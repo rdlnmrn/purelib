@@ -43,24 +43,24 @@ degree balance of the retained factorization. -/
     (identity : forall point : Gaussian.Basic.Canonical,
       left.eval point * polynomial.eval point +
         right.eval point *
-          (Dense.Gaussian.GCD.derivative polynomial).eval point = unit) :
-    Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate polynomial := by
-  match outcome : Dense.Gaussian.Squarefree.Decision.squarefreeOutcome polynomial nonzero with
+          (GCD.derivative polynomial).eval point = unit) :
+    Basic.SquarefreeCertificate polynomial := by
+  match outcome : Decision.squarefreeOutcome polynomial nonzero with
   | .coprime certificate => exact certificate
   | .commonDivisor common =>
       let cofactor :=
         left * common.leftFactor + right * common.rightFactor
-      have factorization : Dense.Gaussian.Factorization.Identity.ProductIdentity
-          (Dense.Basic.DensePolynomial.constant unit) common.divisor cofactor := by
-        apply Dense.Gaussian.Factorization.Identity.factorizationOfCandidateEvals
+      have factorization : Factorization.Identity.ProductIdentity
+          (Basic.DensePolynomial.constant unit) common.divisor cofactor := by
+        apply Factorization.Identity.factorizationOfCandidateEvals
         intro point _member
         dsimp only [cofactor]
-        rw [Dense.Basic.DensePolynomial.eval_constant, Dense.Basic.DensePolynomial.eval_add,
-          Dense.Basic.DensePolynomial.eval_mul, Dense.Basic.DensePolynomial.eval_mul]
+        rw [Basic.DensePolynomial.eval_constant, Basic.DensePolynomial.eval_add,
+          Basic.DensePolynomial.eval_mul, Basic.DensePolynomial.eval_mul]
         calc
           unit = left.eval point * polynomial.eval point +
                 right.eval point *
-                  (Dense.Gaussian.GCD.derivative polynomial).eval point :=
+                  (GCD.derivative polynomial).eval point :=
             (identity point).symm
           _ = common.divisor.eval point *
                 (left.eval point * common.leftFactor.eval point +
@@ -68,20 +68,20 @@ degree balance of the retained factorization. -/
             rw [common.leftIdentity point, common.rightIdentity point]
             ring1
       have constantNormalized :
-          (Dense.Basic.DensePolynomial.constant unit).normalize = Dense.Basic.DensePolynomial.constant unit :=
-        Dense.Basic.DensePolynomial.normalize_constant_of_ne unitNonzero
-      have constantNonzero : (Dense.Basic.DensePolynomial.constant unit).isZero = false := by
-        rw [Dense.Basic.DensePolynomial.isZero, constantNormalized]
+          (Basic.DensePolynomial.constant unit).normalize = Basic.DensePolynomial.constant unit :=
+        Basic.DensePolynomial.normalize_constant_of_ne unitNonzero
+      have constantNonzero : (Basic.DensePolynomial.constant unit).isZero = false := by
+        rw [Basic.DensePolynomial.isZero, constantNormalized]
         rfl
       have cofactorNonzero : cofactor.isZero = false :=
-        Dense.Gaussian.Factorization.Identity.right_isZero_false constantNonzero
+        Factorization.Identity.right_isZero_false constantNonzero
           constantNormalized
           factorization
-      have degreeBalance := Dense.Gaussian.Factorization.Identity.factor_natDegree_add
+      have degreeBalance := Factorization.Identity.factor_natDegree_add
         constantNonzero constantNormalized common.nonzero cofactorNonzero
           factorization
-      have degreeZero : (Dense.Basic.DensePolynomial.constant unit).natDegree = 0 := by
-        rw [Dense.Basic.DensePolynomial.natDegree, Dense.Basic.DensePolynomial.degreeCount,
+      have degreeZero : (Basic.DensePolynomial.constant unit).natDegree = 0 := by
+        rw [Basic.DensePolynomial.natDegree, Basic.DensePolynomial.degreeCount,
           constantNormalized]
         rfl
       rw [degreeZero] at degreeBalance
@@ -100,8 +100,8 @@ Gaussian unit. -/
     (identity : forall point : Gaussian.Basic.Canonical,
       left.eval point * polynomial.eval point +
         right.eval point *
-          (Dense.Gaussian.GCD.derivative polynomial).eval point = 1) :
-    Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate polynomial :=
+          (GCD.derivative polynomial).eval point = 1) :
+    Basic.SquarefreeCertificate polynomial :=
   ofEvalBezoutUnit polynomial nonzero 1 (by decide) left right identity
 
 end Purelib.Polynomial.Dense.Gaussian.Squarefree.Evaluation

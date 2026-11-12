@@ -54,6 +54,10 @@ import Purelib.RootIsolation.State.WindingOne.Raw
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid
+
+open Purelib.Topology.Surface.Sewing.SewnPrimitiveContacts
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -74,81 +78,83 @@ source count remains in the bound and must be paid by the global allocator. -/
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.PairedSources
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+open Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted (OuterPreparation)
+
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
     Fraction.Rational}
   {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius} {index :
-    Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
-  {annulus : Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index} {lifted : Meshes.LiftedPuncturedGrid
+    Branches.BranchIsolation.Data.Index branches}
+  {annulus : Faces.AnnularFaces grid index} {lifted : Meshes.LiftedPuncturedGrid
     grid.punctured}
 
 namespace Lifted.OuterPreparation.Comparison
 
-variable {region : Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted} {prepared :
-  Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation region}
-  {differential : Fin genus} {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+variable {region : LiftedBoundary.Lifted annulus lifted} {prepared :
+  OuterPreparation region}
+  {differential : Fin genus} {domains : Face.DomainBanks.FaceDomainBank lifted.frames
     grid.faces.regulars}
   {tolerance : Fraction.Rational}
 
 /-- Each paired differential reading on the same retained source occurrence satisfies the common scalar magnitude bound.
 -/
 theorem paired_source_bound (first :
-  Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation.Comparison prepared differential
+  OuterPreparation.Comparison prepared differential
   domains tolerance)
     {other : Fin genus} (second :
-      Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation.Comparison prepared other domains
+      OuterPreparation.Comparison prepared other domains
       tolerance)
     {stage : Nat} (firstLater : first.reference.index ≤ stage) (secondLater : second.reference.index ≤ stage)
-    {firstBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    {firstBank : Face.PrimitiveData.FacePrimitiveBank
       (Periods.PeriodMatrix.standardDifferential differential) stage domains}
-    {secondBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    {secondBank : Face.PrimitiveData.FacePrimitiveBank
       (Periods.PeriodMatrix.standardDifferential other) stage domains}
-    (firstReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings firstBank
+    (firstReadings : TrianglePrimitiveReadings.TriangleReadings firstBank
       lifted.mesh)
-    (secondReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings secondBank
+    (secondReadings : TrianglePrimitiveReadings.TriangleReadings secondBank
       lifted.mesh) :
     ∀ point ∈ prepared.sources.map (fun source =>
-      (⟨Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge.increment source firstReadings.values,
-        Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge.increment source secondReadings.values⟩ :
+      (⟨SourceEdge.increment source firstReadings.values,
+        SourceEdge.increment source secondReadings.values⟩ :
         Topology.Polygon.Stokes.PrimitivePoint)),
       Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded point (3 * tolerance + 4 * (target / 16)) := by
   intro point member
   rcases Data.List.Map.mem_map.mp member with ⟨source, sourceMember, rfl⟩
   rw [prepared.sources_eq] at sourceMember
   have firstScalar := first.reference.source_bound first.shared firstLater firstReadings
-    (Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge.increment source firstReadings.values)
+    (SourceEdge.increment source firstReadings.values)
     (Data.List.Map.mem_map.mpr ⟨source, sourceMember, rfl⟩)
   have secondScalar := second.reference.source_bound second.shared secondLater secondReadings
-    (Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge.increment source secondReadings.values)
+    (SourceEdge.increment source secondReadings.values)
     (Data.List.Map.mem_map.mpr ⟨source, sourceMember, rfl⟩)
   rw [Gaussian.Norm.Basic.normSq_eq_canonical] at firstScalar secondScalar
   exact ⟨firstScalar, secondScalar⟩
 
 /-- The full ordered polygon, including every repeated source occurrence. -/
 theorem paired_source_area_bound (first :
-  Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation.Comparison prepared differential
+  OuterPreparation.Comparison prepared differential
   domains tolerance)
     {other : Fin genus} (second :
-      Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation.Comparison prepared other domains
+      OuterPreparation.Comparison prepared other domains
       tolerance)
     {stage : Nat} (firstLater : first.reference.index ≤ stage) (secondLater : second.reference.index ≤ stage)
-    {firstBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    {firstBank : Face.PrimitiveData.FacePrimitiveBank
       (Periods.PeriodMatrix.standardDifferential differential) stage domains}
-    {secondBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    {secondBank : Face.PrimitiveData.FacePrimitiveBank
       (Periods.PeriodMatrix.standardDifferential other) stage domains}
-    (firstReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings firstBank
+    (firstReadings : TrianglePrimitiveReadings.TriangleReadings firstBank
       lifted.mesh)
-    (secondReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings secondBank
+    (secondReadings : TrianglePrimitiveReadings.TriangleReadings secondBank
       lifted.mesh) :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area (prepared.sources.map (fun source =>
-      (⟨Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge.increment source firstReadings.values,
-        Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge.increment source secondReadings.values⟩ :
+    Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area (prepared.sources.map (fun source =>
+      (⟨SourceEdge.increment source firstReadings.values,
+        SourceEdge.increment source secondReadings.values⟩ :
         Topology.Polygon.Stokes.PrimitivePoint)))) ≤
       4 * ((region.outer.length : Fraction.Rational)^2 * (3 * tolerance + 4 * (target / 16)))^2 := by
   have bounded := Path.PairedIncrementArea.area_bound _ first.reference.bound_nonnegative
-    (Hyperelliptic.Meshes.Newton.Annulus.PairedSources.Lifted.OuterPreparation.Comparison.paired_source_bound first
+    (Comparison.paired_source_bound first
       second firstLater secondLater firstReadings secondReadings)
   have count := congrArg List.length prepared.sources_project
   rw [List.Map.length_map] at count
@@ -157,66 +163,66 @@ theorem paired_source_area_bound (first :
 
 /-- Endpoint increments are bounded, not erased by sheet return. -/
 theorem paired_source_total_bound (first :
-  Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation.Comparison prepared differential
+  OuterPreparation.Comparison prepared differential
   domains tolerance)
     {other : Fin genus} (second :
-      Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation.Comparison prepared other domains
+      OuterPreparation.Comparison prepared other domains
       tolerance)
     {stage : Nat} (firstLater : first.reference.index ≤ stage) (secondLater : second.reference.index ≤ stage)
-    {firstBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    {firstBank : Face.PrimitiveData.FacePrimitiveBank
       (Periods.PeriodMatrix.standardDifferential differential) stage domains}
-    {secondBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    {secondBank : Face.PrimitiveData.FacePrimitiveBank
       (Periods.PeriodMatrix.standardDifferential other) stage domains}
-    (firstReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings firstBank
+    (firstReadings : TrianglePrimitiveReadings.TriangleReadings firstBank
       lifted.mesh)
-    (secondReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings secondBank
+    (secondReadings : TrianglePrimitiveReadings.TriangleReadings secondBank
       lifted.mesh) :
     Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded
       (Path.PairedIncrementArea.total (prepared.sources.map (fun source =>
-        (⟨Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge.increment source firstReadings.values,
-          Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge.increment source secondReadings.values⟩ :
+        (⟨SourceEdge.increment source firstReadings.values,
+          SourceEdge.increment source secondReadings.values⟩ :
           Topology.Polygon.Stokes.PrimitivePoint))))
       ((region.outer.length : Fraction.Rational)^2 * (3 * tolerance + 4 * (target / 16))) := by
   have count := congrArg List.length prepared.sources_project
   rw [List.Map.length_map] at count
   exact Path.PairedIncrementArea.total_bound first.reference.bound_nonnegative
-    (Hyperelliptic.Meshes.Newton.Annulus.PairedSources.Lifted.OuterPreparation.Comparison.paired_source_bound first
+    (Comparison.paired_source_bound first
       second firstLater secondLater firstReadings secondReadings)
     (by rw [List.Map.length_map, count])
 
 /-- Translation retains the determinant against the actual endpoint total. -/
 theorem paired_source_trace_bound (first :
-  Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation.Comparison prepared differential
+  OuterPreparation.Comparison prepared differential
   domains tolerance)
     {other : Fin genus} (second :
-      Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation.Comparison prepared other domains
+      OuterPreparation.Comparison prepared other domains
       tolerance)
     {stage : Nat} (firstLater : first.reference.index ≤ stage) (secondLater : second.reference.index ≤ stage)
-    {firstBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    {firstBank : Face.PrimitiveData.FacePrimitiveBank
       (Periods.PeriodMatrix.standardDifferential differential) stage domains}
-    {secondBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    {secondBank : Face.PrimitiveData.FacePrimitiveBank
       (Periods.PeriodMatrix.standardDifferential other) stage domains}
-    (firstReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings firstBank
+    (firstReadings : TrianglePrimitiveReadings.TriangleReadings firstBank
       lifted.mesh)
-    (secondReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings secondBank
+    (secondReadings : TrianglePrimitiveReadings.TriangleReadings secondBank
       lifted.mesh)
     (anchor : Topology.Polygon.Stokes.PrimitivePoint) {magnitude : Fraction.Rational} (anchorBound :
       Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded anchor magnitude) :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.traceArea anchor (prepared.sources.map (fun source =>
-      (⟨Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge.increment source firstReadings.values,
-        Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge.increment source secondReadings.values⟩ :
+    Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.traceArea anchor (prepared.sources.map (fun source =>
+      (⟨SourceEdge.increment source firstReadings.values,
+        SourceEdge.increment source secondReadings.values⟩ :
         Topology.Polygon.Stokes.PrimitivePoint)))) ≤
       8 * ((region.outer.length : Fraction.Rational)^2 * (3 * tolerance + 4 * (target / 16)))^2 +
         8 * magnitude * ((region.outer.length : Fraction.Rational)^2 * (3 * tolerance + 4 * (target / 16))) := by
   have endpoint := Readings.PrimitiveAreaBounds.PrimitivePoint.area_bound anchorBound
-    (Hyperelliptic.Meshes.Newton.Annulus.PairedSources.Lifted.OuterPreparation.Comparison.paired_source_total_bound
+    (Comparison.paired_source_total_bound
       first second firstLater secondLater firstReadings secondReadings)
   rw [← Gaussian.Norm.Basic.normSq_eq_canonical] at endpoint
   rw [Path.PairedIncrementArea.traceArea_eq]
   exact (Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
     ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
       (add_le_add
-        (Hyperelliptic.Meshes.Newton.Annulus.PairedSources.Lifted.OuterPreparation.Comparison.paired_source_area_bound
+        (Comparison.paired_source_area_bound
         first second firstLater secondLater firstReadings secondReadings)
         endpoint) (by decide)).trans_eq (by ring1))
 

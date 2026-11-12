@@ -31,6 +31,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Integration.Polynomial.Gaussian
 
 public section
@@ -57,9 +59,9 @@ open Purelib.Data.Rat in
 /-- The rational carrier for cell parameters and error allowances. -/
 abbrev Coordinate := Fraction.Rational
 /-- The rational Gaussian box carrier for retained root enclosures. -/
-abbrev Box := Purelib.Geometry.Rational.Box
+abbrev Box := Geometry.Rational.Box
 /-- The original Gaussian polynomial integration-cell carrier. -/
-abbrev CellModel := Purelib.Integration.Polynomial.Gaussian.Cell.Basic.CellModel
+abbrev CellModel := Cell.Basic.CellModel
 
 open Purelib.Data.Rat in
 open Purelib.Integration.Algebraic.SquareFactor in
@@ -68,7 +70,7 @@ set_option genInjectivity false in
 
 The same ordered interval and refinement witness retain both endpoints inside the original unit parameter domain. -/
 structure Span where
-  /-- The retained original parameter interval. -/ interval : Data.Rat.Interval.Bounds
+  /-- The retained original parameter interval. -/ interval : Interval.Bounds
   /-- The retained parameter interval refines the original unit interval. -/ within : interval.Refines
     PathInput.unitInterval
 
@@ -78,52 +80,52 @@ namespace Span
 
 open Purelib.Integration.Algebraic.SquareFactor in
 /-- The retained parameter span's upper endpoint minus its lower endpoint. -/
-@[expose] def width (span : CellModels.Span) : Coordinate := span.interval.upper - span.interval.lower
+@[expose] def width (span : Span) : Coordinate := span.interval.upper - span.interval.lower
 
 open Purelib.Data.Rat in
 open Purelib.Integration.Algebraic.SquareFactor in
 /-- The ordered retained parameter span has nonnegative width.
 
 The original interval ordering supplies the direct scalar nonnegativity of its same upper-minus-lower width. -/
-theorem width_nonnegative (span : CellModels.Span) : 0 ≤ span.width :=
-  Fraction.Order.Arithmetic.sub_nonneg_direct span.interval.valid
+theorem width_nonnegative (span : Span) : 0 ≤ span.width :=
+  Arithmetic.sub_nonneg_direct span.interval.valid
 
 open Purelib.Integration.Algebraic.SquareFactor in
 /-- Map a local fraction affinely onto the retained original parameter span. -/
-@[expose] def parameter (span : CellModels.Span) (fraction : CellModels.Coordinate) : Coordinate :=
+@[expose] def parameter (span : Span) (fraction : Coordinate) : Coordinate :=
   span.interval.lower + span.width * fraction
 
 open Purelib.Data.Rat in
 open Purelib.Integration.Algebraic.SquareFactor in
 /-- An in-unit local fraction maps into the retained parameter span. -/
-theorem parameter_inside (span : CellModels.Span) {fraction : CellModels.Coordinate}
+theorem parameter_inside (span : Span) {fraction : Coordinate}
     (inside : PathInput.unitInterval.Contains fraction) : span.interval.Contains (span.parameter fraction) := by
   constructor
   · exact le_add_of_nonneg_right
-      (Fraction.Order.Arithmetic.mul_nonneg_direct span.width_nonnegative inside.1)
+      (Arithmetic.mul_nonneg_direct span.width_nonnegative inside.1)
   · calc
       span.parameter fraction ≤ span.interval.lower + span.width * 1 :=
         add_le_add (show span.interval.lower ≤ span.interval.lower from le_rfl)
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct
             inside.2 span.width_nonnegative)
-      _ = span.interval.upper := by unfold CellModels.Span.width; ring1
+      _ = span.interval.upper := by unfold width; ring1
 
 open Purelib.Integration.Algebraic.SquareFactor.CellModels.Span in
 open Purelib.Integration.Algebraic.SquareFactor in
 /-- Every point of the retained span remains inside the original unit interval. -/
-theorem inside_unit (span : CellModels.Span) {parameter : CellModels.Coordinate}
+theorem inside_unit (span : Span) {parameter : Coordinate}
     (inside : span.interval.Contains parameter) : PathInput.unitInterval.Contains parameter :=
   ⟨span.within.1.trans inside.1, inside.2.trans span.within.2⟩
 
 open Purelib.Integration.Algebraic.SquareFactor in
 /-- The retained span's lower endpoint lies in the original unit interval. -/
-theorem lower_inside_unit (span : CellModels.Span) : PathInput.unitInterval.Contains span.interval.lower :=
+theorem lower_inside_unit (span : Span) : PathInput.unitInterval.Contains span.interval.lower :=
   span.inside_unit ⟨le_rfl, span.interval.valid⟩
 
 open Purelib.Data.Rat in
 open Purelib.Integration.Algebraic.SquareFactor in
 /-- The mapped parameter's squared displacement from the lower endpoint is at most the retained width squared. -/
-theorem parameter_sub_lower_sq_le (span : CellModels.Span) {fraction : CellModels.Coordinate}
+theorem parameter_sub_lower_sq_le (span : Span) {fraction : Coordinate}
     (inside : PathInput.unitInterval.Contains fraction) :
     (span.parameter fraction - span.interval.lower) ^ 2 ≤ span.width ^ 2 := by
   have bound := Interval.Radius.sub_sq_le_sampleRadiusSq span.interval
@@ -133,10 +135,10 @@ theorem parameter_sub_lower_sq_le (span : CellModels.Span) {fraction : CellModel
 
 end Span
 
-variable {polynomial : Purelib.Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial} {request :
-  Purelib.Curves.Hyperelliptic.Differentials.SquareFactor.Request}
-  {prepared : Purelib.Curves.Hyperelliptic.Differentials.SquareFactor.Prepared polynomial request} {segment :
-    Purelib.Integration.Algebraic.SquareFactor.PathInput.Segment}
+variable {polynomial : GaussianPolynomial} {request :
+  Request}
+  {prepared : Prepared polynomial request} {segment :
+    Segment}
 
 open Purelib.Curves.Hyperelliptic.Differentials in
 open Purelib.Data.Gaussian in
@@ -148,19 +150,19 @@ allowance.
 
 The model is indexed by the exact original path data and parameter span; the coefficient and allowance retain their
 defining equations. -/
-structure Model (data : PathInput.Data prepared segment) (span : CellModels.Span) where
-  /-- The retained original root enclosure. -/ rootBox : CellModels.Box
-  /-- The original root reading at the span's lower endpoint. -/ centerRoot : SquareFactor.Gaussian
+structure Model (data : Data prepared segment) (span : Span) where
+  /-- The retained original root enclosure. -/ rootBox : Box
+  /-- The original root reading at the span's lower endpoint. -/ centerRoot : Gaussian
   /-- The original center root lies in its retained root box. -/ centerRootInside : rootBox.Contains centerRoot
   /-- The center root meets the original lower-endpoint square-residual target. -/ centerResidual :
-    Data.Gaussian.Norm.Basic.normSq (centerRoot * centerRoot -
+    Norm.Basic.normSq (centerRoot * centerRoot -
       prepared.reduction.radicand.eval (segment.point span.interval.lower)) ≤
     SquareRootSheets.residualTarget
       (prepared.reduction.radicand.eval (segment.point span.interval.lower))
-  /-- The cached coefficient at the original span lower endpoint and center root. -/ center : SquareFactor.Gaussian
+  /-- The cached coefficient at the original span lower endpoint and center root. -/ center : Gaussian
   /-- The cached center equals the exact coefficient readback of the original path data. -/ center_eq : center =
     CoefficientBounds.coefficient data span.interval.lower centerRoot
-  /-- The retained local coefficient-variation allowance. -/ allowance : CellModels.Coordinate
+  /-- The retained local coefficient-variation allowance. -/ allowance : Coordinate
   /-- The allowance is the sum of parameter-width and root-box-diagonal contributions. -/ allowance_eq : allowance =
     CoefficientBounds.parameterSlope data * span.width ^ 2 + CoefficientBounds.rootSlope data * rootBox.diagonalSq
   /-- The retained local allowance is nonnegative. -/ allowanceNonnegative : 0 ≤ allowance
@@ -172,32 +174,55 @@ open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
 open Purelib.Integration.Algebraic.SquareFactor in
 open Purelib.Riemann.Branches in
-/-- Build the coefficient model from the original safe path, span, root box and residual-certified root.
+/-- Build the original coefficient model with a retained exact coefficient cache.
 
-The local allowance combines parameter-slope times squared span width and root-slope times squared box diagonal,
-retaining both contributions. -/
-@[expose] def make {data : PathInput.Data prepared segment} (safe : data.Safe) (span : CellModels.Span)
-    (rootBox : CellModels.Box) (centerRoot : SquareFactor.Gaussian) (centerRootInside : rootBox.Contains centerRoot)
-    (centerResidual : Data.Gaussian.Norm.Basic.normSq (centerRoot * centerRoot -
+The source path, span, root enclosure and residual-certified root remain
+unchanged. The constructor consumes the supplied coefficient and its
+identity instead of evaluating the numerator and denominator again.
+-/
+@[expose] def makeWithCenter {data : Data prepared segment} (safe : data.Safe) (span : Span)
+    (rootBox : Box) (centerRoot : Gaussian) (centerRootInside : rootBox.Contains centerRoot)
+    (centerResidual : Norm.Basic.normSq (centerRoot * centerRoot -
         prepared.reduction.radicand.eval (segment.point span.interval.lower)) ≤
       SquareRootSheets.residualTarget
-        (prepared.reduction.radicand.eval (segment.point span.interval.lower))) : CellModels.Model data span :=
+        (prepared.reduction.radicand.eval (segment.point span.interval.lower)))
+    (center : Gaussian)
+    (centerEq : center = CoefficientBounds.coefficient data span.interval.lower centerRoot) :
+    Model data span :=
   { rootBox, centerRoot, centerRootInside, centerResidual
-    center := CoefficientBounds.coefficient data span.interval.lower centerRoot
-    center_eq := rfl
+    center := center
+    center_eq := centerEq
     allowance := CoefficientBounds.parameterSlope data * span.width ^ 2 + CoefficientBounds.rootSlope data *
       rootBox.diagonalSq
     allowance_eq := rfl
     allowanceNonnegative := add_nonneg
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (CoefficientBounds.parameterSlope_nonnegative safe)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (CoefficientBounds.rootSlope_nonnegative safe)
+      (Arithmetic.mul_nonneg_direct (CoefficientBounds.parameterSlope_nonnegative safe)
+        (Arithmetic.sq_nonneg_direct _))
+      (Arithmetic.mul_nonneg_direct (CoefficientBounds.rootSlope_nonnegative safe)
         rootBox.diagonalSq_nonneg) }
+
+open Purelib.Curves.Hyperelliptic.Differentials in
+open Purelib.Data.Gaussian in
+open Purelib.Data.Rat in
+open Purelib.Integration.Algebraic.SquareFactor in
+open Purelib.Riemann.Branches in
+/-- Build the coefficient model from the original safe path, span, root box and residual-certified root.
+
+The local allowance combines parameter-slope times squared span width and root-slope times squared box diagonal,
+retaining both contributions. -/
+@[expose] def make {data : Data prepared segment} (safe : data.Safe) (span : Span)
+    (rootBox : Box) (centerRoot : Gaussian) (centerRootInside : rootBox.Contains centerRoot)
+    (centerResidual : Norm.Basic.normSq (centerRoot * centerRoot -
+        prepared.reduction.radicand.eval (segment.point span.interval.lower)) ≤
+      SquareRootSheets.residualTarget
+        (prepared.reduction.radicand.eval (segment.point span.interval.lower))) : Model data span :=
+  makeWithCenter safe span rootBox centerRoot centerRootInside centerResidual
+    (CoefficientBounds.coefficient data span.interval.lower centerRoot) rfl
 
 namespace Model
 
-variable {data : Purelib.Integration.Algebraic.SquareFactor.PathInput.Data prepared segment} {span :
-  Purelib.Integration.Algebraic.SquareFactor.CellModels.Span}
+variable {data : Data prepared segment} {span :
+  Span}
 
 open Purelib.Integration.Algebraic.SquareFactor in
 open Purelib.Polynomial.Ascending in
@@ -205,7 +230,7 @@ open Purelib.Polynomial.Ascending in
 
 The original span endpoints determine the cell endpoints, its cached coefficient and allowance are reused, and its
 observation list is empty. -/
-@[expose] def cell (model : CellModels.Model data span) : CellModels.CellModel where
+@[expose] def cell (model : Model data span) : CellModel where
   start := segment.point span.interval.lower
   finish := segment.point span.interval.upper
   polynomial := Gaussian.Basic.constant model.center
@@ -216,7 +241,7 @@ observation list is empty. -/
 open Purelib.Integration.Algebraic.SquareFactor in
 open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- The retained constant cell sample equals its exact span displacement times the cached coefficient. -/
-theorem integralSample (model : CellModels.Model data span) :
+theorem integralSample (model : Model data span) :
     model.cell.integralSample =
       (segment.point span.interval.upper - segment.point span.interval.lower) * model.center :=
   Cell.Basic.CellModel.integralSample_constant _ _ rfl
@@ -226,13 +251,13 @@ open Purelib.Geometry.Rational in
 open Purelib.Integration.Algebraic.SquareFactor in
 open Purelib.Integration.Polynomial.Gaussian.Cell in
 /-- The cell's local affine point equals the original segment evaluated at the mapped span parameter. -/
-theorem point_eq (model : CellModels.Model data span) (fraction : CellModels.Coordinate) :
+theorem point_eq (model : Model data span) (fraction : Coordinate) :
     model.cell.start + Cast.Path.ofCoordinate fraction * model.cell.displacement =
       segment.point (span.parameter fraction) := by
   apply Basic.ext <;>
-    simp only [CellModels.Model.cell, Basic.CellModel.displacement,
-      PathInput.Segment.point, PathInput.Segment.direction, Affine.line, CellModels.Span.parameter,
-        CellModels.Span.width,
+    simp only [cell, Basic.CellModel.displacement,
+      Segment.point, Segment.direction, Affine.line, Span.parameter,
+        Span.width,
       Cast.ofCoordinate_re, Cast.ofCoordinate_im,
       Basic.add_re, Basic.add_im, Basic.sub_re, Basic.sub_im, Basic.mul_re, Basic.mul_im] <;> ring1
 
@@ -246,14 +271,14 @@ open Purelib.Riemann.Branches in
 allowance.
 
 The comparison uses the original center root, root box and separate parameter and root movement bounds. -/
-theorem candidate_error_le (model : CellModels.Model data span) (safe : data.Safe)
-    {fraction : CellModels.Coordinate} (inside : PathInput.unitInterval.Contains fraction)
-    {root : SquareFactor.Gaussian} (rootInside : model.rootBox.Contains root)
-    (residual : Data.Gaussian.Norm.Basic.normSq (root * root -
+theorem candidate_error_le (model : Model data span) (safe : data.Safe)
+    {fraction : Coordinate} (inside : PathInput.unitInterval.Contains fraction)
+    {root : Gaussian} (rootInside : model.rootBox.Contains root)
+    (residual : Norm.Basic.normSq (root * root -
         prepared.reduction.radicand.eval (segment.point (span.parameter fraction))) ≤
       SquareRootSheets.residualTarget
         (prepared.reduction.radicand.eval (segment.point (span.parameter fraction)))) :
-    Data.Gaussian.Norm.Basic.normSq (CoefficientBounds.coefficient data (span.parameter fraction) root -
+    Norm.Basic.normSq (CoefficientBounds.coefficient data (span.parameter fraction) root -
       Gaussian.Evaluation.eval model.cell.polynomial ⟨fraction, 0⟩) ≤ model.cell.localAllowance := by
   have bound := CoefficientBounds.normSq_coefficient_sub_le_generated safe
     (span.inside_unit (span.parameter_inside inside)) span.lower_inside_unit
@@ -261,7 +286,7 @@ theorem candidate_error_le (model : CellModels.Model data span) (safe : data.Saf
     (Box.normSq_sub_le_diagonalSq model.centerRootInside rootInside)
     residual model.centerResidual
   rw [CoefficientBounds.variation_eq_linear, ← model.center_eq, ← model.allowance_eq] at bound
-  simpa only [CellModels.Model.cell, Gaussian.Evaluation.eval_constant] using bound
+  simpa only [cell, Gaussian.Evaluation.eval_constant] using bound
 
 open Purelib.Curves.Hyperelliptic.Differentials in
 open Purelib.Data.Gaussian in
@@ -273,10 +298,10 @@ open Purelib.Riemann.Branches in
 
 The original local fraction, actual coefficient reading and its difference from the cached center are retained with an
 exact decomposition and error bound. -/
-@[expose] def observation (model : CellModels.Model data span) (safe : data.Safe)
-    (fraction : CellModels.Coordinate) (inside : PathInput.unitInterval.Contains fraction)
-    (root : SquareFactor.Gaussian) (rootInside : model.rootBox.Contains root)
-    (residual : Data.Gaussian.Norm.Basic.normSq (root * root -
+@[expose] def observation (model : Model data span) (safe : data.Safe)
+    (fraction : Coordinate) (inside : PathInput.unitInterval.Contains fraction)
+    (root : Gaussian) (rootInside : model.rootBox.Contains root)
+    (residual : Norm.Basic.normSq (root * root -
         prepared.reduction.radicand.eval (segment.point (span.parameter fraction))) ≤
       SquareRootSheets.residualTarget
         (prepared.reduction.radicand.eval (segment.point (span.parameter fraction)))) :
@@ -284,11 +309,11 @@ exact decomposition and error bound. -/
   { parameter := fraction
     integrandReading := CoefficientBounds.coefficient data (span.parameter fraction) root
     error := CoefficientBounds.coefficient data (span.parameter fraction) root - model.center
-    decomposition := by rw [CellModels.Model.cell, Gaussian.Evaluation.eval_constant]
+    decomposition := by rw [cell, Gaussian.Evaluation.eval_constant]
     error_le := by
       have bound := model.candidate_error_le safe inside rootInside residual
       rw [Norm.Basic.normSq_eq_canonical] at bound
-      simpa only [CellModels.Model.cell, Gaussian.Evaluation.eval_constant] using bound }
+      simpa only [cell, Gaussian.Evaluation.eval_constant] using bound }
 
 open Purelib.Curves.Hyperelliptic.Differentials in
 open Purelib.Data.Gaussian in
@@ -297,15 +322,15 @@ open Purelib.Polynomial.Ascending in
 open Purelib.Riemann.Branches in
 /-- A positive original square-factor margin transports the retained local error bound to the original differential
 coefficient. -/
-theorem original_candidate_error_le (model : CellModels.Model data span) (safe : data.Safe)
+theorem original_candidate_error_le (model : Model data span) (safe : data.Safe)
     (originalDomain : 0 < data.squareFactor.lowerBound)
-    {fraction : CellModels.Coordinate} (inside : PathInput.unitInterval.Contains fraction)
-    {root : SquareFactor.Gaussian} (rootInside : model.rootBox.Contains root)
-    (residual : Data.Gaussian.Norm.Basic.normSq (root * root -
+    {fraction : Coordinate} (inside : PathInput.unitInterval.Contains fraction)
+    {root : Gaussian} (rootInside : model.rootBox.Contains root)
+    (residual : Norm.Basic.normSq (root * root -
         prepared.reduction.radicand.eval (segment.point (span.parameter fraction))) ≤
       SquareRootSheets.residualTarget
         (prepared.reduction.radicand.eval (segment.point (span.parameter fraction)))) :
-    Data.Gaussian.Norm.Basic.normSq (request.originalNumerator prepared.reduction (segment.point (span.parameter
+    Norm.Basic.normSq (request.originalNumerator prepared.reduction (segment.point (span.parameter
       fraction)) /
         SquareFactor.coordinate prepared.reduction (segment.point (span.parameter fraction)) root -
       Gaussian.Evaluation.eval model.cell.polynomial ⟨fraction, 0⟩) ≤ model.cell.localAllowance := by

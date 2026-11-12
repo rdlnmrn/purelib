@@ -181,7 +181,7 @@ theorem polynomial_zero_of_evaluations_zero
   cases nonzero : numerator.isZero with
   | true => rfl
   | false =>
-      have tooMany := Dense.RootBound.Roots.nodup_zeros_length_lt_degreeCount
+      have tooMany := Dense.RootBound.Extensionality.nodup_zeros_length_lt_degreeCount
         numerator nonzero bank.points bank.distinct zeros
       rw [bank.length_eq] at tooMany
       exact (not_lt_of_ge degreeBound tooMany).elim

@@ -39,6 +39,8 @@ import Purelib.Topology.Surface.Sewing.SewingTree
 import Purelib.Topology.Surface.Word.NormalForm
 import Purelib.Topology.Surface.Word.PairedWord
 
+open Purelib.Topology.Surface
+
 open Purelib.Algebra
 
 open Purelib.Curves
@@ -60,37 +62,37 @@ open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
 local notation "vget" => Data.Vector.get
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
-    {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered} {prepared :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired}
+    BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {ordered : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
+    {paired : OrderedBranchPairs.Ordered.Paired ordered} {prepared :
+    PeriodPrograms.Prepared paired}
 
-variable {cut : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared} (chains :
-  Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleWords.CutBank.HandleChains cut)
+variable {cut : PeriodCoordinates.CutBank prepared} (chains :
+  HandleChains cut)
 
 /-- Evaluate only coordinates belonging to the retained handle pivots. -/
-def handleValue (weights : Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleCoordinates.CutBank.HandleVector cut) (value
+def handleValue (weights : HandleCoordinates.CutBank.HandleVector cut) (value
   : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) : Gaussian :=
   FiniteSum.Fin.sumFin fun index => if index ∈ Handle.Basic.handleIndices cut.normal.pivots then
     ((vget weights index : Int) : Gaussian.Basic.Canonical) * chains.cycleValues value index else 0
 
 /-- Keep every unused cycle contribution until its physical readback has been applied. -/
-def radicalValue (weights : Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleCoordinates.CutBank.HandleVector cut) (value
+def radicalValue (weights : HandleCoordinates.CutBank.HandleVector cut) (value
   : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) : Gaussian :=
   FiniteSum.Fin.sumFin fun index => if index ∈ Handle.Basic.handleIndices cut.normal.pivots then 0 else
     ((vget weights index : Int) : Gaussian.Basic.Canonical) * chains.cycleValues value index
 
 /-- The original normal-form cycle reading is the sum of its retained handle and radical contributions. -/
-theorem value_split (weights : Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleCoordinates.CutBank.HandleVector cut)
+theorem value_split (weights : HandleCoordinates.CutBank.HandleVector cut)
   (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) :
-    Topology.Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine (vget weights) (chains.cycleValues value) =
+    Boundary.BoundaryCoordinates.WordCoordinates.combine (vget weights) (chains.cycleValues value) =
       chains.handleValue weights value + chains.radicalValue weights value := by
-  unfold Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleWords.CutBank.HandleChains.handleValue
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleWords.CutBank.HandleChains.radicalValue
+  unfold HandleChains.handleValue
+    HandleChains.radicalValue
   rw [← FiniteSum.Fin.sumFin_add]
   apply FiniteSum.Fin.sumFin_congr
   intro index
@@ -100,14 +102,14 @@ theorem value_split (weights : Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleC
 
 /-- This is a physical-boundary sum, not a claimed zero period. -/
 theorem radicalValue_physical (weights :
-  Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleCoordinates.CutBank.HandleVector cut)
+  HandleCoordinates.CutBank.HandleVector cut)
     (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) (anti : ∀ edge,
       value edge.reverse = -value edge) :
     chains.radicalValue weights value = FiniteSum.Fin.sumFin (fun index =>
       if index ∈ Handle.Basic.handleIndices cut.normal.pivots then 0 else
         ((vget weights index : Int) : Gaussian.Basic.Canonical) *
-          Topology.Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine (vget (chains.physicalCycleRow index))
-          (fun column => value (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map
+          Boundary.BoundaryCoordinates.WordCoordinates.combine (vget (chains.physicalCycleRow index))
+          (fun column => value (Sewing.VertexSewing.OrientedEdge.map
             lifted.cutPolygon.patch.cut.vertexLabels (lifted.cutBoundaryWord.alphabet.generators column)))) := by
   apply FiniteSum.Fin.sumFin_congr
   intro index
@@ -117,51 +119,51 @@ theorem radicalValue_physical (weights :
 
 /-- Combine the old physical remainder with the explicitly retained unused-cycle values. -/
 def aPhysicalValue {index : Fin genus} (row :
-  Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleCoordinates.CutBank.HandleRow cut index)
+  HandleCoordinates.CutBank.HandleRow cut index)
     (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) : Gaussian :=
   chains.radicalValue row.a value +
-    Topology.Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine (chains.chords.rows.get
+    Boundary.BoundaryCoordinates.WordCoordinates.combine (chains.chords.rows.get
       index).aPhysical.physical
-      (fun column => value (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map
+      (fun column => value (Sewing.VertexSewing.OrientedEdge.map
         lifted.cutPolygon.patch.cut.vertexLabels (lifted.cutBoundaryWord.alphabet.generators column)))
 
 /-- The b-cycle physical reading combines its original radical row with the retained physical boundary correction. -/
 def bPhysicalValue {index : Fin genus} (row :
-  Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleCoordinates.CutBank.HandleRow cut index)
+  HandleCoordinates.CutBank.HandleRow cut index)
     (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) : Gaussian :=
   chains.radicalValue row.b value +
-    Topology.Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine (chains.chords.rows.get
+    Boundary.BoundaryCoordinates.WordCoordinates.combine (chains.chords.rows.get
       index).bPhysical.physical
-      (fun column => value (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map
+      (fun column => value (Sewing.VertexSewing.OrientedEdge.map
         lifted.cutPolygon.patch.cut.vertexLabels (lifted.cutBoundaryWord.alphabet.generators column)))
 
 /-- The a-cycle word reading equals its handle reading, original physical correction and retained face-boundary
 correction. -/
 theorem a_word_handle_value {index : Fin genus} (row :
-  Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleCoordinates.CutBank.HandleRow cut index)
+  HandleCoordinates.CutBank.HandleRow cut index)
     (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) (anti : ∀ edge,
       value edge.reverse = -value edge) :
-    Topology.Surface.Sewing.SewingRetraction.wordValue value (prepared.aWord index) =
+    Sewing.SewingRetraction.wordValue value (prepared.aWord index) =
       chains.handleValue row.a value + chains.aPhysicalValue row value +
-        Topology.Surface.Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value (cut.rows.get
+        Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value (cut.rows.get
           index).a.route.correction := by
   rw [chains.a_word_value row value anti, chains.value_split row.a value]
-  exact congrArg (· + Topology.Surface.Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value
+  exact congrArg (· + Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value
     (cut.rows.get index).a.route.correction)
     (add_assoc _ _ _)
 
 /-- The b-cycle word reading equals its handle reading, original physical correction and retained face-boundary
 correction. -/
 theorem b_word_handle_value {index : Fin genus} (row :
-  Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleCoordinates.CutBank.HandleRow cut index)
+  HandleCoordinates.CutBank.HandleRow cut index)
     (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) (anti : ∀ edge,
       value edge.reverse = -value edge) :
-    Topology.Surface.Sewing.SewingRetraction.wordValue value (prepared.bWord index) =
+    Sewing.SewingRetraction.wordValue value (prepared.bWord index) =
       chains.handleValue row.b value + chains.bPhysicalValue row value +
-        Topology.Surface.Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value (cut.rows.get
+        Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value (cut.rows.get
           index).b.route.correction := by
   rw [chains.b_word_value row value anti, chains.value_split row.b value]
-  exact congrArg (· + Topology.Surface.Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value
+  exact congrArg (· + Sewing.SewingRetraction.faceValue lifted.mesh.triangulation.faces value
     (cut.rows.get index).b.route.correction)
     (add_assoc _ _ _)
 

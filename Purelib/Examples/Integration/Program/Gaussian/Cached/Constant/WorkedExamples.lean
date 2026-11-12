@@ -10,12 +10,7 @@ import Purelib.Integration.Program.Gaussian.Basic
 @[expose] public section
 
 /-!
-# Multi-step replay regressions
-
-These are actual exact polynomial integration programs.  Zero exercises the
-initial-low chart, one exercises residual padding, and three halves reaches
-the silent residual inverse chart and its second model query.  Literal
-arithmetic is checked by the kernel at ordinary elaboration limits.
+Exact constant integration programs with retained polynomial models.
 -/
 
 namespace Purelib.Examples.Integration.Program.Gaussian.Cached.Constant.WorkedExamples

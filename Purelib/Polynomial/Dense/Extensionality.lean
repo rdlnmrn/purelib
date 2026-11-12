@@ -146,4 +146,78 @@ public theorem normalized_eq_of_sub_isZero
       rightNormalized
   rw [leftTrim, rightTrim] at trimmedEqual
   exact trimmedEqual
+
+/-- Equal-length finite lists with identical leading-zero trims retain exactly the same entries. -/
+private theorem list_eq_of_trim_eq : ∀ left right : List K,
+    left.length = right.length → left.dropWhile (· = 0) = right.dropWhile (· = 0) → left = right
+  | [], [], _, _ => rfl
+  | [], _ :: _, length, _ => by cases length
+  | _ :: _, [], length, _ => by cases length
+  | left :: leftTail, right :: rightTail, length, trimmed => by
+      have tailsLength : leftTail.length = rightTail.length := Nat.succ.inj length
+      by_cases leftZero : left = 0
+      · rewrite [DropWhile.cons_of_true (fun value : K => decide (value = 0)) left leftTail
+          (decide_eq_true leftZero)] at trimmed
+        by_cases rightZero : right = 0
+        · rewrite [DropWhile.cons_of_true (fun value : K => decide (value = 0)) right rightTail
+            (decide_eq_true rightZero)] at trimmed
+          have tails := list_eq_of_trim_eq leftTail rightTail tailsLength trimmed
+          cases leftZero
+          cases rightZero
+          exact congrArg (List.cons 0) tails
+        · rewrite [DropWhile.cons_of_false (fun value : K => decide (value = 0)) right rightTail
+            (decide_eq_false rightZero)] at trimmed
+          have count := congrArg List.length trimmed
+          have bounded := DropWhile.length_le (fun value : K => decide (value = 0)) leftTail
+          change (leftTail.dropWhile (· = 0)).length = rightTail.length + 1 at count
+          rewrite [count, tailsLength] at bounded
+          exact (Nat.not_succ_le_self _ bounded).elim
+      · rewrite [DropWhile.cons_of_false (fun value : K => decide (value = 0)) left leftTail
+          (decide_eq_false leftZero)] at trimmed
+        by_cases rightZero : right = 0
+        · rewrite [DropWhile.cons_of_true (fun value : K => decide (value = 0)) right rightTail
+            (decide_eq_true rightZero)] at trimmed
+          have count := congrArg List.length trimmed
+          have bounded := DropWhile.length_le (fun value : K => decide (value = 0)) rightTail
+          change leftTail.length + 1 = (rightTail.dropWhile (· = 0)).length at count
+          rewrite [← count, ← tailsLength] at bounded
+          exact (Nat.not_succ_le_self _ bounded).elim
+        · rewrite [DropWhile.cons_of_false (fun value : K => decide (value = 0)) right rightTail
+            (decide_eq_false rightZero)] at trimmed
+          exact trimmed
+
+/-- Normalized equality and the same physical coefficient count identify the complete original polynomial records.
+
+Structural comparison recovers each original leading zero from the common
+length and trim. No evaluation equality or infinite-carrier argument is used.
+-/
+public theorem eq_of_normalize_eq_of_length_eq {left right : Basic.DensePolynomial K}
+    (normalized : left.normalize = right.normalize) (length : left.coeffs.length = right.coeffs.length) :
+    left = right := by
+  apply Basic.DensePolynomial.ext
+  apply list_eq_of_trim_eq left.coeffs right.coeffs length
+  exact congrArg (fun p : Basic.DensePolynomial K => p.coeffs) normalized
+
+/-- Every retained entry is zero when its leading-zero trim is empty. -/
+private theorem zero_mem_of_trim_eq_nil : ∀ values : List K,
+    values.dropWhile (· = 0) = [] → ∀ entry, entry ∈ values → entry = 0
+  | [], _, _, member => by cases member
+  | head :: tail, empty, entry, member => by
+      by_cases zero : head = 0
+      · rewrite [DropWhile.cons_of_true (fun value : K => decide (value = 0)) head tail
+          (decide_eq_true zero)] at empty
+        cases member with
+        | head => exact zero
+        | tail _ member => exact zero_mem_of_trim_eq_nil tail empty entry member
+      · rewrite [DropWhile.cons_of_false (fun value : K => decide (value = 0)) head tail
+          (decide_eq_false zero)] at empty
+        cases empty
+
+/-- A coefficient-zero dense polynomial has zero at each actual retained coefficient occurrence. -/
+public theorem coefficient_mem_eq_zero_of_isZero (polynomial : Basic.DensePolynomial K)
+    (zero : polynomial.isZero = true) (entry : K) (member : entry ∈ polynomial.coeffs) : entry = 0 := by
+  have empty := congrArg (fun p : Basic.DensePolynomial K => p.coeffs)
+    (Basic.DensePolynomial.normalize_eq_zero_of_isZero zero)
+  exact zero_mem_of_trim_eq_nil polynomial.coeffs empty entry member
+
 end Purelib.Polynomial.Dense.Extensionality

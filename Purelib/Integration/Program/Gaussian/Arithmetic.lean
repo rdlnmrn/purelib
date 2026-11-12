@@ -17,6 +17,8 @@ import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 public section
 
@@ -39,7 +41,7 @@ set_option genInjectivity false in
 /-- A retained model sequence whose samples add two original program samples and whose allowances satisfy their combined
 geometric bound. -/
 structure SumModels (left right :
-  Gaussian.Basic.RefinementProgram) where
+  RefinementProgram) where
   /-- The retained path-model sequence for the original pair of programs. -/ model : Nat -> Basic.PathModel
   /-- Each retained model sample equals the sum of the original two program samples. -/ integral_eq : forall index,
     (model index).integralSample =
@@ -61,12 +63,12 @@ open Purelib.Integration.Program in
 The error and center bounds are twice the sum of the respective original bounds; the supplied models keep their exact
 sample and allowance certificates. -/
 @[expose] def add (left right :
-  Gaussian.Basic.RefinementProgram) (models : SumModels left right) :
-    Gaussian.Basic.RefinementProgram where
+  RefinementProgram) (models : SumModels left right) :
+    RefinementProgram where
   model := models.model
   errorScale := 2 * (left.errorScale + right.errorScale)
   errorScale_nonneg :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    Arithmetic.mul_nonneg_direct (by decide)
       (add_nonneg left.errorScale_nonneg right.errorScale_nonneg)
   modelAllowance_le := models.aggregate_le
   later_close := by
@@ -101,7 +103,7 @@ sample and allowance certificates. -/
       _ <= 2 *
             (Geometric.Basic.quarterRadius left.errorScale earlier +
               Geometric.Basic.quarterRadius right.errorScale earlier) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add (left.later_close order) (right.later_close order))
           (by decide)
       _ = Geometric.Basic.quarterRadius
@@ -112,7 +114,7 @@ sample and allowance certificates. -/
         ring1
   centerBound := 2 * (left.centerBound + right.centerBound)
   centerBound_nonneg :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    Arithmetic.mul_nonneg_direct (by decide)
       (add_nonneg left.centerBound_nonneg right.centerBound_nonneg)
   sample_bounded := by
     intro index
@@ -121,14 +123,14 @@ sample and allowance certificates. -/
       (left.model index).integralSample (right.model index).integralSample
     rw [Norm.Basic.normSq_eq_canonical, Norm.Basic.normSq_eq_canonical, Norm.Basic.normSq_eq_canonical] at scalar
     exact scalar.trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add (left.sample_bounded index)
           (right.sample_bounded index)) (by decide))
 
 open Purelib.Integration.Program in
 /-- Every retained sum-program sample equals the sum of the two original stage samples. -/
 @[simp] theorem add_integralSample (left right :
-  Gaussian.Basic.RefinementProgram)
+  RefinementProgram)
     (models : SumModels left right) (index : Nat) :
     ((add left right models).model index).integralSample =
       (left.model index).integralSample +
@@ -144,28 +146,28 @@ open Purelib.Integration.Program in
 The geometric error keeps both error-times-opposite-center contributions, while the center bound is the product of the
 two original bounds. -/
 @[expose] def multiply (left right :
-  Gaussian.Basic.RefinementProgram) : Gaussian.Basic.RefinementProgram where
-  model := fun index => Gaussian.Basic.RefinementProgram.productSamplePath (left.model index) (right.model index)
+  RefinementProgram) : RefinementProgram where
+  model := fun index => productSamplePath (left.model index) (right.model index)
   errorScale := 2 *
     (left.errorScale * right.centerBound +
       left.centerBound * right.errorScale)
   errorScale_nonneg :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    Arithmetic.mul_nonneg_direct (by decide)
       (add_nonneg
-        (Fraction.Order.Arithmetic.mul_nonneg_direct
+        (Arithmetic.mul_nonneg_direct
           left.errorScale_nonneg right.centerBound_nonneg)
-        (Fraction.Order.Arithmetic.mul_nonneg_direct
+        (Arithmetic.mul_nonneg_direct
           left.centerBound_nonneg right.errorScale_nonneg))
   modelAllowance_le := by
     intro index
-    rw [Gaussian.Basic.RefinementProgram.productSamplePath_aggregateAllowance]
+    rw [productSamplePath_aggregateAllowance]
     exact Geometric.Basic.quarterRadius_nonneg
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct
         (by decide : (0 : Fraction.Rational) <= 2)
         (add_nonneg
-          (Fraction.Order.Arithmetic.mul_nonneg_direct
+          (Arithmetic.mul_nonneg_direct
             left.errorScale_nonneg right.centerBound_nonneg)
-          (Fraction.Order.Arithmetic.mul_nonneg_direct
+          (Arithmetic.mul_nonneg_direct
             left.centerBound_nonneg right.errorScale_nonneg))) index
   later_close := by
     intro earlier later order
@@ -189,11 +191,11 @@ two original bounds. -/
         Basic.Canonical.normSq (leftLater - leftEarlier) * Basic.Canonical.normSq rightLater <=
             Geometric.Basic.quarterRadius left.errorScale earlier *
               Basic.Canonical.normSq rightLater :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          Arithmetic.mul_le_mul_of_nonneg_right_direct
             (left.later_close order) (Basic.Canonical.normSq_nonneg rightLater)
         _ <= Geometric.Basic.quarterRadius left.errorScale earlier *
               right.centerBound :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          Arithmetic.mul_le_mul_of_nonneg_left_direct
             (right.sample_bounded later)
             (Geometric.Basic.quarterRadius_nonneg
               left.errorScale_nonneg earlier)
@@ -205,16 +207,16 @@ two original bounds. -/
         Basic.Canonical.normSq leftEarlier * Basic.Canonical.normSq (rightLater - rightEarlier) <=
             Basic.Canonical.normSq leftEarlier *
               Geometric.Basic.quarterRadius right.errorScale earlier :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          Arithmetic.mul_le_mul_of_nonneg_left_direct
             (right.later_close order) (Basic.Canonical.normSq_nonneg leftEarlier)
         _ <= left.centerBound *
               Geometric.Basic.quarterRadius right.errorScale earlier :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          Arithmetic.mul_le_mul_of_nonneg_right_direct
             (left.sample_bounded earlier)
             (Geometric.Basic.quarterRadius_nonneg
               right.errorScale_nonneg earlier)
-    rw [Gaussian.Basic.RefinementProgram.productSamplePath_integralSample,
-      Gaussian.Basic.RefinementProgram.productSamplePath_integralSample,
+    rw [productSamplePath_integralSample,
+      productSamplePath_integralSample,
       productIdentity]
     calc
       Basic.Canonical.normSq ((leftLater - leftEarlier) * rightLater +
@@ -234,7 +236,7 @@ two original bounds. -/
                 right.centerBound +
               left.centerBound *
                 Geometric.Basic.quarterRadius right.errorScale earlier) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add firstBound secondBound) (by decide)
       _ = Geometric.Basic.quarterRadius
             (2 *
@@ -246,12 +248,12 @@ two original bounds. -/
         ring1
   centerBound := left.centerBound * right.centerBound
   centerBound_nonneg :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct left.centerBound_nonneg
+    Arithmetic.mul_nonneg_direct left.centerBound_nonneg
       right.centerBound_nonneg
   sample_bounded := by
     intro index
-    rw [Gaussian.Basic.RefinementProgram.productSamplePath_integralSample, Basic.Canonical.normSq_mul]
-    exact Fraction.Order.Arithmetic.mul_le_mul_direct
+    rw [productSamplePath_integralSample, Basic.Canonical.normSq_mul]
+    exact Arithmetic.mul_le_mul_direct
       (left.sample_bounded index) (right.sample_bounded index)
       (Basic.Canonical.normSq_nonneg (right.model index).integralSample)
       left.centerBound_nonneg
@@ -259,12 +261,12 @@ two original bounds. -/
 open Purelib.Integration.Program in
 /-- Every product-program sample equals the product of the two exact original stage samples. -/
 @[simp] theorem multiply_integralSample (left right
-  : Gaussian.Basic.RefinementProgram)
+  : RefinementProgram)
     (index : Nat) :
     ((multiply left right).model index).integralSample =
       (left.model index).integralSample *
         (right.model index).integralSample :=
-  Gaussian.Basic.RefinementProgram.productSamplePath_integralSample _ _
+  productSamplePath_integralSample _ _
 end RefinementProgram
 
 end Purelib.Integration.Program.Gaussian.Basic

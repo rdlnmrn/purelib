@@ -18,6 +18,8 @@ import Purelib.Geometry.Trigonometry.QuadTriple.Basic
 import Purelib.Data.Rat.Fraction.Compatibility
 import Purelib.Tactic.Ring
 
+open Purelib.Geometry.Plane.Line
+
 section
 @[expose] public section
 
@@ -42,16 +44,16 @@ open Purelib.Algebra.Field.Finite
 open Purelib.Geometry.Plane.Line
 /-- The displayed line with coefficients (1, 0, 0) modulo eleven. -/
 def line₁ :
-  Purelib.Geometry.Plane.Line Eleven.Element := ⟨1, 0, 0, Or.inl (by decide)⟩
+  Plane.Line Eleven.Element := ⟨1, 0, 0, Or.inl (by decide)⟩
 /-- The displayed line with coefficients (1, 1, 0) modulo eleven. -/
 def line₂ :
-  Purelib.Geometry.Plane.Line Eleven.Element := ⟨1, 1, 0, Or.inl (by decide)⟩
+  Plane.Line Eleven.Element := ⟨1, 1, 0, Or.inl (by decide)⟩
 /-- The displayed line with coefficients (0, 1, 0) modulo eleven. -/
 def line₃ :
-  Purelib.Geometry.Plane.Line Eleven.Element := ⟨0, 1, 0, Or.inr (by decide)⟩
+  Plane.Line Eleven.Element := ⟨0, 1, 0, Or.inr (by decide)⟩
 /-- The displayed line with coefficients (1, 2, 0) modulo eleven. -/
 def line₄ :
-  Purelib.Geometry.Plane.Line Eleven.Element := ⟨1, 2, 0, Or.inl (by decide)⟩
+  Plane.Line Eleven.Element := ⟨1, 2, 0, Or.inl (by decide)⟩
 
 end
 
@@ -63,28 +65,28 @@ open formalisations.DivineProportions.Chapters.Examples.ChapterSeven.ExerciseSev
 theorem
   line₁_nonNull
   : ¬ line₁.IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull line₁
+  unfold IsNull line₁
   decide
 
 /-- The displayed line ₂ has nonzero direction quadrance modulo eleven. -/
 theorem
   line₂_nonNull
   : ¬ line₂.IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull line₂
+  unfold IsNull line₂
   decide
 
 /-- The displayed line ₃ has nonzero direction quadrance modulo eleven. -/
 theorem
   line₃_nonNull
   : ¬ line₃.IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull line₃
+  unfold IsNull line₃
   decide
 
 /-- The displayed line ₄ has nonzero direction quadrance modulo eleven. -/
 theorem
   line₄_nonNull
   : ¬ line₄.IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull line₄
+  unfold IsNull line₄
   decide
 
 end
@@ -195,7 +197,7 @@ theorem line_incidence :
     line₁.Contains point₂ ∧ line₁.Contains point₃ ∧
       line₂.Contains point₁ ∧ line₂.Contains point₃ ∧
       line₃.Contains point₁ ∧ line₃.Contains point₂ := by
-  unfold Purelib.Geometry.Plane.Line.Contains line₁ line₂ line₃ point₁ point₂ point₃
+  unfold Contains line₁ line₂ line₃ point₁ point₂ point₃
   exact ⟨by ring1, by ring1, by ring1, by ring1, by ring1, by ring1⟩
 
 open Purelib.Geometry.Plane.Point in
@@ -219,17 +221,17 @@ section
 open Purelib.Geometry.Plane.Line.Basic
 /-- The side line ₁ has nonzero direction quadrance over the rationals. -/
 theorem line₁_nonNull : ¬ line₁.IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull line₁
+  unfold IsNull line₁
   decide
 
 /-- The side line ₂ has nonzero direction quadrance over the rationals. -/
 theorem line₂_nonNull : ¬ line₂.IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull line₂
+  unfold IsNull line₂
   decide
 
 /-- The side line ₃ has nonzero direction quadrance over the rationals. -/
 theorem line₃_nonNull : ¬ line₃.IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull line₃
+  unfold IsNull line₃
   decide
 
 end
@@ -365,17 +367,17 @@ section
 open Purelib.Geometry.Plane.Line.Basic
 /-- The side line ₁ has nonzero direction quadrance modulo eleven. -/
 theorem line₁_nonNull : ¬ line₁.IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull line₁
+  unfold IsNull line₁
   decide
 
 /-- The side line ₂ has nonzero direction quadrance modulo eleven. -/
 theorem line₂_nonNull : ¬ line₂.IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull line₂
+  unfold IsNull line₂
   decide
 
 /-- The side line ₃ has nonzero direction quadrance modulo eleven. -/
 theorem line₃_nonNull : ¬ line₃.IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull line₃
+  unfold IsNull line₃
   decide
 
 /-- Each displayed side line contains both of its designated triangle vertices. -/
@@ -383,7 +385,7 @@ theorem line_incidence :
     line₁.Contains point₂ ∧ line₁.Contains point₃ ∧
       line₂.Contains point₁ ∧ line₂.Contains point₃ ∧
       line₃.Contains point₁ ∧ line₃.Contains point₂ := by
-  unfold Purelib.Geometry.Plane.Line.Contains line₁ line₂ line₃ point₁ point₂ point₃
+  unfold Contains line₁ line₂ line₃ point₁ point₂ point₃
   exact ⟨by decide, by decide, by decide, by decide, by decide, by decide⟩
 
 end

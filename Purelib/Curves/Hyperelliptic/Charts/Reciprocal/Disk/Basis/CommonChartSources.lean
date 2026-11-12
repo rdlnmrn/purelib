@@ -100,70 +100,70 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.EndpointSchedule 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEndpointReadings.Point (ReadingView)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy (RegularBasisPolynomials)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {model :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell}
-  {parameter target sourceTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor sourceFloor :
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : ParameterEdge} {cell :
+    Cell data edge}
+  {regular : RegularBounds.Data cap} {model :
+    RootModel cell}
+  {parameter target sourceTarget : Coordinate} {floor sourceFloor :
     Nat}
-  {covers : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
+  {covers : BasisSourceCovers parent}
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations
   (PrimitiveBank)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
 
-variable {cover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data}
+variable {cover : Cover data}
 
 namespace EndpointSources
 
 /-- Keep the common interval's source cells at boundary vertices as well as internal vertices, instead of performing
 another pointwise cover lookup. -/
-def onInterval (prepared : VertexRequests.Prepared regular model parameter target floor)
-    (interval : CommonCover.BasisCommonInterval cover covers)
+def onInterval (prepared : Prepared regular model parameter target floor)
+    (interval : BasisCommonInterval cover covers)
     (inside : interval.edge.left.parameter ≤ parameter ∧ parameter ≤ interval.edge.right.parameter)
-    (sourceTarget : InverseRootPolynomial.Coordinate) (positive : 0 < sourceTarget) (sourceFloor : Nat) :
-    EndpointSchedule.EndpointSources prepared covers sourceTarget sourceFloor :=
+    (sourceTarget : Coordinate) (positive : 0 < sourceTarget) (sourceFloor : Nat) :
+    EndpointSources prepared covers sourceTarget sourceFloor :=
   let locations := interval.locations regular prepared.point inside
   ⟨locations, BasisSourceRequest.build locations.owners sourceTarget positive sourceFloor⟩
 
-variable {prepared : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexRequests.Prepared regular model parameter
+variable {prepared : Prepared regular model parameter
   target floor}
-  {interval : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers}
+  {interval : BasisCommonInterval cover covers}
   {inside : interval.edge.left.parameter ≤ parameter ∧ parameter ≤ interval.edge.right.parameter}
   {positive : 0 < sourceTarget}
-  {index stage minimum : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {polynomials : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+  {index stage minimum : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {polynomials : RegularBasisPolynomials cap
     index box}
-  {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample comparison capSample}
-  {charts : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRequests.BasisSourceRequest.ChartRequest
-    (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSources.EndpointSources.onInterval prepared
+  {comparison : ArcSamples.Data regular cell}
+  {sample : ArcSamples.Sample comparison capSample}
+  {charts : BasisSourceRequest.ChartRequest
+    (onInterval prepared
       interval inside sourceTarget positive sourceFloor).request polynomials minimum}
-  {bank : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank
+  {bank : BasisSourceLocations.SampleBank
     covers index}
-  {reading : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexRequests.Reading regular model sample parameter
+  {reading : Reading regular model sample parameter
     target floor stage}
 
 /-- The chart endpoint certificate reads precisely the polynomial used by the common interval's pullback path. -/
 theorem onInterval_value
     (evaluated : EndpointSources.Evaluation
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSources.EndpointSources.onInterval prepared interval
+      (onInterval prepared interval
       inside sourceTarget positive sourceFloor) charts bank reading)
-    (originals : BasisSourceLocations.PrimitiveBank covers index)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    FiniteSum.Fin.sumFin (fun row => coefficients row * evaluated.evaluated.sources row) =
+    (originals : PrimitiveBank covers index)
+    (coefficients : GaussianVector genus) :
+    sumFin (fun row => coefficients row * evaluated.evaluated.sources row) =
       (BasisCommonInterval.primitiveSample interval regular polynomials originals bank).pullbackValue coefficients
         parameter := by
   unfold BasisCommonInterval.PrimitiveSample.pullbackValue
-  apply FiniteSum.Fin.sumFin_congr
+  apply sumFin_congr
   intro row
   apply congrArg (fun value => coefficients row * value)
   rw [evaluated.evaluated.sources_eq row, evaluated.samples_eq]
@@ -194,16 +194,16 @@ theorem onInterval_value
 comparison bound. -/
 theorem onInterval_accurate
     (evaluated : EndpointSources.Evaluation
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSources.EndpointSources.onInterval prepared interval
+      (onInterval prepared interval
       inside sourceTarget positive sourceFloor) charts bank reading)
-    (originals : BasisSourceLocations.PrimitiveBank covers index)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
+    (originals : PrimitiveBank covers index)
+    (coefficients : GaussianVector genus) :
     Data.Gaussian.Norm.Basic.normSq
       ((BasisCommonInterval.primitiveSample interval regular polynomials originals bank).pullbackValue coefficients
         parameter -
         polynomials.value coefficients reading.root.coordinate) ≤
       10 * sourceTarget * PreparedObservationCoercivity.coefficientNormSq coefficients := by
-  rw [← Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSources.EndpointSources.onInterval_value evaluated
+  rw [← onInterval_value evaluated
     originals coefficients]
   exact evaluated.evaluated.accurate coefficients
 

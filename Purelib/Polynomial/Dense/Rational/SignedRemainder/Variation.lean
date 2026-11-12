@@ -9,6 +9,7 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Division.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Polynomial.Dense.Rational.Basic
+import Purelib.Polynomial.Dense.Rational.Evaluation
 public import Purelib.Polynomial.Dense.Rational.Pair.NoCommonZero
 public import Purelib.Polynomial.Dense.Rational.SignedRemainder.Basic
 import Purelib.Polynomial.Dense.Rational.SignedRemainder.Evaluation
@@ -37,13 +38,34 @@ open Purelib.Polynomial.Dense.Rational.Basic renaming CoordinatePolynomial -> De
 open Purelib.Polynomial.Dense.Rational
 open _root_.Purelib.Polynomial.Dense.Rational.Pair (NoCommonZero)
 
+/-- Read doubled endpoint variation from each original polynomial's cleared integer numerator.
+
+Each coefficient table is prepared once for this endpoint. Its homogeneous
+numerator supplies the exact sign through a denominator-one rational, without
+normalizing the full rational polynomial value. Chain order and zero entries
+remain unchanged.
+-/
+public def Sturm.variation2 (chain : List Dense) (point : Fraction.Rational) : Nat :=
+  Sign.Variation.variation2 (chain.map fun polynomial =>
+    Fraction.Cast.fromInt ((Evaluation.prepare polynomial.coeffs).numerator point))
+
 /-- Measure doubled sign variation of a polynomial chain at one endpoint.
 
 The displayed list retains its polynomial order. Evaluating each retained
 polynomial at the same rational coordinate gives the finite list whose adjacent
 integer-sign distances determine the natural variation reading. -/
-@[expose] public def Sturm.endpointVariation2 (chain : List Dense) (x : Fraction.Rational) : Nat :=
+@[expose, implemented_by Sturm.variation2] public def Sturm.endpointVariation2
+    (chain : List Dense) (x : Fraction.Rational) : Nat :=
   Sign.Variation.variation2 (chain.map fun p => p.eval x)
+
+/-- Integer-numerator variation equals the complete original rational endpoint variation for every chain and point. -/
+public theorem Sturm.variation2_eq (chain : List Dense) (point : Fraction.Rational) :
+    Sturm.variation2 chain point = Sturm.endpointVariation2 chain point := by
+  apply Sign.Variation.variation2_congr_of_forall₂_sign
+  induction chain with
+  | nil => exact .nil
+  | cons polynomial remaining inductionHypothesis =>
+      exact .cons ((Evaluation.prepare polynomial.coeffs).numerator_sign_eq point) inductionHypothesis
 
 /-- A chain whose second polynomial is represented zero has zero endpoint variation.
 
@@ -51,10 +73,10 @@ The original zero test selects the singleton containing the first polynomial.
 Its single retained evaluation has no adjacent sign change at any endpoint. -/
 private theorem endpointVariation2_of_second_zero
     (p q : Dense) (qZero : q.isZero = true) (x : Fraction.Rational) :
-    Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain p q) x = 0 := by
+    Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain p q) x = 0 := by
   unfold Sturm.endpointVariation2
-  rewrite [SignedRemainder.Basic.Sturm.signedRemainderChain,
-    SignedRemainder.Basic.Sturm.signedRemainderChainWF_eq, if_pos qZero]
+  rewrite [Basic.Sturm.signedRemainderChain,
+    Basic.Sturm.signedRemainderChainWF_eq, if_pos qZero]
   exact Eq.refl _
 
 /-- An exposed signed division step contributes its first jump and its tail variation.
@@ -64,14 +86,14 @@ the zero-remainder terminal case. The original next chain begins with that secon
 polynomial, so its first evaluation supplies the adjacent sign jump. -/
 public theorem endpointVariation2_signedRemainderChain_step
     (p q : Dense) (qNonzero : q.isZero = false) (x : Fraction.Rational) :
-    Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain p q) x =
+    Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain p q) x =
       Sign.Jump.signJump (p.eval x) (q.eval x) +
         Sturm.endpointVariation2
-          (SignedRemainder.Basic.Sturm.signedRemainderChain q (-((DensePolynomial.divMod p q).remainder))) x := by
+          (Basic.Sturm.signedRemainderChain q (-((DensePolynomial.divMod p q).remainder))) x := by
   rw [Sturm.endpointVariation2,
-    SignedRemainder.Basic.signedRemainderChain_step_of_second_nonzero p q qNonzero]
+    Basic.signedRemainderChain_step_of_second_nonzero p q qNonzero]
   obtain ⟨tail, chain⟩ :=
-    SignedRemainder.Basic.signedRemainderChain_eq_cons q (-((DensePolynomial.divMod p q).remainder))
+    Basic.signedRemainderChain_eq_cons q (-((DensePolynomial.divMod p q).remainder))
   rw [chain]
   rfl
 
@@ -82,8 +104,8 @@ Induction on the second polynomial's coefficient count compares the same finite
 zero branch or transports the recursive tail equality through the initial jump. -/
 public theorem endpointVariation2_signedRemainderChain_normalize
     (p q : Dense) (x : Fraction.Rational) :
-    Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain p.normalize q.normalize) x =
-      Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain p q) x := by
+    Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain p.normalize q.normalize) x =
+      Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain p q) x := by
   generalize degreeEquation : q.degreeCount = degree
   induction degree using Nat.strong_induction_on generalizing p q with
   | h degree inductionHypothesis =>
@@ -125,8 +147,8 @@ The exact division-remainder negation equation supplies the retained next pair;
 its coefficient-count descent permits the same finite induction. -/
 public theorem endpointVariation2_signedRemainderChain_neg
     (p q : Dense) (x : Fraction.Rational) :
-    Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain (-p) (-q)) x =
-      Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain p q) x := by
+    Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain (-p) (-q)) x =
+      Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain p q) x := by
   generalize degreeEquation : q.degreeCount = degree
   induction degree using Nat.strong_induction_on generalizing p q with
   | h degree inductionHypothesis =>
@@ -159,10 +181,10 @@ public theorem endpointVariation2_neg_second_sum_eq
     {p q : Dense} {a b : Fraction.Rational}
     (pairAtA : p.eval a ≠ 0 ∨ q.eval a ≠ 0)
     (pairAtB : p.eval b ≠ 0 ∨ q.eval b ≠ 0) :
-    Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain p q) a +
-        Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain p (-q)) a =
-      Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain p q) b +
-        Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain p (-q)) b := by
+    Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain p q) a +
+        Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain p (-q)) a =
+      Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain p q) b +
+        Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain p (-q)) b := by
   generalize degreeEquation : q.degreeCount = degree
   induction degree using Nat.strong_induction_on generalizing p q with
   | h degree inductionHypothesis =>
@@ -182,7 +204,7 @@ public theorem endpointVariation2_neg_second_sum_eq
           by_cases qZeroAtX : q.eval x = 0
           · right
             intro remainderZeroAtX
-            have step := SignedRemainder.Evaluation.signedStep_eval_identity p q x
+            have step := Evaluation.signedStep_eval_identity p q x
             have pZeroAtX : p.eval x = 0 := by
               rw [qZeroAtX] at step
               change p.eval x = 0 * (DensePolynomial.divMod p q).quotient.eval x -
@@ -225,35 +247,35 @@ public theorem endpointVariation2_neg_second_sum_eq
         calc
           Sign.Jump.signJump (p.eval a) (q.eval a) +
                 Sturm.endpointVariation2
-                  (SignedRemainder.Basic.Sturm.signedRemainderChain q (-remainder)) a +
+                  (Basic.Sturm.signedRemainderChain q (-remainder)) a +
               (Sign.Jump.signJump (p.eval a) (-q.eval a) +
                 Sturm.endpointVariation2
-                  (SignedRemainder.Basic.Sturm.signedRemainderChain q remainder) a) =
+                  (Basic.Sturm.signedRemainderChain q remainder) a) =
               (Sign.Jump.signJump (p.eval a) (q.eval a) +
                 Sign.Jump.signJump (p.eval a) (-q.eval a)) +
                 (Sturm.endpointVariation2
-                    (SignedRemainder.Basic.Sturm.signedRemainderChain q (-remainder)) a +
+                    (Basic.Sturm.signedRemainderChain q (-remainder)) a +
                   Sturm.endpointVariation2
-                    (SignedRemainder.Basic.Sturm.signedRemainderChain q remainder) a) := by ring1
+                    (Basic.Sturm.signedRemainderChain q remainder) a) := by ring1
           _ = 2 +
                 (Sturm.endpointVariation2
-                    (SignedRemainder.Basic.Sturm.signedRemainderChain q (-remainder)) b +
+                    (Basic.Sturm.signedRemainderChain q (-remainder)) b +
                   Sturm.endpointVariation2
-                    (SignedRemainder.Basic.Sturm.signedRemainderChain q remainder) b) := by
+                    (Basic.Sturm.signedRemainderChain q remainder) b) := by
               rw [atA, recursive]
           _ = (Sign.Jump.signJump (p.eval b) (q.eval b) +
                 Sign.Jump.signJump (p.eval b) (-q.eval b)) +
                 (Sturm.endpointVariation2
-                    (SignedRemainder.Basic.Sturm.signedRemainderChain q (-remainder)) b +
+                    (Basic.Sturm.signedRemainderChain q (-remainder)) b +
                   Sturm.endpointVariation2
-                    (SignedRemainder.Basic.Sturm.signedRemainderChain q remainder) b) := by
+                    (Basic.Sturm.signedRemainderChain q remainder) b) := by
               rw [atB]
           _ = Sign.Jump.signJump (p.eval b) (q.eval b) +
                 Sturm.endpointVariation2
-                  (SignedRemainder.Basic.Sturm.signedRemainderChain q (-remainder)) b +
+                  (Basic.Sturm.signedRemainderChain q (-remainder)) b +
               (Sign.Jump.signJump (p.eval b) (-q.eval b) +
                 Sturm.endpointVariation2
-                  (SignedRemainder.Basic.Sturm.signedRemainderChain q remainder) b) := by ring1
+                  (Basic.Sturm.signedRemainderChain q remainder) b) := by ring1
 
 /-- Endpoint variation differs evenly from the first-coordinate zero flag.
 
@@ -263,10 +285,10 @@ the two explicit parity witnesses add to the displayed integer difference. -/
 public theorem endpointVariation2_sub_firstZeroFlag_even
     {p q : Dense} (hq : q.isZero = false)
     (coprime : NoCommonZero p q) (x : Fraction.Rational) :
-    Even (((Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain p q) x : Nat) : Int) -
+    Even (((Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain p q) x : Nat) : Int) -
       (if p.eval x = 0 then 1 else 0)) := by
-  obtain ⟨tail, chain⟩ := SignedRemainder.Basic.signedRemainderChain_eq_cons p q
-  have terminal := SignedRemainder.Signs.terminalValue_signedRemainderChain_eval_ne_zero
+  obtain ⟨tail, chain⟩ := Basic.signedRemainderChain_eq_cons p q
+  have terminal := Signs.terminalValue_signedRemainderChain_eval_ne_zero
     hq coprime x chain
   have variation := Sign.Variation.variation2_sub_signDifference_even
     (p.eval x) (tail.map fun r => r.eval x)

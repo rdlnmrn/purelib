@@ -38,10 +38,10 @@ open Purelib.Integration.Polynomial.Gaussian.Path.Basic (PathModel)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {ambient : Purelib.Geometry.Rational.Box} {current : Purelib.RootIsolation.State.Raw.RawWindingState
+  {ambient : Geometry.Rational.Box} {current : RootIsolation.State.Raw.RawWindingState
     curve.polynomial ambient}
   {profile : Profile curve.squarefree current.box} {fixed : DifferentialProfile profile differential.exponent}
-  {target : Purelib.Data.Rat.Fraction.Rational}
+  {target : Data.Rat.Fraction.Rational}
 
 open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
 
@@ -67,7 +67,7 @@ open Purelib.Riemann.RootContinuation
 The exact shared dyadic depth and parent movement give four times the square of their density sum times movement. -/
 theorem paired_area_density_bound (paired : PairedBoundaryParent request parent other)
     (otherProfile : DifferentialProfile profile other.exponent) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area
+    normSq (PairedIncrementArea.area
       (PreparedNewtonPairedIncrements.PairedBoundaryParent.increments
       paired)) ≤
       4 * ((PreparedNewtonBandSamples.Sample.preparedDensity request.sample fixed request.error +
@@ -86,13 +86,13 @@ theorem paired_area_density_bound (paired : PairedBoundaryParent request parent 
 /-- The original zero-anchored paired trace satisfies the same retained density-area bound. -/
 theorem paired_trace_density_bound (paired : PairedBoundaryParent request parent other)
     (otherProfile : DifferentialProfile profile other.exponent) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.traceArea PrimitivePoint.zero
+    normSq (PairedIncrementArea.traceArea PrimitivePoint.zero
       (PreparedNewtonPairedIncrements.PairedBoundaryParent.increments paired)) ≤
       4 * ((PreparedNewtonBandSamples.Sample.preparedDensity request.sample fixed request.error +
         PreparedNewtonBandSamples.Sample.preparedDensity request.sample otherProfile request.error) *
         movement parent)^2 := by
   rw [← PairedIncrementArea.area_eq_trace]
-  exact PreparedNewtonPairedArea.PairedBoundaryParent.paired_area_density_bound paired otherProfile
+  exact paired_area_density_bound paired otherProfile
 
 end
 
@@ -109,18 +109,18 @@ open Purelib.Riemann.RootContinuation in
 /-- The cached original area value satisfies the retained paired density bound. -/
 theorem areaSample_bound (paired : PairedBoundaryParent request parent other)
     (otherProfile : DifferentialProfile profile other.exponent) :
-    Data.Gaussian.Norm.Basic.normSq (areaSample paired).areaValue ≤
+    normSq (areaSample paired).areaValue ≤
       4 * ((PreparedNewtonBandSamples.Sample.preparedDensity request.sample fixed request.error +
         PreparedNewtonBandSamples.Sample.preparedDensity request.sample otherProfile request.error) *
         movement parent)^2 := by
   calc
-    Data.Gaussian.Norm.Basic.normSq (areaSample paired).areaValue = Data.Gaussian.Norm.Basic.normSq
+    normSq (areaSample paired).areaValue = normSq
       (PairedIncrementArea.area
       (PreparedNewtonPairedIncrements.PairedBoundaryParent.increments paired)) :=
-      congrArg Data.Gaussian.Norm.Basic.normSq (areaSample paired).area_eq
+      congrArg normSq (areaSample paired).area_eq
     _ ≤ 4 * ((PreparedNewtonBandSamples.Sample.preparedDensity request.sample fixed request.error +
       PreparedNewtonBandSamples.Sample.preparedDensity request.sample otherProfile request.error) *
-      movement parent)^2 := PreparedNewtonPairedArea.PairedBoundaryParent.paired_area_density_bound paired otherProfile
+      movement parent)^2 := paired_area_density_bound paired otherProfile
 
 end PairedBoundaryParent
 end Purelib.Riemann.RootContinuation.PreparedNewtonPairedArea

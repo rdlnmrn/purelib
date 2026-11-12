@@ -50,6 +50,8 @@ import Purelib.Riemann.Integration.PreparedModelAccuracy
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! A positive request pays the full local primitive-versus-Newton area. -/
@@ -71,10 +73,10 @@ open Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility (PreparedPatch)
 open Purelib.Topology.Polygon.Stokes (PrimitivePoint)
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential other :
   Differential genus}
-  {ambient : Purelib.Geometry.Rational.Box} {current : Purelib.RootIsolation.State.Raw.RawWindingState
+  {ambient : Geometry.Rational.Box} {current : RootIsolation.State.Raw.RawWindingState
     curve.polynomial ambient}
   {profile : Profile curve.squarefree current.box} {fixed : DifferentialProfile profile differential.exponent}
-  {target : Purelib.Data.Rat.Fraction.Rational} {request : PreparedBandRequest fixed target} {parent : CenteredEdge
+  {target : Fraction.Rational} {request : PreparedBandRequest fixed target} {parent : CenteredEdge
     curve differential}
 
 open Purelib.Curves.Hyperelliptic in
@@ -88,12 +90,12 @@ open Purelib.Riemann.RootContinuation in
 The dependent tuple retains its exact paired refinement, common model index and distinct primitive comparisons with
 three separate paid inequalities. -/
 @[expose] def RequestedPrimitiveParent (request : PreparedBandRequest fixed target)
-    (parent : CenteredEdge curve differential) (other : Differentials.Basic.Differential genus) (count : Nat)
+    (parent : CenteredEdge curve differential) (other : Differential genus) (count : Nat)
       (areaTarget : Fraction.Rational) :=
   (paired : PairedBoundaryParent request parent other) × (index : Nat) ×
   (first : PrimitiveComparison paired.refinement.first count index) ×
     { second : PrimitiveComparison paired.refinement.second count index //
-      Data.Gaussian.Norm.Basic.normSq (CenteredBilinearPath.area
+      normSq (CenteredBilinearPath.area
           (fun vertex : Fin ((PreparedNewtonPairedIncrements.PairedBoundaryParent.increments paired).length + 1) =>
             paired.primitiveVertex first second vertex.val) -
         PairedIncrementArea.traceArea PrimitivePoint.zero
@@ -111,7 +113,7 @@ open Purelib.Riemann.RootContinuation in
 The retained density and parent movement define an area-plus-endpoint weight; a positive unit-capped allowance selects
 the shared primitive request and keeps the original patch, boundary and properness witnesses. -/
 @[expose] def RequestedPrimitiveParent.build (request : PreparedBandRequest fixed target)
-    (parent : CenteredEdge curve differential) (other : Differentials.Basic.Differential genus)
+    (parent : CenteredEdge curve differential) (other : Differential genus)
     (otherProfile : DifferentialProfile profile other.exponent)
     (boundary : PreparedBoundarySegments.ParentOnBoundary parent request.sample.output.box)
     (patch : PreparedPatch parent) (count : Nat)
@@ -126,28 +128,28 @@ the shared primitive request and keeps the original patch, boundary and properne
     (PreparedNewtonBandSamples.Sample.preparedDensity_nonnegative request.sample fixed request.errorPositive.le)
     (PreparedNewtonBandSamples.Sample.preparedDensity_nonnegative request.sample otherProfile request.errorPositive.le)
   have movementSquaredNonnegative : 0 ≤ movement^2 :=
-    Fraction.Order.Arithmetic.pow_nonneg_direct (PreparedPrimitiveRequests.movement_nonnegative parent) 2
+    Arithmetic.pow_nonneg_direct (PreparedPrimitiveRequests.movement_nonnegative parent) 2
   let areaWeight := 32 * (density + 1) * movement^2
-  have areaWeightNonnegative : 0 ≤ areaWeight := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) (add_nonneg densityNonnegative (by decide)))
+  have areaWeightNonnegative : 0 ≤ areaWeight := Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide +kernel) (add_nonneg densityNonnegative (by decide)))
       movementSquaredNonnegative
   let weight := areaWeight + movement
   have movementNonnegative : 0 ≤ movement := PreparedPrimitiveRequests.movement_nonnegative parent
   have weightNonnegative : 0 ≤ weight := add_nonneg areaWeightNonnegative movementNonnegative
   let allowance := min (1 : Fraction.Rational) (Budget.Weighted.allowance areaTarget weight)
-  have allowancePositive : 0 < allowance := Fraction.Order.Basic.lt_min (by decide)
+  have allowancePositive : 0 < allowance := Basic.lt_min (by decide)
     (Budget.Weighted.allowance_positive positive weightNonnegative)
-  have allowanceSmall : allowance ≤ 1 := Fraction.Order.Basic.min_le_left _ _
+  have allowanceSmall : allowance ≤ 1 := Basic.min_le_left _ _
   have allowancePaid : weight * allowance ≤ areaTarget :=
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Basic.min_le_right _ _)
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Basic.min_le_right _ _)
       weightNonnegative).trans
       (Budget.Weighted.mul_allowance_le positive.le weightNonnegative)
   have areaAllowancePaid : areaWeight * allowance ≤ areaTarget :=
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct
       (le_add_of_nonneg_right movementNonnegative) allowancePositive.le).trans allowancePaid
   have endpointAllowancePaid : allowance * movement ≤ areaTarget := by
     rw [Fraction.Field.mul_comm]
-    exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact (Arithmetic.mul_le_mul_of_nonneg_right_direct
       (le_add_of_nonneg_left areaWeightNonnegative) allowancePositive.le).trans allowancePaid
   let selected := PreparedPairedPrimitiveRequests.PaidPrimitivePair.build parent other patch count finishInside proper
     request.error allowance request.errorPositive allowancePositive
@@ -155,31 +157,31 @@ the shared primitive request and keeps the original patch, boundary and properne
   let first := selected.2.2.1
   let second := selected.2.2.2.val
   let error := max (0 : Fraction.Rational) (max first.errorDensity second.errorDensity)
-  have errorNonnegative : 0 ≤ error := Fraction.Order.Basic.le_max_left _ _
-  have errorLe : error ≤ allowance := Fraction.Order.Basic.max_le allowancePositive.le
-    (Fraction.Order.Basic.max_le selected.2.2.2.property.1 selected.2.2.2.property.2)
+  have errorNonnegative : 0 ≤ error := Basic.le_max_left _ _
+  have errorLe : error ≤ allowance := Basic.max_le allowancePositive.le
+    (Basic.max_le selected.2.2.2.property.1 selected.2.2.2.property.2)
   have estimate := paired.primitive_vertex_area_error_le otherProfile first second
   have factorLe : 2 * (density + error) ≤ 2 * (density + 1) :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add (le_refl density) (errorLe.trans
+    Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add (le_refl density) (errorLe.trans
       allowanceSmall)) (by decide)
   have productLe : 16 * error * (2 * (density + error)) ≤ 16 * allowance * (2 * (density + 1)) :=
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct factorLe
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) errorNonnegative)).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct errorLe (by decide +kernel))
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg densityNonnegative (by decide))))
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct factorLe
+      (Arithmetic.mul_nonneg_direct (by decide +kernel) errorNonnegative)).trans
+      (Arithmetic.mul_le_mul_of_nonneg_right_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct errorLe (by decide +kernel))
+        (Arithmetic.mul_nonneg_direct (by decide) (add_nonneg densityNonnegative (by decide))))
   have paid : 16 * error * (2 * (density + error)) * movement^2 ≤ areaTarget :=
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct productLe movementSquaredNonnegative).trans
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct productLe movementSquaredNonnegative).trans
       ((show 16 * allowance * (2 * (density + 1)) * movement^2 = areaWeight * allowance by
           dsimp only [areaWeight, -eq_self, -iff_self];
           ring1).le.trans areaAllowancePaid)
   have firstEndpoint : first.2.2.bound ≤ areaTarget := by
     rw [first.bound_eq_density]
-    exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct selected.2.2.2.property.1
+    exact (Arithmetic.mul_le_mul_of_nonneg_right_direct selected.2.2.2.property.1
       movementNonnegative).trans endpointAllowancePaid
   have secondEndpoint : second.2.2.bound ≤ areaTarget := by
     rw [second.bound_eq_density]
-    exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct selected.2.2.2.property.2
+    exact (Arithmetic.mul_le_mul_of_nonneg_right_direct selected.2.2.2.property.2
       movementNonnegative).trans endpointAllowancePaid
   exact ⟨paired, selected.2.1, first, second, estimate.trans paid, firstEndpoint, secondEndpoint⟩
 

@@ -14,6 +14,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Multiplication
 
+open Purelib.Data.Rat.Fraction
+
 open Purelib
 
 open Purelib.Curves.Legendre
@@ -50,13 +52,13 @@ namespace Purelib.Curves.Legendre.Polynomial.Clearance
 /-- Multiply the retained zero, moving and one affine-factor clearances on the same original box. -/
 @[expose] def factorsClearance {lambda :
   Data.Gaussian.Basic.Canonical} {box : Rational.Box}
-    (zero : Boundary.Basic.BoundaryClearance
+    (zero : BoundaryClearance
       (translatedCoordinate 0) box)
-    (moving : Boundary.Basic.BoundaryClearance
+    (moving : BoundaryClearance
       (translatedCoordinate lambda) box)
-    (one : Boundary.Basic.BoundaryClearance
+    (one : BoundaryClearance
       (translatedCoordinate 1) box) :
-    Boundary.Basic.BoundaryClearance (Polynomial.factorsAt lambda) box :=
+    BoundaryClearance (factorsAt lambda) box :=
   BoundaryClearance.mul
     (BoundaryClearance.mul zero moving) one
 end Purelib.Curves.Legendre.Polynomial.Clearance
@@ -82,7 +84,7 @@ namespace Purelib.Curves.Legendre.Polynomial.Clearance
 @[expose] def lowerSampleZeroClearance (lambda :
   Data.Gaussian.Basic.Canonical)
     (movingLeft : lambda.re < (Centered.sampleBox 0).xLower) :
-    Boundary.Basic.BoundaryClearance (Polynomial.factorsAt lambda) (Centered.sampleBox 0) :=
+    BoundaryClearance (factorsAt lambda) (Centered.sampleBox 0) :=
   factorsClearance
     (ExplicitLegendreSegment.centeredClearance 0 (by decide) (by decide) (by decide) (by decide))
     (ExplicitLegendreSegment.leftClearance lambda movingLeft)
@@ -94,44 +96,44 @@ right. -/
   Data.Gaussian.Basic.Canonical)
     (zeroRight : (Centered.sampleBox lambda).xUpper < (0 : Data.Gaussian.Basic.Canonical).re)
     (oneRight : (Centered.sampleBox lambda).xUpper < (1 : Data.Gaussian.Basic.Canonical).re) :
-    Boundary.Basic.BoundaryClearance (Polynomial.factorsAt lambda) (Centered.sampleBox lambda) :=
+    BoundaryClearance (factorsAt lambda) (Centered.sampleBox lambda) :=
   factorsClearance
     (ExplicitLegendreSegment.rightClearance 0 zeroRight)
     (ExplicitLegendreSegment.centeredClearance lambda
       (by
         change lambda.re - 1 / 16 < lambda.re
-        have translated := Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+        have translated := Order.Arithmetic.sub_lt_sub_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 16) lambda.re
         have scalarZero : lambda.re - 0 = lambda.re := by
-          rewrite [Fraction.Arithmetic.sub_eq_add_neg_direct,
+          rewrite [Arithmetic.sub_eq_add_neg_direct,
             show -(0 : Fraction.Rational) = 0 by decide]
-          exact (Fraction.Field.add_comm lambda.re 0).trans (Fraction.Field.zero_add lambda.re)
+          exact (Field.add_comm lambda.re 0).trans (Field.zero_add lambda.re)
         rewrite [scalarZero] at translated
         exact translated)
       (by
         change lambda.re < lambda.re + 1 / 16
-        have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct
+        have translated := Order.Arithmetic.add_lt_add_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 16) lambda.re
         have scalarZero : lambda.re + 0 = lambda.re :=
-          (Fraction.Field.add_comm lambda.re 0).trans (Fraction.Field.zero_add lambda.re)
+          (Field.add_comm lambda.re 0).trans (Field.zero_add lambda.re)
         rewrite [scalarZero] at translated
         exact translated)
       (by
         change lambda.im - 1 / 16 < lambda.im
-        have translated := Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+        have translated := Order.Arithmetic.sub_lt_sub_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 16) lambda.im
         have scalarZero : lambda.im - 0 = lambda.im := by
-          rewrite [Fraction.Arithmetic.sub_eq_add_neg_direct,
+          rewrite [Arithmetic.sub_eq_add_neg_direct,
             show -(0 : Fraction.Rational) = 0 by decide]
-          exact (Fraction.Field.add_comm lambda.im 0).trans (Fraction.Field.zero_add lambda.im)
+          exact (Field.add_comm lambda.im 0).trans (Field.zero_add lambda.im)
         rewrite [scalarZero] at translated
         exact translated)
       (by
         change lambda.im < lambda.im + 1 / 16
-        have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct
+        have translated := Order.Arithmetic.add_lt_add_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 16) lambda.im
         have scalarZero : lambda.im + 0 = lambda.im :=
-          (Fraction.Field.add_comm lambda.im 0).trans (Fraction.Field.zero_add lambda.im)
+          (Field.add_comm lambda.im 0).trans (Field.zero_add lambda.im)
         rewrite [scalarZero] at translated
         exact translated))
     (ExplicitLegendreSegment.rightClearance 1 oneRight)
@@ -140,7 +142,7 @@ right. -/
 @[expose] def lowerSampleOneClearance (lambda :
   Data.Gaussian.Basic.Canonical)
     (movingLeft : lambda.re < (Centered.sampleBox 1).xLower) :
-    Boundary.Basic.BoundaryClearance (Polynomial.factorsAt lambda) (Centered.sampleBox 1) :=
+    BoundaryClearance (factorsAt lambda) (Centered.sampleBox 1) :=
   factorsClearance
     (ExplicitLegendreSegment.leftClearance 0 (by decide))
     (ExplicitLegendreSegment.leftClearance lambda movingLeft)
@@ -150,7 +152,7 @@ right. -/
 @[expose] def lowerRightSampleZeroClearance (lambda :
   Data.Gaussian.Basic.Canonical)
     (movingRight : (Centered.sampleBox 0).xUpper < lambda.re) :
-    Boundary.Basic.BoundaryClearance (Polynomial.factorsAt lambda) (Centered.sampleBox 0) :=
+    BoundaryClearance (factorsAt lambda) (Centered.sampleBox 0) :=
   factorsClearance
     (ExplicitLegendreSegment.centeredClearance 0 (by decide) (by decide) (by decide) (by decide))
     (ExplicitLegendreSegment.rightClearance lambda movingRight)
@@ -162,44 +164,44 @@ right. -/
   Data.Gaussian.Basic.Canonical)
     (zeroLeft : (0 : Data.Gaussian.Basic.Canonical).re < (Centered.sampleBox lambda).xLower)
     (oneRight : (Centered.sampleBox lambda).xUpper < (1 : Data.Gaussian.Basic.Canonical).re) :
-    Boundary.Basic.BoundaryClearance (Polynomial.factorsAt lambda) (Centered.sampleBox lambda) :=
+    BoundaryClearance (factorsAt lambda) (Centered.sampleBox lambda) :=
   factorsClearance
     (ExplicitLegendreSegment.leftClearance 0 zeroLeft)
     (ExplicitLegendreSegment.centeredClearance lambda
       (by
         change lambda.re - 1 / 16 < lambda.re
-        have translated := Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+        have translated := Order.Arithmetic.sub_lt_sub_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 16) lambda.re
         have scalarZero : lambda.re - 0 = lambda.re := by
-          rewrite [Fraction.Arithmetic.sub_eq_add_neg_direct,
+          rewrite [Arithmetic.sub_eq_add_neg_direct,
             show -(0 : Fraction.Rational) = 0 by decide]
-          exact (Fraction.Field.add_comm lambda.re 0).trans (Fraction.Field.zero_add lambda.re)
+          exact (Field.add_comm lambda.re 0).trans (Field.zero_add lambda.re)
         rewrite [scalarZero] at translated
         exact translated)
       (by
         change lambda.re < lambda.re + 1 / 16
-        have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct
+        have translated := Order.Arithmetic.add_lt_add_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 16) lambda.re
         have scalarZero : lambda.re + 0 = lambda.re :=
-          (Fraction.Field.add_comm lambda.re 0).trans (Fraction.Field.zero_add lambda.re)
+          (Field.add_comm lambda.re 0).trans (Field.zero_add lambda.re)
         rewrite [scalarZero] at translated
         exact translated)
       (by
         change lambda.im - 1 / 16 < lambda.im
-        have translated := Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+        have translated := Order.Arithmetic.sub_lt_sub_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 16) lambda.im
         have scalarZero : lambda.im - 0 = lambda.im := by
-          rewrite [Fraction.Arithmetic.sub_eq_add_neg_direct,
+          rewrite [Arithmetic.sub_eq_add_neg_direct,
             show -(0 : Fraction.Rational) = 0 by decide]
-          exact (Fraction.Field.add_comm lambda.im 0).trans (Fraction.Field.zero_add lambda.im)
+          exact (Field.add_comm lambda.im 0).trans (Field.zero_add lambda.im)
         rewrite [scalarZero] at translated
         exact translated)
       (by
         change lambda.im < lambda.im + 1 / 16
-        have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct
+        have translated := Order.Arithmetic.add_lt_add_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 16) lambda.im
         have scalarZero : lambda.im + 0 = lambda.im :=
-          (Fraction.Field.add_comm lambda.im 0).trans (Fraction.Field.zero_add lambda.im)
+          (Field.add_comm lambda.im 0).trans (Field.zero_add lambda.im)
         rewrite [scalarZero] at translated
         exact translated))
     (ExplicitLegendreSegment.rightClearance 1 oneRight)

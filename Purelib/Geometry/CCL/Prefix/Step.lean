@@ -8,6 +8,8 @@ import Purelib.Data.List.Map
 import Purelib.Data.List.Membership
 import Purelib.Geometry.Rational.Box.Refinement
 
+open Purelib.Data.CCL.Encoding.Parser.Semantics.Prefix
+
 /-!
 # Proper rational placement of one exact raw CCL bit
 
@@ -136,7 +138,7 @@ supplies every earlier history and active-phase condition.
 -/
 theorem canStep_iff {previous : Encoding.Prefix.Enclosure} (children : ChildForms previous)
     (bit : Bool) {point : Gaussian.Basic.Canonical} (inside : previous.box.Contains point) :
-    (children.atBit bit).Holds point ↔ Encoding.Parser.Semantics.Prefix.CanStep previous.state point bit := by
+    (children.atBit bit).Holds point ↔ CanStep previous.state point bit := by
   have original := Parser.Formula.inputIncrementalAdvanceFormula_canStep_iff previous.state point
     (previous.tail point) previous.determinant (previous.tail_represents inside) bit
   constructor
@@ -148,8 +150,8 @@ theorem canStep_iff {previous : Encoding.Prefix.Enclosure} (children : ChildForm
 /-- Certify either original child formula on one exact signed neighbourhood of the retained guard family. -/
 def stableAt {previous : Encoding.Prefix.Enclosure} (children : ChildForms previous)
     (signs : Hermitian.Box.SignNeighborhood children.forms previous.box) (bit : Bool) :
-    Hermitian.Formula.Box.Stable previous.box signs.box (children.atBit bit) :=
-  Hermitian.Formula.Box.Stable.ofAtoms (children.atBit bit) fun atom member =>
+    Box.Stable previous.box signs.box (children.atBit bit) :=
+  Box.Stable.ofAtoms (children.atBit bit) fun atom member =>
     (signs.formStability atom.form (children.formMember bit atom member)).toAtom
 
 end ChildForms
@@ -176,11 +178,11 @@ structure Step (previous : Encoding.Prefix.Enclosure) where
   /-- The actual unique admissible bit at the original represented sample. -/ choice :
     Encoding.Parser.Next.AdmissibleBit previous.state signs.sample.point
   /-- The original false-child formula is stable throughout the computed box. -/ falseStable :
-    Hermitian.Formula.Box.Stable previous.box signs.box children.falseFormula
+    Box.Stable previous.box signs.box children.falseFormula
   /-- The original true-child formula is stable throughout the computed box. -/ trueStable :
-    Hermitian.Formula.Box.Stable previous.box signs.box children.trueFormula
+    Box.Stable previous.box signs.box children.trueFormula
   /-- Every point of the actual computed box admits this same selected next bit. -/ uniformStep :
-    ∀ point, signs.box.Contains point → Encoding.Parser.Semantics.Prefix.CanStep previous.state point choice.bit
+    ∀ point, signs.box.Contains point → CanStep previous.state point choice.bit
   /-- The actual retained exact-word extension on the same computed box. -/ extension :
     Encoding.Prefix.Enclosure.BitExtension previous signs.box
   /-- The extension is the original builder applied to these same retained data and certificates. -/ extensionSpec :
@@ -210,12 +212,12 @@ def build (previous : Encoding.Prefix.Enclosure) : Step previous := by
   let falseStable := children.stableAt signs false
   let trueStable := children.stableAt signs true
   have uniformStep : ∀ point, signs.box.Contains point →
-      Encoding.Parser.Semantics.Prefix.CanStep previous.state point choice.bit := by
+      CanStep previous.state point choice.bit := by
     intro point inside
     have sampleInNew : signs.box.Contains signs.sample.point :=
       ⟨signs.sampleInside.1.le, signs.sampleInside.2.1.le,
         signs.sampleInside.2.2.1.le, signs.sampleInside.2.2.2.le⟩
-    have stable : Hermitian.Formula.Box.Stable previous.box signs.box (children.atBit choice.bit) := by
+    have stable : Box.Stable previous.box signs.box (children.atBit choice.bit) := by
       cases selected : choice.bit with
       | false => exact falseStable
       | true => exact trueStable
@@ -255,13 +257,13 @@ theorem sample_inside {previous : Encoding.Prefix.Enclosure} (step : Step previo
 
 /-- The actual later rational sample represents the exact appended raw word. -/
 theorem sample_represented {previous : Encoding.Prefix.Enclosure} (step : Step previous) :
-    Encoding.Parser.Semantics.Prefix.Represented step.next.word step.sample := step.next.represented step.sample_inside
+    Represented step.next.word step.sample := step.next.represented step.sample_inside
 
 /-- The bit retained by the exact word extension equals the original local decision at the same sample. -/
 theorem bit_eq_choice {previous : Encoding.Prefix.Enclosure} (step : Step previous) :
     step.extension.bit = step.choice.bit := by
   rcases step.next.uniform step.sample step.sample_inside with ⟨tail, represented⟩
-  have possible : Encoding.Parser.Semantics.Prefix.CanStep previous.state step.sample step.extension.bit :=
+  have possible : CanStep previous.state step.sample step.extension.bit :=
     ⟨tail, step.extension.stateEq ▸ represented⟩
   exact step.choice.unique step.extension.bit possible
 

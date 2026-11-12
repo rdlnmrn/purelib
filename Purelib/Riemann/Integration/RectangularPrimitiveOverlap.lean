@@ -47,6 +47,8 @@ open Purelib.Riemann.Integration.RectangularPrimitiveGluing (PrimitiveAnchors)
 open Purelib.Riemann.Normalization.InverseRootPolynomial
 open Purelib.Data.Gaussian.Basic.Canonical
 
+variable {pairs : Nat}
+
 namespace Purelib.Riemann.Integration.RectangularPrimitiveOverlap
 
 open Purelib.Data.Gaussian in
@@ -96,9 +98,9 @@ open Purelib.Riemann.Branches
 namespace Purelib.Riemann.Integration.RectangularPrimitiveOverlap.GridPrimitiveAccuracy
 
 /-- Two original cell readings in one row at a shared point differ by at most the retained global bound. -/
-theorem same_row_bound (request : GridPrimitiveAccuracy bounds columns target)
+theorem same_row_bound (request : GridPrimitiveAccuracy bounds columns target pairs)
     {transitions : Transitions (bank.refine request.index)} {gauge : Topology.Grid.Signs.Gauge transitions.flatGrid}
-    {primitives : Primitives (RectangularSheetGauge.Transitions.oriented transitions gauge) numerator} (anchors :
+    {primitives : Primitives (RectangularSheetGauge.Transitions.oriented transitions gauge) numerator pairs} (anchors :
       PrimitiveAnchors primitives)
     (offsets : LinearAlgebra.Grid.Offsets anchors.edges)
     (refines : ∀ column row, (geometry.box column row).Refines ambient)
@@ -119,9 +121,9 @@ theorem same_row_bound (request : GridPrimitiveAccuracy bounds columns target)
   exact estimate
 
 /-- Two original cell readings in one column at a shared point differ by at most the retained global bound. -/
-theorem same_column_bound (request : GridPrimitiveAccuracy bounds columns target)
+theorem same_column_bound (request : GridPrimitiveAccuracy bounds columns target pairs)
     {transitions : Transitions (bank.refine request.index)} {gauge : Topology.Grid.Signs.Gauge transitions.flatGrid}
-    {primitives : Primitives (RectangularSheetGauge.Transitions.oriented transitions gauge) numerator} (anchors :
+    {primitives : Primitives (RectangularSheetGauge.Transitions.oriented transitions gauge) numerator pairs} (anchors :
       PrimitiveAnchors primitives)
     (offsets : LinearAlgebra.Grid.Offsets anchors.edges)
     (refines : ∀ column row, (geometry.box column row).Refines ambient)
@@ -158,9 +160,9 @@ open Purelib.Riemann.Integration in
 A retained intermediate cell uses the target column and source row, so the two original adjacent-axis estimates compare
 readings of the same point. -/
 theorem overlap_bound (request :
-  GridPrimitiveAccuracy bounds columns target)
+  GridPrimitiveAccuracy bounds columns target pairs)
     {transitions : Transitions (bank.refine request.index)} {gauge : Topology.Grid.Signs.Gauge transitions.flatGrid}
-    {primitives : Primitives (RectangularSheetGauge.Transitions.oriented transitions gauge) numerator} (anchors :
+    {primitives : Primitives (RectangularSheetGauge.Transitions.oriented transitions gauge) numerator pairs} (anchors :
       PrimitiveAnchors primitives)
     (offsets : LinearAlgebra.Grid.Offsets anchors.edges)
     (refines : ∀ column row, (geometry.box column row).Refines ambient)

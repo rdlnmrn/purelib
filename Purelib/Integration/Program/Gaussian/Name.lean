@@ -1,4 +1,7 @@
 module
+public import Purelib.Integration.Program.Gaussian.Approximation
+public import Purelib.Approximation.Gaussian.Equivalence
+import Purelib.Approximation.Gaussian.Equivalence.Sampling
 import Purelib.Approximation.Gaussian.Name.Coherent
 public import Purelib.Approximation.Gaussian.Name.Sampling
 import Purelib.Approximation.Rational.Geometric.Basic
@@ -88,5 +91,34 @@ open Purelib.Integration.Program.Gaussian in
 end RefinementProgram
 
 end Purelib.Integration.Program.Gaussian.Basic
+
+end
+
+public section
+
+namespace Purelib.Integration.Program.Gaussian.Basic.RefinementProgram
+
+open Purelib.Approximation.Gaussian.Equivalence (Equivalent NamedEquivalent)
+open Purelib.Integration.Polynomial.Gaussian.Path.Basic (PathModel)
+
+/-- Exact model readbacks transport an original equivalence to the given programmes' own output names.
+
+All four original programme owners remain inputs. The retained comparison
+keeps its actual starts, sufficient indices and later sample bounds through
+pointwise model equality. The original generic output-sampling comparison
+then relates the given programmes' actual names without a new sample carrier.
+-/
+def outputEquivalent (first last nextFirst nextLast : Basic.RefinementProgram)
+    (compared : Equivalent first.approximation last.approximation)
+    (firstModels : ∀ stage, nextFirst.model stage = first.model stage)
+    (lastModels : ∀ stage, nextLast.model stage = last.model stage) :
+    NamedEquivalent nextFirst.output.name nextLast.output.name :=
+  (compared.withSamples nextFirst.approximation nextLast.approximation
+    (fun stage => (nextFirst.certifiedView_sample stage).trans
+      ((congrArg PathModel.integralSample (firstModels stage)).trans (first.certifiedView_sample stage).symm))
+    (fun stage => (nextLast.certifiedView_sample stage).trans
+      ((congrArg PathModel.integralSample (lastModels stage)).trans (last.certifiedView_sample stage).symm))).toNamed
+
+end Purelib.Integration.Program.Gaussian.Basic.RefinementProgram
 
 end

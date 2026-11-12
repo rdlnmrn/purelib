@@ -39,6 +39,8 @@ import Purelib.RootIsolation.Progressive.Chamber.Basic
 import Purelib.RootIsolation.State.WindingOne.Basic
 import Purelib.RootIsolation.Track.Basic
 
+open Purelib.Polynomial.Power.Gaussian.Progressive
+
 open Purelib.Data.Gaussian.Basic (Canonical)
 open Purelib.Data.Nat.Positive (RootDegree)
 open Purelib.RootIsolation.Owner.Bridge.Basic (OwnerBridge)
@@ -81,11 +83,11 @@ theorem unitMoveCountEq
     {source target : Canonical}
     (sourceUnit : normSq source = 1) (_targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value) :
-    (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
+    (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
       sourceUnit degree
-      degreeAtLeastTwo).degree = (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree := by
-  rw [Progressive.Power.Unit.Frame.robustChamberFrame_degree,
-    Power.Gaussian.Progressive.Coefficients.coefficientTable_degree]
+      degreeAtLeastTwo).degree = (Coefficients.coefficientTable target degree).degree := by
+  rw [Frame.robustChamberFrame_degree,
+    Coefficients.coefficientTable_degree]
 end Purelib.RootIsolation.Progressive.Power.Unit.Move.Frame
 
 end
@@ -117,8 +119,8 @@ def unitMoveSourceIndex
     {source target : Canonical}
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
-    (index : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree) :
-    (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
+    (index : Fin (Coefficients.coefficientTable target degree).degree) :
+    (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
       sourceUnit degree
       degreeAtLeastTwo).Index :=
   Fin.cast (unitMoveCountEq sourceUnit targetUnit degree degreeAtLeastTwo).symm
@@ -156,34 +158,34 @@ def unitTransportedFrame
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo) :
-    Progressive.Chamber.Frame.ChamberFrame where
-  reference := Power.Gaussian.Progressive.Coefficients.coefficientTable target degree
+    Chamber.Frame.ChamberFrame where
+  reference := Coefficients.coefficientTable target degree
   chamber := by
-    let sourceFrame := Progressive.Power.Unit.Frame.robustChamberFrame
-      (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree degreeAtLeastTwo
-    let sourceIndex : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree →
+    let sourceFrame := Frame.robustChamberFrame
+      (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree degreeAtLeastTwo
+    let sourceIndex : Fin (Coefficients.coefficientTable target degree).degree →
         sourceFrame.Index :=
       unitMoveSourceIndex sourceUnit targetUnit degree degreeAtLeastTwo
     let sourceOwner :
-        (index : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree) →
+        (index : Fin (Coefficients.coefficientTable target degree).degree) →
           Owner.Local.Basic.LocalOwner
-            (Purelib.Polynomial.Power.Gaussian.rootPolynomial source degree) := fun index =>
+            (Power.Gaussian.rootPolynomial source degree) := fun index =>
       Owner.Local.Transport.castOwner
-        (Progressive.Power.Unit.Frame.robustChamberFrame_polynomial
-          (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree
+        (Frame.robustChamberFrame_polynomial
+          (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree
           degreeAtLeastTwo)
         (sourceFrame.owner (sourceIndex index))
     let rawOwners : Owner.Family.Basic.OwnerFamily
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree)
-        (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree :=
-      { owner := fun index => Progressive.Power.Owner.Transport.transportedOwner degree (sourceOwner index) (by
+        (Power.Gaussian.rootPolynomial target degree)
+        (Coefficients.coefficientTable target degree).degree :=
+      { owner := fun index => Owner.Transport.transportedOwner degree (sourceOwner index) (by
           dsimp only [sourceOwner]
           rw [Owner.Local.Transport.castOwner_clearance_bound]
           have sourceDegreeIndex : Fin degree.value := Fin.cast
-            (Progressive.Power.Unit.Frame.robustChamberFrame_degree
-              (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree
+            (Frame.robustChamberFrame_degree
+              (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree
               degreeAtLeastTwo) (sourceIndex index)
-          rw [Progressive.Power.Unit.Frame.robustChamberFrame_owner_clearance_bound]
+          rw [Frame.robustChamberFrame_owner_clearance_bound]
           exact small.owner sourceDegreeIndex)
         pairwiseSeparated := by
           intro left right different
@@ -202,26 +204,38 @@ def unitTransportedFrame
           have rightBox : (sourceOwner right).box =
               (sourceFrame.owner (sourceIndex right)).box :=
             Owner.Local.Transport.castOwner_box _ _
-          simpa only [Progressive.Power.Owner.Transport.transportedOwner,
+          simpa only [Owner.Transport.transportedOwner,
             OwnerBridge.rightOwner,
             OwnerBridge.ofForward,
             leftBox, rightBox] using separated }
     let owners : Owner.Family.Basic.OwnerFamily
-        (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).polynomial
-        (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree :=
+        (Coefficients.coefficientTable target degree).polynomial
+        (Coefficients.coefficientTable target degree).degree :=
       Owner.Family.Transport.castOwnerFamily
-        (Power.Gaussian.Progressive.Coefficients.coefficientTable_polynomial target degree).symm rawOwners
+        (Coefficients.coefficientTable_polynomial target degree).symm rawOwners
     let targetOriginal :=
-      (Progressive.Power.Frame.Basic.chamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
+      (Frame.Basic.chamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
         degreeAtLeastTwo).chamber
     exact
       { degreeAtLeastTwo := targetOriginal.degreeAtLeastTwo
-        squarefree := targetOriginal.squarefree
+        squarefree := Power.Gaussian.Progressive.Coefficients.coefficientTableSquarefree
+          (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
         owners := owners
-        referenceSmall := Power.Gaussian.Progressive.Coefficients.coefficientTable_allowances_lt target degree
-          (Progressive.Chamber.Target.simpleRootChamberTarget_pos
-            (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree) targetOriginal.squarefree owners)
+        referenceSmall := Coefficients.coefficientTable_allowances_lt target degree
+          (Chamber.Target.simpleRootChamberTarget_pos
+            (Coefficients.coefficientTable target degree) targetOriginal.squarefree owners)
         referenceMaximality := targetOriginal.referenceMaximality }
+
+/-- The transported frame retains exactly the original target squarefree field without building unused target owners. -/
+theorem unitTransportedFrame_squarefree {source target : Canonical}
+    (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
+    (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
+    (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo) :
+    (unitTransportedFrame sourceUnit targetUnit degree degreeAtLeastTwo small).chamber.squarefree =
+      (Progressive.Power.Frame.Basic.chamberFrame
+        (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree degreeAtLeastTwo).chamber.squarefree :=
+  (Progressive.Power.Frame.Basic.chamberFrame_squarefree
+    (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree degreeAtLeastTwo).symm
 end Purelib.RootIsolation.Progressive.Power.Unit.Move.Frame
 
 end
@@ -256,7 +270,7 @@ open Purelib.Data.Gaussian
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo) :
     (unitTransportedFrame sourceUnit targetUnit degree degreeAtLeastTwo
       small).degree = degree.value :=
-  Power.Gaussian.Progressive.Coefficients.coefficientTable_degree target degree
+  Coefficients.coefficientTable_degree target degree
 end Purelib.RootIsolation.Progressive.Power.Unit.Move.Frame
 
 end
@@ -289,19 +303,19 @@ open Purelib.Data.Gaussian
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
-    (index : (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+    (index : (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one
       sourceUnit)
       sourceUnit degree degreeAtLeastTwo).Index) :
     ((unitTransportedFrame sourceUnit targetUnit degree degreeAtLeastTwo
       small).owner
         (Fin.cast (unitMoveCountEq sourceUnit targetUnit degree
           degreeAtLeastTwo) index)).box =
-      ((Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
+      ((Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
         sourceUnit
         degree degreeAtLeastTwo).owner index).box := by
-  simp only [Progressive.Chamber.Frame.ChamberFrame.owner, unitTransportedFrame,
+  simp only [Chamber.Frame.ChamberFrame.owner, unitTransportedFrame,
     unitMoveSourceIndex, Owner.Family.Transport.castOwnerFamily_owner_box,
-    Owner.Local.Transport.castOwner_box, Progressive.Power.Owner.Transport.transportedOwner,
+    Owner.Local.Transport.castOwner_box, Owner.Transport.transportedOwner,
     OwnerBridge.rightOwner,
     OwnerBridge.ofForward]
   congr 1
@@ -338,8 +352,8 @@ open Purelib.Data.Gaussian
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo) :
     (unitTransportedFrame sourceUnit targetUnit degree degreeAtLeastTwo
-      small).polynomial = Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree :=
-  Power.Gaussian.Progressive.Coefficients.coefficientTable_polynomial target degree
+      small).polynomial = Power.Gaussian.rootPolynomial target degree :=
+  Coefficients.coefficientTable_polynomial target degree
 end Purelib.RootIsolation.Progressive.Power.Unit.Move.Frame
 
 end

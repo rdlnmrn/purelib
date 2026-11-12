@@ -11,6 +11,8 @@ import Purelib.Tactic.QuotientFreeOmega
 import Mathlib.Algebra.Group.Even
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian.Path.Box
+
 open Purelib.Polynomial.Dense.Rational.Pair.Path.Basic (PolynomialEdge)
 
 open Purelib.Geometry.Rational
@@ -36,9 +38,9 @@ namespace Purelib.Polynomial.Winding.Box.Parity
 The imaginary-coordinate zero flags at shared vertices cancel between successive edges, leaving an explicit even
 integer. -/
 theorem quadrupledBoxWinding_even_of_boundaryCoprime
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (box : Box)
-    (coprime : Dense.Gaussian.Path.Box.NoCommonZero.BoundaryCoprime p box) :
-    Even (Winding.Box.Basic.quadrupledBoxWinding p box) := open Purelib.Data in by
+    (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (box : Box)
+    (coprime : NoCommonZero.BoundaryCoprime p box) :
+    Even (Basic.quadrupledBoxWinding p box) := open Purelib.Data in by
   have bottom := PolynomialEdge.doubledWinding_sub_imagZeroFlags_even
     _ coprime.bottom
   have right := PolynomialEdge.doubledWinding_sub_imagZeroFlags_even
@@ -47,8 +49,8 @@ theorem quadrupledBoxWinding_even_of_boundaryCoprime
     _ coprime.top
   have left := PolynomialEdge.doubledWinding_sub_imagZeroFlags_even
     _ coprime.left
-  simp only [Dense.Gaussian.Path.Box.Sides.horizontalEdge_imag_eval] at bottom top
-  simp only [Dense.Gaussian.Path.Box.Sides.verticalEdge_imag_eval] at right left
+  simp only [Sides.horizontalEdge_imag_eval] at bottom top
+  simp only [Sides.verticalEdge_imag_eval] at right left
   let lowerLeftFlag : Int :=
     if (p.eval (Gaussian.Components.Basic.point box.xLower box.yLower)).im = 0 then 1 else 0
   let lowerRightFlag : Int :=
@@ -57,16 +59,16 @@ theorem quadrupledBoxWinding_even_of_boundaryCoprime
     if (p.eval (Gaussian.Components.Basic.point box.xUpper box.yUpper)).im = 0 then 1 else 0
   let upperLeftFlag : Int :=
     if (p.eval (Gaussian.Components.Basic.point box.xLower box.yUpper)).im = 0 then 1 else 0
-  change Even ((Dense.Gaussian.Path.Box.Sides.horizontalEdge p box.yLower box.xLower
+  change Even ((Sides.horizontalEdge p box.yLower box.xLower
       box.xUpper).doubledWinding -
     (lowerLeftFlag - lowerRightFlag)) at bottom
-  change Even ((Dense.Gaussian.Path.Box.Sides.verticalEdge p box.xUpper box.yLower
+  change Even ((Sides.verticalEdge p box.xUpper box.yLower
       box.yUpper).doubledWinding -
     (lowerRightFlag - upperRightFlag)) at right
-  change Even ((Dense.Gaussian.Path.Box.Sides.horizontalEdge p box.yUpper box.xUpper
+  change Even ((Sides.horizontalEdge p box.yUpper box.xUpper
       box.xLower).doubledWinding -
     (upperRightFlag - upperLeftFlag)) at top
-  change Even ((Dense.Gaussian.Path.Box.Sides.verticalEdge p box.xLower box.yUpper
+  change Even ((Sides.verticalEdge p box.xLower box.yUpper
       box.yLower).doubledWinding -
     (upperLeftFlag - lowerLeftFlag)) at left
   rcases bottom with ⟨bottomHalf, bottomIdentity⟩
@@ -75,42 +77,42 @@ theorem quadrupledBoxWinding_even_of_boundaryCoprime
   rcases left with ⟨leftHalf, leftIdentity⟩
   let k := ((bottomHalf + rightHalf) + topHalf) + leftHalf
   have hk :
-      (((Dense.Gaussian.Path.Box.Sides.horizontalEdge p box.yLower box.xLower
+      (((Sides.horizontalEdge p box.yLower box.xLower
             box.xUpper).doubledWinding -
           (lowerLeftFlag - lowerRightFlag)) +
-        ((Dense.Gaussian.Path.Box.Sides.verticalEdge p box.xUpper box.yLower
+        ((Sides.verticalEdge p box.xUpper box.yLower
             box.yUpper).doubledWinding -
           (lowerRightFlag - upperRightFlag)) +
-        ((Dense.Gaussian.Path.Box.Sides.horizontalEdge p box.yUpper box.xUpper
+        ((Sides.horizontalEdge p box.yUpper box.xUpper
             box.xLower).doubledWinding -
           (upperRightFlag - upperLeftFlag))) +
-        ((Dense.Gaussian.Path.Box.Sides.verticalEdge p box.xLower box.yUpper
+        ((Sides.verticalEdge p box.xLower box.yUpper
             box.yLower).doubledWinding -
           (upperLeftFlag - lowerLeftFlag)) = k + k := by
     rewrite [bottomIdentity, rightIdentity, topIdentity, leftIdentity]
     dsimp [k]
     ring1
   refine ⟨k, ?_⟩
-  rw [Winding.Box.Basic.quadrupledBoxWinding_eq]
+  rw [Basic.quadrupledBoxWinding_eq]
   calc
-    (Dense.Gaussian.Path.Box.Sides.horizontalEdge p box.yLower box.xLower
+    (Sides.horizontalEdge p box.yLower box.xLower
           box.xUpper).doubledWinding +
-        (Dense.Gaussian.Path.Box.Sides.verticalEdge p box.xUpper box.yLower
+        (Sides.verticalEdge p box.xUpper box.yLower
           box.yUpper).doubledWinding +
-        (Dense.Gaussian.Path.Box.Sides.horizontalEdge p box.yUpper box.xUpper
+        (Sides.horizontalEdge p box.yUpper box.xUpper
           box.xLower).doubledWinding +
-        (Dense.Gaussian.Path.Box.Sides.verticalEdge p box.xLower box.yUpper
+        (Sides.verticalEdge p box.xLower box.yUpper
           box.yLower).doubledWinding =
-      (((Dense.Gaussian.Path.Box.Sides.horizontalEdge p box.yLower box.xLower
+      (((Sides.horizontalEdge p box.yLower box.xLower
             box.xUpper).doubledWinding -
           (lowerLeftFlag - lowerRightFlag)) +
-        ((Dense.Gaussian.Path.Box.Sides.verticalEdge p box.xUpper box.yLower
+        ((Sides.verticalEdge p box.xUpper box.yLower
             box.yUpper).doubledWinding -
           (lowerRightFlag - upperRightFlag)) +
-        ((Dense.Gaussian.Path.Box.Sides.horizontalEdge p box.yUpper box.xUpper
+        ((Sides.horizontalEdge p box.yUpper box.xUpper
             box.xLower).doubledWinding -
           (upperRightFlag - upperLeftFlag))) +
-        ((Dense.Gaussian.Path.Box.Sides.verticalEdge p box.xLower box.yUpper
+        ((Sides.verticalEdge p box.xLower box.yUpper
             box.yLower).doubledWinding -
           (upperLeftFlag - lowerLeftFlag)) := by
         ring1

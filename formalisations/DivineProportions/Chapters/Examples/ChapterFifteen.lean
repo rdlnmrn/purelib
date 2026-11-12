@@ -52,7 +52,7 @@ variable {K : Type*} [ExplicitField K]
 namespace Conic
 
 /-- Example 15.1's conic `⟨1 : 2 : -1 : -6 : 2 : 1⟩`. -/
-def example15OneConic [Nontrivial K] : Curves.Plane.Conic K
+def example15OneConic [Nontrivial K] : Conic K
   where
   d := 1
   e := 2
@@ -71,12 +71,12 @@ theorem example_15_1 [Nontrivial K] :
 theorem example_15_1_rotationInvariant [Nontrivial K]
     (twoNonzero : (2 : K) ≠ 0) :
     (example15OneConic (K := K)).RotationInvariant ⟨1, 2⟩ :=
-  (Curves.Plane.Conic.isCenter_iff_rotationInvariant _ _ twoNonzero).1
+  (isCenter_iff_rotationInvariant _ _ twoNonzero).1
     example_15_1
 
 /-- The first conic in Exercise 15.1, `(x+y)² = 0`. -/
 def exercise15OneFirstConic [Nontrivial K] :
-  Curves.Plane.Conic K where
+  Conic K where
   d := 1
   e := 2
   f := 1
@@ -87,7 +87,7 @@ def exercise15OneFirstConic [Nontrivial K] :
 
 /-- The second conic in Exercise 15.1, `(x+y)²+x = 0`. -/
 def exercise15OneSecondConic [Nontrivial K] :
-  Curves.Plane.Conic K where
+  Conic K where
   d := 1
   e := 2
   f := 1
@@ -98,7 +98,7 @@ def exercise15OneSecondConic [Nontrivial K] :
 
 /-- Exercise 15.1: the first conic has exactly the centers `[u,-u]`. -/
 theorem exercise_15_1_first [Nontrivial K] (twoNonzero : (2 : K) ≠ 0)
-    (point : Plane.Point K) :
+    (point : Point K) :
     (exercise15OneFirstConic (K := K)).IsCenter point ↔
       point.y = -point.x := by
   constructor
@@ -125,7 +125,7 @@ theorem exercise_15_1_first [Nontrivial K] (twoNonzero : (2 : K) ≠ 0)
 
 /-- Exercise 15.1: the second conic has no center. -/
 theorem exercise_15_1_second [Nontrivial K] :
-    ¬ ∃ point : Plane.Point K,
+    ¬ ∃ point : Point K,
       (exercise15OneSecondConic (K := K)).IsCenter point := by
   rintro ⟨point, firstEquation, secondEquation⟩
   have oneZero : (1 : K) = 0 := by
@@ -165,7 +165,7 @@ variable {K : Type*} [ExplicitField K]
 namespace Conic
 
 /-- The first line in Exercise 15.5. -/
-def exercise15FiveFirstLine (twoNonzero : (2 : K) ≠ 0) : Plane.Line K
+def exercise15FiveFirstLine (twoNonzero : (2 : K) ≠ 0) : Line K
   where
   a := 2
   b := 3
@@ -174,7 +174,7 @@ def exercise15FiveFirstLine (twoNonzero : (2 : K) ≠ 0) : Plane.Line K
 
 /-- The second line in Exercise 15.5. -/
 def exercise15FiveSecondLine (threeNonzero : (3 : K) ≠ 0) :
-  Plane.Line K where
+  Line K where
   a := 3
   b := 2
   c := 0
@@ -185,8 +185,8 @@ field of characteristic thirteen, the central null circle is exactly the union
 of the two displayed null lines. -/
 theorem exercise_15_5 [DecidableEq K] [Nontrivial K]
     (twoNonzero : (2 : K) ≠ 0) (threeNonzero : (3 : K) ≠ 0)
-    (thirteenZero : (13 : K) = 0) (point : Plane.Point K) :
-    (Curves.Plane.Conic.circleConic (⟨0, 0⟩ : Plane.Point K) 0).Contains point ↔
+    (thirteenZero : (13 : K) = 0) (point : Point K) :
+    (circleConic (⟨0, 0⟩ : Point K) 0).Contains point ↔
       (exercise15FiveFirstLine twoNonzero).Contains point ∨
         (exercise15FiveSecondLine threeNonzero).Contains point := by
   have subtractZero (value : K) : value - 0 = value := by ring1
@@ -210,9 +210,9 @@ theorem exercise_15_5 [DecidableEq K] [Nontrivial K]
       _ = 6 * (point.x ^ 2 + point.y ^ 2) := by
         rw [thirteenZero]
         ring1
-  simp only [Curves.Plane.Conic.Contains, Curves.Plane.Conic.circleConic,
-    Curves.Plane.Conic.evaluate, exercise15FiveFirstLine,
-    exercise15FiveSecondLine, Plane.Line.Contains, one_mul, zero_mul, add_zero,
+  simp only [Contains, circleConic,
+    evaluate, exercise15FiveFirstLine,
+    exercise15FiveSecondLine, Line.Contains, one_mul, zero_mul, add_zero,
     mul_zero, subtractZero, zero_pow (by decide : 2 ≠ 0)]
   change point.x ^ 2 + point.y ^ 2 = 0 ↔
     (2 : K) * point.x + 3 * point.y = 0 ∨
@@ -270,7 +270,7 @@ variable {K : Type*} [ExplicitField K]
 
 /-- The first diagonal `⟨a:-1:0⟩` in Example 15.7. -/
 def example15SevenFirstDiagonal
-  [Nontrivial K] (a : K) : Plane.Line K where
+  [Nontrivial K] (a : K) : Line K where
   a := a
   b := -1
   c := 0
@@ -283,7 +283,7 @@ def example15SevenFirstDiagonal
 
 /-- The second diagonal `⟨a:1:0⟩` in Example 15.7. -/
 def example15SevenSecondDiagonal
-  [Nontrivial K] (a : K) : Plane.Line K where
+  [Nontrivial K] (a : K) : Line K where
   a := a
   b := 1
   c := 0
@@ -365,7 +365,7 @@ theorem example_15_7_presentation
 theorem example_15_7_equation
   [Nontrivial K] [DecidableEq K]
     (a associatedQuadrance : K) (normNonzero : a ^ 2 + 1 ≠ 0)
-    (point : Plane.Point K) :
+    (point : Point K) :
     Conics.Grammola.Contains (example15SevenFirstDiagonal a)
         (example15SevenSecondDiagonal a)
         (example15SevenFirst_nonNull a normNonzero)
@@ -467,7 +467,7 @@ namespace Conic
 
 /-- The directrix `⟨1:0:a⟩` used in Example 15.3. -/
 def example15ThreeDirectrix [Nontrivial K] (parameter : K) :
-  Plane.Line K where
+  Line K where
   a := 1
   b := 0
   c := parameter
@@ -475,7 +475,7 @@ def example15ThreeDirectrix [Nontrivial K] (parameter : K) :
 
 /-- The displayed conic `⟨0:0:1:-4a:0:0⟩` in Example 15.3. -/
 def example15ThreeConic [Nontrivial K] (parameter : K) :
-  Curves.Plane.Conic K where
+  Conic K where
   d := 0
   e := 0
   f := 1
@@ -503,11 +503,11 @@ theorem example_15_3 [Nontrivial K] (twoNonzero : (2 : K) ≠ 0)
       aEquation := ?_
       bEquation := ?_
       cEquation := ?_ }⟩
-  · unfold Plane.Line.IsNull example15ThreeDirectrix
+  · unfold Line.IsNull example15ThreeDirectrix
     intro oneZero
     exact one_ne_zero (by simpa only [one_pow, zero_pow (by decide : 2 ≠ 0),
       add_zero] using oneZero)
-  · unfold Plane.Line.Contains example15ThreeDirectrix
+  · unfold Line.Contains example15ThreeDirectrix
     intro incidence
     apply twoParameterNonzero
     calc
@@ -521,10 +521,10 @@ theorem example_15_3 [Nontrivial K] (twoNonzero : (2 : K) ≠ 0)
 
 /-- Example 15.3's equation is exactly `y² = 4ax`. -/
 theorem example_15_3_equation [Nontrivial K]
-    (parameter : K) (point : Plane.Point K) :
+    (parameter : K) (point : Point K) :
     (example15ThreeConic parameter).Contains point ↔
       point.y ^ 2 = 4 * parameter * point.x := by
-  unfold Curves.Plane.Conic.Contains Curves.Plane.Conic.evaluate
+  unfold Contains evaluate
     example15ThreeConic
   constructor <;> intro equation
   · calc
@@ -548,7 +548,7 @@ theorem example_15_4 :
   example_15_3 (K := Finite.Eleven.Element) (by decide) 1 (by decide)
 
 /-- Example 15.4's plotted finite-field conic has equation `y² = 4x`. -/
-theorem example_15_4_equation (point : Plane.Point
+theorem example_15_4_equation (point : Point
   Finite.Eleven.Element) :
     (example15ThreeConic (K := Finite.Eleven.Element) 1).Contains point ↔
       point.y ^ 2 = 4 * point.x := by
@@ -593,11 +593,11 @@ variable {K : Type*} [ExplicitField K]
 
 /-- The first symmetric focus used in Examples 15.5 and 15.6. -/
 def symmetricFirstFocus (a : K) :
-  Plane.Point K := ⟨a, 0⟩
+  Point K := ⟨a, 0⟩
 
 /-- The second symmetric focus used in Examples 15.5 and 15.6. -/
 def symmetricSecondFocus (a : K) :
-  Plane.Point K := ⟨-a, 0⟩
+  Point K := ⟨-a, 0⟩
 
 open formalisations.DivineProportions.Chapters.Examples
 /-- Example 15.5: the quadrance between the displayed symmetric foci is
@@ -617,7 +617,7 @@ theorem example_15_5_equation
   [DecidableEq K]
     (a associatedQuadrance : K)
     (associatedNonzero : associatedQuadrance ≠ 0)
-    (eightNonzero : (8 : K) ≠ 0) (point : Plane.Point K) :
+    (eightNonzero : (8 : K) ≠ 0) (point : Point K) :
     (Conics.Quadrola.conic (symmetricFirstFocus a)
       (symmetricSecondFocus a)
       associatedQuadrance associatedNonzero eightNonzero).evaluate point =
@@ -636,14 +636,14 @@ displayed vertical foci and replacing `K` by `K-4a²` leaves the finite
 Archimedes equation unchanged. -/
 theorem example_15_5_alternate_foci
     (a associatedQuadrance i : K) (iSquare : i ^ 2 = -1)
-    (point : Plane.Point K) :
+    (point : Point K) :
     Conics.Quadrola.evaluate (symmetricFirstFocus a)
       (symmetricSecondFocus a)
         associatedQuadrance point =
       Conics.Quadrola.evaluate ⟨0, i * a⟩ ⟨0, -(i * a)⟩
         (associatedQuadrance - 4 * a ^ 2) point := by
   unfold Conics.Quadrola.evaluate
-  simp only [Geometry.Trigonometry.QuadTriple.Basic.Quadrola.archimedes_difference_identity]
+  simp only [Trigonometry.QuadTriple.Basic.Quadrola.archimedes_difference_identity]
   calc
     -(Point.Quadrance.quadrance point (symmetricFirstFocus a) -
             Point.Quadrance.quadrance point (symmetricSecondFocus a)) ^ 2 +
@@ -717,17 +717,17 @@ theorem
   have iaNonzero : i * a ≠ 0 :=
     ExplicitField.mul_ne_zero iNonzero aNonzero
   have alternateFocusQuadrance :
-      Point.Quadrance.quadrance (⟨0, i * a⟩ : Plane.Point K) ⟨0, -(i * a)⟩ =
+      Point.Quadrance.quadrance (⟨0, i * a⟩ : Point K) ⟨0, -(i * a)⟩ =
         -4 * a ^ 2 := by
     calc
-      Point.Quadrance.quadrance (⟨0, i * a⟩ : Plane.Point K) ⟨0, -(i * a)⟩ =
+      Point.Quadrance.quadrance (⟨0, i * a⟩ : Point K) ⟨0, -(i * a)⟩ =
           4 * i ^ 2 * a ^ 2 := by
         unfold Point.Quadrance.quadrance
         ring1
       _ = -4 * a ^ 2 := by rw [iSquare]; ring1
   constructor
   · intro equal
-    have yEqual := congrArg Plane.Point.y equal
+    have yEqual := congrArg Point.y equal
     change i * a = -(i * a) at yEqual
     have addedEqual := congrArg (fun value : K => value + i * a) yEqual
     have twiceIaZero : (2 : K) * (i * a) = 0 := by
@@ -748,7 +748,7 @@ theorem
     rw [example_15_5_focus_quadrance]
     calc
       4 * a ^ 2 = -(-4 * a ^ 2) := by ring1
-      _ = -Point.Quadrance.quadrance (⟨0, i * a⟩ : Plane.Point K) ⟨0, -(i * a)⟩ := by
+      _ = -Point.Quadrance.quadrance (⟨0, i * a⟩ : Point K) ⟨0, -(i * a)⟩ := by
         rw [alternateFocusQuadrance]
       _ = 0 := by rw [alternateQuadranceZero]; ring1
   · intro sameQuadrance
@@ -756,8 +756,8 @@ theorem
     calc
       associatedQuadrance =
           (associatedQuadrance - 4 * a ^ 2) - (-4 * a ^ 2) := by ring1
-      _ = Point.Quadrance.quadrance (⟨0, i * a⟩ : Plane.Point K) ⟨0, -(i * a)⟩ -
-          Point.Quadrance.quadrance (⟨0, i * a⟩ : Plane.Point K) ⟨0, -(i * a)⟩ := by
+      _ = Point.Quadrance.quadrance (⟨0, i * a⟩ : Point K) ⟨0, -(i * a)⟩ -
+          Point.Quadrance.quadrance (⟨0, i * a⟩ : Point K) ⟨0, -(i * a)⟩ := by
         rw [← sameQuadrance, alternateFocusQuadrance]
       _ = 0 := by ring1
 end Quadrola
@@ -785,10 +785,10 @@ variable {K : Type*} [ExplicitField K]
 namespace ExampleFifteenSix
 
 /-- The two displayed foci `[1,0]` and `[-1,0]`. -/
-def firstFocus : Geometry.Plane.Point Finite.Eleven.Element := ⟨1, 0⟩
+def firstFocus : Point Finite.Eleven.Element := ⟨1, 0⟩
 
 /-- The second symmetric focus (−1, 0) over the field with eleven elements. -/
-def secondFocus : Geometry.Plane.Point Finite.Eleven.Element := ⟨-1, 0⟩
+def secondFocus : Point Finite.Eleven.Element := ⟨-1, 0⟩
 
 /-- The associated quadrance one is nonzero over the field with eleven elements. -/
 theorem associated_nonzero : (1 : Finite.Eleven.Element) ≠ 0 := by decide
@@ -798,10 +798,10 @@ theorem eight_nonzero : (8 : Finite.Eleven.Element) ≠ 0 := by decide
 
 /-- The displayed data satisfy all four clauses in the definition of a
 quadrola. -/
-theorem presentation : Geometry.Conics.Quadrola.Presentation firstFocus secondFocus 1 := by
+theorem presentation : Conics.Quadrola.Presentation firstFocus secondFocus 1 := by
   constructor
   · intro equal
-    have xEqual := congrArg Geometry.Plane.Point.x equal
+    have xEqual := congrArg Point.x equal
     change (1 : Finite.Eleven.Element) = -1 at xEqual
     exact (by decide : (1 : Finite.Eleven.Element) ≠ -1) xEqual
   · exact associated_nonzero
@@ -812,7 +812,7 @@ theorem presentation : Geometry.Conics.Quadrola.Presentation firstFocus secondFo
 
 /-- The executable conic obtained directly from the Archimedes equation. -/
 def quadrolaConic : Curves.Plane.Conic Finite.Eleven.Element :=
-  Geometry.Conics.Quadrola.conic firstFocus secondFocus 1 associated_nonzero eight_nonzero
+  Conics.Quadrola.conic firstFocus secondFocus 1 associated_nonzero eight_nonzero
 
 /-- The representative `⟨7:0:5:0:0:1⟩` printed in Example 15.6. -/
 def printedConic : Curves.Plane.Conic Finite.Eleven.Element where
@@ -833,26 +833,26 @@ theorem coefficient_scale :
       quadrolaConic.a = 3 * printedConic.a ∧
       quadrolaConic.b = 3 * printedConic.b ∧
       quadrolaConic.c = 3 * printedConic.c := by
-  unfold quadrolaConic printedConic Geometry.Conics.Quadrola.conic
-    Geometry.Conics.Quadrola.conicD
-    Geometry.Conics.Quadrola.conicE Geometry.Conics.Quadrola.conicF
-      Geometry.Conics.Quadrola.conicA Geometry.Conics.Quadrola.conicB
-    Geometry.Conics.Quadrola.conicC firstFocus secondFocus
+  unfold quadrolaConic printedConic Conics.Quadrola.conic
+    Conics.Quadrola.conicD
+    Conics.Quadrola.conicE Conics.Quadrola.conicF
+      Conics.Quadrola.conicA Conics.Quadrola.conicB
+    Conics.Quadrola.conicC firstFocus secondFocus
   decide
 
 /-- Example 15.6: the quadrola locus is exactly the printed conic
 `7x²+5y²+1=0` in `F₁₁`. -/
-theorem example_15_6 (point : Geometry.Plane.Point Finite.Eleven.Element) :
-    Geometry.Conics.Quadrola.Contains firstFocus secondFocus 1 point ↔
+theorem example_15_6 (point : Point Finite.Eleven.Element) :
+    Conics.Quadrola.Contains firstFocus secondFocus 1 point ↔
       printedConic.Contains point := by
   have definingEquation :
-      Geometry.Conics.Quadrola.Contains firstFocus secondFocus 1 point ↔
+      Conics.Quadrola.Contains firstFocus secondFocus 1 point ↔
         quadrolaConic.Contains point := by
-    unfold Geometry.Conics.Quadrola.Contains Curves.Plane.Conic.Contains quadrolaConic
-    rw [Geometry.Conics.Quadrola.conic_evaluate]
+    unfold Conics.Quadrola.Contains Curves.Plane.Conic.Contains quadrolaConic
+    rw [Conics.Quadrola.conic_evaluate]
   rcases coefficient_scale with ⟨dScale, eScale, fScale, aScale, bScale,
     cScale⟩
-  have sameLocus := Geometry.Conics.CoefficientScale.Locus.conic_contains_iff_of_coefficient_scale
+  have sameLocus := Conics.CoefficientScale.Locus.conic_contains_iff_of_coefficient_scale
     quadrolaConic printedConic 3 (by decide) dScale eScale fScale aScale
       bScale cScale point
   exact definingEquation.trans sameLocus
@@ -860,44 +860,44 @@ theorem example_15_6 (point : Geometry.Plane.Point Finite.Eleven.Element) :
 end ExampleFifteenSix
 
 /-- The normalized first diagonal with coefficients (1/2, −1, 0), retaining the nonzero-two certificate. -/
-private def halfFirstDiagonal (twoNonzero : (2 : K) ≠ 0) : Geometry.Plane.Line K where
+private def halfFirstDiagonal (twoNonzero : (2 : K) ≠ 0) : Line K where
   a := 1 / 2
   b := -1
   c := 0
   direction_nonzero := Or.inr (by
     intro negativeOneZero
     apply (fun {K : Type _} [ExplicitField K] (twoNonzero : (2 : K) ≠ 0) =>
-      (Purelib.Algebra.Field.Characteristic.Nonzero.one_ne_zero_of_two_ne_zero (K := K) twoNonzero : (1 : K) ≠ 0))
+      (Characteristic.Nonzero.one_ne_zero_of_two_ne_zero (K := K) twoNonzero : (1 : K) ≠ 0))
       twoNonzero
     calc
       (1 : K) = -(-1) := by ring1
       _ = 0 := by rw [negativeOneZero]; ring1)
 
 /-- The normalized second diagonal with coefficients (1/2, 1, 0), retaining the nonzero-two certificate. -/
-private def halfSecondDiagonal (twoNonzero : (2 : K) ≠ 0) : Geometry.Plane.Line K where
+private def halfSecondDiagonal (twoNonzero : (2 : K) ≠ 0) : Line K where
   a := 1 / 2
   b := 1
   c := 0
   direction_nonzero := Or.inr ((fun {K : Type _} [ExplicitField K] (twoNonzero : (2 : K) ≠ 0) =>
-    (Purelib.Algebra.Field.Characteristic.Nonzero.one_ne_zero_of_two_ne_zero (K := K) twoNonzero : (1 : K) ≠ 0))
+    (Characteristic.Nonzero.one_ne_zero_of_two_ne_zero (K := K) twoNonzero : (1 : K) ≠ 0))
     twoNonzero)
 
 /-- The integral first diagonal with coefficients (1, −2, 0). -/
-private def integerFirstDiagonal (twoNonzero : (2 : K) ≠ 0) : Geometry.Plane.Line K where
+private def integerFirstDiagonal (twoNonzero : (2 : K) ≠ 0) : Line K where
   a := 1
   b := -2
   c := 0
   direction_nonzero := Or.inl ((fun {K : Type _} [ExplicitField K] (twoNonzero : (2 : K) ≠ 0) =>
-    (Purelib.Algebra.Field.Characteristic.Nonzero.one_ne_zero_of_two_ne_zero (K := K) twoNonzero : (1 : K) ≠ 0))
+    (Characteristic.Nonzero.one_ne_zero_of_two_ne_zero (K := K) twoNonzero : (1 : K) ≠ 0))
     twoNonzero)
 
 /-- The integral second diagonal with coefficients (1, 2, 0). -/
-private def integerSecondDiagonal (twoNonzero : (2 : K) ≠ 0) : Geometry.Plane.Line K where
+private def integerSecondDiagonal (twoNonzero : (2 : K) ≠ 0) : Line K where
   a := 1
   b := 2
   c := 0
   direction_nonzero := Or.inl ((fun {K : Type _} [ExplicitField K] (twoNonzero : (2 : K) ≠ 0) =>
-    (Purelib.Algebra.Field.Characteristic.Nonzero.one_ne_zero_of_two_ne_zero (K := K) twoNonzero : (1 : K) ≠ 0))
+    (Characteristic.Nonzero.one_ne_zero_of_two_ne_zero (K := K) twoNonzero : (1 : K) ≠ 0))
     twoNonzero)
 
 /-- The normalized half-coefficient diagonals are equivalent to their integral representatives when two is nonzero. -/
@@ -910,7 +910,7 @@ private theorem half_diagonals_equivalent
   have twoCancel : (2 : K) * (2 : K)⁻¹ = 1 :=
     ExplicitField.mul_inv_cancel 2 twoNonzero
   unfold halfFirstDiagonal halfSecondDiagonal integerFirstDiagonal
-    integerSecondDiagonal Geometry.Plane.Line.Equivalent
+    integerSecondDiagonal Line.Equivalent
   simp only [ExplicitField.div_eq_mul_inv]
   refine ⟨⟨?_, by ring1, by ring1⟩, ⟨?_, by ring1, by ring1⟩⟩
   · calc
@@ -927,14 +927,14 @@ private theorem half_diagonals_equivalent
 namespace ExampleFifteenEight
 
 /-- The printed diagonal `x-2y=0`. -/
-def firstDiagonal : Geometry.Plane.Line Fraction.Rational where
+def firstDiagonal : Line Fraction.Rational where
   a := 1
   b := -2
   c := 0
   direction_nonzero := Or.inl (by decide)
 
 /-- The printed diagonal `x+2y=0`. -/
-def secondDiagonal : Geometry.Plane.Line Fraction.Rational where
+def secondDiagonal : Line Fraction.Rational where
   a := 1
   b := 2
   c := 0
@@ -943,20 +943,20 @@ def secondDiagonal : Geometry.Plane.Line Fraction.Rational where
 /-- The rational diagonal x − 2y = 0 has nonzero norm. -/
 theorem first_nonNull : ¬ firstDiagonal.IsNull := by
   rw [firstDiagonal.eq_1]
-  unfold Geometry.Plane.Line.IsNull
+  unfold Line.IsNull
   decide
 
 /-- The rational diagonal x + 2y = 0 has nonzero norm. -/
 theorem second_nonNull : ¬ secondDiagonal.IsNull := by
   rw [secondDiagonal.eq_1]
-  unfold Geometry.Plane.Line.IsNull
+  unfold Line.IsNull
   decide
 
 /-- Two is nonzero in the rational coefficient field. -/
 theorem two_nonzero : (2 : Fraction.Rational) ≠ 0 := by decide
 
 /-- The exact `a=1/2` normalization of the first Example 15.7 diagonal. -/
-def normalizedFirstDiagonal : Geometry.Plane.Line Fraction.Rational where
+def normalizedFirstDiagonal : Line Fraction.Rational where
   a := 1 / 2
   b := -1
   c := 0
@@ -974,7 +974,7 @@ def normalizedFirstDiagonal : Geometry.Plane.Line Fraction.Rational where
       _ = 0 := by rw [negativeOneZero]; ring1)
 
 /-- The exact `a=1/2` normalization of the second Example 15.7 diagonal. -/
-def normalizedSecondDiagonal : Geometry.Plane.Line Fraction.Rational where
+def normalizedSecondDiagonal : Line Fraction.Rational where
   a := 1 / 2
   b := 1
   c := 0
@@ -986,16 +986,16 @@ def normalizedSecondDiagonal : Geometry.Plane.Line Fraction.Rational where
       _ = 0 := by rw [oneZero]; ring1)
 
 /-- The exact rational data satisfy the grammola definition. -/
-theorem presentation : Geometry.Conics.Grammola.Presentation firstDiagonal secondDiagonal 1 := by
+theorem presentation : Conics.Grammola.Presentation firstDiagonal secondDiagonal 1 := by
   refine ⟨first_nonNull, second_nonNull, ?_, ?_, by decide⟩
-  · unfold Geometry.Plane.Line.Parallel firstDiagonal secondDiagonal
+  · unfold Line.Parallel firstDiagonal secondDiagonal
     decide
-  · unfold Geometry.Plane.Line.Perpendicular firstDiagonal secondDiagonal
+  · unfold Line.Perpendicular firstDiagonal secondDiagonal
     decide
 
 /-- The cleared metric construction before rescaling its six coefficients. -/
 def constructedConic : Curves.Plane.Conic Fraction.Rational :=
-  Geometry.Conics.Grammola.conic firstDiagonal secondDiagonal first_nonNull second_nonNull 1
+  Conics.Grammola.conic firstDiagonal secondDiagonal first_nonNull second_nonNull 1
     two_nonzero
 
 /-- Example 15.8's conic `2x²+8y²=5`. -/
@@ -1016,11 +1016,11 @@ theorem coefficient_scale :
       constructedConic.a = 5 * printedConic.a ∧
       constructedConic.b = 5 * printedConic.b ∧
       constructedConic.c = 5 * printedConic.c := by
-  unfold constructedConic printedConic Geometry.Conics.Grammola.conic
-    Geometry.Conics.Grammola.conicD
-    Geometry.Conics.Grammola.conicE Geometry.Conics.Grammola.conicF
-      Geometry.Conics.Grammola.conicA Geometry.Conics.Grammola.conicB
-    Geometry.Conics.Grammola.conicC Line.Basic.lineNorm firstDiagonal secondDiagonal
+  unfold constructedConic printedConic Conics.Grammola.conic
+    Conics.Grammola.conicD
+    Conics.Grammola.conicE Conics.Grammola.conicF
+      Conics.Grammola.conicA Conics.Grammola.conicB
+    Conics.Grammola.conicC Line.Basic.lineNorm firstDiagonal secondDiagonal
   decide
 
 /-- The `a=1/2` representatives in Example 15.7 are the same two lines as
@@ -1031,7 +1031,7 @@ theorem normalized_diagonals :
   have twoCancel : (2 : Fraction.Rational) * (2 : Fraction.Rational)⁻¹ = 1 :=
     ExplicitField.mul_inv_cancel 2 two_nonzero
   rw [normalizedFirstDiagonal.eq_1, normalizedSecondDiagonal.eq_1]
-  unfold Geometry.Plane.Line.Equivalent firstDiagonal secondDiagonal
+  unfold Line.Equivalent firstDiagonal secondDiagonal
   simp only [ExplicitField.div_eq_mul_inv]
   refine ⟨⟨?_, by ring1, by ring1⟩, ⟨?_, by ring1, by ring1⟩⟩
   · calc
@@ -1046,7 +1046,7 @@ theorem normalized_diagonals :
       _ = 1 * 1 := by ring1
 
 /-- Membership in the displayed rational conic is exactly the equation 2x² + 8y² = 5. -/
-theorem printed_equation (point : Geometry.Plane.Point Fraction.Rational) :
+theorem printed_equation (point : Point Fraction.Rational) :
     printedConic.Contains point ↔
       2 * point.x ^ 2 + 8 * point.y ^ 2 = 5 := by
   unfold Curves.Plane.Conic.Contains
@@ -1073,16 +1073,16 @@ theorem printed_equation (point : Geometry.Plane.Point Fraction.Rational) :
 
 /-- Example 15.8: the exact rational grammola equation is the displayed
 conic `2x²+8y²=5`. -/
-theorem example_15_8 (point : Geometry.Plane.Point Fraction.Rational) :
-    Geometry.Conics.Grammola.Contains firstDiagonal secondDiagonal first_nonNull second_nonNull
+theorem example_15_8 (point : Point Fraction.Rational) :
+    Conics.Grammola.Contains firstDiagonal secondDiagonal first_nonNull second_nonNull
         1 point ↔
       2 * point.x ^ 2 + 8 * point.y ^ 2 = 5 := by
   have metricToConstructed :=
-    (Geometry.Conics.Grammola.conic_contains_iff firstDiagonal secondDiagonal first_nonNull
+    (Conics.Grammola.conic_contains_iff firstDiagonal secondDiagonal first_nonNull
       second_nonNull 1 two_nonzero point).symm
   rcases coefficient_scale with ⟨dScale, eScale, fScale, aScale, bScale,
     cScale⟩
-  have constructedToPrinted := Geometry.Conics.CoefficientScale.Locus.conic_contains_iff_of_coefficient_scale
+  have constructedToPrinted := Conics.CoefficientScale.Locus.conic_contains_iff_of_coefficient_scale
     constructedConic printedConic 5 (by decide) dScale eScale fScale aScale
       bScale cScale point
   exact metricToConstructed.trans (constructedToPrinted.trans (printed_equation point))
@@ -1139,14 +1139,14 @@ theorem example_15_8_distinguished_points
 namespace ExampleFifteenNine
 
 /-- The diagonal x − 2y = 0 over the field with eleven elements. -/
-def firstDiagonal : Geometry.Plane.Line Finite.Eleven.Element where
+def firstDiagonal : Line Finite.Eleven.Element where
   a := 1
   b := -2
   c := 0
   direction_nonzero := Or.inl (by decide)
 
 /-- The diagonal x + 2y = 0 over the field with eleven elements. -/
-def secondDiagonal : Geometry.Plane.Line Finite.Eleven.Element where
+def secondDiagonal : Line Finite.Eleven.Element where
   a := 1
   b := 2
   c := 0
@@ -1154,28 +1154,28 @@ def secondDiagonal : Geometry.Plane.Line Finite.Eleven.Element where
 
 /-- The first displayed characteristic-eleven diagonal has nonzero norm. -/
 theorem first_nonNull : ¬ firstDiagonal.IsNull := by
-  unfold Geometry.Plane.Line.IsNull firstDiagonal
+  unfold Line.IsNull firstDiagonal
   decide
 
 /-- The second displayed characteristic-eleven diagonal has nonzero norm. -/
 theorem second_nonNull : ¬ secondDiagonal.IsNull := by
-  unfold Geometry.Plane.Line.IsNull secondDiagonal
+  unfold Line.IsNull secondDiagonal
   decide
 
 /-- Two is nonzero over the field with eleven elements. -/
 theorem two_nonzero : (2 : Finite.Eleven.Element) ≠ 0 := by decide
 
 /-- The two displayed characteristic-eleven diagonals and associated quadrance one form a grammola presentation. -/
-theorem presentation : Geometry.Conics.Grammola.Presentation firstDiagonal secondDiagonal 1 := by
+theorem presentation : Conics.Grammola.Presentation firstDiagonal secondDiagonal 1 := by
   refine ⟨first_nonNull, second_nonNull, ?_, ?_, by decide⟩
-  · unfold Geometry.Plane.Line.Parallel firstDiagonal secondDiagonal
+  · unfold Line.Parallel firstDiagonal secondDiagonal
     decide
-  · unfold Geometry.Plane.Line.Perpendicular firstDiagonal secondDiagonal
+  · unfold Line.Perpendicular firstDiagonal secondDiagonal
     decide
 
 /-- The characteristic-eleven conic obtained by clearing the two diagonal norms in the grammola equation. -/
 def constructedConic : Curves.Plane.Conic Finite.Eleven.Element :=
-  Geometry.Conics.Grammola.conic firstDiagonal secondDiagonal first_nonNull second_nonNull 1
+  Conics.Grammola.conic firstDiagonal secondDiagonal first_nonNull second_nonNull 1
     two_nonzero
 
 /-- The `F₁₁` representative `2x²+8y²-5=0`. -/
@@ -1196,21 +1196,21 @@ theorem coefficient_scale :
       constructedConic.a = 5 * printedConic.a ∧
       constructedConic.b = 5 * printedConic.b ∧
       constructedConic.c = 5 * printedConic.c := by
-  unfold constructedConic printedConic Geometry.Conics.Grammola.conic
-    Geometry.Conics.Grammola.conicD
-    Geometry.Conics.Grammola.conicE Geometry.Conics.Grammola.conicF
-      Geometry.Conics.Grammola.conicA Geometry.Conics.Grammola.conicB
-    Geometry.Conics.Grammola.conicC Line.Basic.lineNorm firstDiagonal secondDiagonal
+  unfold constructedConic printedConic Conics.Grammola.conic
+    Conics.Grammola.conicD
+    Conics.Grammola.conicE Conics.Grammola.conicF
+      Conics.Grammola.conicA Conics.Grammola.conicB
+    Conics.Grammola.conicC Line.Basic.lineNorm firstDiagonal secondDiagonal
   decide
 
 /-- The point (2, 1) over the field with eleven elements. -/
-def point21 : Geometry.Plane.Point Finite.Eleven.Element := ⟨2, 1⟩
+def point21 : Point Finite.Eleven.Element := ⟨2, 1⟩
 /-- The point (2, −1) over the field with eleven elements. -/
-def point2Neg1 : Geometry.Plane.Point Finite.Eleven.Element := ⟨2, -1⟩
+def point2Neg1 : Point Finite.Eleven.Element := ⟨2, -1⟩
 /-- The point (−2, 1) over the field with eleven elements. -/
-def pointNeg21 : Geometry.Plane.Point Finite.Eleven.Element := ⟨-2, 1⟩
+def pointNeg21 : Point Finite.Eleven.Element := ⟨-2, 1⟩
 /-- The point (−2, −1) over the field with eleven elements. -/
-def pointNeg2Neg1 : Geometry.Plane.Point Finite.Eleven.Element := ⟨-2, -1⟩
+def pointNeg2Neg1 : Point Finite.Eleven.Element := ⟨-2, -1⟩
 
 /-- Example 15.9: the four displayed points lie on the grammola and split
 between its two displayed diagonal lines exactly as in the figure. -/
@@ -1222,23 +1222,23 @@ theorem example_15_9 :
       firstDiagonal.Contains pointNeg2Neg1 ∧
       secondDiagonal.Contains point2Neg1 ∧
       secondDiagonal.Contains pointNeg21 := by
-  unfold Curves.Plane.Conic.Contains Curves.Plane.Conic.evaluate Geometry.Plane.Line.Contains
+  unfold Curves.Plane.Conic.Contains Curves.Plane.Conic.evaluate Line.Contains
     printedConic firstDiagonal
     secondDiagonal point21 point2Neg1 pointNeg21 pointNeg2Neg1
   decide
 
 /-- The metrical `F₁₁` grammola and the printed conic have the same
 locus. -/
-theorem metric_locus (point : Geometry.Plane.Point Finite.Eleven.Element) :
-    Geometry.Conics.Grammola.Contains firstDiagonal secondDiagonal first_nonNull second_nonNull
+theorem metric_locus (point : Point Finite.Eleven.Element) :
+    Conics.Grammola.Contains firstDiagonal secondDiagonal first_nonNull second_nonNull
         1 point ↔
       printedConic.Contains point := by
   have metricToConstructed :=
-    (Geometry.Conics.Grammola.conic_contains_iff firstDiagonal secondDiagonal first_nonNull
+    (Conics.Grammola.conic_contains_iff firstDiagonal secondDiagonal first_nonNull
       second_nonNull 1 two_nonzero point).symm
   rcases coefficient_scale with ⟨dScale, eScale, fScale, aScale, bScale,
     cScale⟩
-  have constructedToPrinted := Geometry.Conics.CoefficientScale.Locus.conic_contains_iff_of_coefficient_scale
+  have constructedToPrinted := Conics.CoefficientScale.Locus.conic_contains_iff_of_coefficient_scale
     constructedConic printedConic 5 (by decide) dScale eScale fScale aScale
       bScale cScale point
   exact metricToConstructed.trans constructedToPrinted
@@ -1249,10 +1249,10 @@ namespace ExerciseFifteenSixteen
 
 /-- A focal pair for the printed grammola: its vertical separation has
 quadrance nine. -/
-def firstFocus : Geometry.Plane.Point Finite.Eleven.Element := ⟨0, 4⟩
+def firstFocus : Point Finite.Eleven.Element := ⟨0, 4⟩
 
 /-- The second vertical focus (0, 7) over the field with eleven elements. -/
-def secondFocus : Geometry.Plane.Point Finite.Eleven.Element := ⟨0, 7⟩
+def secondFocus : Point Finite.Eleven.Element := ⟨0, 7⟩
 
 /-- The associated quadrance eight is nonzero over the field with eleven elements. -/
 theorem associated_nonzero : (8 : Finite.Eleven.Element) ≠ 0 := by decide
@@ -1262,10 +1262,10 @@ theorem eight_nonzero : (8 : Finite.Eleven.Element) ≠ 0 := by decide
 
 /-- The counterexample's focal data satisfy every quadrola nondegeneracy
 clause. -/
-theorem presentation : Geometry.Conics.Quadrola.Presentation firstFocus secondFocus 8 := by
+theorem presentation : Conics.Quadrola.Presentation firstFocus secondFocus 8 := by
   constructor
   · intro equal
-    have yEqual := congrArg Geometry.Plane.Point.y equal
+    have yEqual := congrArg Point.y equal
     change (4 : Finite.Eleven.Element) = 7 at yEqual
     exact (by decide : (4 : Finite.Eleven.Element) ≠ 7) yEqual
   · exact associated_nonzero
@@ -1276,7 +1276,7 @@ theorem presentation : Geometry.Conics.Quadrola.Presentation firstFocus secondFo
 
 /-- The characteristic-eleven quadrola conic with vertical foci (0, 4), (0, 7) and associated quadrance eight. -/
 def quadrolaConic : Curves.Plane.Conic Finite.Eleven.Element :=
-  Geometry.Conics.Quadrola.conic firstFocus secondFocus 8 associated_nonzero eight_nonzero
+  Conics.Quadrola.conic firstFocus secondFocus 8 associated_nonzero eight_nonzero
 
 /-- The constructed quadrola coefficients are five times the very conic
 which Exercise 15.16 claims is not a quadrola. -/
@@ -1284,32 +1284,32 @@ theorem coefficientScale :
     Curves.Plane.Conic.Scale.CoefficientScale quadrolaConic
       ExampleFifteenNine.printedConic 5 := by
   constructor <;>
-    unfold quadrolaConic ExampleFifteenNine.printedConic Geometry.Conics.Quadrola.conic
-      Geometry.Conics.Quadrola.conicD Geometry.Conics.Quadrola.conicE
-        Geometry.Conics.Quadrola.conicF Geometry.Conics.Quadrola.conicA
-      Geometry.Conics.Quadrola.conicB Geometry.Conics.Quadrola.conicC firstFocus
+    unfold quadrolaConic ExampleFifteenNine.printedConic Conics.Quadrola.conic
+      Conics.Quadrola.conicD Conics.Quadrola.conicE
+        Conics.Quadrola.conicF Conics.Quadrola.conicA
+      Conics.Quadrola.conicB Conics.Quadrola.conicC firstFocus
         secondFocus <;>
     decide
 
 /-- Exercise 15.16 is false as printed: the displayed `F₁₁` grammola is the
 same conic proportion as this valid quadrola with associated quadrance eight. -/
 theorem exercise_15_16_printed_counterexample :
-    Geometry.Conics.Quadrola.Presentation firstFocus secondFocus 8 ∧
+    Conics.Quadrola.Presentation firstFocus secondFocus 8 ∧
       Curves.Plane.Conic.Scale.CoefficientScale quadrolaConic
         ExampleFifteenNine.printedConic 5 :=
   ⟨presentation, coefficientScale⟩
 
 /-- The metric quadrola equation and the printed grammola equation therefore
 have exactly the same finite locus. -/
-theorem same_locus (point : Geometry.Plane.Point Finite.Eleven.Element) :
-    Geometry.Conics.Quadrola.Contains firstFocus secondFocus 8 point ↔
+theorem same_locus (point : Point Finite.Eleven.Element) :
+    Conics.Quadrola.Contains firstFocus secondFocus 8 point ↔
       ExampleFifteenNine.printedConic.Contains point := by
   have definingEquation :
-      Geometry.Conics.Quadrola.Contains firstFocus secondFocus 8 point ↔
+      Conics.Quadrola.Contains firstFocus secondFocus 8 point ↔
         quadrolaConic.Contains point := by
-    unfold Geometry.Conics.Quadrola.Contains Curves.Plane.Conic.Contains quadrolaConic
-    rw [Geometry.Conics.Quadrola.conic_evaluate]
-  have coefficientLocus := Geometry.Conics.CoefficientScale.Locus.conic_contains_iff_of_coefficient_scale
+    unfold Conics.Quadrola.Contains Curves.Plane.Conic.Contains quadrolaConic
+    rw [Conics.Quadrola.conic_evaluate]
+  have coefficientLocus := Conics.CoefficientScale.Locus.conic_contains_iff_of_coefficient_scale
     quadrolaConic ExampleFifteenNine.printedConic 5 (by decide)
       coefficientScale.d coefficientScale.e coefficientScale.f
       coefficientScale.a coefficientScale.b coefficientScale.c point
@@ -1321,10 +1321,10 @@ namespace ExerciseFifteenSeventeen
 
 /-- The two rationally displayed foci used for a quadrola whose quadratic
 trace vanishes. -/
-def firstFocus (K : Type*) [ExplicitField K] : Geometry.Plane.Point K := ⟨1, 0⟩
+def firstFocus (K : Type*) [ExplicitField K] : Point K := ⟨1, 0⟩
 
 /-- The second focus (−1, 0) of the zero-trace quadrola. -/
-def secondFocus (K : Type*) [ExplicitField K] : Geometry.Plane.Point K := ⟨-1, 0⟩
+def secondFocus (K : Type*) [ExplicitField K] : Point K := ⟨-1, 0⟩
 
 /-- The two symmetric foci have quadrance four. -/
 theorem focus_quadrance :
@@ -1336,10 +1336,10 @@ theorem focus_quadrance :
 four, so it is a valid quadrola over every constructive field outside
 characteristic two. -/
 theorem presentation (twoNonzero : (2 : K) ≠ 0) :
-    Geometry.Conics.Quadrola.Presentation (firstFocus K) (secondFocus K) 2 := by
+    Conics.Quadrola.Presentation (firstFocus K) (secondFocus K) 2 := by
   constructor
   · intro equal
-    have xEqual := congrArg Geometry.Plane.Point.x equal
+    have xEqual := congrArg Point.x equal
     apply twoNonzero
     calc
       (2 : K) = 1 - (-1) := by ring1
@@ -1348,7 +1348,7 @@ theorem presentation (twoNonzero : (2 : K) ≠ 0) :
   · exact twoNonzero
   · rw [focus_quadrance]
     exact (fun {K : Type _} [ExplicitField K] (twoNonzero : (2 : K) ≠ 0) =>
-      (Purelib.Algebra.Field.Characteristic.Nonzero.four_ne_zero (K := K) twoNonzero : (4 : K) ≠ 0)) twoNonzero
+      (Characteristic.Nonzero.four_ne_zero (K := K) twoNonzero : (4 : K) ≠ 0)) twoNonzero
   · intro equalQuadrance
     apply twoNonzero
     calc
@@ -1362,7 +1362,7 @@ theorem presentation (twoNonzero : (2 : K) ≠ 0) :
 Its construction retains the nonzero-two certificate, which also supplies the required nonzero-eight denominator
 condition. -/
 def exampleConic [DecidableEq K] (twoNonzero : (2 : K) ≠ 0) : Curves.Plane.Conic K :=
-  Geometry.Conics.Quadrola.conic (firstFocus K) (secondFocus K) 2 twoNonzero
+  Conics.Quadrola.conic (firstFocus K) (secondFocus K) 2 twoNonzero
     (by
       have eightAsProduct : (8 : K) = (2 * 2) * 2 := by ring1
       rw [eightAsProduct]
@@ -1374,8 +1374,8 @@ def exampleConic [DecidableEq K] (twoNonzero : (2 : K) ≠ 0) : Curves.Plane.Con
 theorem example_trace_zero [DecidableEq K]
     (twoNonzero : (2 : K) ≠ 0) :
     (exampleConic twoNonzero).d + (exampleConic twoNonzero).f = 0 := by
-  unfold exampleConic Geometry.Conics.Quadrola.conic Geometry.Conics.Quadrola.conicD
-    Geometry.Conics.Quadrola.conicF
+  unfold exampleConic Conics.Quadrola.conic Conics.Quadrola.conicD
+    Conics.Quadrola.conicF
     firstFocus secondFocus
   ring1
 
@@ -1384,20 +1384,20 @@ grammola conic, in either coefficient-scale direction.  The proof uses only
 the zero/nonzero quadratic-trace invariant. -/
 theorem exercise_15_17 [DecidableEq K]
     (twoNonzero : (2 : K) ≠ 0) :
-    Geometry.Conics.Quadrola.Presentation (firstFocus K) (secondFocus K) 2 ∧
-      ∀ (firstDiagonal secondDiagonal : Geometry.Plane.Line K)
+    Conics.Quadrola.Presentation (firstFocus K) (secondFocus K) 2 ∧
+      ∀ (firstDiagonal secondDiagonal : Line K)
         (associatedQuadrance : K)
         (grammolaPresentation :
-          Geometry.Conics.Grammola.Presentation firstDiagonal secondDiagonal
+          Conics.Grammola.Presentation firstDiagonal secondDiagonal
             associatedQuadrance)
         (scale : K), scale ≠ 0 →
           (¬ Curves.Plane.Conic.Scale.CoefficientScale (exampleConic twoNonzero)
-            (Geometry.Conics.Grammola.conic firstDiagonal secondDiagonal
+            (Conics.Grammola.conic firstDiagonal secondDiagonal
               grammolaPresentation.firstNonNull
               grammolaPresentation.secondNonNull associatedQuadrance
               twoNonzero) scale) ∧
           (¬ Curves.Plane.Conic.Scale.CoefficientScale
-            (Geometry.Conics.Grammola.conic firstDiagonal secondDiagonal
+            (Conics.Grammola.conic firstDiagonal secondDiagonal
               grammolaPresentation.firstNonNull
               grammolaPresentation.secondNonNull associatedQuadrance
               twoNonzero) (exampleConic twoNonzero) scale) := by
@@ -1405,12 +1405,12 @@ theorem exercise_15_17 [DecidableEq K]
   intro firstDiagonal secondDiagonal associatedQuadrance
     grammolaPresentation scale scaleNonzero
   let grammolaConic :=
-    Geometry.Conics.Grammola.conic firstDiagonal secondDiagonal
+    Conics.Grammola.conic firstDiagonal secondDiagonal
       grammolaPresentation.firstNonNull
       grammolaPresentation.secondNonNull associatedQuadrance twoNonzero
   have grammolaTraceNonzero : grammolaConic.d + grammolaConic.f ≠ 0 := by
     unfold grammolaConic
-    exact Geometry.Conics.Grammola.conic_trace_nonzero firstDiagonal secondDiagonal
+    exact Conics.Grammola.conic_trace_nonzero firstDiagonal secondDiagonal
       grammolaPresentation.firstNonNull
       grammolaPresentation.secondNonNull associatedQuadrance twoNonzero
   constructor

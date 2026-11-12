@@ -63,6 +63,8 @@ import Purelib.Riemann.RootContinuation.SquareRootChannelOwnership
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
@@ -113,24 +115,24 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths (Segment)
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {owners :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.OwnedEndpoints regular cell}
-  {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell} {target :
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
+    UniformReciprocalCover.Cell data edge}
+  {regular : RegularBounds.Data cap} {owners :
+    ParentOwners.OwnedEndpoints regular cell}
+  {comparison : ArcSamples.Data regular cell} {target :
     Coordinate} {floor : Nat}
-  {index depth stage minimum : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {source : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
+  {index depth stage minimum : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {source : UniformReciprocalPrimitives.SourcePrimitive data index}
   {request : AreaRequest comparison owners target
     floor}
   {charts : ChartMesh request.mesh capSample minimum}
-  {original : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentCells.ComparedCell comparison source capSample
+  {original : ParentCells.ComparedCell comparison source capSample
     depth}
 
 namespace AreaRequest.Evaluation
@@ -141,16 +143,16 @@ variable {evaluated : Evaluation charts
 /-- The reversed actual cap-edge area sum is the negative complete primitive trace area along the retained
 root-coordinate chain. -/
 private theorem reverse_trace (branch : HyperellipticReciprocal.originOrder curve = 1)
-    (segments : List (VertexPaths.Segment regular owners.model original.sample request.tolerance floor stage))
-    {first last : InverseRootPolynomial.Gaussian} (chain : Segment.From first segments last) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (segments.map (fun segment =>
-      Purelib.Integration.Path.BoundaryRibbon.area segment.last.chartValue segment.first.chartValue)) =
+    (segments : List (Segment regular owners.model original.sample request.tolerance floor stage))
+    {first last : Gaussian} (chain : Segment.From first segments last) :
+    gaussianSum (segments.map (fun segment =>
+      area segment.last.chartValue segment.first.chartValue)) =
       -IncrementArea.traceArea (capSample.primitive.value.eval first) (segments.map Segment.chartIncrement) := by
   induction segments generalizing first with
   | nil => change 0 = -0; ring1
   | cons head tail ih =>
       change first = head.first.root.coordinate ∧ Segment.From head.last.root.coordinate tail last at chain
-      simp only [List.map_cons, Data.Gaussian.Norm.Sum.Basic.gaussianSum, IncrementArea.traceArea]
+      simp only [List.map_cons, gaussianSum, IncrementArea.traceArea]
       rw [ih chain.2, chain.1, head.chart_eq]
       have firstValue : head.first.chartValue = capSample.primitive.value.eval head.first.root.coordinate := by
         have value := head.first.chart_eq
@@ -162,19 +164,19 @@ private theorem reverse_trace (branch : HyperellipticReciprocal.originOrder curv
         exact value
       rw [← firstValue, ← lastValue, show head.first.chartValue + (head.last.chartValue - head.first.chartValue) =
         head.last.chartValue by ring1]
-      have reverse : BoundaryRibbon.area head.last.chartValue head.first.chartValue = -BoundaryRibbon.area
+      have reverse : area head.last.chartValue head.first.chartValue = -area
         head.first.chartValue head.last.chartValue := by
-        unfold BoundaryRibbon.area; ring1
+        unfold area; ring1
       rw [reverse]
       ring1
 
 /-- The reversed retained chart-edge area sum equals the negative full chart polygon area minus its actual endpoint
 chord. -/
-theorem reversed_chart_area (evaluated : AreaRequest.Evaluation charts original stage)
+theorem reversed_chart_area (evaluated : Evaluation charts original stage)
     (branch : HyperellipticReciprocal.originOrder curve = 1) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (evaluated.vertices.path.segments.map (fun segment =>
-      BoundaryRibbon.area segment.last.chartValue segment.first.chartValue)) =
-      -evaluated.vertices.path.chart.area - BoundaryRibbon.area evaluated.vertices.first.chartValue
+    gaussianSum (evaluated.vertices.path.segments.map (fun segment =>
+      area segment.last.chartValue segment.first.chartValue)) =
+      -evaluated.vertices.path.chart.area - area evaluated.vertices.first.chartValue
         evaluated.vertices.last.chartValue := by
   have trace := reverse_trace
     branch evaluated.vertices.path.segments evaluated.vertices.path.chain
@@ -195,10 +197,10 @@ variable {energyTarget : Coordinate} {energyFloor : Nat}
 
 /-- The actual energy surface is compared with the existing chart polygon, including its primitive offset and the two
 uncancelled radial sides. -/
-theorem chart_boundary_close (energy : Evaluation.RequestedEnergy evaluated energyTarget energyFloor)
+theorem chart_boundary_close (energy : RequestedEnergy evaluated energyTarget energyFloor)
     (branch : HyperellipticReciprocal.originOrder curve = 1) :
-    Data.Gaussian.Norm.Basic.normSq (energy.area - (-evaluated.vertices.path.chart.area -
-      BoundaryRibbon.area evaluated.vertices.first.chartValue evaluated.vertices.last.chartValue +
+    Basic.normSq (energy.area - (-evaluated.vertices.path.chart.area -
+      area evaluated.vertices.first.chartValue evaluated.vertices.last.chartValue +
       RootRadialGeometry.radialArea capSample.primitive.value.eval energy.request.depth
         evaluated.vertices.last.root.coordinate -
       RootRadialGeometry.radialArea capSample.primitive.value.eval energy.request.depth
@@ -208,57 +210,57 @@ theorem chart_boundary_close (energy : Evaluation.RequestedEnergy evaluated ener
     segment.last.root.coordinate segment.first.root.coordinate)) energy.segments_eq
   simp only [Data.List.Map.map_map, Function.comp_def] at mapped
   have bound := Evaluation.refined_arc_error evaluated branch energy.request.depth
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergyBoundary.AreaRequest.Evaluation.reversed_chart_area
+  rw [reversed_chart_area
     evaluated branch] at bound
   rw [energy.boundary, mapped]
-  refine (congrArg Data.Gaussian.Norm.Basic.normSq ?_).trans_lt bound
+  refine (congrArg Basic.normSq ?_).trans_lt bound
   ring1
 
 /-- The same finite energy surface now has a paid comparison with the original cap-comparison path, retaining all
 endpoint terms. -/
-theorem source_boundary_close (energy : Evaluation.RequestedEnergy evaluated energyTarget energyFloor)
+theorem source_boundary_close (energy : RequestedEnergy evaluated energyTarget energyFloor)
     (branch : HyperellipticReciprocal.originOrder curve = 1) :
-    Data.Gaussian.Norm.Basic.normSq (energy.area - (-original.capSummary.area -
-      BoundaryRibbon.area evaluated.vertices.first.chartValue evaluated.vertices.last.chartValue +
+    Basic.normSq (energy.area - (-original.capSummary.area -
+      area evaluated.vertices.first.chartValue evaluated.vertices.last.chartValue +
       RootRadialGeometry.radialArea capSample.primitive.value.eval energy.request.depth
         evaluated.vertices.last.root.coordinate -
       RootRadialGeometry.radialArea capSample.primitive.value.eval energy.request.depth
         evaluated.vertices.first.root.coordinate)) < 4 * target := by
-  let endpoints := -BoundaryRibbon.area evaluated.vertices.first.chartValue evaluated.vertices.last.chartValue +
+  let endpoints := -area evaluated.vertices.first.chartValue evaluated.vertices.last.chartValue +
     RootRadialGeometry.radialArea capSample.primitive.value.eval energy.request.depth
       evaluated.vertices.last.root.coordinate -
     RootRadialGeometry.radialArea capSample.primitive.value.eval energy.request.depth
       evaluated.vertices.first.root.coordinate
-  have chart : Data.Gaussian.Norm.Basic.normSq (energy.area - (-evaluated.vertices.path.chart.area +
+  have chart : Basic.normSq (energy.area - (-evaluated.vertices.path.chart.area +
     endpoints)) < target := by
-    refine (congrArg Data.Gaussian.Norm.Basic.normSq ?_).trans_lt
+    refine (congrArg Basic.normSq ?_).trans_lt
       (chart_boundary_close
       energy branch)
     dsimp only [endpoints]
     ring1
-  have difference : Data.Gaussian.Norm.Basic.normSq ((-evaluated.vertices.path.chart.area + endpoints) -
+  have difference : Basic.normSq ((-evaluated.vertices.path.chart.area + endpoints) -
     (-original.capSummary.area + endpoints)) < target := by
-    exact (congrArg Data.Gaussian.Norm.Basic.normSq (by ring1 : (-evaluated.vertices.path.chart.area +
+    exact (congrArg Basic.normSq (by ring1 : (-evaluated.vertices.path.chart.area +
       endpoints) - (-original.capSummary.area + endpoints) =
       original.capSummary.area - evaluated.vertices.path.chart.area)).trans_lt evaluated.area_error
-  have estimate := (Data.Gaussian.Norm.Bounds.normSq_sub_le_via energy.area (-evaluated.vertices.path.chart.area +
+  have estimate := (Bounds.normSq_sub_le_via energy.area (-evaluated.vertices.path.chart.area +
     endpoints) (-original.capSummary.area + endpoints)).trans_lt
-    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : InverseRootPolynomial.Coordinate) < 2)
+    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Coordinate) < 2)
       (Fraction.Order.Arithmetic.add_lt_add_direct chart difference))
-  have normalized : Data.Gaussian.Norm.Basic.normSq (energy.area - (-original.capSummary.area + endpoints)) < 4
+  have normalized : Basic.normSq (energy.area - (-original.capSummary.area + endpoints)) < 4
     * target := estimate.trans_eq (by ring1)
-  refine (congrArg Data.Gaussian.Norm.Basic.normSq ?_).trans_lt normalized
+  refine (congrArg Basic.normSq ?_).trans_lt normalized
   dsimp only [endpoints]
   ring1
 
 /-- Transfer the signed energy bound to the original cap-comparison polygon once its squared area allowance is paid by a
 linear energy budget. -/
-theorem source_lower (energy : Evaluation.RequestedEnergy evaluated energyTarget energyFloor)
-    (branch : HyperellipticReciprocal.originOrder curve = 1) (budget : InverseRootPolynomial.Coordinate) (nonnegative :
+theorem source_lower (energy : RequestedEnergy evaluated energyTarget energyFloor)
+    (branch : HyperellipticReciprocal.originOrder curve = 1) (budget : Coordinate) (nonnegative :
       0 ≤ budget)
     (paid : 4 * target ≤ (4 * budget) ^ 2) :
     -energyTarget - budget < (-original.capSummary.area -
-      BoundaryRibbon.area evaluated.vertices.first.chartValue evaluated.vertices.last.chartValue +
+      area evaluated.vertices.first.chartValue evaluated.vertices.last.chartValue +
       RootRadialGeometry.radialArea capSample.primitive.value.eval energy.request.depth
         evaluated.vertices.last.root.coordinate -
       RootRadialGeometry.radialArea capSample.primitive.value.eval energy.request.depth

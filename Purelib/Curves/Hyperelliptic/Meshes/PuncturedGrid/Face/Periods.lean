@@ -170,7 +170,7 @@ open Purelib.Curves.Hyperelliptic.Integration.Observation.UniformPreparedMesh (C
 open Purelib.Riemann.Readings.PreparedPrimitiveSamples (differentialNumerator)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face :
@@ -181,11 +181,11 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 set_option genInjectivity false in
 /-- The actual root-closed grid program, together with geometric containment. No vanishing-period or
 primitive-compatibility certificate is an input. -/
-structure ContainedPeriod (models : BranchCellBank.FaceModels frames face) (sheet : Fin 2) (source :
-  Differentials.Basic.Differential genus) where
+structure ContainedPeriod (models : FaceModels frames face) (sheet : Fin 2) (source :
+  Differential genus) where
   /-- The actual original root-closed grid period on the retained face sheet. -/ period :
-    PreparedGridPeriodPrograms.PeriodWalk bank.grid face.cell.box.anchor (models.frame.owners sheet) source
-  /-- Every point of the original closed walk lies in the retained clear face box. -/ inside : ClearPath.InBox
+    PeriodWalk bank.grid face.cell.box.anchor (models.frame.owners sheet) source
+  /-- Every point of the original closed walk lies in the retained clear face box. -/ inside : InBox
     face.cell.box period.closed.walk.path
 
 constructive_injectivity ContainedPeriod
@@ -193,12 +193,12 @@ constructive_injectivity ContainedPeriod
 namespace ContainedPeriod
 
 /-- Reuse the original covered face walk and its traced owners to certify a root-closed period on the selected sheet. -/
-def ofCovered (models : BranchCellBank.FaceModels frames face) (sheet : Fin 2) (source :
-  Differentials.Basic.Differential genus)
-    (walk : Walks.Walk bank.grid face.cell.box.anchor face.cell.box.anchor) (inside : ClearPath.InBox face.cell.box
+def ofCovered (models : FaceModels frames face) (sheet : Fin 2) (source :
+  Differential genus)
+    (walk : Walks.Walk bank.grid face.cell.box.anchor face.cell.box.anchor) (inside : InBox face.cell.box
       walk.path)
-    (covered : PreparedClearPathModels.CoveredTracedPath walk.path (models.frame.owners sheet)) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.ContainedPeriod models sheet source :=
+    (covered : CoveredTracedPath walk.path (models.frame.owners sheet)) :
+      ContainedPeriod models sheet source :=
   let reference := (BranchCellBank.referenceAt bank _ (face.cell.anchor_mem face.member)).toLoop
   have winding := ClearPath.rawWinding_zero_of_inBox face.clearance (Nat.zero_lt_of_lt higher) walk.path inside
   let closed : Grid.RootClosedWalk bank.grid face.cell.box.anchor (models.frame.owners sheet) :=
@@ -210,25 +210,25 @@ def ofCovered (models : BranchCellBank.FaceModels frames face) (sheet : Fin 2) (
 
 /-- Prepare the actual contained face period, shared rectangular domain or differential mesh while retaining their
 original owners. -/
-def build (models : BranchCellBank.FaceModels frames face) (sheet : Fin 2) (source : Differentials.Basic.Differential
+def build (models : FaceModels frames face) (sheet : Fin 2) (source : Differential
   genus)
-    (walk : Walks.Walk bank.grid face.cell.box.anchor face.cell.box.anchor) (inside : ClearPath.InBox face.cell.box
+    (walk : Walks.Walk bank.grid face.cell.box.anchor face.cell.box.anchor) (inside : InBox face.cell.box
       walk.path) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.ContainedPeriod models sheet source :=
+    ContainedPeriod models sheet source :=
   ofCovered models sheet source walk inside
     (CoveredTracedPath.build walk.path walk.withinAmbient (models.frame.owners sheet))
 
 /-- Recasting the original period parents gives exactly the retained prepared path's differential parent list. -/
-theorem parents_eq (loop : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.ContainedPeriod models sheet source)
-  (target : Differentials.Basic.Differential genus) :
+theorem parents_eq (loop : ContainedPeriod models sheet source)
+  (target : Differential genus) :
     loop.period.initial.state.parents.map (PreparedEdgeRecasting.recastCenteredEdge target) =
       (CenteredPathChain.ofPreparedPath curve target 0 loop.period.closed.traced.prepared).parents := by
   rw [loop.period.initial_eq, RootClosedWalk.initial_parents, PreparedPathDifferentialRecasting.ofPreparedPath_recast]
 
 /-- Read the original closed centered-parent chain after differential recasting. -/
-def chain (loop : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.ContainedPeriod models sheet source) (target :
-  Differentials.Basic.Differential genus) :
-    PreparedDirectDyadicRefinements.CenteredPathChain (loop.period.initial.state.parents.map
+def chain (loop : ContainedPeriod models sheet source) (target :
+  Differential genus) :
+    CenteredPathChain (loop.period.initial.state.parents.map
       (PreparedEdgeRecasting.recastCenteredEdge target))
       (start := ⟨face.cell.box.anchor, 0⟩) (finish := ⟨face.cell.box.anchor, 0⟩) := by
   rw [loop.parents_eq target]
@@ -237,7 +237,7 @@ def chain (loop : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.Contain
 end ContainedPeriod
 
 /-- The four original face edges are contained in their own clear box. -/
-theorem boundary_inside (face : PuncturedGridFaces.RegularFace bank) : ClearPath.InBox face.cell.box face.boundary.path
+theorem boundary_inside (face : RegularFace bank) : InBox face.cell.box face.boundary.path
   := by
   change face.cell.box.Contains face.cell.box.anchor ∧
     face.cell.box.Contains (Components.Basic.point face.cell.box.xUpper face.cell.box.yLower) ∧
@@ -250,49 +250,112 @@ theorem boundary_inside (face : PuncturedGridFaces.RegularFace bank) : ClearPath
     ⟨le_rfl, face.cell.box.x_valid, face.cell.box.y_valid, le_rfl⟩, face.cell.box.contains_anchor⟩
 
 /-- An automatic actual boundary program on either local sheet. -/
-def boundaryPeriod (models : BranchCellBank.FaceModels frames face) (sheet : Fin 2) (source :
-  Differentials.Basic.Differential genus) :
+def boundaryPeriod (models : FaceModels frames face) (sheet : Fin 2) (source :
+  Differential genus) :
     ContainedPeriod models sheet source :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.ContainedPeriod.build models sheet source face.boundary
+  ContainedPeriod.build models sheet source face.boundary
     (boundary_inside face)
 
 /-- The retained boundary period uses exactly the original regular face boundary walk. -/
-theorem boundaryPeriod_walk (models : BranchCellBank.FaceModels frames face) (sheet : Fin 2) (source :
-  Differentials.Basic.Differential genus) :
+theorem boundaryPeriod_walk (models : FaceModels frames face) (sheet : Fin 2) (source :
+  Differential genus) :
     (boundaryPeriod models sheet source).period.closed.walk =
       face.boundary := rfl
 
 set_option genInjectivity false in
 /-- The complete face, not merely an arbitrary family of refining cells. The materialized axes are reused by every
 request. Checked generated axes may replace the uniform constructor through the same coverage contract. -/
-structure PeriodDomain (models : BranchCellBank.FaceModels frames face) (sheet : Fin 2) where
+structure PeriodDomain (models : FaceModels frames face) (sheet : Fin 2) where
   /-- The cached finite subdivision count on both original face axes. -/ steps : Nat
   /-- The retained rectangular grid on the complete original face box. -/ geometry : RectangularInverseModels.Geometry
     steps steps
   /-- The cached grid covers every point of the original face box. -/ covers : ∀ {point :
-    Data.Gaussian.Basic.Canonical}, face.cell.box.Contains point → Geometry.Covers geometry point
+    Basic.Canonical}, face.cell.box.Contains point → Geometry.Covers geometry point
   /-- The retained grid begins at the original face box anchor. -/ anchor_eq : (geometry.box 0 0).anchor =
     face.cell.box.anchor
   /-- The retained face inverse-model patch on this exact original grid and sheet. -/ patch :
-    RectangularFaceModels.RectangularPatch models.bounds (models.frame.owners sheet) geometry
+    RectangularPatch models.bounds (models.frame.owners sheet) geometry
   /-- The cached cut axes used to split the original retained parent paths. -/ cuts :
-    RectangularSegmentSplitting.GridCuts geometry
+    GridCuts geometry
 
 constructive_injectivity PeriodDomain
 
 namespace PeriodDomain
 
+open Purelib.Topology.Mesh.CoordinateTriangulation (VertexLookup)
+
 /-- Prepare the actual contained face period, shared rectangular domain or differential mesh while retaining their
 original owners. -/
-def build (models : BranchCellBank.FaceModels frames face) (sheet : Fin 2) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain models sheet :=
-  let steps := Geometry.Rectangle.Partition.RectangularUniformGeometry.dyadicSteps models.mesh.depth
-  let geometry := Geometry.Rectangle.Partition.RectangularUniformGeometry.uniform face.cell.box face.cell.box_proper
+def build (models : FaceModels frames face) (sheet : Fin 2) :
+  PeriodDomain models sheet :=
+  let steps := Rectangle.Partition.RectangularUniformGeometry.dyadicSteps models.mesh.depth
+  let geometry := Rectangle.Partition.RectangularUniformGeometry.uniform face.cell.box face.cell.box_proper
       steps
   ⟨steps, geometry, Geometry.uniform_covers face.cell.box face.cell.box_proper steps,
-    Geometry.Rectangle.Partition.RectangularUniformGeometry.uniform_anchor face.cell.box face.cell.box_proper steps,
+    Rectangle.Partition.RectangularUniformGeometry.uniform_anchor face.cell.box face.cell.box_proper steps,
     RectangularPatch.acquire (RectangularLayout.ofMesh models.mesh face.cell.box_proper) (models.frame.owners sheet),
     GridCuts.build geometry⟩
+
+/-- Transport the complete original face domain along a proved equality of its actual sheet indices. -/
+def castSheet {first last : Fin 2} (equal : first = last) (domain : PeriodDomain models first) :
+    PeriodDomain models last := by
+  cases equal
+  exact domain
+
+/-- Transport along the reflexive sheet equation retains the complete original domain. -/
+theorem castSheet_refl (domain : PeriodDomain models sheet) : castSheet rfl domain = domain := by
+  unfold castSheet
+  rfl
+
+/-- Sheet-index transport preserves the whole retained domain, including its geometry, patch and cut caches. -/
+theorem castSheet_heq {first last : Fin 2} (equal : first = last) (domain : PeriodDomain models first) :
+    HEq (castSheet equal domain) domain := by
+  cases equal
+  unfold castSheet
+  rfl
+
+/-- Sheet-index transport changes no cached finite subdivision count. -/
+theorem castSheet_steps {first last : Fin 2} (equal : first = last) (domain : PeriodDomain models first) :
+    (castSheet equal domain).steps = domain.steps := by
+  cases equal
+  unfold castSheet
+  rfl
+
+universe u
+
+/-- Reindex one retained numerical surface and lookup along the actual whole-domain sheet transport.
+
+The target domain has its complete original castSheet factory equation.
+Equality elimination transports the given triangles, surface and lookup;
+it executes no geometry, triangulation, point-location or numerical
+factory. The coordinate equation changes only the lookup's point index.
+Whole-value heterogeneous identities, the original vertex list and the
+exact selected occurrence preserve the supplied numerical owners.
+-/
+def withSurfaceView {first last : Fin 2}
+    (equal : first = last) (original : PeriodDomain models first) (target : PeriodDomain models last)
+    (target_eq : target = castSheet equal original)
+    {triangles : List (RectangularOwnedTriangulation.ModelTriangle original.geometry)}
+    (surface : RectangularOwnedTriangulation.OwnedTriangulation triangles)
+    {firstPoint lastPoint : Basic.Canonical}
+    (lookup : VertexLookup surface.mesh.vertices firstPoint)
+    (point_eq : firstPoint = lastPoint) {Result : Type u}
+    (consume : HEq target.geometry original.geometry →
+      (viewTriangles : List (RectangularOwnedTriangulation.ModelTriangle target.geometry)) →
+      HEq viewTriangles triangles →
+      (view : RectangularOwnedTriangulation.OwnedTriangulation viewTriangles) →
+      HEq view surface →
+      view.mesh.vertices = surface.mesh.vertices →
+      (viewLookup : VertexLookup view.mesh.vertices lastPoint) →
+      HEq viewLookup lookup →
+      viewLookup.index.val = lookup.index.val →
+      HEq (view.owners viewLookup.index) (surface.owners lookup.index) → Result) : Result := by
+  cases equal
+  have same : target = original := target_eq.trans (castSheet_refl original)
+  cases same
+  cases point_eq
+  exact consume (HEq.refl original.geometry) triangles (HEq.refl triangles) surface (HEq.refl surface) rfl
+    lookup (HEq.refl lookup) rfl (HEq.refl (surface.owners lookup.index))
 
 end PeriodDomain
 
@@ -303,17 +366,17 @@ The parent splitting, coverage and analytic bounds retain the actual period pare
 located in the cached mesh. -/
 structure PeriodMesh (domain : PeriodDomain models sheet) (loop :
   ContainedPeriod models sheet source)
-    (differential : Differentials.Basic.Differential genus) where
+    (differential : Differential genus) where
   /-- The cached splitting of the original differential-recast period parents. -/ mesh :
-    PreparedParentSplitting.PreparedSplitMesh domain.cuts (loop.period.initial.state.parents.map
+    PreparedSplitMesh domain.cuts (loop.period.initial.state.parents.map
     (PreparedEdgeRecasting.recastCenteredEdge differential)) [face.cell.box.anchor]
   /-- The original recast parents retain their actual primitive coverage. -/ covered :
     UniformPreparedMesh.CoveredParents genus
     (loop.period.initial.state.parents.map (PreparedEdgeRecasting.recastCenteredEdge differential))
-  /-- The cached fragment bounds for the original patch and differential. -/ bounds : FragmentReadings.FragmentBounds
+  /-- The cached fragment bounds for the original patch and differential. -/ bounds : FragmentBounds
     domain.patch differential
   /-- The retained global primitive overlap bounds from the original clear face and differential numerator. -/
-    globalBounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds face.clearance
+    globalBounds : PrimitiveOverlapBounds face.clearance
     (PreparedPrimitiveSamples.differentialNumerator differential)
   /-- The cached original face anchor's index in the retained mesh vertex bank. -/ anchor : Fin
     mesh.mesh.surface.mesh.vertices.length
@@ -326,10 +389,10 @@ namespace PeriodMesh
 
 /-- Prepare the actual contained face period, shared rectangular domain or differential mesh while retaining their
 original owners. -/
-def build (domain : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain models sheet) (loop :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.ContainedPeriod models sheet source)
-    (differential : Differentials.Basic.Differential genus) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodMesh domain loop differential :=
+def build (domain : PeriodDomain models sheet) (loop :
+  ContainedPeriod models sheet source)
+    (differential : Differential genus) :
+      PeriodMesh domain loop differential :=
   let mesh := PreparedSplitMesh.build domain.cuts
     (loop.period.initial.state.parents.map (PreparedEdgeRecasting.recastCenteredEdge differential))
     (fun parent member => by

@@ -7,6 +7,7 @@ import Purelib.Data.Gaussian.Power
 import Purelib.Algebra.Semiring.Normalization
 import Purelib.Data.Nat.Multiplication
 import Purelib.Polynomial.Ascending.Gaussian.Basic
+import Purelib.Polynomial.Ascending.Gaussian.Coefficient
 public import Purelib.Polynomial.Ascending.Gaussian.Evaluation
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
@@ -76,6 +77,39 @@ def evenCoefficients : List Gaussian -> List
   | [] => []
   | coefficient :: remaining =>
       coefficient :: 0 :: evenCoefficients remaining
+
+/-- The square substitution stores precisely two entries for each original coefficient. -/
+theorem evenCoefficients_length : ∀ coefficients : List Gaussian,
+    (evenCoefficients coefficients).length = 2 * coefficients.length
+  | [] => rfl
+  | _ :: tail => by
+      rewrite [evenCoefficients, List.length_cons, List.length_cons, evenCoefficients_length]
+      rewrite [List.length_cons]
+      omega
+
+/-- Every even coordinate of the square substitution reads its original coefficient. -/
+theorem evenCoefficients_even : ∀ (coefficients : List Gaussian) (degree : Nat),
+    Coefficient.coefficientList (evenCoefficients coefficients) (2 * degree) =
+      Coefficient.coefficientList coefficients degree
+  | [], _ => rfl
+  | _ :: _, 0 => rfl
+  | _ :: tail, degree + 1 => by
+      have successor : 2 * (degree + 1) = 2 * degree + 1 + 1 := by omega
+      rewrite [successor]
+      exact evenCoefficients_even tail degree
+
+/-- Every odd coordinate of the square substitution is exactly zero.
+
+The proof follows the finite table and includes coordinates beyond its stored
+length. It is the coefficient parity needed by ramified infinity calculations. -/
+theorem evenCoefficients_odd : ∀ (coefficients : List Gaussian) (degree : Nat),
+    Coefficient.coefficientList (evenCoefficients coefficients) (2 * degree + 1) = 0
+  | [], _ => rfl
+  | _ :: _, 0 => rfl
+  | _ :: tail, degree + 1 => by
+      have successor : 2 * (degree + 1) + 1 = (2 * degree + 1) + 1 + 1 := by omega
+      rewrite [successor]
+      exact evenCoefficients_odd tail degree
 
 /-- Direct finite Horner evaluation in the squared chart parameter. -/
 def evenHorner (squareParameter : Gaussian) : List
@@ -320,3 +354,24 @@ theorem differentialExponent_eq {genus : Nat}
   rfl
 
 end Purelib.Curves.Hyperelliptic.Charts.Infinity
+
+end
+
+public section
+
+namespace Purelib.Curves.Hyperelliptic.Charts.Infinity
+
+/-- The original finite even Horner recursion is the same ascending coefficient evaluation. -/
+theorem evenHorner_eq_evalCoeffs (point : Gaussian) :
+    ∀ coefficients : List Gaussian,
+      evenHorner point coefficients = Evaluation.evalCoeffs coefficients point
+  | [] => rfl
+  | coefficient :: remaining => by
+      change coefficient + point * evenHorner point remaining =
+        coefficient + point * Evaluation.evalCoeffs remaining point
+      rewrite [evenHorner_eq_evalCoeffs point remaining]
+      rfl
+
+end Purelib.Curves.Hyperelliptic.Charts.Infinity
+
+end

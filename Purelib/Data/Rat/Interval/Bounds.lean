@@ -1,4 +1,5 @@
 module
+public import Purelib.Data.Rat.Fraction.Square
 import Purelib.Data.Rat.Fraction
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Arithmetic
@@ -7,6 +8,8 @@ public import Purelib.Data.Rat.Interval.Width
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
+
+open Purelib.Data.Rat.Fraction.Order
 
 /-!
 # Endpoint-square bounds for rational intervals
@@ -31,33 +34,33 @@ public theorem sq_le_endpoint_max {lower value upper : Fraction.Rational}
   by_cases hvalue : 0 ≤ value
   · have hupperNonnegative : 0 ≤ upper := hvalue.trans hupper
     have hfirst : value * value ≤ upper * value :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct hupper hvalue
+      Arithmetic.mul_le_mul_of_nonneg_right_direct hupper hvalue
     have hsecond : value * upper ≤ upper * upper :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         hupper hupperNonnegative
     have hsquare : value ^ 2 ≤ upper ^ 2 := by
       rw [pow_two, pow_two]
       exact hfirst.trans (by
         rw [Fraction.Field.mul_comm upper value]
         exact hsecond)
-    exact hsquare.trans (Fraction.Order.Basic.le_max_right _ _)
+    exact hsquare.trans (Basic.le_max_right _ _)
   · have hvalueNonpositive : value ≤ 0 :=
-      Fraction.Order.Arithmetic.le_of_not_gt_direct fun positive => hvalue positive.1
+      Arithmetic.le_of_not_gt_direct fun positive => hvalue positive.1
     have hlowerNonpositive : lower ≤ 0 := hlower.trans hvalueNonpositive
-    have hneg : -value ≤ -lower := Fraction.Order.Arithmetic.neg_le_neg_direct hlower
+    have hneg : -value ≤ -lower := Arithmetic.neg_le_neg_direct hlower
     have hnegValueNonnegative : 0 ≤ -value := by
-      have comparison := Fraction.Order.Arithmetic.neg_le_neg_direct hvalueNonpositive
+      have comparison := Arithmetic.neg_le_neg_direct hvalueNonpositive
       rw [show -(0 : Fraction.Rational) = 0 by decide] at comparison
       exact comparison
     have hnegLowerNonnegative : 0 ≤ -lower := by
-      have comparison := Fraction.Order.Arithmetic.neg_le_neg_direct hlowerNonpositive
+      have comparison := Arithmetic.neg_le_neg_direct hlowerNonpositive
       rw [show -(0 : Fraction.Rational) = 0 by decide] at comparison
       exact comparison
     have hfirst : (-value) * (-value) ≤ (-lower) * (-value) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         hneg hnegValueNonnegative
     have hsecond : (-value) * (-lower) ≤ (-lower) * (-lower) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         hneg hnegLowerNonnegative
     have hsquare : value ^ 2 ≤ lower ^ 2 := by
       rw [pow_two, pow_two]
@@ -67,7 +70,7 @@ public theorem sq_le_endpoint_max {lower value upper : Fraction.Rational}
         _ = (-value) * (-lower) := Fraction.Field.mul_comm _ _
         _ ≤ (-lower) * (-lower) := hsecond
         _ = lower * lower := by ring1
-    exact hsquare.trans (Fraction.Order.Basic.le_max_left _ _)
+    exact hsquare.trans (Basic.le_max_left _ _)
 
 end Purelib.Geometry.Rational.Box
 
@@ -91,18 +94,18 @@ public theorem parameter_sub_sq_le_width_sq
       -(interval.upper - interval.lower) =
           interval.lower + -interval.upper := by ring1
       _ ≤ left + -right := add_le_add leftInside.1
-        (Fraction.Order.Arithmetic.neg_le_neg_direct rightInside.2)
+        (Arithmetic.neg_le_neg_direct rightInside.2)
       _ = left - right := by ring1
   have upper : left - right ≤ width := by
     dsimp only [width, Bounds.width]
     calc
       left - right = left + -right := by ring1
       _ ≤ interval.upper + -interval.lower := add_le_add leftInside.2
-        (Fraction.Order.Arithmetic.neg_le_neg_direct rightInside.1)
+        (Arithmetic.neg_le_neg_direct rightInside.1)
       _ = interval.upper - interval.lower := by ring1
   have square := Geometry.Rational.Box.sq_le_endpoint_max lower upper
   have negSquare : (-width) ^ 2 = width ^ 2 := by ring1
-  rw [negSquare, Fraction.Order.Basic.max_self] at square
+  rw [negSquare, Basic.max_self] at square
   exact square
 
 end Purelib.Data.Rat.Interval
@@ -111,26 +114,40 @@ namespace Purelib.Data.Rat.Interval.Bounds
 
 /-- Compute the maximum of the two retained endpoint squares.
 
-The original lower and upper endpoint squares determine the retained maximum.
-No endpoint, coordinate or comparison operation is replaced. -/
+The original lower and upper endpoints retain their reduced-fraction
+certificates. Direct coordinate squaring computes their canonical squares
+without cross-cancellation before the unchanged maximum comparison. -/
 @[expose] public def squareBound (interval : Bounds) : Fraction.Rational :=
-  max (interval.lower ^ 2) (interval.upper ^ 2)
+  max (Fraction.square interval.lower) (Fraction.square interval.upper)
+
+/-- The direct endpoint-square bound equals the maximum of the original endpoint powers.
+
+Both original canonical rational endpoints are retained. The original
+reduced-fraction square law identifies their direct products with the
+same second powers before the unchanged maximum is applied. -/
+public theorem squareBound_eq (interval : Bounds) :
+    interval.squareBound = max (interval.lower ^ 2) (interval.upper ^ 2) := by
+  unfold squareBound
+  rewrite [Fraction.square_eq_mul, Fraction.square_eq_mul, pow_two, pow_two]
+  rfl
 
 /-- The endpoint-square bound is nonnegative.
 
 The lower endpoint square is nonnegative and lies below the retained
 maximum, giving the same scalar square bound a nonnegative floor. -/
-public theorem squareBound_nonneg (interval : Bounds) : 0 ≤ interval.squareBound :=
-  (Fraction.Order.Arithmetic.sq_nonneg_direct interval.lower).trans
-    (Fraction.Order.Basic.le_max_left _ _)
+public theorem squareBound_nonneg (interval : Bounds) : 0 ≤ interval.squareBound := by
+  rewrite [squareBound_eq]
+  exact (Arithmetic.sq_nonneg_direct interval.lower).trans
+    (Basic.le_max_left _ _)
 
 /-- The square of a contained rational is at most the interval's endpoint-square bound.
 
 The retained containment comparisons bound the original coordinate
 between both endpoints. Its square is below their retained maximum. -/
 public theorem sq_le_squareBound {interval : Bounds} {x : Fraction.Rational}
-    (inside : interval.Contains x) : x ^ 2 ≤ interval.squareBound :=
-  Geometry.Rational.Box.sq_le_endpoint_max inside.1 inside.2
+    (inside : interval.Contains x) : x ^ 2 ≤ interval.squareBound := by
+  rewrite [squareBound_eq]
+  exact Geometry.Rational.Box.sq_le_endpoint_max inside.1 inside.2
 
 /-- Endpoint refinement cannot increase the interval's square bound.
 
@@ -139,7 +156,8 @@ bounds combine under the same maximum operation to compare the two intervals. -/
 public theorem squareBound_le_of_refines {interval root : Bounds}
     (refines : interval.Refines root) :
     interval.squareBound ≤ root.squareBound := by
-  apply Fraction.Order.Basic.max_le
+  rewrite [squareBound_eq]
+  apply Basic.max_le
   · exact root.sq_le_squareBound ⟨refines.1, interval.valid.trans refines.2⟩
   · exact root.sq_le_squareBound ⟨refines.1.trans interval.valid, refines.2⟩
 

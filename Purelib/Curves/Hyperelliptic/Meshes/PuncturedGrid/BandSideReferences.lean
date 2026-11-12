@@ -62,6 +62,10 @@ import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.RootIsolation.Newton.Band.Basic
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation
+
+open Purelib.Riemann.RootContinuation.PreparedNewtonAreaRate
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -82,13 +86,13 @@ open Purelib
 The source boundary certificate discharges all fine-vertex geometry. -/
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BandSideReferences
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face : Meshes.PuncturedGridFaces.RegularFace bank}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {face : Meshes.PuncturedGridFaces.RegularFace bank}
       {models
-    : Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames face}
-  {sheet : Fin 2} (domain : Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain models sheet)
+    : Face.InverseModels.BranchCellBank.FaceModels frames face}
+  {sheet : Fin 2} (domain : Face.Periods.PeriodDomain models sheet)
   {cuts : Paths.RectangularSegmentSplitting.GridCuts domain.geometry}
   {mesh : Meshes.RectangularObservationMesh.ObservationMesh cuts face.cell.box}
   {bandAmbient : Rational.Box} {current : State.Raw.RawWindingState curve.polynomial bandAmbient}
@@ -103,25 +107,25 @@ band. -/
 def BandSideReference (traces : Paths.RectangularPerimeterTraces.PerimeterTraces mesh) (band :
   RootContinuation.PreparedNewtonBandFamilies.PreparedBandFamily family target radius)
     (first second : Fin genus) : Meshes.GridLiftedDualSteps.GridSide → Type _
-  | .bottom => Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.Request
-    (Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.bottom domain traces) domain
+  | .bottom => SideGeometry.Request
+    (SideGeometry.bottom domain traces) domain
       (Periods.PeriodMatrix.standardDifferential first) (Periods.PeriodMatrix.standardDifferential second)
-      (RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget band
+      (PreparedBandFamily.sideBudget band
         traces.bottom.vertices.rest.length).tolerance
-  | .right => Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.Request
-    (Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.right domain traces) domain
+  | .right => SideGeometry.Request
+    (SideGeometry.right domain traces) domain
       (Periods.PeriodMatrix.standardDifferential first) (Periods.PeriodMatrix.standardDifferential second)
-      (RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget band
+      (PreparedBandFamily.sideBudget band
         traces.right.vertices.rest.length).tolerance
-  | .top => Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.Request
-    (Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.top domain traces) domain
+  | .top => SideGeometry.Request
+    (SideGeometry.top domain traces) domain
       (Periods.PeriodMatrix.standardDifferential first) (Periods.PeriodMatrix.standardDifferential second)
-      (RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget band
+      (PreparedBandFamily.sideBudget band
         traces.top.vertices.rest.length).tolerance
-  | .left => Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.Request
-    (Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.left domain traces) domain
+  | .left => SideGeometry.Request
+    (SideGeometry.left domain traces) domain
       (Periods.PeriodMatrix.standardDifferential first) (Periods.PeriodMatrix.standardDifferential second)
-      (RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget band
+      (PreparedBandFamily.sideBudget band
         traces.left.vertices.rest.length).tolerance
 
 namespace BandSideReference
@@ -135,27 +139,27 @@ def build (traces : Paths.RectangularPerimeterTraces.PerimeterTraces mesh)
     (band : RootContinuation.PreparedNewtonBandFamilies.PreparedBandFamily family target radius) (first second : Fin
       genus) :
     (side : Meshes.GridLiftedDualSteps.GridSide) →
-      Hyperelliptic.Meshes.PuncturedGrid.BandSideReferences.BandSideReference domain traces band first second side
-  | .bottom => Hyperelliptic.Meshes.PuncturedGrid.NewtonDomainPerimeterArea.SideGeometry.bottomRequest domain traces
+      BandSideReference domain traces band first second side
+  | .bottom => NewtonDomainPerimeterArea.SideGeometry.bottomRequest domain traces
       (Periods.PeriodMatrix.standardDifferential first) (Periods.PeriodMatrix.standardDifferential second)
-        ((RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget band _))
-  | .right => Hyperelliptic.Meshes.PuncturedGrid.NewtonDomainPerimeterArea.SideGeometry.rightRequest domain traces
+        ((PreparedBandFamily.sideBudget band _))
+  | .right => NewtonDomainPerimeterArea.SideGeometry.rightRequest domain traces
       (Periods.PeriodMatrix.standardDifferential first) (Periods.PeriodMatrix.standardDifferential second)
-        ((RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget band _))
-  | .top => Hyperelliptic.Meshes.PuncturedGrid.NewtonDomainPerimeterArea.SideGeometry.topRequest domain traces
+        ((PreparedBandFamily.sideBudget band _))
+  | .top => NewtonDomainPerimeterArea.SideGeometry.topRequest domain traces
       (Periods.PeriodMatrix.standardDifferential first) (Periods.PeriodMatrix.standardDifferential second)
-        ((RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget band _))
-  | .left => Hyperelliptic.Meshes.PuncturedGrid.NewtonDomainPerimeterArea.SideGeometry.leftRequest domain traces
+        ((PreparedBandFamily.sideBudget band _))
+  | .left => NewtonDomainPerimeterArea.SideGeometry.leftRequest domain traces
       (Periods.PeriodMatrix.standardDifferential first) (Periods.PeriodMatrix.standardDifferential second)
-        ((RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget band _))
+        ((PreparedBandFamily.sideBudget band _))
 
 /-- The retained comparison threshold of the selected original side request. -/
 def index : (side : Meshes.GridLiftedDualSteps.GridSide) →
-  Hyperelliptic.Meshes.PuncturedGrid.BandSideReferences.BandSideReference domain traces band first second side → Nat
-  | .bottom, request => Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.Request.index request
-  | .right, request => Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.Request.index request
-  | .top, request => Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.Request.index request
-  | .left, request => Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.Request.index request
+  BandSideReference domain traces band first second side → Nat
+  | .bottom, request => SideGeometry.Request.index request
+  | .right, request => SideGeometry.Request.index request
+  | .top, request => SideGeometry.Request.index request
+  | .left, request => SideGeometry.Request.index request
 
 /-- Read the centered area of the specified original rectangle side. -/
 def sideArea {values : Fin (domain.steps + 1) → Fin (domain.steps + 1) → Gaussian.Basic.Canonical →
@@ -170,64 +174,64 @@ def sideArea {values : Fin (domain.steps + 1) → Fin (domain.steps + 1) → Gau
 /-- The retained side request bounds its actual centered area by the Newton quadratic radius estimate.
 
 The source boundary certificate supplies membership and common-side geometry for every original fine vertex. -/
-theorem area_bound (reference : Hyperelliptic.Meshes.PuncturedGrid.BandSideReferences.BandSideReference domain traces
+theorem area_bound (reference : BandSideReference domain traces
   band first second side)
     (lengths : Integration.RectangularPerimeterLengths.Lengths traces)
-    (boundary : Hyperelliptic.Meshes.PuncturedGrid.SideBoundaryGeometry.SideBoundary face.cell.box
+    (boundary : SideBoundaryGeometry.SideBoundary face.cell.box
       band.selection.sample.output.box side)
-    {stage : Nat} (later : Hyperelliptic.Meshes.PuncturedGrid.BandSideReferences.BandSideReference.index side reference
+    {stage : Nat} (later : BandSideReference.index side reference
       ≤ stage)
-    (leftData : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives domain
+    (leftData : Face.PrimitiveData.DomainPrimitives domain
       (Periods.PeriodMatrix.standardDifferential first) stage)
-    (rightData : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives domain
+    (rightData : Face.PrimitiveData.DomainPrimitives domain
       (Periods.PeriodMatrix.standardDifferential second) stage)
     (samples : Integration.RectangularCenteredPerimeter.Centered traces (fun column row point =>
       (⟨leftData.anchors.alignedValue leftData.offsets column row point,
         rightData.anchors.alignedValue rightData.offsets column row point⟩ : Topology.Polygon.Stokes.PrimitivePoint))) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Hyperelliptic.Meshes.PuncturedGrid.BandSideReferences.BandSideReference.sideArea samples side) ≤
-      RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.areaCoefficient family *
+    Gaussian.Norm.Basic.normSq
+      (BandSideReference.sideArea samples side) ≤
+      PreparedBandFamily.areaCoefficient family *
         band.selection.sample.output.radius^2 := by
   cases side with
   | bottom =>
-      exact Hyperelliptic.Meshes.PuncturedGrid.NewtonBandPerimeterArea.SideGeometry.bottom_band_area_bound domain traces
-        lengths band ((RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget band _))
-        ((RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget_padding_le band _)) reference
-        (fun vertex => boundary.contains (Hyperelliptic.Meshes.PuncturedGrid.PerimeterSideBoundary.bottom_onSide domain
+      exact NewtonBandPerimeterArea.SideGeometry.bottom_band_area_bound domain traces
+        lengths band ((PreparedBandFamily.sideBudget band _))
+        ((PreparedBandFamily.sideBudget_padding_le band _)) reference
+        (fun vertex => boundary.contains (PerimeterSideBoundary.bottom_onSide domain
           traces vertex))
         (fun a b => boundary.sameSide face.cell.box_proper
-          (Hyperelliptic.Meshes.PuncturedGrid.PerimeterSideBoundary.bottom_onSide domain traces a)
-            (Hyperelliptic.Meshes.PuncturedGrid.PerimeterSideBoundary.bottom_onSide domain traces b))
+          (PerimeterSideBoundary.bottom_onSide domain traces a)
+            (PerimeterSideBoundary.bottom_onSide domain traces b))
         later leftData rightData samples
   | right =>
-      exact Hyperelliptic.Meshes.PuncturedGrid.NewtonBandPerimeterArea.SideGeometry.right_band_area_bound domain traces
-        lengths band ((RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget band _))
-        ((RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget_padding_le band _)) reference
-        (fun vertex => boundary.contains (Hyperelliptic.Meshes.PuncturedGrid.PerimeterSideBoundary.right_onSide domain
+      exact NewtonBandPerimeterArea.SideGeometry.right_band_area_bound domain traces
+        lengths band ((PreparedBandFamily.sideBudget band _))
+        ((PreparedBandFamily.sideBudget_padding_le band _)) reference
+        (fun vertex => boundary.contains (PerimeterSideBoundary.right_onSide domain
           traces vertex))
         (fun a b => boundary.sameSide face.cell.box_proper
-          (Hyperelliptic.Meshes.PuncturedGrid.PerimeterSideBoundary.right_onSide domain traces a)
-            (Hyperelliptic.Meshes.PuncturedGrid.PerimeterSideBoundary.right_onSide domain traces b))
+          (PerimeterSideBoundary.right_onSide domain traces a)
+            (PerimeterSideBoundary.right_onSide domain traces b))
         later leftData rightData samples
   | top =>
-      exact Hyperelliptic.Meshes.PuncturedGrid.NewtonBandPerimeterArea.SideGeometry.top_band_area_bound domain traces
-        lengths band ((RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget band _))
-        ((RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget_padding_le band _)) reference
-        (fun vertex => boundary.contains (Hyperelliptic.Meshes.PuncturedGrid.PerimeterSideBoundary.top_onSide domain
+      exact NewtonBandPerimeterArea.SideGeometry.top_band_area_bound domain traces
+        lengths band ((PreparedBandFamily.sideBudget band _))
+        ((PreparedBandFamily.sideBudget_padding_le band _)) reference
+        (fun vertex => boundary.contains (PerimeterSideBoundary.top_onSide domain
           traces vertex))
         (fun a b => boundary.sameSide face.cell.box_proper
-          (Hyperelliptic.Meshes.PuncturedGrid.PerimeterSideBoundary.top_onSide domain traces a)
-            (Hyperelliptic.Meshes.PuncturedGrid.PerimeterSideBoundary.top_onSide domain traces b))
+          (PerimeterSideBoundary.top_onSide domain traces a)
+            (PerimeterSideBoundary.top_onSide domain traces b))
         later leftData rightData samples
   | left =>
-      exact Hyperelliptic.Meshes.PuncturedGrid.NewtonBandPerimeterArea.SideGeometry.left_band_area_bound domain traces
-        lengths band ((RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget band _))
-        ((RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.sideBudget_padding_le band _)) reference
-        (fun vertex => boundary.contains (Hyperelliptic.Meshes.PuncturedGrid.PerimeterSideBoundary.left_onSide domain
+      exact NewtonBandPerimeterArea.SideGeometry.left_band_area_bound domain traces
+        lengths band ((PreparedBandFamily.sideBudget band _))
+        ((PreparedBandFamily.sideBudget_padding_le band _)) reference
+        (fun vertex => boundary.contains (PerimeterSideBoundary.left_onSide domain
           traces vertex))
         (fun a b => boundary.sameSide face.cell.box_proper
-          (Hyperelliptic.Meshes.PuncturedGrid.PerimeterSideBoundary.left_onSide domain traces a)
-            (Hyperelliptic.Meshes.PuncturedGrid.PerimeterSideBoundary.left_onSide domain traces b))
+          (PerimeterSideBoundary.left_onSide domain traces a)
+            (PerimeterSideBoundary.left_onSide domain traces b))
         later leftData rightData samples
 
 end BandSideReference

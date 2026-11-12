@@ -97,21 +97,21 @@ open Purelib.Riemann.Meshes.RectangularObservationMesh (ObservationMesh)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies (AxisSourceBank)
 open Purelib.Data.Gaussian.Basic.Canonical
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential} {target : Coordinate} {minimum
     stage fine : Nat}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
   {plan : PairedSourcePlan occurrence
     other target minimum}
 
@@ -119,7 +119,7 @@ open Purelib.Data.Rat.Fraction.Compatibility
 variable {evaluated :
   ParentEvaluation
   plan sample otherSample fine}
-  {beforePhysical afterPhysical : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval}
+  {beforePhysical afterPhysical : PreparedAxisPartitions.Interval}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ReverseParentHandoffs.SourceBlockParameters
 
@@ -162,7 +162,7 @@ theorem reverse_occurrence_parent_handoff
     change before.lastParameter = 0 ∧ after.firstParameter = 1 at endpoints
     have joint := before.last_axis.trans (consecutive.symm.trans after.first_axis.symm)
     rw [endpoints.1, endpoints.2] at joint
-    have signedJoint := congrArg (fun value : InverseRootPolynomial.Coordinate => -value) joint.symm
+    have signedJoint := congrArg (fun value : Coordinate => -value) joint.symm
     exact Or.inr ⟨indexed_parents_no_skip evaluated project ordered
       after.index before.index next signedJoint, endpoints⟩
 
@@ -209,7 +209,7 @@ theorem reverse_at_physical_start {physical : PreparedAxisPartitions.Interval}
       (reverse_parent_bounds
       block backward).2
   refine ⟨indexed_parent_at_finish evaluated (SourceBlockParameters.signedAxis occurrence.sourceVertical false)
-    (fun parent member => ?_) block.index (congrArg (fun value : InverseRootPolynomial.Coordinate => -value) endpoint),
+    (fun parent member => ?_) block.index (congrArg (fun value : Coordinate => -value) endpoint),
     block.first_parameter_of_parent_endpoint (start.trans endpoint.symm)⟩
   have ordered := BoundaryAxisLocation.source_parent_ordered occurrence member
   simpa only [backward, -eq_self, -iff_self] using ordered
@@ -225,7 +225,7 @@ theorem reverse_at_physical_finish {physical : PreparedAxisPartitions.Interval}
     block backward).1
     (finish.symm.trans_le block.physical_inside.2)
   refine ⟨indexed_parent_at_start evaluated (SourceBlockParameters.signedAxis occurrence.sourceVertical false)
-    (fun parent member => ?_) block.index (congrArg (fun value : InverseRootPolynomial.Coordinate => -value) endpoint),
+    (fun parent member => ?_) block.index (congrArg (fun value : Coordinate => -value) endpoint),
     block.last_parameter_of_parent_endpoint (finish.trans endpoint.symm)⟩
   have ordered := BoundaryAxisLocation.source_parent_ordered occurrence member
   simpa only [backward, -eq_self, -iff_self] using ordered

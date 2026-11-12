@@ -23,6 +23,8 @@ import Purelib.Data.Gaussian.Basic
 public import Purelib.Data.Gaussian.Field
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian.Resource
+
 /-!
 # Retained polynomial inverse resource envelopes
 
@@ -49,7 +51,7 @@ structure DataSlotsWithin {count : Nat} (data :
   /-- The retained scalar coefficient list fits within the shared slot allowance. -/ scalar : data.scalar.coeffs.length
     ≤ slots
   /-- Every retained inverse-entry coefficient list fits within the shared slot allowance. -/ inverse :
-    PolynomialMatrix.Resource.Gaussian.Slots.MatrixSlotsWithin data.inverse slots
+    Resource.Gaussian.Slots.MatrixSlotsWithin data.inverse slots
 
 /-- Compute the recursive coefficient-slot envelope for polynomial inverse data.
 
@@ -57,7 +59,7 @@ A positive-dimensional step doubles the input slot allowance and adds the corres
 @[expose] def dataSlotEnvelope : Nat → Nat → Nat
   | 0, _ => 1
   | count + 1, slots =>
-      2 * slots + Purelib.LinearAlgebra.PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Slots.dataSlotEnvelope count
+      2 * slots + Slots.dataSlotEnvelope count
         (2 * slots)
 
 /-- Every polynomial Schur entry uses at most twice the original matrix slot bound.
@@ -66,62 +68,62 @@ The original head, tail, left-column and top-row polynomials supply the two Schu
 uses at most twice the original maximum entry allowance. -/
 theorem schur_slots {count : Nat} (matrix : Basic.GaussianNumberMatrix (count + 1))
     (row column : Fin count) :
-    (PolynomialMatrix.Basic.schur matrix row column).coeffs.length ≤
-      2 * PolynomialMatrix.Resource.Gaussian.Slots.matrixSlotBound matrix := by
-  let first := PolynomialMatrix.Basic.head matrix *
-    PolynomialMatrix.Basic.tail matrix row column
-  let second := PolynomialMatrix.Basic.leftColumn matrix row *
-    PolynomialMatrix.Basic.topRow matrix column
+    (Basic.schur matrix row column).coeffs.length ≤
+      2 * Resource.Gaussian.Slots.matrixSlotBound matrix := by
+  let first := Basic.head matrix *
+    Basic.tail matrix row column
+  let second := Basic.leftColumn matrix row *
+    Basic.topRow matrix column
   have headDegree :
-      (PolynomialMatrix.Basic.head matrix).degreeCount ≤
-        PolynomialMatrix.Resource.Gaussian.Slots.matrixSlotBound matrix :=
-    (Dense.Gaussian.Resource.Slots.degreeCount_le_coeffs_length _).trans
-      (PolynomialMatrix.Resource.Gaussian.Slots.matrixSlot_le matrix 0 0)
+      (Basic.head matrix).degreeCount ≤
+        Resource.Gaussian.Slots.matrixSlotBound matrix :=
+    (Slots.degreeCount_le_coeffs_length _).trans
+      (Resource.Gaussian.Slots.matrixSlot_le matrix 0 0)
   have tailDegree :
-      (PolynomialMatrix.Basic.tail matrix row column).degreeCount ≤
-        PolynomialMatrix.Resource.Gaussian.Slots.matrixSlotBound matrix :=
-    (Dense.Gaussian.Resource.Slots.degreeCount_le_coeffs_length _).trans (by
-      simpa only [PolynomialMatrix.Basic.tail,
+      (Basic.tail matrix row column).degreeCount ≤
+        Resource.Gaussian.Slots.matrixSlotBound matrix :=
+    (Slots.degreeCount_le_coeffs_length _).trans (by
+      simpa only [Basic.tail,
         SquareMatrix.matrixOfFn_apply, -eq_self, -iff_self] using
-        PolynomialMatrix.Resource.Gaussian.Slots.matrixSlot_le matrix row.succ column.succ)
+        Resource.Gaussian.Slots.matrixSlot_le matrix row.succ column.succ)
   have leftDegree :
-      (PolynomialMatrix.Basic.leftColumn matrix row).degreeCount ≤
-        PolynomialMatrix.Resource.Gaussian.Slots.matrixSlotBound matrix :=
-    (Dense.Gaussian.Resource.Slots.degreeCount_le_coeffs_length _).trans (by
-      simpa only [PolynomialMatrix.Basic.leftColumn,
+      (Basic.leftColumn matrix row).degreeCount ≤
+        Resource.Gaussian.Slots.matrixSlotBound matrix :=
+    (Slots.degreeCount_le_coeffs_length _).trans (by
+      simpa only [Basic.leftColumn,
         Data.Vector.Basic.vectorOfFn_apply, -eq_self, -iff_self] using
-        PolynomialMatrix.Resource.Gaussian.Slots.matrixSlot_le matrix row.succ 0)
+        Resource.Gaussian.Slots.matrixSlot_le matrix row.succ 0)
   have topDegree :
-      (PolynomialMatrix.Basic.topRow matrix column).degreeCount ≤
-        PolynomialMatrix.Resource.Gaussian.Slots.matrixSlotBound matrix :=
-    (Dense.Gaussian.Resource.Slots.degreeCount_le_coeffs_length _).trans (by
-      simpa only [PolynomialMatrix.Basic.topRow,
+      (Basic.topRow matrix column).degreeCount ≤
+        Resource.Gaussian.Slots.matrixSlotBound matrix :=
+    (Slots.degreeCount_le_coeffs_length _).trans (by
+      simpa only [Basic.topRow,
         Data.Vector.Basic.vectorOfFn_apply, -eq_self, -iff_self] using
-        PolynomialMatrix.Resource.Gaussian.Slots.matrixSlot_le matrix 0 column.succ)
-  have firstDegree : first.degreeCount ≤ 2 * PolynomialMatrix.Resource.Gaussian.Slots.matrixSlotBound matrix := by
+        Resource.Gaussian.Slots.matrixSlot_le matrix 0 column.succ)
+  have firstDegree : first.degreeCount ≤ 2 * Resource.Gaussian.Slots.matrixSlotBound matrix := by
     refine (Dense.Basic.DensePolynomial.degreeCount_mul_le _ _).trans ((Nat.sub_le _ _).trans ?_)
     calc
-      (PolynomialMatrix.Basic.head matrix).degreeCount +
-            (PolynomialMatrix.Basic.tail matrix row column).degreeCount ≤
-          PolynomialMatrix.Resource.Gaussian.Slots.matrixSlotBound matrix +
-            PolynomialMatrix.Resource.Gaussian.Slots.matrixSlotBound matrix :=
+      (Basic.head matrix).degreeCount +
+            (Basic.tail matrix row column).degreeCount ≤
+          Resource.Gaussian.Slots.matrixSlotBound matrix +
+            Resource.Gaussian.Slots.matrixSlotBound matrix :=
         Nat.add_le_add headDegree tailDegree
-      _ = 2 * PolynomialMatrix.Resource.Gaussian.Slots.matrixSlotBound matrix := by omega0
-  have secondDegree : second.degreeCount ≤ 2 * PolynomialMatrix.Resource.Gaussian.Slots.matrixSlotBound matrix := by
+      _ = 2 * Resource.Gaussian.Slots.matrixSlotBound matrix := by omega0
+  have secondDegree : second.degreeCount ≤ 2 * Resource.Gaussian.Slots.matrixSlotBound matrix := by
     refine (Dense.Basic.DensePolynomial.degreeCount_mul_le _ _).trans ((Nat.sub_le _ _).trans ?_)
     calc
-      (PolynomialMatrix.Basic.leftColumn matrix row).degreeCount +
-            (PolynomialMatrix.Basic.topRow matrix column).degreeCount ≤
-          PolynomialMatrix.Resource.Gaussian.Slots.matrixSlotBound matrix +
-            PolynomialMatrix.Resource.Gaussian.Slots.matrixSlotBound matrix :=
+      (Basic.leftColumn matrix row).degreeCount +
+            (Basic.topRow matrix column).degreeCount ≤
+          Resource.Gaussian.Slots.matrixSlotBound matrix +
+            Resource.Gaussian.Slots.matrixSlotBound matrix :=
         Nat.add_le_add leftDegree topDegree
-      _ = 2 * PolynomialMatrix.Resource.Gaussian.Slots.matrixSlotBound matrix := by omega0
+      _ = 2 * Resource.Gaussian.Slots.matrixSlotBound matrix := by omega0
   have differenceDegree : (first - second).degreeCount ≤
       max first.degreeCount second.degreeCount :=
     Dense.Basic.DensePolynomial.degreeCount_sub_le_of_normalized (Dense.Basic.DensePolynomial.normalize_mul _ _)
   have normalized : (first - second).normalize = first - second :=
     Dense.Basic.DensePolynomial.normalize_sub _ _
-  simp only [PolynomialMatrix.Basic.schur,
+  simp only [Basic.schur,
     SquareMatrix.matrixOfFn_apply, -eq_self, -iff_self]
   change (first - second).coeffs.length ≤ _
   change (first - second).normalize.coeffs.length ≤ _ at differenceDegree
@@ -134,41 +136,41 @@ theorem schur_slots {count : Nat} (matrix : Basic.GaussianNumberMatrix (count + 
 The assumption bounds each original matrix coefficient list by the supplied slot allowance. -/
 theorem scaledInverseData_slots :
     ∀ (count : Nat) (matrix : Basic.GaussianNumberMatrix count) (slots : Nat),
-      PolynomialMatrix.Resource.Gaussian.Slots.MatrixSlotsWithin matrix slots →
-      PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Slots.DataSlotsWithin
-        (PolynomialMatrix.Inverse.Scaled.Compute.scaledInverseData count matrix)
-        (PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Slots.dataSlotEnvelope count slots)
+      Resource.Gaussian.Slots.MatrixSlotsWithin matrix slots →
+      DataSlotsWithin
+        (Compute.scaledInverseData count matrix)
+        (dataSlotEnvelope count slots)
   | 0, _, _, _ => by
       constructor
       · rfl
       · intro row
         exact Fin.elim0 row
   | count + 1, matrix, slots, matrixWithin => by
-      let schurMatrix := PolynomialMatrix.Basic.schur matrix
-      have schurWithin : PolynomialMatrix.Resource.Gaussian.Slots.MatrixSlotsWithin schurMatrix (2 * slots) := by
+      let schurMatrix := Basic.schur matrix
+      have schurWithin : Resource.Gaussian.Slots.MatrixSlotsWithin schurMatrix (2 * slots) := by
         intro row column
-        exact (PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Slots.schur_slots matrix row column).trans
-          (Nat.mul_le_mul_left 2 (PolynomialMatrix.Resource.Gaussian.Slots.matrixSlotBound_le matrixWithin))
-      let smaller := PolynomialMatrix.Inverse.Scaled.Compute.scaledInverseData
+        exact (schur_slots matrix row column).trans
+          (Nat.mul_le_mul_left 2 (Resource.Gaussian.Slots.matrixSlotBound_le matrixWithin))
+      let smaller := Compute.scaledInverseData
         count schurMatrix
-      have smallerWithin : PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Slots.DataSlotsWithin smaller
-          (PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Slots.dataSlotEnvelope count (2 * slots)) :=
-        Purelib.LinearAlgebra.PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Slots.scaledInverseData_slots count
+      have smallerWithin : DataSlotsWithin smaller
+          (dataSlotEnvelope count (2 * slots)) :=
+        Slots.scaledInverseData_slots count
           schurMatrix (2 * slots) schurWithin
-      let recursiveSlots := PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Slots.dataSlotEnvelope count (2 * slots)
-      change PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Slots.DataSlotsWithin
-        (PolynomialMatrix.Inverse.Scaled.Compute.scaledInverseData (count + 1) matrix)
+      let recursiveSlots := dataSlotEnvelope count (2 * slots)
+      change DataSlotsWithin
+        (Compute.scaledInverseData (count + 1) matrix)
         (2 * slots + recursiveSlots)
       have headSlots :
-          (PolynomialMatrix.Basic.head matrix).coeffs.length ≤
+          (Basic.head matrix).coeffs.length ≤
             slots := matrixWithin 0 0
       have smallerScalarSlots : smaller.scalar.coeffs.length ≤
           recursiveSlots := smallerWithin.scalar
       have scalarSlots :
-          (PolynomialMatrix.Basic.head matrix * smaller.scalar).coeffs.length ≤
+          (Basic.head matrix * smaller.scalar).coeffs.length ≤
             2 * slots + recursiveSlots :=
-        (Purelib.Polynomial.Dense.Gaussian.Resource.Slots.mul_slots _ _).trans (calc
-          (PolynomialMatrix.Basic.head matrix).coeffs.length +
+        (Slots.mul_slots _ _).trans (calc
+          (Basic.head matrix).coeffs.length +
                 smaller.scalar.coeffs.length ≤ slots + recursiveSlots :=
             Nat.add_le_add headSlots smallerScalarSlots
           _ ≤ 2 * slots + recursiveSlots := by
@@ -178,86 +180,85 @@ theorem scaledInverseData_slots :
       constructor
       · exact scalarSlots
       · intro row column
-        let a := PolynomialMatrix.Basic.head matrix
-        let top := PolynomialMatrix.Basic.topRow matrix
-        let left := PolynomialMatrix.Basic.leftColumn matrix
+        let a := Basic.head matrix
+        let top := Basic.topRow matrix
+        let left := Basic.leftColumn matrix
         let inverse := smaller.inverse
         have aSlots : a.coeffs.length ≤ slots := matrixWithin 0 0
         have topSlots : ∀ index, (top index).coeffs.length ≤ slots :=
           fun index => by
-            simpa only [top, PolynomialMatrix.Basic.topRow,
+            simpa only [top, Basic.topRow,
               Data.Vector.Basic.vectorOfFn_apply, -eq_self, -iff_self] using
               matrixWithin 0 index.succ
         have leftSlots : ∀ index, (left index).coeffs.length ≤ slots :=
           fun index => by
-            simpa only [left, PolynomialMatrix.Basic.leftColumn,
+            simpa only [left, Basic.leftColumn,
               Data.Vector.Basic.vectorOfFn_apply, -eq_self, -iff_self] using
               matrixWithin index.succ 0
         have inverseSlots : ∀ i j,
             (inverse i j).coeffs.length ≤ recursiveSlots :=
           smallerWithin.inverse
         have inverseColumnSlots : ∀ index,
-            (PolynomialMatrix.Basic.matrixVector inverse left index
+            (Basic.matrixVector inverse left index
                 ).coeffs.length ≤ recursiveSlots + slots := by
           intro index
-          simpa only [PolynomialMatrix.Basic.matrixVector,
+          simpa only [Basic.matrixVector,
             Data.Vector.Basic.vectorOfFn_apply, -eq_self, -iff_self] using
-            Purelib.LinearAlgebra.PolynomialMatrix.Resource.Gaussian.Slots.dot_slots (inverse index) left
+            Resource.Gaussian.Slots.dot_slots (inverse index) left
               recursiveSlots slots
               (fun middle => inverseSlots index middle) leftSlots
         have rowInverseSlots : ∀ index,
-            (PolynomialMatrix.Basic.vectorMatrix top inverse index
+            (Basic.vectorMatrix top inverse index
                 ).coeffs.length ≤ slots + recursiveSlots := by
           intro index
-          simpa only [PolynomialMatrix.Basic.vectorMatrix,
+          simpa only [Basic.vectorMatrix,
             Data.Vector.Basic.vectorOfFn_apply, -eq_self, -iff_self] using
-            Purelib.LinearAlgebra.PolynomialMatrix.Resource.Gaussian.Slots.dot_slots top
+            Resource.Gaussian.Slots.dot_slots top
               (Data.Vector.Basic.vectorOfFn fun middle =>
                 inverse middle index)
               slots recursiveSlots topSlots
               (fun middle => by
                 simpa only [Data.Vector.Basic.vectorOfFn_apply, -eq_self, -iff_self] using
                   inverseSlots middle index)
-        unfold PolynomialMatrix.Inverse.Scaled.Compute.scaledInverseData
-          PolynomialMatrix.Inverse.Scaled.Block.blockInverse
-        simp only [SquareMatrix.matrixOfFn_apply, -eq_self, -iff_self]
+        change (Block.blockInverse matrix smaller row column).coeffs.length ≤ 2 * slots + recursiveSlots
+        rewrite [Block.blockInverse_apply]
         refine Data.Fin.cases_induction ?_ (fun rowIndex => ?_) row
         · refine Data.Fin.cases_induction ?_ (fun columnIndex => ?_) column
-          · have innerDot := Purelib.LinearAlgebra.PolynomialMatrix.Resource.Gaussian.Slots.dot_slots top
-                (PolynomialMatrix.Basic.matrixVector inverse left)
+          · have innerDot := Resource.Gaussian.Slots.dot_slots top
+                (Basic.matrixVector inverse left)
                 slots (recursiveSlots + slots) topSlots inverseColumnSlots
-            exact (Purelib.Polynomial.Dense.Gaussian.Resource.Slots.add_slots smaller.scalar _).trans (by
+            exact (Slots.add_slots smaller.scalar _).trans (by
               rw [Data.Nat.Order.max_eq_natMax]
               apply Data.Nat.Order.max_le
               · exact smallerWithin.scalar.trans
                   (Nat.le_add_left recursiveSlots (2 * slots))
               · exact innerDot.trans (Nat.le_of_eq (by omega0)))
-          · have negA := Purelib.Polynomial.Dense.Gaussian.Resource.Slots.neg_slots a
+          · have negA := Slots.neg_slots a
             have rowBound := rowInverseSlots columnIndex
-            exact (Purelib.Polynomial.Dense.Gaussian.Resource.Slots.mul_slots (-a)
-              (PolynomialMatrix.Basic.vectorMatrix top inverse
+            exact (Slots.mul_slots (-a)
+              (Basic.vectorMatrix top inverse
                 columnIndex)).trans (calc
                   (-a).coeffs.length +
-                      (PolynomialMatrix.Basic.vectorMatrix top
+                      (Basic.vectorMatrix top
                         inverse columnIndex).coeffs.length ≤
                     slots + (slots + recursiveSlots) :=
                       Nat.add_le_add (negA.trans aSlots) rowBound
                   _ = 2 * slots + recursiveSlots := by omega0)
         · refine Data.Fin.cases_induction ?_ (fun columnIndex => ?_) column
-          · have negA := Purelib.Polynomial.Dense.Gaussian.Resource.Slots.neg_slots a
+          · have negA := Slots.neg_slots a
             have columnBound := inverseColumnSlots rowIndex
-            exact (Purelib.Polynomial.Dense.Gaussian.Resource.Slots.mul_slots (-a)
-              (PolynomialMatrix.Basic.matrixVector inverse left
+            exact (Slots.mul_slots (-a)
+              (Basic.matrixVector inverse left
                 rowIndex)).trans (calc
                   (-a).coeffs.length +
-                      (PolynomialMatrix.Basic.matrixVector inverse
+                      (Basic.matrixVector inverse
                         left rowIndex).coeffs.length ≤
                     slots + (recursiveSlots + slots) :=
                       Nat.add_le_add (negA.trans aSlots) columnBound
                   _ = 2 * slots + recursiveSlots := by omega0)
-          · have square := Purelib.Polynomial.Dense.Gaussian.Resource.Slots.mul_slots a a
+          · have square := Slots.mul_slots a a
             have inverseBound := inverseSlots rowIndex columnIndex
-            exact (Purelib.Polynomial.Dense.Gaussian.Resource.Slots.mul_slots (a * a) (inverse rowIndex
+            exact (Slots.mul_slots (a * a) (inverse rowIndex
               columnIndex)).trans
               (calc
                 (a * a).coeffs.length +

@@ -1,7 +1,8 @@
 module
 
 -- The public ToString contract also retains the original Nat.repr owner publicly.
-public import Init.Data.ToString.Basic
+import Init.Data.ToString.Basic
+public import Purelib.Data.Nat.Decimal
 import Init.Data.Repr
 -- The exposed signed renderer retains the original native append and UTF8 certificate.
 public import Purelib.Data.String.Basic
@@ -9,9 +10,9 @@ public import Purelib.Data.String.Basic
 /-!
 # Signed decimal representations
 
-Signed rendering retains the original integer constructors and the original
-natural-number renderer, including its cached and machine-word runtime paths.
-Only the negative prefix uses the direct original-byte append certificate.
+Signed rendering retains the original integer constructors and decimal bytes.
+Natural magnitudes retain the original cached and machine-word runtime paths;
+larger values use the same digit procedure with proved binary-width fuel.
 -/
 
 namespace Purelib.Data.Int.Decimal
@@ -20,31 +21,36 @@ open Purelib.Data.String (append)
 
 /-- Render an integer with its original natural magnitude and sign bytes.
 
-Nonnegative values call the original Nat.repr directly. Negative successors retain
-the same successor magnitude and original minus prefix with direct UTF8 validity. -/
+Both branches use the original magnitude's complete decimal record. Negative
+successors retain the same successor magnitude and original minus prefix. -/
 @[expose] public def repr : Int → _root_.String
-  | Int.ofNat value => Nat.repr value
-  | Int.negSucc value => append "-" (Nat.repr (Nat.succ value))
+  | Int.ofNat value => Nat.Decimal.repr value
+  | Int.negSucc value => append "-" (Nat.Decimal.repr (Nat.succ value))
 
 /-- Rendering a nonnegative integer retains the original natural renderer's bytes.
 
-The original Nat.repr output is used directly, including its existing runtime
-cache and backend. No copied digits, reconstructed string or new printer is used. -/
+The natural renderer's all-input readback retains the complete original bytes,
+including the same small-value cache and machine-word backend. -/
 public theorem toByteArray_ofNat (value : Nat) :
-    (repr (Int.ofNat value)).toByteArray = (Nat.repr value).toByteArray := rfl
+    (repr (Int.ofNat value)).toByteArray = (Nat.repr value).toByteArray := by
+  exact congrArg _root_.String.toByteArray (Nat.Decimal.repr_eq value)
 
 /-- Rendering a negative successor retains the original minus and magnitude bytes.
 
-The original Nat.repr renders the successor magnitude once. String concatenation
-keeps that exact output and the original one-byte minus prefix in order. -/
+The successor magnitude is rendered once with its original-byte readback.
+String concatenation retains that output and the original minus prefix in order. -/
 public theorem toByteArray_negSucc (value : Nat) :
     (repr (Int.negSucc value)).toByteArray =
-      "-".toByteArray ++ (Nat.repr (Nat.succ value)).toByteArray := rfl
+      "-".toByteArray ++ (Nat.repr (Nat.succ value)).toByteArray := by
+  unfold repr
+  dsimp only
+  rewrite [Nat.Decimal.repr_eq]
+  rfl
 
 /-- Use the retained original signed decimal representation for integer scalars.
 
-Opening the scope selects the original natural renderer and native string append;
-only the append validity certificate follows the owned direct proof route. -/
+Opening the scope selects the exact original decimal bytes and native append;
+the natural magnitude uses proved shortened fuel when it exceeds one word. -/
 public scoped instance (priority := 1001) : ToString Int where
   toString := repr
 

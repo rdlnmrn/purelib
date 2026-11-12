@@ -23,6 +23,8 @@ import Purelib.Geometry.Rational.Box.Separation
 import Purelib.Riemann.Readings.PreparedObservationBoxes
 import Purelib.Tactic.Ring
 
+open Purelib.LinearAlgebra.Gaussian
+
 open Purelib.Curves
 
 open Purelib.Data.Rat
@@ -41,20 +43,20 @@ namespace Purelib.Curves.Hyperelliptic.Integration.Observation.CurveRawCells
 open Purelib.Curves.Hyperelliptic.Integration.Observation
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {bank :
-  Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve} {floor : Nat}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {bank :
+  Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve} {floor : Nat}
   (request : Readings.CurveRawRequest.PairedPeriodBank.RawRequest bank floor) (geometry :
     Topology.PreparedObservationSurface.ObservationBoxEnergy curve.polynomial genus)
 
 set_option genInjectivity false in
 /-- The energy and cells are cached; both bounds refer to that retained value.
 The geometry is supplied once and may be shared across coefficient requests. -/
-structure SurfaceWitness (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) where
+structure SurfaceWitness (coefficients : Energy.GaussianVector genus) where
   /-- The actual retained original surface cells. -/ values : Data.Vector
-    (Hyperelliptic.Integration.Energy.Prepared.PreparedEnergy.SurfaceCell curve coefficients) genus
+    (Energy.Prepared.PreparedEnergy.SurfaceCell curve coefficients) genus
   /-- The cached energy of those exact cells. -/ energy : Fraction.Rational
   /-- The cached energy equals the original surface-energy expression. -/ energy_eq : energy =
-    Hyperelliptic.Integration.Energy.Prepared.surfaceEnergy (fun index => values index)
+    Energy.Prepared.surfaceEnergy (fun index => values index)
   /-- The cached original energy is positive. -/ positive : 0 < energy
   /-- The original coefficient norm satisfies the retained homogeneous lower bound. -/ norm_lower : min geometry.lower
     request.lower * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ≤ energy
@@ -67,12 +69,12 @@ constructive_injectivity SurfaceWitness
 
 /-- Build the original separated surface cells for nonzero coefficients and retain their positive energy with the
 homogeneous lower and raw upper bounds. -/
-@[expose] def surfaceWitness (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
-    (nonzero : LinearAlgebra.Gaussian.Energy.NonzeroGaussianVector coefficients) : CurveRawCells.SurfaceWitness request
+@[expose] def surfaceWitness (coefficients : Energy.GaussianVector genus)
+    (nonzero : Energy.NonzeroGaussianVector coefficients) : SurfaceWitness request
       geometry coefficients := by
   let original := Topology.PreparedObservationSurface.ObservationBoxes.surfaceCells
-    geometry.boxes coefficients Hyperelliptic.Integration.Energy.Prepared.canonicalSurfaceFace
-  let energy := Hyperelliptic.Integration.Energy.Prepared.surfaceEnergy (fun index => original index)
+    geometry.boxes coefficients Energy.Prepared.canonicalSurfaceFace
+  let energy := Energy.Prepared.surfaceEnergy (fun index => original index)
   let target := request.lower * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients
   have normPositive := Readings.PreparedObservationCoercivity.coefficientNormSq_positive nonzero
   have energyPositive : 0 < energy := geometry.surfaceEnergy_positive coefficients nonzero _
@@ -81,7 +83,7 @@ homogeneous lower and raw upper bounds. -/
   have factorPositive : 0 < factor := RawCoercivityCells.capFactor_positive energyPositive targetPositive
   have factorBound : factor ≤ 1 := RawCoercivityCells.capFactor_le_one _ _
   let values := RawCoercivityCells.scaleSurfaceCells original factor factorPositive.le factorBound
-  have total : Hyperelliptic.Integration.Energy.Prepared.surfaceEnergy (fun index => values index) = min energy target
+  have total : Energy.Prepared.surfaceEnergy (fun index => values index) = min energy target
     :=
     (RawCoercivityCells.scaleSurfaceCells_energy original factor factorPositive.le factorBound).trans
       (RawCoercivityCells.capFactor_energy energyPositive target)
@@ -102,20 +104,20 @@ homogeneous lower and raw upper bounds. -/
   · intro index
     exact (RawCoercivityCells.scaleSurfaceCells_box original factor factorPositive.le factorBound index).trans
       (Topology.PreparedObservationSurface.ObservationBoxes.surfaceCells_box
-        geometry.boxes coefficients Hyperelliptic.Integration.Energy.Prepared.canonicalSurfaceFace index)
+        geometry.boxes coefficients Energy.Prepared.canonicalSurfaceFace index)
 
 namespace SurfaceWitness
 
-variable {request geometry} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
-  (witness : CurveRawCells.SurfaceWitness request geometry coefficients)
+variable {request geometry} {coefficients : Energy.GaussianVector genus}
+  (witness : SurfaceWitness request geometry coefficients)
 
 /-- Read the actual retained original surface cells. -/
-@[expose] def cells : Fin genus → Hyperelliptic.Integration.Energy.Prepared.PreparedEnergy.SurfaceCell curve
+@[expose] def cells : Fin genus → Energy.Prepared.PreparedEnergy.SurfaceCell curve
   coefficients := fun index => witness.values index
 
 /-- The retained original cell energy is positive. -/
-theorem energy_positive : 0 < Hyperelliptic.Integration.Energy.Prepared.surfaceEnergy witness.cells := by
-  change 0 < Hyperelliptic.Integration.Energy.Prepared.surfaceEnergy (fun index => witness.values index)
+theorem energy_positive : 0 < Energy.Prepared.surfaceEnergy witness.cells := by
+  change 0 < Energy.Prepared.surfaceEnergy (fun index => witness.values index)
   rw [← witness.energy_eq]
   exact witness.positive
 
@@ -133,46 +135,46 @@ theorem lower_positive : 0 < min geometry.lower request.lower :=
 /-- The retained energy dominates the original coefficient norm times the shared lower bound. -/
 theorem homogeneous_lower : min geometry.lower request.lower * Readings.PreparedObservationCoercivity.coefficientNormSq
   coefficients ≤
-    Hyperelliptic.Integration.Energy.Prepared.surfaceEnergy witness.cells := by
-  change _ ≤ Hyperelliptic.Integration.Energy.Prepared.surfaceEnergy (fun index => witness.values index)
+    Energy.Prepared.surfaceEnergy witness.cells := by
+  change _ ≤ Energy.Prepared.surfaceEnergy (fun index => witness.values index)
   rw [← witness.energy_eq]
   exact witness.norm_lower
 
 /-- Every sufficiently late original period sample bounds the retained cell energy from above. -/
 theorem energy_le_raw (stage : Nat) (later : request.index ≤ stage) :
-    Hyperelliptic.Integration.Energy.Prepared.surfaceEnergy witness.cells ≤
-      LinearAlgebra.Gaussian.Energy.unnormalizedEnergyForm coefficients
+    Energy.Prepared.surfaceEnergy witness.cells ≤
+      Energy.unnormalizedEnergyForm coefficients
       (Periods.PeriodMatrix.sampledMatrix bank.periodData.aMatrix stage) (Periods.PeriodMatrix.sampledMatrix
         bank.periodData.bMatrix stage) := by
-  change Hyperelliptic.Integration.Energy.Prepared.surfaceEnergy (fun index => witness.values index) ≤ _
+  change Energy.Prepared.surfaceEnergy (fun index => witness.values index) ≤ _
   rw [← witness.energy_eq]
   exact witness.raw_upper.trans (request.accurate stage later coefficients)
 
 /-- Retain the actual cell energy and nonnegative raw-energy remainder with an empty edge-pair list. -/
 @[expose] def rawReduction (stage : Nat) (later : request.index ≤ stage) :
-    Hyperelliptic.Integration.Energy.Prepared.RawBoundaryReduction bank.periodData coefficients stage witness.cells
+    Energy.Prepared.RawBoundaryReduction bank.periodData coefficients stage witness.cells
       where
   edgePairCount := 0
   edgePairValues := Fin.elim0
-  remainder := LinearAlgebra.Gaussian.Energy.unnormalizedEnergyForm coefficients
+  remainder := Energy.unnormalizedEnergyForm coefficients
     (Periods.PeriodMatrix.sampledMatrix bank.periodData.aMatrix stage) (Periods.PeriodMatrix.sampledMatrix
       bank.periodData.bMatrix stage) - witness.energy
-  remainder_nonnegative := Purelib.Data.Rat.Fraction.Order.Arithmetic.sub_nonneg_direct (witness.raw_upper.trans
+  remainder_nonnegative := Fraction.Order.Arithmetic.sub_nonneg_direct (witness.raw_upper.trans
     (request.accurate stage later coefficients))
   raw_eq_decomposition := by
-    rw [Hyperelliptic.Integration.Energy.Prepared.pairedBoundarySum_zero]
-    change _ = Hyperelliptic.Integration.Energy.Prepared.surfaceEnergy (fun index => witness.values index) + 0 + _
+    rw [Energy.Prepared.pairedBoundarySum_zero]
+    change _ = Energy.Prepared.surfaceEnergy (fun index => witness.values index) + 0 + _
     rw [← witness.energy_eq]
     ring1
 
 /-- Use the retained surface lower bound to construct the original controlled reduction for the scaled coefficient
 vector. -/
-@[expose] def controlledReduction {stage : Nat} {vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector genus}
-    (witness : CurveRawCells.SurfaceWitness request geometry (LinearAlgebra.Gaussian.Energy.scaledNormalizedCoefficients
+@[expose] def controlledReduction {stage : Nat} {vector : QuadraticForm.RationalVector genus}
+    (witness : SurfaceWitness request geometry (Energy.scaledNormalizedCoefficients
       bank.periodData stage vector))
-    (later : request.index ≤ stage) : Hyperelliptic.Integration.Energy.Prepared.ControlledBoundaryReduction
+    (later : request.index ≤ stage) : Energy.Prepared.ControlledBoundaryReduction
       bank.periodData vector stage witness.cells :=
-  Hyperelliptic.Integration.Energy.Prepared.ControlledBoundaryReduction.ofSurfaceLower (witness.energy_le_raw stage
+  Energy.Prepared.ControlledBoundaryReduction.ofSurfaceLower (witness.energy_le_raw stage
     later)
 
 end SurfaceWitness

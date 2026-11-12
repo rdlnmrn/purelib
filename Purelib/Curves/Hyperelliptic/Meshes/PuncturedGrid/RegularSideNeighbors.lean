@@ -66,16 +66,16 @@ namespace Purelib.Riemann.Meshes.GridLiftedDualSteps.GridSide
 
 /-- The original directed face side and neighboring box share exactly their transverse extents and boundary coordinate.
 -/
-@[expose] def Matches : GridLiftedDualSteps.GridSide →
-  Rational.Box → Rational.Box → Prop
+@[expose] def Matches : GridSide →
+  Box → Box → Prop
   | .bottom, first, next => first.xLower = next.xLower ∧ first.xUpper = next.xUpper ∧ first.yLower = next.yUpper
   | .top, first, next => first.xLower = next.xLower ∧ first.xUpper = next.xUpper ∧ first.yUpper = next.yLower
   | .left, first, next => first.yLower = next.yLower ∧ first.yUpper = next.yUpper ∧ first.xLower = next.xUpper
   | .right, first, next => first.yLower = next.yLower ∧ first.yUpper = next.yUpper ∧ first.xUpper = next.xLower
 
 /-- The original directed face side lies exactly on the corresponding ambient boundary. -/
-@[expose] def Exterior : GridLiftedDualSteps.GridSide →
-  Rational.Box → Rational.Box → Prop
+@[expose] def Exterior : GridSide →
+  Box → Box → Prop
   | .bottom, face, ambient => face.yLower = ambient.yLower
   | .top, face, ambient => face.yUpper = ambient.yUpper
   | .left, face, ambient => face.xLower = ambient.xLower
@@ -87,7 +87,7 @@ section
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Curves.Hyperelliptic.Branches.Cuts (Ambient)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
 
@@ -96,15 +96,15 @@ namespace Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces
 set_option genInjectivity false in
 /-- The original regular-face side has a retained adjacent cell location or an exact ambient-boundary certificate. -/
 inductive SideNeighbor (faces :
-  PuncturedGridFaces.PuncturedFaces bank) (face : PuncturedGridFaces.RegularFace bank) (side :
-  GridLiftedDualSteps.GridSide) where
+  PuncturedFaces bank) (face : RegularFace bank) (side :
+  GridSide) where
   /-- Retain the actual adjacent grid cell, exact side matching and original regular/hole location. -/ | neighbor (cell
-    : ClearGrid.Cell curve.polynomial (Cuts.Ambient curve)) (member : cell ∈ bank.grid.cells)
+    : Grid.Cell curve.polynomial (Ambient curve)) (member : cell ∈ bank.grid.cells)
       (matching : side.Matches face.cell.box cell.box) (location : faces.Location cell)
   /-- Retain equality of the original face side with its exact ambient boundary. -/ | exterior (equal : side.Exterior
-    face.cell.box (Cuts.Ambient curve))
+    face.cell.box (Ambient curve))
 
-constructive_injectivity Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces.SideNeighbor
+constructive_injectivity SideNeighbor
 
 end Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces
 
@@ -113,12 +113,12 @@ open Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces (SideNeighbor)
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularSideNeighbors.BranchCellBank.PuncturedFaces
 
 /-- Pairing retained horizontal and vertical grid intervals gives an actual cell of the original grid. -/
-public theorem cell_member (horizontal : ClearGrid.Interval (VerticalLine.coordinate (polynomial := curve.polynomial)
-  (ambient := Cuts.Ambient curve)))
-    (vertical : ClearGrid.Interval (HorizontalLine.coordinate (polynomial := curve.polynomial) (ambient := Cuts.Ambient
+public theorem cell_member (horizontal : Grid.Interval (VerticalLine.coordinate (polynomial := curve.polynomial)
+  (ambient := Ambient curve)))
+    (vertical : Grid.Interval (HorizontalLine.coordinate (polynomial := curve.polynomial) (ambient := Ambient
       curve)))
     (hMember : horizontal ∈ bank.grid.xIntervals) (vMember : vertical ∈ bank.grid.yIntervals) :
-    (⟨horizontal, vertical⟩ : ClearGrid.Cell curve.polynomial (Cuts.Ambient curve)) ∈ bank.grid.cells :=
+    (⟨horizontal, vertical⟩ : Grid.Cell curve.polynomial (Ambient curve)) ∈ bank.grid.cells :=
   Flatten.mem_flatMap.mpr ⟨horizontal, hMember, Map.mem_map.mpr ⟨vertical, vMember, rfl⟩⟩
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularSideNeighbors.BranchCellBank.PuncturedFaces
@@ -128,14 +128,14 @@ namespace Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces.SideNeighbor
 /-- Inspect the original framed grid's adjacent axis interval and retain its exact cell location or ambient-boundary
 equality. -/
 @[expose] def build (faces :
-  PuncturedGridFaces.PuncturedFaces bank) (frame : Polynomial.Geometry.Grid.FramedClearGrid.AmbientFrame bank.grid)
-    (face : PuncturedGridFaces.RegularFace bank) : (side : GridLiftedDualSteps.GridSide) →
-      Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces.SideNeighbor faces face side
+  PuncturedFaces bank) (frame : AmbientFrame bank.grid)
+    (face : RegularFace bank) : (side : GridSide) →
+      SideNeighbor faces face side
   | .bottom =>
       match Predecessor.build face.cell.vertical (Cell.intervals_mem face.cell face.member).2
-        (Cuts.Ambient curve).yLower frame.yLower (fun line _ => line.inside.1) with
+        (Ambient curve).yLower frame.yLower (fun line _ => line.inside.1) with
       | .previous found =>
-          let cell : ClearGrid.Cell curve.polynomial (Cuts.Ambient curve) := ⟨face.cell.horizontal, found.interval⟩
+          let cell : Grid.Cell curve.polynomial (Ambient curve) := ⟨face.cell.horizontal, found.interval⟩
           let member :=
             RegularSideNeighbors.BranchCellBank.PuncturedFaces.cell_member
             face.cell.horizontal found.interval (Cell.intervals_mem face.cell face.member).1 found.member
@@ -143,9 +143,9 @@ equality. -/
       | .exterior equal => .exterior equal
   | .top =>
       match Successor.build face.cell.vertical (Cell.intervals_mem face.cell face.member).2
-        (Cuts.Ambient curve).yUpper frame.yUpper (fun line _ => line.inside.2) with
+        (Ambient curve).yUpper frame.yUpper (fun line _ => line.inside.2) with
       | .next found =>
-          let cell : ClearGrid.Cell curve.polynomial (Cuts.Ambient curve) := ⟨face.cell.horizontal, found.interval⟩
+          let cell : Grid.Cell curve.polynomial (Ambient curve) := ⟨face.cell.horizontal, found.interval⟩
           let member :=
             RegularSideNeighbors.BranchCellBank.PuncturedFaces.cell_member
             face.cell.horizontal found.interval (Cell.intervals_mem face.cell face.member).1 found.member
@@ -153,9 +153,9 @@ equality. -/
       | .exterior equal => .exterior equal
   | .left =>
       match Predecessor.build face.cell.horizontal (Cell.intervals_mem face.cell face.member).1
-        (Cuts.Ambient curve).xLower frame.xLower (fun line _ => line.inside.1) with
+        (Ambient curve).xLower frame.xLower (fun line _ => line.inside.1) with
       | .previous found =>
-          let cell : ClearGrid.Cell curve.polynomial (Cuts.Ambient curve) := ⟨found.interval, face.cell.vertical⟩
+          let cell : Grid.Cell curve.polynomial (Ambient curve) := ⟨found.interval, face.cell.vertical⟩
           let member :=
             RegularSideNeighbors.BranchCellBank.PuncturedFaces.cell_member
             found.interval face.cell.vertical found.member (Cell.intervals_mem face.cell face.member).2
@@ -163,9 +163,9 @@ equality. -/
       | .exterior equal => .exterior equal
   | .right =>
       match Successor.build face.cell.horizontal (Cell.intervals_mem face.cell face.member).1
-        (Cuts.Ambient curve).xUpper frame.xUpper (fun line _ => line.inside.2) with
+        (Ambient curve).xUpper frame.xUpper (fun line _ => line.inside.2) with
       | .next found =>
-          let cell : ClearGrid.Cell curve.polynomial (Cuts.Ambient curve) := ⟨found.interval, face.cell.vertical⟩
+          let cell : Grid.Cell curve.polynomial (Ambient curve) := ⟨found.interval, face.cell.vertical⟩
           let member :=
             RegularSideNeighbors.BranchCellBank.PuncturedFaces.cell_member
             found.interval face.cell.vertical found.member (Cell.intervals_mem face.cell face.member).2
@@ -179,7 +179,7 @@ namespace Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces
 set_option genInjectivity false in
 /-- The four retained neighboring-cell or ambient-boundary certificates of one original regular face. -/
 structure FaceNeighbors (faces :
-  PuncturedGridFaces.PuncturedFaces bank) (face : PuncturedGridFaces.RegularFace bank) where
+  PuncturedFaces bank) (face : RegularFace bank) where
   /-- The retained neighbor or ambient boundary at the original lower face side. -/ bottom :
     SideNeighbor faces face .bottom
   /-- The retained neighbor or ambient boundary at the original right face side. -/ right :
@@ -189,7 +189,7 @@ structure FaceNeighbors (faces :
   /-- The retained neighbor or ambient boundary at the original left face side. -/ left :
     SideNeighbor faces face .left
 
-constructive_injectivity Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces.FaceNeighbors
+constructive_injectivity FaceNeighbors
 
 end Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces
 
@@ -199,13 +199,13 @@ namespace Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces.FaceNeighbors
 
 /-- Construct and cache the four side certificates of the original regular face. -/
 @[expose] def build (faces :
-  PuncturedGridFaces.PuncturedFaces bank) (frame : Polynomial.Geometry.Grid.FramedClearGrid.AmbientFrame bank.grid)
-    (face : PuncturedGridFaces.RegularFace bank) : PuncturedFaces.FaceNeighbors faces
+  PuncturedFaces bank) (frame : AmbientFrame bank.grid)
+    (face : RegularFace bank) : FaceNeighbors faces
       face :=
-  ⟨SideNeighbor.build faces frame face .bottom, PuncturedFaces.SideNeighbor.build
+  ⟨SideNeighbor.build faces frame face .bottom, SideNeighbor.build
     faces frame face .right,
-    Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces.SideNeighbor.build faces frame face .top,
-      Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces.SideNeighbor.build faces frame face .left⟩
+    SideNeighbor.build faces frame face .top,
+      SideNeighbor.build faces frame face .left⟩
 
 end Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces.FaceNeighbors
 
@@ -214,12 +214,12 @@ namespace Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces
 set_option genInjectivity false in
 /-- A cached dependent vector of all four side certificates for every original regular face. -/
 structure NeighborBank (faces :
-  PuncturedGridFaces.PuncturedFaces bank) where
+  PuncturedFaces bank) where
   /-- The retained four-side neighbor certificates indexed by the exact original regular-face list. -/ entries :
-    Data.Vector.DependentVector (fun position : Fin faces.regulars.length =>
+    DependentVector (fun position : Fin faces.regulars.length =>
     FaceNeighbors faces faces.regulars[position.val])
 
-constructive_injectivity Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank
+constructive_injectivity NeighborBank
 
 end Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces
 
@@ -229,9 +229,9 @@ namespace Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank
 
 /-- Cache the four-side neighbor certificates in original regular-face order. -/
 @[expose] def build (faces :
-  PuncturedGridFaces.PuncturedFaces bank) (frame : Polynomial.Geometry.Grid.FramedClearGrid.AmbientFrame bank.grid) :
-  Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank faces :=
-  ⟨DependentVector.ofFn (fun position => PuncturedFaces.FaceNeighbors.build faces
+  PuncturedFaces bank) (frame : AmbientFrame bank.grid) :
+  NeighborBank faces :=
+  ⟨DependentVector.ofFn (fun position => FaceNeighbors.build faces
     frame faces.regulars[position.val])⟩
 
 end Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank

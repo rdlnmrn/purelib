@@ -36,7 +36,7 @@ universe u
 variable {Alpha : Type u} {key : Alpha → Fraction.Rational}
 
 /-- The final payload read from a nonempty axis belongs to that axis. -/
-public theorem lastFrom_mem (first : Alpha) (rest : List Alpha) : Geometry.Grid.CellBoundary.Interval.lastFrom first
+public theorem lastFrom_mem (first : Alpha) (rest : List Alpha) : CellBoundary.Interval.lastFrom first
   rest ∈ first :: rest := by
   induction rest generalizing first with
   | nil => exact List.mem_cons_self
@@ -64,7 +64,7 @@ occurrences by that same final key. -/
 public theorem key_le_last (first : Alpha) (rest : List Alpha)
     (ordered : (first :: rest).Pairwise (fun left right => key left < key right))
     {coordinate : Fraction.Rational} (member : coordinate ∈ (first :: rest).map key) : coordinate ≤ key
-      (Geometry.Grid.CellBoundary.Interval.lastFrom first rest) := by
+      (CellBoundary.Interval.lastFrom first rest) := by
   induction rest generalizing first coordinate with
   | nil => exact (Membership.mem_singleton.mp member).le
   | cons next rest ih =>
@@ -77,27 +77,27 @@ public theorem key_le_last (first : Alpha) (rest : List Alpha)
 /-- Construct an increasing walk through every adjacent interval of a nonempty ordered axis.
 
 The supplied inclusion places each original interval in the retained ambient interval list. -/
-@[expose] public def fullIn (intervals : List (Geometry.Grid.ClearGrid.Interval key)) (first : Alpha) (rest : List
+@[expose] public def fullIn (intervals : List (ClearGrid.Interval key)) (first : Alpha) (rest : List
   Alpha)
     (ordered : (first :: rest).Pairwise (fun left right => key left < key right))
-    (included : ∀ interval ∈ Geometry.Grid.ClearGrid.Interval.adjacent (first :: rest) ordered, interval ∈ intervals) :
-    Geometry.Grid.AxisWalks.IncreasingWalk intervals (key first) (key (Geometry.Grid.CellBoundary.Interval.lastFrom
+    (included : ∀ interval ∈ ClearGrid.Interval.adjacent (first :: rest) ordered, interval ∈ intervals) :
+    AxisWalks.IncreasingWalk intervals (key first) (key (CellBoundary.Interval.lastFrom
       first rest)) :=
   match rest with
   | [] => .nil (key first)
   | next :: tail =>
       .cons ⟨first, next, (List.pairwise_cons.mp ordered).1 next List.mem_cons_self⟩ (included _ List.mem_cons_self)
-        (Purelib.Polynomial.Geometry.Grid.Axis.Full.Interval.fullIn intervals next tail (List.pairwise_cons.mp
+        (Interval.fullIn intervals next tail (List.pairwise_cons.mp
           ordered).2 (fun interval member =>
           included interval (List.mem_cons_of_mem _ member)))
 
 /-- The complete axis walk retains exactly the original adjacent-interval list. -/
-private theorem fullIn_edges (intervals : List (Geometry.Grid.ClearGrid.Interval key)) (first : Alpha) (rest : List
+private theorem fullIn_edges (intervals : List (ClearGrid.Interval key)) (first : Alpha) (rest : List
   Alpha)
     (ordered : (first :: rest).Pairwise (fun left right => key left < key right))
-    (included : ∀ interval ∈ Geometry.Grid.ClearGrid.Interval.adjacent (first :: rest) ordered, interval ∈ intervals) :
-    (Geometry.Grid.Axis.Full.Interval.fullIn intervals first rest ordered included).edges =
-      Geometry.Grid.ClearGrid.Interval.adjacent (first :: rest) ordered := by
+    (included : ∀ interval ∈ ClearGrid.Interval.adjacent (first :: rest) ordered, interval ∈ intervals) :
+    (fullIn intervals first rest ordered included).edges =
+      ClearGrid.Interval.adjacent (first :: rest) ordered := by
   induction rest generalizing first with
   | nil => rfl
   | cons next rest ih => exact congrArg (List.cons _) (ih next _ _)
@@ -114,7 +114,7 @@ public structure Span (entries : List Alpha) (lower upper : Fraction.Rational) w
     first :: rest
   /-- The first payload's key is the requested lower endpoint. -/ lower_eq : key first = lower
   /-- The final payload's key is the requested upper endpoint. -/ upper_eq : key
-    (Geometry.Grid.CellBoundary.Interval.lastFrom first rest) = upper
+    (CellBoundary.Interval.lastFrom first rest) = upper
 
 constructive_injectivity Span
 
@@ -129,69 +129,69 @@ All keys lie between those bounds; the constructor retains the original nonempty
   right))
     (inside : ∀ entry ∈ entries, lower ≤ key entry ∧ key entry ≤ upper)
     (lowerMember : lower ∈ entries.map key) (upperMember : upper ∈ entries.map key) :
-      Geometry.Grid.Axis.Full.Interval.Span (key := key) entries lower upper :=
+      Span (key := key) entries lower upper :=
   match entries with
   | [] => (List.not_mem_nil lowerMember).elim
   | first :: rest =>
       ⟨first, rest, rfl,
-        le_antisymm (Geometry.Grid.Axis.Full.Interval.first_le_key first rest ordered lowerMember) (inside first
+        le_antisymm (first_le_key first rest ordered lowerMember) (inside first
           List.mem_cons_self).1,
-        le_antisymm (inside _ (Geometry.Grid.Axis.Full.Interval.lastFrom_mem first rest)).2
-          (Geometry.Grid.Axis.Full.Interval.key_le_last first rest ordered upperMember)⟩
+        le_antisymm (inside _ (lastFrom_mem first rest)).2
+          (key_le_last first rest ordered upperMember)⟩
 
 /-- Build the complete increasing walk between a span's certified endpoint coordinates. -/
-@[expose] public def walk (span : Geometry.Grid.Axis.Full.Interval.Span (key := key) entries lower upper)
-    (ordered : entries.Pairwise (fun left right => key left < key right)) : Geometry.Grid.AxisWalks.IncreasingWalk
-      (Geometry.Grid.ClearGrid.Interval.adjacent entries ordered) lower upper := by
+@[expose] public def walk (span : Span (key := key) entries lower upper)
+    (ordered : entries.Pairwise (fun left right => key left < key right)) : AxisWalks.IncreasingWalk
+      (ClearGrid.Interval.adjacent entries ordered) lower upper := by
   rcases span with ⟨first, rest, rfl, lowerEq, upperEq⟩
-  exact ((Geometry.Grid.Axis.Full.Interval.fullIn _ first rest ordered (fun _ member => member)).castStart
+  exact ((fullIn _ first rest ordered (fun _ member => member)).castStart
     lowerEq).castFinish upperEq
 
 /-- The span walk consumes exactly the adjacent intervals of its original ordered axis. -/
-public theorem walk_edges (span : Geometry.Grid.Axis.Full.Interval.Span (key := key) entries lower upper)
+public theorem walk_edges (span : Span (key := key) entries lower upper)
     (ordered : entries.Pairwise (fun left right => key left < key right)) :
-    (span.walk ordered).edges = Geometry.Grid.ClearGrid.Interval.adjacent entries ordered := by
+    (span.walk ordered).edges = ClearGrid.Interval.adjacent entries ordered := by
   rcases span with ⟨first, rest, rfl, rfl, rfl⟩
-  exact Geometry.Grid.Axis.Full.Interval.fullIn_edges _ first rest ordered (fun _ member => member)
+  exact fullIn_edges _ first rest ordered (fun _ member => member)
 
 end Span
 end Interval
 
 namespace EdgeValues
 
-variable {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient : Box} {grid :
+variable {polynomial : ClearPath.GaussianPolynomial} {ambient : Box} {grid :
   ClearGrid polynomial ambient}
 
 /-- Endpoint equality transport preserves a walk's edge-value sum. -/
-public theorem walk_castEndpoints (values : Geometry.Grid.CellBoundary.EdgeValues) {start finish first last :
+public theorem walk_castEndpoints (values : CellBoundary.EdgeValues) {start finish first last :
   Gaussian.Basic.Canonical}
-    (walk : Geometry.Grid.Walks.Walk grid start finish) (startEq : start = first) (finishEq : finish = last) :
+    (walk : Walks.Walk grid start finish) (startEq : start = first) (finishEq : finish = last) :
     values.walk (walk.castEndpoints startEq finishEq) = values.walk walk := by
   cases startEq
   cases finishEq
   rfl
 
 /-- A horizontal increasing walk sums the readings of its actual retained intervals. -/
-public theorem walk_horizontalIncreasing (values : Geometry.Grid.CellBoundary.EdgeValues) (line :
-  Geometry.Grid.ClearGrid.HorizontalLine polynomial ambient) (member : line ∈ grid.horizontal) :
-    {start finish : Fraction.Rational} → (walk : Geometry.Grid.AxisWalks.IncreasingWalk grid.xIntervals start finish) →
-    values.walk (Geometry.Grid.Walks.Walk.horizontalIncreasing line member walk) =
-      Geometry.Grid.CellBoundary.sumValues (fun interval => values.horizontal interval.lower.coordinate
+public theorem walk_horizontalIncreasing (values : CellBoundary.EdgeValues) (line :
+  ClearGrid.HorizontalLine polynomial ambient) (member : line ∈ grid.horizontal) :
+    {start finish : Fraction.Rational} → (walk : AxisWalks.IncreasingWalk grid.xIntervals start finish) →
+    values.walk (Walks.Walk.horizontalIncreasing line member walk) =
+      CellBoundary.sumValues (fun interval => values.horizontal interval.lower.coordinate
         interval.upper.coordinate line.coordinate) walk.edges
   | _, _, .nil _ => rfl
   | _, _, .cons _ _ tail => congrArg (fun total => _ + total)
-    (Purelib.Polynomial.Geometry.Grid.Axis.Full.EdgeValues.walk_horizontalIncreasing values line member tail)
+    (EdgeValues.walk_horizontalIncreasing values line member tail)
 
 /-- A vertical increasing walk sums the readings of its actual retained intervals. -/
-public theorem walk_verticalIncreasing (values : Geometry.Grid.CellBoundary.EdgeValues) (line :
-  Geometry.Grid.ClearGrid.VerticalLine polynomial ambient) (member : line ∈ grid.vertical) :
-    {start finish : Fraction.Rational} → (walk : Geometry.Grid.AxisWalks.IncreasingWalk grid.yIntervals start finish) →
-    values.walk (Geometry.Grid.Walks.Walk.verticalIncreasing line member walk) =
-      Geometry.Grid.CellBoundary.sumValues (fun interval => values.vertical line.coordinate interval.lower.coordinate
+public theorem walk_verticalIncreasing (values : CellBoundary.EdgeValues) (line :
+  ClearGrid.VerticalLine polynomial ambient) (member : line ∈ grid.vertical) :
+    {start finish : Fraction.Rational} → (walk : AxisWalks.IncreasingWalk grid.yIntervals start finish) →
+    values.walk (Walks.Walk.verticalIncreasing line member walk) =
+      CellBoundary.sumValues (fun interval => values.vertical line.coordinate interval.lower.coordinate
         interval.upper.coordinate) walk.edges
   | _, _, .nil _ => rfl
   | _, _, .cons _ _ tail => congrArg (fun total => _ + total)
-    (Purelib.Polynomial.Geometry.Grid.Axis.Full.EdgeValues.walk_verticalIncreasing values line member tail)
+    (EdgeValues.walk_verticalIncreasing values line member tail)
 
 end EdgeValues
 

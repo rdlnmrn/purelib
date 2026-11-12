@@ -49,6 +49,8 @@ import Purelib.RootIsolation.Newton.Band.Basic
 import Mathlib.Order.MinMax
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Geometry.Rational.Box.Refinement
+
 /-!
 # Continuation congruence using intersected source boxes
 
@@ -79,11 +81,11 @@ open Purelib.Riemann.RootContinuation.SquareRootTrackEquivalence
 /-- The canonical Gaussian rational carrier for original root parameters. -/
 abbrev Gaussian := Basic.Canonical
 /-- The original rational Gaussian box carrier with retained coordinate bounds. -/
-abbrev Box := Purelib.Geometry.Rational.Box
+abbrev Box := Geometry.Rational.Box
 /-- The original winding-one quadratic root owner indexed by its exact parameter. -/
-abbrev Owner := Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+abbrev Owner := Topology.SquareRootContinuationChain.Owner
 /-- The original operational equivalence certificate between retained Gaussian names. -/
-abbrev NamedEquivalent := Purelib.Approximation.Gaussian.Equivalence.NamedEquivalent
+abbrev NamedEquivalent := Approximation.Gaussian.Equivalence.NamedEquivalent
 
 set_option genInjectivity false in
 /-- A target-parameter root owner whose initial box lies strictly inside both original source-owner boxes.
@@ -111,26 +113,26 @@ relations. -/
     (firstSmall : normSq (source - target) < first.track.initial.clearance.bound)
     (secondSmall : normSq (source - target) < second.track.initial.clearance.bound) :
     SharedTarget first second target := by
-  let overlap := Geometry.Rational.Box.Intersection.intersection first.track.initial.box second.track.initial.box
-    common.track.initial.box (Geometry.Rational.Box.Refinement.StrictInterior.refines strictFirst)
-      (Geometry.Rational.Box.Refinement.StrictInterior.refines strictSecond)
+  let overlap := Box.Intersection.intersection first.track.initial.box second.track.initial.box
+    common.track.initial.box (StrictInterior.refines strictFirst)
+      (StrictInterior.refines strictSecond)
   have overlapFirst : overlap.Refines first.track.initial.box :=
-      Geometry.Rational.Box.Intersection.intersection_refines_first
+      Box.Intersection.intersection_refines_first
   have overlapSecond : overlap.Refines second.track.initial.box :=
-    Geometry.Rational.Box.Intersection.intersection_refines_second
-  have proper : overlap.Proper := Geometry.Rational.Box.Intersection.intersection_proper strictFirst strictSecond
+    Box.Intersection.intersection_refines_second
+  have proper : overlap.Proper := Box.Intersection.intersection_proper strictFirst strictSecond
   let clearance := Boundary.Intersection.BoxClearance.BoundaryClearance.intersection first.track.initial.clearance
     second.track.initial.clearance
-    (Geometry.Rational.Box.Refinement.StrictInterior.refines strictFirst)
-        (Geometry.Rational.Box.Refinement.StrictInterior.refines strictSecond)
+    (StrictInterior.refines strictFirst)
+        (StrictInterior.refines strictSecond)
   let sourceInput := SquareRootReconditioning.isolationInput first.parameterNonzero
   let supported := supportedInside first.parameterNonzero first.track.initial common.track.initial
-    (Geometry.Rational.Box.Refinement.StrictInterior.refines strictFirst)
+    (StrictInterior.refines strictFirst)
   have supportedStrict : supported.box.StrictInterior overlap :=
-    Geometry.Rational.Box.Refinement.StrictInterior.of_refines
-      (Geometry.Rational.Box.Intersection.strictInterior_intersection strictFirst strictSecond)
+    StrictInterior.of_refines
+      (Box.Intersection.strictInterior_intersection strictFirst strictSecond)
       (supportedInside_refines_inner first.parameterNonzero first.track.initial common.track.initial
-        (Geometry.Rational.Box.Refinement.StrictInterior.refines strictFirst))
+        (StrictInterior.refines strictFirst))
   let region : Region.ClearRegion (SquareRootReconditioning.rootPolynomial source) first.track.initial.box :=
     ⟨overlap, overlapFirst, proper, clearance⟩
   have sourcePositive : 4 ≤ Winding.Box.Basic.quadrupledBoxWinding
@@ -181,10 +183,10 @@ relations. -/
       ambientTopClearance := output.ambientTopClearance }
   let track := Track.Newton.Build.ofInitial targetInput.degreeAtLeastTwo targetInput.squarefree targetInput.elimination
     state
-  exact ⟨⟨targetNonzero, overlap, track⟩, Geometry.Rational.Box.Refinement.StrictInterior.Boxes.trans_refines
+  exact ⟨⟨targetNonzero, overlap, track⟩, StrictInterior.Boxes.trans_refines
       output.strictCurrent
     overlapFirst,
-    Geometry.Rational.Box.Refinement.StrictInterior.Boxes.trans_refines output.strictCurrent overlapSecond⟩
+    StrictInterior.Boxes.trans_refines output.strictCurrent overlapSecond⟩
 
 /-- Compare two retained target root owners refining two source boxes with a common strict source refinement.
 

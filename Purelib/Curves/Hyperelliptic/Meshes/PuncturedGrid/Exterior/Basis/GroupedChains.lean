@@ -72,45 +72,45 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBa
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments (IndexedFragment ParentFragment)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping (IndexedRun IndexedGrouping)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains (SourceChain)
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
+  {program : ExteriorProgram lifted
     differential} {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+    SurfacePreparation
     regular domains program}
 
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
-variable (retained : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation
+variable (retained : CommonBasisPreparation
   prepared) {index : Nat} (inputs : retained.Inputs index)
   (outer : Fin prepared.occurrences.length) {faceIndex : Nat}
-  (data : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (data : RowData
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) faceIndex)
   (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
 
 variable {retained inputs outer data coefficients}
 
 namespace ParentFragment
-variable {first last : Fin (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+variable {first last : Fin (ParentIndices.occurrenceAt
   prepared.occurrences outer).compared.entered.cache.parents.length}
 
 /-- Transporting to an equal retained parent preserves the original fragment's first source parameter. -/
 theorem castParent_first (same : first = last)
-    (fragment : IndexedFragments.ParentFragment retained inputs outer data coefficients first) :
+    (fragment : ParentFragment retained inputs outer data coefficients first) :
     (fragment.castParent same).parameters 0 = fragment.parameters 0 := by
   cases same
   rfl
 
 /-- Transporting to an equal retained parent preserves the original fragment's last source parameter. -/
 theorem castParent_last (same : first = last)
-    (fragment : IndexedFragments.ParentFragment retained inputs outer data coefficients first) :
+    (fragment : ParentFragment retained inputs outer data coefficients first) :
     (fragment.castParent same).parameters (Fin.last (fragment.castParent same).vertices) =
       fragment.parameters (Fin.last fragment.vertices) := by
   cases same
@@ -118,7 +118,7 @@ theorem castParent_last (same : first = last)
 
 /-- Transporting to an equal retained parent preserves the original nondecreasing source steps. -/
 theorem castParent_ordered (same : first = last)
-    (fragment : IndexedFragments.ParentFragment retained inputs outer data coefficients first)
+    (fragment : ParentFragment retained inputs outer data coefficients first)
     (ordered : ∀ edge : Fin fragment.vertices, fragment.parameters edge.castSucc ≤ fragment.parameters edge.succ) :
     ∀ edge : Fin (fragment.castParent same).vertices,
       (fragment.castParent same).parameters edge.castSucc ≤ (fragment.castParent same).parameters edge.succ := by
@@ -130,12 +130,12 @@ namespace IndexedFragment
 
 /-- Read the retained indexed fragment's original initial source parameter. -/
 @[expose]
-def firstParameter (item : IndexedFragments.IndexedFragment retained inputs outer data coefficients) : Coordinate :=
+def firstParameter (item : IndexedFragment retained inputs outer data coefficients) : Coordinate :=
   item.fragment.parameters 0
 
 /-- Read the retained indexed fragment's original terminal source parameter. -/
 @[expose]
-def lastParameter (item : IndexedFragments.IndexedFragment retained inputs outer data coefficients) : Coordinate :=
+def lastParameter (item : IndexedFragment retained inputs outer data coefficients) : Coordinate :=
   item.fragment.parameters (Fin.last item.fragment.vertices)
 
 /-- Every source step of the retained original fragment is nondecreasing.
@@ -143,7 +143,7 @@ def lastParameter (item : IndexedFragments.IndexedFragment retained inputs outer
 Every successor edge compares the two retained parameters of the same fragment, with no change to its parent or finite
 vertex indices. -/
 @[expose]
-def Increasing (item : IndexedFragments.IndexedFragment retained inputs outer data coefficients) : Prop :=
+def Increasing (item : IndexedFragment retained inputs outer data coefficients) : Prop :=
   ∀ edge : Fin item.fragment.vertices,
     item.fragment.parameters edge.castSucc ≤ item.fragment.parameters edge.succ
 
@@ -153,7 +153,7 @@ changed parent.
 A common parent requires exact endpoint agreement; a changed parent requires the previous terminal parameter and the
 next initial parameter. -/
 @[expose]
-def Joined (before after : IndexedFragments.IndexedFragment retained inputs outer data coefficients) : Prop :=
+def Joined (before after : IndexedFragment retained inputs outer data coefficients) : Prop :=
   (before.parent = after.parent → before.lastParameter = after.firstParameter) ∧
   (before.parent ≠ after.parent → before.lastParameter = 1 ∧ after.firstParameter = 0)
 
@@ -162,28 +162,28 @@ def Joined (before after : IndexedFragments.IndexedFragment retained inputs oute
 Each retained successor supplies its actual join with the preceding fragment, and the empty tail requires the final
 parameter to be one. -/
 @[expose]
-def After (before : IndexedFragments.IndexedFragment retained inputs outer data coefficients) :
-    List (IndexedFragments.IndexedFragment retained inputs outer data coefficients) → Prop
+def After (before : IndexedFragment retained inputs outer data coefficients) :
+    List (IndexedFragment retained inputs outer data coefficients) → Prop
   | [] => before.lastParameter = 1
   | after :: rest => before.Joined after ∧
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment.After after rest
+    After after rest
 
 /-- The original indexed fragments form a complete joined parameter word from zero to one.
 
 The first fragment starts at parameter zero, each consecutive pair retains its join, and the final fragment ends at
 parameter one. -/
 @[expose]
-def Word : List (IndexedFragments.IndexedFragment retained inputs outer data coefficients) → Prop
+def Word : List (IndexedFragment retained inputs outer data coefficients) → Prop
   | [] => True
   | first :: rest => first.firstParameter = 0 ∧
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment.After first rest
+    After first rest
 
 end IndexedFragment
 
 /-- The supplied retained parent differs from the first indexed fragment's parent, when present. -/
 private def apart (parent : Fin (ParentIndices.occurrenceAt prepared.occurrences
   outer).compared.entered.cache.parents.length) :
-    List (IndexedFragments.IndexedFragment retained inputs outer data coefficients) → Prop
+    List (IndexedFragment retained inputs outer data coefficients) → Prop
   | [] => True
   | item :: _ => parent ≠ item.parent
 
@@ -191,19 +191,19 @@ private def apart (parent : Fin (ParentIndices.occurrenceAt prepared.occurrences
 word on the remaining parents. -/
 private theorem finish_run
     (parent : Fin (ParentIndices.occurrenceAt prepared.occurrences outer).compared.entered.cache.parents.length)
-    (first : IndexedFragments.IndexedFragment retained inputs outer data coefficients)
-    (rest after : List (IndexedFragments.IndexedFragment retained inputs outer data coefficients))
+    (first : IndexedFragment retained inputs outer data coefficients)
+    (rest after : List (IndexedFragment retained inputs outer data coefficients))
     (same : ∀ item ∈ first :: rest, item.parent = parent)
-    (ends : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment.After first (rest
-      ++ after)) (separate : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.apart parent
+    (ends : IndexedFragment.After first (rest
+      ++ after)) (separate : IndexedFragments.apart parent
       after)
     (increasing : ∀ item ∈ first :: rest, item.Increasing) :
-    SourceChains.SourceChain (IndexedRun.fragmentsAt parent (first :: rest) same) first.firstParameter 1 ∧
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment.Word after := by
+    SourceChain (IndexedRun.fragmentsAt parent (first :: rest) same) first.firstParameter 1 ∧
+      IndexedFragment.Word after := by
   induction rest generalizing first with
   | nil =>
     have last : first.lastParameter = 1 ∧
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment.Word after := by
+      IndexedFragment.Word after := by
       cases after with
       | nil => exact ⟨ends, True.intro⟩
       | cons next tail =>
@@ -212,15 +212,15 @@ private theorem finish_run
         have joined := ends.1.2 different
         exact ⟨joined.1, joined.2, ends.2⟩
     let fragment := first.fragment.castParent (same first List.mem_cons_self)
-    have tail : SourceChains.SourceChain ([] : List (IndexedFragments.ParentFragment retained inputs outer data
+    have tail : SourceChain ([] : List (ParentFragment retained inputs outer data
       coefficients parent))
         (fragment.parameters (Fin.last fragment.vertices)) 1 := by
-      rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.ParentFragment.castParent_last]
-      change SourceChains.SourceChain [] first.lastParameter 1
+      rw [ParentFragment.castParent_last]
+      change SourceChain [] first.lastParameter 1
       rw [last.1]
       exact .nil 1
     have chain := SourceChain.cons fragment
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.ParentFragment.castParent_ordered _ _
+      (ParentFragment.castParent_ordered _ _
         (increasing first List.mem_cons_self)) tail
     rw [ParentFragment.castParent_first] at chain
     exact ⟨chain, last.2⟩
@@ -230,15 +230,15 @@ private theorem finish_run
     have joined := ends.1.1 ((same first List.mem_cons_self).trans
       (same next (List.mem_cons_of_mem first List.mem_cons_self)).symm)
     let fragment := first.fragment.castParent (same first List.mem_cons_self)
-    have tail : SourceChains.SourceChain (IndexedRun.fragmentsAt parent (next :: rest)
+    have tail : SourceChain (IndexedRun.fragmentsAt parent (next :: rest)
         (fun item member => same item (List.mem_cons_of_mem first member)))
         (fragment.parameters (Fin.last fragment.vertices)) 1 := by
-      rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.ParentFragment.castParent_last]
-      change SourceChains.SourceChain _ first.lastParameter 1
+      rw [ParentFragment.castParent_last]
+      change SourceChain _ first.lastParameter 1
       rw [joined]
       exact result.1
     have chain := SourceChain.cons fragment
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.ParentFragment.castParent_ordered _ _
+      (ParentFragment.castParent_ordered _ _
         (increasing first List.mem_cons_self)) tail
     rw [ParentFragment.castParent_first] at chain
     exact ⟨chain, result.2⟩
@@ -248,25 +248,25 @@ one.
 
 The proof follows membership in the retained list through its original head, tail or concatenation, preserving the
 supplied occurrence witness. -/
-private theorem runs_chains (runs : List (FragmentGrouping.IndexedRun retained inputs outer data coefficients))
+private theorem runs_chains (runs : List (IndexedRun retained inputs outer data coefficients))
     (separated : IndexedRun.separated runs)
-    (word : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment.Word (runs.map
+    (word : IndexedFragment.Word (runs.map
       IndexedRun.items).flatten)
     (increasing : ∀ item ∈ (runs.map IndexedRun.items).flatten, item.Increasing) :
-    ∀ run ∈ runs, SourceChains.SourceChain run.fragments 0 1 := by
+    ∀ run ∈ runs, SourceChain run.fragments 0 1 := by
   induction runs with
   | nil => intro _ member; cases member
   | cons run rest ih =>
-    have separate : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.apart run.parent (rest.map
+    have separate : IndexedFragments.apart run.parent (rest.map
       IndexedRun.items).flatten := by
       cases rest with
       | nil => trivial
       | cons next tail => exact fun same => separated.1 (same.trans next.first_parent)
-    have result := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.finish_run run.parent
+    have result := IndexedFragments.finish_run run.parent
       run.first run.rest (rest.map IndexedRun.items).flatten
       (fun _ member => run.parent_eq member) word.2 separate
       (fun item member => increasing item (Membership.mem_append.mpr (Or.inl member)))
-    have firstChain : SourceChains.SourceChain run.fragments 0 1 := by
+    have firstChain : SourceChain run.fragments 0 1 := by
       have chain := result.1
       rw [word.1] at chain
       exact chain
@@ -279,16 +279,16 @@ private theorem runs_chains (runs : List (FragmentGrouping.IndexedRun retained i
 
 namespace IndexedGrouping
 variable {items : List
-  (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment retained inputs
+  (IndexedFragment retained inputs
   outer data coefficients)}
 
 /-- The original word's certified joins imply a complete chain for each maximal group on its exact retained numerical
 source owner. -/
 theorem source_chains (grouped : FragmentGrouping.IndexedGrouping retained inputs outer data coefficients items)
-    (word : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment.Word items)
+    (word : IndexedFragment.Word items)
       (increasing : ∀ item ∈ items, item.Increasing) :
-    ∀ run ∈ grouped.runs, SourceChains.SourceChain run.fragments 0 1 := by
-  apply Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.runs_chains grouped.runs
+    ∀ run ∈ grouped.runs, SourceChain run.fragments 0 1 := by
+  apply IndexedFragments.runs_chains grouped.runs
     grouped.separated
   · rw [grouped.flattened]
     exact word

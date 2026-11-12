@@ -52,9 +52,9 @@ open Purelib.Integration.Program.Gaussian.Query in
 The witness is an exact representation over the same cached program,
 recipe and certified process. Its state-index equality identifies the
 original cursor index without adding a process callback to cursor data. -/
-@[expose] public def CursorRep (program : Basic.CachedProgram) (cursor : Approximation.Gaussian.Process.Recipe.Cursor)
+@[expose] public def CursorRep (program : Basic.CachedProgram) (cursor : Process.Recipe.Cursor)
     (process :
-  Approximation.Gaussian.Process)
+  Process)
     (state : process.State) : Prop :=
   ∃ representation : Representation.Represents program cursor.recipe process,
     representation.index state = cursor.index
@@ -82,9 +82,9 @@ open Purelib.Integration.Program.Gaussian.Query in
 The positive target refines the same certified process state and
 retained cursor. The representation refinement equation identifies their
 original recipe-selected source stage. -/
-public theorem refined {program : Basic.CachedProgram} {cursor : Approximation.Gaussian.Process.Recipe.Cursor} {process
+public theorem refined {program : Basic.CachedProgram} {cursor : Process.Recipe.Cursor} {process
     :
-  Approximation.Gaussian.Process}
+  Process}
     {state : process.State} (represented : CursorRep program cursor process state)
     (target : Fraction.Rational) (positive : 0 < target) :
     CursorRep program (cursor.refined (IntegrationReplay.control program) target)
@@ -104,9 +104,9 @@ open Purelib.Integration.Program.Gaussian.Query in
 The original recipe runs against the retained program stage procedure.
 Its checked successful reply contains the same refined cursor and
 certified process ball, preserving the original accuracy evidence. -/
-public theorem observe {program : Basic.CachedProgram} {cursor : Approximation.Gaussian.Process.Recipe.Cursor} {process
+public theorem observe {program : Basic.CachedProgram} {cursor : Process.Recipe.Cursor} {process
     :
-  Approximation.Gaussian.Process}
+  Process}
     {state : process.State} (represented : CursorRep program cursor process state)
     (target : Fraction.Rational) (positive : 0 < target) :
     ((cursor.observe (IntegrationReplay.control program) target).run program.stage).value =
@@ -115,8 +115,8 @@ public theorem observe {program : Basic.CachedProgram} {cursor : Approximation.G
   obtain ⟨representation, indexEqual⟩ := represented.refined target positive
   have observed := representation.ball_run (process.refine state target positive)
   rw [indexEqual] at observed
-  unfold Approximation.Gaussian.Process.Recipe.Cursor.observe
-  rw [Computation.Query.Protocol.map_run_value, observed]
+  rewrite [Process.Recipe.Cursor.observe_run]
+  rw [Protocol.map_run_value, observed]
   change (Replay.Check.checkedBall _ target (Enclosure.Ball.Data.BallData.ofBall (process.ball (process.refine state
     target positive)))).map _ = _
   rw [Replay.Check.checkedBall, dif_pos ⟨(process.ball _).radiusSq_nonneg, process.accurate state target positive⟩]
@@ -129,8 +129,8 @@ open Purelib.Integration.Program.Gaussian.Query in
 The same original process state is retained as the base of the unary
 scaled process. Multiplication by inverse gamma matches the retained
 recipe scaling and preserves its original source index. -/
-public theorem unary {program : Basic.CachedProgram} {cursor : Approximation.Gaussian.Process.Recipe.Cursor} {process :
-  Approximation.Gaussian.Process}
+public theorem unary {program : Basic.CachedProgram} {cursor : Process.Recipe.Cursor} {process :
+  Process}
     {state : process.State} (represented : CursorRep program cursor process state) :
     CursorRep program (cursor.scaled (IntegrationReplay.control program) gamma⁻¹)
       (Process.Gamma.Downscale.unaryScaledProcess process state)
@@ -146,11 +146,11 @@ open Purelib.Integration.Program.Gaussian.Query in
 The same original state is based and translated by the supplied sector
 representative. The retained cursor recipe and process therefore share
 that exact Gaussian shift and source index. -/
-public theorem residual {program : Basic.CachedProgram} {cursor : Approximation.Gaussian.Process.Recipe.Cursor} {process
+public theorem residual {program : Basic.CachedProgram} {cursor : Process.Recipe.Cursor} {process
     :
-  Approximation.Gaussian.Process}
+  Process}
     {state : process.State} (represented : CursorRep program cursor process state)
-    (sector : Data.ComplexContinuedFraction.Encoding.Sector) :
+    (sector : Sector) :
     CursorRep program (cursor.translated (IntegrationReplay.control program) sector.rep)
       (Process.Sector.Residual.residualProcess process state sector)
       (Process.Sector.Residual.residualInitial process state sector) := by
@@ -165,9 +165,9 @@ open Purelib.Integration.Program.Gaussian.Query
 The supplied natural exponent determines the original retained gamma
 power. Both the based process and cursor recipe use that same factor
 and retain the original process-state index. -/
-public theorem upscaled {program : Basic.CachedProgram} {cursor : Approximation.Gaussian.Process.Recipe.Cursor} {process
+public theorem upscaled {program : Basic.CachedProgram} {cursor : Process.Recipe.Cursor} {process
     :
-  Approximation.Gaussian.Process}
+  Process}
     {state : process.State} (represented : CursorRep program cursor process state) (exponent : Nat) :
     CursorRep program (cursor.scaled (IntegrationReplay.control program) (Power.natPow Basic.Canonical.gamma exponent))
       (Process.Gamma.Upscale.upscaledProcess process state exponent)
@@ -182,11 +182,11 @@ The preparation index is the original recipe refinement at one twelfth
 of the certificate's lower squared bound. The same based state,
 apartness certificate, gamma factor and natural count determine every
 subsequent division and scaling operation. -/
-public theorem inverse {program : Basic.CachedProgram} {cursor : Approximation.Gaussian.Process.Recipe.Cursor} {process
+public theorem inverse {program : Basic.CachedProgram} {cursor : Process.Recipe.Cursor} {process
     :
-  Approximation.Gaussian.Process}
+  Process}
     {state : process.State} (represented : CursorRep program cursor process state)
-    (certificate : Approximation.Gaussian.Enclosure.Ball.Apart (process.ball state)) (count : Nat) :
+    (certificate : Enclosure.Ball.Apart (process.ball state)) (count : Nat) :
     CursorRep program (Process.Recipe.Inverse.inverseCursor (IntegrationReplay.control program) cursor
       certificate.lowerSq count)
       (Process.Gamma.Inverse.Scale.normalizedInverseProcess process state certificate count)

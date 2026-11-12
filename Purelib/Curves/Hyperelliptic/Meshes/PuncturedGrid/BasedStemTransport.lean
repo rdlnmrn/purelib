@@ -73,7 +73,7 @@ open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Riemann.Meshes (FramedPuncturedGrid LiftedPuncturedGrid)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
 
 section
@@ -82,16 +82,16 @@ namespace Purelib.Curves.Hyperelliptic.Branches.FramedBranchCellBank
 
 /-- The rectangle between the original ambient anchor and the selected branch cell's anchor. -/
 @[expose] def southwestBox
-    (bank : Branches.FramedBranchCellBank curve branches higher) (index : BranchIsolation.Data.Index branches) : Box :=
+    (bank : FramedBranchCellBank curve branches higher) (index : BranchIsolation.Data.Index branches) : Box :=
   ⟨(Cuts.Ambient curve).xLower, (bank.cell index).box.xLower,
     (Cuts.Ambient curve).yLower, (bank.cell index).box.yLower,
     (bank.cell index).horizontal.lower.inside.1, (bank.cell index).vertical.lower.inside.1⟩
 
 /-- The exact framed-grid window on the retained southwest branch rectangle. -/
 @[expose] def southwestWindow
-    (bank : Branches.FramedBranchCellBank curve branches higher) (index : BranchIsolation.Data.Index branches) :
-    Polynomial.Geometry.Grid.WindowBoundary.Window bank.grid (bank.southwestBox index) :=
-  Polynomial.Geometry.Grid.WindowBoundary.Window.build bank.grid (bank.southwestBox index)
+    (bank : FramedBranchCellBank curve branches higher) (index : BranchIsolation.Data.Index branches) :
+    Window bank.grid (bank.southwestBox index) :=
+  Window.build bank.grid (bank.southwestBox index)
     bank.frame.xLower ((bank.cell index).anchor_mem (bank.cell_mem index)).1
     bank.frame.yLower ((bank.cell index).anchor_mem (bank.cell_mem index)).2
 
@@ -111,13 +111,13 @@ set_option genInjectivity false in
 
 Both paths retain their original grid endpoints; the cached finite branch count determines their relative sheet action.
 -/
-structure StemComparison (bank : LiftedPuncturedGrid.BasedBranchBank lifted) (index : BranchIsolation.Data.Index
+structure StemComparison (bank : BasedBranchBank lifted) (index : BranchIsolation.Data.Index
   branches) where
   /-- The actual southwest grid window associated with the retained branch index. -/ window :
-    Polynomial.Geometry.Grid.WindowBoundary.Window base.bank.grid
+    Window base.bank.grid
     (base.bank.southwestBox index)
   /-- The cached finite branch selection and parity action on this exact window. -/ branches :
-    Polynomial.Geometry.Grid.WindowBoundary.Window.BranchCount
+    BranchCount
     base.faces window
   /-- The retained rightward-then-upward connector from the original base to the selected branch anchor. -/ direct :
     Walks.Walk base.bank.grid (Cuts.Ambient curve).anchor (base.bank.cell index).box.anchor
@@ -137,17 +137,17 @@ end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedStemTransport.LiftedP
 section
 
 variable {bank : BasedBranchBank
-  lifted} {index : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
+  lifted} {index : BranchIsolation.Data.Index branches}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedStemTransport
 namespace LiftedPuncturedGrid.BasedBranchBank.StemComparison
 
 /-- Cache the southwest branch window and its parity together with both actual connector paths. -/
-@[expose] def build (bank : LiftedPuncturedGrid.BasedBranchBank lifted) (index : BranchIsolation.Data.Index branches) :
-  BasedBranchBank.StemComparison bank
+@[expose] def build (bank : BasedBranchBank lifted) (index : BranchIsolation.Data.Index branches) :
+  StemComparison bank
   index :=
   let window := base.bank.southwestWindow index
-  let branches := Polynomial.Geometry.Grid.WindowBoundary.Window.BranchCount.build base.faces window
+  let branches := BranchCount.build base.faces window
   let direct := Grid.connect base.bank.grid _ _
     (FramedBranchCellBank.baseMember base.bank)
     ((base.bank.cell index).anchor_mem (base.bank.cell_mem index))
@@ -156,7 +156,7 @@ namespace LiftedPuncturedGrid.BasedBranchBank.StemComparison
 /-- Both sides read the same retained root-edge bank. The sheet correction comes from the complete finite southwest
 branch selection. -/
 theorem target (comparison :
-  BasedBranchBank.StemComparison bank
+  StemComparison bank
   index) (sheet : Fin 2) :
     RootEdgeBank.target lifted.edges comparison.direct sheet =
       RootEdgeBank.target lifted.edges comparison.stem (comparison.branches.action sheet) := by
@@ -168,7 +168,7 @@ theorem target (comparison :
 
 /-- Endpoint coordinates permit a same-sheet substitution exactly when the cached southwest branch count is even. -/
 theorem same_sheet_iff (comparison :
-  BasedBranchBank.StemComparison bank
+  StemComparison bank
   index) (sheet : Fin 2) :
     RootEdgeBank.target lifted.edges comparison.direct sheet = RootEdgeBank.target lifted.edges comparison.stem sheet ↔
       comparison.branches.flip = false := by
@@ -189,7 +189,7 @@ theorem same_sheet_iff (comparison :
         change 1 - sheet.val = sheet.val at values
         omega
   · intro even
-    rw [Polynomial.Geometry.Grid.WindowBoundary.Window.BranchCount.action, even]
+    rw [BranchCount.action, even]
     rfl
 
 end BasedBranchBank.StemComparison

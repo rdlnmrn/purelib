@@ -16,6 +16,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.Tactic.Ring
 
+open Purelib.Data.GaussianInt.Arithmetic
+
 open Purelib.Data.Gaussian.Basic.Canonical.Fraction (NaturalDenominator)
 
 open Purelib.Data
@@ -48,7 +50,7 @@ open Purelib.Polynomial.Dense.Gaussian.Denominator
 
 /-- Clear a finite Gaussian-rational coefficient list by structural recursion. -/
 def clear : List Gaussian.Basic.Canonical →
-  Dense.Gaussian.Denominator.Clearing.Basic.ClearedCoefficients
+  Basic.ClearedCoefficients
   | [] => ⟨1, by decide, []⟩
   | coefficient :: remaining =>
       let head := NaturalDenominator.ofGaussian coefficient
@@ -56,8 +58,8 @@ def clear : List Gaussian.Basic.Canonical →
       { scale := head.denominator * tail.scale
         scalePositive := Nat.mul_pos head.denominatorPositive tail.scalePositive
         coefficients :=
-          Data.GaussianInt.Arithmetic.Scale.scale tail.scale head.numerator ::
-            tail.coefficients.map (Data.GaussianInt.Arithmetic.Scale.scale head.denominator) }
+          Scale.scale tail.scale head.numerator ::
+            tail.coefficients.map (Scale.scale head.denominator) }
 
 /-- Structural denominator clearing retains the source coefficient count.
 
@@ -70,7 +72,7 @@ cleared tail preserves its exact list length. -/
   | nil => rfl
   | cons coefficient remaining inductionHypothesis =>
       change Nat.succ (((clear remaining).coefficients.map
-        (Data.GaussianInt.Arithmetic.Scale.scale
+        (Scale.scale
           (NaturalDenominator.ofGaussian coefficient).denominator)).length) =
         Nat.succ remaining.length
       exact congrArg Nat.succ ((Map.length_map _ _).trans inductionHypothesis)
@@ -82,7 +84,7 @@ and product denominator. Their evaluation uses the same point and source list. -
 theorem eval_clear (point :
   Gaussian.Basic.Canonical) (coefficients : List Gaussian.Basic.Canonical) :
     Evaluation.evalIntegers point (clear coefficients).coefficients =
-      ⟨((clear coefficients).scale : Rat.Fraction.Rational), 0⟩ *
+      ⟨((clear coefficients).scale : Fraction.Rational), 0⟩ *
         DensePolynomial.evalCoeffs point coefficients := by
   induction coefficients with
   | nil => exact (Gaussian.Basic.mul_zero _).symm
@@ -93,23 +95,23 @@ theorem eval_clear (point :
         NaturalDenominator.ofGaussian_value coefficient
       have headClear := head.value_mul_denominator
       rw [show (clear (coefficient :: remaining)).coefficients =
-          Data.GaussianInt.Arithmetic.Scale.scale tail.scale head.numerator ::
-            tail.coefficients.map (Data.GaussianInt.Arithmetic.Scale.scale head.denominator)
+          Scale.scale tail.scale head.numerator ::
+            tail.coefficients.map (Scale.scale head.denominator)
         from rfl]
       rw [Evaluation.evalIntegers_cons, Map.length_map, clear_length,
         Evaluation.evalIntegers_map_scale, inductionHypothesis]
-      rw [Data.GaussianInt.Arithmetic.Scale.toGaussian_scale]
+      rw [Scale.toGaussian_scale]
       change
-        (⟨(tail.scale : Rat.Fraction.Rational), 0⟩ *
+        (⟨(tail.scale : Fraction.Rational), 0⟩ *
               GaussianInt.toGaussian
                 head.numerator) * point ^ remaining.length +
-            ⟨(head.denominator : Rat.Fraction.Rational), 0⟩ *
-              (⟨(tail.scale : Rat.Fraction.Rational), 0⟩ *
+            ⟨(head.denominator : Fraction.Rational), 0⟩ *
+              (⟨(tail.scale : Fraction.Rational), 0⟩ *
                 DensePolynomial.evalCoeffs point remaining) =
-          ⟨((head.denominator * tail.scale : Nat) : Rat.Fraction.Rational), 0⟩ *
+          ⟨((head.denominator * tail.scale : Nat) : Fraction.Rational), 0⟩ *
             DensePolynomial.evalCoeffs point (coefficient :: remaining)
       have headIdentity :
-          coefficient * ⟨(head.denominator : Rat.Fraction.Rational), 0⟩ =
+          coefficient * ⟨(head.denominator : Fraction.Rational), 0⟩ =
             GaussianInt.toGaussian
               head.numerator := by
         rw [← headValue]

@@ -35,41 +35,41 @@ namespace IntegerBridge
 /-- The rational monomial `X^degree` has executable integer coefficients. -/
 theorem monomialOne_integral : ∀ degree :
   Nat,
-    Dense.Rational.IntegerCoefficients.Basic.IsIntegralPolynomial (Dense.Rational.PowerMinusOne.monomialOne degree)
+    IntegerCoefficients.Basic.IsIntegralPolynomial (monomialOne degree)
   | 0 => by
-      rw [Dense.Rational.PowerMinusOne.monomialOne_zero]
-      exact Dense.Rational.IntegerCoefficients.Basic.integral_constant
-        (Purelib.Data.Rat.Fraction.Integer.integral_of_integer 1)
+      rw [monomialOne_zero]
+      exact IntegerCoefficients.Basic.integral_constant
+        (Data.Rat.Fraction.Integer.integral_of_integer 1)
   | degree + 1 => by
-      rw [Dense.Rational.PowerMinusOne.monomialOne_succ]
-      exact Dense.Rational.IntegerCoefficients.Basic.integral_shift 1
+      rw [monomialOne_succ]
+      exact IntegerCoefficients.Basic.integral_shift 1
         (monomialOne_integral degree)
 
 /-- The rational polynomial `X^degree - 1` has executable integer coefficients. -/
 theorem powerMinusOne_integral (degree :
   Nat) :
-    Dense.Rational.IntegerCoefficients.Basic.IsIntegralPolynomial (Dense.Rational.PowerMinusOne.powerMinusOne degree) :=
+    IntegerCoefficients.Basic.IsIntegralPolynomial (powerMinusOne degree) :=
       open Purelib.Data.Rat in by
-  rw [Dense.Rational.PowerMinusOne.powerMinusOne]
-  exact Dense.Rational.IntegerCoefficients.Basic.integral_sub
+  rw [powerMinusOne]
+  exact IntegerCoefficients.Basic.integral_sub
     (monomialOne_integral degree)
-    (Dense.Rational.IntegerCoefficients.Basic.integral_constant (Fraction.Integer.integral_of_integer 1))
+    (IntegerCoefficients.Basic.integral_constant (Fraction.Integer.integral_of_integer 1))
 end IntegerBridge
 
 /-- Convert the explicit ascending integer coefficients of `X^number - 1` to their rational dense polynomial. -/
 theorem ofAscending_powerMinusOneCoefficients (number :
   Nat) :
-    Dense.Rational.AscendingInteger.Basic.ofAscending
+    AscendingInteger.Basic.ofAscending
         (Ascending.Integer.PowerMinusOne.IntegerPolynomial.powerMinusOneCoefficients
           number) =
-      Dense.Rational.PowerMinusOne.powerMinusOne number := by
-  apply Dense.Rational.Extensionality.rational_normalized_eq_of_eval_eq
-    (Dense.Rational.AscendingInteger.Basic.ofAscending_normalized _)
-    (Dense.Rational.PowerMinusOne.powerMinusOne_normalized number)
+      powerMinusOne number := by
+  apply Extensionality.rational_normalized_eq_of_eval_eq
+    (AscendingInteger.Basic.ofAscending_normalized _)
+    (powerMinusOne_normalized number)
   intro point
-  rw [Dense.Rational.AscendingInteger.Basic.eval_ofAscending,
+  rw [AscendingInteger.Basic.eval_ofAscending,
     Ascending.Integer.PowerMinusOne.IntegerPolynomial.eval_powerMinusOneCoefficients,
-    Dense.Rational.PowerMinusOne.eval_powerMinusOne]
+    eval_powerMinusOne]
 end Purelib.Polynomial.Dense.Rational.PowerMinusOne.Integer
 
 end

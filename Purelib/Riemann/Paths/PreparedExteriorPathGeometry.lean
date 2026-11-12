@@ -50,9 +50,9 @@ open Purelib.Geometry in
 
 The predicate follows the original segment spine and permits either orientation on each side, including stationary
 segments. -/
-@[expose] def OnBoxSides {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient : Rational.Box}
-  (box : Rational.Box) :
-    {start finish : Gaussian.Basic.Canonical} → Polynomial.Geometry.ClearPath polynomial ambient start finish → Prop
+@[expose] def OnBoxSides {polynomial : GaussianPolynomial} {ambient : Box}
+  (box : Box) :
+    {start finish : Gaussian.Basic.Canonical} → ClearPath polynomial ambient start finish → Prop
   | _, _, .nil _ => True
   | start, _, .cons (middle := middle) _ tail => SameSide box start middle ∧ OnBoxSides box tail
 
@@ -84,7 +84,7 @@ namespace Walk
 open Purelib.Data in
 open Purelib.Geometry in
 /-- Reversing the two endpoints preserves membership in a common box side. -/
-private theorem side_reverse {box : Rational.Box} {first last : Gaussian.Basic.Canonical} (same :
+private theorem side_reverse {box : Box} {first last : Gaussian.Basic.Canonical} (same :
   SameSide box first last) : SameSide box last first := by
   rcases same with same | same | same | same
   · exact Or.inl ⟨same.2, same.1⟩
@@ -99,23 +99,23 @@ open Purelib.Polynomial
 section
 open Purelib.Geometry
 /-- Append two grid walks whose segments lie on displayed sides of the same box. -/
-theorem onBoxSides_append {box : Rational.Box} : {start middle finish : Gaussian.Basic.Canonical} →
-    (left : Geometry.Grid.Walks.Walk grid start middle) → (right : Geometry.Grid.Walks.Walk grid middle finish) →
-    Paths.PreparedExteriorPathGeometry.ClearPath.OnBoxSides box left.path →
-      Paths.PreparedExteriorPathGeometry.ClearPath.OnBoxSides box right.path →
-      Paths.PreparedExteriorPathGeometry.ClearPath.OnBoxSides box (left.append right).path
+theorem onBoxSides_append {box : Box} : {start middle finish : Gaussian.Basic.Canonical} →
+    (left : Walk grid start middle) → (right : Walk grid middle finish) →
+    ClearPath.OnBoxSides box left.path →
+      ClearPath.OnBoxSides box right.path →
+      ClearPath.OnBoxSides box (left.append right).path
   | _, _, _, .nil _, _, _, after => after
   | _, _, _, .cons _ tail, right, before, after =>
       ⟨before.1, onBoxSides_append tail right before.2
         after⟩
 
 /-- Reverse the first side-supported walk onto a side-supported continuation. -/
-private theorem onBoxSides_reverseOnto {box : Rational.Box} : {start middle finish :
+private theorem onBoxSides_reverseOnto {box : Box} : {start middle finish :
   Gaussian.Basic.Canonical} →
-    (left : Geometry.Grid.Walks.Walk grid start middle) → (right : Geometry.Grid.Walks.Walk grid start finish) →
-    Paths.PreparedExteriorPathGeometry.ClearPath.OnBoxSides box left.path →
-      Paths.PreparedExteriorPathGeometry.ClearPath.OnBoxSides box right.path →
-      Paths.PreparedExteriorPathGeometry.ClearPath.OnBoxSides box (left.reverseOnto right).path
+    (left : Walk grid start middle) → (right : Walk grid start finish) →
+    ClearPath.OnBoxSides box left.path →
+      ClearPath.OnBoxSides box right.path →
+      ClearPath.OnBoxSides box (left.reverseOnto right).path
   | _, _, _, .nil _, _, _, after => after
   | _, _, _, .cons edge tail, right, before, after =>
       onBoxSides_reverseOnto
@@ -123,19 +123,19 @@ private theorem onBoxSides_reverseOnto {box : Rational.Box} : {start middle fini
         ⟨side_reverse before.1, after⟩
 
 /-- Reversing a grid walk preserves its displayed box-side support. -/
-theorem onBoxSides_reverse {box : Rational.Box} {start finish : Gaussian.Basic.Canonical} (walk :
-  Geometry.Grid.Walks.Walk grid start finish)
-    (sides : Paths.PreparedExteriorPathGeometry.ClearPath.OnBoxSides box walk.path) :
-    Paths.PreparedExteriorPathGeometry.ClearPath.OnBoxSides box walk.reverse.path :=
-  Paths.PreparedExteriorPathGeometry.Grid.Walk.onBoxSides_reverseOnto
+theorem onBoxSides_reverse {box : Box} {start finish : Gaussian.Basic.Canonical} (walk :
+  Walk grid start finish)
+    (sides : ClearPath.OnBoxSides box walk.path) :
+    ClearPath.OnBoxSides box walk.reverse.path :=
+  onBoxSides_reverseOnto
     walk (.nil _) sides trivial
 
 /-- Transporting walk endpoints preserves its displayed box-side support. -/
-theorem onBoxSides_castEndpoints {box : Rational.Box} {start finish first last :
-  Gaussian.Basic.Canonical} (walk : Geometry.Grid.Walks.Walk grid start finish)
+theorem onBoxSides_castEndpoints {box : Box} {start finish first last :
+  Gaussian.Basic.Canonical} (walk : Walk grid start finish)
     (startEq : start = first) (finishEq : finish = last)
-    (sides : Paths.PreparedExteriorPathGeometry.ClearPath.OnBoxSides box walk.path) :
-    Paths.PreparedExteriorPathGeometry.ClearPath.OnBoxSides box
+    (sides : ClearPath.OnBoxSides box walk.path) :
+    ClearPath.OnBoxSides box
       (walk.castEndpoints startEq finishEq).path := by
   cases startEq
   cases finishEq
@@ -144,13 +144,13 @@ theorem onBoxSides_castEndpoints {box : Rational.Box} {start finish first last :
 end
 
 /-- An increasing horizontal grid walk on the lower or upper ambient line stays on that side. -/
-theorem horizontalIncreasing_onBoxSides (line : Geometry.Grid.ClearGrid.HorizontalLine polynomial ambient) (member :
+theorem horizontalIncreasing_onBoxSides (line : HorizontalLine polynomial ambient) (member :
   line ∈ grid.horizontal)
     (side : line.coordinate = ambient.yLower ∨ line.coordinate = ambient.yUpper) :
-    {start finish : Rat.Fraction.Rational} → (walk : Geometry.Grid.AxisWalks.IncreasingWalk grid.xIntervals start
+    {start finish : Rational} → (walk : IncreasingWalk grid.xIntervals start
       finish) →
-    Paths.PreparedExteriorPathGeometry.ClearPath.OnBoxSides ambient
-      (Geometry.Grid.Walks.Walk.horizontalIncreasing line member walk).path
+    ClearPath.OnBoxSides ambient
+      (horizontalIncreasing line member walk).path
   | _, _, .nil _ => trivial
   | _, _, .cons _ _ tail => by
       refine ⟨?_, horizontalIncreasing_onBoxSides line member side tail⟩
@@ -159,13 +159,13 @@ theorem horizontalIncreasing_onBoxSides (line : Geometry.Grid.ClearGrid.Horizont
       | inr equal => exact Or.inr (Or.inr (Or.inr ⟨equal, equal⟩))
 
 /-- An increasing vertical grid walk on the left or right ambient line stays on that side. -/
-theorem verticalIncreasing_onBoxSides (line : Geometry.Grid.ClearGrid.VerticalLine polynomial ambient) (member : line ∈
+theorem verticalIncreasing_onBoxSides (line : VerticalLine polynomial ambient) (member : line ∈
   grid.vertical)
     (side : line.coordinate = ambient.xLower ∨ line.coordinate = ambient.xUpper) :
-    {start finish : Rat.Fraction.Rational} → (walk : Geometry.Grid.AxisWalks.IncreasingWalk grid.yIntervals start
+    {start finish : Rational} → (walk : IncreasingWalk grid.yIntervals start
       finish) →
-    Paths.PreparedExteriorPathGeometry.ClearPath.OnBoxSides ambient
-      (Geometry.Grid.Walks.Walk.verticalIncreasing line member walk).path
+    ClearPath.OnBoxSides ambient
+      (verticalIncreasing line member walk).path
   | _, _, .nil _ => trivial
   | _, _, .cons _ _ tail => by
       refine ⟨?_, verticalIncreasing_onBoxSides line member side tail⟩
@@ -184,32 +184,32 @@ open Purelib.Riemann
 open Purelib.Data
 open Purelib.Polynomial
 /-- The retained horizontal axis walk lies on the specified lower or upper ambient side. -/
-private theorem horizontal_sides (axes : Polynomial.Geometry.Grid.FramedClearGrid.AmbientFrame.Axes grid) (y :
-  Rat.Fraction.Rational) (member : y ∈ grid.horizontal.map Geometry.Grid.ClearGrid.HorizontalLine.coordinate)
+private theorem horizontal_sides (axes : Axes grid) (y :
+  Rational) (member : y ∈ grid.horizontal.map HorizontalLine.coordinate)
     (side : y = ambient.yLower ∨ y = ambient.yUpper) :
-    Paths.PreparedExteriorPathGeometry.ClearPath.OnBoxSides ambient
+    ClearPath.OnBoxSides ambient
       (axes.horizontal y member).path := by
-  apply Paths.PreparedExteriorPathGeometry.Grid.Walk.onBoxSides_castEndpoints
-  apply Paths.PreparedExteriorPathGeometry.Grid.Walk.horizontalIncreasing_onBoxSides
+  apply Walk.onBoxSides_castEndpoints
+  apply Walk.horizontalIncreasing_onBoxSides
   rcases side with side | side
   · subst y
-    exact Or.inl (Geometry.Grid.AxisWalks.lookup ambient.yLower grid.horizontal member).coordinate_eq
+    exact Or.inl (lookup ambient.yLower grid.horizontal member).coordinate_eq
   · subst y
-    exact Or.inr (Geometry.Grid.AxisWalks.lookup ambient.yUpper grid.horizontal member).coordinate_eq
+    exact Or.inr (lookup ambient.yUpper grid.horizontal member).coordinate_eq
 
 /-- The retained vertical axis walk lies on the specified left or right ambient side. -/
-private theorem vertical_sides (axes : Polynomial.Geometry.Grid.FramedClearGrid.AmbientFrame.Axes grid) (x :
-  Rat.Fraction.Rational) (member : x ∈ grid.vertical.map Geometry.Grid.ClearGrid.VerticalLine.coordinate)
+private theorem vertical_sides (axes : Axes grid) (x :
+  Rational) (member : x ∈ grid.vertical.map VerticalLine.coordinate)
     (side : x = ambient.xLower ∨ x = ambient.xUpper) :
-    Paths.PreparedExteriorPathGeometry.ClearPath.OnBoxSides ambient
+    ClearPath.OnBoxSides ambient
       (axes.vertical x member).path := by
-  apply Paths.PreparedExteriorPathGeometry.Grid.Walk.onBoxSides_castEndpoints
-  apply Paths.PreparedExteriorPathGeometry.Grid.Walk.verticalIncreasing_onBoxSides
+  apply Walk.onBoxSides_castEndpoints
+  apply Walk.verticalIncreasing_onBoxSides
   rcases side with side | side
   · subst x
-    exact Or.inl (Geometry.Grid.AxisWalks.lookup ambient.xLower grid.vertical member).coordinate_eq
+    exact Or.inl (lookup ambient.xLower grid.vertical member).coordinate_eq
   · subst x
-    exact Or.inr (Geometry.Grid.AxisWalks.lookup ambient.xUpper grid.vertical member).coordinate_eq
+    exact Or.inr (lookup ambient.xUpper grid.vertical member).coordinate_eq
 
 end
 
@@ -219,16 +219,16 @@ open Purelib.Polynomial in
 
 The proof follows all original adjacent-axis intervals, including the reversed top and left walks, preserving their
 exact concatenation and endpoint transports. -/
-theorem boundary_onBoxSides (frame : Polynomial.Geometry.Grid.FramedClearGrid.AmbientFrame grid) :
-    Paths.PreparedExteriorPathGeometry.ClearPath.OnBoxSides ambient frame.boundary.path := by
-  exact Paths.PreparedExteriorPathGeometry.Grid.Walk.onBoxSides_append _ _ (horizontal_sides frame.axes _ frame.yLower
+theorem boundary_onBoxSides (frame : AmbientFrame grid) :
+    ClearPath.OnBoxSides ambient frame.boundary.path := by
+  exact Walk.onBoxSides_append _ _ (horizontal_sides frame.axes _ frame.yLower
     (Or.inl rfl))
-    (Paths.PreparedExteriorPathGeometry.Grid.Walk.onBoxSides_append _ _ (vertical_sides frame.axes _ frame.xUpper
+    (Walk.onBoxSides_append _ _ (vertical_sides frame.axes _ frame.xUpper
       (Or.inr rfl))
-      (Paths.PreparedExteriorPathGeometry.Grid.Walk.onBoxSides_append _ _
-        (Paths.PreparedExteriorPathGeometry.Grid.Walk.onBoxSides_reverse _ (horizontal_sides frame.axes _ frame.yUpper
+      (Walk.onBoxSides_append _ _
+        (Walk.onBoxSides_reverse _ (horizontal_sides frame.axes _ frame.yUpper
           (Or.inr rfl)))
-        (Paths.PreparedExteriorPathGeometry.Grid.Walk.onBoxSides_reverse _ (vertical_sides frame.axes _ frame.xLower
+        (Walk.onBoxSides_reverse _ (vertical_sides frame.axes _ frame.xLower
           (Or.inl rfl)))))
 
 end AmbientFrame
@@ -264,16 +264,16 @@ section
 open Purelib.Data
 open Purelib.Polynomial
 /-- The first endpoint of a retained covered segment lies in its original ambient box. -/
-private theorem first_inside {start finish : Gaussian.Basic.Canonical} {segment : Geometry.ClearPath.ClearSegment
+private theorem first_inside {start finish : Gaussian.Basic.Canonical} {segment : ClearPath.ClearSegment
   curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)} (piece : CoveredSegment segment owner) : ambient.Contains start := by
-  simpa only [Geometry.ClearPath.ClearSegment.pointAt_zero] using segment.pointAt_contains piece.within 0 (by decide)
+  simpa only [ClearPath.ClearSegment.pointAt_zero] using segment.pointAt_contains piece.within 0 (by decide)
 
 /-- The last endpoint of a retained covered segment lies in its original ambient box. -/
-private theorem last_inside {start finish : Gaussian.Basic.Canonical} {segment : Geometry.ClearPath.ClearSegment
+private theorem last_inside {start finish : Gaussian.Basic.Canonical} {segment : ClearPath.ClearSegment
   curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)} (piece : CoveredSegment segment owner) : ambient.Contains finish := by
-  simpa only [Geometry.ClearPath.ClearSegment.pointAt_one] using segment.pointAt_contains piece.within 1 (by decide)
+  simpa only [ClearPath.ClearSegment.pointAt_one] using segment.pointAt_contains piece.within 1 (by decide)
 
 end
 
@@ -284,18 +284,18 @@ open Purelib.Polynomial in
 
 The proof follows the existing segment caches and uses their retained provenance equations; it does not repeat
 polynomial or root preparation. -/
-theorem onBoundary : ∀ {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial
+theorem onBoundary : ∀ {start finish : Gaussian.Basic.Canonical} {path : ClearPath curve.polynomial
   ambient start finish}
     {owner : Owner (curve.polynomial.eval start)} {prepared : PreparedPath path owner} {pieces : CoveredSegments
       prepared}
-    (cache : Paths.PreparedPathParentCaches.PreparedClearPathModels.PreparedPath.CoveredSegments.ParentCaches
+    (cache : ParentCaches
       differential sheet pieces),
-    Paths.PreparedExteriorPathGeometry.ClearPath.OnBoxSides ambient path →
+    ClearPath.OnBoxSides ambient path →
       ∀ parent ∈ parents cache, ParentOnBoundary parent ambient
   | _, _, _, _, _, .nil _ _, _, _, _, member => False.elim (List.not_mem_nil member)
   | _, _, _, _, _, .cons first tail, cache, sides, parent, member => by
       rcases Membership.mem_append.mp member with member | member
-      · exact Paths.PreparedSegmentBoundaryGeometry.segment_parent_boundary
+      · exact PreparedSegmentBoundaryGeometry.segment_parent_boundary
           cache.1 (first_inside first) (last_inside first) sides.1 member
       · exact onBoundary cache.2 sides.2 parent member
 
@@ -325,29 +325,29 @@ open Purelib.Geometry in
 
 The exact parent-list provenance supplies a segment decomposition, whose boundary certificates are transported back to
 the retained cache. -/
-theorem onBoundary {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {ambient :
-  Rational.Box}
-    {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start
+theorem onBoundary {genus : Nat} {curve : HyperellipticCurve genus} {ambient :
+  Box}
+    {start finish : Gaussian.Basic.Canonical} {path : ClearPath curve.polynomial ambient start
       finish}
     {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {covered : CoveredTracedPath path
       owner}
-    {differential : Hyperelliptic.Differentials.Basic.Differential genus} {sheet : Fin 2}
+    {differential : Differential genus} {sheet : Fin 2}
     (cache : ParentCache covered differential sheet)
-    (sides : Paths.PreparedExteriorPathGeometry.ClearPath.OnBoxSides ambient path) :
+    (sides : ClearPath.OnBoxSides ambient path) :
     ∀ parent ∈ cache.parents, PreparedBoundarySegments.ParentOnBoundary parent ambient := by
   let pieces := segments covered
   have equal : cache.parents =
-      Paths.PreparedSegmentParentBanks.PreparedPath.CoveredSegments.parents
+      PreparedSegmentParentBanks.PreparedPath.CoveredSegments.parents
         differential sheet pieces :=
     cache.parents_eq.trans
-      (Paths.PreparedSegmentParentBanks.PreparedPath.CoveredSegments.parents_eq
+      (PreparedSegmentParentBanks.PreparedPath.CoveredSegments.parents_eq
         differential sheet pieces).symm
   let split :=
-    Paths.PreparedPathParentCaches.PreparedClearPathModels.PreparedPath.CoveredSegments.ParentCaches.build
+    PreparedPathParentCaches.PreparedClearPathModels.PreparedPath.CoveredSegments.ParentCaches.build
       differential sheet pieces cache.parents equal cache.covered
   have bounded :=
-    Paths.PreparedExteriorPathGeometry.ParentCaches.onBoundary split sides
-  rw [Paths.PreparedPathParentCaches.PreparedClearPathModels.PreparedPath.CoveredSegments.ParentCaches.build_parents
+    ParentCaches.onBoundary split sides
+  rw [PreparedPathParentCaches.PreparedClearPathModels.PreparedPath.CoveredSegments.ParentCaches.build_parents
     pieces cache.parents equal cache.covered] at bounded
   exact bounded
 

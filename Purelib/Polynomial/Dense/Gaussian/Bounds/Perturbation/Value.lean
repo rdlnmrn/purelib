@@ -17,6 +17,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data
 open Purelib.Data.Rat
 open Purelib.Polynomial
@@ -36,22 +38,22 @@ namespace Purelib.Polynomial.Dense.Gaussian.Bounds.Perturbation.Value
 
 The tails must have the same length, so their leading coefficients multiply the same power of the input. -/
 private theorem evalCoeffs_sub_expansion
-    (left right : Gaussian.Basic.Canonical) (leftTail rightTail : List Gaussian.Basic.Canonical)
-    (input : Gaussian.Basic.Canonical) (tailLength : leftTail.length = rightTail.length) :
-    Dense.Basic.DensePolynomial.evalCoeffs input
+    (left right : Basic.Canonical) (leftTail rightTail : List Basic.Canonical)
+    (input : Basic.Canonical) (tailLength : leftTail.length = rightTail.length) :
+    Basic.DensePolynomial.evalCoeffs input
         (left :: leftTail) -
-      Dense.Basic.DensePolynomial.evalCoeffs input
+      Basic.DensePolynomial.evalCoeffs input
         (right :: rightTail) =
       (left - right) * input ^ leftTail.length +
-        (Dense.Basic.DensePolynomial.evalCoeffs input leftTail -
-          Dense.Basic.DensePolynomial.evalCoeffs input
+        (Basic.DensePolynomial.evalCoeffs input leftTail -
+          Basic.DensePolynomial.evalCoeffs input
             rightTail) := by
-  rw [Dense.Basic.DensePolynomial.evalCoeffs_cons_expansion,
-    Dense.Basic.DensePolynomial.evalCoeffs_cons_expansion,
+  rw [Basic.DensePolynomial.evalCoeffs_cons_expansion,
+    Basic.DensePolynomial.evalCoeffs_cons_expansion,
     tailLength]
-  apply Gaussian.Basic.ext <;>
-    simp only [Gaussian.Basic.sub_re, Gaussian.Basic.sub_im, Gaussian.Basic.add_re, Gaussian.Basic.add_im,
-      Gaussian.Basic.mul_re, Gaussian.Basic.mul_im] <;> ring1
+  apply Basic.ext <;>
+    simp only [Basic.sub_re, Basic.sub_im, Basic.add_re, Basic.add_im,
+      Basic.mul_re, Basic.mul_im] <;> ring1
 
 /-- Coarse square-root-free Horner perturbation budget for `count`
 high-to-low coefficients, one coefficientwise quadrance bound, and one input
@@ -60,7 +62,7 @@ quadrance bound. -/
   | 0, _, _ => 0
   | count + 1, coefficientBound, inputNormSq =>
       2 * (coefficientBound * inputNormSq ^ count +
-        Purelib.Polynomial.Dense.Gaussian.Bounds.Perturbation.Value.hornerPerturbationBudget count coefficientBound
+        Value.hornerPerturbationBudget count coefficientBound
           inputNormSq)
 
 /-- The perturbation budget is monotone in a nonnegative input quadrance bound.
@@ -69,20 +71,20 @@ The common coefficient perturbation bound is also assumed nonnegative. -/
 public theorem hornerPerturbationBudget_mono_input : ∀ count
     {coefficientBound small large : Fraction.Rational},
     0 ≤ coefficientBound → 0 ≤ small → small ≤ large →
-      Dense.Gaussian.Bounds.Perturbation.Value.hornerPerturbationBudget count coefficientBound small ≤
-        Dense.Gaussian.Bounds.Perturbation.Value.hornerPerturbationBudget count coefficientBound large
+      hornerPerturbationBudget count coefficientBound small ≤
+        hornerPerturbationBudget count coefficientBound large
   | 0, _coefficientBound, _small, _large, _coefficientNonnegative,
       _smallNonnegative, _order => le_rfl
   | count + 1, coefficientBound, small, large, coefficientNonnegative,
       smallNonnegative, order => by
-      apply Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct _
+      apply Arithmetic.mul_le_mul_of_nonneg_left_direct _
         (by decide)
       exact add_le_add
-        (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Purelib.Data.Rat.Fraction.Order.Arithmetic.pow_le_pow_direct smallNonnegative order
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.pow_le_pow_direct smallNonnegative order
             count)
           coefficientNonnegative)
-        (Purelib.Polynomial.Dense.Gaussian.Bounds.Perturbation.Value.hornerPerturbationBudget_mono_input count
+        (Value.hornerPerturbationBudget_mono_input count
           coefficientNonnegative
           smallNonnegative order)
 
@@ -94,18 +96,18 @@ power, sum and doubled scalar contribution. -/
 public theorem hornerPerturbationBudget_nonneg : ∀ count
     {coefficientBound inputNormSq : Fraction.Rational},
     0 ≤ coefficientBound → 0 ≤ inputNormSq →
-      0 ≤ Dense.Gaussian.Bounds.Perturbation.Value.hornerPerturbationBudget count coefficientBound inputNormSq
+      0 ≤ hornerPerturbationBudget count coefficientBound inputNormSq
   | 0, _coefficientBound, _inputNormSq, _coefficientNonnegative,
       _inputNonnegative => le_rfl
   | count + 1, coefficientBound, inputNormSq, coefficientNonnegative,
       inputNonnegative =>
-      Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      Arithmetic.mul_nonneg_direct (by decide)
         (add_nonneg
-          (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
+          (Arithmetic.mul_nonneg_direct
             coefficientNonnegative
-            (Purelib.Data.Rat.Fraction.Order.Arithmetic.pow_nonneg_direct inputNonnegative
+            (Arithmetic.pow_nonneg_direct inputNonnegative
               count))
-          (Purelib.Polynomial.Dense.Gaussian.Bounds.Perturbation.Value.hornerPerturbationBudget_nonneg count
+          (Value.hornerPerturbationBudget_nonneg count
             coefficientNonnegative
             inputNonnegative))
 
@@ -115,7 +117,7 @@ Only nonnegativity is required of the input quadrance bound. -/
 public theorem hornerPerturbationBudget_pos_of_count_pos : ∀ count
     {coefficientBound inputNormSq : Fraction.Rational},
     0 < count → 0 < coefficientBound → 0 ≤ inputNormSq →
-      0 < Dense.Gaussian.Bounds.Perturbation.Value.hornerPerturbationBudget count coefficientBound inputNormSq := by
+      0 < hornerPerturbationBudget count coefficientBound inputNormSq := by
   intro count
   induction count with
   | zero =>
@@ -124,7 +126,7 @@ public theorem hornerPerturbationBudget_pos_of_count_pos : ∀ count
   | succ count inductionHypothesis =>
       intro coefficientBound inputNormSq _countPositive coefficientPositive inputNonnegative
       have powerNonnegative :=
-        Fraction.Order.Arithmetic.pow_nonneg_direct inputNonnegative count
+        Arithmetic.pow_nonneg_direct inputNonnegative count
       cases count with
       | zero =>
           have readback :
@@ -132,34 +134,34 @@ public theorem hornerPerturbationBudget_pos_of_count_pos : ∀ count
                 (2 : Fraction.Rational) * coefficientBound := by ring1
           change 0 < 2 * (coefficientBound * inputNormSq ^ 0 + 0)
           rewrite [readback]
-          exact Fraction.Order.Arithmetic.mul_pos_direct (by decide) coefficientPositive
+          exact Arithmetic.mul_pos_direct (by decide) coefficientPositive
       | succ remaining =>
           have tailPositive := inductionHypothesis
             (Nat.zero_lt_succ remaining) coefficientPositive inputNonnegative
-          exact Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-            (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
-              (Fraction.Order.Arithmetic.mul_nonneg_direct
+          exact Arithmetic.mul_pos_direct (by decide)
+            (Arithmetic.add_pos_of_nonneg_of_pos_direct
+              (Arithmetic.mul_nonneg_direct
                 coefficientPositive.le powerNonnegative) tailPositive)
 
 /-- The Horner budget is exactly linear in its common coefficientwise
 quadrance bound. -/
 public theorem hornerPerturbationBudget_scale : ∀ count
     (factor coefficientBound inputNormSq : Fraction.Rational),
-    Dense.Gaussian.Bounds.Perturbation.Value.hornerPerturbationBudget count (factor * coefficientBound) inputNormSq =
+    hornerPerturbationBudget count (factor * coefficientBound) inputNormSq =
       factor *
-        Dense.Gaussian.Bounds.Perturbation.Value.hornerPerturbationBudget count coefficientBound inputNormSq
+        hornerPerturbationBudget count coefficientBound inputNormSq
   | 0, factor, coefficientBound, inputNormSq => by
       change (0 : Fraction.Rational) = factor * 0
       rw [Fraction.Field.mul_zero_direct]
   | count + 1, factor, coefficientBound, inputNormSq => by
       change
         2 * ((factor * coefficientBound) * inputNormSq ^ count +
-          Dense.Gaussian.Bounds.Perturbation.Value.hornerPerturbationBudget count (factor * coefficientBound)
+          hornerPerturbationBudget count (factor * coefficientBound)
             inputNormSq) =
           factor *
             (2 * (coefficientBound * inputNormSq ^ count +
-              Dense.Gaussian.Bounds.Perturbation.Value.hornerPerturbationBudget count coefficientBound inputNormSq))
-      rw [Purelib.Polynomial.Dense.Gaussian.Bounds.Perturbation.Value.hornerPerturbationBudget_scale count factor
+              hornerPerturbationBudget count coefficientBound inputNormSq))
+      rw [Value.hornerPerturbationBudget_scale count factor
         coefficientBound
         inputNormSq]
       ring1
@@ -171,18 +173,18 @@ evaluation difference.
 The lists retain corresponding entries and the same coefficientwise
 squared-distance bound. Their equal finite shapes align the original
 Horner powers, and the displayed recurrence bounds that exact evaluation difference. -/
-public theorem normSq_evalCoeffs_sub_le : ∀ (left right : List Gaussian.Basic.Canonical)
-    (input : Gaussian.Basic.Canonical) (coefficientBound : Fraction.Rational),
+public theorem normSq_evalCoeffs_sub_le : ∀ (left right : List Basic.Canonical)
+    (input : Basic.Canonical) (coefficientBound : Fraction.Rational),
     Gaussian.List.Proximity.CoefficientsClose left right coefficientBound →
-      Data.Gaussian.Norm.Basic.normSq
-          (Dense.Basic.DensePolynomial.evalCoeffs input left -
-            Dense.Basic.DensePolynomial.evalCoeffs input right) ≤
-        Dense.Gaussian.Bounds.Perturbation.Value.hornerPerturbationBudget left.length coefficientBound
-          (Data.Gaussian.Norm.Basic.normSq input)
+      Norm.Basic.normSq
+          (Basic.DensePolynomial.evalCoeffs input left -
+            Basic.DensePolynomial.evalCoeffs input right) ≤
+        hornerPerturbationBudget left.length coefficientBound
+          (Norm.Basic.normSq input)
   | [], [], input, coefficientBound, _close => by
-      change Data.Gaussian.Norm.Basic.normSq ((0 : Gaussian.Basic.Canonical) - 0) ≤ 0
-      rewrite [Gaussian.Basic.sub_self, Gaussian.Norm.Basic.normSq_zero]
-      exact Fraction.Order.Basic.le_refl 0
+      change Norm.Basic.normSq ((0 : Basic.Canonical) - 0) ≤ 0
+      rewrite [Basic.sub_self, Norm.Basic.normSq_zero]
+      exact Basic.le_refl 0
   | [], _ :: _, input, coefficientBound, close => by
       exact close.elim
   | _ :: _, [], input, coefficientBound, close => by
@@ -202,47 +204,47 @@ public theorem normSq_evalCoeffs_sub_le : ∀ (left right : List Gaussian.Basic.
             | cons rightHead rightRest =>
                 exact congrArg Nat.succ
                   (inductionHypothesis rightRest tailClose.2)
-      rw [Dense.Gaussian.Bounds.Perturbation.Value.evalCoeffs_sub_expansion left right leftTail rightTail input
+      rw [evalCoeffs_sub_expansion left right leftTail rightTail input
         tailLength]
       calc
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
             ((left - right) * input ^ leftTail.length +
-              (Dense.Basic.DensePolynomial.evalCoeffs input
+              (Basic.DensePolynomial.evalCoeffs input
                   leftTail -
-                Dense.Basic.DensePolynomial.evalCoeffs input
+                Basic.DensePolynomial.evalCoeffs input
                   rightTail)) ≤
             2 *
-              (Data.Gaussian.Norm.Basic.normSq ((left - right) * input ^ leftTail.length) +
-                Data.Gaussian.Norm.Basic.normSq
-                  (Dense.Basic.DensePolynomial.evalCoeffs input
+              (Norm.Basic.normSq ((left - right) * input ^ leftTail.length) +
+                Norm.Basic.normSq
+                  (Basic.DensePolynomial.evalCoeffs input
                       leftTail -
-                    Dense.Basic.DensePolynomial.evalCoeffs input
+                    Basic.DensePolynomial.evalCoeffs input
                       rightTail)) :=
           Norm.Bounds.normSq_add_le_two _ _
         _ = 2 *
-            (Data.Gaussian.Norm.Basic.normSq (left - right) * Data.Gaussian.Norm.Basic.normSq input ^
+            (Norm.Basic.normSq (left - right) * Norm.Basic.normSq input ^
               leftTail.length +
-              Data.Gaussian.Norm.Basic.normSq
-                (Dense.Basic.DensePolynomial.evalCoeffs input
+              Norm.Basic.normSq
+                (Basic.DensePolynomial.evalCoeffs input
                     leftTail -
-                  Dense.Basic.DensePolynomial.evalCoeffs input
+                  Basic.DensePolynomial.evalCoeffs input
                     rightTail)) := by
-          rw [Gaussian.Norm.Basic.normSq_mul, Power.normSq_pow]
+          rw [Norm.Basic.normSq_mul, Power.normSq_pow]
         _ ≤ 2 *
-            (coefficientBound * Data.Gaussian.Norm.Basic.normSq input ^ leftTail.length +
-              Dense.Gaussian.Bounds.Perturbation.Value.hornerPerturbationBudget leftTail.length coefficientBound
-                (Data.Gaussian.Norm.Basic.normSq input)) := by
-          apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct _
+            (coefficientBound * Norm.Basic.normSq input ^ leftTail.length +
+              hornerPerturbationBudget leftTail.length coefficientBound
+                (Norm.Basic.normSq input)) := by
+          apply Arithmetic.mul_le_mul_of_nonneg_left_direct _
             (by decide)
           exact add_le_add
-            (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+            (Arithmetic.mul_le_mul_of_nonneg_right_direct
               headClose
-              (Fraction.Order.Arithmetic.pow_nonneg_direct
-                (Gaussian.Norm.Basic.normSq_nonneg input) leftTail.length))
-            (Purelib.Polynomial.Dense.Gaussian.Bounds.Perturbation.Value.normSq_evalCoeffs_sub_le leftTail rightTail
+              (Arithmetic.pow_nonneg_direct
+                (Norm.Basic.normSq_nonneg input) leftTail.length))
+            (Value.normSq_evalCoeffs_sub_le leftTail rightTail
               input coefficientBound
               tailClose)
-        _ = Dense.Gaussian.Bounds.Perturbation.Value.hornerPerturbationBudget (left :: leftTail).length
-            coefficientBound (Data.Gaussian.Norm.Basic.normSq input) := rfl
+        _ = hornerPerturbationBudget (left :: leftTail).length
+            coefficientBound (Norm.Basic.normSq input) := rfl
 
 end Purelib.Polynomial.Dense.Gaussian.Bounds.Perturbation.Value

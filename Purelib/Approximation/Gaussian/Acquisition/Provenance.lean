@@ -9,6 +9,10 @@ import Purelib.Approximation.Gaussian.Name.Coherent
 import Purelib.Approximation.Gaussian.Provenance.Rational.Basic
 
 public import Purelib.Riemann.RootContinuation.SquareRootSidecar
+public import Purelib.Approximation.Gaussian.Provenance.Quadratic
+public import Purelib.Approximation.Gaussian.Provenance.PolynomialRoot
+public import Purelib.Approximation.Gaussian.Provenance.Algebraic
+meta import Purelib.Elab.ConstructiveInjectivity
 import Init.Core
 meta import Mathlib.Tactic.Linter.Lint
 
@@ -41,7 +45,7 @@ framework:
   zero-or-gap law. `signedGap` computes a sufficient canonical inspection
   budget from an unsigned imaginary gap.
 * `exact` decides between an equivalent prepared presentation and operational
-  zero for the two supported finite provenance classes. Its semantic iff
+  zero for the supported finite provenance classes. Its semantic iff
   and presentation-invariance laws do not apply to opaque inputs lacking
   this provenance, nor to the overlapping numerical small/apart verdicts.
 
@@ -54,33 +58,69 @@ allocation, certificate-size, or general-polynomial separation bounds.
 
 namespace Purelib.Approximation.Gaussian.Acquisition
 
-/-- A closed list of the supported finite provenance classes, not a caller-supplied zero/prepared answer. Unsupported
-symbolic operations may forget their sidecar but cannot construct one of these inputs without proof. -/
-def Provenance (channel : Coherent.CoherentNamed) :=
-  Sum (Rational.Basic.RationalSidecar channel)
-    (SquareRootSidecar.Sidecar channel)
+set_option genInjectivity false in
+/-- Retained exact evidence at the original coherent numerical channel.
+
+Each constructor keeps its own mathematical owner and operational comparison.
+The polynomial-root class admits arbitrary positive degrees and retains the
+original isolation or coefficient-computed multiplicity data.
+-/
+inductive Provenance (channel : Coherent.CoherentNamed) : Type 1 where
+  /-- The original channel has a retained exact Gaussian-rational reading. -/
+  | rational (sidecar : Rational.Basic.RationalSidecar channel)
+  /-- The original channel has a retained square equation and branch owner. -/
+  | squareRoot (sidecar : SquareRootSidecar.Sidecar channel)
+  /-- The original channel has admitted quadratic coordinates at their original generator. -/
+  | quadratic (sidecar : Quadratic.Sidecar channel)
+  /-- The original channel has a retained arbitrary-degree polynomial-root owner. -/
+  | polynomialRoot (sidecar : PolynomialRoot.Sidecar channel)
+  /-- The original channel has a retained finite algebraic construction and its actual numerical caches. -/
+  | algebraic (sidecar : Algebraic.Sidecar channel)
+
+constructive_injectivity Provenance
 
 namespace Provenance
 
-/-- Retain rational provenance for the exact original coherent channel. -/
-def rational {channel : Coherent.CoherentNamed}
-    (sidecar : Rational.Basic.RationalSidecar channel) : Provenance
-      channel := .inl sidecar
+/-- Read exact rational evidence retained by the original provenance.
 
-/-- Retain square-root provenance for the exact original coherent channel. -/
-def squareRoot {channel :
-  Coherent.CoherentNamed}
-    (sidecar : SquareRootSidecar.Sidecar channel) : Provenance channel :=
-      .inr sidecar
+An algebraic construction reads its own scalar cache. A missing reading
+remains absent without invoking general root classification.
+-/
+def rationalReading {channel : Coherent.CoherentNamed} (provenance : Provenance channel) :
+    Option (Rational.Basic.RationalSidecar channel) :=
+  match provenance with
+  | .rational reading => some reading
+  | .squareRoot root => if zero : root.parameter = 0 then
+      some ⟨0, SquareRootProvenance.zero_of_square (zero ▸ root.square)⟩ else none
+  | .quadratic coordinates => if zero : coordinates.evidence.value.im = 0
+      then some (coordinates.scalarReading zero) else none
+  | .polynomialRoot root => root.scalar?
+  | .algebraic sidecar => sidecar.scalar?
+
+/-- Algebraic scalar inspection uses the original construction's retained scalar reader. -/
+theorem rationalReading_algebraic {channel : Coherent.CoherentNamed} (sidecar : Algebraic.Sidecar channel) :
+    (algebraic sidecar).rationalReading = sidecar.scalar? := rfl
+
+/-- A retained zero-parameter root supplies exact zero provenance at the same original channel. -/
+theorem rationalReading_zero_root {channel : Coherent.CoherentNamed}
+    (root : SquareRootSidecar.Sidecar channel) (zero : root.parameter = 0) :
+    ∃ reading, (squareRoot root).rationalReading = some reading ∧ reading.value = 0 := by
+  unfold rationalReading
+  dsimp only
+  rewrite [dif_pos zero]
+  exact ⟨_, rfl, rfl⟩
 
 /-- Executable exact success-or-exclusion. A prepared result retains its denominator, apartness, operational comparison,
 and productive quotient API. -/
 def exact {channel : Coherent.CoherentNamed} (provenance :
   Provenance channel) :
-    Division.Prepared.Decision channel :=
+    Decision channel :=
   match provenance with
-  | .inl rational => rational.decide
-  | .inr algebraic => algebraic.decide
+  | .rational reading => reading.decide
+  | .squareRoot root => root.decide
+  | .quadratic coordinates => coordinates.decide
+  | .polynomialRoot root => root.decide
+  | .algebraic sidecar => sidecar.decide
 
 /-- Exact obstruction completeness for supported provenance: zero means there is no equivalent prepared presentation,
 not merely no certificate found by one search. Both directions remain constructive. -/
@@ -88,28 +128,28 @@ theorem exact_complete {channel : Coherent.CoherentNamed}
   (provenance : Provenance channel) :
     (Zero.IsZero channel ↔ ¬ Equivalence.IsPrepared channel) ∧
     (Equivalence.IsPrepared channel ↔ ¬ Zero.IsZero channel) :=
-  ⟨(Approximation.Gaussian.Acquisition.Provenance.exact provenance).zero_iff_unpreparable,
-    (Approximation.Gaussian.Acquisition.Provenance.exact provenance).prepared_iff_nonzero⟩
+  ⟨(exact provenance).zero_iff_unpreparable,
+    (exact provenance).prepared_iff_nonzero⟩
 
 /-- The supported provenance decision flag classifies exactly preparation and operational zero. -/
 theorem exact_classifies {channel : Coherent.CoherentNamed}
   (provenance : Provenance channel) :
-    ((Approximation.Gaussian.Acquisition.Provenance.exact provenance).isPrepared = true ↔ Equivalence.IsPrepared
+    ((exact provenance).isPrepared = true ↔ Equivalence.IsPrepared
       channel) ∧
-    ((Approximation.Gaussian.Acquisition.Provenance.exact provenance).isPrepared = false ↔ Zero.IsZero channel) :=
-  ⟨(Approximation.Gaussian.Acquisition.Provenance.exact provenance).isPrepared_eq_true_iff,
-    (Approximation.Gaussian.Acquisition.Provenance.exact provenance).isPrepared_eq_false_iff⟩
+    ((exact provenance).isPrepared = false ↔ Zero.IsZero channel) :=
+  ⟨(exact provenance).isPrepared_eq_true_iff,
+    (exact provenance).isPrepared_eq_false_iff⟩
 
 /-- Operationally equivalent channels with supported provenance have the same exact preparation decision. -/
 theorem exact_respects {first second :
   Coherent.CoherentNamed}
     (left : Provenance first) (right :
       Provenance second)
-    (equivalent : Gaussian.Equivalence.NamedEquivalent first.name second.name) :
-    (Approximation.Gaussian.Acquisition.Provenance.exact left).isPrepared =
-      (Approximation.Gaussian.Acquisition.Provenance.exact right).isPrepared :=
-      (Approximation.Gaussian.Acquisition.Provenance.exact left).respects
-      (Approximation.Gaussian.Acquisition.Provenance.exact right) equivalent
+    (equivalent : NamedEquivalent first.name second.name) :
+    (exact left).isPrepared =
+      (exact right).isPrepared :=
+      (exact left).respects
+      (exact right) equivalent
 
 end Provenance
 
@@ -138,15 +178,18 @@ open Purelib.Approximation.Gaussian.Acquisition (Provenance)
 open Purelib.Approximation.Gaussian.Provenance.Rational.Basic (RationalSidecar)
 open Purelib.Approximation.Gaussian.Equivalence (NamedEquivalent)
 
-/-- Transport the retained finite rational or square-root provenance along the supplied operational equivalence. -/
+/-- Transport retained finite provenance along the supplied operational equivalence. -/
 def transportProvenance {first second :
-  Coherent.CoherentNamed} (provenance : Provenance first)
-    (equivalent : Gaussian.Equivalence.NamedEquivalent second.name first.name) :
+  CoherentNamed} (provenance : Provenance first)
+    (equivalent : NamedEquivalent second.name first.name) :
       Provenance second :=
   match provenance with
-  | .inl rational => .inl ⟨rational.value,
-      NamedEquivalent.trans equivalent rational.equivalent⟩
-  | .inr root => .inr (root.transport equivalent)
+  | .rational reading => .rational ⟨reading.value,
+      NamedEquivalent.trans equivalent reading.equivalent⟩
+  | .squareRoot root => .squareRoot (root.transport equivalent)
+  | .quadratic coordinates => .quadratic (coordinates.transport equivalent)
+  | .polynomialRoot root => .polynomialRoot (root.transport equivalent)
+  | .algebraic sidecar => .algebraic (sidecar.transport equivalent)
 end Purelib.Approximation.Gaussian.Acquisition.Provenance
 
 end

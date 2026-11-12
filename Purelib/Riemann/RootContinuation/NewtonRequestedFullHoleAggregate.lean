@@ -64,6 +64,8 @@ import Mathlib.Order.Basic
 import Mathlib.Data.Nat.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! A single requested bank pays the full hole-side correction after annular
@@ -99,7 +101,7 @@ open Purelib.Data.Rat.Fraction.Compatibility
 open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target radius : Rational}
@@ -126,20 +128,20 @@ retained per-hole payment control their finite sum. -/
 theorem omitted_bound (prepared :
   BoundaryPreparation preparation first second target radius floor)
     (bank : OmittedHoleBank prepared.excision prepared.traces first second)
-    {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains stage}
-    (readings : Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings prepared.paid.cut cache) (later :
+    {stage : Nat} {cache : Numerics prepared.domains stage}
+    (readings : CutPairingRequest.Readings prepared.paid.cut cache) (later :
       prepared.index ≤ stage)
-    (interfaceLater : bank.index ≤ stage) : Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    (interfaceLater : bank.index ≤ stage) : normSq (gaussianSum
       (bank.values
       readings.normalized)) < target / 4 := by
   have bounded (position : Fin prepared.fine.family.single.grid.faces.regulars.length) (side : GridSide) (sheet : Fin 2)
     :
-      Data.Gaussian.Norm.Basic.normSq (((bank.rows.get position).sideDecision side).value readings.normalized sheet) ≤
+      normSq (((bank.rows.get position).sideDecision side).value readings.normalized sheet) ≤
         prepared.fine.perHole := by
     have sideLater := ((bank.rows.get position).index_le side).trans ((bank.index_ge position).trans interfaceLater)
     cases chosen : (bank.rows.get position).sideDecision side with
     | absent certificate =>
-      change Data.Gaussian.Norm.Basic.normSq (0 : Basic.Canonical) ≤ _
+      change normSq (0 : Basic.Canonical) ≤ _
       rw [Norm.Basic.normSq_zero, prepared.fine.perHole_eq]
       exact (Budget.Aggregate.perTerm_positive prepared.fine.positive _).le
     | present hole matching discarded allocated =>
@@ -156,9 +158,9 @@ theorem omitted_bound (prepared :
   have positive : 0 < prepared.fine.perHole := by
     rw [prepared.fine.perHole_eq]
     exact Budget.Aggregate.perTerm_positive prepared.fine.positive _
-  have product := Fraction.Order.Arithmetic.mul_le_mul_direct cap
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct cap positive.le)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct nonnegative positive.le) (Fraction.Cast.Order.natCast_le_direct
+  have product := Arithmetic.mul_le_mul_direct cap
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct cap positive.le)
+    (Arithmetic.mul_nonneg_direct nonnegative positive.le) (Fraction.Cast.Order.natCast_le_direct
       (Nat.zero_le prepared.fine.count))
   have paid := Budget.Aggregate.count_mul_perTerm_lt prepared.fine.positive prepared.fine.count
   rw [← prepared.fine.perHole_eq] at paid
@@ -169,11 +171,11 @@ open Purelib.Curves.Hyperelliptic in
 /-- Read the full physical-hole evaluation on both sheets from the original perimeter cache. -/
 @[expose] def fullHoleRemainder
   (prepared : BoundaryPreparation preparation first second target radius floor)
-    {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains stage}
-    (readings : Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings prepared.paid.cut cache) : Gaussian
+    {stage : Nat} {cache : Numerics prepared.domains stage}
+    (readings : CutPairingRequest.Readings prepared.paid.cut cache) : Gaussian
       :=
   Meshes.PuncturedGrid.HoleSelectionPartition.fullHoleEvaluation readings.neighbors
-    (fun side p => FiniteSum.Fin.sumFin (fun sheet => Meshes.PuncturedGrid.HoleAreaRemainder.sideAreaRemainder
+    (fun side p => FiniteSum.Fin.sumFin (fun sheet => sideAreaRemainder
       readings.normalized p sheet side))
 
 open Purelib.Curves.Hyperelliptic in
@@ -186,10 +188,10 @@ omitted rows. -/
 theorem fullHoleRemainder_eq
   (prepared : BoundaryPreparation preparation first second target radius floor)
     (omitted : OmittedHoleBank prepared.excision prepared.traces first second)
-    {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains stage}
-    (readings : Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings prepared.paid.cut cache) :
+    {stage : Nat} {cache : Numerics prepared.domains stage}
+    (readings : CutPairingRequest.Readings prepared.paid.cut cache) :
     prepared.fullHoleRemainder readings = prepared.selectedHoleRemainder readings +
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (omitted.values readings.normalized) := by
+      gaussianSum (omitted.values readings.normalized) := by
   have readback := NewtonOmittedHoleReadback.OmittedHoleBank.sum_eq_omitted omitted (cache := cache) readings.neighbors
     readings.normalized
   rw [readback]
@@ -207,32 +209,32 @@ theorem full_holes_bound (prepared :
   BoundaryPreparation preparation first second target radius floor)
     (interfaces : InterfaceBank prepared.excision prepared.traces first second)
     (omitted : OmittedHoleBank prepared.excision prepared.traces first second)
-    {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains stage}
-    {readings : Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings prepared.paid.cut cache}
+    {stage : Nat} {cache : Numerics prepared.domains stage}
+    {readings : CutPairingRequest.Readings prepared.paid.cut cache}
     (cached : CutAnnularReadings prepared.comparison readings)
     (later : prepared.index ≤ stage) (interfaceLater : interfaces.index ≤ stage) (omittedLater : omitted.index ≤ stage)
       :
-    Data.Gaussian.Norm.Basic.normSq (cached.annuli.selectedArea + prepared.fullHoleRemainder readings) < 4 * target :=
+    normSq (cached.annuli.selectedArea + prepared.fullHoleRemainder readings) < 4 * target :=
       by
   have selected := prepared.holes_bound interfaces cached later interfaceLater
   have omittedBound := prepared.omitted_bound omitted readings later omittedLater
-  have positive : 0 < target := (Fraction.Order.Arithmetic.mul_pos_direct prepared.fine.positive (by
-      decide : (0 : Fraction.Rational) < 4)).trans_eq
+  have positive : 0 < target := (Arithmetic.mul_pos_direct prepared.fine.positive (by
+      decide : (0 : Rational) < 4)).trans_eq
     (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))
   have quarter : target / 4 ≤ target := by
-    apply (Fraction.Order.Field.div_le_iff_pos (by decide)).mpr
+    apply (Field.div_le_iff_pos (by decide)).mpr
     exact (show target = target * 1 by ring1).le.trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (by decide : (1 : Fraction.Rational) ≤ 4)
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (by decide : (1 : Rational) ≤ 4)
         positive.le)
-  have total := Fraction.Order.Arithmetic.add_lt_add_direct selected (omittedBound.trans_le quarter)
+  have total := Arithmetic.add_lt_add_direct selected (omittedBound.trans_le quarter)
   have equal : cached.annuli.selectedArea + prepared.fullHoleRemainder readings =
-      (cached.annuli.selectedArea + prepared.selectedHoleRemainder readings) + Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      (cached.annuli.selectedArea + prepared.selectedHoleRemainder readings) + gaussianSum
         (omitted.values readings.normalized) := by
     rw [prepared.fullHoleRemainder_eq omitted readings]
     ring1
   rw [equal]
   exact ((Norm.Bounds.normSq_add_le_two _ _).trans_lt
-    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2) total)).trans_eq
+    (Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Rational) < 2) total)).trans_eq
       (by ring1)
 
 open Purelib.Curves.Hyperelliptic in
@@ -247,9 +249,9 @@ cached readings and the four-target squared-norm certificate. -/
   let interfaces := prepared.interfaceBank
   let omitted := prepared.omittedBank
   let stage := max (max prepared.index interfaces.index) omitted.index
-  let cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains stage :=
+  let cache : Numerics prepared.domains stage :=
     Vector.DependentVector.ofFn fun row =>
-    Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank.build (standardDifferential row) stage prepared.domains
+    FacePrimitiveBank.build (standardDifferential row) stage prepared.domains
   let later := (Data.Nat.Order.le_max_left _ _).trans (Data.Nat.Order.le_max_left _ _)
   let readings := prepared.readAt cache later
   (⟨interfaces, omitted, cache, readings,
@@ -257,9 +259,9 @@ cached readings and the four-target squared-norm certificate. -/
       ((Data.Nat.Order.le_max_right _ _).trans (Data.Nat.Order.le_max_left _ _)) (Data.Nat.Order.le_max_right _ _)⟩ :
     (interfaces : InterfaceBank prepared.excision prepared.traces first second) ×
     (omitted : OmittedHoleBank prepared.excision prepared.traces first second) ×
-    (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains (max (max prepared.index
+    (cache : Numerics prepared.domains (max (max prepared.index
       interfaces.index) omitted.index)) ×
-    {readings : prepared.Readings cache // Data.Gaussian.Norm.Basic.normSq (readings.2.val.annuli.selectedArea +
+    {readings : prepared.Readings cache // normSq (readings.2.val.annuli.selectedArea +
       prepared.fullHoleRemainder readings.1) < 4 * target})
 
 end Purelib.Riemann.RootContinuation.NewtonRequestedBoundary.BoundaryPreparation

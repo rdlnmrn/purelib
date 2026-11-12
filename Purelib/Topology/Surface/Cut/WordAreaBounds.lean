@@ -34,6 +34,8 @@ import Mathlib.Data.Int.Cast.Defs
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-!
@@ -101,7 +103,7 @@ open Purelib.Topology.Chain.PathBoundary (PathEndpoints)
 namespace PrimitivePoint.Bounded
 
 /-- Subtracting two primitive points with the same coordinate bound gives a fourfold bound. -/
-theorem sub {first last : Stokes.PrimitivePoint} {bound : PrimitiveAreaBounds.AreaCoordinate}
+theorem sub {first last : PrimitivePoint} {bound : AreaCoordinate}
     (left : (PrimitivePoint.Bounded first) bound) (right : (PrimitivePoint.Bounded last) bound) :
     (PrimitivePoint.Bounded ((PrimitivePoint.sub first) last)) (4 * bound) := by
   change Canonical.normSq (first.left - last.left) ≤ 4 * bound ∧
@@ -110,16 +112,16 @@ theorem sub {first last : Stokes.PrimitivePoint} {bound : PrimitiveAreaBounds.Ar
   · have estimate := Gaussian.Norm.Bounds.normSq_sub_le_two first.left last.left
     simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
     exact estimate.trans
-      ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add left.1 right.1) (by decide)).trans_eq (by
+      ((Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add left.1 right.1) (by decide)).trans_eq (by
         ring1))
   · have estimate := Gaussian.Norm.Bounds.normSq_sub_le_two first.right last.right
     simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
     exact estimate.trans
-      ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add left.2 right.2) (by decide)).trans_eq (by
+      ((Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add left.2 right.2) (by decide)).trans_eq (by
         ring1))
 
 /-- Negating a primitive point preserves its coordinate magnitude bound. -/
-theorem neg {point : Stokes.PrimitivePoint} {bound : PrimitiveAreaBounds.AreaCoordinate}
+theorem neg {point : PrimitivePoint} {bound : AreaCoordinate}
     (bounded : (PrimitivePoint.Bounded point) bound) : (PrimitivePoint.Bounded ((PrimitivePoint.sub PrimitivePoint.zero)
       point)) bound := by
   simpa only [PrimitivePoint.Bounded, PrimitivePoint.zero, PrimitivePoint.sub, Gaussian.Basic.zero_sub,
@@ -133,18 +135,18 @@ open Purelib.Topology.Surface.Cut.WordArea.CutWordArea (Step steps word correcti
 open Purelib.Topology.Surface.Cut.WordErrors.CutWordArea (ErrorsBounded)
 
 variable {source target count : Nat} {labels : Fin source → Fin target}
-  {generators : Data.Vector (Stokes.OrientedEdge source) count}
-  {primitive : Fin source → Stokes.PrimitivePoint} {values : Fin count → Stokes.PrimitivePoint}
+  {generators : Data.Vector (OrientedEdge source) count}
+  {primitive : Fin source → PrimitivePoint} {values : Fin count → PrimitivePoint}
 
 open Purelib.Topology.Surface.Cut.WordArea.CutWordArea in
 /-- A cached step starts at the modeled endpoint of its literal prefix.
 
 Membership identifies the retained step and splits the original entry list at that occurrence. Its cached start equals
 the supplied initial point plus the modeled total of that exact prefix. -/
-theorem steps_member_split {entries : List (BoundaryWord.CutWordEntry labels generators)} {start :
-  Stokes.PrimitivePoint}
-    {step : CutWordArea.Step (labels := labels) (generators := generators) primitive values}
-    (member : step ∈ CutWordArea.steps primitive values start entries) :
+theorem steps_member_split {entries : List (CutWordEntry labels generators)} {start :
+  PrimitivePoint}
+    {step : Step (labels := labels) (generators := generators) primitive values}
+    (member : step ∈ steps primitive values start entries) :
     ∃ before after, entries = before ++ step.entry :: after ∧
       step.start = start.add (Pairing.linear (Pairing.totalAt (word before)) values) := by
   induction entries generalizing start with
@@ -173,16 +175,16 @@ open Purelib.Topology.Surface.Cut.WordAreaBounds in
 
 The retained boundary path supplies the actual prefix endpoint for each cached step. Its provenance split invokes the
 same local error bounds with both original word-count factors. -/
-theorem steps_drifts_bounded {entries : List (BoundaryWord.CutWordEntry labels generators)} {bound :
-  PrimitiveAreaBounds.AreaCoordinate}
-    (bounded : CutWordArea.ErrorsBounded primitive values entries bound) (nonnegative : 0 ≤ bound)
+theorem steps_drifts_bounded {entries : List (CutWordEntry labels generators)} {bound :
+  AreaCoordinate}
+    (bounded : ErrorsBounded primitive values entries bound) (nonnegative : 0 ≤ bound)
     {first last : Fin source}
-    (path : PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish (entries.map CutWordEntry.edge) first
+    (path : PathEndpoints OrientedEdge.start OrientedEdge.finish (entries.map CutWordEntry.edge) first
       last)
-    (step : CutWordArea.Step (labels := labels) (generators := generators) primitive values)
-    (member : step ∈ CutWordArea.steps primitive values (primitive first) entries) :
-    (PrimitivePoint.Bounded step.drift) ((entries.length : PrimitiveAreaBounds.AreaCoordinate) * ((entries.length :
-      PrimitiveAreaBounds.AreaCoordinate) * bound)) := by
+    (step : Step (labels := labels) (generators := generators) primitive values)
+    (member : step ∈ steps primitive values (primitive first) entries) :
+    (PrimitivePoint.Bounded step.drift) ((entries.length : AreaCoordinate) * ((entries.length :
+      AreaCoordinate) * bound)) := by
   obtain ⟨before, after, entriesEq, startEq⟩ := steps_member_split member
   have splitPath := path
   rw [entriesEq, Map.map_append] at splitPath
@@ -194,40 +196,40 @@ theorem steps_drifts_bounded {entries : List (BoundaryWord.CutWordEntry labels g
 
 /-- Binary count conversion keeps large allocation checks executable without enumerating a synthetic word or using unary
 casts. -/
-@[expose] def areaWeight (magnitude : PrimitiveAreaBounds.AreaCoordinate) (count : Nat) : AreaCoordinate :=
+@[expose] def areaWeight (magnitude : AreaCoordinate) (count : Nat) : AreaCoordinate :=
   let n := Aggregate.countCoordinate count
   8 * magnitude * (4 * n * n + 1)
 
 section
 open Purelib.Topology.Surface.Cut.WordAreaBounds
 /-- The complete word-area error weight is nonnegative for a nonnegative magnitude bound. -/
-theorem areaWeight_nonnegative {magnitude : PrimitiveAreaBounds.AreaCoordinate} (nonnegative : 0 ≤ magnitude) (count :
+theorem areaWeight_nonnegative {magnitude : AreaCoordinate} (nonnegative : 0 ≤ magnitude) (count :
   Nat) :
     0 ≤ areaWeight magnitude count := by
-  have countNonnegative : (0 : PrimitiveAreaBounds.AreaCoordinate) ≤ Aggregate.countCoordinate count := by
+  have countNonnegative : (0 : AreaCoordinate) ≤ Aggregate.countCoordinate count := by
     rw [Aggregate.countCoordinate_eq]
     exact Cast.Order.natCast_le_direct (Nat.zero_le _)
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) nonnegative)
-    (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) countNonnegative) countNonnegative) (by decide))
+  exact Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide) nonnegative)
+    (add_nonneg (Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct (by decide) countNonnegative) countNonnegative) (by decide))
 
 /-- Bound the full retained step correction using drift, increment, original endpoint and local error bounds. -/
-theorem Step.correction_bounded (step : CutWordArea.Step (labels := labels) (generators := generators) primitive values)
-    {magnitude bound : PrimitiveAreaBounds.AreaCoordinate} (count : Nat)
-    (drift : (PrimitivePoint.Bounded step.drift) ((count : PrimitiveAreaBounds.AreaCoordinate) * ((count :
-      PrimitiveAreaBounds.AreaCoordinate) * bound)))
+theorem Step.correction_bounded (step : Step (labels := labels) (generators := generators) primitive values)
+    {magnitude bound : AreaCoordinate} (count : Nat)
+    (drift : (PrimitivePoint.Bounded step.drift) ((count : AreaCoordinate) * ((count :
+      AreaCoordinate) * bound)))
     (increment : (PrimitivePoint.Bounded step.increment) (4 * magnitude))
     (endpoint : (PrimitivePoint.Bounded (primitive step.entry.edge.start)) magnitude)
     (error : (PrimitivePoint.Bounded step.error) bound) :
-    Data.Gaussian.Norm.Basic.normSq step.correction ≤ areaWeight magnitude count * bound := by
+    Gaussian.Norm.Basic.normSq step.correction ≤ areaWeight magnitude count * bound := by
   rw [step.correction_eq, Gaussian.Norm.Basic.normSq_eq_canonical]
   have sumEstimate := Gaussian.Norm.Bounds.normSq_add_le_two
-    (Stokes.edgeArea step.drift step.increment)
-    (Stokes.edgeArea (primitive step.entry.edge.start) step.error)
+    (edgeArea step.drift step.increment)
+    (edgeArea (primitive step.entry.edge.start) step.error)
   simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at sumEstimate
   have estimate := sumEstimate.trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
       (add_le_add (PrimitivePoint.area_bound drift increment) (PrimitivePoint.area_bound endpoint error)) (by decide))
   exact estimate.trans_eq (by rw [areaWeight, Aggregate.countCoordinate_eq]; ring1)
 
@@ -235,9 +237,9 @@ end
 
 open Purelib.Topology.Surface.Cut.WordArea.CutWordArea in
 /-- The retained correction fold equals the Gaussian sum of all original step corrections. -/
-theorem correction_eq_sum (samples : List (CutWordArea.Step (labels := labels) (generators := generators) primitive
+theorem correction_eq_sum (samples : List (Step (labels := labels) (generators := generators) primitive
   values)) :
-    CutWordArea.correction samples = Data.Gaussian.Norm.Sum.Basic.gaussianSum (samples.map Step.correction) := by
+    correction samples = gaussianSum (samples.map Step.correction) := by
   induction samples with
   | nil => rfl
   | cons step samples ih => exact congrArg (step.correction + ·) ih
@@ -248,14 +250,14 @@ namespace CutBoundaryWord.AreaSample
 
 open Purelib.Topology.Surface.Cut.WordArea.CutBoundaryWord (AreaSample)
 
-variable {source target : Nat} {labels : Fin source → Fin target} {edges : List (Stokes.OrientedEdge source)}
-  {word : BoundaryWord.CutBoundaryWord labels edges} {primitive : Fin source → Stokes.PrimitivePoint} {anchor : Fin
+variable {source target : Nat} {labels : Fin source → Fin target} {edges : List (OrientedEdge source)}
+  {word : CutBoundaryWord labels edges} {primitive : Fin source → PrimitivePoint} {anchor : Fin
     source}
 
 open Purelib.Topology.Surface.Cut.WordArea.CutWordArea in
 /-- Each cached step comes from an entry in the original boundary alphabet. -/
-theorem step_entry_mem (sample : CutBoundaryWord.AreaSample word primitive (primitive anchor))
-    {step : CutWordArea.Step (labels := labels) (generators := word.alphabet.generators) primitive sample.values}
+theorem step_entry_mem (sample : AreaSample word primitive (primitive anchor))
+    {step : Step (labels := labels) (generators := word.alphabet.generators) primitive sample.values}
     (member : step ∈ sample.steps) : step.entry ∈ word.alphabet.entries := by
   rw [← CutWordArea.steps_entries primitive sample.values word.alphabet.entries (primitive anchor), ← sample.steps_eq]
   exact Map.mem_map_of_mem member
@@ -266,14 +268,14 @@ open Purelib.Topology.Surface.Cut.WordAreaBounds in
 
 The cached step equation retains its original boundary-entry occurrence. The edge readback equation identifies that same
 list length, preserving the modeled drift and both count factors. -/
-theorem step_drift_bounded (sample : CutBoundaryWord.AreaSample word primitive (primitive anchor))
-    (closed : PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish edges anchor anchor)
-    {bound : PrimitiveAreaBounds.AreaCoordinate} (nonnegative : 0 ≤ bound)
+theorem step_drift_bounded (sample : AreaSample word primitive (primitive anchor))
+    (closed : PathEndpoints OrientedEdge.start OrientedEdge.finish edges anchor anchor)
+    {bound : AreaCoordinate} (nonnegative : 0 ≤ bound)
     (bounded : CutWordArea.ErrorsBounded primitive sample.values word.alphabet.entries bound)
-    (step : CutWordArea.Step (labels := labels) (generators := word.alphabet.generators) primitive sample.values)
+    (step : Step (labels := labels) (generators := word.alphabet.generators) primitive sample.values)
     (member : step ∈ sample.steps) :
-    (PrimitivePoint.Bounded step.drift) ((edges.length : PrimitiveAreaBounds.AreaCoordinate) * ((edges.length :
-      PrimitiveAreaBounds.AreaCoordinate) * bound)) := by
+    (PrimitivePoint.Bounded step.drift) ((edges.length : AreaCoordinate) * ((edges.length :
+      AreaCoordinate) * bound)) := by
   rw [sample.steps_eq] at member
   have estimate := CutWordArea.steps_drifts_bounded bounded nonnegative
     (by rw [word.alphabet.edges_eq]; exact closed) step member
@@ -290,15 +292,15 @@ open Purelib.Topology.Surface.Cut.WordAreaBounds.CutWordArea in
 
 The closed boundary supplies the retained prefix paths and endpoint bounds. Weighted allocation pays each original step
 correction using the actual complete step count, without discarding local drift or increment-error terms. -/
-theorem correction_accurate (sample : CutBoundaryWord.AreaSample word primitive (primitive anchor))
-    (closed : PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish edges anchor anchor)
-    {target magnitude : PrimitiveAreaBounds.AreaCoordinate} (positive : 0 < target) (nonnegative : 0 ≤ magnitude)
+theorem correction_accurate (sample : AreaSample word primitive (primitive anchor))
+    (closed : PathEndpoints OrientedEdge.start OrientedEdge.finish edges anchor anchor)
+    {target magnitude : AreaCoordinate} (positive : 0 < target) (nonnegative : 0 ≤ magnitude)
     (bounded : CutWordArea.ErrorsBounded primitive sample.values word.alphabet.entries
       (Aggregate.perTerm (Weighted.allowance target (CutWordArea.areaWeight magnitude edges.length)) edges.length))
     (increments : ∀ entry ∈ word.alphabet.entries,
       (PrimitivePoint.Bounded (Pairing.linear entry.letter.coefficients sample.values)) (4 * magnitude))
     (endpoints : ∀ entry ∈ word.alphabet.entries, (PrimitivePoint.Bounded (primitive entry.edge.start)) magnitude) :
-    Data.Gaussian.Norm.Basic.normSq sample.correction < target := by
+    Gaussian.Norm.Basic.normSq sample.correction < target := by
   have localPositive := Aggregate.perTerm_positive
     (Weighted.allowance_positive positive (CutWordArea.areaWeight_nonnegative nonnegative edges.length)) edges.length
   have lengthEq : sample.steps.length = edges.length := by
@@ -325,11 +327,11 @@ open Purelib.Topology.Surface.Cut.WordArea.CutWordArea in
 
 The cached closed-correction equation subtracts the anchor pairing with its retained total error. Scalar transport of
 the supplied centered anchor makes that pairing zero while keeping the dependent sample and all its caches unchanged. -/
-theorem closedCorrection_eq_of_centered (sample : CutBoundaryWord.AreaSample word primitive (primitive anchor))
+theorem closedCorrection_eq_of_centered (sample : AreaSample word primitive (primitive anchor))
     (centered : primitive anchor = PrimitivePoint.zero) : sample.closedCorrection = sample.correction := by
   rw [sample.closedCorrection_eq]
-  have areaZero : Stokes.edgeArea (primitive anchor) sample.errorTotal = 0 := by
-    refine (congrArg (fun point => Stokes.edgeArea point sample.errorTotal) centered).trans ?_
+  have areaZero : edgeArea (primitive anchor) sample.errorTotal = 0 := by
+    refine (congrArg (fun point => edgeArea point sample.errorTotal) centered).trans ?_
     change 0 * sample.errorTotal.right - sample.errorTotal.left * 0 = 0
     rw [Gaussian.Basic.zero_mul, Gaussian.Basic.mul_zero, Gaussian.Basic.sub_zero]
   rw [areaZero, Gaussian.Basic.sub_zero]

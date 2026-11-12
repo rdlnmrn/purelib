@@ -4,6 +4,7 @@ import Purelib.Data.List.Membership
 import Purelib.Algebra.FiniteSum.Rational.Squares
 import Purelib.Data.List.Sort.RationalKey.Basic
 import Purelib.Data.List.Map
+public import Purelib.Data.List.Search
 public import Purelib.Data.List.Filter
 import Purelib.Polynomial.Geometry.Grid.Incidence
 import Purelib.Data.Rat.Fraction
@@ -52,7 +53,7 @@ namespace Partition.PreparedAxisPartitions
 /-- The rational coordinate type of the axis partition. -/
 public abbrev Coordinate := Fraction.Rational
 /-- A proper coordinate interval with the identity key. -/
-public abbrev Interval := ClearGrid.Interval (id : Coordinate →
+public abbrev Interval := Grid.Interval (id : Coordinate →
   Coordinate)
 
 end Partition.PreparedAxisPartitions
@@ -113,24 +114,24 @@ end Partition.PreparedAxisPartitions
 set_option genInjectivity false in
 /-- Both geometry and counts are retained as data. The exact coordinate membership
 law also admits independently generated sorted caches. -/
-public structure AxisPartition (lower upper : Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate) (cuts :
+public structure AxisPartition (lower upper : Partition.PreparedAxisPartitions.Coordinate) (cuts :
     List
-  Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate) where
+  Partition.PreparedAxisPartitions.Coordinate) where
   /-- The original lower endpoint is strictly below the upper endpoint. -/ proper : lower < upper
   /-- The cached sorted list of endpoints and in-range cuts. -/ coordinates : List
-    Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate
+    Partition.PreparedAxisPartitions.Coordinate
   /-- The cached coordinates are strictly increasing. -/ ordered : coordinates.Pairwise (fun first last => first < last)
   /-- Exactly the endpoints and requested in-range cuts occur in the coordinate
 cache. -/ coordinates_spec : ∀ point, point ∈ coordinates ↔
     point = lower ∨ point = upper ∨ (point ∈ cuts ∧ lower ≤ point ∧ point ≤ upper)
-  /-- The cached adjacent intervals. -/ intervals : List Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval
+  /-- The cached adjacent intervals. -/ intervals : List Partition.PreparedAxisPartitions.Interval
   /-- The interval cache is the adjacent-interval construction on the coordinates. -/ intervals_eq : intervals =
     Interval.adjacent coordinates ordered
   /-- The cached number of intervals. -/ count : Nat
   /-- The cached count is the actual interval-list length. -/ count_eq : count = intervals.length
   /-- The number of intervals is at most one more than the number of requested cuts. -/ count_le : count ≤ cuts.length +
     1
-  /-- An increasing walk covering the original interval with retained intervals. -/ walk : AxisWalks.IncreasingWalk
+  /-- An increasing walk covering the original interval with retained intervals. -/ walk : IncreasingWalk
     intervals lower upper
   /-- The covering walk traverses exactly the cached interval list. -/ walk_edges : walk.edges = intervals
 
@@ -138,8 +139,8 @@ constructive_injectivity AxisPartition
 
 namespace AxisPartition
 
-variable {lower upper : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate} {cuts : List
-  Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate}
+variable {lower upper : Partition.PreparedAxisPartitions.Coordinate} {cuts : List
+  Partition.PreparedAxisPartitions.Coordinate}
 
 /-- Consecutive adjacent intervals share their common endpoint.
 
@@ -193,6 +194,19 @@ private theorem consecutive_transport {first last : List Partition.PreparedAxisP
   cases equal
   exact consecutive
 
+/-- Read the preceding original interval occurrence of a bounded consecutive-pair position. -/
+@[expose] public def previousIndex (partition : AxisPartition lower upper cuts)
+    (pair : Fin (partition.intervals.length - 1)) : Fin partition.intervals.length :=
+  ⟨pair.val, Nat.lt_of_lt_of_le pair.isLt (Nat.sub_le partition.intervals.length 1)⟩
+
+/-- Read the immediate following original interval occurrence of a bounded consecutive-pair position. -/
+@[expose] public def nextIndex (partition : AxisPartition lower upper cuts)
+    (pair : Fin (partition.intervals.length - 1)) : Fin partition.intervals.length :=
+  ⟨pair.val + 1, Eq.mp (congrArg (fun total => pair.val + 1 < total)
+      (Nat.sub_add_cancel (Nat.lt_of_le_of_lt (Nat.zero_le pair.val)
+        (Nat.lt_of_lt_of_le pair.isLt (Nat.sub_le partition.intervals.length 1)))))
+    (Nat.add_lt_add_right pair.isLt 1)⟩
+
 /-- Consecutive retained partition intervals share an endpoint.
 
 The interval cache equals the original adjacent construction on the cached
@@ -210,13 +224,13 @@ public theorem consecutive (partition : AxisPartition lower upper cuts) (index :
 Filter the cuts to the closed interval, sort and deduplicate them with both
 endpoints, and cache adjacent intervals, their count bound and their increasing
 covering walk. -/
-@[expose] public def build (lower upper : Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate) (proper :
-  lower < upper) (cuts : List Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate) :
+@[expose] public def build (lower upper : Partition.PreparedAxisPartitions.Coordinate) (proper :
+  lower < upper) (cuts : List Partition.PreparedAxisPartitions.Coordinate) :
   AxisPartition lower upper cuts := by
   let candidates := lower :: upper :: cuts.filter (fun point => decide (lower ≤ point ∧ point ≤ upper))
   let coordinates := RationalKey.Basic.sort id candidates
   have ordered := RationalKey.Basic.pairwise_sort id candidates
-  have spec (point : Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate) : point ∈ coordinates ↔
+  have spec (point : Partition.PreparedAxisPartitions.Coordinate) : point ∈ coordinates ↔
       point = lower ∨ point = upper ∨ (point ∈ cuts ∧ lower ≤ point ∧ point ≤ upper) := by
     have sorted := RationalKey.Basic.keys_sort id candidates point
     rewrite [Map.map_id, Map.map_id] at sorted
@@ -235,7 +249,7 @@ covering walk. -/
       · exact Membership.mem_cons.mpr (Or.inr (Membership.mem_cons.mpr (Or.inl atUpper)))
       · exact Membership.mem_cons.mpr (Or.inr (Membership.mem_cons.mpr (Or.inr
           (Filter.mem_filter.mpr ⟨member.1, decide_eq_true member.2⟩))))
-  have bounded (point : Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate) (member : point ∈ coordinates) :
+  have bounded (point : Partition.PreparedAxisPartitions.Coordinate) (member : point ∈ coordinates) :
     lower ≤ point ∧ point ≤ upper := by
     rcases (spec point).mp member with rfl | rfl | member
     · exact ⟨le_rfl, proper.le⟩
@@ -251,10 +265,10 @@ covering walk. -/
   let intervals := Interval.adjacent coordinates ordered
   let count := intervals.length
   have countLe : count ≤ cuts.length + 1 := by
-    have sorted := Geometry.Rectangle.Partition.PreparedAxisPartitions.sort_length candidates
+    have sorted := Partition.PreparedAxisPartitions.sort_length candidates
     have filtered := Filter.length_filter_le (fun point => decide (lower ≤ point ∧ point ≤ upper)) cuts
     change (Interval.adjacent coordinates ordered).length ≤ _
-    rw [Geometry.Rectangle.Partition.PreparedAxisPartitions.adjacent_length coordinates ordered]
+    rw [Partition.PreparedAxisPartitions.adjacent_length coordinates ordered]
     dsimp only [coordinates, candidates] at sorted ⊢
     simp only [List.length_cons] at sorted
     omega
@@ -282,7 +296,7 @@ public theorem upper_mem (partition : AxisPartition lower upper cuts) : upper �
 The requested coordinate belongs to the original cut bank and lies between its
 endpoints. The exact cache specification retains that same occurrence. -/
 public theorem cut_mem (partition : AxisPartition lower upper cuts) {point :
-  _root_.Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate} (member : point ∈ cuts)
+  Partition.PreparedAxisPartitions.Coordinate} (member : point ∈ cuts)
     (inside : lower ≤ point ∧ point ≤ upper) : point ∈ partition.coordinates :=
   (partition.coordinates_spec point).mpr (Or.inr (Or.inr ⟨member, inside⟩))
 
@@ -292,7 +306,7 @@ The exact cache specification identifies either original endpoint or an in-
 range requested coordinate. All three alternatives give the displayed closed
 bounds. -/
 public theorem coordinate_bounds (partition : AxisPartition lower upper cuts) {point :
-  _root_.Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate}
+  Partition.PreparedAxisPartitions.Coordinate}
     (member : point ∈ partition.coordinates) : lower ≤ point ∧ point ≤ upper := by
   rcases (partition.coordinates_spec point).mp member with rfl | rfl | member
   · exact ⟨le_rfl, partition.proper.le⟩
@@ -325,7 +339,7 @@ The retained coordinate occurs on the original strictly ordered axis. No
 original axis occurrence lies inside one of its adjacent intervals, including
 endpoint equality. -/
 public theorem coordinate_outside (partition : AxisPartition lower upper cuts) {interval :
-  _root_.Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval}
+  Partition.PreparedAxisPartitions.Interval}
     (member : interval ∈ partition.intervals) {point : Partition.PreparedAxisPartitions.Coordinate} (present : point ∈
       partition.coordinates) :
     point ≤ interval.lower ∨ interval.upper ≤ point := by
@@ -338,7 +352,7 @@ Cuts below or above the original frame are already outside every retained
 interval. In-range cuts occur in the coordinate cache and satisfy its adjacent-
 interval separation law. -/
 public theorem cut_outside (partition : AxisPartition lower upper cuts) {interval :
-  _root_.Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval}
+  Partition.PreparedAxisPartitions.Interval}
     (member : interval ∈ partition.intervals) {point : Partition.PreparedAxisPartitions.Coordinate} (present : point ∈
         cuts) :
     point ≤ interval.lower ∨ interval.upper ≤ point := by
@@ -356,9 +370,9 @@ either outer endpoint.
 The record retains the actual selected interval, its membership in the cached
 partition, and closed lower and upper bounds for the supplied query. -/
 public structure Located (partition : AxisPartition lower upper cuts)
-  (point : Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate) where
+  (point : Partition.PreparedAxisPartitions.Coordinate) where
   /-- An actual interval containing the query. -/ interval :
-    Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval
+    Partition.PreparedAxisPartitions.Interval
   /-- The selected interval belongs to the retained partition. -/ member : interval ∈ partition.intervals
   /-- The query lies between the selected interval's closed endpoints. -/ inside : interval.lower ≤ point ∧ point ≤
     interval.upper
@@ -369,12 +383,12 @@ constructive_injectivity Located
 
 Strictly ordered outer endpoints and closed point bounds ensure the scan
 returns an actual interval with its membership and containment proofs. -/
-@[expose] public def locateWalk (intervals : List Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval)
-  (point : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate) :
-    {start finish : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate} →
-      Purelib.Polynomial.Geometry.Grid.AxisWalks.IncreasingWalk intervals start finish → start < finish →
+@[expose] public def locateWalk (intervals : List Partition.PreparedAxisPartitions.Interval)
+  (point : Partition.PreparedAxisPartitions.Coordinate) :
+    {start finish : Partition.PreparedAxisPartitions.Coordinate} →
+      IncreasingWalk intervals start finish → start < finish →
     start ≤ point → point ≤ finish →
-      {interval : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval // interval ∈ intervals ∧
+      {interval : Partition.PreparedAxisPartitions.Interval // interval ∈ intervals ∧
         interval.lower ≤ point ∧ point ≤ interval.upper}
   | _, _, .nil _, proper, _, _ => (lt_irrefl _ proper).elim
   | _, _, .cons interval member tail, _, lower, upper =>
@@ -388,7 +402,7 @@ The original increasing-walk scan returns an interval from the retained bank.
 The query bounds and original proper frame certify containment at either outer
 endpoint as well. -/
 @[expose] public def locate (partition : AxisPartition lower upper cuts)
-  (point : Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate) (inside : lower ≤ point ∧ point ≤ upper) :
+  (point : Partition.PreparedAxisPartitions.Coordinate) (inside : lower ≤ point ∧ point ≤ upper) :
     Located partition point :=
   let found := locateWalk partition.intervals point
     partition.walk partition.proper inside.1 inside.2
@@ -402,9 +416,9 @@ The record retains an actual interval and a Boolean identifying its requested
 lower or upper endpoint. Its exact reading equals the original cached
 coordinate. -/
 public structure Endpoint (partition : AxisPartition lower upper cuts)
-  (point : Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate) where
+  (point : Partition.PreparedAxisPartitions.Coordinate) where
   /-- An actual interval having the specified endpoint. -/ interval :
-    Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval
+    Partition.PreparedAxisPartitions.Interval
   /-- The selected interval belongs to the retained partition. -/ member : interval ∈ partition.intervals
   /-- Whether the specified point is the upper endpoint. -/ high : Bool
   /-- The selected endpoint equals the requested coordinate. -/ endpoint_eq : (if high then interval.upper else
@@ -412,12 +426,39 @@ public structure Endpoint (partition : AxisPartition lower upper cuts)
 
 constructive_injectivity Endpoint
 
+/-- An actual partition interval incident to the outer upper endpoint uses its upper-endpoint role.
+
+Its lower endpoint cannot equal the outer upper bound: the stored proper
+width would place its finish beyond the original interval bounds. This
+concerns the supplied Endpoint cache and performs no neighbor scan.
+-/
+public theorem Endpoint.high_upper {partition : AxisPartition lower upper cuts}
+    (located : Endpoint partition upper) : located.high = true := by
+  cases selected : located.high with
+  | false =>
+      have lowerEq : located.interval.lower = upper := by
+        have equal := located.endpoint_eq
+        rewrite [selected] at equal
+        exact equal
+      have beyond : upper < located.interval.upper :=
+        Eq.mp (congrArg (fun value : Partition.PreparedAxisPartitions.Coordinate =>
+          value < located.interval.upper) lowerEq) located.interval.ordered
+      exact False.elim ((not_lt_of_ge (partition.interval_bounds located.member).2) beyond)
+  | true => rfl
+
+/-- The supplied final-endpoint cache retains the literal original upper coordinate. -/
+public theorem Endpoint.upper_eq {partition : AxisPartition lower upper cuts}
+    (located : Endpoint partition upper) : located.interval.upper = upper := by
+  have equal := located.endpoint_eq
+  rewrite [located.high_upper] at equal
+  exact equal
+
 /-- Select an actual partition interval having the requested retained endpoint.
 
 The neighbor construction returns the lower endpoint at the first cut and an
 upper endpoint when a preceding interval is available. -/
 @[expose] public def endpoint (partition : AxisPartition lower upper
-  cuts) (point : Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate) (member : point ∈
+  cuts) (point : Partition.PreparedAxisPartitions.Coordinate) (member : point ∈
   partition.coordinates) :
     Endpoint partition point := by
   have keyMember : point ∈ partition.coordinates.map id := by simpa only [Map.map_id] using member
@@ -432,12 +473,55 @@ upper endpoint when a preceding interval is available. -/
   | singleton only =>
       exact (partition.proper.ne ((only lower partition.lower_mem).trans (only upper partition.upper_mem).symm)).elim
 
+/-- Retain the whole original first-occurrence scan locating this actual adjacent interval by its lower key.
+
+Strict ordered adjacency makes the lower key unique in the SAME original
+interval bank. The scan is new finite metadata work; it does not acquire
+or classify an interval and preserves its complete stored payload.
+-/
+public def intervalPosition (partition : AxisPartition lower upper cuts)
+    (interval : Partition.PreparedAxisPartitions.Interval) (member : interval ∈ partition.intervals) :
+    {selected : Search.Occurrence (fun entry : Partition.PreparedAxisPartitions.Interval =>
+      entry.lower = interval.lower) partition.intervals //
+      Search.firstOccurrence (fun entry => entry.lower = interval.lower) (fun _ => inferInstance)
+        partition.intervals = some selected} :=
+  Search.firstAccepted (fun entry => entry.lower = interval.lower) (fun _ => inferInstance)
+    partition.intervals ⟨interval, member, rfl⟩
+
+/-- Original ordered-adjacent uniqueness identifies the complete selected interval, not merely its lower coordinate. -/
+public theorem intervalOccurrence_entry_eq (partition : AxisPartition lower upper cuts)
+    (interval : Partition.PreparedAxisPartitions.Interval) (member : interval ∈ partition.intervals)
+    (selected : Search.Occurrence (fun entry : Partition.PreparedAxisPartitions.Interval =>
+      entry.lower = interval.lower) partition.intervals) : selected.entry = interval :=
+  AxisNeighbors.eq_of_lower partition.ordered
+    (Eq.mp (congrArg (fun intervals => selected.entry ∈ intervals) partition.intervals_eq) selected.member)
+    (Eq.mp (congrArg (fun intervals => interval ∈ intervals) partition.intervals_eq) member) selected.accepted
+
+/-- Select the actual following interval at a retained coordinate before the final endpoint.
+
+The original finite neighbor worker returns the literal adjacent interval.
+Its maximum and singleton cases contradict the strict outer bound; no
+proposition witness is extracted to choose runtime geometry. -/
+public def following (partition : AxisPartition lower upper cuts)
+    (point : Partition.PreparedAxisPartitions.Coordinate) (member : point ∈ partition.coordinates)
+    (before : point < upper) : AxisNeighbors.AtEndpoint partition.intervals point false := by
+  have keyMember : point ∈ partition.coordinates.map id := by
+    simpa only [Map.map_id] using member
+  let neighbors := AxisNeighbors.neighbors point partition.coordinates partition.ordered keyMember
+  cases neighbors with
+  | first after _ =>
+      exact ⟨after.interval, partition.intervals_eq.symm ▸ after.member, after.endpoint_eq⟩
+  | last _ maximum => exact (not_lt_of_ge (maximum upper partition.upper_mem) before).elim
+  | interior _ after =>
+      exact ⟨after.interval, partition.intervals_eq.symm ▸ after.member, after.endpoint_eq⟩
+  | singleton only => exact (before.ne (only upper partition.upper_mem).symm).elim
+
 /-- Sum the widths of a finite interval list.
 
 The finite structural coordinate sum accumulates each retained interval width
 in list order. The empty interval bank contributes zero. -/
-@[expose] public def widthSum (intervals : List Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval) :
-  Partition.PreparedAxisPartitions.Coordinate := Squares.coordinateSum (intervals.map fun interval => interval.upper -
+@[expose] public def widthSum (intervals : List Partition.PreparedAxisPartitions.Interval) :
+  Partition.PreparedAxisPartitions.Coordinate := coordinateSum (intervals.map fun interval => interval.upper -
       interval.lower)
 
 /-- The widths along an increasing walk telescope to its endpoint difference.
@@ -446,7 +530,7 @@ Each walk step retains the interval ending where the remaining walk begins.
 Scalar addition telescopes those displayed widths to the original endpoint
 difference. -/
 private theorem widthSum_walk {intervals : List Partition.PreparedAxisPartitions.Interval} :
-    {start finish : Partition.PreparedAxisPartitions.Coordinate} → (walk : AxisWalks.IncreasingWalk intervals start
+    {start finish : Partition.PreparedAxisPartitions.Coordinate} → (walk : IncreasingWalk intervals start
         finish) →
       widthSum walk.edges = finish - start
   | _, _, .nil _ => by change (0 : Partition.PreparedAxisPartitions.Coordinate) = _ - _; ring1

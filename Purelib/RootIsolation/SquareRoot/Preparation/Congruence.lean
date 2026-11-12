@@ -56,9 +56,9 @@ open Purelib.Riemann.RootContinuation.SquareRootTrackEquivalence
 /-- The canonical Gaussian rational coordinate type. -/
 abbrev Gaussian := Gaussian.Basic.Canonical
 /-- Finite dense Gaussian rational polynomials. -/
-abbrev Polynomial := Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+abbrev Polynomial := Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
 /-- The retained rational box type. -/
-abbrev Box := Purelib.Geometry.Rational.Box
+abbrev Box := Geometry.Rational.Box
 /-- The original indexed square-root continuation owner. -/
 abbrev Owner := Riemann.Topology.SquareRootContinuationChain.Owner
 /-- Operational equivalence of the original named Gaussian approximation processes. -/
@@ -68,82 +68,82 @@ open Purelib.RootIsolation
 /-- The two accepted prepared moves retain equivalent endpoint owners.
 This is the ordinary-bound replacement for
 `PreparedSheetContinuation.advanceRootEquivalent_of_rootEquivalent`. -/
-def advanceEquivalent {polynomial : SquareRoot.Preparation.Congruence.Polynomial} {ambient :
-  SquareRoot.Preparation.Congruence.Box} {start finish : SquareRoot.Preparation.Congruence.Gaussian}
+def advanceEquivalent {polynomial : Polynomial} {ambient :
+  Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
-    (within : segment.WithinAmbient) (left : Riemann.Branches.PreparedSheetContinuation.Endpoint)
-    (first second : SquareRoot.Preparation.Congruence.Owner (polynomial.eval (segment.pointAt left.parameter)))
-    (request : Riemann.Branches.PreparedSheetContinuation.StepRequest)
-    (equivalent : SquareRoot.Preparation.Congruence.NamedEquivalent
-      (Riemann.RootContinuation.SquareRootTrackEquivalence.ownerRootName first.parameterNonzero first)
-      (Riemann.RootContinuation.SquareRootTrackEquivalence.ownerRootName second.parameterNonzero second))
+    (within : segment.WithinAmbient) (left : Endpoint)
+    (first second : Owner (polynomial.eval (segment.pointAt left.parameter)))
+    (request : StepRequest)
+    (equivalent : NamedEquivalent
+      (ownerRootName first.parameterNonzero first)
+      (ownerRootName second.parameterNonzero second))
     (firstSmall : Riemann.Branches.ClearSheetContinuation.variationBound segment left.parameter
       request.endpoint.parameter <
-      (Riemann.Branches.PreparedSheetContinuation.prepared segment left first request).track.initial.clearance.bound)
+      (prepared segment left first request).track.initial.clearance.bound)
     (secondSmall : Riemann.Branches.ClearSheetContinuation.variationBound segment left.parameter
       request.endpoint.parameter <
-      (Riemann.Branches.PreparedSheetContinuation.prepared segment left second request).track.initial.clearance.bound) :
-    SquareRoot.Preparation.Congruence.NamedEquivalent
-      (Riemann.RootContinuation.SquareRootTrackEquivalence.ownerRootName (segment.pointAt_eval_ne_zero
+      (prepared segment left second request).track.initial.clearance.bound) :
+    NamedEquivalent
+      (ownerRootName (segment.pointAt_eval_ne_zero
         request.endpoint.parameter request.endpoint.inside)
-        (Riemann.Branches.PreparedSheetContinuation.advance segment within left first request firstSmall))
-      (Riemann.RootContinuation.SquareRootTrackEquivalence.ownerRootName (segment.pointAt_eval_ne_zero
+        (advance segment within left first request firstSmall))
+      (ownerRootName (segment.pointAt_eval_ne_zero
         request.endpoint.parameter request.endpoint.inside)
-        (Riemann.Branches.PreparedSheetContinuation.advance segment within left second request secondSmall)) := by
-  have preparedEquivalent := (Riemann.Branches.PreparedSheetContinuation.sourceRootEquivalent segment left first
+        (advance segment within left second request secondSmall)) := by
+  have preparedEquivalent := (sourceRootEquivalent segment left first
     request).symm.trans
-    (equivalent.trans (Riemann.Branches.PreparedSheetContinuation.sourceRootEquivalent segment left second request))
+    (equivalent.trans (sourceRootEquivalent segment left second request))
   have variation := Riemann.Branches.ClearSheetContinuation.evaluation_variation_le segment within
     left.parameter request.endpoint.parameter left.inside request.endpoint.inside
   have generic := Riemann.RootContinuation.RootContinuationCongruence.continuedEquivalent
     (segment.pointAt_eval_ne_zero request.endpoint.parameter request.endpoint.inside)
-    (Riemann.Branches.PreparedSheetContinuation.prepared segment left first request)
-      (Riemann.Branches.PreparedSheetContinuation.prepared segment left second request)
+    (prepared segment left first request)
+      (prepared segment left second request)
     preparedEquivalent (by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using (variation.trans_lt firstSmall))
       (by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using (variation.trans_lt secondSmall))
   have transportedEquivalent :=
-    (Riemann.Branches.PreparedSheetContinuation.continuedRootNameEquivalentTransportedRootName segment within left first
+    (continuedRootNameEquivalentTransportedRootName segment within left first
       request firstSmall).symm.trans
-      (generic.trans (Riemann.Branches.PreparedSheetContinuation.continuedRootNameEquivalentTransportedRootName segment
+      (generic.trans (continuedRootNameEquivalentTransportedRootName segment
         within left second request secondSmall))
   have retained :=
-    (Riemann.Branches.PreparedSheetContinuation.retainedAtReserveRootEquivalent
-      (Riemann.Branches.PreparedSheetContinuation.transported segment within left first request firstSmall)
-      (Riemann.Branches.PreparedSheetContinuation.preparedClearanceLower segment left request)).symm.trans
+    (retainedAtReserveRootEquivalent
+      (transported segment within left first request firstSmall)
+      (preparedClearanceLower segment left request)).symm.trans
     (transportedEquivalent.trans
-      (Riemann.Branches.PreparedSheetContinuation.retainedAtReserveRootEquivalent
-        (Riemann.Branches.PreparedSheetContinuation.transported segment within left second request secondSmall)
-        (Riemann.Branches.PreparedSheetContinuation.preparedClearanceLower segment left request)))
-  simpa only [Riemann.Branches.PreparedSheetContinuation.advance,
-    Riemann.Branches.PreparedSheetContinuation.transportedRootName,
-    Riemann.RootContinuation.SquareRootTrackEquivalence.ownerRootName] using retained
+      (retainedAtReserveRootEquivalent
+        (transported segment within left second request secondSmall)
+        (preparedClearanceLower segment left request)))
+  simpa only [advance,
+    transportedRootName,
+    ownerRootName] using retained
 
 /-- Compact cached-name form for dependent bank recursion. -/
-def advanceAtEquivalent {polynomial : SquareRoot.Preparation.Congruence.Polynomial} {ambient :
-  SquareRoot.Preparation.Congruence.Box} {start finish : SquareRoot.Preparation.Congruence.Gaussian}
+def advanceAtEquivalent {polynomial : Polynomial} {ambient :
+  Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
-    (within : segment.WithinAmbient) (left : Riemann.Branches.PreparedSheetContinuation.Endpoint)
-    (first second : SquareRoot.Preparation.Congruence.Owner (polynomial.eval (segment.pointAt left.parameter)))
-    (request : Riemann.Branches.PreparedSheetContinuation.StepRequest)
-    (equivalent : Riemann.Branches.PreparedSheetContinuation.Subdivision.RootEquivalentAt segment left first second)
+    (within : segment.WithinAmbient) (left : Endpoint)
+    (first second : Owner (polynomial.eval (segment.pointAt left.parameter)))
+    (request : StepRequest)
+    (equivalent : Subdivision.RootEquivalentAt segment left first second)
     (firstSmall : Riemann.Branches.ClearSheetContinuation.variationBound segment left.parameter
       request.endpoint.parameter <
-      (Riemann.Branches.PreparedSheetContinuation.prepared segment left first request).track.initial.clearance.bound)
+      (prepared segment left first request).track.initial.clearance.bound)
     (secondSmall : Riemann.Branches.ClearSheetContinuation.variationBound segment left.parameter
       request.endpoint.parameter <
-      (Riemann.Branches.PreparedSheetContinuation.prepared segment left second request).track.initial.clearance.bound) :
-    Riemann.Branches.PreparedSheetContinuation.Subdivision.RootEquivalentAt segment request.endpoint
-      (Riemann.Branches.PreparedSheetContinuation.advance segment within left first request firstSmall)
-      (Riemann.Branches.PreparedSheetContinuation.advance segment within left second request secondSmall) where
-  firstName := Riemann.RootContinuation.SquareRootTrackEquivalence.ownerRootName (segment.pointAt_eval_ne_zero
+      (prepared segment left second request).track.initial.clearance.bound) :
+    Subdivision.RootEquivalentAt segment request.endpoint
+      (advance segment within left first request firstSmall)
+      (advance segment within left second request secondSmall) where
+  firstName := ownerRootName (segment.pointAt_eval_ne_zero
     request.endpoint.parameter request.endpoint.inside)
-    (Riemann.Branches.PreparedSheetContinuation.advance segment within left first request firstSmall)
-  secondName := Riemann.RootContinuation.SquareRootTrackEquivalence.ownerRootName (segment.pointAt_eval_ne_zero
+    (advance segment within left first request firstSmall)
+  secondName := ownerRootName (segment.pointAt_eval_ne_zero
     request.endpoint.parameter request.endpoint.inside)
-    (Riemann.Branches.PreparedSheetContinuation.advance segment within left second request secondSmall)
+    (advance segment within left second request secondSmall)
   first_eq := rfl
   second_eq := rfl
-  equivalent := SquareRoot.Preparation.Congruence.advanceEquivalent segment within left first second request
+  equivalent := advanceEquivalent segment within left first second request
     equivalent.toNamedEquivalent firstSmall secondSmall
 
 end Purelib.RootIsolation.SquareRoot.Preparation.Congruence

@@ -9,6 +9,9 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Basic
+open Purelib.Data.Rat.Fraction.Order
+
 section
 @[expose] public section
 
@@ -27,11 +30,11 @@ open Purelib.Data.Rat in
 theorem two_pow_le_succ (count : Nat) :
     (2 : Fraction.Rational) ^ count ≤ (2 : Fraction.Rational) ^ (count + 1) := by
   have powerNonnegative : 0 ≤ (2 : Fraction.Rational) ^ count :=
-    Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) count
+    Arithmetic.pow_nonneg_direct (by decide) count
   calc
     (2 : Fraction.Rational) ^ count = (2 : Fraction.Rational) ^ count * 1 := by ring1
     _ ≤ (2 : Fraction.Rational) ^ count * 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (by decide) powerNonnegative
     _ = (2 : Fraction.Rational) ^ (count + 1) := by
       rw [pow_succ]
@@ -40,14 +43,14 @@ open Purelib.Data
 open Purelib.Data.Rat
 /-- A successor dyadic power times a Gaussian squared norm below two gives a previous product below one. -/
 theorem lower_low_active_of_radial_upper
-    (count : Nat) (value : Gaussian.Basic.Canonical)
-    (upper : (2 : Fraction.Rational) ^ (count + 1) * Gaussian.Basic.Canonical.normSq value < 2) :
-    (2 : Fraction.Rational) ^ count * Gaussian.Basic.Canonical.normSq value < 1 := by
-  apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+    (count : Nat) (value : Canonical)
+    (upper : (2 : Fraction.Rational) ^ (count + 1) * Canonical.normSq value < 2) :
+    (2 : Fraction.Rational) ^ count * Canonical.normSq value < 1 := by
+  apply Arithmetic.lt_of_mul_lt_mul_right_direct
     (c := (2 : Fraction.Rational)) _ (by decide)
   calc
-    ((2 : Fraction.Rational) ^ count * Gaussian.Basic.Canonical.normSq value) * 2 =
-        (2 : Fraction.Rational) ^ (count + 1) * Gaussian.Basic.Canonical.normSq value := by
+    ((2 : Fraction.Rational) ^ count * Canonical.normSq value) * 2 =
+        (2 : Fraction.Rational) ^ (count + 1) * Canonical.normSq value := by
       rw [pow_succ]
       ring1
     _ < 2 := upper
@@ -55,21 +58,21 @@ theorem lower_low_active_of_radial_upper
 
 /-- A successor dyadic power times a Gaussian squared norm below one gives a previous product below one. -/
 theorem lower_low_active_of_next
-    (count : Nat) (value : Gaussian.Basic.Canonical)
-    (next : (2 : Fraction.Rational) ^ (count + 1) * Gaussian.Basic.Canonical.normSq value < 1) :
-    (2 : Fraction.Rational) ^ count * Gaussian.Basic.Canonical.normSq value < 1 := by
-  let oldValue := (2 : Fraction.Rational) ^ count * Gaussian.Basic.Canonical.normSq value
+    (count : Nat) (value : Canonical)
+    (next : (2 : Fraction.Rational) ^ (count + 1) * Canonical.normSq value < 1) :
+    (2 : Fraction.Rational) ^ count * Canonical.normSq value < 1 := by
+  let oldValue := (2 : Fraction.Rational) ^ count * Canonical.normSq value
   have oldNonnegative : 0 ≤ oldValue :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) count)
-      (Gaussian.Basic.Canonical.normSq_nonneg value)
+    Arithmetic.mul_nonneg_direct
+      (Arithmetic.pow_nonneg_direct (by decide) count)
+      (Canonical.normSq_nonneg value)
   have oneLeTwo : (1 : Fraction.Rational) ≤ 2 := by decide
   calc
     oldValue = oldValue * 1 := by ring1
     _ ≤ oldValue * 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         oneLeTwo oldNonnegative
-    _ = (2 : Fraction.Rational) ^ (count + 1) * Gaussian.Basic.Canonical.normSq value := by
+    _ = (2 : Fraction.Rational) ^ (count + 1) * Canonical.normSq value := by
       dsimp only [oldValue]
       rw [pow_succ]
       ring1

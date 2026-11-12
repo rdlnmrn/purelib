@@ -41,6 +41,8 @@ import Purelib.RootIsolation.Curve.Event.Analysis
 import Purelib.RootIsolation.Curve.Event.Basic
 import Purelib.RootIsolation.Curve.Event.Profile.Basic
 
+open Purelib.Geometry.Projective
+
 open Purelib.RootIsolation.Curve.Boundary.Complete.Basic (BoundaryCompleteRequestEntry)
 
 open Purelib.Data.Rat
@@ -79,10 +81,10 @@ is outside it.  Neither alternative asserts that a factor zero exists.
 namespace Purelib.RootIsolation.CCL.Persistent.Event.Atom
 section Boundary
 
-variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
 variable {denominatorMargin : Fraction.Rational}
 variable {marginPositive : 0 < denominatorMargin}
-variable {atom : Geometry.Projective.Hermitian.Atom}
+variable {atom : Hermitian.Atom}
 variable {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
   marginPositive atom}
 
@@ -129,14 +131,14 @@ def classifyPersistentDescendantAtom
       Curve.Boundary.Winding.Persistence.persistentDescendantSample_onBoundary squarefree entry family ownerIndex
         later
   match decision :
-      Geometry.Projective.Hermitian.atomEqualityDecision atom with
+      Hermitian.atomEqualityDecision atom with
   | .owned holds =>
       exact .owned
-        (Geometry.Projective.Hermitian.atom_holds_of_boundary onBoundary
+        (Hermitian.atom_holds_of_boundary onBoundary
           holds decision)
   | .excluded fails =>
       exact .excluded
-        (Geometry.Projective.Hermitian.atom_not_holds_of_boundary onBoundary
+        (Hermitian.atom_not_holds_of_boundary onBoundary
           fails decision)
 
 /-- Exact weak/strict equality ownership of the explicit near-box sample.
@@ -188,14 +190,14 @@ def classifyNearBoxDescendantAtom
     simpa only [point] using
       Curve.Boundary.Winding.Resolution.nearBoxDescendantSample_onBoundary entry denominator apart radius
   match decision :
-      Geometry.Projective.Hermitian.atomEqualityDecision atom with
+      Hermitian.atomEqualityDecision atom with
   | .owned holds =>
       exact .owned
-        (Geometry.Projective.Hermitian.atom_holds_of_boundary onBoundary
+        (Hermitian.atom_holds_of_boundary onBoundary
           holds decision)
   | .excluded fails =>
       exact .excluded
-        (Geometry.Projective.Hermitian.atom_not_holds_of_boundary onBoundary
+        (Hermitian.atom_not_holds_of_boundary onBoundary
           fails decision)
 end Boundary
 

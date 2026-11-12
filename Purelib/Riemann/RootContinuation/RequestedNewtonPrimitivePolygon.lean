@@ -58,6 +58,8 @@ import Purelib.Riemann.Integration.PreparedModelAccuracy
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! Full requested-bank comparison retains the polygon joining parent blocks. -/
@@ -78,11 +80,11 @@ open Purelib.Riemann.Integration.PreparedSubdivisionModelCore (CenteredEdge)
 open Purelib.Topology.Polygon.Stokes (PrimitivePoint)
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential other :
   Differential genus}
-  {ambient : Purelib.Geometry.Rational.Box} {current : Purelib.RootIsolation.State.Raw.RawWindingState
+  {ambient : Geometry.Rational.Box} {current : RootIsolation.State.Raw.RawWindingState
     curve.polynomial ambient}
   {profile : Profile curve.squarefree current.box} {fixed : DifferentialProfile profile differential.exponent}
-  {target : Purelib.Data.Rat.Fraction.Rational} {request : PreparedBandRequest fixed target} {areaTarget :
-    Purelib.Data.Rat.Fraction.Rational}
+  {target : Fraction.Rational} {request : PreparedBandRequest fixed target} {areaTarget :
+    Fraction.Rational}
 
 namespace RequestedPrimitiveParents
 
@@ -174,7 +176,7 @@ theorem polygon_error_le {parents : List (CenteredEdge curve differential)}
     (prepared : RequestedPrimitiveParents request other count areaTarget parents)
     {magnitude : Fraction.Rational} (nonnegative : 0 ≤ magnitude) (positive : 0 ≤ areaTarget) (small : areaTarget ≤ 1)
     (numeric : ∀ pair ∈ prepared.endpointPairs, PrimitiveAreaBounds.PrimitivePoint.Bounded pair.2 magnitude) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area prepared.primitives.primitiveTotals -
+    normSq (PairedIncrementArea.area prepared.primitives.primitiveTotals -
       PairedIncrementArea.area (prepared.bank.incrementBlocks.map PairedIncrementArea.total)) ≤
         32 * (parents.length : Fraction.Rational)^4 * areaTarget * (magnitude + 1) := by
   have step : magnitude ≤ magnitude + 1 :=
@@ -188,7 +190,7 @@ theorem polygon_error_le {parents : List (CenteredEdge curve differential)}
     intro pair member
     have bounded := Boundary.HandleAreaBounds.PrimitivePoint.perturbation_bounded (numeric pair member)
       (prepared.endpointPairs_errors pair member)
-    have upper := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add (le_refl magnitude) small) (by
+    have upper := Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add (le_refl magnitude) small) (by
       decide : (0 : Fraction.Rational) ≤ 2)
     exact ⟨bounded.1.trans upper, bounded.2.trans upper⟩
   have right : ∀ pair ∈ prepared.endpointPairs, PrimitiveAreaBounds.PrimitivePoint.Bounded pair.2 (2 * (magnitude + 1))
@@ -196,7 +198,7 @@ theorem polygon_error_le {parents : List (CenteredEdge curve differential)}
     intro pair member
     exact ⟨(numeric pair member).1.trans enlarged, (numeric pair member).2.trans enlarged⟩
   have bounded := PairedIncrementComparison.area_difference_bound prepared.endpointPairs positive
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    (Arithmetic.mul_nonneg_direct (by decide)
       (add_nonneg nonnegative (by decide))) prepared.endpointPairs_errors left right
   rw [prepared.endpointPairs_length, prepared.endpointPairs_left, prepared.endpointPairs_right] at bounded
   exact bounded.trans_eq (by ring1)
@@ -213,21 +215,21 @@ theorem full_area_error_le {parents : List (CenteredEdge curve differential)}
     (prepared : RequestedPrimitiveParents request other count areaTarget parents)
     {magnitude : Fraction.Rational} (nonnegative : 0 ≤ magnitude) (positive : 0 ≤ areaTarget) (small : areaTarget ≤ 1)
     (numeric : ∀ pair ∈ prepared.endpointPairs, PrimitiveAreaBounds.PrimitivePoint.Bounded pair.2 magnitude) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area prepared.primitives.primitiveBlocks.flatten -
+    normSq (PairedIncrementArea.area prepared.primitives.primitiveBlocks.flatten -
       PairedIncrementArea.area prepared.bank.incrementBlocks.flatten) ≤
         2 * ((parents.length : Fraction.Rational)^2 + 32 * (parents.length : Fraction.Rational)^4 * (magnitude + 1)) *
           areaTarget := by
   have identity : PairedIncrementArea.area prepared.primitives.primitiveBlocks.flatten -
       PairedIncrementArea.area prepared.bank.incrementBlocks.flatten =
-    (Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.primitives.primitiveBlocks.map PairedIncrementArea.area) -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.bank.incrementBlocks.map PairedIncrementArea.area)) +
+    (gaussianSum (prepared.primitives.primitiveBlocks.map PairedIncrementArea.area) -
+      gaussianSum (prepared.bank.incrementBlocks.map PairedIncrementArea.area)) +
     (PairedIncrementArea.area prepared.primitives.primitiveTotals -
       PairedIncrementArea.area (prepared.bank.incrementBlocks.map PairedIncrementArea.total)) := by
     rw [prepared.primitives.primitiveBlocks_area, PairedAreaBlocks.area_flatten]
     ring1
   rw [identity]
   exact (Norm.Bounds.normSq_add_le_two _ _).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct
       (add_le_add prepared.internal_area_error_le (prepared.polygon_error_le nonnegative positive small numeric)) (by
         decide)).trans_eq (by ring1))
 
@@ -237,7 +239,7 @@ theorem firstBound_le {parents : List (CenteredEdge curve differential)}
     prepared.primitives.firstBound ≤ areaTarget := by
   induction prepared with
   | nil => exact nonnegative
-  | cons head charge tail ih => exact Fraction.Order.Basic.max_le head.2.2.2.property.2.1 ih
+  | cons head charge tail ih => exact Basic.max_le head.2.2.2.property.2.1 ih
 
 /-- The left projection of original primitive totals is exactly the retained first reading list. -/
 theorem primitiveTotals_left {parents : List (CenteredEdge curve differential)}
@@ -253,7 +255,7 @@ theorem secondBound_le {parents : List (CenteredEdge curve differential)}
     prepared.primitives.secondBound ≤ areaTarget := by
   induction prepared with
   | nil => exact nonnegative
-  | cons head charge tail ih => exact Fraction.Order.Basic.max_le head.2.2.2.property.2.2 ih
+  | cons head charge tail ih => exact Basic.max_le head.2.2.2.property.2.2 ih
 
 /-- The right projection of original primitive totals is exactly the retained second reading list. -/
 theorem primitiveTotals_right {parents : List (CenteredEdge curve differential)}
@@ -280,10 +282,10 @@ theorem total_error_le {parents : List (CenteredEdge curve differential)}
   rw [primitive.total_eq, PairedAreaBlocks.total_flatten,
     prepared.primitives.primitiveBlocks_totals, numerical.total_eq]
   have squaredNonnegative : (0 : Fraction.Rational) ≤ (parents.length : Fraction.Rational)^2 :=
-    Fraction.Order.Arithmetic.pow_nonneg_direct
+    Arithmetic.pow_nonneg_direct
       (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 2
   constructor
-  · change Basic.Canonical.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.primitives.primitiveTotals.map
+  · change Basic.Canonical.normSq (gaussianSum (prepared.primitives.primitiveTotals.map
       PrimitivePoint.left) -
       (PairedIncrementArea.total prepared.bank.incrementBlocks.flatten).left) ≤ _
     rw [prepared.primitiveTotals_left]
@@ -293,9 +295,9 @@ theorem total_error_le {parents : List (CenteredEdge curve differential)}
       prepared.primitives.firstBound) =
         (parents.length : Fraction.Rational)^2 * prepared.primitives.firstBound := by ring1
     exact bounded.trans (rearrange.le.trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (prepared.firstBound_le nonnegative)
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (prepared.firstBound_le nonnegative)
         squaredNonnegative))
-  · change Basic.Canonical.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.primitives.primitiveTotals.map
+  · change Basic.Canonical.normSq (gaussianSum (prepared.primitives.primitiveTotals.map
       PrimitivePoint.right) -
       (PairedIncrementArea.total prepared.bank.incrementBlocks.flatten).right) ≤ _
     rw [prepared.primitiveTotals_right]
@@ -305,7 +307,7 @@ theorem total_error_le {parents : List (CenteredEdge curve differential)}
       prepared.primitives.secondBound) =
         (parents.length : Fraction.Rational)^2 * prepared.primitives.secondBound := by ring1
     exact bounded.trans (rearrange.le.trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (prepared.secondBound_le nonnegative)
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (prepared.secondBound_le nonnegative)
         squaredNonnegative))
 
 end RequestedPrimitiveParents

@@ -62,32 +62,32 @@ open Purelib.Approximation
 
 /-- Raising the displayed restoration exponent by any finite amount while halving the arbitrary coherent input the same
 number of times preserves the global exponential name operationally. -/
-@[expose] def coherentDyadicExp_raise (base extra : Nat) (input : Coherent.CoherentNamed)
-    (domain : Name.UnitDisk input.name) :
-    Gaussian.Equivalence.NamedEquivalent
+@[expose] def coherentDyadicExp_raise (base extra : Nat) (input : CoherentNamed)
+    (domain : UnitDisk input.name) :
+    NamedEquivalent
       (Power.squareIterate (base + extra)
-        (Exponential.Progressive.Local.Name.named (Dyadic.halfIterate extra input).name
-          (Exponential.Progressive.Local.Halving.halfIterateUnitDisk extra input domain)))
+        (Local.Name.named (Dyadic.halfIterate extra input).name
+          (Local.Halving.halfIterateUnitDisk extra input domain)))
       (Power.squareIterate base
-        (Exponential.Progressive.Local.Name.named input.name domain)) := by
+        (Local.Name.named input.name domain)) := by
   induction extra with
   | zero =>
       exact NamedEquivalent.refl _
   | succ extra inductionHypothesis =>
-      have step := Exponential.Progressive.Range.Halving.coherentDyadicExp_step (base + extra)
-        (Dyadic.halfIterate extra input) (Exponential.Progressive.Local.Halving.halfIterateUnitDisk extra input domain)
+      have step := Halving.coherentDyadicExp_step (base + extra)
+        (Dyadic.halfIterate extra input) (Local.Halving.halfIterateUnitDisk extra input domain)
       exact NamedEquivalent.trans
         (by simpa only [Nat.add_succ, Dyadic.halfIterate] using step)
         inductionHypothesis
 
 /-- Coherent restored local exponential at an explicitly supplied finite range exponent. -/
-@[expose] def restoredLocalExp (exponent : Nat) (input : Coherent.CoherentNamed)
-    (domain : Name.UnitDisk input.name) :
-    Coherent.CoherentNamed :=
+@[expose] def restoredLocalExp (exponent : Nat) (input : CoherentNamed)
+    (domain : UnitDisk input.name) :
+    CoherentNamed :=
   { name := Power.squareIterate exponent
-      (Exponential.Progressive.Local.Name.named input.name domain)
+      (Local.Name.named input.name domain)
     coherent := Coherent.squareIterateCoherent exponent _
-      (Exponential.Progressive.Local.Coherent.localExpCoherent input.name domain) }
+      (Local.Coherent.localExpCoherent input.name domain) }
 
 /-- Global exponential addition with three independent starting exponents, reduced to one explicit finite compatibility
 certificate between the three common-scale input names.
@@ -95,51 +95,51 @@ certificate between the three common-scale input names.
 All exponent raising and output algebra is proved here; no completed operand value is selected. -/
 @[expose] def coherentDyadicExp_add_independent
     (xBase xExtra yBase yExtra sumBase sumExtra common : Nat)
-    (xInput yInput sumInput : Coherent.CoherentNamed)
-    (xDomain : Name.UnitDisk xInput.name)
-    (yDomain : Name.UnitDisk yInput.name)
-    (sumDomain : Name.UnitDisk sumInput.name)
+    (xInput yInput sumInput : CoherentNamed)
+    (xDomain : UnitDisk xInput.name)
+    (yDomain : UnitDisk yInput.name)
+    (sumDomain : UnitDisk sumInput.name)
     (xCommon : xBase + xExtra = common)
     (yCommon : yBase + yExtra = common)
     (sumCommon : sumBase + sumExtra = common)
-    (commonAddDomain : Name.UnitDisk
+    (commonAddDomain : UnitDisk
       (Named.add
         (Dyadic.halfIterate xExtra xInput).name
         (Dyadic.halfIterate yExtra yInput).name))
-    (scaledAdd : Gaussian.Equivalence.NamedEquivalent
+    (scaledAdd : NamedEquivalent
       (Named.add
         (Dyadic.halfIterate xExtra xInput).name
         (Dyadic.halfIterate yExtra yInput).name)
       (Dyadic.halfIterate sumExtra sumInput).name) :
-    Gaussian.Equivalence.NamedEquivalent
+    NamedEquivalent
       (Named.mul
-        (Exponential.Progressive.Range.Addition.restoredLocalExp xBase xInput xDomain).name
-        (Exponential.Progressive.Range.Addition.restoredLocalExp yBase yInput yDomain).name)
-      (Exponential.Progressive.Range.Addition.restoredLocalExp sumBase sumInput sumDomain).name := by
+        (restoredLocalExp xBase xInput xDomain).name
+        (restoredLocalExp yBase yInput yDomain).name)
+      (restoredLocalExp sumBase sumInput sumDomain).name := by
   let xCommonInput := Dyadic.halfIterate xExtra xInput
   let yCommonInput := Dyadic.halfIterate yExtra yInput
   let sumCommonInput := Dyadic.halfIterate sumExtra sumInput
-  let xCommonDomain := Exponential.Progressive.Local.Halving.halfIterateUnitDisk xExtra xInput xDomain
-  let yCommonDomain := Exponential.Progressive.Local.Halving.halfIterateUnitDisk yExtra yInput yDomain
-  let sumCommonDomain := Exponential.Progressive.Local.Halving.halfIterateUnitDisk sumExtra sumInput sumDomain
-  let xBaseExp := Exponential.Progressive.Range.Addition.restoredLocalExp xBase xInput xDomain
-  let yBaseExp := Exponential.Progressive.Range.Addition.restoredLocalExp yBase yInput yDomain
-  let sumBaseExp := Exponential.Progressive.Range.Addition.restoredLocalExp sumBase sumInput sumDomain
-  let xCommonExp := Exponential.Progressive.Range.Addition.restoredLocalExp common xCommonInput xCommonDomain
-  let yCommonExp := Exponential.Progressive.Range.Addition.restoredLocalExp common yCommonInput yCommonDomain
-  let sumCommonExp := Exponential.Progressive.Range.Addition.restoredLocalExp common sumCommonInput sumCommonDomain
-  have xRaise : Gaussian.Equivalence.NamedEquivalent xCommonExp.name xBaseExp.name := by
-    simpa only [xCommonExp, xCommonInput, xBaseExp, Exponential.Progressive.Range.Addition.restoredLocalExp, xCommon]
-      using Exponential.Progressive.Range.Addition.coherentDyadicExp_raise xBase xExtra xInput xDomain
-  have yRaise : Gaussian.Equivalence.NamedEquivalent yCommonExp.name yBaseExp.name := by
-    simpa only [yCommonExp, yCommonInput, yBaseExp, Exponential.Progressive.Range.Addition.restoredLocalExp, yCommon]
-      using Exponential.Progressive.Range.Addition.coherentDyadicExp_raise yBase yExtra yInput yDomain
-  have sumRaise : Gaussian.Equivalence.NamedEquivalent sumCommonExp.name sumBaseExp.name := by
-    simpa only [sumCommonExp, sumCommonInput, sumBaseExp, Exponential.Progressive.Range.Addition.restoredLocalExp,
+  let xCommonDomain := Local.Halving.halfIterateUnitDisk xExtra xInput xDomain
+  let yCommonDomain := Local.Halving.halfIterateUnitDisk yExtra yInput yDomain
+  let sumCommonDomain := Local.Halving.halfIterateUnitDisk sumExtra sumInput sumDomain
+  let xBaseExp := restoredLocalExp xBase xInput xDomain
+  let yBaseExp := restoredLocalExp yBase yInput yDomain
+  let sumBaseExp := restoredLocalExp sumBase sumInput sumDomain
+  let xCommonExp := restoredLocalExp common xCommonInput xCommonDomain
+  let yCommonExp := restoredLocalExp common yCommonInput yCommonDomain
+  let sumCommonExp := restoredLocalExp common sumCommonInput sumCommonDomain
+  have xRaise : NamedEquivalent xCommonExp.name xBaseExp.name := by
+    simpa only [xCommonExp, xCommonInput, xBaseExp, restoredLocalExp, xCommon]
+      using coherentDyadicExp_raise xBase xExtra xInput xDomain
+  have yRaise : NamedEquivalent yCommonExp.name yBaseExp.name := by
+    simpa only [yCommonExp, yCommonInput, yBaseExp, restoredLocalExp, yCommon]
+      using coherentDyadicExp_raise yBase yExtra yInput yDomain
+  have sumRaise : NamedEquivalent sumCommonExp.name sumBaseExp.name := by
+    simpa only [sumCommonExp, sumCommonInput, sumBaseExp, restoredLocalExp,
       sumCommon] using
-        Exponential.Progressive.Range.Addition.coherentDyadicExp_raise sumBase sumExtra sumInput sumDomain
+        coherentDyadicExp_raise sumBase sumExtra sumInput sumDomain
   have factorsToCommon :
-      Gaussian.Equivalence.NamedEquivalent
+      NamedEquivalent
         (Named.mul
           xBaseExp.name yBaseExp.name)
         (Named.mul
@@ -147,31 +147,31 @@ All exponent raising and output algebra is proved here; no completed operand val
     Congruence.coherentMul_respects xBaseExp xCommonExp yBaseExp yCommonExp
       (NamedEquivalent.symm xRaise)
       (NamedEquivalent.symm yRaise)
-  have commonLaw := Exponential.Progressive.Local.Addition.Power.coherentLocalExp_add_after_squareIterate common
+  have commonLaw := Local.Addition.Power.coherentLocalExp_add_after_squareIterate common
     xCommonInput yCommonInput xCommonDomain yCommonDomain commonAddDomain
   let commonAddInput :=
     CoherentNamed.add
       xCommonInput yCommonInput
-  let commonAddExp : Coherent.CoherentNamed :=
-    { name := Exponential.Progressive.Local.Name.named
+  let commonAddExp : CoherentNamed :=
+    { name := Local.Name.named
         commonAddInput.name commonAddDomain
-      coherent := Exponential.Progressive.Local.Coherent.localExpCoherent commonAddInput.name commonAddDomain }
-  let sumLocalExp : Coherent.CoherentNamed :=
-    { name := Exponential.Progressive.Local.Name.named
+      coherent := Local.Coherent.localExpCoherent commonAddInput.name commonAddDomain }
+  let sumLocalExp : CoherentNamed :=
+    { name := Local.Name.named
         sumCommonInput.name sumCommonDomain
-      coherent := Exponential.Progressive.Local.Coherent.localExpCoherent sumCommonInput.name sumCommonDomain }
-  have localToSum : Gaussian.Equivalence.NamedEquivalent commonAddExp.name sumLocalExp.name :=
-    Exponential.Progressive.Local.Congruence.localExpNamed_respects commonAddDomain sumCommonDomain scaledAdd
-  have restoredToSum : Gaussian.Equivalence.NamedEquivalent
+      coherent := Local.Coherent.localExpCoherent sumCommonInput.name sumCommonDomain }
+  have localToSum : NamedEquivalent commonAddExp.name sumLocalExp.name :=
+    Local.Congruence.localExpNamed_respects commonAddDomain sumCommonDomain scaledAdd
+  have restoredToSum : NamedEquivalent
       (Power.squareIterate common
         commonAddExp.name)
       sumCommonExp.name := by
-    simpa only [sumCommonExp, Exponential.Progressive.Range.Addition.restoredLocalExp] using
+    simpa only [sumCommonExp, restoredLocalExp] using
       Congruence.squareIterate_respects common commonAddExp sumLocalExp localToSum
   exact NamedEquivalent.trans
     factorsToCommon
     (NamedEquivalent.trans
-      (by simpa only [xCommonExp, yCommonExp, Exponential.Progressive.Range.Addition.restoredLocalExp,
+      (by simpa only [xCommonExp, yCommonExp, restoredLocalExp,
           commonAddExp, commonAddInput,
           CoherentNamed.add]
         using commonLaw)
@@ -182,12 +182,12 @@ All exponent raising and output algebra is proved here; no completed operand val
 
 The three automatic range reductions may choose different finite exponents; a computed maximum, explicit halving chains,
 and finite sampler normalization reconcile them without selecting completed input values. -/
-@[expose] def automaticExp_add (left right : Coherent.CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
+@[expose] def automaticExp_add (left right : CoherentNamed) :
+    NamedEquivalent
       (Named.mul
-        (Exponential.Progressive.Range.Name.named left.name)
-        (Exponential.Progressive.Range.Name.named right.name))
-      (Exponential.Progressive.Range.Name.named
+        (Name.named left.name)
+        (Name.named right.name))
+      (Name.named
         (Named.add
           left.name right.name)) := by
   let sumInput :=
@@ -202,36 +202,36 @@ and finite sampler normalization reconcile them without selecting completed inpu
   let xExtra := common - xBase
   let yExtra := common - yBase
   let sumExtra := common - sumBase
-  have xOrder : xBase ≤ common := Purelib.Data.Nat.Order.le_max_left _ _
+  have xOrder : xBase ≤ common := Data.Nat.Order.le_max_left _ _
   have yOrder : yBase ≤ common :=
-    (Purelib.Data.Nat.Order.le_max_left yBase sumBase).trans (Purelib.Data.Nat.Order.le_max_right _ _)
+    (Data.Nat.Order.le_max_left yBase sumBase).trans (Data.Nat.Order.le_max_right _ _)
   have sumOrder : sumBase ≤ common :=
-    (Purelib.Data.Nat.Order.le_max_right yBase sumBase).trans (Purelib.Data.Nat.Order.le_max_right _ _)
+    (Data.Nat.Order.le_max_right yBase sumBase).trans (Data.Nat.Order.le_max_right _ _)
   have xCommon : xBase + xExtra = common := by
     dsimp only [xExtra]
-    rw [Nat.add_comm, Purelib.Data.Nat.Subtraction.sub_add_cancel xOrder]
+    rw [Nat.add_comm, Data.Nat.Subtraction.sub_add_cancel xOrder]
   have yCommon : yBase + yExtra = common := by
     dsimp only [yExtra]
-    rw [Nat.add_comm, Purelib.Data.Nat.Subtraction.sub_add_cancel yOrder]
+    rw [Nat.add_comm, Data.Nat.Subtraction.sub_add_cancel yOrder]
   have sumCommon : sumBase + sumExtra = common := by
     dsimp only [sumExtra]
-    rw [Nat.add_comm, Purelib.Data.Nat.Subtraction.sub_add_cancel sumOrder]
+    rw [Nat.add_comm, Data.Nat.Subtraction.sub_add_cancel sumOrder]
   let xDomain := DyadicReduction.scaledDomain left.name
   let yDomain := DyadicReduction.scaledDomain right.name
   let sumDomain :=
     DyadicReduction.scaledDomain sumInput.name
-  let commonAddDomain := Exponential.Progressive.Range.Scaling.automaticCommonAddUnitDisk
+  let commonAddDomain := Scaling.automaticCommonAddUnitDisk
     xExtra yExtra sumExtra common left right xCommon yCommon sumCommon
-  let scaledAdd := Exponential.Progressive.Range.Scaling.automaticCommonScaledAdd_equivalent
+  let scaledAdd := Scaling.automaticCommonScaledAdd_equivalent
     xExtra yExtra sumExtra common left right xCommon yCommon sumCommon
-  simpa only [xBase, yBase, sumBase, sumInput, Exponential.Progressive.Range.Addition.restoredLocalExp,
-      Exponential.Progressive.Range.Scaling.automaticScaled, Exponential.Progressive.Range.Name.named,
+  simpa only [xBase, yBase, sumBase, sumInput, restoredLocalExp,
+      Scaling.automaticScaled, Name.named,
       CoherentNamed.add] using
-    Exponential.Progressive.Range.Addition.coherentDyadicExp_add_independent
+    coherentDyadicExp_add_independent
       xBase xExtra yBase yExtra sumBase sumExtra common
-      (Exponential.Progressive.Range.Scaling.automaticScaled left)
-        (Exponential.Progressive.Range.Scaling.automaticScaled right)
-      (Exponential.Progressive.Range.Scaling.automaticScaled sumInput) xDomain yDomain sumDomain
+      (Scaling.automaticScaled left)
+        (Scaling.automaticScaled right)
+      (Scaling.automaticScaled sumInput) xDomain yDomain sumDomain
       xCommon yCommon sumCommon commonAddDomain scaledAdd
 
 end

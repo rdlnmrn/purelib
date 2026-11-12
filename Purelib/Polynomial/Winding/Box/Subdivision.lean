@@ -12,6 +12,8 @@ import Mathlib.Algebra.Group.Even
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian.Path.Box
+
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 open Purelib.Polynomial.Dense.Rational.Pair.Path.Basic (PolynomialEdge)
 
@@ -45,35 +47,35 @@ open _root_.Purelib.RootIsolation.Winding
 private theorem horizontal_add (p :
   CoefficientPolynomial)
     (y a b c : Fraction.Rational) :
-    (Purelib.Polynomial.Dense.Gaussian.Path.Box.Sides.horizontalEdge p y a b).doubledWinding +
-        (Purelib.Polynomial.Dense.Gaussian.Path.Box.Sides.horizontalEdge p y b c).doubledWinding =
-      (Purelib.Polynomial.Dense.Gaussian.Path.Box.Sides.horizontalEdge p y a c).doubledWinding :=
+    (Sides.horizontalEdge p y a b).doubledWinding +
+        (Sides.horizontalEdge p y b c).doubledWinding =
+      (Sides.horizontalEdge p y a c).doubledWinding :=
   PolynomialEdge.doubledWinding_restrict_add
-    (Dense.Gaussian.Path.Box.Sides.horizontalEdge p y a c) a b c
+    (Sides.horizontalEdge p y a c) a b c
 /-- Adjacent vertical edge restrictions have additive doubled winding. -/
 private theorem vertical_add (p :
   CoefficientPolynomial)
     (x a b c : Fraction.Rational) :
-    (Purelib.Polynomial.Dense.Gaussian.Path.Box.Sides.verticalEdge p x a b).doubledWinding +
-        (Purelib.Polynomial.Dense.Gaussian.Path.Box.Sides.verticalEdge p x b c).doubledWinding =
-      (Purelib.Polynomial.Dense.Gaussian.Path.Box.Sides.verticalEdge p x a c).doubledWinding :=
+    (Sides.verticalEdge p x a b).doubledWinding +
+        (Sides.verticalEdge p x b c).doubledWinding =
+      (Sides.verticalEdge p x a c).doubledWinding :=
   PolynomialEdge.doubledWinding_restrict_add
-    (Dense.Gaussian.Path.Box.Sides.verticalEdge p x a c) a b c
+    (Sides.verticalEdge p x a c) a b c
 /-- Reversing a horizontal edge negates its doubled winding. -/
 private theorem horizontal_reverse (p :
   CoefficientPolynomial)
     (y a b : Fraction.Rational) :
-    (Purelib.Polynomial.Dense.Gaussian.Path.Box.Sides.horizontalEdge p y b a).doubledWinding =
-      -(Purelib.Polynomial.Dense.Gaussian.Path.Box.Sides.horizontalEdge p y a b).doubledWinding :=
-  PolynomialEdge.doubledWinding_reverse (Dense.Gaussian.Path.Box.Sides.horizontalEdge p y
+    (Sides.horizontalEdge p y b a).doubledWinding =
+      -(Sides.horizontalEdge p y a b).doubledWinding :=
+  PolynomialEdge.doubledWinding_reverse (Sides.horizontalEdge p y
     a b)
 /-- Reversing a vertical edge negates its doubled winding. -/
 private theorem vertical_reverse (p :
   CoefficientPolynomial)
     (x a b : Fraction.Rational) :
-    (Purelib.Polynomial.Dense.Gaussian.Path.Box.Sides.verticalEdge p x b a).doubledWinding =
-      -(Purelib.Polynomial.Dense.Gaussian.Path.Box.Sides.verticalEdge p x a b).doubledWinding :=
-  PolynomialEdge.doubledWinding_reverse (Dense.Gaussian.Path.Box.Sides.verticalEdge p x a
+    (Sides.verticalEdge p x b a).doubledWinding =
+      -(Sides.verticalEdge p x a b).doubledWinding :=
+  PolynomialEdge.doubledWinding_reverse (Sides.verticalEdge p x a
     b)
 end Purelib.Polynomial.Winding.Box.Subdivision
 end
@@ -85,11 +87,11 @@ theorem quadrupledBoxWinding_vertical_split (p :
   CoefficientPolynomial) (box : Box)
     (cut : Fraction.Rational)
     (inside : box.xLower ≤ cut ∧ cut ≤ box.xUpper) :
-    Winding.Box.Basic.quadrupledBoxWinding p box =
-      Winding.Box.Basic.quadrupledBoxWinding p (box.verticalLeft cut inside) +
-        Winding.Box.Basic.quadrupledBoxWinding p (box.verticalRight cut inside) := by
-  rw [Winding.Box.Basic.quadrupledBoxWinding_eq, Winding.Box.Basic.quadrupledBoxWinding_eq,
-    Winding.Box.Basic.quadrupledBoxWinding_eq]
+    Basic.quadrupledBoxWinding p box =
+      Basic.quadrupledBoxWinding p (box.verticalLeft cut inside) +
+        Basic.quadrupledBoxWinding p (box.verticalRight cut inside) := by
+  rw [Basic.quadrupledBoxWinding_eq, Basic.quadrupledBoxWinding_eq,
+    Basic.quadrupledBoxWinding_eq]
   dsimp only [Box.verticalLeft,
     Box.verticalRight]
   have bottom := horizontal_add p box.yLower box.xLower cut box.xUpper
@@ -103,11 +105,11 @@ theorem quadrupledBoxWinding_horizontal_split (p :
   CoefficientPolynomial)
     (box : Box) (cut : Fraction.Rational)
     (inside : box.yLower ≤ cut ∧ cut ≤ box.yUpper) :
-    Winding.Box.Basic.quadrupledBoxWinding p box =
-      Winding.Box.Basic.quadrupledBoxWinding p (box.horizontalLower cut inside) +
-        Winding.Box.Basic.quadrupledBoxWinding p (box.horizontalUpper cut inside) := by
-  rw [Winding.Box.Basic.quadrupledBoxWinding_eq, Winding.Box.Basic.quadrupledBoxWinding_eq,
-    Winding.Box.Basic.quadrupledBoxWinding_eq]
+    Basic.quadrupledBoxWinding p box =
+      Basic.quadrupledBoxWinding p (box.horizontalLower cut inside) +
+        Basic.quadrupledBoxWinding p (box.horizontalUpper cut inside) := by
+  rw [Basic.quadrupledBoxWinding_eq, Basic.quadrupledBoxWinding_eq,
+    Basic.quadrupledBoxWinding_eq]
   dsimp only [Box.horizontalLower,
     Box.horizontalUpper]
   have right := vertical_add p box.xUpper box.yLower cut box.yUpper
@@ -126,11 +128,11 @@ theorem quadrupledBoxWinding_four_split (p :
     let right := box.verticalRight xCut xInside
     let yInsideLeft : left.yLower ≤ yCut ∧ yCut ≤ left.yUpper := yInside
     let yInsideRight : right.yLower ≤ yCut ∧ yCut ≤ right.yUpper := yInside
-    Winding.Box.Basic.quadrupledBoxWinding p box =
-      Winding.Box.Basic.quadrupledBoxWinding p (left.horizontalLower yCut yInsideLeft) +
-      Winding.Box.Basic.quadrupledBoxWinding p (left.horizontalUpper yCut yInsideLeft) +
-      Winding.Box.Basic.quadrupledBoxWinding p (right.horizontalLower yCut yInsideRight) +
-      Winding.Box.Basic.quadrupledBoxWinding p (right.horizontalUpper yCut yInsideRight) := by
+    Basic.quadrupledBoxWinding p box =
+      Basic.quadrupledBoxWinding p (left.horizontalLower yCut yInsideLeft) +
+      Basic.quadrupledBoxWinding p (left.horizontalUpper yCut yInsideLeft) +
+      Basic.quadrupledBoxWinding p (right.horizontalLower yCut yInsideRight) +
+      Basic.quadrupledBoxWinding p (right.horizontalUpper yCut yInsideRight) := by
   dsimp only
   rw [quadrupledBoxWinding_vertical_split p box xCut xInside,
     quadrupledBoxWinding_horizontal_split p
@@ -146,14 +148,14 @@ theorem doubledBoxWinding_vertical_split (p :
   CoefficientPolynomial) (box : Box)
     (cut : Fraction.Rational)
     (inside : box.xLower ≤ cut ∧ cut ≤ box.xUpper)
-    (leftEven : Even (Winding.Box.Basic.quadrupledBoxWinding p (box.verticalLeft cut inside)))
-    (rightEven : Even (Winding.Box.Basic.quadrupledBoxWinding p (box.verticalRight cut inside))) :
-    Winding.Box.Basic.doubledBoxWinding p box =
-      Winding.Box.Basic.doubledBoxWinding p (box.verticalLeft cut inside) +
-        Winding.Box.Basic.doubledBoxWinding p (box.verticalRight cut inside) := by
+    (leftEven : Even (Basic.quadrupledBoxWinding p (box.verticalLeft cut inside)))
+    (rightEven : Even (Basic.quadrupledBoxWinding p (box.verticalRight cut inside))) :
+    Basic.doubledBoxWinding p box =
+      Basic.doubledBoxWinding p (box.verticalLeft cut inside) +
+        Basic.doubledBoxWinding p (box.verticalRight cut inside) := by
   rcases leftEven with ⟨left, leftEven⟩
   rcases rightEven with ⟨right, rightEven⟩
-  rw [Winding.Box.Basic.doubledBoxWinding, Winding.Box.Basic.doubledBoxWinding, Winding.Box.Basic.doubledBoxWinding,
+  rw [Basic.doubledBoxWinding, Basic.doubledBoxWinding, Basic.doubledBoxWinding,
     quadrupledBoxWinding_vertical_split p box cut inside,
     leftEven, rightEven]
   omega
@@ -164,15 +166,15 @@ theorem doubledBoxWinding_horizontal_split (p :
     (box : Box) (cut : Fraction.Rational)
     (inside : box.yLower ≤ cut ∧ cut ≤ box.yUpper)
     (lowerEven : Even
-      (Winding.Box.Basic.quadrupledBoxWinding p (box.horizontalLower cut inside)))
+      (Basic.quadrupledBoxWinding p (box.horizontalLower cut inside)))
     (upperEven : Even
-      (Winding.Box.Basic.quadrupledBoxWinding p (box.horizontalUpper cut inside))) :
-    Winding.Box.Basic.doubledBoxWinding p box =
-      Winding.Box.Basic.doubledBoxWinding p (box.horizontalLower cut inside) +
-        Winding.Box.Basic.doubledBoxWinding p (box.horizontalUpper cut inside) := by
+      (Basic.quadrupledBoxWinding p (box.horizontalUpper cut inside))) :
+    Basic.doubledBoxWinding p box =
+      Basic.doubledBoxWinding p (box.horizontalLower cut inside) +
+        Basic.doubledBoxWinding p (box.horizontalUpper cut inside) := by
   rcases lowerEven with ⟨lower, lowerEven⟩
   rcases upperEven with ⟨upper, upperEven⟩
-  rw [Winding.Box.Basic.doubledBoxWinding, Winding.Box.Basic.doubledBoxWinding, Winding.Box.Basic.doubledBoxWinding,
+  rw [Basic.doubledBoxWinding, Basic.doubledBoxWinding, Basic.doubledBoxWinding,
     quadrupledBoxWinding_horizontal_split p box cut inside,
     lowerEven, upperEven]
   omega
@@ -183,15 +185,15 @@ theorem boxWinding_vertical_split (p :
     (cut : Fraction.Rational)
     (inside : box.xLower ≤ cut ∧ cut ≤ box.xUpper)
     (leftDivisible : (4 : Int) ∣
-      Winding.Box.Basic.quadrupledBoxWinding p (box.verticalLeft cut inside))
+      Basic.quadrupledBoxWinding p (box.verticalLeft cut inside))
     (rightDivisible : (4 : Int) ∣
-      Winding.Box.Basic.quadrupledBoxWinding p (box.verticalRight cut inside)) :
-    Winding.Box.Basic.boxWinding p box =
-      Winding.Box.Basic.boxWinding p (box.verticalLeft cut inside) +
-        Winding.Box.Basic.boxWinding p (box.verticalRight cut inside) := by
+      Basic.quadrupledBoxWinding p (box.verticalRight cut inside)) :
+    Basic.boxWinding p box =
+      Basic.boxWinding p (box.verticalLeft cut inside) +
+        Basic.boxWinding p (box.verticalRight cut inside) := by
   rcases leftDivisible with ⟨left, leftDivisible⟩
   rcases rightDivisible with ⟨right, rightDivisible⟩
-  rw [Winding.Box.Basic.boxWinding, Winding.Box.Basic.boxWinding, Winding.Box.Basic.boxWinding,
+  rw [Basic.boxWinding, Basic.boxWinding, Basic.boxWinding,
     quadrupledBoxWinding_vertical_split p box cut inside,
     leftDivisible, rightDivisible]
   omega
@@ -202,15 +204,15 @@ theorem boxWinding_horizontal_split (p :
     (cut : Fraction.Rational)
     (inside : box.yLower ≤ cut ∧ cut ≤ box.yUpper)
     (lowerDivisible : (4 : Int) ∣
-      Winding.Box.Basic.quadrupledBoxWinding p (box.horizontalLower cut inside))
+      Basic.quadrupledBoxWinding p (box.horizontalLower cut inside))
     (upperDivisible : (4 : Int) ∣
-      Winding.Box.Basic.quadrupledBoxWinding p (box.horizontalUpper cut inside)) :
-    Winding.Box.Basic.boxWinding p box =
-      Winding.Box.Basic.boxWinding p (box.horizontalLower cut inside) +
-        Winding.Box.Basic.boxWinding p (box.horizontalUpper cut inside) := by
+      Basic.quadrupledBoxWinding p (box.horizontalUpper cut inside)) :
+    Basic.boxWinding p box =
+      Basic.boxWinding p (box.horizontalLower cut inside) +
+        Basic.boxWinding p (box.horizontalUpper cut inside) := by
   rcases lowerDivisible with ⟨lower, lowerDivisible⟩
   rcases upperDivisible with ⟨upper, upperDivisible⟩
-  rw [Winding.Box.Basic.boxWinding, Winding.Box.Basic.boxWinding, Winding.Box.Basic.boxWinding,
+  rw [Basic.boxWinding, Basic.boxWinding, Basic.boxWinding,
     quadrupledBoxWinding_horizontal_split p box cut inside,
     lowerDivisible, upperDivisible]
   omega

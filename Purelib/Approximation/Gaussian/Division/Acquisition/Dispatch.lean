@@ -90,10 +90,10 @@ open Purelib.Approximation.Gaussian.Equivalence.Zero (ZeroIdentity)
 open Purelib.Approximation.Gaussian.Equivalence (NamedEquivalent)
 
 /-- Cache the retained exact denominator decision and return its prepared quotient or operational-zero obstruction. -/
-def fromDecision {channel : Coherent.CoherentNamed}
-  {input : State.Input channel} (numerator : Coherent.CoherentNamed)
-    (threshold : Fraction.Rational) (step : State.Step input) (decision :
-        Approximation.Gaussian.Division.Prepared.Decision channel) : Approximation.Gaussian.Division.Acquisition.Report
+def fromDecision {channel : CoherentNamed}
+  {input : Input channel} (numerator : CoherentNamed)
+    (threshold : Rational) (step : Step input) (decision :
+        Decision channel) : Report
       numerator input threshold :=
   ⟨step.cache decision, match decision with
     | .prepared prepared => .ready (Quotient.quotient numerator prepared)
@@ -103,9 +103,9 @@ def fromDecision {channel : Coherent.CoherentNamed}
 
 The dispatcher tries cached evidence, supported provenance, a retained candidate gap, and one numerical inspection in
 that order; smallness remains inconclusive. -/
-def acquire (numerator : Coherent.CoherentNamed)
-  {channel : Coherent.CoherentNamed} (input : State.Input channel)
-    (threshold : Fraction.Rational) (positive : 0 < threshold) : Approximation.Gaussian.Division.Acquisition.Report
+def acquire (numerator : CoherentNamed)
+  {channel : CoherentNamed} (input : Input channel)
+    (threshold : Rational) (positive : 0 < threshold) : Report
         numerator input threshold :=
   match input.cached with
   | some decision => fromDecision numerator threshold
@@ -134,19 +134,19 @@ def acquire (numerator : Coherent.CoherentNamed)
 
 /-- Continue acquisition from the report's exact retained input for a new numerator and positive threshold. -/
 def Report.resume {numerator channel :
-  Coherent.CoherentNamed} {input : State.Input channel} {threshold : Fraction.Rational}
-    (report : Approximation.Gaussian.Division.Acquisition.Report numerator input threshold) (nextNumerator :
-        Coherent.CoherentNamed)
-    (nextThreshold : Fraction.Rational) (positive : 0 < nextThreshold) :
-        Approximation.Gaussian.Division.Acquisition.Report nextNumerator report.1.next
+  CoherentNamed} {input : Input channel} {threshold : Rational}
+    (report : Report numerator input threshold) (nextNumerator :
+        CoherentNamed)
+    (nextThreshold : Rational) (positive : 0 < nextThreshold) :
+        Report nextNumerator report.1.next
       nextThreshold :=
   acquire nextNumerator report.1.next nextThreshold positive
 
 /-- An available cached decision is reused without changing the denominator's retained refinement state. -/
 theorem acquire_cached (numerator :
-  Coherent.CoherentNamed) {channel : Coherent.CoherentNamed} (input : State.Input channel)
-    (threshold : Fraction.Rational) (positive : 0 < threshold) (decision :
-        Approximation.Gaussian.Division.Prepared.Decision channel)
+  CoherentNamed) {channel : CoherentNamed} (input : Input channel)
+    (threshold : Rational) (positive : 0 < threshold) (decision :
+        Decision channel)
     (cached : input.cached = some decision) :
     (acquire numerator input threshold positive).1.route =
       .cached ∧
@@ -159,9 +159,9 @@ theorem acquire_cached (numerator :
 /-- Supported provenance always resolves the exact operational question; the small and branch-only outcomes cannot occur
 on this route. -/
 theorem acquire_symbolic_decisive (numerator :
-  Coherent.CoherentNamed) {channel : Coherent.CoherentNamed}
-    (input : State.Input channel) (threshold : Fraction.Rational) (positive : 0 < threshold)
-    (provenance : Approximation.Gaussian.Acquisition.Provenance channel) (uncached : input.cached = none)
+  CoherentNamed) {channel : CoherentNamed}
+    (input : Input channel) (threshold : Rational) (positive : 0 < threshold)
+    (provenance : Provenance channel) (uncached : input.cached = none)
     (inferred : input.provenance = some provenance) :
     (acquire numerator input threshold positive).2.status =
       .ready ∨
@@ -179,16 +179,19 @@ theorem acquire_symbolic_decisive (numerator :
 /-- A computed zero sidecar is enough to route automatically to exact exclusion. The caller supplies no operational
 identity to the dispatcher. -/
 theorem start_rational_zero (numerator :
-  Coherent.CoherentNamed) (input : Annotated)
-    (threshold : Fraction.Rational) (positive : 0 < threshold) (zero : input.rationalValue = some 0) :
+  CoherentNamed) (input : Annotated)
+    (threshold : Rational) (positive : 0 < threshold) (zero : input.rationalValue = some 0) :
     (acquire numerator
-      (Purelib.Approximation.Gaussian.Division.Acquisition.State.start input) threshold positive).2.status = .zero := by
+      (State.start input) threshold positive).2.status = .zero := by
   cases selected : input.provenance with
   | none => simp only [Annotated.rationalValue, selected] at zero; cases zero
   | some provenance =>
       cases provenance with
-      | inr root => simp only [Annotated.rationalValue, selected] at zero; cases zero
-      | inl rational =>
+      | squareRoot root => simp only [Annotated.rationalValue, selected] at zero; cases zero
+      | quadratic algebraic => simp only [Annotated.rationalValue, selected] at zero; cases zero
+      | polynomialRoot root => simp only [Annotated.rationalValue, selected] at zero; cases zero
+      | algebraic sidecar => simp only [Annotated.rationalValue, selected] at zero; cases zero
+      | rational rational =>
           have valueZero : rational.value = 0 := by
             apply Option.some.inj
             simpa only [Annotated.rationalValue, selected] using zero
@@ -197,7 +200,7 @@ theorem start_rational_zero (numerator :
           rw [selected]
           dsimp only
           dsimp only [Provenance.exact]
-          unfold Approximation.Gaussian.Provenance.Rational.Basic.RationalSidecar.decide
+          unfold Provenance.Rational.Basic.RationalSidecar.decide
           rw [dif_pos valueZero]
           rfl
 end Purelib.Approximation.Gaussian.Division.Acquisition.Dispatch

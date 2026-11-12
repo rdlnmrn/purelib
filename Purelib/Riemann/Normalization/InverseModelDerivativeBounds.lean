@@ -25,6 +25,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 namespace Purelib.Riemann.Normalization.InverseModelDerivativeBounds
@@ -73,25 +75,25 @@ forcing term.
 The identity concerns exact evaluations of the original model and polynomial derivatives, with the original half
 coefficient and residual polynomial retained. -/
 theorem step_derivative (model : Model polynomial box) (point : Gaussian) :
-    (Dense.Derivative.derivative model.step.value).eval point =
-      (3 * half) * model.residual.eval point * (Dense.Derivative.derivative model.value).eval point -
-        half * (Dense.Derivative.derivative polynomial).eval point * (model.value.eval point) ^ 3 := by
+    (derivative model.step.value).eval point =
+      (3 * half) * model.residual.eval point * (derivative model.value).eval point -
+        half * (derivative polynomial).eval point * (model.value.eval point) ^ 3 := by
   let formula := (model.value.scale 3 - polynomial * model.value * model.value * model.value).scale half
   have same : (model.step.value - formula).isZero = true := by
     apply NonzeroEvaluation.difference_isZero_of_candidate_evals
     intro sample _
-    change (model.value * (Dense.Basic.DensePolynomial.constant 1 + model.residual.scale half)).eval sample =
+    change (model.value * (constant 1 + model.residual.scale half)).eval sample =
       formula.eval sample
-    simp only [formula, Dense.Basic.DensePolynomial.eval_mul, Dense.Basic.DensePolynomial.eval_add,
-      Dense.Basic.DensePolynomial.eval_sub, Dense.Basic.DensePolynomial.eval_scale,
-      Dense.Basic.DensePolynomial.eval_constant, model.residual_eq]
+    simp only [formula, eval_mul, eval_add,
+      eval_sub, eval_scale,
+      eval_constant, model.residual_eq]
     calc
       _ = half * (3 * model.value.eval sample - polynomial.eval sample * model.value.eval sample *
           model.value.eval sample * model.value.eval sample) + (1 - 2 * half) * model.value.eval sample := by ring1
       _ = _ := by rw [show (2 : Gaussian) * half = 1 by decide]; ring1
   rw [Dense.Derivative.eval_derivative_eq_of_sub_isZero same point]
   simp only [formula, Dense.Derivative.eval_derivative_scale, Dense.Derivative.eval_derivative_sub,
-    Dense.Derivative.eval_derivative_mul, Dense.Basic.DensePolynomial.eval_mul, model.residual_eq]
+    Dense.Derivative.eval_derivative_mul, eval_mul, model.residual_eq]
   ring1
 
 end Purelib.Riemann.Normalization.InverseModelDerivativeBounds.Model
@@ -113,10 +115,10 @@ structure DerivativeBounds {polynomial : Polynomial} {box : Box}
     (clearance : RegionClearance polynomial box) (initial : Model polynomial box) where
   /-- The cached derivative polynomial of the original denominator polynomial. -/ polynomialDerivative : Polynomial
   /-- The cache agrees pointwise with the exact original polynomial derivative. -/ polynomialDerivative_eq : ∀ point,
-    polynomialDerivative.eval point = (Dense.Derivative.derivative polynomial).eval point
+    polynomialDerivative.eval point = (derivative polynomial).eval point
   /-- The cached derivative polynomial of the original initial inverse-root model. -/ initialDerivative : Polynomial
   /-- The cache agrees pointwise with the exact original model derivative. -/ initialDerivative_eq : ∀ point,
-    initialDerivative.eval point = (Dense.Derivative.derivative initial.value).eval point
+    initialDerivative.eval point = (derivative initial.value).eval point
   /-- The cached box squared-norm majorant for the original polynomial derivative. -/ polynomialUpper :
     Fraction.Rational
   /-- This majorant equals the dense box evaluation bound of the cached polynomial derivative. -/ polynomialUpper_eq :
@@ -148,8 +150,8 @@ open Purelib.Polynomial.Dense.Gaussian in
 -/
 @[expose] def build (clearance : RegionClearance polynomial box) (initial : Model polynomial box) : DerivativeBounds
   clearance initial :=
-  let polynomialDerivative := Dense.Derivative.derivative polynomial
-  let initialDerivative := Dense.Derivative.derivative initial.value
+  let polynomialDerivative := derivative polynomial
+  let initialDerivative := derivative initial.value
   let polynomialUpper := Bounds.Box.denseEvalNormBound polynomialDerivative box
   let initialUpper := Bounds.Box.denseEvalNormBound initialDerivative box
   let inverseUpper := 1 + 4 / clearance.bound
@@ -183,14 +185,14 @@ open Purelib.Polynomial in
 /-- The retained inverse-model squared-norm majorant is strictly positive. -/
 theorem inverseUpper_positive (bounds : DerivativeBounds clearance initial) : 0 < bounds.inverseUpper := by
   rw [bounds.inverseUpper_eq]
-  exact (PrimitiveOverlapBounds.build clearance (Dense.Basic.DensePolynomial.constant 1)).inverseUpper_positive
+  exact (PrimitiveOverlapBounds.build clearance (constant 1)).inverseUpper_positive
 
 open Purelib.Data.Rat in
 /-- The cached uniform refinement derivative bound is nonnegative. -/
 theorem bound_nonnegative (bounds : DerivativeBounds clearance initial) : 0 ≤ bounds.bound := by
   rw [bounds.bound_eq]
-  exact add_nonneg bounds.initialUpper_nonnegative (Fraction.Order.Arithmetic.mul_nonneg_direct
-    bounds.polynomialUpper_nonnegative (Fraction.Order.Arithmetic.pow_nonneg_direct bounds.inverseUpper_positive.le 3))
+  exact add_nonneg bounds.initialUpper_nonnegative (Arithmetic.mul_nonneg_direct
+    bounds.polynomialUpper_nonnegative (Arithmetic.pow_nonneg_direct bounds.inverseUpper_positive.le 3))
 
 /-- The polynomial-derivative forcing majorant is no larger than the retained total derivative bound. -/
 theorem forcing_le (bounds : DerivativeBounds clearance initial) : bounds.polynomialUpper * bounds.inverseUpper ^ 3 ≤
@@ -203,7 +205,7 @@ open Purelib.Polynomial in
 theorem value_le (bounds : DerivativeBounds clearance initial) (model : Model polynomial box)
     {point : Gaussian} (inside : box.Contains point) : normSq (model.value.eval point) ≤ bounds.inverseUpper := by
   rw [bounds.inverseUpper_eq]
-  exact (PrimitiveOverlapBounds.build clearance (Dense.Basic.DensePolynomial.constant 1)).inverse_norm_le model inside
+  exact (PrimitiveOverlapBounds.build clearance (constant 1)).inverse_norm_le model inside
 
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
@@ -217,62 +219,62 @@ The correction derivative splits into inherited and forcing terms; the original 
 estimate contract within the cached uniform bound. -/
 theorem refine_derivative_le (bounds : DerivativeBounds clearance initial) (index : Nat)
     {point : Gaussian} (inside : box.Contains point) :
-    normSq ((Dense.Derivative.derivative (initial.refine index).value).eval point) ≤ bounds.bound := by
+    normSq ((derivative (initial.refine index).value).eval point) ≤ bounds.bound := by
   induction index with
   | zero =>
-      change normSq ((Dense.Derivative.derivative initial.value).eval point) ≤ _
+      change normSq ((derivative initial.value).eval point) ≤ _
       rw [← bounds.initialDerivative_eq]
       have scalar := Bounds.Box.normSq_eval_le_denseEvalNormBound bounds.initialDerivative inside
       rw [Norm.Basic.normSq_eq_canonical] at scalar
       exact (scalar.trans_eq bounds.initialUpper_eq.symm).trans (by
           rw [bounds.bound_eq]
-          exact le_add_of_nonneg_right (Fraction.Order.Arithmetic.mul_nonneg_direct bounds.polynomialUpper_nonnegative
-            (Fraction.Order.Arithmetic.pow_nonneg_direct bounds.inverseUpper_positive.le 3)))
+          exact le_add_of_nonneg_right (Arithmetic.mul_nonneg_direct bounds.polynomialUpper_nonnegative
+            (Arithmetic.pow_nonneg_direct bounds.inverseUpper_positive.le 3)))
   | succ index ih =>
       let model := initial.refine index
-      have polynomialLe : normSq ((Dense.Derivative.derivative polynomial).eval point) ≤ bounds.polynomialUpper := by
+      have polynomialLe : normSq ((derivative polynomial).eval point) ≤ bounds.polynomialUpper := by
         rw [← bounds.polynomialDerivative_eq]
         have scalar := Bounds.Box.normSq_eval_le_denseEvalNormBound bounds.polynomialDerivative inside
         rw [Norm.Basic.normSq_eq_canonical] at scalar
         exact scalar.trans_eq bounds.polynomialUpper_eq.symm
       have residualLe := (model.residualBound point inside).trans model.bound_small
-      have inherited : normSq ((3 * half) * model.residual.eval point * (Dense.Derivative.derivative model.value).eval
+      have inherited : normSq ((3 * half) * model.residual.eval point * (derivative model.value).eval
         point) ≤
           (9 / 64 : Fraction.Rational) * bounds.bound := by
-        rw [Basic.Canonical.normSq_mul, Basic.Canonical.normSq_mul, show normSq ((3 : Gaussian) * half) = (9 / 4 :
+        rw [normSq_mul, normSq_mul, show normSq ((3 : Gaussian) * half) = (9 / 4 :
           Fraction.Rational) by decide +kernel]
-        exact (Fraction.Order.Arithmetic.mul_le_mul_direct
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct residualLe (by decide +kernel)) ih
-          (Basic.Canonical.normSq_nonneg _) (by decide +kernel)).trans_eq (by
+        exact (Arithmetic.mul_le_mul_direct
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct residualLe (by decide +kernel)) ih
+          (normSq_nonneg _) (by decide +kernel)).trans_eq (by
             rw [show (9 / 4 : Fraction.Rational) * (1 / 16) = 9 / 64 by decide +kernel])
-      have forcing : normSq (half * (Dense.Derivative.derivative polynomial).eval point * (model.value.eval point) ^ 3)
+      have forcing : normSq (half * (derivative polynomial).eval point * (model.value.eval point) ^ 3)
         ≤
           (1 / 4 : Fraction.Rational) * bounds.bound := by
-        rw [Basic.Canonical.normSq_mul, Basic.Canonical.normSq_mul, canonicalNormSqPow,
+        rw [normSq_mul, normSq_mul, canonicalNormSqPow,
           show normSq half = (1 / 4 : Fraction.Rational) by decide +kernel]
         calc
           _ ≤ ((1 / 4 : Fraction.Rational) * bounds.polynomialUpper) * bounds.inverseUpper ^ 3 :=
-            Fraction.Order.Arithmetic.mul_le_mul_direct
-              (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct polynomialLe (by decide))
-              (Fraction.Order.Arithmetic.pow_le_pow_direct (Basic.Canonical.normSq_nonneg _) (bounds.value_le model
+            Arithmetic.mul_le_mul_direct
+              (Arithmetic.mul_le_mul_of_nonneg_left_direct polynomialLe (by decide))
+              (Arithmetic.pow_le_pow_direct (normSq_nonneg _) (bounds.value_le model
                 inside) 3)
-              (Fraction.Order.Arithmetic.pow_nonneg_direct (Basic.Canonical.normSq_nonneg _) 3)
-              (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) bounds.polynomialUpper_nonnegative)
+              (Arithmetic.pow_nonneg_direct (normSq_nonneg _) 3)
+              (Arithmetic.mul_nonneg_direct (by decide) bounds.polynomialUpper_nonnegative)
           _ = (1 / 4 : Fraction.Rational) * (bounds.polynomialUpper * bounds.inverseUpper ^ 3) := by ring1
-          _ ≤ _ := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct bounds.forcing_le (by decide)
-      change normSq ((Dense.Derivative.derivative model.step.value).eval point) ≤ _
-      rw [(Purelib.Riemann.Normalization.InverseModelDerivativeBounds.Model.step_derivative model)]
+          _ ≤ _ := Arithmetic.mul_le_mul_of_nonneg_left_direct bounds.forcing_le (by decide)
+      change normSq ((derivative model.step.value).eval point) ≤ _
+      rw [(Model.step_derivative model)]
       calc
-        _ ≤ 2 * (normSq ((3 * half) * model.residual.eval point * (Dense.Derivative.derivative model.value).eval point)
+        _ ≤ 2 * (normSq ((3 * half) * model.residual.eval point * (derivative model.value).eval point)
           +
-            normSq (half * (Dense.Derivative.derivative polynomial).eval point * (model.value.eval point) ^ 3)) := by
+            normSq (half * (derivative polynomial).eval point * (model.value.eval point) ^ 3)) := by
               simpa only [Norm.Basic.normSq_eq_canonical] using Norm.Bounds.normSq_sub_le_two _ _
         _ ≤ 2 * ((9 / 64 : Fraction.Rational) * bounds.bound + (1 / 4 : Fraction.Rational) * bounds.bound) :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add inherited forcing) (by decide)
+          Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add inherited forcing) (by decide)
         _ = (2 * (9 / 64 + 1 / 4) : Fraction.Rational) * bounds.bound := by ring1
         _ = (25 / 32 : Fraction.Rational) * bounds.bound := by
           rw [show (2 * (9 / 64 + 1 / 4) : Fraction.Rational) = 25 / 32 by decide +kernel]
-        _ ≤ 1 * bounds.bound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel)
+        _ ≤ 1 * bounds.bound := Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel)
           bounds.bound_nonnegative
         _ = _ := Fraction.Field.one_mul _
 

@@ -69,27 +69,27 @@ constructive_injectivity SameSourceBadWindowRun
 
 /-- Earliest error-parameter stage used by the finite run. -/
 @[expose] def runBaseStage (threshold : Fraction.Rational) (requestedScale : Nat) : Nat :=
-  Dirichlet.Critical.Sharpness.sharpnessStage threshold requestedScale
+  Sharpness.sharpnessStage threshold requestedScale
 
 /-- The common rational source is moved forward by the requested count so
 all backward error parameters remain beyond the sharpness stage. -/
 @[expose] def runSourceStage
     (threshold : Fraction.Rational) (requestedScale count : Nat) : Nat :=
-  Dirichlet.Critical.Run.runBaseStage threshold requestedScale + count
+  runBaseStage threshold requestedScale + count
 
 /-- Exact transported normal form underlying one bounded offset of the
 same-source run. -/
 @[expose] def normalFormAtOffset
     (threshold : Fraction.Rational) (requestedScale count offset : Nat)
     (offsetBound : offset ≤ count) :
-    Dirichlet.Critical.Adjacent.Tower.TransportedNormalForm
-      (Dirichlet.Critical.Pair.criticalSource
-        (Dirichlet.Critical.Run.runSourceStage threshold requestedScale count))
-      (Dirichlet.Critical.Run.runSourceStage threshold requestedScale count - offset)
-      (Dirichlet.Critical.Run.runSourceStage threshold requestedScale count + offset) := by
-  let sourceStage := Dirichlet.Critical.Run.runSourceStage threshold requestedScale count
+    Adjacent.Tower.TransportedNormalForm
+      (Pair.criticalSource
+        (runSourceStage threshold requestedScale count))
+      (runSourceStage threshold requestedScale count - offset)
+      (runSourceStage threshold requestedScale count + offset) := by
+  let sourceStage := runSourceStage threshold requestedScale count
   have offsetLeSource : offset ≤ sourceStage := by
-    dsimp only [sourceStage, Dirichlet.Critical.Run.runSourceStage, Dirichlet.Critical.Run.runBaseStage]
+    dsimp only [sourceStage, runSourceStage, runBaseStage]
     exact offsetBound.trans (Nat.le_add_left count _)
   have sourceIdentity : (sourceStage - offset) + offset = sourceStage :=
     Subtraction.sub_add_cancel offsetLeSource
@@ -100,7 +100,7 @@ same-source run. -/
           ((sourceStage - offset) + offset) + offset := by ring1
       _ = sourceStage + offset := by rw [sourceIdentity]
   have normal :=
-    Dirichlet.Critical.Adjacent.Tower.transportedNormalForm
+    Adjacent.Tower.transportedNormalForm
       (sourceStage - offset) offset
   rw [sourceIdentity, targetIdentity] at normal
   exact normal
@@ -109,52 +109,52 @@ same-source run. -/
 @[expose] def badWindowAtOffset
     {threshold : Fraction.Rational}
     (certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold)
+      Sharpness.IsSharperWindowThreshold threshold)
     (requestedScale count : Nat) (offset : Fin count) :
     { window : Sharpness.BadWindow threshold requestedScale //
-      window.source = Dirichlet.Critical.Pair.criticalSource
-        (Dirichlet.Critical.Run.runSourceStage threshold requestedScale count) } := by
-  let sourceStage := Dirichlet.Critical.Run.runSourceStage threshold requestedScale count
+      window.source = Pair.criticalSource
+        (runSourceStage threshold requestedScale count) } := by
+  let sourceStage := runSourceStage threshold requestedScale count
   let backwardStage := sourceStage - offset.val
   let targetStage := sourceStage + offset.val
   have offsetBound : offset.val ≤ count := Nat.le_of_lt offset.isLt
   have normal :
-      Dirichlet.Critical.Adjacent.Tower.TransportedNormalForm
-        (Dirichlet.Critical.Pair.criticalSource sourceStage)
+      Adjacent.Tower.TransportedNormalForm
+        (Pair.criticalSource sourceStage)
         backwardStage targetStage := by
     simpa only [sourceStage, backwardStage, targetStage] using
-      Dirichlet.Critical.Run.normalFormAtOffset threshold requestedScale count offset.val offsetBound
+      normalFormAtOffset threshold requestedScale count offset.val offsetBound
   have baseLeBackward :
-      Dirichlet.Critical.Run.runBaseStage threshold requestedScale ≤ backwardStage := by
+      runBaseStage threshold requestedScale ≤ backwardStage := by
     clear certificate normal
-    dsimp only [backwardStage, sourceStage, Dirichlet.Critical.Run.runSourceStage]
+    dsimp only [backwardStage, sourceStage, runSourceStage]
     omega0
   have backwardLeTarget : backwardStage ≤ targetStage := by
     dsimp only [backwardStage, targetStage]
     exact (Nat.sub_le sourceStage offset.val).trans
       (Nat.le_add_right sourceStage offset.val)
   have gapStrict :
-      Dirichlet.Critical.Cylinder.TwoParameter.gap
-          (Dirichlet.Critical.Parameter.pellParameter backwardStage)
-          (Dirichlet.Critical.Parameter.pellParameter targetStage) <
+      Cylinder.TwoParameter.gap
+          (Parameter.pellParameter backwardStage)
+          (Parameter.pellParameter targetStage) <
         threshold := by
-    apply Dirichlet.Critical.Adjacent.Tower.transportedGap_lt_sharperThreshold
+    apply Adjacent.Tower.transportedGap_lt_sharperThreshold
       certificate requestedScale backwardStage targetStage
-    · simpa only [Dirichlet.Critical.Run.runBaseStage] using baseLeBackward
+    · simpa only [runBaseStage] using baseLeBackward
     · exact backwardLeTarget
   have baseLeTarget :
-      Dirichlet.Critical.Run.runBaseStage threshold requestedScale ≤ targetStage :=
+      runBaseStage threshold requestedScale ≤ targetStage :=
     baseLeBackward.trans backwardLeTarget
   have beyondScale : requestedScale < Best.Error.denominatorQuadrance
-      (Dirichlet.Critical.Pair.criticalUpperPair targetStage) :=
-    (Dirichlet.Critical.Sharpness.requestedScale_lt_criticalUpperDenominatorQuadrance
+      (Pair.criticalUpperPair targetStage) :=
+    (Sharpness.requestedScale_lt_criticalUpperDenominatorQuadrance
       threshold requestedScale).trans_le
-      (Dirichlet.Critical.Transition.criticalUpper_denominatorQuadrance_le_of_le
-        (by simpa only [Dirichlet.Critical.Run.runBaseStage] using baseLeTarget))
+      (Transition.criticalUpper_denominatorQuadrance_le_of_le
+        (by simpa only [runBaseStage] using baseLeTarget))
   exact
-    ⟨{ source := Dirichlet.Critical.Pair.criticalSource sourceStage
-       lower := Dirichlet.Critical.Pair.criticalLowerPair targetStage
-       upper := Dirichlet.Critical.Pair.criticalUpperPair targetStage
+    ⟨{ source := Pair.criticalSource sourceStage
+       lower := Pair.criticalLowerPair targetStage
+       upper := Pair.criticalUpperPair targetStage
        beyondScale := beyondScale
        consecutive := normal.strictExteriorCertificate.areConsecutiveBest
        violates := normal.one_lt_threshold_mul_window threshold gapStrict }, rfl⟩
@@ -163,22 +163,22 @@ same-source run. -/
 @[simp] theorem badWindowAtOffset_upper
     {threshold : Fraction.Rational}
     (certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold)
+      Sharpness.IsSharperWindowThreshold threshold)
     (requestedScale count : Nat) (offset : Fin count) :
-    (Dirichlet.Critical.Run.badWindowAtOffset certificate requestedScale count offset).1.upper =
-      Dirichlet.Critical.Pair.criticalUpperPair
-        (Dirichlet.Critical.Run.runSourceStage threshold requestedScale count + offset.val) := by
+    (badWindowAtOffset certificate requestedScale count offset).1.upper =
+      Pair.criticalUpperPair
+        (runSourceStage threshold requestedScale count + offset.val) := by
   rfl
 
 /-- The offset window retains the critical lower pair at the common source stage plus its offset. -/
 @[simp] theorem badWindowAtOffset_lower
     {threshold : Fraction.Rational}
     (certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold)
+      Sharpness.IsSharperWindowThreshold threshold)
     (requestedScale count : Nat) (offset : Fin count) :
-    (Dirichlet.Critical.Run.badWindowAtOffset certificate requestedScale count offset).1.lower =
-      Dirichlet.Critical.Pair.criticalLowerPair
-        (Dirichlet.Critical.Run.runSourceStage threshold requestedScale count + offset.val) := by
+    (badWindowAtOffset certificate requestedScale count offset).1.lower =
+      Pair.criticalLowerPair
+        (runSourceStage threshold requestedScale count + offset.val) := by
   rfl
 
 /-- Executable arbitrary-length finite analogue of recurrent critical-window
@@ -187,31 +187,31 @@ requested scale, and have strictly increasing upper scales. -/
 @[expose] def criticalBadWindowRun
     {threshold : Fraction.Rational}
     (certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold)
+      Sharpness.IsSharperWindowThreshold threshold)
     (requestedScale count : Nat) :
-    Dirichlet.Critical.Run.SameSourceBadWindowRun threshold requestedScale count := by
+    SameSourceBadWindowRun threshold requestedScale count := by
   refine
-    { source := Dirichlet.Critical.Pair.criticalSource
-        (Dirichlet.Critical.Run.runSourceStage threshold requestedScale count)
+    { source := Pair.criticalSource
+        (runSourceStage threshold requestedScale count)
       windows := List.ofFn
-        (Dirichlet.Critical.Run.badWindowAtOffset certificate requestedScale count)
+        (badWindowAtOffset certificate requestedScale count)
       length_eq := Data.List.OfFn.Basic.length_ofFn
       scalesStrict := ?_ }
   apply Data.List.OfFn.Pairwise.pairwise_ofFn_direct
   intro first second indexOrder
-  rw [Dirichlet.Critical.Run.badWindowAtOffset_upper, Dirichlet.Critical.Run.badWindowAtOffset_upper]
-  apply Dirichlet.Critical.Transition.criticalUpper_denominatorQuadrance_lt_of_lt
+  rw [badWindowAtOffset_upper, badWindowAtOffset_upper]
+  apply Transition.criticalUpper_denominatorQuadrance_lt_of_lt
   exact Nat.add_lt_add_left indexOrder _
 
 /-- The constructed run retains the critical source at its explicitly computed common stage. -/
 @[simp] theorem criticalBadWindowRun_source
     {threshold : Fraction.Rational}
     (certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold)
+      Sharpness.IsSharperWindowThreshold threshold)
     (requestedScale count : Nat) :
-    (Dirichlet.Critical.Run.criticalBadWindowRun certificate requestedScale count).source =
-      Dirichlet.Critical.Pair.criticalSource
-        (Dirichlet.Critical.Run.runSourceStage threshold requestedScale count) := by
+    (criticalBadWindowRun certificate requestedScale count).source =
+      Pair.criticalSource
+        (runSourceStage threshold requestedScale count) := by
   rfl
 
 end Purelib.NumberTheory.Approximation.Dirichlet.Critical.Run

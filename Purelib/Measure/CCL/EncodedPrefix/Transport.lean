@@ -33,6 +33,8 @@ import Purelib.Data.CCL.Encoding.Block.Basic
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Mathlib.Order.Basic
 
+open Purelib.Measure.Distribution.Projective.Chordal
+
 section
 public section
 
@@ -62,7 +64,7 @@ open Purelib.Measure
 -/
 theorem encodedSquaredSensitiveProbeLawCoupling_squaredTransportCost_eq_zero
     {index : Type}
-    (distribution : Measure.Distribution index)
+    (distribution : Distribution index)
     (fraction : index → GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
     (numeratorNonzero : ∀ item, (fraction item).numerator ≠ 0)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
@@ -72,7 +74,7 @@ theorem encodedSquaredSensitiveProbeLawCoupling_squaredTransportCost_eq_zero
         (fraction item) (numeratorNonzero item)).point)).transportCost
         (fun left right =>
           Distance.rationalSeparation left right ^ 2) = 0 := by
-  rw [Distribution.Projective.Chordal.Probe.encodedProbeLawCoupling_squaredTransportCost]
+  rw [Probe.encodedProbeLawCoupling_squaredTransportCost]
   calc
     distribution.poweredL2Distance
         (fun item => probe (Encoder.Blocks.encodeBlocks
@@ -92,7 +94,7 @@ theorem encodedSquaredSensitiveProbeLawCoupling_squaredTransportCost_eq_zero
 /-- The exact encoder-to-affine omega-probe coupling has zero squared transport cost. -/
 theorem encodedChordalOmegaProbeLawCoupling_squaredTransportCost_eq_zero
     {index : Type}
-    (distribution : Measure.Distribution index)
+    (distribution : Distribution index)
     (fraction : index → GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
     (numeratorNonzero : ∀ item, (fraction item).numerator ≠ 0) :
     (Distribution.Projective.Chordal.encodedProbeLawCoupling distribution fraction Chordal.Probe.chordalOmegaProbe
@@ -100,7 +102,7 @@ theorem encodedChordalOmegaProbeLawCoupling_squaredTransportCost_eq_zero
         (fraction item) (numeratorNonzero item)).point)).transportCost
         (fun left right =>
           Distance.rationalSeparation left right ^ 2) = 0 :=
-  CCL.EncodedPrefix.encodedSquaredSensitiveProbeLawCoupling_squaredTransportCost_eq_zero
+  encodedSquaredSensitiveProbeLawCoupling_squaredTransportCost_eq_zero
     distribution fraction numeratorNonzero Chordal.Probe.chordalOmegaProbe 2
       Chordal.Probe.chordalOmegaProbe_squaredSensitive
 
@@ -109,7 +111,7 @@ theorem encodedChordalOmegaProbeLawCoupling_squaredTransportCost_eq_zero
 The original distribution couples each realized point with its own affine fraction value, and the squared-sensitivity
 factor is nonnegative. -/
 theorem encodedProbeLawCoupling_squaredTransportCost_le {index : Type}
-    (distribution : Measure.Distribution index)
+    (distribution : Distribution index)
     (fraction : index → GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
     (numeratorNonzero : ∀ item, (fraction item).numerator ≠ 0)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
@@ -128,8 +130,8 @@ theorem encodedProbeLawCoupling_squaredTransportCost_le {index : Type}
         factor * Approximation.CCL.Cylinder.cylinderSpread
           (Encoder.Blocks.encodeBlocks (fraction item)
             (numeratorNonzero item)).blocks := by
-  rw [Distribution.Projective.Chordal.Probe.encodedProbeLawCoupling_squaredTransportCost]
-  exact CCL.EncodedPrefix.encodedSquaredProbe_poweredL2Distance_values_le distribution fraction
+  rw [Probe.encodedProbeLawCoupling_squaredTransportCost]
+  exact encodedSquaredProbe_poweredL2Distance_values_le distribution fraction
     numeratorNonzero probe factor factorNonnegative sensitive points
     pointsRealize
 
@@ -147,7 +149,7 @@ open Purelib.Measure in
 -/
 theorem encodedProbeLawCoupling_squaredTransportCost_lt_requested
     {index : Type}
-    (distribution : Measure.Distribution index)
+    (distribution : Distribution index)
     (fraction : index → GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
     (numeratorNonzero : ∀ item, (fraction item).numerator ≠ 0)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
@@ -168,7 +170,7 @@ theorem encodedProbeLawCoupling_squaredTransportCost_lt_requested
         (fun left right =>
           Distance.rationalSeparation left right ^ 2) <
       epsilon ^ 2 := by
-  have costLe := CCL.EncodedPrefix.encodedProbeLawCoupling_squaredTransportCost_le distribution
+  have costLe := encodedProbeLawCoupling_squaredTransportCost_le distribution
     fraction numeratorNonzero probe factor factorPositive.le sensitive points
     pointsRealize
   have budgetLe : distribution.expectation (fun item =>
@@ -199,7 +201,7 @@ open Purelib.Measure in
 -/
 theorem encodedChordalOmegaProbeLawCoupling_squaredTransportCost_lt_requested
     {index : Type}
-    (distribution : Measure.Distribution index)
+    (distribution : Distribution index)
     (fraction : index → GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
     (numeratorNonzero : ∀ item, (fraction item).numerator ≠ 0)
     (epsilon : Fraction.Rational) (epsilonPositive : 0 < epsilon)
@@ -219,7 +221,7 @@ theorem encodedChordalOmegaProbeLawCoupling_squaredTransportCost_lt_requested
         (fun left right =>
           Distance.rationalSeparation left right ^ 2) <
       epsilon ^ 2 :=
-  CCL.EncodedPrefix.encodedProbeLawCoupling_squaredTransportCost_lt_requested distribution
+  encodedProbeLawCoupling_squaredTransportCost_lt_requested distribution
     fraction numeratorNonzero Chordal.Probe.chordalOmegaProbe 2 (by decide)
     Chordal.Probe.chordalOmegaProbe_squaredSensitive epsilon epsilonPositive enough points
     pointsRealize

@@ -8,38 +8,35 @@
   Decide name visibility, body exposure, import re-export and execution phase
   separately. Expose definition bodies only where client reduction requires
   it; keep proof implementations private and preserve intended opacity.
-  Put `public section` before its named namespace, or close the section before
-  closing that namespace. Public abbreviations and instances already expose
-  their bodies; do not add redundant `@[expose]` attributes.
-  When clients must reduce a derived equality procedure, use
-  `deriving @[expose] DecidableEq` to expose its original generated helpers.
-  Exposure must be set at declaration time, not with a later attribute.
-  In an entirely meta tool module, preserve that phase for generated recursors,
-  projections and match helpers too: `meta section` does not tag every auxiliary.
-  Check persisted phase metadata and report the strict helper closure separately.
+  Before changing public exposure, native bindings or tool-module phases, read
+  [module interfaces](docs/lean-development.md#module-interfaces-and-execution-phases).
 - Prefer ordinary `import`. Use `public import` only for a deliberate API
   re-export, such as a facade or a required existing public contract.
   Public signatures and exposed bodies, including retained proof fields, need
   public access to their owners. Incidental transitive availability is not an
   API contract: give callers direct imports for the dependencies they use.
-  Keep those direct imports ordinary when another deliberate public dependency
-  already re-exports the owner. Verify the retained public path in the same
-  execution phase; do not duplicate its re-export.
+  Verify the retained public path in the same execution phase; do not duplicate
+  an existing deliberate re-export.
   Proof tactics and elaborator helpers are normally ordinary or `meta` imports.
   Preserve synthesized instances when narrowing imports; successful compilation
   alone does not establish the same elaboration.
-  Keep scoped and global registrations of the same instance at the same
-  priority: activating a scope replaces that instance's global entry.
-  Before changing data-instance priorities, verify complete retained operation
-  records/functions and direct local instance precedence by kernel comparison.
+  When changing instance priorities, check retained operations and local
+  precedence; follow the module-interface guide for preservation comparisons.
   Use `import all` only when a client must reduce a private body; record the
   owner and reason. Do not bypass visibility with backward compatibility
   options or raw compiler-private names.
 - Reusable sources belong under `Purelib/` and `Purelib.*`; regressions under
-  `Test/` and `Test.*`. Keep publication chapters, optional examples, generated
+  `TestPurelib/` and `TestPurelib.*`. Keep publication chapters, optional examples, generated
   fixtures in their established homes and build targets.
+  Keep regressions reachable from `TestPurelib.All` or a standalone executable;
+  run `scripts/check-purelib-surfaces.py` when adding regression modules.
+  For interim checkpoints, use an existing standalone target for the subject
+  when available; aggregate facade builds can pull in unrelated import closures.
   Group examples by their mathematical subjects, not the review or migration
   that produced them; retain examples that demonstrate real construction chains.
+  Examples own their demonstrated constructions; regressions consume those
+  constructions and keep exhaustive behavior checks under `TestPurelib/`.
+  Library, example and publication modules must not depend on regression modules.
   Reusable library facades must not pull in publication chapters or optional
   fixtures. Do not recreate retired source roots or forwarding modules.
   Publication coverage requires listed claims to remain publicly reachable
@@ -63,39 +60,19 @@
   components beginning with an underscore: reuse the original owner for aliases,
   or give a distinct mathematical object its own name. Compiler-generated
   private/hygiene names and `_root_` are outside this naming rule.
-  Absolute `_root_` qualification applies to declaration names, not ordinary
-  namespace commands: `namespace _root_.X` creates literal nested components.
-  Balance the enclosing scopes before opening an actual top-level owner, and
-  retain the variables, options, openings and local instances it needs.
-  Closing a namespace deactivates local registrations; keep them in a shared
-  enclosing scope, using `with_weak_namespace` when their original declaration
-  owner must be retained.
-  Namespace ancestry can outrank selectively opened aliases; keep distinguishing
-  qualifiers for the original types and instances when moving groups.
+  Before moving declarations or changing scope boundaries, read
+  [namespaces and source moves](docs/lean-development.md#namespaces-openings-and-source-moves).
 - Prefer opening a parent namespace and retaining a short namespace qualifier,
   such as `Matrix.determinant`. One alias for a type/namespace is fine when it
   disambiguates related objects (`Matrix2.determinant`); do not rename its
   functions individually or invent prefixed names such as `matrix2_determinant`.
-  Selective `open` and `open ... renaming` require declarations; a namespace-only
-  name needs a parent opening and a short qualifier instead.
-  Keep namespace routes in selective openings unique across inherited namespaces
-  and simple openings: Lean rejects duplicate routes even when they resolve to
-  the same declaration. Use a longer parent qualifier when needed.
-  Apply this to each dependency actually used; imports alone do not shorten
-  references. For repeated long dependency routes, select the needed types or
-  open their parent and keep a short distinguishing qualifier. Open dependencies
-  once per file, normally inside its main namespace, and let subsequent
-  declarations inherit those openings. Avoid
-  repeating `open ... in` before individual declarations. Use short qualifiers
-  where names collide; reserve local openings for isolated uses or concrete
-  name-resolution conflicts. Use a shared section when a coherent group needs
-  different opening context, rather than one section per declaration. Preserve
-  selected declarations and instances when widening opening scope. Avoid
-  openings that shadow existing laws, local names or implicit type parameters.
+  Share dependency openings across the file or a coherent group. Use short
+  qualifiers for collisions and reserve local openings for isolated uses.
+  Preserve name resolution, implicit parameters and selected instances.
   Reserve fully qualified references for unavoidable disambiguation, recursive
   name resolution or preserving compiler-retained syntax.
-  For same-named Core replacements, select the owned declaration explicitly;
-  check its audited route, since literal reduction can pass for either operation.
+  Follow [namespace linting](docs/linting.md#repeated-namespace-prefixes) for
+  reported long routes; preserve compiler-retained notation expansions.
 - Keep imports narrow and the module graph acyclic. Do not impose namespace
   allowlists or mandatory core/adapter barriers. Constructive proof restrictions
   and publication coverage remain required.
@@ -110,6 +87,31 @@
 
 ## Constructive proofs and dependencies
 
+- Apply mathematical restrictions to admitted constructions and their complete
+  retained proof and execution dependencies. Untrusted generators, tactics,
+  exporters and helper scripts may use broader host facilities when their
+  outputs are checked under the admitted rules for the intended claim and inputs.
+  A helper used by the resulting construction is still a dependency; a helper
+  whose unchecked verdict is trusted is part of verification. Names, locations
+  and meta labels do not establish either exemption.
+- Before presenting foundation-policy choices or their consequences, inspect
+  the pinned Lean rules and implementations. Distinguish source notation from
+  elaborated constructions, generated helpers and retained dependencies; check
+  existing finite specializations before proposing exclusions.
+- Retain Lean's impredicative `Prop` for the current finite-construction work.
+  Impredicativity removal and generation-based propositional layering are
+  deferred.
+- Construction-policy enforcement belongs in the repository's axiom-checking
+  workflow, with an extensible whitelist of construction rules and checked side
+  conditions.
+  Preserve explicit module/file scopes and complete mathematical
+  dependency checks. Unknown cases prevent a certified pass; add justified rules
+  rather than namespace exemptions. Use scoped check-then-lint edit verification
+  during branch work and full coverage before integration into `master`.
+  Finite child domains beyond `Fin n` retain executable original-index
+  enumerations with checked exhaustive coverage, together with an admitted
+  finite whole construction. Reuse existing owners and coverage laws; an erased
+  existence or finiteness claim does not supply the required enumeration data.
 - No `noncomputable`, `classical`, choice-based shortcuts or choice-derived
   enumeration such as `Fintype.ofFinite`. Retain executable finite constructions.
   Prefer direct proofs with explicit witnesses; use contradiction only for
@@ -121,74 +123,43 @@
   exception when carrier, enumeration, decidability and witnesses are executable
   data; this does not relax the choice restrictions. Use the narrowest audited
   finite algebraic dependencies.
+- Do not introduce new `implemented_by` uses, including programmatic replacement
+  registrations. Existing project and upstream uses are permitted; removing them
+  is not a prerequisite for unrelated work. Require admitted finite termination
+  arguments and callback contracts, without a separate execution-step bound
+  unless the API explicitly promises a computational budget.
+- Admit selected standard runtime primitives under an explicit execution-trust
+  assumption: identify their admitted finite logical definitions, actual pinned
+  native implementations and input/result/callback contracts. Inspect before
+  admission; Core origin alone is insufficient. Native correctness and
+  termination under those contracts are trusted, without requiring a formal C
+  correspondence proof. Keep callback and mathematical-evidence checks and the
+  restriction on new `implemented_by` uses. Project-added `extern` bindings and
+  implementations and their correspondence-evidence policy are deferred pending helper cleanup
+  and an actual surviving certified use; no blanket exemption follows from this rule.
 - Keep source-facing mathematical declarations and their complete transitive
   dependencies axiom-free, including private and generated proof dependencies.
   The authoritative checker's normal mode selects safe non-meta source-facing
-  declarations and registered compiler rewrites. Use `--all-helpers` to audit
-  every retained kernel declaration when that strict scope is requested.
-  Strict internal provider-helper auditing remains a separate follow-up; retain
-  normal mathematical proof-closure checks. Clean generated
-  proofs do not establish a clean generator. IR-only inventory is an optional
+  declarations and registered compiler rewrites. Logical closure auditing alone
+  does not audit actual native implementation behavior.
+  Use `--all-helpers` to audit every retained kernel declaration when that strict
+  scope is requested.
+  Internal producer-helper audits are optional diagnostics, not a requirement
+  that an untrusted producer itself satisfy the mathematical restrictions.
+  Retain complete mathematical output-closure checks. IR-only inventory is an optional
   diagnostic report and establishes no kernel proof or axiom-freedom claim.
 - Prefer direct proofs or kernel `decide`. Do not introduce `native_decide`
-  proofs or axioms. Use the owned `Purelib.Algebra.Ring.IntCast` laws for
-  integer casts in generic rings; generic cast lemmas can retain axiom-bearing
-  derived negation instances. Avoid deciding large rational comparisons through recursive
-  numeral casts: use the owned `natCast_pos_direct` and `natCast_le_direct`
-  lemmas with explicit indices. For exact closed computations, rewrite casts
-  with `natCast_eq_fromInt` before kernel decision. These reduction costs can
-  overflow nanoda even when Lean elaboration succeeds.
-  For marked canonical computations, specialize the marker's identity law and
-  compose it with retained equalities; implicit conversion can unfold the whole
-  computation in nanoda even when Lean checks it quickly.
+  proofs or axioms. Before writing or changing proof routes, read
+  [constructive proof techniques](docs/lean-development.md#constructive-proof-techniques).
+  Audit retained dependencies, including implicit indexing proofs, tactic
+  auxiliaries and simplifier companions; source syntax alone is insufficient.
 - Import `Purelib.Tactic.QuotientFreeOmega` directly for `omega0` and for
   `omega` proofs using this repository's quotient-free frontend. Preserve the
   original frontend when narrowing imports, including automatic index-bound
-  proofs that invoke Omega without a written tactic call. Check compiled proofs
-  against the original source context and run the authoritative audit before
-  changing an existing proof route.
-- Use the rational `mul_nonneg_direct`, `mul_le_mul_of_nonneg_left_direct` and
-  `mul_le_mul_of_nonneg_right_direct` helpers mapped from
-  `Purelib.Data.Rat.Fraction.Compatibility`. For mixed strict/weak sum bounds,
-  use direct strict translation and `add_le_add_direct`. Generic ordered-ring
-  instances and monotonicity can introduce `Classical.choice` and `Quot.sound`.
-- Avoid simplification beneath functions/universal binders: it can introduce
-  `funext`/`forall_congr`. Specialize quantified facts first. For finite sums,
-  use pointwise `sumFin_congr` and scalar transport; a local congruence attribute
-  on `Purelib.LinearAlgebra.sumFin_congr` is available. For cached vector
-  readbacks, separate definition reduction, `vectorOfFn_apply` rewrites and
-  scalar field simplification. In list induction, isolate the current entry
-  by scalar congruence before simplifying the unchanged tail.
-- When reconstructing generated certificates, match complete applications and
-  retain their original argument expressions. Use explicit `mkAppN` arguments
-  for nodes containing bound variables; elaborator inference through `mkAppM`
-  needs a matching local context. Kernel-check quantified regressions and audit
-  the generated auxiliaries after shared reconstruction changes.
-- Consume proposition equivalences with `.mp`/`.mpr`. Registering them with
-  `simp` can emit proposition-equality companions that retain `propext`.
-  For reported scalar `eq_self` routes, exclude `eq_self`/`iff_self` even
-  with `simp only`, then finish the remaining equality by `rfl` or direct
-  scalar transport. These logical rules are included among the builtins.
-- Dependent finite matches can emit logical index-equality proofs independently
-  of sparse-match options. Audit their generated auxiliaries and kernel-check
-  all-input agreement when changing executable discrimination.
-  Prefer structural recursion on direct subterms. For necessary well-founded
-  recursion, supply constructive decrease proofs and audit their auxiliaries;
-  default termination tactics can retain axiom-bearing simp companions.
-  Check existing clients' actual unfolding and simplification after changing
-  a selector's definition shape; equal outputs alone do not preserve reduction.
-- Split conjunction goals before applying Omega to their scalar components.
-  Compound-goal preprocessing can retain a classical proposition decision;
-  confirm generated auxiliaries with the authoritative closure audit.
-  Clear irrelevant existential assumptions before scalar Omega calls; automatic
-  preprocessing can select their witnesses through `Exists.choose`.
-- For reflexive comparison goals, use `rewrite` and the owned reflexivity
-  lemma; `rw` may close them through imported generic order instances.
-- Supply retained bounds explicitly, e.g. `values[index.val]'index.isLt`;
-  implicit indexing proofs can introduce Omega and `Quot.sound`. Do not replace
-  scalar congruence with `ac_rfl` or structural list identity with blanket
-  `List.map_id`; use direct scalar equalities and structural induction.
-  Verify proof closures with the authoritative audit, not source-text searches.
+  proofs. Audit an existing proof route before replacing it.
+- Prefer structural recursion. Supply constructive decrease proofs for necessary
+  well-founded recursion and audit generated auxiliaries. Preserve clients'
+  actual unfolding and simplification when changing executable definitions.
 
 ## Owned data and public APIs
 
@@ -198,6 +169,13 @@
   runtime IDs, copied fields or convenient new owners. Small certified views
   and exact reducible aliases may shorten interfaces while preserving parent
   identity, indices and defining equations.
+- Before adding a record or certificate family, compare its fields and
+  invariants with the nearest existing owners. Reuse their constructors,
+  containers and laws; justify a new type by its distinct invariant, retained
+  cache or ownership boundary. For alternate interpreters, replay views and
+  query constructions of the same operation, share branch logic and derive
+  the views from it. Verify complete values, ordered traces, failures, fuel
+  accounting and cache reuse when consolidating execution.
 - Cache expensive executable data with specification equalities/certificates.
   Builders and downstream code must consume those exact caches; readback
   equality alone does not establish execution reuse. Retain factors outside
@@ -235,36 +213,37 @@
   and reasons explicitly. Preserve existing public contracts, executable bodies,
   fields, selected witnesses and failure semantics unless the task authorizes
   changing them; placement work is not algorithm-replacement authorization.
-- When moving an effectful branch into a state action, preserve its enclosing
-  early return after running the action. A return inside the action ends only
-  that action; check early-return modes through saved artifacts and generator
-  markers.
 - When a client outside a module needs a private declaration, expose the needed
   original declaration under its mathematical name, preserving its body and
   dependent identities. Do not create duplicate public copies or names with a
-  `_public` suffix; `_public` is a terrible naming choice and must not be used.
-- Before exposing a private theorem, check for an existing public theorem with
-  the same claim and for private declarations with the same qualified name in
-  consumers. Inspect the original's complete body even when opaque: public
-  elaboration can lose dot access to private companion laws. Expose needed
-  originals atomically. Public signatures and exposed bodies need publicly
-  accessible certificates; reuse the original mathematical owner where possible.
-- Match complete datatype arguments when checking constructor metadata; a command
-  for `Parent.Child` does not cover `Parent`.
-- Apply declaration routes to references with syntax awareness: preserve record
-  field labels, tactics and local identities, and repair method calls after owner
-  moves. Follow checked maps rather than mechanical prefix substitution.
-  Preserve scoped `variable` binder modes and `include` declarations when moving
-  namespace/section boundaries. Identical declaration text does not establish
-  the same compiled interface; check existing calls and retained parameters.
-  When wrapping Lean, preserve original tactic separators and complete location
-  clauses. Keep record continuations inside their fields and use explicit blocks
-  for multiline proofs.
-- Compiled-record comparisons must retain expression metadata and complete
-  `ConstantInfo` fields. A compact expression comparison does not prove literal
-  equality. Report source-position relocations separately: bind both sources,
-  check token spans (including empty syntax spans), surrounding whitespace and
-  anchors, and require every other expression node and record field to agree.
+  `_public` suffix.
+- Before adding or exposing a theorem, check existing owners for the same
+  claim. Check relevant active branches and handoffs when work overlaps;
+  pin revisions when comparing or reusing that work. Reuse or generalize owners;
+  do not develop parallel proofs or certificate families for the same contract.
+- Choose verification to match the promised preservation contract. Ordinary
+  maintenance needs affected-consumer builds and applicable audits. Exhaustive
+  reference inventories and literal compiled-record comparisons are required
+  when the task promises those stronger guarantees; follow
+  [source migration](docs/lean-development.md#namespaces-openings-and-source-moves)
+  and [compiled comparisons](docs/compiled-tracing.md#choosing-a-comparison-contract).
+
+## Documentation upkeep
+
+- Keep documentation focused on current contracts, usage and remaining work.
+  Delete fully implemented plans and remove their completed sections from
+  `docs/ideas.md`, `docs/future.md` and other roadmaps; repair incoming links.
+  Preserve useful API guidance in subject guides, not completion ledgers.
+  Extend the existing subject guide instead of adding one guide per checkpoint,
+  fixture or implementation step; keep detailed declaration contracts in source.
+- Keep technique guides reusable and procedural. In particular,
+  `docs/profiling.md` covers diagnosing and fixing slow module builds: extract
+  the symptom, cause and repair. Omit chronological investigations, historical
+  benchmark tables, temporary paths, process IDs and receipt inventories.
+- Leave routine verification outcomes in CI and run artifacts. Do not add
+  "all verification gates passed" claims, audit counts, build/LSP inventories
+  or stale pending-check notes to README files or documentation. Keep check
+  instructions and substantive unresolved limitations.
 
 ## Generators and build performance
 
@@ -274,54 +253,79 @@
   Retain directories used by Lake namespace globs in Git, even when they have
   no Lean sources. Verify a full build after adding a glob; scoped targets may
   never visit it.
-- Produce intricate finite witnesses with deterministic generators in `scripts/`.
-  Keep coefficient selection there as the single source of truth and provide
-  reproducibility/check mode. Producers are untrusted: verify generated data
-  with exact kernel-checked predicates or proof-producing verifiers.
+- Prefer executable library constructions and compact generic proofs to large
+  precomputed certificates. Do not add bespoke certificate-search harnesses or
+  check in their certificate/proof dumps to make ordinary library proofs build.
+  Use existing automation, scalar readbacks, schema lemmas and
+  kernel decision on small finite goals. Keep expensive numerical and replay
+  outputs in ignored worktree-local stores; reusable APIs must not depend on
+  a particular harness run.
+- Prefer direct Lean regressions with fixed inputs and explicit finite budgets;
+  test invalid records through library APIs. Do not add serialization formats,
+  persistent fixture stores or restart machinery solely to support tests.
+  Persistence infrastructure needs a demonstrated consumer outside test
+  scaffolding, such as a numerical tool or verification cache. Test that
+  consumer's actual reload/rejection contract through existing runners.
+  Preserve expected failure and inconclusivity; do not change inputs or
+  escalate budgets until a certificate appears.
+- Size numerical demonstrations to exhibit the theorem's construction and
+  certificates. Use small inputs and coarse accuracy sufficient for that
+  purpose; stop once the required construction and certificate checks succeed.
+  Keep higher precision and stress trajectories optional. General proofs
+  establish the theorem's full range independently of those runs.
+- Use deterministic generators in `scripts/` when fixed finite witness data is
+  itself required by a real client. Keep outputs compact and coefficient
+  selection in one source of truth, with reproducibility/check mode. Producers
+  are untrusted: verify generated data with exact kernel-checked predicates or
+  proof-producing verifiers.
 - Keep generated proofs as compact schema applications or readable constructor
   proofs. Check a source-size budget before expanding a family; do not dump
   elaborated expressions into source or duplicate them in manifests.
 - Constructor injectivity certificates should be derived from the datatype's
   metadata through `constructive_injectivity TypeName`, rather than maintained
   field recipes or serialized proof terms. Check generated mathematical proof
-  closures through the normal authoritative audit; the complete internal helper
-  audit remains separate work; see
-  [constructor certificates](docs/constructor-certificates.md). Preserve the
-  original `.inj` and `.injEq` API; state `.injEq` as an `Iff` without simp
-  registration. Suppress default axiom-bearing generation locally when supplying
-  checked replacements.
-- Expensive generators/harnesses must reuse completed work through atomic
-  incremental checkpoints and checked reloads. Preserve compatible artifacts
-  and reference shared input manifests through checked receipts instead of
-  duplicating them or rewriting the entire aggregate after each batch.
-  Test interrupted-run recovery before long reruns. Bind exact request/
-  protocol, executable content and retained bytes separately from numerical
-  validity and mathematical ownership. Legacy adoption cannot establish
-  historical executable provenance. Follow
+  closures through the normal authoritative audit; the generator's independent
+  internal helpers need not be axiom-free; see
+  [constructor certificates](docs/constructor-certificates.md). Before changing
+  shared certificate reconstruction, read the
+  [proof-generator procedure](docs/lean-development.md#proof-generators).
+- Reuse completed expensive work through atomic incremental checkpoints and
+  checked reloads in durable worktree-local stores. Preserve compatible
+  artifacts, bind actual inputs and outputs, and test interrupted-run recovery.
+  Bind the environment actually passed to workers; keep per-launch diagnostic
+  IDs and pool scheduling settings in their supervisors.
+  Before implementing or changing resumable jobs, read
   [checkpoint guidance](docs/profiling.md#reuse-completed-work-not-just-logs).
 - Before replacing a worker job, stop its supervisor and descendants after
   checking their process identities. Preserve checkpoints and confirm that no
   superseded worker remains live; detached workers can outlive their supervisor.
-- Keep ordinary Lean limits: do not add `maxRecDepth`, `maxHeartbeats` or external
-  resource safeguards to force success. Compact large dependent signatures with
-  named `def` aliases for exact propositions and parameter/field types, including
-  ownership/bounds. Factor large dependent construction out of recursive
-  equations; use scalar lemmas and explicit transport, unfolding only needed
-  adapters. Preserve cached data, certificates and equations.
+- Keep ordinary Lean limits: do not add `maxRecDepth` or `maxHeartbeats` overrides
+  to sources, or weaken watchdogs to force success. Diagnose the expensive phase
+  before changing proofs; use the [profiling guide](docs/profiling.md) for
+  dependent signatures, generated helpers, reduction and emission costs.
 - Size host-audit pools from measured whole-worker RSS and available memory;
   duplicated transitive imports dominate memory. Budget subagents separately
   and monitor only owned tool process groups; preserve proof scope and limits.
 - Check complete artifact/code emission early for dependent interfaces and
-  executable builders. Declaration checking alone is insufficient. Investigate
-  any individual module build taking over 60 seconds before repeating downstream
-  rebuilds; consult and update
+  executable builders; declaration checking alone is insufficient. Apply the
+  master integration timing policy below. After changing exposure, inlining or
+  dependent type boundaries, check affected production consumers as well as the
+  owner: a faster owner alone does not establish a successful repair. Consult and update
   [profiling.md](docs/profiling.md) for new bottlenecks and repairs.
-  Use `scripts/run-lake.sh --profile build` for automatic quiet timing and
-  isolated cost diagnostics; add `--cold` for complete project-cold coverage.
-  Compare quiet runs with identical thread settings; profiler frames overlap.
 
 ## Verification and working practice
 
+- Always work on a topic branch rather than `master` or a detached HEAD, unless
+  the user explicitly grants an exception. Continue existing tasks in their
+  current worktrees, including legacy locations; no relocation is required.
+  For new tasks, use the worktree helper below to create a fresh worktree on a
+  topic branch before editing. Preserve existing work. Agents own commit timing:
+  make coherent checkpoint commits as work
+  progresses and commit finished changes without asking for routine confirmation.
+  Keep work on its branch until integration is explicitly requested.
+- Preserve pre-existing user and agent changes. Stage and commit only changes
+  belonging to the task; do not absorb unrelated work or discard it during
+  cleanup. Inspect child worktrees for uncommitted work before removing them.
 - Keep tracked PDFs consistent with their current TeX sources. After changing
   a manuscript or any shared TeX input, regenerate every affected PDF and include
   it in the same commit; never commit manuscript edits with stale PDFs.
@@ -329,41 +333,94 @@
   established build command for other publications. Shared CCL source changes
   require rebuilding both CCL PDFs. Check that PDF generation succeeds before
   declaring manuscript work complete.
-- On a working branch, build all changed Lean files before committing, with
-  warnings fatal (`lake --wfail build <targets>`). No linter warnings may remain.
-  The diff identifies changed filenames; do not repeat that inventory in commit
-  messages. Full checks may be deferred across commits until task completion;
+- During branch work, incrementally build, axiom-check and lint changed Lean
+  modules and affected consumers after meaningful edit batches and before
+  checkpoint commits. Use warning-fatal builds
+  (`scripts/run-lake.sh --wfail build <targets>`), scoped
+  `scripts/check-axioms.sh <targets>` and scoped
+  `scripts/run-lake.sh --wfail lint <modules>`. Run Lake through
+  `scripts/run-lake.sh` to select the checked patched toolchain and serialize
+  native-provider preparation. No linter warnings may remain.
+  Reserve full integration gates, including nanoda, for merge readiness;
   track accumulated changes and affected consumer coverage.
-- Use `leanOptions` name/value records in `lakefile.toml` when an option and
-  its suboptions are both configured. Quoted dotted table keys are single Lean
-  name components. Keep the selected native linter providers in dependency
-  order so Core-only sources receive the same checks without proof imports.
-  Keep every declared library/executable in `defaultTargets`; unscoped
-  `scripts/run-lake.sh lint` selects all active modules and configured scripts.
-  Validate options with focused positive/negative checks; `lake check-lint`
-  checks runner configuration, not option validity or source compliance.
+- Nanoda is required when ready to merge into `master`, not for routine branch
+  work, checkpoint commits or branch implementation completion. Run it earlier
+  only when explicitly requested or needed for a specific diagnosis. A branch
+  completion report must distinguish implemented work, incremental checks and
+  the integration checks still pending.
+- Branch work may be committed and declared complete with known module timing
+  overruns. Report the affected modules, measured times, checks blocked by
+  performance and remaining optimization; do not call a failed or incomplete
+  check a pass. Performance debt does not waive mathematical correctness,
+  warning-fatal builds or the applicable verification requirements. Keep
+  unrelated performance cleanup outside the requested task.
+  Before merging or otherwise integrating Lean changes into `master`, changed
+  project modules and consumers affected by the changes must compile in under
+  30 seconds with current dependencies and complete artifact/code emission.
+  Each project-owned nanoda check in that affected scope must also finish in
+  under 30 seconds. An unchanged
+  source can become slower through changed dependencies, exposure, inlining or
+  instances. Do not require profiling or cleanup of unaffected modules.
+  Cached builds do not establish fresh compilation time. Use controlled timings
+  and disclose observed unrelated overruns without expanding the task to fix them.
+  These performance targets exclude third-party code, including the pinned Lean
+  toolchain. See [verification.md](docs/verification.md) for current enforcement.
+- When integration is authorized, prepare the candidate tree on a topic branch
+  and check it against current `master` before advancing `master`. For a local
+  merge, use `git merge --no-ff --no-commit <topic>` so fast-forwarding cannot
+  bypass the checks. Build, fix affected slow modules and run applicable final
+  gates before committing the merge. Keep fixes on the topic branch where
+  practical. Follow the [integration procedure](docs/verification.md#preparing-an-integration).
+- Start every module build and regression test under a suitable watchdog.
+  Use `scripts/run-lake.sh` for Lean compilation and the supervised checkers or
+  equivalent owned-process supervision for standalone regressions. A caller's
+  short tool wait is not a watchdog; see [watchdogs](docs/verification.md#watchdogs-and-process-ownership).
+  On every branch, terminate an individual module build at two minutes and a
+  regression test at five minutes. Send SIGKILL after a fifteen-second grace
+  if needed. Investigate the overrun immediately, before retrying or continuing
+  dependent work. An explicit user-authorized release exception may select
+  `CCL_MODULE_TIMEOUT_SECONDS` up to 300 for guarded builds; record that budget
+  and retain the ordinary default otherwise. A separately authorized tooling-test
+  exception may use `CCL_TOOLING_TIMEOUT_OVERRIDES` for exact discovered case IDs,
+  with a maximum of 600 seconds and the selected deadline bound to each receipt.
+  Do not increase a deadline automatically
+  after failures. Finishing
+  before termination does not establish master readiness. Avoid blind retries
+  after an overrun; bounded profiling, controlled timing comparisons and required
+  verification are valid reasons to rerun unchanged code. Reuse completed work.
+  Full builds, test suites, lint, axiom checks and full nanoda runs may take
+  longer than five minutes in aggregate. Keep progress reporting and supervision
+  active throughout; aggregate duration is not a module measurement.
+  Numerical computations, harnesses and generator jobs retain the five-minute
+  limit and fifteen-second grace. Use checked incremental checkpoints for
+  useful bounded batches, preserving the mathematical requests and budgets.
+  Preserve completed artifacts and verify the owned supervisor and descendants
+  have exited before restarting.
+- Keep every declared library/executable in `defaultTargets` and preserve the
+  selected native linter providers for Core-only sources. Before changing lint
+  configuration or coverage, read [linting.md](docs/linting.md).
 - `scripts/check-axioms.sh` is authoritative. During branch work, including
   before commits, scope audits to changed Lean modules (module names or `.lean`
-  paths). Do not commit Lean changes with a known required-check failure.
+  paths). Do not treat known correctness failures as completed work; distinguish
+  them from pending checks and the performance debt permitted above.
   Validate generated target lists before execution; missing or empty scoped
   inventories must fail instead of selecting the default full scope.
-- Changes to Lean code, including changes to scripts that produce Lean code,
-  can run all completion gates through `scripts/check-all.sh`; see
-  [completion checks](docs/verification.md) for coverage, caches and prerequisites.
-  Such changes normally require a successful full build (`lake --wfail build`), full axiom audit
+- Before integrating mathematical Lean changes into `master`, including changes
+  to generators of mathematical Lean sources, run the full integration gates through
+  `scripts/check-all.sh`; see [integration checks](docs/verification.md) for
+  coverage, caches and prerequisites. These gates normally require a successful full build
+  (`scripts/run-lake.sh --wfail build`), full lint
+  (`scripts/run-lake.sh --wfail lint`), full axiom audit
   (`scripts/check-axioms.sh --configured-scripts --full`) and full nanoda pass
   (`scripts/check-nanoda.sh`) on the final tree, including affected optional
-  targets. Scoped checks do not replace these completion gates. Changes confined
+  targets. Incremental branch checks do not replace these merge-readiness gates.
+  Do not run the full suite merely to complete ordinary branch work. Changes confined
   to linting or nanoda-checker tooling, including its Lean support code and
   generators, are exempt from the axiom and nanoda gates; run focused tooling
-  regressions and appropriate builds. Other script-only changes require relevant
-  tooling tests and build checks, but no axiom audit or nanoda pass.
+  regressions and appropriate builds. Script changes that neither change
+  mathematical Lean sources nor generate them require relevant tooling tests
+  and build checks, but no axiom audit or nanoda pass.
   Documentation-only changes require no Lean build or proof audit.
-  Include configured script owners explicitly: plain `--full` omits them.
-  Compare script receipt roots by scanned module and declaration name;
-  standalone modules can each declare the same basename, including `main`.
-  Include selected project roots even when their worker labels them canonical;
-  worker roles do not change declaration identity or project coverage.
 - Serialize builds and Lean checks that import their outputs in the same
   worktree. Lake can replace artifact parts during emission; overlapping
   writers or readers can observe missing or stale parts.
@@ -371,24 +428,34 @@
   outputs; final builds and audits must still use the current working tree.
   Freeze Lean source edits before an authoritative audit: its required
   support/regression build can rebuild beyond the named audit modules.
-- Resume completed subagents with follow-up tasks; messages alone do not restart
-  their work.
-- When using subagents, output from a running build may be inspected to start
-  useful work before the process exits. Without subagents, let the build process
-  exit before inspecting its output. Partial output does not establish a
-  successful build.
-- `--no-build` requires current selected and audit-support artifacts. Audit
-  receipts bind module sets, source/tool revisions and compiled private
-  artifacts, including generated proof auxiliaries. A public `.olean` alone
-  proves no private-body currentness. After proof dependency changes, rebuild
-  the affected import closure: literal `ConstantInfo` records do not establish
-  current exported-axiom cache entries. Bind complete emitted parts and retain
-  those entries. Missing/stale private artifacts require rerunning the
-  authoritative audit. Diagnose only reported audit failures with
-  `scripts/trace-axiom.sh`; never create ad-hoc `#print axioms` probe files.
+- Before using LSP queries for migration evidence, follow the checked
+  [frontend alignment](docs/profiling.md#align-lsp-workers-with-the-checked-native-frontend)
+  and [reference procedure](docs/profiling.md#lsp-with-the-private-core-prefix).
+- Create worktrees for new tasks, and any additional worktrees used by subagents,
+  inside the task's original top-level worktree. Existing tasks continue where
+  they are already working. Use
+  `python3 scripts/worktrees.py create TOPIC` to create `.worktrees/<topic-slug>/`
+  on its matching branch, and `list` to inspect the current Git inventory.
+  Pass the original root to subagents; use `--root ORIGINAL_ROOT` when needed.
+  Moving into a child does not redefine that root. Do not repurpose an old task
+  directory for another subject or create sibling worktrees under `~/repos`
+  or temporary directories. Use `retire TOPIC` for completed, merged worktrees;
+  it retains branches and archives ignored data. Follow the
+  [worktree procedure](scripts/README.md#task-worktrees), including its process-use
+  checks. Keep `.worktrees/` ignored and excluded from parent source inventories.
+- Inspect live build/check output for progress and diagnosis, with or without
+  subagents. Preserve the owning wait, raw exit and required receipts; partial
+  output or a worker's success does not establish success for the complete run.
+- For progressive GitHub releases, reuse the topic worktree in Git configuration
+  `ccl.releaseWorktree`; keep its path and caches after publication. Use the durable
+  `ccl.publicHistoryStore` for mapping backups and receipts, and verify mounted
+  storage before writing. Follow [release storage](docs/verification.md#durable-release-checkpoints).
+- `--no-build` requires current selected, private and audit-support artifacts;
+  follow [artifact currentness](docs/verification.md#artifact-currentness-and-audit-coverage).
+  Diagnose reported audit failures through `scripts/trace-axiom.sh`, following
+  [compiled tracing](docs/compiled-tracing.md); do not create ad-hoc `#print axioms`
+  probe files.
 - Update AGENTS.md when new rules prove helpful. Keep it concise and actionable:
-  consolidate related guidance and remove superseded rules. Put historical
-  reasoning, incident details and migration narratives in the relevant linked
-  documentation, not here.
+  consolidate related guidance and remove superseded rules.
 - Give concrete progress updates roughly every 60 seconds: findings, remaining
   uncertainty and the next question to resolve. Explain changes of approach.

@@ -1,4 +1,5 @@
 module
+import Purelib.Approximation.Rational.Budget.Weighted
 import Purelib.Data.Rat.Fraction
 import Purelib.Algebra.Field.ExplicitField
 import Purelib.Approximation.Gaussian.Equivalence
@@ -35,6 +36,9 @@ import Purelib.Approximation.Rational.Geometric.Basic
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
+
+open Purelib.Data.Gaussian.Norm
+open Purelib.Data.Rat.Fraction.Order
 
 /-!
 # Arithmetic-process bridges for Gaussian sample products
@@ -82,7 +86,7 @@ private theorem approximationMul_refine_component_radius_lt
     Name.multiplicativeInputTarget_pos
       leftName rightName positive
   have inputLt : inputTarget < target :=
-    Gaussian.Process.Coherence.Basic.Coherent.processMultiplicativeInputTarget_lt_target
+    Process.Coherence.Basic.Coherent.processMultiplicativeInputTarget_lt_target
       leftName rightName positive
   change left.radiusSq
         (left.refineIndex state.1 inputTarget inputPositive) < target ∧
@@ -101,18 +105,18 @@ retained operand radii by that index's positive refinement target. -/
 public theorem approximationMul_stateAt_component_radius_lt
     (left right : ApproximationData)
     (start : left.toProcess.State × right.toProcess.State) (index : Nat) :
-    let state := Gaussian.Process.Sampling.stateAt
+    let state := Process.Sampling.stateAt
       (left.toProcess.mul right.toProcess) start index
     left.radiusSq state.1 <
-        Gaussian.Process.Sampling.refinementTarget index ∧
+        Process.Sampling.refinementTarget index ∧
       right.radiusSq state.2 <
-        Gaussian.Process.Sampling.refinementTarget index := by
+        Process.Sampling.refinementTarget index := by
   cases index with
   | zero =>
       exact approximationMul_refine_component_radius_lt left right start _ _
   | succ index =>
       exact approximationMul_refine_component_radius_lt left right
-        (Gaussian.Process.Sampling.stateAt
+        (Process.Sampling.stateAt
           (left.toProcess.mul right.toProcess) start index) _ _
 
 /-- The canonical product witness is the product of the original operand samples at the two retained component indices.
@@ -122,13 +126,13 @@ operation returns their Gaussian product directly. -/
 private theorem approximationMul_witnessAt_eq
     (left right : ApproximationData)
     (start : left.toProcess.State × right.toProcess.State) (index : Nat) :
-    Gaussian.Process.Sampling.witnessAt
+    Process.Sampling.witnessAt
         (left.toProcess.mul right.toProcess) start index =
       left.sample
-          (Gaussian.Process.Sampling.stateAt
+          (Process.Sampling.stateAt
             (left.toProcess.mul right.toProcess) start index).1 *
         right.sample
-          (Gaussian.Process.Sampling.stateAt
+          (Process.Sampling.stateAt
             (left.toProcess.mul right.toProcess) start index).2 :=
   rfl
 
@@ -140,6 +144,27 @@ approximations remain its inputs. -/
     (left right : ApproximationData) : Fraction.Rational :=
   8 + 4 * (left.centerBound + right.centerBound)
 
+/-- The original product comparison coefficient pays two equal operand tolerances with their actual magnitude ceilings.
+
+The two positive unit margins are bounded by the retained constant eight;
+the doubled actual operand ceilings are bounded by its retained factor four.
+No nonzero magnitude assumption is needed for either operand.
+-/
+public theorem approximationMulBridgeCoefficient_pair_bound (left right : ApproximationData)
+    (target : Fraction.Rational) (nonnegative : 0 ≤ target) :
+    2 * (target * left.centerBound + right.centerBound * target) + target + target ≤
+      target * approximationMulBridgeCoefficient left right := by
+  apply Arithmetic.le_of_sub_nonneg_direct
+  change 0 ≤ target * (8 + 4 * (left.centerBound + right.centerBound)) - _
+  have same : target * (8 + 4 * (left.centerBound + right.centerBound)) -
+      (2 * (target * left.centerBound + right.centerBound * target) + target + target) =
+      target * (6 + 2 * (left.centerBound + right.centerBound)) := by ring1
+  rewrite [same]
+  exact Arithmetic.mul_nonneg_direct nonnegative
+    (add_nonneg (by decide : (0 : Fraction.Rational) ≤ 6)
+      (Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 2)
+        (add_nonneg left.centerBound_nonneg right.centerBound_nonneg)))
+
 /-- The product comparison coefficient is strictly positive.
 
 The constant eight is positive and the two retained center bounds are nonnegative. Their scaled sum therefore preserves
@@ -148,8 +173,8 @@ public theorem approximationMulBridgeCoefficient_pos
     (left right : ApproximationData) :
     0 < approximationMulBridgeCoefficient left right := by
   unfold approximationMulBridgeCoefficient
-  exact Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct (by decide)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  exact Arithmetic.add_pos_of_pos_of_nonneg_direct (by decide)
+    (Arithmetic.mul_nonneg_direct (by decide)
       (add_nonneg left.centerBound_nonneg right.centerBound_nonneg))
 
 /-- The operand comparison tolerance obtained by dividing the output target by one plus its retained product comparison
@@ -168,10 +193,11 @@ output target preserves strict positivity. -/
 public theorem approximationMulBridgeTarget_pos (left right : ApproximationData)
     {target : Fraction.Rational} (positive : 0 < target) :
     0 < approximationMulBridgeTarget left right target :=
-  Fraction.Order.Field.div_pos_direct positive
-    (Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct (by decide)
+  Field.div_pos_direct positive
+    (Arithmetic.add_pos_of_pos_of_nonneg_direct (by decide)
       (approximationMulBridgeCoefficient_pos left right).le)
 
+open Purelib.Approximation.Rational.Budget in
 /-- The scaled operand comparison tolerance stays strictly below the requested positive product tolerance.
 
 The coefficient is strictly smaller than one plus itself. Multiplication by the supplied positive output target
@@ -181,33 +207,9 @@ public theorem approximationMulBridgeTarget_budget_lt
     (positive : 0 < target) :
     approximationMulBridgeTarget left right target *
         approximationMulBridgeCoefficient left right < target := by
-  let coefficient := approximationMulBridgeCoefficient left right
-  have coefficientPositive : 0 < coefficient :=
-    approximationMulBridgeCoefficient_pos left right
-  have denominatorPositive : 0 < 1 + coefficient :=
-    Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct (by decide) coefficientPositive.le
-  have fractionLt : coefficient / (1 + coefficient) < 1 := by
-    apply (Fraction.Order.Field.div_lt_iff_pos denominatorPositive).2
-    calc
-      coefficient = 0 + coefficient :=
-        (Fraction.Field.zero_add coefficient).symm
-      _ < 1 + coefficient :=
-        Fraction.Order.Arithmetic.add_lt_add_right_direct
-          (by decide) coefficient
-      _ = 1 * (1 + coefficient) :=
-        (Fraction.Field.one_mul _).symm
-  have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
-    positive fractionLt
-  calc
-    approximationMulBridgeTarget left right target *
-        approximationMulBridgeCoefficient left right =
-      target * (coefficient / (1 + coefficient)) := by
-        dsimp only [approximationMulBridgeTarget, coefficient]
-        rw [Algebra.Field.ExplicitField.div_eq_mul_inv,
-          Algebra.Field.ExplicitField.div_eq_mul_inv]
-        ring1
-    _ < target * 1 := scaled
-    _ = target := Fraction.Field.mul_one_direct _
+  have paid := Weighted.mul_allowance_lt positive (approximationMulBridgeCoefficient_pos left right).le
+  rewrite [Weighted.allowance_eq_div_one_add] at paid
+  exact (Fraction.Field.mul_comm _ _).trans_lt paid
 
 /-- The actual arithmetic product process agrees operationally with the supplied pointwise sample product.
 
@@ -217,7 +219,7 @@ tolerance. The supplied pointwise product equation links these exact observation
 @[expose] public def mulToNamed_equivalent_pointwise (left right product : ApproximationData)
     (sample_eq : ∀ index,
       product.sample index = left.sample index * right.sample index) :
-    Gaussian.Equivalence.NamedEquivalent
+    NamedEquivalent
       (Named.mul
         left.toNamed right.toNamed)
       product.toNamed := by
@@ -225,7 +227,7 @@ tolerance. The supplied pointwise product equation links these exact observation
   let start : process.State :=
     (show left.toProcess.State from (0 : Nat),
       show right.toProcess.State from (0 : Nat))
-  let bridge : Gaussian.Equivalence.Equivalent
+  let bridge : Equivalent
       (Sampling.approximation
         (Named.mul
           left.toNamed right.toNamed)) product :=
@@ -240,19 +242,19 @@ tolerance. The supplied pointwise product equation links these exact observation
           Search.firstQuarterBelow_ge
             1 leftStart smallTarget
         have outerSmall :
-            Gaussian.Process.Sampling.refinementTarget leftIndex <
+            Process.Sampling.refinementTarget leftIndex <
               smallTarget :=
           Search.firstQuarterBelow_accurate
             1 (by decide) leftStart smallTarget smallPositive
-        let baseState := Gaussian.Process.Sampling.stateAt
+        let baseState := Process.Sampling.stateAt
           process start leftIndex
         let baseLeft : Nat := baseState.1
         let baseRight : Nat := baseState.2
         have componentSmall :
             left.radiusSq baseLeft <
-                Gaussian.Process.Sampling.refinementTarget leftIndex ∧
+                Process.Sampling.refinementTarget leftIndex ∧
               right.radiusSq baseRight <
-                Gaussian.Process.Sampling.refinementTarget leftIndex :=
+                Process.Sampling.refinementTarget leftIndex :=
           approximationMul_stateAt_component_radius_lt
             left right start leftIndex
         let rightIndex := max rightStart (max baseLeft baseRight)
@@ -274,7 +276,7 @@ tolerance. The supplied pointwise product equation links these exact observation
               have leftMovementForward := left.later_close leftComponentOrder
               have rightMovementForward := right.later_close rightComponentOrder
               have leftMovement :
-                  Data.Gaussian.Norm.Basic.normSq
+                  Basic.normSq
                       (left.sample baseLeft -
                         left.sample rightLater) ≤
                     left.radiusSq baseLeft := by
@@ -282,12 +284,12 @@ tolerance. The supplied pointwise product equation links these exact observation
                     left.sample baseLeft - left.sample rightLater =
                       -(left.sample rightLater - left.sample baseLeft) := by
                   apply Data.Gaussian.Basic.ext <;>
-                    simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-                      Purelib.Data.Gaussian.Basic.neg_re, Purelib.Data.Gaussian.Basic.neg_im] <;> ring1
-                rw [identity, Data.Gaussian.Norm.Basic.normSq_neg]
+                    simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+                      Data.Gaussian.Basic.neg_re, Data.Gaussian.Basic.neg_im] <;> ring1
+                rw [identity, Basic.normSq_neg]
                 exact leftMovementForward
               have rightMovement :
-                  Data.Gaussian.Norm.Basic.normSq
+                  Basic.normSq
                       (right.sample baseRight -
                         right.sample rightLater) ≤
                     right.radiusSq baseRight := by
@@ -295,29 +297,29 @@ tolerance. The supplied pointwise product equation links these exact observation
                     right.sample baseRight - right.sample rightLater =
                       -(right.sample rightLater - right.sample baseRight) := by
                   apply Data.Gaussian.Basic.ext <;>
-                    simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-                      Purelib.Data.Gaussian.Basic.neg_re, Purelib.Data.Gaussian.Basic.neg_im] <;> ring1
-                rw [identity, Data.Gaussian.Norm.Basic.normSq_neg]
+                    simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+                      Data.Gaussian.Basic.neg_re, Data.Gaussian.Basic.neg_im] <;> ring1
+                rw [identity, Basic.normSq_neg]
                 exact rightMovementForward
               have firstTerm :
-                  Data.Gaussian.Norm.Basic.normSq
+                  Basic.normSq
                       ((left.sample baseLeft - left.sample rightLater) *
                         right.sample baseRight) ≤
                     left.radiusSq baseLeft * right.centerBound := by
-                rw [Data.Gaussian.Norm.Basic.normSq_mul]
-                exact Fraction.Order.Arithmetic.mul_le_mul_direct
+                rw [Basic.normSq_mul]
+                exact Arithmetic.mul_le_mul_direct
                   leftMovement (right.sample_bounded baseRight)
-                  (Data.Gaussian.Norm.Basic.normSq_nonneg _) (left.radiusSq_nonneg baseLeft)
+                  (Basic.normSq_nonneg _) (left.radiusSq_nonneg baseLeft)
               have secondTerm :
-                  Data.Gaussian.Norm.Basic.normSq
+                  Basic.normSq
                       (left.sample rightLater *
                         (right.sample baseRight -
                           right.sample rightLater)) ≤
                     left.centerBound * right.radiusSq baseRight := by
-                rw [Data.Gaussian.Norm.Basic.normSq_mul]
-                exact Fraction.Order.Arithmetic.mul_le_mul_direct
+                rw [Basic.normSq_mul]
+                exact Arithmetic.mul_le_mul_direct
                   (left.sample_bounded rightLater) rightMovement
-                  (Data.Gaussian.Norm.Basic.normSq_nonneg _) left.centerBound_nonneg
+                  (Basic.normSq_nonneg _) left.centerBound_nonneg
               have productIdentity :
                   left.sample baseLeft * right.sample baseRight -
                       left.sample rightLater * right.sample rightLater =
@@ -327,109 +329,109 @@ tolerance. The supplied pointwise product equation links these exact observation
                         (right.sample baseRight -
                           right.sample rightLater) := by
                 apply Data.Gaussian.Basic.ext <;>
-                  simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-                    Purelib.Data.Gaussian.Basic.add_re, Purelib.Data.Gaussian.Basic.add_im,
-                    Purelib.Data.Gaussian.Basic.mul_re, Purelib.Data.Gaussian.Basic.mul_im] <;>
+                  simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+                    Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im,
+                    Data.Gaussian.Basic.mul_re, Data.Gaussian.Basic.mul_im] <;>
                     ring1
               have pointwiseBound :
-                  Data.Gaussian.Norm.Basic.normSq
+                  Basic.normSq
                       (left.sample baseLeft * right.sample baseRight -
                         product.sample rightLater) ≤
                     2 *
-                      (Gaussian.Process.Sampling.refinementTarget
+                      (Process.Sampling.refinementTarget
                           leftIndex * right.centerBound +
                         left.centerBound *
-                          Gaussian.Process.Sampling.refinementTarget
+                          Process.Sampling.refinementTarget
                             leftIndex) := by
                 rw [sample_eq, productIdentity]
                 calc
-                  Data.Gaussian.Norm.Basic.normSq
+                  Basic.normSq
                       ((left.sample baseLeft - left.sample rightLater) *
                           right.sample baseRight +
                         left.sample rightLater *
                           (right.sample baseRight -
                             right.sample rightLater)) ≤
                     2 *
-                      (Data.Gaussian.Norm.Basic.normSq
+                      (Basic.normSq
                           ((left.sample baseLeft -
                               left.sample rightLater) *
                             right.sample baseRight) +
-                        Data.Gaussian.Norm.Basic.normSq
+                        Basic.normSq
                           (left.sample rightLater *
                             (right.sample baseRight -
                               right.sample rightLater))) :=
-                    Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _
+                    Bounds.normSq_add_le_two _ _
                   _ ≤ 2 *
                       (left.radiusSq baseLeft * right.centerBound +
                         left.centerBound * right.radiusSq baseRight) :=
-                    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                    Arithmetic.mul_le_mul_of_nonneg_left_direct
                       (add_le_add firstTerm secondTerm) (by decide)
                   _ ≤ 2 *
-                      (Gaussian.Process.Sampling.refinementTarget
+                      (Process.Sampling.refinementTarget
                           leftIndex * right.centerBound +
                         left.centerBound *
-                          Gaussian.Process.Sampling.refinementTarget
+                          Process.Sampling.refinementTarget
                             leftIndex) :=
-                    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                    Arithmetic.mul_le_mul_of_nonneg_left_direct
                       (add_le_add
-                        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+                        (Arithmetic.mul_le_mul_of_nonneg_right_direct
                           componentSmall.1.le right.centerBound_nonneg)
-                        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                        (Arithmetic.mul_le_mul_of_nonneg_left_direct
                           componentSmall.2.le left.centerBound_nonneg))
                       (by decide)
               have actualTail :
-                  Data.Gaussian.Norm.Basic.normSq
-                      (Gaussian.Process.Sampling.witnessAt
+                  Basic.normSq
+                      (Process.Sampling.witnessAt
                           process start leftLater -
-                        Gaussian.Process.Sampling.witnessAt
+                        Process.Sampling.witnessAt
                           process start leftIndex) ≤
-                    4 * Gaussian.Process.Sampling.refinementTarget
+                    4 * Process.Sampling.refinementTarget
                       leftIndex := by
-                rw [← Gaussian.Sampling.Dyadic.quarterRadius_four_eq_four_refinementTarget]
-                exact Gaussian.Process.Sampling.witnessAt_later_close
+                rw [← Sampling.Dyadic.quarterRadius_four_eq_four_refinementTarget]
+                exact Process.Sampling.witnessAt_later_close
                   process start leftOrder
-              change Data.Gaussian.Norm.Basic.normSq
-                  (Gaussian.Process.Sampling.witnessAt
+              change Basic.normSq
+                  (Process.Sampling.witnessAt
                       process start leftLater - product.sample rightLater) <
                 target
               calc
-                Data.Gaussian.Norm.Basic.normSq
-                    (Gaussian.Process.Sampling.witnessAt
+                Basic.normSq
+                    (Process.Sampling.witnessAt
                         process start leftLater - product.sample rightLater) ≤
                   2 *
-                    (Data.Gaussian.Norm.Basic.normSq
-                        (Gaussian.Process.Sampling.witnessAt
+                    (Basic.normSq
+                        (Process.Sampling.witnessAt
                             process start leftLater -
-                          Gaussian.Process.Sampling.witnessAt
+                          Process.Sampling.witnessAt
                             process start leftIndex) +
-                      Data.Gaussian.Norm.Basic.normSq
-                        (Gaussian.Process.Sampling.witnessAt
+                      Basic.normSq
+                        (Process.Sampling.witnessAt
                             process start leftIndex -
                           product.sample rightLater)) :=
-                    Data.Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _
+                    Bounds.normSq_sub_le_via _ _ _
                 _ ≤ 2 *
                     (4 *
-                        Gaussian.Process.Sampling.refinementTarget
+                        Process.Sampling.refinementTarget
                           leftIndex +
                       2 *
-                        (Gaussian.Process.Sampling.refinementTarget
+                        (Process.Sampling.refinementTarget
                             leftIndex * right.centerBound +
                           left.centerBound *
-                            Gaussian.Process.Sampling.refinementTarget
+                            Process.Sampling.refinementTarget
                               leftIndex)) := by
-                  apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                  apply Arithmetic.mul_le_mul_of_nonneg_left_direct
                   · apply add_le_add actualTail
                     rw [approximationMul_witnessAt_eq]
                     exact pointwiseBound
                   · decide
-                _ = Gaussian.Process.Sampling.refinementTarget
+                _ = Process.Sampling.refinementTarget
                       leftIndex *
                     approximationMulBridgeCoefficient left right := by
                   unfold approximationMulBridgeCoefficient
                   ring1
                 _ < smallTarget *
                     approximationMulBridgeCoefficient left right :=
-                  Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+                  Arithmetic.mul_lt_mul_of_pos_right_direct
                     outerSmall
                     (approximationMulBridgeCoefficient_pos left right)
                 _ < target :=

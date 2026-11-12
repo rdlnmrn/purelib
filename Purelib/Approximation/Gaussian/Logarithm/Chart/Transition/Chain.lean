@@ -17,6 +17,8 @@ import Purelib.Approximation.ElementaryFunction.Exponential.Operational.Inverse
 import Purelib.Approximation.Gaussian.Process.Coherence.Basic
 import Purelib.Data.Gaussian.Basic
 
+open Purelib.Approximation.Gaussian.Exponential.Progressive.Range
+
 namespace Purelib.Approximation.Gaussian.Logarithm.Chart.Transition.Chain
 
 open Purelib
@@ -50,8 +52,8 @@ open Purelib.Approximation
       Coherence.exact 0
   | start, next :: rest =>
       CoherentNamed.add
-        (Transition.transition start next)
-          (Purelib.Approximation.Gaussian.Logarithm.Chart.Transition.Chain.transitionChain next rest)
+        (transition start next)
+          (Chain.transitionChain next rest)
 
 /-- Every finite chart-transition chain has unit exponential.
 
@@ -59,37 +61,37 @@ This is the finite monodromy statement: it does not identify the chain with a co
 constant. -/
 @[expose] def exp_transitionChain_unit {input : CoherentNamed} :
     (start : Anchored.AnchoredChart input) → (rest : List (Anchored.AnchoredChart input)) →
-    Gaussian.Equivalence.NamedEquivalent
+    NamedEquivalent
       (Exponential.Progressive.Range.Name.named
-        (Approximation.Gaussian.Logarithm.Chart.Transition.Chain.transitionChain start rest).name)
+        (transitionChain start rest).name)
       (Named.exact 1)
   | _start, [] => by
-      simpa only [Approximation.Gaussian.Logarithm.Chart.Transition.Chain.transitionChain,
+      simpa only [transitionChain,
         Coherence.exact] using
-        Exponential.Progressive.Range.Exact.automaticExp_zero
+        Exact.automaticExp_zero
   | start, next :: rest => by
-      let head := Transition.transition start next
-      let tail := Approximation.Gaussian.Logarithm.Chart.Transition.Chain.transitionChain next rest
-      let headExp := Exponential.Progressive.Range.Coherent.exp head.name
-      let tailExp := Exponential.Progressive.Range.Coherent.exp tail.name
+      let head := transition start next
+      let tail := transitionChain next rest
+      let headExp := Coherent.exp head.name
+      let tailExp := Coherent.exp tail.name
       let one :=
         Coherence.exact 1
-      have productToOne : Gaussian.Equivalence.NamedEquivalent
+      have productToOne : NamedEquivalent
           (Named.mul
             headExp.name tailExp.name)
           (Named.mul
             one.name one.name) :=
         Congruence.coherentMul_respects headExp one tailExp one
-          (Transition.exp_transition_unit start next)
-          (Purelib.Approximation.Gaussian.Logarithm.Chart.Transition.Chain.exp_transitionChain_unit next rest)
+          (exp_transition_unit start next)
+          (Chain.exp_transitionChain_unit next rest)
       exact NamedEquivalent.trans
         (NamedEquivalent.symm
           (by
-            simpa only [Approximation.Gaussian.Logarithm.Chart.Transition.Chain.transitionChain, head, tail, headExp,
+            simpa only [transitionChain, head, tail, headExp,
               tailExp,
               CoherentNamed.add,
-              Exponential.Progressive.Range.Coherent.exp] using
-              Exponential.Progressive.Range.Addition.automaticExp_add head tail))
+              Coherent.exp] using
+              Addition.automaticExp_add head tail))
         (NamedEquivalent.trans
           productToOne
           (by

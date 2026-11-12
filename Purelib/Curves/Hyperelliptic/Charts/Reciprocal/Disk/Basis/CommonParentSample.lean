@@ -103,18 +103,18 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy (
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+    UniformReciprocalModels.Data patch count}
   {cover : Cover data} {covers :
     BasisSourceCovers parent}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {bounds :
+  {regular : RegularBounds.Data cap} {bounds :
     UniformBounds regular.padded}
   {depth floor sourceFloor : Nat} {target sourceTarget : Coordinate}
-  {index minimum stage : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {index minimum stage : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
   {polynomials : RegularBasisPolynomials cap
     index box}
   {anchorBank : PrimitiveCells data index
@@ -139,9 +139,9 @@ open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 variable {energyTarget : Coordinate} {energyFloor energyDepth : Nat}
 
 variable {originals :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+  BasisSourceLocations.PrimitiveBank
   covers index}
-  {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
+  {coefficients : GaussianVector genus}
 
 open Purelib.Integration.Path.HomogeneousTraceConnection (HomogeneousTrace)
 
@@ -159,7 +159,7 @@ variable {request :
   {plan : Plan
     request capSample polynomials minimum}
   {acquired :
-    CommonParentReadings.BasisCommonParentRequest.Plan.Acquisition
+    Plan.Acquisition
     plan anchorBank bank stage}
   {energyFloor radialDepth : Nat}
 
@@ -179,26 +179,26 @@ The sample reuses the actual root readings, original primitive bank and common r
 energies, paths, joins and endpoint values. -/
 structure Sample
     (acquired : Plan.Acquisition plan anchorBank bank stage)
-    (preparation : CommonEnergyPreparation.EnergyPreparation request.charts.requests plan.charts acquired.readings
+    (preparation : EnergyPreparation request.charts.requests plan.charts acquired.readings
       allowance energyFloor)
     (originals : BasisSourceLocations.PrimitiveBank covers index)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (radialDepth : Nat) where
-  /-- The actual chart energies at the retained common radial depth. -/ energies : CommonChartEnergy.Energies
+    (coefficients : GaussianVector genus) (radialDepth : Nat) where
+  /-- The actual chart energies at the retained common radial depth. -/ energies : Energies
     preparation.allowance energyFloor radialDepth request.charts.requests plan.charts acquired.readings
   /-- The coefficient-weighted energy samples on the acquired chart readings. -/ samples :
-    CommonEnergySamples.EnergySamples coefficients request.charts.requests plan.charts acquired.readings energies
-  /-- The actual paths acquired from the original basis primitive bank. -/ paths : Plans.Paths originals coefficients
+    EnergySamples coefficients request.charts.requests plan.charts acquired.readings energies
+  /-- The actual paths acquired from the original basis primitive bank. -/ paths : Paths originals coefficients
     request.charts.requests plan.charts acquired.readings
   /-- The retained physical connectors between the original common intervals. -/ connectors :
-    CommonConnectorBank.Connectors coefficients radialDepth request.connectors.tolerance request.charts.requests
+    Connectors coefficients radialDepth request.connectors.tolerance request.charts.requests
     plan.charts acquired.readings
-  /-- The certified chart traces on the actual paths and energy samples. -/ traces : CommonChartTraces.Traces
+  /-- The certified chart traces on the actual paths and energy samples. -/ traces : Traces
     request.arcs.allowance request.charts.requests plan.charts acquired.readings paths energies samples
   /-- The retained ribbon samples joining the actual chart energy samples. -/ ribbons : Connectors.RibbonSample energies
     samples connectors
   /-- The cached first and last source/chart endpoint combinations. -/ endpoints : Paths.Extremes paths
   /-- The homogeneous connection for the complete joined parent path with its actual endpoint potentials. -/ connection
-    : HomogeneousTraceConnection.HomogeneousTrace coefficients
+    : HomogeneousTrace coefficients
     (((Paths.joinedBlocks 0 paths connectors).map (fun block => block.1 :: block.2)).flatten)
     (Readings.firstChartValue coefficients request.charts.requests acquired.readings)
     (Readings.lastChartValue coefficients request.charts.requests acquired.readings)
@@ -213,10 +213,10 @@ constructive_injectivity Sample
 The builder shares the original root readings and primitive bank across energies, paths, connectors, ribbons and cached
 endpoint readbacks. -/
 @[expose] def sample (acquired : Plan.Acquisition plan anchorBank bank stage)
-    (preparation : CommonEnergyPreparation.EnergyPreparation request.charts.requests plan.charts acquired.readings
+    (preparation : EnergyPreparation request.charts.requests plan.charts acquired.readings
       allowance energyFloor)
     (originals : BasisSourceLocations.PrimitiveBank covers index)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (coefficients : GaussianVector genus)
     (parameters : RadialTriangles.Parameters radialDepth)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
     (later : preparation.radialDepth ≤ radialDepth) :

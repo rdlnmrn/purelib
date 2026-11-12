@@ -52,6 +52,8 @@ import Purelib.Riemann.Readings.RectangularObservationAssembly
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Topology.Surface.Cut.PrimitiveJumps
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid
@@ -96,7 +98,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Riemann.Readings.PrimitiveAreaBounds.PrimitivePoint (Bounded)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
@@ -115,15 +117,15 @@ namespace CenteredPerimeters
 
 /-- Geometric lengths for the same retained traces and both sheet occurrences. -/
 def Lengths (samples : RequestedHoleCentering.CenteredPerimeters request cache i j) :=
-  Data.Vector.DependentVector (fun position : Fin base.faces.regulars.length =>
-    Data.Vector.DependentVector (fun sheet : Fin 2 =>
+  DependentVector (fun position : Fin base.faces.regulars.length =>
+    DependentVector (fun sheet : Fin 2 =>
       RectangularPerimeterLengths.Lengths ((samples.traces.get position).get sheet)))
 
 namespace Lengths
 
 /-- Cache the exact geometric trace lengths for every original face and sheet. -/
 def build (samples : RequestedHoleCentering.CenteredPerimeters request cache i j) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.WeightedPerimeterAreas.CenteredPerimeters.Lengths samples :=
+  Lengths samples :=
   DependentVector.ofFn fun position => DependentVector.ofFn fun sheet =>
     RectangularPerimeterLengths.Lengths.build ((samples.traces.get position).get sheet)
 
@@ -136,25 +138,25 @@ length-error budget for every original owner junction. -/
 theorem bottom_weighted_area_bound (samples : RequestedHoleCentering.CenteredPerimeters request cache i j)
     (lengths : Lengths samples)
       (position : Fin base.faces.regulars.length) (sheet : Fin 2)
-    {allowance magnitude density : Fraction.Rational}
-    (budget : NoisyPathArea.LengthErrorBudget (((samples.traces.get position).get sheet).bottom.vertices.rest.length)
+    {allowance magnitude density : Rational}
+    (budget : LengthErrorBudget (((samples.traces.get position).get sheet).bottom.vertices.rest.length)
       allowance)
     (magnitudeNonnegative : 0 ≤ magnitude) (densityNonnegative : 0 ≤ density)
-    (bounded : ∀ vertex, PrimitivePoint.Bounded (((samples.samples.get position).get sheet).bottom.centered vertex)
+    (bounded : ∀ vertex, Bounded (((samples.samples.get position).get sheet).bottom.centered vertex)
       magnitude)
     (increments : ∀ edge : Fin (((samples.traces.get position).get sheet).bottom.vertices.rest.length),
-      PrimitivePoint.Bounded ((((samples.traces.get position).get sheet).bottom.leftValue (FacePerimeters.faceValues
+      Bounded ((((samples.traces.get position).get sheet).bottom.leftValue (FacePerimeters.faceValues
         cache.normalize i j position sheet)
           (((samples.traces.get position).get sheet).bottom.vertices.indexed edge.succ)).sub
         (((samples.traces.get position).get sheet).bottom.leftValue (FacePerimeters.faceValues cache.normalize i j
           position sheet)
           (((samples.traces.get position).get sheet).bottom.vertices.indexed edge.castSucc)))
-        (3 * budget.tolerance + 4 * density * Data.Gaussian.Norm.Basic.normSq
+        (3 * budget.tolerance + 4 * density * Basic.normSq
           (((samples.traces.get position).get sheet).bottom.point (((samples.traces.get position).get
             sheet).bottom.vertices.indexed edge.succ) -
             ((samples.traces.get position).get sheet).bottom.point (((samples.traces.get position).get
               sheet).bottom.vertices.indexed edge.castSucc)))) :
-    Data.Gaussian.Norm.Basic.normSq (SideCenteredRemainder.sideCenteredArea ((samples.samples.get position).get
+    Basic.normSq (SideCenteredRemainder.sideCenteredArea ((samples.samples.get position).get
       sheet) .bottom) ≤
       4 * magnitude * (4 * density + 3) *
         ((base.faces.regulars[position.val]'position.isLt).cell.box.xUpper -
@@ -169,25 +171,25 @@ length-error budget for every original owner junction. -/
 theorem top_weighted_area_bound (samples : RequestedHoleCentering.CenteredPerimeters request cache i j)
     (lengths : Lengths samples)
       (position : Fin base.faces.regulars.length) (sheet : Fin 2)
-    {allowance magnitude density : Fraction.Rational}
-    (budget : NoisyPathArea.LengthErrorBudget (((samples.traces.get position).get sheet).top.vertices.rest.length)
+    {allowance magnitude density : Rational}
+    (budget : LengthErrorBudget (((samples.traces.get position).get sheet).top.vertices.rest.length)
       allowance)
     (magnitudeNonnegative : 0 ≤ magnitude) (densityNonnegative : 0 ≤ density)
-    (bounded : ∀ vertex, PrimitivePoint.Bounded (((samples.samples.get position).get sheet).top.centered vertex)
+    (bounded : ∀ vertex, Bounded (((samples.samples.get position).get sheet).top.centered vertex)
       magnitude)
     (increments : ∀ edge : Fin (((samples.traces.get position).get sheet).top.vertices.rest.length),
-      PrimitivePoint.Bounded ((((samples.traces.get position).get sheet).top.leftValue (FacePerimeters.faceValues
+      Bounded ((((samples.traces.get position).get sheet).top.leftValue (FacePerimeters.faceValues
         cache.normalize i j position sheet)
           (((samples.traces.get position).get sheet).top.vertices.indexed edge.succ)).sub
         (((samples.traces.get position).get sheet).top.leftValue (FacePerimeters.faceValues cache.normalize i j position
           sheet)
           (((samples.traces.get position).get sheet).top.vertices.indexed edge.castSucc)))
-        (3 * budget.tolerance + 4 * density * Data.Gaussian.Norm.Basic.normSq
+        (3 * budget.tolerance + 4 * density * Basic.normSq
           (((samples.traces.get position).get sheet).top.point (((samples.traces.get position).get
             sheet).top.vertices.indexed edge.succ) -
             ((samples.traces.get position).get sheet).top.point (((samples.traces.get position).get
               sheet).top.vertices.indexed edge.castSucc)))) :
-    Data.Gaussian.Norm.Basic.normSq (SideCenteredRemainder.sideCenteredArea ((samples.samples.get position).get
+    Basic.normSq (SideCenteredRemainder.sideCenteredArea ((samples.samples.get position).get
       sheet) .top) ≤
       4 * magnitude * (4 * density + 3) *
         ((base.faces.regulars[position.val]'position.isLt).cell.box.xUpper -
@@ -202,25 +204,25 @@ length-error budget for every original owner junction. -/
 theorem left_weighted_area_bound (samples : RequestedHoleCentering.CenteredPerimeters request cache i j)
     (lengths : Lengths samples)
       (position : Fin base.faces.regulars.length) (sheet : Fin 2)
-    {allowance magnitude density : Fraction.Rational}
-    (budget : NoisyPathArea.LengthErrorBudget (((samples.traces.get position).get sheet).left.vertices.rest.length)
+    {allowance magnitude density : Rational}
+    (budget : LengthErrorBudget (((samples.traces.get position).get sheet).left.vertices.rest.length)
       allowance)
     (magnitudeNonnegative : 0 ≤ magnitude) (densityNonnegative : 0 ≤ density)
-    (bounded : ∀ vertex, PrimitivePoint.Bounded (((samples.samples.get position).get sheet).left.centered vertex)
+    (bounded : ∀ vertex, Bounded (((samples.samples.get position).get sheet).left.centered vertex)
       magnitude)
     (increments : ∀ edge : Fin (((samples.traces.get position).get sheet).left.vertices.rest.length),
-      PrimitivePoint.Bounded ((((samples.traces.get position).get sheet).left.leftValue (FacePerimeters.faceValues
+      Bounded ((((samples.traces.get position).get sheet).left.leftValue (FacePerimeters.faceValues
         cache.normalize i j position sheet)
           (((samples.traces.get position).get sheet).left.vertices.indexed edge.succ)).sub
         (((samples.traces.get position).get sheet).left.leftValue (FacePerimeters.faceValues cache.normalize i j
           position sheet)
           (((samples.traces.get position).get sheet).left.vertices.indexed edge.castSucc)))
-        (3 * budget.tolerance + 4 * density * Data.Gaussian.Norm.Basic.normSq
+        (3 * budget.tolerance + 4 * density * Basic.normSq
           (((samples.traces.get position).get sheet).left.point (((samples.traces.get position).get
             sheet).left.vertices.indexed edge.succ) -
             ((samples.traces.get position).get sheet).left.point (((samples.traces.get position).get
               sheet).left.vertices.indexed edge.castSucc)))) :
-    Data.Gaussian.Norm.Basic.normSq (SideCenteredRemainder.sideCenteredArea ((samples.samples.get position).get
+    Basic.normSq (SideCenteredRemainder.sideCenteredArea ((samples.samples.get position).get
       sheet) .left) ≤
       4 * magnitude * (4 * density + 3) *
         ((base.faces.regulars[position.val]'position.isLt).cell.box.yUpper -
@@ -235,25 +237,25 @@ length-error budget for every original owner junction. -/
 theorem right_weighted_area_bound (samples : RequestedHoleCentering.CenteredPerimeters request cache i j)
     (lengths : Lengths samples)
       (position : Fin base.faces.regulars.length) (sheet : Fin 2)
-    {allowance magnitude density : Fraction.Rational}
-    (budget : NoisyPathArea.LengthErrorBudget (((samples.traces.get position).get sheet).right.vertices.rest.length)
+    {allowance magnitude density : Rational}
+    (budget : LengthErrorBudget (((samples.traces.get position).get sheet).right.vertices.rest.length)
       allowance)
     (magnitudeNonnegative : 0 ≤ magnitude) (densityNonnegative : 0 ≤ density)
-    (bounded : ∀ vertex, PrimitivePoint.Bounded (((samples.samples.get position).get sheet).right.centered vertex)
+    (bounded : ∀ vertex, Bounded (((samples.samples.get position).get sheet).right.centered vertex)
       magnitude)
     (increments : ∀ edge : Fin (((samples.traces.get position).get sheet).right.vertices.rest.length),
-      PrimitivePoint.Bounded ((((samples.traces.get position).get sheet).right.leftValue (FacePerimeters.faceValues
+      Bounded ((((samples.traces.get position).get sheet).right.leftValue (FacePerimeters.faceValues
         cache.normalize i j position sheet)
           (((samples.traces.get position).get sheet).right.vertices.indexed edge.succ)).sub
         (((samples.traces.get position).get sheet).right.leftValue (FacePerimeters.faceValues cache.normalize i j
           position sheet)
           (((samples.traces.get position).get sheet).right.vertices.indexed edge.castSucc)))
-        (3 * budget.tolerance + 4 * density * Data.Gaussian.Norm.Basic.normSq
+        (3 * budget.tolerance + 4 * density * Basic.normSq
           (((samples.traces.get position).get sheet).right.point (((samples.traces.get position).get
             sheet).right.vertices.indexed edge.succ) -
             ((samples.traces.get position).get sheet).right.point (((samples.traces.get position).get
               sheet).right.vertices.indexed edge.castSucc)))) :
-    Data.Gaussian.Norm.Basic.normSq (SideCenteredRemainder.sideCenteredArea ((samples.samples.get position).get
+    Basic.normSq (SideCenteredRemainder.sideCenteredArea ((samples.samples.get position).get
       sheet) .right) ≤
       4 * magnitude * (4 * density + 3) *
         ((base.faces.regulars[position.val]'position.isLt).cell.box.yUpper -

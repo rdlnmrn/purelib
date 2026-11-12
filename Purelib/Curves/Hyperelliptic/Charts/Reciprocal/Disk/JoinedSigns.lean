@@ -44,39 +44,39 @@ open Purelib.Data.Gaussian.Basic.Canonical
 open Purelib.Approximation.Gaussian.Equivalence (NamedEquivalent)
 open Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed (mul)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {model : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell} {parameter :
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {otherCount : Nat} {otherParent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : ParameterEdge} {cell :
+    Cell data edge}
+  {model : RootModel cell} {parameter :
+    Coordinate}
+  {otherCount : Nat} {otherParent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve
     differential}
-  {otherPatch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch otherParent} {otherData :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
-  {otherEdge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {otherCell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell otherData otherEdge}
-  {otherModel : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel otherCell}
-    {otherParameter : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {first : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap model parameter} {last :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap otherModel otherParameter}
+  {otherPatch : PreparedPatch otherParent} {otherData :
+    UniformReciprocalModels.Data otherPatch otherCount}
+  {otherEdge : ParameterEdge} {otherCell :
+    Cell otherData otherEdge}
+  {otherModel : RootModel otherCell}
+    {otherParameter : Coordinate}
+  {first : Point cap model parameter} {last :
+    Point cap otherModel otherParameter}
 
-variable {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell}
-  {otherComparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular otherCell}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {before : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample comparison capSample}
-  {after : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample otherComparison capSample}
+variable {regular : RegularBounds.Data cap}
+  {comparison : ArcSamples.Data regular cell}
+  {otherComparison : ArcSamples.Data regular otherCell}
+  {index : Nat} {box : Geometry.Rational.Box} {capSample :
+    Cap.Primitives.Sample cap differential index box}
+  {before : ArcSamples.Sample comparison capSample}
+  {after : ArcSamples.Sample otherComparison capSample}
 
 /-- The join identifies the actual cached signed polynomials, so later boundary evaluation can reuse one primitive
 across the joined parents. -/
-theorem Join.primitive_eq (joined : ArcOwners.Join first last)
+theorem Join.primitive_eq (joined : Join first last)
     (left : SheetAlignment.RegularAlignment before)
     (right : SheetAlignment.RegularAlignment after) (later : 2 ≤ index) :
     left.primitive = right.primitive := by

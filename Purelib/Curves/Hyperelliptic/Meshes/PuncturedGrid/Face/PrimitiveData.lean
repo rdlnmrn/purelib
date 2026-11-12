@@ -1,4 +1,6 @@
 module
+public import Purelib.Data.Vector.Dependent
+import Purelib.Curves.Hyperelliptic.Differentials.OddPower.Basic
 meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Curves.Hyperelliptic.Basic
 import Purelib.Curves.Hyperelliptic.Differentials.Basic
@@ -100,6 +102,9 @@ open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 open Purelib.Riemann.Readings.PreparedPrimitiveSamples (differentialNumerator)
+open Purelib.Riemann.Normalization.InverseRootPolynomial (Polynomial)
+open Purelib.Data.Vector (DependentVector)
+open Purelib.Curves.Hyperelliptic.Differentials.OddPower.Basic (OddPowerDifferential)
 open Purelib.Riemann.Integration.RectangularPrimitiveModels (Primitives)
 open Purelib.Riemann.Integration.RectangularPrimitiveGluing (PrimitiveAnchors)
 open Purelib.Riemann.Readings.RectangularPointReadings (PointReadings)
@@ -114,28 +119,33 @@ open Purelib.Riemann.Meshes.PuncturedGridFaces (PuncturedFaces)
 open Purelib.Riemann.Meshes.GridLiftedMesh (LiftedMesh)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Corners.FaceCorners (point inside)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches
     higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid}
+  {frames : RootFrames bank.grid}
+
+variable {numerator : Polynomial} {pairs : Nat}
 
 set_option genInjectivity false in
 /-- Cached numerical primitives and four-corner readings for one actual retained face-sheet domain.
 
-The differential and stage select the primitive bank, while anchors, offsets and corner owners are computed once and
-shared by all fine-mesh comparisons. -/
-structure DomainPrimitives {face : PuncturedGridFaces.RegularFace bank} {models : BranchCellBank.FaceModels frames face}
+The original differential remains the source index. The supplied numerator
+and odd inverse-power index select the actual integrand, defaulting to the
+original holomorphic numerator and one inverse factor. Anchors, offsets and
+corner owners are computed once on those same retained primitives and shared
+by all fine-mesh comparisons. -/
+structure DomainPrimitives {face : RegularFace bank} {models : FaceModels frames face}
   {sheet : Fin 2}
-    (domain : Periods.PeriodDomain models sheet) (differential : Differentials.Basic.Differential genus) (index : Nat)
-      where
+    (domain : Periods.PeriodDomain models sheet) (differential : Differential genus) (index : Nat)
+    (numerator : optParam Polynomial (differentialNumerator differential)) (pairs : optParam Nat 0) where
   /-- The cached oriented primitive polynomials for the retained domain, differential and stage. -/ primitives :
-    RectangularPrimitiveModels.Primitives (Transitions.oriented (domain.patch.sheets.refine index).transitions
-    (domain.patch.sheets.refine index).gauge) (PreparedPrimitiveSamples.differentialNumerator differential)
+    Primitives (Transitions.oriented (domain.patch.sheets.refine index).transitions
+    (domain.patch.sheets.refine index).gauge) numerator pairs
   /-- The cached primitive anchors on these exact retained polynomials. -/ anchors :
-    RectangularPrimitiveGluing.PrimitiveAnchors primitives
-  /-- The cached gluing offsets on the actual anchor edges. -/ offsets : LinearAlgebra.Grid.Offsets anchors.edges
-  /-- The cached four-corner readings with their retained owners. -/ corners : RectangularPointReadings.PointReadings
+    PrimitiveAnchors primitives
+  /-- The cached gluing offsets on the actual anchor edges. -/ offsets : Offsets anchors.edges
+  /-- The cached four-corner readings with their retained owners. -/ corners : PointReadings
     anchors offsets (FaceCorners.point face.cell.box)
 
 constructive_injectivity DomainPrimitives
@@ -143,12 +153,13 @@ constructive_injectivity DomainPrimitives
 namespace DomainPrimitives
 
 /-- Cache the retained domain's primitive polynomials, anchors, offsets and four original corner-owner readings. -/
-def build {face : PuncturedGridFaces.RegularFace bank} {models : BranchCellBank.FaceModels frames face} {sheet : Fin 2}
-    (domain : Periods.PeriodDomain models sheet) (differential : Differentials.Basic.Differential genus) (index : Nat) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives domain differential index :=
+def build {face : RegularFace bank} {models : FaceModels frames face} {sheet : Fin 2}
+    (domain : Periods.PeriodDomain models sheet) (differential : Differential genus) (index : Nat)
+    (numerator : optParam Polynomial (differentialNumerator differential)) (pairs : optParam Nat 0) :
+      DomainPrimitives domain differential index numerator pairs :=
   let sheets := domain.patch.sheets.refine index
   let primitives := Primitives.build (Transitions.oriented sheets.transitions sheets.gauge)
-    (PreparedPrimitiveSamples.differentialNumerator differential)
+    numerator pairs
   let anchors := PrimitiveAnchors.build primitives
   let offsets := anchors.offsets
   let owners := Data.Vector.Basic.vectorOfFn fun corner =>
@@ -156,29 +167,29 @@ def build {face : PuncturedGridFaces.RegularFace bank} {models : BranchCellBank.
       (FaceCorners.point face.cell.box corner)
       (FaceCorners.inside face.cell.box corner)
     (⟨located.column, located.row, FaceCorners.point face.cell.box corner, located.inside⟩ :
-      RectangularOwnedTriangulation.OwnedVertex domain.geometry)
+      OwnedVertex domain.geometry)
   let corners := PointReadings.build anchors offsets (FaceCorners.point face.cell.box) owners
     (fun corner => by rw [Data.Vector.Basic.vectorOfFn_apply])
   ⟨primitives, anchors, offsets, corners⟩
 
 /-- Transport the numerical cache along equality of its exact domain owner. -/
-def castDomain {face : PuncturedGridFaces.RegularFace bank} {models : BranchCellBank.FaceModels frames face} {sheet :
+def castDomain {face : RegularFace bank} {models : FaceModels frames face} {sheet :
   Fin 2}
-    {first last : Periods.PeriodDomain models sheet} {differential : Differentials.Basic.Differential genus} {index :
+    {first last : Periods.PeriodDomain models sheet} {differential : Differential genus} {index :
       Nat}
-    (equal : first = last) (cached : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives first
-      differential index) : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives last
-      differential index := by
+    (equal : first = last) (cached : DomainPrimitives first
+      differential index numerator pairs) : DomainPrimitives last
+      differential index numerator pairs := by
   cases equal
   exact cached
 
 /-- Transporting the retained domain preserves all cached corner values. -/
-theorem castDomain_corners {face : PuncturedGridFaces.RegularFace bank} {models : BranchCellBank.FaceModels frames face}
+theorem castDomain_corners {face : RegularFace bank} {models : FaceModels frames face}
   {sheet : Fin 2}
-    {first last : Periods.PeriodDomain models sheet} {differential : Differentials.Basic.Differential genus} {index :
+    {first last : Periods.PeriodDomain models sheet} {differential : Differential genus} {index :
       Nat}
-    (equal : first = last) (cached : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives first
-      differential index) :
+    (equal : first = last) (cached : DomainPrimitives first
+      differential index numerator pairs) :
     (cached.castDomain equal).corners.values = cached.corners.values := by
   cases equal
   rfl
@@ -187,74 +198,73 @@ end DomainPrimitives
 
 set_option genInjectivity false in
 /-- Lazy numerical primitive caches for both sheets of the same retained face-domain bank. -/
-structure FacePrimitives {face : PuncturedGridFaces.RegularFace bank} (domains : DomainBanks.FaceDomains frames face)
-  (differential : Differentials.Basic.Differential genus) (index : Nat) where
+structure FacePrimitives {face : RegularFace bank} (domains : FaceDomains frames face)
+  (differential : Differential genus) (index : Nat)
+  (numerator : optParam Polynomial (differentialNumerator differential)) (pairs : optParam Nat 0) where
   /-- The lazy numerical cache for the exact retained sheet-zero domain. -/ zero : Thunk
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives (domains.domain 0) differential
-    index)
+    (DomainPrimitives (domains.domain 0) differential index numerator pairs)
   /-- The lazy numerical cache for the exact retained sheet-one domain. -/ one : Thunk
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives (domains.domain 1) differential
-    index)
+    (DomainPrimitives (domains.domain 1) differential index numerator pairs)
 
 constructive_injectivity FacePrimitives
 
 namespace FacePrimitives
 
 /-- Delay numerical primitive construction separately for both sheets of the retained face. -/
-def build {face : PuncturedGridFaces.RegularFace bank} (domains : DomainBanks.FaceDomains frames face) (differential :
-  Differentials.Basic.Differential genus) (index : Nat) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitives domains differential index :=
-  ⟨⟨fun _ => Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives.build (domains.domain 0)
-    differential index⟩,
-    ⟨fun _ => Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives.build (domains.domain 1)
-      differential index⟩⟩
+def build {face : RegularFace bank} (domains : FaceDomains frames face) (differential :
+  Differential genus) (index : Nat)
+  (numerator : optParam Polynomial (differentialNumerator differential)) (pairs : optParam Nat 0) :
+    FacePrimitives domains differential index numerator pairs :=
+  ⟨⟨fun _ => DomainPrimitives.build (domains.domain 0)
+    differential index numerator pairs⟩,
+    ⟨fun _ => DomainPrimitives.build (domains.domain 1)
+      differential index numerator pairs⟩⟩
 
 /-- Read the requested sheet's cached primitives, offsets and corner values. -/
-def atSheet {face : PuncturedGridFaces.RegularFace bank} {domains : DomainBanks.FaceDomains frames face} {differential :
-  Differentials.Basic.Differential genus} {index : Nat}
-    (cached : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitives domains differential index) :
-      (sheet : Fin 2) → Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives (domains.domain
-      sheet) differential index
+def atSheet {face : RegularFace bank} {domains : FaceDomains frames face} {differential :
+  Differential genus} {index : Nat}
+    (cached : FacePrimitives domains differential index numerator pairs) :
+      (sheet : Fin 2) → DomainPrimitives (domains.domain
+      sheet) differential index numerator pairs
   | ⟨0, _⟩ => cached.zero.get
   | ⟨1, _⟩ => cached.one.get
   | ⟨_ + 2, impossible⟩ => (by omega : False).elim
 
 /-- Reading sheet zero returns its retained lazy numerical cache. -/
-theorem atSheet_zero {face : PuncturedGridFaces.RegularFace bank} {domains : DomainBanks.FaceDomains frames face}
-  {differential : Differentials.Basic.Differential genus} {index : Nat}
-    (cached : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitives domains differential index) :
+theorem atSheet_zero {face : RegularFace bank} {domains : FaceDomains frames face}
+  {differential : Differential genus} {index : Nat}
+    (cached : FacePrimitives domains differential index numerator pairs) :
       cached.atSheet 0 = cached.zero.get := rfl
 
 /-- Reading sheet one returns its retained lazy numerical cache. -/
-theorem atSheet_one {face : PuncturedGridFaces.RegularFace bank} {domains : DomainBanks.FaceDomains frames face}
-  {differential : Differentials.Basic.Differential genus} {index : Nat}
-    (cached : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitives domains differential index) :
+theorem atSheet_one {face : RegularFace bank} {domains : FaceDomains frames face}
+  {differential : Differential genus} {index : Nat}
+    (cached : FacePrimitives domains differential index numerator pairs) :
       cached.atSheet 1 = cached.one.get := rfl
 
 /-- Transport the numerical cache along equality of its actual retained regular face. -/
-def castFace {first last : PuncturedGridFaces.RegularFace bank} (equal : first = last) {domains :
-  DomainBanks.FaceDomains frames first}
-    {differential : Differentials.Basic.Differential genus} {index : Nat} (cached :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitives domains differential index) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitives (domains.castFace equal) differential
-      index := by
+def castFace {first last : RegularFace bank} (equal : first = last) {domains :
+  FaceDomains frames first}
+    {differential : Differential genus} {index : Nat} (cached :
+      FacePrimitives domains differential index numerator pairs) :
+    FacePrimitives (domains.castFace equal) differential index numerator pairs := by
   cases equal
   exact cached
 
 /-- Transport the numerical cache along equality of its actual face-domain bank. -/
-def castDomains {face : PuncturedGridFaces.RegularFace bank} {first last : DomainBanks.FaceDomains frames face} (equal :
+def castDomains {face : RegularFace bank} {first last : FaceDomains frames face} (equal :
   first = last)
-    {differential : Differentials.Basic.Differential genus} {index : Nat} (cached :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitives first differential index) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitives last differential index := by
+    {differential : Differential genus} {index : Nat} (cached :
+      FacePrimitives first differential index numerator pairs) :
+    FacePrimitives last differential index numerator pairs := by
   cases equal
   exact cached
 
 /-- Transporting the face-domain bank preserves each sheet's exact cached corner values. -/
-theorem castDomains_corners {face : PuncturedGridFaces.RegularFace bank} {first last : DomainBanks.FaceDomains frames
+theorem castDomains_corners {face : RegularFace bank} {first last : FaceDomains frames
   face} (equal : first = last)
-    {differential : Differentials.Basic.Differential genus} {index : Nat} (cached :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitives first differential index) (sheet : Fin
+    {differential : Differential genus} {index : Nat} (cached :
+      FacePrimitives first differential index numerator pairs) (sheet : Fin
       2) :
     ((cached.castDomains equal).atSheet sheet).corners.values = (cached.atSheet sheet).corners.values := by
   cases equal
@@ -263,56 +273,87 @@ theorem castDomains_corners {face : PuncturedGridFaces.RegularFace bank} {first 
 end FacePrimitives
 
 /-- A recursive product over the retained domain bank, not a second face enumeration or an independently acquired
-collection of domains. -/
-def FacePrimitiveBank (differential : Differentials.Basic.Differential genus) (index : Nat) :
-    {faces : List (PuncturedGridFaces.RegularFace bank)} → DomainBanks.FaceDomainBank frames faces → Type
-  | _, .nil => PUnit
-  | _, .cons first remaining => Thunk (Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitives
-    first.get differential index) ×
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index remaining
+collection of domains.
+
+The actual numerator and odd inverse-power index are shared by every lazy
+face and sheet entry; omitting them retains the original holomorphic bank.
+-/
+def FacePrimitiveBank (differential : Differential genus) (index : Nat) :
+    {faces : List (RegularFace bank)} → FaceDomainBank frames faces →
+      (numerator : optParam Polynomial (differentialNumerator differential)) → (pairs : optParam Nat 0) → Type
+  | _, .nil, _, _ => PUnit
+  | _, .cons first remaining, numerator, pairs => Thunk (FacePrimitives
+    first.get differential index numerator pairs) ×
+    FacePrimitiveBank differential index remaining numerator pairs
 
 namespace FacePrimitiveBank
 
 /-- Prepare lazy numerical entries on the exact existing domain-bank spine. -/
-def build (differential : Differentials.Basic.Differential genus) (index : Nat) :
-    {faces : List (PuncturedGridFaces.RegularFace bank)} → (domains : DomainBanks.FaceDomainBank frames faces) →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains
-  | _, .nil => ⟨⟩
-  | _, .cons first remaining => ⟨⟨fun _ =>
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitives.build first.get differential index⟩,
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank.build differential index
-    remaining⟩
+def build (differential : Differential genus) (index : Nat) :
+    {faces : List (RegularFace bank)} → (domains : FaceDomainBank frames faces) →
+      (numerator : optParam Polynomial (differentialNumerator differential)) → (pairs : optParam Nat 0) →
+        FacePrimitiveBank differential index domains numerator pairs
+  | _, .nil, _, _ => ⟨⟩
+  | _, .cons first remaining, numerator, pairs => ⟨⟨fun _ =>
+    FacePrimitives.build first.get differential index numerator pairs⟩,
+    FacePrimitiveBank.build differential index remaining numerator pairs⟩
+
+/-- Retain one original face primitive bank for every supplied odd-power form on the same domain bank.
+
+The materialized input table supplies each original numerator, scale and
+odd inverse-power index. Each scaled numerator is formed once per table
+entry, outside its lazy face and sheet producers. All entries share the
+same retained domain and root-frame owners.
+-/
+def ofForms {count : Nat} (differential : Differential genus) (index : Nat)
+    {faces : List (RegularFace bank)} (domains : FaceDomainBank frames faces)
+    (forms : Data.Vector (OddPowerDifferential curve.polynomial) count) :
+    DependentVector (fun channel : Fin count =>
+      FacePrimitiveBank differential index domains
+        ((forms channel).numerator.scale (forms channel).scale) (forms channel).denominatorPairs) :=
+  DependentVector.ofFn fun channel =>
+    let form := forms channel
+    FacePrimitiveBank.build differential index domains
+      (form.numerator.scale form.scale) form.denominatorPairs
+
+/-- Each retained form entry is the whole original face-bank factory on that same table slot. -/
+theorem ofForms_get {count : Nat} (differential : Differential genus) (index : Nat)
+    {faces : List (RegularFace bank)} (domains : FaceDomainBank frames faces)
+    (forms : Data.Vector (OddPowerDifferential curve.polynomial) count) (channel : Fin count) :
+    (ofForms differential index domains forms).get channel =
+      FacePrimitiveBank.build differential index domains
+        ((forms channel).numerator.scale (forms channel).scale) (forms channel).denominatorPairs :=
+  DependentVector.ofFn_get _ channel
 
 /-- Read the retained numerical cache at its original bounded face position. -/
-def get {differential : Differentials.Basic.Differential genus} {index : Nat} :
-    {faces : List (PuncturedGridFaces.RegularFace bank)} → {domains : DomainBanks.FaceDomainBank frames faces} → (cached
-      : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains) →
-      (position : Fin faces.length) → Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitives
-        (domains.get position) differential index
+def get {differential : Differential genus} {index : Nat} :
+    {faces : List (RegularFace bank)} → {domains : FaceDomainBank frames faces} → (cached
+      : FacePrimitiveBank differential index domains numerator pairs) →
+      (position : Fin faces.length) → FacePrimitives
+        (domains.get position) differential index numerator pairs
   | _, .nil, _, position => Fin.elim0 position
   | _, .cons _ _, cached, ⟨0, _⟩ => cached.1.get
   | _, .cons _ _, cached, ⟨position + 1, bound⟩ =>
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank.get cached.2 ⟨position,
+    FacePrimitiveBank.get cached.2 ⟨position,
     Nat.lt_of_succ_lt_succ bound⟩
 
 /-- Read the exact retained face's numerical cache from the supplied path route without acquiring a new domain. -/
 def atRoute {vertices : LiftedVertices.VertexBank bank.grid} {edges : RootEdgeBank frames}
-    {faces : PuncturedGridFaces.PuncturedFaces bank} {mesh : GridLiftedMesh.LiftedMesh vertices edges faces} {domains :
-      DomainBanks.FaceDomainBank frames faces.regulars}
-    {differential : Differentials.Basic.Differential genus} {index : Nat} (cached :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains)
+    {faces : PuncturedFaces bank} {mesh : LiftedMesh vertices edges faces} {domains :
+      FaceDomainBank frames faces.regulars}
+    {differential : Differential genus} {index : Nat} (cached :
+      FacePrimitiveBank differential index domains numerator pairs)
     {edge : Stokes.OrientedEdge vertices.count} (route : MeshPathWalks.EdgeRoute mesh edge) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitives (domains.atRoute route) differential
-      index :=
+    FacePrimitives (domains.atRoute route) differential index numerator pairs :=
   (cached.get route.position).castFace route.face_eq
 
 /-- One increment of the fixed four-value bank, retaining orientation and the actual selected sheet. This consumes no
 path mesh or integration data. -/
 def edgeIncrement {vertices : LiftedVertices.VertexBank bank.grid} {edges : RootEdgeBank frames}
-    {faces : PuncturedGridFaces.PuncturedFaces bank} {mesh : GridLiftedMesh.LiftedMesh vertices edges faces} {domains :
-      DomainBanks.FaceDomainBank frames faces.regulars}
-    {differential : Differentials.Basic.Differential genus} {index : Nat} (cached :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains)
+    {faces : PuncturedFaces bank} {mesh : LiftedMesh vertices edges faces} {domains :
+      FaceDomainBank frames faces.regulars}
+    {differential : Differential genus} {index : Nat} (cached :
+      FacePrimitiveBank differential index domains numerator pairs)
     {edge : Stokes.OrientedEdge vertices.count} (route : MeshPathWalks.EdgeRoute mesh edge) : Gaussian :=
   let values := ((cached.atRoute route).atSheet route.sheet).corners.values
   values route.corners.finish - values route.corners.start

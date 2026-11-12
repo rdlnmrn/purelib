@@ -98,79 +98,79 @@ open Purelib.Integration.Path.Dyadic.RadialTriangles (Parameters)
 open Purelib.Riemann.RootContinuation
 
 variable {genus count index depth readingIndex floor minimum : Nat} {curve :
-  Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-  {differential : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} {collar :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {parent :
-    Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {source :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
-  {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {polynomials : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+  HyperellipticCurve genus}
+  {differential : Differential genus} {collar :
+    ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {parent :
+    Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap} {source :
+    SourcePrimitive data index}
+  {box : Geometry.Rational.Box} {capSample :
+    Cap.Primitives.Sample cap differential index box}
+  {polynomials : RegularBasisPolynomials cap
     index box}
-  {target energyTarget joinTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {energyFloor
+  {target energyTarget joinTarget : Coordinate} {energyFloor
     energyDepth joinFloor : Nat}
 
 set_option genInjectivity false in
 /-- Accuracy searches and bounds retained before any fan generation. -/
-structure BasisEnergyPreparation {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} {bank : ParentBank.Bank
-  regular data edges} {owners : ParentOwners.Owners bank}
-    {requests : ParentChartRequests.ChartRequests target floor owners} (plans : ParentChartRequests.ChartPlans capSample
+structure BasisEnergyPreparation {edges : List ParameterEdge} {bank : Bank
+  regular data edges} {owners : Owners bank}
+    {requests : ChartRequests target floor owners} (plans : ChartPlans capSample
       minimum requests)
-    (cells : ParentPaths.ComparedCells source capSample depth bank) (evaluated : ChartPlans.EvaluationData readingIndex
+    (cells : ComparedCells source capSample depth bank) (evaluated : EvaluationData readingIndex
       plans cells)
-    (polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box) (energyTarget :
-      InverseRootPolynomial.Coordinate) (energyFloor : Nat) where
+    (polynomials : RegularBasisPolynomials cap index box) (energyTarget :
+      Coordinate) (energyFloor : Nat) where
   /-- The cached positive per-cell energy allowance for the original retained parent spine. -/ allowance :
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The per-cell allowance is exactly the parent target divided by its actual cell count plus one. -/ allowance_eq :
-    allowance = energyTarget / ((edges.length : InverseRootPolynomial.Coordinate) + 1)
+    allowance = energyTarget / ((edges.length : Coordinate) + 1)
   /-- The retained actual per-cell allowance is strictly positive. -/ allowance_positive : 0 < allowance
   /-- The complete original cell count times its retained allowance is strictly below the parent energy target. -/
-    allowance_paid : (edges.length : InverseRootPolynomial.Coordinate) * allowance < energyTarget
+    allowance_paid : (edges.length : Coordinate) * allowance < energyTarget
   /-- The retained shared basis polynomial bounds on the exact radial fan domain. -/ bounds :
-    CapBasisBounds.RegularBasisBounds polynomials RootRadialGeometry.domain
+    RegularBasisBounds polynomials RootRadialGeometry.domain
   /-- The dependent inexpensive energy requests on every actual retained parent cell. -/ requests :
-    ParentBasisRequests.BasisEnergyRequests bounds allowance energyFloor plans cells evaluated
+    BasisEnergyRequests bounds allowance energyFloor plans cells evaluated
 
 constructive_injectivity BasisEnergyPreparation
 
 namespace BasisEnergyPreparation
 
-variable {edges : List Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {bank :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBank.Bank regular data edges} {owners :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank}
-  {requests : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartRequests target floor owners}
-    {plans : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans capSample minimum
+variable {edges : List ParameterEdge} {bank :
+  Bank regular data edges} {owners :
+  Owners bank}
+  {requests : ChartRequests target floor owners}
+    {plans : ChartPlans capSample minimum
     requests}
-  {cells : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank}
-    {evaluated : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans.EvaluationData
+  {cells : ComparedCells source capSample depth bank}
+    {evaluated : EvaluationData
     readingIndex plans cells}
 
 /-- Parents may share this polynomial-bound cache, and select a common radial depth after all their cheap accuracy
 searches are complete. -/
-def build (plans : ParentChartRequests.ChartPlans capSample minimum requests) (cells : ParentPaths.ComparedCells source
+def build (plans : ChartPlans capSample minimum requests) (cells : ComparedCells source
   capSample depth bank)
-    (evaluated : ChartPlans.EvaluationData readingIndex plans cells) (bounds : CapBasisBounds.RegularBasisBounds
+    (evaluated : EvaluationData readingIndex plans cells) (bounds : RegularBasisBounds
       polynomials RootRadialGeometry.domain)
-    (energyTarget : InverseRootPolynomial.Coordinate) (positive : 0 < energyTarget) (energyFloor : Nat) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisEnergy.BasisEnergyPreparation plans cells evaluated
+    (energyTarget : Coordinate) (positive : 0 < energyTarget) (energyFloor : Nat) :
+    BasisEnergyPreparation plans cells evaluated
       polynomials energyTarget energyFloor := by
-  have countNonnegative : (0 : InverseRootPolynomial.Coordinate) ≤ (edges.length : InverseRootPolynomial.Coordinate) :=
+  have countNonnegative : (0 : Coordinate) ≤ (edges.length : Coordinate) :=
     Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)
-  have denominatorPositive : 0 < (edges.length : InverseRootPolynomial.Coordinate) + 1 :=
+  have denominatorPositive : 0 < (edges.length : Coordinate) + 1 :=
     Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct countNonnegative (by decide)
-  let allowance := energyTarget / ((edges.length : InverseRootPolynomial.Coordinate) + 1)
+  let allowance := energyTarget / ((edges.length : Coordinate) + 1)
   have allowancePositive : 0 < allowance := Fraction.Order.Field.div_pos_direct positive denominatorPositive
-  have allowancePaid : (edges.length : InverseRootPolynomial.Coordinate) * allowance < energyTarget := by
-    have countLt : (edges.length : InverseRootPolynomial.Coordinate) < (edges.length : InverseRootPolynomial.Coordinate)
+  have allowancePaid : (edges.length : Coordinate) * allowance < energyTarget := by
+    have countLt : (edges.length : Coordinate) < (edges.length : Coordinate)
       + 1 := by
-      exact (show (edges.length : InverseRootPolynomial.Coordinate) = (edges.length : InverseRootPolynomial.Coordinate)
+      exact (show (edges.length : Coordinate) = (edges.length : Coordinate)
         + 0 by ring1).trans_lt
-        (Fraction.Order.Arithmetic.add_lt_add_left_direct (by decide : (0 : InverseRootPolynomial.Coordinate) < 1) _)
+        (Fraction.Order.Arithmetic.add_lt_add_left_direct (by decide : (0 : Coordinate) < 1) _)
     have bound := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct countLt allowancePositive
     exact bound.trans_eq (by
         rw [Fraction.Field.mul_comm];
@@ -179,13 +179,13 @@ def build (plans : ParentChartRequests.ChartPlans capSample minimum requests) (c
   exact ⟨allowance, rfl, allowancePositive, allowancePaid, bounds, requests⟩
 
 /-- Generate all retained cell fans once at the shared parent depth. -/
-def evaluate (preparation : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisEnergy.BasisEnergyPreparation plans
+def evaluate (preparation : BasisEnergyPreparation plans
   cells evaluated polynomials energyTarget energyFloor)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
-    (oriented : 0 < AffineTriangle.crossEnergy (parent.edge.point 0) (parent.edge.point 1))
-    (parameters : RadialTriangles.Parameters energyDepth)
+    (oriented : 0 < crossEnergy (parent.edge.point 0) (parent.edge.point 1))
+    (parameters : Parameters energyDepth)
     (later : preparation.requests.maximum ≤ energyDepth) :
-    ParentBasisRequests.BasisEnergyData (polynomials := polynomials) preparation.allowance energyFloor energyDepth plans
+    BasisEnergyData (polynomials := polynomials) preparation.allowance energyFloor energyDepth plans
       cells evaluated :=
   preparation.requests.evaluate branch oriented parameters plans cells evaluated later
 

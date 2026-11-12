@@ -24,6 +24,8 @@ import Purelib.Polynomial.Dense.Gaussian.Derivative.Separation.Bezout
 import Purelib.Polynomial.Dense.Gaussian.Newton.Box.Certificate
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Polynomial.Clearance.Box.Line
+
 open Purelib.Data
 
 open Purelib.Data.Rat
@@ -52,7 +54,7 @@ clearances in both the current and fixed ambient boxes.
 The original polynomial, squarefree witness, current raw state and accuracy request index the retained source, positive
 radius and band, together with their displacement, nesting, winding and quantitative clearance certificates. -/
 structure Output
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
     (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
     (current : State.Raw.RawWindingState p ambient) (epsilon : Fraction.Rational) where
   /-- The retained nonzero-winding source box inside the original current box. -/ source : State.Raw.RawWindingState p
@@ -72,21 +74,21 @@ structure Output
   /-- The extracted box refines the original fixed ambient box. -/ refinesAmbient : band.box.Refines ambient
   /-- The extracted box has strictly positive width and height. -/ proper : band.box.Proper
   /-- The polynomial is clear on the band's left vertical line throughout the current box. -/ leftLineClearance :
-    Clearance.Box.Line.Basic.VerticalLineClearance p current.box band.box.xLower
+    Basic.VerticalLineClearance p current.box band.box.xLower
   /-- The polynomial is clear on the band's right vertical line throughout the current box. -/ rightLineClearance :
-    Clearance.Box.Line.Basic.VerticalLineClearance p current.box band.box.xUpper
+    Basic.VerticalLineClearance p current.box band.box.xUpper
   /-- The polynomial is clear on the band's bottom horizontal line throughout the current box. -/ bottomLineClearance :
-    Clearance.Box.Line.Basic.HorizontalLineClearance p current.box band.box.yLower
+    Basic.HorizontalLineClearance p current.box band.box.yLower
   /-- The polynomial is clear on the band's top horizontal line throughout the current box. -/ topLineClearance :
-    Clearance.Box.Line.Basic.HorizontalLineClearance p current.box band.box.yUpper
+    Basic.HorizontalLineClearance p current.box band.box.yUpper
   /-- The polynomial is clear on the band's left vertical line throughout the original ambient box. -/
-    ambientLeftClearance : Clearance.Box.Line.Basic.VerticalLineClearance p ambient band.box.xLower
+    ambientLeftClearance : Basic.VerticalLineClearance p ambient band.box.xLower
   /-- The polynomial is clear on the band's right vertical line throughout the original ambient box. -/
-    ambientRightClearance : Clearance.Box.Line.Basic.VerticalLineClearance p ambient band.box.xUpper
+    ambientRightClearance : Basic.VerticalLineClearance p ambient band.box.xUpper
   /-- The polynomial is clear on the band's bottom horizontal line throughout the original ambient box. -/
-    ambientBottomClearance : Clearance.Box.Line.Basic.HorizontalLineClearance p ambient band.box.yLower
+    ambientBottomClearance : Basic.HorizontalLineClearance p ambient band.box.yLower
   /-- The polynomial is clear on the band's top horizontal line throughout the original ambient box. -/
-    ambientTopClearance : Clearance.Box.Line.Basic.HorizontalLineClearance p ambient band.box.yUpper
+    ambientTopClearance : Basic.HorizontalLineClearance p ambient band.box.yUpper
   /-- A retained positive boundary-clearance certificate for the original polynomial on the extracted box. -/ clearance
     : Clearance.Box.Boundary.Basic.BoundaryClearance p band.box
   /-- The original polynomial has quadrupled winding four on the extracted box. -/ rawWindingFour :
@@ -98,12 +100,25 @@ structure Output
 
 constructive_injectivity Output
 
+/-- Transport only a band's squarefree-certificate index along an exact complete-certificate equality.
+
+The polynomial, original raw state and accuracy stay fixed. The same retained
+source, radius, band, numerical clearances and Newton data are consumed.
+-/
+@[expose] def Output.castSquarefree
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    {left right : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p}
+    {current : State.Raw.RawWindingState p ambient} {epsilon : Fraction.Rational}
+    (same : left = right) (output : Output left current epsilon) : Output right current epsilon := by
+  cases same
+  exact output
+
 /-- Read the rational box of the retained eliminant-safe Newton band. -/
 @[expose] def Output.box
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
     {squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p}
     {current : State.Raw.RawWindingState p ambient} {epsilon : Fraction.Rational}
-    (output : Newton.Band.Basic.Output squarefree current epsilon) : Box :=
+    (output : Output squarefree current epsilon) : Box :=
   output.band.box
 
 end Purelib.RootIsolation.Newton.Band.Basic

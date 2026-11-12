@@ -68,20 +68,20 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.BasisArcRequest 
 open Purelib.Riemann.Branches.NewtonSharedExteriorCuts (SharedExteriorCuts)
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.PieceIndices (columns rows pieceIndex)
 open Purelib.Riemann.Normalization
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve branches
     higher}
-  {preparation : NewtonPreparation original} {target radius : Data.Rat.Fraction.Rational} {grid : NewtonGrid preparation
+  {preparation : NewtonPreparation original} {target radius : Rational} {grid : NewtonGrid preparation
     target radius}
   {observations : ProtectedObservations original} {lifted : LiftedPuncturedGrid grid.punctured}
-  {domains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+  {domains : FaceDomainBank lifted.frames
     grid.faces.regulars}
   {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
     Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
   {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
   {partitions : SurfacePartitions observations grid} {preparations :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.BasisArcRequest.BasisArcPreparations regular domains}
+    BasisArcPreparations regular domains}
 
 open Purelib.Riemann.Readings.RectangularObservationAssembly.ObservationMesh (ClippedAssembly)
 open Purelib.Integration.Polynomial.Rectangle.StitchedSideAreas (Entry)
@@ -103,23 +103,23 @@ theorem bottom_cells (shared : SharedExteriorCuts partitions preparations)
     (position : Fin grid.faces.regulars.length) (sheet : Fin 2) (depth : Nat)
     (values : Fin (((domains.get position).domain sheet).steps + 1) →
       Fin (((domains.get position).domain sheet).steps + 1) → Basic.Canonical → Stokes.PrimitivePoint) :
-    let whole := (Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains shared.source.cuts sheet
+    let whole := (RegularMeshes.build domains shared.source.cuts sheet
       depth).entries.get position
-    let meshes := fun column => ((Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains
+    let meshes := fun column => ((surfaceMeshes partitions domains
       shared.surface sheet depth).get position).entries.get
-      ((Meshes.Newton.Surface.PieceIndices.pieceIndex (partitions.get position)) column 0)
+      ((pieceIndex (partitions.get position)) column 0)
     ∀ (wholeAssembly : ClippedAssembly whole values)
-      (pieces : (column : Fin ((Meshes.Newton.Surface.PieceIndices.columns (partitions.get position)) + 1)) →
+      (pieces : (column : Fin ((columns (partitions.get position)) + 1)) →
         ClippedAssembly (meshes column) values),
       List.ofFn (ClippedPerimeterEntries.bottomCells wholeAssembly) = (List.ofFn (fun column => List.ofFn
         (ClippedPerimeterEntries.bottomCells (pieces column)))).flatten := by
   dsimp only
   intro wholeAssembly pieces
-  let whole := (Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains shared.source.cuts sheet
+  let whole := (RegularMeshes.build domains shared.source.cuts sheet
     depth).entries.get position
-  let meshes := fun column => ((Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains shared.surface
+  let meshes := fun column => ((surfaceMeshes partitions domains shared.surface
     sheet depth).get position).entries.get
-    ((Meshes.Newton.Surface.PieceIndices.pieceIndex (partitions.get position)) column 0)
+    ((pieceIndex (partitions.get position)) column 0)
   apply IndexedBlockReadback.ofFn_flatten
     (fun index => whole.partition.x.intervals[(Fin.cast whole.boundaryColumns_eq index).val]'
       (Fin.cast whole.boundaryColumns_eq index).isLt) (ClippedPerimeterEntries.bottomCells wholeAssembly)
@@ -134,7 +134,7 @@ theorem bottom_cells (shared : SharedExteriorCuts partitions preparations)
   · intro column localIndex wholeIndex same
     have cell := NewtonSharedExteriorBoundaryIntervals.bottom_cell shared position column sheet depth values
       wholeAssembly (pieces column) wholeIndex localIndex same
-    apply StitchedSideAreas.Entry.eq_of_fields
+    apply Entry.eq_of_fields
     · exact congrArg (fun sides => sides.bottom) cell.1
     · exact congrArg (fun corners => corners.lowerLeft) cell.2
     · exact congrArg (fun corners => corners.lowerRight) cell.2
@@ -147,25 +147,25 @@ theorem top_cells (shared : SharedExteriorCuts partitions preparations)
     (position : Fin grid.faces.regulars.length) (sheet : Fin 2) (depth : Nat)
     (values : Fin (((domains.get position).domain sheet).steps + 1) →
       Fin (((domains.get position).domain sheet).steps + 1) → Basic.Canonical → Stokes.PrimitivePoint) :
-    let whole := (Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains shared.source.cuts sheet
+    let whole := (RegularMeshes.build domains shared.source.cuts sheet
       depth).entries.get position
-    let meshes := fun column => ((Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains
+    let meshes := fun column => ((surfaceMeshes partitions domains
       shared.surface sheet depth).get position).entries.get
-      ((Meshes.Newton.Surface.PieceIndices.pieceIndex (partitions.get position)) column (Fin.last
-        (Meshes.Newton.Surface.PieceIndices.rows (partitions.get position))))
+      ((pieceIndex (partitions.get position)) column (Fin.last
+        (rows (partitions.get position))))
     ∀ (wholeAssembly : ClippedAssembly whole values)
-      (pieces : (column : Fin ((Meshes.Newton.Surface.PieceIndices.columns (partitions.get position)) + 1)) →
+      (pieces : (column : Fin ((columns (partitions.get position)) + 1)) →
         ClippedAssembly (meshes column) values),
       List.ofFn (ClippedPerimeterEntries.topCells wholeAssembly) = (List.ofFn (fun column => List.ofFn
         (ClippedPerimeterEntries.topCells (pieces column)))).flatten := by
   dsimp only
   intro wholeAssembly pieces
-  let whole := (Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains shared.source.cuts sheet
+  let whole := (RegularMeshes.build domains shared.source.cuts sheet
     depth).entries.get position
-  let meshes := fun column => ((Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains shared.surface
+  let meshes := fun column => ((surfaceMeshes partitions domains shared.surface
     sheet depth).get position).entries.get
-    ((Meshes.Newton.Surface.PieceIndices.pieceIndex (partitions.get position)) column (Fin.last
-      (Meshes.Newton.Surface.PieceIndices.rows (partitions.get position))))
+    ((pieceIndex (partitions.get position)) column (Fin.last
+      (rows (partitions.get position))))
   apply IndexedBlockReadback.ofFn_flatten
     (fun index => whole.partition.x.intervals[(Fin.cast whole.boundaryColumns_eq index).val]'
       (Fin.cast whole.boundaryColumns_eq index).isLt) (ClippedPerimeterEntries.topCells wholeAssembly)
@@ -175,12 +175,12 @@ theorem top_cells (shared : SharedExteriorCuts partitions preparations)
   · rw [IndexedBlockReadback.ofFn_get_cast]
     have localKeys := OfFn.Basic.ofFn_congr (fun column =>
       IndexedBlockReadback.ofFn_get_cast (meshes column).partition.x.intervals (meshes column).boundaryColumns_eq)
-    exact (NewtonSharedExteriorIntervalSpines.x_spine shared position (Fin.last (Meshes.Newton.Surface.PieceIndices.rows
+    exact (NewtonSharedExteriorIntervalSpines.x_spine shared position (Fin.last (rows
       (partitions.get position))) sheet depth depth).trans (congrArg List.flatten localKeys).symm
   · intro column localIndex wholeIndex same
     have cell := NewtonSharedExteriorBoundaryIntervals.top_cell shared position column sheet depth values wholeAssembly
       (pieces column) wholeIndex localIndex same
-    apply StitchedSideAreas.Entry.eq_of_fields
+    apply Entry.eq_of_fields
     · exact congrArg (fun sides => sides.top) cell.1
     · exact congrArg (fun corners => corners.upperLeft) cell.2
     · exact congrArg (fun corners => corners.upperRight) cell.2
@@ -193,23 +193,23 @@ theorem left_cells (shared : SharedExteriorCuts partitions preparations)
     (position : Fin grid.faces.regulars.length) (sheet : Fin 2) (depth : Nat)
     (values : Fin (((domains.get position).domain sheet).steps + 1) →
       Fin (((domains.get position).domain sheet).steps + 1) → Basic.Canonical → Stokes.PrimitivePoint) :
-    let whole := (Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains shared.source.cuts sheet
+    let whole := (RegularMeshes.build domains shared.source.cuts sheet
       depth).entries.get position
-    let meshes := fun row => ((Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains shared.surface
+    let meshes := fun row => ((surfaceMeshes partitions domains shared.surface
       sheet depth).get position).entries.get
-      ((Meshes.Newton.Surface.PieceIndices.pieceIndex (partitions.get position)) 0 row)
+      ((pieceIndex (partitions.get position)) 0 row)
     ∀ (wholeAssembly : ClippedAssembly whole values)
-      (pieces : (row : Fin ((Meshes.Newton.Surface.PieceIndices.rows (partitions.get position)) + 1)) → ClippedAssembly
+      (pieces : (row : Fin ((rows (partitions.get position)) + 1)) → ClippedAssembly
         (meshes row) values),
       List.ofFn (ClippedPerimeterEntries.leftCells wholeAssembly) = (List.ofFn (fun row => List.ofFn
         (ClippedPerimeterEntries.leftCells (pieces row)))).flatten := by
   dsimp only
   intro wholeAssembly pieces
-  let whole := (Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains shared.source.cuts sheet
+  let whole := (RegularMeshes.build domains shared.source.cuts sheet
     depth).entries.get position
-  let meshes := fun row => ((Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains shared.surface
+  let meshes := fun row => ((surfaceMeshes partitions domains shared.surface
     sheet depth).get position).entries.get
-    ((Meshes.Newton.Surface.PieceIndices.pieceIndex (partitions.get position)) 0 row)
+    ((pieceIndex (partitions.get position)) 0 row)
   apply IndexedBlockReadback.ofFn_flatten
     (fun index => whole.partition.y.intervals[(Fin.cast whole.boundaryRows_eq index).val]'
       (Fin.cast whole.boundaryRows_eq index).isLt) (ClippedPerimeterEntries.leftCells wholeAssembly)
@@ -224,7 +224,7 @@ theorem left_cells (shared : SharedExteriorCuts partitions preparations)
   · intro row localIndex wholeIndex same
     have cell := NewtonSharedExteriorBoundaryIntervals.left_cell shared position row sheet depth values wholeAssembly
       (pieces row) wholeIndex localIndex same
-    apply StitchedSideAreas.Entry.eq_of_fields
+    apply Entry.eq_of_fields
     · exact congrArg (fun sides => sides.left) cell.1
     · exact congrArg (fun corners => corners.lowerLeft) cell.2
     · exact congrArg (fun corners => corners.upperLeft) cell.2
@@ -237,25 +237,25 @@ theorem right_cells (shared : SharedExteriorCuts partitions preparations)
     (position : Fin grid.faces.regulars.length) (sheet : Fin 2) (depth : Nat)
     (values : Fin (((domains.get position).domain sheet).steps + 1) →
       Fin (((domains.get position).domain sheet).steps + 1) → Basic.Canonical → Stokes.PrimitivePoint) :
-    let whole := (Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains shared.source.cuts sheet
+    let whole := (RegularMeshes.build domains shared.source.cuts sheet
       depth).entries.get position
-    let meshes := fun row => ((Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains shared.surface
+    let meshes := fun row => ((surfaceMeshes partitions domains shared.surface
       sheet depth).get position).entries.get
-      ((Meshes.Newton.Surface.PieceIndices.pieceIndex (partitions.get position)) (Fin.last
-        (Meshes.Newton.Surface.PieceIndices.columns (partitions.get position))) row)
+      ((pieceIndex (partitions.get position)) (Fin.last
+        (columns (partitions.get position))) row)
     ∀ (wholeAssembly : ClippedAssembly whole values)
-      (pieces : (row : Fin ((Meshes.Newton.Surface.PieceIndices.rows (partitions.get position)) + 1)) → ClippedAssembly
+      (pieces : (row : Fin ((rows (partitions.get position)) + 1)) → ClippedAssembly
         (meshes row) values),
       List.ofFn (ClippedPerimeterEntries.rightCells wholeAssembly) = (List.ofFn (fun row => List.ofFn
         (ClippedPerimeterEntries.rightCells (pieces row)))).flatten := by
   dsimp only
   intro wholeAssembly pieces
-  let whole := (Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains shared.source.cuts sheet
+  let whole := (RegularMeshes.build domains shared.source.cuts sheet
     depth).entries.get position
-  let meshes := fun row => ((Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains shared.surface
+  let meshes := fun row => ((surfaceMeshes partitions domains shared.surface
     sheet depth).get position).entries.get
-    ((Meshes.Newton.Surface.PieceIndices.pieceIndex (partitions.get position)) (Fin.last
-      (Meshes.Newton.Surface.PieceIndices.columns (partitions.get position))) row)
+    ((pieceIndex (partitions.get position)) (Fin.last
+      (columns (partitions.get position))) row)
   apply IndexedBlockReadback.ofFn_flatten
     (fun index => whole.partition.y.intervals[(Fin.cast whole.boundaryRows_eq index).val]'
       (Fin.cast whole.boundaryRows_eq index).isLt) (ClippedPerimeterEntries.rightCells wholeAssembly)
@@ -266,12 +266,12 @@ theorem right_cells (shared : SharedExteriorCuts partitions preparations)
     have localKeys := OfFn.Basic.ofFn_congr (fun row =>
       IndexedBlockReadback.ofFn_get_cast (meshes row).partition.y.intervals (meshes row).boundaryRows_eq)
     exact (NewtonSharedExteriorIntervalSpines.y_spine shared position (Fin.last
-      (Meshes.Newton.Surface.PieceIndices.columns (partitions.get position))) sheet depth depth).trans (congrArg
+      (columns (partitions.get position))) sheet depth depth).trans (congrArg
       List.flatten localKeys).symm
   · intro row localIndex wholeIndex same
     have cell := NewtonSharedExteriorBoundaryIntervals.right_cell shared position row sheet depth values wholeAssembly
       (pieces row) wholeIndex localIndex same
-    apply StitchedSideAreas.Entry.eq_of_fields
+    apply Entry.eq_of_fields
     · exact congrArg (fun sides => sides.right) cell.1
     · exact congrArg (fun corners => corners.lowerRight) cell.2
     · exact congrArg (fun corners => corners.upperRight) cell.2
@@ -288,16 +288,16 @@ theorem bottom_perimeter (shared : SharedExteriorCuts partitions preparations)
     (position : Fin grid.faces.regulars.length) (sheet : Fin 2) (depth : Nat)
     (values : Fin (((domains.get position).domain sheet).steps + 1) →
       Fin (((domains.get position).domain sheet).steps + 1) → Basic.Canonical → Stokes.PrimitivePoint) :
-    let whole := (Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains shared.source.cuts sheet
+    let whole := (RegularMeshes.build domains shared.source.cuts sheet
       depth).entries.get position
-    let meshes := fun column => ((Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains
+    let meshes := fun column => ((surfaceMeshes partitions domains
       shared.surface sheet depth).get position).entries.get
-      ((Meshes.Newton.Surface.PieceIndices.pieceIndex (partitions.get position)) column 0)
+      ((pieceIndex (partitions.get position)) column 0)
     ∀ (wholeAssembly : ClippedAssembly whole values)
-      (pieces : (column : Fin ((Meshes.Newton.Surface.PieceIndices.columns (partitions.get position)) + 1)) →
+      (pieces : (column : Fin ((columns (partitions.get position)) + 1)) →
         ClippedAssembly (meshes column) values)
       (wholePerimeter : wholeAssembly.Perimeter) (perimeters : ∀ column, (pieces column).Perimeter),
-      (ClippedPerimeterEntries.Perimeter.bottomEntry wholePerimeter) = StitchedSideAreas.Entry.concatenate (fun column
+      (ClippedPerimeterEntries.Perimeter.bottomEntry wholePerimeter) = Entry.concatenate (fun column
         => (ClippedPerimeterEntries.Perimeter.bottomEntry (perimeters column))) := by
   dsimp only
   intro wholeAssembly pieces wholePerimeter perimeters
@@ -316,17 +316,17 @@ theorem top_perimeter (shared : SharedExteriorCuts partitions preparations)
     (position : Fin grid.faces.regulars.length) (sheet : Fin 2) (depth : Nat)
     (values : Fin (((domains.get position).domain sheet).steps + 1) →
       Fin (((domains.get position).domain sheet).steps + 1) → Basic.Canonical → Stokes.PrimitivePoint) :
-    let whole := (Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains shared.source.cuts sheet
+    let whole := (RegularMeshes.build domains shared.source.cuts sheet
       depth).entries.get position
-    let meshes := fun column => ((Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains
+    let meshes := fun column => ((surfaceMeshes partitions domains
       shared.surface sheet depth).get position).entries.get
-      ((Meshes.Newton.Surface.PieceIndices.pieceIndex (partitions.get position)) column (Fin.last
-        (Meshes.Newton.Surface.PieceIndices.rows (partitions.get position))))
+      ((pieceIndex (partitions.get position)) column (Fin.last
+        (rows (partitions.get position))))
     ∀ (wholeAssembly : ClippedAssembly whole values)
-      (pieces : (column : Fin ((Meshes.Newton.Surface.PieceIndices.columns (partitions.get position)) + 1)) →
+      (pieces : (column : Fin ((columns (partitions.get position)) + 1)) →
         ClippedAssembly (meshes column) values)
       (wholePerimeter : wholeAssembly.Perimeter) (perimeters : ∀ column, (pieces column).Perimeter),
-      (ClippedPerimeterEntries.Perimeter.topEntry wholePerimeter) = StitchedSideAreas.Entry.concatenate (fun column =>
+      (ClippedPerimeterEntries.Perimeter.topEntry wholePerimeter) = Entry.concatenate (fun column =>
         (ClippedPerimeterEntries.Perimeter.topEntry (perimeters column))) := by
   dsimp only
   intro wholeAssembly pieces wholePerimeter perimeters
@@ -345,16 +345,16 @@ theorem left_perimeter (shared : SharedExteriorCuts partitions preparations)
     (position : Fin grid.faces.regulars.length) (sheet : Fin 2) (depth : Nat)
     (values : Fin (((domains.get position).domain sheet).steps + 1) →
       Fin (((domains.get position).domain sheet).steps + 1) → Basic.Canonical → Stokes.PrimitivePoint) :
-    let whole := (Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains shared.source.cuts sheet
+    let whole := (RegularMeshes.build domains shared.source.cuts sheet
       depth).entries.get position
-    let meshes := fun row => ((Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains shared.surface
+    let meshes := fun row => ((surfaceMeshes partitions domains shared.surface
       sheet depth).get position).entries.get
-      ((Meshes.Newton.Surface.PieceIndices.pieceIndex (partitions.get position)) 0 row)
+      ((pieceIndex (partitions.get position)) 0 row)
     ∀ (wholeAssembly : ClippedAssembly whole values)
-      (pieces : (row : Fin ((Meshes.Newton.Surface.PieceIndices.rows (partitions.get position)) + 1)) → ClippedAssembly
+      (pieces : (row : Fin ((rows (partitions.get position)) + 1)) → ClippedAssembly
         (meshes row) values)
       (wholePerimeter : wholeAssembly.Perimeter) (perimeters : ∀ row, (pieces row).Perimeter),
-      (ClippedPerimeterEntries.Perimeter.leftEntry wholePerimeter) = StitchedSideAreas.Entry.concatenate (fun row =>
+      (ClippedPerimeterEntries.Perimeter.leftEntry wholePerimeter) = Entry.concatenate (fun row =>
         (ClippedPerimeterEntries.Perimeter.leftEntry (perimeters row))) := by
   dsimp only
   intro wholeAssembly pieces wholePerimeter perimeters
@@ -373,17 +373,17 @@ theorem right_perimeter (shared : SharedExteriorCuts partitions preparations)
     (position : Fin grid.faces.regulars.length) (sheet : Fin 2) (depth : Nat)
     (values : Fin (((domains.get position).domain sheet).steps + 1) →
       Fin (((domains.get position).domain sheet).steps + 1) → Basic.Canonical → Stokes.PrimitivePoint) :
-    let whole := (Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains shared.source.cuts sheet
+    let whole := (RegularMeshes.build domains shared.source.cuts sheet
       depth).entries.get position
-    let meshes := fun row => ((Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains shared.surface
+    let meshes := fun row => ((surfaceMeshes partitions domains shared.surface
       sheet depth).get position).entries.get
-      ((Meshes.Newton.Surface.PieceIndices.pieceIndex (partitions.get position)) (Fin.last
-        (Meshes.Newton.Surface.PieceIndices.columns (partitions.get position))) row)
+      ((pieceIndex (partitions.get position)) (Fin.last
+        (columns (partitions.get position))) row)
     ∀ (wholeAssembly : ClippedAssembly whole values)
-      (pieces : (row : Fin ((Meshes.Newton.Surface.PieceIndices.rows (partitions.get position)) + 1)) → ClippedAssembly
+      (pieces : (row : Fin ((rows (partitions.get position)) + 1)) → ClippedAssembly
         (meshes row) values)
       (wholePerimeter : wholeAssembly.Perimeter) (perimeters : ∀ row, (pieces row).Perimeter),
-      (ClippedPerimeterEntries.Perimeter.rightEntry wholePerimeter) = StitchedSideAreas.Entry.concatenate (fun row =>
+      (ClippedPerimeterEntries.Perimeter.rightEntry wholePerimeter) = Entry.concatenate (fun row =>
         (ClippedPerimeterEntries.Perimeter.rightEntry (perimeters row))) := by
   dsimp only
   intro wholeAssembly pieces wholePerimeter perimeters

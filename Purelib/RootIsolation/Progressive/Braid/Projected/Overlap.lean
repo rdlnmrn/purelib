@@ -8,6 +8,7 @@ import Purelib.Data.Fin.Bijection.Basic
 import Purelib.Data.Rat.Fraction
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Geometry.Rational.Box.Basic
+import Purelib.Geometry.Rational.Box.Rotation
 import Purelib.RootIsolation.Owner.Bridge.Basic
 import Purelib.RootIsolation.Progressive.Chamber.Frame
 import Purelib.Topology.Knot.Braid.Basic
@@ -22,6 +23,7 @@ section
 open Purelib
 
 open Purelib.RootIsolation
+open Purelib.Geometry.Rational
 
 section
 @[expose] public section
@@ -46,43 +48,44 @@ transport, expressed in the endpoint projection orders.
 namespace Purelib.RootIsolation.Progressive.Braid.Projected.Overlap
 
 /-- Rational geometry distinguishing the over/under choice at one adjacent
-projection crossing.  In a positive chart the strand which starts in the
-left position lies strictly below the other strand throughout their two
-Rouché bridge boxes; a negative chart records the reverse height order.
+projection crossing. In a positive chart the strand which starts in the
+left position lies strictly below the other strand throughout the rotated
+enclosures of their original Rouché bridge boxes; a negative chart records
+the reverse height order.
 
 Together with the adjacent endpoint swap stored by `ProjectedOverlap`, this
 is finite signed-crossing data rather than an arbitrary sign annotation. -/
 structure CrossingGeometry {strands : Nat}
-    (start finish : ProjectedFrame strands)
-    (overlap : ChamberOverlap start.chamber finish.chamber)
-    (generator : Generator strands) where
-  /-- The two original bridge boxes have the strict vertical order specified by the retained crossing sign. -/
+    (start finish : Progressive.Braid.Projected.Frame.ProjectedFrame strands)
+    (overlap : Progressive.Chamber.Overlap.ChamberOverlap start.chamber finish.chamber)
+    (generator : Topology.Knot.Braid.Generator strands) where
+  /-- Rotated enclosures of the original bridge boxes have the retained signed vertical order. -/
     heightSeparated :
     match generator.sign with
     | .positive =>
-        (overlap.bridge (start.ownerIndex generator.left)).box.yUpper <
-          (overlap.bridge (start.ownerIndex generator.right)).box.yLower
+        (Box.Rotation.enclosure start.slope (overlap.bridge (start.ownerIndex generator.left)).box).yUpper <
+          (Box.Rotation.enclosure start.slope (overlap.bridge (start.ownerIndex generator.right)).box).yLower
     | .negative =>
-        (overlap.bridge (start.ownerIndex generator.right)).box.yUpper <
-          (overlap.bridge (start.ownerIndex generator.left)).box.yLower
+        (Box.Rotation.enclosure start.slope (overlap.bridge (start.ownerIndex generator.right)).box).yUpper <
+          (Box.Rotation.enclosure start.slope (overlap.bridge (start.ownerIndex generator.left)).box).yLower
 
 set_option genInjectivity false in
 /-- One certified atomic overlap in projection order.  The matching equation
-is the decisive link: it states that persistent owner transport is either the
-identity on projection positions or exactly the displayed adjacent swap. -/
+is the decisive link: both frames share one rotation chart, and persistent
+owner transport is either identity or the displayed adjacent swap on positions. -/
 inductive ProjectedOverlap {strands : Nat}
     (start finish : ProjectedFrame strands) : Type 2
   /-- An original chamber overlap whose matching preserves every projected position. -/ | stationary
-      (overlap : ChamberOverlap start.chamber finish.chamber)
-      (matching_order : ∀ position : Fin strands,
+      (overlap : Progressive.Chamber.Overlap.ChamberOverlap start.chamber finish.chamber)
+      (agreement : start.slope = finish.slope ∧ ∀ position : Fin strands,
         overlap.matching.forward (start.ownerIndex position) =
           finish.ownerIndex position)
   /-- An original chamber overlap whose matching is the displayed adjacent swap, with its retained signed height
     geometry. -/ | crossing
-      (overlap : ChamberOverlap start.chamber finish.chamber)
-      (generator : Generator strands)
-      (geometry : CrossingGeometry start finish overlap generator)
-      (matching_order : ∀ position : Fin strands,
+      (overlap : Progressive.Chamber.Overlap.ChamberOverlap start.chamber finish.chamber)
+      (generator : Topology.Knot.Braid.Generator strands)
+      (geometry : Progressive.Braid.Projected.Overlap.CrossingGeometry start finish overlap generator)
+      (agreement : start.slope = finish.slope ∧ ∀ position : Fin strands,
         overlap.matching.forward (start.ownerIndex position) =
           finish.ownerIndex (generator.permutation.forward position))
 
@@ -92,31 +95,39 @@ namespace ProjectedOverlap
 
 /-- Read the original chamber overlap retained by a projected step. -/
 def chamberOverlap {strands : Nat} {start finish : ProjectedFrame strands} :
-    Progressive.Braid.Projected.Overlap.ProjectedOverlap start finish →
+    ProjectedOverlap start finish →
       ChamberOverlap start.chamber finish.chamber
   | .stationary overlap _ => overlap
   | .crossing overlap _ _ _ => overlap
 
 /-- Read the stationary event or signed adjacent crossing retained by this projected overlap. -/
 def event {strands : Nat} {start finish : ProjectedFrame strands} :
-    Progressive.Braid.Projected.Overlap.ProjectedOverlap start finish → Topology.Knot.Braid.Event strands
+    ProjectedOverlap start finish → Topology.Knot.Braid.Event strands
   | .stationary _ _ => .stationary
   | .crossing _ generator _ _ => .crossing generator
 
 /-- Read the finite braid word of the original projected event. -/
 def word {strands : Nat} {start finish : ProjectedFrame strands}
-    (step : Progressive.Braid.Projected.Overlap.ProjectedOverlap start finish) : Topology.Knot.Braid.Word strands :=
+    (step : ProjectedOverlap start finish) : Topology.Knot.Braid.Word strands :=
   step.event.word
 
 /-- The original chamber-owner matching agrees with the retained projected event permutation. -/
 theorem matching_order {strands : Nat}
     {start finish : ProjectedFrame strands}
-    (step : Progressive.Braid.Projected.Overlap.ProjectedOverlap start finish) (position : Fin strands) :
+    (step : ProjectedOverlap start finish) (position : Fin strands) :
     step.chamberOverlap.matching.forward (start.ownerIndex position) =
       finish.ownerIndex (step.event.permutation.forward position) := by
   cases step with
-  | stationary overlap law => exact law position
-  | crossing overlap generator geometry law => exact law position
+  | stationary overlap agreement => exact agreement.2 position
+  | crossing overlap generator geometry agreement => exact agreement.2 position
+
+/-- Both endpoint frames of an atomic projected overlap retain the same rational rotation slope. -/
+theorem slope_eq {strands : Nat}
+    {start finish : Progressive.Braid.Projected.Frame.ProjectedFrame strands}
+    (step : Progressive.Braid.Projected.Overlap.ProjectedOverlap start finish) : start.slope = finish.slope := by
+  cases step with
+  | stationary overlap agreement => exact agreement.1
+  | crossing overlap generator geometry agreement => exact agreement.1
 
 /-- The inverse crossing matching sends the finishing left position to the original right owner. -/
 theorem crossing_backward_left {strands : Nat}
@@ -155,73 +166,74 @@ theorem reverseCrossingGeometry {strands : Nat}
     {start finish : ProjectedFrame strands}
     (overlap : ChamberOverlap start.chamber finish.chamber)
     (generator : Generator strands)
-    (geometry : Progressive.Braid.Projected.Overlap.CrossingGeometry start finish overlap generator)
+    (geometry : CrossingGeometry start finish overlap generator)
     (law : ∀ position : Fin strands,
       overlap.matching.forward (start.ownerIndex position) =
-        finish.ownerIndex (generator.permutation.forward position)) :
-    Progressive.Braid.Projected.Overlap.CrossingGeometry finish start overlap.reverse generator.reverse := by
+        finish.ownerIndex (generator.permutation.forward position))
+    (sameSlope : start.slope = finish.slope) :
+    CrossingGeometry finish start overlap.reverse generator.reverse := by
   constructor
-  have backwardLeft := Progressive.Braid.Projected.Overlap.ProjectedOverlap.crossing_backward_left overlap generator law
-  have backwardRight := Progressive.Braid.Projected.Overlap.ProjectedOverlap.crossing_backward_right overlap generator
+  have backwardLeft := crossing_backward_left overlap generator law
+  have backwardRight := crossing_backward_right overlap generator
     law
   cases generator with
   | mk index sign =>
       cases sign with
       | positive =>
           change
-            (overlap.bridge
+            (Box.Rotation.enclosure finish.slope (overlap.bridge
               (overlap.matching.backward
                 (finish.ownerIndex
-                  ({ index := index, sign := CrossingSign.positive } :
-                    Generator strands).right))).box.yUpper <
-              (overlap.bridge
+                  ({ index := index, sign := Topology.Knot.Braid.CrossingSign.positive } :
+                    Topology.Knot.Braid.Generator strands).right))).box).yUpper <
+              (Box.Rotation.enclosure finish.slope (overlap.bridge
                 (overlap.matching.backward
                   (finish.ownerIndex
-                    ({ index := index, sign := CrossingSign.positive } :
-                      Generator strands).left))).box.yLower
-          rw [backwardRight, backwardLeft]
+                    ({ index := index, sign := Topology.Knot.Braid.CrossingSign.positive } :
+                      Topology.Knot.Braid.Generator strands).left))).box).yLower
+          rw [← sameSlope, backwardRight, backwardLeft]
           exact geometry.heightSeparated
       | negative =>
           change
-            (overlap.bridge
+            (Box.Rotation.enclosure finish.slope (overlap.bridge
               (overlap.matching.backward
                 (finish.ownerIndex
-                  ({ index := index, sign := CrossingSign.negative } :
-                    Generator strands).left))).box.yUpper <
-              (overlap.bridge
+                  ({ index := index, sign := Topology.Knot.Braid.CrossingSign.negative } :
+                    Topology.Knot.Braid.Generator strands).left))).box).yUpper <
+              (Box.Rotation.enclosure finish.slope (overlap.bridge
                 (overlap.matching.backward
                   (finish.ownerIndex
-                    ({ index := index, sign := CrossingSign.negative } :
-                      Generator strands).right))).box.yLower
-          rw [backwardLeft, backwardRight]
+                    ({ index := index, sign := Topology.Knot.Braid.CrossingSign.negative } :
+                      Topology.Knot.Braid.Generator strands).right))).box).yLower
+          rw [← sameSlope, backwardLeft, backwardRight]
           exact geometry.heightSeparated
 
 /-- Reverse a projected overlap, preserving its original common-owner bridges and reversing its crossing sign. -/
 def reverse {strands : Nat} {start finish : ProjectedFrame strands} :
-    Progressive.Braid.Projected.Overlap.ProjectedOverlap start finish →
-      Progressive.Braid.Projected.Overlap.ProjectedOverlap finish start
-  | .stationary overlap law =>
-      .stationary overlap.reverse (by
+    ProjectedOverlap start finish →
+      ProjectedOverlap finish start
+  | .stationary overlap agreement =>
+      .stationary overlap.reverse ⟨agreement.1.symm, by
         intro position
-        have matched := congrArg overlap.matching.backward (law position)
+        have matched := congrArg overlap.matching.backward (agreement.2 position)
         rw [overlap.matching.backward_forward] at matched
-        exact matched.symm)
-  | .crossing overlap generator geometry law =>
+        exact matched.symm⟩
+  | .crossing overlap generator geometry agreement =>
       .crossing overlap.reverse generator.reverse
-        (Progressive.Braid.Projected.Overlap.ProjectedOverlap.reverseCrossingGeometry overlap generator geometry law)
-          (by
+        (reverseCrossingGeometry overlap generator geometry agreement.2 agreement.1)
+          ⟨agreement.1.symm, by
           intro position
           have matched := congrArg overlap.matching.backward
-            (law (generator.permutation.forward position))
-          rw [Generator.permutation_involutive,
+            (agreement.2 (generator.permutation.forward position))
+          rw [Topology.Knot.Braid.Generator.permutation_involutive,
             overlap.matching.backward_forward] at matched
-          exact matched.symm)
+          exact matched.symm⟩
 
 /-- Reversing a projected overlap gives the inverse of its original braid word. -/
 @[simp] theorem reverse_word {strands
   : Nat}
     {start finish : ProjectedFrame strands}
-    (step : Progressive.Braid.Projected.Overlap.ProjectedOverlap start finish) :
+    (step : ProjectedOverlap start finish) :
     step.reverse.word = step.word.inverse := by
   cases step with
   | stationary overlap law => rfl
@@ -231,7 +243,7 @@ def reverse {strands : Nat} {start finish : ProjectedFrame strands} :
 @[simp] theorem reverse_chamberOverlap
   {strands : Nat}
     {start finish : ProjectedFrame strands}
-    (step : Progressive.Braid.Projected.Overlap.ProjectedOverlap start finish) :
+    (step : ProjectedOverlap start finish) :
     step.reverse.chamberOverlap = step.chamberOverlap.reverse := by
   cases step with
   | stationary overlap law => rfl

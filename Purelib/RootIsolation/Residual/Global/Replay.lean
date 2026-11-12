@@ -57,19 +57,15 @@ section
 namespace Purelib.RootIsolation.Residual.Global.Replay
 
 variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (input :
-  RootIsolation.FTA.Squarefree.Input p)
+  FTA.Squarefree.Input p)
   (sample : Gaussian.Basic.Canonical) (inside : (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox p).Contains sample)
   {epsilon : Fraction.Rational} (epsilonPositive : 0 < epsilon)
-  (residualSmall : Data.Gaussian.Norm.Basic.normSq (p.eval sample) < Residual.Global.Assignment.insideResidualTarget
+  (residualSmall : Gaussian.Norm.Basic.normSq (p.eval sample) < Assignment.insideResidualTarget
     input epsilon)
 
 /-- Reconstruct the original anchored localization seed from the supplied sample and strict residual bound. -/
 def seed :=
-  let parent := Residual.Global.Assignment.largeSquareProtectedAmbient input.degreePositive
-  let localized := Newton.Restart.Uniform.Anchored.uniform_residual_strict_and_anchored
-    input.squarefree parent sample inside epsilonPositive residualSmall
-  Newton.Restart.Anchored.Seed.seedOfResidual input.squarefree input.elimination parent sample
-    localized.1 epsilonPositive localized.2
+  Assignment.insideSeed input input.elimination sample inside epsilonPositive residualSmall
 
 /-- Construct the original shrinking track of the reconstructed anchored seed. -/
 def track := (seed input sample inside
@@ -85,8 +81,8 @@ Keep the same seed radius, state, track, isolation owner and quantitative bounds
 evidence. -/
 def restore (saved : Refined input sample
   inside epsilonPositive residualSmall) :
-    Residual.Global.Assignment.AssignedResult input sample epsilon := open Purelib.Geometry.Rational in by
-  let parent := Residual.Global.Assignment.largeSquareProtectedAmbient input.degreePositive
+    Assignment.AssignedResult input sample epsilon := open Purelib.Geometry.Rational in by
+  let parent := Assignment.largeSquareProtectedAmbient input.degreePositive
   have localized :=
     Newton.Restart.Uniform.Anchored.uniform_residual_strict_and_anchored
       input.squarefree parent sample inside epsilonPositive residualSmall
@@ -121,7 +117,7 @@ def restore (saved : Refined input sample
       radiusLeRequested := radiusLe
       state := state
       stateStrictLargeSquare := by
-        simpa only [state, parent, Residual.Global.Assignment.largeSquareProtectedAmbient] using
+        simpa only [state, parent, Assignment.largeSquareProtectedAmbient] using
           seed.state_strict_current input.degreeAtLeastTwo
       windingFour := state.rawWindingFour
       diagonalBound := diagonal
@@ -143,7 +139,7 @@ def restore (saved : Refined input sample
         intro z zInside
         have distance := seed.band.normSq_sub_anchor_le
           seed.displacementSmall zInside
-        have distanceFromSample : Data.Gaussian.Norm.Basic.normSq (sample - z) ≤
+        have distanceFromSample : Gaussian.Norm.Basic.normSq (sample - z) ≤
             18 * seed.radius ^ 2 := by
           have swapped : sample - z = -(z - sample) := by
             apply Gaussian.Basic.ext <;>
@@ -167,7 +163,7 @@ def restore (saved : Refined input sample
 theorem restore_eq (saved : Refined input
   sample inside epsilonPositive residualSmall) :
     restore input sample inside epsilonPositive residualSmall saved =
-      Residual.Global.Assignment.assignInside input sample inside epsilonPositive residualSmall := by
+      Assignment.assignInside input sample inside epsilonPositive residualSmall := by
   rcases saved with ⟨state, same⟩
   cases same
   rfl

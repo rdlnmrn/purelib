@@ -79,6 +79,10 @@ import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Topology.Surface.Sewing.SewnPrimitiveContacts
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-! Pay both stem defects for the original branch excursion on the enlarged
@@ -133,12 +137,12 @@ open Purelib.Data.Gaussian.Basic.Canonical
 open Purelib.Data.Rat.Fraction.Order.Arithmetic (mul_nonneg_direct mul_le_mul_direct mul_le_mul_of_nonneg_left_direct
   add_le_add_direct)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base next : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {current : LiftedPuncturedGrid next}
-  (bank : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted)
-    (included : Purelib.Polynomial.Geometry.Grid.Extension.CoordinateInclusion base.bank.grid next.bank.grid)
+  (bank : BasedBranchBank lifted)
+    (included : Extension.CoordinateInclusion base.bank.grid next.bank.grid)
 
 /-- The retained branch stem resplit along the supplied coordinate inclusion. -/
 @[expose] def stem (branch : BranchIsolation.Data.Index branches) :=
@@ -148,36 +152,36 @@ variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.Hyperelliptic
 @[expose] def hole (branch : BranchIsolation.Data.Index branches) :=
   included.resplit (bank.rows.get branch).boundary ((base.bank.cell branch).anchor_mem (base.bank.cell_mem branch))
 
-variable {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames
-  next.faces.regulars} {differential : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+variable {domains : FaceDomainBank current.frames
+  next.faces.regulars} {differential : Differential genus}
 
 /-- The squared stem-plus-boundary edge count times the retained primitive magnitude bound. -/
-@[expose] def magnitude (fixed : MagnitudeBank.FaceMagnitudeBank domains differential) (branch :
-  BranchIsolation.Data.Index branches) : Fraction.Rational :=
-  (((stem bank included branch).append (hole bank included branch)).edgeCount : Fraction.Rational) ^ 2 * (4 *
+@[expose] def magnitude (fixed : FaceMagnitudeBank domains differential) (branch :
+  BranchIsolation.Data.Index branches) : Rational :=
+  (((stem bank included branch).append (hole bank included branch)).edgeCount : Rational) ^ 2 * (4 *
     fixed.bound)
 
 /-- The resplit stem and boundary magnitude bound is nonnegative. -/
-theorem magnitude_nonnegative (fixed : MagnitudeBank.FaceMagnitudeBank domains differential) (branch :
+theorem magnitude_nonnegative (fixed : FaceMagnitudeBank domains differential) (branch :
   BranchIsolation.Data.Index branches) :
     0 ≤ magnitude bank included fixed branch :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.pow_nonneg_direct
+  Arithmetic.mul_nonneg_direct (Arithmetic.pow_nonneg_direct
     (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 2)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) fixed.nonnegative)
+    (Arithmetic.mul_nonneg_direct (by decide) fixed.nonnegative)
 
 set_option genInjectivity false in
 /-- A paid comparison between a resplit based branch excursion and its retained hole boundary.
 
 One paired stem placement carries the opposite-sheet area, both source/chart comparisons and increment cancellation, all
 paid at a common stage. -/
-structure IncludedStemRequest (fixed : MagnitudeBank.FaceMagnitudeBank domains differential)
-    (branch : BranchIsolation.Data.Index branches) (sheet : Fin 2) (target : Fraction.Rational) where
+structure IncludedStemRequest (fixed : FaceMagnitudeBank domains differential)
+    (branch : BranchIsolation.Data.Index branches) (sheet : Fin 2) (target : Rational) where
   /-- The requested total stem error is strictly positive. -/ positive : 0 < target
-  /-- The cached magnitude bound for the actual resplit stem and hole boundary. -/ magnitude : Fraction.Rational
+  /-- The cached magnitude bound for the actual resplit stem and hole boundary. -/ magnitude : Rational
   /-- The cached magnitude equals the actual resplit stem and boundary bound. -/ magnitude_eq : magnitude =
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.StemRequests.magnitude bank included fixed branch
+    StemRequests.magnitude bank included fixed branch
   /-- The retained allowance for cancellation of the two opposite-sheet stem increments. -/ incrementTarget :
-    Fraction.Rational
+    Rational
   /-- The increment allowance is the weighted share of one quarter of the target. -/ incrementTarget_eq :
     incrementTarget = Weighted.allowance (target / 4) (4 * magnitude)
   /-- The actual paired placement of the resplit stem on the enlarged mesh. -/ paired : WalkOccurrences.PairedWalk
@@ -189,7 +193,7 @@ structure IncludedStemRequest (fixed : MagnitudeBank.FaceMagnitudeBank domains d
   /-- The source/chart area request for the other retained stem sheet. -/ other : SourceChartAreaRequest fixed
     (paired.sources (BranchCutLifts.otherSheet sheet)) (target / 4 / 10)
   /-- The increment-cancellation request on the same paired stem and original differential. -/ increment :
-    PairedWalk.IncrementRequest paired domains differential sheet incrementTarget
+    IncrementRequest paired domains differential sheet incrementTarget
   /-- The cached common stage paying all four retained request families. -/ index : Nat
   /-- The common stage is the nested maximum of the retained area and increment request stages. -/ index_eq : index =
     max opposite.index (max outward.index (max other.index increment.index))
@@ -198,21 +202,21 @@ constructive_injectivity IncludedStemRequest
 
 namespace IncludedStemRequest
 
-variable {bank included} {fixed : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank
+variable {bank included} {fixed : FaceMagnitudeBank
   domains differential}
-  {branch : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches} {sheet : Fin 2} {target :
-    Purelib.Data.Rat.Fraction.Rational}
+  {branch : BranchIsolation.Data.Index branches} {sheet : Fin 2} {target :
+    Rational}
 
 /-- Prepare one paired resplit stem and all its area and increment requests using the retained magnitude reference. -/
-@[expose] def build (bank : LiftedPuncturedGrid.BasedBranchBank lifted) (included : Extension.CoordinateInclusion
+@[expose] def build (bank : BasedBranchBank lifted) (included : Extension.CoordinateInclusion
   base.bank.grid next.bank.grid)
-    (fixed : MagnitudeBank.FaceMagnitudeBank domains differential) (branch : BranchIsolation.Data.Index branches)
-    (sheet : Fin 2) (target : Fraction.Rational) (positive : 0 < target) : IncludedStemRequest bank included fixed
+    (fixed : FaceMagnitudeBank domains differential) (branch : BranchIsolation.Data.Index branches)
+    (sheet : Fin 2) (target : Rational) (positive : 0 < target) : IncludedStemRequest bank included fixed
       branch sheet target :=
-  let magnitude := Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.StemRequests.magnitude bank included fixed branch
+  let magnitude := StemRequests.magnitude bank included fixed branch
   let incrementTarget := Weighted.allowance (target / 4) (4 * magnitude)
-  have quarterPositive : 0 < target / 4 := Fraction.Order.Field.div_pos_direct positive (by decide)
-  have partPositive : 0 < target / 4 / 10 := Fraction.Order.Field.div_pos_direct quarterPositive (by decide)
+  have quarterPositive : 0 < target / 4 := Field.div_pos_direct positive (by decide)
+  have partPositive : 0 < target / 4 / 10 := Field.div_pos_direct quarterPositive (by decide)
   let paired := PairedWalk.build current.mesh (stem bank included branch)
   let opposite := AreaRequest.build fixed paired _ partPositive
   let outward := SourceChartAreaRequest.build fixed (paired.sources sheet)
@@ -221,7 +225,7 @@ variable {bank included} {fixed : Purelib.Curves.Hyperelliptic.Meshes.PuncturedG
     (SignedSourceChartRequests.paired_sources_nonloop paired _) _ partPositive
   let increment := IncrementRequest.build paired domains differential sheet incrementTarget
     (Weighted.allowance_positive quarterPositive
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (magnitude_nonnegative bank included fixed branch)))
+      (Arithmetic.mul_nonneg_direct (by decide) (magnitude_nonnegative bank included fixed branch)))
   ⟨positive, magnitude, rfl, incrementTarget, rfl, paired, opposite, outward, other, increment,
     max opposite.index (max outward.index (max other.index increment.index)), rfl⟩
 
@@ -232,7 +236,7 @@ private theorem otherSheet_different (sheet : Fin 2) :
 
 /-- The actual single-differential reading parent on the enlarged mesh. -/
 @[expose, reducible] def AreaSample :=
-  SourceChartComparison.SingleReadings (owner := SourceChartComparison.ownerFromMesh current.mesh) domains differential
+  SingleReadings (owner := SourceChartComparison.ownerFromMesh current.mesh) domains differential
 
 /-- The paid common stem stage also pays its retained opposite-sheet area request. -/
 theorem OppositeStage (request : IncludedStemRequest bank included fixed branch sheet target)
@@ -268,7 +272,7 @@ theorem OppositeStage (request : IncludedStemRequest bank included fixed branch 
       request.index ≤ sample.stage}
     {opposite : OppositePart request sample later}
     (first : FirstPart request sample opposite) (second : SecondPart request sample opposite)
-    (residual : Data.Gaussian.Basic.Canonical) : Prop := residual = first.chartArea - second.chartArea
+    (residual : Gaussian) : Prop := residual = first.chartArea - second.chartArea
 
 /-- The cached stem bound combines the two source/chart errors with the intervening opposite-sheet error. -/
 @[expose, reducible] def BoundIdentity {request : IncludedStemRequest bank included fixed branch sheet target}
@@ -276,7 +280,7 @@ theorem OppositeStage (request : IncludedStemRequest bank included fixed branch 
       request.index ≤ sample.stage}
     (opposite : OppositePart request sample later)
     (first : FirstPart request sample opposite) (second : SecondPart request sample opposite)
-    (bound : Fraction.Rational) : Prop := bound = 2 * (first.areaBound + 2 * (opposite.areaBound + second.areaBound))
+    (bound : Rational) : Prop := bound = 2 * (first.areaBound + 2 * (opposite.areaBound + second.areaBound))
 
 set_option genInjectivity false in
 /-- The realized stem-area comparison retaining its exact request and reading parent.
@@ -298,10 +302,10 @@ structure AreaRealization (request : IncludedStemRequest bank included fixed bra
     sample opposite
   /-- The second source/chart comparison consuming the retained other-sheet source observation. -/ second : SecondPart
     request sample opposite
-  /-- The cached signed discrepancy of the two retained stem chart areas. -/ residual : Data.Gaussian.Basic.Canonical
+  /-- The cached signed discrepancy of the two retained stem chart areas. -/ residual : Gaussian
   /-- The residual cache satisfies the actual retained chart-area identity. -/ residual_eq : ResidualIdentity first
     second residual
-  /-- The cached complete three-comparison stem-area bound. -/ areaBound : Fraction.Rational
+  /-- The cached complete three-comparison stem-area bound. -/ areaBound : Rational
   /-- The bound cache satisfies the retained three-comparison arithmetic identity. -/ areaBound_eq : BoundIdentity
     opposite first second areaBound
   /-- The actual residual squared norm is bounded by the cached area bound. -/ bounded : normSq residual ≤ areaBound
@@ -334,12 +338,12 @@ chart-area residual. -/
     AreaComparison.stem_chain first.chartArea opposite.leftSources.summary.area
       opposite.rightSources.summary.area second.chartArea firstBound middleBound secondBound
   have budget : areaBound ≤ target / 4 := by
-    have inner := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct first.budget
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.add_le_add_direct opposite.budget second.budget) (by
-            decide : (0 : Fraction.Rational) ≤ 2)))
-      (by decide : (0 : Fraction.Rational) ≤ 2)
+    have inner := Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct first.budget
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.add_le_add_direct opposite.budget second.budget) (by
+            decide : (0 : Rational) ≤ 2)))
+      (by decide : (0 : Rational) ≤ 2)
     refine inner.trans_eq ?_
     exact AreaComparison.stem_tenth_payment (target / 4)
   ⟨request, rfl, sample, rfl, opposite, first, second, residual, rfl, areaBound, rfl, bounded, budget⟩
@@ -369,33 +373,33 @@ end AreaRealization
 
 /-- The actual resplit stem-plus-boundary word value obeys the cached request magnitude at a paid reading stage. -/
 private theorem magnitude_bound (request : IncludedStemRequest bank included fixed branch sheet target)
-    {stage : Nat} {shared : PrimitiveData.FacePrimitiveBank differential stage domains} (readings :
-      TrianglePrimitiveReadings.TriangleReadings shared current.mesh)
+    {stage : Nat} {shared : FacePrimitiveBank differential stage domains} (readings :
+      TriangleReadings shared current.mesh)
     (later : fixed.index ≤ stage) :
     normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation current.mesh readings.values)
       (current.edges.indexedEdges current.vertices ((stem bank included branch).append (hole bank included branch))
         sheet)) ≤
         request.magnitude := by
-  let retainedMagnitude := Readings.EdgeMagnitude.ofBank
+  let retainedMagnitude := EdgeMagnitude.ofBank
     (owner := SourceChartComparison.ownerFromMesh current.mesh) fixed later readings
   let observation := WordObservations.realize retainedMagnitude (current.edges.indexedEdges current.vertices ((stem bank
     included branch).append (hole bank included branch)) sheet)
   have cached := observation.bounded
-  change Data.Gaussian.Norm.Basic.normSq observation.total ≤ observation.bound at cached
+  change Basic.normSq observation.total ≤ observation.bound at cached
   rw [observation.total_readback, observation.bound_readback, WordObservations.BoundSpecification] at cached
-  change Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation
+  change Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation
     current.mesh readings.values) (current.edges.indexedEdges current.vertices ((stem bank included branch).append (hole
     bank included branch)) sheet)) ≤
     ((current.edges.indexedEdges current.vertices ((stem bank included branch).append (hole bank included branch))
-      sheet).length : Fraction.Rational) ^ 2 * (4 * fixed.bound) at cached
+      sheet).length : Rational) ^ 2 * (4 * fixed.bound) at cached
   rw [current.edges.indexedEdges_length] at cached
-  rw [request.magnitude_eq, Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.StemRequests.magnitude]
-  simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using cached
+  rw [request.magnitude_eq, StemRequests.magnitude]
+  simpa only [Basic.normSq_eq_canonical] using cached
 /-- At the paid common stage, the original resplit based excursion and its hole boundary differ in squared area by at
 most the requested target. -/
 theorem loop_area_accurate (request : IncludedStemRequest bank included fixed branch sheet target)
-    {stage : Nat} {shared : PrimitiveData.FacePrimitiveBank differential stage domains} (readings :
-      TrianglePrimitiveReadings.TriangleReadings shared current.mesh)
+    {stage : Nat} {shared : FacePrimitiveBank differential stage domains} (readings :
+      TriangleReadings shared current.mesh)
     (later : request.index ≤ stage) :
     normSq (RetracingWords.wordArea (CanonicalEdgeValues.edgeValuation current.mesh readings.values)
       (current.edges.indexedEdges current.vertices
@@ -419,39 +423,39 @@ theorem loop_area_accurate (request : IncludedStemRequest bank included fixed br
   rw [current.edges.indexedEdges_append, SewingRetraction.wordValue_append] at mag
   have inc := request.increment.accurate readings incrementLater
   have magNonnegative : 0 ≤ request.magnitude := request.magnitude_eq ▸ magnitude_nonnegative bank included fixed branch
-  have oldBound {value : Data.Gaussian.Basic.Canonical} {limit : Fraction.Rational}
-      (bound : Data.Gaussian.Basic.Canonical.normSq value ≤ limit) :
-      Data.Gaussian.Norm.Basic.normSq value ≤ limit := by
-    change Fraction.Order.Basic.LessEqual _ _ at bound ⊢
-    simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using bound
-  have canonicalBound {value : Data.Gaussian.Basic.Canonical} {limit : Fraction.Rational}
-      (bound : Data.Gaussian.Norm.Basic.normSq value ≤ limit) :
-      Data.Gaussian.Basic.Canonical.normSq value ≤ limit := by
-    change Fraction.Order.Basic.LessEqual _ _ at bound ⊢
-    simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using bound
-  have product := Fraction.Order.Arithmetic.mul_le_mul_direct (oldBound mag) inc (Data.Gaussian.Norm.Basic.normSq_nonneg
+  have oldBound {value : Gaussian} {limit : Rational}
+      (bound : Gaussian.normSq value ≤ limit) :
+      Basic.normSq value ≤ limit := by
+    change Basic.LessEqual _ _ at bound ⊢
+    simpa only [Basic.normSq_eq_canonical] using bound
+  have canonicalBound {value : Gaussian} {limit : Rational}
+      (bound : Basic.normSq value ≤ limit) :
+      Gaussian.normSq value ≤ limit := by
+    change Basic.LessEqual _ _ at bound ⊢
+    simpa only [Basic.normSq_eq_canonical] using bound
+  have product := Arithmetic.mul_le_mul_direct (oldBound mag) inc (Basic.normSq_nonneg
     _) magNonnegative
-  have weighted := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct product (by
-      decide : (0 : Fraction.Rational) ≤ 4)
+  have weighted := Arithmetic.mul_le_mul_of_nonneg_left_direct product (by
+      decide : (0 : Rational) ≤ 4)
   have budget : 4 * request.magnitude * request.incrementTarget ≤ target / 4 := by
     rw [request.incrementTarget_eq]
     exact Weighted.mul_allowance_le
-      (Fraction.Order.Field.div_nonneg_direct request.positive.le (by decide))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) magNonnegative)
-  have cross : Data.Gaussian.Norm.Basic.normSq (BoundaryRibbon.area (SewingRetraction.wordValue value outward +
+      (Field.div_nonneg_direct request.positive.le (by decide))
+      (Arithmetic.mul_nonneg_direct (by decide) magNonnegative)
+  have cross : Basic.normSq (BoundaryRibbon.area (SewingRetraction.wordValue value outward +
     SewingRetraction.wordValue value boundary)
       (-(SewingRetraction.wordValue value outward + SewingRetraction.wordValue value other))) ≤ target / 4 := by
     have bound := BoundaryRibbon.area_bound (SewingRetraction.wordValue value outward + SewingRetraction.wordValue value
       boundary)
       (-(SewingRetraction.wordValue value outward + SewingRetraction.wordValue value other))
-    rw [Data.Gaussian.Norm.Basic.normSq_neg] at bound
-    exact bound.trans ((show 4 * Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue value outward +
+    rw [Basic.normSq_neg] at bound
+    exact bound.trans ((show 4 * Basic.normSq (SewingRetraction.wordValue value outward +
       SewingRetraction.wordValue value boundary) *
-        Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue value outward + SewingRetraction.wordValue
+        Basic.normSq (SewingRetraction.wordValue value outward + SewingRetraction.wordValue
           value other) =
-        4 * (Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue value outward +
+        4 * (Basic.normSq (SewingRetraction.wordValue value outward +
           SewingRetraction.wordValue value boundary) *
-          Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue value outward +
+          Basic.normSq (SewingRetraction.wordValue value outward +
             SewingRetraction.wordValue value other)) by ring1).trans_le
       (weighted.trans ((by ring1 : 4 * (request.magnitude * request.incrementTarget) =
         4 * request.magnitude * request.incrementTarget).trans_le budget)))
@@ -475,8 +479,8 @@ theorem loop_area_accurate (request : IncludedStemRequest bank included fixed br
   let areaComparison := request.realizeArea sample later
   have areaPaid := oldBound areaComparison.pay
   rw [areaComparison.residual_readback] at areaPaid
-  have estimate := (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct areaPaid
+  have estimate := (Bounds.normSq_add_le_two _ _).trans
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct areaPaid
       cross) (by decide))
   apply canonicalBound
   exact estimate.trans_eq ((by ring1 : 2 * (target / 4 + target / 4) = target / 4 * 4).trans

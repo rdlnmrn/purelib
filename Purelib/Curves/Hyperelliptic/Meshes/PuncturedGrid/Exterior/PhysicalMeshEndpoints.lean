@@ -79,26 +79,26 @@ open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet} {surfaceTarget target : Fraction.Rational}
   {minimum floor stage coarseDepth : Nat} {box : Rational.Box}
   {basis : PhysicalBasisRequest regular domains target
     minimum floor}
-  {previous : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains} {selected :
+  {previous : RegularDomainMeshes.RegularMeshes.CommonCuts domains} {selected :
     BasisSourceCuts basis.preparations previous}
-  {initial : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet coarseDepth)
+  {initial : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+    RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet coarseDepth)
     fixed surfaceTarget}
   {request : PhysicalMeshRequest basis initial} {cache :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+    RegularDomainMeshes.RegularMeshes.Numerics domains stage}
 
 namespace Readings
 
@@ -111,12 +111,12 @@ namespace Readings
 
 /-- The endpoint correction is exactly the retained cap joining area minus the oriented physical endpoint sum. -/
 theorem endpointCorrection_eq_joining (entries : request.Readings cache)
-    (polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box)
+    (polynomials : CapBasisEnergy.RegularBasisPolynomials cap stage box)
       (first second : Fin genus)
-    (attached : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment
+    (attached : Caps.AllSurfacePreparation.CapAttachment
       (basis.preparations.get first)) :
     entries.endpointCorrection polynomials first second =
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateChordPolygons.CapAttachment.conjugateJoiningArea
+      ConjugateChordPolygons.CapAttachment.conjugateJoiningArea
         attached (polynomials.get first) (polynomials.get second) -
         entries.physicalEndpoints first second := by
   unfold endpointCorrection
@@ -125,53 +125,53 @@ theorem endpointCorrection_eq_joining (entries : request.Readings cache)
   rw [FiniteSum.Fin.sumFin_sub]
   have readback :
       FiniteSum.Fin.sumFin (fun index : Fin (basis.preparations.get first).occurrences.length =>
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateArcFamily.PairedArcRequest.conjugateChordValue
+        ConjugateArcFamily.PairedArcRequest.conjugateChordValue
           ((basis.preparations.get first).occurrences[index.val]'index.isLt)
           (polynomials.get first) (polynomials.get second)) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      Gaussian.Norm.Sum.Basic.gaussianSum
         ((basis.preparations.get first).occurrences.map (fun occurrence =>
-          Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateArcFamily.PairedArcRequest.conjugateChordValue occurrence
+          ConjugateArcFamily.PairedArcRequest.conjugateChordValue occurrence
             (polynomials.get first) (polynomials.get second))) := by
-    rw [Data.Gaussian.Norm.Sum.Indexed.sumFin_eq_gaussianSum]
-    apply congrArg Data.Gaussian.Norm.Sum.Basic.gaussianSum
-    exact (Data.List.OfFn.Basic.map_ofFn (function := fun index : Fin (basis.preparations.get first).occurrences.length
+    rw [Gaussian.Norm.Sum.Indexed.sumFin_eq_gaussianSum]
+    apply congrArg Gaussian.Norm.Sum.Basic.gaussianSum
+    exact (List.OfFn.Basic.map_ofFn (function := fun index : Fin (basis.preparations.get first).occurrences.length
       =>
       (basis.preparations.get first).occurrences[index.val]'index.isLt)
       (transform := fun occurrence =>
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateArcFamily.PairedArcRequest.conjugateChordValue occurrence
+        ConjugateArcFamily.PairedArcRequest.conjugateChordValue occurrence
         (polynomials.get first) (polynomials.get second))).symm.trans
         (congrArg (List.map (fun occurrence =>
-          Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateArcFamily.PairedArcRequest.conjugateChordValue occurrence
+          ConjugateArcFamily.PairedArcRequest.conjugateChordValue occurrence
           (polynomials.get first) (polynomials.get second)))
-          (Data.List.OfFn.Basic.ofFn_getElem (basis.preparations.get first).occurrences))
+          (List.OfFn.Basic.ofFn_getElem (basis.preparations.get first).occurrences))
   exact congrArg (fun value => value - entries.physicalEndpoints first second)
     (readback.trans
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateChordPolygons.CapAttachment.conjugate_chords_eq_joining
+      (ConjugateChordPolygons.CapAttachment.conjugate_chords_eq_joining
         attached (polynomials.get first) (polynomials.get second)))
 
 /-- Form the conjugate coefficient-weighted sum of the original physical endpoint chords. -/
 @[expose] def physicalEndpointEnergy (entries : request.Readings cache)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) : Gaussian :=
-  FiniteSum.Fin.sumFin fun first => FiniteSum.Fin.sumFin fun second => Data.Gaussian.Basic.conj (coefficients first)
+  FiniteSum.Fin.sumFin fun first => FiniteSum.Fin.sumFin fun second => Gaussian.Basic.conj (coefficients first)
     * coefficients second *
     entries.physicalEndpoints first second
 
 /-- Form the conjugate coefficient-weighted sum of the cap joining polygons for the retained attachments. -/
-@[expose] def capJoiningEnergy (attachments : Data.Vector.DependentVector (fun first =>
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment (basis.preparations.get first)))
-    (polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box)
+@[expose] def capJoiningEnergy (attachments : Vector.DependentVector (fun first =>
+  Caps.AllSurfacePreparation.CapAttachment (basis.preparations.get first)))
+    (polynomials : CapBasisEnergy.RegularBasisPolynomials cap stage box)
       (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) : Gaussian :=
-  FiniteSum.Fin.sumFin fun first => FiniteSum.Fin.sumFin fun second => Data.Gaussian.Basic.conj (coefficients first)
+  FiniteSum.Fin.sumFin fun first => FiniteSum.Fin.sumFin fun second => Gaussian.Basic.conj (coefficients first)
     * coefficients second *
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateChordPolygons.CapAttachment.conjugateJoiningArea
+    ConjugateChordPolygons.CapAttachment.conjugateJoiningArea
       (attachments.get first) (polynomials.get first) (polynomials.get second)
 
 /-- The complete endpoint correction equals cap joining energy minus the original physical endpoint energy. -/
 theorem endpointEnergy_eq_joining (entries : request.Readings cache)
-    (attachments : Data.Vector.DependentVector (fun first =>
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment (basis.preparations.get
+    (attachments : Vector.DependentVector (fun first =>
+      Caps.AllSurfacePreparation.CapAttachment (basis.preparations.get
       first)))
-    (polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box)
+    (polynomials : CapBasisEnergy.RegularBasisPolynomials cap stage box)
       (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
     entries.endpointEnergy polynomials coefficients =
       capJoiningEnergy
@@ -192,25 +192,25 @@ variable (selected)
   {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
     regular domains differential} (attached :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared)
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box}
-    {bounds : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisBounds.RegularBasisBounds polynomials}
+    Caps.AllSurfacePreparation.CapAttachment prepared)
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap stage box}
+    {bounds : CapBasisBounds.RegularBasisBounds polynomials}
   {capTarget : Fraction.Rational} {capMinimum : Nat}
-  (capRequest : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisRequest.RegularBasisRequest bounds
+  (capRequest : CapBasisRequest.RegularBasisRequest bounds
     attached.caps.length capTarget capMinimum)
-  {geometry : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
+  {geometry : Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
     attached} {parameters : Path.Dyadic.RadialTriangles.Parameters capRequest.depth}
 
 /-- The regular cap pays the centered physical component plus the full cap
 joining polygons. The physical chords remain explicit for the Newton bridge. -/
 theorem joining_energy_upper (entries : request.Readings cache) (faces : request.FacePerimeterBank cache)
-    (attachments : Data.Vector.DependentVector (fun first =>
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment (basis.preparations.get
+    (attachments : Vector.DependentVector (fun first =>
+      Caps.AllSurfacePreparation.CapAttachment (basis.preparations.get
       first)))
     (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank base.faces)
     (evaluated : basis.Evaluations polynomials capRequest.depth)
     (later : request.index ≤ stage) (spatial : basis.depth ≤ capRequest.depth)
-    (caps : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisAggregate.RegularBasisCap geometry parameters
+    (caps : CapBasisAggregate.RegularBasisCap geometry parameters
       polynomials)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
     (capSample : (capRequest.certify caps).Evaluation coefficients)

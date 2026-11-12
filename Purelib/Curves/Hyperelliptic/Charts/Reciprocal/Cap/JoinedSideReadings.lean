@@ -109,36 +109,36 @@ open Purelib.Approximation.Gaussian.Equivalence (Comparison)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover (Parent ParentData Bank)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathRequests.Bank (Requests Samples)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {collar :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} {count : Nat}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {collar :
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {differential :
+    Differential genus} {count : Nat}
+  {index : Nat} {box : Geometry.Rational.Box} {capSample :
+    Primitives.Sample cap differential index box}
 
 /-- Read the maximum current chart-reading stage over the retained fine parent polygons. -/
-@[expose] public def stage : {parents : List (PathCover.Parent curve differential)} → {bank : PathCover.Bank cap
+@[expose] public def stage : {parents : List (Parent curve differential)} → {bank : Bank cap
   differential count parents} →
-    {target slope : InverseRootPolynomial.Coordinate} → {floor : Nat} → {requests : Bank.Requests bank target floor} →
-    {samples : Bank.Samples requests capSample} → {fine : Bank.FineRequests requests slope} → Bank.FineSamples samples
+    {target slope : Coordinate} → {floor : Nat} → {requests : Requests bank target floor} →
+    {samples : Samples requests capSample} → {fine : FineRequests requests slope} → FineSamples samples
       fine → Nat
   | _, .nil, _, _, _, _, _, _, _ => 0
   | _, .cons _ _, _, _, _, _, _, _, charts => max charts.1.charts.stage
-    (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.stage charts.2)
+    (FineSamples.stage charts.2)
 
 /-- Refine every retained fine polygon to the supplied common stage while preserving its original source request. -/
-@[expose] public def refine : {parents : List (PathCover.Parent curve differential)} → {bank : PathCover.Bank cap
+@[expose] public def refine : {parents : List (Parent curve differential)} → {bank : Bank cap
   differential count parents} →
-    {target slope : InverseRootPolynomial.Coordinate} → {floor : Nat} → {requests : Bank.Requests bank target floor} →
-    {samples : Bank.Samples requests capSample} → {fine : Bank.FineRequests requests slope} →
-    (charts : Bank.FineSamples samples fine) → FineRequests.stage fine ≤ index → (next : Nat) →
-    charts.stage ≤ next → Bank.FineSamples samples fine
+    {target slope : Coordinate} → {floor : Nat} → {requests : Requests bank target floor} →
+    {samples : Samples requests capSample} → {fine : FineRequests requests slope} →
+    (charts : FineSamples samples fine) → FineRequests.stage fine ≤ index → (next : Nat) →
+    charts.stage ≤ next → FineSamples samples fine
   | _, .nil, _, _, _, _, _, _, _, _, _, _ => ⟨⟩
   | _, .cons _ _, _, _, _, _, _, _, charts, later, next, ready =>
-      ⟨charts.1.refine ((Purelib.Data.Nat.Order.le_max_left _ _).trans later) next ((Purelib.Data.Nat.Order.le_max_left
+      ⟨charts.1.refine ((Data.Nat.Order.le_max_left _ _).trans later) next ((Data.Nat.Order.le_max_left
         _ _).trans ready),
-        refine charts.2 ((Purelib.Data.Nat.Order.le_max_right _ _).trans later) next
-          ((Purelib.Data.Nat.Order.le_max_right _ _).trans ready)⟩
+        refine charts.2 ((Data.Nat.Order.le_max_right _ _).trans later) next
+          ((Data.Nat.Order.le_max_right _ _).trans ready)⟩
 
 set_option genInjectivity false in
 /-- The actual two cached endpoint channels at a parent boundary. -/
@@ -154,146 +154,146 @@ constructive_injectivity StreamPair
 
 set_option genInjectivity false in
 /-- An operational comparison of the actual endpoint streams at one retained parent junction. -/
-structure Junction (error : InverseRootPolynomial.Coordinate) where
+structure Junction (error : Coordinate) where
   /-- The exact pair of cached endpoint streams and their retained stage floors. -/ source :
-    Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.StreamPair
+    StreamPair
   /-- The comparison certificate pays the supplied error for these exact two streams. -/ comparison :
-    Gaussian.Equivalence.Comparison source.first source.last source.firstFloor source.lastFloor error
+    Comparison source.first source.last source.firstFloor source.lastFloor error
 
 constructive_injectivity Junction
 
 namespace Junction
 
 /-- Request an operational comparison of the endpoint streams certified by the supplied coordinate join. -/
-@[expose] public def ofJoin {firstPoint lastPoint : InverseRootPolynomial.Gaussian}
+@[expose] public def ofJoin {firstPoint lastPoint : Gaussian}
     {firstOwner : SquareRootContinuationChain.Owner ((HyperellipticReciprocal.polynomial curve).eval firstPoint)}
     {lastOwner : SquareRootContinuationChain.Owner ((HyperellipticReciprocal.polynomial curve).eval lastPoint)}
     {first : RootCoordinates.Overlap cap firstPoint firstOwner}
     {last : RootCoordinates.Overlap cap lastPoint lastOwner}
     (join : RootCoordinates.Overlap.Join first last)
     (sample : Primitives.Sample cap differential index box)
-    (firstFloor lastFloor : Nat) (error : InverseRootPolynomial.Coordinate) (positive : 0 < error) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.Junction error :=
+    (firstFloor lastFloor : Nat) (error : Coordinate) (positive : 0 < error) :
+      Junction error :=
   ⟨⟨(first.chartApproximation sample).toApproximation, (last.chartApproximation sample).toApproximation,
     firstFloor, lastFloor⟩, (join.readings sample).compare firstFloor lastFloor error positive⟩
 
 /-- Compute a common stage above both indices of every retained endpoint comparison. -/
-@[expose] public def maximum {error : InverseRootPolynomial.Coordinate} : List
-  (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.Junction error) → Nat
+@[expose] public def maximum {error : Coordinate} : List
+  (Junction error) → Nat
   | [] => 0
   | item :: rest => max item.comparison.leftIndex (max item.comparison.rightIndex
-    (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.Junction.maximum rest))
+    (Junction.maximum rest))
 
 /-- Both indices of any retained junction comparison are bounded by the cached list maximum. -/
-theorem indices_le {error : InverseRootPolynomial.Coordinate} (items : List
-  (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.Junction error))
-    (item : Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.Junction error) (member : item ∈
+theorem indices_le {error : Coordinate} (items : List
+  (Junction error))
+    (item : Junction error) (member : item ∈
       items) :
-    item.comparison.leftIndex ≤ Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.Junction.maximum
+    item.comparison.leftIndex ≤ maximum
       items ∧ item.comparison.rightIndex ≤
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.Junction.maximum items := by
+      maximum items := by
   induction items with
   | nil => cases member
   | cons head tail ih =>
       cases Purelib.Data.List.Membership.mem_cons.mp member with
       | inl equal =>
           subst item
-          exact ⟨Purelib.Data.Nat.Order.le_max_left _ _, (Purelib.Data.Nat.Order.le_max_left _ _).trans
-            (Purelib.Data.Nat.Order.le_max_right _ _)⟩
+          exact ⟨Data.Nat.Order.le_max_left _ _, (Data.Nat.Order.le_max_left _ _).trans
+            (Data.Nat.Order.le_max_right _ _)⟩
       | inr member =>
           have retained := ih member
-          have tailLe : Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.Junction.maximum tail ≤
-            Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.Junction.maximum (head :: tail) :=
-            (Purelib.Data.Nat.Order.le_max_right _ _).trans (Purelib.Data.Nat.Order.le_max_right _ _)
+          have tailLe : maximum tail ≤
+            maximum (head :: tail) :=
+            (Data.Nat.Order.le_max_right _ _).trans (Data.Nat.Order.le_max_right _ _)
           exact ⟨retained.1.trans tailLe, retained.2.trans tailLe⟩
 
 end Junction
 
 section Boundary
 
-variable {parent next : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Parent curve differential} {parents
-  : List (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Parent curve differential)}
-    {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.ParentData cap differential count parent}
-      {nextData : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.ParentData cap differential count next}
-    {remaining : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank cap differential count parents}
-      {target slope : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
-    {requests : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathRequests.Bank.Requests (.cons data (.cons
+variable {parent next : Parent curve differential} {parents
+  : List (Parent curve differential)}
+    {data : ParentData cap differential count parent}
+      {nextData : ParentData cap differential count next}
+    {remaining : Bank cap differential count parents}
+      {target slope : Coordinate} {floor : Nat}
+    {requests : Requests (.cons data (.cons
       nextData remaining)) target floor}
-    {samples : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathRequests.Bank.Samples requests capSample} {fine :
-      Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineRequests requests slope}
+    {samples : Samples requests capSample} {fine :
+      FineRequests requests slope}
 
 /-- Read the exact last and first endpoint streams of two consecutive retained parent polygons. -/
-@[expose] public def headStreams (charts : Bank.FineSamples samples fine) : StreamPair :=
+@[expose] public def headStreams (charts : FineSamples samples fine) : StreamPair :=
   ⟨charts.1.lastStream, charts.2.1.firstStream,
     charts.1.last.evaluated.chart.stage, charts.2.1.first.evaluated.chart.stage⟩
 
 /-- Build the comparison for the first retained parent boundary from its cached endpoint join. -/
-@[expose] public def headJunction (charts : Bank.FineSamples samples fine) (joins : FineSamples.EndpointJoins charts)
-    (error : InverseRootPolynomial.Coordinate) (positive : 0 < error) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.Junction error :=
-  Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.Junction.ofJoin joins.head capSample
+@[expose] public def headJunction (charts : FineSamples samples fine) (joins : EndpointJoins charts)
+    (error : Coordinate) (positive : 0 < error) :
+      Junction error :=
+  Junction.ofJoin joins.head capSample
     charts.1.last.evaluated.chart.stage charts.2.1.first.evaluated.chart.stage error positive
 
 end Boundary
 
 /-- Read every actual parent-boundary endpoint pair in its retained order. -/
-@[expose] public def streamPairs : {parents : List (PathCover.Parent curve differential)} → {bank : PathCover.Bank cap
+@[expose] public def streamPairs : {parents : List (Parent curve differential)} → {bank : Bank cap
   differential count parents} →
-    {target slope : InverseRootPolynomial.Coordinate} → {floor : Nat} → {requests : Bank.Requests bank target floor} →
-    {samples : Bank.Samples requests capSample} → {fine : Bank.FineRequests requests slope} →
-    Bank.FineSamples samples fine → List
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.StreamPair
+    {target slope : Coordinate} → {floor : Nat} → {requests : Requests bank target floor} →
+    {samples : Samples requests capSample} → {fine : FineRequests requests slope} →
+    FineSamples samples fine → List
+      StreamPair
   | [], .nil, _, _, _, _, _, _, _ => []
   | [_], .cons _ .nil, _, _, _, _, _, _, _ => []
   | _ :: _ :: _, .cons _ (.cons _ _), _, _, _, _, _, _, charts =>
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.headStreams charts ::
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.streamPairs charts.2
+      headStreams charts ::
+        FineSamples.streamPairs charts.2
 
 set_option genInjectivity false in
 /-- Flat retained comparisons, with exact ordered provenance for every junction. -/
-structure JunctionRequests {parents : List (PathCover.Parent curve differential)} {bank : PathCover.Bank cap
+structure JunctionRequests {parents : List (Parent curve differential)} {bank : Bank cap
   differential count parents}
-    {target slope : InverseRootPolynomial.Coordinate} {floor : Nat} {requests : Bank.Requests bank target floor}
-    {samples : Bank.Samples requests capSample} {fine : Bank.FineRequests requests slope}
-    (charts : Bank.FineSamples samples fine) (error : InverseRootPolynomial.Coordinate) where
+    {target slope : Coordinate} {floor : Nat} {requests : Requests bank target floor}
+    {samples : Samples requests capSample} {fine : FineRequests requests slope}
+    (charts : FineSamples samples fine) (error : Coordinate) where
   /-- The cached ordered endpoint comparisons for all retained parent boundaries. -/ items : List
-    (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.Junction error)
+    (Junction error)
   /-- The comparison sources are exactly the ordered endpoint pairs of the retained fine polygons. -/ sources_eq :
-    items.map Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.Junction.source =
-    Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.streamPairs charts
+    items.map Junction.source =
+    streamPairs charts
   /-- The cached common stage above both indices of every retained junction comparison. -/ stage : Nat
   /-- The retained common stage equals the maximum of both comparison indices at every junction. -/ stage_eq : stage =
-    Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.Junction.maximum items
+    Junction.maximum items
 
 constructive_injectivity JunctionRequests
 
 namespace JunctionRequests
 
 /-- Construct one endpoint comparison per retained parent boundary from its exact cached coordinate join. -/
-@[expose] public def buildItems : {parents : List (PathCover.Parent curve differential)} → {bank : PathCover.Bank cap
+@[expose] public def buildItems : {parents : List (Parent curve differential)} → {bank : Bank cap
   differential count parents} →
-    {target slope : InverseRootPolynomial.Coordinate} → {floor : Nat} → {requests : Bank.Requests bank target floor} →
-    {samples : Bank.Samples requests capSample} → {fine : Bank.FineRequests requests slope} →
-    (charts : Bank.FineSamples samples fine) → FineSamples.EndpointJoins charts → (error :
-      InverseRootPolynomial.Coordinate) → 0 < error → List
-      (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.Junction error)
+    {target slope : Coordinate} → {floor : Nat} → {requests : Requests bank target floor} →
+    {samples : Samples requests capSample} → {fine : FineRequests requests slope} →
+    (charts : FineSamples samples fine) → EndpointJoins charts → (error :
+      Coordinate) → 0 < error → List
+      (Junction error)
   | [], .nil, _, _, _, _, _, _, _, _, _, _ => []
   | [_], .cons _ .nil, _, _, _, _, _, _, _, _, _, _ => []
   | _ :: _ :: _, .cons _ (.cons _ _), _, _, _, _, _, _, charts, joins, error, positive =>
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.headJunction charts joins error positive ::
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.JunctionRequests.buildItems
+      headJunction charts joins error positive ::
+        JunctionRequests.buildItems
           charts.2 joins.tail error positive
 
 /-- The constructed junction comparisons preserve the exact ordered endpoint-stream provenance. -/
-public theorem buildItems_sources : {parents : List (PathCover.Parent curve differential)} → {bank : PathCover.Bank cap
+public theorem buildItems_sources : {parents : List (Parent curve differential)} → {bank : Bank cap
   differential count parents} →
-    {target slope : InverseRootPolynomial.Coordinate} → {floor : Nat} → {requests : Bank.Requests bank target floor} →
-    {samples : Bank.Samples requests capSample} → {fine : Bank.FineRequests requests slope} →
-    (charts : Bank.FineSamples samples fine) → (joins : FineSamples.EndpointJoins charts) → (error :
-      InverseRootPolynomial.Coordinate) → (positive : 0 < error) →
-    (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.JunctionRequests.buildItems charts joins
-      error positive).map Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.Junction.source =
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.streamPairs charts
+    {target slope : Coordinate} → {floor : Nat} → {requests : Requests bank target floor} →
+    {samples : Samples requests capSample} → {fine : FineRequests requests slope} →
+    (charts : FineSamples samples fine) → (joins : EndpointJoins charts) → (error :
+      Coordinate) → (positive : 0 < error) →
+    (buildItems charts joins
+      error positive).map Junction.source =
+      streamPairs charts
   | [], .nil, _, _, _, _, _, _, _, _, _, _ => rfl
   | [_], .cons _ .nil, _, _, _, _, _, _, _, _, _, _ => rfl
   | _ :: _ :: _, .cons _ (.cons _ _), _, _, _, _, _, _, charts, joins, error, positive =>
@@ -302,18 +302,18 @@ public theorem buildItems_sources : {parents : List (PathCover.Parent curve diff
         charts.2 joins.tail error positive)
 
 /-- Cache the complete ordered junction-comparison list and its common reading stage. -/
-@[expose] public def build {parents : List (PathCover.Parent curve differential)} {bank : PathCover.Bank cap
+@[expose] public def build {parents : List (Parent curve differential)} {bank : Bank cap
   differential count parents}
-    {target slope : InverseRootPolynomial.Coordinate} {floor : Nat} {requests : Bank.Requests bank target floor}
-    {samples : Bank.Samples requests capSample} {fine : Bank.FineRequests requests slope}
-    (charts : Bank.FineSamples samples fine) (joins : FineSamples.EndpointJoins charts) (error :
-      InverseRootPolynomial.Coordinate) (positive : 0 < error) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.JunctionRequests charts error :=
-  let items := Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.JunctionRequests.buildItems
+    {target slope : Coordinate} {floor : Nat} {requests : Requests bank target floor}
+    {samples : Samples requests capSample} {fine : FineRequests requests slope}
+    (charts : FineSamples samples fine) (joins : EndpointJoins charts) (error :
+      Coordinate) (positive : 0 < error) :
+    JunctionRequests charts error :=
+  let items := buildItems
     charts joins error positive
   ⟨items,
-    Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.JunctionRequests.buildItems_sources
-    charts joins error positive, Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.Junction.maximum
+    buildItems_sources
+    charts joins error positive, Junction.maximum
     items, rfl⟩
 
 end JunctionRequests

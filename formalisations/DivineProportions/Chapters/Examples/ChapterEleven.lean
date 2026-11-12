@@ -149,7 +149,7 @@ private theorem firstSide : Incidence.Collinear second third B₁ := by
   exact ⟨Incidence.lineThrough second third distinct,
     Incidence.lineThrough_contains_first second third distinct,
     Incidence.lineThrough_contains_second second third distinct, by
-      unfold Purelib.Geometry.Plane.Line.Contains Incidence.lineThrough second third B₁
+      unfold Contains Incidence.lineThrough second third B₁
       ring1⟩
 
 /-- The point B₂ is collinear with the third and first vertices. -/
@@ -158,7 +158,7 @@ private theorem secondSide : Incidence.Collinear third first B₂ := by
   exact ⟨Incidence.lineThrough third first distinct,
     Incidence.lineThrough_contains_first third first distinct,
     Incidence.lineThrough_contains_second third first distinct, by
-      unfold Purelib.Geometry.Plane.Line.Contains Incidence.lineThrough third first B₂
+      unfold Contains Incidence.lineThrough third first B₂
       ring1⟩
 
 /-- The point B₃ is collinear with the first and second vertices. -/
@@ -167,7 +167,7 @@ private theorem thirdSide : Incidence.Collinear first second B₃ := by
   exact ⟨Incidence.lineThrough first second distinct,
     Incidence.lineThrough_contains_first first second distinct,
     Incidence.lineThrough_contains_second first second distinct, by
-      unfold Purelib.Geometry.Plane.Line.Contains Incidence.lineThrough first second B₃
+      unfold Contains Incidence.lineThrough first second B₃
       ring1⟩
 
 end
@@ -228,7 +228,7 @@ private theorem firstSide : Incidence.Collinear second third B₁ := by
   exact ⟨Incidence.lineThrough second third distinct,
     Incidence.lineThrough_contains_first second third distinct,
     Incidence.lineThrough_contains_second second third distinct, by
-      unfold Purelib.Geometry.Plane.Line.Contains Incidence.lineThrough second third B₁
+      unfold Contains Incidence.lineThrough second third B₁
       ring1⟩
 
 /-- The point B₂ is collinear with the third and first vertices. -/
@@ -237,7 +237,7 @@ private theorem secondSide : Incidence.Collinear third first B₂ := by
   exact ⟨Incidence.lineThrough third first distinct,
     Incidence.lineThrough_contains_first third first distinct,
     Incidence.lineThrough_contains_second third first distinct, by
-      unfold Purelib.Geometry.Plane.Line.Contains Incidence.lineThrough third first B₂
+      unfold Contains Incidence.lineThrough third first B₂
       ring1⟩
 
 /-- The point B₃ is collinear with the first and second vertices. -/
@@ -246,7 +246,7 @@ private theorem thirdSide : Incidence.Collinear first second B₃ := by
   exact ⟨Incidence.lineThrough first second distinct,
     Incidence.lineThrough_contains_first first second distinct,
     Incidence.lineThrough_contains_second first second distinct, by
-      unfold Purelib.Geometry.Plane.Line.Contains Incidence.lineThrough first second B₃
+      unfold Contains Incidence.lineThrough first second B₃
       ring1⟩
 
 end

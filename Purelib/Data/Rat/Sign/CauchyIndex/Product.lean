@@ -41,13 +41,13 @@ public theorem coordinateLocalProductTable
       0 < (A₀ * C₀ - B₀ * D₀) * (A₁ * C₁ - B₁ * D₁))
     (HStable : A₀ * D₀ + B₀ * C₀ = 0 ∨
       0 < (A₀ * D₀ + B₀ * C₀) * (A₁ * D₁ + B₁ * C₁)) :
-    Sign.CauchyIndex.Endpoint.leftEndpointIndex2
+    Endpoint.leftEndpointIndex2
         (A₀ * C₀ - B₀ * D₀) (A₀ * D₀ + B₀ * C₀)
         (A₁ * C₁ - B₁ * D₁) (A₁ * D₁ + B₁ * C₁) =
-      Sign.CauchyIndex.Endpoint.leftEndpointIndex2 A₀ B₀ A₁ B₁ +
-        Sign.CauchyIndex.Endpoint.leftEndpointIndex2 C₀ D₀ C₁ D₁ -
-        (Sign.Jump.signJump 1 ((A₀ * D₀ + B₀ * C₀) * (B₀ * D₀)) : Int) +
-        Sign.Jump.signJump 1 ((A₁ * D₁ + B₁ * C₁) * (B₁ * D₁)) := by
+      Endpoint.leftEndpointIndex2 A₀ B₀ A₁ B₁ +
+        Endpoint.leftEndpointIndex2 C₀ D₀ C₁ D₁ -
+        (Jump.signJump 1 ((A₀ * D₀ + B₀ * C₀) * (B₀ * D₀)) : Int) +
+        Jump.signJump 1 ((A₁ * D₁ + B₁ * C₁) * (B₁ * D₁)) := by
   let A₀s := FiniteSign.ofCoordinate A₀
   let B₀s := FiniteSign.ofCoordinate B₀
   let C₀s := FiniteSign.ofCoordinate C₀
@@ -72,24 +72,24 @@ public theorem coordinateLocalProductTable
     · exact FiniteSign.ofCoordinate_ne_zero_iff.mpr B₁Nonzero
     · exact FiniteSign.ofCoordinate_ne_zero_iff.mpr D₁Nonzero
     · exact FiniteSign.ofCoordinate_ne_zero_iff.mpr H₁Nonzero
-    · exact Sign.Typed.Compatibility.sign_stable_of_eq_zero_or_mul_pos AStable
-    · exact Sign.Typed.Compatibility.sign_stable_of_eq_zero_or_mul_pos BStable
-    · exact Sign.Typed.Compatibility.sign_stable_of_eq_zero_or_mul_pos CStable
-    · exact Sign.Typed.Compatibility.sign_stable_of_eq_zero_or_mul_pos DStable
-    · exact Sign.Typed.Compatibility.sign_stable_of_eq_zero_or_mul_pos EStable
-    · exact Sign.Typed.Compatibility.sign_stable_of_eq_zero_or_mul_pos HStable
-    · exact Sign.ComplexProduct.sign_complexProductCompatible A₀ B₀ C₀ D₀
-    · exact Sign.ComplexProduct.sign_complexProductCompatible A₁ B₁ C₁ D₁
+    · exact Typed.Compatibility.sign_stable_of_eq_zero_or_mul_pos AStable
+    · exact Typed.Compatibility.sign_stable_of_eq_zero_or_mul_pos BStable
+    · exact Typed.Compatibility.sign_stable_of_eq_zero_or_mul_pos CStable
+    · exact Typed.Compatibility.sign_stable_of_eq_zero_or_mul_pos DStable
+    · exact Typed.Compatibility.sign_stable_of_eq_zero_or_mul_pos EStable
+    · exact Typed.Compatibility.sign_stable_of_eq_zero_or_mul_pos HStable
+    · exact ComplexProduct.sign_complexProductCompatible A₀ B₀ C₀ D₀
+    · exact ComplexProduct.sign_complexProductCompatible A₁ B₁ C₁ D₁
   have table := FiniteSign.localProductTable
     A₀s B₀s C₀s D₀s E₀s H₀s A₁s B₁s C₁s D₁s E₁s H₁s admissible
   dsimp only [A₀s, B₀s, C₀s, D₀s, E₀s, H₀s,
     A₁s, B₁s, C₁s, D₁s, E₁s, H₁s] at table
   unfold FiniteSign.LocalProductIdentity at table
-  rewrite [Sign.CauchyIndex.Endpoint.sign_leftEndpointIndex2_ofCoordinate,
-    Sign.CauchyIndex.Endpoint.sign_leftEndpointIndex2_ofCoordinate,
-    Sign.CauchyIndex.Endpoint.sign_leftEndpointIndex2_ofCoordinate,
-    Sign.CauchyIndex.Endpoint.sign_productCorrection2_ofCoordinate,
-    Sign.CauchyIndex.Endpoint.sign_productCorrection2_ofCoordinate] at table
+  rewrite [Endpoint.sign_leftEndpointIndex2_ofCoordinate,
+    Endpoint.sign_leftEndpointIndex2_ofCoordinate,
+    Endpoint.sign_leftEndpointIndex2_ofCoordinate,
+    Endpoint.sign_productCorrection2_ofCoordinate,
+    Endpoint.sign_productCorrection2_ofCoordinate] at table
   exact table
 
 end Purelib.Data.Rat.Sign.CauchyIndex.Product

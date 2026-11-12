@@ -120,20 +120,20 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedR
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {count : Nat} {patch : PreparedPatch parent}
-  {sourceData : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
+  {sourceData : Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
     Cover sourceData}
   {covers : BasisSourceCovers parent} {minimum
     floor index depth : Nat}
@@ -141,7 +141,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {areaAllowance sourceTarget coefficientTarget : Coordinate}
   {request : BasisPreparedCommonRequest
     regular common areaAllowance sourceTarget coefficientTarget floor}
-  {box : Purelib.Geometry.Rational.Box}
+  {box : Geometry.Rational.Box}
   {polynomials : RegularBasisPolynomials cap
     index box}
   {originals :
@@ -176,16 +176,16 @@ variable {faceIndex : Nat} {data :
 namespace ReverseSourceRuns.ReverseSourceRun
 
 /-- The same cached physical increments, now traversed in source orientation. -/
-def orientedPhysical (run : ReverseSourceRuns.ReverseSourceRun acquired data) : List PrimitivePoint :=
+def orientedPhysical (run : ReverseSourceRun acquired data) : List PrimitivePoint :=
   PairedAreaReversal.reverseIncrements ((run.fragments.map OwnedFragment.pair).map Prod.fst).flatten
 
 /-- The original reversed physical increments satisfy the retained homogeneous error bound against the positive source
 area. -/
-theorem oriented_area (run : ReverseSourceRuns.ReverseSourceRun acquired data)
+theorem oriented_area (run : ReverseSourceRun acquired data)
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs) :
     Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area run.orientedPhysical - weighted.source.area) ≤
       run.error * (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
-  unfold ReverseSourceRuns.ReverseSourceRun.orientedPhysical
+  unfold ReverseSourceRun.orientedPhysical
   rw [PairedAreaReversal.area_reverseIncrements]
   rw [show -PairedIncrementArea.area ((run.fragments.map OwnedFragment.pair).map Prod.fst).flatten -
       weighted.source.area = -(PairedIncrementArea.area
@@ -195,7 +195,7 @@ theorem oriented_area (run : ReverseSourceRuns.ReverseSourceRun acquired data)
 
 /-- The original reversed physical displacement satisfies the retained error bound against the conjugate source
 displacement. -/
-theorem oriented_total (run : ReverseSourceRuns.ReverseSourceRun acquired data)
+theorem oriented_total (run : ReverseSourceRun acquired data)
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs) :
     PrimitivePoint.Bounded
       ((PairedIncrementArea.total run.orientedPhysical).sub
@@ -204,7 +204,7 @@ theorem oriented_total (run : ReverseSourceRuns.ReverseSourceRun acquired data)
   PairedReverseBlocks.reversed_total_error _ _ (run.cached_source_total_bound weighted)
 
 /-- The original reversed physical displacement retains its coefficient-scaled magnitude bound. -/
-theorem oriented_bounded (run : ReverseSourceRuns.ReverseSourceRun acquired data)
+theorem oriented_bounded (run : ReverseSourceRun acquired data)
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs) :
     PrimitivePoint.Bounded
       (PairedIncrementArea.total run.orientedPhysical)
@@ -219,7 +219,7 @@ variable {target : Coordinate}
 -/
 theorem
   RequestedRuns.CertifiedReverseRun.oriented_area_requested
-  (certified : RequestedRuns.CertifiedReverseRun acquired data target)
+  (certified : CertifiedReverseRun acquired data target)
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs) :
     Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area certified.run.orientedPhysical -
       weighted.source.area) ≤
@@ -233,7 +233,7 @@ theorem
 bound. -/
 theorem
   RequestedRuns.CertifiedReverseRun.oriented_total_requested
-  (certified : RequestedRuns.CertifiedReverseRun acquired data target)
+  (certified : CertifiedReverseRun acquired data target)
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs) :
     PrimitivePoint.Bounded
       ((PairedIncrementArea.total certified.run.orientedPhysical).sub

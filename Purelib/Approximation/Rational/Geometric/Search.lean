@@ -1,4 +1,5 @@
 module
+meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Data.Rat.Fraction
 public import Purelib.Approximation.Rational.Geometric.Basic
 import Purelib.Data.Rat.Fraction.Cast.Order
@@ -27,6 +28,8 @@ first successful comparison, and neither its definition nor its proof refers
 to a limit, an infinite sequence as an object, or an Archimedean existence
 principle.
 -/
+
+public section
 
 namespace Purelib.Approximation.Rational.Geometric.Search
 
@@ -156,6 +159,19 @@ retains the supplied scale, target and starting stage. -/
   Search.scanFirstBelow scale target current
     (Nat.log2 (Floor.ceilNat (scale / target)) + 1)
 
+/-- An already accurate original starting stage is the exact result of the bounded search.
+
+The first successful scalar comparison returns the supplied stage before
+spending any of the original logarithmic scan budget.
+-/
+theorem firstQuarterBelow_eq_of_lt (scale : Fraction.Rational) (current : Nat)
+    (target : Fraction.Rational)
+    (accurate : Geometric.Basic.quarterRadius scale current < target) :
+    Search.firstQuarterBelow scale current target = current := by
+  unfold Search.firstQuarterBelow
+  rewrite [Search.scanFirstBelow, if_pos accurate]
+  rfl
+
 /-- The computed quarter-radius stage is at least the requested starting stage.
 
 The lower bound applies to the same bounded scan with its computed binary fuel. -/
@@ -185,4 +201,65 @@ public theorem firstQuarterBelow_accurate (scale : Fraction.Rational)
     Geometric.Basic.quarterRadius scale (Search.firstQuarterBelow scale current target) < target := by
   apply Search.scanFirstBelow_accurate scale target current
   exact Search.terminal_quarterRadius_lt scaleNonnegative targetPositive current
+
+set_option genInjectivity false in
+/-- A retained successful bounded quarter-radius search with the original scale, request and starting stage.
+
+The quotient, ceiling, finite fuel, returned stage and attained allowance
+carry their exact defining equations. The same scan proves both stage bounds
+and payment of the retained positive request. -/
+structure Selection (scale : Fraction.Rational) (current : Nat) (target : Fraction.Rational) where
+  /-- The retained original scale is nonnegative. -/
+  scaleNonnegative : 0 ≤ scale
+  /-- The retained positive accuracy request. -/
+  targetPositive : 0 < target
+  /-- The cached scale-to-request quotient used to choose finite scan fuel. -/
+  quotient : Fraction.Rational
+  /-- The quotient uses the original retained scale and request. -/
+  quotient_eq : quotient = scale / target
+  /-- The cached natural ceiling of that same quotient. -/
+  ceiling : Nat
+  /-- The ceiling was computed on the retained quotient. -/
+  ceiling_eq : ceiling = Floor.ceilNat quotient
+  /-- The cached binary-width scan budget. -/
+  fuel : Nat
+  /-- The budget is the binary width of the retained ceiling. -/
+  fuel_eq : fuel = Nat.log2 ceiling + 1
+  /-- The actual returned stage of the original bounded scan. -/
+  stage : Nat
+  /-- The scan consumes the retained scale, request, starting stage and fuel. -/
+  stage_eq : stage = Search.scanFirstBelow scale target current fuel
+  /-- The returned stage does not precede the requested starting stage. -/
+  lower : current ≤ stage
+  /-- The returned stage spends no more than the retained finite fuel. -/
+  upper : stage ≤ current + fuel
+  /-- The actual allowance attained at the returned stage. -/
+  allowance : Fraction.Rational
+  /-- The allowance uses the retained scale and returned stage. -/
+  allowance_eq : allowance = Geometric.Basic.quarterRadius scale stage
+  /-- The attained allowance strictly pays the original accuracy request. -/
+  accurate : allowance < target
+
+constructive_injectivity Selection
+
+/-- Compute and retain one certified quarter-radius search without repeating its fuel or allowance calculations. -/
+@[expose] def Selection.build (scale : Fraction.Rational) (scaleNonnegative : 0 ≤ scale) (current : Nat)
+    (target : Fraction.Rational) (targetPositive : 0 < target) : Selection scale current target :=
+  let quotient := scale / target
+  let ceiling := Floor.ceilNat quotient
+  let fuel := Nat.log2 ceiling + 1
+  let stage := scanFirstBelow scale target current fuel
+  let allowance := Geometric.Basic.quarterRadius scale stage
+  ⟨scaleNonnegative, targetPositive, quotient, rfl, ceiling, rfl, fuel, rfl, stage, rfl,
+    scanFirstBelow_ge _ _ _ _, scanFirstBelow_le_add _ _ _ _, allowance, rfl,
+    scanFirstBelow_accurate _ _ _ _ (terminal_quarterRadius_lt scaleNonnegative targetPositive current)⟩
+
+/-- Any retained later stage also strictly pays the same original quarter-radius request. -/
+theorem Selection.later_accurate {scale target : Fraction.Rational} {current later : Nat}
+    (selection : Selection scale current target) (lower : selection.stage ≤ later) :
+    Geometric.Basic.quarterRadius scale later < target := by
+  have monotone := Geometric.Basic.quarterRadius_antitone selection.scaleNonnegative lower
+  rewrite [← selection.allowance_eq] at monotone
+  exact monotone.trans_lt selection.accurate
+
 end Purelib.Approximation.Rational.Geometric.Search

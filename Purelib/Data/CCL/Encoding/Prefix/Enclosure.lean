@@ -111,9 +111,9 @@ structure Realization (enclosure : Enclosure) where
     fraction.value = sample.point
   /-- The same fraction has nonzero numerator. -/ numeratorNonzero : fraction.numerator ≠ 0
 
-/-- Compute a rational realization using the actual retained enclosure and its existing parser and inverse cache. -/
-def realize (enclosure : Enclosure) : Realization enclosure := by
-  let sample := enclosure.box.nonzeroSample enclosure.proper
+/-- Realize a retained nonzero box sample through the original cached parser and inverse chart. -/
+def realizeSample (enclosure : Enclosure) (sample : Rational.Box.NonzeroSample enclosure.box) :
+    Realization enclosure := by
   let tail := enclosure.tail sample.point
   let fraction := GaussianInt.Fraction.ofGaussian sample.point
   exact
@@ -125,6 +125,19 @@ def realize (enclosure : Enclosure) : Realization enclosure := by
       fractionSpec := rfl
       fractionValue := GaussianInt.Fraction.ofGaussian_value sample.point
       numeratorNonzero := GaussianInt.Fraction.ofGaussian_numerator_ne_zero sample.nonzero }
+
+private theorem realizeSample_point_specification (enclosure : Enclosure)
+    (sample : Rational.Box.NonzeroSample enclosure.box) :
+    (enclosure.realizeSample sample).sample.point = sample.point := rfl
+
+/-- Realizing a supplied sample preserves its exact Gaussian reading. -/
+theorem realizeSample_point (enclosure : Enclosure) (sample : Rational.Box.NonzeroSample enclosure.box) :
+    (enclosure.realizeSample sample).sample.point = sample.point :=
+  realizeSample_point_specification enclosure sample
+
+/-- Compute a rational realization using the actual retained enclosure and its existing parser and inverse cache. -/
+def realize (enclosure : Enclosure) : Realization enclosure :=
+  enclosure.realizeSample (enclosure.box.nonzeroSample enclosure.proper)
 
 namespace Realization
 

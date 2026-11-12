@@ -47,6 +47,9 @@ import Purelib.Data.CCL.Transducer.Replay.Failure
 import Purelib.Approximation.Gaussian.Enclosure.Sector.Safe
 import Purelib.Approximation.Gaussian.Process.Basic
 
+open Purelib.Data.CCL.Transducer.Emission.Initial
+open Purelib.Approximation.Gaussian.Enclosure.Ball.Data
+
 open Purelib.Approximation.Gaussian.Enclosure.Ball.Data (BallData)
 open Purelib.Approximation.Gaussian.Process.Recipe (Cursor)
 
@@ -73,28 +76,29 @@ theorem initialAfter_rep (program :
   Basic.CachedProgram) (actual : Mode.Basic.InitialState)
     (cursor : Cursor)
     (represented : CursorRepresentation.CursorRep program cursor actual.process
-      (Emission.Initial.Preparation.initialRefinedState actual.process actual.state)) :
+      (Preparation.initialRefinedState actual.process actual.state)) :
     Representation.EmissionRep program
       (Replay.Emission.Step.initialAfter (IntegrationReplay.control program) cursor (BallData.ofBall
-        (actual.process.ball (Emission.Initial.Preparation.initialRefinedState actual.process actual.state))))
+        (actual.process.ball (Preparation.initialRefinedState actual.process actual.state))))
       (Emission.Initial.initialStep actual) := by
-  unfold Replay.Emission.Step.initialAfter Emission.Initial.initialStep
+  rewrite [Emission.Initial.initialStep_eq]
+  unfold Replay.Emission.Step.initialAfter
   dsimp only [BallData.ofBall]
   by_cases normalized : 1 ≤ normSq
-      (actual.process.ball (Emission.Initial.Preparation.initialRefinedState actual.process actual.state)).center
+      (actual.process.ball (Preparation.initialRefinedState actual.process actual.state)).center
   · have normalizedAdapter := normalized
     rw [← Norm.Basic.normSq_eq_canonical] at normalizedAdapter
     rw [if_pos normalizedAdapter, dif_pos normalizedAdapter]
     unfold Enclosure.Sector.Decision.decide
     by_cases upper : normSq
-        (actual.process.ball (Emission.Initial.Preparation.initialRefinedState actual.process actual.state)).center ≤ 13
+        (actual.process.ball (Preparation.initialRefinedState actual.process actual.state)).center ≤ 13
           / 6
     · have upperAdapter := upper
       rw [← Norm.Basic.normSq_eq_canonical] at upperAdapter
       rw [if_pos upperAdapter, dif_pos upperAdapter]
       dsimp only [Representation.EmissionRep, Replay.Emission.Step.sectorNext]
       refine ⟨rfl, ?_⟩
-      simp only [Enclosure.Ball.Data.Bounds.residualUpper, Basic.Canonical.Norm.Comparison.normSqFromReduced_eq]
+      simp only [Bounds.residualUpper, Norm.Comparison.normSqFromReduced_eq]
       apply Representation.ModeRep.residual
       exact represented.residual _
     · have upperAdapter := upper
@@ -102,7 +106,7 @@ theorem initialAfter_rep (program :
       rw [if_neg upperAdapter, dif_neg upperAdapter]
       dsimp only [Representation.EmissionRep, Replay.Emission.Step.unaryNext]
       refine ⟨rfl, ?_⟩
-      simp only [Enclosure.Ball.Data.Bounds.unaryLower, Basic.Canonical.Norm.Comparison.normSqFromReduced_eq]
+      simp only [Bounds.unaryLower, Norm.Comparison.normSqFromReduced_eq]
       apply Representation.ModeRep.loop
       exact represented.unary
   · have normalizedAdapter := normalized
@@ -128,11 +132,11 @@ theorem initialStep_rep (program :
     ∃ emission,
       ((Controller.initialStep (IntegrationReplay.control program) cursor).run program.stage).value = .ok emission ∧
       Representation.EmissionRep program emission (Emission.Initial.initialStep actual) := by
-  unfold Controller.initialStep
-  rw [Computation.Query.Protocol.map_run_value,
-    represented.observe _ Emission.Initial.Budget.initialRadiusSq_pos]
+  rewrite [Controller.initialStep_run]
+  rw [Protocol.map_run_value,
+    represented.observe _ Budget.initialRadiusSq_pos]
   refine ⟨_, rfl, initialAfter_rep program actual _ ?_⟩
-  exact represented.refined _ Emission.Initial.Budget.initialRadiusSq_pos
+  exact represented.refined _ Budget.initialRadiusSq_pos
 
 open Purelib.Data.CCL.Transducer in
 open Purelib.Data.Gaussian in
@@ -144,24 +148,25 @@ theorem lowAfter_rep (program :
   Basic.CachedProgram) (actual : Mode.Basic.LowState)
     (cursor : Cursor)
     (represented : CursorRepresentation.CursorRep program cursor actual.process
-      (Emission.Initial.Preparation.initialRefinedState actual.process actual.state)) :
+      (Preparation.initialRefinedState actual.process actual.state)) :
     ∃ emission,
       Replay.Emission.Step.lowAfter (IntegrationReplay.control program) actual.count cursor
         (BallData.ofBall
-        (actual.process.ball (Emission.Initial.Preparation.initialRefinedState actual.process actual.state))) = .ok
+        (actual.process.ball (Preparation.initialRefinedState actual.process actual.state))) = .ok
           emission ∧
       Representation.EmissionRep program emission (Emission.Low.lowStep actual) := by
-  unfold Replay.Emission.Step.lowAfter Emission.Low.lowStep
+  rewrite [Emission.Low.lowStep_eq]
+  unfold Replay.Emission.Step.lowAfter
   dsimp only [BallData.ofBall]
   by_cases normalized : 1 ≤ normSq
-      (actual.process.ball (Emission.Initial.Preparation.initialRefinedState actual.process actual.state)).center
+      (actual.process.ball (Preparation.initialRefinedState actual.process actual.state)).center
   · have normalizedAdapter := normalized
     rw [← Norm.Basic.normSq_eq_canonical] at normalizedAdapter
     rw [if_pos normalizedAdapter, dif_pos normalizedAdapter,
       dif_pos (Emission.Low.Preparation.low_center_lt_extended_upper actual)]
     refine ⟨_, rfl, rfl, ?_⟩
     dsimp only [Replay.Emission.Step.sectorNext]
-    simp only [Enclosure.Ball.Data.Bounds.residualUpper, Basic.Canonical.Norm.Comparison.normSqFromReduced_eq]
+    simp only [Bounds.residualUpper, Norm.Comparison.normSqFromReduced_eq]
     apply Representation.ModeRep.residual
     exact represented.residual _
   · have normalizedAdapter := normalized
@@ -187,10 +192,10 @@ theorem lowStep_rep (program :
       ((Controller.lowStep (IntegrationReplay.control program) actual.count cursor).run program.stage).value = .ok
         emission ∧
       Representation.EmissionRep program emission (Emission.Low.lowStep actual) := by
-  unfold Controller.lowStep
-  rw [Computation.Query.Protocol.map_run_value,
-    represented.observe _ Emission.Initial.Budget.initialRadiusSq_pos]
-  exact lowAfter_rep program actual _ (represented.refined _ Emission.Initial.Budget.initialRadiusSq_pos)
+  rewrite [Controller.lowStep_run]
+  rw [Protocol.map_run_value,
+    represented.observe _ Budget.initialRadiusSq_pos]
+  exact lowAfter_rep program actual _ (represented.refined _ Budget.initialRadiusSq_pos)
 
 open Purelib.Data.CCL.Transducer in
 open Purelib.Data.Gaussian in
@@ -211,14 +216,15 @@ theorem loopAfter_rep (program :
   unfold Replay.Emission.Step.loopAfter
   dsimp only [BallData.ofBall]
   rw [dif_pos (actual.domain.refined_center_normalized actual.state)]
-  unfold Emission.Loop.loopStep Process.Normalization.Basic.LoopDomain.decide Enclosure.Sector.Decision.decide
+  rewrite [Emission.Loop.loopStep_eq]
+  unfold Process.Normalization.Basic.LoopDomain.decide Enclosure.Sector.Decision.decide
   by_cases upper : normSq (actual.process.ball (actual.domain.refinedState actual.state)).center ≤ 13 / 6
   · have upperAdapter := upper
     rw [← Norm.Basic.normSq_eq_canonical] at upperAdapter
     rw [if_pos upperAdapter, dif_pos upperAdapter]
     refine ⟨_, rfl, rfl, ?_⟩
     dsimp only [Replay.Emission.Step.sectorNext]
-    simp only [Enclosure.Ball.Data.Bounds.residualUpper, Basic.Canonical.Norm.Comparison.normSqFromReduced_eq]
+    simp only [Bounds.residualUpper, Norm.Comparison.normSqFromReduced_eq]
     apply Representation.ModeRep.residual
     exact represented.residual _
   · have upperAdapter := upper
@@ -226,7 +232,7 @@ theorem loopAfter_rep (program :
     rw [if_neg upperAdapter, dif_neg upperAdapter]
     refine ⟨_, rfl, rfl, ?_⟩
     dsimp only [Replay.Emission.Step.unaryNext]
-    simp only [Enclosure.Ball.Data.Bounds.unaryLower, Basic.Canonical.Norm.Comparison.normSqFromReduced_eq]
+    simp only [Bounds.unaryLower, Norm.Comparison.normSqFromReduced_eq]
     apply Representation.ModeRep.loop
     exact represented.unary
 
@@ -246,8 +252,8 @@ theorem loopStep_rep (program :
         (Process.Normalization.Data.Correspondence.Domain.ofActual actual.domain)).run program.stage).value = .ok
           emission ∧
       Representation.EmissionRep program emission (Emission.Loop.loopStep actual) := by
-  unfold Controller.loopStep
-  rw [Process.Normalization.Data.Correspondence.Domain.target_ofActual, Computation.Query.Protocol.map_run_value,
+  rewrite [Controller.loopStep_run]
+  rw [Process.Normalization.Data.Correspondence.Domain.target_ofActual, Protocol.map_run_value,
     represented.observe _ actual.domain.decisionTarget_pos]
   exact loopAfter_rep program actual _ (represented.refined _ actual.domain.decisionTarget_pos)
 
@@ -280,8 +286,8 @@ theorem residualStep_rep (program :
     (actual.process.ball (Padding.Process.residualState actual.process actual.state (actual.count + 1)))
     target (Padding.Residual.paddingTarget_pos (actual.count + 1))
     (Padding.Process.residual_accurate actual.process actual.state (actual.count + 1))
-  unfold Controller.residualStep
-  rw [Computation.Query.Protocol.bind_run_value, represented.observe _ positive]
+  rewrite [Controller.residualStep_run]
+  rw [Protocol.bind_run_value, represented.observe _ positive]
   change ∃ emission,
     ((Controller.residualAfter (IntegrationReplay.control program) actual.count actual.upper
       (cursor.refined (IntegrationReplay.control program) (target / 6))
@@ -294,23 +300,24 @@ theorem residualStep_rep (program :
     (Padding.Process.residual_accurate actual.process actual.state (actual.count + 1)) with
   | small certificate =>
       rw [decision] at fields
-      unfold Controller.residualAfter
+      rewrite [Controller.residualAfter_run]
       rw [if_pos fields]
       refine ⟨_, rfl, ?_⟩
-      unfold Emission.Residual.residualStep Padding.Process.decideResidual
+      rewrite [Emission.Residual.residualStep_eq]
+      unfold Padding.Process.decideResidual
       dsimp only [Enclosure.Ball.Bounds.smallUpper, Enclosure.Residual.SmallBall]
       rw [decision]
       refine ⟨rfl, ?_⟩
-      simp only [Enclosure.Ball.Data.Bounds.smallUpper, Basic.Canonical.Norm.Comparison.normSqFromReduced_eq,
+      simp only [Bounds.smallUpper, Norm.Comparison.normSqFromReduced_eq,
         BallData.ofBall]
       apply Representation.ModeRep.residual
       exact refined
   | apart certificate =>
       rw [decision] at fields
-      unfold Controller.residualAfter
+      rewrite [Controller.residualAfter_run]
       rw [if_neg fields.1]
       dsimp only [BallData.ofBall]
-      rw [Basic.Canonical.Norm.Comparison.normSqFromReduced_eq]
+      rw [Norm.Comparison.normSqFromReduced_eq]
       rw [← fields.2]
       let next := Emission.Residual.residualApartLoopState actual certificate
       have inverseRep : CursorRepresentation.CursorRep program
@@ -318,7 +325,8 @@ theorem residualStep_rep (program :
             (cursor.refined (IntegrationReplay.control program) (target / 6)) certificate.lowerSq actual.count)
           next.process next.state := refined.inverse certificate actual.count
       have projected := loopStep_rep program next _ inverseRep
-      unfold Emission.Residual.residualStep Padding.Process.decideResidual
+      rewrite [Emission.Residual.residualStep_eq]
+      unfold Padding.Process.decideResidual
       dsimp only [Enclosure.Ball.Bounds.smallUpper, Enclosure.Residual.SmallBall]
       rw [decision]
       exact projected
@@ -332,7 +340,7 @@ open Purelib.Integration.Program.Gaussian.Cached in
 /-- Every represented replay mode takes a successful original-program query step whose emission represents the exact
 actual transducer step. -/
 theorem step_rep {program : Basic.CachedProgram}
-  {actual : Data.CCL.Transducer.Mode} {mode : Data.CCL.Transducer.Replay.Mode}
+  {actual : Mode} {mode : Replay.Mode}
     (represented : Representation.ModeRep program actual mode) :
     ∃ emission, ((Controller.step (IntegrationReplay.control program) mode).run program.stage).value = .ok emission ∧
       Representation.EmissionRep program emission (Emission.Step.step actual) := by

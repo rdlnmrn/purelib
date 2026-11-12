@@ -53,6 +53,8 @@ import Purelib.Riemann.RootContinuation.PreparedGridRootClosure
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-! The retained occurrence slices partition the original closed source bank.
@@ -118,8 +120,8 @@ private theorem ofFn_read {α : Type u} (values : List α) {count : Nat}
 
 /-- The finite Gaussian sum of pointwise differences equals the difference of the original sums. -/
 private theorem sum_difference {count : Nat} (left right : Fin count → InverseRootPolynomial.Gaussian) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn (fun i => left i - right i)) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn left) - Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    Sum.Basic.gaussianSum (List.ofFn (fun i => left i - right i)) =
+      Sum.Basic.gaussianSum (List.ofFn left) - Sum.Basic.gaussianSum
         (List.ofFn right) := by
   induction count with
   | zero => change (0 : InverseRootPolynomial.Gaussian) = 0 - 0; ring1
@@ -145,26 +147,26 @@ private theorem flatten_length_congr {α β : Type} {count : Nat}
   | zero => rfl
   | succ count ih =>
     rw [OfFn.Basic.ofFn_succ, OfFn.Basic.ofFn_succ (function := right),
-      List.flatten_cons, List.flatten_cons, Data.List.Append.length_append, Data.List.Append.length_append]
+      List.flatten_cons, List.flatten_cons, Append.length_append, Append.length_append]
     exact congrArg₂ Nat.add (lengths 0) (ih _ _ (fun i => lengths i.succ))
 
 /-- Summing the original flattened block bank equals the sum of the retained block sums. -/
 private theorem sum_flatten_ofFn {count : Nat} (blocks : Fin count → List InverseRootPolynomial.Gaussian) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn blocks).flatten =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn (fun i => Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    Sum.Basic.gaussianSum (List.ofFn blocks).flatten =
+      Sum.Basic.gaussianSum (List.ofFn (fun i => Sum.Basic.gaussianSum
       (blocks i))) := by
   induction count with
   | zero => rfl
   | succ count ih =>
     rw [OfFn.Basic.ofFn_succ, List.flatten_cons, IncrementArea.sum_append,
       OfFn.Basic.ofFn_succ]
-    exact congrArg (fun tail => Data.Gaussian.Norm.Sum.Basic.gaussianSum (blocks 0) + tail) (ih _)
+    exact congrArg (fun tail => Sum.Basic.gaussianSum (blocks 0) + tail) (ih _)
 
 /-- Bounds on every value in every original indexed block hold throughout the flattened block bank. -/
 private theorem flattened_bounds {count : Nat} (blocks : Fin count → List InverseRootPolynomial.Gaussian) {bound :
-  InverseRootPolynomial.Coordinate}
-    (bounds : ∀ i value, value ∈ blocks i → Data.Gaussian.Norm.Basic.normSq value ≤ bound) :
-    ∀ value ∈ (List.ofFn blocks).flatten, Data.Gaussian.Norm.Basic.normSq value ≤ bound := by
+  Coordinate}
+    (bounds : ∀ i value, value ∈ blocks i → Basic.normSq value ≤ bound) :
+    ∀ value ∈ (List.ofFn blocks).flatten, Basic.normSq value ≤ bound := by
   induction count with
   | zero => intro value member; cases member
   | succ count ih =>
@@ -189,17 +191,17 @@ theorem orient_source_difference (forward : Bool) (source reference remainder ca
     ring1
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
 
 /-- The original occurrence parent ranges concatenate to the complete retained parent range in exact order. -/
-private theorem occurrence_ranges (occurrences : List (ExteriorProgram.SurfaceOccurrence regular domains differential))
+private theorem occurrence_ranges (occurrences : List (SurfaceOccurrence regular domains differential))
     (offset : Nat) :
     (List.ofFn (fun outer : Fin occurrences.length =>
       List.range' (offset + (BoundaryParentLocation.occurrenceParents (occurrences.take outer.val)).length)
@@ -218,17 +220,17 @@ private theorem occurrence_ranges (occurrences : List (ExteriorProgram.SurfaceOc
     have tails := OfFn.Basic.ofFn_congr (fun i : Fin tail.length =>
       congrArg (fun start => List.range' start (BoundaryAxisLocation.occurrenceAt tail
         i).compared.entered.cache.parents.length)
-        ((congrArg (fun n => offset + n) (Data.List.Append.length_append ..)).trans
+        ((congrArg (fun n => offset + n) (Append.length_append ..)).trans
           (Nat.add_assoc offset head.compared.entered.cache.parents.length
             (BoundaryParentLocation.occurrenceParents (tail.take i.val)).length).symm))
     exact (congrArg (List.append (List.range' offset head.compared.entered.cache.parents.length))
       ((congrArg List.flatten tails).trans (ih (offset + head.compared.entered.cache.parents.length)))).trans
-      (Data.List.Range.Basic.range'_append_1.trans (congrArg (List.range' offset) (Data.List.Append.length_append
+      (Data.List.Range.Basic.range'_append_1.trans (congrArg (List.range' offset) (Append.length_append
         ..).symm))
 
 variable {program : ExteriorProgram lifted
   differential} {prepared :
-  ExteriorProgram.SurfacePreparation
+  SurfacePreparation
   regular domains program}
   {requested : Coordinate} {minimum : Nat}
 
@@ -238,7 +240,7 @@ theorem parentIndices_partition (comparison : prepared.ClosedBoundaryComparison 
       List.ofFn (fun i : Fin comparison.original.plans.length => i) := by
   apply
     fin_values_injective
-  rw [Data.List.Flatten.map_flatten, OfFn.Basic.map_ofFn, OfFn.Basic.map_ofFn]
+  rw [Flatten.map_flatten, OfFn.Basic.map_ofFn, OfFn.Basic.map_ofFn]
   have parts := OfFn.Basic.ofFn_congr (comparison.parentIndices_values)
   have ranged :=
     occurrence_ranges
@@ -247,7 +249,7 @@ theorem parentIndices_partition (comparison : prepared.ClosedBoundaryComparison 
     := by
     exact (congrArg List.length (show BoundaryParentLocation.occurrenceParents prepared.occurrences =
       comparison.original.plans.map (fun plan => plan.parent) from
-        prepared.parents_eq.trans comparison.original.parents_eq.symm)).trans (Data.List.Map.length_map ..)
+        prepared.parents_eq.trans comparison.original.parents_eq.symm)).trans (Map.length_map ..)
   have all :=
     ofFn_range
     comparison.original.plans.length 0
@@ -264,23 +266,23 @@ multiplying two worst-case counts. -/
 theorem component_resampling_bound (comparison : prepared.ClosedBoundaryComparison other requested minimum)
     (blocks : Fin prepared.occurrences.length → List InverseRootPolynomial.Gaussian)
     (errors : Fin prepared.occurrences.length → InverseRootPolynomial.Gaussian)
-    (readback : ∀ outer, Data.Gaussian.Norm.Sum.Basic.gaussianSum (blocks outer) = errors outer)
+    (readback : ∀ outer, Sum.Basic.gaussianSum (blocks outer) = errors outer)
     (lengths : ∀ outer, (blocks outer).length = (comparison.parentIndices outer).length)
-    {bound : InverseRootPolynomial.Coordinate} (bounds : ∀ outer value, value ∈ blocks outer →
-      Data.Gaussian.Norm.Basic.normSq value ≤ bound) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn errors)) ≤
-      (comparison.original.plans.length : InverseRootPolynomial.Coordinate)^2 * bound := by
+    {bound : Coordinate} (bounds : ∀ outer value, value ∈ blocks outer →
+      Basic.normSq value ≤ bound) :
+    Basic.normSq (Sum.Basic.gaussianSum (List.ofFn errors)) ≤
+      (comparison.original.plans.length : Coordinate)^2 * bound := by
   have count :=
     (flatten_length_congr
     blocks comparison.parentIndices lengths).trans
-    ((congrArg List.length comparison.parentIndices_partition).trans Data.List.OfFn.Basic.length_ofFn)
-  have estimate := Data.Gaussian.Norm.Sum.Bounds.normSq_sum_le (List.ofFn blocks).flatten bound
+    ((congrArg List.length comparison.parentIndices_partition).trans OfFn.Basic.length_ofFn)
+  have estimate := Sum.Bounds.normSq_sum_le (List.ofFn blocks).flatten bound
 
       (flattened_bounds
       blocks bounds)
   have sums :=
     (sum_flatten_ofFn
-    blocks).trans (congrArg Data.Gaussian.Norm.Sum.Basic.gaussianSum (OfFn.Basic.ofFn_congr readback))
+    blocks).trans (congrArg Sum.Basic.gaussianSum (OfFn.Basic.ofFn_congr readback))
   rw [sums, count] at estimate
   exact estimate.trans_eq (by ring1)
 
@@ -290,12 +292,12 @@ theorem sourceOccurrenceBlocks_partition (comparison : prepared.ClosedBoundaryCo
     (List.ofFn (fun outer => comparison.sourceOccurrenceBlocks outer true)).flatten =
       comparison.sourcePaths := by
   let bank := comparison.sourcePaths
-  have length : bank.length = comparison.original.plans.length := Data.List.OfFn.Basic.length_ofFn
+  have length : bank.length = comparison.original.plans.length := OfFn.Basic.length_ofFn
   let read := fun i : Fin comparison.original.plans.length => bank[i.val]'(i.isLt.trans_eq length.symm)
   have parts := OfFn.Basic.ofFn_congr (fun outer : Fin prepared.occurrences.length =>
     (show comparison.sourceOccurrenceBlocks outer true = (comparison.parentIndices outer).map read from rfl))
   have all := congrArg (List.map read) comparison.parentIndices_partition
-  rw [Data.List.Flatten.map_flatten, OfFn.Basic.map_ofFn, OfFn.Basic.map_ofFn] at all
+  rw [Flatten.map_flatten, OfFn.Basic.map_ofFn, OfFn.Basic.map_ofFn] at all
   apply (congrArg List.flatten parts).trans
   apply all.trans
   exact
@@ -307,13 +309,13 @@ theorem sourceOccurrencePaths_partition (comparison : prepared.ClosedBoundaryCom
     (List.ofFn (fun outer => (comparison.sourceOccurrenceBlocks outer true).flatten)).flatten =
       comparison.sourcePaths.flatten := by
   have all := congrArg List.flatten comparison.sourceOccurrenceBlocks_partition
-  rw [Data.List.Flatten.flatten_flatten, OfFn.Basic.map_ofFn] at all
+  rw [Flatten.flatten_flatten, OfFn.Basic.map_ofFn] at all
   exact all
 
 /-- All occurrence interiors and their joining polygon reconstruct the original full source area. This is not a sum of
 endpoint chords alone. -/
 theorem sourceOccurrencePaths_area (comparison : prepared.ClosedBoundaryComparison other requested minimum) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn (fun outer => PairedIncrementArea.area
+    Sum.Basic.gaussianSum (List.ofFn (fun outer => PairedIncrementArea.area
       (comparison.sourceOccurrenceBlocks outer true).flatten)) +
       PairedIncrementArea.area (List.ofFn (fun outer => PairedIncrementArea.total (comparison.sourceOccurrenceBlocks
         outer true).flatten)) =
@@ -329,31 +331,31 @@ theorem component_source_bound (comparison : prepared.ClosedBoundaryComparison o
     (sources remainders : Fin prepared.occurrences.length → InverseRootPolynomial.Gaussian)
     (differences : ∀ outer, sources outer - PairedIncrementArea.area (comparison.sourceOccurrenceBlocks outer
       true).flatten = remainders outer) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn sources) +
+    Basic.normSq (Sum.Basic.gaussianSum (List.ofFn sources) +
       PairedIncrementArea.area (List.ofFn (fun outer => PairedIncrementArea.total (comparison.sourceOccurrenceBlocks
         outer true).flatten)) -
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn remainders)) < requested := by
+        Sum.Basic.gaussianSum (List.ofFn remainders)) < requested := by
   have interiors :=
     (sum_difference
     sources remainders).symm.trans
-    (congrArg Data.Gaussian.Norm.Sum.Basic.gaussianSum (OfFn.Basic.ofFn_congr (fun outer =>
+    (congrArg Sum.Basic.gaussianSum (OfFn.Basic.ofFn_congr (fun outer =>
       subtract_remainder
       (differences outer))))
-  have equal : Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn sources) +
+  have equal : Sum.Basic.gaussianSum (List.ofFn sources) +
       PairedIncrementArea.area (List.ofFn (fun outer => PairedIncrementArea.total (comparison.sourceOccurrenceBlocks
         outer true).flatten)) -
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn remainders) = PairedIncrementArea.area
+        Sum.Basic.gaussianSum (List.ofFn remainders) = PairedIncrementArea.area
           comparison.sourcePaths.flatten := by
     calc
-      _ = (Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn sources) -
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn remainders)) +
+      _ = (Sum.Basic.gaussianSum (List.ofFn sources) -
+        Sum.Basic.gaussianSum (List.ofFn remainders)) +
           PairedIncrementArea.area (List.ofFn (fun outer => PairedIncrementArea.total (comparison.sourceOccurrenceBlocks
             outer true).flatten)) := by ring1
       _ = _ := (congrArg (fun value => value +
         PairedIncrementArea.area (List.ofFn (fun outer => PairedIncrementArea.total (comparison.sourceOccurrenceBlocks
           outer true).flatten))) interiors).trans
           comparison.sourceOccurrencePaths_area
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq equal).trans_lt comparison.path_bounded
+  exact (congrArg Basic.normSq equal).trans_lt comparison.path_bounded
 
 end SurfacePreparation.ClosedBoundaryComparison
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram

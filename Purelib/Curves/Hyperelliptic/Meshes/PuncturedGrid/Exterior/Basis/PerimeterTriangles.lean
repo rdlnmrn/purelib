@@ -93,16 +93,16 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PerimeterS
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
 
 open Purelib.Riemann.Readings.RectangularPointReadings (PointReadings)
@@ -122,7 +122,7 @@ open Purelib.Integration.Path.ConjugatePathReadback (conjugateDiagonal conjugate
 variable {stage : Nat}
   {cuts : GridCuts ((domains.get
     occurrence.sideOccurrence.position).domain occurrence.sideOccurrence.sheet).geometry}
-  {meshBox : Purelib.Geometry.Rational.Box} {mesh :
+  {meshBox : Geometry.Rational.Box} {mesh :
     ObservationMesh cuts meshBox}
 
 namespace SharedPerimeter
@@ -133,7 +133,7 @@ variable (cache : Numerics domains
 def primitiveValues
     (column row : Fin (((domains.get occurrence.sideOccurrence.position).domain occurrence.sideOccurrence.sheet).steps +
       1))
-    (point : InverseRootPolynomial.Gaussian) : PrimitivePoint :=
+    (point : Gaussian) : PrimitivePoint :=
   ConjugatePathReadback.conjugateDiagonal (FiniteSum.Fin.sumFin (fun basisRow => coefficients basisRow *
     (cache.atDomain occurrence.sideOccurrence.position occurrence.sideOccurrence.sheet basisRow).primitives.value
       column row point))
@@ -143,10 +143,10 @@ same coefficient vector. -/
 theorem grid_difference
     (column row : Fin (((domains.get occurrence.sideOccurrence.position).domain occurrence.sideOccurrence.sheet).steps +
       1))
-    (first last : InverseRootPolynomial.Gaussian) :
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PerimeterReadback.SharedPerimeter.gridValues
+    (first last : Gaussian) :
+    (SharedPerimeter.gridValues
       (occurrence := occurrence) cache coefficients column row last).sub
-      (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PerimeterReadback.SharedPerimeter.gridValues
+      (SharedPerimeter.gridValues
         cache coefficients column row first) =
     (primitiveValues
       cache coefficients column row last).sub
@@ -168,7 +168,7 @@ joining polygon has zero area. -/
 theorem triangle_offsets_cancel
     (column row : Fin (((domains.get occurrence.sideOccurrence.position).domain occurrence.sideOccurrence.sheet).steps +
       1))
-    (first second third : InverseRootPolynomial.Gaussian) :
+    (first second third : Gaussian) :
     Stokes.triangleWedgeArea
       (SharedPerimeter.gridValues (occurrence := occurrence) cache coefficients column row first)
       (SharedPerimeter.gridValues cache coefficients column row second) (SharedPerimeter.gridValues cache coefficients
@@ -200,28 +200,25 @@ theorem triangle_offsets_cancel
 /-- The complete retained local triangle sum is unchanged by cancelling each triangle owner's constant primitive
 alignment offset. -/
 theorem localWedges_offsets_cancel
-    (triangles : List (RectangularOwnedTriangulation.ModelTriangle
+    (triangles : List (ModelTriangle
       ((domains.get occurrence.sideOccurrence.position).domain occurrence.sideOccurrence.sheet).geometry)) :
     RectangularClippedLocalBoundary.localWedges (SharedPerimeter.gridValues (occurrence := occurrence) cache
       coefficients) triangles =
       RectangularClippedLocalBoundary.localWedges
         (primitiveValues
         cache coefficients) triangles := by
-  induction triangles with
-  | nil => rfl
-  | cons triangle rest ih =>
-    exact congrArg₂ (fun first last : InverseRootPolynomial.Gaussian => first + last)
-
-        (triangle_offsets_cancel
-        cache coefficients triangle.column triangle.row
-        triangle.triangle.first triangle.triangle.second triangle.triangle.third) ih
+  apply RectangularClippedLocalBoundary.localWedges_congr
+  intro triangle
+  exact triangle_offsets_cancel (occurrence := occurrence)
+    cache coefficients triangle.column triangle.row
+    triangle.triangle.first triangle.triangle.second triangle.triangle.third
 
 variable (traces : PerimeterTraces mesh)
 
 /-- Exact accounting of the complete local triangle sum. All owner seams, corner polygons and the four centering chords
 remain in the identity. -/
-theorem Samples.triangle_boundary (samples : SharedPerimeter.Samples traces cache coefficients)
-    (assembly : ObservationMesh.ClippedAssembly mesh (SharedPerimeter.gridValues (occurrence := occurrence) cache
+theorem Samples.triangle_boundary (samples : Samples traces cache coefficients)
+    (assembly : ClippedAssembly mesh (SharedPerimeter.gridValues (occurrence := occurrence) cache
       coefficients))
     (perimeter : assembly.Perimeter) :
     RectangularClippedLocalBoundary.localWedges

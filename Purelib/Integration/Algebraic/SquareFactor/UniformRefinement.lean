@@ -74,113 +74,113 @@ open Purelib.Data.Rat in
 /-- The rational carrier for synchronized refinement requests. -/
 abbrev Coordinate := Fraction.Rational
 
-variable {polynomial : Purelib.Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial} {request :
-  Purelib.Curves.Hyperelliptic.Differentials.SquareFactor.Request}
-  {prepared : Purelib.Curves.Hyperelliptic.Differentials.SquareFactor.Prepared polynomial request} {segment :
-    Purelib.Integration.Algebraic.SquareFactor.PathInput.Segment}
-  {data : Purelib.Integration.Algebraic.SquareFactor.PathInput.Data prepared segment} {safe : data.Safe}
+variable {polynomial : GaussianPolynomial} {request :
+  Request}
+  {prepared : Prepared polynomial request} {segment :
+    Segment}
+  {data : Data prepared segment} {safe : data.Safe}
 
 /-- The maximum of the requested minimum and every original parent's sufficient child-mesh depth. -/
-@[expose] def maximumAdditionalDepth (diameter : UniformRefinement.Coordinate) (minimumDepth : Nat) : List
-  (OwnedCells.Cell safe) → Nat
+@[expose] def maximumAdditionalDepth (diameter : Coordinate) (minimumDepth : Nat) : List
+  (Cell safe) → Nat
   | [] => minimumDepth
   | parent :: parents => max
       (PreparedSheetContinuation.Subdivision.sufficientDyadicDepth (PathContinuation.clearSegment safe)
         parent.edge.left parent.edge.step.endpoint diameter)
-      (Purelib.Integration.Algebraic.SquareFactor.UniformRefinement.maximumAdditionalDepth diameter minimumDepth
+      (UniformRefinement.maximumAdditionalDepth diameter minimumDepth
         parents)
 
 /-- The common sufficient maximum meets the original minimum-depth request. -/
-theorem minimum_le_maximumAdditionalDepth (diameter : UniformRefinement.Coordinate) (minimumDepth : Nat)
-    (parents : List (OwnedCells.Cell safe)) :
-    minimumDepth ≤ UniformRefinement.maximumAdditionalDepth diameter minimumDepth parents := by
+theorem minimum_le_maximumAdditionalDepth (diameter : Coordinate) (minimumDepth : Nat)
+    (parents : List (Cell safe)) :
+    minimumDepth ≤ maximumAdditionalDepth diameter minimumDepth parents := by
   induction parents with
   | nil => exact Nat.le_refl _
-  | cons parent parents ih => exact ih.trans (Purelib.Data.Nat.Order.le_max_right _ _)
+  | cons parent parents ih => exact ih.trans (Data.Nat.Order.le_max_right _ _)
 
 /-- Every retained parent's sufficient depth lies below the common maximum. -/
-theorem sufficient_le_maximumAdditionalDepth (diameter : UniformRefinement.Coordinate) (minimumDepth : Nat)
-    (parents : List (OwnedCells.Cell safe)) :
+theorem sufficient_le_maximumAdditionalDepth (diameter : Coordinate) (minimumDepth : Nat)
+    (parents : List (Cell safe)) :
     ∀ parent ∈ parents,
       PreparedSheetContinuation.Subdivision.sufficientDyadicDepth (PathContinuation.clearSegment safe)
         parent.edge.left parent.edge.step.endpoint diameter ≤
-          UniformRefinement.maximumAdditionalDepth diameter minimumDepth parents := by
+          maximumAdditionalDepth diameter minimumDepth parents := by
   induction parents with
   | nil => intro parent member; nomatch member
   | cons parent parents ih =>
       intro cell member
-      rcases Purelib.Data.List.Membership.mem_cons.mp member with equal | member
-      · cases equal; exact Purelib.Data.Nat.Order.le_max_left _ _
-      · exact (ih cell member).trans (Purelib.Data.Nat.Order.le_max_right _ _)
+      rcases Data.List.Membership.mem_cons.mp member with equal | member
+      · cases equal; exact Data.Nat.Order.le_max_left _ _
+      · exact (ih cell member).trans (Data.Nat.Order.le_max_right _ _)
 
 set_option genInjectivity false in
 /-- An ordered bank of compiled child blocks at one common diameter and depth, indexed by the exact parent cells.
 
 Each retained block keeps its original parent identity and cached mesh cells. -/
-inductive Expansion (diameter : UniformRefinement.Coordinate) (depth : Nat) : List (OwnedCells.Cell safe) → Type
+inductive Expansion (diameter : Coordinate) (depth : Nat) : List (Cell safe) → Type
   /-- The empty original parent list has an empty retained bank. -/ | nil :
-    Purelib.Integration.Algebraic.SquareFactor.UniformRefinement.Expansion diameter depth []
+    UniformRefinement.Expansion diameter depth []
   /-- Prepend the exact original parent's retained compiled child block to the remaining expansion. -/ | cons {parent :
-    OwnedCells.Cell safe} {parents : List (OwnedCells.Cell safe)}
-      (head : ChildMeshes.Block parent diameter depth) (tail :
-        Purelib.Integration.Algebraic.SquareFactor.UniformRefinement.Expansion diameter depth parents) :
-      Purelib.Integration.Algebraic.SquareFactor.UniformRefinement.Expansion diameter depth (parent :: parents)
+    Cell safe} {parents : List (Cell safe)}
+      (head : Block parent diameter depth) (tail :
+        UniformRefinement.Expansion diameter depth parents) :
+      UniformRefinement.Expansion diameter depth (parent :: parents)
 
 constructive_injectivity Expansion
 
 namespace Expansion
 
-variable {diameter : Purelib.Integration.Algebraic.SquareFactor.UniformRefinement.Coordinate} {depth : Nat}
+variable {diameter : Coordinate} {depth : Nat}
 
 /-- Flatten the exact retained child block cells in original parent order. -/
-@[expose] def cells : {parents : List (OwnedCells.Cell safe)} → UniformRefinement.Expansion diameter depth parents →
-  List (OwnedCells.Cell safe)
+@[expose] def cells : {parents : List (Cell safe)} → Expansion diameter depth parents →
+  List (Cell safe)
   | _, .nil => []
-  | _, .cons head tail => head.cells ++ Purelib.Integration.Algebraic.SquareFactor.UniformRefinement.Expansion.cells
+  | _, .cons head tail => head.cells ++ Expansion.cells
     tail
 
 open Purelib.Integration.Polynomial.Gaussian.Cell in
 /-- Flatten the retained child block model cells in original parent order. -/
-@[expose] def models : {parents : List (OwnedCells.Cell safe)} → UniformRefinement.Expansion diameter depth parents →
+@[expose] def models : {parents : List (Cell safe)} → Expansion diameter depth parents →
   List Basic.CellModel
   | _, .nil => []
   | _, .cons head tail => head.pathModel.cells ++
-    Purelib.Integration.Algebraic.SquareFactor.UniformRefinement.Expansion.models tail
+    Expansion.models tail
 
 /-- The retained model list is exactly the model readback of the retained compiled cells. -/
-theorem models_eq {parents : List (OwnedCells.Cell safe)} (expansion : UniformRefinement.Expansion diameter depth
+theorem models_eq {parents : List (Cell safe)} (expansion : Expansion diameter depth
   parents) :
     expansion.models = expansion.cells.map (fun cell => cell.model.cell) := by
   induction expansion with
   | nil => rfl
   | cons head tail ih =>
-      rw [UniformRefinement.Expansion.models, UniformRefinement.Expansion.cells, Purelib.Data.List.Map.map_append, ih]
+      rw [models, cells, Data.List.Map.map_append, ih]
       rfl
 
 open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- Read the compatible constant refinement from the original retained block certificates. -/
-@[expose] def refinement : {parents : List (OwnedCells.Cell safe)} → (expansion : UniformRefinement.Expansion diameter
+@[expose] def refinement : {parents : List (Cell safe)} → (expansion : Expansion diameter
   depth parents) →
     Basic.PathModel.CompatibleConstantPathRefinement (parents.map (fun cell => cell.model.cell)) expansion.models
   | _, .nil => .nil
   | _, .cons head tail => .cons head.partition
-    (Purelib.Integration.Algebraic.SquareFactor.UniformRefinement.Expansion.refinement tail)
+    (Expansion.refinement tail)
 
 /-- The retained expansion has the original parent count times two to the common additional depth cells. -/
-theorem count {parents : List (OwnedCells.Cell safe)} (expansion : UniformRefinement.Expansion diameter depth parents) :
+theorem count {parents : List (Cell safe)} (expansion : Expansion diameter depth parents) :
     expansion.cells.length = parents.length * 2 ^ depth := by
   induction expansion with
   | nil => exact (Nat.zero_mul _).symm
   | @cons parent parents head tail ih =>
-      rw [UniformRefinement.Expansion.cells, Purelib.Data.List.Append.length_append,
+      rw [cells, Data.List.Append.length_append,
         ChildBounds.Block.cellCount head,
         ih, List.length_cons]
-      rw [Purelib.Data.Nat.Multiplication.right_distrib, Nat.one_mul, Nat.add_comm]
+      rw [Data.Nat.Multiplication.right_distrib, Nat.one_mul, Nat.add_comm]
 
 open Purelib.Integration.Algebraic.SquareFactor.PathContinuation in
 open Purelib.Approximation.Rational in
 /-- Nested quarter radii add their exact depths. -/
-private theorem quarterRadius_nested (scale : UniformRefinement.Coordinate) (first second : Nat) :
+private theorem quarterRadius_nested (scale : Coordinate) (first second : Nat) :
     Geometric.Basic.quarterRadius (Geometric.Basic.quarterRadius scale first) second =
       Geometric.Basic.quarterRadius scale (first + second) := by
   rw [Geometric.Basic.quarterRadius_eq_mul_pow, Geometric.Basic.quarterRadius_eq_mul_pow,
@@ -189,7 +189,7 @@ private theorem quarterRadius_nested (scale : UniformRefinement.Coordinate) (fir
 
 open Purelib.Approximation.Rational in
 /-- Uniform original parent widths give child widths at the sum of the retained depths. -/
-theorem widths {parents : List (OwnedCells.Cell safe)} (expansion : UniformRefinement.Expansion diameter depth parents)
+theorem widths {parents : List (Cell safe)} (expansion : Expansion diameter depth parents)
     (parentDepth : Nat)
     (parentWidths : ∀ parent ∈ parents,
       parent.edge.span.width ^ 2 = Geometric.Basic.quarterRadius 1 parentDepth) :
@@ -199,28 +199,28 @@ theorem widths {parents : List (OwnedCells.Cell safe)} (expansion : UniformRefin
   | nil => intro child member; nomatch member
   | @cons parent parents head tail ih =>
       intro child member
-      rcases Purelib.Data.List.Membership.mem_append.mp member with member | member
+      rcases Data.List.Membership.mem_append.mp member with member | member
       · rw [ChildBounds.Block.width_sq head child member,
           parentWidths parent (List.mem_cons_self ..)]
-        rw [UniformRefinement.Expansion.quarterRadius_nested]
+        rw [quarterRadius_nested]
       · exact ih (fun cell member => parentWidths cell (List.mem_cons_of_mem _ member))
           child member
 
 /-- Every retained expanded child keeps the original common diameter request. -/
-theorem diameters {parents : List (OwnedCells.Cell safe)} (expansion : UniformRefinement.Expansion diameter depth
+theorem diameters {parents : List (Cell safe)} (expansion : Expansion diameter depth
   parents) :
     ∀ child ∈ expansion.cells, child.edge.step.rootDiameter = diameter := by
   induction expansion with
   | nil => intro child member; nomatch member
   | cons head tail ih =>
       intro child member
-      rcases Purelib.Data.List.Membership.mem_append.mp member with member | member
+      rcases Data.List.Membership.mem_append.mp member with member | member
       · exact ChildBounds.Block.diameter_eq head child member
       · exact ih child member
 
 open Purelib.Approximation.Rational in
 /-- Uniform original parent widths give the explicit parameter-and-root local allowance for every retained child. -/
-theorem local_allowance_le {parents : List (OwnedCells.Cell safe)} (expansion : UniformRefinement.Expansion diameter
+theorem local_allowance_le {parents : List (Cell safe)} (expansion : Expansion diameter
   depth parents)
     (parentDepth : Nat)
     (parentWidths : ∀ parent ∈ parents,
@@ -238,31 +238,31 @@ open Purelib.Data.List in
 open Purelib.Data.Rat in
 open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- Retained parent and child bounds control every exact comparison model's displacement and local allowance. -/
-theorem comparison_bounds {parents : List (OwnedCells.Cell safe)} (expansion : UniformRefinement.Expansion diameter
+theorem comparison_bounds {parents : List (Cell safe)} (expansion : Expansion diameter
   depth parents)
-    (movement parentAllowance childAllowance : UniformRefinement.Coordinate)
+    (movement parentAllowance childAllowance : Coordinate)
     (parentBounds : ∀ parent ∈ parents, parent.model.cell.localAllowance ≤ parentAllowance)
     (childBounds : ∀ child ∈ expansion.cells,
-      Data.Gaussian.Norm.Basic.normSq child.model.cell.displacement ≤ movement ∧ child.model.cell.localAllowance ≤
+      Norm.Basic.normSq child.model.cell.displacement ≤ movement ∧ child.model.cell.localAllowance ≤
         childAllowance) :
     ∀ model ∈ (CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.comparisonCells expansion.refinement),
-      Data.Gaussian.Norm.Basic.normSq model.displacement ≤ movement ∧ model.localAllowance ≤ 2 * (parentAllowance +
+      Norm.Basic.normSq model.displacement ≤ movement ∧ model.localAllowance ≤ 2 * (parentAllowance +
         childAllowance) := by
   induction expansion with
   | nil => intro model member; nomatch member
   | @cons parent parents head tail ih =>
       intro model member
-      rcases Purelib.Data.List.Membership.mem_append.mp member with member | member
+      rcases Membership.mem_append.mp member with member | member
       · change model ∈ head.pathModel.cells.map (Basic.PathModel.comparisonCell parent.model.cell) at member
         rcases Map.mem_map.mp member with ⟨childModel, childMember, rfl⟩
         change childModel ∈ head.cells.map (fun child => child.model.cell) at childMember
         rcases Map.mem_map.mp childMember with ⟨child, cellMember, rfl⟩
-        have childBound := childBounds child ((Purelib.Data.List.Membership.mem_append.mpr (Or.inl cellMember)))
+        have childBound := childBounds child ((Membership.mem_append.mpr (Or.inl cellMember)))
         refine ⟨childBound.1, ?_⟩
         exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add (parentBounds parent (List.mem_cons_self ..)) childBound.2) (by decide)
       · exact ih (fun cell member => parentBounds cell (List.mem_cons_of_mem _ member))
-          (fun child member => childBounds child ((Purelib.Data.List.Membership.mem_append.mpr (Or.inr member)))) model
+          (fun child member => childBounds child ((Membership.mem_append.mpr (Or.inr member)))) model
             member
 
 end Expansion
@@ -270,24 +270,31 @@ end Expansion
 open Purelib.Integration.Algebraic.SquareFactor.PathContinuation in
 set_option genInjectivity false in
 /-- An ordered bank of original child meshes sharing one diameter and depth and indexed by their exact parents. -/
-inductive MeshBank (diameter : UniformRefinement.Coordinate) (depth : Nat) : List (OwnedCells.Cell safe) → Type
+inductive MeshBank (diameter : Coordinate) (depth : Nat) : List (Cell safe) → Type
   /-- The empty original parent list has an empty retained bank. -/ | nil :
-    Purelib.Integration.Algebraic.SquareFactor.UniformRefinement.MeshBank diameter depth []
+    UniformRefinement.MeshBank diameter depth []
   /-- Prepend the exact original parent's retained child mesh to the remaining mesh bank. -/ | cons {parent :
-    OwnedCells.Cell safe} {parents : List (OwnedCells.Cell safe)}
-      (head : ChildMeshes.Mesh parent diameter depth first last) (tail :
-        Purelib.Integration.Algebraic.SquareFactor.UniformRefinement.MeshBank diameter depth parents) :
-      Purelib.Integration.Algebraic.SquareFactor.UniformRefinement.MeshBank diameter depth (parent :: parents)
+    Cell safe} {parents : List (Cell safe)}
+      (head : Mesh parent diameter depth first last) (tail :
+        UniformRefinement.MeshBank diameter depth parents) :
+      UniformRefinement.MeshBank diameter depth (parent :: parents)
 
 constructive_injectivity MeshBank
+
+/-- Read each original mesh's prepared leaf edges in parent order without requesting their cell models. -/
+@[expose] def MeshBank.edges {diameter : Coordinate} {depth : Nat} :
+    {parents : List (Cell safe)} → MeshBank diameter depth parents →
+      List (Edge safe)
+  | _, .nil => []
+  | _, .cons head tail => head.edges ++ tail.edges
 
 /-- Compile the retained mesh bank in order, caching each original mesh's cell list.
 
 The original parent order determines each retained compiled child block.
 Structural recursion reuses the supplied remaining bank without choosing new meshes. -/
-@[expose] def MeshBank.sequentialCompile {diameter : UniformRefinement.Coordinate} {depth : Nat} :
-    {parents : List (OwnedCells.Cell safe)} → UniformRefinement.MeshBank diameter depth parents →
-      UniformRefinement.Expansion diameter depth parents
+@[expose] def MeshBank.sequentialCompile {diameter : Coordinate} {depth : Nat} :
+    {parents : List (Cell safe)} → MeshBank diameter depth parents →
+      Expansion diameter depth parents
   | _, .nil => .nil
   | _, .cons head tail => .cons (ChildMeshes.compile head) tail.sequentialCompile
 
@@ -295,9 +302,9 @@ section
 open Purelib.Integration.Algebraic.SquareFactor.PathContinuation
 open Purelib.Data
 /-- Compile the original mesh bank in groups of four parallel tasks while retaining the exact original parent order. -/
-@[expose] def MeshBank.compile {diameter : UniformRefinement.Coordinate} {depth : Nat} :
-    {parents : List (OwnedCells.Cell safe)} → UniformRefinement.MeshBank diameter depth parents →
-      UniformRefinement.Expansion diameter depth parents
+@[expose] def MeshBank.compile {diameter : Coordinate} {depth : Nat} :
+    {parents : List (Cell safe)} → MeshBank diameter depth parents →
+      Expansion diameter depth parents
   | _, .nil => .nil
   | _, .cons head .nil => .cons (ChildMeshes.compile head) .nil
   | _, .cons head (.cons second .nil) =>
@@ -314,8 +321,8 @@ open Purelib.Data
       .cons results.1 (.cons results.2.1 (.cons results.2.2.1 (.cons results.2.2.2 tail.compile)))
 
 /-- Parallel mesh-bank compilation equals the exact sequential compilation. -/
-theorem MeshBank.compile_eq_sequential {diameter : UniformRefinement.Coordinate} {depth : Nat} :
-    {parents : List (OwnedCells.Cell safe)} → (bank : UniformRefinement.MeshBank diameter depth parents) →
+theorem MeshBank.compile_eq_sequential {diameter : Coordinate} {depth : Nat} :
+    {parents : List (Cell safe)} → (bank : MeshBank diameter depth parents) →
       bank.compile = bank.sequentialCompile
   | _, .cons first (.cons second (.cons third (.cons fourth tail))) => by
       simp only [compile, Task.Parallel.four_eq, sequentialCompile, compile_eq_sequential tail, -eq_self, -iff_self]
@@ -333,8 +340,8 @@ open Purelib.Integration.Algebraic.SquareFactor.PathContinuation
 
 Each original parent is attempted once in order at the supplied diameter and
 depth. A failed attempt ends the traversal with the same original failure result. -/
-@[expose] def sequentialMeshes (diameter : UniformRefinement.Coordinate) (positive : 0 < diameter) (depth : Nat) :
-    (parents : List (OwnedCells.Cell safe)) → Option (UniformRefinement.MeshBank diameter depth parents)
+@[expose] def sequentialMeshes (diameter : Coordinate) (positive : 0 < diameter) (depth : Nat) :
+    (parents : List (Cell safe)) → Option (MeshBank diameter depth parents)
   | [] => some .nil
   | parent :: parents => do
       let head ← ChildMeshes.tryBuild parent diameter positive depth first last (by decide)
@@ -347,8 +354,8 @@ open Purelib.Data in
 set_option backward.match.sparseCases false in
 /-- Attempt child meshes in groups of four parallel tasks, preserving the original parent order and exact failure
 outcome. -/
-@[expose] def tryMeshes (diameter : UniformRefinement.Coordinate) (positive : 0 < diameter) (depth : Nat) :
-    (parents : List (OwnedCells.Cell safe)) → Option (UniformRefinement.MeshBank diameter depth parents)
+@[expose] def tryMeshes (diameter : Coordinate) (positive : 0 < diameter) (depth : Nat) :
+    (parents : List (Cell safe)) → Option (MeshBank diameter depth parents)
   | one :: two :: three :: four :: parents =>
       let results := Task.Parallel.four
         (fun _ => ChildMeshes.tryBuild one diameter positive depth first last (by decide))
@@ -357,7 +364,7 @@ outcome. -/
         (fun _ => ChildMeshes.tryBuild four diameter positive depth first last (by decide))
       match results with
       | (some firstMesh, some secondMesh, some thirdMesh, some fourthMesh) =>
-          match Purelib.Integration.Algebraic.SquareFactor.UniformRefinement.tryMeshes diameter positive depth parents
+          match UniformRefinement.tryMeshes diameter positive depth parents
             with
           | none => none
           | some tail => some (.cons firstMesh (.cons secondMesh (.cons thirdMesh (.cons fourthMesh tail))))
@@ -368,12 +375,12 @@ open Purelib.Integration.Algebraic.SquareFactor.PathContinuation
   Purelib.Integration.Algebraic.SquareFactor.UniformRefinement in
 open Purelib.Data in
 /-- Parallel child-mesh attempts equal the exact sequential attempts, including failure results. -/
-theorem tryMeshes_eq_sequential (diameter : UniformRefinement.Coordinate) (positive : 0 < diameter) (depth : Nat) :
-    ∀ parents : List (OwnedCells.Cell safe),
-      UniformRefinement.tryMeshes diameter positive depth parents = sequentialMeshes diameter positive depth parents
+theorem tryMeshes_eq_sequential (diameter : Coordinate) (positive : 0 < diameter) (depth : Nat) :
+    ∀ parents : List (Cell safe),
+      tryMeshes diameter positive depth parents = sequentialMeshes diameter positive depth parents
   | one :: two :: three :: four :: parents => by
-      simp only [UniformRefinement.tryMeshes, Task.Parallel.four_eq, sequentialMeshes]
-      rw [Purelib.Integration.Algebraic.SquareFactor.UniformRefinement.tryMeshes_eq_sequential diameter positive depth
+      simp only [tryMeshes, Task.Parallel.four_eq, sequentialMeshes]
+      rw [UniformRefinement.tryMeshes_eq_sequential diameter positive depth
         parents]
       generalize ChildMeshes.tryBuild one diameter positive depth first last (by decide) = a
       generalize ChildMeshes.tryBuild two diameter positive depth first last (by decide) = b
@@ -387,26 +394,26 @@ theorem tryMeshes_eq_sequential (diameter : UniformRefinement.Coordinate) (posit
   | [_, _, _] => rfl
 
 /-- Construct the original mesh bank from a sufficient-depth certificate for every retained parent. -/
-@[expose] def buildMeshes (diameter : UniformRefinement.Coordinate) (positive : 0 < diameter) (depth : Nat) :
-    (parents : List (OwnedCells.Cell safe)) →
+@[expose] def buildMeshes (diameter : Coordinate) (positive : 0 < diameter) (depth : Nat) :
+    (parents : List (Cell safe)) →
     (∀ parent ∈ parents, PreparedSheetContinuation.Subdivision.sufficientDyadicDepth
       (PathContinuation.clearSegment safe) parent.edge.left parent.edge.step.endpoint diameter ≤ depth) →
-    UniformRefinement.MeshBank diameter depth parents
+    MeshBank diameter depth parents
   | [], _ => .nil
   | parent :: parents, enough =>
       .cons (ChildMeshes.generateAtDepth parent diameter positive depth (enough parent (List.mem_cons_self ..)))
-        (Purelib.Integration.Algebraic.SquareFactor.UniformRefinement.buildMeshes diameter positive depth parents
+        (UniformRefinement.buildMeshes diameter positive depth parents
           (fun cell member => enough cell (List.mem_cons_of_mem _ member)))
 
 set_option genInjectivity false in
 /-- A retained common-depth mesh bank between the requested minimum and the derived sufficient maximum. -/
-structure SelectedMeshes (parents : List (OwnedCells.Cell safe)) (diameter : UniformRefinement.Coordinate) (minimumDepth
+structure SelectedMeshes (parents : List (Cell safe)) (diameter : Coordinate) (minimumDepth
   : Nat) where
   /-- The actual common selected additional mesh depth. -/ depth : Nat
   /-- The selected common depth meets the original minimum request. -/ minimum_le_depth : minimumDepth ≤ depth
   /-- The selected common depth is bounded by the original sufficient maximum. -/ depth_le_maximum : depth ≤
-    UniformRefinement.maximumAdditionalDepth diameter minimumDepth parents
-  /-- The original mesh bank at the exact retained common depth. -/ meshes : UniformRefinement.MeshBank diameter depth
+    maximumAdditionalDepth diameter minimumDepth parents
+  /-- The original mesh bank at the exact retained common depth. -/ meshes : MeshBank diameter depth
     parents
 
 constructive_injectivity SelectedMeshes
@@ -414,65 +421,82 @@ constructive_injectivity SelectedMeshes
 /-- Search successive common depths for the original parent mesh bank, stopping at the certified sufficient maximum.
 
 Accepted attempts retain their exact meshes; the final sufficient depth constructs the certified meshes directly. -/
-@[expose] def searchMeshes (parents : List (OwnedCells.Cell safe)) (diameter : UniformRefinement.Coordinate) (positive :
+@[expose] def searchMeshes (parents : List (Cell safe)) (diameter : Coordinate) (positive :
   0 < diameter)
     (minimumDepth depth : Nat) : (remaining : Nat) → minimumDepth ≤ depth →
-      UniformRefinement.maximumAdditionalDepth diameter minimumDepth parents = depth + remaining →
-      UniformRefinement.SelectedMeshes parents diameter minimumDepth
+      maximumAdditionalDepth diameter minimumDepth parents = depth + remaining →
+      SelectedMeshes parents diameter minimumDepth
   | 0, minimum, upper =>
       { depth
         minimum_le_depth := minimum
         depth_le_maximum := by omega
-        meshes := UniformRefinement.buildMeshes diameter positive depth parents (by
+        meshes := buildMeshes diameter positive depth parents (by
           intro parent member
-          have bound := UniformRefinement.sufficient_le_maximumAdditionalDepth diameter minimumDepth parents parent
+          have bound := sufficient_le_maximumAdditionalDepth diameter minimumDepth parents parent
             member
           omega) }
   | remaining + 1, minimum, upper =>
-      match UniformRefinement.tryMeshes diameter positive depth parents with
+      match tryMeshes diameter positive depth parents with
       | some meshes =>
           { depth
             minimum_le_depth := minimum
             depth_le_maximum := by omega
             meshes }
-      | none => Purelib.Integration.Algebraic.SquareFactor.UniformRefinement.searchMeshes parents diameter positive
+      | none => UniformRefinement.searchMeshes parents diameter positive
         minimumDepth (depth + 1)
           remaining (by omega) (by omega)
 
 /-- Select a common mesh depth from the original minimum through the retained sufficient maximum. -/
-@[expose] def selectMeshes (parents : List (OwnedCells.Cell safe)) (diameter : UniformRefinement.Coordinate) (positive :
+@[expose] def selectMeshes (parents : List (Cell safe)) (diameter : Coordinate) (positive :
   0 < diameter)
-    (minimumDepth : Nat) : UniformRefinement.SelectedMeshes parents diameter minimumDepth :=
-  UniformRefinement.searchMeshes parents diameter positive minimumDepth minimumDepth
-    (UniformRefinement.maximumAdditionalDepth diameter minimumDepth parents - minimumDepth) le_rfl (by
-      have bound := UniformRefinement.minimum_le_maximumAdditionalDepth diameter minimumDepth parents
+    (minimumDepth : Nat) : SelectedMeshes parents diameter minimumDepth :=
+  searchMeshes parents diameter positive minimumDepth minimumDepth
+    (maximumAdditionalDepth diameter minimumDepth parents - minimumDepth) le_rfl (by
+      have bound := minimum_le_maximumAdditionalDepth diameter minimumDepth parents
       omega)
 
 set_option genInjectivity false in
 /-- Compiled child blocks sharing one selected depth with the original minimum and maximum bounds. -/
-structure Synchronized (parents : List (OwnedCells.Cell safe)) (diameter : UniformRefinement.Coordinate) (minimumDepth :
+structure Synchronized (parents : List (Cell safe)) (diameter : Coordinate) (minimumDepth :
   Nat) where
   /-- The actual common selected additional mesh depth. -/ depth : Nat
   /-- The selected common depth meets the original minimum request. -/ minimum_le_depth : minimumDepth ≤ depth
   /-- The selected common depth is bounded by the original sufficient maximum. -/ depth_le_maximum : depth ≤
-    UniformRefinement.maximumAdditionalDepth diameter minimumDepth parents
+    maximumAdditionalDepth diameter minimumDepth parents
   /-- The retained compiled child blocks indexed by the exact original parents and depth. -/ expansion :
-    UniformRefinement.Expansion diameter depth parents
+    Expansion diameter depth parents
 
 constructive_injectivity Synchronized
 
+/-- Assemble the original selected depth and bounds with its supplied already compiled mesh-bank expansion. -/
+@[expose] def Synchronized.ofMeshes {parents : List (Cell safe)} {diameter : Coordinate}
+    {minimumDepth : Nat} (selected : SelectedMeshes parents diameter minimumDepth)
+    (expansion : Expansion diameter selected.depth parents)
+    (_expansionEq : expansion = selected.meshes.compile) : Synchronized parents diameter minimumDepth :=
+  ⟨selected.depth, selected.minimum_le_depth, selected.depth_le_maximum, expansion⟩
+
 /-- Select the original mesh bank once and compile its retained meshes at their common depth. -/
-@[expose] def synchronize (parents : List (OwnedCells.Cell safe)) (diameter : UniformRefinement.Coordinate) (positive :
+@[expose] def synchronize (parents : List (Cell safe)) (diameter : Coordinate) (positive :
   0 < diameter)
-    (minimumDepth : Nat) : UniformRefinement.Synchronized parents diameter minimumDepth :=
-  let selected := UniformRefinement.selectMeshes parents diameter positive minimumDepth
-  ⟨selected.depth, selected.minimum_le_depth, selected.depth_le_maximum, selected.meshes.compile⟩
+    (minimumDepth : Nat) : Synchronized parents diameter minimumDepth :=
+  let selected := selectMeshes parents diameter positive minimumDepth
+  Synchronized.ofMeshes selected selected.meshes.compile rfl
+
+/-- The original selected meshes and exact compiled-bank identity preserve the original synchronized result. -/
+theorem Synchronized.ofMeshes_eq_synchronize {parents : List (Cell safe)} {diameter : Coordinate}
+    {positive : 0 < diameter} {minimumDepth : Nat} (selected : SelectedMeshes parents diameter minimumDepth)
+    (selectedEq : selected = selectMeshes parents diameter positive minimumDepth)
+    (expansion : Expansion diameter selected.depth parents) (expansionEq : expansion = selected.meshes.compile) :
+    Synchronized.ofMeshes selected expansion expansionEq = synchronize parents diameter positive minimumDepth := by
+  cases selectedEq
+  cases expansionEq
+  rfl
 
 namespace Synchronized
 
-variable {parents : List (Purelib.Integration.Algebraic.SquareFactor.OwnedCells.Cell safe)} {diameter :
-  Purelib.Integration.Algebraic.SquareFactor.UniformRefinement.Coordinate} {minimumDepth : Nat}
-  (result : Purelib.Integration.Algebraic.SquareFactor.UniformRefinement.Synchronized parents diameter minimumDepth)
+variable {parents : List (Cell safe)} {diameter :
+  Coordinate} {minimumDepth : Nat}
+  (result : Synchronized parents diameter minimumDepth)
 
 /-- The retained expansion has the original parent count times two to the common additional depth cells. -/
 theorem count : result.expansion.cells.length = parents.length * 2 ^ result.depth :=
@@ -497,7 +521,7 @@ allowance.
 
 The cache equations tie all readbacks to the same original parent expansion, with its certified uniform parent widths.
 -/
-structure Refined (parentDepth : Nat) (parents : List (OwnedCells.Cell safe)) (target : UniformRefinement.Coordinate)
+structure Refined (parentDepth : Nat) (parents : List (Cell safe)) (target : Coordinate)
   where
   /-- Every original parent has the certified squared width at the retained parent depth. -/ parentWidths : ∀ parent ∈
     parents,
@@ -505,14 +529,14 @@ structure Refined (parentDepth : Nat) (parents : List (OwnedCells.Cell safe)) (t
   /-- The exact target resolution using unit weight and the original path data. -/ resolution : Accuracy.Resolution data
     1 target
   /-- The retained common-depth expansion for the exact resolved diameter and additional minimum. -/ synchronized :
-    UniformRefinement.Synchronized parents resolution.rootDiameter (resolution.minimumDepth - parentDepth)
-  /-- The cached ordered compiled child cells. -/ cells : List (OwnedCells.Cell safe)
+    Synchronized parents resolution.rootDiameter (resolution.minimumDepth - parentDepth)
+  /-- The cached ordered compiled child cells. -/ cells : List (Cell safe)
   /-- The cached child cells equal the exact retained expansion's cell readback. -/ cells_eq : cells =
     synchronized.expansion.cells
   /-- The cached child path model. -/ model : Basic.PathModel
   /-- The cached model cells equal the exact retained expansion's model readback. -/ model_eq : model.cells =
     synchronized.expansion.models
-  /-- The cached explicit local allowance for the retained refinement. -/ allowance : UniformRefinement.Coordinate
+  /-- The cached explicit local allowance for the retained refinement. -/ allowance : Coordinate
   /-- The cached allowance is the exact sum of retained parameter and root contributions. -/ allowance_eq : allowance =
     CoefficientBounds.parameterSlope data * Geometric.Basic.quarterRadius 1 (parentDepth + synchronized.depth) +
     CoefficientBounds.rootSlope data * resolution.rootDiameter
@@ -520,27 +544,56 @@ structure Refined (parentDepth : Nat) (parents : List (OwnedCells.Cell safe)) (t
 constructive_injectivity Refined
 
 open Purelib.Approximation.Rational in
-/-- Resolve the target, synchronize the original parent meshes and cache their exact cells, model and allowance.
+/-- Assemble a target refinement from its supplied resolution and already synchronized original child expansion.
 
-The additional minimum depth accounts for the original parent depth; all cached readbacks retain their defining
-equations. -/
-@[expose] def refine (parentDepth : Nat) (parents : List (OwnedCells.Cell safe))
+Cells, model and allowance read the exact supplied expansion and request.
+The builder invokes neither mesh selection nor original cell compilation.
+-/
+@[expose] def Refined.ofSynchronized (parentDepth : Nat) (parents : List (Cell safe))
     (parentWidths : ∀ parent ∈ parents,
       parent.edge.span.width ^ 2 = Geometric.Basic.quarterRadius 1 parentDepth)
-    (target : UniformRefinement.Coordinate) (positive : 0 < target) : UniformRefinement.Refined parentDepth parents
-      target :=
-  let resolution := Accuracy.resolve safe 1 (by decide) target positive
-  let synchronized := UniformRefinement.synchronize parents resolution.rootDiameter resolution.rootDiameterPositive
-    (resolution.minimumDepth - parentDepth)
+    (target : Coordinate) (resolution : Accuracy.Resolution data 1 target)
+    (synchronized : Synchronized parents resolution.rootDiameter (resolution.minimumDepth - parentDepth)) :
+    Refined parentDepth parents target :=
   { parentWidths, resolution, synchronized
     cells := synchronized.expansion.cells
     cells_eq := rfl
     model := ⟨synchronized.expansion.models⟩
     model_eq := rfl
     allowance := CoefficientBounds.parameterSlope data * Geometric.Basic.quarterRadius 1 (parentDepth +
-      synchronized.depth) +
-      CoefficientBounds.rootSlope data * resolution.rootDiameter
+      synchronized.depth) + CoefficientBounds.rootSlope data * resolution.rootDiameter
     allowance_eq := rfl }
+
+open Purelib.Approximation.Rational in
+/-- Resolve the target, synchronize the original parent meshes and cache their exact cells, model and allowance.
+
+The additional minimum depth accounts for the original parent depth; all cached readbacks retain their defining
+equations. -/
+@[expose] def refine (parentDepth : Nat) (parents : List (Cell safe))
+    (parentWidths : ∀ parent ∈ parents,
+      parent.edge.span.width ^ 2 = Geometric.Basic.quarterRadius 1 parentDepth)
+    (target : Coordinate) (positive : 0 < target) : Refined parentDepth parents
+      target :=
+  let resolution := Accuracy.resolve safe 1 (by decide) target positive
+  let synchronized := synchronize parents resolution.rootDiameter resolution.rootDiameterPositive
+    (resolution.minimumDepth - parentDepth)
+  Refined.ofSynchronized parentDepth parents parentWidths target resolution synchronized
+
+open Purelib.Approximation.Rational in
+/-- Original resolution and synchronization identities preserve the exact original target refinement and all caches. -/
+theorem Refined.ofSynchronized_eq_refine (parentDepth : Nat) (parents : List (Cell safe))
+    (parentWidths : ∀ parent ∈ parents,
+      parent.edge.span.width ^ 2 = Geometric.Basic.quarterRadius 1 parentDepth)
+    (target : Coordinate) (positive : 0 < target) (resolution : Accuracy.Resolution data 1 target)
+    (resolutionEq : resolution = Accuracy.resolve safe 1 (by decide) target positive)
+    (synchronized : Synchronized parents resolution.rootDiameter (resolution.minimumDepth - parentDepth))
+    (synchronizedEq : synchronized = synchronize parents resolution.rootDiameter resolution.rootDiameterPositive
+      (resolution.minimumDepth - parentDepth)) :
+    Refined.ofSynchronized parentDepth parents parentWidths target resolution synchronized =
+      refine parentDepth parents parentWidths target positive := by
+  cases resolutionEq
+  cases synchronizedEq
+  rfl
 
 section
 open Purelib.Integration.Polynomial.Gaussian.Cell
@@ -556,7 +609,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path
 private theorem castChildren_comparisonAllowance {parents children otherChildren : List Basic.CellModel}
     (certificate : Basic.PathModel.CompatibleConstantPathRefinement parents children) (equal : children = otherChildren)
       :
-    (CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.comparisonAllowance (UniformRefinement.castChildren
+    (CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.comparisonAllowance (castChildren
       certificate equal)) = (CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.comparisonAllowance
       certificate) := by
   cases equal
@@ -566,9 +619,9 @@ end
 
 namespace Refined
 
-variable {parentDepth : Nat} {parents : List (Purelib.Integration.Algebraic.SquareFactor.OwnedCells.Cell safe)} {target
-  : Purelib.Integration.Algebraic.SquareFactor.UniformRefinement.Coordinate}
-  (result : Purelib.Integration.Algebraic.SquareFactor.UniformRefinement.Refined parentDepth parents target)
+variable {parentDepth : Nat} {parents : List (Cell safe)} {target
+  : Coordinate}
+  (result : Refined parentDepth parents target)
 
 /-- The total original-plus-selected depth meets the retained accuracy resolution's minimum. -/
 theorem numericalDepth_le : result.resolution.minimumDepth ≤ parentDepth + result.synchronized.depth := by
@@ -584,14 +637,14 @@ open Purelib.Integration.Polynomial.Gaussian.Path
 /-- Read the compatible refinement to the cached model using its exact expansion model equation. -/
 @[expose] def refinement : Basic.PathModel.CompatibleConstantPathRefinement
     (parents.map (fun cell => cell.model.cell)) result.model.cells :=
-  UniformRefinement.castChildren result.synchronized.expansion.refinement result.model_eq.symm
+  castChildren result.synchronized.expansion.refinement result.model_eq.symm
 
 /-- The cached refinement has the exact comparison allowance of its retained synchronized expansion. -/
 theorem comparisonAllowance_eq :
     (CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.comparisonAllowance result.refinement) =
       (CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.comparisonAllowance
       result.synchronized.expansion.refinement) :=
-  UniformRefinement.castChildren_comparisonAllowance _ _
+  castChildren_comparisonAllowance _ _
 
 end
 

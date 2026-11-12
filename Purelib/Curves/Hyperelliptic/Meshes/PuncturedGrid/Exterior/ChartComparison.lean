@@ -79,25 +79,25 @@ open Purelib.Riemann.Meshes (FramedPuncturedGrid LiftedPuncturedGrid)
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
-  {lifted : LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {localTarget localArea chartTarget : Coordinate} {floor index depth readingIndex : Nat} {box :
     Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
+    Face.PrimitiveData.FacePrimitiveBank differential index domains}
 
 namespace ChartSamples.ChartedEntry
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry
 /-- Assemble cached block summaries without reevaluating either path. -/
 @[expose] def summary :
-  (values : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+  (values : List (ChartedEntry (regular := regular) sample
   shared depth readingIndex localTarget localArea chartTarget floor)) →
     Path.IncrementArea.Summary (values.map (fun value => value.chart.path)).flatten
   | [] => Path.IncrementArea.Summary.build []
@@ -105,11 +105,11 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.Cha
 
 /-- Combining the original chart summaries preserves the exact total of the retained cap blocks. -/
 theorem summary_total
-  (values : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+  (values : List (ChartedEntry (regular := regular) sample
   shared depth readingIndex localTarget localArea chartTarget floor)) :
     (summary values).total =
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry.rightSummary
-      (values.map Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.value)).total := by
+      (SurfaceRequests.AllSurfacePreparation.SampledEntry.rightSummary
+      (values.map ChartedEntry.value)).total := by
   induction values with
   | nil => rfl
   | cons head tail ih => exact congrArg₂ (· + ·) head.total_preserved ih
@@ -117,12 +117,12 @@ theorem summary_total
 /-- The complete chart-area difference is the sum of the actual block errors because their retained totals agree. -/
 theorem
   summary_area_difference
-  (values : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+  (values : List (ChartedEntry (regular := regular) sample
   shared depth readingIndex localTarget localArea chartTarget floor)) :
     (summary values).area -
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry.rightSummary
-      (values.map Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.value)).area =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (values.map (fun value => value.chart.summary.area -
+      (SurfaceRequests.AllSurfacePreparation.SampledEntry.rightSummary
+      (values.map ChartedEntry.value)).area =
+      Gaussian.Norm.Sum.Basic.gaussianSum (values.map (fun value => value.chart.summary.area -
         value.value.evaluated.right.area)) := by
   induction values with
   | nil => change (0 : Gaussian) - 0 = 0; ring1
@@ -130,25 +130,25 @@ theorem
       change (head.chart.summary.area + (summary tail).area +
         Path.BoundaryRibbon.area head.chart.summary.total (summary tail).total) -
         (head.value.evaluated.right.area +
-          (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry.rightSummary
-          (tail.map Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.value)).area +
+          (SurfaceRequests.AllSurfacePreparation.SampledEntry.rightSummary
+          (tail.map ChartedEntry.value)).area +
           Path.BoundaryRibbon.area head.value.evaluated.right.total
-            (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry.rightSummary
-            (tail.map Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.value)).total) =
+            (SurfaceRequests.AllSurfacePreparation.SampledEntry.rightSummary
+            (tail.map ChartedEntry.value)).total) =
         (head.chart.summary.area - head.value.evaluated.right.area) + _
-      rw [head.total_preserved, Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.summary_total, ←
+      rw [head.total_preserved, ChartedEntry.summary_total, ←
         ih]
       ring1
 
 /-- The complete chart-area error satisfies the squared original block-count allowance. -/
 theorem summary_area_error
-  (values : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+  (values : List (ChartedEntry (regular := regular) sample
   shared depth readingIndex localTarget localArea chartTarget floor)) :
     normSq ((summary values).area -
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry.rightSummary
-      (values.map Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.value)).area) ≤
+      (SurfaceRequests.AllSurfacePreparation.SampledEntry.rightSummary
+      (values.map ChartedEntry.value)).area) ≤
       (values.length : Coordinate) * ((values.length : Coordinate) * chartTarget) := open Purelib in by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.summary_area_difference]
+  rw [ChartedEntry.summary_area_difference]
   have estimate := Gaussian.Norm.Sum.Bounds.normSq_sum_le
     (values.map (fun value => value.chart.summary.area - value.value.evaluated.right.area)) chartTarget (by
       intro value member
@@ -156,7 +156,7 @@ theorem summary_area_error
       rw [← equal]
       exact entry.area_error.le)
   rw [Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
-  simpa only [Data.List.Map.length_map] using estimate
+  simpa only [List.Map.length_map] using estimate
 
 end ChartSamples.ChartedEntry
 
@@ -170,14 +170,14 @@ set_option genInjectivity false in
 /-- The chart budget is additional to the original surface area budget. -/
 structure
   ChartRequest
-  (request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request prepared target
+  (request : Request prepared target
   areaTarget floor) (chartTarget : Coordinate) where
   /-- The additional chart target is positive. -/ positive : 0 < chartTarget
   /-- The allocated allowance for each original chart block. -/ localChart : Coordinate
   /-- The local allowance is the original count-based allocation. -/ localChart_eq : localChart =
     Rational.Budget.Aggregate.perTerm chartTarget request.count
   /-- The chart requests on the original retained source entries. -/ requests :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartRequests localChart request.entries
+    ChartSamples.ChartRequests localChart request.entries
   /-- The common required model index. -/ index : Nat
   /-- The index is exactly the maximum of the original surface and chart requirements. -/ index_eq : index = max
     request.index requests.maximum
@@ -188,33 +188,33 @@ constructive_injectivity ChartRequest
 
 namespace ChartRequest
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request prepared
+variable {request : Request prepared
   target areaTarget floor}
 
 /-- Allocate the additional chart target over the original request count and retain the common model index and depth. -/
 @[expose] def
   build
-  (request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request prepared target
+  (request : Request prepared target
   areaTarget floor) (chartTarget : Coordinate) (positive : 0 < chartTarget) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.ChartRequest request
+    ChartRequest request
       chartTarget :=
   let localChart := Rational.Budget.Aggregate.perTerm chartTarget request.count
-  let requests := Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartRequests.build localChart
+  let requests := ChartSamples.ChartRequests.build localChart
     (Rational.Budget.Aggregate.perTerm_positive positive _) request.entries
   ⟨positive, localChart, rfl, requests, max request.index requests.maximum, rfl, requests.depthMaximum, rfl⟩
 
 variable {charts :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.ChartRequest
+  ChartRequest
   request chartTarget}
 
 set_option genInjectivity false in
 /-- The original chart plans on one retained cap sample, with their common reading stage. -/
 structure
   Plan
-  (charts : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.ChartRequest
-  request chartTarget) (sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box) where
+  (charts : ChartRequest
+  request chartTarget) (sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential index box) where
   /-- The original chart plans on the exact supplied sample. -/ plans :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartPlans sample charts.requests
+    ChartSamples.ChartPlans sample charts.requests
   /-- The retained common reading stage. -/ stage : Nat
   /-- The stage is exactly the maximum of original surface and chart reading requirements. -/ stage_eq : stage = max
     request.readingIndex plans.maximum
@@ -226,15 +226,15 @@ namespace Plan
 /-- Prepare every original chart on the supplied retained cap sample and cache the maximum reading stage. -/
 @[expose] def
   build
-  (charts : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.ChartRequest
-  request chartTarget) (sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box) :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.ChartRequest.Plan charts
+  (charts : ChartRequest
+  request chartTarget) (sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential index box) :
+  Plan charts
   sample :=
-  let plans := Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartPlans.build sample charts.requests
+  let plans := ChartSamples.ChartPlans.build sample charts.requests
   ⟨plans, max request.readingIndex plans.maximum, rfl⟩
 
 variable {plan :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.ChartRequest.Plan
+  Plan
   charts sample}
 
 set_option genInjectivity false in
@@ -244,14 +244,14 @@ The cached chart summary preserves the total and retains separate integral, sour
 comparisons. -/
 structure
   Evaluation
-  (plan : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.ChartRequest.Plan
-  charts sample) (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index
+  (plan : Plan
+  charts sample) (shared : Face.PrimitiveData.FacePrimitiveBank differential index
   domains) (depth readingIndex : Nat) where
   /-- The actual original chart samples. -/ samples :
     ChartSamples request.entries sample shared depth
     readingIndex charts.localChart
   /-- The surface evaluation using those same retained original source samples. -/ original :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.Evaluation request sample
+    Request.Evaluation request sample
     shared depth readingIndex
   /-- The retained surface is exactly the original evaluation of the shared samples. -/ original_eq : original =
     request.evaluateWithSamples samples.original
@@ -274,41 +274,41 @@ constructive_injectivity Evaluation
 of block totals pays the whole exterior area, including cross-occurrence terms. -/
 @[expose] def
   evaluate
-  (plan : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.ChartRequest.Plan
-  charts sample) (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index
+  (plan : Plan
+  charts sample) (shared : Face.PrimitiveData.FacePrimitiveBank differential index
   domains) (depth readingIndex : Nat)
     (later : charts.index ≤ index) (fineLater : charts.depth ≤ depth) (readingLater : plan.stage ≤ readingIndex) :
 
       Evaluation
-      plan shared depth readingIndex := open Purelib.Data.Rat in by
+      plan shared depth readingIndex := open Data.Rat in by
   have positive : 0 < charts.localChart := charts.localChart_eq ▸ Rational.Budget.Aggregate.perTerm_positive
     charts.positive _
   let samples := plan.plans.evaluate positive
-    ((Data.Nat.Order.le_max_right _ _).trans (charts.index_eq ▸ later)) (charts.depth_eq ▸ fineLater)
-    ((Data.Nat.Order.le_max_right _ _).trans (plan.stage_eq ▸ readingLater)) (shared := shared)
+    ((Nat.Order.le_max_right _ _).trans (charts.index_eq ▸ later)) (charts.depth_eq ▸ fineLater)
+    ((Nat.Order.le_max_right _ _).trans (plan.stage_eq ▸ readingLater)) (shared := shared)
   let original := request.evaluateWithSamples samples.original
-  let summary := Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.summary samples.values
+  let summary := ChartSamples.ChartedEntry.summary samples.values
   have totalEq : summary.total = original.cap.total :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.summary_total samples.values
+    ChartSamples.ChartedEntry.summary_total samples.values
   have areaError : normSq (summary.area - original.cap.area) < chartTarget := by
-    have estimate := Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.summary_area_error
+    have estimate := ChartSamples.ChartedEntry.summary_area_error
       samples.values
     rw [samples.count_eq, request.count_entries] at estimate
     have paid : (request.count : Coordinate) * ((request.count : Coordinate) * charts.localChart) < chartTarget := by
       rw [charts.localChart_eq]
       exact Rational.Budget.Aggregate.count_mul_perTerm_lt charts.positive request.count
     exact estimate.trans_lt paid
-  have reversed : Data.Gaussian.Norm.Basic.normSq (original.cap.area - summary.area) < chartTarget := by
+  have reversed : Gaussian.Norm.Basic.normSq (original.cap.area - summary.area) < chartTarget := by
     rw [show original.cap.area - summary.area = -(summary.area - original.cap.area) by ring1,
       Gaussian.Norm.Basic.normSq_neg]
     rw [Gaussian.Norm.Basic.normSq_eq_canonical]
     exact areaError
-  have sourceClose : Data.Gaussian.Norm.Basic.normSq (original.source.area - summary.area) < 2 * (areaTarget +
+  have sourceClose : Gaussian.Norm.Basic.normSq (original.source.area - summary.area) < 2 * (areaTarget +
     chartTarget) :=
     (Gaussian.Norm.Bounds.normSq_sub_le_via original.source.area original.cap.area summary.area).trans_lt
       (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Coordinate) < 2)
         (Fraction.Order.Arithmetic.add_lt_add_direct original.area_close reversed))
-  have surfaceClose : Data.Gaussian.Norm.Basic.normSq (original.surface.area + original.internalArea - summary.area)
+  have surfaceClose : Gaussian.Norm.Basic.normSq (original.surface.area + original.internalArea - summary.area)
     < 2 * (areaTarget + chartTarget) :=
     (Gaussian.Norm.Bounds.normSq_sub_le_via (original.surface.area + original.internalArea) original.cap.area
       summary.area).trans_lt
@@ -325,14 +325,14 @@ set_option genInjectivity false in
 /-- The actual cap sample, shared face bank, retained chart plan and its evaluation at the selected depth. -/
 structure
   Acquisition
-  (charts : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.ChartRequest
+  (charts : ChartRequest
   request chartTarget) (depthFloor : Nat) where
   /-- The original cap sample acquired at the common index. -/ sample :
-    Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential charts.index collar.box
+    Charts.Reciprocal.Cap.Primitives.Sample cap differential charts.index collar.box
   /-- The original shared face numerical bank at that same index. -/ shared :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential charts.index domains
+    Face.PrimitiveData.FacePrimitiveBank differential charts.index domains
   /-- The actual chart plan on the retained sample. -/ plan :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.ChartRequest.Plan charts
+    Plan charts
     sample
   /-- The chosen subdivision depth. -/ depth : Nat
   /-- The depth is exactly the maximum of the requested floor and original chart depth. -/ depth_eq : depth = max
@@ -346,18 +346,18 @@ constructive_injectivity Acquisition
 /-- Build the original cap and shared face samples once, then evaluate the retained chart plan at its common stage. -/
 @[expose] def
   acquire
-  (charts : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.ChartRequest
+  (charts : ChartRequest
   request chartTarget) (depthFloor : Nat) :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.ChartRequest.Acquisition
+  Acquisition
   charts depthFloor :=
-  let sample := Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample.build cap differential charts.index collar.box
-  let shared := Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank.build differential charts.index
+  let sample := Charts.Reciprocal.Cap.Primitives.Sample.build cap differential charts.index collar.box
+  let shared := Face.PrimitiveData.FacePrimitiveBank.build differential charts.index
     domains
   let plan :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.ChartRequest.Plan.build
+    Plan.build
     charts sample
   let depth := max depthFloor charts.depth
-  ⟨sample, shared, plan, depth, rfl, plan.evaluate shared depth plan.stage le_rfl (Data.Nat.Order.le_max_right _ _)
+  ⟨sample, shared, plan, depth, rfl, plan.evaluate shared depth plan.stage le_rfl (Nat.Order.le_max_right _ _)
     le_rfl⟩
 
 end ChartRequest

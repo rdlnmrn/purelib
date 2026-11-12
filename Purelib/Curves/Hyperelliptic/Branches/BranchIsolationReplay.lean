@@ -68,13 +68,6 @@ namespace Purelib.Curves.Hyperelliptic.Branches.BranchIsolationReplay
 
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 
-/-- A retained successor equality reduces the natural-number case eliminator to its successor branch. -/
-private theorem cases_succ {α : Sort u} (n k : Nat) (same : n = k + 1)
-    (zero : n = 0 → α) (succ : (k : Nat) → n = k + 1 → α) :
-    Nat.casesAuxOn (motive := fun value => n = value → α) n zero succ rfl = succ k same := by
-  cases same
-  rfl
-
 /-- Transporting the equality-indexed function and applying reflexivity is evaluation at the reversed retained equality.
 -/
 private theorem transport_apply {α : Sort u} {β : Sort v} {a b : α}
@@ -85,24 +78,24 @@ private theorem transport_apply {α : Sort u} {β : Sort v} {a b : α}
 
 open Purelib.Curves.Hyperelliptic.Branches.BranchIsolationReplay in
 /-- A retained higher-degree result equality reduces the positive-result eliminator to its higher-degree branch. -/
-private theorem cases_higher {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {α :
+private theorem cases_higher {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {α :
   Sort u}
-    (value : CCL.Basic.PositiveResult p) (boxes : Squarefree.AdapterResult p)
+    (value : PositiveResult p) (boxes : AdapterResult p)
     (higher : 2 ≤ p.natDegree) (same : value = .higher boxes higher)
-    (terminalCase : (terminal : RootIsolation.Roots.CCL.Terminal p) → (degree : p.natDegree = 1) →
+    (terminalCase : (terminal : Terminal p) → (degree : p.natDegree = 1) →
       value = .terminal terminal degree → α)
-    (higherCase : (boxes : Squarefree.AdapterResult p) → (degree : 2 ≤ p.natDegree) →
+    (higherCase : (boxes : AdapterResult p) → (degree : 2 ≤ p.natDegree) →
       value = .higher boxes degree → α) :
     PositiveResult.casesOn (motive := fun result => value = result → α)
       value terminalCase higherCase rfl = higherCase boxes higher same := by
   cases same
   rfl
 
-variable {genus : Nat} (curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+variable {genus : Nat} (curve : HyperellipticCurve genus)
   (higher : 1 < curve.polynomial.natDegree)
 
 /-- Package the original curve squarefree certificate and higher-degree witness as an isolation input. -/
-@[expose] def input : RootIsolation.FTA.Squarefree.Input curve.polynomial := ⟨curve.squarefree, higher⟩
+@[expose] def input : Input curve.polynomial := ⟨curve.squarefree, higher⟩
 
 /-- Reconstruct ownership interfaces around the supplied exact isolation output.
 
@@ -110,30 +103,25 @@ The original squarefree elimination and finite maximality bound certify the same
 supplied isolation. -/
 @[expose] def boxes (isolation : Exact.Basic.Output curve.polynomial
     (RootRadius.Box.largeSquareBox curve.polynomial) curve.polynomial.natDegree) :
-    Squarefree.AdapterResult curve.polynomial :=
-  ⟨{ isolation := isolation
-     ownership := fun track supported => Prepare.selectOutputOwner higher curve.squarefree
-       (Curves.Hyperelliptic.Branches.BranchIsolationReplay.input curve higher).elimination isolation track supported
-     maximality := (Curves.Hyperelliptic.Branches.BranchIsolationReplay.input curve higher).familyCardLe }⟩
+    AdapterResult curve.polynomial :=
+  ⟨Build.BoxFTA.fromIsolation (input curve higher) isolation⟩
 
 open Purelib.Curves.Hyperelliptic.Branches.BranchIsolationReplay in
 /-- An isolation equal to the canonical one yields exactly the canonical retained box result. -/
 theorem boxes_eq (isolation : Exact.Basic.Output curve.polynomial
     (RootRadius.Box.largeSquareBox curve.polynomial) curve.polynomial.natDegree)
-    (same : isolation = (Curves.Hyperelliptic.Branches.BranchIsolationReplay.input curve higher).isolation) :
-    boxes curve higher isolation = Build.Box.prove (Curves.Hyperelliptic.Branches.BranchIsolationReplay.input curve
+    (same : isolation = (input curve higher).isolation) :
+    boxes curve higher isolation = Build.Box.prove (input curve
       higher) := by
   cases same
   rfl
 
 /-- A higher-degree curve selects the canonical higher branch of positive root isolation. -/
-theorem canonical_higher : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.branchIsolation curve =
-    .higher (Build.Box.prove (Curves.Hyperelliptic.Branches.BranchIsolationReplay.input curve higher)) higher := by
-  let degree := curve.polynomial.natDegree - 2
-  have degreeEq' : curve.polynomial.natDegree = degree + 1 + 1 := by omega0
-  unfold BranchIsolation.branchIsolation CCL.Build.provePositive Build.provePositive
-  rw [Curves.Hyperelliptic.Branches.BranchIsolationReplay.cases_succ _ _ degreeEq']
-  simp only [Curves.Hyperelliptic.Branches.BranchIsolationReplay.transport_apply, Nat.casesAuxOn]
+theorem canonical_higher : BranchIsolation.branchIsolation curve =
+    .higher (Build.Box.prove (input curve higher)) higher := by
+  unfold BranchIsolation.branchIsolation CCL.Build.provePositive
+  rewrite [Build.provePositive_eq_higher
+    { squarefree := curve.squarefree, degreePositive := BranchIsolation.degreePositive curve } higher]
   rfl
 
 open Purelib.Curves.Hyperelliptic.Branches.BranchIsolationReplay in
@@ -158,14 +146,14 @@ Names, coherent tracks, anchors and pairwise separation all come from the same r
 construct this interface. -/
 theorem data_eq (isolation : Exact.Basic.Output curve.polynomial
     (RootRadius.Box.largeSquareBox curve.polynomial) curve.polynomial.natDegree)
-    (same : isolation = (Curves.Hyperelliptic.Branches.BranchIsolationReplay.input curve higher).isolation) :
-    Purelib.Curves.Hyperelliptic.Branches.BranchIsolationReplay.data curve higher isolation =
-      Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.data curve := by
+    (same : isolation = (input curve higher).isolation) :
+    data curve higher isolation =
+      BranchIsolation.data curve := by
   cases same
-  unfold BranchIsolationReplay.data BranchIsolation.data
-  rw [Curves.Hyperelliptic.Branches.BranchIsolationReplay.cases_higher _ _ _
-    (Curves.Hyperelliptic.Branches.BranchIsolationReplay.canonical_higher curve higher)]
-  simp only [Curves.Hyperelliptic.Branches.BranchIsolationReplay.transport_apply]
+  unfold data BranchIsolation.data
+  rw [cases_higher _ _ _
+    (canonical_higher curve higher)]
+  simp only [transport_apply]
   rfl
 
 end Purelib.Curves.Hyperelliptic.Branches.BranchIsolationReplay

@@ -1,0 +1,30 @@
+--- a/Lean/Meta/AbstractNestedProofs.lean
++++ b/Lean/Meta/AbstractNestedProofs.lean
+@@ -9,6 +9,8 @@
+ public import Init.Grind.Util
+ public import Lean.Meta.Closure
+ public import Lean.Meta.Transform
++import Lean.OriginalConstKind
++import Lean.Util.CollectFVars
+ 
+ public section
+ 
+@@ -57,8 +59,16 @@
+   else
+     -- We consider proofs such as `fun x => f x a` as trivial.
+     -- For example, we don't want to abstract the body of `def rfl`
+-    (getLambdaBody e).withApp fun f args =>
+-      pure $ !f.isAtomic ||
++    (getLambdaBody e).withApp fun f args => do
++      let lctx ← getLCtx
++      -- Existing theorem applications share their opaque proof bodies already.
++      -- Retain abstraction when the application uses a dependent local let:
++      -- the later letToHave pass relies on that proof boundary.
++      if e.isApp && f.isConst && origEnv.contains f.constName! &&
++          (wasOriginallyTheorem origEnv f.constName!) &&
++          !((collectFVars {} e).fvarIds.any fun id => (lctx.find? id).any (·.isLet)) then
++        pure false
++      else pure $ !f.isAtomic ||
+         -- Again we may need to re-do an abstraction here for `to_additive` even if in base
+         -- elaborator, this condition should never be fulfilled
+         f.const?.any (!origEnv.contains ·.1) ||

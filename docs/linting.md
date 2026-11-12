@@ -81,7 +81,39 @@ not prohibit `maxRecDepth`. Documentation checks do not enforce our requirement
 to document every theorem and private declaration. Keep the authoritative axiom
 audit and nanoda checks; linting does not replace them.
 
+## Repeated namespace prefixes
+
+The ordinary `scripts/run-lake.sh lint` command also checks selected authored
+sources for repeated long namespace prefixes before building selected modules
+or starting native lint workers. Its fixed thresholds are at least **six uses**,
+**three namespace components**, **24 prefix characters** and **three distinct
+lines**. It fails on
+findings, including with `--no-build`. Unscoped lint checks every active source
+and configured script owner; explicit module scopes remain scoped. Dependency
+modules outside the repository have no authored source to check.
+
+Run `python3 -m scripts.verification.namespace_prefixes` for a ranked repository
+survey, or pass individual Lean paths. The survey also includes Git-visible
+fixtures and optional sources outside the active module inventory; `--json`
+retains the complete report. Comments, literals, explicit quotations, notation
+expansions, declaration names and import/scope command headers (including
+multiline continuations) are excluded. Notation expansions are implicit
+quotations retained by Lean; keep their original qualified routes. The analyzer
+uses naming conventions and cannot establish that opening a namespace preserves
+resolution. Repair a reported route with a shared parent opening and a short
+qualifier, or use an
+existing owned type name; check collisions, bindings and instance selection.
+Keep openings shared by the file or coherent group rather than repeating them
+before individual declarations. Unsupported custom Lake lint CLI forms retain
+their existing delegated behavior.
+
 ## Running and coverage
+
+Run scoped lint incrementally during branch work, after meaningful edits and
+before checkpoint commits; include affected consumers. Reserve the unscoped
+full-inventory run for readiness to merge into `master`. A scoped pass establishes
+only its stated coverage. See [verification](verification.md) for the build,
+axiom-audit and merge-readiness workflow.
 
 ```sh
 scripts/run-lake.sh --wfail build
@@ -138,9 +170,11 @@ Completed successes are checkpointed in batches, checking the union of their
 import closures once instead of checking shared file signatures for every module.
 A batch is published when it reaches the worker count or after approximately one second,
 including while other workers are slow. Interrupted runs retain published
-checkpoints; an unpublished batch and failed checks are rerun. Custom
-lint flags or drivers and alternate workspace/configuration arguments keep
-Lake's original dispatch and memory behavior.
+checkpoints; an unpublished batch and failed checks are rerun. The full lint
+selection may run longer than two minutes; each individual module compilation
+it requires still has a two-minute watchdog. Custom lint flags or drivers and
+alternate workspace/configuration arguments keep Lake's original dispatch and
+memory behavior.
 
 `check-lint` checks runner configuration, not option validity or source
 compliance. The focused tests verify actual diagnostics on Core-only sources,

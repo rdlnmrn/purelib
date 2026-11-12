@@ -78,40 +78,40 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RetainedDetourNorms.
 
 open Purelib.Topology.Polygon.Stokes
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
     bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
   {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars} {differential :
-    Hyperelliptic.Differentials.Basic.Differential genus} {index : Nat}
+  {domains : Face.DomainBanks.FaceDomainBank frames faces.regulars} {differential :
+    Differentials.Basic.Differential genus} {index : Nat}
 
 /-- Reading a retained route spine preserves the original indexed word length. -/
 theorem RouteSpine.values_length
-    {α : Type} (value : (edge : Topology.Polygon.Stokes.OrientedEdge vertices.count) →
-      Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute mesh edge → α) :
-    ∀ {word : List (Topology.Polygon.Stokes.OrientedEdge vertices.count)} (spine :
-      Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh word), (spine.values value).length = word.length
+    {α : Type} (value : (edge : OrientedEdge vertices.count) →
+      MeshPathWalks.EdgeRoute mesh edge → α) :
+    ∀ {word : List (OrientedEdge vertices.count)} (spine :
+      MeshPathWalks.RouteSpine mesh word), (spine.values value).length = word.length
   | _, .nil => rfl
   | _, .cons _ tail => congrArg Nat.succ
-      (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RetainedDetourNorms.LiftedMesh.RouteSpine.values_length value
+      (RouteSpine.values_length value
         tail)
 
 /-- An original edge increment is bounded in squared norm by twice the squared-increment sum on its retained side
 detour. -/
-theorem EdgeRoute.detour_norm_le (cached : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+theorem EdgeRoute.detour_norm_le (cached : Face.PrimitiveData.FacePrimitiveBank
   differential index domains)
-    {edge : Topology.Polygon.Stokes.OrientedEdge vertices.count} (route :
-      Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute mesh edge) :
-    Data.Gaussian.Norm.Basic.normSq (cached.edgeIncrement route) ≤
+    {edge : OrientedEdge vertices.count} (route :
+      MeshPathWalks.EdgeRoute mesh edge) :
+    Gaussian.Norm.Basic.normSq (cached.edgeIncrement route) ≤
       2 * Gaussian.Norm.Sum.Basic.gaussianNormSqSum (route.detourRoutes.values (fun _ next => cached.edgeIncrement
-        next)) := open Purelib.Data.Rat in by
-  rw [← Hyperelliptic.Meshes.PuncturedGrid.RetainedDetourValues.BranchCellBank.LiftedMesh.EdgeRoute.detour_sum
+        next)) := open Rat in by
+  rw [← RetainedDetourValues.BranchCellBank.LiftedMesh.EdgeRoute.detour_sum
     cached route]
   have estimate := Gaussian.Norm.Sum.Basic.normSq_gaussianSum_le
     (route.detourRoutes.values (fun _ next => cached.edgeIncrement next))
-  have spineLength := Hyperelliptic.Meshes.PuncturedGrid.RetainedDetourNorms.LiftedMesh.RouteSpine.values_length
+  have spineLength := RouteSpine.values_length
     (fun _ next => cached.edgeIncrement next) route.detourRoutes
   rw [spineLength, ← Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
   exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
@@ -119,59 +119,59 @@ theorem EdgeRoute.detour_norm_le (cached : Hyperelliptic.Meshes.PuncturedGrid.Fa
       _))
 
 /-- The original routed word's squared-increment sum is at most twice that of its exact retained detoured word. -/
-theorem RouteSpine.detoured_norm_le (cached : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+theorem RouteSpine.detoured_norm_le (cached : Face.PrimitiveData.FacePrimitiveBank
   differential index domains) :
-    ∀ {word : List (Topology.Polygon.Stokes.OrientedEdge vertices.count)} (spine :
-      Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh word),
+    ∀ {word : List (OrientedEdge vertices.count)} (spine :
+      MeshPathWalks.RouteSpine mesh word),
       Gaussian.Norm.Sum.Basic.gaussianNormSqSum (spine.values (fun _ route => cached.edgeIncrement route)) ≤
         2 * Gaussian.Norm.Sum.Basic.gaussianNormSqSum (spine.detoured.values (fun _ route => cached.edgeIncrement
           route))
-  | _, .nil => by change (0 : Purelib.Topology.Surface.Sewing.SewnPrimitiveFaces.Coordinate) ≤ 2 * 0; rw [mul_zero]
+  | _, .nil => by change (0 : Topology.Surface.Sewing.SewnPrimitiveFaces.Coordinate) ≤ 2 * 0; rw [mul_zero]
   | _, .cons head tail => by
       change Gaussian.Basic.Canonical.normSq (cached.edgeIncrement head) + Gaussian.Norm.Sum.Basic.gaussianNormSqSum
         (tail.values (fun _ route => cached.edgeIncrement route)) ≤
         2 * Gaussian.Norm.Sum.Basic.gaussianNormSqSum ((head.detourRoutes.append tail.detoured).values (fun _ route =>
           cached.edgeIncrement route))
-      rw [Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine.values_append,
-        Purelib.Data.Gaussian.Basic.Canonical.Norm.Sum.Prefix.append]
-      have firstScalar := Hyperelliptic.Meshes.PuncturedGrid.RetainedDetourNorms.LiftedMesh.EdgeRoute.detour_norm_le
+      rw [MeshPathWalks.RouteSpine.values_append,
+        Gaussian.Basic.Canonical.Norm.Sum.Prefix.append]
+      have firstScalar := EdgeRoute.detour_norm_le
         cached head
       rw [Gaussian.Norm.Basic.normSq_eq_canonical] at firstScalar
       exact (Rat.Fraction.Order.Arithmetic.add_le_add_direct firstScalar
-        (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RetainedDetourNorms.LiftedMesh.RouteSpine.detoured_norm_le
+        (RouteSpine.detoured_norm_le
           cached tail)).trans_eq (by ring1)
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RetainedDetourNorms.LiftedMesh
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RetainedDetourNorms.FaceBank
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {source : Hyperelliptic.Differentials.Basic.Differential genus}
+  {lifted : Meshes.LiftedPuncturedGrid base} {source : Differentials.Basic.Differential genus}
 
 /-- The original period route's squared-increment sum is bounded by twice the sum over its actual retained prepared side
 segments. -/
-theorem ofSegments_norm_sum (prepared : Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgram lifted
+theorem ofSegments_norm_sum (prepared : Cut.CyclePrograms.CutCycleProgram lifted
   source)
-    (segments : Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank prepared.period)
-    {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-    {differential : Hyperelliptic.Differentials.Basic.Differential genus} {index : Nat}
-    (cached : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains) :
+    (segments : PeriodSegmentBanks.SegmentBank prepared.period)
+    {domains : Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+    {differential : Differentials.Basic.Differential genus} {index : Nat}
+    (cached : Face.PrimitiveData.FacePrimitiveBank differential index domains) :
     Gaussian.Norm.Sum.Basic.gaussianNormSqSum (prepared.routed.spine.values (fun _ route => cached.edgeIncrement route))
       ≤
       2 * Gaussian.Norm.Sum.Basic.gaussianNormSqSum
-        (Hyperelliptic.Meshes.PuncturedGrid.Cut.CornerRequests.AssignedSegments.cornerIncrements cached
-        (Hyperelliptic.Meshes.PuncturedGrid.Cut.FaceBanks.FaceBank.ofSegments prepared segments).assigned) := by
+        (Cut.CornerRequests.AssignedSegments.cornerIncrements cached
+        (Cut.FaceBanks.FaceBank.ofSegments prepared segments).assigned) := by
   change _ ≤ 2 * Gaussian.Norm.Sum.Basic.gaussianNormSqSum
-    (Hyperelliptic.Meshes.PuncturedGrid.Cut.CornerRequests.AssignedSegments.cornerIncrements cached
-    (Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments.build segments.pieces prepared.pathFaces))
+    (Cut.CornerRequests.AssignedSegments.cornerIncrements cached
+    (PreparedFaceSegments.AssignedSegments.build segments.pieces prepared.pathFaces))
   rw
     [RetainedDetourValues.BranchCellBank.LiftedMesh.AssignedSegments.build_cornerIncrements,
     prepared.pathFaces_eq]
   simp only [Meshes.GridLiftedMesh.LiftedMesh.PathFaces.ofRoutes_values,
-    Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine.values_castWord]
-  exact Hyperelliptic.Meshes.PuncturedGrid.RetainedDetourNorms.LiftedMesh.RouteSpine.detoured_norm_le
+    MeshPathWalks.RouteSpine.values_castWord]
+  exact LiftedMesh.RouteSpine.detoured_norm_le
     cached prepared.routed.spine
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RetainedDetourNorms.FaceBank

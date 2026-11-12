@@ -31,6 +31,8 @@ import Purelib.Riemann.RootContinuation.CertifiedSquareRoot
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_antitone)
 
 @[expose] public section
@@ -96,19 +98,19 @@ def build (coefficientScale diameter target : Fraction.Rational)
     (coefficientNonnegative : 0 ≤ coefficientScale) (diameterNonnegative : 0 ≤ diameter) (targetPositive : 0 < target) :
     SurfaceTolerance coefficientScale diameter target := by
   let scale := 2 * diameter * (2 * coefficientScale + 3)
-  have scaleNonnegative : 0 ≤ scale := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) diameterNonnegative)
-    (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) coefficientNonnegative) (by decide))
-  have denominatorPositive : 0 < scale + 1 := Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct scaleNonnegative
+  have scaleNonnegative : 0 ≤ scale := Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide) diameterNonnegative)
+    (add_nonneg (Arithmetic.mul_nonneg_direct (by decide) coefficientNonnegative) (by decide))
+  have denominatorPositive : 0 < scale + 1 := Arithmetic.add_pos_of_nonneg_of_pos_direct scaleNonnegative
     (by decide)
   let threshold := target / (scale + 1)
-  have thresholdPositive : 0 < threshold := Fraction.Order.Field.div_pos_direct targetPositive denominatorPositive
+  have thresholdPositive : 0 < threshold := Field.div_pos_direct targetPositive denominatorPositive
   let index := Geometric.Search.firstQuarterBelow 1 0 threshold
   let epsilon := Geometric.Basic.quarterRadius 1 index
   have positive : 0 < epsilon := Geometric.Basic.quarterRadius_pos (by decide) index
   have accurate : epsilon < threshold := Geometric.Search.firstQuarterBelow_accurate 1 (by decide) 0 threshold
     thresholdPositive
-  have paid : epsilon * (scale + 1) < target := (Fraction.Order.Field.lt_div_iff_pos denominatorPositive).mp accurate
+  have paid : epsilon * (scale + 1) < target := (Field.lt_div_iff_pos denominatorPositive).mp accurate
   exact
     { epsilon := epsilon
       positive := positive
@@ -116,10 +118,10 @@ def build (coefficientScale diameter target : Fraction.Rational)
       accurate := by
         calc
           scale * epsilon ≤ (scale + 1) * epsilon :=
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by
+            Arithmetic.mul_le_mul_of_nonneg_right_direct (by
               calc
                 scale = scale + 0 := by ring1
-                _ ≤ scale + 1 := Fraction.Order.Arithmetic.add_le_add_direct (Fraction.Order.Basic.le_refl scale) (by
+                _ ≤ scale + 1 := Arithmetic.add_le_add_direct (Basic.le_refl scale) (by
                   decide)) positive.le
           _ = epsilon * (scale + 1) := by ring1
           _ < target := paid }
@@ -136,34 +138,34 @@ Nonnegative coefficient and distance bounds and a tolerance between zero and one
 increment-error scales. -/
 def uniform (coefficient epsilon distance : Fraction.Rational) (coefficientNonnegative : 0 ≤ coefficient)
     (epsilonNonnegative : 0 ≤ epsilon) (epsilonLe : epsilon ≤ 1) (distanceNonnegative : 0 ≤ distance) :
-    PrimitiveTriangleEnergy.TriangleProductBudget (coefficient * distance) (coefficient * distance)
+    TriangleProductBudget (coefficient * distance) (coefficient * distance)
       (2 * epsilon ^ 2 * distance) (2 * epsilon ^ 2 * distance) where
   first := epsilon * distance * (coefficient + 1)
   second := epsilon * distance * (coefficient + 1)
   mixed := epsilon * distance
-  first_nonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct epsilonNonnegative distanceNonnegative) (add_nonneg
+  first_nonnegative := Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct epsilonNonnegative distanceNonnegative) (add_nonneg
       coefficientNonnegative (by decide))
-  second_nonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct epsilonNonnegative distanceNonnegative) (add_nonneg
+  second_nonnegative := Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct epsilonNonnegative distanceNonnegative) (add_nonneg
       coefficientNonnegative (by decide))
-  mixed_nonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct epsilonNonnegative distanceNonnegative
-  first_bound := PrimitiveTriangleEnergy.TriangleProductBudget.uniform_cross coefficientNonnegative
+  mixed_nonnegative := Arithmetic.mul_nonneg_direct epsilonNonnegative distanceNonnegative
+  first_bound := TriangleProductBudget.uniform_cross coefficientNonnegative
   second_bound := by
     rw [Fraction.Field.mul_comm (coefficient * distance)]
-    exact PrimitiveTriangleEnergy.TriangleProductBudget.uniform_cross coefficientNonnegative
+    exact TriangleProductBudget.uniform_cross coefficientNonnegative
   mixed_bound := by
     have squareLe : epsilon ^ 2 ≤ 1 := by
-      simpa only [one_pow] using Fraction.Order.Arithmetic.pow_le_pow_direct epsilonNonnegative epsilonLe 2
+      simpa only [one_pow] using Arithmetic.pow_le_pow_direct epsilonNonnegative epsilonLe 2
     have fourthLe : epsilon ^ 2 * epsilon ^ 2 ≤ epsilon ^ 2 := by
       simpa only [Fraction.Field.mul_one_direct] using
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct squareLe (Fraction.Order.Arithmetic.sq_nonneg_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct squareLe (Arithmetic.sq_nonneg_direct
           epsilon)
-    apply (Fraction.Order.Field.div_le_iff_pos (by decide)).mpr
+    apply (Field.div_le_iff_pos (by decide)).mpr
     calc
       _ = (epsilon ^ 2 * epsilon ^ 2) * (4 * distance ^ 2) := by ring1
-      _ ≤ epsilon ^ 2 * (4 * distance ^ 2) := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct fourthLe
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (Fraction.Order.Arithmetic.sq_nonneg_direct distance))
+      _ ≤ epsilon ^ 2 * (4 * distance ^ 2) := Arithmetic.mul_le_mul_of_nonneg_right_direct fourthLe
+        (Arithmetic.mul_nonneg_direct (by decide) (Arithmetic.sq_nonneg_direct distance))
       _ = _ := by ring1
 
 end PrimitiveSurfaceBudget.TriangleProductBudget
@@ -201,7 +203,7 @@ structure PrimitiveSurfaceBudget {polynomial : Polynomial} {siteCount count : Na
   /-- The retained Taylor scale times that exact leaf diameter is at most tolerance squared. -/ taylor_small :
     basis.taylorScale * leafDiameter ≤ tolerance.epsilon ^ 2
   /-- The uniform product budgets indexed by the exact original coefficient, tolerance and leaf diameter. -/ products :
-    PrimitiveTriangleEnergy.TriangleProductBudget (preflight.coefficientScale * leafDiameter)
+    TriangleProductBudget (preflight.coefficientScale * leafDiameter)
     (preflight.coefficientScale * leafDiameter)
     (2 * tolerance.epsilon ^ 2 * leafDiameter) (2 * tolerance.epsilon ^ 2 * leafDiameter)
   /-- The cached sum of the original uniform face product budgets. -/ faceBudget : Fraction.Rational
@@ -215,7 +217,7 @@ constructive_injectivity PrimitiveSurfaceBudget
 namespace PrimitiveSurfaceBudget
 
 variable {polynomial : Polynomial} {siteCount count : Nat} {patch : ContinuedNeighborhood polynomial siteCount}
-  {preflight : PrimitiveBasisPreflight patch count} {diameter target : Purelib.Data.Rat.Fraction.Rational}
+  {preflight : PrimitiveBasisPreflight patch count} {diameter target : Data.Rat.Fraction.Rational}
 
 open Purelib.Algebra in
 open Purelib.Approximation.Rational in
@@ -237,7 +239,7 @@ def acquire (preflight : PrimitiveBasisPreflight patch count) (diameter target :
     PrimitiveSurfaceBudget preflight diameter target :=
   let tolerance := SurfaceTolerance.build preflight.coefficientScale diameter target
     preflight.coefficientScale_nonnegative diameterNonnegative targetPositive
-  have squaredPositive := Fraction.Order.Arithmetic.pow_pos_direct tolerance.positive 2
+  have squaredPositive := Arithmetic.pow_pos_direct tolerance.positive 2
   let index := Geometric.Search.firstQuarterBelow preflight.readingScale 0 (tolerance.epsilon ^ 2)
   let depth := Geometric.Search.firstQuarterBelow (preflight.taylorScale * diameter) 0 (tolerance.epsilon ^ 2)
   let basis := PrimitiveBasis.ofPreflight preflight index
@@ -261,7 +263,7 @@ def acquire (preflight : PrimitiveBasisPreflight patch count) (diameter target :
     taylor_small := by
       rw [quarterRadius_mul]
       exact (Geometric.Search.firstQuarterBelow_accurate _
-        (Fraction.Order.Arithmetic.mul_nonneg_direct basis.taylorScale_nonnegative diameterNonnegative) 0 _
+        (Arithmetic.mul_nonneg_direct basis.taylorScale_nonnegative diameterNonnegative) 0 _
           squaredPositive).le
     products := products
     faceBudget := products.first + products.second + products.mixed
@@ -320,14 +322,14 @@ theorem face_count_cancel (diameter : Fraction.Rational) (depth : Nat) :
   calc
     _ = 2 * ((diameter / (4 : Fraction.Rational) ^ depth) * (4 : Fraction.Rational) ^ depth) := by ring1
     _ = _ := by rw [Fraction.Field.div_mul_cancel_of_ne _ _
-      (Fraction.Order.Arithmetic.pow_pos_direct (by decide) depth).ne']
+      (Arithmetic.pow_pos_direct (by decide) depth).ne']
 
 open Purelib.Approximation.Rational in
 open Purelib.Data.Rat in
 /-- The original subdivision face count times its retained uniform face budget is below the requested target. -/
 theorem total_faceBudget_lt (budget : PrimitiveSurfaceBudget preflight diameter target) :
     ((2 * 4 ^ budget.depth : Nat) : Fraction.Rational) * budget.faceBudget < target := by
-  have initial := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct budget.faceBudget_le
+  have initial := Arithmetic.mul_le_mul_of_nonneg_left_direct budget.faceBudget_le
     (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le (2 * 4 ^ budget.depth)))
   rw [budget.leafDiameter_eq] at initial
   apply initial.trans_lt
@@ -346,16 +348,16 @@ open Purelib.Data.Rat in
 theorem incrementScale_le (budget : PrimitiveSurfaceBudget preflight diameter target)
     {first second : Gaussian} (distanceLe : normSq (second - first) ≤ budget.leafDiameter) :
     budget.basis.incrementScale first second ≤ 2 * budget.tolerance.epsilon ^ 2 * budget.leafDiameter := by
-  have distanceNonnegative := Basic.Canonical.normSq_nonneg (second - first)
-  have taylorFirst := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct distanceLe
+  have distanceNonnegative := normSq_nonneg (second - first)
+  have taylorFirst := (Arithmetic.mul_le_mul_of_nonneg_left_direct distanceLe
     budget.basis.taylorScale_nonnegative).trans
     budget.taylor_small
-  have taylor := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct taylorFirst distanceNonnegative).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct distanceLe (Fraction.Order.Arithmetic.sq_nonneg_direct
+  have taylor := (Arithmetic.mul_le_mul_of_nonneg_right_direct taylorFirst distanceNonnegative).trans
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct distanceLe (Arithmetic.sq_nonneg_direct
       _))
-  have reading := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct budget.reading_small
+  have reading := (Arithmetic.mul_le_mul_of_nonneg_right_direct budget.reading_small
     distanceNonnegative).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct distanceLe (Fraction.Order.Arithmetic.sq_nonneg_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct distanceLe (Arithmetic.sq_nonneg_direct
       _))
   calc
     _ = (budget.basis.taylorScale * normSq (second - first)) * normSq (second - first) +
@@ -394,11 +396,11 @@ def triangleCertificate (budget : PrimitiveSurfaceBudget preflight diameter targ
         PreparedObservationCoercivity.coefficientNormSq coefficients * (preflight.coefficientScale *
           budget.leafDiameter) := by
     unfold AffineTriangle.affinePrimitiveIncrement
-    rw [← mul_sub, Basic.Canonical.normSq_mul]
-    have first := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct coefficientLe
-      (Basic.Canonical.normSq_nonneg (point - first))
-    have second := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct distanceLe
-      (Fraction.Order.Arithmetic.mul_nonneg_direct normNonnegative preflight.coefficientScale_nonnegative)
+    rw [← mul_sub, normSq_mul]
+    have first := Arithmetic.mul_le_mul_of_nonneg_right_direct coefficientLe
+      (normSq_nonneg (point - first))
+    have second := Arithmetic.mul_le_mul_of_nonneg_left_direct distanceLe
+      (Arithmetic.mul_nonneg_direct normNonnegative preflight.coefficientScale_nonnegative)
     exact (first.trans second).trans_eq (by ring1)
   have errorLe {point : Gaussian} (inside : patch.box.Contains point) (distanceLe : normSq (point - first) ≤
     budget.leafDiameter) :
@@ -416,7 +418,7 @@ def triangleCertificate (budget : PrimitiveSurfaceBudget preflight diameter targ
       ring1
     rw [identity]
     exact (budget.basis.operational_increment_bound coefficients firstInside inside sample possible).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (budget.incrementScale_le distanceLe) normNonnegative)
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (budget.incrementScale_le distanceLe) normNonnegative)
   exact budget.products.certificate _ normNonnegative _ first second third _ _ _
     (affineLe secondDistance) (affineLe thirdDistance) (errorLe secondInside secondDistance) (errorLe thirdInside
       thirdDistance)

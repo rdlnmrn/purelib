@@ -94,82 +94,82 @@ open Purelib.Data.Gaussian.Basic (Canonical)
 open Purelib.Riemann.Periods.CenteredBilinearPath (Sample)
 
 open Purelib.Riemann.Paths.RectangularDyadicPairedTrace (dyadicCount)
-variable {columns rows : Nat} {geometry : Purelib.Riemann.Normalization.RectangularInverseModels.Geometry columns rows}
-  {cuts : Purelib.Riemann.Paths.RectangularSegmentSplitting.GridCuts geometry} {box :
-  Purelib.Geometry.Rational.Box}
+variable {columns rows : Nat} {geometry : Riemann.Normalization.RectangularInverseModels.Geometry columns rows}
+  {cuts : GridCuts geometry} {box :
+  Geometry.Rational.Box}
 
 /-- The actual number of owner junctions on the selected retained rectangle side. -/
-@[expose] def junctionCount (mesh : RectangularObservationMesh.ObservationMesh cuts box) : GridLiftedDualSteps.GridSide
+@[expose] def junctionCount (mesh : ObservationMesh cuts box) : GridSide
   → Nat
   | .bottom | .top => mesh.boundaryColumns
   | .left | .right => mesh.boundaryRows
 
 /-- Transport a retained side-piece position into the exact original axis-interval index. -/
-@[expose] def pieceIndex (mesh : RectangularObservationMesh.ObservationMesh cuts box) (side :
-  GridLiftedDualSteps.GridSide) :
-    Fin (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
+@[expose] def pieceIndex (mesh : ObservationMesh cuts box) (side :
+  GridSide) :
+    Fin (RetainedPerimeterPiece.junctionCount mesh
       side + 1) → Fin (SourceIntervals.axisIntervals mesh (RetainedPerimeterPiece.vertical side)).length :=
   match side with
   | .bottom | .top => Fin.cast mesh.boundaryColumns_eq
   | .left | .right => Fin.cast mesh.boundaryRows_eq
 
-variable {mesh : Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh cuts box} {traces :
-  Purelib.Riemann.Paths.RectangularPerimeterTraces.PerimeterTraces mesh}
-  {values : Fin (columns + 1) → Fin (rows + 1) → Purelib.Data.Gaussian.Basic.Canonical →
-    Purelib.Topology.Polygon.Stokes.PrimitivePoint}
+variable {mesh : ObservationMesh cuts box} {traces :
+  PerimeterTraces mesh}
+  {values : Fin (columns + 1) → Fin (rows + 1) → Canonical →
+    PrimitivePoint}
 
 /-- Read a paired primitive displacement from two positions of the original centered sample. -/
-@[expose] def difference {count : Nat} {values : Fin (count + 1) → Stokes.PrimitivePoint}
-    (sample : CenteredBilinearPath.Sample values) (first last : Fin (count + 1)) : PrimitivePoint :=
+@[expose] def difference {count : Nat} {values : Fin (count + 1) → PrimitivePoint}
+    (sample : Sample values) (first last : Fin (count + 1)) : PrimitivePoint :=
   (sample.centered last).sub (sample.centered first)
 
 /-- The original centered displacement equals the exact difference of the retained uncentered vertex values. -/
-private theorem difference_eq {count : Nat} {values : Fin (count + 1) → Stokes.PrimitivePoint}
-    (sample : CenteredBilinearPath.Sample values) (first last : Fin (count + 1)) :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.difference
+private theorem difference_eq {count : Nat} {values : Fin (count + 1) → PrimitivePoint}
+    (sample : Sample values) (first last : Fin (count + 1)) :
+    RetainedPerimeterPiece.difference
       sample first last = (values last).sub (values first) := by
-  unfold Exterior.RetainedJunctions.RetainedPerimeterPiece.difference
+  unfold RetainedPerimeterPiece.difference
   rw [sample.centered_eq, sample.centered_eq]
   apply congrArg₂ PrimitivePoint.mk <;> dsimp only [PrimitivePoint.sub] <;> ring1
 
 /-- Read the original owner-junction displacement directly from the cached whole-side centered sample. -/
-@[expose] def junction (samples : RectangularCenteredPerimeter.Centered traces values) (side :
-  GridLiftedDualSteps.GridSide) : Fin
-  (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side)
+@[expose] def junction (samples : Centered traces values) (side :
+  GridSide) : Fin
+  (RetainedPerimeterPiece.junctionCount mesh side)
   → PrimitivePoint :=
   match side with
   | .bottom => fun i =>
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.difference
+    RetainedPerimeterPiece.difference
     samples.bottom
       ((Trace.pieceEmbedding traces.bottom i.castSucc).indexOfIndexed (Fin.last
         (RectangularDyadicPairedTrace.dyadicCount mesh.depth)))
       ((Trace.pieceEmbedding traces.bottom i.succ).indexOfIndexed 0)
   | .top => fun i =>
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.difference samples.top
+    RetainedPerimeterPiece.difference samples.top
       ((Trace.pieceEmbedding traces.top i.castSucc).indexOfIndexed (Fin.last (RectangularDyadicPairedTrace.dyadicCount
         mesh.depth)))
       ((Trace.pieceEmbedding traces.top i.succ).indexOfIndexed 0)
   | .left => fun i =>
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.difference samples.left
+    RetainedPerimeterPiece.difference samples.left
       ((Trace.pieceEmbedding traces.left i.castSucc).indexOfIndexed (Fin.last (RectangularDyadicPairedTrace.dyadicCount
         mesh.depth)))
       ((Trace.pieceEmbedding traces.left i.succ).indexOfIndexed 0)
   | .right => fun i =>
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.difference samples.right
+    RetainedPerimeterPiece.difference samples.right
       ((Trace.pieceEmbedding traces.right i.castSucc).indexOfIndexed (Fin.last (RectangularDyadicPairedTrace.dyadicCount
         mesh.depth)))
       ((Trace.pieceEmbedding traces.right i.succ).indexOfIndexed 0)
 
 /-- The cached junction displacement is the exact difference of the adjoining original piece-owner values. -/
-theorem junction_eq (samples : RectangularCenteredPerimeter.Centered traces values) (side :
-  GridLiftedDualSteps.GridSide) (i : Fin
-  (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side))
+theorem junction_eq (samples : Centered traces values) (side :
+  GridSide) (i : Fin
+  (RetainedPerimeterPiece.junctionCount mesh side))
   :
-    let before := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex
+    let before := RetainedPerimeterPiece.pieceIndex
       mesh side i.castSucc
-    let after := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex
+    let after := RetainedPerimeterPiece.pieceIndex
       mesh side i.succ
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junction samples side i
+    RetainedPerimeterPiece.junction samples side i
       =
       (values (RetainedPerimeterPiece.piece mesh side after).leftColumn (RetainedPerimeterPiece.piece mesh side
         after).leftRow ((RetainedPerimeterPiece.trace traces side after).points 0)).sub
@@ -179,39 +179,39 @@ theorem junction_eq (samples : RectangularCenteredPerimeter.Centered traces valu
           mesh.depth)))) := by
   cases side with
   | bottom =>
-    dsimp only [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junction]
-    rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.difference_eq,
+    dsimp only [RetainedPerimeterPiece.junction]
+    rw [RetainedPerimeterPiece.difference_eq,
       (Trace.pieceEmbedding traces.bottom i.castSucc).indexOfIndexed_eq,
       (Trace.pieceEmbedding traces.bottom i.succ).indexOfIndexed_eq]
     rfl
   | top =>
-    dsimp only [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junction]
-    rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.difference_eq,
+    dsimp only [RetainedPerimeterPiece.junction]
+    rw [RetainedPerimeterPiece.difference_eq,
       (Trace.pieceEmbedding traces.top i.castSucc).indexOfIndexed_eq,
       (Trace.pieceEmbedding traces.top i.succ).indexOfIndexed_eq]
     rfl
   | left =>
-    dsimp only [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junction]
-    rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.difference_eq,
+    dsimp only [RetainedPerimeterPiece.junction]
+    rw [RetainedPerimeterPiece.difference_eq,
       (Trace.pieceEmbedding traces.left i.castSucc).indexOfIndexed_eq,
       (Trace.pieceEmbedding traces.left i.succ).indexOfIndexed_eq]
     rfl
   | right =>
-    dsimp only [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junction]
-    rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.difference_eq,
+    dsimp only [RetainedPerimeterPiece.junction]
+    rw [RetainedPerimeterPiece.difference_eq,
       (Trace.pieceEmbedding traces.right i.castSucc).indexOfIndexed_eq,
       (Trace.pieceEmbedding traces.right i.succ).indexOfIndexed_eq]
     rfl
 
 /-- The adjoining retained physical trace endpoints are the identical geometric point. -/
-theorem junction_point (traces : RectangularPerimeterTraces.PerimeterTraces mesh) (side : GridLiftedDualSteps.GridSide)
-  (i : Fin (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount
+theorem junction_point (traces : PerimeterTraces mesh) (side : GridSide)
+  (i : Fin (RetainedPerimeterPiece.junctionCount
   mesh side)) :
     (RetainedPerimeterPiece.trace traces side
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
+      (RetainedPerimeterPiece.pieceIndex mesh side
       i.succ)).points 0 =
       (RetainedPerimeterPiece.trace traces side
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh
+        (RetainedPerimeterPiece.pieceIndex mesh
         side i.castSucc)).points (Fin.last (RectangularDyadicPairedTrace.dyadicCount mesh.depth)) := by
   rw [Trace.first_point, Trace.last_point]
   cases side with
@@ -229,39 +229,39 @@ theorem junction_point (traces : RectangularPerimeterTraces.PerimeterTraces mesh
       i.succ).isLt).symm
 
 /-- The adjoining retained physical side intervals share their exact endpoint coordinate. -/
-theorem junction_interval (traces : RectangularPerimeterTraces.PerimeterTraces mesh) (side :
-  GridLiftedDualSteps.GridSide) (i : Fin
-  (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side))
+theorem junction_interval (traces : PerimeterTraces mesh) (side :
+  GridSide) (i : Fin
+  (RetainedPerimeterPiece.junctionCount mesh side))
   :
     ((SourceIntervals.axisIntervals mesh (RetainedPerimeterPiece.vertical
-      side))[(Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex
+      side))[(RetainedPerimeterPiece.pieceIndex
       mesh side
       i.succ).val]'(pieceIndex
       mesh side i.succ).isLt).lower =
     ((SourceIntervals.axisIntervals mesh (RetainedPerimeterPiece.vertical
-      side))[(Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex
+      side))[(RetainedPerimeterPiece.pieceIndex
       mesh side
       i.castSucc).val]'(pieceIndex
       mesh side i.castSucc).isLt).upper := by
   have points :=
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junction_point traces
+    RetainedPerimeterPiece.junction_point traces
     side i
   rw [Trace.first_point, Trace.last_point] at points
   have axes := congrArg (SourceIntervals.axisCoordinate (RetainedPerimeterPiece.vertical side)) points
   exact (RetainedPerimeterPiece.first_along mesh side
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
+    (RetainedPerimeterPiece.pieceIndex mesh side
     i.succ)).symm.trans
     (axes.trans (RetainedPerimeterPiece.last_along mesh side
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
+      (RetainedPerimeterPiece.pieceIndex mesh side
       i.castSucc)))
 
 /-- The first retained side interval starts at the original box's lower axis coordinate. -/
-theorem first_interval_lower (mesh : RectangularObservationMesh.ObservationMesh cuts box) (side :
-  GridLiftedDualSteps.GridSide) :
+theorem first_interval_lower (mesh : ObservationMesh cuts box) (side :
+  GridSide) :
     ((SourceIntervals.axisIntervals mesh (RetainedPerimeterPiece.vertical
-      side))[(Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex
+      side))[(RetainedPerimeterPiece.pieceIndex
       mesh side
-      0).val]'(Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex
+      0).val]'(RetainedPerimeterPiece.pieceIndex
       mesh side 0).isLt).lower =
       (if RetainedPerimeterPiece.vertical side then box.yLower else box.xLower) := by
   cases side with
@@ -269,16 +269,16 @@ theorem first_interval_lower (mesh : RectangularObservationMesh.ObservationMesh 
   | left | right => exact mesh.y_first
 
 /-- The final retained side interval finishes at the original box's upper axis coordinate. -/
-theorem last_interval_upper (mesh : RectangularObservationMesh.ObservationMesh cuts box) (side :
-  GridLiftedDualSteps.GridSide) :
+theorem last_interval_upper (mesh : ObservationMesh cuts box) (side :
+  GridSide) :
     ((SourceIntervals.axisIntervals mesh (RetainedPerimeterPiece.vertical
-      side))[(Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex
+      side))[(RetainedPerimeterPiece.pieceIndex
       mesh side (Fin.last
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
+      (RetainedPerimeterPiece.junctionCount mesh
       side))).val]'
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
+      (RetainedPerimeterPiece.pieceIndex mesh side
         (Fin.last
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
+        (RetainedPerimeterPiece.junctionCount mesh
         side))).isLt).upper =
       (if RetainedPerimeterPiece.vertical side then box.yUpper else box.xUpper) := by
   cases side with
@@ -303,28 +303,28 @@ open
   (sourceForward sourceSpan sourceVertical)
 open Purelib.Riemann.Normalization
 open Purelib.Geometry.Rectangle.SourceIntervals (axisIntervals)
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : Riemann.Meshes.LiftedPuncturedGrid base} {differential :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
 
 /-- The actual first and last retained side intervals recover the original occurrence's signed source span in either
 direction. -/
 theorem side_span_endpoints (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential)
-    (meshes : RegularDomainMeshes.RegularMeshes domains occurrence.sideOccurrence.sheet) :
+    (meshes : RegularMeshes domains occurrence.sideOccurrence.sheet) :
     let mesh := meshes.entries.get occurrence.sideOccurrence.position
     let side := occurrence.sideOccurrence.side
     let firstIndex :=
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side 0
+      RetainedPerimeterPiece.pieceIndex mesh side 0
     let lastIndex :=
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
+      RetainedPerimeterPiece.pieceIndex mesh side
       (Fin.last
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
+      (RetainedPerimeterPiece.junctionCount mesh
       side))
     let intervals := SourceIntervals.axisIntervals mesh occurrence.sourceVertical
     (if occurrence.sourceForward then (intervals[firstIndex.val]'firstIndex.isLt).lower
@@ -333,10 +333,10 @@ theorem side_span_endpoints (occurrence : ExteriorProgram.SurfaceOccurrence regu
       else -(intervals[firstIndex.val]'firstIndex.isLt).lower) = occurrence.sourceSpan.upper := by
   intro mesh side firstIndex lastIndex intervals
   have lower :=
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.first_interval_lower
+    RetainedPerimeterPiece.first_interval_lower
     mesh side
   have upper :=
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.last_interval_upper mesh
+    RetainedPerimeterPiece.last_interval_upper mesh
     side
   have first := congrArg₂ (fun low high : InverseRootPolynomial.Coordinate =>
     if occurrence.sourceForward then low else -high) lower upper
@@ -346,13 +346,13 @@ theorem side_span_endpoints (occurrence : ExteriorProgram.SurfaceOccurrence regu
   · apply first.trans
     cases sideEq : occurrence.sideOccurrence.side <;> cases backward : occurrence.sideOccurrence.backward <;>
       simp only [SurfaceOccurrence.sourceForward, SurfaceOccurrence.sourceSpan, SurfaceOccurrence.sourceVertical,
-        sideEq, backward, Exterior.SourceBlockParameters.signedInterval,
+        sideEq, backward, SourceBlockParameters.signedInterval,
         side, RetainedPerimeterPiece.vertical, Bool.not_false, Bool.not_true, if_neg (by decide : ¬ false = true),
           if_pos (Eq.refl true), -eq_self, -iff_self] <;> rfl
   · apply last.trans
     cases sideEq : occurrence.sideOccurrence.side <;> cases backward : occurrence.sideOccurrence.backward <;>
       simp only [SurfaceOccurrence.sourceForward, SurfaceOccurrence.sourceSpan, SurfaceOccurrence.sourceVertical,
-        sideEq, backward, Exterior.SourceBlockParameters.signedInterval,
+        sideEq, backward, SourceBlockParameters.signedInterval,
         side, RetainedPerimeterPiece.vertical, Bool.not_false, Bool.not_true, if_neg (by decide : ¬ false = true),
           if_pos (Eq.refl true), -eq_self, -iff_self] <;> rfl
 

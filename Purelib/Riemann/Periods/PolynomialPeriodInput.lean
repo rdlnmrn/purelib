@@ -11,6 +11,10 @@ public import Purelib.Riemann.Periods.PeriodReplay
 
 import Purelib.Elab.Deriving.Repr
 
+open Purelib.Polynomial.Dense.Gaussian.Basic
+
+open Purelib.Curves.Hyperelliptic.Preparation
+
 public section
 
 /-!
@@ -62,7 +66,7 @@ constructive_injectivity Bounds
 open Purelib.Riemann in
 /-- Convert the raw selection to a finite standard entry using its retained bounds. -/
 @[expose] def Selection.entry (selection : Selection) {genus : Nat} (bounds : Bounds selection genus) :
-    Periods.PeriodReplay.StandardEntry genus :=
+    PeriodReplay.StandardEntry genus :=
   match selection.side with
   | .a => .a ⟨selection.differential, bounds.differential_lt⟩ ⟨selection.cycle, bounds.cycle_lt⟩
   | .b => .b ⟨selection.differential, bounds.differential_lt⟩ ⟨selection.cycle, bounds.cycle_lt⟩
@@ -107,17 +111,17 @@ set_option genInjectivity false in
 
 The source polynomial is nonzero, both indices fit the computed genus, and the cached replay entry equals the canonical
 preparation for that exact reduced curve. -/
-structure PreparedEntry (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+structure PreparedEntry (polynomial : CanonicalCoefficients.CoefficientPolynomial)
   (selection : Selection)
   where
   /-- The original polynomial is certified nonzero. -/ sourceNonzero : polynomial.isZero = false
   /-- The retained regular-curve preparation of the original polynomial. -/ prepared :
-    Hyperelliptic.Preparation.Polynomial.Prepared polynomial
+    Polynomial.Prepared polynomial
   /-- Both selection indices fit the retained preparation's computed genus. -/ bounds : Bounds selection prepared.genus
-  /-- The shared thunk retaining the selected canonical period entry. -/ entryCache : Thunk (Periods.PeriodReplay.Entry
+  /-- The shared thunk retaining the selected canonical period entry. -/ entryCache : Thunk (PeriodReplay.Entry
     prepared.curve)
   /-- The cached entry is the canonical entry of the retained reduced curve and bounded selection. -/ entry_eq :
-    entryCache.get = Periods.PeriodReplay.canonical prepared.curve (selection.entry bounds)
+    entryCache.get = PeriodReplay.canonical prepared.curve (selection.entry bounds)
 
 constructive_injectivity PreparedEntry
 
@@ -126,23 +130,23 @@ namespace PreparedEntry
 open Purelib.Riemann in
 open Purelib.Polynomial in
 /-- Read the exact selected period entry from its retained shared thunk. -/
-@[expose] def entry {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+@[expose] def entry {polynomial : CanonicalCoefficients.CoefficientPolynomial}
   {selection : Selection}
     (prepared : PreparedEntry polynomial selection) :
-    Periods.PeriodReplay.Entry prepared.prepared.curve := prepared.entryCache.get
+    PeriodReplay.Entry prepared.prepared.curve := prepared.entryCache.get
 
 open Purelib.Riemann in
 open Purelib.Curves in
 open Purelib.Polynomial in
 /-- Retain an already computed regular curve and checked selection in a shared entry thunk. -/
-@[expose] def ofCurve {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+@[expose] def ofCurve {polynomial : CanonicalCoefficients.CoefficientPolynomial}
   (selection : Selection)
-    (nonzero : polynomial.isZero = false) (prepared : Hyperelliptic.Preparation.Polynomial.Prepared polynomial)
+    (nonzero : polynomial.isZero = false) (prepared : Polynomial.Prepared polynomial)
     (bounds : Bounds selection prepared.genus) : PreparedEntry polynomial selection :=
   { sourceNonzero := nonzero
     prepared := prepared
     bounds := bounds
-    entryCache := ⟨fun _ => Periods.PeriodReplay.canonical prepared.curve (selection.entry bounds)⟩
+    entryCache := ⟨fun _ => PeriodReplay.canonical prepared.curve (selection.entry bounds)⟩
     entry_eq := rfl }
 
 end PreparedEntry
@@ -154,7 +158,7 @@ set_option genInjectivity false in
 
 The cases retain zero or degree evidence, the actual square-factor reduction when relevant, or the computed regular
 curve with its invalid-index certificate. -/
-inductive Failure (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (selection
+inductive Failure (polynomial : CanonicalCoefficients.CoefficientPolynomial) (selection
   : Selection) where
   /-- The original polynomial is zero. -/ | zero (certificate : polynomial.isZero = true)
   /-- The nonzero input has degree zero and its retained reduced radicand also has degree zero. -/ | constantInput
@@ -166,7 +170,7 @@ inductive Failure (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoeffic
       (reduction : Dense.Gaussian.Squarefree.SquareFactor.Basic.Reduction polynomial)
       (radicandDegreeZero : reduction.radicand.natDegree = 0)
   /-- The actual regular-curve preparation has a certified out-of-range requested index. -/ | invalidIndex (prepared :
-    Hyperelliptic.Preparation.Polynomial.Prepared polynomial)
+    Polynomial.Prepared polynomial)
       (failure : IndexFailure selection prepared.genus)
 
 constructive_injectivity Failure
@@ -175,10 +179,10 @@ section
 open Purelib.Curves
 open Purelib.Polynomial
 /-- Check the selection against an already computed regular curve and retain the accepted entry. -/
-@[expose] def prepareRegular {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+@[expose] def prepareRegular {polynomial : CanonicalCoefficients.CoefficientPolynomial}
   (selection :
   Selection)
-    (nonzero : polynomial.isZero = false) (prepared : Hyperelliptic.Preparation.Polynomial.Prepared polynomial) :
+    (nonzero : polynomial.isZero = false) (prepared : Polynomial.Prepared polynomial) :
     Except (Failure polynomial selection) (PreparedEntry polynomial selection) :=
   match checkIndices selection prepared.genus with
   | .error failure => .error (.invalidIndex prepared failure)
@@ -188,10 +192,10 @@ open Purelib.Polynomial
 
 The finite preparation determines square-factor reduction, genus and curve validity, then checks both selection indices.
 Every rejected branch retains its actual finite obstruction. -/
-@[expose] def prepare (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+@[expose] def prepare (polynomial : CanonicalCoefficients.CoefficientPolynomial)
   (selection : Selection) :
     Except (Failure polynomial selection) (PreparedEntry polynomial selection) :=
-  match Hyperelliptic.Preparation.Polynomial.prepare polynomial with
+  match Polynomial.prepare polynomial with
   | .zero certificate => .error (.zero certificate)
   | .constantInput nonzero degreeZero reduction reducedZero =>
       .error (.constantInput nonzero degreeZero reduction reducedZero)
@@ -201,9 +205,9 @@ Every rejected branch retains its actual finite obstruction. -/
 
 /-- Valid bounds make regular-curve entry preparation return the retained prepared entry. -/
 theorem prepareRegular_complete {polynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (selection :
+  CanonicalCoefficients.CoefficientPolynomial} (selection :
   Selection)
-    (nonzero : polynomial.isZero = false) (prepared : Hyperelliptic.Preparation.Polynomial.Prepared polynomial)
+    (nonzero : polynomial.isZero = false) (prepared : Polynomial.Prepared polynomial)
     (bounds : Bounds selection prepared.genus) :
     prepareRegular selection nonzero prepared =
       .ok (PreparedEntry.ofCurve selection nonzero prepared bounds) := by
@@ -211,9 +215,9 @@ theorem prepareRegular_complete {polynomial :
 
 /-- Regular-curve entry preparation succeeds exactly when both raw indices fit its computed genus. -/
 theorem prepareRegular_success_iff {polynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (selection :
+  CanonicalCoefficients.CoefficientPolynomial} (selection :
   Selection)
-    (nonzero : polynomial.isZero = false) (prepared : Hyperelliptic.Preparation.Polynomial.Prepared polynomial) :
+    (nonzero : polynomial.isZero = false) (prepared : Polynomial.Prepared polynomial) :
     (∃ entry, prepareRegular selection nonzero prepared = .ok entry) ↔
       selection.differential < prepared.genus ∧ selection.cycle < prepared.genus := by
   constructor
@@ -233,21 +237,21 @@ theorem prepareRegular_success_iff {polynomial :
 
 This proposition refers to the computed reduction and raw finite selection; it introduces no alternate genus or
 executable preprocessing pass. -/
-@[expose] def Admissible (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+@[expose] def Admissible (polynomial : CanonicalCoefficients.CoefficientPolynomial)
   (selection : Selection)
   : Prop :=
-  ∃ genus, (Hyperelliptic.Preparation.Polynomial.prepare polynomial).genus? = some genus ∧
+  ∃ genus, (Polynomial.prepare polynomial).genus? = some genus ∧
     selection.differential < genus ∧ selection.cycle < genus
 
 /-- Polynomial-first entry preparation succeeds exactly for admissible raw input and selection.
 
 The characterization uses the actual computed regular genus, including the absence of valid standard entries at genus
 zero. -/
-theorem prepare_success_iff (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+theorem prepare_success_iff (polynomial : CanonicalCoefficients.CoefficientPolynomial)
   (selection :
   Selection) :
     (∃ entry, prepare polynomial selection = .ok entry) ↔ Admissible polynomial selection := by
-  cases computed : Hyperelliptic.Preparation.Polynomial.prepare polynomial with
+  cases computed : Polynomial.prepare polynomial with
   | zero certificate =>
       constructor
       · rintro ⟨entry, success⟩
@@ -281,7 +285,7 @@ theorem prepare_success_iff (polynomial : Polynomial.Dense.Gaussian.Basic.Canoni
           (prepareRegular_success_iff selection nonzero prepared).mp ⟨entry, accepted⟩⟩
       · rintro ⟨genus, present, differential, cycle⟩
         have sameGenus : prepared.genus = genus := Option.some.inj (by
-          simpa only [computed, Hyperelliptic.Preparation.Polynomial.Outcome.genus?, -eq_self, -iff_self] using present)
+          simpa only [computed, Polynomial.Outcome.genus?, -eq_self, -iff_self] using present)
         have bounds : selection.differential < prepared.genus ∧ selection.cycle < prepared.genus := by
           rw [sameGenus]
           exact ⟨differential, cycle⟩

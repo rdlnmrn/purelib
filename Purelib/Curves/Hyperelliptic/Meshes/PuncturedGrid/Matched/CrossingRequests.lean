@@ -85,7 +85,7 @@ open Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh
   MatchedVerticalSide)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
@@ -114,7 +114,7 @@ namespace CrossingRequests
 set_option genInjectivity false in
 /-- The prepared original horizontal crossing request or its retained geometric separation obstruction. -/
 inductive HorizontalPrepared {first : mesh.LocatedFace firstPosition firstSheet}
-    {nextPosition : Fin faces.regulars.length} : CrossingBank.HorizontalOutcome request first nextPosition → Type 3
+    {nextPosition : Fin faces.regulars.length} : HorizontalOutcome request first nextPosition → Type 3
       where
   /-- Retain the actual paid area request for the original matched horizontal crossing. -/ | matched {joined} :
     HorizontalCrossing.AreaRequest
@@ -122,7 +122,7 @@ inductive HorizontalPrepared {first : mesh.LocatedFace firstPosition firstSheet}
       firstParent secondParent tolerance floor →
         HorizontalPrepared (.matched joined)
   /-- Retain the original horizontal separation obstruction unchanged. -/ | separated (obstruction :
-    CrossingBank.HorizontalObstruction (faces := faces) firstPosition nextPosition) :
+    HorizontalObstruction (faces := faces) firstPosition nextPosition) :
       HorizontalPrepared (.separated
         obstruction)
 
@@ -134,8 +134,8 @@ namespace CrossingRequests.HorizontalPrepared
 
 /-- Prepare an area request for the actual matched horizontal crossing or preserve its original separation witness. -/
 @[expose] def build {first : mesh.LocatedFace firstPosition firstSheet} {nextPosition : Fin faces.regulars.length}
-    (positive : 0 < tolerance) (outcome : CrossingBank.HorizontalOutcome request first nextPosition) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingRequests.HorizontalPrepared firstDifferential
+    (positive : 0 < tolerance) (outcome : HorizontalOutcome request first nextPosition) :
+    HorizontalPrepared firstDifferential
       secondDifferential firstParent secondParent tolerance floor outcome :=
   match outcome with
   | .matched joined => .matched (AreaRequest.build joined firstDifferential secondDifferential
@@ -144,8 +144,8 @@ namespace CrossingRequests.HorizontalPrepared
 
 /-- The actual original horizontal area-request stage, with zero for a separated pair. -/
 @[expose] def index {first : mesh.LocatedFace firstPosition firstSheet} {nextPosition : Fin faces.regulars.length}
-    {outcome : CrossingBank.HorizontalOutcome request first nextPosition}
-    (prepared : Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingRequests.HorizontalPrepared firstDifferential
+    {outcome : HorizontalOutcome request first nextPosition}
+    (prepared : HorizontalPrepared firstDifferential
       secondDifferential firstParent secondParent tolerance floor outcome) : Nat :=
   match prepared with
   | .matched allocated => allocated.accuracy.index
@@ -154,7 +154,7 @@ namespace CrossingRequests.HorizontalPrepared
 /-- Read the actual retained original horizontal area request from a certified matched outcome. -/
 @[expose] def allocated {first : mesh.LocatedFace firstPosition firstSheet} {nextPosition : Fin faces.regulars.length}
     {joined : LiftedSides.HorizontalCrossing request first nextPosition false false}
-    (prepared : Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingRequests.HorizontalPrepared firstDifferential
+    (prepared : HorizontalPrepared firstDifferential
       secondDifferential firstParent secondParent tolerance floor (.matched joined)) :
     HorizontalCrossing.AreaRequest
       joined firstDifferential secondDifferential firstParent secondParent tolerance floor :=
@@ -164,7 +164,7 @@ namespace CrossingRequests.HorizontalPrepared
 /-- The extracted original horizontal area request has exactly the retained preparation stage. -/
 theorem allocated_index {first : mesh.LocatedFace firstPosition firstSheet} {nextPosition : Fin faces.regulars.length}
     {joined : LiftedSides.HorizontalCrossing request first nextPosition false false}
-    (prepared : Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingRequests.HorizontalPrepared firstDifferential
+    (prepared : HorizontalPrepared firstDifferential
       secondDifferential firstParent secondParent tolerance floor (.matched joined)) :
     (allocated firstDifferential
       secondDifferential firstParent secondParent tolerance floor prepared).accuracy.index =
@@ -180,14 +180,14 @@ namespace CrossingRequests
 set_option genInjectivity false in
 /-- The prepared original vertical crossing request or its retained geometric separation obstruction. -/
 inductive VerticalPrepared {first : mesh.LocatedFace firstPosition firstSheet}
-    {nextPosition : Fin faces.regulars.length} : CrossingBank.VerticalOutcome request first nextPosition → Type 3 where
+    {nextPosition : Fin faces.regulars.length} : VerticalOutcome request first nextPosition → Type 3 where
   /-- Retain the actual paid area request for the original matched vertical crossing. -/ | matched {joined} :
     VerticalCrossing.AreaRequest
       joined firstDifferential secondDifferential
       firstParent secondParent tolerance floor →
         VerticalPrepared (.matched joined)
   /-- Retain the original vertical separation obstruction unchanged. -/ | separated (obstruction :
-    CrossingBank.VerticalObstruction (faces := faces) firstPosition nextPosition) :
+    VerticalObstruction (faces := faces) firstPosition nextPosition) :
       VerticalPrepared (.separated
         obstruction)
 
@@ -199,8 +199,8 @@ namespace CrossingRequests.VerticalPrepared
 
 /-- Prepare an area request for the actual matched vertical crossing or preserve its original separation witness. -/
 @[expose] def build {first : mesh.LocatedFace firstPosition firstSheet} {nextPosition : Fin faces.regulars.length}
-    (positive : 0 < tolerance) (outcome : CrossingBank.VerticalOutcome request first nextPosition) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingRequests.VerticalPrepared firstDifferential
+    (positive : 0 < tolerance) (outcome : VerticalOutcome request first nextPosition) :
+    VerticalPrepared firstDifferential
       secondDifferential firstParent secondParent tolerance floor outcome :=
   match outcome with
   | .matched joined => .matched (AreaRequest.build joined firstDifferential secondDifferential
@@ -209,8 +209,8 @@ namespace CrossingRequests.VerticalPrepared
 
 /-- The actual original vertical area-request stage, with zero for a separated pair. -/
 @[expose] def index {first : mesh.LocatedFace firstPosition firstSheet} {nextPosition : Fin faces.regulars.length}
-    {outcome : CrossingBank.VerticalOutcome request first nextPosition}
-    (prepared : Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingRequests.VerticalPrepared firstDifferential
+    {outcome : VerticalOutcome request first nextPosition}
+    (prepared : VerticalPrepared firstDifferential
       secondDifferential firstParent secondParent tolerance floor outcome) : Nat :=
   match prepared with
   | .matched allocated => allocated.accuracy.index
@@ -219,7 +219,7 @@ namespace CrossingRequests.VerticalPrepared
 /-- Read the actual retained original vertical area request from a certified matched outcome. -/
 @[expose] def allocated {first : mesh.LocatedFace firstPosition firstSheet} {nextPosition : Fin faces.regulars.length}
     {joined : LiftedSides.VerticalCrossing request first nextPosition false false}
-    (prepared : Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingRequests.VerticalPrepared firstDifferential
+    (prepared : VerticalPrepared firstDifferential
       secondDifferential firstParent secondParent tolerance floor (.matched joined)) :
     VerticalCrossing.AreaRequest
       joined firstDifferential secondDifferential firstParent secondParent tolerance floor :=
@@ -229,7 +229,7 @@ namespace CrossingRequests.VerticalPrepared
 /-- The extracted original vertical area request has exactly the retained preparation stage. -/
 theorem allocated_index {first : mesh.LocatedFace firstPosition firstSheet} {nextPosition : Fin faces.regulars.length}
     {joined : LiftedSides.VerticalCrossing request first nextPosition false false}
-    (prepared : Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingRequests.VerticalPrepared firstDifferential
+    (prepared : VerticalPrepared firstDifferential
       secondDifferential firstParent secondParent tolerance floor (.matched joined)) :
     (allocated firstDifferential
       secondDifferential firstParent secondParent tolerance floor prepared).accuracy.index =
@@ -247,25 +247,25 @@ set_option genInjectivity false in
 Every face, sheet and destination index retains its actual matched request or original separation obstruction. -/
 structure CrossingRequests (retained : CrossingBank request mesh) where
   /-- The actual original horizontal crossing preparations on all retained face, sheet and destination indices. -/
-    horizontal : Data.Vector.DependentVector (fun a : Fin faces.regulars.length =>
-    Data.Vector.DependentVector (fun b : Fin 2 => Data.Vector.DependentVector (fun c : Fin faces.regulars.length =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingRequests.HorizontalPrepared firstDifferential
+    horizontal : DependentVector (fun a : Fin faces.regulars.length =>
+    Data.Vector.DependentVector (fun b : Fin 2 => DependentVector (fun c : Fin faces.regulars.length =>
+      CrossingRequests.HorizontalPrepared firstDifferential
         secondDifferential firstParent secondParent tolerance floor
         (((retained.horizontal.get a).get b).get c))))
   /-- The actual original vertical crossing preparations on all retained face, sheet and destination indices. -/
-    vertical : Data.Vector.DependentVector (fun a : Fin faces.regulars.length =>
-    Data.Vector.DependentVector (fun b : Fin 2 => Data.Vector.DependentVector (fun c : Fin faces.regulars.length =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingRequests.VerticalPrepared firstDifferential
+    vertical : DependentVector (fun a : Fin faces.regulars.length =>
+    Data.Vector.DependentVector (fun b : Fin 2 => DependentVector (fun c : Fin faces.regulars.length =>
+      CrossingRequests.VerticalPrepared firstDifferential
         secondDifferential firstParent secondParent tolerance floor
         (((retained.vertical.get a).get b).get c))))
   /-- The cached common stage paying the original base request and both complete crossing banks. -/ index : Nat
   /-- The common stage pays the original synchronized two-sheet request. -/ base_le : request.index ≤ index
   /-- The common stage pays every actual original horizontal crossing preparation. -/ horizontal_le : ∀ a b c,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingRequests.HorizontalPrepared.index firstDifferential
+    CrossingRequests.HorizontalPrepared.index firstDifferential
       secondDifferential firstParent secondParent tolerance floor
       (((horizontal.get a).get b).get c) ≤ index
   /-- The common stage pays every actual original vertical crossing preparation. -/ vertical_le : ∀ a b c,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingRequests.VerticalPrepared.index firstDifferential
+    CrossingRequests.VerticalPrepared.index firstDifferential
       secondDifferential firstParent secondParent tolerance floor
       (((vertical.get a).get b).get c) ≤ index
 
@@ -283,20 +283,20 @@ allocations. -/
       secondDifferential firstParent secondParent tolerance floor retained := by
   let horizontal := DependentVector.ofFn (fun a : Fin faces.regulars.length =>
     DependentVector.ofFn (fun b : Fin 2 => DependentVector.ofFn (fun c : Fin faces.regulars.length =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingRequests.HorizontalPrepared.build firstDifferential
+      HorizontalPrepared.build firstDifferential
         secondDifferential firstParent secondParent tolerance floor positive
         (((retained.horizontal.get a).get b).get c))))
   let horizontalWeight := fun a b c =>
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingRequests.HorizontalPrepared.index firstDifferential
+    HorizontalPrepared.index firstDifferential
     secondDifferential firstParent secondParent tolerance floor
     (outcome := (((retained.horizontal.get a).get b).get c))
   let vertical := DependentVector.ofFn (fun a : Fin faces.regulars.length =>
     DependentVector.ofFn (fun b : Fin 2 => DependentVector.ofFn (fun c : Fin faces.regulars.length =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingRequests.VerticalPrepared.build firstDifferential
+      VerticalPrepared.build firstDifferential
         secondDifferential firstParent secondParent tolerance floor positive
         (((retained.vertical.get a).get b).get c))))
   let verticalWeight := fun a b c =>
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingRequests.VerticalPrepared.index firstDifferential
+    VerticalPrepared.index firstDifferential
     secondDifferential firstParent secondParent tolerance floor
     (outcome := (((retained.vertical.get a).get b).get c))
   let horizontalMax := DependentVector.maximum3 horizontalWeight horizontal

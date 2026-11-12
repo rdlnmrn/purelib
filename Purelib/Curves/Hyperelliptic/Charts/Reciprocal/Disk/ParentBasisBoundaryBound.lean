@@ -48,6 +48,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Algebra
@@ -104,15 +106,15 @@ open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 variable {genus count index depth readingIndex floor minimum : Nat} {curve :
   HyperellipticCurve genus}
   {differential : Differential genus} {collar :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {parent :
-    Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+    ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {parent :
+    Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {source :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap} {source :
     SourcePrimitive data index}
-  {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {box : Geometry.Rational.Box} {capSample :
+    Cap.Primitives.Sample cap differential index box}
   {target : Coordinate}
   {polynomials : RegularBasisPolynomials cap
     index box}
@@ -134,17 +136,17 @@ set_option genInjectivity false in
 
 It caches the actual cell budgets, their maximum and the squared-count bound used by the complete signed boundary
 comparison. -/
-structure ParentBasisBoundaryBudget (plans : ParentChartRequests.ChartPlans capSample minimum requests)
-    (cells : ParentPaths.ComparedCells source capSample depth bank) (evaluated : ChartPlans.EvaluationData readingIndex
+structure ParentBasisBoundaryBudget (plans : ChartPlans capSample minimum requests)
+    (cells : ComparedCells source capSample depth bank) (evaluated : EvaluationData readingIndex
       plans cells) where
   /-- The original boundary budgets on every retained parent cell evaluation. -/ entries :
-    ParentBasisBudgets.BasisBoundaryBudgets plans cells evaluated
-  /-- The cached maximum of the actual retained cell budgets. -/ maximum : InverseRootPolynomial.Coordinate
+    BasisBoundaryBudgets plans cells evaluated
+  /-- The cached maximum of the actual retained cell budgets. -/ maximum : Coordinate
   /-- The maximum cache reads the exact retained cell budget bank. -/ maximum_eq : maximum = entries.maximum plans cells
     evaluated
-  /-- The cached squared-count aggregate cell error bound. -/ bound : InverseRootPolynomial.Coordinate
+  /-- The cached squared-count aggregate cell error bound. -/ bound : Coordinate
   /-- The aggregate bound equals the squared original parent count times the retained maximum. -/ bound_eq : bound =
-    (edges.length : InverseRootPolynomial.Coordinate) ^ 2 * maximum
+    (edges.length : Coordinate) ^ 2 * maximum
   /-- The cached aggregate cell error bound is nonnegative. -/ nonnegative : 0 ≤ bound
 
 constructive_injectivity ParentBasisBoundaryBudget
@@ -152,26 +154,26 @@ constructive_injectivity ParentBasisBoundaryBudget
 namespace ParentBasisBoundaryBudget
 
 /-- Construct the retained cell budgets once and cache their nonnegative squared-count aggregate. -/
-def build (plans : ParentChartRequests.ChartPlans capSample minimum requests) (cells : ParentPaths.ComparedCells source
+def build (plans : ChartPlans capSample minimum requests) (cells : ComparedCells source
   capSample depth bank)
-    (evaluated : ChartPlans.EvaluationData readingIndex plans cells) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundaryBound.ParentBasisBoundaryBudget plans cells
+    (evaluated : EvaluationData readingIndex plans cells) :
+      ParentBasisBoundaryBudget plans cells
       evaluated := by
   let entries := BasisBoundaryBudgets.build plans cells evaluated
   let maximum := entries.maximum plans cells evaluated
-  let bound := (edges.length : InverseRootPolynomial.Coordinate) ^ 2 * maximum
+  let bound := (edges.length : Coordinate) ^ 2 * maximum
   exact ⟨entries, maximum, rfl, bound, rfl,
-    Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+    Arithmetic.mul_nonneg_direct (Arithmetic.sq_nonneg_direct _)
       (entries.maximum_nonnegative plans cells evaluated)⟩
 
 /-- The original chart target already pays the whole basis at every cell. -/
 theorem bound_le (budget :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundaryBound.ParentBasisBoundaryBudget plans cells evaluated)
+  ParentBasisBoundaryBudget plans cells evaluated)
   (nonnegative : 0 ≤ target) :
-    budget.bound ≤ (edges.length : InverseRootPolynomial.Coordinate) ^ 2 * target := by
+    budget.bound ≤ (edges.length : Coordinate) ^ 2 * target := by
   rw [budget.bound_eq, budget.maximum_eq]
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (budget.entries.maximum_le nonnegative plans cells
-    evaluated) (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+  exact Arithmetic.mul_le_mul_of_nonneg_left_direct (budget.entries.maximum_le nonnegative plans cells
+    evaluated) (Arithmetic.sq_nonneg_direct _)
 
 variable {energies : BasisEnergyData
   (polynomials := polynomials) energyTarget energyFloor energyDepth plans cells evaluated}
@@ -180,11 +182,11 @@ variable {energies : BasisEnergyData
 /-- The actual sum of the retained cell energy residuals obeys the cached aggregate budget with its homogeneous
 coefficient factor. -/
 theorem cell_error_bound (budget :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundaryBound.ParentBasisBoundaryBudget plans cells evaluated)
-    (sample : ParentBasisBoundarySample.BasisBoundarySample energies coefficients joinTarget)
+  ParentBasisBoundaryBudget plans cells evaluated)
+    (sample : BasisBoundarySample energies coefficients joinTarget)
     (branch : HyperellipticReciprocal.originOrder curve = 1) :
     Data.Gaussian.Norm.Basic.normSq sample.cellError ≤ budget.bound *
-      (PreparedObservationCoercivity.coefficientNormSq coefficients) ^ 2 := by
+      (coefficientNormSq coefficients) ^ 2 := by
   rw [sample.cell_error]
   have estimate := Data.Gaussian.Norm.Sum.Bounds.normSq_sum_le (BasisEnergyData.cellErrors coefficients plans cells
     evaluated energies) _
@@ -195,83 +197,83 @@ theorem cell_error_bound (budget :
 /-- The retained signed boundary pays both cell refinement and internal join defects. No endpoint term is dropped from
 the reference expression. -/
 theorem boundary_bound (budget :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundaryBound.ParentBasisBoundaryBudget plans cells evaluated)
-    (sample : ParentBasisBoundarySample.BasisBoundarySample energies coefficients joinTarget)
+  ParentBasisBoundaryBudget plans cells evaluated)
+    (sample : BasisBoundarySample energies coefficients joinTarget)
     (branch : HyperellipticReciprocal.originOrder curve = 1) :
     Data.Gaussian.Norm.Basic.normSq (sample.energy - (-sample.trace + sample.lastRadial - sample.firstRadial))
       ≤
-      2 * (budget.bound + (sample.joins.count : InverseRootPolynomial.Coordinate) ^ 2 * joinTarget) *
-        (PreparedObservationCoercivity.coefficientNormSq coefficients) ^ 2 := by
+      2 * (budget.bound + (sample.joins.count : Coordinate) ^ 2 * joinTarget) *
+        (coefficientNormSq coefficients) ^ 2 := by
   rw [sample.discrepancy]
   exact (Data.Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.add_le_add_direct (budget.cell_error_bound sample branch) sample.joins.bounded) (by
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_direct (budget.cell_error_bound sample branch) sample.joins.bounded) (by
       decide)).trans_eq (by ring1))
 
 /-- The complete residual is paid by the original cell target and the homogeneous junction request, independently of the
 later polynomial stage. -/
 theorem requested_boundary_bound (budget :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundaryBound.ParentBasisBoundaryBudget plans cells evaluated)
-    (sample : ParentBasisBoundarySample.BasisBoundarySample energies coefficients joinTarget)
+  ParentBasisBoundaryBudget plans cells evaluated)
+    (sample : BasisBoundarySample energies coefficients joinTarget)
     (branch : HyperellipticReciprocal.originOrder curve = 1) (nonnegative : 0 ≤ target) :
     Data.Gaussian.Norm.Basic.normSq (sample.energy - (-sample.trace + sample.lastRadial - sample.firstRadial))
       ≤
-      2 * ((edges.length : InverseRootPolynomial.Coordinate) ^ 2 * target + ((edges.length - 1 : Nat) :
-        InverseRootPolynomial.Coordinate) ^ 2 * joinTarget) *
-        (PreparedObservationCoercivity.coefficientNormSq coefficients) ^ 2 := by
+      2 * ((edges.length : Coordinate) ^ 2 * target + ((edges.length - 1 : Nat) :
+        Coordinate) ^ 2 * joinTarget) *
+        (coefficientNormSq coefficients) ^ 2 := by
   have bound := budget.boundary_bound sample branch
   rw [sample.joins.count_edges] at bound
-  exact bound.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
+  exact bound.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
       (budget.bound_le nonnegative) le_rfl) (by decide))
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+    (Arithmetic.sq_nonneg_direct _))
 
 /-- Transfer the homogeneous fan lower bound to the literal joined trace once the computed scalar discrepancy is paid by
 a linear energy allowance. -/
 theorem trace_lower (budget :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundaryBound.ParentBasisBoundaryBudget plans cells evaluated)
-    (sample : ParentBasisBoundarySample.BasisBoundarySample energies coefficients joinTarget)
+  ParentBasisBoundaryBudget plans cells evaluated)
+    (sample : BasisBoundarySample energies coefficients joinTarget)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
-    (allowance : InverseRootPolynomial.Coordinate) (nonnegative : 0 ≤ allowance)
-    (paid : 2 * (budget.bound + (sample.joins.count : InverseRootPolynomial.Coordinate) ^ 2 * joinTarget) ≤ (4 *
+    (allowance : Coordinate) (nonnegative : 0 ≤ allowance)
+    (paid : 2 * (budget.bound + (sample.joins.count : Coordinate) ^ 2 * joinTarget) ≤ (4 *
       allowance) ^ 2) :
-    -(((edges.length : InverseRootPolynomial.Coordinate) * energyTarget + allowance) *
-      PreparedObservationCoercivity.coefficientNormSq coefficients) ≤
+    -(((edges.length : Coordinate) * energyTarget + allowance) *
+      coefficientNormSq coefficients) ≤
       (-sample.trace + sample.lastRadial - sample.firstRadial).im / 4 := by
-  have coefficientNonnegative : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients :=
+  have coefficientNonnegative : 0 ≤ coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
-      (Order.Positivity.sumFin_mono (fun _ => (0 : InverseRootPolynomial.Coordinate)) _ (fun row =>
-        Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
+      (Order.Positivity.sumFin_mono (fun _ => (0 : Coordinate)) _ (fun row =>
+        normSq_nonneg (coefficients row)))
   have estimate := (budget.boundary_bound sample branch).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct paid (Fraction.Order.Arithmetic.sq_nonneg_direct _))
-  have comparison := PreparedSurfaceCoercivity.boundaryEnergy_sub_budget_le sample.energy _
-    (allowance * PreparedObservationCoercivity.coefficientNormSq coefficients)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct nonnegative coefficientNonnegative)
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct paid (Arithmetic.sq_nonneg_direct _))
+  have comparison := boundaryEnergy_sub_budget_le sample.energy _
+    (allowance * coefficientNormSq coefficients)
+      (Arithmetic.mul_nonneg_direct nonnegative coefficientNonnegative)
     (estimate.trans_eq (by ring1))
-  have lower := Fraction.Order.Arithmetic.sub_le_sub_right_direct sample.lower (allowance *
-    PreparedObservationCoercivity.coefficientNormSq coefficients)
-  exact (show -(((edges.length : InverseRootPolynomial.Coordinate) * energyTarget + allowance) *
-    PreparedObservationCoercivity.coefficientNormSq coefficients) =
-    -(PreparedObservationCoercivity.coefficientNormSq coefficients * ((edges.length : InverseRootPolynomial.Coordinate)
-      * energyTarget)) - allowance * PreparedObservationCoercivity.coefficientNormSq coefficients by ring1).trans_le
+  have lower := Arithmetic.sub_le_sub_right_direct sample.lower (allowance *
+    coefficientNormSq coefficients)
+  exact (show -(((edges.length : Coordinate) * energyTarget + allowance) *
+    coefficientNormSq coefficients) =
+    -(coefficientNormSq coefficients * ((edges.length : Coordinate)
+      * energyTarget)) - allowance * coefficientNormSq coefficients by ring1).trans_le
       (lower.trans comparison)
 
 /-- The original cell and junction targets imply the signed joined-trace energy lower bound once their complete scalar
 discrepancy is paid. -/
 theorem requested_trace_lower (budget :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundaryBound.ParentBasisBoundaryBudget plans cells evaluated)
-    (sample : ParentBasisBoundarySample.BasisBoundarySample energies coefficients joinTarget)
+  ParentBasisBoundaryBudget plans cells evaluated)
+    (sample : BasisBoundarySample energies coefficients joinTarget)
     (branch : HyperellipticReciprocal.originOrder curve = 1) (targetNonnegative : 0 ≤ target)
-    (allowance : InverseRootPolynomial.Coordinate) (nonnegative : 0 ≤ allowance)
-    (paid : 2 * ((edges.length : InverseRootPolynomial.Coordinate) ^ 2 * target + ((edges.length - 1 : Nat) :
-      InverseRootPolynomial.Coordinate) ^ 2 * joinTarget) ≤
+    (allowance : Coordinate) (nonnegative : 0 ≤ allowance)
+    (paid : 2 * ((edges.length : Coordinate) ^ 2 * target + ((edges.length - 1 : Nat) :
+      Coordinate) ^ 2 * joinTarget) ≤
       (4 * allowance) ^ 2) :
-    -(((edges.length : InverseRootPolynomial.Coordinate) * energyTarget + allowance) *
-      PreparedObservationCoercivity.coefficientNormSq coefficients) ≤
+    -(((edges.length : Coordinate) * energyTarget + allowance) *
+      coefficientNormSq coefficients) ≤
       (-sample.trace + sample.lastRadial - sample.firstRadial).im / 4 := by
   apply budget.trace_lower sample branch allowance nonnegative
   rw [sample.joins.count_edges]
-  exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
+  exact (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
     (budget.bound_le targetNonnegative) le_rfl) (by decide)).trans paid
 
 end ParentBasisBoundaryBudget

@@ -46,19 +46,19 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedCapEn
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {target otherTarget areaTarget otherAreaTarget : Fraction.Rational} {minimum otherMinimum stage depth otherDepth
     readingIndex otherReadingIndex : Nat}
   {box otherBox : Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
 
 /-- Both retained cap totals are endpoint differences with one common sheet sign.
 
@@ -71,14 +71,14 @@ theorem paired_cap_totals
     (occurrence :
       SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
       regular domains differential) (member : occurrence ∈ prepared.occurrences)
-    {firstRequest : Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapRequest
+    {firstRequest : Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapRequest
       occurrence.cap target areaTarget minimum}
-    {lastRequest : Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapRequest
+    {lastRequest : Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapRequest
       (occurrence.pairedCap prepared member other)
       otherTarget otherAreaTarget otherMinimum}
-    (first : Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapRequest.Evaluation
+    (first : Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapRequest.Evaluation
       firstRequest sample depth readingIndex)
-    (last : Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapRequest.Evaluation
+    (last : Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapRequest.Evaluation
       lastRequest otherSample otherDepth otherReadingIndex)
     (degree : curve.polynomial.natDegree = 2 * genus + 2) :
     ∃ flip : Bool,
@@ -88,12 +88,12 @@ theorem paired_cap_totals
       last.right.total =
         (if flip then -otherSample.primitive.value else otherSample.primitive.value).eval occurrence.finish⁻¹ -
         (if flip then -otherSample.primitive.value else otherSample.primitive.value).eval occurrence.start⁻¹ := open
-          Purelib.Data in by
+          Data in by
   obtain ⟨firstPaths, firstEq, ⟨firstWitnesses⟩⟩ := first.regular_witnesses degree
   obtain ⟨lastPaths, lastEq, ⟨lastWitnesses⟩⟩ := last.regular_witnesses degree
-  let sign := Hyperelliptic.Charts.Reciprocal.Disk.PairedWitnessSigns.RegularWitnesses.recastSign firstWitnesses
+  let sign := Charts.Reciprocal.Disk.PairedWitnessSigns.RegularWitnesses.recastSign firstWitnesses
     lastWitnesses
-  have paths := Hyperelliptic.Charts.Reciprocal.Disk.PairedWitnessSigns.RegularWitnesses.paired_paths_signed
+  have paths := Charts.Reciprocal.Disk.PairedWitnessSigns.RegularWitnesses.paired_paths_signed
     firstWitnesses lastWitnesses sign occurrence.cap.path.links
     (occurrence.pairedCap prepared member other).path.links
   obtain ⟨firstChain⟩ := occurrence.compared.entered.cache.chain

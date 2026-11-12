@@ -33,6 +33,8 @@ import Mathlib.Order.Basic
 import Mathlib.Data.Nat.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-!
@@ -58,11 +60,11 @@ open Purelib.Data.Gaussian in
 /-- The canonical Gaussian rational carrier for original root readings. -/
 abbrev Gaussian := Basic.Canonical
 /-- The original rational Gaussian box carrier with retained coordinate bounds. -/
-abbrev Box := Purelib.Geometry.Rational.Box
+abbrev Box := Geometry.Rational.Box
 /-- The original winding-one quadratic root owner indexed by its exact parameter. -/
-abbrev Owner := Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+abbrev Owner := Topology.SquareRootContinuationChain.Owner
 /-- The original operational equivalence certificate between retained Gaussian names. -/
-abbrev NamedEquivalent := Purelib.Approximation.Gaussian.Equivalence.NamedEquivalent
+abbrev NamedEquivalent := Approximation.Gaussian.Equivalence.NamedEquivalent
 
 /-- The minimum signed coordinate margin between an inner and an outer box.
 
@@ -80,10 +82,10 @@ Taking the nested minimum preserves those four inequalities on the same two
 original boxes. -/
 theorem interiorRadius_positive {inner outer : Box}
     (strict : inner.StrictInterior outer) : 0 < interiorRadius inner outer :=
-  Fraction.Order.Basic.lt_min (Fraction.Order.Basic.lt_min (Fraction.Order.Arithmetic.sub_pos_direct strict.left)
-      (Fraction.Order.Arithmetic.sub_pos_direct strict.right))
-    (Fraction.Order.Basic.lt_min (Fraction.Order.Arithmetic.sub_pos_direct strict.bottom)
-      (Fraction.Order.Arithmetic.sub_pos_direct strict.top))
+  Basic.lt_min (Basic.lt_min (Arithmetic.sub_pos_direct strict.left)
+      (Arithmetic.sub_pos_direct strict.right))
+    (Basic.lt_min (Arithmetic.sub_pos_direct strict.bottom)
+      (Arithmetic.sub_pos_direct strict.top))
 
 open Purelib.Data.Gaussian in
 /-- A positive squared radius bounds both signed coordinates of a smaller Gaussian distance.
@@ -95,11 +97,11 @@ private theorem signed_bounds {delta : Gaussian} {radius : Coordinate}
     (positive : 0 < radius) (close : normSq delta < radius ^ 2) :
     -radius < delta.re ∧ delta.re < radius ∧
       -radius < delta.im ∧ delta.im < radius := by
-  simp only [Basic.Canonical.normSq, ← pow_two] at close
+  simp only [normSq, ← pow_two] at close
   have realSq : delta.re ^ 2 < radius ^ 2 :=
-    (le_add_of_nonneg_right (Fraction.Order.Arithmetic.sq_nonneg_direct delta.im)).trans_lt close
+    (le_add_of_nonneg_right (Arithmetic.sq_nonneg_direct delta.im)).trans_lt close
   have imagSq : delta.im ^ 2 < radius ^ 2 :=
-    (le_add_of_nonneg_left (Fraction.Order.Arithmetic.sq_nonneg_direct delta.re)).trans_lt close
+    (le_add_of_nonneg_left (Arithmetic.sq_nonneg_direct delta.re)).trans_lt close
   have realUpper := Bounds.Square.lt_of_sq_lt_sq_of_nonneg positive.le realSq
   have imagUpper := Bounds.Square.lt_of_sq_lt_sq_of_nonneg positive.le imagSq
   have negReal := Bounds.Square.lt_of_sq_lt_sq_of_nonneg positive.le
@@ -110,9 +112,9 @@ private theorem signed_bounds {delta : Gaussian} {radius : Coordinate}
     (a := -delta.im) (by
       rewrite [show (-delta.im) ^ 2 = delta.im ^ 2 by ring1]
       exact imagSq)
-  exact ⟨by simpa only [neg_neg] using Fraction.Order.Arithmetic.neg_lt_neg_direct negReal,
+  exact ⟨by simpa only [neg_neg] using Arithmetic.neg_lt_neg_direct negReal,
     realUpper,
-    by simpa only [neg_neg] using Fraction.Order.Arithmetic.neg_lt_neg_direct negImag,
+    by simpa only [neg_neg] using Arithmetic.neg_lt_neg_direct negImag,
     imagUpper⟩
 
 /-- A retained lower-side margin and strict displacement bound keep the translated coordinate strictly above the outer
@@ -122,10 +124,10 @@ private theorem lower_of_close {outer inner point delta radius : Coordinate}
     (close : -radius < delta) : outer < point + delta := by
   calc
     outer = inner - (inner - outer) := by ring1
-    _ ≤ inner - radius := Fraction.Order.Arithmetic.sub_le_sub_left_direct margin inner
-    _ ≤ point - radius := Fraction.Order.Arithmetic.sub_le_sub_right_direct inside radius
+    _ ≤ inner - radius := Arithmetic.sub_le_sub_left_direct margin inner
+    _ ≤ point - radius := Arithmetic.sub_le_sub_right_direct inside radius
     _ < point + delta := by
-      simpa only [_root_.sub_eq_add_neg] using Fraction.Order.Arithmetic.add_lt_add_left_direct close point
+      simpa only [_root_.sub_eq_add_neg] using Arithmetic.add_lt_add_left_direct close point
 
 /-- A retained upper-side margin and strict displacement bound keep the translated coordinate strictly below the outer
 upper endpoint. -/
@@ -133,9 +135,9 @@ private theorem upper_of_close {outer inner point delta radius : Coordinate}
     (margin : radius ≤ outer - inner) (inside : point ≤ inner)
     (close : delta < radius) : point + delta < outer := by
   calc
-    point + delta < point + radius := Fraction.Order.Arithmetic.add_lt_add_left_direct close point
-    _ ≤ inner + radius := Fraction.Order.Arithmetic.add_le_add_right_direct inside radius
-    _ ≤ inner + (outer - inner) := Fraction.Order.Arithmetic.add_le_add_direct (le_refl _) margin
+    point + delta < point + radius := Arithmetic.add_lt_add_left_direct close point
+    _ ≤ inner + radius := Arithmetic.add_le_add_right_direct inside radius
+    _ ≤ inner + (outer - inner) := Arithmetic.add_le_add_direct (le_refl _) margin
     _ = outer := by ring1
 
 open Purelib.Data.Gaussian in
@@ -148,13 +150,13 @@ theorem nearby_inside {inner outer : Box} (strict : inner.StrictInterior outer)
     (close : normSq (nearby - point) < (interiorRadius inner outer) ^ 2) :
     outer.StrictContains nearby := by
   have bounds := signed_bounds (interiorRadius_positive strict) close
-  have left := lower_of_close ((Fraction.Order.Basic.min_le_left _ _).trans (Fraction.Order.Basic.min_le_left _ _))
+  have left := lower_of_close ((Basic.min_le_left _ _).trans (Basic.min_le_left _ _))
     inside.1 bounds.1
-  have right := upper_of_close ((Fraction.Order.Basic.min_le_left _ _).trans (Fraction.Order.Basic.min_le_right _ _))
+  have right := upper_of_close ((Basic.min_le_left _ _).trans (Basic.min_le_right _ _))
     inside.2.1 bounds.2.1
-  have bottom := lower_of_close ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _))
+  have bottom := lower_of_close ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _))
     inside.2.2.1 bounds.2.2.1
-  have top := upper_of_close ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_right _ _))
+  have top := upper_of_close ((Basic.min_le_right _ _).trans (Basic.min_le_right _ _))
     inside.2.2.2 bounds.2.2.2
   simp only [Basic.sub_re, Basic.sub_im] at left right bottom top
   exact ⟨by convert left using 1; ring1, by convert right using 1; ring1,
@@ -193,8 +195,8 @@ an exact second-owner refinement index whose diameter and anchor proximity estab
   let radius := interiorRadius inner.track.initial.box first.track.initial.box
   have radiusPositive : 0 < radius := interiorRadius_positive innerStrict
   let target := radius ^ 2 / 4
-  have targetPositive : 0 < target := Fraction.Order.Field.div_pos_direct
-    (Fraction.Order.Arithmetic.pow_pos_direct radiusPositive 2) (by decide)
+  have targetPositive : 0 < target := Field.div_pos_direct
+    (Arithmetic.pow_pos_direct radiusPositive 2) (by decide)
   let firstApprox := CertifiedSquareRoot.approximation first.track
   let secondApprox := CertifiedSquareRoot.approximation second.track
   let raw := approximationEquivalent_of_rootEquivalent first.parameterNonzero first.track second.track equivalent
@@ -236,14 +238,14 @@ an exact second-owner refinement index whose diameter and anchor proximity estab
     simp only [Norm.Basic.normSq_eq_canonical] at triangle
     have reverse : normSq (owner.track.initial.box.anchor - point) =
         normSq (point - owner.track.initial.box.anchor) := by
-      rw [← Basic.Canonical.normSq_neg (point - owner.track.initial.box.anchor)]
+      rw [← normSq_neg (point - owner.track.initial.box.anchor)]
       congr 1
       ring1
     calc
       _ ≤ 2 * (normSq (nearby - owner.track.initial.box.anchor) +
           normSq (owner.track.initial.box.anchor - point)) := triangle
-      _ < 2 * (target + target) := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
-        (by decide) (Fraction.Order.Arithmetic.add_lt_add_direct (distance.trans_lt diameter)
+      _ < 2 * (target + target) := Arithmetic.mul_lt_mul_of_pos_left_direct
+        (by decide) (Arithmetic.add_lt_add_direct (distance.trans_lt diameter)
           (reverse ▸ anchorsClose))
       _ = radius ^ 2 := by
         change 2 * (radius ^ 2 / 4 + radius ^ 2 / 4) = radius ^ 2

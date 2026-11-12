@@ -84,63 +84,63 @@ open Purelib.Topology.Chain.PathBoundary (PathEndpoints)
 open Purelib.Riemann.Meshes.UniformPrimitiveMesh (firstEndpoint lastEndpoint)
 
 /-- Concatenate two actual parameter-edge paths at their retained common endpoint. -/
-private theorem path_append {first last : List ClearSheetContinuation.Subdivision.ParameterEdge} {start middle finish :
-  InverseRootPolynomial.Coordinate}
-    (before : PathBoundary.PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) first
+private theorem path_append {first last : List ParameterEdge} {start middle finish :
+  Coordinate}
+    (before : PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) first
       start middle)
-    (after : PathBoundary.PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) last middle
+    (after : PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) last middle
       finish) :
-    PathBoundary.PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) (first ++ last)
+    PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) (first ++ last)
       start finish := by
   induction before with
   | nil => exact after
   | cons tail ih => exact .cons (ih after)
 
 /-- A nonempty retained parameter path starts at its actual first edge's left parameter. -/
-private theorem path_start {edge : ClearSheetContinuation.Subdivision.ParameterEdge} {tail : List
-  ClearSheetContinuation.Subdivision.ParameterEdge} {start finish : InverseRootPolynomial.Coordinate}
-    (path : PathBoundary.PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) (edge ::
+private theorem path_start {edge : ParameterEdge} {tail : List
+  ParameterEdge} {start finish : Coordinate}
+    (path : PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) (edge ::
       tail) start finish) :
     start = edge.left.parameter := by
   cases path
   rfl
 
 /-- The actual dyadic edge list forms a parameter path between the original retained endpoints. -/
-private theorem dyadic_path (depth : Nat) (first last : ClearSheetContinuation.Subdivision.Endpoint) :
-    PathBoundary.PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter)
-      (ClearSheetContinuation.Subdivision.dyadicEdges depth first last) first.parameter last.parameter := by
+private theorem dyadic_path (depth : Nat) (first last : Endpoint) :
+    PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter)
+      (dyadicEdges depth first last) first.parameter last.parameter := by
   induction depth generalizing first last with
   | zero => exact .cons (.nil _)
   | succ depth ih =>
-    exact Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.path_append (ih _ _) (ih _
+    exact path_append (ih _ _) (ih _
       _)
 
-variable {genus count otherCount : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-  {differential other : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential} {patch :
-    Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {otherPatch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch
-    (Purelib.Riemann.Integration.PreparedEdgeRecasting.recastCenteredEdge other parent)}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {otherData :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
-  {firstCover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {secondCover :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover otherData}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {common :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCommonCover.CommonCover firstCover secondCover}
-  {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {minimum stage depth : Nat} {box otherBox :
-    Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
-  {source : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data stage}
-    {otherSource : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive otherData
+variable {genus count otherCount : Nat} {curve : HyperellipticCurve genus}
+  {differential other : Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : CenteredEdge curve differential} {patch :
+    PreparedPatch parent}
+  {otherPatch : PreparedPatch
+    (recastCenteredEdge other parent)}
+  {data : UniformReciprocalModels.Data patch count} {otherData :
+    UniformReciprocalModels.Data otherPatch otherCount}
+  {firstCover : Cover data} {secondCover :
+    Cover otherData}
+  {regular : RegularBounds.Data cap} {common :
+    CommonCover firstCover secondCover}
+  {target : Coordinate} {minimum stage depth : Nat} {box otherBox :
+    Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Cap.Primitives.Sample cap other stage otherBox}
+  {source : SourcePrimitive data stage}
+    {otherSource : SourcePrimitive otherData
     stage}
-  {request : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest regular common
+  {request : CommonRibbonRequest regular common
     target minimum}
 
 /-- Adjacent retained common intervals have the same actual left flip bit at every stage at least two. -/
-theorem Entry.adjacent_sign (first last : CommonRibbonRequest.Entry request sample otherSample source otherSource depth)
+theorem Entry.adjacent_sign (first last : Entry request sample otherSample source otherSource depth)
     (joined : first.plan.interval.edge.right.parameter = last.plan.interval.edge.left.parameter) (later : 2 ≤ stage) :
     first.left.first.flip = last.left.first.flip := by
   apply first.left.same_parent last.left first.plan.interval.edge.right.parameter
@@ -149,18 +149,18 @@ theorem Entry.adjacent_sign (first last : CommonRibbonRequest.Entry request samp
   exact ⟨last.plan.interval.first.lower, last.plan.interval.ordered.trans last.plan.interval.first.upper⟩
 
 /-- Read the actual first retained entry's left flip bit, using false for an empty bank. -/
-@[expose] def firstFlip : List (CommonRibbonRequest.Entry request sample otherSample source otherSource depth) → Bool
+@[expose] def firstFlip : List (Entry request sample otherSample source otherSource depth) → Bool
   | [] => false
   | head :: _ => head.left.first.flip
 
 /-- Every entry of a connected retained parameter path has its actual left flip equal to the first entry's bit. -/
-private theorem path_signs (entries : List (CommonRibbonRequest.Entry request sample otherSample source otherSource
+private theorem path_signs (entries : List (Entry request sample otherSample source otherSource
   depth))
-    {start finish : InverseRootPolynomial.Coordinate}
-    (path : PathBoundary.PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter)
+    {start finish : Coordinate}
+    (path : PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter)
       (entries.map (fun entry => entry.plan.interval.edge)) start finish) (later : 2 ≤ stage) :
     ∀ entry ∈ entries, entry.left.first.flip =
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.firstFlip entries := by
+      firstFlip entries := by
   induction entries generalizing start with
   | nil => intro entry member; exact False.elim (List.not_mem_nil member)
   | cons head tail ih =>
@@ -173,34 +173,34 @@ private theorem path_signs (entries : List (CommonRibbonRequest.Entry request sa
             | nil => exact False.elim (List.not_mem_nil member)
             | cons next rest =>
                 have joined : head.plan.interval.edge.right.parameter = next.plan.interval.edge.left.parameter :=
-                  Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.path_start tailPath
+                  path_start tailPath
                 exact (ih tailPath entry member).trans (head.adjacent_sign next joined later).symm
 
 /-- The actual retained common-chart entries form the complete parameter path from zero to one. -/
-theorem Evaluation.parameterPath (evaluated : CommonRibbonRequest.Evaluation request sample otherSample source
+theorem Evaluation.parameterPath (evaluated : Evaluation request sample otherSample source
   otherSource depth) :
-    PathBoundary.PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter)
+    PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter)
       (evaluated.entries.map (fun entry => entry.plan.interval.edge)) 0 1 := by
   have plans := congrArg (List.map (fun plan => plan.interval.edge)) evaluated.plans_eq
   have intervals := congrArg (List.map CommonInterval.edge) request.intervals_eq
   rw [Data.List.Map.map_map] at plans intervals
   have edges : evaluated.entries.map (fun entry => entry.plan.interval.edge) =
-      ClearSheetContinuation.Subdivision.dyadicEdges common.depth UniformPrimitiveMesh.firstEndpoint lastEndpoint :=
+      dyadicEdges common.depth firstEndpoint lastEndpoint :=
     (plans.trans intervals).trans common.edges_eq
-  exact edges.symm ▸ Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.dyadic_path
+  exact edges.symm ▸ dyadic_path
     common.depth _ _
 
 /-- The common bit is computed from the first retained entry. Every later entry consumes actual interval adjacency and
 the recast-root sign proof. -/
-theorem Evaluation.shared_signs (evaluated : CommonRibbonRequest.Evaluation request sample otherSample source
+theorem Evaluation.shared_signs (evaluated : Evaluation request sample otherSample source
   otherSource depth)
-    (later : 2 ≤ stage) (entry : CommonRibbonRequest.Entry request sample otherSample source otherSource depth) (member
+    (later : 2 ≤ stage) (entry : Entry request sample otherSample source otherSource depth) (member
       : entry ∈ evaluated.entries) :
-    entry.left.first.flip = Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.firstFlip
+    entry.left.first.flip = firstFlip
       evaluated.entries ∧ entry.right.first.flip =
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.firstFlip evaluated.entries :=
+      firstFlip evaluated.entries :=
       by
-  have left := Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.path_signs
+  have left := path_signs
     evaluated.entries evaluated.parameterPath later entry member
   exact ⟨left, (entry.same_sign later).symm.trans left⟩
 
@@ -210,15 +210,15 @@ set_option genInjectivity false in
 /-- One common retained sign choice and its exact two signed polynomial primitives.
 
 The bit is read from the first actual entry; every retained interval uses these same polynomial owners. -/
-structure SharedPair (evaluated : CommonRibbonRequest.Evaluation request sample otherSample source otherSource depth)
+structure SharedPair (evaluated : Evaluation request sample otherSample source otherSource depth)
   where
   /-- The cached common flip bit of the actual retained entries. -/ flip : Bool
   /-- The cached bit is exactly the original first retained entry's bit. -/ flip_eq : flip =
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.firstFlip evaluated.entries
-  /-- The cached first signed polynomial primitive. -/ first : InverseRootPolynomial.Polynomial
+    firstFlip evaluated.entries
+  /-- The cached first signed polynomial primitive. -/ first : Polynomial
   /-- The first cache is exactly the original first primitive, negated precisely when the retained bit is true. -/
     first_eq : first = if flip then -sample.primitive.value else sample.primitive.value
-  /-- The cached second signed polynomial primitive. -/ second : InverseRootPolynomial.Polynomial
+  /-- The cached second signed polynomial primitive. -/ second : Polynomial
   /-- The second cache uses the same actual retained bit on the original second primitive. -/ second_eq : second = if
     flip then -otherSample.primitive.value else otherSample.primitive.value
   /-- Every actual retained entry uses this exact first signed polynomial primitive. -/ first_owner : ∀ entry ∈
@@ -230,11 +230,11 @@ constructive_injectivity SharedPair
 
 /-- Cache the common actual flip bit and both signed primitives, retaining their equality with every original entry
 owner. -/
-@[expose] def sharedPair (evaluated : CommonRibbonRequest.Evaluation request sample otherSample source otherSource
+@[expose] def sharedPair (evaluated : Evaluation request sample otherSample source otherSource
   depth) (later : 2 ≤ stage) :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.Evaluation.SharedPair evaluated :=
+  SharedPair evaluated :=
   by
-  let flip := Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.firstFlip
+  let flip := firstFlip
     evaluated.entries
   refine ⟨flip, rfl, if flip then -sample.primitive.value else sample.primitive.value, rfl,
     if flip then -otherSample.primitive.value else otherSample.primitive.value, rfl, ?_, ?_⟩
@@ -244,16 +244,16 @@ owner. -/
     rw [entry.right.primitive_eq, (evaluated.shared_signs later entry member).2]
 
 /-- Subtracting two increments at a fixed original origin cancels that origin exactly. -/
-private theorem unanchor (a b c d origin otherOrigin : InverseRootPolynomial.Gaussian) :
+private theorem unanchor (a b c d origin otherOrigin : Gaussian) :
     ((b - origin) - (d - otherOrigin)) - ((a - origin) - (c - otherOrigin)) = (b - a) - (d - c) := by ring1
 
 /-- The local estimate now compares increments of the same two polynomials on every common interval; no local primitive
 origins occur in the result. -/
-theorem SharedPair.increment_errors {evaluated : CommonRibbonRequest.Evaluation request sample otherSample source
+theorem SharedPair.increment_errors {evaluated : Evaluation request sample otherSample source
   otherSource depth}
-    (shared : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.Evaluation.SharedPair
-      evaluated) (entry : CommonRibbonRequest.Entry request sample otherSample source otherSource depth)
-    (member : entry ∈ evaluated.entries) {first last : InverseRootPolynomial.Coordinate}
+    (shared : SharedPair
+      evaluated) (entry : Entry request sample otherSample source otherSource depth)
+    (member : entry ∈ evaluated.entries) {first last : Coordinate}
     (firstInside : entry.plan.interval.edge.left.parameter ≤ first ∧ first ≤ entry.plan.interval.edge.right.parameter)
     (lastInside : entry.plan.interval.edge.left.parameter ≤ last ∧ last ≤ entry.plan.interval.edge.right.parameter) :
     Data.Gaussian.Norm.Basic.normSq
@@ -276,9 +276,9 @@ theorem SharedPair.increment_errors {evaluated : CommonRibbonRequest.Evaluation 
   dsimp only [CellPrimitive.sourceValue,
     RegularAlignment.capValue] at left right
   rw [shared.first_owner entry member,
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.Evaluation.unanchor] at left
+    unanchor] at left
   rw [shared.second_owner entry member,
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.Evaluation.unanchor] at right
+    unanchor] at right
   exact ⟨left, right⟩
 
 end Evaluation

@@ -71,7 +71,7 @@ def baseVertex (degree : RootDegree)
 /-- Construct the original robust root-owner chamber at the retained initial unit parameter. -/
 def frame (degree : RootDegree)
   (degreeAtLeastTwo : 2 ≤ degree.value) :
-    Progressive.Chamber.Frame.ChamberFrame :=
+    Chamber.Frame.ChamberFrame :=
   (baseVertex degree degreeAtLeastTwo).frame degree degreeAtLeastTwo
 
 /-- The retained torus-model chamber has exactly the supplied power degree. -/
@@ -80,7 +80,7 @@ def frame (degree : RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) :
     (frame degree degreeAtLeastTwo).degree = degree.value := by
   unfold frame Geometry.Gaussian.UnitCircle.Basic.UnitVertex.frame
-  exact Progressive.Power.Unit.Frame.robustChamberFrame_degree _ _ degree _
+  exact Power.Unit.Frame.robustChamberFrame_degree _ _ degree _
 
 /-- The retained torus-model chamber has a positive number of owner indices. -/
 theorem frame_positive (degree :
@@ -95,7 +95,7 @@ def loop (degree : RootDegree)
   (degreeAtLeastTwo : 2 ≤ degree.value) :
     ChamberPath (frame degree degreeAtLeastTwo)
       (frame degree degreeAtLeastTwo) :=
-  Progressive.Power.Unit.Circuit.Loop.unitCircuitLoop degree degreeAtLeastTwo
+  Power.Unit.Circuit.Loop.unitCircuitLoop degree degreeAtLeastTwo
 
 /-- The explicit positive unit circuit permutes all retained power-family owners in one cycle. -/
 theorem loop_isSingleCycle (degree :
@@ -104,7 +104,7 @@ theorem loop_isSingleCycle (degree :
     Data.Fin.Bijection.IsSingleCycle
       (loop degree degreeAtLeastTwo).monodromy := by
   unfold loop
-  exact Progressive.Power.Unit.Circuit.Monodromy.unitCircuitMonodromy_isSingleCycle
+  exact Power.Unit.Circuit.Monodromy.unitCircuitMonodromy_isSingleCycle
     degree degreeAtLeastTwo
 
 /-- Select the original zero-indexed root owner using the retained positive chamber degree. -/
@@ -138,7 +138,7 @@ def negativeCircuitBraid (degree :
   RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) :
     (negativeCircuitBraid degree degreeAtLeastTwo).word =
-      (Topology.Knot.Braid.PositiveBand.Basic.positiveBand
+      (PositiveBand.Basic.positiveBand
         (frame degree degreeAtLeastTwo).degree).inverse := rfl
 
 /-- Independent finite evidence that the chosen parameter circuit is the
@@ -174,7 +174,7 @@ theorem repeated_agrees (degree :
         ((oneCircuitBraid degree degreeAtLeastTwo).labeling.forward position) =
       (oneCircuitBraid degree degreeAtLeastTwo).labeling.forward
         ((Word.repeatWord
-          (Topology.Knot.Braid.PositiveBand.Basic.positiveBand
+          (PositiveBand.Basic.positiveBand
             (frame degree degreeAtLeastTwo).degree) circuits).permutation.forward
           position) := by
   induction circuits generalizing position with
@@ -192,21 +192,21 @@ theorem repeated_agrees (degree :
         _ = (loop degree degreeAtLeastTwo).monodromy.forward
             ((oneCircuitBraid degree degreeAtLeastTwo).labeling.forward
               ((Word.repeatWord
-                (Topology.Knot.Braid.PositiveBand.Basic.positiveBand
+                (PositiveBand.Basic.positiveBand
                   (frame degree degreeAtLeastTwo).degree)
                 circuits).permutation.forward position)) := by
           rw [inductionHypothesis]
         _ = (oneCircuitBraid degree degreeAtLeastTwo).labeling.forward
-            ((Topology.Knot.Braid.PositiveBand.Basic.positiveBand
+            ((PositiveBand.Basic.positiveBand
               (frame degree degreeAtLeastTwo).degree).permutation.forward
               ((Word.repeatWord
-                (Topology.Knot.Braid.PositiveBand.Basic.positiveBand
+                (PositiveBand.Basic.positiveBand
                   (frame degree degreeAtLeastTwo).degree)
                 circuits).permutation.forward position)) :=
           (oneCircuitBraid degree degreeAtLeastTwo).agrees _
         _ = (oneCircuitBraid degree degreeAtLeastTwo).labeling.forward
             ((Word.repeatWord
-              (Topology.Knot.Braid.PositiveBand.Basic.positiveBand
+              (PositiveBand.Basic.positiveBand
                 (frame degree degreeAtLeastTwo).degree)
               (circuits + 1)).permutation.forward position) := by
           rw [Word.repeatWord_succ,
@@ -220,7 +220,7 @@ def repeatedBraid (degree : RootDegree)
     RelabeledLoopBraid (frame degree degreeAtLeastTwo)
       (repeatedLoop degree degreeAtLeastTwo circuits) where
   word := Word.repeatWord
-    (Topology.Knot.Braid.PositiveBand.Basic.positiveBand
+    (PositiveBand.Basic.positiveBand
       (frame degree degreeAtLeastTwo).degree) circuits
   labeling := (oneCircuitBraid degree degreeAtLeastTwo).labeling
   agrees := repeated_agrees degree degreeAtLeastTwo circuits
@@ -231,7 +231,7 @@ def repeatedBraid (degree : RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) (circuits : Nat) :
     (repeatedBraid degree degreeAtLeastTwo circuits).word =
       Word.repeatWord
-        (Topology.Knot.Braid.PositiveBand.Basic.positiveBand
+        (PositiveBand.Basic.positiveBand
           (frame degree degreeAtLeastTwo).degree) circuits := by
   rfl
 
@@ -280,7 +280,7 @@ theorem closure_eq_torus (degree :
     (repeatedBraid degree degreeAtLeastTwo q).word.length =
       q * (degree.value - 1) := by
   rw [repeatedBraid_word, Word.repeatWord_length,
-    Topology.Knot.Braid.PositiveBand.Basic.positiveBand_length, frame_degree]
+    PositiveBand.Basic.positiveBand_length, frame_degree]
 
 /-- The repeated positive circuit braid has writhe equal to circuit count times degree-minus-one. -/
 @[simp] theorem repeatedBraid_writhe (degree :
@@ -289,7 +289,7 @@ theorem closure_eq_torus (degree :
     (repeatedBraid degree degreeAtLeastTwo q).word.writhe =
       (q : Int) * (degree.value - 1 : Nat) := by
   rw [repeatedBraid_word, Word.repeatWord_writhe,
-    Topology.Knot.Braid.PositiveBand.Basic.positiveBand_writhe, frame_degree]
+    PositiveBand.Basic.positiveBand_writhe, frame_degree]
 end Purelib.RootIsolation.Progressive.Braid.Power.Torus
 
 end

@@ -41,6 +41,8 @@ import Purelib.Riemann.RootContinuation.NewtonPathBudget
 import Purelib.Riemann.RootContinuation.PreparedNewtonBandSamples
 import Purelib.Tactic.Ring
 
+open Purelib.Approximation.Rational.Budget
+
 open Purelib.Approximation
 
 open Purelib.Curves
@@ -57,13 +59,13 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.Newton
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
-    {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered}
+    PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {ordered : PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
+    {paired : PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation base.bank.toBranchCellBank}
   {target radius : Fraction.Rational} {i j : Fin genus} {floor : Nat}
 
@@ -72,23 +74,23 @@ set_option genInjectivity false in
 
 The original two differential magnitude banks determine the weight; the allocated positive allowance pays the complete
 doubled exterior estimate without exceeding the target. -/
-structure TerminalExteriorBudget (paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered)
+structure TerminalExteriorBudget (paired : PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered)
     (boundary : RootContinuation.NewtonRequestedBoundary.BoundaryPreparation preparation i j target radius floor) where
   /-- The retained first-differential magnitude bank on the fixed boundary domains. -/ first :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank boundary.domains
+    PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank boundary.domains
     (Periods.PeriodMatrix.standardDifferential i)
   /-- The retained second-differential magnitude bank on the same boundary domains. -/ second :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank boundary.domains
+    PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank boundary.domains
     (Periods.PeriodMatrix.standardDifferential j)
   /-- The cached exterior-product magnitude coefficient. -/ weight : Fraction.Rational
   /-- The weight is four times the maximum of the two original ordered-factor bounds. -/ weight_eq : weight = 4 * max
-    (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
+    (PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
       paired) boundary.fine.family.single.grid.shrunk.included first)
-    (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
+    (PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
       paired) boundary.fine.family.single.grid.shrunk.included second)
   /-- The common allocated exterior and endpoint accuracy. -/ allowance : Fraction.Rational
   /-- The allowance is the smaller of the target and one quarter of its weighted allocation. -/ allowance_eq : allowance
-    = min target (Rational.Budget.Weighted.allowance target weight / 4)
+    = min target (Weighted.allowance target weight / 4)
   /-- The allocated exterior accuracy is strictly positive. -/ positive : 0 < allowance
   /-- The allocated accuracy does not exceed the original target. -/ allowance_le : allowance ≤ target
   /-- The cached weight times the doubled pair of allowances is at most the target. -/ paid : weight * (2 * (allowance +
@@ -104,40 +106,40 @@ variable {boundary : RootContinuation.NewtonRequestedBoundary.BoundaryPreparatio
 
 The retained boundary supplies target positivity, and the cached weight and allowance keep exact specification
 equalities. -/
-@[expose] def build (paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered) (boundary :
+@[expose] def build (paired : PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered) (boundary :
   RootContinuation.NewtonRequestedBoundary.BoundaryPreparation preparation i j target radius floor) :
     TerminalExteriorBudget paired boundary := by
   have positive : 0 < target := (Fraction.Order.Arithmetic.mul_pos_direct boundary.fine.positive (by
       decide : (0 : Fraction.Rational) < 4)).trans_eq
     (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))
-  let first := Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank.build boundary.domains
+  let first := PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank.build boundary.domains
     (Periods.PeriodMatrix.standardDifferential i)
-  let second := Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank.build boundary.domains
+  let second := PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank.build boundary.domains
     (Periods.PeriodMatrix.standardDifferential j)
   let weight := 4 * max
-    (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
+    (PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
       paired) boundary.fine.family.single.grid.shrunk.included first)
-    (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
+    (PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
       paired) boundary.fine.family.single.grid.shrunk.included second)
   have weightNonnegative : 0 ≤ weight := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-    ((Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound_nonnegative
+    ((PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound_nonnegative
       (paired := paired)
-      boundary.fine.family.single.grid.shrunk.included first).trans (Purelib.Data.Rat.Fraction.Order.Basic.le_max_left _
+      boundary.fine.family.single.grid.shrunk.included first).trans (Fraction.Order.Basic.le_max_left _
         _))
-  let allowance := min target (Rational.Budget.Weighted.allowance target weight / 4)
-  have allowancePositive : 0 < allowance := Purelib.Data.Rat.Fraction.Order.Basic.lt_min positive
-    (Fraction.Order.Field.div_pos_direct (Rational.Budget.Weighted.allowance_positive positive weightNonnegative) (by
+  let allowance := min target (Weighted.allowance target weight / 4)
+  have allowancePositive : 0 < allowance := Fraction.Order.Basic.lt_min positive
+    (Fraction.Order.Field.div_pos_direct (Weighted.allowance_positive positive weightNonnegative) (by
       decide))
   refine ⟨first, second, weight, rfl, allowance, rfl, allowancePositive,
-    Purelib.Data.Rat.Fraction.Order.Basic.min_le_left _ _, ?_⟩
+    Fraction.Order.Basic.min_le_left _ _, ?_⟩
   have small := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (Purelib.Data.Rat.Fraction.Order.Basic.min_le_right target (Rational.Budget.Weighted.allowance target weight / 4))
+    (Fraction.Order.Basic.min_le_right target (Weighted.allowance target weight / 4))
     (by decide : (0 : Fraction.Rational) ≤ 4)
-  have small : 2 * (allowance + allowance) ≤ Rational.Budget.Weighted.allowance target weight :=
+  have small : 2 * (allowance + allowance) ≤ Weighted.allowance target weight :=
     (show 2 * (allowance + allowance) = allowance * 4 by ring1).trans_le
       (small.trans_eq (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)))
   exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct small weightNonnegative).trans
-    (Rational.Budget.Weighted.mul_allowance_le positive.le weightNonnegative)
+    (Weighted.mul_allowance_le positive.le weightNonnegative)
 
 end TerminalExteriorBudget
 end Purelib.Curves.Hyperelliptic.Meshes.Newton

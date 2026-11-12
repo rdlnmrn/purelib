@@ -19,6 +19,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Approximation.Gaussian.Exponential.Horner
@@ -53,19 +55,19 @@ namespace Purelib.Approximation.Gaussian.Exponential.Progressive.Local.Bounds
 theorem sampleFrom_input_effect (source :
   UnitDisk.UnitDiskSamples)
     {oldIndex newIndex : Nat} (indexOrder : oldIndex ≤ newIndex) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
         (Horner.Sample.sample (source.value newIndex) oldIndex -
           Horner.Sample.sample (source.value oldIndex) oldIndex) ≤
       Budget.inputErrorScale * (1 / 4 : Fraction.Rational) ^ oldIndex := by
-  have sensitivity := Horner.Sample.sample_input_close
+  have sensitivity := Sample.sample_input_close
     (source.value newIndex) (source.value oldIndex)
     (source.unit newIndex) (source.unit oldIndex) oldIndex
   have movement := source.close indexOrder
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
         (Horner.Sample.sample (source.value newIndex) oldIndex -
           Horner.Sample.sample (source.value oldIndex) oldIndex) ≤
-        16 * Data.Gaussian.Norm.Basic.normSq (source.value newIndex - source.value oldIndex) := sensitivity
+        16 * Basic.normSq (source.value newIndex - source.value oldIndex) := sensitivity
     _ ≤ 16 * Geometric.Basic.quarterRadius 4 oldIndex :=
       Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct movement
         (by decide)
@@ -78,23 +80,23 @@ theorem sampleFrom_input_effect (source :
 theorem sampleFrom_later_close (source :
   UnitDisk.UnitDiskSamples)
     {oldIndex newIndex : Nat} (indexOrder : oldIndex ≤ newIndex) :
-    Data.Gaussian.Norm.Basic.normSq (Sample.sampleFrom source.value newIndex -
+    Basic.normSq (Sample.sampleFrom source.value newIndex -
       Sample.sampleFrom source.value oldIndex) ≤
       Geometric.Basic.quarterRadius Budget.errorScale oldIndex := by
-  have truncation := Horner.Sample.sample_later_close
+  have truncation := Sample.sample_later_close
     (source.value newIndex) (source.unit newIndex) indexOrder
   have inputEffect := sampleFrom_input_effect source
     indexOrder
   calc
-    Data.Gaussian.Norm.Basic.normSq (Sample.sampleFrom source.value newIndex -
+    Basic.normSq (Sample.sampleFrom source.value newIndex -
         Sample.sampleFrom source.value oldIndex) ≤
-        2 * (Data.Gaussian.Norm.Basic.normSq
+        2 * (Basic.normSq
           (Horner.Sample.sample (source.value newIndex) newIndex -
             Horner.Sample.sample (source.value newIndex) oldIndex) +
-          Data.Gaussian.Norm.Basic.normSq
+          Basic.normSq
           (Horner.Sample.sample (source.value newIndex) oldIndex -
             Horner.Sample.sample (source.value oldIndex) oldIndex)) :=
-      Data.Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _
+      Bounds.normSq_sub_le_via _ _ _
     _ ≤ 2 * (Geometric.Basic.quarterRadius 10 oldIndex +
         Budget.inputErrorScale * (1 / 4 : Fraction.Rational) ^ oldIndex) :=
       Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct

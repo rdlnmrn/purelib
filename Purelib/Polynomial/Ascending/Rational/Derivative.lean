@@ -36,15 +36,15 @@ The first entry is multiplied by `factor`, the next by `factor + 1`, and so on, 
   | _, [] => []
   | factor, coefficient :: remaining =>
       (factor : Fraction.Rational) * coefficient ::
-        Purelib.Polynomial.Ascending.Rational.Derivative.derivativeFrom (factor + 1) remaining
+        Derivative.derivativeFrom (factor + 1) remaining
 
 /-- Differentiate the finite coefficient table.
 
 Discard the constant term and multiply the remaining coefficients by their positive original degrees. -/
-@[expose] def derivative (polynomial : Ascending.Rational.Basic.CoefficientPolynomial) :
-  Ascending.Rational.Basic.CoefficientPolynomial :=
+@[expose] def derivative (polynomial : Basic.CoefficientPolynomial) :
+  Basic.CoefficientPolynomial :=
   match polynomial.coefficients with
-  | [] => Ascending.Rational.Basic.zero
+  | [] => Basic.zero
   | _ :: remaining => ⟨derivativeFrom 1 remaining⟩
 
 /-- Degree-weighted table readback retains the starting factor plus degree.
@@ -53,9 +53,9 @@ The same coefficient table supplies the scalar readback. Structural recursion
 increments its starting factor exactly once per retained coefficient. -/
 theorem coefficientCoefficients_derivativeFrom :
     ∀ factor coefficients degree,
-      Ascending.Rational.Basic.coefficientCoefficients (derivativeFrom factor coefficients) degree =
+      Basic.coefficientCoefficients (derivativeFrom factor coefficients) degree =
         ((factor + degree : Nat) : Fraction.Rational) *
-          Ascending.Rational.Basic.coefficientCoefficients coefficients degree
+          Basic.coefficientCoefficients coefficients degree
   | factor, [], degree => by
       change 0 = ((factor + degree : Nat) : Fraction.Rational) * 0
       exact (Fraction.Field.mul_zero_direct _).symm
@@ -64,8 +64,8 @@ theorem coefficientCoefficients_derivativeFrom :
         ((factor + 0 : Nat) : Fraction.Rational) * coefficient
       rw [Nat.add_zero]
   | factor, coefficient :: remaining, degree + 1 => by
-      rw [derivativeFrom, Ascending.Rational.Basic.coefficientCoefficients_cons_succ,
-        Purelib.Polynomial.Ascending.Rational.Derivative.coefficientCoefficients_derivativeFrom]
+      rw [derivativeFrom, Basic.coefficientCoefficients_cons_succ,
+        Derivative.coefficientCoefficients_derivativeFrom]
       congr 1
       congr 1
       calc
@@ -78,20 +78,20 @@ theorem coefficientCoefficients_derivativeFrom :
 
 Removing the constant coefficient shifts readback by one. The degree-weighted
 tail procedure supplies the original positive natural factor at that degree. -/
-theorem coefficient_derivative (polynomial : Ascending.Rational.Basic.CoefficientPolynomial) (degree : Nat) :
-    Ascending.Rational.Basic.coefficient (derivative polynomial) degree =
-      ((degree + 1 : Nat) : Fraction.Rational) * Ascending.Rational.Basic.coefficient polynomial (degree + 1) := by
+theorem coefficient_derivative (polynomial : Basic.CoefficientPolynomial) (degree : Nat) :
+    Basic.coefficient (derivative polynomial) degree =
+      ((degree + 1 : Nat) : Fraction.Rational) * Basic.coefficient polynomial (degree + 1) := by
   cases coefficients : polynomial.coefficients with
   | nil =>
-      unfold Ascending.Rational.Basic.coefficient derivative
+      unfold Basic.coefficient derivative
       rw [coefficients]
       change 0 = ((degree + 1 : Nat) : Fraction.Rational) * 0
       exact (Fraction.Field.mul_zero_direct _).symm
   | cons head tail =>
-      unfold Ascending.Rational.Basic.coefficient
+      unfold Basic.coefficient
       rw [derivative, coefficients,
         coefficientCoefficients_derivativeFrom]
-      rw [Ascending.Rational.Basic.coefficientCoefficients_cons_succ]
+      rw [Basic.coefficientCoefficients_cons_succ]
       rw [Nat.add_comm 1 degree]
 
 /-- Increasing every natural degree weight adds the retained coefficient table.
@@ -101,11 +101,11 @@ Structural recursion preserves the original order and unmatched finite tail. -/
 theorem derivativeFrom_succ_eq_add : ∀ (factor : Nat)
     (coefficients : List Fraction.Rational),
     derivativeFrom (factor + 1) coefficients =
-      Ascending.Rational.Basic.addCoefficients (derivativeFrom factor coefficients) coefficients
+      Basic.addCoefficients (derivativeFrom factor coefficients) coefficients
   | factor, [] => rfl
   | factor, coefficient :: remaining => by
-      rw [derivativeFrom, derivativeFrom, Ascending.Rational.Basic.addCoefficients,
-        Purelib.Polynomial.Ascending.Rational.Derivative.derivativeFrom_succ_eq_add (factor + 1) remaining]
+      rw [derivativeFrom, derivativeFrom, Basic.addCoefficients,
+        Derivative.derivativeFrom_succ_eq_add (factor + 1) remaining]
       congr 1
       rw [NatCast.add]
       ring1
@@ -114,86 +114,86 @@ theorem derivativeFrom_succ_eq_add : ∀ (factor : Nat)
 
 The degree-weighted convolution splits into the convolution with the left derivative and the convolution with the right
 derivative. -/
-theorem coefficient_derivative_mul (left right : Ascending.Rational.Basic.CoefficientPolynomial) (degree : Nat) :
-    Ascending.Rational.Basic.coefficient (derivative (Ascending.Rational.Basic.mul left right)) degree =
-      Ascending.Rational.Basic.coefficient
-        (Ascending.Rational.Basic.add (Ascending.Rational.Basic.mul (derivative left) right)
-          (Ascending.Rational.Basic.mul left (derivative right))) degree := open Purelib.Algebra in by
-  rw [coefficient_derivative, Ascending.Rational.Convolution.coefficient_mul, Ascending.Rational.Basic.coefficient_add,
-    Ascending.Rational.Convolution.coefficient_mul, Ascending.Rational.Convolution.coefficient_mul]
-  rw [Ascending.Rational.Convolution.convolution_derivative_identity
-    (fun index => Ascending.Rational.Basic.coefficient left index)
-    (fun index => Ascending.Rational.Basic.coefficient right index) degree]
+theorem coefficient_derivative_mul (left right : Basic.CoefficientPolynomial) (degree : Nat) :
+    Basic.coefficient (derivative (Basic.mul left right)) degree =
+      Basic.coefficient
+        (Basic.add (Basic.mul (derivative left) right)
+          (Basic.mul left (derivative right))) degree := open Purelib.Algebra in by
+  rw [coefficient_derivative, Convolution.coefficient_mul, Basic.coefficient_add,
+    Convolution.coefficient_mul, Convolution.coefficient_mul]
+  rewrite [FiniteSum.Prefix.coordinateSum_eq_prefixSum,
+    FiniteSum.Prefix.coordinateSum_eq_prefixSum, FiniteSum.Prefix.coordinateSum_eq_prefixSum,
+    FiniteSum.Prefix.convolution_derivative_identity]
   apply congrArg₂ (· + ·)
-  · apply FiniteSum.Prefix.coordinateSum_congr
-    intro index
+  · apply FiniteSum.Prefix.prefixSum_congr
+    intro index _
     rw [coefficient_derivative]
-  · apply FiniteSum.Prefix.coordinateSum_congr
-    intro index
+  · apply FiniteSum.Prefix.prefixSum_congr
+    intro index _
     rw [coefficient_derivative]
     ring1
 
 /-- The finite polynomial derivative satisfies the product rule coefficientwise. -/
-theorem derivative_mul (left right : Ascending.Rational.Basic.CoefficientPolynomial) :
-    Ascending.Rational.Coefficientwise.CoefficientwiseEqual (derivative (Ascending.Rational.Basic.mul left right))
-      (Ascending.Rational.Basic.add (Ascending.Rational.Basic.mul (derivative left) right)
-        (Ascending.Rational.Basic.mul left (derivative right))) :=
+theorem derivative_mul (left right : Basic.CoefficientPolynomial) :
+    Coefficientwise.CoefficientwiseEqual (derivative (Basic.mul left right))
+      (Basic.add (Basic.mul (derivative left) right)
+        (Basic.mul left (derivative right))) :=
   coefficient_derivative_mul left right
 
 /-- Differentiation preserves coefficientwise equality. -/
-theorem coefficientwise_derivative {left right : Ascending.Rational.Basic.CoefficientPolynomial}
-    (equal : Ascending.Rational.Coefficientwise.CoefficientwiseEqual left right) :
-    Ascending.Rational.Coefficientwise.CoefficientwiseEqual (derivative left) (derivative right) := by
+theorem coefficientwise_derivative {left right : Basic.CoefficientPolynomial}
+    (equal : Coefficientwise.CoefficientwiseEqual left right) :
+    Coefficientwise.CoefficientwiseEqual (derivative left) (derivative right) := by
   intro degree
   rw [coefficient_derivative, coefficient_derivative,
     equal (degree + 1)]
 
 /-- The derivative of the zero polynomial is coefficientwise zero. -/
-theorem derivative_zero : Ascending.Rational.Coefficientwise.CoefficientwiseEqual (derivative
-  Ascending.Rational.Basic.zero) Ascending.Rational.Basic.zero := by
+theorem derivative_zero : Coefficientwise.CoefficientwiseEqual (derivative
+  Basic.zero) Basic.zero := by
   intro degree
-  rw [coefficient_derivative, Ascending.Rational.Coefficientwise.coefficient_zero,
-    Ascending.Rational.Coefficientwise.coefficient_zero,
+  rw [coefficient_derivative, Coefficientwise.coefficient_zero,
+    Coefficientwise.coefficient_zero,
     Fraction.Field.mul_zero_direct]
 
 /-- The derivative of a constant polynomial is coefficientwise zero. -/
 theorem derivative_constant (value : Fraction.Rational) :
-    Ascending.Rational.Coefficientwise.CoefficientwiseEqual (derivative (Ascending.Rational.Basic.constant value))
-      Ascending.Rational.Basic.zero := by
+    Coefficientwise.CoefficientwiseEqual (derivative (Basic.constant value))
+      Basic.zero := by
   intro degree
-  rw [coefficient_derivative, Ascending.Rational.Coefficientwise.coefficient_zero,
-    Ascending.Rational.Coefficientwise.coefficient_constant]
+  rw [coefficient_derivative, Coefficientwise.coefficient_zero,
+    Coefficientwise.coefficient_constant]
   rw [if_neg ((fun same : degree + 1 = 0 => Nat.noConfusion same)),
     Fraction.Field.mul_zero_direct]
 
 /-- Differentiation preserves addition coefficientwise. -/
-theorem derivative_add (left right : Ascending.Rational.Basic.CoefficientPolynomial) :
-    Ascending.Rational.Coefficientwise.CoefficientwiseEqual (derivative (Ascending.Rational.Basic.add left right))
-      (Ascending.Rational.Basic.add (derivative left) (derivative right)) := by
+theorem derivative_add (left right : Basic.CoefficientPolynomial) :
+    Coefficientwise.CoefficientwiseEqual (derivative (Basic.add left right))
+      (Basic.add (derivative left) (derivative right)) := by
   intro degree
-  rw [coefficient_derivative, Ascending.Rational.Basic.coefficient_add, Ascending.Rational.Basic.coefficient_add,
+  rw [coefficient_derivative, Basic.coefficient_add, Basic.coefficient_add,
     coefficient_derivative, coefficient_derivative]
   ring1
 
 /-- Differentiation commutes with rational scaling coefficientwise. -/
-theorem derivative_scale (factor : Fraction.Rational) (polynomial : Ascending.Rational.Basic.CoefficientPolynomial) :
-    Ascending.Rational.Coefficientwise.CoefficientwiseEqual (derivative (Ascending.Rational.Basic.scale factor
+theorem derivative_scale (factor : Fraction.Rational) (polynomial : Basic.CoefficientPolynomial) :
+    Coefficientwise.CoefficientwiseEqual (derivative (Basic.scale factor
       polynomial))
-      (Ascending.Rational.Basic.scale factor (derivative polynomial)) := by
+      (Basic.scale factor (derivative polynomial)) := by
   intro degree
-  rw [coefficient_derivative, Ascending.Rational.Basic.coefficient_scale, Ascending.Rational.Basic.coefficient_scale,
+  rw [coefficient_derivative, Basic.coefficient_scale, Basic.coefficient_scale,
     coefficient_derivative]
   ring1
 
 /-- Differentiating a positive-degree monomial lowers the degree and multiplies its coefficient by the original degree.
 -/
 theorem derivative_monomial_succ (degree : Nat) (value : Fraction.Rational) :
-    Ascending.Rational.Coefficientwise.CoefficientwiseEqual (derivative (Ascending.Rational.Monomial.monomial (degree +
+    Coefficientwise.CoefficientwiseEqual (derivative (Monomial.monomial (degree +
       1) value))
-      (Ascending.Rational.Monomial.monomial degree (((degree + 1 : Nat) : Fraction.Rational) * value)) := by
+      (Monomial.monomial degree (((degree + 1 : Nat) : Fraction.Rational) * value)) := by
   intro outputDegree
-  rw [coefficient_derivative, Ascending.Rational.Monomial.coefficient_monomial,
-    Ascending.Rational.Monomial.coefficient_monomial]
+  rw [coefficient_derivative, Monomial.coefficient_monomial,
+    Monomial.coefficient_monomial]
   by_cases equal : outputDegree = degree
   · subst outputDegree
     rw [if_pos rfl, if_pos rfl]

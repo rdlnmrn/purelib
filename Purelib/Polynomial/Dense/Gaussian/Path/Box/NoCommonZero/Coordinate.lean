@@ -44,7 +44,7 @@ a positive symmetric constructive square. -/
 theorem
   coordinatePositivePower_symmetric_boundaryCoprime
     {R : Fraction.Rational} (positive : 0 < R) (n : Nat) :
-    Dense.Gaussian.Path.Box.NoCommonZero.BoundaryCoprime (Dense.Gaussian.Power.Coordinate.coordinatePositivePower n)
+    BoundaryCoprime (Power.Coordinate.coordinatePositivePower n)
       (Box.symmetric R positive.le) := open Purelib.Data in by
   have rNonzero : R ≠ 0 := positive.ne'
   have negativeRNonzero : -R ≠ 0 := by
@@ -54,37 +54,37 @@ theorem
     exact rNonzero positiveZero
   constructor
   · change (PolynomialEdge.ofLine
-      (Dense.Gaussian.Power.Coordinate.coordinatePositivePower n)
+      (Power.Coordinate.coordinatePositivePower n)
       (Gaussian.Cast.Imaginary.horizontalBase (-R)) Gaussian.Constants.horizontalDirection (-R) R).Coprime
     apply PolynomialEdge.ofLine_coprime_of_eval_ne_zero
     intro t
-    rw [Affine.Axis.line_horizontal, Dense.Gaussian.Power.Coordinate.coordinatePositivePower_eval]
+    rw [Affine.Axis.line_horizontal, Power.Coordinate.coordinatePositivePower_eval]
     exact Gaussian.Power.pow_ne_zero_direct _
-      (Purelib.Data.Gaussian.Components.Nonzero.point_ne_zero_of_im_ne_zero t (-R) negativeRNonzero) _
+      (Gaussian.Components.Nonzero.point_ne_zero_of_im_ne_zero t (-R) negativeRNonzero) _
   · change (PolynomialEdge.ofLine
-      (Dense.Gaussian.Power.Coordinate.coordinatePositivePower n)
+      (Power.Coordinate.coordinatePositivePower n)
       (Gaussian.Cast.Winding.verticalBase R) Gaussian.Constants.imaginaryUnit (-R) R).Coprime
     apply PolynomialEdge.ofLine_coprime_of_eval_ne_zero
     intro t
-    rw [Affine.Axis.line_vertical, Dense.Gaussian.Power.Coordinate.coordinatePositivePower_eval]
+    rw [Affine.Axis.line_vertical, Power.Coordinate.coordinatePositivePower_eval]
     exact Gaussian.Power.pow_ne_zero_direct _
-      (Purelib.Data.Gaussian.Components.Nonzero.point_ne_zero_of_re_ne_zero R t rNonzero) _
+      (Gaussian.Components.Nonzero.point_ne_zero_of_re_ne_zero R t rNonzero) _
   · change (PolynomialEdge.ofLine
-      (Dense.Gaussian.Power.Coordinate.coordinatePositivePower n)
+      (Power.Coordinate.coordinatePositivePower n)
       (Gaussian.Cast.Imaginary.horizontalBase R) Gaussian.Constants.horizontalDirection R (-R)).Coprime
     apply PolynomialEdge.ofLine_coprime_of_eval_ne_zero
     intro t
-    rw [Affine.Axis.line_horizontal, Dense.Gaussian.Power.Coordinate.coordinatePositivePower_eval]
+    rw [Affine.Axis.line_horizontal, Power.Coordinate.coordinatePositivePower_eval]
     exact Gaussian.Power.pow_ne_zero_direct _
-      (Purelib.Data.Gaussian.Components.Nonzero.point_ne_zero_of_im_ne_zero t R rNonzero) _
+      (Gaussian.Components.Nonzero.point_ne_zero_of_im_ne_zero t R rNonzero) _
   · change (PolynomialEdge.ofLine
-      (Dense.Gaussian.Power.Coordinate.coordinatePositivePower n)
+      (Power.Coordinate.coordinatePositivePower n)
       (Gaussian.Cast.Winding.verticalBase (-R)) Gaussian.Constants.imaginaryUnit R (-R)).Coprime
     apply PolynomialEdge.ofLine_coprime_of_eval_ne_zero
     intro t
-    rw [Affine.Axis.line_vertical, Dense.Gaussian.Power.Coordinate.coordinatePositivePower_eval]
+    rw [Affine.Axis.line_vertical, Power.Coordinate.coordinatePositivePower_eval]
     exact Gaussian.Power.pow_ne_zero_direct _
-      (Purelib.Data.Gaussian.Components.Nonzero.point_ne_zero_of_re_ne_zero (-R) t negativeRNonzero) _
+      (Gaussian.Components.Nonzero.point_ne_zero_of_re_ne_zero (-R) t negativeRNonzero) _
 end Purelib.Polynomial.Dense.Gaussian.Path.Box.NoCommonZero.Coordinate
 
 end

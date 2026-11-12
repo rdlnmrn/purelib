@@ -37,6 +37,8 @@ import Purelib.RootIsolation.SquareRoot.Grid.Walk.ChainComparison
 import Purelib.RootIsolation.SquareRoot.Grid.Walk.Vertex
 import Purelib.Tactic.Ring
 
+open Purelib.Topology.Surface.Sewing
+
 open Purelib.Algebra
 
 open Purelib.Curves
@@ -73,9 +75,9 @@ namespace BilinearPolarization
 /-- The four finite scalar readings select the complex-bilinear cross term. -/
 @[expose] def extract (value : Gaussian.Basic.Canonical → Gaussian.Basic.Canonical) : Gaussian :=
   (⟨1 / 4, 0⟩ : Gaussian.Basic.Canonical) *
-    (value 1 - value (-1) - Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.imaginary *
-      (value Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.imaginary - value
-      (-Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.imaginary)))
+    (value 1 - value (-1) - BilinearPolarization.imaginary *
+      (value BilinearPolarization.imaginary - value
+      (-BilinearPolarization.imaginary)))
 
 /-- Combine the conjugate of the first original edge valuation with a Gaussian multiple of the second. -/
 @[expose] def mix {vertices : Nat} (first second : Topology.Polygon.Stokes.OrientedEdge vertices →
@@ -89,10 +91,10 @@ theorem mix_reverse {vertices : Nat} (first second : Topology.Polygon.Stokes.Ori
     (firstAnti : ∀ edge, first edge.reverse = -first edge)
     (secondAnti : ∀ edge, second edge.reverse = -second edge) (coefficient : Gaussian.Basic.Canonical) (edge :
       Topology.Polygon.Stokes.OrientedEdge vertices) :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient
-      edge.reverse = -Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second
+    BilinearPolarization.mix first second coefficient
+      edge.reverse = -BilinearPolarization.mix first second
       coefficient edge := by
-  unfold Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix
+  unfold BilinearPolarization.mix
   rw [firstAnti, secondAnti]
   apply Gaussian.Basic.ext <;> simp only [Gaussian.Basic.conj, Gaussian.Basic.neg_re, Gaussian.Basic.neg_im,
     Gaussian.Basic.add_re, Gaussian.Basic.add_im, Gaussian.Basic.mul_re, Gaussian.Basic.mul_im] <;> ring1
@@ -102,38 +104,38 @@ theorem mix_reverse {vertices : Nat} (first second : Topology.Polygon.Stokes.Ori
 theorem word_mix {vertices : Nat} (first second : Topology.Polygon.Stokes.OrientedEdge vertices →
   Gaussian.Basic.Canonical) (coefficient : Gaussian.Basic.Canonical)
     (word : List (Topology.Polygon.Stokes.OrientedEdge vertices)) :
-    Topology.Surface.Sewing.SewingRetraction.wordValue
-      (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient)
-      word = Gaussian.Basic.conj (Topology.Surface.Sewing.SewingRetraction.wordValue first word) + coefficient
-      * Topology.Surface.Sewing.SewingRetraction.wordValue second word := by
+    SewingRetraction.wordValue
+      (BilinearPolarization.mix first second coefficient)
+      word = Gaussian.Basic.conj (SewingRetraction.wordValue first word) + coefficient
+      * SewingRetraction.wordValue second word := by
   induction word with
   | nil =>
     change (0 : Gaussian.Basic.Canonical) = Gaussian.Basic.conj 0 + coefficient * 0; rw
       [Gaussian.Basic.conj_zero, Gaussian.Basic.mul_zero, Gaussian.Basic.add_zero]
   | cons edge rest ih =>
       change (Gaussian.Basic.conj (first edge) + coefficient * second edge) +
-        Topology.Surface.Sewing.SewingRetraction.wordValue
-        (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient)
+        SewingRetraction.wordValue
+        (BilinearPolarization.mix first second coefficient)
         rest = _
-      rw [ih, Topology.Surface.Sewing.SewingRetraction.wordValue, Topology.Surface.Sewing.SewingRetraction.wordValue,
+      rw [ih, SewingRetraction.wordValue, SewingRetraction.wordValue,
         Gaussian.Basic.conj_add]
       ring1
 
 /-- The four retained scalar area readings extract exactly the original complex-bilinear determinant. -/
 theorem extract_area (aFirst bFirst aSecond bSecond : Gaussian.Basic.Canonical) :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
+    BilinearPolarization.extract (fun coefficient =>
       Path.BoundaryRibbon.area (Gaussian.Basic.conj aFirst + coefficient * aSecond)
       (Gaussian.Basic.conj bFirst + coefficient * bSecond)) =
       aFirst * bSecond - bFirst * aSecond := by
   let value := fun coefficient => Path.BoundaryRibbon.area (Gaussian.Basic.conj aFirst + coefficient * aSecond)
     (Gaussian.Basic.conj bFirst + coefficient * bSecond)
   have cross : value 1 - value (-1) -
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.imaginary * (value
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.imaginary - value
-    (-Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.imaginary)) =
+    BilinearPolarization.imaginary * (value
+    BilinearPolarization.imaginary - value
+    (-BilinearPolarization.imaginary)) =
       (⟨4, 0⟩ : Gaussian.Basic.Canonical) * (aFirst * bSecond - bFirst * aSecond) := by
     apply Gaussian.Basic.ext <;>
-      simp only [value, Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.imaginary,
+      simp only [value, BilinearPolarization.imaginary,
         Path.BoundaryRibbon.area, Gaussian.Basic.conj, Gaussian.Basic.add_re, Gaussian.Basic.add_im,
         Gaussian.Basic.sub_re, Gaussian.Basic.sub_im, Gaussian.Basic.mul_re, Gaussian.Basic.mul_im,
         Gaussian.Basic.neg_re, Gaussian.Basic.neg_im, Gaussian.Basic.one_re, Gaussian.Basic.one_im] <;> ring1
@@ -143,52 +145,52 @@ theorem extract_area (aFirst bFirst aSecond bSecond : Gaussian.Basic.Canonical) 
 /-- Pointwise equal original scalar readings have equal finite polarization extractions. -/
 theorem extract_congr {first second : Gaussian.Basic.Canonical → Gaussian.Basic.Canonical} (same : ∀ coefficient, first
   coefficient = second coefficient) :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract first =
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract second := by
-  unfold Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract
-  rw [same 1, same (-1), same Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.imaginary,
-    same (-Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.imaginary)]
+    BilinearPolarization.extract first =
+      BilinearPolarization.extract second := by
+  unfold BilinearPolarization.extract
+  rw [same 1, same (-1), same BilinearPolarization.imaginary,
+    same (-BilinearPolarization.imaginary)]
 
 /-- Finite polarization commutes with the original finite indexed sum. -/
 theorem extract_sum {count : Nat} (values : Gaussian.Basic.Canonical → Fin count → Gaussian.Basic.Canonical) :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
+    BilinearPolarization.extract (fun coefficient =>
       FiniteSum.Fin.sumFin (values coefficient)) = FiniteSum.Fin.sumFin (fun index =>
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient => values
+      BilinearPolarization.extract (fun coefficient => values
       coefficient index)) := by
-  unfold Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract
+  unfold BilinearPolarization.extract
   rw [FiniteSum.Fin.sumFin_mul_left, FiniteSum.Fin.sumFin_sub, FiniteSum.Fin.sumFin_sub, FiniteSum.Fin.sumFin_mul_left,
     FiniteSum.Fin.sumFin_sub]
 
 end BilinearPolarization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
-    {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered}
+    BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {ordered : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
+    {paired : OrderedBranchPairs.Ordered.Paired ordered}
 
 /-- The full right-hand side after moving only the finite exterior area.
 Internal excursions, the reference hole, terminal data and signed faces are
 still explicit. This is not a zero-residual certificate. -/
-@[expose] def surfaceResidual (_prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+@[expose] def surfaceResidual (_prepared : PeriodPrograms.Prepared paired)
   (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) : Gaussian :=
   paired.rows.internalArea value + paired.ending.internalArea value +
-    Path.BoundaryRibbon.area (Topology.Surface.Sewing.SewingRetraction.wordValue value paired.rows.word)
-      (-Topology.Surface.Sewing.SewingRetraction.wordValue value (paired.reference.hole.liftedBoundary lifted.vertices
+    Path.BoundaryRibbon.area (SewingRetraction.wordValue value paired.rows.word)
+      (-SewingRetraction.wordValue value (paired.reference.hole.liftedBoundary lifted.vertices
       lifted.edges)) +
-    paired.ending.exteriorArea value (Topology.Surface.Sewing.SewingRetraction.wordValue value paired.rows.word) +
+    paired.ending.exteriorArea value (SewingRetraction.wordValue value paired.rows.word) +
     Topology.Mesh.RetracingWords.AreaTerm.total value ordered.prepared.compiled.areaTerms -
     lifted.edges.chainArea lifted.vertices value base.bank.exterior sheet
 
 /-- The original corrected A/B pairing equals the complete retained surface residual. -/
-theorem pairing_eq_surfaceResidual (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+theorem pairing_eq_surfaceResidual (prepared : PeriodPrograms.Prepared paired)
   (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
     (anti : ∀ edge, value edge.reverse = -value edge) : prepared.pairing value =
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.surfaceResidual prepared value := by
+      BilinearIdentity.surfaceResidual prepared value := by
   have formula := prepared.area_formula value anti
-  unfold Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.surfaceResidual
+  unfold BilinearIdentity.surfaceResidual
   rw [← formula]
   ring1
 
@@ -196,99 +198,99 @@ theorem pairing_eq_surfaceResidual (prepared : Hyperelliptic.Meshes.PuncturedGri
 retained interior, hole, exterior and face terms cancel against the fixed
 exterior chain area. This is the simplification that makes the first relation
 the polarization of the actual A/B determinant. -/
-theorem surfaceResidual_eq_correctedArea (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared
+theorem surfaceResidual_eq_correctedArea (prepared : PeriodPrograms.Prepared
   paired)
     (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
     (anti : ∀ edge, value edge.reverse = -value edge) :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.surfaceResidual prepared value =
+    BilinearIdentity.surfaceResidual prepared value =
       paired.rows.correctedArea value :=
-  (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.pairing_eq_surfaceResidual prepared value anti).symm.trans
+  (BilinearIdentity.pairing_eq_surfaceResidual prepared value anti).symm.trans
     (prepared.pairing_eq value)
 
 /-- Polarize the complete original physical and signed-face surface residual in the two supplied differential
 valuations. -/
-@[expose] def bilinearResidual (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+@[expose] def bilinearResidual (prepared : PeriodPrograms.Prepared paired)
   (first second : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) : Gaussian :=
-  Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.surfaceResidual prepared
-    (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient))
+  BilinearPolarization.extract (fun coefficient =>
+    BilinearIdentity.surfaceResidual prepared
+    (BilinearPolarization.mix first second coefficient))
 
 /-- Exact two-differential determinant identity for the corrected walks,
 with their complete polarized physical and face residual. -/
-theorem bilinear_formula (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired) (first
+theorem bilinear_formula (prepared : PeriodPrograms.Prepared paired) (first
   second : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
     (firstAnti : ∀ edge, first edge.reverse = -first edge)
     (secondAnti : ∀ edge, second edge.reverse = -second edge) :
     FiniteSum.Fin.sumFin (fun index : Fin genus =>
-      Topology.Surface.Sewing.SewingRetraction.wordValue first (prepared.aWord index) *
-        Topology.Surface.Sewing.SewingRetraction.wordValue second (prepared.bWord index) -
-      Topology.Surface.Sewing.SewingRetraction.wordValue first (prepared.bWord index) *
-        Topology.Surface.Sewing.SewingRetraction.wordValue second (prepared.aWord index)) =
-        Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.bilinearResidual prepared first second := by
-  have polarized := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract_congr (fun
+      SewingRetraction.wordValue first (prepared.aWord index) *
+        SewingRetraction.wordValue second (prepared.bWord index) -
+      SewingRetraction.wordValue first (prepared.bWord index) *
+        SewingRetraction.wordValue second (prepared.aWord index)) =
+        BilinearIdentity.bilinearResidual prepared first second := by
+  have polarized := BilinearPolarization.extract_congr (fun
     coefficient =>
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.pairing_eq_surfaceResidual prepared
-      (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient)
-      (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix_reverse first second
+    BilinearIdentity.pairing_eq_surfaceResidual prepared
+      (BilinearPolarization.mix first second coefficient)
+      (BilinearPolarization.mix_reverse first second
         firstAnti secondAnti coefficient))
-  change Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
+  change BilinearPolarization.extract (fun coefficient =>
     FiniteSum.Fin.sumFin (fun index : Fin genus =>
-    Path.BoundaryRibbon.area (Topology.Surface.Sewing.SewingRetraction.wordValue
-      (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient)
+    Path.BoundaryRibbon.area (SewingRetraction.wordValue
+      (BilinearPolarization.mix first second coefficient)
       (prepared.aWord index))
-      (Topology.Surface.Sewing.SewingRetraction.wordValue
-        (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient)
+      (SewingRetraction.wordValue
+        (BilinearPolarization.mix first second coefficient)
         (prepared.bWord index)))) =
-        Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.bilinearResidual prepared first second at polarized
-  rw [Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract_sum] at polarized
+        BilinearIdentity.bilinearResidual prepared first second at polarized
+  rw [BilinearPolarization.extract_sum] at polarized
   apply Eq.trans _ polarized
   apply FiniteSum.Fin.sumFin_congr
   intro index
   symm
   calc
-    _ = Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-        Path.BoundaryRibbon.area (Gaussian.Basic.conj (Topology.Surface.Sewing.SewingRetraction.wordValue first
-          (prepared.aWord index)) + coefficient * Topology.Surface.Sewing.SewingRetraction.wordValue second
+    _ = BilinearPolarization.extract (fun coefficient =>
+        Path.BoundaryRibbon.area (Gaussian.Basic.conj (SewingRetraction.wordValue first
+          (prepared.aWord index)) + coefficient * SewingRetraction.wordValue second
           (prepared.aWord index))
-          (Gaussian.Basic.conj (Topology.Surface.Sewing.SewingRetraction.wordValue first (prepared.bWord
-            index)) + coefficient * Topology.Surface.Sewing.SewingRetraction.wordValue second (prepared.bWord index)))
+          (Gaussian.Basic.conj (SewingRetraction.wordValue first (prepared.bWord
+            index)) + coefficient * SewingRetraction.wordValue second (prepared.bWord index)))
             :=
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract_congr (fun coefficient =>
+      BilinearPolarization.extract_congr (fun coefficient =>
         by
-        rw [Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.word_mix,
-          Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.word_mix])
-    _ = _ := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract_area _ _ _ _
+        rw [BilinearPolarization.word_mix,
+          BilinearPolarization.word_mix])
+    _ = _ := BilinearPolarization.extract_area _ _ _ _
 
 /-- The first-bilinear residual is the polarization of the actual corrected A/B
 word area, with no surface residual left in the way. -/
 theorem bilinearResidual_eq_extract_correctedArea (prepared :
-  Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+  PeriodPrograms.Prepared paired)
     (first second : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
     (firstAnti : ∀ edge, first edge.reverse = -first edge)
     (secondAnti : ∀ edge, second edge.reverse = -second edge) :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.bilinearResidual prepared first second =
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-        paired.rows.correctedArea (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix
+    BilinearIdentity.bilinearResidual prepared first second =
+      BilinearPolarization.extract (fun coefficient =>
+        paired.rows.correctedArea (BilinearPolarization.mix
           first second coefficient)) := by
-  unfold Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.bilinearResidual
-  exact Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract_congr (fun coefficient
+  unfold BilinearIdentity.bilinearResidual
+  exact BilinearPolarization.extract_congr (fun coefficient
     =>
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.surfaceResidual_eq_correctedArea prepared _
-      (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix_reverse first second
+    BilinearIdentity.surfaceResidual_eq_correctedArea prepared _
+      (BilinearPolarization.mix_reverse first second
         firstAnti secondAnti coefficient))
 
 /-- The first-bilinear residual is antisymmetric in its two differential
 directions: swapping them negates it. This is the exact symplectic skewness of
 the word pairing, proved from its explicit sum form. -/
-theorem bilinearResidual_swap (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+theorem bilinearResidual_swap (prepared : PeriodPrograms.Prepared paired)
     (first second : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
     (firstAnti : ∀ edge, first edge.reverse = -first edge)
     (secondAnti : ∀ edge, second edge.reverse = -second edge) :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.bilinearResidual prepared first second =
-      -Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.bilinearResidual prepared second first := by
-  rw [← Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.bilinear_formula prepared first second firstAnti
+    BilinearIdentity.bilinearResidual prepared first second =
+      -BilinearIdentity.bilinearResidual prepared second first := by
+  rw [← BilinearIdentity.bilinear_formula prepared first second firstAnti
     secondAnti,
-    ← Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.bilinear_formula prepared second first secondAnti
+    ← BilinearIdentity.bilinear_formula prepared second first secondAnti
       firstAnti]
   rw [← FiniteSum.Fin.sumFin_neg]
   apply FiniteSum.Fin.sumFin_congr
@@ -298,24 +300,24 @@ theorem bilinearResidual_swap (prepared : Hyperelliptic.Meshes.PuncturedGrid.Pai
 /-- The diagonal first-bilinear residual vanishes: a direction paired with
 itself has zero symplectic product. This is the exact diagonal cancellation
 consumed by the genus-one and genus-two first-relation reductions. -/
-theorem bilinearResidual_self_zero (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+theorem bilinearResidual_self_zero (prepared : PeriodPrograms.Prepared paired)
     (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
     (anti : ∀ edge, value edge.reverse = -value edge) :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.bilinearResidual prepared value value = 0 := by
-  have skew : Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.bilinearResidual prepared value value =
-      -Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.bilinearResidual prepared value value :=
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.bilinearResidual_swap prepared value value anti anti
-  have doubled : Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.bilinearResidual prepared value value +
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.bilinearResidual prepared value value = 0 := by
+    BilinearIdentity.bilinearResidual prepared value value = 0 := by
+  have skew : BilinearIdentity.bilinearResidual prepared value value =
+      -BilinearIdentity.bilinearResidual prepared value value :=
+    BilinearIdentity.bilinearResidual_swap prepared value value anti anti
+  have doubled : BilinearIdentity.bilinearResidual prepared value value +
+      BilinearIdentity.bilinearResidual prepared value value = 0 := by
     nth_rewrite 1 [skew]
     rw [neg_add_cancel]
-  have factor : Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.bilinearResidual prepared value value * (2 :
+  have factor : BilinearIdentity.bilinearResidual prepared value value * (2 :
     Gaussian.Basic.Canonical) =
       (0 : Gaussian.Basic.Canonical) * 2 := by
-    have mul2 : Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.bilinearResidual prepared value value * (2 :
+    have mul2 : BilinearIdentity.bilinearResidual prepared value value * (2 :
       Gaussian.Basic.Canonical) =
-        Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.bilinearResidual prepared value value +
-          Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.bilinearResidual prepared value value := by
+        BilinearIdentity.bilinearResidual prepared value value +
+          BilinearIdentity.bilinearResidual prepared value value := by
       ring1
     rw [mul2, doubled, Gaussian.Basic.zero_mul]
   exact Gaussian.Field.mul_right_cancel_of_ne
@@ -332,8 +334,8 @@ open Purelib.Data
 
 The four original coefficient evaluations use the same extraction factors.
 Scalar subtraction distributes over their retained Gaussian combination. -/
-public theorem BilinearPolarization.extract_sub (first second : Data.Gaussian.Basic.Canonical →
-  Data.Gaussian.Basic.Canonical) :
+public theorem BilinearPolarization.extract_sub (first second : Gaussian.Basic.Canonical →
+  Gaussian.Basic.Canonical) :
     BilinearPolarization.extract (fun coefficient => first coefficient - second coefficient) =
       BilinearPolarization.extract first - BilinearPolarization.extract second := by
   unfold BilinearPolarization.extract

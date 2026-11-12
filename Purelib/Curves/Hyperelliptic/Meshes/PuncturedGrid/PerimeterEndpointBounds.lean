@@ -61,6 +61,10 @@ import Purelib.Riemann.Paths.RectangularMatchedVerticalSideTrace
 import Purelib.Riemann.Readings.RectangularObservationAssembly
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-! Actual normalized perimeter endpoint corrections have a common-stage
@@ -102,7 +106,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleAreaRemainder (sideAr
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_ite_eq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
@@ -127,13 +131,13 @@ open Purelib.Data.Gaussian.Basic (Canonical)
 /-- The endpoint-area discrepancy is bounded by the retained corner magnitudes and endpoint error, independently of the
 trace length. -/
 private theorem endpoint_bound {count : Nat} {values : Fin (count + 1) → Stokes.PrimitivePoint}
-    (sample : CenteredBilinearPath.Sample values) {first last : Stokes.PrimitivePoint} {magnitude error :
-      Fraction.Rational}
+    (sample : Sample values) {first last : Stokes.PrimitivePoint} {magnitude error :
+      Rational}
     (nonnegative : 0 ≤ magnitude) (errorNonnegative : 0 ≤ error) (small : error ≤ 1)
     (firstBound : PrimitivePoint.Bounded first magnitude) (lastBound : PrimitivePoint.Bounded last magnitude)
     (firstError : PrimitivePoint.Bounded ((values 0).sub first) error)
     (lastError : PrimitivePoint.Bounded ((values (Fin.last count)).sub last) error) :
-    Data.Gaussian.Norm.Basic.normSq (sample.endpoint - Stokes.edgeArea first last) ≤ 32 * (magnitude + 1) *
+    Basic.normSq (sample.endpoint - Stokes.edgeArea first last) ≤ 32 * (magnitude + 1) *
       error := by
   have equal : sample.endpoint = Stokes.edgeArea (values 0) (values (Fin.last count)) := by
     rw [sample.endpoint_eq]
@@ -145,183 +149,183 @@ private theorem endpoint_bound {count : Nat} {values : Fin (count + 1) → Stoke
 
 variable
     (firstMagnitude : FaceMagnitudeBank domains
-      (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential i))
+      (PeriodMatrix.standardDifferential i))
     (secondMagnitude : FaceMagnitudeBank domains
-      (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential j))
+      (PeriodMatrix.standardDifferential j))
     (firstLater : firstMagnitude.index ≤ stage) (secondLater : secondMagnitude.index ≤ stage)
     {tolerance : Rational} (positive : 0 < tolerance) (small : 4 * tolerance ≤ 1)
-    {liBounds : Purelib.Riemann.Comparison.PrimitiveEdgeComparison.PrimitiveOverlapBounds
+    {liBounds : Riemann.Comparison.PrimitiveEdgeComparison.PrimitiveOverlapBounds
       (base.faces.regulars[position.val]'position.isLt).clearance
-      (Purelib.Riemann.Readings.PreparedPrimitiveSamples.differentialNumerator
-        (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential i))}
-    (li : Purelib.Riemann.Integration.RectangularPrimitiveAccuracy.GridPrimitiveAccuracy liBounds
+      (Riemann.Readings.PreparedPrimitiveSamples.differentialNumerator
+        (PeriodMatrix.standardDifferential i))}
+    (li : Riemann.Integration.RectangularPrimitiveAccuracy.GridPrimitiveAccuracy liBounds
       ((domains.get position).domain sheet).steps tolerance) (liLater : li.index ≤ stage)
-    {ljBounds : Purelib.Riemann.Comparison.PrimitiveEdgeComparison.PrimitiveOverlapBounds
+    {ljBounds : Riemann.Comparison.PrimitiveEdgeComparison.PrimitiveOverlapBounds
       (base.faces.regulars[position.val]'position.isLt).clearance
-      (Purelib.Riemann.Readings.PreparedPrimitiveSamples.differentialNumerator
-        (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential j))}
-    (lj : Purelib.Riemann.Integration.RectangularPrimitiveAccuracy.GridPrimitiveAccuracy ljBounds
+      (Riemann.Readings.PreparedPrimitiveSamples.differentialNumerator
+        (PeriodMatrix.standardDifferential j))}
+    (lj : Riemann.Integration.RectangularPrimitiveAccuracy.GridPrimitiveAccuracy ljBounds
       ((domains.get position).domain sheet).steps tolerance) (ljLater : lj.index ≤ stage)
     {traces : PerimeterTraces ((request.entries.get
       sheet).meshes.entries.get position)}
     (samples : Centered traces
-      (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.faceValues cache.normalize i j position
+      (FacePerimeters.faceValues cache.normalize i j position
       sheet))
 
 include firstLater secondLater positive small liLater ljLater
 
 /-- The actual normalized bottom endpoint contribution meets the common corner-error bound at every paid stage. -/
 theorem bottom_endpoint_bound :
-    Data.Gaussian.Norm.Basic.normSq (samples.bottom.endpoint - Numerics.sideChord cache.normalize i j position
+    Basic.normSq (samples.bottom.endpoint - Numerics.sideChord cache.normalize i j position
       sheet .bottom) ≤
       32 * (firstMagnitude.bound + secondMagnitude.bound + 1) * (4 * tolerance) := by
   apply endpoint_bound samples.bottom (add_nonneg
     firstMagnitude.nonnegative secondMagnitude.nonnegative)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) positive.le) small
+    (Arithmetic.mul_nonneg_direct (by decide) positive.le) small
     (Numerics.normalized_corner_pair_bound firstMagnitude secondMagnitude firstLater secondLater cache position sheet 0)
     (Numerics.normalized_corner_pair_bound firstMagnitude secondMagnitude firstLater secondLater cache position sheet 1)
   · constructor
     · have estimate := PerimeterCornerReadings.perimeter_bottom_first_bound
         (GridPrimitiveAccuracy.atIndex li stage liLater) (cache.normalize.atDomain position sheet i) traces
       rw [traces.bottom.leftReadings_value] at estimate
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
-      exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (GridPrimitiveAccuracy.atIndex li stage liLater).accurate.le (by decide : (0 : Fraction.Rational) ≤ 4))
+      rw [Basic.normSq_eq_canonical] at estimate
+      exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (GridPrimitiveAccuracy.atIndex li stage liLater).accurate.le (by decide : (0 : Rational) ≤ 4))
     · have estimate := PerimeterCornerReadings.perimeter_bottom_first_bound
         (GridPrimitiveAccuracy.atIndex lj stage ljLater) (cache.normalize.atDomain position sheet j) traces
       rw [traces.bottom.leftReadings_value] at estimate
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
-      exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (GridPrimitiveAccuracy.atIndex lj stage ljLater).accurate.le (by decide : (0 : Fraction.Rational) ≤ 4))
+      rw [Basic.normSq_eq_canonical] at estimate
+      exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (GridPrimitiveAccuracy.atIndex lj stage ljLater).accurate.le (by decide : (0 : Rational) ≤ 4))
   · constructor
     · have estimate := PerimeterCornerReadings.perimeter_bottom_last_bound
         (GridPrimitiveAccuracy.atIndex li stage liLater) (cache.normalize.atDomain position sheet i) traces
       rw [traces.bottom.leftReadings_value] at estimate
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
-      exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (GridPrimitiveAccuracy.atIndex li stage liLater).accurate.le (by decide : (0 : Fraction.Rational) ≤ 4))
+      rw [Basic.normSq_eq_canonical] at estimate
+      exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (GridPrimitiveAccuracy.atIndex li stage liLater).accurate.le (by decide : (0 : Rational) ≤ 4))
     · have estimate := PerimeterCornerReadings.perimeter_bottom_last_bound
         (GridPrimitiveAccuracy.atIndex lj stage ljLater) (cache.normalize.atDomain position sheet j) traces
       rw [traces.bottom.leftReadings_value] at estimate
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
-      exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (GridPrimitiveAccuracy.atIndex lj stage ljLater).accurate.le (by decide : (0 : Fraction.Rational) ≤ 4))
+      rw [Basic.normSq_eq_canonical] at estimate
+      exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (GridPrimitiveAccuracy.atIndex lj stage ljLater).accurate.le (by decide : (0 : Rational) ≤ 4))
 
 /-- The actual normalized top endpoint contribution meets the common corner-error bound at every paid stage. -/
 theorem top_endpoint_bound :
-    Data.Gaussian.Norm.Basic.normSq (samples.top.endpoint - Numerics.sideChord cache.normalize i j position
+    Basic.normSq (samples.top.endpoint - Numerics.sideChord cache.normalize i j position
       sheet .top) ≤
       32 * (firstMagnitude.bound + secondMagnitude.bound + 1) * (4 * tolerance) := by
   apply endpoint_bound samples.top (add_nonneg
     firstMagnitude.nonnegative secondMagnitude.nonnegative)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) positive.le) small
+    (Arithmetic.mul_nonneg_direct (by decide) positive.le) small
     (Numerics.normalized_corner_pair_bound firstMagnitude secondMagnitude firstLater secondLater cache position sheet 3)
     (Numerics.normalized_corner_pair_bound firstMagnitude secondMagnitude firstLater secondLater cache position sheet 2)
   · constructor
     · have estimate := PerimeterCornerReadings.perimeter_top_first_bound
         (GridPrimitiveAccuracy.atIndex li stage liLater) (cache.normalize.atDomain position sheet i) traces
       rw [traces.top.leftReadings_value] at estimate
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
-      exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (GridPrimitiveAccuracy.atIndex li stage liLater).accurate.le (by decide : (0 : Fraction.Rational) ≤ 4))
+      rw [Basic.normSq_eq_canonical] at estimate
+      exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (GridPrimitiveAccuracy.atIndex li stage liLater).accurate.le (by decide : (0 : Rational) ≤ 4))
     · have estimate := PerimeterCornerReadings.perimeter_top_first_bound
         (GridPrimitiveAccuracy.atIndex lj stage ljLater) (cache.normalize.atDomain position sheet j) traces
       rw [traces.top.leftReadings_value] at estimate
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
-      exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (GridPrimitiveAccuracy.atIndex lj stage ljLater).accurate.le (by decide : (0 : Fraction.Rational) ≤ 4))
+      rw [Basic.normSq_eq_canonical] at estimate
+      exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (GridPrimitiveAccuracy.atIndex lj stage ljLater).accurate.le (by decide : (0 : Rational) ≤ 4))
   · constructor
     · have estimate := PerimeterCornerReadings.perimeter_top_last_bound
         (GridPrimitiveAccuracy.atIndex li stage liLater) (cache.normalize.atDomain position sheet i) traces
       rw [traces.top.leftReadings_value] at estimate
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
-      exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (GridPrimitiveAccuracy.atIndex li stage liLater).accurate.le (by decide : (0 : Fraction.Rational) ≤ 4))
+      rw [Basic.normSq_eq_canonical] at estimate
+      exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (GridPrimitiveAccuracy.atIndex li stage liLater).accurate.le (by decide : (0 : Rational) ≤ 4))
     · have estimate := PerimeterCornerReadings.perimeter_top_last_bound
         (GridPrimitiveAccuracy.atIndex lj stage ljLater) (cache.normalize.atDomain position sheet j) traces
       rw [traces.top.leftReadings_value] at estimate
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
-      exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (GridPrimitiveAccuracy.atIndex lj stage ljLater).accurate.le (by decide : (0 : Fraction.Rational) ≤ 4))
+      rw [Basic.normSq_eq_canonical] at estimate
+      exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (GridPrimitiveAccuracy.atIndex lj stage ljLater).accurate.le (by decide : (0 : Rational) ≤ 4))
 
 /-- The actual normalized left endpoint contribution meets the common corner-error bound at every paid stage. -/
 theorem left_endpoint_bound :
-    Data.Gaussian.Norm.Basic.normSq (samples.left.endpoint - Numerics.sideChord cache.normalize i j position
+    Basic.normSq (samples.left.endpoint - Numerics.sideChord cache.normalize i j position
       sheet .left) ≤
       32 * (firstMagnitude.bound + secondMagnitude.bound + 1) * (4 * tolerance) := by
   apply endpoint_bound samples.left (add_nonneg
     firstMagnitude.nonnegative secondMagnitude.nonnegative)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) positive.le) small
+    (Arithmetic.mul_nonneg_direct (by decide) positive.le) small
     (Numerics.normalized_corner_pair_bound firstMagnitude secondMagnitude firstLater secondLater cache position sheet 0)
     (Numerics.normalized_corner_pair_bound firstMagnitude secondMagnitude firstLater secondLater cache position sheet 3)
   · constructor
     · have estimate := PerimeterCornerReadings.perimeter_left_first_bound
         (GridPrimitiveAccuracy.atIndex li stage liLater) (cache.normalize.atDomain position sheet i) traces
       rw [traces.left.leftReadings_value] at estimate
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
-      exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (GridPrimitiveAccuracy.atIndex li stage liLater).accurate.le (by decide : (0 : Fraction.Rational) ≤ 4))
+      rw [Basic.normSq_eq_canonical] at estimate
+      exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (GridPrimitiveAccuracy.atIndex li stage liLater).accurate.le (by decide : (0 : Rational) ≤ 4))
     · have estimate := PerimeterCornerReadings.perimeter_left_first_bound
         (GridPrimitiveAccuracy.atIndex lj stage ljLater) (cache.normalize.atDomain position sheet j) traces
       rw [traces.left.leftReadings_value] at estimate
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
-      exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (GridPrimitiveAccuracy.atIndex lj stage ljLater).accurate.le (by decide : (0 : Fraction.Rational) ≤ 4))
+      rw [Basic.normSq_eq_canonical] at estimate
+      exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (GridPrimitiveAccuracy.atIndex lj stage ljLater).accurate.le (by decide : (0 : Rational) ≤ 4))
   · constructor
     · have estimate := PerimeterCornerReadings.perimeter_left_last_bound
         (GridPrimitiveAccuracy.atIndex li stage liLater) (cache.normalize.atDomain position sheet i) traces
       rw [traces.left.leftReadings_value] at estimate
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
-      exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (GridPrimitiveAccuracy.atIndex li stage liLater).accurate.le (by decide : (0 : Fraction.Rational) ≤ 4))
+      rw [Basic.normSq_eq_canonical] at estimate
+      exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (GridPrimitiveAccuracy.atIndex li stage liLater).accurate.le (by decide : (0 : Rational) ≤ 4))
     · have estimate := PerimeterCornerReadings.perimeter_left_last_bound
         (GridPrimitiveAccuracy.atIndex lj stage ljLater) (cache.normalize.atDomain position sheet j) traces
       rw [traces.left.leftReadings_value] at estimate
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
-      exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (GridPrimitiveAccuracy.atIndex lj stage ljLater).accurate.le (by decide : (0 : Fraction.Rational) ≤ 4))
+      rw [Basic.normSq_eq_canonical] at estimate
+      exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (GridPrimitiveAccuracy.atIndex lj stage ljLater).accurate.le (by decide : (0 : Rational) ≤ 4))
 
 /-- The actual normalized right endpoint contribution meets the common corner-error bound at every paid stage. -/
 theorem right_endpoint_bound :
-    Data.Gaussian.Norm.Basic.normSq (samples.right.endpoint - Numerics.sideChord cache.normalize i j position
+    Basic.normSq (samples.right.endpoint - Numerics.sideChord cache.normalize i j position
       sheet .right) ≤
       32 * (firstMagnitude.bound + secondMagnitude.bound + 1) * (4 * tolerance) := by
   apply endpoint_bound samples.right (add_nonneg
     firstMagnitude.nonnegative secondMagnitude.nonnegative)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) positive.le) small
+    (Arithmetic.mul_nonneg_direct (by decide) positive.le) small
     (Numerics.normalized_corner_pair_bound firstMagnitude secondMagnitude firstLater secondLater cache position sheet 1)
     (Numerics.normalized_corner_pair_bound firstMagnitude secondMagnitude firstLater secondLater cache position sheet 2)
   · constructor
     · have estimate := PerimeterCornerReadings.perimeter_right_first_bound
         (GridPrimitiveAccuracy.atIndex li stage liLater) (cache.normalize.atDomain position sheet i) traces
       rw [traces.right.leftReadings_value] at estimate
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
-      exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (GridPrimitiveAccuracy.atIndex li stage liLater).accurate.le (by decide : (0 : Fraction.Rational) ≤ 4))
+      rw [Basic.normSq_eq_canonical] at estimate
+      exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (GridPrimitiveAccuracy.atIndex li stage liLater).accurate.le (by decide : (0 : Rational) ≤ 4))
     · have estimate := PerimeterCornerReadings.perimeter_right_first_bound
         (GridPrimitiveAccuracy.atIndex lj stage ljLater) (cache.normalize.atDomain position sheet j) traces
       rw [traces.right.leftReadings_value] at estimate
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
-      exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (GridPrimitiveAccuracy.atIndex lj stage ljLater).accurate.le (by decide : (0 : Fraction.Rational) ≤ 4))
+      rw [Basic.normSq_eq_canonical] at estimate
+      exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (GridPrimitiveAccuracy.atIndex lj stage ljLater).accurate.le (by decide : (0 : Rational) ≤ 4))
   · constructor
     · have estimate := PerimeterCornerReadings.perimeter_right_last_bound
         (GridPrimitiveAccuracy.atIndex li stage liLater) (cache.normalize.atDomain position sheet i) traces
       rw [traces.right.leftReadings_value] at estimate
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
-      exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (GridPrimitiveAccuracy.atIndex li stage liLater).accurate.le (by decide : (0 : Fraction.Rational) ≤ 4))
+      rw [Basic.normSq_eq_canonical] at estimate
+      exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (GridPrimitiveAccuracy.atIndex li stage liLater).accurate.le (by decide : (0 : Rational) ≤ 4))
     · have estimate := PerimeterCornerReadings.perimeter_right_last_bound
         (GridPrimitiveAccuracy.atIndex lj stage ljLater) (cache.normalize.atDomain position sheet j) traces
       rw [traces.right.leftReadings_value] at estimate
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
-      exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (GridPrimitiveAccuracy.atIndex lj stage ljLater).accurate.le (by decide : (0 : Fraction.Rational) ≤ 4))
+      rw [Basic.normSq_eq_canonical] at estimate
+      exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (GridPrimitiveAccuracy.atIndex lj stage ljLater).accurate.le (by decide : (0 : Rational) ≤ 4))
 
 /-- Every retained normalized side endpoint contribution satisfies the same original magnitude and primitive-error
 bound. -/
-theorem side_endpoint_bound (side : GridLiftedDualSteps.GridSide) :
-    Data.Gaussian.Norm.Basic.normSq (SideCenteredRemainder.sideEndpoint samples side - Numerics.sideChord
+theorem side_endpoint_bound (side : GridSide) :
+    Basic.normSq (SideCenteredRemainder.sideEndpoint samples side - Numerics.sideChord
       cache.normalize i j position sheet side) ≤
       32 * (firstMagnitude.bound + secondMagnitude.bound + 1) * (4 * tolerance) := by
   cases side with
@@ -345,9 +349,9 @@ theorem side_endpoint_bound (side : GridLiftedDualSteps.GridSide) :
 /-- The original side-area remainder approximates its actual centered trace area within the retained endpoint-error
 budget. -/
 theorem side_remainder_centered_bound
-    (perimeters : Matched.FacePerimeters (request := request) cache.normalize i j) (side :
-      GridLiftedDualSteps.GridSide) :
-    Data.Gaussian.Norm.Basic.normSq (HoleAreaRemainder.sideAreaRemainder perimeters position sheet side -
+    (perimeters : FacePerimeters (request := request) cache.normalize i j) (side :
+      GridSide) :
+    Basic.normSq (HoleAreaRemainder.sideAreaRemainder perimeters position sheet side -
       SideCenteredRemainder.sideCenteredArea samples side) ≤
       32 * (firstMagnitude.bound + secondMagnitude.bound + 1) * (4 * tolerance) := by
   rw [SideCenteredRemainder.side_centered_remainder samples perimeters side, Group.add_sub_cancel_left]

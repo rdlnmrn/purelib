@@ -77,47 +77,47 @@ open Purelib.Data.Gaussian.Basic.Canonical
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples (Junction ClosingRequest)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {collar :
-  Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {collar :
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar}
   {owner : Topology.SquareRootContinuationChain.Owner
-    ((Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.polynomial curve).eval collar.box.anchor)}
-  {differential : Hyperelliptic.Differentials.Basic.Differential genus}
+    ((HyperellipticReciprocal.polynomial curve).eval collar.box.anchor)}
+  {differential : Differentials.Basic.Differential genus}
 
 set_option genInjectivity false in
 /-- A joined cap comparison and closing request with separate total and area targets.
 
 The total comparison receives one quarter of its target; closing retains the original endpoint requests. -/
-structure AreaRequest (data : Hyperelliptic.Charts.Reciprocal.Cap.Boundary.Data cap owner differential) (totalTarget
+structure AreaRequest (data : Data cap owner differential) (totalTarget
   areaTarget : Normalization.InverseRootPolynomial.Coordinate) (floor : Nat) where
   /-- The original joined comparison with a quarter of the total target. -/ comparison :
-    Hyperelliptic.Charts.Reciprocal.Cap.PathCover.AreaRequest data.covered (totalTarget / 4) areaTarget floor
+    PathCover.AreaRequest data.covered (totalTarget / 4) areaTarget floor
   /-- The closing request on the original comparison's endpoint owners. -/ closing :
-    Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.ClosingJoin data.covered.bank
+    PathCover.Bank.ClosingJoin data.covered.bank
   /-- The original total target is positive. -/ positive : 0 < totalTarget
 
 constructive_injectivity AreaRequest
 
 namespace AreaRequest
 
-variable {data : Hyperelliptic.Charts.Reciprocal.Cap.Boundary.Data cap owner differential} {totalTarget areaTarget :
+variable {data : Data cap owner differential} {totalTarget areaTarget :
   Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
 
 /-- Read the original comparison request's sufficient stage. -/
-@[expose] public def index (request : Hyperelliptic.Charts.Reciprocal.Cap.Boundary.AreaRequest data totalTarget
+@[expose] public def index (request : AreaRequest data totalTarget
   areaTarget floor) : Nat := request.comparison.index
 
 /-- Prepare the original quarter-target area comparison and its retained closing coordinates. -/
-@[expose] public def build (data : Hyperelliptic.Charts.Reciprocal.Cap.Boundary.Data cap owner differential)
+@[expose] public def build (data : Data cap owner differential)
   (totalTarget areaTarget : Normalization.InverseRootPolynomial.Coordinate)
     (totalPositive : 0 < totalTarget) (areaPositive : 0 < areaTarget) (floor : Nat) :
-      Hyperelliptic.Charts.Reciprocal.Cap.Boundary.AreaRequest data totalTarget areaTarget floor :=
-  ⟨Hyperelliptic.Charts.Reciprocal.Cap.PathCover.AreaRequest.build data.covered (totalTarget / 4) areaTarget
+      AreaRequest data totalTarget areaTarget floor :=
+  ⟨PathCover.AreaRequest.build data.covered (totalTarget / 4) areaTarget
     (Data.Rat.Bounds.Quarter.quarter_pos totalPositive) areaPositive floor,
-      Hyperelliptic.Charts.Reciprocal.Cap.Boundary.closingCoordinates data, totalPositive⟩
+      closingCoordinates data, totalPositive⟩
 
 /-- The retained comparison stage meets the requested floor. -/
-theorem floor_le (request : Hyperelliptic.Charts.Reciprocal.Cap.Boundary.AreaRequest data totalTarget areaTarget floor)
+theorem floor_le (request : AreaRequest data totalTarget areaTarget floor)
   : floor ≤ request.index := request.comparison.floor_le
 
 set_option genInjectivity false in
@@ -125,12 +125,12 @@ set_option genInjectivity false in
 
 The endpoint connector closes the literal flattened path, preserves its area and retains separate total and area error
 bounds. -/
-structure Evaluation (request : Hyperelliptic.Charts.Reciprocal.Cap.Boundary.AreaRequest data totalTarget areaTarget
+structure Evaluation (request : AreaRequest data totalTarget areaTarget
   floor)
     {capIndex : Nat} {box : Rational.Box} (sample :
-      Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential capIndex box) where
+      Primitives.Sample cap differential capIndex box) where
   /-- The actual original joined comparison. -/ joined :
-    Hyperelliptic.Charts.Reciprocal.Cap.PathCover.AreaRequest.Evaluation request.comparison sample
+    PathCover.AreaRequest.Evaluation request.comparison sample
   /-- The retained closing readings. -/ closing : List (Junction (totalTarget / 4))
   /-- There are no closing readings for an empty parent family and one otherwise. -/ closing_count : closing.length = if
     data.covered.cache.parents = [] then 0 else 1
@@ -141,38 +141,38 @@ structure Evaluation (request : Hyperelliptic.Charts.Reciprocal.Cap.Boundary.Are
   /-- The connector is the first endpoint minus the last endpoint. -/ connector_endpoints : connector =
     joined.separated.fine.firstValue - joined.separated.fine.lastValue
   /-- The connector is exactly the sum of the retained closing readings. -/ connector_readings : connector =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (closing.map (fun item =>
+    Gaussian.Norm.Sum.Basic.gaussianSum (closing.map (fun item =>
     item.source.first.sample joined.stage - item.source.last.sample joined.stage))
   /-- The actual connector magnitude is below one quarter of the total target. -/ connector_small :
-    Data.Gaussian.Norm.Basic.normSq connector < totalTarget / 4
+    Gaussian.Norm.Basic.normSq connector < totalTarget / 4
   /-- The literal flattened original connection followed by its connector. -/ polygon : Path.IncrementArea.Summary
     ((joined.connections.map (fun block => block.1 :: block.2)).flatten ++ [connector])
   /-- The retained polygon has total zero. -/ polygon_total : polygon.total = 0
   /-- Closing preserves the original joined path's area. -/ polygon_area : polygon.area = joined.chart.area
   /-- The original comparison and closed polygon totals differ by less than the total target. -/ total_close :
-    Data.Gaussian.Norm.Basic.normSq (polygon.total - joined.right.total) < totalTarget
+    Gaussian.Norm.Basic.normSq (polygon.total - joined.right.total) < totalTarget
   /-- Their actual areas differ by less than the independently retained area target. -/ area_close :
-    Data.Gaussian.Norm.Basic.normSq (polygon.area - joined.right.area) < areaTarget
+    Gaussian.Norm.Basic.normSq (polygon.area - joined.right.area) < areaTarget
 
 constructive_injectivity Evaluation
 
 /-- Refine the original comparison once to the common junction and closing stage, then close its cached path with the
 retained endpoint connector. -/
-@[expose] public def evaluate (request : Hyperelliptic.Charts.Reciprocal.Cap.Boundary.AreaRequest data totalTarget
+@[expose] public def evaluate (request : AreaRequest data totalTarget
   areaTarget floor)
     {capIndex : Nat} {box : Rational.Box}
-    (sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential capIndex box) (later :
+    (sample : Primitives.Sample cap differential capIndex box) (later :
       request.index ≤ capIndex) :
-    Hyperelliptic.Charts.Reciprocal.Cap.Boundary.AreaRequest.Evaluation request sample := open Purelib.Polynomial in by
+    Evaluation request sample := open Purelib.Polynomial in by
   change request.comparison.separated.index ≤ capIndex at later
   have indices := request.comparison.separated.index_eq ▸ later
   have polynomialLater := (Data.Nat.Order.le_max_left _ _).trans indices
   have fineLater := (Data.Nat.Order.le_max_right _ _).trans indices
   let polynomial := request.comparison.separated.polynomial.evaluatePolynomial sample polynomialLater
-  let initial := Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.build polynomial.samples
+  let initial := PathCover.Bank.FineSamples.build polynomial.samples
     request.comparison.separated.fine fineLater
-  let junctions := Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.JunctionRequests.build initial
-    (Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.EndpointJoins.build initial
+  let junctions := PathCover.Bank.FineSamples.JunctionRequests.build initial
+    (PathCover.Bank.FineSamples.EndpointJoins.build initial
       data.covered.coordinates)
     request.comparison.budget.tolerance request.comparison.budget.positive
   let closing := ClosingRequest.build initial request.closing (totalTarget / 4) (Data.Rat.Bounds.Quarter.quarter_pos
@@ -185,8 +185,8 @@ retained endpoint connector. -/
   let fine := initial.refine fineLater stage firstReady
   have junctionValues : fine.gaps = junctions.items.map (fun item => item.source.first.sample stage -
     item.source.last.sample stage) := by
-    rw [Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.gaps_refine, ← junctions.sources_eq,
-      Purelib.Data.List.Map.map_map]
+    rw [PathCover.Bank.FineSamples.gaps_refine, ← junctions.sources_eq,
+      Data.List.Map.map_map]
     rfl
   let joined := request.comparison.evaluateReadings sample later polynomial fine junctions.items stage
     (fun item member => let bounds := Junction.indices_le junctions.items item member
@@ -194,15 +194,15 @@ retained endpoint connector. -/
     junctionValues (fun gap member => (junctions.gaps_small fineLater stage firstReady junctionReady gap member).le)
   have totalEq : joined.chart.total = fine.lastValue - fine.firstValue := fine.connected_total_endpoints
   have connectorEq : -joined.chart.total = fine.firstValue - fine.lastValue := by rw [totalEq]; ring1
-  have small : Data.Gaussian.Norm.Basic.normSq (-joined.chart.total) < totalTarget / 4 := by
+  have small : Gaussian.Norm.Basic.normSq (-joined.chart.total) < totalTarget / 4 := by
     rw [connectorEq]
     exact closing.close fineLater stage firstReady closingReady
   let polygon := Path.IncrementAreaClosure.Summary.close joined.chart
-  have totalClose : Data.Gaussian.Norm.Basic.normSq (polygon.total - joined.right.total) < totalTarget := by
+  have totalClose : Gaussian.Norm.Basic.normSq (polygon.total - joined.right.total) < totalTarget := by
     have estimate := Clearance.Box.Boundary.Basic.BoundaryClearance.normSq_add_lt_of_quarters small
       joined.total_close.le
-    change Data.Gaussian.Norm.Basic.normSq (0 - joined.right.total) < totalTarget
-    exact (congrArg Data.Gaussian.Norm.Basic.normSq (show (0 : Normalization.InverseRootPolynomial.Gaussian) -
+    change Gaussian.Norm.Basic.normSq (0 - joined.right.total) < totalTarget
+    exact (congrArg Gaussian.Norm.Basic.normSq (show (0 : Normalization.InverseRootPolynomial.Gaussian) -
       joined.right.total =
       -joined.chart.total + (joined.chart.total - joined.right.total) by ring1)).trans_lt estimate
   exact ⟨joined, closing.items, closing.count_eq,

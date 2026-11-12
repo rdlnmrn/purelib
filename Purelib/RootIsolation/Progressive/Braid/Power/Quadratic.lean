@@ -78,7 +78,7 @@ def baseVertex :
     degreeAtLeastTwo 0
 
 /-- The exact simple-root chamber at the base parameter `w=1`. -/
-def frame : Progressive.Chamber.Frame.ChamberFrame :=
+def frame : Chamber.Frame.ChamberFrame :=
   baseVertex.frame degree
   degreeAtLeastTwo
 
@@ -86,21 +86,21 @@ def frame : Progressive.Chamber.Frame.ChamberFrame :=
 @[simp] theorem frame_degree :
   frame.degree = 2 := by
   unfold frame Geometry.Gaussian.UnitCircle.Basic.UnitVertex.frame
-  rw [Progressive.Power.Unit.Frame.robustChamberFrame_degree]
+  rw [Power.Unit.Frame.robustChamberFrame_degree]
   rfl
 
 /-- The explicit rational polynomial loop `Z^2-w` over one positive unit
 circuit. -/
-def loop : Progressive.Chamber.Path.Basic.ChamberPath
+def loop : Chamber.Path.Basic.ChamberPath
   frame frame :=
-  Progressive.Power.Unit.Circuit.Loop.unitCircuitLoop degree
+  Power.Unit.Circuit.Loop.unitCircuitLoop degree
     degreeAtLeastTwo
 
 /-- The explicit quadratic parameter loop permutes its two retained root owners in one cycle. -/
 theorem loop_isSingleCycle :
     Data.Fin.Bijection.IsSingleCycle loop.monodromy := by
   unfold loop
-  exact Progressive.Power.Unit.Circuit.Monodromy.unitCircuitMonodromy_isSingleCycle
+  exact Power.Unit.Circuit.Monodromy.unitCircuitMonodromy_isSingleCycle
     degree degreeAtLeastTwo
 
 /-- The unique adjacent generator on the two displayed strands. -/
@@ -227,7 +227,7 @@ theorem positive_parameter_winding :
 number of times.  This is the polynomial family `Z^2 = w^q` restricted to
 the unit parameter circuit. -/
 def repeatedLoop : Nat →
-  Progressive.Chamber.Path.Basic.ChamberPath frame
+  Chamber.Path.Basic.ChamberPath frame
   frame
   | 0 => .nil frame
   | circuits + 1 => (repeatedLoop circuits).append
@@ -245,13 +245,13 @@ def repeatedBraid : (circuits : Nat) →
 /-- Repeating the certified quadratic circuit retains exactly the corresponding repeated original word. -/
 @[simp] theorem repeatedBraid_word (circuits : Nat) :
     (repeatedBraid circuits).word =
-      Topology.Knot.Braid.Word.repeatWord word circuits := by
+      Word.repeatWord word circuits := by
   induction circuits with
   | zero => rfl
   | succ circuits inductionHypothesis =>
       simp only [-eq_self, -iff_self, repeatedBraid,
         CertifiedLoopBraid.append,
-        Topology.Knot.Braid.Word.repeatWord_succ, inductionHypothesis,
+        Word.repeatWord_succ, inductionHypothesis,
         certifiedBraid]
       rfl
 
@@ -259,17 +259,17 @@ def repeatedBraid : (circuits : Nat) →
 @[simp] theorem repeatedBraid_crossingCount (circuits :
   Nat) :
     (repeatedBraid circuits).word.length = circuits := by
-  rw [repeatedBraid_word, Topology.Knot.Braid.Word.repeatWord_length]
+  rw [repeatedBraid_word, Word.repeatWord_length]
   simp only [word, List.length_cons, List.length_nil]
   omega
 
 /-- The repeated positive quadratic circuit's word has writhe equal to its finite circuit count. -/
 @[simp] theorem repeatedBraid_writhe (circuits : Nat) :
     (repeatedBraid circuits).word.writhe = (circuits : Int) := by
-  rw [repeatedBraid_word, Topology.Knot.Braid.Word.repeatWord_writhe]
-  simp only [-eq_self, -iff_self, word, Topology.Knot.Braid.Word.writhe_cons,
-    Topology.Knot.Braid.Word.writhe_nil,
-    Topology.Knot.Braid.Generator.weight, positiveGenerator,
+  rw [repeatedBraid_word, Word.repeatWord_writhe]
+  simp only [-eq_self, -iff_self, word, Word.writhe_cons,
+    Word.writhe_nil,
+    Generator.weight, positiveGenerator,
     CrossingSign.weight, add_zero, mul_one]
   rfl
 

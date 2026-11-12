@@ -35,46 +35,46 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Sourc
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
 namespace CommonBasisRequest.Sampled
 
-variable (retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared)
+variable (retained : Preparation.CommonBasisPreparation prepared)
   {firstIndex lastIndex : Nat}
   (first : retained.Inputs firstIndex) (last : retained.Inputs lastIndex)
 
 /-- Changing the numerical input stage preserves the finite list of original parent source slopes. -/
 theorem sourceSlopes_eq :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceMagnitude.CommonBasisRequest.Sampled.sourceSlopes retained
-  first = Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceMagnitude.CommonBasisRequest.Sampled.sourceSlopes
+  SourceMagnitude.CommonBasisRequest.Sampled.sourceSlopes retained
+  first = SourceMagnitude.CommonBasisRequest.Sampled.sourceSlopes
   retained last := open Purelib in by
   apply congrArg List.flatten
   apply Data.List.OfFn.Basic.ofFn_congr
   intro outer
   apply Data.List.OfFn.Basic.ofFn_congr
   intro position
-  exact congrArg Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentSourceStages.parentInput_sources_eq retained first last
+  exact congrArg Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope
+    (ParentSourceStages.parentInput_sources_eq retained first last
       outer position)
 
 /-- Changing the numerical input stage preserves the magnitude computed from the original parent source slopes. -/
 theorem parentMagnitude_eq :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceMagnitude.CommonBasisRequest.Sampled.parentMagnitude retained
-  first = Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceMagnitude.CommonBasisRequest.Sampled.parentMagnitude
+  SourceMagnitude.CommonBasisRequest.Sampled.parentMagnitude retained
+  first = SourceMagnitude.CommonBasisRequest.Sampled.parentMagnitude
   retained last :=
-  congrArg (fun slopes : List Normalization.InverseRootPolynomial.Coordinate => 2 * (1 +
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum id slopes))
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceMagnitudeStages.CommonBasisRequest.Sampled.sourceSlopes_eq
+  congrArg (fun slopes : List InverseRootPolynomial.Coordinate => 2 * (1 +
+    PairedFragmentBlocks.maximum id slopes))
+    (Sampled.sourceSlopes_eq
     retained first last)
 
 end CommonBasisRequest.Sampled

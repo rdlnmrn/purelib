@@ -104,27 +104,27 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners (Join)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
 
 /-- Join the complete original finite trace bank with all connectors, using a single zero vertex for an empty bank. -/
-@[expose] def joinedTrace {n : Nat} (traces : Fin n → JoinedTrace.VertexTrace Stokes.PrimitivePoint) :
-  JoinedTrace.VertexTrace PrimitivePoint :=
+@[expose] def joinedTrace {n : Nat} (traces : Fin n → VertexTrace PrimitivePoint) :
+  VertexTrace PrimitivePoint :=
   match n, traces with
   | 0, _ => ⟨PrimitivePoint.zero, []⟩
   | _ + 1, traces => VertexTrace.concatenate traces
 
 /-- The complete original joined area retains every actual trace area and each intervening endpoint connector. -/
-private theorem joinedTrace_area {n : Nat} (traces : Fin n → JoinedTrace.VertexTrace Stokes.PrimitivePoint) :
+private theorem joinedTrace_area {n : Nat} (traces : Fin n → VertexTrace PrimitivePoint) :
     (joinedTrace traces).area id =
-      FiniteSum.Fin.sumFin (fun i => (traces i).area id) +
-      FiniteSum.Fin.sumFin (fun i : Fin (n - 1) => Stokes.edgeArea (traces ⟨i.val, by omega0⟩).last
+      sumFin (fun i => (traces i).area id) +
+      sumFin (fun i : Fin (n - 1) => edgeArea (traces ⟨i.val, by omega0⟩).last
         (traces ⟨i.val + 1, by omega0⟩).first) := by
   cases n with
-  | zero => change (0 : InverseRootPolynomial.Gaussian) = 0 + 0; ring1
+  | zero => change (0 : Gaussian) = 0 + 0; ring1
   | succ n =>
       rw [joinedTrace, VertexTrace.concatenate_area,
         VertexTrace.joiningArea_ofFn]
       rfl
 
 /-- The joined nonempty original trace bank starts at its actual first retained endpoint. -/
-private theorem joinedTrace_first {n : Nat} (traces : Fin n → JoinedTrace.VertexTrace Stokes.PrimitivePoint)
+private theorem joinedTrace_first {n : Nat} (traces : Fin n → VertexTrace PrimitivePoint)
     (positive : 0 < n) : (joinedTrace traces).first
       = (traces ⟨0, positive⟩).first := by
   cases n with
@@ -132,7 +132,7 @@ private theorem joinedTrace_first {n : Nat} (traces : Fin n → JoinedTrace.Vert
   | succ n => exact VertexTrace.glue_first _ _
 
 /-- The joined nonempty original trace bank ends at its actual last retained endpoint. -/
-private theorem joinedTrace_last {n : Nat} (traces : Fin n → JoinedTrace.VertexTrace Stokes.PrimitivePoint)
+private theorem joinedTrace_last {n : Nat} (traces : Fin n → VertexTrace PrimitivePoint)
     (positive : 0 < n) : (joinedTrace traces).last =
       (traces ⟨n - 1, by omega0⟩).last := by
   cases n with
@@ -141,8 +141,8 @@ private theorem joinedTrace_last {n : Nat} (traces : Fin n → JoinedTrace.Verte
 
 /-- The total change from inserting all actual original trace connectors satisfies the retained squared-count gap bound.
 -/
-private theorem joinedTrace_total_insertion {n : Nat} (traces : Fin n → JoinedTrace.VertexTrace Stokes.PrimitivePoint)
-    {error : InverseRootPolynomial.Coordinate} (nonnegative : 0 ≤ error)
+private theorem joinedTrace_total_insertion {n : Nat} (traces : Fin n → VertexTrace PrimitivePoint)
+    {error : Coordinate} (nonnegative : 0 ≤ error)
     (gaps : ∀ i : Fin (n - 1), PrimitivePoint.Bounded
       ((traces ⟨i.val + 1, by omega0⟩).first.sub
       (traces ⟨i.val, by omega0⟩).last) error) :
@@ -150,21 +150,21 @@ private theorem joinedTrace_total_insertion {n : Nat} (traces : Fin n → Joined
       ((PairedIncrementArea.total (List.ofFn (fun i => VertexTrace.increments (traces i) id)).flatten).sub
       (PairedIncrementArea.total (VertexTrace.increments
         (joinedTrace traces) id)))
-      (((2 * n - 1 : Nat) : InverseRootPolynomial.Coordinate)^2 * error) := by
+      (((2 * n - 1 : Nat) : Coordinate)^2 * error) := by
   cases n with
   | zero =>
-      constructor <;> change Data.Gaussian.Basic.Canonical.normSq (0 - 0) ≤ (0 : InverseRootPolynomial.Coordinate)^2 *
+      constructor <;> change Data.Gaussian.Basic.Canonical.normSq (0 - 0) ≤ (0 : Coordinate)^2 *
         error <;>
         rw [sub_self, Data.Gaussian.Basic.Canonical.normSq_zero] <;>
         simp only [zero_pow (by decide : 2 ≠ 0), zero_mul, -eq_self, -iff_self] <;> exact le_rfl
   | succ n =>
       rw [show 2 * (n + 1) - 1 = 2 * n + 1 by omega0]
-      exact PairedChartTrace.concatenate_total_insertion traces nonnegative gaps
+      exact concatenate_total_insertion traces nonnegative gaps
 
 /-- The area change from inserting all actual original trace connectors satisfies the retained fourth-power count and
 magnitude bound. -/
-private theorem joinedTrace_area_insertion {n : Nat} (traces : Fin n → JoinedTrace.VertexTrace Stokes.PrimitivePoint)
-    {error magnitude : InverseRootPolynomial.Coordinate} (nonnegative : 0 ≤ error) (magnitudeNonnegative : 0 ≤
+private theorem joinedTrace_area_insertion {n : Nat} (traces : Fin n → VertexTrace PrimitivePoint)
+    {error magnitude : Coordinate} (nonnegative : 0 ≤ error) (magnitudeNonnegative : 0 ≤
       magnitude)
     (small : error ≤ magnitude)
     (totals : ∀ i, PrimitivePoint.Bounded
@@ -172,28 +172,28 @@ private theorem joinedTrace_area_insertion {n : Nat} (traces : Fin n → JoinedT
     (gaps : ∀ i : Fin (n - 1), PrimitivePoint.Bounded
       ((traces ⟨i.val + 1, by omega0⟩).first.sub
       (traces ⟨i.val, by omega0⟩).last) error) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area (List.ofFn (fun i => VertexTrace.increments
+    normSq (PairedIncrementArea.area (List.ofFn (fun i => VertexTrace.increments
       (traces i) id)).flatten -
       PairedIncrementArea.area (VertexTrace.increments
         (joinedTrace traces) id)) ≤
-      32 * ((2 * n - 1 : Nat) : InverseRootPolynomial.Coordinate)^4 * error * magnitude := by
+      32 * ((2 * n - 1 : Nat) : Coordinate)^4 * error * magnitude := by
   cases n with
   | zero =>
-      change Data.Gaussian.Norm.Basic.normSq (0 - 0) ≤ 32 * (0 : InverseRootPolynomial.Coordinate)^4 * error *
+      change normSq (0 - 0) ≤ 32 * (0 : Coordinate)^4 * error *
         magnitude
       rw [sub_self, Data.Gaussian.Norm.Basic.normSq_zero]
       simp only [zero_pow (by decide : 4 ≠ 0), mul_zero, zero_mul, -eq_self, -iff_self]
       exact le_rfl
   | succ n =>
       rw [show 2 * (n + 1) - 1 = 2 * n + 1 by omega0]
-      exact PairedChartTrace.concatenate_area_insertion traces nonnegative magnitudeNonnegative small totals gaps
+      exact concatenate_area_insertion traces nonnegative magnitudeNonnegative small totals gaps
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {differential other :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {parents : List (Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap}
+  {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)}
   {target requested : Coordinate} {minimum depth : Nat}
   {original : Request regular other parents
     target minimum}
@@ -202,13 +202,13 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {differential other :
 
 /-- The physical and root-owner join between the original last chart point of one retained parent and the first of
 another. -/
-@[expose] def EndpointJoin (request : PairedParentCharts.ChartBankRequest original depth requested) (i j : Fin
+@[expose] def EndpointJoin (request : ChartBankRequest original depth requested) (i j : Fin
   original.plans.length) :=
-  ArcOwners.Join (ChartRequest.lastPoint (request.plans.get i)) (ChartRequest.firstPoint (request.plans.get j))
+  Join (ChartRequest.lastPoint (request.plans.get i)) (ChartRequest.firstPoint (request.plans.get j))
 
 /-- Read the physical and root joins from the retained parent chain, for either parity. No radial fan certificate is
 needed for this construction. -/
-@[expose] def sourceJoins (request : PairedParentCharts.ChartBankRequest original depth requested)
+@[expose] def sourceJoins (request : ChartBankRequest original depth requested)
     {start finish : Lifted.Basic.LiftedPoint 2}
     (chain : Nonempty (PreparedDirectDyadicRefinements.DirectPathChain parents
       (start := start) (finish := finish)))
@@ -236,33 +236,33 @@ needed for this construction. -/
   apply ReciprocalDiskArcOwners.sourceEndpointJoin _ _
     (ChartRequest.lastParameter_eq (request.plans.get ⟨i.val, by omega0⟩))
     (ChartRequest.firstParameter_eq (request.plans.get ⟨i.val + 1, by omega0⟩))
-  · dsimp only [PairedParentCharts.ChartParent]
+  · dsimp only [ChartParent]
     convert same using 1 <;> rfl
-  · dsimp only [PairedParentCharts.ChartParent]
+  · dsimp only [ChartParent]
     convert link using 1 <;> rfl
 
 /-- The actual connector between two original parent chart traces has zero area in the unramified chart when their
 retained owners join. -/
-theorem Evaluation.regular_parent_connector_zero (evaluated : ChartBankRequest.Evaluation request)
+theorem Evaluation.regular_parent_connector_zero (evaluated : Evaluation request)
     (unramified : HyperellipticReciprocal.originOrder curve = 0)
     (i j : Fin original.plans.length) (owners :
       EndpointJoin request i j) :
-    Stokes.edgeArea (Evaluation.chartTrace (evaluated.entries.get i)).last
+    edgeArea (Evaluation.chartTrace (evaluated.entries.get i)).last
       (Evaluation.chartTrace (evaluated.entries.get j)).first = 0 := by
   rw [Evaluation.chartTrace_last (evaluated.entries.get i),
     Evaluation.chartTrace_first (evaluated.entries.get j)]
   exact Evaluation.regular_join_area
-    (((evaluated.entries.get i).entries.get (PairedParentCharts.ChartParent original
+    (((evaluated.entries.get i).entries.get (ChartParent original
       i).common.lastIndex).evaluated.chart.retained.area.evaluated.readings.get
-    (Fin.last ((request.plans.get i).plans.get (PairedParentCharts.ChartParent original
+    (Fin.last ((request.plans.get i).plans.get (ChartParent original
       i).common.lastIndex).geometry.tail.length))
-    (((evaluated.entries.get j).entries.get (PairedParentCharts.ChartParent original
+    (((evaluated.entries.get j).entries.get (ChartParent original
       j).common.firstIndex).evaluated.chart.retained.area.evaluated.readings.get 0)
     owners ((evaluated.shared j).1.trans (evaluated.shared i).1.symm)
       ((evaluated.shared j).2.trans (evaluated.shared i).2.symm) unramified
 
 /-- Construct the actual original last-to-first parent chart join from the retained physical closure and root return. -/
-@[expose] def closingJoin (request : PairedParentCharts.ChartBankRequest original depth requested)
+@[expose] def closingJoin (request : ChartBankRequest original depth requested)
     (positive : 0 < original.plans.length)
     {start finish : Lifted.Basic.LiftedPoint 2}
     (chain : Nonempty (PreparedDirectDyadicRefinements.DirectPathChain parents
@@ -295,39 +295,39 @@ theorem Evaluation.regular_parent_connector_zero (evaluated : ChartBankRequest.E
   apply ReciprocalDiskArcOwners.sourceEndpointJoin _ _
     (ChartRequest.lastParameter_eq (request.plans.get ⟨original.plans.length - 1, by omega0⟩))
     (ChartRequest.firstParameter_eq (request.plans.get ⟨0, positive⟩))
-  · dsimp only [PairedParentCharts.ChartParent]
+  · dsimp only [ChartParent]
     convert same using 1; rfl
-  · dsimp only [PairedParentCharts.ChartParent]
+  · dsimp only [ChartParent]
     convert link using 1; rfl
 
 /-- The complete original parent chart trace retaining every actual joining edge. -/
-@[expose] def Evaluation.regularTrace (evaluated : ChartBankRequest.Evaluation request) : JoinedTrace.VertexTrace
+@[expose] def Evaluation.regularTrace (evaluated : Evaluation request) : VertexTrace
   PrimitivePoint :=
   joinedTrace (fun i => (Evaluation.chartTrace
     (evaluated.entries.get i)))
 
 /-- The original regular parent trace starts at the actual first retained parent chart endpoint. -/
-theorem Evaluation.regularTrace_first (evaluated : ChartBankRequest.Evaluation request) (positive : 0 <
+theorem Evaluation.regularTrace_first (evaluated : Evaluation request) (positive : 0 <
   original.plans.length) :
-    (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace evaluated).first =
+    (Evaluation.regularTrace evaluated).first =
       (Evaluation.chartTrace (evaluated.entries.get ⟨0, positive⟩)).first :=
   joinedTrace_first _ positive
 
 /-- The original regular parent trace ends at the actual last retained parent chart endpoint. -/
-theorem Evaluation.regularTrace_last (evaluated : ChartBankRequest.Evaluation request) (positive : 0 <
+theorem Evaluation.regularTrace_last (evaluated : Evaluation request) (positive : 0 <
   original.plans.length) :
-    (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace evaluated).last =
+    (Evaluation.regularTrace evaluated).last =
       (Evaluation.chartTrace (evaluated.entries.get ⟨original.plans.length - 1, by omega0⟩)).last :=
   joinedTrace_last _ positive
 
 /-- The unclosed increment list retains its actual endpoint difference. -/
-theorem Evaluation.regularTrace_increment_total (evaluated : ChartBankRequest.Evaluation request) :
+theorem Evaluation.regularTrace_increment_total (evaluated : Evaluation request) :
     PairedIncrementArea.total ((VertexTrace.increments
-      (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace evaluated) id)) =
-      (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace evaluated).last.sub
-        (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace evaluated).first :=
+      (Evaluation.regularTrace evaluated) id)) =
+      (Evaluation.regularTrace evaluated).last.sub
+        (Evaluation.regularTrace evaluated).first :=
         by
-  let trace := (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace evaluated)
+  let trace := (Evaluation.regularTrace evaluated)
   have total := CenteredPathIncrements.increments_total (fun vertex => id (trace.indexed vertex))
   rw [VertexTrace.indexed_increments trace id] at total
   change PairedIncrementArea.total ((VertexTrace.increments trace id)) =
@@ -337,8 +337,8 @@ theorem Evaluation.regularTrace_increment_total (evaluated : ChartBankRequest.Ev
 
 /-- Transport separate parent totals to the actual glued trace, retaining the error from every independently sampled
 joining endpoint. -/
-theorem Evaluation.regularTrace_total_insertion (evaluated : ChartBankRequest.Evaluation request)
-    {error : InverseRootPolynomial.Coordinate} (nonnegative : 0 ≤ error)
+theorem Evaluation.regularTrace_total_insertion (evaluated : Evaluation request)
+    {error : Coordinate} (nonnegative : 0 ≤ error)
     (gaps : ∀ i : Fin (original.plans.length - 1),
       PrimitivePoint.Bounded
         ((Evaluation.chartTrace (evaluated.entries.get ⟨i.val + 1, by omega0⟩)).first.sub
@@ -347,13 +347,13 @@ theorem Evaluation.regularTrace_total_insertion (evaluated : ChartBankRequest.Ev
       ((PairedIncrementArea.total (List.ofFn (fun i : Fin original.plans.length =>
       VertexTrace.increments (Evaluation.chartTrace (evaluated.entries.get i)) id)).flatten).sub
       (PairedIncrementArea.total ((VertexTrace.increments
-        (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace evaluated) id))))
-      (((2 * original.plans.length - 1 : Nat) : InverseRootPolynomial.Coordinate)^2 * error) :=
+        (Evaluation.regularTrace evaluated) id))))
+      (((2 * original.plans.length - 1 : Nat) : Coordinate)^2 * error) :=
   joinedTrace_total_insertion _ nonnegative gaps
 
 /-- The original separate-parent and joined trace areas satisfy the retained complete insertion error bound. -/
-theorem Evaluation.regularTrace_area_insertion (evaluated : ChartBankRequest.Evaluation request)
-    {error magnitude : InverseRootPolynomial.Coordinate} (nonnegative : 0 ≤ error) (magnitudeNonnegative : 0 ≤
+theorem Evaluation.regularTrace_area_insertion (evaluated : Evaluation request)
+    {error magnitude : Coordinate} (nonnegative : 0 ≤ error) (magnitudeNonnegative : 0 ≤
       magnitude)
     (small : error ≤ magnitude)
     (totals : ∀ i, PrimitivePoint.Bounded
@@ -363,76 +363,76 @@ theorem Evaluation.regularTrace_area_insertion (evaluated : ChartBankRequest.Eva
       PrimitivePoint.Bounded
         ((Evaluation.chartTrace (evaluated.entries.get ⟨i.val + 1, by omega0⟩)).first.sub
         (Evaluation.chartTrace (evaluated.entries.get ⟨i.val, by omega0⟩)).last) error) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area (List.ofFn (fun i : Fin original.plans.length =>
+    normSq (PairedIncrementArea.area (List.ofFn (fun i : Fin original.plans.length =>
       VertexTrace.increments (Evaluation.chartTrace (evaluated.entries.get i)) id)).flatten -
       PairedIncrementArea.area ((VertexTrace.increments
-        (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace evaluated) id))) ≤
-      32 * ((2 * original.plans.length - 1 : Nat) : InverseRootPolynomial.Coordinate)^4 * error * magnitude :=
+        (Evaluation.regularTrace evaluated) id))) ≤
+      32 * ((2 * original.plans.length - 1 : Nat) : Coordinate)^4 * error * magnitude :=
   joinedTrace_area_insertion _ nonnegative
     magnitudeNonnegative small totals gaps
 
 /-- Increment area already includes the closing-edge correction of the absolute vertex trace, even when its sampled
 endpoints differ. -/
-theorem Evaluation.regularTrace_increment_area (evaluated : ChartBankRequest.Evaluation request) :
+theorem Evaluation.regularTrace_increment_area (evaluated : Evaluation request) :
     PairedIncrementArea.area ((VertexTrace.increments
-      (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace evaluated) id)) =
-      (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace evaluated).area id +
-        Stokes.edgeArea (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace
-        evaluated).last (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace
+      (Evaluation.regularTrace evaluated) id)) =
+      (Evaluation.regularTrace evaluated).area id +
+        edgeArea (Evaluation.regularTrace
+        evaluated).last (Evaluation.regularTrace
         evaluated).first := by
-  let trace := (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace evaluated)
+  let trace := (Evaluation.regularTrace evaluated)
   have traced := CenteredPathIncrements.increments_trace (fun vertex => id (trace.indexed vertex))
   rw [VertexTrace.indexed_increments trace id, PairedIncrementArea.traceArea_eq,
-    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace_increment_total
+    Evaluation.regularTrace_increment_total
       evaluated] at traced
   have same := traced.trans (trace.indexed_area id)
   change PairedIncrementArea.area ((VertexTrace.increments trace id)) +
-    Stokes.edgeArea trace.first (trace.last.sub trace.first) = trace.area id at same
-  have edge : Stokes.edgeArea trace.first (trace.last.sub trace.first) = -Stokes.edgeArea trace.last trace.first := by
-    simp only [Stokes.edgeArea, PrimitivePoint.sub, -eq_self, -iff_self]
+    edgeArea trace.first (trace.last.sub trace.first) = trace.area id at same
+  have edge : edgeArea trace.first (trace.last.sub trace.first) = -edgeArea trace.last trace.first := by
+    simp only [edgeArea, PrimitivePoint.sub, -eq_self, -iff_self]
     ring1
   rw [edge] at same
   calc
-    _ = (PairedIncrementArea.area ((VertexTrace.increments trace id)) + -Stokes.edgeArea trace.last trace.first) +
-        Stokes.edgeArea trace.last trace.first := by ring1
-    _ = _ := congrArg (fun area => area + Stokes.edgeArea trace.last trace.first) same
+    _ = (PairedIncrementArea.area ((VertexTrace.increments trace id)) + -edgeArea trace.last trace.first) +
+        edgeArea trace.last trace.first := by ring1
+    _ = _ := congrArg (fun area => area + edgeArea trace.last trace.first) same
 
 /-- The actual concatenated parent trace reads exactly the bank's cached area. The hypothesis supplies owner joins, not
 numerical root equalities. -/
-theorem Evaluation.regularTrace_area (evaluated : ChartBankRequest.Evaluation request)
+theorem Evaluation.regularTrace_area (evaluated : Evaluation request)
     (unramified : HyperellipticReciprocal.originOrder curve = 0)
     (owners : ∀ i : Fin (original.plans.length - 1),
       EndpointJoin request ⟨i.val, by omega0⟩ ⟨i.val
         + 1, by omega0⟩) :
-    (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace evaluated).area id =
+    (Evaluation.regularTrace evaluated).area id =
       evaluated.chartArea := by
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace,
+  rw [Evaluation.regularTrace,
     joinedTrace_area]
-  have intervals := FiniteSum.Fin.sumFin_congr (fun i => ReciprocalRegularChartJoins.regular_chartTrace_area
+  have intervals := sumFin_congr (fun i => ReciprocalRegularChartJoins.regular_chartTrace_area
     (evaluated.entries.get i) unramified)
-  have connectors := FiniteSum.Fin.sumFin_congr (fun i =>
-    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regular_parent_connector_zero
+  have connectors := sumFin_congr (fun i =>
+    Evaluation.regular_parent_connector_zero
     evaluated unramified _ _ (owners i))
   rw [intervals, connectors, FiniteSum.Fin.sumFin_zero, add_zero]
   exact evaluated.chartArea_eq.symm
 
 /-- The complete original regular chart trace reads the cached parent-bank area using owner joins derived from its
 retained physical and root chains. -/
-theorem Evaluation.regularTrace_area_of_chain (evaluated : ChartBankRequest.Evaluation request)
+theorem Evaluation.regularTrace_area_of_chain (evaluated : Evaluation request)
     (unramified : HyperellipticReciprocal.originOrder curve = 0)
     {start finish : Lifted.Basic.LiftedPoint 2}
     (chain : Nonempty (PreparedDirectDyadicRefinements.DirectPathChain parents
       (start := start) (finish := finish)))
     {first last : Gaussian.Name.Basic.Named}
     (roots : PreparedRefinementRootChains.RootChain parents first last) :
-    (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace evaluated).area id =
+    (Evaluation.regularTrace evaluated).area id =
       evaluated.chartArea :=
-  Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace_area evaluated unramified
+  Evaluation.regularTrace_area evaluated unramified
     (sourceJoins request chain roots)
 
 /-- Closing the retained trace adds zero determinant area. This statement does not identify the two endpoint samples or
 discard their increment. -/
-theorem Evaluation.regularTrace_closed_area (evaluated : ChartBankRequest.Evaluation request)
+theorem Evaluation.regularTrace_closed_area (evaluated : Evaluation request)
     (unramified : HyperellipticReciprocal.originOrder curve = 0)
     (positive : 0 < original.plans.length)
     {start finish : Lifted.Basic.LiftedPoint 2}
@@ -442,12 +442,12 @@ theorem Evaluation.regularTrace_closed_area (evaluated : ChartBankRequest.Evalua
     (roots : PreparedRefinementRootChains.RootChain parents first last)
     (closed : start.coordinate = finish.coordinate)
     (returned : Gaussian.Equivalence.NamedEquivalent last first) :
-    (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace evaluated).area id +
-      Stokes.edgeArea (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace
-        evaluated).last (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace
+    (Evaluation.regularTrace evaluated).area id +
+      edgeArea (Evaluation.regularTrace
+        evaluated).last (Evaluation.regularTrace
         evaluated).first = evaluated.chartArea := by
   have closing :=
-    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regular_parent_connector_zero
+    Evaluation.regular_parent_connector_zero
     evaluated unramified _ _
     (closingJoin request positive chain roots closed
       returned)
@@ -455,12 +455,12 @@ theorem Evaluation.regularTrace_closed_area (evaluated : ChartBankRequest.Evalua
     (Evaluation.chartTrace (evaluated.entries.get i))) positive
   have firstEq := joinedTrace_first (fun i =>
     (Evaluation.chartTrace (evaluated.entries.get i))) positive
-  change (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace evaluated).last =
+  change (Evaluation.regularTrace evaluated).last =
     _ at lastEq
-  change (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace evaluated).first =
+  change (Evaluation.regularTrace evaluated).first =
     _ at firstEq
   rw [lastEq, firstEq, closing, add_zero]
-  exact Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace.Evaluation.regularTrace_area_of_chain
+  exact Evaluation.regularTrace_area_of_chain
     evaluated unramified chain roots
 
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentTrace

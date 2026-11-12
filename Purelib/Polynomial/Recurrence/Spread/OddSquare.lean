@@ -51,12 +51,12 @@ def oddSpreadRootTerm
 
 The requested half-index determines exactly half plus one terms. -/
 def oddSpreadRootExpansion (half : Nat) (value : K) : K :=
-  FiniteSum.Prefix.prefixSum (half + 1) (Recurrence.Spread.OddSquare.oddSpreadRootTerm half value)
+  FiniteSum.Prefix.prefixSum (half + 1) (oddSpreadRootTerm half value)
 
 /-- The last displayed term is exactly `(-s)^l`. -/
 theorem oddSpreadRootTerm_last (half : Nat) (value : K) :
-    Recurrence.Spread.OddSquare.oddSpreadRootTerm half value half = (-value) ^ half := open Purelib in by
-  unfold Recurrence.Spread.OddSquare.oddSpreadRootTerm
+    oddSpreadRootTerm half value half = (-value) ^ half := open Purelib in by
+  unfold oddSpreadRootTerm
   rw [Nat.sub_self,
     show half + half + 1 = half + half + 1 by rfl,
     Data.Nat.Choose.choose_self, pow_zero, Nat.cast_one]
@@ -70,18 +70,18 @@ private theorem
   innerGenerator_even_power
     (value : K) (index : Nat) :
     let generator :=
-      Algebra.Quadratic.Pair.generator (K := K)
+      Quadratic.Pair.generator (K := K)
         (radialSquare := value - 1)
     generator ^ (index + index) =
-      Algebra.Quadratic.Pair.scalar
+      Quadratic.Pair.scalar
         (radialSquare := value - 1) ((1 - value) ^ index) := by
   dsimp only
   calc
-    Algebra.Quadratic.Pair.generator (K := K)
+    Quadratic.Pair.generator (K := K)
           (radialSquare := value - 1) ^ (index + index) =
-        Algebra.Quadratic.Pair.scalar ((-(value - 1)) ^ index) :=
-      Algebra.Quadratic.Pair.generator_even_power index
-    _ = Algebra.Quadratic.Pair.scalar ((1 - value) ^ index) := by
+        Quadratic.Pair.scalar ((-(value - 1)) ^ index) :=
+      Quadratic.Pair.generator_even_power index
+    _ = Quadratic.Pair.scalar ((1 - value) ^ index) := by
       congr 1
       congr 1
       ring1
@@ -92,35 +92,35 @@ private theorem
   antisymmetricTerm_nested
     (half index : Nat) (value : K) (indexBound : index < half + 1) :
     let innerScalar :=
-      Algebra.Quadratic.Pair.scalar (radialSquare := value - 1)
+      Quadratic.Pair.scalar (radialSquare := value - 1)
     let innerGenerator :=
-      Algebra.Quadratic.Pair.generator (K := K)
+      Quadratic.Pair.generator (K := K)
         (radialSquare := value - 1)
     let outerScalar :=
-      Algebra.Quadratic.Pair.scalar
+      Quadratic.Pair.scalar
         (radialSquare := innerScalar value)
     let outerGenerator :=
-      Algebra.Quadratic.Pair.generator
-        (K := Algebra.Quadratic.Pair K (value - 1))
+      Quadratic.Pair.generator
+        (K := Quadratic.Pair K (value - 1))
         (radialSquare := innerScalar value)
     outerGenerator ^ (index + index) *
           (outerScalar innerGenerator) ^
             (half + half + 1 - (index + index + 1)) *
         ((half + half + 1).choose (index + index + 1) :
-          Algebra.Quadratic.Pair
-            (Algebra.Quadratic.Pair K (value - 1)) (innerScalar value)) =
-      outerScalar (innerScalar (Recurrence.Spread.OddSquare.oddSpreadRootTerm half value index)) := by
+          Quadratic.Pair
+            (Quadratic.Pair K (value - 1)) (innerScalar value)) =
+      outerScalar (innerScalar (oddSpreadRootTerm half value index)) := by
   dsimp only
   let innerScalar :=
-    Algebra.Quadratic.Pair.scalar (radialSquare := value - 1)
+    Quadratic.Pair.scalar (radialSquare := value - 1)
   let innerGenerator :=
-    Algebra.Quadratic.Pair.generator (K := K)
+    Quadratic.Pair.generator (K := K)
       (radialSquare := value - 1)
   let outerScalar :=
-    Algebra.Quadratic.Pair.scalar (radialSquare := innerScalar value)
+    Quadratic.Pair.scalar (radialSquare := innerScalar value)
   let outerGenerator :=
-    Algebra.Quadratic.Pair.generator
-      (K := Algebra.Quadratic.Pair K (value - 1))
+    Quadratic.Pair.generator
+      (K := Quadratic.Pair K (value - 1))
       (radialSquare := innerScalar value)
   have outerEvenPower :
       outerGenerator ^ (index + index) =
@@ -128,10 +128,10 @@ private theorem
     calc
       outerGenerator ^ (index + index) =
           outerScalar ((-innerScalar value) ^ index) :=
-        Algebra.Quadratic.Pair.generator_even_power index
+        Quadratic.Pair.generator_even_power index
       _ = outerScalar (innerScalar ((-value) ^ index)) := by
-        rw [← Algebra.Quadratic.Pair.scalar_neg,
-          ← Algebra.Quadratic.Pair.scalar_pow]
+        rw [← Quadratic.Pair.scalar_neg,
+          ← Quadratic.Pair.scalar_pow]
   have exponentEquation :
       half + half + 1 - (index + index + 1) =
         (half - index) + (half - index) := by omega0
@@ -140,23 +140,23 @@ private theorem
           (half + half + 1 - (index + index + 1)) =
         outerScalar (innerScalar ((1 - value) ^ (half - index))) := by
     rw [exponentEquation]
-    rw [← Algebra.Quadratic.Pair.scalar_pow]
-    rw [Purelib.Polynomial.Recurrence.Spread.OddSquare.innerGenerator_even_power]
+    rw [← Quadratic.Pair.scalar_pow]
+    rw [innerGenerator_even_power]
   have coefficientCast :
       ((half + half + 1).choose (index + index + 1) :
-          Algebra.Quadratic.Pair
-            (Algebra.Quadratic.Pair K (value - 1)) (innerScalar value)) =
+          Quadratic.Pair
+            (Quadratic.Pair K (value - 1)) (innerScalar value)) =
         outerScalar (innerScalar
           ((half + half + 1).choose (index + index + 1) : K)) := by
-    rw [Algebra.Quadratic.Pair.natCast_eq_scalar,
-      Algebra.Quadratic.Pair.natCast_eq_scalar]
+    rw [Quadratic.Pair.natCast_eq_scalar,
+      Quadratic.Pair.natCast_eq_scalar]
   rw [outerEvenPower, centerPower, coefficientCast]
-  unfold Recurrence.Spread.OddSquare.oddSpreadRootTerm
-  rw [← Algebra.Quadratic.Pair.scalar_mul,
-    ← Algebra.Quadratic.Pair.scalar_mul]
+  unfold oddSpreadRootTerm
+  rw [← Quadratic.Pair.scalar_mul,
+    ← Quadratic.Pair.scalar_mul]
   congr 1
-  rw [← Algebra.Quadratic.Pair.scalar_mul,
-    ← Algebra.Quadratic.Pair.scalar_mul]
+  rw [← Quadratic.Pair.scalar_mul,
+    ← Quadratic.Pair.scalar_mul]
 end
 
 open Purelib.Data.Nat in
@@ -166,53 +166,53 @@ attribute [local instance 2000] successorNeZero in
 The square factor is the explicit odd-binomial prefix; two must be nonzero in the supplied explicit field. -/
 theorem ExerciseEightSeven.exercise_8_7
     (half : Nat) (value : K) (twoNonzero : (2 : K) ≠ 0) :
-    Recurrence.Spread.Basic.spreadPolynomial (half + half + 1) value =
-      value * Recurrence.Spread.OddSquare.oddSpreadRootExpansion half value ^ 2 := open Purelib in by
+    Basic.spreadPolynomial (half + half + 1) value =
+      value * oddSpreadRootExpansion half value ^ 2 := open Purelib in by
   let innerScalar :=
-    Algebra.Quadratic.Pair.scalar (radialSquare := value - 1)
+    Quadratic.Pair.scalar (radialSquare := value - 1)
   let innerGenerator :=
-    Algebra.Quadratic.Pair.generator (K := K)
+    Quadratic.Pair.generator (K := K)
       (radialSquare := value - 1)
   let outerScalar :=
-    Algebra.Quadratic.Pair.scalar (radialSquare := innerScalar value)
+    Quadratic.Pair.scalar (radialSquare := innerScalar value)
   let outerGenerator :=
-    Algebra.Quadratic.Pair.generator
-      (K := Algebra.Quadratic.Pair K (value - 1))
+    Quadratic.Pair.generator
+      (K := Quadratic.Pair K (value - 1))
       (radialSquare := innerScalar value)
   let embeddedValue := outerScalar (innerScalar value)
   let embeddedRoot :=
-    outerScalar (innerScalar (Recurrence.Spread.OddSquare.oddSpreadRootExpansion half value))
+    outerScalar (innerScalar (oddSpreadRootExpansion half value))
   let positive := outerScalar innerGenerator + outerGenerator
   let negative := outerScalar innerGenerator - outerGenerator
   let offset := 2 * outerScalar innerGenerator * outerGenerator
   have innerSquare : innerGenerator ^ 2 = innerScalar (1 - value) := by
     unfold innerGenerator innerScalar
     calc
-      Algebra.Quadratic.Pair.generator (K := K)
+      Quadratic.Pair.generator (K := K)
             (radialSquare := value - 1) ^ 2 =
-          Algebra.Quadratic.Pair.scalar ((1 - value) ^ 1) := by
+          Quadratic.Pair.scalar ((1 - value) ^ 1) := by
             simpa only [show 1 + 1 = 2 by omega0] using
-              Purelib.Polynomial.Recurrence.Spread.OddSquare.innerGenerator_even_power
+              innerGenerator_even_power
                 value 1
-      _ = Algebra.Quadratic.Pair.scalar (1 - value) := by rw [pow_one]
+      _ = Quadratic.Pair.scalar (1 - value) := by rw [pow_one]
   have outerSquare : outerGenerator ^ 2 = -embeddedValue := by
     unfold outerGenerator embeddedValue outerScalar
     calc
-      Algebra.Quadratic.Pair.generator
-            (K := Algebra.Quadratic.Pair K (value - 1))
+      Quadratic.Pair.generator
+            (K := Quadratic.Pair K (value - 1))
             (radialSquare := innerScalar value) ^ 2 =
           outerScalar (-innerScalar value) :=
-        Algebra.Quadratic.Pair.generator_square
+        Quadratic.Pair.generator_square
       _ = -outerScalar (innerScalar value) := by
-        exact Algebra.Quadratic.Pair.scalar_neg (innerScalar value)
+        exact Quadratic.Pair.scalar_neg (innerScalar value)
   have embeddedInnerSquare :
       (outerScalar innerGenerator) ^ 2 = 1 - embeddedValue := by
-    rw [← Algebra.Quadratic.Pair.scalar_pow, innerSquare]
+    rw [← Quadratic.Pair.scalar_pow, innerSquare]
     unfold embeddedValue
-    rw [← Algebra.Quadratic.Pair.scalar_one,
-      ← Algebra.Quadratic.Pair.scalar_one,
-      ← Algebra.Quadratic.Pair.scalar_sub,
-      ← Algebra.Quadratic.Pair.scalar_sub]
+    rw [← Quadratic.Pair.scalar_one,
+      ← Quadratic.Pair.scalar_one,
+      ← Quadratic.Pair.scalar_sub,
+      ← Quadratic.Pair.scalar_sub]
   have positiveNegative : positive * negative = 1 := by
     unfold positive negative
     calc
@@ -226,7 +226,7 @@ theorem ExerciseEightSeven.exercise_8_7
       positive ^ (half + half + 1) *
           negative ^ (half + half + 1) = 1 := by
     rw [← Semiring.Normalization.product_pow, positiveNegative, one_pow]
-  have antisymmetricRaw := Algebra.Binomial.Parity.antisymmetric_binomial_odd half
+  have antisymmetricRaw := Binomial.Parity.antisymmetric_binomial_odd half
     (outerScalar innerGenerator) outerGenerator
   have antisymmetricTerms :
       FiniteSum.Prefix.prefixSum (half + 1) (fun index =>
@@ -234,32 +234,32 @@ theorem ExerciseEightSeven.exercise_8_7
             (outerScalar innerGenerator) ^
               (half + half + 1 - (index + index + 1)) *
               ((half + half + 1).choose (index + index + 1) :
-                Algebra.Quadratic.Pair
-                  (Algebra.Quadratic.Pair K (value - 1))
+                Quadratic.Pair
+                  (Quadratic.Pair K (value - 1))
                   (innerScalar value))) = embeddedRoot := by
-    unfold embeddedRoot Recurrence.Spread.OddSquare.oddSpreadRootExpansion
+    unfold embeddedRoot oddSpreadRootExpansion
     calc
       FiniteSum.Prefix.prefixSum (half + 1) (fun index =>
           outerGenerator ^ (index + index) *
             (outerScalar innerGenerator) ^
               (half + half + 1 - (index + index + 1)) *
               ((half + half + 1).choose (index + index + 1) :
-                Algebra.Quadratic.Pair
-                  (Algebra.Quadratic.Pair K (value - 1))
+                Quadratic.Pair
+                  (Quadratic.Pair K (value - 1))
                   (innerScalar value))) =
         FiniteSum.Prefix.prefixSum (half + 1) (fun index =>
-          outerScalar (innerScalar (Recurrence.Spread.OddSquare.oddSpreadRootTerm half value index))) := by
+          outerScalar (innerScalar (oddSpreadRootTerm half value index))) := by
             apply FiniteSum.Prefix.prefixSum_congr
             intro index indexBound
-            exact Purelib.Polynomial.Recurrence.Spread.OddSquare.antisymmetricTerm_nested
+            exact antisymmetricTerm_nested
               half index value indexBound
       _ = outerScalar (FiniteSum.Prefix.prefixSum (half + 1) (fun index =>
-          innerScalar (Recurrence.Spread.OddSquare.oddSpreadRootTerm half value index))) :=
-        Algebra.Quadratic.Pair.FiniteSum.prefixSum_quadraticPair_scalar
+          innerScalar (oddSpreadRootTerm half value index))) :=
+        Quadratic.Pair.FiniteSum.prefixSum_quadraticPair_scalar
           (innerScalar value) (half + 1) _
       _ = outerScalar (innerScalar (FiniteSum.Prefix.prefixSum (half + 1)
-          (Recurrence.Spread.OddSquare.oddSpreadRootTerm half value))) := by
-            rw [Algebra.Quadratic.Pair.FiniteSum.prefixSum_quadraticPair_scalar]
+          (oddSpreadRootTerm half value))) := by
+            rw [Quadratic.Pair.FiniteSum.prefixSum_quadraticPair_scalar]
   have antisymmetric :
       positive ^ (half + half + 1) -
           negative ^ (half + half + 1) =
@@ -310,13 +310,13 @@ theorem ExerciseEightSeven.exercise_8_7
     congr 1
     omega0
   have embeddedSpread :
-      Recurrence.Spread.Basic.spreadPolynomial (half + half + 1) embeddedValue =
+      Basic.spreadPolynomial (half + half + 1) embeddedValue =
         outerScalar (innerScalar
-          (Recurrence.Spread.Basic.spreadPolynomial (half + half + 1) value)) := by
+          (Basic.spreadPolynomial (half + half + 1) value)) := by
     unfold embeddedValue
-    rw [Recurrence.Spread.QuadraticPair.spreadPolynomial_quadraticPair_scalar,
-      Recurrence.Spread.QuadraticPair.spreadPolynomial_quadraticPair_scalar]
-  have spreadFormula := Recurrence.Spread.Formula.spread_polynomial_offset_formula_cleared
+    rw [QuadraticPair.spreadPolynomial_quadraticPair_scalar,
+      QuadraticPair.spreadPolynomial_quadraticPair_scalar]
+  have spreadFormula := Formula.spread_polynomial_offset_formula_cleared
     embeddedValue offset offsetSquare (half + half + 1)
   rw [positiveEvenPower, negativeEvenPower, embeddedSpread] at spreadFormula
   have positivePowerSquare :
@@ -329,11 +329,11 @@ theorem ExerciseEightSeven.exercise_8_7
     rw [pow_two, ← pow_add]
   have embeddedEquation :
       4 * outerScalar (innerScalar
-          (Recurrence.Spread.Basic.spreadPolynomial (half + half + 1) value)) =
+          (Basic.spreadPolynomial (half + half + 1) value)) =
         4 * embeddedValue * embeddedRoot ^ 2 := by
     calc
       4 * outerScalar (innerScalar
-          (Recurrence.Spread.Basic.spreadPolynomial (half + half + 1) value)) =
+          (Basic.spreadPolynomial (half + half + 1) value)) =
         2 - positive ^ ((half + half + 1) + (half + half + 1)) -
           negative ^ ((half + half + 1) + (half + half + 1)) :=
             spreadFormula
@@ -367,24 +367,24 @@ theorem ExerciseEightSeven.exercise_8_7
                 ring1
   have embeddedRootSquare :
       embeddedRoot ^ 2 = outerScalar (innerScalar
-        (Recurrence.Spread.OddSquare.oddSpreadRootExpansion half value ^ 2)) := by
+        (oddSpreadRootExpansion half value ^ 2)) := by
     unfold embeddedRoot
-    rw [← Algebra.Quadratic.Pair.scalar_pow,
-      ← Algebra.Quadratic.Pair.scalar_pow]
+    rw [← Quadratic.Pair.scalar_pow,
+      ← Quadratic.Pair.scalar_pow]
   rw [embeddedRootSquare] at embeddedEquation
-  rw [Algebra.Quadratic.Pair.four_eq_scalar] at embeddedEquation
-  rw [← Algebra.Quadratic.Pair.scalar_mul,
-    ← Algebra.Quadratic.Pair.scalar_mul] at embeddedEquation
-  have innerEquation := congrArg Algebra.Quadratic.Pair.re embeddedEquation
-  simp only [Algebra.Quadratic.Pair.scalar_re] at innerEquation
-  rw [Algebra.Quadratic.Pair.four_eq_scalar] at innerEquation
-  rw [← Algebra.Quadratic.Pair.scalar_mul,
-    ← Algebra.Quadratic.Pair.scalar_mul] at innerEquation
-  have baseEquation := congrArg Algebra.Quadratic.Pair.re innerEquation
+  rw [Quadratic.Pair.four_eq_scalar] at embeddedEquation
+  rw [← Quadratic.Pair.scalar_mul,
+    ← Quadratic.Pair.scalar_mul] at embeddedEquation
+  have innerEquation := congrArg Quadratic.Pair.re embeddedEquation
+  simp only [Quadratic.Pair.scalar_re] at innerEquation
+  rw [Quadratic.Pair.four_eq_scalar] at innerEquation
+  rw [← Quadratic.Pair.scalar_mul,
+    ← Quadratic.Pair.scalar_mul] at innerEquation
+  have baseEquation := congrArg Quadratic.Pair.re innerEquation
   unfold innerScalar at baseEquation
   have scalarSubZero (scalar : K) : scalar - 0 = scalar := by ring1
-  simp only [Algebra.Quadratic.Pair.mul_re, Algebra.Quadratic.Pair.scalar_re,
-    Algebra.Quadratic.Pair.scalar_im, mul_zero, scalarSubZero, -eq_self, -iff_self] at baseEquation
+  simp only [Quadratic.Pair.mul_re, Quadratic.Pair.scalar_re,
+    Quadratic.Pair.scalar_im, mul_zero, scalarSubZero, -eq_self, -iff_self] at baseEquation
   have fourNonzero : (4 : K) ≠ 0 := by
     intro fourZero
     have twoProductZero : (2 : K) * 2 = 0 := by
@@ -395,9 +395,9 @@ theorem ExerciseEightSeven.exercise_8_7
       twoProductZero
   apply ExplicitField.eq_of_mul_eq_mul_left fourNonzero
   calc
-    4 * Recurrence.Spread.Basic.spreadPolynomial (half + half + 1) value =
-        4 * value * Recurrence.Spread.OddSquare.oddSpreadRootExpansion half value ^ 2 := baseEquation
-    _ = 4 * (value * Recurrence.Spread.OddSquare.oddSpreadRootExpansion half value ^ 2) := by ring1
+    4 * Basic.spreadPolynomial (half + half + 1) value =
+        4 * value * oddSpreadRootExpansion half value ^ 2 := baseEquation
+    _ = 4 * (value * oddSpreadRootExpansion half value ^ 2) := by ring1
 
 end ExerciseEightSeven
 

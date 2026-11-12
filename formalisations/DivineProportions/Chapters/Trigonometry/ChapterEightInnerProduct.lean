@@ -7,6 +7,8 @@ import Purelib.Tactic.QuotientFreeOmega
 import Mathlib.Algebra.Ring.Defs
 import Mathlib.Data.Nat.Prime.Defs
 
+open Purelib.Polynomial.Recurrence.Spread.FiniteResidue
+
 open Purelib.Algebra
 
 open Purelib
@@ -39,27 +41,27 @@ theorem exercise_8_11
     (firstAtMost : first ≤ prime - 2)
     (secondAtMost : second ≤ prime - 2) :
     ((first + second ≠ prime - 1 ∧ first + second ≠ prime + 1) →
-        Polynomial.Recurrence.Spread.FiniteResidue.InnerProduct.spreadInnerProduct (K := K) prime first second = 0) ∧
+        InnerProduct.spreadInnerProduct (K := K) prime first second = 0) ∧
       (first + second = prime - 1 →
-        Polynomial.Recurrence.Spread.FiniteResidue.InnerProduct.spreadInnerProduct (K := K) prime first second =
-          Polynomial.Recurrence.Spread.FiniteResidue.InnerProduct.lowerExceptionalValue) ∧
+        InnerProduct.spreadInnerProduct (K := K) prime first second =
+          InnerProduct.lowerExceptionalValue) ∧
       (first + second = prime + 1 →
-        Polynomial.Recurrence.Spread.FiniteResidue.InnerProduct.spreadInnerProduct (K := K) prime first second =
-          Polynomial.Recurrence.Spread.FiniteResidue.InnerProduct.upperExceptionalValue) := by
+        InnerProduct.spreadInnerProduct (K := K) prime first second =
+          InnerProduct.upperExceptionalValue) := by
   constructor
   · intro regular
-    exact Polynomial.Recurrence.Spread.FiniteResidue.InnerProduct.spreadInnerProduct_zero prime first second
+    exact InnerProduct.spreadInnerProduct_zero prime first second
       primeIsPrime
       primeCastZero twoNonzero firstPositive secondPositive firstAtMost
         secondAtMost regular.1 regular.2
   · constructor
     · intro lower
-      exact Polynomial.Recurrence.Spread.FiniteResidue.InnerProduct.spreadInnerProduct_lower_exceptional prime first
+      exact InnerProduct.spreadInnerProduct_lower_exceptional prime first
         second
         primeIsPrime primeCastZero twoNonzero firstPositive secondPositive
           firstAtMost secondAtMost lower
     · intro upper
-      exact Polynomial.Recurrence.Spread.FiniteResidue.InnerProduct.spreadInnerProduct_upper_exceptional prime first
+      exact InnerProduct.spreadInnerProduct_upper_exceptional prime first
         second
         primeIsPrime primeCastZero twoNonzero firstPositive secondPositive
           firstAtMost secondAtMost upper

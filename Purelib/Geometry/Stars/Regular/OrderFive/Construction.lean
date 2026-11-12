@@ -56,7 +56,7 @@ variable {K : Type*} [ExplicitField K]
 /-- The printed line `⟨v:3-r:0⟩`. -/
 @[expose] def orderFiveLine₁ [Nontrivial K] (root
   spreadRoot : K)
-    (spreadRootNonzero : spreadRoot ≠ 0) : Plane.Line K where
+    (spreadRootNonzero : spreadRoot ≠ 0) : Line K where
   a := spreadRoot
   b := 3 - root
   c := 0
@@ -66,7 +66,7 @@ variable {K : Type*} [ExplicitField K]
 @[expose] def orderFiveLine₂ [Nontrivial K] (root
   spreadRoot : K)
     (spreadRootNonzero : spreadRoot ≠ 0)
-    (rootNeThree : (3 : K) - root ≠ 0) : Plane.Line K where
+    (rootNeThree : (3 : K) - root ≠ 0) : Line K where
   a := spreadRoot * (3 - root)
   b := 2 - 2 * root
   c := 0
@@ -77,7 +77,7 @@ variable {K : Type*} [ExplicitField K]
 @[expose] def orderFiveLine₃ [Nontrivial K] (root
   spreadRoot : K)
     (spreadRootNonzero : spreadRoot ≠ 0)
-    (rootMinusThreeNonzero : root - 3 ≠ 0) : Plane.Line K where
+    (rootMinusThreeNonzero : root - 3 ≠ 0) : Line K where
   a := spreadRoot * (root - 3)
   b := 2 - 2 * root
   c := 0
@@ -87,7 +87,7 @@ variable {K : Type*} [ExplicitField K]
 /-- The printed line `⟨-v:3-r:0⟩`. -/
 @[expose] def orderFiveLine₄ [Nontrivial K] (root
   spreadRoot : K)
-    (spreadRootNonzero : spreadRoot ≠ 0) : Plane.Line K where
+    (spreadRootNonzero : spreadRoot ≠ 0) : Line K where
   a := -spreadRoot
   b := 3 - root
   c := 0
@@ -103,7 +103,7 @@ variable {K : Type*} [ExplicitField K]
     (root spreadRoot : K) (rootNonzero : root ≠ 0)
     (rootSquare : root ^ 2 = 5)
     (spreadSquare : spreadRoot ^ 2 = 2 * (5 - root))
-    (twoNonzero : (2 : K) ≠ 0) : OrderFive.Basic.RegularFiveStar K := by
+    (twoNonzero : (2 : K) ≠ 0) : Basic.RegularFiveStar K := by
   have fourNonzero : (4 : K) ≠ 0 := by
     have fourAsProduct : (4 : K) = 2 * 2 := by ring1
     rw [fourAsProduct]
@@ -193,7 +193,7 @@ variable {K : Type*} [ExplicitField K]
       (2 : K) * (5 - root) = spreadRoot ^ 2 := spreadSquare.symm
       _ = 0 := by rw [zero]; ring1
   exact
-    { line₀ := Purelib.Geometry.Plane.Line.Basic.xAxis
+    { line₀ := Line.Basic.xAxis
       line₁ := orderFiveLine₁ root spreadRoot spreadRootNonzero
       line₂ := orderFiveLine₂ root spreadRoot spreadRootNonzero
         rootNeThree
@@ -287,7 +287,7 @@ variable {K : Type*} [ExplicitField K]
       line₀Line₁Nonparallel := by
         intro parallel
         apply spreadRootNonzero
-        unfold Purelib.Geometry.Plane.Line.Parallel Purelib.Geometry.Plane.Line.Basic.xAxis
+        unfold Line.Parallel Line.Basic.xAxis
           orderFiveLine₁ at parallel
         calc
           spreadRoot = -(0 * (3 - root) - spreadRoot * 1) := by ring1
@@ -295,7 +295,7 @@ variable {K : Type*} [ExplicitField K]
       line₀Line₂Nonparallel := by
         intro parallel
         apply (ExplicitField.mul_ne_zero spreadRootNonzero rootNeThree)
-        unfold Purelib.Geometry.Plane.Line.Parallel Purelib.Geometry.Plane.Line.Basic.xAxis
+        unfold Line.Parallel Line.Basic.xAxis
           orderFiveLine₂ at parallel
         calc
           spreadRoot * (3 - root) =
@@ -305,7 +305,7 @@ variable {K : Type*} [ExplicitField K]
         intro parallel
         apply (ExplicitField.mul_ne_zero spreadRootNonzero
           rootMinusThreeNonzero)
-        unfold Purelib.Geometry.Plane.Line.Parallel Purelib.Geometry.Plane.Line.Basic.xAxis
+        unfold Line.Parallel Line.Basic.xAxis
           orderFiveLine₃ at parallel
         calc
           spreadRoot * (root - 3) =
@@ -314,7 +314,7 @@ variable {K : Type*} [ExplicitField K]
       line₀Line₄Nonparallel := by
         intro parallel
         apply spreadRootNonzero
-        unfold Purelib.Geometry.Plane.Line.Parallel Purelib.Geometry.Plane.Line.Basic.xAxis
+        unfold Line.Parallel Line.Basic.xAxis
           orderFiveLine₄ at parallel
         calc
           spreadRoot = 0 * (3 - root) - (-spreadRoot) * 1 := by ring1
@@ -326,7 +326,7 @@ variable {K : Type*} [ExplicitField K]
             (show (4 : K) ≠ 0 from fourNonzero) spreadRootNonzero)
           rootMinusThreeNonzero
         apply productNonzero
-        unfold Purelib.Geometry.Plane.Line.Parallel
+        unfold Line.Parallel
           orderFiveLine₁
           orderFiveLine₂ at parallel
         calc
@@ -340,7 +340,7 @@ variable {K : Type*} [ExplicitField K]
         apply (ExplicitField.mul_ne_zero
           (ExplicitField.mul_ne_zero eightNonzero spreadRootNonzero)
           rootNeTwo)
-        unfold Purelib.Geometry.Plane.Line.Parallel
+        unfold Line.Parallel
           orderFiveLine₁
           orderFiveLine₃ at parallel
         calc
@@ -354,7 +354,7 @@ variable {K : Type*} [ExplicitField K]
         apply (ExplicitField.mul_ne_zero
           (ExplicitField.mul_ne_zero twoNonzero spreadRootNonzero)
           rootNeThree)
-        unfold Purelib.Geometry.Plane.Line.Parallel
+        unfold Line.Parallel
           orderFiveLine₁
           orderFiveLine₄ at parallel
         calc
@@ -367,7 +367,7 @@ variable {K : Type*} [ExplicitField K]
           (ExplicitField.mul_ne_zero
             (ExplicitField.mul_ne_zero fourNonzero spreadRootNonzero)
             rootNeThree) rootNeOne)
-        unfold Purelib.Geometry.Plane.Line.Parallel
+        unfold Line.Parallel
           orderFiveLine₂
           orderFiveLine₃ at parallel
         calc
@@ -380,7 +380,7 @@ variable {K : Type*} [ExplicitField K]
         apply (ExplicitField.mul_ne_zero
           (ExplicitField.mul_ne_zero eightNonzero spreadRootNonzero)
           rootNeTwo)
-        unfold Purelib.Geometry.Plane.Line.Parallel
+        unfold Line.Parallel
           orderFiveLine₂
           orderFiveLine₄ at parallel
         calc
@@ -394,7 +394,7 @@ variable {K : Type*} [ExplicitField K]
         apply (ExplicitField.mul_ne_zero
           (ExplicitField.mul_ne_zero fourNonzero spreadRootNonzero)
           rootMinusThreeNonzero)
-        unfold Purelib.Geometry.Plane.Line.Parallel
+        unfold Line.Parallel
           orderFiveLine₃
           orderFiveLine₄ at parallel
         calc
@@ -404,18 +404,18 @@ variable {K : Type*} [ExplicitField K]
                 (-spreadRoot * (root ^ 2 - 5)) := by ring1
           _ = 0 := by rw [parallel, rootSquare]; ring1
       reflectAround₀ := by
-        unfold Purelib.Geometry.Plane.Line.Equivalent
+        unfold Line.Equivalent
         simp only [Line.reflectLine, Line.reflectedLineA, Line.reflectedLineB, Line.reflectedLineC,
-          Line.Basic.lineNorm, Purelib.Geometry.Plane.Line.Basic.xAxis,
+          Line.Basic.lineNorm, Line.Basic.xAxis,
             orderFiveLine₁,
             orderFiveLine₄]
         constructor
         · ring1
         constructor <;> ring1
       reflectAround₁ := by
-        unfold Purelib.Geometry.Plane.Line.Equivalent
+        unfold Line.Equivalent
         simp only [Line.reflectLine, Line.reflectedLineA, Line.reflectedLineB, Line.reflectedLineC,
-          Line.Basic.lineNorm, Purelib.Geometry.Plane.Line.Basic.xAxis,
+          Line.Basic.lineNorm, Line.Basic.xAxis,
             orderFiveLine₁,
             orderFiveLine₂]
         constructor
@@ -428,7 +428,7 @@ variable {K : Type*} [ExplicitField K]
             _ = 0 := by rw [rootSquare, spreadSquare]; ring1
         constructor <;> ring1
       reflectAround₂ := by
-        unfold Purelib.Geometry.Plane.Line.Equivalent
+        unfold Line.Equivalent
         simp only [Line.reflectLine, Line.reflectedLineA, Line.reflectedLineB, Line.reflectedLineC,
           Line.Basic.lineNorm, orderFiveLine₁,
             orderFiveLine₂,
@@ -448,7 +448,7 @@ variable {K : Type*} [ExplicitField K]
             _ = 0 := by rw [rootSquare, spreadSquare]; ring1
         constructor <;> ring1
       reflectAround₃ := by
-        unfold Purelib.Geometry.Plane.Line.Equivalent
+        unfold Line.Equivalent
         simp only [Line.reflectLine, Line.reflectedLineA, Line.reflectedLineB, Line.reflectedLineC,
           Line.Basic.lineNorm, orderFiveLine₂,
             orderFiveLine₃,
@@ -468,9 +468,9 @@ variable {K : Type*} [ExplicitField K]
             _ = 0 := by rw [rootSquare, spreadSquare]; ring1
         constructor <;> ring1
       reflectAround₄ := by
-        unfold Purelib.Geometry.Plane.Line.Equivalent
+        unfold Line.Equivalent
         simp only [Line.reflectLine, Line.reflectedLineA, Line.reflectedLineB, Line.reflectedLineC,
-          Line.Basic.lineNorm, Purelib.Geometry.Plane.Line.Basic.xAxis,
+          Line.Basic.lineNorm, Line.Basic.xAxis,
             orderFiveLine₃,
             orderFiveLine₄]
         constructor

@@ -60,8 +60,8 @@ theorem computation_rep (program :
       ObservationRep program request count observation := by
   obtain ⟨machine, valueEqual, represented⟩ :=
     MachineProjection.initial_advance_rep program (selectedIndex (control program) request) count
-  rw [Observation.Basic.computation, Computation.Query.Protocol.bind_run_value, requestReading,
-    read_stage_value, Observation.Basic.continueObservation, Computation.Query.Protocol.map_run_value]
+  rw [Observation.Basic.computation_run, Computation.Query.Protocol.bind_run_value, requestReading_run,
+    read_stage_value, Observation.Basic.continueObservation_run, Computation.Query.Protocol.map_run_value]
   change ∃ observation,
     Except.map (fun machine => (⟨requestedReading program request, machine⟩ :
       Integration.Program.Gaussian.CCL.Replay.Observation))
@@ -92,8 +92,9 @@ theorem computation_trace (program :
       ⟨selectedIndex (control program) request, program.stage (selectedIndex (control program) request)⟩ ::
         ((Machine.advance (control program)
           (.initial (selectedIndex (control program) request)) count).run program.stage).trace := by
-  rw [Observation.Basic.computation, Computation.Query.Protocol.bind_run_trace, requestReading, read_stage_value,
-    Observation.Basic.continueObservation, Computation.Query.Protocol.map_run_trace, read_trace]
+  rw [Observation.Basic.computation_run, Computation.Query.Protocol.bind_run_trace, requestReading_run,
+    read_stage_value,
+    Observation.Basic.continueObservation_run, Computation.Query.Protocol.map_run_trace, read_trace]
   rfl
 end Purelib.Integration.Program.Gaussian.CCL.Replay.Observation.Representation
 

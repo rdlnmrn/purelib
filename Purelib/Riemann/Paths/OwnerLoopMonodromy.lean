@@ -221,3 +221,44 @@ The exact canonical-assignment equality is transported through the original reco
 end OwnerPath
 
 end Purelib.Riemann.Paths.OwnerLoopMonodromy
+
+namespace Purelib.Riemann.Paths.OwnerLoopMonodromy.WindingOneLoop
+
+open Purelib
+open Purelib.Data.Gaussian.Basic (Canonical)
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
+open Purelib.Polynomial.Geometry (ClearPath)
+open Purelib.Curves.Hyperelliptic.Branches
+
+/-- The actual connector, retained winding-one loop and reversed connector have raw winding four.
+
+The original left-associated concatenation keeps both connector occurrences
+and their opposite raw windings. The retained loop contributes its exact
+original winding-four witness.
+-/
+theorem rebase_winding {polynomial : CoefficientPolynomial} {base start : Canonical}
+    (reference : WindingOneLoop polynomial base)
+    (connector : ClearPath polynomial reference.ambient start base) :
+    PreparedPathWinding.ClearPath.rawWinding
+      ((connector.append reference.path).append (BranchCutLifts.ClearPath.reverse connector)) = 4 := by
+  rewrite [PreparedPathClosure.ClearPath.rawWinding_append,
+    PreparedPathClosure.ClearPath.rawWinding_append,
+    PreparedPathClosure.ClearPath.rawWinding_reverse, reference.winding]
+  omega0
+
+/-- Rebase the same retained winding-one loop along an actual cleared connector.
+
+The connector and its reverse remain on the original reference ambient.
+The complete left-associated path is the original connector-loop-reverse
+construction. Its body remains exposed for existing builder reduction;
+the winding proof implementation stays opaque at its mathematical owner.
+-/
+@[expose] def rebase {polynomial : CoefficientPolynomial} {base start : Canonical}
+    (reference : WindingOneLoop polynomial base)
+    (connector : ClearPath polynomial reference.ambient start base)
+    (within : connector.WithinAmbient) : WindingOneLoop polynomial start :=
+  ⟨reference.ambient, (connector.append reference.path).append (BranchCutLifts.ClearPath.reverse connector),
+    (within.append reference.within).append (BranchCutLifts.ClearPath.reverse_withinAmbient connector within),
+    reference.rebase_winding connector⟩
+
+end Purelib.Riemann.Paths.OwnerLoopMonodromy.WindingOneLoop

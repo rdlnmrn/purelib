@@ -31,21 +31,21 @@ abbrev Gaussian := Data.Gaussian.Basic.Canonical
 attribute [local congr] FiniteSum.Fin.sumFin_congr
 
 variable {n : Nat} (p q r s : SquareMatrix
-  Purelib.LinearAlgebra.Matrix.Inverse.SymplecticBlockIdentities.Gaussian n)
+  SymplecticBlockIdentities.Gaussian n)
 
 /-- Assemble the transposed symplectic inverse candidate from the four retained blocks.
 
 The diagonal blocks are the transposes of the opposite diagonal blocks, and the off-diagonal blocks are negated
 transposes. -/
-@[expose] def inverseBlock : SquareMatrix SquareMatrix.Inverse.SymplecticBlockIdentities.Gaussian (n + n) :=
-  SquareMatrix.Blocks.block (SquareMatrix.matrixOfFn fun row column => s column row)
-    (SquareMatrix.matrixOfFn fun row column => -q column row)
-    (SquareMatrix.matrixOfFn fun row column => -r column row) (SquareMatrix.matrixOfFn fun row column => p
+@[expose] def inverseBlock : SquareMatrix Gaussian (n + n) :=
+  Blocks.block (matrixOfFn fun row column => s column row)
+    (matrixOfFn fun row column => -q column row)
+    (matrixOfFn fun row column => -r column row) (matrixOfFn fun row column => p
       column row)
 
 /-- The equality indicator for first-block indices equals the original coordinate indicator with reversed arguments. -/
 private theorem left_delta (row column : Fin n) :
-    (if Fin.castAdd n row = Fin.castAdd n column then (1 : SquareMatrix.Inverse.SymplecticBlockIdentities.Gaussian) else
+    (if Fin.castAdd n row = Fin.castAdd n column then (1 : Gaussian) else
       0) = if column = row then 1 else 0 := by
   by_cases same : column = row
   · rw [if_pos same, if_pos (congrArg (Fin.castAdd n) same.symm)]
@@ -56,7 +56,7 @@ private theorem left_delta (row column : Fin n) :
 
 /-- The equality indicator for second-block indices equals the original coordinate indicator. -/
 private theorem right_delta (row column : Fin n) :
-    (if Fin.natAdd n row = Fin.natAdd n column then (1 : SquareMatrix.Inverse.SymplecticBlockIdentities.Gaussian) else
+    (if Fin.natAdd n row = Fin.natAdd n column then (1 : Gaussian) else
       0) = if row = column then 1 else 0 := by
   by_cases same : row = column
   · rw [if_pos same, if_pos (congrArg (Fin.natAdd n) same)]
@@ -81,57 +81,57 @@ variable
 include pp qq pq
 
 /-- The retained symplectic column identities make the candidate a left inverse of the block matrix. -/
-theorem inverseBlock_mul : SquareMatrix.Multiplication.mul (SquareMatrix.Inverse.SymplecticBlockIdentities.inverseBlock
-  p q r s) (SquareMatrix.Blocks.block p q r s) = SquareMatrix.Multiplication.scaleIdentity 1 := by
-  apply SquareMatrix.matrix_ext
+theorem inverseBlock_mul : Multiplication.mul (inverseBlock
+  p q r s) (Blocks.block p q r s) = Multiplication.scaleIdentity 1 := by
+  apply matrix_ext
   intro row column
   rcases Data.Fin.addCases_split row with ⟨row, rfl⟩ | ⟨row, rfl⟩ <;>
     rcases Data.Fin.addCases_split column with ⟨column, rfl⟩ | ⟨column, rfl⟩
-  · rw [SquareMatrix.Multiplication.mul_apply, FiniteSum.Fin.sumFin_split,
-      SquareMatrix.Multiplication.scaleIdentity_apply,
-      LinearAlgebra.Matrix.Inverse.SymplecticBlockIdentities.left_delta]
-    simp only [SquareMatrix.Inverse.SymplecticBlockIdentities.inverseBlock, SquareMatrix.Blocks.block_ll,
-      SquareMatrix.Blocks.block_lr, SquareMatrix.Blocks.block_rl, SquareMatrix.matrixOfFn_apply]
+  · rw [Multiplication.mul_apply, FiniteSum.Fin.sumFin_split,
+      Multiplication.scaleIdentity_apply,
+      left_delta]
+    simp only [inverseBlock, Blocks.block_ll,
+      Blocks.block_lr, Blocks.block_rl, matrixOfFn_apply]
     rw [← FiniteSum.Fin.sumFin_add]
     exact (FiniteSum.Fin.sumFin_congr (fun index => by ring1)).trans (pq column row)
-  · rw [SquareMatrix.Multiplication.mul_apply, FiniteSum.Fin.sumFin_split,
-      SquareMatrix.Multiplication.scaleIdentity_apply, if_neg
-      (LinearAlgebra.Matrix.Inverse.SymplecticBlockIdentities.separate row column)]
-    simp only [SquareMatrix.Inverse.SymplecticBlockIdentities.inverseBlock, SquareMatrix.Blocks.block_ll,
-      SquareMatrix.Blocks.block_lr, SquareMatrix.Blocks.block_rr, SquareMatrix.matrixOfFn_apply]
+  · rw [Multiplication.mul_apply, FiniteSum.Fin.sumFin_split,
+      Multiplication.scaleIdentity_apply, if_neg
+      (separate row column)]
+    simp only [inverseBlock, Blocks.block_ll,
+      Blocks.block_lr, Blocks.block_rr, matrixOfFn_apply]
     rw [← FiniteSum.Fin.sumFin_add]
     exact (FiniteSum.Fin.sumFin_congr (fun index => by ring1)).trans (qq column row)
-  · rw [SquareMatrix.Multiplication.mul_apply, FiniteSum.Fin.sumFin_split,
-      SquareMatrix.Multiplication.scaleIdentity_apply, if_neg (Ne.symm
-      (LinearAlgebra.Matrix.Inverse.SymplecticBlockIdentities.separate column row))]
-    simp only [SquareMatrix.Inverse.SymplecticBlockIdentities.inverseBlock, SquareMatrix.Blocks.block_rl,
-      SquareMatrix.Blocks.block_rr, SquareMatrix.Blocks.block_ll, SquareMatrix.matrixOfFn_apply]
+  · rw [Multiplication.mul_apply, FiniteSum.Fin.sumFin_split,
+      Multiplication.scaleIdentity_apply, if_neg (Ne.symm
+      (separate column row))]
+    simp only [inverseBlock, Blocks.block_rl,
+      Blocks.block_rr, Blocks.block_ll, matrixOfFn_apply]
     rw [← FiniteSum.Fin.sumFin_add]
     exact (FiniteSum.Fin.sumFin_congr (fun index => by ring1)).trans (pp row column)
-  · rw [SquareMatrix.Multiplication.mul_apply, FiniteSum.Fin.sumFin_split,
-      SquareMatrix.Multiplication.scaleIdentity_apply,
-      LinearAlgebra.Matrix.Inverse.SymplecticBlockIdentities.right_delta]
-    simp only [SquareMatrix.Inverse.SymplecticBlockIdentities.inverseBlock, SquareMatrix.Blocks.block_rl,
-      SquareMatrix.Blocks.block_rr, SquareMatrix.Blocks.block_lr, SquareMatrix.matrixOfFn_apply]
+  · rw [Multiplication.mul_apply, FiniteSum.Fin.sumFin_split,
+      Multiplication.scaleIdentity_apply,
+      right_delta]
+    simp only [inverseBlock, Blocks.block_rl,
+      Blocks.block_rr, Blocks.block_lr, matrixOfFn_apply]
     rw [← FiniteSum.Fin.sumFin_add]
     exact (FiniteSum.Fin.sumFin_congr (fun index => by ring1)).trans (pq row column)
 
 /-- The retained symplectic column identities also make the candidate a right inverse. -/
-theorem mul_inverseBlock : SquareMatrix.Multiplication.mul (SquareMatrix.Blocks.block p q r s)
-  (SquareMatrix.Inverse.SymplecticBlockIdentities.inverseBlock p q r s) = SquareMatrix.Multiplication.scaleIdentity 1 :=
-  SquareMatrix.Inverse.SquareInverseCancellation.reverse_inverse _ _
-    (SquareMatrix.Inverse.SymplecticBlockIdentities.inverseBlock_mul p q r s pp qq pq)
+theorem mul_inverseBlock : Multiplication.mul (Blocks.block p q r s)
+  (inverseBlock p q r s) = Multiplication.scaleIdentity 1 :=
+  SquareInverseCancellation.reverse_inverse _ _
+    (inverseBlock_mul p q r s pp qq pq)
 
 /-- The first two block rows have zero signed wedge pairing under the supplied column identities. -/
 theorem first_row_wedges (row column : Fin n) :
     FiniteSum.Fin.sumFin (fun index => p row index * q column index - q row index * p column index) = 0 := by
-  have equal := SquareMatrix.matrix_eq_at (SquareMatrix.Inverse.SymplecticBlockIdentities.mul_inverseBlock p q r s
+  have equal := matrix_eq_at (mul_inverseBlock p q r s
     pp qq pq) (Fin.castAdd n row) (Fin.natAdd n column)
-  rw [SquareMatrix.Multiplication.mul_apply, FiniteSum.Fin.sumFin_split,
-    SquareMatrix.Multiplication.scaleIdentity_apply, if_neg
-    (LinearAlgebra.Matrix.Inverse.SymplecticBlockIdentities.separate row column)] at equal
-  simp only [SquareMatrix.Inverse.SymplecticBlockIdentities.inverseBlock, SquareMatrix.Blocks.block_ll,
-    SquareMatrix.Blocks.block_lr, SquareMatrix.Blocks.block_rr, SquareMatrix.matrixOfFn_apply] at equal
+  rw [Multiplication.mul_apply, FiniteSum.Fin.sumFin_split,
+    Multiplication.scaleIdentity_apply, if_neg
+    (separate row column)] at equal
+  simp only [inverseBlock, Blocks.block_ll,
+    Blocks.block_lr, Blocks.block_rr, matrixOfFn_apply] at equal
   rw [← FiniteSum.Fin.sumFin_add] at equal
   have negative : -FiniteSum.Fin.sumFin (fun index => p row index * q column index - q row index * p column index) = 0
     := by
@@ -142,13 +142,13 @@ theorem first_row_wedges (row column : Fin n) :
 /-- The last two block rows have zero signed wedge pairing under the supplied column identities. -/
 theorem last_row_wedges (row column : Fin n) :
     FiniteSum.Fin.sumFin (fun index => r row index * s column index - s row index * r column index) = 0 := by
-  have equal := SquareMatrix.matrix_eq_at (SquareMatrix.Inverse.SymplecticBlockIdentities.mul_inverseBlock p q r s
+  have equal := matrix_eq_at (mul_inverseBlock p q r s
     pp qq pq) (Fin.natAdd n row) (Fin.castAdd n column)
-  rw [SquareMatrix.Multiplication.mul_apply, FiniteSum.Fin.sumFin_split,
-    SquareMatrix.Multiplication.scaleIdentity_apply, if_neg (Ne.symm
-    (LinearAlgebra.Matrix.Inverse.SymplecticBlockIdentities.separate column row))] at equal
-  simp only [SquareMatrix.Inverse.SymplecticBlockIdentities.inverseBlock, SquareMatrix.Blocks.block_rl,
-    SquareMatrix.Blocks.block_rr, SquareMatrix.Blocks.block_ll, SquareMatrix.matrixOfFn_apply] at equal
+  rw [Multiplication.mul_apply, FiniteSum.Fin.sumFin_split,
+    Multiplication.scaleIdentity_apply, if_neg (Ne.symm
+    (separate column row))] at equal
+  simp only [inverseBlock, Blocks.block_rl,
+    Blocks.block_rr, Blocks.block_ll, matrixOfFn_apply] at equal
   rw [← FiniteSum.Fin.sumFin_add] at equal
   exact (FiniteSum.Fin.sumFin_congr (fun index => by ring1)).trans equal
 
@@ -156,13 +156,13 @@ theorem last_row_wedges (row column : Fin n) :
 theorem mixed_row_wedges (row column : Fin n) :
     FiniteSum.Fin.sumFin (fun index => p row index * s column index - q row index * r column index) =
       if row = column then 1 else 0 := by
-  have equal := SquareMatrix.matrix_eq_at (SquareMatrix.Inverse.SymplecticBlockIdentities.mul_inverseBlock p q r s
+  have equal := matrix_eq_at (mul_inverseBlock p q r s
     pp qq pq) (Fin.castAdd n row) (Fin.castAdd n column)
-  rw [SquareMatrix.Multiplication.mul_apply, FiniteSum.Fin.sumFin_split,
-    SquareMatrix.Multiplication.scaleIdentity_apply,
-    LinearAlgebra.Matrix.Inverse.SymplecticBlockIdentities.left_delta] at equal
-  simp only [SquareMatrix.Inverse.SymplecticBlockIdentities.inverseBlock, SquareMatrix.Blocks.block_ll,
-    SquareMatrix.Blocks.block_lr, SquareMatrix.Blocks.block_rl, SquareMatrix.matrixOfFn_apply] at equal
+  rw [Multiplication.mul_apply, FiniteSum.Fin.sumFin_split,
+    Multiplication.scaleIdentity_apply,
+    left_delta] at equal
+  simp only [inverseBlock, Blocks.block_ll,
+    Blocks.block_lr, Blocks.block_rl, matrixOfFn_apply] at equal
   rw [← FiniteSum.Fin.sumFin_add] at equal
   apply (FiniteSum.Fin.sumFin_congr (fun index => by ring1)).trans (equal.trans ?_)
   by_cases same : row = column

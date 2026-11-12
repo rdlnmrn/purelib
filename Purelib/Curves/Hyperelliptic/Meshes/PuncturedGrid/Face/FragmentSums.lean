@@ -76,6 +76,8 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Topology.Mesh.CoordinateTriangulation
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 /-!
 # Aggregate comparisons on automatically split prepared requests
 
@@ -84,6 +86,8 @@ Finite Cauchy--Schwarz uses the full fragment count, not the original parent
 count. Exact geometric telescoping then recovers the unchanged actual request
 sum. Assembly consumes cached readings and scalar charges only.
 -/
+
+open Purelib.Riemann.Integration.RectangularSharedPrimitives renaming SharedPrimitiveValues -> SharedValues
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums
 
@@ -160,7 +164,7 @@ open Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianNormSqSum)
 open Purelib.Approximation.Rational.Budget.Aggregate (countCoordinate countCoordinate_eq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face :
@@ -173,48 +177,48 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {differential : Differential genus} {bounds :
     FragmentBounds patch differential}
   {globalBounds : PrimitiveOverlapBounds face.clearance
-    (Purelib.Riemann.Readings.PreparedPrimitiveSamples.differentialNumerator differential)}
-  {tolerance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {gridRequest :
+    (PreparedPrimitiveSamples.differentialNumerator differential)}
+  {tolerance : InverseRootPolynomial.Coordinate} {gridRequest :
     GridPrimitiveAccuracy globalBounds columns tolerance}
   {primitives : Primitives
-    (Purelib.Riemann.Branches.RectangularSheetGauge.Transitions.oriented (patch.sheets.refine
+    (Riemann.Branches.RectangularSheetGauge.Transitions.oriented (patch.sheets.refine
     gridRequest.index).transitions (patch.sheets.refine gridRequest.index).gauge)
-    (Purelib.Riemann.Readings.PreparedPrimitiveSamples.differentialNumerator differential)}
+    (PreparedPrimitiveSamples.differentialNumerator differential)}
   {anchors : PrimitiveAnchors primitives} {offsets :
     LinearAlgebra.Grid.Offsets anchors.edges}
   {cuts : GridCuts geometry} {meshParents : List
     (CenteredEdge curve differential)} {extra : List
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian}
+    InverseRootPolynomial.Gaussian}
   {mesh : PreparedSplitMesh cuts meshParents extra}
-  {count : Nat} {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+  {count : Nat} {target : InverseRootPolynomial.Coordinate}
 
 /-- Gaussian summation preserves concatenation of the two original finite lists. -/
 private theorem sum_append (first last : List InverseRootPolynomial.Gaussian) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (first ++ last) = Data.Gaussian.Norm.Sum.Basic.gaussianSum first
-      + Data.Gaussian.Norm.Sum.Basic.gaussianSum last := by
+    Sum.Basic.gaussianSum (first ++ last) = Sum.Basic.gaussianSum first
+      + Sum.Basic.gaussianSum last := by
   induction first with
   | nil =>
-    change Data.Gaussian.Norm.Sum.Basic.gaussianSum last = 0 + Data.Gaussian.Norm.Sum.Basic.gaussianSum last;
+    change Sum.Basic.gaussianSum last = 0 + Sum.Basic.gaussianSum last;
       ring1
   | cons first rest ih =>
-      change first + Data.Gaussian.Norm.Sum.Basic.gaussianSum (rest ++ last) = (first +
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum rest) + Data.Gaussian.Norm.Sum.Basic.gaussianSum last
+      change first + Sum.Basic.gaussianSum (rest ++ last) = (first +
+        Sum.Basic.gaussianSum rest) + Sum.Basic.gaussianSum last
       rw [ih]
       ring1
 
 /-- The sum of squared Gaussian norms preserves finite-list concatenation. -/
 private theorem normSum_append (first last : List InverseRootPolynomial.Gaussian) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianNormSqSum (first ++ last) = Data.Gaussian.Norm.Sum.Basic.gaussianNormSqSum
-      first + Data.Gaussian.Norm.Sum.Basic.gaussianNormSqSum last := by
+    Sum.Basic.gaussianNormSqSum (first ++ last) = Sum.Basic.gaussianNormSqSum
+      first + Sum.Basic.gaussianNormSqSum last := by
   induction first with
   | nil =>
-    change Data.Gaussian.Norm.Sum.Basic.gaussianNormSqSum last = 0 + Data.Gaussian.Norm.Sum.Basic.gaussianNormSqSum
+    change Sum.Basic.gaussianNormSqSum last = 0 + Sum.Basic.gaussianNormSqSum
       last; ring1
   | cons first rest ih =>
-      change Data.Gaussian.Basic.Canonical.normSq first + Data.Gaussian.Norm.Sum.Basic.gaussianNormSqSum (rest ++ last)
+      change Data.Gaussian.Basic.Canonical.normSq first + Sum.Basic.gaussianNormSqSum (rest ++ last)
         =
-        (Data.Gaussian.Basic.Canonical.normSq first + Data.Gaussian.Norm.Sum.Basic.gaussianNormSqSum rest) +
-          Data.Gaussian.Norm.Sum.Basic.gaussianNormSqSum last
+        (Data.Gaussian.Basic.Canonical.normSq first + Sum.Basic.gaussianNormSqSum rest) +
+          Sum.Basic.gaussianNormSqSum last
       rw [ih]
       ring1
 
@@ -223,17 +227,17 @@ set_option genInjectivity false in
 
 Each reading is indexed by the original request and its segment piece. The dependent tail preserves the order of the
 supplied split without choosing new parents or reevaluating cached observations. -/
-inductive FragmentReadings (bounds : FragmentReadings.FragmentBounds patch differential)
+inductive FragmentReadings (bounds : FragmentBounds patch differential)
     (readings : RectangularSharedPrimitives.SharedPrimitiveValues anchors offsets mesh.mesh.surface)
-    {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential} (request :
-      UniformPreparedRequests.LocalRequest parent count target) :
-    List (RectangularSegmentSplitting.SegmentPiece geometry (parent.edge.point 0) (parent.edge.point 1)) → Type 2
+    {parent : CenteredEdge curve differential} (request :
+      LocalRequest parent count target) :
+    List (SegmentPiece geometry (parent.edge.point 0) (parent.edge.point 1)) → Type 2
   /-- The empty original fragment or request spine retains no readings. -/ | nil :
     FragmentReadings bounds readings request []
   /-- Retain the original head reading or fragment bank together with the exact remaining dependent tail. -/ | cons
-    {piece : RectangularSegmentSplitting.SegmentPiece geometry (parent.edge.point 0) (parent.edge.point 1)}
-      {pieces : List (RectangularSegmentSplitting.SegmentPiece geometry (parent.edge.point 0) (parent.edge.point 1))}
-      (reading : FragmentReadings.FragmentReading (gridRequest := gridRequest) bounds readings request piece)
+    {piece : SegmentPiece geometry (parent.edge.point 0) (parent.edge.point 1)}
+      {pieces : List (SegmentPiece geometry (parent.edge.point 0) (parent.edge.point 1))}
+      (reading : FragmentReading (gridRequest := gridRequest) bounds readings request piece)
       (tail : FragmentReadings bounds readings
         request pieces) : FragmentReadings bounds
         readings request (piece :: pieces)
@@ -251,15 +255,15 @@ variable {readings : SharedPrimitiveValues anchors offsets
 
 The supplied membership and reachability witnesses refer to the original split and face. Structural recursion retains
 the same head certificate and dependent tail in the supplied piece order. -/
-@[expose] def build (bounds : FragmentReadings.FragmentBounds patch differential) (readings :
+@[expose] def build (bounds : FragmentBounds patch differential) (readings :
   RectangularSharedPrimitives.SharedPrimitiveValues anchors offsets mesh.mesh.surface)
-    (request : UniformPreparedRequests.LocalRequest parent count target) {split :
-      RectangularSegmentSplitting.SegmentSplit cuts (parent.edge.point 0) (parent.edge.point 1)}
+    (request : LocalRequest parent count target) {split :
+      SegmentSplit cuts (parent.edge.point 0) (parent.edge.point 1)}
     (member : ParentSplits.Member split mesh.splits)
-    (pieces : List (RectangularSegmentSplitting.SegmentPiece geometry (parent.edge.point 0) (parent.edge.point 1)))
+    (pieces : List (SegmentPiece geometry (parent.edge.point 0) (parent.edge.point 1)))
     (included : ∀ piece ∈ pieces, piece ∈ split.pieces)
-    (reached : PreparedFaceTracePrefixes.ParentReached face.cell.box (models.frame.owners sheet) parent) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentReadings (gridRequest := gridRequest) bounds
+    (reached : ParentReached face.cell.box (models.frame.owners sheet) parent) :
+    FragmentReadings (gridRequest := gridRequest) bounds
       readings request pieces :=
   match pieces with
   | [] => .nil
@@ -274,9 +278,9 @@ the same head certificate and dependent tail in the supplied piece order. -/
 
 Each head contributes its retained value without reevaluating a primitive. The remaining values follow the original
 dependent reading spine. -/
-@[expose] def values : {pieces : List (RectangularSegmentSplitting.SegmentPiece geometry (parent.edge.point 0)
+@[expose] def values : {pieces : List (SegmentPiece geometry (parent.edge.point 0)
   (parent.edge.point 1))} →
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentReadings (gridRequest := gridRequest) bounds
+    FragmentReadings (gridRequest := gridRequest) bounds
       readings request pieces → List InverseRootPolynomial.Gaussian
   | _, .nil => []
   | _, .cons reading tail => reading.value :: tail.values
@@ -285,9 +289,9 @@ dependent reading spine. -/
 
 The ordered spine supplies each original scalar charge once. This fold retains repeated occurrences and reads the same
 cached head and tail. -/
-@[expose] def chargeSum : {pieces : List (RectangularSegmentSplitting.SegmentPiece geometry (parent.edge.point 0)
+@[expose] def chargeSum : {pieces : List (SegmentPiece geometry (parent.edge.point 0)
   (parent.edge.point 1))} →
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentReadings (gridRequest := gridRequest) bounds
+    FragmentReadings (gridRequest := gridRequest) bounds
       readings request pieces → InverseRootPolynomial.Coordinate
   | _, .nil => 0
   | _, .cons reading tail => reading.charge + tail.chargeSum
@@ -296,17 +300,17 @@ cached head and tail. -/
 
 The retained request and piece indices determine every charge. Structural recursion sums those original scalar
 observations without changing their bounds or geometric owners. -/
-@[expose] def analyticChargeSum : {pieces : List (RectangularSegmentSplitting.SegmentPiece geometry (parent.edge.point
+@[expose] def analyticChargeSum : {pieces : List (SegmentPiece geometry (parent.edge.point
   0) (parent.edge.point 1))} →
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentReadings (gridRequest := gridRequest) bounds
+    FragmentReadings (gridRequest := gridRequest) bounds
       readings request pieces → InverseRootPolynomial.Coordinate
   | _, .nil => 0
   | piece :: _, .cons _ tail => bounds.charge piece request gridRequest.index + tail.analyticChargeSum
 
 /-- Read each cached shared fragment value minus its unchanged original request primitive increment. -/
-private def errors : {pieces : List (RectangularSegmentSplitting.SegmentPiece geometry (parent.edge.point 0)
+private def errors : {pieces : List (SegmentPiece geometry (parent.edge.point 0)
   (parent.edge.point 1))} →
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentReadings (gridRequest := gridRequest) bounds
+    FragmentReadings (gridRequest := gridRequest) bounds
       readings request pieces → List InverseRootPolynomial.Gaussian
   | _, .nil => []
   | piece :: _, .cons reading tail =>
@@ -321,7 +325,7 @@ variable {pieces : List (SegmentPiece geometry (parent.edge.point 0)
 
 Each retained reading contributes one cached value. Structural induction on the original piece spine preserves its exact
 length. -/
-theorem values_length (entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentReadings
+theorem values_length (entries : FragmentReadings
   (gridRequest := gridRequest) bounds readings request pieces) :
     entries.values.length = pieces.length := by
   induction entries with
@@ -334,7 +338,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.Fragmen
 
 The displayed full fragment count weights the shared-grid charge. Structural induction on the retained readings adds the
 original analytic charges without changing their factors. -/
-theorem chargeSum_eq (entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentReadings
+theorem chargeSum_eq (entries : FragmentReadings
   (gridRequest := gridRequest) bounds readings request pieces) :
     entries.chargeSum = 32 * Aggregate.countCoordinate pieces.length * gridRequest.globalBound + 2 *
       entries.analyticChargeSum := by
@@ -351,34 +355,34 @@ theorem chargeSum_eq (entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.F
 
 Each entry uses its original contact equalities to identify the two cached endpoint observations. List-constructor
 congruence retains the unchanged ordered tail. -/
-private theorem values_eq (entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentReadings
+private theorem values_eq (entries : FragmentReadings
   (gridRequest := gridRequest) bounds readings request pieces) :
-    entries.values = pieces.map (fun piece => (SharedPrimitiveValues.atPoint readings) piece.lastPoint -
-      (SharedPrimitiveValues.atPoint readings) piece.firstPoint) := by
+    entries.values = pieces.map (fun piece => (SharedValues.atPoint readings) piece.lastPoint -
+      (SharedValues.atPoint readings) piece.firstPoint) := by
   induction entries with
   | nil => rfl
   | cons reading tail ih =>
       rewrite [values, List.map_cons, ih, reading.value_eq, ← reading.contact.last_eq, ← reading.contact.first_eq,
-        SharedPrimitiveValues.atPoint_coordinate readings, SharedPrimitiveValues.atPoint_coordinate readings]
+        SharedValues.atPoint_coordinate readings, SharedValues.atPoint_coordinate readings]
       exact Eq.refl _
 
 end
 
 /-- The cached shared readings telescope over the original retained fragment or parent chain. -/
-theorem sum_eq_increment {split : RectangularSegmentSplitting.SegmentSplit cuts (parent.edge.point 0) (parent.edge.point
+theorem sum_eq_increment {split : SegmentSplit cuts (parent.edge.point 0) (parent.edge.point
   1)}
-    (entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentReadings (gridRequest := gridRequest)
+    (entries : FragmentReadings (gridRequest := gridRequest)
       bounds readings request split.pieces) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum entries.values = (SharedPrimitiveValues.atPoint readings)
-      (parent.edge.point 1) - (SharedPrimitiveValues.atPoint readings) (parent.edge.point 0) := by
+    Sum.Basic.gaussianSum entries.values = (SharedValues.atPoint readings)
+      (parent.edge.point 1) - (SharedValues.atPoint readings) (parent.edge.point 0) := by
   rw [entries.values_eq]
-  exact split.telescope (SharedPrimitiveValues.atPoint readings)
+  exact split.telescope (SharedValues.atPoint readings)
 
 /-- There is one original request discrepancy for each retained fragment occurrence.
 
 Each retained reading contributes one discrepancy. Structural induction follows the same original piece spine and
 preserves its length. -/
-private theorem errors_length (entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentReadings
+private theorem errors_length (entries : FragmentReadings
   (gridRequest := gridRequest) bounds readings request pieces) :
     (errors entries).length = pieces.length
       := by
@@ -388,11 +392,11 @@ private theorem errors_length (entries : Curves.Hyperelliptic.Meshes.PuncturedGr
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentReadings in
 /-- The finite fragment-error sum is the shared reading sum minus the unchanged original request increment sum. -/
-private theorem errors_sum (entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentReadings
+private theorem errors_sum (entries : FragmentReadings
   (gridRequest := gridRequest) bounds readings request pieces) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    Sum.Basic.gaussianSum
       (errors entries) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum entries.values - Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      Sum.Basic.gaussianSum entries.values - Sum.Basic.gaussianSum
       (pieces.map fun piece =>
       request.request.model.primitive.value.eval piece.lastPoint - request.request.model.primitive.value.eval
         piece.firstPoint) := by
@@ -400,19 +404,19 @@ private theorem errors_sum (entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.
   | nil => change (0 : InverseRootPolynomial.Gaussian) = 0 - 0; ring1
   | cons reading tail ih =>
     simp only [errors, values,
-      List.map_cons, Data.Gaussian.Norm.Sum.Basic.gaussianSum, ih]; ring1
+      List.map_cons, Sum.Basic.gaussianSum, ih]; ring1
 
 /-- The sum of squared retained fragment errors is bounded by their actual cached charge sum. -/
-private theorem errors_bounded (entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentReadings
+private theorem errors_bounded (entries : FragmentReadings
   (gridRequest := gridRequest) bounds readings request pieces) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianNormSqSum
+    Sum.Basic.gaussianNormSqSum
       (errors entries) ≤ entries.chargeSum
       := by
   induction entries with
   | nil => exact le_rfl
   | cons reading tail ih =>
       have scalar := reading.accurate
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+      rw [Basic.normSq_eq_canonical] at scalar
       exact Fraction.Order.Arithmetic.add_le_add_direct scalar ih
 
 end FragmentReadings
@@ -422,20 +426,20 @@ set_option genInjectivity false in
 
 The head couples one retained fragment bank to its original split and request. Its dependent tail keeps the remaining
 parent occurrences in their supplied order. -/
-inductive SplitReadings (bounds : FragmentReadings.FragmentBounds patch differential)
+inductive SplitReadings (bounds : FragmentBounds patch differential)
     (readings : RectangularSharedPrimitives.SharedPrimitiveValues anchors offsets mesh.mesh.surface) :
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-      PreparedParentSplitting.ParentSplits cuts parents →
-      UniformPreparedRequests.RequestedParents count target parents → Type 2
+    {parents : List (CenteredEdge curve differential)} →
+      ParentSplits cuts parents →
+      RequestedParents count target parents → Type 2
   /-- The empty original fragment or request spine retains no readings. -/ | nil :
     SplitReadings bounds readings .nil .nil
   /-- Retain the original head reading or fragment bank together with the exact remaining dependent tail. -/ | cons
-    {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential} {parents : List
-    (PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-      {split : RectangularSegmentSplitting.SegmentSplit cuts (parent.edge.point 0) (parent.edge.point 1)} {splits :
-        PreparedParentSplitting.ParentSplits cuts parents}
-      {request : UniformPreparedRequests.LocalRequest parent count target} {requests :
-        UniformPreparedRequests.RequestedParents count target parents}
+    {parent : CenteredEdge curve differential} {parents : List
+    (CenteredEdge curve differential)}
+      {split : SegmentSplit cuts (parent.edge.point 0) (parent.edge.point 1)} {splits :
+        ParentSplits cuts parents}
+      {request : LocalRequest parent count target} {requests :
+        RequestedParents count target parents}
       (entries : FragmentReadings (gridRequest :=
         gridRequest) bounds readings request split.pieces)
       (tail : SplitReadings bounds readings splits
@@ -455,22 +459,22 @@ identities.
 
 Each supplied request is coupled to its original parent split. The inclusion and face-reachability witnesses pass to the
 dependent tail while the head consumes the retained shared readings. -/
-@[expose] def build (bounds : FragmentReadings.FragmentBounds patch differential) (readings :
+@[expose] def build (bounds : FragmentBounds patch differential) (readings :
   RectangularSharedPrimitives.SharedPrimitiveValues anchors offsets mesh.mesh.surface)
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} (splits :
-      PreparedParentSplitting.ParentSplits cuts parents)
-    (requests : UniformPreparedRequests.RequestedParents count target parents)
-    (included : ∀ {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential} (split :
-      RectangularSegmentSplitting.SegmentSplit cuts (parent.edge.point 0) (parent.edge.point 1)),
+    {parents : List (CenteredEdge curve differential)} (splits :
+      ParentSplits cuts parents)
+    (requests : RequestedParents count target parents)
+    (included : ∀ {parent : CenteredEdge curve differential} (split :
+      SegmentSplit cuts (parent.edge.point 0) (parent.edge.point 1)),
       ParentSplits.Member split splits → ParentSplits.Member split mesh.splits)
-    (reached : ∀ parent ∈ parents, PreparedFaceTracePrefixes.ParentReached face.cell.box (models.frame.owners sheet)
+    (reached : ∀ parent ∈ parents, ParentReached face.cell.box (models.frame.owners sheet)
       parent) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.SplitReadings (gridRequest := gridRequest) bounds
+    SplitReadings (gridRequest := gridRequest) bounds
       readings splits requests :=
   match splits, requests with
   | .nil, .nil => .nil
   | .cons split tail, .cons request requests =>
-      .cons (Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentReadings.build bounds readings request
+      .cons (FragmentReadings.build bounds readings request
         (included split (.here tail)) split.pieces (fun _ member => member)
         (reached _ List.mem_cons_self))
         (build bounds readings tail
@@ -482,10 +486,10 @@ termination_by structural splits
 
 Each head contributes its retained value without reevaluating a primitive. The remaining values follow the original
 dependent reading spine. -/
-@[expose] def values : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {splits :
-  PreparedParentSplitting.ParentSplits cuts parents} →
-    {requests : UniformPreparedRequests.RequestedParents count target parents} →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.SplitReadings (gridRequest := gridRequest) bounds
+@[expose] def values : {parents : List (CenteredEdge curve differential)} → {splits :
+  ParentSplits cuts parents} →
+    {requests : RequestedParents count target parents} →
+      SplitReadings (gridRequest := gridRequest) bounds
       readings splits requests → List InverseRootPolynomial.Gaussian
   | _, _, _, .nil => []
   | _, _, _, .cons entries tail => entries.values ++ tail.values
@@ -494,10 +498,10 @@ dependent reading spine. -/
 
 The ordered spine supplies each original scalar charge once. This fold retains repeated occurrences and reads the same
 cached head and tail. -/
-@[expose] def chargeSum : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {splits :
-  PreparedParentSplitting.ParentSplits cuts parents} →
-    {requests : UniformPreparedRequests.RequestedParents count target parents} →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.SplitReadings (gridRequest := gridRequest) bounds
+@[expose] def chargeSum : {parents : List (CenteredEdge curve differential)} → {splits :
+  ParentSplits cuts parents} →
+    {requests : RequestedParents count target parents} →
+      SplitReadings (gridRequest := gridRequest) bounds
       readings splits requests → InverseRootPolynomial.Coordinate
   | _, _, _, .nil => 0
   | _, _, _, .cons entries tail => entries.chargeSum + tail.chargeSum
@@ -506,22 +510,22 @@ cached head and tail. -/
 
 The retained request and piece indices determine every charge. Structural recursion sums those original scalar
 observations without changing their bounds or geometric owners. -/
-@[expose] def analyticChargeSum : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-  {splits : PreparedParentSplitting.ParentSplits cuts parents} →
-    {requests : UniformPreparedRequests.RequestedParents count target parents} →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.SplitReadings (gridRequest := gridRequest) bounds
+@[expose] def analyticChargeSum : {parents : List (CenteredEdge curve differential)} →
+  {splits : ParentSplits cuts parents} →
+    {requests : RequestedParents count target parents} →
+      SplitReadings (gridRequest := gridRequest) bounds
       readings splits requests → InverseRootPolynomial.Coordinate
   | _, _, _, .nil => 0
   | _, _, _, .cons entries tail => entries.analyticChargeSum + tail.analyticChargeSum
 
 /-- Read each cached shared fragment value minus its unchanged original request primitive increment. -/
-private def errors : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {splits :
-  PreparedParentSplitting.ParentSplits cuts parents} →
-    {requests : UniformPreparedRequests.RequestedParents count target parents} →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.SplitReadings (gridRequest := gridRequest) bounds
+private def errors : {parents : List (CenteredEdge curve differential)} → {splits :
+  ParentSplits cuts parents} →
+    {requests : RequestedParents count target parents} →
+      SplitReadings (gridRequest := gridRequest) bounds
       readings splits requests → List InverseRootPolynomial.Gaussian
   | _, _, _, .nil => []
-  | _, _, _, .cons entries tail => Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentReadings.errors
+  | _, _, _, .cons entries tail => FragmentReadings.errors
     entries ++ errors tail
 
 variable {parents : List (CenteredEdge curve differential)}
@@ -534,7 +538,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.SplitRe
 
 The dependent reading spine follows the supplied split occurrences. Each head contributes its original number of pieces,
 and concatenation adds the retained counts. -/
-theorem values_length (entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.SplitReadings (gridRequest
+theorem values_length (entries : SplitReadings (gridRequest
   := gridRequest) bounds readings splits requests) :
     entries.values.length = splits.pieceCount := by
   induction entries with
@@ -547,7 +551,7 @@ theorem values_length (entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.
 
 The displayed full fragment count weights the shared-grid charge. Structural induction on the retained readings adds the
 original analytic charges without changing their factors. -/
-theorem chargeSum_eq (entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.SplitReadings (gridRequest
+theorem chargeSum_eq (entries : SplitReadings (gridRequest
   := gridRequest) bounds readings splits requests) :
     entries.chargeSum = 32 * Aggregate.countCoordinate splits.pieceCount * gridRequest.globalBound + 2 *
       entries.analyticChargeSum := by
@@ -562,12 +566,12 @@ theorem chargeSum_eq (entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.F
       ring1
 
 /-- The cached shared readings telescope over the original retained fragment or parent chain. -/
-theorem sum_eq_increment (entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.SplitReadings
+theorem sum_eq_increment (entries : SplitReadings
   (gridRequest := gridRequest) bounds readings splits requests)
-    {start finish : Lifted.Basic.LiftedPoint 2} (chain : PreparedDirectDyadicRefinements.CenteredPathChain parents
+    {start finish : Lifted.Basic.LiftedPoint 2} (chain : CenteredPathChain parents
       (start := start) (finish := finish)) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum entries.values = (SharedPrimitiveValues.atPoint readings)
-      finish.coordinate - (SharedPrimitiveValues.atPoint readings) start.coordinate := by
+    Sum.Basic.gaussianSum entries.values = (SharedValues.atPoint readings)
+      finish.coordinate - (SharedValues.atPoint readings) start.coordinate := by
   induction chain with
   | nil point => cases splits; cases requests; cases entries; change (0 : InverseRootPolynomial.Gaussian) = _ - _; ring1
   | cons parent tail ih =>
@@ -577,7 +581,7 @@ theorem sum_eq_increment (entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.Fa
           | cons request requests =>
               cases entries with
               | cons entries rest =>
-                  rw [values, Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.sum_append,
+                  rw [values, FragmentSums.sum_append,
                     entries.sum_eq_increment, ih rest, parent.edge.point_zero, parent.edge.point_one]
                   ring1
 
@@ -587,7 +591,7 @@ end
 
 Each retained fragment supplies one discrepancy. The dependent split spine concatenates these error lists in the
 original parent order, preserving their total piece count. -/
-private theorem errors_length (entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.SplitReadings
+private theorem errors_length (entries : SplitReadings
   (gridRequest := gridRequest) bounds readings splits requests) :
     (errors entries).length =
       splits.pieceCount := by
@@ -595,50 +599,50 @@ private theorem errors_length (entries : Curves.Hyperelliptic.Meshes.PuncturedGr
   | nil => rfl
   | @cons parent parents split splits request requests entries tail ih =>
       rewrite [errors, Append.length_append,
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentReadings.errors_length, ih,
+        FragmentReadings.errors_length, ih,
         ParentSplits.pieceCount, split.count_eq]
       exact Eq.refl _
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.SplitReadings in
 /-- The finite fragment-error sum is the shared reading sum minus the unchanged original request increment sum. -/
-private theorem errors_sum (entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.SplitReadings
+private theorem errors_sum (entries : SplitReadings
   (gridRequest := gridRequest) bounds readings splits requests) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    Sum.Basic.gaussianSum
       (errors entries) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum entries.values - Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      Sum.Basic.gaussianSum entries.values - Sum.Basic.gaussianSum
       (splits.increments requests) := by
   induction entries with
   | nil => change (0 : InverseRootPolynomial.Gaussian) = 0 - 0; ring1
   | cons entries tail ih =>
       simp only [errors, values,
-        ParentSplits.increments, Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.sum_append,
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentReadings.errors_sum, ih]
+        ParentSplits.increments, FragmentSums.sum_append,
+        FragmentReadings.errors_sum, ih]
       ring1
 
 /-- The sum of squared retained fragment errors is bounded by their actual cached charge sum. -/
-private theorem errors_bounded (entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.SplitReadings
+private theorem errors_bounded (entries : SplitReadings
   (gridRequest := gridRequest) bounds readings splits requests) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianNormSqSum
+    Sum.Basic.gaussianNormSqSum
       (errors entries) ≤ entries.chargeSum :=
       by
   induction entries with
   | nil => exact le_rfl
   | cons entries tail ih =>
     rw [errors,
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.normSum_append]; exact add_le_add
+      FragmentSums.normSum_append]; exact add_le_add
       entries.errors_bounded ih
 
 /-- The cached aggregate differs from the unchanged original request increment sum by at most its retained bound. -/
-theorem accurate (entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.SplitReadings (gridRequest :=
+theorem accurate (entries : SplitReadings (gridRequest :=
   gridRequest) bounds readings splits requests) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum entries.values -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum requests.increments) ≤
+    Basic.normSq (Sum.Basic.gaussianSum entries.values -
+      Sum.Basic.gaussianSum requests.increments) ≤
       Aggregate.countCoordinate splits.pieceCount * entries.chargeSum := by
   rw [← splits.sum_eq requests, ← entries.errors_sum, Aggregate.countCoordinate_eq]
-  have bounded := Data.Gaussian.Norm.Sum.Basic.normSq_gaussianSum_le
+  have bounded := Sum.Basic.normSq_gaussianSum_le
     (errors entries)
   rw [entries.errors_length] at bounded
-  rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+  rw [Basic.normSq_eq_canonical]
   exact bounded.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct entries.errors_bounded
     (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)))
 
@@ -650,11 +654,11 @@ accuracy certificate.
 
 The record retains the reading spine, ordered value list, count and charge total together with their exact equations.
 Its discrepancy bound refers to these same caches and original requests. -/
-structure FragmentSum (bounds : FragmentReadings.FragmentBounds patch differential)
+structure FragmentSum (bounds : FragmentBounds patch differential)
     (readings : RectangularSharedPrimitives.SharedPrimitiveValues anchors offsets mesh.mesh.surface)
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} (splits :
-      PreparedParentSplitting.ParentSplits cuts parents)
-    (requests : UniformPreparedRequests.RequestedParents count target parents) where
+    {parents : List (CenteredEdge curve differential)} (splits :
+      ParentSplits cuts parents)
+    (requests : RequestedParents count target parents) where
   /-- The retained readings indexed by the original splits and unchanged actual requests. -/ entries :
     SplitReadings (gridRequest := gridRequest) bounds
     readings splits requests
@@ -666,7 +670,7 @@ structure FragmentSum (bounds : FragmentReadings.FragmentBounds patch differenti
     splits.pieceCount
   /-- The cached Gaussian sum of the original shared fragment readings. -/ value : InverseRootPolynomial.Gaussian
   /-- The cached aggregate is exactly the finite sum of its retained value list. -/ value_eq : value =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum values
+    Sum.Basic.gaussianSum values
   /-- The cached total of the original fragment charges. -/ chargeSum : InverseRootPolynomial.Coordinate
   /-- The cached total is exactly the charge sum of the retained original reading spine. -/ chargeSum_eq : chargeSum =
     entries.chargeSum
@@ -674,7 +678,7 @@ structure FragmentSum (bounds : FragmentReadings.FragmentBounds patch differenti
   /-- The cached bound multiplies the exact original fragment count by the retained total charge. -/ bound_eq : bound =
     Aggregate.countCoordinate fragmentCount * chargeSum
   /-- The cached aggregate differs from the unchanged original request increment sum by at most its retained bound. -/
-    accurate : Data.Gaussian.Norm.Basic.normSq (value - Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    accurate : Basic.normSq (value - Sum.Basic.gaussianSum
     requests.increments) ≤ bound
 
 constructive_injectivity FragmentSum
@@ -692,40 +696,40 @@ analytic comparisons.
 
 The resulting record retains the original reading spine and its exact value-list, count and charge equations. Its
 discrepancy proof uses those same caches and original request increments. -/
-@[expose] def build (entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.SplitReadings (gridRequest :=
+@[expose] def build (entries : SplitReadings (gridRequest :=
   gridRequest) bounds readings splits requests) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentSum (gridRequest := gridRequest) bounds readings
+    FragmentSum (gridRequest := gridRequest) bounds readings
       splits requests :=
   let values := entries.values
   let fragmentCount := values.length
   let chargeSum := entries.chargeSum
   { entries := entries, values := values, values_eq := rfl
     fragmentCount := fragmentCount, fragmentCount_eq := entries.values_length
-    value := Data.Gaussian.Norm.Sum.Basic.gaussianSum values, value_eq := rfl
+    value := Sum.Basic.gaussianSum values, value_eq := rfl
     chargeSum := chargeSum, chargeSum_eq := rfl
     bound := Aggregate.countCoordinate fragmentCount * chargeSum, bound_eq := rfl
     accurate := by
-      change Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum entries.values -
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum requests.increments) ≤
+      change Basic.normSq (Sum.Basic.gaussianSum entries.values -
+        Sum.Basic.gaussianSum requests.increments) ≤
         Aggregate.countCoordinate entries.values.length * entries.chargeSum
       rw [entries.values_length]
       exact entries.accurate }
 
 /-- The cached aggregate value is exactly the difference of the original shared readings at the retained chain
 endpoints. -/
-theorem value_eq_increment (summary : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentSum
+theorem value_eq_increment (summary : FragmentSum
   (gridRequest := gridRequest) bounds readings splits requests)
-    {start finish : Lifted.Basic.LiftedPoint 2} (chain : PreparedDirectDyadicRefinements.CenteredPathChain parents
+    {start finish : Lifted.Basic.LiftedPoint 2} (chain : CenteredPathChain parents
       (start := start) (finish := finish))
     (first last : Fin mesh.mesh.surface.mesh.vertices.length)
     (firstEq : mesh.mesh.surface.mesh.coordinate first = start.coordinate)
     (lastEq : mesh.mesh.surface.mesh.coordinate last = finish.coordinate) :
     summary.value = readings.values last - readings.values first := by
   rw [summary.value_eq, summary.values_eq, summary.entries.sum_eq_increment chain, ← firstEq, ← lastEq,
-    SharedPrimitiveValues.atPoint_coordinate readings, SharedPrimitiveValues.atPoint_coordinate readings]
+    SharedValues.atPoint_coordinate readings, SharedValues.atPoint_coordinate readings]
 
 /-- The aggregate discrepancy bound retains the full actual fragment count in both grid and analytic charge factors. -/
-theorem bound_eq_full_count (summary : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentSum
+theorem bound_eq_full_count (summary : FragmentSum
   (gridRequest := gridRequest) bounds readings splits requests) :
     summary.bound = Aggregate.countCoordinate splits.pieceCount *
       (32 * Aggregate.countCoordinate splits.pieceCount * gridRequest.globalBound + 2 *
@@ -733,47 +737,47 @@ theorem bound_eq_full_count (summary : Curves.Hyperelliptic.Meshes.PuncturedGrid
   rw [summary.bound_eq, summary.fragmentCount_eq, summary.chargeSum_eq, summary.entries.chargeSum_eq]
 
 /-- The actual retained fragment count is bounded by the original parent count and coarse-grid dimensions. -/
-theorem fragmentCount_le (summary : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentSum (gridRequest
+theorem fragmentCount_le (summary : FragmentSum (gridRequest
   := gridRequest) bounds readings splits requests) :
     summary.fragmentCount ≤ parents.length * (columns + rows + 5) := by
   rw [summary.fragmentCount_eq]
   exact splits.pieceCount_le
 
 /-- The retained aggregate discrepancy bound is nonnegative. -/
-theorem bound_nonnegative (summary : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentSum
+theorem bound_nonnegative (summary : FragmentSum
   (gridRequest := gridRequest) bounds readings splits requests) :
-    0 ≤ summary.bound := (Data.Gaussian.Norm.Basic.normSq_nonneg _).trans summary.accurate
+    0 ≤ summary.bound := (Basic.normSq_nonneg _).trans summary.accurate
 
 /-- The cached fragment aggregate satisfies its original bound against the retained controlled primitive request. -/
-theorem controlled_accurate {request : PreparedControlledPrimitiveRequests.ControlledSumRequest parents count target}
-    (summary : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentSum (gridRequest := gridRequest)
+theorem controlled_accurate {request : ControlledSumRequest parents count target}
+    (summary : FragmentSum (gridRequest := gridRequest)
       bounds readings splits request.requests) :
-    Data.Gaussian.Norm.Basic.normSq (summary.value - request.primitiveSum) ≤ summary.bound := by
+    Basic.normSq (summary.value - request.primitiveSum) ≤ summary.bound := by
   rw [request.primitiveSum_eq, request.increments_eq]
   exact summary.accurate
 
 /-- The cached fragment aggregate and actual original period sample satisfy the combined fragment and sampling error
 bound. -/
-theorem period_accurate {source : Differentials.Basic.Differential genus} {root : Gaussian.Name.Basic.Named}
-    {initial : PreparedRefinementRootEndpoints.RootClosedState curve source root} {targets : List
-      (Differentials.Basic.Differential genus)}
-    {splits : PreparedParentSplitting.ParentSplits cuts (initial.state.parents.map
+theorem period_accurate {source : Differential genus} {root : Named}
+    {initial : RootClosedState curve source root} {targets : List
+      (Differential genus)}
+    {splits : ParentSplits cuts (initial.state.parents.map
       (PreparedEdgeRecasting.recastCenteredEdge differential))}
-    {request : PreparedControlledPrimitiveRequests.ControlledSumRequest (initial.state.parents.map
+    {request : ControlledSumRequest (initial.state.parents.map
       (PreparedEdgeRecasting.recastCenteredEdge differential)) count target}
-    (summary : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentSum (gridRequest := gridRequest)
+    (summary : FragmentSum (gridRequest := gridRequest)
       bounds readings splits request.requests) {minimumStage : Nat}
-    (sample : PreparedPeriodPrimitiveRequests.PeriodSample initial targets differential request minimumStage) :
-    Data.Gaussian.Norm.Basic.normSq (summary.value - sample.sample) < 2 * summary.bound + 2 * target := by
+    (sample : PeriodSample initial targets differential request minimumStage) :
+    Basic.normSq (summary.value - sample.sample) < 2 * summary.bound + 2 * target := by
   have identity : summary.value - sample.sample =
       (summary.value - request.primitiveSum) + (request.primitiveSum - sample.sample) := by ring1
   rw [identity]
   have firstBound := summary.controlled_accurate
   have lastBound := sample.accurate
-  have triangle := Data.Gaussian.Norm.Bounds.normSq_add_le_two
+  have triangle := Bounds.normSq_add_le_two
     (summary.value - request.primitiveSum) (request.primitiveSum - sample.sample)
-  simp only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at triangle firstBound
-  rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+  simp only [Basic.normSq_eq_canonical] at triangle firstBound
+  rw [Basic.normSq_eq_canonical]
   exact triangle.trans_lt
     ((Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
       (by decide : (0 : Fraction.Rational) < 2)
@@ -787,16 +791,16 @@ assignment is required.
 
 The supplied split mesh and reachability witnesses determine the original fragment readings. Their dependent reading
 banks are folded into one cached summary with the exact original requests. -/
-@[expose] def fragmentSum (mesh : PreparedParentSplitting.PreparedSplitMesh cuts meshParents extra) (bounds :
-  FragmentReadings.FragmentBounds patch differential)
+@[expose] def fragmentSum (mesh : PreparedSplitMesh cuts meshParents extra) (bounds :
+  FragmentBounds patch differential)
     (readings : RectangularSharedPrimitives.SharedPrimitiveValues anchors offsets mesh.mesh.surface)
-    (requests : UniformPreparedRequests.RequestedParents count target meshParents)
-    (reached : ∀ parent ∈ meshParents, PreparedFaceTracePrefixes.ParentReached face.cell.box (models.frame.owners sheet)
+    (requests : RequestedParents count target meshParents)
+    (reached : ∀ parent ∈ meshParents, ParentReached face.cell.box (models.frame.owners sheet)
       parent) :
     FragmentSum (gridRequest := gridRequest) bounds readings
       mesh.splits requests :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentSum.build
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.SplitReadings.build bounds readings mesh.splits
+  FragmentSum.build
+    (SplitReadings.build bounds readings mesh.splits
     requests (fun _ member => member)
     reached)
 

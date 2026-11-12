@@ -25,6 +25,9 @@ import Purelib.Polynomial.Clearance.Pair.Operations
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Rational.SignedRemainder.Signs
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Polynomial.Clearance.Pair.Basic (Certificate)
 open Purelib.Polynomial.Dense.Rational.Basic (CoordinatePolynomial)
 
@@ -53,9 +56,9 @@ namespace Purelib.Polynomial.Dense.Rational.CauchyIndex.HalfPlane
 The displayed rational coordinate polynomials and endpoints determine the exact
 index and both signed products. This proposition retains those same inputs. -/
 @[expose] def Formula (R S : CoordinatePolynomial) (a b : Fraction.Rational) : Prop :=
-  Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 R S a b =
-    (Data.Rat.Sign.Jump.signJump 1 (R.eval a * S.eval a) : Int) -
-      Data.Rat.Sign.Jump.signJump 1 (R.eval b * S.eval b)
+  Basic.Sturm.cauchyIndex2 R S a b =
+    (Sign.Jump.signJump 1 (R.eval a * S.eval a) : Int) -
+      Sign.Jump.signJump 1 (R.eval b * S.eval b)
 
 /-- Compose endpoint-jump formulas meeting at the same retained endpoint.
 
@@ -65,7 +68,7 @@ theorem Formula.add {R S : CoordinatePolynomial} {a b c : Fraction.Rational}
     (left : Formula R S a b) (right : Formula R S b c) :
     Formula R S a c := by
   unfold Formula at left right ⊢
-  rw [Dense.Rational.CauchyIndex.Basic.cauchyIndex2_add R S a b c, left, right]
+  rw [Basic.cauchyIndex2_add R S a b c, left, right]
   ring1
 
 /-- Reverse the two endpoints of an endpoint-jump formula.
@@ -75,7 +78,7 @@ jumps without changing the coordinate polynomials. -/
 theorem Formula.reverse {R S : CoordinatePolynomial} {a b : Fraction.Rational}
     (formula : Formula R S a b) : Formula R S b a := by
   unfold Formula at formula ⊢
-  rw [Dense.Rational.CauchyIndex.Basic.cauchyIndex2_reverse, formula]
+  rw [Basic.cauchyIndex2_reverse, formula]
   ring1
 
 /-- A resolved event with positive real coordinate has the endpoint-jump formula.
@@ -83,8 +86,8 @@ theorem Formula.reverse {R S : CoordinatePolynomial} {a b : Fraction.Rational}
 Positivity holds throughout the retained interval. The same resolved event is
 recentered with its positive real sign and original denominator sign. -/
 theorem formula_of_event
-    {R S : CoordinatePolynomial} {interval : Data.Rat.Interval.Bounds}
-    (event : Dense.Rational.CauchyIndex.Events.Signs.CauchyEventSigns R S interval)
+    {R S : CoordinatePolynomial} {interval : Interval.Bounds}
+    (event : Events.Signs.CauchyEventSigns R S interval)
     (realPositive : ∀ x : Fraction.Rational, interval.Contains x → 0 < R.eval x) :
     Formula R S interval.lower interval.upper := by
   have lowerPositive := realPositive interval.lower
@@ -100,32 +103,32 @@ theorem formula_of_event
   have index := centered.index
   unfold Formula
   rw [index]
-  dsimp only [centered, Dense.Rational.CauchyIndex.Events.Signs.CauchyEventSigns.recenter]
+  dsimp only [centered, Events.Signs.CauchyEventSigns.recenter]
   rw [Data.Sign.ofCoordinate_of_pos lowerPositive,
     Data.Sign.ofCoordinate_of_pos upperPositive]
   rw [Data.Sign.CauchyIndex.HalfPlane.sign_eventIndex2_positive _ _ _
       event.denominatorLowerStable event.denominatorUpperStable,
-    Purelib.Data.Rat.Sign.CauchyIndex.HalfPlane.jump_positive_eq_signJump_mul lowerPositive,
-    Purelib.Data.Rat.Sign.CauchyIndex.HalfPlane.jump_positive_eq_signJump_mul upperPositive]
+    Sign.CauchyIndex.HalfPlane.jump_positive_eq_signJump_mul lowerPositive,
+    Sign.CauchyIndex.HalfPlane.jump_positive_eq_signJump_mul upperPositive]
 
 /-- A sufficiently narrow retained subinterval has the right-half-plane formula.
 
 The subinterval refines the original clearance interval, has positive width and
 stays below the retained resolution threshold. Its real coordinate is positive. -/
 theorem formula_of_refined_width
-    {R S : CoordinatePolynomial} {root interval : Data.Rat.Interval.Bounds}
+    {R S : CoordinatePolynomial} {root interval : Interval.Bounds}
     (clearance : Certificate R S root)
     (refines : interval.Refines root)
     (proper : interval.lower < interval.upper)
     (widthSmall : interval.upper - interval.lower <
-      min 1 (Dense.Rational.SignedRemainder.Signs.Radius.signedChainResolutionRadiusSq S R clearance.swap))
+      min 1 (Radius.signedChainResolutionRadiusSq S R clearance.swap))
     (realPositive : ∀ x : Fraction.Rational, root.Contains x → 0 < R.eval x) :
     Formula R S interval.lower interval.upper := by
-  have radius : Data.Rat.Interval.Radius.sampleRadiusSq interval interval.lower <
-      Dense.Rational.SignedRemainder.Signs.Radius.signedChainResolutionRadiusSq S R clearance.swap :=
-    Data.Rat.Interval.Radius.Partition.radius_lt_of_width_lt
+  have radius : Interval.Radius.sampleRadiusSq interval interval.lower <
+      Radius.signedChainResolutionRadiusSq S R clearance.swap :=
+    Interval.Radius.Partition.radius_lt_of_width_lt
       proper widthSmall
-  let event := Dense.Rational.CauchyIndex.Events.Resolution.cauchyEventSignsOfRefinedRadiusSq clearance.swap refines
+  let event := Events.Resolution.cauchyEventSignsOfRefinedRadiusSq clearance.swap refines
     radius
   apply formula_of_event event
   intro x inside
@@ -138,15 +141,15 @@ The retained clearance and positive real coordinate apply on the original root
 interval. A displayed depth bound makes every recursively retained leaf narrow
 enough for its finite event certificate, and their endpoint jumps telescope. -/
 theorem formulaAtDepth
-    {R S : CoordinatePolynomial} {root : Data.Rat.Interval.Bounds}
+    {R S : CoordinatePolynomial} {root : Interval.Bounds}
     (clearance : Certificate R S root)
     (realPositive : ∀ x : Fraction.Rational, root.Contains x → 0 < R.eval x)
-    (fuel : Nat) (interval : Data.Rat.Interval.Bounds)
+    (fuel : Nat) (interval : Interval.Bounds)
     (refines : interval.Refines root)
     (proper : interval.lower < interval.upper)
     (sufficient : (2 / 3 : Fraction.Rational) ^ fuel *
       (interval.upper - interval.lower) <
-        min 1 (Dense.Rational.SignedRemainder.Signs.Radius.signedChainResolutionRadiusSq S R clearance.swap)) :
+        min 1 (Radius.signedChainResolutionRadiusSq S R clearance.swap)) :
     Formula R S interval.lower interval.upper := open Purelib.Algebra.Field in by
   induction fuel generalizing interval with
   | zero =>
@@ -160,11 +163,11 @@ theorem formulaAtDepth
         simpa only [cut] using bounds.1
       have cutUpper : cut < interval.upper := by
         exact (by simpa only [cut] using bounds.2.1.trans bounds.2.2)
-      let leftInterval : Data.Rat.Interval.Bounds :=
+      let leftInterval : Interval.Bounds :=
         { lower := interval.lower
           upper := cut
           valid := cutLower.le }
-      let rightInterval : Data.Rat.Interval.Bounds :=
+      let rightInterval : Interval.Bounds :=
         { lower := cut
           upper := interval.upper
           valid := cutUpper.le }
@@ -173,7 +176,7 @@ theorem formulaAtDepth
       have rightRefines : rightInterval.Refines root :=
         ⟨refines.1.trans cutLower.le, refines.2⟩
       have widthPositive : 0 < interval.upper - interval.lower :=
-        Fraction.Order.Arithmetic.sub_pos_direct proper
+        Arithmetic.sub_pos_direct proper
       have leftContraction :
           leftInterval.upper - leftInterval.lower ≤
             (2 / 3 : Fraction.Rational) *
@@ -184,7 +187,7 @@ theorem formulaAtDepth
           Fraction.Arithmetic.normalizedDiv_eq,
           Fraction.Arithmetic.normalizedSub_eq]
         have scaled :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          Arithmetic.mul_le_mul_of_nonneg_right_direct
             (show (1 / 3 : Fraction.Rational) ≤ 2 / 3 by decide)
             widthPositive.le
         calc
@@ -220,27 +223,27 @@ theorem formulaAtDepth
           ExplicitField.div_eq_mul_inv]
         ring1
       have powerNonnegative : 0 ≤ (2 / 3 : Fraction.Rational) ^ fuel :=
-        Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) fuel
+        Arithmetic.pow_nonneg_direct (by decide) fuel
       have leftSufficient : (2 / 3 : Fraction.Rational) ^ fuel *
           (leftInterval.upper - leftInterval.lower) <
-            min 1 (Dense.Rational.SignedRemainder.Signs.Radius.signedChainResolutionRadiusSq S R clearance.swap) := by
+            min 1 (Radius.signedChainResolutionRadiusSq S R clearance.swap) := by
         calc
           (2 / 3 : Fraction.Rational) ^ fuel *
               (leftInterval.upper - leftInterval.lower) ≤
               (2 / 3 : Fraction.Rational) ^ fuel *
                 ((2 / 3 : Fraction.Rational) *
                   (interval.upper - interval.lower)) :=
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+            Arithmetic.mul_le_mul_of_nonneg_left_direct
               leftContraction powerNonnegative
           _ = (2 / 3 : Fraction.Rational) ^ Nat.succ fuel *
               (interval.upper - interval.lower) := by
             rw [pow_succ]
             ring1
-          _ < min 1 (Dense.Rational.SignedRemainder.Signs.Radius.signedChainResolutionRadiusSq S R clearance.swap) :=
+          _ < min 1 (Radius.signedChainResolutionRadiusSq S R clearance.swap) :=
             sufficient
       have rightSufficient : (2 / 3 : Fraction.Rational) ^ fuel *
           (rightInterval.upper - rightInterval.lower) <
-            min 1 (Dense.Rational.SignedRemainder.Signs.Radius.signedChainResolutionRadiusSq S R clearance.swap) := by
+            min 1 (Radius.signedChainResolutionRadiusSq S R clearance.swap) := by
         rw [rightContraction]
         calc
           (2 / 3 : Fraction.Rational) ^ fuel *
@@ -250,7 +253,7 @@ theorem formulaAtDepth
                 (interval.upper - interval.lower) := by
             rw [pow_succ]
             ring1
-          _ < min 1 (Dense.Rational.SignedRemainder.Signs.Radius.signedChainResolutionRadiusSq S R clearance.swap) :=
+          _ < min 1 (Radius.signedChainResolutionRadiusSq S R clearance.swap) :=
             sufficient
       exact (inductionHypothesis leftInterval leftRefines cutLower
         leftSufficient).add
@@ -262,24 +265,24 @@ theorem formulaAtDepth
 The original proper rational interval has a positive real coordinate everywhere.
 Its exact resolution radius supplies a finite sufficient subdivision depth. -/
 theorem formula_of_positive_real
-    {R S : CoordinatePolynomial} {root : Data.Rat.Interval.Bounds}
+    {R S : CoordinatePolynomial} {root : Interval.Bounds}
     (clearance : Certificate R S root)
     (proper : root.lower < root.upper)
     (realPositive : ∀ x : Fraction.Rational, root.Contains x → 0 < R.eval x) :
     Formula R S root.lower root.upper := open Purelib.Algebra.Field in by
-  let leafWidth := min 1 (Dense.Rational.SignedRemainder.Signs.Radius.signedChainResolutionRadiusSq S R clearance.swap)
+  let leafWidth := min 1 (Radius.signedChainResolutionRadiusSq S R clearance.swap)
   have leafWidthPositive : 0 < leafWidth :=
-    Fraction.Order.Basic.lt_min (by decide)
-      (Dense.Rational.SignedRemainder.Signs.Radius.signedChainResolutionRadiusSq_pos S R clearance.swap)
+    Basic.lt_min (by decide)
+      (Radius.signedChainResolutionRadiusSq_pos S R clearance.swap)
   let depth := Approximation.Rational.Contraction.geometricDepth (root.upper - root.lower) (leafWidth / 2)
   have geometric : (2 / 3 : Fraction.Rational) ^ depth *
       (root.upper - root.lower) ≤ leafWidth / 2 := by
     simpa only [depth] using Approximation.Rational.Contraction.geometricDepth_sufficient
       (width := root.upper - root.lower) (epsilon := leafWidth / 2)
-      (Fraction.Order.Arithmetic.sub_pos_direct proper).le
-      (Fraction.Order.Field.div_pos_direct leafWidthPositive (by decide))
+      (Arithmetic.sub_pos_direct proper).le
+      (Field.div_pos_direct leafWidthPositive (by decide))
   have halfBelow : leafWidth / 2 < leafWidth := by
-    have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+    have scaled := Arithmetic.mul_lt_mul_of_pos_right_direct
       (show (1 / 2 : Fraction.Rational) < 1 by decide) leafWidthPositive
     rw [ExplicitField.div_eq_mul_inv]
     have halfInverse : (2 : Fraction.Rational)⁻¹ = 1 / 2 := by

@@ -81,7 +81,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -106,19 +106,19 @@ sample estimate, preserving the original lifted anchor and the factor-two square
 theorem ACanonicalPreparation.sample_accurate
     (data : ACanonicalPreparation prepared geometry differential cycle target minimum)
     (positive : 0 < target) (numericalIndex : Nat)
-    (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics geometry.domains numericalIndex)
-    (triangles : Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get differential)
+    (cache : Numerics geometry.domains numericalIndex)
+    (triangles : TriangleReadings (cache.get differential)
       geometry.lifted.mesh)
     (later : data.numericalIndex ≤ numericalIndex) (stage : Nat)
     (after : data.request.fragments.stage ≤ stage) :
     let word := Sewing.SewingRetraction.wordValue
-      (Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation geometry.lifted.mesh triangles.values)
+      (edgeValuation geometry.lifted.mesh triangles.values)
       (geometry.lifted.edges.indexedEdges geometry.lifted.vertices
         (geometry.grid.shrunk.included.resplit (prepared.aWalk cycle).closed.walk
           (lifted.vertices.coordinate_onGrid
-            (Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.anchor lifted sheet)))
+            (BasedBranchBank.anchor lifted sheet)))
         (canonicalPeriodSheet (lifted := lifted) (sheet := sheet) geometry))
-    Data.Gaussian.Norm.Basic.normSq (word - sampledMatrix prepared.periodData.aMatrix stage differential cycle) ≤
+    normSq (word - sampledMatrix prepared.periodData.aMatrix stage differential cycle) ≤
       2 * (target + Geometric.Basic.quarterRadius
         (max (prepared.periodData.aProgram differential cycle).integral.errorScale 1) stage) := by
   intro word
@@ -128,10 +128,10 @@ theorem ACanonicalPreparation.sample_accurate
     triangles later stage after
   have witness := sampledMatrix_aProgram_close prepared.periodData differential cycle stage
   calc
-    Data.Gaussian.Norm.Basic.normSq (word - sample) = Data.Gaussian.Norm.Basic.normSq ((word - model) - (sample -
+    normSq (word - sample) = normSq ((word - model) - (sample -
       model)) :=
-      congrArg Data.Gaussian.Norm.Basic.normSq (by ring1)
-    _ ≤ 2 * (Data.Gaussian.Norm.Basic.normSq (word - model) + Data.Gaussian.Norm.Basic.normSq (sample - model)) :=
+      congrArg normSq (by ring1)
+    _ ≤ 2 * (normSq (word - model) + normSq (sample - model)) :=
       Norm.Bounds.normSq_sub_le_two _ _
     _ ≤ _ := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
       (Fraction.Order.Arithmetic.add_le_add_direct canonical.le witness) (by decide)
@@ -143,19 +143,19 @@ sample estimate, preserving the original lifted anchor and the factor-two square
 theorem BCanonicalPreparation.sample_accurate
     (data : BCanonicalPreparation prepared geometry differential cycle target minimum)
     (positive : 0 < target) (numericalIndex : Nat)
-    (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics geometry.domains numericalIndex)
-    (triangles : Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get differential)
+    (cache : Numerics geometry.domains numericalIndex)
+    (triangles : TriangleReadings (cache.get differential)
       geometry.lifted.mesh)
     (later : data.numericalIndex ≤ numericalIndex) (stage : Nat)
     (after : data.request.fragments.stage ≤ stage) :
     let word := Sewing.SewingRetraction.wordValue
-      (Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation geometry.lifted.mesh triangles.values)
+      (edgeValuation geometry.lifted.mesh triangles.values)
       (geometry.lifted.edges.indexedEdges geometry.lifted.vertices
         (geometry.grid.shrunk.included.resplit (prepared.bWalk cycle).closed.walk
           (lifted.vertices.coordinate_onGrid
-            (Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.anchor lifted sheet)))
+            (BasedBranchBank.anchor lifted sheet)))
         (canonicalPeriodSheet (lifted := lifted) (sheet := sheet) geometry))
-    Data.Gaussian.Norm.Basic.normSq (word - sampledMatrix prepared.periodData.bMatrix stage differential cycle) ≤
+    normSq (word - sampledMatrix prepared.periodData.bMatrix stage differential cycle) ≤
       2 * (target + Geometric.Basic.quarterRadius
         (max (prepared.periodData.bProgram differential cycle).integral.errorScale 1) stage) := by
   intro word
@@ -165,10 +165,10 @@ theorem BCanonicalPreparation.sample_accurate
     triangles later stage after
   have witness := sampledMatrix_bProgram_close prepared.periodData differential cycle stage
   calc
-    Data.Gaussian.Norm.Basic.normSq (word - sample) = Data.Gaussian.Norm.Basic.normSq ((word - model) - (sample -
+    normSq (word - sample) = normSq ((word - model) - (sample -
       model)) :=
-      congrArg Data.Gaussian.Norm.Basic.normSq (by ring1)
-    _ ≤ 2 * (Data.Gaussian.Norm.Basic.normSq (word - model) + Data.Gaussian.Norm.Basic.normSq (sample - model)) :=
+      congrArg normSq (by ring1)
+    _ ≤ 2 * (normSq (word - model) + normSq (sample - model)) :=
       Norm.Bounds.normSq_sub_le_two _ _
     _ ≤ _ := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
       (Fraction.Order.Arithmetic.add_le_add_direct canonical.le witness) (by decide)

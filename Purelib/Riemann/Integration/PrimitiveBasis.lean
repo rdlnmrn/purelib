@@ -29,6 +29,8 @@ public import Purelib.Riemann.Normalization.InverseRootPrimitive
 import Purelib.Riemann.Integration.PreparedNumeratorVariation
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -64,7 +66,7 @@ open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius)
 namespace PrimitiveBasis
 
 /-- A structural vector of Gaussian rational coefficients. -/
-abbrev Coefficients (count : Nat) := LinearAlgebra.Gaussian.Energy.GaussianVector count
+abbrev Coefficients (count : Nat) := Gaussian.Energy.GaussianVector count
 
 set_option genInjectivity false in
 /-- A numerator polynomial with its retained local primitive model.
@@ -345,7 +347,7 @@ open Purelib.Polynomial in
 /-- Evaluate the coefficient polynomial as the corresponding sum of retained monomial numerators. -/
 theorem numerator_sum (basis : PrimitiveBasis patch index count) (coefficients : Coefficients count) (point : Gaussian)
   :
-    (Geometry.EvaluationLower.coefficientPolynomial coefficients).eval point =
+    (coefficientPolynomial coefficients).eval point =
       FiniteSum.Fin.sumFin (fun row => coefficients row * (basis.terms row).numerator.eval point) := by
   change Dense.Basic.DensePolynomial.evalCoeffs point (List.ofFn coefficients).reverse = _
   rw [Readings.PreparedObservationInterpolation.eval_reverse_ofFn]
@@ -355,29 +357,29 @@ section
 open Purelib.Data
 /-- The finite squared coefficient norm is nonnegative. -/
 theorem coefficientNorm_nonnegative (coefficients : Coefficients count) : 0 ≤ coefficientNormSq coefficients :=
-  sum_nonnegative _ (fun row => Gaussian.Basic.Canonical.normSq_nonneg (coefficients row))
+  sum_nonnegative _ (fun row => normSq_nonneg (coefficients row))
 
 /-- The cached coefficient scale is nonnegative. -/
 theorem coefficientScale_nonnegative (basis : PrimitiveBasis patch index count) : 0 ≤ basis.coefficientScale := by
   rw [basis.coefficientScale_eq]
-  exact Rat.Fraction.Order.Field.div_nonneg_direct
-    (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
+  exact Field.div_nonneg_direct
+    (Arithmetic.mul_nonneg_direct
       (Rat.Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count)) basis.totalNumerator_nonnegative)
     patch.rootLower_positive.le
 
 /-- The cached Taylor scale is nonnegative. -/
 theorem taylorScale_nonnegative (basis : PrimitiveBasis patch index count) : 0 ≤ basis.taylorScale := by
   rw [basis.taylorScale_eq]
-  exact Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  exact Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide)
       (Rat.Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count))) basis.totalRemainder_nonnegative
 
 /-- The cached reading scale is nonnegative. -/
 theorem readingScale_nonnegative (basis : PrimitiveBasis patch index count) : 0 ≤ basis.readingScale := by
   rw [basis.readingScale_eq]
-  exact Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  exact Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct (by decide)
         (Rat.Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count))) basis.totalNumerator_nonnegative)
     patch.inverseErrorScale_positive.le
 
@@ -390,7 +392,7 @@ Combine the Taylor scale times squared movement squared with the geometrically r
 movement; this quantity is independent of the coefficient vector. -/
 def incrementScale (basis : PrimitiveBasis patch index count) (start finish : Gaussian) : Coordinate :=
   basis.taylorScale * normSq (finish - start) ^ 2 +
-    Rational.Geometric.Basic.quarterRadius basis.readingScale index * normSq (finish - start)
+    quarterRadius basis.readingScale index * normSq (finish - start)
 
 open Purelib.Approximation in
 open Purelib.Data in
@@ -398,11 +400,11 @@ open Purelib.Data in
 theorem incrementScale_nonnegative (basis : PrimitiveBasis patch index count) (start finish : Gaussian) :
     0 ≤ basis.incrementScale start finish :=
   add_nonneg
-    (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct basis.taylorScale_nonnegative
-      (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct _))
-    (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct basis.taylorScale_nonnegative
+      (Arithmetic.sq_nonneg_direct _))
+    (Arithmetic.mul_nonneg_direct
       (Rational.Geometric.Basic.quarterRadius_nonneg basis.readingScale_nonnegative index)
-        (Gaussian.Basic.Canonical.normSq_nonneg _))
+        (normSq_nonneg _))
 
 open Purelib.Algebra in
 open Purelib.Data in
@@ -415,21 +417,21 @@ theorem operational_coefficient_bound (basis : PrimitiveBasis patch index count)
     {point : Gaussian} (inside : patch.box.Contains point) (sample : ContinuedNeighborhood.Point patch point)
     (state : sample.certificate.value.name.process.State) {root : Gaussian}
     (possible : sample.certificate.value.name.process.Possible state root) :
-    normSq ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval point / root) ≤
+    normSq ((coefficientPolynomial coefficients).eval point / root) ≤
       coefficientNormSq coefficients * basis.coefficientScale := by
   have rootBound := sample.candidate_lower state possible
   have rootPositive := patch.rootLower_positive.trans_le rootBound
   have rootNonzero : root ≠ 0 := by
     intro zero
-    rw [zero, Gaussian.Basic.Canonical.normSq_zero] at rootPositive
+    rw [zero, normSq_zero] at rootPositive
     exact (lt_irrefl _ rootPositive)
   have localBounds : ∀ row : Fin count,
       normSq (coefficients row * (basis.terms row).numerator.eval point) ≤
         normSq (coefficients row) * basis.totalNumerator := by
     intro row
-    rw [Gaussian.Basic.Canonical.normSq_mul]
-    exact Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (basis.numerator_le_total row inside)
-      (Gaussian.Basic.Canonical.normSq_nonneg _)
+    rw [normSq_mul]
+    exact Arithmetic.mul_le_mul_of_nonneg_left_direct (basis.numerator_le_total row inside)
+      (normSq_nonneg _)
   have numeratorBound := Gaussian.Norm.Sum.Indexed.normSq_sumFin_le_count_mul_sumFin
     (fun row => coefficients row * (basis.terms row).numerator.eval point)
     (fun row => normSq (coefficients row) * basis.totalNumerator)
@@ -439,14 +441,14 @@ theorem operational_coefficient_bound (basis : PrimitiveBasis patch index count)
   have paid : basis.coefficientScale * patch.rootLower = (count : Coordinate) * basis.totalNumerator := by
     rw [basis.coefficientScale_eq]
     exact Rat.Fraction.Field.div_mul_cancel_of_ne _ _ patch.rootLower_positive.ne'
-  rw [Gaussian.Basic.Canonical.normSq_div _ _ rootNonzero, ← Rat.Fraction.Field.div_eq_mul_inv_direct]
-  apply (Rat.Fraction.Order.Field.div_le_iff_pos rootPositive).mpr
+  rw [normSq_div _ _ rootNonzero, ← Rat.Fraction.Field.div_eq_mul_inv_direct]
+  apply (Field.div_le_iff_pos rootPositive).mpr
   calc
     _ ≤ (count : Coordinate) * (coefficientNormSq coefficients * basis.totalNumerator) := numeratorBound
     _ = coefficientNormSq coefficients * (basis.coefficientScale * patch.rootLower) := by rw [paid]; ring1
     _ = (coefficientNormSq coefficients * basis.coefficientScale) * patch.rootLower := by ring1
-    _ ≤ _ := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct rootBound
-      (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (coefficientNorm_nonnegative coefficients)
+    _ ≤ _ := Arithmetic.mul_le_mul_of_nonneg_left_direct rootBound
+      (Arithmetic.mul_nonneg_direct (coefficientNorm_nonnegative coefficients)
         basis.coefficientScale_nonnegative)
 
 open Purelib.Algebra in
@@ -460,7 +462,7 @@ private theorem error_sum (basis : PrimitiveBasis patch index count) (coefficien
       (basis.terms row).model.primitive.value.eval start -
         ((basis.terms row).numerator.eval start / root) * (finish - start))) =
       basis.value coefficients finish - basis.value coefficients start -
-        ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval start / root) * (finish - start) := by
+        ((coefficientPolynomial coefficients).eval start / root) * (finish - start) := by
   rw [basis.numerator_sum]
   calc
     _ = FiniteSum.Fin.sumFin (fun row => coefficients row * (basis.terms row).model.primitive.value.eval finish -
@@ -486,11 +488,11 @@ theorem operational_increment_bound (basis : PrimitiveBasis patch index count) (
     (sample : ContinuedNeighborhood.Point patch start) {root : Gaussian}
     (possible : sample.certificate.value.name.process.Possible (sample.readingState index) root) :
     normSq (basis.value coefficients finish - basis.value coefficients start -
-      ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval start / root) * (finish - start)) ≤
+      ((coefficientPolynomial coefficients).eval start / root) * (finish - start)) ≤
         coefficientNormSq coefficients * (basis.taylorScale * normSq (finish - start) ^ 2 +
-          Rational.Geometric.Basic.quarterRadius basis.readingScale index * normSq (finish - start)) := by
+          quarterRadius basis.readingScale index * normSq (finish - start)) := by
   let distance := normSq (finish - start)
-  let error := Rational.Geometric.Basic.quarterRadius patch.inverseErrorScale index
+  let error := quarterRadius patch.inverseErrorScale index
   have errorNonnegative : 0 ≤ error := Rational.Geometric.Basic.quarterRadius_nonneg patch.inverseErrorScale_positive.le
     index
   have localBounds : ∀ row : Fin count,
@@ -501,17 +503,17 @@ theorem operational_increment_bound (basis : PrimitiveBasis patch index count) (
           distance)) := by
     intro row
     have bound := (basis.terms row).model.operational_increment_bound startInside finishInside sample possible
-    have taylor := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (basis.remainder_le_total row)
-      (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct distance)
-    have reading := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (basis.numerator_le_total row startInside)
+    have taylor := Arithmetic.mul_le_mul_of_nonneg_right_direct (basis.remainder_le_total row)
+      (Arithmetic.sq_nonneg_direct distance)
+    have reading := Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (Arithmetic.mul_le_mul_of_nonneg_right_direct (basis.numerator_le_total row startInside)
         errorNonnegative)
-      (Gaussian.Basic.Canonical.normSq_nonneg (finish - start))
-    rw [Gaussian.Basic.Canonical.normSq_mul]
-    exact Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (bound.trans (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add taylor reading) (by
+      (normSq_nonneg (finish - start))
+    rw [normSq_mul]
+    exact Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (bound.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add taylor reading) (by
         decide)))
-      (Gaussian.Basic.Canonical.normSq_nonneg _)
+      (normSq_nonneg _)
   have bounded := Gaussian.Norm.Sum.Indexed.normSq_sumFin_le_count_mul_sumFin
     (fun row => coefficients row * ((basis.terms row).model.primitive.value.eval finish -
       (basis.terms row).model.primitive.value.eval start -
@@ -523,7 +525,7 @@ theorem operational_increment_bound (basis : PrimitiveBasis patch index count) (
   rw [basis.error_sum, FiniteSum.Fin.sumFin_mul_right] at bounded
   apply bounded.trans_eq
   rw [basis.taylorScale_eq, basis.readingScale_eq]
-  simp only [coefficientNormSq, distance, error, Rational.Geometric.Basic.quarterRadius,
+  simp only [coefficientNormSq, distance, error, quarterRadius,
     Field.ExplicitField.div_eq_mul_inv]
   ring1
 
@@ -535,16 +537,16 @@ variable {polynomial : Polynomial} {siteCount count : Nat} {patch : ContinuedNei
 
 /-- The preflight reading scale is nonnegative. -/
 theorem readingScale_nonnegative (preflight : PrimitiveBasisPreflight patch count) : 0 ≤ preflight.readingScale :=
-  (PrimitiveBasis.ofPreflight preflight 0).readingScale_nonnegative
+  (ofPreflight preflight 0).readingScale_nonnegative
 
 /-- The preflight coefficient scale is nonnegative. -/
 theorem coefficientScale_nonnegative (preflight : PrimitiveBasisPreflight patch count) : 0 ≤ preflight.coefficientScale
   :=
-  (PrimitiveBasis.ofPreflight preflight 0).coefficientScale_nonnegative
+  (ofPreflight preflight 0).coefficientScale_nonnegative
 
 /-- The preflight Taylor scale is nonnegative. -/
 theorem taylorScale_nonnegative (preflight : PrimitiveBasisPreflight patch count) : 0 ≤ preflight.taylorScale :=
-  (PrimitiveBasis.ofPreflight preflight 0).taylorScale_nonnegative
+  (ofPreflight preflight 0).taylorScale_nonnegative
 
 end PrimitiveBasis.PrimitiveBasisPreflight
 

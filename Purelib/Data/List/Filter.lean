@@ -65,6 +65,21 @@ public theorem filter_append {Alpha : Type u} (predicate : Alpha → Bool)
           rw [filter_cons_of_pos selected, filter_cons_of_pos selected]
           exact congrArg (List.cons head) ih
 
+/-- Filtering repeated copies either retains every original copy or rejects the entire block.
+
+The same Boolean test is evaluated on the displayed repeated value. Each
+accepted copy retains its original position and multiplicity.
+-/
+public theorem filter_replicate {Alpha : Type u} (predicate : Alpha → Bool)
+    (value : Alpha) (count : Nat) :
+    (List.replicate count value).filter predicate =
+      if predicate value then List.replicate count value else [] := by
+  induction count with
+  | zero => cases predicate value <;> rfl
+  | succ count previous =>
+      rw [List.replicate_succ, filter_cons, previous]
+      cases predicate value <;> rfl
+
 /-- A filtered member retains its source occurrence and acceptance certificate.
 
 Membership is equivalent to occurrence in the original list together with a

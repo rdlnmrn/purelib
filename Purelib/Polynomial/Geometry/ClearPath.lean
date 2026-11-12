@@ -7,7 +7,13 @@ import Purelib.Data.Gaussian.Norm.Basic
 public import Purelib.Data.Gaussian.Scale
 import Purelib.Data.Rat.Fraction.Order.Arithmetic
 import Purelib.Geometry.Rational.Box.Basic
+import Purelib.Geometry.Rational.Box.Refinement
 public import Purelib.Polynomial.Clearance.Box.Line.Basic
+public import Purelib.Polynomial.Clearance.Box.Region
+import Purelib.Polynomial.Bounds.Horner
+public import Purelib.Polynomial.Dense.Gaussian.Bounds.Box
+import Purelib.Geometry.Rational.Box.Segment
+public import Purelib.Geometry.Rational.Affine
 import Purelib.Polynomial.Dense.Gaussian.Basic
 import Mathlib.Algebra.Ring.Defs
 import Purelib.Data.Gaussian.Field
@@ -18,6 +24,9 @@ import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 meta import Purelib.Elab.ConstructiveInjectivity
+
+open Purelib.Data.Gaussian.Components
+open Purelib.Data.Rat.Fraction.Order
 
 open Purelib.Data
 
@@ -54,12 +63,35 @@ end ClearPath
 
 namespace ClearPath
 
+namespace ClearSegment
+
 set_option genInjectivity false in
-/-- A polynomial-clear rational axis segment inside the common ambient box.
-The dependent endpoints make concatenation exact rather than propositional. -/
+/-- The retained geometric discipline of an original polynomial-clear segment.
+
+The default axis discipline keeps the original coordinate-line invariants.
+The region discipline retains a genuine affine chord inside an original
+quantitatively clear region and its original ambient polynomial bounds.
+-/
+inductive Mode where
+  /-- The original horizontal or vertical cleared coordinate segment. -/
+  | axis
+  /-- An affine chord in a retained quantitatively clear region. -/
+  | region
+
+constructive_injectivity Mode
+
+end ClearSegment
+
+set_option genInjectivity false in
+/-- A polynomial-clear rational segment with its original axis or retained affine-region discipline.
+
+The default axis index retains the original coordinate-line contract. The
+region index retains a genuine clear affine chord; both modes preserve the
+exact original dependent endpoints. -/
 inductive ClearSegment (polynomial : GaussianPolynomial)
   (ambient : Box) :
-    Gaussian.Basic.Canonical -> Gaussian.Basic.Canonical -> Type
+    Gaussian.Basic.Canonical → Gaussian.Basic.Canonical →
+      (mode : optParam ClearSegment.Mode .axis) → Type
   /-- A horizontal segment retaining both endpoint bounds and the original line-clearance certificate. -/ | horizontal
     (xStart xFinish y : Fraction.Rational)
       (startLower : ambient.xLower <= xStart)
@@ -68,8 +100,8 @@ inductive ClearSegment (polynomial : GaussianPolynomial)
       (finishUpper : xFinish <= ambient.xUpper)
       (clearance : Clearance.Box.Line.Basic.HorizontalLineClearance
         polynomial ambient y) :
-      ClearSegment polynomial ambient (Gaussian.Components.Basic.point xStart y)
-        (Gaussian.Components.Basic.point xFinish y)
+      ClearSegment polynomial ambient (Basic.point xStart y)
+        (Basic.point xFinish y) .axis
   /-- A vertical segment retaining both endpoint bounds and the original line-clearance certificate. -/ | vertical (x
     yStart yFinish : Fraction.Rational)
       (startLower : ambient.yLower <= yStart)
@@ -78,8 +110,17 @@ inductive ClearSegment (polynomial : GaussianPolynomial)
       (finishUpper : yFinish <= ambient.yUpper)
       (clearance : Clearance.Box.Line.Basic.VerticalLineClearance
         polynomial ambient x) :
-      ClearSegment polynomial ambient (Gaussian.Components.Basic.point x yStart)
-        (Gaussian.Components.Basic.point x yFinish)
+      ClearSegment polynomial ambient (Basic.point x yStart)
+        (Basic.point x yFinish) .axis
+  /-- An actual affine chord retains its original clear region, endpoint containment
+  and complete ambient Horner cache. -/
+  | affine (start finish : Gaussian.Basic.Canonical) (region : Box)
+      (within : ambient.Contains start ∧ ambient.Contains finish)
+      (clearance : Clearance.Box.Region.RegionClearance polynomial region)
+      (startInside : region.Contains start) (finishInside : region.Contains finish)
+      (bounds : Bounds.Horner)
+      (bounds_eq : bounds = Dense.Gaussian.Bounds.Box.denseHornerNormBounds polynomial ambient) :
+      ClearSegment polynomial ambient start finish .region
 
 constructive_injectivity ClearSegment
 
@@ -103,25 +144,29 @@ end ClearPath.ClearSegment.vertical
 
 namespace ClearPath.ClearSegment
 
+variable {mode : Mode}
+
 /-- The fixed positive squared-modulus lower bound carried by the certified
 coordinate line underlying a clear segment. -/
 def clearanceBound {polynomial :
   GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish) : Fraction.Rational :=
+    (segment : ClearSegment polynomial ambient start finish mode) : Fraction.Rational :=
   match segment with
   | .horizontal _ _ _ _ _ _ _ clearance => clearance.bound
   | .vertical _ _ _ _ _ _ _ clearance => clearance.bound
+  | .affine _ _ _ _ clearance _ _ _ _ => clearance.bound
 
 /-- The line-clearance bound retained by every clear segment is strictly positive. -/
 theorem clearanceBound_positive {polynomial :
   GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish) :
+    (segment : ClearSegment polynomial ambient start finish mode) :
     0 < segment.clearanceBound := by
   cases segment with
   | horizontal _ _ _ _ _ _ _ clearance => exact clearance.positive
   | vertical _ _ _ _ _ _ _ clearance => exact clearance.positive
+  | affine _ _ _ _ clearance _ _ _ _ => exact clearance.positive
 
 /-- A rational Purelib.Data.Gaussian.Components.Basic.point on the certified ambient portion of the segment's
 coordinate line.  This deliberately describes a superset of the oriented
@@ -129,29 +174,30 @@ segment, so its exclusion theorem is immediately reusable after subdivision. -/
 def OnCertifiedLine {polynomial :
   GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish)
+    (segment : ClearSegment polynomial ambient start finish mode)
     (value : Gaussian.Basic.Canonical) : Prop :=
   match segment with
   | .horizontal _ _ y _ _ _ _ _ =>
       value.im = y ∧ ambient.xLower <= value.re ∧ value.re <= ambient.xUpper
   | .vertical x _ _ _ _ _ _ _ =>
       value.re = x ∧ ambient.yLower <= value.im ∧ value.im <= ambient.yUpper
+  | .affine _ _ region _ _ _ _ _ _ => region.Contains value ∧ ambient.Contains value
 
 /-- The line-clearance number uniformly bounds the polynomial on every
 displayed rational Purelib.Data.Gaussian.Components.Basic.point of the certified ambient line. -/
 theorem clearanceBound_le_eval_normSq {polynomial :
   GaussianPolynomial}
     {ambient : Box} {start finish value : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish)
+    (segment : ClearSegment polynomial ambient start finish mode)
     (onLine : segment.OnCertifiedLine value) :
     segment.clearanceBound <=
-      Data.Gaussian.Norm.Basic.normSq (polynomial.eval value) := by
+      Gaussian.Norm.Basic.normSq (polynomial.eval value) := by
   cases segment with
   | horizontal xStart xFinish y startLower startUpper finishLower finishUpper
       clearance =>
       rcases onLine with ⟨imaginary, lower, upper⟩
       have bound := clearance.lower value.re lower upper
-      have valueEqual : Gaussian.Components.Basic.point value.re y = value := by
+      have valueEqual : Basic.point value.re y = value := by
         apply Gaussian.Basic.ext
         · rfl
         · exact imaginary.symm
@@ -161,18 +207,19 @@ theorem clearanceBound_le_eval_normSq {polynomial :
       clearance =>
       rcases onLine with ⟨real, lower, upper⟩
       have bound := clearance.lower value.im lower upper
-      have valueEqual : Gaussian.Components.Basic.point x value.im = value := by
+      have valueEqual : Basic.point x value.im = value := by
         apply Gaussian.Basic.ext
         · exact real.symm
         · rfl
       simpa only [clearanceBound, valueEqual, Gaussian.Norm.Basic.normSq_eq_canonical]
         using bound
+  | affine _ _ _ _ clearance _ _ _ _ => exact clearance.lower _ onLine.1
 
 /-- Rational affine parameterization of a displayed clear segment. -/
 def pointAt {polynomial :
   GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian.Basic.Canonical}
-    (_segment : ClearSegment polynomial ambient start finish)
+    (_segment : ClearSegment polynomial ambient start finish mode)
     (parameter : Fraction.Rational) : Gaussian.Basic.Canonical :=
   start + Gaussian.Scale.scale parameter (finish - start)
 
@@ -180,7 +227,7 @@ def pointAt {polynomial :
 @[simp] theorem pointAt_zero {polynomial :
   GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish) :
+    (segment : ClearSegment polynomial ambient start finish mode) :
     segment.pointAt 0 = start := by
   apply Gaussian.Basic.ext <;>
     simp only [pointAt, Gaussian.Scale.scale_re, Gaussian.Scale.scale_im,
@@ -193,7 +240,7 @@ def pointAt {polynomial :
 @[simp] theorem pointAt_one {polynomial :
   GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish) :
+    (segment : ClearSegment polynomial ambient start finish mode) :
     segment.pointAt 1 = finish := by
   apply Gaussian.Basic.ext <;>
     simp only [pointAt, Gaussian.Scale.scale_re, Gaussian.Scale.scale_im,
@@ -202,36 +249,46 @@ def pointAt {polynomial :
       Gaussian.Basic.sub_re,
       Gaussian.Basic.sub_im] <;> ring1
 
+/-- The original segment parameterization is its actual affine chord for both retained geometric disciplines. -/
+theorem pointAt_eq_line {polynomial : GaussianPolynomial} {ambient : Box}
+    {start finish : Gaussian.Basic.Canonical} (segment : ClearSegment polynomial ambient start finish mode)
+    (parameter : Fraction.Rational) : segment.pointAt parameter =
+      Affine.line start (finish - start) parameter := by
+  apply Gaussian.Basic.ext <;>
+    simp only [pointAt, Affine.line, Gaussian.Scale.scale_re, Gaussian.Scale.scale_im,
+      Gaussian.Cast.ofCoordinate_re, Gaussian.Cast.ofCoordinate_im,
+      Gaussian.Basic.add_re, Gaussian.Basic.add_im, Gaussian.Basic.mul_re, Gaussian.Basic.mul_im] <;> ring1
+
 /-- Every parameter in the rational unit interval stays on the certified
 ambient portion of the segment's clearance line. -/
 theorem pointAt_onCertifiedLine {polynomial :
   GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish)
+    (segment : ClearSegment polynomial ambient start finish mode)
     (parameter : Fraction.Rational)
     (inside : (0 : Fraction.Rational) <= parameter ∧ parameter <= 1) :
     segment.OnCertifiedLine (segment.pointAt parameter) := by
   have oneMinusNonnegative : (0 : Fraction.Rational) <= 1 - parameter :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct inside.2
+    Arithmetic.sub_nonneg_direct inside.2
   cases segment with
   | horizontal xStart xFinish y startLower startUpper finishLower finishUpper
       clearance =>
       have realFormula :
-          (Gaussian.Components.Basic.point xStart y +
+          (Basic.point xStart y +
             Gaussian.Scale.scale parameter
-              (Gaussian.Components.Basic.point xFinish y - Gaussian.Components.Basic.point xStart y)).re =
+              (Basic.point xFinish y - Basic.point xStart y)).re =
             (1 - parameter) * xStart + parameter * xFinish := by
         simp only [Gaussian.Basic.add_re, Gaussian.Basic.sub_re, Gaussian.Scale.scale_re,
-          Gaussian.Components.Basic.point]
+          Basic.point]
         ring1
       refine ⟨?_, ?_, ?_⟩
       · simp only [pointAt, Gaussian.Basic.add_im, Gaussian.Basic.sub_im,
           Gaussian.Scale.scale_im,
-          Gaussian.Components.Basic.point]
+          Basic.point]
         ring1
       · change ambient.xLower <=
-          (Gaussian.Components.Basic.point xStart y + Gaussian.Scale.scale parameter
-            (Gaussian.Components.Basic.point xFinish y - Gaussian.Components.Basic.point xStart y)).re
+          (Basic.point xStart y + Gaussian.Scale.scale parameter
+            (Basic.point xFinish y - Basic.point xStart y)).re
         rw [realFormula]
         calc
           ambient.xLower =
@@ -239,42 +296,42 @@ theorem pointAt_onCertifiedLine {polynomial :
                 parameter * ambient.xLower := by ring1
           _ <= (1 - parameter) * xStart + parameter * xFinish :=
             add_le_add
-              (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+              (Arithmetic.mul_le_mul_of_nonneg_left_direct
                 startLower oneMinusNonnegative)
-              (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+              (Arithmetic.mul_le_mul_of_nonneg_left_direct
                 finishLower inside.1)
       · change
-          (Gaussian.Components.Basic.point xStart y + Gaussian.Scale.scale parameter
-            (Gaussian.Components.Basic.point xFinish y - Gaussian.Components.Basic.point xStart y)).re <= ambient.xUpper
+          (Basic.point xStart y + Gaussian.Scale.scale parameter
+            (Basic.point xFinish y - Basic.point xStart y)).re <= ambient.xUpper
         rw [realFormula]
         calc
           (1 - parameter) * xStart + parameter * xFinish <=
               (1 - parameter) * ambient.xUpper +
                 parameter * ambient.xUpper :=
             add_le_add
-              (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+              (Arithmetic.mul_le_mul_of_nonneg_left_direct
                 startUpper oneMinusNonnegative)
-              (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+              (Arithmetic.mul_le_mul_of_nonneg_left_direct
                 finishUpper inside.1)
           _ = ambient.xUpper := by ring1
   | vertical x yStart yFinish startLower startUpper finishLower finishUpper
       clearance =>
       have imaginaryFormula :
-          (Gaussian.Components.Basic.point x yStart +
+          (Basic.point x yStart +
             Gaussian.Scale.scale parameter
-              (Gaussian.Components.Basic.point x yFinish - Gaussian.Components.Basic.point x yStart)).im =
+              (Basic.point x yFinish - Basic.point x yStart)).im =
             (1 - parameter) * yStart + parameter * yFinish := by
         simp only [Gaussian.Basic.add_im, Gaussian.Basic.sub_im, Gaussian.Scale.scale_im,
-          Gaussian.Components.Basic.point]
+          Basic.point]
         ring1
       refine ⟨?_, ?_, ?_⟩
       · simp only [pointAt, Gaussian.Basic.add_re, Gaussian.Basic.sub_re,
           Gaussian.Scale.scale_re,
-          Gaussian.Components.Basic.point]
+          Basic.point]
         ring1
       · change ambient.yLower <=
-          (Gaussian.Components.Basic.point x yStart + Gaussian.Scale.scale parameter
-            (Gaussian.Components.Basic.point x yFinish - Gaussian.Components.Basic.point x yStart)).im
+          (Basic.point x yStart + Gaussian.Scale.scale parameter
+            (Basic.point x yFinish - Basic.point x yStart)).im
         rw [imaginaryFormula]
         calc
           ambient.yLower =
@@ -282,24 +339,31 @@ theorem pointAt_onCertifiedLine {polynomial :
                 parameter * ambient.yLower := by ring1
           _ <= (1 - parameter) * yStart + parameter * yFinish :=
             add_le_add
-              (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+              (Arithmetic.mul_le_mul_of_nonneg_left_direct
                 startLower oneMinusNonnegative)
-              (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+              (Arithmetic.mul_le_mul_of_nonneg_left_direct
                 finishLower inside.1)
       · change
-          (Gaussian.Components.Basic.point x yStart + Gaussian.Scale.scale parameter
-            (Gaussian.Components.Basic.point x yFinish - Gaussian.Components.Basic.point x yStart)).im <= ambient.yUpper
+          (Basic.point x yStart + Gaussian.Scale.scale parameter
+            (Basic.point x yFinish - Basic.point x yStart)).im <= ambient.yUpper
         rw [imaginaryFormula]
         calc
           (1 - parameter) * yStart + parameter * yFinish <=
               (1 - parameter) * ambient.yUpper +
                 parameter * ambient.yUpper :=
             add_le_add
-              (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+              (Arithmetic.mul_le_mul_of_nonneg_left_direct
                 startUpper oneMinusNonnegative)
-              (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+              (Arithmetic.mul_le_mul_of_nonneg_left_direct
                 finishUpper inside.1)
           _ = ambient.yUpper := by ring1
+  | affine start finish region within clearance startInside finishInside bounds bounds_eq =>
+      change region.Contains ((affine start finish region within clearance startInside finishInside
+        bounds bounds_eq).pointAt parameter) ∧
+        ambient.Contains ((affine start finish region within clearance startInside finishInside
+          bounds bounds_eq).pointAt parameter)
+      rewrite [pointAt_eq_line]
+      exact ⟨Box.contains_line startInside finishInside inside, Box.contains_line within.1 within.2 inside⟩
 
 /-- The segment's fixed coordinate also lies in the ambient box.  Line
 clearance itself is meaningful outside the box in that coordinate, so this
@@ -307,18 +371,27 @@ geometric fact is recorded separately. -/
 def WithinAmbient {polynomial :
   GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish) : Prop :=
+    (segment : ClearSegment polynomial ambient start finish mode) : Prop :=
   match segment with
   | .horizontal _ _ y _ _ _ _ _ =>
       ambient.yLower <= y ∧ y <= ambient.yUpper
   | .vertical x _ _ _ _ _ _ _ =>
       ambient.xLower <= x ∧ x <= ambient.xUpper
+  | .affine _ _ _ _ _ _ _ _ _ => True
+
+/-- Containment of the actual starting endpoint supplies the segment's fixed-coordinate ambient bound. -/
+theorem withinAmbient_of_start {polynomial : GaussianPolynomial} {ambient : Box}
+    {start finish : Gaussian.Basic.Canonical} (segment : ClearSegment polynomial ambient start finish)
+    (inside : ambient.Contains start) : segment.WithinAmbient := by
+  cases segment with
+  | horizontal => exact inside.2.2
+  | vertical => exact ⟨inside.1, inside.2.1⟩
 
 /-- A Purelib.Data.Gaussian.Components.Basic.point on an ambient-contained certified line lies in the ambient box. -/
 theorem contains_of_onCertifiedLine {polynomial :
   GaussianPolynomial}
     {ambient : Box} {start finish value : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish)
+    (segment : ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient)
     (onLine : segment.OnCertifiedLine value) : ambient.Contains value := by
   cases segment with
@@ -332,12 +405,27 @@ theorem contains_of_onCertifiedLine {polynomial :
       exact ⟨by rw [onLine.1]; exact within.1,
         by rw [onLine.1]; exact within.2,
         onLine.2.1, onLine.2.2⟩
+  | affine _ _ _ _ _ _ _ _ _ => exact onLine.2
+
+/-- Every unit-interval sample belongs to any retained box containing both actual segment endpoints.
+
+The original axis or region segment is unchanged. Its exact affine
+parameterization and the two endpoint comparisons establish containment in
+the supplied box independently of the segment's clearance certificate.
+-/
+theorem pointAt_contains_of_endpoints {polynomial : GaussianPolynomial} {ambient enclosure : Box}
+    {start finish : Gaussian.Basic.Canonical} (segment : ClearSegment polynomial ambient start finish mode)
+    (first : enclosure.Contains start) (last : enclosure.Contains finish)
+    (parameter : Fraction.Rational) (inside : 0 ≤ parameter ∧ parameter ≤ 1) :
+    enclosure.Contains (segment.pointAt parameter) := by
+  rewrite [segment.pointAt_eq_line]
+  exact Box.contains_line first last inside
 
 /-- Every unit-interval sample of an ambient-contained segment belongs to the original ambient box. -/
 theorem pointAt_contains {polynomial :
   GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish)
+    (segment : ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient)
     (parameter : Fraction.Rational)
     (inside : (0 : Fraction.Rational) <= parameter ∧ parameter <= 1) :
@@ -349,7 +437,7 @@ theorem pointAt_contains {polynomial :
 theorem pointAt_sub_pointAt {polynomial :
   GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish)
+    (segment : ClearSegment polynomial ambient start finish mode)
     (left right : Fraction.Rational) :
     segment.pointAt left - segment.pointAt right =
       Gaussian.Scale.scale (left - right) (finish - start) := by
@@ -361,12 +449,12 @@ theorem pointAt_sub_pointAt {polynomial :
 theorem normSq_pointAt_sub_pointAt {polynomial :
   GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish)
+    (segment : ClearSegment polynomial ambient start finish mode)
     (left right : Fraction.Rational) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         (segment.pointAt left - segment.pointAt right) =
       (left - right) ^ 2 *
-        Data.Gaussian.Norm.Basic.normSq (finish - start) := by
+        Gaussian.Norm.Basic.normSq (finish - start) := by
   rw [segment.pointAt_sub_pointAt left right, Gaussian.Scale.normSq_scale]
 
 /-- A unit-interval Purelib.Data.Gaussian.Components.Basic.point is no farther from the local start than the full
@@ -374,21 +462,21 @@ affine segment displacement. -/
 theorem normSq_pointAt_sub_zero_le_full {polynomial :
   GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish)
+    (segment : ClearSegment polynomial ambient start finish mode)
     (parameter : Fraction.Rational)
     (inside : (0 : Fraction.Rational) <= parameter ∧ parameter <= 1) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         (segment.pointAt parameter - segment.pointAt 0) <=
-      Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq
         (segment.pointAt 1 - segment.pointAt 0) := by
   have squareLe : parameter ^ 2 <= (1 : Fraction.Rational) ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct inside.1 inside.2 2
+    Arithmetic.pow_le_pow_direct inside.1 inside.2 2
   have squareDifferenceLe : (parameter - 0) ^ 2 <=
       ((1 : Fraction.Rational) - 0) ^ 2 := by
     convert squareLe using 1 <;> ring1
   rw [segment.normSq_pointAt_sub_pointAt parameter 0,
     segment.normSq_pointAt_sub_pointAt 1 0]
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+  exact Arithmetic.mul_le_mul_of_nonneg_right_direct
     squareDifferenceLe
     (Gaussian.Norm.Basic.normSq_nonneg (finish - start))
 
@@ -402,7 +490,7 @@ theorem horizontal_eval_ne_zero {polynomial :
       polynomial ambient y)
     (x : Fraction.Rational) (lower : ambient.xLower <= x)
     (upper : x <= ambient.xUpper) :
-    polynomial.eval (Gaussian.Components.Basic.point x y) ≠ 0 := by
+    polynomial.eval (Basic.point x y) ≠ 0 := by
   intro zero
   have bound := clearance.lower x lower upper
   rw [zero, Gaussian.Basic.Canonical.normSq_zero] at bound
@@ -417,7 +505,7 @@ theorem vertical_eval_ne_zero {polynomial :
       polynomial ambient x)
     (y : Fraction.Rational) (lower : ambient.yLower <= y)
     (upper : y <= ambient.yUpper) :
-    polynomial.eval (Gaussian.Components.Basic.point x y) ≠ 0 := by
+    polynomial.eval (Basic.point x y) ≠ 0 := by
   intro zero
   have bound := clearance.lower y lower upper
   rw [zero, Gaussian.Basic.Canonical.normSq_zero] at bound
@@ -428,7 +516,7 @@ of the displayed segment—avoids every finite branch root. -/
 theorem eval_ne_zero {polynomial :
   GaussianPolynomial} {ambient : Box}
     {start finish value : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish)
+    (segment : ClearSegment polynomial ambient start finish mode)
     (onLine : segment.OnCertifiedLine value) :
     polynomial.eval value ≠ 0 := by
   cases segment with
@@ -436,7 +524,7 @@ theorem eval_ne_zero {polynomial :
       clearance =>
       rcases onLine with ⟨imaginary, lower, upper⟩
       have nonzero := horizontal_eval_ne_zero clearance value.re lower upper
-      have valueEqual : Gaussian.Components.Basic.point value.re y = value := by
+      have valueEqual : Basic.point value.re y = value := by
         apply Gaussian.Basic.ext
         · rfl
         · exact imaginary.symm
@@ -446,19 +534,20 @@ theorem eval_ne_zero {polynomial :
       clearance =>
       rcases onLine with ⟨real, lower, upper⟩
       have nonzero := vertical_eval_ne_zero clearance value.im lower upper
-      have valueEqual : Gaussian.Components.Basic.point x value.im = value := by
+      have valueEqual : Basic.point x value.im = value := by
         apply Gaussian.Basic.ext
         · exact real.symm
         · rfl
       rw [valueEqual] at nonzero
       exact nonzero
+  | affine _ _ _ _ clearance _ _ _ _ => exact clearance.eval_ne_zero onLine.1
 
 /-- Polynomial nonvanishing at every displayed rational unit-interval
 parameter of a clear segment. -/
 theorem pointAt_eval_ne_zero {polynomial :
   GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish)
+    (segment : ClearSegment polynomial ambient start finish mode)
     (parameter : Fraction.Rational)
     (inside : (0 : Fraction.Rational) <= parameter ∧ parameter <= 1) :
     polynomial.eval (segment.pointAt parameter) ≠ 0 :=
@@ -468,18 +557,18 @@ theorem pointAt_eval_ne_zero {polynomial :
 def betweenOnCertifiedLine {polynomial :
   GaussianPolynomial}
     {ambient : Box} {start finish left right : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish)
+    (segment : ClearSegment polynomial ambient start finish mode)
     (leftOn : segment.OnCertifiedLine left)
     (rightOn : segment.OnCertifiedLine right) :
-    ClearSegment polynomial ambient left right := by
+    ClearSegment polynomial ambient left right mode := by
   cases segment with
   | horizontal xStart xFinish y startLower startUpper finishLower finishUpper
       clearance =>
-      have leftEq : Gaussian.Components.Basic.point left.re y = left := by
+      have leftEq : Basic.point left.re y = left := by
         apply Gaussian.Basic.ext
         · rfl
         · exact leftOn.1.symm
-      have rightEq : Gaussian.Components.Basic.point right.re y = right := by
+      have rightEq : Basic.point right.re y = right := by
         apply Gaussian.Basic.ext
         · rfl
         · exact rightOn.1.symm
@@ -488,25 +577,27 @@ def betweenOnCertifiedLine {polynomial :
         leftOn.2.1 leftOn.2.2 rightOn.2.1 rightOn.2.2 clearance
   | vertical x yStart yFinish startLower startUpper finishLower finishUpper
       clearance =>
-      have leftEq : Gaussian.Components.Basic.point x left.im = left := by
+      have leftEq : Basic.point x left.im = left := by
         apply Gaussian.Basic.ext
         · exact leftOn.1.symm
         · rfl
-      have rightEq : Gaussian.Components.Basic.point x right.im = right := by
+      have rightEq : Basic.point x right.im = right := by
         apply Gaussian.Basic.ext
         · exact rightOn.1.symm
         · rfl
       rw [← leftEq, ← rightEq]
       exact .vertical x left.im right.im
         leftOn.2.1 leftOn.2.2 rightOn.2.1 rightOn.2.2 clearance
+  | affine _ _ region _ clearance _ _ bounds bounds_eq =>
+      exact .affine left right region ⟨leftOn.2, rightOn.2⟩ clearance leftOn.1 rightOn.1 bounds bounds_eq
 
 /-- Transport a clear segment along an equality of starting-point indices, retaining its original line certificate. -/
 def castStart {polynomial :
   GaussianPolynomial} {ambient : Box}
     {left right finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient left finish)
+    (segment : ClearSegment polynomial ambient left finish mode)
     (equal : left = right) :
-    ClearSegment polynomial ambient right finish := by
+    ClearSegment polynomial ambient right finish mode := by
   subst right
   exact segment
 
@@ -514,9 +605,9 @@ def castStart {polynomial :
 def castFinish {polynomial :
   GaussianPolynomial} {ambient : Box}
     {start left right : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start left)
+    (segment : ClearSegment polynomial ambient start left mode)
     (equal : left = right) :
-    ClearSegment polynomial ambient start right := by
+    ClearSegment polynomial ambient start right mode := by
   subst right
   exact segment
 
@@ -524,7 +615,7 @@ def castFinish {polynomial :
 theorem castStart_withinAmbient
     {polynomial : GaussianPolynomial} {ambient : Box}
     {left right finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient left finish)
+    (segment : ClearSegment polynomial ambient left finish mode)
     (within : segment.WithinAmbient) (equal : left = right) :
     (segment.castStart equal).WithinAmbient := by
   subst right
@@ -534,7 +625,7 @@ theorem castStart_withinAmbient
 theorem castFinish_withinAmbient
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start left right : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start left)
+    (segment : ClearSegment polynomial ambient start left mode)
     (within : segment.WithinAmbient) (equal : left = right) :
     (segment.castFinish equal).WithinAmbient := by
   subst right
@@ -544,7 +635,7 @@ theorem castFinish_withinAmbient
 @[simp] theorem castStart_clearanceBound
     {polynomial : GaussianPolynomial} {ambient : Box}
     {left right finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient left finish)
+    (segment : ClearSegment polynomial ambient left finish mode)
     (equal : left = right) :
     (segment.castStart equal).clearanceBound = segment.clearanceBound := by
   subst right
@@ -554,7 +645,7 @@ theorem castFinish_withinAmbient
 @[simp] theorem castFinish_clearanceBound
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start left right : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start left)
+    (segment : ClearSegment polynomial ambient start left mode)
     (equal : left = right) :
     (segment.castFinish equal).clearanceBound = segment.clearanceBound := by
   subst right
@@ -567,13 +658,13 @@ bound. -/
 def restriction {polynomial :
   GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish)
+    (segment : ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient)
     (left right : Fraction.Rational)
     (leftInside : (0 : Fraction.Rational) <= left ∧ left <= 1)
     (rightInside : (0 : Fraction.Rational) <= right ∧ right <= 1) :
     { restricted : ClearSegment polynomial ambient
-        (segment.pointAt left) (segment.pointAt right) //
+        (segment.pointAt left) (segment.pointAt right) mode //
       restricted.WithinAmbient ∧
         restricted.clearanceBound = segment.clearanceBound } := by
   have leftOn := segment.pointAt_onCertifiedLine left leftInside
@@ -582,30 +673,30 @@ def restriction {polynomial :
   | horizontal xStart xFinish y startLower startUpper finishLower finishUpper
       clearance =>
       have leftEq :
-          Gaussian.Components.Basic.point
-              ((Geometry.ClearPath.ClearSegment.horizontal xStart xFinish y startLower startUpper
+          Basic.point
+              ((horizontal xStart xFinish y startLower startUpper
                 finishLower finishUpper clearance).pointAt left).re y =
-            (Geometry.ClearPath.ClearSegment.horizontal xStart xFinish y startLower startUpper
+            (horizontal xStart xFinish y startLower startUpper
               finishLower finishUpper clearance).pointAt left := by
         apply Gaussian.Basic.ext
         · rfl
         · exact leftOn.1.symm
       have rightEq :
-          Gaussian.Components.Basic.point
-              ((Geometry.ClearPath.ClearSegment.horizontal xStart xFinish y startLower startUpper
+          Basic.point
+              ((horizontal xStart xFinish y startLower startUpper
                 finishLower finishUpper clearance).pointAt right).re y =
-            (Geometry.ClearPath.ClearSegment.horizontal xStart xFinish y startLower startUpper
+            (horizontal xStart xFinish y startLower startUpper
               finishLower finishUpper clearance).pointAt right := by
         apply Gaussian.Basic.ext
         · rfl
         · exact rightOn.1.symm
       let raw : ClearSegment polynomial ambient
-          (Gaussian.Components.Basic.point
-            ((Geometry.ClearPath.ClearSegment.horizontal xStart xFinish y startLower startUpper
+          (Basic.point
+            ((horizontal xStart xFinish y startLower startUpper
               finishLower finishUpper clearance).pointAt left).re y)
-          (Gaussian.Components.Basic.point
-            ((Geometry.ClearPath.ClearSegment.horizontal xStart xFinish y startLower startUpper
-              finishLower finishUpper clearance).pointAt right).re y) :=
+          (Basic.point
+            ((horizontal xStart xFinish y startLower startUpper
+              finishLower finishUpper clearance).pointAt right).re y) .axis :=
         .horizontal _ _ y leftOn.2.1 leftOn.2.2
           rightOn.2.1 rightOn.2.2 clearance
       exact ⟨(raw.castStart leftEq).castFinish rightEq,
@@ -617,36 +708,36 @@ def restriction {polynomial :
                 (raw.castStart leftEq).clearanceBound :=
               castFinish_clearanceBound (raw.castStart leftEq) rightEq
             _ = raw.clearanceBound := castStart_clearanceBound raw leftEq
-            _ = (Geometry.ClearPath.ClearSegment.horizontal xStart xFinish y startLower
+            _ = (horizontal xStart xFinish y startLower
                 startUpper finishLower finishUpper clearance).clearanceBound :=
               rfl⟩
   | vertical x yStart yFinish startLower startUpper finishLower finishUpper
       clearance =>
       have leftEq :
-          Gaussian.Components.Basic.point x
-              ((Geometry.ClearPath.ClearSegment.vertical x yStart yFinish startLower startUpper
+          Basic.point x
+              ((vertical x yStart yFinish startLower startUpper
                 finishLower finishUpper clearance).pointAt left).im =
-            (Geometry.ClearPath.ClearSegment.vertical x yStart yFinish startLower startUpper
+            (vertical x yStart yFinish startLower startUpper
               finishLower finishUpper clearance).pointAt left := by
         apply Gaussian.Basic.ext
         · exact leftOn.1.symm
         · rfl
       have rightEq :
-          Gaussian.Components.Basic.point x
-              ((Geometry.ClearPath.ClearSegment.vertical x yStart yFinish startLower startUpper
+          Basic.point x
+              ((vertical x yStart yFinish startLower startUpper
                 finishLower finishUpper clearance).pointAt right).im =
-            (Geometry.ClearPath.ClearSegment.vertical x yStart yFinish startLower startUpper
+            (vertical x yStart yFinish startLower startUpper
               finishLower finishUpper clearance).pointAt right := by
         apply Gaussian.Basic.ext
         · exact rightOn.1.symm
         · rfl
       let raw : ClearSegment polynomial ambient
-          (Gaussian.Components.Basic.point x
-            ((Geometry.ClearPath.ClearSegment.vertical x yStart yFinish startLower startUpper
+          (Basic.point x
+            ((vertical x yStart yFinish startLower startUpper
               finishLower finishUpper clearance).pointAt left).im)
-          (Gaussian.Components.Basic.point x
-            ((Geometry.ClearPath.ClearSegment.vertical x yStart yFinish startLower startUpper
-              finishLower finishUpper clearance).pointAt right).im) :=
+          (Basic.point x
+            ((vertical x yStart yFinish startLower startUpper
+              finishLower finishUpper clearance).pointAt right).im) .axis :=
         .vertical x _ _ leftOn.2.1 leftOn.2.2
           rightOn.2.1 rightOn.2.2 clearance
       exact ⟨(raw.castStart leftEq).castFinish rightEq,
@@ -658,21 +749,24 @@ def restriction {polynomial :
                 (raw.castStart leftEq).clearanceBound :=
               castFinish_clearanceBound (raw.castStart leftEq) rightEq
             _ = raw.clearanceBound := castStart_clearanceBound raw leftEq
-            _ = (Geometry.ClearPath.ClearSegment.vertical x yStart yFinish startLower
+            _ = (vertical x yStart yFinish startLower
                 startUpper finishLower finishUpper clearance).clearanceBound :=
               rfl⟩
+  | affine start finish region within clearance startInside finishInside bounds bounds_eq =>
+      exact ⟨.affine _ _ region ⟨leftOn.2, rightOn.2⟩ clearance leftOn.1 rightOn.1 bounds bounds_eq,
+        True.intro, rfl⟩
 
 /-- The segment component of an ambient-contained restriction. -/
 def restrict {polynomial :
   GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish)
+    (segment : ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient)
     (left right : Fraction.Rational)
     (leftInside : (0 : Fraction.Rational) <= left ∧ left <= 1)
     (rightInside : (0 : Fraction.Rational) <= right ∧ right <= 1) :
     ClearSegment polynomial ambient
-      (segment.pointAt left) (segment.pointAt right) :=
+      (segment.pointAt left) (segment.pointAt right) mode :=
   (segment.restriction within left right leftInside rightInside).1
 
 /-- Restricting the displayed endpoints retains the certified coordinate
@@ -680,7 +774,7 @@ line and therefore its cached polynomial-clearance bound exactly. -/
 @[simp] theorem restrict_clearanceBound
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish)
+    (segment : ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient)
     (left right : Fraction.Rational)
     (leftInside : (0 : Fraction.Rational) <= left ∧ left <= 1)
@@ -693,7 +787,7 @@ line and therefore its cached polynomial-clearance bound exactly. -/
 theorem restrict_withinAmbient {polynomial :
   GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish)
+    (segment : ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient)
     (left right : Fraction.Rational)
     (leftInside : (0 : Fraction.Rational) <= left ∧ left <= 1)
@@ -705,27 +799,29 @@ theorem restrict_withinAmbient {polynomial :
 theorem start_onCertifiedLine {polynomial :
   GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish) :
+    (segment : ClearSegment polynomial ambient start finish mode) :
     segment.OnCertifiedLine start := by
   cases segment with
   | horizontal => exact ⟨rfl, ‹_›, ‹_›⟩
   | vertical => exact ⟨rfl, ‹_›, ‹_›⟩
+  | affine _ _ _ within _ startInside _ _ _ => exact ⟨startInside, within.1⟩
 
 /-- The finishing endpoint lies on the segment's certified ambient line portion. -/
 theorem finish_onCertifiedLine {polynomial :
   GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish) :
+    (segment : ClearSegment polynomial ambient start finish mode) :
     segment.OnCertifiedLine finish := by
   cases segment with
   | horizontal => exact ⟨rfl, ‹_›, ‹_›⟩
   | vertical => exact ⟨rfl, ‹_›, ‹_›⟩
+  | affine _ _ _ within _ _ finishInside _ _ => exact ⟨finishInside, within.2⟩
 
 /-- The polynomial is nonzero at the original starting endpoint. -/
 theorem start_eval_ne_zero {polynomial :
   GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish) :
+    (segment : ClearSegment polynomial ambient start finish mode) :
     polynomial.eval start ≠ 0 :=
   segment.eval_ne_zero segment.start_onCertifiedLine
 
@@ -733,7 +829,7 @@ theorem start_eval_ne_zero {polynomial :
 theorem finish_eval_ne_zero {polynomial :
   GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian.Basic.Canonical}
-    (segment : ClearSegment polynomial ambient start finish) :
+    (segment : ClearSegment polynomial ambient start finish mode) :
     polynomial.eval finish ≠ 0 :=
   segment.eval_ne_zero segment.finish_onCertifiedLine
 
@@ -741,14 +837,14 @@ end ClearPath.ClearSegment
 
 set_option genInjectivity false in
 /-- A finite concatenation of certified axis segments. -/
-inductive ClearPath (polynomial : Geometry.ClearPath.GaussianPolynomial)
+inductive ClearPath (polynomial : ClearPath.GaussianPolynomial)
   (ambient : Box) :
     Gaussian.Basic.Canonical -> Gaussian.Basic.Canonical -> Type
   /-- The empty indexed path at a displayed point. -/ | nil (point : Gaussian.Basic.Canonical) :
     ClearPath polynomial ambient point point
   /-- Prepend a clear segment whose finishing index is exactly the tail path's starting index. -/ | cons {start middle
     finish : Gaussian.Basic.Canonical}
-      (head : Geometry.ClearPath.ClearSegment polynomial ambient start middle)
+      (head : ClearPath.ClearSegment polynomial ambient start middle)
       (tail : ClearPath polynomial ambient middle finish) :
       ClearPath polynomial ambient start finish
 
@@ -937,6 +1033,61 @@ concatenation preserves the tail and its dependent endpoints. -/
         (tail.segmentCount + 1) + second.segmentCount
       rw [inductionHypothesis]
       omega0
+
+section
+
+variable {polynomial : GaussianPolynomial} {ambient box : Box}
+
+
+open Purelib.Data.Gaussian in
+open Purelib.Geometry.Rational in
+open Purelib.Polynomial in
+/-- Every retained vertex of the original cleared path belongs to the given box. -/
+def InBox (box : Box) : {start finish :
+  Basic.Canonical} → ClearPath polynomial ambient start finish → Prop
+  | _, _, .nil point => box.Contains point
+  | start, _, .cons _ tail => box.Contains start ∧ InBox box tail
+
+
+namespace InBox
+
+open Purelib.Data.Gaussian in
+open Purelib.Polynomial in
+/-- An original path retained inside a box starts inside that same box. -/
+theorem start {start finish : Basic.Canonical} {path :
+  ClearPath polynomial ambient start finish}
+    (inside : InBox box path) : box.Contains start := by
+  cases path with
+  | nil => exact inside
+  | cons => exact inside.1
+
+open Purelib.Data.Gaussian in
+open Purelib.Geometry.Rational in
+open Purelib.Polynomial in
+/-- Transport original path-vertex containment along the retained box refinement. -/
+theorem mono {larger : Box} (refines :
+  box.Refines larger) :
+    ∀ {start finish : Basic.Canonical} {path : ClearPath polynomial ambient start finish},
+      InBox box path → InBox larger path
+  | _, _, .nil _, inside => refines.contains inside
+  | _, _, .cons _ _, inside => ⟨refines.contains inside.1, mono
+    refines inside.2⟩
+
+open Purelib.Data.Gaussian in
+open Purelib.Polynomial in
+/-- An original ambient-contained path with a contained start has every retained vertex inside its ambient box. -/
+theorem ofWithin : ∀ {start finish : Basic.Canonical} (path
+  : ClearPath polynomial ambient start finish),
+    path.WithinAmbient → ambient.Contains start → InBox ambient path
+  | _, _, .nil _, _, inside => inside
+  | _, _, .cons head tail, within, inside => by
+      have last := head.pointAt_contains within.head 1 (by decide)
+      rw [Geometry.ClearPath.ClearSegment.pointAt_one] at last
+      exact ⟨inside, ofWithin tail within.tail last⟩
+
+end InBox
+
+end
 
 end ClearPath
 end Purelib.Polynomial.Geometry

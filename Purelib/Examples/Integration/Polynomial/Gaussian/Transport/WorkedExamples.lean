@@ -18,12 +18,9 @@ import Purelib.Data.Rat.Fraction.Field
 @[expose] public section
 
 /-!
-# Finite integration transport regressions and a scope counterexample
+Polynomial integration under restriction, reversal and cached splitting.
 
-The Gaussian quadratic exercises non-real coefficients and a non-dyadic
-restriction.  The zero/one programs show why generic integration coherence
-cannot imply agreement of unrelated sources.  Concrete arithmetic uses kernel
-decision only; transport itself is obtained from the generic finite proof.
+The exact zero and one programs also exhibit distinct integration outputs.
 -/
 
 namespace Purelib.Examples.Integration.Polynomial.Gaussian.Transport.WorkedExamples

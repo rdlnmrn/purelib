@@ -23,6 +23,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data
 open Purelib.Data.Rat
 open Purelib.Polynomial
@@ -45,45 +47,45 @@ one; the finite coefficient weight then bounds that exact lower tail. -/
 public theorem normSq_lowerTermsPolynomial_eval_le
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree)
     {z : Gaussian.Basic.Canonical} {radialSq : Fraction.Rational}
-    (normUpper : Data.Gaussian.Norm.Basic.normSq z ≤ 2 * radialSq) (oneLeRadial : 1 ≤ radialSq) :
-    Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z) ≤
-      Dense.Gaussian.Bounds.RootRadius.denseLowerCoefficientWeight p *
+    (normUpper : Gaussian.Norm.Basic.normSq z ≤ 2 * radialSq) (oneLeRadial : 1 ≤ radialSq) :
+    Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval z) ≤
+      RootRadius.denseLowerCoefficientWeight p *
         radialSq ^ (p.natDegree - 1) := by
-  have polynomialNonzero := Dense.Gaussian.Degree.Global.isZero_false_of_natDegree_pos degreePositive
-  have coefficientLength := Dense.Gaussian.Coefficients.Tail.lowerCoefficients_length polynomialNonzero
-  have coefficientsNonempty : Dense.Gaussian.Coefficients.Tail.lowerCoefficients p ≠ [] := by
+  have polynomialNonzero := Degree.Global.isZero_false_of_natDegree_pos degreePositive
+  have coefficientLength := Coefficients.Tail.lowerCoefficients_length polynomialNonzero
+  have coefficientsNonempty : Coefficients.Tail.lowerCoefficients p ≠ [] := by
     intro empty
     rw [empty] at coefficientLength
     simp only [List.length_nil] at coefficientLength
     omega
-  have cauchy := Dense.Gaussian.Evaluation.Norm.normSq_evalCoeffs_le
-    (Dense.Gaussian.Coefficients.Tail.lowerCoefficients p) z
-  have monomialBound := Dense.Gaussian.Evaluation.Norm.Weighted.monomialNormSqSum_le_weighted
-    (Dense.Gaussian.Coefficients.Tail.lowerCoefficients p) (Data.Gaussian.Norm.Basic.normSq z) radialSq
+  have cauchy := Evaluation.Norm.normSq_evalCoeffs_le
+    (Coefficients.Tail.lowerCoefficients p) z
+  have monomialBound := Evaluation.Norm.Weighted.monomialNormSqSum_le_weighted
+    (Coefficients.Tail.lowerCoefficients p) (Gaussian.Norm.Basic.normSq z) radialSq
       coefficientsNonempty
     (Gaussian.Norm.Basic.normSq_nonneg z) normUpper oneLeRadial
   have scaledMonomial :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       monomialBound
       (Fraction.Cast.Order.natCast_le_direct
-        (Nat.zero_le (Dense.Gaussian.Coefficients.Tail.lowerCoefficients p).length))
-  change Data.Gaussian.Norm.Basic.normSq (Dense.Basic.DensePolynomial.evalCoeffs z
-    (Dense.Gaussian.Coefficients.Tail.lowerCoefficients p)) ≤ _
+        (Nat.zero_le (Coefficients.Tail.lowerCoefficients p).length))
+  change Gaussian.Norm.Basic.normSq (Basic.DensePolynomial.evalCoeffs z
+    (Coefficients.Tail.lowerCoefficients p)) ≤ _
   calc
-    Data.Gaussian.Norm.Basic.normSq (Dense.Basic.DensePolynomial.evalCoeffs z
-      (Dense.Gaussian.Coefficients.Tail.lowerCoefficients p)) ≤
-        ((Dense.Gaussian.Coefficients.Tail.lowerCoefficients p).length : Fraction.Rational) *
-          Dense.Gaussian.Evaluation.Norm.monomialNormSqSum
-            (Dense.Gaussian.Coefficients.Tail.lowerCoefficients p) (Data.Gaussian.Norm.Basic.normSq z) := cauchy
-    _ ≤ ((Dense.Gaussian.Coefficients.Tail.lowerCoefficients p).length : Fraction.Rational) *
-          (Dense.Gaussian.Evaluation.Norm.Weighted.weightedNormSum (Dense.Gaussian.Coefficients.Tail.lowerCoefficients
+    Gaussian.Norm.Basic.normSq (Basic.DensePolynomial.evalCoeffs z
+      (Coefficients.Tail.lowerCoefficients p)) ≤
+        ((Coefficients.Tail.lowerCoefficients p).length : Fraction.Rational) *
+          Evaluation.Norm.monomialNormSqSum
+            (Coefficients.Tail.lowerCoefficients p) (Gaussian.Norm.Basic.normSq z) := cauchy
+    _ ≤ ((Coefficients.Tail.lowerCoefficients p).length : Fraction.Rational) *
+          (Evaluation.Norm.Weighted.weightedNormSum (Coefficients.Tail.lowerCoefficients
             p).reverse 0 *
-            radialSq ^ ((Dense.Gaussian.Coefficients.Tail.lowerCoefficients p).length - 1)) :=
+            radialSq ^ ((Coefficients.Tail.lowerCoefficients p).length - 1)) :=
       scaledMonomial
-    _ = Dense.Gaussian.Bounds.RootRadius.denseLowerCoefficientWeight p *
+    _ = RootRadius.denseLowerCoefficientWeight p *
           radialSq ^ (p.natDegree - 1) := by
       rw [coefficientLength]
-      unfold Dense.Gaussian.Bounds.RootRadius.denseLowerCoefficientWeight
+      unfold RootRadius.denseLowerCoefficientWeight
       ring1
 
 /-- A nonnegative lower bound on point quadrance gives the corresponding leading-monomial quadrance bound.
@@ -95,13 +97,13 @@ public theorem normSq_leadingMonomial_eval_lower
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree)
     {z : Gaussian.Basic.Canonical} {radialSq : Fraction.Rational}
     (radialNonnegative : 0 ≤ radialSq)
-    (normLower : radialSq ≤ Data.Gaussian.Norm.Basic.normSq z) :
-    Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * radialSq ^ p.natDegree ≤
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval z) := by
-  rw [Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial_eval degreePositive, Gaussian.Norm.Basic.normSq_mul,
+    (normLower : radialSq ≤ Gaussian.Norm.Basic.normSq z) :
+    Gaussian.Norm.Basic.normSq p.leadingCoeff * radialSq ^ p.natDegree ≤
+      Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval z) := by
+  rw [Coefficients.LeadingSplit.leadingMonomial_eval degreePositive, Gaussian.Norm.Basic.normSq_mul,
     Gaussian.Power.normSq_pow]
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.pow_le_pow_direct
+  exact Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.pow_le_pow_direct
       radialNonnegative normLower p.natDegree)
     (Gaussian.Norm.Basic.normSq_nonneg p.leadingCoeff)
 
@@ -113,26 +115,26 @@ The computed radius exceeds the weight divided by that quadrance and is
 at least one, giving the strict squared-radius comparison. -/
 public theorem denseLowerCoefficientWeight_lt_leading_radiusSq
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree) :
-    Dense.Gaussian.Bounds.RootRadius.denseLowerCoefficientWeight p <
-      Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ^ 2
+    RootRadius.denseLowerCoefficientWeight p <
+      Gaussian.Norm.Basic.normSq p.leadingCoeff * RootRadius.denseLargeSquareRadius p ^ 2
         := by
-  have polynomialNonzero := Dense.Gaussian.Degree.Global.isZero_false_of_natDegree_pos degreePositive
-  have leadingNonzero := Dense.Basic.DensePolynomial.leadingCoeff_ne_zero polynomialNonzero
+  have polynomialNonzero := Degree.Global.isZero_false_of_natDegree_pos degreePositive
+  have leadingNonzero := Basic.DensePolynomial.leadingCoeff_ne_zero polynomialNonzero
   have leadingPositive := Gaussian.Norm.Basic.normSq_pos leadingNonzero
-  let weight := Dense.Gaussian.Bounds.RootRadius.denseLowerCoefficientWeight p
-  let leadingNorm := Data.Gaussian.Norm.Basic.normSq p.leadingCoeff
-  let radius := Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p
+  let weight := RootRadius.denseLowerCoefficientWeight p
+  let leadingNorm := Gaussian.Norm.Basic.normSq p.leadingCoeff
+  let radius := RootRadius.denseLargeSquareRadius p
   have strictStep : weight / leadingNorm < weight / leadingNorm + 1 := by
-    have added := Fraction.Order.Arithmetic.add_lt_add_left_direct
+    have added := Arithmetic.add_lt_add_left_direct
       (by decide : (0 : Fraction.Rational) < 1) (weight / leadingNorm)
     calc
       weight / leadingNorm = weight / leadingNorm + 0 := by ring1
       _ < weight / leadingNorm + 1 := added
   have quotientBelow : weight / leadingNorm < radius :=
     strictStep.trans_le (by
-      dsimp only [radius, Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius]
-      exact Fraction.Order.Basic.le_max_right _ _)
-  have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+      dsimp only [radius, RootRadius.denseLargeSquareRadius]
+      exact Basic.le_max_right _ _)
+  have scaled := Arithmetic.mul_lt_mul_of_pos_right_direct
     quotientBelow leadingPositive
   have weightBelowLinear : weight < leadingNorm * radius := by
     change weight / leadingNorm * leadingNorm < radius * leadingNorm at scaled
@@ -143,7 +145,7 @@ public theorem denseLowerCoefficientWeight_lt_leading_radiusSq
     exact scaled
   have oneLeRadius : (1 : Fraction.Rational) ≤ radius := by
     dsimp only [radius]
-    exact Dense.Gaussian.Bounds.RootRadius.one_le_denseLargeSquareRadius p
+    exact RootRadius.one_le_denseLargeSquareRadius p
   have radiusNonnegative : 0 ≤ radius :=
     (by decide : (0 : Fraction.Rational) ≤ 1).trans oneLeRadius
   have radiusLeSquare : radius ≤ radius ^ 2 := by
@@ -151,10 +153,10 @@ public theorem denseLowerCoefficientWeight_lt_leading_radiusSq
     calc
       radius = radius * 1 := by ring1
       _ ≤ radius * radius :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           oneLeRadius radiusNonnegative
   have scaledRadius : leadingNorm * radius ≤ leadingNorm * radius ^ 2 :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct radiusLeSquare
+    Arithmetic.mul_le_mul_of_nonneg_left_direct radiusLeSquare
       (Gaussian.Norm.Basic.normSq_nonneg p.leadingCoeff)
   exact weightBelowLinear.trans_le scaledRadius
 
@@ -167,59 +169,59 @@ estimate give strict dominance at that same point. -/
 public theorem largeSquare_radial_dominance
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree)
     {z : Gaussian.Basic.Canonical}
-    (normLower : Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ^ 2 ≤ Data.Gaussian.Norm.Basic.normSq z)
-    (normUpper : Data.Gaussian.Norm.Basic.normSq z ≤ 2 * Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ^
+    (normLower : RootRadius.denseLargeSquareRadius p ^ 2 ≤ Gaussian.Norm.Basic.normSq z)
+    (normUpper : Gaussian.Norm.Basic.normSq z ≤ 2 * RootRadius.denseLargeSquareRadius p ^
       2) :
-    Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z) <
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval z) := by
-  let radiusSq := Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ^ 2
-  have radiusPositive := Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p
+    Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval z) <
+      Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval z) := by
+  let radiusSq := RootRadius.denseLargeSquareRadius p ^ 2
+  have radiusPositive := RootRadius.denseLargeSquareRadius_pos p
   have radiusSqPositive : 0 < radiusSq :=
     by
       dsimp only [radiusSq]
       rw [pow_two]
-      exact Fraction.Order.Arithmetic.mul_pos_direct
+      exact Arithmetic.mul_pos_direct
         radiusPositive radiusPositive
-  have oneLeRadius := Dense.Gaussian.Bounds.RootRadius.one_le_denseLargeSquareRadius p
+  have oneLeRadius := RootRadius.one_le_denseLargeSquareRadius p
   have oneLeRadiusSq : (1 : Fraction.Rational) ≤ radiusSq := by
     dsimp only [radiusSq]
     rw [pow_two]
     calc
       1 = 1 * 1 := by ring1
-      _ ≤ Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p *
-        Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p :=
-        Fraction.Order.Arithmetic.mul_le_mul_direct oneLeRadius oneLeRadius
+      _ ≤ RootRadius.denseLargeSquareRadius p *
+        RootRadius.denseLargeSquareRadius p :=
+        Arithmetic.mul_le_mul_direct oneLeRadius oneLeRadius
           (by decide) radiusPositive.le
-  have lowerBound := Dense.Gaussian.Bounds.LeadingDominance.normSq_lowerTermsPolynomial_eval_le degreePositive
+  have lowerBound := normSq_lowerTermsPolynomial_eval_le degreePositive
     (z := z) (radialSq := radiusSq) (by simpa only [radiusSq] using normUpper)
     oneLeRadiusSq
-  have weightStrict := Dense.Gaussian.Bounds.LeadingDominance.denseLowerCoefficientWeight_lt_leading_radiusSq
+  have weightStrict := denseLowerCoefficientWeight_lt_leading_radiusSq
     degreePositive
-  have powerPositive := Fraction.Order.Arithmetic.pow_pos_direct
+  have powerPositive := Arithmetic.pow_pos_direct
     radiusSqPositive (p.natDegree - 1)
-  have scaledStrict := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+  have scaledStrict := Arithmetic.mul_lt_mul_of_pos_right_direct
     (by simpa only [radiusSq] using weightStrict) powerPositive
   have degreeIdentity : p.natDegree - 1 + 1 = p.natDegree := by omega
   have leadingRadial :
-      Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq ^ p.natDegree ≤
-        Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval z) :=
-    Dense.Gaussian.Bounds.LeadingDominance.normSq_leadingMonomial_eval_lower degreePositive radiusSqPositive.le
+      Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq ^ p.natDegree ≤
+        Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval z) :=
+    normSq_leadingMonomial_eval_lower degreePositive radiusSqPositive.le
       (by simpa only [radiusSq] using normLower)
   calc
-    Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z) ≤
-        Dense.Gaussian.Bounds.RootRadius.denseLowerCoefficientWeight p *
+    Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval z) ≤
+        RootRadius.denseLowerCoefficientWeight p *
           radiusSq ^ (p.natDegree - 1) := lowerBound
-    _ < (Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq) *
+    _ < (Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq) *
           radiusSq ^ (p.natDegree - 1) := scaledStrict
-    _ = Data.Gaussian.Norm.Basic.normSq p.leadingCoeff *
+    _ = Gaussian.Norm.Basic.normSq p.leadingCoeff *
           (radiusSq ^ (p.natDegree - 1) * radiusSq) := by ring1
-    _ = Data.Gaussian.Norm.Basic.normSq p.leadingCoeff *
+    _ = Gaussian.Norm.Basic.normSq p.leadingCoeff *
           radiusSq ^ (p.natDegree - 1 + 1) := by
-      exact congrArg (Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * ·)
+      exact congrArg (Gaussian.Norm.Basic.normSq p.leadingCoeff * ·)
         (pow_succ radiusSq (p.natDegree - 1)).symm
-    _ = Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq ^ p.natDegree := by
+    _ = Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq ^ p.natDegree := by
       rw [degreeIdentity]
-    _ ≤ Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval z) :=
+    _ ≤ Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval z) :=
       leadingRadial
 
 /-- Explicit positive gap by which the leading monomial dominates the lower
@@ -230,9 +232,9 @@ radial power. Both factors use the same computed radius and retained
 leading coefficient as the radial dominance estimate. -/
 @[expose] public def largeSquareDominanceMargin (p : Basic.CanonicalCoefficients.CoefficientPolynomial) :
   Fraction.Rational :=
-  (Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ^ 2 -
-      Dense.Gaussian.Bounds.RootRadius.denseLowerCoefficientWeight p) *
-    (Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ^ 2) ^ (p.natDegree - 1)
+  (Gaussian.Norm.Basic.normSq p.leadingCoeff * RootRadius.denseLargeSquareRadius p ^ 2 -
+      RootRadius.denseLowerCoefficientWeight p) *
+    (RootRadius.denseLargeSquareRadius p ^ 2) ^ (p.natDegree - 1)
 
 /-- The computed leading-term dominance margin is positive for a positive-degree polynomial.
 
@@ -240,15 +242,15 @@ Positive degree makes the coefficient-weight gap strictly positive.
 The computed positive radius also makes its retained natural power positive. -/
 public theorem largeSquareDominanceMargin_pos
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree) :
-    0 < Dense.Gaussian.Bounds.LeadingDominance.largeSquareDominanceMargin p := by
-  apply Fraction.Order.Arithmetic.mul_pos_direct
-  · exact Fraction.Order.Arithmetic.sub_pos_direct
-      (Dense.Gaussian.Bounds.LeadingDominance.denseLowerCoefficientWeight_lt_leading_radiusSq degreePositive)
-  · exact Fraction.Order.Arithmetic.pow_pos_direct (by
+    0 < largeSquareDominanceMargin p := by
+  apply Arithmetic.mul_pos_direct
+  · exact Arithmetic.sub_pos_direct
+      (denseLowerCoefficientWeight_lt_leading_radiusSq degreePositive)
+  · exact Arithmetic.pow_pos_direct (by
       rw [pow_two]
-      exact Fraction.Order.Arithmetic.mul_pos_direct
-        (Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p)
-          (Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p)) _
+      exact Arithmetic.mul_pos_direct
+        (RootRadius.denseLargeSquareRadius_pos p)
+          (RootRadius.denseLargeSquareRadius_pos p)) _
 
 /-- Quantitative form of radial dominance, retaining the same finite margin
 at every point of the large-square annulus.
@@ -259,72 +261,72 @@ coefficient gap and degree-predecessor radial power. -/
 public theorem largeSquare_radial_dominance_margin
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree)
     {z : Gaussian.Basic.Canonical}
-    (normLower : Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ^ 2 ≤ Data.Gaussian.Norm.Basic.normSq z)
-    (normUpper : Data.Gaussian.Norm.Basic.normSq z ≤ 2 * Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ^
+    (normLower : RootRadius.denseLargeSquareRadius p ^ 2 ≤ Gaussian.Norm.Basic.normSq z)
+    (normUpper : Gaussian.Norm.Basic.normSq z ≤ 2 * RootRadius.denseLargeSquareRadius p ^
       2) :
-    Dense.Gaussian.Bounds.LeadingDominance.largeSquareDominanceMargin p ≤
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval z) -
-        Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z) := by
-  let radiusSq := Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ^ 2
+    largeSquareDominanceMargin p ≤
+      Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval z) -
+        Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval z) := by
+  let radiusSq := RootRadius.denseLargeSquareRadius p ^ 2
   have radiusSqPositive : 0 < radiusSq := by
     dsimp only [radiusSq]
     rw [pow_two]
-    exact Fraction.Order.Arithmetic.mul_pos_direct
-      (Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p)
-        (Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p)
-  have oneLeRadius := Dense.Gaussian.Bounds.RootRadius.one_le_denseLargeSquareRadius p
+    exact Arithmetic.mul_pos_direct
+      (RootRadius.denseLargeSquareRadius_pos p)
+        (RootRadius.denseLargeSquareRadius_pos p)
+  have oneLeRadius := RootRadius.one_le_denseLargeSquareRadius p
   have oneLeRadiusSq : (1 : Fraction.Rational) ≤ radiusSq := by
     dsimp only [radiusSq]
     rw [pow_two]
     calc
       1 = 1 * 1 := by ring1
-      _ ≤ Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p *
-        Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p :=
-        Fraction.Order.Arithmetic.mul_le_mul_direct oneLeRadius oneLeRadius
-          (by decide) (Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p).le
-  have lowerTermsBound := Dense.Gaussian.Bounds.LeadingDominance.normSq_lowerTermsPolynomial_eval_le degreePositive
+      _ ≤ RootRadius.denseLargeSquareRadius p *
+        RootRadius.denseLargeSquareRadius p :=
+        Arithmetic.mul_le_mul_direct oneLeRadius oneLeRadius
+          (by decide) (RootRadius.denseLargeSquareRadius_pos p).le
+  have lowerTermsBound := normSq_lowerTermsPolynomial_eval_le degreePositive
     (z := z) (radialSq := radiusSq)
     (by simpa only [radiusSq] using normUpper) oneLeRadiusSq
-  have leadingBound := Dense.Gaussian.Bounds.LeadingDominance.normSq_leadingMonomial_eval_lower degreePositive
+  have leadingBound := normSq_leadingMonomial_eval_lower degreePositive
     radiusSqPositive.le (by simpa only [radiusSq] using normLower)
   have degreeIdentity : p.natDegree - 1 + 1 = p.natDegree := by omega
   have sumBound :
-      Dense.Gaussian.Bounds.LeadingDominance.largeSquareDominanceMargin p +
-        Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z) ≤
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval z) := by
+      largeSquareDominanceMargin p +
+        Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval z) ≤
+      Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval z) := by
     calc
-      Dense.Gaussian.Bounds.LeadingDominance.largeSquareDominanceMargin p +
-          Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z) ≤
-        Dense.Gaussian.Bounds.LeadingDominance.largeSquareDominanceMargin p +
-          Dense.Gaussian.Bounds.RootRadius.denseLowerCoefficientWeight p *
+      largeSquareDominanceMargin p +
+          Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval z) ≤
+        largeSquareDominanceMargin p +
+          RootRadius.denseLowerCoefficientWeight p *
             radiusSq ^ (p.natDegree - 1) :=
         add_le_add (le_refl _) lowerTermsBound
-      _ = (Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq) *
+      _ = (Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq) *
             radiusSq ^ (p.natDegree - 1) := by
-        dsimp only [Dense.Gaussian.Bounds.LeadingDominance.largeSquareDominanceMargin, radiusSq]
+        dsimp only [largeSquareDominanceMargin, radiusSq]
         ring1
-      _ = Data.Gaussian.Norm.Basic.normSq p.leadingCoeff *
+      _ = Gaussian.Norm.Basic.normSq p.leadingCoeff *
             (radiusSq ^ (p.natDegree - 1) * radiusSq) := by ring1
-      _ = Data.Gaussian.Norm.Basic.normSq p.leadingCoeff *
+      _ = Gaussian.Norm.Basic.normSq p.leadingCoeff *
             radiusSq ^ (p.natDegree - 1 + 1) := by
-        exact congrArg (Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * ·)
+        exact congrArg (Gaussian.Norm.Basic.normSq p.leadingCoeff * ·)
           (pow_succ radiusSq (p.natDegree - 1)).symm
-      _ = Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq ^ p.natDegree := by
+      _ = Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq ^ p.natDegree := by
         rw [degreeIdentity]
-      _ ≤ Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval z) :=
+      _ ≤ Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval z) :=
         leadingBound
-  have translated := Fraction.Order.Arithmetic.add_le_add_right_direct
-    sumBound (-Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z))
+  have translated := Arithmetic.add_le_add_right_direct
+    sumBound (-Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval z))
   have lowerReadback :
-      (Dense.Gaussian.Bounds.LeadingDominance.largeSquareDominanceMargin p + Data.Gaussian.Norm.Basic.normSq
-        ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z)) +
-        -Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z) =
-      Dense.Gaussian.Bounds.LeadingDominance.largeSquareDominanceMargin p := by ring1
+      (largeSquareDominanceMargin p + Gaussian.Norm.Basic.normSq
+        ((Coefficients.Tail.lowerTermsPolynomial p).eval z)) +
+        -Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval z) =
+      largeSquareDominanceMargin p := by ring1
   have upperReadback :
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval z) +
-        -Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z) =
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval z) -
-        Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z) := by
+      Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval z) +
+        -Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval z) =
+      Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval z) -
+        Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval z) := by
           ring1
   exact lowerReadback ▸ upperReadback ▸ translated
 
@@ -339,70 +341,70 @@ and lower-tail comparisons apply at that larger radius. -/
 public theorem symmetric_radial_dominance_of_denseRadius_le
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree)
     {radius : Fraction.Rational}
-    (radiusLe : Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ≤ radius)
+    (radiusLe : RootRadius.denseLargeSquareRadius p ≤ radius)
     {z : Gaussian.Basic.Canonical}
-    (normLower : radius ^ 2 ≤ Data.Gaussian.Norm.Basic.normSq z)
-    (normUpper : Data.Gaussian.Norm.Basic.normSq z ≤ 2 * radius ^ 2) :
-    Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z) <
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval z) := by
+    (normLower : radius ^ 2 ≤ Gaussian.Norm.Basic.normSq z)
+    (normUpper : Gaussian.Norm.Basic.normSq z ≤ 2 * radius ^ 2) :
+    Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval z) <
+      Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval z) := by
   let radiusSq := radius ^ 2
   have radiusPositive : 0 < radius :=
-    (Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe
+    (RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe
   have radiusSqPositive : 0 < radiusSq := by
     dsimp only [radiusSq]
     rw [pow_two]
-    exact Fraction.Order.Arithmetic.mul_pos_direct radiusPositive radiusPositive
+    exact Arithmetic.mul_pos_direct radiusPositive radiusPositive
   have oneLeRadius : (1 : Fraction.Rational) ≤ radius :=
-    (Dense.Gaussian.Bounds.RootRadius.one_le_denseLargeSquareRadius p).trans radiusLe
+    (RootRadius.one_le_denseLargeSquareRadius p).trans radiusLe
   have oneLeRadiusSq : (1 : Fraction.Rational) ≤ radiusSq := by
     dsimp only [radiusSq]
     rw [pow_two]
     calc
       1 = 1 * 1 := by ring1
       _ ≤ radius * radius :=
-        Fraction.Order.Arithmetic.mul_le_mul_direct oneLeRadius oneLeRadius
+        Arithmetic.mul_le_mul_direct oneLeRadius oneLeRadius
           (by decide) radiusPositive.le
-  have lowerBound := Dense.Gaussian.Bounds.LeadingDominance.normSq_lowerTermsPolynomial_eval_le degreePositive
+  have lowerBound := normSq_lowerTermsPolynomial_eval_le degreePositive
     (z := z) (radialSq := radiusSq)
     (by simpa only [radiusSq] using normUpper) oneLeRadiusSq
-  have denseSquareLe : Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ^ 2 ≤ radiusSq := by
-    exact Fraction.Order.Arithmetic.pow_le_pow_direct
-      (Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p).le radiusLe 2
+  have denseSquareLe : RootRadius.denseLargeSquareRadius p ^ 2 ≤ radiusSq := by
+    exact Arithmetic.pow_le_pow_direct
+      (RootRadius.denseLargeSquareRadius_pos p).le radiusLe 2
   have leadingScaled :
-      Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ^ 2
+      Gaussian.Norm.Basic.normSq p.leadingCoeff * RootRadius.denseLargeSquareRadius p ^ 2
         ≤
-        Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct denseSquareLe
+        Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq :=
+    Arithmetic.mul_le_mul_of_nonneg_left_direct denseSquareLe
       (Gaussian.Norm.Basic.normSq_nonneg p.leadingCoeff)
-  have weightStrict : Dense.Gaussian.Bounds.RootRadius.denseLowerCoefficientWeight p <
-      Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq :=
-    (Dense.Gaussian.Bounds.LeadingDominance.denseLowerCoefficientWeight_lt_leading_radiusSq degreePositive).trans_le
+  have weightStrict : RootRadius.denseLowerCoefficientWeight p <
+      Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq :=
+    (denseLowerCoefficientWeight_lt_leading_radiusSq degreePositive).trans_le
       leadingScaled
-  have powerPositive := Fraction.Order.Arithmetic.pow_pos_direct
+  have powerPositive := Arithmetic.pow_pos_direct
     radiusSqPositive (p.natDegree - 1)
-  have scaledStrict := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+  have scaledStrict := Arithmetic.mul_lt_mul_of_pos_right_direct
     weightStrict powerPositive
   have degreeIdentity : p.natDegree - 1 + 1 = p.natDegree := by omega
   have leadingRadial :
-      Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq ^ p.natDegree ≤
-        Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval z) :=
-    Dense.Gaussian.Bounds.LeadingDominance.normSq_leadingMonomial_eval_lower degreePositive radiusSqPositive.le
+      Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq ^ p.natDegree ≤
+        Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval z) :=
+    normSq_leadingMonomial_eval_lower degreePositive radiusSqPositive.le
       (by simpa only [radiusSq] using normLower)
   calc
-    Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z) ≤
-        Dense.Gaussian.Bounds.RootRadius.denseLowerCoefficientWeight p *
+    Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval z) ≤
+        RootRadius.denseLowerCoefficientWeight p *
           radiusSq ^ (p.natDegree - 1) := lowerBound
-    _ < (Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq) *
+    _ < (Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq) *
           radiusSq ^ (p.natDegree - 1) := scaledStrict
-    _ = Data.Gaussian.Norm.Basic.normSq p.leadingCoeff *
+    _ = Gaussian.Norm.Basic.normSq p.leadingCoeff *
           (radiusSq ^ (p.natDegree - 1) * radiusSq) := by ring1
-    _ = Data.Gaussian.Norm.Basic.normSq p.leadingCoeff *
+    _ = Gaussian.Norm.Basic.normSq p.leadingCoeff *
           radiusSq ^ (p.natDegree - 1 + 1) := by
-      exact congrArg (Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * ·)
+      exact congrArg (Gaussian.Norm.Basic.normSq p.leadingCoeff * ·)
         (pow_succ radiusSq (p.natDegree - 1)).symm
-    _ = Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq ^ p.natDegree := by
+    _ = Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq ^ p.natDegree := by
       rw [degreeIdentity]
-    _ ≤ Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval z) :=
+    _ ≤ Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval z) :=
       leadingRadial
 
 /-- Explicit dominance margin on an arbitrary sufficiently large symmetric
@@ -413,8 +415,8 @@ degree determine the gap at the supplied radius. Its radial power uses
 the original degree predecessor. -/
 @[expose] public def symmetricDominanceMargin
     (p : Basic.CanonicalCoefficients.CoefficientPolynomial) (radius : Fraction.Rational) : Fraction.Rational :=
-  (Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * radius ^ 2 -
-      Dense.Gaussian.Bounds.RootRadius.denseLowerCoefficientWeight p) *
+  (Gaussian.Norm.Basic.normSq p.leadingCoeff * radius ^ 2 -
+      RootRadius.denseLowerCoefficientWeight p) *
     (radius ^ 2) ^ (p.natDegree - 1)
 
 /-- Every radius above the computed large-square radius has a positive leading-term dominance margin.
@@ -425,27 +427,27 @@ coefficient gap and the positivity of its radial power. -/
 public theorem symmetricDominanceMargin_pos
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree)
     {radius : Fraction.Rational}
-    (radiusLe : Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ≤ radius) :
-    0 < Dense.Gaussian.Bounds.LeadingDominance.symmetricDominanceMargin p radius := by
-  have radiusPositive := (Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe
-  have denseSquareLe : Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ^ 2 ≤ radius ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
-      (Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p).le radiusLe 2
+    (radiusLe : RootRadius.denseLargeSquareRadius p ≤ radius) :
+    0 < symmetricDominanceMargin p radius := by
+  have radiusPositive := (RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe
+  have denseSquareLe : RootRadius.denseLargeSquareRadius p ^ 2 ≤ radius ^ 2 :=
+    Arithmetic.pow_le_pow_direct
+      (RootRadius.denseLargeSquareRadius_pos p).le radiusLe 2
   have leadingScaled :
-      Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ^ 2
+      Gaussian.Norm.Basic.normSq p.leadingCoeff * RootRadius.denseLargeSquareRadius p ^ 2
         ≤
-        Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * radius ^ 2 :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct denseSquareLe
+        Gaussian.Norm.Basic.normSq p.leadingCoeff * radius ^ 2 :=
+    Arithmetic.mul_le_mul_of_nonneg_left_direct denseSquareLe
       (Gaussian.Norm.Basic.normSq_nonneg p.leadingCoeff)
-  have weightStrict : Dense.Gaussian.Bounds.RootRadius.denseLowerCoefficientWeight p <
-      Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * radius ^ 2 :=
-    (Dense.Gaussian.Bounds.LeadingDominance.denseLowerCoefficientWeight_lt_leading_radiusSq degreePositive).trans_le
+  have weightStrict : RootRadius.denseLowerCoefficientWeight p <
+      Gaussian.Norm.Basic.normSq p.leadingCoeff * radius ^ 2 :=
+    (denseLowerCoefficientWeight_lt_leading_radiusSq degreePositive).trans_le
       leadingScaled
-  apply Fraction.Order.Arithmetic.mul_pos_direct
-  · exact Fraction.Order.Arithmetic.sub_pos_direct weightStrict
-  · exact Fraction.Order.Arithmetic.pow_pos_direct (by
+  apply Arithmetic.mul_pos_direct
+  · exact Arithmetic.sub_pos_direct weightStrict
+  · exact Arithmetic.pow_pos_direct (by
       rw [pow_two]
-      exact Fraction.Order.Arithmetic.mul_pos_direct radiusPositive
+      exact Arithmetic.mul_pos_direct radiusPositive
         radiusPositive) _
 
 /-- The retained margin bounds leading-minus-tail quadrance throughout a sufficiently large square annulus.
@@ -454,69 +456,69 @@ The polynomial has positive degree and point quadrance lies between the squared 
 public theorem symmetric_radial_dominance_margin
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree)
     {radius : Fraction.Rational}
-    (radiusLe : Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ≤ radius)
+    (radiusLe : RootRadius.denseLargeSquareRadius p ≤ radius)
     {z : Gaussian.Basic.Canonical}
-    (normLower : radius ^ 2 ≤ Data.Gaussian.Norm.Basic.normSq z)
-    (normUpper : Data.Gaussian.Norm.Basic.normSq z ≤ 2 * radius ^ 2) :
-    Dense.Gaussian.Bounds.LeadingDominance.symmetricDominanceMargin p radius ≤
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval z) -
-        Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z) := by
+    (normLower : radius ^ 2 ≤ Gaussian.Norm.Basic.normSq z)
+    (normUpper : Gaussian.Norm.Basic.normSq z ≤ 2 * radius ^ 2) :
+    symmetricDominanceMargin p radius ≤
+      Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval z) -
+        Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval z) := by
   let radiusSq := radius ^ 2
-  have radiusPositive := (Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe
+  have radiusPositive := (RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe
   have radiusSqPositive : 0 < radiusSq := by
     dsimp only [radiusSq]
     rw [pow_two]
-    exact Fraction.Order.Arithmetic.mul_pos_direct radiusPositive radiusPositive
+    exact Arithmetic.mul_pos_direct radiusPositive radiusPositive
   have oneLeRadius : (1 : Fraction.Rational) ≤ radius :=
-    (Dense.Gaussian.Bounds.RootRadius.one_le_denseLargeSquareRadius p).trans radiusLe
+    (RootRadius.one_le_denseLargeSquareRadius p).trans radiusLe
   have oneLeRadiusSq : (1 : Fraction.Rational) ≤ radiusSq := by
     dsimp only [radiusSq]
     rw [pow_two]
-    exact Fraction.Order.Arithmetic.mul_le_mul_direct oneLeRadius oneLeRadius
+    exact Arithmetic.mul_le_mul_direct oneLeRadius oneLeRadius
       (by decide) radiusPositive.le
-  have lowerTermsBound := Dense.Gaussian.Bounds.LeadingDominance.normSq_lowerTermsPolynomial_eval_le degreePositive
+  have lowerTermsBound := normSq_lowerTermsPolynomial_eval_le degreePositive
     (z := z) (radialSq := radiusSq)
     (by simpa only [radiusSq] using normUpper) oneLeRadiusSq
-  have leadingBound := Dense.Gaussian.Bounds.LeadingDominance.normSq_leadingMonomial_eval_lower degreePositive
+  have leadingBound := normSq_leadingMonomial_eval_lower degreePositive
     radiusSqPositive.le (by simpa only [radiusSq] using normLower)
   have degreeIdentity : p.natDegree - 1 + 1 = p.natDegree := by omega
   have sumBound :
-      Dense.Gaussian.Bounds.LeadingDominance.symmetricDominanceMargin p radius +
-        Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z) ≤
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval z) := by
+      symmetricDominanceMargin p radius +
+        Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval z) ≤
+      Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval z) := by
     calc
-      Dense.Gaussian.Bounds.LeadingDominance.symmetricDominanceMargin p radius +
-          Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z) ≤
-        Dense.Gaussian.Bounds.LeadingDominance.symmetricDominanceMargin p radius +
-          Dense.Gaussian.Bounds.RootRadius.denseLowerCoefficientWeight p *
+      symmetricDominanceMargin p radius +
+          Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval z) ≤
+        symmetricDominanceMargin p radius +
+          RootRadius.denseLowerCoefficientWeight p *
             radiusSq ^ (p.natDegree - 1) :=
         add_le_add le_rfl lowerTermsBound
-      _ = (Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq) *
+      _ = (Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq) *
             radiusSq ^ (p.natDegree - 1) := by
-        dsimp only [Dense.Gaussian.Bounds.LeadingDominance.symmetricDominanceMargin, radiusSq]
+        dsimp only [symmetricDominanceMargin, radiusSq]
         ring1
-      _ = Data.Gaussian.Norm.Basic.normSq p.leadingCoeff *
+      _ = Gaussian.Norm.Basic.normSq p.leadingCoeff *
             (radiusSq ^ (p.natDegree - 1) * radiusSq) := by ring1
-      _ = Data.Gaussian.Norm.Basic.normSq p.leadingCoeff *
+      _ = Gaussian.Norm.Basic.normSq p.leadingCoeff *
             radiusSq ^ (p.natDegree - 1 + 1) := by
-        exact congrArg (Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * ·)
+        exact congrArg (Gaussian.Norm.Basic.normSq p.leadingCoeff * ·)
           (pow_succ radiusSq (p.natDegree - 1)).symm
-      _ = Data.Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq ^ p.natDegree := by
+      _ = Gaussian.Norm.Basic.normSq p.leadingCoeff * radiusSq ^ p.natDegree := by
         rw [degreeIdentity]
-      _ ≤ Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval z) :=
+      _ ≤ Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval z) :=
         leadingBound
-  have translated := Fraction.Order.Arithmetic.add_le_add_right_direct
-    sumBound (-Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z))
+  have translated := Arithmetic.add_le_add_right_direct
+    sumBound (-Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval z))
   have lowerReadback :
-      (Dense.Gaussian.Bounds.LeadingDominance.symmetricDominanceMargin p radius + Data.Gaussian.Norm.Basic.normSq
-        ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z)) +
-        -Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z) =
-      Dense.Gaussian.Bounds.LeadingDominance.symmetricDominanceMargin p radius := by ring1
+      (symmetricDominanceMargin p radius + Gaussian.Norm.Basic.normSq
+        ((Coefficients.Tail.lowerTermsPolynomial p).eval z)) +
+        -Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval z) =
+      symmetricDominanceMargin p radius := by ring1
   have upperReadback :
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval z) +
-        -Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z) =
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval z) -
-        Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval z) := by
+      Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval z) +
+        -Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval z) =
+      Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval z) -
+        Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval z) := by
           ring1
   exact lowerReadback ▸ upperReadback ▸ translated
 

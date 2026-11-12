@@ -23,6 +23,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Approximation
@@ -57,23 +59,23 @@ namespace Coherent
 private theorem approximation_pair_close_from
     (approximation : ApproximationData) {base left right : Nat}
     (leftOrder : base ≤ left) (rightOrder : base ≤ right) :
-    Data.Gaussian.Norm.Basic.normSq (approximation.sample left - approximation.sample right) ≤
+    Basic.normSq (approximation.sample left - approximation.sample right) ≤
       4 * approximation.radiusSq base := by
   have leftClose := approximation.later_close leftOrder
   have rightCloseForward := approximation.later_close rightOrder
   have rightClose :
-      Data.Gaussian.Norm.Basic.normSq
+      Basic.normSq
           (approximation.sample base - approximation.sample right) ≤
         approximation.radiusSq base := by
-    rw [Purelib.Data.Gaussian.Field.sub_eq_neg_sub, Data.Gaussian.Norm.Basic.normSq_neg]
+    rw [Data.Gaussian.Field.sub_eq_neg_sub, Basic.normSq_neg]
     exact rightCloseForward
   calc
-    Data.Gaussian.Norm.Basic.normSq (approximation.sample left - approximation.sample right) ≤
-        2 * (Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq (approximation.sample left - approximation.sample right) ≤
+        2 * (Basic.normSq
             (approximation.sample left - approximation.sample base) +
-          Data.Gaussian.Norm.Basic.normSq
+          Basic.normSq
             (approximation.sample base - approximation.sample right)) :=
-      Data.Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _
+      Bounds.normSq_sub_le_via _ _ _
     _ ≤ 2 *
         (approximation.radiusSq base + approximation.radiusSq base) :=
       Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
@@ -84,7 +86,7 @@ private theorem approximation_pair_close_from
 generated from it. -/
 def ofApproximation (approximation :
   ApproximationData) :
-    Gaussian.Process.Coherence.Basic.Coherent approximation.toProcess where
+    Coherent approximation.toProcess where
   allowance index := approximation.radiusSq index
   allowance_nonneg := approximation.radiusSq_nonneg
   ball_radius_le _ := le_rfl
@@ -96,7 +98,7 @@ def ofApproximation (approximation :
     rcases rightPossible with ⟨rightLater, rightOrder, rfl⟩
     rcases Nat.le_total leftState rightState with stateOrder | stateOrder
     · calc
-        Data.Gaussian.Norm.Basic.normSq
+        Basic.normSq
             (approximation.sample leftLater -
               approximation.sample rightLater) ≤
             4 * approximation.radiusSq leftState :=
@@ -109,7 +111,7 @@ def ofApproximation (approximation :
             (le_add_of_nonneg_right
               (approximation.radiusSq_nonneg rightState)) (by decide)
     · calc
-        Data.Gaussian.Norm.Basic.normSq
+        Basic.normSq
             (approximation.sample leftLater -
               approximation.sample rightLater) ≤
             4 * approximation.radiusSq rightState :=

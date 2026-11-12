@@ -65,19 +65,19 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequest
 
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
-    {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered}
+    BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {ordered : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
+    {paired : OrderedBranchPairs.Ordered.Paired ordered}
 
 set_option genInjectivity false in
 /-- The two original controlled period requests for one paired row.
 
 Keep each request's own initial parents and certified period tail. -/
-structure RequestRow (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired) (differential
+structure RequestRow (prepared : PeriodPrograms.Prepared paired) (differential
   : Fin genus) (target : Readings.PreparedPrimitiveRequests.Coordinate)
     (minimumStage : Nat) (index : Fin genus) where
   /-- The original A-period controlled request on its exact initial parents. -/ a :
@@ -102,9 +102,9 @@ constructive_injectivity RequestRow
 namespace RequestRow
 
 /-- Acquire both original controlled requests and their corresponding certified tails. -/
-def acquire (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired) (differential : Fin
+def acquire (prepared : PeriodPrograms.Prepared paired) (differential : Fin
   genus) (target : Readings.PreparedPrimitiveRequests.Coordinate) (positive : 0 < target)
-    (minimumStage : Nat) (index : Fin genus) : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.RequestRow
+    (minimumStage : Nat) (index : Fin genus) : RequestRow
       prepared differential target minimumStage index :=
   let a := (prepared.aWalk index).primitiveRequest differential target positive
   let b := (prepared.bWalk index).primitiveRequest differential target positive
@@ -116,9 +116,9 @@ def acquire (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms
       (Periods.PeriodMatrix.standardDifferential differential) b minimumStage⟩
 
 /-- Take the maximum of the two retained original tail stages. -/
-def threshold {prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired} {differential : Fin
+def threshold {prepared : PeriodPrograms.Prepared paired} {differential : Fin
   genus} {target : Readings.PreparedPrimitiveRequests.Coordinate}
-    {minimumStage : Nat} {index : Fin genus} (row : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.RequestRow
+    {minimumStage : Nat} {index : Fin genus} (row : RequestRow
       prepared differential target minimumStage index) : Nat :=
   max row.aTail.stage row.bTail.stage
 
@@ -127,10 +127,10 @@ end RequestRow
 set_option genInjectivity false in
 /-- The global finite stage is tied to the thresholds in the retained rows.
 The empty family is permitted and uses the supplied minimum stage. -/
-structure Requests (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired) (differential :
+structure Requests (prepared : PeriodPrograms.Prepared paired) (differential :
   Fin genus) (target : Readings.PreparedPrimitiveRequests.Coordinate) (minimumStage : Nat) where
-  /-- The actual dependent original paired request rows. -/ rows : Data.Vector.DependentVector (fun index : Fin genus =>
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.RequestRow prepared differential target minimumStage index)
+  /-- The actual dependent original paired request rows. -/ rows : Vector.DependentVector (fun index : Fin genus =>
+    RequestRow prepared differential target minimumStage index)
   /-- The cached common sampling stage. -/ stage : Nat
   /-- The stage equals the maximum of the requested floor and all original row thresholds. -/ stage_eq : stage = max
     minimumStage (rows.maximum (fun _ row => row.threshold))
@@ -139,27 +139,27 @@ constructive_injectivity Requests
 
 namespace Requests
 
-variable {prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired} {differential : Fin
+variable {prepared : PeriodPrograms.Prepared paired} {differential : Fin
   genus} {target : Readings.PreparedPrimitiveRequests.Coordinate} {minimumStage : Nat}
 
 /-- Acquire every original paired request and cache a stage meeting the supplied floor and all row thresholds. -/
-def acquire (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired) (differential : Fin
+def acquire (prepared : PeriodPrograms.Prepared paired) (differential : Fin
   genus) (target : Readings.PreparedPrimitiveRequests.Coordinate) (positive : 0 < target)
-    (minimumStage : Nat) : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.Requests prepared differential
+    (minimumStage : Nat) : Requests prepared differential
       target minimumStage :=
-  let rows := Data.Vector.DependentVector.ofFn
-    (Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.RequestRow.acquire prepared differential target positive
+  let rows := Vector.DependentVector.ofFn
+    (RequestRow.acquire prepared differential target positive
     minimumStage)
   ⟨rows, max minimumStage (rows.maximum (fun _ row => row.threshold)), rfl⟩
 
 /-- The retained common sampling stage meets the original requested floor. -/
-theorem stage_ge (requests : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.Requests prepared differential
+theorem stage_ge (requests : Requests prepared differential
   target minimumStage) : minimumStage ≤ requests.stage := by
   rw [requests.stage_eq]
   exact Nat.Order.le_max_left _ _
 
 /-- Each original A tail is ready at the retained common sampling stage. -/
-theorem a_stage_le (requests : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.Requests prepared differential
+theorem a_stage_le (requests : Requests prepared differential
   target minimumStage) (index : Fin genus) :
     (requests.rows.get index).aTail.stage ≤ requests.stage := by
   rw [requests.stage_eq]
@@ -167,7 +167,7 @@ theorem a_stage_le (requests : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodR
     ((requests.rows.get_le_maximum (fun _ row => row.threshold) index).trans (Nat.Order.le_max_right _ _))
 
 /-- Each original B tail is ready at the retained common sampling stage. -/
-theorem b_stage_le (requests : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.Requests prepared differential
+theorem b_stage_le (requests : Requests prepared differential
   target minimumStage) (index : Fin genus) :
     (requests.rows.get index).bTail.stage ≤ requests.stage := by
   rw [requests.stage_eq]
@@ -176,7 +176,7 @@ theorem b_stage_le (requests : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodR
 
 set_option genInjectivity false in
 /-- The two actual original period samples of a retained row at the shared global stage. -/
-structure SampleRow (requests : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.Requests prepared differential
+structure SampleRow (requests : Requests prepared differential
   target minimumStage) (index : Fin genus) where
   /-- The actual original A-period sample. -/ a : Periods.PreparedPeriodPrimitiveRequests.PeriodSample (prepared.aWalk
     index).initial (Integration.PreparedRefinementProgramCore.standardDifferentials genus)
@@ -190,8 +190,8 @@ structure SampleRow (requests : Hyperelliptic.Meshes.PuncturedGrid.Paired.Period
 constructive_injectivity SampleRow
 
 /-- Read both original certified tails at the common stage and retain their exact stage identities. -/
-def SampleRow.build (requests : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.Requests prepared differential
-  target minimumStage) (index : Fin genus) : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.Requests.SampleRow
+def SampleRow.build (requests : Requests prepared differential
+  target minimumStage) (index : Fin genus) : SampleRow
   requests index :=
   ⟨(requests.rows.get index).aTail.sampleAt
     (Integration.PreparedRefinementProgramCore.standardDifferential_mem_standardDifferentials differential)
@@ -202,25 +202,25 @@ def SampleRow.build (requests : Hyperelliptic.Meshes.PuncturedGrid.Paired.Period
 
 set_option genInjectivity false in
 /-- The dependent bank of original paired samples at the retained common stage. -/
-structure Samples (requests : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.Requests prepared differential
+structure Samples (requests : Requests prepared differential
   target minimumStage) where
-  /-- The actual original sample pair for every retained row. -/ rows : Data.Vector.DependentVector (fun index : Fin
-    genus => Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.Requests.SampleRow requests index)
+  /-- The actual original sample pair for every retained row. -/ rows : Vector.DependentVector (fun index : Fin
+    genus => SampleRow requests index)
 
 constructive_injectivity Samples
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.Requests in
 /-- Sample every original certified pair at the retained common stage. -/
-def samples (requests : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.Requests prepared differential target
-  minimumStage) : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.Requests.Samples requests :=
-  ⟨Data.Vector.DependentVector.ofFn (Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.Requests.SampleRow.build
+def samples (requests : Requests prepared differential target
+  minimumStage) : Samples requests :=
+  ⟨Vector.DependentVector.ofFn (SampleRow.build
     requests)⟩
 
 namespace Samples
 
-variable {requests : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.Requests prepared
+variable {requests : Requests prepared
   differential target minimumStage} (samples :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.Requests.Samples requests)
+  Samples requests)
 
 /-- Read the retained original A sample of the selected row. -/
 def a (index : Fin genus) : Gaussian := (samples.rows.get index).a.sample
@@ -249,13 +249,13 @@ theorem b_eq (index : Fin genus) : samples.b index =
 end
 
 /-- The original A sample is within its own request's target of its retained primitive sum. -/
-theorem a_accurate (index : Fin genus) : Data.Gaussian.Norm.Basic.normSq ((requests.rows.get index).a.primitiveSum -
+theorem a_accurate (index : Fin genus) : Gaussian.Norm.Basic.normSq ((requests.rows.get index).a.primitiveSum -
   samples.a index) < target := by
   rw [Gaussian.Norm.Basic.normSq_eq_canonical]
   exact (samples.rows.get index).a.accurate
 
 /-- The original B sample is within its own request's target of its retained primitive sum. -/
-theorem b_accurate (index : Fin genus) : Data.Gaussian.Norm.Basic.normSq ((requests.rows.get index).b.primitiveSum -
+theorem b_accurate (index : Fin genus) : Gaussian.Norm.Basic.normSq ((requests.rows.get index).b.primitiveSum -
   samples.b index) < target := by
   rw [Gaussian.Norm.Basic.normSq_eq_canonical]
   exact (samples.rows.get index).b.accurate
@@ -264,10 +264,10 @@ end Samples
 
 /-- The certificate remains valid on the entire synchronized tail, including
 later stages chosen by another differential or an inverse/energy request. -/
-theorem a_accurate_later (requests : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.Requests prepared
+theorem a_accurate_later (requests : Requests prepared
   differential target minimumStage)
     (index : Fin genus) (stage : Nat) (later : requests.stage ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq ((requests.rows.get index).a.primitiveSum -
+    Gaussian.Norm.Basic.normSq ((requests.rows.get index).a.primitiveSum -
       ((prepared.periodData.aProgram differential index).integral.model stage).integralSample) < target := by
   rw [prepared.aProgram_model, Periods.PreparedGridPeriodPrograms.PeriodWalk.state,
     Periods.PreparedRootSafePeriodPrograms.RootClosedState.sample_eq_flat (prepared.aWalk index).initial
@@ -279,10 +279,10 @@ theorem a_accurate_later (requests : Hyperelliptic.Meshes.PuncturedGrid.Paired.P
     stage ((requests.a_stage_le index).trans later)
 
 /-- Every later original B-period reading remains within its own retained request's target. -/
-theorem b_accurate_later (requests : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodRequests.Requests prepared
+theorem b_accurate_later (requests : Requests prepared
   differential target minimumStage)
     (index : Fin genus) (stage : Nat) (later : requests.stage ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq ((requests.rows.get index).b.primitiveSum -
+    Gaussian.Norm.Basic.normSq ((requests.rows.get index).b.primitiveSum -
       ((prepared.periodData.bProgram differential index).integral.model stage).integralSample) < target := by
   rw [prepared.bProgram_model, Periods.PreparedGridPeriodPrograms.PeriodWalk.state,
     Periods.PreparedRootSafePeriodPrograms.RootClosedState.sample_eq_flat (prepared.bWalk index).initial

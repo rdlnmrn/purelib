@@ -14,6 +14,8 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Rational.Pair.Path.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian.Path.Box
+
 /-!
 # Integer winding sums of displayed box boundaries
 
@@ -33,7 +35,7 @@ The original oriented edge order and list sum are retained. Both the polynomial
 and the box determine the same four edge records used by the integer fold. -/
 @[expose] public def quadrupledBoxWinding (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (box :
   Box) : Int :=
-  ((Dense.Gaussian.Path.Box.Boundary.boxBoundary p box).map
+  ((Boundary.boxBoundary p box).map
     Dense.Rational.Pair.Path.Basic.PolynomialEdge.doubledWinding).sum
 
 /-- Closed-box winding ignores the finite prefix of representation zeros removed by dense normalization.
@@ -43,11 +45,11 @@ Their retained doubled indices therefore give the same integer boundary sum. -/
 @[simp] public theorem quadrupledBoxWinding_normalize
     (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (box : Box) :
     quadrupledBoxWinding p.normalize box = quadrupledBoxWinding p box := by
-  unfold quadrupledBoxWinding Dense.Gaussian.Path.Box.Boundary.boxBoundary
-  rw [Dense.Gaussian.Path.Box.Sides.horizontalEdge_normalize p box.yLower box.xLower box.xUpper,
-    Dense.Gaussian.Path.Box.Sides.verticalEdge_normalize p box.xUpper box.yLower box.yUpper,
-    Dense.Gaussian.Path.Box.Sides.horizontalEdge_normalize p box.yUpper box.xUpper box.xLower,
-    Dense.Gaussian.Path.Box.Sides.verticalEdge_normalize p box.xLower box.yUpper box.yLower]
+  unfold quadrupledBoxWinding Boundary.boxBoundary
+  rw [Sides.horizontalEdge_normalize p box.yLower box.xLower box.xUpper,
+    Sides.verticalEdge_normalize p box.xUpper box.yLower box.yUpper,
+    Sides.horizontalEdge_normalize p box.yUpper box.xUpper box.xLower,
+    Sides.verticalEdge_normalize p box.xLower box.yUpper box.yLower]
 
 /-- Expand the raw box winding as the sum of its four oriented doubled edge indices.
 
@@ -56,11 +58,11 @@ original endpoints. The displayed sum uses their doubled indices in that order. 
 public theorem quadrupledBoxWinding_eq (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (box :
   Box) :
     quadrupledBoxWinding p box =
-      (Dense.Gaussian.Path.Box.Sides.horizontalEdge p box.yLower box.xLower box.xUpper).doubledWinding +
-      (Dense.Gaussian.Path.Box.Sides.verticalEdge p box.xUpper box.yLower box.yUpper).doubledWinding +
-      (Dense.Gaussian.Path.Box.Sides.horizontalEdge p box.yUpper box.xUpper box.xLower).doubledWinding +
-      (Dense.Gaussian.Path.Box.Sides.verticalEdge p box.xLower box.yUpper box.yLower).doubledWinding := by
-  simp only [quadrupledBoxWinding, Dense.Gaussian.Path.Box.Boundary.boxBoundary, List.map_cons, List.map_nil,
+      (Sides.horizontalEdge p box.yLower box.xLower box.xUpper).doubledWinding +
+      (Sides.verticalEdge p box.xUpper box.yLower box.yUpper).doubledWinding +
+      (Sides.horizontalEdge p box.yUpper box.xUpper box.xLower).doubledWinding +
+      (Sides.verticalEdge p box.xLower box.yUpper box.yLower).doubledWinding := by
+  simp only [quadrupledBoxWinding, Boundary.boxBoundary, List.map_cons, List.map_nil,
     List.sum_cons, List.sum_nil]
   ring1
 

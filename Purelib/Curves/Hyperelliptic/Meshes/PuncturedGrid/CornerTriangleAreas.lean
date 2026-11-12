@@ -28,6 +28,8 @@ import Purelib.Riemann.Periods.PeriodMatrix
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -46,24 +48,24 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Corners.FaceCorners
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid}
 
 variable {vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
   SquareRoot.Grid.RootEdgeBank frames}
   {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars} {stage : Nat}
-    {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  {domains : Face.DomainBanks.FaceDomainBank frames faces.regulars} {stage : Nat}
+    {cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage}
   {i j : Fin genus}
 
 namespace TriangleReadings
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Corners.FaceCorners in
 /-- The wedge area of the three actual paired triangle readings. -/
-def bilinearArea (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i)
-  mesh) (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
+def bilinearArea (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i)
+  mesh) (right : TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
     (triangle : Fin mesh.triangles.length) : Gaussian.Basic.Canonical :=
   Topology.Polygon.Stokes.triangleWedgeArea
     ⟨left.values triangle 0, right.values triangle 0⟩
@@ -75,52 +77,52 @@ def bilinearArea (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveRea
 The retained paired readings use their original bounded triangle index and
 face-corner values. Scalar coordinate identities preserve the original upper
 or lower orientation and its exact cached wedge. -/
-theorem bilinearArea_eq_corners (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings
-  (cache.get i) mesh) (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get
+theorem bilinearArea_eq_corners (left : TrianglePrimitiveReadings.TriangleReadings
+  (cache.get i) mesh) (right : TrianglePrimitiveReadings.TriangleReadings (cache.get
   j) mesh)
     (position : Fin faces.regulars.length) (sheet : Fin 2) (upper : Bool) :
-    Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right (mesh.triangleIndex
+    TriangleReadings.bilinearArea left right (mesh.triangleIndex
       position sheet upper) =
       if upper then Topology.Polygon.Stokes.triangleWedgeArea
-        (Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cache i j
+        (Numerics.cornerPair cache i j
           position sheet 0)
-          (Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cache i j
+          (Numerics.cornerPair cache i j
           position sheet 2)
-          (Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cache i j
+          (Numerics.cornerPair cache i j
           position sheet 3)
       else Topology.Polygon.Stokes.triangleWedgeArea
-        (Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cache i j
+        (Numerics.cornerPair cache i j
           position sheet 0)
-          (Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cache i j
+          (Numerics.cornerPair cache i j
           position sheet 1)
-          (Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cache i j
+          (Numerics.cornerPair cache i j
           position sheet 2) := by
-  unfold Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea
+  unfold TriangleReadings.bilinearArea
   rw [left.values_eq, right.values_eq]
   cases upper <;>
-    simp only [Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.FaceCorners.triangleValues,
-      Data.Vector.Basic.vectorOfFn_apply, -eq_self, -iff_self] <;> rfl
+    simp only [TrianglePrimitiveReadings.FaceCorners.triangleValues,
+      Vector.Basic.vectorOfFn_apply, -eq_self, -iff_self] <;> rfl
 
 /-- The normalized horizontal corner jump is the negative actual upper-triangle wedge area.
 
 The retained paired readings use their original bounded triangle index and
 face-corner values. Scalar coordinate identities preserve the original upper
 or lower orientation and its exact cached wedge. -/
-theorem normalized_horizontal_jump (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings
-  (cache.get i) mesh) (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get
+theorem normalized_horizontal_jump (left : TrianglePrimitiveReadings.TriangleReadings
+  (cache.get i) mesh) (right : TrianglePrimitiveReadings.TriangleReadings (cache.get
   j) mesh)
     (position nextPosition : Fin faces.regulars.length) (sheet nextSheet : Fin 2) :
-  Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerJump
+  Numerics.cornerJump
     cache.normalize i j position nextPosition sheet nextSheet 3 2 =
-      -Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+      -TriangleReadings.bilinearArea left right
         (mesh.triangleIndex position sheet true) := by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea_eq_corners left right]
+  rw [TriangleReadings.bilinearArea_eq_corners left right]
   rw [if_pos rfl]
-  unfold Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerJump
-    Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair
+  unfold Numerics.cornerJump
+    Numerics.cornerPair
   rw [cache.normalize_atDomain, cache.normalize_atDomain, cache.normalize_atDomain, cache.normalize_atDomain]
-  simp only [Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives.normalize_corner,
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics.atDomain,
+  simp only [Face.PrimitiveData.DomainPrimitives.normalize_corner,
+    RegularDomainMeshes.RegularMeshes.Numerics.atDomain,
     Topology.Polygon.Stokes.triangleWedgeArea, Topology.Polygon.Stokes.edgeArea,
       Topology.Polygon.Stokes.PrimitivePoint.sub, -eq_self, -iff_self]
   ring1
@@ -130,21 +132,21 @@ theorem normalized_horizontal_jump (left : Hyperelliptic.Meshes.PuncturedGrid.Tr
 The retained paired readings use their original bounded triangle index and
 face-corner values. Scalar coordinate identities preserve the original upper
 or lower orientation and its exact cached wedge. -/
-theorem normalized_vertical_jump (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings
-  (cache.get i) mesh) (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get
+theorem normalized_vertical_jump (left : TrianglePrimitiveReadings.TriangleReadings
+  (cache.get i) mesh) (right : TrianglePrimitiveReadings.TriangleReadings (cache.get
   j) mesh)
     (position nextPosition : Fin faces.regulars.length) (sheet nextSheet : Fin 2) :
-  Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerJump
+  Numerics.cornerJump
     cache.normalize i j position nextPosition sheet nextSheet 1 2 =
-      Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+      TriangleReadings.bilinearArea left right
         (mesh.triangleIndex position sheet false) := by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea_eq_corners left right]
+  rw [TriangleReadings.bilinearArea_eq_corners left right]
   rw [if_neg Bool.false_ne_true]
-  unfold Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerJump
-    Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair
+  unfold Numerics.cornerJump
+    Numerics.cornerPair
   rw [cache.normalize_atDomain, cache.normalize_atDomain, cache.normalize_atDomain, cache.normalize_atDomain]
-  simp only [Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives.normalize_corner,
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics.atDomain,
+  simp only [Face.PrimitiveData.DomainPrimitives.normalize_corner,
+    RegularDomainMeshes.RegularMeshes.Numerics.atDomain,
     Topology.Polygon.Stokes.triangleWedgeArea, Topology.Polygon.Stokes.edgeArea,
       Topology.Polygon.Stokes.PrimitivePoint.sub, -eq_self, -iff_self]
   ring1

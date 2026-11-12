@@ -33,6 +33,8 @@ import Purelib.Polynomial.Dense.Gaussian.Derivative.Separation.Basic
 import Purelib.Polynomial.Dense.Gaussian.Newton.Box.Certificate
 import Purelib.RootIsolation.State.WindingOne.Basic
 
+open Purelib.Polynomial.Dense.Gaussian.Newton.Box
+
 open Purelib.Data.Gaussian.Basic (Canonical)
 open Purelib.Data.Nat.Positive (RootDegree)
 
@@ -133,7 +135,7 @@ open Purelib.Data.Gaussian
 /-- The retained reference parameter has quadrance one. -/
 theorem unitReferenceParameter_unit : normSq
   unitReferenceParameter = 1 :=
-  Gaussian.Norm.Basic.normSq_one
+  Norm.Basic.normSq_one
 end Purelib.RootIsolation.Power.Unit.Clearance
 
 end
@@ -166,46 +168,46 @@ def unitRobustBoundaryClearance
     (parameterUnit : normSq parameter = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (index : Fin degree.value) :
-    Clearance.Box.Boundary.Basic.BoundaryClearance (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree)
-      (Power.Unit.Box.unitRobustBox parameterNonzero parameterUnit degree degreeAtLeastTwo
+    Clearance.Box.Boundary.Basic.BoundaryClearance (Power.Gaussian.rootPolynomial parameter degree)
+      (Box.unitRobustBox parameterNonzero parameterUnit degree degreeAtLeastTwo
         index) := by
-  let p := Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree
+  let p := Power.Gaussian.rootPolynomial parameter degree
   let ambient := Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox p
-  let source := Power.Unit.Source.unitRobustSourceState parameterNonzero parameterUnit degree
+  let source := Source.unitRobustSourceState parameterNonzero parameterUnit degree
     degreeAtLeastTwo index
   let separation := Power.Gaussian.DerivativeSeparation.unitParameterDerivativeSeparation parameterUnit degree
     degreeAtLeastTwo ambient
-  let newton := Power.Unit.Newton.unitRobustNewton parameterNonzero parameterUnit degree
+  let newton := Newton.unitRobustNewton parameterNonzero parameterUnit degree
     degreeAtLeastTwo index
-  let r := Power.Unit.Radius.unitRobustRadius parameterUnit degree degreeAtLeastTwo
+  let r := Radius.unitRobustRadius parameterUnit degree degreeAtLeastTwo
   have degreeTwo : 2 ≤ p.natDegree := by
-    rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]
+    rw [Power.Gaussian.rootPolynomial_degree]
     exact degreeAtLeastTwo
   have targetRefines :
       (Box.Square.Centered.Affine.centeredSquare
-        (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source.box) r
-        (Power.Unit.Radius.unitRobustRadius_pos parameterUnit degree degreeAtLeastTwo).le).Refines
+        (Anchor.anchorNewtonCenter p source.box) r
+        (Radius.unitRobustRadius_pos parameterUnit degree degreeAtLeastTwo).le).Refines
           ambient := by
-    rw [← Power.Unit.Box.unitRobustBox_eq_centeredNewtonSquare parameterNonzero parameterUnit
+    rw [← Box.unitRobustBox_eq_centeredNewtonSquare parameterNonzero parameterUnit
       degree degreeAtLeastTwo index]
-    exact Power.Unit.Box.unitRobustBox_refinesAmbient parameterNonzero parameterUnit degree
+    exact Box.unitRobustBox_refinesAmbient parameterNonzero parameterUnit degree
       degreeAtLeastTwo index
   have displacement :
-      normSq (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source.box -
+      normSq (Anchor.anchorNewtonCenter p source.box -
         source.box.anchor) ≤ r ^ 2 := by
     rw [← newton.point_eq]
-    exact Power.Unit.Box.unitRobustNewton_displacement_le_radius_sq parameterNonzero
+    exact Box.unitRobustNewton_displacement_le_radius_sq parameterNonzero
       parameterUnit degree degreeAtLeastTwo index
   have taylor :
       2 * (36 * Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p ambient *
         r ^ 2) ≤ separation.margin := by
     simpa only [separation, Power.Gaussian.DerivativeSeparation.unitParameterDerivativeSeparation] using
-      Power.Unit.Radius.unitRobustRadius_taylor parameterUnit degree degreeAtLeastTwo
-  rw [Power.Unit.Box.unitRobustBox_eq_centeredNewtonSquare parameterNonzero parameterUnit
+      Radius.unitRobustRadius_taylor parameterUnit degree degreeAtLeastTwo
+  rw [Box.unitRobustBox_eq_centeredNewtonSquare parameterNonzero parameterUnit
     degree degreeAtLeastTwo index]
   exact Clearance.Box.Boundary.Newton.Square.Separated.separatedNewtonSquareBoundaryClearance degreeTwo
     newton source.refinesAmbient
-    (Power.Unit.Radius.unitRobustRadius_pos parameterUnit degree degreeAtLeastTwo)
+    (Radius.unitRobustRadius_pos parameterUnit degree degreeAtLeastTwo)
     targetRefines displacement taylor
 end Purelib.RootIsolation.Power.Unit.Clearance
 
@@ -242,13 +244,13 @@ theorem unitRobustBoundaryClearance_bound
     (index : Fin degree.value) :
     (unitRobustBoundaryClearance parameterNonzero parameterUnit degree
       degreeAtLeastTwo index).bound =
-      let p := Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree
+      let p := Power.Gaussian.rootPolynomial parameter degree
       let ambient := Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox p
       let separation := Power.Gaussian.DerivativeSeparation.unitParameterDerivativeSeparation parameterUnit degree
         degreeAtLeastTwo ambient
-      let r := Power.Unit.Radius.unitRobustRadius parameterUnit degree degreeAtLeastTwo
-      Dense.Gaussian.Newton.Box.Square.Separated.separatedNewtonDominanceMargin separation r ^ 2 /
-        (4 * Dense.Gaussian.Newton.Box.Square.Bounds.separatedNewtonLinearizationMajorant
+      let r := Radius.unitRobustRadius parameterUnit degree degreeAtLeastTwo
+      Square.Separated.separatedNewtonDominanceMargin separation r ^ 2 /
+        (4 * Square.Bounds.separatedNewtonLinearizationMajorant
           p ambient r) := by
   unfold unitRobustBoundaryClearance
   rfl
@@ -284,13 +286,13 @@ rational radius. -/
 def unitRobustClearanceScale
     {parameter : Canonical} (parameterUnit : normSq parameter = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value) : Fraction.Rational :=
-  let p := Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree
+  let p := Power.Gaussian.rootPolynomial parameter degree
   let ambient := Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox p
   let separation := Power.Gaussian.DerivativeSeparation.unitParameterDerivativeSeparation parameterUnit degree
     degreeAtLeastTwo ambient
-  let r := Power.Unit.Radius.unitRobustRadius parameterUnit degree degreeAtLeastTwo
-  Dense.Gaussian.Newton.Box.Square.Separated.separatedNewtonDominanceMargin separation r ^ 2 /
-    (4 * Dense.Gaussian.Newton.Box.Square.Bounds.separatedNewtonLinearizationMajorant p ambient r)
+  let r := Radius.unitRobustRadius parameterUnit degree degreeAtLeastTwo
+  Square.Separated.separatedNewtonDominanceMargin separation r ^ 2 /
+    (4 * Square.Bounds.separatedNewtonLinearizationMajorant p ambient r)
 end Purelib.RootIsolation.Power.Unit.Clearance
 
 end
@@ -432,15 +434,15 @@ theorem unitRobustClearanceScale_eq_of_normSq_eq
     unitRobustClearanceScale sourceUnit degree degreeAtLeastTwo =
       unitRobustClearanceScale targetUnit degree degreeAtLeastTwo := by
   unfold unitRobustClearanceScale
-    Dense.Gaussian.Newton.Box.Square.Separated.separatedNewtonDominanceMargin
-    Dense.Gaussian.Newton.Box.Square.Bounds.newtonErrorBudget
-    Dense.Gaussian.Newton.Box.Square.Bounds.separatedNewtonLinearizationMajorant
+    Square.Separated.separatedNewtonDominanceMargin
+    Square.Bounds.newtonErrorBudget
+    Square.Bounds.separatedNewtonLinearizationMajorant
   dsimp only [Power.Gaussian.DerivativeSeparation.unitParameterDerivativeSeparation]
-  rw [Power.Unit.Radius.unitRobustRadius_eq_of_normSq_eq sourceUnit targetUnit equalNorm degree
+  rw [Radius.unitRobustRadius_eq_of_normSq_eq sourceUnit targetUnit equalNorm degree
       degreeAtLeastTwo,
-    Power.Bounds.denseTaylorRemainderBound_polynomial_eq_of_normSq_eq equalNorm degree,
+    Bounds.denseTaylorRemainderBound_polynomial_eq_of_normSq_eq equalNorm degree,
     Power.Gaussian.derivative_polynomial_eq source target degree,
-    Power.Bounds.largeSquareBox_polynomial_eq_of_normSq_eq equalNorm degree]
+    Bounds.largeSquareBox_polynomial_eq_of_normSq_eq equalNorm degree]
 end Purelib.RootIsolation.Power.Unit.Clearance
 
 end

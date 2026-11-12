@@ -95,18 +95,18 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedSelection
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {bounds :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {bounds :
+    ReciprocalPaddedInverse.UniformBounds regular.padded}
   {parent : CenteredEdge curve differential} {patch :
-    Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {basis : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+    Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
+  {data : UniformReciprocalModels.Data patch count}
+  {basis : ReciprocalPaddedBasisBounds.BasisBounds bounds}
   {allowance coefficientTarget : Coordinate} {coverFloor floor :
     Nat}
-  {index minimum readingIndex : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {index minimum readingIndex : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
   {polynomials : RegularBasisPolynomials cap
     index box}
 
@@ -122,16 +122,16 @@ open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 
 /-- Read cached connected-chart displacements in the original parent order. Every entry retains its root-endpoint
 ownership through the source sample bank. -/
-def rootTotals : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-    (anchors : UniformReciprocalCover.ParentCovers parents) → (sources : SourceLocations.BasisParentSourceCovers
+def rootTotals : {parents : List (CenteredEdge curve differential)} →
+    (anchors : ParentCovers parents) → (sources : SourceLocations.BasisParentSourceCovers
       parents) →
-    (bank : CommonParentBank.BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor) →
-    (plans : CommonParentPlans.Plans capSample polynomials minimum anchors sources bank) → (inputs :
-      CommonParentPlans.NumericalBank index anchors sources) →
-    (readings : CommonParentPlans.Readings anchors sources bank plans inputs stage) →
-    (prepared : CommonParentSamples.FanPreparations energyFloor anchors sources bank plans inputs readings) →
-    CommonParentSamples.Samples coefficients radialDepth anchors sources bank plans inputs readings prepared →
-    Data.Vector.DependentVector (fun _ : Fin parents.length => InverseRootPolynomial.Gaussian)
+    (bank : BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor) →
+    (plans : Plans capSample polynomials minimum anchors sources bank) → (inputs :
+      NumericalBank index anchors sources) →
+    (readings : Readings anchors sources bank plans inputs stage) →
+    (prepared : FanPreparations energyFloor anchors sources bank plans inputs readings) →
+    Samples coefficients radialDepth anchors sources bank plans inputs readings prepared →
+    Data.Vector.DependentVector (fun _ : Fin parents.length => Gaussian)
   | _, .nil, _, _, _, _, _, _, _ => .nil
   | _, .cons _ _ _ tail, sources, bank, plans, inputs, readings, prepared, samples =>
       .cons samples.1.connection.summary.total
@@ -140,23 +140,23 @@ def rootTotals : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curv
 
 /-- Selection keeps the same positional parent and its already prepared source summary. The root endpoint comparison
 does not reacquire either path. -/
-theorem selected_source_root_error : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-    (anchors : UniformReciprocalCover.ParentCovers parents) → (sources : SourceLocations.BasisParentSourceCovers
+theorem selected_source_root_error : {parents : List (CenteredEdge curve differential)} →
+    (anchors : ParentCovers parents) → (sources : SourceLocations.BasisParentSourceCovers
       parents) →
-    (bank : CommonParentBank.BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor) →
-    (plans : CommonParentPlans.Plans capSample polynomials minimum anchors sources bank) → (inputs :
-      CommonParentPlans.NumericalBank index anchors sources) →
-    (readings : CommonParentPlans.Readings anchors sources bank plans inputs stage) →
-    (prepared : CommonParentSamples.FanPreparations energyFloor anchors sources bank plans inputs readings) →
-    (samples : CommonParentSamples.Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
+    (bank : BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor) →
+    (plans : Plans capSample polynomials minimum anchors sources bank) → (inputs :
+      NumericalBank index anchors sources) →
+    (readings : Readings anchors sources bank plans inputs stage) →
+    (prepared : FanPreparations energyFloor anchors sources bank plans inputs readings) →
+    (samples : Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
       →
-    (comparisons : Samples.PreparedComparisons anchors sources bank plans inputs readings prepared samples) →
+    (comparisons : PreparedComparisons anchors sources bank plans inputs readings prepared samples) →
     (position : Fin parents.length) →
-    Data.Gaussian.Norm.Basic.normSq ((PreparedComparisons.select anchors sources bank plans inputs readings
+    normSq ((select anchors sources bank plans inputs readings
       prepared samples comparisons position).weighted.source.total -
       (rootTotals anchors sources bank
         plans inputs readings prepared samples).get position) ≤
-      34 * allowance^2 * PreparedObservationCoercivity.coefficientNormSq coefficients
+      34 * allowance^2 * coefficientNormSq coefficients
   | _, .nil, _, _, _, _, _, _, _, _, position => Fin.elim0 position
   | _, .cons _ _ _ _, _, _, _, _, _, _, _, comparisons, ⟨0, _⟩ => PreparedComparison.source_connection_total
     comparisons.1

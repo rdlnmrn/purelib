@@ -69,11 +69,11 @@ public theorem interval_separated {left right radius : Rat.Fraction.Rational}
     (positive : 0 < radius) (bound : radius <= (right - left) / 4) :
     left + radius < right - radius := by
   have multiplied : radius * 4 <= right - left :=
-    (Rat.Fraction.Order.Field.le_div_iff_pos (by decide : (0 : Rat.Fraction.Rational) < 4)).1 bound
+    (Field.le_div_iff_pos (by decide : (0 : Rat.Fraction.Rational) < 4)).1 bound
   have twice : radius * 2 < right - left :=
-    (Rat.Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct positive
+    (Arithmetic.mul_lt_mul_of_pos_left_direct positive
       (by decide : (2 : Rat.Fraction.Rational) < 4)).trans_le multiplied
-  have translated := Rat.Fraction.Order.Arithmetic.add_lt_add_right_direct twice (left - radius)
+  have translated := Arithmetic.add_lt_add_right_direct twice (left - radius)
   exact (show left + radius = radius * 2 + (left - radius) by ring1).trans_lt
     (translated.trans_eq (by ring1))
 
@@ -105,20 +105,20 @@ def pointSeparationRadius (left right : Gaussian.Basic.Canonical) (distinct : le
   by_cases realForward : left.re < right.re
   · exact
       { radius := (right.re - left.re) / 4
-        positive := Rat.Fraction.Order.Field.div_pos_direct
-          (Rat.Fraction.Order.Arithmetic.sub_pos_direct realForward) (by decide)
+        positive := Field.div_pos_direct
+          (Arithmetic.sub_pos_direct realForward) (by decide)
         separated := fun _ positive bound => Or.inl (interval_separated positive bound) }
   · by_cases realBackward : right.re < left.re
     · exact
         { radius := (left.re - right.re) / 4
-          positive := Rat.Fraction.Order.Field.div_pos_direct
-            (Rat.Fraction.Order.Arithmetic.sub_pos_direct realBackward) (by decide)
+          positive := Field.div_pos_direct
+            (Arithmetic.sub_pos_direct realBackward) (by decide)
           separated := fun _ positive bound => Or.inr (Or.inl (interval_separated positive bound)) }
     · by_cases imaginaryForward : left.im < right.im
       · exact
           { radius := (right.im - left.im) / 4
-            positive := Rat.Fraction.Order.Field.div_pos_direct
-              (Rat.Fraction.Order.Arithmetic.sub_pos_direct imaginaryForward) (by decide)
+            positive := Field.div_pos_direct
+              (Arithmetic.sub_pos_direct imaginaryForward) (by decide)
             separated := fun _ positive bound =>
               Or.inr (Or.inr (Or.inl (interval_separated positive bound))) }
       · have imaginaryBackward : right.im < left.im := by
@@ -128,8 +128,8 @@ def pointSeparationRadius (left right : Gaussian.Basic.Canonical) (distinct : le
             (le_antisymm (le_of_not_gt realBackward) (le_of_not_gt realForward)) equal.symm)
         exact
           { radius := (left.im - right.im) / 4
-            positive := Rat.Fraction.Order.Field.div_pos_direct
-              (Rat.Fraction.Order.Arithmetic.sub_pos_direct imaginaryBackward) (by decide)
+            positive := Field.div_pos_direct
+              (Arithmetic.sub_pos_direct imaginaryBackward) (by decide)
             separated := fun _ positive bound =>
               Or.inr (Or.inr (Or.inr (interval_separated positive bound))) }
 

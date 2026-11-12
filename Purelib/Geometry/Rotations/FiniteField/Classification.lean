@@ -95,11 +95,11 @@ variable {K : Type*} [ExplicitField K]
 
 section
 
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The corresponding computed rotation list. Its duplicate-freeness and completeness are inherited from the canonical
 projective list and the inverse theorem, rather than checked by matrix equality. -/
-@[expose] public def rotations : List (Rotations.Basic.Rotation K) :=
+@[expose] public def rotations : List (Rotation K) :=
   presentation.nonNullProjectiveRepresentatives.map
     NonNullProportion.rotation
 
@@ -130,7 +130,7 @@ private theorem nodup_map_of_injective_on
 
 /-- Canonical non-null proportions representing the same rotation are equal. -/
 private theorem rotation_injective_on_canonical
-    {left right : Projective.Basic.NonNullProportion K}
+    {left right : NonNullProportion K}
     (leftMember : left ∈ presentation.nonNullProjectiveRepresentatives)
     (rightMember : right ∈ presentation.nonNullProjectiveRepresentatives)
     (equal : (NonNullProportion.rotation left) = (NonNullProportion.rotation right)) : left = right := by
@@ -158,7 +158,7 @@ theorem rotations_nodup : presentation.rotations.Nodup := by
 
 /-- Every stored rotation occurs in the explicit canonical projective list. The witness is the normalized executable
 inverse from Theorem 58. -/
-theorem rotations_complete (rotation : Rotations.Basic.Rotation K) :
+theorem rotations_complete (rotation : Rotation K) :
     rotation ∈ presentation.rotations := by
   letI : DecidableEq K := presentation.eqDecidable
   let source := RotationProportion.ofRotation rotation presentation.twoNonzero
@@ -166,8 +166,8 @@ theorem rotations_complete (rotation : Rotations.Basic.Rotation K) :
   apply Map.mem_map.mpr
   refine ⟨normalized, presentation.canonicalize_mem source, ?_⟩
   apply (fun {K : Type _} [ExplicitField K] {left right :
-    Purelib.Geometry.Rotations.Basic.Rotation K} (equal : left.matrix = right.matrix) =>
-    (Purelib.Geometry.Rotations.Basic.Rotation.eq_of_matrix_eq (K := K) (left := left) (right := right) equal : left =
+    Rotation K} (equal : left.matrix = right.matrix) =>
+    (Rotation.eq_of_matrix_eq (K := K) (left := left) (right := right) equal : left =
     right))
   change (NonNullProportion.rotationMatrix normalized) = rotation.matrix
   calc
@@ -181,9 +181,9 @@ theorem rotations_complete (rotation : Rotations.Basic.Rotation K) :
 set_option genInjectivity false in
 /-- A complete duplicate-free executable carrier of finite-field rotations. -/
 structure RotationEnumeration where
-  /-- The retained finite list of rotations. -/ values : List (Rotations.Basic.Rotation K)
+  /-- The retained finite list of rotations. -/ values : List (Rotation K)
   /-- The rotation list contains no duplicates. -/ nodup : values.Nodup
-  /-- Every rotation belongs to the retained list. -/ complete : ∀ rotation : Rotations.Basic.Rotation K, rotation ∈
+  /-- Every rotation belongs to the retained list. -/ complete : ∀ rotation : Rotation K, rotation ∈
     values
 
 constructive_injectivity RotationEnumeration
@@ -197,7 +197,7 @@ constructive_injectivity RotationEnumeration
 
 /-- The matrices underlying the canonical rotation carrier. Keeping this list separately makes matrix-level finite
 searches executable without recomputing the projective rotation map. -/
-@[expose] public def rotationMatrices : List (Coordinates3.Matrix3 K) :=
+@[expose] public def rotationMatrices : List (Matrix3 K) :=
   presentation.rotations.map Rotation.matrix
 
 /-- The retained list of rotation matrices has no duplicates. -/
@@ -206,13 +206,13 @@ theorem rotationMatrices_nodup : presentation.rotationMatrices.Nodup := by
   apply nodup_map_of_injective_on Rotation.matrix
   · intro left _ right _ matrixEqual
     exact (fun {K : Type _} [ExplicitField K] {left right :
-      Purelib.Geometry.Rotations.Basic.Rotation K} (equal : left.matrix = right.matrix) =>
-      (Purelib.Geometry.Rotations.Basic.Rotation.eq_of_matrix_eq (K := K) (left := left) (right := right) equal : left =
+      Rotation K} (equal : left.matrix = right.matrix) =>
+      (Rotation.eq_of_matrix_eq (K := K) (left := left) (right := right) equal : left =
       right)) matrixEqual
   · exact presentation.rotations_nodup
 
 /-- Every displayed rotation matrix belongs to the matrix enumeration. -/
-theorem rotationMatrices_complete (rotation : Rotations.Basic.Rotation K) :
+theorem rotationMatrices_complete (rotation : Rotation K) :
     rotation.matrix ∈ presentation.rotationMatrices := by
   unfold rotationMatrices
   exact Map.mem_map.mpr
@@ -221,9 +221,9 @@ theorem rotationMatrices_complete (rotation : Rotations.Basic.Rotation K) :
 set_option genInjectivity false in
 /-- Complete duplicate-free executable carrier of the matrices representing finite-field rotations. -/
 structure RotationMatrixEnumeration where
-  /-- The retained finite list of rotation matrices. -/ values : List (Coordinates3.Matrix3 K)
+  /-- The retained finite list of rotation matrices. -/ values : List (Matrix3 K)
   /-- The matrix list contains no duplicates. -/ nodup : values.Nodup
-  /-- Every rotation's matrix appears in the retained list. -/ realizes : ∀ rotation : Rotations.Basic.Rotation K,
+  /-- Every rotation's matrix appears in the retained list. -/ realizes : ∀ rotation : Rotation K,
     rotation.matrix ∈ values
 
 constructive_injectivity RotationMatrixEnumeration
@@ -236,15 +236,15 @@ constructive_injectivity RotationMatrixEnumeration
   realizes := presentation.rotationMatrices_complete
 
 /-- Executable inverse from a finite-field rotation to its unique canonical four-chart projective representative. -/
-@[expose] public def canonicalRotationRepresentative (rotation : Rotations.Basic.Rotation K) :
-    Projective.Basic.NonNullProportion K := by
+@[expose] public def canonicalRotationRepresentative (rotation : Rotation K) :
+    NonNullProportion K := by
   letI : DecidableEq K := presentation.eqDecidable
   exact (presentation.canonicalize
     (RotationProportion.ofRotation rotation
       presentation.twoNonzero)).representative
 
 /-- The recovered rotation representative belongs to the canonical projective carrier. -/
-theorem canonicalRotationRepresentative_mem (rotation : Rotations.Basic.Rotation K) :
+theorem canonicalRotationRepresentative_mem (rotation : Rotation K) :
     presentation.canonicalRotationRepresentative rotation ∈
       presentation.nonNullProjectiveRepresentatives := by
   letI : DecidableEq K := presentation.eqDecidable
@@ -252,13 +252,13 @@ theorem canonicalRotationRepresentative_mem (rotation : Rotations.Basic.Rotation
     (RotationProportion.ofRotation rotation presentation.twoNonzero)
 
 /-- The recovered canonical proportion represents the original rotation. -/
-theorem canonicalRotationRepresentative_rotation (rotation : Rotations.Basic.Rotation K) :
+theorem canonicalRotationRepresentative_rotation (rotation : Rotation K) :
     (NonNullProportion.rotation (presentation.canonicalRotationRepresentative rotation)) =
       rotation := by
   letI : DecidableEq K := presentation.eqDecidable
   apply (fun {K : Type _} [ExplicitField K] {left right :
-    Purelib.Geometry.Rotations.Basic.Rotation K} (equal : left.matrix = right.matrix) =>
-    (Purelib.Geometry.Rotations.Basic.Rotation.eq_of_matrix_eq (K := K) (left := left) (right := right) equal : left =
+    Rotation K} (equal : left.matrix = right.matrix) =>
+    (Rotation.eq_of_matrix_eq (K := K) (left := left) (right := right) equal : left =
     right))
   let source := RotationProportion.ofRotation rotation presentation.twoNonzero
   change (NonNullProportion.rotationMatrix (presentation.canonicalize source).representative) =
@@ -274,7 +274,7 @@ theorem canonicalRotationRepresentative_rotation (rotation : Rotations.Basic.Rot
 
 /-- The projective rotation theorem as an explicit finite-list bijection on the canonical representatives used for
 counting. -/
-@[expose] public def projectiveRotationBijection : Bijection.ListBijection
+@[expose] public def projectiveRotationBijection : ListBijection
     presentation.nonNullProjectiveRepresentatives presentation.rotations where
   forward := NonNullProportion.rotation
   backward := presentation.canonicalRotationRepresentative
@@ -296,7 +296,7 @@ counting. -/
     exact presentation.canonicalRotationRepresentative_rotation rotation
 
 /-- The projective half-spread fiber, evaluated by the homogeneous closed formula `Q(v)/N(x,v)`. -/
-@[expose] public def halfSpreadFiber (value : K) : List (Projective.Basic.NonNullProportion K) := by
+@[expose] public def halfSpreadFiber (value : K) : List (NonNullProportion K) := by
   letI : DecidableEq K := presentation.eqDecidable
   exact presentation.nonNullProjectiveRepresentatives.filter fun proportion =>
     proportion.vector.quadrance / proportion.toProportion.norm = value
@@ -304,7 +304,7 @@ counting. -/
 /-- The affine quadric `Q(v) = value`, retained in normalized projective coordinates so every point also caches the
 non-null norm certificate needed by the rotation map. This is constructed independently of half spread by filtering the
 displayed four-chart carrier. -/
-@[expose] public def affineQuadricRawRepresentatives (value : K) : List (Projective.Basic.Proportion K) := by
+@[expose] public def affineQuadricRawRepresentatives (value : K) : List (Proportion K) := by
   letI : DecidableEq K := presentation.eqDecidable
   exact presentation.projectiveRepresentatives.filter fun raw =>
     raw.scalar = 1 ∧ raw.vector.quadrance = value
@@ -313,13 +313,13 @@ displayed four-chart carrier. -/
 
 The representatives have scalar coordinate one and the prescribed vector quadrance. -/
 @[expose] public def affineQuadricRepresentatives (value : K) :
-    List (Projective.Basic.NonNullProportion K) :=
+    List (NonNullProportion K) :=
   (presentation.affineQuadricRawRepresentatives value).filterMap
     presentation.certifyNonNull
 
 /-- Canonical projective axis representatives: the displayed projective plane at infinity, before removing its null
 conic. -/
-@[expose] public def projectiveAxisRawRepresentatives : List (Projective.Basic.Proportion K) := by
+@[expose] public def projectiveAxisRawRepresentatives : List (Proportion K) := by
   letI : DecidableEq K := presentation.eqDecidable
   exact presentation.projectiveRepresentatives.filter fun raw =>
     raw.scalar = 0
@@ -327,7 +327,7 @@ conic. -/
 /-- The non-null projective-axis quadric complement parametrizing half turns. The construction is independent of the
 half-spread fiber predicate. -/
 @[expose] public def projectiveNonNullAxisRepresentatives :
-    List (Projective.Basic.NonNullProportion K) :=
+    List (NonNullProportion K) :=
   presentation.projectiveAxisRawRepresentatives.filterMap
     presentation.certifyNonNull
 
@@ -350,7 +350,7 @@ theorem affineQuadricRawRepresentatives_nodup (value : K) :
 theorem affineQuadricRepresentatives_nodup (value : K) :
     (presentation.affineQuadricRepresentatives value).Nodup := by
   unfold affineQuadricRepresentatives
-  exact FiniteOddFieldPresentation.certifyNonNull_filterMap_nodup (presentation := presentation)
+  exact certifyNonNull_filterMap_nodup (presentation := presentation)
     (presentation.affineQuadricRawRepresentatives value)
     (presentation.affineQuadricRawRepresentatives_nodup value)
 
@@ -365,13 +365,13 @@ theorem projectiveAxisRawRepresentatives_nodup :
 theorem projectiveNonNullAxisRepresentatives_nodup :
     presentation.projectiveNonNullAxisRepresentatives.Nodup := by
   unfold projectiveNonNullAxisRepresentatives
-  exact FiniteOddFieldPresentation.certifyNonNull_filterMap_nodup (presentation := presentation)
+  exact certifyNonNull_filterMap_nodup (presentation := presentation)
     presentation.projectiveAxisRawRepresentatives
     presentation.projectiveAxisRawRepresentatives_nodup
 
 /-- Affine quadric membership means canonical membership, scalar one and the specified vector quadrance. -/
 theorem mem_affineQuadricRepresentatives_iff
-    (value : K) (proportion : Projective.Basic.NonNullProportion K) :
+    (value : K) (proportion : NonNullProportion K) :
     proportion ∈ presentation.affineQuadricRepresentatives value ↔
       proportion ∈ presentation.nonNullProjectiveRepresentatives ∧
         proportion.scalar = 1 ∧
@@ -384,9 +384,9 @@ theorem mem_affineQuadricRepresentatives_iff
       ⟨raw, rawMember, certified⟩
     have filtered := Filter.mem_filter.mp rawMember
     have rawEqual :=
-      (FiniteOddFieldPresentation.certifyNonNull_eq_some_toProportion presentation) certified
+      (certifyNonNull_eq_some_toProportion presentation) certified
     constructor
-    · unfold FiniteOddFieldPresentation.nonNullProjectiveRepresentatives
+    · unfold nonNullProjectiveRepresentatives
       exact FilterMap.mem_filterMap.mpr
         ⟨raw, filtered.1, certified⟩
     · rw [rawEqual]
@@ -402,7 +402,7 @@ theorem mem_affineQuadricRepresentatives_iff
 
 /-- Non-null projective-axis membership means canonical membership with scalar zero. -/
 theorem mem_projectiveNonNullAxisRepresentatives_iff
-    (proportion : Projective.Basic.NonNullProportion K) :
+    (proportion : NonNullProportion K) :
     proportion ∈ presentation.projectiveNonNullAxisRepresentatives ↔
       proportion ∈ presentation.nonNullProjectiveRepresentatives ∧
         proportion.scalar = 0 := by
@@ -414,9 +414,9 @@ theorem mem_projectiveNonNullAxisRepresentatives_iff
       ⟨raw, rawMember, certified⟩
     have filtered := Filter.mem_filter.mp rawMember
     have rawEqual :=
-      (FiniteOddFieldPresentation.certifyNonNull_eq_some_toProportion presentation) certified
+      (certifyNonNull_eq_some_toProportion presentation) certified
     constructor
-    · unfold FiniteOddFieldPresentation.nonNullProjectiveRepresentatives
+    · unfold nonNullProjectiveRepresentatives
       exact FilterMap.mem_filterMap.mpr
         ⟨raw, filtered.1, certified⟩
     · rw [rawEqual]
@@ -432,19 +432,19 @@ theorem mem_projectiveNonNullAxisRepresentatives_iff
 
 /-- Canonical representatives whose four-square norm has square class one. This is the executable kernel list for the
 map `chi`. -/
-@[expose] public def quadranceClassKernel : List (Projective.Basic.NonNullProportion K) := by
+@[expose] public def quadranceClassKernel : List (NonNullProportion K) := by
   exact presentation.nonNullProjectiveRepresentatives.filter fun proportion =>
     (FiniteOddFieldPresentation.isSquare presentation) proportion.toProportion.norm
 
 /-- The other quadrance-class fiber in the canonical projective carrier. -/
-@[expose] public def quadranceClassNontrivialFiber : List (Projective.Basic.NonNullProportion K) :=
+@[expose] public def quadranceClassNontrivialFiber : List (NonNullProportion K) :=
   presentation.nonNullProjectiveRepresentatives.filter fun proportion =>
     !(FiniteOddFieldPresentation.isSquare presentation) proportion.toProportion.norm
 
 /-- On the canonical finite rotation carrier, the executable square-norm filter is exactly the unit-quaternion kernel
 predicate. -/
 theorem mem_quadranceClassKernel_iff_hasUnitRepresentative
-    (proportion : Projective.Basic.NonNullProportion K) :
+    (proportion : NonNullProportion K) :
     proportion ∈ presentation.quadranceClassKernel ↔
       proportion ∈ presentation.nonNullProjectiveRepresentatives ∧
         (QuaternionObstruction.HasUnitRepresentative proportion) := by
@@ -495,8 +495,8 @@ theorem mem_quadranceClassKernel_iff_hasUnitRepresentative
 
 /-- Two squares representing a nonzero scalar supply a four-square representation with two cached zero coordinates. -/
 @[expose] public def quadranceClassRepresentation
-    (target : SquareClass.Basic.SquareClassRepresentative K) :
-    Four.FourSquareRepresentation target.value := by
+    (target : SquareClassRepresentative K) :
+    FourSquareRepresentation target.value := by
   let pair := presentation.twoSquareRepresentation target.value
   exact
     { scalar := pair.first
@@ -510,12 +510,12 @@ theorem mem_quadranceClassKernel_iff_hasUnitRepresentative
 
 /-- Executable finite-field preimage of an arbitrary square-class representative. -/
 @[expose] public def quadranceClassPreimageProportion
-    (target : SquareClass.Basic.SquareClassRepresentative K) : Projective.Basic.NonNullProportion K :=
+    (target : SquareClassRepresentative K) : NonNullProportion K :=
   (presentation.quadranceClassRepresentation target).proportion target
 
 /-- The computed preimage proportion has exactly the requested square-class representative norm. -/
 theorem quadranceClassPreimageProportion_norm
-    (target : SquareClass.Basic.SquareClassRepresentative K) :
+    (target : SquareClassRepresentative K) :
     (presentation.quadranceClassPreimageProportion target).toProportion.norm =
       target.value := by
   exact FourSquareRepresentation.realizes_quadranceClass target
@@ -525,13 +525,13 @@ theorem quadranceClassPreimageProportion_norm
 
 Use the finite two-square representation to construct a non-null quaternion proportion and apply its rotation. -/
 @[expose] public def quadranceClassPreimageRotation
-    (target : SquareClass.Basic.SquareClassRepresentative K) : Rotations.Basic.Rotation K :=
+    (target : SquareClassRepresentative K) : Rotation K :=
   (NonNullProportion.rotation (presentation.quadranceClassPreimageProportion target))
 
 /-- The finite-field quadrance-class map is onto, with a computed preimage for every displayed nonzero representative.
 -/
 theorem quadranceClassPreimage_realizes
-    (target : SquareClass.Basic.SquareClassRepresentative K) :
+    (target : SquareClassRepresentative K) :
     letI : DecidableEq K := presentation.eqDecidable
     (RotationQuadranceClass.ofRotation
       (presentation.quadranceClassPreimageRotation target)
@@ -559,7 +559,7 @@ theorem quadranceClassPreimage_realizes
   exact classEquivalent
 
 /-- A fixed non-null proportion whose norm represents the nontrivial square class. -/
-@[expose] public def quadranceClassSwitcher : Projective.Basic.NonNullProportion K :=
+@[expose] public def quadranceClassSwitcher : NonNullProportion K :=
   presentation.quadranceClassPreimageProportion
     presentation.nontrivialSquareClass
 
@@ -571,14 +571,14 @@ theorem quadranceClassSwitcher_norm :
     presentation.nontrivialSquareClass
 
 /-- Multiply by the fixed nonsquare-norm proportion and normalize back to the canonical four-chart carrier. -/
-@[expose] public def switchQuadranceClassForward (source : Projective.Basic.NonNullProportion K) :
-    Projective.Basic.NonNullProportion K :=
+@[expose] public def switchQuadranceClassForward (source : NonNullProportion K) :
+    NonNullProportion K :=
   (presentation.canonicalize
     (NonNullProportion.mul presentation.quadranceClassSwitcher source)).representative
 
 /-- The inverse switch uses the displayed quaternion conjugate. -/
-@[expose] public def switchQuadranceClassBackward (source : Projective.Basic.NonNullProportion K) :
-    Projective.Basic.NonNullProportion K :=
+@[expose] public def switchQuadranceClassBackward (source : NonNullProportion K) :
+    NonNullProportion K :=
   (presentation.canonicalize
     (NonNullProportion.mul
       (NonNullProportion.conjugate presentation.quadranceClassSwitcher)
@@ -586,7 +586,7 @@ theorem quadranceClassSwitcher_norm :
 
 /-- Equivalent canonical non-null representatives are literally equal. -/
 private theorem canonical_nonNull_eq_of_equivalent
-    {left right : Projective.Basic.NonNullProportion K}
+    {left right : NonNullProportion K}
     (leftMember : left ∈ presentation.nonNullProjectiveRepresentatives)
     (rightMember : right ∈ presentation.nonNullProjectiveRepresentatives)
     (equivalent : left.Equivalent right) : left = right := by
@@ -599,9 +599,9 @@ private theorem canonical_nonNull_eq_of_equivalent
 
 /-- Canonical normalization preserves the existence of a norm square root. -/
 private theorem canonicalize_norm_hasSquareRoot
-    (source : Projective.Basic.NonNullProportion K) (root : K)
+    (source : NonNullProportion K) (root : K)
     (rootSquare : root ^ 2 = source.toProportion.norm) :
-    FiniteOddFieldPresentation.HasSquareRoot
+    HasSquareRoot
       (presentation.canonicalize source).representative.toProportion.norm := by
   rcases (presentation.canonicalize source).equivalent with
     ⟨factor, _, representativeValue⟩
@@ -617,7 +617,7 @@ private theorem canonicalize_norm_hasSquareRoot
 
 /-- Canonical normalization preserves the absence of a norm square root. -/
 private theorem canonicalize_norm_noRoot
-    (source : Projective.Basic.NonNullProportion K)
+    (source : NonNullProportion K)
     (sourceNoRoot : ∀ root : K, root ^ 2 ≠ source.toProportion.norm) :
     ∀ root : K,
       root ^ 2 ≠
@@ -642,7 +642,7 @@ private theorem canonicalize_norm_noRoot
 
 /-- Multiplication by the switcher sends the square-norm kernel to the nonsquare fiber. -/
 theorem switchQuadranceClassForward_mem
-    {source : Projective.Basic.NonNullProportion K}
+    {source : NonNullProportion K}
     (member : source ∈ presentation.quadranceClassKernel) :
     presentation.switchQuadranceClassForward source ∈
       presentation.quadranceClassNontrivialFiber := by
@@ -678,7 +678,7 @@ theorem switchQuadranceClassForward_mem
   apply Filter.mem_filter.mpr
   constructor
   · exact presentation.canonicalize_mem product
-  · apply Purelib.Data.Bool.Decide.not_true_iff _ |>.mpr
+  · apply Data.Bool.Decide.not_true_iff _ |>.mpr
     unfold FiniteOddFieldPresentation.isSquare
     apply decide_eq_false
     intro squareMember
@@ -688,13 +688,13 @@ theorem switchQuadranceClassForward_mem
 
 /-- Multiplication by the conjugate switcher sends the nonsquare fiber to the kernel. -/
 theorem switchQuadranceClassBackward_mem
-    {source : Projective.Basic.NonNullProportion K}
+    {source : NonNullProportion K}
     (member : source ∈ presentation.quadranceClassNontrivialFiber) :
     presentation.switchQuadranceClassBackward source ∈
       presentation.quadranceClassKernel := by
   letI : DecidableEq K := presentation.eqDecidable
   have sourceRejected := (Filter.mem_filter.mp member).2
-  have sourceSquareFalse := Purelib.Data.Bool.Decide.not_true_iff _ |>.mp sourceRejected
+  have sourceSquareFalse := Data.Bool.Decide.not_true_iff _ |>.mp sourceRejected
   unfold FiniteOddFieldPresentation.isSquare at sourceSquareFalse
   have sourceNotSquare := decide_eq_false_iff_not.mp sourceSquareFalse
   have sourceNoRoot : ∀ root : K,
@@ -736,7 +736,7 @@ theorem switchQuadranceClassBackward_mem
 
 /-- The backward switch undoes the forward switch on the kernel. -/
 theorem switchQuadranceClassBackward_forward
-    {source : Projective.Basic.NonNullProportion K}
+    {source : NonNullProportion K}
     (member : source ∈ presentation.quadranceClassKernel) :
     presentation.switchQuadranceClassBackward
         (presentation.switchQuadranceClassForward source) = source := by
@@ -777,7 +777,7 @@ theorem switchQuadranceClassBackward_forward
 
 /-- The forward switch undoes the backward switch on the nonsquare fiber. -/
 theorem switchQuadranceClassForward_backward
-    {source : Projective.Basic.NonNullProportion K}
+    {source : NonNullProportion K}
     (member : source ∈ presentation.quadranceClassNontrivialFiber) :
     presentation.switchQuadranceClassForward
         (presentation.switchQuadranceClassBackward source) = source := by
@@ -818,7 +818,7 @@ theorem switchQuadranceClassForward_backward
     forwardProductEquivalent
 
 /-- Multiplication by one fixed nonsquare-norm proportion exchanges the two quadrance-class fibers. -/
-@[expose] public def quadranceClassFiberBijection : Bijection.ListBijection
+@[expose] public def quadranceClassFiberBijection : ListBijection
     presentation.quadranceClassKernel
     presentation.quadranceClassNontrivialFiber where
   forward := presentation.switchQuadranceClassForward
@@ -846,11 +846,11 @@ theorem quadranceClassKernel_length_eq_nontrivialFiber_length :
   · exact pairwise_filter _ presentation.nonNullProjectiveRepresentatives_nodup
 
 /-- The canonical parabolic rotation attached to a displayed null anchor. -/
-@[expose] public def parabolicRotation (presentation : Presentation.FiniteOddFieldPresentation K)
+@[expose] public def parabolicRotation (presentation : FiniteOddFieldPresentation K)
     (vector : Coordinates3.Vector K) (null : vector.quadrance = 0) :
-    Rotations.Basic.Rotation K :=
+    Rotation K :=
   Cap.capRotation vector
-    ((Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation) vector null)
+    ((Cap.capDenominator_ne_zero_of_null_presentation presentation) vector null)
 
 /-- A cap rotation of a null vector has half spread zero. -/
 theorem parabolicRotation_halfSpread (vector : Coordinates3.Vector K)
@@ -875,7 +875,7 @@ theorem parabolicRotation_characteristic (vector : Coordinates3.Vector K)
   rw [denominatorOne]
   have oneInverse : (1 : K)⁻¹ = 1 := by
     have cancel := ExplicitField.mul_inv_cancel (1 : K)
-      (FiniteOddFieldPresentation.one_ne_zero presentation)
+      (one_ne_zero presentation)
     simpa only [_root_.one_mul] using cancel
   simp only [ExplicitField.div_eq_mul_inv, oneInverse]
   ring1
@@ -887,11 +887,11 @@ theorem parabolicRotation_fixedAnchor (vector : Coordinates3.Vector K)
         (presentation.parabolicRotation vector null).matrix = vector := by
   change Matrix3.rowMul vector
       (Cap.cap vector
-        ((Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation) vector null))
+        ((Cap.capDenominator_ne_zero_of_null_presentation presentation) vector null))
           =
     vector
   exact Cap.rowMul_self_cap vector
-    ((Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation) vector null)
+    ((Cap.capDenominator_ne_zero_of_null_presentation presentation) vector null)
 
 /-- A nonzero null anchor gives a nonidentity parabolic rotation. -/
 theorem parabolicRotation_nonidentity (vector : Coordinates3.Vector K)
@@ -900,26 +900,26 @@ theorem parabolicRotation_nonidentity (vector : Coordinates3.Vector K)
   intro identity
   apply nonzero
   apply Cap.cap_injective presentation.twoNonzero vector Coordinates3.Vector.zero
-    ((Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation) vector null)
-    ((Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation)
+    ((Cap.capDenominator_ne_zero_of_null_presentation presentation) vector null)
+    ((Cap.capDenominator_ne_zero_of_null_presentation presentation)
       Coordinates3.Vector.zero Coordinates3.Vector.quadrance_zero)
   calc
     Cap.cap vector
-        ((Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation) vector null) =
+        ((Cap.capDenominator_ne_zero_of_null_presentation presentation) vector null) =
       Matrix3.identity := identity
     _ = Cap.cap Coordinates3.Vector.zero
-        ((Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation)
+        ((Cap.capDenominator_ne_zero_of_null_presentation presentation)
           Coordinates3.Vector.zero Coordinates3.Vector.quadrance_zero) :=
       (((fun {K : Type _} [ExplicitField K] (presentation :
-        Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K) =>
-        (Purelib.Geometry.Rotations.Cayley.FieldRealizations.cap_zero_eq_identity (K := K)
-        (Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation
+        FiniteOddFieldPresentation K) =>
+        (FieldRealizations.cap_zero_eq_identity (K := K)
+        (Cap.capDenominator_ne_zero_of_null_presentation presentation
         Coordinates3.Vector.zero Coordinates3.Vector.quadrance_zero) :
-        Purelib.Geometry.Rotations.Cayley.Cap.cap (Coordinates3.Vector.zero :
+        Cap.cap (Coordinates3.Vector.zero :
         Coordinates3.Vector K)
-        ((Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation)
+        ((Cap.capDenominator_ne_zero_of_null_presentation presentation)
         Coordinates3.Vector.zero Coordinates3.Vector.quadrance_zero) =
-        Purelib.LinearAlgebra.Coordinates3.Matrix3.identity)) presentation)).symm
+        Matrix3.identity)) presentation)).symm
 
 /-- Equal parabolic cap rotations have equal null anchors. -/
 theorem parabolicRotation_injective
@@ -928,15 +928,15 @@ theorem parabolicRotation_injective
     (equal : presentation.parabolicRotation left leftNull =
       presentation.parabolicRotation right rightNull) : left = right := by
   apply Cap.cap_injective presentation.twoNonzero left right
-    ((Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation) left leftNull)
-    ((Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation) right rightNull)
+    ((Cap.capDenominator_ne_zero_of_null_presentation presentation) left leftNull)
+    ((Cap.capDenominator_ne_zero_of_null_presentation presentation) right rightNull)
   exact congrArg Rotation.matrix equal
 
 /-- The nonidentity parabolic rotations lying over one canonical projective null direction, parametrized by every
 displayed nonzero scalar. -/
 @[expose] public def parabolicRotationsOverDirection (direction : Coordinates3.Vector K)
     (directionMember : direction ∈
-      presentation.nullDirectionRepresentatives) : List (Rotations.Basic.Rotation K) :=
+      presentation.nullDirectionRepresentatives) : List (Rotation K) :=
   presentation.nonzeroScalars.map fun parameter =>
     presentation.parabolicRotation (Coordinates3.Vector.scale parameter direction) (by
       rw [Coordinates3.Vector.quadrance_scale,
@@ -950,7 +950,7 @@ theorem parabolicRotationsOverDirection_nodup (direction : Coordinates3.Vector K
     (presentation.parabolicRotationsOverDirection direction
       directionMember).Nodup := by
   unfold parabolicRotationsOverDirection
-  apply Data.List.Nodup.nodup_map_of_injective
+  apply Nodup.nodup_map_of_injective
   · intro left right equal
     apply presentation.nullDirection_scale_injective directionMember
     apply presentation.parabolicRotation_injective
@@ -980,7 +980,7 @@ theorem parabolicRotationsOverDirection_mem_properties
     (direction : Coordinates3.Vector K)
     (directionMember : direction ∈
       presentation.nullDirectionRepresentatives)
-    {rotation : Rotations.Basic.Rotation K}
+    {rotation : Rotation K}
     (member : rotation ∈ presentation.parabolicRotationsOverDirection
       direction directionMember) :
     Spread.halfSpread rotation = 0 ∧
@@ -1010,7 +1010,7 @@ theorem parabolicRotationsOverDirection_mem_properties
 
 /-- Every nonidentity half-spread-zero rotation has one and only one displayed nonzero null anchor. The existential
 retains the null and nonzero certificates used to construct the cap. -/
-theorem parabolicRotation_complete (rotation : Rotations.Basic.Rotation K)
+theorem parabolicRotation_complete (rotation : Rotation K)
     (spreadZero : Spread.halfSpread rotation = 0)
     (nonidentity : rotation.matrix ≠ Matrix3.identity) :
     ∃ vector : Coordinates3.Vector K, ∃ null : vector.quadrance = 0,
@@ -1019,7 +1019,7 @@ theorem parabolicRotation_complete (rotation : Rotations.Basic.Rotation K)
         rotation = presentation.parabolicRotation vector null := by
   have notHalfTurn : Spread.halfSpread rotation ≠ 1 := by
     intro spreadOne
-    apply FiniteOddFieldPresentation.one_ne_zero presentation
+    apply one_ne_zero presentation
     calc
       (1 : K) = Spread.halfSpread rotation := spreadOne.symm
       _ = 0 := spreadZero
@@ -1037,23 +1037,23 @@ theorem parabolicRotation_complete (rotation : Rotations.Basic.Rotation K)
     have recovered := Recovery.cap_rotationAnchor rotation notHalfTurn
       presentation.twoNonzero
     have zeroCap := ((fun {K : Type _} [ExplicitField K] (presentation :
-      Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K) =>
-      (Purelib.Geometry.Rotations.Cayley.FieldRealizations.cap_zero_eq_identity (K := K)
-      (Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation
+      FiniteOddFieldPresentation K) =>
+      (FieldRealizations.cap_zero_eq_identity (K := K)
+      (Cap.capDenominator_ne_zero_of_null_presentation presentation
       Coordinates3.Vector.zero Coordinates3.Vector.quadrance_zero) :
-      Purelib.Geometry.Rotations.Cayley.Cap.cap (Coordinates3.Vector.zero :
+      Cap.cap (Coordinates3.Vector.zero :
       Coordinates3.Vector K)
-      ((Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation)
+      ((Cap.capDenominator_ne_zero_of_null_presentation presentation)
       Coordinates3.Vector.zero Coordinates3.Vector.quadrance_zero) =
-      Purelib.LinearAlgebra.Coordinates3.Matrix3.identity)) presentation)
+      Matrix3.identity)) presentation)
     calc
       rotation.matrix = Cap.cap vector
           (Recovery.rotationAnchorVector_capDefined rotation notHalfTurn
             presentation.twoNonzero) := recovered.symm
       _ = Cap.cap Coordinates3.Vector.zero
-          ((Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation)
+          ((Cap.capDenominator_ne_zero_of_null_presentation presentation)
             Coordinates3.Vector.zero Coordinates3.Vector.quadrance_zero) :=
-        Purelib.Geometry.Rotations.Cayley.Cap.eq_of_vector_eq vectorZero
+        Cap.eq_of_vector_eq vectorZero
           _ _
       _ = Matrix3.identity := zeroCap
   have member : vector ∈ presentation.nonzeroNullVectors :=
@@ -1061,15 +1061,15 @@ theorem parabolicRotation_complete (rotation : Rotations.Basic.Rotation K)
       ⟨presentation.vectors_complete vector, null, nonzero⟩
   refine ⟨vector, null, nonzero, member, ?_⟩
   apply (fun {K : Type _} [ExplicitField K] {left right :
-    Purelib.Geometry.Rotations.Basic.Rotation K} (equal : left.matrix = right.matrix) =>
-    (Purelib.Geometry.Rotations.Basic.Rotation.eq_of_matrix_eq (K := K) (left := left) (right := right) equal : left =
+    Rotation K} (equal : left.matrix = right.matrix) =>
+    (Rotation.eq_of_matrix_eq (K := K) (left := left) (right := right) equal : left =
     right))
   exact (Recovery.cap_rotationAnchor rotation notHalfTurn presentation.twoNonzero).symm
 
 /-- Characteristic-polynomial form of parabolic completeness. This is the literal converse requested by Problem 69:
 every nonidentity rotation with characteristic polynomial `(X - 1)^3` is a cap of one displayed nonzero null anchor. -/
 theorem parabolicRotation_complete_of_characteristic
-    (rotation : Rotations.Basic.Rotation K)
+    (rotation : Rotation K)
     (characteristic : ∀ X : K,
       Matrix3.characteristicValue rotation.matrix X = (X - 1) ^ 3)
     (nonidentity : rotation.matrix ≠ Matrix3.identity) :
@@ -1084,7 +1084,7 @@ theorem parabolicRotation_complete_of_characteristic
 
 set_option genInjectivity false in
 /-- Executable canonical null-direction and nonzero parameter coordinates for one nonidentity parabolic rotation. -/
-structure ParabolicDirectionCoordinates (rotation : Rotations.Basic.Rotation K) where
+structure ParabolicDirectionCoordinates (rotation : Rotation K) where
   /-- The retained canonical projective null direction. -/ direction : Coordinates3.Vector K
   /-- The direction belongs to the canonical null-direction list. -/ directionMember : direction ∈
     presentation.nullDirectionRepresentatives
@@ -1101,13 +1101,13 @@ constructive_injectivity ParabolicDirectionCoordinates
 
 /-- Recover the canonical projective null direction and its affine parameter directly from a nonidentity
 half-spread-zero rotation. -/
-@[expose] public def parabolicDirectionCoordinates (rotation : Rotations.Basic.Rotation K)
+@[expose] public def parabolicDirectionCoordinates (rotation : Rotation K)
     (spreadZero : Spread.halfSpread rotation = 0)
     (nonidentity : rotation.matrix ≠ Matrix3.identity) :
     presentation.ParabolicDirectionCoordinates rotation := by
   have notHalfTurn : Spread.halfSpread rotation ≠ 1 := by
     intro spreadOne
-    apply FiniteOddFieldPresentation.one_ne_zero presentation
+    apply one_ne_zero presentation
     calc
       (1 : K) = Spread.halfSpread rotation := spreadOne.symm
       _ = 0 := spreadZero
@@ -1125,23 +1125,23 @@ half-spread-zero rotation. -/
     have recovered := Recovery.cap_rotationAnchor rotation notHalfTurn
       presentation.twoNonzero
     have zeroCap := ((fun {K : Type _} [ExplicitField K] (presentation :
-      Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K) =>
-      (Purelib.Geometry.Rotations.Cayley.FieldRealizations.cap_zero_eq_identity (K := K)
-      (Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation
+      FiniteOddFieldPresentation K) =>
+      (FieldRealizations.cap_zero_eq_identity (K := K)
+      (Cap.capDenominator_ne_zero_of_null_presentation presentation
       Coordinates3.Vector.zero Coordinates3.Vector.quadrance_zero) :
-      Purelib.Geometry.Rotations.Cayley.Cap.cap (Coordinates3.Vector.zero :
+      Cap.cap (Coordinates3.Vector.zero :
       Coordinates3.Vector K)
-      ((Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation)
+      ((Cap.capDenominator_ne_zero_of_null_presentation presentation)
       Coordinates3.Vector.zero Coordinates3.Vector.quadrance_zero) =
-      Purelib.LinearAlgebra.Coordinates3.Matrix3.identity)) presentation)
+      Matrix3.identity)) presentation)
     calc
       rotation.matrix = Cap.cap anchorVector
           (Recovery.rotationAnchorVector_capDefined rotation notHalfTurn
             presentation.twoNonzero) := recovered.symm
       _ = Cap.cap Coordinates3.Vector.zero
-          ((Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation)
+          ((Cap.capDenominator_ne_zero_of_null_presentation presentation)
             Coordinates3.Vector.zero Coordinates3.Vector.quadrance_zero) :=
-        Purelib.Geometry.Rotations.Cayley.Cap.eq_of_vector_eq anchorZero
+        Cap.eq_of_vector_eq anchorZero
           _ _
       _ = Matrix3.identity := zeroCap
   let normalization := presentation.normalizeNullDirection anchorVector
@@ -1165,11 +1165,11 @@ half-spread-zero rotation. -/
       scaledNull := scaledNull
       rotation_eq := ?_ }
   apply (fun {K : Type _} [ExplicitField K] {left right :
-    Purelib.Geometry.Rotations.Basic.Rotation K} (equal : left.matrix = right.matrix) =>
-    (Purelib.Geometry.Rotations.Basic.Rotation.eq_of_matrix_eq (K := K) (left := left) (right := right) equal : left =
+    Rotation K} (equal : left.matrix = right.matrix) =>
+    (Rotation.eq_of_matrix_eq (K := K) (left := left) (right := right) equal : left =
     right))
   let scaledDefined :=
-    (Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation)
+    (Cap.capDenominator_ne_zero_of_null_presentation presentation)
       (Coordinates3.Vector.scale normalization.parameter normalization.representative)
       scaledNull
   change rotation.matrix = Cap.cap
@@ -1183,13 +1183,13 @@ half-spread-zero rotation. -/
           presentation.twoNonzero) := recovered.symm
     _ = Cap.cap (Coordinates3.Vector.scale normalization.parameter normalization.representative)
         scaledDefined :=
-      Purelib.Geometry.Rotations.Cayley.Cap.eq_of_vector_eq
+      Cap.eq_of_vector_eq
         normalization.source_eq_scale _ _
 
 /-- Executable direction/parameter normal form obtained directly from the paper's characteristic-polynomial description
 of a parabolic rotation. -/
 @[expose] public def parabolicDirectionCoordinatesOfCharacteristic
-    (rotation : Rotations.Basic.Rotation K)
+    (rotation : Rotation K)
     (characteristic : ∀ X : K,
       Matrix3.characteristicValue rotation.matrix X = (X - 1) ^ 3)
     (nonidentity : rotation.matrix ≠ Matrix3.identity) :
@@ -1201,7 +1201,7 @@ of a parabolic rotation. -/
 
 /-- Any other canonical direction/parameter description of the same parabolic rotation agrees with the computed
 coordinates. -/
-theorem parabolicDirectionCoordinates_unique (rotation : Rotations.Basic.Rotation K)
+theorem parabolicDirectionCoordinates_unique (rotation : Rotation K)
     (spreadZero : Spread.halfSpread rotation = 0)
     (nonidentity : rotation.matrix ≠ Matrix3.identity)
     (direction : Coordinates3.Vector K)
@@ -1236,7 +1236,7 @@ theorem parabolicDirectionCoordinates_unique (rotation : Rotations.Basic.Rotatio
     ExplicitField.mul_ne_zero
       (ExplicitField.inv_ne_zero coordinateParameterNonzero)
       parameterNonzero
-  have coordinateCancel := FiniteOddFieldPresentation.inverse_mul coordinates.parameter
+  have coordinateCancel := inverse_mul coordinates.parameter
     coordinateParameterNonzero
   have scaledDirections :
       coordinates.direction = Coordinates3.Vector.scale factor direction := by
@@ -1298,7 +1298,7 @@ theorem parabolicDirectionCoordinates_unique (rotation : Rotations.Basic.Rotatio
 set_option genInjectivity false in
 /-- Executable four-way classification of one finite-field rotation. The endpoint cases retain the matrix, axis, or
 canonical parabolic coordinates needed by downstream computations instead of storing only a proposition. -/
-inductive RotationStratum (rotation : Rotations.Basic.Rotation K) where
+inductive RotationStratum (rotation : Rotation K) where
   /-- The identity matrix, with its zero half-spread certificate. -/ | identity
       (spreadZero : Spread.halfSpread rotation = 0)
       (matrixIdentity : rotation.matrix = Matrix3.identity)
@@ -1318,14 +1318,14 @@ inductive RotationStratum (rotation : Rotations.Basic.Rotation K) where
 constructive_injectivity RotationStratum
 
 /-- Classify a displayed rotation by the two finite half-spread tests and one matrix-identity test. -/
-@[expose] public def classifyRotationStratum (rotation : Rotations.Basic.Rotation K) :
+@[expose] public def classifyRotationStratum (rotation : Rotation K) :
     presentation.RotationStratum rotation := by
   letI : DecidableEq K := presentation.eqDecidable
   by_cases spreadZero : Spread.halfSpread rotation = 0
   · by_cases matrixIdentity : rotation.matrix = Matrix3.identity
-    · exact Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.RotationStratum.identity spreadZero
+    · exact RotationStratum.identity spreadZero
         matrixIdentity
-    · exact Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.RotationStratum.parabolic spreadZero
+    · exact RotationStratum.parabolic spreadZero
         matrixIdentity
         (presentation.parabolicDirectionCoordinates rotation spreadZero
           matrixIdentity)
@@ -1333,11 +1333,11 @@ constructive_injectivity RotationStratum
     · let axis := Recovery.halfTurnAxis rotation spreadOne presentation.twoNonzero
       let axisNonNull := Recovery.halfTurnAxis_nonNull rotation spreadOne
         presentation.twoNonzero
-      exact Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.RotationStratum.halfTurn spreadOne axis
+      exact RotationStratum.halfTurn spreadOne axis
         axisNonNull
         (Recovery.rotation_eq_halfTurn_halfTurnAxis rotation spreadOne
           presentation.twoNonzero)
-    · exact Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.RotationStratum.semisimple spreadZero
+    · exact RotationStratum.semisimple spreadZero
         spreadOne
 
 /-- The square and nonsquare norm filters partition the canonical carrier by length. -/
@@ -1359,7 +1359,7 @@ theorem rotationCount_eq_rotationEnumeration_length :
     presentation.rotationCount =
       presentation.rotationEnumeration.values.length := by
   unfold rotationCount rotationEnumeration
-    FiniteOddFieldPresentation.RotationEnumeration.values rotations
+    RotationEnumeration.values rotations
   rw [Map.length_map]
   calc
     presentation.projectiveCountWhere
@@ -1368,13 +1368,13 @@ theorem rotationCount_eq_rotationEnumeration_length :
           (fun raw => (presentation.certifyNonNull raw).isSome)).length :=
       presentation.projectiveCountWhere_eq_length_filter _
     _ = presentation.nonNullProjectiveRepresentatives.length := by
-      unfold FiniteOddFieldPresentation.nonNullProjectiveRepresentatives
+      unfold nonNullProjectiveRepresentatives
       exact (CountWhere.length_filterMap_eq_count_isSome
         presentation.projectiveRepresentatives
         presentation.certifyNonNull).symm
 
 /-- Homogeneous Boolean test for a non-null projective point of prescribed half spread. -/
-@[expose] public def halfSpreadAccepted (value : K) (raw : Projective.Basic.Proportion K) : Bool := by
+@[expose] public def halfSpreadAccepted (value : K) (raw : Proportion K) : Bool := by
   letI : DecidableEq K := presentation.eqDecidable
   exact decide (raw.norm ≠ 0) &&
     decide (raw.vector.quadrance = value * raw.norm)
@@ -1384,7 +1384,7 @@ theorem rotationCount_eq_rotationEnumeration_length :
   -value * (1 - value)
 
 /-- On scalar-zero proportions, half-turn acceptance is exactly non-null norm acceptance. -/
-private theorem halfSpreadAccepted_one_of_scalar_zero (raw : Projective.Basic.Proportion K)
+private theorem halfSpreadAccepted_one_of_scalar_zero (raw : Proportion K)
     (scalarZero : raw.scalar = 0) :
     presentation.halfSpreadAccepted 1 raw =
       presentation.normNonzeroAccepted raw := by
@@ -1393,7 +1393,7 @@ private theorem halfSpreadAccepted_one_of_scalar_zero (raw : Projective.Basic.Pr
     unfold Proportion.norm
     rw [scalarZero]
     ring1
-  unfold halfSpreadAccepted FiniteOddFieldPresentation.normNonzeroAccepted
+  unfold halfSpreadAccepted normNonzeroAccepted
   rw [normQuadrance]
   have equation : raw.vector.quadrance = (1 : K) * raw.vector.quadrance := by
     ring1
@@ -1401,13 +1401,13 @@ private theorem halfSpreadAccepted_one_of_scalar_zero (raw : Projective.Basic.Pr
 
 /-- A proportion with nonzero scalar coordinate is rejected by the half-turn test. -/
 private theorem halfSpreadAccepted_one_of_scalar_nonzero
-    (raw : Projective.Basic.Proportion K) (scalarNonzero : raw.scalar ≠ 0) :
+    (raw : Proportion K) (scalarNonzero : raw.scalar ≠ 0) :
     presentation.halfSpreadAccepted 1 raw = false := by
   letI : DecidableEq K := presentation.eqDecidable
   unfold halfSpreadAccepted
   apply Bool.eq_false_iff.mpr
   intro accepted
-  have acceptedParts := Purelib.Data.Bool.Decide.and_true_iff _ _ |>.mp accepted
+  have acceptedParts := Data.Bool.Decide.and_true_iff _ _ |>.mp accepted
   have equation := of_decide_eq_true acceptedParts.2
   have normEquation : raw.norm = raw.vector.quadrance := by
     calc
@@ -1441,17 +1441,17 @@ theorem halfSpreadFiberCount_one_eq_infinityCounts :
   have affineZero :
       presentation.vectorCountWhere (fun vector =>
         presentation.halfSpreadAccepted 1 ⟨1, vector⟩) = 0 := by
-    apply (FiniteOddFieldPresentation.vectorCountWhere_eq_zero_of_reject presentation)
+    apply (vectorCountWhere_eq_zero_of_reject presentation)
     intro vector _
     exact presentation.halfSpreadAccepted_one_of_scalar_nonzero
-      ⟨1, vector⟩ (FiniteOddFieldPresentation.one_ne_zero presentation)
+      ⟨1, vector⟩ (one_ne_zero presentation)
   have infinityTEqual :
       (presentation.carrier.map fun r =>
         presentation.infinityTSliceCountWhere r
           (presentation.halfSpreadAccepted 1)).foldr Nat.add 0 =
         presentation.infinityTNonNullCount := by
-    unfold FiniteOddFieldPresentation.infinityTNonNullCount FiniteOddFieldPresentation.infinityTSliceCountWhere
-      FiniteOddFieldPresentation.scalarPairs
+    unfold infinityTNonNullCount infinityTSliceCountWhere
+      scalarPairs
     rw [CountWhere.listCountWhere_flatMap]
     apply congrArg (fun counts : List Nat => counts.foldr Nat.add 0)
     apply Map.map_congr_left
@@ -1464,29 +1464,29 @@ theorem halfSpreadFiberCount_one_eq_infinityCounts :
   have infinityREqual :
       CountWhere.listCountWhere
           (presentation.carrier.map fun s =>
-            (⟨0, ⟨0, 1, s⟩⟩ : Projective.Basic.Proportion K))
+            (⟨0, ⟨0, 1, s⟩⟩ : Proportion K))
           (presentation.halfSpreadAccepted 1) =
         presentation.infinityRNonNullCount := by
-    unfold FiniteOddFieldPresentation.infinityRNonNullCount
+    unfold infinityRNonNullCount
     rw [CountWhere.listCountWhere_map]
     apply CountWhere.listCountWhere_congr
     intro s _
     exact presentation.halfSpreadAccepted_one_of_scalar_zero
       ⟨0, ⟨0, 1, s⟩⟩ rfl
   have infinitySAccepted :
-      presentation.halfSpreadAccepted 1 FiniteOddFieldPresentation.infinitySRepresentative = true := by
+      presentation.halfSpreadAccepted 1 infinitySRepresentative = true := by
     rw [presentation.halfSpreadAccepted_one_of_scalar_zero
-      FiniteOddFieldPresentation.infinitySRepresentative rfl]
-    unfold FiniteOddFieldPresentation.normNonzeroAccepted
+      infinitySRepresentative rfl]
+    unfold normNonzeroAccepted
     have normEquation :
-        Proportion.norm (FiniteOddFieldPresentation.infinitySRepresentative : Projective.Basic.Proportion K) = 1 := by
-      unfold FiniteOddFieldPresentation.infinitySRepresentative Proportion.norm Coordinates3.Vector.quadrance
+        Proportion.norm (infinitySRepresentative : Proportion K) = 1 := by
+      unfold infinitySRepresentative Proportion.norm Coordinates3.Vector.quadrance
         Coordinates3.Vector.dot
       ring1
     rw [normEquation]
     apply decide_eq_true
-    exact FiniteOddFieldPresentation.one_ne_zero presentation
-  unfold halfSpreadFiberCount FiniteOddFieldPresentation.projectiveCountWhere
+    exact one_ne_zero presentation
+  unfold halfSpreadFiberCount projectiveCountWhere
   rw [affineZero, infinityTEqual, infinityREqual, infinitySAccepted]
   rw [if_pos rfl]
   change 0 + presentation.infinityTNonNullCount +
@@ -1500,7 +1500,7 @@ theorem halfSpreadFiberCount_one :
       presentation.carrier.length * presentation.carrier.length := by
   have minusOneNonzero : (-1 : K) ≠ 0 := by
     intro minusOneZero
-    apply FiniteOddFieldPresentation.one_ne_zero presentation
+    apply one_ne_zero presentation
     calc
       (1 : K) = -(-1) := by ring1
       _ = 0 := by rw [minusOneZero]; ring1
@@ -1520,7 +1520,7 @@ theorem halfSpreadFiberCount_one :
         calc
           presentation.infinityRNonNullCount + 1 =
               ((presentation.infinityRNonNullCount + 1) + 1) - 1 :=
-            (Purelib.Data.Nat.Subtraction.add_sub_cancel_right
+            (Data.Nat.Subtraction.add_sub_cancel_right
               (presentation.infinityRNonNullCount + 1) 1).symm
           _ = (presentation.infinityRNonNullCount + 2) - 1 := by
             exact congrArg (fun count => count - 1)
@@ -1574,14 +1574,14 @@ theorem rotationCount_eq_affineNonNullCount_add_infinityCounts :
   have predicateEqual := presentation.projectiveCountWhere_congr
     (fun raw => (presentation.certifyNonNull raw).isSome)
     presentation.normNonzeroAccepted
-    (FiniteOddFieldPresentation.certifyNonNull_isSome_eq_normNonzeroAccepted presentation)
+    (certifyNonNull_isSome_eq_normNonzeroAccepted presentation)
   have infinityTEqual :
       (presentation.carrier.map fun r =>
         presentation.infinityTSliceCountWhere r
           presentation.normNonzeroAccepted).foldr Nat.add 0 =
         presentation.infinityTNonNullCount := by
-    unfold FiniteOddFieldPresentation.infinityTNonNullCount FiniteOddFieldPresentation.infinityTSliceCountWhere
-      FiniteOddFieldPresentation.scalarPairs
+    unfold infinityTNonNullCount infinityTSliceCountWhere
+      scalarPairs
     rw [CountWhere.listCountWhere_flatMap]
     apply congrArg (fun counts : List Nat => counts.foldr Nat.add 0)
     apply Map.map_congr_left
@@ -1590,21 +1590,21 @@ theorem rotationCount_eq_affineNonNullCount_add_infinityCounts :
   have infinityREqual :
       CountWhere.listCountWhere
           (presentation.carrier.map fun s =>
-            (⟨0, ⟨0, 1, s⟩⟩ : Projective.Basic.Proportion K))
+            (⟨0, ⟨0, 1, s⟩⟩ : Proportion K))
           presentation.normNonzeroAccepted =
         presentation.infinityRNonNullCount := by
-    unfold FiniteOddFieldPresentation.infinityRNonNullCount
+    unfold infinityRNonNullCount
     rw [CountWhere.listCountWhere_map]
   have infinitySAccepted :
-      presentation.normNonzeroAccepted FiniteOddFieldPresentation.infinitySRepresentative = true := by
-    unfold FiniteOddFieldPresentation.normNonzeroAccepted
+      presentation.normNonzeroAccepted infinitySRepresentative = true := by
+    unfold normNonzeroAccepted
     have normEquation :
-        Proportion.norm (FiniteOddFieldPresentation.infinitySRepresentative : Projective.Basic.Proportion K) = 1 := by
-      unfold FiniteOddFieldPresentation.infinitySRepresentative Proportion.norm Coordinates3.Vector.quadrance
+        Proportion.norm (infinitySRepresentative : Proportion K) = 1 := by
+      unfold infinitySRepresentative Proportion.norm Coordinates3.Vector.quadrance
         Coordinates3.Vector.dot
       ring1
     rw [normEquation]
-    exact decide_eq_true (FiniteOddFieldPresentation.one_ne_zero presentation)
+    exact decide_eq_true (one_ne_zero presentation)
   calc
     presentation.rotationCount =
         presentation.projectiveCountWhere
@@ -1612,7 +1612,7 @@ theorem rotationCount_eq_affineNonNullCount_add_infinityCounts :
     _ = presentation.affineNonNullCount +
         presentation.infinityTNonNullCount +
           presentation.infinityRNonNullCount + 1 := by
-      unfold FiniteOddFieldPresentation.projectiveCountWhere FiniteOddFieldPresentation.affineNonNullCount
+      unfold projectiveCountWhere affineNonNullCount
       rw [infinityTEqual, infinityREqual, infinitySAccepted, if_pos rfl]
 
 /-- The kernel has half the total number of rotations. -/
@@ -1624,10 +1624,10 @@ theorem rotationCount_eq_affineNonNullCount_add_infinityCounts :
 theorem quadranceClassKernelCount_eq_length :
     presentation.quadranceClassKernelCount =
       presentation.quadranceClassKernel.length := by
-  unfold FiniteOddFieldPresentation.quadranceClassKernelCount quadranceClassKernel
-    FiniteOddFieldPresentation.nonNullProjectiveRepresentatives
+  unfold quadranceClassKernelCount quadranceClassKernel
+    nonNullProjectiveRepresentatives
   rw [presentation.projectiveCountWhere_eq_length_filter]
-  exact (FiniteOddFieldPresentation.certifiedSquareFilter_length_eq_rawCount
+  exact (certifiedSquareFilter_length_eq_rawCount
     (presentation := presentation)
     presentation.projectiveRepresentatives).symm
 
@@ -1645,7 +1645,7 @@ theorem quadranceClassKernel_twice_eq_rotationCount :
     _ = presentation.nonNullProjectiveRepresentatives.length :=
       presentation.quadranceClassFibers_partition
     _ = presentation.rotationEnumeration.values.length := by
-      unfold rotationEnumeration FiniteOddFieldPresentation.RotationEnumeration.values
+      unfold rotationEnumeration RotationEnumeration.values
         rotations
       rw [Map.length_map]
     _ = presentation.rotationCount :=
@@ -1662,9 +1662,9 @@ public theorem one_sub_ne_zero_of_ne_one_counting {value : K}
 
 /-- Minus one is nonzero in the displayed odd finite field. -/
 public theorem minus_one_ne_zero_counting
-    (presentation : Presentation.FiniteOddFieldPresentation K) : (-1 : K) ≠ 0 := by
+    (presentation : FiniteOddFieldPresentation K) : (-1 : K) ≠ 0 := by
   intro minusOneZero
-  apply FiniteOddFieldPresentation.one_ne_zero presentation
+  apply one_ne_zero presentation
   calc
     (1 : K) = -(-1) := by ring1
     _ = 0 := by rw [minusOneZero]; ring1
@@ -1684,7 +1684,7 @@ private theorem eq_div_of_mul_eq_counting {left right denominator : K}
 
 /-- A non-null raw proportion is accepted at exactly one displayed half-spread value; a null one is never accepted. -/
 private theorem halfSpreadAccepted_count_over_carrier
-    (raw : Projective.Basic.Proportion K) :
+    (raw : Proportion K) :
     CountWhere.listCountWhere presentation.carrier (fun value =>
         presentation.halfSpreadAccepted value raw) =
       if presentation.normNonzeroAccepted raw then 1 else 0 := by
@@ -1692,7 +1692,7 @@ private theorem halfSpreadAccepted_count_over_carrier
   cases presentation.eqDecidable raw.norm 0 with
   | isTrue normZero =>
       have normRejected : presentation.normNonzeroAccepted raw = false := by
-        unfold FiniteOddFieldPresentation.normNonzeroAccepted
+        unfold normNonzeroAccepted
         exact decide_eq_false (fun normNonzero => normNonzero normZero)
       have allRejected : ∀ value ∈ presentation.carrier,
           presentation.halfSpreadAccepted value raw = false := by
@@ -1707,7 +1707,7 @@ private theorem halfSpreadAccepted_count_over_carrier
   | isFalse normNonzero =>
       let target := raw.vector.quadrance / raw.norm
       have normAccepted : presentation.normNonzeroAccepted raw = true := by
-        unfold FiniteOddFieldPresentation.normNonzeroAccepted
+        unfold normNonzeroAccepted
         exact decide_eq_true normNonzero
       have predicateEqual : ∀ value ∈ presentation.carrier,
           presentation.halfSpreadAccepted value raw =
@@ -1715,7 +1715,7 @@ private theorem halfSpreadAccepted_count_over_carrier
         intro value _
         unfold halfSpreadAccepted
         rw [decide_eq_true normNonzero, Bool.true_and]
-        apply Purelib.Data.Bool.Decide.eq_of_true_iff
+        apply Data.Bool.Decide.eq_of_true_iff
         constructor
         · intro accepted
           apply decide_eq_true
@@ -1773,7 +1773,7 @@ theorem halfSpreadFiberCounts_sum :
     exact presentation.projectiveCountWhere_congr
       (fun raw => (presentation.certifyNonNull raw).isSome)
       presentation.normNonzeroAccepted
-      (FiniteOddFieldPresentation.certifyNonNull_isSome_eq_normNonzeroAccepted presentation)
+      (certifyNonNull_isSome_eq_normNonzeroAccepted presentation)
   calc
     (presentation.carrier.map presentation.halfSpreadFiberCount).foldr
         Nat.add 0 =
@@ -1831,11 +1831,11 @@ theorem halfSpreadFiberCount_eq_vectorQuadranceCount (value : K)
         decide (vector.quadrance =
           value * ((1 : K) ^ 2 + vector.quadrance))) =
         decide (vector.quadrance = value / (1 - value))
-    apply Purelib.Data.Bool.Decide.eq_of_true_iff
+    apply Data.Bool.Decide.eq_of_true_iff
     constructor
     · intro accepted
       apply decide_eq_true
-      have acceptedParts := Purelib.Data.Bool.Decide.and_true_iff _ _ |>.mp accepted
+      have acceptedParts := Data.Bool.Decide.and_true_iff _ _ |>.mp accepted
       have equation := of_decide_eq_true acceptedParts.2
       apply eq_div_of_mul_eq_counting
         (one_sub_ne_zero_of_ne_one_counting
@@ -1863,7 +1863,7 @@ theorem halfSpreadFiberCount_eq_vectorQuadranceCount (value : K)
                 value * (1 - value)⁻¹ := by rw [complementCancel]; ring1
           _ = (1 - value + value) * (1 - value)⁻¹ := by ring1
           _ = (1 - value)⁻¹ := by ring1
-      apply Purelib.Data.Bool.Decide.and_true_iff _ _ |>.mpr
+      apply Data.Bool.Decide.and_true_iff _ _ |>.mpr
       constructor
       · apply decide_eq_true
         rw [normEquation]
@@ -1875,7 +1875,7 @@ theorem halfSpreadFiberCount_eq_vectorQuadranceCount (value : K)
     unfold halfSpreadAccepted
     apply Bool.eq_false_iff.mpr
     intro accepted
-    have acceptedParts := Purelib.Data.Bool.Decide.and_true_iff _ _ |>.mp accepted
+    have acceptedParts := Data.Bool.Decide.and_true_iff _ _ |>.mp accepted
     have normNonzero := of_decide_eq_true acceptedParts.1
     have equation := of_decide_eq_true acceptedParts.2
     have normQuadrance : raw.norm = raw.vector.quadrance := by
@@ -1907,7 +1907,7 @@ theorem halfSpreadFiberCount_eq_vectorQuadranceCount (value : K)
 
 /-- A non-null scalar-zero proportion has homogeneous half-spread quotient one. -/
 private theorem halfSpreadQuotient_eq_one_of_scalar_zero
-    (proportion : Projective.Basic.NonNullProportion K)
+    (proportion : NonNullProportion K)
     (scalarZero : proportion.scalar = 0) :
     proportion.vector.quadrance / proportion.toProportion.norm = 1 := by
   have normEq : proportion.toProportion.norm =
@@ -1924,7 +1924,7 @@ private theorem halfSpreadQuotient_eq_one_of_scalar_zero
 
 /-- A canonical representative in a non-half-turn fiber is necessarily in the scalar-one affine chart. -/
 theorem halfSpreadFiber_scalar_eq_one {value : K}
-    (notOne : value ≠ 1) (proportion : Projective.Basic.NonNullProportion K)
+    (notOne : value ≠ 1) (proportion : NonNullProportion K)
     (member : proportion ∈ presentation.halfSpreadFiber value) :
     proportion.scalar = 1 := by
   letI : DecidableEq K := presentation.eqDecidable
@@ -1955,7 +1955,7 @@ theorem halfSpreadFiber_scalar_eq_one {value : K}
 
 /-- Elementwise homogeneous-to-affine reduction for a non-half-turn fiber. -/
 theorem halfSpreadFiber_quadrance_eq_affineValue {value : K}
-    (notOne : value ≠ 1) (proportion : Projective.Basic.NonNullProportion K)
+    (notOne : value ≠ 1) (proportion : NonNullProportion K)
     (member : proportion ∈ presentation.halfSpreadFiber value) :
     proportion.vector.quadrance = value / (1 - value) := by
   letI : DecidableEq K := presentation.eqDecidable
@@ -1994,7 +1994,7 @@ theorem halfSpreadFiber_quadrance_eq_affineValue {value : K}
 
 /-- The affine quadric at h divided by one minus h belongs to the h half-spread fiber when h differs from one. -/
 public theorem affineQuadric_member_halfSpreadFiber {value : K}
-    (notOne : value ≠ 1) (proportion : Projective.Basic.NonNullProportion K)
+    (notOne : value ≠ 1) (proportion : NonNullProportion K)
     (member : proportion ∈ presentation.affineQuadricRepresentatives
       (value / (1 - value))) :
     proportion ∈ presentation.halfSpreadFiber value := by
@@ -2036,7 +2036,7 @@ public theorem affineQuadric_member_halfSpreadFiber {value : K}
 `Q(v) = h/(1-h)`. The maps are identity on the cached normalized representatives; the proof establishes that the two
 independently defined lists have exactly the same members. -/
 @[expose] public def affineHalfSpreadFiberBijection (value : K) (notOne : value ≠ 1) :
-    Bijection.ListBijection (presentation.halfSpreadFiber value)
+    ListBijection (presentation.halfSpreadFiber value)
       (presentation.affineQuadricRepresentatives
         (value / (1 - value))) where
   forward := fun proportion => proportion
@@ -2059,7 +2059,7 @@ independently defined lists have exactly the same members. -/
 /-- In the half-turn fiber, the homogeneous equation forces scalar coordinate zero, so the representative is an axis in
 the projective plane at infinity. -/
 theorem halfSpreadFiber_one_scalar_eq_zero
-    (proportion : Projective.Basic.NonNullProportion K)
+    (proportion : NonNullProportion K)
     (member : proportion ∈ presentation.halfSpreadFiber 1) :
     proportion.scalar = 0 := by
   letI : DecidableEq K := presentation.eqDecidable
@@ -2085,12 +2085,12 @@ theorem halfSpreadFiber_one_scalar_eq_zero
       _ = proportion.vector.quadrance -
           proportion.vector.quadrance := by rw [← quadranceEqNorm]
       _ = 0 := by ring1
-  exact Quadratic.Pair.Coordinates.eq_zero_of_square_eq_zero presentation.eqDecidable
+  exact Coordinates.eq_zero_of_square_eq_zero presentation.eqDecidable
     proportion.scalar scalarSquareZero
 
 /-- A certified non-null projective axis belongs to the half-turn fiber. -/
 public theorem projectiveAxis_member_halfSpreadFiber_one
-    (proportion : Projective.Basic.NonNullProportion K)
+    (proportion : NonNullProportion K)
     (member : proportion ∈
       presentation.projectiveNonNullAxisRepresentatives) :
     proportion ∈ presentation.halfSpreadFiber 1 := by
@@ -2109,7 +2109,7 @@ public theorem projectiveAxis_member_halfSpreadFiber_one
 /-- Explicit bijection between the half-turn stratum and the independently listed non-null projective axes (the
 projective plane at infinity with its null conic removed). -/
 @[expose] public def halfTurnProjectiveAxisBijection :
-    Bijection.ListBijection (presentation.halfSpreadFiber 1)
+    ListBijection (presentation.halfSpreadFiber 1)
       presentation.projectiveNonNullAxisRepresentatives where
   forward := fun proportion => proportion
   backward := fun proportion => proportion
@@ -2128,7 +2128,7 @@ projective plane at infinity with its null conic removed). -/
 
 /-- Membership in the projective fiber computes the same half-spread value on the represented rotation. -/
 theorem halfSpread_rotation_eq_value_of_mem (value : K)
-    (proportion : Projective.Basic.NonNullProportion K)
+    (proportion : NonNullProportion K)
     (member : proportion ∈ presentation.halfSpreadFiber value) :
     Spread.halfSpread (NonNullProportion.rotation proportion) = value := by
   letI : DecidableEq K := presentation.eqDecidable
@@ -2139,29 +2139,29 @@ theorem halfSpread_rotation_eq_value_of_mem (value : K)
 
 /-- Under the zero-fiber affine-quadric bijection, the identity is exactly the quadric origin. -/
 theorem zeroFiber_rotation_identity_iff_vector_eq_zero
-    (proportion : Projective.Basic.NonNullProportion K)
+    (proportion : NonNullProportion K)
     (member : proportion ∈ presentation.halfSpreadFiber 0) :
     (NonNullProportion.rotation proportion).matrix = Matrix3.identity ↔
       proportion.vector = Coordinates3.Vector.zero := by
   letI : DecidableEq K := presentation.eqDecidable
   have zeroNotOne : (0 : K) ≠ 1 := by
     intro zeroOne
-    exact FiniteOddFieldPresentation.one_ne_zero presentation zeroOne.symm
+    exact one_ne_zero presentation zeroOne.symm
   have scalarOne := presentation.halfSpreadFiber_scalar_eq_one zeroNotOne
     proportion member
   have scalarNonzero : proportion.scalar ≠ 0 := by
     rw [scalarOne]
-    exact FiniteOddFieldPresentation.one_ne_zero presentation
+    exact one_ne_zero presentation
   have oneInverse : (1 : K)⁻¹ = 1 := by
     have cancel := ExplicitField.mul_inv_cancel (1 : K)
-      (FiniteOddFieldPresentation.one_ne_zero presentation)
+      (one_ne_zero presentation)
     simpa only [_root_.one_mul] using cancel
   have vectorNull : proportion.vector.quadrance = 0 := by
     simpa only [ExplicitField.zero_div] using
       presentation.halfSpreadFiber_quadrance_eq_affineValue zeroNotOne
         proportion member
   let vectorDefined :=
-    (Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation)
+    (Cap.capDenominator_ne_zero_of_null_presentation presentation)
       proportion.vector vectorNull
   have matrixCap : (NonNullProportion.rotation proportion).matrix =
       Cap.cap proportion.vector vectorDefined := by
@@ -2179,48 +2179,48 @@ theorem zeroFiber_rotation_identity_iff_vector_eq_zero
   · intro matrixIdentity
     apply Cap.cap_injective presentation.twoNonzero proportion.vector Coordinates3.Vector.zero
       vectorDefined
-      ((Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation)
+      ((Cap.capDenominator_ne_zero_of_null_presentation presentation)
         Coordinates3.Vector.zero Coordinates3.Vector.quadrance_zero)
     calc
       Cap.cap proportion.vector vectorDefined = (NonNullProportion.rotation proportion).matrix :=
         matrixCap.symm
       _ = Matrix3.identity := matrixIdentity
       _ = Cap.cap Coordinates3.Vector.zero
-          ((Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation)
+          ((Cap.capDenominator_ne_zero_of_null_presentation presentation)
             Coordinates3.Vector.zero Coordinates3.Vector.quadrance_zero) :=
         (((fun {K : Type _} [ExplicitField K] (presentation :
-          Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K) =>
-          (Purelib.Geometry.Rotations.Cayley.FieldRealizations.cap_zero_eq_identity (K := K)
-          (Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation
+          FiniteOddFieldPresentation K) =>
+          (FieldRealizations.cap_zero_eq_identity (K := K)
+          (Cap.capDenominator_ne_zero_of_null_presentation presentation
           Coordinates3.Vector.zero Coordinates3.Vector.quadrance_zero) :
-          Purelib.Geometry.Rotations.Cayley.Cap.cap (Coordinates3.Vector.zero :
+          Cap.cap (Coordinates3.Vector.zero :
           Coordinates3.Vector K)
-          ((Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation)
+          ((Cap.capDenominator_ne_zero_of_null_presentation presentation)
           Coordinates3.Vector.zero Coordinates3.Vector.quadrance_zero) =
-          Purelib.LinearAlgebra.Coordinates3.Matrix3.identity)) presentation)).symm
+          Matrix3.identity)) presentation)).symm
   · intro vectorZero
     calc
       (NonNullProportion.rotation proportion).matrix = Cap.cap proportion.vector vectorDefined :=
         matrixCap
       _ = Cap.cap Coordinates3.Vector.zero
-          ((Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation)
+          ((Cap.capDenominator_ne_zero_of_null_presentation presentation)
             Coordinates3.Vector.zero Coordinates3.Vector.quadrance_zero) :=
-        Purelib.Geometry.Rotations.Cayley.Cap.eq_of_vector_eq vectorZero
+        Cap.eq_of_vector_eq vectorZero
           _ _
       _ = Matrix3.identity := ((fun {K : Type _} [ExplicitField K] (presentation :
-        Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K) =>
-        (Purelib.Geometry.Rotations.Cayley.FieldRealizations.cap_zero_eq_identity (K := K)
-        (Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation
+        FiniteOddFieldPresentation K) =>
+        (FieldRealizations.cap_zero_eq_identity (K := K)
+        (Cap.capDenominator_ne_zero_of_null_presentation presentation
         Coordinates3.Vector.zero Coordinates3.Vector.quadrance_zero) :
-        Purelib.Geometry.Rotations.Cayley.Cap.cap (Coordinates3.Vector.zero :
+        Cap.cap (Coordinates3.Vector.zero :
         Coordinates3.Vector K)
-        ((Purelib.Geometry.Rotations.Cayley.Cap.capDenominator_ne_zero_of_null_presentation presentation)
+        ((Cap.capDenominator_ne_zero_of_null_presentation presentation)
         Coordinates3.Vector.zero Coordinates3.Vector.quadrance_zero) =
-        Purelib.LinearAlgebra.Coordinates3.Matrix3.identity)) presentation)
+        Matrix3.identity)) presentation)
 
 /-- The complementary points of the zero affine quadric are exactly the nonidentity parabolic stratum. -/
 theorem zeroFiber_rotation_nonidentity_iff_vector_ne_zero
-    (proportion : Projective.Basic.NonNullProportion K)
+    (proportion : NonNullProportion K)
     (member : proportion ∈ presentation.halfSpreadFiber 0) :
     (NonNullProportion.rotation proportion).matrix ≠ Matrix3.identity ↔
       proportion.vector ≠ Coordinates3.Vector.zero := by
@@ -2238,7 +2238,7 @@ theorem zeroFiber_rotation_nonidentity_iff_vector_ne_zero
 spread different from both endpoints. -/
 theorem middleFiber_rotation_semisimple {value : K}
     (valueNonzero : value ≠ 0) (notOne : value ≠ 1)
-    (proportion : Projective.Basic.NonNullProportion K)
+    (proportion : NonNullProportion K)
     (member : proportion ∈ presentation.halfSpreadFiber value) :
     Spread.halfSpread (NonNullProportion.rotation proportion) ≠ 0 ∧
       Spread.halfSpread (NonNullProportion.rotation proportion) ≠ 1 := by
@@ -2254,7 +2254,7 @@ theorem middleFiber_rotation_semisimple {value : K}
 
 /-- Every point of the projective-axis quadric complement represents a half-turn rotation. -/
 theorem projectiveAxis_rotation_halfTurn
-    (proportion : Projective.Basic.NonNullProportion K)
+    (proportion : NonNullProportion K)
     (member : proportion ∈
       presentation.projectiveNonNullAxisRepresentatives) :
     Spread.halfSpread (NonNullProportion.rotation proportion) = 1 := by
@@ -2267,7 +2267,7 @@ theorem halfSpreadFiberCount_zero :
       presentation.carrier.length * presentation.carrier.length := by
   have zeroNotOne : (0 : K) ≠ 1 := by
     intro zeroOne
-    exact FiniteOddFieldPresentation.one_ne_zero presentation zeroOne.symm
+    exact one_ne_zero presentation zeroOne.symm
   rw [presentation.halfSpreadFiberCount_eq_vectorQuadranceCount 0 zeroNotOne,
     ExplicitField.zero_div, presentation.vectorQuadranceCount_zero]
 
@@ -2333,7 +2333,7 @@ constructive_injectivity NonHalfTurnFiberCountClassification
           (one_sub_ne_zero_of_ne_one_counting
             notOne), zero_mul] at multiplied
         exact multiplied
-      exact Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.NonHalfTurnFiberCountClassification.zero
+      exact NonHalfTurnFiberCountClassification.zero
         valueZero (by
         rw [valueZero]
         exact presentation.halfSpreadFiberCount_zero)
@@ -2345,7 +2345,7 @@ constructive_injectivity NonHalfTurnFiberCountClassification
         change value / (1 - value) = 0
         rw [valueZero, ExplicitField.zero_div]
       exact
-        Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.NonHalfTurnFiberCountClassification.splitSquare
+        NonHalfTurnFiberCountClassification.splitSquare
         valueNonzero
         minusOneRoot affineRoot minusOneSquare affineSquare
         (reduction.trans (vectorSliced.trans count))
@@ -2426,7 +2426,7 @@ constructive_injectivity MiddleHalfSpreadFiberCountClassification
       exact False.elim (valueNonzero valueZero)
   | splitSquare _ minusOneRoot affineRoot minusOneSquare affineSquare count =>
       refine
-        Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.MiddleHalfSpreadFiberCountClassification.large
+        MiddleHalfSpreadFiberCountClassification.large
         (minusOneRoot * affineRoot * complement) ?_ count
       calc
         (minusOneRoot * affineRoot * complement) ^ 2 =
@@ -2452,7 +2452,7 @@ constructive_injectivity MiddleHalfSpreadFiberCountClassification
         (minusOneRoot * complement) affineValue squareValueNonzero
         squareEquation affineNoRoot
       refine
-        Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.MiddleHalfSpreadFiberCountClassification.small
+        MiddleHalfSpreadFiberCountClassification.small
         ?_ count
       intro root rootSquare
       apply productNoRoot root
@@ -2480,7 +2480,7 @@ constructive_injectivity MiddleHalfSpreadFiberCountClassification
         (affineRoot * complement) (-1) squareValueNonzero squareEquation
         minusOneNoRoot
       refine
-        Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.MiddleHalfSpreadFiberCountClassification.small
+        MiddleHalfSpreadFiberCountClassification.small
         ?_ count
       intro root rootSquare
       apply productNoRoot root
@@ -2495,7 +2495,7 @@ constructive_injectivity MiddleHalfSpreadFiberCountClassification
       let witness := (FiniteOddFieldPresentation.nonsquareMulNonsquareSquareWitness presentation)
         (-1) affineValue minusOneNoRoot affineNoRoot
       refine
-        Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.MiddleHalfSpreadFiberCountClassification.large
+        MiddleHalfSpreadFiberCountClassification.large
         (witness.root * complement) ?_ count
       calc
         (witness.root * complement) ^ 2 =
@@ -2559,11 +2559,11 @@ theorem rotationCount_formula :
         presentation.carrier.length *
           (presentation.carrier.length * presentation.carrier.length) -
             presentation.carrier.length :=
-      FiniteOddFieldPresentation.nat_eq_sub_of_add_eq_counting totalAdd
+      nat_eq_sub_of_add_eq_counting totalAdd
     _ = presentation.carrier.length *
         (presentation.carrier.length * presentation.carrier.length - 1) := by
       symm
-      rw [Purelib.Data.Nat.Multiplication.left_sub_distrib, Nat.mul_one]
+      rw [Data.Nat.Multiplication.left_sub_distrib, Nat.mul_one]
 
 /-- The order formula stated directly for the duplicate-free rotation list, with the projective representative bijection
 used as the cardinal bridge. -/
@@ -2630,7 +2630,7 @@ theorem quadranceClassKernelCount_formula :
         congr 1
         ring1
       _ = kernelLength :=
-        Purelib.Data.Nat.Division.mul_div_cancel_left kernelLength (by decide : 0 < 2)
+        Data.Nat.Division.mul_div_cancel_left kernelLength (by decide : 0 < 2)
   calc
     presentation.quadranceClassKernelCount = kernelLength :=
       presentation.quadranceClassKernelCount_eq_length
@@ -2653,7 +2653,7 @@ scalar-one chart. -/
 theorem parabolicCount_eq_nonzeroNullVectors_length :
     presentation.parabolicCount = presentation.nonzeroNullVectors.length := by
   letI : DecidableEq K := presentation.eqDecidable
-  unfold parabolicCount FiniteOddFieldPresentation.nonzeroNullVectors
+  unfold parabolicCount nonzeroNullVectors
   rw [presentation.vectorCountWhere_eq_length_filter]
 
 /-- Adding the identity to the parabolic count gives the square of the field size. -/
@@ -2673,7 +2673,7 @@ theorem parabolicCount_formula :
   calc
     presentation.parabolicCount =
         (presentation.parabolicCount + 1) - 1 :=
-      (Purelib.Data.Nat.Subtraction.add_sub_cancel_right presentation.parabolicCount 1).symm
+      (Data.Nat.Subtraction.add_sub_cancel_right presentation.parabolicCount 1).symm
     _ = presentation.carrier.length * presentation.carrier.length - 1 :=
       congrArg (fun count => count - 1) added
 
@@ -2692,10 +2692,10 @@ structure ProblemSixtyNineSolution where
     rotationMatrixCarrier.values =
       presentation.rotationMatrixEnumeration.values
   /-- The finite-list bijection between canonical proportions and rotations. -/ projectiveRotationEquivalence :
-    Bijection.ListBijection
+    ListBijection
     presentation.nonNullProjectiveRepresentatives presentation.rotations
   /-- The finite-list bijection between raw non-null proportions and canonical scale coordinates. -/
-    rawScaleOrbitEquivalence : Bijection.ListBijection
+    rawScaleOrbitEquivalence : ListBijection
     presentation.allNonNullProportionRepresentatives
       presentation.scaleOrbitCoordinates
   /-- The raw proportion count includes the q minus one nonzero scales per canonical rotation. -/ rawProportionCount :
@@ -2708,25 +2708,25 @@ structure ProblemSixtyNineSolution where
     presentation.carrier.length *
       (presentation.carrier.length * presentation.carrier.length - 1)
   /-- An executable identity, parabolic, half-turn or semisimple classification of each rotation. -/ classifyStratum : ∀
-    rotation : Rotations.Basic.Rotation K,
+    rotation : Rotation K,
     presentation.RotationStratum rotation
   /-- Each non-half-turn fiber is explicitly bijective with its affine ternary quadric. -/ affineFiberQuadricEquivalence
     : ∀ value : K, value ≠ 1 →
-    Bijection.ListBijection (presentation.halfSpreadFiber value)
+    ListBijection (presentation.halfSpreadFiber value)
       (presentation.affineQuadricRepresentatives
         (value / (1 - value)))
   /-- The half-turn fiber is explicitly bijective with the non-null projective axes. -/
-    halfTurnProjectiveAxisEquivalence : Bijection.ListBijection
+    halfTurnProjectiveAxisEquivalence : ListBijection
     (presentation.halfSpreadFiber 1)
       presentation.projectiveNonNullAxisRepresentatives
   /-- The origin of the zero-fiber affine quadric corresponds exactly to the identity rotation. -/
-    zeroFiberIdentityPoint : ∀ proportion : Projective.Basic.NonNullProportion K,
+    zeroFiberIdentityPoint : ∀ proportion : NonNullProportion K,
     proportion ∈ presentation.halfSpreadFiber 0 →
       ((NonNullProportion.rotation proportion).matrix = Matrix3.identity ↔
         proportion.vector = Coordinates3.Vector.zero)
   /-- A non-endpoint half-spread fiber contains only semisimple rotations. -/ middleFiberSemisimple : ∀ value : K, value
     ≠ 0 → value ≠ 1 →
-    ∀ proportion : Projective.Basic.NonNullProportion K,
+    ∀ proportion : NonNullProportion K,
       proportion ∈ presentation.halfSpreadFiber value →
         Spread.halfSpread (NonNullProportion.rotation proportion) ≠ 0 ∧
           Spread.halfSpread (NonNullProportion.rotation proportion) ≠ 1
@@ -2754,17 +2754,17 @@ structure ProblemSixtyNineSolution where
       (presentation.parabolicRotationsOverDirection direction member).length =
         presentation.carrier.length - 1
   /-- Recover canonical direction and scalar coordinates from a nonidentity zero-half-spread rotation. -/
-    parabolicCoordinates : ∀ rotation : Rotations.Basic.Rotation K,
+    parabolicCoordinates : ∀ rotation : Rotation K,
     ∀ _spreadZero : Spread.halfSpread rotation = 0,
     ∀ _nonidentity : rotation.matrix ≠ Matrix3.identity,
       presentation.ParabolicDirectionCoordinates rotation
   /-- The unipotent characteristic polynomial is equivalent to half spread zero. -/ characteristicParabolicEquivalence :
-    ∀ rotation : Rotations.Basic.Rotation K,
+    ∀ rotation : Rotation K,
     (∀ X : K,
       Matrix3.characteristicValue rotation.matrix X = (X - 1) ^ 3) ↔
         Spread.halfSpread rotation = 0
   /-- Recover parabolic coordinates from the characteristic polynomial and nonidentity evidence. -/
-    parabolicCoordinatesFromCharacteristic : ∀ rotation : Rotations.Basic.Rotation K,
+    parabolicCoordinatesFromCharacteristic : ∀ rotation : Rotation K,
     (∀ X : K,
       Matrix3.characteristicValue rotation.matrix X = (X - 1) ^ 3) →
     rotation.matrix ≠ Matrix3.identity →
@@ -2772,14 +2772,14 @@ structure ProblemSixtyNineSolution where
   /-- The nonidentity parabolic count is q squared minus one. -/ parabolicAnchorCount : presentation.parabolicCount =
     presentation.carrier.length * presentation.carrier.length - 1
   /-- Every nonidentity zero-half-spread rotation has a displayed nonzero null cap anchor. -/ parabolicComplete : ∀
-    rotation : Rotations.Basic.Rotation K,
+    rotation : Rotation K,
     Spread.halfSpread rotation = 0 → rotation.matrix ≠ Matrix3.identity →
       ∃ vector : Coordinates3.Vector K, ∃ null : vector.quadrance = 0,
         vector ≠ Coordinates3.Vector.zero ∧
         vector ∈ presentation.nonzeroNullVectors ∧
           rotation = presentation.parabolicRotation vector null
   /-- Every nonidentity rotation with the unipotent characteristic polynomial has a displayed null cap anchor. -/
-    parabolicCompleteFromCharacteristic : ∀ rotation : Rotations.Basic.Rotation K,
+    parabolicCompleteFromCharacteristic : ∀ rotation : Rotation K,
     (∀ X : K,
       Matrix3.characteristicValue rotation.matrix X = (X - 1) ^ 3) →
     rotation.matrix ≠ Matrix3.identity →
@@ -2796,18 +2796,18 @@ structure ProblemSixtyNineSolution where
     (presentation.carrier.length + 1) *
       (presentation.carrier.length + 1)
   /-- Compute a rotation representing any displayed nonzero square class. -/ quadranceClassPreimage :
-    SquareClass.Basic.SquareClassRepresentative K → Rotations.Basic.Rotation K
+    SquareClassRepresentative K → Rotation K
   /-- The computed rotation realizes its requested square-class representative. -/ quadranceClassPreimageRealizes : ∀
-    target : SquareClass.Basic.SquareClassRepresentative K,
+    target : SquareClassRepresentative K,
     letI : DecidableEq K := presentation.eqDecidable
     (RotationQuadranceClass.ofRotation
       (quadranceClassPreimage target) presentation.twoNonzero).Equivalent target
   /-- An explicit finite-list bijection exchanges the two quadrance-class fibers. -/ quadranceClassFiberSwitch :
-    Bijection.ListBijection
+    ListBijection
     presentation.quadranceClassKernel
     presentation.quadranceClassNontrivialFiber
   /-- The square-norm kernel consists exactly of canonical proportions with unit representatives. -/
-    quadranceClassKernelCharacterization : ∀ proportion : Projective.Basic.NonNullProportion K,
+    quadranceClassKernelCharacterization : ∀ proportion : NonNullProportion K,
     proportion ∈ presentation.quadranceClassKernel ↔
       proportion ∈ presentation.nonNullProjectiveRepresentatives ∧
         (QuaternionObstruction.HasUnitRepresentative proportion)
@@ -2938,8 +2938,8 @@ section
 
 /-- The counted finite square-norm list is exactly this kernel predicate on the canonical projective carrier. -/
 theorem mem_quadranceClassKernel_iff_hasUnitRepresentative
-    (presentation : Presentation.FiniteOddFieldPresentation K)
-    (proportion : Projective.Basic.NonNullProportion K) :
+    (presentation : FiniteOddFieldPresentation K)
+    (proportion : NonNullProportion K) :
     proportion ∈ presentation.quadranceClassKernel ↔
       proportion ∈ presentation.nonNullProjectiveRepresentatives ∧
         OpenProblems.Contains proportion :=

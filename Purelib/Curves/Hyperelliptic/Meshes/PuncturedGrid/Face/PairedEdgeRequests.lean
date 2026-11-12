@@ -1,4 +1,5 @@
 module
+import Purelib.Polynomial.Dense.Gaussian.Basic
 meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Data.Nat.Order
 import Purelib.Data.List.Membership
@@ -98,6 +99,7 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedEdgeReque
 
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 open Purelib.Curves.Hyperelliptic.Branches (BranchCellBank)
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 open Purelib.Data.Rat.Fraction (Rational)
@@ -111,7 +113,7 @@ open Purelib.Riemann.Readings.PreparedPrimitiveSamples (differentialNumerator)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face :
@@ -124,16 +126,16 @@ set_option genInjectivity false in
 
 The request keeps both numerical models, their source charts and exact
 endpoints. Its stage and accuracy certificate belong to that same piece. -/
-structure Local (domains : DomainBanks.FaceDomains frames face) (differential : Differentials.Basic.Differential genus)
-    (piece : RectangularPairedSegments.PairedSegmentPiece (domains.domain 0).geometry (domains.domain 1).geometry)
-      (target : Fraction.Rational) where
-  /-- The cached overlap bounds on the actual first-sheet model cell and supplied differential. -/ bounds :
-    PrimitiveEdgeComparison.PrimitiveOverlapBounds
+structure Local (domains : DomainBanks.FaceDomains frames face) (differential : Differential genus)
+    (piece : PairedSegmentPiece (domains.domain 0).geometry (domains.domain 1).geometry)
+      (target : Rational) (numerator : CoefficientPolynomial := differentialNumerator differential) where
+  /-- The cached overlap bounds for the actual polynomial numerator on the retained first-sheet model cell. -/ bounds :
+    PrimitiveOverlapBounds
     (face.clearance.restrict ((domains.domain 0).patch.transported.cell piece.leftColumn
       piece.leftRow).geometry.refines)
-    (PreparedPrimitiveSamples.differentialNumerator differential)
+    numerator
   /-- The cached primitive-increment request on these exact two retained models and endpoints. -/ request :
-    PrimitiveEdgeComparison.PrimitiveEdgeAccuracy bounds ((domains.domain 0).patch.models.ready piece.leftColumn
+    PrimitiveEdgeAccuracy bounds ((domains.domain 0).patch.models.ready piece.leftColumn
     piece.leftRow).model
     ((domains.domain 1).patch.models.ready piece.rightColumn piece.rightRow).model piece.first piece.last target
 
@@ -141,15 +143,16 @@ constructive_injectivity Local
 
 /-- Cache the overlap bound and local accuracy request for these exact two retained models and segment endpoints. -/
 @[expose] def Local.build (domains : DomainBanks.FaceDomains frames face) (differential :
-  Differentials.Basic.Differential genus)
-    (piece : RectangularPairedSegments.PairedSegmentPiece (domains.domain 0).geometry (domains.domain 1).geometry)
-    (target : Fraction.Rational) (positive : 0 < target) :
+  Differential genus)
+    (piece : PairedSegmentPiece (domains.domain 0).geometry (domains.domain 1).geometry)
+    (target : Rational) (positive : 0 < target)
+    (numerator : CoefficientPolynomial := differentialNumerator differential) :
       Local domains differential
-      piece target :=
+      piece target numerator :=
   let bounds := PrimitiveOverlapBounds.build
     (face.clearance.restrict ((domains.domain 0).patch.transported.cell piece.leftColumn
       piece.leftRow).geometry.refines)
-    (PreparedPrimitiveSamples.differentialNumerator differential)
+    numerator
   ⟨bounds, PrimitiveEdgeAccuracy.build bounds _ _ _ _ target positive⟩
 
 set_option genInjectivity false in
@@ -157,19 +160,21 @@ set_option genInjectivity false in
 
 The head request and tail spine retain the original split-piece order,
 including repetitions, with each request attached to its actual piece. -/
-inductive Locals (domains : DomainBanks.FaceDomains frames face) (differential : Differentials.Basic.Differential genus)
-  (target : Fraction.Rational) :
-    List (RectangularPairedSegments.PairedSegmentPiece (domains.domain 0).geometry (domains.domain 1).geometry) → Type
-  /-- The empty local request bank for an empty retained piece list. -/ | nil :
+inductive Locals (domains : DomainBanks.FaceDomains frames face) (differential : Differential genus)
+  (target : Rational) :
+    List (PairedSegmentPiece (domains.domain 0).geometry (domains.domain 1).geometry) →
+      (numerator : optParam CoefficientPolynomial (differentialNumerator differential)) → Type
+  /-- The empty local request bank for an empty retained piece list. -/ | nil {numerator : CoefficientPolynomial} :
     Locals domains
-    differential target []
-  /-- Retain the request for the actual first piece and the exact dependent tail. -/ | cons {piece rest} (localRequest :
+    differential target [] numerator
+  /-- Retain the request for the actual first piece and the exact dependent tail. -/ | cons {piece rest}
+    {numerator : CoefficientPolynomial} (localRequest :
     Local domains differential piece
-    target)
+    target numerator)
       (tail : Locals domains
-        differential target rest) :
+        differential target rest numerator) :
         Locals domains
-        differential target (piece :: rest)
+        differential target (piece :: rest) numerator
 
 constructive_injectivity Locals
 
@@ -177,40 +182,37 @@ namespace Locals
 
 variable {domains : FaceDomains frames face}
   {differential : Differential genus} {target :
-  Rational}
+  Rational} {numerator : CoefficientPolynomial}
 
 /-- Prepare every actual paired split piece at the supplied positive local target. -/
-@[expose] def build (domains : DomainBanks.FaceDomains frames face) (differential : Differentials.Basic.Differential
-  genus) (target : Fraction.Rational) (positive : 0 < target) :
-    (pieces : List (RectangularPairedSegments.PairedSegmentPiece (domains.domain 0).geometry (domains.domain
-      1).geometry)) →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedEdgeRequests.PairedEdgeRequest.Locals domains differential
-        target pieces
-  | [] => .nil
-  | piece :: rest => .cons
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedEdgeRequests.PairedEdgeRequest.Local.build domains
-    differential piece target positive)
-      (build domains
-        differential target positive rest)
+@[expose] def build (domains : DomainBanks.FaceDomains frames face) (differential : Differential
+  genus) (target : Rational) (positive : 0 < target) :
+    (pieces : List (PairedSegmentPiece (domains.domain 0).geometry (domains.domain 1).geometry)) →
+      (numerator : optParam CoefficientPolynomial (differentialNumerator differential)) →
+        Locals domains differential target pieces numerator
+  | [], _ => .nil
+  | piece :: rest, numerator => .cons
+      (Local.build domains differential piece target positive numerator)
+      (build domains differential target positive rest numerator)
 
 /-- Read the common maximum of all retained local model indices. -/
-@[expose] def index : {pieces : List (RectangularPairedSegments.PairedSegmentPiece (domains.domain 0).geometry
+@[expose] def index : {pieces : List (PairedSegmentPiece (domains.domain 0).geometry
   (domains.domain 1).geometry)} →
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedEdgeRequests.PairedEdgeRequest.Locals domains differential
-      target pieces → Nat
+    Locals domains differential
+      target pieces numerator → Nat
   | _, .nil => 0
   | _, .cons head tail => max head.request.index tail.index
 
 /-- Every actual retained paired piece satisfies its paid opposite-sheet primitive-sum error at independently later
 indices. -/
-theorem accurate {pieces : List (RectangularPairedSegments.PairedSegmentPiece (domains.domain 0).geometry
+theorem accurate {pieces : List (PairedSegmentPiece (domains.domain 0).geometry
   (domains.domain 1).geometry)}
-    (requests : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedEdgeRequests.PairedEdgeRequest.Locals domains
-      differential target pieces) {leftIndex rightIndex : Nat}
-    (first : PrimitiveData.DomainPrimitives (domains.domain 0) differential leftIndex)
-    (second : PrimitiveData.DomainPrimitives (domains.domain 1) differential rightIndex)
+    (requests : Locals domains
+      differential target pieces numerator) {leftIndex rightIndex : Nat}
+    (first : DomainPrimitives (domains.domain 0) differential leftIndex (numerator := numerator))
+    (second : DomainPrimitives (domains.domain 1) differential rightIndex (numerator := numerator))
     (leftLater : requests.index ≤ leftIndex) (rightLater : requests.index ≤ rightIndex)
-    (piece : RectangularPairedSegments.PairedSegmentPiece (domains.domain 0).geometry (domains.domain 1).geometry)
+    (piece : PairedSegmentPiece (domains.domain 0).geometry (domains.domain 1).geometry)
       (member : piece ∈ pieces) :
     Data.Gaussian.Norm.Basic.normSq ((first.primitives.value piece.leftColumn piece.leftRow piece.last -
         first.primitives.value piece.leftColumn piece.leftRow piece.first) +
@@ -223,7 +225,8 @@ theorem accurate {pieces : List (RectangularPairedSegments.PairedSegmentPiece (d
       · exact FaceDomains.cell_primitive_sum_accurate domains _ _ _ _ head.request first second
           piece.leftFirst piece.leftLast piece.rightFirst piece.rightLast
           ((Data.Nat.Order.le_max_left _ _).trans leftLater) ((Data.Nat.Order.le_max_left _ _).trans rightLater)
-      · exact ih ((Data.Nat.Order.le_max_right _ _).trans leftLater) ((Data.Nat.Order.le_max_right _ _).trans
+      · exact ih first second ((Data.Nat.Order.le_max_right _ _).trans leftLater)
+          ((Data.Nat.Order.le_max_right _ _).trans
           rightLater) remaining
 
 end Locals
@@ -235,24 +238,24 @@ set_option genInjectivity false in
 The actual split count pays each local fragment and both grid-owner errors, and the common index preserves the two
 original domain caches. -/
 structure PairedEdgeRequest (domains : DomainBanks.FaceDomains frames face) (differential :
-  Differentials.Basic.Differential genus)
-    (first last : Data.Gaussian.Basic.Canonical) (target : Fraction.Rational) where
+  Differential genus)
+    (first last : Gaussian) (target : Rational)
+    (numerator : CoefficientPolynomial := differentialNumerator differential) where
   /-- The supplied whole-edge target is positive. -/ positive : 0 < target
   /-- The cached split of the original endpoints across both retained sheet-domain grids. -/ split :
-    RectangularPairedSegments.PairedSegmentSplit (domains.domain 0).cuts (domains.domain 1).cuts first last
-  /-- The cached count-dependent target for each actual split piece. -/ perPiece : Fraction.Rational
+    PairedSegmentSplit (domains.domain 0).cuts (domains.domain 1).cuts first last
+  /-- The cached count-dependent target for each actual split piece. -/ perPiece : Rational
   /-- The per-piece target is the finite allocation from one quarter of the whole-edge target. -/ perPiece_eq : perPiece
     = Aggregate.perTerm (target / 4) split.count
-  /-- The cached whole-face primitive overlap bounds for the supplied differential. -/ globalBounds :
-    PrimitiveEdgeComparison.PrimitiveOverlapBounds face.clearance (PreparedPrimitiveSamples.differentialNumerator
-    differential)
+  /-- The cached whole-face primitive overlap bounds for the supplied polynomial numerator. -/ globalBounds :
+    PrimitiveOverlapBounds face.clearance numerator
   /-- The retained first-sheet ownership accuracy request. -/ leftGrid :
-    RectangularPrimitiveAccuracy.GridPrimitiveAccuracy globalBounds (domains.domain 0).steps (perPiece / 256)
+    GridPrimitiveAccuracy globalBounds (domains.domain 0).steps (perPiece / 256)
   /-- The retained second-sheet ownership accuracy request. -/ rightGrid :
-    RectangularPrimitiveAccuracy.GridPrimitiveAccuracy globalBounds (domains.domain 1).steps (perPiece / 256)
+    GridPrimitiveAccuracy globalBounds (domains.domain 1).steps (perPiece / 256)
   /-- The cached local opposite-sheet primitive comparisons on the exact split pieces. -/ locals :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedEdgeRequests.PairedEdgeRequest.Locals domains differential
-    (perPiece / 4) split.pieces
+    PairedEdgeRequest.Locals domains differential
+    (perPiece / 4) split.pieces numerator
   /-- The cached common lower index for both ownership requests and all local comparisons. -/ index : Nat
   /-- The common index is exactly the maximum of both grid requests and the retained local request bank. -/ index_eq :
     index = max (max leftGrid.index rightGrid.index) locals.index
@@ -263,12 +266,13 @@ namespace PairedEdgeRequest
 
 /-- Cache the actual two-domain split, both ownership budgets and every local primitive request before selecting a
 shared stage. -/
-@[expose] def build (domains : DomainBanks.FaceDomains frames face) (differential : Differentials.Basic.Differential
-  genus) (first last : Data.Gaussian.Basic.Canonical)
+@[expose] def build (domains : DomainBanks.FaceDomains frames face) (differential : Differential
+  genus) (first last : Gaussian)
     (firstInside : face.cell.box.Contains first) (lastInside : face.cell.box.Contains last)
-    (target : Fraction.Rational) (positive : 0 < target) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedEdgeRequests.PairedEdgeRequest domains differential first
-      last target :=
+    (target : Rational) (positive : 0 < target)
+    (numerator : CoefficientPolynomial := differentialNumerator differential) :
+      PairedEdgeRequest domains differential first
+      last target numerator :=
   let split := PairedSegmentSplit.build (domains.domain 0).cuts (domains.domain 1).cuts first last
     ((domains.domain 0).covers firstInside) ((domains.domain 0).covers lastInside)
     ((domains.domain 1).covers firstInside) ((domains.domain 1).covers lastInside)
@@ -276,42 +280,42 @@ shared stage. -/
   have perPositive : 0 < perPiece := Aggregate.perTerm_positive
     (Fraction.Order.Field.div_pos_direct positive (by decide)) _
   let globalBounds := PrimitiveOverlapBounds.build
-    face.clearance (PreparedPrimitiveSamples.differentialNumerator differential)
+    face.clearance numerator
   let leftGrid := GridPrimitiveAccuracy.build globalBounds (domains.domain 0).steps (perPiece / 256)
     (Fraction.Order.Field.div_pos_direct perPositive (by decide +kernel))
   let rightGrid := GridPrimitiveAccuracy.build globalBounds (domains.domain 1).steps (perPiece / 256)
     (Fraction.Order.Field.div_pos_direct perPositive (by decide +kernel))
-  let locals := Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedEdgeRequests.PairedEdgeRequest.Locals.build domains
+  let locals := Locals.build domains
     differential (perPiece / 4)
-    (Fraction.Order.Field.div_pos_direct perPositive (by decide)) split.pieces
+    (Fraction.Order.Field.div_pos_direct perPositive (by decide)) split.pieces numerator
   ⟨positive, split, perPiece, rfl, globalBounds, leftGrid, rightGrid, locals,
     max (max leftGrid.index rightGrid.index) locals.index, rfl⟩
 
 variable {domains : FaceDomains frames face}
   {differential : Differential genus} {first last :
-  Purelib.Data.Gaussian.Basic.Canonical} {target : Rational}
+  Gaussian} {target : Rational} {numerator : CoefficientPolynomial}
 
 /-- The retained count-dependent piece allocation is positive. -/
-theorem perPiece_positive (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedEdgeRequests.PairedEdgeRequest
-  domains differential first last target) : 0 < request.perPiece := by
+theorem perPiece_positive (request : PairedEdgeRequest
+  domains differential first last target numerator) : 0 < request.perPiece := by
   rw [request.perPiece_eq]
   exact Aggregate.perTerm_positive (Fraction.Order.Field.div_pos_direct request.positive (by decide)) _
 
 /-- The common request index bounds the retained first-sheet ownership index. -/
-theorem left_later (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedEdgeRequests.PairedEdgeRequest
-  domains differential first last target) : request.leftGrid.index ≤ request.index := by
+theorem left_later (request : PairedEdgeRequest
+  domains differential first last target numerator) : request.leftGrid.index ≤ request.index := by
   rw [request.index_eq]
   exact (Data.Nat.Order.le_max_left _ _).trans (Data.Nat.Order.le_max_left _ _)
 
 /-- The common request index bounds the retained second-sheet ownership index. -/
-theorem right_later (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedEdgeRequests.PairedEdgeRequest
-  domains differential first last target) : request.rightGrid.index ≤ request.index := by
+theorem right_later (request : PairedEdgeRequest
+  domains differential first last target numerator) : request.rightGrid.index ≤ request.index := by
   rw [request.index_eq]
   exact (Data.Nat.Order.le_max_right _ _).trans (Data.Nat.Order.le_max_left _ _)
 
 /-- The common request index bounds every retained local primitive comparison. -/
-theorem locals_later (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedEdgeRequests.PairedEdgeRequest
-  domains differential first last target) : request.locals.index ≤ request.index := by
+theorem locals_later (request : PairedEdgeRequest
+  domains differential first last target numerator) : request.locals.index ≤ request.index := by
   rw [request.index_eq]
   exact Data.Nat.Order.le_max_right _ _
 

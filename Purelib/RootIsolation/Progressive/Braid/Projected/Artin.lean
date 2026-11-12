@@ -51,33 +51,33 @@ namespace BraidClassSame
 theorem refl {strands : Nat} {start finish
   : ProjectedFrame strands}
     (path : ProjectedPath start finish) :
-      Progressive.Braid.Projected.Artin.BraidClassSame path path :=
+      BraidClassSame path path :=
   Equivalent.refl path.word
 
 /-- Reverse the finite Artin equivalence between two retained path words. -/
 theorem symm {strands : Nat} {start finish
   : ProjectedFrame strands}
     {left right : ProjectedPath start finish}
-    (same : Progressive.Braid.Projected.Artin.BraidClassSame left right) :
-      Progressive.Braid.Projected.Artin.BraidClassSame right left :=
+    (same : BraidClassSame left right) :
+      BraidClassSame right left :=
   Equivalent.symm same
 
 /-- Compose finite Artin equivalences of three retained path words. -/
 theorem trans {strands : Nat} {start
   finish : ProjectedFrame strands}
     {first second third : ProjectedPath start finish}
-    (firstSecond : Progressive.Braid.Projected.Artin.BraidClassSame first second)
-    (secondThird : Progressive.Braid.Projected.Artin.BraidClassSame second third) :
-    Progressive.Braid.Projected.Artin.BraidClassSame first third :=
+    (firstSecond : BraidClassSame first second)
+    (secondThird : BraidClassSame second third) :
+    BraidClassSame first third :=
   Equivalent.trans firstSecond secondThird
 
 /-- An event-preserving refinement retains the original projected path's braid class. -/
 theorem of_refinement {strands : Nat}
     {start finish : ProjectedFrame strands}
     {coarse fine : ProjectedPath start finish}
-    (refinement : RootIsolation.Progressive.Braid.Projected.Refinement coarse fine) :
-      Progressive.Braid.Projected.Artin.BraidClassSame coarse fine := by
-  unfold Progressive.Braid.Projected.Artin.BraidClassSame
+    (refinement : Refinement coarse fine) :
+      BraidClassSame coarse fine := by
+  unfold BraidClassSame
   rw [refinement.word_eq]
   exact Equivalent.refl _
 
@@ -86,11 +86,11 @@ theorem append {strands : Nat}
     {start middle finish : ProjectedFrame strands}
     {firstLeft firstRight : ProjectedPath start middle}
     {secondLeft secondRight : ProjectedPath middle finish}
-    (first : Progressive.Braid.Projected.Artin.BraidClassSame firstLeft firstRight)
-    (second : Progressive.Braid.Projected.Artin.BraidClassSame secondLeft secondRight) :
-    Progressive.Braid.Projected.Artin.BraidClassSame (firstLeft.append secondLeft)
+    (first : BraidClassSame firstLeft firstRight)
+    (second : BraidClassSame secondLeft secondRight) :
+    BraidClassSame (firstLeft.append secondLeft)
       (firstRight.append secondRight) := by
-  unfold Progressive.Braid.Projected.Artin.BraidClassSame
+  unfold BraidClassSame
   rw [ProjectedPath.word_append,
     ProjectedPath.word_append]
   exact Equivalent.append first second
@@ -99,7 +99,7 @@ theorem append {strands : Nat}
 theorem transport_eq {strands : Nat}
     {start finish : ProjectedFrame strands}
     {left right : ProjectedPath start finish}
-    (same : Progressive.Braid.Projected.Artin.BraidClassSame left right) (position : Fin strands) :
+    (same : BraidClassSame left right) (position : Fin strands) :
     left.chamberPath.transport.forward (start.ownerIndex position) =
       right.chamberPath.transport.forward (start.ownerIndex position) := by
   calc
@@ -115,7 +115,7 @@ theorem transport_eq {strands : Nat}
 theorem writhe_eq {strands : Nat}
     {start finish : ProjectedFrame strands}
     {left right : ProjectedPath start finish}
-    (same : Progressive.Braid.Projected.Artin.BraidClassSame left right) :
+    (same : BraidClassSame left right) :
     left.word.writhe = right.word.writhe :=
   Equivalent.writhe_eq same
 

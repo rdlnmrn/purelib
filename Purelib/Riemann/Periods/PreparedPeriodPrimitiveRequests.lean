@@ -47,8 +47,8 @@ open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius quarterRadius
 /-- The canonical Gaussian rational scalar type. -/
 abbrev Gaussian := Gaussian.Basic.Canonical
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {source :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} {root : Named}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {source :
+  Differential genus} {root : Named}
   {target : Coordinate}
 
 set_option genInjectivity false in
@@ -57,8 +57,8 @@ set_option genInjectivity false in
 The chosen stage meets the requested minimum and pays the spatial half-target before numerical sampling, so a finite
 family can synchronize stages first. -/
 structure PeriodTail (initial : RootClosedState curve source root) (targets : List
-  (Hyperelliptic.Differentials.Basic.Differential genus))
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus)
+  (Differential genus))
+    (differential : Differential genus)
     (request : ControlledSumRequest (initial.state.parents.map (recastCenteredEdge differential)) count target)
     (minimumStage : Nat) where
   /-- The retained decay budget from the original controlled primitive requests and schedule scale. -/ budget :
@@ -67,7 +67,7 @@ structure PeriodTail (initial : RootClosedState curve source root) (targets : Li
   /-- The certified tail floor meets the requested minimum stage. -/ stage_ge : minimumStage ≤ stage
   /-- The certified tail floor is strictly positive. -/ stage_positive : 0 < stage
   /-- The retained tail floor pays the spatial error strictly within half the target. -/ spatial_small :
-    Rational.Geometric.Basic.quarterRadius budget.spatialScale stage < target / 2
+    quarterRadius budget.spatialScale stage < target / 2
 
 constructive_injectivity PeriodTail
 
@@ -77,8 +77,8 @@ set_option genInjectivity false in
 The numerical value has an exact readback to the original flat model and a strict comparison with the same controlled
 primitive sum. -/
 structure PeriodSample (initial : RootClosedState curve source root) (targets : List
-  (Hyperelliptic.Differentials.Basic.Differential genus))
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus)
+  (Differential genus))
+    (differential : Differential genus)
     (request : ControlledSumRequest (initial.state.parents.map (recastCenteredEdge differential)) count target)
     (minimumStage : Nat) extends PeriodTail initial targets differential request minimumStage where
   /-- The cached numerical Gaussian sample of the original period model. -/ sample : Gaussian
@@ -96,8 +96,8 @@ namespace PeriodTail
 The original request mass supplies the decay budget, and an explicit quarter-radius search pays the spatial half-target
 without acquiring a numerical sample. -/
 @[expose] def acquire (initial : RootClosedState curve source root) (targets : List
-  (Hyperelliptic.Differentials.Basic.Differential genus))
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus)
+  (Differential genus))
+    (differential : Differential genus)
     (request : ControlledSumRequest (initial.state.parents.map (recastCenteredEdge differential)) count target)
     (minimumStage : Nat) : PeriodTail initial targets differential request minimumStage := by
   let budget := DecayBudget.ofMass request.requests (initial.state.scheduleBase targets) request.mass request.mass_eq
@@ -105,7 +105,7 @@ without acquiring a numerical sample. -/
   have halfPositive : 0 < half := Rat.Fraction.Order.Field.div_pos_direct request.target_positive (by decide)
   let first := Rational.Geometric.Search.firstQuarterBelow budget.spatialScale 0 half
   let stage := max minimumStage first + 1
-  have spatialSmall : Rational.Geometric.Basic.quarterRadius budget.spatialScale stage < half :=
+  have spatialSmall : quarterRadius budget.spatialScale stage < half :=
     (quarterRadius_antitone
       (budget.spatialScale_nonnegative (initial.state.scheduleBase_positive targets).le)
       (Nat.le_trans (((congrArg (Nat.le _) (Order.max_eq_natMax _ _)).mpr (Order.le_max_right _ _))) (Nat.le_succ
@@ -121,8 +121,8 @@ without acquiring a numerical sample. -/
       spatial_small := spatialSmall }
 
 variable {initial : RootClosedState curve source root} {targets : List
-  (Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus)}
-  {differential : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+  (Differential genus)}
+  {differential : Differential genus}
   {request : ControlledSumRequest (initial.state.parents.map (recastCenteredEdge differential)) count target}
   {minimumStage : Nat}
 
@@ -133,7 +133,7 @@ spatial half-targets paid separately. -/
 theorem accurate (tail : PeriodTail initial targets differential request minimumStage)
     (member : differential ∈ targets) (stage : Nat) (later : tail.stage ≤ stage) :
     normSq (request.primitiveSum - (flatModel initial targets differential stage).integralSample) < target := by
-  have spatialSmall : Rational.Geometric.Basic.quarterRadius tail.budget.spatialScale stage < target / 2 :=
+  have spatialSmall : quarterRadius tail.budget.spatialScale stage < target / 2 :=
     (quarterRadius_antitone
       (tail.budget.spatialScale_nonnegative (initial.state.scheduleBase_positive targets).le) later).trans_lt
         tail.spatial_small
@@ -186,8 +186,8 @@ namespace PeriodSample
 The computed tail floor is used as the numerical stage, retaining the same budget and all-later comparison certificate.
 -/
 @[expose] def acquire (initial : RootClosedState curve source root) (targets : List
-  (Hyperelliptic.Differentials.Basic.Differential genus))
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus) (member : differential ∈ targets)
+  (Differential genus))
+    (differential : Differential genus) (member : differential ∈ targets)
     (request : ControlledSumRequest (initial.state.parents.map (recastCenteredEdge differential)) count target)
     (minimumStage : Nat) : PeriodSample initial targets differential request minimumStage :=
   let tail := PeriodTail.acquire initial targets differential request minimumStage

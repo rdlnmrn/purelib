@@ -17,6 +17,8 @@ import Mathlib.Algebra.Ring.Defs
 import Purelib.Data.Rat.Fraction.Arithmetic
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Quadratic Taylor bounds propagated by a finite Horner fold
 
@@ -68,8 +70,8 @@ namespace Purelib.Polynomial.Dense.Gaussian.Bounds.Taylor
 
 The update uses the common input quadrance bound and the current Gaussian coefficient. -/
 @[expose] public def HornerTaylorNormBounds.step (radiusSq : Fraction.Rational)
-    (bounds : Dense.Gaussian.Bounds.Taylor.HornerTaylorNormBounds) (coefficient : Gaussian.Basic.Canonical) :
-    Dense.Gaussian.Bounds.Taylor.HornerTaylorNormBounds where
+    (bounds : HornerTaylorNormBounds) (coefficient : Gaussian.Basic.Canonical) :
+    HornerTaylorNormBounds where
   value := 2 * (bounds.value * radiusSq + Gaussian.Norm.Basic.normSq coefficient)
   slope := 2 * (bounds.slope * radiusSq + bounds.value)
   remainder := 2 * (bounds.slope + radiusSq * bounds.remainder)
@@ -84,7 +86,7 @@ private theorem evalTaylorNormBoundsCoeffs_spec
     (radiusNonnegative : 0 ≤ radiusSq)
     (xBound : Gaussian.Norm.Basic.normSq x ≤ radiusSq) (yBound : Gaussian.Norm.Basic.normSq y ≤
       radiusSq)
-    (accX accY derivativeY : Gaussian.Basic.Canonical) (bounds : Dense.Gaussian.Bounds.Taylor.HornerTaylorNormBounds)
+    (accX accY derivativeY : Gaussian.Basic.Canonical) (bounds : HornerTaylorNormBounds)
     (valueNonnegative : 0 ≤ bounds.value)
     (slopeNonnegative : 0 ≤ bounds.slope)
     (remainderNonnegative : 0 ≤ bounds.remainder)
@@ -100,9 +102,9 @@ private theorem evalTaylorNormBoundsCoeffs_spec
     let finalY := coeffs.foldl
       (fun accumulator coefficient => accumulator * y + coefficient) accY
     let finalDerivativeY := coeffs.foldl
-      (Dense.Derivative.evalDerivativeStep y) (accY, derivativeY) |>.2
+      (Derivative.evalDerivativeStep y) (accY, derivativeY) |>.2
     let finalBounds := coeffs.foldl
-      (Dense.Gaussian.Bounds.Taylor.HornerTaylorNormBounds.step radiusSq) bounds
+      (HornerTaylorNormBounds.step radiusSq) bounds
     0 ≤ finalBounds.value ∧ 0 ≤ finalBounds.slope ∧
       0 ≤ finalBounds.remainder ∧
       Gaussian.Norm.Basic.normSq finalX ≤ finalBounds.value ∧
@@ -118,23 +120,23 @@ private theorem evalTaylorNormBoundsCoeffs_spec
   | cons coefficient coeffs inductionHypothesis =>
       simp only [List.foldl_cons]
       apply inductionHypothesis
-      · apply Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      · apply Arithmetic.mul_nonneg_direct (by decide)
         exact add_nonneg
-          (Fraction.Order.Arithmetic.mul_nonneg_direct
+          (Arithmetic.mul_nonneg_direct
             valueNonnegative radiusNonnegative)
           (Gaussian.Norm.Basic.normSq_nonneg coefficient)
-      · apply Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      · apply Arithmetic.mul_nonneg_direct (by decide)
         exact add_nonneg
-          (Fraction.Order.Arithmetic.mul_nonneg_direct
+          (Arithmetic.mul_nonneg_direct
             slopeNonnegative radiusNonnegative)
           valueNonnegative
-      · apply Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      · apply Arithmetic.mul_nonneg_direct (by decide)
         exact add_nonneg slopeNonnegative
-          (Fraction.Order.Arithmetic.mul_nonneg_direct
+          (Arithmetic.mul_nonneg_direct
             radiusNonnegative remainderNonnegative)
       · have productBound : Gaussian.Norm.Basic.normSq accX * Gaussian.Norm.Basic.normSq x ≤
             bounds.value * radiusSq :=
-          Fraction.Order.Arithmetic.mul_le_mul_direct accXBound xBound
+          Arithmetic.mul_le_mul_direct accXBound xBound
             (Gaussian.Norm.Basic.normSq_nonneg x) valueNonnegative
         calc
           Gaussian.Norm.Basic.normSq (accX * x + coefficient) ≤
@@ -144,11 +146,11 @@ private theorem evalTaylorNormBoundsCoeffs_spec
             Gaussian.Norm.Basic.normSq coefficient) := by
             rw [Gaussian.Norm.Basic.normSq_mul]
           _ ≤ 2 * (bounds.value * radiusSq + Gaussian.Norm.Basic.normSq coefficient) :=
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+            Arithmetic.mul_le_mul_of_nonneg_left_direct
               (add_le_add productBound (le_refl _)) (by decide)
       · have productBound : Gaussian.Norm.Basic.normSq accY * Gaussian.Norm.Basic.normSq y ≤
             bounds.value * radiusSq :=
-          Fraction.Order.Arithmetic.mul_le_mul_direct accYBound yBound
+          Arithmetic.mul_le_mul_direct accYBound yBound
             (Gaussian.Norm.Basic.normSq_nonneg y) valueNonnegative
         calc
           Gaussian.Norm.Basic.normSq (accY * y + coefficient) ≤
@@ -158,7 +160,7 @@ private theorem evalTaylorNormBoundsCoeffs_spec
             Gaussian.Norm.Basic.normSq coefficient) := by
             rw [Gaussian.Norm.Basic.normSq_mul]
           _ ≤ 2 * (bounds.value * radiusSq + Gaussian.Norm.Basic.normSq coefficient) :=
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+            Arithmetic.mul_le_mul_of_nonneg_left_direct
               (add_le_add productBound (le_refl _)) (by decide)
       · have identity :
             (accX * x + coefficient) - (accY * y + coefficient) =
@@ -170,13 +172,13 @@ private theorem evalTaylorNormBoundsCoeffs_spec
         rw [identity]
         have firstProduct : Gaussian.Norm.Basic.normSq (accX - accY) * Gaussian.Norm.Basic.normSq x ≤
             (bounds.slope * Gaussian.Norm.Basic.normSq (x - y)) * radiusSq :=
-          Fraction.Order.Arithmetic.mul_le_mul_direct differenceBound xBound
+          Arithmetic.mul_le_mul_direct differenceBound xBound
             (Gaussian.Norm.Basic.normSq_nonneg x)
-            (Fraction.Order.Arithmetic.mul_nonneg_direct slopeNonnegative
+            (Arithmetic.mul_nonneg_direct slopeNonnegative
               (Gaussian.Norm.Basic.normSq_nonneg (x - y)))
         have secondProduct : Gaussian.Norm.Basic.normSq accY * Gaussian.Norm.Basic.normSq (x - y) ≤
             bounds.value * Gaussian.Norm.Basic.normSq (x - y) :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          Arithmetic.mul_le_mul_of_nonneg_right_direct
             accYBound (Gaussian.Norm.Basic.normSq_nonneg (x - y))
         calc
           Gaussian.Norm.Basic.normSq ((accX - accY) * x + accY * (x - y)) ≤
@@ -187,7 +189,7 @@ private theorem evalTaylorNormBoundsCoeffs_spec
             rw [Gaussian.Norm.Basic.normSq_mul, Gaussian.Norm.Basic.normSq_mul]
           _ ≤ 2 * ((bounds.slope * Gaussian.Norm.Basic.normSq (x - y)) * radiusSq +
                 bounds.value * Gaussian.Norm.Basic.normSq (x - y)) :=
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+            Arithmetic.mul_le_mul_of_nonneg_left_direct
               (add_le_add firstProduct secondProduct) (by decide)
           _ = 2 * (bounds.slope * radiusSq + bounds.value) *
                 Gaussian.Norm.Basic.normSq (x - y) := by ring1
@@ -208,19 +210,19 @@ private theorem evalTaylorNormBoundsCoeffs_spec
             Gaussian.Norm.Basic.normSq (accX - accY) * Gaussian.Norm.Basic.normSq (x - y) ≤
                 (bounds.slope * Gaussian.Norm.Basic.normSq (x - y)) * Gaussian.Norm.Basic.normSq (x -
                   y) :=
-              Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+              Arithmetic.mul_le_mul_of_nonneg_right_direct
                 differenceBound (Gaussian.Norm.Basic.normSq_nonneg (x - y))
             _ = bounds.slope * Gaussian.Norm.Basic.normSq (x - y) ^ 2 := by ring1
         have taylorProductNonnegative :
             0 ≤ bounds.remainder * Gaussian.Norm.Basic.normSq (x - y) ^ 2 :=
-          Fraction.Order.Arithmetic.mul_nonneg_direct remainderNonnegative
-            (Fraction.Order.Arithmetic.pow_nonneg_direct
+          Arithmetic.mul_nonneg_direct remainderNonnegative
+            (Arithmetic.pow_nonneg_direct
               (Gaussian.Norm.Basic.normSq_nonneg (x - y)) 2)
         have secondProduct :
             Gaussian.Norm.Basic.normSq (accX - accY - derivativeY * (x - y)) *
               Gaussian.Norm.Basic.normSq y ≤
               (bounds.remainder * Gaussian.Norm.Basic.normSq (x - y) ^ 2) * radiusSq :=
-          Fraction.Order.Arithmetic.mul_le_mul_direct taylorBound yBound
+          Arithmetic.mul_le_mul_direct taylorBound yBound
             (Gaussian.Norm.Basic.normSq_nonneg y) taylorProductNonnegative
         calc
           Gaussian.Norm.Basic.normSq ((accX - accY) * (x - y) +
@@ -234,7 +236,7 @@ private theorem evalTaylorNormBoundsCoeffs_spec
                   Gaussian.Norm.Basic.normSq_mul]
           _ ≤ 2 * (bounds.slope * Gaussian.Norm.Basic.normSq (x - y) ^ 2 +
               (bounds.remainder * Gaussian.Norm.Basic.normSq (x - y) ^ 2) * radiusSq) :=
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+            Arithmetic.mul_le_mul_of_nonneg_left_direct
               (add_le_add firstProduct secondProduct) (by decide)
           _ = 2 * (bounds.slope + radiusSq * bounds.remainder) *
               Gaussian.Norm.Basic.normSq (x - y) ^ 2 := by ring1

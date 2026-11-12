@@ -37,6 +37,16 @@ public import Purelib.RootIsolation.SquareRoot.Clearance.QuadraticLineClearance
 import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Tactic.Ring
 
+open Purelib.Approximation.Gaussian.Name.Coherent
+
+open Purelib.Polynomial.Dense.Gaussian.Bounds.RootRadius
+
+open Purelib.Approximation.Gaussian
+
+open Purelib.Approximation.Rational.Geometric
+
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_antitone)
 
 /-!
@@ -64,11 +74,11 @@ end
 section
 open Purelib.Approximation
 /-- Finite Gaussian samples with executable refinement and error bounds. -/
-public abbrev Approximation := Gaussian.Sequence.ApproximationData
+public abbrev Approximation := Sequence.ApproximationData
 /-- The coherent arithmetic CCL name type for each retained root. -/
-public abbrev CoherentNamed := Gaussian.Name.Coherent.CoherentNamed
+public abbrev CoherentNamed := Name.Coherent.CoherentNamed
 /-- Operational equivalence between persistent Gaussian names. -/
-public abbrev NamedEquivalent := Gaussian.Equivalence.NamedEquivalent
+public abbrev NamedEquivalent := Equivalence.NamedEquivalent
 
 end
 
@@ -149,7 +159,7 @@ public theorem residualTarget_positive {parameter : Gaussian}
     (parameterNonzero : parameter ≠ 0) : 0 < residualTarget parameter := by
   have scalar := Gaussian.Norm.Basic.normSq_pos parameterNonzero
   rw [Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
-  exact Rat.Fraction.Order.Field.div_pos_direct scalar (by decide)
+  exact Field.div_pos_direct scalar (by decide)
 
 /-- The larger retained absolute rational coordinate of a Gaussian value.
 
@@ -165,18 +175,18 @@ remaining square is nonnegative. -/
 public theorem coordinateNormLower_sq_le_normSq (parameter : Gaussian) :
     coordinateNormLower parameter ^ 2 ≤ normSq parameter := by
   unfold coordinateNormLower
-  simp only [Gaussian.Basic.Canonical.normSq, ← pow_two]
+  simp only [normSq, ← pow_two]
   change max (Rat.Fraction.abs parameter.re) (Rat.Fraction.abs parameter.im) ^ 2 ≤
     parameter.re ^ 2 + parameter.im ^ 2
   by_cases order : (Rat.Fraction.abs parameter.re) ≤ (Rat.Fraction.abs parameter.im)
-  · rw [Rat.Fraction.Order.Basic.max_eq_right order, Rat.Bounds.Abs.abs_sq_direct]
+  · rw [Basic.max_eq_right order, Rat.Bounds.Abs.abs_sq_direct]
     exact le_add_of_nonneg_left
-      (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct parameter.re)
+      (Arithmetic.sq_nonneg_direct parameter.re)
   · have reverse : (Rat.Fraction.abs parameter.im) ≤ (Rat.Fraction.abs parameter.re) :=
       le_of_not_ge order
-    rw [Rat.Fraction.Order.Basic.max_eq_left reverse, Rat.Bounds.Abs.abs_sq_direct]
+    rw [Basic.max_eq_left reverse, Rat.Bounds.Abs.abs_sq_direct]
     exact le_add_of_nonneg_right
-      (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct parameter.im)
+      (Arithmetic.sq_nonneg_direct parameter.im)
 
 /-- Gaussian quadrance is at most twice the dominant absolute coordinate squared.
 
@@ -187,21 +197,21 @@ public theorem normSq_le_two_coordinateNormLower_sq (parameter : Gaussian) :
   unfold coordinateNormLower normSq
   simp only [← pow_two]
   by_cases order : (Rat.Fraction.abs parameter.re) <= (Rat.Fraction.abs parameter.im)
-  · rw [Rat.Fraction.Order.Basic.max_eq_right order, Rat.Bounds.Abs.abs_sq_direct]
+  · rw [Basic.max_eq_right order, Rat.Bounds.Abs.abs_sq_direct]
     have reSqLe : parameter.re ^ 2 <= parameter.im ^ 2 := by
       rw [← Rat.Bounds.Abs.abs_sq_direct parameter.re, ← Rat.Bounds.Abs.abs_sq_direct parameter.im]
-      exact Rat.Fraction.Order.Arithmetic.pow_le_pow_direct
-        (Rat.Fraction.Order.Arithmetic.abs_nonneg_direct parameter.re) order 2
+      exact Arithmetic.pow_le_pow_direct
+        (Arithmetic.abs_nonneg_direct parameter.re) order 2
     calc
       parameter.re ^ 2 + parameter.im ^ 2 <=
           parameter.im ^ 2 + parameter.im ^ 2 := add_le_add reSqLe le_rfl
       _ = 2 * parameter.im ^ 2 := by ring1
   · have reverse : (Rat.Fraction.abs parameter.im) <= (Rat.Fraction.abs parameter.re) := le_of_not_ge order
-    rw [Rat.Fraction.Order.Basic.max_eq_left reverse, Rat.Bounds.Abs.abs_sq_direct]
+    rw [Basic.max_eq_left reverse, Rat.Bounds.Abs.abs_sq_direct]
     have imSqLe : parameter.im ^ 2 <= parameter.re ^ 2 := by
       rw [← Rat.Bounds.Abs.abs_sq_direct parameter.im, ← Rat.Bounds.Abs.abs_sq_direct parameter.re]
-      exact Rat.Fraction.Order.Arithmetic.pow_le_pow_direct
-        (Rat.Fraction.Order.Arithmetic.abs_nonneg_direct parameter.im) reverse 2
+      exact Arithmetic.pow_le_pow_direct
+        (Arithmetic.abs_nonneg_direct parameter.im) reverse 2
     calc
       parameter.re ^ 2 + parameter.im ^ 2 <=
           parameter.re ^ 2 + parameter.re ^ 2 := add_le_add le_rfl imSqLe
@@ -221,29 +231,29 @@ public theorem dyadicSquareRadius_half_le_coordinateNormLower
     Rational.SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius (lower / 2) <=
       coordinateNormLower parameter := by
   have halfPositive : 0 < lower / 2 :=
-    Rat.Fraction.Order.Field.div_pos_direct positive (by decide)
+    Field.div_pos_direct positive (by decide)
   have normHalfLe : normSq parameter / 2 <=
       coordinateNormLower parameter ^ 2 := by
-    apply (Rat.Fraction.Order.Field.div_le_iff_pos
+    apply (Field.div_le_iff_pos
       (show (0 : Coordinate) < 2 by decide)).2
     simpa only [Rat.Fraction.Field.mul_comm] using
       normSq_le_two_coordinateNormLower_sq parameter
   have lowerHalfLe : lower / 2 <= normSq parameter / 2 := by
     rw [Rat.Fraction.Field.div_eq_mul_inv_direct,
       Rat.Fraction.Field.div_eq_mul_inv_direct]
-    exact Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct lowerLe
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct lowerLe
       (by decide)
   have squareLe :
       Rational.SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius (lower / 2) ^ 2 <=
         coordinateNormLower parameter ^ 2 :=
     (Rational.SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius_sq_lt halfPositive).le.trans
       (lowerHalfLe.trans normHalfLe)
-  exact Rat.Fraction.Order.Arithmetic.le_of_sq_le_sq_direct
+  exact Arithmetic.le_of_sq_le_sq_direct
     (by
       unfold coordinateNormLower
       exact
-        (Rat.Fraction.Order.Arithmetic.abs_nonneg_direct parameter.re).trans
-          (Rat.Fraction.Order.Basic.le_max_left _ _))
+        (Arithmetic.abs_nonneg_direct parameter.re).trans
+          (Basic.le_max_left _ _))
     squareLe
 
 /-- The explicit lower bound used for retained square-root sample quadrances.
@@ -253,6 +263,17 @@ are directly executable rationals. -/
 @[expose] public def sampleNormLower (parameter : Gaussian) : Coordinate :=
   max (min 1 (residualTarget parameter))
     (coordinateNormLower parameter / 2)
+
+/-- A displayed radicand quadrance floor gives the same capped lower bound on the original sample margin.
+
+Only the retained scalar radicand floor is weakened. The original maximum,
+residual threshold and dominant-coordinate bound are not recomputed or replaced.
+-/
+public theorem capped_quarter_le_sampleNormLower {parameter : Gaussian} {lower : Coordinate}
+    (bound : lower ≤ normSq parameter) :
+    min 1 (lower / 4) ≤ sampleNormLower parameter :=
+  (Basic.min_le_min (Basic.le_refl _) (Field.divide_mono bound (by decide))).trans
+    (Basic.le_max_left _ _)
 
 section
 open Purelib.Data
@@ -296,11 +317,11 @@ The same nonzero radicand and retained sheet track determine the geometric resid
 that scale with the positive quarter-quadrance threshold. -/
 @[expose] public def baseIndex {parameter : Gaussian} (parameterNonzero : parameter ≠ 0)
     (sheet : Fin 2) : Nat :=
-  Rational.Geometric.Search.firstQuarterBelow
+  Search.firstQuarterBelow
     (RootContinuation.CoherentRoot.residualScale
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degreeTwo)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degreeTwo))
+      (Power.Gaussian.rootPolynomial parameter degreeTwo)
+      (Box.largeSquareBox
+        (Power.Gaussian.rootPolynomial parameter degreeTwo))
       (track parameterNonzero sheet))
     0 (residualTarget parameter)
 
@@ -324,25 +345,25 @@ public theorem sample_residual_le {parameter : Gaussian}
     normSq
         ((approximation parameterNonzero sheet).sample index *
             (approximation parameterNonzero sheet).sample index - parameter) <=
-      Rational.Geometric.Basic.quarterRadius
+      Basic.quarterRadius
         (RootContinuation.CoherentRoot.residualScale
-          (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degreeTwo)
-          (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox
-            (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degreeTwo))
+          (Power.Gaussian.rootPolynomial parameter degreeTwo)
+          (Box.largeSquareBox
+            (Power.Gaussian.rootPolynomial parameter degreeTwo))
           (track parameterNonzero sheet)) index := by
   let source := RootContinuation.CoherentRoot.approximation
     (track parameterNonzero sheet)
   let selected := max (baseIndex parameterNonzero sheet) index
   have raw := RootContinuation.CoherentRoot.sample_residual_le
     (track parameterNonzero sheet) (by
-      rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]
+      rw [Power.Gaussian.rootPolynomial_degree]
       exact degreeTwo.positive) selected
-  rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_eval] at raw
+  rw [Power.Gaussian.rootPolynomial_eval] at raw
   have selectedBound := quarterRadius_antitone
     (RootContinuation.CoherentRoot.residualScale_nonneg
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degreeTwo)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degreeTwo))
+      (Power.Gaussian.rootPolynomial parameter degreeTwo)
+      (Box.largeSquareBox
+        (Power.Gaussian.rootPolynomial parameter degreeTwo))
       (track parameterNonzero sheet))
     ((Order.max_eq_natMax (baseIndex parameterNonzero sheet) index).symm ▸ Order.le_max_right (baseIndex
       parameterNonzero sheet) index)
@@ -357,17 +378,17 @@ public theorem sample_residual_lt_target {parameter : Gaussian}
             (approximation parameterNonzero sheet).sample index - parameter) <
       residualTarget parameter := by
   let scale := RootContinuation.CoherentRoot.residualScale
-    (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degreeTwo)
-    (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degreeTwo))
+    (Power.Gaussian.rootPolynomial parameter degreeTwo)
+    (Box.largeSquareBox
+      (Power.Gaussian.rootPolynomial parameter degreeTwo))
     (track parameterNonzero sheet)
-  have baseSmall : Rational.Geometric.Basic.quarterRadius scale
+  have baseSmall : Basic.quarterRadius scale
       (baseIndex parameterNonzero sheet) < residualTarget parameter := by
-    exact Rational.Geometric.Search.firstQuarterBelow_accurate scale
+    exact Search.firstQuarterBelow_accurate scale
       (RootContinuation.CoherentRoot.residualScale_nonneg
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degreeTwo)
-        (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox
-          (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degreeTwo))
+        (Power.Gaussian.rootPolynomial parameter degreeTwo)
+        (Box.largeSquareBox
+          (Power.Gaussian.rootPolynomial parameter degreeTwo))
         (track parameterNonzero sheet))
       0 (residualTarget parameter) (residualTarget_positive parameterNonzero)
   let selected := max (baseIndex parameterNonzero sheet) index
@@ -377,16 +398,16 @@ public theorem sample_residual_lt_target {parameter : Gaussian}
     exact Order.le_max_left _ _
   have raw := RootContinuation.CoherentRoot.sample_residual_le
     (track parameterNonzero sheet) (by
-      rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]
+      rw [Power.Gaussian.rootPolynomial_degree]
       exact degreeTwo.positive) selected
-  rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_eval] at raw
-  have selectedSmall : Rational.Geometric.Basic.quarterRadius scale selected <
+  rw [Power.Gaussian.rootPolynomial_eval] at raw
+  have selectedSmall : Basic.quarterRadius scale selected <
       residualTarget parameter :=
     (quarterRadius_antitone
       (RootContinuation.CoherentRoot.residualScale_nonneg
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degreeTwo)
-        (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox
-          (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degreeTwo))
+        (Power.Gaussian.rootPolynomial parameter degreeTwo)
+        (Box.largeSquareBox
+          (Power.Gaussian.rootPolynomial parameter degreeTwo))
         (track parameterNonzero sheet))
       baseSelected).trans_lt
         baseSmall
@@ -419,7 +440,7 @@ public theorem normSq_lower_of_square_residual
       apply Gaussian.Basic.ext <;>
         simp only [Gaussian.Basic.sub_re, Gaussian.Basic.sub_im, Gaussian.Basic.neg_re, Gaussian.Basic.neg_im,
           Gaussian.Basic.mul_re, Gaussian.Basic.mul_im] <;> ring1
-    rw [negativeIdentity, Gaussian.Basic.Canonical.normSq_neg]
+    rw [negativeIdentity, normSq_neg]
     exact residual
   have parameterUpper :
       parameterNorm <= parameterNorm / 2 + 2 * valueNorm ^ 2 := by
@@ -433,17 +454,17 @@ public theorem normSq_lower_of_square_residual
       _ <= 2 * (normSq (parameter - value * value) + valueNorm ^ 2) := by
         simpa only [valueNorm, pow_two, Gaussian.Norm.Basic.normSq_eq_canonical] using triangle
       _ <= 2 * (parameterNorm / 4 + valueNorm ^ 2) :=
-        Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add reversedResidual (le_refl _)) (by decide)
       _ = parameterNorm / 2 + 2 * valueNorm ^ 2 := by
         rw [show 2 * (parameterNorm / 4 + valueNorm ^ 2) =
             2 * (parameterNorm / 4) + 2 * valueNorm ^ 2 by ring1,
           twice_quarter_eq_half]
   have quarterLeSquare : parameterNorm / 4 <= valueNorm ^ 2 := by
-    apply Rat.Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+    apply Arithmetic.le_of_mul_le_mul_right_direct
       (c := (4 : Coordinate)) _ (by decide)
     have halfLe : parameterNorm / 2 <= 2 * valueNorm ^ 2 := by
-      apply Rat.Fraction.Order.Arithmetic.le_of_add_le_add_right_direct
+      apply Arithmetic.le_of_add_le_add_right_direct
         (c := parameterNorm / 2)
       calc
         parameterNorm / 2 + parameterNorm / 2 = parameterNorm :=
@@ -457,22 +478,22 @@ public theorem normSq_lower_of_square_residual
         exact (Rat.Fraction.Field.div_mul_cancel_of_ne
           parameterNorm 2 (by decide)).symm
       _ <= (2 * valueNorm ^ 2) * 2 :=
-        Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           halfLe (by decide)
       _ = valueNorm ^ 2 * 4 := by ring1
   have residualLower : min 1 (residualTarget parameter) <= valueNorm := by
     apply le_of_not_gt
     intro tooSmall
     have valueLtOne : valueNorm < 1 :=
-      tooSmall.trans_le (Rat.Fraction.Order.Basic.min_le_left _ _)
+      tooSmall.trans_le (Basic.min_le_left _ _)
     have valueLtTarget : valueNorm < parameterNorm / 4 :=
-      tooSmall.trans_le (Rat.Fraction.Order.Basic.min_le_right _ _)
+      tooSmall.trans_le (Basic.min_le_right _ _)
     have valueSquareLeValue : valueNorm ^ 2 <= valueNorm := by
       rw [pow_two]
       calc
         valueNorm * valueNorm <= 1 * valueNorm :=
-          Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-            valueLtOne.le (Gaussian.Basic.Canonical.normSq_nonneg value)
+          Arithmetic.mul_le_mul_of_nonneg_right_direct
+            valueLtOne.le (normSq_nonneg value)
         _ = valueNorm := by ring1
     exact (not_lt_of_ge quarterLeSquare)
       (valueSquareLeValue.trans_lt valueLtTarget)
@@ -493,12 +514,12 @@ public theorem normSq_lower_of_square_residual
       _ <= parameterNorm / 4 := by
         rw [Rat.Fraction.Field.div_eq_mul_inv_direct,
           Rat.Fraction.Field.div_eq_mul_inv_direct]
-        exact Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        exact Arithmetic.mul_le_mul_of_nonneg_right_direct
           (coordinateNormLower_sq_le_normSq parameter) (by decide)
   have coordinateLower : coordinateNormLower parameter / 2 <= valueNorm :=
-    Rat.Fraction.Order.Arithmetic.le_of_sq_le_sq_direct (Gaussian.Basic.Canonical.normSq_nonneg value)
+    Arithmetic.le_of_sq_le_sq_direct (normSq_nonneg value)
       (coordinateQuarter.trans quarterLeSquare)
-  exact Rat.Fraction.Order.Basic.max_le residualLower coordinateLower
+  exact Basic.max_le residualLower coordinateLower
 
 /-- Every retained sheet sample satisfies the same explicit quadrance lower bound. -/
 public theorem sample_norm_lower {parameter : Gaussian}
@@ -516,8 +537,8 @@ the stated positive lower bound. -/
 public theorem sampleLower_positive {parameter : Gaussian}
     (parameterNonzero : parameter ≠ 0) :
     0 < sampleNormLower parameter :=
-  (Rat.Fraction.Order.Basic.lt_min (by decide) (residualTarget_positive parameterNonzero)).trans_le
-    (Rat.Fraction.Order.Basic.le_max_left _ _)
+  (Basic.lt_min (by decide) (residualTarget_positive parameterNonzero)).trans_le
+    (Basic.le_max_left _ _)
 
 open Purelib.Approximation in
 open Purelib.Data in
@@ -526,7 +547,7 @@ open Purelib.Data in
 Every possible later sample satisfies the same positive lower quadrance before whole-ball denominator preparation. -/
 @[expose] public def possibleApart {parameter : Gaussian}
     (parameterNonzero : parameter ≠ 0) (sheet : Fin 2) :
-    Gaussian.Process.Apart.Possible.PossibleApart
+    Process.Apart.Possible.PossibleApart
       (approximation parameterNonzero sheet).toProcess where
   lowerSq := sampleNormLower parameter
   positive := sampleLower_positive parameterNonzero
@@ -544,7 +565,7 @@ The original retained sheet approximation supplies both the persistent name and 
 indices and refinement data are passed unchanged to the named conversion. -/
 @[expose] public def rawRoot {parameter : Gaussian} (parameterNonzero : parameter ≠ 0)
     (sheet : Fin 2) : CoherentNamed :=
-  Gaussian.Name.Coherent.CoherentNamed.ofApproximation
+  CoherentNamed.ofApproximation
     (approximation parameterNonzero sheet)
 
 /-- Prepare the coherent sheet name for division using its retained candidate apartness certificate.
@@ -553,7 +574,7 @@ The same raw root and retained candidate-apart certificate determine the prepare
 preparation preserves both the original operational value and its coherent refinement data. -/
 @[expose] public def root {parameter : Gaussian} (parameterNonzero : parameter ≠ 0)
     (sheet : Fin 2) : CoherentNamed :=
-  Gaussian.Name.Coherent.CoherentNamed.apartify
+  CoherentNamed.apartify
     (rawRoot parameterNonzero sheet)
     (possibleApart parameterNonzero sheet)
 
@@ -562,9 +583,9 @@ preparation preserves both the original operational value and its coherent refin
 The certificate belongs to the actual prepared name produced from the same candidate-apart evidence. The retained
 preparation state and process determine its whole-ball apartness fields. -/
 @[expose] public def rootApart {parameter : Gaussian} (parameterNonzero : parameter ≠ 0)
-    (sheet : Fin 2) : Gaussian.Name.Basic.Named.Apart
+    (sheet : Fin 2) : Name.Basic.Named.Apart
       (root parameterNonzero sheet).name where
-  certificate := Gaussian.Process.Apart.Preparation.apartifyApart
+  certificate := Process.Apart.Preparation.apartifyApart
     (possibleApart parameterNonzero sheet)
 
 end
@@ -582,10 +603,10 @@ center bound. -/
   let scale := 4 * source.centerBound *
     RootContinuation.CoherentRoot.scale (track parameterNonzero sheet)
   { sample := fun index => source.sample index * source.sample index
-    radiusSq := Rational.Geometric.Basic.quarterRadius scale
-    radiusSq_nonneg := Rational.Geometric.Basic.quarterRadius_nonneg
-      (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    radiusSq := Basic.quarterRadius scale
+    radiusSq_nonneg := Basic.quarterRadius_nonneg
+      (Arithmetic.mul_nonneg_direct
+        (Arithmetic.mul_nonneg_direct (by decide)
           source.centerBound_nonneg)
         (RootContinuation.CoherentRoot.scale_positive
           (track parameterNonzero sheet)).le)
@@ -593,7 +614,7 @@ center bound. -/
       intro earlier later order
       have movement := source.later_close order
       have sourceRadiusLe : source.radiusSq earlier <=
-          Rational.Geometric.Basic.quarterRadius
+          Basic.quarterRadius
             (RootContinuation.CoherentRoot.scale
               (track parameterNonzero sheet)) earlier :=
         quarterRadius_antitone
@@ -602,27 +623,27 @@ center bound. -/
           ((Order.max_eq_natMax (baseIndex parameterNonzero sheet) earlier).symm ▸ Order.le_max_right (baseIndex
             parameterNonzero sheet) earlier)
       have firstTerm :
-          Data.Gaussian.Norm.Basic.normSq ((source.sample later - source.sample earlier) *
+          Gaussian.Norm.Basic.normSq ((source.sample later - source.sample earlier) *
               source.sample later) <=
-            Rational.Geometric.Basic.quarterRadius
+            Basic.quarterRadius
                 (RootContinuation.CoherentRoot.scale
                   (track parameterNonzero sheet)) earlier *
               source.centerBound := by
         rw [Gaussian.Norm.Basic.normSq_mul]
-        exact Rat.Fraction.Order.Arithmetic.mul_le_mul_direct
+        exact Arithmetic.mul_le_mul_direct
           (movement.trans sourceRadiusLe) (source.sample_bounded later)
-          (Gaussian.Norm.Basic.normSq_nonneg _) (Rational.Geometric.Basic.quarterRadius_nonneg
+          (Gaussian.Norm.Basic.normSq_nonneg _) (Basic.quarterRadius_nonneg
             (RootContinuation.CoherentRoot.scale_positive
               (track parameterNonzero sheet)).le earlier)
       have secondTerm :
-          Data.Gaussian.Norm.Basic.normSq (source.sample earlier *
+          Gaussian.Norm.Basic.normSq (source.sample earlier *
               (source.sample later - source.sample earlier)) <=
             source.centerBound *
-              Rational.Geometric.Basic.quarterRadius
+              Basic.quarterRadius
                 (RootContinuation.CoherentRoot.scale
                   (track parameterNonzero sheet)) earlier := by
         rw [Gaussian.Norm.Basic.normSq_mul]
-        exact Rat.Fraction.Order.Arithmetic.mul_le_mul_direct
+        exact Arithmetic.mul_le_mul_direct
           (source.sample_bounded earlier) (movement.trans sourceRadiusLe)
           (Gaussian.Norm.Basic.normSq_nonneg _) source.centerBound_nonneg
       have identity :
@@ -637,51 +658,51 @@ center bound. -/
             Gaussian.Basic.mul_re, Gaussian.Basic.mul_im] <;> ring1
       rw [identity]
       calc
-        Data.Gaussian.Norm.Basic.normSq
+        Gaussian.Norm.Basic.normSq
             ((source.sample later - source.sample earlier) *
                 source.sample later +
               source.sample earlier *
                 (source.sample later - source.sample earlier)) <=
           2 *
-            (Data.Gaussian.Norm.Basic.normSq ((source.sample later - source.sample earlier) *
+            (Gaussian.Norm.Basic.normSq ((source.sample later - source.sample earlier) *
                 source.sample later) +
-              Data.Gaussian.Norm.Basic.normSq (source.sample earlier *
+              Gaussian.Norm.Basic.normSq (source.sample earlier *
                 (source.sample later - source.sample earlier))) :=
           Gaussian.Norm.Bounds.normSq_add_le_two _ _
         _ <= 2 *
-            (Rational.Geometric.Basic.quarterRadius
+            (Basic.quarterRadius
                 (RootContinuation.CoherentRoot.scale
                   (track parameterNonzero sheet)) earlier *
                 source.centerBound +
               source.centerBound *
-                Rational.Geometric.Basic.quarterRadius
+                Basic.quarterRadius
                   (RootContinuation.CoherentRoot.scale
                     (track parameterNonzero sheet)) earlier) :=
-          Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          Arithmetic.mul_le_mul_of_nonneg_left_direct
             (add_le_add firstTerm secondTerm) (by decide)
-        _ = Rational.Geometric.Basic.quarterRadius scale earlier := by
-          rw [Rational.Geometric.Basic.quarterRadius_eq_mul_pow,
-            Rational.Geometric.Basic.quarterRadius_eq_mul_pow]
+        _ = Basic.quarterRadius scale earlier := by
+          rw [Basic.quarterRadius_eq_mul_pow,
+            Basic.quarterRadius_eq_mul_pow]
           dsimp only [scale]
           ring1
     refineIndex current target _ :=
-      Rational.Geometric.Search.firstQuarterBelow scale current target
+      Search.firstQuarterBelow scale current target
     refineIndex_ge current target _ :=
-      Rational.Geometric.Search.firstQuarterBelow_ge scale current target
+      Search.firstQuarterBelow_ge scale current target
     refineIndex_accurate :=
-      Rational.Geometric.Search.firstQuarterBelow_accurate scale
-        (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
-          (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      Search.firstQuarterBelow_accurate scale
+        (Arithmetic.mul_nonneg_direct
+          (Arithmetic.mul_nonneg_direct (by decide)
             source.centerBound_nonneg)
           (RootContinuation.CoherentRoot.scale_positive
             (track parameterNonzero sheet)).le)
     centerBound := source.centerBound * source.centerBound
-    centerBound_nonneg := Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
+    centerBound_nonneg := Arithmetic.mul_nonneg_direct
       source.centerBound_nonneg source.centerBound_nonneg
     sample_bounded := by
       intro index
       rw [Gaussian.Norm.Basic.normSq_mul]
-      exact Rat.Fraction.Order.Arithmetic.mul_le_mul_direct
+      exact Arithmetic.mul_le_mul_direct
         (source.sample_bounded index) (source.sample_bounded index)
         (Gaussian.Norm.Basic.normSq_nonneg _) source.centerBound_nonneg }
 
@@ -708,35 +729,35 @@ A finite quarter-radius search supplies comparison indices beyond both requested
 controls every later pair of samples. -/
 @[expose] public def squareApproximation_equivalent_parameter {parameter : Gaussian}
     (parameterNonzero : parameter ≠ 0) (sheet : Fin 2) :
-    Gaussian.Equivalence.Equivalent
+    Equivalence.Equivalent
       (squareApproximation parameterNonzero sheet)
-      (Gaussian.Sequence.Constant.constantApproximation parameter) where
+      (Sequence.Constant.constantApproximation parameter) where
   compare := by
     intro leftStart rightStart target positive
     let start := max leftStart rightStart
     let scale := RootContinuation.CoherentRoot.residualScale
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degreeTwo)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degreeTwo))
+      (Power.Gaussian.rootPolynomial parameter degreeTwo)
+      (Box.largeSquareBox
+        (Power.Gaussian.rootPolynomial parameter degreeTwo))
       (track parameterNonzero sheet)
-    let index := Rational.Geometric.Search.firstQuarterBelow scale start target
-    have radiusSmall : Rational.Geometric.Basic.quarterRadius scale index < target :=
-      Rational.Geometric.Search.firstQuarterBelow_accurate scale
+    let index := Search.firstQuarterBelow scale start target
+    have radiusSmall : Basic.quarterRadius scale index < target :=
+      Search.firstQuarterBelow_accurate scale
         (RootContinuation.CoherentRoot.residualScale_nonneg
-          (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degreeTwo)
-          (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox
-            (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degreeTwo))
+          (Power.Gaussian.rootPolynomial parameter degreeTwo)
+          (Box.largeSquareBox
+            (Power.Gaussian.rootPolynomial parameter degreeTwo))
           (track parameterNonzero sheet)) start target positive
     exact
       { leftIndex := index
         rightIndex := index
         left_ge := by
-          apply Nat.le_trans _ (Rational.Geometric.Search.firstQuarterBelow_ge scale start target)
+          apply Nat.le_trans _ (Search.firstQuarterBelow_ge scale start target)
           change leftStart ≤ max leftStart rightStart
           rewrite [Order.max_eq_natMax]
           exact Order.le_max_left leftStart rightStart
         right_ge := by
-          apply Nat.le_trans _ (Rational.Geometric.Search.firstQuarterBelow_ge scale start target)
+          apply Nat.le_trans _ (Search.firstQuarterBelow_ge scale start target)
           change rightStart ≤ max leftStart rightStart
           rewrite [Order.max_eq_natMax]
           exact Order.le_max_right leftStart rightStart
@@ -746,12 +767,12 @@ controls every later pair of samples. -/
             leftLater
           have radiusLater := quarterRadius_antitone
             (RootContinuation.CoherentRoot.residualScale_nonneg
-              (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degreeTwo)
-              (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox
-                (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degreeTwo))
+              (Power.Gaussian.rootPolynomial parameter degreeTwo)
+              (Box.largeSquareBox
+                (Power.Gaussian.rootPolynomial parameter degreeTwo))
               (track parameterNonzero sheet)) leftOrder
           simpa only [squareApproximation_sample,
-            Gaussian.Sequence.Constant.constantApproximation, Gaussian.Norm.Basic.normSq_eq_canonical] using
+            Sequence.Constant.constantApproximation, Gaussian.Norm.Basic.normSq_eq_canonical] using
               residualBound.trans_lt (radiusLater.trans_lt radiusSmall) }
 
 section
@@ -763,29 +784,29 @@ approximation. -/
 @[expose] public def rawRoot_square {parameter : Gaussian}
     (parameterNonzero : parameter ≠ 0) (sheet : Fin 2) :
     NamedEquivalent
-      (Gaussian.Name.Coherent.CoherentNamed.mul
+      (CoherentNamed.mul
         (rawRoot parameterNonzero sheet)
         (rawRoot parameterNonzero sheet)).name
-      (Gaussian.Name.Basic.Named.exact parameter) := by
+      (Name.Basic.Named.exact parameter) := by
   let source := approximation parameterNonzero sheet
   let product := squareApproximation parameterNonzero sheet
   have actualToProduct : NamedEquivalent
-      (Gaussian.Name.Basic.Named.mul source.toNamed source.toNamed)
+      (Name.Basic.Named.mul source.toNamed source.toNamed)
       product.toNamed :=
-    Gaussian.Sequence.Arithmetic.Multiplication.Bridge.mulToNamed_equivalent_pointwise
+    Sequence.Arithmetic.Multiplication.Bridge.mulToNamed_equivalent_pointwise
       source source product (by intro index; rfl)
   have productToConstant : NamedEquivalent product.toNamed
-      (Gaussian.Sequence.Constant.constantApproximation parameter).toNamed :=
-    Gaussian.Sequence.Name.Equivalence.approximationEquivalent_toNamed
+      (Sequence.Constant.constantApproximation parameter).toNamed :=
+    Sequence.Name.Equivalence.approximationEquivalent_toNamed
       (squareApproximation_equivalent_parameter parameterNonzero sheet)
-  exact Gaussian.Equivalence.NamedEquivalent.trans
+  exact Equivalence.NamedEquivalent.trans
     (by simpa only [rawRoot,
-      Gaussian.Name.Coherent.CoherentNamed.mul,
-      Gaussian.Name.Coherent.CoherentNamed.ofApproximation, source, product]
+      CoherentNamed.mul,
+      CoherentNamed.ofApproximation, source, product]
       using actualToProduct)
-    (Gaussian.Equivalence.NamedEquivalent.trans productToConstant
-      (Gaussian.Equivalence.NamedEquivalent.symm
-        (Gaussian.Sequence.Name.Exact.exact_toConstantNamed parameter)))
+    (Equivalence.NamedEquivalent.trans productToConstant
+      (Equivalence.NamedEquivalent.symm
+        (Sequence.Name.Exact.exact_toConstantNamed parameter)))
 
 /-- The division-ready root still squares operationally to the exact radicand.
 
@@ -794,22 +815,22 @@ square certificate. -/
 @[expose] public def root_square {parameter : Gaussian} (parameterNonzero : parameter ≠ 0)
     (sheet : Fin 2) :
     NamedEquivalent
-      (Gaussian.Name.Coherent.CoherentNamed.mul
+      (CoherentNamed.mul
         (root parameterNonzero sheet)
         (root parameterNonzero sheet)).name
-      (Gaussian.Name.Basic.Named.exact parameter) := by
+      (Name.Basic.Named.exact parameter) := by
   let raw := rawRoot parameterNonzero sheet
   let prepared := root parameterNonzero sheet
   have preparedToRaw : NamedEquivalent prepared.name raw.name :=
-    Gaussian.Equivalence.NamedEquivalent.symm
-      (Gaussian.Name.Coherent.CoherentNamed.apartifyEquivalent raw
+    Equivalence.NamedEquivalent.symm
+      (CoherentNamed.apartifyEquivalent raw
         (possibleApart parameterNonzero sheet))
   have products : NamedEquivalent
-      (Gaussian.Name.Coherent.CoherentNamed.mul prepared prepared).name
-      (Gaussian.Name.Coherent.CoherentNamed.mul raw raw).name :=
-    Gaussian.Name.Coherent.Arithmetic.Product.Congruence.coherentMul_respects
+      (CoherentNamed.mul prepared prepared).name
+      (CoherentNamed.mul raw raw).name :=
+    Arithmetic.Product.Congruence.coherentMul_respects
       prepared raw prepared raw preparedToRaw preparedToRaw
-  exact Gaussian.Equivalence.NamedEquivalent.trans products
+  exact Equivalence.NamedEquivalent.trans products
     (rawRoot_square parameterNonzero sheet)
 
 end
@@ -823,12 +844,12 @@ displayed exact radicand. -/
 public structure Sheet (parameter : Gaussian) where
   /-- The retained finite index of this square-root sheet. -/ index : Fin 2
   /-- The retained coherent persistent root name. -/ value : CoherentNamed
-  /-- The retained name carries whole-ball apartness for safe division. -/ apart : Gaussian.Name.Basic.Named.Apart
+  /-- The retained name carries whole-ball apartness for safe division. -/ apart : Name.Basic.Named.Apart
     value.name
   /-- The actual product of the retained root with itself is operationally the exact radicand. -/ square :
     NamedEquivalent
-    (Gaussian.Name.Coherent.CoherentNamed.mul value value).name
-    (Gaussian.Name.Basic.Named.exact parameter)
+    (CoherentNamed.mul value value).name
+    (Name.Basic.Named.exact parameter)
 
 constructive_injectivity Sheet
 

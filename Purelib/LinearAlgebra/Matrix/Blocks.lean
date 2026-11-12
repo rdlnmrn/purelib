@@ -1,6 +1,6 @@
 module
 import Purelib.Data.Vector.Basic
-public import Purelib.LinearAlgebra.Matrix.Basic
+public import Purelib.LinearAlgebra.Matrix.Rectangular
 public import Purelib.Data.Fin
 
 open Purelib
@@ -23,52 +23,48 @@ a scaled inverse of the whole matrix.
 namespace Purelib.LinearAlgebra.Matrix.Blocks
 
 universe u
-variable {K : Type*} [CommRing K]
+variable {K : Type*} [CommRing K] {rows columns : Nat}
 
-/-- Read the leading entry of a nonempty square matrix. -/
-def head (matrix : SquareMatrix K (n + 1)) : K := matrix
-  0 0
+/-- Read the leading entry of a rectangle with nonempty dimensions. -/
+def head (matrix : SquareMatrix.Rectangular K (rows + 1) (columns + 1)) : K := matrix 0 0
 
-/-- Materialize the first row after deleting its leading entry. -/
-def topRow (matrix : SquareMatrix K (n + 1)) :
-  Data.Vector K n :=
+/-- Retain the first row after its leading entry at the original successor columns. -/
+def topRow (matrix : SquareMatrix.Rectangular K (rows + 1) (columns + 1)) :
+    Data.Vector K columns :=
   Data.Vector.Basic.vectorOfFn fun column => matrix 0 column.succ
 
-/-- Materialize the first column after deleting its leading entry. -/
-def leftColumn (matrix : SquareMatrix K (n + 1)) :
-  Data.Vector K n :=
+/-- Retain the first column after its leading entry at the original successor rows. -/
+def leftColumn (matrix : SquareMatrix.Rectangular K (rows + 1) (columns + 1)) :
+    Data.Vector K rows :=
   Data.Vector.Basic.vectorOfFn fun row => matrix row.succ 0
 
 omit [CommRing K] in
-/-- Read a retained top-row entry at the corresponding successor column. -/
-@[simp] theorem topRow_apply (matrix : SquareMatrix K (n
-  + 1))
-    (column : Fin n) :
-    SquareMatrix.Blocks.topRow matrix column = matrix 0 column.succ := by
+/-- Read a retained top-row entry at the corresponding original successor column. -/
+@[simp] theorem topRow_apply
+    (matrix : SquareMatrix.Rectangular K (rows + 1) (columns + 1)) (column : Fin columns) :
+    topRow matrix column = matrix 0 column.succ := by
   exact Data.Vector.Basic.vectorOfFn_apply _ _
 
 omit [CommRing K] in
-/-- Read a retained left-column entry at the corresponding successor row. -/
-@[simp] theorem leftColumn_apply (matrix : SquareMatrix K
-  (n + 1))
-    (row : Fin n) :
-    SquareMatrix.Blocks.leftColumn matrix row = matrix row.succ 0 := by
+/-- Read a retained left-column entry at the corresponding original successor row. -/
+@[simp] theorem leftColumn_apply
+    (matrix : SquareMatrix.Rectangular K (rows + 1) (columns + 1)) (row : Fin rows) :
+    leftColumn matrix row = matrix row.succ 0 := by
   exact Data.Vector.Basic.vectorOfFn_apply _ _
 
-/-- Delete the leading row and column of a nonempty square matrix.
-
-The smaller structural matrix retains entries at the original successor indices. -/
-def tail (matrix : SquareMatrix K (n + 1)) : SquareMatrix
-  K n :=
-  SquareMatrix.matrixOfFn fun row column => matrix row.succ column.succ
+/-- Delete the leading row and column while retaining both original tail dimensions. -/
+def tail (matrix : SquareMatrix.Rectangular K (rows + 1) (columns + 1)) :
+    SquareMatrix.Rectangular K rows columns :=
+  SquareMatrix.Rectangular.ofFn fun row column => matrix row.succ column.succ
 
 omit [CommRing K] in
 /-- Read a tail entry at the corresponding original successor row and column. -/
-@[simp] theorem tail_apply (matrix : SquareMatrix K (n +
-  1))
-    (row column : Fin n) :
-    SquareMatrix.Blocks.tail matrix row column = matrix row.succ column.succ := by
-  exact SquareMatrix.matrixOfFn_apply _ _ _
+@[simp] theorem tail_apply
+    (matrix : SquareMatrix.Rectangular K (rows + 1) (columns + 1))
+    (row : Fin rows) (column : Fin columns) :
+    tail matrix row column = matrix row.succ column.succ := by
+  exact SquareMatrix.Rectangular.ofFn_apply _ _ _
+
 end Purelib.LinearAlgebra.Matrix.Blocks
 
 end

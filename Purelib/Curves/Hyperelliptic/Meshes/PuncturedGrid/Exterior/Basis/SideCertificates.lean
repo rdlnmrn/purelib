@@ -81,26 +81,26 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGr
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedSideReadback (groupSideFragments
   indexedSideFragments)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains (SourceChain)
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
+  {program : ExteriorProgram lifted
     differential} {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+    SurfacePreparation
     regular domains program}
 
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
-variable (retained : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation
+variable (retained : CommonBasisPreparation
   prepared) {index : Nat} (inputs : retained.Inputs index)
   (outer : Fin prepared.occurrences.length) {faceIndex : Nat}
-  (data : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (data : RowData
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) faceIndex)
   (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
 
@@ -108,10 +108,10 @@ variable {retained inputs outer data coefficients}
 
 variable {count : Nat}
   (pieces : Fin (count + 1) →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment retained inputs
+    IndexedFragments.IndexedFragment retained inputs
     outer data coefficients)
   (junctions : Fin count →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment retained inputs
+    IndexedFragments.IndexedFragment retained inputs
     outer data coefficients)
 
 /-- The interleaved original side begins with its retained first physical piece. -/
@@ -135,7 +135,7 @@ private theorem side_parent_after
   | zero => exact finish
   | succ count ih =>
     refine ⟨Or.inl (congrArg Fin.val (junctionParent 0)), ?_⟩
-    rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SideCertificates.indexedSideFragments_cons]
+    rw [SideCertificates.indexedSideFragments_cons]
     refine ⟨?_, ih (fun position => pieces position.succ) (fun position => junctions position.succ)
         (fun position => junctionParent position.succ) (fun position => steps position.succ) finish⟩
     rw [junctionParent 0]
@@ -152,7 +152,7 @@ theorem indexedSideFragments_parentWord
     (finish : (pieces (Fin.last count)).parent.val + 1 =
       (ParentIndices.occurrenceAt prepared.occurrences outer).compared.entered.cache.parents.length) :
     IndexedFragment.ParentWord (GroupedSideReadback.indexedSideFragments pieces junctions) := by
-  have after := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SideCertificates.side_parent_after pieces
+  have after := SideCertificates.side_parent_after pieces
     junctions junctionParent steps finish
   cases count with
   | zero => exact ⟨start, after⟩
@@ -171,7 +171,7 @@ private theorem side_reverse_parent_after
   | zero => exact finish
   | succ count ih =>
     refine ⟨Or.inl (congrArg Fin.val (junctionParent 0)), ?_⟩
-    rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SideCertificates.indexedSideFragments_cons]
+    rw [SideCertificates.indexedSideFragments_cons]
     refine ⟨?_, ih (fun position => pieces position.succ) (fun position => junctions position.succ)
         (fun position => junctionParent position.succ) (fun position => steps position.succ) finish⟩
     rw [junctionParent 0]
@@ -187,7 +187,7 @@ theorem indexedSideFragments_reverseParentWord
       (pieces position.castSucc).parent.val = (pieces position.succ).parent.val + 1)
     (finish : (pieces (Fin.last count)).parent.val = 0) :
     IndexedFragment.ReverseParentWord (GroupedSideReadback.indexedSideFragments pieces junctions) := by
-  have after := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SideCertificates.side_reverse_parent_after
+  have after := SideCertificates.side_reverse_parent_after
     pieces junctions junctionParent steps finish
   cases count with
   | zero => exact ⟨start, after⟩
@@ -204,7 +204,7 @@ private theorem side_after
   | zero => exact finish
   | succ count ih =>
     refine ⟨pieceJoin 0, ?_⟩
-    rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SideCertificates.indexedSideFragments_cons]
+    rw [SideCertificates.indexedSideFragments_cons]
     exact ⟨nextJoin 0, ih (fun position => pieces position.succ) (fun position => junctions position.succ)
         (fun position => pieceJoin position.succ) (fun position => nextJoin position.succ) finish⟩
 
@@ -215,7 +215,7 @@ theorem indexedSideFragments_word
     (nextJoin : ∀ position : Fin count, (junctions position).Joined (pieces position.succ))
     (finish : (pieces (Fin.last count)).lastParameter = 1) :
     IndexedFragment.Word (GroupedSideReadback.indexedSideFragments pieces junctions) := by
-  have after := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SideCertificates.side_after pieces junctions
+  have after := SideCertificates.side_after pieces junctions
     pieceJoin nextJoin finish
   cases count with
   | zero => exact ⟨start, after⟩
@@ -251,11 +251,11 @@ theorem indexedSideFragments_source_chains
     (pieceOrder : ∀ position, (pieces position).Increasing)
     (junctionOrder : ∀ position, (junctions position).Increasing) :
     ∀ run ∈ (IndexedGrouping.build (GroupedSideReadback.indexedSideFragments pieces junctions)).runs,
-      SourceChains.SourceChain run.fragments 0 1 :=
+      SourceChain run.fragments 0 1 :=
   IndexedGrouping.source_chains (IndexedGrouping.build _)
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SideCertificates.indexedSideFragments_word pieces
+    (SideCertificates.indexedSideFragments_word pieces
       junctions start pieceJoin nextJoin finish)
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SideCertificates.indexedSideFragments_increasing pieces
+    (SideCertificates.indexedSideFragments_increasing pieces
       junctions pieceOrder junctionOrder)
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SideCertificates

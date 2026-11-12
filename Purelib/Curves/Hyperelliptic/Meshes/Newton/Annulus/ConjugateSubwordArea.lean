@@ -60,6 +60,8 @@ import Purelib.RootIsolation.State.WindingOne.Raw
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Branches
@@ -119,7 +121,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings
 open Purelib.Riemann.Periods.PeriodMatrix (standardDifferential)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original}
@@ -134,52 +136,52 @@ variable {target radius : Rational}
 
 Both original differential readings must meet their retained reference stages; source membership and occurrence-count
 bounds are supplied separately. -/
-theorem conjugate_subword_area_accurate (request : NewtonPreparation.AreaRequest preparation target radius)
-    {index : BranchIsolation.Data.Index branches} {annulus : Faces.AnnularFaces request.grid index}
-    {lifted : Meshes.LiftedPuncturedGrid request.grid.punctured} {region : LiftedBoundary.Lifted annulus lifted}
-    {prepared : Lifted.OuterPreparation region} {differential : Fin genus}
-    {domains : DomainBanks.FaceDomainBank lifted.frames request.grid.faces.regulars}
+theorem conjugate_subword_area_accurate (request : AreaRequest preparation target radius)
+    {index : BranchIsolation.Data.Index branches} {annulus : AnnularFaces request.grid index}
+    {lifted : LiftedPuncturedGrid request.grid.punctured} {region : LiftedBoundary.Lifted annulus lifted}
+    {prepared : OuterPreparation region} {differential : Fin genus}
+    {domains : FaceDomainBank lifted.frames request.grid.faces.regulars}
     (comparison : OuterPreparation.Comparison prepared differential domains request.budget.scale)
     {other : Fin genus} (second : OuterPreparation.Comparison prepared other domains request.budget.scale)
-    (sources : List (SewnPrimitiveContacts.SourceEdge lifted.mesh.triangles.length))
+    (sources : List (SourceEdge lifted.mesh.triangles.length))
     (members : ∀ source ∈ sources, source ∈ prepared.sources)
     (length : sources.length ≤ region.outer.length)
     {stage : Nat} (later : comparison.reference.index ≤ stage) (secondLater : second.reference.index ≤ stage)
-    {shared : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential differential) stage domains}
-    (readings : TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh)
-    {secondBank : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential other) stage domains}
-    (secondReadings : TrianglePrimitiveReadings.TriangleReadings secondBank lifted.mesh) :
+    {shared : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) stage domains}
+    (readings : TriangleReadings shared lifted.mesh)
+    {secondBank : FacePrimitiveBank (PeriodMatrix.standardDifferential other) stage domains}
+    (secondReadings : TriangleReadings secondBank lifted.mesh) :
     Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area (sources.map (fun source =>
       (⟨Data.Gaussian.Basic.conj (SourceEdge.increment source readings.values), SourceEdge.increment source
-        secondReadings.values⟩ : Stokes.PrimitivePoint)))) < target := by
-  have count := Fraction.Order.Arithmetic.pow_le_pow_direct
+        secondReadings.values⟩ : PrimitivePoint)))) < target := by
+  have count := Arithmetic.pow_le_pow_direct
     (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le sources.length))
     (Fraction.Cast.Order.natCast_le_direct (length.trans (request.outer_count region))) 2
   have increment := request.budget.increment_le
   have nonnegative := comparison.reference.bound_nonnegative
-  have product := Fraction.Order.Arithmetic.mul_le_mul_direct count increment nonnegative
-    (Fraction.Order.Arithmetic.sq_nonneg_direct (request.count : Fraction.Rational))
-  have square := Fraction.Order.Arithmetic.pow_le_pow_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.sq_nonneg_direct _) nonnegative) product 2
+  have product := Arithmetic.mul_le_mul_direct count increment nonnegative
+    (Arithmetic.sq_nonneg_direct (request.count : Rational))
+  have square := Arithmetic.pow_le_pow_direct
+    (Arithmetic.mul_nonneg_direct (Arithmetic.sq_nonneg_direct _) nonnegative) product 2
   have sourceBound := Comparison.paired_source_bound comparison second later secondLater readings secondReadings
   have areaBound := PairedIncrementArea.area_bound (sources.map (fun source =>
     (⟨Data.Gaussian.Basic.conj (SourceEdge.increment source readings.values), SourceEdge.increment source
-      secondReadings.values⟩ : Stokes.PrimitivePoint)))
+      secondReadings.values⟩ : PrimitivePoint)))
     nonnegative (by
       intro point member
       obtain ⟨source, present, equal⟩ := Map.mem_map.mp member
       have bounded := sourceBound (⟨SourceEdge.increment source readings.values, SourceEdge.increment source
-        secondReadings.values⟩ : Stokes.PrimitivePoint)
+        secondReadings.values⟩ : PrimitivePoint)
         (Map.mem_map.mpr ⟨source, members source present, rfl⟩)
       rw [← equal]
       have conjugate := Data.Gaussian.Norm.Basic.normSq_conj (SourceEdge.increment source readings.values)
       simp only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at conjugate
       exact ⟨conjugate.trans_le bounded.1, bounded.2⟩)
-  rw [Data.List.Map.length_map] at areaBound
+  rw [Map.length_map] at areaBound
   have bounded := areaBound.trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct square (by decide : (0 : Fraction.Rational) ≤ 4))
-  exact bounded.trans_lt ((show 4 * ((request.count : Fraction.Rational) ^ 2 * (4 * request.budget.scale)) ^ 2 =
-    64 * (request.count : Fraction.Rational) ^ 4 * request.budget.scale ^ 2 by ring1).trans_lt request.budget.area_paid)
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct square (by decide : (0 : Rational) ≤ 4))
+  exact bounded.trans_lt ((show 4 * ((request.count : Rational) ^ 2 * (4 * request.budget.scale)) ^ 2 =
+    64 * (request.count : Rational) ^ 4 * request.budget.scale ^ 2 by ring1).trans_lt request.budget.area_paid)
 
 end AreaRequest
 end NewtonPreparation

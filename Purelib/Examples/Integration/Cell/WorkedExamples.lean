@@ -46,15 +46,15 @@ def rangedCells : List (IntegrationCell Nat) :=
     ⟨1, 1 / 2, by decide, 1 / 2, 3 / 4, by decide⟩]
 
 /-- The displayed two-cell lower integral is one quarter. -/
-example : (Purelib.Integration.integralBound rangedCells).lower = 1 / 4 := by
+example : (Integration.integralBound rangedCells).lower = 1 / 4 := by
   decide
 
 /-- The displayed two-cell upper integral is one half. -/
-example : (Purelib.Integration.integralBound rangedCells).upper = 1 / 2 := by
+example : (Integration.integralBound rangedCells).upper = 1 / 2 := by
   decide
 
 /-- The displayed integral enclosure has width one quarter. -/
-example : (Purelib.Integration.integralBound rangedCells).width = 1 / 4 := by
+example : (Integration.integralBound rangedCells).width = 1 / 4 := by
   decide
 
 /-- The displayed cell reading, one eighth at index zero and five eighths elsewhere. -/
@@ -62,15 +62,15 @@ def sampledValue (index : Nat) : Rational :=
   if index == 0 then 1 / 8 else 5 / 8
 
 /-- The exact weighted sample lies inside the retained two-cell integral enclosure. -/
-example : (Purelib.Integration.integralBound rangedCells).Contains
-    (Purelib.Integration.weightedEvaluation sampledValue
+example : (Integration.integralBound rangedCells).Contains
+    (Integration.weightedEvaluation sampledValue
       rangedCells) := by
   apply weightedEvaluation_mem_integralBound
   intro cell member
   simp only [-eq_self, -iff_self, rangedCells] at member
-  have member := (Purelib.Data.List.Membership.mem_cons.mp member).elim
+  have member := (Data.List.Membership.mem_cons.mp member).elim
     (fun equal => Or.inl equal)
-    (fun tail => Or.inr (Purelib.Data.List.Membership.mem_singleton.mp tail))
+    (fun tail => Or.inr (Data.List.Membership.mem_singleton.mp tail))
   rcases member with rfl | rfl <;> decide
 
 /-- The unit-weight integration cell with value range [0,1]. -/
@@ -92,22 +92,22 @@ def integrationResolution : IntegrationSplit
   lower_refines := by
     intro child member
     simp only [-eq_self, -iff_self, integrationChildren] at member
-    have member := (Purelib.Data.List.Membership.mem_cons.mp member).elim
+    have member := (Data.List.Membership.mem_cons.mp member).elim
       (fun equal => Or.inl equal)
-      (fun tail => Or.inr (Purelib.Data.List.Membership.mem_singleton.mp tail))
+      (fun tail => Or.inr (Data.List.Membership.mem_singleton.mp tail))
     rcases member with rfl | rfl <;> decide
   upper_refines := by
     intro child member
     simp only [-eq_self, -iff_self, integrationChildren] at member
-    have member := (Purelib.Data.List.Membership.mem_cons.mp member).elim
+    have member := (Data.List.Membership.mem_cons.mp member).elim
       (fun equal => Or.inl equal)
-      (fun tail => Or.inr (Purelib.Data.List.Membership.mem_singleton.mp tail))
+      (fun tail => Or.inr (Data.List.Membership.mem_singleton.mp tail))
     rcases member with rfl | rfl <;> decide
 
 /-- The child-cell integral enclosure refines the singleton parent enclosure. -/
-example : Purelib.Data.Rat.Interval.Refines (Purelib.Integration.integralBound
+example : Interval.Refines (Integration.integralBound
   integrationChildren)
-    (Purelib.Integration.integralBound [integrationParent]) :=
+    (Integration.integralBound [integrationParent]) :=
   integrationResolution.integralBound_refines
 
 /-- The displayed two-child integration frontier refines the singleton parent frontier. -/
@@ -116,13 +116,13 @@ theorem integrationFrontierRefinement :
       [integrationParent] := by
   change IntegrationFrontierRefines integrationResolution.children
     [integrationParent]
-  simpa only [List.nil_append, Purelib.Data.List.Append.append_nil] using
+  simpa only [List.nil_append, Data.List.Append.append_nil] using
     (IntegrationFrontierRefines.split [] [] integrationParent
       integrationResolution)
 
 /-- The retained split does not increase the integration frontier oscillation. -/
-example : Purelib.Integration.integralOscillation integrationChildren ≤
-    Purelib.Integration.integralOscillation [integrationParent] :=
+example : Integration.integralOscillation integrationChildren ≤
+    Integration.integralOscillation [integrationParent] :=
   integrationFrontierRefinement.oscillation_le
 
 /-- The retained split preserves the integration frontier total weight. -/
@@ -131,8 +131,8 @@ example : integrationWeight integrationChildren =
   integrationFrontierRefinement.weight_conserved
 
 /-- The displayed child frontier has exact integral bounds three eighths and five eighths. -/
-example : (Purelib.Integration.integralBound integrationChildren).lower = 3 / 8 ∧
-    (Purelib.Integration.integralBound integrationChildren).upper = 5 / 8 := by
+example : (Integration.integralBound integrationChildren).lower = 3 / 8 ∧
+    (Integration.integralBound integrationChildren).upper = 5 / 8 := by
   decide
 
 /-- The equally weighted Boolean entries with exact values one quarter and three quarters. -/
@@ -143,15 +143,15 @@ def exactSimpleEntries : List (Weighted (Bool ×
 
 /-- The exact simple integration process meets every retained request tolerance after running the finite request list.
 -/
-example (request : Purelib.Approximation.AccuracyRequest) (requests : List Purelib.Approximation.AccuracyRequest)
+example (request : Approximation.AccuracyRequest) (requests : List Approximation.AccuracyRequest)
     (member : request ∈ requests) :
-    Purelib.Integration.integralOscillation
-      ((Purelib.Integration.IntegrationProcess.exactSimple exactSimpleEntries).frontier
-        ((Purelib.Integration.IntegrationProcess.exactSimple
+    Integration.integralOscillation
+      ((IntegrationProcess.exactSimple exactSimpleEntries).frontier
+        ((IntegrationProcess.exactSimple
           exactSimpleEntries).runRequests
           () requests)) < request.tolerance :=
   IntegrationProcess.runRequests_oscillation_lt_of_mem
-    (Purelib.Integration.IntegrationProcess.exactSimple exactSimpleEntries)
+    (IntegrationProcess.exactSimple exactSimpleEntries)
       () requests request member
 
 end Purelib.Examples.Integration.Cell.WorkedExamples

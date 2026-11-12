@@ -56,8 +56,8 @@ variable {vertexCount faceCount : Nat} {faces : Fin faceCount → OrientedTriang
 open Purelib.Integration in
 open Purelib.Data in
 /-- The remaining-area discrepancy equals the total period discrepancy minus the removed local-area discrepancy. -/
-theorem local_comparison_error (excision : Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.AreaExcision
-  sample) (periodArea localRemoved : Gaussian.Basic.Canonical) :
+theorem local_comparison_error (excision : AreaExcision
+  sample) (periodArea localRemoved : Canonical) :
     excision.remaining.area - (periodArea - localRemoved) =
       (sample.boundaryArea - periodArea) - (excision.removedArea - localRemoved) := by
   rw [← excision.partition]
@@ -70,8 +70,8 @@ open Purelib.Data in
 
 The exact excision partition relates the actual remaining area to the supplied period area minus retained local removed
 area. -/
-theorem local_accurate (excision : Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.AreaExcision sample)
-  (periodArea localRemoved : Gaussian.Basic.Canonical) {target : Surface.Sewing.SewnPrimitiveFaces.Coordinate}
+theorem local_accurate (excision : AreaExcision sample)
+  (periodArea localRemoved : Canonical) {target : Coordinate}
     (periodBound : normSq (sample.boundaryArea - periodArea) < target / 4)
     (removedBound : normSq (excision.removedArea - localRemoved) < target / 4) :
     normSq (excision.remaining.area - (periodArea - localRemoved)) < target := by
@@ -81,7 +81,7 @@ theorem local_accurate (excision : Surface.Sewn.Selection.Basic.SewnPrimitiveFac
   simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
   apply scalar.trans_lt
   apply (Rat.Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
-    (by decide : (0 : Surface.Sewing.SewnPrimitiveFaces.Coordinate) < 2)
+    (by decide : (0 : Coordinate) < 2)
       (Rat.Fraction.Order.Arithmetic.add_lt_add_direct periodBound removedBound)).trans_eq
   calc
     2 * (target / 4 + target / 4) = (target / 4) * 4 := by ring1
@@ -111,7 +111,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target radius : Coordinate}
@@ -128,7 +128,7 @@ One union mask identifies all removed annuli on the original cached cut surface,
 selection. -/
 structure LocalAreas (sewn : Sewn excision sample) where
   /-- The actual original triangle selection removed by the union of retained annular masks. -/ removed :
-    Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection sample (fun index => excision.entries.any
+    FaceSelection sample (fun index => excision.entries.any
     (fun entry => sourceMask entry index))
   /-- The local source-area readback on that exact removed selection. -/ annular : removed.LocalArea
   /-- The local source-area readback on the original retained remaining selection. -/ remaining :
@@ -143,10 +143,10 @@ open Purelib.Integration in
 
 The removed union is selected once, and both local readbacks use the original cached surface and remaining geometry. -/
 def build (sewn : Sewn excision sample) : LocalAreas sewn :=
-  let removed := Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection.build sample (fun index =>
+  let removed := FaceSelection.build sample (fun index =>
     excision.entries.any (fun entry => sourceMask entry index))
-  ⟨removed, Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection.LocalArea.build removed,
-    Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection.LocalArea.build sewn.remaining⟩
+  ⟨removed, FaceSelection.LocalArea.build removed,
+    FaceSelection.LocalArea.build sewn.remaining⟩
 
 variable {sewn : Sewn excision sample}
 
@@ -170,14 +170,14 @@ section
 open Purelib.Curves
 /-- One paid selection request controls the full removed annular union against its actual local source area. -/
 theorem annular_accurate (areas : LocalAreas retained) (request :
-  Hyperelliptic.Meshes.PuncturedGrid.SewnSelectionRequests.SelectionAreaPreparation.Request prepared error floor)
+  SelectionAreaPreparation.Request prepared error floor)
     (later : request.contact.index ≤ index) : normSq (retained.annularArea - areas.annular.value) < error := by
   rw [← areas.removed_area]
   exact request.accurate later triangles surface areas.removed areas.annular
 
 /-- The same selection request controls the actual remaining sewn area against its local source readback. -/
 theorem remaining_accurate (areas : LocalAreas retained) (request :
-  Hyperelliptic.Meshes.PuncturedGrid.SewnSelectionRequests.SelectionAreaPreparation.Request prepared error floor)
+  SelectionAreaPreparation.Request prepared error floor)
     (later : request.contact.index ≤ index) : normSq (retained.remaining.area - areas.remaining.value) < error :=
   request.accurate later triangles surface retained.remaining areas.remaining
 
@@ -191,14 +191,14 @@ open Purelib.Data in
 The original selection request pays the annular sewing discrepancy, leaving the retained local annular source term
 explicit in the final comparison. -/
 theorem period_accurate (areas : LocalAreas retained) (request :
-  Hyperelliptic.Meshes.PuncturedGrid.SewnSelectionRequests.SelectionAreaPreparation.Request prepared (error / 4) floor)
+  SelectionAreaPreparation.Request prepared (error / 4) floor)
     (later : request.contact.index ≤ index) (periodArea : Gaussian)
     (periodBound : normSq (surface.boundaryArea - periodArea) < error / 4) :
     normSq (retained.remaining.area - (periodArea - areas.annular.value)) < error := by
   have periodScalar := periodBound
   have annularScalar := areas.annular_accurate request later
   rw [Gaussian.Norm.Basic.normSq_eq_canonical] at periodScalar annularScalar
-  have scalar := Topology.NewtonSewnAreaComparison.AreaExcision.local_accurate
+  have scalar := AreaExcision.local_accurate
     retained.areaExcision periodArea areas.annular.value periodScalar annularScalar
   rw [← Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
   exact scalar

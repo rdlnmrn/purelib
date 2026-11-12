@@ -13,6 +13,8 @@ import Mathlib.Algebra.Ring.Defs
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Field
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Polynomial.Dense.Gaussian.Bounds.Taylor (HornerTaylorNormBounds)
 
 open Purelib.Data
@@ -44,13 +46,13 @@ open Purelib.Data.Gaussian
 /-- The value and slope components of the Taylor fold agree with the ordinary Horner bounds when their initial
 components agree. -/
 private theorem denseHornerNormTaylor_fields : ∀
-    (coefficients : List Gaussian.Basic.Canonical) (inputNormSq : Fraction.Rational)
-    (normBounds : Polynomial.Bounds.Horner)
+    (coefficients : List Basic.Canonical) (inputNormSq : Fraction.Rational)
+    (normBounds : Bounds.Horner)
     (taylorBounds : HornerTaylorNormBounds),
     normBounds.value = taylorBounds.value →
     normBounds.slope = taylorBounds.slope →
     let normFinal := coefficients.foldl
-      (Dense.Gaussian.Bounds.Horner.step inputNormSq) normBounds
+      (Horner.step inputNormSq) normBounds
     let taylorFinal := coefficients.foldl
       (HornerTaylorNormBounds.step inputNormSq)
         taylorBounds
@@ -62,10 +64,10 @@ private theorem denseHornerNormTaylor_fields : ∀
       valueEqual, slopeEqual => by
       simp only [List.foldl_cons]
       apply denseHornerNormTaylor_fields remaining inputNormSq
-      · simp only [Dense.Gaussian.Bounds.Horner.step,
+      · simp only [Horner.step,
           HornerTaylorNormBounds.step]
         rw [valueEqual]
-      · simp only [Dense.Gaussian.Bounds.Horner.step,
+      · simp only [Horner.step,
           HornerTaylorNormBounds.step]
         rw [valueEqual, slopeEqual]
 
@@ -162,9 +164,9 @@ open Purelib.Data.Gaussian
 The input radius and coefficient ceiling are nonnegative, and the actual initial components are nonnegative and bounded
 by their uniform counterparts. -/
 private theorem denseTaylorFold_le_uniform : ∀
-    (coefficients : List Gaussian.Basic.Canonical) {coefficientBound inputNormSq : Fraction.Rational}
+    (coefficients : List Basic.Canonical) {coefficientBound inputNormSq : Fraction.Rational}
     (actual uniform : HornerTaylorNormBounds),
-    Purelib.Data.Gaussian.List.NormBounds.CoefficientsNormLe coefficients coefficientBound →
+    Gaussian.List.NormBounds.CoefficientsNormLe coefficients coefficientBound →
     0 ≤ coefficientBound → 0 ≤ inputNormSq →
     0 ≤ actual.value → 0 ≤ actual.slope →
     0 ≤ actual.remainder →
@@ -194,38 +196,38 @@ private theorem denseTaylorFold_le_uniform : ∀
           0 ≤ actualNext.value ∧ 0 ≤ actualNext.slope ∧
             0 ≤ actualNext.remainder := by
         constructor
-        · exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+        · exact Arithmetic.mul_nonneg_direct (by decide)
             (add_nonneg
-              (Fraction.Order.Arithmetic.mul_nonneg_direct
+              (Arithmetic.mul_nonneg_direct
                 actualValueNonnegative inputNonnegative)
-              (Gaussian.Norm.Basic.normSq_nonneg coefficient))
+              (Norm.Basic.normSq_nonneg coefficient))
         constructor
-        · exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+        · exact Arithmetic.mul_nonneg_direct (by decide)
             (add_nonneg
-              (Fraction.Order.Arithmetic.mul_nonneg_direct
+              (Arithmetic.mul_nonneg_direct
                 actualSlopeNonnegative inputNonnegative)
               actualValueNonnegative)
-        · exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+        · exact Arithmetic.mul_nonneg_direct (by decide)
             (add_nonneg actualSlopeNonnegative
-              (Fraction.Order.Arithmetic.mul_nonneg_direct
+              (Arithmetic.mul_nonneg_direct
                 inputNonnegative actualRemainderNonnegative))
       have valueNext : actualNext.value ≤ uniformNext.value := by
-        apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct _
+        apply Arithmetic.mul_le_mul_of_nonneg_left_direct _
           (by decide)
         exact add_le_add
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          (Arithmetic.mul_le_mul_of_nonneg_right_direct
             valueOrder inputNonnegative) bounded.1
       have slopeNext : actualNext.slope ≤ uniformNext.slope := by
-        apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct _
+        apply Arithmetic.mul_le_mul_of_nonneg_left_direct _
           (by decide)
         exact add_le_add
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          (Arithmetic.mul_le_mul_of_nonneg_right_direct
             slopeOrder inputNonnegative) valueOrder
       have remainderNext : actualNext.remainder ≤ uniformNext.remainder := by
-        apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct _
+        apply Arithmetic.mul_le_mul_of_nonneg_left_direct _
           (by decide)
         exact add_le_add slopeOrder
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct
             remainderOrder inputNonnegative)
       simpa only [List.foldl_cons, List.length_cons,
         uniformTaylorBoundsFrom, actualNext, uniformNext] using

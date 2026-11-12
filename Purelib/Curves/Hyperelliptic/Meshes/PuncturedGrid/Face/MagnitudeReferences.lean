@@ -114,7 +114,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels (
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.EnteredPaths (EnteredPath)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face :
@@ -128,20 +128,20 @@ set_option genInjectivity false in
 
 The route, incoming sheet owner and entered domain are retained together, and the unit request fixes a bound before any
 later numerical face index. -/
-structure CornerReference (domain : Periods.PeriodDomain models sheet) (differential : Differentials.Basic.Differential
+structure CornerReference (domain : Periods.PeriodDomain models sheet) (differential : Differential
   genus) (corner : Fin 4) where
-  /-- The original clear route from the face anchor to this exact corner. -/ route : ClearBoxPaths.Route
+  /-- The original clear route from the face anchor to this exact corner. -/ route : Route
     curve.polynomial face.cell.box face.cell.box.anchor (FaceCorners.point face.cell.box corner)
   /-- The cached original route preparation on the retained sheet owner. -/ prepared :
-    PreparedClearPathModels.CoveredTracedPath route.path (models.frame.owners sheet)
-  /-- The actual entered face path consuming this exact route preparation. -/ entered : EnteredPaths.EnteredPath models
+    CoveredTracedPath route.path (models.frame.owners sheet)
+  /-- The actual entered face path consuming this exact route preparation. -/ entered : EnteredPath models
     prepared differential sheet
   /-- The entry is exactly the original selected sheet's face-origin entry. -/ entry_eq : entered.entry = Entry.origin
     models sheet
   /-- The entered path retains the supplied original domain up to erased dependent transport. -/ domain_eq : HEq
     entered.domain domain
   /-- The cached unit-target primitive reference on this exact entered path. -/ reference :
-    PrimitiveReferences.Reference entered 1
+    Reference entered 1
 
 constructive_injectivity CornerReference
 
@@ -149,20 +149,20 @@ namespace CornerReference
 
 /-- Prepare the actual anchor-to-corner route once on the original domain and retain its unit-target primitive
 reference. -/
-@[expose] def build (domain : Periods.PeriodDomain models sheet) (differential : Differentials.Basic.Differential genus)
+@[expose] def build (domain : Periods.PeriodDomain models sheet) (differential : Differential genus)
   (corner : Fin 4) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeReferences.CornerReference domain differential corner :=
+    CornerReference domain differential corner :=
   let route := Route.build face.clearance face.cell.box.anchor (FaceCorners.point face.cell.box corner)
     face.cell.box.contains_anchor (FaceCorners.inside face.cell.box corner)
   let prepared := CoveredTracedPath.build route.path route.within (models.frame.owners sheet)
   let entered := EnteredPath.ofEntry (Entry.origin models sheet) domain prepared
-    (Polynomial.Geometry.ClearPath.InBox.ofWithin route.path route.within face.cell.box.contains_anchor)
+    (InBox.ofWithin route.path route.within face.cell.box.contains_anchor)
     differential sheet (ParentCache.build prepared differential sheet)
   ⟨route, prepared, entered, rfl, HEq.rfl, Reference.build entered 1 (by decide)⟩
 
 /-- Every sufficiently refined actual corner increment satisfies its original retained reference bound. -/
 theorem bounded {corner : Fin 4} (fixed :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeReferences.CornerReference domain differential corner) {index
+  CornerReference domain differential corner) {index
   : Nat}
     (later : fixed.reference.budget.grid.index ≤ index) (data : PrimitiveData.DomainPrimitives domain differential
       index) :
@@ -181,7 +181,7 @@ set_option genInjectivity false in
 
 The original three references determine the cached nested maximum stage and the
 exact sum of their stage-independent magnitude ceilings. -/
-structure CornerReferences (domain : Periods.PeriodDomain models sheet) (differential : Differentials.Basic.Differential
+structure CornerReferences (domain : Periods.PeriodDomain models sheet) (differential : Differential
   genus) where
   /-- The retained reference from the face anchor to corner one. -/ second :
     CornerReference domain differential 1
@@ -193,7 +193,7 @@ structure CornerReferences (domain : Periods.PeriodDomain models sheet) (differe
   /-- The common index is exactly the maximum of the three retained grid request indices. -/ index_eq : index = max
     second.reference.budget.grid.index (max third.reference.budget.grid.index fourth.reference.budget.grid.index)
   /-- The cached stage-independent squared-norm ceiling for every corner increment. -/ bound :
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The common bound is exactly the sum of the three retained reference bounds. -/ bound_eq : bound =
     second.reference.bound + third.reference.bound + fourth.reference.bound
 
@@ -202,13 +202,13 @@ constructive_injectivity CornerReferences
 namespace CornerReferences
 
 /-- Cache the three original non-anchor corner references and their exact common index and bound. -/
-@[expose] def build (domain : Periods.PeriodDomain models sheet) (differential : Differentials.Basic.Differential genus)
-  : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeReferences.CornerReferences domain differential :=
-  let second := Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeReferences.CornerReference.build domain
+@[expose] def build (domain : Periods.PeriodDomain models sheet) (differential : Differential genus)
+  : CornerReferences domain differential :=
+  let second := CornerReference.build domain
     differential 1
-  let third := Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeReferences.CornerReference.build domain
+  let third := CornerReference.build domain
     differential 2
-  let fourth := Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeReferences.CornerReference.build domain
+  let fourth := CornerReference.build domain
     differential 3
   ⟨second, third, fourth,
     max second.reference.budget.grid.index (max third.reference.budget.grid.index fourth.reference.budget.grid.index),
@@ -216,7 +216,7 @@ namespace CornerReferences
     second.reference.bound + third.reference.bound + fourth.reference.bound, rfl⟩
 
 /-- The cached total corner magnitude bound is nonnegative. -/
-theorem nonnegative (fixed : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeReferences.CornerReferences domain
+theorem nonnegative (fixed : CornerReferences domain
   differential) : 0 ≤ fixed.bound := by
   rw [fixed.bound_eq]
   exact add_nonneg (add_nonneg fixed.second.reference.bound_positive.le fixed.third.reference.bound_positive.le)
@@ -226,7 +226,7 @@ theorem nonnegative (fixed : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Magn
 
 The supplied later stage is sufficient for all three original corner references.
 Their nonnegative ceilings sum to the same retained common magnitude bound. -/
-theorem bounded (fixed : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeReferences.CornerReferences domain
+theorem bounded (fixed : CornerReferences domain
   differential) {index : Nat} (later : fixed.index ≤ index)
     (data : PrimitiveData.DomainPrimitives domain differential index) (corner : Fin 4) :
     Data.Gaussian.Norm.Basic.normSq (data.corners.values corner - data.corners.values 0) ≤ fixed.bound := by

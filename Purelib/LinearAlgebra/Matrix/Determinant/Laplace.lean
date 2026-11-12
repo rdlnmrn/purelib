@@ -45,8 +45,8 @@ produce a finite table whose sum uses the same left fold and zero accumulator. -
   | n + 1, matrix =>
       (List.ofFn fun row : Fin (n + 1) =>
         (-1 : K) ^ (row : Nat) * matrix row 0 *
-          Purelib.LinearAlgebra.Matrix.Determinant.Laplace.scalarDeterminant n
-            (SquareMatrix.Minor.scalarFirstColumnMinor matrix row)).foldl
+          Laplace.scalarDeterminant n
+            (Minor.scalarFirstColumnMinor matrix row)).foldl
         (fun a b => a + b) 0
 
 omit [DecidableEq K] in
@@ -56,37 +56,37 @@ The original minor indices and finite summand table retain each bounded entry
 comparison through the recursive determinants and the same addition fold. -/
 theorem scalarDeterminant_congr : ∀ {n : Nat} (left right : BivariateMatrix K n),
     (∀ row column, left row column = right row column) →
-      SquareMatrix.Determinant.Laplace.scalarDeterminant n left = SquareMatrix.Determinant.Laplace.scalarDeterminant n
+      scalarDeterminant n left = scalarDeterminant n
         right
   | 0, left, right, equal => rfl
   | n + 1, left, right, equal => by
-      rw [SquareMatrix.Determinant.Laplace.scalarDeterminant, SquareMatrix.Determinant.Laplace.scalarDeterminant]
+      rw [scalarDeterminant, scalarDeterminant]
       apply congrArg (fun values : List K =>
         values.foldl (fun a b => a + b) 0)
-      apply Purelib.Data.List.OfFn.Basic.ofFn_congr
+      apply Data.List.OfFn.Basic.ofFn_congr
       intro row
       have minorEqual :
-          SquareMatrix.Determinant.Laplace.scalarDeterminant n (SquareMatrix.Minor.scalarFirstColumnMinor left row) =
-            SquareMatrix.Determinant.Laplace.scalarDeterminant n (SquareMatrix.Minor.scalarFirstColumnMinor right row)
+          scalarDeterminant n (Minor.scalarFirstColumnMinor left row) =
+            scalarDeterminant n (Minor.scalarFirstColumnMinor right row)
               :=
-        Purelib.LinearAlgebra.Matrix.Determinant.Laplace.scalarDeterminant_congr _ _ (fun minorRow
+        Laplace.scalarDeterminant_congr _ _ (fun minorRow
           column => by
-          simp only [SquareMatrix.Minor.scalarFirstColumnMinor,
-            SquareMatrix.matrixOfFn_apply]
+          simp only [Minor.scalarFirstColumnMinor,
+            matrixOfFn_apply]
           exact equal (Data.Fin.skipIndex row minorRow) column.succ)
       calc
         (-1 : K) ^ (row : Nat) * left row 0 *
-              SquareMatrix.Determinant.Laplace.scalarDeterminant n (SquareMatrix.Minor.scalarFirstColumnMinor left row)
+              scalarDeterminant n (Minor.scalarFirstColumnMinor left row)
                 =
             (-1 : K) ^ (row : Nat) * right row 0 *
-              SquareMatrix.Determinant.Laplace.scalarDeterminant n (SquareMatrix.Minor.scalarFirstColumnMinor left row)
+              scalarDeterminant n (Minor.scalarFirstColumnMinor left row)
                 :=
           congrArg (fun value =>
             (-1 : K) ^ (row : Nat) * value *
-              SquareMatrix.Determinant.Laplace.scalarDeterminant n (SquareMatrix.Minor.scalarFirstColumnMinor left row))
+              scalarDeterminant n (Minor.scalarFirstColumnMinor left row))
             (equal row 0)
         _ = (-1 : K) ^ (row : Nat) * right row 0 *
-              SquareMatrix.Determinant.Laplace.scalarDeterminant n (SquareMatrix.Minor.scalarFirstColumnMinor right row)
+              scalarDeterminant n (Minor.scalarFirstColumnMinor right row)
                 :=
           congrArg (fun value =>
             (-1 : K) ^ (row : Nat) * right row 0 * value) minorEqual

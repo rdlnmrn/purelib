@@ -19,6 +19,8 @@ import Purelib.Data.GaussianInt.Basic
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Measure.Distribution.Projective
+
 section
 @[expose] public section
 
@@ -45,24 +47,24 @@ failure request. -/
 theorem
   encodedChordalOmegaProbe_iidSamples_empiricalCumulativeGridDistance_lt_requested
     {index : Type}
-    (distribution : Measure.Distribution index)
+    (distribution : Distribution index)
     (fraction : index → GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
     (numeratorNonzero : ∀ item, (fraction item).numerator ≠ 0)
     (thresholds : List Fraction.Rational)
     (tolerance : Fraction.Rational) (tolerancePositive : 0 < tolerance)
     (failure : Fraction.Rational) (failurePositive : 0 < failure) :
-    ((CCL.EncodedPrefix.encodedChordalOmegaProbeLaw distribution fraction numeratorNonzero)
+    ((encodedChordalOmegaProbeLaw distribution fraction numeratorNonzero)
       |>.iidSamples
         (Distribution.requiredCumulativeGridSampleCount
           thresholds tolerance failure)).probability
       (Distribution.empiricalCumulativeGridDistanceDeviation
-        (Distribution.Projective.Chordal.affineChordalOmegaProbeLaw distribution fraction) thresholds
+        (Chordal.affineChordalOmegaProbeLaw distribution fraction) thresholds
         (Distribution.requiredCumulativeGridSampleCount
           thresholds tolerance failure)
         tolerance) < failure := by
-  rw [CCL.EncodedPrefix.encodedChordalOmegaProbeLaw_eq_affine distribution fraction
+  rw [encodedChordalOmegaProbeLaw_eq_affine distribution fraction
     numeratorNonzero]
-  exact (Distribution.Projective.Chordal.affineChordalOmegaProbeLaw distribution fraction)
+  exact (Chordal.affineChordalOmegaProbeLaw distribution fraction)
     |>.iidSamples_empiricalCumulativeGridDistanceDeviation_lt_requested
       thresholds tolerance tolerancePositive failure failurePositive
 
@@ -70,25 +72,25 @@ theorem
 theorem
   encodedChordalOmegaProbe_iidSamples_empiricalKolmogorovDistance_lt_requested
     {index : Type}
-    (distribution : Measure.Distribution index)
+    (distribution : Distribution index)
     (fraction : index → GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
     (numeratorNonzero : ∀ item, (fraction item).numerator ≠ 0)
     (tolerance : Fraction.Rational) (tolerancePositive : 0 < tolerance)
     (failure : Fraction.Rational) (failurePositive : 0 < failure) :
-    ((CCL.EncodedPrefix.encodedChordalOmegaProbeLaw distribution fraction numeratorNonzero)
+    ((encodedChordalOmegaProbeLaw distribution fraction numeratorNonzero)
       |>.iidSamples
         (Distribution.requiredKolmogorovSampleCount
-          (Distribution.Projective.Chordal.affineChordalOmegaProbeLaw distribution fraction)
+          (Chordal.affineChordalOmegaProbeLaw distribution fraction)
           tolerance failure)).probability
       (Distribution.empiricalKolmogorovDistanceDeviation
-        (Distribution.Projective.Chordal.affineChordalOmegaProbeLaw distribution fraction)
+        (Chordal.affineChordalOmegaProbeLaw distribution fraction)
         (Distribution.requiredKolmogorovSampleCount
-          (Distribution.Projective.Chordal.affineChordalOmegaProbeLaw distribution fraction)
+          (Chordal.affineChordalOmegaProbeLaw distribution fraction)
           tolerance failure)
           tolerance) < failure := by
-  rw [CCL.EncodedPrefix.encodedChordalOmegaProbeLaw_eq_affine distribution fraction
+  rw [encodedChordalOmegaProbeLaw_eq_affine distribution fraction
     numeratorNonzero]
-  exact (Distribution.Projective.Chordal.affineChordalOmegaProbeLaw distribution fraction)
+  exact (Chordal.affineChordalOmegaProbeLaw distribution fraction)
     |>.iidSamples_empiricalKolmogorovDistanceDeviation_lt_requested
       tolerance tolerancePositive failure failurePositive
 
@@ -99,7 +101,7 @@ lower and upper margins at the valid quantile level. -/
 theorem
   encodedChordalOmegaProbe_iidSamples_empiricalQuantileBracket_lt_requested
     {index : Type}
-    (distribution : Measure.Distribution index)
+    (distribution : Distribution index)
     (fraction : index → GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
     (numeratorNonzero : ∀ item, (fraction item).numerator ≠ 0)
     (thresholds : List Fraction.Rational)
@@ -110,11 +112,11 @@ theorem
     (lower upper : Fraction.Rational)
     (lowerMember : lower ∈ thresholds) (upperMember : upper ∈ thresholds)
     (lowerMargin :
-      (Distribution.Projective.Chordal.affineChordalOmegaProbeLaw distribution fraction).cumulative lower +
+      (Chordal.affineChordalOmegaProbeLaw distribution fraction).cumulative lower +
         tolerance < level)
     (upperMargin : level + tolerance ≤
-      (Distribution.Projective.Chordal.affineChordalOmegaProbeLaw distribution fraction).cumulative upper) :
-    ((CCL.EncodedPrefix.encodedChordalOmegaProbeLaw distribution fraction numeratorNonzero)
+      (Chordal.affineChordalOmegaProbeLaw distribution fraction).cumulative upper) :
+    ((encodedChordalOmegaProbeLaw distribution fraction numeratorNonzero)
       |>.iidSamples
         (Distribution.requiredCumulativeGridSampleCount
           thresholds tolerance failure)).probability
@@ -122,9 +124,9 @@ theorem
         (Distribution.requiredCumulativeGridSampleCount
           thresholds tolerance failure)
         level levelPositive levelAtMostOne lower upper) < failure := by
-  rw [CCL.EncodedPrefix.encodedChordalOmegaProbeLaw_eq_affine distribution fraction
+  rw [encodedChordalOmegaProbeLaw_eq_affine distribution fraction
     numeratorNonzero]
-  exact (Distribution.Projective.Chordal.affineChordalOmegaProbeLaw distribution fraction)
+  exact (Chordal.affineChordalOmegaProbeLaw distribution fraction)
     |>.iidSamples_empiricalLowerQuantileBracketDeviation_lt_requested
       thresholds tolerance tolerancePositive failure failurePositive level
       levelPositive levelAtMostOne lower upper lowerMember upperMember
@@ -137,7 +139,7 @@ Kolmogorov bound. -/
 theorem
   encodedChordalOmegaProbe_iidSamples_empiricalQuantileBracket_lt_requested_global
     {index : Type}
-    (distribution : Measure.Distribution index)
+    (distribution : Distribution index)
     (fraction : index → GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
     (numeratorNonzero : ∀ item, (fraction item).numerator ≠ 0)
     (tolerance : Fraction.Rational) (tolerancePositive : 0 < tolerance)
@@ -146,23 +148,23 @@ theorem
     (levelAtMostOne : level ≤ 1)
     (lower upper : Fraction.Rational)
     (lowerMargin :
-      (Distribution.Projective.Chordal.affineChordalOmegaProbeLaw distribution fraction).cumulative lower +
+      (Chordal.affineChordalOmegaProbeLaw distribution fraction).cumulative lower +
         tolerance < level)
     (upperMargin : level + tolerance ≤
-      (Distribution.Projective.Chordal.affineChordalOmegaProbeLaw distribution fraction).cumulative upper) :
-    ((CCL.EncodedPrefix.encodedChordalOmegaProbeLaw distribution fraction numeratorNonzero)
+      (Chordal.affineChordalOmegaProbeLaw distribution fraction).cumulative upper) :
+    ((encodedChordalOmegaProbeLaw distribution fraction numeratorNonzero)
       |>.iidSamples
         (Distribution.requiredKolmogorovSampleCount
-          (Distribution.Projective.Chordal.affineChordalOmegaProbeLaw distribution fraction)
+          (Chordal.affineChordalOmegaProbeLaw distribution fraction)
           tolerance failure)).probability
       (Distribution.empiricalLowerQuantileBracketDeviation
         (Distribution.requiredKolmogorovSampleCount
-          (Distribution.Projective.Chordal.affineChordalOmegaProbeLaw distribution fraction)
+          (Chordal.affineChordalOmegaProbeLaw distribution fraction)
           tolerance failure)
         level levelPositive levelAtMostOne lower upper) < failure := by
-  rw [CCL.EncodedPrefix.encodedChordalOmegaProbeLaw_eq_affine distribution fraction
+  rw [encodedChordalOmegaProbeLaw_eq_affine distribution fraction
     numeratorNonzero]
-  exact (Distribution.Projective.Chordal.affineChordalOmegaProbeLaw distribution fraction)
+  exact (Chordal.affineChordalOmegaProbeLaw distribution fraction)
     |>.iidSamples_empiricalLowerQuantileBracketDeviation_lt_requested_global
       tolerance tolerancePositive failure failurePositive level levelPositive
         levelAtMostOne lower upper lowerMargin upperMargin

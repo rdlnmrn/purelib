@@ -76,25 +76,25 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks (FaceDom
 open Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy (SurfacePartitions SurfaceRequest)
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility (SurfaceCuts surfaceMeshes)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target
-    radius : Purelib.Data.Rat.Fraction.Rational} {grid :
-    Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-  {observations : Purelib.Riemann.RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
+  {preparation : NewtonPreparation original} {target
+    radius : Rational} {grid :
+    NewtonGrid preparation target radius}
+  {observations : ProtectedObservations original} {frames :
     RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
+  {domains : FaceDomainBank frames
     grid.faces.regulars} {sheet : Fin 2}
-  {partitions : Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid}
-  {surfaceCuts : Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceCuts partitions domains}
+  {partitions : SurfacePartitions observations grid}
+  {surfaceCuts : SurfaceCuts partitions domains}
     {depth : Nat}
-  {fixed : Purelib.Riemann.RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet} {error :
-    Purelib.Data.Rat.Fraction.Rational}
+  {fixed : Preflights domains sheet} {error :
+    Rational}
 
-variable (request : Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfaceRequest partitions
-  (Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
+variable (request : Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfaceRequest partitions
+  (MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
   sheet depth) fixed error)
 
 /-- On a horizontal side the upper piece is the left trace, so its bottom minus the lower piece's top agrees with the
@@ -105,7 +105,7 @@ def horizontalSeamSide (position : Fin grid.faces.regulars.length)
     let partition := partitions.get position
     let above := (request.meshes.get position).entries.get (PieceIndices.pieceIndex partition column row.succ)
     let below := (request.meshes.get position).entries.get (PieceIndices.pieceIndex partition column row.castSucc)
-    ObservationMesh.MatchedHorizontalSide above below (Fin.cast above.boundaryRows_eq 0)
+    MatchedHorizontalSide above below (Fin.cast above.boundaryRows_eq 0)
       (Fin.cast below.boundaryRows_eq (Fin.last below.boundaryRows))
       (partition.cuts.boxes[(PieceIndices.pieceIndex partition column row.castSucc).val]'(PieceIndices.pieceIndex
         partition column row.castSucc).isLt).yUpper := by
@@ -130,7 +130,7 @@ def verticalSeamSide (position : Fin grid.faces.regulars.length)
     let partition := partitions.get position
     let left := (request.meshes.get position).entries.get (PieceIndices.pieceIndex partition column.castSucc row)
     let right := (request.meshes.get position).entries.get (PieceIndices.pieceIndex partition column.succ row)
-    ObservationMesh.MatchedVerticalSide left right (Fin.cast left.boundaryColumns_eq (Fin.last left.boundaryColumns))
+    MatchedVerticalSide left right (Fin.cast left.boundaryColumns_eq (Fin.last left.boundaryColumns))
       (Fin.cast right.boundaryColumns_eq 0)
       (partition.cuts.boxes[(PieceIndices.pieceIndex partition column.castSucc row).val]'(PieceIndices.pieceIndex
         partition column.castSucc row).isLt).xUpper := by
@@ -153,27 +153,27 @@ set_option genInjectivity false in
 Every trace uses the shared request depth and preserves both original model owners and the face-assembly seam
 orientation. -/
 structure SeamTraces (position : Fin grid.faces.regulars.length) where
-  /-- The cached matched traces between vertically adjacent retained pieces. -/ horizontal : Data.Vector.DependentVector
+  /-- The cached matched traces between vertically adjacent retained pieces. -/ horizontal : DependentVector
     (fun column : Fin ((PieceIndices.columns (partitions.get position)) + 1) =>
-    Data.Vector.DependentVector (fun row : Fin (PieceIndices.rows (partitions.get position)) =>
-      (Curves.Hyperelliptic.Meshes.Newton.Surface.MatchedSides.horizontalSeamSide request position column row).Trace
+    DependentVector (fun row : Fin (PieceIndices.rows (partitions.get position)) =>
+      (MatchedSides.horizontalSeamSide request position column row).Trace
       request.depth))
-  /-- The cached matched traces between horizontally adjacent retained pieces. -/ vertical : Data.Vector.DependentVector
+  /-- The cached matched traces between horizontally adjacent retained pieces. -/ vertical : DependentVector
     (fun column : Fin (PieceIndices.columns (partitions.get position)) =>
-    Data.Vector.DependentVector (fun row : Fin ((PieceIndices.rows (partitions.get position)) + 1) =>
-      (Curves.Hyperelliptic.Meshes.Newton.Surface.MatchedSides.verticalSeamSide request position column row).Trace
+    DependentVector (fun row : Fin ((PieceIndices.rows (partitions.get position)) + 1) =>
+      (MatchedSides.verticalSeamSide request position column row).Trace
       request.depth))
 
 constructive_injectivity SeamTraces
 
 /-- Construct and cache each actual piece-seam trace at the common retained spatial depth. -/
 def SeamTraces.build (position : Fin grid.faces.regulars.length) :
-  Curves.Hyperelliptic.Meshes.Newton.Surface.MatchedSides.SeamTraces request position :=
+  SeamTraces request position :=
   ⟨DependentVector.ofFn fun column => DependentVector.ofFn fun row =>
-      Trace.build (Curves.Hyperelliptic.Meshes.Newton.Surface.MatchedSides.horizontalSeamSide request position column
+      Trace.build (MatchedSides.horizontalSeamSide request position column
         row) request.depth,
     DependentVector.ofFn fun column => DependentVector.ofFn fun row =>
-      Trace.build (Curves.Hyperelliptic.Meshes.Newton.Surface.MatchedSides.verticalSeamSide request position column row)
+      Trace.build (MatchedSides.verticalSeamSide request position column row)
         request.depth⟩
 
 end Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MatchedSides

@@ -45,13 +45,13 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation
 open Purelib.Riemann.Paths.RectangularHorizontalTraceLengths
 open Purelib.Riemann.Paths.RectangularVerticalTraceLengths
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face : Meshes.PuncturedGridFaces.RegularFace bank}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {face : Meshes.PuncturedGridFaces.RegularFace bank}
       {models
-    : Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames face}
-  {sheet : Fin 2} (domain : Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain models sheet)
+    : InverseModels.BranchCellBank.FaceModels frames face}
+  {sheet : Fin 2} (domain : Periods.PeriodDomain models sheet)
   {cuts : Paths.RectangularSegmentSplitting.GridCuts domain.geometry}
   {mesh : Meshes.RectangularObservationMesh.ObservationMesh cuts face.cell.box}
 
@@ -60,7 +60,7 @@ namespace SideGeometry
 /-- Prepare the original bottom perimeter geometry from its retained local owners and exact straight-coordinate
 identity. -/
 def bottom (traces : Paths.RectangularPerimeterTraces.PerimeterTraces mesh) :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry models (fun vertex => traces.bottom.point
+    SideGeometry models (fun vertex => traces.bottom.point
       (traces.bottom.vertices.indexed vertex)) :=
   .horizontal models _ (fun vertex =>
     let owner := traces.bottom.leftOwner (traces.bottom.vertices.indexed vertex)
@@ -71,7 +71,7 @@ def bottom (traces : Paths.RectangularPerimeterTraces.PerimeterTraces mesh) :
 /-- Prepare the original top perimeter geometry from its retained local owners and exact straight-coordinate identity.
 -/
 def top (traces : Paths.RectangularPerimeterTraces.PerimeterTraces mesh) :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry models (fun vertex => traces.top.point
+    SideGeometry models (fun vertex => traces.top.point
       (traces.top.vertices.indexed vertex)) :=
   .horizontal models _ (fun vertex =>
     let owner := traces.top.leftOwner (traces.top.vertices.indexed vertex)
@@ -81,7 +81,7 @@ def top (traces : Paths.RectangularPerimeterTraces.PerimeterTraces mesh) :
 /-- Prepare the original left perimeter geometry from its retained local owners and exact straight-coordinate identity.
 -/
 def left (traces : Paths.RectangularPerimeterTraces.PerimeterTraces mesh) :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry models (fun vertex => traces.left.point
+    SideGeometry models (fun vertex => traces.left.point
       (traces.left.vertices.indexed vertex)) :=
   .vertical models _ (fun vertex =>
     let owner := traces.left.leftOwner (traces.left.vertices.indexed vertex)
@@ -92,7 +92,7 @@ def left (traces : Paths.RectangularPerimeterTraces.PerimeterTraces mesh) :
 /-- Prepare the original right perimeter geometry from its retained local owners and exact straight-coordinate identity.
 -/
 def right (traces : Paths.RectangularPerimeterTraces.PerimeterTraces mesh) :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry models (fun vertex => traces.right.point
+    SideGeometry models (fun vertex => traces.right.point
       (traces.right.vertices.indexed vertex)) :=
   .vertical models _ (fun vertex =>
     let owner := traces.right.leftOwner (traces.right.vertices.indexed vertex)

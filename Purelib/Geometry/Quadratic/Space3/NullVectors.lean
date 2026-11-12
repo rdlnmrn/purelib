@@ -17,6 +17,8 @@ public import Purelib.Data.Rat.Fraction.Field
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -39,7 +41,7 @@ bare existence claim.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Algebra.Field.ExplicitField K]
 
 namespace Purelib.Geometry.Quadratic.Space3.NullVectors
 
@@ -69,11 +71,11 @@ theorem rationalSumSquaresSeparate :
   separate := by
     intro first second third sumZero
     have firstNonnegative :=
-      Fraction.Order.Arithmetic.sq_nonneg_direct first
+      Arithmetic.sq_nonneg_direct first
     have secondNonnegative :=
-      Fraction.Order.Arithmetic.sq_nonneg_direct second
+      Arithmetic.sq_nonneg_direct second
     have thirdNonnegative :=
-      Fraction.Order.Arithmetic.sq_nonneg_direct third
+      Arithmetic.sq_nonneg_direct third
     have secondThirdNonnegative : 0 ≤ second ^ 2 + third ^ 2 :=
       add_nonneg secondNonnegative thirdNonnegative
     have firstUpper : first ^ 2 ≤ 0 := by
@@ -103,11 +105,11 @@ theorem rationalSumSquaresSeparate :
     have thirdSquareZero : third ^ 2 = 0 :=
       le_antisymm thirdUpper thirdNonnegative
     exact
-      ⟨(Fraction.Order.Arithmetic.sq_eq_zero_direct first).mp
+      ⟨(Arithmetic.sq_eq_zero_direct first).mp
           firstSquareZero,
-        (Fraction.Order.Arithmetic.sq_eq_zero_direct second).mp
+        (Arithmetic.sq_eq_zero_direct second).mp
           secondSquareZero,
-        (Fraction.Order.Arithmetic.sq_eq_zero_direct third).mp
+        (Arithmetic.sq_eq_zero_direct third).mp
           thirdSquareZero⟩
 
 /-- In particular, the only null vector over the repository's executable rational field is zero. -/
@@ -189,13 +191,13 @@ end Purelib.Geometry.Quadratic.Space3.NullVectors.SquareCollision
 
 section
 
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
 
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 
 /-- The paper's Theorem 2 collision is the target `-1` specialization of the stronger two-square computation. -/
 def squareCollision :
-  Purelib.Geometry.Quadratic.Space3.NullVectors.SquareCollision K := by
+  Geometry.Quadratic.Space3.NullVectors.SquareCollision K := by
   let representation := presentation.twoSquareRepresentation (-1)
   refine
     { first := representation.first
@@ -256,13 +258,13 @@ end
 
 section
 
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
 
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 
 /-- The complete finite square-table presentation computes the nonzero null vector asserted by Theorem 2. -/
 def nullCertificate :
-  Purelib.Geometry.Quadratic.Space3.NullVectors.FiniteOddFieldNullCertificate K where
+  Geometry.Quadratic.Space3.NullVectors.FiniteOddFieldNullCertificate K where
   twoNonzero := presentation.twoNonzero
   collision := presentation.squareCollision
 

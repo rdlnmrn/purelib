@@ -71,22 +71,22 @@ def moveBridge
     (sourceNonzero : source ≠ 0) (targetNonzero : target ≠ 0)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo)
-    (index : (Progressive.Power.Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo).Index) :
+    (index : (Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo).Index) :
     OwnerBridge
-      (Progressive.Power.Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo).polynomial
-      (Progressive.Power.EqualNorm.Move.Frame.transportedFrame sourceNonzero targetNonzero degree degreeAtLeastTwo
+      (Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo).polynomial
+      (Frame.transportedFrame sourceNonzero targetNonzero degree degreeAtLeastTwo
         small.toMoveSmall).polynomial := by
   let owner := Owner.Local.Transport.castOwner
-    (Progressive.Power.Frame.Basic.chamberFrame_polynomial sourceNonzero degree degreeAtLeastTwo)
-    ((Progressive.Power.Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo).owner index)
+    (Frame.Basic.chamberFrame_polynomial sourceNonzero degree degreeAtLeastTwo)
+    ((Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo).owner index)
   let raw := OwnerBridge.ofForward owner
-    (Progressive.Power.Owner.Transport.ownerMoveRouche (target := target) degree owner (by
+    (Owner.Transport.ownerMoveRouche (target := target) degree owner (by
       dsimp only [owner]
       rw [Owner.Local.Transport.castOwner_clearance_bound]
       exact small.toMoveSmall index))
   exact raw.cast
-    (Progressive.Power.Frame.Basic.chamberFrame_polynomial sourceNonzero degree degreeAtLeastTwo).symm
-    (Progressive.Power.EqualNorm.Move.Frame.transportedFrame_polynomial sourceNonzero targetNonzero degree
+    (Frame.Basic.chamberFrame_polynomial sourceNonzero degree degreeAtLeastTwo).symm
+    (Frame.transportedFrame_polynomial sourceNonzero targetNonzero degree
       degreeAtLeastTwo small.toMoveSmall).symm
 end Purelib.RootIsolation.Progressive.Power.EqualNorm.Move.Path
 
@@ -120,16 +120,16 @@ open Purelib.Data.Gaussian
     (sourceNonzero : source ≠ 0) (targetNonzero : target ≠ 0)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo)
-    (index : (Progressive.Power.Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo).Index) :
+    (index : (Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo).Index) :
     (moveBridge sourceNonzero targetNonzero degree degreeAtLeastTwo small
       index).box =
-      ((Progressive.Power.Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo).owner index).box := by
+      ((Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo).owner index).box := by
   rw [moveBridge, OwnerBridge.cast_box]
   change
     (Owner.Local.Transport.castOwner
-      (Progressive.Power.Frame.Basic.chamberFrame_polynomial sourceNonzero degree degreeAtLeastTwo)
-      ((Progressive.Power.Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo).owner index)).box =
-    ((Progressive.Power.Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo).owner index).box
+      (Frame.Basic.chamberFrame_polynomial sourceNonzero degree degreeAtLeastTwo)
+      ((Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo).owner index)).box =
+    ((Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo).owner index).box
   exact Owner.Local.Transport.castOwner_box _ _
 end Purelib.RootIsolation.Progressive.Power.EqualNorm.Move.Path
 
@@ -163,12 +163,12 @@ def moveOverlap
     (sourceNonzero : source ≠ 0) (targetNonzero : target ≠ 0)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo) :
-    Progressive.Chamber.Overlap.ChamberOverlap
-      (Progressive.Power.Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo)
-      (Progressive.Power.EqualNorm.Move.Frame.transportedFrame sourceNonzero targetNonzero degree degreeAtLeastTwo
+    Chamber.Overlap.ChamberOverlap
+      (Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo)
+      (Frame.transportedFrame sourceNonzero targetNonzero degree degreeAtLeastTwo
         small.toMoveSmall) where
   matching := Data.Fin.Bijection.cast
-    (Progressive.Power.EqualNorm.Move.Frame.moveCountEq sourceNonzero target degree degreeAtLeastTwo)
+    (Frame.moveCountEq sourceNonzero target degree degreeAtLeastTwo)
   bridge := moveBridge sourceNonzero targetNonzero degree degreeAtLeastTwo small
   bridge_refines_left := by
     intro index
@@ -178,7 +178,7 @@ def moveOverlap
     intro index
     rw [moveBridge_box,
       Data.Fin.Bijection.cast_forward]
-    rw [Progressive.Power.EqualNorm.Move.Frame.transportedFrame_owner_box]
+    rw [Frame.transportedFrame_owner_box]
     exact Box.refines_refl _
 end Purelib.RootIsolation.Progressive.Power.EqualNorm.Move.Path
 
@@ -215,13 +215,13 @@ def smallMovePath
     (equalNorm : normSq source = normSq target)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo) :
-    Progressive.Chamber.Path.Basic.ChamberPath
-      (Progressive.Power.Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo)
-      (Progressive.Power.Frame.Basic.chamberFrame targetNonzero degree degreeAtLeastTwo) :=
+    Chamber.Path.Basic.ChamberPath
+      (Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo)
+      (Frame.Basic.chamberFrame targetNonzero degree degreeAtLeastTwo) :=
   .cons (moveOverlap sourceNonzero targetNonzero degree degreeAtLeastTwo small)
-    (.cons (Progressive.Power.EqualNorm.Rebase.Overlap.rebaseOverlap sourceNonzero targetNonzero equalNorm degree
+    (.cons (Rebase.Overlap.rebaseOverlap sourceNonzero targetNonzero equalNorm degree
       degreeAtLeastTwo small)
-      (.nil (Progressive.Power.Frame.Basic.chamberFrame targetNonzero degree degreeAtLeastTwo)))
+      (.nil (Frame.Basic.chamberFrame targetNonzero degree degreeAtLeastTwo)))
 end Purelib.RootIsolation.Progressive.Power.EqualNorm.Move.Path
 
 end

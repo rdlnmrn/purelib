@@ -21,6 +21,9 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Approximation.Gaussian.Name.Basic (Named)
 
 open Purelib
@@ -68,9 +71,9 @@ theorem sampledProductErrorScale_nonneg (left right :
     0 ≤ sampledProductErrorScale left right := by
   unfold sampledProductErrorScale
   exact add_nonneg
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    (Arithmetic.mul_nonneg_direct (by decide)
       (Sampling.approximation left).centerBound_nonneg)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    (Arithmetic.mul_nonneg_direct (by decide)
       (Sampling.approximation right).centerBound_nonneg)
 
 /-- A canonical product approximation built from equal-index finite samples of two arbitrary CCL names. Its geometric
@@ -80,10 +83,10 @@ def sampledProductApproximation (left right :
   sample index :=
     (Sampling.approximation left).sample index *
       (Sampling.approximation right).sample index
-  radiusSq := Geometric.Basic.quarterRadius
+  radiusSq := Basic.quarterRadius
     (sampledProductErrorScale left right)
   radiusSq_nonneg :=
-    Geometric.Basic.quarterRadius_nonneg
+    Basic.quarterRadius_nonneg
       (sampledProductErrorScale_nonneg left right)
   later_close := by
     intro earlier later order
@@ -92,24 +95,24 @@ def sampledProductApproximation (left right :
     have leftMovement := leftSource.later_close order
     have rightMovement := rightSource.later_close order
     have firstTerm :
-        Data.Gaussian.Norm.Basic.normSq
+        Basic.normSq
             ((leftSource.sample later - leftSource.sample earlier) *
               rightSource.sample later) ≤
-          Geometric.Basic.quarterRadius 4 earlier *
+          Basic.quarterRadius 4 earlier *
             rightSource.centerBound := by
-      rw [Data.Gaussian.Norm.Basic.normSq_mul]
-      exact Fraction.Order.Arithmetic.mul_le_mul_direct leftMovement
-        (rightSource.sample_bounded later) (Data.Gaussian.Norm.Basic.normSq_nonneg _)
-        (Geometric.Basic.quarterRadius_nonneg (by decide) _)
+      rw [Basic.normSq_mul]
+      exact Arithmetic.mul_le_mul_direct leftMovement
+        (rightSource.sample_bounded later) (Basic.normSq_nonneg _)
+        (Basic.quarterRadius_nonneg (by decide) _)
     have secondTerm :
-        Data.Gaussian.Norm.Basic.normSq
+        Basic.normSq
             (leftSource.sample earlier *
               (rightSource.sample later - rightSource.sample earlier)) ≤
           leftSource.centerBound *
-            Geometric.Basic.quarterRadius 4 earlier := by
-      rw [Data.Gaussian.Norm.Basic.normSq_mul]
-      exact Fraction.Order.Arithmetic.mul_le_mul_direct
-        (leftSource.sample_bounded earlier) rightMovement (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+            Basic.quarterRadius 4 earlier := by
+      rw [Basic.normSq_mul]
+      exact Arithmetic.mul_le_mul_direct
+        (leftSource.sample_bounded earlier) rightMovement (Basic.normSq_nonneg _)
         leftSource.centerBound_nonneg
     have identity :
         leftSource.sample later * rightSource.sample later -
@@ -119,40 +122,40 @@ def sampledProductApproximation (left right :
             leftSource.sample earlier *
               (rightSource.sample later - rightSource.sample earlier) := by
       apply Data.Gaussian.Basic.ext <;>
-        simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-          Purelib.Data.Gaussian.Basic.add_re, Purelib.Data.Gaussian.Basic.add_im, Purelib.Data.Gaussian.Basic.mul_re,
-          Purelib.Data.Gaussian.Basic.mul_im] <;> ring1
-    change Data.Gaussian.Norm.Basic.normSq
+        simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+          Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im, Data.Gaussian.Basic.mul_re,
+          Data.Gaussian.Basic.mul_im] <;> ring1
+    change Basic.normSq
         (leftSource.sample later * rightSource.sample later -
           leftSource.sample earlier * rightSource.sample earlier) ≤
-      Geometric.Basic.quarterRadius
+      Basic.quarterRadius
         (sampledProductErrorScale left right) earlier
     rw [identity]
     calc
-      Data.Gaussian.Norm.Basic.normSq
+      Basic.normSq
           ((leftSource.sample later - leftSource.sample earlier) *
               rightSource.sample later +
             leftSource.sample earlier *
               (rightSource.sample later - rightSource.sample earlier)) ≤
         2 *
-          (Data.Gaussian.Norm.Basic.normSq
+          (Basic.normSq
               ((leftSource.sample later - leftSource.sample earlier) *
                 rightSource.sample later) +
-            Data.Gaussian.Norm.Basic.normSq
+            Basic.normSq
               (leftSource.sample earlier *
                 (rightSource.sample later - rightSource.sample earlier))) :=
-        Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _
+        Bounds.normSq_add_le_two _ _
       _ ≤ 2 *
-          (Geometric.Basic.quarterRadius 4 earlier *
+          (Basic.quarterRadius 4 earlier *
               rightSource.centerBound +
             leftSource.centerBound *
-              Geometric.Basic.quarterRadius 4 earlier) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+              Basic.quarterRadius 4 earlier) :=
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add firstTerm secondTerm) (by decide)
-      _ = Geometric.Basic.quarterRadius
+      _ = Basic.quarterRadius
           (sampledProductErrorScale left right) earlier := by
-        rw [Geometric.Basic.quarterRadius_eq_mul_pow,
-          Geometric.Basic.quarterRadius_eq_mul_pow]
+        rw [Basic.quarterRadius_eq_mul_pow,
+          Basic.quarterRadius_eq_mul_pow]
         dsimp only [leftSource, rightSource]
         unfold sampledProductErrorScale
         ring1
@@ -170,18 +173,18 @@ def sampledProductApproximation (left right :
     (Sampling.approximation left).centerBound *
       (Sampling.approximation right).centerBound
   centerBound_nonneg :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
+    Arithmetic.mul_nonneg_direct
       (Sampling.approximation left).centerBound_nonneg
       (Sampling.approximation right).centerBound_nonneg
   sample_bounded := by
     intro index
-    rw [Data.Gaussian.Norm.Basic.normSq_mul]
-    exact Fraction.Order.Arithmetic.mul_le_mul_direct
+    rw [Basic.normSq_mul]
+    exact Arithmetic.mul_le_mul_direct
       ((Sampling.approximation left).sample_bounded
         index)
       ((Sampling.approximation right).sample_bounded
         index)
-      (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+      (Basic.normSq_nonneg _)
       (Sampling.approximation left).centerBound_nonneg
 
 /-- The product approximation multiplies the two original canonical samples at the same index. -/
@@ -208,13 +211,13 @@ theorem sampledTripleErrorScale_nonneg (left middle
   right : Named) :
     0 ≤ sampledTripleErrorScale left middle right := by
   unfold sampledTripleErrorScale
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  exact Arithmetic.mul_nonneg_direct (by decide)
     (add_nonneg
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct
         (sampledProductErrorScale_nonneg left middle)
         (Sampling.approximation right).centerBound_nonneg)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Fraction.Order.Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct
+        (Arithmetic.mul_nonneg_direct
           (Sampling.approximation left).centerBound_nonneg
           (Sampling.approximation middle).centerBound_nonneg)
         (by decide)))
@@ -227,10 +230,10 @@ def sampledTripleApproximation (left middle right :
     ((Sampling.approximation left).sample index *
       (Sampling.approximation middle).sample index) *
         (Sampling.approximation right).sample index
-  radiusSq := Geometric.Basic.quarterRadius
+  radiusSq := Basic.quarterRadius
     (sampledTripleErrorScale left middle right)
   radiusSq_nonneg :=
-    Geometric.Basic.quarterRadius_nonneg
+    Basic.quarterRadius_nonneg
       (sampledTripleErrorScale_nonneg left middle right)
   later_close := by
     intro earlier later order
@@ -239,26 +242,26 @@ def sampledTripleApproximation (left middle right :
     have leftMiddleMovement := leftMiddle.later_close order
     have rightMovement := rightSource.later_close order
     have firstTerm :
-        Data.Gaussian.Norm.Basic.normSq
+        Basic.normSq
             ((leftMiddle.sample later - leftMiddle.sample earlier) *
               rightSource.sample later) ≤
-          Geometric.Basic.quarterRadius
+          Basic.quarterRadius
               (sampledProductErrorScale left middle) earlier *
             rightSource.centerBound := by
-      rw [Data.Gaussian.Norm.Basic.normSq_mul]
-      exact Fraction.Order.Arithmetic.mul_le_mul_direct leftMiddleMovement
-        (rightSource.sample_bounded later) (Data.Gaussian.Norm.Basic.normSq_nonneg _)
-        (Geometric.Basic.quarterRadius_nonneg
+      rw [Basic.normSq_mul]
+      exact Arithmetic.mul_le_mul_direct leftMiddleMovement
+        (rightSource.sample_bounded later) (Basic.normSq_nonneg _)
+        (Basic.quarterRadius_nonneg
           (sampledProductErrorScale_nonneg left middle) _)
     have secondTerm :
-        Data.Gaussian.Norm.Basic.normSq
+        Basic.normSq
             (leftMiddle.sample earlier *
               (rightSource.sample later - rightSource.sample earlier)) ≤
           leftMiddle.centerBound *
-            Geometric.Basic.quarterRadius 4 earlier := by
-      rw [Data.Gaussian.Norm.Basic.normSq_mul]
-      exact Fraction.Order.Arithmetic.mul_le_mul_direct
-        (leftMiddle.sample_bounded earlier) rightMovement (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+            Basic.quarterRadius 4 earlier := by
+      rw [Basic.normSq_mul]
+      exact Arithmetic.mul_le_mul_direct
+        (leftMiddle.sample_bounded earlier) rightMovement (Basic.normSq_nonneg _)
         leftMiddle.centerBound_nonneg
     have identity :
         leftMiddle.sample later * rightSource.sample later -
@@ -268,43 +271,43 @@ def sampledTripleApproximation (left middle right :
             leftMiddle.sample earlier *
               (rightSource.sample later - rightSource.sample earlier) := by
       apply Data.Gaussian.Basic.ext <;>
-        simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-          Purelib.Data.Gaussian.Basic.add_re, Purelib.Data.Gaussian.Basic.add_im, Purelib.Data.Gaussian.Basic.mul_re,
-          Purelib.Data.Gaussian.Basic.mul_im] <;> ring1
-    change Data.Gaussian.Norm.Basic.normSq
+        simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+          Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im, Data.Gaussian.Basic.mul_re,
+          Data.Gaussian.Basic.mul_im] <;> ring1
+    change Basic.normSq
         (leftMiddle.sample later * rightSource.sample later -
           leftMiddle.sample earlier * rightSource.sample earlier) ≤
-      Geometric.Basic.quarterRadius
+      Basic.quarterRadius
         (sampledTripleErrorScale left middle right) earlier
     rw [identity]
     calc
-      Data.Gaussian.Norm.Basic.normSq
+      Basic.normSq
           ((leftMiddle.sample later - leftMiddle.sample earlier) *
               rightSource.sample later +
             leftMiddle.sample earlier *
               (rightSource.sample later - rightSource.sample earlier)) ≤
         2 *
-          (Data.Gaussian.Norm.Basic.normSq
+          (Basic.normSq
               ((leftMiddle.sample later - leftMiddle.sample earlier) *
                 rightSource.sample later) +
-            Data.Gaussian.Norm.Basic.normSq
+            Basic.normSq
               (leftMiddle.sample earlier *
                 (rightSource.sample later - rightSource.sample earlier))) :=
-        Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _
+        Bounds.normSq_add_le_two _ _
       _ ≤ 2 *
-          (Geometric.Basic.quarterRadius
+          (Basic.quarterRadius
                 (sampledProductErrorScale left middle) earlier *
               rightSource.centerBound +
             leftMiddle.centerBound *
-              Geometric.Basic.quarterRadius 4 earlier) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+              Basic.quarterRadius 4 earlier) :=
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add firstTerm secondTerm) (by decide)
-      _ = Geometric.Basic.quarterRadius
+      _ = Basic.quarterRadius
           (sampledTripleErrorScale left middle right) earlier
             := by
-        rw [Geometric.Basic.quarterRadius_eq_mul_pow,
-          Geometric.Basic.quarterRadius_eq_mul_pow,
-          Geometric.Basic.quarterRadius_eq_mul_pow]
+        rw [Basic.quarterRadius_eq_mul_pow,
+          Basic.quarterRadius_eq_mul_pow,
+          Basic.quarterRadius_eq_mul_pow]
         dsimp only [leftMiddle, rightSource,
           sampledProductApproximation]
         unfold sampledTripleErrorScale
@@ -326,26 +329,26 @@ def sampledTripleApproximation (left middle right :
       (Sampling.approximation middle).centerBound) *
         (Sampling.approximation right).centerBound
   centerBound_nonneg :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
+    Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct
         (Sampling.approximation left).centerBound_nonneg
         (Sampling.approximation middle).centerBound_nonneg)
       (Sampling.approximation right).centerBound_nonneg
   sample_bounded := by
     intro index
-    rw [Data.Gaussian.Norm.Basic.normSq_mul, Data.Gaussian.Norm.Basic.normSq_mul]
-    exact Fraction.Order.Arithmetic.mul_le_mul_direct
-      (Fraction.Order.Arithmetic.mul_le_mul_direct
+    rw [Basic.normSq_mul, Basic.normSq_mul]
+    exact Arithmetic.mul_le_mul_direct
+      (Arithmetic.mul_le_mul_direct
         ((Sampling.approximation left).sample_bounded
           index)
         ((Sampling.approximation middle).sample_bounded
           index)
-        (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+        (Basic.normSq_nonneg _)
         (Sampling.approximation left).centerBound_nonneg)
       ((Sampling.approximation right).sample_bounded
         index)
-      (Data.Gaussian.Norm.Basic.normSq_nonneg _)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
+      (Basic.normSq_nonneg _)
+      (Arithmetic.mul_nonneg_direct
         (Sampling.approximation left).centerBound_nonneg
         (Sampling.approximation middle).centerBound_nonneg)
 

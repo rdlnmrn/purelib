@@ -18,6 +18,8 @@ import Purelib.Riemann.Paths.RectangularPairedSegments
 import Purelib.Riemann.Readings.RectangularPointReadings
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! Reexpress an existing physical trace in one original parent parameter.
@@ -41,8 +43,8 @@ open Purelib.Data.Rat.Fraction.Compatibility
 variable {leftColumns leftRows rightColumns rightRows count genus : Nat}
   {leftGeometry : Geometry leftColumns leftRows} {rightGeometry : Geometry rightColumns rightRows}
   {piece : PairedSegmentPiece leftGeometry rightGeometry}
-  {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+  {curve : HyperellipticCurve genus} {differential :
+    Differential genus}
 
 open Purelib.Data in
 set_option genInjectivity false in
@@ -71,13 +73,13 @@ every cached parameter. -/
     (first last : Coordinate) (firstEq : piece.first = parent.edge.point first) (lastEq : piece.last = parent.edge.point
       last) :
     ParentParameters trace parent first last :=
-  let parameters := Vector.Basic.vectorOfFn (fun vertex => first + trace.parameters vertex * (last - first))
+  let parameters := vectorOfFn (fun vertex => first + trace.parameters vertex * (last - first))
   { parameters := parameters
-    parameters_eq := fun vertex => Vector.Basic.vectorOfFn_apply _ vertex
+    parameters_eq := fun vertex => vectorOfFn_apply _ vertex
     point_eq := by
       intro vertex
       dsimp only [parameters]
-      rw [Vector.Basic.vectorOfFn_apply, trace.points_eq, firstEq, lastEq, ←
+      rw [vectorOfFn_apply, trace.points_eq, firstEq, lastEq, ←
         Rectangle.Partition.PreparedSegmentCuts.point_eq_line]
       have affine := Rectangle.Partition.PreparedSegmentCuts.point_affine (parent.edge.point 0) (parent.edge.point 1)
         first last (trace.parameters vertex)
@@ -106,11 +108,11 @@ theorem inside (transport : ParentParameters trace parent first last) (ordered :
   1)) :
     first ≤ transport.parameters vertex ∧ transport.parameters vertex ≤ last := by
   rw [transport.parameters_eq]
-  have width := Rat.Fraction.Order.Arithmetic.sub_nonneg_direct ordered
+  have width := Arithmetic.sub_nonneg_direct ordered
   constructor
-  · exact le_add_of_nonneg_right (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (trace.within vertex).1 width)
-  · exact (Rat.Fraction.Order.Arithmetic.add_le_add_direct (le_refl first)
-      (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (trace.within vertex).2 width)).trans_eq (by
+  · exact le_add_of_nonneg_right (Arithmetic.mul_nonneg_direct (trace.within vertex).1 width)
+  · exact (Arithmetic.add_le_add_direct (le_refl first)
+      (Arithmetic.mul_le_mul_of_nonneg_right_direct (trace.within vertex).2 width)).trans_eq (by
         ring1)
 
 /-- Increasing trace parameters remain increasing under a forward parent parametrization. -/
@@ -118,9 +120,9 @@ theorem ordered (transport : ParentParameters trace parent first last) (directio
     (increasing : ∀ edge : Fin count, trace.parameters edge.castSucc ≤ trace.parameters edge.succ)
     (edge : Fin count) : transport.parameters edge.castSucc ≤ transport.parameters edge.succ := by
   rw [transport.parameters_eq, transport.parameters_eq]
-  exact Rat.Fraction.Order.Arithmetic.add_le_add_direct le_rfl
-    (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (increasing edge)
-    (Rat.Fraction.Order.Arithmetic.sub_nonneg_direct direction))
+  exact Arithmetic.add_le_add_direct le_rfl
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct (increasing edge)
+    (Arithmetic.sub_nonneg_direct direction))
 
 /-- Every cached reversed parameter lies between its original endpoints.
 
@@ -130,14 +132,14 @@ the cached affine point. -/
 theorem inside_reverse (transport : ParentParameters trace parent first last) (direction : last ≤ first)
     (vertex : Fin (count + 1)) : last ≤ transport.parameters vertex ∧ transport.parameters vertex ≤ first := by
   rw [transport.parameters_eq]
-  have width := Rat.Fraction.Order.Arithmetic.sub_nonneg_direct direction
+  have width := Arithmetic.sub_nonneg_direct direction
   constructor
   · exact (le_add_of_nonneg_right
-      (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (Rat.Fraction.Order.Arithmetic.sub_nonneg_direct (trace.within
+      (Arithmetic.mul_nonneg_direct (Arithmetic.sub_nonneg_direct (trace.within
         vertex).2) width)).trans_eq (by ring1)
-  · have upper := Rat.Fraction.Order.Arithmetic.add_le_add_direct (le_refl last)
-      (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-        ((Rat.Fraction.Order.Arithmetic.sub_le_sub_left_direct (trace.within vertex).1 (1 : Coordinate)).trans_eq (show
+  · have upper := Arithmetic.add_le_add_direct (le_refl last)
+      (Arithmetic.mul_le_mul_of_nonneg_right_direct
+        ((Arithmetic.sub_le_sub_left_direct (trace.within vertex).1 (1 : Coordinate)).trans_eq (show
         (1 : Coordinate) - 0 = 1 by ring1)) width)
     have leftEq : last + (1 - trace.parameters vertex) * (first - last) =
         first + trace.parameters vertex * (last - first) := by ring1
@@ -153,10 +155,10 @@ theorem ordered_reverse (transport : ParentParameters trace parent first last) (
     (increasing : ∀ edge : Fin count, trace.parameters edge.castSucc ≤ trace.parameters edge.succ)
     (edge : Fin count) : transport.parameters edge.succ ≤ transport.parameters edge.castSucc := by
   rw [transport.parameters_eq, transport.parameters_eq]
-  have upper := Rat.Fraction.Order.Arithmetic.add_le_add_direct (le_refl last)
-    (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (Rat.Fraction.Order.Arithmetic.sub_le_sub_left_direct (increasing edge) (1 : Coordinate))
-      (Rat.Fraction.Order.Arithmetic.sub_nonneg_direct direction))
+  have upper := Arithmetic.add_le_add_direct (le_refl last)
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (Arithmetic.sub_le_sub_left_direct (increasing edge) (1 : Coordinate))
+      (Arithmetic.sub_nonneg_direct direction))
   have affine (parameter : Coordinate) : last + (1 - parameter) * (first - last) = first + parameter * (last - first) :=
     by ring1
   rw [affine, affine] at upper
@@ -171,7 +173,7 @@ The original owner and value caches are reused, changing only the physical-point
 @[expose] def readings (transport : ParentParameters trace parent first last)
     {polynomial numerator : Polynomial} {columns rows : Nat} {geometry : Geometry columns rows}
     {models : Bank polynomial geometry} {primitives : Primitives models numerator}
-    {anchors : PrimitiveAnchors primitives} {offsets : LinearAlgebra.Grid.Offsets anchors.edges}
+    {anchors : PrimitiveAnchors primitives} {offsets : Grid.Offsets anchors.edges}
     (original : PointReadings anchors offsets (fun vertex => trace.points vertex)) :
     PointReadings anchors offsets (fun vertex => parent.edge.point (transport.parameters vertex)) :=
   ⟨original.owners, fun vertex => (original.point_eq vertex).trans (transport.point_eq vertex), original.values,
@@ -181,7 +183,7 @@ The original owner and value caches are reused, changing only the physical-point
 theorem readings_value (transport : ParentParameters trace parent first last)
     {polynomial numerator : Polynomial} {columns rows : Nat} {geometry : Geometry columns rows}
     {models : Bank polynomial geometry} {primitives : Primitives models numerator}
-    {anchors : PrimitiveAnchors primitives} {offsets : LinearAlgebra.Grid.Offsets anchors.edges}
+    {anchors : PrimitiveAnchors primitives} {offsets : Grid.Offsets anchors.edges}
     (original : PointReadings anchors offsets (fun vertex => trace.points vertex)) (vertex : Fin (count + 1)) :
     (transport.readings original).values vertex = original.values vertex := rfl
 

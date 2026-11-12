@@ -26,6 +26,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Mathlib.Order.Basic
 
+open Purelib.Approximation.CCL
+
 open Purelib.Data.CCL.Encoding.Cylinder.Basic (Realizes)
 
 section
@@ -55,17 +57,17 @@ open Purelib.Geometry.Projective in
 /-- Take the original law's probe expectation at the prefix process's fixed witnesses. -/
 def witnessProbeExpectation {ι : Type} (process :
   Cylinder.PrefixFamilyProcess ι)
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (probe : Line.GaussianLine → Fraction.Rational) : Fraction.Rational :=
   distribution.expectation fun item => probe (process.witness item)
 
 /-- Take the original expected scaled cylinder spread at the supplied process state. -/
 def probeRadius {ι : Type} (process : Cylinder.PrefixFamilyProcess
   ι)
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (factor : Fraction.Rational) (state : process.State) : Fraction.Rational :=
   distribution.expectation fun item =>
-    factor * Approximation.CCL.Cylinder.cylinderSpread (process.blocks state item)
+    factor * Cylinder.cylinderSpread (process.blocks state item)
 
 end Purelib.Measure.CCL.Prefix.PrefixFamilyProcess
 
@@ -77,31 +79,31 @@ namespace Purelib.Measure.CCL.Prefix.PrefixFamilyProcess
 /-- A nonnegative sensitivity factor makes the current state's expected probe radius nonnegative. -/
 theorem probeRadius_nonnegative {ι : Type}
     (process : Cylinder.PrefixFamilyProcess ι)
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (factor : Fraction.Rational) (factorNonnegative : 0 ≤ factor)
     (state : process.State) :
-    0 ≤ (CCL.Prefix.PrefixFamilyProcess.probeRadius process) distribution factor state := by
+    0 ≤ (probeRadius process) distribution factor state := by
   apply distribution.expectation_nonneg
   intro atom member
   exact Fraction.Order.Arithmetic.mul_nonneg_direct factorNonnegative
-    (Approximation.CCL.Cylinder.cylinderSpread_nonneg (process.blocks state atom.item))
+    (Cylinder.cylinderSpread_nonneg (process.blocks state atom.item))
 
 /-- Pointwise prefix extension between retained states cannot increase the expected probe radius. -/
 theorem probeRadius_le_of_extends {ι : Type}
     (process : Cylinder.PrefixFamilyProcess ι)
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (factor : Fraction.Rational) (factorNonnegative : 0 ≤ factor)
     {newer older : process.State}
     (extension : ∀ item, ∃ suffix,
       process.blocks newer item = process.blocks older item ++ suffix) :
-    (CCL.Prefix.PrefixFamilyProcess.probeRadius process) distribution factor newer ≤
-      (CCL.Prefix.PrefixFamilyProcess.probeRadius process) distribution factor older := by
+    (probeRadius process) distribution factor newer ≤
+      (probeRadius process) distribution factor older := by
   apply distribution.expectation_mono
   intro atom member
   rcases extension atom.item with ⟨suffix, equal⟩
   apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
   · rw [equal]
-    exact Approximation.CCL.Cylinder.cylinderSpread_le_of_append (process.blocks older atom.item) suffix
+    exact Cylinder.cylinderSpread_le_of_append (process.blocks older atom.item) suffix
   · exact factorNonnegative
 
 end Purelib.Measure.CCL.Prefix.PrefixFamilyProcess
@@ -117,7 +119,7 @@ namespace Purelib.Data.CCL.Encoding.Cylinder.PrefixFamilyProcess
 The process retains the original states and witnesses and averages their pointwise probe enclosures, using the positive
 sensitivity factor to answer width requests. -/
 def toProbeExpectationProcess {ι : Type}
-    (process : Cylinder.PrefixFamilyProcess ι)
+    (process : PrefixFamilyProcess ι)
     (distribution : Measure.Distribution ι)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)
@@ -135,7 +137,7 @@ namespace Purelib.Measure.CCL.Prefix.PrefixFamilyProcess
 /-- Pointwise extension of the retained blocks refines the expectation enclosure between the supplied states. -/
 theorem probeExpectationBound_refines_of_extends {ι : Type}
     (process : Cylinder.PrefixFamilyProcess ι)
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)
     (sensitive : ∀ left right,
@@ -154,18 +156,18 @@ theorem probeExpectationBound_refines_of_extends {ι : Type}
   rcases extension atom.item with ⟨suffix, equal⟩
   unfold Cylinder.PrefixFamilyProcess.toProbePointwiseProcess
   change Interval.Refines
-    (Approximation.CCL.Prefix.completedPrefixProbeBound (process.blocks newer atom.item)
+    (Prefix.completedPrefixProbeBound (process.blocks newer atom.item)
       (process.witness atom.item) (process.realizes newer atom.item)
       probe factor factorPositive.le sensitive)
-    (Approximation.CCL.Prefix.completedPrefixProbeBound (process.blocks older atom.item)
+    (Prefix.completedPrefixProbeBound (process.blocks older atom.item)
       (process.witness atom.item) (process.realizes older atom.item)
       probe factor factorPositive.le sensitive)
   have spreadLe :
-      factor * Approximation.CCL.Cylinder.cylinderSpread (process.blocks newer atom.item) ≤
-        factor * Approximation.CCL.Cylinder.cylinderSpread (process.blocks older atom.item) := by
+      factor * Cylinder.cylinderSpread (process.blocks newer atom.item) ≤
+        factor * Cylinder.cylinderSpread (process.blocks older atom.item) := by
     rw [equal]
     exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Approximation.CCL.Cylinder.cylinderSpread_le_of_append (process.blocks older atom.item) suffix)
+      (Cylinder.cylinderSpread_le_of_append (process.blocks older atom.item) suffix)
       factorPositive.le
   constructor
   · exact Fraction.Order.Arithmetic.sub_le_sub_left_direct spreadLe (probe (process.witness atom.item))
@@ -208,7 +210,7 @@ namespace Purelib.Data.CCL.Encoding.Cylinder.PrefixFamilyProcess
 /-- The current expectation enclosure contains every probe family realizing the current state's original blocks. -/
 theorem expectation_mem_probeExpectationProcess_bound {ι :
   Type}
-    (process : Cylinder.PrefixFamilyProcess ι)
+    (process : PrefixFamilyProcess ι)
     (distribution : Measure.Distribution ι)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)
@@ -225,14 +227,14 @@ theorem expectation_mem_probeExpectationProcess_bound {ι :
   apply (process.toProbePointwiseProcess distribution probe factor
     factorPositive sensitive).expectation_mem
   intro atom member
-  exact Approximation.CCL.Prefix.completedPrefixProbeBound_contains
+  exact Prefix.completedPrefixProbeBound_contains
     (process.blocks state atom.item) (process.witness atom.item)
     (process.realizes state atom.item) probe factor factorPositive.le
     sensitive (pointsRealize atom member)
 
 /-- The requested state's expectation enclosure is narrower than the supplied positive epsilon. -/
 theorem request_probeExpectation_width_lt {ι : Type}
-    (process : Cylinder.PrefixFamilyProcess ι)
+    (process : PrefixFamilyProcess ι)
     (distribution : Measure.Distribution ι)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)
@@ -252,7 +254,7 @@ theorem request_probeExpectation_width_lt {ι : Type}
 expectation. -/
 theorem request_probeExpectation_separation_witness_lt {ι
   : Type}
-    (process : Cylinder.PrefixFamilyProcess ι)
+    (process : PrefixFamilyProcess ι)
     (distribution : Measure.Distribution ι)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)
@@ -285,7 +287,7 @@ theorem request_probeExpectation_separation_witness_lt {ι
 /-- Any two probe families realizing the requested state's blocks have expectation separation strictly below epsilon. -/
 theorem request_probeExpectations_pairwise_separation_lt
   {ι : Type}
-    (process : Cylinder.PrefixFamilyProcess ι)
+    (process : PrefixFamilyProcess ι)
     (distribution : Measure.Distribution ι)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)

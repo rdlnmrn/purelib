@@ -5,6 +5,8 @@ import Purelib.Geometry.Rational.Box.Refinement
 import Purelib.Data.Rat.Fraction.Order.Arithmetic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Retained parabolic samples inside proper rational boxes
 
@@ -34,7 +36,7 @@ structure Parabola (outer : Box) where
   /-- The actual coordinate step is positive. -/ positive : 0 < radius
   /-- The cached centred square containing the arc. -/ square : Box
   /-- The square uses this same centre, step and positivity certificate. -/ squareSpec :
-    square = Box.Square.Centered.Affine.centeredSquare center radius positive.le
+    square = Square.Centered.Affine.centeredSquare center radius positive.le
   /-- The sampling square lies strictly inside the original parent box. -/ nested : square.StrictInterior outer
 
 namespace Parabola
@@ -42,18 +44,18 @@ namespace Parabola
 /-- Construct the sampling arc using the original midpoint and its cached neighbourhood radius. -/
 @[expose] def ofBox (outer : Box) (proper : outer.Proper) : Parabola outer := by
   let center := outer.midpoint
-  have strict : outer.StrictContains center := Box.midpoint_strictContains proper
+  have strict : outer.StrictContains center := midpoint_strictContains proper
   have onePositive : (0 : Fraction.Rational) < 1 := by decide
-  let radius := Box.Neighborhood.radius outer center 1
-  have positive : 0 < radius := Box.Neighborhood.radius_pos strict onePositive
-  let square := Box.Neighborhood.innerBox outer center strict 1 onePositive
+  let radius := Neighborhood.radius outer center 1
+  have positive : 0 < radius := Neighborhood.radius_pos strict onePositive
+  let square := Neighborhood.innerBox outer center strict 1 onePositive
   exact
     { center := center
       radius := radius
       positive := positive
       square := square
       squareSpec := rfl
-      nested := Box.Neighborhood.innerBox_strictInterior strict onePositive }
+      nested := Neighborhood.innerBox_strictInterior strict onePositive }
 
 /-- Evaluate the retained parabolic arc at one rational parameter. -/
 @[expose] def point {outer : Box} (arc : Parabola outer) (parameter : Fraction.Rational) : Gaussian.Basic.Canonical :=
@@ -63,32 +65,32 @@ namespace Parabola
 theorem point_strictContains {outer : Box} (arc : Parabola outer) {parameter : Fraction.Rational}
     (nonnegative : 0 ≤ parameter) (bounded : parameter ≤ 1) : outer.StrictContains (arc.point parameter) := by
   have radialNonnegative := arc.positive.le
-  have realNonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct radialNonnegative nonnegative
-  have imaginaryNonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct radialNonnegative
-    (Fraction.Order.Arithmetic.sq_nonneg_direct parameter)
+  have realNonnegative := Arithmetic.mul_nonneg_direct radialNonnegative nonnegative
+  have imaginaryNonnegative := Arithmetic.mul_nonneg_direct radialNonnegative
+    (Arithmetic.sq_nonneg_direct parameter)
   have realBound : arc.radius * parameter ≤ arc.radius := by
-    exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct bounded radialNonnegative).trans_eq
+    exact (Arithmetic.mul_le_mul_of_nonneg_left_direct bounded radialNonnegative).trans_eq
       (Fraction.Field.mul_one_direct _)
   have squareBound : parameter ^ 2 ≤ (1 : Fraction.Rational) :=
-    (Fraction.Order.Arithmetic.pow_le_pow_direct nonnegative bounded 2).trans_eq (by decide)
+    (Arithmetic.pow_le_pow_direct nonnegative bounded 2).trans_eq (by decide)
   have imaginaryBound : arc.radius * parameter ^ 2 ≤ arc.radius := by
-    exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct squareBound radialNonnegative).trans_eq
+    exact (Arithmetic.mul_le_mul_of_nonneg_left_direct squareBound radialNonnegative).trans_eq
       (Fraction.Field.mul_one_direct _)
   have inside : arc.square.Contains (arc.point parameter) := by
     rewrite [arc.squareSpec]
     have negativeRadius : -arc.radius ≤ (0 : Fraction.Rational) :=
-      (Fraction.Order.Arithmetic.neg_le_neg_direct radialNonnegative).trans_eq (by decide)
+      (Arithmetic.neg_le_neg_direct radialNonnegative).trans_eq (by decide)
     refine ⟨?_, ?_, ?_, ?_⟩
     · change arc.center.re - arc.radius ≤ arc.center.re + arc.radius * parameter
       rewrite [show arc.center.re - arc.radius = arc.center.re + (-arc.radius) by ring1]
-      exact Fraction.Order.Arithmetic.add_le_add_direct (Fraction.Order.Basic.le_refl _)
+      exact Arithmetic.add_le_add_direct (Basic.le_refl _)
         (negativeRadius.trans realNonnegative)
-    · exact Fraction.Order.Arithmetic.add_le_add_direct (Fraction.Order.Basic.le_refl _) realBound
+    · exact Arithmetic.add_le_add_direct (Basic.le_refl _) realBound
     · change arc.center.im - arc.radius ≤ arc.center.im + arc.radius * parameter ^ 2
       rewrite [show arc.center.im - arc.radius = arc.center.im + (-arc.radius) by ring1]
-      exact Fraction.Order.Arithmetic.add_le_add_direct (Fraction.Order.Basic.le_refl _)
+      exact Arithmetic.add_le_add_direct (Basic.le_refl _)
         (negativeRadius.trans imaginaryNonnegative)
-    · exact Fraction.Order.Arithmetic.add_le_add_direct (Fraction.Order.Basic.le_refl _) imaginaryBound
+    · exact Arithmetic.add_le_add_direct (Basic.le_refl _) imaginaryBound
   exact ⟨arc.nested.left.trans_le inside.1, inside.2.1.trans_lt arc.nested.right,
     arc.nested.bottom.trans_le inside.2.2.1, inside.2.2.2.trans_lt arc.nested.top⟩
 

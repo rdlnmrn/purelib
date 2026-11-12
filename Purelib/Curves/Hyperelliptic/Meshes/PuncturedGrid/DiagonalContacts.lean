@@ -1,4 +1,5 @@
 module
+import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Curves.Hyperelliptic.Basic
 import Purelib.Curves.Hyperelliptic.Differentials.Basic
 import Purelib.Data.Gaussian.Basic
@@ -31,6 +32,8 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Corners
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -56,75 +59,77 @@ so their contact requires no path preparation or accuracy refinement.
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DiagonalContacts
 
 open Purelib.Topology.Polygon.Stokes
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 
 open Purelib.Geometry.Rectangle.Partition.RectangularEdgeUniqueness
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Corners.FaceCorners
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
     bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
   {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
-  {differential : Hyperelliptic.Differentials.Basic.Differential genus} {index : Nat} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
-  {shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains}
+  {differential : Differentials.Basic.Differential genus} {index : Nat} {domains :
+    Face.DomainBanks.FaceDomainBank frames faces.regulars}
+  {numerator : CoefficientPolynomial}
+  {shared : Face.PrimitiveData.FacePrimitiveBank differential index domains (numerator := numerator)}
 
 namespace LocatedContact
 
 variable {contact : Topology.Surface.Sewing.SewnPrimitiveContacts.SourceContact mesh.triangulation.faces}
 
 /-- Opposite diagonal occurrences using the same original four-corner cache have exactly zero contact mismatch. -/
-private theorem diagonal_zero (located : Hyperelliptic.Meshes.PuncturedGrid.SourceContactRequests.LocatedContact
-  contact) (oppositeKind : Rectangle.Partition.RectangularEdgeUniqueness.RectangleEdge.Kind)
+private theorem diagonal_zero (located : SourceContactRequests.LocatedContact
+  contact) (oppositeKind : RectangleEdge.Kind)
     (opposite : located.left.lifted.quad.edge oppositeKind =
       (located.left.lifted.quad.edge located.left.kind).reverse)
-    (corners : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Corners.FaceCorners.quad).edge oppositeKind =
-      ((Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Corners.FaceCorners.quad).edge
+    (corners : (FaceCorners.quad).edge oppositeKind =
+      ((FaceCorners.quad).edge
         located.left.kind).reverse)
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared mesh) :
+    (readings : TrianglePrimitiveReadings.TriangleReadings shared mesh) :
       contact.mismatch readings.values = 0 := by
   let other := located.left.atKind oppositeKind
   have same : other.sourceEdge = contact.right :=
-    Hyperelliptic.Meshes.PuncturedGrid.TriangleSourceUniqueness.LiftedMesh.source_eq_of_project_eq mesh
-      (Hyperelliptic.Meshes.PuncturedGrid.TriangleSourceUniqueness.LiftedFaces.EdgeLocation.sourceEdge_positive other)
+    TriangleSourceUniqueness.LiftedMesh.source_eq_of_project_eq mesh
+      (TriangleSourceUniqueness.LiftedFaces.EdgeLocation.sourceEdge_positive other)
       (located.right_eq ▸
-        Hyperelliptic.Meshes.PuncturedGrid.TriangleSourceUniqueness.LiftedFaces.EdgeLocation.sourceEdge_positive
+        TriangleSourceUniqueness.LiftedFaces.EdgeLocation.sourceEdge_positive
         located.right)
       (other.sourceEdge_project.trans (opposite.trans
-        ((congrArg Topology.Polygon.Stokes.OrientedEdge.reverse located.left.edge_eq).trans contact.opposite.symm)))
+        ((congrArg OrientedEdge.reverse located.left.edge_eq).trans contact.opposite.symm)))
   unfold Topology.Surface.Sewing.SewnPrimitiveContacts.SourceContact.mismatch
   rw [← located.left_eq, ← same, readings.location_increment, readings.location_increment,
     shared.edgeIncrement_eq, shared.edgeIncrement_eq]
-  change Data.Gaussian.Norm.Basic.normSq
+  change Gaussian.Norm.Basic.normSq
     ((((shared.get located.left.position).atSheet located.left.sheet).corners.values
-          ((Hyperelliptic.Meshes.PuncturedGrid.Face.Corners.FaceCorners.quad).edge located.left.kind).finish -
+          ((FaceCorners.quad).edge located.left.kind).finish -
         ((shared.get located.left.position).atSheet located.left.sheet).corners.values
-          ((Hyperelliptic.Meshes.PuncturedGrid.Face.Corners.FaceCorners.quad).edge located.left.kind).start) +
+          ((FaceCorners.quad).edge located.left.kind).start) +
       (((shared.get located.left.position).atSheet located.left.sheet).corners.values
-          ((Hyperelliptic.Meshes.PuncturedGrid.Face.Corners.FaceCorners.quad).edge oppositeKind).finish -
+          ((FaceCorners.quad).edge oppositeKind).finish -
         ((shared.get located.left.position).atSheet located.left.sheet).corners.values
-          ((Hyperelliptic.Meshes.PuncturedGrid.Face.Corners.FaceCorners.quad).edge oppositeKind).start)) = 0
+          ((FaceCorners.quad).edge oppositeKind).start)) = 0
   rw [corners]
-  simp only [Topology.Polygon.Stokes.OrientedEdge.reverse]
+  simp only [OrientedEdge.reverse]
   have cancel (first last : Gaussian.Basic.Canonical) : (last - first) + (first - last) = 0 := by ring1
   rw [cancel]
   exact Gaussian.Norm.Basic.normSq_zero
 
 /-- The original up-diagonal contact cancels exactly against its retained down-diagonal occurrence. -/
-theorem upDiagonal_zero (located : Hyperelliptic.Meshes.PuncturedGrid.SourceContactRequests.LocatedContact contact)
+theorem upDiagonal_zero (located : SourceContactRequests.LocatedContact contact)
   (kind : located.left.kind = .upDiagonal)
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared mesh) :
+    (readings : TrianglePrimitiveReadings.TriangleReadings shared mesh) :
       contact.mismatch readings.values = 0 :=
-  Hyperelliptic.Meshes.PuncturedGrid.DiagonalContacts.LocatedContact.diagonal_zero located .downDiagonal
+  LocatedContact.diagonal_zero located .downDiagonal
     (by rw [kind]; rfl) (by rw [kind]; rfl) readings
 
 /-- The original down-diagonal contact cancels exactly against its retained up-diagonal occurrence. -/
-theorem downDiagonal_zero (located : Hyperelliptic.Meshes.PuncturedGrid.SourceContactRequests.LocatedContact contact)
+theorem downDiagonal_zero (located : SourceContactRequests.LocatedContact contact)
   (kind : located.left.kind = .downDiagonal)
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared mesh) :
+    (readings : TrianglePrimitiveReadings.TriangleReadings shared mesh) :
       contact.mismatch readings.values = 0 :=
-  Hyperelliptic.Meshes.PuncturedGrid.DiagonalContacts.LocatedContact.diagonal_zero located .upDiagonal
+  LocatedContact.diagonal_zero located .upDiagonal
     (by rw [kind]; rfl) (by rw [kind]; rfl) readings
 
 end LocatedContact

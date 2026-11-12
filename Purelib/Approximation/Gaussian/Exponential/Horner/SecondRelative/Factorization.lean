@@ -59,10 +59,10 @@ theorem
   (z : Canonical) (index : Nat) :
     Sample.expRelSample z (index + 1) - 1 =
       z * Sample.expSecondRelSample z index := by
-  rw [Sample.expRelSample, Horner.Basic.horner_succ,
-    Horner.Basic.step_eq]
+  rw [Sample.expRelSample, Basic.horner_succ,
+    Basic.step_eq]
   rw [show (1 / ((2 : Nat) : Fraction.Rational)) = 1 / 2 by decide]
-  apply Data.Gaussian.Basic.ext <;>
+  apply Basic.ext <;>
     simp only [Sample.expSecondRelSample, Scale.scale_re,
       Scale.scale_im, Basic.add_re, Basic.add_im, Basic.sub_re, Basic.sub_im,
       Basic.mul_re, Basic.mul_im, Basic.one_re, Basic.one_im, Nat.reduceAdd] <;> ring1
@@ -78,31 +78,31 @@ theorem
         z * Sample.expRelSample z (index + 1) - z := by
       rw [Factorization.expSample_sub_one_factor]
     _ = z * (Sample.expRelSample z (index + 1) - 1) := by
-      apply Data.Gaussian.Basic.ext <;>
+      apply Basic.ext <;>
         simp only [Basic.sub_re, Basic.sub_im, Basic.mul_re, Basic.mul_im, Basic.one_re, Basic.one_im] <;> ring1
     _ = z * (z * Sample.expSecondRelSample z index) := by
       rw [expRelSample_succ_sub_one_factor]
     _ = z ^ 2 * Sample.expSecondRelSample z index := by
-      rw [pow_two, Data.Gaussian.Basic.mul_assoc]
+      rw [pow_two, Basic.mul_assoc]
 
 /-- On the rational unit disk, the quadrance of the finite linearization remainder is at most the square of the input
 quadrance. This is the explicit finite meaning of the ordinary-magnitude phrase "quadratic error". -/
 theorem
   expSample_second_order_normSq_le
   {z : Canonical}
-    (unitInput : Data.Gaussian.Norm.Basic.normSq z ≤ 1) (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (Sample.sample z (index + 1) - 1 - z) ≤
-      Data.Gaussian.Norm.Basic.normSq z ^ 2 := by
+    (unitInput : Norm.Basic.normSq z ≤ 1) (index : Nat) :
+    Norm.Basic.normSq (Sample.sample z (index + 1) - 1 - z) ≤
+      Norm.Basic.normSq z ^ 2 := by
   rw [expSample_second_order_factor,
-    Data.Gaussian.Norm.Basic.normSq_mul, Power.normSq_pow]
+    Norm.Basic.normSq_mul, Power.normSq_pow]
   calc
-    Data.Gaussian.Norm.Basic.normSq z ^ 2 * Data.Gaussian.Norm.Basic.normSq (Sample.expSecondRelSample
+    Norm.Basic.normSq z ^ 2 * Norm.Basic.normSq (Sample.expSecondRelSample
       z index) ≤
-        Data.Gaussian.Norm.Basic.normSq z ^ 2 * 1 :=
+        Norm.Basic.normSq z ^ 2 * 1 :=
       Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
         (Sample.expSecondRelSample_bounded unitInput index)
-        (Fraction.Order.Arithmetic.pow_nonneg_direct (Data.Gaussian.Norm.Basic.normSq_nonneg z) 2)
-    _ = Data.Gaussian.Norm.Basic.normSq z ^ 2 :=
+        (Fraction.Order.Arithmetic.pow_nonneg_direct (Norm.Basic.normSq_nonneg z) 2)
+    _ = Norm.Basic.normSq z ^ 2 :=
       Fraction.Field.mul_one_direct _
 end Purelib.Approximation.Gaussian.Exponential.Horner.SecondRelative.Factorization
 

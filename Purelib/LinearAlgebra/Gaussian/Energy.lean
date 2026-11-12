@@ -23,6 +23,10 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+open Purelib.Riemann.Periods
+open Purelib.LinearAlgebra.Matrix.Inverse.Scaled.Basic
+
 public section
 
 /-!
@@ -90,15 +94,15 @@ against finite displayed A/B period matrices. -/
 private theorem crossPairing_sq_le_normSq_mul (a b : Data.Gaussian.Basic.Canonical) :
     ((b * Data.Gaussian.Basic.conj a -
       a * Data.Gaussian.Basic.conj b).im / 2) ^ 2 <=
-      Data.Gaussian.Norm.Basic.normSq a *
-        Data.Gaussian.Norm.Basic.normSq b := by
+      Basic.normSq a *
+        Basic.normSq b := by
   have squareNonnegative :
       0 <= (a.re * b.re + a.im * b.im) ^ 2 :=
     Fraction.Order.Arithmetic.sq_nonneg_direct _
   simp only [Data.Gaussian.Basic.sub_im,
     Data.Gaussian.Basic.mul_im,
     Data.Gaussian.Basic.conj,
-    Data.Gaussian.Norm.Basic.normSq]
+    Basic.normSq]
   change
     (((b.re * (-a.im) + b.im * a.re -
         (a.re * (-b.im) + a.im * b.re))) / 2) ^ 2 <=
@@ -128,7 +132,7 @@ private theorem crossPairing_scale (coefficient a b : Data.Gaussian.Basic.Canoni
           (coefficient * a) -
         coefficient * a * Data.Gaussian.Basic.conj
           (coefficient * b)).im =
-      Data.Gaussian.Norm.Basic.normSq coefficient *
+      Basic.normSq coefficient *
         (b * Data.Gaussian.Basic.conj a -
           a * Data.Gaussian.Basic.conj b).im := by
   simp only [Data.Gaussian.Basic.conj_mul]
@@ -136,7 +140,7 @@ private theorem crossPairing_scale (coefficient a b : Data.Gaussian.Basic.Canoni
     Data.Gaussian.Basic.mul_im,
     Data.Gaussian.Basic.conj,
     Data.Gaussian.Basic.sub_im,
-    Data.Gaussian.Norm.Basic.normSq]
+    Basic.normSq]
   ring1
 
 /-- In dimension one the square of the raw boundary pairing is bounded by
@@ -145,8 +149,8 @@ two-coordinate Lagrange identity, proved entirely in Gaussian rationals. -/
 theorem periodPairingEnergy_one_sq_le
     (aPeriods bPeriods : GaussianVector 1) :
     periodPairingEnergy aPeriods bPeriods ^ 2 <=
-      Data.Gaussian.Norm.Basic.normSq (aPeriods 0) *
-        Data.Gaussian.Norm.Basic.normSq (bPeriods 0) := by
+      Basic.normSq (aPeriods 0) *
+        Basic.normSq (bPeriods 0) := by
   unfold periodPairingEnergy
   rw [FiniteSum.Fin.sumFin_succ]
   change
@@ -196,8 +200,8 @@ theorem unnormalizedEnergyForm_genusOne_unit_sq_le
     (aMatrix bMatrix : GaussianMatrix 1) :
     unnormalizedEnergyForm genusOneUnitCoefficients aMatrix
       bMatrix ^ 2 <=
-      Data.Gaussian.Norm.Basic.normSq (aMatrix 0 0) *
-        Data.Gaussian.Norm.Basic.normSq (bMatrix 0 0) := by
+      Basic.normSq (aMatrix 0 0) *
+        Basic.normSq (bMatrix 0 0) := by
   unfold unnormalizedEnergyForm
   simpa only [periodCombination_genusOne_unit] using
     periodPairingEnergy_one_sq_le
@@ -224,7 +228,7 @@ theorem unnormalizedEnergyForm_one_eq_normSq_mul_unit
     (coefficients : GaussianVector 1)
     (aMatrix bMatrix : GaussianMatrix 1) :
     unnormalizedEnergyForm coefficients aMatrix bMatrix =
-      Data.Gaussian.Norm.Basic.normSq (coefficients 0) *
+      Basic.normSq (coefficients 0) *
         unnormalizedEnergyForm genusOneUnitCoefficients
           aMatrix bMatrix := by
   unfold unnormalizedEnergyForm
@@ -285,14 +289,14 @@ constructive_injectivity NonzeroGaussianVector
 
 /-- Entrywise finite embedding of a real rational vector. -/
 @[expose] def gaussianVectorOfRational {size : Nat}
-    (vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector size) :
+    (vector : QuadraticForm.RationalVector size) :
       GaussianVector size :=
   Data.Vector.Basic.vectorOfFn fun index =>
     gaussianOfRational (vector index)
 
 /-- Read an embedded rational vector coordinate as its Gaussian embedding. -/
 @[simp] theorem gaussianVectorOfRational_apply {size : Nat}
-    (vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector size) (index : Fin size) :
+    (vector : QuadraticForm.RationalVector size) (index : Fin size) :
     gaussianVectorOfRational vector index =
       gaussianOfRational (vector index) :=
   Data.Vector.Basic.vectorOfFn_apply _ _
@@ -356,10 +360,10 @@ certificate; a zero head passes the original tail witness forward. -/
 /-- Multiplication by the adjugate of a nondegenerate finite matrix sends a
 displayed nonzero real vector to an explicitly nonzero Gaussian vector. -/
 @[expose] def scaledCoefficientsNonzero {size : Nat}
-    (vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector size) (nonzero :
-      LinearAlgebra.Gaussian.QuadraticForm.NonzeroVector vector)
+    (vector : QuadraticForm.RationalVector size) (nonzero :
+      QuadraticForm.NonzeroVector vector)
     (matrix : GaussianMatrix size)
-    (inverse : SquareMatrix.Inverse.Scaled.Basic.ScaledInverse matrix)
+    (inverse : ScaledInverse matrix)
     (scalarNonzero : inverse.scalar ≠ 0) :
     NonzeroGaussianVector
       (SquareMatrix.Multiplication.vectorMatrix
@@ -414,10 +418,10 @@ displayed nonzero real vector to an explicitly nonzero Gaussian vector. -/
 normalized coefficient vector by the complete fraction-free adjugate. -/
 @[expose] def scaledNormalizedCoefficients {genus : Nat}
     {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    (data : Riemann.Periods.PeriodMatrix.PeriodData curve) (index : Nat) (vector :
-      LinearAlgebra.Gaussian.QuadraticForm.RationalVector genus) :
+    (data : PeriodMatrix.PeriodData curve) (index : Nat) (vector :
+      QuadraticForm.RationalVector genus) :
     GaussianVector genus :=
-  let sampled := Riemann.Periods.PeriodMatrix.sampledMatrix data.aMatrix index
+  let sampled := PeriodMatrix.sampledMatrix data.aMatrix index
   let inverse :=
     SquareMatrix.Inverse.PivotedScaledInverse.completeScaledInverse sampled
   SquareMatrix.Multiplication.vectorMatrix
@@ -428,40 +432,40 @@ adjugate-scaled raw coefficient vector is nonzero.  Unlike the uniform
 wrapper below, this theorem imposes no condition on other sample indices. -/
 @[expose] def scaledNormalizedCoefficients_nonzero_of_scalar {genus : Nat}
     {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    (data : Riemann.Periods.PeriodMatrix.PeriodData curve) (index : Nat) (vector :
-      LinearAlgebra.Gaussian.QuadraticForm.RationalVector genus)
-    (nonzero : LinearAlgebra.Gaussian.QuadraticForm.NonzeroVector vector)
+    (data : PeriodMatrix.PeriodData curve) (index : Nat) (vector :
+      QuadraticForm.RationalVector genus)
+    (nonzero : QuadraticForm.NonzeroVector vector)
     (scalarNonzero :
       (SquareMatrix.Inverse.PivotedScaledInverse.completeScaledInverse
-        (Riemann.Periods.PeriodMatrix.sampledMatrix data.aMatrix index)).scalar ≠ 0) :
+        (PeriodMatrix.sampledMatrix data.aMatrix index)).scalar ≠ 0) :
     NonzeroGaussianVector
       (scaledNormalizedCoefficients data index vector) := by
   exact scaledCoefficientsNonzero vector nonzero
-    (Riemann.Periods.PeriodMatrix.sampledMatrix data.aMatrix index)
+    (PeriodMatrix.sampledMatrix data.aMatrix index)
     (SquareMatrix.Inverse.PivotedScaledInverse.completeScaledInverse
-      (Riemann.Periods.PeriodMatrix.sampledMatrix data.aMatrix index)) scalarNonzero
+      (PeriodMatrix.sampledMatrix data.aMatrix index)) scalarNonzero
 
 /-- The finite scalar lower certificate turns every sampled scaled normalized
 vector into an explicit nonzero raw differential combination. -/
 @[expose] def scaledNormalizedCoefficients_nonzero {genus : Nat}
     {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    (data : Riemann.Periods.PeriodMatrix.PeriodData curve)
-    (inverseLower : Riemann.Periods.PeriodMatrix.ScalarCandidateLowerCertificate data.aMatrix)
-    (index : Nat) (vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector genus)
-    (nonzero : LinearAlgebra.Gaussian.QuadraticForm.NonzeroVector vector) :
+    (data : PeriodMatrix.PeriodData curve)
+    (inverseLower : PeriodMatrix.ScalarCandidateLowerCertificate data.aMatrix)
+    (index : Nat) (vector : QuadraticForm.RationalVector genus)
+    (nonzero : QuadraticForm.NonzeroVector vector) :
     NonzeroGaussianVector
       (scaledNormalizedCoefficients data index vector) := by
-  let sampled := Riemann.Periods.PeriodMatrix.sampledMatrix data.aMatrix index
+  let sampled := PeriodMatrix.sampledMatrix data.aMatrix index
   let inverse :=
     SquareMatrix.Inverse.PivotedScaledInverse.completeScaledInverse sampled
   have scalarSample :
-      (Riemann.Periods.PeriodMatrix.canonicalScaledInverse data.aMatrix).scalar.sample index =
+      (PeriodMatrix.canonicalScaledInverse data.aMatrix).scalar.sample index =
         inverse.scalar := by
-    unfold Riemann.Periods.PeriodMatrix.canonicalScaledInverse inverse sampled
+    unfold PeriodMatrix.canonicalScaledInverse inverse sampled
     have samples :=
       SquareMatrix.Inverse.PivotedScaledInverse.completeApproximation_sample
-        (Riemann.Periods.PeriodMatrix.geometricMatrixOfNamed data.aMatrix) index
-    rw [Riemann.Periods.PeriodMatrix.sample_geometricMatrixOfNamed] at samples
+        (PeriodMatrix.geometricMatrixOfNamed data.aMatrix) index
+    rw [PeriodMatrix.sample_geometricMatrixOfNamed] at samples
     exact samples.1
   have scalarNonzero : inverse.scalar ≠ 0 := by
     intro inverseZero
@@ -485,7 +489,7 @@ theorem sumFin_im {size : Nat} (values : Fin size → Data.Gaussian.Basic.Canoni
 
 /-- The numerator form before division by the squared inverse scalar. -/
 @[expose] def scaledImaginaryQuadraticForm {size : Nat}
-    (vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector size) (scalar : Data.Gaussian.Basic.Canonical)
+    (vector : QuadraticForm.RationalVector size) (scalar : Data.Gaussian.Basic.Canonical)
     (numerator : GaussianMatrix size) : Fraction.Rational :=
   FiniteSum.Fin.sumFin fun row =>
     FiniteSum.Fin.sumFin fun column =>
@@ -514,7 +518,7 @@ fraction-free imaginary-coordinate form avoids a field or choice shortcut. -/
 theorem mul_conj_im_eq_normSq_mul_div_im (value scalar : Data.Gaussian.Basic.Canonical)
     (scalarNonzero : scalar ≠ 0) :
     (value * Data.Gaussian.Basic.conj scalar).im =
-      Data.Gaussian.Norm.Basic.normSq scalar *
+      Basic.normSq scalar *
         (value / scalar).im := by
   have quotientCancel : (value / scalar) * scalar = value := by
     change (value * scalar⁻¹) * scalar = value
@@ -528,35 +532,35 @@ theorem mul_conj_im_eq_normSq_mul_div_im (value scalar : Data.Gaussian.Basic.Can
       _ = value := Data.Gaussian.Basic.mul_one _
   have gaussianIdentity :
       gaussianOfRational
-            (Data.Gaussian.Norm.Basic.normSq scalar) *
+            (Basic.normSq scalar) *
           (value / scalar) =
         value * Data.Gaussian.Basic.conj scalar := by
     apply Data.Gaussian.Field.mul_right_cancel_of_ne
       scalarNonzero
     calc
       (gaussianOfRational
-            (Data.Gaussian.Norm.Basic.normSq scalar) *
+            (Basic.normSq scalar) *
           (value / scalar)) * scalar =
           gaussianOfRational
-              (Data.Gaussian.Norm.Basic.normSq scalar) *
+              (Basic.normSq scalar) *
             ((value / scalar) * scalar) :=
         Data.Gaussian.Basic.mul_assoc _ _ _
       _ = gaussianOfRational
-            (Data.Gaussian.Norm.Basic.normSq scalar) * value := by
+            (Basic.normSq scalar) * value := by
         rw [quotientCancel]
       _ = value * gaussianOfRational
-            (Data.Gaussian.Norm.Basic.normSq scalar) :=
+            (Basic.normSq scalar) :=
         _root_.mul_comm _ _
       _ = value *
             (Data.Gaussian.Basic.conj scalar * scalar) := by
         have scalarNorm :
             Data.Gaussian.Basic.conj scalar * scalar =
               gaussianOfRational
-                (Data.Gaussian.Norm.Basic.normSq scalar) := by
+                (Basic.normSq scalar) := by
           apply Data.Gaussian.Basic.ext
           · simp only [Data.Gaussian.Basic.conj,
               Data.Gaussian.Basic.mul_re,
-              Data.Gaussian.Norm.Basic.normSq,
+              Basic.normSq,
               gaussianOfRational]
             ring1
           · simp only [Data.Gaussian.Basic.conj,
@@ -568,7 +572,7 @@ theorem mul_conj_im_eq_normSq_mul_div_im (value scalar : Data.Gaussian.Basic.Can
         (Data.Gaussian.Basic.mul_assoc _ _ _).symm
   have imaginaryIdentity := congrArg
     Data.Gaussian.Basic.im gaussianIdentity
-  change Data.Gaussian.Norm.Basic.normSq scalar *
+  change Basic.normSq scalar *
       (value / scalar).im + 0 * (value / scalar).re =
     (value * Data.Gaussian.Basic.conj scalar).im at imaginaryIdentity
   rw [Fraction.Field.zero_mul_direct, _root_.add_zero] at imaginaryIdentity
@@ -577,11 +581,11 @@ theorem mul_conj_im_eq_normSq_mul_div_im (value scalar : Data.Gaussian.Basic.Can
 /-- The fraction-free numerator form is the normalized imaginary quadratic
 form multiplied by the strictly positive squared inverse scalar. -/
 theorem scaledImaginaryQuadraticForm_eq_normSq_mul {size : Nat}
-    (vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector size) (scalar : Data.Gaussian.Basic.Canonical)
+    (vector : QuadraticForm.RationalVector size) (scalar : Data.Gaussian.Basic.Canonical)
     (numerator : GaussianMatrix size) (scalarNonzero : scalar ≠ 0) :
     scaledImaginaryQuadraticForm vector scalar numerator =
-      Data.Gaussian.Norm.Basic.normSq scalar *
-        LinearAlgebra.Gaussian.QuadraticForm.imaginaryQuadraticForm vector
+      Basic.normSq scalar *
+        QuadraticForm.imaginaryQuadraticForm vector
           (divideGaussianMatrix numerator scalar) := by
   unfold scaledImaginaryQuadraticForm
   calc
@@ -593,7 +597,7 @@ theorem scaledImaginaryQuadraticForm_eq_normSq_mul {size : Nat}
                 vector column)) =
         FiniteSum.Fin.sumFin (fun row =>
           FiniteSum.Fin.sumFin (fun column =>
-            Data.Gaussian.Norm.Basic.normSq scalar *
+            Basic.normSq scalar *
               (vector row * (numerator row column / scalar).im *
                 vector column))) := by
       apply FiniteSum.Fin.sumFin_congr
@@ -603,24 +607,24 @@ theorem scaledImaginaryQuadraticForm_eq_normSq_mul {size : Nat}
       rw [mul_conj_im_eq_normSq_mul_div_im _ _ scalarNonzero]
       ring1
     _ = FiniteSum.Fin.sumFin (fun row =>
-          Data.Gaussian.Norm.Basic.normSq scalar *
+          Basic.normSq scalar *
             FiniteSum.Fin.sumFin (fun column =>
               vector row * (numerator row column / scalar).im *
                 vector column)) := by
       apply FiniteSum.Fin.sumFin_congr
       intro row
       exact FiniteSum.Fin.sumFin_mul_left _ _
-    _ = Data.Gaussian.Norm.Basic.normSq scalar *
+    _ = Basic.normSq scalar *
           FiniteSum.Fin.sumFin (fun row =>
             FiniteSum.Fin.sumFin (fun column =>
               vector row * (numerator row column / scalar).im *
                 vector column)) :=
       FiniteSum.Fin.sumFin_mul_left _ _
-    _ = Data.Gaussian.Norm.Basic.normSq scalar *
-          LinearAlgebra.Gaussian.QuadraticForm.imaginaryQuadraticForm vector
+    _ = Basic.normSq scalar *
+          QuadraticForm.imaginaryQuadraticForm vector
             (divideGaussianMatrix numerator scalar) := by
       congr 1
-      unfold LinearAlgebra.Gaussian.QuadraticForm.imaginaryQuadraticForm
+      unfold QuadraticForm.imaginaryQuadraticForm
       apply FiniteSum.Fin.sumFin_congr
       intro row
       apply FiniteSum.Fin.sumFin_congr
@@ -645,7 +649,7 @@ theorem pairingSummand_scaled (value scalar : Data.Gaussian.Basic.Canonical)
 
 /-- Expand the imaginary part of a row action times a conjugate scalar as a finite real-weighted sum. -/
 theorem vectorMatrix_mul_conj_im {size : Nat}
-    (vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector size) (matrix :
+    (vector : QuadraticForm.RationalVector size) (matrix :
       GaussianMatrix size)
     (scalar : Data.Gaussian.Basic.Canonical) (column : Fin size) :
     (SquareMatrix.Multiplication.vectorMatrix
@@ -670,9 +674,9 @@ theorem vectorMatrix_mul_conj_im {size : Nat}
 /-- The adjugate-scaled period combination on the first matrix is its real coefficient vector times the retained scalar.
 -/
 theorem periodCombination_scaled_a {size : Nat}
-    (vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector size) (aMatrix :
+    (vector : QuadraticForm.RationalVector size) (aMatrix :
       GaussianMatrix size)
-    (inverse : SquareMatrix.Inverse.Scaled.Basic.ScaledInverse aMatrix) :
+    (inverse : ScaledInverse aMatrix) :
     periodCombination
         (SquareMatrix.Multiplication.vectorMatrix
           (gaussianVectorOfRational vector) inverse.inverse) aMatrix =
@@ -700,9 +704,9 @@ theorem periodCombination_scaled_a {size : Nat}
 /-- The adjugate-scaled period combination on the second matrix is the coefficient action on the retained inverse
 product. -/
 theorem periodCombination_scaled_b {size : Nat}
-    (vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector size) (aMatrix bMatrix :
+    (vector : QuadraticForm.RationalVector size) (aMatrix bMatrix :
       GaussianMatrix size)
-    (inverse : SquareMatrix.Inverse.Scaled.Basic.ScaledInverse aMatrix) :
+    (inverse : ScaledInverse aMatrix) :
     periodCombination
         (SquareMatrix.Multiplication.vectorMatrix
           (gaussianVectorOfRational vector) inverse.inverse) bMatrix =
@@ -717,9 +721,9 @@ theorem periodCombination_scaled_b {size : Nat}
 energy of the adjugate-scaled differential combination is precisely the
 imaginary numerator form of the normalized vector. -/
 theorem unnormalizedEnergyForm_scaledCoefficients {size : Nat}
-    (vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector size) (aMatrix bMatrix :
+    (vector : QuadraticForm.RationalVector size) (aMatrix bMatrix :
       GaussianMatrix size)
-    (inverse : SquareMatrix.Inverse.Scaled.Basic.ScaledInverse aMatrix) :
+    (inverse : ScaledInverse aMatrix) :
     unnormalizedEnergyForm
         (SquareMatrix.Multiplication.vectorMatrix
           (gaussianVectorOfRational vector) inverse.inverse)
@@ -801,16 +805,16 @@ theorem unnormalizedEnergyForm_scaledCoefficients {size : Nat}
 /-- Complete exact transport from the raw second-bilinear energy to the
 normalized finite matrix obtained from the same synchronized A/B sample. -/
 theorem unnormalizedEnergyForm_scaledCoefficients_eq_normSq_mul
-    {size : Nat} (vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector size)
+    {size : Nat} (vector : QuadraticForm.RationalVector size)
     (aMatrix bMatrix : GaussianMatrix size)
-    (inverse : SquareMatrix.Inverse.Scaled.Basic.ScaledInverse aMatrix)
+    (inverse : ScaledInverse aMatrix)
     (scalarNonzero : inverse.scalar ≠ 0) :
     unnormalizedEnergyForm
         (SquareMatrix.Multiplication.vectorMatrix
           (gaussianVectorOfRational vector) inverse.inverse)
           aMatrix bMatrix =
-      Data.Gaussian.Norm.Basic.normSq inverse.scalar *
-        LinearAlgebra.Gaussian.QuadraticForm.imaginaryQuadraticForm vector
+      Basic.normSq inverse.scalar *
+        QuadraticForm.imaginaryQuadraticForm vector
           (divideGaussianMatrix
             (SquareMatrix.Multiplication.mul inverse.inverse bMatrix)
             inverse.scalar) := by
@@ -822,21 +826,21 @@ theorem unnormalizedEnergyForm_scaledCoefficients_eq_normSq_mul
 normalized finite quotient at that same sample.  Cancellation uses only the
 displayed nonnegative squared norm, not an abstract eigenvalue argument. -/
 theorem imaginaryQuadraticForm_divide_positive_of_unnormalized
-    {size : Nat} (vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector size)
+    {size : Nat} (vector : QuadraticForm.RationalVector size)
     (aMatrix bMatrix : GaussianMatrix size)
-    (inverse : SquareMatrix.Inverse.Scaled.Basic.ScaledInverse aMatrix)
+    (inverse : ScaledInverse aMatrix)
     (scalarNonzero : inverse.scalar ≠ 0)
     (rawPositive : 0 < unnormalizedEnergyForm
       (SquareMatrix.Multiplication.vectorMatrix
         (gaussianVectorOfRational vector) inverse.inverse)
         aMatrix bMatrix) :
-    0 < LinearAlgebra.Gaussian.QuadraticForm.imaginaryQuadraticForm vector
+    0 < QuadraticForm.imaginaryQuadraticForm vector
       (divideGaussianMatrix
         (SquareMatrix.Multiplication.mul inverse.inverse bMatrix)
         inverse.scalar) := by
   have productPositive :
-      0 < Data.Gaussian.Norm.Basic.normSq inverse.scalar *
-        LinearAlgebra.Gaussian.QuadraticForm.imaginaryQuadraticForm vector
+      0 < Basic.normSq inverse.scalar *
+        QuadraticForm.imaginaryQuadraticForm vector
           (divideGaussianMatrix
             (SquareMatrix.Multiplication.mul inverse.inverse bMatrix)
             inverse.scalar) := by
@@ -844,7 +848,7 @@ theorem imaginaryQuadraticForm_divide_positive_of_unnormalized
       vector aMatrix bMatrix inverse scalarNonzero]
     exact rawPositive
   exact Fraction.Order.Arithmetic.pos_of_mul_pos_right_direct productPositive
-    (Data.Gaussian.Norm.Basic.normSq_nonneg inverse.scalar)
+    (Basic.normSq_nonneg inverse.scalar)
 
 end Purelib.LinearAlgebra.Gaussian.Energy
 
@@ -869,7 +873,7 @@ namespace Purelib.LinearAlgebra.Gaussian.Energy.PreparedEnergySurface
 
 /-- A structural vector of Gaussian rational coefficients with retained finite dimension. -/
 abbrev GaussianVector (size : Nat) :=
-  _root_.Purelib.LinearAlgebra.Gaussian.Energy.GaussianVector size
+  Energy.GaussianVector size
 
 end Purelib.LinearAlgebra.Gaussian.Energy.PreparedEnergySurface
 

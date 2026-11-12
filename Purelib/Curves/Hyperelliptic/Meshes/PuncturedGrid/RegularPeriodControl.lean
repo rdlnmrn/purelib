@@ -57,6 +57,8 @@ import Purelib.Riemann.Topology.PreparedBankRootChains
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior
@@ -99,15 +101,15 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodSamples (C
 open Purelib.Riemann.Normalization
 open Purelib.Data.Gaussian.Basic.Canonical
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
 
 set_option genInjectivity false in
 /-- A shared regular exterior boundary acquisition with small numerical periods on every original component.
@@ -115,18 +117,18 @@ set_option genInjectivity false in
 The same retained surface and cap bank supplies the energy correction and all period transports, which remain small at
 every later paid stage. -/
 structure RegularPeriodControl (prepared : ExteriorProgram.AllSurfacePreparation regular domains differential)
-    (target loss : InverseRootPolynomial.Coordinate) (floor minimumStage : Nat) where
+    (target loss : Coordinate) (floor minimumStage : Nat) where
   /-- The actual original regular boundary control at one sixteenth of the requested period target. -/ boundary :
     RegularBoundaryControl prepared (target / 16) loss floor
   /-- The original component period samples transported from that exact retained boundary acquisition. -/ periods :
-    PeriodSamples.ComponentPeriodSamples boundary.acquired.sample boundary.acquired.shared boundary.acquired.plan.fine
+    ComponentPeriodSamples boundary.acquired.sample boundary.acquired.shared boundary.acquired.plan.fine
     boundary.request.readingIndex boundary.request.localTarget boundary.request.budget.areaTarget floor
     boundary.components.groups (target / 16) minimumStage
   /-- Every actual retained component period sample has squared norm below the original target. -/ small : ∀ value ∈
-    periods.values, Data.Gaussian.Norm.Basic.normSq value.period.sample < target
+    periods.values, Basic.normSq value.period.sample < target
   /-- Every later original numerical period reading remains below the same target. -/ small_later : ∀ value ∈
     periods.values, ∀ stage, periods.stage ≤ stage →
-    Data.Gaussian.Norm.Basic.normSq (((value.group.component.program.period.program
+    Basic.normSq (((value.group.component.program.period.program
       differential.index).integral.model stage).integralSample) < target
 
 constructive_injectivity RegularPeriodControl
@@ -134,46 +136,46 @@ constructive_injectivity RegularPeriodControl
 namespace RegularPeriodControl
 
 /-- Ten copies of one sixteenth of a positive rational target remain strictly below that target. -/
-private theorem allowance_paid {target : InverseRootPolynomial.Coordinate} (positive : 0 < target) : 10 * (target / 16)
+private theorem allowance_paid {target : Coordinate} (positive : 0 < target) : 10 * (target / 16)
   < target := by
   have partPositive := Fraction.Order.Field.div_pos_direct positive (by
-      decide : (0 : InverseRootPolynomial.Coordinate) < 16)
+      decide : (0 : Coordinate) < 16)
   have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct (by
-      decide : (10 : InverseRootPolynomial.Coordinate) < 16) partPositive
+      decide : (10 : Coordinate) < 16) partPositive
   exact scaled.trans_eq ((by ring1 : 16 * (target / 16) = target / 16 * 16).trans
     (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)))
 
 /-- The retained boundary and period-tail allowances bound the actual original component period reading at every paid
 stage. -/
 public theorem small_at {prepared : ExteriorProgram.AllSurfacePreparation regular domains differential} {target loss :
-  InverseRootPolynomial.Coordinate}
+  Coordinate}
     {floor minimumStage : Nat} (positive : 0 < target)
     (boundary : RegularBoundaryControl prepared (target / 16) loss floor)
-    (value : PeriodSamples.ComponentPeriodTail boundary.acquired.sample boundary.acquired.shared
+    (value : ComponentPeriodTail boundary.acquired.sample boundary.acquired.shared
       boundary.acquired.plan.fine
       boundary.request.readingIndex boundary.request.localTarget boundary.request.budget.areaTarget floor (target / 16)
         minimumStage)
     (groupMember : value.group ∈ boundary.components.groups)
     (stage : Nat) (later : value.tail.stage ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (((value.group.component.program.period.program
+    Basic.normSq (((value.group.component.program.period.program
       differential.index).integral.model stage).integralSample) < target := by
   let reading := ((value.group.component.program.period.program differential.index).integral.model stage).integralSample
   have sourceSmall := boundary.component_integrals_small value.group groupMember
   have countPaid := boundary.acquired.evaluated.source.component_error_paid boundary.components value.group groupMember
-  have transport : Data.Gaussian.Norm.Basic.normSq (value.group.surface.total - reading) < 4 * (target / 16) :=
+  have transport : Basic.normSq (value.group.surface.total - reading) < 4 * (target / 16) :=
     (value.accurate stage later).trans ((Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by
-        decide : (0 : InverseRootPolynomial.Coordinate) < 2)
+        decide : (0 : Coordinate) < 2)
       (Fraction.Order.Arithmetic.add_lt_add_right_direct countPaid (target / 16))).trans_eq (by ring1))
-  have reversed : Data.Gaussian.Norm.Basic.normSq (reading - value.group.surface.total) < 4 * (target / 16) :=
+  have reversed : Basic.normSq (reading - value.group.surface.total) < 4 * (target / 16) :=
     by
     rw [show reading - value.group.surface.total = -(value.group.surface.total - reading) by ring1,
-      Data.Gaussian.Norm.Basic.normSq_neg]
+      Basic.normSq_neg]
     exact transport
-  have normBound := Data.Gaussian.Norm.Bounds.normSq_add_le_two (reading - value.group.surface.total)
+  have normBound := Bounds.normSq_add_le_two (reading - value.group.surface.total)
     value.group.surface.total
   rw [show reading - value.group.surface.total + value.group.surface.total = reading by ring1] at normBound
   exact normBound.trans_lt
-    (((Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : InverseRootPolynomial.Coordinate) < 2)
+    (((Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Coordinate) < 2)
       (Fraction.Order.Arithmetic.add_lt_add_direct reversed sourceSmall)).trans_eq (by ring1)).trans
         (allowance_paid positive))
 
@@ -181,16 +183,16 @@ public theorem small_at {prepared : ExteriorProgram.AllSurfacePreparation regula
 uniform later-stage bounds. -/
 def build (prepared : ExteriorProgram.AllSurfacePreparation regular domains differential)
     (degree : curve.polynomial.natDegree = 2 * genus + 2)
-    (target loss : InverseRootPolynomial.Coordinate) (positive : 0 < target) (lossPositive : 0 < loss)
+    (target loss : Coordinate) (positive : 0 < target) (lossPositive : 0 < loss)
     (floor minimumStage : Nat) : RegularPeriodControl
       prepared target loss floor minimumStage := by
   have localPositive := Fraction.Order.Field.div_pos_direct positive (by
-      decide : (0 : InverseRootPolynomial.Coordinate) < 16)
+      decide : (0 : Coordinate) < 16)
   let boundary := RegularBoundaryControl.build prepared degree (target / 16) loss localPositive lossPositive floor
   let periods := Evaluation.periodSamples
     boundary.acquired.evaluated.source boundary.components minimumStage
   have allLater : ∀ value ∈ periods.values, ∀ stage, periods.stage ≤ stage →
-      Data.Gaussian.Norm.Basic.normSq (((value.group.component.program.period.program
+      Basic.normSq (((value.group.component.program.period.program
         differential.index).integral.model stage).integralSample) < target := by
     intro value member stage later
     have mapped : value.group ∈ periods.values.map (fun entry => entry.group) :=

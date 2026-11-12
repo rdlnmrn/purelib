@@ -43,9 +43,9 @@ The pointwise hypothesis bounds term index by scale times one quarter to that in
 remaining family and its scale by one quarter, yielding a bound independent of the prefix length. -/
 theorem sum_geometric_normSq_le (term : Nat → Basic.Canonical) :
     ∀ (count : Nat) (scale : Fraction.Rational), 0 ≤ scale →
-      (∀ index, Data.Gaussian.Norm.Basic.normSq (term index) ≤
+      (∀ index, Norm.Basic.normSq (term index) ≤
         scale * (1 / 4 : Fraction.Rational) ^ index) →
-      Data.Gaussian.Norm.Basic.normSq (FiniteSum.Prefix.sum term count) ≤ 4 * scale := by
+      Norm.Basic.normSq (FiniteSum.Prefix.sum term count) ≤ 4 * scale := by
   intro count
   induction count generalizing term with
   | zero =>
@@ -56,17 +56,17 @@ theorem sum_geometric_normSq_le (term : Nat → Basic.Canonical) :
   | succ count inductionHypothesis =>
     intro scale scaleNonnegative termBound
     rw [FiniteSum.Prefix.sum_succ_front]
-    have headBound : Data.Gaussian.Norm.Basic.normSq (term 0) ≤ scale := by
+    have headBound : Norm.Basic.normSq (term 0) ≤ scale := by
       simpa only [pow_zero, Fraction.Field.mul_one_direct] using
         termBound 0
     have quarterScaleNonnegative : 0 ≤ scale / 4 :=
       Fraction.Order.Field.div_nonneg_direct scaleNonnegative (by decide)
     have shiftedBound : ∀ index,
-        Data.Gaussian.Norm.Basic.normSq (term (index + 1)) ≤
+        Norm.Basic.normSq (term (index + 1)) ≤
           (scale / 4) * (1 / 4 : Fraction.Rational) ^ index := by
       intro index
       calc
-        Data.Gaussian.Norm.Basic.normSq (term (index + 1)) ≤
+        Norm.Basic.normSq (term (index + 1)) ≤
             scale * (1 / 4 : Fraction.Rational) ^ (index + 1) := termBound _
         _ = (scale / 4) * (1 / 4 : Fraction.Rational) ^ index :=
           Geometric.Quarter.geometric_scale_shift scale index
@@ -74,16 +74,16 @@ theorem sum_geometric_normSq_le (term : Nat → Basic.Canonical) :
       (fun index => term (index + 1)) (scale / 4)
         quarterScaleNonnegative shiftedBound
     have tailBound' :
-        Data.Gaussian.Norm.Basic.normSq (FiniteSum.Prefix.sum (fun index => term (index + 1)) count) ≤ scale := by
+        Norm.Basic.normSq (FiniteSum.Prefix.sum (fun index => term (index + 1)) count) ≤ scale := by
       calc
-        Data.Gaussian.Norm.Basic.normSq (FiniteSum.Prefix.sum (fun index => term (index + 1)) count) ≤
+        Norm.Basic.normSq (FiniteSum.Prefix.sum (fun index => term (index + 1)) count) ≤
             4 * (scale / 4) := tailBound
         _ = scale := Fraction.Compatibility.four_mul_quarter_scale scale
     calc
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (term 0 + FiniteSum.Prefix.sum (fun index => term (index + 1)) count) ≤
-        2 * (Data.Gaussian.Norm.Basic.normSq (term 0) +
-          Data.Gaussian.Norm.Basic.normSq (FiniteSum.Prefix.sum (fun index => term (index + 1)) count)) :=
+        2 * (Norm.Basic.normSq (term 0) +
+          Norm.Basic.normSq (FiniteSum.Prefix.sum (fun index => term (index + 1)) count)) :=
             Norm.Bounds.normSq_add_le_two _ _
       _ ≤ 2 * (scale + scale) :=
         Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct

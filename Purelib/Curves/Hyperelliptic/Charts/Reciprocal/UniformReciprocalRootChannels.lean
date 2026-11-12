@@ -53,6 +53,10 @@ import Purelib.Riemann.RootContinuation.SquareRootChannelOwnership
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-!
@@ -104,19 +108,19 @@ open Purelib.Approximation.Gaussian.Equivalence (Equivalent NamedEquivalent)
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius quarterRadius_eq_mul_pow)
 open Purelib.Approximation.Rational.Geometric.Search (firstQuarterBelow)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    Data patch count}
+  {edge : ParameterEdge}
 
 set_option genInjectivity false in
 /-- Cache the two preparation steps once for both endpoints of this cell.
 
 The model cache is exactly refinement two of the supplied cell, with its certified one-over-256 residual ceiling. -/
-structure RootModel (cell : UniformReciprocalCover.Cell data edge) where
-  /-- The cached twice-refined original reciprocal cell model. -/ model : InverseRootPolynomial.Model
+structure RootModel (cell : Cell data edge) where
+  /-- The cached twice-refined original reciprocal cell model. -/ model : Model
     (HyperellipticReciprocal.polynomial curve) (data.box edge.left.parameter)
   /-- The retained model is exactly refinement two of the original cell model. -/ model_eq : model = cell.model.refine 2
   /-- The cached root model has squared residual bound at most one over 256. -/ small : model.bound ≤ 1 / 256
@@ -126,41 +130,41 @@ constructive_injectivity RootModel
 namespace RootModel
 
 /-- Cache the two preparation refinements of the original cell model with their certified residual bound. -/
-@[expose] def build (cell : UniformReciprocalCover.Cell data edge) :
-  Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell :=
+@[expose] def build (cell : Cell data edge) :
+  RootModel cell :=
   ⟨cell.model.refine 2, rfl, by
-    rw [Model.refine_bound, Geometric.Basic.quarterRadius_eq_mul_pow]
-    exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct cell.model.bound_small
-      (by decide +kernel : (0 : InverseRootPolynomial.Coordinate) ≤ (1 / 4) ^ 2)).trans_eq (by decide +kernel)⟩
+    rw [Model.refine_bound, quarterRadius_eq_mul_pow]
+    exact (Arithmetic.mul_le_mul_of_nonneg_right_direct cell.model.bound_small
+      (by decide +kernel : (0 : Coordinate) ≤ (1 / 4) ^ 2)).trans_eq (by decide +kernel)⟩
 
 /-- Refining an original inverse model by a sum equals the corresponding successive refinements. -/
-private theorem refine_add {polynomial : InverseRootPolynomial.Polynomial} {box : Rational.Box}
-    (model : InverseRootPolynomial.Model polynomial box) (first last : Nat) :
+private theorem refine_add {polynomial : Polynomial} {box : Rational.Box}
+    (model : Model polynomial box) (first last : Nat) :
     model.refine (first + last) = (model.refine first).refine last := by
   induction last with
   | zero => rfl
   | succ last ih => rw [Nat.add_succ, Model.refine, Model.refine, ih]
 
 /-- Every later retained root-model refinement is the original cell refinement at the index shifted by two. -/
-theorem refine_eq {cell : UniformReciprocalCover.Cell data edge} (prepared :
-  Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell) (index : Nat) :
+theorem refine_eq {cell : Cell data edge} (prepared :
+  RootModel cell) (index : Nat) :
     prepared.model.refine index = cell.model.refine (2 + index) := by
-  rw [prepared.model_eq, ← Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel.refine_add]
+  rw [prepared.model_eq, ← refine_add]
 
 end RootModel
 
-variable {cell : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
+variable {cell : Cell data edge}
 
 set_option genInjectivity false in
 /-- A retained root channel at an original parameter inside the same reciprocal cell.
 
 The interval witness and original root channel share the supplied model, parameter and retained source edge. -/
-structure RootPoint (prepared : Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell)
-  (parameter : InverseRootPolynomial.Coordinate) where
+structure RootPoint (prepared : RootModel cell)
+  (parameter : Coordinate) where
   /-- The original source parameter lies between the retained cell endpoints. -/ between : edge.left.parameter ≤
     parameter ∧ parameter ≤ edge.right.parameter
   /-- The original reciprocal root channel built from the retained prepared cell model. -/ channel :
-    InverseModelRootChannels.RootChannel prepared.model (parent.edge.point parameter)⁻¹
+    RootChannel prepared.model (parent.edge.point parameter)⁻¹
 
 constructive_injectivity RootPoint
 
@@ -168,18 +172,18 @@ namespace RootPoint
 
 /-- Construct the retained root channel at an original contained source parameter using the same prepared reciprocal
 model. -/
-@[expose] def build (prepared : Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell)
-  (parameter : InverseRootPolynomial.Coordinate)
+@[expose] def build (prepared : RootModel cell)
+  (parameter : Coordinate)
     (between : edge.left.parameter ≤ parameter ∧ parameter ≤ edge.right.parameter) :
-      Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint prepared parameter :=
+      RootPoint prepared parameter :=
   ⟨between, RootChannel.build prepared.model prepared.small _ (cell.contains parameter between)⟩
 
-variable {prepared : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell}
-  {parameter : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+variable {prepared : RootModel cell}
+  {parameter : Coordinate}
 
 /-- Each retained root-channel reading equals the original reciprocal radicand times its shifted original inverse-model
 evaluation. -/
-theorem sample_eq (point : Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint prepared
+theorem sample_eq (point : RootPoint prepared
   parameter) (index : Nat) :
     point.channel.samples.sample index = (HyperellipticReciprocal.polynomial curve).eval (parent.edge.point parameter)⁻¹
       *
@@ -187,44 +191,44 @@ theorem sample_eq (point : Curves.Hyperelliptic.Charts.Reciprocal.UniformRecipro
   rw [point.channel.samples.sample_eq, prepared.refine_eq]
 
 /-- The original coefficient and shared-source bounds combined into the root-channel geometric comparison scale. -/
-private def scale (data : UniformReciprocalModels.Data patch count) (parameter : InverseRootPolynomial.Coordinate) :
+private def scale (data : Data patch count) (parameter : Coordinate) :
   Coordinate :=
-  24 * Data.Gaussian.Norm.Basic.normSq (ReciprocalRootNames.factor genus (parent.edge.point parameter) *
+  24 * Basic.normSq (ReciprocalRootNames.factor genus (parent.edge.point parameter) *
     curve.polynomial.eval (parent.edge.point parameter)) *
     (data.source.bound + 1 / 16) * data.inverseUpper
 
 /-- The retained original root-channel comparison scale is nonnegative. -/
-private theorem scale_nonnegative (data : UniformReciprocalModels.Data patch count) (parameter :
-  InverseRootPolynomial.Coordinate) : 0 ≤
-  Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint.scale data parameter :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (Data.Gaussian.Norm.Basic.normSq_nonneg _))
+private theorem scale_nonnegative (data : Data patch count) (parameter :
+  Coordinate) : 0 ≤
+  scale data parameter :=
+  Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct (by decide) (Basic.normSq_nonneg _))
       (add_nonneg data.source.bound_nonnegative (by decide))) data.inverseUpper_positive.le
 
 /-- The retained source and reciprocal inverse models satisfy the explicit shared geometric discrepancy bound. -/
-theorem source_distance (point : Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint prepared
+theorem source_distance (point : RootPoint prepared
   parameter) (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq ((data.source.refine index).value.eval (parent.edge.point parameter) -
+    Basic.normSq ((data.source.refine index).value.eval (parent.edge.point parameter) -
       ReciprocalInverseModelOverlap.value curve (cell.model.refine index) (parent.edge.point parameter)) ≤
-      6 * (data.source.bound + 1 / 16) * data.inverseUpper * ((1 / 4 : InverseRootPolynomial.Coordinate) ^ index) := by
+      6 * (data.source.bound + 1 / 16) * data.inverseUpper * ((1 / 4 : Coordinate) ^ index) := by
   have estimate := cell.distance_le index parameter point.between
   have bound : cell.model.bound = 1 / 16 := by rw [cell.model_eq]; rfl
   rw [Model.refine_bound, Model.refine_bound, bound] at estimate
-  exact estimate.trans_eq (by simp only [Geometric.Basic.quarterRadius_eq_mul_pow]; ring1)
+  exact estimate.trans_eq (by simp only [quarterRadius_eq_mul_pow]; ring1)
 
-variable {otherEdge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {otherCell :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data otherEdge} {otherModel :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel otherCell}
+variable {otherEdge : ParameterEdge} {otherCell :
+  Cell data otherEdge} {otherModel :
+  RootModel otherCell}
 
 /-- Synchronized readings of the two original overlapping root channels satisfy the retained geometric comparison bound.
 -/
-private theorem same_index (first : Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint
-  prepared parameter) (last : Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint otherModel
+private theorem same_index (first : RootPoint
+  prepared parameter) (last : RootPoint otherModel
   parameter) (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (first.channel.samples.sample index - last.channel.samples.sample index) ≤
-      Geometric.Basic.quarterRadius
-      (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint.scale data parameter)
+    Basic.normSq (first.channel.samples.sample index - last.channel.samples.sample index) ≤
+      quarterRadius
+      (scale data parameter)
       index := by
   let source := (data.source.refine (2 + index)).value.eval (parent.edge.point parameter)
   let left := ReciprocalInverseModelOverlap.value curve (cell.model.refine (2 + index)) (parent.edge.point parameter)
@@ -239,49 +243,49 @@ private theorem same_index (first : Curves.Hyperelliptic.Charts.Reciprocal.Unifo
       (PreparedExteriorReciprocal.parent_point_nonzero data.boundary inside)]
     dsimp only [weight, left, right, ReciprocalInverseModelOverlap.value]
     ring1
-  have estimate : Data.Gaussian.Norm.Basic.normSq (left - right) ≤ 2 *
-      (Data.Gaussian.Norm.Basic.normSq (source - left) + Data.Gaussian.Norm.Basic.normSq (source -
+  have estimate : Basic.normSq (left - right) ≤ 2 *
+      (Basic.normSq (source - left) + Basic.normSq (source -
         right)) := by
     rw [show left - right = (source - right) - (source - left) by ring1]
-    exact (Data.Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans_eq (by ring1)
-  have bounded := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    exact (Bounds.normSq_sub_le_two _ _).trans_eq (by ring1)
+  have bounded := (Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
       (add_le_add (first.source_distance (2 + index)) (last.source_distance (2 + index))) (by decide)))
-    (Data.Gaussian.Norm.Basic.normSq_nonneg weight))
-  rw [identity, Data.Gaussian.Norm.Basic.normSq_mul]
+    (Basic.normSq_nonneg weight))
+  rw [identity, Basic.normSq_mul]
   exact (bounded.trans_eq (by
       dsimp only [weight];
-      rw [Geometric.Basic.quarterRadius_eq_mul_pow];
-      unfold Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint.scale;
+      rw [quarterRadius_eq_mul_pow];
+      unfold scale;
       ring1)).trans
     (quarterRadius_antitone
-      (Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint.scale_nonnegative data parameter)
+      (scale_nonnegative data parameter)
       (Nat.le_add_left index 2))
 
 /-- The original coefficient and shared-source bounds combined into the root-channel geometric comparison scale. -/
-@[expose] def comparisonScale (data : UniformReciprocalModels.Data patch count) (parameter :
-  InverseRootPolynomial.Coordinate) : Coordinate :=
-  24 * Data.Gaussian.Norm.Basic.normSq (ReciprocalRootNames.factor genus (parent.edge.point parameter) *
+@[expose] def comparisonScale (data : Data patch count) (parameter :
+  Coordinate) : Coordinate :=
+  24 * Basic.normSq (ReciprocalRootNames.factor genus (parent.edge.point parameter) *
     curve.polynomial.eval (parent.edge.point parameter)) *
     (data.source.bound + 1 / 16) * data.inverseUpper
 
 /-- The retained original root-channel comparison scale is nonnegative. -/
-theorem comparisonScale_nonnegative (data : UniformReciprocalModels.Data patch count) (parameter :
-  InverseRootPolynomial.Coordinate) : 0 ≤
-  Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint.comparisonScale data parameter :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (Data.Gaussian.Norm.Basic.normSq_nonneg _))
+theorem comparisonScale_nonnegative (data : Data patch count) (parameter :
+  Coordinate) : 0 ≤
+  comparisonScale data parameter :=
+  Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct (by decide) (Basic.normSq_nonneg _))
       (add_nonneg data.source.bound_nonnegative (by decide))) data.inverseUpper_positive.le
 
 /-- Synchronized readings of the two original overlapping root channels satisfy the retained geometric comparison bound.
 -/
-theorem sameIndexBound (first : Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint prepared
-  parameter) (last : Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint otherModel
+theorem sameIndexBound (first : RootPoint prepared
+  parameter) (last : RootPoint otherModel
   parameter) (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (first.channel.samples.sample index - last.channel.samples.sample index) ≤
-      Geometric.Basic.quarterRadius
-      (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint.comparisonScale data
+    Basic.normSq (first.channel.samples.sample index - last.channel.samples.sample index) ≤
+      quarterRadius
+      (comparisonScale data
       parameter) index := by
   let source := (data.source.refine (2 + index)).value.eval (parent.edge.point parameter)
   let left := ReciprocalInverseModelOverlap.value curve (cell.model.refine (2 + index)) (parent.edge.point parameter)
@@ -296,70 +300,70 @@ theorem sameIndexBound (first : Curves.Hyperelliptic.Charts.Reciprocal.UniformRe
       (PreparedExteriorReciprocal.parent_point_nonzero data.boundary inside)]
     dsimp only [weight, left, right, ReciprocalInverseModelOverlap.value]
     ring1
-  have estimate : Data.Gaussian.Norm.Basic.normSq (left - right) ≤ 2 *
-      (Data.Gaussian.Norm.Basic.normSq (source - left) + Data.Gaussian.Norm.Basic.normSq (source -
+  have estimate : Basic.normSq (left - right) ≤ 2 *
+      (Basic.normSq (source - left) + Basic.normSq (source -
         right)) := by
     rw [show left - right = (source - right) - (source - left) by ring1]
-    exact (Data.Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans_eq (by ring1)
-  have bounded := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    exact (Bounds.normSq_sub_le_two _ _).trans_eq (by ring1)
+  have bounded := (Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
       (add_le_add (first.source_distance (2 + index)) (last.source_distance (2 + index))) (by decide)))
-    (Data.Gaussian.Norm.Basic.normSq_nonneg weight))
-  rw [identity, Data.Gaussian.Norm.Basic.normSq_mul]
+    (Basic.normSq_nonneg weight))
+  rw [identity, Basic.normSq_mul]
   exact (bounded.trans_eq (by
       dsimp only [weight];
-      rw [Geometric.Basic.quarterRadius_eq_mul_pow];
-      unfold Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint.comparisonScale;
+      rw [quarterRadius_eq_mul_pow];
+      unfold comparisonScale;
       ring1)).trans
     (quarterRadius_antitone
-      (Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint.comparisonScale_nonnegative data
+      (comparisonScale_nonnegative data
       parameter) (Nat.le_add_left index 2))
 
 /-- The actual cached root programs agree wherever two cells overlap. -/
-@[expose] def equivalent (first : Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint
-  prepared parameter) (last : Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint otherModel
+@[expose] def equivalent (first : RootPoint
+  prepared parameter) (last : RootPoint otherModel
   parameter) :
-    Gaussian.Equivalence.NamedEquivalent first.channel.certificate.value.name last.channel.certificate.value.name := by
+    NamedEquivalent first.channel.certificate.value.name last.channel.certificate.value.name := by
   let left := first.channel.samples.approximation first.channel.small first.channel.inside
   let right := last.channel.samples.approximation last.channel.small last.channel.inside
-  let bound := Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint.comparisonScale data
+  let bound := comparisonScale data
     parameter
-  let samples : Gaussian.Equivalence.Equivalent left right := {
+  let samples : Equivalent left right := {
     compare := fun leftStart rightStart target positive => by
       let budget := target / 4
-      have budgetPositive : 0 < budget := Fraction.Order.Field.div_pos_direct positive (by decide)
-      let index := Search.firstQuarterBelow bound (max leftStart rightStart) budget
+      have budgetPositive : 0 < budget := Field.div_pos_direct positive (by decide)
+      let index := firstQuarterBelow bound (max leftStart rightStart) budget
       have start := Search.firstQuarterBelow_ge bound (max leftStart rightStart) budget
       let comparison := (Equivalent.refl right).compare index index budget budgetPositive
       refine ⟨comparison.leftIndex, comparison.rightIndex,
         ((Data.Nat.Order.le_max_left _ _).trans start).trans comparison.left_ge,
         ((Data.Nat.Order.le_max_right _ _).trans start).trans comparison.right_ge, ?_⟩
       intro leftIndex rightIndex leftLater rightLater
-      have same : Data.Gaussian.Norm.Basic.normSq (left.sample leftIndex - right.sample leftIndex) < budget :=
+      have same : Basic.normSq (left.sample leftIndex - right.sample leftIndex) < budget :=
         (first.sameIndexBound last leftIndex).trans_lt
           ((quarterRadius_antitone
-            (Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint.comparisonScale_nonnegative
+            (comparisonScale_nonnegative
             data parameter)
             (comparison.left_ge.trans leftLater)).trans_lt
               (Search.firstQuarterBelow_accurate bound
                 (comparisonScale_nonnegative
                 data parameter)
                 _ _ budgetPositive))
-      exact (Data.Gaussian.Norm.Bounds.normSq_sub_le_via (left.sample leftIndex) (right.sample leftIndex) (right.sample
+      exact (Bounds.normSq_sub_le_via (left.sample leftIndex) (right.sample leftIndex) (right.sample
         rightIndex)).trans_lt
-        ((Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by
-            decide : (0 : InverseRootPolynomial.Coordinate) < 2)
-          (Fraction.Order.Arithmetic.add_lt_add_direct same (comparison.close leftLater rightLater))).trans_eq (by
+        ((Arithmetic.mul_lt_mul_of_pos_left_direct (by
+            decide : (0 : Coordinate) < 2)
+          (Arithmetic.add_lt_add_direct same (comparison.close leftLater rightLater))).trans_eq (by
             rw [show 2 * (budget + budget) = budget * 4 by ring1]
             exact Fraction.Field.div_mul_cancel_of_ne target 4 (by decide))) }
   exact first.channel.samples_equivalent.symm.trans (samples.trans last.channel.samples_equivalent)
 
 /-- The original attached winding-owner certificates of the two overlapping root channels are operationally equivalent.
 -/
-@[expose] def ownerEquivalent (first : Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint
-  prepared parameter) (last : Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootPoint otherModel
+@[expose] def ownerEquivalent (first : RootPoint
+  prepared parameter) (last : RootPoint otherModel
   parameter) :
-    Gaussian.Equivalence.NamedEquivalent (first.channel.attachment.owner.certificate
+    NamedEquivalent (first.channel.attachment.owner.certificate
       first.channel.attachment.owner.parameterNonzero).value.name
       (last.channel.attachment.owner.certificate last.channel.attachment.owner.parameterNonzero).value.name :=
   first.channel.owner_equivalent.trans ((first.equivalent last).trans last.channel.owner_equivalent.symm)

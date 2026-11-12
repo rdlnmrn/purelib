@@ -1,6 +1,7 @@
 module
 import Init.Data.List.OfFn
 import Purelib.Data.List.Append
+public import Purelib.Data.List.GetD
 -- Public index numerals retain the original successor nonzero certificate.
 public import Purelib.Data.Nat.Order
 
@@ -56,6 +57,18 @@ theorem ofFn_congr {size : Nat} {left right : Fin size → Alpha}
   | succ size inductionHypothesis =>
       rw [ofFn_succ, ofFn_succ, equal 0,
         inductionHypothesis (fun index => equal index.succ)]
+
+/-- Equal finite sizes and pointwise scalar readings materialize the same ordered table.
+
+The two bounded families keep their original natural coordinates. Equality is
+proved at each finite index without equality of the indexing functions.
+-/
+theorem ofFn_congr_size {leftSize rightSize : Nat} (size : leftSize = rightSize)
+    (left : Fin leftSize → Alpha) (right : Fin rightSize → Alpha)
+    (entries : ∀ first second, first.val = second.val → left first = right second) :
+    List.ofFn left = List.ofFn right := by
+  cases size
+  exact ofFn_congr fun index => entries index index rfl
 
 /-- Materializing a successor-size table appends its final entry to the castSucc prefix.
 
@@ -327,9 +340,31 @@ theorem getElem_ofFn {size : Nat} (function : Fin size → Alpha)
               exact inductionHypothesis (fun index : Fin size => function index.succ)
                 ⟨value, Nat.lt_of_succ_lt_succ bounded⟩ tailBound
 
+/-- A bounded defaulting read of the original finite function table returns that exact supplied entry. -/
+theorem getD_ofFn {size : Nat} (function : Fin size → Alpha) (index : Fin size) (fallback : Alpha) :
+    getD (List.ofFn function) index.val fallback = function index := by
+  induction size with
+  | zero => exact Fin.elim0 index
+  | succ size previous =>
+      rewrite [ofFn_succ]
+      cases index with
+      | mk index bound =>
+          cases index with
+          | zero => rfl
+          | succ index =>
+              exact previous (fun next => function next.succ)
+                ⟨index, Nat.lt_of_succ_lt_succ bound⟩
+
 end Purelib.Data.List.OfFn.Basic
 
 namespace Purelib.Data.List.OfFn.Basic
+
+/-- Casting only the finite size preserves the same ordered indexed materialization. -/
+public theorem ofFn_cast {Alpha : Type u} {left right : Nat} (equal : left = right)
+    (function : Fin right → Alpha) :
+    List.ofFn (fun index : Fin left => function (Fin.cast equal index)) = List.ofFn function := by
+  cases equal
+  rfl
 
 /-- Casting an exact retained length preserves indexed materialization of a list map.
 

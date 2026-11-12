@@ -55,3 +55,14 @@ constructive_injectivity Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve
 end Purelib.Curves.Hyperelliptic.Basic
 
 end
+
+namespace Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve
+
+/-- The defining polynomial of a hyperelliptic curve has positive degree in either parity. -/
+public theorem degree_positive {genus : Nat} (curve : HyperellipticCurve genus) :
+    0 < curve.polynomial.natDegree := by
+  cases curve.degreeShape with
+  | odd degree => rewrite [degree]; exact Nat.zero_lt_succ _
+  | even degree => rewrite [degree]; exact Nat.zero_lt_succ _
+
+end Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve

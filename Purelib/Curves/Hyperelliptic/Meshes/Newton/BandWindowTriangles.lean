@@ -57,6 +57,8 @@ import Purelib.Topology.Polygon.Stokes
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity
+
 open Purelib.Approximation
 
 open Purelib.Curves
@@ -81,103 +83,103 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.Bra
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
     Fraction.Rational}
   {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius} {index :
-    Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
+    Branches.BranchIsolation.Data.Index branches}
   {current : Meshes.LiftedPuncturedGrid grid.punctured}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars} {i j
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars} {i j
     : Fin genus}
 
 /-- Polarization extraction distributes over the pointwise difference of two coefficient-indexed areas. -/
 private theorem extract_sub (first second : Gaussian.Basic.Canonical → Gaussian.Basic.Canonical) :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient => first
+    BilinearPolarization.extract (fun coefficient => first
       coefficient - second coefficient) =
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract first -
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract second := by
-  unfold Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract
+      BilinearPolarization.extract first -
+      BilinearPolarization.extract second := by
+  unfold BilinearPolarization.extract
   ring1
 
 /-- Both error allocations use the same magnitude banks and every later
 shared cache. The sum retains the compiler's actual fine-face occurrences. -/
-theorem fine_triangles_accurate (region : Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index) (sheet :
+theorem fine_triangles_accurate (region : Annulus.Faces.AnnularFaces grid index) (sheet :
   Fin 2)
-    (first : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    (first : PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential i))
-    (second : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    (second : PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential j))
     (error : Fraction.Rational) (positive : 0 < error) (floor : Nat) :
     let compiled := RootContinuation.NewtonBandWindowCircuits.fineCompiler (current := current) region sheet
     let partPositive := Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Fraction.Rational) < 4)
-    let connectors := Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedConnectors.PolarizedConnectorRequest.build
+    let connectors := PuncturedGrid.Inclusion.PolarizedConnectors.PolarizedConnectorRequest.build
       compiled current.mesh first second (error / 4) partPositive floor
-    let polygons := Hyperelliptic.Meshes.PuncturedGrid.FinePolygonAggregate.finePolygonRequests current.mesh first
+    let polygons := PuncturedGrid.FinePolygonAggregate.finePolygonRequests current.mesh first
       second (Rational.Budget.Aggregate.perTerm (error / 4) compiled.regulars.length)
       (Rational.Budget.Aggregate.perTerm_positive partPositive _) floor compiled.regulars
     let threshold := max (max floor connectors.index) polygons.val
-    floor ≤ threshold ∧ ∀ stage (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+    floor ≤ threshold ∧ ∀ stage (cache : PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
       domains stage)
-      (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) current.mesh)
-        (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j)
+      (left : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) current.mesh)
+        (right : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j)
         current.mesh),
       threshold ≤ stage →
-      Data.Gaussian.Norm.Basic.normSq
-        (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
+      Gaussian.Norm.Basic.normSq
+        (BilinearPolarization.extract (fun coefficient =>
         current.edges.chainArea current.vertices
-        (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix
-          (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh left.values)
-          (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh right.values) coefficient)
+        (BilinearPolarization.mix
+          (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh left.values)
+          (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh right.values) coefficient)
         region.boundary sheet -
         Topology.Mesh.RetracingWords.wordArea
-          (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix
-          (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh left.values)
-          (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh right.values) coefficient)
+          (BilinearPolarization.mix
+          (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh left.values)
+          (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh right.values) coefficient)
             compiled.word) -
-        Geometry.Grid.CellBoundary.sumValues (Hyperelliptic.Meshes.PuncturedGrid.FinePolygonAggregate.fineTriangleArea
+        Geometry.Grid.CellBoundary.sumValues (PuncturedGrid.FinePolygonAggregate.fineTriangleArea
           left right) compiled.regulars) < error := by
   intro compiled partPositive connectors polygons threshold
   constructor
   · exact (Nat.Order.le_max_left _ _).trans (Nat.Order.le_max_left _ _)
   intro stage cache left right later
-  let value := fun coefficient => Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix
-    (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh left.values)
-    (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh right.values) coefficient
+  let value := fun coefficient => BilinearPolarization.mix
+    (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh left.values)
+    (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh right.values) coefficient
   let boundary := fun coefficient => current.edges.chainArea current.vertices (value coefficient)
     region.boundary sheet -
     Topology.Mesh.RetracingWords.wordArea (value coefficient) compiled.word
   let finePolygons := fun coefficient => Geometry.Grid.CellBoundary.sumValues (fun occurrence =>
     Topology.Mesh.RetracingWords.wordArea (value coefficient) occurrence.word) compiled.regulars
   let triangles := Geometry.Grid.CellBoundary.sumValues
-    (Hyperelliptic.Meshes.PuncturedGrid.FinePolygonAggregate.fineTriangleArea left right) compiled.regulars
-  have connectorBound := (Hyperelliptic.Meshes.Newton.BandWindowConnectors.fine_polygons_accurate region sheet first
+    (PuncturedGrid.FinePolygonAggregate.fineTriangleArea left right) compiled.regulars
+  have connectorBound := (BandWindowConnectors.fine_polygons_accurate region sheet first
     second (error / 4) partPositive floor).2
     stage (cache.get i) (cache.get j) left right ((Nat.Order.le_max_left _ _).trans later)
-  have polygonBound := (Hyperelliptic.Meshes.PuncturedGrid.FinePolygonAggregate.fine_polygons_sum_accurate current.mesh
+  have polygonBound := (PuncturedGrid.FinePolygonAggregate.fine_polygons_sum_accurate current.mesh
     first second (error / 4) partPositive floor compiled.regulars).2
     stage cache left right ((Nat.Order.le_max_right _ _).trans later)
-  change Data.Gaussian.Norm.Basic.normSq
-    (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
+  change Gaussian.Norm.Basic.normSq
+    (BilinearPolarization.extract (fun coefficient =>
     boundary coefficient - finePolygons coefficient)) ≤ error / 4 at connectorBound
-  rw [Hyperelliptic.Meshes.Newton.BandWindowTriangles.extract_sub] at connectorBound
-  change Data.Gaussian.Norm.Basic.normSq
-    (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract finePolygons - triangles) <
+  rw [BandWindowTriangles.extract_sub] at connectorBound
+  change Gaussian.Norm.Basic.normSq
+    (BilinearPolarization.extract finePolygons - triangles) <
     error / 4 at polygonBound
-  change Data.Gaussian.Norm.Basic.normSq
-    (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract boundary - triangles) <
+  change Gaussian.Norm.Basic.normSq
+    (BilinearPolarization.extract boundary - triangles) <
     error
-  have equal : Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract boundary -
+  have equal : BilinearPolarization.extract boundary -
     triangles =
-      (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract boundary -
-        Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract finePolygons) +
-        (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract finePolygons -
+      (BilinearPolarization.extract boundary -
+        BilinearPolarization.extract finePolygons) +
+        (BilinearPolarization.extract finePolygons -
         triangles) := by ring1
   rw [equal]
   have sumBound := (Fraction.Order.Arithmetic.add_le_add_direct connectorBound (le_refl
-    (Data.Gaussian.Norm.Basic.normSq
-    (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract finePolygons -
+    (Gaussian.Norm.Basic.normSq
+    (BilinearPolarization.extract finePolygons -
     triangles)))).trans_lt
     (Fraction.Order.Arithmetic.add_lt_add_left_direct polygonBound (error / 4))
   exact (Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans_lt

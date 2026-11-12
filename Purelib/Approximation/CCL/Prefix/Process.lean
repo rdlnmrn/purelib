@@ -22,6 +22,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Measure.Weighted.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation.CCL
@@ -57,7 +59,7 @@ namespace PrefixFamilyProcess
 /-- Turn finite CCL prefix requests into pointwise rational probe-enclosure requests on one fixed finite probability
 table. -/
 def toProbePointwiseProcess {ι : Type}
-    (process : Cylinder.PrefixFamilyProcess ι)
+    (process : PrefixFamilyProcess ι)
     (distribution : Measure.Distribution ι)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)
@@ -91,11 +93,11 @@ def toProbePointwiseProcess {ι : Type}
               (process.request state
                 (Budget.requiredProbeBlockCount epsilon factor)) atom.item) ≤
           factor * Cylinder.cylinderSpread (process.blocks state atom.item) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         spreadLe factorPositive.le
     constructor
-    · exact Fraction.Order.Arithmetic.sub_le_sub_left_direct scaledLe (probe (process.witness atom.item))
-    · exact Fraction.Order.Arithmetic.add_le_add_direct le_rfl scaledLe
+    · exact Arithmetic.sub_le_sub_left_direct scaledLe (probe (process.witness atom.item))
+    · exact Arithmetic.add_le_add_direct le_rfl scaledLe
   accurate state epsilon positive atom member := by
     exact (Prefix.completedPrefixProbeBound_width_lt_requested
       (process.witness atom.item)
@@ -114,11 +116,11 @@ def toProbePointwiseProcess {ι : Type}
         (process.blocks process.initial atom.item) suffix
     have scaledLe : factor * Cylinder.cylinderSpread (process.blocks state atom.item) ≤
         factor * Cylinder.cylinderSpread (process.blocks process.initial atom.item) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         spreadLe factorPositive.le
     constructor
-    · exact Fraction.Order.Arithmetic.sub_le_sub_left_direct scaledLe (probe (process.witness atom.item))
-    · exact Fraction.Order.Arithmetic.add_le_add_direct le_rfl scaledLe
+    · exact Arithmetic.sub_le_sub_left_direct scaledLe (probe (process.witness atom.item))
+    · exact Arithmetic.add_le_add_direct le_rfl scaledLe
 end PrefixFamilyProcess
 
 end Purelib.Data.CCL.Encoding.Cylinder
@@ -152,8 +154,8 @@ def probeRange {ι : Type} (process :
     (sensitive : ∀ left right,
       Distance.rationalSeparation (probe left) (probe right) ≤
         factor * Chordal.Basic.chordalSq left right)
-    (state : process.State) (item : ι) : Rat.Interval :=
-  Prefix.completedPrefixProbeBound (process.blocks state item)
+    (state : process.State) (item : ι) : Interval :=
+  completedPrefixProbeBound (process.blocks state item)
     (process.witness item) (process.realizes state item)
     probe factor factorNonnegative sensitive
 end PrefixFamilyProcess

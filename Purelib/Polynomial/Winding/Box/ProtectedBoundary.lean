@@ -24,6 +24,9 @@ import Purelib.Geometry.Rational.Box.Refinement
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian.Bounds
+open Purelib.Polynomial.Clearance.Box
+
 open Purelib.Geometry.Rational.Box.Boundary.Strip (BoundaryStripSide BoundaryStripWitness)
 
 open Purelib.Data
@@ -52,29 +55,29 @@ namespace Purelib.Polynomial.Winding.Box.ProtectedBoundary
 theorem quadrupledBoxWinding_eq_zero_of_boundaryStripWitness
     (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) {ambient small : Box}
     (degreePositive : 0 < p.natDegree)
-    (clearance : Clearance.Box.Boundary.Basic.BoundaryClearance p ambient)
+    (clearance : Boundary.Basic.BoundaryClearance p ambient)
     (ambientProper : ambient.Proper) (smallProper : small.Proper)
     (refines : small.Refines ambient)
     (diagonal : small.diagonalSq ≤
-      Clearance.Box.ProtectedRadius.protectedBoundaryRadius p ambient clearance ^ 2)
+      ProtectedRadius.protectedBoundaryRadius p ambient clearance ^ 2)
     (witness : BoundaryStripWitness ambient small
-      (4 * Clearance.Box.ProtectedRadius.protectedBoundaryRadius p ambient clearance)) :
-    Winding.Box.Basic.quadrupledBoxWinding p small = 0 := by
-  let rho := Clearance.Box.ProtectedRadius.protectedBoundaryRadius p ambient clearance
-  have rhoPositive := Clearance.Box.ProtectedRadius.protectedBoundaryRadius_pos p clearance ambientProper
+      (4 * ProtectedRadius.protectedBoundaryRadius p ambient clearance)) :
+    Basic.quadrupledBoxWinding p small = 0 := by
+  let rho := ProtectedRadius.protectedBoundaryRadius p ambient clearance
+  have rhoPositive := ProtectedRadius.protectedBoundaryRadius_pos p clearance ambientProper
   have nearby : Box.Boundary.Strip.NearbyBoundaryPoint ambient small rho :=
     Box.Boundary.Strip.nearbyBoundaryPoint (ambient := ambient) (small := small)
       (rho := rho) refines diagonal witness
   have anchorInside : ambient.Contains small.anchor :=
     refines.contains small.contains_anchor
-  have variationRaw := Dense.Gaussian.Bounds.Box.normSq_eval_sub_eval_le_denseLipschitzBound
+  have variationRaw := Box.normSq_eval_sub_eval_le_denseLipschitzBound
     p nearby.boundary.1 anchorInside
-  have variation : Data.Gaussian.Norm.Basic.normSq (p.eval nearby.point - p.eval small.anchor) ≤
-      Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient *
+  have variation : Gaussian.Norm.Basic.normSq (p.eval nearby.point - p.eval small.anchor) ≤
+      Box.denseLipschitzBound p ambient *
         (Box.Boundary.Strip.protectedBoundaryDistanceScale * rho ^ 2) :=
     variationRaw.trans
       (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        nearby.distance (Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos p ambient).le)
+        nearby.distance (Box.denseLipschitzBound_pos p ambient).le)
   have valueIdentity : p.eval nearby.point = p.eval small.anchor +
       (p.eval nearby.point - p.eval small.anchor) := by
     apply Gaussian.Basic.ext <;>
@@ -83,55 +86,55 @@ theorem quadrupledBoxWinding_eq_zero_of_boundaryStripWitness
   have valueUpper := Gaussian.Norm.Bounds.normSq_add_le_two (p.eval small.anchor)
     (p.eval nearby.point - p.eval small.anchor)
   rw [← valueIdentity] at valueUpper
-  have dominance := Clearance.Box.ProtectedRadius.protectedBoundaryRadius_dominates
+  have dominance := ProtectedRadius.protectedBoundaryRadius_dominates
     p clearance ambientProper diagonal
   have chain :
-      2 * (Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound p ambient small +
-          Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient *
+      2 * (Box.Residual.anchorResidualBound p ambient small +
+          Box.denseLipschitzBound p ambient *
             (Box.Boundary.Strip.protectedBoundaryDistanceScale * rho ^ 2)) <
-        2 * (Data.Gaussian.Norm.Basic.normSq (p.eval small.anchor) +
-          Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient *
+        2 * (Gaussian.Norm.Basic.normSq (p.eval small.anchor) +
+          Box.denseLipschitzBound p ambient *
             (Box.Boundary.Strip.protectedBoundaryDistanceScale * rho ^ 2)) := by
     have twoNonnegative : (0 : Fraction.Rational) ≤ 2 :=
       (Fraction.Cast.Order.natCast_pos_direct
         (n := 2) (by decide)).le
     calc
-      2 * (Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound p ambient small +
-          Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient *
+      2 * (Box.Residual.anchorResidualBound p ambient small +
+          Box.denseLipschitzBound p ambient *
             (Box.Boundary.Strip.protectedBoundaryDistanceScale * rho ^ 2)) <
           clearance.bound := dominance
-      _ ≤ Data.Gaussian.Norm.Basic.normSq (p.eval nearby.point) :=
+      _ ≤ Gaussian.Norm.Basic.normSq (p.eval nearby.point) :=
         by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using
           clearance.lower nearby.point nearby.boundary
-      _ ≤ 2 * (Data.Gaussian.Norm.Basic.normSq (p.eval small.anchor) +
-          Data.Gaussian.Norm.Basic.normSq (p.eval nearby.point - p.eval small.anchor)) := valueUpper
-      _ ≤ 2 * (Data.Gaussian.Norm.Basic.normSq (p.eval small.anchor) +
-          Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient *
+      _ ≤ 2 * (Gaussian.Norm.Basic.normSq (p.eval small.anchor) +
+          Gaussian.Norm.Basic.normSq (p.eval nearby.point - p.eval small.anchor)) := valueUpper
+      _ ≤ 2 * (Gaussian.Norm.Basic.normSq (p.eval small.anchor) +
+          Box.denseLipschitzBound p ambient *
             (Box.Boundary.Strip.protectedBoundaryDistanceScale * rho ^ 2)) := by
-        have added : Data.Gaussian.Norm.Basic.normSq (p.eval small.anchor) +
-              Data.Gaussian.Norm.Basic.normSq (p.eval nearby.point - p.eval small.anchor) ≤
-            Data.Gaussian.Norm.Basic.normSq (p.eval small.anchor) +
-              Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient *
+        have added : Gaussian.Norm.Basic.normSq (p.eval small.anchor) +
+              Gaussian.Norm.Basic.normSq (p.eval nearby.point - p.eval small.anchor) ≤
+            Gaussian.Norm.Basic.normSq (p.eval small.anchor) +
+              Box.denseLipschitzBound p ambient *
                 (Box.Boundary.Strip.protectedBoundaryDistanceScale * rho ^ 2) :=
           add_le_add (le_refl _) variation
         exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
           added twoNonnegative
   have cancelledScale :
-      Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound p ambient small +
-          Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient *
+      Box.Residual.anchorResidualBound p ambient small +
+          Box.denseLipschitzBound p ambient *
             (Box.Boundary.Strip.protectedBoundaryDistanceScale * rho ^ 2) <
-        Data.Gaussian.Norm.Basic.normSq (p.eval small.anchor) +
-          Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient *
+        Gaussian.Norm.Basic.normSq (p.eval small.anchor) +
+          Box.denseLipschitzBound p ambient *
             (Box.Boundary.Strip.protectedBoundaryDistanceScale * rho ^ 2) := by
     have twoPositive : (0 : Fraction.Rational) < 2 :=
       Fraction.Cast.Order.natCast_pos_direct (n := 2) (by decide)
     apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
       (c := 2) ?_ twoPositive
     simpa only [Fraction.Field.mul_comm] using chain
-  have large : Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound p ambient small <
-      Data.Gaussian.Norm.Basic.normSq (p.eval small.anchor) :=
+  have large : Box.Residual.anchorResidualBound p ambient small <
+      Gaussian.Norm.Basic.normSq (p.eval small.anchor) :=
     Fraction.Order.Arithmetic.lt_of_add_lt_add_right_direct cancelledScale
-  exact Winding.Box.Residual.quadrupledBoxWinding_eq_zero_of_anchorResidualBound_lt
+  exact Residual.quadrupledBoxWinding_eq_zero_of_anchorResidualBound_lt
     p degreePositive refines smallProper large
 
 /-- A sufficiently small nonzero-winding source lies beyond all four
@@ -139,18 +142,18 @@ protected strips. -/
 theorem strictly_inside_protectedBoundary
     {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient small : Box}
     (degreePositive : 0 < p.natDegree)
-    (clearance : Clearance.Box.Boundary.Basic.BoundaryClearance p ambient)
+    (clearance : Boundary.Basic.BoundaryClearance p ambient)
     (ambientProper : ambient.Proper) (smallProper : small.Proper)
     (refines : small.Refines ambient)
-    (rawNonzero : Winding.Box.Basic.quadrupledBoxWinding p small ≠ 0)
+    (rawNonzero : Basic.quadrupledBoxWinding p small ≠ 0)
     (diagonal : small.diagonalSq ≤
-      Clearance.Box.ProtectedRadius.protectedBoundaryRadius p ambient clearance ^ 2) :
-    let rho := Clearance.Box.ProtectedRadius.protectedBoundaryRadius p ambient clearance
+      ProtectedRadius.protectedBoundaryRadius p ambient clearance ^ 2) :
+    let rho := ProtectedRadius.protectedBoundaryRadius p ambient clearance
     ambient.xLower + 4 * rho < small.xLower ∧
       small.xUpper < ambient.xUpper - 4 * rho ∧
       ambient.yLower + 4 * rho < small.yLower ∧
       small.yUpper < ambient.yUpper - 4 * rho := by
-  let rho := Clearance.Box.ProtectedRadius.protectedBoundaryRadius p ambient clearance
+  let rho := ProtectedRadius.protectedBoundaryRadius p ambient clearance
   have left : ambient.xLower + 4 * rho < small.xLower := by
     by_cases strict : ambient.xLower + 4 * rho < small.xLower
     · exact strict

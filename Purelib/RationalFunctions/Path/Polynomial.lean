@@ -9,6 +9,8 @@ public import Purelib.Polynomial.Dense.Rational.Pair.Product
 public import Purelib.Polynomial.Dense.Rational.Pair.Path.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian.Path
+
 open Purelib.Data.Gaussian.Basic (Canonical)
 open Purelib.Polynomial.Dense.Basic (DensePolynomial)
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
@@ -43,10 +45,10 @@ def quotientPathReal
     (numerator denominator : CoefficientPolynomial)
     (origin direction : Canonical) : (DensePolynomial Rat.Fraction.Rational) :=
   Dense.Rational.Pair.Product.productReal
-    (Dense.Gaussian.Path.Components.pathReal numerator origin direction)
-    (Dense.Gaussian.Path.Components.pathImag numerator origin direction)
-    (Dense.Gaussian.Path.Components.pathReal denominator origin direction)
-    (-(Dense.Gaussian.Path.Components.pathImag denominator origin direction))
+    (Components.pathReal numerator origin direction)
+    (Components.pathImag numerator origin direction)
+    (Components.pathReal denominator origin direction)
+    (-(Components.pathImag denominator origin direction))
 
 /-- Form the imaginary coordinate polynomial of the numerator times the conjugate denominator along an affine line.
 
@@ -56,10 +58,10 @@ def quotientPathImag
     (numerator denominator : CoefficientPolynomial)
     (origin direction : Canonical) : (DensePolynomial Rat.Fraction.Rational) :=
   Dense.Rational.Pair.Product.productImag
-    (Dense.Gaussian.Path.Components.pathReal numerator origin direction)
-    (Dense.Gaussian.Path.Components.pathImag numerator origin direction)
-    (Dense.Gaussian.Path.Components.pathReal denominator origin direction)
-    (-(Dense.Gaussian.Path.Components.pathImag denominator origin direction))
+    (Components.pathReal numerator origin direction)
+    (Components.pathImag numerator origin direction)
+    (Components.pathReal denominator origin direction)
+    (-(Components.pathImag denominator origin direction))
 
 section
 open Purelib.Geometry
@@ -74,8 +76,8 @@ open Purelib.RationalFunctions
         (numerator.eval (Rational.Affine.line origin direction t)).im *
           (denominator.eval (Rational.Affine.line origin direction t)).im := by
   simp only [quotientPathReal, Dense.Rational.Pair.Product.eval_productReal,
-    DensePolynomial.eval_neg, Dense.Gaussian.Path.Components.eval_pathReal,
-    Dense.Gaussian.Path.Components.eval_pathImag]
+    DensePolynomial.eval_neg, Components.eval_pathReal,
+    Components.eval_pathImag]
   ring1
 
 /-- The imaginary coordinate polynomial evaluates to the difference of the two crossed component products. -/
@@ -88,8 +90,8 @@ open Purelib.RationalFunctions
         (numerator.eval (Rational.Affine.line origin direction t)).re *
           (denominator.eval (Rational.Affine.line origin direction t)).im := by
   simp only [quotientPathImag, Dense.Rational.Pair.Product.eval_productImag,
-    DensePolynomial.eval_neg, Dense.Gaussian.Path.Components.eval_pathReal,
-    Dense.Gaussian.Path.Components.eval_pathImag]
+    DensePolynomial.eval_neg, Components.eval_pathReal,
+    Components.eval_pathImag]
   ring1
 
 end

@@ -13,6 +13,9 @@ public import Purelib.RationalFunctions.Curve.Transform
 
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.LinearAlgebra.Coordinates2.Matrix
+open Purelib.Geometry.Projective.Homography
+
 section
 public section
 
@@ -40,9 +43,9 @@ open Purelib.RationalFunctions in
 
 The denominator-quadrance polynomial is explicitly nonzero. Equal affine points at any two parameters with nonzero
 denominators force those parameters to be equal. -/
-structure Nondegenerate (curve : Curve.RationalCurve) : Prop where
+structure Nondegenerate (curve : RationalCurve) : Prop where
   /-- The curve's denominator-quadrance polynomial is not the zero polynomial. -/ denominatorNormNonzero :
-    (Curve.Coordinates.denominatorNormSq curve).isZero = false
+    (Coordinates.denominatorNormSq curve).isZero = false
   /-- Equal affine values at non-pole parameters imply equal parameters. -/ pointInjective : ∀ {left right :
     Rat.Fraction.Rational},
     curve.denominatorAt left ≠ 0 → curve.denominatorAt right ≠ 0 →
@@ -60,48 +63,48 @@ open Purelib.RationalFunctions
 The matrix determinant is nonzero, and the source curve has nonzero denominator everywhere and an injective affine
 parameterization. -/
 private theorem transformed_point_injective
-    (matrix : Coordinates2.Matrix.GaussianMatrix)
+    (matrix : GaussianMatrix)
     (determinantNonzero :
-      Coordinates2.Matrix.BoundaryAdjugate.determinant matrix ≠ 0)
-    (source : Curve.RationalCurve)
+      BoundaryAdjugate.determinant matrix ≠ 0)
+    (source : RationalCurve)
     (sourceTotal : ∀ parameter, source.denominatorAt parameter ≠ 0)
     (sourceInjective : Function.Injective source.point)
     {left right : Rat.Fraction.Rational}
     (leftDenominator :
       (source.transform
-        (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix)).denominatorAt left ≠ 0)
+        (BoundaryAdjugate.adjugate matrix)).denominatorAt left ≠ 0)
     (rightDenominator :
       (source.transform
-        (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix)).denominatorAt right ≠ 0)
+        (BoundaryAdjugate.adjugate matrix)).denominatorAt right ≠ 0)
     (equal :
       (source.transform
-          (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix)).point left =
+          (BoundaryAdjugate.adjugate matrix)).point left =
         (source.transform
-          (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix)).point right) :
+          (BoundaryAdjugate.adjugate matrix)).point right) :
     left = right := by
-  have leftAdjugate := Curve.adjugateDenominator_ne_of_transformed matrix source left
+  have leftAdjugate := adjugateDenominator_ne_of_transformed matrix source left
     (sourceTotal left) leftDenominator
-  have rightAdjugate := Curve.adjugateDenominator_ne_of_transformed matrix source right
+  have rightAdjugate := adjugateDenominator_ne_of_transformed matrix source right
     (sourceTotal right) rightDenominator
   have imageEqual :
-      Projective.Homography.Basic.homographic
-          (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix) (source.point left) =
-        Projective.Homography.Basic.homographic
-          (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix)
+      Basic.homographic
+          (BoundaryAdjugate.adjugate matrix) (source.point left) =
+        Basic.homographic
+          (BoundaryAdjugate.adjugate matrix)
             (source.point right) := by
-    rw [← Curve.RationalCurve.point_transform
-          (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix) source left
+    rw [← RationalCurve.point_transform
+          (BoundaryAdjugate.adjugate matrix) source left
             (sourceTotal left) leftAdjugate,
-      ← Curve.RationalCurve.point_transform
-          (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix) source right
+      ← RationalCurve.point_transform
+          (BoundaryAdjugate.adjugate matrix) source right
             (sourceTotal right) rightAdjugate]
     exact equal
   apply sourceInjective
-  apply Projective.Homography.Injectivity.homographic_injective
-    (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix)
-  · change Coordinates2.Matrix.BoundaryAdjugate.determinant
-      (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix) ≠ 0
-    rw [Coordinates2.Matrix.BoundaryAdjugate.determinant_adjugate]
+  apply Injectivity.homographic_injective
+    (BoundaryAdjugate.adjugate matrix)
+  · change BoundaryAdjugate.determinant
+      (BoundaryAdjugate.adjugate matrix) ≠ 0
+    rw [BoundaryAdjugate.determinant_adjugate]
     exact determinantNonzero
   · exact leftAdjugate
   · exact rightAdjugate
@@ -112,46 +115,46 @@ private theorem transformed_point_injective
 The matrix is invertible, and the source curve is total and injective. Two such poles would force the distinct source
 parameters to have the same affine point. -/
 private theorem transformed_denominators_not_both_zero
-    (matrix : Coordinates2.Matrix.GaussianMatrix)
+    (matrix : GaussianMatrix)
     (determinantNonzero :
-      Coordinates2.Matrix.BoundaryAdjugate.determinant matrix ≠ 0)
-    (source : Curve.RationalCurve)
+      BoundaryAdjugate.determinant matrix ≠ 0)
+    (source : RationalCurve)
     (sourceTotal : ∀ parameter, source.denominatorAt parameter ≠ 0)
     (sourceInjective : Function.Injective source.point) :
     ¬ ((source.transform
-          (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix)).denominatorAt 0 = 0 ∧
+          (BoundaryAdjugate.adjugate matrix)).denominatorAt 0 = 0 ∧
        (source.transform
-          (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix)).denominatorAt 1 = 0) := by
+          (BoundaryAdjugate.adjugate matrix)).denominatorAt 1 = 0) := by
   rintro ⟨zeroAtZero, zeroAtOne⟩
   have adjugateZeroAtZero :
-      Projective.Homography.Basic.denominator
-          (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix) (source.point 0) = 0 := by
-    by_cases nonzero : Projective.Homography.Basic.denominator
-        (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix) (source.point 0) ≠ 0
+      Basic.denominator
+          (BoundaryAdjugate.adjugate matrix) (source.point 0) = 0 := by
+    by_cases nonzero : Basic.denominator
+        (BoundaryAdjugate.adjugate matrix) (source.point 0) ≠ 0
     · exact (Gaussian.Field.mul_ne_zero_direct nonzero
         (sourceTotal 0) (by
-          rw [← Curve.NondegenerateHelpers.transformedDenominator_eq matrix source 0 (sourceTotal 0)]
+          rw [← NondegenerateHelpers.transformedDenominator_eq matrix source 0 (sourceTotal 0)]
           exact zeroAtZero)).elim
-    · by_cases zero : Projective.Homography.Basic.denominator
-          (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix) (source.point 0) = 0
+    · by_cases zero : Basic.denominator
+          (BoundaryAdjugate.adjugate matrix) (source.point 0) = 0
       · exact zero
       · exact (nonzero zero).elim
   have adjugateZeroAtOne :
-      Projective.Homography.Basic.denominator
-          (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix) (source.point 1) = 0 := by
-    by_cases nonzero : Projective.Homography.Basic.denominator
-        (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix) (source.point 1) ≠ 0
+      Basic.denominator
+          (BoundaryAdjugate.adjugate matrix) (source.point 1) = 0 := by
+    by_cases nonzero : Basic.denominator
+        (BoundaryAdjugate.adjugate matrix) (source.point 1) ≠ 0
     · exact (Gaussian.Field.mul_ne_zero_direct nonzero
         (sourceTotal 1) (by
-          rw [← Curve.NondegenerateHelpers.transformedDenominator_eq matrix source 1 (sourceTotal 1)]
+          rw [← NondegenerateHelpers.transformedDenominator_eq matrix source 1 (sourceTotal 1)]
           exact zeroAtOne)).elim
-    · by_cases zero : Projective.Homography.Basic.denominator
-          (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix) (source.point 1) = 0
+    · by_cases zero : Basic.denominator
+          (BoundaryAdjugate.adjugate matrix) (source.point 1) = 0
       · exact zero
       · exact (nonzero zero).elim
   have sourcePointsEqual := Projective.Homography.denominator_zero_unique
-    (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix) (by
-      rw [Coordinates2.Matrix.BoundaryAdjugate.determinant_adjugate]
+    (BoundaryAdjugate.adjugate matrix) (by
+      rw [BoundaryAdjugate.determinant_adjugate]
       exact determinantNonzero) adjugateZeroAtZero adjugateZeroAtOne
   have parametersEqual : (0 : Rat.Fraction.Rational) = 1 :=
     sourceInjective sourcePointsEqual
@@ -168,37 +171,37 @@ open Purelib.RationalFunctions in
 A nonzero matrix determinant preserves injectivity away from poles. The transformed denominator-quadrance polynomial is
 nonzero because the denominators at zero and one cannot both vanish. -/
 theorem transformed_nondegenerate
-    (matrix : Coordinates2.Matrix.GaussianMatrix)
+    (matrix : GaussianMatrix)
     (determinantNonzero :
-      Coordinates2.Matrix.BoundaryAdjugate.determinant matrix ≠ 0)
-    (source : Curve.RationalCurve)
+      BoundaryAdjugate.determinant matrix ≠ 0)
+    (source : RationalCurve)
     (sourceTotal : ∀ parameter, source.denominatorAt parameter ≠ 0)
     (sourceInjective : Function.Injective source.point) :
-    Curve.RationalCurve.Nondegenerate
-      (source.transform (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix)) := by
-  let curve := source.transform (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix)
-  have notBothZero := Curve.transformed_denominators_not_both_zero matrix
+    RationalCurve.Nondegenerate
+      (source.transform (BoundaryAdjugate.adjugate matrix)) := by
+  let curve := source.transform (BoundaryAdjugate.adjugate matrix)
+  have notBothZero := transformed_denominators_not_both_zero matrix
     determinantNonzero source sourceTotal sourceInjective
   refine
     { denominatorNormNonzero := ?_
       pointInjective := ?_ }
   · by_cases nonzero :
-        (Curve.Coordinates.denominatorNormSq curve).isZero =
+        (Coordinates.denominatorNormSq curve).isZero =
           false
     · exact nonzero
     · have zero :
-          (Curve.Coordinates.denominatorNormSq curve).isZero =
+          (Coordinates.denominatorNormSq curve).isZero =
             true := by
-        cases value : (Curve.Coordinates.denominatorNormSq curve).isZero with
+        cases value : (Coordinates.denominatorNormSq curve).isZero with
         | false => exact (nonzero value).elim
         | true => rfl
       have zeroAt (parameter : Rat.Fraction.Rational) : curve.denominatorAt parameter = 0 := by
         apply Gaussian.Norm.Basic.normSq_eq_zero.mp
-        rw [← Curve.Coordinates.eval_denominatorNormSq]
+        rw [← Coordinates.eval_denominatorNormSq]
         exact Dense.Basic.DensePolynomial.eval_eq_zero_of_isZero zero parameter
       exact (notBothZero ⟨zeroAt 0, zeroAt 1⟩).elim
   · intro left right leftDenominator rightDenominator equal
-    exact Curve.transformed_point_injective matrix determinantNonzero source
+    exact transformed_point_injective matrix determinantNonzero source
       sourceTotal sourceInjective leftDenominator rightDenominator equal
 
 end Purelib.RationalFunctions.Curve

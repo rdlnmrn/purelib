@@ -89,10 +89,10 @@ def unitMoveSourceDegreeIndex
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (index : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree) : Fin degree.value :=
   Fin.cast
-    (Progressive.Power.Unit.Frame.robustChamberFrame_degree (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
+    (Frame.robustChamberFrame_degree (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
       sourceUnit
       degree degreeAtLeastTwo)
-    (Progressive.Power.Unit.Move.Frame.unitMoveSourceIndex sourceUnit targetUnit degree degreeAtLeastTwo index)
+    (Frame.unitMoveSourceIndex sourceUnit targetUnit degree degreeAtLeastTwo index)
 end Purelib.RootIsolation.Progressive.Power.Unit.Move.Track
 
 end
@@ -127,21 +127,21 @@ def unitTransportedRawState
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
     (index : Fin degree.value) :
-    State.Raw.RawWindingState (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Purelib.Polynomial.Power.Gaussian.rootPolynomial target
+    State.Raw.RawWindingState (Power.Gaussian.rootPolynomial target degree)
+      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Power.Gaussian.rootPolynomial target
         degree)) :=
         by
-  let sourceOwner := Progressive.Power.Unit.Owner.unitRobustOwner (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+  let sourceOwner := Owner.unitRobustOwner (Norm.Nonzero.nonzero_of_normSq_eq_one
     sourceUnit)
     sourceUnit degree degreeAtLeastTwo index
-  let targetOwner := Progressive.Power.Owner.Transport.transportedOwner degree sourceOwner (small.owner index)
+  let targetOwner := Owner.Transport.transportedOwner degree sourceOwner (small.owner index)
   exact
     { box := sourceOwner.box
       refinesAmbient := by
         rw [← Power.Bounds.largeSquareBox_polynomial_eq_of_normSq_eq
           (sourceUnit.trans targetUnit.symm) degree]
         exact Power.Unit.Box.unitRobustBox_refinesAmbient
-          (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree
+          (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree
           degreeAtLeastTwo index
       proper := targetOwner.proper
       clearance := targetOwner.clearance
@@ -185,9 +185,9 @@ def unitTransportedExtraction
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
     (index : Fin degree.value) :=
   Newton.Band.Build.extract
-    (by rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]; exact degreeAtLeastTwo)
-    (Power.Gaussian.Squarefree.squarefree (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree)
-    (Power.Isolation.isolationInput (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
+    (by rw [Power.Gaussian.rootPolynomial_degree]; exact degreeAtLeastTwo)
+    (Power.Gaussian.Squarefree.squarefree (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree)
+    (Power.Isolation.isolationInput (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
       degreeAtLeastTwo).elimination
     (unitTransportedRawState sourceUnit targetUnit degree degreeAtLeastTwo
       small index) (epsilon := (1 : Fraction.Rational)) (by decide)
@@ -224,8 +224,8 @@ def unitTransportedIsolatedState
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
     (index : Fin degree.value) :
-    State.WindingOne.Basic.WindingOneState (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Purelib.Polynomial.Power.Gaussian.rootPolynomial target
+    State.WindingOne.Basic.WindingOneState (Power.Gaussian.rootPolynomial target degree)
+      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Power.Gaussian.rootPolynomial target
         degree)) :=
         by
   let extracted := unitTransportedExtraction sourceUnit targetUnit degree
@@ -273,13 +273,13 @@ def unitTransportedIsolatedTrack
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
     (index : Fin degree.value) :
-    Track.Basic.WindingOneTrack (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Purelib.Polynomial.Power.Gaussian.rootPolynomial target
+    Track.Basic.WindingOneTrack (Power.Gaussian.rootPolynomial target degree)
+      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Power.Gaussian.rootPolynomial target
         degree)) :=
   Track.Newton.Build.ofInitial
-    (by rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]; exact degreeAtLeastTwo)
-    (Power.Gaussian.Squarefree.squarefree (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree)
-    (Power.Isolation.isolationInput (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
+    (by rw [Power.Gaussian.rootPolynomial_degree]; exact degreeAtLeastTwo)
+    (Power.Gaussian.Squarefree.squarefree (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree)
+    (Power.Isolation.isolationInput (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
       degreeAtLeastTwo).elimination
     (unitTransportedIsolatedState sourceUnit targetUnit degree degreeAtLeastTwo
       small index)
@@ -317,8 +317,8 @@ def unitTransportedFrameTrack
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
     (index : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree) :
-    Track.Basic.WindingOneTrack (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Purelib.Polynomial.Power.Gaussian.rootPolynomial target
+    Track.Basic.WindingOneTrack (Power.Gaussian.rootPolynomial target degree)
+      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Power.Gaussian.rootPolynomial target
         degree)) :=
   unitTransportedIsolatedTrack sourceUnit targetUnit degree degreeAtLeastTwo
     small (unitMoveSourceDegreeIndex sourceUnit targetUnit degree
@@ -358,11 +358,11 @@ theorem unitTransportedFrameTrack_supported
     (index : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree) :
     (unitTransportedFrameTrack sourceUnit targetUnit degree degreeAtLeastTwo
       small index).initial.box.Refines
-      (Power.Isolation.isolationResult (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
+      (Power.Isolation.isolationResult (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
         degreeAtLeastTwo).boxes.isolation.support := by
   change (unitTransportedFrameTrack sourceUnit targetUnit degree
     degreeAtLeastTwo small index).initial.box.Refines
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Purelib.Polynomial.Power.Gaussian.rootPolynomial target
+      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Power.Gaussian.rootPolynomial target
         degree))
   exact (unitTransportedFrameTrack sourceUnit targetUnit degree
     degreeAtLeastTwo small index).initial.refinesAmbient
@@ -401,7 +401,7 @@ open Purelib.Data.Gaussian
     (index : Fin degree.value) :
     (unitTransportedRawState sourceUnit targetUnit degree degreeAtLeastTwo
       small index).box =
-      Power.Unit.Box.unitRobustBox (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree
+      Power.Unit.Box.unitRobustBox (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree
         degreeAtLeastTwo index := rfl
 end Purelib.RootIsolation.Progressive.Power.Unit.Move.Track
 
@@ -438,13 +438,13 @@ theorem unitTransportedIsolatedState_refines
     (index : Fin degree.value) :
     (unitTransportedIsolatedState sourceUnit targetUnit degree degreeAtLeastTwo
       small index).box.Refines
-        (Power.Unit.Box.unitRobustBox (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree
+        (Power.Unit.Box.unitRobustBox (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree
           degreeAtLeastTwo index) := by
   change (unitTransportedExtraction sourceUnit targetUnit degree
     degreeAtLeastTwo small index).box.Refines _
   rw [← unitTransportedRawState_box sourceUnit targetUnit degree
     degreeAtLeastTwo small index]
-  exact Geometry.Rational.Box.Refinement.StrictInterior.refines
+  exact Box.Refinement.StrictInterior.refines
       (unitTransportedExtraction
     sourceUnit targetUnit degree
     degreeAtLeastTwo small index).strictCurrent
@@ -483,33 +483,33 @@ theorem unitTransportedFrameTrack_initial_refines
     (index : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree) :
     (unitTransportedFrameTrack sourceUnit targetUnit degree degreeAtLeastTwo
       small index).initial.box.Refines
-      ((Progressive.Power.Unit.Move.Frame.unitTransportedFrame sourceUnit targetUnit degree degreeAtLeastTwo
+      ((Frame.unitTransportedFrame sourceUnit targetUnit degree degreeAtLeastTwo
         small).owner index).box := by
-  let sourceIndex := Progressive.Power.Unit.Move.Frame.unitMoveSourceIndex sourceUnit targetUnit degree
+  let sourceIndex := Frame.unitMoveSourceIndex sourceUnit targetUnit degree
     degreeAtLeastTwo index
   let degreeIndex := unitMoveSourceDegreeIndex sourceUnit targetUnit degree
     degreeAtLeastTwo index
   have targetIndex :
-      Fin.cast (Progressive.Power.Unit.Move.Frame.unitMoveCountEq sourceUnit targetUnit degree degreeAtLeastTwo)
+      Fin.cast (Frame.unitMoveCountEq sourceUnit targetUnit degree degreeAtLeastTwo)
           sourceIndex = index := by
     apply Fin.ext
     rfl
   have transportedBox :
-      ((Progressive.Power.Unit.Move.Frame.unitTransportedFrame sourceUnit targetUnit degree degreeAtLeastTwo
+      ((Frame.unitTransportedFrame sourceUnit targetUnit degree degreeAtLeastTwo
         small).owner index).box =
-        ((Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
+        ((Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
           sourceUnit
           degree degreeAtLeastTwo).owner sourceIndex).box := by
     rw [← targetIndex]
-    exact Progressive.Power.Unit.Move.Frame.unitTransportedFrame_owner_box sourceUnit targetUnit degree
+    exact Frame.unitTransportedFrame_owner_box sourceUnit targetUnit degree
       degreeAtLeastTwo small sourceIndex
   have sourceRobustBox :
-      ((Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
+      ((Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
         sourceUnit
         degree degreeAtLeastTwo).owner sourceIndex).box =
-        Power.Unit.Box.unitRobustBox (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree
+        Power.Unit.Box.unitRobustBox (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree
           degreeAtLeastTwo degreeIndex := by
-    exact Progressive.Power.Unit.Frame.robustChamberFrame_owner_box (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+    exact Frame.robustChamberFrame_owner_box (Norm.Nonzero.nonzero_of_normSq_eq_one
       sourceUnit)
       sourceUnit degree degreeAtLeastTwo sourceIndex
   rw [transportedBox, sourceRobustBox]
@@ -554,8 +554,8 @@ theorem unitTransportedFrameTracks_pairwise
       (unitTransportedFrameTrack sourceUnit targetUnit degree degreeAtLeastTwo
         small right).initial.box :=
   Box.Separated.of_refines
-    (Progressive.Chamber.Frame.ChamberFrame.pairwiseSeparated
-      (Progressive.Power.Unit.Move.Frame.unitTransportedFrame sourceUnit targetUnit degree degreeAtLeastTwo small)
+    (Chamber.Frame.ChamberFrame.pairwiseSeparated
+      (Frame.unitTransportedFrame sourceUnit targetUnit degree degreeAtLeastTwo small)
       left right different)
       (unitTransportedFrameTrack_initial_refines sourceUnit targetUnit degree
         degreeAtLeastTwo small left)

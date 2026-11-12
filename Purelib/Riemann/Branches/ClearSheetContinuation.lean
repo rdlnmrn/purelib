@@ -1,6 +1,7 @@
 module
 meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Data.List.Append
+import Purelib.Data.List.Membership
 import Purelib.Data.List.Map
 import Purelib.Data.List.Flatten
 import Purelib.Data.Nat.Subtraction
@@ -40,6 +41,8 @@ import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-!
@@ -51,6 +54,8 @@ the current owner's Rouché clearance, this file advances the owner without a
 fresh sheet choice.  It is the local step used by a finite adaptive
 subdivision.
 -/
+
+variable {mode : Purelib.Polynomial.Geometry.ClearPath.ClearSegment.Mode}
 
 namespace Purelib.Riemann.Branches.ClearSheetContinuation
 
@@ -66,16 +71,16 @@ abbrev Gaussian := Basic.Canonical
 open Purelib.Polynomial.Dense.Gaussian in
 /-- Dense Gaussian polynomials over exact rational coordinates. -/
 abbrev GaussianPolynomial :=
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+  Basic.CanonicalCoefficients.CoefficientPolynomial
 /-- The original rational box type with coordinate bounds. -/
-abbrev Box := Purelib.Geometry.Rational.Box
+abbrev Box := Geometry.Rational.Box
 /-- The original square-root owner indexed by its exact radicand. -/
-abbrev Owner := Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+abbrev Owner := Topology.SquareRootContinuationChain.Owner
 /-- A radicand paired with its original dependent square-root owner. -/
 abbrev PackedOwner :=
-  Purelib.Riemann.Topology.SquareRootContinuationChain.PackedOwner
+  Topology.SquareRootContinuationChain.PackedOwner
 /-- A finite square-root continuation chain indexed by its starting owner. -/
-abbrev Chain := Purelib.Riemann.Topology.SquareRootContinuationChain.Chain
+abbrev Chain := Topology.SquareRootContinuationChain.Chain
 
 /-- The degenerate Gaussian box representing the real unit parameter interval. -/
 @[expose] def parameterAmbient : Box where
@@ -122,7 +127,7 @@ open Purelib.Polynomial.Dense.Gaussian in
 /-- Substitute the original segment's affine parameterization into its polynomial. -/
 @[expose] def segmentPolynomial {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (_segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (_segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) :
     GaussianPolynomial :=
   Substitution.Affine.composeLine polynomial start (finish - start)
 
@@ -141,25 +146,13 @@ open Purelib.Polynomial.Dense.Gaussian in
 theorem segmentPolynomial_eval
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate) :
     (segmentPolynomial segment).eval
         (Cast.Path.ofCoordinate parameter) =
       polynomial.eval (segment.pointAt parameter) := by
   rw [segmentPolynomial, Substitution.Affine.eval_composeLine]
-  congr 1
-  apply Basic.ext <;>
-    simp only [Affine.line, Geometry.ClearPath.ClearSegment.pointAt,
-      Cast.ofCoordinate_re,
-      Cast.ofCoordinate_im,
-      Scale.scale_re, Scale.scale_im,
-      Basic.add_re,
-      Basic.add_im,
-      Basic.sub_re,
-      Basic.sub_im,
-      Basic.mul_re,
-      Basic.mul_im] <;>
-    ring1
+  exact congrArg polynomial.eval (segment.pointAt_eq_line parameter).symm
 
 section
 open Purelib.Polynomial
@@ -169,7 +162,7 @@ open Purelib.Polynomial.Dense.Gaussian
 The bound uses the exact polynomial after affine substitution and the retained unit parameter box. -/
 @[expose, irreducible] def variationBound {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (left right : Coordinate) : Coordinate :=
   Bounds.Box.denseLipschitzBound
       (segmentPolynomial segment) parameterAmbient *
@@ -179,7 +172,7 @@ The bound uses the exact polynomial after affine substitution and the retained u
 theorem variationBound_eq_denseLipschitz
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (left right : Coordinate) :
     variationBound segment left right =
       Bounds.Box.denseLipschitzBound
@@ -196,20 +189,20 @@ open Purelib.Polynomial.Dense.Gaussian in
 /-- The retained variation bound is nonnegative for every pair of parameters. -/
 theorem variationBound_nonneg {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (left right : Coordinate) :
     0 <= variationBound segment left right := by
   unfold variationBound
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct
+  exact Arithmetic.mul_nonneg_direct
     (Bounds.Box.denseLipschitzBound_pos
       (segmentPolynomial segment) parameterAmbient).le
-    (Fraction.Order.Arithmetic.sq_nonneg_direct (left - right))
+    (Arithmetic.sq_nonneg_direct (left - right))
 
 open Purelib.Polynomial in
 /-- One quarter of the original segment's squared clearance bound. -/
 @[expose] def squareRootDerivativeThreshold {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) : Coordinate :=
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) : Coordinate :=
   segment.clearanceBound / 4
 
 open Purelib.Approximation.Rational in
@@ -217,7 +210,7 @@ open Purelib.Polynomial in
 /-- Four times the positive dyadic square radius of the derivative threshold. -/
 @[expose] def squareRootDerivativeMargin {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) : Coordinate :=
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) : Coordinate :=
   4 * SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius
     (squareRootDerivativeThreshold segment)
 
@@ -227,9 +220,9 @@ open Purelib.Polynomial in
 theorem squareRootDerivativeThreshold_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) :
     0 < squareRootDerivativeThreshold segment :=
-  Fraction.Order.Field.div_pos_direct segment.clearanceBound_positive
+  Field.div_pos_direct segment.clearanceBound_positive
     (by decide)
 
 open Purelib.Approximation.Rational in
@@ -239,9 +232,9 @@ open Purelib.Polynomial in
 theorem squareRootDerivativeMargin_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) :
     0 < squareRootDerivativeMargin segment :=
-  Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+  Arithmetic.mul_pos_direct (by decide)
     (SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius_positive _)
 
 open Purelib.Approximation.Rational in
@@ -258,11 +251,11 @@ the retained dyadic lower bound for the squared derivative norm. -/
 @[expose] def squareRootDerivativeSeparation
     {polynomial : GaussianPolynomial} {ambient rootAmbient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) ≤ parameter ∧ parameter ≤ 1) :
     Derivative.Separation.Basic.Certificate
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial
+      (Gaussian.rootPolynomial
         (polynomial.eval (segment.pointAt parameter))
         SquareRootDegree.degreeTwo) rootAmbient where
   threshold := squareRootDerivativeThreshold segment
@@ -272,54 +265,54 @@ the retained dyadic lower bound for the squared derivative norm. -/
   lower := by
     intro root _rootInside residualSmall
     let base := polynomial.eval (segment.pointAt parameter)
-    let rootPolynomial := Purelib.Polynomial.Power.Gaussian.rootPolynomial base
+    let rootPolynomial := Gaussian.rootPolynomial base
       SquareRootDegree.degreeTwo
     let baseClearance := segment.clearanceBound
     let threshold := squareRootDerivativeThreshold segment
     let rootNorm :=
-      Data.Gaussian.Norm.Basic.normSq root
+      Norm.Basic.normSq root
     have baseLower : baseClearance ≤
-        Data.Gaussian.Norm.Basic.normSq base := by
+        Norm.Basic.normSq base := by
       exact segment.clearanceBound_le_eval_normSq
         (segment.pointAt_onCertifiedLine parameter inside)
     have baseIdentity : base = root ^ 2 - rootPolynomial.eval root := by
-      rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_eval]
+      rw [Gaussian.rootPolynomial_eval]
       change base = root ^ 2 - (root ^ 2 - base)
       apply Basic.ext <;>
         simp only [Basic.sub_re,
           Basic.sub_im] <;> ring1
     have baseUpper :
-        Data.Gaussian.Norm.Basic.normSq base ≤
+        Norm.Basic.normSq base ≤
           2 * (rootNorm ^ 2 + threshold) := by
       calc
-        Data.Gaussian.Norm.Basic.normSq base =
-            Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq base =
+            Norm.Basic.normSq
               (root ^ 2 - rootPolynomial.eval root) := by rw [baseIdentity]
         _ ≤ 2 *
-            (Data.Gaussian.Norm.Basic.normSq (root ^ 2) +
-              Data.Gaussian.Norm.Basic.normSq
+            (Norm.Basic.normSq (root ^ 2) +
+              Norm.Basic.normSq
                 (rootPolynomial.eval root)) :=
           Norm.Bounds.normSq_sub_le_two _ _
         _ = 2 * (rootNorm ^ 2 +
-              Data.Gaussian.Norm.Basic.normSq
+              Norm.Basic.normSq
                 (rootPolynomial.eval root)) := by
           rw [Power.normSq_pow]
         _ ≤ 2 * (rootNorm ^ 2 + threshold) :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          Arithmetic.mul_le_mul_of_nonneg_left_direct
             (by
               calc
                 rootNorm ^ 2 +
-                    Data.Gaussian.Norm.Basic.normSq
+                    Norm.Basic.normSq
                       (rootPolynomial.eval root) =
-                    Data.Gaussian.Norm.Basic.normSq
+                    Norm.Basic.normSq
                         (rootPolynomial.eval root) + rootNorm ^ 2 := by ring1
                 _ ≤ threshold + rootNorm ^ 2 :=
-                  Fraction.Order.Arithmetic.add_le_add_right_direct
+                  Arithmetic.add_le_add_right_direct
                     residualSmall (rootNorm ^ 2)
                 _ = rootNorm ^ 2 + threshold := by ring1)
             (by decide)
     have clearanceToSquare : baseClearance / 4 ≤ rootNorm ^ 2 := by
-      apply (Fraction.Order.Field.div_le_iff_pos
+      apply (Field.div_le_iff_pos
         (show (0 : Coordinate) < 4 by decide)).2
       have halfAddHalf :
           baseClearance / 2 + baseClearance / 2 = baseClearance := by
@@ -347,7 +340,7 @@ the retained dyadic lower bound for the squared derivative norm. -/
             (Fraction.Field.div_mul_cancel_of_ne _ 2
               (by decide)).symm
       have reduced : baseClearance / 2 ≤ 2 * rootNorm ^ 2 := by
-        apply Fraction.Order.Arithmetic.le_of_add_le_add_right_direct
+        apply Arithmetic.le_of_add_le_add_right_direct
           (c := baseClearance / 2)
         calc
           baseClearance / 2 + baseClearance / 2 = baseClearance := halfAddHalf
@@ -355,7 +348,7 @@ the retained dyadic lower bound for the squared derivative norm. -/
           _ = 2 * rootNorm ^ 2 + baseClearance / 2 := by
             rw [mul_add, twiceThreshold]
       have scaled :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct reduced
+        Arithmetic.mul_le_mul_of_nonneg_right_direct reduced
           (show (0 : Coordinate) ≤ 2 by decide)
       have scaledClearance :
           baseClearance ≤ (2 * rootNorm ^ 2) * 2 := by
@@ -372,7 +365,7 @@ the retained dyadic lower bound for the squared derivative norm. -/
             simpa only [threshold, squareRootDerivativeThreshold] using
               clearanceToSquare)
     have dyadicLeRoot : dyadicRoot ≤ rootNorm :=
-      Fraction.Order.Arithmetic.le_of_sq_le_sq_direct
+      Arithmetic.le_of_sq_le_sq_direct
         (Norm.Basic.normSq_nonneg root)
         dyadicSquareLe
     rw [Gaussian.derivative_eval,
@@ -380,9 +373,9 @@ the retained dyadic lower bound for the squared derivative norm. -/
       Power.normSq_pow,
       SquareRootDegree.degreeTwo_value]
     have normSqTwo :
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
             ((2 : Nat) : Gaussian) = 4 := by
-      simp only [Data.Gaussian.Norm.Basic.normSq,
+      simp only [Norm.Basic.normSq,
         Cast.natCast_re,
         Cast.natCast_im]
       ring1
@@ -390,7 +383,7 @@ the retained dyadic lower bound for the squared derivative norm. -/
     simp only [Nat.reduceSub, pow_one]
     change squareRootDerivativeMargin segment ≤ 4 * rootNorm
     unfold squareRootDerivativeMargin
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_left_direct
       dyadicLeRoot (by decide)
 
 section
@@ -399,7 +392,7 @@ open Purelib.Polynomial
 @[simp] theorem squareRootDerivativeSeparation_threshold
     {polynomial : GaussianPolynomial} {ambient rootAmbient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) ≤ parameter ∧ parameter ≤ 1) :
     (squareRootDerivativeSeparation (rootAmbient := rootAmbient)
@@ -410,7 +403,7 @@ open Purelib.Polynomial
 @[simp] theorem squareRootDerivativeSeparation_margin
     {polynomial : GaussianPolynomial} {ambient rootAmbient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) ≤ parameter ∧ parameter ≤ 1) :
     (squareRootDerivativeSeparation (rootAmbient := rootAmbient)
@@ -427,7 +420,7 @@ open Purelib.Data.Rat
 /-- For ordered parameters, the left endpoint is at most their midpoint. -/
 theorem left_le_midpoint {left right : Coordinate} (ordered : left <= right) :
     left <= midpoint left right := by
-  apply (Fraction.Order.Field.le_div_iff_pos
+  apply (Field.le_div_iff_pos
     (by decide : (0 : Coordinate) < 2)).2
   calc
     left * 2 = left + left := by ring1
@@ -436,7 +429,7 @@ theorem left_le_midpoint {left right : Coordinate} (ordered : left <= right) :
 /-- For ordered parameters, the midpoint is at most the right endpoint. -/
 theorem midpoint_le_right {left right : Coordinate} (ordered : left <= right) :
     midpoint left right <= right := by
-  apply (Fraction.Order.Field.div_le_iff_pos
+  apply (Field.div_le_iff_pos
     (by decide : (0 : Coordinate) < 2)).2
   calc
     left + right <= right + right := add_le_add ordered (le_refl _)
@@ -445,21 +438,21 @@ theorem midpoint_le_right {left right : Coordinate} (ordered : left <= right) :
 /-- For strictly ordered parameters, the left endpoint is strictly below the midpoint. -/
 theorem left_lt_midpoint {left right : Coordinate} (ordered : left < right) :
     left < midpoint left right := by
-  apply (Fraction.Order.Field.lt_div_iff_pos
+  apply (Field.lt_div_iff_pos
     (by decide : (0 : Coordinate) < 2)).2
   calc
     left * 2 = left + left := by ring1
     _ < left + right :=
-      Fraction.Order.Arithmetic.add_lt_add_left_direct ordered left
+      Arithmetic.add_lt_add_left_direct ordered left
 
 /-- For strictly ordered parameters, the midpoint is strictly below the right endpoint. -/
 theorem midpoint_lt_right {left right : Coordinate} (ordered : left < right) :
     midpoint left right < right := by
-  apply (Fraction.Order.Field.div_lt_iff_pos
+  apply (Field.div_lt_iff_pos
     (by decide : (0 : Coordinate) < 2)).2
   calc
     left + right < right + right :=
-      Fraction.Order.Arithmetic.add_lt_add_right_direct ordered right
+      Arithmetic.add_lt_add_right_direct ordered right
     _ = right * 2 := by ring1
 
 /-- The midpoint of two unit-interval parameters lies in the unit interval. -/
@@ -468,9 +461,9 @@ theorem midpoint_inside {left right : Coordinate}
     (rightInside : (0 : Coordinate) <= right ∧ right <= 1) :
     (0 : Coordinate) <= midpoint left right ∧ midpoint left right <= 1 := by
   constructor
-  · exact Fraction.Order.Field.div_nonneg_direct
+  · exact Field.div_nonneg_direct
       (add_nonneg leftInside.1 rightInside.1) (by decide)
-  · apply (Fraction.Order.Field.div_le_iff_pos
+  · apply (Field.div_le_iff_pos
       (show (0 : Coordinate) < 2 by decide)).2
     calc
       left + right <= 1 + 1 := add_le_add leftInside.2 rightInside.2
@@ -512,7 +505,7 @@ open Purelib.Polynomial.Dense.Gaussian
 theorem variationBound_left_midpoint
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (left right : Coordinate) :
     variationBound segment left (midpoint left right) =
       variationBound segment left right / 4 := by
@@ -533,7 +526,7 @@ theorem variationBound_left_midpoint
 theorem variationBound_midpoint_right
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (left right : Coordinate) :
     variationBound segment (midpoint left right) right =
       variationBound segment left right / 4 := by
@@ -561,11 +554,11 @@ Both parameters lie in the unit interval of the same cleared segment; affine sub
 exact parameter-box Lipschitz bound. -/
 theorem evaluation_variation_le {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (_within : segment.WithinAmbient) (left right : Coordinate)
     (leftInside : (0 : Coordinate) <= left ∧ left <= 1)
     (rightInside : (0 : Coordinate) <= right ∧ right <= 1) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (polynomial.eval (segment.pointAt left) -
           polynomial.eval (segment.pointAt right)) <=
       variationBound segment left right := by
@@ -580,7 +573,7 @@ theorem evaluation_variation_le {polynomial : GaussianPolynomial}
       (segmentPolynomial segment) parameterAmbient * (left - right) ^ 2
   exact variation.trans_eq (by
     congr 1
-    unfold Data.Gaussian.Norm.Basic.normSq
+    unfold Norm.Basic.normSq
     simp only [Basic.sub_re,
       Basic.sub_im,
       Cast.ofCoordinate_re,
@@ -597,18 +590,18 @@ same left endpoint. Squaring and the nonnegative Lipschitz factor preserve that 
 theorem variationBound_le_of_between
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {left parameter right : Coordinate}
     (leftParameter : left <= parameter)
     (parameterRight : parameter <= right) :
     variationBound segment left parameter <=
       variationBound segment left right := by
   have parameterDeltaNonnegative : (0 : Coordinate) <= parameter - left :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct leftParameter
+    Arithmetic.sub_nonneg_direct leftParameter
   have deltaOrder : parameter - left <= right - left := by
-    exact Fraction.Order.Arithmetic.sub_le_sub_right_direct parameterRight left
+    exact Arithmetic.sub_le_sub_right_direct parameterRight left
   have squareOrder : (parameter - left) ^ 2 <= (right - left) ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
+    Arithmetic.pow_le_pow_direct
       parameterDeltaNonnegative deltaOrder 2
   have signedSquareOrder : (left - parameter) ^ 2 <=
       (left - right) ^ 2 := by
@@ -617,11 +610,38 @@ theorem variationBound_le_of_between
       _ <= (right - left) ^ 2 := squareOrder
       _ = (left - right) ^ 2 := by ring1
   unfold variationBound
-  apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  apply Arithmetic.mul_le_mul_of_nonneg_left_direct
   · exact signedSquareOrder
   · exact
       (Bounds.Box.denseLipschitzBound_pos
         (segmentPolynomial segment) parameterAmbient).le
+
+open Purelib.Data.Rat in
+open Purelib.Polynomial in
+open Purelib.Polynomial.Dense.Gaussian in
+/-- The original variation majorant decreases on every ordered subinterval of the same retained parameter interval.
+
+The two displayed endpoints keep their orientation. Squared scalar
+length and the same nonnegative Lipschitz factor bound the new interval,
+including a zero-width interval without dividing by its length.
+-/
+theorem variationBound_le_of_subinterval
+    {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    {first lower upper last : Coordinate}
+    (firstLower : first ≤ lower) (ordered : lower ≤ upper) (upperLast : upper ≤ last) :
+    variationBound segment lower upper ≤ variationBound segment first last := by
+  have lengthBound := Arithmetic.sub_le_sub_direct upperLast firstLower
+  have nonnegative := Arithmetic.sub_nonneg_direct ordered
+  have squares := Arithmetic.pow_le_pow_direct nonnegative lengthBound 2
+  have signed : (lower - upper) ^ 2 ≤ (first - last) ^ 2 := by
+    calc
+      _ = (upper - lower) ^ 2 := by ring1
+      _ ≤ (last - first) ^ 2 := squares
+      _ = _ := by ring1
+  unfold variationBound
+  exact Arithmetic.mul_le_mul_of_nonneg_left_direct signed
+    (Bounds.Box.denseLipschitzBound_pos (segmentPolynomial segment) parameterAmbient).le
 
 section
 open Purelib.Polynomial
@@ -631,7 +651,7 @@ The cleared segment supplies target nonvanishing, while the same retained variat
 displacement. -/
 @[expose] def advance {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left right : Coordinate)
     (leftInside : (0 : Coordinate) <= left ∧ left <= 1)
     (rightInside : (0 : Coordinate) <= right ∧ right <= 1)
@@ -650,7 +670,7 @@ A successful result is the certified advanced owner. Failure reports only that t
 enough. -/
 @[expose] def tryAdvance {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left right : Coordinate)
     (leftInside : (0 : Coordinate) <= left ∧ left <= 1)
     (rightInside : (0 : Coordinate) <= right ∧ right <= 1)
@@ -668,7 +688,7 @@ finite attempt and retains its exact advanced square-root owner. -/
 theorem tryAdvance_eq_some_of_small
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left right : Coordinate)
     (leftInside : (0 : Coordinate) <= left ∧ left <= 1)
     (rightInside : (0 : Coordinate) <= right ∧ right <= 1)
@@ -687,7 +707,7 @@ attempt. It states only failure of this sufficient clearance comparison. -/
 theorem tryAdvance_eq_none_of_not_small
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left right : Coordinate)
     (leftInside : (0 : Coordinate) <= left ∧ left <= 1)
     (rightInside : (0 : Coordinate) <= right ∧ right <= 1)
@@ -709,7 +729,7 @@ The supplied variation bound certifies the actual advanced owner at the right pa
 index. -/
 @[expose] def oneStep {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left right : Coordinate)
     (leftInside : (0 : Coordinate) <= left ∧ left <= 1)
     (rightInside : (0 : Coordinate) <= right ∧ right <= 1)
@@ -728,7 +748,7 @@ index. -/
     let target := polynomial.eval (segment.pointAt right)
     have targetNonzero := segment.pointAt_eval_ne_zero right rightInside
     have moveSmall :
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
             (initial.parameter - target) <
           initial.owner.track.initial.clearance.bound := by
       exact (evaluation_variation_le segment within left right leftInside
@@ -742,7 +762,7 @@ open Purelib.Riemann.Topology in
 @[simp] theorem oneStep_endpoint_parameter
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left right : Coordinate)
     (leftInside : (0 : Coordinate) <= left ∧ left <= 1)
     (rightInside : (0 : Coordinate) <= right ∧ right <= 1)
@@ -761,7 +781,7 @@ Every endpoint stays in the unit interval, and each tail begins at the owner pro
 witness. -/
 inductive Subdivision {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) :
     (left : Coordinate) →
       (leftInside : (0 : Coordinate) <= left ∧ left <= 1) →
@@ -798,12 +818,22 @@ structure Endpoint where
 
 constructive_injectivity Endpoint
 
+namespace Endpoint
+
+/-- The original left unit-interval endpoint with its exact rational bounds. -/
+@[expose] def first : Endpoint := ⟨0, by constructor <;> decide +kernel⟩
+
+/-- The original right unit-interval endpoint with its exact rational bounds. -/
+@[expose] def last : Endpoint := ⟨1, by constructor <;> decide +kernel⟩
+
+end Endpoint
+
 section
 open Purelib.Polynomial
 /-- Read the exact terminal parameter of the certified subdivision. -/
 @[expose] def endpoint {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode}
     {within : segment.WithinAmbient} {left : Coordinate}
     {leftInside : (0 : Coordinate) <= left ∧ left <= 1}
     {owner : Owner (polynomial.eval (segment.pointAt left))} :
@@ -814,7 +844,7 @@ open Purelib.Polynomial
 /-- Read the retained square-root owner indexed by the polynomial value at the terminal parameter. -/
 @[expose] def terminalOwner {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode}
     {within : segment.WithinAmbient} {left : Coordinate}
     {leftInside : (0 : Coordinate) <= left ∧ left <= 1}
     {owner : Owner (polynomial.eval (segment.pointAt left))} :
@@ -827,7 +857,7 @@ open Purelib.Polynomial
 /-- Count the certified continuation steps in the subdivision. -/
 @[expose] def stepCount {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode}
     {within : segment.WithinAmbient} {left : Coordinate}
     {leftInside : (0 : Coordinate) <= left ∧ left <= 1}
     {owner : Owner (polynomial.eval (segment.pointAt left))} :
@@ -841,7 +871,7 @@ Each successful step reuses its exact advanced owner for the remaining samples. 
 any sufficient clearance comparison fails. -/
 @[expose] def trySamples {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient)
     (current : Endpoint)
     (owner : Owner
@@ -863,7 +893,7 @@ any sufficient clearance comparison fails. -/
 /-- An empty sample list returns the stopped subdivision at the original current owner. -/
 @[simp] theorem trySamples_nil {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (current : Endpoint)
     (owner : Owner
       (polynomial.eval (segment.pointAt current.parameter))) :
@@ -873,7 +903,7 @@ any sufficient clearance comparison fails. -/
 /-- A successful sample-list attempt has exactly as many steps as supplied samples. -/
 theorem trySamples_stepCount {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (current : Endpoint)
     (owner : Owner
       (polynomial.eval (segment.pointAt current.parameter)))
@@ -926,7 +956,7 @@ open Purelib.Polynomial in
 theorem trySamples_endpoint_parameter
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (current : Endpoint)
     (owner : Owner
       (polynomial.eval (segment.pointAt current.parameter)))
@@ -1157,6 +1187,25 @@ theorem dyadicEdgeAt_strict (depth : Nat) (left right : Endpoint)
       · apply inductionHypothesis
         exact midpoint_lt_right ordered
 
+/-- Every member of the actual dyadic edge list inherits strict original endpoint order.
+
+The proof follows the displayed midpoint concatenation and original list
+membership. It preserves the actual edge occurrence without selecting a
+new subdivision or converting it to a separately computed indexed edge.
+-/
+theorem dyadicEdges_strict (depth : Nat) (left right : Endpoint)
+    (ordered : left.parameter < right.parameter) (edge : ParameterEdge)
+    (member : edge ∈ dyadicEdges depth left right) : edge.left.parameter < edge.right.parameter := by
+  induction depth generalizing left right with
+  | zero =>
+      have equal : edge = { left := left, right := right } := Membership.mem_singleton.mp member
+      subst edge
+      exact ordered
+  | succ depth inductionHypothesis =>
+      rcases Membership.mem_append.mp member with member | member
+      · exact inductionHypothesis left _ (left_lt_midpoint ordered) member
+      · exact inductionHypothesis _ right (midpoint_lt_right ordered) member
+
 /-- Divide the original variation bound by four at each retained depth. -/
 @[expose] def quarterVariation : Nat -> Coordinate -> Coordinate
   | 0, bound => bound
@@ -1171,7 +1220,7 @@ theorem quarterVariation_mono (depth : Nat) {left right : Coordinate}
   | zero => exact lessEqual
   | succ depth inductionHypothesis =>
       apply inductionHypothesis
-      apply (Fraction.Order.Field.div_le_iff_pos (by decide)).2
+      apply (Field.div_le_iff_pos (by decide)).2
       rw [Fraction.Field.div_mul_cancel_of_ne]
       · exact lessEqual
       · decide
@@ -1181,7 +1230,7 @@ open Purelib.Polynomial in
 theorem variationBound_dyadicEdgeAt
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (depth : Nat) (left right : Endpoint) (index : Fin (2 ^ depth)) :
     variationBound segment
         (dyadicEdgeAt depth left right index).left.parameter
@@ -1259,7 +1308,7 @@ open Purelib.Polynomial in
 /-- Ordered successive parameters whose exact segment variation bounds share a common ceiling. -/
 @[expose] def EdgeVariationBound {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (bound : Coordinate) : Endpoint -> List Endpoint -> Prop
   | _current, [] => True
   | current, endpoint :: remaining =>
@@ -1273,7 +1322,7 @@ open Purelib.Polynomial in
 /-- Concatenate two ordered variation-bounded sample lists meeting at the first list's final endpoint. -/
 theorem append {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (bound : Coordinate) :
     forall (current : Endpoint) (first second : List Endpoint),
       EdgeVariationBound segment bound current first ->
@@ -1312,7 +1361,7 @@ ceiling. -/
 theorem dyadicTargets_edgeVariationBound
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (depth : Nat) (left right : Endpoint)
     (ordered : left.parameter <= right.parameter) :
     EdgeVariationBound segment
@@ -1376,7 +1425,7 @@ final sample. -/
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (current : Endpoint) :
     (remaining : List Endpoint) ->
-      Polynomial.Geometry.ClearPath polynomial ambient (segment.pointAt current.parameter)
+      Geometry.ClearPath polynomial ambient (segment.pointAt current.parameter)
         (segment.pointAt (finalTarget current remaining).parameter)
   | [] => .nil _
   | endpoint :: rest =>
@@ -1397,7 +1446,7 @@ final sample. -/
   induction remaining generalizing current with
   | nil => rfl
   | cons endpoint rest inductionHypothesis =>
-      simp only [geometricPath, Polynomial.Geometry.ClearPath.segmentCount, List.length_cons]
+      simp only [geometricPath, Geometry.ClearPath.segmentCount, List.length_cons]
       exact congrArg Nat.succ (inductionHypothesis endpoint)
 
 /-- Read the exact dyadic target list as a cleared path between the original interval endpoints. -/
@@ -1406,7 +1455,7 @@ final sample. -/
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (depth : Nat)
     (left right : Endpoint) :
-    Polynomial.Geometry.ClearPath polynomial ambient (segment.pointAt left.parameter)
+    Geometry.ClearPath polynomial ambient (segment.pointAt left.parameter)
       (segment.pointAt right.parameter) :=
   (geometricPath segment within left (dyadicTargets depth left right)).castFinish
     (congrArg (fun endpoint : Endpoint => segment.pointAt endpoint.parameter)
@@ -1423,13 +1472,13 @@ final endpoint preserves that segment count and the exact binary length. -/
     (within : segment.WithinAmbient) (depth : Nat)
     (left right : Endpoint) :
     (dyadicPath segment within depth left right).segmentCount = 2 ^ depth := by
-  rw [dyadicPath, Polynomial.Geometry.ClearPath.segmentCount_castFinish,
+  rw [dyadicPath, Geometry.ClearPath.segmentCount_castFinish,
     geometricPath_segmentCount, dyadicTargets_length]
 
 /-- Attempt certified continuation along the exact dyadic target list at the supplied depth. -/
 @[expose] def tryDyadic {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient)
     (left right : Endpoint)
     (owner : Owner
@@ -1441,7 +1490,7 @@ final endpoint preserves that segment count and the exact binary length. -/
 /-- A successful dyadic attempt contains exactly two to the supplied depth continuation steps. -/
 theorem tryDyadic_stepCount {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient)
     (left right : Endpoint)
     (owner : Owner
@@ -1459,7 +1508,7 @@ theorem tryDyadic_stepCount {polynomial : GaussianPolynomial}
 theorem tryDyadic_endpoint_parameter
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient)
     (left right : Endpoint)
     (owner : Owner
@@ -1481,7 +1530,7 @@ theorem tryDyadic_endpoint_parameter
     {leftInside : (0 : Coordinate) <= left ∧ left <= 1}
     {owner : Owner (polynomial.eval (segment.pointAt left))} :
     (subdivision : Subdivision segment within left leftInside owner) →
-      Polynomial.Geometry.ClearPath polynomial ambient (segment.pointAt left)
+      Geometry.ClearPath polynomial ambient (segment.pointAt left)
         (segment.pointAt subdivision.endpoint.parameter)
   | .stop left _ _ => .nil (segment.pointAt left)
   | .next left leftInside _ right rightInside _ remaining =>
@@ -1533,7 +1582,7 @@ Each chain step uses the original variation witness to certify its polynomial-va
 advanced owner in the tail. -/
 @[expose] def toChain {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode}
     {within : segment.WithinAmbient} {left : Coordinate}
     {leftInside : (0 : Coordinate) <= left ∧ left <= 1}
     {owner : Owner (polynomial.eval (segment.pointAt left))} :
@@ -1544,7 +1593,7 @@ advanced owner in the tail. -/
       let target := polynomial.eval (segment.pointAt right)
       let targetNonzero := segment.pointAt_eval_ne_zero right rightInside
       let moveSmall :
-          Data.Gaussian.Norm.Basic.normSq
+          Norm.Basic.normSq
               (polynomial.eval (segment.pointAt left) - target) <
             owner.track.initial.clearance.bound :=
         (evaluation_variation_le segment within left right leftInside
@@ -1557,7 +1606,7 @@ open Purelib.Polynomial
 @[simp] theorem toChain_endpoint_parameter
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode}
     {within : segment.WithinAmbient} {left : Coordinate}
     {leftInside : (0 : Coordinate) <= left ∧ left <= 1}
     {owner : Owner (polynomial.eval (segment.pointAt left))}
@@ -1573,7 +1622,7 @@ open Purelib.Polynomial
 /-- Reading a subdivision as a continuation chain preserves its exact step count. -/
 @[simp] theorem toChain_length {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode}
     {within : segment.WithinAmbient} {left : Coordinate}
     {leftInside : (0 : Coordinate) <= left ∧ left <= 1}
     {owner : Owner (polynomial.eval (segment.pointAt left))}
@@ -1592,7 +1641,7 @@ open Purelib.Riemann.Topology in
 /-- Retain the original sheet choice while reading its certified subdivision as a seeded continuation chain. -/
 @[expose] def seeded {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode}
     {within : segment.WithinAmbient} {left : Coordinate}
     {leftInside : (0 : Coordinate) <= left ∧ left <= 1}
     (sheet : Fin 2)

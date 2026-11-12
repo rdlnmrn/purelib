@@ -104,25 +104,25 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Rat.Fraction.Compatibility
 variable {genus count otherCount depth : Nat} {curve : HyperellipticCurve genus}
   {differential other : Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent}
   {otherPatch : PreparedPatch
-    (Purelib.Riemann.Integration.PreparedEdgeRecasting.recastCenteredEdge other parent)}
+    (recastCenteredEdge other parent)}
   {data : Data patch count} {otherData :
     Data otherPatch otherCount}
   {cover : Cover data} {otherCover :
     Cover otherData}
   {interval : CommonInterval cover
     otherCover}
-  (regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap)
+  (regular : RegularBounds.Data cap)
   (geometry : ChartGeometry (cap := cap) interval
     depth)
 
 set_option genInjectivity false in
 /-- Both original pullback-to-endpoint comparison requests at one actual retained common-chart vertex. -/
-structure SourceVertexRequest (target : InverseRootPolynomial.Coordinate) (floor : Nat)
+structure SourceVertexRequest (target : Coordinate) (floor : Nat)
     (i : Fin (geometry.tail.length + 1)) where
   /-- The retained endpoint comparison bounds for the actual first-differential cap point. -/ firstBounds :
     EndpointComparison.Data regular (geometry.vertices.get i).first
@@ -136,13 +136,13 @@ structure SourceVertexRequest (target : InverseRootPolynomial.Coordinate) (floor
 constructive_injectivity SourceVertexRequest
 
 /-- Read the sufficient common model stage of both original vertex requests. -/
-@[expose] def sourceModelWeight {target : InverseRootPolynomial.Coordinate} {floor : Nat} (i : Fin (geometry.tail.length
+@[expose] def sourceModelWeight {target : Coordinate} {floor : Nat} (i : Fin (geometry.tail.length
   + 1))
     (request : SourceVertexRequest regular geometry
       target floor i) : Nat := max request.first.index request.second.index
 
 /-- Read the sufficient common endpoint-reading stage of both original vertex requests. -/
-@[expose] def sourceReadingWeight {target : InverseRootPolynomial.Coordinate} {floor : Nat} (i : Fin
+@[expose] def sourceReadingWeight {target : Coordinate} {floor : Nat} (i : Fin
   (geometry.tail.length + 1))
     (request : SourceVertexRequest regular geometry
       target floor i) : Nat :=
@@ -152,8 +152,8 @@ set_option genInjectivity false in
 /-- The complete retained paired source request bank on the actual common-chart geometry.
 
 Exact finite maxima select model and reading stages before choosing the shared polynomial sample. -/
-structure SourceChartRequest (target : InverseRootPolynomial.Coordinate) (floor : Nat) where
-  /-- The cached requests on every actual retained dyadic chart vertex. -/ vertices : Data.Vector.DependentVector
+structure SourceChartRequest (target : Coordinate) (floor : Nat) where
+  /-- The cached requests on every actual retained dyadic chart vertex. -/ vertices : DependentVector
     (SourceVertexRequest regular geometry target floor)
   /-- The cached sufficient common source-model stage. -/ index : Nat
   /-- The model stage is exactly the maximum of both retained requests at every vertex. -/ index_eq : index =
@@ -169,28 +169,28 @@ namespace SourceChartRequest
 
 /-- Cache both original endpoint comparison requests at every actual chart vertex and retain their exact common stage
 maxima. -/
-@[expose] def build (target : InverseRootPolynomial.Coordinate) (positive : 0 < target) (floor : Nat) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartSources.SourceChartRequest regular geometry target floor :=
+@[expose] def build (target : Coordinate) (positive : 0 < target) (floor : Nat) :
+    SourceChartRequest regular geometry target floor :=
   let vertices := DependentVector.ofFn (fun i =>
     let firstBounds := EndpointComparison.Data.build regular (geometry.vertices.get i).first
     let secondBounds := EndpointComparison.Data.build regular (geometry.vertices.get i).second
     (⟨firstBounds, secondBounds,
       EndpointComparison.Request.build firstBounds target positive floor,
       EndpointComparison.Request.build secondBounds target positive floor⟩ :
-        Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartSources.SourceVertexRequest regular geometry target floor
+        SourceVertexRequest regular geometry target floor
         i))
-  ⟨vertices, vertices.maximum (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartSources.sourceModelWeight regular
+  ⟨vertices, vertices.maximum (sourceModelWeight regular
     geometry), rfl,
-    vertices.maximum (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartSources.sourceReadingWeight regular
+    vertices.maximum (sourceReadingWeight regular
       geometry), rfl⟩
 
 variable {regular geometry} {target : Coordinate} {floor index :
   Nat}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other index otherBox}
-  {firstComparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular interval.first.cell}
-  {secondComparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular interval.second.cell}
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential index box}
+  {otherSample : Cap.Primitives.Sample cap other index otherBox}
+  {firstComparison : ArcSamples.Data regular interval.first.cell}
+  {secondComparison : ArcSamples.Data regular interval.second.cell}
 
 /-- Read the actual indexed parameter of the retained common-chart geometry. -/
 @[expose] def Parameter (i : Fin (geometry.tail.length + 1)) : Coordinate :=
@@ -202,27 +202,27 @@ set_option genInjectivity false in
 Each original endpoint reading remains unchanged; the paired bound includes both source and chart tolerances. -/
 structure PullbackReading (first : ArcSamples.Sample firstComparison sample)
     (second : ArcSamples.Sample secondComparison otherSample)
-    {chartTarget : InverseRootPolynomial.Coordinate} {chartFloor stage : Nat}
-    {request : CommonChartPaths.ChartRequest interval sample otherSample geometry chartTarget chartFloor}
+    {chartTarget : Coordinate} {chartFloor stage : Nat}
+    {request : ChartRequest interval sample otherSample geometry chartTarget chartFloor}
     (i : Fin (geometry.tail.length + 1))
-    (reading : PairedChartRequest.Evaluation (request.entries.get i) stage) (target : InverseRootPolynomial.Coordinate)
+    (reading : PairedChartRequest.Evaluation (request.entries.get i) stage) (target : Coordinate)
       where
   /-- The cached first original pullback polynomial value at this actual chart parameter. -/ firstValue :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The first cache is exactly the original first pullback evaluated at the inverse source point. -/ first_eq :
     firstValue = first.pullback.value.eval (parent.edge.point
     (Parameter (geometry := geometry)
     i))⁻¹
   /-- The cached second original pullback polynomial value at this actual chart parameter. -/ secondValue :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The second cache is exactly the original second pullback evaluated at the same inverse source point. -/ second_eq
     : secondValue = second.pullback.value.eval (parent.edge.point
     (Parameter (geometry := geometry)
     i))⁻¹
   /-- The actual first pullback value satisfies its original retained endpoint target. -/ first_close :
-    Data.Gaussian.Norm.Basic.normSq (firstValue - reading.first.value) < target
+    normSq (firstValue - reading.first.value) < target
   /-- The actual second pullback value satisfies its original retained endpoint target. -/ second_close :
-    Data.Gaussian.Norm.Basic.normSq (secondValue - reading.originalOther.value) < target
+    normSq (secondValue - reading.originalOther.value) < target
   /-- Both exact pullback-to-chart differences satisfy the combined retained source and chart budget. -/ chart_bound :
     PrimitivePoint.Bounded
     (PrimitivePoint.sub ⟨firstValue, secondValue⟩ reading.chartPoint)
@@ -232,13 +232,13 @@ constructive_injectivity PullbackReading
 
 /-- Certify the actual pullback polynomials at every retained parameter. The chart values and both original root
 readings are consumed unchanged. -/
-@[expose] def read (prepared : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartSources.SourceChartRequest regular
+@[expose] def read (prepared : SourceChartRequest regular
   geometry target floor)
     (first : ArcSamples.Sample firstComparison sample)
     (second : ArcSamples.Sample secondComparison otherSample)
     (modelLater : prepared.index ≤ index)
-    {chartTarget : InverseRootPolynomial.Coordinate} {chartFloor stage : Nat}
-    {request : CommonChartPaths.ChartRequest interval sample otherSample geometry chartTarget chartFloor}
+    {chartTarget : Coordinate} {chartFloor stage : Nat}
+    {request : ChartRequest interval sample otherSample geometry chartTarget chartFloor}
     (readingLater : prepared.readingIndex ≤ stage)
     (i : Fin (geometry.tail.length + 1))
     (reading : PairedChartRequest.Evaluation (request.entries.get i) stage) :
@@ -246,11 +246,11 @@ readings are consumed unchanged. -/
       request) first second i reading target := by
   let vertex := prepared.vertices.get i
   have modelBound : max vertex.first.index vertex.second.index ≤ index :=
-    (DependentVector.get_le_maximum (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartSources.sourceModelWeight
+    (DependentVector.get_le_maximum (sourceModelWeight
       regular geometry) prepared.vertices i).trans
       (prepared.index_eq.symm.trans_le modelLater)
   have readingBound : max vertex.first.coordinate.rightIndex vertex.second.coordinate.rightIndex ≤ stage :=
-    (DependentVector.get_le_maximum (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartSources.sourceReadingWeight
+    (DependentVector.get_le_maximum (sourceReadingWeight
       regular geometry) prepared.vertices i).trans
       (prepared.readingIndex_eq.symm.trans_le readingLater)
   let firstValue := first.pullback.value.eval (parent.edge.point
@@ -259,11 +259,11 @@ readings are consumed unchanged. -/
   let secondValue := second.pullback.value.eval (parent.edge.point
     (Parameter (geometry := geometry)
     i))⁻¹
-  have firstClose : Data.Gaussian.Norm.Basic.normSq (firstValue - reading.first.value) < target := by
+  have firstClose : normSq (firstValue - reading.first.value) < target := by
     rw [reading.first.sample_eq]
     exact vertex.first.accurate first (request.entries.get i).first
       ((Data.Nat.Order.le_max_left _ _).trans modelBound) ((Data.Nat.Order.le_max_left _ _).trans readingBound)
-  have secondClose : Data.Gaussian.Norm.Basic.normSq (secondValue - reading.originalOther.value) < target := by
+  have secondClose : normSq (secondValue - reading.originalOther.value) < target := by
     rw [reading.originalOther.sample_eq]
     exact vertex.second.accurate second (request.entries.get i).originalOther
       ((Data.Nat.Order.le_max_right _ _).trans modelBound) ((Data.Nat.Order.le_max_right _ _).trans readingBound)
@@ -292,22 +292,22 @@ readings are consumed unchanged. -/
 /-- The dependent vector of actual paired pullback readings on the exact retained chart reading bank. -/
 @[expose] def PullbackReadings (first : ArcSamples.Sample firstComparison sample)
     (second : ArcSamples.Sample secondComparison otherSample)
-    {chartTarget : InverseRootPolynomial.Coordinate} {chartFloor : Nat}
-    {request : CommonChartPaths.ChartRequest interval sample otherSample geometry chartTarget chartFloor}
-    (readings : request.Readings) (target : InverseRootPolynomial.Coordinate) :=
-  Data.Vector.DependentVector (fun i =>
+    {chartTarget : Coordinate} {chartFloor : Nat}
+    {request : ChartRequest interval sample otherSample geometry chartTarget chartFloor}
+    (readings : request.Readings) (target : Coordinate) :=
+  DependentVector (fun i =>
     PullbackReading (request :=
     request) first second i (readings.get i) target)
 
 set_option genInjectivity false in
 /-- The retained paired chart-area acquisition with every exact original source pullback comparison. -/
-structure Evaluation (prepared : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartSources.SourceChartRequest
+structure Evaluation (prepared : SourceChartRequest
   regular geometry target floor)
     (first : ArcSamples.Sample firstComparison sample)
-    (second : ArcSamples.Sample secondComparison otherSample) (requested : InverseRootPolynomial.Coordinate) where
+    (second : ArcSamples.Sample secondComparison otherSample) (requested : Coordinate) where
   /-- The retained caller-supplied lower endpoint-reading stage. -/ readingFloor : Nat
   /-- The actual chart request above both the original source reading index and retained caller floor. -/ request :
-    CommonChartPaths.ChartRequest interval sample otherSample geometry requested (max prepared.readingIndex
+    ChartRequest interval sample otherSample geometry requested (max prepared.readingIndex
     readingFloor)
   /-- The cached complete paid paired chart-area evaluation. -/ area : ChartPathRequest.RequestedArea request requested
   /-- The actual original pullback comparisons against these exact cached chart readings. -/ pullbacks :
@@ -318,11 +318,11 @@ constructive_injectivity Evaluation
 
 /-- The reading floor comes from the pre-sample source requests; the paired area allocator may refine it further,
 retaining all cached endpoints. -/
-@[expose] def evaluate (prepared : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartSources.SourceChartRequest
+@[expose] def evaluate (prepared : SourceChartRequest
   regular geometry target floor)
     (first : ArcSamples.Sample firstComparison sample)
     (second : ArcSamples.Sample secondComparison otherSample)
-    (modelLater : prepared.index ≤ index) (requested : InverseRootPolynomial.Coordinate) (positive : 0 < requested)
+    (modelLater : prepared.index ≤ index) (requested : Coordinate) (positive : 0 < requested)
       (readingFloor : Nat) :
     Evaluation prepared first second
       requested := by
@@ -337,9 +337,9 @@ retaining all cached endpoints. -/
 
 /-- The paid chart evaluation's actual reading stage meets its retained caller floor. -/
 theorem Evaluation.readingFloor_le {prepared :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartSources.SourceChartRequest regular geometry target floor}
+  SourceChartRequest regular geometry target floor}
     {first : ArcSamples.Sample firstComparison sample}
-    {second : ArcSamples.Sample secondComparison otherSample} {requested : InverseRootPolynomial.Coordinate}
+    {second : ArcSamples.Sample secondComparison otherSample} {requested : Coordinate}
     (evaluated : Evaluation prepared
       first second requested) : evaluated.readingFloor ≤ evaluated.area.refined.stage :=
   (Data.Nat.Order.le_max_right _ _).trans evaluated.area.refined.floor_le

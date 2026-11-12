@@ -16,6 +16,7 @@ import Purelib.Data.Rat.Fraction.Order.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Field
 
 import Purelib.Curves.Hyperelliptic.Integration.Observation.UniformPreparedMesh
+public import Purelib.Curves.Hyperelliptic.Integration.Observation.UniformPreparedMesh.Entries
 public import Purelib.Riemann.Periods.PreparedPeriodPrimitiveDecay
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Riemann.Integration.PreparedDyadicRefinements
@@ -42,6 +43,8 @@ import Mathlib.Data.Nat.Basic
 import Purelib.Tactic.Ring
 import Purelib.Data.Nat.Order
 meta import Purelib.Elab.ConstructiveInjectivity
+
+open Purelib.Data.Rat.Fraction.Order
 
 public section
 
@@ -85,9 +88,9 @@ structure DualIndex (firstScale secondScale firstTarget secondTarget : Coordinat
   /-- The retained common refinement index. -/ index : Nat
   /-- The retained index is above the original requested minimum. -/ index_ge : minimum ≤ index
   /-- The first original scale's quarter-radius is strictly below its target. -/ first_accurate :
-    Geometric.Basic.quarterRadius firstScale index < firstTarget
+    quarterRadius firstScale index < firstTarget
   /-- The second original scale's quarter-radius is strictly below its target. -/ second_accurate :
-    Geometric.Basic.quarterRadius secondScale index < secondTarget
+    quarterRadius secondScale index < secondTarget
 
 constructive_injectivity DualIndex
 
@@ -102,7 +105,7 @@ maxima without changing either target. -/
     (firstNonnegative : 0 ≤ firstScale) (firstPositive : 0 < firstTarget) (secondPositive : 0 < secondTarget)
     (minimum : Nat := 0) : DualIndex firstScale secondScale firstTarget secondTarget minimum :=
   let second := max secondScale 0
-  have secondNonnegative : 0 ≤ second := Fraction.Order.Basic.le_max_right _ _
+  have secondNonnegative : 0 ≤ second := Basic.le_max_right _ _
   let firstIndex := Geometric.Search.firstQuarterBelow firstScale 0 firstTarget
   let secondIndex := Geometric.Search.firstQuarterBelow second 0 secondTarget
   let index := max minimum (max firstIndex secondIndex)
@@ -118,12 +121,12 @@ maxima without changing either target. -/
     change secondIndex ≤ max minimum (max firstIndex secondIndex)
     rw [Nat.Order.max_eq_natMax, Nat.Order.max_eq_natMax]
     exact (Nat.Order.le_max_right _ _).trans (Nat.Order.le_max_right _ _)
-  have secondScaleBound : Geometric.Basic.quarterRadius secondScale index ≤
-      Geometric.Basic.quarterRadius second index := by
+  have secondScaleBound : quarterRadius secondScale index ≤
+      quarterRadius second index := by
     rw [Geometric.Basic.quarterRadius_eq_mul_pow, Geometric.Basic.quarterRadius_eq_mul_pow]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (Fraction.Order.Basic.le_max_left _ _)
-      (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) index)
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (Basic.le_max_left _ _)
+      (Arithmetic.pow_nonneg_direct (by decide) index)
   { index := index
     index_ge := aboveMinimum
     first_accurate := (quarterRadius_antitone firstNonnegative
@@ -134,8 +137,8 @@ maxima without changing either target. -/
         aboveSecond)).trans_lt
         (Geometric.Search.firstQuarterBelow_accurate second secondNonnegative 0 secondTarget secondPositive) }
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
 
 set_option genInjectivity false in
 /-- An original local primitive request with a strict coefficient target and index floor.
@@ -179,21 +182,21 @@ containment and the proper parent edge are preserved. -/
   let localScale := PreparedPrimitiveRequests.rootScale neighborhood numeratorBound (PreparedPrimitiveRequests.movement
     parent)
   let coefficientScale := 4 * numeratorBound * neighborhood.inverseErrorScale
-  have localPositive : 0 < target / 8 := Fraction.Order.Field.div_pos_direct positive (by decide)
+  have localPositive : 0 < target / 8 := Field.div_pos_direct positive (by decide)
   let selected := DualIndex.acquire localScale coefficientScale ((target / 8) / 3) coefficientTarget
     (PreparedPrimitiveRequests.rootScale_nonnegative neighborhood numeratorNonnegative
       (PreparedPrimitiveRequests.movement_nonnegative parent))
-    (Fraction.Order.Field.div_pos_direct localPositive (by decide)) coefficientPositive minimum
+    (Field.div_pos_direct localPositive (by decide)) coefficientPositive minimum
   let model := InverseRootPrimitive.PrimitiveModel.ofIndex
     neighborhood selected.index numerator
   let approximation := PreparedPrimitiveRequests.Request.ofModel parent neighborhood (target / 8) localPositive proper
     numeratorBound numeratorNonnegative numeratorLe selected.index model selected.first_accurate
   let localRequest : LocalRequest parent count target := ⟨patch, neighborhood, rfl, approximation, finishInside⟩
   refine ⟨localRequest, ?_, selected.index_ge⟩
-  have coefficientEq : localCoefficient localRequest = Geometric.Basic.quarterRadius coefficientScale selected.index :=
+  have coefficientEq : localCoefficient localRequest = quarterRadius coefficientScale selected.index :=
     by
-    change 4 * numeratorBound * Geometric.Basic.quarterRadius neighborhood.inverseErrorScale selected.index =
-      Geometric.Basic.quarterRadius (4 * numeratorBound * neighborhood.inverseErrorScale) selected.index
+    change 4 * numeratorBound * quarterRadius neighborhood.inverseErrorScale selected.index =
+      quarterRadius (4 * numeratorBound * neighborhood.inverseErrorScale) selected.index
     rw [Geometric.Basic.quarterRadius_eq_mul_pow, Geometric.Basic.quarterRadius_eq_mul_pow]
     ring1
   exact coefficientEq.trans_lt selected.second_accurate
@@ -229,7 +232,7 @@ open Purelib.Curves.Hyperelliptic.Integration in
 Each parent keeps its own patch and finish-containment witness, with one shared coefficient target and minimum index;
 the resulting maximum bound retains that exact list. -/
 @[expose] def ControlledParents.acquire {parents : List (CenteredEdge curve differential)} (covered :
-  Observation.UniformPreparedMesh.CoveredParents count parents)
+  CoveredParents count parents)
     (target coefficientTarget : Coordinate) (positive : 0 < target) (coefficientPositive : 0 < coefficientTarget)
     (proper : AllParentsProper parents) (minimum : Nat := 0) :
     ControlledParents parents count target coefficientTarget minimum :=
@@ -250,6 +253,31 @@ the resulting maximum bound retains that exact list. -/
           exact head.coefficient_accurate),
         head.index_ge, remaining.indices_ge⟩
 termination_by structural covered
+
+/-- A bounded original cover occurrence selects the complete original controlled local request.
+
+The result retains the same covering patch, finish certificate, numerator,
+selected index, primitive and child block. Structural readback follows the
+original acquired request bank; it performs no acquisition or refinement.
+-/
+theorem ControlledParents.acquire_get
+    (target coefficientTarget : Coordinate) (positive : 0 < target)
+    (coefficientPositive : 0 < coefficientTarget) (minimum : Nat) :
+    ∀ {parents : List (CenteredEdge curve differential)} (covered : CoveredParents count parents)
+      (proper : AllParentsProper parents) (index : Fin parents.length),
+      ((ControlledParents.acquire covered target coefficientTarget positive coefficientPositive proper
+        minimum).requests.get index) =
+      (ControlledLocalRequest.acquire (covered.entry index).1 count target coefficientTarget positive
+        coefficientPositive (covered.entry index).2 (AllParentsProper.get proper index) minimum).localRequest
+    := by
+  intro parents covered proper index
+  induction covered with
+  | nil => exact Fin.elim0 index
+  | cons patch finishInside tail ih =>
+      refine Fin.cases ?_ ?_ index
+      · rfl
+      · intro next
+        exact ih proper.2 next
 
 set_option genInjectivity false in
 /-- An original primitive-sum request with cached movement mass and a controlled polynomial-error floor.
@@ -282,15 +310,15 @@ open Purelib.Data.Rat in
 
 The original movement mass and mass-plus-one denominator set the coefficient target; per-term budgets and minimum
 indices are retained in the exact acquired request family. -/
-@[expose] def acquire (covered : Observation.UniformPreparedMesh.CoveredParents count parents) (proper :
+@[expose] def acquire (covered : CoveredParents count parents) (proper :
   AllParentsProper parents)
     (target : Coordinate) (positive : 0 < target) (minimumIndex : Nat := 0) : ControlledSumRequest parents count target
       := by
   let mass := movementMass parents
   let coefficientTarget := (target / 2) / (mass + 1)
-  have coefficientPositive : 0 < coefficientTarget := Fraction.Order.Field.div_pos_direct
-    (Fraction.Order.Field.div_pos_direct positive (by decide))
-    (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct (movementMass_nonnegative parents) (by decide))
+  have coefficientPositive : 0 < coefficientTarget := Field.div_pos_direct
+    (Field.div_pos_direct positive (by decide))
+    (Arithmetic.add_pos_of_nonneg_of_pos_direct (movementMass_nonnegative parents) (by decide))
   let localTarget := Budget.Aggregate.perTerm target parents.length
   let controlled := ControlledParents.acquire covered localTarget coefficientTarget
     (Budget.Aggregate.perTerm_positive positive parents.length) coefficientPositive proper minimumIndex
@@ -304,9 +332,41 @@ indices are retained in the exact acquired request family. -/
           minimumIndex := minimumIndex
           indices_ge := controlled.indices_ge }
 
+open Purelib.Approximation.Rational in
+open Purelib.Curves.Hyperelliptic.Integration in
+open Purelib.Data.Rat in
+/-- Every actual controlled-sum occurrence keeps its original covering neighborhood and paid model floor.
+
+The whole local acquisition readback supplies both facts on the same
+stored request. The proof does not acquire a request, primitive, child
+block or neighborhood while reading this certificate.
+-/
+theorem acquire_local (covered : CoveredParents count parents) (proper : AllParentsProper parents)
+    (target : Coordinate) (positive : 0 < target) (minimumIndex : Nat) (index : Fin parents.length) :
+    ((acquire covered proper target positive minimumIndex).requestsAtTarget.get index).neighborhood =
+        (covered.entry index).1.neighborhood count ∧
+      minimumIndex ≤ ((acquire covered proper target positive minimumIndex).requestsAtTarget.get index).request.index :=
+    by
+  let mass := movementMass parents
+  let coefficientTarget := (target / 2) / (mass + 1)
+  have coefficientPositive : 0 < coefficientTarget := Field.div_pos_direct
+    (Field.div_pos_direct positive (by decide))
+    (Arithmetic.add_pos_of_nonneg_of_pos_direct (movementMass_nonnegative parents) (by decide))
+  let localTarget := Budget.Aggregate.perTerm target parents.length
+  have localPositive := Budget.Aggregate.perTerm_positive positive parents.length
+  change ((ControlledParents.acquire covered localTarget coefficientTarget localPositive coefficientPositive
+      proper minimumIndex).requests.get index).neighborhood = _ ∧
+    minimumIndex ≤ ((ControlledParents.acquire covered localTarget coefficientTarget localPositive
+      coefficientPositive proper minimumIndex).requests.get index).request.index
+  rewrite [ControlledParents.acquire_get localTarget coefficientTarget localPositive coefficientPositive
+    minimumIndex covered proper index]
+  exact ⟨rfl, (ControlledLocalRequest.acquire (covered.entry index).1 count localTarget coefficientTarget
+    localPositive coefficientPositive (covered.entry index).2
+    (AllParentsProper.get proper index) minimumIndex).index_ge⟩
+
 open Purelib.Curves.Hyperelliptic.Integration in
 /-- The acquired controlled sum request retains the exact requested minimum index. -/
-theorem acquire_minimumIndex (covered : Observation.UniformPreparedMesh.CoveredParents count parents)
+theorem acquire_minimumIndex (covered : CoveredParents count parents)
     (proper : AllParentsProper parents) (target : Coordinate) (positive : 0 < target) (minimumIndex : Nat) :
     (acquire covered proper target positive minimumIndex).minimumIndex = minimumIndex := rfl
 
@@ -317,19 +377,19 @@ The proof uses the retained coefficient maximum, exact movement-mass identity an
 the same request family. -/
 theorem polynomialFloor_lt (request : ControlledSumRequest parents count target) {base : Coordinate}
     (budget : DecayBudget request.requests base) : budget.polynomialFloor < target / 2 := by
-  have factorPositive : 0 < budget.mass + 1 := Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
+  have factorPositive : 0 < budget.mass + 1 := Arithmetic.add_pos_of_nonneg_of_pos_direct
     budget.mass_nonnegative (by decide)
   have coefficientBound : budget.coefficient < (target / 2) / (budget.mass + 1) := by
     calc
       budget.coefficient = coefficientMaximum request.requests := budget.coefficient_eq
       _ < request.coefficientTarget := request.coefficient_accurate
       _ = (target / 2) / (budget.mass + 1) := by rw [request.coefficientTarget_eq, request.mass_eq, budget.mass_eq]
-  have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct factorPositive coefficientBound
+  have scaled := Arithmetic.mul_lt_mul_of_pos_left_direct factorPositive coefficientBound
   have paid : (budget.mass + 1) * ((target / 2) / (budget.mass + 1)) = target / 2 := by
     rw [Fraction.Field.mul_comm]
     exact Fraction.Field.div_mul_cancel_of_ne _ _ factorPositive.ne'
   have enlarged : budget.mass ≤ budget.mass + 1 := by
-    have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+    have shifted := Arithmetic.add_le_add_right_direct
       (by decide : (0 : Coordinate) ≤ 1) budget.mass
     calc
       budget.mass = 0 + budget.mass := by ring1
@@ -338,7 +398,7 @@ theorem polynomialFloor_lt (request : ControlledSumRequest parents count target)
   calc
     budget.polynomialFloor = budget.mass * budget.coefficient := by rw [budget.polynomialFloor_eq]; ring1
     _ ≤ (budget.mass + 1) * budget.coefficient :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct enlarged budget.coefficient_nonnegative
+      Arithmetic.mul_le_mul_of_nonneg_right_direct enlarged budget.coefficient_nonnegative
     _ < target / 2 := scaled.trans_eq paid
 
 end ControlledSumRequest

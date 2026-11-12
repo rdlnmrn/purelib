@@ -37,7 +37,7 @@ namespace Purelib.Geometry.Triangles.Reflection.Circumcircle.FiniteRegion
 
 section ResectionApplications
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Algebra.Field.ExplicitField K]
 
 /-! ## The reflected-circle correspondence after Example 25.1 -/
 
@@ -46,10 +46,10 @@ set_option genInjectivity false in
 structure ReflectionTriangleData (K : Type*)
   [Algebra.Field.ExplicitField K]
     [DecidableEq K] where
-  /-- The first reference vertex. -/ first : Plane.Point K
-  /-- The second reference vertex. -/ second : Plane.Point K
-  /-- The third reference vertex. -/ third : Plane.Point K
-  /-- The point reflected in each reference side. -/ base : Plane.Point K
+  /-- The first reference vertex. -/ first : Point K
+  /-- The second reference vertex. -/ second : Point K
+  /-- The third reference vertex. -/ third : Point K
+  /-- The point reflected in each reference side. -/ base : Point K
   /-- The first two vertices are distinct. -/ firstSecondDistinct : first ≠ second
   /-- The first and third vertices are distinct. -/ firstThirdDistinct : first ≠ third
   /-- The last two vertices are distinct. -/ secondThirdDistinct : second ≠ third
@@ -67,7 +67,7 @@ section ReflectionTriangleData
 /-- Reflect the retained base point in the side joining the second and third vertices. -/
 def ReflectionTriangleData.reflectedInSecondThird
   [DecidableEq K]
-    (data : Geometry.Triangles.Reflection.Circumcircle.FiniteRegion.ReflectionTriangleData K) : Plane.Point
+    (data : ReflectionTriangleData K) : Point
       K :=
   Reflection.Point.reflectPoint
     (Incidence.lineThrough data.second data.third data.secondThirdDistinct)
@@ -76,7 +76,7 @@ def ReflectionTriangleData.reflectedInSecondThird
 /-- Reflect the retained base point in the side joining the first and third vertices. -/
 def ReflectionTriangleData.reflectedInFirstThird
   [DecidableEq K]
-    (data : Geometry.Triangles.Reflection.Circumcircle.FiniteRegion.ReflectionTriangleData K) : Plane.Point
+    (data : ReflectionTriangleData K) : Point
       K :=
   Reflection.Point.reflectPoint
     (Incidence.lineThrough data.first data.third data.firstThirdDistinct)
@@ -85,7 +85,7 @@ def ReflectionTriangleData.reflectedInFirstThird
 /-- Reflect the retained base point in the side joining the first and second vertices. -/
 def ReflectionTriangleData.reflectedInFirstSecond
   [DecidableEq K]
-    (data : Geometry.Triangles.Reflection.Circumcircle.FiniteRegion.ReflectionTriangleData K) : Plane.Point
+    (data : ReflectionTriangleData K) : Point
       K :=
   Reflection.Point.reflectPoint
     (Incidence.lineThrough data.first data.second data.firstSecondDistinct)
@@ -95,8 +95,8 @@ def ReflectionTriangleData.reflectedInFirstSecond
 def
   ReflectionTriangleData.IsCommonReflectedCirclePoint
   [DecidableEq K]
-    (data : Geometry.Triangles.Reflection.Circumcircle.FiniteRegion.ReflectionTriangleData K) (candidate :
-      Plane.Point K) : Prop :=
+    (data : ReflectionTriangleData K) (candidate :
+      Point K) : Prop :=
   Quadrilateral.coordinateCircleDeterminant
       data.second data.third data.reflectedInSecondThird candidate = 0 ∧
     Quadrilateral.coordinateCircleDeterminant
@@ -108,11 +108,11 @@ def
 instance
   ReflectionTriangleData.isCommonReflectedCirclePointDecidable
   [DecidableEq K]
-    (data : Geometry.Triangles.Reflection.Circumcircle.FiniteRegion.ReflectionTriangleData K) (candidate :
-      Plane.Point K) :
+    (data : ReflectionTriangleData K) (candidate :
+      Point K) :
     Decidable (data.IsCommonReflectedCirclePoint candidate) := by
   unfold
-    Purelib.Geometry.Triangles.Reflection.Circumcircle.FiniteRegion.ReflectionTriangleData.IsCommonReflectedCirclePoint
+    ReflectionTriangleData.IsCommonReflectedCirclePoint
   infer_instance
 
 /-- The constructive finite version of the common-point construction cited after Example 25.1: inspect an explicit
@@ -120,9 +120,9 @@ finite region and retain precisely the common reflected-circle points. -/
 def
   ReflectionTriangleData.commonReflectedCirclePoints
   [DecidableEq K]
-    (data : Geometry.Triangles.Reflection.Circumcircle.FiniteRegion.ReflectionTriangleData K) (candidates : List
-      (Plane.Point K)) :
-    List (Plane.Point K) :=
+    (data : ReflectionTriangleData K) (candidates : List
+      (Point K)) :
+    List (Point K) :=
   candidates.filter fun candidate => decide
     (data.IsCommonReflectedCirclePoint candidate)
 
@@ -132,28 +132,28 @@ incidences. -/
 theorem
   ReflectionTriangleData.memCommonReflectedCirclePoints
   [DecidableEq K]
-    (data : Geometry.Triangles.Reflection.Circumcircle.FiniteRegion.ReflectionTriangleData K) (candidates : List
-      (Plane.Point K))
-    (candidate : Plane.Point K) :
+    (data : ReflectionTriangleData K) (candidates : List
+      (Point K))
+    (candidate : Point K) :
     candidate ∈ data.commonReflectedCirclePoints candidates ↔
       candidate ∈ candidates ∧ data.IsCommonReflectedCirclePoint candidate := by
   constructor
   · intro member
-    rewrite [Geometry.Triangles.Reflection.Circumcircle.FiniteRegion.ReflectionTriangleData.commonReflectedCirclePoints]
+    rewrite [ReflectionTriangleData.commonReflectedCirclePoints]
       at member
     have filtered := List.Filter.mem_filter.mp member
     exact ⟨filtered.1, of_decide_eq_true filtered.2⟩
   · intro member
-    rewrite [Geometry.Triangles.Reflection.Circumcircle.FiniteRegion.ReflectionTriangleData.commonReflectedCirclePoints]
+    rewrite [ReflectionTriangleData.commonReflectedCirclePoints]
     exact List.Filter.mem_filter.mpr ⟨member.1, decide_eq_true member.2⟩
 
 /-- A singleton result is an exact uniqueness certificate on the supplied finite search region. -/
 theorem
   ReflectionTriangleData.common_reflected_circle_point_unique_in_region
     [DecidableEq K]
-    (data : Geometry.Triangles.Reflection.Circumcircle.FiniteRegion.ReflectionTriangleData K) (candidates : List
-      (Plane.Point K))
-    (common candidate : Plane.Point K)
+    (data : ReflectionTriangleData K) (candidates : List
+      (Point K))
+    (common candidate : Point K)
     (singleton : data.commonReflectedCirclePoints candidates = [common])
     (candidateMember : candidate ∈ candidates)
     (candidateCommon : data.IsCommonReflectedCirclePoint candidate) :

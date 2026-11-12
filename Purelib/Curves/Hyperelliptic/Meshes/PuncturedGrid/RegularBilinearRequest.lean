@@ -60,16 +60,16 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularBilinearReque
 
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {faces : List (Meshes.PuncturedGridFaces.RegularFace
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {faces : List (Meshes.PuncturedGridFaces.RegularFace
       bank)}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces} {sheet : Fin 2}
-  {coarse : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains sheet} {fixed :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {target :
+  {domains : Face.DomainBanks.FaceDomainBank frames faces} {sheet : Fin 2}
+  {coarse : RegularDomainMeshes.RegularMeshes domains sheet} {fixed :
+    RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {target :
     Fraction.Rational}
-  {stage : Nat} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  {stage : Nat} {cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage}
 
 /-- The finite sum of a constant rational equals the count times that constant. -/
 private theorem sum_constant (size : Nat) (value : Fraction.Rational) :
@@ -82,11 +82,11 @@ private theorem sum_constant (size : Nat) (value : Fraction.Rational) :
 targets.
 
 Use the supplied shared differential bank, the retained per-face payment and the actual face count. -/
-theorem bilinear_bound (request : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request coarse
+theorem bilinear_bound (request : RegularDomainMeshes.RegularMeshes.Request coarse
   fixed target) (later : request.index ≤ stage)
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Samples request.meshes cache) (left
+    (samples : RegularDomainMeshes.RegularMeshes.Samples request.meshes cache) (left
       right : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun position => Topology.Polygon.Stokes.edgeListArea
+    Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun position => Topology.Polygon.Stokes.edgeListArea
       (fun vertex => ⟨(samples.readings.get position).affine.value left vertex,
         (samples.readings.get position).affine.value right vertex⟩)
       (request.meshes.entries.get position).surface.mesh.triangulation.boundary)) ≤
@@ -98,13 +98,13 @@ theorem bilinear_bound (request : Hyperelliptic.Meshes.PuncturedGrid.RegularDoma
     (request.meshes.entries.get position).surface.mesh.triangulation.boundary
   let scale := Readings.PreparedObservationCoercivity.coefficientNormSq left *
     Readings.PreparedObservationCoercivity.coefficientNormSq right
-  have localBound (position : Fin faces.length) : Data.Gaussian.Norm.Basic.normSq (value position) ≤ scale * (64 *
+  have localBound (position : Fin faces.length) : Gaussian.Norm.Basic.normSq (value position) ≤ scale * (64 *
     request.perFace ^ 2) :=
     (request.atStage stage later position).bilinear_bound_on rfl (request.mesh_eq position)
       (samples.readings.get position) left right
   have estimate := Gaussian.Norm.Sum.Indexed.normSq_sumFin_le_count_mul_sumFin value
     (fun _ => scale * (64 * request.perFace ^ 2)) localBound
-  rw [Hyperelliptic.Meshes.PuncturedGrid.RegularBilinearRequest.sum_constant] at estimate
+  rw [RegularBilinearRequest.sum_constant] at estimate
   have nonnegative : 0 ≤ (faces.length : Fraction.Rational) * request.perFace :=
     Fraction.Order.Arithmetic.mul_nonneg_direct
     (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) request.positive.le
@@ -114,8 +114,8 @@ theorem bilinear_bound (request : Hyperelliptic.Meshes.PuncturedGrid.RegularDoma
     exact (le_of_eq (by ring1)).trans (bound.trans_eq (by ring1))
   have scaleNonnegative : 0 ≤ scale * 64 := Fraction.Order.Arithmetic.mul_nonneg_direct
     (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Riemann.Integration.PrimitiveBasis.coefficientNorm_nonnegative left)
-      (Riemann.Integration.PrimitiveBasis.coefficientNorm_nonnegative right)) (by decide +kernel)
+      (Integration.PrimitiveBasis.coefficientNorm_nonnegative left)
+      (Integration.PrimitiveBasis.coefficientNorm_nonnegative right)) (by decide +kernel)
   exact estimate.trans ((le_of_eq (by ring1)).trans
     ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct squares scaleNonnegative).trans_eq (by ring1)))
 

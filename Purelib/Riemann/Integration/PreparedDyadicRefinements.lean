@@ -33,6 +33,10 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Integration.Polynomial.Gaussian.Cell.Basic
 import Mathlib.Order.Basic
 
+open Purelib.Curves.Hyperelliptic
+
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -55,20 +59,20 @@ open Purelib.Data.Gaussian in
 /-- The canonical Gaussian rational carrier. -/
 abbrev Gaussian := Basic.Canonical
 /-- The original square-root continuation owner at its retained radicand. -/
-abbrev Owner := Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+abbrev Owner := Topology.SquareRootContinuationChain.Owner
 /-- A retained subdivision parameter with unit-interval bounds. -/
-abbrev Endpoint := Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.Endpoint
+abbrev Endpoint := Branches.ClearSheetContinuation.Subdivision.Endpoint
 /-- The original prepared continuation request. -/
-abbrev StepRequest := Purelib.Riemann.Branches.PreparedSheetContinuation.StepRequest
+abbrev StepRequest := Branches.PreparedSheetContinuation.StepRequest
 open Purelib in
 open Purelib.Curves.Hyperelliptic.Differentials in
 /-- A prepared edge with its exact retained center state. -/
-abbrev CenteredEdge {genus : Nat} (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+abbrev CenteredEdge {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus) :=
-  Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential
+  PreparedSubdivisionModelCore.CenteredEdge curve differential
 /-- A compatible refinement of the original ordered constant path models. -/
 abbrev CompatibleConstantPathRefinement :=
-  Purelib.Integration.Polynomial.Gaussian.Path.Basic.PathModel.CompatibleConstantPathRefinement
+  Integration.Polynomial.Gaussian.Path.Basic.PathModel.CompatibleConstantPathRefinement
 
 section
 open Purelib
@@ -82,7 +86,7 @@ open Purelib.Riemann.RootContinuation
 The bounds come from the parent's direct owner and the step's prepared owner, their fresh owners and bridge tails, and
 the first owner's fresh common refinement. -/
 def directStepClearanceFloor {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential)
@@ -116,7 +120,7 @@ def directStepClearanceFloor {genus : Nat}
 
 /-- The minimum of the seven actual direct-step clearance bounds is positive. -/
 theorem directStepClearanceFloor_positive {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential)
@@ -148,21 +152,21 @@ theorem directStepClearanceFloor_positive {genus : Nat}
                 nonzero second)
               (SquareRootTrackEquivalence.freshCommonClearance
                 nonzero first))))))
-  apply Purelib.Data.Rat.Fraction.Order.Basic.lt_min
+  apply Basic.lt_min
   · exact first.track.initial.clearance.positive
-  · apply Purelib.Data.Rat.Fraction.Order.Basic.lt_min
+  · apply Basic.lt_min
     · exact second.track.initial.clearance.positive
-    · apply Purelib.Data.Rat.Fraction.Order.Basic.lt_min
+    · apply Basic.lt_min
       · exact (SquareRootReconditioning.freshOwner nonzero
           first).track.initial.clearance.positive
-      · apply Purelib.Data.Rat.Fraction.Order.Basic.lt_min
+      · apply Basic.lt_min
         · exact (SquareRootReconditioning.freshOwner nonzero
             second).track.initial.clearance.positive
-        · apply Purelib.Data.Rat.Fraction.Order.Basic.lt_min
+        · apply Basic.lt_min
           · exact (SquareRootTrackEquivalence.commonTailOfBridge
               (SquareRootReconditioning.bridge nonzero first)).initial
                 |>.clearance.positive
-          · apply Purelib.Data.Rat.Fraction.Order.Basic.lt_min
+          · apply Basic.lt_min
             · exact (SquareRootTrackEquivalence.commonTailOfBridge
                 (SquareRootReconditioning.bridge nonzero second)).initial
                   |>.clearance.positive
@@ -181,7 +185,7 @@ open Purelib.Riemann.RootContinuation in
 The original segment evaluation bound pays the radicand movement, then each component of the seven-way minimum supplies
 its corresponding owner or bridge condition. -/
 theorem directStepSmall_of_variation_lt_floor {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential)
@@ -226,7 +230,7 @@ theorem directStepSmall_of_variation_lt_floor {genus : Nat}
   let floor := min first.track.initial.clearance.bound secondTail
   have floor_eq : directStepClearanceFloor parent current position owner
       request = floor := rfl
-  have distance : Data.Gaussian.Norm.Basic.normSq
+  have distance : Norm.Basic.normSq
       (curve.polynomial.eval (parent.segment.pointAt current.parameter) -
         curve.polynomial.eval
           (parent.segment.pointAt request.endpoint.parameter)) < floor := by
@@ -236,38 +240,38 @@ theorem directStepSmall_of_variation_lt_floor {genus : Nat}
         request.endpoint.parameter current.inside
           request.endpoint.inside).trans_lt below
   have firstLe : floor <= first.track.initial.clearance.bound :=
-    Purelib.Data.Rat.Fraction.Order.Basic.min_le_left _ _
+    Basic.min_le_left _ _
   have secondLe : floor <= second.track.initial.clearance.bound :=
-    (Purelib.Data.Rat.Fraction.Order.Basic.min_le_right _ _).trans (Purelib.Data.Rat.Fraction.Order.Basic.min_le_left _
+    (Basic.min_le_right _ _).trans (Basic.min_le_left _
       _)
   have firstFreshLe : floor <= firstFresh :=
-    (Purelib.Data.Rat.Fraction.Order.Basic.min_le_right _ _).trans ((Purelib.Data.Rat.Fraction.Order.Basic.min_le_right
-      _ _).trans (Purelib.Data.Rat.Fraction.Order.Basic.min_le_left _ _))
+    (Basic.min_le_right _ _).trans ((Basic.min_le_right
+      _ _).trans (Basic.min_le_left _ _))
   have secondFreshLe : floor <= secondFresh :=
-    (Purelib.Data.Rat.Fraction.Order.Basic.min_le_right _ _).trans ((Purelib.Data.Rat.Fraction.Order.Basic.min_le_right
+    (Basic.min_le_right _ _).trans ((Basic.min_le_right
       _ _).trans
-      ((Purelib.Data.Rat.Fraction.Order.Basic.min_le_right _ _).trans (Purelib.Data.Rat.Fraction.Order.Basic.min_le_left
+      ((Basic.min_le_right _ _).trans (Basic.min_le_left
         _ _)))
   have firstBridgeLe : floor <= firstBridge :=
-    (Purelib.Data.Rat.Fraction.Order.Basic.min_le_right _ _).trans ((Purelib.Data.Rat.Fraction.Order.Basic.min_le_right
+    (Basic.min_le_right _ _).trans ((Basic.min_le_right
       _ _).trans
-      ((Purelib.Data.Rat.Fraction.Order.Basic.min_le_right _ _).trans
-        ((Purelib.Data.Rat.Fraction.Order.Basic.min_le_right _ _).trans
-        (Purelib.Data.Rat.Fraction.Order.Basic.min_le_left _ _))))
+      ((Basic.min_le_right _ _).trans
+        ((Basic.min_le_right _ _).trans
+        (Basic.min_le_left _ _))))
   have secondBridgeLe : floor <= secondBridge :=
-    (Purelib.Data.Rat.Fraction.Order.Basic.min_le_right _ _).trans ((Purelib.Data.Rat.Fraction.Order.Basic.min_le_right
+    (Basic.min_le_right _ _).trans ((Basic.min_le_right
       _ _).trans
-      ((Purelib.Data.Rat.Fraction.Order.Basic.min_le_right _ _).trans
-        ((Purelib.Data.Rat.Fraction.Order.Basic.min_le_right _ _).trans
-        ((Purelib.Data.Rat.Fraction.Order.Basic.min_le_right _ _).trans
-          (Purelib.Data.Rat.Fraction.Order.Basic.min_le_left _ _)))))
+      ((Basic.min_le_right _ _).trans
+        ((Basic.min_le_right _ _).trans
+        ((Basic.min_le_right _ _).trans
+          (Basic.min_le_left _ _)))))
   have freshCommonLe : floor <= freshCommon :=
-    (Purelib.Data.Rat.Fraction.Order.Basic.min_le_right _ _).trans ((Purelib.Data.Rat.Fraction.Order.Basic.min_le_right
+    (Basic.min_le_right _ _).trans ((Basic.min_le_right
       _ _).trans
-      ((Purelib.Data.Rat.Fraction.Order.Basic.min_le_right _ _).trans
-        ((Purelib.Data.Rat.Fraction.Order.Basic.min_le_right _ _).trans
-        ((Purelib.Data.Rat.Fraction.Order.Basic.min_le_right _ _).trans
-          (Purelib.Data.Rat.Fraction.Order.Basic.min_le_right _ _)))))
+      ((Basic.min_le_right _ _).trans
+        ((Basic.min_le_right _ _).trans
+        ((Basic.min_le_right _ _).trans
+          (Basic.min_le_right _ _)))))
   exact
     ⟨{ firstSmall := by simpa only [Norm.Basic.normSq_eq_canonical] using distance.trans_le firstLe
        secondSmall := by simpa only [Norm.Basic.normSq_eq_canonical] using distance.trans_le secondLe
@@ -285,7 +289,7 @@ open Purelib.Riemann.Integration
 
 The dependent safety proposition follows the exact parent positions, original owners, requests and caches. -/
 inductive ParentCongruenceSafe {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential) :
@@ -340,7 +344,7 @@ inductive ParentCongruenceSafe {genus : Nat}
 
 /-- The finite minimum of the original steps' direct-comparison clearance floors, with terminal value one. -/
 def parentCongruenceFloor {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential) :
@@ -362,7 +366,7 @@ def parentCongruenceFloor {genus : Nat}
 
 /-- The retained subdivision's finite congruence clearance floor is positive. -/
 theorem parentCongruenceFloor_positive {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential) :
@@ -379,7 +383,7 @@ theorem parentCongruenceFloor_positive {genus : Nat}
       decide
   | current, owner, .next _ _ request _cached _ordered small remaining,
       .next _ _ _ _ _ _ _ position remainingPositions =>
-      Purelib.Data.Rat.Fraction.Order.Basic.lt_min (directStepClearanceFloor_positive parent current position owner
+      Basic.lt_min (directStepClearanceFloor_positive parent current position owner
         request)
         (parentCongruenceFloor_positive parent request.endpoint
           (PreparedSheetContinuation.advance parent.segment
@@ -391,7 +395,7 @@ theorem parentCongruenceFloor_positive {genus : Nat}
 The dependent proposition retains the original ordered requests and owners; the terminal subdivision contributes no
 variation condition. -/
 inductive ParentSubdivisionVariationBound {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential) (bound : Coordinate) :
@@ -432,7 +436,7 @@ inductive ParentSubdivisionVariationBound {genus : Nat}
 
 /-- A uniform step-variation bound below the retained finite floor certifies every direct comparison. -/
 theorem parentCongruenceSafe_of_bound_lt_floor {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential) (bound : Coordinate) :
@@ -453,19 +457,19 @@ theorem parentCongruenceSafe_of_bound_lt_floor {genus : Nat}
       .next _ _ _ _ _ _ _ head tail, below => by
       apply ParentCongruenceSafe.next current owner request cached ordered small
         remaining position remainingPositions
-      · exact head.trans_lt (below.trans_le (Purelib.Data.Rat.Fraction.Order.Basic.min_le_left _ _))
+      · exact head.trans_lt (below.trans_le (Basic.min_le_left _ _))
       · exact parentCongruenceSafe_of_bound_lt_floor parent bound
           request.endpoint
           (PreparedSheetContinuation.advance parent.segment
             parent.within current owner request small)
           remaining remainingPositions tail
-            (below.trans_le (Purelib.Data.Rat.Fraction.Order.Basic.min_le_right _ _))
+            (below.trans_le (Basic.min_le_right _ _))
 
 /-- Transfer the original request-edge variation bounds to the subdivision constructed from fresh-mesh safety.
 
 The result retains the exact requested endpoint list and the canonical caches produced by the original builder. -/
 theorem parentSubdivisionVariationBound_ofFreshMeshSafe {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential) (bound : Coordinate) :
@@ -504,7 +508,7 @@ theorem parentSubdivisionVariationBound_ofFreshMeshSafe {genus : Nat}
 
 /-- Transfer the original request-edge variation bounds to the subdivision constructed from mesh safety. -/
 theorem parentSubdivisionVariationBound_ofMeshSafe {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential) (bound : Coordinate)
@@ -541,7 +545,7 @@ open Purelib.Riemann.Branches in
 open Purelib.Riemann.Integration in
 /-- The parent segment's variation bound scaled by the geometric quarter-radius at the requested dyadic depth. -/
 def parentDyadicVariationBound {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential) (depth : Nat) : Coordinate :=
@@ -555,7 +559,7 @@ open Purelib.Riemann.Branches
 open Purelib.Riemann.Integration
 /-- The retained finite direct-comparison floor of the exact safe parent dyadic subdivision. -/
 def parentDyadicCongruenceFloor {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential)
@@ -574,7 +578,7 @@ def parentDyadicCongruenceFloor {genus : Nat}
 
 /-- The direct-comparison floor of the retained safe dyadic subdivision is positive. -/
 theorem parentDyadicCongruenceFloor_positive {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential)
@@ -595,7 +599,7 @@ theorem parentDyadicCongruenceFloor_positive {genus : Nat}
 
 /-- Every actual dyadic step meets the parent's geometric quarter-radius variation bound. -/
 theorem parentDyadicSubdivisionVariationBound {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential)
@@ -623,7 +627,7 @@ theorem parentDyadicSubdivisionVariationBound {genus : Nat}
 
 /-- The safe dyadic subdivision is comparison-safe when its variation bound lies below its retained floor. -/
 theorem parentDyadicCongruenceSafe_of_bound_lt_floor {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential)
@@ -653,7 +657,7 @@ theorem parentDyadicCongruenceSafe_of_bound_lt_floor {genus : Nat}
 
 /-- Decide whether the dyadic variation bound is below the exact retained comparison floor. -/
 def parentDyadicCongruenceBoundAccepted {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential)
@@ -670,7 +674,7 @@ def parentDyadicCongruenceBoundAccepted {genus : Nat}
 
 /-- Acceptance of the exact scalar comparison supplies safety for every original dyadic step. -/
 theorem parentDyadicCongruenceSafe_of_accepted {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential)
@@ -693,7 +697,7 @@ theorem parentDyadicCongruenceSafe_of_accepted {genus : Nat}
 
 /-- Add the requested offset to the parent's sufficient dyadic depth for the given root-diameter target. -/
 def parentCandidateDepth {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential) (rootDiameter : Coordinate) (offset : Nat) : Nat :=
@@ -702,7 +706,7 @@ def parentCandidateDepth {genus : Nat}
 
 /-- Every nonnegative offset from the sufficient depth retains mesh safety for the positive diameter target. -/
 theorem parentCandidateMeshSafe {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential)
@@ -724,7 +728,7 @@ open Purelib.Curves.Hyperelliptic.Differentials in
 open Purelib.Riemann.Integration in
 /-- Test the retained comparison bound at the exact offset candidate depth. -/
 def parentCandidateAccepted {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential)
@@ -745,7 +749,7 @@ open Purelib.Riemann.Integration
 Each retained variation inequality supplies the exact direct-step predicate tested by the checker, and the recursive
 safety witness supplies success of the original tail. -/
 theorem tryParentStepSmalls_isSome_of_congruenceSafe {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential) :
@@ -786,7 +790,7 @@ theorem tryParentStepSmalls_isSome_of_congruenceSafe {genus : Nat}
 
 /-- Comparison safety guarantees that the original dyadic checker returns its certificate. -/
 theorem tryCheckedParentDyadic_isSome_of_congruenceSafe {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential)
@@ -830,7 +834,7 @@ theorem tryCheckedParentDyadic_isSome_of_congruenceSafe {genus : Nat}
 The construction reads the actual checked result and preserves its exact depth, diameter, mesh safety and
 parent-position indices. -/
 def checkedParentDyadicOfCongruenceSafe {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential)
@@ -856,7 +860,7 @@ def checkedParentDyadicOfCongruenceSafe {genus : Nat}
 
 /-- Extract the original dyadic certificate from acceptance of its exact variation-versus-floor test. -/
 def checkedParentDyadicOfBoundAccepted {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential)
@@ -886,7 +890,7 @@ open Purelib.Riemann.Integration in
 
 The parent, strict endpoint ordering and positive root-diameter target remain indices of the certificate. -/
 structure CheckedParentCandidate {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential)
@@ -906,7 +910,7 @@ open Purelib.Curves.Hyperelliptic.Differentials in
 open Purelib.Riemann.Integration in
 /-- The actual sufficient depth plus the retained candidate offset. -/
 def depth {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential}
@@ -922,7 +926,7 @@ open Purelib.Riemann.Branches in
 open Purelib.Riemann.Integration in
 /-- The retained candidate depth satisfies the original dyadic mesh-safety predicate. -/
 theorem meshSafe {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential}
@@ -941,7 +945,7 @@ open Purelib.Curves.Hyperelliptic.Differentials in
 open Purelib.Riemann.Integration in
 /-- Recover the original dyadic step certificate at the candidate's retained depth and mesh-safety proof. -/
 def toCheckedParentDyadic {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential}
@@ -965,7 +969,7 @@ open Purelib.Riemann.Integration
 Each candidate uses the same original parent and positive diameter target. `none` means this finite offset search
 returned no certificate. -/
 def tryCheckedParentCandidateUpTo {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential)
@@ -990,7 +994,7 @@ def tryCheckedParentCandidateUpTo {genus : Nat}
 
 /-- The finite candidate search succeeds whenever its final permitted offset is accepted. -/
 theorem tryCheckedParentCandidateUpTo_isSome_of_lastAccepted {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedSubdivisionModelCore.PreparedEdge curve
       differential)
@@ -1026,7 +1030,7 @@ open Purelib.Riemann.Integration in
 
 The supplied center family is indexed by that original subdivision and remains attached to its actual cached steps. -/
 def childEdges {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : CenteredEdge curve differential)
     (depth : Nat) (rootDiameter : Coordinate)
@@ -1055,7 +1059,7 @@ open Purelib.Riemann.Integration in
 Each constructor records the parent, depth, diameter, safety and direct-step certificate before appending its actual
 child edges to the remaining refinement. -/
 inductive CheckedRefinement {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus} :
     List (CenteredEdge curve differential) ->
       List (CenteredEdge curve differential) -> Type
@@ -1092,7 +1096,7 @@ open Purelib.Riemann.Integration in
 set_option backward.match.sparseCases false in
 /-- Transfer checked dyadic blocks to root-comparison refinements with their exact displacement equations. -/
 def toCenteredEdgeRefinement {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus} :
     forall {parents children : List (CenteredEdge curve differential)},
       CheckedRefinement parents children ->
@@ -1123,7 +1127,7 @@ open Purelib.Curves.Hyperelliptic.Differentials in
 open Purelib.Riemann.Integration in
 /-- Transfer the retained checked refinement to compatible constant models of the same ordered edges. -/
 def toCompatible {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parents children : List (CenteredEdge curve differential)}
     (refinement : CheckedRefinement parents children) :
@@ -1138,7 +1142,7 @@ open Purelib in
 open Purelib.Curves.Hyperelliptic.Differentials in
 /-- Every original centered parent has strictly ordered endpoint parameters. -/
 def AllParentsProper {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus} :
     List (CenteredEdge curve differential) -> Prop
   | [] => True
@@ -1146,12 +1150,29 @@ def AllParentsProper {genus : Nat}
       parent.edge.left.parameter < parent.edge.request.endpoint.parameter /\
         AllParentsProper remaining
 
+/-- Read strict parameter order at the same bounded occurrence of the original parent list.
+
+Structural recursion consumes the original ordered proposition and its tail;
+no parent list or numeric edge is constructed by this readback.
+-/
+theorem AllParentsProper.get {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    {differential : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} :
+    {parents : List (CenteredEdge curve differential)} →
+    AllParentsProper parents → (index : Fin parents.length) →
+      (parents[index.val]'index.isLt).edge.left.parameter <
+        (parents[index.val]'index.isLt).edge.request.endpoint.parameter
+  | [], _, index => Fin.elim0 index
+  | _ :: _, ordered, index => by
+      refine Fin.cases ordered.1 ?_ index
+      intro tail
+      exact AllParentsProper.get ordered.2 tail
+
 open Purelib in
 open Purelib.Curves.Hyperelliptic.Differentials in
 open Purelib.Riemann.Integration in
 /-- Read the accepted candidate's exact dyadic child edges with their canonical center family. -/
 def candidateChildEdges {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : CenteredEdge curve differential)
     (proper : parent.edge.left.parameter <
@@ -1174,7 +1195,7 @@ open Purelib.Curves.Hyperelliptic.Differentials in
 
 The result retains the ordered children and the certificate relating those exact children to the input parents. -/
 structure CheckedRefinementResult {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parents : List (CenteredEdge curve differential)) where
   /-- The actual ordered child edges returned by the finite refinement construction. -/ children : List (CenteredEdge
@@ -1191,7 +1212,7 @@ open Purelib.Curves.Hyperelliptic.Differentials in
 open Purelib.Riemann.Integration in
 /-- Transfer the retained checked refinement to compatible constant models of the same ordered edges. -/
 def toCompatible {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parents : List (CenteredEdge curve differential)}
     (result : CheckedRefinementResult parents) :
@@ -1211,7 +1232,7 @@ open Purelib.Riemann.Integration in
 Success retains each accepted depth and its canonical child centers, concatenated in parent order. `none` is the
 unsuccessful result of one of these finite checks. -/
 def tryCheckedRefinementUpTo {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (rootDiameter : Coordinate) (rootDiameterPositive : 0 < rootDiameter)
     (fuel : Nat) :

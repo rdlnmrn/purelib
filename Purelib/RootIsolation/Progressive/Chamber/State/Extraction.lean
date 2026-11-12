@@ -82,7 +82,7 @@ admitted next reading. -/
 def majorantsAt
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (index : chamber.Index) :
     Dense.Gaussian.Newton.Box.Majorants.ExtractionMajorants
       (state.nextTable epsilon positive).polynomial
@@ -125,7 +125,7 @@ The original positive-degree witness supplies nonzeroness and the exact degree-i
 def nextElimination
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) :
     Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate
       (state.nextTable epsilon positive).polynomial
@@ -168,16 +168,16 @@ fixed reference owner to the current live owner. -/
 def separationAt
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (index : chamber.Index) :
     Dense.Gaussian.Derivative.Separation.Basic.Certificate
       (state.nextTable epsilon positive).polynomial
       (state.family.owner index).box := by
   let seedBox := (chamber.owners.owner index).box
   let localTarget := reference.bezoutStabilityTarget chamber.squarefree seedBox
-  have referenceLocal : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.AllowancesLt reference.entries
+  have referenceLocal : CoefficientTable.AllowancesLt reference.entries
       localTarget := chamber.referenceSmall.mono (chamber.target_le_bezout index)
-  have nextLocal : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.AllowancesLt
+  have nextLocal : CoefficientTable.AllowancesLt
       (state.nextTable epsilon positive).entries localTarget :=
     (state.nextTable_chamberSmall epsilon positive).mono
       (chamber.target_le_bezout index)
@@ -219,7 +219,7 @@ The original transfer supplies right-side clearance and preserves winding four, 
 def transportedRawStateAt
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (index : chamber.Index) :
     State.Raw.RawWindingState
       (state.nextTable epsilon positive).polynomial
@@ -264,7 +264,7 @@ namespace ChamberContinuationState
 def extractionAt
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (index : chamber.Index) :
     Newton.Extraction.Majorized.Basic.MajorizedSeparatedOutput
       (state.transportedRawStateAt epsilon positive index)
@@ -307,7 +307,7 @@ namespace ChamberContinuationState
 @[simp] theorem majorantsAt_derivative
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (index : chamber.Index) :
     (state.majorantsAt epsilon positive index).derivative =
       reference.admittedExtractionDerivative chamber.target
@@ -343,7 +343,7 @@ namespace ChamberContinuationState
 @[simp] theorem majorantsAt_lipschitz
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (index : chamber.Index) :
     (state.majorantsAt epsilon positive index).lipschitz =
       reference.admittedExtractionLipschitz chamber.target
@@ -379,7 +379,7 @@ namespace ChamberContinuationState
 @[simp] theorem majorantsAt_taylor
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (index : chamber.Index) :
     (state.majorantsAt epsilon positive index).taylor =
       reference.admittedExtractionTaylor chamber.target
@@ -415,7 +415,7 @@ namespace ChamberContinuationState
 @[simp] theorem separationAt_margin
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (index : chamber.Index) :
     (state.separationAt epsilon positive index).margin =
       Dense.Gaussian.Derivative.Separation.Bezout.approximateMargin chamber.squarefree.right
@@ -452,7 +452,7 @@ namespace ChamberContinuationState
   transportedRawStateAt_box
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (index : chamber.Index) :
     (state.transportedRawStateAt epsilon positive index).box =
       (state.family.owner index).box := rfl
@@ -488,7 +488,7 @@ namespace ChamberContinuationState
   transportedRawStateAt_clearance_bound
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (index : chamber.Index) :
     (state.transportedRawStateAt epsilon positive index).clearance.bound =
       state.transportedClearanceBound index :=
@@ -525,7 +525,7 @@ reading. -/
 def nextFamily
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) :
     Owner.Family.Basic.OwnerFamily (state.nextTable epsilon positive).polynomial
       reference.degree where
@@ -572,7 +572,7 @@ namespace ChamberContinuationState
 theorem nextFamily_accurate
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (index : chamber.Index) :
     ((state.nextFamily epsilon positive).owner index).box.diagonalSq ≤
       epsilon ^ 2 :=
@@ -608,11 +608,11 @@ namespace ChamberContinuationState
 theorem nextFamily_nested
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (index : chamber.Index) :
     ((state.nextFamily epsilon positive).owner index).box.Refines
       (state.family.owner index).box :=
-  (Geometry.Rational.Box.Refinement.StrictInterior.refines (state.extractionAt epsilon positive
+  (Box.Refinement.StrictInterior.refines (state.extractionAt epsilon positive
       index).core.strictCurrent)
 end ChamberContinuationState
 
@@ -645,7 +645,7 @@ namespace ChamberContinuationState
 theorem nextFamily_strict
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (index : chamber.Index) :
     ((state.nextFamily epsilon positive).owner index).box.StrictInterior
       (state.family.owner index).box :=
@@ -684,16 +684,16 @@ majorants. -/
 theorem predictedOwnerClearance_le_next
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (index : chamber.Index) :
     state.predictedOwnerClearance index epsilon ≤
       ((state.nextFamily epsilon positive).owner index).clearance.bound := by
   have predicted :=
     (state.extractionAt epsilon positive index).predicted_clearance_le
   rw [Dense.Gaussian.Newton.Box.Budget.Majorants.predictedExtractionClearance_eq_data] at predicted
-  simpa only [Progressive.Chamber.State.ChamberContinuationState.predictedOwnerClearance,
+  simpa only [predictedOwnerClearance,
     separationAt_margin,
-    Progressive.Chamber.State.ChamberContinuationState.transferAt_clearance_bound,
+    transferAt_clearance_bound,
       majorantsAt_lipschitz,
       majorantsAt_taylor,
     majorantsAt_derivative,
@@ -733,7 +733,7 @@ quantitative budget. -/
 theorem nextFamily_stable
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (index : chamber.Index) :
     (state.nextTable epsilon positive).refinementEvaluationBound
         (state.nextGuardTarget epsilon) (state.family.owner index).box <

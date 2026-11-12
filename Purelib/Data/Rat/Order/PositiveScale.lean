@@ -6,6 +6,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 public import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.Rat
 
 section
@@ -37,8 +39,8 @@ theorem compare_lt_iff
   constructor
   · intro less
     rw [identity]
-    exact Fraction.Order.Arithmetic.mul_neg_of_pos_of_neg_direct
-      factorPositive (Fraction.Order.Arithmetic.sub_neg_direct less)
+    exact Arithmetic.mul_neg_of_pos_of_neg_direct
+      factorPositive (Arithmetic.sub_neg_direct less)
   · intro negative
     rw [identity] at negative
     have scaled :
@@ -46,8 +48,8 @@ theorem compare_lt_iff
       simpa only [Fraction.Field.mul_comm,
         Fraction.Field.zero_mul_direct,
         Fraction.Field.mul_zero_direct] using negative
-    exact Fraction.Order.Arithmetic.lt_of_sub_neg_direct
-      (Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+    exact Arithmetic.lt_of_sub_neg_direct
+      (Arithmetic.lt_of_mul_lt_mul_right_direct
         scaled factorPositive)
 
 /-- A positive scaling of a rational difference is nonpositive exactly when its first endpoint is at most the threshold.
@@ -62,8 +64,8 @@ theorem compare_le_iff
   · intro less
     rw [identity]
     have scaled :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Boundary.sub_nonpositive_iff.mpr less) factorPositive.le
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Boundary.sub_nonpositive_iff.mpr less) factorPositive.le
     simpa only [Fraction.Field.mul_zero_direct] using scaled
   · intro nonpositive
     rw [identity] at nonpositive
@@ -72,8 +74,8 @@ theorem compare_le_iff
       simpa only [Fraction.Field.mul_comm,
         Fraction.Field.zero_mul_direct,
         Fraction.Field.mul_zero_direct] using nonpositive
-    exact Fraction.Order.Boundary.sub_nonpositive_iff.mp
-      (Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+    exact Boundary.sub_nonpositive_iff.mp
+      (Arithmetic.le_of_mul_le_mul_right_direct
         scaled factorPositive)
 
 /-- A positive scaling of a rational difference vanishes exactly when its two endpoints agree.
@@ -115,8 +117,8 @@ theorem compare_gt_iff
   constructor
   · intro greater
     rw [identity]
-    exact Fraction.Order.Arithmetic.mul_pos_direct factorPositive
-      (Fraction.Order.Arithmetic.sub_pos_direct greater)
+    exact Arithmetic.mul_pos_direct factorPositive
+      (Arithmetic.sub_pos_direct greater)
   · intro positive
     rw [identity] at positive
     have scaled :
@@ -124,8 +126,8 @@ theorem compare_gt_iff
       simpa only [Fraction.Field.mul_comm,
         Fraction.Field.zero_mul_direct,
         Fraction.Field.mul_zero_direct] using positive
-    exact Fraction.Order.Arithmetic.lt_of_sub_pos_direct
-      (Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+    exact Arithmetic.lt_of_sub_pos_direct
+      (Arithmetic.lt_of_mul_lt_mul_right_direct
         scaled factorPositive)
 
 /-- A positive scaling of a rational difference is nonnegative exactly when its first endpoint is at least the
@@ -140,8 +142,8 @@ theorem compare_ge_iff
   constructor
   · intro greater
     rw [identity]
-    exact Fraction.Order.Arithmetic.mul_nonneg_direct factorPositive.le
-      (Fraction.Order.Arithmetic.sub_nonneg_direct greater)
+    exact Arithmetic.mul_nonneg_direct factorPositive.le
+      (Arithmetic.sub_nonneg_direct greater)
   · intro nonnegative
     rw [identity] at nonnegative
     have scaled :
@@ -149,8 +151,8 @@ theorem compare_ge_iff
       simpa only [Fraction.Field.mul_comm,
         Fraction.Field.zero_mul_direct,
         Fraction.Field.mul_zero_direct] using nonnegative
-    exact Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
-      (Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+    exact Arithmetic.le_of_sub_nonneg_direct
+      (Arithmetic.le_of_mul_le_mul_right_direct
         scaled factorPositive)
 end Purelib.Data.Rat.Order.PositiveScale
 

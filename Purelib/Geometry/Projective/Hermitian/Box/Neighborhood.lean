@@ -8,6 +8,9 @@ import Purelib.Data.List.Map
 import Purelib.Data.Rat.Fraction.Order.Field
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+open Purelib.Geometry.Rational.Box
+
 /-!
 # Proper neighbourhoods with retained Hermitian signs
 
@@ -34,11 +37,11 @@ theorem signDistanceSq_pos (form : HermitianForm) (bounding : Rational.Box)
     (point : Gaussian.Basic.Canonical) (nonzero : form.eval point ≠ 0) :
     0 < signDistanceSq form bounding point := by
   have coefficientPositive : 0 < 1 + variationCoefficient form bounding :=
-    Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct (by decide)
+    Arithmetic.add_pos_of_pos_of_nonneg_direct (by decide)
       (variationCoefficient_nonneg form bounding)
-  exact Fraction.Order.Field.div_pos_direct
-    (Fraction.Order.Arithmetic.exact_rational_sq_pos nonzero)
-    (Fraction.Order.Arithmetic.mul_pos_direct (by decide) coefficientPositive)
+  exact Field.div_pos_direct
+    (Arithmetic.exact_rational_sq_pos nonzero)
+    (Arithmetic.mul_pos_direct (by decide) coefficientPositive)
 
 /-- A squared diagonal paying the original clearance gives the strict Hermitian variation margin. -/
 theorem variationSqBound_lt_of_signDistanceSq (form : HermitianForm)
@@ -46,23 +49,23 @@ theorem variationSqBound_lt_of_signDistanceSq (form : HermitianForm)
     (diagonal : current.diagonalSq < 4 * signDistanceSq form bounding point) :
     variationSqBound form bounding current < form.eval point ^ 2 := by
   have coefficientPositive : 0 < 1 + variationCoefficient form bounding :=
-    Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct (by decide)
+    Arithmetic.add_pos_of_pos_of_nonneg_direct (by decide)
       (variationCoefficient_nonneg form bounding)
   have coefficientBound : variationCoefficient form bounding ≤ 1 + variationCoefficient form bounding := by
     calc
       variationCoefficient form bounding = 0 + variationCoefficient form bounding := by ring1
       _ ≤ 1 + variationCoefficient form bounding :=
-        Fraction.Order.Arithmetic.add_le_add_direct (by decide) (Fraction.Order.Basic.le_refl _)
+        Arithmetic.add_le_add_direct (by decide) (Basic.le_refl _)
   calc
     variationSqBound form bounding current ≤
         (1 + variationCoefficient form bounding) * current.diagonalSq :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct coefficientBound current.diagonalSq_nonneg
+      Arithmetic.mul_le_mul_of_nonneg_right_direct coefficientBound current.diagonalSq_nonneg
     _ < (1 + variationCoefficient form bounding) * (4 * signDistanceSq form bounding point) :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct coefficientPositive diagonal
+      Arithmetic.mul_lt_mul_of_pos_left_direct coefficientPositive diagonal
     _ = (form.eval point ^ 2 / (4 * (1 + variationCoefficient form bounding))) *
         (4 * (1 + variationCoefficient form bounding)) := by unfold signDistanceSq; ring1
     _ = form.eval point ^ 2 := Fraction.Field.div_mul_cancel_of_ne _ _
-      (Fraction.Order.Arithmetic.mul_pos_direct (by decide) coefficientPositive).ne'
+      (Arithmetic.mul_pos_direct (by decide) coefficientPositive).ne'
 
 /-- Use unit clearance for universal zero forms and the original sign clearance for every other form. -/
 @[expose] def guardedSignDistanceSq (form : HermitianForm) (bounding : Rational.Box)
@@ -88,7 +91,7 @@ structure SignNeighborhood (forms : List HermitianForm) (outer : Rational.Box) w
   /-- The retained minimum is strictly positive. -/ distancePositive : 0 < distanceSq
   /-- The actual computed rational neighbourhood box. -/ box : Rational.Box
   /-- The box uses the retained sample and computed minimum without replacing either owner. -/ boxSpec :
-    box = Rational.Box.Neighborhood.innerBox outer sample.point sample.inside distanceSq distancePositive
+    box = Neighborhood.innerBox outer sample.point sample.inside distanceSq distancePositive
   /-- The returned box has strictly positive coordinate widths. -/ proper : box.Proper
   /-- The returned box lies strictly inside its original parent. -/ nested : box.StrictInterior outer
   /-- The original sample remains strictly inside the returned box. -/ sampleInside : box.StrictContains sample.point
@@ -116,9 +119,9 @@ def signNeighborhoodOfSample {forms : List HermitianForm} {outer : Rational.Box}
       exact signDistanceSq_pos form outer sample.point (sample.regular form formMember zero)
   let distanceSq := Rat.List.Minimum.positiveMinimum clearances
   have distancePositive : 0 < distanceSq := Rat.List.Minimum.positiveMinimum_pos clearances allPositive
-  let box := Rational.Box.Neighborhood.innerBox outer sample.point sample.inside distanceSq distancePositive
-  have nested := Rational.Box.Neighborhood.innerBox_strictInterior sample.inside distancePositive
-  have sampleInside := Rational.Box.Neighborhood.innerBox_strictContains_center sample.inside distancePositive
+  let box := Neighborhood.innerBox outer sample.point sample.inside distanceSq distancePositive
+  have nested := Neighborhood.innerBox_strictInterior sample.inside distancePositive
+  have sampleInside := Neighborhood.innerBox_strictContains_center sample.inside distancePositive
   refine ⟨
     { sample := sample
       clearances := clearances
@@ -128,7 +131,7 @@ def signNeighborhoodOfSample {forms : List HermitianForm} {outer : Rational.Box}
       distancePositive := distancePositive
       box := box
       boxSpec := rfl
-      proper := Rational.Box.Neighborhood.innerBox_proper sample.inside distancePositive
+      proper := Neighborhood.innerBox_proper sample.inside distancePositive
       nested := nested
       sampleInside := sampleInside
       certificate := ?_ }, rfl⟩
@@ -138,10 +141,10 @@ def signNeighborhoodOfSample {forms : List HermitianForm} {outer : Rational.Box}
   have payment := Rat.List.Minimum.positiveMinimum_le_of_mem clearanceMember
   rewrite [guardedSignDistanceSq, if_neg nonzero] at payment
   have diagonal : box.diagonalSq < 4 * signDistanceSq form outer sample.point :=
-    (Rational.Box.Neighborhood.innerBox_diagonalSq_lt sample.inside distancePositive).trans_le
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct payment (by decide))
+    (Neighborhood.innerBox_diagonalSq_lt sample.inside distancePositive).trans_le
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct payment (by decide))
   exact
-    { refines := Rational.Box.Refinement.StrictInterior.refines nested
+    { refines := Refinement.StrictInterior.refines nested
       sample := sample.point
       sampleInside := ⟨sampleInside.1.le, sampleInside.2.1.le, sampleInside.2.2.1.le, sampleInside.2.2.2.le⟩
       margin := variationSqBound_lt_of_signDistanceSq form outer box sample.point diagonal }

@@ -33,46 +33,46 @@ set_option genInjectivity false in
 
 The endpoints index a finite oriented spine. Every nonempty step retains an original adjacent interval and its
 membership in the supplied interval bank. -/
-public inductive IncreasingWalk (intervals : List (Geometry.Grid.ClearGrid.Interval key)) : Fraction.Rational →
+public inductive IncreasingWalk (intervals : List (ClearGrid.Interval key)) : Fraction.Rational →
   Fraction.Rational → Type u
   /-- The empty walk from a coordinate to itself. -/ | nil (point : Fraction.Rational) :
-    Purelib.Polynomial.Geometry.Grid.AxisWalks.IncreasingWalk intervals point point
+    AxisWalks.IncreasingWalk intervals point point
   /-- Prepend an actual retained adjacent interval to a walk starting at its upper endpoint. -/ | cons (interval :
-    Geometry.Grid.ClearGrid.Interval key) (member : interval ∈ intervals)
-      {finish : Fraction.Rational} (tail : Purelib.Polynomial.Geometry.Grid.AxisWalks.IncreasingWalk intervals (key
+    ClearGrid.Interval key) (member : interval ∈ intervals)
+      {finish : Fraction.Rational} (tail : AxisWalks.IncreasingWalk intervals (key
         interval.upper) finish) :
-      Purelib.Polynomial.Geometry.Grid.AxisWalks.IncreasingWalk intervals (key interval.lower) finish
+      AxisWalks.IncreasingWalk intervals (key interval.lower) finish
 
 constructive_injectivity IncreasingWalk
 
 namespace IncreasingWalk
 
-variable {intervals : List (Geometry.Grid.ClearGrid.Interval key)} {start finish : Fraction.Rational}
+variable {intervals : List (ClearGrid.Interval key)} {start finish : Fraction.Rational}
 
 /-- Transport a retained increasing walk along an equality of start coordinates. -/
-@[expose] public def castStart {other : Fraction.Rational} (walk : Geometry.Grid.AxisWalks.IncreasingWalk intervals
+@[expose] public def castStart {other : Fraction.Rational} (walk : IncreasingWalk intervals
   start finish) (equal : start = other) :
-    Geometry.Grid.AxisWalks.IncreasingWalk intervals other finish := equal ▸ walk
+    IncreasingWalk intervals other finish := equal ▸ walk
 
 /-- Transport a retained increasing walk along an equality of finish coordinates. -/
-@[expose] public def castFinish {other : Fraction.Rational} (walk : Geometry.Grid.AxisWalks.IncreasingWalk intervals
+@[expose] public def castFinish {other : Fraction.Rational} (walk : IncreasingWalk intervals
   start finish) (equal : finish = other) :
-    Geometry.Grid.AxisWalks.IncreasingWalk intervals start other := equal ▸ walk
+    IncreasingWalk intervals start other := equal ▸ walk
 
 /-- Read the original adjacent intervals traversed by an increasing walk, in traversal order. -/
-@[expose] public def edges : {start finish : Fraction.Rational} → Geometry.Grid.AxisWalks.IncreasingWalk intervals start
-  finish → List (Geometry.Grid.ClearGrid.Interval key)
+@[expose] public def edges : {start finish : Fraction.Rational} → IncreasingWalk intervals start
+  finish → List (ClearGrid.Interval key)
   | _, _, .nil _ => []
   | _, _, .cons interval _ tail => interval :: tail.edges
 
 /-- The start coordinate of an increasing walk is at most its finish coordinate. -/
-public theorem ordered : {start finish : Fraction.Rational} → (walk : Geometry.Grid.AxisWalks.IncreasingWalk intervals
+public theorem ordered : {start finish : Fraction.Rational} → (walk : IncreasingWalk intervals
   start finish) → start ≤ finish
   | _, _, .nil _ => le_rfl
   | _, _, .cons interval _ tail => interval.ordered.le.trans tail.ordered
 
 /-- Every emitted edge stays inside the original oriented interval. -/
-public theorem edge_bounds : {start finish : Fraction.Rational} → (walk : Geometry.Grid.AxisWalks.IncreasingWalk
+public theorem edge_bounds : {start finish : Fraction.Rational} → (walk : IncreasingWalk
   intervals start finish) →
     ∀ interval ∈ walk.edges, start ≤ key interval.lower ∧ key interval.upper ≤ finish
   | _, _, .nil _, _, member => (List.not_mem_nil member).elim
@@ -84,7 +84,7 @@ public theorem edge_bounds : {start finish : Fraction.Rational} → (walk : Geom
         exact ⟨first.ordered.le.trans bounds.1, bounds.2⟩
 
 /-- Every emitted edge belongs to the original interval bank. -/
-public theorem edge_mem : {start finish : Fraction.Rational} → (walk : Geometry.Grid.AxisWalks.IncreasingWalk intervals
+public theorem edge_mem : {start finish : Fraction.Rational} → (walk : IncreasingWalk intervals
   start finish) →
     ∀ interval ∈ walk.edges, interval ∈ intervals
   | _, _, .nil _, _, member => (List.not_mem_nil member).elim
@@ -99,9 +99,9 @@ end IncreasingWalk
 /-- An adjacent interval of an axis tail remains adjacent in the full strictly ordered axis. -/
 public theorem adjacent_tail_mem {head : Alpha} {tail : List Alpha}
     (ordered : (head :: tail).Pairwise (fun left right => key left < key right))
-    (interval : Geometry.Grid.ClearGrid.Interval key) (member : interval ∈ Geometry.Grid.ClearGrid.Interval.adjacent
+    (interval : ClearGrid.Interval key) (member : interval ∈ ClearGrid.Interval.adjacent
       tail (List.pairwise_cons.mp ordered).2) :
-    interval ∈ Geometry.Grid.ClearGrid.Interval.adjacent (head :: tail) ordered := by
+    interval ∈ ClearGrid.Interval.adjacent (head :: tail) ordered := by
   cases tail with
   | nil => exact (List.not_mem_nil member).elim
   | cons next rest => exact List.mem_cons_of_mem _ member
@@ -120,23 +120,23 @@ public theorem tail_key_member {head : Alpha} {tail : List Alpha} {coordinate : 
 
 Each recursive step consumes one original adjacent interval and transports only its membership into the supplied
 interval bank. -/
-@[expose] public def fromHead (intervals : List (Geometry.Grid.ClearGrid.Interval key)) (target : Fraction.Rational) :
+@[expose] public def fromHead (intervals : List (ClearGrid.Interval key)) (target : Fraction.Rational) :
   (head : Alpha) → (tail : List Alpha) →
     (ordered : (head :: tail).Pairwise (fun left right => key left < key right)) →
-    (∀ interval ∈ Geometry.Grid.ClearGrid.Interval.adjacent (head :: tail) ordered, interval ∈ intervals) →
-    target ∈ (head :: tail).map key → Geometry.Grid.AxisWalks.IncreasingWalk intervals (key head) target
+    (∀ interval ∈ ClearGrid.Interval.adjacent (head :: tail) ordered, interval ∈ intervals) →
+    target ∈ (head :: tail).map key → IncreasingWalk intervals (key head) target
   | head, [], _, _, member =>
-      (Geometry.Grid.AxisWalks.IncreasingWalk.nil (key head)).castFinish (Membership.mem_singleton.mp member).symm
+      (IncreasingWalk.nil (key head)).castFinish (Membership.mem_singleton.mp member).symm
   | head, next :: tail, ordered, included, member =>
       if equal : target = key head then
-        (Geometry.Grid.AxisWalks.IncreasingWalk.nil (key head)).castFinish equal.symm
+        (IncreasingWalk.nil (key head)).castFinish equal.symm
       else
-        let interval : Geometry.Grid.ClearGrid.Interval key := ⟨head, next, (List.pairwise_cons.mp ordered).1 next
+        let interval : ClearGrid.Interval key := ⟨head, next, (List.pairwise_cons.mp ordered).1 next
           List.mem_cons_self⟩
-        let remaining := Purelib.Polynomial.Geometry.Grid.AxisWalks.fromHead intervals target next tail
+        let remaining := AxisWalks.fromHead intervals target next tail
           (List.pairwise_cons.mp ordered).2
-          (fun interval member => included interval (Geometry.Grid.AxisWalks.adjacent_tail_mem ordered interval member))
-            (Geometry.Grid.AxisWalks.tail_key_member member equal)
+          (fun interval member => included interval (adjacent_tail_mem ordered interval member))
+            (tail_key_member member equal)
         .cons interval (included interval List.mem_cons_self) remaining
 
 /-- If an increasing walk starts in the tail, its retained finish coordinate also belongs to the tail. -/
@@ -148,7 +148,7 @@ public theorem target_in_tail {head : Alpha} {tail : List Alpha} {start finish :
   have before : key head < start := by
     rw [← equal]
     exact (List.pairwise_cons.mp ordered).1 entry member
-  apply Geometry.Grid.AxisWalks.tail_key_member finishMember
+  apply tail_key_member finishMember
   intro same
   have strict := before.trans_le forward
   rw [same] at strict
@@ -158,22 +158,22 @@ public theorem target_in_tail {head : Alpha} {tail : List Alpha} {start finish :
 
 Skip entries before the start and retain the original adjacent payloads and bank membership witnesses for all subsequent
 steps. -/
-@[expose] public def increasingIn (intervals : List (Geometry.Grid.ClearGrid.Interval key)) (start finish :
+@[expose] public def increasingIn (intervals : List (ClearGrid.Interval key)) (start finish :
   Fraction.Rational) : (entries : List Alpha) →
     (ordered : entries.Pairwise (fun left right => key left < key right)) →
-    (∀ interval ∈ Geometry.Grid.ClearGrid.Interval.adjacent entries ordered, interval ∈ intervals) →
+    (∀ interval ∈ ClearGrid.Interval.adjacent entries ordered, interval ∈ intervals) →
     start ∈ entries.map key → finish ∈ entries.map key → start ≤ finish →
-      Geometry.Grid.AxisWalks.IncreasingWalk intervals start finish
+      IncreasingWalk intervals start finish
   | [], _, _, startMember, _, _ => (List.not_mem_nil startMember).elim
   | head :: tail, ordered, included, startMember, finishMember, forward =>
       if equal : start = key head then
-        (Geometry.Grid.AxisWalks.fromHead intervals finish head tail ordered included finishMember).castStart equal.symm
+        (fromHead intervals finish head tail ordered included finishMember).castStart equal.symm
       else
-        let startTail := Geometry.Grid.AxisWalks.tail_key_member startMember equal
-        let finishTail := Geometry.Grid.AxisWalks.target_in_tail ordered startTail finishMember forward
-        Purelib.Polynomial.Geometry.Grid.AxisWalks.increasingIn intervals start finish tail (List.pairwise_cons.mp
+        let startTail := tail_key_member startMember equal
+        let finishTail := target_in_tail ordered startTail finishMember forward
+        AxisWalks.increasingIn intervals start finish tail (List.pairwise_cons.mp
           ordered).2
-          (fun interval member => included interval (Geometry.Grid.AxisWalks.adjacent_tail_mem ordered interval member))
+          (fun interval member => included interval (adjacent_tail_mem ordered interval member))
             startTail finishTail forward
 
 /-- Walk directly between two increasing grid coordinates.  The prefix
@@ -182,8 +182,8 @@ so recursive suffixes are not repeatedly copied just to reindex membership. -/
 @[expose] public def increasing (start finish : Fraction.Rational) (entries : List Alpha)
     (ordered : entries.Pairwise (fun left right => key left < key right))
     (startMember : start ∈ entries.map key) (finishMember : finish ∈ entries.map key) (forward : start ≤ finish) :
-    Geometry.Grid.AxisWalks.IncreasingWalk (Geometry.Grid.ClearGrid.Interval.adjacent entries ordered) start finish :=
-  Geometry.Grid.AxisWalks.increasingIn (Geometry.Grid.ClearGrid.Interval.adjacent entries ordered) start finish entries
+    IncreasingWalk (ClearGrid.Interval.adjacent entries ordered) start finish :=
+  increasingIn (ClearGrid.Interval.adjacent entries ordered) start finish entries
     ordered (fun _ member => member) startMember finishMember forward
 
 set_option genInjectivity false in
@@ -191,12 +191,12 @@ set_option genInjectivity false in
 
 Forward traversal follows the stored increasing path from start to finish. Backward traversal uses the same retained
 increasing spine in the opposite direction. -/
-public inductive Walk (intervals : List (Geometry.Grid.ClearGrid.Interval key)) (start finish : Fraction.Rational) :
+public inductive Walk (intervals : List (ClearGrid.Interval key)) (start finish : Fraction.Rational) :
   Type u
   /-- Traverse a retained increasing path from the requested start to finish. -/ | forward (path :
-    Geometry.Grid.AxisWalks.IncreasingWalk intervals start finish)
+    IncreasingWalk intervals start finish)
   /-- Traverse in reverse a retained increasing path from the requested finish to start. -/ | backward (path :
-    Geometry.Grid.AxisWalks.IncreasingWalk intervals finish start)
+    IncreasingWalk intervals finish start)
 
 constructive_injectivity Walk
 
@@ -206,10 +206,10 @@ Use the increasing walk in the appropriate direction; equal endpoints produce an
 @[expose] public def walk (entries : List Alpha) (ordered : entries.Pairwise (fun left right => key left < key right))
     (start finish : Fraction.Rational) (startMember : start ∈ entries.map key) (finishMember : finish ∈ entries.map key)
       :
-    Geometry.Grid.AxisWalks.Walk (Geometry.Grid.ClearGrid.Interval.adjacent entries ordered) start finish :=
-  if forward : start ≤ finish then .forward (Geometry.Grid.AxisWalks.increasing start finish entries ordered startMember
+    Walk (ClearGrid.Interval.adjacent entries ordered) start finish :=
+  if forward : start ≤ finish then .forward (increasing start finish entries ordered startMember
     finishMember forward)
-  else .backward (Geometry.Grid.AxisWalks.increasing finish start entries ordered finishMember startMember (le_of_not_ge
+  else .backward (increasing finish start entries ordered finishMember startMember (le_of_not_ge
     forward))
 
 set_option genInjectivity false in
@@ -228,13 +228,13 @@ constructive_injectivity Lookup
 
 The result keeps the original payload, its membership witness and the exact coordinate equality. -/
 @[expose] public def lookup (coordinate : Fraction.Rational) : (entries : List Alpha) → coordinate ∈ entries.map key →
-  Geometry.Grid.AxisWalks.Lookup (key := key) entries coordinate
+  Lookup (key := key) entries coordinate
   | [], member => (List.not_mem_nil member).elim
   | head :: tail, member =>
       if equal : coordinate = key head then ⟨head, List.mem_cons_self, equal.symm⟩
       else
-        let found := Purelib.Polynomial.Geometry.Grid.AxisWalks.lookup coordinate tail
-          (Geometry.Grid.AxisWalks.tail_key_member member equal)
+        let found := AxisWalks.lookup coordinate tail
+          (tail_key_member member equal)
         ⟨found.entry, List.mem_cons_of_mem _ found.member, found.coordinate_eq⟩
 
 end Purelib.Polynomial.Geometry.Grid.AxisWalks

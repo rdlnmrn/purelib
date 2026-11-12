@@ -190,3 +190,37 @@ end CycleJoin
 end Purelib.Geometry.Path.Gaussian.Lifted.Refinement
 
 end
+
+public section
+
+namespace Purelib.Geometry.Path.Gaussian.Lifted.Basic.LiftedPath
+
+open Purelib.Geometry.Path.Gaussian.Lifted.Basic
+open Purelib.Integration.Polynomial.Gaussian.Cell.Basic
+
+/-- Two model lists following one lifted path have identical ordered endpoints at every cell.
+
+The integrand polynomials and allowances may differ. The two following
+certificates identify each model cell with the same original lifted edge,
+so both physical endpoints and their orientation agree. -/
+theorem followedBy_same_endpoints {sheets : Nat}
+    {leftModels rightModels : List CellModel}
+    {start finish : LiftedPoint sheets} {path : LiftedPath sheets start finish}
+    (leftFollows : FollowedBy leftModels path)
+    (rightFollows : FollowedBy rightModels path)
+    (index : Nat) (leftBound : index < leftModels.length)
+    (rightBound : index < rightModels.length) :
+    (leftModels[index]'leftBound).start = (rightModels[index]'rightBound).start ∧
+      (leftModels[index]'leftBound).finish = (rightModels[index]'rightBound).finish := by
+  induction leftFollows generalizing rightModels index with
+  | nil point => exact False.elim (Nat.not_lt_zero index leftBound)
+  | cons leftStart leftFinish leftTail inductionHypothesis =>
+      cases rightFollows with
+      | cons rightStart rightFinish rightTail =>
+          cases index with
+          | zero => exact ⟨leftStart.trans rightStart.symm, leftFinish.trans rightFinish.symm⟩
+          | succ index =>
+              exact inductionHypothesis rightTail index
+                (Nat.lt_of_succ_lt_succ leftBound) (Nat.lt_of_succ_lt_succ rightBound)
+
+end Purelib.Geometry.Path.Gaussian.Lifted.Basic.LiftedPath

@@ -80,38 +80,35 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonReq
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy (RegularBasisPolynomials)
 open Purelib.Riemann.Integration.PreparedDyadicPrimitiveResampling (PrimitiveSlopeBound)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential} {patch :
-    Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {cover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {covers :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {minimum : Nat} {common :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonCover cover covers minimum}
-  {areaAllowance sourceTarget coefficientTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor
-    index depth : Nat} {box : Purelib.Geometry.Rational.Box}
-  {request : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {parent : CenteredEdge curve differential} {patch :
+    PreparedPatch parent} {data :
+    Data patch count}
+  {cover : Cover data} {covers :
+    BasisSourceCovers parent}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {minimum : Nat} {common :
+    BasisCommonCover cover covers minimum}
+  {areaAllowance sourceTarget coefficientTarget : Coordinate} {floor
+    index depth : Nat} {box : Geometry.Rational.Box}
+  {request : BasisPreparedCommonRequest
     regular common areaAllowance sourceTarget coefficientTarget floor}
-  {polynomials : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+  {polynomials : RegularBasisPolynomials cap
     index box} {originals :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+    CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
     covers index}
-  {cells : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank
+  {cells : BasisSourceLocations.SampleBank
     covers index} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 /-- Supply the resampling hypothesis from the cached source cover and the acquisition's exact polynomial readback. -/
-theorem row_slope (acquired : BasisPreparedCommonRequest.Acquisition request polynomials originals cells coefficients
+theorem row_slope (acquired : Acquisition request polynomials originals cells coefficients
   depth) (row : Fin genus) :
-    PreparedDyadicPrimitiveResampling.PrimitiveSlopeBound (covers.get row).data.sourceSlope
+    PrimitiveSlopeBound (covers.get row).data.sourceSlope
       (RequestedParents.cons (acquired.prepared.get row).localRequest .nil) := by
   constructor
   · intro first last firstInside lastInside
-    change Data.Gaussian.Basic.Canonical.normSq
-      (((acquired.prepared.get row).localRequest.request.model.primitive.value).eval _ -
-        ((acquired.prepared.get row).localRequest.request.model.primitive.value).eval _) ≤ _
     rw [acquired.primitive_eq row]
     have scalar := (originals.get row).increment_bound firstInside lastInside
     rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
@@ -119,21 +116,19 @@ theorem row_slope (acquired : BasisPreparedCommonRequest.Acquisition request pol
   · trivial
 
 /-- Read the retained nonuniform depth bounds from this exact acquisition. -/
-theorem row_depths (acquired : BasisPreparedCommonRequest.Acquisition request polynomials originals cells coefficients
+theorem row_depths (acquired : Acquisition request polynomials originals cells coefficients
   depth)
     (row : Fin genus) {scheduled : Nat} (later : common.depth + acquired.extraDepth ≤ scheduled) :
     PreparedDyadicPrimitiveResampling.PreparedDepthBounds depth scheduled
       (RequestedParents.cons (acquired.prepared.get row).localRequest .nil) := by
   constructor
-  · change depth ≤ (acquired.prepared.get row).localRequest.request.block.depth ∧
-      (acquired.prepared.get row).localRequest.request.block.depth ≤ scheduled
-    rw [acquired.depths_eq row]
+  · rw [acquired.depths_eq row]
     exact ⟨acquired.minimum_le.trans (Nat.le_add_left _ _), later⟩
   · trivial
 
 /-- Identify the polynomial path with the acquisition's actual child mesh, without identifying its polynomial increments
 with model integral samples. -/
-theorem row_path (acquired : BasisPreparedCommonRequest.Acquisition request polynomials originals cells coefficients
+theorem row_path (acquired : Acquisition request polynomials originals cells coefficients
   depth) (row : Fin genus) :
     PreparedDyadicPrimitiveResampling.preparedPrimitivePath
       (RequestedParents.cons (acquired.prepared.get row).localRequest .nil) =

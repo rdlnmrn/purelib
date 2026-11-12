@@ -121,17 +121,17 @@ open Purelib.Riemann.Meshes.RectangularObservationMesh (ObservationMesh)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBanks (horizontalPieces verticalPieces)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.JoinedFragments (SampledFragment)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {program : ExteriorProgram lifted
     differential} {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+    SurfacePreparation
     regular domains program}
 
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate Gaussian)
@@ -149,11 +149,11 @@ variable (retained : CommonBasisPreparation
     Geometry rc rr}
   {leftCuts : GridCuts lg} {rightCuts :
     GridCuts rg} {leftBox rightBox :
-    Purelib.Geometry.Rational.Box}
+    Geometry.Rational.Box}
   {left : ObservationMesh leftCuts leftBox} {right :
     ObservationMesh rightCuts rightBox}
   {data : RowData
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) faceIndex}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -164,18 +164,18 @@ variable {leftRow : Fin left.partition.y.intervals.length} {rightRow : Fin right
     leftRow rightRow height}
   (trace : side.Trace depth) {forward : Bool}
   (blocks : ParentBlockBank
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) left false forward)
-  (sourceFirst : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (sourceFirst : (ParentIndices.occurrenceAt
     prepared.occurrences outer).start.im = height)
-  (sourceLast : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (sourceLast : (ParentIndices.occurrenceAt
     prepared.occurrences outer).finish.im = height)
 
 variable {allowance : Coordinate} (budget :
   LengthErrorBudget
-  (Purelib.Riemann.Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
+  (Riemann.Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
     (owners : OwnerRequest
-      (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      (ParentIndices.occurrenceAt prepared.occurrences
       outer) budget.tolerance)
     (later : owners.index ≤ faceIndex)
     (original : OwnedReadings data (fun
@@ -229,7 +229,7 @@ theorem horizontalPieces_vertices : (fragment).vertices = RectangularDyadicPaire
   rfl
 
 /-- The retained horizontal physical fragment has source mesh width bounded by its actual physical dyadic depth. -/
-theorem horizontalPieces_sourceWidth : (fragment).sourceWidth ≤ (1 / 2 : InverseRootPolynomial.Coordinate)^depth := by
+theorem horizontalPieces_sourceWidth : (fragment).sourceWidth ≤ (1 / 2 : Coordinate)^depth := by
   dsimp only [PhysicalBanks.horizontalPieces]
   rw [DependentVector.ofFn_get]
   exact ParentBlock.horizontalFragment_sourceWidth _ _ _ _ _ _ _ _ _
@@ -244,18 +244,18 @@ variable {leftColumn : Fin left.partition.x.intervals.length} {rightColumn : Fin
     leftColumn rightColumn width}
   (trace : side.Trace depth) {forward : Bool}
   (blocks : ParentBlockBank
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) left true forward)
-  (sourceFirst : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (sourceFirst : (ParentIndices.occurrenceAt
     prepared.occurrences outer).start.re = width)
-  (sourceLast : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (sourceLast : (ParentIndices.occurrenceAt
     prepared.occurrences outer).finish.re = width)
 
 variable {allowance : Coordinate} (budget :
   LengthErrorBudget
-  (Purelib.Riemann.Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
+  (Riemann.Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
     (owners : OwnerRequest
-      (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      (ParentIndices.occurrenceAt prepared.occurrences
       outer) budget.tolerance)
     (later : owners.index ≤ faceIndex)
     (original : OwnedReadings data (fun
@@ -309,7 +309,7 @@ theorem verticalPieces_vertices : (fragment).vertices = RectangularDyadicPairedT
   rfl
 
 /-- The retained vertical physical fragment has source mesh width bounded by its actual physical dyadic depth. -/
-theorem verticalPieces_sourceWidth : (fragment).sourceWidth ≤ (1 / 2 : InverseRootPolynomial.Coordinate)^depth := by
+theorem verticalPieces_sourceWidth : (fragment).sourceWidth ≤ (1 / 2 : Coordinate)^depth := by
   dsimp only [PhysicalBanks.verticalPieces]
   rw [DependentVector.ofFn_get]
   exact ParentBlock.verticalFragment_sourceWidth _ _ _ _ _ _ _ _ _

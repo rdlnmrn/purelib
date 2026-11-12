@@ -118,24 +118,24 @@ open Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision (ParameterEdge)
 open Purelib.Data.Gaussian.Basic.Canonical
 open Purelib.Approximation.Gaussian.Equivalence (NamedEquivalent)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : ParameterEdge} {cell :
+    Cell data edge}
 
 set_option genInjectivity false in
 /-- A retained reciprocal root occurrence with its original regular-cap coordinate overlap.
 
 The coordinate owner is indexed by the actual inverse source point and the exact retained root-channel attachment. -/
-structure Point (cap : ReciprocalInnerInverse.Data curve collar) (model : UniformReciprocalRootChannels.RootModel cell)
-  (parameter : InverseRootPolynomial.Coordinate) where
+structure Point (cap : ReciprocalInnerInverse.Data curve collar) (model : RootModel cell)
+  (parameter : Coordinate) where
   /-- The original retained reciprocal root channel at this exact source parameter. -/ root :
-    UniformReciprocalRootChannels.RootPoint model parameter
+    RootPoint model parameter
   /-- The original cap coordinate overlap for this retained root attachment at the actual inverse source point. -/
     coordinates : Coordinates.Overlap cap (parent.edge.point parameter)⁻¹ root.channel.attachment.owner
 
@@ -144,34 +144,34 @@ constructive_injectivity Point
 namespace Point
 
 /-- Consume a retained disk root when another endpoint consumer already owns it. -/
-@[expose] def ofRegular (model : UniformReciprocalRootChannels.RootModel cell) (parameter :
-  InverseRootPolynomial.Coordinate)
+@[expose] def ofRegular (model : RootModel cell) (parameter :
+  Coordinate)
     (between : edge.left.parameter ≤ parameter ∧ parameter ≤ edge.right.parameter)
     (regular : Owners.DiskPoint cap (parent.edge.point parameter)⁻¹) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap model parameter :=
+      Point cap model parameter :=
   let root := RootPoint.build model parameter between
   ⟨root, Coordinates.Overlap.ofPoint regular root.channel.attachment.owner⟩
 
 /-- Acquire one original regular cap root at the inverse boundary point and retain its overlap with the supplied
 reciprocal cell root. -/
-@[expose] def build (cap : ReciprocalInnerInverse.Data curve collar) (model : UniformReciprocalRootChannels.RootModel
-  cell) (parameter : InverseRootPolynomial.Coordinate)
+@[expose] def build (cap : ReciprocalInnerInverse.Data curve collar) (model : RootModel
+  cell) (parameter : Coordinate)
     (between : edge.left.parameter ≤ parameter ∧ parameter ≤ edge.right.parameter) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap model parameter :=
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point.ofRegular model parameter between
+      Point cap model parameter :=
+  ofRegular model parameter between
     (Owners.atInverseBoundary cap
     (data.boundary.point ⟨edge.left.inside.1.trans between.1, between.2.trans edge.right.inside.2⟩))
 
-variable {model : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell}
-  {parameter : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {otherEdge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {otherCell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data otherEdge} {otherModel :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel otherCell}
+variable {model : RootModel cell}
+  {parameter : Coordinate}
+  {otherEdge : ParameterEdge} {otherCell :
+    Cell data otherEdge} {otherModel :
+    RootModel otherCell}
 
 /-- No sign or equality of prepared paths is supplied by the caller. -/
-@[expose] def coordinateEquivalent (first : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap model
-  parameter) (last : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap otherModel parameter) :
-    Gaussian.Equivalence.NamedEquivalent first.coordinates.coordinate.prepared.denominator.name
+@[expose] def coordinateEquivalent (first : Point cap model
+  parameter) (last : Point cap otherModel parameter) :
+    NamedEquivalent first.coordinates.coordinate.prepared.denominator.name
       last.coordinates.coordinate.prepared.denominator.name :=
   first.coordinates.coordinate.equivalent last.coordinates.coordinate (by
     rw [first.coordinates.reciprocal_eq, last.coordinates.reciprocal_eq]
@@ -181,10 +181,10 @@ variable {model : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciproc
 
 /-- Read the inverse polynomial already retained by the actual arc sample. The offset accounts for the two initial
 root-channel preparation steps. -/
-theorem inverse_accurate (owned : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap model parameter)
+theorem inverse_accurate (owned : Point cap model parameter)
     {regular : RegularBounds.Data cap} {comparison : ArcSamples.Data regular cell}
     {index : Nat} {box : Rational.Box} {capSample : Primitives.Sample cap differential index box}
-    (sample : ArcSamples.Sample comparison capSample) {target : InverseRootPolynomial.Coordinate} {floor rootIndex :
+    (sample : ArcSamples.Sample comparison capSample) {target : Coordinate} {floor rootIndex :
       Nat}
     (request : InverseModelRootRequests.InverseRequest owned.root.channel target floor)
     (later : 2 + request.index ≤ index) (rootLater : request.comparison.rightIndex ≤ rootIndex) :
@@ -195,7 +195,7 @@ theorem inverse_accurate (owned : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Ar
   have accurate := request.accurate (index := index - 2) (by omega0) rootLater
   rw [model.refine_eq, shifted] at accurate
   let reading := (Sampling.approximation owned.root.channel.certificate.value.name).sample rootIndex
-  have inverseEq : Data.Gaussian.Basic.Canonical.inv reading = Data.Gaussian.Field.inv reading := by
+  have inverseEq : inv reading = Data.Gaussian.Field.inv reading := by
     change reading⁻¹ = Data.Gaussian.Field.inv reading
     exact Data.Gaussian.Field.inv_eq reading
   rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical, inverseEq] at accurate
@@ -204,28 +204,28 @@ theorem inverse_accurate (owned : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Ar
 
 end Point
 
-variable {model : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell}
-  {parameter : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {otherCount : Nat} {otherDifferential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {otherParent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve otherDifferential}
-  {otherPatch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch otherParent} {otherData :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
-  {otherEdge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {otherCell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell otherData otherEdge}
-  {otherModel : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel otherCell}
-    {otherParameter : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+variable {model : RootModel cell}
+  {parameter : Coordinate} {otherCount : Nat} {otherDifferential :
+  Differential genus}
+  {otherParent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve otherDifferential}
+  {otherPatch : PreparedPatch otherParent} {otherData :
+    UniformReciprocalModels.Data otherPatch otherCount}
+  {otherEdge : ParameterEdge} {otherCell :
+    Cell otherData otherEdge}
+  {otherModel : RootModel otherCell}
+    {otherParameter : Coordinate}
 
 set_option genInjectivity false in
 /-- Retain physical endpoint equality and the root-coordinate comparison for two original endpoints.
 
 The two indexed root occurrences may belong to different source parents.
 Their actual endpoint equality and operational coordinate witness are retained. -/
-structure Join (first : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap model parameter) (last :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap otherModel otherParameter) where
+structure Join (first : Point cap model parameter) (last :
+  Point cap otherModel otherParameter) where
   /-- The original source parents reach exactly the same retained physical endpoint. -/ point_eq : parent.edge.point
     parameter = otherParent.edge.point otherParameter
   /-- The two retained cap coordinate names are operationally equivalent. -/ coordinate :
-    Gaussian.Equivalence.NamedEquivalent first.coordinates.coordinate.prepared.denominator.name
+    NamedEquivalent first.coordinates.coordinate.prepared.denominator.name
     last.coordinates.coordinate.prepared.denominator.name
 
 constructive_injectivity Join
@@ -234,25 +234,25 @@ namespace Join
 
 /-- Retain the endpoint and coordinate comparison of two original cells at an equal parameter of the same source parent.
 -/
-@[expose] def ofSameParent {nextEdge : ClearSheetContinuation.Subdivision.ParameterEdge} {nextCell :
-  UniformReciprocalCover.Cell data nextEdge}
-    {nextModel : UniformReciprocalRootChannels.RootModel nextCell} {nextParameter : InverseRootPolynomial.Coordinate}
-    (first : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap model parameter) (last :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap nextModel nextParameter)
-    (same : parameter = nextParameter) : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Join first last :=
+@[expose] def ofSameParent {nextEdge : ParameterEdge} {nextCell :
+  Cell data nextEdge}
+    {nextModel : RootModel nextCell} {nextParameter : Coordinate}
+    (first : Point cap model parameter) (last :
+      Point cap nextModel nextParameter)
+    (same : parameter = nextParameter) : Join first last :=
   ⟨congrArg parent.edge.point same, by subst nextParameter; exact first.coordinateEquivalent last⟩
 
 /-- Transport an operational reciprocal-root comparison at equal points to the retained cap coordinate names.
 
 The supplied physical equality identifies both retained points. The root
 comparison then determines the corresponding regular-model quotient names. -/
-@[expose] def coordinateEquivalent {firstPoint lastPoint : InverseRootPolynomial.Gaussian}
+@[expose] def coordinateEquivalent {firstPoint lastPoint : Gaussian}
     {firstOwner : SquareRootContinuationChain.Owner ((HyperellipticReciprocal.polynomial curve).eval firstPoint)}
     {lastOwner : SquareRootContinuationChain.Owner ((HyperellipticReciprocal.polynomial curve).eval lastPoint)}
     (first : Coordinates.Overlap cap firstPoint firstOwner)
     (last : Coordinates.Overlap cap lastPoint lastOwner) (same : firstPoint = lastPoint)
-    (roots : Gaussian.Equivalence.NamedEquivalent first.reciprocal.value.name last.reciprocal.value.name) :
-    Gaussian.Equivalence.NamedEquivalent first.coordinate.prepared.denominator.name
+    (roots : NamedEquivalent first.reciprocal.value.name last.reciprocal.value.name) :
+    NamedEquivalent first.coordinate.prepared.denominator.name
       last.coordinate.prepared.denominator.name := by
   cases same
   exact first.coordinate.equivalent last.coordinate roots
@@ -260,13 +260,13 @@ comparison then determines the corresponding regular-model quotient names. -/
 
 /-- Transport the already retained reciprocal root certificates into the common cap coordinate; the regular cap root is
 determined by its model. -/
-@[expose] def ofRoots (first : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap model parameter) (last :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap otherModel otherParameter)
+@[expose] def ofRoots (first : Point cap model parameter) (last :
+  Point cap otherModel otherParameter)
     (same : parent.edge.point parameter = otherParent.edge.point otherParameter)
-    (roots : Gaussian.Equivalence.NamedEquivalent first.root.channel.certificate.value.name
-      last.root.channel.certificate.value.name) : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Join first last
+    (roots : NamedEquivalent first.root.channel.certificate.value.name
+      last.root.channel.certificate.value.name) : Join first last
       :=
-  ⟨same, Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Join.coordinateEquivalent first.coordinates
+  ⟨same, coordinateEquivalent first.coordinates
     last.coordinates (congrArg Inv.inv same) (by
     rw [first.coordinates.reciprocal_eq, last.coordinates.reciprocal_eq]
     exact first.root.channel.owner_equivalent.trans (roots.trans last.root.channel.owner_equivalent.symm))⟩
@@ -275,12 +275,12 @@ determined by its model. -/
 
 The retained endpoint equality and coordinate comparison apply to the same
 finite polynomial sample, in either branch of the reciprocal origin. -/
-@[expose] def primitiveEquivalent {first : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap model
-  parameter} {last : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap otherModel otherParameter}
-    (joined : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Join first last) {index : Nat} {box :
-      Rational.Box} {numerator : Differentials.Basic.Differential genus}
+@[expose] def primitiveEquivalent {first : Point cap model
+  parameter} {last : Point cap otherModel otherParameter}
+    (joined : Join first last) {index : Nat} {box :
+      Rational.Box} {numerator : Differential genus}
     (sample : Primitives.Sample cap numerator index box) :
-    Gaussian.Equivalence.NamedEquivalent (first.coordinates.chartPrimitive sample).name (last.coordinates.chartPrimitive
+    NamedEquivalent (first.coordinates.chartPrimitive sample).name (last.coordinates.chartPrimitive
       sample).name := by
   by_cases regular : HyperellipticReciprocal.originOrder curve = 0
   · rw [Coordinates.Overlap.chartPrimitive, Coordinates.Overlap.chartPrimitive, if_pos regular, if_pos regular]
@@ -299,22 +299,22 @@ set_option genInjectivity false in
 
 The indexed fields retain the supplied owners, channels and exact cached
 data. Their identities bind each displayed field to those same inputs. -/
-structure Endpoints (cap : ReciprocalInnerInverse.Data curve collar) (cell : UniformReciprocalCover.Cell data edge)
+structure Endpoints (cap : ReciprocalInnerInverse.Data curve collar) (cell : Cell data edge)
   where
   /-- The small reciprocal root model shared by both original cell endpoints. -/ model :
-    UniformReciprocalRootChannels.RootModel cell
+    RootModel cell
   /-- The retained root and cap coordinate occurrence at the original left parameter. -/ first :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap model edge.left.parameter
+    Point cap model edge.left.parameter
   /-- The retained root and cap coordinate occurrence at the original right parameter. -/ last :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap model edge.right.parameter
+    Point cap model edge.right.parameter
 
 constructive_injectivity Endpoints
 
 /-- Build one small reciprocal root model and retain both endpoint coordinate occurrences on that exact model. -/
-@[expose] def Endpoints.build (cap : ReciprocalInnerInverse.Data curve collar) (cell : UniformReciprocalCover.Cell data
-  edge) : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Endpoints cap cell :=
+@[expose] def Endpoints.build (cap : ReciprocalInnerInverse.Data curve collar) (cell : Cell data
+  edge) : Endpoints cap cell :=
   let model := RootModel.build cell
-  ⟨model, Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point.build cap model _ ⟨le_rfl, cell.ordered.le⟩,
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point.build cap model _ ⟨cell.ordered.le, le_rfl⟩⟩
+  ⟨model, Point.build cap model _ ⟨le_rfl, cell.ordered.le⟩,
+    Point.build cap model _ ⟨cell.ordered.le, le_rfl⟩⟩
 
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners

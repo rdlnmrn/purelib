@@ -94,29 +94,29 @@ namespace SafeOverlapExtension
 /-- The target chart computed from the displayed overlap safety data. -/
 @[expose] def chart {sourceInput targetInput : CoherentNamed}
     {source : Anchored.AnchoredChart sourceInput}
-    (extension : Approximation.Gaussian.Logarithm.Chart.Transport.SafeOverlapExtension sourceInput targetInput source) :
+    (extension : SafeOverlapExtension sourceInput targetInput source) :
     Chart targetInput.name :=
-  Chart.ofBounds targetInput.name
+  ofBounds targetInput.name
     source.chart.factor extension.lowerSq extension.lowerSq_positive
     extension.denominatorLower extension.reducedBound source.chart.correction
 
 /-- The rebuilt target chart retains the source chart's exact rational factor. -/
 @[simp] theorem chart_factor {sourceInput targetInput : CoherentNamed}
     {source : Anchored.AnchoredChart sourceInput}
-    (extension : Approximation.Gaussian.Logarithm.Chart.Transport.SafeOverlapExtension sourceInput targetInput source) :
+    (extension : SafeOverlapExtension sourceInput targetInput source) :
     extension.chart.factor = source.chart.factor := rfl
 
 /-- The rebuilt target chart retains the source chart's exact correction process. -/
 @[simp] theorem chart_correction {sourceInput targetInput : CoherentNamed}
     {source : Anchored.AnchoredChart sourceInput}
-    (extension : Approximation.Gaussian.Logarithm.Chart.Transport.SafeOverlapExtension sourceInput targetInput source) :
+    (extension : SafeOverlapExtension sourceInput targetInput source) :
     extension.chart.correction = source.chart.correction := rfl
 
 /-- Analytic continuation through a certified finite overlap: the target chart is rebuilt from target-side rational
 inequalities while retaining the source factor and anchored correction. -/
 @[expose] def transport {sourceInput targetInput : CoherentNamed}
     (source : Anchored.AnchoredChart sourceInput)
-    (extension : Approximation.Gaussian.Logarithm.Chart.Transport.SafeOverlapExtension sourceInput targetInput source) :
+    (extension : SafeOverlapExtension sourceInput targetInput source) :
     Anchored.AnchoredChart targetInput :=
   { chart := extension.chart
     certificate :=
@@ -127,21 +127,21 @@ inequalities while retaining the source factor and anchored correction. -/
 /-- Transporting the anchored chart preserves its exact rational factor. -/
 @[simp] theorem transport_factor {sourceInput targetInput : CoherentNamed}
     (source : Anchored.AnchoredChart sourceInput)
-    (extension : Approximation.Gaussian.Logarithm.Chart.Transport.SafeOverlapExtension sourceInput targetInput source) :
+    (extension : SafeOverlapExtension sourceInput targetInput source) :
     (extension.transport source).chart.factor = source.chart.factor := rfl
 
 /-- Transporting the anchored chart preserves its exact correction process. -/
 @[simp] theorem transport_correction {sourceInput targetInput : CoherentNamed}
     (source : Anchored.AnchoredChart sourceInput)
-    (extension : Approximation.Gaussian.Logarithm.Chart.Transport.SafeOverlapExtension sourceInput targetInput source) :
+    (extension : SafeOverlapExtension sourceInput targetInput source) :
     (extension.transport source).chart.correction = source.chart.correction := rfl
 
 /-- Rechecking safety and transporting the anchored correction preserves the finite exponential/logarithm inverse. -/
 @[expose] def transport_exponential_inverse
     {sourceInput targetInput : CoherentNamed}
     (source : Anchored.AnchoredChart sourceInput)
-    (extension : Approximation.Gaussian.Logarithm.Chart.Transport.SafeOverlapExtension sourceInput targetInput source) :
-    Gaussian.Equivalence.NamedEquivalent
+    (extension : SafeOverlapExtension sourceInput targetInput source) :
+    NamedEquivalent
       (Exponential.Progressive.Range.Name.named
         (extension.transport source).output.name)
       targetInput.name :=

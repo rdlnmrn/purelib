@@ -38,14 +38,14 @@ The original value and difference Horner bounds are retained for both
 polynomials. Two exact quotient thresholds share the same positive
 clearance and their minimum supplies the squared-radius request. -/
 @[expose] public def narrowTurnResolutionRadiusSq
-    {A B : Dense.Rational.Basic.CoordinatePolynomial} {root : Data.Rat.Interval.Bounds}
+    {A B : Basic.CoordinatePolynomial} {root : Interval.Bounds}
     (clearance : Clearance.Pair.Basic.Certificate A B root) : Fraction.Rational :=
   let differenceCoefficient :=
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound A root +
-      Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound B root
+    Bounds.Lipschitz.denseEvalSqLipschitzBound A root +
+      Bounds.Lipschitz.denseEvalSqLipschitzBound B root
   let normBound :=
-    Dense.Rational.Bounds.Horner.evalSqBound A root +
-      Dense.Rational.Bounds.Horner.evalSqBound B root
+    Bounds.Horner.evalSqBound A root +
+      Bounds.Horner.evalSqBound B root
   min (clearance.bound / (differenceCoefficient + 1))
     (clearance.bound ^ 2 /
       (36 * normBound * differenceCoefficient + 1))
@@ -56,22 +56,22 @@ Both original denominator coefficients are nonnegative and are
 increased by one. The retained positive clearance and its square
 therefore give two positive quotients in the original minimum. -/
 public theorem narrowTurnResolutionRadiusSq_pos
-    {A B : Dense.Rational.Basic.CoordinatePolynomial} {root : Data.Rat.Interval.Bounds}
+    {A B : Basic.CoordinatePolynomial} {root : Interval.Bounds}
     (clearance : Clearance.Pair.Basic.Certificate A B root) :
     0 < narrowTurnResolutionRadiusSq clearance := by
   let differenceCoefficient :=
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound A root +
-      Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound B root
+    Bounds.Lipschitz.denseEvalSqLipschitzBound A root +
+      Bounds.Lipschitz.denseEvalSqLipschitzBound B root
   let normBound :=
-    Dense.Rational.Bounds.Horner.evalSqBound A root +
-      Dense.Rational.Bounds.Horner.evalSqBound B root
+    Bounds.Horner.evalSqBound A root +
+      Bounds.Horner.evalSqBound B root
   have differenceNonnegative : 0 ≤ differenceCoefficient :=
-    add_nonneg (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg A root).2
-      (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg B root).2
+    add_nonneg (Bounds.Lipschitz.denseHornerSqBounds_nonneg A root).2
+      (Bounds.Lipschitz.denseHornerSqBounds_nonneg B root).2
   have normNonnegative : 0 ≤ normBound :=
     add_nonneg
-      (Dense.Rational.Bounds.Horner.evalSqBound_nonneg A root)
-      (Dense.Rational.Bounds.Horner.evalSqBound_nonneg B root)
+      (Bounds.Horner.evalSqBound_nonneg A root)
+      (Bounds.Horner.evalSqBound_nonneg B root)
   have thirtySixNonnegative : 0 ≤ (36 : Fraction.Rational) :=
     (Fraction.Cast.Order.natCast_pos_direct
       (n := 36) (by decide)).le
@@ -85,8 +85,8 @@ public theorem narrowTurnResolutionRadiusSq_pos
         thirtySixNonnegative normNonnegative)
       differenceNonnegative
   unfold narrowTurnResolutionRadiusSq
-  apply Fraction.Order.Basic.lt_min
-  · apply Fraction.Order.Field.div_pos_direct clearance.positive
+  apply Basic.lt_min
+  · apply Field.div_pos_direct clearance.positive
     calc
       0 < 1 := onePositive
       _ ≤ differenceCoefficient + 1 :=
@@ -94,7 +94,7 @@ public theorem narrowTurnResolutionRadiusSq_pos
           simpa only [zero_add] using
             Arithmetic.add_le_add_right_direct
               differenceNonnegative (1 : Fraction.Rational)
-  · apply Fraction.Order.Field.div_pos_direct
+  · apply Field.div_pos_direct
     · simpa only [pow_two] using
         Arithmetic.mul_pos_direct
           clearance.positive clearance.positive
@@ -114,7 +114,7 @@ refined interval and retained clearance. The two squared-radius tests
 bound the cross product and keep its scaled absolute value below
 the original endpoint dot product. -/
 public theorem narrowComplexTurn_of_refined_radiusSq
-    {A B : Dense.Rational.Basic.CoordinatePolynomial} {root interval : Data.Rat.Interval.Bounds}
+    {A B : Basic.CoordinatePolynomial} {root interval : Interval.Bounds}
     (clearance : Clearance.Pair.Basic.Certificate A B root)
     (refines : interval.Refines root)
     (radiusSmall : Interval.Radius.sampleRadiusSq interval interval.lower <
@@ -124,11 +124,11 @@ public theorem narrowComplexTurn_of_refined_radiusSq
       (A.eval interval.upper) (B.eval interval.upper) := by
   let radius := Interval.Radius.sampleRadiusSq interval interval.lower
   let differenceCoefficient :=
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound A root +
-      Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound B root
+    Bounds.Lipschitz.denseEvalSqLipschitzBound A root +
+      Bounds.Lipschitz.denseEvalSqLipschitzBound B root
   let normBound :=
-    Dense.Rational.Bounds.Horner.evalSqBound A root +
-      Dense.Rational.Bounds.Horner.evalSqBound B root
+    Bounds.Horner.evalSqBound A root +
+      Bounds.Horner.evalSqBound B root
   let a := A.eval interval.lower
   let b := B.eval interval.lower
   let c := A.eval interval.upper
@@ -140,12 +140,12 @@ public theorem narrowComplexTurn_of_refined_radiusSq
   let dot := a * c + b * d
   have radiusNonnegative : 0 ≤ radius := Interval.Radius.sampleRadiusSq_nonneg interval
   have differenceCoefficientNonnegative : 0 ≤ differenceCoefficient :=
-    add_nonneg (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg A root).2
-      (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg B root).2
+    add_nonneg (Bounds.Lipschitz.denseHornerSqBounds_nonneg A root).2
+      (Bounds.Lipschitz.denseHornerSqBounds_nonneg B root).2
   have normBoundNonnegative : 0 ≤ normBound :=
     add_nonneg
-      (Dense.Rational.Bounds.Horner.evalSqBound_nonneg A root)
-      (Dense.Rational.Bounds.Horner.evalSqBound_nonneg B root)
+      (Bounds.Horner.evalSqBound_nonneg A root)
+      (Bounds.Horner.evalSqBound_nonneg B root)
   have upperInside : root.Contains interval.upper :=
     ⟨refines.1.trans interval.valid, refines.2⟩
   have lowerInside : root.Contains interval.lower :=
@@ -154,46 +154,46 @@ public theorem narrowComplexTurn_of_refined_radiusSq
       (interval.upper - interval.lower) ^ 2 ≤ radius :=
     Interval.Radius.sub_sq_le_sampleRadiusSq interval ⟨interval.valid, le_rfl⟩
   have daBound : da ^ 2 ≤
-      Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound A root * radius := by
-    have localBound := Dense.Rational.Bounds.Lipschitz.eval_sub_sq_le A interval
+      Bounds.Lipschitz.denseEvalSqLipschitzBound A root * radius := by
+    have localBound := Bounds.Lipschitz.eval_sub_sq_le A interval
       (x := interval.upper) (y := interval.lower)
       ⟨interval.valid, le_rfl⟩ ⟨le_rfl, interval.valid⟩
     have ambientProduct := Arithmetic.mul_le_mul_direct
-      (Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound_le_of_refines A refines)
+      (Bounds.Lipschitz.denseEvalSqLipschitzBound_le_of_refines A refines)
       endpointDistance
       (Arithmetic.sq_nonneg_direct
         (interval.upper - interval.lower))
-      (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg A root).2
+      (Bounds.Lipschitz.denseHornerSqBounds_nonneg A root).2
     exact localBound.trans (by
       simpa only [da, c, a] using ambientProduct)
   have dbBound : db ^ 2 ≤
-      Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound B root * radius := by
-    have localBound := Dense.Rational.Bounds.Lipschitz.eval_sub_sq_le B interval
+      Bounds.Lipschitz.denseEvalSqLipschitzBound B root * radius := by
+    have localBound := Bounds.Lipschitz.eval_sub_sq_le B interval
       (x := interval.upper) (y := interval.lower)
       ⟨interval.valid, le_rfl⟩ ⟨le_rfl, interval.valid⟩
     have ambientProduct := Arithmetic.mul_le_mul_direct
-      (Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound_le_of_refines B refines)
+      (Bounds.Lipschitz.denseEvalSqLipschitzBound_le_of_refines B refines)
       endpointDistance
       (Arithmetic.sq_nonneg_direct
         (interval.upper - interval.lower))
-      (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg B root).2
+      (Bounds.Lipschitz.denseHornerSqBounds_nonneg B root).2
     exact localBound.trans (by
       simpa only [db, d, b] using ambientProduct)
   have differenceBound : differenceSq ≤ differenceCoefficient * radius := by
     dsimp only [differenceSq, differenceCoefficient]
     calc
       da ^ 2 + db ^ 2 ≤
-          Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound A root * radius +
-            Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound B root * radius :=
+          Bounds.Lipschitz.denseEvalSqLipschitzBound A root * radius +
+            Bounds.Lipschitz.denseEvalSqLipschitzBound B root * radius :=
         add_le_add daBound dbBound
-      _ = (Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound A root +
-          Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound B root) * radius := by ring1
+      _ = (Bounds.Lipschitz.denseEvalSqLipschitzBound A root +
+          Bounds.Lipschitz.denseEvalSqLipschitzBound B root) * radius := by ring1
   have firstRadius : radius < clearance.bound /
       (differenceCoefficient + 1) :=
-    radiusSmall.trans_le (Fraction.Order.Basic.min_le_left _ _)
+    radiusSmall.trans_le (Basic.min_le_left _ _)
   have differenceBelowClearance : differenceSq < clearance.bound :=
     differenceBound.trans_lt
-      (Data.Rat.Bounds.Scale.coefficient_mul_lt_of_radius_lt_div_add_one
+      (Bounds.Scale.coefficient_mul_lt_of_radius_lt_div_add_one
         differenceCoefficientNonnegative radiusNonnegative firstRadius)
   have lowerClearance : clearance.bound ≤ a ^ 2 + b ^ 2 := by
     simpa only [a, b] using clearance.lower interval.lower lowerInside
@@ -202,8 +202,8 @@ public theorem narrowComplexTurn_of_refined_radiusSq
   have lowerNormBound : a ^ 2 + b ^ 2 ≤ normBound := by
     dsimp only [normBound, a, b]
     exact add_le_add
-      (Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound A root lowerInside)
-      (Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound B root lowerInside)
+      (Bounds.Horner.eval_sq_le_evalSqBound A root lowerInside)
+      (Bounds.Horner.eval_sq_le_evalSqBound B root lowerInside)
   have differenceNonnegative : 0 ≤ differenceSq :=
     add_nonneg (Arithmetic.sq_nonneg_direct da)
       (Arithmetic.sq_nonneg_direct db)
@@ -211,7 +211,7 @@ public theorem narrowComplexTurn_of_refined_radiusSq
       normBound * (differenceCoefficient * radius) := by
     have cauchy : cross ^ 2 ≤
         (a ^ 2 + b ^ 2) * differenceSq := by
-      have base := Data.Rat.Bounds.Square.cross_sq_le_product_sums a b da db
+      have base := Bounds.Square.cross_sq_le_product_sums a b da db
       have crossIdentity : cross = a * db - b * da := by
         dsimp only [cross, da, db, a, b, c, d]
         ring1
@@ -231,7 +231,7 @@ public theorem narrowComplexTurn_of_refined_radiusSq
       differenceCoefficientNonnegative
   have secondRadius : radius < clearance.bound ^ 2 /
       (36 * normBound * differenceCoefficient + 1) :=
-    radiusSmall.trans_le (Fraction.Order.Basic.min_le_right _ _)
+    radiusSmall.trans_le (Basic.min_le_right _ _)
   have scaledCrossBelow : 36 * cross ^ 2 < clearance.bound ^ 2 := by
     calc
       36 * cross ^ 2 ≤
@@ -240,13 +240,13 @@ public theorem narrowComplexTurn_of_refined_radiusSq
           crossBound thirtySixNonnegative
       _ = (36 * normBound * differenceCoefficient) * radius := by ring1
       _ < clearance.bound ^ 2 :=
-        Data.Rat.Bounds.Scale.coefficient_mul_lt_of_radius_lt_div_add_one
+        Bounds.Scale.coefficient_mul_lt_of_radius_lt_div_add_one
           crossCoefficientNonnegative radiusNonnegative secondRadius
   have sixAbsCrossBelow : 6 * Fraction.abs (cross) < clearance.bound := by
-    apply Data.Rat.Bounds.Square.lt_of_sq_lt_sq_of_nonneg clearance.positive.le
+    apply Bounds.Square.lt_of_sq_lt_sq_of_nonneg clearance.positive.le
     calc
       (6 * Fraction.abs (cross)) ^ 2 = 36 * cross ^ 2 := by
-        rw [Normalization.product_pow 6 (Fraction.abs cross) 2, Data.Rat.Bounds.Abs.abs_sq_direct]
+        rw [Normalization.product_pow 6 (Fraction.abs cross) 2, Bounds.Abs.abs_sq_direct]
         ring1
       _ < clearance.bound ^ 2 := scaledCrossBelow
   have sumLess : differenceSq + clearance.bound <
@@ -272,7 +272,7 @@ public theorem narrowComplexTurn_of_refined_radiusSq
       _ < clearance.bound := sixAbsCrossBelow
       _ < 2 * dot := clearanceBelowTwiceDot
   have narrow : 3 * Fraction.abs (cross) < dot :=
-    Data.Rat.Bounds.Square.lt_of_two_mul_lt_two_mul_direct scaledNarrow
+    Bounds.Square.lt_of_two_mul_lt_two_mul_direct scaledNarrow
   simpa only [Plane.Turn.Basic.NarrowComplexTurn,
     cross, dot, a, b, c, d] using narrow
 

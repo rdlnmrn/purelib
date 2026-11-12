@@ -81,6 +81,8 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedArcArea
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! The retained common-chart endpoints are the actual parent endpoints.
@@ -119,27 +121,27 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartSources.Sour
 variable {genus count otherCount depth floor : Nat} {curve : HyperellipticCurve
   genus}
   {differential other : Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent}
   {otherPatch : PreparedPatch
-    (Purelib.Riemann.Integration.PreparedEdgeRecasting.recastCenteredEdge other parent)}
+    (recastCenteredEdge other parent)}
   {data : Data patch count} {otherData :
     Data otherPatch otherCount}
   {cover : Cover data} {otherCover :
     Cover otherData}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {common :
+  {regular : RegularBounds.Data cap} {common :
     CommonCover cover otherCover}
   {target : Coordinate} (request :
     ChartRequest regular common depth target floor)
 
 /-- The exact first parameter of the original retained common-chart request. -/
 @[expose] def firstParameter : Coordinate :=
-  SourceChartRequest.Parameter (geometry := (request.plans.get common.firstIndex).geometry) 0
+  Parameter (geometry := (request.plans.get common.firstIndex).geometry) 0
 /-- The exact final parameter of the original retained common-chart request. -/
 @[expose] def lastParameter : Coordinate :=
-  SourceChartRequest.Parameter (geometry := (request.plans.get common.lastIndex).geometry)
+  Parameter (geometry := (request.plans.get common.lastIndex).geometry)
     (Fin.last (request.plans.get common.lastIndex).geometry.tail.length)
 
 /-- The actual retained original root owner at the common chart's first vertex. -/
@@ -188,10 +190,10 @@ open Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility (PreparedPatch)
 open Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision (ParameterEdge)
 variable {genus count otherCount : Nat} {curve : HyperellipticCurve genus}
   {differential other : Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {otherParent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve other}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {otherParent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve other}
   {patch : PreparedPatch parent}
   {otherPatch : PreparedPatch otherParent}
   {data : Data patch count} {otherData :
@@ -205,12 +207,12 @@ variable {genus count otherCount : Nat} {curve : HyperellipticCurve genus}
 
 /-- Transport the original physical endpoint equality and source-root equivalence to the two actual retained reciprocal
 chart owners. -/
-@[expose] def sourceEndpointJoin (first : ArcOwners.Point cap model parameter) (last : ArcOwners.Point cap otherModel
+@[expose] def sourceEndpointJoin (first : Point cap model parameter) (last : Point cap otherModel
   otherParameter)
     (firstParameter : parameter = 1) (lastParameter : otherParameter = 0)
     (same : parent.edge.point 1 = otherParent.edge.point 0)
     (roots : Gaussian.Equivalence.NamedEquivalent (parent.edge.rootName 1 (by decide))
-      (otherParent.edge.rootName 0 otherParent.edge.baseInside)) : ArcOwners.Join first last := by
+      (otherParent.edge.rootName 0 otherParent.edge.baseInside)) : Join first last := by
   subst parameter
   subst otherParameter
   let source := SourceJoin.build first.root last.root
@@ -250,10 +252,10 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners (Join)
 open Purelib.Riemann.RootContinuation
 variable {genus : Nat} {curve : HyperellipticCurve genus} {differential other :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {parents : List (Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap}
+  {parents : List (Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
   {target requested : Coordinate} {minimum : Nat}
   {original : Request regular other parents
     target minimum}
@@ -262,39 +264,39 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {differential other :
 
 /-- The sheet-aware join between the actual last owner of one retained parent and the first owner of another. -/
 @[expose] def EndpointJoin (i j : Fin original.plans.length) :=
-  ArcOwners.Join (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.ChartRequest.lastPoint
+  Join (ChartRequest.lastPoint
     (request.plans.get i).request)
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.ChartRequest.firstPoint (request.plans.get
+    (ChartRequest.firstPoint (request.plans.get
     j).request)
 
 /-- The actual retained endpoint owners consume the original physical and sheet-aware source link. This works across
 independently prepared parents. -/
 @[expose] def endpointJoin (i j : Fin original.plans.length)
-    (same : (PairedParentCharts.ChartParent original i).parent.edge.point 1 = (PairedParentCharts.ChartParent original
+    (same : (ChartParent original i).parent.edge.point 1 = (ChartParent original
       j).parent.edge.point 0)
-    (roots : Gaussian.Equivalence.NamedEquivalent ((PairedParentCharts.ChartParent original i).parent.edge.rootName 1
+    (roots : Gaussian.Equivalence.NamedEquivalent ((ChartParent original i).parent.edge.rootName 1
       (by decide))
-      ((PairedParentCharts.ChartParent original j).parent.edge.rootName 0 (PairedParentCharts.ChartParent original
+      ((ChartParent original j).parent.edge.rootName 0 (ChartParent original
         j).parent.edge.baseInside)) :
         EndpointJoin request i j
         :=
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.ReciprocalDiskArcOwners.sourceEndpointJoin
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.ChartRequest.lastPoint (request.plans.get
-    i).request) (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.ChartRequest.firstPoint
+  ReciprocalDiskArcOwners.sourceEndpointJoin
+    (ChartRequest.lastPoint (request.plans.get
+    i).request) (ChartRequest.firstPoint
     (request.plans.get j).request)
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.ChartRequest.lastParameter_eq
+    (ChartRequest.lastParameter_eq
       (request.plans.get i).request)
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.ChartRequest.firstParameter_eq
+    (ChartRequest.firstParameter_eq
       (request.plans.get j).request) same roots
 
 /-- The named primitive equivalence at two exact retained parent endpoints for the supplied original cap sample. -/
-@[expose] def EndpointPrimitiveLink (i j : Fin original.plans.length) {numerator : Differentials.Basic.Differential
+@[expose] def EndpointPrimitiveLink (i j : Fin original.plans.length) {numerator : Differential
   genus}
     {index : Nat} {box : Rational.Box} (sample : Primitives.Sample cap numerator index box) :=
   Gaussian.Equivalence.NamedEquivalent
-    ((Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.ChartRequest.lastPoint (request.plans.get
+    ((ChartRequest.lastPoint (request.plans.get
       i).request).coordinates.chartPrimitive sample).name
-    ((Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.ChartRequest.firstPoint (request.plans.get
+    ((ChartRequest.firstPoint (request.plans.get
       j).request).coordinates.chartPrimitive sample).name
 
 /-- Both shared cap primitives consume the same retained root-owner join. -/
@@ -315,13 +317,13 @@ open Purelib.Riemann.Normalization.InverseRootPolynomial (Gaussian)
 /-- The original coordinate approximation name retained at the parent's actual final chart owner. -/
 @[expose] def LastApproximation (i : Fin original.plans.length) :=
   Sampling.approximation
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.ChartRequest.lastPoint (request.plans.get
+    (ChartRequest.lastPoint (request.plans.get
       i).request).coordinates.coordinate.prepared.denominator.name
 
 /-- The original coordinate approximation name retained at the parent's actual initial chart owner. -/
 @[expose] def FirstApproximation (i : Fin original.plans.length) :=
   Sampling.approximation
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.ChartRequest.firstPoint (request.plans.get
+    (ChartRequest.firstPoint (request.plans.get
       i).request).coordinates.coordinate.prepared.denominator.name
 
 set_option genInjectivity false in
@@ -329,14 +331,14 @@ set_option genInjectivity false in
 already prepared for the left parent. -/
 structure JunctionRequest (i j : Fin original.plans.length) (joined :
   EndpointJoin request i j)
-    (tolerance : InverseRootPolynomial.Coordinate) (floor : Nat) where
+    (tolerance : Coordinate) (floor : Nat) where
   /-- The cached paired primitive sensitivity scale from the left parent's original coefficient bounds. -/ scale :
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The sensitivity scale is exactly 512 times the squared maximum of the two retained differential coefficient
     bounds. -/ scale_eq : scale = 512 * (max ((request.plans.get i).preparation.bounds.coefficientUpper differential)
     ((request.plans.get i).preparation.bounds.coefficientUpper other)) ^ 2
   /-- The cached original paired sensitivity scale is nonnegative. -/ nonnegative : 0 ≤ scale
-  /-- The cached coordinate comparison budget for the actual endpoint pair. -/ budget : InverseRootPolynomial.Coordinate
+  /-- The cached coordinate comparison budget for the actual endpoint pair. -/ budget : Coordinate
   /-- The coordinate budget is the requested junction tolerance divided by the original scale plus one. -/ budget_eq :
     budget = tolerance / (scale + 1)
   /-- The actual coordinate-name comparison retaining both endpoint approximations and the original stage floors. -/
@@ -355,16 +357,16 @@ constructive_injectivity JunctionRequest
 requested positive tolerance. -/
 @[expose] def JunctionRequest.build (i j : Fin original.plans.length) (joined :
   EndpointJoin request i j)
-    (tolerance : InverseRootPolynomial.Coordinate) (positive : 0 < tolerance) (floor : Nat) :
+    (tolerance : Coordinate) (positive : 0 < tolerance) (floor : Nat) :
     JunctionRequest request i j
       joined tolerance floor :=
   let bounds := (request.plans.get i).preparation.bounds
   let scale : Coordinate := 512 * (max (bounds.coefficientUpper differential) (bounds.coefficientUpper other)) ^ 2
-  have nonnegative : 0 ≤ scale := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+  have nonnegative : 0 ≤ scale := Arithmetic.mul_nonneg_direct (by decide +kernel)
+    (Arithmetic.sq_nonneg_direct _)
   let budget := tolerance / (scale + 1)
   let comparison := joined.coordinate.compare floor floor budget
-    (Fraction.Order.Field.div_pos_direct positive (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct nonnegative
+    (Field.div_pos_direct positive (Arithmetic.add_pos_of_nonneg_of_pos_direct nonnegative
       (by decide)))
   ⟨scale, rfl, nonnegative, budget, rfl, comparison, max comparison.leftIndex comparison.rightIndex, rfl⟩
 
@@ -372,73 +374,73 @@ variable {request}
 
 /-- The actual retained reading stage at the parent's final common-chart vertex. -/
 @[expose] def Evaluation.lastStage (evaluated : request.Evaluation) (i : Fin original.plans.length) : Nat :=
-  ((evaluated.entries.get i).entries.get (PairedParentCharts.ChartParent original
+  ((evaluated.entries.get i).entries.get (ChartParent original
     i).common.lastIndex).evaluated.chart.retained.area.refined.stage
 
 /-- The actual retained reading stage at the parent's first common-chart vertex. -/
 @[expose] def Evaluation.firstStage (evaluated : request.Evaluation) (i : Fin original.plans.length) : Nat :=
-  ((evaluated.entries.get i).entries.get (PairedParentCharts.ChartParent original
+  ((evaluated.entries.get i).entries.get (ChartParent original
     i).common.firstIndex).evaluated.chart.retained.area.refined.stage
 
 /-- The actual acquired coordinate at the parent's final retained common-chart vertex. -/
 @[expose] def Evaluation.lastCoordinate (evaluated : request.Evaluation) (i : Fin original.plans.length) : Gaussian :=
-  (Evaluation.chartCoordinate (evaluated.entries.get i)) (PairedParentCharts.ChartParent original i).common.lastIndex
-    (Fin.last ((request.plans.get i).request.plans.get (PairedParentCharts.ChartParent original
+  (Evaluation.chartCoordinate (evaluated.entries.get i)) (ChartParent original i).common.lastIndex
+    (Fin.last ((request.plans.get i).request.plans.get (ChartParent original
       i).common.lastIndex).geometry.tail.length)
 
 /-- The actual acquired coordinate at the parent's first retained common-chart vertex. -/
 @[expose] def Evaluation.firstCoordinate (evaluated : request.Evaluation) (i : Fin original.plans.length) : Gaussian :=
-  (Evaluation.chartCoordinate (evaluated.entries.get i)) (PairedParentCharts.ChartParent original i).common.firstIndex 0
+  (Evaluation.chartCoordinate (evaluated.entries.get i)) (ChartParent original i).common.firstIndex 0
 
 /-- The acquired final coordinate is the original retained endpoint approximation sampled at its actual reading stage.
 -/
 theorem Evaluation.lastCoordinate_eq (evaluated : request.Evaluation) (i : Fin original.plans.length) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.lastCoordinate
+    Evaluation.lastCoordinate
       evaluated i =
       (LastApproximation request
       i).sample
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.lastStage
+      (Evaluation.lastStage
       evaluated i) :=
-  (((evaluated.entries.get i).entries.get (PairedParentCharts.ChartParent original
+  (((evaluated.entries.get i).entries.get (ChartParent original
     i).common.lastIndex).evaluated.chart.retained.area.evaluated.readings.get
-    (Fin.last ((request.plans.get i).request.plans.get (PairedParentCharts.ChartParent original
+    (Fin.last ((request.plans.get i).request.plans.get (ChartParent original
       i).common.lastIndex).geometry.tail.length)).first.coordinate_eq
 
 /-- The acquired first coordinate is the original retained endpoint approximation sampled at its actual reading stage.
 -/
 theorem Evaluation.firstCoordinate_eq (evaluated : request.Evaluation) (i : Fin original.plans.length) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.firstCoordinate
+    Evaluation.firstCoordinate
       evaluated i =
       (FirstApproximation
       request i).sample
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.firstStage
+      (Evaluation.firstStage
       evaluated i) :=
-  (((evaluated.entries.get i).entries.get (PairedParentCharts.ChartParent original
+  (((evaluated.entries.get i).entries.get (ChartParent original
     i).common.firstIndex).evaluated.chart.retained.area.evaluated.readings.get 0).first.coordinate_eq
 
 /-- The paired primitive values read from the two exact cap samples shared by the whole retained parent bank. -/
-@[expose] def Evaluation.radialValues (evaluated : request.Evaluation) (point : InverseRootPolynomial.Gaussian) :
-  Stokes.PrimitivePoint :=
+@[expose] def Evaluation.radialValues (evaluated : request.Evaluation) (point : Gaussian) :
+  PrimitivePoint :=
   ⟨evaluated.firstCap.primitive.value.eval point, evaluated.otherCap.primitive.value.eval point⟩
 
 /-- The actual cross-parent radial area difference minus the retained endpoint joining-edge area. -/
 @[expose] def Evaluation.junctionError (evaluated : request.Evaluation) (i j : Fin original.plans.length) : Gaussian :=
   Bilinear.radialArea
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.radialValues
+    (Evaluation.radialValues
     evaluated) evaluated.radialDepth
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.firstCoordinate
+    (Evaluation.firstCoordinate
     evaluated j) -
     Bilinear.radialArea
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.radialValues
+      (Evaluation.radialValues
       evaluated) evaluated.radialDepth
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.lastCoordinate
+      (Evaluation.lastCoordinate
       evaluated i) -
-    Stokes.edgeArea
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.radialValues
+    edgeArea
+      (Evaluation.radialValues
       evaluated
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.lastCoordinate
+      (Evaluation.lastCoordinate
       evaluated i))
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.radialValues
+      (Evaluation.radialValues
         evaluated
         (Evaluation.firstCoordinate
         evaluated j))
@@ -447,35 +449,35 @@ theorem Evaluation.firstCoordinate_eq (evaluated : request.Evaluation) (i : Fin 
 stages. -/
 private theorem JunctionRequest.coordinate_accurate {i j : Fin original.plans.length} {joined :
   EndpointJoin request i j}
-    {tolerance : InverseRootPolynomial.Coordinate} {floor : Nat} (junction :
+    {tolerance : Coordinate} {floor : Nat} (junction :
       JunctionRequest request i
       j joined tolerance floor)
     (evaluated : request.Evaluation) (later : junction.index ≤ evaluated.externalFloor) :
-    Data.Gaussian.Norm.Basic.normSq
+    normSq
       (Evaluation.firstCoordinate
       evaluated j -
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.lastCoordinate
+      Evaluation.lastCoordinate
       evaluated i) < junction.budget := by
   have firstLater : junction.index ≤
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.lastStage
+    Evaluation.lastStage
     evaluated i := later.trans
-    ((evaluated.readingFloors i).symm.trans_le ((evaluated.entries.get i).readingsLater (PairedParentCharts.ChartParent
+    ((evaluated.readingFloors i).symm.trans_le ((evaluated.entries.get i).readingsLater (ChartParent
       original i).common.lastIndex))
   have lastLater : junction.index ≤
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.firstStage
+    Evaluation.firstStage
     evaluated j := later.trans
-    ((evaluated.readingFloors j).symm.trans_le ((evaluated.entries.get j).readingsLater (PairedParentCharts.ChartParent
+    ((evaluated.readingFloors j).symm.trans_le ((evaluated.entries.get j).readingsLater (ChartParent
       original j).common.firstIndex))
   rw [show
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.firstCoordinate
+    Evaluation.firstCoordinate
     evaluated j -
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.lastCoordinate
+    Evaluation.lastCoordinate
     evaluated i =
-    -(Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.lastCoordinate
+    -(Evaluation.lastCoordinate
       evaluated i -
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.firstCoordinate
-      evaluated j) by ring1, Data.Gaussian.Norm.Basic.normSq_neg,
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.lastCoordinate_eq
+      Evaluation.firstCoordinate
+      evaluated j) by ring1, normSq_neg,
+    Evaluation.lastCoordinate_eq
       evaluated,
       Evaluation.firstCoordinate_eq
       evaluated]
@@ -487,39 +489,39 @@ private theorem JunctionRequest.coordinate_accurate {i j : Fin original.plans.le
 assuming equality of samples. -/
 theorem JunctionRequest.accurate {i j : Fin original.plans.length} {joined :
   EndpointJoin request i j}
-    {tolerance : InverseRootPolynomial.Coordinate} {floor : Nat} (junction :
+    {tolerance : Coordinate} {floor : Nat} (junction :
       JunctionRequest request i
       j joined tolerance floor)
     (evaluated : request.Evaluation) (later : junction.index ≤ evaluated.externalFloor)
     (branch : HyperellipticReciprocal.originOrder curve = 1) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.junctionError
+    normSq
+      (Evaluation.junctionError
       evaluated i j) < tolerance := by
   have close := junction.coordinate_accurate evaluated later
-  have firstInside := (Evaluation.chart_square_inside (evaluated.entries.get i)) branch (PairedParentCharts.ChartParent
+  have firstInside := (Evaluation.chart_square_inside (evaluated.entries.get i)) branch (ChartParent
     original i).common.lastIndex
-    (Fin.last ((request.plans.get i).request.plans.get (PairedParentCharts.ChartParent original
+    (Fin.last ((request.plans.get i).request.plans.get (ChartParent original
       i).common.lastIndex).geometry.tail.length)
-  have lastInside := (Evaluation.chart_square_inside (evaluated.entries.get j)) branch (PairedParentCharts.ChartParent
+  have lastInside := (Evaluation.chart_square_inside (evaluated.entries.get j)) branch (ChartParent
     original j).common.firstIndex 0
   have bound := (request.plans.get i).preparation.bounds.paired_radial_connector_bound
     evaluated.firstCap evaluated.otherCap branch firstInside lastInside evaluated.radialDepth
-  change Data.Gaussian.Norm.Basic.normSq
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.junctionError
+  change normSq
+    (Evaluation.junctionError
     evaluated i j) ≤ _ at bound
   rw [← junction.scale_eq] at bound
-  have positive : 0 < junction.scale + 1 := Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
+  have positive : 0 < junction.scale + 1 := Arithmetic.add_pos_of_nonneg_of_pos_direct
     junction.nonnegative (by decide)
   apply bound.trans_lt
   calc
-    _ ≤ (junction.scale + 1) * Data.Gaussian.Norm.Basic.normSq
+    _ ≤ (junction.scale + 1) * normSq
       (Evaluation.firstCoordinate
       evaluated j -
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.lastCoordinate
+      Evaluation.lastCoordinate
       evaluated i) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (le_add_of_nonneg_right (by decide))
-        (Data.Gaussian.Norm.Basic.normSq_nonneg _)
-    _ < (junction.scale + 1) * junction.budget := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct positive close
+      Arithmetic.mul_le_mul_of_nonneg_right_direct (le_add_of_nonneg_right (by decide))
+        (normSq_nonneg _)
+    _ < (junction.scale + 1) * junction.budget := Arithmetic.mul_lt_mul_of_pos_left_direct positive close
     _ = tolerance := by
       rw [junction.budget_eq, Fraction.Field.mul_comm]
       exact Fraction.Field.div_mul_cancel_of_ne _ _ positive.ne'
@@ -528,56 +530,56 @@ theorem JunctionRequest.accurate {i j : Fin original.plans.length} {joined :
 parent traces. -/
 private theorem JunctionRequest.radial_increment_accurate {i j : Fin original.plans.length} {joined :
   EndpointJoin request i j}
-    {tolerance : InverseRootPolynomial.Coordinate} {floor : Nat} (junction :
+    {tolerance : Coordinate} {floor : Nat} (junction :
       JunctionRequest request i
       j joined tolerance floor)
     (evaluated : request.Evaluation) (later : junction.index ≤ evaluated.externalFloor)
     (branch : HyperellipticReciprocal.originOrder curve = 1) :
     PrimitivePoint.Bounded
-      ((Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.radialValues
+      ((Evaluation.radialValues
       evaluated
       (Evaluation.firstCoordinate
       evaluated j)).sub
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.radialValues
+      (Evaluation.radialValues
         evaluated
         (Evaluation.lastCoordinate
         evaluated i))) tolerance := by
   let bounds := (request.plans.get i).preparation.bounds
   let coefficient := max (bounds.coefficientUpper differential) (bounds.coefficientUpper other)
   have scale : 2 * coefficient ≤ junction.scale + 1 := by
-    have square := Fraction.Order.Arithmetic.sq_nonneg_direct (coefficient - 1)
+    have square := Arithmetic.sq_nonneg_direct (coefficient - 1)
     have first : 2 * coefficient ≤ coefficient^2 + 1 := by
-      have translated := Fraction.Order.Arithmetic.add_le_add_direct square (le_refl (2 * coefficient))
+      have translated := Arithmetic.add_le_add_direct square (le_refl (2 * coefficient))
       exact (by ring1 : 2 * coefficient = 0 + 2 * coefficient).trans_le
         (translated.trans_eq (by ring1))
-    have larger := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by
-        decide +kernel : (1 : InverseRootPolynomial.Coordinate) ≤ 512)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct coefficient)
+    have larger := Arithmetic.mul_le_mul_of_nonneg_right_direct (by
+        decide +kernel : (1 : Coordinate) ≤ 512)
+      (Arithmetic.sq_nonneg_direct coefficient)
     rw [Fraction.Field.one_mul] at larger
-    have result := first.trans (Fraction.Order.Arithmetic.add_le_add_direct larger (le_refl (1 :
-      InverseRootPolynomial.Coordinate)))
-    exact result.trans_eq (congrArg (fun value : InverseRootPolynomial.Coordinate => value + 1) junction.scale_eq.symm)
-  have firstInside := (Evaluation.chart_square_inside (evaluated.entries.get i)) branch (PairedParentCharts.ChartParent
+    have result := first.trans (Arithmetic.add_le_add_direct larger (le_refl (1 :
+      Coordinate)))
+    exact result.trans_eq (congrArg (fun value : Coordinate => value + 1) junction.scale_eq.symm)
+  have firstInside := (Evaluation.chart_square_inside (evaluated.entries.get i)) branch (ChartParent
     original i).common.lastIndex
-    (Fin.last ((request.plans.get i).request.plans.get (PairedParentCharts.ChartParent original
+    (Fin.last ((request.plans.get i).request.plans.get (ChartParent original
       i).common.lastIndex).geometry.tail.length)
-  have lastInside := (Evaluation.chart_square_inside (evaluated.entries.get j)) branch (PairedParentCharts.ChartParent
+  have lastInside := (Evaluation.chart_square_inside (evaluated.entries.get j)) branch (ChartParent
     original j).common.firstIndex 0
   have close := junction.coordinate_accurate evaluated later
-  have positive : 0 < junction.scale + 1 := Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
+  have positive : 0 < junction.scale + 1 := Arithmetic.add_pos_of_nonneg_of_pos_direct
     junction.nonnegative (by decide)
-  have paid : (junction.scale + 1) * Data.Gaussian.Norm.Basic.normSq
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.firstCoordinate
+  have paid : (junction.scale + 1) * normSq
+    (Evaluation.firstCoordinate
     evaluated j -
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.lastCoordinate
+    Evaluation.lastCoordinate
     evaluated i) < tolerance := by
-    have estimate := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct positive close
+    have estimate := Arithmetic.mul_lt_mul_of_pos_left_direct positive close
     apply estimate.trans_eq
     rw [junction.budget_eq, Fraction.Field.mul_comm]
     exact Fraction.Field.div_mul_cancel_of_ne _ _ positive.ne'
-  have scalar {d : Differentials.Basic.Differential genus} (sample : Primitives.Sample cap d request.index collar.box)
+  have scalar {d : Differential genus} (sample : Primitives.Sample cap d request.index collar.box)
       (coefficientLe : bounds.coefficientUpper d ≤ coefficient) :
-      Data.Gaussian.Norm.Basic.normSq (sample.primitive.value.eval
+      normSq (sample.primitive.value.eval
         (Evaluation.firstCoordinate
         evaluated j) -
         sample.primitive.value.eval
@@ -585,76 +587,76 @@ private theorem JunctionRequest.radial_increment_accurate {i j : Fin original.pl
           evaluated i)) ≤ tolerance := by
     have bound := bounds.chord_increment sample branch firstInside lastInside
       (left := 0) (right := 1) (by decide) (by decide)
-    change Data.Gaussian.Norm.Basic.normSq (sample.primitive.value.eval
-      (Riemann.RootContinuation.RootRadialGeometry.chord
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.lastCoordinate
+    change normSq (sample.primitive.value.eval
+      (chord
+      (Evaluation.lastCoordinate
         evaluated i)
         (Evaluation.firstCoordinate
         evaluated j) 1) -
-      sample.primitive.value.eval (Riemann.RootContinuation.RootRadialGeometry.chord
+      sample.primitive.value.eval (chord
 
           (Evaluation.lastCoordinate
           evaluated i)
           (Evaluation.firstCoordinate
           evaluated j) 0)) ≤
-      2 * bounds.coefficientUpper d * Data.Gaussian.Norm.Basic.normSq
+      2 * bounds.coefficientUpper d * normSq
         (Evaluation.firstCoordinate
         evaluated j -
         Evaluation.lastCoordinate
         evaluated i) * (1 - 0)^2 at bound
-    have first : Riemann.RootContinuation.RootRadialGeometry.chord
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.lastCoordinate
+    have first : chord
+      (Evaluation.lastCoordinate
       evaluated i)
       (Evaluation.firstCoordinate
       evaluated j) 0 =
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.lastCoordinate
+      Evaluation.lastCoordinate
       evaluated i := by
-      unfold Riemann.RootContinuation.RootRadialGeometry.chord Data.Gaussian.Scale.scale
+      unfold chord Data.Gaussian.Scale.scale
       apply Data.Gaussian.Basic.ext <;>
         simp only [Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im, -eq_self, -iff_self] <;> ring1
-    have last : Riemann.RootContinuation.RootRadialGeometry.chord
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.lastCoordinate
+    have last : chord
+      (Evaluation.lastCoordinate
       evaluated i)
       (Evaluation.firstCoordinate
       evaluated j) 1 =
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.firstCoordinate
+      Evaluation.firstCoordinate
       evaluated j := by
-      unfold Riemann.RootContinuation.RootRadialGeometry.chord Data.Gaussian.Scale.scale
+      unfold chord Data.Gaussian.Scale.scale
       apply Data.Gaussian.Basic.ext <;>
         simp only [Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im, -eq_self, -iff_self] <;> ring1
-    rw [first, last, show ((1 : InverseRootPolynomial.Coordinate) - 0)^2 = 1 by decide, mul_one] at bound
-    exact bound.trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct coefficientLe (by decide)).trans scale)
-      (Data.Gaussian.Norm.Basic.normSq_nonneg _)).trans paid.le)
+    rw [first, last, show ((1 : Coordinate) - 0)^2 = 1 by decide, mul_one] at bound
+    exact bound.trans ((Arithmetic.mul_le_mul_of_nonneg_right_direct
+      ((Arithmetic.mul_le_mul_of_nonneg_left_direct coefficientLe (by decide)).trans scale)
+      (normSq_nonneg _)).trans paid.le)
   constructor
   · rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical]
-    exact scalar evaluated.firstCap (Fraction.Order.Basic.le_max_left _ _)
+    exact scalar evaluated.firstCap (Basic.le_max_left _ _)
   · rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical]
-    exact scalar evaluated.otherCap (Fraction.Order.Basic.le_max_right _ _)
+    exact scalar evaluated.otherCap (Basic.le_max_right _ _)
 
 /-- The actual paired primitive increment between the retained last chart point and the next first chart point. -/
 @[expose] def Evaluation.junctionIncrement (evaluated : request.Evaluation) (i j : Fin original.plans.length) :
-    Stokes.PrimitivePoint :=
-  ((Evaluation.firstChartPoint (evaluated.entries.get j)) (PairedParentCharts.ChartParent original
+    PrimitivePoint :=
+  ((Evaluation.firstChartPoint (evaluated.entries.get j)) (ChartParent original
     j).common.firstIndex).sub
-    ((Evaluation.lastChartPoint (evaluated.entries.get i)) (PairedParentCharts.ChartParent original i).common.lastIndex)
+    ((Evaluation.lastChartPoint (evaluated.entries.get i)) (ChartParent original i).common.lastIndex)
 
 /-- The actual junction increment reads the same two exact shared cap samples at its retained endpoint coordinates. -/
 theorem Evaluation.junctionIncrement_eq (evaluated : request.Evaluation) (i j : Fin original.plans.length)
     (branch : HyperellipticReciprocal.originOrder curve = 1) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.junctionIncrement
+    Evaluation.junctionIncrement
       evaluated i j =
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.radialValues
+      (Evaluation.radialValues
       evaluated
       (Evaluation.firstCoordinate
       evaluated j)).sub
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.radialValues
+      (Evaluation.radialValues
         evaluated
         (Evaluation.lastCoordinate
         evaluated i)) := by
-  have first : (Evaluation.firstChartPoint (evaluated.entries.get j)) (PairedParentCharts.ChartParent original
+  have first : (Evaluation.firstChartPoint (evaluated.entries.get j)) (ChartParent original
     j).common.firstIndex =
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.radialValues
+      Evaluation.radialValues
         evaluated
         (Evaluation.firstCoordinate
         evaluated j) := by
@@ -662,9 +664,9 @@ theorem Evaluation.junctionIncrement_eq (evaluated : request.Evaluation) (i j : 
     rw [Evaluation.chartPoint_readback (evaluated.entries.get j) branch]
     rw [(evaluated.shared j).1, (evaluated.shared j).2]
     rfl
-  have last : (Evaluation.lastChartPoint (evaluated.entries.get i)) (PairedParentCharts.ChartParent original
+  have last : (Evaluation.lastChartPoint (evaluated.entries.get i)) (ChartParent original
     i).common.lastIndex =
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedBoundaryEndpoints.BoundaryBankRequest.Evaluation.radialValues
+      Evaluation.radialValues
         evaluated
         (Evaluation.lastCoordinate
         evaluated i) := by
@@ -677,7 +679,7 @@ theorem Evaluation.junctionIncrement_eq (evaluated : request.Evaluation) (i j : 
 /-- The paid original junction request bounds both components of the actual retained paired joining increment. -/
 theorem JunctionRequest.increment_accurate {i j : Fin original.plans.length} {joined :
   EndpointJoin request i j}
-    {tolerance : InverseRootPolynomial.Coordinate} {floor : Nat} (junction :
+    {tolerance : Coordinate} {floor : Nat} (junction :
       JunctionRequest request i
       j joined tolerance floor)
     (evaluated : request.Evaluation) (later : junction.index ≤ evaluated.externalFloor)

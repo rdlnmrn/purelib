@@ -9,7 +9,6 @@ import Purelib.Approximation.Gaussian.Name.Coherent
 import Purelib.Approximation.Gaussian.Name.Coherent.Arithmetic
 import Purelib.Approximation.Gaussian.Name.Coherent.Division.Equivalence
 import Purelib.Approximation.Gaussian.Name.Coherent.Refinement.State
-import Purelib.Approximation.Gaussian.Acquisition.Provenance
 import Init.Prelude
 meta import Mathlib.Tactic.Linter.Lint
 
@@ -55,7 +54,6 @@ namespace Purelib.Approximation.Gaussian.Division.Prepared
 
 open Purelib.Data.Rat.Fraction (Rational)
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
-open Purelib.Approximation.Gaussian.Acquisition (Provenance)
 
 /-- Construct ordinary coherent division using the retained equivalent denominator and its apartness certificate. -/
 def quotient {channel : Coherent.CoherentNamed} (prepared : Prepared channel)

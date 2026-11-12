@@ -23,6 +23,7 @@ import Purelib.Riemann.Branches.ReconditionedClearSheetContinuation
 import Purelib.RootIsolation.SquareRoot.Clearance.ExactQuadraticOwnerClearance
 import Purelib.Riemann.RootContinuation.UniformSquareRootPreparation
 public import Purelib.Riemann.RootContinuation.CheckedSquareRootPreparation
+import Purelib.RootIsolation.SquareRoot.Owner.Transport
 import Purelib.Riemann.RootContinuation.CertifiedSquareRoot
 import Purelib.Data.Gaussian.Field
 import Purelib.RootIsolation.Newton.Restart.Separated.Basic
@@ -47,6 +48,8 @@ import Mathlib.Order.MinMax
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Diameter-prepared square-root continuation
 
@@ -61,6 +64,8 @@ needed by integration:
 
 All requests and checks are finite rational data.
 -/
+
+variable {mode : Purelib.Polynomial.Geometry.ClearPath.ClearSegment.Mode}
 
 namespace Purelib.Riemann.Branches.PreparedSheetContinuation
 
@@ -78,17 +83,17 @@ public abbrev Gaussian := Basic.Canonical
 open Purelib.Polynomial.Dense.Gaussian in
 /-- The original Gaussian polynomial type evaluated along cleared segments. -/
 public abbrev GaussianPolynomial :=
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+  Basic.CanonicalCoefficients.CoefficientPolynomial
 /-- The original rational box carrier with its retained coordinate bounds. -/
-public abbrev Box := Purelib.Geometry.Rational.Box
+public abbrev Box := Geometry.Rational.Box
 /-- The original square-root owner indexed by its exact radicand. -/
-public abbrev Owner := Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+public abbrev Owner := Topology.SquareRootContinuationChain.Owner
 /-- A segment parameter retaining its proof of membership in the unit interval. -/
-public abbrev Endpoint := Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.Endpoint
+public abbrev Endpoint := ClearSheetContinuation.Subdivision.Endpoint
 /-- Operational equivalence of the two original coherent Gaussian names. -/
-public abbrev NamedEquivalent := Purelib.Approximation.Gaussian.Equivalence.NamedEquivalent
+public abbrev NamedEquivalent := Approximation.Gaussian.Equivalence.NamedEquivalent
 /-- The original coherent Gaussian name carrier. -/
-public abbrev Named := Purelib.Approximation.Gaussian.Name.Basic.Named
+public abbrev Named := Approximation.Gaussian.Name.Basic.Named
 
 open Purelib.Approximation.Gaussian in
 open Purelib.Geometry.Rational in
@@ -100,7 +105,7 @@ The witness compares both exact owners through a refinement of the retained brid
 radicand and root assignment. -/
 @[expose] public def movingRecenterRootEquivalent {parameter : Gaussian}
     (source : Owner parameter)
-    (reset : ExactQuadraticOwnerClearance.MovingRecenter parameter source) :
+    (reset : MovingRecenter parameter source) :
     NamedEquivalent
       (SquareRootTrackEquivalence.ownerRootName
         source.parameterNonzero source)
@@ -124,12 +129,12 @@ radicand and root assignment. -/
   have sourceToCommon :=
     SquareRootTrackEquivalence.rootEquivalent_of_initial_strict
       source.parameterNonzero source.track common.track
-        ((Geometry.Rational.Box.Refinement.StrictInterior.Boxes.trans_refines commonStrictBridge)
+        ((Box.Refinement.StrictInterior.Boxes.trans_refines commonStrictBridge)
             reset.bridgeRefinesSource)
   have movedToCommon :=
     SquareRootTrackEquivalence.rootEquivalent_of_initial_strict
       source.parameterNonzero reset.owner.track common.track
-        ((Geometry.Rational.Box.Refinement.StrictInterior.of_refines reset.bridgeStrictOwner) commonRefinesBridge)
+        ((Box.Refinement.StrictInterior.of_refines reset.bridgeStrictOwner) commonRefinesBridge)
   exact Equivalence.NamedEquivalent.trans sourceToCommon
     movedToCommon.symm
 
@@ -138,14 +143,14 @@ open Purelib.RootIsolation.SquareRoot.Clearance
 /-- Use the owner returned by moving recentering, retaining the original owner when that attempt fails. -/
 @[expose] public def recentered {parameter : Gaussian} (owner : Owner parameter) :
     Owner parameter :=
-  match ExactQuadraticOwnerClearance.movingRecenter? owner with
+  match movingRecenter? owner with
   | none => owner
   | some reset => reset.owner
 
 /-- A successful moving recentering determines the exact owner returned by `recentered`. -/
 public theorem recentered_eq_of_movingRecenter_eq_some {parameter : Gaussian}
-    (owner : Owner parameter) (reset : ExactQuadraticOwnerClearance.MovingRecenter parameter owner)
-    (found : ExactQuadraticOwnerClearance.movingRecenter? owner = some reset) :
+    (owner : Owner parameter) (reset : MovingRecenter parameter owner)
+    (found : movingRecenter? owner = some reset) :
     recentered owner = reset.owner := by
   unfold recentered
   rw [found]
@@ -153,10 +158,10 @@ public theorem recentered_eq_of_movingRecenter_eq_some {parameter : Gaussian}
 /-- Recentering preserves ambient clearance dominance from the original owner. -/
 public theorem recentered_ambientClearanceDominance {parameter : Gaussian}
     (owner : Owner parameter)
-    (dominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance owner) :
-    ExactQuadraticOwnerClearance.AmbientClearanceDominance (recentered owner) := by
+    (dominance : AmbientClearanceDominance owner) :
+    AmbientClearanceDominance (recentered owner) := by
   unfold recentered
-  generalize resetEq : ExactQuadraticOwnerClearance.movingRecenter? owner = reset
+  generalize resetEq : movingRecenter? owner = reset
   cases reset with
   | none => exact dominance
   | some moved => exact moved.ownerDominance
@@ -175,7 +180,7 @@ open Purelib.RootIsolation.SquareRoot.Clearance
       (SquareRootTrackEquivalence.ownerRootName
         owner.parameterNonzero (recentered owner)) := by
   unfold recentered
-  generalize resetEq : ExactQuadraticOwnerClearance.movingRecenter? owner = reset
+  generalize resetEq : movingRecenter? owner = reset
   cases reset with
   | none => exact Equivalence.NamedEquivalent.refl _
   | some moved => exact movingRecenterRootEquivalent owner moved
@@ -251,18 +256,18 @@ owner heterogeneously. -/
 public theorem retainedReservedTransport_heq_self_of_eq
     {source target : Gaussian} (owner : Owner source)
     (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound)
     (reserve : Coordinate)
     (enough : reserve ≤ owner.track.initial.clearance.bound)
     (same : source = target) :
     HEq
       (retainedAtReserve
-        (ExactQuadraticOwnerClearance.reservedTransport owner
+        (reservedTransport owner
           targetNonzero small 0) reserve)
       owner := by
   cases same
-  rw [ExactQuadraticOwnerClearance.reservedTransport]
+  rw [reservedTransport]
   rw [dif_pos rfl]
   rw [retainedAtReserve_eq_self _ _ enough]
 
@@ -271,16 +276,16 @@ public theorem retainedReservedTransport_congr_owner
     {source target : Gaussian} {left right : Owner source}
     (same : left = right)
     (leftTargetNonzero rightTargetNonzero : target ≠ 0)
-    (leftSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (leftSmall : Norm.Basic.normSq (source - target) <
       left.track.initial.clearance.bound)
-    (rightSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (rightSmall : Norm.Basic.normSq (source - target) <
       right.track.initial.clearance.bound)
     (transportReserve retainedReserve : Coordinate) :
     retainedAtReserve
-        (ExactQuadraticOwnerClearance.reservedTransport left
+        (reservedTransport left
           leftTargetNonzero leftSmall transportReserve) retainedReserve =
       retainedAtReserve
-        (ExactQuadraticOwnerClearance.reservedTransport right
+        (reservedTransport right
           rightTargetNonzero rightSmall transportReserve) retainedReserve := by
   subst right
   rfl
@@ -323,7 +328,7 @@ open Purelib.Polynomial in
 /-- The zero clearance reserve supplied to the exact transport operation for each prepared step. -/
 @[expose] public def transportReserve {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (_segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (_segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (_left : Endpoint) (_request : StepRequest) : Coordinate :=
   0
 
@@ -378,16 +383,16 @@ public theorem parameterAt_between (left : Endpoint) (request : StepRequest)
   rw [parameterAt_eq_affine]
   have edgeNonnegative :
       (0 : Coordinate) <= request.endpoint.parameter - left.parameter :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct ordered
+    Arithmetic.sub_nonneg_direct ordered
   have localMoveNonnegative :
       0 <= fraction * (request.endpoint.parameter - left.parameter) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct localInside.1
+    Arithmetic.mul_nonneg_direct localInside.1
       edgeNonnegative
   have remainingNonnegative :
       0 <= (1 - fraction) *
         (request.endpoint.parameter - left.parameter) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.sub_nonneg_direct localInside.2)
+    Arithmetic.mul_nonneg_direct
+      (Arithmetic.sub_nonneg_direct localInside.2)
       edgeNonnegative
   constructor
   · exact le_add_of_nonneg_right localMoveNonnegative
@@ -418,7 +423,7 @@ open Purelib.Polynomial in
 public theorem pointAt_parameterAt
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (request : StepRequest) (fraction : Coordinate) :
     segment.pointAt (parameterAt left request fraction) =
@@ -442,7 +447,7 @@ This readiness predicate does not by itself assert that the requested parameter 
 @[expose] public def AlreadyPrepared
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest) : Prop :=
@@ -458,7 +463,7 @@ open Purelib.Polynomial in
 public instance alreadyPreparedDecidable
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest) : Decidable (AlreadyPrepared segment current owner request) := by
@@ -474,7 +479,7 @@ request. -/
 @[expose] public def uniformPrepared
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest) :
@@ -487,7 +492,7 @@ request. -/
 private theorem uniformPrepared_within
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest) :
@@ -503,7 +508,7 @@ private theorem uniformPrepared_within
 private theorem uniformPrepared_clearance
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest) :
@@ -517,7 +522,7 @@ private theorem uniformPrepared_clearance
 private theorem uniformPrepared_diameter
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest) :
@@ -537,7 +542,7 @@ open Purelib.RootIsolation.SquareRoot.Clearance in
 @[expose] public def uniformPreparedRootEquivalent
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest) :
@@ -572,7 +577,7 @@ cannot carry the requested move. -/
 @[expose] public def baselinePrepared
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
@@ -585,7 +590,7 @@ cannot carry the requested move. -/
           owner.track.initial.clearance.bound then
       owner
     else
-      ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner
+      strengthenQuadraticOwner owner
   else
     match (CheckedSquareRootPreparation.attempt segment current.parameter owner
         request.rootDiameter).value with
@@ -617,7 +622,7 @@ The origin refers to the original candidates; readiness and the strict variation
 can be used. -/
 public structure CoefficientRetry
     {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) (current : Endpoint)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
     (moved : Owner (polynomial.eval (segment.pointAt current.parameter))) where
@@ -645,7 +650,7 @@ Success retains the exact selected strengthened owner together with readiness an
 Failure certifies no global impossibility. -/
 @[expose] public def coefficientProposal?
     {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) (current : Endpoint)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
     (moved : Owner (polynomial.eval (segment.pointAt current.parameter)))
@@ -681,7 +686,7 @@ If the moved owner is already ready and carries the move, return no proposal so 
 moved owner directly. -/
 @[expose] public def coefficientRetry?
     {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) (current : Endpoint)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
     (moved : Owner (polynomial.eval (segment.pointAt current.parameter))) :
@@ -691,7 +696,7 @@ moved owner directly. -/
       if movedCarries : ClearSheetContinuation.variationBound segment current.parameter
           request.endpoint.parameter < moved.track.initial.clearance.bound then none
       else
-        let strengthened := ExactQuadraticOwnerClearance.strengthenQuadraticOwner moved
+        let strengthened := strengthenQuadraticOwner moved
         if carries : ClearSheetContinuation.variationBound segment current.parameter
             request.endpoint.parameter < strengthened.track.initial.clearance.bound then
           some
@@ -699,9 +704,9 @@ moved owner directly. -/
               origin := .movedBaseline (by
                 unfold baselinePrepared
                 rw [if_pos movedReady, if_neg movedCarries])
-              ready := ⟨by rw [ExactQuadraticOwnerClearance.strengthenQuadraticOwner_initial_box]; exact movedReady.1,
-                movedReady.2.1.trans (ExactQuadraticOwnerClearance.strengthenQuadraticOwner_clearance_le moved),
-                by rw [ExactQuadraticOwnerClearance.strengthenQuadraticOwner_initial_box]; exact movedReady.2.2⟩
+              ready := ⟨by rw [strengthenQuadraticOwner_initial_box]; exact movedReady.1,
+                movedReady.2.1.trans (strengthenQuadraticOwner_clearance_le moved),
+                by rw [strengthenQuadraticOwner_initial_box]; exact movedReady.2.2⟩
               carries := carries }
         else
           let second := recentered moved
@@ -719,7 +724,7 @@ end
 /-- A ready moved owner that carries the move causes the retry selector to defer to the moved-owner recursion. -/
 private theorem coefficientRetry_eq_none_of_moved_carries
     {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) (current : Endpoint)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
     (moved : Owner (polynomial.eval (segment.pointAt current.parameter)))
@@ -740,7 +745,7 @@ uniform fallback, preserving readiness without claiming that every requested mov
 @[expose] public def preparedWithRetries
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest) : Nat ->
@@ -781,7 +786,7 @@ Transport still requires an explicit strict variation bound. -/
 @[irreducible, expose] public def prepared
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest) :
@@ -794,7 +799,7 @@ open Purelib.Riemann.Branches
 public theorem prepared_eq_self_of_ready
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
@@ -821,7 +826,7 @@ public theorem prepared_eq_self_of_ready
 public theorem prepared_eq_checked_of_not_ready
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
@@ -849,7 +854,7 @@ open Purelib.RootIsolation.SquareRoot.Clearance in
 public theorem prepared_eq_uniform_of_not_ready_of_checked_miss
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
@@ -891,7 +896,7 @@ carries the move. -/
 public theorem prepared_eq_strengthenQuadraticOwner_of_ready
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
@@ -902,13 +907,13 @@ public theorem prepared_eq_strengthenQuadraticOwner_of_ready
     (strengthenedCarries :
       ClearSheetContinuation.variationBound segment
           current.parameter request.endpoint.parameter <
-        (ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner).track.initial.clearance.bound) :
-    prepared segment current owner request = ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner := by
+        (strengthenQuadraticOwner owner).track.initial.clearance.bound) :
+    prepared segment current owner request = strengthenQuadraticOwner owner := by
   unfold prepared
   rw [show preparationRetryCount = 33 by rfl, preparedWithRetries]
   have baselineEq :
       baselinePrepared segment current owner request =
-        ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner := by
+        strengthenQuadraticOwner owner := by
     unfold baselinePrepared
     rw [if_pos ready, if_neg notCarries]
   have baselineCarries :
@@ -923,7 +928,7 @@ public theorem prepared_eq_strengthenQuadraticOwner_of_ready
 public theorem variation_lt_prepared_of_ready_of_strengthenedCarries
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
@@ -931,7 +936,7 @@ public theorem variation_lt_prepared_of_ready_of_strengthenedCarries
     (strengthenedCarries :
       ClearSheetContinuation.variationBound segment
           current.parameter request.endpoint.parameter <
-        (ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner).track.initial.clearance.bound) :
+        (strengthenQuadraticOwner owner).track.initial.clearance.bound) :
     ClearSheetContinuation.variationBound segment
         current.parameter request.endpoint.parameter <
       (prepared segment current owner request).track.initial.clearance.bound := by
@@ -949,7 +954,7 @@ public theorem variation_lt_prepared_of_ready_of_strengthenedCarries
 public theorem prepared_initial_box_eq_of_ready_of_strengthenedCarries
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
@@ -957,7 +962,7 @@ public theorem prepared_initial_box_eq_of_ready_of_strengthenedCarries
     (strengthenedCarries :
       ClearSheetContinuation.variationBound segment
           current.parameter request.endpoint.parameter <
-        (ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner).track.initial.clearance.bound) :
+        (strengthenQuadraticOwner owner).track.initial.clearance.bound) :
     (prepared segment current owner request).track.initial.box =
       owner.track.initial.box := by
   by_cases carries :
@@ -967,13 +972,13 @@ public theorem prepared_initial_box_eq_of_ready_of_strengthenedCarries
   · rw [prepared_eq_self_of_ready segment current owner request ready carries]
   · rw [prepared_eq_strengthenQuadraticOwner_of_ready segment current owner
       request ready carries strengthenedCarries,
-      ExactQuadraticOwnerClearance.strengthenQuadraticOwner_initial_box]
+      strengthenQuadraticOwner_initial_box]
 
 /-- Preparation preserves ambient clearance dominance when a ready owner's quadratic strengthening carries the move. -/
 public theorem prepared_ambientClearanceDominance_of_ready_of_strengthenedCarries
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
@@ -981,9 +986,9 @@ public theorem prepared_ambientClearanceDominance_of_ready_of_strengthenedCarrie
     (strengthenedCarries :
       ClearSheetContinuation.variationBound segment
           current.parameter request.endpoint.parameter <
-        (ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner).track.initial.clearance.bound)
-    (dominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance owner) :
-    ExactQuadraticOwnerClearance.AmbientClearanceDominance (prepared segment current owner request) := by
+        (strengthenQuadraticOwner owner).track.initial.clearance.bound)
+    (dominance : AmbientClearanceDominance owner) :
+    AmbientClearanceDominance (prepared segment current owner request) := by
   by_cases carries :
       ClearSheetContinuation.variationBound segment
           current.parameter request.endpoint.parameter <
@@ -992,13 +997,13 @@ public theorem prepared_ambientClearanceDominance_of_ready_of_strengthenedCarrie
     exact dominance
   · rw [prepared_eq_strengthenQuadraticOwner_of_ready segment current owner
       request ready carries strengthenedCarries]
-    exact ExactQuadraticOwnerClearance.strengthenQuadraticOwner_ambientClearanceDominance_of owner dominance
+    exact strengthenQuadraticOwner_ambientClearanceDominance_of owner dominance
 
 /-- Preparation preserves the quadratic ambient budget when a ready owner's quadratic strengthening carries the move. -/
 public theorem prepared_quadraticAmbientBudget_of_ready_of_strengthenedCarries
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
@@ -1006,9 +1011,9 @@ public theorem prepared_quadraticAmbientBudget_of_ready_of_strengthenedCarries
     (strengthenedCarries :
       ClearSheetContinuation.variationBound segment
           current.parameter request.endpoint.parameter <
-        (ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner).track.initial.clearance.bound)
-    (budget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget owner) :
-    ExactQuadraticOwnerClearance.QuadraticAmbientBudget (prepared segment current owner request) := by
+        (strengthenQuadraticOwner owner).track.initial.clearance.bound)
+    (budget : QuadraticAmbientBudget owner) :
+    QuadraticAmbientBudget (prepared segment current owner request) := by
   by_cases carries :
       ClearSheetContinuation.variationBound segment
           current.parameter request.endpoint.parameter <
@@ -1017,14 +1022,14 @@ public theorem prepared_quadraticAmbientBudget_of_ready_of_strengthenedCarries
     exact budget
   · rw [prepared_eq_strengthenQuadraticOwner_of_ready segment current owner
       request ready carries strengthenedCarries]
-    exact ExactQuadraticOwnerClearance.strengthenQuadraticOwner_quadraticAmbientBudget owner budget
+    exact strengthenQuadraticOwner_quadraticAmbientBudget owner budget
 
 /-- A lower bound for variation minus displacement also bounds the prepared clearance margin when quadratic
 strengthening carries the move. -/
 public theorem prepared_margin_lower_of_ready_of_strengthenedCarries
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
@@ -1032,7 +1037,7 @@ public theorem prepared_margin_lower_of_ready_of_strengthenedCarries
     (strengthenedCarries :
       ClearSheetContinuation.variationBound segment
           current.parameter request.endpoint.parameter <
-        (ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner).track.initial.clearance.bound)
+        (strengthenQuadraticOwner owner).track.initial.clearance.bound)
     (floor displacement : Coordinate)
     (variationMargin : floor ≤
       ClearSheetContinuation.variationBound segment
@@ -1045,12 +1050,12 @@ public theorem prepared_margin_lower_of_ready_of_strengthenedCarries
         owner.track.initial.clearance.bound
   · rw [prepared_eq_self_of_ready segment current owner request ready carries]
     exact variationMargin.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct carries.le
+      (Arithmetic.sub_le_sub_right_direct carries.le
         displacement)
   · rw [prepared_eq_strengthenQuadraticOwner_of_ready segment current owner
       request ready carries strengthenedCarries]
     exact variationMargin.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct
+      (Arithmetic.sub_le_sub_right_direct
         strengthenedCarries.le displacement)
 
 /-- Preparation selects the exact first recentered owner after inherited and strengthened clearance fail, provided that
@@ -1058,7 +1063,7 @@ recentered owner is ready and carries the move. -/
 public theorem prepared_eq_recentered_of_ready
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
@@ -1069,7 +1074,7 @@ public theorem prepared_eq_recentered_of_ready
     (strengthenedNotCarries :
       ¬ ClearSheetContinuation.variationBound segment
           current.parameter request.endpoint.parameter <
-        (ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner).track.initial.clearance.bound)
+        (strengthenQuadraticOwner owner).track.initial.clearance.bound)
     (recenteredReady : AlreadyPrepared segment current (recentered owner)
       request)
     (recenteredCarries :
@@ -1081,7 +1086,7 @@ public theorem prepared_eq_recentered_of_ready
   rw [show preparationRetryCount = 33 by rfl, preparedWithRetries]
   have firstBaselineEq :
       baselinePrepared segment current owner request =
-        ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner := by
+        strengthenQuadraticOwner owner := by
     unfold baselinePrepared
     rw [if_pos ready, if_neg notCarries]
   have firstBaselineNotCarries :
@@ -1116,7 +1121,7 @@ ready and carries the move. -/
 public theorem prepared_eq_recentered_twice_of_ready
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
@@ -1127,7 +1132,7 @@ public theorem prepared_eq_recentered_twice_of_ready
     (strengthenedNotCarries :
       ¬ ClearSheetContinuation.variationBound segment
           current.parameter request.endpoint.parameter <
-        (ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner).track.initial.clearance.bound)
+        (strengthenQuadraticOwner owner).track.initial.clearance.bound)
     (firstReady : AlreadyPrepared segment current (recentered owner) request)
     (firstNotCarries :
       ¬ ClearSheetContinuation.variationBound segment
@@ -1136,7 +1141,7 @@ public theorem prepared_eq_recentered_twice_of_ready
     (firstStrengthenedNotCarries :
       ¬ ClearSheetContinuation.variationBound segment
           current.parameter request.endpoint.parameter <
-        (ExactQuadraticOwnerClearance.strengthenQuadraticOwner (recentered owner)).track.initial.clearance.bound)
+        (strengthenQuadraticOwner (recentered owner)).track.initial.clearance.bound)
     (secondReady : AlreadyPrepared segment current
       (recentered (recentered owner)) request)
     (secondCarries :
@@ -1149,7 +1154,7 @@ public theorem prepared_eq_recentered_twice_of_ready
   rw [show preparationRetryCount = 33 by rfl, preparedWithRetries]
   have firstBaselineEq :
       baselinePrepared segment current owner request =
-        ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner := by
+        strengthenQuadraticOwner owner := by
     unfold baselinePrepared
     rw [if_pos ready, if_neg notCarries]
   have firstBaselineNotCarries :
@@ -1174,26 +1179,26 @@ open Purelib.RootIsolation.SquareRoot.Clearance
 fail. -/
 public theorem prepared_eq_strengthened_recentered_of_ready
     {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) (current : Endpoint)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
     (ready : AlreadyPrepared segment current owner request)
     (inheritedMiss : ¬ ClearSheetContinuation.variationBound segment current.parameter
       request.endpoint.parameter < owner.track.initial.clearance.bound)
     (directMiss : ¬ ClearSheetContinuation.variationBound segment current.parameter
-      request.endpoint.parameter < (ExactQuadraticOwnerClearance.strengthenQuadraticOwner
+      request.endpoint.parameter < (strengthenQuadraticOwner
         owner).track.initial.clearance.bound)
     (movedReady : AlreadyPrepared segment current (recentered owner) request)
     (movedMiss : ¬ ClearSheetContinuation.variationBound segment current.parameter
       request.endpoint.parameter < (recentered owner).track.initial.clearance.bound)
     (carries : ClearSheetContinuation.variationBound segment current.parameter request.endpoint.parameter <
-      (ExactQuadraticOwnerClearance.strengthenQuadraticOwner (recentered owner)).track.initial.clearance.bound) :
-    prepared segment current owner request = ExactQuadraticOwnerClearance.strengthenQuadraticOwner (recentered owner) :=
+      (strengthenQuadraticOwner (recentered owner)).track.initial.clearance.bound) :
+    prepared segment current owner request = strengthenQuadraticOwner (recentered owner) :=
       by
   unfold prepared
   rw [show preparationRetryCount = 33 by rfl, preparedWithRetries]
   have baselineEq : baselinePrepared segment current owner request =
-    ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner := by
+    strengthenQuadraticOwner owner := by
     unfold baselinePrepared
     rw [if_pos ready, if_neg inheritedMiss]
   rw [baselineEq, if_neg directMiss]
@@ -1207,21 +1212,21 @@ public theorem prepared_eq_strengthened_recentered_of_ready
 proposal carries the move. -/
 public theorem prepared_eq_coefficient_of_ready
     {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) (current : Endpoint)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
     (ready : AlreadyPrepared segment current owner request)
     (inheritedMiss : ¬ ClearSheetContinuation.variationBound segment current.parameter
       request.endpoint.parameter < owner.track.initial.clearance.bound)
     (directMiss : ¬ ClearSheetContinuation.variationBound segment current.parameter
-      request.endpoint.parameter < (ExactQuadraticOwnerClearance.strengthenQuadraticOwner
+      request.endpoint.parameter < (strengthenQuadraticOwner
         owner).track.initial.clearance.bound)
     (movingMiss : ¬ (AlreadyPrepared segment current (recentered owner) request ∧
       ClearSheetContinuation.variationBound segment current.parameter request.endpoint.parameter <
         (recentered owner).track.initial.clearance.bound))
     (movedStrengthenedMiss : AlreadyPrepared segment current (recentered owner) request →
       ¬ ClearSheetContinuation.variationBound segment current.parameter request.endpoint.parameter <
-        (ExactQuadraticOwnerClearance.strengthenQuadraticOwner (recentered owner)).track.initial.clearance.bound)
+        (strengthenQuadraticOwner (recentered owner)).track.initial.clearance.bound)
     (secondMiss : AlreadyPrepared segment current (recentered owner) request →
       ¬ (AlreadyPrepared segment current (recentered (recentered owner)) request ∧
         ClearSheetContinuation.variationBound segment current.parameter request.endpoint.parameter <
@@ -1232,7 +1237,7 @@ public theorem prepared_eq_coefficient_of_ready
   unfold prepared
   rw [show preparationRetryCount = 33 by rfl, preparedWithRetries]
   have baselineEq : baselinePrepared segment current owner request =
-    ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner := by
+    strengthenQuadraticOwner owner := by
     unfold baselinePrepared
     rw [if_pos ready, if_neg inheritedMiss]
   rw [baselineEq, if_neg directMiss]
@@ -1251,20 +1256,20 @@ public theorem prepared_eq_coefficient_of_ready
 carries the move. -/
 public theorem prepared_eq_moved_coefficient_of_ready
     {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) (current : Endpoint)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
     (ready : AlreadyPrepared segment current owner request)
     (inheritedMiss : ¬ ClearSheetContinuation.variationBound segment current.parameter
       request.endpoint.parameter < owner.track.initial.clearance.bound)
     (directMiss : ¬ ClearSheetContinuation.variationBound segment current.parameter
-      request.endpoint.parameter < (ExactQuadraticOwnerClearance.strengthenQuadraticOwner
+      request.endpoint.parameter < (strengthenQuadraticOwner
         owner).track.initial.clearance.bound)
     (movedReady : AlreadyPrepared segment current (recentered owner) request)
     (movingMiss : ¬ ClearSheetContinuation.variationBound segment current.parameter
       request.endpoint.parameter < (recentered owner).track.initial.clearance.bound)
     (movedStrengthenedMiss : ¬ ClearSheetContinuation.variationBound segment current.parameter
-      request.endpoint.parameter < (ExactQuadraticOwnerClearance.strengthenQuadraticOwner (recentered
+      request.endpoint.parameter < (strengthenQuadraticOwner (recentered
         owner)).track.initial.clearance.bound)
     (secondMiss : ¬ (AlreadyPrepared segment current (recentered (recentered owner)) request ∧
       ClearSheetContinuation.variationBound segment current.parameter request.endpoint.parameter <
@@ -1278,7 +1283,7 @@ public theorem prepared_eq_moved_coefficient_of_ready
   unfold prepared
   rw [show preparationRetryCount = 33 by rfl, preparedWithRetries]
   have baselineEq : baselinePrepared segment current owner request =
-    ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner := by
+    strengthenQuadraticOwner owner := by
     unfold baselinePrepared
     rw [if_pos ready, if_neg inheritedMiss]
   rw [baselineEq, if_neg directMiss]
@@ -1299,7 +1304,7 @@ it. -/
 public theorem variation_lt_prepared_of_ready_of_recenteredCarries
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
@@ -1322,7 +1327,7 @@ public theorem variation_lt_prepared_of_ready_of_recenteredCarries
   · by_cases strengthenedCarries :
         ClearSheetContinuation.variationBound segment
             current.parameter request.endpoint.parameter <
-          (ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner).track.initial.clearance.bound
+          (strengthenQuadraticOwner owner).track.initial.clearance.bound
     · rw [prepared_eq_strengthenQuadraticOwner_of_ready segment current owner
         request ready carries strengthenedCarries]
       exact strengthenedCarries
@@ -1334,7 +1339,7 @@ public theorem variation_lt_prepared_of_ready_of_recenteredCarries
 public theorem prepared_ambientClearanceDominance_of_ready_of_recenteredCarries
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
@@ -1345,8 +1350,8 @@ public theorem prepared_ambientClearanceDominance_of_ready_of_recenteredCarries
       ClearSheetContinuation.variationBound segment
           current.parameter request.endpoint.parameter <
         (recentered owner).track.initial.clearance.bound)
-    (dominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance owner) :
-    ExactQuadraticOwnerClearance.AmbientClearanceDominance (prepared segment current owner request) := by
+    (dominance : AmbientClearanceDominance owner) :
+    AmbientClearanceDominance (prepared segment current owner request) := by
   by_cases carries :
       ClearSheetContinuation.variationBound segment
           current.parameter request.endpoint.parameter <
@@ -1356,10 +1361,10 @@ public theorem prepared_ambientClearanceDominance_of_ready_of_recenteredCarries
   · by_cases strengthenedCarries :
         ClearSheetContinuation.variationBound segment
             current.parameter request.endpoint.parameter <
-          (ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner).track.initial.clearance.bound
+          (strengthenQuadraticOwner owner).track.initial.clearance.bound
     · rw [prepared_eq_strengthenQuadraticOwner_of_ready segment current owner
         request ready carries strengthenedCarries]
-      exact ExactQuadraticOwnerClearance.strengthenQuadraticOwner_ambientClearanceDominance_of owner dominance
+      exact strengthenQuadraticOwner_ambientClearanceDominance_of owner dominance
     · rw [prepared_eq_recentered_of_ready segment current owner request ready
         carries strengthenedCarries recenteredReady recenteredCarries]
       exact recentered_ambientClearanceDominance owner dominance
@@ -1368,7 +1373,7 @@ public theorem prepared_ambientClearanceDominance_of_ready_of_recenteredCarries
 public theorem prepared_quadraticAmbientBudget_of_ready_of_recenteredCarries
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
@@ -1379,9 +1384,9 @@ public theorem prepared_quadraticAmbientBudget_of_ready_of_recenteredCarries
       ClearSheetContinuation.variationBound segment
           current.parameter request.endpoint.parameter <
         (recentered owner).track.initial.clearance.bound)
-    (budget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget owner)
-    (recenteredBudget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget (recentered owner)) :
-    ExactQuadraticOwnerClearance.QuadraticAmbientBudget (prepared segment current owner request) := by
+    (budget : QuadraticAmbientBudget owner)
+    (recenteredBudget : QuadraticAmbientBudget (recentered owner)) :
+    QuadraticAmbientBudget (prepared segment current owner request) := by
   by_cases carries :
       ClearSheetContinuation.variationBound segment
           current.parameter request.endpoint.parameter <
@@ -1391,10 +1396,10 @@ public theorem prepared_quadraticAmbientBudget_of_ready_of_recenteredCarries
   · by_cases strengthenedCarries :
         ClearSheetContinuation.variationBound segment
             current.parameter request.endpoint.parameter <
-          (ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner).track.initial.clearance.bound
+          (strengthenQuadraticOwner owner).track.initial.clearance.bound
     · rw [prepared_eq_strengthenQuadraticOwner_of_ready segment current owner
         request ready carries strengthenedCarries]
-      exact ExactQuadraticOwnerClearance.strengthenQuadraticOwner_quadraticAmbientBudget owner budget
+      exact strengthenQuadraticOwner_quadraticAmbientBudget owner budget
     · rw [prepared_eq_recentered_of_ready segment current owner request ready
         carries strengthenedCarries recenteredReady recenteredCarries]
       exact recenteredBudget
@@ -1404,7 +1409,7 @@ owner. -/
 public theorem prepared_margin_lower_of_ready_of_recenteredCarries
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest)
@@ -1429,16 +1434,16 @@ public theorem prepared_margin_lower_of_ready_of_recenteredCarries
         owner.track.initial.clearance.bound
   · rw [prepared_eq_self_of_ready segment current owner request ready carries]
     exact variationMargin.trans
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct carries.le
+      (Arithmetic.sub_le_sub_right_direct carries.le
         displacement)
   · by_cases strengthenedCarries :
         ClearSheetContinuation.variationBound segment
             current.parameter request.endpoint.parameter <
-          (ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner).track.initial.clearance.bound
+          (strengthenQuadraticOwner owner).track.initial.clearance.bound
     · rw [prepared_eq_strengthenQuadraticOwner_of_ready segment current owner
         request ready carries strengthenedCarries]
       exact variationMargin.trans
-        (Fraction.Order.Arithmetic.sub_le_sub_right_direct
+        (Arithmetic.sub_le_sub_right_direct
           strengthenedCarries.le displacement)
     · rw [prepared_eq_recentered_of_ready segment current owner request ready
         carries strengthenedCarries recenteredReady recenteredCarries]
@@ -1454,7 +1459,7 @@ Subsequent transport can consume this owner directly; the equality connects its 
 operation. -/
 public structure CachedSource {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest) where
@@ -1471,7 +1476,7 @@ open Purelib.Polynomial
 /-- Cache the exact canonical prepared owner for the original segment point, owner, and request. -/
 @[expose] public def canonical {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest) : CachedSource segment current owner request where
@@ -1481,7 +1486,7 @@ open Purelib.Polynomial
 /-- Every certified cache equals the canonical cache for the same original preparation inputs. -/
 public theorem eq_canonical {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode}
     {current : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt current.parameter))}
     {request : StepRequest}
@@ -1503,7 +1508,7 @@ open Purelib.RootIsolation.SquareRoot.Clearance in
 private theorem baselinePrepared_initial_box_refines_rootAmbient
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest) :
@@ -1518,7 +1523,7 @@ private theorem baselinePrepared_initial_box_refines_rootAmbient
           owner.track.initial.clearance.bound
     · rw [if_pos carries]
       exact ready.2.2
-    · rw [if_neg carries, ExactQuadraticOwnerClearance.strengthenQuadraticOwner_initial_box]
+    · rw [if_neg carries, strengthenQuadraticOwner_initial_box]
       exact ready.2.2
   · rw [if_neg ready]
     cases found : (CheckedSquareRootPreparation.attempt segment current.parameter
@@ -1532,7 +1537,7 @@ open Purelib.Riemann.RootContinuation in
 public theorem prepared_initial_box_refines_rootAmbient
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest) :
@@ -1590,7 +1595,7 @@ open Purelib.Riemann.RootContinuation
 @[expose] public def preparedClearanceLower
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (_current : Endpoint) (request : StepRequest) : Coordinate :=
   UniformSquareRootPreparation.predictedClearance segment
     request.rootDiameter
@@ -1599,7 +1604,7 @@ open Purelib.Riemann.RootContinuation
 public theorem preparedClearanceLower_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint) (request : StepRequest) :
     0 < preparedClearanceLower segment current request :=
   UniformSquareRootPreparation.predictedClearance_positive segment
@@ -1609,7 +1614,7 @@ public theorem preparedClearanceLower_positive
 @[expose] public def uniformPreparedClearanceFloor
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (rootDiameter : Coordinate) : Coordinate :=
   min
     (UniformSquareRootPreparation.predictedClearance segment
@@ -1620,10 +1625,10 @@ public theorem preparedClearanceLower_positive
 public theorem uniformPreparedClearanceFloor_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
     0 < uniformPreparedClearanceFloor segment rootDiameter :=
-  Fraction.Order.Basic.lt_min
+  Basic.lt_min
     (UniformSquareRootPreparation.predictedClearance_positive
       segment rootDiameter rootDiameterPositive)
     (by decide)
@@ -1632,12 +1637,12 @@ public theorem uniformPreparedClearanceFloor_positive
 public theorem uniformPreparedClearanceFloor_le_predicted
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (rootDiameter : Coordinate) :
     uniformPreparedClearanceFloor segment rootDiameter <=
       UniformSquareRootPreparation.predictedClearance segment
         rootDiameter :=
-  Fraction.Order.Basic.min_le_left _ _
+  Basic.min_le_left _ _
 
 end
 
@@ -1647,7 +1652,7 @@ open Purelib.RootIsolation.SquareRoot.Clearance in
 public theorem preparedClearanceLower_le
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest) :
@@ -1669,7 +1674,7 @@ public theorem preparedClearanceLower_le
       · rw [if_pos carries]
         exact ready.2.1
       · rw [if_neg carries]
-        exact ready.2.1.trans (ExactQuadraticOwnerClearance.strengthenQuadraticOwner_clearance_le candidate)
+        exact ready.2.1.trans (strengthenQuadraticOwner_clearance_le candidate)
     · rw [if_neg ready]
       cases found : (CheckedSquareRootPreparation.attempt segment current.parameter
           candidate request.rootDiameter).value with
@@ -1724,7 +1729,7 @@ public theorem preparedClearanceLower_le
 /-- Read the coherent square-root name of the exact prepared source owner. -/
 @[expose] public def preparedRootName {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest) : Named :=
@@ -1736,7 +1741,7 @@ end
 open Purelib.Data.Gaussian in
 /-- Zero squared displacement is strictly smaller than an owner's positive clearance. -/
 public theorem samePointSmall {parameter : Gaussian} (owner : Owner parameter) :
-    Data.Gaussian.Norm.Basic.normSq (parameter - parameter) <
+    Norm.Basic.normSq (parameter - parameter) <
       owner.track.initial.clearance.bound := by
   rw [Basic.sub_self,
     Norm.Basic.normSq_zero]
@@ -1747,13 +1752,13 @@ open Purelib.RootIsolation.SquareRoot.Clearance in
 /-- Read the root name after zero-reserve transport of the prepared owner to its unchanged radicand. -/
 @[expose] public def zeroMoveRootName {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest) : Named :=
   let source := prepared segment left owner request
   let nonzero := segment.pointAt_eval_ne_zero left.parameter left.inside
-  ((ExactQuadraticOwnerClearance.reservedTransport source nonzero (samePointSmall source)
+  ((reservedTransport source nonzero (samePointSmall source)
     (transportReserve segment left request)).certificate nonzero).value.name
 
 section
@@ -1764,7 +1769,7 @@ open Purelib.RootIsolation.SquareRoot.Clearance
 public theorem prepared_diagonal_lt
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest) :
@@ -1785,7 +1790,7 @@ public theorem prepared_diagonal_lt
             candidate.track.initial.clearance.bound
       · rw [if_pos carries]
         exact ready.1
-      · rw [if_neg carries, ExactQuadraticOwnerClearance.strengthenQuadraticOwner_initial_box]
+      · rw [if_neg carries, strengthenQuadraticOwner_initial_box]
         exact ready.1
     · rw [if_neg ready]
       cases found : (CheckedSquareRootPreparation.attempt segment current.parameter
@@ -1843,7 +1848,7 @@ The segment's ambient containment turns the strict variation estimate into the s
 by zero-reserve transport. -/
 @[expose] public def transported {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -1852,7 +1857,7 @@ by zero-reserve transport. -/
         (prepared segment left owner request).track.initial.clearance.bound) :
     Owner (polynomial.eval
       (segment.pointAt request.endpoint.parameter)) :=
-  ExactQuadraticOwnerClearance.reservedTransport (prepared segment left owner request)
+  reservedTransport (prepared segment left owner request)
     (segment.pointAt_eval_ne_zero request.endpoint.parameter
       request.endpoint.inside)
     ((ClearSheetContinuation.evaluation_variation_le segment
@@ -1867,7 +1872,7 @@ open Purelib.Riemann.Branches in
 /-- Read the coherent square-root name of the exact transported owner at the requested endpoint. -/
 @[expose] public def transportedRootName {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -1890,10 +1895,10 @@ owner. -/
 @[expose] public def rootEquivalentOfDirectPresentation
     {source target : Gaussian} (sourceOwner : Owner source)
     (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Norm.Basic.normSq (source - target) <
       sourceOwner.track.initial.clearance.bound)
     (result : Owner target)
-    (relation : ExactQuadraticOwnerClearance.DirectPresentationRelation sourceOwner targetNonzero small
+    (relation : DirectPresentationRelation sourceOwner targetNonzero small
       result) :
     NamedEquivalent
       (SquareRootTrackEquivalence.ownerRootName targetNonzero
@@ -1909,7 +1914,7 @@ owner. -/
       result.track (by decide)
   have tailStrictParent : tail.track.initial.box.StrictInterior
       relation.parent.track.initial.box :=
-    (Geometry.Rational.Box.Refinement.StrictInterior.Boxes.trans_refines tailStrictResult) relation.resultRefinesParent
+    (Box.Refinement.StrictInterior.Boxes.trans_refines tailStrictResult) relation.resultRefinesParent
   have genericToParent :=
     (SquareRootTrackEquivalence.rootEquivalent_of_initial_strict
       targetNonzero relation.parent.track
@@ -1935,38 +1940,38 @@ open Purelib.RootIsolation.SquareRoot.Clearance
 @[expose] public def directTransportRootEquivalentGeneric
     {source target : Gaussian} (sourceOwner : Owner source)
     (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Norm.Basic.normSq (source - target) <
       sourceOwner.track.initial.clearance.bound) :
     NamedEquivalent
       (SquareRootTrackEquivalence.ownerRootName targetNonzero
         (sourceOwner.advance targetNonzero small))
       (SquareRootTrackEquivalence.ownerRootName targetNonzero
-        (ExactQuadraticOwnerClearance.directTransport sourceOwner targetNonzero small)) := by
+        (directTransport sourceOwner targetNonzero small)) := by
   rcases directTransport_generic_relation sourceOwner targetNonzero small with
       equal | strict
   · rw [equal]
     exact Equivalence.NamedEquivalent.refl _
   · exact rootEquivalentOfDirectPresentation sourceOwner targetNonzero small
-      (ExactQuadraticOwnerClearance.directTransport sourceOwner targetNonzero small) strict
+      (directTransport sourceOwner targetNonzero small) strict
 
 /-- Reserved transport and generic advancement of the same source name equivalent roots at the exact target. -/
 @[expose] public def reservedTransportRootEquivalentGeneric
     {source target : Gaussian} (sourceOwner : Owner source)
     (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Norm.Basic.normSq (source - target) <
       sourceOwner.track.initial.clearance.bound)
     (reserve : Coordinate) :
     NamedEquivalent
       (SquareRootTrackEquivalence.ownerRootName targetNonzero
         (sourceOwner.advance targetNonzero small))
       (SquareRootTrackEquivalence.ownerRootName targetNonzero
-        (ExactQuadraticOwnerClearance.reservedTransport sourceOwner targetNonzero small reserve)) := by
+        (reservedTransport sourceOwner targetNonzero small reserve)) := by
   rcases reservedTransport_generic_relation sourceOwner targetNonzero small
       reserve with equal | strict
   · rw [equal]
     exact Equivalence.NamedEquivalent.refl _
   · exact rootEquivalentOfDirectPresentation sourceOwner targetNonzero small
-      (ExactQuadraticOwnerClearance.reservedTransport sourceOwner targetNonzero small reserve) strict
+      (reservedTransport sourceOwner targetNonzero small reserve) strict
 
 end
 
@@ -1979,13 +1984,13 @@ public theorem reservedTransportRootName_proof_irrel
     {source target : Gaussian} (sourceOwner : Owner source)
     (firstNonzero secondNonzero : target ≠ 0)
     (firstSmall secondSmall :
-      Data.Gaussian.Norm.Basic.normSq (source - target) <
+      Norm.Basic.normSq (source - target) <
         sourceOwner.track.initial.clearance.bound)
     (reserve : Coordinate) :
     SquareRootTrackEquivalence.ownerRootName firstNonzero
-        (ExactQuadraticOwnerClearance.reservedTransport sourceOwner firstNonzero firstSmall reserve) =
+        (reservedTransport sourceOwner firstNonzero firstSmall reserve) =
       SquareRootTrackEquivalence.ownerRootName secondNonzero
-        (ExactQuadraticOwnerClearance.reservedTransport sourceOwner secondNonzero secondSmall reserve) := by
+        (reservedTransport sourceOwner secondNonzero secondSmall reserve) := by
   have nonzero_eq : firstNonzero = secondNonzero :=
     Subsingleton.elim _ _
   cases nonzero_eq
@@ -2001,7 +2006,7 @@ open Purelib.Riemann.RootContinuation in
 @[expose] public def continuedRootNameEquivalentTransportedRootName
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2035,14 +2040,14 @@ open Purelib.RootIsolation.SquareRoot.Clearance in
 public theorem transported_anchor_distance_lt
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
     (small : ClearSheetContinuation.variationBound segment
       left.parameter request.endpoint.parameter <
         (prepared segment left owner request).track.initial.clearance.bound) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((transported segment within left owner request small).track.initial.box.anchor -
           (prepared segment left owner request).track.initial.box.anchor) <
       request.rootDiameter := by
@@ -2050,7 +2055,7 @@ public theorem transported_anchor_distance_lt
   let target := transported segment within left owner request small
   have refines : target.track.initial.box.Refines
       source.track.initial.box := by
-    exact ExactQuadraticOwnerClearance.reservedTransport_initial_box_refines source
+    exact reservedTransport_initial_box_refines source
       (segment.pointAt_eval_ne_zero request.endpoint.parameter
         request.endpoint.inside) _
       (transportReserve segment left request)
@@ -2069,7 +2074,7 @@ The full step's strict variation bound bounds every intermediate move; the same 
 are retained. -/
 @[expose] public def transportedInterior {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2089,7 +2094,7 @@ are retained. -/
         (prepared segment left owner request).track.initial.clearance.bound :=
     (ClearSheetContinuation.variationBound_le_of_between
       segment between.1 between.2).trans_lt small
-  exact ExactQuadraticOwnerClearance.reservedTransport (prepared segment left owner request)
+  exact reservedTransport (prepared segment left owner request)
     (segment.pointAt_eval_ne_zero parameter
       (parameterAt_inside left request ordered fraction localInside))
     ((ClearSheetContinuation.evaluation_variation_le segment within
@@ -2102,7 +2107,7 @@ are retained. -/
 public theorem transportedInterior_initial_box_refines
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2116,7 +2121,7 @@ public theorem transportedInterior_initial_box_refines
       fraction localInside).track.initial.box.Refines
         (prepared segment left owner request).track.initial.box := by
   let parameter := parameterAt left request fraction
-  exact ExactQuadraticOwnerClearance.reservedTransport_initial_box_refines
+  exact reservedTransport_initial_box_refines
     (prepared segment left owner request)
     (segment.pointAt_eval_ne_zero parameter
       (parameterAt_inside left request ordered fraction localInside)) _
@@ -2144,7 +2149,7 @@ Fraction zero uses the exact zero-move transport, fraction one uses the endpoint
 interior transport. Every result retains refinement into the same prepared source box. -/
 @[expose] public def transportedQuery {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2160,7 +2165,7 @@ interior transport. Every result retains refinement into the same prepared sourc
       (prepared segment left owner request).track.initial.box := by
   if atStart : fraction = 0 then
     subst fraction
-    let queryOwner := ExactQuadraticOwnerClearance.reservedTransport (prepared segment left owner request)
+    let queryOwner := reservedTransport (prepared segment left owner request)
       (segment.pointAt_eval_ne_zero left.parameter left.inside)
         (samePointSmall (prepared segment left owner request))
       (transportReserve segment left request)
@@ -2169,7 +2174,7 @@ interior transport. Every result retains refinement into the same prepared sourc
         (prepared segment left owner request).track.initial.box :=
       { owner := queryOwner
         initial_box_refines :=
-          ExactQuadraticOwnerClearance.reservedTransport_initial_box_refines
+          reservedTransport_initial_box_refines
             (prepared segment left owner request)
             (segment.pointAt_eval_ne_zero left.parameter left.inside)
               (samePointSmall (prepared segment left owner request))
@@ -2183,7 +2188,7 @@ interior transport. Every result retains refinement into the same prepared sourc
         (prepared segment left owner request).track.initial.box :=
       { owner := queryOwner
         initial_box_refines := by
-          exact ExactQuadraticOwnerClearance.reservedTransport_initial_box_refines
+          exact reservedTransport_initial_box_refines
             (prepared segment left owner request)
               (segment.pointAt_eval_ne_zero request.endpoint.parameter
                 request.endpoint.inside) _
@@ -2202,7 +2207,7 @@ open Purelib.Riemann.Branches
 /-- Read the exact owner from the transported query at the requested local fraction. -/
 @[expose] public def transportedAt {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2221,7 +2226,7 @@ open Purelib.Riemann.Branches
 public theorem pointVariationSmall
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2248,7 +2253,7 @@ open Purelib.Riemann.Branches in
 public theorem pointNormSmall
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2258,7 +2263,7 @@ public theorem pointNormSmall
         (prepared segment left owner request).track.initial.clearance.bound)
     (fraction : Coordinate)
     (localInside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (polynomial.eval (segment.pointAt left.parameter) -
           polynomial.eval
             (segment.pointAt (parameterAt left request fraction))) <
@@ -2276,7 +2281,7 @@ open Purelib.RootIsolation.SquareRoot.Clearance in
 public theorem transportedAt_eq_directAdvance
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2288,7 +2293,7 @@ public theorem transportedAt_eq_directAdvance
     (localInside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :
     transportedAt segment within left owner request ordered small fraction
         localInside =
-      ExactQuadraticOwnerClearance.reservedTransport (prepared segment left owner request)
+      reservedTransport (prepared segment left owner request)
         (segment.pointAt_eval_ne_zero (parameterAt left request fraction)
           (parameterAt_inside left request ordered fraction localInside))
         (pointNormSmall segment within left owner request ordered small fraction
@@ -2311,7 +2316,7 @@ open Purelib.Riemann.Branches in
 public theorem transportedAt_initial_box_refines
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2334,7 +2339,7 @@ open Purelib.Riemann.Branches in
 public theorem transportedAt_anchor_distance_lt
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2344,7 +2349,7 @@ public theorem transportedAt_anchor_distance_lt
         (prepared segment left owner request).track.initial.clearance.bound)
     (fraction : Coordinate)
     (localInside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((transportedAt segment within left owner request ordered small
           fraction localInside).track.initial.box.anchor -
           (prepared segment left owner request).track.initial.box.anchor) <
@@ -2378,7 +2383,7 @@ The result uses the exact transport owner as the input to reserve retention; roo
 operations. -/
 @[expose] public def advance {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2397,7 +2402,7 @@ Transport consumes the cache's exact owner and strict clearance evidence, follow
 predicted reserve. -/
 @[expose] public def advanceCached {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2408,7 +2413,7 @@ predicted reserve. -/
     Owner (polynomial.eval
       (segment.pointAt request.endpoint.parameter)) :=
   retainedAtReserve
-    (ExactQuadraticOwnerClearance.reservedTransport cached.preparedOwner
+    (reservedTransport cached.preparedOwner
       (segment.pointAt_eval_ne_zero request.endpoint.parameter
         request.endpoint.inside)
       ((ClearSheetContinuation.evaluation_variation_le segment
@@ -2421,7 +2426,7 @@ predicted reserve. -/
 public theorem advanceCached_eq_advance
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2446,7 +2451,7 @@ transport unchanged. -/
 public theorem advanceCached_eq_reservedTransport_of_quadraticCache
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2454,7 +2459,7 @@ public theorem advanceCached_eq_reservedTransport_of_quadraticCache
     (cachedSmall : ClearSheetContinuation.variationBound segment
       left.parameter request.endpoint.parameter <
         cached.preparedOwner.track.initial.clearance.bound)
-    (transportCache : ExactQuadraticOwnerClearance.QuadraticAmbientTransportCache cached.preparedOwner
+    (transportCache : QuadraticAmbientTransportCache cached.preparedOwner
       (segment.pointAt_eval_ne_zero request.endpoint.parameter
         request.endpoint.inside)
       ((ClearSheetContinuation.evaluation_variation_le segment
@@ -2464,7 +2469,7 @@ public theorem advanceCached_eq_reservedTransport_of_quadraticCache
       ClearSheetContinuation.squareRootDerivativeMargin segment ≤
         (1 / 4 : Coordinate)) :
     advanceCached segment within left owner request cached cachedSmall =
-      ExactQuadraticOwnerClearance.reservedTransport cached.preparedOwner
+      reservedTransport cached.preparedOwner
         (segment.pointAt_eval_ne_zero request.endpoint.parameter
           request.endpoint.inside)
         ((ClearSheetContinuation.evaluation_variation_le segment
@@ -2486,7 +2491,7 @@ ambient sides and their resulting clearance separately. -/
 public structure ExactAmbientAdvanceCache
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2518,10 +2523,10 @@ public structure ExactAmbientAdvanceCache
     (advanceCached segment within left owner request cached
         cachedSmall).track.initial.clearance.bound = clearanceBound
   /-- The indexed owner's clearance is dominated by each of its retained ambient clearances. -/ dominance :
-    ExactQuadraticOwnerClearance.AmbientClearanceDominance
+    AmbientClearanceDominance
     (advanceCached segment within left owner request cached cachedSmall)
   /-- The indexed owner retains the certified quadratic ambient budget. -/ budget :
-    ExactQuadraticOwnerClearance.QuadraticAmbientBudget
+    QuadraticAmbientBudget
     (advanceCached segment within left owner request cached cachedSmall)
 
 end
@@ -2537,7 +2542,7 @@ conditions preserve the exact transport result and its quadratic budget. -/
 public theorem exactAmbientAdvanceCache
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2545,23 +2550,23 @@ public theorem exactAmbientAdvanceCache
     (cachedSmall : ClearSheetContinuation.variationBound segment
       left.parameter request.endpoint.parameter <
         cached.preparedOwner.track.initial.clearance.bound)
-    {leftSmall : Data.Gaussian.Norm.Basic.normSq
+    {leftSmall : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt left.parameter) -
         polynomial.eval (segment.pointAt request.endpoint.parameter)) <
       cached.preparedOwner.track.initial.ambientLeftClearance.bound}
-    {rightSmall : Data.Gaussian.Norm.Basic.normSq
+    {rightSmall : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt left.parameter) -
         polynomial.eval (segment.pointAt request.endpoint.parameter)) <
       cached.preparedOwner.track.initial.ambientRightClearance.bound}
-    {bottomSmall : Data.Gaussian.Norm.Basic.normSq
+    {bottomSmall : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt left.parameter) -
         polynomial.eval (segment.pointAt request.endpoint.parameter)) <
       cached.preparedOwner.track.initial.ambientBottomClearance.bound}
-    {topSmall : Data.Gaussian.Norm.Basic.normSq
+    {topSmall : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt left.parameter) -
         polynomial.eval (segment.pointAt request.endpoint.parameter)) <
       cached.preparedOwner.track.initial.ambientTopClearance.bound}
-    (transportCache : ExactQuadraticOwnerClearance.AmbientReservedTransportCache cached.preparedOwner
+    (transportCache : AmbientReservedTransportCache cached.preparedOwner
       (segment.pointAt_eval_ne_zero request.endpoint.parameter
         request.endpoint.inside)
       ((ClearSheetContinuation.evaluation_variation_le segment
@@ -2570,26 +2575,26 @@ public theorem exactAmbientAdvanceCache
       0 leftSmall rightSmall bottomSmall topSmall)
     (leftBound rightBound bottomBound topBound clearanceBound : Coordinate)
     (leftBoundEq :
-      (ExactQuadraticOwnerClearance.ambientLeftAfterMove cached.preparedOwner leftSmall).bound = leftBound)
+      (ambientLeftAfterMove cached.preparedOwner leftSmall).bound = leftBound)
     (rightBoundEq :
-      (ExactQuadraticOwnerClearance.ambientRightAfterMove cached.preparedOwner rightSmall).bound = rightBound)
+      (ambientRightAfterMove cached.preparedOwner rightSmall).bound = rightBound)
     (bottomBoundEq :
-      (ExactQuadraticOwnerClearance.ambientBottomAfterMove cached.preparedOwner bottomSmall).bound =
+      (ambientBottomAfterMove cached.preparedOwner bottomSmall).bound =
         bottomBound)
     (topBoundEq :
-      (ExactQuadraticOwnerClearance.ambientTopAfterMove cached.preparedOwner topSmall).bound = topBound)
+      (ambientTopAfterMove cached.preparedOwner topSmall).bound = topBound)
     (clearanceBoundEq :
       min leftBound (min rightBound (min bottomBound topBound)) =
         clearanceBound)
     (retained : preparedClearanceLower segment left request ≤ clearanceBound)
-    (budget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget cached.preparedOwner)
-    (targetNormSqLe : Data.Gaussian.Norm.Basic.normSq
+    (budget : QuadraticAmbientBudget cached.preparedOwner)
+    (targetNormSqLe : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt request.endpoint.parameter)) ≤ 256) :
     ExactAmbientAdvanceCache segment within left owner request cached
       cachedSmall leftBound rightBound bottomBound topBound clearanceBound := by
   have advanceEq :
       advanceCached segment within left owner request cached cachedSmall =
-        ExactQuadraticOwnerClearance.reservedTransport cached.preparedOwner
+        reservedTransport cached.preparedOwner
           (segment.pointAt_eval_ne_zero request.endpoint.parameter
             request.endpoint.inside)
           ((ClearSheetContinuation.evaluation_variation_le segment
@@ -2601,13 +2606,13 @@ public theorem exactAmbientAdvanceCache
       preparedClearanceLower segment left request ≤ clearanceBound := retained
       _ = min leftBound (min rightBound (min bottomBound topBound)) :=
         clearanceBoundEq.symm
-      _ = min (ExactQuadraticOwnerClearance.ambientLeftAfterMove cached.preparedOwner leftSmall).bound
-          (min (ExactQuadraticOwnerClearance.ambientRightAfterMove cached.preparedOwner rightSmall).bound
+      _ = min (ambientLeftAfterMove cached.preparedOwner leftSmall).bound
+          (min (ambientRightAfterMove cached.preparedOwner rightSmall).bound
             (min
-              (ExactQuadraticOwnerClearance.ambientBottomAfterMove cached.preparedOwner bottomSmall).bound
-              (ExactQuadraticOwnerClearance.ambientTopAfterMove cached.preparedOwner topSmall).bound)) := by
+              (ambientBottomAfterMove cached.preparedOwner bottomSmall).bound
+              (ambientTopAfterMove cached.preparedOwner topSmall).bound)) := by
         rw [leftBoundEq, rightBoundEq, bottomBoundEq, topBoundEq]
-      _ = (ExactQuadraticOwnerClearance.reservedTransport cached.preparedOwner
+      _ = (reservedTransport cached.preparedOwner
           (segment.pointAt_eval_ne_zero request.endpoint.parameter
             request.endpoint.inside)
           ((ClearSheetContinuation.evaluation_variation_le segment
@@ -2673,7 +2678,7 @@ including separate side-clearance and overall-clearance upper bounds. -/
 public structure ParametricQuadraticAdvanceCache
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2689,7 +2694,7 @@ public structure ParametricQuadraticAdvanceCache
     (advanceCached segment within left owner request cached
       cachedSmall).ambient = cached.preparedOwner.ambient
   /-- The specified quadratic transport floor is no greater than the indexed owner's clearance. -/ clearanceFloor :
-    ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt marginFloor ≤
+    quadraticAmbientTransportFloorAt marginFloor ≤
       (advanceCached segment within left owner request cached
         cachedSmall).track.initial.clearance.bound
   /-- The advanced left ambient clearance is at most one quarter of the squared source left clearance. -/
@@ -2703,10 +2708,10 @@ public structure ParametricQuadraticAdvanceCache
         cachedSmall).track.initial.clearance.bound ≤
       cached.preparedOwner.track.initial.ambientLeftClearance.bound ^ 2 / 4
   /-- The indexed owner's clearance is dominated by each of its retained ambient clearances. -/ dominance :
-    ExactQuadraticOwnerClearance.AmbientClearanceDominance
+    AmbientClearanceDominance
     (advanceCached segment within left owner request cached cachedSmall)
   /-- The indexed owner retains the certified quadratic ambient budget. -/ budget :
-    ExactQuadraticOwnerClearance.QuadraticAmbientBudget
+    QuadraticAmbientBudget
     (advanceCached segment within left owner request cached cachedSmall)
 
 section
@@ -2721,7 +2726,7 @@ and the target squared norm must be at most 256. -/
 public theorem parametricQuadraticAdvanceCache
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2734,15 +2739,15 @@ public theorem parametricQuadraticAdvanceCache
         polynomial.eval (segment.pointAt request.endpoint.parameter))
     (marginFloor : Coordinate) (marginFloorPositive : 0 < marginFloor)
     (predictedLeFloor : preparedClearanceLower segment left request ≤
-      ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt marginFloor)
-    (dominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance cached.preparedOwner)
+      quadraticAmbientTransportFloorAt marginFloor)
+    (dominance : AmbientClearanceDominance cached.preparedOwner)
     (marginLower : marginFloor ≤
       cached.preparedOwner.track.initial.clearance.bound -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)))
-    (budget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget cached.preparedOwner)
-    (targetNormSqLe : Data.Gaussian.Norm.Basic.normSq
+    (budget : QuadraticAmbientBudget cached.preparedOwner)
+    (targetNormSqLe : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt request.endpoint.parameter)) ≤ 256) :
     ParametricQuadraticAdvanceCache segment within left owner request cached
       cachedSmall marginFloor := by
@@ -2753,12 +2758,12 @@ public theorem parametricQuadraticAdvanceCache
       within left.parameter request.endpoint.parameter left.inside
         request.endpoint.inside).trans_lt cachedSmall
   let transportCache :=
-    ExactQuadraticOwnerClearance.parametricQuadraticAmbientTransportCache
+    parametricQuadraticAmbientTransportCache
       cached.preparedOwner targetNonzero moveSmall different dominance
         marginFloor marginFloorPositive marginLower budget targetNormSqLe
   have advanceEq :
       advanceCached segment within left owner request cached cachedSmall =
-        ExactQuadraticOwnerClearance.reservedTransport cached.preparedOwner targetNonzero moveSmall 0 := by
+        reservedTransport cached.preparedOwner targetNonzero moveSmall 0 := by
     unfold advanceCached transportReserve
     apply retainedAtReserve_eq_self
     exact predictedLeFloor.trans transportCache.clearanceFloor
@@ -2792,7 +2797,7 @@ stated squared-margin inequality. -/
 public theorem retainedFloorQuadraticAdvanceCache
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2805,20 +2810,20 @@ public theorem retainedFloorQuadraticAdvanceCache
         polynomial.eval (segment.pointAt request.endpoint.parameter))
     (retainedFloor residualFloor sideUpper : Coordinate)
     (predictedLeFloor : preparedClearanceLower segment left request ≤
-      ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt retainedFloor)
-    (dominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance cached.preparedOwner)
+      quadraticAmbientTransportFloorAt retainedFloor)
+    (dominance : AmbientClearanceDominance cached.preparedOwner)
     (residualFloorPositive : 0 < residualFloor)
     (marginLower : residualFloor ≤
       cached.preparedOwner.track.initial.clearance.bound -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)))
-    (sideBounds : ExactQuadraticOwnerClearance.QuadraticAmbientSideMajorantBounds cached.preparedOwner
+    (sideBounds : QuadraticAmbientSideMajorantBounds cached.preparedOwner
       sideUpper)
-    (tradeoff : ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt retainedFloor ≤
+    (tradeoff : quadraticAmbientTransportFloorAt retainedFloor ≤
       residualFloor ^ 2 / (4 * sideUpper))
-    (budget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget cached.preparedOwner)
-    (targetNormSqLe : Data.Gaussian.Norm.Basic.normSq
+    (budget : QuadraticAmbientBudget cached.preparedOwner)
+    (targetNormSqLe : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt request.endpoint.parameter)) ≤ 256) :
     ParametricQuadraticAdvanceCache segment within left owner request cached
       cachedSmall retainedFloor := by
@@ -2829,13 +2834,13 @@ public theorem retainedFloorQuadraticAdvanceCache
       within left.parameter request.endpoint.parameter left.inside
         request.endpoint.inside).trans_lt cachedSmall
   let transportCache :=
-    ExactQuadraticOwnerClearance.retainedFloorQuadraticAmbientTransportCache
+    retainedFloorQuadraticAmbientTransportCache
       cached.preparedOwner targetNonzero moveSmall different dominance
         retainedFloor residualFloor sideUpper residualFloorPositive marginLower
           sideBounds tradeoff budget targetNormSqLe
   have advanceEq :
       advanceCached segment within left owner request cached cachedSmall =
-        ExactQuadraticOwnerClearance.reservedTransport cached.preparedOwner targetNonzero moveSmall 0 := by
+        reservedTransport cached.preparedOwner targetNonzero moveSmall 0 := by
     unfold advanceCached transportReserve
     apply retainedAtReserve_eq_self
     exact predictedLeFloor.trans transportCache.clearanceFloor
@@ -2869,7 +2874,7 @@ and the target squared-norm bound of 256. -/
 public theorem eighthFloorQuadraticAdvanceCache_of_sixteenthMargin
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2881,15 +2886,15 @@ public theorem eighthFloorQuadraticAdvanceCache_of_sixteenthMargin
       polynomial.eval (segment.pointAt left.parameter) ≠
         polynomial.eval (segment.pointAt request.endpoint.parameter))
     (predictedLeEighthFloor : preparedClearanceLower segment left request ≤
-      ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
-    (dominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance cached.preparedOwner)
+      quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
+    (dominance : AmbientClearanceDominance cached.preparedOwner)
     (sixteenthMarginLower : (1 : Coordinate) / 16 ≤
       cached.preparedOwner.track.initial.clearance.bound -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)))
-    (budget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget cached.preparedOwner)
-    (targetNormSqLe : Data.Gaussian.Norm.Basic.normSq
+    (budget : QuadraticAmbientBudget cached.preparedOwner)
+    (targetNormSqLe : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt request.endpoint.parameter)) ≤ 256) :
     ParametricQuadraticAdvanceCache segment within left owner request cached
       cachedSmall (1 / 8 : Coordinate) := by
@@ -2900,12 +2905,12 @@ public theorem eighthFloorQuadraticAdvanceCache_of_sixteenthMargin
       within left.parameter request.endpoint.parameter left.inside
         request.endpoint.inside).trans_lt cachedSmall
   let transportCache :=
-    ExactQuadraticOwnerClearance.eighthFloorQuadraticAmbientTransportCache_of_sixteenthMargin
+    eighthFloorQuadraticAmbientTransportCache_of_sixteenthMargin
       cached.preparedOwner targetNonzero moveSmall different dominance
         sixteenthMarginLower budget targetNormSqLe
   have advanceEq :
       advanceCached segment within left owner request cached cachedSmall =
-        ExactQuadraticOwnerClearance.reservedTransport cached.preparedOwner targetNonzero moveSmall 0 := by
+        reservedTransport cached.preparedOwner targetNonzero moveSmall 0 := by
     unfold advanceCached transportReserve
     apply retainedAtReserve_eq_self
     exact predictedLeEighthFloor.trans transportCache.clearanceFloor
@@ -2937,7 +2942,7 @@ floor. -/
 public theorem eighthFloorQuadraticAdvanceCache_of_oneTwentyEighthMargin
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2949,17 +2954,17 @@ public theorem eighthFloorQuadraticAdvanceCache_of_oneTwentyEighthMargin
       polynomial.eval (segment.pointAt left.parameter) ≠
         polynomial.eval (segment.pointAt request.endpoint.parameter))
     (predictedLeEighthFloor : preparedClearanceLower segment left request ≤
-      ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
-    (dominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance cached.preparedOwner)
+      quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
+    (dominance : AmbientClearanceDominance cached.preparedOwner)
     (marginLower : (1 : Coordinate) / 128 ≤
       cached.preparedOwner.track.initial.clearance.bound -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)))
-    (sideBounds : ExactQuadraticOwnerClearance.QuadraticAmbientSideMajorantBounds
+    (sideBounds : QuadraticAmbientSideMajorantBounds
       cached.preparedOwner 256)
-    (budget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget cached.preparedOwner)
-    (targetNormSqLe : Data.Gaussian.Norm.Basic.normSq
+    (budget : QuadraticAmbientBudget cached.preparedOwner)
+    (targetNormSqLe : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt request.endpoint.parameter)) ≤ 256) :
     ParametricQuadraticAdvanceCache segment within left owner request cached
       cachedSmall (1 / 8 : Coordinate) := by
@@ -2970,12 +2975,12 @@ public theorem eighthFloorQuadraticAdvanceCache_of_oneTwentyEighthMargin
       within left.parameter request.endpoint.parameter left.inside
         request.endpoint.inside).trans_lt cachedSmall
   let transportCache :=
-    ExactQuadraticOwnerClearance.eighthFloorQuadraticAmbientTransportCache_of_oneTwentyEighthMargin
+    eighthFloorQuadraticAmbientTransportCache_of_oneTwentyEighthMargin
       cached.preparedOwner targetNonzero moveSmall different dominance
         marginLower sideBounds budget targetNormSqLe
   have advanceEq :
       advanceCached segment within left owner request cached cachedSmall =
-        ExactQuadraticOwnerClearance.reservedTransport cached.preparedOwner targetNonzero moveSmall 0 := by
+        reservedTransport cached.preparedOwner targetNonzero moveSmall 0 := by
     unfold advanceCached transportReserve
     apply retainedAtReserve_eq_self
     exact predictedLeEighthFloor.trans transportCache.clearanceFloor
@@ -3007,7 +3012,7 @@ floor. -/
 public theorem eighthFloorQuadraticAdvanceCache_of_threeTwoFiftySixthMargin
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -3019,17 +3024,17 @@ public theorem eighthFloorQuadraticAdvanceCache_of_threeTwoFiftySixthMargin
       polynomial.eval (segment.pointAt left.parameter) ≠
         polynomial.eval (segment.pointAt request.endpoint.parameter))
     (predictedLeEighthFloor : preparedClearanceLower segment left request ≤
-      ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
-    (dominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance cached.preparedOwner)
+      quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
+    (dominance : AmbientClearanceDominance cached.preparedOwner)
     (marginLower : (3 : Coordinate) / 256 ≤
       cached.preparedOwner.track.initial.clearance.bound -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)))
-    (sideBounds : ExactQuadraticOwnerClearance.QuadraticAmbientSideMajorantBounds
+    (sideBounds : QuadraticAmbientSideMajorantBounds
       cached.preparedOwner 512)
-    (budget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget cached.preparedOwner)
-    (targetNormSqLe : Data.Gaussian.Norm.Basic.normSq
+    (budget : QuadraticAmbientBudget cached.preparedOwner)
+    (targetNormSqLe : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt request.endpoint.parameter)) ≤ 256) :
     ParametricQuadraticAdvanceCache segment within left owner request cached
       cachedSmall (1 / 8 : Coordinate) := by
@@ -3040,12 +3045,12 @@ public theorem eighthFloorQuadraticAdvanceCache_of_threeTwoFiftySixthMargin
       within left.parameter request.endpoint.parameter left.inside
         request.endpoint.inside).trans_lt cachedSmall
   let transportCache :=
-    ExactQuadraticOwnerClearance.eighthFloorQuadraticAmbientTransportCache_of_threeTwoFiftySixthMargin
+    eighthFloorQuadraticAmbientTransportCache_of_threeTwoFiftySixthMargin
       cached.preparedOwner targetNonzero moveSmall different dominance
         marginLower sideBounds budget targetNormSqLe
   have advanceEq :
       advanceCached segment within left owner request cached cachedSmall =
-        ExactQuadraticOwnerClearance.reservedTransport cached.preparedOwner targetNonzero moveSmall 0 := by
+        reservedTransport cached.preparedOwner targetNonzero moveSmall 0 := by
     unfold advanceCached transportReserve
     apply retainedAtReserve_eq_self
     exact predictedLeEighthFloor.trans transportCache.clearanceFloor
@@ -3077,7 +3082,7 @@ floor. -/
 public theorem eighthFloorQuadraticAdvanceCache_of_sixtyFourthMargin
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -3089,17 +3094,17 @@ public theorem eighthFloorQuadraticAdvanceCache_of_sixtyFourthMargin
       polynomial.eval (segment.pointAt left.parameter) ≠
         polynomial.eval (segment.pointAt request.endpoint.parameter))
     (predictedLeEighthFloor : preparedClearanceLower segment left request ≤
-      ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
-    (dominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance cached.preparedOwner)
+      quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
+    (dominance : AmbientClearanceDominance cached.preparedOwner)
     (marginLower : (1 : Coordinate) / 64 ≤
       cached.preparedOwner.track.initial.clearance.bound -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)))
-    (sideBounds : ExactQuadraticOwnerClearance.QuadraticAmbientSideMajorantBounds
+    (sideBounds : QuadraticAmbientSideMajorantBounds
       cached.preparedOwner 1024)
-    (budget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget cached.preparedOwner)
-    (targetNormSqLe : Data.Gaussian.Norm.Basic.normSq
+    (budget : QuadraticAmbientBudget cached.preparedOwner)
+    (targetNormSqLe : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt request.endpoint.parameter)) ≤ 256) :
     ParametricQuadraticAdvanceCache segment within left owner request cached
       cachedSmall (1 / 8 : Coordinate) := by
@@ -3110,12 +3115,12 @@ public theorem eighthFloorQuadraticAdvanceCache_of_sixtyFourthMargin
       within left.parameter request.endpoint.parameter left.inside
         request.endpoint.inside).trans_lt cachedSmall
   let transportCache :=
-    ExactQuadraticOwnerClearance.eighthFloorQuadraticAmbientTransportCache_of_sixtyFourthMargin
+    eighthFloorQuadraticAmbientTransportCache_of_sixtyFourthMargin
       cached.preparedOwner targetNonzero moveSmall different dominance
         marginLower sideBounds budget targetNormSqLe
   have advanceEq :
       advanceCached segment within left owner request cached cachedSmall =
-        ExactQuadraticOwnerClearance.reservedTransport cached.preparedOwner targetNonzero moveSmall 0 := by
+        reservedTransport cached.preparedOwner targetNonzero moveSmall 0 := by
     unfold advanceCached transportReserve
     apply retainedAtReserve_eq_self
     exact predictedLeEighthFloor.trans transportCache.clearanceFloor
@@ -3153,18 +3158,18 @@ identity. -/
 public structure ParametricSameBoxState
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (box : Box) (preparedUpper marginFloor : Coordinate) : Prop where
   /-- The current owner's initial box is exactly the retained box. -/ boxEq : owner.track.initial.box = box
   /-- The specified quadratic transport floor is no greater than the indexed owner's clearance. -/ clearanceFloor :
-    ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt marginFloor ≤
+    quadraticAmbientTransportFloorAt marginFloor ≤
     owner.track.initial.clearance.bound
   /-- The indexed owner's clearance is dominated by each of its retained ambient clearances. -/ dominance :
-    ExactQuadraticOwnerClearance.AmbientClearanceDominance owner
+    AmbientClearanceDominance owner
   /-- The indexed owner retains the certified quadratic ambient budget. -/ budget :
-    ExactQuadraticOwnerClearance.QuadraticAmbientBudget owner
+    QuadraticAmbientBudget owner
   /-- The current left ambient clearance is at most the retained prepared upper bound. -/ ambientLeftLe :
     owner.track.initial.ambientLeftClearance.bound ≤ preparedUpper
   /-- The current ambient box refines the retained fixed box. -/ ambientRefines : owner.ambient.Refines box
@@ -3179,7 +3184,7 @@ owner's box, ambient refinement, and quarter-square side bound. -/
 public structure ParametricSameBoxStep
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest) (box : Box)
@@ -3190,7 +3195,7 @@ public structure ParametricSameBoxStep
     strengthenedCarries :
     ClearSheetContinuation.variationBound segment left.parameter
         request.endpoint.parameter <
-      (ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner).track.initial.clearance.bound
+      (strengthenQuadraticOwner owner).track.initial.clearance.bound
   /-- The actual canonical prepared source has enough clearance for the requested variation. -/ canonicalSmall :
     ClearSheetContinuation.variationBound segment left.parameter
         request.endpoint.parameter <
@@ -3225,7 +3230,7 @@ open Purelib.Polynomial
 @[expose] public def nextOwner
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode}
     {within : segment.WithinAmbient} {left : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     {request : StepRequest} {box : Box}
@@ -3241,7 +3246,7 @@ upper bound. -/
 public theorem nextState
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode}
     {within : segment.WithinAmbient} {left : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     {request : StepRequest} {box : Box}
@@ -3277,7 +3282,7 @@ move while the margin pays the prescribed transport floor. -/
 public theorem parametricSameBoxStep
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest) (box : Box)
@@ -3289,12 +3294,12 @@ public theorem parametricSameBoxStep
     (predictedLeCurrent :
       preparedClearanceLower segment left request ≤ currentFloor)
     (currentFloorLe : currentFloor ≤ owner.track.initial.clearance.bound)
-    (dominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance owner)
-    (budget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget owner)
+    (dominance : AmbientClearanceDominance owner)
+    (budget : QuadraticAmbientBudget owner)
     (directLower preparedUpper : Coordinate)
     (ownerAmbientLeftLe :
       owner.track.initial.ambientLeftClearance.bound ≤ preparedUpper)
-    (directCache : ExactQuadraticOwnerClearance.DirectBoundaryBounds
+    (directCache : DirectBoundaryBounds
       (polynomial.eval (segment.pointAt left.parameter)) box directLower
         preparedUpper)
     (variationLtDirectLower :
@@ -3306,21 +3311,21 @@ public theorem parametricSameBoxStep
     (marginFloor : Coordinate) (marginFloorPositive : 0 < marginFloor)
     (predictedLeTransportFloor :
       preparedClearanceLower segment left request ≤
-        ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt marginFloor)
+        quadraticAmbientTransportFloorAt marginFloor)
     (variationMargin : marginFloor ≤
       ClearSheetContinuation.variationBound segment left.parameter
           request.endpoint.parameter -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)))
-    (targetNormSqLe : Data.Gaussian.Norm.Basic.normSq
+    (targetNormSqLe : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt request.endpoint.parameter)) ≤ 256) :
     ParametricSameBoxStep segment within left owner request box directLower
       preparedUpper marginFloor := by
   have ready : AlreadyPrepared segment left owner request :=
     ⟨boxEq ▸ boxSmall, predictedLeCurrent.trans currentFloorLe,
       boxEq ▸ boxRefines⟩
-  let actualCache : ExactQuadraticOwnerClearance.DirectBoundaryBounds
+  let actualCache : DirectBoundaryBounds
       (polynomial.eval (segment.pointAt left.parameter))
       owner.track.initial.box directLower preparedUpper := by
     rw [boxEq]
@@ -3328,19 +3333,19 @@ public theorem parametricSameBoxStep
   have strengthenedCarries :
       ClearSheetContinuation.variationBound segment left.parameter
           request.endpoint.parameter <
-        (ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner).track.initial.clearance.bound :=
+        (strengthenQuadraticOwner owner).track.initial.clearance.bound :=
     (variationLtDirectLower.trans_le actualCache.lower_le).trans_le
-      (ExactQuadraticOwnerClearance.directBoundaryClearance_le_strengthenQuadraticOwner owner
+      (directBoundaryClearance_le_strengthenQuadraticOwner owner
         actualCache.leftNonzero actualCache.rightNonzero
           actualCache.bottomNonzero actualCache.topNonzero)
   have canonicalSmall :=
     variation_lt_prepared_of_ready_of_strengthenedCarries segment left owner
       request ready strengthenedCarries
   let cached := CachedSource.canonical segment left owner request
-  have preparedDominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance cached.preparedOwner :=
+  have preparedDominance : AmbientClearanceDominance cached.preparedOwner :=
     prepared_ambientClearanceDominance_of_ready_of_strengthenedCarries segment
       left owner request ready strengthenedCarries dominance
-  have preparedBudget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget cached.preparedOwner :=
+  have preparedBudget : QuadraticAmbientBudget cached.preparedOwner :=
     prepared_quadraticAmbientBudget_of_ready_of_strengthenedCarries segment
       left owner request ready strengthenedCarries budget
   have preparedAmbientLeftLe :
@@ -3360,14 +3365,14 @@ public theorem parametricSameBoxStep
           actualCache.leftNonzero actualCache.rightNonzero
             actualCache.bottomNonzero actualCache.topNonzero with
         ⟨leftEq, _rightEq, _bottomEq, _topEq⟩
-      rw [leftEq, ExactQuadraticOwnerClearance.strengthenQuadraticOwner_clearance_eq_max owner
+      rw [leftEq, strengthenQuadraticOwner_clearance_eq_max owner
         actualCache.leftNonzero actualCache.rightNonzero
           actualCache.bottomNonzero actualCache.topNonzero]
-      exact Fraction.Order.Basic.max_le (dominance.left.trans ownerAmbientLeftLe)
+      exact Basic.max_le (dominance.left.trans ownerAmbientLeftLe)
         actualCache.le_upper
   have preparedMargin : marginFloor ≤
       cached.preparedOwner.track.initial.clearance.bound -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)) :=
     prepared_margin_lower_of_ready_of_strengthenedCarries segment left owner
@@ -3392,7 +3397,7 @@ public theorem parametricSameBoxStep
   have preparedSquareLe :
       cached.preparedOwner.track.initial.ambientLeftClearance.bound ^ 2 ≤
         preparedUpper ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
+    Arithmetic.pow_le_pow_direct
       cached.preparedOwner.track.initial.ambientLeftClearance.positive.le
         preparedAmbientLeftLe 2
   have quarterSquareLe :
@@ -3402,9 +3407,9 @@ public theorem parametricSameBoxStep
       cached.preparedOwner.track.initial.ambientLeftClearance.bound ^ 2 *
           (4 : Coordinate)⁻¹ ≤
         preparedUpper ^ 2 * (4 : Coordinate)⁻¹
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
       preparedSquareLe
-        (Fraction.Order.Field.inv_pos_direct (by decide)).le
+        (Field.inv_pos_direct (by decide)).le
   have nextAmbientLeftLeQuarter :=
     advanceCache.ambientLeftQuarterSq.trans quarterSquareLe
   have preparedAmbientRefines : cached.preparedOwner.ambient.Refines
@@ -3418,7 +3423,7 @@ public theorem parametricSameBoxStep
       exact Box.refines_refl _
     · rw [prepared_eq_strengthenQuadraticOwner_of_ready segment left owner
         request ready carries strengthenedCarries]
-      exact ExactQuadraticOwnerClearance.strengthenQuadraticOwner_ambient_refines owner
+      exact strengthenQuadraticOwner_ambient_refines owner
   have nextAmbientRefines :
       (advanceCached segment within left owner request cached
         canonicalSmall).ambient.Refines owner.ambient := by
@@ -3435,7 +3440,7 @@ squared norm at most 256. -/
 public theorem eighthFloorSameBoxStepOfSixteenthMargin
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest) (box : Box)
@@ -3445,16 +3450,16 @@ public theorem eighthFloorSameBoxStepOfSixteenthMargin
       (UniformSquareRootPreparation.rootAmbient segment))
     (predictedLeEighthFloor :
       preparedClearanceLower segment left request ≤
-        ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
+        quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
     (eighthFloorLeCurrent :
-      ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
+      quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
         owner.track.initial.clearance.bound)
-    (dominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance owner)
-    (budget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget owner)
+    (dominance : AmbientClearanceDominance owner)
+    (budget : QuadraticAmbientBudget owner)
     (directLower preparedUpper : Coordinate)
     (ownerAmbientLeftLe :
       owner.track.initial.ambientLeftClearance.bound ≤ preparedUpper)
-    (directCache : ExactQuadraticOwnerClearance.DirectBoundaryBounds
+    (directCache : DirectBoundaryBounds
       (polynomial.eval (segment.pointAt left.parameter)) box directLower
         preparedUpper)
     (variationLtDirectLower :
@@ -3466,10 +3471,10 @@ public theorem eighthFloorSameBoxStepOfSixteenthMargin
     (variationMargin : (1 : Coordinate) / 16 ≤
       ClearSheetContinuation.variationBound segment left.parameter
           request.endpoint.parameter -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)))
-    (targetNormSqLe : Data.Gaussian.Norm.Basic.normSq
+    (targetNormSqLe : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt request.endpoint.parameter)) ≤ 256) :
     ParametricSameBoxStep segment within left owner request box directLower
       preparedUpper (1 / 8 : Coordinate) := by
@@ -3477,7 +3482,7 @@ public theorem eighthFloorSameBoxStepOfSixteenthMargin
     ⟨boxEq ▸ boxSmall,
       predictedLeEighthFloor.trans eighthFloorLeCurrent,
       boxEq ▸ boxRefines⟩
-  let actualCache : ExactQuadraticOwnerClearance.DirectBoundaryBounds
+  let actualCache : DirectBoundaryBounds
       (polynomial.eval (segment.pointAt left.parameter))
       owner.track.initial.box directLower preparedUpper := by
     rw [boxEq]
@@ -3485,19 +3490,19 @@ public theorem eighthFloorSameBoxStepOfSixteenthMargin
   have strengthenedCarries :
       ClearSheetContinuation.variationBound segment left.parameter
           request.endpoint.parameter <
-        (ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner).track.initial.clearance.bound :=
+        (strengthenQuadraticOwner owner).track.initial.clearance.bound :=
     (variationLtDirectLower.trans_le actualCache.lower_le).trans_le
-      (ExactQuadraticOwnerClearance.directBoundaryClearance_le_strengthenQuadraticOwner owner
+      (directBoundaryClearance_le_strengthenQuadraticOwner owner
         actualCache.leftNonzero actualCache.rightNonzero
           actualCache.bottomNonzero actualCache.topNonzero)
   have canonicalSmall :=
     variation_lt_prepared_of_ready_of_strengthenedCarries segment left owner
       request ready strengthenedCarries
   let cached := CachedSource.canonical segment left owner request
-  have preparedDominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance cached.preparedOwner :=
+  have preparedDominance : AmbientClearanceDominance cached.preparedOwner :=
     prepared_ambientClearanceDominance_of_ready_of_strengthenedCarries segment
       left owner request ready strengthenedCarries dominance
-  have preparedBudget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget cached.preparedOwner :=
+  have preparedBudget : QuadraticAmbientBudget cached.preparedOwner :=
     prepared_quadraticAmbientBudget_of_ready_of_strengthenedCarries segment
       left owner request ready strengthenedCarries budget
   have preparedAmbientLeftLe :
@@ -3517,14 +3522,14 @@ public theorem eighthFloorSameBoxStepOfSixteenthMargin
           actualCache.leftNonzero actualCache.rightNonzero
             actualCache.bottomNonzero actualCache.topNonzero with
         ⟨leftEq, _rightEq, _bottomEq, _topEq⟩
-      rw [leftEq, ExactQuadraticOwnerClearance.strengthenQuadraticOwner_clearance_eq_max owner
+      rw [leftEq, strengthenQuadraticOwner_clearance_eq_max owner
         actualCache.leftNonzero actualCache.rightNonzero
           actualCache.bottomNonzero actualCache.topNonzero]
-      exact Fraction.Order.Basic.max_le (dominance.left.trans ownerAmbientLeftLe)
+      exact Basic.max_le (dominance.left.trans ownerAmbientLeftLe)
         actualCache.le_upper
   have preparedMargin : (1 : Coordinate) / 16 ≤
       cached.preparedOwner.track.initial.clearance.bound -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)) :=
     prepared_margin_lower_of_ready_of_strengthenedCarries segment left owner
@@ -3550,7 +3555,7 @@ public theorem eighthFloorSameBoxStepOfSixteenthMargin
   have preparedSquareLe :
       cached.preparedOwner.track.initial.ambientLeftClearance.bound ^ 2 ≤
         preparedUpper ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
+    Arithmetic.pow_le_pow_direct
       cached.preparedOwner.track.initial.ambientLeftClearance.positive.le
         preparedAmbientLeftLe 2
   have quarterSquareLe :
@@ -3560,9 +3565,9 @@ public theorem eighthFloorSameBoxStepOfSixteenthMargin
       cached.preparedOwner.track.initial.ambientLeftClearance.bound ^ 2 *
           (4 : Coordinate)⁻¹ ≤
         preparedUpper ^ 2 * (4 : Coordinate)⁻¹
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
       preparedSquareLe
-        (Fraction.Order.Field.inv_pos_direct (by decide)).le
+        (Field.inv_pos_direct (by decide)).le
   have nextAmbientLeftLeQuarter :=
     advanceCache.ambientLeftQuarterSq.trans quarterSquareLe
   have preparedAmbientRefines : cached.preparedOwner.ambient.Refines
@@ -3576,7 +3581,7 @@ public theorem eighthFloorSameBoxStepOfSixteenthMargin
       exact Box.refines_refl _
     · rw [prepared_eq_strengthenQuadraticOwner_of_ready segment left owner
         request ready carries strengthenedCarries]
-      exact ExactQuadraticOwnerClearance.strengthenQuadraticOwner_ambient_refines owner
+      exact strengthenQuadraticOwner_ambient_refines owner
   have nextAmbientRefines :
       (advanceCached segment within left owner request cached
         canonicalSmall).ambient.Refines owner.ambient := by
@@ -3598,7 +3603,7 @@ state. -/
 public theorem eighthFloorSameBoxStepOfSixteenthMarginFromState
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest) (box : Box) (preparedUpper : Coordinate)
@@ -3609,9 +3614,9 @@ public theorem eighthFloorSameBoxStepOfSixteenthMarginFromState
       (UniformSquareRootPreparation.rootAmbient segment))
     (predictedLeEighthFloor :
       preparedClearanceLower segment left request ≤
-        ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
+        quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
     (directLower : Coordinate)
-    (directCache : ExactQuadraticOwnerClearance.DirectBoundaryBounds
+    (directCache : DirectBoundaryBounds
       (polynomial.eval (segment.pointAt left.parameter)) box directLower
         preparedUpper)
     (variationLtDirectLower :
@@ -3623,10 +3628,10 @@ public theorem eighthFloorSameBoxStepOfSixteenthMarginFromState
     (variationMargin : (1 : Coordinate) / 16 ≤
       ClearSheetContinuation.variationBound segment left.parameter
           request.endpoint.parameter -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)))
-    (targetNormSqLe : Data.Gaussian.Norm.Basic.normSq
+    (targetNormSqLe : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt request.endpoint.parameter)) ≤ 256) :
     ParametricSameBoxStep segment within left owner request box directLower
       preparedUpper (1 / 8 : Coordinate) :=
@@ -3649,7 +3654,7 @@ bounded by 256. -/
 public theorem eighthFloorSameBoxStepOfOneTwentyEighthMargin
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest) (box : Box)
@@ -3659,16 +3664,16 @@ public theorem eighthFloorSameBoxStepOfOneTwentyEighthMargin
       (UniformSquareRootPreparation.rootAmbient segment))
     (predictedLeEighthFloor :
       preparedClearanceLower segment left request ≤
-        ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
+        quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
     (eighthFloorLeCurrent :
-      ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
+      quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
         owner.track.initial.clearance.bound)
-    (dominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance owner)
-    (budget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget owner)
+    (dominance : AmbientClearanceDominance owner)
+    (budget : QuadraticAmbientBudget owner)
     (directLower preparedUpper : Coordinate)
     (ownerAmbientLeftLe :
       owner.track.initial.ambientLeftClearance.bound ≤ preparedUpper)
-    (directCache : ExactQuadraticOwnerClearance.DirectBoundaryBounds
+    (directCache : DirectBoundaryBounds
       (polynomial.eval (segment.pointAt left.parameter)) box directLower
         preparedUpper)
     (variationLtDirectLower :
@@ -3680,13 +3685,13 @@ public theorem eighthFloorSameBoxStepOfOneTwentyEighthMargin
     (variationMargin : (1 : Coordinate) / 128 ≤
       ClearSheetContinuation.variationBound segment left.parameter
           request.endpoint.parameter -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)))
     (ownerAmbientRefines : owner.ambient.Refines box)
-    (boxSideBounds : ExactQuadraticOwnerClearance.QuadraticBoxSideMajorantBounds
+    (boxSideBounds : QuadraticBoxSideMajorantBounds
       (polynomial.eval (segment.pointAt left.parameter)) box 256)
-    (targetNormSqLe : Data.Gaussian.Norm.Basic.normSq
+    (targetNormSqLe : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt request.endpoint.parameter)) ≤ 256) :
     ParametricSameBoxStep segment within left owner request box directLower
       preparedUpper (1 / 8 : Coordinate) := by
@@ -3694,7 +3699,7 @@ public theorem eighthFloorSameBoxStepOfOneTwentyEighthMargin
     ⟨boxEq ▸ boxSmall,
       predictedLeEighthFloor.trans eighthFloorLeCurrent,
       boxEq ▸ boxRefines⟩
-  let actualCache : ExactQuadraticOwnerClearance.DirectBoundaryBounds
+  let actualCache : DirectBoundaryBounds
       (polynomial.eval (segment.pointAt left.parameter))
       owner.track.initial.box directLower preparedUpper := by
     rw [boxEq]
@@ -3702,19 +3707,19 @@ public theorem eighthFloorSameBoxStepOfOneTwentyEighthMargin
   have strengthenedCarries :
       ClearSheetContinuation.variationBound segment left.parameter
           request.endpoint.parameter <
-        (ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner).track.initial.clearance.bound :=
+        (strengthenQuadraticOwner owner).track.initial.clearance.bound :=
     (variationLtDirectLower.trans_le actualCache.lower_le).trans_le
-      (ExactQuadraticOwnerClearance.directBoundaryClearance_le_strengthenQuadraticOwner owner
+      (directBoundaryClearance_le_strengthenQuadraticOwner owner
         actualCache.leftNonzero actualCache.rightNonzero
           actualCache.bottomNonzero actualCache.topNonzero)
   have canonicalSmall :=
     variation_lt_prepared_of_ready_of_strengthenedCarries segment left owner
       request ready strengthenedCarries
   let cached := CachedSource.canonical segment left owner request
-  have preparedDominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance cached.preparedOwner :=
+  have preparedDominance : AmbientClearanceDominance cached.preparedOwner :=
     prepared_ambientClearanceDominance_of_ready_of_strengthenedCarries segment
       left owner request ready strengthenedCarries dominance
-  have preparedBudget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget cached.preparedOwner :=
+  have preparedBudget : QuadraticAmbientBudget cached.preparedOwner :=
     prepared_quadraticAmbientBudget_of_ready_of_strengthenedCarries segment
       left owner request ready strengthenedCarries budget
   have preparedAmbientRefines : cached.preparedOwner.ambient.Refines
@@ -3728,13 +3733,13 @@ public theorem eighthFloorSameBoxStepOfOneTwentyEighthMargin
       exact Box.refines_refl _
     · rw [prepared_eq_strengthenQuadraticOwner_of_ready segment left owner
         request ready carries strengthenedCarries]
-      exact ExactQuadraticOwnerClearance.strengthenQuadraticOwner_ambient_refines owner
+      exact strengthenQuadraticOwner_ambient_refines owner
   have preparedBoxEq : cached.preparedOwner.track.initial.box = box :=
     (prepared_initial_box_eq_of_ready_of_strengthenedCarries segment left
       owner request ready strengthenedCarries).trans boxEq
-  have preparedSideBounds : ExactQuadraticOwnerClearance.QuadraticAmbientSideMajorantBounds
+  have preparedSideBounds : QuadraticAmbientSideMajorantBounds
       cached.preparedOwner 256 :=
-    ExactQuadraticOwnerClearance.quadraticAmbientSideMajorantBounds_of_box cached.preparedOwner box 256
+    quadraticAmbientSideMajorantBounds_of_box cached.preparedOwner box 256
       preparedBoxEq (preparedAmbientRefines.trans ownerAmbientRefines)
         boxSideBounds
   have preparedAmbientLeftLe :
@@ -3754,14 +3759,14 @@ public theorem eighthFloorSameBoxStepOfOneTwentyEighthMargin
           actualCache.leftNonzero actualCache.rightNonzero
             actualCache.bottomNonzero actualCache.topNonzero with
         ⟨leftEq, _rightEq, _bottomEq, _topEq⟩
-      rw [leftEq, ExactQuadraticOwnerClearance.strengthenQuadraticOwner_clearance_eq_max owner
+      rw [leftEq, strengthenQuadraticOwner_clearance_eq_max owner
         actualCache.leftNonzero actualCache.rightNonzero
           actualCache.bottomNonzero actualCache.topNonzero]
-      exact Fraction.Order.Basic.max_le (dominance.left.trans ownerAmbientLeftLe)
+      exact Basic.max_le (dominance.left.trans ownerAmbientLeftLe)
         actualCache.le_upper
   have preparedMargin : (1 : Coordinate) / 128 ≤
       cached.preparedOwner.track.initial.clearance.bound -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)) :=
     prepared_margin_lower_of_ready_of_strengthenedCarries segment left owner
@@ -3787,7 +3792,7 @@ public theorem eighthFloorSameBoxStepOfOneTwentyEighthMargin
   have preparedSquareLe :
       cached.preparedOwner.track.initial.ambientLeftClearance.bound ^ 2 ≤
         preparedUpper ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
+    Arithmetic.pow_le_pow_direct
       cached.preparedOwner.track.initial.ambientLeftClearance.positive.le
         preparedAmbientLeftLe 2
   have quarterSquareLe :
@@ -3797,9 +3802,9 @@ public theorem eighthFloorSameBoxStepOfOneTwentyEighthMargin
       cached.preparedOwner.track.initial.ambientLeftClearance.bound ^ 2 *
           (4 : Coordinate)⁻¹ ≤
         preparedUpper ^ 2 * (4 : Coordinate)⁻¹
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
       preparedSquareLe
-        (Fraction.Order.Field.inv_pos_direct (by decide)).le
+        (Field.inv_pos_direct (by decide)).le
   have nextAmbientLeftLeQuarter :=
     advanceCache.ambientLeftQuarterSq.trans quarterSquareLe
   have nextAmbientRefines :
@@ -3818,7 +3823,7 @@ retains the source cache and resulting owner identities. -/
 public theorem retainedFloorSameBoxStepOfGeneratedBounds
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest) (box : Box)
@@ -3829,16 +3834,16 @@ public theorem retainedFloorSameBoxStepOfGeneratedBounds
     (marginFloor : Coordinate)
     (predictedLeTransportFloor :
       preparedClearanceLower segment left request ≤
-        ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt marginFloor)
+        quadraticAmbientTransportFloorAt marginFloor)
     (transportFloorLeCurrent :
-      ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt marginFloor ≤
+      quadraticAmbientTransportFloorAt marginFloor ≤
         owner.track.initial.clearance.bound)
-    (dominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance owner)
-    (budget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget owner)
+    (dominance : AmbientClearanceDominance owner)
+    (budget : QuadraticAmbientBudget owner)
     (directLower preparedUpper : Coordinate)
     (ownerAmbientLeftLe :
       owner.track.initial.ambientLeftClearance.bound ≤ preparedUpper)
-    (directCache : ExactQuadraticOwnerClearance.DirectBoundaryBounds
+    (directCache : DirectBoundaryBounds
       (polynomial.eval (segment.pointAt left.parameter)) box directLower
         preparedUpper)
     (variationLtDirectLower :
@@ -3852,15 +3857,15 @@ public theorem retainedFloorSameBoxStepOfGeneratedBounds
     (variationMargin : residualFloor ≤
       ClearSheetContinuation.variationBound segment left.parameter
           request.endpoint.parameter -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)))
     (ownerAmbientRefines : owner.ambient.Refines box)
-    (boxSideBounds : ExactQuadraticOwnerClearance.QuadraticBoxSideMajorantBounds
+    (boxSideBounds : QuadraticBoxSideMajorantBounds
       (polynomial.eval (segment.pointAt left.parameter)) box sideUpper)
-    (tradeoff : ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt marginFloor ≤
+    (tradeoff : quadraticAmbientTransportFloorAt marginFloor ≤
       residualFloor ^ 2 / (4 * sideUpper))
-    (targetNormSqLe : Data.Gaussian.Norm.Basic.normSq
+    (targetNormSqLe : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt request.endpoint.parameter)) ≤ 256) :
     ParametricSameBoxStep segment within left owner request box directLower
       preparedUpper marginFloor := by
@@ -3868,7 +3873,7 @@ public theorem retainedFloorSameBoxStepOfGeneratedBounds
     ⟨boxEq ▸ boxSmall,
       predictedLeTransportFloor.trans transportFloorLeCurrent,
       boxEq ▸ boxRefines⟩
-  let actualCache : ExactQuadraticOwnerClearance.DirectBoundaryBounds
+  let actualCache : DirectBoundaryBounds
       (polynomial.eval (segment.pointAt left.parameter))
       owner.track.initial.box directLower preparedUpper := by
     rw [boxEq]
@@ -3876,19 +3881,19 @@ public theorem retainedFloorSameBoxStepOfGeneratedBounds
   have strengthenedCarries :
       ClearSheetContinuation.variationBound segment left.parameter
           request.endpoint.parameter <
-        (ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner).track.initial.clearance.bound :=
+        (strengthenQuadraticOwner owner).track.initial.clearance.bound :=
     (variationLtDirectLower.trans_le actualCache.lower_le).trans_le
-      (ExactQuadraticOwnerClearance.directBoundaryClearance_le_strengthenQuadraticOwner owner
+      (directBoundaryClearance_le_strengthenQuadraticOwner owner
         actualCache.leftNonzero actualCache.rightNonzero
           actualCache.bottomNonzero actualCache.topNonzero)
   have canonicalSmall :=
     variation_lt_prepared_of_ready_of_strengthenedCarries segment left owner
       request ready strengthenedCarries
   let cached := CachedSource.canonical segment left owner request
-  have preparedDominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance cached.preparedOwner :=
+  have preparedDominance : AmbientClearanceDominance cached.preparedOwner :=
     prepared_ambientClearanceDominance_of_ready_of_strengthenedCarries segment
       left owner request ready strengthenedCarries dominance
-  have preparedBudget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget cached.preparedOwner :=
+  have preparedBudget : QuadraticAmbientBudget cached.preparedOwner :=
     prepared_quadraticAmbientBudget_of_ready_of_strengthenedCarries segment
       left owner request ready strengthenedCarries budget
   have preparedAmbientRefines : cached.preparedOwner.ambient.Refines
@@ -3902,13 +3907,13 @@ public theorem retainedFloorSameBoxStepOfGeneratedBounds
       exact Box.refines_refl _
     · rw [prepared_eq_strengthenQuadraticOwner_of_ready segment left owner
         request ready carries strengthenedCarries]
-      exact ExactQuadraticOwnerClearance.strengthenQuadraticOwner_ambient_refines owner
+      exact strengthenQuadraticOwner_ambient_refines owner
   have preparedBoxEq : cached.preparedOwner.track.initial.box = box :=
     (prepared_initial_box_eq_of_ready_of_strengthenedCarries segment left
       owner request ready strengthenedCarries).trans boxEq
-  have preparedSideBounds : ExactQuadraticOwnerClearance.QuadraticAmbientSideMajorantBounds
+  have preparedSideBounds : QuadraticAmbientSideMajorantBounds
       cached.preparedOwner sideUpper :=
-    ExactQuadraticOwnerClearance.quadraticAmbientSideMajorantBounds_of_box cached.preparedOwner box
+    quadraticAmbientSideMajorantBounds_of_box cached.preparedOwner box
       sideUpper preparedBoxEq
         (preparedAmbientRefines.trans ownerAmbientRefines) boxSideBounds
   have preparedAmbientLeftLe :
@@ -3928,14 +3933,14 @@ public theorem retainedFloorSameBoxStepOfGeneratedBounds
           actualCache.leftNonzero actualCache.rightNonzero
             actualCache.bottomNonzero actualCache.topNonzero with
         ⟨leftEq, _rightEq, _bottomEq, _topEq⟩
-      rw [leftEq, ExactQuadraticOwnerClearance.strengthenQuadraticOwner_clearance_eq_max owner
+      rw [leftEq, strengthenQuadraticOwner_clearance_eq_max owner
         actualCache.leftNonzero actualCache.rightNonzero
           actualCache.bottomNonzero actualCache.topNonzero]
-      exact Fraction.Order.Basic.max_le (dominance.left.trans ownerAmbientLeftLe)
+      exact Basic.max_le (dominance.left.trans ownerAmbientLeftLe)
         actualCache.le_upper
   have preparedMargin : residualFloor ≤
       cached.preparedOwner.track.initial.clearance.bound -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)) :=
     prepared_margin_lower_of_ready_of_strengthenedCarries segment left owner
@@ -3961,7 +3966,7 @@ public theorem retainedFloorSameBoxStepOfGeneratedBounds
   have preparedSquareLe :
       cached.preparedOwner.track.initial.ambientLeftClearance.bound ^ 2 ≤
         preparedUpper ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
+    Arithmetic.pow_le_pow_direct
       cached.preparedOwner.track.initial.ambientLeftClearance.positive.le
         preparedAmbientLeftLe 2
   have quarterSquareLe :
@@ -3971,9 +3976,9 @@ public theorem retainedFloorSameBoxStepOfGeneratedBounds
       cached.preparedOwner.track.initial.ambientLeftClearance.bound ^ 2 *
           (4 : Coordinate)⁻¹ ≤
         preparedUpper ^ 2 * (4 : Coordinate)⁻¹
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
       preparedSquareLe
-        (Fraction.Order.Field.inv_pos_direct (by decide)).le
+        (Field.inv_pos_direct (by decide)).le
   have nextAmbientLeftLeQuarter :=
     advanceCache.ambientLeftQuarterSq.trans quarterSquareLe
   have nextAmbientRefines :
@@ -3997,7 +4002,7 @@ and ambient refinement. -/
 public theorem retainedFloorSameBoxStepOfGeneratedBoundsFromState
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest) (box : Box) (preparedUpper : Coordinate)
@@ -4008,9 +4013,9 @@ public theorem retainedFloorSameBoxStepOfGeneratedBoundsFromState
     (boxRefines : box.Refines
       (UniformSquareRootPreparation.rootAmbient segment))
     (predictedLeTransportFloor : preparedClearanceLower segment left request ≤
-      ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt marginFloor)
+      quadraticAmbientTransportFloorAt marginFloor)
     (directLower : Coordinate)
-    (directCache : ExactQuadraticOwnerClearance.DirectBoundaryBounds
+    (directCache : DirectBoundaryBounds
       (polynomial.eval (segment.pointAt left.parameter)) box directLower
         preparedUpper)
     (variationLtDirectLower :
@@ -4024,14 +4029,14 @@ public theorem retainedFloorSameBoxStepOfGeneratedBoundsFromState
     (variationMargin : residualFloor ≤
       ClearSheetContinuation.variationBound segment left.parameter
           request.endpoint.parameter -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)))
-    (boxSideBounds : ExactQuadraticOwnerClearance.QuadraticBoxSideMajorantBounds
+    (boxSideBounds : QuadraticBoxSideMajorantBounds
       (polynomial.eval (segment.pointAt left.parameter)) box sideUpper)
-    (tradeoff : ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt marginFloor ≤
+    (tradeoff : quadraticAmbientTransportFloorAt marginFloor ≤
       residualFloor ^ 2 / (4 * sideUpper))
-    (targetNormSqLe : Data.Gaussian.Norm.Basic.normSq
+    (targetNormSqLe : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt request.endpoint.parameter)) ≤ 256) :
     ParametricSameBoxStep segment within left owner request box directLower
       preparedUpper marginFloor :=
@@ -4056,7 +4061,7 @@ bounded by 512. -/
 public theorem eighthFloorSameBoxStepOfThreeTwoFiftySixthMargin
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest) (box : Box)
@@ -4066,16 +4071,16 @@ public theorem eighthFloorSameBoxStepOfThreeTwoFiftySixthMargin
       (UniformSquareRootPreparation.rootAmbient segment))
     (predictedLeEighthFloor :
       preparedClearanceLower segment left request ≤
-        ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
+        quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
     (eighthFloorLeCurrent :
-      ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
+      quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
         owner.track.initial.clearance.bound)
-    (dominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance owner)
-    (budget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget owner)
+    (dominance : AmbientClearanceDominance owner)
+    (budget : QuadraticAmbientBudget owner)
     (directLower preparedUpper : Coordinate)
     (ownerAmbientLeftLe :
       owner.track.initial.ambientLeftClearance.bound ≤ preparedUpper)
-    (directCache : ExactQuadraticOwnerClearance.DirectBoundaryBounds
+    (directCache : DirectBoundaryBounds
       (polynomial.eval (segment.pointAt left.parameter)) box directLower
         preparedUpper)
     (variationLtDirectLower :
@@ -4087,13 +4092,13 @@ public theorem eighthFloorSameBoxStepOfThreeTwoFiftySixthMargin
     (variationMargin : (3 : Coordinate) / 256 ≤
       ClearSheetContinuation.variationBound segment left.parameter
           request.endpoint.parameter -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)))
     (ownerAmbientRefines : owner.ambient.Refines box)
-    (boxSideBounds : ExactQuadraticOwnerClearance.QuadraticBoxSideMajorantBounds
+    (boxSideBounds : QuadraticBoxSideMajorantBounds
       (polynomial.eval (segment.pointAt left.parameter)) box 512)
-    (targetNormSqLe : Data.Gaussian.Norm.Basic.normSq
+    (targetNormSqLe : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt request.endpoint.parameter)) ≤ 256) :
     ParametricSameBoxStep segment within left owner request box directLower
       preparedUpper (1 / 8 : Coordinate) := by
@@ -4101,7 +4106,7 @@ public theorem eighthFloorSameBoxStepOfThreeTwoFiftySixthMargin
     ⟨boxEq ▸ boxSmall,
       predictedLeEighthFloor.trans eighthFloorLeCurrent,
       boxEq ▸ boxRefines⟩
-  let actualCache : ExactQuadraticOwnerClearance.DirectBoundaryBounds
+  let actualCache : DirectBoundaryBounds
       (polynomial.eval (segment.pointAt left.parameter))
       owner.track.initial.box directLower preparedUpper := by
     rw [boxEq]
@@ -4109,19 +4114,19 @@ public theorem eighthFloorSameBoxStepOfThreeTwoFiftySixthMargin
   have strengthenedCarries :
       ClearSheetContinuation.variationBound segment left.parameter
           request.endpoint.parameter <
-        (ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner).track.initial.clearance.bound :=
+        (strengthenQuadraticOwner owner).track.initial.clearance.bound :=
     (variationLtDirectLower.trans_le actualCache.lower_le).trans_le
-      (ExactQuadraticOwnerClearance.directBoundaryClearance_le_strengthenQuadraticOwner owner
+      (directBoundaryClearance_le_strengthenQuadraticOwner owner
         actualCache.leftNonzero actualCache.rightNonzero
           actualCache.bottomNonzero actualCache.topNonzero)
   have canonicalSmall :=
     variation_lt_prepared_of_ready_of_strengthenedCarries segment left owner
       request ready strengthenedCarries
   let cached := CachedSource.canonical segment left owner request
-  have preparedDominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance cached.preparedOwner :=
+  have preparedDominance : AmbientClearanceDominance cached.preparedOwner :=
     prepared_ambientClearanceDominance_of_ready_of_strengthenedCarries segment
       left owner request ready strengthenedCarries dominance
-  have preparedBudget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget cached.preparedOwner :=
+  have preparedBudget : QuadraticAmbientBudget cached.preparedOwner :=
     prepared_quadraticAmbientBudget_of_ready_of_strengthenedCarries segment
       left owner request ready strengthenedCarries budget
   have preparedAmbientRefines : cached.preparedOwner.ambient.Refines
@@ -4135,13 +4140,13 @@ public theorem eighthFloorSameBoxStepOfThreeTwoFiftySixthMargin
       exact Box.refines_refl _
     · rw [prepared_eq_strengthenQuadraticOwner_of_ready segment left owner
         request ready carries strengthenedCarries]
-      exact ExactQuadraticOwnerClearance.strengthenQuadraticOwner_ambient_refines owner
+      exact strengthenQuadraticOwner_ambient_refines owner
   have preparedBoxEq : cached.preparedOwner.track.initial.box = box :=
     (prepared_initial_box_eq_of_ready_of_strengthenedCarries segment left
       owner request ready strengthenedCarries).trans boxEq
-  have preparedSideBounds : ExactQuadraticOwnerClearance.QuadraticAmbientSideMajorantBounds
+  have preparedSideBounds : QuadraticAmbientSideMajorantBounds
       cached.preparedOwner 512 :=
-    ExactQuadraticOwnerClearance.quadraticAmbientSideMajorantBounds_of_box cached.preparedOwner box 512
+    quadraticAmbientSideMajorantBounds_of_box cached.preparedOwner box 512
       preparedBoxEq (preparedAmbientRefines.trans ownerAmbientRefines)
         boxSideBounds
   have preparedAmbientLeftLe :
@@ -4161,14 +4166,14 @@ public theorem eighthFloorSameBoxStepOfThreeTwoFiftySixthMargin
           actualCache.leftNonzero actualCache.rightNonzero
             actualCache.bottomNonzero actualCache.topNonzero with
         ⟨leftEq, _rightEq, _bottomEq, _topEq⟩
-      rw [leftEq, ExactQuadraticOwnerClearance.strengthenQuadraticOwner_clearance_eq_max owner
+      rw [leftEq, strengthenQuadraticOwner_clearance_eq_max owner
         actualCache.leftNonzero actualCache.rightNonzero
           actualCache.bottomNonzero actualCache.topNonzero]
-      exact Fraction.Order.Basic.max_le (dominance.left.trans ownerAmbientLeftLe)
+      exact Basic.max_le (dominance.left.trans ownerAmbientLeftLe)
         actualCache.le_upper
   have preparedMargin : (3 : Coordinate) / 256 ≤
       cached.preparedOwner.track.initial.clearance.bound -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)) :=
     prepared_margin_lower_of_ready_of_strengthenedCarries segment left owner
@@ -4194,7 +4199,7 @@ public theorem eighthFloorSameBoxStepOfThreeTwoFiftySixthMargin
   have preparedSquareLe :
       cached.preparedOwner.track.initial.ambientLeftClearance.bound ^ 2 ≤
         preparedUpper ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
+    Arithmetic.pow_le_pow_direct
       cached.preparedOwner.track.initial.ambientLeftClearance.positive.le
         preparedAmbientLeftLe 2
   have quarterSquareLe :
@@ -4204,9 +4209,9 @@ public theorem eighthFloorSameBoxStepOfThreeTwoFiftySixthMargin
       cached.preparedOwner.track.initial.ambientLeftClearance.bound ^ 2 *
           (4 : Coordinate)⁻¹ ≤
         preparedUpper ^ 2 * (4 : Coordinate)⁻¹
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
       preparedSquareLe
-        (Fraction.Order.Field.inv_pos_direct (by decide)).le
+        (Field.inv_pos_direct (by decide)).le
   have nextAmbientLeftLeQuarter :=
     advanceCache.ambientLeftQuarterSq.trans quarterSquareLe
   have nextAmbientRefines :
@@ -4223,7 +4228,7 @@ bounded by 1024. -/
 public theorem eighthFloorSameBoxStepOfSixtyFourthMargin
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest) (box : Box)
@@ -4233,16 +4238,16 @@ public theorem eighthFloorSameBoxStepOfSixtyFourthMargin
       (UniformSquareRootPreparation.rootAmbient segment))
     (predictedLeEighthFloor :
       preparedClearanceLower segment left request ≤
-        ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
+        quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
     (eighthFloorLeCurrent :
-      ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
+      quadraticAmbientTransportFloorAt (1 / 8 : Coordinate) ≤
         owner.track.initial.clearance.bound)
-    (dominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance owner)
-    (budget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget owner)
+    (dominance : AmbientClearanceDominance owner)
+    (budget : QuadraticAmbientBudget owner)
     (directLower preparedUpper : Coordinate)
     (ownerAmbientLeftLe :
       owner.track.initial.ambientLeftClearance.bound ≤ preparedUpper)
-    (directCache : ExactQuadraticOwnerClearance.DirectBoundaryBounds
+    (directCache : DirectBoundaryBounds
       (polynomial.eval (segment.pointAt left.parameter)) box directLower
         preparedUpper)
     (variationLtDirectLower :
@@ -4254,13 +4259,13 @@ public theorem eighthFloorSameBoxStepOfSixtyFourthMargin
     (variationMargin : (1 : Coordinate) / 64 ≤
       ClearSheetContinuation.variationBound segment left.parameter
           request.endpoint.parameter -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)))
     (ownerAmbientRefines : owner.ambient.Refines box)
-    (boxSideBounds : ExactQuadraticOwnerClearance.QuadraticBoxSideMajorantBounds
+    (boxSideBounds : QuadraticBoxSideMajorantBounds
       (polynomial.eval (segment.pointAt left.parameter)) box 1024)
-    (targetNormSqLe : Data.Gaussian.Norm.Basic.normSq
+    (targetNormSqLe : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt request.endpoint.parameter)) ≤ 256) :
     ParametricSameBoxStep segment within left owner request box directLower
       preparedUpper (1 / 8 : Coordinate) := by
@@ -4268,7 +4273,7 @@ public theorem eighthFloorSameBoxStepOfSixtyFourthMargin
     ⟨boxEq ▸ boxSmall,
       predictedLeEighthFloor.trans eighthFloorLeCurrent,
       boxEq ▸ boxRefines⟩
-  let actualCache : ExactQuadraticOwnerClearance.DirectBoundaryBounds
+  let actualCache : DirectBoundaryBounds
       (polynomial.eval (segment.pointAt left.parameter))
       owner.track.initial.box directLower preparedUpper := by
     rw [boxEq]
@@ -4276,19 +4281,19 @@ public theorem eighthFloorSameBoxStepOfSixtyFourthMargin
   have strengthenedCarries :
       ClearSheetContinuation.variationBound segment left.parameter
           request.endpoint.parameter <
-        (ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner).track.initial.clearance.bound :=
+        (strengthenQuadraticOwner owner).track.initial.clearance.bound :=
     (variationLtDirectLower.trans_le actualCache.lower_le).trans_le
-      (ExactQuadraticOwnerClearance.directBoundaryClearance_le_strengthenQuadraticOwner owner
+      (directBoundaryClearance_le_strengthenQuadraticOwner owner
         actualCache.leftNonzero actualCache.rightNonzero
           actualCache.bottomNonzero actualCache.topNonzero)
   have canonicalSmall :=
     variation_lt_prepared_of_ready_of_strengthenedCarries segment left owner
       request ready strengthenedCarries
   let cached := CachedSource.canonical segment left owner request
-  have preparedDominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance cached.preparedOwner :=
+  have preparedDominance : AmbientClearanceDominance cached.preparedOwner :=
     prepared_ambientClearanceDominance_of_ready_of_strengthenedCarries segment
       left owner request ready strengthenedCarries dominance
-  have preparedBudget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget cached.preparedOwner :=
+  have preparedBudget : QuadraticAmbientBudget cached.preparedOwner :=
     prepared_quadraticAmbientBudget_of_ready_of_strengthenedCarries segment
       left owner request ready strengthenedCarries budget
   have preparedAmbientRefines : cached.preparedOwner.ambient.Refines
@@ -4302,13 +4307,13 @@ public theorem eighthFloorSameBoxStepOfSixtyFourthMargin
       exact Box.refines_refl _
     · rw [prepared_eq_strengthenQuadraticOwner_of_ready segment left owner
         request ready carries strengthenedCarries]
-      exact ExactQuadraticOwnerClearance.strengthenQuadraticOwner_ambient_refines owner
+      exact strengthenQuadraticOwner_ambient_refines owner
   have preparedBoxEq : cached.preparedOwner.track.initial.box = box :=
     (prepared_initial_box_eq_of_ready_of_strengthenedCarries segment left
       owner request ready strengthenedCarries).trans boxEq
-  have preparedSideBounds : ExactQuadraticOwnerClearance.QuadraticAmbientSideMajorantBounds
+  have preparedSideBounds : QuadraticAmbientSideMajorantBounds
       cached.preparedOwner 1024 :=
-    ExactQuadraticOwnerClearance.quadraticAmbientSideMajorantBounds_of_box cached.preparedOwner box 1024
+    quadraticAmbientSideMajorantBounds_of_box cached.preparedOwner box 1024
       preparedBoxEq (preparedAmbientRefines.trans ownerAmbientRefines)
         boxSideBounds
   have preparedAmbientLeftLe :
@@ -4328,14 +4333,14 @@ public theorem eighthFloorSameBoxStepOfSixtyFourthMargin
           actualCache.leftNonzero actualCache.rightNonzero
             actualCache.bottomNonzero actualCache.topNonzero with
         ⟨leftEq, _rightEq, _bottomEq, _topEq⟩
-      rw [leftEq, ExactQuadraticOwnerClearance.strengthenQuadraticOwner_clearance_eq_max owner
+      rw [leftEq, strengthenQuadraticOwner_clearance_eq_max owner
         actualCache.leftNonzero actualCache.rightNonzero
           actualCache.bottomNonzero actualCache.topNonzero]
-      exact Fraction.Order.Basic.max_le (dominance.left.trans ownerAmbientLeftLe)
+      exact Basic.max_le (dominance.left.trans ownerAmbientLeftLe)
         actualCache.le_upper
   have preparedMargin : (1 : Coordinate) / 64 ≤
       cached.preparedOwner.track.initial.clearance.bound -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)) :=
     prepared_margin_lower_of_ready_of_strengthenedCarries segment left owner
@@ -4361,7 +4366,7 @@ public theorem eighthFloorSameBoxStepOfSixtyFourthMargin
   have preparedSquareLe :
       cached.preparedOwner.track.initial.ambientLeftClearance.bound ^ 2 ≤
         preparedUpper ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
+    Arithmetic.pow_le_pow_direct
       cached.preparedOwner.track.initial.ambientLeftClearance.positive.le
         preparedAmbientLeftLe 2
   have quarterSquareLe :
@@ -4371,9 +4376,9 @@ public theorem eighthFloorSameBoxStepOfSixtyFourthMargin
       cached.preparedOwner.track.initial.ambientLeftClearance.bound ^ 2 *
           (4 : Coordinate)⁻¹ ≤
         preparedUpper ^ 2 * (4 : Coordinate)⁻¹
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
       preparedSquareLe
-        (Fraction.Order.Field.inv_pos_direct (by decide)).le
+        (Field.inv_pos_direct (by decide)).le
   have nextAmbientLeftLeQuarter :=
     advanceCache.ambientLeftQuarterSq.trans quarterSquareLe
   have nextAmbientRefines :
@@ -4397,7 +4402,7 @@ open Purelib.RootIsolation.SquareRoot.Clearance
 public theorem eighthFloorSameBoxStepOfOneTwentyEighthMarginFromState
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest) (box : Box) (preparedUpper : Coordinate)
@@ -4408,9 +4413,9 @@ public theorem eighthFloorSameBoxStepOfOneTwentyEighthMarginFromState
       (UniformSquareRootPreparation.rootAmbient segment))
     (predictedLeEighthFloor :
       preparedClearanceLower segment left request ≤
-        ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
+        quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
     (directLower : Coordinate)
-    (directCache : ExactQuadraticOwnerClearance.DirectBoundaryBounds
+    (directCache : DirectBoundaryBounds
       (polynomial.eval (segment.pointAt left.parameter)) box directLower
         preparedUpper)
     (variationLtDirectLower :
@@ -4422,12 +4427,12 @@ public theorem eighthFloorSameBoxStepOfOneTwentyEighthMarginFromState
     (variationMargin : (1 : Coordinate) / 128 ≤
       ClearSheetContinuation.variationBound segment left.parameter
           request.endpoint.parameter -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)))
-    (boxSideBounds : ExactQuadraticOwnerClearance.QuadraticBoxSideMajorantBounds
+    (boxSideBounds : QuadraticBoxSideMajorantBounds
       (polynomial.eval (segment.pointAt left.parameter)) box 256)
-    (targetNormSqLe : Data.Gaussian.Norm.Basic.normSq
+    (targetNormSqLe : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt request.endpoint.parameter)) ≤ 256) :
     ParametricSameBoxStep segment within left owner request box directLower
       preparedUpper (1 / 8 : Coordinate) :=
@@ -4442,7 +4447,7 @@ public theorem eighthFloorSameBoxStepOfOneTwentyEighthMarginFromState
 public theorem eighthFloorSameBoxStepOfThreeTwoFiftySixthMarginFromState
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest) (box : Box) (preparedUpper : Coordinate)
@@ -4453,9 +4458,9 @@ public theorem eighthFloorSameBoxStepOfThreeTwoFiftySixthMarginFromState
       (UniformSquareRootPreparation.rootAmbient segment))
     (predictedLeEighthFloor :
       preparedClearanceLower segment left request ≤
-        ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
+        quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
     (directLower : Coordinate)
-    (directCache : ExactQuadraticOwnerClearance.DirectBoundaryBounds
+    (directCache : DirectBoundaryBounds
       (polynomial.eval (segment.pointAt left.parameter)) box directLower
         preparedUpper)
     (variationLtDirectLower :
@@ -4467,12 +4472,12 @@ public theorem eighthFloorSameBoxStepOfThreeTwoFiftySixthMarginFromState
     (variationMargin : (3 : Coordinate) / 256 ≤
       ClearSheetContinuation.variationBound segment left.parameter
           request.endpoint.parameter -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)))
-    (boxSideBounds : ExactQuadraticOwnerClearance.QuadraticBoxSideMajorantBounds
+    (boxSideBounds : QuadraticBoxSideMajorantBounds
       (polynomial.eval (segment.pointAt left.parameter)) box 512)
-    (targetNormSqLe : Data.Gaussian.Norm.Basic.normSq
+    (targetNormSqLe : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt request.endpoint.parameter)) ≤ 256) :
     ParametricSameBoxStep segment within left owner request box directLower
       preparedUpper (1 / 8 : Coordinate) :=
@@ -4487,7 +4492,7 @@ public theorem eighthFloorSameBoxStepOfThreeTwoFiftySixthMarginFromState
 public theorem eighthFloorSameBoxStepOfSixtyFourthMarginFromState
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest) (box : Box) (preparedUpper : Coordinate)
@@ -4498,9 +4503,9 @@ public theorem eighthFloorSameBoxStepOfSixtyFourthMarginFromState
       (UniformSquareRootPreparation.rootAmbient segment))
     (predictedLeEighthFloor :
       preparedClearanceLower segment left request ≤
-        ExactQuadraticOwnerClearance.quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
+        quadraticAmbientTransportFloorAt (1 / 8 : Coordinate))
     (directLower : Coordinate)
-    (directCache : ExactQuadraticOwnerClearance.DirectBoundaryBounds
+    (directCache : DirectBoundaryBounds
       (polynomial.eval (segment.pointAt left.parameter)) box directLower
         preparedUpper)
     (variationLtDirectLower :
@@ -4512,12 +4517,12 @@ public theorem eighthFloorSameBoxStepOfSixtyFourthMarginFromState
     (variationMargin : (1 : Coordinate) / 64 ≤
       ClearSheetContinuation.variationBound segment left.parameter
           request.endpoint.parameter -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)))
-    (boxSideBounds : ExactQuadraticOwnerClearance.QuadraticBoxSideMajorantBounds
+    (boxSideBounds : QuadraticBoxSideMajorantBounds
       (polynomial.eval (segment.pointAt left.parameter)) box 1024)
-    (targetNormSqLe : Data.Gaussian.Norm.Basic.normSq
+    (targetNormSqLe : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt request.endpoint.parameter)) ≤ 256) :
     ParametricSameBoxStep segment within left owner request box directLower
       preparedUpper (1 / 8 : Coordinate) :=
@@ -4540,7 +4545,7 @@ clearance and the overall clearance. -/
 public structure QuadraticAdvanceCache
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -4555,7 +4560,7 @@ public structure QuadraticAdvanceCache
     (advanceCached segment within left owner request cached
       cachedSmall).ambient = cached.preparedOwner.ambient
   /-- The specified quadratic transport floor is no greater than the indexed owner's clearance. -/ clearanceFloor :
-    ExactQuadraticOwnerClearance.quadraticAmbientTransportFloor ≤
+    quadraticAmbientTransportFloor ≤
     (advanceCached segment within left owner request cached
       cachedSmall).track.initial.clearance.bound
   /-- The advanced left ambient clearance is at most one quarter of the squared source left clearance. -/
@@ -4569,10 +4574,10 @@ public structure QuadraticAdvanceCache
         cachedSmall).track.initial.clearance.bound ≤
       cached.preparedOwner.track.initial.ambientLeftClearance.bound ^ 2 / 4
   /-- The indexed owner's clearance is dominated by each of its retained ambient clearances. -/ dominance :
-    ExactQuadraticOwnerClearance.AmbientClearanceDominance
+    AmbientClearanceDominance
     (advanceCached segment within left owner request cached cachedSmall)
   /-- The indexed owner retains the certified quadratic ambient budget. -/ budget :
-    ExactQuadraticOwnerClearance.QuadraticAmbientBudget
+    QuadraticAmbientBudget
     (advanceCached segment within left owner request cached cachedSmall)
 
 open Purelib.Data.Gaussian in
@@ -4586,7 +4591,7 @@ target squared norm at most 256. -/
 public theorem quadraticAdvanceCache
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -4600,14 +4605,14 @@ public theorem quadraticAdvanceCache
     (derivativeMarginLe :
       ClearSheetContinuation.squareRootDerivativeMargin segment ≤
         (1 / 4 : Coordinate))
-    (dominance : ExactQuadraticOwnerClearance.AmbientClearanceDominance cached.preparedOwner)
+    (dominance : AmbientClearanceDominance cached.preparedOwner)
     (marginLower : (1 : Coordinate) / 2 ≤
       cached.preparedOwner.track.initial.clearance.bound -
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (polynomial.eval (segment.pointAt left.parameter) -
             polynomial.eval (segment.pointAt request.endpoint.parameter)))
-    (budget : ExactQuadraticOwnerClearance.QuadraticAmbientBudget cached.preparedOwner)
-    (targetNormSqLe : Data.Gaussian.Norm.Basic.normSq
+    (budget : QuadraticAmbientBudget cached.preparedOwner)
+    (targetNormSqLe : Norm.Basic.normSq
       (polynomial.eval (segment.pointAt request.endpoint.parameter)) ≤ 256) :
     QuadraticAdvanceCache segment within left owner request cached
       cachedSmall := by
@@ -4618,7 +4623,7 @@ public theorem quadraticAdvanceCache
       within left.parameter request.endpoint.parameter left.inside
         request.endpoint.inside).trans_lt cachedSmall
   let transportCache :=
-    ExactQuadraticOwnerClearance.quadraticAmbientTransportCache
+    quadraticAmbientTransportCache
       cached.preparedOwner targetNonzero moveSmall different dominance
         marginLower budget targetNormSqLe
   have advanceEq :=
@@ -4653,7 +4658,7 @@ open Purelib.Riemann.RootContinuation in
 /-- Recondition the exact transported owner through its retained square-root bridge at the target endpoint. -/
 @[expose] public def stepBridge {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -4680,7 +4685,7 @@ The constructive equivalence follows each retained candidate's origin and compos
 recentering comparison. -/
 @[expose] public def sourceRootEquivalent {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest) :
@@ -4723,7 +4728,7 @@ recentering comparison. -/
               exact
                 UniformSquareRootPreparation.bridgeTrack_initial_strict_owner
                   segment left.parameter left.inside candidate request.rootDiameterPositive
-            · rw [if_neg carries, ExactQuadraticOwnerClearance.strengthenQuadraticOwner_initial_box]
+            · rw [if_neg carries, strengthenQuadraticOwner_initial_box]
               exact
                 UniformSquareRootPreparation.bridgeTrack_initial_strict_owner
                   segment left.parameter left.inside candidate request.rootDiameterPositive)
@@ -4810,6 +4815,81 @@ recentering comparison. -/
   unfold prepared
   exact retryEquivalent preparationRetryCount owner
 
+namespace CachedSource
+
+open Purelib.Polynomial
+open Purelib.Riemann.Branches.ClearSheetContinuation
+open Purelib.Approximation.Gaussian
+open Purelib.RootIsolation.SquareRoot.Owner.Transport
+open Purelib.Riemann.RootContinuation
+
+/-- The exact original CachedSource view at the actual geometric starting endpoint.
+
+Only the original pointAt-zero equality reindexes the supplied original
+owner. The original cache still retains the one actual preparation and its
+whole factory identity; this is not another preparation record.
+-/
+@[expose] public def Start {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
+    (owner : Owner (polynomial.eval start)) (request : StepRequest) : Type :=
+  CachedSource segment Subdivision.Endpoint.first
+    (castOwnerParameter (congrArg polynomial.eval segment.pointAt_zero).symm owner) request
+
+/-- Prepare the supplied original source once on its actual starting point and retained segment request. -/
+@[expose] public def atStart {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
+    (owner : Owner (polynomial.eval start)) (request : StepRequest) : Start segment owner request :=
+  canonical segment Subdivision.Endpoint.first
+    (castOwnerParameter (congrArg polynomial.eval segment.pointAt_zero).symm owner) request
+
+variable {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
+variable {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode}
+variable {owner : Owner (polynomial.eval start)} {request : StepRequest}
+
+/-- Read that same prepared owner at the original geometric source point, changing only its exact parameter index. -/
+@[expose] public def startPrepared (cached : Start segment owner request) : Owner (polynomial.eval start) :=
+  castOwnerParameter (congrArg polynomial.eval segment.pointAt_zero) cached.preparedOwner
+
+/-- The reindexed prepared source retains the exact whole original prepared owner cache heterogeneously. -/
+public theorem startPrepared_heq (cached : Start segment owner request) :
+    HEq (startPrepared (segment := segment)
+        (owner := owner) (request := request) cached) cached.preparedOwner :=
+  castOwnerParameter_heq _ _
+
+/-- The actual cached prepared source satisfies its original root-diameter request. -/
+public theorem startPrepared_diagonal (cached : Start segment owner request) :
+    (startPrepared (segment := segment)
+        (owner := owner) (request := request) cached).track.initial.box.diagonalSq < request.rootDiameter := by
+  rewrite [startPrepared, castOwnerParameter_initial_box, cached.preparedOwner_eq]
+  exact prepared_diagonal_lt segment Subdivision.Endpoint.first _ request
+
+/-- The original owner-independent predicted floor pays this actual cached prepared source's clearance. -/
+public theorem startPrepared_clearance (cached : Start segment owner request) :
+    UniformSquareRootPreparation.predictedClearance segment request.rootDiameter ≤
+      (startPrepared (segment := segment)
+        (owner := owner) (request := request) cached).track.initial.clearance.bound := by
+  rewrite [startPrepared, castOwnerParameter_clearance_bound, cached.preparedOwner_eq]
+  exact preparedClearanceLower_le segment Subdivision.Endpoint.first _ request
+
+/-- The genuine retained original source agrees with this exact cached prepared source before any target is created. -/
+@[expose] public def startAgreement (cached : Start segment owner request) :
+    NamedEquivalent (owner.certificate owner.parameterNonzero).value.name
+      ((startPrepared (segment := segment)
+        (owner := owner) (request := request) cached).certificate
+        (startPrepared (segment := segment)
+        (owner := owner) (request := request) cached).parameterNonzero).value.name := by
+  let equal := congrArg polynomial.eval segment.pointAt_zero
+  let original := castOwnerParameter equal.symm owner
+  have retained : NamedEquivalent (original.certificate original.parameterNonzero).value.name
+      (cached.preparedOwner.certificate cached.preparedOwner.parameterNonzero).value.name := by
+    rewrite [cached.preparedOwner_eq]
+    exact sourceRootEquivalent segment Subdivision.Endpoint.first original request
+  exact Equivalence.NamedEquivalent.transport
+    (SquareRootTrackEquivalence.ownerRootName_castOwnerParameter equal.symm owner)
+    (SquareRootTrackEquivalence.ownerRootName_castOwnerParameter equal cached.preparedOwner).symm retained
+
+end CachedSource
+
 /-! ## Congruent continuation from equivalent prepared occurrences -/
 
 open Purelib.Polynomial in
@@ -4822,7 +4902,7 @@ first owner's fresh common clearance. -/
 public structure VariationCongruenceSmall
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (left right : Endpoint)
     (first second : Owner
       (polynomial.eval (segment.pointAt left.parameter))) : Prop where
@@ -4869,7 +4949,7 @@ containment. -/
 public theorem toContinuationCongruenceSmall
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode}
     (within : segment.WithinAmbient)
     {left right : Endpoint}
     {first second : Owner
@@ -4902,7 +4982,7 @@ target. -/
 @[expose] public def preparedContinuationAtRootEquivalent
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (first second : Owner
       (polynomial.eval (segment.pointAt left.parameter)))
@@ -4958,7 +5038,7 @@ exact continuation-congruence bounds. -/
 @[expose] public def directToPreparedContinuationRootEquivalent
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (left middle target : Endpoint)
     (source : Owner
       (polynomial.eval (segment.pointAt left.parameter)))
@@ -4966,12 +5046,12 @@ exact continuation-congruence bounds. -/
       (polynomial.eval (segment.pointAt middle.parameter)))
     (childRequest : StepRequest)
     (sourceMiddleSmall :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
         (polynomial.eval (segment.pointAt left.parameter) -
           polynomial.eval (segment.pointAt middle.parameter)) <
         source.track.initial.clearance.bound)
     (sourceTargetSmall :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
         (polynomial.eval (segment.pointAt left.parameter) -
           polynomial.eval (segment.pointAt target.parameter)) <
         source.track.initial.clearance.bound)
@@ -5037,7 +5117,7 @@ comparisons at the requested target. -/
 @[expose] public def directToAdvanceRootEquivalent
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient)
     (left middle : Endpoint)
     (source : Owner
@@ -5049,12 +5129,12 @@ comparisons at the requested target. -/
       middle.parameter childRequest.endpoint.parameter <
         (prepared segment middle child childRequest).track.initial.clearance.bound)
     (sourceMiddleSmall :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
         (polynomial.eval (segment.pointAt left.parameter) -
           polynomial.eval (segment.pointAt middle.parameter)) <
         source.track.initial.clearance.bound)
     (sourceTargetSmall :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
         (polynomial.eval (segment.pointAt left.parameter) -
           polynomial.eval
             (segment.pointAt childRequest.endpoint.parameter)) <
@@ -5116,7 +5196,7 @@ bounds. -/
 @[expose] public def preparedContinuationRootEquivalent
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (first second : Owner
       (polynomial.eval (segment.pointAt left.parameter)))
@@ -5152,7 +5232,7 @@ request. -/
 @[expose] public def transportedRootEquivalent
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (first second : Owner
       (polynomial.eval (segment.pointAt left.parameter)))
@@ -5188,7 +5268,7 @@ request. -/
 @[expose] public def advanceRootEquivalent_of_rootEquivalent
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left : Endpoint)
     (first second : Owner
       (polynomial.eval (segment.pointAt left.parameter)))
@@ -5237,7 +5317,7 @@ open Purelib.Riemann.RootContinuation in
 /-- Read the actual prepared clearance of one of the two canonical root owners at the current segment point. -/
 @[expose] public def canonicalPreparedClearance {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint) (request : StepRequest) (index : Fin 2) :
     Coordinate :=
   (prepared
@@ -5249,7 +5329,7 @@ open Purelib.Riemann.RootContinuation in
 /-- The minimum of the actual prepared clearances of the two original canonical root owners. -/
 @[expose] public def canonicalPreparedClearanceFloor {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint) (request : StepRequest) : Coordinate :=
   min
     (canonicalPreparedClearance segment current request
@@ -5262,10 +5342,10 @@ open Purelib.Riemann.RootContinuation in
 public theorem canonicalPreparedClearanceFloor_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint) (request : StepRequest) :
     0 < canonicalPreparedClearanceFloor segment current request := by
-  apply Fraction.Order.Basic.lt_min
+  apply Basic.lt_min
   · exact (prepared
       segment current
       (SquareRootReconditioning.canonicalOwner
@@ -5281,16 +5361,16 @@ public theorem canonicalPreparedClearanceFloor_positive
 public theorem canonicalPreparedClearanceFloor_le
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint) (request : StepRequest) (index : Fin 2) :
     canonicalPreparedClearanceFloor segment current request <=
       canonicalPreparedClearance segment current request index := by
   rcases index with ⟨value, bound⟩
   cases value with
-  | zero => exact Fraction.Order.Basic.min_le_left _ _
+  | zero => exact Basic.min_le_left _ _
   | succ value =>
       cases value with
-      | zero => exact Fraction.Order.Basic.min_le_right _ _
+      | zero => exact Basic.min_le_right _ _
       | succ value =>
           exact (Nat.not_lt_zero _
             (Nat.lt_of_succ_lt_succ (Nat.lt_of_succ_lt_succ bound))).elim
@@ -5300,7 +5380,7 @@ open Purelib.Riemann.RootContinuation in
 public theorem canonicalPreparedClearanceFloor_le_freshOwner
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest) :
@@ -5316,7 +5396,7 @@ public theorem canonicalPreparedClearanceFloor_le_freshOwner
 /-- The predicted preparation clearance, independent of which of the two canonical root indices is supplied. -/
 @[expose] public def canonicalPredictedClearance {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint) (request : StepRequest) (_index : Fin 2) :
     Coordinate :=
   preparedClearanceLower segment current request
@@ -5324,7 +5404,7 @@ public theorem canonicalPreparedClearanceFloor_le_freshOwner
 /-- The minimum of the predicted clearances associated with the two canonical root indices. -/
 @[expose] public def canonicalPredictedClearanceFloor {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint) (request : StepRequest) : Coordinate :=
   min
     (canonicalPredictedClearance segment current request
@@ -5336,23 +5416,23 @@ public theorem canonicalPreparedClearanceFloor_le_freshOwner
 public theorem canonicalPredictedClearanceFloor_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint) (request : StepRequest) :
     0 < canonicalPredictedClearanceFloor segment current request := by
-  apply Fraction.Order.Basic.lt_min <;>
+  apply Basic.lt_min <;>
     exact preparedClearanceLower_positive segment current request
 
 /-- The predicted canonical floor is no larger than the minimum actual canonical prepared clearance. -/
 public theorem canonicalPredictedClearanceFloor_le_actual
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint) (request : StepRequest) :
     canonicalPredictedClearanceFloor segment current request ≤
       canonicalPreparedClearanceFloor segment current request := by
   unfold canonicalPredictedClearanceFloor canonicalPreparedClearanceFloor
     canonicalPredictedClearance canonicalPreparedClearance
-  exact Fraction.Order.Basic.min_le_min
+  exact Basic.min_le_min
     (preparedClearanceLower_le segment current _ request)
     (preparedClearanceLower_le segment current _ request)
 
@@ -5360,13 +5440,13 @@ public theorem canonicalPredictedClearanceFloor_le_actual
 public theorem canonicalPredictedClearanceFloor_le_prepared
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (request : StepRequest) :
     canonicalPredictedClearanceFloor segment current request ≤
       (prepared segment current owner request).track.initial.clearance.bound :=
-  (Fraction.Order.Basic.min_le_left _ _).trans
+  (Basic.min_le_left _ _).trans
     (preparedClearanceLower_le segment current owner request)
 
 section
@@ -5377,7 +5457,7 @@ The recursive predicate advances through the exact request endpoints, retaining 
 mesh. -/
 @[expose] public def FreshMeshSafe {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) :
     Endpoint -> List StepRequest -> Prop
   | _current, [] => True
   | current, request :: remaining =>
@@ -5394,7 +5474,7 @@ Each step is ordered by its retained endpoints; the first source owner remains a
 check. -/
 @[expose] public def MeshSafe {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter))) :
     List StepRequest -> Prop
@@ -5412,7 +5492,7 @@ end
 public instance freshMeshSafeDecidable
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint) (requests : List StepRequest) :
     Decidable (FreshMeshSafe segment current requests) := by
   induction requests generalizing current with
@@ -5426,7 +5506,7 @@ public instance freshMeshSafeDecidable
 public instance meshSafeDecidable
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (requests : List StepRequest) :

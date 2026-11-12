@@ -3,6 +3,7 @@ public import Purelib.RootIsolation.SquareRoot.Clearance.ExactQuadraticOwnerClea
 
 public import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Data.Rat.Fraction
+import Purelib.Data.Gaussian.Norm.Basic
 import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Polynomial.Clearance.Box.Boundary.Basic
 import Purelib.Polynomial.Power.Gaussian
@@ -53,6 +54,32 @@ theorem castOwnerParameter_heq {source target : Gaussian}
     (castOwnerParameter equal owner).ambient = owner.ambient := by
   cases equal
   rfl
+
+section
+
+open Purelib.Data.Gaussian
+
+/-- Exact source and target parameter transports commute with the SAME original Owner.advance operation.
+
+Both nonzero and clearance proofs are retained at their actual indices.
+The equality compares the entire original Owner records; it does not
+identify independently constructed roots from coordinates or boxes.
+-/
+theorem castOwnerParameter_advance {source target nextSource nextTarget : Gaussian}
+    (sourceEq : source = nextSource) (targetEq : target = nextTarget) (owner : Owner source)
+    (nonzero : target ≠ 0)
+    (small : Norm.Basic.normSq (source - target) <
+      owner.track.initial.clearance.bound)
+    (nextNonzero : nextTarget ≠ 0)
+    (nextSmall : Norm.Basic.normSq (nextSource - nextTarget) <
+      (castOwnerParameter sourceEq owner).track.initial.clearance.bound) :
+    castOwnerParameter targetEq (owner.advance nonzero small) =
+      (castOwnerParameter sourceEq owner).advance nextNonzero nextSmall := by
+  cases sourceEq
+  cases targetEq
+  rfl
+
+end
 
 open Purelib.RootIsolation.SquareRoot.Clearance
 

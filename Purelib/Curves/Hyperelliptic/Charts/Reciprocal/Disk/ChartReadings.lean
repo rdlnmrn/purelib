@@ -96,16 +96,16 @@ open Purelib.Approximation.Gaussian.Equivalence (NamedEquivalent Equivalent Comp
 open Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.Coherence (exact)
 open Purelib.Data.Gaussian.Basic.Canonical
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {collar :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {point :
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian}
-  {owner : Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
-    ((Purelib.Curves.Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.polynomial curve).eval point)}
-  {overlap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap cap point owner} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} {index : Nat} {box :
-    Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {collar :
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {point :
+    Gaussian}
+  {owner : Riemann.Topology.SquareRootContinuationChain.Owner
+    ((HyperellipticReciprocal.polynomial curve).eval point)}
+  {overlap : Overlap cap point owner} {differential :
+    Differential genus} {index : Nat} {box :
+    Geometry.Rational.Box}
+  {sample : Primitives.Sample cap differential index box}
 
 namespace Endpoint
 
@@ -114,12 +114,12 @@ set_option genInjectivity false in
 
 The value uses the original endpoint coefficient and preserves the exact sampled coordinate rather than claiming an
 exact root. -/
-structure Reading (endpoint : Overlap.Endpoint overlap sample) (stage : Nat) where
+structure Reading (endpoint : Endpoint overlap sample) (stage : Nat) where
   /-- The cached rational reading of the original prepared quotient coordinate. -/ coordinate :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The cached coordinate is the exact original channel sample at the retained stage. -/ coordinate_eq : coordinate =
     (Sampling.approximation overlap.coordinate.prepared.denominator.name).sample stage
-  /-- The cached value computed from the original retained coordinate reading. -/ value : InverseRootPolynomial.Gaussian
+  /-- The cached value computed from the original retained coordinate reading. -/ value : Gaussian
   /-- The cached endpoint value is the retained coordinate reading times the original endpoint coefficient. -/ value_eq
     : value = coordinate * endpoint.coefficient
 
@@ -131,14 +131,14 @@ namespace Reading
 
 The value multiplies that exact retained reading by the endpoint coefficient,
 without replacing or reacquiring its quotient-coordinate channel. -/
-@[expose] def build (endpoint : Overlap.Endpoint overlap sample) (stage : Nat) :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.Endpoint.Reading endpoint stage :=
+@[expose] def build (endpoint : Endpoint overlap sample) (stage : Nat) :
+  Reading endpoint stage :=
   let coordinate := (Sampling.approximation overlap.coordinate.prepared.denominator.name).sample stage
   ⟨coordinate, rfl, coordinate * endpoint.coefficient, rfl⟩
 
 /-- The cached direct reading equals the original endpoint approximation at the same stage. -/
-theorem sample_eq {endpoint : Overlap.Endpoint overlap sample} {stage : Nat} (reading :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.Endpoint.Reading endpoint stage) :
+theorem sample_eq {endpoint : Endpoint overlap sample} {stage : Nat} (reading :
+  Reading endpoint stage) :
     reading.value = endpoint.approximation.sample stage := by
   rw [reading.value_eq, reading.coordinate_eq, endpoint.sample_eq]
 
@@ -149,7 +149,7 @@ end Endpoint
 
 The reciprocal-origin parity selects multiplication by the fixed exact value
 or evaluation of the same cached primitive polynomial at the channel. -/
-@[expose] def chartApproximation (overlap : Coordinates.Overlap cap point owner)
+@[expose] def chartApproximation (overlap : Overlap cap point owner)
     (sample : Primitives.Sample cap differential index box) : GeometricApproximation :=
   let coordinate := GeometricApproximation.ofNamed overlap.coordinate.prepared.denominator.name
   if HyperellipticReciprocal.originOrder curve = 0 then
@@ -160,21 +160,21 @@ or evaluation of the same cached primitive polynomial at the channel. -/
 
 Each reciprocal-origin branch transports the retained coordinate channel
 through the corresponding multiplication or polynomial evaluation. -/
-@[expose] def chartApproximation_agrees (overlap : Coordinates.Overlap cap point owner)
+@[expose] def chartApproximation_agrees (overlap : Overlap cap point owner)
     (sample : Primitives.Sample cap differential index box) :
-    Gaussian.Equivalence.NamedEquivalent (overlap.chartPrimitive sample).name
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.chartApproximation overlap
+    NamedEquivalent (overlap.chartPrimitive sample).name
+      (chartApproximation overlap
       sample).toApproximation.toNamed := by
   by_cases regular : HyperellipticReciprocal.originOrder curve = 0
-  · rw [Overlap.chartPrimitive, chartApproximation]
+  · rw [chartPrimitive, chartApproximation]
     rw [if_pos regular, if_pos regular]
     exact CoherentEvaluation.mul_agrees overlap.coordinate.prepared.denominator
-      (Horner.polynomialEval sample.primitive.value (Coherence.exact point))
+      (Horner.polynomialEval sample.primitive.value (exact point))
       (.ofNamed overlap.coordinate.prepared.denominator.name) (.exact (sample.primitive.value.eval point))
       (CoherentEvaluation.named_agrees overlap.coordinate.prepared.denominator)
       ((Horner.polynomialEval_exact sample.primitive.value point).trans
         (CoherentEvaluation.exact_agrees _))
-  · rw [Overlap.chartPrimitive, chartApproximation]
+  · rw [chartPrimitive, chartApproximation]
     rw [if_neg regular, if_neg regular]
     exact CoherentEvaluation.evaluate_agrees sample.primitive.value overlap.coordinate.prepared.denominator
       (.ofNamed overlap.coordinate.prepared.denominator.name) (CoherentEvaluation.named_agrees _)
@@ -184,19 +184,19 @@ set_option genInjectivity false in
 
 The request stores each comparison and selects the maximum of its three
 reading indices, preserving the direct endpoint and supplied error target. -/
-structure ChartRequest (endpoint : Overlap.Endpoint overlap sample) (target : InverseRootPolynomial.Coordinate) (floor :
+structure ChartRequest (endpoint : Endpoint overlap sample) (target : Coordinate) (floor :
   Nat) where
   /-- The requested chart and coordinate-square error target is strictly positive. -/ positive : 0 < target
   /-- The retained geometric approximation to the original chart primitive. -/ chart :
-    Gaussian.Geometric.GeometricApproximation
+    GeometricApproximation
   /-- The retained chart is exactly the approximation built from the original overlap and sample. -/ chart_eq : chart =
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.chartApproximation overlap sample
+    chartApproximation overlap sample
   /-- The retained direct-endpoint versus chart comparison with independent reading floors. -/ comparison :
-    Gaussian.Equivalence.Comparison endpoint.approximation chart.toApproximation floor floor target
+    Comparison endpoint.approximation chart.toApproximation floor floor target
   /-- The retained comparison of the original coordinate square with its exact reciprocal-origin power. -/ square :
-    Gaussian.Equivalence.Comparison (Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation
+    Comparison (Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation
     overlap.coordinate.prepared.denominator.name overlap.coordinate.prepared.denominator.name)
-    (Sampling.approximation (Coherence.exact (point ^ HyperellipticReciprocal.originOrder curve)).name) floor 0 target
+    (Sampling.approximation (exact (point ^ HyperellipticReciprocal.originOrder curve)).name) floor 0 target
   /-- The shared reading stage paying the chart and coordinate-square comparisons. -/ stage : Nat
   /-- The retained stage is the maximum of the three original comparison reading indices. -/ stage_eq : stage = max
     comparison.leftIndex (max comparison.rightIndex square.leftIndex)
@@ -205,27 +205,27 @@ constructive_injectivity ChartRequest
 
 namespace ChartRequest
 
-variable {endpoint : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap.Endpoint overlap sample}
-  {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
+variable {endpoint : Endpoint overlap sample}
+  {target : Coordinate} {floor : Nat}
 
 /-- Construct a chart request from the endpoint and positive target.
 
 The two operational comparisons retain their separate reading floors and
 indices; their maximum supplies the shared coordinate-reading stage. -/
-@[expose] def build (endpoint : Overlap.Endpoint overlap sample) (target : InverseRootPolynomial.Coordinate) (positive :
+@[expose] def build (endpoint : Endpoint overlap sample) (target : Coordinate) (positive :
   0 < target) (floor : Nat) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.ChartRequest endpoint target floor :=
-  let chart := Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.chartApproximation overlap sample
-  let agrees : Gaussian.Equivalence.Equivalent endpoint.approximation chart.toApproximation :=
+    ChartRequest endpoint target floor :=
+  let chart := chartApproximation overlap sample
+  let agrees : Equivalent endpoint.approximation chart.toApproximation :=
     endpoint.sampled_agreement.symm.trans (Equivalent.trans
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.chartApproximation_agrees overlap sample)
+      (chartApproximation_agrees overlap sample)
       (Equivalent.toNamed_sampling chart.toApproximation))
   let comparison := agrees.compare floor floor target positive
   let square := (SquareRootProvenance.sampled_square overlap.coordinate.square).compare floor 0 target positive
   ⟨positive, chart, rfl, comparison, square, max comparison.leftIndex (max comparison.rightIndex square.leftIndex), rfl⟩
 
 /-- The shared coordinate-reading stage respects the requested floor. -/
-theorem floor_le (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.ChartRequest endpoint target
+theorem floor_le (request : ChartRequest endpoint target
   floor) : floor ≤ request.stage := by
   rw [request.stage_eq]
   exact request.comparison.left_ge.trans (Data.Nat.Order.le_max_left _ _)
@@ -235,10 +235,10 @@ set_option genInjectivity false in
 
 The computed chart value and both error certificates use that same cached
 coordinate and the request's target, without acquiring another root reading. -/
-structure Evaluation (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.ChartRequest endpoint target
-  floor) {stage : Nat} (reading : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.Endpoint.Reading endpoint
+structure Evaluation (request : ChartRequest endpoint target
+  floor) {stage : Nat} (reading : Endpoint.Reading endpoint
   stage) where
-  /-- The cached value computed from the original retained coordinate reading. -/ value : InverseRootPolynomial.Gaussian
+  /-- The cached value computed from the original retained coordinate reading. -/ value : Gaussian
   /-- The cached chart value is the parity-dependent original primitive evaluation on the retained reading. -/ value_eq
     : value = if HyperellipticReciprocal.originOrder curve = 0 then reading.coordinate * sample.primitive.value.eval
     point
@@ -255,10 +255,10 @@ constructive_injectivity Evaluation
 
 A stage beyond the request's shared maximum supplies the chart and square
 comparison certificates at the same supplied error target. -/
-@[expose] def evaluate (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.ChartRequest endpoint target
-  floor) {stage : Nat} (reading : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.Endpoint.Reading endpoint
+@[expose] def evaluate (request : ChartRequest endpoint target
+  floor) {stage : Nat} (reading : Endpoint.Reading endpoint
   stage)
-    (later : request.stage ≤ stage) : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.ChartRequest.Evaluation
+    (later : request.stage ≤ stage) : Evaluation
       request reading := by
   let value := if HyperellipticReciprocal.originOrder curve = 0 then reading.coordinate * sample.primitive.value.eval
     point
@@ -269,12 +269,12 @@ comparison certificates at the same supplied error target. -/
     rw [reading.coordinate_eq]
     by_cases regular : HyperellipticReciprocal.originOrder curve = 0
     · rw [chartApproximation]
-      rw [if_pos regular, if_pos regular, Gaussian.Geometric.GeometricApproximation.mul_sample,
-        Gaussian.Geometric.GeometricApproximation.ofNamed_sample,
-        Gaussian.Geometric.GeometricApproximation.exact_sample]
+      rw [if_pos regular, if_pos regular, GeometricApproximation.mul_sample,
+        GeometricApproximation.ofNamed_sample,
+        GeometricApproximation.exact_sample]
     · rw [chartApproximation]
-      rw [if_neg regular, if_neg regular, Purelib.Polynomial.Approximation.Evaluation.evaluate_sample,
-        Gaussian.Geometric.GeometricApproximation.ofNamed_sample]
+      rw [if_neg regular, if_neg regular, Evaluation.evaluate_sample,
+        GeometricApproximation.ofNamed_sample]
   have indices := request.stage_eq ▸ later
   have accurate : Data.Gaussian.Norm.Basic.normSq (reading.value - value) < target := by
     rw [reading.sample_eq, valueSample]

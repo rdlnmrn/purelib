@@ -3,6 +3,7 @@ import Purelib.Data.Nat.Order
 import Purelib.Approximation.Gaussian.Equivalence
 import Purelib.Approximation.Gaussian.Equivalence.Sampling
 import Purelib.Approximation.Gaussian.Geometric
+public import Purelib.Approximation.Gaussian.Geometric.Coherent.Comparison
 import Purelib.Approximation.Gaussian.Name.Coherent
 import Purelib.Approximation.Gaussian.Name.Coherent.Arithmetic
 import Purelib.Approximation.Gaussian.Name.Sampling
@@ -22,7 +23,7 @@ import Purelib.Integration.Program.Gaussian.Basic
 import Purelib.Integration.Program.Gaussian.Name
 public import Purelib.Integration.Program.Gaussian.Reversal
 import Purelib.Data.Gaussian.Norm.Bounds
-public import Purelib.Riemann.Periods.PeriodMatrix
+import Purelib.Riemann.Periods.PeriodMatrix
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Approximation.Gaussian.Sequence
@@ -34,6 +35,8 @@ import Purelib.Integration.Program.Gaussian.Cached.Basic
 import Purelib.Approximation.Gaussian.Sequence.Name
 import Mathlib.Order.Basic
 import Mathlib.Data.Nat.Basic
+
+open Purelib.Integration.Program.Gaussian.Basic
 
 open Purelib.Approximation.Gaussian.Name.Coherent (CoherentNamed)
 
@@ -57,10 +60,10 @@ namespace Purelib.Integration.Program.Comparison
 
 /-- The exact Gaussian refinement-program carrier used by these output comparisons. -/
 abbrev RefinementProgram :=
-  Purelib.Integration.Program.Gaussian.Basic.RefinementProgram
+  Gaussian.Basic.RefinementProgram
 /-- The original indexed carrier of retained program reversal models. -/
 abbrev ReversalModels :=
-  Purelib.Integration.Program.Gaussian.Basic.RefinementProgram.ReversalModels
+  RefinementProgram.ReversalModels
 
 section
 open Purelib.Approximation.Gaussian
@@ -70,24 +73,24 @@ open Purelib.Integration.Program
 def ofCoherentNamed_output_equivalent (value :
   CoherentNamed) :
     Equivalence.NamedEquivalent value.name
-      (Gaussian.Basic.RefinementProgram.ofCoherentNamed
+      (RefinementProgram.ofCoherentNamed
         value).output.name := by
   let source := Name.Sampling.approximation value.name
   let program :=
-    Gaussian.Basic.RefinementProgram.ofCoherentNamed value
+    RefinementProgram.ofCoherentNamed value
   have rewrap : Equivalence.NamedEquivalent value.name source.toNamed := by
     exact Equivalence.Equivalent.symm
       (Equivalence.Equivalent.toNamed_sampling source)
   have samples : forall index,
       source.sample index = program.approximation.sample index := by
     intro index
-    exact (Gaussian.Basic.RefinementProgram.ofCoherentNamed_integralSample
+    exact (RefinementProgram.ofCoherentNamed_integralSample
       value index).symm
   exact Equivalence.NamedEquivalent.trans rewrap (by
     simpa only [program,
-      Gaussian.Basic.RefinementProgram.output,
+      RefinementProgram.output,
     CertifiedProgram.Program.output,
-    Gaussian.Basic.RefinementProgram.approximation,
+    RefinementProgram.approximation,
       CoherentNamed.ofApproximation] using
       Sequence.Name.Equivalence.approximationEquivalent_toNamed
         (Sequence.Equivalence.approximationEquivalentOfSamplesEq
@@ -99,19 +102,19 @@ def multiplyProgram_output_equivalent (left right :
     Equivalence.NamedEquivalent
       (CoherentNamed.mul
         left.output right.output).name
-      (Gaussian.Basic.RefinementProgram.multiply
+      (RefinementProgram.multiply
         left right).output.name := by
   simpa only [CoherentNamed.mul,
-    Gaussian.Basic.RefinementProgram.output,
+    RefinementProgram.output,
     CertifiedProgram.Program.output,
-    Gaussian.Basic.RefinementProgram.approximation,
+    RefinementProgram.approximation,
     CoherentNamed.ofApproximation] using
     Sequence.Arithmetic.Multiplication.Bridge.mulToNamed_equivalent_pointwise
       left.approximation right.approximation
-      (Gaussian.Basic.RefinementProgram.multiply
+      (RefinementProgram.multiply
         left right).approximation
       (fun index =>
-        Gaussian.Basic.RefinementProgram.multiply_integralSample
+        RefinementProgram.multiply_integralSample
           left right index)
 
 /-- Exact equality of all original stage samples gives equivalence of the two program outputs. -/
@@ -121,13 +124,23 @@ def refinementProgram_output_equivalent_of_samples_eq
       (left.model index).integralSample =
         (right.model index).integralSample) :
     Equivalence.NamedEquivalent left.output.name right.output.name := by
-  simpa only [Gaussian.Basic.RefinementProgram.output,
+  simpa only [RefinementProgram.output,
     CertifiedProgram.Program.output,
-    Gaussian.Basic.RefinementProgram.approximation,
+    RefinementProgram.approximation,
     CoherentNamed.ofApproximation] using
     Sequence.Name.Equivalence.approximationEquivalent_toNamed
       (Sequence.Equivalence.approximationEquivalentOfSamplesEq
         left.approximation right.approximation samples)
+
+open Purelib.Approximation.Gaussian in
+open Purelib.Integration.Polynomial.Gaussian.Path.Basic (PathModel) in
+/-- Supplying original models with the same certified samples preserves the original program output. -/
+def withModels_output_equivalent (program : RefinementProgram) (models : Nat → PathModel)
+    (samples : ∀ index, (models index).integralSample = (program.model index).integralSample)
+    (allowances : ∀ index, (models index).aggregateAllowance ≤
+      Purelib.Approximation.Rational.Geometric.Basic.quarterRadius program.errorScale index) :
+    Equivalence.NamedEquivalent program.output.name (program.withModels models samples allowances).output.name :=
+  refinementProgram_output_equivalent_of_samples_eq _ _ (fun index => (samples index).symm)
 
 end
 
@@ -144,13 +157,13 @@ private theorem refinementProgram_samples_tail_close
     (bridgeScale : Fraction.Rational)
     (_bridgeScale_nonnegative : 0 <= bridgeScale)
     (samples : forall index,
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           ((left.model index).integralSample -
             (right.model index).integralSample) <=
         Geometric.Basic.quarterRadius bridgeScale index)
     {common leftLater rightLater : Nat}
     (leftOrder : common <= leftLater) (rightOrder : common <= rightLater) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((left.model leftLater).integralSample -
           (right.model rightLater).integralSample) <=
       Geometric.Basic.quarterRadius
@@ -162,34 +175,34 @@ private theorem refinementProgram_samples_tail_close
   let rightRadius := Geometric.Basic.quarterRadius
     right.errorScale common
   have leftClose :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           ((left.model leftLater).integralSample -
             (left.model common).integralSample) <= leftRadius :=
     (Norm.Basic.normSq_eq_canonical _).trans_le
       (left.later_close (earlier := common) (later := leftLater) leftOrder)
   have bridgeClose :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           ((left.model common).integralSample -
             (right.model common).integralSample) <= bridgeRadius :=
     samples common
   have rightCloseForward :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           ((right.model rightLater).integralSample -
             (right.model common).integralSample) <= rightRadius :=
     (Norm.Basic.normSq_eq_canonical _).trans_le
       (right.later_close (earlier := common) (later := rightLater) rightOrder)
   have rightClose :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           ((right.model common).integralSample -
             (right.model rightLater).integralSample) <= rightRadius := by
-    rw [Purelib.Data.Gaussian.Norm.Bounds.normSq_sub_symm]
+    rw [Norm.Bounds.normSq_sub_symm]
     exact rightCloseForward
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((left.model leftLater).integralSample -
           (right.model rightLater).integralSample) <=
         2 * (leftRadius + 2 * (bridgeRadius + rightRadius)) :=
-      Purelib.Data.Gaussian.Norm.Bounds.normSq_sub_le_weighted_sum
+      Norm.Bounds.normSq_sub_le_weighted_sum
         (left.model leftLater).integralSample
         (left.model common).integralSample
         (right.model common).integralSample
@@ -217,7 +230,7 @@ opaque refinementProgram_output_equivalent_of_samples_close
     (bridgeScale : Fraction.Rational)
     (bridgeScale_nonnegative : 0 <= bridgeScale)
     (samples : forall index,
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           ((left.model index).integralSample -
             (right.model index).integralSample) <=
         Geometric.Basic.quarterRadius bridgeScale index) :
@@ -254,15 +267,15 @@ opaque refinementProgram_output_equivalent_of_samples_close
         right_ge := common_ge_right
         close := by
           intro leftLater rightLater leftOrder rightOrder
-          change Data.Gaussian.Norm.Basic.normSq
+          change Norm.Basic.normSq
               ((left.model leftLater).integralSample -
                 (right.model rightLater).integralSample) < target
           exact (refinementProgram_samples_tail_close left right bridgeScale
             bridgeScale_nonnegative samples leftOrder rightOrder).trans_lt
               totalSmall }
-  simpa only [Gaussian.Basic.RefinementProgram.output,
+  simpa only [RefinementProgram.output,
     CertifiedProgram.Program.output,
-    Gaussian.Basic.RefinementProgram.approximation,
+    RefinementProgram.approximation,
     CoherentNamed.ofApproximation] using
     Sequence.Name.Equivalence.approximationEquivalent_toNamed equivalent
 
@@ -278,27 +291,27 @@ def geometricRefinementProgram
     (source : Geometric.GeometricApproximation) :
     RefinementProgram where
   model := fun index =>
-    Gaussian.Basic.RefinementProgram.exactSamplePath
+    RefinementProgram.exactSamplePath
       (source.sample index)
   errorScale := source.errorScale
   errorScale_nonneg := source.errorScale_nonneg
   modelAllowance_le := by
     intro index
-    rw [Gaussian.Basic.RefinementProgram.exactSamplePath_aggregateAllowance]
+    rw [RefinementProgram.exactSamplePath_aggregateAllowance]
     exact Geometric.Basic.quarterRadius_nonneg
       source.errorScale_nonneg index
   later_close := by
     intro earlier later order
     rw [← Norm.Basic.normSq_eq_canonical,
-      Gaussian.Basic.RefinementProgram.exactSamplePath_integralSample,
-      Gaussian.Basic.RefinementProgram.exactSamplePath_integralSample]
+      RefinementProgram.exactSamplePath_integralSample,
+      RefinementProgram.exactSamplePath_integralSample]
     exact source.later_close (earlier := earlier) (later := later) order
   centerBound := source.centerBound
   centerBound_nonneg := source.centerBound_nonneg
   sample_bounded := by
     intro index
     rw [← Norm.Basic.normSq_eq_canonical,
-      Gaussian.Basic.RefinementProgram.exactSamplePath_integralSample]
+      RefinementProgram.exactSamplePath_integralSample]
     exact source.sample_bounded index
 
 open Purelib.Approximation.Gaussian in
@@ -309,7 +322,7 @@ open Purelib.Integration.Program in
     (index : Nat) :
     ((geometricRefinementProgram source).model index).integralSample =
       source.sample index :=
-  Gaussian.Basic.RefinementProgram.exactSamplePath_integralSample
+  RefinementProgram.exactSamplePath_integralSample
     _
 
 open Purelib.Approximation.Gaussian in
@@ -323,9 +336,9 @@ def geometricNamed_equivalent_geometricRefinementProgram
       (geometricRefinementProgram source).output.name := by
   simpa only [PeriodMatrix.geometricNamed,
     CoherentNamed.ofApproximation,
-    Gaussian.Basic.RefinementProgram.output,
+    RefinementProgram.output,
     CertifiedProgram.Program.output,
-    Gaussian.Basic.RefinementProgram.approximation] using
+    RefinementProgram.approximation] using
     Sequence.Name.Equivalence.approximationEquivalent_toNamed
       (Sequence.Equivalence.approximationEquivalentOfSamplesEq
         source.toApproximation
@@ -334,6 +347,53 @@ def geometricNamed_equivalent_geometricRefinementProgram
           intro index
           rw [Geometric.GeometricApproximation.toApproximation_sample]
           exact (geometricRefinementProgram_integralSample source index).symm))
+
+open Purelib.Approximation.Gaussian in
+open Purelib.Integration in
+open Purelib.Integration.Program in
+open Purelib.Riemann.Periods in
+/-- The original program output realizes its same-index geometric sample view. -/
+def output_equivalent_geometric (program : RefinementProgram) :
+    Equivalence.NamedEquivalent program.output.name (PeriodMatrix.geometricNamed program.geometric).name :=
+  program.certifiedView.program.output_equivalent_geometric
+
+open Purelib.Approximation.Gaussian in
+open Purelib.Data.Gaussian.Basic (Canonical) in
+open Purelib.Riemann.Periods in
+/-- Exact scaling of an original program output realizes its original same-index scaled samples. -/
+def scale_output_equivalent_geometric (factor : Canonical) (program : RefinementProgram) :
+    Equivalence.NamedEquivalent (Arithmetic.Mul.scaleName factor program.output).name
+      (PeriodMatrix.geometricNamed ((Geometric.GeometricApproximation.exact factor).mul program.geometric)).name :=
+  PeriodMatrix.ScaledInverseCertificate.coherentMul_equivalent_geometricMul
+    (Name.Coherent.CoherentNamed.Coherence.exact factor) program.output
+    (Geometric.GeometricApproximation.exact factor) program.geometric
+    (Geometric.Coherent.Comparison.geometricExact_equivalent_exact factor).symm
+    (output_equivalent_geometric program)
+
+open Purelib.Approximation.Gaussian in
+open Purelib.Approximation.Rational in
+open Purelib.Data.Gaussian in
+open Purelib.Data.Rat in
+open Purelib.Riemann.Periods in
+/-- Source-derived geometric sample bounds compare the original synchronized geometric names.
+
+The comparison uses the existing exact-sample carriers and their original
+movement scales. Its finite requests retain independent starting indices
+and all later-sample guarantees. -/
+def geometricNamed_equivalent_of_samples_close (left right : Geometric.GeometricApproximation)
+    (scale : Fraction.Rational) (nonnegative : 0 ≤ scale)
+    (samples : ∀ index, Norm.Basic.normSq (left.sample index - right.sample index) ≤
+      Geometric.Basic.quarterRadius scale index) :
+    Equivalence.NamedEquivalent (PeriodMatrix.geometricNamed left).name
+      (PeriodMatrix.geometricNamed right).name :=
+  Equivalence.NamedEquivalent.trans (geometricNamed_equivalent_geometricRefinementProgram left)
+    (Equivalence.NamedEquivalent.trans
+      (refinementProgram_output_equivalent_of_samples_close
+        (geometricRefinementProgram left) (geometricRefinementProgram right) scale nonnegative (by
+          intro index
+          rw [geometricRefinementProgram_integralSample, geometricRefinementProgram_integralSample]
+          exact samples index))
+      (geometricNamed_equivalent_geometricRefinementProgram right).symm)
 
 end Purelib.Integration.Program.Comparison
 

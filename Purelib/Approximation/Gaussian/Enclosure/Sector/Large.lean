@@ -47,50 +47,50 @@ namespace Purelib.Approximation.Gaussian.Enclosure.Sector.Large
 
 /-- A finite sufficient test that the whole ball lies strictly above the canonical radial boundary. -/
 def UnaryBall (ball :
-    Approximation.Gaussian.Enclosure.Ball) : Prop :=
-  (16 / 15) * 2 + 16 * ball.radiusSq < Data.Gaussian.Norm.Basic.normSq ball.center
+    Ball) : Prop :=
+  (16 / 15) * 2 + 16 * ball.radiusSq < Basic.normSq ball.center
 
 /-- Decide the sufficient unary-ball test using exact rational comparison. -/
 instance unaryBallDecidable (ball :
-    Approximation.Gaussian.Enclosure.Ball) :
+    Ball) :
   Decidable (UnaryBall ball) := by
   unfold UnaryBall
   infer_instance
 
 /-- Every reading in a ball passing the unary test has squared norm strictly greater than two. -/
 theorem normSq_gt_two_of_contains {ball :
-    Approximation.Gaussian.Enclosure.Ball}
+    Ball}
   {value : Data.Gaussian.Basic.Canonical}
     (certificate : UnaryBall ball) (inside : ball.Contains value) :
-    2 < Data.Gaussian.Norm.Basic.normSq value := by
+    2 < Basic.normSq value := by
   have centerDifference :
       ball.center = (ball.center - value) + value := by
     apply Data.Gaussian.Basic.ext <;>
       simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im, Data.Gaussian.Basic.add_re,
         Data.Gaussian.Basic.add_im] <;> ring1
-  have errorNorm : Data.Gaussian.Norm.Basic.normSq (ball.center - value) ≤ ball.radiusSq := by
+  have errorNorm : Basic.normSq (ball.center - value) ≤ ball.radiusSq := by
     have negDifference : ball.center - value = -(value - ball.center) := by
       apply Data.Gaussian.Basic.ext <;>
         simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im, Data.Gaussian.Basic.neg_re,
           Data.Gaussian.Basic.neg_im] <;> ring1
-    rw [negDifference, Data.Gaussian.Norm.Basic.normSq_neg]
+    rw [negDifference, Basic.normSq_neg]
     exact inside
-  have centerUpper : Data.Gaussian.Norm.Basic.normSq ball.center ≤
-      16 * ball.radiusSq + (16 / 15) * Data.Gaussian.Norm.Basic.normSq value := by
+  have centerUpper : Basic.normSq ball.center ≤
+      16 * ball.radiusSq + (16 / 15) * Basic.normSq value := by
     rw [centerDifference]
     exact (Weighted.normSq_add_le_weighted (ball.center - value) value).trans
       (add_le_add
         (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
           errorNorm (by decide)) le_rfl)
   have scaledStrict :
-      (16 / 15) * 2 < (16 / 15) * Data.Gaussian.Norm.Basic.normSq value := by
+      (16 / 15) * 2 < (16 / 15) * Basic.normSq value := by
     apply Fraction.Order.Arithmetic.lt_of_add_lt_add_right_direct
       (c := 16 * ball.radiusSq)
     calc
-      (16 / 15) * 2 + 16 * ball.radiusSq < Data.Gaussian.Norm.Basic.normSq ball.center :=
+      (16 / 15) * 2 + 16 * ball.radiusSq < Basic.normSq ball.center :=
         certificate
-      _ ≤ 16 * ball.radiusSq + (16 / 15) * Data.Gaussian.Norm.Basic.normSq value := centerUpper
-      _ = (16 / 15) * Data.Gaussian.Norm.Basic.normSq value + 16 * ball.radiusSq := by ring1
+      _ ≤ 16 * ball.radiusSq + (16 / 15) * Basic.normSq value := centerUpper
+      _ = (16 / 15) * Basic.normSq value + 16 * ball.radiusSq := by ring1
   apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
     (c := (16 / 15 : Fraction.Rational)) _ (by decide)
   simpa only [Fraction.Field.mul_comm] using scaledStrict
@@ -120,7 +120,7 @@ namespace Purelib.Approximation.Gaussian.Enclosure.Sector.Large
 
 /-- A passing unary-ball test makes the explicit candidate lower quadrance strictly greater than two. -/
 theorem unaryCandidateLower_gt_two {ball :
-    Approximation.Gaussian.Enclosure.Ball}
+    Ball}
     (unary : UnaryBall ball) :
     2 < Ball.Bounds.unaryCandidateLower ball := by
   apply (Fraction.Order.Field.lt_div_iff_pos
@@ -130,8 +130,8 @@ theorem unaryCandidateLower_gt_two {ball :
   calc
     2 * (16 / 15) + 16 * ball.radiusSq =
         (16 / 15) * 2 + 16 * ball.radiusSq := by ring1
-    _ < Data.Gaussian.Norm.Basic.normSq ball.center := unary
-    _ = (Data.Gaussian.Norm.Basic.normSq ball.center - 16 * ball.radiusSq) +
+    _ < Basic.normSq ball.center := unary
+    _ = (Basic.normSq ball.center - 16 * ball.radiusSq) +
         16 * ball.radiusSq := by ring1
 end Purelib.Approximation.Gaussian.Enclosure.Sector.Large
 

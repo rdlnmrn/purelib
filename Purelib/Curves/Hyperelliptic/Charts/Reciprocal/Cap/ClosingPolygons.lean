@@ -56,35 +56,35 @@ open Purelib.Data
 open Purelib.Geometry
 open Purelib.Riemann
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {differential : Hyperelliptic.Differentials.Basic.Differential genus} {index : Nat} {box :
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {differential : Differentials.Basic.Differential genus} {index : Nat} {box :
     Rational.Box}
-  {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {target :
+  {capSample : Primitives.Sample cap differential index box} {target :
     Normalization.InverseRootPolynomial.Coordinate}
 
 /-- The recursive finish of a nonempty retained vertex list is its actual last entry. -/
-private theorem last_value : ∀ (first : Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex capSample target) (rest :
-  List (Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex capSample target)),
-    (first :: rest).getLast? = some (Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex.finish first rest)
+private theorem last_value : ∀ (first : Vertex capSample target) (rest :
+  List (Vertex capSample target)),
+    (first :: rest).getLast? = some (finish first rest)
   | _, [] => rfl
-  | _, next :: rest => Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex.last_value next rest
+  | _, next :: rest => Vertex.last_value next rest
 
 /-- The sum of the original consecutive vertex increments is the last value minus the first value. -/
-theorem increments_sum_of_endpoints {vertices : List (Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex capSample
-  target)} {first last : Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex capSample target}
+theorem increments_sum_of_endpoints {vertices : List (Vertex capSample
+  target)} {first last : Vertex capSample target}
     (starts : vertices.head? = some first) (finishes : vertices.getLast? = some last) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex.increments vertices)
+    Gaussian.Norm.Sum.Basic.gaussianSum (increments vertices)
       = last.value - first.value := by
   cases vertices with
   | nil => cases starts
   | cons head rest =>
       have startEq : head = first := Option.some.inj starts
-      have finishEq : Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex.finish head rest = last := Option.some.inj
-        ((Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex.last_value head rest).symm.trans finishes)
+      have finishEq : finish head rest = last := Option.some.inj
+        ((last_value head rest).symm.trans finishes)
       rw [← startEq, ← finishEq]
-      exact Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex.steps_sum head rest
+      exact steps_sum head rest
 
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex
 
@@ -97,25 +97,25 @@ open Purelib.Riemann
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover (Parent ParentData)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {collar :
-  Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {differential :
-    Hyperelliptic.Differentials.Basic.Differential genus} {count : Nat}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {collar :
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {differential :
+    Differentials.Basic.Differential genus} {count : Nat}
   {parent : Parent curve differential} {data : ParentData cap differential count parent}
   {integrationTarget : Normalization.InverseRootPolynomial.Coordinate} {floor : Nat} {base :
-    Hyperelliptic.Charts.Reciprocal.Cap.PreparedPrimitives.Request data integrationTarget floor}
+    PreparedPrimitives.Request data integrationTarget floor}
   {totalTarget areaTarget : Normalization.InverseRootPolynomial.Coordinate} {request :
-    Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.AreaRequest base totalTarget areaTarget}
-  {index : Nat} {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample
+    AreaRequest base totalTarget areaTarget}
+  {index : Nat} {box : Rational.Box} {capSample : Primitives.Sample
     cap differential index box}
-  {retained : Hyperelliptic.Charts.Reciprocal.Cap.PreparedPrimitives.Sample base capSample}
+  {retained : PreparedPrimitives.Sample base capSample}
 
 /-- The evaluated original chart total is its retained last vertex value minus its first vertex value. -/
-theorem total_endpoints (evaluated : Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.AreaRequest.Evaluation request
+theorem total_endpoints (evaluated : Evaluation request
   retained) :
     evaluated.chart.total = evaluated.last.vertex.value - evaluated.first.vertex.value := by
   rw [evaluated.chart.total_eq, ← evaluated.vertex_increments]
-  exact Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.Vertex.increments_sum_of_endpoints evaluated.vertex_first
+  exact Vertex.increments_sum_of_endpoints evaluated.vertex_first
     evaluated.vertex_last
 
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.AreaRequest.Evaluation
@@ -131,22 +131,22 @@ open Purelib.Data.Gaussian.Basic.Canonical
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover (Parent Bank)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {collar :
-  Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {differential :
-    Hyperelliptic.Differentials.Basic.Differential genus} {count : Nat}
-  {index : Nat} {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {collar :
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {differential :
+    Differentials.Basic.Differential genus} {count : Nat}
+  {index : Nat} {box : Rational.Box} {capSample : Primitives.Sample
     cap differential index box}
 
 /-- The complete nonempty original connected summary is its entry correction plus the last reading minus the first
 reading. -/
-private theorem connected_total : ∀ {parents : List (Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Parent curve
-  differential)} {bank : Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank cap differential count parents}
+private theorem connected_total : ∀ {parents : List (Parent curve
+  differential)} {bank : Bank cap differential count parents}
     {target slope : Normalization.InverseRootPolynomial.Coordinate} {floor : Nat} {requests :
-      Hyperelliptic.Charts.Reciprocal.Cap.PathRequests.Bank.Requests bank target floor}
-    {samples : Hyperelliptic.Charts.Reciprocal.Cap.PathRequests.Bank.Samples requests capSample} {fine :
-      Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineRequests requests slope}
-    (charts : Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples samples fine) (entry :
+      PathRequests.Bank.Requests bank target floor}
+    {samples : PathRequests.Bank.Samples requests capSample} {fine :
+      FineRequests requests slope}
+    (charts : FineSamples samples fine) (entry :
       Normalization.InverseRootPolynomial.Gaussian), parents ≠ [] →
     (charts.connectedSummary entry).total = entry + charts.lastValue - charts.firstValue
   | [], .nil, _, _, _, _, _, _, _, _, nonempty => (nonempty rfl).elim
@@ -158,7 +158,7 @@ private theorem connected_total : ∀ {parents : List (Hyperelliptic.Charts.Reci
       change entry + charts.1.chart.total +
         (charts.2.connectedSummary (charts.2.1.first.vertex.value - charts.1.last.vertex.value)).total =
         entry + charts.2.lastValue - charts.1.first.vertex.value
-      rw [Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.connected_total charts.2 _ (by
+      rw [FineSamples.connected_total charts.2 _ (by
         intro impossible; cases impossible), charts.1.total_endpoints]
       change entry + (charts.1.last.vertex.value - charts.1.first.vertex.value) +
         (charts.2.1.first.vertex.value - charts.1.last.vertex.value + charts.2.lastValue -
@@ -167,18 +167,18 @@ private theorem connected_total : ∀ {parents : List (Hyperelliptic.Charts.Reci
 
 /-- The existing connected summary is the displacement between its retained
 external readings, including all parent and lap handoffs. -/
-theorem connected_total_endpoints : ∀ {parents : List (Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Parent curve
-  differential)} {bank : Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank cap differential count parents}
+theorem connected_total_endpoints : ∀ {parents : List (Parent curve
+  differential)} {bank : Bank cap differential count parents}
     {target slope : Normalization.InverseRootPolynomial.Coordinate} {floor : Nat} {requests :
-      Hyperelliptic.Charts.Reciprocal.Cap.PathRequests.Bank.Requests bank target floor}
-    {samples : Hyperelliptic.Charts.Reciprocal.Cap.PathRequests.Bank.Samples requests capSample} {fine :
-      Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineRequests requests slope}
-    (charts : Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples samples fine), (charts.connectedSummary
+      PathRequests.Bank.Requests bank target floor}
+    {samples : PathRequests.Bank.Samples requests capSample} {fine :
+      FineRequests requests slope}
+    (charts : FineSamples samples fine), (charts.connectedSummary
       0).total = charts.lastValue - charts.firstValue
   | [], .nil, _, _, _, _, _, _, _ => by change (0 : Normalization.InverseRootPolynomial.Gaussian) = 0 - 0; ring1
   | _ :: _, .cons _ _, _, _, _, _, _, _, charts => by
       simpa only [Gaussian.Basic.zero_add] using
-        Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.connected_total charts 0 (by
+        connected_total charts 0 (by
           intro impossible;
           cases impossible)
 

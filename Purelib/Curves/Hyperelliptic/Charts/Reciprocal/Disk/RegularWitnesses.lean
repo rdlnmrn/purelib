@@ -97,18 +97,18 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank (L
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank (Requests Evaluations)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularSides (Plans Results)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential} {patch :
-    Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data}
-  {index otherIndex depth : Nat} {box : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential otherIndex box}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap}
+  {parent : CenteredEdge curve differential} {patch :
+    UniformPrimitiveSheetCompatibility.PreparedPatch parent}
+  {data : UniformReciprocalModels.Data patch count} {cover :
+    Cover data}
+  {index otherIndex depth : Nat} {box : Geometry.Rational.Box}
+  {sample : Primitives.Sample cap differential index box}
+  {otherSample : Primitives.Sample cap differential otherIndex box}
 
 namespace RegularWitnesses
 
@@ -116,11 +116,11 @@ namespace RegularWitnesses
 @[expose] public def castEndpoint {edge : ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
   UniformReciprocalCover.Cell
   data edge}
-    {model : UniformReciprocalRootChannels.RootModel cell} {parameter : InverseRootPolynomial.Coordinate}
-    {point : ArcOwners.Point cap model parameter} {value : InverseRootPolynomial.Polynomial}
-    (endpoint : RegularEndpoints.RegularEndpoint regular sample point value) (indices : index = otherIndex) (same : HEq
+    {model : UniformReciprocalRootChannels.RootModel cell} {parameter : Coordinate}
+    {point : ArcOwners.Point cap model parameter} {value : Polynomial}
+    (endpoint : RegularEndpoint regular sample point value) (indices : index = otherIndex) (same : HEq
       sample otherSample) :
-    RegularEndpoints.RegularEndpoint regular otherSample point value := by
+    RegularEndpoint regular otherSample point value := by
   cases indices
   cases eq_of_heq same
   exact endpoint
@@ -135,15 +135,15 @@ public theorem samplePrimitive_eq (indices : index = otherIndex) (same : HEq sam
 set_option genInjectivity false in
 /-- The path is an index: extraction does not evaluate or flatten another primitive path merely to recover its
 explanatory certificates. -/
-structure RegularWitness (prepared : ParentComparison.Preparation regular cover)
-    (sample : Primitives.Sample cap differential index box) (depth : Nat) (path : List InverseRootPolynomial.Gaussian)
+structure RegularWitness (prepared : Preparation regular cover)
+    (sample : Primitives.Sample cap differential index box) (depth : Nat) (path : List Gaussian)
       where
   /-- The actual signed primitive polynomial already retained by this parent result. -/ primitive :
-    InverseRootPolynomial.Polynomial
+    Polynomial
   /-- The original first endpoint certificate on this exact retained primitive. -/ first :
-    RegularEndpoints.RegularEndpoint regular sample prepared.boundary.first.point primitive
+    RegularEndpoint regular sample prepared.boundary.first.point primitive
   /-- The original terminal endpoint certificate on that same retained primitive. -/ last :
-    RegularEndpoints.RegularEndpoint regular sample prepared.boundary.last.point primitive
+    RegularEndpoint regular sample prepared.boundary.last.point primitive
   /-- The indexed actual path equals the original prepared regular primitive path at the retained depth. -/ path_eq :
     path = Preparation.regularPrimitivePath prepared primitive depth
   /-- The actual sign choice of this retained parent primitive. -/ flip : Bool
@@ -161,20 +161,20 @@ set_option genInjectivity false in
 /-- The ordered bank of actual regular primitive witnesses indexed by the original side bank and literal retained paths.
 -/
 inductive RegularWitnesses (sample : Primitives.Sample cap differential index box) (depth : Nat) :
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
+    {parents : List (CenteredEdge curve differential)} → {covers :
       UniformReciprocalCover.ParentCovers parents} →
-    ParentJoins.SideBank regular covers → List (List InverseRootPolynomial.Gaussian) → Type 2
+    SideBank regular covers → List (List Gaussian) → Type 2
   /-- The empty original side bank retains an empty primitive-witness path list. -/ | nil :
     RegularWitnesses sample depth .nil []
   /-- Retain one original parent's regular primitive witness before the exact remaining side bank and paths. -/ | cons
-    {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential} {parents : List
-    (PreparedSubdivisionModelCore.CenteredEdge curve differential)}
+    {parent : CenteredEdge curve differential} {parents : List
+    (CenteredEdge curve differential)}
       {patch : UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data : UniformReciprocalModels.Data patch
         genus}
-      {cover : UniformReciprocalCover.Cover data} {covers : UniformReciprocalCover.ParentCovers parents}
-      {prepared : ParentComparison.Preparation regular cover} {bank : ParentJoins.SideBank regular covers} {path : List
-        InverseRootPolynomial.Gaussian} {paths : List (List InverseRootPolynomial.Gaussian)}
-      (head : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularWitnesses.RegularWitness prepared sample depth path)
+      {cover : Cover data} {covers : UniformReciprocalCover.ParentCovers parents}
+      {prepared : Preparation regular cover} {bank : SideBank regular covers} {path : List
+        Gaussian} {paths : List (List Gaussian)}
+      (head : RegularWitnesses.RegularWitness prepared sample depth path)
         (tail : RegularWitnesses sample
         depth bank paths) :
       RegularWitnesses sample depth (.cons
@@ -187,11 +187,11 @@ constructive_injectivity RegularWitnesses
 namespace RegularWitnesses
 
 /-- Concatenate the actual retained side witness banks and their original literal path lists. -/
-@[expose] def append : {first last : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
+@[expose] def append : {first last : List (CenteredEdge curve differential)} →
     {firstCovers : UniformReciprocalCover.ParentCovers first} → {lastCovers : UniformReciprocalCover.ParentCovers last}
       →
-    {firstBank : ParentJoins.SideBank regular firstCovers} → {lastBank : ParentJoins.SideBank regular lastCovers} →
-    {firstPaths lastPaths : List (List InverseRootPolynomial.Gaussian)} →
+    {firstBank : SideBank regular firstCovers} → {lastBank : SideBank regular lastCovers} →
+    {firstPaths lastPaths : List (List Gaussian)} →
       RegularWitnesses sample depth firstBank
       firstPaths →
     RegularWitnesses sample depth lastBank
@@ -202,32 +202,32 @@ namespace RegularWitnesses
     (append tail last)
 
 /-- Read the first actual retained primitive, using the original cap primitive for an empty bank. -/
-@[expose] def primitive : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
+@[expose] def primitive : {parents : List (CenteredEdge curve differential)} → {covers :
   UniformReciprocalCover.ParentCovers parents} →
-    {bank : ParentJoins.SideBank regular covers} → {paths : List (List InverseRootPolynomial.Gaussian)} →
+    {bank : SideBank regular covers} → {paths : List (List Gaussian)} →
       RegularWitnesses sample depth bank paths →
-      InverseRootPolynomial.Polynomial
+      Polynomial
   | _, _, _, _, .nil => sample.primitive.value
   | _, _, _, _, .cons head _ => head.primitive
 
 /-- Every actual retained parent witness uses the supplied original primitive polynomial. -/
-@[expose] def WithPrimitive (value : InverseRootPolynomial.Polynomial) : {parents : List
-  (PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-    {covers : UniformReciprocalCover.ParentCovers parents} → {bank : ParentJoins.SideBank regular covers} →
-    {paths : List (List InverseRootPolynomial.Gaussian)} →
+@[expose] def WithPrimitive (value : Polynomial) : {parents : List
+  (CenteredEdge curve differential)} →
+    {covers : UniformReciprocalCover.ParentCovers parents} → {bank : SideBank regular covers} →
+    {paths : List (List Gaussian)} →
       RegularWitnesses sample depth bank paths →
       Prop
   | _, _, _, _, .nil => True
   | _, _, _, _, .cons head tail => head.primitive = value ∧ tail.WithPrimitive value
 
-variable {parents : List (Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-  {covers : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents}
-  {bank : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers} {paths : List (List
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian)}
+variable {parents : List (CenteredEdge curve differential)}
+  {covers : UniformReciprocalCover.ParentCovers parents}
+  {bank : SideBank regular covers} {paths : List (List
+    Gaussian)}
 
 /-- The original root-join certificates identify one common retained primitive throughout the actual side bank. -/
 theorem shared (witnesses : RegularWitnesses
-  sample depth bank paths) (links : SideBank.Links bank) :
+  sample depth bank paths) (links : Links bank) :
     witnesses.WithPrimitive witnesses.primitive := by
   induction witnesses with
   | nil => trivial
@@ -248,7 +248,7 @@ theorem shared (witnesses : RegularWitnesses
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularWitnesses in
 /-- A common retained primitive identifies the exact original list of regular paths. -/
 theorem paths_eq (witnesses : RegularWitnesses
-  sample depth bank paths) (value : InverseRootPolynomial.Polynomial)
+  sample depth bank paths) (value : Polynomial)
     (shared : witnesses.WithPrimitive value) : paths = SideBank.regularPrimitivePaths value depth bank := by
   induction witnesses with
   | nil => rfl
@@ -257,9 +257,9 @@ theorem paths_eq (witnesses : RegularWitnesses
       rw [head.path_eq, shared.1, ih shared.2]
 
 /-- Read the first actual retained sign, using the unsigned sign for an empty bank. -/
-@[expose] def flip : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
+@[expose] def flip : {parents : List (CenteredEdge curve differential)} → {covers :
   UniformReciprocalCover.ParentCovers parents} →
-    {bank : ParentJoins.SideBank regular covers} → {paths : List (List InverseRootPolynomial.Gaussian)} →
+    {bank : SideBank regular covers} → {paths : List (List Gaussian)} →
       RegularWitnesses sample depth bank paths →
       Bool
   | _, _, _, _, .nil => false
@@ -276,7 +276,7 @@ theorem primitive_signed (witnesses :
 /-- The full actual regular-path area equals the area using the original unsigned cap primitive. -/
 theorem area_unsigned (witnesses :
   RegularWitnesses sample depth bank paths) (links
-  : SideBank.Links bank) :
+  : Links bank) :
     IncrementArea.pathArea paths.flatten =
       IncrementArea.pathArea (SideBank.regularPrimitivePaths sample.primitive.value depth bank).flatten := by
   rw [witnesses.paths_eq witnesses.primitive (witnesses.shared links), witnesses.primitive_signed]
@@ -287,31 +287,31 @@ end RegularWitnesses
 namespace RegularWitnesses.SideBank.Regular.Results
 
 variable {sourceTarget reciprocalTarget coefficientTarget totalTarget areaTarget :
-  Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {minimum readingIndex : Nat}
+  Coordinate} {minimum readingIndex : Nat}
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularWitnesses.SideBank.Regular.Results in
 /-- Extract the actual retained endpoint and literal-path witnesses from the original regular results without
 resampling. -/
-@[expose] def witnesses : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
+@[expose] def witnesses : {parents : List (CenteredEdge curve differential)} → {covers :
   UniformReciprocalCover.ParentCovers parents} →
-    {prepared : ParentJoins.SideBank regular covers} →
-    {requests : SideBank.Requests sourceTarget reciprocalTarget coefficientTarget totalTarget areaTarget minimum
+    {prepared : SideBank regular covers} →
+    {requests : Requests sourceTarget reciprocalTarget coefficientTarget totalTarget areaTarget minimum
       prepared} →
-    {plans : RegularSides.Plans requests} → {evaluated : SideBank.Evaluations sample depth readingIndex requests} →
-    (results : RegularSides.Results plans evaluated) →
+    {plans : Plans requests} → {evaluated : Evaluations sample depth readingIndex requests} →
+    (results : Results plans evaluated) →
       RegularWitnesses sample depth prepared
       (results.pairs.map Prod.snd)
   | _, _, _, _, _, .nil, _ => .nil
   | _, _, .cons prepared _, _, _, .cons head tail, results => by
-      let first := Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularWitnesses.castEndpoint results.1.first
+      let first := castEndpoint results.1.first
         head.original_index head.capSample_eq
-      let last := Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularWitnesses.castEndpoint results.1.last
+      let last := castEndpoint results.1.last
         head.original_index head.capSample_eq
       have path := RegularCells.cap_path_eq _ results.1.cells prepared.owners prepared.links results.1.ready
       rw [← results.1.primitive_eq] at path
       have signed := RegularCells.primitive_signed results.1.cells
       rw [← results.1.primitive_eq,
-        Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularWitnesses.samplePrimitive_eq head.original_index
+        samplePrimitive_eq head.original_index
         head.capSample_eq] at signed
       have ready : 2 ≤ index := by rw [← head.original_index]; exact results.1.ready
       exact .cons ⟨results.1.primitive, first, last, path,

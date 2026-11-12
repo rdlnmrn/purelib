@@ -51,7 +51,7 @@ structure StandardLoopContinuations {parameter :
   /-- The original certified base-fibre period programs shared by all retained standard loop actions. -/ base :
     Fibre.FibreData frame
 
-constructive_injectivity Purelib.Curves.Legendre.GaussManin.StandardLoops.StandardLoopContinuations
+constructive_injectivity StandardLoops.StandardLoopContinuations
 
 namespace StandardLoopContinuations
 
@@ -59,8 +59,8 @@ namespace StandardLoopContinuations
 @[expose] def zero {parameter :
   Data.Gaussian.Basic.Canonical} {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (continuations : Curves.Legendre.GaussManin.StandardLoops.StandardLoopContinuations loops) :
-      Operational.Basic.RawPeriodVector :=
+    (continuations : StandardLoopContinuations loops) :
+      RawPeriodVector :=
   Action.matrixAction
     (Dual.periodMatrix loops.zeroPath.word)
     continuations.base.rawPeriods
@@ -69,8 +69,8 @@ namespace StandardLoopContinuations
 @[expose] def one {parameter :
   Data.Gaussian.Basic.Canonical} {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (continuations : Curves.Legendre.GaussManin.StandardLoops.StandardLoopContinuations loops) :
-      Operational.Basic.RawPeriodVector :=
+    (continuations : StandardLoopContinuations loops) :
+      RawPeriodVector :=
   Action.matrixAction
     (Dual.periodMatrix loops.onePath.word)
     continuations.base.rawPeriods
@@ -79,8 +79,8 @@ namespace StandardLoopContinuations
 @[expose] def infinity {parameter :
   Data.Gaussian.Basic.Canonical} {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (continuations : Curves.Legendre.GaussManin.StandardLoops.StandardLoopContinuations loops) :
-      Operational.Basic.RawPeriodVector :=
+    (continuations : StandardLoopContinuations loops) :
+      RawPeriodVector :=
   Action.matrixAction
     (Dual.periodMatrix
       loops.infinityPath.word)
@@ -90,8 +90,8 @@ namespace StandardLoopContinuations
 @[expose] def product {parameter :
   Data.Gaussian.Basic.Canonical} {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (continuations : Curves.Legendre.GaussManin.StandardLoops.StandardLoopContinuations loops) :
-      Operational.Basic.RawPeriodVector :=
+    (continuations : StandardLoopContinuations loops) :
+      RawPeriodVector :=
   Action.matrixAction
     (Dual.periodMatrix loops.productPath.word)
     continuations.base.rawPeriods
@@ -100,8 +100,8 @@ namespace StandardLoopContinuations
 @[expose] def zero_explicit {parameter
   : Data.Gaussian.Basic.Canonical} {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (continuations : Curves.Legendre.GaussManin.StandardLoops.StandardLoopContinuations loops) :
-    Operational.Basic.VectorEquivalent continuations.zero
+    (continuations : StandardLoopContinuations loops) :
+    VectorEquivalent continuations.zero
       (Action.matrixAction Monodromy.zeroPeriodMatrix
         continuations.base.rawPeriods) := by
   rw [zero, loops.zeroPath_periodMatrix]
@@ -111,8 +111,8 @@ namespace StandardLoopContinuations
 @[expose] def one_explicit {parameter
   : Data.Gaussian.Basic.Canonical} {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (continuations : Curves.Legendre.GaussManin.StandardLoops.StandardLoopContinuations loops) :
-    Operational.Basic.VectorEquivalent continuations.one
+    (continuations : StandardLoopContinuations loops) :
+    VectorEquivalent continuations.one
       (Action.matrixAction Monodromy.onePeriodMatrix
         continuations.base.rawPeriods) := by
   rw [one, loops.onePath_periodMatrix]
@@ -122,8 +122,8 @@ namespace StandardLoopContinuations
 @[expose] def infinity_explicit
   {parameter : Data.Gaussian.Basic.Canonical} {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (continuations : Curves.Legendre.GaussManin.StandardLoops.StandardLoopContinuations loops) :
-    Operational.Basic.VectorEquivalent continuations.infinity
+    (continuations : StandardLoopContinuations loops) :
+    VectorEquivalent continuations.infinity
       (Action.matrixAction Monodromy.infinityPeriodMatrix
         continuations.base.rawPeriods) := by
   rw [infinity, loops.infinityPath_periodMatrix]
@@ -133,8 +133,8 @@ namespace StandardLoopContinuations
 @[expose] def product_identity
   {parameter : Data.Gaussian.Basic.Canonical} {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (continuations : Curves.Legendre.GaussManin.StandardLoops.StandardLoopContinuations loops) :
-    Operational.Basic.VectorEquivalent continuations.product continuations.base.rawPeriods := by
+    (continuations : StandardLoopContinuations loops) :
+    VectorEquivalent continuations.product continuations.base.rawPeriods := by
   rw [product, loops.productPath_periodMatrix]
   exact Action.matrixAction_identity continuations.base.rawPeriods
 

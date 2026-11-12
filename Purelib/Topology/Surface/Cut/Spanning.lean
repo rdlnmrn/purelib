@@ -316,7 +316,12 @@ namespace Purelib.Topology.Surface.Cut.Spanning.SewingForest.SinglePolygon
 
 open Purelib.Topology.Surface.Cut.Spanning.CutBoundaryWord in
 /-- Construct actual integral row coordinates for any retained closed word. The only topology input is the vertex-star
-connection already supplied by the root-backed grid; no guessed cycle basis is assumed. -/
+connection already supplied by the root-backed grid; no guessed cycle basis is assumed.
+
+An explicit cached word supplies the same original alphabet and signature.
+The data-producing span calculation consumes it directly; only the topology
+proof transports its equality to the retained edge pairing's original word.
+-/
 @[expose] def closed_spanning (polygon : SewingForest.SinglePolygon forest)
     (unique : (Stokes.triangleEdgeOccurrences faces).Nodup)
     (nonloop : ∀ edge ∈ Stokes.triangleEdgeOccurrences faces, edge.start ≠ edge.finish)
@@ -328,32 +333,60 @@ connection already supplied by the root-backed grid; no guessed cycle basis is a
     {edges : List (Stokes.OrientedEdge vertexCount)} {anchor : Fin vertexCount}
     (coordinates : BoundaryCoordinates.WordCoordinates (ProjectedEdgePairing.boundaryWord pairing).alphabet edges)
     (closed : PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish edges anchor anchor)
-    (supported : CutPath.Supported polygon.patch.boundary edges) :
+    (supported : CutPath.Supported polygon.patch.boundary edges)
+    (cachedWord : { retained : BoundaryWord.CutBoundaryWord polygon.patch.cut.vertexLabels
+        polygon.patch.cut.boundary // retained = ProjectedEdgePairing.boundaryWord pairing } :=
+      ⟨ProjectedEdgePairing.boundaryWord pairing, (rfl)⟩) :
     IntegralPairing.SpanningCoordinates integral coordinates.totals := by
-  apply IntegralPairing.spanningOfAnnihilation integral normal coordinates.totals
-  intro values physical kernel
-  have cutUnique : (polygon.patch.cut.boundary.map (OrientedEdge.map polygon.patch.cut.vertexLabels)).Nodup := by
-    rw [polygon.patch.cut.boundary_eq]
-    exact SewnPatch.boundary_unique polygon.patch (SinglePolygon.originalEdges_unique polygon unique)
-  let value := ProjectedEdgePairing.generatorValue pairing values
-  have zero := SinglePolygon.closed_value_zero_of_kernel polygon unique nonloop connected pairing integral value
-    (ProjectedEdgePairing.generatorValue_reverse pairing values) (ProjectedEdgePairing.generatorValue_physical pairing
-      cutUnique values physical)
-    (fun index paired => (FiniteSum.Fin.sumFin_congr (fun column => by
-      dsimp only [value]
-      rw [ProjectedEdgePairing.generatorValue_generator pairing cutUnique])).trans (kernel index paired)) closed
-        supported
-  calc
-    _ = WordCoordinates.combine coordinates.totals
-        (fun column => value (OrientedEdge.map polygon.patch.cut.vertexLabels ((ProjectedEdgePairing.boundaryWord
-          pairing).alphabet.generators column))) := by
-      apply FiniteSum.Fin.sumFin_congr
-      intro column
-      dsimp only [value]
-      rw [ProjectedEdgePairing.generatorValue_generator pairing cutUnique]
-    _ = SewingRetraction.wordValue value edges := (WordCoordinates.value_eq coordinates value
-      (ProjectedEdgePairing.generatorValue_reverse pairing values)).symm
-    _ = 0 := zero
+  let inputsFor (word : BoundaryWord.CutBoundaryWord polygon.patch.cut.vertexLabels polygon.patch.cut.boundary) :=
+    Σ integral : IntegralPairing word,
+    Σ raw : List (Handle.Basic.PivotIndices word.alphabet.count),
+      LinearAlgebra.Alternating.NormalForm integral.paired raw ×
+        BoundaryCoordinates.WordCoordinates word.alphabet edges
+  let outputFor (word : BoundaryWord.CutBoundaryWord polygon.patch.cut.vertexLabels polygon.patch.cut.boundary)
+      (inputs : inputsFor word) :=
+    IntegralPairing.SpanningCoordinates inputs.1 inputs.2.2.2.totals
+  let original : inputsFor (ProjectedEdgePairing.boundaryWord pairing) := ⟨integral, raw, normal, coordinates⟩
+  let supplied := cachedWord.val
+  let shifted := Eq.mpr (congrArg inputsFor cachedWord.property) original
+  let computed : outputFor supplied shifted := by
+    apply IntegralPairing.spanningOfAnnihilation (word := supplied) shifted.1 shifted.2.2.1 shifted.2.2.2.totals
+    intro values physical kernel
+    cases cachedWord with
+    | mk saved same =>
+      cases same
+      let integral := shifted.1
+      let coordinates := shifted.2.2.2
+      have cutUnique : (polygon.patch.cut.boundary.map (OrientedEdge.map polygon.patch.cut.vertexLabels)).Nodup := by
+        rw [polygon.patch.cut.boundary_eq]
+        exact SewnPatch.boundary_unique polygon.patch (SinglePolygon.originalEdges_unique polygon unique)
+      let value := ProjectedEdgePairing.generatorValue pairing values
+      have zero := SinglePolygon.closed_value_zero_of_kernel polygon unique nonloop connected pairing integral value
+        (ProjectedEdgePairing.generatorValue_reverse pairing values)
+        (ProjectedEdgePairing.generatorValue_physical pairing
+          cutUnique values physical)
+        (fun index paired => (FiniteSum.Fin.sumFin_congr (fun column => by
+          dsimp only [value]
+          rw [ProjectedEdgePairing.generatorValue_generator pairing cutUnique])).trans (kernel index paired)) closed
+            supported
+      calc
+        _ = WordCoordinates.combine coordinates.totals
+            (fun column => value (OrientedEdge.map polygon.patch.cut.vertexLabels ((ProjectedEdgePairing.boundaryWord
+              pairing).alphabet.generators column))) := by
+          apply FiniteSum.Fin.sumFin_congr
+          intro column
+          dsimp only [value]
+          rw [ProjectedEdgePairing.generatorValue_generator pairing cutUnique]
+        _ = SewingRetraction.wordValue value edges := (WordCoordinates.value_eq coordinates value
+          (ProjectedEdgePairing.generatorValue_reverse pairing values)).symm
+        _ = 0 := zero
+  let restore : ∀ (first last : BoundaryWord.CutBoundaryWord polygon.patch.cut.vertexLabels polygon.patch.cut.boundary)
+      (same : first = last) (given : inputsFor last),
+      outputFor first (Eq.mpr (congrArg inputsFor same) given) → outputFor last given := by
+    intro first last same given value
+    cases same
+    exact value
+  exact restore supplied (ProjectedEdgePairing.boundaryWord pairing) cachedWord.property original computed
 
 end Purelib.Topology.Surface.Cut.Spanning.SewingForest.SinglePolygon
 

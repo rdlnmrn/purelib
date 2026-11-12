@@ -44,7 +44,7 @@ attribute [local instance high] Negation.subNegZeroMonoid
 public section
 namespace Purelib.Algebra.Field.Inverse
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 /-- Put a quadratic expression in the inverse denominator over its square.
 
@@ -121,7 +121,7 @@ section
 public section
 namespace Purelib.Algebra.Field.Inverse
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 /-- Equal ratios have equal cross products when both denominators are nonzero. -/
 public theorem cross_mul_of_div_eq_div
@@ -132,9 +132,9 @@ public theorem cross_mul_of_div_eq_div
       rightNumerator / rightDenominator) :
     leftNumerator * rightDenominator =
       rightNumerator * leftDenominator := by
-  have leftCancel := Algebra.Field.ExplicitField.mul_inv_cancel
+  have leftCancel := ExplicitField.mul_inv_cancel
     leftDenominator leftNonzero
-  have rightCancel := Algebra.Field.ExplicitField.mul_inv_cancel
+  have rightCancel := ExplicitField.mul_inv_cancel
     rightDenominator rightNonzero
   calc
     leftNumerator * rightDenominator =
@@ -145,12 +145,12 @@ public theorem cross_mul_of_div_eq_div
     _ =
         (leftNumerator / leftDenominator) *
           (leftDenominator * rightDenominator) := by
-            simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+            simp only [ExplicitField.div_eq_mul_inv]
             ring1
     _ = (rightNumerator / rightDenominator) *
           (leftDenominator * rightDenominator) := by rw [equal]
     _ = rightNumerator * leftDenominator := by
-      simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+      simp only [ExplicitField.div_eq_mul_inv]
       calc
         rightNumerator * rightDenominator⁻¹ *
             (leftDenominator * rightDenominator) =
@@ -167,9 +167,9 @@ public theorem eq_div_of_mul_eq {left right
     (denominatorNonzero : denominator ≠ 0)
     (product : left * denominator = right) :
     left = right / denominator := by
-  have cancel := Algebra.Field.ExplicitField.mul_inv_cancel denominator
+  have cancel := ExplicitField.mul_inv_cancel denominator
     denominatorNonzero
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  simp only [ExplicitField.div_eq_mul_inv]
   calc
     left = left * (denominator * denominator⁻¹) := by rw [cancel, mul_one]
     _ = (left * denominator) * denominator⁻¹ := by ring1
@@ -178,7 +178,7 @@ public theorem eq_div_of_mul_eq {left right
 /-- The inverse of one is one when one is nonzero. -/
 public theorem inverse_one (oneNonzero : (1 : K) ≠ 0) :
     (1 : K)⁻¹ = 1 := by
-  have cancel := Algebra.Field.ExplicitField.mul_inv_cancel (1 : K) oneNonzero
+  have cancel := ExplicitField.mul_inv_cancel (1 : K) oneNonzero
   simpa only [one_mul] using cancel
 
 /-- Identify the total inverse from a product equal to one.
@@ -201,7 +201,7 @@ The two supplied nonzero certificates justify cancellation of each factor. -/
 public theorem inverse_product {left right : K}
     (leftNonzero : left ≠ 0) (rightNonzero : right ≠ 0) :
     (left * right)⁻¹ = left⁻¹ * right⁻¹ := open Purelib in by
-  apply Purelib.Algebra.Field.Inverse.inverse_eq_of_mul_eq_one
+  apply inverse_eq_of_mul_eq_one
     (ExplicitField.mul_ne_zero leftNonzero rightNonzero)
   have leftCancel := ExplicitField.mul_inv_cancel left leftNonzero
   have rightCancel := ExplicitField.mul_inv_cancel right rightNonzero
@@ -214,7 +214,7 @@ public theorem inverse_product {left right : K}
 public theorem inverse_square {value : K} (valueNonzero : value ≠
   0) :
     (value ^ 2)⁻¹ = value⁻¹ ^ 2 := by
-  simpa only [pow_two] using Purelib.Algebra.Field.Inverse.inverse_product valueNonzero valueNonzero
+  simpa only [pow_two] using inverse_product valueNonzero valueNonzero
 
 /-- Equal cross products give equal ratios with nonzero denominators.
 
@@ -257,7 +257,7 @@ section
 open Purelib
 open Purelib.Algebra.Field
 namespace Purelib.Algebra.Field.Inverse
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 /-- Recover an entry from its pivot-product identity when the pivot is nonzero. -/
 public theorem eq_one_div_mul_of_mul_eq {pivot target left right : K}

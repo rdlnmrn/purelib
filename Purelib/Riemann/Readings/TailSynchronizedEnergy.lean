@@ -12,6 +12,8 @@ import Purelib.LinearAlgebra.Matrix.Rational.Budget
 
 import Purelib.Curves.Hyperelliptic.Periods.Normalization.SynchronizedNormalization
 
+open Purelib.Curves.Hyperelliptic.Integration.Energy
+
 public section
 
 /-!
@@ -41,14 +43,14 @@ structure TailComparisonSchedule {genus : Nat}
     {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
     (data : PeriodData curve)
     (inverseTail : ScalarTailSeparationCertificate data.aMatrix)
-    (vector : Gaussian.QuadraticForm.RationalVector genus) (_nonzero : Gaussian.QuadraticForm.NonzeroVector vector)
+    (vector : RationalVector genus) (_nonzero : NonzeroVector vector)
     (target : Rat.Fraction.Rational) (_positive : 0 < target) where
   /-- The retained rational comparison radius. -/ radius : Rat.Fraction.Rational
   /-- The comparison radius is strictly positive. -/ positive : 0 < radius
   /-- The retained natural index for synchronized comparison. -/ sampleIndex : Nat
   /-- The retained sample index is the certified tail anchor plus the computed comparison offset. -/ sampleIndex_eq :
     sampleIndex = inverseTail.anchor +
-    Hyperelliptic.Periods.Normalization.SynchronizedNormalization.tailSynchronizedSampleIndex data inverseTail
+    tailSynchronizedSampleIndex data inverseTail
       radius positive
 
 constructive_injectivity TailComparisonSchedule
@@ -66,26 +68,26 @@ closeness is derived from the same inverse-tail certificate and exact sample ind
     {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
     {data : PeriodData curve}
     {inverseTail : ScalarTailSeparationCertificate data.aMatrix}
-    {vector : Gaussian.QuadraticForm.RationalVector genus} {nonzero : Gaussian.QuadraticForm.NonzeroVector vector}
+    {vector : RationalVector genus} {nonzero : NonzeroVector vector}
     {target : Rat.Fraction.Rational} (positive : 0 < target)
     (comparisonRadius : Rat.Fraction.Rational) (comparisonRadiusPositive : 0 < comparisonRadius)
     (refinementRadius : Rat.Fraction.Rational) (refinementRadiusPositive : 0 < refinementRadius)
     (refinementTarget_lt_target :
       Rat.Quadratic.Bounds.squaredRefinementTarget refinementRadius < target)
     (centerSmall : Rat.Quadratic.Bounds.squaredRefinementTarget refinementRadius <
-      Hyperelliptic.Periods.Normalization.SynchronizedNormalization.comparisonTarget comparisonRadius)
+      comparisonTarget comparisonRadius)
     (cellCount : Nat)
-    (cells : Fin cellCount -> Hyperelliptic.Integration.Energy.Prepared.PreparedEnergy.SurfaceCell curve
+    (cells : Fin cellCount -> Prepared.PreparedEnergy.SurfaceCell curve
       (Gaussian.Energy.scaledNormalizedCoefficients data
-        (inverseTail.anchor + Hyperelliptic.Periods.Normalization.SynchronizedNormalization.tailSynchronizedSampleIndex
+        (inverseTail.anchor + tailSynchronizedSampleIndex
           data inverseTail
           comparisonRadius comparisonRadiusPositive) vector))
-    (boundaryReduction : Hyperelliptic.Integration.Energy.Prepared.ControlledBoundaryReduction data vector
-      (inverseTail.anchor + Hyperelliptic.Periods.Normalization.SynchronizedNormalization.tailSynchronizedSampleIndex
+    (boundaryReduction : Prepared.ControlledBoundaryReduction data vector
+      (inverseTail.anchor + tailSynchronizedSampleIndex
         data inverseTail
         comparisonRadius comparisonRadiusPositive) cells)
     (boundaryError_lt_surface :
-      boundaryReduction.boundaryError < Hyperelliptic.Integration.Energy.Prepared.surfaceEnergy cells)
+      boundaryReduction.boundaryError < Prepared.surfaceEnergy cells)
     (margin :
       Matrix.Rational.Budget.totalBudget (Matrix.Rational.Budget.automaticBudget
         vector
@@ -99,15 +101,15 @@ closeness is derived from the same inverse-tail certificate and exact sample ind
             (NormalizedPeriodData.ofScaledInverse data
               inverseTail.toScaledInverseCertificate)
             comparisonRadius comparisonRadiusPositive)) <
-      Hyperelliptic.Integration.Energy.Certificate.synchronizedNormalizedEnergyLower data
-        (inverseTail.anchor + Hyperelliptic.Periods.Normalization.SynchronizedNormalization.tailSynchronizedSampleIndex
+      Certificate.synchronizedNormalizedEnergyLower data
+        (inverseTail.anchor + tailSynchronizedSampleIndex
           data inverseTail
           comparisonRadius comparisonRadiusPositive)
         (boundaryReduction.effectiveCells boundaryError_lt_surface)) :
-    Hyperelliptic.Integration.Energy.Prepared.TailControlledRequestCertificate data inverseTail vector nonzero target
+    Prepared.TailControlledRequestCertificate data inverseTail vector nonzero target
       positive where
   sampleIndex := inverseTail.anchor +
-    Hyperelliptic.Periods.Normalization.SynchronizedNormalization.tailSynchronizedSampleIndex data
+    tailSynchronizedSampleIndex data
     inverseTail comparisonRadius comparisonRadiusPositive
   anchor_le := Nat.le_add_right inverseTail.anchor _
   cellCount := cellCount
@@ -120,10 +122,10 @@ closeness is derived from the same inverse-tail certificate and exact sample ind
   comparisonRadius := comparisonRadius
   comparisonRadiusPositive := comparisonRadiusPositive
   synchronized_close := fun row column =>
-    Hyperelliptic.Periods.Normalization.SynchronizedNormalization.tailCenterMatrix_close_synchronized_of_index_eq data
+    tailCenterMatrix_close_synchronized_of_index_eq data
       inverseTail
       comparisonRadius comparisonRadiusPositive
-      (inverseTail.anchor + Hyperelliptic.Periods.Normalization.SynchronizedNormalization.tailSynchronizedSampleIndex
+      (inverseTail.anchor + tailSynchronizedSampleIndex
         data inverseTail
         comparisonRadius comparisonRadiusPositive) rfl
       (Rat.Quadratic.Bounds.squaredRefinementTarget refinementRadius)
@@ -139,7 +141,7 @@ tail certificate discharges synchronized closeness at that exact index. -/
     {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
     {data : PeriodData curve}
     {inverseTail : ScalarTailSeparationCertificate data.aMatrix}
-    {vector : Gaussian.QuadraticForm.RationalVector genus} {nonzero : Gaussian.QuadraticForm.NonzeroVector vector}
+    {vector : RationalVector genus} {nonzero : NonzeroVector vector}
     {target : Rat.Fraction.Rational} {positive : 0 < target}
     (comparison : TailComparisonSchedule data inverseTail vector nonzero target
       positive)
@@ -147,14 +149,14 @@ tail certificate discharges synchronized closeness at that exact index. -/
     (refinementTarget_lt_target :
       Rat.Quadratic.Bounds.squaredRefinementTarget refinementRadius < target)
     (centerSmall : Rat.Quadratic.Bounds.squaredRefinementTarget refinementRadius <
-      Hyperelliptic.Periods.Normalization.SynchronizedNormalization.comparisonTarget comparison.radius)
+      comparisonTarget comparison.radius)
     (cellCount : Nat)
-    (cells : Fin cellCount -> Hyperelliptic.Integration.Energy.Prepared.PreparedEnergy.SurfaceCell curve
+    (cells : Fin cellCount -> Prepared.PreparedEnergy.SurfaceCell curve
       (Gaussian.Energy.scaledNormalizedCoefficients data comparison.sampleIndex vector))
-    (boundaryReduction : Hyperelliptic.Integration.Energy.Prepared.ControlledBoundaryReduction data vector
+    (boundaryReduction : Prepared.ControlledBoundaryReduction data vector
       comparison.sampleIndex cells)
     (boundaryError_lt_surface :
-      boundaryReduction.boundaryError < Hyperelliptic.Integration.Energy.Prepared.surfaceEnergy cells)
+      boundaryReduction.boundaryError < Prepared.surfaceEnergy cells)
     (margin :
       Matrix.Rational.Budget.totalBudget (Matrix.Rational.Budget.automaticBudget
         vector
@@ -168,14 +170,14 @@ tail certificate discharges synchronized closeness at that exact index. -/
             (NormalizedPeriodData.ofScaledInverse data
               inverseTail.toScaledInverseCertificate)
             comparison.radius comparison.positive)) <
-      Hyperelliptic.Integration.Energy.Certificate.synchronizedNormalizedEnergyLower data comparison.sampleIndex
+      Certificate.synchronizedNormalizedEnergyLower data comparison.sampleIndex
         (boundaryReduction.effectiveCells boundaryError_lt_surface)) :
-    Hyperelliptic.Integration.Energy.Prepared.TailControlledRequestCertificate data inverseTail vector nonzero target
+    Prepared.TailControlledRequestCertificate data inverseTail vector nonzero target
       positive where
   sampleIndex := comparison.sampleIndex
   anchor_le := comparison.sampleIndex_eq ▸
     Nat.le_add_right inverseTail.anchor
-      (Hyperelliptic.Periods.Normalization.SynchronizedNormalization.tailSynchronizedSampleIndex data inverseTail
+      (tailSynchronizedSampleIndex data inverseTail
         comparison.radius comparison.positive)
   cellCount := cellCount
   cells := cells
@@ -187,7 +189,7 @@ tail certificate discharges synchronized closeness at that exact index. -/
   comparisonRadius := comparison.radius
   comparisonRadiusPositive := comparison.positive
   synchronized_close := fun row column =>
-    Hyperelliptic.Periods.Normalization.SynchronizedNormalization.tailCenterMatrix_close_synchronized_of_index_eq data
+    tailCenterMatrix_close_synchronized_of_index_eq data
       inverseTail
       comparison.radius comparison.positive comparison.sampleIndex
       comparison.sampleIndex_eq
@@ -211,10 +213,10 @@ structure TailControlledSchedule {genus : Nat}
     (data : PeriodData curve)
     (inverseTail : ScalarTailSeparationCertificate data.aMatrix) where
   /-- Produce the certificate for the supplied nonzero vector and positive rational target. -/ schedule : forall (vector
-    : Gaussian.QuadraticForm.RationalVector genus)
-    (nonzero : Gaussian.QuadraticForm.NonzeroVector vector) (target : Rat.Fraction.Rational)
+    : RationalVector genus)
+    (nonzero : NonzeroVector vector) (target : Rat.Fraction.Rational)
     (positive : 0 < target),
-    Hyperelliptic.Integration.Energy.Prepared.TailControlledRequestCertificate data inverseTail vector nonzero target
+    Prepared.TailControlledRequestCertificate data inverseTail vector nonzero target
       positive
 
 constructive_injectivity TailControlledSchedule
@@ -228,7 +230,7 @@ open Purelib.Curves in
     {data : PeriodData curve}
     {inverseTail : ScalarTailSeparationCertificate data.aMatrix}
     (schedule : TailControlledSchedule data inverseTail) :
-    Hyperelliptic.Integration.Energy.Prepared.TailControlledCertificate data inverseTail where
+    Prepared.TailControlledCertificate data inverseTail where
   certify := schedule.schedule
 
 end TailControlledSchedule

@@ -27,33 +27,33 @@ public section
 The executable pair reduction retains the denominator as the first chain
 polynomial and numerator as the second. Their same reduced representations
 supply the signed Euclidean recursion and its coefficient-count fuel. -/
-@[expose] def reducedChain (numerator denominator : Dense.Rational.Basic.CoordinatePolynomial) : List
-  (Dense.Basic.DensePolynomial Fraction.Rational) :=
-  Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChain (Dense.Rational.Pair.Reduction.reducedDenominator
+@[expose] def reducedChain (numerator denominator : Basic.CoordinatePolynomial) : List
+  (Basic.DensePolynomial Fraction.Rational) :=
+  Basic.Sturm.signedRemainderChain (Pair.Reduction.reducedDenominator
     numerator denominator)
-    (Dense.Rational.Pair.Reduction.reducedNumerator numerator denominator)
+    (Pair.Reduction.reducedNumerator numerator denominator)
 
 /-- Every polynomial in the reduced signed remainder chain is nonzero when the original denominator is nonzero.
 
 If the reduced numerator vanishes, the chain consists only of the retained nonzero reduced denominator. -/
 theorem reducedChain_all_nonzero
-    {numerator denominator : Dense.Rational.Basic.CoordinatePolynomial}
+    {numerator denominator : Basic.CoordinatePolynomial}
     (denominatorNonzero : denominator.isZero = false) :
-    ∀ polynomial ∈ Dense.Rational.SignedRemainder.Reduced.reducedChain numerator denominator,
+    ∀ polynomial ∈ reducedChain numerator denominator,
       polynomial.isZero = false := by
   have reducedDenominatorNonzero :=
-    Dense.Rational.Pair.Reduction.reducedDenominator_isZero_false (numerator := numerator)
+    Pair.Reduction.reducedDenominator_isZero_false (numerator := numerator)
       denominatorNonzero
-  cases numeratorZero : (Dense.Rational.Pair.Reduction.reducedNumerator numerator denominator).isZero with
+  cases numeratorZero : (Pair.Reduction.reducedNumerator numerator denominator).isZero with
   | false =>
-      exact Dense.Rational.SignedRemainder.Basic.signedRemainderChain_all_nonzero
+      exact Basic.signedRemainderChain_all_nonzero
         reducedDenominatorNonzero numeratorZero
   | true =>
-      have chain : Dense.Rational.SignedRemainder.Reduced.reducedChain numerator denominator =
-          [Dense.Rational.Pair.Reduction.reducedDenominator numerator denominator] := by
-        unfold Dense.Rational.SignedRemainder.Reduced.reducedChain
-          Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChain
-        rw [Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChainWF_eq]
+      have chain : reducedChain numerator denominator =
+          [Pair.Reduction.reducedDenominator numerator denominator] := by
+        unfold reducedChain
+          Basic.Sturm.signedRemainderChain
+        rw [Basic.Sturm.signedRemainderChainWF_eq]
         rewrite [if_pos numeratorZero]
         exact Eq.refl _
       intro polynomial member

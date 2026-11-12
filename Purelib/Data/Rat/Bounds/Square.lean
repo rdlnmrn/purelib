@@ -16,6 +16,8 @@ import Purelib.Tactic.Ring
 import Purelib.Data.Rat.Fraction.Arithmetic
 public import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 open scoped Purelib.Data.Nat
 
 open Purelib.Algebra.Group in
@@ -53,9 +55,9 @@ The difference between the upper bound and the squared sum is the square
 of the difference of the two inputs, which is nonnegative in the rational order. -/
 public theorem add_sq_le_two (a b : Fraction.Rational) :
     (a + b) ^ 2 ≤ 2 * (a ^ 2 + b ^ 2) := by
-  apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  apply Arithmetic.le_of_sub_nonneg_direct
   calc
-    0 ≤ (a - b) ^ 2 := Fraction.Order.Arithmetic.sq_nonneg_direct _
+    0 ≤ (a - b) ^ 2 := Arithmetic.sq_nonneg_direct _
     _ = 2 * (a ^ 2 + b ^ 2) - (a + b) ^ 2 := by ring1
 
 /-- The squared dot product of two rational coordinate pairs is bounded by the product of their squared lengths.
@@ -67,10 +69,10 @@ public theorem dot_sq_le_product_sums
     (a b u v : Fraction.Rational) :
     (a * u + b * v) ^ 2 ≤
       (a ^ 2 + b ^ 2) * (u ^ 2 + v ^ 2) := by
-  apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  apply Arithmetic.le_of_sub_nonneg_direct
   calc
     0 ≤ (a * v - b * u) ^ 2 :=
-      Fraction.Order.Arithmetic.sq_nonneg_direct _
+      Arithmetic.sq_nonneg_direct _
     _ = (a ^ 2 + b ^ 2) * (u ^ 2 + v ^ 2) -
         (a * u + b * v) ^ 2 := by ring1
 
@@ -350,13 +352,13 @@ public theorem add_sq_le_three (first second third : Fraction.Rational)
   :
     (first + second + third) ^ 2 ≤
       3 * (first ^ 2 + second ^ 2 + third ^ 2) := by
-  apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  apply Arithmetic.le_of_sub_nonneg_direct
   have firstSecond : 0 ≤ (first - second) ^ 2 :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct _
+    Arithmetic.sq_nonneg_direct _
   have firstThird : 0 ≤ (first - third) ^ 2 :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct _
+    Arithmetic.sq_nonneg_direct _
   have secondThird : 0 ≤ (second - third) ^ 2 :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct _
+    Arithmetic.sq_nonneg_direct _
   calc
     0 ≤ (first - second) ^ 2 + (first - third) ^ 2 +
         (second - third) ^ 2 :=
@@ -969,9 +971,9 @@ theorem integer_square_positive (a : Int) (nonzero : a ≠ 0) :
     (0 : Fraction.Rational) < (a : Fraction.Rational) ^ 2 := by
   have castNonzero : (a : Fraction.Rational) ≠ 0 := fun equal =>
     nonzero (Fraction.Cast.Compatibility.intCast_injective_direct equal)
-  have nonnegative := Fraction.Order.Arithmetic.sq_nonneg_direct (a : Fraction.Rational)
+  have nonnegative := Arithmetic.sq_nonneg_direct (a : Fraction.Rational)
   exact ⟨nonnegative, fun reverse => castNonzero
-    ((Fraction.Order.Arithmetic.sq_eq_zero_direct (a : Fraction.Rational)).mp
+    ((Arithmetic.sq_eq_zero_direct (a : Fraction.Rational)).mp
       (le_antisymm reverse nonnegative))⟩
 end Purelib.Data.Rat.Bounds.Square
 
@@ -1449,9 +1451,9 @@ The difference between the product of square sums and the squared dot product is
 determinant. Nonnegativity of that rational square proves the inequality directly. -/
 public theorem cauchy (a b c d : Fraction.Rational) :
     (a * c + b * d) ^ 2 ≤ (a ^ 2 + b ^ 2) * (c ^ 2 + d ^ 2) := by
-  apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  apply Arithmetic.le_of_sub_nonneg_direct
   calc
-    0 ≤ (a * d - b * c) ^ 2 := Fraction.Order.Arithmetic.sq_nonneg_direct _
+    0 ≤ (a * d - b * c) ^ 2 := Arithmetic.sq_nonneg_direct _
     _ = _ := by ring1
 
 end Purelib.Data.Rat.Bounds.Square
@@ -1817,8 +1819,8 @@ private theorem coordinate_sq_pos_of_ne_zero {value : Fraction.Rational}
     (nonzero : value ≠ 0) : 0 < value ^ 2 := by
   have squareNonzero : value ^ 2 ≠ 0 := by
     intro zero
-    exact nonzero ((Fraction.Order.Arithmetic.sq_eq_zero_direct value).mp zero)
-  exact lt_of_le_of_ne (Fraction.Order.Arithmetic.sq_nonneg_direct value)
+    exact nonzero ((Arithmetic.sq_eq_zero_direct value).mp zero)
+  exact lt_of_le_of_ne (Arithmetic.sq_nonneg_direct value)
     (Ne.symm squareNonzero)
 end Purelib.Data.Rat.Bounds.Square
 
@@ -2052,10 +2054,10 @@ theorem cross_sq_le_product_sums
     (a b da db : Fraction.Rational) :
     (a * db - b * da) ^ 2 ≤
       (a ^ 2 + b ^ 2) * (da ^ 2 + db ^ 2) := by
-  apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  apply Arithmetic.le_of_sub_nonneg_direct
   calc
     0 ≤ (a * da + b * db) ^ 2 :=
-      Fraction.Order.Arithmetic.sq_nonneg_direct _
+      Arithmetic.sq_nonneg_direct _
     _ = (a ^ 2 + b ^ 2) * (da ^ 2 + db ^ 2) -
         (a * db - b * da) ^ 2 := by ring1
 end Purelib.Data.Rat.Bounds.Square
@@ -2326,14 +2328,14 @@ theorem lt_of_sq_lt_sq_of_nonneg {a b : Fraction.Rational}
   · by_cases bZero : b = 0
     · subst b
       exact ((not_lt_of_ge
-        (Fraction.Order.Arithmetic.sq_nonneg_direct a)) squares).elim
+        (Arithmetic.sq_nonneg_direct a)) squares).elim
     · have bPositive : 0 < b := lt_of_le_of_ne bNonnegative (Ne.symm bZero)
       have aPositive : 0 < a := bPositive.trans greater
       have first : b * b < a * b :=
-        Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+        Arithmetic.mul_lt_mul_of_pos_right_direct
           greater bPositive
       have second : a * b < a * a :=
-        Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+        Arithmetic.mul_lt_mul_of_pos_left_direct
           aPositive greater
       have reverse : b ^ 2 < a ^ 2 := by
         simpa only [pow_two] using first.trans second
@@ -2603,7 +2605,7 @@ theorem lt_of_two_mul_lt_two_mul_direct {a b : Fraction.Rational}
   · exact less
   · exact (lt_irrefl _ scaled).elim
   · have reverse : 2 * b < 2 * a :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+      Arithmetic.mul_lt_mul_of_pos_left_direct
         (by decide) greater
     exact (lt_asymm scaled reverse).elim
 end Purelib.Data.Rat.Bounds.Square
@@ -2745,18 +2747,18 @@ theorem signed_bounds_of_sq_le_sq
   · exact
       ⟨(by
           have radiusNonpositive :=
-            Fraction.Order.Arithmetic.neg_le_neg_direct radiusNonnegative
+            Arithmetic.neg_le_neg_direct radiusNonnegative
           rw [neg_zero] at radiusNonpositive
           exact radiusNonpositive.trans valueNonnegative),
-        Fraction.Order.Arithmetic.nonnegative_le_of_sq_le_sq radiusNonnegative squareBound⟩
+        Arithmetic.nonnegative_le_of_sq_le_sq radiusNonnegative squareBound⟩
   · have valueNonpositive : value ≤ 0 := le_of_not_ge valueNonnegative
     have negativeSquareBound : (-value) ^ 2 ≤ radius ^ 2 := by
       calc
         (-value) ^ 2 = value ^ 2 := by ring1
         _ ≤ radius ^ 2 := squareBound
-    have negativeLe := Fraction.Order.Arithmetic.nonnegative_le_of_sq_le_sq radiusNonnegative
+    have negativeLe := Arithmetic.nonnegative_le_of_sq_le_sq radiusNonnegative
       negativeSquareBound
-    have lower := Fraction.Order.Arithmetic.neg_le_neg_direct negativeLe
+    have lower := Arithmetic.neg_le_neg_direct negativeLe
     exact ⟨by simpa only [neg_neg] using lower,
       valueNonpositive.trans radiusNonnegative⟩
 end Purelib.Data.Rat.Bounds.Square
@@ -3012,8 +3014,8 @@ The difference between the upper bound and the squared sum is the square
 of the difference of the two inputs, which is nonnegative in the rational order. -/
 theorem sq_add_le_two (a b : Fraction.Rational) :
     (a + b) ^ 2 ≤ 2 * (a ^ 2 + b ^ 2) := by
-  have nonnegative := Fraction.Order.Arithmetic.sq_nonneg_direct (a - b)
-  apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  have nonnegative := Arithmetic.sq_nonneg_direct (a - b)
+  apply Arithmetic.le_of_sub_nonneg_direct
   calc
     0 ≤ (a - b) ^ 2 := nonnegative
     _ = 2 * (a ^ 2 + b ^ 2) - (a + b) ^ 2 := by ring1
@@ -3270,14 +3272,14 @@ open Purelib.Data.Rat in
 public theorem sq_le_sq_of_bounds {value bound : Fraction.Rational}
     (lower : -bound ≤ value) (upper : value ≤ bound) :
     value ^ 2 ≤ bound ^ 2 := by
-  apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  apply Arithmetic.le_of_sub_nonneg_direct
   calc
     0 ≤ (bound - value) * (bound + value) :=
-      Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Fraction.Order.Arithmetic.sub_nonneg_direct upper)
+      Arithmetic.mul_nonneg_direct
+        (Arithmetic.sub_nonneg_direct upper)
         (by
           have shifted :=
-            Fraction.Order.Arithmetic.add_le_add_right_direct lower bound
+            Arithmetic.add_le_add_right_direct lower bound
           calc
             0 = -bound + bound := by ring1
             _ ≤ value + bound := shifted
@@ -3460,7 +3462,7 @@ public theorem square_le_of_two_sided
     (lower : -radius ≤ value) (upper : value ≤ radius) :
     value ^ 2 ≤ radius ^ 2 := by
   have first : 0 ≤ radius - value :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct upper
+    Arithmetic.sub_nonneg_direct upper
   have second : 0 ≤ radius + value := by
     calc
       0 = radius + -radius := by ring1
@@ -3468,9 +3470,9 @@ public theorem square_le_of_two_sided
   have differenceNonnegative : 0 ≤ radius ^ 2 - value ^ 2 := by
     calc
       0 ≤ (radius - value) * (radius + value) :=
-        Fraction.Order.Arithmetic.mul_nonneg_direct first second
+        Arithmetic.mul_nonneg_direct first second
       _ = radius ^ 2 - value ^ 2 := by ring1
-  apply Fraction.Order.Arithmetic.le_of_add_le_add_right_direct
+  apply Arithmetic.le_of_add_le_add_right_direct
     (c := -(value ^ 2))
   calc
     value ^ 2 + -(value ^ 2) = 0 := by ring1
@@ -3794,8 +3796,8 @@ theorem square_lower_of_negative {gap height : Fraction.Rational} (positive : 0 
   gap) (upper : height ≤ -gap) :
     gap ^ 2 ≤ height ^ 2 := by
   have lower : gap ≤ -height := by
-    simpa only [neg_neg] using Fraction.Order.Arithmetic.neg_le_neg_direct upper
-  have square := Fraction.Order.Arithmetic.pow_le_pow_direct positive.le lower 2
+    simpa only [neg_neg] using Arithmetic.neg_le_neg_direct upper
+  have square := Arithmetic.pow_le_pow_direct positive.le lower 2
   have same : (-height) ^ 2 = height ^ 2 := by ring1
   rwa [same] at square
 end Purelib.Data.Rat.Bounds.Square
@@ -3966,17 +3968,17 @@ public theorem square_lt_quarter {x : Fraction.Rational}
     (lower : -1 / 2 < x) (upper : x < 1 / 2) :
     x ^ 2 < 1 / 4 := by
   have leftPositive : 0 < x + 1 / 2 := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have shifted := Arithmetic.add_lt_add_right_direct
       lower (1 / 2)
     calc
       0 = -1 / 2 + 1 / 2 := by decide
       _ < x + 1 / 2 := shifted
   have rightPositive : 0 < 1 / 2 - x :=
-    Fraction.Order.Arithmetic.sub_pos_direct upper
-  apply Fraction.Order.Arithmetic.lt_of_sub_pos_direct
+    Arithmetic.sub_pos_direct upper
+  apply Arithmetic.lt_of_sub_pos_direct
   calc
     0 < (x + 1 / 2) * (1 / 2 - x) :=
-      Fraction.Order.Arithmetic.mul_pos_direct leftPositive rightPositive
+      Arithmetic.mul_pos_direct leftPositive rightPositive
     _ = (1 / 2 : Fraction.Rational) ^ 2 - x ^ 2 := by ring1
     _ = 1 / 4 - x ^ 2 := by
       rw [show (1 / 2 : Fraction.Rational) ^ 2 = 1 / 4 by decide]
@@ -4549,10 +4551,10 @@ determinant. Nonnegativity of that rational square proves the inequality directl
 public theorem sum_product_sq_le_product_sums
     (a b p q : Fraction.Rational) :
     (a * p + b * q) ^ 2 ≤ (a ^ 2 + b ^ 2) * (p ^ 2 + q ^ 2) := by
-  apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  apply Arithmetic.le_of_sub_nonneg_direct
   calc
     0 ≤ (a * q - b * p) ^ 2 :=
-      Fraction.Order.Arithmetic.sq_nonneg_direct _
+      Arithmetic.sq_nonneg_direct _
     _ = (a ^ 2 + b ^ 2) * (p ^ 2 + q ^ 2) -
         (a * p + b * q) ^ 2 := by ring1
 
@@ -6860,8 +6862,8 @@ private theorem sq_pos_of_ne_zero {x : Fraction.Rational} (nonzero : x ≠ 0) :
     0 < x ^ 2 := by
   have squareNonzero : x ^ 2 ≠ 0 := by
     intro zero
-    exact nonzero ((Fraction.Order.Arithmetic.sq_eq_zero_direct x).mp zero)
-  exact lt_of_le_of_ne (Fraction.Order.Arithmetic.sq_nonneg_direct x)
+    exact nonzero ((Arithmetic.sq_eq_zero_direct x).mp zero)
+  exact lt_of_le_of_ne (Arithmetic.sq_nonneg_direct x)
     (Ne.symm squareNonzero)
 end Purelib.RootIsolation.Cauchy.Degenerate
 
@@ -7135,8 +7137,8 @@ private theorem sq_pos_of_ne_zero {x : Fraction.Rational} (nonzero : x ≠ 0) :
     0 < x ^ 2 := by
   have squareNonzero : x ^ 2 ≠ 0 := by
     intro zero
-    exact nonzero ((Fraction.Order.Arithmetic.sq_eq_zero_direct x).mp zero)
-  exact lt_of_le_of_ne (Fraction.Order.Arithmetic.sq_nonneg_direct x)
+    exact nonzero ((Arithmetic.sq_eq_zero_direct x).mp zero)
+  exact lt_of_le_of_ne (Arithmetic.sq_nonneg_direct x)
     (Ne.symm squareNonzero)
 end Turn
 end Purelib.RootIsolation.Cauchy.ProductCells.Turn
@@ -7412,8 +7414,8 @@ private theorem sq_pos_of_ne_zero {x : Fraction.Rational} (nonzero : x ≠ 0) :
     0 < x ^ 2 := by
   have squareNonzero : x ^ 2 ≠ 0 := by
     intro zero
-    exact nonzero ((Fraction.Order.Arithmetic.sq_eq_zero_direct x).mp zero)
-  exact lt_of_le_of_ne (Fraction.Order.Arithmetic.sq_nonneg_direct x)
+    exact nonzero ((Arithmetic.sq_eq_zero_direct x).mp zero)
+  exact lt_of_le_of_ne (Arithmetic.sq_nonneg_direct x)
     (Ne.symm squareNonzero)
 end Purelib.RootIsolation.Cauchy.Resolution
 
@@ -7691,9 +7693,9 @@ open Purelib.Data.Rat in
 private theorem self_mul_pos_of_ne_zero
     {value : Fraction.Rational} (nonzero : value ≠ 0) : 0 < value * value := by
   rcases lt_or_gt_of_ne nonzero with negative | positive
-  · exact Fraction.Order.Arithmetic.mul_pos_of_neg_of_neg_direct
+  · exact Arithmetic.mul_pos_of_neg_of_neg_direct
       negative negative
-  · exact Fraction.Order.Arithmetic.mul_pos_direct positive positive
+  · exact Arithmetic.mul_pos_direct positive positive
 end Purelib.RootIsolation.Sturm.CoordinateTaylor
 
 end
@@ -7973,9 +7975,9 @@ open Purelib.Data.Rat in
 private theorem self_mul_pos_of_ne_zero
     {value : Fraction.Rational} (nonzero : value ≠ 0) : 0 < value * value := by
   rcases lt_or_gt_of_ne nonzero with negative | positive
-  · exact Fraction.Order.Arithmetic.mul_pos_of_neg_of_neg_direct
+  · exact Arithmetic.mul_pos_of_neg_of_neg_direct
       negative negative
-  · exact Fraction.Order.Arithmetic.mul_pos_direct positive positive
+  · exact Arithmetic.mul_pos_direct positive positive
 end Purelib.RootIsolation.Sturm.RootCount
 
 end
@@ -8041,15 +8043,15 @@ public theorem right_sq_le_sub_sq_of_mul_nonpos
     simpa only [_root_.mul_comm] using product
   have crossNonpositive : 2 * (right * left) ≤ 0 := by
     have scaled :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct swapped
+      Arithmetic.mul_le_mul_of_nonneg_left_direct swapped
         (show (0 : Fraction.Rational) ≤ 2 by decide)
     simpa only [Fraction.Field.mul_zero_direct] using scaled
   have extraNonnegative : 0 ≤ left ^ 2 - 2 * (right * left) :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct
+    Arithmetic.sub_nonneg_direct
       (crossNonpositive.trans
-        (Fraction.Order.Arithmetic.sq_nonneg_direct left))
+        (Arithmetic.sq_nonneg_direct left))
   have enlarged :=
-    Fraction.Order.Arithmetic.add_le_add_right_direct extraNonnegative
+    Arithmetic.add_le_add_right_direct extraNonnegative
       (right ^ 2)
   calc
     right ^ 2 ≤ right ^ 2 + (left ^ 2 - 2 * (right * left)) := by
@@ -8065,7 +8067,7 @@ public theorem sq_le_sq_of_nonneg
     (leftNonnegative : 0 ≤ left) (rightNonnegative : 0 ≤ right) :
     left ^ 2 ≤ right ^ 2 := by
   rw [pow_two, pow_two]
-  exact Fraction.Order.Arithmetic.mul_le_mul_direct order order
+  exact Arithmetic.mul_le_mul_direct order order
     leftNonnegative rightNonnegative
 
 /-- When two rationals have nonpositive product, the square of the left is bounded by the square of their difference. -/
@@ -8075,15 +8077,15 @@ public theorem
     left ^ 2 ≤ (left - right) ^ 2 := by
   have crossNonpositive : 2 * (left * right) ≤ 0 := by
     have scaled :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct product
+      Arithmetic.mul_le_mul_of_nonneg_left_direct product
         (show (0 : Fraction.Rational) ≤ 2 by decide)
     simpa only [Fraction.Field.mul_zero_direct] using scaled
   have extraNonnegative : 0 ≤ right ^ 2 - 2 * (left * right) :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct
+    Arithmetic.sub_nonneg_direct
       (crossNonpositive.trans
-        (Fraction.Order.Arithmetic.sq_nonneg_direct right))
+        (Arithmetic.sq_nonneg_direct right))
   have enlarged :=
-    Fraction.Order.Arithmetic.add_le_add_right_direct extraNonnegative
+    Arithmetic.add_le_add_right_direct extraNonnegative
       (left ^ 2)
   calc
     left ^ 2 ≤ left ^ 2 + (right ^ 2 - 2 * (left * right)) := by
@@ -8103,14 +8105,14 @@ open Purelib.Data.Rat
 public theorem sum_sq_pos_of_ne_zero {A B : Fraction.Rational}
     (nonzero : A ≠ 0 ∨ B ≠ 0) : 0 < A ^ 2 + B ^ 2 := by
   rcases nonzero with ANonzero | BNonzero
-  · have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
-      (Fraction.Order.Arithmetic.exact_rational_sq_pos ANonzero) (B ^ 2)
-    have lower := Fraction.Order.Arithmetic.sq_nonneg_direct B
+  · have shifted := Arithmetic.add_lt_add_right_direct
+      (Arithmetic.exact_rational_sq_pos ANonzero) (B ^ 2)
+    have lower := Arithmetic.sq_nonneg_direct B
     exact lower.trans_lt (by
       simpa only [zero_add, add_zero, add_comm] using shifted)
-  · have shifted := Fraction.Order.Arithmetic.add_lt_add_left_direct
-      (Fraction.Order.Arithmetic.exact_rational_sq_pos BNonzero) (A ^ 2)
-    have lower := Fraction.Order.Arithmetic.sq_nonneg_direct A
+  · have shifted := Arithmetic.add_lt_add_left_direct
+      (Arithmetic.exact_rational_sq_pos BNonzero) (A ^ 2)
+    have lower := Arithmetic.sq_nonneg_direct A
     exact lower.trans_lt (by simpa only [add_zero] using shifted)
 
 end Purelib.Data.Rat.Bounds.Square
@@ -8122,7 +8124,7 @@ namespace Purelib.Data.Rat.Bounds.Square
 
 The original decidable endpoint comparison selects one input. Its
 supplied square bound proves the common ceiling in that same branch. -/
-public theorem min_sq_le {left right bound : Purelib.Data.Rat.Fraction.Rational}
+public theorem min_sq_le {left right bound : Fraction.Rational}
     (leftBound : left ^ 2 ≤ bound) (rightBound : right ^ 2 ≤ bound) :
     min left right ^ 2 ≤ bound := by
   change (if left ≤ right then left else right) ^ 2 ≤ bound
@@ -8136,7 +8138,7 @@ public theorem min_sq_le {left right bound : Purelib.Data.Rat.Fraction.Rational}
 
 The original decidable endpoint comparison selects one input. Its
 supplied square bound proves the common ceiling in that same branch. -/
-public theorem max_sq_le {left right bound : Purelib.Data.Rat.Fraction.Rational}
+public theorem max_sq_le {left right bound : Fraction.Rational}
     (leftBound : left ^ 2 ≤ bound) (rightBound : right ^ 2 ≤ bound) :
     max left right ^ 2 ≤ bound := by
   change (if left ≤ right then right else left) ^ 2 ≤ bound
@@ -8151,19 +8153,19 @@ public theorem max_sq_le {left right bound : Purelib.Data.Rat.Fraction.Rational}
 Strict multiplication compares the positive coordinate squares; the other
 coordinate contributes its nonnegative square. -/
 public theorem radius_sq_lt_normSq_of_lt
-    {radius x y : Purelib.Data.Rat.Fraction.Rational} (radiusPositive : 0 < radius)
+    {radius x y : Fraction.Rational} (radiusPositive : 0 < radius)
     (outside : radius < x) :
     radius ^ 2 < x ^ 2 + y ^ 2 := by
   have xPositive : 0 < x := radiusPositive.trans outside
   have first : radius * radius < radius * x :=
-    Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+    Arithmetic.mul_lt_mul_of_pos_left_direct
       radiusPositive outside
   have second : radius * x < x * x :=
-    Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct outside xPositive
+    Arithmetic.mul_lt_mul_of_pos_right_direct outside xPositive
   calc
     radius ^ 2 < x ^ 2 := by
       simpa only [pow_two] using first.trans second
     _ ≤ x ^ 2 + y ^ 2 :=
-      le_add_of_nonneg_right (Purelib.Data.Rat.Fraction.Order.Arithmetic.sq_nonneg_direct y)
+      le_add_of_nonneg_right (Arithmetic.sq_nonneg_direct y)
 end Purelib.Data.Rat.Bounds.Square
 end

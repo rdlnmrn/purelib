@@ -57,33 +57,33 @@ The strict estimate uses the same residual and count through multiplication by g
 nonzero witness needed for the inverse norm formula. -/
 theorem inverseTail_large {count : Nat} {residual : Basic.Canonical}
     (residualNonzero : residual ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq residual < paddingTarget count) :
-    (2 : Fraction.Rational) ^ count < Data.Gaussian.Norm.Basic.normSq ((Basic.Canonical.gamma * residual)⁻¹) := by
+    (small : Norm.Basic.normSq residual < paddingTarget count) :
+    (2 : Fraction.Rational) ^ count < Norm.Basic.normSq ((Basic.Canonical.gamma * residual)⁻¹) := by
   have productNonzero : Basic.Canonical.gamma * residual ≠ 0 :=
     Field.mul_ne_zero_direct (by decide) residualNonzero
   have productNormPositive := Norm.Basic.normSq_pos productNonzero
   have powerPositive : 0 < (2 : Fraction.Rational) ^ (count + 1) :=
     Fraction.Order.Arithmetic.pow_pos_direct (by decide) (count + 1)
   have residualProduct :
-      Data.Gaussian.Norm.Basic.normSq residual * (2 : Fraction.Rational) ^ (count + 1) < 1 := by
+      Norm.Basic.normSq residual * (2 : Fraction.Rational) ^ (count + 1) < 1 := by
     exact (Fraction.Order.Field.lt_div_iff_pos powerPositive).1 small
   have targetProduct :
-      (2 : Fraction.Rational) ^ count * Data.Gaussian.Norm.Basic.normSq (Basic.Canonical.gamma * residual) < 1 := by
+      (2 : Fraction.Rational) ^ count * Norm.Basic.normSq (Basic.Canonical.gamma * residual) < 1 := by
     rw [Norm.Basic.normSq_mul, Constants.normSq_gamma]
     calc
-      (2 : Fraction.Rational) ^ count * (2 * Data.Gaussian.Norm.Basic.normSq residual) =
-          Data.Gaussian.Norm.Basic.normSq residual * (2 : Fraction.Rational) ^ (count + 1) := by
+      (2 : Fraction.Rational) ^ count * (2 * Norm.Basic.normSq residual) =
+          Norm.Basic.normSq residual * (2 : Fraction.Rational) ^ (count + 1) := by
         rw [pow_succ]
         ring1
       _ < 1 := residualProduct
   rw [Field.inv_eq, Field.normSq_inv _ productNonzero]
   apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
-    (c := Data.Gaussian.Norm.Basic.normSq (Basic.Canonical.gamma * residual)) _ productNormPositive
+    (c := Norm.Basic.normSq (Basic.Canonical.gamma * residual)) _ productNormPositive
   calc
-    (2 : Fraction.Rational) ^ count * Data.Gaussian.Norm.Basic.normSq (Basic.Canonical.gamma * residual) < 1 :=
+    (2 : Fraction.Rational) ^ count * Norm.Basic.normSq (Basic.Canonical.gamma * residual) < 1 :=
       targetProduct
-    _ = (Data.Gaussian.Norm.Basic.normSq (Basic.Canonical.gamma * residual))⁻¹ *
-          Data.Gaussian.Norm.Basic.normSq (Basic.Canonical.gamma * residual) :=
+    _ = (Norm.Basic.normSq (Basic.Canonical.gamma * residual))⁻¹ *
+          Norm.Basic.normSq (Basic.Canonical.gamma * residual) :=
       (Fraction.Field.inv_mul_cancel _
         productNormPositive.ne').symm
 

@@ -15,10 +15,13 @@ import Purelib.Polynomial.Dense.Leading
 meta import Purelib.Elab.Deriving.Repr
 import Purelib.RationalFunctions.Reduction.Evaluation
 public import Purelib.RationalFunctions.Reduction.Build
+public import Purelib.Algebra.Quadratic.Pair.Polynomial
 import Init.Prelude
 import Mathlib.Algebra.Group.Defs
 import Mathlib.Algebra.Ring.Defs
 import Purelib.Tactic.Ring
+
+open Purelib.Algebra.Field
 
 open Purelib
 
@@ -60,9 +63,9 @@ namespace Purelib.Curves.Hyperelliptic.Differentials.SquareFactor
 /-- Exact Gaussian rational coefficients for the square-factor differential calculation. -/
 abbrev Gaussian := Data.Gaussian.Basic.Canonical
 /-- Executable dense Gaussian polynomials used by the differential requests. -/
-abbrev GaussianPolynomial := Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+abbrev GaussianPolynomial := Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
 /-- The certified square-factor decomposition of the original polynomial. -/
-abbrev Reduction := SquareFactor.Basic.Reduction
+abbrev Reduction := Basic.Reduction
 
 open Purelib.Polynomial.Dense.Basic.DensePolynomial
 open Purelib.Data.Gaussian.Basic.Canonical
@@ -83,52 +86,86 @@ namespace Request
 
 open Purelib.Curves.Hyperelliptic.Differentials.SquareFactor.Request in
 /-- Read the finite monomial exponent from either differential coordinate convention. -/
-def exponent : Curves.Hyperelliptic.Differentials.SquareFactor.Request → Nat
+def exponent : Request → Nat
   | .original exponent | .normalized exponent => exponent
 
 /-- Construct the monomial polynomial with coefficient one at the requested exponent. -/
-def power (request : Curves.Hyperelliptic.Differentials.SquareFactor.Request) : GaussianPolynomial :=
-  DensePolynomial.shift request.exponent (DensePolynomial.constant 1)
+def power (request : Request) : GaussianPolynomial :=
+  shift request.exponent (constant 1)
 
 /-- Evaluating the request monomial gives the corresponding power of the point. -/
-theorem power_eval (request : Curves.Hyperelliptic.Differentials.SquareFactor.Request) (point :
-  Curves.Hyperelliptic.Differentials.SquareFactor.Gaussian) :
+theorem power_eval (request : Request) (point :
+  Gaussian) :
     request.power.eval point = point ^ request.exponent := by
-  rw [power, DensePolynomial.eval_shift,
-    DensePolynomial.eval_constant, Data.Gaussian.Basic.one_mul]
+  rw [power, eval_shift,
+    eval_constant, Data.Gaussian.Basic.one_mul]
 
 /-- Select the square factor for an original-coordinate request and one for a normalized request. -/
-def weightDenominator {polynomial : Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial}
-    (reduction : Curves.Hyperelliptic.Differentials.SquareFactor.Reduction polynomial) :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Request →
-      Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial
+def weightDenominator {polynomial : GaussianPolynomial}
+    (reduction : Reduction polynomial) :
+      Request →
+      GaussianPolynomial
   | .original _ => reduction.squareFactor
-  | .normalized _ => DensePolynomial.constant 1
+  | .normalized _ => constant 1
 
 /-- The rational weight denominator is a nonzero polynomial for either request convention. -/
-theorem weightDenominator_nonzero {polynomial : Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial}
-    (reduction : Curves.Hyperelliptic.Differentials.SquareFactor.Reduction polynomial) (request :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Request) :
+theorem weightDenominator_nonzero {polynomial : GaussianPolynomial}
+    (reduction : Reduction polynomial) (request :
+      Request) :
     (request.weightDenominator reduction).isZero = false := by
   cases request with
   | original _ => exact reduction.squareFactorNonzero
   | normalized _ => exact (LeadingTerm.constant
-      (one_ne_zero : (1 : Curves.Hyperelliptic.Differentials.SquareFactor.Gaussian) ≠ 0)).nonzero
+      (one_ne_zero : (1 : Gaussian) ≠ 0)).nonzero
 
 open Purelib.Curves.Hyperelliptic.Differentials.SquareFactor.Request in
 /-- Express the request numerator in the original sheet coordinate.
 
 A normalized-coordinate request acquires the evaluated square factor; an original-coordinate request keeps its monomial
 numerator. -/
-def originalNumerator {polynomial : Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial}
-    (reduction : Curves.Hyperelliptic.Differentials.SquareFactor.Reduction polynomial) (request :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Request) (point :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Gaussian) : Gaussian :=
+def originalNumerator {polynomial : GaussianPolynomial}
+    (reduction : Reduction polynomial) (request :
+      Request) (point :
+      Gaussian) : Gaussian :=
   match request with
   | .original exponent => point ^ exponent
   | .normalized exponent => reduction.squareFactor.eval point * point ^ exponent
 
+/-- Retain the request numerator as finite coefficients in the original coordinate. -/
+def originalNumeratorPolynomial {polynomial : GaussianPolynomial} (reduction : Reduction polynomial)
+    (request : Request) : GaussianPolynomial :=
+  match request with
+  | .original _ => request.power
+  | .normalized _ => reduction.squareFactor * request.power
+
+/-- The retained numerator coefficients evaluate to the original request numerator. -/
+theorem originalNumeratorPolynomial_eval {polynomial : GaussianPolynomial} (reduction : Reduction polynomial)
+    (request : Request) (point : Gaussian) :
+    (request.originalNumeratorPolynomial reduction).eval point = request.originalNumerator reduction point := by
+  cases request with
+  | original exponent => exact Request.power_eval _ point
+  | normalized exponent =>
+    change (reduction.squareFactor * (Request.normalized exponent).power).eval point = _
+    rewrite [DensePolynomial.eval_mul, Request.power_eval]
+    rfl
+
 end Request
+
+open Purelib.Algebra.Quadratic.Pair.Polynomial (Expression)
+
+/-- Compile the cancelled weight divided by the same normalized generator into exact quadratic coefficients.
+
+The retained denominator includes the original radicand; source-coordinate
+guards remain separately owned by the square-factor request. -/
+def algebraicSpec {polynomial : GaussianPolynomial} (reduction : Reduction polynomial) (request : Request)
+    (cancellation : Reduction.Basic.ReducedPair request.power (request.weightDenominator reduction)) :
+    Expression reduction.radicand :=
+  ⟨⟨0, cancellation.numeratorReduced⟩, cancellation.denominatorReduced * reduction.radicand⟩
+
+/-- The original coordinate map is the square factor times the same normalized generator. -/
+def coordinateSpec {polynomial : GaussianPolynomial} (reduction : Reduction polynomial) :
+    Expression reduction.radicand :=
+  ⟨⟨0, reduction.squareFactor⟩, DensePolynomial.constant 1⟩
 
 set_option genInjectivity false in
 /-- One retained Euclidean cancellation, consumed by all downstream tests and coefficient evaluations instead of
@@ -137,8 +174,12 @@ structure Weight {polynomial : GaussianPolynomial}
     (reduction : Reduction polynomial) (request :
       Request) where
   /-- The retained Euclidean cancellation of the monomial and its requested weight denominator. -/ cancellation :
-    Reduction.Basic.ReducedPair request.power
+    Basic.ReducedPair request.power
     (request.weightDenominator reduction)
+  /-- The cached exact coefficient at the original normalized generator. -/
+  algebraic : Expression reduction.radicand
+  /-- The cached coefficients use this same Euclidean cancellation and radicand. -/
+  algebraic_eq : algebraic = algebraicSpec reduction request cancellation
 
 constructive_injectivity Weight
 
@@ -150,49 +191,50 @@ def compile {polynomial : GaussianPolynomial}
     (reduction : Reduction polynomial) (request :
       Request) : Weight
       reduction request :=
-  ⟨Build.reduce request.power (request.weightDenominator reduction)
-    (request.weightDenominator_nonzero reduction)⟩
+  let cancellation := Build.reduce request.power (request.weightDenominator reduction)
+    (request.weightDenominator_nonzero reduction)
+  ⟨cancellation, algebraicSpec reduction request cancellation, rfl⟩
 
 namespace Weight
 
 /-- Read the reduced numerator polynomial from the retained cancellation. -/
-def numerator {polynomial : Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial} {reduction :
-  Curves.Hyperelliptic.Differentials.SquareFactor.Reduction polynomial}
-    {request : Curves.Hyperelliptic.Differentials.SquareFactor.Request} (weight :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Weight reduction request) : GaussianPolynomial :=
+def numerator {polynomial : GaussianPolynomial} {reduction :
+  Reduction polynomial}
+    {request : Request} (weight :
+      Weight reduction request) : GaussianPolynomial :=
   weight.cancellation.numeratorReduced
 
 /-- Read the reduced denominator polynomial from the retained cancellation. -/
-def denominator {polynomial : Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial} {reduction :
-  Curves.Hyperelliptic.Differentials.SquareFactor.Reduction polynomial}
-    {request : Curves.Hyperelliptic.Differentials.SquareFactor.Request} (weight :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Weight reduction request) : GaussianPolynomial :=
+def denominator {polynomial : GaussianPolynomial} {reduction :
+  Reduction polynomial}
+    {request : Request} (weight :
+      Weight reduction request) : GaussianPolynomial :=
   weight.cancellation.denominatorReduced
 
 /-- Exact expression of the cancelled rational weight. Its use as a value is guarded by the denominator evidence below.
 -/
-def expression {polynomial : Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial} {reduction :
-  Curves.Hyperelliptic.Differentials.SquareFactor.Reduction polynomial}
-    {request : Curves.Hyperelliptic.Differentials.SquareFactor.Request} (weight :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Weight reduction request) (point :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Gaussian) : Gaussian :=
+def expression {polynomial : GaussianPolynomial} {reduction :
+  Reduction polynomial}
+    {request : Request} (weight :
+      Weight reduction request) (point :
+      Gaussian) : Gaussian :=
   weight.numerator.eval point / weight.denominator.eval point
 
 /-- The path displacement is deliberately absent; integration applies `dx` once, after this coefficient has been
 transported. -/
-def coefficient {polynomial : Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial} {reduction :
-  Curves.Hyperelliptic.Differentials.SquareFactor.Reduction polynomial}
-    {request : Curves.Hyperelliptic.Differentials.SquareFactor.Request} (weight :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Weight reduction request) (point root :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Gaussian) : Gaussian :=
+def coefficient {polynomial : GaussianPolynomial} {reduction :
+  Reduction polynomial}
+    {request : Request} (weight :
+      Weight reduction request) (point root :
+      Gaussian) : Gaussian :=
   weight.expression point / root
 
 /-- The original monomial and reduced numerator satisfy the cleared rational-weight identity at every point. -/
-theorem crossIdentity {polynomial : Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial} {reduction :
-  Curves.Hyperelliptic.Differentials.SquareFactor.Reduction polynomial}
-    {request : Curves.Hyperelliptic.Differentials.SquareFactor.Request} (weight :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Weight reduction request) (point :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Gaussian) :
+theorem crossIdentity {polynomial : GaussianPolynomial} {reduction :
+  Reduction polynomial}
+    {request : Request} (weight :
+      Weight reduction request) (point :
+      Gaussian) :
     point ^ request.exponent * weight.denominator.eval point =
       weight.numerator.eval point * (request.weightDenominator reduction).eval point := by
   rw [← request.power_eval point, weight.cancellation.numerator_eval point,
@@ -202,11 +244,11 @@ theorem crossIdentity {polynomial : Curves.Hyperelliptic.Differentials.SquareFac
   ring1
 
 /-- Where the original weight denominator is nonzero, the reduced weight equals the original rational expression. -/
-theorem expression_eq {polynomial : Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial} {reduction :
-  Curves.Hyperelliptic.Differentials.SquareFactor.Reduction polynomial}
-    {request : Curves.Hyperelliptic.Differentials.SquareFactor.Request} (weight :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Weight reduction request) (point :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Gaussian)
+theorem expression_eq {polynomial : GaussianPolynomial} {reduction :
+  Reduction polynomial}
+    {request : Request} (weight :
+      Weight reduction request) (point :
+      Gaussian)
     (nonzero : (request.weightDenominator reduction).eval point ≠ 0) :
     weight.expression point =
       point ^ request.exponent / (request.weightDenominator reduction).eval point := by
@@ -214,17 +256,17 @@ theorem expression_eq {polynomial : Curves.Hyperelliptic.Differentials.SquareFac
   rw [request.power_eval point] at cancelled
   simpa only [expression,
     numerator,
-    denominator, Algebra.Field.ExplicitField.div_eq_mul_inv]
+    denominator, ExplicitField.div_eq_mul_inv]
     using cancelled.symm
 
 /-- A zero of the reduced denominator cannot also be a numerator zero. The cached Bézout identity establishes this
 without rerunning Euclid. -/
 theorem numerator_nonzero_at_denominator_zero
-    {polynomial : Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial} {reduction :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Reduction polynomial}
-    {request : Curves.Hyperelliptic.Differentials.SquareFactor.Request} (weight :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Weight reduction request) (point :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Gaussian)
+    {polynomial : GaussianPolynomial} {reduction :
+      Reduction polynomial}
+    {request : Request} (weight :
+      Weight reduction request) (point :
+      Gaussian)
     (zero : weight.denominator.eval point = 0) : weight.numerator.eval point ≠ 0 := by
   intro numeratorZero
   have identity := weight.cancellation.reduced_identity point
@@ -232,6 +274,78 @@ theorem numerator_nonzero_at_denominator_zero
   rw [numeratorZero, zero, Data.Gaussian.Basic.mul_zero, Data.Gaussian.Basic.mul_zero, Data.Gaussian.Basic.zero_add]
     at identity
   exact one_ne_zero identity
+
+/-- The reduced denominator and radicand supply the exact algebraic coefficient's guard. -/
+theorem algebraic_defined {polynomial : GaussianPolynomial} {reduction : Reduction polynomial} {request : Request}
+    (weight : Weight reduction request) (point : Gaussian)
+    (denominatorNonzero : weight.denominator.eval point ≠ 0)
+    (radicandNonzero : reduction.radicand.eval point ≠ 0) : weight.algebraic.Defined point := by
+  rewrite [weight.algebraic_eq]
+  change (weight.denominator * reduction.radicand).eval point ≠ 0
+  rewrite [DensePolynomial.eval_mul]
+  exact Algebra.Field.ExplicitField.mul_ne_zero denominatorNonzero radicandNonzero
+
+/-- The cached divided coefficient reads back at the same original evaluated radicand. -/
+theorem algebraic_evaluate {polynomial : GaussianPolynomial} {reduction : Reduction polynomial} {request : Request}
+    (weight : Weight reduction request) (point : Gaussian) :
+    weight.algebraic.evaluate point =
+      (⟨0, weight.numerator.eval point / (weight.denominator.eval point * reduction.radicand.eval point)⟩ :
+        Algebra.Quadratic.Pair Gaussian (-reduction.radicand.eval point)) := by
+  rewrite [weight.algebraic_eq]
+  apply Algebra.Quadratic.Pair.ext
+  · change (0 : GaussianPolynomial).eval point / _ = 0
+    rewrite [DensePolynomial.eval_zero, Algebra.Field.ExplicitField.zero_div]
+    rfl
+  · change weight.numerator.eval point / (weight.denominator * reduction.radicand).eval point = _
+    rewrite [DensePolynomial.eval_mul]
+    rfl
+
+/-- The exact coefficient times the original coordinate map gives the original numerator on cleared coefficients.
+
+The same cached cancellation supplies both request conventions. No selected
+root or numerical sample is needed for this finite coefficient certificate. -/
+theorem algebraic_cleared {polynomial : GaussianPolynomial} {reduction : Reduction polynomial} {request : Request}
+    (weight : Weight reduction request) :
+    (weight.algebraic.mul (coordinateSpec reduction)).Equal
+      (Expression.scalar (request.originalNumeratorPolynomial reduction)) := by
+  apply Expression.equal_of_cross_eval
+  · intro point
+    have cross := weight.crossIdentity point
+    rewrite [weight.algebraic_eq]
+    dsimp only [Expression.mul, algebraicSpec, coordinateSpec, Expression.scalar, Algebra.Quadratic.Pair.scalar]
+    rewrite [Algebra.Quadratic.Pair.mul_re]
+    dsimp only
+    simp only [DensePolynomial.eval_sub, DensePolynomial.eval_mul, DensePolynomial.eval_zero, DensePolynomial.eval_neg,
+      DensePolynomial.eval_constant, Request.originalNumeratorPolynomial_eval]
+    change (0 * 0 - (-reduction.radicand.eval point) * weight.numerator.eval point *
+        reduction.squareFactor.eval point) * 1 = request.originalNumerator reduction point *
+      ((weight.denominator.eval point * reduction.radicand.eval point) * 1)
+    cases request with
+    | original exponent =>
+      change point ^ exponent * weight.denominator.eval point =
+        weight.numerator.eval point * reduction.squareFactor.eval point at cross
+      change _ = point ^ exponent * _
+      calc
+        _ = (weight.numerator.eval point * reduction.squareFactor.eval point) * reduction.radicand.eval point := by
+          ring1
+        _ = _ := by rewrite [← cross]; ring1
+    | normalized exponent =>
+      change point ^ exponent * weight.denominator.eval point =
+        weight.numerator.eval point * (DensePolynomial.constant 1).eval point at cross
+      rewrite [DensePolynomial.eval_constant, Data.Gaussian.Basic.mul_one] at cross
+      change _ = (reduction.squareFactor.eval point * point ^ exponent) * _
+      calc
+        _ = weight.numerator.eval point * reduction.squareFactor.eval point * reduction.radicand.eval point := by
+          ring1
+        _ = _ := by rewrite [← cross]; ring1
+  · intro point
+    rewrite [weight.algebraic_eq]
+    dsimp only [Expression.mul, algebraicSpec, coordinateSpec, Expression.scalar, Algebra.Quadratic.Pair.scalar]
+    rewrite [Algebra.Quadratic.Pair.mul_im]
+    dsimp only
+    simp only [DensePolynomial.eval_add, DensePolynomial.eval_mul, DensePolynomial.eval_zero,
+      DensePolynomial.eval_constant]
+    ring1
 
 end Weight
 
@@ -269,79 +383,79 @@ namespace Weight
 /-- Denominator-cleared differential identity on the original coordinate domain. The numerator differs for the two
 request constructors. -/
 theorem coefficient_cleared
-    {polynomial : Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial} {reduction :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Reduction polynomial}
-    {request : Curves.Hyperelliptic.Differentials.SquareFactor.Request} (weight :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Weight reduction request) (point root :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Gaussian)
+    {polynomial : GaussianPolynomial} {reduction :
+      Reduction polynomial}
+    {request : Request} (weight :
+      Weight reduction request) (point root :
+      Gaussian)
     (squareNonzero : reduction.squareFactor.eval point ≠ 0) (rootNonzero : root ≠ 0) :
-    weight.coefficient point root * Curves.Hyperelliptic.Differentials.SquareFactor.coordinate reduction point root =
+    weight.coefficient point root * coordinate reduction point root =
       request.originalNumerator reduction point := by
   have rawNonzero : (request.weightDenominator reduction).eval point ≠ 0 := by
     cases request with
     | original _ => exact squareNonzero
     | normalized _ =>
-      simpa only [Curves.Hyperelliptic.Differentials.SquareFactor.Request.weightDenominator,
-        DensePolynomial.eval_constant] using
-        (one_ne_zero : (1 : Curves.Hyperelliptic.Differentials.SquareFactor.Gaussian) ≠ 0)
+      simpa only [Request.weightDenominator,
+        eval_constant] using
+        (one_ne_zero : (1 : Gaussian) ≠ 0)
   rw [coefficient,
-    Curves.Hyperelliptic.Differentials.SquareFactor.coordinate]
+    coordinate]
   calc
     weight.expression point / root * (reduction.squareFactor.eval point * root) =
         (weight.expression point / root * root) * reduction.squareFactor.eval point := by
           ring1
     _ = weight.expression point * reduction.squareFactor.eval point := by
-      rw [Algebra.Field.ExplicitField.div_mul_cancel _ rootNonzero]
+      rw [ExplicitField.div_mul_cancel _ rootNonzero]
     _ = _ := by
       rw [weight.expression_eq point rawNonzero]
       cases request with
-      | original exponent => exact Algebra.Field.ExplicitField.div_mul_cancel _ squareNonzero
+      | original exponent => exact ExplicitField.div_mul_cancel _ squareNonzero
       | normalized exponent =>
-          simp only [Curves.Hyperelliptic.Differentials.SquareFactor.Request.exponent,
-            Curves.Hyperelliptic.Differentials.SquareFactor.Request.weightDenominator,
-            Curves.Hyperelliptic.Differentials.SquareFactor.Request.originalNumerator,
-            DensePolynomial.eval_constant, Algebra.Field.ExplicitField.div_eq_mul_inv]
-          have inverseOne : (1 : Curves.Hyperelliptic.Differentials.SquareFactor.Gaussian)⁻¹ = 1 := by
-            simpa only [Data.Gaussian.Basic.one_mul] using Algebra.Field.ExplicitField.mul_inv_cancel
-              (1 : Curves.Hyperelliptic.Differentials.SquareFactor.Gaussian) one_ne_zero
+          simp only [Request.exponent,
+            Request.weightDenominator,
+            Request.originalNumerator,
+            eval_constant, ExplicitField.div_eq_mul_inv]
+          have inverseOne : (1 : Gaussian)⁻¹ = 1 := by
+            simpa only [Data.Gaussian.Basic.one_mul] using ExplicitField.mul_inv_cancel
+              (1 : Gaussian) one_ne_zero
           rw [inverseOne, Data.Gaussian.Basic.mul_one, Data.Gaussian.Basic.mul_comm]
 
 /-- The reduced differential coefficient equals the original-coordinate quotient away from square-factor and sheet
 zeros. -/
 theorem coefficient_transport
-    {polynomial : Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial} {reduction :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Reduction polynomial}
-    {request : Curves.Hyperelliptic.Differentials.SquareFactor.Request} (weight :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Weight reduction request) (point root :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Gaussian)
+    {polynomial : GaussianPolynomial} {reduction :
+      Reduction polynomial}
+    {request : Request} (weight :
+      Weight reduction request) (point root :
+      Gaussian)
     (squareNonzero : reduction.squareFactor.eval point ≠ 0) (rootNonzero : root ≠ 0) :
     weight.coefficient point root =
-      request.originalNumerator reduction point / Curves.Hyperelliptic.Differentials.SquareFactor.coordinate reduction
+      request.originalNumerator reduction point / coordinate reduction
         point root := by
-  have nonzero : Curves.Hyperelliptic.Differentials.SquareFactor.coordinate reduction point root ≠ 0 :=
+  have nonzero : coordinate reduction point root ≠ 0 :=
     Data.Gaussian.Field.mul_ne_zero_direct squareNonzero rootNonzero
   apply Data.Gaussian.Field.mul_right_cancel_of_ne nonzero
   exact (weight.coefficient_cleared point root squareNonzero rootNonzero).trans
-    (Algebra.Field.ExplicitField.div_mul_cancel _ nonzero).symm
+    (ExplicitField.div_mul_cancel _ nonzero).symm
 
 /-- Changing the sheet sign negates the differential coefficient. -/
 theorem coefficient_neg
-    {polynomial : Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial} {reduction :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Reduction polynomial}
-    {request : Curves.Hyperelliptic.Differentials.SquareFactor.Request} (weight :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Weight reduction request) (point root :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Gaussian) :
+    {polynomial : GaussianPolynomial} {reduction :
+      Reduction polynomial}
+    {request : Request} (weight :
+      Weight reduction request) (point root :
+      Gaussian) :
     weight.coefficient point (-root) = -weight.coefficient point root :=
-  Algebra.Field.ExplicitField.div_neg _ _
+  ExplicitField.div_neg _ _
 
 /-- Exact point classification after cancellation. The second accepted case explicitly records that the original
 coordinate formula is undefined. This is a point test only, not evidence for a whole path. -/
 inductive PointOutcome
-    {polynomial : Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial} {reduction :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Reduction polynomial}
-    {request : Curves.Hyperelliptic.Differentials.SquareFactor.Request} (weight :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Weight reduction request) (point :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Gaussian) : Type where
+    {polynomial : GaussianPolynomial} {reduction :
+      Reduction polynomial}
+    {request : Request} (weight :
+      Weight reduction request) (point :
+      Gaussian) : Type where
   /-- Both coordinate descriptions are defined and the normalized point is not a branch point. -/ | regular
     (denominatorNonzero : weight.denominator.eval point ≠ 0)
       (radicandNonzero : reduction.radicand.eval point ≠ 0)
@@ -362,11 +476,11 @@ inductive PointOutcome
 Exact tests distinguish a weight pole, a normalized branch point, a removed coordinate zero and a regular point. Each
 result retains the equations or nonvanishing evidence establishing that case. -/
 def checkPoint
-    {polynomial : Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial} {reduction :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Reduction polynomial}
-    {request : Curves.Hyperelliptic.Differentials.SquareFactor.Request} (weight :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Weight reduction request) (point :
-      Curves.Hyperelliptic.Differentials.SquareFactor.Gaussian) :
+    {polynomial : GaussianPolynomial} {reduction :
+      Reduction polynomial}
+    {request : Request} (weight :
+      Weight reduction request) (point :
+      Gaussian) :
     weight.PointOutcome point :=
   if denominatorZero : weight.denominator.eval point = 0 then
     .weightPole denominatorZero (weight.numerator_nonzero_at_denominator_zero point denominatorZero)

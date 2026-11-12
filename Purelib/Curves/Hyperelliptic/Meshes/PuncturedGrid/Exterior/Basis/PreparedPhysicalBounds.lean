@@ -88,68 +88,68 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Prepa
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
-variable {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared}
+variable {retained : Preparation.CommonBasisPreparation prepared}
   {index : Nat} {inputs : retained.Inputs index}
   {outer : Fin prepared.occurrences.length} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
-  {faceIndex depth capacity minimum : Nat} {sideArea : Normalization.InverseRootPolynomial.Gaussian} {requested
-    allowance tolerance : Normalization.InverseRootPolynomial.Coordinate}
+  {faceIndex depth capacity minimum : Nat} {sideArea : InverseRootPolynomial.Gaussian} {requested
+    allowance tolerance : InverseRootPolynomial.Coordinate}
 
-variable {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {sourceAllowance coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor : Nat}
+variable {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {sourceAllowance coefficientTarget : InverseRootPolynomial.Coordinate} {coverFloor floor : Nat}
   {box : Rational.Box} {polynomials :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+    CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 namespace PhysicalRunBank
 variable (bank : PhysicalRunBank retained inputs outer
   coefficients faceIndex depth capacity sideArea allowance tolerance)
-  (position : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (position : Fin (ParentIndices.occurrenceAt prepared.occurrences
     outer).compared.entered.cache.parents.length)
   (source : Charts.Reciprocal.Disk.Basis.PreparedSelection
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentInputs.parentInput retained inputs outer position)
+    (ParentInputs.parentInput retained inputs outer position)
     basis sourceAllowance coefficientTarget coverFloor floor polynomials coefficients)
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
 namespace PreparedRun
-variable {bank position source} {target : Normalization.InverseRootPolynomial.Coordinate} (run :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PreparedPhysicalRuns.PhysicalRunBank.PreparedRun bank position
+variable {bank position source} {target : InverseRootPolynomial.Coordinate} (run :
+  PreparedPhysicalRuns.PhysicalRunBank.PreparedRun bank position
   source target)
 
 include run
 
 /-- The original oriented physical path area approximates its prepared source area at the requested coefficient-weighted
 quadratic bound. -/
-theorem area_requested : Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area (bank.physical position) -
+theorem area_requested : Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area (bank.physical position) -
   source.weighted.source.area) ≤
     target * (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
   cases run with
   | forward direction certified fragments =>
     have bound := certified.area_requested source.weighted
     rw [fragments] at bound
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ScheduledPhysicalRuns.PhysicalRunBank.forward_physical bank
+    rw [ScheduledPhysicalRuns.PhysicalRunBank.forward_physical bank
       position direction]
     exact bound
   | reverse direction certified fragments =>
     have bound := certified.oriented_area_requested source.weighted
-    change Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area (Path.PairedAreaReversal.reverseIncrements
+    change Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area (Path.PairedAreaReversal.reverseIncrements
       ((certified.run.fragments.map
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.pair).map Prod.fst).flatten) -
+        OwnedFragments.OwnedFragment.pair).map Prod.fst).flatten) -
         source.weighted.source.area) ≤ _ at bound
     rw [fragments] at bound
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ScheduledPhysicalRuns.PhysicalRunBank.reverse_physical bank
+    rw [ScheduledPhysicalRuns.PhysicalRunBank.reverse_physical bank
       position direction]
     exact bound
 
@@ -163,7 +163,7 @@ theorem total_quarter_requested :
   | forward direction certified fragments =>
     have bound := certified.total_requested source.weighted
     rw [fragments] at bound
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ScheduledPhysicalRuns.PhysicalRunBank.forward_physical bank
+    rw [ScheduledPhysicalRuns.PhysicalRunBank.forward_physical bank
       position direction]
     exact bound
   | reverse direction certified fragments =>
@@ -171,10 +171,10 @@ theorem total_quarter_requested :
     change Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded ((Path.PairedIncrementArea.total
       (Path.PairedAreaReversal.reverseIncrements
       ((certified.run.fragments.map
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.pair).map Prod.fst).flatten)).sub
+        OwnedFragments.OwnedFragment.pair).map Prod.fst).flatten)).sub
       (Path.ConjugatePathReadback.conjugateDiagonal source.weighted.source.total)) _ at bound
     rw [fragments] at bound
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ScheduledPhysicalRuns.PhysicalRunBank.reverse_physical bank
+    rw [ScheduledPhysicalRuns.PhysicalRunBank.reverse_physical bank
       position direction]
     exact bound
 
@@ -183,16 +183,16 @@ tolerance. -/
 theorem total_requested (nonnegative : 0 ≤ target) :
     Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded ((Path.PairedIncrementArea.total (bank.physical position)).sub
       (Path.ConjugatePathReadback.conjugateDiagonal source.weighted.source.total))
-      (target * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) := open Purelib.Algebra in by
+      (target * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) := open Algebra in by
   have massNN : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
     (FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 :
-      Normalization.InverseRootPolynomial.Coordinate)) _
+      InverseRootPolynomial.Coordinate)) _
       (fun row => Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
   have quarter : target / 4 ≤ target := by
     rw [Fraction.Field.div_eq_mul_inv_direct]
     exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (by
-        decide : (4 : Normalization.InverseRootPolynomial.Coordinate)⁻¹ ≤ 1) nonnegative).trans_eq (mul_one _)
+        decide : (4 : InverseRootPolynomial.Coordinate)⁻¹ ≤ 1) nonnegative).trans_eq (mul_one _)
   have paid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct quarter massNN
   have bounded :=
     total_quarter_requested
@@ -203,14 +203,14 @@ theorem total_requested (nonnegative : 0 ≤ target) :
 coefficient mass. -/
 theorem total_bounded_requested (capped : target ≤ 1) :
     Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (Path.PairedIncrementArea.total (bank.physical position))
-      (2 * (1 + Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentInputs.parentInput retained inputs outer
+      (2 * (1 + Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope
+        (ParentInputs.parentInput retained inputs outer
         position).sources) * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) := by
   cases run with
   | forward direction certified fragments =>
     have bound := certified.total_bounded_requested capped source.weighted
     rw [fragments] at bound
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ScheduledPhysicalRuns.PhysicalRunBank.forward_physical bank
+    rw [ScheduledPhysicalRuns.PhysicalRunBank.forward_physical bank
       position direction]
     exact bound
   | reverse direction certified fragments =>
@@ -218,10 +218,10 @@ theorem total_bounded_requested (capped : target ≤ 1) :
     change Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (Path.PairedIncrementArea.total
       (Path.PairedAreaReversal.reverseIncrements
       ((certified.run.fragments.map
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.pair).map Prod.fst).flatten)) _
+        OwnedFragments.OwnedFragment.pair).map Prod.fst).flatten)) _
         at bound
     rw [fragments] at bound
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ScheduledPhysicalRuns.PhysicalRunBank.reverse_physical bank
+    rw [ScheduledPhysicalRuns.PhysicalRunBank.reverse_physical bank
       position direction]
     exact bound
 

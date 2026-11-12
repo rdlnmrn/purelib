@@ -19,6 +19,8 @@ public import Purelib.RootIsolation.Power.Unit.Circuit.Point
 import Purelib.RootIsolation.Power.Unit.Circuit.Subdivision
 import Purelib.Data.Rat.Fraction.Arithmetic
 
+open Purelib.Geometry.Gaussian.UnitCircle
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -54,40 +56,40 @@ open Purelib.Data.Gaussian.Norm.Basic (normSq)
 /-- Multiplication by the quarter rotation relates the coordinate edge to
 its right-half-plane edge by the finite product formula. -/
 theorem unitCircuitEdgeProductFormula
-    (quarter : Geometry.Gaussian.UnitCircle.Quarter.UnitCircuitQuarter) (degree : Data.Nat.Positive.RootDegree)
+    (quarter : Quarter.UnitCircuitQuarter) (degree : Data.Nat.Positive.RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) {index : Nat}
-    (indexBound : index < Power.Unit.Circuit.Subdivision.unitCircuitStepCount degree degreeAtLeastTwo) :
+    (indexBound : index < Subdivision.unitCircuitStepCount degree degreeAtLeastTwo) :
     Winding.Edge.Product.LineProductFormula
       Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
-      (Dense.Gaussian.Constants.gaussianConstant (Geometry.Gaussian.UnitCircle.Quarter.unitCircuitRotation quarter))
-      (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
-      (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
-        Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index) 0 1 := open Purelib.Data in
+      (Dense.Gaussian.Constants.gaussianConstant (Quarter.unitCircuitRotation quarter))
+      (Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
+      (Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
+        Point.unitCircuitPoint quarter degree degreeAtLeastTwo index) 0 1 := open Purelib.Data in
           open Purelib.Geometry.Rational in by
-  let source := Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index
-  let target := Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1)
+  let source := Point.unitCircuitPoint quarter degree degreeAtLeastTwo index
+  let target := Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1)
   have sourceUnit : normSq source = 1 := by
-    dsimp only [source, Power.Unit.Circuit.Point.unitCircuitPoint]
-    rw [normSq_mul, Geometry.Gaussian.UnitCircle.Quarter.unitCircuitMultiplier_unit,
-      Geometry.Gaussian.UnitCircle.Stereographic.unitQuarterPoint_unit,
+    dsimp only [source, Point.unitCircuitPoint]
+    rw [normSq_mul, Quarter.unitCircuitMultiplier_unit,
+      Stereographic.unitQuarterPoint_unit,
       Fraction.Field.one_mul]
   have targetUnit : normSq target = 1 := by
-    dsimp only [target, Power.Unit.Circuit.Point.unitCircuitPoint]
-    rw [normSq_mul, Geometry.Gaussian.UnitCircle.Quarter.unitCircuitMultiplier_unit,
-      Geometry.Gaussian.UnitCircle.Stereographic.unitQuarterPoint_unit,
+    dsimp only [target, Point.unitCircuitPoint]
+    rw [normSq_mul, Quarter.unitCircuitMultiplier_unit,
+      Stereographic.unitQuarterPoint_unit,
       Fraction.Field.one_mul]
   have sourceNonzero : source ≠ 0 := Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit
   have targetNonzero : target ≠ 0 := Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit
-  have rotationNonzero : Geometry.Gaussian.UnitCircle.Quarter.unitCircuitRotation quarter ≠ 0 := by
+  have rotationNonzero : Quarter.unitCircuitRotation quarter ≠ 0 := by
     intro zero
     have normZero := congrArg normSq zero
-    rw [Geometry.Gaussian.UnitCircle.Quarter.unitCircuitRotation_normSq, normSq_zero] at normZero
+    rw [Quarter.unitCircuitRotation_normSq, normSq_zero] at normZero
     exact (by decide : (2 : Fraction.Rational) ≠ 0) normZero
   apply Winding.Edge.Product.lineProductFormula_of_clearances
     Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
-    (Dense.Gaussian.Constants.gaussianConstant (Geometry.Gaussian.UnitCircle.Quarter.unitCircuitRotation quarter))
+    (Dense.Gaussian.Constants.gaussianConstant (Quarter.unitCircuitRotation quarter))
     source (target - source) (by decide)
-    (Power.Unit.Circuit.Clearance.unitCircuitCoordinateEdgeCertificate quarter degree degreeAtLeastTwo
+    (Clearance.unitCircuitCoordinateEdgeCertificate quarter degree degreeAtLeastTwo
       indexBound)
     (Geometry.Polynomial.Path.Clearance.UnitCircle.unitCircuitRotationConstantCertificate quarter source (target -
       source))

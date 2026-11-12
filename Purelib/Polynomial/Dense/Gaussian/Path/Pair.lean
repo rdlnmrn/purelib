@@ -12,6 +12,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
 
+open Purelib.Polynomial.Dense.Gaussian.Path
+
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 
 open Purelib.Data
@@ -40,11 +42,25 @@ namespace Purelib.Polynomial.Dense.Rational.Pair.Path.Basic.PolynomialEdge
 def ofLine (p :
   CoefficientPolynomial)
     (origin direction : Gaussian.Basic.Canonical) (start stop : Fraction.Rational) :
-      Dense.Rational.Pair.Path.Basic.PolynomialEdge where
-  realPart := Dense.Gaussian.Path.Components.pathReal p origin direction
-  imagPart := Dense.Gaussian.Path.Components.pathImag p origin direction
-  start := start
-  stop := stop
+      PolynomialEdge :=
+  let parts := Components.pathParts p origin direction
+  { realPart := parts.1
+    imagPart := parts.2
+    start := start
+    stop := stop }
+
+/-- The original line edge retains the complete two-coordinate path record.
+
+Both polynomials are read from the same retained affine substitution. The
+record keeps its original parameter interval and ordered coordinates.
+-/
+theorem ofLine_eq (p : CoefficientPolynomial)
+    (origin direction : Gaussian.Basic.Canonical) (start stop : Fraction.Rational) :
+    ofLine p origin direction start stop =
+      { realPart := Components.pathReal p origin direction
+        imagPart := Components.pathImag p origin direction
+        start := start
+        stop := stop } := (rfl)
 
 /-- Normalizing the Gaussian polynomial leaves its retained rational line edge unchanged. -/
 @[simp] theorem ofLine_normalize
@@ -53,8 +69,8 @@ def ofLine (p :
     (start stop : Fraction.Rational) :
     ofLine p.normalize origin direction start stop =
       ofLine p origin direction start stop := by
-  unfold ofLine
-  rw [Dense.Gaussian.Path.Components.pathReal_normalize, Dense.Gaussian.Path.Components.pathImag_normalize]
+  unfold ofLine Components.pathParts
+  rw [Dense.Gaussian.Substitution.Affine.composeLine_normalize]
 
 /-- The real polynomial of the retained line edge evaluates to the Gaussian line value's real coordinate. -/
 @[simp] theorem ofLine_real_eval (p :
@@ -62,7 +78,7 @@ def ofLine (p :
     (origin direction : Gaussian.Basic.Canonical) (start stop t : Fraction.Rational) :
     (ofLine p origin direction start stop).realPart.eval t =
       (p.eval (Geometry.Rational.Affine.line origin direction t)).re := by
-  exact Dense.Gaussian.Path.Components.eval_pathReal p origin direction t
+  exact Components.eval_pathReal p origin direction t
 
 /-- The imaginary polynomial of the retained line edge evaluates to the Gaussian line value's imaginary coordinate. -/
 @[simp] theorem ofLine_imag_eval (p :
@@ -70,7 +86,7 @@ def ofLine (p :
     (origin direction : Gaussian.Basic.Canonical) (start stop t : Fraction.Rational) :
     (ofLine p origin direction start stop).imagPart.eval t =
       (p.eval (Geometry.Rational.Affine.line origin direction t)).im := by
-  exact Dense.Gaussian.Path.Components.eval_pathImag p origin direction t
+  exact Components.eval_pathImag p origin direction t
 end Purelib.Polynomial.Dense.Rational.Pair.Path.Basic.PolynomialEdge
 
 end

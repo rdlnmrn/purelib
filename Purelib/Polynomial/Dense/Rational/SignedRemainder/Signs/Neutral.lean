@@ -36,24 +36,24 @@ Each constructor retains the exact head and tail indices. Stable heads
 carry strict-sign certificates; an event carries the original remainder
 equation and signed-step certificate before continuing with its retained tail. -/
 inductive NeutralChainCertificate (interval : Data.Rat.Interval.Bounds) :
-    (head : Dense.Rational.Basic.CoordinatePolynomial) → (tail : List Dense.Rational.Basic.CoordinatePolynomial) → Type
+    (head : Basic.CoordinatePolynomial) → (tail : List Basic.CoordinatePolynomial) → Type
   /-- Certify a singleton chain by a strict-sign certificate for its only member. -/ | single {p :
-    Dense.Rational.Basic.CoordinatePolynomial}
-      (headStable : Dense.Rational.Sign.Interval.Basic.Certificate p interval) :
-      Purelib.Polynomial.Dense.Rational.SignedRemainder.Signs.Neutral.NeutralChainCertificate interval p []
+    Basic.CoordinatePolynomial}
+      (headStable : Sign.Interval.Basic.Certificate p interval) :
+      Neutral.NeutralChainCertificate interval p []
   /-- Prepend a strict-sign head to an already neutral nonempty chain. -/ | stable {p q :
-    Dense.Rational.Basic.CoordinatePolynomial} {tail : List Dense.Rational.Basic.CoordinatePolynomial}
-      (headStable : Dense.Rational.Sign.Interval.Basic.Certificate p interval)
-      (rest : Purelib.Polynomial.Dense.Rational.SignedRemainder.Signs.Neutral.NeutralChainCertificate interval q tail) :
-      Purelib.Polynomial.Dense.Rational.SignedRemainder.Signs.Neutral.NeutralChainCertificate interval p (q :: tail)
+    Basic.CoordinatePolynomial} {tail : List Basic.CoordinatePolynomial}
+      (headStable : Sign.Interval.Basic.Certificate p interval)
+      (rest : Neutral.NeutralChainCertificate interval q tail) :
+      Neutral.NeutralChainCertificate interval p (q :: tail)
   /-- Prepend a signed Euclidean event to a neutral remainder chain.
 
 The displayed remainder equation and signed-step certificate make the two new jumps cancel between endpoints. -/ | event
-  {p q r : Dense.Rational.Basic.CoordinatePolynomial} {tail : List Dense.Rational.Basic.CoordinatePolynomial}
-      (nextEq : r = -((Dense.Basic.DensePolynomial.divMod p q).remainder))
-      (step : Dense.Rational.SignedRemainder.Signs.Step.SignedStepCellCertificate p q interval)
-      (rest : Purelib.Polynomial.Dense.Rational.SignedRemainder.Signs.Neutral.NeutralChainCertificate interval r tail) :
-      Purelib.Polynomial.Dense.Rational.SignedRemainder.Signs.Neutral.NeutralChainCertificate interval p (q :: r ::
+  {p q r : Basic.CoordinatePolynomial} {tail : List Basic.CoordinatePolynomial}
+      (nextEq : r = -((Basic.DensePolynomial.divMod p q).remainder))
+      (step : Step.SignedStepCellCertificate p q interval)
+      (rest : Neutral.NeutralChainCertificate interval r tail) :
+      Neutral.NeutralChainCertificate interval p (q :: r ::
         tail)
 
 constructive_injectivity NeutralChainCertificate
@@ -72,10 +72,10 @@ open Purelib.Polynomial
 The singleton and stable branches retain their head certificate directly;
 the event branch extracts it from the original signed-step certificate. -/
 @[expose] public def headStable {interval : Data.Rat.Interval.Bounds} {p :
-  Dense.Rational.Basic.CoordinatePolynomial}
-    {tail : List Dense.Rational.Basic.CoordinatePolynomial}
-    (certificate : Dense.Rational.SignedRemainder.Signs.Neutral.NeutralChainCertificate interval p tail) :
-    Dense.Rational.Sign.Interval.Basic.Certificate p interval :=
+  Basic.CoordinatePolynomial}
+    {tail : List Basic.CoordinatePolynomial}
+    (certificate : NeutralChainCertificate interval p tail) :
+    Sign.Interval.Basic.Certificate p interval :=
   match certificate with
   | .single headCertificate => headCertificate
   | .stable headCertificate .. => headCertificate
@@ -86,9 +86,9 @@ the event branch extracts it from the original signed-step certificate. -/
 The retained strict-sign head certificate gives a positive product of
 endpoint values, so their integer signs agree. -/
 public theorem headEndpointSign_eq {interval : Data.Rat.Interval.Bounds} {p :
-  Dense.Rational.Basic.CoordinatePolynomial}
-    {tail : List Dense.Rational.Basic.CoordinatePolynomial}
-    (certificate : Dense.Rational.SignedRemainder.Signs.Neutral.NeutralChainCertificate interval p tail) :
+  Basic.CoordinatePolynomial}
+    {tail : List Basic.CoordinatePolynomial}
+    (certificate : NeutralChainCertificate interval p tail) :
     Data.Rat.Sign.Basic.sign (p.eval interval.lower) = Data.Rat.Sign.Basic.sign (p.eval interval.upper) :=
   Data.Rat.Sign.Basic.sign_eq_of_mul_pos certificate.headStable.endpoint_stable
 
@@ -96,20 +96,20 @@ public theorem headEndpointSign_eq {interval : Data.Rat.Interval.Bounds} {p :
 
 Stable heads preserve each adjacent jump, while certified signed triples preserve the sum of their two jumps. -/
 public theorem endpointVariation_eq {interval : Data.Rat.Interval.Bounds} {p :
-  Dense.Rational.Basic.CoordinatePolynomial}
-    {tail : List Dense.Rational.Basic.CoordinatePolynomial}
-    (certificate : Dense.Rational.SignedRemainder.Signs.Neutral.NeutralChainCertificate interval p tail) :
-    Dense.Rational.SignedRemainder.Variation.Sturm.endpointVariation2 (p :: tail) interval.lower =
-      Dense.Rational.SignedRemainder.Variation.Sturm.endpointVariation2 (p :: tail) interval.upper := by
+  Basic.CoordinatePolynomial}
+    {tail : List Basic.CoordinatePolynomial}
+    (certificate : NeutralChainCertificate interval p tail) :
+    Variation.Sturm.endpointVariation2 (p :: tail) interval.lower =
+      Variation.Sturm.endpointVariation2 (p :: tail) interval.upper := by
   induction certificate with
   | single => rfl
   | @stable p q tail headStable rest inductionHypothesis =>
       have headSign := Data.Rat.Sign.Basic.sign_eq_of_mul_pos headStable.endpoint_stable
       have nextSign := rest.headEndpointSign_eq
       change Data.Rat.Sign.Jump.signJump (p.eval interval.lower) (q.eval interval.lower) +
-          Dense.Rational.SignedRemainder.Variation.Sturm.endpointVariation2 (q :: tail) interval.lower =
+          Variation.Sturm.endpointVariation2 (q :: tail) interval.lower =
         Data.Rat.Sign.Jump.signJump (p.eval interval.upper) (q.eval interval.upper) +
-          Dense.Rational.SignedRemainder.Variation.Sturm.endpointVariation2 (q :: tail) interval.upper
+          Variation.Sturm.endpointVariation2 (q :: tail) interval.upper
       rw [Data.Rat.Sign.Jump.signJump_congr headSign nextSign, inductionHypothesis]
   | @event p q r tail nextEq step rest inductionHypothesis =>
       subst r
@@ -117,14 +117,14 @@ public theorem endpointVariation_eq {interval : Data.Rat.Interval.Bounds} {p :
       change
         Data.Rat.Sign.Jump.signJump (p.eval interval.lower) (q.eval interval.lower) +
             (Data.Rat.Sign.Jump.signJump (q.eval interval.lower)
-                ((-((Dense.Basic.DensePolynomial.divMod p q).remainder)).eval interval.lower) +
-              Dense.Rational.SignedRemainder.Variation.Sturm.endpointVariation2
-                ((-((Dense.Basic.DensePolynomial.divMod p q).remainder)) :: tail) interval.lower) =
+                ((-((Basic.DensePolynomial.divMod p q).remainder)).eval interval.lower) +
+              Variation.Sturm.endpointVariation2
+                ((-((Basic.DensePolynomial.divMod p q).remainder)) :: tail) interval.lower) =
           Data.Rat.Sign.Jump.signJump (p.eval interval.upper) (q.eval interval.upper) +
             (Data.Rat.Sign.Jump.signJump (q.eval interval.upper)
-                ((-((Dense.Basic.DensePolynomial.divMod p q).remainder)).eval interval.upper) +
-              Dense.Rational.SignedRemainder.Variation.Sturm.endpointVariation2
-                ((-((Dense.Basic.DensePolynomial.divMod p q).remainder)) :: tail) interval.upper)
+                ((-((Basic.DensePolynomial.divMod p q).remainder)).eval interval.upper) +
+              Variation.Sturm.endpointVariation2
+                ((-((Basic.DensePolynomial.divMod p q).remainder)) :: tail) interval.upper)
       rw [← Nat.add_assoc, ← Nat.add_assoc, localCancellation,
         inductionHypothesis]
 
@@ -142,13 +142,13 @@ set_option genInjectivity false in
 
 The nonempty case retains the indexed certificate for that exact head and tail. -/
 inductive NeutralChainCertificates (interval : Data.Rat.Interval.Bounds) :
-    List Dense.Rational.Basic.CoordinatePolynomial → Type
+    List Basic.CoordinatePolynomial → Type
   /-- The empty polynomial chain is neutral. -/ | nil :
-    Purelib.Polynomial.Dense.Rational.SignedRemainder.Signs.Neutral.NeutralChainCertificates interval []
+    Neutral.NeutralChainCertificates interval []
   /-- Package a neutral certificate for the displayed nonempty chain. -/ | cons {head :
-    Dense.Rational.Basic.CoordinatePolynomial} {tail : List Dense.Rational.Basic.CoordinatePolynomial}
-      (certificate : Dense.Rational.SignedRemainder.Signs.Neutral.NeutralChainCertificate interval head tail) :
-      Purelib.Polynomial.Dense.Rational.SignedRemainder.Signs.Neutral.NeutralChainCertificates interval (head :: tail)
+    Basic.CoordinatePolynomial} {tail : List Basic.CoordinatePolynomial}
+      (certificate : NeutralChainCertificate interval head tail) :
+      Neutral.NeutralChainCertificates interval (head :: tail)
 
 constructive_injectivity NeutralChainCertificates
 
@@ -166,10 +166,10 @@ open Purelib.Polynomial
 The indexed neutral certificates relate the actual chain at both interval
 endpoints and preserve its doubled finite sign variation. -/
 public theorem endpointVariation_eq {interval : Data.Rat.Interval.Bounds} {chain : List
-  Dense.Rational.Basic.CoordinatePolynomial}
-    (certificates : Dense.Rational.SignedRemainder.Signs.Neutral.NeutralChainCertificates interval chain) :
-    Dense.Rational.SignedRemainder.Variation.Sturm.endpointVariation2 chain interval.lower =
-      Dense.Rational.SignedRemainder.Variation.Sturm.endpointVariation2 chain interval.upper := by
+  Basic.CoordinatePolynomial}
+    (certificates : NeutralChainCertificates interval chain) :
+    Variation.Sturm.endpointVariation2 chain interval.lower =
+      Variation.Sturm.endpointVariation2 chain interval.upper := by
   cases certificates with
   | nil => rfl
   | cons certificate => exact certificate.endpointVariation_eq

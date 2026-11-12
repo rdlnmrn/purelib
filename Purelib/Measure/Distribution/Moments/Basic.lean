@@ -14,6 +14,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Measure.Weighted.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 @[expose] public section
 
@@ -68,7 +70,7 @@ theorem varianceAround_nonneg {α : Type} (distribution : Distribution α)
     0 ≤ distribution.varianceAround value center := by
   apply distribution.expectation_nonneg
   intro atom member
-  exact Fraction.Order.Arithmetic.sq_nonneg_direct
+  exact Arithmetic.sq_nonneg_direct
     (value atom.item - center)
 
 /-- Variance in the retained finite distribution is nonnegative. -/
@@ -92,9 +94,9 @@ theorem chebyshev_bound {α : Type} (distribution : Distribution α)
   apply distribution.markov_bound event
     (fun item => (value item - distribution.expectation value) ^ 2)
     (threshold ^ 2)
-    (Fraction.Order.Arithmetic.pow_pos_direct positive 2)
+    (Arithmetic.pow_pos_direct positive 2)
   · intro atom member
-    exact Fraction.Order.Arithmetic.sq_nonneg_direct
+    exact Arithmetic.sq_nonneg_direct
       (value atom.item - distribution.expectation value)
   · exact selectedDeviation
 end Distribution
@@ -166,10 +168,10 @@ theorem variance_indicator_le_quarter {α : Type}
     (distribution : Distribution α) (event : α → Bool) :
     distribution.variance (indicator event) ≤ 1 / 4 := by
   rw [distribution.variance_indicator]
-  apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  apply Arithmetic.le_of_sub_nonneg_direct
   calc
     0 ≤ (distribution.probability event - 1 / 2) ^ 2 :=
-      Fraction.Order.Arithmetic.sq_nonneg_direct _
+      Arithmetic.sq_nonneg_direct _
     _ = (1 / 2) ^ 2 - distribution.probability event *
         (2 * (1 / 2) - distribution.probability event) := by ring1
     _ = (1 / 2) ^ 2 - distribution.probability event *
@@ -194,7 +196,7 @@ theorem expectation_sq_le_secondMoment {α : Type}
       distribution.expectation (fun item => value item ^ 2) := by
   have nonnegative := distribution.variance_nonneg value
   rw [distribution.variance_eq_secondMoment_sub_sq] at nonnegative
-  exact Fraction.Order.Arithmetic.le_of_sub_nonneg_direct nonnegative
+  exact Arithmetic.le_of_sub_nonneg_direct nonnegative
 
 /-- Mean squared deviation around a center equals variance plus squared displacement of the mean from that center. -/
 theorem varianceAround_eq_variance_add_mean_sub_sq {α : Type}
@@ -230,8 +232,8 @@ theorem variance_le_varianceAround {α : Type}
       ring1
     _ ≤ distribution.variance value +
         (distribution.expectation value - center) ^ 2 :=
-      Fraction.Order.Arithmetic.add_le_add_direct le_rfl
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+      Arithmetic.add_le_add_direct le_rfl
+        (Arithmetic.sq_nonneg_direct _)
 
 /-- A center attains the variance as its mean squared deviation exactly when it equals the expectation. -/
 theorem varianceAround_eq_variance_iff_center_eq_expectation {α : Type}
@@ -254,7 +256,7 @@ theorem varianceAround_eq_variance_iff_center_eq_expectation {α : Type}
           congrArg (fun amount => amount - distribution.variance value) equality
         _ = 0 := by ring1
     have differenceZero : distribution.expectation value - center = 0 :=
-      (Fraction.Order.Arithmetic.sq_eq_zero_direct _).mp squareZero
+      (Arithmetic.sq_eq_zero_direct _).mp squareZero
     calc
       center = distribution.expectation value -
           (distribution.expectation value - center) := by ring1
@@ -273,12 +275,12 @@ theorem variance_le_secondMoment {α : Type}
       distribution.expectation (fun item => value item ^ 2) := by
   rw [distribution.variance_eq_secondMoment_sub_sq]
   have meanSquareNonnegative :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct
+    Arithmetic.sq_nonneg_direct
       (distribution.expectation value)
   have negativeMeanSquareNonpositive :
       -(distribution.expectation value ^ 2) ≤ 0 := by
     simpa only [neg_zero] using
-      Fraction.Order.Arithmetic.neg_le_neg_direct meanSquareNonnegative
+      Arithmetic.neg_le_neg_direct meanSquareNonnegative
   calc
     distribution.expectation (fun item => value item ^ 2) -
           distribution.expectation value ^ 2 ≤
@@ -286,7 +288,7 @@ theorem variance_le_secondMoment {α : Type}
       change distribution.expectation (fun item => value item ^ 2) +
           -(distribution.expectation value ^ 2) ≤
         distribution.expectation (fun item => value item ^ 2) + 0
-      exact Fraction.Order.Arithmetic.add_le_add_direct le_rfl
+      exact Arithmetic.add_le_add_direct le_rfl
         negativeMeanSquareNonpositive
     _ = distribution.expectation (fun item => value item ^ 2) := by ring1
 

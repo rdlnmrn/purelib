@@ -39,81 +39,81 @@ The original head certificate and resolution bounds select each stable
 or cancelling branch of the same finite scanner. Recursion retains the
 successful tail certificate and its exact classifier equality. -/
 @[expose] public def neutralChainCertificate?_succeeds_of_resolutionBounds
-    (interval : Data.Rat.Interval.Bounds) :
-    (head : Dense.Rational.Basic.CoordinatePolynomial) → (tail : List Dense.Rational.Basic.CoordinatePolynomial) →
-      Dense.Rational.SignedRemainder.Signs.Resolution.Bounds.NeutralChainResolutionBounds interval head tail →
-      (headResolved : Dense.Rational.Sign.Interval.Resolved.ResolvedSign head interval) →
-      { certificate : Dense.Rational.SignedRemainder.Signs.Neutral.NeutralChainCertificate interval head tail //
-        Dense.Rational.SignedRemainder.Signs.Neutral.Prepare.neutralChainCertificate? interval head tail = some
+    (interval : Interval.Bounds) :
+    (head : Basic.CoordinatePolynomial) → (tail : List Basic.CoordinatePolynomial) →
+      Resolution.Bounds.NeutralChainResolutionBounds interval head tail →
+      (headResolved : Sign.Interval.Resolved.ResolvedSign head interval) →
+      { certificate : NeutralChainCertificate interval head tail //
+        Prepare.neutralChainCertificate? interval head tail = some
           certificate }
   | head, [], .single, headResolved => by
       refine ⟨.single headResolved.certificate, ?_⟩
-      rw [Dense.Rational.SignedRemainder.Signs.Neutral.Prepare.neutralChainCertificate?, headResolved.found]
+      rw [Prepare.neutralChainCertificate?, headResolved.found]
   | head, [q], .pair last, headResolved => by
       refine ⟨.stable headResolved.certificate
         (.single last.certificate), ?_⟩
-      rw [Dense.Rational.SignedRemainder.Signs.Neutral.Prepare.neutralChainCertificate?, headResolved.found, last.found]
+      rw [Prepare.neutralChainCertificate?, headResolved.found, last.found]
   | head, q :: r :: suffix,
       .step nextEq leftClearance rightClearance leftResolution
         rightResolution dominance rest,
       headResolved => by
       subst r
-      by_cases qMargin : Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound q interval *
+      by_cases qMargin : Bounds.Lipschitz.denseEvalSqLipschitzBound q interval *
           Interval.Radius.sampleRadiusSq interval interval.lower < q.eval interval.lower ^ 2
-      · let qCertificate : Dense.Rational.Sign.Interval.Basic.Certificate q interval :=
+      · let qCertificate : Sign.Interval.Basic.Certificate q interval :=
           { sample := interval.lower
             sampleInside := ⟨le_rfl, interval.valid⟩
             margin := qMargin }
-        have qFound : Dense.Rational.Sign.Interval.Prepare.certificate? q interval = some qCertificate := by
-          unfold Dense.Rational.Sign.Interval.Prepare.certificate?
+        have qFound : Sign.Interval.Prepare.certificate? q interval = some qCertificate := by
+          unfold Sign.Interval.Prepare.certificate?
           exact dif_pos qMargin
-        let qResolved : Dense.Rational.Sign.Interval.Resolved.ResolvedSign q interval :=
+        let qResolved : Sign.Interval.Resolved.ResolvedSign q interval :=
           ⟨qCertificate, qFound⟩
         have recursive :=
           neutralChainCertificate?_succeeds_of_resolutionBounds
-          interval q (-((Purelib.Polynomial.Dense.Basic.DensePolynomial.divMod head q).remainder) :: suffix) rest
+          interval q (-((Basic.DensePolynomial.divMod head q).remainder) :: suffix) rest
             qResolved
         refine ⟨.stable headResolved.certificate recursive.1, ?_⟩
-        rw [Dense.Rational.SignedRemainder.Signs.Neutral.Prepare.neutralChainCertificate?, headResolved.found,
+        rw [Prepare.neutralChainCertificate?, headResolved.found,
           qFound]
         dsimp only
         rw (config := { occs := .pos [1] }) [recursive.2]
-      · have qNone : Dense.Rational.Sign.Interval.Prepare.certificate? q interval = none := by
-          unfold Dense.Rational.Sign.Interval.Prepare.certificate?
+      · have qNone : Sign.Interval.Prepare.certificate? q interval = none := by
+          unfold Sign.Interval.Prepare.certificate?
           exact dif_neg qMargin
         have stepSome :=
-          Dense.Rational.SignedRemainder.Signs.Step.Resolution.signedStepCellCertificate?_isSome_of_resolution
+          Step.Resolution.signedStepCellCertificate?_isSome_of_resolution
           headResolved.found qNone rightClearance rightResolution dominance
-        cases stepFound : Dense.Rational.SignedRemainder.Signs.Step.Prepare.signedStepCellCertificate? head q interval
+        cases stepFound : Step.Prepare.signedStepCellCertificate? head q interval
           with
         | none =>
             rw [stepFound] at stepSome
             cases stepSome
         | some stepCertificate =>
           have nextSome :
-              (Dense.Rational.Sign.Interval.Prepare.certificate?
-                (-((Purelib.Polynomial.Dense.Basic.DensePolynomial.divMod head q).remainder)) interval).isSome =
+              (Sign.Interval.Prepare.certificate?
+                (-((Basic.DensePolynomial.divMod head q).remainder)) interval).isSome =
                 true :=
-            Dense.Rational.Sign.Pair.Resolution.certificate?_isSome_of_pairResolution_of_first_none
+            Sign.Pair.Resolution.certificate?_isSome_of_pairResolution_of_first_none
               rightClearance rightResolution qNone
           cases nextFound :
-              Dense.Rational.Sign.Interval.Prepare.certificate?
-                (-((Purelib.Polynomial.Dense.Basic.DensePolynomial.divMod head q).remainder)) interval with
+              Sign.Interval.Prepare.certificate?
+                (-((Basic.DensePolynomial.divMod head q).remainder)) interval with
           | none =>
               rw [nextFound] at nextSome
               cases nextSome
           | some nextCertificate =>
             let nextResolved :
-                Dense.Rational.Sign.Interval.Resolved.ResolvedSign
-                  (-((Purelib.Polynomial.Dense.Basic.DensePolynomial.divMod head q).remainder)) interval :=
+                Sign.Interval.Resolved.ResolvedSign
+                  (-((Basic.DensePolynomial.divMod head q).remainder)) interval :=
               ⟨nextCertificate, nextFound⟩
             have recursive :=
               neutralChainCertificate?_succeeds_of_resolutionBounds
-              interval (-((Purelib.Polynomial.Dense.Basic.DensePolynomial.divMod head q).remainder)) suffix
+              interval (-((Basic.DensePolynomial.divMod head q).remainder)) suffix
                 rest.dropHead
                 nextResolved
             refine ⟨.event rfl stepCertificate recursive.1, ?_⟩
-            rw [Dense.Rational.SignedRemainder.Signs.Neutral.Prepare.neutralChainCertificate?, headResolved.found,
+            rw [Prepare.neutralChainCertificate?, headResolved.found,
               qNone]
             dsimp only
             rw [dif_pos rfl, stepFound]
@@ -133,17 +133,17 @@ The retained recursive certificate is wrapped by the original nonempty
 chain constructor. Its displayed equality certifies that the same scanner
 returns that exact proof-bearing result. -/
 @[expose] public def neutralChainCertificates?_succeeds_of_resolutionBounds
-    (interval : Data.Rat.Interval.Bounds) (head : Dense.Rational.Basic.CoordinatePolynomial) (tail : List
-      Dense.Rational.Basic.CoordinatePolynomial)
-    (bounds : Dense.Rational.SignedRemainder.Signs.Resolution.Bounds.NeutralChainResolutionBounds interval head tail)
-    (headResolved : Dense.Rational.Sign.Interval.Resolved.ResolvedSign head interval) :
-    { certificates : Dense.Rational.SignedRemainder.Signs.Neutral.NeutralChainCertificates interval (head :: tail) //
-      Dense.Rational.SignedRemainder.Signs.Neutral.Prepare.neutralChainCertificates? interval (head :: tail) = some
+    (interval : Interval.Bounds) (head : Basic.CoordinatePolynomial) (tail : List
+      Basic.CoordinatePolynomial)
+    (bounds : Resolution.Bounds.NeutralChainResolutionBounds interval head tail)
+    (headResolved : Sign.Interval.Resolved.ResolvedSign head interval) :
+    { certificates : NeutralChainCertificates interval (head :: tail) //
+      Prepare.neutralChainCertificates? interval (head :: tail) = some
         certificates } := by
   have recursive := neutralChainCertificate?_succeeds_of_resolutionBounds
     interval head tail bounds headResolved
   refine ⟨.cons recursive.1, ?_⟩
-  rw [Dense.Rational.SignedRemainder.Signs.Neutral.Prepare.neutralChainCertificates?]
+  rw [Prepare.neutralChainCertificates?]
   exact congrArg
     (fun found : Option (NeutralChainCertificate interval head tail) =>
       match found with

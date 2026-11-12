@@ -53,8 +53,8 @@ open Purelib.Polynomial.Geometry.Grid.ClearGrid (Cell)
 open Purelib.Curves.Hyperelliptic.Branches.BranchCellWinding
   (state selected_winding_four unassigned_winding_zero anchor_strict_cell)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Data curve}
   {higher : 1 < curve.polynomial.natDegree}
 
 set_option genInjectivity false in
@@ -62,7 +62,7 @@ set_option genInjectivity false in
 
 The selected index retains its exact branch-cell identity, while the clear alternative certifies exclusion of every
 original selected branch cell. These are evidence for the same displayed grid face. -/
-inductive FaceKind (bank : Branches.BranchCellBank curve branches higher) (cell : ClearGrid.Cell curve.polynomial
+inductive FaceKind (bank : BranchCellBank curve branches higher) (cell : Cell curve.polynomial
   (Cuts.Ambient curve))
   /-- Retain the original branch occurrence and equality of its selected cell with this face. -/ | branch (index :
     Data.Index branches) (cell_eq : cell = bank.cell index)
@@ -73,31 +73,31 @@ constructive_injectivity FaceKind
 
 namespace FaceKind
 
-variable {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches higher} {cell :
-  Purelib.Polynomial.Geometry.Grid.ClearGrid.Cell curve.polynomial (Purelib.Curves.Hyperelliptic.Branches.Cuts.Ambient
+variable {bank : BranchCellBank curve branches higher} {cell :
+  Cell curve.polynomial (Cuts.Ambient
   curve)}
 
 /-- Read the retained original branch index when this face is ramified. -/
-@[expose] def branchIndex? : Curves.Hyperelliptic.Branches.BranchFaceClassification.FaceKind bank cell → Option
+@[expose] def branchIndex? : FaceKind bank cell → Option
   (Data.Index branches)
   | .branch index _ => some index
   | .clear _ => none
 
 /-- The raw normalization is four for one branch and zero otherwise. -/
-@[expose] def rawWinding : Curves.Hyperelliptic.Branches.BranchFaceClassification.FaceKind bank cell → Int
+@[expose] def rawWinding : FaceKind bank cell → Int
   | .branch _ _ => 4
   | .clear _ => 0
 
 /-- The retained branch-or-clear classification gives exactly the original face's raw polynomial winding. -/
 theorem rawWinding_eq (member : cell ∈ bank.grid.cells) (kind :
-  Curves.Hyperelliptic.Branches.BranchFaceClassification.FaceKind bank cell) :
+  FaceKind bank cell) :
     kind.rawWinding = Winding.Box.Basic.quadrupledBoxWinding curve.polynomial cell.box := by
   cases kind with
   | branch index equal =>
       change 4 = Winding.Box.Basic.quadrupledBoxWinding curve.polynomial cell.box
       rw [equal]
-      exact (BranchCellWinding.selected_winding_four bank index).symm
-  | clear unassigned => exact (BranchCellWinding.unassigned_winding_zero bank cell member unassigned).symm
+      exact (selected_winding_four bank index).symm
+  | clear unassigned => exact (unassigned_winding_zero bank cell member unassigned).symm
 
 /-- Distinct branch labels cannot classify the same geometric cell. -/
 theorem branch_unique {first second : Data.Index branches}
@@ -107,12 +107,12 @@ theorem branch_unique {first second : Data.Index branches}
   · exact (bank.cells_ne first second equal (firstEq.symm.trans secondEq)).elim
 
 /-- A face equal to an original selected branch cell returns that exact branch index. -/
-theorem branchIndex_eq_of_cell_eq (kind : Curves.Hyperelliptic.Branches.BranchFaceClassification.FaceKind bank cell)
+theorem branchIndex_eq_of_cell_eq (kind : FaceKind bank cell)
   (index : Data.Index branches)
     (equal : cell = bank.cell index) : kind.branchIndex? = some index := by
   cases kind with
   | branch other otherEq =>
-      exact congrArg some (Curves.Hyperelliptic.Branches.BranchFaceClassification.FaceKind.branch_unique otherEq equal)
+      exact congrArg some (branch_unique otherEq equal)
   | clear unassigned => exact (unassigned index equal).elim
 
 end FaceKind
@@ -122,14 +122,14 @@ set_option genInjectivity false in
 
 The original listed index and containment evidence are retained on success. Exhaustion records exclusion at every actual
 occurrence of the same finite input list. -/
-inductive Scan (bank : Branches.BranchCellBank curve branches higher) (cell : ClearGrid.Cell curve.polynomial
+inductive Scan (bank : BranchCellBank curve branches higher) (cell : Cell curve.polynomial
   (Cuts.Ambient curve))
     (indices : List (Data.Index branches))
   /-- Retain the original listed branch occurrence whose cached anchor lies in the cell. -/ | found (index : Data.Index
     branches) (member : index ∈ indices)
-      (inside : cell.box.Contains (BranchCellWinding.state bank index).box.anchor)
+      (inside : cell.box.Contains (state bank index).box.anchor)
   /-- Every original listed branch anchor lies outside the cell. -/ | absent (outside : ∀ index ∈ indices,
-    ¬cell.box.Contains (BranchCellWinding.state bank index).box.anchor)
+    ¬cell.box.Contains (state bank index).box.anchor)
 
 constructive_injectivity Scan
 
@@ -138,16 +138,16 @@ open Purelib.Data.List in
 
 Containment is checked in the original list order using each retained branch state anchor. The first accepted occurrence
 is kept; exhaustion retains explicit exclusion for the exact scanned list. -/
-@[expose] def scan (bank : Branches.BranchCellBank curve branches higher) (cell : ClearGrid.Cell curve.polynomial
+@[expose] def scan (bank : BranchCellBank curve branches higher) (cell : Cell curve.polynomial
   (Cuts.Ambient curve)) :
-    (indices : List (Data.Index branches)) → Curves.Hyperelliptic.Branches.BranchFaceClassification.Scan bank cell
+    (indices : List (Data.Index branches)) → Scan bank cell
       indices
   | [] => .absent (fun _ member => (List.not_mem_nil member).elim)
   | index :: rest =>
-      if inside : cell.box.Contains (BranchCellWinding.state bank index).box.anchor then .found index List.mem_cons_self
+      if inside : cell.box.Contains (state bank index).box.anchor then .found index List.mem_cons_self
         inside
       else
-        match Purelib.Curves.Hyperelliptic.Branches.BranchFaceClassification.scan bank cell rest with
+        match BranchFaceClassification.scan bank cell rest with
         | .found next member inside => .found next (List.mem_cons_of_mem _ member) inside
         | .absent outside => .absent (fun other member => by
             rcases Membership.mem_cons.mp member with equal | member
@@ -156,17 +156,17 @@ is kept; exhaustion retains explicit exclusion for the exact scanned list. -/
             · exact outside other member)
 
 /-- Classify an original grid cell from a complete retained branch-index list and its cached anchor scan. -/
-@[expose] def classifyWith (bank : Branches.BranchCellBank curve branches higher)
+@[expose] def classifyWith (bank : BranchCellBank curve branches higher)
     (indices : List (Data.Index branches)) (complete : ∀ index, index ∈ indices)
-    (cell : ClearGrid.Cell curve.polynomial (Cuts.Ambient curve)) (member : cell ∈ bank.grid.cells) :
-      Curves.Hyperelliptic.Branches.BranchFaceClassification.FaceKind bank cell :=
-  match Curves.Hyperelliptic.Branches.BranchFaceClassification.scan bank cell indices with
+    (cell : Cell curve.polynomial (Cuts.Ambient curve)) (member : cell ∈ bank.grid.cells) :
+      FaceKind bank cell :=
+  match scan bank cell indices with
   | .found index _ inside =>
       .branch index (CellSeparation.cells_eq_of_common_point bank.grid (bank.cell_mem index) member
-        (BranchCellWinding.anchor_strict_cell bank index) inside).symm
+        (anchor_strict_cell bank index) inside).symm
   | .absent outside => .clear (fun index equal => outside index (complete index) (by
       rw [equal]
-      exact (BranchCellWinding.anchor_strict_cell bank index).contains))
+      exact (anchor_strict_cell bank index).contains))
 
 open Purelib.Data.List in
 /-- Total face classification using only cached branch boxes and rational coordinate comparisons. No successful-search
@@ -174,56 +174,56 @@ or winding-check input.
 
 The original List.ofFn enumeration supplies every bounded branch index in its retained order. Classification consumes
 those same cached branch anchors and preserves the resulting branch witness or clear-face evidence. -/
-@[expose] def classify (bank : Branches.BranchCellBank curve branches higher) (cell : ClearGrid.Cell curve.polynomial
+@[expose] def classify (bank : BranchCellBank curve branches higher) (cell : Cell curve.polynomial
   (Cuts.Ambient curve))
-    (member : cell ∈ bank.grid.cells) : Curves.Hyperelliptic.Branches.BranchFaceClassification.FaceKind bank cell :=
-  Curves.Hyperelliptic.Branches.BranchFaceClassification.classifyWith bank (List.ofFn fun index : Data.Index branches =>
+    (member : cell ∈ bank.grid.cells) : FaceKind bank cell :=
+  classifyWith bank (List.ofFn fun index : Data.Index branches =>
     index)
     (fun index => OfFn.Basic.mem_ofFn.mpr ⟨index, rfl⟩) cell member
 
 /-- Classifying an original selected branch cell returns its exact branch occurrence. -/
-theorem classify_selected (bank : Branches.BranchCellBank curve branches higher) (index : Data.Index branches) :
-    (Curves.Hyperelliptic.Branches.BranchFaceClassification.classify bank (bank.cell index) (bank.cell_mem
+theorem classify_selected (bank : BranchCellBank curve branches higher) (index : Data.Index branches) :
+    (classify bank (bank.cell index) (bank.cell_mem
       index)).branchIndex? = some index :=
-  Curves.Hyperelliptic.Branches.BranchFaceClassification.FaceKind.branchIndex_eq_of_cell_eq _ index rfl
+  FaceKind.branchIndex_eq_of_cell_eq _ index rfl
 
 set_option genInjectivity false in
 /-- One materialized face together with its branch classification.
 
 The original grid-cell membership and branch-or-clear payload refer to that exact retained cell. No replacement face or
 branch owner is selected by this record. -/
-structure ClassifiedFace (bank : Branches.BranchCellBank curve branches higher) where
-  /-- The retained original grid cell being classified. -/ cell : ClearGrid.Cell curve.polynomial (Cuts.Ambient curve)
+structure ClassifiedFace (bank : BranchCellBank curve branches higher) where
+  /-- The retained original grid cell being classified. -/ cell : Cell curve.polynomial (Cuts.Ambient curve)
   /-- The retained cell belongs to the original branch grid. -/ member : cell ∈ bank.grid.cells
   /-- The branch-or-clear certificate for this exact original cell. -/ kind :
-    Curves.Hyperelliptic.Branches.BranchFaceClassification.FaceKind bank cell
+    FaceKind bank cell
 
 constructive_injectivity ClassifiedFace
 
 /-- Materialize branch-or-clear certificates in the original cell-list order using one complete branch-index list. -/
-@[expose] def classifyCells (bank : Branches.BranchCellBank curve branches higher)
+@[expose] def classifyCells (bank : BranchCellBank curve branches higher)
     (indices : List (Data.Index branches)) (complete : ∀ index, index ∈ indices) :
-    (cells : List (ClearGrid.Cell curve.polynomial (Cuts.Ambient curve))) → (∀ cell ∈ cells, cell ∈ bank.grid.cells) →
-      List (Curves.Hyperelliptic.Branches.BranchFaceClassification.ClassifiedFace bank)
+    (cells : List (Cell curve.polynomial (Cuts.Ambient curve))) → (∀ cell ∈ cells, cell ∈ bank.grid.cells) →
+      List (ClassifiedFace bank)
   | [], _ => []
   | cell :: rest, included =>
-      ⟨cell, included cell List.mem_cons_self, Curves.Hyperelliptic.Branches.BranchFaceClassification.classifyWith bank
+      ⟨cell, included cell List.mem_cons_self, classifyWith bank
         indices complete cell (included cell List.mem_cons_self)⟩ ::
-        Purelib.Curves.Hyperelliptic.Branches.BranchFaceClassification.classifyCells bank indices complete rest (fun
+        BranchFaceClassification.classifyCells bank indices complete rest (fun
           cell member => included cell (List.mem_cons_of_mem _ member))
 
 /-- Reading back cells from the retained classified list gives the exact original cell list. -/
-private theorem classifyCells_cells (bank : Branches.BranchCellBank curve branches higher)
+private theorem classifyCells_cells (bank : BranchCellBank curve branches higher)
     (indices : List (Data.Index branches)) (complete : ∀ index, index ∈ indices)
-    (cells : List (ClearGrid.Cell curve.polynomial (Cuts.Ambient curve))) (included : ∀ cell ∈ cells, cell ∈
+    (cells : List (Cell curve.polynomial (Cuts.Ambient curve))) (included : ∀ cell ∈ cells, cell ∈
       bank.grid.cells) :
-    (Curves.Hyperelliptic.Branches.BranchFaceClassification.classifyCells bank indices complete cells included).map
-      Curves.Hyperelliptic.Branches.BranchFaceClassification.ClassifiedFace.cell = cells := by
+    (classifyCells bank indices complete cells included).map
+      ClassifiedFace.cell = cells := by
   induction cells with
   | nil => rfl
   | cons cell rest ih =>
-      change cell :: (Curves.Hyperelliptic.Branches.BranchFaceClassification.classifyCells bank indices complete rest
-        _).map Curves.Hyperelliptic.Branches.BranchFaceClassification.ClassifiedFace.cell = cell :: rest
+      change cell :: (classifyCells bank indices complete rest
+        _).map ClassifiedFace.cell = cell :: rest
       rw [ih]
 
 open Purelib.Data.List in
@@ -232,16 +232,16 @@ consumes this retained data.
 
 One original finite branch-index list is shared by the ordered grid-cell scans. The materialized records retain each
 exact cell, its original membership and its selected branch-or-clear evidence. -/
-@[expose] def classifiedFaces (bank : Branches.BranchCellBank curve branches higher) : List
-  (Curves.Hyperelliptic.Branches.BranchFaceClassification.ClassifiedFace bank) :=
-  Curves.Hyperelliptic.Branches.BranchFaceClassification.classifyCells bank (List.ofFn fun index : Data.Index branches
+@[expose] def classifiedFaces (bank : BranchCellBank curve branches higher) : List
+  (ClassifiedFace bank) :=
+  classifyCells bank (List.ofFn fun index : Data.Index branches
     => index)
     (fun index => OfFn.Basic.mem_ofFn.mpr ⟨index, rfl⟩) bank.grid.cells (fun _ member => member)
 
 /-- The retained complete classification preserves the exact original grid-cell list. -/
-theorem classifiedFaces_cells (bank : Branches.BranchCellBank curve branches higher) :
-    (Curves.Hyperelliptic.Branches.BranchFaceClassification.classifiedFaces bank).map
-      Curves.Hyperelliptic.Branches.BranchFaceClassification.ClassifiedFace.cell = bank.grid.cells :=
-      Curves.Hyperelliptic.Branches.BranchFaceClassification.classifyCells_cells _ _ _ _ _
+theorem classifiedFaces_cells (bank : BranchCellBank curve branches higher) :
+    (classifiedFaces bank).map
+      ClassifiedFace.cell = bank.grid.cells :=
+      classifyCells_cells _ _ _ _ _
 
 end Purelib.Curves.Hyperelliptic.Branches.BranchFaceClassification

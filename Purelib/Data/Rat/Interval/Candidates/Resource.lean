@@ -13,6 +13,8 @@ import Purelib.Data.Nat.Order
 import Mathlib.Order.Basic
 import Mathlib.Data.Nat.Basic
 
+open Purelib.Algebra.Field.Resource
+
 /-!
 # Coordinate magnitudes of rational interval candidates
 
@@ -42,7 +44,7 @@ Take the maximum of the two actual endpoint magnitudes and the magnitude of the 
 The first maximum contains the supplied left endpoint representation. -/
 private theorem left_le_intervalSource (a b : Fraction.Rational)
     (degreeBound : Nat) :
-    Fraction.Resource.Model.coordinateMagnitude a ≤ Interval.Candidates.Resource.intervalSourceMagnitude a b degreeBound
+    Fraction.Resource.Model.coordinateMagnitude a ≤ intervalSourceMagnitude a b degreeBound
       := by
   simp only [intervalSourceMagnitude, Data.Nat.Order.max_eq_natMax]
   exact Data.Nat.Order.le_max_left _ _
@@ -52,7 +54,7 @@ private theorem left_le_intervalSource (a b : Fraction.Rational)
 The nested maximum contains the supplied right endpoint representation, and the outer maximum retains that bound. -/
 private theorem right_le_intervalSource (a b : Fraction.Rational)
     (degreeBound : Nat) :
-    Fraction.Resource.Model.coordinateMagnitude b ≤ Interval.Candidates.Resource.intervalSourceMagnitude a b degreeBound
+    Fraction.Resource.Model.coordinateMagnitude b ≤ intervalSourceMagnitude a b degreeBound
       := by
   simp only [intervalSourceMagnitude, Data.Nat.Order.max_eq_natMax]
   exact Nat.le_trans (Data.Nat.Order.le_max_left _ _) (Data.Nat.Order.le_max_right _ _)
@@ -64,7 +66,7 @@ interval maximum. -/
 private theorem natCast_le_intervalSource (a b : Fraction.Rational)
     (degreeBound value : Nat) (valueBound : value ≤ max 3 (degreeBound + 2)) :
     Fraction.Resource.Model.coordinateMagnitude (value : Fraction.Rational) ≤
-      Interval.Candidates.Resource.intervalSourceMagnitude a b degreeBound := by
+      intervalSourceMagnitude a b degreeBound := by
   apply Nat.le_trans (Fraction.Resource.Components.componentMagnitude_natCast_mono valueBound)
   simp only [intervalSourceMagnitude, Data.Nat.Order.max_eq_natMax]
   exact Nat.le_trans (Data.Nat.Order.le_max_right _ _) (Data.Nat.Order.le_max_right _ _)
@@ -75,22 +77,22 @@ Subtract the endpoint records, divide the difference by three, and add the resul
 is bounded in the same rational magnitude model. -/
 public theorem centralLower_magnitude_le (a b : Fraction.Rational) (degreeBound : Nat) :
     Fraction.Resource.Model.coordinateMagnitude (Grid.CentralThird.centralLower a b) ≤
-      Field.Resource.Magnitude.grow Fraction.Resource.Model.rationalModel
-        (Interval.Candidates.Resource.intervalSourceMagnitude a b degreeBound) 3 := by
-  let bound := Interval.Candidates.Resource.intervalSourceMagnitude a b degreeBound
-  have difference := Purelib.Data.Rat.Fraction.Resource.Model.normalizedSub_le
-    (Interval.Candidates.Resource.right_le_intervalSource a b degreeBound)
-    (Interval.Candidates.Resource.left_le_intervalSource a b degreeBound)
-  have threeBound := (Interval.Candidates.Resource.natCast_le_intervalSource a b degreeBound 3
+      Magnitude.grow Fraction.Resource.Model.rationalModel
+        (intervalSourceMagnitude a b degreeBound) 3 := by
+  let bound := intervalSourceMagnitude a b degreeBound
+  have difference := Fraction.Resource.Model.normalizedSub_le
+    (right_le_intervalSource a b degreeBound)
+    (left_le_intervalSource a b degreeBound)
+  have threeBound := (natCast_le_intervalSource a b degreeBound 3
     ((by
         simpa only [Data.Nat.Order.max_eq_natMax]
           using Data.Nat.Order.le_max_left _ _))).trans
-      (Field.Resource.Magnitude.bound_le_grow Fraction.Resource.Model.rationalModel bound 1)
-  have third := Purelib.Data.Rat.Fraction.Resource.Model.normalizedDiv_le difference threeBound
-  have leftBound := (Interval.Candidates.Resource.left_le_intervalSource a b degreeBound).trans
-    (Field.Resource.Magnitude.bound_le_grow Fraction.Resource.Model.rationalModel bound 2)
-  have result := Purelib.Data.Rat.Fraction.Resource.Model.normalizedAdd_le leftBound third
-  simpa only [Grid.CentralThird.centralLower, Field.Resource.Magnitude.grow_add, Nat.cast_ofNat] using result
+      (Magnitude.bound_le_grow Fraction.Resource.Model.rationalModel bound 1)
+  have third := Fraction.Resource.Model.normalizedDiv_le difference threeBound
+  have leftBound := (left_le_intervalSource a b degreeBound).trans
+    (Magnitude.bound_le_grow Fraction.Resource.Model.rationalModel bound 2)
+  have result := Fraction.Resource.Model.normalizedAdd_le leftBound third
+  simpa only [Grid.CentralThird.centralLower, Magnitude.grow_add, Nat.cast_ofNat] using result
 
 /-- Four rational resource-envelope steps bound the computed upper central-third endpoint.
 
@@ -98,28 +100,28 @@ The upper endpoint additionally multiplies the divided difference by two. The re
 controls both natural casts. -/
 public theorem centralUpper_magnitude_le (a b : Fraction.Rational) (degreeBound : Nat) :
     Fraction.Resource.Model.coordinateMagnitude (Grid.CentralThird.centralUpper a b) ≤
-      Field.Resource.Magnitude.grow Fraction.Resource.Model.rationalModel
-        (Interval.Candidates.Resource.intervalSourceMagnitude a b degreeBound) 4 := by
-  let bound := Interval.Candidates.Resource.intervalSourceMagnitude a b degreeBound
-  have difference := Purelib.Data.Rat.Fraction.Resource.Model.normalizedSub_le
-    (Interval.Candidates.Resource.right_le_intervalSource a b degreeBound)
-    (Interval.Candidates.Resource.left_le_intervalSource a b degreeBound)
-  have threeBound := (Interval.Candidates.Resource.natCast_le_intervalSource a b degreeBound 3
+      Magnitude.grow Fraction.Resource.Model.rationalModel
+        (intervalSourceMagnitude a b degreeBound) 4 := by
+  let bound := intervalSourceMagnitude a b degreeBound
+  have difference := Fraction.Resource.Model.normalizedSub_le
+    (right_le_intervalSource a b degreeBound)
+    (left_le_intervalSource a b degreeBound)
+  have threeBound := (natCast_le_intervalSource a b degreeBound 3
     ((by
         simpa only [Data.Nat.Order.max_eq_natMax]
           using Data.Nat.Order.le_max_left _ _))).trans
-      (Field.Resource.Magnitude.bound_le_grow Fraction.Resource.Model.rationalModel bound 1)
-  have third := Purelib.Data.Rat.Fraction.Resource.Model.normalizedDiv_le difference threeBound
-  have twoBound := (Interval.Candidates.Resource.natCast_le_intervalSource a b degreeBound 2
+      (Magnitude.bound_le_grow Fraction.Resource.Model.rationalModel bound 1)
+  have third := Fraction.Resource.Model.normalizedDiv_le difference threeBound
+  have twoBound := (natCast_le_intervalSource a b degreeBound 2
     (Nat.le_trans (by decide : 2 ≤ 3) (by
         simpa only [Data.Nat.Order.max_eq_natMax]
-          using Data.Nat.Order.le_max_left 3 (degreeBound + 2)))).trans (Field.Resource.Magnitude.bound_le_grow
+          using Data.Nat.Order.le_max_left 3 (degreeBound + 2)))).trans (Magnitude.bound_le_grow
             Fraction.Resource.Model.rationalModel bound 2)
-  have twice := Purelib.Data.Rat.Fraction.Resource.Model.normalizedMul_le twoBound third
-  have leftBound := (Interval.Candidates.Resource.left_le_intervalSource a b degreeBound).trans
-    (Field.Resource.Magnitude.bound_le_grow Fraction.Resource.Model.rationalModel bound 3)
-  have result := Purelib.Data.Rat.Fraction.Resource.Model.normalizedAdd_le leftBound twice
-  simpa only [Grid.CentralThird.centralUpper, Field.Resource.Magnitude.grow_add, Nat.cast_ofNat] using result
+  have twice := Fraction.Resource.Model.normalizedMul_le twoBound third
+  have leftBound := (left_le_intervalSource a b degreeBound).trans
+    (Magnitude.bound_le_grow Fraction.Resource.Model.rationalModel bound 3)
+  have result := Fraction.Resource.Model.normalizedAdd_le leftBound twice
+  simpa only [Grid.CentralThird.centralUpper, Magnitude.grow_add, Nat.cast_ofNat] using result
 
 /-- Four resource-envelope steps bound an interior candidate when endpoints, divisor and index cast satisfy the supplied
 source bound.
@@ -134,18 +136,18 @@ private theorem interiorCandidate_magnitude_le_of_source
     (divisorBound : Fraction.Resource.Model.coordinateMagnitude (degreeBound + 2 : Nat) ≤ bound)
     (indexBound : Fraction.Resource.Model.coordinateMagnitude (index.val + 1 : Nat) ≤ bound) :
     Fraction.Resource.Model.coordinateMagnitude (Grid.Interior.interiorCandidate a b degreeBound index) ≤
-      Field.Resource.Magnitude.grow Fraction.Resource.Model.rationalModel bound 4 := by
-  have difference := Purelib.Data.Rat.Fraction.Resource.Model.normalizedSub_le bBound aBound
-  have divisorLift := divisorBound.trans (Field.Resource.Magnitude.bound_le_grow Fraction.Resource.Model.rationalModel
+      Magnitude.grow Fraction.Resource.Model.rationalModel bound 4 := by
+  have difference := Fraction.Resource.Model.normalizedSub_le bBound aBound
+  have divisorLift := divisorBound.trans (Magnitude.bound_le_grow Fraction.Resource.Model.rationalModel
     bound 1)
-  have step := Purelib.Data.Rat.Fraction.Resource.Model.normalizedDiv_le difference divisorLift
-  have indexLift := indexBound.trans (Field.Resource.Magnitude.bound_le_grow Fraction.Resource.Model.rationalModel bound
+  have step := Fraction.Resource.Model.normalizedDiv_le difference divisorLift
+  have indexLift := indexBound.trans (Magnitude.bound_le_grow Fraction.Resource.Model.rationalModel bound
     2)
-  have offset := Purelib.Data.Rat.Fraction.Resource.Model.normalizedMul_le indexLift step
-  have aLift := aBound.trans (Field.Resource.Magnitude.bound_le_grow Fraction.Resource.Model.rationalModel bound 3)
-  have result := Purelib.Data.Rat.Fraction.Resource.Model.normalizedAdd_le aLift offset
-  simpa only [Grid.Interior.interiorCandidate, Grid.Interior.interiorStep, Field.Resource.Magnitude.grow_add] using
-    result
+  have offset := Fraction.Resource.Model.normalizedMul_le indexLift step
+  have aLift := aBound.trans (Magnitude.bound_le_grow Fraction.Resource.Model.rationalModel bound 3)
+  have result := Fraction.Resource.Model.normalizedAdd_le aLift offset
+  simpa only [Grid.Interior.interiorCandidate, Grid.Interior.point,
+    Grid.Interior.interiorStep, Magnitude.grow_add] using result
 
 /-- Eight rational resource-envelope steps bound each retained interior candidate of the central third.
 
@@ -156,35 +158,35 @@ public theorem centralCandidate_magnitude_le (a b : Fraction.Rational) (degreeBo
     Fraction.Resource.Model.coordinateMagnitude
         (Grid.Interior.interiorCandidate (Grid.CentralThird.centralLower a b) (Grid.CentralThird.centralUpper a b)
           degreeBound index) ≤
-      Field.Resource.Magnitude.grow Fraction.Resource.Model.rationalModel
-        (Interval.Candidates.Resource.intervalSourceMagnitude a b degreeBound) 8 := by
-  let source := Interval.Candidates.Resource.intervalSourceMagnitude a b degreeBound
-  let centralBound := Field.Resource.Magnitude.grow Fraction.Resource.Model.rationalModel source 4
+      Magnitude.grow Fraction.Resource.Model.rationalModel
+        (intervalSourceMagnitude a b degreeBound) 8 := by
+  let source := intervalSourceMagnitude a b degreeBound
+  let centralBound := Magnitude.grow Fraction.Resource.Model.rationalModel source 4
   have lowerBound : Fraction.Resource.Model.coordinateMagnitude (Grid.CentralThird.centralLower a b) ≤ centralBound :=
-    (Interval.Candidates.Resource.centralLower_magnitude_le a b degreeBound).trans
-      (Field.Resource.Magnitude.grow_mono_steps Fraction.Resource.Model.rationalModel source (by decide))
+    (centralLower_magnitude_le a b degreeBound).trans
+      (Magnitude.grow_mono_steps Fraction.Resource.Model.rationalModel source (by decide))
   have upperBound : Fraction.Resource.Model.coordinateMagnitude (Grid.CentralThird.centralUpper a b) ≤ centralBound :=
-    Interval.Candidates.Resource.centralUpper_magnitude_le a b degreeBound
-  have divisorSource := Interval.Candidates.Resource.natCast_le_intervalSource a b degreeBound
+    centralUpper_magnitude_le a b degreeBound
+  have divisorSource := natCast_le_intervalSource a b degreeBound
     (degreeBound + 2) ((by
         simpa only [Data.Nat.Order.max_eq_natMax]
           using Data.Nat.Order.le_max_right _ _))
   have divisorBound := divisorSource.trans
-    (Field.Resource.Magnitude.bound_le_grow Fraction.Resource.Model.rationalModel source 4)
+    (Magnitude.bound_le_grow Fraction.Resource.Model.rationalModel source 4)
   have indexNatural : index.val + 1 ≤ max 3 (degreeBound + 2) := by
     exact (Nat.succ_le_of_lt index.isLt).trans
       ((Nat.succ_le_succ (Nat.le_succ degreeBound)).trans
         ((by
             simpa only [Data.Nat.Order.max_eq_natMax]
               using Data.Nat.Order.le_max_right 3 (degreeBound + 2))))
-  have indexSource := Interval.Candidates.Resource.natCast_le_intervalSource a b degreeBound
+  have indexSource := natCast_le_intervalSource a b degreeBound
     (index.val + 1) indexNatural
   have indexBound := indexSource.trans
-    (Field.Resource.Magnitude.bound_le_grow Fraction.Resource.Model.rationalModel source 4)
-  have candidate := Interval.Candidates.Resource.interiorCandidate_magnitude_le_of_source
+    (Magnitude.bound_le_grow Fraction.Resource.Model.rationalModel source 4)
+  have candidate := interiorCandidate_magnitude_le_of_source
     (Grid.CentralThird.centralLower a b) (Grid.CentralThird.centralUpper a b) degreeBound index centralBound
     lowerBound upperBound divisorBound indexBound
-  simpa only [centralBound, Field.Resource.Magnitude.grow_add] using candidate
+  simpa only [centralBound, Magnitude.grow_add] using candidate
 
 /-! ## Structural counts -/
 
@@ -201,7 +203,7 @@ the same evaluation budget. -/
 public theorem safeCandidate_count_eq_budget (a b : Fraction.Rational)
     (degreeBound : Nat) :
     (Grid.Interior.interiorCandidates a b degreeBound).length =
-      Interval.Candidates.Resource.safeCandidateEvaluationBudget degreeBound := by
+      safeCandidateEvaluationBudget degreeBound := by
   exact Grid.Interior.interiorCandidates_length a b degreeBound
 
 /-- Combine a supplied endpoint magnitude bound with the finite candidate denominator magnitude.
@@ -217,8 +219,8 @@ displayed maximum. -/
 Use the rational magnitude model and exactly eight growth steps from the combined source bound. The envelope accounts
 for central-third endpoint construction followed by the interior candidate arithmetic. -/
 @[expose] public def safeCutMagnitudeEnvelope (bound degreeBound : Nat) : Nat :=
-  Field.Resource.Magnitude.grow Fraction.Resource.Model.rationalModel
-    (Interval.Candidates.Resource.safeCutSourceMagnitude bound degreeBound) 8
+  Magnitude.grow Fraction.Resource.Model.rationalModel
+    (safeCutSourceMagnitude bound degreeBound) 8
 
 /-- Bounds on both endpoint magnitudes bound their combined interval source by the safe-cut source magnitude.
 
@@ -228,8 +230,8 @@ public theorem intervalSource_le_safeCutSource
     {a b : Fraction.Rational} {bound degreeBound : Nat}
     (aBound : Fraction.Resource.Model.coordinateMagnitude a ≤ bound)
     (bBound : Fraction.Resource.Model.coordinateMagnitude b ≤ bound) :
-    Interval.Candidates.Resource.intervalSourceMagnitude a b degreeBound ≤
-      Interval.Candidates.Resource.safeCutSourceMagnitude bound degreeBound := by
+    intervalSourceMagnitude a b degreeBound ≤
+      safeCutSourceMagnitude bound degreeBound := by
   simp only [intervalSourceMagnitude, safeCutSourceMagnitude, Data.Nat.Order.max_eq_natMax]
   apply Data.Nat.Order.max_le
   · exact aBound.trans ((Data.Nat.Order.le_max_left _ _))
@@ -242,12 +244,12 @@ public theorem intervalSource_le_safeCutSource
 The source maximum includes the supplied bound, and each of the eight rational growth steps preserves that inequality.
 -/
 public theorem bound_le_safeCutMagnitudeEnvelope (bound degreeBound : Nat) :
-    bound ≤ Interval.Candidates.Resource.safeCutMagnitudeEnvelope bound degreeBound := by
+    bound ≤ safeCutMagnitudeEnvelope bound degreeBound := by
   have source : bound ≤ safeCutSourceMagnitude bound degreeBound := by
     simp only [safeCutSourceMagnitude, Data.Nat.Order.max_eq_natMax]
     exact Data.Nat.Order.le_max_left _ _
   exact Nat.le_trans source
-    (Field.Resource.Magnitude.bound_le_grow Fraction.Resource.Model.rationalModel (safeCutSourceMagnitude bound
+    (Magnitude.bound_le_grow Fraction.Resource.Model.rationalModel (safeCutSourceMagnitude bound
       degreeBound) 8)
 
 end Purelib.Data.Rat.Interval.Candidates.Resource

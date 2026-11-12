@@ -1,5 +1,6 @@
 module
 import Purelib.Data.Rat.Fraction.Cast
+import Purelib.Geometry.Rational.Box.Sum
 meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Riemann.Normalization.InverseRootPolynomial
 import Purelib.Riemann.Readings.PreparedObservationNeighborhoods
@@ -23,7 +24,7 @@ import Purelib.Geometry.Rational.Box.Bounds
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Riemann.RootContinuation.SquareRootContinuation
 
-public import Purelib.RootIsolation.SquareRoot.Clearance.ExactQuadraticOwnerClearance
+public import Purelib.RootIsolation.SquareRoot.Clearance.ExactQuadraticOwnerClearance.Transport
 public import Purelib.Riemann.Normalization.AlignedInverseRootSeed
 import Purelib.Riemann.RootContinuation.SquareRootDegree
 import Purelib.Approximation.Gaussian.Process.Basic
@@ -41,6 +42,10 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Geometry.Rational.Box.Refinement
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
+
+open Purelib.Geometry.Rational.Box.Square.Centered
+
+open Purelib.Data.Rat.Fraction.Order
 
 public section
 
@@ -75,7 +80,7 @@ open Purelib.Data.Gaussian in
 /-- The canonical Gaussian rational carrier. -/
 private abbrev Gaussian := Basic.Canonical
 /-- The original rational box carrier with retained coordinate bounds. -/
-private abbrev Box := Purelib.Geometry.Rational.Box
+private abbrev Box := Geometry.Rational.Box
 
 open Purelib.Data.Rat in
 open Purelib.Geometry.Rational in
@@ -108,9 +113,9 @@ structure ContinuedNeighborhood (polynomial : Polynomial) (count : Nat) where
   /-- The retained radius is no larger than the original seeded-neighborhood radius. -/ radius_bound : radius ≤
     base.radius
   /-- The retained continuation radius is strictly positive. -/ radius_positive : 0 < radius
-  /-- The exact centered box carrying the continuation movement certificate. -/ box : Purelib.Geometry.Rational.Box
+  /-- The exact centered box carrying the continuation movement certificate. -/ box : Geometry.Rational.Box
   /-- The box is centered at the original observation point with the retained radius. -/ box_eq : box =
-    Box.Square.Centered.BoxTransport.centeredBox base.site.center radius radius_positive.le
+    BoxTransport.centeredBox base.site.center radius radius_positive.le
   /-- Every point of the retained box has parameter movement strictly below the exact continuation allowance. -/
     movement_small : ∀ point, box.Contains point →
     normSq (polynomial.eval base.site.center - polynomial.eval point) < continuationAllowance
@@ -140,25 +145,13 @@ theorem movement_of_radius (base : SeededNeighborhood polynomial count)
     (radiusNonnegative : 0 ≤ radius) (baseBound : radius ≤ base.radius)
     (variationBound : radius ≤ variationRadius allowance base.site.denominatorSlope)
     {point : Basic.Canonical}
-    (inside : (Box.Square.Centered.BoxTransport.centeredBox base.site.center radius radiusNonnegative).Contains point) :
+    (inside : (BoxTransport.centeredBox base.site.center radius radiusNonnegative).Contains point) :
     normSq (polynomial.eval base.site.center - polynomial.eval point) < allowance := by
-  have refines : (Box.Square.Centered.BoxTransport.centeredBox base.site.center radius radiusNonnegative).Refines
-    base.box := by
-    rw [base.box_eq]
-    exact centeredBox_refines _ radiusNonnegative base.radius_positive.le baseBound
-  have centerInside := centeredBox_center base.site.center radiusNonnegative
-  have ambientRefines := refines.trans base.box_refines
-  have variation := Bounds.Box.normSq_eval_sub_eval_le_denseLipschitzBound polynomial
-    (ambientRefines.contains centerInside) (ambientRefines.contains inside)
-  rw [← base.site.denominatorSlope_eq] at variation
-  have distance := Box.normSq_sub_le_diagonalSq centerInside inside
-  rw [Box.Square.Centered.BoxTransport.centeredBox_diagonalSq] at distance
-  have movement := variation.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    distance base.site.denominatorSlope_positive.le)
+  have movement := base.site.denominator_movement_le radiusNonnegative
+    (baseBound.trans base.radius_le_site) inside
   have paid := variation_error_le_quarter base.site.denominatorSlope_positive.le radiusNonnegative variationBound
-  rw [Norm.Basic.normSq_eq_canonical] at movement
   apply (movement.trans paid).trans_lt
-  have strict := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+  have strict := Arithmetic.mul_lt_mul_of_pos_left_direct
     allowancePositive (by decide : (1 / 4 : Fraction.Rational) < 1)
   simpa only [Fraction.Field.div_eq_mul_inv_direct, Fraction.Field.one_mul,
     Fraction.Field.mul_one_direct] using strict
@@ -180,13 +173,13 @@ quarter divided by the seed norm squared plus one. -/
       (min base.seed.owner.track.initial.ambientRightClearance.bound
         (min base.seed.owner.track.initial.ambientBottomClearance.bound
           base.seed.owner.track.initial.ambientTopClearance.bound)))
-  have allowancePositive : 0 < allowance := Fraction.Order.Basic.lt_min base.seed.owner.track.initial.clearance.positive
-    (Fraction.Order.Basic.lt_min base.seed.owner.track.initial.ambientLeftClearance.positive
-      (Fraction.Order.Basic.lt_min base.seed.owner.track.initial.ambientRightClearance.positive
-        (Fraction.Order.Basic.lt_min base.seed.owner.track.initial.ambientBottomClearance.positive
+  have allowancePositive : 0 < allowance := Basic.lt_min base.seed.owner.track.initial.clearance.positive
+    (Basic.lt_min base.seed.owner.track.initial.ambientLeftClearance.positive
+      (Basic.lt_min base.seed.owner.track.initial.ambientRightClearance.positive
+        (Basic.lt_min base.seed.owner.track.initial.ambientBottomClearance.positive
           base.seed.owner.track.initial.ambientTopClearance.positive)))
   let radius := min base.radius (variationRadius allowance base.site.denominatorSlope)
-  have positive : 0 < radius := Fraction.Order.Basic.lt_min base.radius_positive
+  have positive : 0 < radius := Basic.lt_min base.radius_positive
     (variationRadius_positive allowancePositive base.site.denominatorSlope_positive.le)
   { base := base
     origin := origin
@@ -196,16 +189,48 @@ quarter divided by the seed norm squared plus one. -/
     continuationAllowance_eq := rfl
     continuationAllowance_positive := allowancePositive
     radius := radius
-    radius_bound := Fraction.Order.Basic.min_le_left _ _
+    radius_bound := Basic.min_le_left _ _
     radius_positive := positive
-    box := Box.Square.Centered.BoxTransport.centeredBox base.site.center radius positive.le
+    box := BoxTransport.centeredBox base.site.center radius positive.le
     box_eq := rfl
     movement_small := fun _ inside => movement_of_radius base allowancePositive positive.le
-      (Fraction.Order.Basic.min_le_left _ _) (Fraction.Order.Basic.min_le_right _ _) inside
+      (Basic.min_le_left _ _) (Basic.min_le_right _ _) inside
     rootLower := (1 / 4) / (normSq base.seed.value + 1)
     rootLower_eq := rfl
-    rootLower_positive := Fraction.Order.Field.div_pos_direct (by decide)
-      (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct (Basic.Canonical.normSq_nonneg _) (by decide)) }
+    rootLower_positive := Field.div_pos_direct (by decide)
+      (Arithmetic.add_pos_of_nonneg_of_pos_direct (normSq_nonneg _) (by decide)) }
+
+open Purelib.Data.Rat in
+/-- The original seeded continuation radius retains its exact variation-radius payment.
+
+The original constructor takes the minimum of the seeded radius and this
+same allowance-dependent radius. Reading that scalar minimum keeps the
+complete seed, origin and alignment owners unchanged.
+-/
+theorem ofSeeded_radius_le_variation (base : SeededNeighborhood polynomial count)
+    (origin : Owner (polynomial.eval base.site.center))
+    (refines : base.seed.owner.track.initial.box.Refines origin.track.initial.box)
+    (aligned : ∀ root, base.seed.owner.track.initial.box.Contains root →
+      normSq (1 - root * base.seed.value) ≤ 1 / 256) :
+    (ofSeeded base origin refines aligned).radius ≤
+      variationRadius (ofSeeded base origin refines aligned).continuationAllowance base.site.denominatorSlope :=
+  Basic.min_le_right _ _
+
+open Purelib.Data.Gaussian in
+/-- The retained continued box has a weak movement ceiling from its identical original slope and radius.
+
+The box equality and retained radius inclusion specialize the original
+observation-site estimate without replacing the neighborhood or querying
+its point owners.
+-/
+theorem movement_le (patch : ContinuedNeighborhood polynomial count) {point : Basic.Canonical}
+    (inside : patch.box.Contains point) :
+    normSq (polynomial.eval patch.base.site.center - polynomial.eval point) ≤
+      patch.base.site.denominatorSlope * (8 * patch.radius ^ 2) := by
+  have retained := inside
+  rewrite [patch.box_eq] at retained
+  exact patch.base.site.denominator_movement_le patch.radius_positive.le
+    (patch.radius_bound.trans patch.base.radius_le_site) retained
 
 open Purelib.Data.Rat in
 open Purelib.Geometry.Rational in
@@ -216,7 +241,7 @@ The original seeded site, root owner, alignment, continuation allowance and root
 supplied neighborhood. -/
 @[expose] def withRadius (patch : ContinuedNeighborhood polynomial count) (radius : Fraction.Rational)
     (positive : 0 < radius) (baseBound : radius ≤ patch.base.radius)
-    (movement : ∀ point, (Box.Square.Centered.BoxTransport.centeredBox patch.base.site.center radius
+    (movement : ∀ point, (BoxTransport.centeredBox patch.base.site.center radius
       positive.le).Contains point →
       normSq (polynomial.eval patch.base.site.center - polynomial.eval point) < patch.continuationAllowance) :
     ContinuedNeighborhood polynomial count :=
@@ -224,7 +249,7 @@ supplied neighborhood. -/
     radius := radius
     radius_bound := baseBound
     radius_positive := positive
-    box := Box.Square.Centered.BoxTransport.centeredBox patch.base.site.center radius positive.le
+    box := BoxTransport.centeredBox patch.base.site.center radius positive.le
     box_eq := rfl
     movement_small := movement }
 
@@ -234,12 +259,12 @@ open Purelib.Riemann.Normalization
 @[expose] def ofAligned (site : ObservationNeighborhood polynomial count)
     {origin : Owner (polynomial.eval site.center)} (aligned : AlignedSeed origin) :
     ContinuedNeighborhood polynomial count :=
-  ofSeeded (OwnerSeededInverseRoot.SeededNeighborhood.ofSeed site aligned.seed) origin aligned.refines aligned.aligned
+  ofSeeded (SeededNeighborhood.ofSeed site aligned.seed) origin aligned.refines aligned.aligned
 
 /-- Align a seed to the original observation owner and construct its continued neighborhood. -/
 @[expose] def ofOwner (site : ObservationNeighborhood polynomial count)
     (origin : Owner (polynomial.eval site.center)) : ContinuedNeighborhood polynomial count :=
-  ofAligned site (AlignedInverseRootSeed.AlignedSeed.ofOwner origin)
+  ofAligned site (AlignedSeed.ofOwner origin)
 
 end
 
@@ -277,10 +302,10 @@ open Purelib.Data.Rat in
 theorem parameter_nonzero (patch : ContinuedNeighborhood polynomial count) {point : Basic.Canonical}
     (inside : patch.box.Contains point) : polynomial.eval point ≠ 0 := by
   have positive : 0 < normSq (polynomial.eval point) :=
-    (Fraction.Order.Field.div_pos_direct patch.base.site.denominatorValue_positive (by decide)).trans_le
+    (Field.div_pos_direct patch.base.site.denominatorValue_positive (by decide)).trans_le
       (patch.parameter_lower inside)
   intro zero
-  rw [zero, Basic.Canonical.normSq_zero] at positive
+  rw [zero, normSq_zero] at positive
   exact (lt_irrefl _ positive)
 
 open Purelib.Data.Gaussian in
@@ -301,7 +326,7 @@ theorem parameter_movement (patch : ContinuedNeighborhood polynomial count) {poi
     normSq (polynomial.eval patch.base.site.center - polynomial.eval point) <
       patch.base.seed.owner.track.initial.clearance.bound :=
   (patch.parameter_movement_allowance inside).trans_le (by
-    rw [patch.continuationAllowance_eq]; exact Fraction.Order.Basic.min_le_left _ _)
+    rw [patch.continuationAllowance_eq]; exact Basic.min_le_left _ _)
 
 open Purelib.Data.Gaussian in
 open Purelib.Riemann.RootContinuation in
@@ -349,19 +374,38 @@ theorem root_lower (patch : ContinuedNeighborhood polynomial count) {root : Basi
   have identity : (1 : Basic.Canonical) - (1 - root * patch.base.seed.value) = root * patch.base.seed.value := by ring1
   simp only [Norm.Basic.normSq_eq_canonical] at lower
   rw [identity,
-      Basic.Canonical.normSq_mul, show normSq (1 : Basic.Canonical) = (1 : Fraction.Rational) by decide] at lower
+      normSq_mul, show normSq (1 : Basic.Canonical) = (1 : Fraction.Rational) by decide] at lower
   have productLower : (1 / 4 : Fraction.Rational) <= normSq root * normSq patch.base.seed.value := by
     calc
       _ <= (1 / 2 : Fraction.Rational) - 1 / 256 := by decide +kernel
       _ <= (1 / 2 : Fraction.Rational) - normSq (1 - root * patch.base.seed.value) :=
-        Fraction.Order.Arithmetic.sub_le_sub_left_direct alignment _
+        Arithmetic.sub_le_sub_left_direct alignment _
       _ <= _ := lower
   rw [patch.rootLower_eq]
-  apply (Fraction.Order.Field.div_le_iff_pos
-    (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct (Basic.Canonical.normSq_nonneg patch.base.seed.value) (by
+  apply (Field.div_le_iff_pos
+    (Arithmetic.add_pos_of_nonneg_of_pos_direct (normSq_nonneg patch.base.seed.value) (by
       decide))).2
-  exact productLower.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (le_add_of_nonneg_right (by decide)) (Basic.Canonical.normSq_nonneg root))
+  exact productLower.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (le_add_of_nonneg_right (by decide)) (normSq_nonneg root))
+
+open Purelib.Data.Gaussian in
+open Purelib.Data.Rat in
+/-- Two readings inside the same original aligned seed box have a uniformly separated sum.
+
+The retained root floor holds on the entire convex box, so it also bounds
+the midpoint of these two actual readings. Neither a new signed window nor
+an equality between independently supplied root owners is assumed.
+-/
+theorem root_sum_lower (patch : ContinuedNeighborhood polynomial count) {first last : Basic.Canonical}
+    (firstInside : patch.base.seed.owner.track.initial.box.Contains first)
+    (lastInside : patch.base.seed.owner.track.initial.box.Contains last) :
+    4 * patch.rootLower ≤ normSq (first + last) := by
+  have lower := Geometry.Rational.Box.sum_normSq_lower patch.base.seed.owner.track.initial.box patch.rootLower
+    (fun inside => by
+      rewrite [Norm.Basic.normSq_eq_canonical]
+      exact patch.root_lower inside) firstInside lastInside
+  rewrite [Norm.Basic.normSq_eq_canonical] at lower
+  exact lower
 
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
@@ -383,7 +427,7 @@ constructive_injectivity Point
 
 namespace Point
 
-variable {patch : ContinuedNeighborhood polynomial count} {point : Purelib.Data.Gaussian.Basic.Canonical}
+variable {patch : ContinuedNeighborhood polynomial count} {point : Data.Gaussian.Basic.Canonical}
 
 open Purelib.Data.Gaussian in
 /-- Retain a supplied point owner with its original seed-box refinement and exact positive parameter squared norm. -/
@@ -426,20 +470,71 @@ theorem acquire_initial_box (patch : ContinuedNeighborhood polynomial count) (po
   all_goals
     apply (patch.parameter_movement_allowance inside).trans_le
     rw [patch.continuationAllowance_eq]
-  · exact Fraction.Order.Basic.min_le_left _ _
-  · exact (Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _)
-  · exact (Fraction.Order.Basic.min_le_right _ _).trans ((Fraction.Order.Basic.min_le_right _ _).trans
-      (Fraction.Order.Basic.min_le_left _ _))
-  · exact (Fraction.Order.Basic.min_le_right _ _).trans ((Fraction.Order.Basic.min_le_right _ _).trans
-      ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _)))
-  · exact (Fraction.Order.Basic.min_le_right _ _).trans ((Fraction.Order.Basic.min_le_right _ _).trans
-      ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_right _ _)))
+  · exact Basic.min_le_left _ _
+  · exact (Basic.min_le_right _ _).trans (Basic.min_le_left _ _)
+  · exact (Basic.min_le_right _ _).trans ((Basic.min_le_right _ _).trans
+      (Basic.min_le_left _ _))
+  · exact (Basic.min_le_right _ _).trans ((Basic.min_le_right _ _).trans
+      ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _)))
+  · exact (Basic.min_le_right _ _).trans ((Basic.min_le_right _ _).trans
+      ((Basic.min_le_right _ _).trans (Basic.min_le_right _ _)))
+
+open Purelib.Data.Gaussian in
+open Purelib.Data.Rat in
+open Purelib.RootIsolation.SquareRoot.Clearance in
+/-- The actual acquired point owner's contour retains the uniform original-seed transport floor.
+
+A finite movement ceiling below the original continuation allowance pays
+all four retained ambient-line margins. The exact original acquisition
+factory and its selected owner remain unchanged.
+-/
+theorem acquire_clearance_lower (patch : ContinuedNeighborhood polynomial count) (ceiling : Fraction.Rational)
+    (small : ceiling < patch.continuationAllowance) {point : Basic.Canonical} (inside : patch.box.Contains point)
+    (paid : normSq (polynomial.eval patch.base.site.center - polynomial.eval point) ≤ ceiling) :
+    ExactQuadraticOwnerClearance.transportFloor patch.base.seed.owner ceiling ≤
+      (acquire patch point inside).owner.track.initial.clearance.bound := by
+  have left : ceiling < patch.base.seed.owner.track.initial.ambientLeftClearance.bound :=
+    small.trans_le (by
+      rewrite [patch.continuationAllowance_eq]
+      exact (Basic.min_le_right _ _).trans (Basic.min_le_left _ _))
+  have right : ceiling < patch.base.seed.owner.track.initial.ambientRightClearance.bound :=
+    small.trans_le (by
+      rewrite [patch.continuationAllowance_eq]
+      exact (Basic.min_le_right _ _).trans ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _)))
+  have bottom : ceiling < patch.base.seed.owner.track.initial.ambientBottomClearance.bound :=
+    small.trans_le (by
+      rewrite [patch.continuationAllowance_eq]
+      exact (Basic.min_le_right _ _).trans ((Basic.min_le_right _ _).trans
+        ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _))))
+  have top : ceiling < patch.base.seed.owner.track.initial.ambientTopClearance.bound :=
+    small.trans_le (by
+      rewrite [patch.continuationAllowance_eq]
+      exact (Basic.min_le_right _ _).trans ((Basic.min_le_right _ _).trans
+        ((Basic.min_le_right _ _).trans (Basic.min_le_right _ _))))
+  have scalarPaid : Norm.Basic.normSq (polynomial.eval patch.base.site.center - polynomial.eval point) ≤ ceiling := by
+    rewrite [Norm.Basic.normSq_eq_canonical]
+    exact paid
+  change ExactQuadraticOwnerClearance.transportFloor patch.base.seed.owner ceiling ≤
+    (ExactQuadraticOwnerClearance.directTransport patch.base.seed.owner (patch.parameter_nonzero inside)
+      (by simpa only [Norm.Basic.normSq_eq_canonical] using
+        patch.parameter_movement inside)).track.initial.clearance.bound
+  exact ExactQuadraticOwnerClearance.directTransport_clearance_lower _ _ _ ceiling left right bottom top scalarPaid
 
 /-- Read the certified square-root name of the retained point owner using its original nonzero parameter proof. -/
 @[expose] def certificate (sample : Point patch point) := sample.owner.certificate sample.owner.parameterNonzero
 
+/-- Equal inputs to the identical acquisition factory retain the same original certified root name. -/
+theorem acquire_name_eq {first last : Data.Gaussian.Basic.Canonical}
+    (firstInside : patch.box.Contains first) (lastInside : patch.box.Contains last) (equal : first = last) :
+    (acquire patch first firstInside).certificate.value.name =
+      (acquire patch last lastInside).certificate.value.name := by
+  cases equal
+  rfl
+
 section
 open Purelib.Data.Gaussian
+open Purelib.Data.Rat
+open Purelib.Riemann.RootContinuation
 /-- Every possible root of the retained point certificate lies in the original seed-owner box. -/
 theorem candidate_inside (sample : Point patch point)
     (state : sample.certificate.value.name.process.State) {root : Basic.Canonical}
@@ -447,6 +542,63 @@ theorem candidate_inside (sample : Point patch point)
     patch.base.seed.owner.track.initial.box.Contains root :=
   sample.refines.contains
     (sample.owner.certificate_candidate_in_initial_box sample.owner.parameterNonzero state possible)
+
+/-- Every original raw sample of this actual point owner stays in the same retained seed box. -/
+theorem approximation_inside (sample : Point patch point) (index : Nat) :
+    patch.base.seed.owner.track.initial.box.Contains
+      ((CertifiedSquareRoot.approximation sample.owner.track).sample index) :=
+  sample.refines.contains (CertifiedSquareRoot.approximation_sample_initial_inside sample.owner.track index)
+
+/-- A retained seed-box anchor fixes every actual point sample near the same original nonzero reference.
+
+The seed-box diameter is measured against its actual cached root floor.
+One retained anchor near the reference controls all other samples in that
+same box, even when the uniform seed was reboxed outside a source owner.
+-/
+theorem approximation_near_reference (sample : Point patch point) (anchor reference : Basic.Canonical)
+    (referenceNorm : Fraction.Rational) (normEq : referenceNorm = normSq reference)
+    (nonnegative : 0 ≤ referenceNorm)
+    (anchorInside : patch.base.seed.owner.track.initial.box.Contains anchor)
+    (near : normSq (anchor - reference) ≤ referenceNorm / 64)
+    (diameter : patch.base.seed.owner.track.initial.box.diagonalSq ≤ patch.rootLower / 256)
+    (index : Nat) :
+    normSq ((CertifiedSquareRoot.approximation sample.owner.track).sample index - reference) ≤ referenceNorm / 16 := by
+  have anchorBound : normSq anchor ≤ 3 * referenceNorm := by
+    have triangle := Norm.Bounds.normSq_add_le_two (anchor - reference) reference
+    simp only [Norm.Basic.normSq_eq_canonical] at triangle
+    rewrite [show anchor - reference + reference = anchor by ring1] at triangle
+    calc
+      _ ≤ 2 * (normSq (anchor - reference) + normSq reference) := triangle
+      _ ≤ 2 * (referenceNorm / 64 + referenceNorm) :=
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.add_le_add_direct near normEq.ge) (by decide +kernel)
+      _ = (2 * ((64 : Fraction.Rational)⁻¹ + 1)) * referenceNorm := by
+        simp only [Fraction.Field.div_eq_mul_inv_direct]
+        ring1
+      _ ≤ 3 * referenceNorm :=
+        Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel) nonnegative
+  have boxBound : patch.base.seed.owner.track.initial.box.diagonalSq ≤ (3 * referenceNorm) / 256 :=
+    diameter.trans (Field.divide_mono ((patch.root_lower anchorInside).trans anchorBound) (by decide +kernel))
+  have sampleBound :=
+    (Geometry.Rational.Box.normSq_sub_le_diagonalSq (sample.approximation_inside index) anchorInside).trans boxBound
+  rewrite [Norm.Basic.normSq_eq_canonical] at sampleBound
+  have triangle := Norm.Bounds.normSq_sub_le_via
+    ((CertifiedSquareRoot.approximation sample.owner.track).sample index) anchor reference
+  simp only [Norm.Basic.normSq_eq_canonical] at triangle
+  calc
+    _ ≤ 2 * (normSq ((CertifiedSquareRoot.approximation sample.owner.track).sample index - anchor) +
+        normSq (anchor - reference)) := triangle
+    _ ≤ 2 * ((3 * referenceNorm) / 256 + referenceNorm / 64) :=
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.add_le_add_direct sampleBound near) (by decide +kernel)
+    _ = (2 * (3 * (256 : Fraction.Rational)⁻¹ + (64 : Fraction.Rational)⁻¹)) * referenceNorm := by
+      simp only [Fraction.Field.div_eq_mul_inv_direct]
+      ring1
+    _ ≤ (16 : Fraction.Rational)⁻¹ * referenceNorm :=
+      Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel) nonnegative
+    _ = referenceNorm / 16 := by
+      rewrite [Fraction.Field.div_eq_mul_inv_direct]
+      ring1
 
 /-- Every possible root of the retained point certificate satisfies the cached root squared-norm lower bound. -/
 theorem candidate_lower (sample : Point patch point)
@@ -462,7 +614,7 @@ open Purelib.Riemann.RootContinuation in
 @[expose] def residualState (sample : Point patch point) (error : Fraction.Rational) (positive : 0 < error) :
     sample.certificate.value.name.process.State :=
   CertifiedSquareRoot.residualState sample.owner.parameterNonzero sample.owner.track
-    (error * sample.parameterNorm) (Fraction.Order.Arithmetic.mul_pos_direct positive sample.parameterNorm_positive)
+    (error * sample.parameterNorm) (Arithmetic.mul_pos_direct positive sample.parameterNorm_positive)
 
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
@@ -474,7 +626,7 @@ theorem candidate_residual (sample : Point patch point) (error : Fraction.Ration
     normSq (root ^ 2 - polynomial.eval point) <= error * normSq (polynomial.eval point) := by
   have residual := CertifiedSquareRoot.residualState_candidate_residual_lt
     sample.owner.parameterNonzero sample.owner.track (error * sample.parameterNorm)
-      (Fraction.Order.Arithmetic.mul_pos_direct positive sample.parameterNorm_positive) possible
+      (Arithmetic.mul_pos_direct positive sample.parameterNorm_positive) possible
   rw [sample.parameterNorm_eq] at residual
   simpa only [pow_two] using residual.le
 
@@ -503,7 +655,7 @@ theorem polynomial_mismatch (sample : Point patch point) (inside : patch.box.Con
     exact patch.aligned root (sample.candidate_inside _ possible)
   · calc
       _ <= (1 / 256 : Fraction.Rational) + 16 * (1 / 4096) := add_le_add le_rfl
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct small (by decide))
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct small (by decide))
       _ <= 1 / 64 := by decide +kernel
 
 /-- Bound the refined polynomial's squared error against the reciprocal of a possible retained root.
@@ -520,7 +672,7 @@ theorem polynomial_inverse_error (sample : Point patch point) (inside : patch.bo
   have rootPositive := patch.rootLower_positive.trans_le (sample.candidate_lower _ possible)
   have rootNonzero : root ≠ 0 := by
     intro zero
-    rw [zero, Basic.Canonical.normSq_zero] at rootPositive
+    rw [zero, normSq_zero] at rootPositive
     exact (lt_irrefl _ rootPositive)
   have initial : normSq (1 - root * patch.base.model.value.eval point) <= 1 / 256 := by
     rw [patch.base.model_value_eq, Dense.Basic.DensePolynomial.eval_constant]
@@ -528,7 +680,7 @@ theorem polynomial_inverse_error (sample : Point patch point) (inside : patch.bo
   have budgetSmall : (1 / 256 : Fraction.Rational) + 16 * error <= 1 / 64 := by
     calc
       _ <= (1 / 256 : Fraction.Rational) + 16 * (1 / 4096) := add_le_add le_rfl
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct small (by decide))
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct small (by decide))
       _ <= 1 / 64 := by decide +kernel
   have comparison := (InverseRootComparison.Model.refine_inverse_error patch.base.model) point
     (patch.box_refines.contains inside)
@@ -536,12 +688,12 @@ theorem polynomial_inverse_error (sample : Point patch point) (inside : patch.bo
       simpa only [Norm.Basic.normSq_eq_canonical] using sample.candidate_residual error positive possible)
     (by simpa only [Norm.Basic.normSq_eq_canonical] using initial) budgetSmall index
   simp only [Norm.Basic.normSq_eq_canonical] at comparison
-  have inverse_eq : Data.Gaussian.Field.inv root = Basic.Canonical.inv root := by
+  have inverse_eq : Field.inv root = inv root := by
     with_unfolding_all exact (Field.inv_eq root).symm
   rw [inverse_eq] at comparison
-  exact comparison.trans (Fraction.Order.Field.div_le_div_of_nonneg_left_direct
+  exact comparison.trans (Field.div_le_div_of_nonneg_left_direct
     (add_nonneg (Geometric.Basic.quarterRadius_nonneg (by decide +kernel) index)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) positive.le))
+      (Arithmetic.mul_nonneg_direct (by decide) positive.le))
     patch.rootLower_positive (sample.candidate_lower _ possible))
 
 end Point
@@ -571,7 +723,7 @@ open Purelib.Data.Rat
 
 /-- The retained inverse-error geometric scale is strictly positive. -/
 theorem inverseErrorScale_positive (patch : ContinuedNeighborhood polynomial count) : 0 < patch.inverseErrorScale :=
-  Fraction.Order.Field.div_pos_direct (by decide +kernel) patch.rootLower_positive
+  Field.div_pos_direct (by decide +kernel) patch.rootLower_positive
 
 /-- A scalar sum identity transports two geometric contributions through a common retained divisor.
 
@@ -604,7 +756,30 @@ private theorem combined_error_eq (patch : ContinuedNeighborhood polynomial coun
 
 namespace Point
 
-variable {patch : ContinuedNeighborhood polynomial count} {point : Purelib.Data.Gaussian.Basic.Canonical}
+variable {patch : ContinuedNeighborhood polynomial count} {point : Data.Gaussian.Basic.Canonical}
+
+/-- Reindex the same original Point along equality of its retained neighborhood.
+
+Only the dependent neighborhood index changes. The actual owner, refinement
+certificate and cached parameter norm are transported as one complete value;
+no acquisition, observation or root preparation occurs.
+-/
+@[expose] def castPatch {first last : ContinuedNeighborhood polynomial count}
+    (equal : first = last) (sample : Point last point) : Point first point :=
+  equal.symm ▸ sample
+
+/-- Neighborhood reindexing retains the entire original Point heterogeneously. -/
+theorem castPatch_heq {first last : ContinuedNeighborhood polynomial count}
+    (equal : first = last) (sample : Point last point) : HEq (castPatch equal sample) sample := by
+  cases equal
+  rfl
+
+/-- Neighborhood reindexing preserves the exact original named certificate value. -/
+theorem castPatch_name {first last : ContinuedNeighborhood polynomial count}
+    (equal : first = last) (sample : Point last point) :
+    (castPatch equal sample).certificate.value.name = sample.certificate.value.name := by
+  cases equal
+  rfl
 
 /-- Transport a neighborhood point certificate along equality of its point.
 

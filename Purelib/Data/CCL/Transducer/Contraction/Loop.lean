@@ -150,7 +150,8 @@ open Purelib.Geometry.Projective in
 /-- Every loop emission is neutral for unary scaling or contracts through its exact selected sector block. -/
 theorem loopStep_accounted (current : Mode.Basic.LoopState) :
     Contraction.Transition.AccountedStep (.loop current) (Emission.Loop.loopStep current).next := by
-  unfold Contraction.Transition.AccountedStep Emission.Loop.loopStep
+  unfold Contraction.Transition.AccountedStep
+  rewrite [Emission.Loop.loopStep_eq]
   split
   · apply Or.inl
     intro tail possible
@@ -183,7 +184,7 @@ theorem loopStep_next_of_sector
       .sector sector certificate) :
     (Emission.Loop.loopStep current).next =
       .residual (Emission.Loop.loopSectorResidualState current sector certificate) := by
-  unfold Emission.Loop.loopStep
+  rewrite [Emission.Loop.loopStep_eq]
   rw [selected]
 
 end Purelib.Data.CCL.Transducer.Contraction.Loop

@@ -54,6 +54,8 @@ import Purelib.Topology.Surface.Sewing.SewnPrimitiveBoundary
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-! The existing shared grid request pays actual source-chord transport,
@@ -100,37 +102,37 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Algebra.FiniteSum.Fin (sumFin)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
   {faces : PuncturedFaces bank} {mesh :
     LiftedMesh vertices edges faces}
-  {forest : Topology.Surface.Sewing.SewingForest mesh.triangulation.faces} {domains :
+  {forest : SewingForest mesh.triangulation.faces} {domains :
     FaceDomainBank frames faces.regulars}
   {i j : Fin genus}
 
 namespace BilinearPreparation.Request
 variable {polygon : SinglePolygon forest} {prepared :
   BilinearPreparation polygon domains i j}
-  {target : Purelib.Topology.Surface.Sewing.SewnPrimitiveFaces.Coordinate} {floor : Nat}
+  {target : Coordinate} {floor : Nat}
 
 /-- The actual cut-edge area minus its retained sewn-origin term approximates the original source chord.
 
 The shared request pays both local primitive comparisons and uses the original triangle magnitude banks on the supplied
 sewn samples. -/
-theorem source_chord_accurate (request : BilinearPreparation.Request prepared target floor) {stage : Nat} (later :
+theorem source_chord_accurate (request : Request prepared target floor) {stage : Nat} (later :
   request.index ≤ stage)
     {cache : RegularMeshes.Numerics domains stage}
     (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
-    {leftSurface : SewnPrimitiveSamples.CachedSample polygon.patch left.values} {rightSurface :
-      SewnPrimitiveSamples.CachedSample polygon.patch right.values}
-    (sample : Topology.Surface.Sewing.Bilinear.Samples leftSurface rightSurface) (route :
-      SewnPrimitiveFaces.OrientedOwner polygon.patch.cut) :
-    Data.Gaussian.Norm.Basic.normSq (Stokes.edgeArea (sample.values route.cutEdge.start) (sample.values
+    {leftSurface : CachedSample polygon.patch left.values} {rightSurface :
+      CachedSample polygon.patch right.values}
+    (sample : Samples leftSurface rightSurface) (route :
+      OrientedOwner polygon.patch.cut) :
+    Basic.normSq (Stokes.edgeArea (sample.values route.cutEdge.start) (sample.values
       route.cutEdge.finish) -
       Stokes.edgeArea (sample.values polygon.patch.cut.triangles[route.owner.position.val].first)
         ((sample.values route.cutEdge.finish).sub (sample.values route.cutEdge.start)) -
@@ -145,19 +147,19 @@ theorem source_chord_accurate (request : BilinearPreparation.Request prepared ta
   have rightAccuracy := request.right.localAccuracy_of_coverage coverage le_rfl
     (request.right_le.trans later) right rightSurface.sewn.readings
   have bounded (source : Fin mesh.triangles.length) (which : Fin 3) :
-      PrimitivePoint.Bounded (⟨left.values source which - left.values source 0,
+      Bounded (⟨left.values source which - left.values source 0,
         right.values source which - right.values source 0⟩ : Stokes.PrimitivePoint)
           (prepared.leftMagnitude.bound + prepared.rightMagnitude.bound) := by
     constructor
     · have scalar := prepared.leftMagnitude.triangle_bounded
         ((Data.Nat.Order.le_max_right _ _).trans (request.left.floor_le.trans (request.left_le.trans later))) left
           source which
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+      rw [Basic.normSq_eq_canonical] at scalar
       exact scalar.trans (le_add_of_nonneg_right prepared.rightMagnitude.nonnegative)
     · have scalar := prepared.rightMagnitude.triangle_bounded
         ((Data.Nat.Order.le_max_right _ _).trans (request.right.floor_le.trans (request.right_le.trans later))) right
           source which
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+      rw [Basic.normSq_eq_canonical] at scalar
       exact scalar.trans (le_add_of_nonneg_left prepared.leftMagnitude.nonnegative)
   have small : request.budget.error ≤ 1 := by
     rw [request.budget.error_eq]
@@ -172,29 +174,29 @@ theorem source_chord_accurate (request : BilinearPreparation.Request prepared ta
 
 /-- The actual path source cache supplies all occurrences, including repeats. Its raw edge area retains every
 sewn-origin contribution. -/
-theorem path_source_chord_accurate (request : BilinearPreparation.Request prepared target floor) {stage : Nat}
+theorem path_source_chord_accurate (request : Request prepared target floor) {stage : Nat}
     (later : request.index ≤ stage) {cache : RegularMeshes.Numerics domains stage}
     (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
-    {leftSurface : SewnPrimitiveSamples.CachedSample polygon.patch left.values} {rightSurface :
-      SewnPrimitiveSamples.CachedSample polygon.patch right.values}
-    (sample : Topology.Surface.Sewing.Bilinear.Samples leftSurface rightSurface)
-    {edges : List (Stokes.OrientedEdge polygon.patch.cut.count)} (sources : SewnPrimitiveFaces.PathSources
+    {leftSurface : CachedSample polygon.patch left.values} {rightSurface :
+      CachedSample polygon.patch right.values}
+    (sample : Samples leftSurface rightSurface)
+    {edges : List (OrientedEdge polygon.patch.cut.count)} (sources : PathSources
       polygon.patch.cut edges) :
-    Data.Gaussian.Norm.Basic.normSq (Stokes.edgeListArea sample.values edges -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (sources.entries.map (fun route =>
+    Basic.normSq (Stokes.edgeListArea sample.values edges -
+      Sum.Basic.gaussianSum (sources.entries.map (fun route =>
         Stokes.edgeArea (sample.values polygon.patch.cut.triangles[route.owner.position.val].first)
           ((sample.values route.cutEdge.finish).sub (sample.values route.cutEdge.start)))) -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (sources.sources.map (TriangleReadings.sourceChord left right))) ≤
-      (edges.length : SewnPrimitiveFaces.Coordinate) * ((edges.length : SewnPrimitiveFaces.Coordinate) *
+      Sum.Basic.gaussianSum (sources.sources.map (TriangleReadings.sourceChord left right))) ≤
+      (edges.length : Coordinate) * ((edges.length : Coordinate) *
         (request.budget.weight * request.budget.error)) := by
-  let origin := fun route : SewnPrimitiveFaces.OrientedOwner polygon.patch.cut =>
+  let origin := fun route : OrientedOwner polygon.patch.cut =>
     Stokes.edgeArea (sample.values polygon.patch.cut.triangles[route.owner.position.val].first)
       ((sample.values route.cutEdge.finish).sub (sample.values route.cutEdge.start))
-  let error := fun route : SewnPrimitiveFaces.OrientedOwner polygon.patch.cut =>
+  let error := fun route : OrientedOwner polygon.patch.cut =>
     Stokes.edgeArea (sample.values route.cutEdge.start) (sample.values route.cutEdge.finish) -
       origin route - TriangleReadings.sourceChord left right route.sourceEdge
-  have bounds : ∀ value ∈ sources.entries.map error, Data.Gaussian.Norm.Basic.normSq value ≤
+  have bounds : ∀ value ∈ sources.entries.map error, Basic.normSq value ≤
     request.budget.weight * request.budget.error := by
     intro value member
     obtain ⟨route, _, equal⟩ := Map.mem_map.mp member
@@ -202,20 +204,20 @@ theorem path_source_chord_accurate (request : BilinearPreparation.Request prepar
     exact
       source_chord_accurate
       request later left right sample route
-  have estimate := Data.Gaussian.Norm.Sum.Bounds.normSq_sum_le _ _ bounds
+  have estimate := Sum.Bounds.normSq_sum_le _ _ bounds
   have count := congrArg List.length sources.edges_eq
-  simp only [Data.List.Map.length_map, -eq_self, -iff_self] at count estimate
+  simp only [Map.length_map, -eq_self, -iff_self] at count estimate
   rw [count] at estimate
-  have balance : Data.Gaussian.Norm.Sum.Basic.gaussianSum (sources.entries.map error) =
-      Stokes.edgeListArea sample.values edges - Data.Gaussian.Norm.Sum.Basic.gaussianSum (sources.entries.map
+  have balance : Sum.Basic.gaussianSum (sources.entries.map error) =
+      Stokes.edgeListArea sample.values edges - Sum.Basic.gaussianSum (sources.entries.map
         origin) -
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (sources.sources.map (TriangleReadings.sourceChord left right)) :=
+        Sum.Basic.gaussianSum (sources.sources.map (TriangleReadings.sourceChord left right)) :=
           by
-    rw [← congrArg (Stokes.edgeListArea sample.values) sources.edges_eq, sources.sources_eq, Data.List.Map.map_map]
+    rw [← congrArg (Stokes.edgeListArea sample.values) sources.edges_eq, sources.sources_eq, Map.map_map]
     induction sources.entries with
-    | nil => change (0 : Data.Gaussian.Basic.Canonical) = 0 - 0 - 0; ring1
+    | nil => change (0 : Canonical) = 0 - 0 - 0; ring1
     | cons route tail ih =>
-      simp only [List.map_cons, Data.Gaussian.Norm.Sum.Basic.gaussianSum, Stokes.edgeListArea, -eq_self, -iff_self]
+      simp only [List.map_cons, Sum.Basic.gaussianSum, Stokes.edgeListArea, -eq_self, -iff_self]
       rw [ih]
       dsimp only [error, Function.comp_def, -eq_self, -iff_self]
       ring1
@@ -224,22 +226,22 @@ theorem path_source_chord_accurate (request : BilinearPreparation.Request prepar
 
 /-- Raw paired values are exactly those cached by the annular samples. Both the edge areas and all owner-origin terms
 use these same values. -/
-theorem raw_path_source_chord_accurate (request : BilinearPreparation.Request prepared target floor) {stage : Nat}
+theorem raw_path_source_chord_accurate (request : Request prepared target floor) {stage : Nat}
     (later : request.index ≤ stage) {cache : RegularMeshes.Numerics domains stage}
     (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
-    {leftSurface : SewnPrimitiveSamples.CachedSample polygon.patch left.values} {rightSurface :
-      SewnPrimitiveSamples.CachedSample polygon.patch right.values}
-    (sample : Topology.Surface.Sewing.Bilinear.Samples leftSurface rightSurface)
-    {edges : List (Stokes.OrientedEdge polygon.patch.cut.count)} (sources : SewnPrimitiveFaces.PathSources
+    {leftSurface : CachedSample polygon.patch left.values} {rightSurface :
+      CachedSample polygon.patch right.values}
+    (sample : Samples leftSurface rightSurface)
+    {edges : List (OrientedEdge polygon.patch.cut.count)} (sources : PathSources
       polygon.patch.cut edges) :
     let raw := fun vertex => (⟨leftSurface.sewn.values vertex, rightSurface.sewn.values vertex⟩ : Stokes.PrimitivePoint)
-    Data.Gaussian.Norm.Basic.normSq (Stokes.edgeListArea raw edges -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (sources.entries.map (fun route =>
+    Basic.normSq (Stokes.edgeListArea raw edges -
+      Sum.Basic.gaussianSum (sources.entries.map (fun route =>
         Stokes.edgeArea (raw polygon.patch.cut.triangles[route.owner.position.val].first)
           ((raw route.cutEdge.finish).sub (raw route.cutEdge.start)))) -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (sources.sources.map (TriangleReadings.sourceChord left right))) ≤
-      (edges.length : SewnPrimitiveFaces.Coordinate) * ((edges.length : SewnPrimitiveFaces.Coordinate) *
+      Sum.Basic.gaussianSum (sources.sources.map (TriangleReadings.sourceChord left right))) ≤
+      (edges.length : Coordinate) * ((edges.length : Coordinate) *
         (request.budget.weight * request.budget.error)) := by
   intro raw
   have estimate :=

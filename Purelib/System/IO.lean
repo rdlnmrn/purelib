@@ -1,7 +1,9 @@
 module
 
--- Public signatures retain the original IO, file-path, handle and stream owners.
-public import Init.System.IO
+-- Public signatures retain the original IO owners and native reference operations.
+public import Purelib.System.IO.Reference
+-- The public state execution alias retains the original finite state transformer.
+public import Init.Control.State
 -- Inline newline writers retain the native String append owner publicly.
 public import Purelib.Data.String.Basic
 
@@ -180,5 +182,33 @@ public def Process.output (args : _root_.IO.Process.SpawnArgs)
     letI : ToString _root_.IO.Error := ⟨Error.toString⟩
     _root_.IO.ofExcept stdout.get
   pure { exitCode := exitCode, stdout := stdout, stderr := stderr }
+
+public section
+
+/-- Error-preserving execution with one explicitly threaded finite cache.
+
+The state lies below the error transformer. Both success and the original
+structured IO error therefore return the complete updated cache.
+-/
+abbrev StateExecution (Cache : Type) := ExceptT _root_.IO.Error (StateT Cache BaseIO)
+
+namespace StateExecution
+
+/-- Run the supplied execution and return its outcome with the same updated cache. -/
+@[expose] def run {Cache Alpha : Type} (action : StateExecution Cache Alpha) (cache : Cache) :
+    BaseIO (Except _root_.IO.Error Alpha × Cache) := ExceptT.run action cache
+
+/-- Lift one original IO action without discarding the current finite cache on failure. -/
+@[expose] def liftIO {Cache Alpha : Type} (action : _root_.IO Alpha) : StateExecution Cache Alpha :=
+  fun cache => do
+    let result ← action.toBaseIO
+    return (result, cache)
+
+/-- Execute original IO effects inside an error-preserving finite cache execution. -/
+instance {Cache : Type} : MonadLift _root_.IO (StateExecution Cache) := ⟨StateExecution.liftIO⟩
+
+end StateExecution
+
+end
 
 end Purelib.System.IO

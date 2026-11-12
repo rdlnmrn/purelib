@@ -10,7 +10,7 @@ import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Gaussian.Cast
 import Purelib.Data.Rat.Fraction.Cast
 public import Purelib.Polynomial.Dense.Arithmetic
-import Purelib.Polynomial.Dense.Gaussian.Basic
+public import Purelib.Polynomial.Dense.Gaussian.Basic
 import Mathlib.Algebra.Ring.Defs
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
@@ -157,7 +157,7 @@ public theorem difference_isZero_of_candidate_evals
       intro point member
       rw [Basic.DensePolynomial.eval_sub, equal point member]
       exact sub_self _
-    have tooMany := RootBound.Roots.nodup_zeros_length_lt_degreeCount (p - q) nonzero
+    have tooMany := RootBound.Extensionality.nodup_zeros_length_lt_degreeCount (p - q) nonzero
       (candidates (p - q)) (candidates_nodup (p - q)) candidateZeros
     rw [candidates_length] at tooMany
     exact (Nat.lt_irrefl _ tooMany).elim
@@ -257,7 +257,7 @@ nonzero point. Exhausting that list contradicts the finite root-count bound. -/
       exact ⟨point, (firstNonzero_some_spec p outcome).2⟩
   | none =>
       have zeros := firstNonzero_none_zeros p outcome
-      have tooMany := RootBound.Roots.nodup_zeros_length_lt_degreeCount p nonzero points
+      have tooMany := RootBound.Extensionality.nodup_zeros_length_lt_degreeCount p nonzero points
         (candidates_nodup p) zeros
       have exactLength := candidates_length p
       rw [exactLength] at tooMany

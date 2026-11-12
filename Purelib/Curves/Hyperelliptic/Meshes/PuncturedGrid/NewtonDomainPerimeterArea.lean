@@ -65,6 +65,8 @@ import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.RootIsolation.Newton.Band.Basic
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic
@@ -121,7 +123,7 @@ open Purelib.Riemann.Integration.RectangularCenteredPerimeter (Centered)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face :
@@ -129,39 +131,39 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     FaceModels frames face}
   {sheet : Fin 2} (domain : PeriodDomain models sheet)
   {cuts : GridCuts domain.geometry}
-  {mesh : Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh cuts face.cell.box}
+  {mesh : Riemann.Meshes.RectangularObservationMesh.ObservationMesh cuts face.cell.box}
   {left right : Differential genus}
 
 namespace SideGeometry
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry
 /-- Construct the request from geometry before acquiring any numerical bank. -/
-def bottomRequest (traces : RectangularPerimeterTraces.PerimeterTraces mesh) (left right :
-  Differentials.Basic.Differential genus)
-    {allowance : Fraction.Rational} (budget : NoisyPathArea.LengthErrorBudget traces.bottom.vertices.rest.length
+def bottomRequest (traces : PerimeterTraces mesh) (left right :
+  Differential genus)
+    {allowance : Fraction.Rational} (budget : LengthErrorBudget traces.bottom.vertices.rest.length
       allowance) :=
-  SideGeometry.Request.build (SideGeometry.bottom domain traces) domain left right budget.tolerance
+  Request.build (SideGeometry.bottom domain traces) domain left right budget.tolerance
     budget.tolerance_positive
 
 /-- The actual bottom perimeter's centered paired area satisfies the retained Newton density and horizontal-length
 budget. -/
-theorem bottom_area_bound (traces : RectangularPerimeterTraces.PerimeterTraces mesh) (lengths :
-  RectangularPerimeterLengths.Lengths traces)
-    {allowance density : Fraction.Rational} (budget : NoisyPathArea.LengthErrorBudget traces.bottom.vertices.rest.length
+theorem bottom_area_bound (traces : PerimeterTraces mesh) (lengths :
+  Lengths traces)
+    {allowance density : Fraction.Rational} (budget : LengthErrorBudget traces.bottom.vertices.rest.length
       allowance)
-    (references : SideGeometry.Request (SideGeometry.bottom domain traces) domain left right budget.tolerance)
-    {bandAmbient : Rational.Box} {current : Raw.RawWindingState curve.polynomial bandAmbient}
+    (references : Request (SideGeometry.bottom domain traces) domain left right budget.tolerance)
+    {bandAmbient : Box} {current : Raw.RawWindingState curve.polynomial bandAmbient}
     {profile : NewtonBandBounds.Profile curve.squarefree current.box}
     {leftProfile : NewtonBandDifferentials.DifferentialProfile profile left.exponent}
     {rightProfile : NewtonBandDifferentials.DifferentialProfile profile right.exponent}
     {leftTarget rightTarget : Fraction.Rational}
-    (leftBand : PreparedNewtonBandSamples.PreparedBandRequest leftProfile leftTarget)
-    (rightBand : PreparedNewtonBandSamples.PreparedBandRequest rightProfile rightTarget)
+    (leftBand : PreparedBandRequest leftProfile leftTarget)
+    (rightBand : PreparedBandRequest rightProfile rightTarget)
     (leftInside : ∀ vertex, leftBand.sample.output.box.Contains (traces.bottom.point vertex))
-    (leftSide : ∀ first last, PreparedBoundarySegments.SameSide leftBand.sample.output.box (traces.bottom.point first)
+    (leftSide : ∀ first last, SameSide leftBand.sample.output.box (traces.bottom.point first)
       (traces.bottom.point last))
     (rightInside : ∀ vertex, rightBand.sample.output.box.Contains (traces.bottom.point vertex))
-    (rightSide : ∀ first last, PreparedBoundarySegments.SameSide rightBand.sample.output.box (traces.bottom.point first)
+    (rightSide : ∀ first last, SameSide rightBand.sample.output.box (traces.bottom.point first)
       (traces.bottom.point last))
     (densityNonnegative : 0 ≤ density)
     (leftDensity : PreparedNewtonBandSamples.Sample.preparedDensity leftBand.sample leftProfile leftBand.error ≤
@@ -169,12 +171,12 @@ theorem bottom_area_bound (traces : RectangularPerimeterTraces.PerimeterTraces m
     (rightDensity : PreparedNewtonBandSamples.Sample.preparedDensity rightBand.sample rightProfile rightBand.error ≤
       density)
     {index : Nat} (later : references.index ≤ index)
-    (leftData : PrimitiveData.DomainPrimitives domain left index) (rightData : PrimitiveData.DomainPrimitives domain
+    (leftData : DomainPrimitives domain left index) (rightData : DomainPrimitives domain
       right index)
     (samples : RectangularCenteredPerimeter.Centered traces (fun column row point =>
       (⟨leftData.anchors.alignedValue leftData.offsets column row point,
-        rightData.anchors.alignedValue rightData.offsets column row point⟩ : Stokes.PrimitivePoint))) :
-    Data.Gaussian.Norm.Basic.normSq samples.bottom.centeredArea ≤
+        rightData.anchors.alignedValue rightData.offsets column row point⟩ : PrimitivePoint))) :
+    Basic.normSq samples.bottom.centeredArea ≤
       4 * (3 * budget.tolerance + 4 * density * leftBand.sample.output.box.diagonalSq) * (4 * density + 3) *
         (face.cell.box.xUpper - face.cell.box.xLower + allowance)^2 := by
   have bound := NewtonSideArea.area_bound budget references leftBand rightBand
@@ -187,44 +189,44 @@ theorem bottom_area_bound (traces : RectangularPerimeterTraces.PerimeterTraces m
     (traces.bottom.leftReadings rightData.anchors rightData.offsets)
     (values := fun vertex => traces.bottom.leftValue (fun column row point =>
       (⟨leftData.anchors.alignedValue leftData.offsets column row point,
-        rightData.anchors.alignedValue rightData.offsets column row point⟩ : Stokes.PrimitivePoint))
+        rightData.anchors.alignedValue rightData.offsets column row point⟩ : PrimitivePoint))
       (traces.bottom.vertices.indexed vertex))
     (fun vertex => by
       rw [traces.bottom.leftReadings_value, traces.bottom.leftReadings_value]
       rfl)
     samples.bottom lengths.bottom.values lengths.bottom.nonnegative (fun edge => by
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+      rw [Basic.normSq_eq_canonical]
       exact RectangularHorizontalTraceLengths.length_movement traces.bottom lengths.bottom edge)
   rw [← lengths.bottom.total_eq, Lengths.bottom_total lengths] at bound
   exact bound
 
 /-- Construct the request from geometry before acquiring any numerical bank. -/
-def topRequest (traces : RectangularPerimeterTraces.PerimeterTraces mesh) (left right : Differentials.Basic.Differential
+def topRequest (traces : PerimeterTraces mesh) (left right : Differential
   genus)
-    {allowance : Fraction.Rational} (budget : NoisyPathArea.LengthErrorBudget traces.top.vertices.rest.length allowance)
+    {allowance : Fraction.Rational} (budget : LengthErrorBudget traces.top.vertices.rest.length allowance)
       :=
-  SideGeometry.Request.build (SideGeometry.top domain traces) domain left right budget.tolerance
+  Request.build (SideGeometry.top domain traces) domain left right budget.tolerance
     budget.tolerance_positive
 
 /-- The actual top perimeter's centered paired area satisfies the retained Newton density and horizontal-length budget.
 -/
-theorem top_area_bound (traces : RectangularPerimeterTraces.PerimeterTraces mesh) (lengths :
-  RectangularPerimeterLengths.Lengths traces)
-    {allowance density : Fraction.Rational} (budget : NoisyPathArea.LengthErrorBudget traces.top.vertices.rest.length
+theorem top_area_bound (traces : PerimeterTraces mesh) (lengths :
+  Lengths traces)
+    {allowance density : Fraction.Rational} (budget : LengthErrorBudget traces.top.vertices.rest.length
       allowance)
-    (references : SideGeometry.Request (SideGeometry.top domain traces) domain left right budget.tolerance)
-    {bandAmbient : Rational.Box} {current : Raw.RawWindingState curve.polynomial bandAmbient}
+    (references : Request (SideGeometry.top domain traces) domain left right budget.tolerance)
+    {bandAmbient : Box} {current : Raw.RawWindingState curve.polynomial bandAmbient}
     {profile : NewtonBandBounds.Profile curve.squarefree current.box}
     {leftProfile : NewtonBandDifferentials.DifferentialProfile profile left.exponent}
     {rightProfile : NewtonBandDifferentials.DifferentialProfile profile right.exponent}
     {leftTarget rightTarget : Fraction.Rational}
-    (leftBand : PreparedNewtonBandSamples.PreparedBandRequest leftProfile leftTarget)
-    (rightBand : PreparedNewtonBandSamples.PreparedBandRequest rightProfile rightTarget)
+    (leftBand : PreparedBandRequest leftProfile leftTarget)
+    (rightBand : PreparedBandRequest rightProfile rightTarget)
     (leftInside : ∀ vertex, leftBand.sample.output.box.Contains (traces.top.point vertex))
-    (leftSide : ∀ first last, PreparedBoundarySegments.SameSide leftBand.sample.output.box (traces.top.point first)
+    (leftSide : ∀ first last, SameSide leftBand.sample.output.box (traces.top.point first)
       (traces.top.point last))
     (rightInside : ∀ vertex, rightBand.sample.output.box.Contains (traces.top.point vertex))
-    (rightSide : ∀ first last, PreparedBoundarySegments.SameSide rightBand.sample.output.box (traces.top.point first)
+    (rightSide : ∀ first last, SameSide rightBand.sample.output.box (traces.top.point first)
       (traces.top.point last))
     (densityNonnegative : 0 ≤ density)
     (leftDensity : PreparedNewtonBandSamples.Sample.preparedDensity leftBand.sample leftProfile leftBand.error ≤
@@ -232,12 +234,12 @@ theorem top_area_bound (traces : RectangularPerimeterTraces.PerimeterTraces mesh
     (rightDensity : PreparedNewtonBandSamples.Sample.preparedDensity rightBand.sample rightProfile rightBand.error ≤
       density)
     {index : Nat} (later : references.index ≤ index)
-    (leftData : PrimitiveData.DomainPrimitives domain left index) (rightData : PrimitiveData.DomainPrimitives domain
+    (leftData : DomainPrimitives domain left index) (rightData : DomainPrimitives domain
       right index)
     (samples : RectangularCenteredPerimeter.Centered traces (fun column row point =>
       (⟨leftData.anchors.alignedValue leftData.offsets column row point,
-        rightData.anchors.alignedValue rightData.offsets column row point⟩ : Stokes.PrimitivePoint))) :
-    Data.Gaussian.Norm.Basic.normSq samples.top.centeredArea ≤
+        rightData.anchors.alignedValue rightData.offsets column row point⟩ : PrimitivePoint))) :
+    Basic.normSq samples.top.centeredArea ≤
       4 * (3 * budget.tolerance + 4 * density * leftBand.sample.output.box.diagonalSq) * (4 * density + 3) *
         (face.cell.box.xUpper - face.cell.box.xLower + allowance)^2 := by
   have bound := NewtonSideArea.area_bound budget references leftBand rightBand
@@ -250,44 +252,44 @@ theorem top_area_bound (traces : RectangularPerimeterTraces.PerimeterTraces mesh
     (traces.top.leftReadings rightData.anchors rightData.offsets)
     (values := fun vertex => traces.top.leftValue (fun column row point =>
       (⟨leftData.anchors.alignedValue leftData.offsets column row point,
-        rightData.anchors.alignedValue rightData.offsets column row point⟩ : Stokes.PrimitivePoint))
+        rightData.anchors.alignedValue rightData.offsets column row point⟩ : PrimitivePoint))
       (traces.top.vertices.indexed vertex))
     (fun vertex => by
       rw [traces.top.leftReadings_value, traces.top.leftReadings_value]
       rfl)
     samples.top lengths.top.values lengths.top.nonnegative (fun edge => by
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+      rw [Basic.normSq_eq_canonical]
       exact RectangularHorizontalTraceLengths.length_movement traces.top lengths.top edge)
   rw [← lengths.top.total_eq, Lengths.top_total lengths] at bound
   exact bound
 
 /-- Construct the request from geometry before acquiring any numerical bank. -/
-def leftRequest (traces : RectangularPerimeterTraces.PerimeterTraces mesh) (left right :
-  Differentials.Basic.Differential genus)
-    {allowance : Fraction.Rational} (budget : NoisyPathArea.LengthErrorBudget traces.left.vertices.rest.length
+def leftRequest (traces : PerimeterTraces mesh) (left right :
+  Differential genus)
+    {allowance : Fraction.Rational} (budget : LengthErrorBudget traces.left.vertices.rest.length
       allowance) :=
-  SideGeometry.Request.build (SideGeometry.left domain traces) domain left right budget.tolerance
+  Request.build (SideGeometry.left domain traces) domain left right budget.tolerance
     budget.tolerance_positive
 
 /-- The actual left perimeter's centered paired area satisfies the retained Newton density and vertical-length budget.
 -/
-theorem left_area_bound (traces : RectangularPerimeterTraces.PerimeterTraces mesh) (lengths :
-  RectangularPerimeterLengths.Lengths traces)
-    {allowance density : Fraction.Rational} (budget : NoisyPathArea.LengthErrorBudget traces.left.vertices.rest.length
+theorem left_area_bound (traces : PerimeterTraces mesh) (lengths :
+  Lengths traces)
+    {allowance density : Fraction.Rational} (budget : LengthErrorBudget traces.left.vertices.rest.length
       allowance)
-    (references : SideGeometry.Request (SideGeometry.left domain traces) domain left right budget.tolerance)
-    {bandAmbient : Rational.Box} {current : Raw.RawWindingState curve.polynomial bandAmbient}
+    (references : Request (SideGeometry.left domain traces) domain left right budget.tolerance)
+    {bandAmbient : Box} {current : Raw.RawWindingState curve.polynomial bandAmbient}
     {profile : NewtonBandBounds.Profile curve.squarefree current.box}
     {leftProfile : NewtonBandDifferentials.DifferentialProfile profile left.exponent}
     {rightProfile : NewtonBandDifferentials.DifferentialProfile profile right.exponent}
     {leftTarget rightTarget : Fraction.Rational}
-    (leftBand : PreparedNewtonBandSamples.PreparedBandRequest leftProfile leftTarget)
-    (rightBand : PreparedNewtonBandSamples.PreparedBandRequest rightProfile rightTarget)
+    (leftBand : PreparedBandRequest leftProfile leftTarget)
+    (rightBand : PreparedBandRequest rightProfile rightTarget)
     (leftInside : ∀ vertex, leftBand.sample.output.box.Contains (traces.left.point vertex))
-    (leftSide : ∀ first last, PreparedBoundarySegments.SameSide leftBand.sample.output.box (traces.left.point first)
+    (leftSide : ∀ first last, SameSide leftBand.sample.output.box (traces.left.point first)
       (traces.left.point last))
     (rightInside : ∀ vertex, rightBand.sample.output.box.Contains (traces.left.point vertex))
-    (rightSide : ∀ first last, PreparedBoundarySegments.SameSide rightBand.sample.output.box (traces.left.point first)
+    (rightSide : ∀ first last, SameSide rightBand.sample.output.box (traces.left.point first)
       (traces.left.point last))
     (densityNonnegative : 0 ≤ density)
     (leftDensity : PreparedNewtonBandSamples.Sample.preparedDensity leftBand.sample leftProfile leftBand.error ≤
@@ -295,12 +297,12 @@ theorem left_area_bound (traces : RectangularPerimeterTraces.PerimeterTraces mes
     (rightDensity : PreparedNewtonBandSamples.Sample.preparedDensity rightBand.sample rightProfile rightBand.error ≤
       density)
     {index : Nat} (later : references.index ≤ index)
-    (leftData : PrimitiveData.DomainPrimitives domain left index) (rightData : PrimitiveData.DomainPrimitives domain
+    (leftData : DomainPrimitives domain left index) (rightData : DomainPrimitives domain
       right index)
     (samples : RectangularCenteredPerimeter.Centered traces (fun column row point =>
       (⟨leftData.anchors.alignedValue leftData.offsets column row point,
-        rightData.anchors.alignedValue rightData.offsets column row point⟩ : Stokes.PrimitivePoint))) :
-    Data.Gaussian.Norm.Basic.normSq samples.left.centeredArea ≤
+        rightData.anchors.alignedValue rightData.offsets column row point⟩ : PrimitivePoint))) :
+    Basic.normSq samples.left.centeredArea ≤
       4 * (3 * budget.tolerance + 4 * density * leftBand.sample.output.box.diagonalSq) * (4 * density + 3) *
         (face.cell.box.yUpper - face.cell.box.yLower + allowance)^2 := by
   have bound := NewtonSideArea.area_bound budget references leftBand rightBand
@@ -313,44 +315,44 @@ theorem left_area_bound (traces : RectangularPerimeterTraces.PerimeterTraces mes
     (traces.left.leftReadings rightData.anchors rightData.offsets)
     (values := fun vertex => traces.left.leftValue (fun column row point =>
       (⟨leftData.anchors.alignedValue leftData.offsets column row point,
-        rightData.anchors.alignedValue rightData.offsets column row point⟩ : Stokes.PrimitivePoint))
+        rightData.anchors.alignedValue rightData.offsets column row point⟩ : PrimitivePoint))
       (traces.left.vertices.indexed vertex))
     (fun vertex => by
       rw [traces.left.leftReadings_value, traces.left.leftReadings_value]
       rfl)
     samples.left lengths.left.values lengths.left.nonnegative (fun edge => by
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+      rw [Basic.normSq_eq_canonical]
       exact RectangularVerticalTraceLengths.length_movement traces.left lengths.left edge)
   rw [← lengths.left.total_eq, Lengths.left_total lengths] at bound
   exact bound
 
 /-- Construct the request from geometry before acquiring any numerical bank. -/
-def rightRequest (traces : RectangularPerimeterTraces.PerimeterTraces mesh) (left right :
-  Differentials.Basic.Differential genus)
-    {allowance : Fraction.Rational} (budget : NoisyPathArea.LengthErrorBudget traces.right.vertices.rest.length
+def rightRequest (traces : PerimeterTraces mesh) (left right :
+  Differential genus)
+    {allowance : Fraction.Rational} (budget : LengthErrorBudget traces.right.vertices.rest.length
       allowance) :=
-  SideGeometry.Request.build (SideGeometry.right domain traces) domain left right budget.tolerance
+  Request.build (SideGeometry.right domain traces) domain left right budget.tolerance
     budget.tolerance_positive
 
 /-- The actual right perimeter's centered paired area satisfies the retained Newton density and vertical-length budget.
 -/
-theorem right_area_bound (traces : RectangularPerimeterTraces.PerimeterTraces mesh) (lengths :
-  RectangularPerimeterLengths.Lengths traces)
-    {allowance density : Fraction.Rational} (budget : NoisyPathArea.LengthErrorBudget traces.right.vertices.rest.length
+theorem right_area_bound (traces : PerimeterTraces mesh) (lengths :
+  Lengths traces)
+    {allowance density : Fraction.Rational} (budget : LengthErrorBudget traces.right.vertices.rest.length
       allowance)
-    (references : SideGeometry.Request (SideGeometry.right domain traces) domain left right budget.tolerance)
-    {bandAmbient : Rational.Box} {current : Raw.RawWindingState curve.polynomial bandAmbient}
+    (references : Request (SideGeometry.right domain traces) domain left right budget.tolerance)
+    {bandAmbient : Box} {current : Raw.RawWindingState curve.polynomial bandAmbient}
     {profile : NewtonBandBounds.Profile curve.squarefree current.box}
     {leftProfile : NewtonBandDifferentials.DifferentialProfile profile left.exponent}
     {rightProfile : NewtonBandDifferentials.DifferentialProfile profile right.exponent}
     {leftTarget rightTarget : Fraction.Rational}
-    (leftBand : PreparedNewtonBandSamples.PreparedBandRequest leftProfile leftTarget)
-    (rightBand : PreparedNewtonBandSamples.PreparedBandRequest rightProfile rightTarget)
+    (leftBand : PreparedBandRequest leftProfile leftTarget)
+    (rightBand : PreparedBandRequest rightProfile rightTarget)
     (leftInside : ∀ vertex, leftBand.sample.output.box.Contains (traces.right.point vertex))
-    (leftSide : ∀ first last, PreparedBoundarySegments.SameSide leftBand.sample.output.box (traces.right.point first)
+    (leftSide : ∀ first last, SameSide leftBand.sample.output.box (traces.right.point first)
       (traces.right.point last))
     (rightInside : ∀ vertex, rightBand.sample.output.box.Contains (traces.right.point vertex))
-    (rightSide : ∀ first last, PreparedBoundarySegments.SameSide rightBand.sample.output.box (traces.right.point first)
+    (rightSide : ∀ first last, SameSide rightBand.sample.output.box (traces.right.point first)
       (traces.right.point last))
     (densityNonnegative : 0 ≤ density)
     (leftDensity : PreparedNewtonBandSamples.Sample.preparedDensity leftBand.sample leftProfile leftBand.error ≤
@@ -358,12 +360,12 @@ theorem right_area_bound (traces : RectangularPerimeterTraces.PerimeterTraces me
     (rightDensity : PreparedNewtonBandSamples.Sample.preparedDensity rightBand.sample rightProfile rightBand.error ≤
       density)
     {index : Nat} (later : references.index ≤ index)
-    (leftData : PrimitiveData.DomainPrimitives domain left index) (rightData : PrimitiveData.DomainPrimitives domain
+    (leftData : DomainPrimitives domain left index) (rightData : DomainPrimitives domain
       right index)
     (samples : RectangularCenteredPerimeter.Centered traces (fun column row point =>
       (⟨leftData.anchors.alignedValue leftData.offsets column row point,
-        rightData.anchors.alignedValue rightData.offsets column row point⟩ : Stokes.PrimitivePoint))) :
-    Data.Gaussian.Norm.Basic.normSq samples.right.centeredArea ≤
+        rightData.anchors.alignedValue rightData.offsets column row point⟩ : PrimitivePoint))) :
+    Basic.normSq samples.right.centeredArea ≤
       4 * (3 * budget.tolerance + 4 * density * leftBand.sample.output.box.diagonalSq) * (4 * density + 3) *
         (face.cell.box.yUpper - face.cell.box.yLower + allowance)^2 := by
   have bound := NewtonSideArea.area_bound budget references leftBand rightBand
@@ -376,13 +378,13 @@ theorem right_area_bound (traces : RectangularPerimeterTraces.PerimeterTraces me
     (traces.right.leftReadings rightData.anchors rightData.offsets)
     (values := fun vertex => traces.right.leftValue (fun column row point =>
       (⟨leftData.anchors.alignedValue leftData.offsets column row point,
-        rightData.anchors.alignedValue rightData.offsets column row point⟩ : Stokes.PrimitivePoint))
+        rightData.anchors.alignedValue rightData.offsets column row point⟩ : PrimitivePoint))
       (traces.right.vertices.indexed vertex))
     (fun vertex => by
       rw [traces.right.leftReadings_value, traces.right.leftReadings_value]
       rfl)
     samples.right lengths.right.values lengths.right.nonnegative (fun edge => by
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+      rw [Basic.normSq_eq_canonical]
       exact RectangularVerticalTraceLengths.length_movement traces.right lengths.right edge)
   rw [← lengths.right.total_eq, Lengths.right_total lengths] at bound
   exact bound

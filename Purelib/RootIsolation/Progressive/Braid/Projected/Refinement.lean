@@ -54,9 +54,9 @@ inductive AllStationary {strands : Nat} :
     strands) :
       AllStationary (.nil frame)
   /-- A retained stationary overlap followed by an entirely stationary original path. -/ | cons {start middle finish :
-    ProjectedFrame strands}
-      (overlap : ChamberOverlap start.chamber middle.chamber)
-      (matching_order : ∀ position : Fin strands,
+    Progressive.Braid.Projected.Frame.ProjectedFrame strands}
+      (overlap : Progressive.Chamber.Overlap.ChamberOverlap start.chamber middle.chamber)
+      (matching_order : start.slope = middle.slope ∧ ∀ position : Fin strands,
         overlap.matching.forward (start.ownerIndex position) =
           middle.ownerIndex position)
       {remaining : ProjectedPath middle finish}
@@ -72,7 +72,7 @@ namespace Refinement.AllStationary
 theorem word_eq_nil {strands : Nat}
     {start finish : ProjectedFrame strands}
     {path : ProjectedPath start finish} (stationary :
-      Progressive.Braid.Projected.Refinement.AllStationary path) :
+      AllStationary path) :
     path.word = [] := by
   induction stationary with
   | nil frame => rfl
@@ -96,18 +96,18 @@ inductive OneCrossing {strands : Nat} (generator :
   /-- The displayed original crossing occurs first, followed only by stationary steps. -/ | here {start middle finish :
     ProjectedFrame strands}
       (overlap : ChamberOverlap start.chamber middle.chamber)
-      (geometry : Progressive.Braid.Projected.Overlap.CrossingGeometry start middle overlap generator)
-      (matching_order : ∀ position : Fin strands,
+      (geometry : Overlap.CrossingGeometry start middle overlap generator)
+      (matching_order : start.slope = middle.slope ∧ ∀ position : Fin strands,
         overlap.matching.forward (start.ownerIndex position) =
           middle.ownerIndex (generator.permutation.forward position))
       {remaining : ProjectedPath middle finish}
-      (remaining_stationary : Progressive.Braid.Projected.Refinement.AllStationary remaining) :
+      (remaining_stationary : AllStationary remaining) :
       OneCrossing generator
         (.cons (.crossing overlap generator geometry matching_order) remaining)
   /-- A retained stationary overlap precedes the unique original crossing in the remaining path. -/ | later {start
-    middle finish : ProjectedFrame strands}
-      (overlap : ChamberOverlap start.chamber middle.chamber)
-      (matching_order : ∀ position : Fin strands,
+    middle finish : Progressive.Braid.Projected.Frame.ProjectedFrame strands}
+      (overlap : Progressive.Chamber.Overlap.ChamberOverlap start.chamber middle.chamber)
+      (matching_order : start.slope = middle.slope ∧ ∀ position : Fin strands,
         overlap.matching.forward (start.ownerIndex position) =
           middle.ownerIndex position)
       {remaining : ProjectedPath middle finish}
@@ -125,7 +125,7 @@ theorem word_eq_singleton {strands :
   Nat} {generator : Generator strands}
     {start finish : ProjectedFrame strands}
     {path : ProjectedPath start finish}
-    (crossing : Progressive.Braid.Projected.Refinement.OneCrossing generator path) : path.word = [generator] := by
+    (crossing : OneCrossing generator path) : path.word = [generator] := by
   induction crossing with
   | here overlap geometry matchingOrder remainingStationary =>
       simp only [ProjectedPath.word,
@@ -155,24 +155,24 @@ inductive CellSubdivision {strands : Nat}
     ProjectedOverlap start finish → ProjectedPath
       start finish → Prop
   /-- An original stationary overlap is replaced by an entirely stationary path with the same endpoints. -/ | stationary
-      (overlap : ChamberOverlap start.chamber finish.chamber)
-      (matching_order : ∀ position : Fin strands,
+      (overlap : Progressive.Chamber.Overlap.ChamberOverlap start.chamber finish.chamber)
+      (matching_order : start.slope = finish.slope ∧ ∀ position : Fin strands,
         overlap.matching.forward (start.ownerIndex position) =
           finish.ownerIndex position)
       (fine : ProjectedPath start finish)
-      (fine_stationary : Progressive.Braid.Projected.Refinement.AllStationary fine) :
+      (fine_stationary : AllStationary fine) :
       CellSubdivision (.stationary overlap matching_order)
         fine
   /-- An original crossing is replaced by a path retaining exactly that signed generator and the same endpoints. -/ |
     crossing
       (overlap : ChamberOverlap start.chamber finish.chamber)
       (generator : Generator strands)
-      (geometry : Progressive.Braid.Projected.Overlap.CrossingGeometry start finish overlap generator)
-      (matching_order : ∀ position : Fin strands,
+      (geometry : Overlap.CrossingGeometry start finish overlap generator)
+      (matching_order : start.slope = finish.slope ∧ ∀ position : Fin strands,
         overlap.matching.forward (start.ownerIndex position) =
           finish.ownerIndex (generator.permutation.forward position))
       (fine : ProjectedPath start finish)
-      (fine_crossing : Progressive.Braid.Projected.Refinement.OneCrossing generator fine) :
+      (fine_crossing : OneCrossing generator fine) :
       CellSubdivision
         (.crossing overlap generator geometry matching_order) fine
 
@@ -185,7 +185,7 @@ theorem word_eq {strands : Nat}
     {start finish : ProjectedFrame strands}
     {coarse : ProjectedOverlap start finish}
     {fine : ProjectedPath start finish}
-    (subdivision : Progressive.Braid.Projected.Refinement.CellSubdivision coarse fine) :
+    (subdivision : CellSubdivision coarse fine) :
     fine.word = coarse.word := by
   cases subdivision with
   | stationary overlap matchingOrder fine fineStationary =>

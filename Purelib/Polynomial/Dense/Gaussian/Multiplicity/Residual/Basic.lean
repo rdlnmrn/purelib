@@ -60,19 +60,19 @@ displayed factor residual quadrances. -/
 theorem normSq_positiveValue : ∀ (entries : List
   PositiveEntry)
     (point : Gaussian.Basic.Canonical),
-    Data.Gaussian.Norm.Basic.normSq (Basis.Positive.positiveValue entries point) =
+    Gaussian.Norm.Basic.normSq (Basis.Positive.positiveValue entries point) =
       match entries with
       | [] => 1
       | entry :: tail =>
-          Data.Gaussian.Norm.Basic.normSq (entry.part.polynomial.eval point) ^ entry.multiplicity *
-            Data.Gaussian.Norm.Basic.normSq (Basis.Positive.positiveValue tail point)
+          Gaussian.Norm.Basic.normSq (entry.part.polynomial.eval point) ^ entry.multiplicity *
+            Gaussian.Norm.Basic.normSq (Basis.Positive.positiveValue tail point)
   | [], point => by
       simp only [-eq_self, -iff_self, Basis.Positive.positiveValue,
         Gaussian.Norm.Basic.normSq_one]
       rfl
   | entry :: entries, point => by
       rw [Basis.Positive.positiveValue, Gaussian.Norm.Basic.normSq_mul,
-        Purelib.Data.Gaussian.Power.normSq_pow]
+        Gaussian.Power.normSq_pow]
 
 /-- If every displayed factor residual is at least `delta`, the whole finite
 weighted product is at least `delta` to the total multiplicity. -/
@@ -80,9 +80,9 @@ theorem power_le_normSq_positiveValue_of_all
     (delta : Fraction.Rational) (deltaNonnegative : 0 ≤ delta) :
     ∀ (entries : List PositiveEntry) (point : Gaussian.Basic.Canonical),
       (∀ entry ∈ entries,
-        delta ≤ Data.Gaussian.Norm.Basic.normSq (entry.part.polynomial.eval point)) →
+        delta ≤ Gaussian.Norm.Basic.normSq (entry.part.polynomial.eval point)) →
       delta ^ multiplicityCount entries ≤
-        Data.Gaussian.Norm.Basic.normSq (Basis.Positive.positiveValue entries point)
+        Gaussian.Norm.Basic.normSq (Basis.Positive.positiveValue entries point)
   | [], point, _ => by
       simp only [multiplicityCount, pow_zero,
         Basis.Positive.positiveValue, Gaussian.Norm.Basic.normSq_one]
@@ -90,7 +90,7 @@ theorem power_le_normSq_positiveValue_of_all
   | entry :: entries, point, lower => by
       have headLower := lower entry (List.mem_cons_self)
       have headPower : delta ^ entry.multiplicity ≤
-          Data.Gaussian.Norm.Basic.normSq (entry.part.polynomial.eval point) ^ entry.multiplicity :=
+          Gaussian.Norm.Basic.normSq (entry.part.polynomial.eval point) ^ entry.multiplicity :=
         Fraction.Order.Arithmetic.pow_le_pow_direct deltaNonnegative
           headLower entry.multiplicity
       have tailLower :=
@@ -110,7 +110,7 @@ theorem power_le_normSq_positiveValue_of_all
 def unitQuadrance {p :
   CoefficientPolynomial}
     (decomposition : Decomposition p) : Fraction.Rational :=
-  Data.Gaussian.Norm.Basic.normSq (Basis.Positive.unitValue
+  Gaussian.Norm.Basic.normSq (Basis.Positive.unitValue
     decomposition.multiplicityBasis.entries)
 
 /-- The squared norm of the retained nonzero scalar unit is strictly positive. -/
@@ -125,9 +125,9 @@ theorem residual_product_identity
     {p : CoefficientPolynomial} (decomposition :
       Decomposition p)
     (point : Gaussian.Basic.Canonical) :
-    Data.Gaussian.Norm.Basic.normSq (p.eval point) = unitQuadrance
+    Gaussian.Norm.Basic.normSq (p.eval point) = unitQuadrance
       decomposition *
-      Data.Gaussian.Norm.Basic.normSq (Basis.Positive.positiveValue
+      Gaussian.Norm.Basic.normSq (Basis.Positive.positiveValue
         decomposition.positiveMultiplicityEntries
         point) := by
   rw [decomposition.eval_positiveMultiplicityEntries point, Gaussian.Norm.Basic.normSq_mul]

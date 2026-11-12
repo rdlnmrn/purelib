@@ -57,7 +57,7 @@ set_option genInjectivity false in
 /-- A progressive process already in a loop chart. The centre lower bound is finite state data, normally obtained from
 radial scaling or the strict margin of the preceding safe inversion. -/
 structure LoopProcess where
-  /-- The original stateful finite enclosure process. -/ process : Approximation.Gaussian.Process
+  /-- The original stateful finite enclosure process. -/ process : Process
   /-- Every retained process state has ball centre squared norm at least one. -/ center_normalized : ∀ (state :
     process.State),
     1 ≤ Data.Gaussian.Norm.Basic.normSq (process.ball state).center
@@ -68,7 +68,7 @@ namespace LoopProcess
 
 /-- The one finite refinement used for a redundant output decision. -/
 def refinedState (loop :
-  Approximation.Gaussian.Process.Sector.LoopProcess) (state : loop.process.State) :
+  LoopProcess) (state : loop.process.State) :
     loop.process.State :=
   loop.process.refine state
     Budget.uniformRadiusSq
@@ -76,7 +76,7 @@ def refinedState (loop :
 
 /-- Every possible reading after the loop refinement was possible at the original state. -/
 theorem refined_persists (loop :
-  Approximation.Gaussian.Process.Sector.LoopProcess) (state : loop.process.State)
+  LoopProcess) (state : loop.process.State)
     {value : Canonical}
     (possible : loop.process.Possible (loop.refinedState state) value) :
     loop.process.Possible state value :=
@@ -84,15 +84,15 @@ theorem refined_persists (loop :
 
 /-- The refined loop state meets the uniform redundant-output squared-radius threshold. -/
 theorem refined_accurate (loop :
-  Approximation.Gaussian.Process.Sector.LoopProcess) (state : loop.process.State) :
+  LoopProcess) (state : loop.process.State) :
     (loop.process.ball (loop.refinedState state)).radiusSq <
       Budget.uniformRadiusSq :=
   loop.process.accurate state _ _
 
 /-- Total bounded unary-or-sector decision at one normalized loop state. -/
 def decide (loop :
-  Approximation.Gaussian.Process.Sector.LoopProcess) (state : loop.process.State) :
-    Approximation.Gaussian.Enclosure.Sector.Decision
+  LoopProcess) (state : loop.process.State) :
+    Decision
       (loop.process.ball (loop.refinedState state)) :=
   Decision.decide _
     (loop.center_normalized (loop.refinedState state))
@@ -100,7 +100,7 @@ def decide (loop :
 
 /-- The unary outcome is sound for every finite possibility at the refined state. -/
 theorem unary_sound (loop :
-  Approximation.Gaussian.Process.Sector.LoopProcess) (state : loop.process.State)
+  LoopProcess) (state : loop.process.State)
     (certificate : Large.UnaryBall
       (loop.process.ball (loop.refinedState state)))
     {value : Canonical}
@@ -111,13 +111,13 @@ theorem unary_sound (loop :
 
 /-- The sector outcome is sound for every finite possibility at the refined state. -/
 theorem sector_sound (loop :
-  Approximation.Gaussian.Process.Sector.LoopProcess) (state : loop.process.State)
-    (sector : Data.ComplexContinuedFraction.Encoding.Sector)
+  LoopProcess) (state : loop.process.State)
+    (sector : Sector)
     (certificate : Safe.SafeBall sector
       (loop.process.ball (loop.refinedState state)))
     {value : Canonical}
     (possible : loop.process.Possible (loop.refinedState state) value) :
-    Geometry.Rational.Sector.Eight.Safe sector value :=
+    Safe sector value :=
   Safe.safe_of_contains certificate
     (loop.process.possible_inside possible)
 

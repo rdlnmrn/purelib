@@ -309,5 +309,30 @@ public theorem parse_lowerRow_ne (word : BinaryPrefix.Basic.SourceEncodingRawPar
     · exact Or.inr dZero
   · exact Or.inl cZero
 
+/-- Folding a true-bit run in a retained unary phase preserves its matrix and history.
+
+The counter increases by the exact finite length in each of the original high,
+low and loop phases. The block kind selects the same existing syntax branch.
+-/
+public theorem foldl_true_unary (kind : Parser.Syntax.BlockKind) (count start : Nat)
+    (matrix : Matrix2.GaussianMatrix) (history : List Constraint) :
+    (List.replicate count true).foldl step
+      ⟨kind.unaryPhase start, matrix, history⟩ =
+      ⟨kind.unaryPhase (start + count), matrix, history⟩ := by
+  induction count generalizing start with
+  | zero =>
+      rewrite [List.replicate_zero, List.foldl_nil, Nat.add_zero]
+      rfl
+  | succ count induction =>
+      rewrite [List.replicate_succ, List.foldl_cons]
+      have transition : step
+          ⟨kind.unaryPhase start, matrix, history⟩ true =
+          ⟨kind.unaryPhase (start + 1), matrix, history⟩ := by
+        cases kind <;> rfl
+      rewrite [transition, induction]
+      have counters : start + 1 + count = start + (count + 1) := by omega0
+      exact congrArg
+        (fun value => State.mk (kind.unaryPhase value) matrix history) counters
+
 end State
 end Purelib.Data.CCL.Encoding.Parser

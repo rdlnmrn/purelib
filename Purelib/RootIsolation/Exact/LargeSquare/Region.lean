@@ -36,6 +36,10 @@ the executable replay.  This imports only existing finite isolation modules.
 
 namespace Purelib.RootIsolation.Exact.LargeSquare.Region
 
+open Purelib.Data.Rat.Fraction (Rational)
+open Purelib.Data.Rat.Fraction.Order
+open Dense.Gaussian.Bounds
+
 variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {degreeBound
   : Nat}
 variable (degreeAtLeastTwo : 2 ≤ p.natDegree) (squarefree :
@@ -52,6 +56,36 @@ section Runs
 
 variable {state : Exact.State.IsolationState p ambient}
 end Runs
+
+/-- The clear symmetric square at a radius containing the polynomial's coefficient bound.
+
+Its exact boundary clearance and properness use that same displayed radius.
+The square may also enclose other input boxes without changing the polynomial,
+degree or clearance constructor.
+-/
+def symmetricRegion {radius : Rational}
+    (radiusLe : RootRadius.denseLargeSquareRadius p ≤ radius) :
+    Clearance.Box.Region.ClearRegion p
+      (Box.symmetric radius
+        ((RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe).le) := by
+  have degreePositive : 0 < p.natDegree := (by decide : (0 : Nat) < 2).trans_le degreeAtLeastTwo
+  have positive := (RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe
+  let box := Box.symmetric radius positive.le
+  have negative := Arithmetic.neg_lt_neg_direct positive
+  change -radius < 0 at negative
+  exact
+    { box := box
+      refinesAmbient := Box.refines_refl box
+      proper := ⟨negative.trans positive, negative.trans positive⟩
+      clearance := Clearance.Box.Boundary.RootRadius.symmetric_boundaryClearance degreePositive radiusLe }
+
+/-- The same clear symmetric square has raw winding four times the polynomial degree. -/
+theorem symmetricRegion_winding {radius : Rational}
+    (radiusLe : RootRadius.denseLargeSquareRadius p ≤ radius) :
+    Winding.Box.Basic.quadrupledBoxWinding p (symmetricRegion degreeAtLeastTwo radiusLe).box =
+      (4 : Int) * p.natDegree :=
+  Winding.Box.Global.quadrupledBoxWinding_symmetric_eq_degree
+    ((show (0 : Nat) < 2 by decide).trans_le degreeAtLeastTwo) radiusLe
 
 /-- The original coefficient-computed initial region, with its original
 boundary bound.  No alternative box or clearance is selected here. -/

@@ -1,0 +1,1070 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\linespread{1.05}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt plus 1pt minus 1pt}
+\postdisplaypenalty=5000
+\clubpenalty=10000
+\widowpenalty=10000
+\pdfinfoomitdate=1
+\pdftrailerid{}
+\hypersetup{pdftitle={Our definitions: Sterling constructions for e + pi + sqrt(2)}}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\N}{\mathbb N}
+\newcommand{\G}{\mathbb Q(i)}
+\newcommand{\sq}[1]{\lvert #1\rvert^2}
+\newcounter{definition}
+\newcommand{\entry}[2]{%
+  \refstepcounter{definition}\subsection*{#1 \thedefinition: #2}}
+\newcommand{\definition}[1]{\entry{Definition}{#1}}
+\newcommand{\contract}[1]{\entry{Contract}{#1}}
+\newcommand{\operation}[1]{\entry{Operation}{#1}}
+\newcommand{\relation}[1]{\entry{Relation}{#1}}
+\newcommand{\construction}[1]{\entry{Construction}{#1}}
+\newcommand{\refine}{\operatorname{refine}}
+\newcommand{\Poss}{\operatorname{Poss}}
+\newcommand{\Seq}{\mathsf{Sequence}}
+\newcommand{\interp}[1]{\mathcal I(#1)}
+\newcommand{\checks}[2]{\begin{samepage}\par
+  \textbf{Recognition.} #1\par\nopagebreak[4]
+  \textbf{Equality.} #2\par\end{samepage}}
+\newcommand{\inheritedchecks}[1]{\par
+  \textbf{Recognition and equality (inherited).} #1\par}
+\begin{document}
+\begin{center}
+  {\LARGE Our definitions\par}
+  \vspace{6pt}
+  {\large Sterling constructions for $e+\pi+\sqrt2$\par}
+\end{center}
+\vspace{8pt}
+
+We build the finite constructions for $(e+\pi)+\sqrt2$ from boxes.
+Natural numbers, integers and rationals use the box representations,
+arithmetic and order in Definitions~\ref{def:naturals},
+\ref{def:integers} and~\ref{def:rational-box}.
+Construction equality is separate from numerical agreement of
+interpretations, written $\approx$. Contracts state laws of the fixed
+interpreters; operations act on the defined finite types.
+
+\definition{Boxes and their arithmetic}\label{def:boxes}
+A box is a finite expression $[B_1,\ldots,B_n]$ whose entries are
+previously constructed boxes. The empty box is $0=[\,]$. Entry order
+is immaterial and repetitions are retained.
+
+The cardinality box $\#B$ replaces every immediate entry of $B$ by $0$,
+retaining multiplicity.
+The sum $B\uplus C$ joins the entries of the two boxes. Write $B\preceq C$
+when each occurrence in $B$ can be matched to a distinct equal occurrence
+in $C$. For this checked inclusion, $C\mathbin{\ominus}B$ is the box
+of unmatched occurrences.
+
+\checks{Parse balanced brackets and separators, then recursively check
+each entry. Expand only previously defined finite abbreviations.
+For $B\preceq C$, scan the entries of $B$, removing one equal entry from
+a working copy of $C$ each time; reject if a match is absent.}
+{Recursively replace each entry by its canonical bracket expression,
+sort these expressions lexicographically, and enclose the sorted entries
+in brackets. Compare the resulting expressions. Fix the symbol order
+$[\ <\ {,}\ <\ ]$; a proper prefix precedes its extension.
+Each recursion descends to smaller boxes, and each sort and scan is finite.}
+
+\definition{Natural numbers and their arithmetic}\label{def:naturals}
+A natural number is a box whose immediate entries are all $0$.
+Write $n$ for the box of $n$ empty entries; in particular,
+$0=[\,]$, $1=[0]$, and the successor of $n$ is $n\uplus[0]$.
+
+\checks{Recognize a box and check that every immediate entry is empty.}
+{Use box equality from Definition~\ref{def:boxes}; for natural boxes
+this compares their numbers of immediate entries.}
+
+Natural addition is box sum: $n+m=n\uplus m$. To multiply $n$ by $m$,
+start with $0$ and add $m$ once for each entry of $n$.
+Define $n\leq m$ by $n\preceq m$, and $n<m$ by $n\leq m$ and $n\ne m$.
+When $m\leq n$, subtraction is $n-m=n\mathbin{\ominus}m$.
+Powers use repeated multiplication, with $n^0=1$.
+
+For $d>0$, divide a natural $a$ by starting with quotient $0$ and
+remainder $a$. While the remainder is at least $d$, subtract $d$ and
+increment the quotient. Each subtraction removes at least one entry,
+so at most the original $a$ subtractions occur. The outputs satisfy
+$a=qd+r$, $0\leq r<d$.
+Write them as $\lfloor a/d\rfloor$ and $a\bmod d$.
+
+Compute $\gcd(a,d)$ by the recursion
+\[
+ \gcd(a,0)=a,\qquad
+ \gcd(a,d)=\gcd(d,a\bmod d)\quad(d>0).
+\]
+The positive second argument strictly decreases. Binary length is obtained
+by repeatedly taking the quotient on division by $2$ until zero, counting
+the steps. These procedures use only natural boxes and their finite scans.
+
+\definition{Lists as boxes of prefixes}\label{def:lists}
+For box-represented entries $a_1,\ldots,a_n$, define
+\[
+ \langle a_1,\ldots,a_n\rangle=[P_1,\ldots,P_n],
+ \qquad P_j=[a_1,\ldots,a_j].
+\]
+The empty list is $[\,]$. In particular,
+\[
+                 \langle a,b,c\rangle=[[a],[a,b],[a,b,c]].
+\]
+The outer box has no prescribed entry order. Its entries are distinguished
+by their cardinalities $1,\ldots,n$. Put $P_0=[\,]$; the $j$th list entry
+is the unique entry of the singleton box $P_j\mathbin{\ominus}P_{j-1}$.
+
+\checks{Recognize a box $L$ and put $n=\#L$. Find exactly one immediate
+entry $P_j$ of cardinality $j$ for each $1\leq j\leq n$. Check
+$P_{j-1}\preceq P_j$, remove its occurrences, and check that the
+remainder has one entry. For a typed list, recognize that recovered entry
+in the declared element type. Every scan is bounded by the supplied box.}
+{Use box equality on canonical entry representations. Equivalently,
+compare lengths and then the recovered entries at positions $1,\ldots,n$.
+Repeated entries remain separate occurrences in each prefix.}
+
+Appending $a$ to a list $L$ of length $n$ is
+\[
+       L\uplus[P_n\uplus[a]],\qquad P_0=[\,]\text{ when }n=0.
+\]
+For $n>0$, removing the first entry gives
+$[P_2\mathbin{\ominus}P_1,\ldots,P_n\mathbin{\ominus}P_1]$,
+with the empty case when $n=1$. A list $L$ is a prefix of a list $K$
+exactly when $L\preceq K$ as boxes.
+If $K=[Q_1,\ldots,Q_m]$ is another prefix-encoded list, concatenation is
+\[
+       L\mathbin{\Vert}K
+          =L\uplus[P_n\uplus Q_1,\ldots,P_n\uplus Q_m].
+\]
+Indexing uses the singleton difference above. A traversal visits
+$j=1,\ldots,n$; mapping, folding and bounded lookup use this finite
+traversal. All ordered lists below use this encoding.
+References to the first or next entry, or to traversal in order, use these
+recovered positions.
+
+\definition{Bits, pairs, records and construction trees}\label{def:finite}
+A bit is the natural box $0$ or $1=[0]$. A unit has the single
+representation $\star=0$. An ordered pair is
+\[
+                     (a,b)=\langle a,b\rangle=[[a],[a,b]].
+\]
+An ordered tuple is a prefix-encoded list of its fields. A record uses
+the field order specified by its definition. A tagged record with tag
+$t$ and fields $a_1,\ldots,a_k$ is $\langle t,a_1,\ldots,a_k\rangle$,
+where $t$ is a natural box.
+
+A construction tree is a tagged record whose prescribed fields may
+themselves be construction trees. Each displayed alternative has its own
+tag and field types. Within each type, assign tags $0,1,\ldots$ in the
+order in which its alternatives are listed. Printed constructor names
+abbreviate these tagged box records.
+
+\checks{Decode the list by Definition~\ref{def:lists}. Check its length,
+tag and prescribed field types recursively. A pair has exactly two fields;
+a fixed record has exactly its declared fields. A tree child is contained
+in a smaller box, so recursive recognition terminates.}
+{Compare tags and corresponding fields using their declared equalities.
+Use canonical box representations of fields when forming the enclosing
+list. Thus tuple and tree equality preserve field order.}
+
+A retained execution record is the tuple of its fixed algorithm tag,
+inputs, list of intermediate states and output. Recognize it by
+recomputing every transition and the terminal output. Its equality
+compares these fields. Successful and failed branch tags are distinct.
+A word is a prefix-encoded list of bits.
+
+\definition{Integers and their arithmetic}\label{def:integers}
+An integer is a signed-magnitude box pair $\langle\epsilon,m\rangle$,
+where $\epsilon$ is $0$ or $1$ and $m$ is natural.
+Call the codes with $\epsilon=0$ nonnegative and those with $\epsilon=1$
+negative. Zero has the single
+representation $\langle0,0\rangle$.
+The constructor $\operatorname{int}(\epsilon,m)$ replaces either sign
+at magnitude zero by this zero representation. Write the other codes
+as $m$ or $-m$ according to their sign.
+
+\checks{Decode a pair by Definition~\ref{def:finite}. Check the sign
+and natural magnitude by Definition~\ref{def:naturals}, and require
+$m=0\Longrightarrow\epsilon=0$.}
+{Compare sign and magnitude, equivalently their canonical box pairs.}
+
+Embed a natural $m$ as $\operatorname{int}(0,m)$.
+To add equal signs, add magnitudes and retain the sign, normalizing zero.
+To add opposite signs, compare magnitudes, subtract the smaller from the
+larger, and use the larger magnitude's sign; equal magnitudes give zero.
+Negation reverses the sign of a nonzero integer and fixes zero.
+Subtraction is addition of the negative. Multiplication multiplies
+magnitudes, uses sign $0$ for equal signs and $1$ for different signs,
+and normalizes zero.
+
+For order, a negative integer precedes every nonnegative integer.
+Among nonnegative integers compare magnitudes in natural order;
+among negative integers reverse that order.
+The absolute magnitude $|a|$ is the retained natural field $m$.
+All operations use the finite natural arithmetic of
+Definition~\ref{def:naturals}.
+
+\definition{Rationals and their arithmetic}\label{def:rational-box}
+A rational is a reduced signed fraction encoded by
+$\langle\epsilon,m,d\rangle$, where $\epsilon$ is $0$ or $1$,
+$m,d$ are natural, and
+\[
+          d>0,\qquad \gcd(m,d)=1,\qquad
+          m=0\Longrightarrow\epsilon=0.
+\]
+Fraction notation uses the normalization constructor below.
+For an integer $a=\langle\epsilon,m\rangle$ and natural $d>0$, define
+the fraction constructor by
+\[
+ g=\gcd(m,d),\qquad
+ \operatorname{rat}(a,d)=\langle\epsilon,m/g,d/g\rangle .
+\]
+The two divisions here are exact natural quotients. Thus zero is
+$\langle0,0,1\rangle$. Embed an integer $a$ as $\operatorname{rat}(a,1)$;
+natural inputs first use their integer embedding.
+Write a reduced code as $\pm m/d$ using its sign and fields.
+
+\checks{Decode a triple using Definition~\ref{def:finite}. Check its sign
+and natural fields by Definition~\ref{def:naturals}, then check the
+three displayed conditions using natural order and greatest common divisor.}
+{Compare the three canonical fields as boxes. For two fraction
+presentations $\operatorname{rat}(a,d)$ and $\operatorname{rat}(b,e)$,
+equivalently check the integer equality $ae=bd$.}
+
+For signed integers $a,b$ and positive natural denominators $d,e$, define
+\[
+\begin{aligned}
+ \operatorname{rat}(a,d)+\operatorname{rat}(b,e)
+     &=\operatorname{rat}(ae+bd,de),\\
+ -\operatorname{rat}(a,d)&=\operatorname{rat}(-a,d),\\
+ \operatorname{rat}(a,d)\operatorname{rat}(b,e)
+     &=\operatorname{rat}(ab,de).
+\end{aligned}
+\]
+Products with a natural denominator use its integer embedding when
+forming numerators. Subtraction adds the negative.
+For $a\ne0$, the reciprocal has natural numerator magnitude $d$, the
+sign of $a$, and denominator $|a|$; normalize with
+$\operatorname{rat}$. Division multiplies by this guarded reciprocal.
+Order is the finite cross-product test
+\[
+ \operatorname{rat}(a,d)\leq\operatorname{rat}(b,e)
+                         \quad\Longleftrightarrow\quad ae\leq bd
+\]
+using integer order.
+
+For a nonnegative rational $q=\langle0,m,d\rangle$, compute
+$\lceil q\rceil$ by scanning natural $k$ from $0$ through $m$ and returning
+the first with $m\leq kd$. This scan always succeeds since $d\geq1$.
+The fraction readback is its retained sign, magnitude and positive denominator.
+Write $\rho(q)$ for its canonical box when stored as a field below;
+fraction expressions are first evaluated by these normalization rules.
+
+\definition{Gaussian rational arithmetic}\label{def:gaussian}
+A Gaussian rational is an ordered pair $z=(x,y)$ with $x,y\in\Q$, written
+$x+iy$. Its box representation is $\langle\rho(x),\rho(y)\rangle$.
+Equality is coordinate equality. Define
+\[
+\begin{aligned}
+ (x,y)+(u,v)&=(x+u,y+v),&
+ -(x,y)&=(-x,-y),\\
+ (x,y)(u,v)&=(xu-yv,xv+yu),&
+ \overline{(x,y)}&=(x,-y),\\
+ \sq{(x,y)}&=x^2+y^2,&
+ (x,y)^{-1}&=\frac{(x,-y)}{x^2+y^2}\quad(x^2+y^2>0).
+\end{aligned}
+\]
+Embed a rational $q$ as $(q,0)$; put $i=(0,1)$ and $\gamma=1+i$.
+Powers and finite sums use repeated multiplication and addition, with
+$z^0=1$ and an empty sum equal to zero.
+\checks{Accept an ordered pair of rational expressions.}
+{Compare the represented rational coordinates.}
+
+\begin{samepage}
+\definition{Intervals, balls and requests}\label{def:ball}
+A rational interval $[L,U]$ retains $L,U\in\Q$ and $L\leq U$.
+This interval notation abbreviates the ordered box record
+$\langle\rho(L),\rho(U)\rangle$.
+Its width is $U-L$ and its midpoint is $(L+U)/2$.
+A rational ball is a pair $(c,r)$ with $c\in\G$ and $r\in\Q$, $r\geq0$;
+its membership condition for a supplied $z\in\G$ is
+\[
+                         \sq{z-c}\leq r.
+\]
+Here $r$ is a \emph{squared} radius. A squared accuracy request is a
+rational $T>0$. A width request is a rational $\varepsilon>0$.
+\par\end{samepage}
+\checks{Check the rational fields and the displayed order or positivity
+conditions by rational comparison.}
+{Compare interval endpoints, or ball centre and squared radius, or request
+value, as appropriate. Ball equality here means equality of these
+enclosure data.}
+
+\definition{Construction names}\label{def:codes}
+The admissible construction codes are the finite expressions
+\[
+\begin{aligned}
+ P::={}&\mathsf{Exact}(q)\mid\mathsf{HornerE}\mid\mathsf{FactorialE}
+       \mid\mathsf{IntegralPi}\\
+      &{}\mid\mathsf{PolygonPi}\mid\mathsf{RootTwo}
+       \mid\mathsf{Add}(P,P),\qquad q\in\Q.
+\end{aligned}
+\]
+Each tag selects the fixed algorithm defined below. The construction
+object is this code with the following equality.
+The grammar uses the tagged box records of Definition~\ref{def:finite};
+in its displayed order, $\mathsf{Exact}$ has tag $0$ and $\mathsf{Add}$
+has tag $6$. In particular,
+\[
+ \mathsf{Exact}(q)=\langle0,\rho(q)\rangle,\qquad
+ \mathsf{HornerE}=\langle1\rangle,\qquad
+ \mathsf{Add}(P,Q)=\langle6,P,Q\rangle.
+\]
+\checks{Check the outer tag and its exact field count. At
+$\mathsf{Exact}$ invoke rational recognition; at $\mathsf{Add}$ recursively
+recognize both children; the five other tags have no fields. Reject every
+other expression.}
+{Different outer tags are unequal. Compare rational values at
+$\mathsf{Exact}$; identical parameter-free tags are equal. At
+$\mathsf{Add}$ compare the left children and the right children
+recursively. These recursions inspect smaller finite trees.}
+
+Use $e_{\rm H},e_{\rm F},\pi_{\rm I},\pi_{\rm P},s$ as abbreviations for
+the five parameter-free tags in their displayed order, and $P+Q$ for
+$\mathsf{Add}(P,Q)$. Thus the two $e$ constructions have different
+identities, as do the two $\pi$ constructions.
+Write $\interp P$ for the numerical interpretation of code $P$.
+
+\definition{States of a construction}\label{def:states}
+A state is the ordered box record $\langle P,\sigma\rangle$, retaining
+its construction owner $P$ and state data of this shape:
+\[
+\begin{array}{c|c|c}
+P&\text{state data}&\text{initial data}\\ \hline
+\mathsf{Exact}(q)&\star&\star\\
+e_{\rm H},e_{\rm F},\pi_{\rm P},s&n\in\N&0\\
+\pi_{\rm I}&\text{ordered finite list of positive width requests}&[\,]\\
+\mathsf{Add}(P,Q)&(\sigma,\tau)\text{ of the two child owners}
+ &(\sigma_*^P,\sigma_*^Q)
+\end{array}
+\]
+The integral request list records continuations after its fixed initial
+preparation. Frontiers, caches and intermediate states are obtained by
+replaying the indicated algorithms.
+\checks{Recognize the owner and recursively check its prescribed state
+data, including positivity of every integral width request. Recompute
+any supplied derived fields and reject a mismatch.}
+{Compare owners first, then their state data recursively, retaining the
+order of integral requests and of addition operands. Replayed fields
+are determined by these data.}
+
+\contract{Sample approximations}\label{def:approximation}
+A sample approximation is the following numerical contract for a fixed
+sampler algorithm. It supplies procedures
+$n\mapsto a_n\in\G$ and $n\mapsto R_n\in\Q$, a rational bound $B\geq0$,
+and certificates of
+\[
+ R_n\geq0,\qquad \sq{a_n}\leq B,\qquad
+ \sq{a_m-a_n}\leq R_n\quad(m\geq n).
+\]
+Its refinement procedure, on a current stage $c\in\N$ and $T>0$,
+returns an actual $j\geq c$ with $R_j<T$, together with these two
+checkable inequalities.
+The sampler-code family here is precisely $e_{\rm H},e_{\rm F},
+\pi_{\rm P},s$, with the algorithms specified below. The universal laws
+are correctness obligations for these fixed algorithms.
+\checks{For this family, use Definition~\ref{def:codes} and accept only
+the four parameter-free tags $\mathsf{HornerE}$, $\mathsf{FactorialE}$,
+$\mathsf{PolygonPi}$ and $\mathsf{RootTwo}$.}
+{Use Definition~\ref{def:codes}: two sampler codes are equal exactly
+when their tags agree. These checks concern the codes; the displayed
+universal laws are the interpretation contract.}
+
+\definition{Geometric selector codes}\label{def:selector}
+For $C\in\Q$, $C\geq0$, define $\mathsf{Select}_C(c,T)$ for $c\in\N$
+and $T>0$ as follows. Compute
+\[
+ h=\lceil C/T\rceil,\qquad
+ f=\begin{cases}
+ 1,&h=0,\\
+ \text{number of binary digits of }h,&h>0.
+ \end{cases}
+\]
+Start at stage $j=c$ with a natural counter of value $f$. If $C/4^j<T$,
+return $j$. Otherwise, if the counter is positive, increment $j$ and
+decrement the counter; repeat. Return $c+f$ when the counter reaches zero.
+The selector retains the input, returned stage and certificate
+\[
+                 c\leq j\leq c+f,\qquad C/4^j<T.
+\]
+The counter is the procedure's \emph{fuel}: an explicit bound on the
+number of stage advances.
+The selector code is $\mathsf{Select}(C)$.
+\checks{Check this tag, one rational field $C$, and $C\geq0$.
+An invocation additionally requires $c\in\N$ and $T>0$.}
+{Compare the rational parameter $C$; compare all retained input and output
+fields when comparing invocation records.}
+
+\contract{Persistent numerical processes}\label{def:process}
+The numerical interpretation of a construction code has the following
+operations and laws on its states from Definition~\ref{def:states}:
+\begin{itemize}
+\item A ball $(c_s,r_s)$ at each state $s$, and a possible-reading
+relation $\Poss(s,z)$ for $z\in\G$. Evidence for a possible reading is
+retained with that reading.
+\item A witness $w_s\in\G$ with evidence of $\Poss(s,w_s)$, and a
+containment law
+\[
+                    \Poss(s,z)\ \Longrightarrow\ \sq{z-c_s}\leq r_s.
+\]
+\item A refinement $s'=\refine(s,T)$ for every $T>0$, with laws
+\[
+ r_{s'}<T,\qquad \Poss(s',z)\ \Longrightarrow\ \Poss(s,z).
+\]
+\item A rational bound $B\geq0$ and the law $\sq{c_s}\leq B$ at every
+state.
+\end{itemize}
+These laws govern the fixed interpretation procedures below.
+\inheritedchecks{Construction owners use Definition~\ref{def:codes},
+states use Definition~\ref{def:states}, and observed balls use
+Definition~\ref{def:ball}. The contract states laws of their interpretation;
+it supplies no additional type of arbitrary function-bearing records.}
+
+\contract{Coherence}\label{def:name}
+A coherent numerical interpretation supplies a rational allowance
+$\eta(s)\geq0$ at every state, with
+\[
+\begin{gathered}
+ r_s\leq\eta(s),\\
+ \Poss(s,u),\ \Poss(t,v)
+ \ \Longrightarrow\
+ \sq{u-v}\leq4\bigl(\eta(s)+\eta(t)\bigr).
+\end{gathered}
+\]
+It also supplies a request modulus $M(A)>0$ for every rational $A>0$,
+with the law
+\[
+             0<r<M(A)\ \Longrightarrow\
+             \eta\bigl(\refine(s,r)\bigr)<A.
+\]
+A \emph{name} uses a construction code with the initial state prescribed by
+Definition~\ref{def:states}. Its numerical interpretation has the displayed
+coherence laws. The finite code determines the algorithms, allowances and
+modulus; these are not arbitrary functions supplied for recognition.
+\inheritedchecks{Use Definition~\ref{def:codes} for the name's code and
+Definition~\ref{def:states} for its prescribed initial state. Allowances
+and moduli are computed by the fixed interpreter; the coherence laws
+are its contract.}
+
+\operation{Sequence-backed interpretation}\label{def:sequence}
+For one of the four sampler codes, write $\Seq(a,R,B)$ for its
+sequence-backed numerical interpretation. It has
+states $n\in\N$, initially $0$, and
+\[
+ (c_n,r_n)=(a_n,R_n),\qquad w_n=a_n,\qquad
+ \eta(n)=R_n,\qquad M(A)=A.
+\]
+A possible-reading certificate at $n$ retains a natural $m\geq n$
+and the exact equality $z=a_m$. Refinement is the approximation's
+refinement from the current stage $n$. Its centre bound is $B$.
+\checks{For the sampler owner, use the four-code restriction in
+Contract~\ref{def:approximation}; for its state use
+Definition~\ref{def:states}. A supplied possible-reading witness must have
+a natural index $m\geq n$ and reading equal to the recomputed $a_m$.}
+{Owner and state equality are inherited from
+Definitions~\ref{def:codes} and~\ref{def:states}.
+Compare witness indices as natural boxes and readings by
+Definition~\ref{def:gaussian}, using the record rule of
+Definition~\ref{def:finite}.}
+
+\operation{Canonical sampling}\label{def:sampling}
+For a name with initial state $s_*$, define its canonical states and
+samples by the finite recursion
+\[
+ s_0=\refine(s_*,1),\qquad
+ s_{k+1}=\refine(s_k,1/4^{k+1}),\qquad A_k=w_{s_k}.
+\]
+A canonical stage counts this recursion; it need not equal a raw stage
+of the name's original sample procedure.
+\inheritedchecks{Input codes use Definition~\ref{def:codes} and stage
+indices use natural boxes from Definition~\ref{def:naturals}. Output states
+use Definition~\ref{def:states} and samples use
+Definition~\ref{def:gaussian}. Check any retained execution record by
+replaying the recursion, as in Definition~\ref{def:finite}.}
+
+\relation{Operational equivalence}\label{def:equivalence}
+For names $A,B$, a comparison at independent canonical floors $p,q\in\N$
+and squared request $T>0$ retains both names and supplies $i\geq p$,
+$j\geq q$, with a finite certificate of
+\[
+              \sq{A_m-B_n}<T
+              \qquad\text{for every }m\geq i,\ n\geq j.
+\]
+Write $A\approx B$ when a finite algorithm with a finite correctness and
+termination argument constructs such a comparison
+for every $p,q,T$. This relation is distinct from presentation identity.
+It concerns the numerical interpretations; the sterling equality of
+construction objects remains Definition~\ref{def:codes}. Finite comparison
+derivations are defined separately below.
+The arguments are recognized construction names. This entry specifies a
+relation between their numerical interpretations; it supplies no new
+object type whose equality is $\approx$.
+
+\definition{Finite comparison derivations}\label{def:derivations}
+A comparison derivation is a finite tree with the following tags and
+endpoint rules. Write $D:P\approx Q$ for its computed endpoints.
+Each tree node uses a tagged prefix-encoded record.
+\[
+\begin{array}{l|l}
+\text{tag and fields}&\text{computed endpoints}\\ \hline
+\mathsf{Refl}(P)&P\approx P\\
+\mathsf{SameE}&e_{\rm H}\approx e_{\rm F}\\
+\mathsf{SamePi}&\pi_{\rm I}\approx\pi_{\rm P}\\
+\mathsf{Sym}(D),\quad D:P\approx Q&Q\approx P\\
+\mathsf{Trans}(D,F),\quad D:P\approx Q,\ F:Q\approx R&P\approx R\\
+\mathsf{Sum}(D,F),\quad D:P\approx Q,\ F:R\approx S
+ &(P+R)\approx(Q+S)\\
+\mathsf{Comm}(P,Q)&(P+Q)\approx(Q+P)\\
+\mathsf{Assoc}(P,Q,R)&((P+Q)+R)\approx(P+(Q+R))\\
+\mathsf{Zero}(P)&(P+\mathsf{Exact}(0))\approx P\\
+\mathsf{RationalSum}(q,r)&
+ (\mathsf{Exact}(q)+\mathsf{Exact}(r))\approx\mathsf{Exact}(q+r)
+\end{array}
+\]
+The table fixes the tag order. Thus $\mathsf{SameE}=\langle1\rangle$
+and $\mathsf{Sum}(D,F)=\langle5,D,F\rangle$.
+Each tag selects the corresponding fixed comparison construction:
+$\mathsf{SameE}$ uses the Horner--factorial comparison;
+$\mathsf{SamePi}$ uses the integral--polygon comparison; the other tags
+use the indicated reflexive, symmetric, transitive or additive comparison.
+The comparison arguments are given in
+\href{SterlingArithmetic.pdf}{\emph{Sterling arithmetic}},
+Sections~3, 5--7 and 9.
+
+\checks{Traverse the tree, check tags and field types, and compute its
+endpoints. At $\mathsf{Trans}$, check equality of the two middle
+construction codes by Definition~\ref{def:codes}. Reject every unlisted
+tag or mismatched endpoint.}
+{Compare derivation tags and fields recursively. Distinct derivation trees
+with the same endpoints remain distinct derivation objects.}
+
+A checked derivation selects an algorithm satisfying
+Relation~\ref{def:equivalence}. The recognition test concerns the supplied
+tree; it is not a search for some derivation with given endpoints.
+
+\operation{Exact rational interpretation}\label{def:exact}
+For $q\in\Q$, the exact name $\mathsf{Exact}(q)$ has one state, ball
+$((q,0),0)$, witness $(q,0)$ and possible-reading condition $z=(q,0)$.
+Refinement returns the same state. Its centre bound is $q^2$, its
+coherence allowance is zero, and its modulus is $M(A)=A$.
+\inheritedchecks{Rational inputs use Definition~\ref{def:rational-box}.
+The resulting $\mathsf{Exact}(q)$ code uses Definition~\ref{def:codes};
+its unit state uses Definition~\ref{def:states}. Its ball and reading
+use Definitions~\ref{def:ball} and~\ref{def:gaussian}.}
+
+\operation{Addition of names}\label{def:add}
+For names $A,B$, the name $A+B$ retains an ordered pair $(s,t)$ of
+their original states, initially $(s_*^A,s_*^B)$. Define
+\[
+\begin{aligned}
+ c_{(s,t)}&=c_s^A+c_t^B,&
+ r_{(s,t)}&=2(r_s^A+r_t^B),\\
+ w_{(s,t)}&=w_s^A+w_t^B,&
+ \eta_+(s,t)&=2(\eta_A(s)+\eta_B(t)).
+\end{aligned}
+\]
+A possible sum reading retains $u,v$, their original possible-reading
+certificates, and $z=u+v$. Define
+\[
+ \refine_+((s,t),T)
+   =\bigl(\refine_A(s,T/4),\refine_B(t,T/4)\bigr).
+\]
+The centre bound is $2(B_A+B_B)$. For positive $u,v$, put
+$\operatorname{com}(u,v)=uv/(u+v)$; the sum modulus at $a>0$ is
+\[
+ M_+(a)=4\operatorname{com}\bigl(M_A(a/4),M_B(a/4)\bigr).
+\]
+\inheritedchecks{Recognize both operand codes and the resulting
+$\mathsf{Add}$ code by Definition~\ref{def:codes}. Their states and the
+ordered pair state use Definition~\ref{def:states}; balls use
+Definition~\ref{def:ball}. Sum-code equality compares the two ordered
+child codes, as in Definition~\ref{def:codes}.}
+
+\operation{Horner's description of \texorpdfstring{$e$}{e}}\label{def:horner}
+For $z\in\G$, positive natural $d$, and $k,n\in\N$, define
+\[
+\begin{aligned}
+ H_z(d,0)&=1,&
+ H_z(d,k+1)&=1+\frac{zH_z(d+1,k)}{d},\\
+ E_n(z)&=1+zH_z(2,n),&
+ h_n&=E_n(1).
+\end{aligned}
+\]
+The numerical interpretation of $\mathsf{HornerE}$ is
+\[
+             \interp{e_{\rm H}}=\Seq\bigl(h,\ (10/4^n)_{n},\ 10\bigr),
+\]
+with refinement $\mathsf{Select}_{10}$. The procedure $E_n(1)$ is the
+Horner exponential procedure evaluated at one.
+\inheritedchecks{The constant's code is the parameter-free
+$\mathsf{HornerE}$ tag of Definition~\ref{def:codes}. Its stage is a
+natural box (Definition~\ref{def:naturals}); its state and sample use
+Definitions~\ref{def:states} and~\ref{def:gaussian}.
+For the helper $H_z(d,k)$, additionally recognize $z$ by
+Definition~\ref{def:gaussian} and check natural $d>0$ and $k$.}
+
+\operation{The factorial-sum description of \texorpdfstring{$e$}{e}}\label{def:factorial}
+Define $0!=1$, $(k+1)!=(k+1)k!$, and the finite sum
+\[
+                         f_n=\sum_{k=0}^{n+1}\frac1{k!}.
+\]
+The numerical interpretation of $\mathsf{FactorialE}$ is
+\[
+             \interp{e_{\rm F}}=\Seq\bigl(f,\ (10/4^n)_{n},\ 10\bigr),
+\]
+with refinement $\mathsf{Select}_{10}$. The two names retain their distinct
+procedure tags.
+\inheritedchecks{The code is the parameter-free $\mathsf{FactorialE}$
+tag of Definition~\ref{def:codes}. Stages use natural boxes from
+Definition~\ref{def:naturals}; states use Definition~\ref{def:states}
+and samples use Definition~\ref{def:gaussian}.}
+
+\newpage
+\definition{Rational source frontiers}\label{def:frontier}
+Define the rational source
+\[
+                         g(t)=\frac4{1+t^2}\qquad(t\in\Q).
+\]
+A source frontier record $F$ retains a finite rational partition
+$0=x_0<\cdots<x_N=1$. For each cell $[x_j,x_{j+1}]$ it retains:
+its width $w_j=x_{j+1}-x_j$; a rational tag in the cell; the exact
+source reading at that tag; and a rational range $[\ell_j,u_j]$
+with the endpoint checks
+\[
+              \ell_j\leq g(x_{j+1}),\qquad
+              g(x_j)\leq u_j.
+\]
+Its source-range law is
+\[
+              \ell_j\leq g(t)\leq u_j
+              \qquad(x_j\leq t\leq x_{j+1},\ t\in\Q).
+\]
+Its enclosure is
+\[
+             I(F)=\left[\sum_{j=0}^{N-1}w_j\ell_j,\
+                        \sum_{j=0}^{N-1}w_ju_j\right].
+\]
+Its box record is
+\[
+\begin{aligned}
+ C_j&=\langle x_j,x_{j+1},w_j,t_j,g(t_j),\ell_j,u_j\rangle,\\
+ F&=\bigl\langle
+       \langle x_0,\ldots,x_N\rangle,\
+       \langle C_0,\ldots,C_{N-1}\rangle
+     \bigr\rangle ,
+\end{aligned}
+\]
+where every rational field uses $\rho$, and $t_j$ is the cell's tag.
+A source cache is an ordered finite list of retained tags and exact
+readings, encoded as $\langle(t_1,y_1),\ldots,(t_m,y_m)\rangle$
+with $y_j=g(t_j)$. A lookup scans this list in order and reuses the first matching
+reading; on a miss it evaluates $g$ and appends the new tag and reading.
+\checks{Check the finite partition, ordered cuts and endpoints; one cell
+per adjacent interval; each tag's membership; the exact width and source
+readback; and the two rational endpoint inequalities for each range.
+For a cache, check every saved reading against $g$ at its retained tag.}
+{Compare the partition and ordered cell fields, including tags, readings
+and ranges. Compare caches in their retained list order. An enclosure
+alone does not determine frontier identity.}
+
+\definition{Frontier preparation and refinement records}\label{def:common}
+For a width request $\varepsilon>0$, define
+\[
+             v=\varepsilon/4,\qquad
+             N=\lceil32/\varepsilon\rceil+1.
+\]
+The fresh frontier $F_\varepsilon$ has cuts $j/N$, $0\leq j\leq N$.
+Cell $j$ has left tag $j/N$, its cached or fresh reading $g(j/N)$,
+and range $[g(j/N)-v,g(j/N)+v]$. Its retained certificates include the
+cell range laws and $\operatorname{width} I(F_\varepsilon)<\varepsilon$.
+Process the cells from left to right, starting with the supplied cache,
+which is empty for an initial preparation.
+
+For two frontiers of $g$, their common frontier is defined by merging
+their ordered cuts and removing duplicates. Each child retains its actual
+parent cell from each frontier and the endpoint inequalities witnessing
+both inclusions. Its range is
+\[
+                  [\max(\ell,\ell'),\ \min(u,u')],
+\]
+where the two parent ranges are $[\ell,u]$ and $[\ell',u']$.
+Its tag is its left endpoint. Retain the reading there, the two parent
+range certificates and the source/tag equalities for any reused reading.
+Process the merged children from left to right.
+
+A fresh-preparation record retains its positive request, input cache and
+computed frontier and cache. A common-refinement record retains both
+parent frontiers, its input cache, the ordered children with their two
+parent indices, and the computed frontier and cache.
+\checks{Recognize the inputs and recompute the specified finite
+preparation or cut merge, every parent lookup and every derived field.
+Compare the claimed outputs with those computed.}
+{Compare the retained inputs, parents and ordered finite output fields.
+The parent frontiers remain part of a refinement record's identity.}
+
+\operation{The rational-integral description of \texorpdfstring{$\pi$}{pi}}\label{def:integral}
+The empty request list is interpreted as the fresh frontier $F_1$, its
+enclosure $[L_0,U_0]$ and its source cache. Interpret a nonempty state list
+by replaying that preparation and then each width request in list order.
+
+For a width request $\varepsilon$, reuse the current frontier if its
+width is already below $\varepsilon$. Otherwise build $F_\varepsilon$,
+using saved readings, and take its common frontier with the current one.
+Retain both parents, the common frontier and the readings in the continued
+history. In either case the returned enclosure has width below
+$\varepsilon$. Append the request to the state list, including in the reuse
+case, and retain its replayed output.
+
+For current enclosure $[L,U]$ and $D=U-L$, define
+\[
+\begin{gathered}
+ c=(L,0),\qquad r=D^2,\qquad
+ w=((L+U)/2,0),\qquad \eta=D^2,\\
+ \Poss(s,z)\ \Longleftrightarrow\
+       z=(x,0)\text{ for a retained rational }L\leq x\leq U.
+\end{gathered}
+\]
+Refinement at squared request $T>0$ is the history continuation at width
+request $\varepsilon=T/(T+1)$. The centre bound is
+$2(L_0^2+(U_0-L_0)^2)$ and the coherence modulus is $M(A)=A$.
+These operations define $\interp{\pi_{\rm I}}$.
+\inheritedchecks{The code is the parameter-free $\mathsf{IntegralPi}$
+tag of Definition~\ref{def:codes}. States use Definition~\ref{def:states},
+including the whole ordered request list; requests use
+Definition~\ref{def:ball}. Replayed frontiers and caches use
+Definition~\ref{def:frontier}, and continuation records use
+Definition~\ref{def:common}.}
+
+\operation{The rational-polygon description of \texorpdfstring{$\pi$}{pi}}\label{def:polygon}
+For rational $t\in[0,1]$, define
+\[
+ p(t)=\left(\frac{1-t^2}{1+t^2},\frac{2t}{1+t^2}\right),
+ \qquad R(x,y)=(-y,x),\qquad
+ \det((x,y),(u,v))=xv-yu.
+\]
+For positive natural $N$, form the ordered list of $4N$ vertices
+\[
+             v_{qN+j}=R^q p(j/N)
+             \quad(0\leq q<4,\ 0\leq j<N).
+\]
+Close the list by $v_{4N}=v_0$ and define its rational area
+\[
+                   A_N=\frac12\sum_{j=0}^{4N-1}\det(v_j,v_{j+1}).
+\]
+The numerical interpretation of $\mathsf{PolygonPi}$ is
+\[
+           \interp{\pi_{\rm P}}=
+           \Seq\bigl((A_{2^n},0)_{n},\ (4/4^n)_{n},\ 16\bigr),
+\]
+with refinement $\mathsf{Select}_4$.
+\inheritedchecks{The code is the parameter-free $\mathsf{PolygonPi}$
+tag of Definition~\ref{def:codes}. Its natural stage and positive cell
+count use Definition~\ref{def:naturals}; its state and sample use
+Definitions~\ref{def:states} and~\ref{def:gaussian}.
+The ordered vertex list uses Definition~\ref{def:lists}.}
+
+\operation{Positive-root sampling}\label{def:root}
+Define the natural square-root procedure $\operatorname{isqrt}$ by
+$\operatorname{isqrt}(0)=0$. For $x>0$, set
+\[
+ k=\operatorname{isqrt}(\lfloor x/4\rfloor),\qquad b=2k,
+ \qquad
+ \operatorname{isqrt}(x)=
+ \begin{cases}
+ b+1,&(b+1)^2\leq x,\\
+ b,&(b+1)^2>x.
+ \end{cases}
+\]
+It returns $m$ with the certificate $m^2\leq x<(m+1)^2$.
+For stage $n$, define
+\[
+ d_n=2^n,\qquad m_n=\operatorname{isqrt}(2d_n^2),\qquad
+ L_n=\frac{m_n}{d_n},\qquad U_n=\frac{m_n+1}{d_n}.
+\]
+The retained bracket certificate is
+\[
+          0\leq L_n,\qquad L_n^2\leq2<U_n^2,\qquad
+          U_n-L_n=1/2^n.
+\]
+The numerical interpretation of $\mathsf{RootTwo}$ is
+\[
+             \interp{s}=\Seq\bigl((U_n,0)_{n},\ (1/4^n)_{n},\ 9\bigr),
+\]
+with refinement $\mathsf{Select}_1$. The notation $\sqrt2$ denotes this
+name.
+\inheritedchecks{The code is the parameter-free $\mathsf{RootTwo}$
+tag of Definition~\ref{def:codes}. Its stage and the input to
+$\operatorname{isqrt}$ use natural boxes (Definition~\ref{def:naturals});
+states use Definition~\ref{def:states}. Bracket intervals and samples
+use Definitions~\ref{def:ball} and~\ref{def:gaussian}, respectively.
+Recompute any retained root trace by Definition~\ref{def:finite}.}
+
+\definition{Projective readings and decoder matrices}\label{def:projective}
+A projective reading is presented by a pair $[u:v]$ of Gaussian
+rationals with at least one coordinate nonzero. Its equality is
+\[
+                         [u:v]=[u':v']
+                  \quad\Longleftrightarrow\quad uv'=u'v.
+\]
+An affine reading $z$ is presented by $[z:1]$; $[1:0]$ is the terminal
+tail tag. Its canonical representative for storage as a box field is
+\[
+ \nu([u:v])=
+ \begin{cases}
+   \langle u/v,1\rangle,&v\ne0,\\
+   \langle1,0\rangle,&v=0.
+ \end{cases}
+\]
+The entries use Gaussian rational box representations.
+A decoder matrix is an ordered $2$ by $2$ table of Gaussian
+rationals with nonzero determinant. It acts by
+\[
+ \begin{pmatrix}a&b\\c&d\end{pmatrix}[u:v]=[au+bv:cu+dv].
+\]
+Its box representation is
+$\langle\langle a,b\rangle,\langle c,d\rangle\rangle$.
+Matrix multiplication uses the two-term row-by-column sums.
+\checks{For a projective presentation, check the two Gaussian fields
+and that they are not both zero. For a decoder matrix, check four
+Gaussian fields and $ad-bc\ne0$.}
+{Compare projective readings by the displayed cross-product test.
+Equivalently, compare their canonical representatives $\nu$ as boxes.
+Compare decoder matrices entry by entry. Matrices with equal projective
+actions may still be distinct matrix objects.}
+
+\definition{CCL blocks and their readings}\label{def:blocks}
+A raw complex continued logarithm (CCL) word is a finite ordered list of
+bits. Displayed bit strings abbreviate prefix-encoded lists; juxtaposition
+means their concatenation $\Vert$. The notation for a completed ordinary
+block abbreviates the word
+\[
+                    [k,a]=1^k0\,\operatorname{code}(a).
+\]
+The initial ordinary block has $k\geq1$; later ordinary blocks have
+$k\geq0$. A low initial block is $0[k,a]$, with $k\geq0$.
+For a normalized reading $w=x+iy$, the sector table is
+\begingroup
+\renewcommand{\arraystretch}{1.25}
+\[
+\begin{array}{c|c|c|c}
+x&y&a&\operatorname{code}(a)\\ \hline
+x\geq\tfrac12&-\tfrac12<y<\tfrac12&1&\texttt{000}\\
+x\geq\tfrac12&y\geq\tfrac12&1+i&\texttt{001}\\
+-\tfrac12<x<\tfrac12&y\geq\tfrac12&i&\texttt{010}\\
+x\leq-\tfrac12&y\geq\tfrac12&-1+i&\texttt{011}\\
+x\leq-\tfrac12&-\tfrac12<y<\tfrac12&-1&\texttt{100}\\
+x\leq-\tfrac12&y\leq-\tfrac12&-1-i&\texttt{101}\\
+-\tfrac12<x<\tfrac12&y\leq-\tfrac12&-i&\texttt{110}\\
+x\geq\tfrac12&y\leq-\tfrac12&1-i&\texttt{111}
+\end{array}
+\]
+\endgroup
+The canonical normalization predicates for a supplied reading $z$ use
+$w=z/\gamma^k$ in an ordinary block and $w=\gamma^kz$ in a low initial
+block. They require $\sq w\in[1,2)$ initially and $\sq w\in(1,2]$
+later, together with the selected row of the sector table.
+Each predicate is a finite test on the supplied rational coordinates.
+
+For a supplied next tail $t$, the ordinary and low block decoders are,
+respectively,
+\[
+        \gamma^k\left(a+\frac1{\gamma t}\right),
+        \qquad
+        \gamma^{-k}\left(a+\frac1{\gamma t}\right).
+\]
+Their homogeneous matrices are
+\[
+ B_{\rm ordinary}=
+ \begin{pmatrix}\gamma^{k+1}a&\gamma^k\\\gamma&0\end{pmatrix},
+ \qquad
+ B_{\rm low}=
+ \begin{pmatrix}\gamma a&1\\\gamma^{k+1}&0\end{pmatrix}.
+\]
+A terminating tail is $[1:0]$. Consecutive block decoders compose by matrix
+multiplication in their word order, using Definition~\ref{def:projective}.
+\checks{For a raw word, recognize a finite bit list. For a completed block,
+check its kind, unary count, separator and three sector bits; the initial
+ordinary count must be positive.}
+{Compare raw words bit by bit. Compare block kind, natural count and
+sector code. Projective readings of supplied tails use the separate
+cross-product equality.}
+
+\definition{CCL parser records}\label{def:ccl-parser}
+A parser record retains a raw word $w$, its current phase $\varphi$ and
+the decoder matrix $M$ of its completed blocks:
+\[
+                         \langle w,\varphi,M\rangle.
+\]
+The phase retains its kind, unary count and any unfinished sector bits.
+The empty word has initial phase and identity matrix.
+
+Parse the bits in their recovered list order. A first bit of one selects
+initial-high count one; a first bit of zero selects initial-low count zero.
+In a unary phase, a one increments the count and a zero starts a three-bit
+sector. On completing a sector, multiply $M$ on the right by that block's
+decoder matrix from Definition~\ref{def:blocks}, then begin the later unary
+phase at count zero. Retain incomplete unary and sector phases.
+
+\checks{Recognize the raw word by Definition~\ref{def:blocks} and replay
+the parser fold. Check the supplied phase, count, partial sector bits and
+matrix against the computed fields.}
+{Compare the retained word and phase fields by their finite-data
+equalities, and the decoder matrix by Definition~\ref{def:projective}.}
+
+\definition{CCL cursor records}\label{def:ccl-cursor}
+The CCL output algorithm is the fixed four-mode Purelib transducer:
+\texttt{Machine.initial} starts it, \texttt{Machine.Step.nextBit} returns
+one bit, and \texttt{Machine.Advance.advance} iterates these steps.
+Its mode-branch procedure is
+\texttt{Emission.Step.step}.\footnote{Under
+\path{Purelib/Data/CCL/Transducer/}, the source definitions are in
+\path{Machine/Basic.lean}, \path{Machine/Step.lean},
+\path{Machine/Advance.lean} and \path{Emission/Step.lean}.}
+The box records below encode its finite execution data. Its rational
+branch tests, process charts and nonempty emitted chunks are an explicit
+dependency here.
+
+A cursor record retains its construction origin, a mode, its current
+numerical state, an emitted word, a pending word and its finite history.
+These are its ordered box-record fields. Both words and the history use
+prefix-encoded lists. The origin is a retained construction owner and
+state, at which the cursor starts with empty emitted and pending words.
+Its \emph{committed word} is emitted followed by pending.
+
+The cursor modes are initial, low, loop and residual, each retaining the
+finite process-chart code and encoded state generated by the fixed cursor.
+Chart construction and state replay use that algorithm's finite records.
+Low and loop also retain their scale count;
+loop retains whether it is initial-high or later. Residual retains a
+unary count. For a possible reading $z$ of the current mode and count $k$,
+the associated projective tails are
+\[
+\begin{array}{c|c|c|c}
+\text{initial}&\text{low}&\text{loop}&\text{residual}\\ \hline
+[z:1]&[\gamma^{-k}z:1]&[\gamma^kz:1]&[1:\gamma z].
+\end{array}
+\]
+
+\checks{Recognize the origin by Definition~\ref{def:states} and the
+words by Definition~\ref{def:blocks}. Replay the finite cursor history
+with the fixed transducer; check its generated chart code, state, mode,
+counts, rational bounds and emitted and pending words.}
+{Compare the origin and ordered history, then the retained finite mode,
+state, bound and word fields. Parser data derived from the committed word
+use Definition~\ref{def:ccl-parser}.}
+
+\operation{Advancing a CCL cursor}\label{def:ccl-advance}
+To advance a cursor by one bit, use the following two cases:
+\begin{enumerate}
+\item If pending is nonempty, remove its first bit and append that bit
+to emitted. Keep the mode and its numerical state.
+\item If pending is empty, compute one nonempty chunk and the next mode
+with the fixed transducer. Append the first chunk bit to emitted and
+retain the remaining chunk as pending.
+\end{enumerate}
+Append this transition to the cursor history. To advance by a natural
+count $k$, repeat this procedure $k$ times; a count of zero returns the
+original cursor.
+
+\inheritedchecks{Input and output cursors use
+Definition~\ref{def:ccl-cursor}; the count uses
+Definition~\ref{def:naturals}. Check a supplied transition or finite run
+by replay, using the execution-record rule of Definition~\ref{def:finite}.}
+
+\contract{CCL cursor reading and productivity}\label{def:ccl-reading}
+Every advance of Operation~\ref{def:ccl-advance} terminates and appends
+exactly one emitted bit. A $k$-step advance therefore increases the emitted
+length by $k$ and preserves the previous emitted word as a prefix.
+For the prefix-encoded words, this extension is box inclusion as in
+Definition~\ref{def:lists}.
+
+The parser phase of the committed word agrees with the retained mode:
+initial mode has initial phase; low mode has low unary phase; loop mode
+has the unary phase of its retained kind; residual mode has later unary
+phase. The unary counts agree in each case.
+
+The \emph{exact reading law} concerns the same retained origin.
+Let $M$ be the decoder matrix of the committed word. For every supplied
+possible reading of the current mode, applying $M$ to its projective tail
+from Definition~\ref{def:ccl-cursor} yields $[u:1]$ for a retained reading
+$u$ possible at the original state where the cursor started.
+Digit decisions may use certified redundant margins and require no
+decision that a remainder is zero.
+
+\inheritedchecks{Cursor records use Definition~\ref{def:ccl-cursor},
+their parser records use Definition~\ref{def:ccl-parser}, and projective
+readings use Definition~\ref{def:projective}. These are laws of the fixed
+transducer on those records.}
+
+\definition{CCL accuracy observations}\label{def:ccl}
+An observation retains a construction owner, its initial state, a positive
+squared request $T$, a natural bit count $k$, a refined state, a rational
+ball and a final cursor.
+
+For a squared request $T>0$ and bit count $k\in\N$, a finite CCL
+observation of a name starts by retaining
+\[
+                  s'=\refine(s_*,T),\qquad
+                  (c_{s'},r_{s'}),\qquad r_{s'}<T.
+\]
+Start a cursor of Definition~\ref{def:ccl-cursor} at this same $s'$ with
+both words empty, then advance $k$ times by
+Operation~\ref{def:ccl-advance}. Return the emitted word, of length $k$,
+the retained ball as its \emph{accuracy sidecar}, and the exact reading
+certificate of Contract~\ref{def:ccl-reading}.
+
+A new accuracy request may start a new cursor at a new refined state.
+Prefix preservation concerns continuation of one cursor. No specified
+accuracy is inferred from the bit count alone.
+\checks{Check the construction owner, original state, positive request,
+bit count and finite record fields. Recompute refinement and its ball.
+Recognize the final cursor by Definition~\ref{def:ccl-cursor}, checking
+that it starts at this refined state and records exactly $k$ advances.}
+{Compare the owner, original state, request, bit count and ordered
+refinement data using their previously defined equalities, and the final
+cursor by Definition~\ref{def:ccl-cursor}. Equal exposed words alone do
+not make two observations equal.}
+
+\construction{The presented expression}\label{def:expression}
+An expression for this example is a construction code of
+Definition~\ref{def:codes}. Interpret its leaves by their definitions above
+and each ordered addition node by Operation~\ref{def:add}. Numerical
+agreement is the operational equivalence of Relation~\ref{def:equivalence}.
+
+The two presentations of the requested example are
+\[
+                  X=(e_{\rm H}+\pi_{\rm I})+s,\qquad
+                  Y=(e_{\rm F}+\pi_{\rm P})+s.
+\]
+Their initial states retain the corresponding ordered triples of original
+leaf states, grouped as $((s_e,s_\pi),s_{\sqrt2})$. Their CCL observations
+are the words, accuracy sidecars and reading certificates of
+Definition~\ref{def:ccl} for these interpreted names.
+The supplied comparison derivation for these two presentations is
+\[
+ \mathsf{Sum}\bigl(
+   \mathsf{Sum}(\mathsf{SameE},\mathsf{SamePi}),\
+   \mathsf{Refl}(s)\bigr).
+\]
+Its endpoints are $X\approx Y$.
+\checks{Recognize $X$ and $Y$ by Definition~\ref{def:codes}, checking
+their indicated leaf tags and ordered addition nodes. Recognize the
+displayed comparison derivation by Definition~\ref{def:derivations}.}
+{Use Definition~\ref{def:codes} for the two construction codes and
+Definition~\ref{def:derivations} for derivation objects. The supplied
+comparison establishes the separate relation $X\approx Y$.}
+
+\end{document}

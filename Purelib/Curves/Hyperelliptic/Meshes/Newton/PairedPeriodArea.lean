@@ -63,6 +63,14 @@ import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Topology.Surface.Sewing.SewingTree
 import Purelib.Tactic.Ring
 
+open Purelib.Approximation.Rational.Budget
+
+open Purelib.Topology
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid
+
 open Purelib.Approximation
 
 open Purelib.Curves
@@ -81,115 +89,115 @@ public section
 actual resplit period identity, retaining every terminal and connector term. -/
 namespace Purelib.Curves.Hyperelliptic.Meshes.Newton.PairedPeriodArea
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
-    {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered} (prepared :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+    BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {ordered : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
+    {paired : OrderedBranchPairs.Ordered.Paired ordered} (prepared :
+    Paired.PeriodPrograms.Prepared paired)
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation base.bank.toBranchCellBank}
     {target radius : Fraction.Rational}
   {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius} {current :
     Meshes.LiftedPuncturedGrid grid.punctured}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
-    {leftDifferential rightDifferential : Hyperelliptic.Differentials.Basic.Differential genus}
+  {domains : Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
+    {leftDifferential rightDifferential : Differentials.Basic.Differential genus}
 
 open Purelib.Integration in
 open Purelib.Polynomial in
 /-- The polygon readback concerns the original ordered A/B owner. In
 particular, polarization does not discard the even ending's terminal cross. -/
 theorem original_paired_polygons_period_area (newSheet : Fin 2) (excision :
-  Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid current)
-    {leftFixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains leftDifferential}
-      {rightFixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains rightDifferential}
+  AllHoles.Excision.AllHoleExcision grid current)
+    {leftFixed : Face.MagnitudeBank.FaceMagnitudeBank domains leftDifferential}
+      {rightFixed : Face.MagnitudeBank.FaceMagnitudeBank domains rightDifferential}
     {regularError branchError : Fraction.Rational} {floor : Nat}
-    {stage : Nat} {leftBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank leftDifferential
-      stage domains} {rightBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    {stage : Nat} {leftBank : Face.PrimitiveData.FacePrimitiveBank leftDifferential
+      stage domains} {rightBank : Face.PrimitiveData.FacePrimitiveBank
       rightDifferential stage domains}
-    (leftReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh)
-      (rightReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings rightBank
+    (leftReadings : TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh)
+      (rightReadings : TrianglePrimitiveReadings.TriangleReadings rightBank
       current.mesh)
-    (leftSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch
-      leftReadings.values) (rightSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample
+    (leftSurface : Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch
+      leftReadings.values) (rightSurface : Surface.Sewing.SewnPrimitiveSamples.CachedSample
       current.cutPolygon.patch rightReadings.values) :
-    let reference := fun point member => (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
+    let reference := fun point member => (LoopMonodromy.BranchCellBank.referenceAt
       grid.punctured.bank.toBranchCellBank point member).toLoop
     let compiled :=
-      Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.compileResplit
+      OrderedBranchCircuits.BranchCellBank.CircuitPartition.compileResplit
       grid.shrunk.included current.edges current.vertices
-      reference (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
+      reference (BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
         ordered.prepared.partition newSheet
-    ∀ {regular : Hyperelliptic.Meshes.Newton.PairedRegularAggregate.PairedRegularRequests leftFixed rightFixed
+    ∀ {regular : PairedRegularAggregate.PairedRegularRequests leftFixed rightFixed
       regularError floor compiled.regulars}
-      {branch : Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests bank
-        (Hyperelliptic.Meshes.Newton.OrderedBranchPolygons.branchSheet ordered newSheet) leftFixed rightFixed
+      {branch : PairedBranchAggregate.PairedBranchRequests bank
+        (OrderedBranchPolygons.branchSheet ordered newSheet) leftFixed rightFixed
         branchError floor excision.entries},
-      (regularSamples : Hyperelliptic.Meshes.Newton.PairedRegularAggregate.PairedRegularRequests.Samples leftReadings
+      (regularSamples : PairedRegularAggregate.PairedRegularRequests.Samples leftReadings
         rightReadings leftSurface rightSurface regular) →
-      (branchSamples : Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.Samples leftReadings
+      (branchSamples : PairedBranchAggregate.PairedBranchRequests.Samples leftReadings
         rightReadings leftSurface rightSurface branch) →
       regularSamples.polygons + branchSamples.polygons =
-        Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-        let value := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix
-          (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh leftReadings.values)
-          (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh rightReadings.values)
+        BilinearPolarization.extract (fun coefficient =>
+        let value := BilinearPolarization.mix
+          (CanonicalEdgeValues.edgeValuation current.mesh leftReadings.values)
+          (CanonicalEdgeValues.edgeValuation current.mesh rightReadings.values)
             coefficient
         current.edges.chainArea current.vertices value (grid.shrunk.included.resplit base.bank.exterior
-          (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet +
-        Hyperelliptic.Meshes.Newton.OriginalPeriodArea.resplitPeriodArea prepared grid.shrunk.included current.edges
+          (BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet +
+        OriginalPeriodArea.resplitPeriodArea prepared grid.shrunk.included current.edges
           current.vertices newSheet value -
-        Hyperelliptic.Meshes.Newton.OriginalPeriodArea.resplitEndCorrection (paired := paired) grid.shrunk.included
+        OriginalPeriodArea.resplitEndCorrection (paired := paired) grid.shrunk.included
           current.edges current.vertices newSheet value -
-        Topology.Mesh.RetracingWords.AreaTerm.total value compiled.connectorTerms) := by
+        Mesh.RetracingWords.AreaTerm.total value compiled.connectorTerms) := by
   intro reference compiled regular branch regularSamples branchSamples
-  let first := Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh leftReadings.values
-  let second := Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh rightReadings.values
+  let first := CanonicalEdgeValues.edgeValuation current.mesh leftReadings.values
+  let second := CanonicalEdgeValues.edgeValuation current.mesh rightReadings.values
   let branchWord := fun index => current.edges.indexedEdges current.vertices
     (grid.shrunk.included.resplit (bank.rows.get index).reference.walk
-      (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank))
-      (Hyperelliptic.Meshes.Newton.OrderedBranchPolygons.branchSheet ordered newSheet index)
+      (BasedBranchTours.FramedBranchCellBank.baseMember base.bank))
+      (OrderedBranchPolygons.branchSheet ordered newSheet index)
   have regularRead := regularSamples.polygons_eq.trans
-    (Topology.Surface.Boundary.PolarizedWordArea.BilinearPolarization.extract_word_sum first second (fun occurrence =>
+    (Surface.Boundary.PolarizedWordArea.BilinearPolarization.extract_word_sum first second (fun occurrence =>
       occurrence.word) compiled.regulars).symm
   have branchRead := branchSamples.polygons_eq.trans
-    ((Hyperelliptic.Meshes.Newton.Branch.RegionAggregate.Ordered.branch_entries_sum ordered excision
+    ((Branch.RegionAggregate.Ordered.branch_entries_sum ordered excision
     (fun index => Path.PairedIncrementArea.area ((branchWord index).map (fun edge => (⟨first edge, second edge⟩ :
-      Topology.Polygon.Stokes.PrimitivePoint))))).symm.trans
-      (Topology.Surface.Boundary.PolarizedWordArea.BilinearPolarization.extract_word_sum first second branchWord
+      Polygon.Stokes.PrimitivePoint))))).symm.trans
+      (Surface.Boundary.PolarizedWordArea.BilinearPolarization.extract_word_sum first second branchWord
         ordered.prepared.labels).symm)
   rw [regularRead, branchRead]
-  have combine : Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun
-    coefficient => Geometry.Grid.CellBoundary.sumValues (fun occurrence => Topology.Mesh.RetracingWords.wordArea
-    (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient)
+  have combine : BilinearPolarization.extract (fun
+    coefficient => Geometry.Grid.CellBoundary.sumValues (fun occurrence => Mesh.RetracingWords.wordArea
+    (BilinearPolarization.mix first second coefficient)
     occurrence.word) compiled.regulars) +
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-        Geometry.Grid.CellBoundary.sumValues (fun index => Topology.Mesh.RetracingWords.wordArea
-        (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient)
+      BilinearPolarization.extract (fun coefficient =>
+        Geometry.Grid.CellBoundary.sumValues (fun index => Mesh.RetracingWords.wordArea
+        (BilinearPolarization.mix first second coefficient)
         (branchWord index)) ordered.prepared.labels) =
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-        Geometry.Grid.CellBoundary.sumValues (fun occurrence => Topology.Mesh.RetracingWords.wordArea
-        (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient)
+      BilinearPolarization.extract (fun coefficient =>
+        Geometry.Grid.CellBoundary.sumValues (fun occurrence => Mesh.RetracingWords.wordArea
+        (BilinearPolarization.mix first second coefficient)
         occurrence.word) compiled.regulars +
-        Geometry.Grid.CellBoundary.sumValues (fun index => Topology.Mesh.RetracingWords.wordArea
-          (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient)
+        Geometry.Grid.CellBoundary.sumValues (fun index => Mesh.RetracingWords.wordArea
+          (BilinearPolarization.mix first second coefficient)
           (branchWord index)) ordered.prepared.labels) := by
-    unfold Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract
+    unfold BilinearPolarization.extract
     ring1
-  refine combine.trans (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract_congr
+  refine combine.trans (BilinearPolarization.extract_congr
     (fun coefficient => ?_))
-  let value := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second
+  let value := BilinearPolarization.mix first second
     coefficient
-  have anti := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix_reverse first second
-    (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation_reverse current.mesh leftReadings.values)
-    (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation_reverse current.mesh rightReadings.values)
+  have anti := BilinearPolarization.mix_reverse first second
+    (CanonicalEdgeValues.edgeValuation_reverse current.mesh leftReadings.values)
+    (CanonicalEdgeValues.edgeValuation_reverse current.mesh rightReadings.values)
       coefficient
   have formula :=
-    Hyperelliptic.Meshes.PuncturedGrid.Inclusion.OrderedBoundary.Ordered.Paired.Prepared.resplit_exterior_area_formula
+    Inclusion.OrderedBoundary.Ordered.Paired.Prepared.resplit_exterior_area_formula
     grid.shrunk.included current.edges current.vertices reference prepared
     newSheet compiled value anti
-  have branchEq := Hyperelliptic.Meshes.Newton.OrderedBranchPolygons.branch_area_sum grid.shrunk.included current.edges
+  have branchEq := OrderedBranchPolygons.branch_area_sum grid.shrunk.included current.edges
     current.vertices paired newSheet value
   have scalar (regular branch inner ending cross terminal connector whole : Gaussian.Basic.Canonical)
       (branchEq : branch = inner + ending - terminal)
@@ -202,67 +210,67 @@ theorem original_paired_polygons_period_area (newSheet : Fin 2) (excision :
 /-- One constructed all-later comparison on the shared Newton surface.
 The physical, terminal, connector and cut corrections all remain visible. -/
 theorem original_paired_period_area_accurate (newSheet : Fin 2) (excision :
-  Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid current)
-    (leftFixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains leftDifferential)
-      (rightFixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains rightDifferential)
+  AllHoles.Excision.AllHoleExcision grid current)
+    (leftFixed : Face.MagnitudeBank.FaceMagnitudeBank domains leftDifferential)
+      (rightFixed : Face.MagnitudeBank.FaceMagnitudeBank domains rightDifferential)
     (error : Fraction.Rational) (positive : 0 < error) (floor : Nat) :
-    let reference := fun point member => (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
+    let reference := fun point member => (LoopMonodromy.BranchCellBank.referenceAt
       grid.punctured.bank.toBranchCellBank point member).toLoop
     let compiled :=
-      Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.compileResplit
+      OrderedBranchCircuits.BranchCellBank.CircuitPartition.compileResplit
       grid.shrunk.included current.edges current.vertices
-      reference (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
+      reference (BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
         ordered.prepared.partition newSheet
-    let part := Rational.Budget.Aggregate.perTerm error 2
-    let partPositive := Rational.Budget.Aggregate.perTerm_positive positive 2
-    let regular := Hyperelliptic.Meshes.Newton.PairedRegularAggregate.PairedRegularRequests.build leftFixed rightFixed
-      (Rational.Budget.Aggregate.perTerm part compiled.regulars.length)
-      (Rational.Budget.Aggregate.perTerm_positive partPositive _) floor compiled.regulars
-    let branch := Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.build bank
-      (Hyperelliptic.Meshes.Newton.OrderedBranchPolygons.branchSheet ordered newSheet) leftFixed rightFixed
-      (Rational.Budget.Aggregate.perTerm part excision.entries.length)
-      (Rational.Budget.Aggregate.perTerm_positive partPositive _) floor excision.entries
-    ∀ stage (leftBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank leftDifferential stage
-      domains) (rightBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank rightDifferential
+    let part := Aggregate.perTerm error 2
+    let partPositive := Aggregate.perTerm_positive positive 2
+    let regular := PairedRegularAggregate.PairedRegularRequests.build leftFixed rightFixed
+      (Aggregate.perTerm part compiled.regulars.length)
+      (Aggregate.perTerm_positive partPositive _) floor compiled.regulars
+    let branch := PairedBranchAggregate.PairedBranchRequests.build bank
+      (OrderedBranchPolygons.branchSheet ordered newSheet) leftFixed rightFixed
+      (Aggregate.perTerm part excision.entries.length)
+      (Aggregate.perTerm_positive partPositive _) floor excision.entries
+    ∀ stage (leftBank : Face.PrimitiveData.FacePrimitiveBank leftDifferential stage
+      domains) (rightBank : Face.PrimitiveData.FacePrimitiveBank rightDifferential
       stage domains)
-      (leftReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings leftBank
-        current.mesh) (rightReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings
+      (leftReadings : TrianglePrimitiveReadings.TriangleReadings leftBank
+        current.mesh) (rightReadings : TrianglePrimitiveReadings.TriangleReadings
         rightBank current.mesh)
-      (leftSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch
-        leftReadings.values) (rightSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample
+      (leftSurface : Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch
+        leftReadings.values) (rightSurface : Surface.Sewing.SewnPrimitiveSamples.CachedSample
         current.cutPolygon.patch rightReadings.values),
       max regular.index branch.index ≤ stage →
-      let regularSamples := Hyperelliptic.Meshes.Newton.PairedRegularAggregate.PairedRegularRequests.Samples.build
+      let regularSamples := PairedRegularAggregate.PairedRegularRequests.Samples.build
         leftReadings rightReadings leftSurface rightSurface regular
-      let branchSamples := Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.Samples.build
+      let branchSamples := PairedBranchAggregate.PairedBranchRequests.Samples.build
         leftReadings rightReadings leftSurface rightSurface branch
-      let physical := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun
+      let physical := BilinearPolarization.extract (fun
         coefficient =>
-        let value := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix
-          (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh leftReadings.values)
-          (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh rightReadings.values)
+        let value := BilinearPolarization.mix
+          (CanonicalEdgeValues.edgeValuation current.mesh leftReadings.values)
+          (CanonicalEdgeValues.edgeValuation current.mesh rightReadings.values)
             coefficient
         current.edges.chainArea current.vertices value (grid.shrunk.included.resplit base.bank.exterior
-          (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet +
-          Hyperelliptic.Meshes.Newton.OriginalPeriodArea.resplitPeriodArea prepared grid.shrunk.included current.edges
+          (BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet +
+          OriginalPeriodArea.resplitPeriodArea prepared grid.shrunk.included current.edges
             current.vertices newSheet value -
-          Hyperelliptic.Meshes.Newton.OriginalPeriodArea.resplitEndCorrection (paired := paired) grid.shrunk.included
+          OriginalPeriodArea.resplitEndCorrection (paired := paired) grid.shrunk.included
             current.edges current.vertices newSheet value -
-          Topology.Mesh.RetracingWords.AreaTerm.total value compiled.connectorTerms)
-      Data.Gaussian.Norm.Basic.normSq (Topology.Polygon.Stokes.edgeListArea
-        (Hyperelliptic.Meshes.Newton.Regular.PairedRegion.pairedValues leftSurface rightSurface)
+          Mesh.RetracingWords.AreaTerm.total value compiled.connectorTerms)
+      Gaussian.Norm.Basic.normSq (Polygon.Stokes.edgeListArea
+        (Regular.PairedRegion.pairedValues leftSurface rightSurface)
         current.cutPolygon.patch.cut.boundary -
         (regularSamples.corrections + branchSamples.corrections) - (physical + physical)) < error := by
   intro reference compiled part partPositive regular branch stage leftBank rightBank leftReadings rightReadings
     leftSurface rightSurface later regularSamples branchSamples physical
-  have estimate := Hyperelliptic.Meshes.Newton.OriginalPairedRegionsComparison.original_paired_regions_accurate ordered
-    newSheet (Hyperelliptic.Meshes.Newton.OrderedBranchPolygons.branchSheet ordered newSheet) excision leftFixed
+  have estimate := OriginalPairedRegionsComparison.original_paired_regions_accurate ordered
+    newSheet (OrderedBranchPolygons.branchSheet ordered newSheet) excision leftFixed
     rightFixed error positive floor
     stage leftBank rightBank leftReadings rightReadings leftSurface rightSurface later
-  have read := Hyperelliptic.Meshes.Newton.PairedPeriodArea.original_paired_polygons_period_area prepared newSheet
+  have read := PairedPeriodArea.original_paired_polygons_period_area prepared newSheet
     excision leftReadings rightReadings leftSurface rightSurface regularSamples branchSamples
-  exact (congrArg (fun polygon => Data.Gaussian.Norm.Basic.normSq
-    (Topology.Polygon.Stokes.edgeListArea (Hyperelliptic.Meshes.Newton.Regular.PairedRegion.pairedValues leftSurface
+  exact (congrArg (fun polygon => Gaussian.Norm.Basic.normSq
+    (Polygon.Stokes.edgeListArea (Regular.PairedRegion.pairedValues leftSurface
       rightSurface) current.cutPolygon.patch.cut.boundary -
       (regularSamples.corrections + branchSamples.corrections) - (polygon + polygon))) read.symm).trans_lt estimate
 

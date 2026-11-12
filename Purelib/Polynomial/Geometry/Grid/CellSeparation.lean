@@ -7,6 +7,10 @@ import Purelib.Polynomial.Geometry.ClearPath
 
 public import Purelib.Polynomial.Geometry.Grid.ClearGrid
 import Purelib.Polynomial.Geometry.Grid.ClearGridCoverage
+import Purelib.Polynomial.Geometry.Grid.CellBoundary
+import Purelib.Polynomial.Geometry.Grid.Rectangle.Cuts
+import Purelib.Data.List.Flatten
+import Purelib.Data.List.Map
 
 /-!
 # Separation and point identification for retained grid cells
@@ -104,5 +108,37 @@ public theorem cells_eq_of_common_point (grid : ClearGrid polynomial ambient) {f
     (insideFirst : first.box.StrictContains point) (insideSecond : second.box.Contains point) : first = second :=
   equal_of_common_point (ClearGridCoverage.cells_pairwise grid)
     firstMember secondMember insideFirst insideSecond
+
+/-- Two retained grid cells containing a common ordinate have the same vertical interval.
+
+The ordinate is strict in the first cell and weak in the second. A
+Cartesian-product cell uses the first horizontal interval and second
+vertical interval. The original common-point uniqueness theorem
+identifies it with the first cell, retaining both original line payloads.
+-/
+public theorem vertical_eq_of_common_ordinate (grid : ClearGrid polynomial ambient)
+    {first second : Geometry.Grid.ClearGrid.Cell polynomial ambient}
+    (firstMember : first ∈ grid.cells) (secondMember : second ∈ grid.cells)
+    {ordinate : Rat.Fraction.Rational}
+    (insideFirst : first.box.yLower < ordinate ∧ ordinate < first.box.yUpper)
+    (insideSecond : second.box.yLower ≤ ordinate ∧ ordinate ≤ second.box.yUpper) :
+    first.vertical = second.vertical := by
+  let mixed : Geometry.Grid.ClearGrid.Cell polynomial ambient := ⟨first.horizontal, second.vertical⟩
+  have firstIntervals := Geometry.Grid.CellBoundary.Cell.intervals_mem first firstMember
+  have secondIntervals := Geometry.Grid.CellBoundary.Cell.intervals_mem second secondMember
+  have mixedMember : mixed ∈ grid.cells :=
+    Flatten.mem_flatMap.mpr ⟨first.horizontal, firstIntervals.1,
+      Map.mem_map.mpr ⟨second.vertical, secondIntervals.2, rfl⟩⟩
+  let center := Geometry.Grid.Rectangle.Cuts.center first.box
+  let point := Gaussian.Basic.point center.re ordinate
+  have central := Geometry.Grid.Rectangle.Cuts.center_strict first.box_proper
+  have inFirst : first.box.StrictContains point :=
+    ⟨central.1, central.2.1, insideFirst.1, insideFirst.2⟩
+  have inMixed : mixed.box.Contains point :=
+    ⟨central.1.le, central.2.1.le, insideSecond.1, insideSecond.2⟩
+  have equal : first = mixed :=
+    cells_eq_of_common_point (first := first) (second := mixed) grid firstMember mixedMember inFirst inMixed
+  have vertical : first.vertical = mixed.vertical := congrArg Geometry.Grid.ClearGrid.Cell.vertical equal
+  exact vertical
 
 end Purelib.Polynomial.Geometry.Grid.CellSeparation

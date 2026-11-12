@@ -28,6 +28,8 @@ import Purelib.Polynomial.Dense.Gaussian.Bounds.RootRadius.Box
 import Purelib.Polynomial.Dense.Gaussian.Coefficient.Progressive.Refinement
 import Purelib.RootIsolation.FTA.Squarefree.Basic
 
+open Purelib.Polynomial.Dense.Gaussian.Coefficient.Progressive
+
 open Purelib.Data.Rat
 
 open Purelib.Geometry.Rational
@@ -59,7 +61,7 @@ section HigherChamber
 
 /-- The finite index type bounded by the original higher chamber's retained polynomial degree. -/
 abbrev Index
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (_chamber : HigherChamber table target positive) :=
   Fin table.polynomial.natDegree
@@ -92,11 +94,11 @@ section HigherChamber
 
 /-- Read the original stable refinement step at the supplied chamber index. -/
 def stepAt
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (chamber : HigherChamber table target positive)
     (index : chamber.Index) :
-    Dense.Gaussian.Coefficient.Progressive.Refinement.Transport.StableRefinement table target positive
+    Refinement.Transport.StableRefinement table target positive
       (chamber.owners.trackAt index).initial.box where
   currentSmall := chamber.currentSmall
   proper := (chamber.owners.trackAt index).initial.proper
@@ -132,7 +134,7 @@ section HigherChamber
 whole box.  Taking that box itself as ambient supplies all four required
 ambient-line certificates directly from the transported boundary clearance. -/
 def nextInitialAt
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (chamber : HigherChamber table target positive)
     (index : chamber.Index) :
@@ -185,7 +187,7 @@ section HigherChamber
 
 /-- Build the next chamber input from the retained refined boxes and original degree bounds. -/
 def nextInput
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (chamber : HigherChamber table target positive) :
     FTA.Squarefree.Input (table.refine target positive).polynomial where
@@ -225,7 +227,7 @@ section HigherChamber
 literally the preceding owner box, so every later request retains finite owner
 identity without relabelling roots. -/
 def nextTrackAt
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (chamber : HigherChamber table target positive)
     (index : chamber.Index) :
@@ -264,7 +266,7 @@ section HigherChamber
 
 /-- The next track's initial box is exactly the refined box at the supplied original index. -/
 theorem nextTrackAt_initial_box
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (chamber : HigherChamber table target positive)
     (index : chamber.Index) :
@@ -299,7 +301,7 @@ section HigherChamber
 
 /-- The next tracks' initial boxes retain the original pairwise separation certificate. -/
 theorem nextTrackAt_pairwiseSeparated
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (chamber : HigherChamber table target positive)
     (left right : chamber.Index) (different : left ≠ right) :
@@ -336,7 +338,7 @@ section HigherChamber
 /-- One arbitrary-accuracy refinement of a transported owner, strictly
 inside the preceding owner's box. -/
 def requestAt
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (chamber : HigherChamber table target positive)
     (index : chamber.Index) (epsilon : Fraction.Rational)
@@ -375,7 +377,7 @@ section HigherChamber
 
 /-- Each indexed chamber request meets the supplied positive accuracy target. -/
 theorem requestAt_accurate
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (chamber : HigherChamber table target positive)
     (index : chamber.Index) (epsilon : Fraction.Rational)
@@ -413,7 +415,7 @@ section HigherChamber
 
 /-- The indexed requested owner boxes are pairwise separated. -/
 theorem requestAt_pairwiseSeparated
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (chamber : HigherChamber table target positive)
     (left right : chamber.Index) (different : left ≠ right)
@@ -455,7 +457,7 @@ section HigherChamber
 
 /-- Every requested box remains strictly inside its own retained original owner box. -/
 theorem requestAt_strict_owner
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
     (chamber : HigherChamber table target positive)
     (index : chamber.Index) (epsilon : Fraction.Rational)

@@ -17,6 +17,8 @@ import Mathlib.Data.Nat.Cast.Defs
 import Mathlib.Data.Nat.Init
 import Purelib.Tactic.Ring
 
+open Purelib.Algebra.Field
+
 open Purelib
 
 open Purelib.LinearAlgebra
@@ -30,7 +32,7 @@ open Purelib.LinearAlgebra.Coordinates3 renaming Vector -> Vector3
 open Purelib.LinearAlgebra.Coordinates3.Antisymmetric
 open Purelib.Geometry.Rotations.Basic
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 /-- The scalar denominator controlling whether an anchor has a cap. -/
 def capDenominator (vector : Vector K) : K := 1 + vector.quadrance
@@ -58,7 +60,7 @@ def cap (vector : Vector K) (_defined : capDenominator vector ≠ 0) :
 private theorem denominator_mul_inverse (vector : Vector K)
     (defined : capDenominator vector ≠ 0) :
     capDenominator vector * (capDenominator vector)⁻¹ = (1 : K) :=
-  Algebra.Field.ExplicitField.mul_inv_cancel (capDenominator vector) defined
+  ExplicitField.mul_inv_cancel (capDenominator vector) defined
 
 /-- Lemma 22, left-inverse certificate. -/
 theorem anchorResolventInverse_left (vector : Vector K)
@@ -67,7 +69,7 @@ theorem anchorResolventInverse_left (vector : Vector K)
         (Matrix3.sub Matrix3.identity (anchor vector))
         (anchorResolventInverse vector defined) =
       Matrix3.identity := by
-  have cancel := Purelib.Geometry.Rotations.Cayley.Cap.denominator_mul_inverse vector defined
+  have cancel := denominator_mul_inverse vector defined
   have coefficientZero :
       capDenominator vector * (capDenominator vector)⁻¹ - 1 = 0 := by
     rw [cancel]
@@ -82,11 +84,11 @@ theorem anchorResolventInverse_left (vector : Vector K)
           (anchor vector)) := by
             ext <;> unfold anchorResolventInverse capDenominator Matrix3.mul
               Matrix3.sub Matrix3.add Matrix3.scale Matrix3.identity anchor
-              Coordinates3.Vector.quadrance Coordinates3.Vector.dot <;>
-              simp only [Algebra.Field.ExplicitField.div_eq_mul_inv] <;> ring1
+              Vector3.quadrance Vector3.dot <;>
+              simp only [ExplicitField.div_eq_mul_inv] <;> ring1
     _ = Matrix3.identity := by
       rw [coefficientZero]
-      exact Purelib.LinearAlgebra.Coordinates3.Matrix3.zero_scale_add_identity (anchor vector)
+      exact Matrix3.zero_scale_add_identity (anchor vector)
 
 /-- Lemma 22, right-inverse certificate. -/
 theorem anchorResolventInverse_right (vector : Vector K)
@@ -95,7 +97,7 @@ theorem anchorResolventInverse_right (vector : Vector K)
         (anchorResolventInverse vector defined)
         (Matrix3.sub Matrix3.identity (anchor vector)) =
       Matrix3.identity := by
-  have cancel := Purelib.Geometry.Rotations.Cayley.Cap.denominator_mul_inverse vector defined
+  have cancel := denominator_mul_inverse vector defined
   have coefficientZero :
       capDenominator vector * (capDenominator vector)⁻¹ - 1 = 0 := by
     rw [cancel]
@@ -110,11 +112,11 @@ theorem anchorResolventInverse_right (vector : Vector K)
           (anchor vector)) := by
             ext <;> unfold anchorResolventInverse capDenominator Matrix3.mul
               Matrix3.sub Matrix3.add Matrix3.scale Matrix3.identity anchor
-              Coordinates3.Vector.quadrance Coordinates3.Vector.dot <;>
-              simp only [Algebra.Field.ExplicitField.div_eq_mul_inv] <;> ring1
+              Vector3.quadrance Vector3.dot <;>
+              simp only [ExplicitField.div_eq_mul_inv] <;> ring1
     _ = Matrix3.identity := by
       rw [coefficientZero]
-      exact Purelib.LinearAlgebra.Coordinates3.Matrix3.zero_scale_add_identity (anchor vector)
+      exact Matrix3.zero_scale_add_identity (anchor vector)
 
 /-- Definition 21 agrees with the cached quadratic value: the cap is the displayed Cayley product `(I+A)(I-A)⁻¹`. -/
 theorem cap_eq_cayley (vector : Vector K)
@@ -122,7 +124,7 @@ theorem cap_eq_cayley (vector : Vector K)
     cap vector defined =
       Matrix3.mul (Matrix3.add Matrix3.identity (anchor vector))
         (anchorResolventInverse vector defined) := by
-  have cancel := Purelib.Geometry.Rotations.Cayley.Cap.denominator_mul_inverse vector defined
+  have cancel := denominator_mul_inverse vector defined
   have coefficientZero :
       1 - capDenominator vector * (capDenominator vector)⁻¹ = 0 := by
     rw [cancel]
@@ -137,8 +139,8 @@ theorem cap_eq_cayley (vector : Vector K)
           (anchor vector)) := by
             ext <;> unfold anchorResolventInverse cap capDenominator
               Matrix3.mul Matrix3.add Matrix3.scale
-              Matrix3.identity anchor Coordinates3.Vector.quadrance Coordinates3.Vector.dot <;>
-              simp only [Algebra.Field.ExplicitField.div_eq_mul_inv] <;> ring1
+              Matrix3.identity anchor Vector3.quadrance Vector3.dot <;>
+              simp only [ExplicitField.div_eq_mul_inv] <;> ring1
     _ = cap vector defined := by
       rw [coefficientZero]
       ext <;> unfold Matrix3.add Matrix3.scale <;> ring1
@@ -166,17 +168,17 @@ theorem cap_coordinate_formula (vector : Vector K)
           2 * (vector.r + vector.s * vector.t),
           2 * (-vector.t + vector.r * vector.s),
           -vector.t ^ 2 - vector.r ^ 2 + vector.s ^ 2 + 1⟩ := by
-  have cancel := Purelib.Geometry.Rotations.Cayley.Cap.denominator_mul_inverse vector defined
+  have cancel := denominator_mul_inverse vector defined
   have inverseCancel :
       capDenominator vector * (1 / capDenominator vector) = 1 := by
-    rw [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    rw [ExplicitField.div_eq_mul_inv]
     calc
       capDenominator vector * (1 * (capDenominator vector)⁻¹) =
           capDenominator vector * (capDenominator vector)⁻¹ := by ring1
       _ = 1 := cancel
   have doubleCancel :
       capDenominator vector * (2 / capDenominator vector) = 2 := by
-    rw [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    rw [ExplicitField.div_eq_mul_inv]
     calc
       capDenominator vector * (2 * (capDenominator vector)⁻¹) =
           2 * (capDenominator vector * (capDenominator vector)⁻¹) := by
@@ -187,14 +189,14 @@ theorem cap_coordinate_formula (vector : Vector K)
   rw [Matrix3.scale_add, Matrix3.scale_scale, doubleCancel,
     Matrix3.scale_scale, inverseCancel]
   ext <;> unfold capDenominator Matrix3.add Matrix3.scale Matrix3.identity
-    Matrix3.mul anchor Coordinates3.Vector.quadrance Coordinates3.Vector.dot <;> ring1
+    Matrix3.mul anchor Vector3.quadrance Vector3.dot <;> ring1
 
 /-- The determinant calculation preceding Lemma 22. -/
 theorem determinant_identity_sub_anchor (vector : Vector K) :
     Matrix3.determinant (Matrix3.sub Matrix3.identity (anchor vector)) =
       capDenominator vector := by
   unfold Matrix3.determinant Matrix3.sub Matrix3.identity anchor
-    capDenominator Coordinates3.Vector.quadrance Coordinates3.Vector.dot
+    capDenominator Vector3.quadrance Vector3.dot
   ring1
 
 /-- The matching determinant for `I+A`. -/
@@ -202,7 +204,7 @@ theorem determinant_identity_add_anchor (vector : Vector K) :
     Matrix3.determinant (Matrix3.add Matrix3.identity (anchor vector)) =
       capDenominator vector := by
   unfold Matrix3.determinant Matrix3.add Matrix3.identity anchor
-    capDenominator Coordinates3.Vector.quadrance Coordinates3.Vector.dot
+    capDenominator Vector3.quadrance Vector3.dot
   ring1
 
 /-- Multiplying the quadratic cap by `I-A` recovers `I+A`. -/
@@ -211,7 +213,7 @@ theorem cap_mul_identity_sub_anchor (vector : Vector K)
     Matrix3.mul (cap vector defined)
         (Matrix3.sub Matrix3.identity (anchor vector)) =
       Matrix3.add Matrix3.identity (anchor vector) := by
-  have cancel := Purelib.Geometry.Rotations.Cayley.Cap.denominator_mul_inverse vector defined
+  have cancel := denominator_mul_inverse vector defined
   have coefficientZero :
       2 * (capDenominator vector * (capDenominator vector)⁻¹ - 1) =
         0 := by
@@ -226,8 +228,8 @@ theorem cap_mul_identity_sub_anchor (vector : Vector K)
             (capDenominator vector)⁻¹ - 1)) (anchor vector)) := by
               ext <;> unfold cap capDenominator Matrix3.mul Matrix3.sub
                 Matrix3.add Matrix3.scale Matrix3.identity anchor
-                Coordinates3.Vector.quadrance Coordinates3.Vector.dot <;>
-                simp only [Algebra.Field.ExplicitField.div_eq_mul_inv] <;> ring1
+                Vector3.quadrance Vector3.dot <;>
+                simp only [ExplicitField.div_eq_mul_inv] <;> ring1
     _ = Matrix3.add Matrix3.identity (anchor vector) := by
       rw [coefficientZero]
       ext <;> unfold Matrix3.add Matrix3.scale Matrix3.identity anchor <;>
@@ -239,7 +241,7 @@ theorem identity_sub_anchor_mul_cap (vector : Vector K)
     Matrix3.mul (Matrix3.sub Matrix3.identity (anchor vector))
         (cap vector defined) =
       Matrix3.add Matrix3.identity (anchor vector) := by
-  have cancel := Purelib.Geometry.Rotations.Cayley.Cap.denominator_mul_inverse vector defined
+  have cancel := denominator_mul_inverse vector defined
   have coefficientZero :
       2 * (capDenominator vector * (capDenominator vector)⁻¹ - 1) =
         0 := by
@@ -254,8 +256,8 @@ theorem identity_sub_anchor_mul_cap (vector : Vector K)
             (capDenominator vector)⁻¹ - 1)) (anchor vector)) := by
               ext <;> unfold cap capDenominator Matrix3.mul Matrix3.sub
                 Matrix3.add Matrix3.scale Matrix3.identity anchor
-                Coordinates3.Vector.quadrance Coordinates3.Vector.dot <;>
-                simp only [Algebra.Field.ExplicitField.div_eq_mul_inv] <;> ring1
+                Vector3.quadrance Vector3.dot <;>
+                simp only [ExplicitField.div_eq_mul_inv] <;> ring1
     _ = Matrix3.add Matrix3.identity (anchor vector) := by
       rw [coefficientZero]
       ext <;> unfold Matrix3.add Matrix3.scale Matrix3.identity anchor <;>
@@ -263,14 +265,14 @@ theorem identity_sub_anchor_mul_cap (vector : Vector K)
 
 /-- Negating the anchor leaves the cap denominator unchanged. -/
 theorem capDenominator_neg (vector : Vector K) :
-    capDenominator (Coordinates3.Vector.neg vector) = capDenominator vector := by
+    capDenominator (Vector3.neg vector) = capDenominator vector := by
   unfold capDenominator
-  rw [Coordinates3.Vector.quadrance_neg]
+  rw [Vector3.quadrance_neg]
 
 /-- The negated anchor is in the cap domain whenever the original anchor is. -/
 theorem cap_neg_defined (vector : Vector K)
     (defined : capDenominator vector ≠ 0) :
-    capDenominator (Coordinates3.Vector.neg vector) ≠ 0 := by
+    capDenominator (Vector3.neg vector) ≠ 0 := by
   rw [capDenominator_neg]
   exact defined
 
@@ -278,7 +280,7 @@ theorem cap_neg_defined (vector : Vector K)
 theorem transpose_cap (vector : Vector K)
     (defined : capDenominator vector ≠ 0) :
     Matrix3.transpose (cap vector defined) =
-      cap (Coordinates3.Vector.neg vector) (cap_neg_defined vector defined) := by
+      cap (Vector3.neg vector) (cap_neg_defined vector defined) := by
   unfold cap
   rw [capDenominator_neg, anchor_neg]
   ext <;> unfold Matrix3.transpose Matrix3.add Matrix3.scale
@@ -289,8 +291,8 @@ private theorem cap_inverse_coefficient (vector : Vector K)
     (defined : capDenominator vector ≠ 0) :
     2 * (2 / capDenominator vector) -
       (2 / capDenominator vector) ^ 2 * capDenominator vector = 0 := by
-  have cancel := Purelib.Geometry.Rotations.Cayley.Cap.denominator_mul_inverse vector defined
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  have cancel := denominator_mul_inverse vector defined
+  simp only [ExplicitField.div_eq_mul_inv]
   calc
     2 * (2 * (capDenominator vector)⁻¹) -
         (2 * (capDenominator vector)⁻¹) ^ 2 *
@@ -304,12 +306,12 @@ private theorem cap_inverse_coefficient (vector : Vector K)
 theorem cap_mul_cap_neg (vector : Vector K)
     (defined : capDenominator vector ≠ 0) :
     Matrix3.mul (cap vector defined)
-        (cap (Coordinates3.Vector.neg vector) (cap_neg_defined vector defined)) =
+        (cap (Vector3.neg vector) (cap_neg_defined vector defined)) =
       Matrix3.identity := by
-  have coefficientZero := Purelib.Geometry.Rotations.Cayley.Cap.cap_inverse_coefficient vector defined
+  have coefficientZero := cap_inverse_coefficient vector defined
   calc
     Matrix3.mul (cap vector defined)
-        (cap (Coordinates3.Vector.neg vector) (cap_neg_defined vector defined)) =
+        (cap (Vector3.neg vector) (cap_neg_defined vector defined)) =
       Matrix3.add Matrix3.identity
         (Matrix3.scale
           (2 * (2 / capDenominator vector) -
@@ -319,21 +321,21 @@ theorem cap_mul_cap_neg (vector : Vector K)
             rw [capDenominator_neg, anchor_neg]
             ext <;> unfold Matrix3.mul Matrix3.add Matrix3.scale
               Matrix3.identity Matrix3.neg anchor capDenominator
-              Coordinates3.Vector.quadrance Coordinates3.Vector.dot <;> ring1
+              Vector3.quadrance Vector3.dot <;> ring1
     _ = Matrix3.identity := by
       rw [coefficientZero]
-      exact Purelib.LinearAlgebra.Coordinates3.Matrix3.zero_scale_add_identity _
+      exact Matrix3.zero_scale_add_identity _
 
 /-- The inverse multiplication in the opposite order. -/
 theorem cap_neg_mul_cap (vector : Vector K)
     (defined : capDenominator vector ≠ 0) :
     Matrix3.mul
-        (cap (Coordinates3.Vector.neg vector) (cap_neg_defined vector defined))
+        (cap (Vector3.neg vector) (cap_neg_defined vector defined))
         (cap vector defined) = Matrix3.identity := by
-  have coefficientZero := Purelib.Geometry.Rotations.Cayley.Cap.cap_inverse_coefficient vector defined
+  have coefficientZero := cap_inverse_coefficient vector defined
   calc
     Matrix3.mul
-        (cap (Coordinates3.Vector.neg vector) (cap_neg_defined vector defined))
+        (cap (Vector3.neg vector) (cap_neg_defined vector defined))
         (cap vector defined) =
       Matrix3.add Matrix3.identity
         (Matrix3.scale
@@ -344,10 +346,10 @@ theorem cap_neg_mul_cap (vector : Vector K)
             rw [capDenominator_neg, anchor_neg]
             ext <;> unfold Matrix3.mul Matrix3.add Matrix3.scale
               Matrix3.identity Matrix3.neg anchor capDenominator
-              Coordinates3.Vector.quadrance Coordinates3.Vector.dot <;> ring1
+              Vector3.quadrance Vector3.dot <;> ring1
     _ = Matrix3.identity := by
       rw [coefficientZero]
-      exact Purelib.LinearAlgebra.Coordinates3.Matrix3.zero_scale_add_identity _
+      exact Matrix3.zero_scale_add_identity _
 
 /-- Theorem 24.1, orthogonality of a cap. -/
 theorem cap_isOrthogonal (vector : Vector K)
@@ -364,7 +366,7 @@ theorem determinant_cap (vector : Vector K)
     (cap_mul_identity_sub_anchor vector defined)
   rw [Matrix3.determinant_mul, determinant_identity_sub_anchor,
     determinant_identity_add_anchor] at determinantEquation
-  have cancel := Purelib.Geometry.Rotations.Cayley.Cap.denominator_mul_inverse vector defined
+  have cancel := denominator_mul_inverse vector defined
   calc
     Matrix3.determinant (cap vector defined) =
         Matrix3.determinant (cap vector defined) *
@@ -388,8 +390,8 @@ theorem rowMul_self_cap (vector : Vector K)
     (defined : capDenominator vector ≠ 0) :
     Matrix3.rowMul vector (cap vector defined) = vector := by
   ext <;> unfold Matrix3.rowMul cap capDenominator Matrix3.add
-    Matrix3.scale Matrix3.identity Matrix3.mul anchor Coordinates3.Vector.quadrance
-    Coordinates3.Vector.dot <;> ring1
+    Matrix3.scale Matrix3.identity Matrix3.mul anchor Vector3.quadrance
+    Vector3.dot <;> ring1
 
 /-- A cap fixes exactly the vectors in the kernel of its original anchor.
 
@@ -449,14 +451,14 @@ theorem rowMul_cap_eq_self_iff_projection (vector other : Vector K)
           ext <;> unfold Vector3.add Vector3.sub <;> ring1
     have cancel : vector.quadrance⁻¹ * vector.quadrance = 1 := by
       rw [mul_comm]
-      exact Algebra.Field.ExplicitField.mul_inv_cancel vector.quadrance nonNull
+      exact ExplicitField.mul_inv_cancel vector.quadrance nonNull
     calc
       other = Vector3.scale vector.quadrance⁻¹ (Vector3.scale vector.quadrance other) := by
         rw [Vector3.scale_scale, cancel, Vector3.one_scale]
       _ = Vector3.scale vector.quadrance⁻¹ (Vector3.scale (other.dot vector) vector) :=
         congrArg (Vector3.scale vector.quadrance⁻¹) scaled
       _ = Vector3.scale (other.dot vector / vector.quadrance) vector := by
-        rw [Vector3.scale_scale, Algebra.Field.ExplicitField.div_eq_mul_inv, mul_comm]
+        rw [Vector3.scale_scale, ExplicitField.div_eq_mul_inv, mul_comm]
   · intro projected
     calc
       Matrix3.rowMul other (cap vector defined) =
@@ -471,14 +473,14 @@ theorem trace_cap (vector : Vector K)
     (defined : capDenominator vector ≠ 0) :
     Matrix3.trace (cap vector defined) =
       (3 - vector.quadrance) / capDenominator vector := by
-  have cancel := Purelib.Geometry.Rotations.Cayley.Cap.denominator_mul_inverse vector defined
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  have cancel := denominator_mul_inverse vector defined
+  simp only [ExplicitField.div_eq_mul_inv]
   calc
     Matrix3.trace (cap vector defined) =
         3 - 4 * vector.quadrance * (capDenominator vector)⁻¹ := by
           unfold Matrix3.trace cap capDenominator Matrix3.add Matrix3.scale
-            Matrix3.identity Matrix3.mul anchor Coordinates3.Vector.quadrance Coordinates3.Vector.dot
-          simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+            Matrix3.identity Matrix3.mul anchor Vector3.quadrance Vector3.dot
+          simp only [ExplicitField.div_eq_mul_inv]
           ring1
     _ = 3 * (capDenominator vector * (capDenominator vector)⁻¹) -
         4 * vector.quadrance * (capDenominator vector)⁻¹ := by
@@ -510,16 +512,16 @@ theorem adjugate_cap (vector : Vector K)
           rw [Matrix3.identity_mul]
     _ = Matrix3.mul
         (Matrix3.mul
-          (cap (Coordinates3.Vector.neg vector) (cap_neg_defined vector defined))
+          (cap (Vector3.neg vector) (cap_neg_defined vector defined))
           (cap vector defined))
         (Matrix3.adjugate (cap vector defined)) := by
           rw [cap_neg_mul_cap]
     _ = Matrix3.mul
-        (cap (Coordinates3.Vector.neg vector) (cap_neg_defined vector defined))
+        (cap (Vector3.neg vector) (cap_neg_defined vector defined))
         (Matrix3.mul (cap vector defined)
           (Matrix3.adjugate (cap vector defined))) := by
             rw [Matrix3.mul_assoc]
-    _ = cap (Coordinates3.Vector.neg vector) (cap_neg_defined vector defined) := by
+    _ = cap (Vector3.neg vector) (cap_neg_defined vector defined) := by
       rw [adjugateProduct, Matrix3.mul_identity]
     _ = Matrix3.transpose (cap vector defined) :=
       (transpose_cap vector defined).symm
@@ -537,9 +539,9 @@ private theorem trace_cap_sub_one (vector : Vector K)
     (defined : capDenominator vector ≠ 0) :
     Matrix3.trace (cap vector defined) - 1 =
       2 * (1 - vector.quadrance) / capDenominator vector := by
-  have cancel := Purelib.Geometry.Rotations.Cayley.Cap.denominator_mul_inverse vector defined
+  have cancel := denominator_mul_inverse vector defined
   rw [trace_cap]
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  simp only [ExplicitField.div_eq_mul_inv]
   calc
     (3 - vector.quadrance) * (capDenominator vector)⁻¹ - 1 =
         (3 - vector.quadrance) * (capDenominator vector)⁻¹ -
@@ -572,67 +574,67 @@ theorem characteristicValue_cap (vector : Vector K)
     _ = (X - 1) *
         (X ^ 2 -
           (2 * (1 - vector.quadrance) / capDenominator vector) * X + 1) := by
-      rw [Purelib.Geometry.Rotations.Cayley.Cap.trace_cap_sub_one]
+      rw [trace_cap_sub_one]
 
 /-- Theorem 24.4: minus one is not an eigenvalue of a cap. -/
 theorem rowMul_cap_eq_neg_implies_zero (vector : Vector K)
     (defined : capDenominator vector ≠ 0) (twoNonzero : (2 : K) ≠ 0)
     (other : Vector K)
     (negativeEigen : Matrix3.rowMul other (cap vector defined) =
-      Coordinates3.Vector.neg other) : other = Coordinates3.Vector.zero := by
+      Vector3.neg other) : other = Vector3.zero := by
   have transported := congrArg
     (fun value => Matrix3.rowMul value
       (Matrix3.sub Matrix3.identity (anchor vector))) negativeEigen
   rw [Matrix3.rowMul_mul, cap_mul_identity_sub_anchor] at transported
-  have tEquation := congrArg Coordinates3.Vector.t transported
-  have rEquation := congrArg Coordinates3.Vector.r transported
-  have sEquation := congrArg Coordinates3.Vector.s transported
+  have tEquation := congrArg Vector3.t transported
+  have rEquation := congrArg Vector3.r transported
+  have sEquation := congrArg Vector3.s transported
   apply Coordinates3.Vector.ext
-  · apply Purelib.Algebra.Field.Characteristic.Nonzero.eq_zero_of_two_mul_eq_zero twoNonzero
+  · apply Characteristic.Nonzero.eq_zero_of_two_mul_eq_zero twoNonzero
     calc
       2 * other.t =
           (Matrix3.rowMul other
             (Matrix3.add Matrix3.identity (anchor vector))).t -
-          (Matrix3.rowMul (Coordinates3.Vector.neg other)
+          (Matrix3.rowMul (Vector3.neg other)
             (Matrix3.sub Matrix3.identity (anchor vector))).t := by
               unfold Matrix3.rowMul Matrix3.add Matrix3.sub Matrix3.identity
-                anchor Coordinates3.Vector.neg
+                anchor Vector3.neg
               ring1
-      _ = (Matrix3.rowMul (Coordinates3.Vector.neg other)
+      _ = (Matrix3.rowMul (Vector3.neg other)
             (Matrix3.sub Matrix3.identity (anchor vector))).t -
-          (Matrix3.rowMul (Coordinates3.Vector.neg other)
+          (Matrix3.rowMul (Vector3.neg other)
             (Matrix3.sub Matrix3.identity (anchor vector))).t := by
               rw [tEquation]
       _ = 0 := by ring1
-  · apply Purelib.Algebra.Field.Characteristic.Nonzero.eq_zero_of_two_mul_eq_zero twoNonzero
+  · apply Characteristic.Nonzero.eq_zero_of_two_mul_eq_zero twoNonzero
     calc
       2 * other.r =
           (Matrix3.rowMul other
             (Matrix3.add Matrix3.identity (anchor vector))).r -
-          (Matrix3.rowMul (Coordinates3.Vector.neg other)
+          (Matrix3.rowMul (Vector3.neg other)
             (Matrix3.sub Matrix3.identity (anchor vector))).r := by
               unfold Matrix3.rowMul Matrix3.add Matrix3.sub Matrix3.identity
-                anchor Coordinates3.Vector.neg
+                anchor Vector3.neg
               ring1
-      _ = (Matrix3.rowMul (Coordinates3.Vector.neg other)
+      _ = (Matrix3.rowMul (Vector3.neg other)
             (Matrix3.sub Matrix3.identity (anchor vector))).r -
-          (Matrix3.rowMul (Coordinates3.Vector.neg other)
+          (Matrix3.rowMul (Vector3.neg other)
             (Matrix3.sub Matrix3.identity (anchor vector))).r := by
               rw [rEquation]
       _ = 0 := by ring1
-  · apply Purelib.Algebra.Field.Characteristic.Nonzero.eq_zero_of_two_mul_eq_zero twoNonzero
+  · apply Characteristic.Nonzero.eq_zero_of_two_mul_eq_zero twoNonzero
     calc
       2 * other.s =
           (Matrix3.rowMul other
             (Matrix3.add Matrix3.identity (anchor vector))).s -
-          (Matrix3.rowMul (Coordinates3.Vector.neg other)
+          (Matrix3.rowMul (Vector3.neg other)
             (Matrix3.sub Matrix3.identity (anchor vector))).s := by
               unfold Matrix3.rowMul Matrix3.add Matrix3.sub Matrix3.identity
-                anchor Coordinates3.Vector.neg
+                anchor Vector3.neg
               ring1
-      _ = (Matrix3.rowMul (Coordinates3.Vector.neg other)
+      _ = (Matrix3.rowMul (Vector3.neg other)
             (Matrix3.sub Matrix3.identity (anchor vector))).s -
-          (Matrix3.rowMul (Coordinates3.Vector.neg other)
+          (Matrix3.rowMul (Vector3.neg other)
             (Matrix3.sub Matrix3.identity (anchor vector))).s := by
               rw [sEquation]
       _ = 0 := by ring1
@@ -644,8 +646,8 @@ theorem cap_antisymmetric_part (vector : Vector K)
       Matrix3.scale (4 / capDenominator vector) (anchor vector) := by
   ext <;> unfold cap capDenominator Matrix3.sub Matrix3.transpose
     Matrix3.add Matrix3.scale Matrix3.identity Matrix3.mul anchor
-    Coordinates3.Vector.quadrance Coordinates3.Vector.dot <;>
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv] <;> ring1
+    Vector3.quadrance Vector3.dot <;>
+    simp only [ExplicitField.div_eq_mul_inv] <;> ring1
 
 /-- Theorem 24.5: the cap is injective on its domain. -/
 theorem cap_injective (twoNonzero : (2 : K) ≠ 0)
@@ -656,10 +658,10 @@ theorem cap_injective (twoNonzero : (2 : K) ≠ 0)
     first = second := by
   have traceEqual := congrArg Matrix3.trace equalCaps
   rw [trace_cap first firstDefined, trace_cap second secondDefined] at traceEqual
-  have crossed := Purelib.Algebra.Field.Inverse.cross_mul_of_div_eq_div firstDefined secondDefined traceEqual
+  have crossed := Inverse.cross_mul_of_div_eq_div firstDefined secondDefined traceEqual
   have fourNonzero : (4 : K) ≠ 0 := by
     have productNonzero :=
-      Algebra.Field.ExplicitField.mul_ne_zero twoNonzero twoNonzero
+      ExplicitField.mul_ne_zero twoNonzero twoNonzero
     simpa only [show (4 : K) = 2 * 2 by ring1] using productNonzero
   have quadranceDifference :
       4 * (second.quadrance - first.quadrance) = 0 := by
@@ -670,7 +672,7 @@ theorem cap_injective (twoNonzero : (2 : K) ≠ 0)
               unfold capDenominator
               ring1
       _ = 0 := by rw [crossed]; ring1
-  have differenceZero := Purelib.Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left
+  have differenceZero := ExplicitField.eq_zero_of_mul_eq_zero_left
     fourNonzero quadranceDifference
   have quadrancesEqual : first.quadrance = second.quadrance := by
     calc
@@ -686,7 +688,7 @@ theorem cap_injective (twoNonzero : (2 : K) ≠ 0)
     rw [quadrancesEqual]
   rw [denominatorsEqual] at partsEqual
   have scalarNonzero : 4 / capDenominator second ≠ 0 :=
-    Algebra.Field.ExplicitField.div_ne_zero fourNonzero secondDefined
+    ExplicitField.div_ne_zero fourNonzero secondDefined
   exact anchor_injective
     (Matrix3.eq_of_scale_eq_scale scalarNonzero partsEqual)
 
@@ -696,15 +698,15 @@ section
 public section
 namespace Purelib.Geometry.Rotations.Cayley.Cap
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 /-- Equal anchor vectors yield equal caps with their supplied domain certificates. -/
 public theorem cap_congr_vector {first second :
   Coordinates3.Vector K}
     (equal : first = second)
-    (firstDefined : Cap.capDenominator first ≠ 0)
-    (secondDefined : Cap.capDenominator second ≠ 0) :
-    Cap.cap first firstDefined = Cap.cap second secondDefined := by
+    (firstDefined : capDenominator first ≠ 0)
+    (secondDefined : capDenominator second ≠ 0) :
+    cap first firstDefined = cap second secondDefined := by
   subst second
   rfl
 
@@ -720,13 +722,13 @@ open Purelib.LinearAlgebra
 open Purelib.LinearAlgebra.Coordinates3
 open Purelib.Geometry.Rotations.Cayley
 namespace Purelib.Geometry.Rotations.Cayley.Cap
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 /-- Equal anchor vectors give equal cap matrices regardless of nonzero-denominator proofs. -/
 public theorem eq_of_vector_eq {left right : Coordinates3.Vector K}
-    (equal : left = right) (leftDefined : Cap.capDenominator left ≠ 0)
-    (rightDefined : Cap.capDenominator right ≠ 0) :
-    Cap.cap left leftDefined = Cap.cap right rightDefined := by
+    (equal : left = right) (leftDefined : capDenominator left ≠ 0)
+    (rightDefined : capDenominator right ≠ 0) :
+    cap left leftDefined = cap right rightDefined := by
   subst right
   rfl
 

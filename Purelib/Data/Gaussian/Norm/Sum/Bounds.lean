@@ -1,4 +1,6 @@
 module
+public import Purelib.Algebra.FiniteSum.List.Basic
+public import Batteries.Data.List.Basic
 import Purelib.Data.List.Map
 import Purelib.Algebra.NatCast
 import Purelib.Data.Gaussian.Basic
@@ -72,6 +74,25 @@ open Purelib
 open Purelib.Data
 open Purelib.Data.Gaussian
 open Purelib.Data.Rat
+open Purelib.Algebra.FiniteSum.List.Basic (scalarSum)
+
+/-- Ordered pointwise squared-norm payments bound the same finite sum of squared norms.
+
+The existing paired-list relation retains every error and its corresponding
+payment in order. Structural recursion adds the actual head payment to the
+unchanged tail without replacing the individual bounds by a uniform one.
+-/
+theorem normSum_le_scalarSum {values : List Basic.Canonical} {payments : List Fraction.Rational}
+    (paid : List.Forall₂ (fun value payment => Basic.normSq value ≤ payment) values payments) :
+    Norm.Sum.Basic.gaussianNormSqSum values ≤ scalarSum payments := by
+  induction paid with
+  | nil => exact Fraction.Order.Basic.le_refl 0
+  | @cons value payment values payments first _ ih =>
+      change Basic.Canonical.normSq value + Norm.Sum.Basic.gaussianNormSqSum values ≤
+        payment + scalarSum payments
+      rewrite [Norm.Basic.normSq_eq_canonical] at first
+      exact Fraction.Order.Arithmetic.add_le_add_direct first ih
+
 /-- A common squared-norm bound controls the difference of two ordered Gaussian sums.
 
 The finite list retains both readings at each entry. Summing their pointwise

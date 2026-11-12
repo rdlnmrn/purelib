@@ -23,6 +23,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 namespace Purelib.Riemann.Integration
@@ -56,19 +58,19 @@ open Purelib.Integration.Path.Dyadic in
 The original edge control and unit partition index cached affine points and both trace rows, with exact readbacks to
 their mathematical values. -/
 structure PrimitiveEdgeRibbon {polynomial numerator leftCoefficient rightCoefficient : Polynomial}
-    {leftBox rightBox : Purelib.Geometry.Rational.Box} {clearance : RegionClearance polynomial leftBox}
+    {leftBox rightBox : Geometry.Rational.Box} {clearance : RegionClearance polynomial leftBox}
     (bounds : PrimitiveOverlapBounds clearance numerator) {left : Model polynomial leftBox} {right : Model polynomial
       rightBox}
     {start finish : Gaussian} (edge : EdgeTransition left right start finish)
     (leftPrimitive : DensePrimitive leftCoefficient leftBox) (rightPrimitive : DensePrimitive rightCoefficient rightBox)
     (anchor : PrimitiveEdgeAnchor edge leftPrimitive.value rightPrimitive.value) {count : Nat} (partition :
-      UniformParameters.UnitPartition count)
+      UnitPartition count)
     extends PrimitiveEdgeControl bounds edge leftPrimitive rightPrimitive anchor where
   /-- The cached affine sample points in original partition order. -/
   points : PrimitiveEdgeRibbon.EdgeVector Gaussian (count + 1)
   /-- Each cached point is the original endpoint interpolation at its partition parameter. -/ points_eq : ∀ vertex,
     points vertex = Affine.line start (finish - start) (partition.parameters vertex)
-  /-- The retained ribbon built from the two cached sample rows. -/ trace : BoundaryRibbon.Ribbon count
+  /-- The retained ribbon built from the two cached sample rows. -/ trace : Ribbon count
   /-- The left trace reads the original anchored value at each cached point. -/ left_eq : ∀ vertex, trace.left vertex =
     anchor.alignedValue (points vertex)
   /-- The right trace reads the original primitive model at each cached point. -/ right_eq : ∀ vertex, trace.right
@@ -79,13 +81,13 @@ constructive_injectivity PrimitiveEdgeRibbon
 namespace PrimitiveEdgeRibbon
 
 variable {polynomial numerator leftCoefficient rightCoefficient : Polynomial} {leftBox rightBox :
-  Purelib.Riemann.Normalization.InverseRootPolynomial.Box}
+  Normalization.InverseRootPolynomial.Box}
     {clearance : RegionClearance polynomial leftBox} {bounds : PrimitiveOverlapBounds clearance numerator}
     {left : Model polynomial leftBox} {right : Model polynomial rightBox} {start finish : Gaussian}
     {edge : EdgeTransition left right start finish} {leftPrimitive : DensePrimitive leftCoefficient leftBox}
     {rightPrimitive : DensePrimitive rightCoefficient rightBox}
     {anchor : PrimitiveEdgeAnchor edge leftPrimitive.value rightPrimitive.value} {count : Nat} {partition :
-      Purelib.Integration.Path.Dyadic.UniformParameters.UnitPartition count}
+      UnitPartition count}
 
 open Purelib.Data in
 open Purelib.Geometry.Rational in
@@ -97,25 +99,25 @@ The original partition, primitive bounds and edge control determine the same ord
 def build (bounds : PrimitiveOverlapBounds clearance numerator) (edge : EdgeTransition left right start finish)
     (leftPrimitive : DensePrimitive leftCoefficient leftBox) (rightPrimitive : DensePrimitive rightCoefficient rightBox)
     (anchor : PrimitiveEdgeAnchor edge leftPrimitive.value rightPrimitive.value) (partition :
-      UniformParameters.UnitPartition count)
+      UnitPartition count)
     (leftCoefficient_eq : ∀ point, leftCoefficient.eval point = numerator.eval point * left.value.eval point)
     (rightCoefficient_eq : ∀ point, rightCoefficient.eval point = numerator.eval point * right.value.eval point) :
     PrimitiveEdgeRibbon bounds edge leftPrimitive rightPrimitive anchor partition :=
-  let points := Vector.Basic.vectorOfFn fun vertex => Affine.line start (finish - start) (partition.parameters vertex)
-  let leftValues := Vector.Basic.vectorOfFn fun vertex => anchor.alignedValue (points vertex)
-  let rightValues := Vector.Basic.vectorOfFn fun vertex => leftPrimitive.value.eval (points vertex)
+  let points := vectorOfFn fun vertex => Affine.line start (finish - start) (partition.parameters vertex)
+  let leftValues := vectorOfFn fun vertex => anchor.alignedValue (points vertex)
+  let rightValues := vectorOfFn fun vertex => leftPrimitive.value.eval (points vertex)
   { toPrimitiveEdgeControl :=
       PrimitiveEdgeControl.build bounds edge leftPrimitive rightPrimitive anchor
         leftCoefficient_eq rightCoefficient_eq
     points := points
-    points_eq := fun vertex => Vector.Basic.vectorOfFn_apply _ vertex
-    trace := BoundaryRibbon.Ribbon.build leftValues rightValues
+    points_eq := fun vertex => vectorOfFn_apply _ vertex
+    trace := Ribbon.build leftValues rightValues
     left_eq := fun vertex => by
       change leftValues vertex = _
-      exact Vector.Basic.vectorOfFn_apply _ vertex
+      exact vectorOfFn_apply _ vertex
     right_eq := fun vertex => by
       change rightValues vertex = _
-      exact Vector.Basic.vectorOfFn_apply _ vertex }
+      exact vectorOfFn_apply _ vertex }
 
 /-- The original ribbon's pointwise squared errors are bounded by its retained drift. -/
 theorem error_bound (ribbon : PrimitiveEdgeRibbon bounds edge leftPrimitive rightPrimitive anchor partition)
@@ -149,14 +151,14 @@ open Purelib.Data.Rat in
 /-- The original ribbon difference has squared norm at most eight times drift times four slopes plus drift. -/
 theorem difference_bound (ribbon : PrimitiveEdgeRibbon bounds edge leftPrimitive rightPrimitive anchor partition) :
     normSq ribbon.trace.difference ≤ 8 * ribbon.drift * (4 * ribbon.slope + ribbon.drift) := by
-  have errors : ∀ vertex, Data.Gaussian.Norm.Basic.normSq (ribbon.trace.errors vertex) ≤ ribbon.drift := fun vertex =>
+  have errors : ∀ vertex, Norm.Basic.normSq (ribbon.trace.errors vertex) ≤ ribbon.drift := fun vertex =>
     by
     rw [Norm.Basic.normSq_eq_canonical]; exact ribbon.error_bound vertex
-  have right : ∀ segment : Fin count, Data.Gaussian.Norm.Basic.normSq (ribbon.trace.right segment.succ -
+  have right : ∀ segment : Fin count, Norm.Basic.normSq (ribbon.trace.right segment.succ -
     ribbon.trace.right
     segment.castSucc) ≤ ribbon.slope * partition.step ^ 2 := fun segment => by
     rw [Norm.Basic.normSq_eq_canonical]; exact ribbon.right_increment_bound segment
-  have drift : ∀ segment : Fin count, Data.Gaussian.Norm.Basic.normSq (ribbon.trace.errors segment.succ -
+  have drift : ∀ segment : Fin count, Norm.Basic.normSq (ribbon.trace.errors segment.succ -
     ribbon.trace.errors
     segment.castSucc) ≤ ribbon.drift * partition.step ^ 2 := fun segment => by
     rw [Norm.Basic.normSq_eq_canonical]; exact ribbon.drift_increment_bound segment
@@ -174,7 +176,7 @@ set_option genInjectivity false in
 
 The retained slope, denominator and edge request keep the original primitive bounds and endpoints, with explicit
 positivity, unit cap and payment proofs. -/
-structure PrimitiveRibbonAccuracy {polynomial numerator : Polynomial} {leftBox rightBox : Purelib.Geometry.Rational.Box}
+structure PrimitiveRibbonAccuracy {polynomial numerator : Polynomial} {leftBox rightBox : Geometry.Rational.Box}
     {clearance : RegionClearance polynomial leftBox} (bounds : PrimitiveOverlapBounds clearance numerator)
     (left : Model polynomial leftBox) (right : Model polynomial rightBox)
     (start finish : Gaussian) (target : Coordinate) where
@@ -199,7 +201,7 @@ end PrimitiveEdgeRibbon
 namespace PrimitiveEdgeRibbon.PrimitiveRibbonAccuracy
 
 variable {polynomial numerator : Polynomial} {leftBox rightBox :
-  Purelib.Riemann.Normalization.InverseRootPolynomial.Box}
+  Normalization.InverseRootPolynomial.Box}
     {clearance : RegionClearance polynomial leftBox} {bounds : PrimitiveOverlapBounds clearance numerator}
     {left : Model polynomial leftBox} {right : Model polynomial rightBox} {start finish : Gaussian} {target :
       Coordinate}
@@ -215,18 +217,18 @@ def build (bounds : PrimitiveOverlapBounds clearance numerator)
     (start finish : Gaussian) (target : Coordinate) (targetPositive : 0 < target) :
     PrimitiveRibbonAccuracy bounds left right start finish target :=
   let slope := 2 * (bounds.numeratorUpper * bounds.inverseUpper) * normSq (finish - start)
-  have slopeNonnegative : 0 ≤ slope := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct bounds.numeratorUpper_nonnegative bounds.inverseUpper_positive.le))
-        (Basic.Canonical.normSq_nonneg _)
+  have slopeNonnegative : 0 ≤ slope := Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.mul_nonneg_direct bounds.numeratorUpper_nonnegative bounds.inverseUpper_positive.le))
+        (normSq_nonneg _)
   let denominator := 8 * (4 * slope + 1)
-  have denominatorPositive : 0 < denominator := Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-    (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  have denominatorPositive : 0 < denominator := Arithmetic.mul_pos_direct (by decide)
+    (Arithmetic.add_pos_of_nonneg_of_pos_direct (Arithmetic.mul_nonneg_direct (by decide)
       slopeNonnegative) (by decide))
-  have totalPositive : 0 < denominator + target := Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct
+  have totalPositive : 0 < denominator + target := Arithmetic.add_pos_of_pos_of_nonneg_direct
     denominatorPositive targetPositive.le
   let tolerance := target / (denominator + target)
-  have positive : 0 < tolerance := Fraction.Order.Field.div_pos_direct targetPositive totalPositive
+  have positive : 0 < tolerance := Field.div_pos_direct targetPositive totalPositive
   have cancel : (denominator + target) * tolerance = target := by
     rw [Fraction.Field.mul_comm]
     exact Fraction.Field.div_mul_cancel_of_ne _ _ totalPositive.ne'
@@ -238,10 +240,10 @@ def build (bounds : PrimitiveOverlapBounds clearance numerator)
     denominator_positive := denominatorPositive
     tolerance := tolerance
     positive := positive
-    le_one := (Fraction.Order.Field.div_le_iff_pos totalPositive).2 (by
+    le_one := (Field.div_le_iff_pos totalPositive).2 (by
       rw [Fraction.Field.one_mul]
       exact le_add_of_nonneg_left denominatorPositive.le)
-    paid := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    paid := (Arithmetic.mul_le_mul_of_nonneg_right_direct
       (le_add_of_nonneg_right targetPositive.le) positive.le).trans_eq cancel
     edgeRequest := PrimitiveEdgeAccuracy.build bounds left right start finish tolerance positive }
 
@@ -260,10 +262,10 @@ theorem allowance_lt (request : PrimitiveRibbonAccuracy bounds left right start 
   have driftLe : ribbon.drift ≤ 1 := driftLt.le.trans request.le_one
   have slopeEq : ribbon.slope = request.slope := ribbon.slope_eq.trans request.slope_eq.symm
   calc
-    _ ≤ 8 * ribbon.drift * (4 * ribbon.slope + 1) := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (add_le_add le_rfl driftLe) (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) ribbon.drift_nonnegative)
+    _ ≤ 8 * ribbon.drift * (4 * ribbon.slope + 1) := Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (add_le_add le_rfl driftLe) (Arithmetic.mul_nonneg_direct (by decide) ribbon.drift_nonnegative)
     _ = request.denominator * ribbon.drift := by rw [slopeEq, request.denominator_eq]; ring1
-    _ < request.denominator * request.tolerance := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+    _ < request.denominator * request.tolerance := Arithmetic.mul_lt_mul_of_pos_left_direct
       request.denominator_positive driftLt
     _ ≤ target := request.paid
 
@@ -275,7 +277,7 @@ theorem accurate (request : PrimitiveRibbonAccuracy bounds left right start fini
     {leftCoefficient rightCoefficient : Polynomial} {leftPrimitive : DensePrimitive leftCoefficient leftBox}
     {rightPrimitive : DensePrimitive rightCoefficient rightBox}
     {anchor : PrimitiveEdgeAnchor edge leftPrimitive.value rightPrimitive.value} {count : Nat} {partition :
-      UniformParameters.UnitPartition count}
+      UnitPartition count}
     (ribbon : PrimitiveEdgeRibbon bounds edge leftPrimitive rightPrimitive anchor partition) : normSq
       ribbon.trace.difference < target :=
   ribbon.difference_bound.trans_lt (request.allowance_lt ribbon.toPrimitiveEdgeControl)

@@ -102,25 +102,25 @@ open Purelib.Riemann.Topology.PreparedRefinementRootChains (RootChain)
 open Purelib.Riemann.Integration.PreparedDirectDyadicRefinements (DirectPathChain)
 open Purelib.Approximation.Gaussian.Equivalence (NamedEquivalent)
 
-variable {genus count otherCount : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-  {differential : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {bounds :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential} {patch :
-    Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {sources :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
-  {otherParent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential} {otherPatch :
-    Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch otherParent}
-  {otherData : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
-    {otherCover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover otherData}
-  {otherSources : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers
+variable {genus count otherCount : Nat} {curve : HyperellipticCurve genus}
+  {differential : Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {bounds :
+    ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {parent : CenteredEdge curve differential} {patch :
+    Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
+  {data : UniformReciprocalModels.Data patch count} {cover :
+    Cover data} {sources :
+    SourceLocations.BasisSourceCovers parent}
+  {otherParent : CenteredEdge curve differential} {otherPatch :
+    Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch otherParent}
+  {otherData : UniformReciprocalModels.Data otherPatch otherCount}
+    {otherCover : Cover otherData}
+  {otherSources : SourceLocations.BasisSourceCovers
     otherParent}
-  {basis : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {allowance coefficientTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor :
+  {basis : ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {allowance coefficientTarget : Coordinate} {coverFloor floor :
     Nat}
 
 namespace BasisCommonParentBank
@@ -130,64 +130,64 @@ set_option genInjectivity false in
 
 Both endpoint owners come from the original requests, and the next parent supplies the restoration target. -/
 structure Junction
-    (first : CommonParentBank.BasisCommonParentEntry cover sources basis allowance coefficientTarget coverFloor floor)
-    (last : CommonParentBank.BasisCommonParentEntry otherCover otherSources basis allowance coefficientTarget coverFloor
+    (first : BasisCommonParentEntry cover sources basis allowance coefficientTarget coverFloor floor)
+    (last : BasisCommonParentEntry otherCover otherSources basis allowance coefficientTarget coverFloor
       floor) where
   /-- The retained physical root join between the first parent's last owner and the next parent's first owner. -/ joined
-    : ArcOwners.Join (BasisCommonParentRequest.lastView first.request).point (BasisCommonParentRequest.firstView
+    : Join (BasisCommonParentRequest.lastView first.request).point (BasisCommonParentRequest.firstView
     last.request).point
   /-- The restoration request on that exact join and next-parent target. -/ request :
-    RestorationJoins.BasisRestorationRequest basis joined last.request.restoration.target floor
+    BasisRestorationRequest basis joined last.request.restoration.target floor
 
 constructive_injectivity Junction
 
 /-- Construct a common-parent junction from physical endpoint equality and the original named-root agreement. -/
 @[expose] def Junction.build
-    (first : CommonParentBank.BasisCommonParentEntry cover sources basis allowance coefficientTarget coverFloor floor)
-    (last : CommonParentBank.BasisCommonParentEntry otherCover otherSources basis allowance coefficientTarget coverFloor
+    (first : BasisCommonParentEntry cover sources basis allowance coefficientTarget coverFloor floor)
+    (last : BasisCommonParentEntry otherCover otherSources basis allowance coefficientTarget coverFloor
       floor)
     (same : parent.edge.point 1 = otherParent.edge.point 0)
-    (roots : Gaussian.Equivalence.NamedEquivalent (parent.edge.rootName 1 (by decide)) (otherParent.edge.rootName 0
+    (roots : NamedEquivalent (parent.edge.rootName 1 (by decide)) (otherParent.edge.rootName 0
       otherParent.edge.baseInside)) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.Junction first last :=
+    Junction first last :=
   let joined := BasisCommonParentRequest.join first.request last.request same roots
   ⟨joined, BasisRestorationRequest.build basis joined last.request.restoration.target last.request.restoration.positive
     floor⟩
 
 /-- The complete dependent spine of junctions between consecutive retained common-parent entries. -/
-@[expose] def Junctions : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-    (anchors : UniformReciprocalCover.ParentCovers parents) → (sources : SourceLocations.BasisParentSourceCovers
+@[expose] def Junctions : {parents : List (CenteredEdge curve differential)} →
+    (anchors : ParentCovers parents) → (sources : SourceLocations.BasisParentSourceCovers
       parents) →
-    CommonParentBank.BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor → Type 2
+    BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor → Type 2
   | _, .nil, _, _ => PUnit
   | _, .cons _ _ _ .nil, _, _ => PUnit
   | _, .cons _ _ _ (.cons _ _ _ _), _, bank =>
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.Junction bank.1 bank.2.1
-        × Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.Junctions _
+      Junction bank.1 bank.2.1
+        × BasisCommonParentBank.Junctions _
         _ bank.2
 
 /-- Consecutive original parent edges share their physical endpoint coordinates. -/
-@[expose] def PhysicalJoins : List (PreparedSubdivisionModelCore.CenteredEdge curve differential) → Prop
+@[expose] def PhysicalJoins : List (CenteredEdge curve differential) → Prop
   | [] => True
   | [_] => True
   | first :: next :: remaining => first.edge.point 1 = next.edge.point 0 ∧
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.PhysicalJoins
+    BasisCommonParentBank.PhysicalJoins
     (next :: remaining)
 
 /-- The start coordinate of a nonempty direct path chain is the first parent's start coordinate. -/
-private theorem chain_start {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} {parent :
-  PreparedSubdivisionModelCore.CenteredEdge curve differential}
-    {start finish : Lifted.Basic.LiftedPoint 2} (chain : PreparedDirectDyadicRefinements.DirectPathChain (parent ::
+private theorem chain_start {parents : List (CenteredEdge curve differential)} {parent :
+  CenteredEdge curve differential}
+    {start finish : Lifted.Basic.LiftedPoint 2} (chain : DirectPathChain (parent ::
       parents) (start := start) (finish := finish)) :
     start.coordinate = parent.edge.point 0 := by
   cases chain
   exact parent.edge.point_zero.symm
 
 /-- An original direct path chain supplies every consecutive physical endpoint equality. -/
-private theorem physicalJoins {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} {start
+private theorem physicalJoins {parents : List (CenteredEdge curve differential)} {start
   finish : Lifted.Basic.LiftedPoint 2}
-    (chain : PreparedDirectDyadicRefinements.DirectPathChain parents (start := start) (finish := finish)) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.PhysicalJoins parents :=
+    (chain : DirectPathChain parents (start := start) (finish := finish)) :
+      PhysicalJoins parents :=
       by
   induction chain with
   | nil => trivial
@@ -196,68 +196,68 @@ private theorem physicalJoins {parents : List (PreparedSubdivisionModelCore.Cent
       | nil => trivial
       | cons next remaining =>
         exact ⟨parent.edge.point_one.trans
-          (Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.chain_start tail),
+          (chain_start tail),
           ih⟩
 
 /-- Read the original named-root agreement at the first retained parent junction. -/
-@[expose] def root_head {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} {parent next :
-  PreparedSubdivisionModelCore.CenteredEdge curve differential}
-    {first last : Gaussian.Name.Basic.Named} (roots : PreparedRefinementRootChains.RootChain (parent :: next :: parents)
+@[expose] def root_head {parents : List (CenteredEdge curve differential)} {parent next :
+  CenteredEdge curve differential}
+    {first last : Gaussian.Name.Basic.Named} (roots : RootChain (parent :: next :: parents)
       first last) :
-    Gaussian.Equivalence.NamedEquivalent (parent.edge.rootName 1 (by decide)) (next.edge.rootName 0
+    NamedEquivalent (parent.edge.rootName 1 (by decide)) (next.edge.rootName 0
       next.edge.baseInside) :=
   match roots with
   | .cons _ _ (.cons _ entry _) => entry
 
 /-- Retain the original root-chain tail starting at the first parent's endpoint root. -/
-@[expose] def root_tail {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} {parent :
-  PreparedSubdivisionModelCore.CenteredEdge curve differential}
-    {first last : Gaussian.Name.Basic.Named} (roots : PreparedRefinementRootChains.RootChain (parent :: parents) first
+@[expose] def root_tail {parents : List (CenteredEdge curve differential)} {parent :
+  CenteredEdge curve differential}
+    {first last : Gaussian.Name.Basic.Named} (roots : RootChain (parent :: parents) first
       last) :
-    PreparedRefinementRootChains.RootChain parents (parent.edge.rootName 1 (by decide)) last :=
+    RootChain parents (parent.edge.rootName 1 (by decide)) last :=
   match roots with
   | .cons _ _ tail => tail
 
 /-- Build all common-parent junctions from the supplied physical equalities and original root chain. -/
-@[expose] def junctionsOfJoins : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-    (anchors : UniformReciprocalCover.ParentCovers parents) → (sources : SourceLocations.BasisParentSourceCovers
+@[expose] def junctionsOfJoins : {parents : List (CenteredEdge curve differential)} →
+    (anchors : ParentCovers parents) → (sources : SourceLocations.BasisParentSourceCovers
       parents) →
-    (bank : CommonParentBank.BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor) →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.PhysicalJoins parents →
+    (bank : BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor) →
+    PhysicalJoins parents →
       {first last : Gaussian.Name.Basic.Named} →
-    PreparedRefinementRootChains.RootChain parents first last →
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.Junctions anchors
+    RootChain parents first last →
+      Junctions anchors
       sources bank
   | _, .nil, _, _, _, _, _, _ => PUnit.unit
   | _, .cons _ _ _ .nil, _, _, _, _, _, _ => PUnit.unit
   | _, .cons _ _ _ (.cons _ _ _ _), _, bank, physical, _, _, roots =>
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.Junction.build bank.1
+      (Junction.build bank.1
         bank.2.1 physical.1
-        (Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.root_head roots),
+        (root_head roots),
 
           junctionsOfJoins
           _ _ bank.2 physical.2
-          (Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.root_tail roots))
+          (root_tail roots))
 
 /-- Build the retained junction spine using the original direct path and operational root chains. -/
-@[expose] def junctions {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-    (anchors : UniformReciprocalCover.ParentCovers parents) (sources : SourceLocations.BasisParentSourceCovers parents)
-    (bank : CommonParentBank.BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor)
+@[expose] def junctions {parents : List (CenteredEdge curve differential)}
+    (anchors : ParentCovers parents) (sources : SourceLocations.BasisParentSourceCovers parents)
+    (bank : BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor)
     {start finish : Lifted.Basic.LiftedPoint 2}
-    (chain : Nonempty (PreparedDirectDyadicRefinements.DirectPathChain parents (start := start) (finish := finish)))
-    {first last : Gaussian.Name.Basic.Named} (roots : PreparedRefinementRootChains.RootChain parents first last) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.Junctions anchors
+    (chain : Nonempty (DirectPathChain parents (start := start) (finish := finish)))
+    {first last : Gaussian.Name.Basic.Named} (roots : RootChain parents first last) :
+      Junctions anchors
       sources bank :=
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.junctionsOfJoins anchors
-    sources bank (by obtain ⟨chain⟩ := chain; exact
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.physicalJoins chain) roots
+  junctionsOfJoins anchors
+    sources bank (by
+      obtain ⟨chain⟩ := chain; exact physicalJoins chain) roots
 
 /-- Shared reading stages must include these joins in addition to each parent's own acquisition plan. -/
-@[expose] def Junctions.stage : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-    (anchors : UniformReciprocalCover.ParentCovers parents) → (sources : SourceLocations.BasisParentSourceCovers
+@[expose] def Junctions.stage : {parents : List (CenteredEdge curve differential)} →
+    (anchors : ParentCovers parents) → (sources : SourceLocations.BasisParentSourceCovers
       parents) →
-    (bank : CommonParentBank.BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor) →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.Junctions anchors sources
+    (bank : BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor) →
+    Junctions anchors sources
       bank → Nat
   | _, .nil, _, _, _ => 0
   | _, .cons _ _ _ .nil, _, _, _ => 0
@@ -268,14 +268,14 @@ set_option genInjectivity false in
 /-- The complete common-parent request bank, junctions and shared polynomial threshold.
 
 Both cover banks retain the original parent list, and the cached threshold pays every parent and join. -/
-structure Schedule {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-    (anchors : UniformReciprocalCover.ParentCovers parents) (sources : SourceLocations.BasisParentSourceCovers parents)
+structure Schedule {parents : List (CenteredEdge curve differential)}
+    (anchors : ParentCovers parents) (sources : SourceLocations.BasisParentSourceCovers parents)
     (basis : ReciprocalPaddedBasisBounds.BasisBounds bounds)
-    (allowance coefficientTarget : InverseRootPolynomial.Coordinate) (coverFloor floor : Nat) where
-  /-- The complete retained common-parent request bank. -/ bank : CommonParentBank.BasisCommonParentBank anchors sources
+    (allowance coefficientTarget : Coordinate) (coverFloor floor : Nat) where
+  /-- The complete retained common-parent request bank. -/ bank : BasisCommonParentBank anchors sources
     basis allowance coefficientTarget coverFloor floor
   /-- The junction spine on those exact retained parent entries. -/ joins :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.Junctions anchors sources
+    Junctions anchors sources
     bank
   /-- The cached common parent and junction threshold. -/ index : Nat
   /-- The threshold is exactly the maximum of the retained parent-bank and junction stages. -/ index_eq : index = max
@@ -288,42 +288,42 @@ namespace Schedule
 /-- Use the cache's original parent and root chains. Both input cover banks are indexed by that same retained parent
 list. -/
 @[expose] def ofCache {ambient : Rational.Box} {start finish : InverseRootPolynomial.Gaussian}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : ClearPath curve.polynomial ambient start finish}
     {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)}
     {covered : PreparedClearPathModels.CoveredTracedPath path owner} {sheet : Fin 2}
-    (cache : PreparedClearPathModels.ParentCache covered differential sheet)
-    (anchors : UniformReciprocalCover.ParentCovers cache.parents) (sources : SourceLocations.BasisParentSourceCovers
+    (cache : ParentCache covered differential sheet)
+    (anchors : ParentCovers cache.parents) (sources : SourceLocations.BasisParentSourceCovers
       cache.parents)
     (basis : ReciprocalPaddedBasisBounds.BasisBounds bounds)
-    (allowance coefficientTarget : InverseRootPolynomial.Coordinate) (positive : 0 < allowance) (coefficientPositive : 0
+    (allowance coefficientTarget : Coordinate) (positive : 0 < allowance) (coefficientPositive : 0
       < coefficientTarget)
     (coverFloor floor : Nat) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.Schedule anchors sources
+      Schedule anchors sources
       basis allowance coefficientTarget coverFloor floor :=
   let bank := BasisCommonParentBank.build basis allowance coefficientTarget positive coefficientPositive coverFloor
     floor anchors sources
-  let joins := Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.junctions
+  let joins := junctions
     anchors sources bank (start := ⟨start, sheet⟩) (finish := ⟨finish, sheet⟩)
     (by obtain ⟨chain⟩ := (ParentCache.chain cache); exact ⟨chain.toDirectPathChain⟩) (ParentCache.rootChain cache)
   ⟨bank, joins, max (BasisCommonParentBank.index anchors sources bank) (joins.stage anchors sources bank), rfl⟩
 
-variable {parents : List (Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-  {anchors : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents} {sources :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisParentSourceCovers parents}
+variable {parents : List (CenteredEdge curve differential)}
+  {anchors : ParentCovers parents} {sources :
+    SourceLocations.BasisParentSourceCovers parents}
 
 /-- Every parent-bank threshold is paid by the retained schedule. -/
 theorem parents_le (schedule :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.Schedule anchors sources
+  Schedule anchors sources
   basis allowance coefficientTarget coverFloor floor) :
     BasisCommonParentBank.index anchors sources schedule.bank ≤ schedule.index :=
-  (Purelib.Data.Nat.Order.le_max_left ..).trans_eq schedule.index_eq.symm
+  (Data.Nat.Order.le_max_left ..).trans_eq schedule.index_eq.symm
 
 /-- Every junction threshold is paid by the retained schedule. -/
 theorem joins_le (schedule :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.Schedule anchors sources
+  Schedule anchors sources
   basis allowance coefficientTarget coverFloor floor) :
     schedule.joins.stage anchors sources schedule.bank ≤ schedule.index :=
-  (Purelib.Data.Nat.Order.le_max_right ..).trans_eq schedule.index_eq.symm
+  (Data.Nat.Order.le_max_right ..).trans_eq schedule.index_eq.symm
 
 end Schedule
 

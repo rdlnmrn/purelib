@@ -52,6 +52,10 @@ import Purelib.Riemann.Paths.PreparedPathParentCaches
 import Purelib.Riemann.Paths.PreparedPathTrace
 import Purelib.Riemann.Readings.PreparedPrimitiveSamples
 
+open Purelib.Riemann.Paths.PreparedPathDecomposition
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh
+
 open Purelib.Approximation
 
 open Purelib.Curves
@@ -79,47 +83,47 @@ the actual number of occurrences, including repeated or reversed segments.
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
     bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
   {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
     {ambient : Rational.Box}
 
 /-- An original coarse primitive reference for each retained assigned segment occurrence and comparison owner. -/
-@[expose] def References (differential : Hyperelliptic.Differentials.Basic.Differential genus) (parentSheet : Fin 2) :
-    ∀ {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start
+@[expose] def References (differential : Differentials.Basic.Differential genus) (parentSheet : Fin 2) :
+    ∀ {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath curve.polynomial ambient start
       finish}
       {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
         Paths.PreparedClearPathModels.PreparedPath path owner} {pieces :
-        Paths.PreparedPathDecomposition.PreparedPath.CoveredSegments prepared}
-      (assigned : Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces),
-        Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons differential
+        PreparedPath.CoveredSegments prepared}
+      (assigned : PreparedFaceSegments.AssignedSegments mesh pieces),
+        AssignedSegments.Comparisons differential
         parentSheet assigned → Type 2
   | _, _, _, _, _, _, .nil _ _, _ => PUnit
   | _, _, _, _, _, _, .cons _ remaining, compared =>
-      Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveReferences.Reference compared.1.entered 1 ×
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References differential parentSheet
+      Face.PrimitiveReferences.Reference compared.1.entered 1 ×
+        References differential parentSheet
           remaining compared.2
 
 namespace References
 
 /-- Prepare the original unit-tolerance reference recursively for every retained segment occurrence. -/
-@[expose] def build (differential : Hyperelliptic.Differentials.Basic.Differential genus) (parentSheet : Fin 2) :
-    ∀ {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start
+@[expose] def build (differential : Differentials.Basic.Differential genus) (parentSheet : Fin 2) :
+    ∀ {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath curve.polynomial ambient start
       finish}
       {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
         Paths.PreparedClearPathModels.PreparedPath path owner} {pieces :
-        Paths.PreparedPathDecomposition.PreparedPath.CoveredSegments prepared}
-      (assigned : Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
-        Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons differential
+        PreparedPath.CoveredSegments prepared}
+      (assigned : PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
+        AssignedSegments.Comparisons differential
         parentSheet assigned),
-      Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References differential parentSheet assigned compared
+      References differential parentSheet assigned compared
   | _, _, _, _, _, _, .nil _ _, _ => ⟨⟩
   | _, _, _, _, _, _, .cons _ remaining, compared =>
-      ⟨Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveReferences.Reference.build compared.1.entered 1 (by decide),
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References.build differential
+      ⟨Face.PrimitiveReferences.Reference.build compared.1.entered 1 (by decide),
+        References.build differential
           parentSheet remaining compared.2⟩
 
 set_option genInjectivity false in
@@ -134,95 +138,95 @@ constructive_injectivity Profile
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References
 /-- Fold the actual original reference stages, occurrence count and squared-increment allowances once. -/
-@[expose] def profile (differential : Hyperelliptic.Differentials.Basic.Differential genus) (parentSheet : Fin 2) :
-    ∀ {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start
+@[expose] def profile (differential : Differentials.Basic.Differential genus) (parentSheet : Fin 2) :
+    ∀ {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath curve.polynomial ambient start
       finish}
       {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
         Paths.PreparedClearPathModels.PreparedPath path owner} {pieces :
-        Paths.PreparedPathDecomposition.PreparedPath.CoveredSegments prepared}
-      (assigned : Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
-        Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons differential
+        PreparedPath.CoveredSegments prepared}
+      (assigned : PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
+        AssignedSegments.Comparisons differential
         parentSheet assigned),
-      Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References differential parentSheet assigned compared →
-        Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References.Profile
+      References differential parentSheet assigned compared →
+        Profile
   | _, _, _, _, _, _, .nil _ _, _, _ => ⟨0, 0, 0⟩
   | _, _, _, _, _, _, .cons _ remaining, compared, references =>
       let tail := profile differential parentSheet remaining compared.2 references.2
       ⟨max references.1.budget.grid.index tail.index, tail.count + 1, references.1.bound + tail.total⟩
 
 /-- The retained original profile's total squared-increment allowance is nonnegative. -/
-theorem profile_nonnegative (differential : Hyperelliptic.Differentials.Basic.Differential genus) (parentSheet : Fin 2)
+theorem profile_nonnegative (differential : Differentials.Basic.Differential genus) (parentSheet : Fin 2)
   :
-    ∀ {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start
+    ∀ {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath curve.polynomial ambient start
       finish}
       {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
         Paths.PreparedClearPathModels.PreparedPath path owner} {pieces :
-        Paths.PreparedPathDecomposition.PreparedPath.CoveredSegments prepared}
-      (assigned : Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
-        Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons differential
+        PreparedPath.CoveredSegments prepared}
+      (assigned : PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
+        AssignedSegments.Comparisons differential
         parentSheet assigned)
-      (references : Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References differential parentSheet
+      (references : References differential parentSheet
         assigned compared),
       0 ≤ (profile differential parentSheet assigned compared references).total
   | _, _, _, _, _, _, .nil _ _, _, _ => le_rfl
   | _, _, _, _, _, _, .cons _ remaining, compared, references =>
       add_nonneg references.1.bound_positive.le
-        (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References.profile_nonnegative
+        (References.profile_nonnegative
         differential parentSheet remaining compared.2 references.2)
 
 /-- The retained profile count equals the original complete corner-increment list length. -/
-theorem profile_count (differential : Hyperelliptic.Differentials.Basic.Differential genus) (parentSheet : Fin 2)
-    {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars} {index : Nat}
-      (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains) :
-    ∀ {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start
+theorem profile_count (differential : Differentials.Basic.Differential genus) (parentSheet : Fin 2)
+    {domains : Face.DomainBanks.FaceDomainBank frames faces.regulars} {index : Nat}
+      (shared : Face.PrimitiveData.FacePrimitiveBank differential index domains) :
+    ∀ {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath curve.polynomial ambient start
       finish}
       {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
         Paths.PreparedClearPathModels.PreparedPath path owner} {pieces :
-        Paths.PreparedPathDecomposition.PreparedPath.CoveredSegments prepared}
-      (assigned : Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
-        Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons differential
+        PreparedPath.CoveredSegments prepared}
+      (assigned : PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
+        AssignedSegments.Comparisons differential
         parentSheet assigned)
-      (references : Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References differential parentSheet
+      (references : References differential parentSheet
         assigned compared),
       (profile differential parentSheet assigned compared references).count =
-        (Hyperelliptic.Meshes.PuncturedGrid.Cut.CornerRequests.AssignedSegments.cornerIncrements shared assigned).length
+        (Cut.CornerRequests.AssignedSegments.cornerIncrements shared assigned).length
   | _, _, _, _, _, _, .nil _ _, _, _ => rfl
   | _, _, _, _, _, _, .cons _ remaining, compared, references =>
       congrArg Nat.succ
-        (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References.profile_count differential
+        (References.profile_count differential
         parentSheet shared remaining compared.2 references.2)
 
 /-- At a sufficient shared stage, the original corner squared-norm sum satisfies the retained reference profile total.
 -/
-theorem normSum_le (differential : Hyperelliptic.Differentials.Basic.Differential genus) (parentSheet : Fin 2)
-    {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars} {index : Nat}
-      (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains) :
-    ∀ {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start
+theorem normSum_le (differential : Differentials.Basic.Differential genus) (parentSheet : Fin 2)
+    {domains : Face.DomainBanks.FaceDomainBank frames faces.regulars} {index : Nat}
+      (shared : Face.PrimitiveData.FacePrimitiveBank differential index domains) :
+    ∀ {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath curve.polynomial ambient start
       finish}
       {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
         Paths.PreparedClearPathModels.PreparedPath path owner} {pieces :
-        Paths.PreparedPathDecomposition.PreparedPath.CoveredSegments prepared}
-      (assigned : Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
-        Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons differential
+        PreparedPath.CoveredSegments prepared}
+      (assigned : PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
+        AssignedSegments.Comparisons differential
         parentSheet assigned)
       (_aligned :
-        Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons.UsesDomains
+        AssignedSegments.Comparisons.UsesDomains
         domains differential parentSheet assigned compared)
-      (references : Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References differential parentSheet
+      (references : References differential parentSheet
         assigned compared),
       (profile differential parentSheet assigned compared references).index ≤ index →
         Gaussian.Norm.Sum.Basic.gaussianNormSqSum
-          (Hyperelliptic.Meshes.PuncturedGrid.Cut.CornerRequests.AssignedSegments.cornerIncrements shared assigned) ≤
+          (Cut.CornerRequests.AssignedSegments.cornerIncrements shared assigned) ≤
           (profile differential parentSheet assigned compared references).total
   | _, _, _, _, _, _, .nil _ _, _, _, _, _ => le_rfl
   | _, _, _, _, _, _, .cons _ remaining, compared, aligned, references, later => by
-      have firstScalar := Hyperelliptic.Meshes.PuncturedGrid.SegmentPrimitiveReferences.reference_bounded compared.1
+      have firstScalar := SegmentPrimitiveReferences.reference_bounded compared.1
         aligned.1
-        references.1 ((Data.Nat.Order.le_max_left _ _).trans later) shared
+        references.1 ((Nat.Order.le_max_left _ _).trans later) shared
       rw [Gaussian.Norm.Basic.normSq_eq_canonical] at firstScalar
       exact Rat.Fraction.Order.Arithmetic.add_le_add_direct firstScalar
-        (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References.normSum_le differential
-          parentSheet shared remaining compared.2 aligned.2 references.2 ((Data.Nat.Order.le_max_right _ _).trans
+        (References.normSum_le differential
+          parentSheet shared remaining compared.2 aligned.2 references.2 ((Nat.Order.le_max_right _ _).trans
           later))
 
 end References
@@ -230,21 +234,21 @@ end References
 set_option genInjectivity false in
 /-- Generated reference banks supply the same checked preparations and
 cached totals. There is no condition equating them with `References.build`. -/
-structure ReferenceBank (differential : Hyperelliptic.Differentials.Basic.Differential genus) (parentSheet : Fin 2)
-    {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start
+structure ReferenceBank (differential : Differentials.Basic.Differential genus) (parentSheet : Fin 2)
+    {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath curve.polynomial ambient start
       finish}
     {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
       Paths.PreparedClearPathModels.PreparedPath path owner} {pieces :
-      Paths.PreparedPathDecomposition.PreparedPath.CoveredSegments prepared}
-    (assigned : Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
-      Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons differential
+      PreparedPath.CoveredSegments prepared}
+    (assigned : PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
+      AssignedSegments.Comparisons differential
       parentSheet assigned) where
   /-- The exact original coarse references aligned with the retained segment comparisons. -/ references :
-    Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References differential parentSheet assigned compared
+    References differential parentSheet assigned compared
   /-- The retained stage, count and allowance summary of those original references. -/ profile :
-    Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References.Profile
+    References.Profile
   /-- The cached profile equals the exact fold over the retained original reference bank. -/ profile_eq : profile =
-    Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References.profile differential parentSheet assigned
+    References.profile differential parentSheet assigned
     compared references
   /-- The retained squared-norm bound for the complete original path sum. -/ bound :
     Normalization.InverseRootPolynomial.Coordinate
@@ -255,75 +259,75 @@ constructive_injectivity ReferenceBank
 
 namespace ReferenceBank
 
-variable {differential : Hyperelliptic.Differentials.Basic.Differential genus} {parentSheet : Fin 2}
-  {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+variable {differential : Differentials.Basic.Differential genus} {parentSheet : Fin 2}
+  {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath curve.polynomial ambient start finish}
   {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
     Paths.PreparedClearPathModels.PreparedPath path owner} {pieces :
-    Paths.PreparedPathDecomposition.PreparedPath.CoveredSegments prepared}
-  {assigned : Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces} {compared :
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons differential
+    PreparedPath.CoveredSegments prepared}
+  {assigned : PreparedFaceSegments.AssignedSegments mesh pieces} {compared :
+    AssignedSegments.Comparisons differential
     parentSheet assigned}
 
 /-- Cache the profile and count-paid complete-path bound of the supplied original reference bank. -/
-@[expose] def ofReferences (references : Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References
-  differential parentSheet assigned compared) : Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.ReferenceBank
+@[expose] def ofReferences (references : References
+  differential parentSheet assigned compared) : ReferenceBank
   differential parentSheet assigned compared :=
-  let profile := Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References.profile differential parentSheet
+  let profile := References.profile differential parentSheet
     assigned compared references
   ⟨references, profile, rfl, Rational.Budget.Aggregate.countCoordinate profile.count * profile.total,
     by rw [Rational.Budget.Aggregate.countCoordinate_eq]⟩
 
 /-- Prepare every original segment reference once and cache its complete-path profile and bound. -/
-@[expose] def build (assigned : Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces)
-  (compared : Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons differential
+@[expose] def build (assigned : PreparedFaceSegments.AssignedSegments mesh pieces)
+  (compared : AssignedSegments.Comparisons differential
   parentSheet assigned) :
-    Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.ReferenceBank differential parentSheet assigned compared
+    ReferenceBank differential parentSheet assigned compared
       :=
-  Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.ReferenceBank.ofReferences
-    (Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References.build differential parentSheet assigned
+  ReferenceBank.ofReferences
+    (References.build differential parentSheet assigned
     compared)
 
 /-- The original retained reference profile has nonnegative total allowance. -/
-theorem total_nonnegative (reference : Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.ReferenceBank
+theorem total_nonnegative (reference : ReferenceBank
   differential parentSheet assigned compared) : 0 ≤ reference.profile.total := by
   rw [reference.profile_eq]
-  exact Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References.profile_nonnegative differential
+  exact References.profile_nonnegative differential
     parentSheet assigned compared reference.references
 
 /-- The complete original corner squared-norm sum is bounded by the cached profile total. -/
-theorem normSum_bounded (reference : Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.ReferenceBank
+theorem normSum_bounded (reference : ReferenceBank
   differential parentSheet assigned compared)
-    {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars} (aligned :
-      Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons.UsesDomains domains
+    {domains : Face.DomainBanks.FaceDomainBank frames faces.regulars} (aligned :
+      AssignedSegments.Comparisons.UsesDomains domains
       differential parentSheet assigned compared)
     {index : Nat} (later : reference.profile.index ≤ index) (shared :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains) :
+      Face.PrimitiveData.FacePrimitiveBank differential index domains) :
     Gaussian.Norm.Sum.Basic.gaussianNormSqSum
-      (Hyperelliptic.Meshes.PuncturedGrid.Cut.CornerRequests.AssignedSegments.cornerIncrements shared assigned) ≤
+      (Cut.CornerRequests.AssignedSegments.cornerIncrements shared assigned) ≤
       reference.profile.total := by
-  have norms := Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References.normSum_le differential
+  have norms := References.normSum_le differential
     parentSheet shared assigned compared aligned reference.references
     (reference.profile_eq ▸ later)
   rw [← reference.profile_eq] at norms
   exact norms
 
 /-- The original full corner sum satisfies the retained count-paid path bound at every sufficient shared stage. -/
-theorem bounded (reference : Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.ReferenceBank differential
+theorem bounded (reference : ReferenceBank differential
   parentSheet assigned compared)
-    {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars} (aligned :
-      Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons.UsesDomains domains
+    {domains : Face.DomainBanks.FaceDomainBank frames faces.regulars} (aligned :
+      AssignedSegments.Comparisons.UsesDomains domains
       differential parentSheet assigned compared)
     {index : Nat} (later : reference.profile.index ≤ index) (shared :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum
-      (Hyperelliptic.Meshes.PuncturedGrid.Cut.CornerRequests.AssignedSegments.cornerIncrements shared assigned)) ≤
-      reference.bound := open Purelib.Data.Rat in by
+      Face.PrimitiveData.FacePrimitiveBank differential index domains) :
+    Gaussian.Norm.Basic.normSq (Gaussian.Norm.Sum.Basic.gaussianSum
+      (Cut.CornerRequests.AssignedSegments.cornerIncrements shared assigned)) ≤
+      reference.bound := open Data.Rat in by
   have norms := reference.normSum_bounded aligned later shared
-  have count := Hyperelliptic.Meshes.PuncturedGrid.PathPrimitiveReferences.References.profile_count differential
+  have count := References.profile_count differential
     parentSheet shared assigned compared reference.references
   rw [← reference.profile_eq] at count
   have estimate := Gaussian.Norm.Sum.Basic.normSq_gaussianSum_le
-    (Hyperelliptic.Meshes.PuncturedGrid.Cut.CornerRequests.AssignedSegments.cornerIncrements shared assigned)
+    (Cut.CornerRequests.AssignedSegments.cornerIncrements shared assigned)
   rw [← count, ← Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
   exact estimate.trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct norms
     (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _))).trans_eq reference.bound_eq.symm)

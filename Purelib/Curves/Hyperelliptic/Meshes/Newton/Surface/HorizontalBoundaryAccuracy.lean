@@ -102,51 +102,51 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.EndpointPolygonEnergy.End
 open _root_.Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.HorizontalBoundaryRequest
   (Traces Request)
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve branches
     higher}
-  {preparation : Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius
-    : Data.Rat.Fraction.Rational} {grid : Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid
+  {preparation : NewtonPreparation original} {target radius
+    : Rational} {grid : NewtonGrid
     preparation target radius}
-  {observations : Riemann.RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
+  {observations : ProtectedObservations original} {frames :
     RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars}
-    {partitions : Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid}
-  {surfaceCuts : Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceCuts partitions domains}
+  {domains : FaceDomainBank frames grid.faces.regulars}
+    {partitions : SurfacePartitions observations grid}
+  {surfaceCuts : SurfaceCuts partitions domains}
   {first last : Fin grid.faces.regulars.length}
-  {start : Data.Gaussian.Basic.Canonical} {owner : Riemann.Topology.SquareRootContinuationChain.Owner
+  {start : Gaussian} {owner : Riemann.Topology.SquareRootContinuationChain.Owner
     (curve.polynomial.eval start)}
-  (firstEntry : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry (domains.get first).models start
+  (firstEntry : Entry (domains.get first).models start
     owner)
-  (lastEntry : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry (domains.get last).models start
+  (lastEntry : Entry (domains.get last).models start
     owner)
-  {coarseDepth : Nat} {fixed : (sheet : Fin 2) → Riemann.RootContinuation.NewtonRequestedObservationEnergy.Preflights
-    domains sheet} {error : Data.Rat.Fraction.Rational}
+  {coarseDepth : Nat} {fixed : (sheet : Fin 2) → Preflights
+    domains sheet} {error : Rational}
 
-variable (requests : Riemann.Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests
-  (fun sheet => Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains
+variable (requests : SynchronizedSurfaceRequests
+  (fun sheet => MeshCompatibility.surfaceMeshes partitions domains
     surfaceCuts sheet coarseDepth) fixed error)
 
 variable
-  (firstTraces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.PiecePerimeterTraces (requests.entries.get
+  (firstTraces : PiecePerimeterTraces (requests.entries.get
     firstEntry.sheet) first)
-  (lastTraces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.PiecePerimeterTraces (requests.entries.get
+  (lastTraces : PiecePerimeterTraces (requests.entries.get
     lastEntry.sheet) last)
 
 namespace HorizontalBoundaryRequest
 
 variable {count : Nat}
-  (pieces : Fin (count + 1) → Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.HorizontalPieces (partitions.get
+  (pieces : Fin (count + 1) → HorizontalPieces (partitions.get
     first) (partitions.get last))
-  (endpoints : PuncturedGrid.EndpointPolygonPreparation
+  (endpoints : EndpointPolygonPreparation
     (leftEntry := firstEntry) (rightEntry := lastEntry)
     (EndpointGeometry.horizontalPieces firstTraces
       lastTraces pieces))
 
-variable (traces : HorizontalBoundaryRequest.Traces
+variable (traces : Traces
   firstEntry lastEntry requests pieces)
-  {pieceAllowance polygonAllowance : Data.Rat.Fraction.Rational} {floor stage : Nat}
+  {pieceAllowance polygonAllowance : Rational} {floor stage : Nat}
 
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces (FacePerimeterTraces)
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.SeamAreas (seamValues)
@@ -163,18 +163,18 @@ piece.
 
 The bound uses the original numerical cache, owned perimeters and homogeneous coefficient factor. -/
 theorem Request.piece_accurate
-    (request : HorizontalBoundaryRequest.Request firstEntry lastEntry requests firstTraces lastTraces pieces endpoints
+    (request : Request firstEntry lastEntry requests firstTraces lastTraces pieces endpoints
       traces pieceAllowance polygonAllowance floor)
-    (later : request.index ≤ stage) (cache : LocalMeshes.Numerics domains stage) (coefficients :
-      LinearAlgebra.Gaussian.Energy.GaussianVector
+    (later : request.index ≤ stage) (cache : Numerics domains stage) (coefficients :
+      GaussianVector
       genus)
     (piece : Fin (count + 1))
-    (left : CenteredBilinearPath.Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients first
+    (left : Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients first
       ((RectangularOwnedPerimeterTraces.topOwned (firstTraces.get (pieces piece).firstPiece)).indexed vertex)))
-    (right : CenteredBilinearPath.Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients last
+    (right : Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients last
       ((RectangularOwnedPerimeterTraces.bottomOwned (lastTraces.get (pieces piece).lastPiece)).indexed vertex))) :
     Data.Gaussian.Norm.Basic.normSq (left.centeredArea - right.centeredArea) ≤
-      (genus : Fraction.Rational)^2 * (FiniteSum.Fin.sumFin (fun i => Data.Gaussian.Norm.Basic.normSq
+      (genus : Rational)^2 * (FiniteSum.Fin.sumFin (fun i => Data.Gaussian.Norm.Basic.normSq
         (coefficients i)))^2 * pieceAllowance := by
   let leftAssembly := ClippedAssembly.build
     (((requests.entries.get firstEntry.sheet).meshes.get first).entries.get (pieces piece).firstPiece)
@@ -195,24 +195,24 @@ theorem Request.piece_accurate
 /-- The paid horizontal boundary request bounds the actual endpoint-polygon area difference on the same retained piece
 list and numerical cache. -/
 theorem Request.polygon_accurate
-    (request : HorizontalBoundaryRequest.Request firstEntry lastEntry requests firstTraces lastTraces pieces endpoints
+    (request : Request firstEntry lastEntry requests firstTraces lastTraces pieces endpoints
       traces pieceAllowance polygonAllowance floor)
-    (later : request.index ≤ stage) (cache : LocalMeshes.Numerics domains stage) (coefficients :
-      LinearAlgebra.Gaussian.Energy.GaussianVector
+    (later : request.index ≤ stage) (cache : Numerics domains stage) (coefficients :
+      GaussianVector
       genus)
-    (left : CenteredBilinearPath.Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients first
+    (left : Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients first
       ((JoinedCenteredArea.endpointPolygon (fun piece => RectangularOwnedPerimeterTraces.topOwned (firstTraces.get
         (pieces piece).firstPiece))).indexed vertex)))
-    (right : CenteredBilinearPath.Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients last
+    (right : Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients last
       ((JoinedCenteredArea.endpointPolygon (fun piece => RectangularOwnedPerimeterTraces.bottomOwned (lastTraces.get
         (pieces piece).lastPiece))).indexed vertex))) :
     Data.Gaussian.Norm.Basic.normSq (left.centeredArea - right.centeredArea) ≤
-      (genus : Fraction.Rational)^2 * (FiniteSum.Fin.sumFin (fun i => Data.Gaussian.Norm.Basic.normSq
+      (genus : Rational)^2 * (FiniteSum.Fin.sumFin (fun i => Data.Gaussian.Norm.Basic.normSq
         (coefficients i)))^2 * polygonAllowance :=
   request.polygon.original_accurate (request.polygon_le.trans later)
     (fun i => cache.atDomain first firstEntry.sheet i) (fun i => cache.atDomain last lastEntry.sheet i) coefficients
-    (fun _ _ => CenteredBilinearPath.Sample.build _) (fun _ _ => CenteredBilinearPath.Sample.build _)
-    (fun _ _ => CenteredBilinearPath.Sample.build _) (fun _ _ => CenteredBilinearPath.Sample.build _) left right
+    (fun _ _ => Sample.build _) (fun _ _ => Sample.build _)
+    (fun _ _ => Sample.build _) (fun _ _ => Sample.build _) left right
 
 end HorizontalBoundaryRequest
 end Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.HorizontalBoundaryAccuracy

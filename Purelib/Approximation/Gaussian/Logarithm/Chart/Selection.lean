@@ -56,20 +56,20 @@ open Purelib.Approximation
 retained. -/
 @[expose] def SelectedLogarithm (input : CoherentNamed) : Type 1 :=
   Sigma fun branch : Anchored.AnchoredChart
-    (Exponential.Progressive.Range.Coherent.exp input.name) =>
+    (Progressive.Range.Coherent.exp input.name) =>
       Difference.LocalAlignment input branch.output
 
 namespace SelectedLogarithm
 
 /-- Read the selected anchored chart over the actual exponential input. -/
 @[expose] def branch {input : CoherentNamed} (selection :
-  Approximation.Gaussian.Logarithm.Chart.Selection.SelectedLogarithm input) :
-    Anchored.AnchoredChart (Exponential.Progressive.Range.Coherent.exp input.name) :=
+  SelectedLogarithm input) :
+    Anchored.AnchoredChart (Progressive.Range.Coherent.exp input.name) :=
   selection.1
 
 /-- Read the selected branch's retained zero alignment with the original input. -/
 @[expose] def alignment {input : CoherentNamed} (selection :
-  Approximation.Gaussian.Logarithm.Chart.Selection.SelectedLogarithm input) :
+  SelectedLogarithm input) :
     Difference.LocalAlignment input selection.branch.output :=
   selection.2
 
@@ -80,33 +80,33 @@ The caller supplies no `LocalAlignment`; it is computed below. -/
 @[expose] def ofOverlap (input sourceInput : CoherentNamed)
     (source : Anchored.AnchoredChart sourceInput)
     (extension : Transport.SafeOverlapExtension sourceInput
-      (Exponential.Progressive.Range.Coherent.exp input.name) source)
+      (Progressive.Range.Coherent.exp input.name) source)
     (injectivity : LocalInjectivity.LocalExpInjectivity
       (extension.transport source).output input) :
-    Approximation.Gaussian.Logarithm.Chart.Selection.SelectedLogarithm input := by
+    SelectedLogarithm input := by
   let branch := extension.transport source
-  have exponentials : Gaussian.Equivalence.NamedEquivalent
-      (Exponential.Progressive.Range.Name.named branch.output.name)
-      (Exponential.Progressive.Range.Name.named input.name) := by
+  have exponentials : NamedEquivalent
+      (Progressive.Range.Name.named branch.output.name)
+      (Progressive.Range.Name.named input.name) := by
     simpa only [branch,
-      Exponential.Progressive.Range.Coherent.exp] using
+      Progressive.Range.Coherent.exp] using
       branch.exponential_inverse
-  have selected : Gaussian.Equivalence.NamedEquivalent branch.output.name input.name :=
+  have selected : NamedEquivalent branch.output.name input.name :=
     injectivity.identify exponentials
   exact ⟨branch, Difference.difference_zero_of_equivalent input branch.output selected⟩
 
 /-- The constructed local branch proves the reverse exponential/logarithm inverse without a caller-supplied alignment
 premise. -/
 @[expose] def logarithm_exponential_inverse (input : CoherentNamed)
-    (selection : Approximation.Gaussian.Logarithm.Chart.Selection.SelectedLogarithm input) :
-    Gaussian.Equivalence.NamedEquivalent selection.branch.output.name input.name :=
+    (selection : SelectedLogarithm input) :
+    NamedEquivalent selection.branch.output.name input.name :=
   Inverse.logarithm_exponential_inverse input
     selection.branch selection.alignment
 
 /-- Bit-producing form of the automatically selected local inverse. -/
 @[expose] def logarithm_exponential_bitLaw (input : CoherentNamed)
-    (selection : Approximation.Gaussian.Logarithm.Chart.Selection.SelectedLogarithm input) :
-    Law.Basic.BitLaw selection.branch.output input :=
+    (selection : SelectedLogarithm input) :
+    BitLaw selection.branch.output input :=
   BitLaw.ofEquivalent
     (selection.logarithm_exponential_inverse input)
 

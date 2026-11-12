@@ -48,35 +48,35 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover (Cell
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels (RootModel)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularEndpoints (RegularEndpoint)
 open Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision (ParameterEdge)
-variable {genus count otherCount index : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-  {differential other : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential} {otherParent :
-    Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve other}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {otherPatch :
-    Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch otherParent}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {otherData :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
-  {edge otherEdge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge} {otherCell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell otherData otherEdge}
-  {model : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell} {otherModel :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel otherCell} {parameter
-    otherParameter : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {first : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap model parameter} {last :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap otherModel otherParameter}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other index otherBox}
-    {firstValue lastValue : Purelib.Riemann.Normalization.InverseRootPolynomial.Polynomial}
+variable {genus count otherCount index : Nat} {curve : HyperellipticCurve genus}
+  {differential other : Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap}
+  {parent : CenteredEdge curve differential} {otherParent :
+    CenteredEdge curve other}
+  {patch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {otherPatch :
+    Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch otherParent}
+  {data : UniformReciprocalModels.Data patch count} {otherData :
+    UniformReciprocalModels.Data otherPatch otherCount}
+  {edge otherEdge : ParameterEdge} {cell :
+    Cell data edge} {otherCell :
+    Cell otherData otherEdge}
+  {model : RootModel cell} {otherModel :
+    RootModel otherCell} {parameter
+    otherParameter : Coordinate}
+  {first : ArcOwners.Point cap model parameter} {last :
+    ArcOwners.Point cap otherModel otherParameter}
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential index box}
+  {otherSample : Cap.Primitives.Sample cap other index otherBox}
+    {firstValue lastValue : Polynomial}
 
 /-- Different numerators do not choose independent sheet signs. This reads the two cached signed primitives and the
 actual retained root join. -/
-theorem RegularEndpoint.paired_primitive_signed (left : RegularEndpoints.RegularEndpoint regular sample first
+theorem RegularEndpoint.paired_primitive_signed (left : RegularEndpoint regular sample first
   firstValue)
-    (right : RegularEndpoints.RegularEndpoint regular otherSample last lastValue) (joined : ArcOwners.Join first last)
+    (right : RegularEndpoint regular otherSample last lastValue) (joined : ArcOwners.Join first last)
     (later : 2 ≤ index) :
     (firstValue, lastValue) =
       (if left.alignment.first.flip then -sample.primitive.value else sample.primitive.value,

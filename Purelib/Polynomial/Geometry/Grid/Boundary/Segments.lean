@@ -41,8 +41,8 @@ namespace Riemann.Paths.PreparedBoundarySegments.SameSide
 /-- Exchanging two endpoints preserves their membership on a common box side. -/
 theorem reverse
     {box : Box} {first last : Gaussian.Basic.Canonical}
-    (side : Riemann.Paths.PreparedBoundarySegments.SameSide box first last) :
-      Riemann.Paths.PreparedBoundarySegments.SameSide box last first := by
+    (side : SameSide box first last) :
+      SameSide box last first := by
   rcases side with side | side | side | side
   · exact Or.inl side.symm
   · exact Or.inr (Or.inl side.symm)
@@ -76,10 +76,10 @@ section Walk
 /-- Appending two boundary walks preserves containment and common-side evidence for every actual segment. -/
 theorem boundary_append : {start middle finish :
   Gaussian.Basic.Canonical} →
-    (first : Geometry.Grid.Walks.Walk grid start middle) → (second : Geometry.Grid.Walks.Walk grid middle finish) →
-    Geometry.Grid.Boundary.Segments.PreparedBoundarySegments.OnBoundary box first.path →
-      Geometry.Grid.Boundary.Segments.PreparedBoundarySegments.OnBoundary box second.path →
-      Geometry.Grid.Boundary.Segments.PreparedBoundarySegments.OnBoundary box (first.append second).path
+    (first : Walks.Walk grid start middle) → (second : Walks.Walk grid middle finish) →
+    PreparedBoundarySegments.OnBoundary box first.path →
+      PreparedBoundarySegments.OnBoundary box second.path →
+      PreparedBoundarySegments.OnBoundary box (first.append second).path
   | _, _, _, .nil _, _, _, bounded => bounded
   | _, _, _, .cons _ tail, second, bounded, rest =>
       ⟨bounded.1, bounded.2.1, bounded.2.2.1,
@@ -88,10 +88,10 @@ theorem boundary_append : {start middle finish :
 /-- Reversing a boundary walk onto a boundary suffix preserves every segment's boundary evidence. -/
 theorem boundary_reverseOnto : {start middle finish
   : Gaussian.Basic.Canonical} →
-    (walk : Geometry.Grid.Walks.Walk grid start middle) → (suffix : Geometry.Grid.Walks.Walk grid start finish) →
-    Geometry.Grid.Boundary.Segments.PreparedBoundarySegments.OnBoundary box walk.path →
-      Geometry.Grid.Boundary.Segments.PreparedBoundarySegments.OnBoundary box suffix.path →
-      Geometry.Grid.Boundary.Segments.PreparedBoundarySegments.OnBoundary box (walk.reverseOnto suffix).path
+    (walk : Walks.Walk grid start middle) → (suffix : Walks.Walk grid start finish) →
+    PreparedBoundarySegments.OnBoundary box walk.path →
+      PreparedBoundarySegments.OnBoundary box suffix.path →
+      PreparedBoundarySegments.OnBoundary box (walk.reverseOnto suffix).path
   | _, _, _, .nil _, _, _, bounded => bounded
   | _, _, _, .cons edge tail, suffix, bounded, rest =>
       boundary_reverseOnto tail (.cons (.reverse edge)
@@ -100,17 +100,17 @@ theorem boundary_reverseOnto : {start middle finish
 
 /-- Reversing a walk preserves its actual segments' boundary certificates. -/
 theorem boundary_reverse {start finish :
-  Gaussian.Basic.Canonical} (walk : Geometry.Grid.Walks.Walk grid start finish)
-    (bounded : Geometry.Grid.Boundary.Segments.PreparedBoundarySegments.OnBoundary box walk.path) :
-      Geometry.Grid.Boundary.Segments.PreparedBoundarySegments.OnBoundary box walk.reverse.path :=
+  Gaussian.Basic.Canonical} (walk : Walks.Walk grid start finish)
+    (bounded : PreparedBoundarySegments.OnBoundary box walk.path) :
+      PreparedBoundarySegments.OnBoundary box walk.reverse.path :=
   boundary_reverseOnto walk (.nil start) bounded trivial
 
 /-- Transporting endpoint indices preserves the segment boundary certificates. -/
 theorem boundary_castEndpoints {start finish first
-  last : Gaussian.Basic.Canonical} (walk : Geometry.Grid.Walks.Walk grid start finish)
+  last : Gaussian.Basic.Canonical} (walk : Walks.Walk grid start finish)
     (firstEq : start = first) (lastEq : finish = last) (bounded :
-      Geometry.Grid.Boundary.Segments.PreparedBoundarySegments.OnBoundary box walk.path) :
-    Geometry.Grid.Boundary.Segments.PreparedBoundarySegments.OnBoundary box (walk.castEndpoints firstEq lastEq).path :=
+      PreparedBoundarySegments.OnBoundary box walk.path) :
+    PreparedBoundarySegments.OnBoundary box (walk.castEndpoints firstEq lastEq).path :=
       by
   cases firstEq
   cases lastEq
@@ -118,12 +118,12 @@ theorem boundary_castEndpoints {start finish first
 
 /-- A bounded increasing horizontal walk on a box-side coordinate lies on that boundary side. -/
 theorem horizontalIncreasing_boundary (line :
-  Geometry.Grid.ClearGrid.HorizontalLine polynomial ambient) (member : line ∈ grid.horizontal)
+  ClearGrid.HorizontalLine polynomial ambient) (member : line ∈ grid.horizontal)
     (side : line.coordinate = box.yLower ∨ line.coordinate = box.yUpper) :
-    {start finish : Fraction.Rational} → (walk : Geometry.Grid.AxisWalks.IncreasingWalk grid.xIntervals start finish) →
+    {start finish : Fraction.Rational} → (walk : AxisWalks.IncreasingWalk grid.xIntervals start finish) →
     box.xLower ≤ start → finish ≤ box.xUpper →
-    Geometry.Grid.Boundary.Segments.PreparedBoundarySegments.OnBoundary box
-      (Geometry.Grid.Walks.Walk.horizontalIncreasing line member walk).path
+    PreparedBoundarySegments.OnBoundary box
+      (Walks.Walk.horizontalIncreasing line member walk).path
   | _, _, .nil _, _, _ => trivial
   | _, _, .cons interval adjacent tail, first, last => by
       have y : box.yLower ≤ line.coordinate ∧ line.coordinate ≤ box.yUpper := by
@@ -140,11 +140,11 @@ theorem horizontalIncreasing_boundary (line :
 
 /-- A bounded increasing vertical walk on a box-side coordinate lies on that boundary side. -/
 theorem verticalIncreasing_boundary (line :
-  Geometry.Grid.ClearGrid.VerticalLine polynomial ambient) (member : line ∈ grid.vertical)
+  ClearGrid.VerticalLine polynomial ambient) (member : line ∈ grid.vertical)
     (side : line.coordinate = box.xLower ∨ line.coordinate = box.xUpper) :
-    {start finish : Fraction.Rational} → (walk : Geometry.Grid.AxisWalks.IncreasingWalk grid.yIntervals start finish) →
+    {start finish : Fraction.Rational} → (walk : AxisWalks.IncreasingWalk grid.yIntervals start finish) →
     box.yLower ≤ start → finish ≤ box.yUpper →
-    Geometry.Grid.Boundary.Segments.PreparedBoundarySegments.OnBoundary box (Geometry.Grid.Walks.Walk.verticalIncreasing
+    PreparedBoundarySegments.OnBoundary box (Walks.Walk.verticalIncreasing
       line member walk).path
   | _, _, .nil _, _, _ => trivial
   | _, _, .cons interval adjacent tail, first, last => by
@@ -172,8 +172,8 @@ variable {polynomial : GaussianPolynomial} {ambient box : Box}
 
 /-- The window's horizontal subdivision lies on its chosen top or bottom side. -/
 theorem horizontal_boundary (window : Window grid box) {y : Fraction.Rational}
-    (line : Geometry.Grid.AxisWalks.Lookup (key := Geometry.Grid.ClearGrid.HorizontalLine.coordinate) grid.horizontal y)
-    (side : y = box.yLower ∨ y = box.yUpper) : Geometry.Grid.Boundary.Segments.PreparedBoundarySegments.OnBoundary box
+    (line : AxisWalks.Lookup (key := ClearGrid.HorizontalLine.coordinate) grid.horizontal y)
+    (side : y = box.yLower ∨ y = box.yUpper) : Boundary.Segments.PreparedBoundarySegments.OnBoundary box
       (window.horizontal line).path := by
   apply Boundary.Segments.Walk.boundary_castEndpoints
   exact Boundary.Segments.Walk.horizontalIncreasing_boundary line.entry line.member
@@ -181,8 +181,8 @@ theorem horizontal_boundary (window : Window grid box) {y : Fraction.Rational}
 
 /-- The window's vertical subdivision lies on its chosen left or right side. -/
 theorem vertical_boundary (window : Window grid box) {x : Fraction.Rational}
-    (line : Geometry.Grid.AxisWalks.Lookup (key := Geometry.Grid.ClearGrid.VerticalLine.coordinate) grid.vertical x)
-    (side : x = box.xLower ∨ x = box.xUpper) : Geometry.Grid.Boundary.Segments.PreparedBoundarySegments.OnBoundary box
+    (line : AxisWalks.Lookup (key := ClearGrid.VerticalLine.coordinate) grid.vertical x)
+    (side : x = box.xLower ∨ x = box.xUpper) : Boundary.Segments.PreparedBoundarySegments.OnBoundary box
       (window.vertical line).path := by
   apply Boundary.Segments.Walk.boundary_castEndpoints
   exact Boundary.Segments.Walk.verticalIncreasing_boundary line.entry line.member
@@ -192,7 +192,7 @@ theorem vertical_boundary (window : Window grid box) {x : Fraction.Rational}
 
 The certificates follow the retained subdivisions, including reversed top and left occurrences. -/
 theorem boundary_segments (window : Window grid box) :
-  Geometry.Grid.Boundary.Segments.PreparedBoundarySegments.OnBoundary box window.boundary.path :=
+  Boundary.Segments.PreparedBoundarySegments.OnBoundary box window.boundary.path :=
   Boundary.Segments.Walk.boundary_append _ _ (window.horizontal_boundary window.bottom (Or.inl rfl))
     (Boundary.Segments.Walk.boundary_append _ _ (window.vertical_boundary window.right (Or.inr rfl))
       (Boundary.Segments.Walk.boundary_append _ _

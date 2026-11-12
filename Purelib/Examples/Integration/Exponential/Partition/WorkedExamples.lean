@@ -19,11 +19,10 @@ import Purelib.Polynomial.Ascending.Gaussian.Basic
 @[expose] public section
 
 /-!
-# Finite exponential integration regressions
+Exponential integration on rational partitions.
 
-These are small kernel calculations at ordinary Lean limits.  In particular,
-the unequal-width example witnesses why a progressive constructor must select
-its degree using the actual geometric amplification, not assume it is one.
+The displayed partitions retain their exact polynomial coefficients,
+integral samples and allowance bounds at successive refinement depths.
 -/
 
 namespace Purelib.Examples.Integration.Exponential.Partition.WorkedExamples

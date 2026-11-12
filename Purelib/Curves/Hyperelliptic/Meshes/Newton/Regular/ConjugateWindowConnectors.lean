@@ -66,44 +66,44 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.Bra
 open Purelib.Riemann.Periods
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
     Fraction.Rational}
   {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius} {face :
     Meshes.PuncturedGridFaces.RegularFace original}
   {current : Meshes.LiftedPuncturedGrid grid.punctured}
 
-variable {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames
+variable {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames
   grid.faces.regulars} {i j : Fin genus}
 
 /-- All connector requests are constructed from the two magnitude banks.
 The actual fine-cell polygons remain; this is not their vanishing theorem. -/
 theorem fine_conjugate_polygons_accurate (region : RootContinuation.NewtonOriginalRegularFaces.OriginalRegularFaces grid
   face) (sheet : Fin 2)
-    (first : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
-      (Periods.PeriodMatrix.standardDifferential i))
-    (second : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
-      (Periods.PeriodMatrix.standardDifferential j))
+    (first : PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+      (PeriodMatrix.standardDifferential i))
+    (second : PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+      (PeriodMatrix.standardDifferential j))
     (error : Fraction.Rational) (positive : 0 < error) (floor : Nat) :
-    let compiled := Hyperelliptic.Meshes.Newton.Regular.WindowConnectors.fineCompiler (current := current) region sheet
-    let request := Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedConnectors.PolarizedConnectorRequest.build
+    let compiled := WindowConnectors.fineCompiler (current := current) region sheet
+    let request := PuncturedGrid.Inclusion.PolarizedConnectors.PolarizedConnectorRequest.build
       compiled current.mesh first second error positive floor
     let threshold := max floor request.index
-    floor ≤ threshold ∧ ∀ stage (leftBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
-      (Periods.PeriodMatrix.standardDifferential i) stage domains)
-      (rightBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
-        (Periods.PeriodMatrix.standardDifferential j) stage domains)
-      (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh)
-        (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings rightBank current.mesh),
+    floor ≤ threshold ∧ ∀ stage (leftBank : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+      (PeriodMatrix.standardDifferential i) stage domains)
+      (rightBank : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+        (PeriodMatrix.standardDifferential j) stage domains)
+      (left : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh)
+        (right : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings rightBank current.mesh),
       threshold ≤ stage →
-      Data.Gaussian.Norm.Basic.normSq
-        (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-        let value := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix (fun edge =>
-          Data.Gaussian.Basic.conj (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation
+      Gaussian.Norm.Basic.normSq
+        (BilinearPolarization.extract (fun coefficient =>
+        let value := BilinearPolarization.mix (fun edge =>
+          Gaussian.Basic.conj (PuncturedGrid.CanonicalEdgeValues.edgeValuation
           current.mesh left.values edge))
-          (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh right.values) coefficient
+          (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh right.values) coefficient
         current.edges.chainArea current.vertices value
           (grid.shrunk.included.resplit face.boundary (face.cell.anchor_mem face.member)) sheet -
         Geometry.Grid.CellBoundary.sumValues (fun occurrence => Topology.Mesh.RetracingWords.wordArea value
@@ -113,31 +113,31 @@ theorem fine_conjugate_polygons_accurate (region : RootContinuation.NewtonOrigin
   · exact Nat.Order.le_max_left _ _
   intro stage leftBank rightBank left right later
   have equal (coefficient : Gaussian.Basic.Canonical) :
-      let value := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix (fun edge =>
-        Data.Gaussian.Basic.conj (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh
+      let value := BilinearPolarization.mix (fun edge =>
+        Gaussian.Basic.conj (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh
         left.values edge))
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh right.values) coefficient
+        (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh right.values) coefficient
       current.edges.chainArea current.vertices value
         (grid.shrunk.included.resplit face.boundary (face.cell.anchor_mem face.member)) sheet =
         Topology.Mesh.RetracingWords.AreaTerm.total value compiled.areaTerms := by
     intro value
-    apply Hyperelliptic.Meshes.Newton.Regular.WindowConnectors.fineCompiler_area region sheet value
-    exact Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix_reverse _ _
-      (fun edge => by rw [Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation_reverse]; rfl)
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation_reverse current.mesh right.values)
+    apply WindowConnectors.fineCompiler_area region sheet value
+    exact BilinearPolarization.mix_reverse _ _
+      (fun edge => by rw [PuncturedGrid.CanonicalEdgeValues.edgeValuation_reverse]; rfl)
+      (PuncturedGrid.CanonicalEdgeValues.edgeValuation_reverse current.mesh right.values)
         coefficient
-  have extracted := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract_congr (fun
+  have extracted := BilinearPolarization.extract_congr (fun
     coefficient =>
     congrArg (fun area => area - Geometry.Grid.CellBoundary.sumValues (fun occurrence =>
       Topology.Mesh.RetracingWords.wordArea
-      (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix (fun edge =>
-        Data.Gaussian.Basic.conj (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh
+      (BilinearPolarization.mix (fun edge =>
+        Gaussian.Basic.conj (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh
         left.values edge))
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh right.values) coefficient)
+        (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh right.values) coefficient)
           occurrence.word) compiled.regulars)
       (equal coefficient))
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq extracted).trans_le
-    (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ConjugateConnectors.PolarizedConnectorRequest.conjugate_accurate
+  exact (congrArg Gaussian.Norm.Basic.normSq extracted).trans_le
+    (PuncturedGrid.Inclusion.ConjugateConnectors.PolarizedConnectorRequest.conjugate_accurate
     request left right ((Nat.Order.le_max_right _ _).trans later))
 
 end Purelib.Curves.Hyperelliptic.Meshes.Newton.Regular.ConjugateWindowConnectors

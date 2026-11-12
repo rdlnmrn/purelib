@@ -135,6 +135,8 @@ import Purelib.Tactic.Ring
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceAlignment
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SharedPointReadings
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! Requested quantitative bounds for the retained exterior sides. -/
@@ -183,22 +185,22 @@ open Purelib.Riemann.Periods.PeriodMatrix (standardDifferential)
 open Purelib.Riemann.Normalization
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : NewtonPreparation original} {first second : Fin genus} {target radius : Fraction.Rational} {floor :
+  {preparation : NewtonPreparation original} {first second : Fin genus} {target radius : Rational} {floor :
     Nat}
   {differential : Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
 
 section
 open Purelib.Data.Gaussian
 /-- Applying one orientation sign to each Gaussian entry applies that sign to its finite sum. -/
 private theorem oriented_sum (forward : Bool) (values : List Basic.Canonical) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (values.map (fun value => if forward then value else -value)) =
-      if forward then Data.Gaussian.Norm.Sum.Basic.gaussianSum values else -Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    Norm.Sum.Basic.gaussianSum (values.map (fun value => if forward then value else -value)) =
+      if forward then Norm.Sum.Basic.gaussianSum values else -Norm.Sum.Basic.gaussianSum
         values := by
   induction values with
   | nil =>
@@ -209,14 +211,14 @@ private theorem oriented_sum (forward : Bool) (values : List Basic.Canonical) :
     change (if forward then value else -value) + _ = _
     rw [ih]
     cases forward
-    · change -value + -Data.Gaussian.Norm.Sum.Basic.gaussianSum rest = -(value +
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum rest)
+    · change -value + -Norm.Sum.Basic.gaussianSum rest = -(value +
+        Norm.Sum.Basic.gaussianSum rest)
       ring1
     · rfl
 
 /-- Reversing a Gaussian value's orientation preserves its squared norm. -/
 private theorem oriented_norm (forward : Bool) (value : Basic.Canonical) :
-    Data.Gaussian.Norm.Basic.normSq (if forward then value else -value) = Data.Gaussian.Norm.Basic.normSq value := by
+    normSq (if forward then value else -value) = normSq value := by
   cases forward
   · exact Norm.Basic.normSq_neg _
   · rfl
@@ -245,29 +247,29 @@ and squared original parent count. -/
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum),
     let source := fun outer : Fin component.prepared.occurrences.length =>
-      let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+      let occurrence := occurrenceAt component.prepared.occurrences
         outer
       let side := occurrence.sideOccurrence.side
       let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
         occurrence.sideOccurrence.sheet).meshes.entries.get
         occurrence.sideOccurrence.position
-      (List.ofFn (fun i : Fin (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
+      (List.ofFn (fun i : Fin (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
         side + 1) =>
         (NewtonRetainedExteriorSources.retainedExteriorChord prepared componentIndex comparison outer
-          (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
+          (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
           i)).increments)).flatten
     let forward := fun outer : Fin component.prepared.occurrences.length =>
-      (Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+      (occurrenceAt component.prepared.occurrences
         outer).sourceForward
     let remainders := fun outer : Fin component.prepared.occurrences.length =>
       let grouped := NewtonRetainedExteriorSources.retainedExteriorSourceGrouping prepared componentIndex comparison
         outer
-      let blocks := grouped.runs.map Meshes.PuncturedGrid.Exterior.SourceChordRuns.SourceChordRun.values
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (blocks.map PairedIncrementArea.area) -
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      let blocks := grouped.runs.map SourceChordRun.values
+      Norm.Sum.Basic.gaussianSum (blocks.map PairedIncrementArea.area) -
+        Norm.Sum.Basic.gaussianSum
           ((comparison.sourceOccurrenceBlocks outer (forward outer)).map PairedIncrementArea.area)
     let areas := fun outer => if forward outer then PairedIncrementArea.area (source outer)
       else -PairedIncrementArea.area (source outer)
@@ -275,13 +277,13 @@ and squared original parent count. -/
       else Stokes.PrimitivePoint.zero.sub (PairedIncrementArea.total (source outer))
     let errors := fun outer => if forward outer then remainders outer else -remainders outer
     let rate := 16 * comparison.sourceMagnitude^2 *
-      ((1 / 2 : Fraction.Rational)^prepared.paid.cut.exterior.prepared.energy.depth)^2
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn areas) +
+      ((1 / 2 : Rational)^prepared.paid.cut.exterior.prepared.energy.depth)^2
+    normSq (Norm.Sum.Basic.gaussianSum (List.ofFn areas) +
       PairedIncrementArea.area (List.ofFn totals) -
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn errors)) < requested ∧
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn areas) +
+        Norm.Sum.Basic.gaussianSum (List.ofFn errors)) < requested ∧
+    normSq (Norm.Sum.Basic.gaussianSum (List.ofFn areas) +
       PairedIncrementArea.area (List.ofFn totals)) ≤
-        2 * (requested + (comparison.original.plans.length : Fraction.Rational)^2 * rate + requested / 128)
+        2 * (requested + (comparison.original.plans.length : Rational)^2 * rate + requested / 128)
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Gaussian in
@@ -302,21 +304,21 @@ theorem retained_exterior_component_source_bound
   have sourceTotals (outer : Fin component.prepared.occurrences.length) :
       PairedIncrementArea.total (source outer) =
         PairedIncrementArea.total (comparison.sourceOccurrenceBlocks outer (forward outer)).flatten := by
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let side := occurrence.sideOccurrence.side
     let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
       occurrence.sideOccurrence.sheet).meshes.entries.get occurrence.sideOccurrence.position
-    let intervals := SourceIntervals.axisIntervals mesh occurrence.sourceVertical
-    let chords := fun i : Fin (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
+    let intervals := axisIntervals mesh occurrence.sourceVertical
+    let chords := fun i : Fin (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
       side + 1) =>
-      (⟨intervals[(Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
-        i).val]'(Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i).isLt,
+      (⟨intervals[(RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
+        i).val]'(RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i).isLt,
         NewtonRetainedExteriorSources.retainedExteriorChord prepared componentIndex comparison outer
-          (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i)⟩ :
-        Meshes.PuncturedGrid.Exterior.SourceChordRuns.StoredSourceChord comparison occurrence.sourceVertical)
+          (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i)⟩ :
+        SourceChordRuns.StoredSourceChord comparison occurrence.sourceVertical)
     change PairedIncrementArea.total
-      (List.ofFn (fun i => Meshes.PuncturedGrid.Exterior.SourceChordRuns.StoredSourceChord.increments (chords
+      (List.ofFn (fun i => SourceChordRuns.StoredSourceChord.increments (chords
         i))).flatten = _
     exact comparison.source_total_ofFn outer (forward outer) (source := chords)
       (NewtonRetainedExteriorSources.retainedExteriorSourceGrouping prepared componentIndex comparison outer)
@@ -334,10 +336,10 @@ theorem retained_exterior_component_source_bound
       (NewtonRetainedExteriorSources.retained_exterior_source_area_difference prepared componentIndex comparison outer)
       (comparison.sourceOccurrenceBlocks_area_orientation outer (forward outer))
   have estimate := comparison.component_source_bound areas errors differences
-  have reference := (congrArg (fun joined => Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+  have reference := (congrArg (fun joined => normSq (Norm.Sum.Basic.gaussianSum
     (List.ofFn
     areas) +
-    PairedIncrementArea.area joined - Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn errors)))
+    PairedIncrementArea.area joined - Norm.Sum.Basic.gaussianSum (List.ofFn errors)))
       orientedTotals).trans_lt estimate
   refine ⟨reference, ?_⟩
   let terms := fun outer : Fin component.prepared.occurrences.length =>
@@ -346,7 +348,7 @@ theorem retained_exterior_component_source_bound
       comparison.sourceReferenceArea (forward outer) run.parent)).map (fun value => if forward outer then value else
         -value)
   have readback (outer : Fin component.prepared.occurrences.length) :
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (terms outer) = errors outer :=
+      Norm.Sum.Basic.gaussianSum (terms outer) = errors outer :=
     (oriented_sum (forward outer) _).trans (congrArg (fun value => if forward outer then value else -value)
       (comparison.source_runs_resampling_eq outer (forward outer)
         (NewtonRetainedExteriorSources.retainedExteriorSourceGrouping prepared componentIndex comparison outer).runs
@@ -356,64 +358,64 @@ theorem retained_exterior_component_source_bound
     let runs := (NewtonRetainedExteriorSources.retainedExteriorSourceGrouping prepared componentIndex comparison
       outer).runs
     have ordered := NewtonRetainedExteriorSources.retained_exterior_run_order prepared componentIndex comparison outer
-    change runs.map Meshes.PuncturedGrid.Exterior.SourceChordRuns.SourceChordRun.parent =
+    change runs.map SourceChordRun.parent =
       (if forward outer then comparison.parentIndices outer else (comparison.parentIndices outer).reverse) at ordered
-    exact (Data.List.Map.length_map _ _).trans ((Data.List.Map.length_map _ runs).trans
-      ((Data.List.Map.length_map _ runs).symm.trans ((congrArg List.length ordered).trans
+    exact (Map.length_map _ _).trans ((Map.length_map _ runs).trans
+      ((Map.length_map _ runs).symm.trans ((congrArg List.length ordered).trans
         (oriented_length (forward outer) (comparison.parentIndices outer)))))
-  have nonnegative : 0 ≤ rate := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (Fraction.Order.Arithmetic.sq_nonneg_direct _))
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+  have nonnegative : 0 ≤ rate := Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide) (Arithmetic.sq_nonneg_direct _))
+    (Arithmetic.sq_nonneg_direct _)
   have parentRate (index : Fin comparison.original.plans.length) :
       max (16 * (comparison.sourceDensity index)^2 *
-        ((1 / 2 : Fraction.Rational)^prepared.paid.cut.exterior.prepared.energy.depth)^2)
+        ((1 / 2 : Rational)^prepared.paid.cut.exterior.prepared.energy.depth)^2)
         (comparison.entries.get index).referenceError ≤ rate + comparison.referenceAllowance := by
     have density : comparison.sourceDensity index ≤ comparison.sourceMagnitude :=
-      Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.le_maximum _ (Data.List.OfFn.Basic.mem_ofFn.mpr ⟨index, rfl⟩)
-    have physical := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.pow_le_pow_direct (comparison.sourceDensity_nonnegative index) density 2) (by
-            decide : (0 : Fraction.Rational) ≤ 16))
-      (Fraction.Order.Arithmetic.sq_nonneg_direct ((1 / 2 :
-        Fraction.Rational)^prepared.paid.cut.exterior.prepared.energy.depth))
+      PairedFragmentBlocks.le_maximum _ (Data.List.OfFn.Basic.mem_ofFn.mpr ⟨index, rfl⟩)
+    have physical := Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.pow_le_pow_direct (comparison.sourceDensity_nonnegative index) density 2) (by
+            decide : (0 : Rational) ≤ 16))
+      (Arithmetic.sq_nonneg_direct ((1 / 2 :
+        Rational)^prepared.paid.cut.exterior.prepared.energy.depth))
     have allowance := comparison.reference_le index
-    exact Fraction.Order.Basic.max_le (physical.trans (le_add_of_nonneg_right comparison.reference_positive.le))
+    exact Basic.max_le (physical.trans (le_add_of_nonneg_right comparison.reference_positive.le))
       (allowance.trans (le_add_of_nonneg_left nonnegative))
   have bounds (outer : Fin component.prepared.occurrences.length) (value : Basic.Canonical)
-      (member : value ∈ terms outer) : Data.Gaussian.Norm.Basic.normSq value ≤ rate + comparison.referenceAllowance :=
+      (member : value ∈ terms outer) : normSq value ≤ rate + comparison.referenceAllowance :=
         by
     obtain ⟨raw, rawMember, rfl⟩ := Map.mem_map.mp member
     obtain ⟨run, runMember, rfl⟩ := Map.mem_map.mp rawMember
     have paid := NewtonRetainedExteriorSources.retained_exterior_run_resampling prepared componentIndex comparison outer
       run runMember
     have depth := prepared.paid.cut.exterior.prepared.energy.mesh_depth
-      (Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+      (occurrenceAt component.prepared.occurrences
         outer).sideOccurrence.sheet
-      (Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+      (occurrenceAt component.prepared.occurrences
         outer).sideOccurrence.position
     have rateEq := congrArg (fun depth => max (16 * (comparison.sourceDensity run.parent)^2 * ((1 / 2 :
-      Fraction.Rational)^depth)^2)
+      Rational)^depth)^2)
       (comparison.entries.get run.parent).referenceError) depth
     have bound := (paid.trans_eq rateEq).trans (parentRate run.parent)
     exact (oriented_norm (forward outer) _).trans_le bound
   have residual := comparison.component_resampling_bound terms errors readback lengths bounds
   have paid := comparison.reference_paid.le
-  have residualPaid : Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn errors)) ≤
-      (comparison.original.plans.length : Fraction.Rational)^2 * rate + requested / 128 := by
-    have allocation := Fraction.Order.Arithmetic.add_le_add_direct
-      (le_refl ((comparison.original.plans.length : Fraction.Rational)^2 * rate)) paid
-    exact residual.trans ((show (comparison.original.plans.length : Fraction.Rational)^2 * (rate +
+  have residualPaid : normSq (Norm.Sum.Basic.gaussianSum (List.ofFn errors)) ≤
+      (comparison.original.plans.length : Rational)^2 * rate + requested / 128 := by
+    have allocation := Arithmetic.add_le_add_direct
+      (le_refl ((comparison.original.plans.length : Rational)^2 * rate)) paid
+    exact residual.trans ((show (comparison.original.plans.length : Rational)^2 * (rate +
       comparison.referenceAllowance) =
-      (comparison.original.plans.length : Fraction.Rational)^2 * rate +
-        (comparison.original.plans.length : Fraction.Rational) * ((comparison.original.plans.length : Fraction.Rational)
+      (comparison.original.plans.length : Rational)^2 * rate +
+        (comparison.original.plans.length : Rational) * ((comparison.original.plans.length : Rational)
           * comparison.referenceAllowance) by ring1).trans_le allocation)
-  let value := Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn areas) +
+  let value := Norm.Sum.Basic.gaussianSum (List.ofFn areas) +
     PairedIncrementArea.area (List.ofFn totals)
-  let error := Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn errors)
+  let error := Norm.Sum.Basic.gaussianSum (List.ofFn errors)
   have combined := Norm.Bounds.normSq_add_le_two (value - error) error
   rw [show value - error + error = value by ring1] at combined
-  exact combined.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    ((Fraction.Order.Arithmetic.add_le_add_direct reference.le residualPaid).trans_eq (by ring1)) (by decide))
+  exact combined.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+    ((Arithmetic.add_le_add_direct reference.le residualPaid).trans_eq (by ring1)) (by decide))
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece in
 open Purelib.Curves.Hyperelliptic in
@@ -434,17 +436,17 @@ total also equals its exact chord endpoint value. -/
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
     let componentMember : component ∈ prepared.exterior.prepared.components := List.getElem_mem componentIndex.isLt
     ∀
-    {requested : Fraction.Rational} {minimum : Nat}
+    {requested : Rational} {minimum : Nat}
     (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
     (outer : Fin component.prepared.occurrences.length),
-    let originalOccurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt
+    let originalOccurrence := occurrenceAt
       component.prepared.occurrences outer
     let sheet := originalOccurrence.sideOccurrence.sheet
     let position := originalOccurrence.sideOccurrence.position
     let vertical := originalOccurrence.sourceVertical
     let forward := originalOccurrence.sourceForward
     let meshes := (prepared.paid.cut.exterior.prepared.energy.entries.get sheet).meshes
-    let intervals := SourceIntervals.axisIntervals (meshes.entries.get position) vertical
+    let intervals := axisIntervals (meshes.entries.get position) vertical
     ∀
     (intervalIndex : Fin intervals.length),
     let physical := intervals[intervalIndex.val]'intervalIndex.isLt
@@ -462,18 +464,18 @@ total also equals its exact chord endpoint value. -/
     let side := originalOccurrence.sideOccurrence.side
     let perimeter := (prepared.traces.get position).get sheet
     let count := RectangularDyadicPairedTrace.dyadicCount mesh.depth
-    let trace := Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece.trace perimeter side
+    let trace := RetainedTracePieces.RetainedPerimeterPiece.trace perimeter side
       intervalIndex
-    let firstAlong := Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece.first_along mesh side
+    let firstAlong := first_along mesh side
       intervalIndex
-    let lastAlong := Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece.last_along mesh side
+    let lastAlong := last_along mesh side
       intervalIndex
-    let firstAcross := (Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece.first_across mesh side
+    let firstAcross := (first_across mesh side
       intervalIndex).trans
 
         (SurfacePreparation.ClosedBoundaryComparison.sourceAcross_side
         originalOccurrence).symm
-    let lastAcross := (Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece.last_across mesh side
+    let lastAcross := (last_across mesh side
       intervalIndex).trans
 
         (SurfacePreparation.ClosedBoundaryComparison.sourceAcross_side
@@ -481,17 +483,17 @@ total also equals its exact chord endpoint value. -/
     let transport := assigned.traceParameters rangeCertificate (crossing.lower.trans_lt crossing.upper)
       trace firstAlong lastAlong firstAcross lastAcross
     let parameters := transport.parameters
-    ∀ {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index),
+    ∀ {index : Nat} (cache : Numerics prepared.domains index),
     let samples := ((prepared.traces.samples cache first second).samples.get position).get sheet
     let ownedIncrements := Perimeter.RetainedIncrements.increments samples side intervalIndex
     ∀
-    {allowance : Fraction.Rational} (budget : NoisyPathArea.LengthErrorBudget count allowance)
-    (owners : Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest occurrence
+    {allowance : Rational} (budget : LengthErrorBudget count allowance)
+    (owners : OwnerRequest occurrence
       (standardDifferential second) budget.tolerance) (_later : owners.index ≤ index),
     let located := NewtonRetainedExteriorSources.locateRetainedExteriorInterval prepared sheet position member
       split.split split.member
       vertical physical present range rangeCertificate.property.1 rangeCertificate.property.2
-    let length := Meshes.PuncturedGrid.Exterior.PairedFragmentArea.parameterStep forward
+    let length := parameterStep forward
       (parameters 0) (parameters (Fin.last count))
     let sourceChord := (NewtonRetainedExteriorSources.retainedExteriorChord prepared componentIndex comparison outer
       intervalIndex).value
@@ -526,9 +528,9 @@ theorem retained_exterior_fragment_bound
     mesh side perimeter count trace firstAlong lastAlong firstAcross lastAcross transport parameters index cache samples
       ownedIncrements
     allowance budget owners later located length sourceChord sourceIncrements
-  have inside := Meshes.PuncturedGrid.Exterior.BoundaryTraceParameters.trace_inside transport
-  have ordered := Meshes.PuncturedGrid.Exterior.BoundaryTraceParameters.trace_ordered transport
-    (Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece.increasing perimeter side intervalIndex)
+  have inside := BoundaryTraceParameters.trace_inside transport
+  have ordered := BoundaryTraceParameters.trace_ordered transport
+    (increasing perimeter side intervalIndex)
   -- These witnesses live only in the erased proof. The conclusion consumes
   -- the original whole-side centered vector, not a newly evaluated sample.
   let leftBank := cache.normalize.get first
@@ -539,18 +541,18 @@ theorem retained_exterior_fragment_bound
   let right := trace.leftReadings rightData.anchors rightData.offsets
   let owned := CenteredBilinearPath.Sample.build
     (fun vertex => (⟨left.values vertex, right.values vertex⟩ : Stokes.PrimitivePoint))
-  let retainedSource : Meshes.PuncturedGrid.Exterior.SourceChordData.SourceSample
+  let retainedSource : SourceSample
       comparison i forward range mesh.depth :=
     (NewtonRetainedExteriorSources.retainedExteriorChord prepared componentIndex comparison outer intervalIndex).sample
   have sourceParametersEq (vertex : Fin (count + 1)) :
-      Meshes.PuncturedGrid.Exterior.SourceChordData.sourceParameters forward range mesh.depth vertex =
+      sourceParameters forward range mesh.depth vertex =
         parameters vertex :=
     ((transport.parameters_eq vertex).trans
       (congrArg (fun parameter =>
-        Meshes.PuncturedGrid.Exterior.BoundaryTraceParameters.firstParameter forward range + parameter *
-          (Meshes.PuncturedGrid.Exterior.BoundaryTraceParameters.lastParameter forward range -
-            Meshes.PuncturedGrid.Exterior.BoundaryTraceParameters.firstParameter forward range))
-        (Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece.parameters_eq perimeter side
+        BoundaryTraceParameters.firstParameter forward range + parameter *
+          (BoundaryTraceParameters.lastParameter forward range -
+            BoundaryTraceParameters.firstParameter forward range))
+        (parameters_eq perimeter side
           intervalIndex vertex))).symm
   let source := SampleReadback.Sample.readback retainedSource (last := fun vertex => comparison.sourceValues i
     (parameters vertex))
@@ -561,16 +563,16 @@ theorem retained_exterior_fragment_bound
   have valuesEq (vertex : Fin (count + 1)) :
       (⟨left.values vertex, right.values vertex⟩ : Stokes.PrimitivePoint) =
         Meshes.PuncturedGrid.Matched.FacePerimeters.faceValues cache.normalize first second position sheet
-          (Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece.piece mesh side
+          (RetainedTracePieces.RetainedPerimeterPiece.piece mesh side
             intervalIndex).leftColumn
-          (Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece.piece mesh side
+          (RetainedTracePieces.RetainedPerimeterPiece.piece mesh side
             intervalIndex).leftRow (trace.points vertex) :=
     congrArg₂ Stokes.PrimitivePoint.mk
       (trace.leftReadings_value leftData.anchors leftData.offsets vertex)
       (trace.leftReadings_value rightData.anchors rightData.offsets vertex)
   have incrementsEq : CenteredPathIncrements.Sample.increments owned = ownedIncrements := by
     refine ((CenteredPathIncrements.Sample.increments_raw owned).trans (OfFn.Basic.ofFn_congr ?_)).trans
-      (Perimeter.RetainedIncrements.increments_eq samples side intervalIndex).symm
+      (increments_eq samples side intervalIndex).symm
     intro edge
     exact congrArg₂ Stokes.PrimitivePoint.sub (valuesEq edge.succ) (valuesEq edge.castSucc)
   have areaEq : PairedIncrementArea.area ownedIncrements = owned.centeredArea :=
@@ -590,7 +592,7 @@ theorem retained_exterior_fragment_bound
     parameters (fun vertex => located.contains (inside vertex)) forward owners later
       (transport.readings firstReadings.val) (transport.readings secondReadings.val) reused source
   have totalReadback := congrArg PairedIncrementArea.total incrementsEq
-  have firstParameterEq : parameters 0 = Meshes.PuncturedGrid.Exterior.BoundaryTraceParameters.firstParameter
+  have firstParameterEq : parameters 0 = BoundaryTraceParameters.firstParameter
       assigned.occurrence.sourceForward rangeCertificate.val := by
     rw [transport.parameters_eq, trace.first_eq]
     ring1
@@ -601,10 +603,10 @@ theorem retained_exterior_fragment_bound
   have retainedTotals := Eq.mp (congrArg
     (fun owned => comparison.OwnedTotalsBound occurrence i located.piece index length budget.tolerance owned
       (PairedIncrementArea.total (CenteredPathIncrements.Sample.increments source))) totalReadback) totals
-  have fineArea := (congrArg₂ (fun owned source => Data.Gaussian.Norm.Basic.normSq (owned - source)) areaEq
+  have fineArea := (congrArg₂ (fun owned source => normSq (owned - source)) areaEq
     (CenteredPathIncrements.Sample.increments_area source)).trans_le original
   have retainedArea := (congrArg (fun increments =>
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area ownedIncrements - PairedIncrementArea.area increments))
+    normSq (PairedIncrementArea.area ownedIncrements - PairedIncrementArea.area increments))
       sourceEq).symm.trans_le fineArea
   have finalTotals := Eq.mp (congrArg (fun increments => comparison.OwnedTotalsBound occurrence i located.piece
     index length budget.tolerance (PairedIncrementArea.total ownedIncrements)
@@ -622,14 +624,14 @@ open Purelib.Data.Rat in
     let sheet := occurrence.sideOccurrence.sheet
     let side := occurrence.sideOccurrence.side
     let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get sheet).meshes.entries.get position
-    ∀ (junctionIndex : Fin (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
+    ∀ (junctionIndex : Fin (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
       side))
-      {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index)
-        {tolerance : Fraction.Rational}
-      (owners : Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest occurrence
+      {index : Nat} (cache : Numerics prepared.domains index)
+        {tolerance : Rational}
+      (owners : OwnerRequest occurrence
         (standardDifferential second) tolerance) (_later : owners.index ≤ index),
     let samples := ((prepared.traces.samples cache first second).samples.get position).get sheet
-    Bounded (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junction samples side junctionIndex)
+    Bounded (RetainedJunctions.RetainedPerimeterPiece.junction samples side junctionIndex)
       (tolerance / 4)
 
 open Purelib.Curves.Hyperelliptic in
@@ -638,7 +640,7 @@ theorem retained_exterior_junction_bound
     (prepared : BoundaryPreparation preparation first second target radius floor) :
     RetainedExteriorJunctionBound prepared := by
   intro outer occurrence position sheet side mesh junctionIndex index cache tolerance owners later samples
-  exact Meshes.PuncturedGrid.Exterior.JunctionOwnerBounds.SurfaceOccurrence.retained_junction_bound occurrence
+  exact JunctionOwnerBounds.SurfaceOccurrence.retained_junction_bound occurrence
     ((prepared.traces.get position).get sheet)
     (cache.normalize.get first) (cache.normalize.get second) samples side junctionIndex owners later
 
@@ -654,15 +656,15 @@ tolerance remain explicit arguments. -/
     (prepared : BoundaryPreparation preparation first second target radius floor) : Type _ :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (_comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let meshes := (prepared.paid.cut.exterior.prepared.energy.entries.get occurrence.sideOccurrence.sheet).meshes
-    Fin (SourceIntervals.axisIntervals (meshes.entries.get occurrence.sideOccurrence.position)
+    Fin (axisIntervals (meshes.entries.get occurrence.sideOccurrence.position)
       occurrence.sourceVertical).length →
-      Nat → Fraction.Rational → Fraction.Rational → (Fraction.Rational × Fraction.Rational) × List Stokes.PrimitivePoint
+      Nat → Rational → Rational → (Rational × Rational) × List Stokes.PrimitivePoint
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece in
 open Purelib.Curves.Hyperelliptic in
@@ -682,7 +684,7 @@ its source-chord owner. -/
   let position := occurrence.sideOccurrence.position
   let vertical := occurrence.sourceVertical
   let forward := occurrence.sourceForward
-  let intervals := SourceIntervals.axisIntervals (meshes.entries.get position) vertical
+  let intervals := axisIntervals (meshes.entries.get position) vertical
   let physical := intervals[intervalIndex.val]'intervalIndex.isLt
   have present : physical ∈ intervals := List.getElem_mem intervalIndex.isLt
   let crossing := comparison.locateSideInterval outer meshes physical present
@@ -698,24 +700,24 @@ its source-chord owner. -/
   let mesh := meshes.entries.get position
   let side := occurrence.sideOccurrence.side
   let perimeter := (prepared.traces.get position).get sheet
-  let trace := Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece.trace perimeter side
+  let trace := RetainedTracePieces.RetainedPerimeterPiece.trace perimeter side
     intervalIndex
-  let firstAcross := (Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece.first_across mesh side
+  let firstAcross := (first_across mesh side
     intervalIndex).trans
 
       (SurfacePreparation.ClosedBoundaryComparison.sourceAcross_side
       occurrence).symm
-  let lastAcross := (Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece.last_across mesh side
+  let lastAcross := (last_across mesh side
     intervalIndex).trans
 
       (SurfacePreparation.ClosedBoundaryComparison.sourceAcross_side
       occurrence).symm
   let transport := assigned.traceParameters rangeCertificate (crossing.lower.trans_lt crossing.upper)
-    trace (Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece.first_along mesh side intervalIndex)
-      (Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece.last_along mesh side intervalIndex)
+    trace (first_along mesh side intervalIndex)
+      (last_along mesh side intervalIndex)
         firstAcross lastAcross
   let count := RectangularDyadicPairedTrace.dyadicCount mesh.depth
-  let length := Meshes.PuncturedGrid.Exterior.PairedFragmentArea.parameterStep forward
+  let length := parameterStep forward
     (transport.parameters 0) (transport.parameters (Fin.last count))
   exact ⟨⟨comparison.ownedAreaError assigned.occurrence crossing.index located.piece index length allowance tolerance,
     comparison.ownedTotalError assigned.occurrence crossing.index located.piece index length tolerance⟩,
@@ -729,17 +731,17 @@ open Purelib.Geometry.Rectangle in
 @[expose] def RetainedExteriorPieceEstimate
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {requested : Fraction.Rational} {minimum : Nat}
+    {requested : Rational} {minimum : Nat}
     (comparison :
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.ClosedBoundaryComparison
       (standardDifferential second) requested minimum)
-    (index : Nat) (allowance tolerance areaTarget totalTarget : Fraction.Rational) : Prop :=
+    (index : Nat) (allowance tolerance areaTarget totalTarget : Rational) : Prop :=
   ∀ outer : Fin
     (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.occurrences.length,
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt
+    let occurrence := occurrenceAt
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.occurrences outer
     let meshes := (prepared.paid.cut.exterior.prepared.energy.entries.get occurrence.sideOccurrence.sheet).meshes
-    ∀ intervalIndex : Fin (SourceIntervals.axisIntervals (meshes.entries.get occurrence.sideOccurrence.position)
+    ∀ intervalIndex : Fin (axisIntervals (meshes.entries.get occurrence.sideOccurrence.position)
       occurrence.sourceVertical).length,
       let rates := retainedExteriorPieceRates prepared componentIndex comparison outer intervalIndex index allowance
         tolerance
@@ -753,17 +755,17 @@ open Purelib.Data.Rat in
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ componentIndex : Fin prepared.exterior.prepared.components.length,
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
-      (index : Nat) (allowance tolerance areaTarget totalTarget : Fraction.Rational),
+      (index : Nat) (allowance tolerance areaTarget totalTarget : Rational),
     (∀ outer : Fin component.prepared.occurrences.length,
-      let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+      let occurrence := occurrenceAt component.prepared.occurrences
         outer
       ∀ (i : Fin comparison.original.plans.length)
         (piece :
           SurfacePreparation.ClosedBoundaryComparison.Piece
           comparison occurrence i)
-        (length : Fraction.Rational), (0 ≤ length ∧ length ≤ 1) →
+        (length : Rational), (0 ≤ length ∧ length ≤ 1) →
         comparison.ownedAreaError occurrence i piece index length allowance tolerance ≤ areaTarget ∧
         comparison.ownedTotalError occurrence i piece index length tolerance ≤ totalTarget) →
       RetainedExteriorPieceEstimate prepared componentIndex comparison index allowance tolerance areaTarget totalTarget
@@ -783,7 +785,7 @@ theorem retained_exterior_piece_bound
   let position := occurrence.sideOccurrence.position
   let vertical := occurrence.sourceVertical
   let forward := occurrence.sourceForward
-  let intervals := SourceIntervals.axisIntervals (meshes.entries.get position) vertical
+  let intervals := axisIntervals (meshes.entries.get position) vertical
   let physical := intervals[intervalIndex.val]'intervalIndex.isLt
   have present : physical ∈ intervals := List.getElem_mem intervalIndex.isLt
   let crossing := comparison.locateSideInterval outer meshes physical present
@@ -799,26 +801,26 @@ theorem retained_exterior_piece_bound
   let mesh := meshes.entries.get position
   let side := occurrence.sideOccurrence.side
   let perimeter := (prepared.traces.get position).get sheet
-  let trace := Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece.trace perimeter side
+  let trace := RetainedTracePieces.RetainedPerimeterPiece.trace perimeter side
     intervalIndex
-  let firstAcross := (Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece.first_across mesh side
+  let firstAcross := (first_across mesh side
     intervalIndex).trans
 
       (SurfacePreparation.ClosedBoundaryComparison.sourceAcross_side
       occurrence).symm
-  let lastAcross := (Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece.last_across mesh side
+  let lastAcross := (last_across mesh side
     intervalIndex).trans
 
       (SurfacePreparation.ClosedBoundaryComparison.sourceAcross_side
       occurrence).symm
   let transport := assigned.traceParameters rangeCertificate (crossing.lower.trans_lt crossing.upper)
-    trace (Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece.first_along mesh side intervalIndex)
-      (Meshes.PuncturedGrid.Exterior.RetainedTracePieces.RetainedPerimeterPiece.last_along mesh side intervalIndex)
+    trace (first_along mesh side intervalIndex)
+      (last_along mesh side intervalIndex)
         firstAcross lastAcross
   let count := RectangularDyadicPairedTrace.dyadicCount mesh.depth
-  let length := Meshes.PuncturedGrid.Exterior.PairedFragmentArea.parameterStep forward
+  let length := parameterStep forward
     (transport.parameters 0) (transport.parameters (Fin.last count))
-  have lengthBound := Meshes.PuncturedGrid.Exterior.BoundaryTraceParameters.trace_length_bound transport
+  have lengthBound := BoundaryTraceParameters.trace_length_bound transport
     rangeCertificate.property.1
   exact paid outer crossing.index located.piece length lengthBound
 
@@ -833,42 +835,42 @@ paired-area comparison formula. -/
 @[expose] def RetainedExteriorSideEstimate
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {requested : Fraction.Rational} {minimum : Nat}
+    {requested : Rational} {minimum : Nat}
     (comparison :
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.ClosedBoundaryComparison
       (standardDifferential second) requested minimum)
     (outer : Fin
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.occurrences.length)
-    {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index)
-      (allowance tolerance : Fraction.Rational) : Prop :=
+    {index : Nat} (cache : Numerics prepared.domains index)
+      (allowance tolerance : Rational) : Prop :=
   let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-  let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences outer
+  let occurrence := occurrenceAt component.prepared.occurrences outer
   let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
     occurrence.sideOccurrence.sheet).meshes.entries.get
     occurrence.sideOccurrence.position
   let side := occurrence.sideOccurrence.side
   let samples := ((prepared.traces.samples cache first second).samples.get occurrence.sideOccurrence.position).get
     occurrence.sideOccurrence.sheet
-  let rates := fun i : Fin (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
+  let rates := fun i : Fin (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
     side + 1) =>
     retainedExteriorPieceRates prepared componentIndex comparison outer
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i) index allowance
+      (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i) index allowance
         tolerance
   let pieces := List.ofFn (fun i => (rates i).1)
   let source := fun i => (rates i).2
-  let areaError := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum Prod.fst pieces
-  let totalError := max tolerance (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum Prod.snd pieces)
-  Data.Gaussian.Norm.Basic.normSq (Meshes.PuncturedGrid.SideCenteredRemainder.sideCenteredArea samples side -
+  let areaError := PairedFragmentBlocks.maximum Prod.fst pieces
+  let totalError := max tolerance (PairedFragmentBlocks.maximum Prod.snd pieces)
+  normSq (sideCenteredArea samples side -
     PairedIncrementArea.area (List.ofFn source).flatten) ≤
-    2 * (((2 * Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1 : Nat)
-      : Fraction.Rational)^2 * areaError +
-      16 * ((2 * Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1 :
-        Nat) : Fraction.Rational)^4 * totalError * (2 * (comparison.sourceMagnitude + totalError))) ∧
-  Bounded ((PairedIncrementArea.total (Meshes.PuncturedGrid.Exterior.RetainedSideBlocks.RetainedPerimeterPiece.blocks
+    2 * (((2 * RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1 : Nat)
+      : Rational)^2 * areaError +
+      16 * ((2 * RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1 :
+        Nat) : Rational)^4 * totalError * (2 * (comparison.sourceMagnitude + totalError))) ∧
+  Bounded ((PairedIncrementArea.total (RetainedSideBlocks.RetainedPerimeterPiece.blocks
     samples side).flatten).sub
     (PairedIncrementArea.total (List.ofFn source).flatten))
-    (((2 * Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1 : Nat) :
-      Fraction.Rational)^2 * totalError)
+    (((2 * RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1 : Nat) :
+      Rational)^2 * totalError)
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Gaussian in
@@ -883,50 +885,50 @@ errors and exact count factors. -/
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length),
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length),
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let position := occurrence.sideOccurrence.position
     let sheet := occurrence.sideOccurrence.sheet
     let side := occurrence.sideOccurrence.side
     let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get sheet).meshes.entries.get position
-    ∀ {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index),
+    ∀ {index : Nat} (cache : Numerics prepared.domains index),
     let samples := ((prepared.traces.samples cache first second).samples.get position).get sheet
-    ∀ {allowance : Fraction.Rational}
-      (budget : NoisyPathArea.LengthErrorBudget
+    ∀ {allowance : Rational}
+      (budget : LengthErrorBudget
         (RectangularDyadicPairedTrace.dyadicCount mesh.depth) allowance)
-      (owners : Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest occurrence
+      (owners : OwnerRequest occurrence
         (standardDifferential second) budget.tolerance) (_later : owners.index ≤ index),
-    let rates := fun i : Fin (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
+    let rates := fun i : Fin (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
       side + 1) =>
       retainedExteriorPieceRates prepared componentIndex comparison outer
-        (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i) index allowance
+        (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i) index allowance
           budget.tolerance
     let pieces := List.ofFn (fun i => (rates i).1)
     let source := fun i => (rates i).2
-    let areaError := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum Prod.fst pieces
+    let areaError := PairedFragmentBlocks.maximum Prod.fst pieces
     let totalError := max budget.tolerance
-      (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum Prod.snd pieces)
-    Data.Gaussian.Norm.Basic.normSq (Meshes.PuncturedGrid.SideCenteredRemainder.sideCenteredArea samples side -
+      (PairedFragmentBlocks.maximum Prod.snd pieces)
+    normSq (sideCenteredArea samples side -
       PairedIncrementArea.area (List.ofFn source).flatten) ≤
-      2 * (((2 * Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1 :
-        Nat) : Fraction.Rational)^2 * areaError +
-        16 * ((2 * Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1 :
-          Nat) : Fraction.Rational)^4 * totalError * (2 * (comparison.sourceMagnitude + totalError))) ∧
-    Bounded ((PairedIncrementArea.total (Meshes.PuncturedGrid.Exterior.RetainedSideBlocks.RetainedPerimeterPiece.blocks
+      2 * (((2 * RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1 :
+        Nat) : Rational)^2 * areaError +
+        16 * ((2 * RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1 :
+          Nat) : Rational)^4 * totalError * (2 * (comparison.sourceMagnitude + totalError))) ∧
+    Bounded ((PairedIncrementArea.total (RetainedSideBlocks.RetainedPerimeterPiece.blocks
       samples side).flatten).sub
       (PairedIncrementArea.total (List.ofFn source).flatten))
-      (((2 * Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1 : Nat) :
-        Fraction.Rational)^2 * totalError)
+      (((2 * RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1 : Nat) :
+        Rational)^2 * totalError)
 
 open Purelib.Data.Rat in
 /-- One quarter of a nonnegative rational value is bounded by that value. -/
-private theorem quarter_le {value : Fraction.Rational} (nonnegative : 0 ≤ value) : value / 4 ≤ value := by
-  apply (Fraction.Order.Field.div_le_iff_pos (by decide : (0 : Fraction.Rational) < 4)).mpr
-  exact (le_add_of_nonneg_right (Fraction.Order.Arithmetic.mul_nonneg_direct nonnegative
-    (by decide : (0 : Fraction.Rational) ≤ 3))).trans_eq (by ring1)
+private theorem quarter_le {value : Rational} (nonnegative : 0 ≤ value) : value / 4 ≤ value := by
+  apply (Field.div_le_iff_pos (by decide : (0 : Rational) < 4)).mpr
+  exact (le_add_of_nonneg_right (Arithmetic.mul_nonneg_direct nonnegative
+    (by decide : (0 : Rational) ≤ 3))).trans_eq (by ring1)
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Gaussian in
@@ -943,60 +945,60 @@ theorem retained_exterior_side_bound
   intro componentIndex component requested minimum comparison outer occurrence position sheet side mesh index cache
     samples allowance
     budget owners later rates pieces source areaError totalError
-  have areaNonnegative : 0 ≤ areaError := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative _ _
-  have toleranceLe : budget.tolerance ≤ totalError := Fraction.Order.Basic.le_max_left _ _
+  have areaNonnegative : 0 ≤ areaError := PairedFragmentBlocks.maximum_nonnegative _ _
+  have toleranceLe : budget.tolerance ≤ totalError := Basic.le_max_left _ _
   have totalNonnegative : 0 ≤ totalError := budget.tolerance_positive.le.trans toleranceLe
-  have pieceBounds (i : Fin (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
+  have pieceBounds (i : Fin (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
     side + 1)) :
-      Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area
+      normSq (PairedIncrementArea.area
         (Perimeter.RetainedIncrements.increments samples side
-          (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i)) -
+          (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i)) -
           PairedIncrementArea.area (source i)) ≤ (rates i).1.1 ∧
       Bounded ((PairedIncrementArea.total
         (Perimeter.RetainedIncrements.increments samples side
-          (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i))).sub
+          (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i))).sub
           (PairedIncrementArea.total (source i))) (rates i).1.2 := by
     have bound := retained_exterior_fragment_bound prepared componentIndex comparison outer
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i) cache budget
+      (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i) cache budget
         owners later
     exact ⟨bound.1, bound.2.1.1⟩
-  have areas (i : Fin (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side +
+  have areas (i : Fin (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side +
     1)) :=
-    (pieceBounds i).1.trans (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.le_maximum
+    (pieceBounds i).1.trans (PairedFragmentBlocks.le_maximum
       Prod.fst (show (rates i).1 ∈ pieces from Data.List.OfFn.Basic.mem_ofFn.mpr ⟨i, rfl⟩))
-  have totals (i : Fin (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side +
+  have totals (i : Fin (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side +
     1)) :
       Bounded ((PairedIncrementArea.total
         (Perimeter.RetainedIncrements.increments samples side
-          (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i))).sub
+          (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i))).sub
           (PairedIncrementArea.total (source i))) totalError := by
     have upper : (rates i).1.2 ≤ totalError :=
-      (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.le_maximum
+      (PairedFragmentBlocks.le_maximum
         Prod.snd (show (rates i).1 ∈ pieces from Data.List.OfFn.Basic.mem_ofFn.mpr ⟨i, rfl⟩)).trans
-          (Fraction.Order.Basic.le_max_right _ _)
+          (Basic.le_max_right _ _)
     exact ⟨(pieceBounds i).2.1.trans upper, (pieceBounds i).2.2.trans upper⟩
   have sources : ∀ i, Bounded (PairedIncrementArea.total (source i)) comparison.sourceMagnitude := by
     intro i
     have bound := retained_exterior_fragment_bound prepared componentIndex comparison outer
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i) cache budget
+      (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i) cache budget
         owners later
     exact Eq.mpr (congrArg (fun value => Bounded value comparison.sourceMagnitude) bound.2.2)
       (NewtonRetainedExteriorSources.retainedExteriorChord prepared componentIndex comparison outer
-        (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i)).bounded
-  have estimate := Meshes.PuncturedGrid.Exterior.RetainedSideBlocks.RetainedPerimeterPiece.blocks_comparison samples
+        (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i)).bounded
+  have estimate := RetainedSideBlocks.RetainedPerimeterPiece.blocks_comparison samples
     side source
     areaNonnegative totalNonnegative comparison.sourceMagnitude_nonnegative areas totals sources (by
       intro i
-      have paid := Meshes.PuncturedGrid.Exterior.JunctionOwnerBounds.SurfaceOccurrence.retained_junction_bound
+      have paid := JunctionOwnerBounds.SurfaceOccurrence.retained_junction_bound
         occurrence ((prepared.traces.get position).get sheet)
         (cache.normalize.get first) (cache.normalize.get second) samples side i owners later
       have upper := (quarter_le budget.tolerance_positive.le).trans toleranceLe
       exact ⟨paid.1.trans upper, paid.2.trans upper⟩)
-  have exactArea := (PairedAreaBlocks.area_flatten
-    (Meshes.PuncturedGrid.Exterior.RetainedSideBlocks.RetainedPerimeterPiece.blocks samples side)).trans
-    (Meshes.PuncturedGrid.Exterior.RetainedSideBlocks.LiftedPuncturedGrid.CenteredPerimeters.retained_blocks_area
+  have exactArea := (area_flatten
+    (RetainedSideBlocks.RetainedPerimeterPiece.blocks samples side)).trans
+    (RetainedSideBlocks.LiftedPuncturedGrid.CenteredPerimeters.retained_blocks_area
       (prepared.traces.samples cache first second) position sheet side).symm
-  exact ⟨(congrArg (fun value => Data.Gaussian.Norm.Basic.normSq (value - PairedIncrementArea.area (List.ofFn
+  exact ⟨(congrArg (fun value => normSq (value - PairedIncrementArea.area (List.ofFn
     source).flatten)) exactArea).symm.trans_le estimate.1,
     estimate.2⟩
 
@@ -1010,30 +1012,30 @@ open Purelib.Topology.Polygon in
 @[expose] def ComponentSourceArea
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {requested : Fraction.Rational} {minimum : Nat}
+    {requested : Rational} {minimum : Nat}
     (comparison :
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.ClosedBoundaryComparison
       (standardDifferential second) requested minimum) : Basic.Canonical :=
   let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
   let source := fun outer : Fin component.prepared.occurrences.length =>
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let side := occurrence.sideOccurrence.side
     let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
       occurrence.sideOccurrence.sheet).meshes.entries.get
       occurrence.sideOccurrence.position
-    (List.ofFn (fun i : Fin (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
+    (List.ofFn (fun i : Fin (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
       side + 1) =>
       (NewtonRetainedExteriorSources.retainedExteriorChord prepared componentIndex comparison outer
-        (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
+        (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
         i)).increments)).flatten
   let forward := fun outer : Fin component.prepared.occurrences.length =>
-    (Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences outer).sourceForward
+    (occurrenceAt component.prepared.occurrences outer).sourceForward
   let areas := fun outer => if forward outer then PairedIncrementArea.area (source outer)
     else -PairedIncrementArea.area (source outer)
   let totals := fun outer => if forward outer then PairedIncrementArea.total (source outer)
     else Stokes.PrimitivePoint.zero.sub (PairedIncrementArea.total (source outer))
-  Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn areas) + PairedIncrementArea.area (List.ofFn totals)
+  Norm.Sum.Basic.gaussianSum (List.ofFn areas) + PairedIncrementArea.area (List.ofFn totals)
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Gaussian in
@@ -1043,23 +1045,23 @@ open Purelib.Topology.Polygon in
 @[expose] def ComponentPhysicalArea
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index) :
+    {index : Nat} (cache : Numerics prepared.domains index) :
       Basic.Canonical :=
   let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
   let occurrence := fun outer : Fin component.prepared.occurrences.length =>
-    Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences outer
+    occurrenceAt component.prepared.occurrences outer
   let samples := fun outer => ((prepared.traces.samples cache first second).samples.get
     (occurrence outer).sideOccurrence.position).get (occurrence outer).sideOccurrence.sheet
   let areas := fun outer => if (occurrence outer).sourceForward then
-    Meshes.PuncturedGrid.SideCenteredRemainder.sideCenteredArea (samples outer) (occurrence outer).sideOccurrence.side
+    sideCenteredArea (samples outer) (occurrence outer).sideOccurrence.side
       else
-    -Meshes.PuncturedGrid.SideCenteredRemainder.sideCenteredArea (samples outer) (occurrence outer).sideOccurrence.side
+    -sideCenteredArea (samples outer) (occurrence outer).sideOccurrence.side
   let totals := fun outer =>
     let value := PairedIncrementArea.total
-      (Meshes.PuncturedGrid.Exterior.RetainedSideBlocks.RetainedPerimeterPiece.blocks (samples outer) (occurrence
+      (RetainedSideBlocks.RetainedPerimeterPiece.blocks (samples outer) (occurrence
         outer).sideOccurrence.side).flatten
     if (occurrence outer).sourceForward then value else Stokes.PrimitivePoint.zero.sub value
-  Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn areas) + PairedIncrementArea.area (List.ofFn totals)
+  Norm.Sum.Basic.gaussianSum (List.ofFn areas) + PairedIncrementArea.area (List.ofFn totals)
 
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
@@ -1074,9 +1076,9 @@ structure ExteriorComponentSide where
   /-- The original oriented source-side area. -/ sourceArea : Basic.Canonical
   /-- The retained oriented physical-side paired total. -/ physicalTotal : Stokes.PrimitivePoint
   /-- The original oriented source-side paired total. -/ sourceTotal : Stokes.PrimitivePoint
-  /-- The separate count-weighted squared area-difference rate. -/ areaError : Fraction.Rational
-  /-- The separate count-weighted paired-total difference rate. -/ totalError : Fraction.Rational
-  /-- The count-weighted source-total magnitude bound. -/ magnitude : Fraction.Rational
+  /-- The separate count-weighted squared area-difference rate. -/ areaError : Rational
+  /-- The separate count-weighted paired-total difference rate. -/ totalError : Rational
+  /-- The count-weighted source-total magnitude bound. -/ magnitude : Rational
 
 constructive_injectivity ExteriorComponentSide
 
@@ -1091,53 +1093,53 @@ error, total error and source magnitude separately. -/
 @[expose] def exteriorComponentSide
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {requested : Fraction.Rational} {minimum : Nat}
+    {requested : Rational} {minimum : Nat}
     (comparison :
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.ClosedBoundaryComparison
       (standardDifferential second) requested minimum)
     (outer : Fin
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.occurrences.length)
-    {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index)
-      (allowance tolerance : Fraction.Rational) : ExteriorComponentSide :=
+    {index : Nat} (cache : Numerics prepared.domains index)
+      (allowance tolerance : Rational) : ExteriorComponentSide :=
   let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-  let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences outer
+  let occurrence := occurrenceAt component.prepared.occurrences outer
   let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
     occurrence.sideOccurrence.sheet).meshes.entries.get
     occurrence.sideOccurrence.position
   let side := occurrence.sideOccurrence.side
   let samples := ((prepared.traces.samples cache first second).samples.get occurrence.sideOccurrence.position).get
     occurrence.sideOccurrence.sheet
-  let rates := fun i : Fin (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
+  let rates := fun i : Fin (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
     side + 1) =>
     retainedExteriorPieceRates prepared componentIndex comparison outer
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i) index allowance
+      (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i) index allowance
         tolerance
   let pieces := List.ofFn (fun i => (rates i).1)
   let source := (List.ofFn (fun i => (rates i).2)).flatten
-  let areaError := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum Prod.fst pieces
-  let totalError := max tolerance (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum Prod.snd pieces)
-  let count := ((2 * Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1
-    : Nat) : Fraction.Rational)
+  let areaError := PairedFragmentBlocks.maximum Prod.fst pieces
+  let totalError := max tolerance (PairedFragmentBlocks.maximum Prod.snd pieces)
+  let count := ((2 * RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1
+    : Nat) : Rational)
   let physicalTotal := PairedIncrementArea.total
-    (Meshes.PuncturedGrid.Exterior.RetainedSideBlocks.RetainedPerimeterPiece.blocks samples side).flatten
+    (RetainedSideBlocks.RetainedPerimeterPiece.blocks samples side).flatten
   let sourceTotal := PairedIncrementArea.total source
-  ⟨if occurrence.sourceForward then Meshes.PuncturedGrid.SideCenteredRemainder.sideCenteredArea samples side else
-    -Meshes.PuncturedGrid.SideCenteredRemainder.sideCenteredArea samples side,
+  ⟨if occurrence.sourceForward then sideCenteredArea samples side else
+    -sideCenteredArea samples side,
     if occurrence.sourceForward then PairedIncrementArea.area source else -PairedIncrementArea.area source,
     if occurrence.sourceForward then physicalTotal else Stokes.PrimitivePoint.zero.sub physicalTotal,
     if occurrence.sourceForward then sourceTotal else Stokes.PrimitivePoint.zero.sub sourceTotal,
     2 * (count^2 * areaError + 16 * count^4 * totalError * (2 * (comparison.sourceMagnitude + totalError))),
     count^2 * totalError,
-    ((Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1 : Nat) :
-      Fraction.Rational)^2 * comparison.sourceMagnitude⟩
+    ((RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1 : Nat) :
+      Rational)^2 * comparison.sourceMagnitude⟩
 
 open Purelib.Data.Gaussian in
 /-- A common orientation sign preserves the squared area difference. -/
 private theorem signed_area_error (forward : Bool) (left right : Basic.Canonical) :
-    Data.Gaussian.Norm.Basic.normSq ((if forward then left else -left) - (if forward then right else -right)) =
-      Data.Gaussian.Norm.Basic.normSq (left - right) := by
+    normSq ((if forward then left else -left) - (if forward then right else -right)) =
+      normSq (left - right) := by
   cases forward
-  · change Data.Gaussian.Norm.Basic.normSq (-left - -right) = _
+  · change normSq (-left - -right) = _
     rw [show -left - -right = -(left - right) by ring1]
     exact Norm.Basic.normSq_neg _
   · rfl
@@ -1148,7 +1150,7 @@ open Purelib.Data.Rat
 open Purelib.Topology.Polygon
 /-- A common orientation sign preserves both coordinate bounds of a paired-total difference. -/
 private theorem signed_total_error (forward : Bool) {left right : Stokes.PrimitivePoint}
-    {bound : Fraction.Rational} (bounded : Bounded (left.sub right) bound) :
+    {bound : Rational} (bounded : Bounded (left.sub right) bound) :
     Bounded ((if forward then left else Stokes.PrimitivePoint.zero.sub left).sub
       (if forward then right else Stokes.PrimitivePoint.zero.sub right)) bound := by
   cases forward
@@ -1162,7 +1164,7 @@ private theorem signed_total_error (forward : Bool) {left right : Stokes.Primiti
 
 /-- A common orientation sign preserves both coordinate bounds of a paired total. -/
 private theorem signed_total_bound (forward : Bool) {value : Stokes.PrimitivePoint}
-    {bound : Fraction.Rational} (bounded : Bounded value bound) :
+    {bound : Rational} (bounded : Bounded value bound) :
     Bounded (if forward then value else Stokes.PrimitivePoint.zero.sub value) bound := by
   cases forward
   · change Basic.Canonical.normSq (0 - value.left) ≤ bound ∧ Basic.Canonical.normSq (0 - value.right) ≤ bound
@@ -1180,14 +1182,14 @@ private def ExteriorComponentSideBound
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ componentIndex : Fin prepared.exterior.prepared.components.length,
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
       (outer : Fin component.prepared.occurrences.length) {index : Nat} (cache :
-        Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index)
-      {allowance tolerance : Fraction.Rational},
+        Numerics prepared.domains index)
+      {allowance tolerance : Rational},
     RetainedExteriorSideEstimate prepared componentIndex comparison outer cache allowance tolerance →
     let data := exteriorComponentSide prepared componentIndex comparison outer cache allowance tolerance
-    Data.Gaussian.Norm.Basic.normSq (data.physicalArea - data.sourceArea) ≤ data.areaError ∧
+    normSq (data.physicalArea - data.sourceArea) ≤ data.areaError ∧
       Bounded (data.physicalTotal.sub data.sourceTotal) data.totalError ∧ Bounded data.sourceTotal data.magnitude
 
 open Purelib.Curves.Hyperelliptic in
@@ -1199,26 +1201,26 @@ private theorem exteriorComponentSide_bounded
     (prepared : BoundaryPreparation preparation first second target radius floor) : ExteriorComponentSideBound prepared
       := by
   intro componentIndex component requested minimum comparison outer index cache allowance tolerance estimate data
-  let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences outer
+  let occurrence := occurrenceAt component.prepared.occurrences outer
   let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
     occurrence.sideOccurrence.sheet).meshes.entries.get
     occurrence.sideOccurrence.position
   let side := occurrence.sideOccurrence.side
-  let source := fun i : Fin (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
+  let source := fun i : Fin (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
     side + 1) =>
     (NewtonRetainedExteriorSources.retainedExteriorChord prepared componentIndex comparison outer
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i)).increments
+      (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i)).increments
   have sources : ∀ i, Bounded (PairedIncrementArea.total (source i)) comparison.sourceMagnitude := by
     intro i
     let chord := NewtonRetainedExteriorSources.retainedExteriorChord prepared componentIndex comparison outer
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i)
+      (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i)
     exact Eq.mpr (congrArg (fun value => Bounded value comparison.sourceMagnitude) chord.increments_total) chord.bounded
-  have sourceBound := PairedIncrementArea.total_bound comparison.sourceMagnitude_nonnegative
+  have sourceBound := total_bound comparison.sourceMagnitude_nonnegative
     (values := List.ofFn (fun i => PairedIncrementArea.total (source i)))
     (by intro value member; obtain ⟨i, rfl⟩ := Data.List.OfFn.Basic.mem_ofFn.mp member; exact sources i)
-    (count := Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1) (by
-        rw [Data.List.OfFn.Basic.length_ofFn])
-  have sourceEq := PairedAreaBlocks.total_flatten (List.ofFn source)
+    (count := RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh side + 1) (by
+        rw [OfFn.Basic.length_ofFn])
+  have sourceEq := total_flatten (List.ofFn source)
   rw [OfFn.Basic.map_ofFn] at sourceEq
   change PairedIncrementArea.total (List.ofFn source).flatten =
     PairedIncrementArea.total (List.ofFn (fun i => PairedIncrementArea.total (source i))) at sourceEq
@@ -1236,15 +1238,15 @@ open Purelib.Integration.Path in
 private def ComponentSourceReadback
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {requested : Fraction.Rational} {minimum : Nat}
+    {requested : Rational} {minimum : Nat}
     (comparison :
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.ClosedBoundaryComparison
       (standardDifferential second) requested minimum)
-    {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index)
-      (allowance tolerance : Fraction.Rational) : Prop :=
+    {index : Nat} (cache : Numerics prepared.domains index)
+      (allowance tolerance : Rational) : Prop :=
     let sides := List.ofFn (fun outer => exteriorComponentSide prepared componentIndex comparison outer cache allowance
       tolerance)
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (sides.map ExteriorComponentSide.sourceArea) +
+    Norm.Sum.Basic.gaussianSum (sides.map ExteriorComponentSide.sourceArea) +
       PairedIncrementArea.area (sides.map ExteriorComponentSide.sourceTotal) =
       ComponentSourceArea prepared componentIndex comparison
 
@@ -1257,16 +1259,16 @@ open Purelib.Integration.Path in
 private theorem component_source_eq
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {requested : Fraction.Rational} {minimum : Nat}
+    {requested : Rational} {minimum : Nat}
     (comparison :
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.ClosedBoundaryComparison
       (standardDifferential second) requested minimum)
-    {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index)
-      (allowance tolerance : Fraction.Rational) :
+    {index : Nat} (cache : Numerics prepared.domains index)
+      (allowance tolerance : Rational) :
     ComponentSourceReadback prepared componentIndex comparison cache allowance tolerance := by
   unfold ComponentSourceReadback ComponentSourceArea
   apply congrArg₂ (fun a b : Basic.Canonical => a + b)
-  · apply congrArg Data.Gaussian.Norm.Sum.Basic.gaussianSum
+  · apply congrArg Norm.Sum.Basic.gaussianSum
     refine OfFn.Basic.map_ofFn.trans ?_
     apply OfFn.Basic.ofFn_congr
     intro outer
@@ -1285,15 +1287,15 @@ open Purelib.Integration.Path in
 private def ComponentPhysicalReadback
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {requested : Fraction.Rational} {minimum : Nat}
+    {requested : Rational} {minimum : Nat}
     (comparison :
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.ClosedBoundaryComparison
       (standardDifferential second) requested minimum)
-    {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index)
-      (allowance tolerance : Fraction.Rational) : Prop :=
+    {index : Nat} (cache : Numerics prepared.domains index)
+      (allowance tolerance : Rational) : Prop :=
     let sides := List.ofFn (fun outer => exteriorComponentSide prepared componentIndex comparison outer cache allowance
       tolerance)
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (sides.map ExteriorComponentSide.physicalArea) +
+    Norm.Sum.Basic.gaussianSum (sides.map ExteriorComponentSide.physicalArea) +
       PairedIncrementArea.area (sides.map ExteriorComponentSide.physicalTotal) =
       ComponentPhysicalArea prepared componentIndex cache
 
@@ -1306,16 +1308,16 @@ open Purelib.Integration.Path in
 private theorem component_physical_eq
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {requested : Fraction.Rational} {minimum : Nat}
+    {requested : Rational} {minimum : Nat}
     (comparison :
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.ClosedBoundaryComparison
       (standardDifferential second) requested minimum)
-    {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index)
-      (allowance tolerance : Fraction.Rational) :
+    {index : Nat} (cache : Numerics prepared.domains index)
+      (allowance tolerance : Rational) :
     ComponentPhysicalReadback prepared componentIndex comparison cache allowance tolerance := by
   unfold ComponentPhysicalReadback ComponentPhysicalArea
   apply congrArg₂ (fun a b : Basic.Canonical => a + b)
-  · apply congrArg Data.Gaussian.Norm.Sum.Basic.gaussianSum
+  · apply congrArg Norm.Sum.Basic.gaussianSum
     refine OfFn.Basic.map_ofFn.trans ?_
     apply OfFn.Basic.ofFn_congr
     intro outer
@@ -1334,7 +1336,7 @@ private theorem total_ofFn_flatten {count : Nat}
     (paths : Fin count → List Stokes.PrimitivePoint) :
     PairedIncrementArea.total (List.ofFn (fun i => PairedIncrementArea.total (paths i))) =
       PairedIncrementArea.total (List.ofFn paths).flatten := by
-  rw [PairedAreaBlocks.total_flatten, OfFn.Basic.map_ofFn]
+  rw [total_flatten, OfFn.Basic.map_ofFn]
   rfl
 
 open Purelib.Curves.Hyperelliptic in
@@ -1344,16 +1346,16 @@ open Purelib.Topology.Polygon in
 @[expose] def ComponentPhysicalTotal
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index) :
+    {index : Nat} (cache : Numerics prepared.domains index) :
       Stokes.PrimitivePoint :=
   let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
   PairedIncrementArea.total (List.ofFn (fun outer : Fin component.prepared.occurrences.length =>
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     let samples := ((prepared.traces.samples cache first second).samples.get
       occurrence.sideOccurrence.position).get occurrence.sideOccurrence.sheet
     let value := PairedIncrementArea.total
-      (Meshes.PuncturedGrid.Exterior.RetainedSideBlocks.RetainedPerimeterPiece.blocks samples
+      (RetainedSideBlocks.RetainedPerimeterPiece.blocks samples
       occurrence.sideOccurrence.side).flatten
     if occurrence.sourceForward then value else Stokes.PrimitivePoint.zero.sub value))
 
@@ -1363,16 +1365,16 @@ open Purelib.Data.Rat in
 @[expose] def ComponentTotalError
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {requested : Fraction.Rational} {minimum : Nat}
+    {requested : Rational} {minimum : Nat}
     (comparison :
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.ClosedBoundaryComparison
       (standardDifferential second) requested minimum)
-    {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index)
-      (allowance tolerance : Fraction.Rational) : Fraction.Rational :=
+    {index : Nat} (cache : Numerics prepared.domains index)
+      (allowance tolerance : Rational) : Rational :=
   let sides := List.ofFn (fun outer => exteriorComponentSide prepared componentIndex comparison outer cache allowance
     tolerance)
-  (sides.length : Fraction.Rational)^2 *
-    Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum ExteriorComponentSide.totalError sides
+  (sides.length : Rational)^2 *
+    PairedFragmentBlocks.maximum ExteriorComponentSide.totalError sides
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.List in
@@ -1388,12 +1390,12 @@ and the ordered physical readback. -/
 theorem retained_exterior_component_total_bound
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {requested : Fraction.Rational} {minimum : Nat}
+    {requested : Rational} {minimum : Nat}
     (comparison :
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.ClosedBoundaryComparison
       (standardDifferential second) requested minimum)
-    {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index)
-      {allowance tolerance : Fraction.Rational}
+    {index : Nat} (cache : Numerics prepared.domains index)
+      {allowance tolerance : Rational}
     (estimates : ∀ outer, RetainedExteriorSideEstimate prepared componentIndex comparison outer cache allowance
       tolerance) :
     Bounded (ComponentPhysicalTotal prepared componentIndex cache)
@@ -1401,7 +1403,7 @@ theorem retained_exterior_component_total_bound
   let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
   let sides := List.ofFn (fun outer => exteriorComponentSide prepared componentIndex comparison outer cache allowance
     tolerance)
-  let error := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum ExteriorComponentSide.totalError sides
+  let error := PairedFragmentBlocks.maximum ExteriorComponentSide.totalError sides
   let pairs := sides.map (fun side => (side.physicalTotal, side.sourceTotal))
   have bounded : ∀ value ∈ pairs.map (fun pair => pair.1.sub pair.2), Bounded value error := by
     intro value member
@@ -1410,14 +1412,14 @@ theorem retained_exterior_component_total_bound
     obtain ⟨outer, equal⟩ := Data.List.OfFn.Basic.mem_ofFn.mp inSides
     have bound := (exteriorComponentSide_bounded prepared componentIndex comparison outer cache (estimates outer)).2.1
     rw [equal] at bound
-    have upper := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.le_maximum ExteriorComponentSide.totalError inSides
+    have upper := PairedFragmentBlocks.le_maximum ExteriorComponentSide.totalError inSides
     exact ⟨bound.1.trans upper, bound.2.trans upper⟩
-  have difference := PairedIncrementArea.total_bound
-    (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative _ _) bounded
-    (count := sides.length) (by rw [Data.List.Map.length_map, Data.List.Map.length_map])
-  rw [PairedIncrementComparison.total_differences] at difference
-  have left : pairs.map Prod.fst = sides.map ExteriorComponentSide.physicalTotal := by rw [Data.List.Map.map_map]; rfl
-  have right : pairs.map Prod.snd = sides.map ExteriorComponentSide.sourceTotal := by rw [Data.List.Map.map_map]; rfl
+  have difference := total_bound
+    (PairedFragmentBlocks.maximum_nonnegative _ _) bounded
+    (count := sides.length) (by rw [Map.length_map, Map.length_map])
+  rw [total_differences] at difference
+  have left : pairs.map Prod.fst = sides.map ExteriorComponentSide.physicalTotal := by rw [Map.map_map]; rfl
+  have right : pairs.map Prod.snd = sides.map ExteriorComponentSide.sourceTotal := by rw [Map.map_map]; rfl
   rw [left, right] at difference
   have physical : PairedIncrementArea.total (sides.map ExteriorComponentSide.physicalTotal) =
       ComponentPhysicalTotal prepared componentIndex cache := by
@@ -1428,7 +1430,7 @@ theorem retained_exterior_component_total_bound
     rw [OfFn.Basic.map_ofFn]
     apply OfFn.Basic.ofFn_congr
     intro outer
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     have equal := comparison.source_total_ofFn outer occurrence.sourceForward
       (NewtonRetainedExteriorSources.retainedExteriorSourceGrouping prepared componentIndex comparison outer)
@@ -1453,19 +1455,19 @@ The formula preserves the squared and fourth-power side-count factors and the or
 @[expose] def ComponentComparisonError
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {requested : Fraction.Rational} {minimum : Nat}
+    {requested : Rational} {minimum : Nat}
     (comparison :
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.ClosedBoundaryComparison
       (standardDifferential second) requested minimum)
-    {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index)
-      (allowance tolerance : Fraction.Rational) : Fraction.Rational :=
+    {index : Nat} (cache : Numerics prepared.domains index)
+      (allowance tolerance : Rational) : Rational :=
   let sides := List.ofFn (fun outer => exteriorComponentSide prepared componentIndex comparison outer cache allowance
     tolerance)
-  let areaError := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum ExteriorComponentSide.areaError sides
-  let totalError := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum ExteriorComponentSide.totalError sides
-  let magnitude := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum ExteriorComponentSide.magnitude sides
-  2 * ((sides.length : Fraction.Rational)^2 * areaError +
-    16 * (sides.length : Fraction.Rational)^4 * totalError * (2 * (magnitude + totalError)))
+  let areaError := PairedFragmentBlocks.maximum ExteriorComponentSide.areaError sides
+  let totalError := PairedFragmentBlocks.maximum ExteriorComponentSide.totalError sides
+  let magnitude := PairedFragmentBlocks.maximum ExteriorComponentSide.magnitude sides
+  2 * ((sides.length : Rational)^2 * areaError +
+    16 * (sides.length : Rational)^4 * totalError * (2 * (magnitude + totalError)))
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Gaussian in
@@ -1474,13 +1476,13 @@ open Purelib.Data.Rat in
 @[expose] def RetainedExteriorComponentEstimate
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {requested : Fraction.Rational} {minimum : Nat}
+    {requested : Rational} {minimum : Nat}
     (comparison :
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.ClosedBoundaryComparison
       (standardDifferential second) requested minimum)
-    {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index)
-      (allowance tolerance : Fraction.Rational) : Prop :=
-  Data.Gaussian.Norm.Basic.normSq (ComponentPhysicalArea prepared componentIndex cache - ComponentSourceArea prepared
+    {index : Nat} (cache : Numerics prepared.domains index)
+      (allowance tolerance : Rational) : Prop :=
+  normSq (ComponentPhysicalArea prepared componentIndex cache - ComponentSourceArea prepared
     componentIndex comparison) ≤
     ComponentComparisonError prepared componentIndex comparison cache allowance tolerance
 
@@ -1497,12 +1499,12 @@ distinct count factors. -/
 theorem retained_exterior_component_bound
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {requested : Fraction.Rational} {minimum : Nat}
+    {requested : Rational} {minimum : Nat}
     (comparison :
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.ClosedBoundaryComparison
       (standardDifferential second) requested minimum)
-    {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index)
-      {allowance tolerance : Fraction.Rational}
+    {index : Nat} (cache : Numerics prepared.domains index)
+      {allowance tolerance : Rational}
     (estimates : ∀ outer, RetainedExteriorSideEstimate prepared componentIndex comparison outer cache allowance
       tolerance) :
     RetainedExteriorComponentEstimate prepared componentIndex comparison cache allowance tolerance := by
@@ -1511,27 +1513,27 @@ theorem retained_exterior_component_bound
     ← component_source_eq prepared componentIndex comparison cache allowance tolerance]
   let sides := List.ofFn (fun outer => exteriorComponentSide prepared componentIndex comparison outer cache allowance
     tolerance)
-  let areaError := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum ExteriorComponentSide.areaError sides
-  let totalError := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum ExteriorComponentSide.totalError sides
-  let magnitude := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum ExteriorComponentSide.magnitude sides
+  let areaError := PairedFragmentBlocks.maximum ExteriorComponentSide.areaError sides
+  let totalError := PairedFragmentBlocks.maximum ExteriorComponentSide.totalError sides
+  let magnitude := PairedFragmentBlocks.maximum ExteriorComponentSide.magnitude sides
   have each (data : ExteriorComponentSide) (member : data ∈ sides) :
-      Data.Gaussian.Norm.Basic.normSq (data.physicalArea - data.sourceArea) ≤ areaError ∧
+      normSq (data.physicalArea - data.sourceArea) ≤ areaError ∧
       Bounded (data.physicalTotal.sub data.sourceTotal) totalError ∧ Bounded data.sourceTotal magnitude := by
     obtain ⟨outer, equal⟩ := Data.List.OfFn.Basic.mem_ofFn.mp member
     have localBound := exteriorComponentSide_bounded prepared componentIndex comparison outer cache (estimates outer)
     rw [equal] at localBound
-    have areaLe := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.le_maximum ExteriorComponentSide.areaError member
-    have totalLe := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.le_maximum ExteriorComponentSide.totalError
+    have areaLe := PairedFragmentBlocks.le_maximum ExteriorComponentSide.areaError member
+    have totalLe := PairedFragmentBlocks.le_maximum ExteriorComponentSide.totalError
       member
-    have magnitudeLe := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.le_maximum ExteriorComponentSide.magnitude
+    have magnitudeLe := PairedFragmentBlocks.le_maximum ExteriorComponentSide.magnitude
       member
     exact ⟨localBound.1.trans areaLe, ⟨localBound.2.1.1.trans totalLe, localBound.2.1.2.trans totalLe⟩,
       ⟨localBound.2.2.1.trans magnitudeLe, localBound.2.2.2.trans magnitudeLe⟩⟩
-  have totalNonnegative : 0 ≤ totalError := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative _ _
-  have magnitudeNonnegative : 0 ≤ magnitude := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative _
+  have totalNonnegative : 0 ≤ totalError := PairedFragmentBlocks.maximum_nonnegative _ _
+  have magnitudeNonnegative : 0 ≤ magnitude := PairedFragmentBlocks.maximum_nonnegative _
     _
   let bound := 2 * (magnitude + totalError)
-  have boundNonnegative : 0 ≤ bound := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  have boundNonnegative : 0 ≤ bound := Arithmetic.mul_nonneg_direct (by decide)
     (add_nonneg magnitudeNonnegative totalNonnegative)
   have magnitudeLe : magnitude ≤ bound :=
     (le_add_of_nonneg_right totalNonnegative).trans
@@ -1540,7 +1542,7 @@ theorem retained_exterior_component_bound
   have areas := Norm.Sum.Bounds.normSq_sum_le
     (sides.map (fun data => data.physicalArea - data.sourceArea)) areaError (by
       intro value member; obtain ⟨data, present, rfl⟩ := Map.mem_map.mp member; exact (each data present).1)
-  have totals := PairedIncrementComparison.area_difference_bound
+  have totals := area_difference_bound
     (sides.map (fun data => (data.physicalTotal, data.sourceTotal))) totalNonnegative boundNonnegative
     (by intro pair member; obtain ⟨data, present, rfl⟩ := Map.mem_map.mp member; exact (each data present).2.1)
     (by intro pair member; obtain ⟨data, present, rfl⟩ := Map.mem_map.mp member
@@ -1548,27 +1550,27 @@ theorem retained_exterior_component_bound
           present).2.1)
     (by intro pair member; obtain ⟨data, present, rfl⟩ := Map.mem_map.mp member
         exact ⟨(each data present).2.2.1.trans magnitudeLe, (each data present).2.2.2.trans magnitudeLe⟩)
-  simp only [Data.List.Map.map_map, Data.List.Map.length_map, -eq_self, -iff_self] at totals
+  simp only [Map.map_map, Map.length_map, -eq_self, -iff_self] at totals
   dsimp only [Function.comp_def] at totals
-  rw [Data.List.Map.length_map] at areas
-  have difference : Data.Gaussian.Norm.Sum.Basic.gaussianSum (sides.map (fun data => data.physicalArea -
+  rw [Map.length_map] at areas
+  have difference : Norm.Sum.Basic.gaussianSum (sides.map (fun data => data.physicalArea -
     data.sourceArea)) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (sides.map ExteriorComponentSide.physicalArea) -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (sides.map ExteriorComponentSide.sourceArea) := by
+      Norm.Sum.Basic.gaussianSum (sides.map ExteriorComponentSide.physicalArea) -
+      Norm.Sum.Basic.gaussianSum (sides.map ExteriorComponentSide.sourceArea) := by
     clear each estimates
     induction sides with
     | nil => change (0 : Basic.Canonical) = 0 - 0; ring1
     | cons data tail ih => change (_ - _) + _ = (_ + _) - (_ + _); rw [ih]; ring1
   rw [difference] at areas
-  have areaBound := areas.trans_eq (show (sides.length : Fraction.Rational) * ((sides.length : Fraction.Rational) *
+  have areaBound := areas.trans_eq (show (sides.length : Rational) * ((sides.length : Rational) *
     areaError) =
-    (sides.length : Fraction.Rational)^2 * areaError by ring1)
+    (sides.length : Rational)^2 * areaError by ring1)
   have rearrange (a b c d : Basic.Canonical) : (a + b) - (c + d) = (a - c) + (b - d) := by ring1
-  change Data.Gaussian.Norm.Basic.normSq ((_ + _) - (_ + _)) ≤ _
+  change normSq ((_ + _) - (_ + _)) ≤ _
   rw [rearrange]
   exact (Norm.Bounds.normSq_add_le_two _ _).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct areaBound totals) (by decide))
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct areaBound totals) (by decide))
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Gaussian in
@@ -1577,43 +1579,43 @@ open Purelib.Data.Rat in
 theorem retained_exterior_component_physical_bound
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {requested : Fraction.Rational} {minimum : Nat}
+    {requested : Rational} {minimum : Nat}
     (comparison :
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.ClosedBoundaryComparison
       (standardDifferential second) requested minimum)
-    {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index)
-      {allowance tolerance sourceBound : Fraction.Rational}
+    {index : Nat} (cache : Numerics prepared.domains index)
+      {allowance tolerance sourceBound : Rational}
     (estimate : RetainedExteriorComponentEstimate prepared componentIndex comparison cache allowance tolerance)
-    (source : Data.Gaussian.Norm.Basic.normSq (ComponentSourceArea prepared componentIndex comparison) ≤ sourceBound) :
-    Data.Gaussian.Norm.Basic.normSq (ComponentPhysicalArea prepared componentIndex cache) ≤
+    (source : normSq (ComponentSourceArea prepared componentIndex comparison) ≤ sourceBound) :
+    normSq (ComponentPhysicalArea prepared componentIndex cache) ≤
       2 * (ComponentComparisonError prepared componentIndex comparison cache allowance tolerance + sourceBound) := by
   have bounded := (Norm.Bounds.normSq_add_le_two
     (ComponentPhysicalArea prepared componentIndex cache - ComponentSourceArea prepared componentIndex comparison)
     (ComponentSourceArea prepared componentIndex comparison)).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct estimate source) (by decide))
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct estimate source) (by decide))
   rw [sub_add_cancel] at bounded
   exact bounded
 
 open Purelib.Data.Rat in
 /-- The paired-area rate increases with its area, total and source bounds under the stated nonnegativity conditions. -/
-private theorem rate_mono (count : Nat) {a A t T s S : Fraction.Rational}
+private theorem rate_mono (count : Nat) {a A t T s S : Rational}
     (areaLe : a ≤ A) (totalLe : t ≤ T) (sourceLe : s ≤ S)
     (totalNonnegative : 0 ≤ t) (upperNonnegative : 0 ≤ T) (sourceNonnegative : 0 ≤ s) :
-    2 * ((count : Fraction.Rational)^2 * a + 16 * (count : Fraction.Rational)^4 * t * (2 * (s + t))) ≤
-      2 * ((count : Fraction.Rational)^2 * A + 16 * (count : Fraction.Rational)^4 * T * (2 * (S + T))) := by
-  have factor := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 16)
-    (Fraction.Order.Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count)) 4)
-  have totals := Fraction.Order.Arithmetic.mul_le_mul_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct totalLe factor)
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct sourceLe totalLe) (by decide : (0 : Fraction.Rational) ≤ 2))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 2) (add_nonneg sourceNonnegative
+    2 * ((count : Rational)^2 * a + 16 * (count : Rational)^4 * t * (2 * (s + t))) ≤
+      2 * ((count : Rational)^2 * A + 16 * (count : Rational)^4 * T * (2 * (S + T))) := by
+  have factor := Arithmetic.mul_nonneg_direct (by decide : (0 : Rational) ≤ 16)
+    (Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count)) 4)
+  have totals := Arithmetic.mul_le_mul_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct totalLe factor)
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct sourceLe totalLe) (by decide : (0 : Rational) ≤ 2))
+    (Arithmetic.mul_nonneg_direct (by decide : (0 : Rational) ≤ 2) (add_nonneg sourceNonnegative
       totalNonnegative))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct factor upperNonnegative)
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.add_le_add_direct
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct areaLe (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+    (Arithmetic.mul_nonneg_direct factor upperNonnegative)
+  exact Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct areaLe (Arithmetic.sq_nonneg_direct _))
         totals)
     (by decide)
 
@@ -1621,20 +1623,20 @@ section
 open Purelib.Curves.Hyperelliptic
 open Purelib.Data.Rat
 /-- A nonnegative common bound controls the finite retained maximum, including the empty list. -/
-private theorem maximum_bound {Item : Type} (value : Item → Fraction.Rational) (items : List Item)
-    {bound : Fraction.Rational} (nonnegative : 0 ≤ bound) (bounded : ∀ item ∈ items, value item ≤ bound) :
-    Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum value items ≤ bound := by
+private theorem maximum_bound {Item : Type} (value : Item → Rational) (items : List Item)
+    {bound : Rational} (nonnegative : 0 ≤ bound) (bounded : ∀ item ∈ items, value item ≤ bound) :
+    PairedFragmentBlocks.maximum value items ≤ bound := by
   induction items with
   | nil => exact nonnegative
   | cons first rest ih =>
-      exact Fraction.Order.Basic.max_le (bounded first List.mem_cons_self)
+      exact Basic.max_le (bounded first List.mem_cons_self)
         (ih (fun item member => bounded item (List.mem_cons_of_mem _ member)))
 
 /-- The original component's retained source magnitude is bounded by its parent preparation slope. -/
 theorem component_source_magnitude_le_slope
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {requested : Fraction.Rational} {minimum : Nat}
+    {requested : Rational} {minimum : Nat}
     (comparison :
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.ClosedBoundaryComparison
       (standardDifferential second) requested minimum) :
@@ -1644,7 +1646,7 @@ theorem component_source_magnitude_le_slope
   obtain ⟨i, rfl⟩ := Data.List.OfFn.Basic.mem_ofFn.mp member
   have bound := comparison.original.plan_bounds
     (Charts.Reciprocal.Disk.PairedParentCharts.ChartParent comparison.original i) (List.getElem_mem i.isLt)
-  exact Fraction.Order.Basic.max_le bound.1 bound.2
+  exact Basic.max_le bound.1 bound.2
 
 end
 
@@ -1652,9 +1654,9 @@ open Purelib.Data.Rat in
 set_option genInjectivity false in
 /-- Separate count-based area, total and source-magnitude caps for one original exterior side. -/
 structure ExteriorCountSide where
-  /-- The separate count-weighted squared area-difference rate. -/ areaError : Fraction.Rational
-  /-- The separate count-weighted paired-total difference rate. -/ totalError : Fraction.Rational
-  /-- The count-weighted source-total magnitude bound. -/ magnitude : Fraction.Rational
+  /-- The separate count-weighted squared area-difference rate. -/ areaError : Rational
+  /-- The separate count-weighted paired-total difference rate. -/ totalError : Rational
+  /-- The count-weighted source-total magnitude bound. -/ magnitude : Rational
 
 constructive_injectivity ExteriorCountSide
 
@@ -1665,33 +1667,33 @@ open Purelib.Data.Rat
 @[expose] def exteriorCountSide
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    (sourceMagnitude : Fraction.Rational)
+    (sourceMagnitude : Rational)
     (outer : Fin
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.occurrences.length)
-    (areaTarget totalTarget : Fraction.Rational) : ExteriorCountSide :=
-  let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt
+    (areaTarget totalTarget : Rational) : ExteriorCountSide :=
+  let occurrence := occurrenceAt
     (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.occurrences outer
   let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
     occurrence.sideOccurrence.sheet).meshes.entries.get
     occurrence.sideOccurrence.position
-  let joins := Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
+  let joins := RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
     occurrence.sideOccurrence.side
-  let count := ((2 * joins + 1 : Nat) : Fraction.Rational)
+  let count := ((2 * joins + 1 : Nat) : Rational)
   ⟨2 * (count^2 * areaTarget + 16 * count^4 * totalTarget * (2 * (sourceMagnitude + totalTarget))),
-    count^2 * totalTarget, ((joins + 1 : Nat) : Fraction.Rational)^2 * sourceMagnitude⟩
+    count^2 * totalTarget, ((joins + 1 : Nat) : Rational)^2 * sourceMagnitude⟩
 
 /-- The original component's aggregate comparison cap computed from retained side counts. -/
 @[expose] def ComponentCountError
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    (sourceMagnitude : Fraction.Rational) (areaTarget totalTarget : Fraction.Rational) : Fraction.Rational :=
+    (sourceMagnitude : Rational) (areaTarget totalTarget : Rational) : Rational :=
   let sides := List.ofFn (fun outer => exteriorCountSide prepared componentIndex sourceMagnitude outer areaTarget
     totalTarget)
-  let areaError := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum ExteriorCountSide.areaError sides
-  let totalError := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum ExteriorCountSide.totalError sides
-  let magnitude := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum ExteriorCountSide.magnitude sides
-  2 * ((sides.length : Fraction.Rational)^2 * areaError +
-    16 * (sides.length : Fraction.Rational)^4 * totalError * (2 * (magnitude + totalError)))
+  let areaError := PairedFragmentBlocks.maximum ExteriorCountSide.areaError sides
+  let totalError := PairedFragmentBlocks.maximum ExteriorCountSide.totalError sides
+  let magnitude := PairedFragmentBlocks.maximum ExteriorCountSide.magnitude sides
+  2 * ((sides.length : Rational)^2 * areaError +
+    16 * (sides.length : Rational)^4 * totalError * (2 * (magnitude + totalError)))
 
 end
 
@@ -1702,20 +1704,20 @@ open Purelib.Riemann.RootContinuation in
 private theorem exteriorCountSide_atDepth
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    (sourceMagnitude : Fraction.Rational)
+    (sourceMagnitude : Rational)
     (depth : Nat)
     (outer : Fin
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.occurrences.length)
-    (areaTarget totalTarget : Fraction.Rational) :
+    (areaTarget totalTarget : Rational) :
     exteriorCountSide (NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared depth) componentIndex
       sourceMagnitude outer areaTarget totalTarget =
       exteriorCountSide prepared componentIndex sourceMagnitude outer areaTarget totalTarget := by
-  let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt
+  let occurrence := occurrenceAt
     (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.occurrences outer
   let rate := fun joins : Nat =>
-    let count := ((2 * joins + 1 : Nat) : Fraction.Rational)
+    let count := ((2 * joins + 1 : Nat) : Rational)
     (⟨2 * (count^2 * areaTarget + 16 * count^4 * totalTarget * (2 * (sourceMagnitude + totalTarget))),
-      count^2 * totalTarget, ((joins + 1 : Nat) : Fraction.Rational)^2 * sourceMagnitude⟩ : ExteriorCountSide)
+      count^2 * totalTarget, ((joins + 1 : Nat) : Rational)^2 * sourceMagnitude⟩ : ExteriorCountSide)
   exact congrArg rate (NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth_junction_count prepared depth
     occurrence.sideOccurrence.sheet
     occurrence.sideOccurrence.position occurrence.sideOccurrence.side)
@@ -1728,8 +1730,8 @@ open Purelib.Riemann.RootContinuation in
 theorem component_count_error_atDepth
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    (sourceMagnitude : Fraction.Rational)
-    (depth : Nat) (areaTarget totalTarget : Fraction.Rational) :
+    (sourceMagnitude : Rational)
+    (depth : Nat) (areaTarget totalTarget : Rational) :
     ComponentCountError (NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared depth) componentIndex
       sourceMagnitude areaTarget totalTarget =
       ComponentCountError prepared componentIndex sourceMagnitude areaTarget totalTarget := by
@@ -1739,11 +1741,11 @@ theorem component_count_error_atDepth
     OfFn.Basic.ofFn_congr (fun outer => exteriorCountSide_atDepth prepared componentIndex sourceMagnitude depth outer
       areaTarget totalTarget)
   exact congrArg (fun sides : List ExteriorCountSide =>
-    let areaError := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum ExteriorCountSide.areaError sides
-    let totalError := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum ExteriorCountSide.totalError sides
-    let magnitude := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum ExteriorCountSide.magnitude sides
-    2 * ((sides.length : Fraction.Rational)^2 * areaError +
-      16 * (sides.length : Fraction.Rational)^4 * totalError * (2 * (magnitude + totalError)))) sides
+    let areaError := PairedFragmentBlocks.maximum ExteriorCountSide.areaError sides
+    let totalError := PairedFragmentBlocks.maximum ExteriorCountSide.totalError sides
+    let magnitude := PairedFragmentBlocks.maximum ExteriorCountSide.magnitude sides
+    2 * ((sides.length : Rational)^2 * areaError +
+      16 * (sides.length : Rational)^4 * totalError * (2 * (magnitude + totalError)))) sides
 
 section
 open Purelib.Curves.Hyperelliptic
@@ -1753,10 +1755,10 @@ private def ExteriorSideRatePayment
     (prepared : BoundaryPreparation preparation first second target radius floor) : Prop :=
   ∀ componentIndex : Fin prepared.exterior.prepared.components.length,
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
-    ∀ {requested : Fraction.Rational} {minimum : Nat}
+    ∀ {requested : Rational} {minimum : Nat}
       (comparison : component.prepared.ClosedBoundaryComparison (standardDifferential second) requested minimum)
-      {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index)
-        {allowance tolerance areaTarget totalTarget sourceMagnitude : Fraction.Rational},
+      {index : Nat} (cache : Numerics prepared.domains index)
+        {allowance tolerance areaTarget totalTarget sourceMagnitude : Rational},
       0 ≤ areaTarget → 0 ≤ totalTarget → tolerance ≤ totalTarget → comparison.sourceMagnitude ≤ sourceMagnitude →
       RetainedExteriorPieceEstimate prepared componentIndex comparison index allowance tolerance areaTarget totalTarget
         →
@@ -1772,46 +1774,46 @@ private theorem exteriorSideRatePayment
   intro componentIndex component requested minimum comparison index cache allowance tolerance areaTarget totalTarget
     sourceMagnitude
     areaNonnegative totalNonnegative toleranceLe sourceLe paid outer data cap
-  let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences outer
+  let occurrence := occurrenceAt component.prepared.occurrences outer
   let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
     occurrence.sideOccurrence.sheet).meshes.entries.get
     occurrence.sideOccurrence.position
   let side := occurrence.sideOccurrence.side
-  let rates := fun i : Fin (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
+  let rates := fun i : Fin (RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
     side + 1) =>
     retainedExteriorPieceRates prepared componentIndex comparison outer
-      (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i)
+      (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side i)
       index allowance tolerance
   let pieces := List.ofFn (fun i => (rates i).1)
-  have areaLe : Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum Prod.fst pieces ≤ areaTarget :=
+  have areaLe : PairedFragmentBlocks.maximum Prod.fst pieces ≤ areaTarget :=
     maximum_bound _ _ areaNonnegative (by
       intro value member; obtain ⟨i, rfl⟩ := Data.List.OfFn.Basic.mem_ofFn.mp member
-      exact (paid outer (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
+      exact (paid outer (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
         i)).1)
-  have totalLe : max tolerance (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum Prod.snd pieces) ≤
+  have totalLe : max tolerance (PairedFragmentBlocks.maximum Prod.snd pieces) ≤
     totalTarget :=
-    Fraction.Order.Basic.max_le toleranceLe (maximum_bound _ _ totalNonnegative (by
+    Basic.max_le toleranceLe (maximum_bound _ _ totalNonnegative (by
       intro value member; obtain ⟨i, rfl⟩ := Data.List.OfFn.Basic.mem_ofFn.mp member
-      exact (paid outer (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
+      exact (paid outer (RetainedJunctions.RetainedPerimeterPiece.pieceIndex mesh side
         i)).2))
-  have currentNonnegative : 0 ≤ max tolerance (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum Prod.snd
+  have currentNonnegative : 0 ≤ max tolerance (PairedFragmentBlocks.maximum Prod.snd
     pieces) :=
-    (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative _ _).trans
-      (Fraction.Order.Basic.le_max_right _ _)
+    (PairedFragmentBlocks.maximum_nonnegative _ _).trans
+      (Basic.le_max_right _ _)
   exact ⟨rate_mono _ areaLe totalLe sourceLe currentNonnegative totalNonnegative comparison.sourceMagnitude_nonnegative,
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct totalLe (Fraction.Order.Arithmetic.sq_nonneg_direct _),
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct sourceLe (Fraction.Order.Arithmetic.sq_nonneg_direct _)⟩
+    Arithmetic.mul_le_mul_of_nonneg_left_direct totalLe (Arithmetic.sq_nonneg_direct _),
+    Arithmetic.mul_le_mul_of_nonneg_left_direct sourceLe (Arithmetic.sq_nonneg_direct _)⟩
 
 /-- Paid original piece rates control the retained component comparison error by its count-based cap. -/
 theorem component_comparison_error_paid
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {requested : Fraction.Rational} {minimum : Nat}
+    {requested : Rational} {minimum : Nat}
     (comparison :
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.ClosedBoundaryComparison
       (standardDifferential second) requested minimum)
-    {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index)
-      {allowance tolerance areaTarget totalTarget sourceMagnitude : Fraction.Rational}
+    {index : Nat} (cache : Numerics prepared.domains index)
+      {allowance tolerance areaTarget totalTarget sourceMagnitude : Rational}
     (areaNonnegative : 0 ≤ areaTarget) (totalNonnegative : 0 ≤ totalTarget) (toleranceLe : tolerance ≤ totalTarget)
     (sourceLe : comparison.sourceMagnitude ≤ sourceMagnitude)
     (paid : RetainedExteriorPieceEstimate prepared componentIndex comparison index allowance tolerance areaTarget
@@ -1825,25 +1827,25 @@ theorem component_comparison_error_paid
   have each := exteriorSideRatePayment prepared componentIndex comparison cache areaNonnegative totalNonnegative
     toleranceLe sourceLe paid
   have areas := maximum_bound ExteriorComponentSide.areaError sides
-    (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative ExteriorCountSide.areaError caps) (by
+    (PairedFragmentBlocks.maximum_nonnegative ExteriorCountSide.areaError caps) (by
       intro data member; obtain ⟨outer, rfl⟩ := Data.List.OfFn.Basic.mem_ofFn.mp member
-      exact (each outer).1.trans (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.le_maximum
+      exact (each outer).1.trans (PairedFragmentBlocks.le_maximum
         ExteriorCountSide.areaError (Data.List.OfFn.Basic.mem_ofFn.mpr ⟨outer, rfl⟩)))
   have totals := maximum_bound ExteriorComponentSide.totalError sides
-    (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative ExteriorCountSide.totalError caps) (by
+    (PairedFragmentBlocks.maximum_nonnegative ExteriorCountSide.totalError caps) (by
       intro data member; obtain ⟨outer, rfl⟩ := Data.List.OfFn.Basic.mem_ofFn.mp member
-      exact (each outer).2.1.trans (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.le_maximum
+      exact (each outer).2.1.trans (PairedFragmentBlocks.le_maximum
         ExteriorCountSide.totalError (Data.List.OfFn.Basic.mem_ofFn.mpr ⟨outer, rfl⟩)))
   have magnitudes := maximum_bound ExteriorComponentSide.magnitude sides
-    (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative ExteriorCountSide.magnitude caps) (by
+    (PairedFragmentBlocks.maximum_nonnegative ExteriorCountSide.magnitude caps) (by
       intro data member; obtain ⟨outer, rfl⟩ := Data.List.OfFn.Basic.mem_ofFn.mp member
-      exact (each outer).2.2.trans (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.le_maximum
+      exact (each outer).2.2.trans (PairedFragmentBlocks.le_maximum
         ExteriorCountSide.magnitude (Data.List.OfFn.Basic.mem_ofFn.mpr ⟨outer, rfl⟩)))
   have estimate := rate_mono
     (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.occurrences.length
-    areas totals magnitudes (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative _ _)
-    (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative _ _)
-    (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative _ _)
+    areas totals magnitudes (PairedFragmentBlocks.maximum_nonnegative _ _)
+    (PairedFragmentBlocks.maximum_nonnegative _ _)
+    (PairedFragmentBlocks.maximum_nonnegative _ _)
   simpa only [ComponentComparisonError, ComponentCountError, Data.List.OfFn.Basic.length_ofFn, -eq_self, -iff_self]
     using estimate
 
@@ -1852,22 +1854,22 @@ end
 open Purelib.Integration.Path.PairedIncrementArea (area) in
 open Purelib.Data.Rat in
 /-- The count-weighted total term is at most twice the paired-area rate under the four-area target relation. -/
-private theorem total_le_twice_area (count : Nat) {area total source : Fraction.Rational}
+private theorem total_le_twice_area (count : Nat) {area total source : Rational}
     (totalNonnegative : 0 ≤ total) (sourceNonnegative : 0 ≤ source) (small : total ≤ 4 * area) :
-    (count : Fraction.Rational)^2 * total ≤
-      2 * (2 * ((count : Fraction.Rational)^2 * area +
-        16 * (count : Fraction.Rational)^4 * total * (2 * (source + total)))) := by
-  have extra : 0 ≤ 16 * (count : Fraction.Rational)^4 * total * (2 * (source + total)) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-          (Fraction.Order.Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count)) 4))
+    (count : Rational)^2 * total ≤
+      2 * (2 * ((count : Rational)^2 * area +
+        16 * (count : Rational)^4 * total * (2 * (source + total)))) := by
+  have extra : 0 ≤ 16 * (count : Rational)^4 * total * (2 * (source + total)) :=
+    Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct
+        (Arithmetic.mul_nonneg_direct (by decide)
+          (Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count)) 4))
         totalNonnegative)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg sourceNonnegative totalNonnegative))
-  have first := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct small
-    (Fraction.Order.Arithmetic.sq_nonneg_direct (count : Fraction.Rational))
-  have second := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (le_add_of_nonneg_right (a := (count : Fraction.Rational)^2 * area) extra) (by decide : (0 : Fraction.Rational) ≤ 4)
+      (Arithmetic.mul_nonneg_direct (by decide) (add_nonneg sourceNonnegative totalNonnegative))
+  have first := Arithmetic.mul_le_mul_of_nonneg_left_direct small
+    (Arithmetic.sq_nonneg_direct (count : Rational))
+  have second := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (le_add_of_nonneg_right (a := (count : Rational)^2 * area) extra) (by decide : (0 : Rational) ≤ 4)
   exact first.trans ((le_of_eq (by ring1)).trans (second.trans_eq (by ring1)))
 
 open Purelib.Integration.Path.PairedIncrementArea (area) in
@@ -1880,12 +1882,12 @@ estimates aligned. -/
 theorem component_total_error_paid
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {requested : Fraction.Rational} {minimum : Nat}
+    {requested : Rational} {minimum : Nat}
     (comparison :
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.ClosedBoundaryComparison
       (standardDifferential second) requested minimum)
-    {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index)
-      {allowance tolerance areaTarget totalTarget sourceMagnitude : Fraction.Rational}
+    {index : Nat} (cache : Numerics prepared.domains index)
+      {allowance tolerance areaTarget totalTarget sourceMagnitude : Rational}
     (areaNonnegative : 0 ≤ areaTarget) (totalNonnegative : 0 ≤ totalTarget) (sourceNonnegative : 0 ≤ sourceMagnitude)
     (toleranceLe : tolerance ≤ totalTarget) (small : totalTarget ≤ 4 * areaTarget)
     (sourceLe : comparison.sourceMagnitude ≤ sourceMagnitude)
@@ -1897,14 +1899,14 @@ theorem component_total_error_paid
     tolerance)
   let caps := List.ofFn (fun outer => exteriorCountSide prepared componentIndex sourceMagnitude outer areaTarget
     totalTarget)
-  let area := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum ExteriorCountSide.areaError caps
-  let total := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum ExteriorCountSide.totalError caps
-  let magnitude := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum ExteriorCountSide.magnitude caps
+  let area := PairedFragmentBlocks.maximum ExteriorCountSide.areaError caps
+  let total := PairedFragmentBlocks.maximum ExteriorCountSide.totalError caps
+  let magnitude := PairedFragmentBlocks.maximum ExteriorCountSide.magnitude caps
   have each := exteriorSideRatePayment prepared componentIndex comparison cache areaNonnegative totalNonnegative
     toleranceLe sourceLe paid
-  have areasNonnegative : 0 ≤ area := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative _ _
+  have areasNonnegative : 0 ≤ area := PairedFragmentBlocks.maximum_nonnegative _ _
   have totals := maximum_bound ExteriorComponentSide.totalError sides
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 2) areasNonnegative) (by
+    (Arithmetic.mul_nonneg_direct (by decide : (0 : Rational) ≤ 2) areasNonnegative) (by
       intro data member
       obtain ⟨outer, rfl⟩ := Data.List.OfFn.Basic.mem_ofFn.mp member
       have sideBound : (exteriorCountSide prepared componentIndex sourceMagnitude outer areaTarget
@@ -1912,25 +1914,25 @@ theorem component_total_error_paid
           2 * (exteriorCountSide prepared componentIndex sourceMagnitude outer areaTarget totalTarget).areaError :=
         total_le_twice_area _ totalNonnegative sourceNonnegative small
       exact (each outer).2.1.trans (sideBound.trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.le_maximum ExteriorCountSide.areaError
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (PairedFragmentBlocks.le_maximum ExteriorCountSide.areaError
             (Data.List.OfFn.Basic.mem_ofFn.mpr ⟨outer, rfl⟩)) (by decide))))
-  have totalNonnegative : 0 ≤ total := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative _ _
-  have magnitudeNonnegative : 0 ≤ magnitude := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative _
+  have totalNonnegative : 0 ≤ total := PairedFragmentBlocks.maximum_nonnegative _ _
+  have magnitudeNonnegative : 0 ≤ magnitude := PairedFragmentBlocks.maximum_nonnegative _
     _
   let count : Rational :=
     (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.occurrences.length
   have extra : 0 ≤ 16 * count^4 * total * (2 * (magnitude + total)) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-          (Fraction.Order.Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 4))
+    Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct
+        (Arithmetic.mul_nonneg_direct (by decide)
+          (Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 4))
             totalNonnegative)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg magnitudeNonnegative totalNonnegative))
-  have bound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct totals
-    (Fraction.Order.Arithmetic.sq_nonneg_direct count)
-  have larger := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (le_add_of_nonneg_right (a := count^2 * area) extra) (by decide : (0 : Fraction.Rational) ≤ 2)
+      (Arithmetic.mul_nonneg_direct (by decide) (add_nonneg magnitudeNonnegative totalNonnegative))
+  have bound := Arithmetic.mul_le_mul_of_nonneg_left_direct totals
+    (Arithmetic.sq_nonneg_direct count)
+  have larger := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (le_add_of_nonneg_right (a := count^2 * area) extra) (by decide : (0 : Rational) ≤ 2)
   have result := bound.trans ((le_of_eq (by ring1)).trans larger)
   simpa only [ComponentTotalError, ComponentCountError, Data.List.OfFn.Basic.length_ofFn, -eq_self, -iff_self] using
     result
@@ -1939,29 +1941,29 @@ open Purelib.Integration.Path.PairedIncrementArea (area) in
 open Purelib.Data.Rat in
 /-- Scaling area and total targets by a factor in the unit interval scales the paired-area rate by at most that factor.
 -/
-private theorem rate_scale (count : Nat) (scale area total source : Fraction.Rational)
+private theorem rate_scale (count : Nat) (scale area total source : Rational)
     (nonnegative : 0 ≤ scale) (small : scale ≤ 1) (totalNonnegative : 0 ≤ total) :
-    2 * ((count : Fraction.Rational)^2 * (scale * area) +
-      16 * (count : Fraction.Rational)^4 * (scale * total) * (2 * (source + scale * total))) ≤
-    scale * (2 * ((count : Fraction.Rational)^2 * area +
-      16 * (count : Fraction.Rational)^4 * total * (2 * (source + total)))) := by
-  have totalLe := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct small totalNonnegative).trans_eq (one_mul
+    2 * ((count : Rational)^2 * (scale * area) +
+      16 * (count : Rational)^4 * (scale * total) * (2 * (source + scale * total))) ≤
+    scale * (2 * ((count : Rational)^2 * area +
+      16 * (count : Rational)^4 * total * (2 * (source + total)))) := by
+  have totalLe := (Arithmetic.mul_le_mul_of_nonneg_right_direct small totalNonnegative).trans_eq (one_mul
     total)
-  have weighted := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct (le_refl source) totalLe) (by decide : (0 : Fraction.Rational) ≤ 2))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 16)
-        (Fraction.Order.Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count)) 4))
+  have weighted := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct (le_refl source) totalLe) (by decide : (0 : Rational) ≤ 2))
+    (Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct (by decide : (0 : Rational) ≤ 16)
+        (Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count)) 4))
           totalNonnegative)
-  have result := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct (le_refl ((count : Fraction.Rational)^2 * area)) weighted)
-      (by decide : (0 : Fraction.Rational) ≤ 2)) nonnegative
-  exact (show 2 * ((count : Fraction.Rational)^2 * (scale * area) +
-      16 * (count : Fraction.Rational)^4 * (scale * total) * (2 * (source + scale * total))) =
-    scale * (2 * ((count : Fraction.Rational)^2 * area +
-      16 * (count : Fraction.Rational)^4 * total * (2 * (source + scale * total)))) by ring1).trans_le result
+  have result := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct (le_refl ((count : Rational)^2 * area)) weighted)
+      (by decide : (0 : Rational) ≤ 2)) nonnegative
+  exact (show 2 * ((count : Rational)^2 * (scale * area) +
+      16 * (count : Rational)^4 * (scale * total) * (2 * (source + scale * total))) =
+    scale * (2 * ((count : Rational)^2 * area +
+      16 * (count : Rational)^4 * total * (2 * (source + scale * total)))) by ring1).trans_le result
 
 section
 open Purelib.Curves.Hyperelliptic
@@ -1970,30 +1972,30 @@ open Purelib.Data.Rat
 private theorem exteriorCountSide_scale
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    (sourceMagnitude : Fraction.Rational)
+    (sourceMagnitude : Rational)
     (outer : Fin
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.occurrences.length)
-    (areaTarget totalTarget : Fraction.Rational) (sourceNonnegative : 0 ≤ sourceMagnitude)
+    (areaTarget totalTarget : Rational) (sourceNonnegative : 0 ≤ sourceMagnitude)
     (areaNonnegative : 0 ≤ areaTarget) (small : areaTarget ≤ 1)
     (totalNonnegative : 0 ≤ totalTarget) (totalLe : totalTarget ≤ 4 * areaTarget) :
     let side := exteriorCountSide prepared componentIndex sourceMagnitude outer areaTarget totalTarget
     let unit := exteriorCountSide prepared componentIndex sourceMagnitude outer 1 4
     side.areaError ≤ areaTarget * unit.areaError ∧ side.totalError ≤ areaTarget * unit.totalError ∧ side.magnitude ≤
       unit.magnitude := by
-  let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt
+  let occurrence := occurrenceAt
     (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.occurrences outer
   let mesh := (prepared.paid.cut.exterior.prepared.energy.entries.get
     occurrence.sideOccurrence.sheet).meshes.entries.get
     occurrence.sideOccurrence.position
-  let count := 2 * Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
+  let count := 2 * RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
     occurrence.sideOccurrence.side + 1
   have normalized := rate_mono count (show areaTarget ≤ areaTarget * 1 by rw [mul_one])
     (totalLe.trans_eq (mul_comm _ _)) (le_refl sourceMagnitude) totalNonnegative
-    (Fraction.Order.Arithmetic.mul_nonneg_direct areaNonnegative (by decide : (0 : Fraction.Rational) ≤ 4))
+    (Arithmetic.mul_nonneg_direct areaNonnegative (by decide : (0 : Rational) ≤ 4))
       sourceNonnegative
   have areaBound := normalized.trans (rate_scale count areaTarget 1 4 sourceMagnitude areaNonnegative small (by decide))
-  have totalBound : (count : Fraction.Rational)^2 * totalTarget ≤ areaTarget * ((count : Fraction.Rational)^2 * 4) :=
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct totalLe (Fraction.Order.Arithmetic.sq_nonneg_direct
+  have totalBound : (count : Rational)^2 * totalTarget ≤ areaTarget * ((count : Rational)^2 * 4) :=
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct totalLe (Arithmetic.sq_nonneg_direct
       _)).trans_eq (by ring1)
   exact ⟨areaBound, totalBound, le_rfl⟩
 
@@ -2003,7 +2005,7 @@ The area scale lies in the unit interval, and the total target is nonnegative an
 theorem component_count_error_scale
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    (sourceMagnitude areaTarget totalTarget : Fraction.Rational) (sourceNonnegative : 0 ≤ sourceMagnitude)
+    (sourceMagnitude areaTarget totalTarget : Rational) (sourceNonnegative : 0 ≤ sourceMagnitude)
     (areaNonnegative : 0 ≤ areaTarget) (small : areaTarget ≤ 1)
     (totalNonnegative : 0 ≤ totalTarget) (totalLe : totalTarget ≤ 4 * areaTarget) :
     ComponentCountError prepared componentIndex sourceMagnitude areaTarget totalTarget ≤
@@ -2011,41 +2013,41 @@ theorem component_count_error_scale
   let sides := List.ofFn (fun outer => exteriorCountSide prepared componentIndex sourceMagnitude outer areaTarget
     totalTarget)
   let units := List.ofFn (fun outer => exteriorCountSide prepared componentIndex sourceMagnitude outer 1 4)
-  let unitArea := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum ExteriorCountSide.areaError units
-  let unitTotal := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum ExteriorCountSide.totalError units
-  let unitMagnitude := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum ExteriorCountSide.magnitude units
-  have unitAreaNonnegative : 0 ≤ unitArea := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative _ _
-  have unitTotalNonnegative : 0 ≤ unitTotal := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative _
+  let unitArea := PairedFragmentBlocks.maximum ExteriorCountSide.areaError units
+  let unitTotal := PairedFragmentBlocks.maximum ExteriorCountSide.totalError units
+  let unitMagnitude := PairedFragmentBlocks.maximum ExteriorCountSide.magnitude units
+  have unitAreaNonnegative : 0 ≤ unitArea := PairedFragmentBlocks.maximum_nonnegative _ _
+  have unitTotalNonnegative : 0 ≤ unitTotal := PairedFragmentBlocks.maximum_nonnegative _
     _
   have unitMagnitudeNonnegative : 0 ≤ unitMagnitude :=
-    Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative _ _
+    PairedFragmentBlocks.maximum_nonnegative _ _
   have each := exteriorCountSide_scale prepared componentIndex sourceMagnitude
     (areaTarget := areaTarget) (totalTarget := totalTarget)
   have areas := maximum_bound ExteriorCountSide.areaError sides
-    (Fraction.Order.Arithmetic.mul_nonneg_direct areaNonnegative unitAreaNonnegative) (by
+    (Arithmetic.mul_nonneg_direct areaNonnegative unitAreaNonnegative) (by
       intro data member; obtain ⟨outer, rfl⟩ := Data.List.OfFn.Basic.mem_ofFn.mp member
       exact (each outer sourceNonnegative areaNonnegative small totalNonnegative totalLe).1.trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.le_maximum ExteriorCountSide.areaError
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (PairedFragmentBlocks.le_maximum ExteriorCountSide.areaError
             (Data.List.OfFn.Basic.mem_ofFn.mpr ⟨outer, rfl⟩)) areaNonnegative))
   have totals := maximum_bound ExteriorCountSide.totalError sides
-    (Fraction.Order.Arithmetic.mul_nonneg_direct areaNonnegative unitTotalNonnegative) (by
+    (Arithmetic.mul_nonneg_direct areaNonnegative unitTotalNonnegative) (by
       intro data member; obtain ⟨outer, rfl⟩ := Data.List.OfFn.Basic.mem_ofFn.mp member
       exact (each outer sourceNonnegative areaNonnegative small totalNonnegative totalLe).2.1.trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.le_maximum ExteriorCountSide.totalError
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (PairedFragmentBlocks.le_maximum ExteriorCountSide.totalError
             (Data.List.OfFn.Basic.mem_ofFn.mpr ⟨outer, rfl⟩)) areaNonnegative))
   have magnitudes := maximum_bound ExteriorCountSide.magnitude sides unitMagnitudeNonnegative (by
     intro data member; obtain ⟨outer, rfl⟩ := Data.List.OfFn.Basic.mem_ofFn.mp member
     exact (each outer sourceNonnegative areaNonnegative small totalNonnegative totalLe).2.2.trans
-      (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.le_maximum ExteriorCountSide.magnitude
+      (PairedFragmentBlocks.le_maximum ExteriorCountSide.magnitude
         (Data.List.OfFn.Basic.mem_ofFn.mpr ⟨outer, rfl⟩)))
   let count :=
     (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.occurrences.length
   have normalized := rate_mono count areas totals magnitudes
-    (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative _ _)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct areaNonnegative unitTotalNonnegative)
-    (Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative _ _)
+    (PairedFragmentBlocks.maximum_nonnegative _ _)
+    (Arithmetic.mul_nonneg_direct areaNonnegative unitTotalNonnegative)
+    (PairedFragmentBlocks.maximum_nonnegative _ _)
   have result := normalized.trans (rate_scale count areaTarget unitArea unitTotal unitMagnitude areaNonnegative small
     unitTotalNonnegative)
   simpa only [ComponentCountError, Data.List.OfFn.Basic.length_ofFn, -eq_self, -iff_self] using result
@@ -2061,16 +2063,16 @@ The exact cache stage is later than the request's original endpoint stage, so bo
 readings. -/
 theorem exterior_sides_accurate (prepared : BoundaryPreparation preparation first second target radius floor)
     (exterior :
-      Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation regular
+      AllSurfacePreparation regular
       prepared.domains differential)
-    {tolerance : Fraction.Rational}
+    {tolerance : Rational}
     (allocated :
-      SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.SideRemainderRequest
+      AllSurfacePreparation.SideRemainderRequest
       exterior prepared.paid.cut.fixed first second tolerance)
-    {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains stage}
+    {stage : Nat} {cache : Numerics prepared.domains stage}
     (readings : Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings prepared.paid.cut cache) (later :
       allocated.endpoints.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (exterior.fineRemainder readings.normalized readings.left readings.right -
+    normSq (exterior.fineRemainder readings.normalized readings.left readings.right -
       exterior.centeredSideArea (prepared.traces.samples cache first second)) < tolerance :=
   allocated.accurate later (prepared.traces.samples cache first second) readings.normalized readings.left readings.right
 
@@ -2085,50 +2087,50 @@ The request-chord identity transports the paid side estimate while retaining the
 orientations and cached block readbacks. -/
 theorem exterior_request_chords_accurate (prepared : BoundaryPreparation preparation first second target radius floor)
     (exterior :
-      Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation regular
+      AllSurfacePreparation regular
       prepared.domains differential)
-    {other : Differentials.Basic.Differential genus} {next :
-      Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation regular
+    {other : Differential genus} {next :
+      AllSurfacePreparation regular
       prepared.domains other}
-    {capTarget capArea : Fraction.Rational} {capFloor : Nat}
-    (requested : Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request next capTarget capArea
+    {capTarget capArea : Rational} {capFloor : Nat}
+    (requested : SurfaceRequests.AllSurfacePreparation.Request next capTarget capArea
       capFloor)
-    {tolerance : Fraction.Rational}
+    {tolerance : Rational}
     (allocated :
-      SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.SideRemainderRequest
+      AllSurfacePreparation.SideRemainderRequest
       exterior prepared.paid.cut.fixed first second tolerance)
-    {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains stage}
+    {stage : Nat} {cache : Numerics prepared.domains stage}
     (readings : Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings prepared.paid.cut cache) (later :
       allocated.endpoints.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (exterior.occurrences.map
+    normSq (Norm.Sum.Basic.gaussianSum (exterior.occurrences.map
         (fun occurrence => Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.occurrenceFineArea
           readings.normalized occurrence.sideOccurrence)) -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (requested.entries.map
+      Norm.Sum.Basic.gaussianSum (requested.entries.map
         (fun entry => Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord readings.left
           readings.right entry.occurrence.placement.location.sourceEdge)) -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (exterior.occurrences.map (fun occurrence =>
-        let blocks := Meshes.PuncturedGrid.Exterior.RetainedSideBlocks.RetainedPerimeterPiece.blocks
+      Norm.Sum.Basic.gaussianSum (exterior.occurrences.map (fun occurrence =>
+        let blocks := RetainedSideBlocks.RetainedPerimeterPiece.blocks
           (((prepared.traces.samples cache first second).samples.get occurrence.sideOccurrence.position).get
             occurrence.sideOccurrence.sheet)
           occurrence.sideOccurrence.side
         Meshes.PuncturedGrid.SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence.oriented
           occurrence.sideOccurrence
-          (Data.Gaussian.Norm.Sum.Basic.gaussianSum (blocks.map PairedIncrementArea.area) +
+          (Norm.Sum.Basic.gaussianSum (blocks.map PairedIncrementArea.area) +
             PairedIncrementArea.area (blocks.map PairedIncrementArea.total))))) < tolerance := by
   have aligned := exterior.fineRemainder_request_chords requested readings.normalized readings.left readings.right
   have cancel (left right : Basic.Canonical) : left = (left + right) - right := by ring1
   have remainder := (cancel _ _).trans (congrArg (fun value => value -
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (requested.entries.map
+    Norm.Sum.Basic.gaussianSum (requested.entries.map
       (fun entry => Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord
         readings.left readings.right entry.occurrence.placement.location.sourceEdge))) aligned)
-  have bounded := (congrArg (fun value => Data.Gaussian.Norm.Basic.normSq (value - exterior.centeredSideArea
+  have bounded := (congrArg (fun value => normSq (value - exterior.centeredSideArea
     (prepared.traces.samples cache first second))) remainder).symm.trans_lt
       (exterior_sides_accurate prepared exterior allocated readings later)
-  exact (congrArg (fun area => Data.Gaussian.Norm.Basic.normSq
-    (Data.Gaussian.Norm.Sum.Basic.gaussianSum (exterior.occurrences.map
+  exact (congrArg (fun area => normSq
+    (Norm.Sum.Basic.gaussianSum (exterior.occurrences.map
       (fun occurrence => Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.occurrenceFineArea
         readings.normalized occurrence.sideOccurrence)) -
-     Data.Gaussian.Norm.Sum.Basic.gaussianSum (requested.entries.map
+     Norm.Sum.Basic.gaussianSum (requested.entries.map
       (fun entry => Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord readings.left
         readings.right entry.occurrence.placement.location.sourceEdge)) - area))
 

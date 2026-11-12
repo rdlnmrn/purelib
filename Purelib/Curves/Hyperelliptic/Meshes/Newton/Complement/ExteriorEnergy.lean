@@ -75,6 +75,8 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! Stitch the retained pieces using the existing exterior request.
@@ -118,55 +120,55 @@ open Purelib.Riemann.Meshes (LiftedPuncturedGrid)
 open Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy (SurfacePartitions SurfaceMeshes SurfaceRequest)
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Complement.ObservationLower (remainingFaceMask)
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve branches
     higher}
-  {preparation : Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius
-    : Data.Rat.Fraction.Rational} {grid : Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid
+  {preparation : NewtonPreparation original} {target radius
+    : Rational} {grid : NewtonGrid
     preparation target radius}
-  {observations : Riemann.RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
+  {observations : ProtectedObservations original} {frames :
     RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars}
+  {domains : FaceDomainBank frames grid.faces.regulars}
     {sheet : Fin 2}
-  {partitions : Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid} {coarse :
-    Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfaceMeshes partitions domains sheet}
-  {lifted : Riemann.Meshes.LiftedPuncturedGrid grid.punctured}
-  {fixed : Riemann.RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet} {energyTarget :
-    Data.Rat.Fraction.Rational}
+  {partitions : SurfacePartitions observations grid} {coarse :
+    SurfaceMeshes partitions domains sheet}
+  {lifted : LiftedPuncturedGrid grid.punctured}
+  {fixed : Preflights domains sheet} {energyTarget :
+    Rational}
 
 namespace ExteriorRequest
 
-variable {energy : Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfaceRequest partitions coarse fixed energyTarget}
-  {error : Data.Rat.Fraction.Rational} {minimum : Nat}
-  {stage : Nat} {cache : Riemann.RootContinuation.NewtonObservationLocalEnergy.LocalMeshes.Numerics domains stage}
-  (excision : Curves.Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted)
+variable {energy : SurfaceRequest partitions coarse fixed energyTarget}
+  {error : Rational} {minimum : Nat}
+  {stage : Nat} {cache : Numerics domains stage}
+  (excision : AllHoles.Excision.AllHoleExcision grid lifted)
 
 /-- The actual exterior-area sum of the retained pieces on precisely the unexcised regular faces.
 
 Each original piece keeps its own joining edges and coefficient-weighted assembly. -/
-@[expose] def remainingExterior (assemblies : ExteriorRequest.Assemblies energy cache coefficients) : Gaussian :=
+@[expose] def remainingExterior (assemblies : Assemblies energy cache coefficients) : Gaussian :=
   FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
     if ObservationLower.remainingFaceMask excision position then ((assemblies.get position).get piece).exterior else 0))
 
 /-- The squared finite count times its per-term aggregate allowance is at most the original positive target. -/
-private theorem payment {count : Nat} {target : Fraction.Rational} (positive : 0 < target) :
-    (count : Fraction.Rational) ^ 2 * Aggregate.perTerm target count ≤ target :=
+private theorem payment {count : Nat} {target : Rational} (positive : 0 < target) :
+    (count : Rational) ^ 2 * Aggregate.perTerm target count ≤ target :=
   (le_of_eq (by ring1)).trans (Aggregate.count_mul_perTerm_lt positive count).le
 
 /-- The retained local-energy sum and actual remaining piece exteriors satisfy the original coefficient-weighted
 squared-norm error budget. -/
 theorem remaining_error_bound (request : Surface.ExteriorRequest energy error minimum) (later : request.index ≤
   stage)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (assemblies : ExteriorRequest.Assemblies energy
+    (coefficients : GaussianVector genus) (assemblies : Assemblies energy
       cache coefficients) :
     Data.Gaussian.Norm.Basic.normSq (LocalEnergy.remainingLocalEnergyArea excision energy cache coefficients -
       remainingExterior excision
       assemblies) ≤
-      (genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 * error := by
-  let factor := (genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2
-  have factorNonnegative : 0 ≤ factor := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _) (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+      (genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 * error := by
+  let factor := (genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2
+  have factorNonnegative : 0 ≤ factor := Arithmetic.mul_nonneg_direct
+    (Arithmetic.sq_nonneg_direct _) (Arithmetic.sq_nonneg_direct _)
   have perFacePositive : 0 < request.perFace := by
     rw [request.perFace_eq]
     exact Aggregate.perTerm_positive request.positive _
@@ -190,22 +192,22 @@ theorem remaining_error_bound (request : Surface.ExteriorRequest energy error mi
             dsimp only [difference]
             rw [kept]
             simp only [if_neg (by decide : false ≠ true), Data.Gaussian.Norm.Basic.normSq_zero, -eq_self, -iff_self]
-            exact Fraction.Order.Arithmetic.mul_nonneg_direct factorNonnegative
+            exact Arithmetic.mul_nonneg_direct factorNonnegative
               (Aggregate.perTerm_positive perFacePositive _).le)
     apply estimate.trans
     calc
-      _ = factor * (((partitions.get position).cuts.boxes.length : Fraction.Rational) ^ 2 *
+      _ = factor * (((partitions.get position).cuts.boxes.length : Rational) ^ 2 *
         Aggregate.perTerm request.perFace (partitions.get position).cuts.boxes.length) := by ring1
-      _ ≤ _ := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      _ ≤ _ := Arithmetic.mul_le_mul_of_nonneg_left_direct
         (payment perFacePositive)
         factorNonnegative
   have estimate := Indexed.normSq_sumFin_le _ (factor * request.perFace) faceBound
-  have paid : (grid.faces.regulars.length : Fraction.Rational) ^ 2 * (factor * request.perFace) ≤ factor * error := by
+  have paid : (grid.faces.regulars.length : Rational) ^ 2 * (factor * request.perFace) ≤ factor * error := by
     rw [request.perFace_eq]
     calc
-      _ = factor * ((grid.faces.regulars.length : Fraction.Rational) ^ 2 *
+      _ = factor * ((grid.faces.regulars.length : Rational) ^ 2 *
         Aggregate.perTerm error grid.faces.regulars.length) := by ring1
-      _ ≤ _ := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      _ ≤ _ := Arithmetic.mul_le_mul_of_nonneg_left_direct
         (payment request.positive)
         factorNonnegative
   have total := estimate.trans paid
@@ -215,7 +217,7 @@ theorem remaining_error_bound (request : Surface.ExteriorRequest energy error mi
     := by
     dsimp only [difference]
     rw [FiniteSum.Fin.sumFin_congr (fun position => FiniteSum.Fin.sumFin_congr (fun piece => ((fun (keep : Bool) (first
-      second : Data.Gaussian.Basic.Canonical) =>
+      second : Gaussian) =>
       show (if keep then first - second else 0) = (if keep then first else 0) - (if keep then second else 0) from by
         cases keep
         · exact (Data.Gaussian.Basic.sub_zero 0).symm
@@ -226,7 +228,7 @@ theorem remaining_error_bound (request : Surface.ExteriorRequest energy error mi
     intro position
     apply FiniteSum.Fin.sumFin_congr
     intro piece
-    exact congrArg (fun value : Data.Gaussian.Basic.Canonical => if ObservationLower.remainingFaceMask excision position
+    exact congrArg (fun value : Gaussian => if ObservationLower.remainingFaceMask excision position
       then value else 0)
       (EnergyAssembly.raw_localTotal_eq (cache.atDomain position sheet) coefficients ((assemblies.get position).get
         piece))
@@ -235,15 +237,15 @@ theorem remaining_error_bound (request : Surface.ExteriorRequest energy error mi
 
 /-- The positive surface margin survives both ownership and seam/corner losses at one common numerical sample. Piece
 exteriors keep their joining edges; joining different pieces and faces remains a separate comparison. -/
-theorem remaining_energy_lower {ownershipAllowance exteriorAllowance : Fraction.Rational}
+theorem remaining_energy_lower {ownershipAllowance exteriorAllowance : Rational}
     (ownership : Surface.ConjugateRequest energy (ConjugateRequest.energyAllowanceTarget genus
       ownershipAllowance))
     (request : Surface.ExteriorRequest energy (ConjugateRequest.energyAllowanceTarget genus exteriorAllowance)
       ownership.index)
     (ownershipPositive : 0 < ownershipAllowance) (exteriorPositive : 0 < exteriorAllowance)
     (later : request.index ≤ stage) (samples : energy.Readings cache)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (face : Attachment.Face)
-    (assemblies : ExteriorRequest.Assemblies energy cache coefficients) :
+    (coefficients : GaussianVector genus) (face : Attachment.Face)
+    (assemblies : Assemblies energy cache coefficients) :
     (NewtonObservationSurfaceLower.surfaceLowerConstant observations - energyTarget - ownershipAllowance -
       exteriorAllowance) * PreparedObservationCoercivity.coefficientNormSq coefficients ≤
       (remainingExterior excision
@@ -251,8 +253,8 @@ theorem remaining_energy_lower {ownershipAllowance exteriorAllowance : Fraction.
   have close := remaining_error_bound
     excision request later coefficients assemblies
   have normNonnegative : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients := by
-    have bound := Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Fraction.Rational)) _
-      (fun row => Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row))
+    have bound := Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Rational)) _
+      (fun row => Gaussian.normSq_nonneg (coefficients row))
     exact (FiniteSum.Fin.sumFin_zero).symm.trans_le bound
   have squared : Data.Gaussian.Norm.Basic.normSq (LocalEnergy.remainingLocalEnergyArea excision energy cache
     coefficients - remainingExterior
@@ -260,21 +262,21 @@ theorem remaining_energy_lower {ownershipAllowance exteriorAllowance : Fraction.
       (4 * (exteriorAllowance * PreparedObservationCoercivity.coefficientNormSq coefficients)) ^ 2 := by
     apply close.trans
     calc
-      _ = ((genus : Fraction.Rational) ^ 2 * ConjugateRequest.energyAllowanceTarget genus exteriorAllowance) *
+      _ = ((genus : Rational) ^ 2 * ConjugateRequest.energyAllowanceTarget genus exteriorAllowance) *
         PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 := by
         ring1
       _ ≤ (4 * exteriorAllowance) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-          (ConjugateRequest.energyAllowanceTarget_paid exteriorPositive) (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
+          (ConjugateRequest.energyAllowanceTarget_paid exteriorPositive) (Arithmetic.sq_nonneg_direct _)
       _ = _ := by ring1
   have comparison := PreparedSurfaceCoercivity.boundaryEnergy_sub_budget_le
     (LocalEnergy.remainingLocalEnergyArea excision energy cache coefficients)
       (remainingExterior excision
       assemblies) (exteriorAllowance * PreparedObservationCoercivity.coefficientNormSq coefficients)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct exteriorPositive.le normNonnegative) squared
+    (Arithmetic.mul_nonneg_direct exteriorPositive.le normNonnegative) squared
   have lower := ConjugateRequest.remaining_local_energy_lower excision ownership ownershipPositive
     (request.minimum_le.trans later) samples coefficients face
-  have paid := (Fraction.Order.Arithmetic.sub_le_sub_direct lower
+  have paid := (Arithmetic.sub_le_sub_direct lower
     (le_rfl (a := exteriorAllowance * PreparedObservationCoercivity.coefficientNormSq coefficients))).trans comparison
   exact (le_of_eq (by ring1)).trans paid
 

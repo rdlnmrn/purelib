@@ -19,6 +19,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Approximation.Gaussian.Name.Basic (Named)
 open Purelib.Approximation.Gaussian.Name (PositiveReal)
 open Purelib.Data.Gaussian.Basic (Canonical)
@@ -61,39 +63,39 @@ names.
 namespace Purelib.Approximation.Gaussian.Name.PositiveReal.Preparation
 
 /-- The rational constant sixteen used to budget positive-real coordinate refinement. -/
-def refinementDenominator : Fraction.Rational := (2
+def refinementDenominator : Rational := (2
   * 2) * (2 * 2)
 
 /-- The positive-real refinement denominator is strictly positive. -/
 theorem refinementDenominator_pos : 0 <
   refinementDenominator := by
   unfold refinementDenominator
-  exact Fraction.Order.Arithmetic.mul_pos_direct
-    (Fraction.Order.Arithmetic.mul_pos_direct (by decide) (by decide))
-    (Fraction.Order.Arithmetic.mul_pos_direct (by decide) (by decide))
+  exact Arithmetic.mul_pos_direct
+    (Arithmetic.mul_pos_direct (by decide) (by decide))
+    (Arithmetic.mul_pos_direct (by decide) (by decide))
 
 /-- One sixteenth of the original positive-real coordinate lower bound. -/
 def refinementSlack {input :
-  Named} (positive : PositiveReal input) : Fraction.Rational :=
+  Named} (positive : PositiveReal input) : Rational :=
   positive.lower / refinementDenominator
 
 /-- The coordinate refinement margin is strictly positive. -/
 theorem refinementSlack_pos {input :
   Named} (positive : PositiveReal input) :
     0 < refinementSlack positive :=
-  Fraction.Order.Field.div_pos_direct positive.lowerPositive
+  Field.div_pos_direct positive.lowerPositive
     refinementDenominator_pos
 
 /-- The squared coordinate margin used as the positive-real process refinement request. -/
 def refinementTarget {input :
-  Named} (positive : PositiveReal input) : Fraction.Rational :=
+  Named} (positive : PositiveReal input) : Rational :=
   refinementSlack positive ^ 2
 
 /-- The positive-real squared-error refinement request is strictly positive. -/
 theorem refinementTarget_pos {input :
   Named} (positive : PositiveReal input) :
     0 < refinementTarget positive :=
-  Fraction.Order.Arithmetic.pow_pos_direct (refinementSlack_pos
+  Arithmetic.pow_pos_direct (refinementSlack_pos
     positive) 2
 
 /-- Refine the original named state at its lower-bound-dependent squared-error request. -/
@@ -151,7 +153,7 @@ theorem candidate_deviation_sq {input :
       (input.process.accurate input.state (refinementTarget
         positive)
         (refinementTarget_pos positive)).le
-  rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at inside
+  rw [Basic.normSq_eq_canonical] at inside
   exact bound.trans inside
 
 /-- Every possible refined reading's real-coordinate deviation lies between the two signed refinement margins. -/
@@ -166,9 +168,9 @@ theorem candidate_deviation {input :
         refinementSlack positive := by
   have squares := candidate_deviation_sq positive possible
   exact
-    ⟨Fraction.Order.Arithmetic.neg_le_of_sq_le_sq_direct
+    ⟨Arithmetic.neg_le_of_sq_le_sq_direct
         (refinementSlack_pos positive).le squares,
-      Fraction.Order.Arithmetic.le_of_sq_le_sq_direct
+      Arithmetic.le_of_sq_le_sq_direct
         (refinementSlack_pos positive).le squares⟩
 
 /-- Eight times the refinement margin is half the original positive-real lower bound. -/
@@ -176,7 +178,7 @@ theorem refinementSlack_mul_eight {input :
   Named}
     (positive : PositiveReal input) :
     refinementSlack positive * 8 = positive.lower / 2 := by
-  apply Fraction.Field.mul_right_cancel_of_ne (c := 2) (by decide)
+  apply Field.mul_right_cancel_of_ne (c := 2) (by decide)
   calc
     (refinementSlack positive * 8) * 2 =
         refinementSlack positive *
@@ -184,11 +186,11 @@ theorem refinementSlack_mul_eight {input :
       unfold refinementDenominator
       ring1
     _ = positive.lower :=
-      Fraction.Field.div_mul_cancel_of_ne positive.lower
+      Field.div_mul_cancel_of_ne positive.lower
         refinementDenominator
           refinementDenominator_pos.ne'
     _ = (positive.lower / 2) * 2 :=
-      (Fraction.Field.div_mul_cancel_of_ne positive.lower 2
+      (Field.div_mul_cancel_of_ne positive.lower 2
         (by decide)).symm
 
 /-- The refinement margin is at most half the retained positive-real lower bound. -/
@@ -198,9 +200,9 @@ theorem refinementSlack_le_half {input :
   calc
     refinementSlack positive =
       refinementSlack positive * 1 :=
-      (Fraction.Field.mul_one_direct _).symm
+      (Field.mul_one_direct _).symm
     _ ≤ refinementSlack positive * 8 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (by decide)
+      Arithmetic.mul_le_mul_of_nonneg_left_direct (by decide)
         (refinementSlack_pos positive).le
     _ = positive.lower / 2 := refinementSlack_mul_eight positive
 
@@ -233,17 +235,17 @@ theorem half_lower_le_refinedCenter {input :
           (refinedCenter positive).re := by ring1
       _ ≤ refinementSlack positive +
         (refinedCenter positive).re :=
-        Fraction.Order.Arithmetic.add_le_add_right_direct deviationUpper _
+        Arithmetic.add_le_add_right_direct deviationUpper _
       _ = (refinedCenter positive).re +
         refinementSlack positive := by
         ring1
-  apply Fraction.Order.Arithmetic.le_of_add_le_add_right_direct
+  apply Arithmetic.le_of_add_le_add_right_direct
     (c := refinementSlack positive)
   calc
     positive.lower / 2 + refinementSlack positive =
         refinementSlack positive + positive.lower / 2 := by ring1
     _ ≤ positive.lower / 2 + positive.lower / 2 :=
-      Fraction.Order.Arithmetic.add_le_add_right_direct
+      Arithmetic.add_le_add_right_direct
         (refinementSlack_le_half positive) _
     _ = positive.lower := Field.two_halves positive.lower
     _ ≤ (refinedCenter positive).re +
@@ -254,7 +256,7 @@ theorem half_lower_le_refinedCenter {input :
 theorem refinedCenter_pos {input :
   Named} (positive : PositiveReal input) :
     0 < (refinedCenter positive).re :=
-  (Fraction.Order.Field.div_pos_direct positive.lowerPositive
+  (Field.div_pos_direct positive.lowerPositive
     (by decide)).trans_le (half_lower_le_refinedCenter positive)
 end Purelib.Approximation.Gaussian.Name.PositiveReal.Preparation
 

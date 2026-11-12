@@ -163,11 +163,11 @@ open Purelib.Riemann.Topology.PreparedRefinementRootChains (RootChain)
 open Purelib.Riemann.Paths.PreparedSegmentSources (SegmentSource)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
   {source : Differential genus} {axes :
     PrimitiveAxes base.bank.grid}
   {domains : FaceDomainBank frames
@@ -182,12 +182,12 @@ and root name are retained.
 
 The supplied prefix determines a boundary of the same original word. Its coordinate and root name are retained in the
 two resulting certificates, together with all original junction witnesses. -/
-theorem RootedWord.split : ∀ (before : List (RootedWords.LiftedFragment axes domains mesh source count target))
-    {after : List (RootedWords.LiftedFragment axes domains mesh source count target)}
+theorem RootedWord.split : ∀ (before : List (LiftedFragment axes domains mesh source count target))
+    {after : List (LiftedFragment axes domains mesh source count target)}
     {first last : Data.Gaussian.Basic.Canonical} {firstName lastName : Gaussian.Name.Basic.Named},
-    LiftedFragment.RootedWord (before ++ after) first firstName last lastName →
-      ∃ middle middleName, LiftedFragment.RootedWord before first firstName middle middleName ∧
-        LiftedFragment.RootedWord after middle middleName last lastName
+    RootedWord (before ++ after) first firstName last lastName →
+      ∃ middle middleName, RootedWord before first firstName middle middleName ∧
+        RootedWord after middle middleName last lastName
   | [], _, first, _, firstName, _, word =>
       ⟨first, firstName, .nil rfl ⟨NamedEquivalent.refl _⟩, word⟩
   | _ :: before, _, _, _, _, _, .cons piece coordinate root tail => by
@@ -199,17 +199,17 @@ original path segments.
 
 Each head group carries the original parent identity of every fragment and its rooted endpoint word. The dependent tail
 preserves the remaining parents and ordered occurrences. -/
-inductive ParentGroups : List (PreparedSubdivisionModelCore.CenteredEdge curve source) →
-    List (RootedWords.LiftedFragment axes domains mesh source count target) → Prop
+inductive ParentGroups : List (CenteredEdge curve source) →
+    List (LiftedFragment axes domains mesh source count target) → Prop
   /-- The empty original parent list retains an empty fragment grouping. -/ | nil :
     ParentGroups [] []
   /-- Retain one actual parent's ordered fragments and original endpoint-root chain before the remaining parent groups.
   -/
-  | cons {parent : PreparedSubdivisionModelCore.CenteredEdge curve source} {parents : List
-    (PreparedSubdivisionModelCore.CenteredEdge curve source)}
-      {block pieces : List (RootedWords.LiftedFragment axes domains mesh source count target)}
+  | cons {parent : CenteredEdge curve source} {parents : List
+    (CenteredEdge curve source)}
+      {block pieces : List (LiftedFragment axes domains mesh source count target)}
       (original : ∀ piece ∈ block, piece.parent = parent)
-      (word : LiftedFragment.RootedWord block (parent.edge.point 0) (parent.edge.rootName 0 parent.edge.baseInside)
+      (word : RootedWord block (parent.edge.point 0) (parent.edge.rootName 0 parent.edge.baseInside)
         (parent.edge.point 1) (parent.edge.rootName 1 (by decide)))
       (tail : ParentGroups parents
         pieces) : ParentGroups
@@ -221,13 +221,13 @@ namespace ParentGroups
 
 Finite recursion follows the supplied original parent prefix. The output concatenation equation retains exactly the same
 fragment occurrences, with both original grouped tails. -/
-theorem split : ∀ (before : List (PreparedSubdivisionModelCore.CenteredEdge curve source))
-    {after : List (PreparedSubdivisionModelCore.CenteredEdge curve source)} {pieces : List (RootedWords.LiftedFragment
+theorem split : ∀ (before : List (CenteredEdge curve source))
+    {after : List (CenteredEdge curve source)} {pieces : List (LiftedFragment
       axes domains mesh source count target)},
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.ParentGroups (before ++ after) pieces
+    ParentGroups (before ++ after) pieces
       → ∃ left right, pieces = left ++ right ∧
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.ParentGroups before left ∧
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.ParentGroups after right
+      ParentGroups before left ∧
+        ParentGroups after right
   | [], _, pieces, groups => ⟨[], pieces, rfl, .nil, groups⟩
   | _ :: before, _, _, .cons (block := block) original word tail => by
       obtain ⟨left, right, equal, firstPart, lastPart⟩ :=
@@ -241,19 +241,19 @@ prepared-parent records.
 
 The retained grouping supplies each piece's original parent identity. Membership of that same parent in the supplied
 source chain transports its original segment-source certificate. -/
-theorem segment_sources {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)}
-    {pieces : List (RootedWords.LiftedFragment axes domains mesh source count target)}
-    (groups : Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.ParentGroups parents pieces)
+theorem segment_sources {parents : List (CenteredEdge curve source)}
+    {pieces : List (LiftedFragment axes domains mesh source count target)}
+    (groups : ParentGroups parents pieces)
       {ambient : Rational.Box} {start finish : Data.Gaussian.Basic.Canonical}
     {segment : ClearPath.ClearSegment curve.polynomial ambient start finish}
-    (original : ∀ parent ∈ parents, PreparedSegmentSources.SegmentSource segment parent) :
-    ∀ piece ∈ pieces, PreparedSegmentSources.SegmentSource segment piece.parent := by
+    (original : ∀ parent ∈ parents, SegmentSource segment parent) :
+    ∀ piece ∈ pieces, SegmentSource segment piece.parent := by
   induction groups with
   | nil => intro piece member; exact (List.not_mem_nil member).elim
   | @cons parent parents block pieces same word tail ih =>
       intro piece member
       rcases Membership.mem_append.mp member with member | member
-      · exact (congrArg (PreparedSegmentSources.SegmentSource segment) (same piece member)).mpr (original parent
+      · exact (congrArg (SegmentSource segment) (same piece member)).mpr (original parent
           List.mem_cons_self)
       · exact ih (fun parent member => original parent (List.mem_cons_of_mem _ member)) piece member
 
@@ -262,14 +262,14 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.Lift
 
 The supplied parent coordinate and root chains align the original head word with its retained tail. Concatenation keeps
 those same intermediate owners and every original fragment occurrence. -/
-theorem rooted {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)}
-    {pieces : List (RootedWords.LiftedFragment axes domains mesh source count target)}
-    (groups : Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.ParentGroups parents pieces)
+theorem rooted {parents : List (CenteredEdge curve source)}
+    {pieces : List (LiftedFragment axes domains mesh source count target)}
+    (groups : ParentGroups parents pieces)
       {first last : Data.Gaussian.Basic.Canonical}
     {firstName lastName : Gaussian.Name.Basic.Named}
-    (coordinates : RootedWords.ParentCoordinates parents first last) (roots : PreparedRefinementRootChains.RootChain
+    (coordinates : ParentCoordinates parents first last) (roots : RootChain
       parents firstName lastName) :
-    LiftedFragment.RootedWord pieces first firstName last lastName := by
+    RootedWord pieces first firstName last lastName := by
   induction groups generalizing first last firstName lastName with
   | nil =>
       cases coordinates
@@ -294,9 +294,9 @@ open
 
 Structural membership in the retained source spine identifies each original head or tail fragment. Their parent field is
 the same supplied centered edge. -/
-private theorem parent_eq {parent : PreparedSubdivisionModelCore.CenteredEdge curve source} {partition :
-  Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)}
-    {request : UniformPreparedRequests.LocalRequest parent count target} {intervals : List
+private theorem parent_eq {parent : CenteredEdge curve source} {partition :
+  Partition 0 1 (axes.parameters parent)}
+    {request : LocalRequest parent count target} {intervals : List
       PreparedAxisPartitions.Interval}
     {fragments : RegularFaces.RegularPrimitiveFragments axes parent partition intervals}
     {entries : FragmentSheets domains request fragments}
@@ -320,19 +320,19 @@ open
 
 Each head source bank supplies its original parent identities and rooted interval walk. The remaining cached source
 spine gives the ordered tail grouping. -/
-theorem parentGroups {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)} {splits :
-  PreparedPrimitiveSplits.PrimitiveSplits axes parents}
+theorem parentGroups {parents : List (CenteredEdge curve source)} {splits :
+  PrimitiveSplits axes parents}
     {fragments : RegularFaces.RegularPrimitiveSplits (base := base) axes splits} {requests :
-      UniformPreparedRequests.RequestedParents count target parents}
+      RequestedParents count target parents}
     {entries : SplitSheets domains fragments requests} (sources : LiftedSources mesh entries) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.ParentGroups parents (pieces sources)
+    LiftedFragment.ParentGroups parents (pieces sources)
       := by
   induction sources with
   | nil => exact .nil
   | @cons parent parents partition splits head tail request requests firstEntries restEntries firstSources restSources
     ih =>
       exact .cons
-        (RegularPrimitiveFragments.SheetEntries.LiftedSources.parent_eq
+        (LiftedSources.parent_eq
         firstSources)
         (LiftedSources.rooted_of_walk firstSources partition.walk partition.walk_edges.symm parent.edge.baseInside (by
           decide)) ih

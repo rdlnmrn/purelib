@@ -9,6 +9,7 @@ import Purelib.Polynomial.Dense.Gaussian.Basic
 
 import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Data.Gaussian.Field
+import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
 open Purelib.Polynomial.Dense.Basic (DensePolynomial)
@@ -116,6 +117,35 @@ def rootData {p :
             exact Nat.succ_lt_succ
               (Nat.succ_lt_succ (Nat.zero_lt_succ remaining.length))
           exact False.elim ((Nat.ne_of_lt strict) count)
+
+/-- A degree-one polynomial evaluates as its original leading coefficient times displacement from any exact root.
+
+The original normalized two-coefficient record supplies the same leading and
+constant scalars. The supplied exact root cancels their constant evaluation;
+no replacement root or coefficient table is selected.
+-/
+theorem eval_eq_leading_mul_sub {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
+    (degree : polynomial.natDegree = 1) (root : Gaussian.Basic.Canonical)
+    (zero : polynomial.eval root = 0) (point : Gaussian.Basic.Canonical) :
+    polynomial.eval point = polynomial.leadingCoeff * (point - root) := by
+  let data := rootData degree
+  have evaluation (input : Gaussian.Basic.Canonical) :
+      polynomial.eval input = data.leading * input + data.trailing := by
+    rw [← DensePolynomial.eval_normalize polynomial input]
+    change DensePolynomial.evalCoeffs input polynomial.normalize.coeffs = _
+    rw [data.normalizedCoeffs]
+    change (0 * input + data.leading) * input + data.trailing = _
+    ring1
+  have leading : polynomial.leadingCoeff = data.leading := by
+    change polynomial.normalize.coeffs.headD 0 = data.leading
+    rw [data.normalizedCoeffs]
+    rfl
+  calc
+    polynomial.eval point = data.leading * point + data.trailing := evaluation point
+    _ = data.leading * (point - root) + (data.leading * root + data.trailing) := by ring1
+    _ = data.leading * (point - root) := by rw [← evaluation root, zero]; ring1
+    _ = polynomial.leadingCoeff * (point - root) := congrArg (fun coefficient => coefficient * (point - root))
+      leading.symm
 
 end Purelib.Polynomial.Dense.Gaussian.Roots.Linear
 

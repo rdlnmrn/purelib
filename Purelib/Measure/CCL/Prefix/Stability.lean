@@ -26,6 +26,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Mathlib.Order.Basic
 
+open Purelib.Approximation.CCL
+
 open Purelib.Data.CCL.Encoding.Cylinder.Basic (Realizes)
 
 section
@@ -52,7 +54,7 @@ open Purelib.Geometry.Projective
 -/
 theorem prefixFamilyProbe_l1Distance_le
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
     (sensitive : ∀ left right,
@@ -67,15 +69,15 @@ theorem prefixFamilyProbe_l1Distance_le
         (fun certificate => probe (leftPoints certificate))
         (fun certificate => probe (rightPoints certificate)) ≤
       distribution.expectation fun certificate =>
-        factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks := by
+        factor * Cylinder.cylinderSpread certificate.blocks := by
   change distribution.expectation
       (fun certificate => Distance.rationalSeparation
         (probe (leftPoints certificate)) (probe (rightPoints certificate))) ≤
     distribution.expectation fun certificate =>
-      factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks
+      factor * Cylinder.cylinderSpread certificate.blocks
   apply distribution.expectation_mono
   intro atom member
-  exact Approximation.CCL.Prefix.realized_probe_separation_le
+  exact Prefix.realized_probe_separation_le
     (leftRealizes atom member) (rightRealizes atom member)
     probe factor factorNonnegative sensitive
 
@@ -84,7 +86,7 @@ open Purelib.Measure
 /-- Two realizing probe expectations differ by at most the expected scaled cylinder spread. -/
 theorem prefixFamilyProbe_expectation_separation_le
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
     (sensitive : ∀ left right,
@@ -101,7 +103,7 @@ theorem prefixFamilyProbe_expectation_separation_le
         (distribution.expectation fun certificate =>
           probe (rightPoints certificate)) ≤
       distribution.expectation fun certificate =>
-        factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks := by
+        factor * Cylinder.cylinderSpread certificate.blocks := by
   exact (distribution.expectation_separation_le_l1Distance
     (fun certificate => probe (leftPoints certificate))
     (fun certificate => probe (rightPoints certificate))).trans
@@ -112,7 +114,7 @@ theorem prefixFamilyProbe_expectation_separation_le
 /-- A realizing probe expectation lies within the retained expected radius of the original witness expectation. -/
 theorem prefixFamilyProbe_expectation_separation_witness_le
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
     (sensitive : ∀ left right,
@@ -123,8 +125,8 @@ theorem prefixFamilyProbe_expectation_separation_witness_le
       Realizes atom.item.blocks (points atom.item)) :
     Distance.rationalSeparation
         (distribution.expectation fun certificate => probe (points certificate))
-        (CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) ≤
-      CCL.Prefix.prefixFamilyProbeRadius distribution factor := by
+        (prefixFamilyProbeWitnessExpectation distribution probe) ≤
+      prefixFamilyProbeRadius distribution factor := by
   exact prefixFamilyProbe_expectation_separation_le distribution probe factor
     factorNonnegative sensitive points (fun certificate => certificate.witness)
     pointsRealize (fun atom member => atom.item.witnessRealizes)
@@ -134,7 +136,7 @@ end
 /-- Powered Lp distance between two realizing probe families is bounded by the expected power of scaled spread. -/
 theorem prefixFamilyProbe_poweredLpDistance_le
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (exponent : Nat)
     (factor : Fraction.Rational) (factorNonnegative : 0 ≤ factor)
     (sensitive : ∀ left right,
@@ -149,16 +151,16 @@ theorem prefixFamilyProbe_poweredLpDistance_le
         (fun certificate => probe (leftPoints certificate))
         (fun certificate => probe (rightPoints certificate)) ≤
       distribution.expectation fun certificate =>
-        (factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks) ^ exponent := by
+        (factor * Cylinder.cylinderSpread certificate.blocks) ^ exponent := by
   change distribution.expectation
       (fun certificate => Distance.rationalSeparation
         (probe (leftPoints certificate))
         (probe (rightPoints certificate)) ^ exponent) ≤
     distribution.expectation fun certificate =>
-      (factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks) ^ exponent
+      (factor * Cylinder.cylinderSpread certificate.blocks) ^ exponent
   apply distribution.expectation_mono
   intro atom member
-  have separationLe := Approximation.CCL.Prefix.realized_probe_separation_le
+  have separationLe := Prefix.realized_probe_separation_le
     (leftRealizes atom member) (rightRealizes atom member)
     probe factor factorNonnegative sensitive
   exact Fraction.Order.Arithmetic.pow_le_pow_direct
@@ -171,7 +173,7 @@ The natural exponent and both realizing families refer to the exact same origina
 block prefixes. -/
 theorem prefixFamilyProbe_separationProbability_le
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (exponent : Nat)
     (factor : Fraction.Rational) (factorNonnegative : 0 ≤ factor)
     (sensitive : ∀ left right,
@@ -184,11 +186,11 @@ theorem prefixFamilyProbe_separationProbability_le
     (rightRealizes : ∀ atom, atom ∈ distribution.atoms →
       Realizes atom.item.blocks (rightPoints atom.item)) :
     distribution.probability
-        (Measure.separationAtLeast threshold
+        (separationAtLeast threshold
           (fun certificate => probe (leftPoints certificate))
           (fun certificate => probe (rightPoints certificate))) ≤
       (distribution.expectation fun certificate =>
-        (factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks) ^ exponent) /
+        (factor * Cylinder.cylinderSpread certificate.blocks) ^ exponent) /
           threshold ^ exponent := by
   have markov :=
     distribution.probability_separationAtLeast_le_poweredLpDistance
@@ -205,7 +207,7 @@ theorem prefixFamilyProbe_separationProbability_le
         (threshold ^ exponent)⁻¹ ≤
     distribution.expectation
         (fun certificate =>
-          (factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks) ^ exponent) *
+          (factor * Cylinder.cylinderSpread certificate.blocks) ^ exponent) *
       (threshold ^ exponent)⁻¹
   exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
     distanceBound

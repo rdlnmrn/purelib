@@ -20,6 +20,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-!
@@ -53,7 +55,7 @@ namespace Name
   Fraction.Rational) : Fraction.Rational := target / 4
 
 /-- Operand radii below the quarter-target request make the sum ball's squared radius below the original target. -/
-theorem add_radius_lt (left right : Enclosure.Ball) {target :
+theorem add_radius_lt (left right : Ball) {target :
   Fraction.Rational}
     (leftSmall : left.radiusSq < additiveInputTarget target)
     (rightSmall : right.radiusSq < additiveInputTarget target) :
@@ -63,9 +65,9 @@ theorem add_radius_lt (left right : Enclosure.Ball) {target :
   have sumSmall : left.radiusSq + right.radiusSq < target / 2 := by
     calc
       left.radiusSq + right.radiusSq < target / 4 + target / 4 :=
-        Fraction.Order.Arithmetic.add_lt_add_direct leftSmall rightSmall
-      _ = target / 2 := Purelib.Data.Rat.Bounds.Quarter.two_quarters target
-  have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+        Arithmetic.add_lt_add_direct leftSmall rightSmall
+      _ = target / 2 := Bounds.Quarter.two_quarters target
+  have scaled := Arithmetic.mul_lt_mul_of_pos_left_direct
     (by decide : (0 : Fraction.Rational) < 2) sumSmall
   calc
     2 * (left.radiusSq + right.radiusSq) < 2 * (target / 2) := scaled
@@ -81,9 +83,9 @@ theorem add_radius_lt (left right : Enclosure.Ball) {target :
 Each operand receives one quarter of the positive output target; the centre bound is twice the sum of the retained
 operand bounds. -/
 @[expose] public def add (left right :
-  Gaussian.Request.Basic.Name) : Gaussian.Request.Basic.Name where
+  Name) : Name where
   request target positive :=
-    let inputPositive := Purelib.Data.Rat.Bounds.Quarter.quarter_pos positive
+    let inputPositive := Bounds.Quarter.quarter_pos positive
     (left.request (additiveInputTarget target) inputPositive).add
       (right.request (additiveInputTarget target) inputPositive)
   accurate target positive := by
@@ -92,18 +94,18 @@ operand bounds. -/
     · exact right.accurate _ _
   centerBound := 2 * (left.centerBound + right.centerBound)
   centerBound_nonneg :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    Arithmetic.mul_nonneg_direct (by decide)
       (add_nonneg left.centerBound_nonneg right.centerBound_nonneg)
   center_bounded target positive := by
     dsimp only
     exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add (left.center_bounded _ _) (right.center_bounded _ _))
         (by decide))
 
 /-- Negate each requested ball while retaining the original accuracy and uniform centre bound. -/
-@[expose] public def neg (name : Gaussian.Request.Basic.Name) :
-  Gaussian.Request.Basic.Name where
+@[expose] public def neg (name : Name) :
+  Name where
   request target positive := (name.request target positive).neg
   accurate target positive := name.accurate target positive
   centerBound := name.centerBound
@@ -115,22 +117,22 @@ operand bounds. -/
 
 /-- Subtract two enclosure request oracles by adding the left oracle to the negated right oracle. -/
 @[expose] public def sub (left right :
-  Gaussian.Request.Basic.Name) : Gaussian.Request.Basic.Name := left.add right.neg
+  Name) : Name := left.add right.neg
 
 /-! ## Request-level soundness -/
 
 /-- The sum request admits sums of readings admitted by the two original quarter-target operand requests. -/
 theorem request_contains_add (left right :
-  Gaussian.Request.Basic.Name) {target : Fraction.Rational}
+  Name) {target : Fraction.Rational}
     (positive : 0 < target) {x y : Data.Gaussian.Basic.Canonical}
     (xInside :
       (left.request (additiveInputTarget target)
-        (Purelib.Data.Rat.Bounds.Quarter.quarter_pos positive)).Contains x)
+        (Bounds.Quarter.quarter_pos positive)).Contains x)
     (yInside :
       (right.request (additiveInputTarget target)
-        (Purelib.Data.Rat.Bounds.Quarter.quarter_pos positive)).Contains y) :
+        (Bounds.Quarter.quarter_pos positive)).Contains y) :
     (left.add right).request target positive |>.Contains (x + y) :=
-  Enclosure.Ball.contains_add xInside yInside
+  Ball.contains_add xInside yInside
 end Name
 
 end Purelib.Approximation.Gaussian.Request.Basic
@@ -168,17 +170,17 @@ namespace Coherent
 theorem additiveInputTarget_lt_target {target :
   Fraction.Rational}
     (positive : 0 < target) :
-    Purelib.Approximation.Gaussian.Request.Basic.Name.additiveInputTarget target <
+    Name.additiveInputTarget target <
       target := by
-  unfold Approximation.Gaussian.Request.Basic.Name.additiveInputTarget
-  apply (Fraction.Order.Field.div_lt_iff_pos
+  unfold Name.additiveInputTarget
+  apply (Field.div_lt_iff_pos
     (show (0 : Fraction.Rational) < 4 by decide)).2
   have threeTargetPositive : 0 < 3 * target :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide) positive
+    Arithmetic.mul_pos_direct (by decide) positive
   calc
     target = target + 0 := by ring1
     _ < target + 3 * target :=
-      Fraction.Order.Arithmetic.add_lt_add_left_direct
+      Arithmetic.add_lt_add_left_direct
         threeTargetPositive target
     _ = target * 4 := by ring1
 end Coherent

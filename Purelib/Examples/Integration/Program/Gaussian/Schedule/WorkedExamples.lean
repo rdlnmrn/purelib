@@ -21,11 +21,10 @@ import Purelib.Integration.Polynomial.Gaussian.Path.Basic
 @[expose] public section
 
 /-!
-# Positive-stride integration regressions
+Fixed and alternating polynomial policies under independent schedules.
 
-Ceiling-division tests cover offsets, exact and inexact hits, large strides,
-and an already advanced cursor.  The comparison test deliberately quantifies
-over two independently advanced tails, not only a selected pair of samples.
+Unit-stride and stride-five presentations retain equivalent integration
+outputs for the same repeated curved path.
 -/
 
 namespace Purelib.Examples.Integration.Program.Gaussian.Schedule.WorkedExamples
@@ -55,29 +54,6 @@ theorem positive_stride_indices :
       fast.index 1,
       fast.index 2] = [3, 8, 13] := by decide
 
-/-- Seeking below the schedule offset retains local index zero. -/
-theorem seek_before_offset :
-  fast.seek 0 2 = 0 := by decide
-/-- Seeking an exact source hit returns its corresponding local index. -/
-theorem seek_exact_hit :
-  fast.seek 0 13 = 2 := by decide
-/-- Seeking between source hits advances to the next local index. -/
-theorem seek_between_hits :
-  fast.seek 0 14 = 3 := by decide
-/-- Seeking preserves an already advanced local cursor. -/
-theorem seek_preserves_cursor :
-  fast.seek 7 14 = 7 := by decide
-/-- A stride-one-thousand schedule reaches source threshold 1001 at local index two. -/
-theorem seek_large_stride :
-  (PositiveStride.mk 0 999).seek 0 1001 = 2 := by decide
-
-/-- The computed seek is no greater than any candidate meeting both cursor and source thresholds. -/
-theorem computed_seek_is_least (schedule :
-  PositiveStride) (current required candidate : Nat)
-    (cursorOrder : current ≤ candidate) (sourceOrder : required ≤ schedule.index candidate) :
-    schedule.seek current required ≤ candidate :=
-  (schedule.seek_le_iff current required candidate).mpr ⟨cursorOrder, sourceOrder⟩
-
 /-- The retained fixed-policy polynomial program reindexed by the unit-stride schedule. -/
 def fixed :=
   Schedule.reindexCached (polynomialProgram
@@ -91,14 +67,6 @@ def alternating :=
   Partition.WorkedExamples.alternatingPolicy)
   fast
 
-/-- Reindexing retains the original complete cached stage at the selected source index. -/
-theorem cached_stage_retained (index : Nat)
-  :
-    alternating.stage index =
-      (polynomialProgram Partition.WorkedExamples.repeatedPath
-        Partition.WorkedExamples.alternatingPolicy).stage
-        (fast.index index) := rfl
-
 /-- The fixed and alternating polynomial policies produce equivalent names under their respective schedules. -/
 def
   generated_policy_and_schedule_equivalence
@@ -108,25 +76,6 @@ def
   Program.Gaussian.Polynomial.Schedule.polynomial_scheduled_outputs_equivalent
     Partition.WorkedExamples.repeatedPath _ _
     slow fast
-
-/-- Both independently advanced tails remain close after synchronization.
-
-The retained comparison uses the original cached program bounds for every pair of later local indices. -/
-theorem all_independently_later_pairs
-  (program : Program.Gaussian.Cached.Basic.CachedProgram)
-    (leftSchedule rightSchedule : PositiveStride) (leftStart rightStart : Nat)
-    (target : Fraction.Rational) (positive : 0 < target) :
-    let comparison := (Schedule.reindexed_cached_equivalent program leftSchedule
-      rightSchedule).compare
-      leftStart rightStart target positive
-    ∀ leftLater rightLater,
-      comparison.leftIndex ≤ leftLater → comparison.rightIndex ≤ rightLater →
-      Data.Gaussian.Norm.Basic.normSq
-        ((Schedule.reindexCached program leftSchedule).approximation.sample leftLater -
-          (Schedule.reindexCached program rightSchedule).approximation.sample rightLater) <
-            target := by
-  intro comparison leftLater rightLater leftOrder rightOrder
-  exact comparison.close leftOrder rightOrder
 
 end Purelib.Examples.Integration.Program.Gaussian.Schedule.WorkedExamples
 

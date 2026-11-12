@@ -1,4 +1,7 @@
 module
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy
+import Purelib.Polynomial.Geometry.ClearPath
+import Purelib.Riemann.Paths.PreparedPathTrace
 meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Data.Gaussian.Norm.Basic
 import Purelib.Approximation.Rational.Geometric.Basic
@@ -11,7 +14,7 @@ import Purelib.Geometry.Rational.Box.Segment
 import Purelib.Curves.Hyperelliptic.Branches.BranchCellBank
 import Purelib.Curves.Hyperelliptic.Branches.BranchIsolation
 import Purelib.Curves.Hyperelliptic.Integration.Observation.PreparedFaceTracePrefixes
-import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PreparedComparison
+import Purelib.Riemann.Branches.ContainedPreparedPolynomialSheets
 import Purelib.Data.Rat.Fraction.Compatibility
 import Purelib.Riemann.Branches.RectangularSheetGauge
 import Purelib.Riemann.Integration.PreparedParentSplitting
@@ -23,7 +26,7 @@ import Purelib.Riemann.Paths.RectangularSegmentSplitting
 import Purelib.Riemann.Readings.PreparedPrimitiveSamples
 import Purelib.RootIsolation.SquareRoot.Grid.RootFrames
 public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentReadings
-import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.GluedPrimitives
+import Purelib.Riemann.Comparison.RectangularSharedPrimitiveComparison
 import Purelib.Riemann.Meshes.PuncturedGridFaces
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels
 import Purelib.Riemann.Normalization.RectangularInverseModels
@@ -62,6 +65,8 @@ import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation.Rational
@@ -98,6 +103,10 @@ open Purelib.Riemann.Readings
 original parent primitive. No new subedge or primitive is prepared. -/
 open Purelib.Curves.Hyperelliptic.Branches (BranchCellBank)
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentQueries
+
+open Purelib.Riemann.Comparison.PrimitiveEdgeComparison (PrimitiveOverlapBounds)
+
+open Purelib.Riemann.Paths.PreparedPathTrace (TracedPath)
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
 open Purelib.Riemann.Normalization.RegularFaceInverseModels
@@ -119,7 +128,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.Branch
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face :
@@ -133,65 +142,65 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 
 /-- The retained cell and original request residual charge per squared query displacement. -/
 def queryDensity
-    (bounds : FragmentReadings.FragmentBounds patch differential) (column : Fin (columns + 1)) (row : Fin (rows + 1))
-    {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential} {count : Nat} {target :
+    (bounds : FragmentBounds patch differential) (column : Fin (columns + 1)) (row : Fin (rows + 1))
+    {parent : CenteredEdge curve differential} {count : Nat} {target :
       InverseRootPolynomial.Coordinate}
-    (request : UniformPreparedRequests.LocalRequest parent count target) (index : Nat) : Fraction.Rational :=
-  12 * (Geometric.Basic.quarterRadius (patch.transported.cell column row).model.bound (index + 2) +
-    Geometric.Basic.quarterRadius request.neighborhood.base.model.bound request.request.index) *
+    (request : LocalRequest parent count target) (index : Nat) : Fraction.Rational :=
+  12 * (Basic.quarterRadius (patch.transported.cell column row).model.bound (index + 2) +
+    Basic.quarterRadius request.neighborhood.base.model.bound request.request.index) *
       (bounds.numerator column row * bounds.inverse)
 
 /-- The original residual and coefficient ceilings make the query discrepancy density nonnegative. -/
 theorem queryDensity_nonnegative
-    (bounds : FragmentReadings.FragmentBounds patch differential)
+    (bounds : FragmentBounds patch differential)
     (column : Fin (columns + 1)) (row : Fin (rows + 1))
-    {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential} {count : Nat} {target :
+    {parent : CenteredEdge curve differential} {count : Nat} {target :
       InverseRootPolynomial.Coordinate}
-    (request : UniformPreparedRequests.LocalRequest parent count target) (index : Nat) :
+    (request : LocalRequest parent count target) (index : Nat) :
     0 ≤ queryDensity bounds column row request index :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide)
       (add_nonneg
-        (Geometric.Basic.quarterRadius_nonneg (patch.transported.cell column row).model.bound_nonnegative _)
-        (Geometric.Basic.quarterRadius_nonneg request.neighborhood.base.model.bound_nonnegative _)))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (bounds.atCell column row).numeratorUpper_nonnegative
+        (Basic.quarterRadius_nonneg (patch.transported.cell column row).model.bound_nonnegative _)
+        (Basic.quarterRadius_nonneg request.neighborhood.base.model.bound_nonnegative _)))
+    (Arithmetic.mul_nonneg_direct (bounds.atCell column row).numeratorUpper_nonnegative
       (bounds.atCell column row).inverseUpper_positive.le)
 
 /-- A fixed query density ceiling from the original coarse cell and shared coefficient bounds, independent of later
 refinement. -/
 def uniformQueryDensity
-    (bounds : FragmentReadings.FragmentBounds patch differential)
+    (bounds : FragmentBounds patch differential)
     (column : Fin (columns + 1)) (row : Fin (rows + 1)) : Fraction.Rational :=
   12 * ((patch.transported.cell column row).model.bound + 1 / 16) *
     (bounds.numerator column row * bounds.inverse)
 
 /-- Every original request and shared cell stage satisfies the retained uniform query density ceiling. -/
 theorem queryDensity_uniform_le
-    (bounds : FragmentReadings.FragmentBounds patch differential)
+    (bounds : FragmentBounds patch differential)
     (column : Fin (columns + 1)) (row : Fin (rows + 1))
-    {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential} {count : Nat} {target :
+    {parent : CenteredEdge curve differential} {count : Nat} {target :
       InverseRootPolynomial.Coordinate}
-    (request : UniformPreparedRequests.LocalRequest parent count target) (index : Nat) :
+    (request : LocalRequest parent count target) (index : Nat) :
     queryDensity bounds column row request index ≤
       uniformQueryDensity bounds column row := by
-  have face := Geometric.Basic.quarterRadius_le_scale (patch.transported.cell column row).model.bound_nonnegative (index
+  have face := Basic.quarterRadius_le_scale (patch.transported.cell column row).model.bound_nonnegative (index
     + 2)
-  have source := (Geometric.Basic.quarterRadius_le_scale request.neighborhood.base.model.bound_nonnegative
+  have source := (Basic.quarterRadius_le_scale request.neighborhood.base.model.bound_nonnegative
     request.request.index).trans request.neighborhood.base.model.bound_small
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct face source) (by decide))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (bounds.atCell column row).numeratorUpper_nonnegative
+  exact Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct face source) (by decide))
+    (Arithmetic.mul_nonneg_direct (bounds.atCell column row).numeratorUpper_nonnegative
       (bounds.atCell column row).inverseUpper_positive.le)
 
 set_option genInjectivity false in
 /-- A finite face-refinement request retains the irreducible contribution of the already chosen source primitive request
 explicitly. -/
-structure QueryTail (bounds : FragmentReadings.FragmentBounds patch differential)
+structure QueryTail (bounds : FragmentBounds patch differential)
     (column : Fin (columns + 1)) (row : Fin (rows + 1))
-    {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential} {count : Nat} {target :
+    {parent : CenteredEdge curve differential} {count : Nat} {target :
       InverseRootPolynomial.Coordinate}
-    (request : UniformPreparedRequests.LocalRequest parent count target) (radius : InverseRootPolynomial.Coordinate)
+    (request : LocalRequest parent count target) (radius : InverseRootPolynomial.Coordinate)
       where
   /-- The cached face-refinement stage selected for the original requested radius. -/ index : Nat
   /-- The face stage is the first original model quarter-radius search result below the requested radius. -/ index_eq :
@@ -199,7 +208,7 @@ structure QueryTail (bounds : FragmentReadings.FragmentBounds patch differential
   /-- The retained residual contribution of the already selected original source request. -/ sourceRadius :
     InverseRootPolynomial.Coordinate
   /-- The source contribution is exactly its original model quarter-radius at the retained request index. -/ source_eq :
-    sourceRadius = Geometric.Basic.quarterRadius request.neighborhood.base.model.bound request.request.index
+    sourceRadius = Basic.quarterRadius request.neighborhood.base.model.bound request.request.index
   /-- The cached query discrepancy density ceiling at all later face stages. -/ ceiling :
     InverseRootPolynomial.Coordinate
   /-- The ceiling combines the requested face radius and unchanged source residual with the original coefficient bounds.
@@ -213,43 +222,43 @@ constructive_injectivity QueryTail
 
 /-- If the original source residual fits the requested radius, the retained query ceiling is at most twice the radius
 contribution. -/
-theorem QueryTail.ceiling_le {bounds : FragmentReadings.FragmentBounds patch differential}
+theorem QueryTail.ceiling_le {bounds : FragmentBounds patch differential}
     {column : Fin (columns + 1)} {row : Fin (rows + 1)}
-    {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential} {count : Nat} {target radius :
+    {parent : CenteredEdge curve differential} {count : Nat} {target radius :
       InverseRootPolynomial.Coordinate}
-    {request : UniformPreparedRequests.LocalRequest parent count target} (tail :
+    {request : LocalRequest parent count target} (tail :
       QueryTail bounds column row request radius)
     (sourceSmall : tail.sourceRadius ≤ radius) :
     tail.ceiling ≤ 24 * radius * (bounds.numerator column row * bounds.inverse) := by
   rw [tail.ceiling_eq]
   have nonnegative : 0 ≤ bounds.numerator column row * bounds.inverse :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (bounds.atCell column row).numeratorUpper_nonnegative
+    Arithmetic.mul_nonneg_direct (bounds.atCell column row).numeratorUpper_nonnegative
       (bounds.atCell column row).inverseUpper_positive.le
-  have bounded := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct (le_refl radius) sourceSmall) (by
+  have bounded := Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct (le_refl radius) sourceSmall) (by
           decide : (0 : InverseRootPolynomial.Coordinate) ≤ 12))
     nonnegative
   exact bounded.trans_eq (by ring1)
 
 /-- The paid query-tail ceiling is bounded by the requested radius times the original uniform density scale. -/
-theorem QueryTail.ceiling_le_uniform {bounds : FragmentReadings.FragmentBounds patch differential}
+theorem QueryTail.ceiling_le_uniform {bounds : FragmentBounds patch differential}
     {column : Fin (columns + 1)} {row : Fin (rows + 1)}
-    {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential} {count : Nat} {target radius :
+    {parent : CenteredEdge curve differential} {count : Nat} {target radius :
       InverseRootPolynomial.Coordinate}
-    {request : UniformPreparedRequests.LocalRequest parent count target} (tail :
+    {request : LocalRequest parent count target} (tail :
       QueryTail bounds column row request radius)
     (nonnegative : 0 ≤ radius) (sourceSmall : tail.sourceRadius ≤ radius) :
     tail.ceiling ≤ 32 * radius *
       uniformQueryDensity bounds column row := by
   have scaleNonnegative : 0 ≤ bounds.numerator column row * bounds.inverse :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (bounds.atCell column row).numeratorUpper_nonnegative
+    Arithmetic.mul_nonneg_direct (bounds.atCell column row).numeratorUpper_nonnegative
       (bounds.atCell column row).inverseUpper_positive.le
   have extra : 0 ≤ 384 * radius * (patch.transported.cell column row).model.bound *
       (bounds.numerator column row * bounds.inverse) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) nonnegative)
+    Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct
+        (Arithmetic.mul_nonneg_direct (by decide +kernel) nonnegative)
         (patch.transported.cell column row).model.bound_nonnegative) scaleNonnegative
   exact (tail.ceiling_le sourceSmall).trans ((le_add_of_nonneg_right extra).trans_eq (by
     unfold uniformQueryDensity
@@ -263,15 +272,15 @@ theorem QueryTail.ceiling_le_uniform {bounds : FragmentReadings.FragmentBounds p
 
 /-- Select a finite face-refinement stage while retaining the unchanged original source-request residual contribution
 explicitly. -/
-def queryTail (bounds : FragmentReadings.FragmentBounds patch differential)
+def queryTail (bounds : FragmentBounds patch differential)
     (column : Fin (columns + 1)) (row : Fin (rows + 1))
-    {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential} {count : Nat} {target :
+    {parent : CenteredEdge curve differential} {count : Nat} {target :
       InverseRootPolynomial.Coordinate}
-    (request : UniformPreparedRequests.LocalRequest parent count target) (radius : InverseRootPolynomial.Coordinate)
+    (request : LocalRequest parent count target) (radius : InverseRootPolynomial.Coordinate)
       (positive : 0 < radius) :
     QueryTail bounds column row request radius := by
   let index := Search.firstQuarterBelow (patch.transported.cell column row).model.bound 0 radius
-  let sourceRadius := Geometric.Basic.quarterRadius request.neighborhood.base.model.bound request.request.index
+  let sourceRadius := Basic.quarterRadius request.neighborhood.base.model.bound request.request.index
   let ceiling := 12 * (radius + sourceRadius) * (bounds.numerator column row * bounds.inverse)
   refine ⟨index, rfl, sourceRadius, rfl, ceiling, rfl, ?_⟩
   intro later after
@@ -281,22 +290,22 @@ def queryTail (bounds : FragmentReadings.FragmentBounds patch differential)
   have small := (quarterRadius_antitone
     (patch.transported.cell column row).model.bound_nonnegative
     (after.trans (Nat.le_add_right later 2))).trans chosen.le
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct small (le_refl sourceRadius)) (by decide))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (bounds.atCell column row).numeratorUpper_nonnegative
+  exact Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct small (le_refl sourceRadius)) (by decide))
+    (Arithmetic.mul_nonneg_direct (bounds.atCell column row).numeratorUpper_nonnegative
       (bounds.atCell column row).inverseUpper_positive.le)
 
 /-- Both query parameters may coincide or occur in either order. Closed containment is inherited from the actual
 assigned fragment cell. -/
-theorem query_increment_le (bounds : FragmentReadings.FragmentBounds patch differential)
-    {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential} (piece :
-      RectangularSegmentSplitting.SegmentPiece geometry (parent.edge.point 0) (parent.edge.point 1))
-    {index : Nat} (primitives : RectangularPrimitiveModels.Primitives (Transitions.oriented (patch.sheets.refine
+theorem query_increment_le (bounds : FragmentBounds patch differential)
+    {parent : CenteredEdge curve differential} (piece :
+      SegmentPiece geometry (parent.edge.point 0) (parent.edge.point 1))
+    {index : Nat} (primitives : Primitives (Transitions.oriented (patch.sheets.refine
       index).transitions (patch.sheets.refine index).gauge) (PreparedPrimitiveSamples.differentialNumerator
       differential))
-    (reached : PreparedFaceTracePrefixes.ParentReached face.cell.box (models.frame.owners sheet) parent)
-    {count : Nat} {target : InverseRootPolynomial.Coordinate} (request : UniformPreparedRequests.LocalRequest parent
+    (reached : ParentReached face.cell.box (models.frame.owners sheet) parent)
+    {count : Nat} {target : InverseRootPolynomial.Coordinate} (request : LocalRequest parent
       count target)
     (first last : InverseRootPolynomial.Coordinate)
     (firstInside : piece.interval.lower ≤ first ∧ first ≤ piece.interval.upper)
@@ -327,15 +336,37 @@ theorem query_increment_le (bounds : FragmentReadings.FragmentBounds patch diffe
   have rightFinish := requestInside last lastInside
   rcases request with ⟨localPatch, neighborhood, neighborhoodEq, request, finishInside⟩
   subst neighborhood
-  have bounded := PreparedComparison.prepared_subedge_primitive_increment_le (patch.transported.cell piece.column
-    piece.row)
-    differential parent reached first last (unit first firstInside) (cellInside first firstInside)
-    localPatch count index request.index (primitives.dense piece.column piece.row)
-    (GluedPrimitives.primitive_coefficient_eq differential primitives piece.column piece.row)
+  have bounded := TransportedFaceInverseModels.TransportedCell.prepared_subedge_primitive_increment_le
+    (pairs := 0) (numerator := differentialNumerator differential)
+    (patch.transported.cell piece.column piece.row) differential parent
+    first last (unit first firstInside) (cellInside first firstInside)
+    localPatch count index request.index
+      (by
+        intro otherCount otherPatch otherInside otherSample roots otherIndex
+        exact (patch.transported.cell piece.column piece.row).prepared_query_aligned
+          (entered := TracedPath.build
+            (Polynomial.Geometry.ClearPath.nil (polynomial := curve.polynomial)
+              (ambient := face.cell.box) face.cell.box.anchor) (.nil face.cell.box.anchor) _)
+          face.cell.box.contains_anchor differential (Branches.BranchIsolation.degreePositive curve)
+          (LoopMonodromy.BranchCellBank.referenceAt bank _ (face.cell.anchor_mem face.member)).toLoop
+          parent reached first (unit first firstInside) (cellInside first firstInside) index
+          otherPatch otherInside otherSample roots otherIndex)
+      (primitives.dense piece.column piece.row)
+    (patch.primitive_coefficient_eq (pairs := 0)
+      (entered := TracedPath.build
+        (Polynomial.Geometry.ClearPath.nil (polynomial := curve.polynomial)
+          (ambient := face.cell.box) face.cell.box.anchor)
+        (.nil face.cell.box.anchor) _)
+      face.cell.box.contains_anchor differential
+      (Branches.BranchIsolation.degreePositive curve)
+      (LoopMonodromy.BranchCellBank.referenceAt bank _
+        (face.cell.anchor_mem face.member)).toLoop
+      primitives piece.column piece.row)
     request.model (bounds.atCell piece.column piece.row)
     (cellInside last lastInside) rightStart rightFinish
+  rewrite [PrimitiveOverlapBounds.weight_zero] at bounded
   exact bounded.trans_eq (by
-    change _ = 12 * (Geometric.Basic.quarterRadius _ (index + 2) + Geometric.Basic.quarterRadius _ request.index) * _ *
+    change _ = 12 * (Basic.quarterRadius _ (index + 2) + Basic.quarterRadius _ request.index) * _ *
       _
     rw [Model.refine_bound,
       SeededNeighborhood.refine,

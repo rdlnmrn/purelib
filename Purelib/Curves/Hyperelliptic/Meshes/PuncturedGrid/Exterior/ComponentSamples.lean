@@ -85,12 +85,12 @@ constructive_injectivity MappedSplit
 identity. -/
 @[expose] def splitMapped {Alpha : Type u} {Beta : Type v} (map : Alpha → Beta) :
     (first last : List Beta) → (values : List Alpha) → values.map map = first ++ last →
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSamples.MappedSplit map first last values
+      MappedSplit map first last values
   | [], _, values, equal => ⟨[], values, rfl, equal, rfl⟩
   | _ :: _, _, [], equal => by cases equal
   | first :: remaining, last, value :: values, equal => by
       have parts := List.cons.inj equal
-      let split := Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSamples.splitMapped map remaining
+      let split := ComponentSamples.splitMapped map remaining
         last values parts.2
       exact ⟨value :: split.before, split.after, congrArg₂ List.cons parts.1 split.before_eq,
         split.after_eq, congrArg (List.cons value) split.append_eq⟩
@@ -108,28 +108,28 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
   {index depth readingIndex : Nat} {box : Rational.Box}
   {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
     Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains}
-  {localTarget localArea : Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
+  {localTarget localArea : InverseRootPolynomial.Coordinate} {floor : Nat}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSamples
 
 set_option genInjectivity false in
 /-- One original exterior component with its actual retained occurrence samples and cached cap and surface summaries. -/
-structure SampledComponent (sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box)
-    (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains) (depth
+structure SampledComponent (sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential index box)
+    (shared : Face.PrimitiveData.FacePrimitiveBank differential index domains) (depth
       readingIndex : Nat)
-    (localTarget localArea : Normalization.InverseRootPolynomial.Coordinate) (floor : Nat) where
+    (localTarget localArea : InverseRootPolynomial.Coordinate) (floor : Nat) where
   /-- The original exterior component and its retained surface preparation. -/ component :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceComponent
+    SurfaceComponent
     regular domains differential
   /-- The actual samples of that component's original occurrences. -/ values : List
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry (regular := regular)
+    (SurfaceRequests.AllSurfacePreparation.SampledEntry (regular := regular)
     sample shared depth readingIndex localTarget localArea floor)
   /-- The sample occurrences equal the original component order exactly. -/ occurrences_eq : values.map (fun value =>
     value.entry.occurrence) = component.prepared.occurrences
   /-- The cached summary of the actual complete cap paths. -/ cap : Path.IncrementArea.Summary (values.map (fun value =>
     value.evaluated.capPath)).flatten
   /-- The summary of the corresponding original surface increments. -/ surface : Path.IncrementArea.Summary (values.map
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry.increment)
+    SurfaceRequests.AllSurfacePreparation.SampledEntry.increment)
 
 constructive_injectivity SampledComponent
 
@@ -140,28 +140,28 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSa
 /-- Group the supplied original occurrence samples and combine their cached cap summaries without new primitive
 readings. -/
 @[expose] def build (component :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceComponent
+  SurfaceComponent
   regular domains differential)
-    (values : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry
+    (values : List (SurfaceRequests.AllSurfacePreparation.SampledEntry
       (regular := regular) sample shared depth readingIndex localTarget localArea floor))
     (occurrences : values.map (fun value => value.entry.occurrence) = component.prepared.occurrences) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSamples.SampledComponent (regular := regular) sample shared
+    SampledComponent (regular := regular) sample shared
       depth readingIndex localTarget localArea floor := by
   refine ⟨component, values, occurrences, ?_, Path.IncrementArea.Summary.build (values.map
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry.increment)⟩
+    SurfaceRequests.AllSurfacePreparation.SampledEntry.increment)⟩
   simpa only [Map.map_map, Function.comp_def,
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry.pair, -eq_self,
+    SurfaceRequests.AllSurfacePreparation.SampledEntry.pair, -eq_self,
     -iff_self] using
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry.rightSummary values
+    SurfaceRequests.AllSurfacePreparation.SampledEntry.rightSummary values
 
 /-- In even degree, the actual cached cap area equals the complete retained regular primitive-path area. -/
-theorem regular_area (group : Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSamples.SampledComponent (regular :=
+theorem regular_area (group : SampledComponent (regular :=
   regular) sample shared depth readingIndex localTarget localArea floor)
     (degree : curve.polynomial.natDegree = 2 * genus + 2) :
     group.cap.area = Path.IncrementArea.pathArea
-      (Hyperelliptic.Charts.Reciprocal.Disk.RegularSidePrimitive.SideBank.regularPrimitivePaths sample.primitive.value
+      (Charts.Reciprocal.Disk.RegularSidePrimitive.SideBank.regularPrimitivePaths sample.primitive.value
         depth
-        (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence.capSpine
+        (SurfaceOccurrence.capSpine
         group.component.prepared.occurrences).bank).flatten := by
   rw [group.cap.area_eq]
   exact group.component.prepared.regular_cap_area group.values group.occurrences_eq degree
@@ -173,22 +173,22 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior
 set_option genInjectivity false in
 /-- Both projections certify an exact partition of the original sample
 list in its original order, including empty components. -/
-structure ComponentSamples (sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box)
-    (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains) (depth
+structure ComponentSamples (sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential index box)
+    (shared : Face.PrimitiveData.FacePrimitiveBank differential index domains) (depth
       readingIndex : Nat)
-    (localTarget localArea : Normalization.InverseRootPolynomial.Coordinate) (floor : Nat)
+    (localTarget localArea : InverseRootPolynomial.Coordinate) (floor : Nat)
     (components : List
-      (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceComponent
+      (SurfaceComponent
       regular domains differential))
-    (values : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry
+    (values : List (SurfaceRequests.AllSurfacePreparation.SampledEntry
       (regular := regular) sample shared depth readingIndex localTarget localArea floor)) where
   /-- The grouped original component samples. -/ groups : List
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSamples.SampledComponent (regular := regular) sample shared
+    (ComponentSamples.SampledComponent (regular := regular) sample shared
     depth readingIndex localTarget localArea floor)
   /-- The groups retain exactly the supplied original components. -/ components_eq : groups.map
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSamples.SampledComponent.component = components
+    ComponentSamples.SampledComponent.component = components
   /-- Flattening the grouped samples recovers the exact original sample list. -/ values_eq : (groups.map
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSamples.SampledComponent.values).flatten = values
+    ComponentSamples.SampledComponent.values).flatten = values
 
 constructive_injectivity ComponentSamples
 
@@ -198,9 +198,9 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSa
 
 /-- Split the already computed samples along the original component occurrence lists, including empty components. -/
 @[expose] def build : (components : List
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceComponent
+  (SurfaceComponent
   regular domains differential)) →
-    (values : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry
+    (values : List (SurfaceRequests.AllSurfacePreparation.SampledEntry
       (regular := regular) sample shared depth readingIndex localTarget localArea floor)) →
     values.map (fun value => value.entry.occurrence) = components.flatMap (fun component =>
       component.prepared.occurrences) →
@@ -211,28 +211,28 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSa
       subst values
       exact ⟨[], rfl, rfl⟩
   | component :: components, values, equal => by
-      let split := Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSamples.splitMapped (fun value :
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry (regular :=
+      let split := ComponentSamples.splitMapped (fun value :
+        SurfaceRequests.AllSurfacePreparation.SampledEntry (regular :=
         regular) sample shared depth readingIndex localTarget localArea floor => value.entry.occurrence)
         component.prepared.occurrences (components.flatMap (fun item :
-          SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceComponent
+          SurfaceComponent
           regular domains differential => item.prepared.occurrences)) values
         (by simpa only [Flatten.flatMap_cons, -eq_self, -iff_self] using equal)
-      let head := Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSamples.SampledComponent.build component
+      let head := SampledComponent.build component
         split.before split.before_eq
       let tail := build
         components split.after split.after_eq
       refine ⟨head :: tail.groups, congrArg (List.cons component) tail.components_eq, ?_⟩
       change split.before ++ (tail.groups.map
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSamples.SampledComponent.values).flatten = values
+        SampledComponent.values).flatten = values
       rw [tail.values_eq]
       exact split.append_eq
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSamples
 
 variable {prepared :
-  ExteriorProgram.AllSurfacePreparation
-  regular domains differential} {target areaTarget : Normalization.InverseRootPolynomial.Coordinate}
+  AllSurfacePreparation
+  regular domains differential} {target areaTarget : InverseRootPolynomial.Coordinate}
   {request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request prepared target
     areaTarget floor}
 
@@ -241,7 +241,7 @@ namespace Evaluation
 
 /-- Group the exact samples already used by the full surface estimate. -/
 @[expose] def components
-    (evaluated : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.Evaluation
+    (evaluated : Evaluation
       request sample shared depth readingIndex) :
     ComponentSamples sample shared depth readingIndex
       request.localTarget request.budget.areaTarget floor prepared.components evaluated.samples.values := by
@@ -249,7 +249,7 @@ namespace Evaluation
   calc
     evaluated.samples.values.map (fun value => value.entry.occurrence) =
         (evaluated.samples.values.map
-          Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry.entry).map
+          SampledEntry.entry).map
           Entry.occurrence
           := by
       rw [Map.map_map]

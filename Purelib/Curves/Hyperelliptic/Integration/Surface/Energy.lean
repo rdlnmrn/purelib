@@ -57,6 +57,8 @@ import Purelib.Integration.Program.Gaussian.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Algebra
@@ -149,7 +151,7 @@ namespace SurfaceCell
 /-- The checked denominator lower bound supplies a horizontal clearance on the bottom side of the rational surface box.
 -/
 def bottomClearance {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
     (cell : PreparedEnergySurface.SurfaceCell curve coefficients) :
     Line.Basic.HorizontalLineClearance curve.polynomial cell.box
@@ -165,7 +167,7 @@ def bottomClearance {genus : Nat}
 
 /-- The original denominator lower bound certifies polynomial clearance along the top side. -/
 def topClearance {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
     (cell : PreparedEnergySurface.SurfaceCell curve coefficients) :
     Line.Basic.HorizontalLineClearance curve.polynomial cell.box
@@ -181,7 +183,7 @@ def topClearance {genus : Nat}
 
 /-- The original denominator lower bound certifies polynomial clearance along the left side. -/
 def leftClearance {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
     (cell : PreparedEnergySurface.SurfaceCell curve coefficients) :
     Line.Basic.VerticalLineClearance curve.polynomial cell.box
@@ -197,7 +199,7 @@ def leftClearance {genus : Nat}
 
 /-- The original denominator lower bound certifies polynomial clearance along the right side. -/
 def rightClearance {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
     (cell : PreparedEnergySurface.SurfaceCell curve coefficients) :
     Line.Basic.VerticalLineClearance curve.polynomial cell.box
@@ -213,63 +215,63 @@ def rightClearance {genus : Nat}
 
 /-- Counterclockwise bottom edge of the automatically clear box boundary. -/
 def bottomSegment {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
     (cell : PreparedEnergySurface.SurfaceCell curve coefficients) :
     ClearPath.ClearSegment curve.polynomial cell.box
-      (Purelib.Geometry.Rational.Box.Gaussian.Corners.lowerLeft cell.box)
-        (Purelib.Geometry.Rational.Box.Gaussian.Corners.lowerRight cell.box) := by
-  unfold Purelib.Geometry.Rational.Box.Gaussian.Corners.lowerLeft
-    Purelib.Geometry.Rational.Box.Gaussian.Corners.lowerRight
+      (Corners.lowerLeft cell.box)
+        (Corners.lowerRight cell.box) := by
+  unfold Corners.lowerLeft
+    Corners.lowerRight
   exact .horizontal cell.box.xLower cell.box.xUpper cell.box.yLower
     le_rfl cell.box.x_valid cell.box.x_valid le_rfl
       (bottomClearance cell)
 
 /-- The upward oriented right side with its retained polynomial-clearance proof. -/
 def rightSegment {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
     (cell : PreparedEnergySurface.SurfaceCell curve coefficients) :
     ClearPath.ClearSegment curve.polynomial cell.box
-      (Purelib.Geometry.Rational.Box.Gaussian.Corners.lowerRight cell.box)
-        (Purelib.Geometry.Rational.Box.Gaussian.Corners.upperRight cell.box) := by
-  unfold Purelib.Geometry.Rational.Box.Gaussian.Corners.lowerRight
-    Purelib.Geometry.Rational.Box.Gaussian.Corners.upperRight
+      (Corners.lowerRight cell.box)
+        (Corners.upperRight cell.box) := by
+  unfold Corners.lowerRight
+    Corners.upperRight
   exact .vertical cell.box.xUpper cell.box.yLower cell.box.yUpper
     le_rfl cell.box.y_valid cell.box.y_valid le_rfl
       (rightClearance cell)
 
 /-- The leftward oriented top side with its retained polynomial-clearance proof. -/
 def topSegment {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
     (cell : PreparedEnergySurface.SurfaceCell curve coefficients) :
     ClearPath.ClearSegment curve.polynomial cell.box
-      (Purelib.Geometry.Rational.Box.Gaussian.Corners.upperRight cell.box)
-        (Purelib.Geometry.Rational.Box.Gaussian.Corners.upperLeft cell.box) := by
-  unfold Purelib.Geometry.Rational.Box.Gaussian.Corners.upperRight
-    Purelib.Geometry.Rational.Box.Gaussian.Corners.upperLeft
+      (Corners.upperRight cell.box)
+        (Corners.upperLeft cell.box) := by
+  unfold Corners.upperRight
+    Corners.upperLeft
   exact .horizontal cell.box.xUpper cell.box.xLower cell.box.yUpper
     cell.box.x_valid le_rfl le_rfl cell.box.x_valid
       (topClearance cell)
 
 /-- The downward oriented left side with its retained polynomial-clearance proof. -/
 def leftSegment {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
     (cell : PreparedEnergySurface.SurfaceCell curve coefficients) :
     ClearPath.ClearSegment curve.polynomial cell.box
-      (Purelib.Geometry.Rational.Box.Gaussian.Corners.upperLeft cell.box)
-        (Purelib.Geometry.Rational.Box.Gaussian.Corners.lowerLeft cell.box) := by
-  unfold Purelib.Geometry.Rational.Box.Gaussian.Corners.upperLeft
-    Purelib.Geometry.Rational.Box.Gaussian.Corners.lowerLeft
+      (Corners.upperLeft cell.box)
+        (Corners.lowerLeft cell.box) := by
+  unfold Corners.upperLeft
+    Corners.lowerLeft
   exact .vertical cell.box.xLower cell.box.yUpper cell.box.yLower
     cell.box.y_valid le_rfl le_rfl cell.box.y_valid
       (leftClearance cell)
 
 /-- Every point of the oriented bottom segment lies in the original cell box. -/
 theorem bottomSegment_within {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
     (cell : PreparedEnergySurface.SurfaceCell curve coefficients) :
     (bottomSegment cell).WithinAmbient :=
@@ -277,7 +279,7 @@ theorem bottomSegment_within {genus : Nat}
 
 /-- Every point of the oriented right segment lies in the original cell box. -/
 theorem rightSegment_within {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
     (cell : PreparedEnergySurface.SurfaceCell curve coefficients) :
     (rightSegment cell).WithinAmbient :=
@@ -285,7 +287,7 @@ theorem rightSegment_within {genus : Nat}
 
 /-- Every point of the oriented top segment lies in the original cell box. -/
 theorem topSegment_within {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
     (cell : PreparedEnergySurface.SurfaceCell curve coefficients) :
     (topSegment cell).WithinAmbient :=
@@ -293,7 +295,7 @@ theorem topSegment_within {genus : Nat}
 
 /-- Every point of the oriented left segment lies in the original cell box. -/
 theorem leftSegment_within {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
     (cell : PreparedEnergySurface.SurfaceCell curve coefficients) :
     (leftSegment cell).WithinAmbient :=
@@ -301,10 +303,10 @@ theorem leftSegment_within {genus : Nat}
 
 /-- Counterclockwise four-edge boundary path of the checked surface box. -/
 def boundaryPath {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
     (cell : PreparedEnergySurface.SurfaceCell curve coefficients) :
-    Polynomial.Geometry.ClearPath curve.polynomial cell.box
+    ClearPath curve.polynomial cell.box
       (Corners.lowerLeft cell.box) (Corners.lowerLeft cell.box) :=
   .cons (bottomSegment cell)
     (.cons (rightSegment cell)
@@ -314,7 +316,7 @@ def boundaryPath {genus : Nat}
 
 /-- Every segment of the four-edge boundary stays within the original cell box. -/
 theorem boundaryPath_within {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
     (cell : PreparedEnergySurface.SurfaceCell curve coefficients) :
     (boundaryPath cell).WithinAmbient :=
@@ -327,7 +329,7 @@ theorem boundaryPath_within {genus : Nat}
 /-- Either explicitly indexed square-root owner at the lower-left corner can seed continuation around the entire clear
 box boundary. -/
 def boundaryOwner {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
     (cell : PreparedEnergySurface.SurfaceCell curve coefficients) (sheet : Fin 2) :
     SquareRootContinuationChain.Owner
@@ -338,11 +340,11 @@ def boundaryOwner {genus : Nat}
 /-- Total prepared square-root continuation and integration geometry around the checked box. The sufficient dyadic
 depths are computed internally for the requested positive root diameter. -/
 def preparedBoundary {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
     (cell : PreparedEnergySurface.SurfaceCell curve coefficients) (sheet : Fin 2)
     (rootDiameter : Fraction.Rational) (rootDiameterPositive : 0 < rootDiameter) :
-    PreparedClearPathModels.PreparedPath (boundaryPath cell)
+    PreparedPath (boundaryPath cell)
       ((boundaryOwner cell) sheet) :=
   Adaptive.preparePath (boundaryPath cell)
     (boundaryPath_within cell)
@@ -352,7 +354,7 @@ def preparedBoundary {genus : Nat}
 /-- The prepared boundary immediately supplies the certified finite integration model for any standard algebraic
 differential. -/
 def certifiedBoundary {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
     (cell : PreparedEnergySurface.SurfaceCell curve coefficients) (sheet : Fin 2)
     (rootDiameter : Fraction.Rational) (rootDiameterPositive : 0 < rootDiameter)
@@ -372,7 +374,7 @@ namespace SurfaceCell
 /-- The automatically certified clear box boundary is cellwise constant, as inherited from every accepted prepared
 subdivision. -/
 def boundaryConstantCells {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
     (cell : PreparedEnergySurface.SurfaceCell curve coefficients) (sheet : Fin 2)
     (rootDiameter : Fraction.Rational) (rootDiameterPositive : 0 < rootDiameter)
@@ -391,17 +393,17 @@ sample is exactly its finite weighted coefficient-error sum relative to any rati
 theorem
   boundaryIntegralSample_eq_referenceError
   {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
     (cell : PreparedEnergySurface.SurfaceCell curve coefficients) (sheet : Fin 2)
     (rootDiameter : Fraction.Rational) (rootDiameterPositive : 0 < rootDiameter)
     (differential : Differentials.Basic.Differential genus)
-    (reference : Data.Gaussian.Basic.Canonical) :
+    (reference : Basic.Canonical) :
     (PathModel.mk
       ((certifiedBoundary cell) sheet rootDiameter
         rootDiameterPositive
         differential).cells).integralSample =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      Norm.Sum.Basic.gaussianSum
         (ConstantComparison.constantReferenceErrorTerms
           ((boundaryConstantCells cell) sheet rootDiameter
             rootDiameterPositive
@@ -417,19 +419,19 @@ theorem
       certified.certificates.toFollowedBy reference
   simpa only [certified, constant, AffineTriangle.affinePrimitiveIncrement,
     _root_.sub_self,
-    Data.Gaussian.Basic.zero_add] using comparison
+    Basic.zero_add] using comparison
 
 /-- The computed finite reference allowance bounds the complete prepared closed-boundary residual. -/
 theorem
   boundaryIntegralSample_normSq_le_referenceAllowance
   {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
     (cell : PreparedEnergySurface.SurfaceCell curve coefficients) (sheet : Fin 2)
     (rootDiameter : Fraction.Rational) (rootDiameterPositive : 0 < rootDiameter)
     (differential : Differentials.Basic.Differential genus)
-    (reference : Data.Gaussian.Basic.Canonical) :
-    Data.Gaussian.Norm.Basic.normSq
+    (reference : Basic.Canonical) :
+    Norm.Basic.normSq
         ((PathModel.mk
           ((certifiedBoundary cell) sheet rootDiameter
             rootDiameterPositive
@@ -453,24 +455,24 @@ identity into the required local surface-energy lower bound. -/
 theorem
   SurfaceCell.contribution_le_boxAffineTriangleEnergy
     {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {coefficients : PreparedEnergySurface.GaussianVector genus}
-    (cell : PreparedEnergySurface.SurfaceCell curve coefficients) (coefficient : Data.Gaussian.Basic.Canonical)
+    (cell : PreparedEnergySurface.SurfaceCell curve coefficients) (coefficient : Basic.Canonical)
     (densityLower : cell.densityLower <=
-      Data.Gaussian.Norm.Basic.normSq coefficient) :
-    Integration.Energy.Cell.contribution cell.toEnergyCell <=
+      Norm.Basic.normSq coefficient) :
+    Cell.contribution cell.toEnergyCell <=
       AffineTriangle.Box.lowerBoxAffineTriangleEnergy cell.box coefficient +
         AffineTriangle.Box.upperBoxAffineTriangleEnergy cell.box coefficient := by
   rw [AffineTriangle.Box.boxAffineTriangleEnergy_add]
   unfold Cell.contribution
     SurfaceCell.toEnergyCell
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  exact Arithmetic.mul_le_mul_of_nonneg_left_direct
     densityLower (Content.boxContent_nonneg cell.box)
 
 /-- First triangle of the canonical genus-one commutator polygon `0, a, a+b, b`, using the conjugate/value energy
 primitive. -/
 def genusOneUnitFirstTriangleEnergy
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) (sampleIndex : Nat) : Fraction.Rational :=
   let a := Polygon.energyPrimitivePoint (sampledMatrix data.aMatrix sampleIndex 0 0)
   let b := Polygon.energyPrimitivePoint (sampledMatrix data.bMatrix sampleIndex 0 0)
@@ -479,7 +481,7 @@ def genusOneUnitFirstTriangleEnergy
 
 /-- Second triangle of the same canonical handle subdivision. -/
 def genusOneUnitSecondTriangleEnergy
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) (sampleIndex : Nat) : Fraction.Rational :=
   let a := Polygon.energyPrimitivePoint (sampledMatrix data.aMatrix sampleIndex 0 0)
   let b := Polygon.energyPrimitivePoint (sampledMatrix data.bMatrix sampleIndex 0 0)
@@ -488,7 +490,7 @@ def genusOneUnitSecondTriangleEnergy
 
 /-- The diagonal subdivision splits the handle energy into two equal oriented triangles. -/
 theorem genusOneUnitFirstTriangleEnergy_eq_second
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) (sampleIndex : Nat) :
     genusOneUnitFirstTriangleEnergy data sampleIndex =
       genusOneUnitSecondTriangleEnergy data sampleIndex := by
@@ -499,21 +501,21 @@ theorem genusOneUnitFirstTriangleEnergy_eq_second
 
 /-- The two canonical triangle energies add to the displayed unit second-bilinear period pairing. -/
 theorem genusOneUnitTriangleEnergy_add_eq_raw
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) (sampleIndex : Nat) :
     genusOneUnitFirstTriangleEnergy data sampleIndex +
         genusOneUnitSecondTriangleEnergy data sampleIndex =
-      Purelib.LinearAlgebra.Gaussian.Energy.unnormalizedEnergyForm
-        Energy.genusOneUnitCoefficients
+      unnormalizedEnergyForm
+        genusOneUnitCoefficients
         (sampledMatrix data.aMatrix sampleIndex)
         (sampledMatrix data.bMatrix sampleIndex) := by
   unfold genusOneUnitFirstTriangleEnergy
     genusOneUnitSecondTriangleEnergy
   rw [AffineTriangle.primitiveTriangleEnergy_zero_left_add,
     AffineTriangle.primitiveTriangleEnergy_zero_add_right]
-  unfold Polygon.energyPrimitivePoint Energy.unnormalizedEnergyForm
-  rw [Energy.periodPairingEnergy_one_eq]
-  simp only [Energy.periodCombination_genusOne_unit,
+  unfold Polygon.energyPrimitivePoint unnormalizedEnergyForm
+  rw [periodPairingEnergy_one_eq]
+  simp only [periodCombination_genusOne_unit,
     Basic.sub_im,
     Basic.mul_im,
     Fraction.Field.div_eq_mul_inv_direct]
@@ -522,20 +524,20 @@ theorem genusOneUnitTriangleEnergy_add_eq_raw
 
 /-- The direct A-program reading at one explicitly displayed internal refinement index. -/
 def genusOneDirectASample
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
-    (data : PeriodData curve) (index : Nat) : Data.Gaussian.Basic.Canonical :=
+    {curve : Basic.HyperellipticCurve 1}
+    (data : PeriodData curve) (index : Nat) : Basic.Canonical :=
   ((data.aProgram 0 0).integral.model index).integralSample
 
 /-- The direct B-program reading at one explicitly displayed internal refinement index. -/
 def genusOneDirectBSample
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
-    (data : PeriodData curve) (index : Nat) : Data.Gaussian.Basic.Canonical :=
+    {curve : Basic.HyperellipticCurve 1}
+    (data : PeriodData curve) (index : Nat) : Basic.Canonical :=
   ((data.bProgram 0 0).integral.model index).integralSample
 
 /-- Antisymmetric genus-one pairing of two independently refined direct program readings. -/
 def genusOneDirectPairing
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
-    (data : PeriodData curve) (aIndex bIndex : Nat) : Data.Gaussian.Basic.Canonical :=
+    {curve : Basic.HyperellipticCurve 1}
+    (data : PeriodData curve) (aIndex bIndex : Nat) : Basic.Canonical :=
   let a := genusOneDirectASample data aIndex
   let b := genusOneDirectBSample data bIndex
   a.conj * b - b.conj * a
@@ -543,7 +545,7 @@ def genusOneDirectPairing
 /-- A synchronized named A-period sample is definitionally a direct reading of its originating finite refinement
 program. -/
 theorem sampledAEntry_eq_direct
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) (sampleIndex : Nat) :
     sampledMatrix data.aMatrix sampleIndex 0 0 =
       genusOneDirectASample data
@@ -554,7 +556,7 @@ theorem sampledAEntry_eq_direct
 
 /-- The analogous direct-reading identity for the B-period. -/
 theorem sampledBEntry_eq_direct
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) (sampleIndex : Nat) :
     sampledMatrix data.bMatrix sampleIndex 0 0 =
       genusOneDirectBSample data
@@ -568,9 +570,9 @@ construction retains the same sampler index in all four factors and binds each p
 estimate applies directly to the canonical commutator face without re-running either finite period program inside the
 pointwise product. -/
 def genusOnePairingApproximation
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) :
-    Gaussian.Geometric.GeometricApproximation :=
+    GeometricApproximation :=
   let a := GeometricApproximation.ofNamed
     (data.aMatrix 0 0).name
   let b := GeometricApproximation.ofNamed
@@ -588,7 +590,7 @@ def genusOnePairingApproximation
     errorScale_nonneg := base.errorScale_nonneg
     later_close := by
       intro earlier later order
-      change Data.Gaussian.Norm.Basic.normSq
+      change Norm.Basic.normSq
           (base.sample later - base.sample earlier) <=
         Geometric.Basic.quarterRadius base.errorScale earlier
       exact base.later_close order
@@ -596,23 +598,23 @@ def genusOnePairingApproximation
     centerBound_nonneg := base.centerBound_nonneg
     sample_bounded := by
       intro sampleIndex
-      change Data.Gaussian.Norm.Basic.normSq
+      change Norm.Basic.normSq
           (base.sample sampleIndex) <= base.centerBound
       exact base.sample_bounded sampleIndex }
 
 /-- Each retained pairing sample is the antisymmetrized product of the same synchronized A and B samples. -/
 @[simp] theorem genusOnePairingApproximation_sample
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) (sampleIndex : Nat) :
     (genusOnePairingApproximation data).sample sampleIndex =
-      Data.Gaussian.Basic.Canonical.conj
+      Basic.Canonical.conj
           (sampledMatrix data.aMatrix sampleIndex 0 0) *
         sampledMatrix data.bMatrix sampleIndex 0 0 -
-      Data.Gaussian.Basic.Canonical.conj
+      Basic.Canonical.conj
           (sampledMatrix data.bMatrix sampleIndex 0 0) *
         sampledMatrix data.aMatrix sampleIndex 0 0 := by
   simp only [genusOnePairingApproximation,
-    Gaussian.Geometric.GeometricApproximation.ofNamed_sample,
+    GeometricApproximation.ofNamed_sample,
     sampledMatrix_apply, -eq_self, -iff_self]
   rfl
 
@@ -620,7 +622,7 @@ def genusOnePairingApproximation
 finite sample index. -/
 theorem
   genusOneUnitFirstTriangleEnergy_eq_pairing_im_div_four
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) (sampleIndex : Nat) :
     genusOneUnitFirstTriangleEnergy data sampleIndex =
       ((genusOnePairingApproximation data).sample sampleIndex).im / 4 :=
@@ -634,34 +636,34 @@ theorem
 names can answer one external request using different internal refinement indices. Proving the bound for every displayed
 pair of direct readings therefore suffices for the actual synchronized named matrix. -/
 structure DirectGenusOneCanonicalFaceLowerCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) where
   /-- Every independently indexed original A/B pair satisfies the canonical half-face energy lower bound. -/ lower :
     forall aIndex bIndex : Nat,
-    Prepared.genusOneRawEnergy curve / 2 <=
+    genusOneRawEnergy curve / 2 <=
       (genusOneDirectPairing data aIndex bIndex).im / 4
 
 /-- Tail-only direct-program form of the canonical face theorem. The first external sample has already advanced each
 originating refinement program to its independently computed initial accuracy index; only direct readings at or beyond
 those two finite indices can occur in the named period matrix. -/
 structure DirectTailGenusOneCanonicalFaceLowerCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) where
   /-- Every original A/B pair beyond its own initial resampling index satisfies the canonical half-face lower bound. -/
     lower : forall aIndex bIndex : Nat,
     Readback.resampledRefinementIndex (data.aProgram 0 0).integral 0 <= aIndex ->
     Readback.resampledRefinementIndex (data.bProgram 0 0).integral 0 <= bIndex ->
-    Prepared.genusOneRawEnergy curve / 2 <=
+    genusOneRawEnergy curve / 2 <=
       (genusOneDirectPairing data aIndex bIndex).im / 4
 
 /-- Minimal local genus-one face theorem. The reference box energy is split equally across the two canonical commutator
 triangles, so only one local triangle inequality is independent. -/
 structure GenusOneCanonicalFaceLowerCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) where
   /-- Every synchronized first canonical triangle dominates half of the unit reference energy. -/ lower : forall
     sampleIndex : Nat,
-    Prepared.genusOneRawEnergy curve / 2 <=
+    genusOneRawEnergy curve / 2 <=
       genusOneUnitFirstTriangleEnergy data sampleIndex
 
 namespace DirectGenusOneCanonicalFaceLowerCertificate
@@ -670,16 +672,16 @@ namespace DirectGenusOneCanonicalFaceLowerCertificate
 and B names. -/
 theorem
   toCanonicalFaceLowerCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve}
-    (certificate : Curves.Hyperelliptic.Integration.Surface.Energy.DirectGenusOneCanonicalFaceLowerCertificate data) :
-    Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneCanonicalFaceLowerCertificate data where
+    (certificate : DirectGenusOneCanonicalFaceLowerCertificate data) :
+    GenusOneCanonicalFaceLowerCertificate data where
   lower := by
     intro sampleIndex
-    rw [Curves.Hyperelliptic.Integration.Surface.Energy.genusOneUnitFirstTriangleEnergy_eq_pairing_im_div_four,
-      Curves.Hyperelliptic.Integration.Surface.Energy.genusOnePairingApproximation_sample,
-      Curves.Hyperelliptic.Integration.Surface.Energy.sampledAEntry_eq_direct,
-        Curves.Hyperelliptic.Integration.Surface.Energy.sampledBEntry_eq_direct]
+    rw [genusOneUnitFirstTriangleEnergy_eq_pairing_im_div_four,
+      genusOnePairingApproximation_sample,
+      sampledAEntry_eq_direct,
+        sampledBEntry_eq_direct]
     exact certificate.lower
       (Readback.resampledRefinementIndex
         (data.aProgram 0 0).integral sampleIndex)
@@ -694,17 +696,17 @@ namespace DirectTailGenusOneCanonicalFaceLowerCertificate
 selected by named sampling. -/
 theorem
   toCanonicalFaceLowerCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve}
-    (certificate : Curves.Hyperelliptic.Integration.Surface.Energy.DirectTailGenusOneCanonicalFaceLowerCertificate data)
+    (certificate : DirectTailGenusOneCanonicalFaceLowerCertificate data)
       :
-    Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneCanonicalFaceLowerCertificate data where
+    GenusOneCanonicalFaceLowerCertificate data where
   lower := by
     intro sampleIndex
-    rw [Curves.Hyperelliptic.Integration.Surface.Energy.genusOneUnitFirstTriangleEnergy_eq_pairing_im_div_four,
-      Curves.Hyperelliptic.Integration.Surface.Energy.genusOnePairingApproximation_sample,
-      Curves.Hyperelliptic.Integration.Surface.Energy.sampledAEntry_eq_direct,
-        Curves.Hyperelliptic.Integration.Surface.Energy.sampledBEntry_eq_direct]
+    rw [genusOneUnitFirstTriangleEnergy_eq_pairing_im_div_four,
+      genusOnePairingApproximation_sample,
+      sampledAEntry_eq_direct,
+        sampledBEntry_eq_direct]
     exact certificate.lower
       (Readback.resampledRefinementIndex
         (data.aProgram 0 0).integral sampleIndex)
@@ -721,7 +723,7 @@ end DirectTailGenusOneCanonicalFaceLowerCertificate
 sample. Each period program is compared with its own initial internal index, so no artificial synchronization of the two
 executable refiners is required. -/
 def genusOneDirectTailMovementBound
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) : Fraction.Rational :=
   let aProgram := (data.aProgram 0 0).integral
   let bProgram := (data.bProgram 0 0).integral
@@ -736,13 +738,13 @@ def genusOneDirectTailMovementBound
 /-- Independent later A/B readings move their antisymmetric pairing by at most the displayed finite rectangle-tail
 allowance. The factor eight pays first for the two product differences and then for antisymmetrization. -/
 theorem genusOneDirectPairing_sub_anchor_normSq_le
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) (aIndex bIndex : Nat)
     (aOrder :
       Readback.resampledRefinementIndex (data.aProgram 0 0).integral 0 <= aIndex)
     (bOrder :
       Readback.resampledRefinementIndex (data.bProgram 0 0).integral 0 <= bIndex) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (genusOneDirectPairing data aIndex bIndex -
           genusOneDirectPairing data
             (Readback.resampledRefinementIndex (data.aProgram 0 0).integral 0)
@@ -761,44 +763,44 @@ theorem genusOneDirectPairing_sub_anchor_normSq_le
   have bReadback : b = (bProgram.model bIndex).integralSample := rfl
   have aBaseReadback : aBase = (aProgram.model aAnchor).integralSample := rfl
   have bBaseReadback : bBase = (bProgram.model bAnchor).integralSample := rfl
-  have conjugateReadback (value : Data.Gaussian.Basic.Canonical) :
-      value.conj = Data.Gaussian.Basic.conj value := rfl
+  have conjugateReadback (value : Basic.Canonical) :
+      value.conj = Basic.conj value := rfl
   have aMovement :
-      Data.Gaussian.Norm.Basic.normSq (a - aBase) <=
+      Norm.Basic.normSq (a - aBase) <=
         Geometric.Basic.quarterRadius aProgram.errorScale aAnchor := by
     have scalar := aProgram.later_close (earlier := aAnchor) (later := aIndex) aOrder
     rw [← aReadback, ← aBaseReadback] at scalar
-    rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+    rw [normSq_eq_canonical]
     exact scalar
   have bMovement :
-      Data.Gaussian.Norm.Basic.normSq (b - bBase) <=
+      Norm.Basic.normSq (b - bBase) <=
         Geometric.Basic.quarterRadius bProgram.errorScale bAnchor := by
     have scalar := bProgram.later_close (earlier := bAnchor) (later := bIndex) bOrder
     rw [← bReadback, ← bBaseReadback] at scalar
-    rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+    rw [normSq_eq_canonical]
     exact scalar
   have aBaseBound :
-      Data.Gaussian.Norm.Basic.normSq aBase <=
+      Norm.Basic.normSq aBase <=
         aProgram.centerBound :=
     by
       have scalar := aProgram.sample_bounded aAnchor
       rw [← aBaseReadback] at scalar
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+      rw [normSq_eq_canonical]
       exact scalar
   have bBound :
-      Data.Gaussian.Norm.Basic.normSq b <=
+      Norm.Basic.normSq b <=
         bProgram.centerBound :=
     by
       have scalar := bProgram.sample_bounded bIndex
       rw [← bReadback] at scalar
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+      rw [normSq_eq_canonical]
       exact scalar
   have productIdentity :
       productDifference =
         (a - aBase).conj * b + aBase.conj * (b - bBase) := by
-    apply Data.Gaussian.Basic.ext <;>
+    apply Basic.ext <;>
       simp only [productDifference,
-        Data.Gaussian.Basic.Canonical.conj,
+        Basic.Canonical.conj,
         Basic.sub_re,
         Basic.sub_im,
         Basic.add_re,
@@ -806,27 +808,27 @@ theorem genusOneDirectPairing_sub_anchor_normSq_le
         Basic.mul_re,
         Basic.mul_im] <;> ring1
   have firstProduct :
-      Data.Gaussian.Norm.Basic.normSq ((a - aBase).conj * b) <=
+      Norm.Basic.normSq ((a - aBase).conj * b) <=
         Geometric.Basic.quarterRadius aProgram.errorScale aAnchor *
           bProgram.centerBound := by
-    rw [Data.Gaussian.Norm.Basic.normSq_mul, conjugateReadback,
-      Data.Gaussian.Norm.Basic.normSq_conj]
-    exact Fraction.Order.Arithmetic.mul_le_mul_direct aMovement bBound
-      (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+    rw [Norm.Basic.normSq_mul, conjugateReadback,
+      Norm.Basic.normSq_conj]
+    exact Arithmetic.mul_le_mul_direct aMovement bBound
+      (Norm.Basic.normSq_nonneg _)
       (Geometric.Basic.quarterRadius_nonneg
         aProgram.errorScale_nonneg aAnchor)
   have secondProduct :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (aBase.conj * (b - bBase)) <=
         aProgram.centerBound *
           Geometric.Basic.quarterRadius bProgram.errorScale bAnchor := by
-    rw [Data.Gaussian.Norm.Basic.normSq_mul, conjugateReadback,
-      Data.Gaussian.Norm.Basic.normSq_conj]
-    exact Fraction.Order.Arithmetic.mul_le_mul_direct aBaseBound bMovement
-      (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+    rw [Norm.Basic.normSq_mul, conjugateReadback,
+      Norm.Basic.normSq_conj]
+    exact Arithmetic.mul_le_mul_direct aBaseBound bMovement
+      (Norm.Basic.normSq_nonneg _)
       aProgram.centerBound_nonneg
   have productBound :
-      Data.Gaussian.Norm.Basic.normSq productDifference <=
+      Norm.Basic.normSq productDifference <=
         2 *
           (Geometric.Basic.quarterRadius aProgram.errorScale aAnchor *
               bProgram.centerBound +
@@ -834,32 +836,32 @@ theorem genusOneDirectPairing_sub_anchor_normSq_le
               Geometric.Basic.quarterRadius bProgram.errorScale
                 bAnchor) := by
     rw [productIdentity]
-    exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    exact (Norm.Bounds.normSq_add_le_two _ _).trans
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add firstProduct secondProduct) (by decide))
   have pairingIdentity :
       genusOneDirectPairing data aIndex bIndex -
           genusOneDirectPairing data aAnchor bAnchor =
         productDifference - productDifference.conj := by
-    apply Data.Gaussian.Basic.ext <;>
+    apply Basic.ext <;>
       simp only [genusOneDirectPairing, a, b, aBase, bBase,
         productDifference,
-        Data.Gaussian.Basic.Canonical.conj,
+        Basic.Canonical.conj,
         Basic.sub_re,
         Basic.sub_im,
         Basic.mul_re,
         Basic.mul_im] <;> ring1
   rw [pairingIdentity]
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (productDifference - productDifference.conj) <=
       2 *
-        (Data.Gaussian.Norm.Basic.normSq productDifference +
-          Data.Gaussian.Norm.Basic.normSq
+        (Norm.Basic.normSq productDifference +
+          Norm.Basic.normSq
             productDifference.conj) :=
-      Data.Gaussian.Norm.Bounds.normSq_sub_le_two _ _
-    _ = 4 * Data.Gaussian.Norm.Basic.normSq productDifference := by
-      rw [conjugateReadback, Data.Gaussian.Norm.Basic.normSq_conj]
+      Norm.Bounds.normSq_sub_le_two _ _
+    _ = 4 * Norm.Basic.normSq productDifference := by
+      rw [conjugateReadback, Norm.Basic.normSq_conj]
       ring1
     _ <= 4 *
         (2 *
@@ -868,7 +870,7 @@ theorem genusOneDirectPairing_sub_anchor_normSq_le
             aProgram.centerBound *
               Geometric.Basic.quarterRadius bProgram.errorScale
                 bAnchor)) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct productBound
+      Arithmetic.mul_le_mul_of_nonneg_left_direct productBound
         (by decide)
     _ = genusOneDirectTailMovementBound data := by
       unfold genusOneDirectTailMovementBound aProgram bProgram aAnchor
@@ -879,7 +881,7 @@ theorem genusOneDirectPairing_sub_anchor_normSq_le
 programs. Unlike `genusOneDirectTailMovementBound`, this quantity contains no executable resampling index, so an
 explicit example can normalize it using only the cached program scales and center bounds. -/
 def genusOneDirectZeroMovementBound
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) : Fraction.Rational :=
   let aProgram := (data.aProgram 0 0).integral
   let bProgram := (data.bProgram 0 0).integral
@@ -892,9 +894,9 @@ def genusOneDirectZeroMovementBound
 /-- Every pair of direct program readings is close to the pair at internal index zero. This deliberately spends the
 coarser zeroth-index tail allowance in exchange for avoiding reduction of either executable resampling index. -/
 theorem genusOneDirectPairing_sub_zero_normSq_le
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) (aIndex bIndex : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (genusOneDirectPairing data aIndex bIndex -
           genusOneDirectPairing data 0 0) <=
       genusOneDirectZeroMovementBound data := by
@@ -909,44 +911,44 @@ theorem genusOneDirectPairing_sub_zero_normSq_le
   have bReadback : b = (bProgram.model bIndex).integralSample := rfl
   have aBaseReadback : aBase = (aProgram.model 0).integralSample := rfl
   have bBaseReadback : bBase = (bProgram.model 0).integralSample := rfl
-  have conjugateReadback (value : Data.Gaussian.Basic.Canonical) :
-      value.conj = Data.Gaussian.Basic.conj value := rfl
+  have conjugateReadback (value : Basic.Canonical) :
+      value.conj = Basic.conj value := rfl
   have aMovement :
-      Data.Gaussian.Norm.Basic.normSq (a - aBase) <=
+      Norm.Basic.normSq (a - aBase) <=
         Geometric.Basic.quarterRadius aProgram.errorScale 0 := by
     have scalar := aProgram.later_close (earlier := 0) (later := aIndex) (Nat.zero_le aIndex)
     rw [← aReadback, ← aBaseReadback] at scalar
-    rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+    rw [normSq_eq_canonical]
     exact scalar
   have bMovement :
-      Data.Gaussian.Norm.Basic.normSq (b - bBase) <=
+      Norm.Basic.normSq (b - bBase) <=
         Geometric.Basic.quarterRadius bProgram.errorScale 0 := by
     have scalar := bProgram.later_close (earlier := 0) (later := bIndex) (Nat.zero_le bIndex)
     rw [← bReadback, ← bBaseReadback] at scalar
-    rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+    rw [normSq_eq_canonical]
     exact scalar
   have aBaseBound :
-      Data.Gaussian.Norm.Basic.normSq aBase <=
+      Norm.Basic.normSq aBase <=
         aProgram.centerBound :=
     by
       have scalar := aProgram.sample_bounded 0
       rw [← aBaseReadback] at scalar
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+      rw [normSq_eq_canonical]
       exact scalar
   have bBound :
-      Data.Gaussian.Norm.Basic.normSq b <=
+      Norm.Basic.normSq b <=
         bProgram.centerBound :=
     by
       have scalar := bProgram.sample_bounded bIndex
       rw [← bReadback] at scalar
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+      rw [normSq_eq_canonical]
       exact scalar
   have productIdentity :
       productDifference =
         (a - aBase).conj * b + aBase.conj * (b - bBase) := by
-    apply Data.Gaussian.Basic.ext <;>
+    apply Basic.ext <;>
       simp only [productDifference,
-        Data.Gaussian.Basic.Canonical.conj,
+        Basic.Canonical.conj,
         Basic.sub_re,
         Basic.sub_im,
         Basic.add_re,
@@ -954,59 +956,59 @@ theorem genusOneDirectPairing_sub_zero_normSq_le
         Basic.mul_re,
         Basic.mul_im] <;> ring1
   have firstProduct :
-      Data.Gaussian.Norm.Basic.normSq ((a - aBase).conj * b) <=
+      Norm.Basic.normSq ((a - aBase).conj * b) <=
         Geometric.Basic.quarterRadius aProgram.errorScale 0 *
           bProgram.centerBound := by
-    rw [Data.Gaussian.Norm.Basic.normSq_mul, conjugateReadback,
-      Data.Gaussian.Norm.Basic.normSq_conj]
-    exact Fraction.Order.Arithmetic.mul_le_mul_direct aMovement bBound
-      (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+    rw [Norm.Basic.normSq_mul, conjugateReadback,
+      Norm.Basic.normSq_conj]
+    exact Arithmetic.mul_le_mul_direct aMovement bBound
+      (Norm.Basic.normSq_nonneg _)
       (Geometric.Basic.quarterRadius_nonneg
         aProgram.errorScale_nonneg 0)
   have secondProduct :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (aBase.conj * (b - bBase)) <=
         aProgram.centerBound *
           Geometric.Basic.quarterRadius bProgram.errorScale 0 := by
-    rw [Data.Gaussian.Norm.Basic.normSq_mul, conjugateReadback,
-      Data.Gaussian.Norm.Basic.normSq_conj]
-    exact Fraction.Order.Arithmetic.mul_le_mul_direct aBaseBound bMovement
-      (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+    rw [Norm.Basic.normSq_mul, conjugateReadback,
+      Norm.Basic.normSq_conj]
+    exact Arithmetic.mul_le_mul_direct aBaseBound bMovement
+      (Norm.Basic.normSq_nonneg _)
       aProgram.centerBound_nonneg
   have productBound :
-      Data.Gaussian.Norm.Basic.normSq productDifference <=
+      Norm.Basic.normSq productDifference <=
         2 *
           (Geometric.Basic.quarterRadius aProgram.errorScale 0 *
               bProgram.centerBound +
             aProgram.centerBound *
               Geometric.Basic.quarterRadius bProgram.errorScale 0) := by
     rw [productIdentity]
-    exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    exact (Norm.Bounds.normSq_add_le_two _ _).trans
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add firstProduct secondProduct) (by decide))
   have pairingIdentity :
       genusOneDirectPairing data aIndex bIndex -
           genusOneDirectPairing data 0 0 =
         productDifference - productDifference.conj := by
-    apply Data.Gaussian.Basic.ext <;>
+    apply Basic.ext <;>
       simp only [genusOneDirectPairing, a, b, aBase, bBase,
         productDifference,
-        Data.Gaussian.Basic.Canonical.conj,
+        Basic.Canonical.conj,
         Basic.sub_re,
         Basic.sub_im,
         Basic.mul_re,
         Basic.mul_im] <;> ring1
   rw [pairingIdentity]
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (productDifference - productDifference.conj) <=
       2 *
-        (Data.Gaussian.Norm.Basic.normSq productDifference +
-          Data.Gaussian.Norm.Basic.normSq
+        (Norm.Basic.normSq productDifference +
+          Norm.Basic.normSq
             productDifference.conj) :=
-      Data.Gaussian.Norm.Bounds.normSq_sub_le_two _ _
-    _ = 4 * Data.Gaussian.Norm.Basic.normSq productDifference := by
-      rw [conjugateReadback, Data.Gaussian.Norm.Basic.normSq_conj]
+      Norm.Bounds.normSq_sub_le_two _ _
+    _ = 4 * Norm.Basic.normSq productDifference := by
+      rw [conjugateReadback, Norm.Basic.normSq_conj]
       ring1
     _ <= 4 *
         (2 *
@@ -1014,7 +1016,7 @@ theorem genusOneDirectPairing_sub_zero_normSq_le
               bProgram.centerBound +
             aProgram.centerBound *
               Geometric.Basic.quarterRadius bProgram.errorScale 0)) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct productBound
+      Arithmetic.mul_le_mul_of_nonneg_left_direct productBound
         (by decide)
     _ = genusOneDirectZeroMovementBound data := by
       unfold genusOneDirectZeroMovementBound aProgram bProgram
@@ -1025,7 +1027,7 @@ first internal readings controls all later independently refined A/B readings wh
 smaller than the squared margin. -/
 structure
   AnchoredDirectTailGenusOneCanonicalFaceLowerCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) where
   /-- The direct pairing at the two original initial resampling indices has a strictly positive margin above four times
     the required half-energy floor. -/ tailMarginPositive :
@@ -1033,79 +1035,79 @@ structure
       (genusOneDirectPairing data
         (Readback.resampledRefinementIndex (data.aProgram 0 0).integral 0)
         (Readback.resampledRefinementIndex (data.bProgram 0 0).integral 0)).im -
-          4 * (Prepared.genusOneRawEnergy curve / 2)
+          4 * (genusOneRawEnergy curve / 2)
   /-- The retained direct tail movement bound is strictly below the square of the positive anchor margin. -/
     tailMovementSmall :
     genusOneDirectTailMovementBound data <
       ((genusOneDirectPairing data
         (Readback.resampledRefinementIndex (data.aProgram 0 0).integral 0)
         (Readback.resampledRefinementIndex (data.bProgram 0 0).integral 0)).im -
-          4 * (Prepared.genusOneRawEnergy curve / 2)) ^ 2
+          4 * (genusOneRawEnergy curve / 2)) ^ 2
 
 namespace AnchoredDirectTailGenusOneCanonicalFaceLowerCertificate
 
 /-- Promote one finite asynchronous anchor calculation to the universal direct-tail face inequality. -/
 theorem
   toDirectTailGenusOneCanonicalFaceLowerCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve}
     (certificate :
-      Curves.Hyperelliptic.Integration.Surface.Energy.AnchoredDirectTailGenusOneCanonicalFaceLowerCertificate data) :
-    Curves.Hyperelliptic.Integration.Surface.Energy.DirectTailGenusOneCanonicalFaceLowerCertificate data where
+      AnchoredDirectTailGenusOneCanonicalFaceLowerCertificate data) :
+    DirectTailGenusOneCanonicalFaceLowerCertificate data where
   lower := by
     intro aIndex bIndex aOrder bOrder
-    let target := Prepared.genusOneRawEnergy curve / 2
+    let target := genusOneRawEnergy curve / 2
     let aAnchor :=
       Readback.resampledRefinementIndex (data.aProgram 0 0).integral 0
     let bAnchor :=
       Readback.resampledRefinementIndex (data.bProgram 0 0).integral 0
-    let anchorValue := (Curves.Hyperelliptic.Integration.Surface.Energy.genusOneDirectPairing data aAnchor bAnchor).im
-    let sampleValue := (Curves.Hyperelliptic.Integration.Surface.Energy.genusOneDirectPairing data aIndex bIndex).im
+    let anchorValue := (genusOneDirectPairing data aAnchor bAnchor).im
+    let sampleValue := (genusOneDirectPairing data aIndex bIndex).im
     let margin := anchorValue - 4 * target
     have marginPositive : 0 < margin := certificate.tailMarginPositive
-    apply (Fraction.Order.Field.le_div_iff_pos
+    apply (Field.le_div_iff_pos
       (by decide : (0 : Fraction.Rational) < 4)).2
     change target * 4 <= sampleValue
     by_cases enough : 4 * target <= sampleValue
     · simpa only [mul_comm target] using enough
     · have sampleBelow : sampleValue < 4 * target :=
-        Fraction.Order.Arithmetic.lt_of_not_ge_direct enough
+        Arithmetic.lt_of_not_ge_direct enough
       have marginBelowDifference :
           margin < anchorValue - sampleValue :=
-        Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+        Arithmetic.sub_lt_sub_left_direct
           sampleBelow anchorValue
       have differencePositive : 0 < anchorValue - sampleValue :=
         marginPositive.trans marginBelowDifference
       have firstProduct :
           margin * margin < margin * (anchorValue - sampleValue) :=
-        Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+        Arithmetic.mul_lt_mul_of_pos_left_direct
           marginPositive marginBelowDifference
       have secondProduct :
           margin * (anchorValue - sampleValue) <
             (anchorValue - sampleValue) * (anchorValue - sampleValue) :=
-        Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+        Arithmetic.mul_lt_mul_of_pos_right_direct
           marginBelowDifference differencePositive
       have squareStrict :
           margin ^ 2 < (anchorValue - sampleValue) ^ 2 := by
         simpa only [pow_two] using firstProduct.trans secondProduct
       have imaginarySquareLe :
           (anchorValue - sampleValue) ^ 2 <=
-            Data.Gaussian.Norm.Basic.normSq
-              (Curves.Hyperelliptic.Integration.Surface.Energy.genusOneDirectPairing data aIndex bIndex -
-                Curves.Hyperelliptic.Integration.Surface.Energy.genusOneDirectPairing data aAnchor bAnchor) := by
+            Norm.Basic.normSq
+              (genusOneDirectPairing data aIndex bIndex -
+                genusOneDirectPairing data aAnchor bAnchor) := by
         change (anchorValue - sampleValue) ^ 2 <=
-          ((Curves.Hyperelliptic.Integration.Surface.Energy.genusOneDirectPairing data aIndex bIndex).re -
-              (Curves.Hyperelliptic.Integration.Surface.Energy.genusOneDirectPairing data aAnchor bAnchor).re) ^ 2 +
+          ((genusOneDirectPairing data aIndex bIndex).re -
+              (genusOneDirectPairing data aAnchor bAnchor).re) ^ 2 +
             (sampleValue - anchorValue) ^ 2
         have reflected :
             (anchorValue - sampleValue) ^ 2 =
               (sampleValue - anchorValue) ^ 2 := by ring1
         rw [reflected]
         exact le_add_of_nonneg_left
-          (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-      have movement := Curves.Hyperelliptic.Integration.Surface.Energy.genusOneDirectPairing_sub_anchor_normSq_le
+          (Arithmetic.sq_nonneg_direct _)
+      have movement := genusOneDirectPairing_sub_anchor_normSq_le
         data aIndex bIndex aOrder bOrder
-      have forbidden : margin ^ 2 < Curves.Hyperelliptic.Integration.Surface.Energy.genusOneDirectTailMovementBound data
+      have forbidden : margin ^ 2 < genusOneDirectTailMovementBound data
         :=
         squareStrict.trans_le (imaginarySquareLe.trans movement)
       have cycle := certificate.tailMovementSmall.trans forbidden
@@ -1115,11 +1117,11 @@ theorem
 period theorem. -/
 theorem
   toCanonicalFaceLowerCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve}
     (certificate :
-      Curves.Hyperelliptic.Integration.Surface.Energy.AnchoredDirectTailGenusOneCanonicalFaceLowerCertificate data) :
-    Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneCanonicalFaceLowerCertificate data :=
+      AnchoredDirectTailGenusOneCanonicalFaceLowerCertificate data) :
+    GenusOneCanonicalFaceLowerCertificate data :=
   certificate.toDirectTailGenusOneCanonicalFaceLowerCertificate.toCanonicalFaceLowerCertificate
 
 end AnchoredDirectTailGenusOneCanonicalFaceLowerCertificate
@@ -1129,17 +1131,17 @@ index zero and compares the coarser zero-index rectangle-tail allowance with its
 direct readings and never mentions an executable resampling index. -/
 structure
   AnchoredDirectZeroGenusOneCanonicalFaceLowerCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) where
   /-- At original internal index zero, the direct pairing imaginary part exceeds four times the required half-energy
     floor. -/ zeroMarginPositive :
     0 < (genusOneDirectPairing data 0 0).im -
-      4 * (Prepared.genusOneRawEnergy curve / 2)
+      4 * (genusOneRawEnergy curve / 2)
   /-- The all-index movement bound is strictly below the square of the retained positive index-zero margin. -/
     zeroMovementSmall :
     genusOneDirectZeroMovementBound data <
       ((genusOneDirectPairing data 0 0).im -
-        4 * (Prepared.genusOneRawEnergy curve / 2)) ^ 2
+        4 * (genusOneRawEnergy curve / 2)) ^ 2
 
 namespace AnchoredDirectZeroGenusOneCanonicalFaceLowerCertificate
 
@@ -1147,61 +1149,61 @@ namespace AnchoredDirectZeroGenusOneCanonicalFaceLowerCertificate
 readings. -/
 theorem
   toDirectGenusOneCanonicalFaceLowerCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve}
     (certificate :
-      Curves.Hyperelliptic.Integration.Surface.Energy.AnchoredDirectZeroGenusOneCanonicalFaceLowerCertificate data) :
-    Curves.Hyperelliptic.Integration.Surface.Energy.DirectGenusOneCanonicalFaceLowerCertificate data where
+      AnchoredDirectZeroGenusOneCanonicalFaceLowerCertificate data) :
+    DirectGenusOneCanonicalFaceLowerCertificate data where
   lower := by
     intro aIndex bIndex
-    let target := Prepared.genusOneRawEnergy curve / 2
-    let anchorValue := (Curves.Hyperelliptic.Integration.Surface.Energy.genusOneDirectPairing data 0 0).im
-    let sampleValue := (Curves.Hyperelliptic.Integration.Surface.Energy.genusOneDirectPairing data aIndex bIndex).im
+    let target := genusOneRawEnergy curve / 2
+    let anchorValue := (genusOneDirectPairing data 0 0).im
+    let sampleValue := (genusOneDirectPairing data aIndex bIndex).im
     let margin := anchorValue - 4 * target
     have marginPositive : 0 < margin := certificate.zeroMarginPositive
-    apply (Fraction.Order.Field.le_div_iff_pos
+    apply (Field.le_div_iff_pos
       (by decide : (0 : Fraction.Rational) < 4)).2
     change target * 4 <= sampleValue
     by_cases enough : 4 * target <= sampleValue
     · simpa only [mul_comm target] using enough
     · have sampleBelow : sampleValue < 4 * target :=
-        Fraction.Order.Arithmetic.lt_of_not_ge_direct enough
+        Arithmetic.lt_of_not_ge_direct enough
       have marginBelowDifference :
           margin < anchorValue - sampleValue :=
-        Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+        Arithmetic.sub_lt_sub_left_direct
           sampleBelow anchorValue
       have differencePositive : 0 < anchorValue - sampleValue :=
         marginPositive.trans marginBelowDifference
       have firstProduct :
           margin * margin < margin * (anchorValue - sampleValue) :=
-        Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+        Arithmetic.mul_lt_mul_of_pos_left_direct
           marginPositive marginBelowDifference
       have secondProduct :
           margin * (anchorValue - sampleValue) <
             (anchorValue - sampleValue) * (anchorValue - sampleValue) :=
-        Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+        Arithmetic.mul_lt_mul_of_pos_right_direct
           marginBelowDifference differencePositive
       have squareStrict :
           margin ^ 2 < (anchorValue - sampleValue) ^ 2 := by
         simpa only [pow_two] using firstProduct.trans secondProduct
       have imaginarySquareLe :
           (anchorValue - sampleValue) ^ 2 <=
-            Data.Gaussian.Norm.Basic.normSq
-              (Curves.Hyperelliptic.Integration.Surface.Energy.genusOneDirectPairing data aIndex bIndex -
-                Curves.Hyperelliptic.Integration.Surface.Energy.genusOneDirectPairing data 0 0) := by
+            Norm.Basic.normSq
+              (genusOneDirectPairing data aIndex bIndex -
+                genusOneDirectPairing data 0 0) := by
         change (anchorValue - sampleValue) ^ 2 <=
-          ((Curves.Hyperelliptic.Integration.Surface.Energy.genusOneDirectPairing data aIndex bIndex).re -
-              (Curves.Hyperelliptic.Integration.Surface.Energy.genusOneDirectPairing data 0 0).re) ^ 2 +
+          ((genusOneDirectPairing data aIndex bIndex).re -
+              (genusOneDirectPairing data 0 0).re) ^ 2 +
             (sampleValue - anchorValue) ^ 2
         have reflected :
             (anchorValue - sampleValue) ^ 2 =
               (sampleValue - anchorValue) ^ 2 := by ring1
         rw [reflected]
         exact le_add_of_nonneg_left
-          (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-      have movement := Curves.Hyperelliptic.Integration.Surface.Energy.genusOneDirectPairing_sub_zero_normSq_le
+          (Arithmetic.sq_nonneg_direct _)
+      have movement := genusOneDirectPairing_sub_zero_normSq_le
         data aIndex bIndex
-      have forbidden : margin ^ 2 < Curves.Hyperelliptic.Integration.Surface.Energy.genusOneDirectZeroMovementBound data
+      have forbidden : margin ^ 2 < genusOneDirectZeroMovementBound data
         :=
         squareStrict.trans_le (imaginarySquareLe.trans movement)
       have cycle := certificate.zeroMovementSmall.trans forbidden
@@ -1211,11 +1213,11 @@ theorem
 period theorem. -/
 theorem
   toCanonicalFaceLowerCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve}
     (certificate :
-      Curves.Hyperelliptic.Integration.Surface.Energy.AnchoredDirectZeroGenusOneCanonicalFaceLowerCertificate data) :
-    Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneCanonicalFaceLowerCertificate data :=
+      AnchoredDirectZeroGenusOneCanonicalFaceLowerCertificate data) :
+    GenusOneCanonicalFaceLowerCertificate data :=
   certificate.toDirectGenusOneCanonicalFaceLowerCertificate.toCanonicalFaceLowerCertificate
 
 end AnchoredDirectZeroGenusOneCanonicalFaceLowerCertificate
@@ -1225,24 +1227,24 @@ set_option genInjectivity false in
 One positive imaginary margin at the anchor, together with a squared geometric tail bound smaller than that margin,
 controls every later sample. -/
 structure AnchoredGenusOneCanonicalFaceLowerCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) where
   /-- The retained synchronized sample index separating the checked finite prefix from the controlled tail. -/ anchor :
     Nat
   /-- Every synchronized sample before the retained anchor satisfies the canonical half-face lower bound. -/
     prefix_lower : forall sampleIndex, sampleIndex < anchor ->
-    Prepared.genusOneRawEnergy curve / 2 <=
+    genusOneRawEnergy curve / 2 <=
       genusOneUnitFirstTriangleEnergy data sampleIndex
   /-- The synchronized pairing imaginary part at the retained anchor strictly exceeds four times the required
     half-energy floor. -/ tailMarginPositive :
     0 < ((genusOnePairingApproximation data).sample anchor).im -
-      4 * (Prepared.genusOneRawEnergy curve / 2)
+      4 * (genusOneRawEnergy curve / 2)
   /-- The geometric error radius at the retained anchor is strictly below its positive margin squared. -/
     tailMovementSmall :
     Geometric.Basic.quarterRadius
         (genusOnePairingApproximation data).errorScale anchor <
       (((genusOnePairingApproximation data).sample anchor).im -
-        4 * (Prepared.genusOneRawEnergy curve / 2)) ^ 2
+        4 * (genusOneRawEnergy curve / 2)) ^ 2
 
 constructive_injectivity AnchoredGenusOneCanonicalFaceLowerCertificate
 
@@ -1252,56 +1254,56 @@ namespace AnchoredGenusOneCanonicalFaceLowerCertificate
 imaginary-coordinate motion with the full Gaussian squared-motion bound; it uses no limit or completeness principle. -/
 theorem
   toCanonicalFaceLowerCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve}
-    (certificate : Curves.Hyperelliptic.Integration.Surface.Energy.AnchoredGenusOneCanonicalFaceLowerCertificate data) :
-    Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneCanonicalFaceLowerCertificate data where
+    (certificate : AnchoredGenusOneCanonicalFaceLowerCertificate data) :
+    GenusOneCanonicalFaceLowerCertificate data where
   lower := by
     intro sampleIndex
     by_cases before : sampleIndex < certificate.anchor
     · exact certificate.prefix_lower sampleIndex before
     · have order : certificate.anchor <= sampleIndex := Nat.le_of_not_gt before
-      let approximation := Curves.Hyperelliptic.Integration.Surface.Energy.genusOnePairingApproximation data
-      let target := Prepared.genusOneRawEnergy curve / 2
+      let approximation := genusOnePairingApproximation data
+      let target := genusOneRawEnergy curve / 2
       let anchorValue := (approximation.sample certificate.anchor).im
       let sampleValue := (approximation.sample sampleIndex).im
       let margin := anchorValue - 4 * target
       have marginPositive : 0 < margin := certificate.tailMarginPositive
       have movement := approximation.later_close order
       have targetOriented :
-          Curves.Hyperelliptic.Integration.Surface.Energy.genusOneUnitFirstTriangleEnergy data sampleIndex =
+          genusOneUnitFirstTriangleEnergy data sampleIndex =
             sampleValue / 4 := by
-        exact Curves.Hyperelliptic.Integration.Surface.Energy.genusOneUnitFirstTriangleEnergy_eq_pairing_im_div_four
+        exact genusOneUnitFirstTriangleEnergy_eq_pairing_im_div_four
           data sampleIndex
       rw [targetOriented]
-      apply (Fraction.Order.Field.le_div_iff_pos
+      apply (Field.le_div_iff_pos
         (by decide : (0 : Fraction.Rational) < 4)).2
       change target * 4 <= sampleValue
       by_cases enough : 4 * target <= sampleValue
       · simpa only [mul_comm target] using enough
       · have sampleBelow : sampleValue < 4 * target :=
-          Fraction.Order.Arithmetic.lt_of_not_ge_direct enough
+          Arithmetic.lt_of_not_ge_direct enough
         have marginBelowDifference :
             margin < anchorValue - sampleValue :=
-          Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+          Arithmetic.sub_lt_sub_left_direct
             sampleBelow anchorValue
         have differencePositive : 0 < anchorValue - sampleValue :=
           marginPositive.trans marginBelowDifference
         have firstProduct :
             margin * margin < margin * (anchorValue - sampleValue) :=
-          Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+          Arithmetic.mul_lt_mul_of_pos_left_direct
             marginPositive marginBelowDifference
         have secondProduct :
             margin * (anchorValue - sampleValue) <
               (anchorValue - sampleValue) * (anchorValue - sampleValue) :=
-          Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+          Arithmetic.mul_lt_mul_of_pos_right_direct
             marginBelowDifference differencePositive
         have squareStrict :
             margin ^ 2 < (anchorValue - sampleValue) ^ 2 := by
           simpa only [pow_two] using firstProduct.trans secondProduct
         have imaginarySquareLe :
             (anchorValue - sampleValue) ^ 2 <=
-              Data.Gaussian.Norm.Basic.normSq
+              Norm.Basic.normSq
                 (approximation.sample sampleIndex -
                   approximation.sample certificate.anchor) := by
           change (anchorValue - sampleValue) ^ 2 <=
@@ -1313,7 +1315,7 @@ theorem
                 (sampleValue - anchorValue) ^ 2 := by ring1
           rw [reflected]
           exact le_add_of_nonneg_left
-            (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+            (Arithmetic.sq_nonneg_direct _)
         have forbidden : margin ^ 2 <
             Geometric.Basic.quarterRadius approximation.errorScale
               certificate.anchor :=
@@ -1328,39 +1330,39 @@ namespace GenusOneCanonicalFaceLowerCertificate
 /-- Package the derived unit surface inequality at every synchronized sample. -/
 theorem
   toUnitSurfaceLowerCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve}
-    (certificate : Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneCanonicalFaceLowerCertificate data) :
-    Prepared.GenusOneUnitSurfaceLowerCertificate data where
+    (certificate : GenusOneCanonicalFaceLowerCertificate data) :
+    GenusOneUnitSurfaceLowerCertificate data where
   lower := by
     intro sampleIndex
     have secondLower :
-        Prepared.genusOneRawEnergy curve / 2 <=
-          Curves.Hyperelliptic.Integration.Surface.Energy.genusOneUnitSecondTriangleEnergy data sampleIndex := by
-      rw [← Curves.Hyperelliptic.Integration.Surface.Energy.genusOneUnitFirstTriangleEnergy_eq_second data sampleIndex]
+        genusOneRawEnergy curve / 2 <=
+          genusOneUnitSecondTriangleEnergy data sampleIndex := by
+      rw [← genusOneUnitFirstTriangleEnergy_eq_second data sampleIndex]
       exact certificate.lower sampleIndex
     calc
-      Prepared.genusOneRawEnergy curve =
-          Prepared.genusOneRawEnergy curve / 2 +
-            Prepared.genusOneRawEnergy curve / 2 := by
+      genusOneRawEnergy curve =
+          genusOneRawEnergy curve / 2 +
+            genusOneRawEnergy curve / 2 := by
         simp only [Fraction.Field.div_eq_mul_inv_direct]
         calc
-          Prepared.genusOneRawEnergy curve =
-              Prepared.genusOneRawEnergy curve *
+          genusOneRawEnergy curve =
+              genusOneRawEnergy curve *
                 ((2 : Fraction.Rational)⁻¹ + (2 : Fraction.Rational)⁻¹) := by
             rw [show (2 : Fraction.Rational)⁻¹ + (2 : Fraction.Rational)⁻¹ = 1 by decide]
             ring1
-          _ = Prepared.genusOneRawEnergy curve * 2⁻¹ +
-              Prepared.genusOneRawEnergy curve * 2⁻¹ := by
+          _ = genusOneRawEnergy curve * 2⁻¹ +
+              genusOneRawEnergy curve * 2⁻¹ := by
             ring1
-      _ <= Curves.Hyperelliptic.Integration.Surface.Energy.genusOneUnitFirstTriangleEnergy data sampleIndex +
-          Curves.Hyperelliptic.Integration.Surface.Energy.genusOneUnitSecondTriangleEnergy data sampleIndex :=
+      _ <= genusOneUnitFirstTriangleEnergy data sampleIndex +
+          genusOneUnitSecondTriangleEnergy data sampleIndex :=
         add_le_add (certificate.lower sampleIndex) secondLower
-      _ = Energy.unnormalizedEnergyForm
-          Energy.genusOneUnitCoefficients
+      _ = unnormalizedEnergyForm
+          genusOneUnitCoefficients
           (sampledMatrix data.aMatrix sampleIndex)
           (sampledMatrix data.bMatrix sampleIndex) :=
-        Curves.Hyperelliptic.Integration.Surface.Energy.genusOneUnitTriangleEnergy_add_eq_raw data sampleIndex
+        genusOneUnitTriangleEnergy_add_eq_raw data sampleIndex
 
 end GenusOneCanonicalFaceLowerCertificate
 
@@ -1369,23 +1371,23 @@ set_option genInjectivity false in
 lower contribution is assigned to an actual oriented triangle. -/
 structure TriangulatedRawEnergySample {genus cellCount :
   Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (data : PeriodData curve) (coefficients : PreparedEnergySurface.GaussianVector genus)
     (sampleIndex : Nat)
     (cells : Fin cellCount -> PreparedEnergySurface.SurfaceCell curve coefficients) where
   /-- The retained finite number of triangulation vertices. -/ vertexCount : Nat
   /-- The original finite oriented triangle incidence with its exact boundary cancellation. -/ triangulation :
-    Stokes.Triangulation vertexCount cellCount
+    Triangulation vertexCount cellCount
   /-- The retained primitive pair at each original triangulation vertex. -/ primitive : Fin vertexCount ->
-    Stokes.PrimitivePoint
+    PrimitivePoint
   /-- The original oriented boundary area is exactly the period-combination boundary area at this sample. -/
     boundary_matches :
-    Stokes.edgeListArea primitive
+    edgeListArea primitive
         triangulation.boundary =
       Polygon.energyBoundaryArea
-        (Energy.periodCombination coefficients
+        (periodCombination coefficients
           (sampledMatrix data.aMatrix sampleIndex))
-        (Energy.periodCombination coefficients
+        (periodCombination coefficients
           (sampledMatrix data.bMatrix sampleIndex))
   /-- Each original cell contribution is bounded by its assigned oriented primitive triangle energy. -/
     face_energy_lower : forall face : Fin cellCount,
@@ -1401,45 +1403,45 @@ namespace TriangulatedRawEnergySample
 theorem
   triangleEnergySum_eq_raw
   {genus cellCount : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodData curve} {coefficients : PreparedEnergySurface.GaussianVector genus}
     {sampleIndex : Nat}
     {cells : Fin cellCount -> PreparedEnergySurface.SurfaceCell curve coefficients}
-    (sample : Curves.Hyperelliptic.Integration.Surface.Energy.TriangulatedRawEnergySample data coefficients sampleIndex
+    (sample : TriangulatedRawEnergySample data coefficients sampleIndex
       cells) :
     FiniteSum.Fin.sumFin (fun face =>
-        Purelib.Integration.Energy.AffineTriangle.triangleEnergy sample.primitive (sample.triangulation.faces face)) =
-      Energy.unnormalizedEnergyForm coefficients
+        AffineTriangle.triangleEnergy sample.primitive (sample.triangulation.faces face)) =
+      unnormalizedEnergyForm coefficients
         (sampledMatrix data.aMatrix sampleIndex)
         (sampledMatrix data.bMatrix sampleIndex) := by
-  let aPeriods := Energy.periodCombination coefficients
+  let aPeriods := periodCombination coefficients
     (sampledMatrix data.aMatrix sampleIndex)
-  let bPeriods := Energy.periodCombination coefficients
+  let bPeriods := periodCombination coefficients
     (sampledMatrix data.bMatrix sampleIndex)
   calc
     FiniteSum.Fin.sumFin (fun face =>
         AffineTriangle.triangleEnergy sample.primitive (sample.triangulation.faces face)) =
-        (Stokes.triangleWedgeSum sample.primitive
+        (triangleWedgeSum sample.primitive
           sample.triangulation.faces).im / 4 := by
-      unfold AffineTriangle.triangleEnergy Stokes.triangleWedgeSum
-      rw [Energy.sumFin_im]
+      unfold AffineTriangle.triangleEnergy triangleWedgeSum
+      rw [sumFin_im]
       simp only [Fraction.Field.div_eq_mul_inv_direct]
       exact FiniteSum.Fin.sumFin_mul_right
         (fun face =>
-          (Stokes.triangleWedgeArea
+          (triangleWedgeArea
             (sample.primitive (sample.triangulation.faces face).first)
             (sample.primitive (sample.triangulation.faces face).second)
             (sample.primitive
               (sample.triangulation.faces face).third)).im)
         ((4 : Fraction.Rational)⁻¹)
-    _ = (Stokes.edgeListArea sample.primitive
+    _ = (edgeListArea sample.primitive
           sample.triangulation.boundary).im / 4 := by
       rw [sample.triangulation.wedgeSum_eq_boundaryArea sample.primitive]
     _ = (Polygon.energyBoundaryArea aPeriods bPeriods).im / 4 := by
       rw [sample.boundary_matches]
-    _ = Energy.periodPairingEnergy aPeriods bPeriods :=
+    _ = periodPairingEnergy aPeriods bPeriods :=
       (Polygon.periodPairingEnergy_eq_boundaryArea_im_div_four aPeriods bPeriods).symm
-    _ = Energy.unnormalizedEnergyForm coefficients
+    _ = unnormalizedEnergyForm coefficients
           (sampledMatrix data.aMatrix sampleIndex)
           (sampledMatrix data.bMatrix sampleIndex) := rfl
 
@@ -1447,19 +1449,19 @@ theorem
 -/
 theorem surfaceEnergy_le_raw
   {genus cellCount : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodData curve} {coefficients : PreparedEnergySurface.GaussianVector genus}
     {sampleIndex : Nat}
     {cells : Fin cellCount -> PreparedEnergySurface.SurfaceCell curve coefficients}
-    (sample : Curves.Hyperelliptic.Integration.Surface.Energy.TriangulatedRawEnergySample data coefficients sampleIndex
+    (sample : TriangulatedRawEnergySample data coefficients sampleIndex
       cells) :
-    Purelib.Curves.Hyperelliptic.Integration.Energy.Prepared.surfaceEnergy cells <=
-      Energy.unnormalizedEnergyForm coefficients
+    surfaceEnergy cells <=
+      unnormalizedEnergyForm coefficients
         (sampledMatrix data.aMatrix sampleIndex)
         (sampledMatrix data.bMatrix sampleIndex) := by
-  unfold Prepared.surfaceEnergy
-    Cell.cellEnergy
-    Prepared.energyCells
+  unfold surfaceEnergy
+    cellEnergy
+    energyCells
   calc
     FiniteSum.Fin.sumFin (fun face =>
         Cell.contribution
@@ -1469,7 +1471,7 @@ theorem surfaceEnergy_le_raw
             (sample.triangulation.faces face)) := by
       apply Order.Positivity.sumFin_mono
       exact sample.face_energy_lower
-    _ = Energy.unnormalizedEnergyForm coefficients
+    _ = unnormalizedEnergyForm coefficients
           (sampledMatrix data.aMatrix sampleIndex)
           (sampledMatrix data.bMatrix sampleIndex) :=
       sample.triangleEnergySum_eq_raw
@@ -1478,26 +1480,26 @@ theorem surfaceEnergy_le_raw
 inequality. -/
 def toRawBoundaryReduction
   {genus cellCount : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodData curve} {coefficients : PreparedEnergySurface.GaussianVector genus}
     {sampleIndex : Nat}
     {cells : Fin cellCount -> PreparedEnergySurface.SurfaceCell curve coefficients}
-    (sample : Curves.Hyperelliptic.Integration.Surface.Energy.TriangulatedRawEnergySample data coefficients sampleIndex
+    (sample : TriangulatedRawEnergySample data coefficients sampleIndex
       cells) :
-    Prepared.RawBoundaryReduction data coefficients
+    RawBoundaryReduction data coefficients
       sampleIndex cells := by
-  let raw := Energy.unnormalizedEnergyForm coefficients
+  let raw := unnormalizedEnergyForm coefficients
     (sampledMatrix data.aMatrix sampleIndex)
     (sampledMatrix data.bMatrix sampleIndex)
-  let localEnergy := Prepared.surfaceEnergy cells
+  let localEnergy := surfaceEnergy cells
   exact
     { edgePairCount := 0
       edgePairValues := fun edge => Fin.elim0 edge
       remainder := raw - localEnergy
       remainder_nonnegative :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct sample.surfaceEnergy_le_raw
+        Arithmetic.sub_nonneg_direct sample.surfaceEnergy_le_raw
       raw_eq_decomposition := by
-        rw [Prepared.pairedBoundarySum_zero]
+        rw [pairedBoundarySum_zero]
         unfold raw localEnergy
         ring1 }
 
@@ -1510,28 +1512,28 @@ the triangle's coordinate area and coefficient norm dominate the assigned surfac
 therefore derived from the exact affine Jacobian theorem above. -/
 structure AffineTriangulatedRawEnergySample {genus
   cellCount : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (data : PeriodData curve) (coefficients : PreparedEnergySurface.GaussianVector genus)
     (sampleIndex : Nat)
     (cells : Fin cellCount -> PreparedEnergySurface.SurfaceCell curve coefficients) where
   /-- The retained finite number of triangulation vertices. -/ vertexCount : Nat
   /-- The original finite oriented triangle incidence with its exact boundary cancellation. -/ triangulation :
-    Stokes.Triangulation vertexCount cellCount
+    Triangulation vertexCount cellCount
   /-- The retained Gaussian rational coordinate of each original triangulation vertex. -/ coordinate : Fin vertexCount
-    -> Data.Gaussian.Basic.Canonical
+    -> Basic.Canonical
   /-- The retained primitive pair at each original triangulation vertex. -/ primitive : Fin vertexCount ->
-    Stokes.PrimitivePoint
+    PrimitivePoint
   /-- The original oriented boundary area is exactly the period-combination boundary area at this sample. -/
     boundary_matches :
-    Stokes.edgeListArea primitive
+    edgeListArea primitive
         triangulation.boundary =
       Polygon.energyBoundaryArea
-        (Energy.periodCombination coefficients
+        (periodCombination coefficients
           (sampledMatrix data.aMatrix sampleIndex))
-        (Energy.periodCombination coefficients
+        (periodCombination coefficients
           (sampledMatrix data.bMatrix sampleIndex))
   /-- The retained constant Gaussian differential coefficient for each original face. -/ faceCoefficient : Fin cellCount
-    -> Data.Gaussian.Basic.Canonical
+    -> Basic.Canonical
   /-- The first primitive vertex equals this face coefficient applied to its original coordinate. -/ primitive_first :
     forall face : Fin cellCount,
     primitive (triangulation.faces face).first =
@@ -1557,7 +1559,7 @@ structure AffineTriangulatedRawEnergySample {genus
   /-- Each original cell density floor is bounded by its assigned affine coefficient squared norm. -/
     cell_density_le_coefficient : forall face : Fin cellCount,
     (cells face).densityLower <=
-      Data.Gaussian.Norm.Basic.normSq (faceCoefficient face)
+      Norm.Basic.normSq (faceCoefficient face)
 
 constructive_injectivity AffineTriangulatedRawEnergySample
 
@@ -1567,17 +1569,17 @@ namespace AffineTriangulatedRawEnergySample
 theorem
   face_energy_lower
   {genus cellCount : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodData curve} {coefficients : PreparedEnergySurface.GaussianVector genus}
     {sampleIndex : Nat}
     {cells : Fin cellCount -> PreparedEnergySurface.SurfaceCell curve coefficients}
-    (sample : Curves.Hyperelliptic.Integration.Surface.Energy.AffineTriangulatedRawEnergySample data coefficients
+    (sample : AffineTriangulatedRawEnergySample data coefficients
       sampleIndex
       cells)
     (face : Fin cellCount) :
     Cell.contribution
         ((cells face).toEnergyCell) <=
-      Purelib.Integration.Energy.AffineTriangle.triangleEnergy sample.primitive (sample.triangulation.faces face) := by
+      AffineTriangle.triangleEnergy sample.primitive (sample.triangulation.faces face) := by
   let triangle := sample.triangulation.faces face
   let first := sample.coordinate triangle.first
   let second := sample.coordinate triangle.second
@@ -1593,8 +1595,8 @@ theorem
         Content.boxContent (cells face).box *
           (cells face).densityLower := rfl
     _ <= AffineTriangle.coordinateTriangleArea first second third *
-          Data.Gaussian.Norm.Basic.normSq coefficient :=
-      Fraction.Order.Arithmetic.mul_le_mul_direct
+          Norm.Basic.normSq coefficient :=
+      Arithmetic.mul_le_mul_direct
         (sample.cell_area_le_triangle face)
         (sample.cell_density_le_coefficient face)
         (cells face).densityLower_nonnegative areaNonnegative
@@ -1614,14 +1616,14 @@ coefficient norm. -/
 def
   toTriangulatedRawEnergySample
   {genus cellCount : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodData curve} {coefficients : PreparedEnergySurface.GaussianVector genus}
     {sampleIndex : Nat}
     {cells : Fin cellCount -> PreparedEnergySurface.SurfaceCell curve coefficients}
-    (sample : Curves.Hyperelliptic.Integration.Surface.Energy.AffineTriangulatedRawEnergySample data coefficients
+    (sample : AffineTriangulatedRawEnergySample data coefficients
       sampleIndex
       cells) :
-    Curves.Hyperelliptic.Integration.Surface.Energy.TriangulatedRawEnergySample data coefficients sampleIndex cells
+    TriangulatedRawEnergySample data coefficients sampleIndex cells
       where
   vertexCount := sample.vertexCount
   triangulation := sample.triangulation
@@ -1634,15 +1636,15 @@ theorem. -/
 theorem
   surfaceEnergy_le_raw
   {genus cellCount : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodData curve} {coefficients : PreparedEnergySurface.GaussianVector genus}
     {sampleIndex : Nat}
     {cells : Fin cellCount -> PreparedEnergySurface.SurfaceCell curve coefficients}
-    (sample : Curves.Hyperelliptic.Integration.Surface.Energy.AffineTriangulatedRawEnergySample data coefficients
+    (sample : AffineTriangulatedRawEnergySample data coefficients
       sampleIndex
       cells) :
-    Prepared.surfaceEnergy cells <=
-      Energy.unnormalizedEnergyForm coefficients
+    surfaceEnergy cells <=
+      unnormalizedEnergyForm coefficients
         (sampledMatrix data.aMatrix sampleIndex)
         (sampledMatrix data.bMatrix sampleIndex) :=
   sample.toTriangulatedRawEnergySample.surfaceEnergy_le_raw
@@ -1656,29 +1658,29 @@ error before the exact incidence theorem is applied. -/
 structure
   ErrorControlledAffineTriangulatedRawEnergySample
     {genus cellCount : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (data : PeriodData curve) (coefficients : PreparedEnergySurface.GaussianVector genus)
     (sampleIndex : Nat)
     (cells : Fin cellCount -> PreparedEnergySurface.SurfaceCell curve coefficients) where
   /-- The retained finite number of triangulation vertices. -/ vertexCount : Nat
   /-- The original finite oriented triangle incidence with its exact boundary cancellation. -/ triangulation :
-    Stokes.Triangulation vertexCount cellCount
+    Triangulation vertexCount cellCount
   /-- The retained Gaussian rational coordinate of each original triangulation vertex. -/ coordinate : Fin vertexCount
-    -> Data.Gaussian.Basic.Canonical
+    -> Basic.Canonical
   /-- The retained Gaussian primitive value at each original triangulation vertex. -/ primitiveValue : Fin vertexCount
-    -> Data.Gaussian.Basic.Canonical
+    -> Basic.Canonical
   /-- The original oriented boundary area is exactly the period-combination boundary area at this sample. -/
     boundary_matches :
-    Stokes.edgeListArea
+    edgeListArea
         (fun vertex => Polygon.energyPrimitivePoint (primitiveValue vertex))
         triangulation.boundary =
       Polygon.energyBoundaryArea
-        (Energy.periodCombination coefficients
+        (periodCombination coefficients
           (sampledMatrix data.aMatrix sampleIndex))
-        (Energy.periodCombination coefficients
+        (periodCombination coefficients
           (sampledMatrix data.bMatrix sampleIndex))
   /-- The retained constant Gaussian differential coefficient for each original face. -/ faceCoefficient : Fin cellCount
-    -> Data.Gaussian.Basic.Canonical
+    -> Basic.Canonical
   /-- The retained comparison certificate for the three original primitive vertices and their local affine model. -/
     faceError : forall face : Fin cellCount,
     AffineTriangle.AffineTriangleErrorCertificate (faceCoefficient face)
@@ -1697,7 +1699,7 @@ structure
           (coordinate (triangulation.faces face).first)
           (coordinate (triangulation.faces face).second)
           (coordinate (triangulation.faces face).third) *
-        Data.Gaussian.Norm.Basic.normSq (faceCoefficient face)
+        Norm.Basic.normSq (faceCoefficient face)
 
 constructive_injectivity ErrorControlledAffineTriangulatedRawEnergySample
 
@@ -1708,11 +1710,11 @@ namespace ErrorControlledAffineTriangulatedRawEnergySample
 theorem
   face_energy_lower
   {genus cellCount : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodData curve} {coefficients : PreparedEnergySurface.GaussianVector genus}
     {sampleIndex : Nat}
     {cells : Fin cellCount -> PreparedEnergySurface.SurfaceCell curve coefficients}
-    (sample : Curves.Hyperelliptic.Integration.Surface.Energy.ErrorControlledAffineTriangulatedRawEnergySample data
+    (sample : ErrorControlledAffineTriangulatedRawEnergySample data
       coefficients sampleIndex cells)
     (face : Fin cellCount) :
     Cell.contribution
@@ -1731,7 +1733,7 @@ theorem
   let error := sample.faceError face
   let contribution := Cell.contribution
     ((cells face).toEnergyCell)
-  have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+  have shifted := Arithmetic.add_le_add_right_direct
     (sample.cell_energy_add_error_le_affine face) (-error.totalBudget)
   calc
     Cell.contribution
@@ -1740,10 +1742,10 @@ theorem
       unfold contribution
       ring1
     _ <= AffineTriangle.coordinateTriangleArea first second third *
-          Data.Gaussian.Norm.Basic.normSq coefficient +
+          Norm.Basic.normSq coefficient +
             -error.totalBudget := shifted
     _ = AffineTriangle.coordinateTriangleArea first second third *
-          Data.Gaussian.Norm.Basic.normSq coefficient -
+          Norm.Basic.normSq coefficient -
             error.totalBudget := by ring1
     _ <= AffineTriangle.primitiveTriangleEnergy
           (Polygon.energyPrimitivePoint primitiveFirst)
@@ -1758,13 +1760,13 @@ theorem
 def
   toTriangulatedRawEnergySample
   {genus cellCount : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodData curve} {coefficients : PreparedEnergySurface.GaussianVector genus}
     {sampleIndex : Nat}
     {cells : Fin cellCount -> PreparedEnergySurface.SurfaceCell curve coefficients}
-    (sample : Curves.Hyperelliptic.Integration.Surface.Energy.ErrorControlledAffineTriangulatedRawEnergySample data
+    (sample : ErrorControlledAffineTriangulatedRawEnergySample data
       coefficients sampleIndex cells) :
-    Curves.Hyperelliptic.Integration.Surface.Energy.TriangulatedRawEnergySample data coefficients sampleIndex cells
+    TriangulatedRawEnergySample data coefficients sampleIndex cells
       where
   vertexCount := sample.vertexCount
   triangulation := sample.triangulation
@@ -1776,14 +1778,14 @@ def
 theorem
   surfaceEnergy_le_raw
   {genus cellCount : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodData curve} {coefficients : PreparedEnergySurface.GaussianVector genus}
     {sampleIndex : Nat}
     {cells : Fin cellCount -> PreparedEnergySurface.SurfaceCell curve coefficients}
-    (sample : Curves.Hyperelliptic.Integration.Surface.Energy.ErrorControlledAffineTriangulatedRawEnergySample data
+    (sample : ErrorControlledAffineTriangulatedRawEnergySample data
       coefficients sampleIndex cells) :
-    Prepared.surfaceEnergy cells <=
-      Energy.unnormalizedEnergyForm coefficients
+    surfaceEnergy cells <=
+      unnormalizedEnergyForm coefficients
         (sampledMatrix data.aMatrix sampleIndex)
         (sampledMatrix data.bMatrix sampleIndex) :=
   sample.toTriangulatedRawEnergySample.surfaceEnergy_le_raw
@@ -1795,7 +1797,7 @@ set_option genInjectivity false in
 structure
   ErrorControlledAffineTriangulatedRawEnergyCertificate
   {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (data : PeriodData curve) where
   /-- For every coefficient vector, sample index and original cell, retain an error-controlled affine triangulation of
     that single cell. -/ sample : forall (coefficients : PreparedEnergySurface.GaussianVector genus) (sampleIndex : Nat)
@@ -1811,11 +1813,11 @@ namespace ErrorControlledAffineTriangulatedRawEnergyCertificate
 theorem
   toRawSurfaceLowerCertificate
   {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodData curve}
     (certificate :
-      Curves.Hyperelliptic.Integration.Surface.Energy.ErrorControlledAffineTriangulatedRawEnergyCertificate data) :
-    Prepared.RawSurfaceLowerCertificate data where
+      ErrorControlledAffineTriangulatedRawEnergyCertificate data) :
+    RawSurfaceLowerCertificate data where
   lower := by
     intro coefficients sampleIndex cell
     exact (certificate.sample coefficients sampleIndex cell).surfaceEnergy_le_raw
@@ -1824,11 +1826,11 @@ theorem
 def
   toRawCertificate
   {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodData curve}
     (certificate :
-      Curves.Hyperelliptic.Integration.Surface.Energy.ErrorControlledAffineTriangulatedRawEnergyCertificate data) :
-    Prepared.RawCertificate data :=
+      ErrorControlledAffineTriangulatedRawEnergyCertificate data) :
+    RawCertificate data :=
   certificate.toRawSurfaceLowerCertificate.toRawCertificate
 
 end ErrorControlledAffineTriangulatedRawEnergyCertificate
@@ -1838,7 +1840,7 @@ set_option genInjectivity false in
 preassembled face-energy inequalities. -/
 structure AffineTriangulatedRawEnergyCertificate {genus :
   Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (data : PeriodData curve) where
   /-- For every coefficient vector, sample index and original cell, retain its affine triangulation and exact local
     primitive comparisons. -/ sample : forall (coefficients : PreparedEnergySurface.GaussianVector genus) (sampleIndex :
@@ -1855,10 +1857,10 @@ namespace AffineTriangulatedRawEnergyCertificate
 theorem
   toRawSurfaceLowerCertificate
   {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodData curve}
-    (certificate : Curves.Hyperelliptic.Integration.Surface.Energy.AffineTriangulatedRawEnergyCertificate data) :
-    Prepared.RawSurfaceLowerCertificate data where
+    (certificate : AffineTriangulatedRawEnergyCertificate data) :
+    RawSurfaceLowerCertificate data where
   lower := by
     intro coefficients sampleIndex cell
     exact (certificate.sample coefficients sampleIndex cell).surfaceEnergy_le_raw
@@ -1867,10 +1869,10 @@ theorem
 def
   toRawCertificate
   {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodData curve}
-    (certificate : Curves.Hyperelliptic.Integration.Surface.Energy.AffineTriangulatedRawEnergyCertificate data) :
-    Prepared.RawCertificate data :=
+    (certificate : AffineTriangulatedRawEnergyCertificate data) :
+    RawCertificate data :=
   certificate.toRawSurfaceLowerCertificate.toRawCertificate
 
 end AffineTriangulatedRawEnergyCertificate
@@ -1879,7 +1881,7 @@ set_option genInjectivity false in
 /-- Genus-generic triangulated replacement for the global raw surface-lower field. The only analytic hypotheses are
 local face inequalities. -/
 structure TriangulatedRawEnergyCertificate {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (data : PeriodData curve) where
   /-- For every coefficient vector, sample index and original cell, retain a finite triangulation proving its local
     energy lower bound. -/ sample : forall (coefficients : PreparedEnergySurface.GaussianVector genus) (sampleIndex :
@@ -1896,10 +1898,10 @@ namespace TriangulatedRawEnergyCertificate
 theorem
   toRawSurfaceLowerCertificate
   {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodData curve}
-    (certificate : Curves.Hyperelliptic.Integration.Surface.Energy.TriangulatedRawEnergyCertificate data) :
-    Prepared.RawSurfaceLowerCertificate data where
+    (certificate : TriangulatedRawEnergyCertificate data) :
+    RawSurfaceLowerCertificate data where
   lower := by
     intro coefficients sampleIndex cell
     exact (certificate.sample coefficients sampleIndex cell).surfaceEnergy_le_raw
@@ -1907,10 +1909,10 @@ theorem
 /-- Package the derived surface lower theorem as the raw energy certificate. -/
 def toRawCertificate
   {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {data : PeriodData curve}
-    (certificate : Curves.Hyperelliptic.Integration.Surface.Energy.TriangulatedRawEnergyCertificate data) :
-    Prepared.RawCertificate data :=
+    (certificate : TriangulatedRawEnergyCertificate data) :
+    RawCertificate data :=
   certificate.toRawSurfaceLowerCertificate.toRawCertificate
 
 end TriangulatedRawEnergyCertificate
@@ -1921,30 +1923,30 @@ bank of faces. Unlike the selected-face interface below, this records the genuin
 triangles jointly carry the reference-box energy. -/
 structure
   GenusOneUnitDistributedTriangulatedSurfaceSample
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) (sampleIndex : Nat) where
   /-- The retained finite number of triangulation vertices. -/ vertexCount : Nat
   /-- The retained finite number of oriented triangle faces. -/ faceCount : Nat
   /-- The original finite oriented triangle incidence with its exact boundary cancellation. -/ triangulation :
-    Stokes.Triangulation vertexCount faceCount
+    Triangulation vertexCount faceCount
   /-- The retained primitive pair at each original triangulation vertex. -/ primitive : Fin vertexCount ->
-    Stokes.PrimitivePoint
+    PrimitivePoint
   /-- The original oriented boundary area is exactly the period-combination boundary area at this sample. -/
     boundary_matches :
-    Stokes.edgeListArea primitive
+    edgeListArea primitive
         triangulation.boundary =
       Polygon.energyBoundaryArea
-        (Energy.periodCombination
-          Energy.genusOneUnitCoefficients
+        (periodCombination
+          genusOneUnitCoefficients
           (sampledMatrix data.aMatrix sampleIndex))
-        (Energy.periodCombination
-          Energy.genusOneUnitCoefficients
+        (periodCombination
+          genusOneUnitCoefficients
           (sampledMatrix data.bMatrix sampleIndex))
   /-- The retained rational energy lower bound assigned to each original oriented face. -/ faceLower : Fin faceCount ->
     Fraction.Rational
   /-- The finite sum of retained face lower bounds dominates the full unit reference energy. -/
     unit_energy_le_faceLowerSum :
-    Prepared.genusOneRawEnergy curve <=
+    genusOneRawEnergy curve <=
       FiniteSum.Fin.sumFin faceLower
   /-- Each retained face lower bound is bounded by the energy of that same oriented primitive triangle. -/
     face_energy_lower : forall face : Fin faceCount,
@@ -1958,46 +1960,46 @@ namespace GenusOneUnitDistributedTriangulatedSurfaceSample
 unit-differential period pairing. -/
 theorem
   triangleEnergySum_eq_raw
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve} {sampleIndex : Nat}
     (sample :
-      Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitDistributedTriangulatedSurfaceSample data sampleIndex)
+      GenusOneUnitDistributedTriangulatedSurfaceSample data sampleIndex)
         :
     FiniteSum.Fin.sumFin (fun face =>
-        Purelib.Integration.Energy.AffineTriangle.triangleEnergy sample.primitive (sample.triangulation.faces face)) =
-      Energy.unnormalizedEnergyForm
-        Energy.genusOneUnitCoefficients
+        AffineTriangle.triangleEnergy sample.primitive (sample.triangulation.faces face)) =
+      unnormalizedEnergyForm
+        genusOneUnitCoefficients
         (sampledMatrix data.aMatrix sampleIndex)
         (sampledMatrix data.bMatrix sampleIndex) := by
-  let coefficients := Energy.genusOneUnitCoefficients
-  let aPeriods := Energy.periodCombination coefficients
+  let coefficients := genusOneUnitCoefficients
+  let aPeriods := periodCombination coefficients
     (sampledMatrix data.aMatrix sampleIndex)
-  let bPeriods := Energy.periodCombination coefficients
+  let bPeriods := periodCombination coefficients
     (sampledMatrix data.bMatrix sampleIndex)
   calc
     FiniteSum.Fin.sumFin (fun face =>
         AffineTriangle.triangleEnergy sample.primitive (sample.triangulation.faces face)) =
-        (Stokes.triangleWedgeSum sample.primitive
+        (triangleWedgeSum sample.primitive
           sample.triangulation.faces).im / 4 := by
-      unfold AffineTriangle.triangleEnergy Stokes.triangleWedgeSum
-      rw [Energy.sumFin_im]
+      unfold AffineTriangle.triangleEnergy triangleWedgeSum
+      rw [sumFin_im]
       simp only [Fraction.Field.div_eq_mul_inv_direct]
       exact FiniteSum.Fin.sumFin_mul_right
         (fun face =>
-          (Stokes.triangleWedgeArea
+          (triangleWedgeArea
             (sample.primitive (sample.triangulation.faces face).first)
             (sample.primitive (sample.triangulation.faces face).second)
             (sample.primitive
               (sample.triangulation.faces face).third)).im)
         ((4 : Fraction.Rational)⁻¹)
-    _ = (Stokes.edgeListArea sample.primitive
+    _ = (edgeListArea sample.primitive
           sample.triangulation.boundary).im / 4 := by
       rw [sample.triangulation.wedgeSum_eq_boundaryArea sample.primitive]
     _ = (Polygon.energyBoundaryArea aPeriods bPeriods).im / 4 := by
       rw [sample.boundary_matches]
-    _ = Energy.periodPairingEnergy aPeriods bPeriods :=
+    _ = periodPairingEnergy aPeriods bPeriods :=
       (Polygon.periodPairingEnergy_eq_boundaryArea_im_div_four aPeriods bPeriods).symm
-    _ = Energy.unnormalizedEnergyForm coefficients
+    _ = unnormalizedEnergyForm coefficients
           (sampledMatrix data.aMatrix sampleIndex)
           (sampledMatrix data.bMatrix sampleIndex) := rfl
 
@@ -2005,14 +2007,14 @@ theorem
 pairing. -/
 theorem
   unitEnergy_le_raw
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve} {sampleIndex : Nat}
     (sample :
-      Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitDistributedTriangulatedSurfaceSample data sampleIndex)
+      GenusOneUnitDistributedTriangulatedSurfaceSample data sampleIndex)
         :
-    Prepared.genusOneRawEnergy curve <=
-      Energy.unnormalizedEnergyForm
-        Energy.genusOneUnitCoefficients
+    genusOneRawEnergy curve <=
+      unnormalizedEnergyForm
+        genusOneUnitCoefficients
         (sampledMatrix data.aMatrix sampleIndex)
         (sampledMatrix data.bMatrix sampleIndex) :=
   sample.unit_energy_le_faceLowerSum.trans
@@ -2028,61 +2030,61 @@ namespace GenusOneCanonicalFaceLowerCertificate
 /-- The explicit commutator boundary is the unit coefficient combination of the two sampled genus-one period entries. -/
 theorem
   commutatorBoundary_matches
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) (sampleIndex : Nat) :
-    Stokes.edgeListArea
+    edgeListArea
         (Triangulation.genusOneCommutatorPrimitive
           (Polygon.energyPrimitivePoint (sampledMatrix data.aMatrix sampleIndex 0 0))
           (Polygon.energyPrimitivePoint (sampledMatrix data.bMatrix sampleIndex 0 0)))
         Triangulation.genusOneCommutatorTriangulation.boundary =
-      Purelib.Integration.Energy.Polygon.energyBoundaryArea
-        (Energy.periodCombination
-          Energy.genusOneUnitCoefficients
+      Polygon.energyBoundaryArea
+        (periodCombination
+          genusOneUnitCoefficients
           (sampledMatrix data.aMatrix sampleIndex))
-        (Energy.periodCombination
-          Energy.genusOneUnitCoefficients
+        (periodCombination
+          genusOneUnitCoefficients
           (sampledMatrix data.bMatrix sampleIndex)) := by
   rw [Triangulation.genusOneCommutatorTriangulation_boundaryArea]
   unfold Polygon.energyBoundaryArea
   rw [FiniteSum.Fin.sumFin_succ,
-    Energy.periodCombination_genusOne_unit,
-    Energy.periodCombination_genusOne_unit]
+    periodCombination_genusOne_unit,
+    periodCombination_genusOne_unit]
   change _ = _ + 0
-  rw [Data.Gaussian.Basic.add_zero]
+  rw [Basic.add_zero]
 
 /-- Two identical half-energy lower entries sum to the full reference energy. -/
 theorem
   unitEnergy_le_halfFaceLowerSum
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1} :
-    Prepared.genusOneRawEnergy curve <=
+    {curve : Basic.HyperellipticCurve 1} :
+    genusOneRawEnergy curve <=
       FiniteSum.Fin.sumFin (fun _ : Fin 2 =>
-        Prepared.genusOneRawEnergy curve / 2) := by
+        genusOneRawEnergy curve / 2) := by
   rw [FiniteSum.Fin.sumFin_succ,
     FiniteSum.Fin.sumFin_succ]
-  change Prepared.genusOneRawEnergy curve <=
-    Prepared.genusOneRawEnergy curve / 2 +
-      (Prepared.genusOneRawEnergy curve / 2 + 0)
+  change genusOneRawEnergy curve <=
+    genusOneRawEnergy curve / 2 +
+      (genusOneRawEnergy curve / 2 + 0)
   rw [_root_.add_zero]
   apply le_of_eq
   simp only [Fraction.Field.div_eq_mul_inv_direct]
   calc
-    Prepared.genusOneRawEnergy curve =
-        Prepared.genusOneRawEnergy curve *
+    genusOneRawEnergy curve =
+        genusOneRawEnergy curve *
           ((2 : Fraction.Rational)⁻¹ + (2 : Fraction.Rational)⁻¹) := by
       rw [show (2 : Fraction.Rational)⁻¹ + (2 : Fraction.Rational)⁻¹ = 1 by decide]
       ring1
-    _ = Prepared.genusOneRawEnergy curve * 2⁻¹ +
-        Prepared.genusOneRawEnergy curve * 2⁻¹ := by
+    _ = genusOneRawEnergy curve * 2⁻¹ +
+        genusOneRawEnergy curve * 2⁻¹ := by
       ring1
 
 /-- The one independent canonical face bound supplies both oriented faces of the explicit commutator triangulation. -/
 theorem
   halfFaceLower_le_triangleEnergy
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve}
-    (certificate : Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneCanonicalFaceLowerCertificate data)
+    (certificate : GenusOneCanonicalFaceLowerCertificate data)
     (sampleIndex : Nat) (face : Fin 2) :
-    Prepared.genusOneRawEnergy curve / 2 <=
+    genusOneRawEnergy curve / 2 <=
       AffineTriangle.triangleEnergy
         (Triangulation.genusOneCommutatorPrimitive
           (Polygon.energyPrimitivePoint (sampledMatrix data.aMatrix sampleIndex 0 0))
@@ -2091,7 +2093,7 @@ theorem
   rcases face with ⟨value, bound⟩
   cases value with
   | zero =>
-      change Prepared.genusOneRawEnergy curve / 2 <=
+      change genusOneRawEnergy curve / 2 <=
         AffineTriangle.triangleEnergy
           (Triangulation.genusOneCommutatorPrimitive
             (Polygon.energyPrimitivePoint (sampledMatrix data.aMatrix sampleIndex 0 0))
@@ -2102,7 +2104,7 @@ theorem
   | succ value =>
       cases value with
       | zero =>
-          change Prepared.genusOneRawEnergy curve / 2 <=
+          change genusOneRawEnergy curve / 2 <=
             AffineTriangle.triangleEnergy
               (Triangulation.genusOneCommutatorPrimitive
                 (Polygon.energyPrimitivePoint (sampledMatrix data.aMatrix sampleIndex 0 0))
@@ -2110,9 +2112,9 @@ theorem
               (Triangulation.genusOneCommutatorTriangulation.faces (1 : Fin 2))
           rw [Triangulation.genusOneCommutatorSecondFaceEnergy]
           have secondLower :
-              Prepared.genusOneRawEnergy curve / 2 <=
-                Curves.Hyperelliptic.Integration.Surface.Energy.genusOneUnitSecondTriangleEnergy data sampleIndex := by
-            rw [← Curves.Hyperelliptic.Integration.Surface.Energy.genusOneUnitFirstTriangleEnergy_eq_second data
+              genusOneRawEnergy curve / 2 <=
+                genusOneUnitSecondTriangleEnergy data sampleIndex := by
+            rw [← genusOneUnitFirstTriangleEnergy_eq_second data
               sampleIndex]
             exact certificate.lower sampleIndex
           exact secondLower
@@ -2125,11 +2127,11 @@ theorem
 half of the checked reference energy, so the distributed lower sum is the full unit energy. -/
 def
   toDistributedTriangulatedSurfaceSample
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve}
-    (certificate : Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneCanonicalFaceLowerCertificate data)
+    (certificate : GenusOneCanonicalFaceLowerCertificate data)
     (sampleIndex : Nat) :
-    Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitDistributedTriangulatedSurfaceSample data sampleIndex
+    GenusOneUnitDistributedTriangulatedSurfaceSample data sampleIndex
       where
     vertexCount := 4
     faceCount := 2
@@ -2141,7 +2143,7 @@ def
       commutatorBoundary_matches
       data sampleIndex
     faceLower := fun _ =>
-      Prepared.genusOneRawEnergy curve / 2
+      genusOneRawEnergy curve / 2
     unit_energy_le_faceLowerSum :=
       unitEnergy_le_halfFaceLowerSum
     face_energy_lower :=
@@ -2151,16 +2153,16 @@ def
 bypassing the triangulation algebra. -/
 theorem
   unitEnergy_le_raw_via_commutatorTriangulation
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve}
-    (certificate : Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneCanonicalFaceLowerCertificate data)
+    (certificate : GenusOneCanonicalFaceLowerCertificate data)
     (sampleIndex : Nat) :
-    Prepared.genusOneRawEnergy curve <=
-      Energy.unnormalizedEnergyForm
-        Energy.genusOneUnitCoefficients
+    genusOneRawEnergy curve <=
+      unnormalizedEnergyForm
+        genusOneUnitCoefficients
         (sampledMatrix data.aMatrix sampleIndex)
         (sampledMatrix data.bMatrix sampleIndex) :=
-  Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitDistributedTriangulatedSurfaceSample.unitEnergy_le_raw
+  GenusOneUnitDistributedTriangulatedSurfaceSample.unitEnergy_le_raw
     (certificate.toDistributedTriangulatedSurfaceSample sampleIndex)
 
 end GenusOneCanonicalFaceLowerCertificate
@@ -2169,31 +2171,31 @@ set_option genInjectivity false in
 /-- One genus-one unit-differential triangulation. Its number of triangles is independent of the single reference box:
 one selected face dominates that box's positive lower energy, while every other oriented face is nonnegative. -/
 structure GenusOneUnitTriangulatedSurfaceSample
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) (sampleIndex : Nat) where
   /-- The retained finite number of triangulation vertices. -/ vertexCount : Nat
   /-- The retained finite number of oriented triangle faces. -/ faceCount : Nat
   /-- The original finite oriented triangle incidence with its exact boundary cancellation. -/ triangulation :
-    Stokes.Triangulation vertexCount faceCount
+    Triangulation vertexCount faceCount
   /-- The retained primitive pair at each original triangulation vertex. -/ primitive : Fin vertexCount ->
-    Stokes.PrimitivePoint
+    PrimitivePoint
   /-- The original oriented boundary area is exactly the period-combination boundary area at this sample. -/
     boundary_matches :
-    Stokes.edgeListArea primitive
+    edgeListArea primitive
         triangulation.boundary =
       Polygon.energyBoundaryArea
-        (Energy.periodCombination
-          Energy.genusOneUnitCoefficients
+        (periodCombination
+          genusOneUnitCoefficients
           (sampledMatrix data.aMatrix sampleIndex))
-        (Energy.periodCombination
-          Energy.genusOneUnitCoefficients
+        (periodCombination
+          genusOneUnitCoefficients
           (sampledMatrix data.bMatrix sampleIndex))
   /-- Every original oriented primitive triangle has nonnegative energy. -/ face_energy_nonnegative : forall face : Fin
     faceCount,
     0 <= AffineTriangle.triangleEnergy primitive (triangulation.faces face)
   /-- The retained original face that carries the unit reference energy lower bound. -/ positiveFace : Fin faceCount
   /-- The selected original primitive triangle dominates the unit reference energy. -/ unit_energy_le_face :
-    Prepared.genusOneRawEnergy curve <=
+    genusOneRawEnergy curve <=
     AffineTriangle.triangleEnergy primitive (triangulation.faces positiveFace)
 
 constructive_injectivity GenusOneUnitTriangulatedSurfaceSample
@@ -2204,10 +2206,10 @@ namespace GenusOneUnitTriangulatedSurfaceSample
 reference lower and every other face receives zero. -/
 def
   toDistributedTriangulatedSurfaceSample
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve} {sampleIndex : Nat}
-    (sample : Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitTriangulatedSurfaceSample data sampleIndex) :
-    Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitDistributedTriangulatedSurfaceSample data sampleIndex
+    (sample : GenusOneUnitTriangulatedSurfaceSample data sampleIndex) :
+    GenusOneUnitDistributedTriangulatedSurfaceSample data sampleIndex
       where
   vertexCount := sample.vertexCount
   faceCount := sample.faceCount
@@ -2216,7 +2218,7 @@ def
   boundary_matches := sample.boundary_matches
   faceLower := fun face =>
     if face = sample.positiveFace then
-      Prepared.genusOneRawEnergy curve
+      genusOneRawEnergy curve
     else 0
   unit_energy_le_faceLowerSum := by
     rw [FiniteSum.Fin.sumFin_ite_eq]
@@ -2232,13 +2234,13 @@ def
 energy. -/
 theorem
   triangleEnergySum_eq_raw
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve} {sampleIndex : Nat}
-    (sample : Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitTriangulatedSurfaceSample data sampleIndex) :
+    (sample : GenusOneUnitTriangulatedSurfaceSample data sampleIndex) :
     FiniteSum.Fin.sumFin (fun face =>
         AffineTriangle.triangleEnergy sample.primitive (sample.triangulation.faces face)) =
-      Energy.unnormalizedEnergyForm
-        Energy.genusOneUnitCoefficients
+      unnormalizedEnergyForm
+        genusOneUnitCoefficients
         (sampledMatrix data.aMatrix sampleIndex)
         (sampledMatrix data.bMatrix sampleIndex) :=
 
@@ -2249,15 +2251,15 @@ theorem
 pairing. -/
 theorem
   unitEnergy_le_raw
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve} {sampleIndex : Nat}
-    (sample : Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitTriangulatedSurfaceSample data sampleIndex) :
-    Prepared.genusOneRawEnergy curve <=
-      Energy.unnormalizedEnergyForm
-        Energy.genusOneUnitCoefficients
+    (sample : GenusOneUnitTriangulatedSurfaceSample data sampleIndex) :
+    genusOneRawEnergy curve <=
+      unnormalizedEnergyForm
+        genusOneUnitCoefficients
         (sampledMatrix data.aMatrix sampleIndex)
         (sampledMatrix data.bMatrix sampleIndex) :=
-  Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitDistributedTriangulatedSurfaceSample.unitEnergy_le_raw
+  GenusOneUnitDistributedTriangulatedSurfaceSample.unitEnergy_le_raw
     sample.toDistributedTriangulatedSurfaceSample
 
 end GenusOneUnitTriangulatedSurfaceSample
@@ -2267,29 +2269,29 @@ set_option genInjectivity false in
 triangle carrying one rational constant differential model. Nonnegativity and the selected positive-face lower bound are
 transported to primitive energy by the exact affine Jacobian theorem. -/
 structure GenusOneUnitAffineTriangulatedSurfaceSample
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) (sampleIndex : Nat) where
   /-- The retained finite number of triangulation vertices. -/ vertexCount : Nat
   /-- The retained finite number of oriented triangle faces. -/ faceCount : Nat
   /-- The original finite oriented triangle incidence with its exact boundary cancellation. -/ triangulation :
-    Stokes.Triangulation vertexCount faceCount
+    Triangulation vertexCount faceCount
   /-- The retained Gaussian rational coordinate of each original triangulation vertex. -/ coordinate : Fin vertexCount
-    -> Data.Gaussian.Basic.Canonical
+    -> Basic.Canonical
   /-- The retained primitive pair at each original triangulation vertex. -/ primitive : Fin vertexCount ->
-    Stokes.PrimitivePoint
+    PrimitivePoint
   /-- The original oriented boundary area is exactly the period-combination boundary area at this sample. -/
     boundary_matches :
-    Stokes.edgeListArea primitive
+    edgeListArea primitive
         triangulation.boundary =
       Polygon.energyBoundaryArea
-        (Energy.periodCombination
-          Energy.genusOneUnitCoefficients
+        (periodCombination
+          genusOneUnitCoefficients
           (sampledMatrix data.aMatrix sampleIndex))
-        (Energy.periodCombination
-          Energy.genusOneUnitCoefficients
+        (periodCombination
+          genusOneUnitCoefficients
           (sampledMatrix data.bMatrix sampleIndex))
   /-- The retained constant Gaussian differential coefficient for each original face. -/ faceCoefficient : Fin faceCount
-    -> Data.Gaussian.Basic.Canonical
+    -> Basic.Canonical
   /-- The first primitive vertex equals this face coefficient applied to its original coordinate. -/ primitive_first :
     forall face : Fin faceCount,
     primitive (triangulation.faces face).first =
@@ -2314,12 +2316,12 @@ structure GenusOneUnitAffineTriangulatedSurfaceSample
   /-- The retained original face that carries the unit reference energy lower bound. -/ positiveFace : Fin faceCount
   /-- The selected face coordinate area times its coefficient squared norm dominates the unit reference energy. -/
     unit_energy_le_affine_face :
-    Prepared.genusOneRawEnergy curve <=
+    genusOneRawEnergy curve <=
       AffineTriangle.coordinateTriangleArea
           (coordinate (triangulation.faces positiveFace).first)
           (coordinate (triangulation.faces positiveFace).second)
           (coordinate (triangulation.faces positiveFace).third) *
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (faceCoefficient positiveFace)
 
 constructive_injectivity GenusOneUnitAffineTriangulatedSurfaceSample
@@ -2329,12 +2331,12 @@ namespace GenusOneUnitAffineTriangulatedSurfaceSample
 /-- Every original oriented primitive triangle has nonnegative energy. -/
 theorem
   face_energy_nonnegative
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve} {sampleIndex : Nat}
-    (sample : Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitAffineTriangulatedSurfaceSample data
+    (sample : GenusOneUnitAffineTriangulatedSurfaceSample data
       sampleIndex)
     (face : Fin sample.faceCount) :
-    0 <= Purelib.Integration.Energy.AffineTriangle.triangleEnergy sample.primitive
+    0 <= AffineTriangle.triangleEnergy sample.primitive
       (sample.triangulation.faces face) := by
   let triangle := sample.triangulation.faces face
   let first := sample.coordinate triangle.first
@@ -2343,10 +2345,10 @@ theorem
   let coefficient := sample.faceCoefficient face
   calc
     0 <= AffineTriangle.coordinateTriangleArea first second third *
-          Data.Gaussian.Norm.Basic.normSq coefficient :=
-      Fraction.Order.Arithmetic.mul_nonneg_direct
+          Norm.Basic.normSq coefficient :=
+      Arithmetic.mul_nonneg_direct
         (sample.face_area_nonnegative face)
-        (Data.Gaussian.Norm.Basic.normSq_nonneg coefficient)
+        (Norm.Basic.normSq_nonneg coefficient)
     _ = AffineTriangle.primitiveTriangleEnergy
           (AffineTriangle.affineEnergyPrimitive coefficient first)
           (AffineTriangle.affineEnergyPrimitive coefficient second)
@@ -2361,12 +2363,12 @@ theorem
 /-- The selected original primitive triangle dominates the unit reference energy. -/
 theorem
   unit_energy_le_face
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve} {sampleIndex : Nat}
-    (sample : Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitAffineTriangulatedSurfaceSample data
+    (sample : GenusOneUnitAffineTriangulatedSurfaceSample data
       sampleIndex) :
-    Prepared.genusOneRawEnergy curve <=
-      Purelib.Integration.Energy.AffineTriangle.triangleEnergy sample.primitive
+    genusOneRawEnergy curve <=
+      AffineTriangle.triangleEnergy sample.primitive
         (sample.triangulation.faces sample.positiveFace) := by
   let triangle := sample.triangulation.faces sample.positiveFace
   let first := sample.coordinate triangle.first
@@ -2374,9 +2376,9 @@ theorem
   let third := sample.coordinate triangle.third
   let coefficient := sample.faceCoefficient sample.positiveFace
   calc
-    Prepared.genusOneRawEnergy curve <=
+    genusOneRawEnergy curve <=
         AffineTriangle.coordinateTriangleArea first second third *
-          Data.Gaussian.Norm.Basic.normSq coefficient :=
+          Norm.Basic.normSq coefficient :=
       sample.unit_energy_le_affine_face
     _ = AffineTriangle.primitiveTriangleEnergy
           (AffineTriangle.affineEnergyPrimitive coefficient first)
@@ -2393,11 +2395,11 @@ theorem
 /-- Retain the original triangulation and primitive vertices after deriving their face bounds from the affine model. -/
 def
   toUnitTriangulatedSurfaceSample
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve} {sampleIndex : Nat}
-    (sample : Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitAffineTriangulatedSurfaceSample data
+    (sample : GenusOneUnitAffineTriangulatedSurfaceSample data
       sampleIndex) :
-    Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitTriangulatedSurfaceSample data sampleIndex where
+    GenusOneUnitTriangulatedSurfaceSample data sampleIndex where
   vertexCount := sample.vertexCount
   faceCount := sample.faceCount
   triangulation := sample.triangulation
@@ -2411,13 +2413,13 @@ def
 pairing. -/
 theorem
   unitEnergy_le_raw
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve} {sampleIndex : Nat}
-    (sample : Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitAffineTriangulatedSurfaceSample data
+    (sample : GenusOneUnitAffineTriangulatedSurfaceSample data
       sampleIndex) :
-    Prepared.genusOneRawEnergy curve <=
-      Energy.unnormalizedEnergyForm
-        Energy.genusOneUnitCoefficients
+    genusOneRawEnergy curve <=
+      unnormalizedEnergyForm
+        genusOneUnitCoefficients
         (sampledMatrix data.aMatrix sampleIndex)
         (sampledMatrix data.bMatrix sampleIndex) :=
   sample.toUnitTriangulatedSurfaceSample.unitEnergy_le_raw
@@ -2429,30 +2431,30 @@ set_option genInjectivity false in
 affine models; each face pays the resulting three-term square budget. -/
 structure
   GenusOneUnitErrorControlledAffineTriangulatedSurfaceSample
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) (sampleIndex : Nat) where
   /-- The retained finite number of triangulation vertices. -/ vertexCount : Nat
   /-- The retained finite number of oriented triangle faces. -/ faceCount : Nat
   /-- The original finite oriented triangle incidence with its exact boundary cancellation. -/ triangulation :
-    Stokes.Triangulation vertexCount faceCount
+    Triangulation vertexCount faceCount
   /-- The retained Gaussian rational coordinate of each original triangulation vertex. -/ coordinate : Fin vertexCount
-    -> Data.Gaussian.Basic.Canonical
+    -> Basic.Canonical
   /-- The retained Gaussian primitive value at each original triangulation vertex. -/ primitiveValue : Fin vertexCount
-    -> Data.Gaussian.Basic.Canonical
+    -> Basic.Canonical
   /-- The original oriented boundary area is exactly the period-combination boundary area at this sample. -/
     boundary_matches :
-    Stokes.edgeListArea
+    edgeListArea
         (fun vertex => Polygon.energyPrimitivePoint (primitiveValue vertex))
         triangulation.boundary =
       Polygon.energyBoundaryArea
-        (Energy.periodCombination
-          Energy.genusOneUnitCoefficients
+        (periodCombination
+          genusOneUnitCoefficients
           (sampledMatrix data.aMatrix sampleIndex))
-        (Energy.periodCombination
-          Energy.genusOneUnitCoefficients
+        (periodCombination
+          genusOneUnitCoefficients
           (sampledMatrix data.bMatrix sampleIndex))
   /-- The retained constant Gaussian differential coefficient for each original face. -/ faceCoefficient : Fin faceCount
-    -> Data.Gaussian.Basic.Canonical
+    -> Basic.Canonical
   /-- The retained comparison certificate for the three original primitive vertices and their local affine model. -/
     faceError : forall face : Fin faceCount,
     AffineTriangle.AffineTriangleErrorCertificate (faceCoefficient face)
@@ -2469,17 +2471,17 @@ structure
           (coordinate (triangulation.faces face).first)
           (coordinate (triangulation.faces face).second)
           (coordinate (triangulation.faces face).third) *
-        Data.Gaussian.Norm.Basic.normSq (faceCoefficient face)
+        Norm.Basic.normSq (faceCoefficient face)
   /-- The retained original face that carries the unit reference energy lower bound. -/ positiveFace : Fin faceCount
   /-- The selected affine face pays both the unit reference energy and its retained primitive comparison budget. -/
     unit_energy_add_error_le_affine :
-    Prepared.genusOneRawEnergy curve +
+    genusOneRawEnergy curve +
         (faceError positiveFace).totalBudget <=
       AffineTriangle.coordinateTriangleArea
           (coordinate (triangulation.faces positiveFace).first)
           (coordinate (triangulation.faces positiveFace).second)
           (coordinate (triangulation.faces positiveFace).third) *
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (faceCoefficient positiveFace)
 
 constructive_injectivity GenusOneUnitErrorControlledAffineTriangulatedSurfaceSample
@@ -2489,10 +2491,10 @@ namespace GenusOneUnitErrorControlledAffineTriangulatedSurfaceSample
 /-- Every original oriented primitive triangle has nonnegative energy. -/
 theorem
   face_energy_nonnegative
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve} {sampleIndex : Nat}
     (sample :
-      Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitErrorControlledAffineTriangulatedSurfaceSample data
+      GenusOneUnitErrorControlledAffineTriangulatedSurfaceSample data
         sampleIndex)
     (face : Fin sample.faceCount) :
     0 <= AffineTriangle.triangleEnergy
@@ -2509,9 +2511,9 @@ theorem
   let error := sample.faceError face
   calc
     0 <= AffineTriangle.coordinateTriangleArea first second third *
-          Data.Gaussian.Norm.Basic.normSq coefficient -
+          Norm.Basic.normSq coefficient -
             error.totalBudget :=
-      Fraction.Order.Arithmetic.sub_nonneg_direct
+      Arithmetic.sub_nonneg_direct
         (sample.face_error_le_affine face)
     _ <= AffineTriangle.primitiveTriangleEnergy
           (Polygon.energyPrimitivePoint primitiveFirst)
@@ -2525,12 +2527,12 @@ theorem
 /-- The selected original primitive triangle dominates the unit reference energy. -/
 theorem
   unit_energy_le_face
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve} {sampleIndex : Nat}
     (sample :
-      Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitErrorControlledAffineTriangulatedSurfaceSample data
+      GenusOneUnitErrorControlledAffineTriangulatedSurfaceSample data
         sampleIndex) :
-    Prepared.genusOneRawEnergy curve <=
+    genusOneRawEnergy curve <=
       AffineTriangle.triangleEnergy
         (fun vertex => Polygon.energyPrimitivePoint (sample.primitiveValue vertex))
         (sample.triangulation.faces sample.positiveFace) := by
@@ -2543,17 +2545,17 @@ theorem
   let primitiveSecond := sample.primitiveValue triangle.second
   let primitiveThird := sample.primitiveValue triangle.third
   let error := sample.faceError sample.positiveFace
-  have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+  have shifted := Arithmetic.add_le_add_right_direct
     sample.unit_energy_add_error_le_affine (-error.totalBudget)
   calc
-    Prepared.genusOneRawEnergy curve =
-        (Prepared.genusOneRawEnergy curve +
+    genusOneRawEnergy curve =
+        (genusOneRawEnergy curve +
           error.totalBudget) + -error.totalBudget := by ring1
     _ <= AffineTriangle.coordinateTriangleArea first second third *
-          Data.Gaussian.Norm.Basic.normSq coefficient +
+          Norm.Basic.normSq coefficient +
             -error.totalBudget := shifted
     _ = AffineTriangle.coordinateTriangleArea first second third *
-          Data.Gaussian.Norm.Basic.normSq coefficient -
+          Norm.Basic.normSq coefficient -
             error.totalBudget := by ring1
     _ <= AffineTriangle.primitiveTriangleEnergy
           (Polygon.energyPrimitivePoint primitiveFirst)
@@ -2567,12 +2569,12 @@ theorem
 /-- Retain the original triangulation and primitive vertices after deriving their face bounds from the affine model. -/
 def
   toUnitTriangulatedSurfaceSample
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve} {sampleIndex : Nat}
     (sample :
-      Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitErrorControlledAffineTriangulatedSurfaceSample data
+      GenusOneUnitErrorControlledAffineTriangulatedSurfaceSample data
         sampleIndex) :
-    Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitTriangulatedSurfaceSample data sampleIndex where
+    GenusOneUnitTriangulatedSurfaceSample data sampleIndex where
   vertexCount := sample.vertexCount
   faceCount := sample.faceCount
   triangulation := sample.triangulation
@@ -2586,14 +2588,14 @@ def
 pairing. -/
 theorem
   unitEnergy_le_raw
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve} {sampleIndex : Nat}
     (sample :
-      Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitErrorControlledAffineTriangulatedSurfaceSample data
+      GenusOneUnitErrorControlledAffineTriangulatedSurfaceSample data
         sampleIndex) :
-    Prepared.genusOneRawEnergy curve <=
-      Energy.unnormalizedEnergyForm
-        Energy.genusOneUnitCoefficients
+    genusOneRawEnergy curve <=
+      unnormalizedEnergyForm
+        genusOneUnitCoefficients
         (sampledMatrix data.aMatrix sampleIndex)
         (sampledMatrix data.bMatrix sampleIndex) :=
   sample.toUnitTriangulatedSurfaceSample.unitEnergy_le_raw
@@ -2605,7 +2607,7 @@ set_option genInjectivity false in
 of the exact two-dimensional surface assembly. -/
 structure
   GenusOneUnitDistributedTriangulatedSurfaceCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) where
   /-- At every synchronized sample, retain the original triangulated unit surface with distributed face lower bounds. -/
     sample : forall sampleIndex : Nat,
@@ -2618,11 +2620,11 @@ namespace GenusOneUnitDistributedTriangulatedSurfaceCertificate
 /-- Package the derived unit surface inequality at every synchronized sample. -/
 theorem
   toUnitSurfaceLowerCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve}
     (certificate :
-      Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitDistributedTriangulatedSurfaceCertificate data) :
-    Prepared.GenusOneUnitSurfaceLowerCertificate data where
+      GenusOneUnitDistributedTriangulatedSurfaceCertificate data) :
+    GenusOneUnitSurfaceLowerCertificate data where
   lower := by
     intro sampleIndex
     exact (certificate.sample sampleIndex).unitEnergy_le_raw
@@ -2634,20 +2636,20 @@ namespace GenusOneCanonicalFaceLowerCertificate
 /-- Package the canonical two-face commutator construction at every sample. -/
 def
   toDistributedTriangulatedSurfaceCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve}
-    (certificate : Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneCanonicalFaceLowerCertificate data) :
-    Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitDistributedTriangulatedSurfaceCertificate data where
+    (certificate : GenusOneCanonicalFaceLowerCertificate data) :
+    GenusOneUnitDistributedTriangulatedSurfaceCertificate data where
   sample := certificate.toDistributedTriangulatedSurfaceSample
 
 /-- Certificate-level route from the independent half-face bound through the explicit finite commutator triangulation to
 the unit surface lower theorem. -/
 theorem
   toUnitSurfaceLowerCertificate_via_commutatorTriangulation
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve}
-    (certificate : Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneCanonicalFaceLowerCertificate data) :
-    Prepared.GenusOneUnitSurfaceLowerCertificate data :=
+    (certificate : GenusOneCanonicalFaceLowerCertificate data) :
+    GenusOneUnitSurfaceLowerCertificate data :=
 
     GenusOneUnitDistributedTriangulatedSurfaceCertificate.toUnitSurfaceLowerCertificate
     certificate.toDistributedTriangulatedSurfaceCertificate
@@ -2658,7 +2660,7 @@ set_option genInjectivity false in
 /-- The reduced genus-one surface input with a genuine triangulated witness at every synchronized sample of the standard
 unit differential. -/
 structure GenusOneUnitTriangulatedSurfaceCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) where
   /-- At every synchronized sample, retain a triangulated unit surface with one selected positive face. -/ sample :
     forall sampleIndex : Nat,
@@ -2671,10 +2673,10 @@ namespace GenusOneUnitTriangulatedSurfaceCertificate
 /-- Package the derived unit surface inequality at every synchronized sample. -/
 theorem
   toUnitSurfaceLowerCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve}
-    (certificate : Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitTriangulatedSurfaceCertificate data) :
-    Prepared.GenusOneUnitSurfaceLowerCertificate data where
+    (certificate : GenusOneUnitTriangulatedSurfaceCertificate data) :
+    GenusOneUnitSurfaceLowerCertificate data where
   lower := by
     intro sampleIndex
     exact (certificate.sample sampleIndex).unitEnergy_le_raw
@@ -2686,7 +2688,7 @@ set_option genInjectivity false in
 synchronized sample. -/
 structure
   GenusOneUnitAffineTriangulatedSurfaceCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) where
   /-- At every synchronized sample, retain the affine coordinate models and selected positive face on the original
     triangulation. -/ sample : forall sampleIndex : Nat,
@@ -2699,11 +2701,11 @@ namespace GenusOneUnitAffineTriangulatedSurfaceCertificate
 /-- Package the derived unit surface inequality at every synchronized sample. -/
 theorem
   toUnitSurfaceLowerCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve}
-    (certificate : Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitAffineTriangulatedSurfaceCertificate
+    (certificate : GenusOneUnitAffineTriangulatedSurfaceCertificate
       data) :
-    Prepared.GenusOneUnitSurfaceLowerCertificate data where
+    GenusOneUnitSurfaceLowerCertificate data where
   lower := by
     intro sampleIndex
     exact (certificate.sample sampleIndex).unitEnergy_le_raw
@@ -2715,7 +2717,7 @@ set_option genInjectivity false in
 rational error budgets. -/
 structure
   GenusOneUnitErrorControlledAffineTriangulatedSurfaceCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     (data : PeriodData curve) where
   /-- At every synchronized sample, retain the original affine face models and their paid primitive comparison budgets.
   -/
@@ -2730,12 +2732,12 @@ namespace GenusOneUnitErrorControlledAffineTriangulatedSurfaceCertificate
 /-- Package the derived unit surface inequality at every synchronized sample. -/
 theorem
   toUnitSurfaceLowerCertificate
-    {curve : Hyperelliptic.Basic.HyperellipticCurve 1}
+    {curve : Basic.HyperellipticCurve 1}
     {data : PeriodData curve}
     (certificate :
-      Curves.Hyperelliptic.Integration.Surface.Energy.GenusOneUnitErrorControlledAffineTriangulatedSurfaceCertificate
+      GenusOneUnitErrorControlledAffineTriangulatedSurfaceCertificate
         data) :
-    Prepared.GenusOneUnitSurfaceLowerCertificate data where
+    GenusOneUnitSurfaceLowerCertificate data where
   lower := by
     intro sampleIndex
     exact (certificate.sample sampleIndex).unitEnergy_le_raw

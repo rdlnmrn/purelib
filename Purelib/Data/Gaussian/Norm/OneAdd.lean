@@ -32,13 +32,13 @@ open Purelib.Data.Gaussian
 open Purelib.Data.Rat
 /-- A Gaussian squared norm at most one quarter gives squared norm at least one quarter after adding one. -/
 theorem one_add_normSq_lower {u : Basic.Canonical} (disk :
-  Data.Gaussian.Norm.Basic.normSq u ≤ 1 / 4) :
-    (1 / 4 : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq (1 + u) := by
+  Basic.normSq u ≤ 1 / 4) :
+    (1 / 4 : Fraction.Rational) ≤ Basic.normSq (1 + u) := by
   have realSquare : u.re ^ 2 ≤ (1 / 2 : Fraction.Rational) ^ 2 := by
     calc
       u.re ^ 2 ≤ u.re ^ 2 + u.im ^ 2 :=
         le_add_of_nonneg_right (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-      _ = Data.Gaussian.Norm.Basic.normSq u := rfl
+      _ = Basic.normSq u := rfl
       _ ≤ 1 / 4 := disk
       _ = (1 / 2 : Fraction.Rational) ^ 2 := by decide
   have realLower : -(1 / 2 : Fraction.Rational) ≤ u.re :=
@@ -56,22 +56,22 @@ theorem one_add_normSq_lower {u : Basic.Canonical} (disk :
     _ ≤ (1 + u.re) ^ 2 := squared
     _ ≤ (1 + u.re) ^ 2 + u.im ^ 2 :=
       le_add_of_nonneg_right (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-    _ = Data.Gaussian.Norm.Basic.normSq (1 + u) := by
-      simp only [Data.Gaussian.Norm.Basic.normSq, Basic.add_re, Basic.add_im, Basic.one_re, Basic.one_im]
+    _ = Basic.normSq (1 + u) := by
+      simp only [Basic.normSq, Basic.add_re, Basic.add_im, Basic.one_re, Basic.one_im]
       ring1
 
 /-- Adding one to a Gaussian whose squared norm is at most one quarter gives a nonzero Gaussian. -/
 theorem one_add_ne_zero {u : Basic.Canonical} (disk :
-  Data.Gaussian.Norm.Basic.normSq u ≤ 1 / 4) :
+  Basic.normSq u ≤ 1 / 4) :
     1 + u ≠ 0 := by
   intro zero
   have lower := one_add_normSq_lower disk
-  rw [zero, Norm.Basic.normSq_zero] at lower
+  rw [zero, Basic.normSq_zero] at lower
   exact (by decide : ¬ ((1 / 4 : Fraction.Rational) ≤ 0)) lower
 
 /-- The inverse of one plus a quarter-norm-bounded Gaussian has squared norm at most four. -/
 theorem one_add_inverse_normSq_le_four {u : Basic.Canonical}
-    (disk : Data.Gaussian.Norm.Basic.normSq u ≤ 1 / 4) : Data.Gaussian.Norm.Basic.normSq ((1 + u)⁻¹) ≤ 4 := by
+    (disk : Basic.normSq u ≤ 1 / 4) : Basic.normSq ((1 + u)⁻¹) ≤ 4 := by
   have nonzero := one_add_ne_zero disk
   rw [Field.inv_eq,
     Field.normSq_inv (1 + u) nonzero]

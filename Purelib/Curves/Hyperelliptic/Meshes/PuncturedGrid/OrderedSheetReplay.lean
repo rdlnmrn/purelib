@@ -40,43 +40,43 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid
 
 open Purelib.Riemann.Meshes (FramedPuncturedGrid LiftedPuncturedGrid)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+    BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
 
 /-- Retain the original window, partition, order, stems and root bank; materialize only the new sheet occurrences. -/
 def
   BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered.atSheet
-    (ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank
+    (ordered : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank
       sheet) (next : Fin 2) :
-      Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank next :=
+      BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank next :=
   let original := ordered.prepared
-  let prepared : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.Window.OrderedBranches base.faces
+  let prepared : OrderedBranchCircuits.Window.OrderedBranches base.faces
     ordered.window lifted.edges lifted.vertices next :=
     ⟨original.ordered, original.partition, original.kept, original.kept_eq, original.labels, original.labels_eq,
       original.unique, original.selected,
-      Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.compile
+      OrderedBranchCircuits.BranchCellBank.CircuitPartition.compile
         lifted.edges lifted.vertices original.partition next⟩
   ⟨ordered.window, ordered.exterior_eq, prepared, ordered.complete, ordered.walk, ordered.walk_eq,
     lifted.edges.indexedEdges lifted.vertices ordered.walk next, rfl, ordered.comparison,
-    Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchFaceCorrections.OrderedBranches.corrections prepared lifted.mesh⟩
+    OrderedBranchFaceCorrections.OrderedBranches.corrections prepared lifted.mesh⟩
 
 namespace OrderedBranchPairs.Ordered.Paired
-variable {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank
+variable {ordered : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank
   sheet}
 
 /-- Both replays use the same ordered branch split and retained physical reference hole. -/
 def atSheet
-    (paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered) (next : Fin 2) :
-      Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired (ordered.atSheet next) :=
+    (paired : Paired ordered) (next : Fin 2) :
+      Paired (ordered.atSheet next) :=
   ⟨paired.split,
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRows.build bank paired.split.ending.reference next
+    Paired.BranchArea.PairedRows.build bank paired.split.ending.reference next
       paired.split.pairs
       (SquareRoot.Grid.Walk.Vertex.VertexWalk.nil lifted.vertices lifted.edges
-        (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.anchor lifted next)),
-    Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.EndingTours.build bank next paired.split.ending,
+        (BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.anchor lifted next)),
+    EndingTours.build bank next paired.split.ending,
     paired.reference, paired.reference_eq⟩
 
 end OrderedBranchPairs.Ordered.Paired

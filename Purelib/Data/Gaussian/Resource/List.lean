@@ -112,7 +112,7 @@ private theorem foldl_max_initial_le (weight :
   | [], _ => le_refl _
   | _ :: remaining, _ =>
       (Nat.Order.le_max_left _ _).trans
-        (Purelib.Data.Gaussian.Resource.List.foldl_max_initial_le weight remaining _)
+        (Resource.List.foldl_max_initial_le weight remaining _)
 
 /-- Every retained member weight is bounded by the iterated maximum.
 
@@ -129,9 +129,9 @@ public theorem member_le_foldl_max (weight :
       cases member with
       | head =>
           exact (Nat.Order.le_max_right _ _).trans
-            (Purelib.Data.Gaussian.Resource.List.foldl_max_initial_le weight remaining _)
+            (foldl_max_initial_le weight remaining _)
       | tail _ tail =>
-          exact Purelib.Data.Gaussian.Resource.List.member_le_foldl_max weight remaining
+          exact Resource.List.member_le_foldl_max weight remaining
             (max initial (weight coefficient)) candidate tail
 
 end Purelib.Data.Gaussian.Resource.List
@@ -148,11 +148,11 @@ so structural recursion preserves the original initial contribution. -/
 public theorem foldl_componentMagnitude_max_initial_le : ∀ (coefficients :
   List Basic.Number)
     (initial : Nat), initial ≤ coefficients.foldl
-      (fun bound coefficient => max bound (Purelib.Data.Gaussian.Resource.Model.gaussianModel.magnitude coefficient))
+      (fun bound coefficient => max bound (Model.gaussianModel.magnitude coefficient))
       initial
   | [], _ => le_refl _
   | _ :: remaining, _ =>
-      (Nat.Order.le_max_left _ _).trans (Purelib.Data.Gaussian.Resource.List.foldl_componentMagnitude_max_initial_le
+      (Nat.Order.le_max_left _ _).trans (Resource.List.foldl_componentMagnitude_max_initial_le
         remaining _)
 
 /-- Every actual coefficient magnitude is bounded by the retained maximum fold.
@@ -162,17 +162,17 @@ the fold. The original Gaussian model supplies that coefficient's magnitude. -/
 public theorem member_componentMagnitude_le_foldl_max : ∀ (coefficients :
   List Basic.Number)
     (initial : Nat) {candidate : Basic.Number}, candidate ∈ coefficients →
-    Purelib.Data.Gaussian.Resource.Model.gaussianModel.magnitude candidate ≤ coefficients.foldl
-      (fun bound coefficient => max bound (Purelib.Data.Gaussian.Resource.Model.gaussianModel.magnitude coefficient))
+    Model.gaussianModel.magnitude candidate ≤ coefficients.foldl
+      (fun bound coefficient => max bound (Model.gaussianModel.magnitude coefficient))
       initial
   | [], _, _, member => nomatch member
   | coefficient :: remaining, initial, candidate, member => by
       cases member with
       | head =>
           exact (Nat.Order.le_max_right _ _).trans
-            (Purelib.Data.Gaussian.Resource.List.foldl_componentMagnitude_max_initial_le remaining _)
+            (foldl_componentMagnitude_max_initial_le remaining _)
       | tail _ tail =>
-          exact Purelib.Data.Gaussian.Resource.List.member_componentMagnitude_le_foldl_max remaining
-            (max initial (Purelib.Data.Gaussian.Resource.Model.gaussianModel.magnitude coefficient)) tail
+          exact Resource.List.member_componentMagnitude_le_foldl_max remaining
+            (max initial (Model.gaussianModel.magnitude coefficient)) tail
 
 end Purelib.Data.Gaussian.Resource.List

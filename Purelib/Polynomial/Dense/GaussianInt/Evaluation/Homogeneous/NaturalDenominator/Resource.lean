@@ -69,10 +69,10 @@ open Purelib.Data.GaussianInt
 @[simp] theorem
   homogeneousMultiplicationBudget_eq
     (coefficient : GaussianInt) (remaining : List GaussianInt) :
-    Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousMultiplicationBudget (coefficient ::
+    homogeneousMultiplicationBudget (coefficient ::
       remaining) =
       remaining.length + 2 +
-        Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousMultiplicationBudget remaining
+        homogeneousMultiplicationBudget remaining
         := rfl
 end Purelib.Polynomial.Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource
 
@@ -134,17 +134,17 @@ theorem
   homogeneousEval_norm_le_envelope
     (numerator denominator : GaussianInt) (coefficients : List GaussianInt) :
     normNat
-        (Dense.GaussianInt.Evaluation.Homogeneous.homogeneousEval numerator denominator
+        (homogeneousEval numerator denominator
           coefficients) ≤
-      Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousNormEnvelope numerator denominator
+      homogeneousNormEnvelope numerator denominator
         coefficients := by
   induction coefficients with
   | nil => rfl
   | cons coefficient remaining inductionHypothesis =>
-      rw [Dense.GaussianInt.Evaluation.Homogeneous.homogeneousEval,
-        Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousNormEnvelope]
-      refine (GaussianInt.Norm.Bounds.normNat_add_le_two _ _).trans ?_
-      rw [normNat_mul, normNat_mul, GaussianInt.Power.normNat_pow]
+      rw [homogeneousEval,
+        homogeneousNormEnvelope]
+      refine (Norm.Bounds.normNat_add_le_two _ _).trans ?_
+      rw [normNat_mul, normNat_mul, Power.normNat_pow]
       exact Nat.mul_le_mul_left 2
         (Nat.add_le_add_left
           (Nat.mul_le_mul_left (normNat denominator) inductionHypothesis) _)
@@ -200,9 +200,9 @@ def homogeneousTrace
     List GaussianInt → List GaussianInt
   | [] => [0]
   | coefficients@(_ :: remaining) =>
-      Dense.GaussianInt.Evaluation.Homogeneous.homogeneousEval numerator denominator
+      homogeneousEval numerator denominator
           coefficients ::
-        Purelib.Polynomial.Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousTrace
+        Resource.homogeneousTrace
           numerator denominator remaining
 end Purelib.Polynomial.Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource
 
@@ -229,14 +229,14 @@ open Purelib.Data.GaussianInt
 @[simp] theorem
   homogeneousTrace_length
     (numerator denominator : GaussianInt) (coefficients : List GaussianInt) :
-    (Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousTrace numerator denominator
+    (homogeneousTrace numerator denominator
       coefficients).length =
       coefficients.length + 1 := by
   induction coefficients with
   | nil => rfl
   | cons coefficient remaining inductionHypothesis =>
       simp only [-eq_self, -iff_self,
-        Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousTrace, List.length_cons,
+        homogeneousTrace, List.length_cons,
         inductionHypothesis]
       rfl
 end Purelib.Polynomial.Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource
@@ -267,7 +267,7 @@ def
     List GaussianInt → Nat
   | [] => 0
   | coefficients@(_ :: remaining) =>
-      max (Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousNormEnvelope numerator
+      max (homogeneousNormEnvelope numerator
         denominator coefficients)
 
           (homogeneousWorkingEnvelope
@@ -298,29 +298,29 @@ theorem
   homogeneousTrace_norm_le_workingEnvelope
     (numerator denominator : GaussianInt) (coefficients : List GaussianInt)
     {value : GaussianInt}
-    (member : value ∈ Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousTrace numerator
+    (member : value ∈ homogeneousTrace numerator
       denominator coefficients) :
     normNat value ≤
-      Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousWorkingEnvelope numerator
+      homogeneousWorkingEnvelope numerator
         denominator coefficients := by
   induction coefficients with
   | nil =>
       simp only [-eq_self, -iff_self,
-        Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousTrace] at member
-      have member := Purelib.Data.List.Membership.mem_singleton.mp member
+        homogeneousTrace] at member
+      have member := Data.List.Membership.mem_singleton.mp member
       rw [member]
       rfl
   | cons coefficient remaining inductionHypothesis =>
       simp only [-eq_self, -iff_self,
-        Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousTrace] at member
-      have member := Purelib.Data.List.Membership.mem_cons.mp member
-      rw [Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousWorkingEnvelope]
+        homogeneousTrace] at member
+      have member := Data.List.Membership.mem_cons.mp member
+      rw [homogeneousWorkingEnvelope]
       rcases member with head | tail
       · rw [head]
-        exact (Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousEval_norm_le_envelope
+        exact (homogeneousEval_norm_le_envelope
           numerator denominator _).trans
-          (Purelib.Data.Nat.Order.le_max_left _ _)
-      · exact (inductionHypothesis tail).trans (Purelib.Data.Nat.Order.le_max_right _ _)
+          (Data.Nat.Order.le_max_left _ _)
+      · exact (inductionHypothesis tail).trans (Data.Nat.Order.le_max_right _ _)
 end Purelib.Polynomial.Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource
 
 end

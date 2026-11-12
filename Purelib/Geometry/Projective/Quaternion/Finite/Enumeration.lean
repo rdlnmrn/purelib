@@ -58,7 +58,7 @@ variable {K : Type*} [ExplicitField K]
 
 section
 
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : Presentation.FiniteOddFieldPresentation K)
 
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 
@@ -71,34 +71,34 @@ def vectors : List (Coordinates3.Vector
 
 /-- Every displayed four-coordinate proportion, before removing the zero-norm locus or identifying nonzero scales. -/
 def allProportionRepresentatives : List
-  (Projective.Basic.Proportion K) :=
+  (Proportion K) :=
   presentation.carrier.flatMap fun scalar =>
     presentation.vectors.map fun vector => ⟨scalar, vector⟩
 
 /-- The affine chart of projective three-space, normalized to scalar coordinate one. -/
 def affineProportionRepresentatives :
-  List (Projective.Basic.Proportion K) :=
+  List (Proportion K) :=
   presentation.vectors.map fun vector => ⟨1, vector⟩
 
 /-- The first chart at infinity, normalized to vector coordinate `t = 1`. -/
 def infinityTRepresentatives : List
-  (Projective.Basic.Proportion K) :=
+  (Proportion K) :=
   presentation.carrier.flatMap fun r =>
     presentation.carrier.map fun s => ⟨0, ⟨1, r, s⟩⟩
 
 /-- The second chart at infinity, normalized to `t = 0, r = 1`. -/
 def infinityRRepresentatives : List
-  (Projective.Basic.Proportion K) :=
+  (Proportion K) :=
   presentation.carrier.map fun s => ⟨0, ⟨0, 1, s⟩⟩
 
 /-- The final point at infinity, normalized to `t = r = 0, s = 1`. -/
 def infinitySRepresentative :
-  Projective.Basic.Proportion K := ⟨0, ⟨0, 0, 1⟩⟩
+  Proportion K := ⟨0, ⟨0, 0, 1⟩⟩
 
 /-- A duplicate-free-by-construction first-nonzero-coordinate list for projective three-space. Completeness and
 uniqueness are proved in the general counting layer; this definition is already executable. -/
 def projectiveRepresentatives : List
-  (Projective.Basic.Proportion K) :=
+  (Proportion K) :=
   presentation.affineProportionRepresentatives ++
     presentation.infinityTRepresentatives ++
     presentation.infinityRRepresentatives ++
@@ -119,7 +119,7 @@ theorem vectors_complete (vector :
 /-- Every raw four-coordinate proportion occurs in the finite carrier enumeration. -/
 theorem
   allProportionRepresentatives_complete
-  (raw : Projective.Basic.Proportion K) :
+  (raw : Proportion K) :
     raw ∈ presentation.allProportionRepresentatives := by
   unfold allProportionRepresentatives
   apply Flatten.mem_flatMap.mpr
@@ -130,7 +130,7 @@ theorem
 /-- Every scalar-one representative occurs in the canonical projective chart list. -/
 theorem affineProportion_mem (vector :
   Coordinates3.Vector K) :
-    (⟨1, vector⟩ : Projective.Basic.Proportion K) ∈
+    (⟨1, vector⟩ : Proportion K) ∈
       presentation.projectiveRepresentatives := by
   apply Membership.mem_append.mpr
   left
@@ -145,7 +145,7 @@ theorem affineProportion_mem (vector :
 /-- Every representative with scalar zero and first vector coordinate one occurs in the chart list. -/
 theorem infinityTProportion_mem (r s :
   K) :
-    (⟨0, ⟨1, r, s⟩⟩ : Projective.Basic.Proportion K) ∈
+    (⟨0, ⟨1, r, s⟩⟩ : Proportion K) ∈
       presentation.projectiveRepresentatives := by
   apply Membership.mem_append.mpr
   left
@@ -162,7 +162,7 @@ theorem infinityTProportion_mem (r s :
 /-- Every representative normalized at the second vector coordinate occurs in the chart list. -/
 theorem infinityRProportion_mem (s : K)
   :
-    (⟨0, ⟨0, 1, s⟩⟩ : Projective.Basic.Proportion K) ∈
+    (⟨0, ⟨0, 1, s⟩⟩ : Proportion K) ∈
       presentation.projectiveRepresentatives := by
   apply Membership.mem_append.mpr
   left
@@ -175,7 +175,7 @@ theorem infinityRProportion_mem (s : K)
 /-- The final normalized point at infinity occurs in the chart list. -/
 theorem infinitySProportion_mem :
     (infinitySRepresentative :
-      Projective.Basic.Proportion K) ∈
+      Proportion K) ∈
       presentation.projectiveRepresentatives := by
   apply Membership.mem_append.mpr
   right
@@ -183,7 +183,7 @@ theorem infinitySProportion_mem :
 
 /-- Membership in the four-chart list exposes the normalized chart and its displayed free coordinates. -/
 theorem projectiveRepresentatives_cases
-  {raw : Projective.Basic.Proportion K}
+  {raw : Proportion K}
     (member : raw ∈ presentation.projectiveRepresentatives) :
     (∃ vector : Coordinates3.Vector K, raw = ⟨1, vector⟩) ∨
     (∃ r s : K, raw = ⟨0, ⟨1, r, s⟩⟩) ∨
@@ -245,7 +245,7 @@ theorem vectors_nodup :
     apply nodup_flatMap_of_nodup
       presentation.carrierNodup
     · intro r _
-      apply Data.List.Nodup.nodup_map_of_injective
+      apply Nodup.nodup_map_of_injective
       · intro left right equal
         exact congrArg Coordinates3.Vector.s equal
       · exact presentation.carrierNodup
@@ -283,7 +283,7 @@ theorem
   apply nodup_flatMap_of_nodup
     presentation.carrierNodup
   · intro scalar _
-    apply Data.List.Nodup.nodup_map_of_injective
+    apply Nodup.nodup_map_of_injective
     · intro left right equal
       exact congrArg Proportion.vector equal
     · exact presentation.vectors_nodup
@@ -304,7 +304,7 @@ private theorem
   :
     presentation.affineProportionRepresentatives.Nodup := by
   unfold affineProportionRepresentatives
-  apply Data.List.Nodup.nodup_map_of_injective
+  apply Nodup.nodup_map_of_injective
   · intro left right equal
     exact congrArg Proportion.vector equal
   · exact presentation.vectors_nodup
@@ -317,9 +317,9 @@ private theorem
   apply nodup_flatMap_of_nodup
     presentation.carrierNodup
   · intro r _
-    apply Data.List.Nodup.nodup_map_of_injective
+    apply Nodup.nodup_map_of_injective
     · intro left right equal
-      exact congrArg (fun value : Projective.Basic.Proportion K => value.vector.s) equal
+      exact congrArg (fun value : Proportion K => value.vector.s) equal
     · exact presentation.carrierNodup
   · intro left _ right _ different leftValue leftMember rightValue
       rightMember equal
@@ -329,26 +329,26 @@ private theorem
     apply different
     calc
       left = leftValue.vector.r :=
-        congrArg (fun value : Projective.Basic.Proportion K => value.vector.r) leftEq
+        congrArg (fun value : Proportion K => value.vector.r) leftEq
       _ = rightValue.vector.r :=
-        congrArg (fun value : Projective.Basic.Proportion K => value.vector.r) equal
+        congrArg (fun value : Proportion K => value.vector.r) equal
       _ = right :=
-        (congrArg (fun value : Projective.Basic.Proportion K => value.vector.r) rightEq).symm
+        (congrArg (fun value : Proportion K => value.vector.r) rightEq).symm
 
 /-- The second chart at infinity has no repeated representatives. -/
 private theorem
   infinityRRepresentatives_nodup :
     presentation.infinityRRepresentatives.Nodup := by
   unfold infinityRRepresentatives
-  apply Data.List.Nodup.nodup_map_of_injective
+  apply Nodup.nodup_map_of_injective
   · intro left right equal
-    exact congrArg (fun value : Projective.Basic.Proportion K => value.vector.s) equal
+    exact congrArg (fun value : Proportion K => value.vector.s) equal
   · exact presentation.carrierNodup
 
 /-- The scalar-one chart and the first chart at infinity have distinct representatives. -/
 private theorem
   affine_infinityT_disjoint {left right
-  : Projective.Basic.Proportion K}
+  : Proportion K}
     (leftMember : left ∈ presentation.affineProportionRepresentatives)
     (rightMember : right ∈ presentation.infinityTRepresentatives) :
     left ≠ right := by
@@ -359,13 +359,13 @@ private theorem
   subst left
   subst right
   intro equal
-  exact Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.one_ne_zero presentation (congrArg
+  exact one_ne_zero presentation (congrArg
     Proportion.scalar equal)
 
 /-- Representatives in the first two charts differ from those normalized at the second vector coordinate. -/
 private theorem
   beforeR_infinityR_disjoint {left right
-  : Projective.Basic.Proportion K}
+  : Proportion K}
     (leftMember : left ∈
       presentation.affineProportionRepresentatives ++
         presentation.infinityTRepresentatives)
@@ -378,20 +378,20 @@ private theorem
       ⟨vector, _, leftEqual⟩
     subst left
     intro equal
-    exact Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.one_ne_zero presentation (congrArg
+    exact one_ne_zero presentation (congrArg
       Proportion.scalar equal)
   · rcases Flatten.mem_flatMap.mp atT with ⟨r, _, rMember⟩
     rcases Map.mem_map.mp rMember with
       ⟨otherS, _, leftEqual⟩
     subst left
     intro equal
-    exact Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.one_ne_zero presentation
-      (congrArg (fun value : Projective.Basic.Proportion K => value.vector.t) equal)
+    exact one_ne_zero presentation
+      (congrArg (fun value : Proportion K => value.vector.t) equal)
 
 /-- No representative in the first three charts equals the final normalized point. -/
 private theorem
   beforeS_infinityS_disjoint {left right
-  : Projective.Basic.Proportion K}
+  : Proportion K}
     (leftMember : left ∈
       (presentation.affineProportionRepresentatives ++
         presentation.infinityTRepresentatives) ++
@@ -406,20 +406,20 @@ private theorem
         ⟨vector, _, leftEqual⟩
       subst left
       intro equal
-      exact Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.one_ne_zero presentation (congrArg
+      exact one_ne_zero presentation (congrArg
         Proportion.scalar equal)
     · rcases Flatten.mem_flatMap.mp atT with ⟨r, _, rMember⟩
       rcases Map.mem_map.mp rMember with
         ⟨s, _, leftEqual⟩
       subst left
       intro equal
-      exact Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.one_ne_zero presentation
-        (congrArg (fun value : Projective.Basic.Proportion K => value.vector.t) equal)
+      exact one_ne_zero presentation
+        (congrArg (fun value : Proportion K => value.vector.t) equal)
   · rcases Map.mem_map.mp atR with ⟨s, _, leftEqual⟩
     subst left
     intro equal
-    exact Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.one_ne_zero presentation
-      (congrArg (fun value : Projective.Basic.Proportion K => value.vector.r) equal)
+    exact one_ne_zero presentation
+      (congrArg (fun value : Proportion K => value.vector.r) equal)
 
 /-- The four concatenated canonical projective charts contain no duplicates. -/
 theorem projectiveRepresentatives_nodup
@@ -450,7 +450,7 @@ theorem projectiveRepresentatives_nodup
 /-- Two normalized members of the four projective charts cannot differ by a nonzero scale. This is the quotient-free
 uniqueness theorem behind the finite rotation carrier. -/
 theorem projective_eq_of_equivalent
-  {left right : Projective.Basic.Proportion K}
+  {left right : Proportion K}
     (leftMember : left ∈ presentation.projectiveRepresentatives)
     (rightMember : right ∈ presentation.projectiveRepresentatives)
     (equivalent : left.Equivalent right) : left = right := by
@@ -482,62 +482,62 @@ theorem projective_eq_of_equivalent
     exact False.elim (factorNonzero (by simpa using scalar.symm))
   · have scalar := congrArg Proportion.scalar scaled
     change (1 : K) = factor * 0 at scalar
-    exact False.elim (Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.one_ne_zero presentation
+    exact False.elim (one_ne_zero presentation
       (by simpa using scalar))
-  · have tCoordinate := congrArg (fun value : Projective.Basic.Proportion K => value.vector.t)
+  · have tCoordinate := congrArg (fun value : Proportion K => value.vector.t)
       scaled
     change (1 : K) = factor * 1 at tCoordinate
     have factorOne : factor = 1 := by simpa using tCoordinate.symm
     subst factor
     rw [Proportion.one_scale] at scaled
     exact scaled.symm
-  · have tCoordinate := congrArg (fun value : Projective.Basic.Proportion K => value.vector.t)
+  · have tCoordinate := congrArg (fun value : Proportion K => value.vector.t)
       scaled
     change (0 : K) = factor * 1 at tCoordinate
     exact False.elim (factorNonzero (by simpa using tCoordinate.symm))
-  · have tCoordinate := congrArg (fun value : Projective.Basic.Proportion K => value.vector.t)
+  · have tCoordinate := congrArg (fun value : Proportion K => value.vector.t)
       scaled
     change (0 : K) = factor * 1 at tCoordinate
     exact False.elim (factorNonzero (by simpa using tCoordinate.symm))
   · have scalar := congrArg Proportion.scalar scaled
     change (1 : K) = factor * 0 at scalar
-    exact False.elim (Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.one_ne_zero presentation
+    exact False.elim (one_ne_zero presentation
       (by simpa using scalar))
-  · have tCoordinate := congrArg (fun value : Projective.Basic.Proportion K => value.vector.t)
+  · have tCoordinate := congrArg (fun value : Proportion K => value.vector.t)
       scaled
     change (1 : K) = factor * 0 at tCoordinate
-    exact False.elim (Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.one_ne_zero presentation
+    exact False.elim (one_ne_zero presentation
       (by simpa using tCoordinate))
-  · have rCoordinate := congrArg (fun value : Projective.Basic.Proportion K => value.vector.r)
+  · have rCoordinate := congrArg (fun value : Proportion K => value.vector.r)
       scaled
     change (1 : K) = factor * 1 at rCoordinate
     have factorOne : factor = 1 := by simpa using rCoordinate.symm
     subst factor
     rw [Proportion.one_scale] at scaled
     exact scaled.symm
-  · have rCoordinate := congrArg (fun value : Projective.Basic.Proportion K => value.vector.r)
+  · have rCoordinate := congrArg (fun value : Proportion K => value.vector.r)
       scaled
     change (0 : K) = factor * 1 at rCoordinate
     exact False.elim (factorNonzero (by simpa using rCoordinate.symm))
   · have scalar := congrArg Proportion.scalar scaled
     change (1 : K) = factor * 0 at scalar
-    exact False.elim (Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.one_ne_zero presentation
+    exact False.elim (one_ne_zero presentation
       (by simpa using scalar))
-  · have tCoordinate := congrArg (fun value : Projective.Basic.Proportion K => value.vector.t)
+  · have tCoordinate := congrArg (fun value : Proportion K => value.vector.t)
       scaled
     change (1 : K) = factor * 0 at tCoordinate
-    exact False.elim (Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.one_ne_zero presentation
+    exact False.elim (one_ne_zero presentation
       (by simpa using tCoordinate))
-  · have rCoordinate := congrArg (fun value : Projective.Basic.Proportion K => value.vector.r)
+  · have rCoordinate := congrArg (fun value : Proportion K => value.vector.r)
       scaled
     change (1 : K) = factor * 0 at rCoordinate
-    exact False.elim (Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.one_ne_zero presentation
+    exact False.elim (one_ne_zero presentation
       (by simpa using rCoordinate))
   · rfl
 
 /-- Turn one raw projective representative into cached non-null data exactly when its four-square norm is nonzero. -/
 def certifyNonNull (raw :
-  Projective.Basic.Proportion K) : Option (Projective.Basic.NonNullProportion K) := by
+  Proportion K) : Option (NonNullProportion K) := by
   letI : DecidableEq K := presentation.eqDecidable
   exact if normZero : raw.norm = 0 then none else
     some { toProportion := raw, normNonzero := normZero }
@@ -545,12 +545,12 @@ def certifyNonNull (raw :
 /-- Canonical non-null projective representatives. Via the projective rotation theorem these are the executable rotation
 carrier for Problem 69. -/
 def nonNullProjectiveRepresentatives :
-  List (Projective.Basic.NonNullProportion K) :=
+  List (NonNullProportion K) :=
   presentation.projectiveRepresentatives.filterMap presentation.certifyNonNull
 
 /-- Every displayed non-null four-tuple, before quotienting by scale. -/
 def allNonNullProportionRepresentatives
-  : List (Projective.Basic.NonNullProportion K) :=
+  : List (NonNullProportion K) :=
   presentation.allProportionRepresentatives.filterMap
     presentation.certifyNonNull
 
@@ -601,8 +601,8 @@ set_option genInjectivity false in
 /-- Cached normalization of a non-null displayed proportion to the unique first-nonzero-coordinate chart used by
 `projectiveRepresentatives`. -/
 structure Canonicalization (source :
-  Projective.Basic.NonNullProportion K) where
-  /-- The cached normalized non-null proportion. -/ representative : Projective.Basic.NonNullProportion K
+  NonNullProportion K) where
+  /-- The cached normalized non-null proportion. -/ representative : NonNullProportion K
   /-- Its raw proportion lies in the canonical first-nonzero-coordinate chart list. -/ member :
     representative.toProportion ∈
     presentation.projectiveRepresentatives
@@ -635,7 +635,7 @@ public theorem eq_zero_of_not_ne
 /-- Normalize by the first nonzero coordinate. All four branches and the scale witness are computed directly; no
 representative is chosen from a quotient. -/
 def canonicalize (source :
-  Projective.Basic.NonNullProportion K) :
+  NonNullProportion K) :
     presentation.Canonicalization source := by
   letI : DecidableEq K := presentation.eqDecidable
   if scalarNonzero : source.scalar ≠ 0 then
@@ -651,9 +651,9 @@ def canonicalize (source :
         representative_eq_scale := rfl
         equivalent := ⟨factor, factorNonzero, rfl⟩ }
     have rawEqual : representative.toProportion =
-        (⟨1, Coordinates3.Vector.scale factor source.vector⟩ : Projective.Basic.Proportion K) :=
+        (⟨1, Coordinates3.Vector.scale factor source.vector⟩ : Proportion K) :=
           by
-      change Purelib.Algebra.Quaternion.Projective.Basic.Proportion.scale factor source.toProportion = _
+      change Proportion.scale factor source.toProportion = _
       apply Proportion.ext
       · exact inverse_mul source.scalar
           scalarNonzero
@@ -674,10 +674,10 @@ def canonicalize (source :
         equivalent := ⟨factor, factorNonzero, rfl⟩ }
     have rawEqual : representative.toProportion =
         (⟨0, ⟨1, factor * source.vector.r,
-          factor * source.vector.s⟩⟩ : Projective.Basic.Proportion K) := by
-      change Purelib.Algebra.Quaternion.Projective.Basic.Proportion.scale factor source.toProportion = _
+          factor * source.vector.s⟩⟩ : Proportion K) := by
+      change Proportion.scale factor source.toProportion = _
       apply Proportion.ext
-      · unfold Purelib.Algebra.Quaternion.Projective.Basic.Proportion.scale
+      · unfold Proportion.scale
         rw [eq_zero_of_not_ne
           presentation.eqDecidable scalarNonzero]
         ring1
@@ -701,15 +701,15 @@ def canonicalize (source :
         representative_eq_scale := rfl
         equivalent := ⟨factor, factorNonzero, rfl⟩ }
     have rawEqual : representative.toProportion =
-        (⟨0, ⟨0, 1, factor * source.vector.s⟩⟩ : Projective.Basic.Proportion K) := by
-      change Purelib.Algebra.Quaternion.Projective.Basic.Proportion.scale factor source.toProportion = _
+        (⟨0, ⟨0, 1, factor * source.vector.s⟩⟩ : Proportion K) := by
+      change Proportion.scale factor source.toProportion = _
       apply Proportion.ext
-      · unfold Purelib.Algebra.Quaternion.Projective.Basic.Proportion.scale
+      · unfold Proportion.scale
         rw [eq_zero_of_not_ne
           presentation.eqDecidable scalarNonzero]
         ring1
       · apply Coordinates3.Vector.ext
-        · unfold Purelib.Algebra.Quaternion.Projective.Basic.Proportion.scale
+        · unfold Proportion.scale
             Coordinates3.Vector.scale
           rw [eq_zero_of_not_ne
             presentation.eqDecidable tNonzero]
@@ -723,7 +723,7 @@ def canonicalize (source :
     have sNonzero : source.vector.s ≠ 0 := by
       intro sZero
       apply source.normNonzero
-      unfold Purelib.Algebra.Quaternion.Projective.Basic.Proportion.norm
+      unfold Proportion.norm
         Coordinates3.Vector.quadrance Coordinates3.Vector.dot
       rw [eq_zero_of_not_ne
         presentation.eqDecidable scalarNonzero,
@@ -745,22 +745,22 @@ def canonicalize (source :
         equivalent := ⟨factor, factorNonzero, rfl⟩ }
     have rawEqual : representative.toProportion =
         (infinitySRepresentative :
-          Projective.Basic.Proportion K) := by
-      change Purelib.Algebra.Quaternion.Projective.Basic.Proportion.scale factor source.toProportion = _
+          Proportion K) := by
+      change Proportion.scale factor source.toProportion = _
       apply Proportion.ext
-      · unfold Purelib.Algebra.Quaternion.Projective.Basic.Proportion.scale
+      · unfold Proportion.scale
           infinitySRepresentative
         rw [eq_zero_of_not_ne
           presentation.eqDecidable scalarNonzero]
         ring1
       · apply Coordinates3.Vector.ext
-        · unfold Purelib.Algebra.Quaternion.Projective.Basic.Proportion.scale
+        · unfold Proportion.scale
             Coordinates3.Vector.scale
             infinitySRepresentative
           rw [eq_zero_of_not_ne
             presentation.eqDecidable tNonzero]
           ring1
-        · unfold Purelib.Algebra.Quaternion.Projective.Basic.Proportion.scale
+        · unfold Proportion.scale
             Coordinates3.Vector.scale
             infinitySRepresentative
           rw [eq_zero_of_not_ne
@@ -773,7 +773,7 @@ def canonicalize (source :
 
 /-- Certifying the raw coordinates of an already non-null proportion returns the original proportion. -/
 theorem certifyNonNull_self (proportion
-  : Projective.Basic.NonNullProportion K) :
+  : NonNullProportion K) :
     presentation.certifyNonNull proportion.toProportion = some proportion := by
   letI : DecidableEq K := presentation.eqDecidable
   unfold certifyNonNull
@@ -782,7 +782,7 @@ theorem certifyNonNull_self (proportion
 /-- Successful non-null certification preserves the original raw proportion. -/
 public theorem
   certifyNonNull_eq_some_toProportion
-    {raw : Projective.Basic.Proportion K} {result : Projective.Basic.NonNullProportion K}
+    {raw : Proportion K} {result : NonNullProportion K}
     (certified : presentation.certifyNonNull raw = some result) :
     result.toProportion = raw := by
   letI : DecidableEq K := presentation.eqDecidable
@@ -795,8 +795,8 @@ public theorem
 /-- Filtering a duplicate-free proportion list by non-null certification preserves absence of duplicates. -/
 public theorem
   certifyNonNull_filterMap_nodup
-    (presentation : Presentation.FiniteOddFieldPresentation K) :
-    ∀ (values : List (Projective.Basic.Proportion K)), values.Nodup →
+    (presentation : FiniteOddFieldPresentation K) :
+    ∀ (values : List (Proportion K)), values.Nodup →
       (values.filterMap presentation.certifyNonNull).Nodup
   | [], _ => List.Pairwise.nil
   | head :: tail, nodup => by
@@ -842,7 +842,7 @@ theorem
 /-- Every displayed non-null proportion occurs in the certified raw enumeration. -/
 theorem
   allNonNullProportionRepresentatives_complete
-    (proportion : Projective.Basic.NonNullProportion K) :
+    (proportion : NonNullProportion K) :
     proportion ∈ presentation.allNonNullProportionRepresentatives := by
   unfold allNonNullProportionRepresentatives
   apply FilterMap.mem_filterMap.mpr
@@ -938,7 +938,7 @@ public def
     DisplayedNonzeroScalar (K := K) := by
   letI : DecidableEq K := presentation.eqDecidable
   if valueZero : value = 0 then
-    exact ⟨1, Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.one_ne_zero presentation⟩
+    exact ⟨1, one_ne_zero presentation⟩
   else
     exact ⟨value, valueZero⟩
 
@@ -984,7 +984,7 @@ theorem
 
 /-- Forgetting non-null evidence recovers membership in the raw canonical chart list. -/
 theorem raw_mem_of_nonNull_mem
-  {proportion : Projective.Basic.NonNullProportion K}
+  {proportion : NonNullProportion K}
     (member : proportion ∈ presentation.nonNullProjectiveRepresentatives) :
     proportion.toProportion ∈ presentation.projectiveRepresentatives := by
   unfold nonNullProjectiveRepresentatives at member
@@ -995,7 +995,7 @@ theorem raw_mem_of_nonNull_mem
 
 /-- The computed normalized representative belongs to the certified canonical enumeration. -/
 theorem canonicalize_mem (source :
-  Projective.Basic.NonNullProportion K) :
+  NonNullProportion K) :
     (presentation.canonicalize source).representative ∈
       presentation.nonNullProjectiveRepresentatives := by
   unfold nonNullProjectiveRepresentatives
@@ -1010,7 +1010,7 @@ theorem canonicalize_mem (source :
 normalized coordinate equal to one in each of the four charts. -/
 private theorem
   scale_factor_eq_one_of_projective_member
-    {raw : Projective.Basic.Proportion K}
+    {raw : Proportion K}
     (member : raw ∈ presentation.projectiveRepresentatives)
     (factor : K) (fixed : raw = Proportion.scale factor raw) :
     factor = 1 := by
@@ -1023,17 +1023,17 @@ private theorem
     change (1 : K) = factor * 1 at coordinate
     simpa only [mul_one] using coordinate.symm
   · have coordinate := congrArg
-      (fun value : Projective.Basic.Proportion K => value.vector.t) fixed
+      (fun value : Proportion K => value.vector.t) fixed
     rw [rawEq] at coordinate
     change (1 : K) = factor * 1 at coordinate
     simpa only [mul_one] using coordinate.symm
   · have coordinate := congrArg
-      (fun value : Projective.Basic.Proportion K => value.vector.r) fixed
+      (fun value : Proportion K => value.vector.r) fixed
     rw [rawEq] at coordinate
     change (1 : K) = factor * 1 at coordinate
     simpa only [mul_one] using coordinate.symm
   · have coordinate := congrArg
-      (fun value : Projective.Basic.Proportion K => value.vector.s) fixed
+      (fun value : Proportion K => value.vector.s) fixed
     rw [rawEq] at coordinate
     change (1 : K) = factor * 1 at coordinate
     simpa only [mul_one] using coordinate.symm
@@ -1042,7 +1042,7 @@ private theorem
 -/
 def scaleOrbitCoordinates : List
     (DisplayedNonzeroScalar (K := K) ×
-      Projective.Basic.NonNullProportion K) :=
+      NonNullProportion K) :=
   presentation.nonzeroScalarWitnesses.flatMap fun scalar =>
     presentation.nonNullProjectiveRepresentatives.map fun representative =>
       (scalar, representative)
@@ -1050,7 +1050,7 @@ def scaleOrbitCoordinates : List
 /-- Orbit-coordinate membership is exactly membership of its scalar and canonical representative. -/
 theorem mem_scaleOrbitCoordinates_iff
     (coordinate : DisplayedNonzeroScalar (K := K) ×
-      Projective.Basic.NonNullProportion K) :
+      NonNullProportion K) :
     coordinate ∈ presentation.scaleOrbitCoordinates ↔
       coordinate.1 ∈ presentation.nonzeroScalarWitnesses ∧
         coordinate.2 ∈ presentation.nonNullProjectiveRepresentatives := by
@@ -1078,7 +1078,7 @@ theorem scaleOrbitCoordinates_nodup :
   apply nodup_flatMap_of_nodup
     presentation.nonzeroScalarWitnesses_nodup
   · intro scalar _
-    apply Data.List.Nodup.nodup_map_of_injective
+    apply Nodup.nodup_map_of_injective
     · intro left right equal
       exact congrArg Prod.snd equal
     · exact presentation.nonNullProjectiveRepresentatives_nodup
@@ -1097,9 +1097,9 @@ theorem scaleOrbitCoordinates_nodup :
 /-- Normalize a displayed non-null four-tuple and retain the inverse scaling factor needed to reconstruct it from its
 canonical projective point. -/
 def scaleOrbitForward (source :
-  Projective.Basic.NonNullProportion K) :
+  NonNullProportion K) :
     DisplayedNonzeroScalar (K := K) ×
-      Projective.Basic.NonNullProportion K :=
+      NonNullProportion K :=
   let normalization := presentation.canonicalize source
   (⟨normalization.factor⁻¹,
       ExplicitField.inv_ne_zero normalization.factorNonzero⟩,
@@ -1108,13 +1108,13 @@ def scaleOrbitForward (source :
 /-- Reconstruct a displayed non-null four-tuple from its nonzero scale and canonical projective representative. -/
 def scaleOrbitBackward
     (coordinate : DisplayedNonzeroScalar (K := K) ×
-      Projective.Basic.NonNullProportion K) :
-    Projective.Basic.NonNullProportion K :=
+      NonNullProportion K) :
+    NonNullProportion K :=
   coordinate.2.scale coordinate.1.value coordinate.1.nonzero
 
 /-- Normalizing any non-null proportion gives listed orbit coordinates. -/
 theorem scaleOrbitForward_mem (source :
-  Projective.Basic.NonNullProportion K) :
+  NonNullProportion K) :
     presentation.scaleOrbitForward source ∈
       presentation.scaleOrbitCoordinates := by
   apply (presentation.mem_scaleOrbitCoordinates_iff
@@ -1127,7 +1127,7 @@ theorem scaleOrbitForward_mem (source :
 /-- Reconstructing any certified scale and non-null representative gives a listed raw non-null proportion. -/
 theorem scaleOrbitBackward_mem
     (coordinate : DisplayedNonzeroScalar (K := K) ×
-      Projective.Basic.NonNullProportion K) :
+      NonNullProportion K) :
     scaleOrbitBackward coordinate ∈
       presentation.allNonNullProportionRepresentatives :=
   presentation.allNonNullProportionRepresentatives_complete
@@ -1137,7 +1137,7 @@ theorem scaleOrbitBackward_mem
 
 The retained inverse scale cancels the normalization factor on the actual stored representative. -/
 theorem scaleOrbitBackward_forward
-  (source : Projective.Basic.NonNullProportion K) :
+  (source : NonNullProportion K) :
     scaleOrbitBackward
       (presentation.scaleOrbitForward source) = source := by
   let normalization := presentation.canonicalize source
@@ -1179,7 +1179,7 @@ Membership supplies the canonical representative whose first nonzero coordinate 
 scalar uniquely. -/
 theorem scaleOrbitForward_backward
     (coordinate : DisplayedNonzeroScalar (K := K) ×
-      Projective.Basic.NonNullProportion K)
+      NonNullProportion K)
     (member : coordinate ∈ presentation.scaleOrbitCoordinates) :
     presentation.scaleOrbitForward
       (scaleOrbitBackward coordinate) = coordinate :=

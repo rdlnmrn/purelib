@@ -39,22 +39,22 @@ variable {count : Nat}
 
 /-- Sum the bilinear edge areas along the finite primitive-point path. -/
 @[expose] def area (values : Fin (count + 1) → PrimitivePoint) :=
-  FiniteSum.Fin.sumFin (fun edge : Fin count => edgeArea (values edge.castSucc) (values edge.succ))
+  sumFin (fun edge : Fin count => edgeArea (values edge.castSucc) (values edge.succ))
 
 open Purelib.Integration in
 /-- Translating a primitive path changes its area by the exact origin-to-endpoint term. -/
 theorem area_translate (values : Fin (count + 1) → PrimitivePoint) (origin : PrimitivePoint) :
-    area values = area (fun vertex => (Polygon.Stokes.PrimitivePoint.sub (values vertex)) origin) +
+    area values = area (fun vertex => (PrimitivePoint.sub (values vertex)) origin) +
       (edgeArea origin (values (Fin.last count)) - edgeArea origin (values 0)) := by
-  have edges := FiniteSum.Fin.sumFin_congr (fun edge : Fin count => show
+  have edges := sumFin_congr (fun edge : Fin count => show
     edgeArea (values edge.castSucc) (values edge.succ) =
-      edgeArea ((Polygon.Stokes.PrimitivePoint.sub (values edge.castSucc)) origin) ((Polygon.Stokes.PrimitivePoint.sub
+      edgeArea ((PrimitivePoint.sub (values edge.castSucc)) origin) ((PrimitivePoint.sub
         (values edge.succ)) origin) +
         (edgeArea origin (values edge.succ) - edgeArea origin (values edge.castSucc)) by
-    simp only [edgeArea, Polygon.Stokes.PrimitivePoint.sub]
+    simp only [edgeArea, PrimitivePoint.sub]
     ring1)
   unfold area
-  rw [edges, FiniteSum.Fin.sumFin_add, Path.BoundaryRibbon.sum_increasing (fun vertex => edgeArea origin (values
+  rw [edges, sumFin_add, Path.BoundaryRibbon.sum_increasing (fun vertex => edgeArea origin (values
     vertex))]
 
 set_option genInjectivity false in
@@ -65,15 +65,15 @@ structure Sample (values : Fin (count + 1) → PrimitivePoint) where
   /-- The materialized path points after subtracting the original first point. -/ centered : Data.Vector
     PrimitivePoint (count + 1)
   /-- Every centered cache entry equals the original point minus the retained origin. -/ centered_eq : ∀ vertex,
-    centered vertex = (Polygon.Stokes.PrimitivePoint.sub (values vertex)) (values 0)
-  /-- The cached area of the centered finite path. -/ centeredArea : Gaussian.Basic.Canonical
+    centered vertex = (PrimitivePoint.sub (values vertex)) (values 0)
+  /-- The cached area of the centered finite path. -/ centeredArea : Canonical
   /-- The centered-area cache is the area of the actual cached centered points. -/ centeredArea_eq : centeredArea = area
     (fun vertex => centered vertex)
   /-- The cached pairing of the original origin with the total endpoint increment. -/ endpoint :
-    Gaussian.Basic.Canonical
+    Canonical
   /-- The endpoint cache uses the original first point and actual final-minus-first increment. -/ endpoint_eq : endpoint
-    = edgeArea (values 0) ((Polygon.Stokes.PrimitivePoint.sub (values (Fin.last count))) (values 0))
-  /-- The cached original finite path area. -/ originalArea : Gaussian.Basic.Canonical
+    = edgeArea (values 0) ((PrimitivePoint.sub (values (Fin.last count))) (values 0))
+  /-- The cached original finite path area. -/ originalArea : Canonical
   /-- The original-area cache equals the area of the original point sequence. -/ originalArea_eq : originalArea = area
     values
   /-- The cached original area equals centered area plus endpoint contribution. -/ decomposition : originalArea =
@@ -87,11 +87,11 @@ variable {values : Fin (count + 1) → PrimitivePoint}
 
 /-- Materialize the centered point vector and exact area decomposition once. -/
 @[expose] def build (values : Fin (count + 1) → PrimitivePoint) : Sample values :=
-  let centered := Vector.Basic.vectorOfFn fun vertex => (Polygon.Stokes.PrimitivePoint.sub (values vertex)) (values 0)
+  let centered := vectorOfFn fun vertex => (PrimitivePoint.sub (values vertex)) (values 0)
   let centeredArea := area (fun vertex => centered vertex)
-  let endpoint := edgeArea (values 0) ((Polygon.Stokes.PrimitivePoint.sub (values (Fin.last count))) (values 0))
+  let endpoint := edgeArea (values 0) ((PrimitivePoint.sub (values (Fin.last count))) (values 0))
   { centered := centered
-    centered_eq := fun vertex => Vector.Basic.vectorOfFn_apply _ vertex
+    centered_eq := fun vertex => vectorOfFn_apply _ vertex
     centeredArea := centeredArea
     centeredArea_eq := rfl
     endpoint := endpoint
@@ -100,16 +100,16 @@ variable {values : Fin (count + 1) → PrimitivePoint}
     originalArea_eq := by
       have translation := area_translate values (values 0)
       have endpointEq : edgeArea (values 0) (values (Fin.last count)) - edgeArea (values 0) (values 0) = endpoint := by
-        dsimp only [endpoint, edgeArea, Polygon.Stokes.PrimitivePoint.sub]
+        dsimp only [endpoint, edgeArea, PrimitivePoint.sub]
         ring1
       rw [endpointEq] at translation
-      have centeredEq : area (fun vertex => centered vertex) = area (fun vertex => (Polygon.Stokes.PrimitivePoint.sub
+      have centeredEq : area (fun vertex => centered vertex) = area (fun vertex => (PrimitivePoint.sub
         (values vertex)) (values 0)) := by
         unfold area
-        apply FiniteSum.Fin.sumFin_congr
+        apply sumFin_congr
         intro edge
         dsimp only [centered]
-        rw [Vector.Basic.vectorOfFn_apply, Vector.Basic.vectorOfFn_apply]
+        rw [vectorOfFn_apply, vectorOfFn_apply]
       change area (fun vertex => centered vertex) + endpoint = area values
       rw [centeredEq]
       exact translation.symm
@@ -123,9 +123,9 @@ bound at most one. The finite estimate pays the actual edge count squared. -/
 theorem comparison {first last : Fin (count + 1) → PrimitivePoint} (left : Sample first) (right : Sample last)
     {magnitude error : Coordinate} (nonnegative : 0 ≤ magnitude) (errorNonnegative : 0 ≤ error) (small : error ≤ 1)
     (bounded : ∀ vertex, (Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (right.centered vertex)) magnitude)
-    (accurate : ∀ vertex, (Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded ((Polygon.Stokes.PrimitivePoint.sub
+    (accurate : ∀ vertex, (Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded ((PrimitivePoint.sub
       (left.centered vertex)) (right.centered vertex))) error) :
-    Data.Gaussian.Norm.Basic.normSq ((left.originalArea - right.originalArea) - (left.endpoint - right.endpoint)) ≤
+    normSq ((left.originalArea - right.originalArea) - (left.endpoint - right.endpoint)) ≤
       (count : Coordinate) ^ 2 * (32 * (magnitude + 1) * error) := by
   have estimate := Gaussian.Norm.Sum.Indexed.normSq_sumFin_le
     (fun edge : Fin count => edgeArea (left.centered edge.castSucc) (left.centered edge.succ) -
@@ -136,7 +136,7 @@ theorem comparison {first last : Fin (count + 1) → PrimitivePoint} (left : Sam
       (changedFirst := left.centered edge.castSucc) (changedLast := left.centered edge.succ) nonnegative
         errorNonnegative small
       (bounded edge.castSucc) (bounded edge.succ) (accurate edge.castSucc) (accurate edge.succ))
-  rw [FiniteSum.Fin.sumFin_sub] at estimate
+  rw [sumFin_sub] at estimate
   have equal : (left.originalArea - right.originalArea) - (left.endpoint - right.endpoint) =
       left.centeredArea - right.centeredArea := by
     rw [left.decomposition, right.decomposition]

@@ -36,6 +36,8 @@ import Purelib.Riemann.Topology.PrimitiveSurfaceBudget
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -57,7 +59,7 @@ open Purelib.Data.Gaussian in
 /-- Gaussian rational carrier for primitive surface readings. -/
 private abbrev Gaussian := Basic.Canonical
 /-- Rational box type for retained primitive surface cells. -/
-private abbrev Box := Purelib.Geometry.Rational.Box
+private abbrev Box := Geometry.Rational.Box
 open Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions
 open Purelib.Riemann.Integration.PrimitiveBasis (Coefficients PrimitiveBasisPreflight)
 open _root_.Purelib.Riemann.Topology (PrimitiveSurfaceBudget)
@@ -92,8 +94,8 @@ private theorem approximate_root_square_le {parameter root : Basic.Canonical}
       have scalar := Norm.Bounds.normSq_add_le_two (root ^ 2 - parameter) parameter
       simpa only [Norm.Basic.normSq_eq_canonical] using scalar
     _ ≤ 2 * (normSq parameter + normSq parameter) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.add_le_add_right_direct residual (normSq parameter))
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.add_le_add_right_direct residual (normSq parameter))
         (by decide : (0 : Fraction.Rational) ≤ 2)
     _ = _ := by ring1
 
@@ -114,47 +116,47 @@ theorem densityLower_quarter_le_approximateDifferential {genus : Nat}
     (residual : normSq (root ^ 2 - curve.polynomial.eval point) ≤ normSq (curve.polynomial.eval point)) :
     cell.densityLower / 4 ≤ normSq ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval point / root) :=
       by
-  have rootNonnegative := Basic.Canonical.normSq_nonneg root
+  have rootNonnegative := normSq_nonneg root
   have squareLe := approximate_root_square_le residual
   have multiplied : cell.densityLower * normSq root ≤
       4 * normSq ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval point) := by
     by_cases small : normSq root ≤ 1
     · calc
         _ ≤ cell.densityLower * 1 :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct small cell.densityLower_nonnegative
+          Arithmetic.mul_le_mul_of_nonneg_left_direct small cell.densityLower_nonnegative
         _ = cell.densityLower := by ring1
         _ ≤ normSq ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval point) := by
           have scalar := cell.density_below_numerator point inside
           simpa only [Norm.Basic.normSq_eq_canonical] using scalar
         _ ≤ _ := by
           simpa only [_root_.one_mul] using
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide : (1 : Fraction.Rational) ≤ 4)
-              (Basic.Canonical.normSq_nonneg ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval point))
+            Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide : (1 : Fraction.Rational) ≤ 4)
+              (normSq_nonneg ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval point))
     · have oneLe : (1 : Fraction.Rational) ≤ normSq root := (lt_of_not_ge small).le
       have normLeSquare : normSq root ≤ normSq root ^ 2 := by
         calc
           _ = 1 * normSq root := by ring1
-          _ ≤ normSq root * normSq root := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct oneLe
+          _ ≤ normSq root * normSq root := Arithmetic.mul_le_mul_of_nonneg_right_direct oneLe
             rootNonnegative
           _ = _ := by ring1
       calc
         _ ≤ cell.densityLower * (4 * normSq (curve.polynomial.eval point)) :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (normLeSquare.trans squareLe)
+          Arithmetic.mul_le_mul_of_nonneg_left_direct (normLeSquare.trans squareLe)
             cell.densityLower_nonnegative
         _ = 4 * (cell.densityLower * normSq (curve.polynomial.eval point)) := by ring1
         _ ≤ _ := by
           have scalar := cell.density_valid point inside
           simp only [Norm.Basic.normSq_eq_canonical] at scalar
-          exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct scalar (by decide)
-  rw [Basic.Canonical.normSq_div _ _ nonzero]
+          exact Arithmetic.mul_le_mul_of_nonneg_left_direct scalar (by decide)
+  rw [normSq_div _ _ nonzero]
   have rootPositive : 0 < normSq root := by
     simpa only [Norm.Basic.normSq_eq_canonical] using Norm.Basic.normSq_pos nonzero
-  apply (Fraction.Order.Field.le_div_iff_pos rootPositive).mpr
+  apply (Field.le_div_iff_pos rootPositive).mpr
   calc
     _ = (cell.densityLower * normSq root) / 4 := by
       simp only [Field.ExplicitField.div_eq_mul_inv]
       ring1
-    _ ≤ _ := (Fraction.Order.Field.div_le_iff_pos (by decide : (0 : Fraction.Rational) < 4)).mpr
+    _ ≤ _ := (Field.div_le_iff_pos (by decide : (0 : Fraction.Rational) < 4)).mpr
       (multiplied.trans_eq (by ring1))
 
 end PreparedEnergy.SurfaceCell
@@ -181,7 +183,7 @@ theorem density_lower {genus siteCount index : Nat}
   have positive := patch.rootLower_positive.trans_le (reading.sample.candidate_lower _ reading.possible)
   have nonzero : reading.root ≠ 0 := by
     intro zero
-    rw [zero, Basic.Canonical.normSq_zero] at positive
+    rw [zero, normSq_zero] at positive
     exact lt_irrefl 0 positive
   have residual := reading.sample.candidate_residual (ContinuedNeighborhood.relativeRootError index)
     (ContinuedNeighborhood.relativeRootError_positive index) reading.possible
@@ -189,18 +191,18 @@ theorem density_lower {genus siteCount index : Nat}
     (ContinuedNeighborhood.relativeRootError_small index).trans (by decide +kernel : (1 / 4096 : Fraction.Rational) ≤ 1)
   have residualLe : normSq (reading.root ^ 2 - curve.polynomial.eval reading.point) ≤ normSq (curve.polynomial.eval
     reading.point) :=
-    residual.trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct errorLe (Basic.Canonical.normSq_nonneg
+    residual.trans ((Arithmetic.mul_le_mul_of_nonneg_right_direct errorLe (normSq_nonneg
       (curve.polynomial.eval reading.point))).trans_eq (by ring1))
-  exact PrimitiveSurfaceLower.PreparedEnergy.SurfaceCell.densityLower_quarter_le_approximateDifferential cell inside
+  exact PreparedEnergy.SurfaceCell.densityLower_quarter_le_approximateDifferential cell inside
     nonzero residualLe
 
 end InverseRootPolynomial.PrimitiveFaceReading
 
 namespace InverseRootPolynomial.PrimitiveBoxSurface.Readings
 
-variable {genus siteCount : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+variable {genus siteCount : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
   {patch : ContinuedNeighborhood curve.polynomial siteCount} {preflight : PrimitiveBasisPreflight patch genus}
-  {box : Purelib.Geometry.Rational.Box} {target : Purelib.Data.Rat.Fraction.Rational} {surface :
+  {box : Geometry.Rational.Box} {target : Data.Rat.Fraction.Rational} {surface :
     PrimitiveBoxSurface preflight box target}
 
 open Purelib.Algebra in
@@ -224,7 +226,7 @@ theorem cell_energy_le_affineEnergy (readings : PrimitiveBoxSurface.Readings sur
       normSq ((readings.sample coefficients).faceCoefficient face) := by
     change cell.densityLower / 4 ≤ normSq ((Vector.Basic.vectorOfFn _) face)
     rw [Vector.Basic.vectorOfFn_apply]
-    exact PrimitiveSurfaceLower.InverseRootPolynomial.PrimitiveFaceReading.density_lower (readings.entries face) cell
+    exact PrimitiveFaceReading.density_lower (readings.entries face) cell
       (by rw [boxEq, readings.point_eq]; exact (surface.face_inside face).1)
   rw [(readings.sample coefficients).affineEnergy_eq]
   have weighted (face : Fin surface.faceCount) :
@@ -236,11 +238,11 @@ theorem cell_energy_le_affineEnergy (readings : PrimitiveBoxSurface.Readings sur
         (surface.mesh.mesh.coordinate (surface.mesh.mesh.triangulation.faces face).first)
         (surface.mesh.mesh.coordinate (surface.mesh.mesh.triangulation.faces face).second)
         (surface.mesh.mesh.coordinate (surface.mesh.mesh.triangulation.faces face).third) *
-        Data.Gaussian.Norm.Basic.normSq ((readings.sample coefficients).faceCoefficient face) := by
+        Norm.Basic.normSq ((readings.sample coefficients).faceCoefficient face) := by
     have scalar : cell.densityLower / 4 ≤
-        Data.Gaussian.Norm.Basic.normSq ((readings.sample coefficients).faceCoefficient face) := by
+        Norm.Basic.normSq ((readings.sample coefficients).faceCoefficient face) := by
       simpa only [Norm.Basic.normSq_eq_canonical] using pointwise face
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_left_direct
       scalar (surface.mesh.faceArea_positive proper face).le
   have lower := FiniteSum.Rational.Order.Positivity.sumFin_mono _ _ weighted
   apply le_trans ?_ lower
@@ -263,11 +265,11 @@ theorem cell_energy_sub_error_le_rectangleBoundary (readings : PrimitiveBoxSurfa
       cell.box = box) :
     Box.Content.boxContent cell.box * (cell.densityLower / 4) -
         PreparedObservationCoercivity.coefficientNormSq coefficients * target ≤
-      (PreparedBoxBoundary.rectangleBoundary (fun point => Polygon.energyPrimitivePoint (surface.budget.basis.value
+      (rectangleBoundary (fun point => Polygon.energyPrimitivePoint (surface.budget.basis.value
         coefficients point))
         surface.budget.depth box).im / 4 :=
-  (Fraction.Order.Arithmetic.sub_le_sub_right_direct
-    (PrimitiveSurfaceLower.InverseRootPolynomial.PrimitiveBoxSurface.Readings.cell_energy_le_affineEnergy readings
+  (Arithmetic.sub_le_sub_right_direct
+    (cell_energy_le_affineEnergy readings
     coefficients cell boxEq) _).trans
     (readings.sample_energy_le_rectangleBoundary coefficients)
 

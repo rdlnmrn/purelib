@@ -33,75 +33,75 @@ inductive PlaneOrientation
   /-- Counterclockwise traversal is positively oriented. -/ | counterclockwisePositive
   /-- Clockwise traversal is positively oriented. -/ | clockwisePositive
 deriving DecidableEq
-derive_exposed_repr Purelib.Curves.Legendre.Conventions.PlaneOrientation
+derive_exposed_repr Conventions.PlaneOrientation
 
 /-- The traversal order assigned to a concatenation of two paths. -/
 inductive ConcatenationOrder
   /-- Traverse the first path before the second. -/ | firstThenSecond
   /-- Traverse the second path before the first. -/ | secondThenFirst
 deriving DecidableEq
-derive_exposed_repr Purelib.Curves.Legendre.Conventions.ConcatenationOrder
+derive_exposed_repr Conventions.ConcatenationOrder
 
 /-- The traversal order assigned to the head of a braid word. -/
 inductive BraidMultiplicationOrder
   /-- The head braid generator acts before the remaining word. -/ | headActsFirst
   /-- The head braid generator acts after the remaining word. -/ | headActsLast
 deriving DecidableEq
-derive_exposed_repr Purelib.Curves.Legendre.Conventions.BraidMultiplicationOrder
+derive_exposed_repr Conventions.BraidMultiplicationOrder
 
 /-- The row or column convention for homology coordinates. -/
 inductive HomologyCoordinates
   /-- Homology coordinates are represented as column vectors. -/ | columnVectors
   /-- Homology coordinates are represented as row vectors. -/ | rowVectors
 deriving DecidableEq
-derive_exposed_repr Purelib.Curves.Legendre.Conventions.HomologyCoordinates
+derive_exposed_repr Conventions.HomologyCoordinates
 
 /-- The sign convention for the ordered intersection of the two basis cycles. -/
 inductive IntersectionConvention
   /-- The ordered intersection of a with b is positive. -/ | aDotBPositive
   /-- The ordered intersection of b with a is positive. -/ | bDotAPositive
 deriving DecidableEq
-derive_exposed_repr Purelib.Curves.Legendre.Conventions.IntersectionConvention
+derive_exposed_repr Conventions.IntersectionConvention
 
 /-- The orientation chosen for an adjacent half-twist lift. -/
 inductive HalfTwistLift
   /-- Use the positive adjacent half-twist lift. -/ | positiveAdjacentLift
   /-- Use the negative adjacent half-twist lift. -/ | negativeAdjacentLift
 deriving DecidableEq
-derive_exposed_repr Purelib.Curves.Legendre.Conventions.HalfTwistLift
+derive_exposed_repr Conventions.HalfTwistLift
 
 /-- The branch-label orientation assigned to a vanishing cycle. -/
 inductive VanishingOrientation
   /-- Orient the vanishing cycle toward the increasing branch label. -/ | increasingBranchLabel
   /-- Orient the vanishing cycle toward the decreasing branch label. -/ | decreasingBranchLabel
 deriving DecidableEq
-derive_exposed_repr Purelib.Curves.Legendre.Conventions.VanishingOrientation
+derive_exposed_repr Conventions.VanishingOrientation
 
 set_option genInjectivity false in
 /-- The complete convention lock used by the Legendre calculation. -/
 structure Convention where
-  /-- The positive orientation of the parameter plane. -/ parameterPlane : Curves.Legendre.Conventions.PlaneOrientation
+  /-- The positive orientation of the parameter plane. -/ parameterPlane : PlaneOrientation
   /-- The positive orientation of the projected branch plane. -/ branchProjection :
-    Curves.Legendre.Conventions.PlaneOrientation
-  /-- The traversal order of concatenated paths. -/ pathConcatenation : Curves.Legendre.Conventions.ConcatenationOrder
+    PlaneOrientation
+  /-- The traversal order of concatenated paths. -/ pathConcatenation : ConcatenationOrder
   /-- The order in which listed braid generators act. -/ braidMultiplication :
-    Curves.Legendre.Conventions.BraidMultiplicationOrder
+    BraidMultiplicationOrder
   /-- The row or column representation of homology classes. -/ homologyCoordinates :
-    Curves.Legendre.Conventions.HomologyCoordinates
+    HomologyCoordinates
   /-- The sign assigned to the ordered basis-cycle intersection. -/ intersectionSign :
-    Curves.Legendre.Conventions.IntersectionConvention
+    IntersectionConvention
   /-- The chosen orientation of an adjacent half-twist lift. -/ halfTwistLift :
-    Curves.Legendre.Conventions.HalfTwistLift
+    HalfTwistLift
   /-- The branch-label orientation of a vanishing cycle. -/ vanishingCycle :
-    Curves.Legendre.Conventions.VanishingOrientation
+    VanishingOrientation
 deriving DecidableEq
 
 constructive_injectivity Convention
 
-derive_exposed_repr Purelib.Curves.Legendre.Conventions.Convention
+derive_exposed_repr Conventions.Convention
 
 /-- The single convention record consumed by all later Legendre modules. -/
-def standard : Curves.Legendre.Conventions.Convention where
+def standard : Convention where
   parameterPlane := .counterclockwisePositive
   branchProjection := .counterclockwisePositive
   pathConcatenation := .firstThenSecond
@@ -112,33 +112,33 @@ def standard : Curves.Legendre.Conventions.Convention where
   vanishingCycle := .increasingBranchLabel
 
 /-- The positive crossing of the lower adjacent pair in a three-strand braid. -/
-def lowerPositive : Braid.Generator 3 where
+def lowerPositive : Generator 3 where
   index := 0
   sign := .positive
 
 /-- The positive crossing of the upper adjacent pair in a three-strand braid. -/
-def upperPositive : Braid.Generator 3 where
+def upperPositive : Generator 3 where
   index := 1
   sign := .positive
 
 /-- With head-first traversal, the lower crossing followed by the upper one sends strand zero to strand two. -/
 example :
-    (Purelib.Topology.Knot.Braid.Word.permutation ([Curves.Legendre.Conventions.lowerPositive,
-      Purelib.Curves.Legendre.Conventions.upperPositive] : Purelib.Topology.Knot.Braid.Word 3)).forward 0 =
+    (Word.permutation ([lowerPositive,
+      upperPositive] : Word 3)).forward 0 =
       (2 : Fin 3) := rfl
 
 /-- Reversing the displayed path reverses the above strand transport. -/
 example :
-    (Purelib.Topology.Knot.Braid.Word.permutation
-      (Purelib.Topology.Knot.Braid.Word.inverse ([Curves.Legendre.Conventions.lowerPositive,
-        Purelib.Curves.Legendre.Conventions.upperPositive] : Purelib.Topology.Knot.Braid.Word 3))).forward 2 =
+    (Word.permutation
+      (Word.inverse ([lowerPositive,
+        upperPositive] : Word 3))).forward 2 =
       (0 : Fin 3) := rfl
 
 /-- List concatenation is path concatenation: the first singleton is traversed before the second singleton. -/
 example :
-    (Purelib.Topology.Knot.Braid.Word.permutation
-      (([Curves.Legendre.Conventions.lowerPositive] : Purelib.Topology.Knot.Braid.Word 3) ++
-        [Purelib.Curves.Legendre.Conventions.upperPositive])).forward 0 =
+    (Word.permutation
+      (([lowerPositive] : Word 3) ++
+        [upperPositive])).forward 0 =
       (2 : Fin 3) := rfl
 
 /-- The locked cellular sign is `a · b = +1`. -/

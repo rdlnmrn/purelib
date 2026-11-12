@@ -54,30 +54,30 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.Newton.Branch.WindowHole
 open Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank
   (NewtonPreparation NewtonGrid)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
+  {preparation : NewtonPreparation original} {target radius :
     Fraction.Rational}
-  {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius} {index :
-    Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
+  {grid : NewtonGrid preparation target radius} {index :
+    Branches.BranchIsolation.Data.Index branches}
   {current : Meshes.LiftedPuncturedGrid grid.punctured}
 
 /-- The partition is independent of the initial sheet. Read its unique
 hole and original connector once, with their ownership certificates. -/
 @[expose] def fineHole (region : RootContinuation.NewtonOriginalAnnularFaces.OriginalAnnularFaces grid index) :
-    Hyperelliptic.Meshes.PuncturedGrid.SingleHoleCircuit.SingleHole
-      (Hyperelliptic.Meshes.Newton.Branch.WindowCircuits.fineOrder (current := current) region 0).partition index :=
-  Hyperelliptic.Meshes.PuncturedGrid.SingleHoleCircuit.singleHole index
-    (Hyperelliptic.Meshes.Newton.Branch.WindowCircuits.fineOrder (current := current) region 0).partition
-    (Hyperelliptic.Meshes.Newton.Branch.WindowCircuits.fine_kept_labels region 0)
+    PuncturedGrid.SingleHoleCircuit.SingleHole
+      (WindowCircuits.fineOrder (current := current) region 0).partition index :=
+  PuncturedGrid.SingleHoleCircuit.singleHole index
+    (WindowCircuits.fineOrder (current := current) region 0).partition
+    (WindowCircuits.fine_kept_labels region 0)
 
 /-- The unique original fine-window hole retains exactly the indexed shrunken branch cell. -/
 theorem fineHole_cell (region : RootContinuation.NewtonOriginalAnnularFaces.OriginalAnnularFaces grid index) :
-    (Hyperelliptic.Meshes.Newton.Branch.WindowHole.fineHole (current := current) region).hole.cell =
+    (WindowHole.fineHole (current := current) region).hole.cell =
       grid.punctured.bank.cell index :=
-  (Hyperelliptic.Meshes.Newton.Branch.WindowHole.fineHole (current := current) region).hole.cell_eq.trans
-    (congrArg grid.punctured.bank.cell (Hyperelliptic.Meshes.Newton.Branch.WindowHole.fineHole (current := current)
+  (WindowHole.fineHole (current := current) region).hole.cell_eq.trans
+    (congrArg grid.punctured.bank.cell (WindowHole.fineHole (current := current)
       region).hole_index)
 
 /-- The remaining polygon is the based circuit around the actual shrunken
@@ -86,22 +86,22 @@ theorem fineCompiler_hole_area (region : RootContinuation.NewtonOriginalAnnularF
   (sheet : Fin 2)
     (value : Topology.Polygon.Stokes.OrientedEdge current.vertices.count → Gaussian.Basic.Canonical)
     (anti : ∀ edge, value edge.reverse = -value edge) :
-    Topology.Mesh.RetracingWords.wordArea value (Hyperelliptic.Meshes.Newton.Branch.WindowCircuits.fineCompiler (current
+    Topology.Mesh.RetracingWords.wordArea value (WindowCircuits.fineCompiler (current
       := current) region sheet).word =
       current.edges.chainArea current.vertices value
-        ((Hyperelliptic.Meshes.Newton.Branch.WindowHole.fineHole (current := current) region).stem.based
+        ((WindowHole.fineHole (current := current) region).stem.based
           (Geometry.Grid.CellBoundary.Cell.boundaryWalk
-            (Hyperelliptic.Meshes.Newton.Branch.WindowHole.fineHole (current := current) region).hole.cell
-            (Hyperelliptic.Meshes.Newton.Branch.WindowHole.fineHole (current := current) region).hole.member)) sheet :=
+            (WindowHole.fineHole (current := current) region).hole.cell
+            (WindowHole.fineHole (current := current) region).hole.member)) sheet :=
               by
-  let order := Hyperelliptic.Meshes.Newton.Branch.WindowCircuits.fineOrder (current := current) region sheet
-  let compiled := Hyperelliptic.Meshes.Newton.Branch.WindowCircuits.fineCompiler (current := current) region sheet
-  let found := Hyperelliptic.Meshes.Newton.Branch.WindowHole.fineHole (current := current) region
+  let order := WindowCircuits.fineOrder (current := current) region sheet
+  let compiled := WindowCircuits.fineCompiler (current := current) region sheet
+  let found := WindowHole.fineHole (current := current) region
   let member := grid.shrunk.included.vertex (Geometry.Grid.ClearGrid.Cell.anchor_mem (original.cell index)
     (original.cell_mem index))
   have words := congrArg (Topology.Mesh.RetracingWords.wordArea value) compiled.word_eq
-  have self := Polynomial.Geometry.Grid.ClearGrid.self_resplit_comparison current.edges current.vertices
-    (fun point member => (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
+  have self := Geometry.Grid.ClearGrid.self_resplit_comparison current.edges current.vertices
+    (fun point member => (PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
       grid.punctured.bank.toBranchCellBank point member).toLoop) order.partition.kept.product member
   have kept : order.partition.kept.product = found.stem.based (Geometry.Grid.CellBoundary.Cell.boundaryWalk
     found.hole.cell found.hole.member) :=

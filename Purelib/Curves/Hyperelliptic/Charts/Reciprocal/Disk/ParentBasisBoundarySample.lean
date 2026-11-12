@@ -93,15 +93,15 @@ open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 variable {genus count index depth readingIndex floor minimum : Nat} {curve :
   HyperellipticCurve genus}
   {differential : Differential genus} {collar :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {parent :
-    Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+    ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {parent :
+    Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {source :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap} {source :
     SourcePrimitive data index}
-  {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {box : Geometry.Rational.Box} {capSample :
+    Cap.Primitives.Sample cap differential index box}
   {target : Coordinate}
   {polynomials : RegularBasisPolynomials cap
     index box}
@@ -122,59 +122,59 @@ set_option genInjectivity false in
 /-- Retained boundary data for the actual joined root-chart path. The cell residual is computed from cached totals,
 never by reacquiring fan energies. -/
 structure BasisBoundarySample
-    (energies : ParentBasisRequests.BasisEnergyData (polynomials := polynomials) energyTarget energyFloor energyDepth
+    (energies : BasisEnergyData (polynomials := polynomials) energyTarget energyFloor energyDepth
       plans cells evaluated)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (joinTarget : InverseRootPolynomial.Coordinate)
+    (coefficients : GaussianVector genus) (joinTarget : Coordinate)
       where
   /-- The cached signed homogeneous cell energy values in original retained cell order. -/ values : List
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The energy value cache equals the actual original cell evaluations. -/ values_eq : values = BasisEnergyData.values
     coefficients plans cells evaluated energies
-  /-- The cached total of all retained original signed cell energies. -/ energy : InverseRootPolynomial.Gaussian
+  /-- The cached total of all retained original signed cell energies. -/ energy : Gaussian
   /-- The energy cache is exactly the Gaussian sum of the retained original cell values. -/ energy_eq : energy =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum values
+    gaussianSum values
   /-- The original energy total satisfies its homogeneous signed lower bound with the actual retained cell count. -/
-    lower : -(PreparedObservationCoercivity.coefficientNormSq coefficients * ((edges.length :
-    InverseRootPolynomial.Coordinate) * energyTarget)) ≤ energy.im / 4
+    lower : -(coefficientNormSq coefficients * ((edges.length :
+    Coordinate) * energyTarget)) ≤ energy.im / 4
   /-- The actual previously certified original internal join defects and their retained total. -/ joins :
-    ParentBasisJoinErrors.BasisJoinSample polynomials coefficients energyDepth plans cells evaluated joinTarget
-  /-- The cached complete original joined chart increment path. -/ path : List InverseRootPolynomial.Gaussian
+    BasisJoinSample polynomials coefficients energyDepth plans cells evaluated joinTarget
+  /-- The cached complete original joined chart increment path. -/ path : List Gaussian
   /-- The path cache is exactly the original cell increments with every actual retained connector. -/ path_eq : path =
     ParentBasisPath.basisJoinedPath polynomials coefficients plans cells evaluated
   /-- The cached total and area summary of that exact original joined path. -/ summary : IncrementArea.Summary path
   /-- The cached actual first root coordinate of the original retained chart spine. -/ firstRoot :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The first root cache reads the original retained chart bank. -/ first_root : firstRoot =
-    ParentBasisBoundary.chartFirstRoot plans cells evaluated
+    chartFirstRoot plans cells evaluated
   /-- The cached actual last root coordinate of the original retained chart spine. -/ lastRoot :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The last root cache reads the original retained chart bank. -/ last_root : lastRoot =
-    ParentBasisBoundary.chartLastRoot plans cells evaluated
+    chartLastRoot plans cells evaluated
   /-- The cached original coefficient-weighted primitive value at the actual first root. -/ firstValue :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The first value cache uses the original polynomial bank and retained first root. -/ first_value : firstValue =
     polynomials.value coefficients firstRoot
   /-- The cached original coefficient-weighted primitive value at the actual last root. -/ lastValue :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The last value cache uses the original polynomial bank and retained last root. -/ last_value : lastValue =
     polynomials.value coefficients lastRoot
   /-- The complete actual joined path total is its retained last primitive value minus the first. -/ total_eq :
     summary.total = lastValue - firstValue
   /-- The cached original first radial area at the retained common energy depth. -/ firstRadial :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The first radial cache is exactly the original primitive radial area at the actual first root. -/ first_radial :
     firstRadial = RootRadialGeometry.radialArea (polynomials.value coefficients) energyDepth firstRoot
   /-- The cached original last radial area at the retained common energy depth. -/ lastRadial :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The last radial cache is exactly the original primitive radial area at the actual last root. -/ last_radial :
     lastRadial = RootRadialGeometry.radialArea (polynomials.value coefficients) energyDepth lastRoot
-  /-- The cached complete original uncentered chart trace area. -/ trace : InverseRootPolynomial.Gaussian
+  /-- The cached complete original uncentered chart trace area. -/ trace : Gaussian
   /-- The trace cache reads the actual original joined path with its retained initial value. -/ trace_eq : trace =
     IncrementArea.traceArea firstValue path
   /-- The cached complete signed cell residual computed from the original retained totals. -/ cellError :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The residual cache equals the sum of the actual original per-cell boundary discrepancies. -/ cell_error :
-    cellError = Data.Gaussian.Norm.Sum.Basic.gaussianSum (BasisEnergyData.cellErrors coefficients plans cells
+    cellError = gaussianSum (BasisEnergyData.cellErrors coefficients plans cells
     evaluated energies)
   /-- The original complete energy-versus-boundary discrepancy is the retained cell residual minus the actual join
     defect total. -/ discrepancy : energy - (-trace + lastRadial - firstRadial) = cellError - joins.total
@@ -185,19 +185,19 @@ namespace BasisBoundarySample
 
 /-- Consume the previously certified join sample and acquire each cell's homogeneous area once. All subsequent
 comparisons use the retained totals. -/
-def build (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
-    (energies : ParentBasisRequests.BasisEnergyData (polynomials := polynomials) energyTarget energyFloor energyDepth
+def build (coefficients : GaussianVector genus)
+    (energies : BasisEnergyData (polynomials := polynomials) energyTarget energyFloor energyDepth
       plans cells evaluated)
-    (joins : ParentBasisJoinErrors.BasisJoinSample polynomials coefficients energyDepth plans cells evaluated
+    (joins : BasisJoinSample polynomials coefficients energyDepth plans cells evaluated
       joinTarget) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundarySample.BasisBoundarySample energies coefficients
+    BasisBoundarySample energies coefficients
       joinTarget := by
   let values := BasisEnergyData.values coefficients plans cells evaluated energies
-  let energy := Data.Gaussian.Norm.Sum.Basic.gaussianSum values
+  let energy := gaussianSum values
   let path := ParentBasisPath.basisJoinedPath polynomials coefficients plans cells evaluated
   let summary := IncrementArea.Summary.build path
-  let firstRoot := ParentBasisBoundary.chartFirstRoot plans cells evaluated
-  let lastRoot := ParentBasisBoundary.chartLastRoot plans cells evaluated
+  let firstRoot := chartFirstRoot plans cells evaluated
+  let lastRoot := chartLastRoot plans cells evaluated
   let firstValue := polynomials.value coefficients firstRoot
   let lastValue := polynomials.value coefficients lastRoot
   have totalEq : summary.total = lastValue - firstValue :=
@@ -209,18 +209,18 @@ def build (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
     rw [IncrementArea.traceArea_eq, ← summary.area_eq, ← summary.total_eq, totalEq,
       BoundaryRibbon.area_sub_self_right]
   have identity : energy - (-trace + lastRadial - firstRadial) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (BasisEnergyData.cellErrors coefficients plans cells evaluated
+      gaussianSum (BasisEnergyData.cellErrors coefficients plans cells evaluated
         energies) - joins.total := by
     rw [traceEq, joins.total_eq, joins.errors_eq]
-    change Data.Gaussian.Norm.Sum.Basic.gaussianSum (BasisEnergyData.values coefficients plans cells evaluated
+    change gaussianSum (BasisEnergyData.values coefficients plans cells evaluated
       energies) -
-      (-IncrementArea.traceArea (polynomials.value coefficients (ParentBasisBoundary.chartFirstRoot plans cells
+      (-IncrementArea.traceArea (polynomials.value coefficients (chartFirstRoot plans cells
         evaluated))
         (ParentBasisPath.basisJoinedPath polynomials coefficients plans cells evaluated) + _ - _) = _
     rw [ParentBasisPath.basisJoinedPath_trace]
     exact BasisEnergyData.boundary_identity coefficients plans cells evaluated energies
   let cellError := energy - (-trace + lastRadial - firstRadial) + joins.total
-  have cellEq : cellError = Data.Gaussian.Norm.Sum.Basic.gaussianSum (BasisEnergyData.cellErrors coefficients plans
+  have cellEq : cellError = gaussianSum (BasisEnergyData.cellErrors coefficients plans
     cells evaluated energies) := by
     dsimp only [cellError]
     rw [identity]

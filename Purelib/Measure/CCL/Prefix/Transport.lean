@@ -26,6 +26,8 @@ import Purelib.Measure.Distribution.Lp.L1
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Approximation.CCL
+
 open Purelib.Data.CCL.Encoding.Cylinder.Basic (Realizes)
 
 section
@@ -54,10 +56,10 @@ open Purelib.Measure
 The construction retains the exact source distribution and both point families as its pushforward marginals. -/
 def prefixFamilyProbeLawCoupling
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational)
     (leftPoints rightPoints : Cylinder.CompletedPrefixCertificate → Line.GaussianLine) :
-    Measure.LawCoupling
+    LawCoupling
       (distribution.map fun certificate => probe (leftPoints certificate))
       (distribution.map fun certificate => probe (rightPoints certificate)) :=
   Coupling.Law.probeLawCoupling distribution probe leftPoints rightPoints
@@ -65,7 +67,7 @@ def prefixFamilyProbeLawCoupling
 /-- The retained coupling's separation cost is the original law's L1 distance between the two probe families. -/
 theorem prefixFamilyProbeLawCoupling_transportCost
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational)
     (leftPoints rightPoints : Cylinder.CompletedPrefixCertificate → Line.GaussianLine) :
     (prefixFamilyProbeLawCoupling distribution probe leftPoints rightPoints
@@ -80,7 +82,7 @@ theorem prefixFamilyProbeLawCoupling_transportCost
 /-- For two realizations, the retained coupling's cost is at most expected sensitivity-scaled cylinder spread. -/
 theorem prefixFamilyProbeLawCoupling_transportCost_le
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
     (sensitive : ∀ left right,
@@ -94,9 +96,9 @@ theorem prefixFamilyProbeLawCoupling_transportCost_le
     (prefixFamilyProbeLawCoupling distribution probe leftPoints rightPoints
       ).transportCost Distance.rationalSeparation ≤
       distribution.expectation fun certificate =>
-        factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks := by
+        factor * Cylinder.cylinderSpread certificate.blocks := by
   rw [prefixFamilyProbeLawCoupling_transportCost]
-  exact CCL.Prefix.prefixFamilyProbe_l1Distance_le distribution probe factor
+  exact prefixFamilyProbe_l1Distance_le distribution probe factor
     factorNonnegative sensitive leftPoints rightPoints leftRealizes
     rightRealizes
 
@@ -112,7 +114,7 @@ open Purelib.Measure in
 /-- Enough retained blocks at the half-epsilon request make the probe coupling's cost strictly smaller than epsilon. -/
 theorem prefixFamilyProbeLawCoupling_transportCost_lt_requested
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)
     (sensitive : ∀ left right,
@@ -133,40 +135,40 @@ theorem prefixFamilyProbeLawCoupling_transportCost_lt_requested
     distribution probe factor factorPositive.le sensitive leftPoints
     rightPoints leftRealizes rightRealizes
   have radiusLeHalf : distribution.expectation (fun certificate =>
-        factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks) ≤ epsilon / 2 := by
+        factor * Cylinder.cylinderSpread certificate.blocks) ≤ epsilon / 2 := by
     calc
       distribution.expectation (fun certificate =>
-            factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks) ≤
+            factor * Cylinder.cylinderSpread certificate.blocks) ≤
           distribution.expectation (fun _ => epsilon / 2) := by
         apply distribution.expectation_mono
         intro atom member
-        have widthSmall := Approximation.CCL.Prefix.completedPrefixProbeBound_width_lt_requested
+        have widthSmall := Prefix.completedPrefixProbeBound_width_lt_requested
           atom.item.witness atom.item.witnessRealizes probe factor factorPositive
           sensitive (epsilon / 2)
           (Fraction.Order.Field.div_pos_direct positive (by decide))
           (enough atom member)
         have radiusNonnegative : 0 ≤
-            factor * Approximation.CCL.Cylinder.cylinderSpread atom.item.blocks :=
+            factor * Cylinder.cylinderSpread atom.item.blocks :=
           Fraction.Order.Arithmetic.mul_nonneg_direct factorPositive.le
-            (Approximation.CCL.Cylinder.cylinderSpread_nonneg atom.item.blocks)
+            (Cylinder.cylinderSpread_nonneg atom.item.blocks)
         calc
-          factor * Approximation.CCL.Cylinder.cylinderSpread atom.item.blocks ≤
-              2 * (factor * Approximation.CCL.Cylinder.cylinderSpread atom.item.blocks) := by
+          factor * Cylinder.cylinderSpread atom.item.blocks ≤
+              2 * (factor * Cylinder.cylinderSpread atom.item.blocks) := by
             calc
-              _ = 0 + factor * Approximation.CCL.Cylinder.cylinderSpread atom.item.blocks := by ring1
-              _ ≤ factor * Approximation.CCL.Cylinder.cylinderSpread atom.item.blocks +
-                    factor * Approximation.CCL.Cylinder.cylinderSpread atom.item.blocks :=
+              _ = 0 + factor * Cylinder.cylinderSpread atom.item.blocks := by ring1
+              _ ≤ factor * Cylinder.cylinderSpread atom.item.blocks +
+                    factor * Cylinder.cylinderSpread atom.item.blocks :=
                 Fraction.Order.Arithmetic.add_le_add_direct
                   radiusNonnegative le_rfl
               _ = _ := by ring1
-          _ = (Approximation.CCL.Prefix.completedPrefixProbeBound atom.item.blocks atom.item.witness
+          _ = (Prefix.completedPrefixProbeBound atom.item.blocks atom.item.witness
               atom.item.witnessRealizes probe factor factorPositive.le
               sensitive).width := by
-            rw [Approximation.CCL.Prefix.completedPrefixProbeBound_width]
+            rw [Prefix.completedPrefixProbeBound_width]
           _ ≤ epsilon / 2 := widthSmall.le
       _ = epsilon / 2 := distribution.expectation_constant _
   exact transportLe.trans_lt
-    (radiusLeHalf.trans_lt (Purelib.Data.Rat.Fraction.Order.Field.half_lt_self positive))
+    (radiusLeHalf.trans_lt (Fraction.Order.Field.half_lt_self positive))
 
 end Purelib.Measure.CCL.Prefix
 

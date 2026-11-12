@@ -6,6 +6,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 public import Purelib.Data.Rat.Fraction.Field
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 @[expose] public section
 
@@ -51,7 +53,7 @@ theorem quadratic_cauchy_sq_le
       rw [plusFormula] at plusNonnegative
       rw [minusFormula] at minusNonnegative
       have mixedNonnegative : 0 ≤ mixed := by
-        apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+        apply Arithmetic.le_of_mul_le_mul_right_direct
           (c := (2 : Fraction.Rational))
         · calc
             0 * 2 = 0 := by ring1
@@ -59,10 +61,10 @@ theorem quadratic_cauchy_sq_le
             _ = mixed * 2 := by ring1
         · decide
       have mixedNonpositive : mixed ≤ 0 := by
-        apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+        apply Arithmetic.le_of_mul_le_mul_right_direct
           (c := (2 : Fraction.Rational))
         · have doubledNonpositive : 2 * mixed ≤ 0 :=
-            Fraction.Order.Arithmetic.le_of_sub_nonneg_direct (by
+            Arithmetic.le_of_sub_nonneg_direct (by
               calc
                 0 ≤ -2 * mixed := minusNonnegative
                 _ = 0 - 2 * mixed := by ring1)
@@ -72,7 +74,7 @@ theorem quadratic_cauchy_sq_le
             _ = 0 * 2 := by ring1
         · decide
       have mixedZero : mixed = 0 :=
-        Fraction.Order.Basic.Compatibility.le_antisymm _ _
+        Basic.Compatibility.le_antisymm _ _
           mixedNonpositive mixedNonnegative
       rw [mixedZero, leftZero, rightZero]
       exact le_rfl
@@ -87,11 +89,11 @@ theorem quadratic_cauchy_sq_le
       rw [factored] at combinationNonnegative
       have differenceNonnegative :
           0 ≤ leftSq * rightSq - mixed ^ 2 := by
-        apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+        apply Arithmetic.le_of_mul_le_mul_right_direct
           (c := leftSq)
         · simpa only [zero_mul] using combinationNonnegative
         · exact leftPositive
-      exact Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+      exact Arithmetic.le_of_sub_nonneg_direct
         differenceNonnegative
   · have rightPositive : 0 < rightSq :=
       lt_of_le_of_ne rightNonnegative (Ne.symm rightZero)
@@ -104,11 +106,11 @@ theorem quadratic_cauchy_sq_le
     rw [factored] at combinationNonnegative
     have differenceNonnegative :
         0 ≤ leftSq * rightSq - mixed ^ 2 := by
-      apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+      apply Arithmetic.le_of_mul_le_mul_right_direct
         (c := rightSq)
       · simpa only [zero_mul] using combinationNonnegative
       · exact rightPositive
-    exact Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    exact Arithmetic.le_of_sub_nonneg_direct
       differenceNonnegative
 
 end Purelib.Data.Rat

@@ -6,6 +6,7 @@ import Purelib.Polynomial.Dense.Basic
 public import Purelib.Polynomial.Dense.Gaussian.LinearFactor
 import Purelib.Polynomial.Dense.Gaussian.Multiplication
 public import Purelib.Polynomial.Dense.Multiplication
+public import Purelib.Polynomial.Dense.Leading
 import Purelib.Data.Gaussian.Field
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.QuotientFreeOmega
@@ -44,9 +45,9 @@ namespace Purelib.Polynomial.Dense.Gaussian.Split
 
 /-- Finite product of the displayed linear factors. -/
 @[expose] def splitPolynomial : List Gaussian.Basic.Canonical →
-  Dense.Gaussian.Basic.ExactPolynomialLoops.GaussianPolynomial
+  Basic.ExactPolynomialLoops.GaussianPolynomial
   | [] => DensePolynomial.constant 1
-  | root :: remaining => Dense.Gaussian.LinearFactor.linearFactor root *
+  | root :: remaining => LinearFactor.linearFactor root *
     splitPolynomial remaining
 
 /-- The product over an empty root list is the constant polynomial one. -/
@@ -57,7 +58,7 @@ namespace Purelib.Polynomial.Dense.Gaussian.Split
 @[simp] theorem splitPolynomial_cons (root : Gaussian.Basic.Canonical)
     (remaining : List Gaussian.Basic.Canonical) :
     splitPolynomial (root :: remaining) =
-      Dense.Gaussian.LinearFactor.linearFactor root * splitPolynomial remaining := rfl
+      LinearFactor.linearFactor root * splitPolynomial remaining := rfl
 
 /-- Every finite product of monic Gaussian linear factors is nonzero. -/
 @[simp] theorem splitPolynomial_isZero_false (roots : List
@@ -69,8 +70,8 @@ namespace Purelib.Polynomial.Dense.Gaussian.Split
       rw [DensePolynomial.normalize_constant_of_ne (by decide : (1 : Gaussian.Basic.Canonical) ≠ 0)]
       rfl
   | cons root remaining inductionHypothesis =>
-      exact Dense.Gaussian.Multiplication.product_isZero_false
-        (Dense.Gaussian.LinearFactor.linearFactor_isZero_false root) inductionHypothesis
+      exact Multiplication.product_isZero_false
+        (LinearFactor.linearFactor_isZero_false root) inductionHypothesis
 
 /-- The degree of the finite split polynomial equals the root-list length, including repetitions. -/
 @[simp] theorem splitPolynomial_natDegree (roots : List
@@ -83,9 +84,9 @@ namespace Purelib.Polynomial.Dense.Gaussian.Split
       rfl
   | cons root remaining inductionHypothesis =>
       rw [splitPolynomial_cons, DensePolynomial.natDegree_mul
-        (Dense.Gaussian.LinearFactor.linearFactor_isZero_false root)
+        (LinearFactor.linearFactor_isZero_false root)
         (splitPolynomial_isZero_false remaining),
-        Dense.Gaussian.LinearFactor.linearFactor_natDegree, inductionHypothesis, List.length_cons]
+        LinearFactor.linearFactor_natDegree, inductionHypothesis, List.length_cons]
       omega
 
 /-- Every finite split polynomial has leading coefficient one. -/
@@ -99,9 +100,9 @@ namespace Purelib.Polynomial.Dense.Gaussian.Split
       rfl
   | cons root remaining inductionHypothesis =>
       rw [splitPolynomial_cons, DensePolynomial.leadingCoeff_mul
-        (Dense.Gaussian.LinearFactor.linearFactor_isZero_false root)
+        (LinearFactor.linearFactor_isZero_false root)
         (splitPolynomial_isZero_false remaining),
-        Dense.Gaussian.LinearFactor.linearFactor_leadingCoeff, inductionHypothesis,
+        LinearFactor.linearFactor_leadingCoeff, inductionHypothesis,
         Gaussian.Basic.one_mul]
 
 /-- A root occurring in the retained list evaluates the finite split polynomial to zero. -/
@@ -116,11 +117,26 @@ theorem splitPolynomial_eval_eq_zero_of_mem {root :
       rcases List.Membership.mem_cons.mp membership with same | later
       · subst head
         rw [splitPolynomial_cons, DensePolynomial.eval_mul,
-          Dense.Gaussian.LinearFactor.linearFactor_eval,
+          LinearFactor.linearFactor_eval,
           Gaussian.Basic.sub_self,
           Gaussian.Basic.zero_mul]
       · rw [splitPolynomial_cons, DensePolynomial.eval_mul, inductionHypothesis later,
           Gaussian.Basic.mul_zero]
+
+/-- Every original finite split product already has its leading zeros removed. -/
+theorem splitPolynomial_normalized (roots : List Gaussian.Basic.Canonical) :
+    (splitPolynomial roots).normalize = splitPolynomial roots := by
+  cases roots with
+  | nil => exact DensePolynomial.normalize_constant_of_ne (by decide)
+  | cons root remaining => exact DensePolynomial.normalize_mul _ _
+
+/-- The same original finite split product has its list length as degree and leading coefficient one. -/
+theorem splitPolynomial_leading (roots : List Gaussian.Basic.Canonical) :
+    Leading.LeadingTerm (splitPolynomial roots) roots.length 1 :=
+  { normalized := splitPolynomial_normalized roots
+    nonzero := splitPolynomial_isZero_false roots
+    degree_eq := splitPolynomial_natDegree roots
+    coefficient_eq := splitPolynomial_leadingCoeff roots }
 
 end Purelib.Polynomial.Dense.Gaussian.Split
 

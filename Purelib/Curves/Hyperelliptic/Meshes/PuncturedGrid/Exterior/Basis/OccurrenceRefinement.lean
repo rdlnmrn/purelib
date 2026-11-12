@@ -44,15 +44,15 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Occur
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
@@ -67,13 +67,13 @@ variable (outer : Fin prepared.occurrences.length)
   {whole :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
     regular domains differential} {previous :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+    RegularDomainMeshes.RegularMeshes.CommonCuts domains}
   (selected : SourceCuts whole previous)
   {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {meshTarget :
-    Normalization.InverseRootPolynomial.Coordinate}
-  (request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
-    (fun sheet => Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
+    RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {meshTarget :
+    InverseRootPolynomial.Coordinate}
+  (request : TwoSheetBilinearRequest.TwoSheetRequest
+    (fun sheet => RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
       coarseDepth) fixed meshTarget)
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedOccurrence.RequestedOccurrenceRuns
@@ -86,7 +86,7 @@ theorem atDepth_mesh_columns (depth : Nat) (later : request.depth ≤ depth) :
     (mesh outer selected (request.atDepth depth later)).boundaryColumns =
       (mesh outer selected request).boundaryColumns :=
   congrArg (fun intervals => intervals.length - 1)
-    (Hyperelliptic.Meshes.PuncturedGrid.TwoSheetSpatialRefinement.TwoSheetRequest.atDepth_mesh_x_intervals request depth
+    (TwoSheetSpatialRefinement.TwoSheetRequest.atDepth_mesh_x_intervals request depth
     later _ _)
 
 /-- Refining the retained occurrence depth preserves its boundary-row count. -/
@@ -94,7 +94,7 @@ theorem atDepth_mesh_rows (depth : Nat) (later : request.depth ≤ depth) :
     (mesh outer selected (request.atDepth depth later)).boundaryRows =
       (mesh outer selected request).boundaryRows :=
   congrArg (fun intervals => intervals.length - 1)
-    (Hyperelliptic.Meshes.PuncturedGrid.TwoSheetSpatialRefinement.TwoSheetRequest.atDepth_mesh_y_intervals request depth
+    (TwoSheetSpatialRefinement.TwoSheetRequest.atDepth_mesh_y_intervals request depth
     later _ _)
 
 /-- Finer physical pieces retain exactly the same parent fragment capacity. -/
@@ -104,7 +104,7 @@ theorem atDepth_capacity (depth : Nat) (later : request.depth ≤ depth) :
       SharedOccurrenceRuns.sideCapacity outer
         (mesh := mesh outer selected request) := by
   unfold SharedOccurrenceRuns.sideCapacity
-  cases (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  cases (ParentIndices.occurrenceAt prepared.occurrences
     outer).sideOccurrence.side <;>
     first
     | exact congrArg (fun count => 2 * count + 1)

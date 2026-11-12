@@ -77,7 +77,7 @@ theorem affinePrimitiveTriangleEnergy_eq
         (affineEnergyPrimitive coefficient second)
         (affineEnergyPrimitive coefficient third) =
       coordinateTriangleArea first second third *
-        Data.Gaussian.Norm.Basic.normSq coefficient := by
+        Norm.Basic.normSq coefficient := by
   have wedgeImaginary :
       (Stokes.triangleWedgeArea
         (affineEnergyPrimitive coefficient first)
@@ -86,11 +86,11 @@ theorem affinePrimitiveTriangleEnergy_eq
       2 *
         ((second.re - first.re) * (third.im - first.im) -
           (second.im - first.im) * (third.re - first.re)) *
-        Data.Gaussian.Norm.Basic.normSq coefficient := by
+        Norm.Basic.normSq coefficient := by
     unfold affineEnergyPrimitive Polygon.energyPrimitivePoint
       Stokes.triangleWedgeArea
-      Data.Gaussian.Basic.conj
-      Data.Gaussian.Norm.Basic.normSq
+      Basic.conj
+      Norm.Basic.normSq
     simp only [Basic.sub_re,
       Basic.sub_im,
       Basic.mul_re,
@@ -104,23 +104,23 @@ theorem affinePrimitiveTriangleEnergy_eq
     (2 *
           ((second.re - first.re) * (third.im - first.im) -
             (second.im - first.im) * (third.re - first.re)) *
-          Data.Gaussian.Norm.Basic.normSq coefficient) * 4⁻¹ =
+          Norm.Basic.normSq coefficient) * 4⁻¹ =
         ((second.re - first.re) * (third.im - first.im) -
           (second.im - first.im) * (third.re - first.re)) *
-          Data.Gaussian.Norm.Basic.normSq coefficient *
+          Norm.Basic.normSq coefficient *
             (2 * 4⁻¹) := by ring1
     _ = ((second.re - first.re) * (third.im - first.im) -
           (second.im - first.im) * (third.re - first.re)) *
-          Data.Gaussian.Norm.Basic.normSq coefficient * 2⁻¹ := by
+          Norm.Basic.normSq coefficient * 2⁻¹ := by
       rw [show (2 : Fraction.Rational) * 4⁻¹ = 2⁻¹ by decide]
     _ = (((second.re - first.re) * (third.im - first.im) -
           (second.im - first.im) * (third.re - first.re)) * 2⁻¹) *
-          Data.Gaussian.Norm.Basic.normSq coefficient := by ring1
+          Norm.Basic.normSq coefficient := by ring1
 
 open Purelib.Data.Rat in
 /-- Half the imaginary part of the conjugate-first-times-second Gaussian product. -/
 def crossEnergy (first second : Basic.Canonical) : Fraction.Rational :=
-  (Data.Gaussian.Basic.conj first * second).im / 2
+  (Basic.conj first * second).im / 2
 
 open Purelib.Data.Rat in
 open Purelib.Integration.Energy in
@@ -133,7 +133,7 @@ theorem primitiveTriangleEnergy_energyPrimitivePoint_eq_crossEnergy
       crossEnergy (second - first) (third - first) := by
   unfold primitiveTriangleEnergy Polygon.energyPrimitivePoint crossEnergy
     Stokes.triangleWedgeArea
-    Data.Gaussian.Basic.conj
+    Basic.conj
   simp only [Basic.sub_re,
     Basic.sub_im,
     Basic.mul_im,
@@ -150,7 +150,7 @@ theorem crossEnergy_add_add (first second firstError secondError :
     crossEnergy (first + firstError) (second + secondError) =
       crossEnergy first second + crossEnergy firstError second +
         crossEnergy first secondError + crossEnergy firstError secondError := by
-  unfold crossEnergy Data.Gaussian.Basic.conj
+  unfold crossEnergy Basic.conj
   simp only [Basic.add_re,
     Basic.add_im,
     Basic.mul_im,
@@ -160,12 +160,12 @@ theorem crossEnergy_add_add (first second firstError secondError :
 /-- Cross energy squared is bounded by one quarter of the product of the two squared norms. -/
 theorem crossEnergy_sq_le (first second : Basic.Canonical) :
     crossEnergy first second ^ 2 <=
-      Data.Gaussian.Norm.Basic.normSq first *
-        Data.Gaussian.Norm.Basic.normSq second / 4 := by
-  let product := Data.Gaussian.Basic.conj first * second
+      Norm.Basic.normSq first *
+        Norm.Basic.normSq second / 4 := by
+  let product := Basic.conj first * second
   have imaginarySquare : product.im ^ 2 <=
-      Data.Gaussian.Norm.Basic.normSq product := by
-    unfold Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq product := by
+    unfold Norm.Basic.normSq
     exact le_add_of_nonneg_left
       (Fraction.Order.Arithmetic.sq_nonneg_direct product.re)
   have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
@@ -177,20 +177,20 @@ theorem crossEnergy_sq_le (first second : Basic.Canonical) :
   simp only [Fraction.Field.div_eq_mul_inv_direct]
   have halfSquare : (2 : Fraction.Rational)⁻¹ ^ 2 = (4 : Fraction.Rational)⁻¹ := by decide
   calc
-    ((Data.Gaussian.Basic.conj first * second).im * 2⁻¹) ^ 2 =
-        (Data.Gaussian.Basic.conj first * second).im ^ 2 *
+    ((Basic.conj first * second).im * 2⁻¹) ^ 2 =
+        (Basic.conj first * second).im ^ 2 *
           4⁻¹ := by
       rw [← halfSquare]
       ring1
-    _ <= Data.Gaussian.Norm.Basic.normSq first *
-          Data.Gaussian.Norm.Basic.normSq second * 4⁻¹ := scaled
+    _ <= Norm.Basic.normSq first *
+          Norm.Basic.normSq second * 4⁻¹ := scaled
 
 /-- A nonnegative budget whose square bounds the quarter norm product bounds cross energy from below by its negative. -/
 theorem neg_budget_le_crossEnergy (first second : Basic.Canonical)
     (budget : Fraction.Rational) (budgetNonnegative : 0 <= budget)
     (productBound :
-      Data.Gaussian.Norm.Basic.normSq first *
-          Data.Gaussian.Norm.Basic.normSq second / 4 <=
+      Norm.Basic.normSq first *
+          Norm.Basic.normSq second / 4 <=
         budget ^ 2) :
     -budget <= crossEnergy first second :=
   Fraction.Order.Arithmetic.neg_le_of_sq_le_sq_direct budgetNonnegative
@@ -206,16 +206,16 @@ theorem crossEnergy_sub_budget_le_add_add
     (secondBudgetNonnegative : 0 <= secondBudget)
     (mixedBudgetNonnegative : 0 <= mixedBudget)
     (firstProductBound :
-      Data.Gaussian.Norm.Basic.normSq firstError *
-          Data.Gaussian.Norm.Basic.normSq second / 4 <=
+      Norm.Basic.normSq firstError *
+          Norm.Basic.normSq second / 4 <=
         firstBudget ^ 2)
     (secondProductBound :
-      Data.Gaussian.Norm.Basic.normSq first *
-          Data.Gaussian.Norm.Basic.normSq secondError / 4 <=
+      Norm.Basic.normSq first *
+          Norm.Basic.normSq secondError / 4 <=
         secondBudget ^ 2)
     (mixedProductBound :
-      Data.Gaussian.Norm.Basic.normSq firstError *
-          Data.Gaussian.Norm.Basic.normSq secondError / 4 <=
+      Norm.Basic.normSq firstError *
+          Norm.Basic.normSq secondError / 4 <=
         mixedBudget ^ 2) :
     crossEnergy first second -
         (firstBudget + secondBudget + mixedBudget) <=
@@ -287,30 +287,30 @@ theorem affineTriangleEnergy_sub_budget_le
     (secondBudgetNonnegative : 0 <= secondBudget)
     (mixedBudgetNonnegative : 0 <= mixedBudget)
     (firstProductBound :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
             (affinePrimitiveIncrementError coefficient coordinateFirst
               coordinateSecond primitiveFirst primitiveSecond) *
-          Data.Gaussian.Norm.Basic.normSq
+          Norm.Basic.normSq
             (affinePrimitiveIncrement coefficient coordinateFirst
               coordinateThird) / 4 <= firstBudget ^ 2)
     (secondProductBound :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
             (affinePrimitiveIncrement coefficient coordinateFirst
               coordinateSecond) *
-          Data.Gaussian.Norm.Basic.normSq
+          Norm.Basic.normSq
             (affinePrimitiveIncrementError coefficient coordinateFirst
               coordinateThird primitiveFirst primitiveThird) / 4 <=
         secondBudget ^ 2)
     (mixedProductBound :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
             (affinePrimitiveIncrementError coefficient coordinateFirst
               coordinateSecond primitiveFirst primitiveSecond) *
-          Data.Gaussian.Norm.Basic.normSq
+          Norm.Basic.normSq
             (affinePrimitiveIncrementError coefficient coordinateFirst
               coordinateThird primitiveFirst primitiveThird) / 4 <=
         mixedBudget ^ 2) :
     coordinateTriangleArea coordinateFirst coordinateSecond coordinateThird *
-          Data.Gaussian.Norm.Basic.normSq coefficient -
+          Norm.Basic.normSq coefficient -
         (firstBudget + secondBudget + mixedBudget) <=
       primitiveTriangleEnergy
         (Polygon.energyPrimitivePoint primitiveFirst)
@@ -327,7 +327,7 @@ theorem affineTriangleEnergy_sub_budget_le
   have referenceEnergy :
       crossEnergy first second =
         coordinateTriangleArea coordinateFirst coordinateSecond coordinateThird *
-          Data.Gaussian.Norm.Basic.normSq coefficient := by
+          Norm.Basic.normSq coefficient := by
     calc
       crossEnergy first second =
           primitiveTriangleEnergy
@@ -338,7 +338,7 @@ theorem affineTriangleEnergy_sub_budget_le
         rfl
       _ = coordinateTriangleArea coordinateFirst coordinateSecond
             coordinateThird *
-          Data.Gaussian.Norm.Basic.normSq coefficient :=
+          Norm.Basic.normSq coefficient :=
         affinePrimitiveTriangleEnergy_eq coefficient coordinateFirst
           coordinateSecond coordinateThird
   have stable := crossEnergy_sub_budget_le_add_add first second firstError
@@ -347,7 +347,7 @@ theorem affineTriangleEnergy_sub_budget_le
     secondProductBound mixedProductBound
   calc
     coordinateTriangleArea coordinateFirst coordinateSecond coordinateThird *
-            Data.Gaussian.Norm.Basic.normSq coefficient -
+            Norm.Basic.normSq coefficient -
           (firstBudget + secondBudget + mixedBudget) =
         crossEnergy first second -
           (firstBudget + secondBudget + mixedBudget) := by rw [referenceEnergy]
@@ -388,26 +388,26 @@ structure AffineTriangleErrorCertificate
   /-- The retained mixed-error allowance is nonnegative. -/ mixedBudget_nonnegative : 0 <= mixedBudget
   /-- The first error and second affine increment's quarter norm product is bounded by the first allowance squared. -/
     firstProductBound :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
           (affinePrimitiveIncrementError coefficient coordinateFirst
             coordinateSecond primitiveFirst primitiveSecond) *
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (affinePrimitiveIncrement coefficient coordinateFirst
             coordinateThird) / 4 <= firstBudget ^ 2
   /-- The first affine increment and second error's quarter norm product is bounded by the second allowance squared. -/
     secondProductBound :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
           (affinePrimitiveIncrement coefficient coordinateFirst
             coordinateSecond) *
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (affinePrimitiveIncrementError coefficient coordinateFirst
             coordinateThird primitiveFirst primitiveThird) / 4 <=
       secondBudget ^ 2
   /-- The two errors' quarter norm product is bounded by the mixed allowance squared. -/ mixedProductBound :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
           (affinePrimitiveIncrementError coefficient coordinateFirst
             coordinateSecond primitiveFirst primitiveSecond) *
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (affinePrimitiveIncrementError coefficient coordinateFirst
             coordinateThird primitiveFirst primitiveThird) / 4 <=
       mixedBudget ^ 2
@@ -423,7 +423,7 @@ open Purelib.Integration.Energy in
 def totalBudget
     {coefficient coordinateFirst coordinateSecond coordinateThird
       primitiveFirst primitiveSecond primitiveThird : Basic.Canonical}
-    (certificate : AffineTriangle.AffineTriangleErrorCertificate coefficient coordinateFirst
+    (certificate : AffineTriangleErrorCertificate coefficient coordinateFirst
       coordinateSecond coordinateThird primitiveFirst primitiveSecond
       primitiveThird) : Fraction.Rational :=
   certificate.firstBudget + certificate.secondBudget + certificate.mixedBudget
@@ -434,7 +434,7 @@ open Purelib.Integration.Energy
 theorem totalBudget_nonnegative
     {coefficient coordinateFirst coordinateSecond coordinateThird
       primitiveFirst primitiveSecond primitiveThird : Basic.Canonical}
-    (certificate : AffineTriangle.AffineTriangleErrorCertificate coefficient coordinateFirst
+    (certificate : AffineTriangleErrorCertificate coefficient coordinateFirst
       coordinateSecond coordinateThird primitiveFirst primitiveSecond
       primitiveThird) :
     0 <= certificate.totalBudget :=
@@ -448,17 +448,17 @@ budget. -/
 theorem affineEnergy_sub_totalBudget_le
     {coefficient coordinateFirst coordinateSecond coordinateThird
       primitiveFirst primitiveSecond primitiveThird : Basic.Canonical}
-    (certificate : AffineTriangle.AffineTriangleErrorCertificate coefficient coordinateFirst
+    (certificate : AffineTriangleErrorCertificate coefficient coordinateFirst
       coordinateSecond coordinateThird primitiveFirst primitiveSecond
       primitiveThird) :
-    AffineTriangle.coordinateTriangleArea coordinateFirst coordinateSecond coordinateThird *
-          Data.Gaussian.Norm.Basic.normSq coefficient -
+    coordinateTriangleArea coordinateFirst coordinateSecond coordinateThird *
+          Norm.Basic.normSq coefficient -
         certificate.totalBudget <=
-      AffineTriangle.primitiveTriangleEnergy
+      primitiveTriangleEnergy
         (Polygon.energyPrimitivePoint primitiveFirst)
         (Polygon.energyPrimitivePoint primitiveSecond)
         (Polygon.energyPrimitivePoint primitiveThird) :=
-  AffineTriangle.affineTriangleEnergy_sub_budget_le coefficient coordinateFirst
+  affineTriangleEnergy_sub_budget_le coefficient coordinateFirst
     coordinateSecond coordinateThird primitiveFirst primitiveSecond
     primitiveThird certificate.firstBudget certificate.secondBudget
     certificate.mixedBudget certificate.firstBudget_nonnegative

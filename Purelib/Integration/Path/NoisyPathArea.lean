@@ -21,6 +21,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! Pay all finite trace junction errors by a requested total length allowance.
@@ -51,7 +53,7 @@ structure LengthErrorBudget (count : Nat) (allowance : CenteredBilinearPath.Coor
 constructive_injectivity LengthErrorBudget
 
 namespace LengthErrorBudget
-variable {count : Nat} {allowance : Purelib.Riemann.Periods.CenteredBilinearPath.Coordinate}
+variable {count : Nat} {allowance : CenteredBilinearPath.Coordinate}
 
 open Purelib.Approximation.Rational in
 /-- Choose a positive padding from the original count and allowance, retaining its square as tolerance.
@@ -59,13 +61,13 @@ open Purelib.Approximation.Rational in
 The weighted rational allowance supplies the count payment and the returned certificate keeps the original count and
 positive target. -/
 @[expose] def build (count : Nat) (allowance : CenteredBilinearPath.Coordinate) (positive : 0 < allowance) :
-  NoisyPathArea.LengthErrorBudget count allowance :=
+  LengthErrorBudget count allowance :=
   let padding := Budget.Weighted.allowance allowance count
   have nonnegative : (0 : CenteredBilinearPath.Coordinate) ≤ count := Fraction.Cast.Order.natCast_le_direct (Nat.zero_le
     count)
   have paddingPositive := Budget.Weighted.allowance_positive positive nonnegative
   ⟨padding, paddingPositive, Budget.Weighted.mul_allowance_le positive.le nonnegative,
-    padding^2, by simpa only [pow_two] using Fraction.Order.Arithmetic.mul_pos_direct paddingPositive paddingPositive,
+    padding^2, by simpa only [pow_two] using Arithmetic.mul_pos_direct paddingPositive paddingPositive,
       rfl⟩
 
 /-- The finite sum of a constant rational equals the retained count times that constant.
@@ -79,31 +81,31 @@ private theorem sum_constant (count : Nat) (value : CenteredBilinearPath.Coordin
   | succ count ih =>
       rw [FiniteSum.Fin.sumFin_succ, ih]
       have successor : ((count + 1 : Nat) : CenteredBilinearPath.Coordinate) =
-          (count : CenteredBilinearPath.Coordinate) + 1 := Purelib.Algebra.NatCast.add count 1
+          (count : CenteredBilinearPath.Coordinate) + 1 := NatCast.add count 1
       rewrite [successor]
       ring1
 
 /-- Adding the retained padding to every original edge length increases total weight by at most the allowance. -/
-theorem total_weight_le (budget : NoisyPathArea.LengthErrorBudget count allowance) (lengths : Fin count →
+theorem total_weight_le (budget : LengthErrorBudget count allowance) (lengths : Fin count →
   CenteredBilinearPath.Coordinate) :
     FiniteSum.Fin.sumFin (fun edge => lengths edge + budget.padding) ≤ FiniteSum.Fin.sumFin lengths + allowance := by
-  rw [FiniteSum.Fin.sumFin_add, NoisyPathArea.LengthErrorBudget.sum_constant]
-  exact Fraction.Order.Arithmetic.add_le_add_direct le_rfl budget.paid
+  rw [FiniteSum.Fin.sumFin_add, sum_constant]
+  exact Arithmetic.add_le_add_direct le_rfl budget.paid
 
 /-- The retained squared tolerance is absorbed by the padded edge length under nonnegative density and length. -/
-theorem increment_bound (budget : NoisyPathArea.LengthErrorBudget count allowance) {density length :
+theorem increment_bound (budget : LengthErrorBudget count allowance) {density length :
   CenteredBilinearPath.Coordinate}
     (densityNonnegative : 0 ≤ density) (lengthNonnegative : 0 ≤ length) :
     3 * budget.tolerance + 4 * density * length^2 ≤
       (4 * density + 3) * (length + budget.padding)^2 := by
   rw [budget.tolerance_eq]
-  have first := Fraction.Order.Arithmetic.pow_le_pow_direct budget.padding_positive.le
+  have first := Arithmetic.pow_le_pow_direct budget.padding_positive.le
     (show budget.padding ≤ length + budget.padding from le_add_of_nonneg_left lengthNonnegative) 2
-  have second := Fraction.Order.Arithmetic.pow_le_pow_direct lengthNonnegative
+  have second := Arithmetic.pow_le_pow_direct lengthNonnegative
     (show length ≤ length + budget.padding from le_add_of_nonneg_right budget.padding_positive.le) 2
-  exact (Fraction.Order.Arithmetic.add_le_add_direct (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct first
+  exact (Arithmetic.add_le_add_direct (Arithmetic.mul_le_mul_of_nonneg_left_direct first
     (by decide))
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct second (Fraction.Order.Arithmetic.mul_nonneg_direct (by
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct second (Arithmetic.mul_nonneg_direct (by
       decide) densityNonnegative))).trans_eq (by ring1)
 
 open Purelib.Data.Gaussian in
@@ -113,7 +115,7 @@ open Purelib.Topology.Polygon in
 
 Each original edge keeps its length and noise tolerance; the estimate uses total length plus allowance and the common
 centered magnitude and density. -/
-theorem centered_area_bound (budget : NoisyPathArea.LengthErrorBudget count allowance)
+theorem centered_area_bound (budget : LengthErrorBudget count allowance)
     {values : Fin (count + 1) → Stokes.PrimitivePoint} (sample : CenteredBilinearPath.Sample values)
     (lengths : Fin count → CenteredBilinearPath.Coordinate) {magnitude density : CenteredBilinearPath.Coordinate}
     (magnitudeNonnegative : 0 ≤ magnitude) (densityNonnegative : 0 ≤ density)
@@ -122,7 +124,7 @@ theorem centered_area_bound (budget : NoisyPathArea.LengthErrorBudget count allo
     (increments : ∀ edge : Fin count, (PrimitiveAreaBounds.PrimitivePoint.Bounded ((Stokes.PrimitivePoint.sub (values
       edge.succ)) (values edge.castSucc)))
       (3 * budget.tolerance + 4 * density * (lengths edge)^2)) :
-    Data.Gaussian.Norm.Basic.normSq sample.centeredArea ≤ 4 * magnitude * (4 * density + 3) * (FiniteSum.Fin.sumFin
+    Norm.Basic.normSq sample.centeredArea ≤ 4 * magnitude * (4 * density + 3) * (FiniteSum.Fin.sumFin
       lengths +
       allowance)^2 := by
   have weightsNonnegative : ∀ edge, 0 ≤ lengths edge + budget.padding :=
@@ -138,11 +140,11 @@ theorem centered_area_bound (budget : NoisyPathArea.LengthErrorBudget count allo
       | zero => exact le_rfl
       | succ n ih => rw [FiniteSum.Fin.sumFin_succ]; exact add_nonneg (hn 0) (ih _ (fun i => hn i.succ))
     exact sumPositive _ weightsNonnegative
-  exact weighted.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.pow_le_pow_direct sumNonnegative (budget.total_weight_le lengths) 2)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  exact weighted.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.pow_le_pow_direct sumNonnegative (budget.total_weight_le lengths) 2)
+    (Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide)
       magnitudeNonnegative)
-      (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) densityNonnegative) (by decide))))
+      (add_nonneg (Arithmetic.mul_nonneg_direct (by decide) densityNonnegative) (by decide))))
 
 end LengthErrorBudget
 end Purelib.Integration.Path.NoisyPathArea

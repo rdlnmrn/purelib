@@ -17,6 +17,9 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Data.Gaussian.Norm
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation.Gaussian.Enclosure
@@ -43,19 +46,19 @@ def mul (left right : Ball) : Ball
   :=
   { center := left.center * right.center
     radiusSq :=
-      4 * (left.radiusSq * Data.Gaussian.Norm.Basic.normSq right.center +
-        Data.Gaussian.Norm.Basic.normSq left.center * right.radiusSq) +
+      4 * (left.radiusSq * Basic.normSq right.center +
+        Basic.normSq left.center * right.radiusSq) +
       2 * (left.radiusSq * right.radiusSq)
     radiusSq_nonneg := by
       exact add_nonneg
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+        (Arithmetic.mul_nonneg_direct (by decide)
           (add_nonneg
-            (Fraction.Order.Arithmetic.mul_nonneg_direct
-              left.radiusSq_nonneg (Data.Gaussian.Norm.Basic.normSq_nonneg right.center))
-            (Fraction.Order.Arithmetic.mul_nonneg_direct
-              (Data.Gaussian.Norm.Basic.normSq_nonneg left.center) right.radiusSq_nonneg)))
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-          (Fraction.Order.Arithmetic.mul_nonneg_direct
+            (Arithmetic.mul_nonneg_direct
+              left.radiusSq_nonneg (Basic.normSq_nonneg right.center))
+            (Arithmetic.mul_nonneg_direct
+              (Basic.normSq_nonneg left.center) right.radiusSq_nonneg)))
+        (Arithmetic.mul_nonneg_direct (by decide)
+          (Arithmetic.mul_nonneg_direct
             left.radiusSq_nonneg right.radiusSq_nonneg)) }
 
 /-- The product ball admits products of readings admitted by the two original balls.
@@ -75,51 +78,87 @@ theorem contains_mul {left right : Ball} {x y
       simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im, Data.Gaussian.Basic.add_re,
         Data.Gaussian.Basic.add_im, Data.Gaussian.Basic.mul_re, Data.Gaussian.Basic.mul_im] <;> ring1
   have firstTerm :
-      Data.Gaussian.Norm.Basic.normSq (dx * right.center) ≤
-        left.radiusSq * Data.Gaussian.Norm.Basic.normSq right.center := by
-    rw [Data.Gaussian.Norm.Basic.normSq_mul]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      xInside (Data.Gaussian.Norm.Basic.normSq_nonneg right.center)
+      Basic.normSq (dx * right.center) ≤
+        left.radiusSq * Basic.normSq right.center := by
+    rw [Basic.normSq_mul]
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
+      xInside (Basic.normSq_nonneg right.center)
   have secondTerm :
-      Data.Gaussian.Norm.Basic.normSq (left.center * dy) ≤
-        Data.Gaussian.Norm.Basic.normSq left.center * right.radiusSq := by
-    rw [Data.Gaussian.Norm.Basic.normSq_mul]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      yInside (Data.Gaussian.Norm.Basic.normSq_nonneg left.center)
-  have productTerm : Data.Gaussian.Norm.Basic.normSq (dx * dy) ≤
+      Basic.normSq (left.center * dy) ≤
+        Basic.normSq left.center * right.radiusSq := by
+    rw [Basic.normSq_mul]
+    exact Arithmetic.mul_le_mul_of_nonneg_left_direct
+      yInside (Basic.normSq_nonneg left.center)
+  have productTerm : Basic.normSq (dx * dy) ≤
       left.radiusSq * right.radiusSq := by
-    rw [Data.Gaussian.Norm.Basic.normSq_mul]
+    rw [Basic.normSq_mul]
     have firstScaled :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-        xInside (Data.Gaussian.Norm.Basic.normSq_nonneg dy)
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
+        xInside (Basic.normSq_nonneg dy)
     exact firstScaled.trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
         yInside left.radiusSq_nonneg)
   unfold Contains mul
   rw [difference]
   calc
-    Data.Gaussian.Norm.Basic.normSq ((dx * right.center + left.center * dy) + dx * dy) ≤
-        2 * (Data.Gaussian.Norm.Basic.normSq (dx * right.center + left.center * dy) +
-          Data.Gaussian.Norm.Basic.normSq (dx * dy)) := Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _
+    Basic.normSq ((dx * right.center + left.center * dy) + dx * dy) ≤
+        2 * (Basic.normSq (dx * right.center + left.center * dy) +
+          Basic.normSq (dx * dy)) := Bounds.normSq_add_le_two _ _
     _ ≤ 2 *
-        (2 * (Data.Gaussian.Norm.Basic.normSq (dx * right.center) + Data.Gaussian.Norm.Basic.normSq
+        (2 * (Basic.normSq (dx * right.center) + Basic.normSq
           (left.center * dy)) +
-          Data.Gaussian.Norm.Basic.normSq (dx * dy)) := by
-      exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (add_le_add (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _) le_rfl) (by decide)
+          Basic.normSq (dx * dy)) := by
+      exact Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (add_le_add (Bounds.normSq_add_le_two _ _) le_rfl) (by decide)
     _ ≤ 2 *
-        (2 * (left.radiusSq * Data.Gaussian.Norm.Basic.normSq right.center +
-          Data.Gaussian.Norm.Basic.normSq left.center * right.radiusSq) +
+        (2 * (left.radiusSq * Basic.normSq right.center +
+          Basic.normSq left.center * right.radiusSq) +
           left.radiusSq * right.radiusSq) := by
-      apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      apply Arithmetic.mul_le_mul_of_nonneg_left_direct
       · apply add_le_add
-        · exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        · exact Arithmetic.mul_le_mul_of_nonneg_left_direct
             (add_le_add firstTerm secondTerm) (by decide)
         · exact productTerm
       · decide
-    _ = 4 * (left.radiusSq * Data.Gaussian.Norm.Basic.normSq right.center +
-          Data.Gaussian.Norm.Basic.normSq left.center * right.radiusSq) +
+    _ = 4 * (left.radiusSq * Basic.normSq right.center +
+          Basic.normSq left.center * right.radiusSq) +
         2 * (left.radiusSq * right.radiusSq) := by ring1
+
+/-- Enclose a finite natural power by multiplying the previous enclosure by the same original input ball.
+
+The zero power is the exact unit ball. Positive powers consume the original
+input enclosure at every factor and retain the existing multiplication bounds.
+-/
+def pow (ball : Ball) : Nat → Ball
+  | 0 => point 1
+  | exponent + 1 => (ball.pow exponent).mul ball
+
+/-- Zero ball power is the complete exact-unit enclosure. -/
+theorem pow_zero (ball : Ball) : ball.pow 0 = point 1 := rfl
+
+/-- Each positive ball power multiplies its previous enclosure by the original input ball. -/
+theorem pow_succ (ball : Ball) (exponent : Nat) :
+    ball.pow (exponent + 1) = (ball.pow exponent).mul ball := rfl
+
+/-- The power enclosure's center is the natural power of its same original input center. -/
+theorem pow_center (ball : Ball) (exponent : Nat) :
+    (ball.pow exponent).center = ball.center ^ exponent := by
+  induction exponent with
+  | zero => rfl
+  | succ exponent previous =>
+      change (ball.pow exponent).center * ball.center = _
+      rewrite [previous, _root_.pow_succ]
+      rfl
+
+/-- A finite power enclosure contains powers of every reading admitted by the original input ball. -/
+theorem contains_pow {ball : Ball} {value : Data.Gaussian.Basic.Canonical}
+    (inside : ball.Contains value) (exponent : Nat) : (ball.pow exponent).Contains (value ^ exponent) := by
+  induction exponent with
+  | zero => exact contains_point 1
+  | succ exponent previous =>
+      rewrite [_root_.pow_succ]
+      exact contains_mul previous inside
+
 end Ball
 
 end Purelib.Approximation.Gaussian.Enclosure.Ball

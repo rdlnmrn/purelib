@@ -17,6 +17,9 @@ import Purelib.Data.Gaussian.Field
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
 
+open Purelib.Approximation.Gaussian.Name.Coherent
+open Purelib.Polynomial.Dense.Gaussian.Primitive
+
 /-!
 # Coherent evaluation through an operational square law
 
@@ -41,31 +44,31 @@ open Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.Coherence (exact
 
 The resulting named equivalence uses the supplied operational square certificate; individual rational samples need not
 satisfy that equality. -/
-@[expose] def low_square (input : Name.Coherent.CoherentNamed) (point : Gaussian.Basic.Canonical)
-    (square : Equivalence.NamedEquivalent (Name.Coherent.CoherentNamed.mul input input).name (exact point).name)
+@[expose] def low_square (input : CoherentNamed) (point : Gaussian.Basic.Canonical)
+    (square : Equivalence.NamedEquivalent (CoherentNamed.mul input input).name (exact point).name)
       (coefficients : List Gaussian.Basic.Canonical) :
-    Equivalence.NamedEquivalent (Horner.Low.low (Dense.Gaussian.Primitive.Parity.spread coefficients) input).name
+    Equivalence.NamedEquivalent (Horner.Low.low (Parity.spread coefficients) input).name
       (Horner.Low.low coefficients (exact point)).name := by
   induction coefficients with
   | nil => exact Equivalence.NamedEquivalent.refl _
   | cons coefficient remaining previous =>
-      let left := Horner.Low.low (Dense.Gaussian.Primitive.Parity.spread remaining) input
+      let left := Horner.Low.low (Parity.spread remaining) input
       let right := Horner.Low.low remaining (exact point)
-      have products : Equivalence.NamedEquivalent (Name.Coherent.CoherentNamed.mul (Name.Coherent.CoherentNamed.add
-        (Name.Coherent.CoherentNamed.mul left input) (exact 0)) input).name
-          (Name.Coherent.CoherentNamed.mul right (exact point)).name :=
-        (Name.Coherent.Arithmetic.Product.Congruence.coherentMul_respects (Name.Coherent.CoherentNamed.add
-          (Name.Coherent.CoherentNamed.mul left input) (exact 0)) (Name.Coherent.CoherentNamed.mul left input) input
+      have products : Equivalence.NamedEquivalent (CoherentNamed.mul (CoherentNamed.add
+        (CoherentNamed.mul left input) (exact 0)) input).name
+          (CoherentNamed.mul right (exact point)).name :=
+        (Arithmetic.Product.Congruence.coherentMul_respects (CoherentNamed.add
+          (CoherentNamed.mul left input) (exact 0)) (CoherentNamed.mul left input) input
           input
-          (Arithmetic.Add.coherentAdd_zero_right (Name.Coherent.CoherentNamed.mul left input))
+          (Arithmetic.Add.coherentAdd_zero_right (CoherentNamed.mul left input))
             (Equivalence.NamedEquivalent.refl _)).trans
-          ((Name.Coherent.Arithmetic.Product.Laws.coherentMul_assoc left input input).trans
-            (Name.Coherent.Arithmetic.Product.Congruence.coherentMul_respects left right
-              (Name.Coherent.CoherentNamed.mul input input) (exact point) previous square))
-      simp only [Dense.Gaussian.Primitive.Parity.spread, Horner.Low.low_cons]
-      exact Name.Coherent.Arithmetic.Sum.Congruence.coherentAdd_respects (Name.Coherent.CoherentNamed.mul
-        (Name.Coherent.CoherentNamed.add (Name.Coherent.CoherentNamed.mul left input) (exact 0)) input)
-        (Name.Coherent.CoherentNamed.mul right (exact point)) (exact coefficient) (exact coefficient) products
+          ((Arithmetic.Product.Laws.coherentMul_assoc left input input).trans
+            (Arithmetic.Product.Congruence.coherentMul_respects left right
+              (CoherentNamed.mul input input) (exact point) previous square))
+      simp only [Parity.spread, Horner.Low.low_cons]
+      exact Arithmetic.Sum.Congruence.coherentAdd_respects (CoherentNamed.mul
+        (CoherentNamed.add (CoherentNamed.mul left input) (exact 0)) input)
+        (CoherentNamed.mul right (exact point)) (exact coefficient) (exact coefficient) products
           (Equivalence.NamedEquivalent.refl _)
 
 /-- A factored dense primitive evaluates through the supplied operational square law.
@@ -74,29 +77,29 @@ The retained coefficient identity expresses the primitive as the coordinate
 times its cached factor at the squared parameter. The comparison uses that
 same factor and coordinate name without replacing their numerical readings. -/
 @[expose] def square {value factor : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    (coefficients : value.coeffs = Dense.Gaussian.Primitive.Parity.valueCoefficients factor true)
-    (input : Name.Coherent.CoherentNamed) (point : Gaussian.Basic.Canonical)
-    (square : Equivalence.NamedEquivalent (Name.Coherent.CoherentNamed.mul input input).name (exact point).name) :
-    Equivalence.NamedEquivalent (Approximation.Gaussian.Evaluation.Horner.polynomialEval value input).name
-      (Name.Coherent.CoherentNamed.mul input (exact (factor.eval point))).name := by
-  have factorValue : Equivalence.NamedEquivalent (Horner.Low.low (Dense.Gaussian.Primitive.Parity.spread
+    (coefficients : value.coeffs = Parity.valueCoefficients factor true)
+    (input : CoherentNamed) (point : Gaussian.Basic.Canonical)
+    (square : Equivalence.NamedEquivalent (CoherentNamed.mul input input).name (exact point).name) :
+    Equivalence.NamedEquivalent (Horner.polynomialEval value input).name
+      (CoherentNamed.mul input (exact (factor.eval point))).name := by
+  have factorValue : Equivalence.NamedEquivalent (Horner.Low.low (Parity.spread
     factor.coeffs.reverse) input).name
       (exact (factor.eval point)).name := by
     have transported := low_square input point square factor.coeffs.reverse
     rw [Horner.Low.low_coeffs] at transported
-    exact transported.trans (Approximation.Gaussian.Evaluation.Horner.polynomialEval_exact factor point)
-  change Equivalence.NamedEquivalent (Approximation.Gaussian.Evaluation.Horner.horner input (exact 0) value.coeffs).name
+    exact transported.trans (Horner.polynomialEval_exact factor point)
+  change Equivalence.NamedEquivalent (Horner.horner input (exact 0) value.coeffs).name
     _
   rw [coefficients]
-  change Equivalence.NamedEquivalent (Horner.Low.low (0 :: Dense.Gaussian.Primitive.Parity.spread factor.coeffs.reverse)
+  change Equivalence.NamedEquivalent (Horner.Low.low (0 :: Parity.spread factor.coeffs.reverse)
     input).name _
   rw [Horner.Low.low_cons]
-  exact (Arithmetic.Add.coherentAdd_zero_right (Name.Coherent.CoherentNamed.mul (Horner.Low.low
-    (Dense.Gaussian.Primitive.Parity.spread factor.coeffs.reverse) input) input)).trans
-    ((Name.Coherent.Arithmetic.Product.Laws.coherentMul_comm (Horner.Low.low (Dense.Gaussian.Primitive.Parity.spread
+  exact (Arithmetic.Add.coherentAdd_zero_right (CoherentNamed.mul (Horner.Low.low
+    (Parity.spread factor.coeffs.reverse) input) input)).trans
+    ((Arithmetic.Product.Laws.coherentMul_comm (Horner.Low.low (Parity.spread
       factor.coeffs.reverse) input) input).trans
-      (Name.Coherent.Arithmetic.Product.Congruence.coherentMul_respects input input (Horner.Low.low
-        (Dense.Gaussian.Primitive.Parity.spread factor.coeffs.reverse) input) (exact (factor.eval point))
+      (Arithmetic.Product.Congruence.coherentMul_respects input input (Horner.Low.low
+        (Parity.spread factor.coeffs.reverse) input) (exact (factor.eval point))
         (Equivalence.NamedEquivalent.refl _) factorValue))
 
 end Purelib.Polynomial.Approximation.Gaussian.Evaluation.Parity

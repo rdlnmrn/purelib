@@ -66,31 +66,31 @@ assert that a completed exponential or logarithm value has been selected.
 -/
 
 /-- The actual automatically selected scaled input, with its coherence certificate. -/
-@[expose] def automaticScaled (input : Coherent.CoherentNamed) : Coherent.CoherentNamed :=
+@[expose] def automaticScaled (input : CoherentNamed) : CoherentNamed :=
   { name := DyadicReduction.scaledInput input.name
     coherent :=
-      Gaussian.Process.Coherence.Basic.Coherent.mul
-        (Gaussian.Process.Coherence.Basic.Coherent.exact
+      Process.Coherence.Basic.Coherent.mul
+        (Process.Coherence.Basic.Coherent.exact
           (DyadicReduction.inverseDyadic input.name))
         input.coherent }
 
 /-- The automatically selected scaling factor is exactly the inverse dyadic at the retained range exponent. -/
-theorem automaticScaled_inverse_eq (input : Gaussian.Name.Basic.Named) :
+theorem automaticScaled_inverse_eq (input : Named) :
     DyadicReduction.inverseDyadic input =
       Dyadic.inverseDyadicAt
         (DyadicReduction.rangeExponent input) :=
   rfl
 
 /-- The actual automatic scaling process is operationally its explicit inverse-dyadic sampler. -/
-@[expose] def automaticScaled_to_dyadicScaled (input : Coherent.CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
-      (Approximation.Gaussian.Exponential.Progressive.Range.Scaling.automaticScaled input).name
+@[expose] def automaticScaled_to_dyadicScaled (input : CoherentNamed) :
+    NamedEquivalent
+      (automaticScaled input).name
       (DyadicScale.dyadicScaledApproximation
         (DyadicReduction.rangeExponent input.name)
         input.name).toNamed := by
   let scale := Coherence.exact
     (DyadicReduction.inverseDyadic input.name)
-  let product := Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation scale.name input.name
+  let product := Product.sampledProductApproximation scale.name input.name
   let target := DyadicScale.dyadicScaledApproximation
     (DyadicReduction.rangeExponent input.name) input.name
   exact NamedEquivalent.trans
@@ -102,33 +102,33 @@ theorem automaticScaled_inverse_eq (input : Gaussian.Name.Basic.Named) :
 /-- Automatic scaling followed by any finite number of halvings normalizes to the one sampler at the sum of the two
 displayed exponents. -/
 @[expose] def halfIterateAutomatic_to_dyadicScaled (extra : Nat)
-    (input : Coherent.CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
-      (Dyadic.halfIterate extra (Approximation.Gaussian.Exponential.Progressive.Range.Scaling.automaticScaled
+    (input : CoherentNamed) :
+    NamedEquivalent
+      (Dyadic.halfIterate extra (automaticScaled
         input)).name
       (DyadicScale.dyadicScaledApproximation
         (DyadicReduction.rangeExponent input.name + extra)
         input.name).toNamed :=
   Dyadic.halfIterate_to_dyadicScaledFrom
     (DyadicReduction.rangeExponent input.name)
-    extra input (Approximation.Gaussian.Exponential.Progressive.Range.Scaling.automaticScaled input)
-      (Approximation.Gaussian.Exponential.Progressive.Range.Scaling.automaticScaled_to_dyadicScaled input)
+    extra input (automaticScaled input)
+      (automaticScaled_to_dyadicScaled input)
 
 /-- Semantic form of the same normalization, used only to transfer the finite unit-disk certificate to the common-scale
 sum process. -/
 theorem halfIterateAutomatic_possible (extra : Nat)
-    (input : Coherent.CoherentNamed) {value : Data.Gaussian.Basic.Canonical}
+    (input : CoherentNamed) {value : Basic.Canonical}
     (possible :
-      (Dyadic.halfIterate extra (Approximation.Gaussian.Exponential.Progressive.Range.Scaling.automaticScaled
+      (Dyadic.halfIterate extra (automaticScaled
         input)).name.process.Possible
-        (Dyadic.halfIterate extra (Approximation.Gaussian.Exponential.Progressive.Range.Scaling.automaticScaled
+        (Dyadic.halfIterate extra (automaticScaled
           input)).name.state value) :
     ∃ sourceValue,
       input.name.process.Possible input.name.state sourceValue ∧
         value = Dyadic.inverseDyadicAt
           (DyadicReduction.rangeExponent input.name + extra) *
             sourceValue := by
-  rcases Dyadic.halfIterate_possible extra (Approximation.Gaussian.Exponential.Progressive.Range.Scaling.automaticScaled
+  rcases Dyadic.halfIterate_possible extra (automaticScaled
     input) possible with
     ⟨scaledValue, scaledPossible, valueEqual⟩
   rcases scaledPossible with ⟨scaleValue, sourceValue,
@@ -138,15 +138,15 @@ theorem halfIterateAutomatic_possible (extra : Nat)
   subst scaleValue
   subst scaledValue
   refine ⟨sourceValue, sourcePossible, ?_⟩
-  rw [valueEqual, Approximation.Gaussian.Exponential.Progressive.Range.Scaling.automaticScaled_inverse_eq,
-    ← Data.Gaussian.Basic.mul_assoc,
+  rw [valueEqual, automaticScaled_inverse_eq,
+    ← Basic.mul_assoc,
     Dyadic.inverseDyadicAt_mul]
 
 /-- The actual sum of two independently scheduled automatically scaled names at one common exponent satisfies the local
 unit-disk contract. -/
 theorem automaticCommonAddUnitDisk
     (xExtra yExtra sumExtra common : Nat)
-    (left right : Coherent.CoherentNamed)
+    (left right : CoherentNamed)
     (xCommon :
       DyadicReduction.rangeExponent left.name + xExtra =
         common)
@@ -157,11 +157,11 @@ theorem automaticCommonAddUnitDisk
       DyadicReduction.rangeExponent
           (CoherentNamed.add
             left right).name + sumExtra = common) :
-    Name.UnitDisk
+    UnitDisk
       (Named.add
-        (Dyadic.halfIterate xExtra (Approximation.Gaussian.Exponential.Progressive.Range.Scaling.automaticScaled
+        (Dyadic.halfIterate xExtra (automaticScaled
           left)).name
-        (Dyadic.halfIterate yExtra (Approximation.Gaussian.Exponential.Progressive.Range.Scaling.automaticScaled
+        (Dyadic.halfIterate yExtra (automaticScaled
           right)).name) where
   possible_unit := by
     intro value possible
@@ -169,10 +169,10 @@ theorem automaticCommonAddUnitDisk
       CoherentNamed.add left right
     rcases possible with ⟨leftValue, rightValue,
       leftPossible, rightPossible, rfl⟩
-    rcases Approximation.Gaussian.Exponential.Progressive.Range.Scaling.halfIterateAutomatic_possible xExtra left
+    rcases halfIterateAutomatic_possible xExtra left
       leftPossible with
       ⟨leftSource, leftSourcePossible, leftEqual⟩
-    rcases Approximation.Gaussian.Exponential.Progressive.Range.Scaling.halfIterateAutomatic_possible yExtra right
+    rcases halfIterateAutomatic_possible yExtra right
       rightPossible with
       ⟨rightSource, rightSourcePossible, rightEqual⟩
     rw [xCommon] at leftEqual
@@ -183,7 +183,7 @@ theorem automaticCommonAddUnitDisk
           (leftSource + rightSource) :=
       ⟨leftSource, rightSource, leftSourcePossible, rightSourcePossible, rfl⟩
     have sumBound :=
-      Gaussian.Name.Bounds.possible_normSq_le_inputBound
+      Bounds.possible_normSq_le_inputBound
         sumInput.name sumPossible
     have sumBaseLeCommon :
         DyadicReduction.rangeExponent sumInput.name ≤
@@ -192,36 +192,36 @@ theorem automaticCommonAddUnitDisk
       exact Nat.le_add_right _ _
     have radiusOrder :
         Geometric.Basic.quarterRadius
-            (Gaussian.Name.Bounds.inputBound sumInput.name)
+            (Bounds.inputBound sumInput.name)
             common ≤
           Geometric.Basic.quarterRadius
-            (Gaussian.Name.Bounds.inputBound sumInput.name)
+            (Bounds.inputBound sumInput.name)
             (DyadicReduction.rangeExponent
               sumInput.name) :=
       quarterRadius_antitone
-        (Gaussian.Name.Bounds.inputBound_nonneg sumInput.name)
+        (Bounds.inputBound_nonneg sumInput.name)
         sumBaseLeCommon
     have identity :
         Dyadic.inverseDyadicAt common * leftSource +
             Dyadic.inverseDyadicAt common * rightSource =
           Dyadic.inverseDyadicAt common * (leftSource + rightSource) :=
-      (Data.Gaussian.Basic.left_distrib _ _ _).symm
-    rw [identity, Data.Gaussian.Norm.Basic.normSq_mul, Dyadic.normSq_inverseDyadicAt]
+      (Basic.left_distrib _ _ _).symm
+    rw [identity, Norm.Basic.normSq_mul, Dyadic.normSq_inverseDyadicAt]
     calc
       Geometric.Basic.quarterRadius 1 common *
-          Data.Gaussian.Norm.Basic.normSq (leftSource + rightSource) ≤
+          Norm.Basic.normSq (leftSource + rightSource) ≤
         Geometric.Basic.quarterRadius 1 common *
-          Gaussian.Name.Bounds.inputBound sumInput.name :=
+          Bounds.inputBound sumInput.name :=
         Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct sumBound
           (Geometric.Basic.quarterRadius_nonneg (by decide) _)
       _ = Geometric.Basic.quarterRadius
-          (Gaussian.Name.Bounds.inputBound sumInput.name)
+          (Bounds.inputBound sumInput.name)
           common := by
         rw [Geometric.Basic.quarterRadius_eq_mul_pow,
           Geometric.Basic.quarterRadius_eq_mul_pow]
         ring1
       _ ≤ Geometric.Basic.quarterRadius
-          (Gaussian.Name.Bounds.inputBound sumInput.name)
+          (Bounds.inputBound sumInput.name)
           (DyadicReduction.rangeExponent sumInput.name) :=
         radiusOrder
       _ ≤ 1 :=
@@ -232,7 +232,7 @@ theorem automaticCommonAddUnitDisk
 one common exponent. -/
 @[expose] def automaticCommonScaledAdd_equivalent
     (xExtra yExtra sumExtra common : Nat)
-    (left right : Coherent.CoherentNamed)
+    (left right : CoherentNamed)
     (xCommon :
       DyadicReduction.rangeExponent left.name + xExtra =
         common)
@@ -243,24 +243,24 @@ one common exponent. -/
       DyadicReduction.rangeExponent
           (CoherentNamed.add
             left right).name + sumExtra = common) :
-    Gaussian.Equivalence.NamedEquivalent
+    NamedEquivalent
       (Named.add
-        (Dyadic.halfIterate xExtra (Approximation.Gaussian.Exponential.Progressive.Range.Scaling.automaticScaled
+        (Dyadic.halfIterate xExtra (automaticScaled
           left)).name
-        (Dyadic.halfIterate yExtra (Approximation.Gaussian.Exponential.Progressive.Range.Scaling.automaticScaled
+        (Dyadic.halfIterate yExtra (automaticScaled
           right)).name)
       (Dyadic.halfIterate sumExtra
-        (Approximation.Gaussian.Exponential.Progressive.Range.Scaling.automaticScaled
+        (automaticScaled
           (CoherentNamed.add
             left right))).name := by
   let sumInput :=
     CoherentNamed.add left right
   let xNormalized := Dyadic.halfIterate xExtra
-    (Approximation.Gaussian.Exponential.Progressive.Range.Scaling.automaticScaled left)
+    (automaticScaled left)
   let yNormalized := Dyadic.halfIterate yExtra
-    (Approximation.Gaussian.Exponential.Progressive.Range.Scaling.automaticScaled right)
+    (automaticScaled right)
   let sumNormalized := Dyadic.halfIterate sumExtra
-    (Approximation.Gaussian.Exponential.Progressive.Range.Scaling.automaticScaled sumInput)
+    (automaticScaled sumInput)
   let xScaledApproximation := DyadicScale.dyadicScaledApproximation common left.name
   let yScaledApproximation := DyadicScale.dyadicScaledApproximation common right.name
   let sumScaledApproximation := DyadicScale.dyadicScaledApproximation common sumInput.name
@@ -270,21 +270,21 @@ one common exponent. -/
   let yScaled :=
     CoherentNamed.ofApproximation
       yScaledApproximation
-  have xEquivalent : Gaussian.Equivalence.NamedEquivalent xNormalized.name xScaled.name := by
+  have xEquivalent : NamedEquivalent xNormalized.name xScaled.name := by
     simpa only [xNormalized, xScaled, xScaledApproximation, xCommon,
       CoherentNamed.ofApproximation] using
-      Approximation.Gaussian.Exponential.Progressive.Range.Scaling.halfIterateAutomatic_to_dyadicScaled xExtra left
-  have yEquivalent : Gaussian.Equivalence.NamedEquivalent yNormalized.name yScaled.name := by
+      halfIterateAutomatic_to_dyadicScaled xExtra left
+  have yEquivalent : NamedEquivalent yNormalized.name yScaled.name := by
     simpa only [yNormalized, yScaled, yScaledApproximation, yCommon,
       CoherentNamed.ofApproximation] using
-      Approximation.Gaussian.Exponential.Progressive.Range.Scaling.halfIterateAutomatic_to_dyadicScaled yExtra right
-  have sumEquivalent : Gaussian.Equivalence.NamedEquivalent
+      halfIterateAutomatic_to_dyadicScaled yExtra right
+  have sumEquivalent : NamedEquivalent
       sumNormalized.name sumScaledApproximation.toNamed := by
     simpa only [sumNormalized, sumScaledApproximation, sumInput, sumCommon]
-      using Approximation.Gaussian.Exponential.Progressive.Range.Scaling.halfIterateAutomatic_to_dyadicScaled sumExtra
+      using halfIterateAutomatic_to_dyadicScaled sumExtra
         sumInput
   have inputsToScaled :
-      Gaussian.Equivalence.NamedEquivalent
+      NamedEquivalent
         (Named.add
           xNormalized.name yNormalized.name)
         (Named.add

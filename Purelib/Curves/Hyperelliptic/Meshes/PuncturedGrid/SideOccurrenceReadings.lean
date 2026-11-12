@@ -52,6 +52,8 @@ import Purelib.Riemann.Periods.PeriodMatrix
 import Purelib.Riemann.Readings.RectangularObservationAssembly
 import Purelib.Tactic.Ring
 
+open Purelib.Riemann.Meshes.GridLiftedDualSteps
+
 public section
 
 open Purelib
@@ -85,23 +87,23 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
   {faces : PuncturedFaces bank} {mesh :
     LiftedMesh vertices edges faces}
 
 /-- Apply the actual rectangle-side sign and retained reversal flag to a scalar reading. -/
-@[expose] def oriented (occurrence : LiftedMesh.SideOccurrence mesh) (value : Data.Gaussian.Basic.Canonical) : Gaussian
+@[expose] def oriented (occurrence : SideOccurrence mesh) (value : Gaussian) : Gaussian
   :=
   let forward := if occurrence.side = .top ∨ occurrence.side = .left then -value else value
   if occurrence.backward then -forward else forward
 
 /-- The retained occurrence orientation preserves subtraction. -/
-theorem oriented_sub (occurrence : LiftedMesh.SideOccurrence mesh) (first last : Data.Gaussian.Basic.Canonical) :
+theorem oriented_sub (occurrence : SideOccurrence mesh) (first last : Gaussian) :
     oriented
       occurrence (first - last) =
       oriented
@@ -111,18 +113,18 @@ theorem oriented_sub (occurrence : LiftedMesh.SideOccurrence mesh) (first last :
   rcases occurrence with ⟨position, sheet, side, backward⟩
   cases side <;> cases backward <;> simp only
     [oriented,
-    if_pos (by decide : Purelib.Riemann.Meshes.GridLiftedDualSteps.GridSide.top = .top ∨
-      Purelib.Riemann.Meshes.GridLiftedDualSteps.GridSide.top = .left),
-    if_pos (by decide : Purelib.Riemann.Meshes.GridLiftedDualSteps.GridSide.left = .top ∨
-      Purelib.Riemann.Meshes.GridLiftedDualSteps.GridSide.left = .left),
-    if_neg (by decide : ¬ (Purelib.Riemann.Meshes.GridLiftedDualSteps.GridSide.bottom = .top ∨
-      Purelib.Riemann.Meshes.GridLiftedDualSteps.GridSide.bottom = .left)),
-    if_neg (by decide : ¬ (Purelib.Riemann.Meshes.GridLiftedDualSteps.GridSide.right = .top ∨
-      Purelib.Riemann.Meshes.GridLiftedDualSteps.GridSide.right = .left)),
+    if_pos (by decide : GridSide.top = .top ∨
+      GridSide.top = .left),
+    if_pos (by decide : GridSide.left = .top ∨
+      GridSide.left = .left),
+    if_neg (by decide : ¬ (GridSide.bottom = .top ∨
+      GridSide.bottom = .left)),
+    if_neg (by decide : ¬ (GridSide.right = .top ∨
+      GridSide.right = .left)),
     if_pos (Eq.refl true), if_neg (by decide : ¬ false = true), -eq_self, -iff_self] <;> ring1
 
 /-- The retained occurrence orientation preserves squared norm. -/
-theorem normSq_oriented (occurrence : LiftedMesh.SideOccurrence mesh) (value : Data.Gaussian.Basic.Canonical) :
+theorem normSq_oriented (occurrence : SideOccurrence mesh) (value : Gaussian) :
     Data.Gaussian.Norm.Basic.normSq
       (oriented
       occurrence value) = Data.Gaussian.Norm.Basic.normSq value := by
@@ -136,7 +138,7 @@ variable {domains : FaceDomainBank frames
     {i j : Fin genus}
 
 /-- The original source chord is exactly the oriented chord of its retained face, sheet and side. -/
-theorem sourceChord (occurrence : LiftedMesh.SideOccurrence mesh)
+theorem sourceChord (occurrence : SideOccurrence mesh)
     (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
     TriangleReadings.sourceChord left right occurrence.source =
@@ -147,7 +149,7 @@ theorem sourceChord (occurrence : LiftedMesh.SideOccurrence mesh)
   cases backward with
   | false => exact forward
   | true =>
-      have reversed (source : SewnPrimitiveContacts.SourceEdge mesh.triangles.length) :
+      have reversed (source : SourceEdge mesh.triangles.length) :
           TriangleReadings.sourceChord left right ⟨source.source, source.last, source.first⟩ =
             -TriangleReadings.sourceChord left right source :=
         Stokes.edgeArea_reverse _ _
@@ -156,6 +158,9 @@ theorem sourceChord (occurrence : LiftedMesh.SideOccurrence mesh)
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid
+
+open
+  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 open Purelib.Data.Rat.Fraction (Rational)
@@ -174,7 +179,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SegmentSideSources.Lifted
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
@@ -191,17 +196,17 @@ namespace CenteredPerimeters
 
 /-- The oriented centered area of the retained source occurrence on the original sampled perimeter. -/
 @[expose] def occurrenceArea (samples : RequestedHoleCentering.CenteredPerimeters request cache i j) (occurrence :
-  LiftedMesh.SideOccurrence lifted.mesh) : Gaussian :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence.oriented
+  SideOccurrence lifted.mesh) : Gaussian :=
+  oriented
     occurrence (SideCenteredRemainder.sideCenteredArea ((samples.samples.get occurrence.position).get occurrence.sheet)
     occurrence.side)
 
 end CenteredPerimeters
 
 /-- The oriented fine perimeter area of the retained source occurrence. -/
-@[expose] def occurrenceFineArea (perimeters : Matched.FacePerimeters (request := request) cache.normalize i j)
-    (occurrence : LiftedMesh.SideOccurrence lifted.mesh) : Gaussian :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence.oriented
+@[expose] def occurrenceFineArea (perimeters : FacePerimeters (request := request) cache.normalize i j)
+    (occurrence : SideOccurrence lifted.mesh) : Gaussian :=
+  oriented
     occurrence (match occurrence.side with
     | .bottom => ((perimeters.perimeters.get occurrence.position).get occurrence.sheet).bottom
     | .right => ((perimeters.perimeters.get occurrence.position).get occurrence.sheet).right
@@ -209,20 +214,20 @@ end CenteredPerimeters
     | .left => ((perimeters.perimeters.get occurrence.position).get occurrence.sheet).left)
 
 /-- The actual fine occurrence area minus its source chord equals the oriented retained side-area remainder. -/
-theorem occurrence_remainder (perimeters : Matched.FacePerimeters (request := request) cache.normalize i j)
-    (occurrence : LiftedMesh.SideOccurrence lifted.mesh)
+theorem occurrence_remainder (perimeters : FacePerimeters (request := request) cache.normalize i j)
+    (occurrence : SideOccurrence lifted.mesh)
     (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh) (right :
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh) :
     occurrenceFineArea
       perimeters occurrence - TriangleReadings.sourceChord left right occurrence.source =
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence.oriented
+      oriented
         occurrence (HoleAreaRemainder.sideAreaRemainder perimeters occurrence.position occurrence.sheet occurrence.side)
         := by
   unfold occurrenceFineArea
   rw
-    [BranchCellBank.LiftedMesh.SideOccurrence.sourceChord
+    [sourceChord
     occurrence left right, ←
-    BranchCellBank.LiftedMesh.SideOccurrence.oriented_sub
+    oriented_sub
     occurrence]
   rfl
 
@@ -231,30 +236,30 @@ namespace PerimeterEndpointRequest
 /-- The original endpoint request bounds the occurrence's fine area minus its source chord and centered area.
 
 The comparison retains the exact face, sheet, side and reversal of the source occurrence. -/
-theorem occurrence_bound {error : Fraction.Rational} (allocated : PerimeterEndpointRequest
+theorem occurrence_bound {error : Rational} (allocated : PerimeterEndpointRequest
   fixed i j error)
     (later : allocated.index ≤ stage) (samples : RequestedHoleCentering.CenteredPerimeters request cache i j)
-    (perimeters : Matched.FacePerimeters (request := request) cache.normalize i j)
+    (perimeters : FacePerimeters (request := request) cache.normalize i j)
     (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh) (right :
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
-    (occurrence : LiftedMesh.SideOccurrence lifted.mesh) :
+    (occurrence : SideOccurrence lifted.mesh) :
     Data.Gaussian.Norm.Basic.normSq
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.occurrenceFineArea
+      (LiftedPuncturedGrid.occurrenceFineArea
       perimeters occurrence - TriangleReadings.sourceChord left right occurrence.source -
 
         CenteredPerimeters.occurrenceArea
         samples occurrence) ≤ error := by
-  rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.occurrence_remainder
+  rw [LiftedPuncturedGrid.occurrence_remainder
     perimeters occurrence left right]
   change Data.Gaussian.Norm.Basic.normSq
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence.oriented
+    (oriented
     occurrence _ -
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence.oriented
+    oriented
     occurrence _) ≤ error
   rw [←
-    BranchCellBank.LiftedMesh.SideOccurrence.oriented_sub
+    oriented_sub
     occurrence,
-    BranchCellBank.LiftedMesh.SideOccurrence.normSq_oriented
+    normSq_oriented
     occurrence]
   exact allocated.bound later ((samples.samples.get occurrence.position).get occurrence.sheet) perimeters
     occurrence.side

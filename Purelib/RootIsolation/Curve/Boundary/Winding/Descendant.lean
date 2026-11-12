@@ -81,11 +81,11 @@ is outside it.  Neither alternative asserts that a factor zero exists.
 namespace Purelib.RootIsolation.Curve.Boundary.Winding.Descendant
 section Boundary
 
-variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
 variable {denominatorMargin : Fraction.Rational}
 variable {marginPositive : 0 < denominatorMargin}
 variable {atom : Geometry.Projective.Hermitian.Atom}
-variable {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+variable {boundary : Analysis.CurveBoundary p reference current denominatorMargin
   marginPositive atom}
 
 /-! ## Total strict-owner/outside classification on one descendant -/
@@ -98,7 +98,7 @@ def strictDescendantRequestWidth
       BoundaryCompleteRequestEntry
         boundary epsilon)
     (windingState : WindingOneState p ambient) : Fraction.Rational :=
-  Curve.Boundary.Complete.Sample.descendantResidualRequestWidth
+  Complete.Sample.descendantResidualRequestWidth
     entry windingState.box windingState.clearance.bound
 
 /-- The descendant request tied to the retained state's positive boundary clearance has positive width. -/
@@ -109,7 +109,7 @@ theorem strictDescendantRequestWidth_pos
         boundary epsilon)
     (windingState : WindingOneState p ambient) :
     0 < strictDescendantRequestWidth entry windingState :=
-  Curve.Boundary.Complete.Sample.descendantResidualRequestWidth_pos
+  Complete.Sample.descendantResidualRequestWidth_pos
     entry windingState.box windingState.clearance.positive
 
 /-- Executable non-pole sample on the selected descendant at the strict-owner
@@ -120,7 +120,7 @@ def strictDescendantSample
       BoundaryCompleteRequestEntry
         boundary epsilon)
     (windingState : WindingOneState p ambient) :=
-  Curve.Boundary.Complete.Sample.nonpoleCompleteRequestDescendantSample
+  Complete.Sample.nonpoleCompleteRequestDescendantSample
     entry (strictDescendantRequestWidth entry windingState)
 
 /-- Total finite result for one retained event branch and one candidate
@@ -141,7 +141,7 @@ inductive StrictDescendantClassification
       (strict : windingState.box.StrictContains
         (entry.parent.parent.chart.parameterization.curve.point
           (strictDescendantSample entry windingState).parameter))
-      (residual : Data.Gaussian.Norm.Basic.normSq
+      (residual : Gaussian.Norm.Basic.normSq
         (p.eval (entry.parent.parent.chart.parameterization.curve.point
           (strictDescendantSample entry windingState).parameter)) <
             windingState.clearance.bound)
@@ -164,7 +164,7 @@ def classifyStrictDescendant
     sample.parameter
   by_cases contains : windingState.box.Contains point
   · have residual :=
-      Curve.Boundary.Complete.Sample.descendant_sample_residual_lt
+      Complete.Sample.descendant_sample_residual_lt
         entry windingState.box windingState.clearance.positive sample contains
     exact .inside contains
       (windingState.clearance.strictContains_of_residual_lt contains residual)
@@ -182,7 +182,7 @@ def targetedFamilyDescendantRequestWidth
         boundary epsilon)
     (family : WindingFamily p ambient)
     (target : Fraction.Rational) : Fraction.Rational :=
-  Curve.Boundary.Profile.Control.profileResidualFamilyRequestWidth
+  Profile.Control.profileResidualFamilyRequestWidth
     entry.parent family.boxes target
 
 /-- The common family descendant request has positive width for a positive residual target. -/
@@ -194,7 +194,7 @@ theorem targetedFamilyDescendantRequestWidth_pos
     (family : WindingFamily p ambient)
     {target : Fraction.Rational} (targetPositive : 0 < target) :
     0 < targetedFamilyDescendantRequestWidth entry family target :=
-  Curve.Boundary.Profile.Control.profileResidualFamilyRequestWidth_pos
+  Profile.Control.profileResidualFamilyRequestWidth_pos
     entry.parent family.boxes targetPositive
 
 /-- The common non-pole rational sample at an arbitrary family-wide residual
@@ -206,7 +206,7 @@ def targetedFamilyDescendantSample
         boundary epsilon)
     (family : WindingFamily p ambient)
     (target : Fraction.Rational) :=
-  Curve.Boundary.Complete.Sample.nonpoleCompleteRequestDescendantSample
+  Complete.Sample.nonpoleCompleteRequestDescendantSample
     entry (targetedFamilyDescendantRequestWidth entry family target)
 
 /-- If the targeted common sample meets a state, its exact original-
@@ -220,28 +220,28 @@ theorem targeted_family_descendant_sample_residual_lt
     (index : Fin family.boxes.length)
     {target : Fraction.Rational} (targetPositive : 0 < target)
     (sample :
-      Curve.Boundary.Complete.Sample.NonpoleCompleteRequestDescendantSample
+      Complete.Sample.NonpoleCompleteRequestDescendantSample
         entry (targetedFamilyDescendantRequestWidth entry family target))
     (contains : (family.stateAtBoxIndex index).box.Contains
       (entry.parent.parent.chart.parameterization.curve.point
         sample.parameter)) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         (p.eval (entry.parent.parent.chart.parameterization.curve.point
           sample.parameter)) < target := by
   let coefficient :=
-    Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient
+    Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient
       entry.parent (family.stateAtBoxIndex index).box
   let commonWidth := targetedFamilyDescendantRequestWidth entry family target
   let boxWidth :=
-    Curve.Boundary.Complete.Sample.descendantResidualRequestWidth
+    Complete.Sample.descendantResidualRequestWidth
       entry (family.stateAtBoxIndex index).box target
   have commonLeBox : commonWidth ≤ boxWidth := by
     simpa only [commonWidth, boxWidth, targetedFamilyDescendantRequestWidth,
-      Curve.Boundary.Complete.Sample.descendantResidualRequestWidth,
-      Curve.Boundary.Profile.Control.boxResidualRequestWidth,
-      Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient,
+      Complete.Sample.descendantResidualRequestWidth,
+      Profile.Control.boxResidualRequestWidth,
+      Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient,
       coefficient, family.boxAt_eq index] using
-      Curve.Boundary.Profile.Control.profileResidualFamilyRequestWidth_le_box
+      Profile.Control.profileResidualFamilyRequestWidth_le_box
         entry.parent family.boxes target index
   have squareOrder : commonWidth ^ 2 ≤ boxWidth ^ 2 :=
     Fraction.Order.Arithmetic.pow_le_pow_direct
@@ -249,28 +249,28 @@ theorem targeted_family_descendant_sample_residual_lt
         targetPositive).le commonLeBox 2
   have coefficientNonnegative : 0 ≤ coefficient := by
     simpa only [coefficient] using
-      Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient_nonneg
+      Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient_nonneg
         entry.parent (family.stateAtBoxIndex index).box
   have upper := sample.normSq_eval_point_le_of_inside
     (targetedFamilyDescendantRequestWidth_pos entry family targetPositive)
     (family.stateAtBoxIndex index).box contains
   have boxSmall : coefficient * boxWidth ^ 2 < target := by
     simpa only [boxWidth, coefficient,
-      Curve.Boundary.Complete.Sample.descendantResidualRequestWidth,
-      Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient]
+      Complete.Sample.descendantResidualRequestWidth,
+      Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient]
       using
-        Data.Rat.SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
+        SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
           coefficientNonnegative targetPositive
   have commonSmall : coefficient * commonWidth ^ 2 < target :=
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct squareOrder
       coefficientNonnegative).trans_lt boxSmall
   have upperScaled :
-      Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq
           (p.eval (entry.parent.parent.chart.parameterization.curve.point
             sample.parameter)) ≤
         coefficient * commonWidth ^ 2 := by
     simpa only [coefficient, commonWidth,
-      Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient]
+      Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient]
       using upper
   exact upperScaled.trans_lt commonSmall
 
@@ -303,7 +303,7 @@ def familyStrictDescendantSample
       BoundaryCompleteRequestEntry
         boundary epsilon)
     (family : WindingFamily p ambient) :=
-  Curve.Boundary.Complete.Sample.nonpoleCompleteRequestDescendantSample
+  Complete.Sample.nonpoleCompleteRequestDescendantSample
     entry (familyStrictDescendantRequestWidth entry family)
 
 /-- If the common descendant sample meets one state, its original-polynomial
@@ -316,12 +316,12 @@ theorem family_descendant_sample_residual_lt
     (family : WindingFamily p ambient)
     (index : Fin family.boxes.length)
     (sample :
-      Curve.Boundary.Complete.Sample.NonpoleCompleteRequestDescendantSample
+      Complete.Sample.NonpoleCompleteRequestDescendantSample
         entry (familyStrictDescendantRequestWidth entry family))
     (contains : (family.stateAtBoxIndex index).box.Contains
       (entry.parent.parent.chart.parameterization.curve.point
         sample.parameter)) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         (p.eval (entry.parent.parent.chart.parameterization.curve.point
           sample.parameter)) <
       (family.stateAtBoxIndex index).clearance.bound := by
@@ -349,7 +349,7 @@ inductive FamilyStrictDescendantClassification
       (strict : (family.stateAtBoxIndex index).box.StrictContains
         (entry.parent.parent.chart.parameterization.curve.point
           (familyStrictDescendantSample entry family).parameter))
-      (residual : Data.Gaussian.Norm.Basic.normSq
+      (residual : Gaussian.Norm.Basic.normSq
         (p.eval (entry.parent.parent.chart.parameterization.curve.point
           (familyStrictDescendantSample entry family).parameter)) <
             (family.stateAtBoxIndex index).clearance.bound)
@@ -406,18 +406,18 @@ common strict descendant remains strictly in that same indexed state. -/
 inductive OwnedChildDescendantResolution
     (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
     (family : WindingFamily p ambient)
-    (classified : Curve.Boundary.Winding.Budget.ClassifiedChild (boundary := boundary) squarefree family)
+    (classified : Budget.ClassifiedChild (boundary := boundary) squarefree family)
     (owner :
-      Curve.Boundary.Complete.Ownership.ControlledCompleteRequestMeeting
+      Complete.Ownership.ControlledCompleteRequestMeeting
         family.boxes family.boxes_pairwise
-          (Curve.Boundary.Winding.Budget.windingTarget (boundary := boundary) squarefree family)
+          (Budget.windingTarget (boundary := boundary) squarefree family)
           classified.entry) where
   /-- The same selected owner strictly contains the descendant sample with the retained clearance residual bound. -/ |
     retained
       (strict : (family.stateAtBoxIndex owner.index).box.StrictContains
         (classified.entry.parent.parent.chart.parameterization.curve.point
           (familyStrictDescendantSample classified.entry family).parameter))
-      (residual : Data.Gaussian.Norm.Basic.normSq
+      (residual : Gaussian.Norm.Basic.normSq
         (p.eval
           (classified.entry.parent.parent.chart.parameterization.curve.point
             (familyStrictDescendantSample classified.entry family).parameter)) <
@@ -429,11 +429,11 @@ request. -/
 theorem resolveOwnedChildDescendant
     (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
     (family : WindingFamily p ambient)
-    (classified : Curve.Boundary.Winding.Budget.ClassifiedChild (boundary := boundary) squarefree family)
+    (classified : Budget.ClassifiedChild (boundary := boundary) squarefree family)
     (owner :
-      Curve.Boundary.Complete.Ownership.ControlledCompleteRequestMeeting
+      Complete.Ownership.ControlledCompleteRequestMeeting
         family.boxes family.boxes_pairwise
-          (Curve.Boundary.Winding.Budget.windingTarget (boundary := boundary) squarefree family)
+          (Budget.windingTarget (boundary := boundary) squarefree family)
           classified.entry) :
     OwnedChildDescendantResolution squarefree family classified owner := by
   let sample := familyStrictDescendantSample classified.entry family
@@ -448,7 +448,7 @@ theorem resolveOwnedChildDescendant
         (classified.entry.child.request_refines
           (familyStrictDescendantRequestWidth classified.entry family)).2⟩
   have contains : (family.stateAtBoxIndex owner.index).box.Contains point :=
-    Curve.Boundary.Winding.Containment.controlledChild_inside_owner squarefree family classified owner
+    Containment.controlledChild_inside_owner squarefree family classified owner
       descendantInside sample.denominatorNonzero
   have residual := family_descendant_sample_residual_lt classified.entry family
     owner.index sample contains

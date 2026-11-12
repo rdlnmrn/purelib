@@ -86,47 +86,47 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEndpointReadings.P
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy (RegularBasisPolynomials)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover (BasisCommonInterval)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {model :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell}
-  {parameter target sourceTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor sourceFloor :
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : ParameterEdge} {cell :
+    Cell data edge}
+  {regular : RegularBounds.Data cap} {model :
+    RootModel cell}
+  {parameter target sourceTarget : Coordinate} {floor sourceFloor :
     Nat}
-  {covers : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
+  {covers : BasisSourceCovers parent}
 
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
 
-variable {cover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data}
+variable {cover : Cover data}
 
 namespace BasisIntervalChartRequest
 
-variable {interval : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover
-  covers} {depth index minimum : Nat} {box : Purelib.Geometry.Rational.Box}
-  {request : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartRequest.BasisIntervalChartRequest
+variable {interval : BasisCommonInterval cover
+  covers} {depth index minimum : Nat} {box : Geometry.Rational.Box}
+  {request : BasisIntervalChartRequest
     interval regular depth target sourceTarget floor sourceFloor}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {polynomials : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {polynomials : RegularBasisPolynomials cap
     index box}
 
 namespace Plan.Evaluation
 
 variable {plan :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartAcquisition.BasisIntervalChartRequest.Plan
+  Plan
   request capSample polynomials minimum}
-  {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular interval.anchor.cell}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample comparison capSample}
-  {bank : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank
+  {comparison : ArcSamples.Data regular interval.anchor.cell}
+  {sample : ArcSamples.Sample comparison capSample}
+  {bank : BasisSourceLocations.SampleBank
     covers index} {stage : Nat}
 
 variable {originals :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+  CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
   covers index} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 namespace PathData
@@ -136,8 +136,8 @@ def firstCombination (evaluated : Plan.Evaluation plan sample bank stage)
     (path : Evaluation.PathData evaluated originals coefficients) : evaluated.firstSources.evaluated.Combination
       coefficients := by
   let endpoint := evaluated.firstSources.evaluated
-  let direct := FiniteSum.Fin.sumFin (fun row => coefficients row * endpoint.chart.direct row)
-  have sourceEq : path.firstSource = FiniteSum.Fin.sumFin (fun row => coefficients row * endpoint.sources row) :=
+  let direct := sumFin (fun row => coefficients row * endpoint.chart.direct row)
+  have sourceEq : path.firstSource = sumFin (fun row => coefficients row * endpoint.sources row) :=
     path.first_eq
   have sourceBound := endpoint.chart.source_direct_accurate endpoint.sources endpoint.source_close coefficients
   have chartBound := endpoint.accurate coefficients
@@ -149,8 +149,8 @@ def lastCombination (evaluated : Plan.Evaluation plan sample bank stage)
     (path : Evaluation.PathData evaluated originals coefficients) : evaluated.lastSources.evaluated.Combination
       coefficients := by
   let endpoint := evaluated.lastSources.evaluated
-  let direct := FiniteSum.Fin.sumFin (fun row => coefficients row * endpoint.chart.direct row)
-  have sourceEq : path.lastSource = FiniteSum.Fin.sumFin (fun row => coefficients row * endpoint.sources row) :=
+  let direct := sumFin (fun row => coefficients row * endpoint.chart.direct row)
+  have sourceEq : path.lastSource = sumFin (fun row => coefficients row * endpoint.sources row) :=
     path.last_eq
   have sourceBound := endpoint.chart.source_direct_accurate endpoint.sources endpoint.source_close coefficients
   have chartBound := endpoint.accurate coefficients

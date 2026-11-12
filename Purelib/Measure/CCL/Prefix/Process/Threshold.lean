@@ -24,6 +24,9 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Mathlib.Order.Basic
 
+open Purelib.Approximation.CCL
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.CCL.Encoding.Cylinder.Basic (Realizes)
 
 section
@@ -50,17 +53,17 @@ open Purelib.Geometry.Projective in
 /-- Enclose threshold probability by classifying probe ranges at the supplied original process state. -/
 def probeThresholdBound {ι : Type}
     (process : Cylinder.PrefixFamilyProcess ι)
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
     (sensitive : ∀ left right,
       Distance.rationalSeparation (probe left) (probe right) ≤
         factor * Chordal.Basic.chordalSq left right)
     (threshold : Fraction.Rational) (state : process.State) :
-    Data.Rat.Interval :=
-  Measure.eventBound
+    Interval :=
+  eventBound
     (distribution.thresholdFrontier
-      ((Approximation.CCL.Prefix.PrefixFamilyProcess.probeRange process) probe factor factorNonnegative sensitive state)
+      ((Prefix.PrefixFamilyProcess.probeRange process) probe factor factorNonnegative sensitive state)
       threshold)
 
 open Purelib in
@@ -72,7 +75,7 @@ open Purelib.Geometry.Projective in
 positive margin. -/
 private theorem requestedProbeThresholdResolved {ι : Type}
     (process : Cylinder.PrefixFamilyProcess ι)
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)
     (sensitive : ∀ left right,
@@ -82,15 +85,15 @@ private theorem requestedProbeThresholdResolved {ι : Type}
     (separated : ∀ atom, atom ∈ distribution.atoms →
       threshold + margin ≤ probe (process.witness atom.item) ∨
         probe (process.witness atom.item) + margin ≤ threshold)
-    (state : process.State) (atom : Measure.Weighted ι)
+    (state : process.State) (atom : Weighted ι)
     (member : atom ∈ distribution.atoms) :
-    Measure.ThresholdResolved
-      ((Approximation.CCL.Prefix.PrefixFamilyProcess.probeRange process) probe factor factorPositive.le sensitive
+    ThresholdResolved
+      ((Prefix.PrefixFamilyProcess.probeRange process) probe factor factorPositive.le sensitive
         (process.request state (Budget.requiredProbeBlockCount margin factor))
         atom.item)
       threshold := by
-  unfold Approximation.CCL.Prefix.PrefixFamilyProcess.probeRange
-  exact Approximation.CCL.Prefix.completedPrefixProbeBound_thresholdResolved_of_margin
+  unfold Prefix.PrefixFamilyProcess.probeRange
+  exact Prefix.completedPrefixProbeBound_thresholdResolved_of_margin
     (process.witness atom.item)
     (process.realizes
       (process.request state (Budget.requiredProbeBlockCount margin factor))
@@ -112,7 +115,7 @@ Every positive-width request extends the original state to the fixed margin budg
 producing an exact zero-width probability interval. -/
 def toProbeThresholdProcess {ι : Type}
     (process : Cylinder.PrefixFamilyProcess ι)
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)
     (sensitive : ∀ left right,
@@ -136,27 +139,27 @@ def toProbeThresholdProcess {ι : Type}
     rcases process.request_extends state
       (Budget.requiredProbeBlockCount margin factor) atom.item with
       ⟨suffix, equal⟩
-    unfold Approximation.CCL.Prefix.PrefixFamilyProcess.probeRange
+    unfold Prefix.PrefixFamilyProcess.probeRange
     have spreadLe :
-        Approximation.CCL.Cylinder.cylinderSpread
+        Cylinder.cylinderSpread
             (process.blocks
               (process.request state
                 (Budget.requiredProbeBlockCount margin factor)) atom.item) ≤
-          Approximation.CCL.Cylinder.cylinderSpread (process.blocks state atom.item) := by
+          Cylinder.cylinderSpread (process.blocks state atom.item) := by
       rw [equal]
-      exact Approximation.CCL.Cylinder.cylinderSpread_le_of_append
+      exact Cylinder.cylinderSpread_le_of_append
         (process.blocks state atom.item) suffix
     have scaledLe :
-        factor * Approximation.CCL.Cylinder.cylinderSpread
+        factor * Cylinder.cylinderSpread
             (process.blocks
               (process.request state
                 (Budget.requiredProbeBlockCount margin factor)) atom.item) ≤
-          factor * Approximation.CCL.Cylinder.cylinderSpread (process.blocks state atom.item) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          factor * Cylinder.cylinderSpread (process.blocks state atom.item) :=
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         spreadLe factorPositive.le
     constructor
-    · exact Fraction.Order.Arithmetic.sub_le_sub_left_direct scaledLe (probe (process.witness atom.item))
-    · exact Fraction.Order.Arithmetic.add_le_add_direct le_rfl scaledLe
+    · exact Arithmetic.sub_le_sub_left_direct scaledLe (probe (process.witness atom.item))
+    · exact Arithmetic.add_le_add_direct le_rfl scaledLe
   accurate state epsilon positive := by
     unfold probeThresholdBound
     rw [distribution.thresholdFrontier_width_eq_zero_of_resolved]
@@ -170,19 +173,19 @@ def toProbeThresholdProcess {ι : Type}
     apply distribution.thresholdFrontier_eventBound_refines
     intro atom member
     rcases process.extendsInitial state atom.item with ⟨suffix, equal⟩
-    unfold Approximation.CCL.Prefix.PrefixFamilyProcess.probeRange
-    have spreadLe : Approximation.CCL.Cylinder.cylinderSpread (process.blocks state atom.item) ≤
-        Approximation.CCL.Cylinder.cylinderSpread (process.blocks process.initial atom.item) := by
+    unfold Prefix.PrefixFamilyProcess.probeRange
+    have spreadLe : Cylinder.cylinderSpread (process.blocks state atom.item) ≤
+        Cylinder.cylinderSpread (process.blocks process.initial atom.item) := by
       rw [equal]
-      exact Approximation.CCL.Cylinder.cylinderSpread_le_of_append
+      exact Cylinder.cylinderSpread_le_of_append
         (process.blocks process.initial atom.item) suffix
-    have scaledLe : factor * Approximation.CCL.Cylinder.cylinderSpread (process.blocks state atom.item) ≤
-        factor * Approximation.CCL.Cylinder.cylinderSpread (process.blocks process.initial atom.item) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    have scaledLe : factor * Cylinder.cylinderSpread (process.blocks state atom.item) ≤
+        factor * Cylinder.cylinderSpread (process.blocks process.initial atom.item) :=
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         spreadLe factorPositive.le
     constructor
-    · exact Fraction.Order.Arithmetic.sub_le_sub_left_direct scaledLe (probe (process.witness atom.item))
-    · exact Fraction.Order.Arithmetic.add_le_add_direct le_rfl scaledLe
+    · exact Arithmetic.sub_le_sub_left_direct scaledLe (probe (process.witness atom.item))
+    · exact Arithmetic.add_le_add_direct le_rfl scaledLe
 
 open Purelib
 open Purelib.Data.CCL.Encoding
@@ -192,7 +195,7 @@ open Purelib.Measure
 /-- Every requested threshold enclosure has zero width under the retained witness margin. -/
 theorem request_probeThreshold_width_eq_zero {ι : Type}
     (process : Cylinder.PrefixFamilyProcess ι)
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)
     (sensitive : ∀ left right,
@@ -218,7 +221,7 @@ theorem request_probeThreshold_width_eq_zero {ι : Type}
 /-- The current threshold enclosure contains the event probability of any family realizing the current blocks. -/
 theorem probability_mem_toProbeThresholdProcess_bound {ι : Type}
     (process : Cylinder.PrefixFamilyProcess ι)
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)
     (sensitive : ∀ left right,
@@ -235,13 +238,13 @@ theorem probability_mem_toProbeThresholdProcess_bound {ι : Type}
     (((toProbeThresholdProcess process) distribution probe factor factorPositive
       sensitive threshold margin marginPositive separated).bound state).Contains
       (distribution.probability
-        (Measure.atLeastEvent threshold fun item =>
+        (atLeastEvent threshold fun item =>
           probe (points item))) := by
   unfold toProbeThresholdProcess probeThresholdBound
   apply distribution.probability_mem_thresholdFrontier
   intro atom member
-  unfold Approximation.CCL.Prefix.PrefixFamilyProcess.probeRange
-  exact Approximation.CCL.Prefix.completedPrefixProbeBound_contains
+  unfold Prefix.PrefixFamilyProcess.probeRange
+  exact Prefix.completedPrefixProbeBound_contains
     (process.blocks state atom.item) (process.witness atom.item)
     (process.realizes state atom.item) probe factor factorPositive.le sensitive
     (pointsRealize atom member)
@@ -249,7 +252,7 @@ theorem probability_mem_toProbeThresholdProcess_bound {ι : Type}
 /-- Any two families realizing the requested threshold state have exactly equal threshold-event probabilities. -/
 theorem request_probeThreshold_probabilities_eq {ι : Type}
     (process : Cylinder.PrefixFamilyProcess ι)
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)
     (sensitive : ∀ left right,
@@ -276,10 +279,10 @@ theorem request_probeThreshold_probabilities_eq {ι : Type}
             |>.request state epsilon positive) atom.item)
         (rightPoints atom.item)) :
     distribution.probability
-        (Measure.atLeastEvent threshold fun item =>
+        (atLeastEvent threshold fun item =>
           probe (leftPoints item)) =
       distribution.probability
-        (Measure.atLeastEvent threshold fun item =>
+        (atLeastEvent threshold fun item =>
           probe (rightPoints item)) := by
   let thresholdProcess := (toProbeThresholdProcess process) distribution probe
     factor factorPositive sensitive threshold margin marginPositive separated

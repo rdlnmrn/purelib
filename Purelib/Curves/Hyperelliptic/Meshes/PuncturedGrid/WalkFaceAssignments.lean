@@ -69,12 +69,12 @@ open Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh (PathFaces)
 open Purelib.Topology.Surface.Cut.JumpPaths
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
   {faces : PuncturedFaces bank} {mesh :
     LiftedMesh vertices edges faces}
 
@@ -83,7 +83,7 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.WalkFaceAssignments
 /-- The sheet is existential proof data, never a runtime instruction to replay transitions while traversing a previously
 materialized word. -/
 def WalkMatches {start finish : Data.Gaussian.Basic.Canonical} (walk : Walks.Walk bank.grid start finish)
-    (indexed : List (Stokes.OrientedEdge vertices.count)) : Prop :=
+    (indexed : List (OrientedEdge vertices.count)) : Prop :=
   ∃ sheet, indexed = edges.indexedEdges vertices walk sheet
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.WalkFaceAssignments
@@ -93,8 +93,8 @@ section
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.WalkFaceAssignments.WalkMatches
 
 /-- A cached edge word matching the empty original grid walk is empty. -/
-private theorem nil_eq {point : Data.Gaussian.Basic.Canonical} {indexed : List (Stokes.OrientedEdge vertices.count)}
-    (matching : WalkFaceAssignments.WalkMatches (edges := edges) (.nil point)
+private theorem nil_eq {point : Data.Gaussian.Basic.Canonical} {indexed : List (OrientedEdge vertices.count)}
+    (matching : WalkMatches (edges := edges) (.nil point)
       indexed) : indexed = [] := by
   obtain ⟨sheet, equal⟩ := matching
   exact equal
@@ -103,7 +103,7 @@ private theorem nil_eq {point : Data.Gaussian.Basic.Canonical} {indexed : List (
 public theorem cons_not_nil {start middle finish : Data.Gaussian.Basic.Canonical} {edge : Walks.Edge bank.grid start
   middle}
     {tail : Walks.Walk bank.grid middle finish}
-    (matching : WalkFaceAssignments.WalkMatches (vertices := vertices) (edges
+    (matching : WalkMatches (vertices := vertices) (edges
       := edges) (.cons edge tail) []) : False := by
   obtain ⟨sheet, equal⟩ := matching
   cases equal
@@ -111,9 +111,9 @@ public theorem cons_not_nil {start middle finish : Data.Gaussian.Basic.Canonical
 /-- The retained head edge coordinates are exactly the original head grid edge endpoints. -/
 public theorem cons_endpoints {start middle finish : Data.Gaussian.Basic.Canonical} {edge : Walks.Edge bank.grid start
   middle}
-    {tail : Walks.Walk bank.grid middle finish} {head : Stokes.OrientedEdge vertices.count} {rest : List
-      (Stokes.OrientedEdge vertices.count)}
-    (matching : WalkFaceAssignments.WalkMatches (edges := edges) (.cons edge
+    {tail : Walks.Walk bank.grid middle finish} {head : OrientedEdge vertices.count} {rest : List
+      (OrientedEdge vertices.count)}
+    (matching : WalkMatches (edges := edges) (.cons edge
       tail) (head :: rest)) :
     vertices.coordinate head.start = start ∧ vertices.coordinate head.finish = middle := by
   obtain ⟨sheet, equal⟩ := matching
@@ -124,10 +124,10 @@ public theorem cons_endpoints {start middle finish : Data.Gaussian.Basic.Canonic
 /-- The retained word tail matches the original remaining grid walk on its actual arriving sheet. -/
 public theorem cons_tail {start middle finish : Data.Gaussian.Basic.Canonical} {edge : Walks.Edge bank.grid start
   middle}
-    {tail : Walks.Walk bank.grid middle finish} {head : Stokes.OrientedEdge vertices.count} {rest : List
-      (Stokes.OrientedEdge vertices.count)}
-    (matching : WalkFaceAssignments.WalkMatches (edges := edges) (.cons edge
-      tail) (head :: rest)) : WalkFaceAssignments.WalkMatches (edges := edges)
+    {tail : Walks.Walk bank.grid middle finish} {head : OrientedEdge vertices.count} {rest : List
+      (OrientedEdge vertices.count)}
+    (matching : WalkMatches (edges := edges) (.cons edge
+      tail) (head :: rest)) : WalkMatches (edges := edges)
       tail rest := by
   obtain ⟨sheet, equal⟩ := matching
   exact ⟨(edges.edge edge).forward.target sheet, (List.cons.inj equal).2⟩
@@ -144,12 +144,12 @@ namespace Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh.PathFaces
 
 /-- Attach already retained occurrences, including the original face on reversed detour sides. No edge lookup or root
 preparation is repeated. -/
-def ofRoutes (mesh : GridLiftedMesh.LiftedMesh
+def ofRoutes (mesh : LiftedMesh
   vertices edges faces) :
     ∀ {start finish : Data.Gaussian.Basic.Canonical} (walk : Walks.Walk bank.grid start finish) (indexed : List
-      (Stokes.OrientedEdge vertices.count)),
-      Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.WalkFaceAssignments.WalkMatches (edges := edges) walk indexed →
-        MeshPathWalks.RouteSpine mesh indexed → LiftedMesh.PathFaces mesh walk.path
+      (OrientedEdge vertices.count)),
+      WalkFaceAssignments.WalkMatches (edges := edges) walk indexed →
+        RouteSpine mesh indexed → PathFaces mesh walk.path
   | _, _, .nil point, _, _, _ => .nil point
   | _, _, .cons _ _, [], matching, _ => matching.cons_not_nil.elim
   | _, _, .cons _edge tail, head :: rest, matching, .cons route routes =>
@@ -159,43 +159,51 @@ def ofRoutes (mesh : GridLiftedMesh.LiftedMesh
 
 /-- Canonical finite lookup for clients which do not already hold a route spine. Clients with retained occurrences use
 `ofRoutes` directly. -/
-def ofIndexed (mesh : GridLiftedMesh.LiftedMesh
+def ofIndexed (mesh : LiftedMesh
   vertices edges faces) {start finish : Data.Gaussian.Basic.Canonical}
-    (walk : Walks.Walk bank.grid start finish) (indexed : List (Stokes.OrientedEdge vertices.count))
-    (matching : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.WalkFaceAssignments.WalkMatches (edges := edges) walk
+    (walk : Walks.Walk bank.grid start finish) (indexed : List (OrientedEdge vertices.count))
+    (matching : WalkFaceAssignments.WalkMatches (edges := edges) walk
       indexed)
     (supported : CutPath.Supported (Stokes.triangleEdgeOccurrences mesh.triangulation.faces) indexed) :
-      LiftedMesh.PathFaces mesh walk.path :=
+      PathFaces mesh walk.path :=
   ofRoutes mesh walk indexed matching (RouteSpine.build mesh indexed
     supported)
 
 /-- This is only a fold over stored indices, not root transport. -/
 def indexed {ambient : Rational.Box} :
-    ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient
+    ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : ClearPath curve.polynomial ambient
       start finish},
-      LiftedMesh.PathFaces mesh path → List (Stokes.OrientedEdge vertices.count)
+      PathFaces mesh path → List (OrientedEdge vertices.count)
   | _, _, _, .nil _ => []
   | _, _, _, .cons first tail => first.indexed :: tail.indexed
 
 /-- Evaluate the original retained face occurrence of every segment in path order. -/
 def values {α : Type} (value : (edge :
-  Stokes.OrientedEdge vertices.count) → MeshPathWalks.EdgeRoute mesh edge → α)
+  OrientedEdge vertices.count) → EdgeRoute mesh edge → α)
     {ambient : Rational.Box} :
-    ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient
+    ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : ClearPath curve.polynomial ambient
       start finish},
-      LiftedMesh.PathFaces mesh path → List α
+      PathFaces mesh path → List α
   | _, _, _, .nil _ => []
   | _, _, _, .cons first tail => value _ first.location ::
     PathFaces.values value tail
 
+/-- Reading retained face occurrences preserves the complete ordered indexed word's length. -/
+theorem values_length {α : Type} (value : (edge : OrientedEdge vertices.count) → EdgeRoute mesh edge → α)
+    {ambient : Rational.Box} :
+    ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : ClearPath curve.polynomial ambient start finish}
+      (assigned : PathFaces mesh path), (PathFaces.values value assigned).length = assigned.indexed.length
+  | _, _, _, .nil _ => rfl
+  | _, _, _, .cons _ tail => congrArg Nat.succ (values_length value tail)
+
 /-- Attaching retained routes to the original grid walk preserves their exact occurrence values. -/
 theorem ofRoutes_values {α : Type} (value : (edge :
-  Stokes.OrientedEdge vertices.count) → MeshPathWalks.EdgeRoute mesh edge → α) :
+  OrientedEdge vertices.count) → EdgeRoute mesh edge → α) :
     ∀ {start finish : Data.Gaussian.Basic.Canonical} (walk : Walks.Walk bank.grid start finish) (word : List
-      (Stokes.OrientedEdge vertices.count))
-      (matching : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.WalkFaceAssignments.WalkMatches (edges := edges)
+      (OrientedEdge vertices.count))
+      (matching : WalkFaceAssignments.WalkMatches (edges := edges)
         walk word)
-        (routes : MeshPathWalks.RouteSpine mesh word),
+        (routes : RouteSpine mesh word),
       (ofRoutes mesh walk word matching routes).values value =
         routes.values value
   | _, _, .nil _, word, matching, routes => by
@@ -210,12 +218,12 @@ theorem ofRoutes_values {α : Type} (value : (edge :
 
 /-- Attaching retained routes preserves the exact original cached indexed word. -/
 theorem ofRoutes_indexed (mesh :
-  GridLiftedMesh.LiftedMesh vertices edges faces) :
+  LiftedMesh vertices edges faces) :
     ∀ {start finish : Data.Gaussian.Basic.Canonical} (walk : Walks.Walk bank.grid start finish) (word : List
-      (Stokes.OrientedEdge vertices.count))
-      (matching : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.WalkFaceAssignments.WalkMatches (edges := edges)
+      (OrientedEdge vertices.count))
+      (matching : WalkFaceAssignments.WalkMatches (edges := edges)
         walk word)
-      (routes : MeshPathWalks.RouteSpine mesh word), (ofRoutes mesh
+      (routes : RouteSpine mesh word), (ofRoutes mesh
         walk word matching routes).indexed = word
   | _, _, .nil _, _, matching, _ => matching.nil_eq.symm
   | _, _, .cons _ _, [], matching, _ => matching.cons_not_nil.elim
@@ -225,10 +233,10 @@ theorem ofRoutes_indexed (mesh :
 
 /-- The face assignment reads back exactly the supplied original indexed word. -/
 theorem ofIndexed_indexed (mesh :
-  GridLiftedMesh.LiftedMesh vertices edges faces)
+  LiftedMesh vertices edges faces)
     {start finish : Data.Gaussian.Basic.Canonical} (walk : Walks.Walk bank.grid start finish) (word : List
-      (Stokes.OrientedEdge vertices.count))
-    (matching : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.WalkFaceAssignments.WalkMatches (edges := edges) walk
+      (OrientedEdge vertices.count))
+    (matching : WalkFaceAssignments.WalkMatches (edges := edges) walk
       word)
     (supported : CutPath.Supported (Stokes.triangleEdgeOccurrences mesh.triangulation.faces) word) :
     (ofIndexed mesh walk word matching supported).indexed = word :=
@@ -238,30 +246,127 @@ theorem ofIndexed_indexed (mesh :
 /-- There is one retained indexed edge per original path segment. -/
 theorem indexed_length {ambient :
   Rational.Box} :
-    ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient
+    ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : ClearPath curve.polynomial ambient
       start finish}
-      (assigned : LiftedMesh.PathFaces mesh path),
+      (assigned : PathFaces mesh path),
       assigned.indexed.length = path.segmentCount
   | _, _, _, .nil _ => rfl
   | _, _, _, .cons _ tail => congrArg Nat.succ tail.indexed_length
 
 /-- Attach actual mesh faces to the retained vertex walk's original cached edge word. -/
-def ofVertexWalk (mesh : GridLiftedMesh.LiftedMesh
+def ofVertexWalk (mesh : LiftedMesh
   vertices edges faces) {first last : Fin vertices.count}
     (walk : Vertex.VertexWalk vertices edges first last)
     (supported : CutPath.Supported (Stokes.triangleEdgeOccurrences mesh.triangulation.faces) walk.indexed) :
-    LiftedMesh.PathFaces mesh walk.walk.path :=
+    PathFaces mesh walk.walk.path :=
   ofIndexed mesh walk.walk walk.indexed ⟨vertices.sheet first,
     walk.indexed_eq⟩ supported
 
 /-- The vertex-walk face assignment preserves its exact original indexed edge word. -/
 theorem ofVertexWalk_indexed (mesh :
-  GridLiftedMesh.LiftedMesh vertices edges faces) {first last : Fin vertices.count}
+  LiftedMesh vertices edges faces) {first last : Fin vertices.count}
     (walk : Vertex.VertexWalk vertices edges first last)
     (supported : CutPath.Supported (Stokes.triangleEdgeOccurrences mesh.triangulation.faces) walk.indexed) :
     (ofVertexWalk mesh walk supported).indexed = walk.indexed :=
   ofIndexed_indexed mesh walk.walk walk.indexed ⟨vertices.sheet
     first, walk.indexed_eq⟩ supported
+
+section Concatenation
+
+/-- Read the complete actual cached clear path from its retained face spine.
+
+Only the outer path constructor is materialized. Its original head segment
+and complete original tail path are read directly from the existing cache;
+no grid edge, suffix path or face assignment is reconstructed.
+-/
+def path {ambient : Rational.Box} :
+    ∀ {start finish : Data.Gaussian.Basic.Canonical} {route : ClearPath curve.polynomial ambient start finish},
+      PathFaces mesh route → {value : ClearPath curve.polynomial ambient start finish // value = route}
+  | _, _, _, .nil point => ⟨.nil point, rfl⟩
+  | _, _, _, .cons (head := head) (tail := tail) _ _ => ⟨.cons head tail, rfl⟩
+
+/-- Concatenate retained face spines and their actual clear path in one structural traversal.
+
+Every original first-path placement, segment and endpoint is retained. The
+complete second assignment is the literal supplied tail. The resulting
+path is cached alongside those assignments, so dependent constructor fields
+consume the already built tail instead of reconstructing suffix paths.
+-/
+def append {ambient : Rational.Box} :
+    ∀ {start middle finish : Data.Gaussian.Basic.Canonical}
+      {first : ClearPath curve.polynomial ambient start middle}
+      {second : ClearPath curve.polynomial ambient middle finish},
+      PathFaces mesh first → PathFaces mesh second →
+        Σ joined : {value : ClearPath curve.polynomial ambient start finish // value = first.append second},
+          PathFaces mesh joined.val
+  | _, _, _, _, _, .nil _, right =>
+      let actual := path right
+      ⟨actual, Eq.mpr (congrArg (PathFaces mesh) actual.property) right⟩
+  | _, _, _, _, _, .cons (head := head) first remaining, right =>
+      let after := append remaining right
+      ⟨⟨.cons head after.1.val, congrArg (ClearPath.cons head) after.1.property⟩,
+        .cons first after.2⟩
+
+/-- The empty first face spine retains the complete supplied second assignment. -/
+theorem append_nil_heq {ambient : Rational.Box} {point finish : Data.Gaussian.Basic.Canonical}
+    {second : ClearPath curve.polynomial ambient point finish} (right : PathFaces mesh second) :
+    HEq (append (.nil point) right).2 right := by
+  cases right <;> exact HEq.rfl
+
+/-- The complete concatenation keeps the original head placement and its one retained recursive tail cache. -/
+theorem append_cons {ambient : Rational.Box} {start middle point finish : Data.Gaussian.Basic.Canonical}
+    {head : ClearPath.ClearSegment curve.polynomial ambient start middle}
+    {tail : ClearPath curve.polynomial ambient middle point}
+    {second : ClearPath curve.polynomial ambient point finish}
+    (first : SegmentFace mesh head) (remaining : PathFaces mesh tail) (right : PathFaces mesh second) :
+    append (.cons first remaining) right =
+      let after := append remaining right
+      ⟨⟨.cons head after.1.val, congrArg (ClearPath.cons head) after.1.property⟩,
+        .cons first after.2⟩ := (rfl)
+
+/-- Retained face concatenation preserves the exact ordered indexed words. -/
+theorem indexed_append {ambient : Rational.Box} :
+    ∀ {start middle finish : Data.Gaussian.Basic.Canonical}
+      {first : ClearPath curve.polynomial ambient start middle}
+      {second : ClearPath curve.polynomial ambient middle finish}
+      (left : PathFaces mesh first) (right : PathFaces mesh second),
+      (append left right).2.indexed = left.indexed ++ right.indexed
+  | _, _, _, _, _, .nil _, right => by cases right <;> rfl
+  | _, _, _, _, _, .cons first remaining, right =>
+      congrArg (List.cons first.indexed) (indexed_append remaining right)
+
+/-- Evaluation of face concatenation preserves every actual occurrence value in its original order. -/
+theorem values_append {α : Type}
+    (value : (edge : OrientedEdge vertices.count) → EdgeRoute mesh edge → α)
+    {ambient : Rational.Box} :
+    ∀ {start middle finish : Data.Gaussian.Basic.Canonical}
+      {first : ClearPath curve.polynomial ambient start middle}
+      {second : ClearPath curve.polynomial ambient middle finish}
+      (left : PathFaces mesh first) (right : PathFaces mesh second),
+      (append left right).2.values value = left.values value ++ right.values value
+  | _, _, _, _, _, .nil _, right => by cases right <;> rfl
+  | _, _, _, _, _, .cons first remaining, right =>
+      congrArg (List.cons (value _ first.location)) (values_append value remaining right)
+
+/-- Transporting a retained assignment's path index preserves its exact indexed word. -/
+theorem indexed_transport {ambient : Rational.Box} {start finish : Data.Gaussian.Basic.Canonical}
+    {first second : ClearPath curve.polynomial ambient start finish} (same : first = second)
+    (assigned : PathFaces mesh first) :
+    (Eq.mp (congrArg (PathFaces mesh) same) assigned).indexed = assigned.indexed := by
+  cases same
+  rfl
+
+/-- Path-index transport preserves every retained occurrence value. -/
+theorem values_transport {α : Type}
+    (value : (edge : OrientedEdge vertices.count) → EdgeRoute mesh edge → α)
+    {ambient : Rational.Box} {start finish : Data.Gaussian.Basic.Canonical}
+    {first second : ClearPath curve.polynomial ambient start finish} (same : first = second)
+    (assigned : PathFaces mesh first) :
+    (Eq.mp (congrArg (PathFaces mesh) same) assigned).values value = assigned.values value := by
+  cases same
+  rfl
+
+end Concatenation
 
 end Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh.PathFaces
 

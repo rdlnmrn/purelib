@@ -52,14 +52,14 @@ open Purelib.Riemann.RootContinuation.RootRadialRefinement (Refinement)
 open Purelib.Riemann.RootContinuation.RootRadialBasisEnergy (BasisValues)
 open Purelib.Riemann.RootContinuation.RootRadialBasisRequest (surfaceBudget lower)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box} {first last :
-    Purelib.Data.Gaussian.Basic.Canonical} {depth : Nat}
-  {parameters : Purelib.Integration.Path.Dyadic.RadialTriangles.Parameters depth} {refinement : Refinement first last
+variable {genus : Nat} {curve : HyperellipticCurve genus}
+  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {index : Nat} {box : Geometry.Rational.Box} {first last :
+    Data.Gaussian.Basic.Canonical} {depth : Nat}
+  {parameters : Integration.Path.Dyadic.RadialTriangles.Parameters depth} {refinement : Refinement first last
     parameters}
-  {polynomials : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+  {polynomials : RegularBasisPolynomials cap
     index box}
 
 namespace RootRadialBasisEnergy.BasisValues
@@ -74,16 +74,16 @@ open Purelib.LinearAlgebra.Gaussian in
 Uses the sample value identities and refinement coordinates to identify every boundary edge with the same
 coefficient-combined polynomial evaluated on the unit box. -/
 theorem boundary_eq_rectangle (sample : BasisValues refinement polynomials)
-    (budget : AffineBasis.SurfaceBudget sample.basis) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector
+    (budget : AffineBasis.SurfaceBudget sample.basis) (coefficients : Energy.GaussianVector
       genus) :
     (budget.sample coefficients).boundaryArea = PreparedBoxBoundary.rectangleBoundary
-      (fun parameter => Polygon.energyPrimitivePoint (polynomials.value coefficients (point first last parameter)))
+      (fun parameter => energyPrimitivePoint (polynomials.value coefficients (point first last parameter)))
       depth RadialTriangles.unitBox := by
   rw [(budget.sample coefficients).boundaryArea_eq]
-  change edgeListArea (fun vertex => Polygon.energyPrimitivePoint ((budget.sample coefficients).primitiveValue vertex))
+  change edgeListArea (fun vertex => energyPrimitivePoint ((budget.sample coefficients).primitiveValue vertex))
     parameters.mesh.mesh.triangulation.boundary = _
   calc
-    _ = edgeListArea (fun vertex => Polygon.energyPrimitivePoint (polynomials.value coefficients
+    _ = edgeListArea (fun vertex => energyPrimitivePoint (polynomials.value coefficients
         (point first last (parameters.mesh.mesh.coordinate vertex)))) parameters.mesh.mesh.triangulation.boundary := by
       generalize parameters.mesh.mesh.triangulation.boundary = edges
       induction edges with
@@ -95,10 +95,10 @@ theorem boundary_eq_rectangle (sample : BasisValues refinement polynomials)
           rw [sample.value_readback budget coefficients, sample.value_readback budget coefficients,
             refinement.coordinates_eq, refinement.coordinates_eq]
     _ = PreparedBoxBoundary.rectangleBoundary
-        (fun parameter => Polygon.energyPrimitivePoint (polynomials.value coefficients (point first last parameter)))
+        (fun parameter => energyPrimitivePoint (polynomials.value coefficients (point first last parameter)))
         depth parameters.mesh.partition.parent :=
           PreparedBoxBoundary.TriangulatedPartition.boundaryArea_eq_rectangleBoundary parameters.mesh
-          (fun parameter => Polygon.energyPrimitivePoint (polynomials.value coefficients (point first last parameter)))
+          (fun parameter => energyPrimitivePoint (polynomials.value coefficients (point first last parameter)))
     _ = _ := by rw [parameters.parent_eq]
 
 open Purelib.LinearAlgebra.Gaussian in
@@ -106,7 +106,7 @@ open Purelib.LinearAlgebra.Gaussian in
 
 Preserves the first-to-last orientation: the initial radial area is added and the final radial area is subtracted. -/
 theorem boundary_eq_arcs (sample : BasisValues refinement polynomials)
-    (budget : AffineBasis.SurfaceBudget sample.basis) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector
+    (budget : AffineBasis.SurfaceBudget sample.basis) (coefficients : Energy.GaussianVector
       genus) :
     (budget.sample coefficients).boundaryArea = radialArea (polynomials.value coefficients) depth first +
       arcArea (polynomials.value coefficients) depth first last - radialArea (polynomials.value coefficients) depth last
@@ -118,12 +118,12 @@ end RootRadialBasisEnergy.BasisValues
 
 namespace RootRadialBasisBoundary.BasisRequest
 
-variable {bounds : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisBounds.RegularBasisBounds
-  polynomials RootRadialGeometry.domain}
-  {count minimum : Nat} {target : Purelib.Data.Rat.Fraction.Rational} (request :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisRequest.RegularBasisRequest bounds count target
+variable {bounds : RegularBasisBounds
+  polynomials domain}
+  {count minimum : Nat} {target : Rational} (request :
+    RegularBasisRequest bounds count target
     minimum)
-  {parameters : Purelib.Integration.Path.Dyadic.RadialTriangles.Parameters request.depth} {refinement : Refinement first
+  {parameters : Integration.Path.Dyadic.RadialTriangles.Parameters request.depth} {refinement : Refinement first
     last parameters}
 
 open Purelib.LinearAlgebra.Gaussian in
@@ -133,7 +133,7 @@ open Purelib.Riemann.Readings in
 Transports the retained surface budget through the exact arc decomposition, with coefficient norm, tolerance and the
 original factor 128 unchanged. -/
 theorem arcs_lower (sample : BasisValues refinement polynomials) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
+  Energy.GaussianVector genus) :
     -(PreparedObservationCoercivity.coefficientNormSq coefficients *
       (128 * (2 * bounds.coefficient + 3) * request.tolerance.epsilon)) ≤
       (radialArea (polynomials.value coefficients) request.depth first +

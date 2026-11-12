@@ -59,32 +59,32 @@ abbrev RawPeriodVector := Fin 2 -> Coherent.CoherentNamed
 /-- Pointwise operational equality of raw period vectors. -/
 def VectorEquivalent (left right :
   RawPeriodVector) : Type :=
-  forall coordinate, Gaussian.Equivalence.NamedEquivalent (left coordinate).name
+  forall coordinate, NamedEquivalent (left coordinate).name
     (right coordinate).name
 
 namespace VectorEquivalent
 
 /-- Every two-coordinate coherent vector is pointwise operationally equivalent to itself. -/
 def refl (periods :
-  Approximation.Gaussian.Vector.Operational.Basic.RawPeriodVector) :
-  Approximation.Gaussian.Vector.Operational.Basic.VectorEquivalent periods periods :=
+  RawPeriodVector) :
+  VectorEquivalent periods periods :=
   fun coordinate =>
     NamedEquivalent.refl (periods coordinate).name
 
 /-- Reverse a pointwise operational equivalence between two coherent vectors. -/
 def symm {left right :
-  Approximation.Gaussian.Vector.Operational.Basic.RawPeriodVector}
-    (equivalent : Approximation.Gaussian.Vector.Operational.Basic.VectorEquivalent left right) :
-      Approximation.Gaussian.Vector.Operational.Basic.VectorEquivalent right left :=
+  RawPeriodVector}
+    (equivalent : VectorEquivalent left right) :
+      VectorEquivalent right left :=
   fun coordinate =>
     NamedEquivalent.symm (equivalent coordinate)
 
 /-- Compose pointwise operational equivalences through the same retained middle vector. -/
 def trans {first second third :
-  Approximation.Gaussian.Vector.Operational.Basic.RawPeriodVector}
-    (firstSecond : Approximation.Gaussian.Vector.Operational.Basic.VectorEquivalent first second)
-    (secondThird : Approximation.Gaussian.Vector.Operational.Basic.VectorEquivalent second third) :
-    Approximation.Gaussian.Vector.Operational.Basic.VectorEquivalent first third := fun coordinate =>
+  RawPeriodVector}
+    (firstSecond : VectorEquivalent first second)
+    (secondThird : VectorEquivalent second third) :
+    VectorEquivalent first third := fun coordinate =>
   NamedEquivalent.trans
     (firstSecond coordinate) (secondThird coordinate)
 

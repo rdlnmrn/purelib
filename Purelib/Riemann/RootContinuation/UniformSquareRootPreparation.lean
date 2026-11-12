@@ -1,4 +1,5 @@
 module
+import Purelib.Polynomial.Bounds.Horner
 import Purelib.Polynomial.Dense.Gaussian.Bounds.Box
 import Purelib.Polynomial.Dense.Gaussian.Bounds.Box.Taylor
 import Purelib.Polynomial.Dense.Gaussian.Bounds.Taylor
@@ -59,7 +60,6 @@ import Purelib.Geometry.Rational.Box.Bounds
 import Purelib.RootIsolation.FTA.Squarefree.Input
 import Purelib.Geometry.Rational.Box.Refinement
 import Purelib.Approximation.Gaussian.Sequence
-import Purelib.Polynomial.Bounds.Horner
 import Purelib.Geometry.Rational.Box.Sample
 import Purelib.Polynomial.Dense.Gaussian.Derivative.Separation.Basic
 import Purelib.Data.Rat.Fraction.Order.Basic
@@ -67,6 +67,16 @@ import Purelib.Data.Gaussian.Field
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
+
+open Purelib.Polynomial.Dense.Basic
+
+open Purelib.RootIsolation.Newton.Restart.Separated
+
+open Purelib.Polynomial.Dense.Gaussian.Newton.Box
+
+open Purelib.Approximation.Rational.SquareRoot.Radius.Dyadic
+
+open Purelib.Data.Rat.Fraction.Order
 
 /-!
 # Uniform finite square-root preparation along a clear segment
@@ -79,7 +89,11 @@ boundary clearance on that ambient.  It is the finite replacement for a
 compactness argument in the persistent refinement schedule.
 -/
 
+variable {mode : Purelib.Polynomial.Geometry.ClearPath.ClearSegment.Mode}
+
 namespace Purelib.Riemann.RootContinuation.UniformSquareRootPreparation
+
+open Purelib.Polynomial.Bounds (Horner)
 
 open Purelib.Data.Rat in
 /-- The exact rational coordinate carrier. -/
@@ -90,11 +104,11 @@ public abbrev Gaussian := Basic.Canonical
 open Purelib.Polynomial.Dense.Gaussian in
 /-- Dense Gaussian polynomials over exact rational coordinates. -/
 public abbrev GaussianPolynomial :=
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+  Basic.CanonicalCoefficients.CoefficientPolynomial
 /-- The original rational box type with retained coordinate bounds. -/
-public abbrev Box := Purelib.Geometry.Rational.Box
+public abbrev Box := Geometry.Rational.Box
 /-- The original square-root owner indexed by its exact radicand. -/
-public abbrev Owner := Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+public abbrev Owner := Topology.SquareRootContinuationChain.Owner
 
 /-! ## Finite path-range bounds -/
 
@@ -160,7 +174,7 @@ public theorem dyadicLineNormMajorant_leftmost_le (polynomial : GaussianPolynomi
   | succ depth inductionHypothesis =>
       rw [dyadicLineNormMajorant]
       exact (inductionHypothesis
-        (Scale.scale (1 / 2) direction)).trans (Fraction.Order.Basic.le_max_left _ _)
+        (Scale.scale (1 / 2) direction)).trans (Basic.le_max_left _ _)
 
 /-- The rightmost leaf's exact evaluation majorant is at most the retained dyadic maximum.
 
@@ -179,7 +193,7 @@ public theorem dyadicLineNormMajorant_rightmost_le (polynomial : GaussianPolynom
       rw [dyadicLineNormMajorant]
       exact (inductionHypothesis
         (origin + Scale.scale (1 / 2) direction)
-          (Scale.scale (1 / 2) direction)).trans (Fraction.Order.Basic.le_max_right _ _)
+          (Scale.scale (1 / 2) direction)).trans (Basic.le_max_right _ _)
 
 end
 
@@ -284,7 +298,7 @@ public theorem normSq_eval_line_le_dyadicLineNormMajorant
     (polynomial : GaussianPolynomial) (origin direction : Gaussian)
     (depth : Nat) (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (polynomial.eval
           (Affine.line origin direction parameter)) <=
       dyadicLineNormMajorant polynomial origin direction depth := by
@@ -303,38 +317,38 @@ public theorem normSq_eval_line_le_dyadicLineNormMajorant
       · have localInside : (0 : Coordinate) <= 2 * parameter ∧
             2 * parameter <= 1 := by
           constructor
-          · exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+          · exact Arithmetic.mul_nonneg_direct (by decide)
               inside.1
           · calc
               2 * parameter <= 2 * (1 / 2) :=
-                Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                Arithmetic.mul_le_mul_of_nonneg_left_direct
                   left (by decide)
               _ = 1 := by decide
         have localBound := inductionHypothesis origin half
           (2 * parameter) localInside
         rw [line_left_half] at localBound
-        exact localBound.trans (Fraction.Order.Basic.le_max_left _ _)
+        exact localBound.trans (Basic.le_max_left _ _)
       · have halfLt : (1 / 2 : Coordinate) < parameter :=
-          Fraction.Order.Arithmetic.lt_of_not_ge_direct left
+          Arithmetic.lt_of_not_ge_direct left
         have localInside : (0 : Coordinate) <= 2 * parameter - 1 ∧
             2 * parameter - 1 <= 1 := by
           constructor
-          · apply Fraction.Order.Arithmetic.sub_nonneg_direct
+          · apply Arithmetic.sub_nonneg_direct
             calc
               1 = 2 * (1 / 2 : Coordinate) := by decide
               _ <= 2 * parameter :=
-                Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                Arithmetic.mul_le_mul_of_nonneg_left_direct
                   halfLt.le (by decide)
           · calc
               2 * parameter - 1 <= 2 * 1 - 1 :=
-                Fraction.Order.Arithmetic.sub_le_sub_right_direct
-                  (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                Arithmetic.sub_le_sub_right_direct
+                  (Arithmetic.mul_le_mul_of_nonneg_left_direct
                     inside.2 (by decide)) 1
               _ = 1 := by ring1
         have localBound := inductionHypothesis (origin + half) half
           (2 * parameter - 1) localInside
         rw [line_right_half] at localBound
-        exact localBound.trans (Fraction.Order.Basic.le_max_right _ _)
+        exact localBound.trans (Basic.le_max_right _ _)
 
 open Purelib.Data.Gaussian in
 open Purelib.Polynomial.Dense.Gaussian in
@@ -351,7 +365,7 @@ public theorem dyadicLineNormMajorant_nonneg (polynomial : GaussianPolynomial)
       exact (Bounds.Box.denseEvalNormMajorant_pos _ _).le
   | succ depth inductionHypothesis =>
       exact (inductionHypothesis origin
-        (Scale.scale (1 / 2) direction)).trans (Fraction.Order.Basic.le_max_left _ _)
+        (Scale.scale (1 / 2) direction)).trans (Basic.le_max_left _ _)
 
 /-- The fixed depth-four dyadic scan used for the radicand majorant. -/
 @[expose] public def radicandScanDepth : Nat := 4
@@ -368,7 +382,7 @@ determines the exact degree-two root polynomial. -/
 @[expose] public def rootPolynomialAt
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate) : GaussianPolynomial :=
   SquareRootReconditioning.rootPolynomial
     (polynomial.eval (segment.pointAt parameter))
@@ -384,10 +398,10 @@ positive radius for the same segment. -/
 @[expose] public def segmentPointRadius
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (_segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) : Coordinate :=
+    (_segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) : Coordinate :=
   2 *
-      (Data.Gaussian.Norm.Basic.normSq (finish - start) +
-        Data.Gaussian.Norm.Basic.normSq start) +
+      (Norm.Basic.normSq (finish - start) +
+        Norm.Basic.normSq start) +
     1
 
 open Purelib.Data.Gaussian in
@@ -397,14 +411,14 @@ open Purelib.Polynomial in
 public theorem one_le_segmentPointRadius
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) :
     (1 : Coordinate) <= segmentPointRadius segment := by
   unfold segmentPointRadius
   have doubledNonnegative :
       0 <= 2 *
-        (Data.Gaussian.Norm.Basic.normSq (finish - start) +
-          Data.Gaussian.Norm.Basic.normSq start) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+        (Norm.Basic.normSq (finish - start) +
+          Norm.Basic.normSq start) :=
+    Arithmetic.mul_nonneg_direct (by decide)
       (add_nonneg
         (Norm.Basic.normSq_nonneg _)
         (Norm.Basic.normSq_nonneg _))
@@ -415,7 +429,7 @@ open Purelib.Polynomial in
 public theorem segmentPointRadius_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) :
     0 < segmentPointRadius segment :=
   (show (0 : Coordinate) < 1 by decide).trans_le
     (one_le_segmentPointRadius segment)
@@ -429,7 +443,7 @@ changing the original segment. -/
 @[expose] public def segmentPointAmbient
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) : Box :=
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) : Box :=
   Box.symmetric (segmentPointRadius segment)
     (segmentPointRadius_positive segment).le
 
@@ -443,15 +457,15 @@ same retained endpoint quadrances. -/
 public theorem segmentPointAmbient_contains
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1) :
     (segmentPointAmbient segment).Contains (segment.pointAt parameter) := by
   let point := segment.pointAt parameter
   let radius := segmentPointRadius segment
   have differenceBound :
-      Data.Gaussian.Norm.Basic.normSq (point - start) <=
-        Data.Gaussian.Norm.Basic.normSq (finish - start) := by
+      Norm.Basic.normSq (point - start) <=
+        Norm.Basic.normSq (finish - start) := by
     simpa only [point, Geometry.ClearPath.ClearSegment.pointAt_zero, Geometry.ClearPath.ClearSegment.pointAt_one]
       using segment.normSq_pointAt_sub_zero_le_full parameter inside
   have decomposition : point = (point - start) + start := by
@@ -460,16 +474,16 @@ public theorem segmentPointAmbient_contains
         Basic.sub_im,
         Basic.add_re,
         Basic.add_im] <;> ring1
-  have pointLeBase : Data.Gaussian.Norm.Basic.normSq point <=
+  have pointLeBase : Norm.Basic.normSq point <=
       2 *
-        (Data.Gaussian.Norm.Basic.normSq (finish - start) +
-          Data.Gaussian.Norm.Basic.normSq start) := by
+        (Norm.Basic.normSq (finish - start) +
+          Norm.Basic.normSq start) := by
     rw [decomposition]
     exact (Norm.Bounds.normSq_add_le_two _ _).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add differenceBound le_rfl) (by decide))
   have pointLeRadius :
-      Data.Gaussian.Norm.Basic.normSq point <= radius := by
+      Norm.Basic.normSq point <= radius := by
     exact pointLeBase.trans (by
       dsimp only [radius, segmentPointRadius]
       exact le_add_of_nonneg_right (by decide))
@@ -478,7 +492,7 @@ public theorem segmentPointAmbient_contains
     calc
       radius = radius * 1 := by ring1
       _ <= radius * radius :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (one_le_segmentPointRadius segment)
           (segmentPointRadius_positive segment).le
   exact Norm.Bounds.coordinate_bounds_of_normSq_le
@@ -488,6 +502,7 @@ public theorem segmentPointAmbient_contains
 section
 
 open Purelib.Polynomial
+open Purelib.Polynomial.Dense.Gaussian
 
 /-- One plus the depth-four dyadic squared-norm majorant for the original segment polynomial.
 
@@ -496,26 +511,46 @@ majorant supplies the same positive bound for every segment parameter. -/
 @[irreducible, expose] public def radicandNormBound
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (_segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) : Coordinate :=
-  dyadicLineNormMajorant polynomial start (finish - start)
-    radicandScanDepth + 1
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) : Coordinate :=
+  match mode, segment with
+  | .axis, _ =>
+      dyadicLineNormMajorant polynomial start (finish - start) radicandScanDepth + 1
+  | .region, .affine _ _ _ _ _ _ _ bounds _ => bounds.value + 1
 
 /-- The retained radicand squared-norm bound is at least one. -/
 public theorem one_le_radicandNormBound
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (_segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
-    (1 : Coordinate) <= radicandNormBound _segment := by
-  unfold radicandNormBound
-  exact le_add_of_nonneg_left
-    (dyadicLineNormMajorant_nonneg polynomial start (finish - start)
-      radicandScanDepth)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) :
+    (1 : Coordinate) ≤ radicandNormBound segment := by
+  have axis (original : radicandNormBound segment =
+      dyadicLineNormMajorant polynomial start (finish - start) radicandScanDepth + 1) :
+      (1 : Coordinate) ≤ radicandNormBound segment := by
+    rewrite [original]
+    exact le_add_of_nonneg_left
+      (dyadicLineNormMajorant_nonneg polynomial start (finish - start) radicandScanDepth)
+  cases segment with
+  | horizontal =>
+      apply axis
+      unfold radicandNormBound
+      rfl
+  | vertical =>
+      apply axis
+      unfold radicandNormBound
+      rfl
+  | affine start finish region refines clearance startInside finishInside bounds bounds_eq =>
+      unfold radicandNormBound
+      change (1 : Coordinate) ≤ bounds.value + 1
+      have nonnegative := (Bounds.Box.denseHornerNormBounds_nonneg polynomial ambient).1
+      change 0 ≤ (Bounds.Box.denseHornerNormBounds polynomial ambient).value at nonnegative
+      rewrite [← bounds_eq] at nonnegative
+      exact le_add_of_nonneg_left nonnegative
 
 /-- The retained radicand squared-norm bound is strictly positive. -/
 public theorem radicandNormBound_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) :
     0 < radicandNormBound segment :=
   (show (0 : Coordinate) < 1 by decide).trans_le
     (one_le_radicandNormBound segment)
@@ -525,6 +560,7 @@ end
 open Purelib.Data.Gaussian in
 open Purelib.Geometry.Rational in
 open Purelib.Polynomial in
+open Purelib.Polynomial.Dense.Gaussian in
 /-- Every original segment sample's polynomial value satisfies the retained radicand bound.
 
 The unit-interval parameter selects a point on the original cleared segment. The fixed-depth dyadic scan bounds the
@@ -532,32 +568,45 @@ polynomial value at that same point. -/
 public theorem eval_normSq_le_radicandNormBound
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (polynomial.eval (segment.pointAt parameter)) <=
       radicandNormBound segment := by
-  have evaluated := normSq_eval_line_le_dyadicLineNormMajorant polynomial
-    start (finish - start) radicandScanDepth parameter inside
-  have lineEqual : Affine.line start (finish - start) parameter =
-      segment.pointAt parameter := by
-    apply Basic.ext <;>
-      simp only [Affine.line, Geometry.ClearPath.ClearSegment.pointAt,
-        Cast.ofCoordinate_re,
-        Cast.ofCoordinate_im,
-        Scale.scale_re, Scale.scale_im,
-        Basic.add_re,
-        Basic.add_im,
-        Basic.sub_re,
-        Basic.sub_im,
-        Basic.mul_re,
-        Basic.mul_im] <;>
-      ring1
-  rw [lineEqual] at evaluated
-  exact evaluated.trans (by
-    unfold radicandNormBound
-    exact le_add_of_nonneg_right (by decide))
+  have axis (original : radicandNormBound segment =
+      dyadicLineNormMajorant polynomial start (finish - start) radicandScanDepth + 1) :
+      Norm.Basic.normSq (polynomial.eval (segment.pointAt parameter)) ≤ radicandNormBound segment := by
+    have evaluated := normSq_eval_line_le_dyadicLineNormMajorant polynomial
+      start (finish - start) radicandScanDepth parameter inside
+    have lineEqual : Affine.line start (finish - start) parameter = segment.pointAt parameter :=
+      (segment.pointAt_eq_line parameter).symm
+    rw [lineEqual] at evaluated
+    exact evaluated.trans (by
+      rewrite [original]
+      exact le_add_of_nonneg_right (by decide))
+  cases segment with
+  | horizontal =>
+      apply axis
+      unfold radicandNormBound
+      rfl
+  | vertical =>
+      apply axis
+      unfold radicandNormBound
+      rfl
+  | affine start finish region refines clearance startInside finishInside bounds bounds_eq =>
+      have contained : ambient.Contains
+          ((Geometry.ClearPath.ClearSegment.affine start finish region refines clearance
+            startInside finishInside bounds bounds_eq).pointAt parameter) :=
+        (Geometry.ClearPath.ClearSegment.affine start finish region refines clearance
+          startInside finishInside bounds bounds_eq).pointAt_contains True.intro parameter inside
+      have bound := Bounds.Box.normSq_eval_le_denseEvalNormBound polynomial contained
+      change Norm.Basic.normSq _ ≤ (Bounds.Box.denseHornerNormBounds polynomial ambient).value at bound
+      rewrite [← bounds_eq] at bound
+      unfold radicandNormBound
+      exact bound.trans (by
+        change bounds.value ≤ bounds.value + 1
+        exact le_add_of_nonneg_right (by decide))
 
 section
 
@@ -567,14 +616,14 @@ open Purelib.Polynomial
 @[expose] public def rootSampleCoordinateRadius
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) : Coordinate :=
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) : Coordinate :=
   2 * radicandNormBound segment
 
 /-- Twice the sum of one quarter and the retained radicand squared-norm bound. -/
 @[expose] public def rootSampleNormSqMajorant
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) : Coordinate :=
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) : Coordinate :=
   2 * ((1 / 4 : Coordinate) + radicandNormBound segment)
 
 end
@@ -588,9 +637,9 @@ strictly positive sample bound. -/
 public theorem rootSampleNormSqMajorant_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) :
     0 < rootSampleNormSqMajorant segment :=
-  Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+  Arithmetic.mul_pos_direct (by decide)
     (add_pos_of_pos_of_nonneg (by decide)
       (radicandNormBound_positive segment).le)
 
@@ -599,7 +648,7 @@ open Purelib.Polynomial in
 @[expose] public def rootAmbientRadius
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) : Coordinate :=
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) : Coordinate :=
   rootSampleCoordinateRadius segment + 1
 
 section
@@ -611,14 +660,14 @@ open Purelib.Polynomial
 public theorem three_le_rootAmbientRadius
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) :
     (3 : Coordinate) <= rootAmbientRadius segment := by
   unfold rootAmbientRadius rootSampleCoordinateRadius
   calc
     (3 : Coordinate) = 2 * 1 + 1 := by decide
     _ <= 2 * radicandNormBound segment + 1 := by
       exact add_le_add
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
           (one_le_radicandNormBound segment)
           (show (0 : Coordinate) <= 2 by decide)) le_rfl
 
@@ -626,10 +675,10 @@ public theorem three_le_rootAmbientRadius
 public theorem rootAmbientRadius_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) :
     0 < rootAmbientRadius segment :=
   add_pos_of_pos_of_nonneg
-    (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+    (Arithmetic.mul_pos_direct (by decide)
       (radicandNormBound_positive segment)) (by decide)
 
 end
@@ -643,7 +692,7 @@ independent of its sampled parameter. -/
 @[expose] public def rootAmbient
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) : Box :=
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) : Box :=
   Box.symmetric (rootAmbientRadius segment)
     (rootAmbientRadius_positive segment).le
 
@@ -659,7 +708,7 @@ private theorem two_one_add_le_sampleRadius_four
     calc
       bound = bound * 1 := by ring1
       _ <= bound * bound :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct oneLe
+        Arithmetic.mul_le_mul_of_nonneg_left_direct oneLe
           boundNonnegative
   have oneLeSquare : (1 : Coordinate) <= bound ^ 2 :=
     oneLe.trans boundLeSquare
@@ -668,21 +717,21 @@ private theorem two_one_add_le_sampleRadius_four
     calc
       bound ^ 2 = bound ^ 2 * 1 := by ring1
       _ <= bound ^ 2 * bound ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct oneLeSquare
-          (Fraction.Order.Arithmetic.sq_nonneg_direct bound)
+        Arithmetic.mul_le_mul_of_nonneg_left_direct oneLeSquare
+          (Arithmetic.sq_nonneg_direct bound)
   have boundLeFourth := boundLeSquare.trans squareLeFourth
   have oneLeFourth := oneLeSquare.trans squareLeFourth
   calc
     2 * (1 + bound) <= 2 * (bound ^ 4 + bound ^ 4) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add oneLeFourth boundLeFourth) (by decide)
     _ <= 16 * bound ^ 4 := by
       have fourthNonnegative : (0 : Coordinate) <= bound ^ 4 :=
-        Fraction.Order.Arithmetic.pow_nonneg_direct boundNonnegative 4
+        Arithmetic.pow_nonneg_direct boundNonnegative 4
       calc
         2 * (bound ^ 4 + bound ^ 4) = 4 * bound ^ 4 := by ring1
         _ <= 16 * bound ^ 4 :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          Arithmetic.mul_le_mul_of_nonneg_right_direct
             (by decide) fourthNonnegative
     _ = (2 * bound) ^ 4 := by ring1
 
@@ -700,7 +749,7 @@ four sides. -/
 @[expose] public def rootAmbientClearance
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1) :
     Boundary.Basic.BoundaryClearance
@@ -713,18 +762,18 @@ four sides. -/
     let radius := rootAmbientRadius segment
     let radicand := polynomial.eval (segment.pointAt parameter)
     have radicandBound :
-        Data.Gaussian.Norm.Basic.normSq radicand <= bound :=
+        Norm.Basic.normSq radicand <= bound :=
       eval_normSq_le_radicandNormBound segment parameter inside
     have radial := Box.Square.Symmetric.Norm.symmetric_boundary_norm_bounds
       (rootAmbientRadius_positive segment).le boundary
     have powerLower : radius ^ 4 <=
-        Data.Gaussian.Norm.Basic.normSq (z ^ 2) := by
+        Norm.Basic.normSq (z ^ 2) := by
       rw [Power.normSq_pow]
       calc
         radius ^ 4 = (radius ^ 2) ^ 2 := by ring1
-        _ <= Data.Gaussian.Norm.Basic.normSq z ^ 2 :=
-          Fraction.Order.Arithmetic.pow_le_pow_direct
-            (Fraction.Order.Arithmetic.sq_nonneg_direct radius) radial.1 2
+        _ <= Norm.Basic.normSq z ^ 2 :=
+          Arithmetic.pow_le_pow_direct
+            (Arithmetic.sq_nonneg_direct radius) radial.1 2
     have split : z ^ 2 = (z ^ 2 - radicand) + radicand := by
       apply Basic.ext <;>
         simp only [Basic.sub_re,
@@ -745,44 +794,44 @@ four sides. -/
           two_one_add_le_sampleRadius_four
             (one_le_radicandNormBound segment)
       exact baseScalar.trans
-        (Fraction.Order.Arithmetic.pow_le_pow_direct
+        (Arithmetic.pow_le_pow_direct
           (by
             unfold rootSampleCoordinateRadius
-            exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+            exact Arithmetic.mul_nonneg_direct (by decide)
               (radicandNormBound_positive segment).le)
           sampleRadiusLe 4)
     have combined :
         2 * (1 + bound) <=
           2 *
-            (Data.Gaussian.Norm.Basic.normSq
+            (Norm.Basic.normSq
                 (z ^ 2 - radicand) +
-              Data.Gaussian.Norm.Basic.normSq radicand) :=
+              Norm.Basic.normSq radicand) :=
       scalarLower.trans (powerLower.trans upper)
     have boundedRight :
         2 *
-            (Data.Gaussian.Norm.Basic.normSq
+            (Norm.Basic.normSq
                 (z ^ 2 - radicand) +
-              Data.Gaussian.Norm.Basic.normSq radicand) <=
+              Norm.Basic.normSq radicand) <=
           2 *
-            (Data.Gaussian.Norm.Basic.normSq
+            (Norm.Basic.normSq
                 (z ^ 2 - radicand) + bound) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add le_rfl radicandBound) (by decide)
     have reduced := combined.trans boundedRight
     have withoutTwo :
         1 + bound <=
-          Data.Gaussian.Norm.Basic.normSq
+          Norm.Basic.normSq
               (z ^ 2 - radicand) + bound := by
-      apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+      apply Arithmetic.le_of_mul_le_mul_right_direct
         (c := 2) ?_ (show (0 : Coordinate) < 2 by decide)
       simpa only [Fraction.Field.mul_comm] using reduced
     have result : (1 : Coordinate) <=
-        Data.Gaussian.Norm.Basic.normSq (z ^ 2 - radicand) := by
-      exact Fraction.Order.Arithmetic.le_of_add_le_add_right_direct
+        Norm.Basic.normSq (z ^ 2 - radicand) := by
+      exact Arithmetic.le_of_add_le_add_right_direct
         (c := bound) withoutTwo
     simpa only [rootPolynomialAt,
       SquareRootReconditioning.rootPolynomial,
-      Purelib.Polynomial.Power.Gaussian.rootPolynomial_eval,
+      Gaussian.rootPolynomial_eval,
       SquareRootDegree.degreeTwo_value, radicand, Norm.Basic.normSq_eq_canonical] using result
 
 open Purelib.Polynomial in
@@ -790,7 +839,7 @@ open Purelib.Polynomial in
 @[simp] public theorem rootAmbientClearance_bound
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1) :
     (rootAmbientClearance segment parameter inside).bound = 1 := rfl
@@ -810,7 +859,7 @@ retained box quadrance bound, not the segment parameter. -/
 public theorem rootLipschitz_formula
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate) :
     Bounds.Box.denseLipschitzBound
         (rootPolynomialAt segment parameter) (rootAmbient segment) =
@@ -826,14 +875,14 @@ public theorem rootLipschitz_formula
     List.foldl_cons, List.foldl_nil,
     Norm.Basic.normSq_zero,
     Norm.Basic.normSq_one]
-  congr 1
+  apply congrArg (fun bound : Coordinate => max 1 bound)
   ring1
 
 /-- The exact quadratic Taylor remainder bound in the common root box is eight. -/
 public theorem rootTaylor_formula
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate) :
     Bounds.Box.Taylor.denseTaylorRemainderBound
         (rootPolynomialAt segment parameter) (rootAmbient segment) = 8 := by
@@ -849,7 +898,9 @@ public theorem rootTaylor_formula
     Norm.Basic.normSq_zero,
     Norm.Basic.normSq_one]
   calc
-    max 1 _ = max 1 (8 : Coordinate) := by congr 1; ring1
+    max 1 _ = max 1 (8 : Coordinate) := by
+      apply congrArg (fun bound : Coordinate => max 1 bound)
+      ring1
     _ = 8 := by decide
 
 end
@@ -866,7 +917,7 @@ majorant. The same derivative bounds all segment parameters. -/
 @[expose] public def rootDerivativeMajorant
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) : Coordinate :=
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) : Coordinate :=
   Bounds.Box.denseEvalNormMajorant
     (GCD.derivative (rootPolynomialAt segment 0))
     (rootAmbient segment)
@@ -875,7 +926,7 @@ majorant. The same derivative bounds all segment parameters. -/
 public theorem rootDerivativeMajorant_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) :
     0 < rootDerivativeMajorant segment :=
   Bounds.Box.denseEvalNormMajorant_pos _ _
 
@@ -892,7 +943,7 @@ same finite evaluation majorant. -/
 public theorem rootDerivativeMajorant_formula
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate) :
     Bounds.Box.denseEvalNormMajorant
         (GCD.derivative
@@ -918,12 +969,12 @@ that same point's squared norm. -/
 public theorem rootDerivative_normSq_formula
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate) (point : Gaussian) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((GCD.derivative
           (rootPolynomialAt segment parameter)).eval point) =
-      4 * Data.Gaussian.Norm.Basic.normSq point := by
+      4 * Norm.Basic.normSq point := by
   unfold rootPolynomialAt
     SquareRootReconditioning.rootPolynomial
     Gaussian.rootPolynomial
@@ -933,16 +984,16 @@ public theorem rootDerivative_normSq_formula
     List.replicate_succ, List.replicate_zero, List.nil_append,
     List.cons_append, List.foldl_cons, List.foldl_nil,
     Dense.Derivative.derivativeStep,
-    Dense.Basic.DensePolynomial.normalize_constant_of_ne
+    DensePolynomial.normalize_constant_of_ne
       (by decide : (1 : Gaussian) ≠ 0),
-    Dense.Basic.DensePolynomial.shift_zero,
-    Dense.Basic.DensePolynomial.zero_add_normalize,
-    Dense.Basic.DensePolynomial.normalize_zero,
-    Dense.Basic.DensePolynomial.eval_add,
-    Dense.Basic.DensePolynomial.eval_shift,
-    Dense.Basic.DensePolynomial.eval_constant, pow_one]
+    DensePolynomial.shift_zero,
+    DensePolynomial.zero_add_normalize,
+    DensePolynomial.normalize_zero,
+    DensePolynomial.eval_add,
+    DensePolynomial.eval_shift,
+    DensePolynomial.eval_constant, pow_one]
   simp only [one_mul, add_zero]
-  unfold Data.Gaussian.Norm.Basic.normSq
+  unfold Norm.Basic.normSq
   simp only [Basic.add_re,
     Basic.add_im]
   ring1
@@ -955,7 +1006,7 @@ nonconstant coefficients make it uniform in the original segment parameter. -/
 @[expose] public def rootLipschitz
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) : Coordinate :=
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) : Coordinate :=
   max 1 (16 * (rootAmbient segment).normSqBound)
 
 open Purelib.Polynomial in
@@ -964,9 +1015,9 @@ open Purelib.Data.Rat in
 public theorem rootLipschitz_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) :
     0 < rootLipschitz segment :=
-  (show (0 : Coordinate) < 1 by decide).trans_le (Fraction.Order.Basic.le_max_left _ _)
+  (show (0 : Coordinate) < 1 by decide).trans_le (Basic.le_max_left _ _)
 
 open Purelib.Polynomial in
 /-- The smaller of one and the reciprocal of four times the common squared Lipschitz bound.
@@ -976,7 +1027,7 @@ radius. -/
 @[expose] public def rootInteriorRadius
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) : Coordinate :=
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) : Coordinate :=
   min 1 (1 / (4 * rootLipschitz segment))
 
 open Purelib.Data.Rat in
@@ -988,11 +1039,11 @@ retained Lipschitz bound. -/
 public theorem rootInteriorRadius_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) :
     0 < rootInteriorRadius segment :=
-  Fraction.Order.Basic.lt_min (by decide)
-    (Fraction.Order.Field.div_pos_direct (by decide)
-      (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+  Basic.lt_min (by decide)
+    (Field.div_pos_direct (by decide)
+      (Arithmetic.mul_pos_direct (by decide)
         (rootLipschitz_positive segment)))
 
 open Purelib.Polynomial in
@@ -1004,7 +1055,7 @@ residual-interior formula consequently uses the retained common radius. -/
 public theorem rootAmbient_residualInteriorRadius_eq
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1) :
     (rootAmbientClearance segment parameter inside).residualInteriorRadius =
@@ -1024,14 +1075,14 @@ the original segment. -/
 @[expose] public def preparationRadius
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (rootDiameter : Coordinate) : Coordinate :=
   min (1 / 8 : Coordinate)
     (min
-      (SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius
+      (Geometric.dyadicSquareRadius
         (ClearSheetContinuation.squareRootDerivativeMargin
             segment / (72 * 8)))
-      (SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius (rootDiameter / 8)))
+      (Geometric.dyadicSquareRadius (rootDiameter / 8)))
 
 open Purelib.Approximation.Rational in
 open Purelib.Polynomial in
@@ -1043,22 +1094,22 @@ positive. Their original nested minimum is therefore positive. -/
 public theorem preparationRadius_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {rootDiameter : Coordinate} (_rootDiameterPositive : 0 < rootDiameter) :
     0 < preparationRadius segment rootDiameter := by
   unfold preparationRadius
-  exact Fraction.Order.Basic.lt_min
+  exact Basic.lt_min
     (by decide)
-    (Fraction.Order.Basic.lt_min
-      (SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius_positive _)
-      (SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius_positive _))
+    (Basic.lt_min
+      (Geometric.dyadicSquareRadius_positive _)
+      (Geometric.dyadicSquareRadius_positive _))
 
 open Purelib.Polynomial in
 /-- Four times the retained root-sample squared-norm majorant. -/
 @[expose] public def rootSampleDerivativeMajorant
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) : Coordinate :=
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) : Coordinate :=
   4 * rootSampleNormSqMajorant segment
 
 section
@@ -1070,15 +1121,15 @@ open Purelib.Polynomial
 public theorem ten_le_rootSampleDerivativeMajorant
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) :
     (10 : Coordinate) <= rootSampleDerivativeMajorant segment := by
   unfold rootSampleDerivativeMajorant rootSampleNormSqMajorant
   calc
     (10 : Coordinate) = 4 * (2 * ((1 / 4 : Coordinate) + 1)) := by
       decide
     _ <= 4 * (2 * ((1 / 4 : Coordinate) + radicandNormBound segment)) := by
-      apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      · apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      apply Arithmetic.mul_le_mul_of_nonneg_left_direct
+      · apply Arithmetic.mul_le_mul_of_nonneg_left_direct
         · exact add_le_add_right (one_le_radicandNormBound segment) (1 / 4)
         · decide
       · decide
@@ -1087,9 +1138,9 @@ public theorem ten_le_rootSampleDerivativeMajorant
 public theorem rootSampleDerivativeMajorant_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) :
     0 < rootSampleDerivativeMajorant segment :=
-  Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+  Arithmetic.mul_pos_direct (by decide)
     (rootSampleNormSqMajorant_positive segment)
 
 end
@@ -1099,7 +1150,7 @@ open Purelib.Polynomial in
 @[expose] public def linearizationMajorant
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (rootDiameter : Coordinate) : Coordinate :=
   2 * rootSampleDerivativeMajorant segment *
     preparationRadius segment rootDiameter ^ 2
@@ -1116,22 +1167,22 @@ gives the displayed lower bound. -/
 public theorem twenty_mul_preparationRadius_sq_le_linearizationMajorant
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (rootDiameter : Coordinate) :
     20 * preparationRadius segment rootDiameter ^ 2 <=
       linearizationMajorant segment rootDiameter := by
   unfold linearizationMajorant
   have doubled : (2 : Coordinate) * 10 <=
       2 * rootSampleDerivativeMajorant segment :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       (ten_le_rootSampleDerivativeMajorant segment) (by decide)
   have twentyLe : (20 : Coordinate) <=
       2 * rootSampleDerivativeMajorant segment := by
     calc
       (20 : Coordinate) = 2 * 10 := by decide
       _ <= 2 * rootSampleDerivativeMajorant segment := doubled
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct twentyLe
-    (Fraction.Order.Arithmetic.sq_nonneg_direct
+  exact Arithmetic.mul_le_mul_of_nonneg_right_direct twentyLe
+    (Arithmetic.sq_nonneg_direct
       (preparationRadius segment rootDiameter))
 
 /-- The retained linearization majorant is strictly positive for a positive diameter target.
@@ -1141,13 +1192,13 @@ radius. Their retained product is strictly positive. -/
 public theorem linearizationMajorant_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
     0 < linearizationMajorant segment rootDiameter :=
-  Fraction.Order.Arithmetic.mul_pos_direct
-    (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+  Arithmetic.mul_pos_direct
+    (Arithmetic.mul_pos_direct (by decide)
       (rootSampleDerivativeMajorant_positive segment))
-    (Fraction.Order.Arithmetic.pow_pos_direct
+    (Arithmetic.pow_pos_direct
       (preparationRadius_positive segment rootDiameterPositive) 2)
 
 end
@@ -1158,10 +1209,10 @@ open Purelib.Data.Rat in
 public theorem preparationRadius_le_oneEighth
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (rootDiameter : Coordinate) :
     preparationRadius segment rootDiameter <= 1 / 8 :=
-  Fraction.Order.Basic.min_le_left _ _
+  Basic.min_le_left _ _
 
 open Purelib.Approximation.Rational in
 open Purelib.Data.Rat in
@@ -1174,7 +1225,7 @@ original positive derivative-margin ratio. -/
 public theorem preparationRadius_sq_lt_taylorRatio
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
     preparationRadius segment rootDiameter ^ 2 <
       ClearSheetContinuation.squareRootDerivativeMargin segment /
@@ -1182,24 +1233,24 @@ public theorem preparationRadius_sq_lt_taylorRatio
   let target :=
     ClearSheetContinuation.squareRootDerivativeMargin segment /
       (72 * 8)
-  let selected := SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius target
+  let selected := Geometric.dyadicSquareRadius target
   have radiusPositive :=
     preparationRadius_positive segment rootDiameterPositive
   have radiusLe : preparationRadius segment rootDiameter <= selected :=
-    (Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _)
+    (Basic.min_le_right _ _).trans (Basic.min_le_left _ _)
   have squareLe : preparationRadius segment rootDiameter ^ 2 <=
       selected ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct radiusPositive.le radiusLe 2
+    Arithmetic.pow_le_pow_direct radiusPositive.le radiusLe 2
   have denominatorPositive : (0 : Coordinate) < 72 * 8 :=
-    Fraction.Order.Arithmetic.mul_pos_direct
+    Arithmetic.mul_pos_direct
       (Fraction.Cast.Order.natCast_pos_direct (n := 72) (by decide))
       (Fraction.Cast.Order.natCast_pos_direct (n := 8) (by decide))
   have targetPositive : 0 < target :=
-    Fraction.Order.Field.div_pos_direct
+    Field.div_pos_direct
       (ClearSheetContinuation.squareRootDerivativeMargin_positive
         segment) denominatorPositive
   exact squareLe.trans_lt
-    (SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius_sq_lt targetPositive)
+    (Geometric.dyadicSquareRadius_sq_lt targetPositive)
 
 open Purelib.Polynomial in
 open Purelib.Riemann.Branches in
@@ -1210,7 +1261,7 @@ scale factor retains the same segment data. -/
 @[expose] public def derivativeDiameterBound
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) : Coordinate :=
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) : Coordinate :=
   8 *
     (ClearSheetContinuation.squareRootDerivativeMargin segment /
       (72 * 8))
@@ -1225,13 +1276,13 @@ quotient is therefore strictly positive. -/
 public theorem derivativeDiameterBound_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode) :
     0 < derivativeDiameterBound segment :=
-  Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-    (Fraction.Order.Field.div_pos_direct
+  Arithmetic.mul_pos_direct (by decide)
+    (Field.div_pos_direct
       (ClearSheetContinuation.squareRootDerivativeMargin_positive
         segment)
-      (Fraction.Order.Arithmetic.mul_pos_direct
+      (Arithmetic.mul_pos_direct
         (Fraction.Cast.Order.natCast_pos_direct (n := 72) (by decide))
         (Fraction.Cast.Order.natCast_pos_direct (n := 8) (by decide))))
 
@@ -1242,18 +1293,18 @@ open Purelib.Data.Rat in
 public theorem preparationRadius_le_diameterCap
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (rootDiameter : Coordinate) :
     preparationRadius segment rootDiameter <=
-      SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius (rootDiameter / 8) :=
-  (Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_right _ _)
+      Geometric.dyadicSquareRadius (rootDiameter / 8) :=
+  (Basic.min_le_right _ _).trans (Basic.min_le_right _ _)
 
 open Purelib.Polynomial in
 /-- The uniform preparation radius is at most one. -/
 public theorem preparationRadius_le_one
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (rootDiameter : Coordinate) :
     preparationRadius segment rootDiameter <= 1 := by
   exact (preparationRadius_le_oneEighth segment rootDiameter).trans (by decide)
@@ -1269,7 +1320,7 @@ coefficient eight, giving the same doubled remainder budget at every parameter. 
 public theorem preparation_taylorSmall
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
     2 *
@@ -1283,11 +1334,11 @@ public theorem preparation_taylorSmall
   let margin :=
     ClearSheetContinuation.squareRootDerivativeMargin segment
   have denominatorPositive : (0 : Coordinate) < 72 * 8 :=
-    Fraction.Order.Arithmetic.mul_pos_direct
+    Arithmetic.mul_pos_direct
       (Fraction.Cast.Order.natCast_pos_direct (n := 72) (by decide))
       (Fraction.Cast.Order.natCast_pos_direct (n := 8) (by decide))
   have scaled : radius ^ 2 * (72 * 8) <= margin :=
-    (Fraction.Order.Field.le_div_iff_pos denominatorPositive).mp
+    (Field.le_div_iff_pos denominatorPositive).mp
       (preparationRadius_sq_lt_taylorRatio segment rootDiameterPositive).le
   rw [rootTaylor_formula segment parameter]
   calc
@@ -1304,7 +1355,7 @@ radius. -/
 public theorem two_preparationRadius_lt_one
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {rootDiameter : Coordinate} (_rootDiameterPositive : 0 < rootDiameter) :
     2 * preparationRadius segment rootDiameter < 1 := by
   let radius := preparationRadius segment rootDiameter
@@ -1312,7 +1363,7 @@ public theorem two_preparationRadius_lt_one
     preparationRadius_le_oneEighth segment rootDiameter
   calc
     2 * radius <= 2 * (1 / 8 : Coordinate) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct radiusLe
+      Arithmetic.mul_le_mul_of_nonneg_left_direct radiusLe
         (by decide)
     _ < 1 := by decide
 
@@ -1329,7 +1380,7 @@ the original owner's box. -/
 @[expose] public def bridgeRadius
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     (rootDiameter : Coordinate) : Coordinate :=
@@ -1339,11 +1390,11 @@ the original owner's box. -/
       owner.track.initial.clearance.residualInteriorRadius)
     (min ((1 / 4 : Coordinate) * preparationRadius segment rootDiameter)
       (min
-        (SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius
+        (Geometric.dyadicSquareRadius
           (ClearSheetContinuation.squareRootDerivativeThreshold
               segment /
             (2 * Bounds.Box.denseLipschitzBound p ownerBox)))
-        (SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius
+        (Geometric.dyadicSquareRadius
           (ClearSheetContinuation.squareRootDerivativeMargin
               segment /
             (72 * Bounds.Box.Taylor.denseTaylorRemainderBound
@@ -1359,20 +1410,20 @@ positive. Each original bridge-radius cap is therefore positive. -/
 public theorem bridgeRadius_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
     0 < bridgeRadius segment owner rootDiameter :=
-  Fraction.Order.Basic.lt_min
-    (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+  Basic.lt_min
+    (Arithmetic.mul_pos_direct (by decide)
       owner.track.initial.clearance.residualInteriorRadius_pos)
-    (Fraction.Order.Basic.lt_min
-      (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+    (Basic.lt_min
+      (Arithmetic.mul_pos_direct (by decide)
         (preparationRadius_positive segment rootDiameterPositive))
-      (Fraction.Order.Basic.lt_min
-        (SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius_positive _)
-        (SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius_positive _)))
+      (Basic.lt_min
+        (Geometric.dyadicSquareRadius_positive _)
+        (Geometric.dyadicSquareRadius_positive _)))
 
 open Purelib.Data.Rat in
 open Purelib.Polynomial in
@@ -1380,7 +1431,7 @@ open Purelib.Polynomial in
 public theorem bridgeRadius_le_preparation
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
@@ -1388,12 +1439,12 @@ public theorem bridgeRadius_le_preparation
       preparationRadius segment rootDiameter := by
   have preparationNonnegative :=
     (preparationRadius_positive segment rootDiameterPositive).le
-  exact ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _)).trans
+  exact ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _)).trans
     (by
       calc
         (1 / 4 : Coordinate) * preparationRadius segment rootDiameter <=
             1 * preparationRadius segment rootDiameter :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          Arithmetic.mul_le_mul_of_nonneg_right_direct
             (by decide) preparationNonnegative
         _ = preparationRadius segment rootDiameter := by ring1)
 
@@ -1403,14 +1454,14 @@ open Purelib.Data.Rat in
 public theorem bridgeRadius_le_ownerInteriorScale
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     (rootDiameter : Coordinate) :
     bridgeRadius segment owner rootDiameter <=
       (3 / 8 : Coordinate) *
         owner.track.initial.clearance.residualInteriorRadius :=
-  Fraction.Order.Basic.min_le_left _ _
+  Basic.min_le_left _ _
 
 section
 
@@ -1427,7 +1478,7 @@ derivative threshold bound the actual source variation. -/
 public theorem bridge_sourceThreshold
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
@@ -1444,24 +1495,24 @@ public theorem bridge_sourceThreshold
     ClearSheetContinuation.squareRootDerivativeThreshold segment
   have radiusPositive : 0 < radius :=
     bridgeRadius_positive segment owner rootDiameterPositive
-  let selected := SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius
+  let selected := Geometric.dyadicSquareRadius
     (threshold / (2 * lipschitz))
   have radiusLeSelected : radius <= selected :=
-    (Fraction.Order.Basic.min_le_right _ _).trans
-      ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _))
+    (Basic.min_le_right _ _).trans
+      ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _))
   have denominatorPositive : 0 < 2 * lipschitz :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+    Arithmetic.mul_pos_direct (by decide)
       (Bounds.Box.denseLipschitzBound_pos p ownerBox)
   have targetPositive : 0 < threshold / (2 * lipschitz) :=
-    Fraction.Order.Field.div_pos_direct
+    Field.div_pos_direct
       (ClearSheetContinuation.squareRootDerivativeThreshold_positive
         segment) denominatorPositive
   have squareLeTarget : radius ^ 2 <= threshold / (2 * lipschitz) :=
-    (Fraction.Order.Arithmetic.pow_le_pow_direct radiusPositive.le
+    (Arithmetic.pow_le_pow_direct radiusPositive.le
       radiusLeSelected 2).trans
-        (SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius_sq_lt targetPositive).le
+        (Geometric.dyadicSquareRadius_sq_lt targetPositive).le
   have scaled : radius ^ 2 * (2 * lipschitz) <= threshold :=
-    (Fraction.Order.Field.le_div_iff_pos denominatorPositive).mp
+    (Field.le_div_iff_pos denominatorPositive).mp
       squareLeTarget
   change lipschitz * (2 * radius ^ 2) <= threshold
   calc
@@ -1476,7 +1527,7 @@ retained uniform derivative margin. -/
 public theorem bridge_taylorSmall
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
@@ -1495,25 +1546,25 @@ public theorem bridge_taylorSmall
     ClearSheetContinuation.squareRootDerivativeMargin segment
   have radiusPositive : 0 < radius :=
     bridgeRadius_positive segment owner rootDiameterPositive
-  let selected := SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius
+  let selected := Geometric.dyadicSquareRadius
     (margin / (72 * taylor))
   have radiusLeSelected : radius <= selected :=
-    (Fraction.Order.Basic.min_le_right _ _).trans
-      ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_right _ _))
+    (Basic.min_le_right _ _).trans
+      ((Basic.min_le_right _ _).trans (Basic.min_le_right _ _))
   have denominatorPositive : 0 < 72 * taylor :=
-    Fraction.Order.Arithmetic.mul_pos_direct
+    Arithmetic.mul_pos_direct
       (Fraction.Cast.Order.natCast_pos_direct (n := 72) (by decide))
       (Bounds.Box.Taylor.denseTaylorRemainderBound_pos p ownerBox)
   have targetPositive : 0 < margin / (72 * taylor) :=
-    Fraction.Order.Field.div_pos_direct
+    Field.div_pos_direct
       (ClearSheetContinuation.squareRootDerivativeMargin_positive
         segment) denominatorPositive
   have squareLeTarget : radius ^ 2 <= margin / (72 * taylor) :=
-    (Fraction.Order.Arithmetic.pow_le_pow_direct radiusPositive.le
+    (Arithmetic.pow_le_pow_direct radiusPositive.le
       radiusLeSelected 2).trans
-        (SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius_sq_lt targetPositive).le
+        (Geometric.dyadicSquareRadius_sq_lt targetPositive).le
   have scaled : radius ^ 2 * (72 * taylor) <= margin :=
-    (Fraction.Order.Field.le_div_iff_pos denominatorPositive).mp
+    (Field.le_div_iff_pos denominatorPositive).mp
       squareLeTarget
   change 2 * (36 * taylor * radius ^ 2) <= margin
   calc
@@ -1533,7 +1584,7 @@ original owner's quarter-clearance limit. -/
 @[expose] public def sampleResidualTarget
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     (rootDiameter : Coordinate) : Coordinate :=
@@ -1565,7 +1616,7 @@ retained sampling cap positive. Their original nested minimum keeps that positiv
 public theorem sampleResidualTarget_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
@@ -1585,27 +1636,27 @@ public theorem sampleResidualTarget_positive
     ClearSheetContinuation.squareRootDerivativeMargin_positive
       segment
   unfold sampleResidualTarget
-  exact Fraction.Order.Basic.lt_min
-    (Fraction.Order.Basic.lt_min (by decide)
+  exact Basic.lt_min
+    (Basic.lt_min (by decide)
       (ClearSheetContinuation.squareRootDerivativeThreshold_positive
         segment))
-    (Fraction.Order.Basic.lt_min
-      (Fraction.Order.Arithmetic.mul_pos_direct
+    (Basic.lt_min
+      (Arithmetic.mul_pos_direct
         (rootLipschitz_positive segment)
-        (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-          (Fraction.Order.Arithmetic.pow_pos_direct radiusPositive 2)))
-      (Fraction.Order.Basic.lt_min
-        (Fraction.Order.Arithmetic.mul_pos_direct marginPositive
-          (Fraction.Order.Arithmetic.pow_pos_direct radiusPositive 2))
-        (Fraction.Order.Basic.lt_min
-          (Fraction.Order.Arithmetic.mul_pos_direct
+        (Arithmetic.mul_pos_direct (by decide)
+          (Arithmetic.pow_pos_direct radiusPositive 2)))
+      (Basic.lt_min
+        (Arithmetic.mul_pos_direct marginPositive
+          (Arithmetic.pow_pos_direct radiusPositive 2))
+        (Basic.lt_min
+          (Arithmetic.mul_pos_direct
             (Bounds.Box.denseLipschitzBound_pos _ _)
-            (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-              (Fraction.Order.Arithmetic.pow_pos_direct bridgePositive 2)))
-          (Fraction.Order.Basic.lt_min
-            (Fraction.Order.Arithmetic.mul_pos_direct marginPositive
-              (Fraction.Order.Arithmetic.pow_pos_direct bridgePositive 2))
-            (Fraction.Order.Field.div_pos_direct
+            (Arithmetic.mul_pos_direct (by decide)
+              (Arithmetic.pow_pos_direct bridgePositive 2)))
+          (Basic.lt_min
+            (Arithmetic.mul_pos_direct marginPositive
+              (Arithmetic.pow_pos_direct bridgePositive 2))
+            (Field.div_pos_direct
               owner.track.initial.clearance.positive (by decide))))))
 
 open Purelib.Approximation.Rational in
@@ -1618,7 +1669,7 @@ natural index belongs to that same retained track. -/
 @[expose] public def sampleIndex
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     (rootDiameter : Coordinate) : Nat :=
@@ -1636,7 +1687,7 @@ determines both the selected box and the point read from it. -/
 @[expose] public def trackSample
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     (rootDiameter : Coordinate) : Gaussian :=
@@ -1655,16 +1706,16 @@ residual estimate controls the sample at that index. -/
 public theorem trackSample_residual_lt
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((rootPolynomialAt segment parameter).eval
           (trackSample segment owner rootDiameter)) <
       sampleResidualTarget segment owner rootDiameter :=
   (CoherentRoot.sample_residual_le owner.track (by
-    rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]
+    rw [Gaussian.rootPolynomial_degree]
     exact SquareRootDegree.degreeTwo.positive)
       (sampleIndex segment owner rootDiameter)).trans_lt
     (Geometric.Search.firstQuarterBelow_accurate
@@ -1684,7 +1735,7 @@ same original owner. -/
 public theorem trackSample_inside_owner
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     (rootDiameter : Coordinate) :
@@ -1710,12 +1761,12 @@ residual threshold. The predicate retains the candidate in both comparisons. -/
 @[expose] public def SampleAcceptable
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     (rootDiameter : Coordinate) (point : Gaussian) : Prop :=
   owner.track.initial.box.Contains point ∧
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((rootPolynomialAt segment parameter).eval point) <
       sampleResidualTarget segment owner rootDiameter
 
@@ -1727,7 +1778,7 @@ candidate. The instance retains their exact executable conjunction decision. -/
 public instance sampleAcceptableDecidable
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     (rootDiameter : Coordinate) :
@@ -1747,7 +1798,7 @@ certificates; failure leaves fallback sampling available. -/
 @[expose] public def sampleCandidates
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     (rootDiameter : Coordinate) :
@@ -1757,11 +1808,11 @@ certificates; failure leaves fallback sampling available. -/
   let box := owner.track.initial.box
   letI : DecidablePred (SampleAcceptable segment owner rootDiameter) :=
     fun point => (inferInstance : Decidable
-      (box.Contains point ∧ Data.Gaussian.Norm.Basic.normSq
+      (box.Contains point ∧ Norm.Basic.normSq
         (root.eval point) < target))
   SquareRoot.Newton.Search.search (polynomial.eval (segment.pointAt parameter))
     (SampleAcceptable segment owner rootDiameter) 8
-    (SquareRoot.Radius.Dyadic.CheckedSquareRootNewton.gridFor target) (ownerMidpoint box)
+    (CheckedSquareRootNewton.gridFor target) (ownerMidpoint box)
 
 section
 
@@ -1774,7 +1825,7 @@ is acceptable, the original track sample supplies the retained certified fallbac
 @[expose] public def sample
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     (rootDiameter : Coordinate) : Gaussian :=
@@ -1789,7 +1840,7 @@ satisfies those same conditions at its retained search index. -/
 public theorem sample_acceptable
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
@@ -1809,11 +1860,11 @@ open Purelib.Polynomial in
 public theorem sample_residual_lt
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((rootPolynomialAt segment parameter).eval
           (sample segment owner rootDiameter)) <
       sampleResidualTarget segment owner rootDiameter :=
@@ -1826,15 +1877,15 @@ open Purelib.Data.Rat in
 public theorem sample_residual_lt_quarter
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((rootPolynomialAt segment parameter).eval
           (sample segment owner rootDiameter)) < 1 / 4 :=
   (sample_residual_lt segment owner rootDiameterPositive).trans_le
-    ((Fraction.Order.Basic.min_le_left _ _).trans (Fraction.Order.Basic.min_le_left _ _))
+    ((Basic.min_le_left _ _).trans (Basic.min_le_left _ _))
 
 open Purelib.Data.Gaussian in
 open Purelib.Polynomial in
@@ -1844,17 +1895,17 @@ open Purelib.Data.Rat in
 public theorem sample_residual_le_uniformThreshold
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((rootPolynomialAt segment parameter).eval
           (sample segment owner rootDiameter)) <=
       ClearSheetContinuation.squareRootDerivativeThreshold
         segment :=
   ((sample_residual_lt segment owner rootDiameterPositive).trans_le
-    ((Fraction.Order.Basic.min_le_left _ _).trans (Fraction.Order.Basic.min_le_right _ _))).le
+    ((Basic.min_le_left _ _).trans (Basic.min_le_right _ _))).le
 
 open Purelib.Data.Gaussian in
 open Purelib.Polynomial in
@@ -1866,17 +1917,17 @@ radius satisfy that same original budget. -/
 public theorem sample_residual_le_uniformSource
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((rootPolynomialAt segment parameter).eval
           (sample segment owner rootDiameter)) <=
       rootLipschitz segment *
         (2 * preparationRadius segment rootDiameter ^ 2) :=
   ((sample_residual_lt segment owner rootDiameterPositive).trans_le
-    ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _))).le
+    ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _))).le
 
 open Purelib.Data.Gaussian in
 open Purelib.Polynomial in
@@ -1889,18 +1940,18 @@ squared residual fits the same preparation radius. -/
 public theorem sample_residual_le_uniformDisplacement
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((rootPolynomialAt segment parameter).eval
           (sample segment owner rootDiameter)) <=
       ClearSheetContinuation.squareRootDerivativeMargin segment *
         preparationRadius segment rootDiameter ^ 2 :=
   ((sample_residual_lt segment owner rootDiameterPositive).trans_le
-    ((Fraction.Order.Basic.min_le_right _ _).trans
-      ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _)))).le
+    ((Basic.min_le_right _ _).trans
+      ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _)))).le
 
 open Purelib.Data.Gaussian in
 open Purelib.Polynomial in
@@ -1913,20 +1964,20 @@ finite Lipschitz budget at the retained bridge radius. -/
 public theorem sample_residual_le_bridgeSource
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((rootPolynomialAt segment parameter).eval
           (sample segment owner rootDiameter)) <=
       Bounds.Box.denseLipschitzBound
           (rootPolynomialAt segment parameter) owner.track.initial.box *
         (2 * bridgeRadius segment owner rootDiameter ^ 2) :=
   ((sample_residual_lt segment owner rootDiameterPositive).trans_le
-    ((Fraction.Order.Basic.min_le_right _ _).trans
-      ((Fraction.Order.Basic.min_le_right _ _).trans
-        ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _))))).le
+    ((Basic.min_le_right _ _).trans
+      ((Basic.min_le_right _ _).trans
+        ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _))))).le
 
 open Purelib.Data.Gaussian in
 open Purelib.Polynomial in
@@ -1939,20 +1990,20 @@ owner-specific bridge radius. -/
 public theorem sample_residual_le_bridgeDisplacement
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((rootPolynomialAt segment parameter).eval
           (sample segment owner rootDiameter)) <=
       ClearSheetContinuation.squareRootDerivativeMargin segment *
         bridgeRadius segment owner rootDiameter ^ 2 :=
   ((sample_residual_lt segment owner rootDiameterPositive).trans_le
-    ((Fraction.Order.Basic.min_le_right _ _).trans
-      ((Fraction.Order.Basic.min_le_right _ _).trans
-        ((Fraction.Order.Basic.min_le_right _ _).trans
-          ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _)))))).le
+    ((Basic.min_le_right _ _).trans
+      ((Basic.min_le_right _ _).trans
+        ((Basic.min_le_right _ _).trans
+          ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _)))))).le
 
 open Purelib.Data.Gaussian in
 open Purelib.Polynomial in
@@ -1961,26 +2012,26 @@ open Purelib.Data.Rat in
 public theorem sample_residual_lt_ownerQuarter
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((rootPolynomialAt segment parameter).eval
           (sample segment owner rootDiameter)) <
       owner.track.initial.clearance.bound / 4 :=
   (sample_residual_lt segment owner rootDiameterPositive).trans_le
-    ((Fraction.Order.Basic.min_le_right _ _).trans
-      ((Fraction.Order.Basic.min_le_right _ _).trans
-        ((Fraction.Order.Basic.min_le_right _ _).trans
-          ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_right _ _)))))
+    ((Basic.min_le_right _ _).trans
+      ((Basic.min_le_right _ _).trans
+        ((Basic.min_le_right _ _).trans
+          ((Basic.min_le_right _ _).trans (Basic.min_le_right _ _)))))
 
 open Purelib.Polynomial in
 /-- The selected sample stays in the exact original owner's initial box. -/
 public theorem sample_inside_owner
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     (rootDiameter : Coordinate) :
@@ -2002,12 +2053,12 @@ stated scalar bound. -/
 public theorem sample_normSq_le_rootSampleNormSqMajorant
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (sample segment owner rootDiameter) <=
       rootSampleNormSqMajorant segment := by
   let point := sample segment owner rootDiameter
@@ -2015,15 +2066,15 @@ public theorem sample_normSq_le_rootSampleNormSqMajorant
   let bound := radicandNormBound segment
   let residual := (rootPolynomialAt segment parameter).eval point
   have radicandBound :
-      Data.Gaussian.Norm.Basic.normSq radicand <= bound :=
+      Norm.Basic.normSq radicand <= bound :=
     eval_normSq_le_radicandNormBound segment parameter inside
   have residualBound :
-      Data.Gaussian.Norm.Basic.normSq residual <= 1 / 4 :=
+      Norm.Basic.normSq residual <= 1 / 4 :=
     (sample_residual_lt_quarter segment owner rootDiameterPositive).le
   have powerIdentity : point ^ 2 = residual + radicand := by
     dsimp only [residual, rootPolynomialAt,
       SquareRootReconditioning.rootPolynomial]
-    rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_eval,
+    rw [Gaussian.rootPolynomial_eval,
       SquareRootDegree.degreeTwo_value]
     apply Basic.ext <;>
       simp only [Basic.sub_re,
@@ -2031,33 +2082,33 @@ public theorem sample_normSq_le_rootSampleNormSqMajorant
         Basic.add_re,
         Basic.add_im] <;> ring1
   have pointSquareBound :
-      Data.Gaussian.Norm.Basic.normSq point ^ 2 <=
+      Norm.Basic.normSq point ^ 2 <=
         2 * ((1 / 4 : Coordinate) + bound) := by
     rw [← Power.normSq_pow point 2,
       powerIdentity]
     exact (Norm.Bounds.normSq_add_le_two _ _).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add residualBound radicandBound) (by decide))
   have oneLeMajorant : (1 : Coordinate) <=
       2 * ((1 / 4 : Coordinate) + bound) := by
     calc
       1 <= 2 * ((1 / 4 : Coordinate) + 1) := by decide
       _ <= 2 * ((1 / 4 : Coordinate) + bound) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add le_rfl (one_le_radicandNormBound segment)) (by decide)
-  let pointNorm := Data.Gaussian.Norm.Basic.normSq point
+  let pointNorm := Norm.Basic.normSq point
   have pointNormBound : pointNorm <=
       2 * ((1 / 4 : Coordinate) + bound) := by
     by_cases atMostOne : pointNorm <= 1
     · exact atMostOne.trans oneLeMajorant
     · have oneLePoint : (1 : Coordinate) <= pointNorm :=
-        (Fraction.Order.Arithmetic.lt_of_not_ge_direct atMostOne).le
+        (Arithmetic.lt_of_not_ge_direct atMostOne).le
       have pointLeSquare : pointNorm <= pointNorm ^ 2 := by
         rw [pow_two]
         calc
           pointNorm = pointNorm * 1 := by ring1
           _ <= pointNorm * pointNorm :=
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+            Arithmetic.mul_le_mul_of_nonneg_left_direct
               oneLePoint
               (Norm.Basic.normSq_nonneg point)
       exact pointLeSquare.trans pointSquareBound
@@ -2075,19 +2126,19 @@ sample derivative majorant. -/
 public theorem sample_rootDerivative_le_rootSampleDerivativeMajorant
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((GCD.derivative
           (rootPolynomialAt segment parameter)).eval
             (sample segment owner rootDiameter)) <=
       rootSampleDerivativeMajorant segment := by
   rw [rootDerivative_normSq_formula]
   unfold rootSampleDerivativeMajorant
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  exact Arithmetic.mul_le_mul_of_nonneg_left_direct
     (sample_normSq_le_rootSampleNormSqMajorant segment parameter inside owner
       rootDiameterPositive) (by decide)
 
@@ -2104,12 +2155,12 @@ formula yields the displayed square bound. -/
 public theorem sample_normSq_le_rootSampleCoordinateRadius_sq
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (sample segment owner rootDiameter) <=
       rootSampleCoordinateRadius segment ^ 2 := by
   let bound := radicandNormBound segment
@@ -2122,7 +2173,7 @@ public theorem sample_normSq_le_rootSampleCoordinateRadius_sq
     calc
       bound = bound * 1 := by ring1
       _ <= bound * bound :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct oneLe
+        Arithmetic.mul_le_mul_of_nonneg_left_direct oneLe
           nonnegative
   have scalarBound :
       rootSampleNormSqMajorant segment <= radius ^ 2 := by
@@ -2133,11 +2184,11 @@ public theorem sample_normSq_le_rootSampleCoordinateRadius_sq
     change 2 * ((1 / 4 : Coordinate) + bound) <= radius ^ 2
     calc
       2 * ((1 / 4 : Coordinate) + bound) <= 2 * (bound + bound) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add quarterLeBound le_rfl) (by decide)
       _ = 4 * bound := by ring1
       _ <= 4 * bound ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           boundLeSquare (by decide)
       _ = radius ^ 2 := by
         dsimp only [radius, rootSampleCoordinateRadius]
@@ -2152,7 +2203,7 @@ both signed endpoint bounds. -/
 public theorem sample_rootSampleCoordinateBounds
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
@@ -2168,7 +2219,7 @@ public theorem sample_rootSampleCoordinateBounds
   exact Norm.Bounds.coordinate_bounds_of_normSq_le
     (by
       unfold rootSampleCoordinateRadius
-      exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      exact Arithmetic.mul_nonneg_direct (by decide)
         (radicandNormBound_positive segment).le)
     (sample_normSq_le_rootSampleCoordinateRadius_sq segment parameter inside
       owner rootDiameterPositive)
@@ -2184,7 +2235,7 @@ coordinates of the original selected sample therefore belong to that box. -/
 public theorem sample_inside_rootAmbient
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
@@ -2203,14 +2254,14 @@ public theorem sample_inside_rootAmbient
     ⟨(by
         calc
           -(core + 1) <= -core := by
-            exact Fraction.Order.Arithmetic.neg_le_neg_direct
+            exact Arithmetic.neg_le_neg_direct
               (le_add_of_nonneg_right (by decide))
           _ <= (sample segment owner rootDiameter).re := bounds.1),
       bounds.2.1.trans (le_add_of_nonneg_right (by decide)),
       (by
         calc
           -(core + 1) <= -core := by
-            exact Fraction.Order.Arithmetic.neg_le_neg_direct
+            exact Arithmetic.neg_le_neg_direct
               (le_add_of_nonneg_right (by decide))
           _ <= (sample segment owner rootDiameter).im := bounds.2.2.1),
       bounds.2.2.2.trans (le_add_of_nonneg_right (by decide))⟩
@@ -2228,12 +2279,12 @@ derivative, displacement and Taylor requirements. -/
 @[expose] public def restartInput
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     (rootDiameter : Coordinate) (rootDiameterPositive : 0 < rootDiameter) :
-    Newton.Restart.Separated.Basic.SeparatedRestartInput
+    Basic.SeparatedRestartInput
       (ClearSheetContinuation.squareRootDerivativeSeparation
         (rootAmbient := rootAmbient segment) segment parameter inside) := by
   let p := rootPolynomialAt segment parameter
@@ -2249,7 +2300,7 @@ derivative, displacement and Taylor requirements. -/
   let core := rootSampleCoordinateRadius segment
   have leftMargin : (rootAmbient segment).xLower + 2 * radius < point.re :=
     (by
-      have shifted := Fraction.Order.Arithmetic.add_lt_add_left_direct
+      have shifted := Arithmetic.add_lt_add_left_direct
         twiceRadiusLt (-(core + 1))
       have coreLower : -(core + 1) + 2 * radius < -core := by
         calc
@@ -2261,12 +2312,12 @@ derivative, displacement and Taylor requirements. -/
       (rootAmbient segment).xUpper :=
     (by
       change point.re + 2 * radius < core + 1
-      exact (Fraction.Order.Arithmetic.add_le_add_right_direct bounds.2.1
+      exact (Arithmetic.add_le_add_right_direct bounds.2.1
           (2 * radius)).trans_lt
-        (Fraction.Order.Arithmetic.add_lt_add_left_direct twiceRadiusLt core))
+        (Arithmetic.add_lt_add_left_direct twiceRadiusLt core))
   have bottomMargin : (rootAmbient segment).yLower + 2 * radius < point.im :=
     (by
-      have shifted := Fraction.Order.Arithmetic.add_lt_add_left_direct
+      have shifted := Arithmetic.add_lt_add_left_direct
         twiceRadiusLt (-(core + 1))
       have coreLower : -(core + 1) + 2 * radius < -core := by
         calc
@@ -2278,13 +2329,13 @@ derivative, displacement and Taylor requirements. -/
       (rootAmbient segment).yUpper :=
     (by
       change point.im + 2 * radius < core + 1
-      exact (Fraction.Order.Arithmetic.add_le_add_right_direct bounds.2.2.2
+      exact (Arithmetic.add_le_add_right_direct bounds.2.2.2
           (2 * radius)).trans_lt
-        (Fraction.Order.Arithmetic.add_lt_add_left_direct twiceRadiusLt core))
-  apply Newton.Restart.Separated.Basic.SeparatedRestartInput.ofAnchored point radius
+        (Arithmetic.add_lt_add_left_direct twiceRadiusLt core))
+  apply Basic.SeparatedRestartInput.ofAnchored point radius
     (preparationRadius_positive segment rootDiameterPositive)
     leftMargin rightMargin bottomMargin topMargin
-  · change Data.Gaussian.Norm.Basic.normSq
+  · change Norm.Basic.normSq
         ((rootPolynomialAt segment parameter).eval
           (sample segment owner rootDiameter)) <=
       Bounds.Box.denseLipschitzBound
@@ -2292,17 +2343,17 @@ derivative, displacement and Taylor requirements. -/
         (2 * preparationRadius segment rootDiameter ^ 2)
     rw [rootLipschitz_formula segment parameter]
     exact sample_residual_le_uniformSource segment owner rootDiameterPositive
-  · change Data.Gaussian.Norm.Basic.normSq
+  · change Norm.Basic.normSq
         ((rootPolynomialAt segment parameter).eval
           (sample segment owner rootDiameter)) <= separation.threshold
     simpa only [rootLipschitz, separation,
       ClearSheetContinuation.squareRootDerivativeSeparation_threshold]
       using sample_residual_le_uniformThreshold segment owner
         rootDiameterPositive
-  · apply (Fraction.Order.Field.div_le_iff_pos
+  · apply (Field.div_le_iff_pos
       (ClearSheetContinuation.squareRootDerivativeMargin_positive
         segment)).2
-    change Data.Gaussian.Norm.Basic.normSq
+    change Norm.Basic.normSq
         ((rootPolynomialAt segment parameter).eval
           (sample segment owner rootDiameter)) <=
       preparationRadius segment rootDiameter ^ 2 *
@@ -2327,7 +2378,7 @@ a strict margin within that same interior radius. -/
 public theorem two_bridgeRadius_lt_ownerInterior
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     (rootDiameter : Coordinate) :
@@ -2341,13 +2392,13 @@ public theorem two_bridgeRadius_lt_ownerInterior
     owner.track.initial.clearance.residualInteriorRadius_pos
   calc
     2 * radius <= 2 * ((3 / 8 : Coordinate) * interior) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct radiusLe
+      Arithmetic.mul_le_mul_of_nonneg_left_direct radiusLe
         (by decide)
     _ = (2 * (3 / 8 : Coordinate)) * interior := by ring1
     _ = (3 / 4 : Coordinate) * interior := by
       rw [show (2 : Coordinate) * (3 / 8) = 3 / 4 by decide]
     _ < 1 * interior :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+      Arithmetic.mul_lt_mul_of_pos_right_direct
         (by decide) interiorPositive
     _ = interior := by ring1
 
@@ -2364,12 +2415,12 @@ the exact source owner for comparison. -/
 @[expose] public def bridgeRestartInput
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     (rootDiameter : Coordinate) (rootDiameterPositive : 0 < rootDiameter) :
-    Newton.Restart.Separated.Basic.SeparatedRestartInput
+    Basic.SeparatedRestartInput
       (ClearSheetContinuation.squareRootDerivativeSeparation
         (rootAmbient := owner.track.initial.box) segment parameter inside) := by
   let p := rootPolynomialAt segment parameter
@@ -2386,28 +2437,28 @@ the exact source owner for comparison. -/
       2 * radius < owner.track.initial.clearance.residualInteriorRadius :=
     two_bridgeRadius_lt_ownerInterior segment owner rootDiameter
   have leftMargin : ownerBox.xLower + 2 * radius < point.re :=
-    (Fraction.Order.Arithmetic.add_lt_add_left_direct twiceRadiusLt
+    (Arithmetic.add_lt_add_left_direct twiceRadiusLt
       ownerBox.xLower).trans margins.1
   have rightMargin : point.re + 2 * radius < ownerBox.xUpper :=
-    (Fraction.Order.Arithmetic.add_lt_add_left_direct twiceRadiusLt point.re).trans
+    (Arithmetic.add_lt_add_left_direct twiceRadiusLt point.re).trans
       margins.2.1
   have bottomMargin : ownerBox.yLower + 2 * radius < point.im :=
-    (Fraction.Order.Arithmetic.add_lt_add_left_direct twiceRadiusLt
+    (Arithmetic.add_lt_add_left_direct twiceRadiusLt
       ownerBox.yLower).trans margins.2.2.1
   have topMargin : point.im + 2 * radius < ownerBox.yUpper :=
-    (Fraction.Order.Arithmetic.add_lt_add_left_direct twiceRadiusLt point.im).trans
+    (Arithmetic.add_lt_add_left_direct twiceRadiusLt point.im).trans
       margins.2.2.2
-  apply Newton.Restart.Separated.Basic.SeparatedRestartInput.ofAnchored point radius
+  apply Basic.SeparatedRestartInput.ofAnchored point radius
     (bridgeRadius_positive segment owner rootDiameterPositive)
     leftMargin rightMargin bottomMargin topMargin
-  · change Data.Gaussian.Norm.Basic.normSq
+  · change Norm.Basic.normSq
         ((rootPolynomialAt segment parameter).eval
           (sample segment owner rootDiameter)) <=
       Bounds.Box.denseLipschitzBound
           (rootPolynomialAt segment parameter) owner.track.initial.box *
         (2 * bridgeRadius segment owner rootDiameter ^ 2)
     exact sample_residual_le_bridgeSource segment owner rootDiameterPositive
-  · change Data.Gaussian.Norm.Basic.normSq
+  · change Norm.Basic.normSq
         ((rootPolynomialAt segment parameter).eval
           (sample segment owner rootDiameter)) <= separation.threshold
     simpa only [separation,
@@ -2415,10 +2466,10 @@ the exact source owner for comparison. -/
       using (sample_residual_le_bridgeSource segment owner
           rootDiameterPositive).trans
         (bridge_sourceThreshold segment owner rootDiameterPositive)
-  · apply (Fraction.Order.Field.div_le_iff_pos
+  · apply (Field.div_le_iff_pos
       (ClearSheetContinuation.squareRootDerivativeMargin_positive
         segment)).2
-    change Data.Gaussian.Norm.Basic.normSq
+    change Norm.Basic.normSq
         ((rootPolynomialAt segment parameter).eval
           (sample segment owner rootDiameter)) <=
       bridgeRadius segment owner rootDiameter ^ 2 *
@@ -2440,7 +2491,7 @@ open Purelib.Polynomial in
 @[simp] public theorem restartInput_source_anchor
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
@@ -2459,7 +2510,7 @@ open Purelib.Polynomial in
 @[simp] public theorem restartInput_radius
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
@@ -2480,7 +2531,7 @@ radius. -/
 public theorem restart_newtonLinearization_boundary_le_majorant
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
@@ -2489,8 +2540,8 @@ public theorem restart_newtonLinearization_boundary_le_majorant
     (boundary : Box.Boundary.OnBoxBoundary
       (restartInput segment parameter inside owner rootDiameter
         rootDiameterPositive).centeredBox z) :
-    Data.Gaussian.Norm.Basic.normSq
-        ((Newton.Box.Linearization.newtonLinearization
+    Norm.Basic.normSq
+        ((Linearization.newtonLinearization
           (rootPolynomialAt segment parameter)
           (restartInput segment parameter inside owner rootDiameter
             rootDiameterPositive).source).eval z) <=
@@ -2498,7 +2549,7 @@ public theorem restart_newtonLinearization_boundary_le_majorant
   let restart := restartInput segment parameter inside owner rootDiameter
     rootDiameterPositive
   have derivativeBound :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           ((GCD.derivative
             (rootPolynomialAt segment parameter)).eval
               restart.source.anchor) <=
@@ -2508,27 +2559,27 @@ public theorem restart_newtonLinearization_boundary_le_majorant
     exact sample_rootDerivative_le_rootSampleDerivativeMajorant segment
       parameter inside owner rootDiameterPositive
   have radial :
-      Data.Gaussian.Norm.Basic.normSq
-          (z - Newton.Box.Anchor.anchorNewtonCenter
+      Norm.Basic.normSq
+          (z - Anchor.anchorNewtonCenter
             (rootPolynomialAt segment parameter) restart.source) <=
         2 * restart.radius ^ 2 := by
     apply Box.Square.Centered.centeredSquare_normSq_sub_center_le
-      (Newton.Box.Anchor.anchorNewtonCenter
+      (Anchor.anchorNewtonCenter
         (rootPolynomialAt segment parameter) restart.source)
       restart.radiusPositive.le
     exact boundary.1
-  rw [Newton.Box.Linearization.newtonLinearization,
+  rw [Linearization.newtonLinearization,
     Linear.Affine.affineCoordinate_eval,
     Norm.Basic.normSq_mul]
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
           ((GCD.derivative
             (rootPolynomialAt segment parameter)).eval restart.source.anchor) *
-        Data.Gaussian.Norm.Basic.normSq
-          (z - Newton.Box.Anchor.anchorNewtonCenter
+        Norm.Basic.normSq
+          (z - Anchor.anchorNewtonCenter
             (rootPolynomialAt segment parameter) restart.source) <=
       rootSampleDerivativeMajorant segment * (2 * restart.radius ^ 2) :=
-        Fraction.Order.Arithmetic.mul_le_mul_direct derivativeBound radial
+        Arithmetic.mul_le_mul_direct derivativeBound radial
           (Norm.Basic.normSq_nonneg _)
           (rootSampleDerivativeMajorant_positive segment).le
     _ = linearizationMajorant segment rootDiameter := by
@@ -2543,7 +2594,7 @@ open Purelib.Polynomial in
 @[simp] public theorem bridgeRestartInput_source_anchor
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
@@ -2562,7 +2613,7 @@ open Purelib.Polynomial in
 @[simp] public theorem bridgeRestartInput_radius
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
@@ -2580,7 +2631,7 @@ compares the two original retained radii. -/
 public theorem bridgeRadius_lt_preparation
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     {parameter : Coordinate}
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     {rootDiameter : Coordinate} (rootDiameterPositive : 0 < rootDiameter) :
@@ -2588,13 +2639,13 @@ public theorem bridgeRadius_lt_preparation
       preparationRadius segment rootDiameter := by
   have bridgeLeQuarter : bridgeRadius segment owner rootDiameter <=
       (1 / 4 : Coordinate) * preparationRadius segment rootDiameter :=
-    (Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _)
+    (Basic.min_le_right _ _).trans (Basic.min_le_left _ _)
   calc
     bridgeRadius segment owner rootDiameter <=
         (1 / 4 : Coordinate) * preparationRadius segment rootDiameter :=
       bridgeLeQuarter
     _ < 1 * preparationRadius segment rootDiameter :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+      Arithmetic.mul_lt_mul_of_pos_right_direct
         (by decide) (preparationRadius_positive segment rootDiameterPositive)
     _ = preparationRadius segment rootDiameter := by ring1
 
@@ -2607,21 +2658,21 @@ derivative therefore determine the same Newton center. -/
 public theorem restart_newtonCenter_eq
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     (rootDiameter : Coordinate) (rootDiameterPositive : 0 < rootDiameter) :
-    Newton.Box.Anchor.anchorNewtonCenter
+    Anchor.anchorNewtonCenter
         (rootPolynomialAt segment parameter)
         (bridgeRestartInput segment parameter inside owner rootDiameter
           rootDiameterPositive).source =
-      Newton.Box.Anchor.anchorNewtonCenter
+      Anchor.anchorNewtonCenter
         (rootPolynomialAt segment parameter)
         (restartInput segment parameter inside owner rootDiameter
           rootDiameterPositive).source := by
-  rw [Newton.Box.Anchor.anchorNewtonCenter_eq,
-    Newton.Box.Anchor.anchorNewtonCenter_eq,
+  rw [Anchor.anchorNewtonCenter_eq,
+    Anchor.anchorNewtonCenter_eq,
     bridgeRestartInput_source_anchor, restartInput_source_anchor]
 
 section
@@ -2636,7 +2687,7 @@ squarefreeness and axis elimination certify that exact parameter polynomial. -/
 @[expose] public def inputAt
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1) :=
   SquareRootReconditioning.isolationInput
@@ -2653,13 +2704,48 @@ remaining independent of the parameter and starting owner. -/
 @[expose] public def predictedClearance
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (rootDiameter : Coordinate) : Coordinate :=
   let radius := preparationRadius segment rootDiameter
   (ClearSheetContinuation.squareRootDerivativeMargin segment *
         radius ^ 2 -
       36 * 8 * (radius ^ 2) ^ 2) ^ 2 /
     (4 * linearizationMajorant segment rootDiameter)
+
+open Purelib.Polynomial in
+open Purelib.Polynomial.Dense.Gaussian in
+open Purelib.Riemann.Branches in
+/-- Region-controlled chords with the same retained floor and whole Horner cache have identical predicted clearance.
+
+The actual original region boxes and endpoints can differ. The complete
+numerical preparation formula depends only on the retained clearance bound,
+original ambient Horner value and diameter request; no owner is constructed
+or identified by this scalar equality.
+-/
+public theorem predictedClearance_affine_eq
+    {polynomial : GaussianPolynomial} {ambient : Box}
+    (firstStart firstFinish lastStart lastFinish : Gaussian) (firstRegion lastRegion : Box)
+    (firstWithin : ambient.Contains firstStart ∧ ambient.Contains firstFinish)
+    (lastWithin : ambient.Contains lastStart ∧ ambient.Contains lastFinish)
+    (firstClearance : Clearance.Box.Region.RegionClearance polynomial firstRegion)
+    (lastClearance : Clearance.Box.Region.RegionClearance polynomial lastRegion)
+    (sameFloor : firstClearance.bound = lastClearance.bound)
+    (firstInside : firstRegion.Contains firstStart) (firstFinishInside : firstRegion.Contains firstFinish)
+    (lastInside : lastRegion.Contains lastStart) (lastFinishInside : lastRegion.Contains lastFinish)
+    (bounds : Horner)
+    (bounds_eq : bounds = Bounds.Box.denseHornerNormBounds polynomial ambient)
+    (rootDiameter : Coordinate) :
+    predictedClearance (.affine firstStart firstFinish firstRegion firstWithin firstClearance
+      firstInside firstFinishInside bounds bounds_eq) rootDiameter =
+    predictedClearance (.affine lastStart lastFinish lastRegion lastWithin lastClearance
+      lastInside lastFinishInside bounds bounds_eq) rootDiameter := by
+  unfold predictedClearance linearizationMajorant rootSampleDerivativeMajorant rootSampleNormSqMajorant
+    preparationRadius ClearSheetContinuation.squareRootDerivativeMargin
+    ClearSheetContinuation.squareRootDerivativeThreshold Geometry.ClearPath.ClearSegment.clearanceBound
+    radicandNormBound
+  dsimp only
+  rewrite [sameFloor]
+  rfl
 
 /-- The square of one eighth is one sixty-fourth in the rational carrier. -/
 private theorem oneEighth_sq_eq_one64 :
@@ -2676,7 +2762,7 @@ private theorem fiveEighth_eq_one128_mul80 :
 open Purelib.Data.Rat in
 /-- The rational product thirty-six times eight is nonnegative. -/
 private theorem zero_le_288 : (0 : Coordinate) <= 36 * 8 :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct
+  Arithmetic.mul_nonneg_direct
     (Fraction.Cast.Order.natCast_pos_direct
       (n := 36) (by decide)).le
     (Fraction.Cast.Order.natCast_pos_direct
@@ -2702,7 +2788,7 @@ and positive denominator. -/
 public theorem predictedClearance_le_oneOver128
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (rootDiameter : Coordinate) (rootDiameterPositive : 0 < rootDiameter)
     (marginLe :
       ClearSheetContinuation.squareRootDerivativeMargin segment <=
@@ -2721,7 +2807,7 @@ public theorem predictedClearance_le_oneOver128
   have radiusSqLe : radius ^ 2 <= (1 / (8 * 8) : Coordinate) := by
     calc
       radius ^ 2 <= (1 / 8 : Coordinate) ^ 2 :=
-        Fraction.Order.Arithmetic.pow_le_pow_direct radiusPositive.le
+        Arithmetic.pow_le_pow_direct radiusPositive.le
           (preparationRadius_le_oneEighth segment rootDiameter) 2
       _ = 1 / (8 * 8) := oneEighth_sq_eq_one64
   have marginNonnegative : 0 <= margin :=
@@ -2730,26 +2816,26 @@ public theorem predictedClearance_le_oneOver128
   have bracketNonnegative :
       0 <= margin + (36 * 8) * radius ^ 2 :=
     add_nonneg marginNonnegative
-      (Fraction.Order.Arithmetic.mul_nonneg_direct zero_le_288
-        (Fraction.Order.Arithmetic.sq_nonneg_direct radius))
+      (Arithmetic.mul_nonneg_direct zero_le_288
+        (Arithmetic.sq_nonneg_direct radius))
   have taylorDenominatorPositive : (0 : Coordinate) < 72 * 8 :=
-    Fraction.Order.Arithmetic.mul_pos_direct
+    Arithmetic.mul_pos_direct
       (Fraction.Cast.Order.natCast_pos_direct
         (n := 72) (by decide))
       (Fraction.Cast.Order.natCast_pos_direct
         (n := 8) (by decide))
   have scaledTaylor : radius ^ 2 * (72 * 8) <= margin :=
-    (Fraction.Order.Field.le_div_iff_pos taylorDenominatorPositive).mp
+    (Field.le_div_iff_pos taylorDenominatorPositive).mp
       (preparationRadius_sq_lt_taylorRatio segment
         rootDiameterPositive).le
   have secondTermNonnegative : 0 <= (36 * 8) * radius ^ 2 :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct zero_le_288
-      (Fraction.Order.Arithmetic.sq_nonneg_direct radius)
+    Arithmetic.mul_nonneg_direct zero_le_288
+      (Arithmetic.sq_nonneg_direct radius)
   have secondTermLeMargin : (36 * 8) * radius ^ 2 <= margin := by
     calc
       (36 * 8) * radius ^ 2 = 1 * ((36 * 8) * radius ^ 2) := by ring1
       _ <= 2 * ((36 * 8) * radius ^ 2) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           (show (1 : Coordinate) <= 2 by decide) secondTermNonnegative
       _ = radius ^ 2 * (72 * 8) := by ring1
       _ <= margin := scaledTaylor
@@ -2763,7 +2849,7 @@ public theorem predictedClearance_le_oneOver128
   have bracketSqLe :
       (margin + (36 * 8) * radius ^ 2) ^ 2 <=
         (1 : Coordinate) ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct bracketNonnegative bracketLe 2
+    Arithmetic.pow_le_pow_direct bracketNonnegative bracketLe 2
   have scaledBracketLe :
       radius ^ 2 * (margin + (36 * 8) * radius ^ 2) ^ 2 <=
         (5 / 8 : Coordinate) := by
@@ -2771,23 +2857,23 @@ public theorem predictedClearance_le_oneOver128
       radius ^ 2 * (margin + (36 * 8) * radius ^ 2) ^ 2 <=
           (1 / (8 * 8) : Coordinate) *
             (margin + (36 * 8) * radius ^ 2) ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct radiusSqLe
-          (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+        Arithmetic.mul_le_mul_of_nonneg_right_direct radiusSqLe
+          (Arithmetic.sq_nonneg_direct _)
       _ <= (1 / (8 * 8) : Coordinate) * (1 : Coordinate) ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct bracketSqLe
+        Arithmetic.mul_le_mul_of_nonneg_left_direct bracketSqLe
           zero_le_one64
       _ <= 5 / 8 := one64_mul_nineteenQuarter_sq_le_fiveEighth
   have firstTermNonnegative : 0 <= margin * radius ^ 2 :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct marginNonnegative
-      (Fraction.Order.Arithmetic.sq_nonneg_direct radius)
+    Arithmetic.mul_nonneg_direct marginNonnegative
+      (Arithmetic.sq_nonneg_direct radius)
   have quadraticTermNonnegative :
       0 <= (36 * 8) * (radius ^ 2) ^ 2 :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct zero_le_288
-      (Fraction.Order.Arithmetic.sq_nonneg_direct (radius ^ 2))
+    Arithmetic.mul_nonneg_direct zero_le_288
+      (Arithmetic.sq_nonneg_direct (radius ^ 2))
   have correctionNonnegative :
       0 <= 4 * (margin * radius ^ 2) * ((36 * 8) * (radius ^ 2) ^ 2) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct zero_le_four
+    Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct zero_le_four
         firstTermNonnegative) quadraticTermNonnegative
   have differenceSquareLe :
       (margin * radius ^ 2 - (36 * 8) * (radius ^ 2) ^ 2) ^ 2 <=
@@ -2811,8 +2897,8 @@ public theorem predictedClearance_le_oneOver128
       _ = radius ^ 2 *
           (radius ^ 2 * (margin + (36 * 8) * radius ^ 2) ^ 2) := by ring1
       _ <= radius ^ 2 * (5 / 8 : Coordinate) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          scaledBracketLe (Fraction.Order.Arithmetic.sq_nonneg_direct radius)
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
+          scaledBracketLe (Arithmetic.sq_nonneg_direct radius)
       _ = (5 / 8 : Coordinate) * radius ^ 2 := by ring1
   have majorantLower :
       (10 * 8) * radius ^ 2 <= 4 * majorant := by
@@ -2822,7 +2908,7 @@ public theorem predictedClearance_le_oneOver128
     calc
       (10 * 8) * radius ^ 2 = 4 * (20 * radius ^ 2) := by ring1
       _ <= 4 * majorant :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct base
+        Arithmetic.mul_le_mul_of_nonneg_left_direct base
           zero_le_four
   have numeratorLeScaledMajorant :
       (margin * radius ^ 2 - (36 * 8) * (radius ^ 2) ^ 2) ^ 2 <=
@@ -2833,12 +2919,12 @@ public theorem predictedClearance_le_oneOver128
       _ = (1 / (16 * 8) : Coordinate) * ((10 * 8) * radius ^ 2) := by
         rw [← mul_assoc, ← fiveEighth_eq_one128_mul80]
       _ <= (1 / (16 * 8) : Coordinate) * (4 * majorant) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           majorantLower zero_le_one128
   have denominatorPositive : (0 : Coordinate) < 4 * majorant :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+    Arithmetic.mul_pos_direct (by decide)
       (linearizationMajorant_positive segment rootDiameterPositive)
-  exact (Fraction.Order.Field.div_le_iff_pos denominatorPositive).2
+  exact (Field.div_le_iff_pos denominatorPositive).2
     numeratorLeScaledMajorant
 
 /-- Bound predicted clearance by the quarter transport floor when the radius is at most one sixty-fourth.
@@ -2848,7 +2934,7 @@ retained preparation formula. -/
 public theorem predictedClearance_le_quarterTransportFloor_of_radius
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (rootDiameter : Coordinate) (rootDiameterPositive : 0 < rootDiameter)
     (marginLe :
       ClearSheetContinuation.squareRootDerivativeMargin segment <=
@@ -2867,11 +2953,11 @@ public theorem predictedClearance_le_quarterTransportFloor_of_radius
   have radiusPositive : 0 < radius :=
     preparationRadius_positive segment rootDiameterPositive
   have radiusSqNonnegative : 0 ≤ radius ^ 2 :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct radius
+    Arithmetic.sq_nonneg_direct radius
   have radiusSqLe : radius ^ 2 ≤ (1 / 4096 : Coordinate) := by
     calc
       radius ^ 2 ≤ (1 / 64 : Coordinate) ^ 2 :=
-        Fraction.Order.Arithmetic.pow_le_pow_direct radiusPositive.le
+        Arithmetic.pow_le_pow_direct radiusPositive.le
           radiusLe 2
       _ = (1 / 4096 : Coordinate) := by
         rw [pow_two, Fraction.Field.div_mul_div_direct]
@@ -2881,64 +2967,64 @@ public theorem predictedClearance_le_quarterTransportFloor_of_radius
     (ClearSheetContinuation.squareRootDerivativeMargin_positive
       segment).le
   have taylorDenominatorPositive : (0 : Coordinate) < 72 * 8 :=
-    Fraction.Order.Arithmetic.mul_pos_direct
+    Arithmetic.mul_pos_direct
       (Fraction.Cast.Order.natCast_pos_direct
         (n := 72) (by decide))
       (Fraction.Cast.Order.natCast_pos_direct
         (n := 8) (by decide))
   have scaledTaylor : radius ^ 2 * (72 * 8) ≤ margin :=
-    (Fraction.Order.Field.le_div_iff_pos taylorDenominatorPositive).mp
+    (Field.le_div_iff_pos taylorDenominatorPositive).mp
       (preparationRadius_sq_lt_taylorRatio segment
         rootDiameterPositive).le
   have secondTermNonnegative : 0 ≤ (36 * 8) * radius ^ 2 :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct zero_le_288
+    Arithmetic.mul_nonneg_direct zero_le_288
       radiusSqNonnegative
   have secondTermLeMargin : (36 * 8) * radius ^ 2 ≤ margin := by
     calc
       (36 * 8) * radius ^ 2 = 1 * ((36 * 8) * radius ^ 2) := by ring1
       _ ≤ 2 * ((36 * 8) * radius ^ 2) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           (show (1 : Coordinate) ≤ 2 by decide) secondTermNonnegative
       _ = radius ^ 2 * (72 * 8) := by ring1
       _ ≤ margin := scaledTaylor
   have correctionNonnegative : 0 ≤ (36 * 8) * (radius ^ 2) ^ 2 :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct zero_le_288
-      (Fraction.Order.Arithmetic.sq_nonneg_direct (radius ^ 2))
+    Arithmetic.mul_nonneg_direct zero_le_288
+      (Arithmetic.sq_nonneg_direct (radius ^ 2))
   have correctionLeFirst :
       (36 * 8) * (radius ^ 2) ^ 2 ≤ margin * radius ^ 2 := by
     calc
       (36 * 8) * (radius ^ 2) ^ 2 =
           ((36 * 8) * radius ^ 2) * radius ^ 2 := by ring1
       _ ≤ margin * radius ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           secondTermLeMargin radiusSqNonnegative
   have differenceNonnegative :
       0 ≤ margin * radius ^ 2 - (36 * 8) * (radius ^ 2) ^ 2 :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct correctionLeFirst
+    Arithmetic.sub_nonneg_direct correctionLeFirst
   have differenceLeFirst :
       margin * radius ^ 2 - (36 * 8) * (radius ^ 2) ^ 2 ≤
         margin * radius ^ 2 := by
     calc
       margin * radius ^ 2 - (36 * 8) * (radius ^ 2) ^ 2 ≤
           margin * radius ^ 2 - 0 :=
-        Fraction.Order.Arithmetic.sub_le_sub_left_direct
+        Arithmetic.sub_le_sub_left_direct
           correctionNonnegative _
       _ = margin * radius ^ 2 := by ring1
   have differenceSquareLe :
       (margin * radius ^ 2 - (36 * 8) * (radius ^ 2) ^ 2) ^ 2 ≤
         (margin * radius ^ 2) ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct differenceNonnegative
+    Arithmetic.pow_le_pow_direct differenceNonnegative
       differenceLeFirst 2
   have marginSquareLe : margin ^ 2 ≤ (1 / 16 : Coordinate) := by
     calc
       margin ^ 2 ≤ (1 / 4 : Coordinate) ^ 2 :=
-        Fraction.Order.Arithmetic.pow_le_pow_direct marginNonnegative
+        Arithmetic.pow_le_pow_direct marginNonnegative
           marginLe 2
       _ = (1 / 16 : Coordinate) := by decide
   have radiusFourthLe : (radius ^ 2) ^ 2 ≤
       (1 / 4096 : Coordinate) * radius ^ 2 := by
     rw [pow_two]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
       radiusSqLe radiusSqNonnegative
   have numeratorLe :
       (margin * radius ^ 2 - (36 * 8) * (radius ^ 2) ^ 2) ^ 2 ≤
@@ -2948,12 +3034,12 @@ public theorem predictedClearance_le_quarterTransportFloor_of_radius
           (margin * radius ^ 2) ^ 2 := differenceSquareLe
       _ = margin ^ 2 * (radius ^ 2) ^ 2 := by ring1
       _ ≤ (1 / 16 : Coordinate) * (radius ^ 2) ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           marginSquareLe
-            (Fraction.Order.Arithmetic.sq_nonneg_direct (radius ^ 2))
+            (Arithmetic.sq_nonneg_direct (radius ^ 2))
       _ ≤ (1 / 16 : Coordinate) *
           ((1 / 4096 : Coordinate) * radius ^ 2) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           radiusFourthLe (by decide)
       _ = ((1 / 16 : Coordinate) * (1 / 4096)) * radius ^ 2 := by ring1
       _ = (1 / 65536 : Coordinate) * radius ^ 2 := by
@@ -2970,11 +3056,11 @@ public theorem predictedClearance_le_quarterTransportFloor_of_radius
     calc
       (80 : Coordinate) * radius ^ 2 = 4 * (20 * radius ^ 2) := by ring1
       _ ≤ 4 * majorant :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct base
+        Arithmetic.mul_le_mul_of_nonneg_left_direct base
           zero_le_four
   let floor : Coordinate := (1 / 4 : Coordinate) ^ 2 / (4 * 65536)
   have largeDenominatorPositive : (0 : Coordinate) < 4 * 65536 :=
-    Fraction.Order.Arithmetic.mul_pos_direct
+    Arithmetic.mul_pos_direct
       (Fraction.Cast.Order.natCast_pos_direct
         (n := 4) (by decide))
       (Fraction.Cast.Order.natCast_pos_direct
@@ -2986,7 +3072,7 @@ public theorem predictedClearance_le_quarterTransportFloor_of_radius
     (Fraction.Cast.Order.natCast_pos_direct
       (n := 65536) (by decide)).ne'
   have coefficientLe : (1 / 65536 : Coordinate) ≤ floor * 80 := by
-    apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct _
+    apply Arithmetic.le_of_mul_le_mul_right_direct _
       largeDenominatorPositive
     calc
       (1 / 65536 : Coordinate) * (4 * 65536) =
@@ -3019,19 +3105,19 @@ public theorem predictedClearance_le_quarterTransportFloor_of_radius
       (margin * radius ^ 2 - (36 * 8) * (radius ^ 2) ^ 2) ^ 2 ≤
           (1 / 65536 : Coordinate) * radius ^ 2 := numeratorLe
       _ ≤ (floor * 80) * radius ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           coefficientLe radiusSqNonnegative
       _ = floor * (80 * radius ^ 2) := by ring1
       _ ≤ floor * (4 * majorant) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           majorantLower
-            (Fraction.Order.Field.div_nonneg_direct
-              (Fraction.Order.Arithmetic.sq_nonneg_direct (1 / 4))
+            (Field.div_nonneg_direct
+              (Arithmetic.sq_nonneg_direct (1 / 4))
                 largeDenominatorPositive.le)
   have denominatorPositive : (0 : Coordinate) < 4 * majorant :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+    Arithmetic.mul_pos_direct (by decide)
       (linearizationMajorant_positive segment rootDiameterPositive)
-  exact (Fraction.Order.Field.div_le_iff_pos denominatorPositive).2
+  exact (Field.div_le_iff_pos denominatorPositive).2
     numeratorLeFloorMajorant
 
 /-- Bound predicted clearance by the eighth transport floor using the stronger supplied majorant bound.
@@ -3041,7 +3127,7 @@ dominates 256 times radius squared. -/
 public theorem predictedClearance_le_eighthTransportFloor_of_radius
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (rootDiameter : Coordinate) (rootDiameterPositive : 0 < rootDiameter)
     (marginLe :
       ClearSheetContinuation.squareRootDerivativeMargin segment <=
@@ -3063,11 +3149,11 @@ public theorem predictedClearance_le_eighthTransportFloor_of_radius
   have radiusPositive : 0 < radius :=
     preparationRadius_positive segment rootDiameterPositive
   have radiusSqNonnegative : 0 ≤ radius ^ 2 :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct radius
+    Arithmetic.sq_nonneg_direct radius
   have radiusSqLe : radius ^ 2 ≤ (1 / 4096 : Coordinate) := by
     calc
       radius ^ 2 ≤ (1 / 64 : Coordinate) ^ 2 :=
-        Fraction.Order.Arithmetic.pow_le_pow_direct radiusPositive.le
+        Arithmetic.pow_le_pow_direct radiusPositive.le
           radiusLe 2
       _ = (1 / 4096 : Coordinate) := by
         rw [pow_two, Fraction.Field.div_mul_div_direct]
@@ -3077,64 +3163,64 @@ public theorem predictedClearance_le_eighthTransportFloor_of_radius
     (ClearSheetContinuation.squareRootDerivativeMargin_positive
       segment).le
   have taylorDenominatorPositive : (0 : Coordinate) < 72 * 8 :=
-    Fraction.Order.Arithmetic.mul_pos_direct
+    Arithmetic.mul_pos_direct
       (Fraction.Cast.Order.natCast_pos_direct
         (n := 72) (by decide))
       (Fraction.Cast.Order.natCast_pos_direct
         (n := 8) (by decide))
   have scaledTaylor : radius ^ 2 * (72 * 8) ≤ margin :=
-    (Fraction.Order.Field.le_div_iff_pos taylorDenominatorPositive).mp
+    (Field.le_div_iff_pos taylorDenominatorPositive).mp
       (preparationRadius_sq_lt_taylorRatio segment
         rootDiameterPositive).le
   have secondTermNonnegative : 0 ≤ (36 * 8) * radius ^ 2 :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct zero_le_288
+    Arithmetic.mul_nonneg_direct zero_le_288
       radiusSqNonnegative
   have secondTermLeMargin : (36 * 8) * radius ^ 2 ≤ margin := by
     calc
       (36 * 8) * radius ^ 2 = 1 * ((36 * 8) * radius ^ 2) := by ring1
       _ ≤ 2 * ((36 * 8) * radius ^ 2) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           (show (1 : Coordinate) ≤ 2 by decide) secondTermNonnegative
       _ = radius ^ 2 * (72 * 8) := by ring1
       _ ≤ margin := scaledTaylor
   have correctionNonnegative : 0 ≤ (36 * 8) * (radius ^ 2) ^ 2 :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct zero_le_288
-      (Fraction.Order.Arithmetic.sq_nonneg_direct (radius ^ 2))
+    Arithmetic.mul_nonneg_direct zero_le_288
+      (Arithmetic.sq_nonneg_direct (radius ^ 2))
   have correctionLeFirst :
       (36 * 8) * (radius ^ 2) ^ 2 ≤ margin * radius ^ 2 := by
     calc
       (36 * 8) * (radius ^ 2) ^ 2 =
           ((36 * 8) * radius ^ 2) * radius ^ 2 := by ring1
       _ ≤ margin * radius ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           secondTermLeMargin radiusSqNonnegative
   have differenceNonnegative :
       0 ≤ margin * radius ^ 2 - (36 * 8) * (radius ^ 2) ^ 2 :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct correctionLeFirst
+    Arithmetic.sub_nonneg_direct correctionLeFirst
   have differenceLeFirst :
       margin * radius ^ 2 - (36 * 8) * (radius ^ 2) ^ 2 ≤
         margin * radius ^ 2 := by
     calc
       margin * radius ^ 2 - (36 * 8) * (radius ^ 2) ^ 2 ≤
           margin * radius ^ 2 - 0 :=
-        Fraction.Order.Arithmetic.sub_le_sub_left_direct
+        Arithmetic.sub_le_sub_left_direct
           correctionNonnegative _
       _ = margin * radius ^ 2 := by ring1
   have differenceSquareLe :
       (margin * radius ^ 2 - (36 * 8) * (radius ^ 2) ^ 2) ^ 2 ≤
         (margin * radius ^ 2) ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct differenceNonnegative
+    Arithmetic.pow_le_pow_direct differenceNonnegative
       differenceLeFirst 2
   have marginSquareLe : margin ^ 2 ≤ (1 / 16 : Coordinate) := by
     calc
       margin ^ 2 ≤ (1 / 4 : Coordinate) ^ 2 :=
-        Fraction.Order.Arithmetic.pow_le_pow_direct marginNonnegative
+        Arithmetic.pow_le_pow_direct marginNonnegative
           marginLe 2
       _ = (1 / 16 : Coordinate) := by decide
   have radiusFourthLe : (radius ^ 2) ^ 2 ≤
       (1 / 4096 : Coordinate) * radius ^ 2 := by
     rw [pow_two]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
       radiusSqLe radiusSqNonnegative
   have numeratorLe :
       (margin * radius ^ 2 - (36 * 8) * (radius ^ 2) ^ 2) ^ 2 ≤
@@ -3144,12 +3230,12 @@ public theorem predictedClearance_le_eighthTransportFloor_of_radius
           (margin * radius ^ 2) ^ 2 := differenceSquareLe
       _ = margin ^ 2 * (radius ^ 2) ^ 2 := by ring1
       _ ≤ (1 / 16 : Coordinate) * (radius ^ 2) ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           marginSquareLe
-            (Fraction.Order.Arithmetic.sq_nonneg_direct (radius ^ 2))
+            (Arithmetic.sq_nonneg_direct (radius ^ 2))
       _ ≤ (1 / 16 : Coordinate) *
           ((1 / 4096 : Coordinate) * radius ^ 2) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           radiusFourthLe (by decide)
       _ = ((1 / 16 : Coordinate) * (1 / 4096)) * radius ^ 2 := by ring1
       _ = (1 / 65536 : Coordinate) * radius ^ 2 := by
@@ -3161,7 +3247,7 @@ public theorem predictedClearance_le_eighthTransportFloor_of_radius
         rw [coefficientProduct]
   let floor : Coordinate := (1 / 8 : Coordinate) ^ 2 / (4 * 65536)
   have largeDenominatorPositive : (0 : Coordinate) < 4 * 65536 :=
-    Fraction.Order.Arithmetic.mul_pos_direct
+    Arithmetic.mul_pos_direct
       (Fraction.Cast.Order.natCast_pos_direct
         (n := 4) (by decide))
       (Fraction.Cast.Order.natCast_pos_direct
@@ -3203,8 +3289,8 @@ public theorem predictedClearance_le_eighthTransportFloor_of_radius
             sixtyFourNonzero]
         ring1
   have floorNonnegative : 0 ≤ floor :=
-    Fraction.Order.Field.div_nonneg_direct
-      (Fraction.Order.Arithmetic.sq_nonneg_direct (1 / 8))
+    Field.div_nonneg_direct
+      (Arithmetic.sq_nonneg_direct (1 / 8))
       largeDenominatorPositive.le
   have numeratorLeFloorMajorant :
       (margin * radius ^ 2 - (36 * 8) * (radius ^ 2) ^ 2) ^ 2 ≤
@@ -3215,12 +3301,12 @@ public theorem predictedClearance_le_eighthTransportFloor_of_radius
       _ = (floor * 256) * radius ^ 2 := by rw [coefficientEq]
       _ = floor * (256 * radius ^ 2) := by ring1
       _ ≤ floor * (4 * majorant) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           majorantLower floorNonnegative
   have denominatorPositive : (0 : Coordinate) < 4 * majorant :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+    Arithmetic.mul_pos_direct (by decide)
       (linearizationMajorant_positive segment rootDiameterPositive)
-  exact (Fraction.Order.Field.div_le_iff_pos denominatorPositive).2
+  exact (Field.div_le_iff_pos denominatorPositive).2
     numeratorLeFloorMajorant
 
 /-- The exact quarter margin and one-sixty-fourth radius satisfy the eighth transport floor.
@@ -3230,7 +3316,7 @@ denominator of predicted clearance. -/
 public theorem predictedClearance_le_eighthTransportFloor_of_exactRadius
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (rootDiameter : Coordinate)
     (marginEq :
       ClearSheetContinuation.squareRootDerivativeMargin segment =
@@ -3248,27 +3334,27 @@ public theorem predictedClearance_le_eighthTransportFloor_of_exactRadius
     (Fraction.Cast.Order.natCast_pos_direct
       (n := 26) (by omega)).trans_le derivativeLower
   have radiusPositive : (0 : Coordinate) < (1 / 64 : Coordinate) :=
-    Fraction.Order.Field.div_pos_direct
+    Field.div_pos_direct
       (Fraction.Cast.Order.natCast_pos_direct (n := 1) (by omega))
       (Fraction.Cast.Order.natCast_pos_direct (n := 64) (by omega))
   have denominatorPositive : (0 : Coordinate) <
       4 * (2 * rootSampleDerivativeMajorant segment * (1 / 64) ^ 2) :=
-    Fraction.Order.Arithmetic.mul_pos_direct
+    Arithmetic.mul_pos_direct
       (Fraction.Cast.Order.natCast_pos_direct (n := 4) (by omega))
-      (Fraction.Order.Arithmetic.mul_pos_direct
-        (Fraction.Order.Arithmetic.mul_pos_direct
+      (Arithmetic.mul_pos_direct
+        (Arithmetic.mul_pos_direct
           (Fraction.Cast.Order.natCast_pos_direct (n := 2) (by omega))
           derivativePositive)
-        (Fraction.Order.Arithmetic.pow_pos_direct radiusPositive 2))
-  apply (Fraction.Order.Field.div_le_iff_pos denominatorPositive).2
+        (Arithmetic.pow_pos_direct radiusPositive 2))
+  apply (Field.div_le_iff_pos denominatorPositive).2
   have denominatorLower :
       4 * (2 * (26 : Coordinate) * (1 / 64) ^ 2) ≤
         4 * (2 * rootSampleDerivativeMajorant segment * (1 / 64) ^ 2) := by
-    apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    · apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      · exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    apply Arithmetic.mul_le_mul_of_nonneg_left_direct
+    · apply Arithmetic.mul_le_mul_of_nonneg_right_direct
+      · exact Arithmetic.mul_le_mul_of_nonneg_left_direct
           derivativeLower (by decide)
-      · exact Fraction.Order.Arithmetic.sq_nonneg_direct _
+      · exact Arithmetic.sq_nonneg_direct _
     · decide
   calc
     ((1 / 4 : Coordinate) * (1 / 64) ^ 2 -
@@ -3347,7 +3433,7 @@ public theorem predictedClearance_le_eighthTransportFloor_of_exactRadius
       have floorScaled : floor * 16777216 = 1 := by
         dsimp only [floor]
         have denominatorNonzero : (4 * 65536 : Coordinate) ≠ 0 :=
-          (Fraction.Order.Arithmetic.mul_pos_direct
+          (Arithmetic.mul_pos_direct
             (Fraction.Cast.Order.natCast_pos_direct
               (n := 4) (by omega))
             (Fraction.Cast.Order.natCast_pos_direct
@@ -3362,7 +3448,7 @@ public theorem predictedClearance_le_eighthTransportFloor_of_exactRadius
         rw [show (1 / 8 : Coordinate) ^ 2 * 64 =
           ((1 / 8 : Coordinate) * 8) ^ 2 by ring1,
           eighthCancel, one_pow]
-      apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+      apply Arithmetic.le_of_mul_le_mul_right_direct
         (c := (274877906944 : Coordinate)) _
           (Fraction.Cast.Order.natCast_pos_direct
             (n := 274877906944) (by omega))
@@ -3399,11 +3485,11 @@ public theorem predictedClearance_le_eighthTransportFloor_of_exactRadius
     _ ≤ ((1 / 8 : Coordinate) ^ 2 / (4 * 65536)) *
         (4 * (2 * rootSampleDerivativeMajorant segment *
           (1 / 64) ^ 2)) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         denominatorLower
-        (Fraction.Order.Field.div_nonneg_direct
-          (Fraction.Order.Arithmetic.sq_nonneg_direct (1 / 8))
-          (Fraction.Order.Arithmetic.mul_nonneg_direct
+        (Field.div_nonneg_direct
+          (Arithmetic.sq_nonneg_direct (1 / 8))
+          (Arithmetic.mul_nonneg_direct
             (Fraction.Cast.Order.natCast_pos_direct
               (n := 4) (by omega)).le
             (Fraction.Cast.Order.natCast_pos_direct
@@ -3418,7 +3504,7 @@ open Purelib.Data.Rat
 /-- The rational constant thirty-two is strictly positive. -/
 private theorem floorThirtyTwo_positive : (0 : Coordinate) < 32 := by
   rw [show (32 : Coordinate) = 2 ^ 5 by ring1]
-  exact Fraction.Order.Arithmetic.pow_pos_direct (by decide) 5
+  exact Arithmetic.pow_pos_direct (by decide) 5
 
 /-- Every natural power of a nonzero rational value is nonzero.
 
@@ -3468,7 +3554,7 @@ open Purelib.Data.Rat
 private theorem floorSixtyFiveThousandFiveHundredThirtySix_positive :
     (0 : Coordinate) < 65536 := by
   rw [show (65536 : Coordinate) = 2 ^ 16 by ring1]
-  exact Fraction.Order.Arithmetic.pow_pos_direct (by decide) 16
+  exact Arithmetic.pow_pos_direct (by decide) 16
 
 /-- Eight times one thirty-second equals one quarter. -/
 private theorem floorOneOverThirtyTwo_mul_eight :
@@ -3502,11 +3588,11 @@ private theorem clearanceFloor_mul_thirtyTwoThousandSevenHundredSixtyEight :
 /-- One sixty-fourth is at most one thirty-second. -/
 private theorem floorOneOverSixtyFour_le_oneOverThirtyTwo :
     (1 / 64 : Coordinate) ≤ 1 / 32 := by
-  apply Fraction.Order.Field.div_le_div_of_nonneg_left_direct
+  apply Field.div_le_div_of_nonneg_left_direct
     (by decide) floorThirtyTwo_positive
-  apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  apply Arithmetic.le_of_sub_nonneg_direct
   rw [show (64 : Coordinate) - 32 = 2 ^ 5 by ring1]
-  exact Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) 5
+  exact Arithmetic.pow_nonneg_direct (by decide) 5
 
 /-- The half transport floor scaled by eighty and seventy-two times eight dominates one sixty-fourth. -/
 private theorem oneOverSixtyFour_le_clearanceFloor_scaled :
@@ -3514,16 +3600,16 @@ private theorem oneOverSixtyFour_le_clearanceFloor_scaled :
       (((1 / 2 : Coordinate) ^ 2 / (4 * 65536)) * 80) * (72 * 8) := by
   have floorNonnegative : (0 : Coordinate) ≤
       (1 / 2 : Coordinate) ^ 2 / (4 * 65536) :=
-    Fraction.Order.Field.div_nonneg_direct
-      (Fraction.Order.Arithmetic.sq_nonneg_direct (1 / 2))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    Field.div_nonneg_direct
+      (Arithmetic.sq_nonneg_direct (1 / 2))
+      (Arithmetic.mul_nonneg_direct (by decide)
         floorSixtyFiveThousandFiveHundredThirtySix_positive.le)
   have scaleLe : (32768 : Coordinate) ≤ 80 * (72 * 8) := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     rw [show (80 : Coordinate) * (72 * 8) - 32768 =
       13 * 2 ^ 10 by ring1]
-    exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) 10)
+    exact Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.pow_nonneg_direct (by decide) 10)
   calc
     (1 / 64 : Coordinate) ≤ 1 / 32 :=
       floorOneOverSixtyFour_le_oneOverThirtyTwo
@@ -3531,7 +3617,7 @@ private theorem oneOverSixtyFour_le_clearanceFloor_scaled :
       clearanceFloor_mul_thirtyTwoThousandSevenHundredSixtyEight.symm
     _ ≤ ((1 / 2 : Coordinate) ^ 2 / (4 * 65536)) *
         (80 * (72 * 8)) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         scaleLe floorNonnegative
     _ = (((1 / 2 : Coordinate) ^ 2 / (4 * 65536)) * 80) *
         (72 * 8) := by ring1
@@ -3548,7 +3634,7 @@ denominator. -/
 public theorem predictedClearance_le_transportFloor
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (rootDiameter : Coordinate) (rootDiameterPositive : 0 < rootDiameter)
     (marginLe :
       ClearSheetContinuation.squareRootDerivativeMargin segment ≤
@@ -3563,39 +3649,39 @@ public theorem predictedClearance_le_transportFloor
     (margin * radius ^ 2 - 36 * 8 * (radius ^ 2) ^ 2) ^ 2 /
         (4 * majorant) ≤ (1 / 2 : Coordinate) ^ 2 / (4 * 65536)
   have radiusSqNonnegative : (0 : Coordinate) ≤ radius ^ 2 :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct radius
+    Arithmetic.sq_nonneg_direct radius
   have marginNonnegative : (0 : Coordinate) ≤ margin :=
     (ClearSheetContinuation.squareRootDerivativeMargin_positive
       segment).le
   have taylorDenominatorPositive : (0 : Coordinate) < 72 * 8 :=
-    Fraction.Order.Arithmetic.mul_pos_direct
+    Arithmetic.mul_pos_direct
       (Fraction.Cast.Order.natCast_pos_direct
         (n := 72) (by decide))
       (Fraction.Cast.Order.natCast_pos_direct
         (n := 8) (by decide))
   have scaledTaylor : radius ^ 2 * (72 * 8) ≤ margin :=
-    (Fraction.Order.Field.le_div_iff_pos
+    (Field.le_div_iff_pos
       taylorDenominatorPositive).mp
       (preparationRadius_sq_lt_taylorRatio segment
         rootDiameterPositive).le
   have correctionCoefficientNonnegative :
       (0 : Coordinate) ≤ 36 * 8 :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
+    Arithmetic.mul_nonneg_direct
       (Fraction.Cast.Order.natCast_pos_direct
         (n := 36) (by decide)).le
       (by decide)
   have correctionNonnegative :
       (0 : Coordinate) ≤ (36 * 8) * (radius ^ 2) ^ 2 :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
+    Arithmetic.mul_nonneg_direct
       correctionCoefficientNonnegative
-      (Fraction.Order.Arithmetic.sq_nonneg_direct (radius ^ 2))
+      (Arithmetic.sq_nonneg_direct (radius ^ 2))
   have correctionCoefficientLeMargin :
       (36 * 8) * radius ^ 2 ≤ margin := by
     calc
       (36 * 8) * radius ^ 2 = 1 * ((36 * 8) * radius ^ 2) := by ring1
       _ ≤ 2 * ((36 * 8) * radius ^ 2) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-          (by decide) (Fraction.Order.Arithmetic.mul_nonneg_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
+          (by decide) (Arithmetic.mul_nonneg_direct
             correctionCoefficientNonnegative radiusSqNonnegative)
       _ = radius ^ 2 * (72 * 8) := by ring1
       _ ≤ margin := scaledTaylor
@@ -3605,42 +3691,42 @@ public theorem predictedClearance_le_transportFloor
       (36 * 8) * (radius ^ 2) ^ 2 =
           ((36 * 8) * radius ^ 2) * radius ^ 2 := by ring1
       _ ≤ margin * radius ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           correctionCoefficientLeMargin radiusSqNonnegative
   have differenceNonnegative :
       (0 : Coordinate) ≤
         margin * radius ^ 2 - (36 * 8) * (radius ^ 2) ^ 2 :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct correctionLeFirst
+    Arithmetic.sub_nonneg_direct correctionLeFirst
   have differenceLeFirst :
       margin * radius ^ 2 - (36 * 8) * (radius ^ 2) ^ 2 ≤
         margin * radius ^ 2 := by
     calc
       margin * radius ^ 2 - (36 * 8) * (radius ^ 2) ^ 2 ≤
           margin * radius ^ 2 - 0 :=
-        Fraction.Order.Arithmetic.sub_le_sub_left_direct
+        Arithmetic.sub_le_sub_left_direct
           correctionNonnegative (margin * radius ^ 2)
       _ = margin * radius ^ 2 := by ring1
   have numeratorLe :
       (margin * radius ^ 2 - (36 * 8) * (radius ^ 2) ^ 2) ^ 2 ≤
         (margin * radius ^ 2) ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
+    Arithmetic.pow_le_pow_direct
       differenceNonnegative differenceLeFirst 2
   have marginCubeLe : margin ^ 3 ≤ (1 / 4 : Coordinate) ^ 3 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct marginNonnegative marginLe 3
+    Arithmetic.pow_le_pow_direct marginNonnegative marginLe 3
   have scaledCore :
       (margin ^ 2 * radius ^ 2) * (72 * 8) ≤ (1 / 64 : Coordinate) := by
     calc
       (margin ^ 2 * radius ^ 2) * (72 * 8) =
           margin ^ 2 * (radius ^ 2 * (72 * 8)) := by ring1
       _ ≤ margin ^ 2 * margin :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          scaledTaylor (Fraction.Order.Arithmetic.sq_nonneg_direct margin)
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
+          scaledTaylor (Arithmetic.sq_nonneg_direct margin)
       _ = margin ^ 3 := by ring1
       _ ≤ (1 / 4 : Coordinate) ^ 3 := marginCubeLe
       _ = 1 / 64 := oneQuarter_cube
   have coreLe : margin ^ 2 * radius ^ 2 ≤
       ((1 / 2 : Coordinate) ^ 2 / (4 * 65536)) * 80 := by
-    apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+    apply Arithmetic.le_of_mul_le_mul_right_direct
       _ taylorDenominatorPositive
     exact scaledCore.trans oneOverSixtyFour_le_clearanceFloor_scaled
   have majorantLower : (80 : Coordinate) * radius ^ 2 ≤ 4 * majorant := by
@@ -3649,13 +3735,13 @@ public theorem predictedClearance_le_transportFloor
     calc
       (80 : Coordinate) * radius ^ 2 = 4 * (20 * radius ^ 2) := by ring1
       _ ≤ 4 * majorant :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           base (by decide)
   have floorNonnegative : (0 : Coordinate) ≤
       (1 / 2 : Coordinate) ^ 2 / (4 * 65536) :=
-    Fraction.Order.Field.div_nonneg_direct
-      (Fraction.Order.Arithmetic.sq_nonneg_direct (1 / 2))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    Field.div_nonneg_direct
+      (Arithmetic.sq_nonneg_direct (1 / 2))
+      (Arithmetic.mul_nonneg_direct (by decide)
         floorSixtyFiveThousandFiveHundredThirtySix_positive.le)
   have numeratorLeScaledMajorant :
       (margin * radius ^ 2 - (36 * 8) * (radius ^ 2) ^ 2) ^ 2 ≤
@@ -3666,18 +3752,18 @@ public theorem predictedClearance_le_transportFloor
       _ = (margin ^ 2 * radius ^ 2) * radius ^ 2 := by ring1
       _ ≤ (((1 / 2 : Coordinate) ^ 2 / (4 * 65536)) * 80) *
           radius ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           coreLe radiusSqNonnegative
       _ = ((1 / 2 : Coordinate) ^ 2 / (4 * 65536)) *
           (80 * radius ^ 2) := by ring1
       _ ≤ ((1 / 2 : Coordinate) ^ 2 / (4 * 65536)) *
           (4 * majorant) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           majorantLower floorNonnegative
   have denominatorPositive : (0 : Coordinate) < 4 * majorant :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+    Arithmetic.mul_pos_direct (by decide)
       (linearizationMajorant_positive segment rootDiameterPositive)
-  exact (Fraction.Order.Field.div_le_iff_pos denominatorPositive).2
+  exact (Field.div_le_iff_pos denominatorPositive).2
     numeratorLeScaledMajorant
 
 open Purelib.Data.Gaussian in
@@ -3691,7 +3777,7 @@ The state retains the same centered box, original parameter quadratic and bounda
 @[expose] public def state
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
@@ -3708,13 +3794,13 @@ The state retains the same centered box, original parameter quadratic and bounda
     linearizationMajorant_positive segment rootDiameterPositive
   let majorantUpper : forall z : Gaussian,
       Box.Boundary.OnBoxBoundary restart.centeredBox z ->
-        Data.Gaussian.Norm.Basic.normSq
-          ((Newton.Box.Linearization.newtonLinearization
+        Norm.Basic.normSq
+          ((Linearization.newtonLinearization
             (rootPolynomialAt segment parameter) restart.source).eval z) <=
           majorant := by
     intro z boundary
-    change Data.Gaussian.Norm.Basic.normSq
-        ((Newton.Box.Linearization.newtonLinearization
+    change Norm.Basic.normSq
+        ((Linearization.newtonLinearization
           (rootPolynomialAt segment parameter) restart.source).eval z) <=
       linearizationMajorant segment rootDiameter
     exact restart_newtonLinearization_boundary_le_majorant segment parameter
@@ -3733,7 +3819,7 @@ Taylor coefficient identify the displayed parameter-independent clearance. -/
 @[simp] public theorem state_clearance_bound
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
@@ -3742,9 +3828,9 @@ Taylor coefficient identify the displayed parameter-independent clearance. -/
       rootDiameterPositive).clearance.bound =
         predictedClearance segment rootDiameter := by
   unfold state
-  rw [Newton.Restart.Separated.Basic.SeparatedRestartInput.centeredStateWithMajorant_clearance_bound]
-  unfold predictedClearance Newton.Box.Square.Separated.separatedNewtonDominanceMargin
-    Newton.Box.Square.Bounds.newtonErrorBudget
+  rw [Basic.SeparatedRestartInput.centeredStateWithMajorant_clearance_bound]
+  unfold predictedClearance Square.Separated.separatedNewtonDominanceMargin
+    Square.Bounds.newtonErrorBudget
   rw [ClearSheetContinuation.squareRootDerivativeSeparation_margin]
   change
     (ClearSheetContinuation.squareRootDerivativeMargin segment *
@@ -3769,7 +3855,7 @@ positive retained linearization majorant gives the displayed uniform bound. -/
 public theorem predictedClearance_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (rootDiameter : Coordinate) (rootDiameterPositive : 0 < rootDiameter) :
     0 < predictedClearance segment rootDiameter := by
   let parameter : Coordinate := 0
@@ -3780,11 +3866,11 @@ public theorem predictedClearance_positive
     (rootAmbient := rootAmbient segment) segment parameter inside
   have radiusPositive := preparationRadius_positive segment rootDiameterPositive
   have taylorSmall := preparation_taylorSmall segment parameter rootDiameterPositive
-  have dominancePositive := Newton.Box.Square.Separated.separatedNewtonDominanceMargin_pos
+  have dominancePositive := Square.Separated.separatedNewtonDominanceMargin_pos
     separation radiusPositive taylorSmall
-  have numeratorPositive := Fraction.Order.Arithmetic.pow_pos_direct dominancePositive 2
-  unfold Newton.Box.Square.Separated.separatedNewtonDominanceMargin
-    Newton.Box.Square.Bounds.newtonErrorBudget at numeratorPositive
+  have numeratorPositive := Arithmetic.pow_pos_direct dominancePositive 2
+  unfold Square.Separated.separatedNewtonDominanceMargin
+    Square.Bounds.newtonErrorBudget at numeratorPositive
   rewrite [ClearSheetContinuation.squareRootDerivativeSeparation_margin] at numeratorPositive
   change 0 <
     (ClearSheetContinuation.squareRootDerivativeMargin segment *
@@ -3793,8 +3879,8 @@ public theorem predictedClearance_positive
         (rootPolynomialAt segment parameter) (rootAmbient segment) *
         (preparationRadius segment rootDiameter ^ 2) ^ 2) ^ 2 at numeratorPositive
   rewrite [rootTaylor_formula segment parameter] at numeratorPositive
-  exact Fraction.Order.Field.div_pos_direct numeratorPositive
-    (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+  exact Field.div_pos_direct numeratorPositive
+    (Arithmetic.mul_pos_direct (by decide)
       (linearizationMajorant_positive segment rootDiameterPositive))
 
 open Purelib.Data.Gaussian in
@@ -3810,7 +3896,7 @@ The retained squarefree input, degree and majorant evidence belong to the same p
 @[expose] public def track
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
@@ -3827,13 +3913,13 @@ The retained squarefree input, degree and majorant evidence belong to the same p
     linearizationMajorant_positive segment rootDiameterPositive
   let majorantUpper : forall z : Gaussian,
       Box.Boundary.OnBoxBoundary restart.centeredBox z ->
-        Data.Gaussian.Norm.Basic.normSq
-          ((Newton.Box.Linearization.newtonLinearization
+        Norm.Basic.normSq
+          ((Linearization.newtonLinearization
             (rootPolynomialAt segment parameter) restart.source).eval z) <=
           majorant := by
     intro z boundary
-    change Data.Gaussian.Norm.Basic.normSq
-        ((Newton.Box.Linearization.newtonLinearization
+    change Norm.Basic.normSq
+        ((Linearization.newtonLinearization
           (rootPolynomialAt segment parameter) restart.source).eval z) <=
       linearizationMajorant segment rootDiameter
     exact restart_newtonLinearization_boundary_le_majorant segment parameter
@@ -3852,7 +3938,7 @@ clearance guarantees. -/
 @[expose] public def prepared
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
@@ -3873,7 +3959,7 @@ that exact original initial box. -/
 @[simp] public theorem prepared_initial_box
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
@@ -3882,7 +3968,7 @@ that exact original initial box. -/
       rootDiameterPositive).track.initial.box =
         (restartInput segment parameter inside owner rootDiameter
           rootDiameterPositive).centeredBox := by
-  unfold prepared track Newton.Restart.Separated.Basic.SeparatedRestartInput.centeredTrackWithMajorant
+  unfold prepared track Basic.SeparatedRestartInput.centeredTrackWithMajorant
     Track.Newton.Build.ofInitial
   rfl
 
@@ -3891,7 +3977,7 @@ open Purelib.Polynomial in
 @[simp] public theorem prepared_clearance_bound
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
@@ -3908,7 +3994,7 @@ open Purelib.RootIsolation in
 @[simp] public theorem prepared_diagonalSq
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
@@ -3918,7 +4004,7 @@ open Purelib.RootIsolation in
         8 * preparationRadius segment rootDiameter ^ 2 := by
   change (restartInput segment parameter inside owner rootDiameter
     rootDiameterPositive).centeredBox.diagonalSq = _
-  rw [Newton.Restart.Separated.Basic.SeparatedRestartInput.centeredBox_diagonalSq,
+  rw [Basic.SeparatedRestartInput.centeredBox_diagonalSq,
     restartInput_radius]
 
 open Purelib.Data.Rat in
@@ -3930,7 +4016,7 @@ displayed derivative-controlled upper bound. -/
 public theorem prepared_diagonal_lt_derivativeDiameterBound
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
@@ -3940,7 +4026,7 @@ public theorem prepared_diagonal_lt_derivativeDiameterBound
         derivativeDiameterBound segment := by
   rw [prepared_diagonalSq segment parameter inside owner rootDiameterPositive]
   unfold derivativeDiameterBound
-  exact Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide)
+  exact Arithmetic.mul_lt_mul_of_pos_left_direct (by decide)
     (preparationRadius_sq_lt_taylorRatio segment rootDiameterPositive)
 
 open Purelib.Approximation.Rational in
@@ -3953,7 +4039,7 @@ exact initial-box diagonal is strictly below the original request. -/
 public theorem prepared_diagonal_lt
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
@@ -3962,23 +4048,23 @@ public theorem prepared_diagonal_lt
       rootDiameterPositive).track.initial.box.diagonalSq < rootDiameter := by
   let radius := preparationRadius segment rootDiameter
   let diameterCap :=
-    SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius (rootDiameter / 8)
+    Geometric.dyadicSquareRadius (rootDiameter / 8)
   have radiusPositive : 0 < radius :=
     preparationRadius_positive segment rootDiameterPositive
   have radiusLe := preparationRadius_le_diameterCap segment rootDiameter
   have squareLe : radius ^ 2 <= diameterCap ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct radiusPositive.le radiusLe 2
+    Arithmetic.pow_le_pow_direct radiusPositive.le radiusLe 2
   have targetPositive : 0 < rootDiameter / 8 :=
-    Fraction.Order.Field.div_pos_direct rootDiameterPositive (by decide)
+    Field.div_pos_direct rootDiameterPositive (by decide)
   have capSquareLt : diameterCap ^ 2 < rootDiameter / 8 :=
-    SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius_sq_lt targetPositive
+    Geometric.dyadicSquareRadius_sq_lt targetPositive
   rw [prepared_diagonalSq segment parameter inside owner rootDiameterPositive]
   calc
     8 * radius ^ 2 <= 8 * diameterCap ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct squareLe
+      Arithmetic.mul_le_mul_of_nonneg_left_direct squareLe
         (by decide)
     _ < 8 * (rootDiameter / 8) :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+      Arithmetic.mul_lt_mul_of_pos_left_direct
         (by decide) capSquareLt
     _ = rootDiameter := by
       calc
@@ -4001,7 +4087,7 @@ owners. -/
 @[expose] public def bridgeTrack
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
@@ -4014,20 +4100,20 @@ owners. -/
     rootDiameter rootDiameterPositive
   let isolation := inputAt segment parameter inside
   let majorant :=
-    Newton.Box.Square.Bounds.separatedNewtonLinearizationMajorant
+    Square.Bounds.separatedNewtonLinearizationMajorant
       (rootPolynomialAt segment parameter) owner.track.initial.box
       (bridgeRadius segment owner rootDiameter)
   let majorantPositive :=
-    Newton.Box.Square.Bounds.separatedNewtonLinearizationMajorant_pos
+    Square.Bounds.separatedNewtonLinearizationMajorant_pos
       (rootPolynomialAt segment parameter) owner.track.initial.box
       (bridgeRadius_positive segment owner rootDiameterPositive)
   let majorantUpper : forall z : Gaussian,
       Box.Boundary.OnBoxBoundary restart.centeredBox z ->
-        Data.Gaussian.Norm.Basic.normSq
-          ((Newton.Box.Linearization.newtonLinearization
+        Norm.Basic.normSq
+          ((Linearization.newtonLinearization
             (rootPolynomialAt segment parameter) restart.source).eval z) <=
           majorant := fun _z boundary =>
-    Newton.Box.Square.Bounds.newtonLinearization_boundary_le_majorant
+    Square.Bounds.newtonLinearization_boundary_le_majorant
       restart.sourceRefines restart.radiusPositive boundary
   exact restart.centeredTrackWithMajorant isolation.squarefree
     (QuadraticAxisElimination.quadraticAxisElimination
@@ -4043,7 +4129,7 @@ owner's initial box. -/
 public theorem bridgeTrack_initial_strict_owner
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
@@ -4067,7 +4153,7 @@ boxes satisfy the displayed strict containment. -/
 public theorem bridgeTrack_initial_strict_prepared
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
@@ -4080,17 +4166,17 @@ public theorem bridgeTrack_initial_strict_prepared
       rootDiameterPositive).centeredBox.StrictInterior
     (restartInput segment parameter inside owner rootDiameter
       rootDiameterPositive).centeredBox
-  unfold Newton.Restart.Separated.Basic.SeparatedRestartInput.centeredBox
+  unfold Basic.SeparatedRestartInput.centeredBox
   change
     (Box.Square.Centered.Affine.centeredSquare
-      (Newton.Box.Anchor.anchorNewtonCenter
+      (Anchor.anchorNewtonCenter
         (rootPolynomialAt segment parameter)
         (bridgeRestartInput segment parameter inside owner rootDiameter
           rootDiameterPositive).source)
       (bridgeRadius segment owner rootDiameter)
       (bridgeRadius_positive segment owner rootDiameterPositive).le).StrictInterior
     (Box.Square.Centered.Affine.centeredSquare
-      (Newton.Box.Anchor.anchorNewtonCenter
+      (Anchor.anchorNewtonCenter
         (rootPolynomialAt segment parameter)
         (restartInput segment parameter inside owner rootDiameter
           rootDiameterPositive).source)

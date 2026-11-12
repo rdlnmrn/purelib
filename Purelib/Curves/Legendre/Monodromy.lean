@@ -57,27 +57,27 @@ open Purelib.Topology.Knot.Braid
 open Purelib.LinearAlgebra
 
 /-- A certified Legendre root chamber at the exact parameter. -/
-abbrev Frame (parameter : Paths.Gaussian) :=
+abbrev Frame (parameter : Gaussian) :=
   Paths.Frame parameter
 /-- A certified parameter path indexed by its original endpoint root frames. -/
-abbrev Path {start finish : Paths.Gaussian}
+abbrev Path {start finish : Gaussian}
     (left : Frame start) (right : Frame finish) :=
   Paths.Path left right
 /-- The integral two-by-two matrix representation of homology transport. -/
-abbrev IntegralMatrix := Matrix.Basic.IntegralMatrix
+abbrev IntegralMatrix := Basic.IntegralMatrix
 
 /-- The pure braid consisting of two positive lower adjacent half twists. -/
-@[expose] def zeroBraid : Braid.Word 3 :=
+@[expose] def zeroBraid : Word 3 :=
   [Conventions.lowerPositive,
     Conventions.lowerPositive]
 
 /-- The pure braid consisting of two positive upper adjacent half twists. -/
-@[expose] def oneBraid : Braid.Word 3 :=
+@[expose] def oneBraid : Word 3 :=
   [Conventions.upperPositive,
     Conventions.upperPositive]
 
 /-- The inverse braid of traversal around zero followed by one. -/
-@[expose] def infinityBraid : Braid.Word 3 := (zeroBraid ++
+@[expose] def infinityBraid : Word 3 := (zeroBraid ++
   oneBraid).inverse
 
 /-- The standard zero loop fixes every finite branch label. -/
@@ -168,21 +168,21 @@ theorem infinityBraid_matrix : Words.wordMatrix infinityBraid = infinityMatrix :
 
 /-- The zero-loop braid has the retained dual period matrix. -/
 theorem zeroBraid_periodMatrix :
-    Purelib.Topology.Knot.Braid.ThreeStrand.Integral.Dual.periodMatrix zeroBraid =
+    Dual.periodMatrix zeroBraid =
       zeroPeriodMatrix := by
   unfold Dual.periodMatrix zeroPeriodMatrix
   rw [zeroBraid_matrix]
 
 /-- The one-loop braid has the retained dual period matrix. -/
 theorem oneBraid_periodMatrix :
-    Purelib.Topology.Knot.Braid.ThreeStrand.Integral.Dual.periodMatrix oneBraid =
+    Dual.periodMatrix oneBraid =
       onePeriodMatrix := by
   unfold Dual.periodMatrix onePeriodMatrix
   rw [oneBraid_matrix]
 
 /-- The infinity-loop braid has the retained dual period matrix. -/
 theorem infinityBraid_periodMatrix :
-    Purelib.Topology.Knot.Braid.ThreeStrand.Integral.Dual.periodMatrix infinityBraid =
+    Dual.periodMatrix infinityBraid =
       infinityPeriodMatrix := by
   unfold Dual.periodMatrix infinityPeriodMatrix
   rw [infinityBraid_matrix]
@@ -195,7 +195,7 @@ theorem explicit_loop_product_left :
   unfold infinityMatrix oneMatrix
     zeroMatrix
   rw [Two.mul_matrix₂, Two.mul_matrix₂]
-  apply LinearAlgebra.Matrix.matrix_ext
+  apply matrix_ext
   intro row column
   rcases Data.Fin.Two.finTwo_cases row with rowZero | rowOne <;>
     rcases Data.Fin.Two.finTwo_cases column with columnZero | columnOne <;>
@@ -209,7 +209,7 @@ theorem explicit_loop_product_right :
   unfold infinityMatrix oneMatrix
     zeroMatrix
   rw [Two.mul_matrix₂, Two.mul_matrix₂]
-  apply LinearAlgebra.Matrix.matrix_ext
+  apply matrix_ext
   intro row column
   rcases Data.Fin.Two.finTwo_cases row with rowZero | rowOne <;>
     rcases Data.Fin.Two.finTwo_cases column with columnZero | columnOne <;>
@@ -223,7 +223,7 @@ theorem explicit_period_product_left :
       Multiplication.identity := by
   rw [zeroPeriodMatrix_explicit, onePeriodMatrix_explicit,
     infinityPeriodMatrix_explicit, Two.mul_matrix₂, Two.mul_matrix₂]
-  apply LinearAlgebra.Matrix.matrix_ext
+  apply matrix_ext
   intro row column
   rcases Data.Fin.Two.finTwo_cases row with rowZero | rowOne <;>
     rcases Data.Fin.Two.finTwo_cases column with columnZero | columnOne <;>
@@ -236,7 +236,7 @@ theorem explicit_period_product_right :
       Multiplication.identity := by
   rw [zeroPeriodMatrix_explicit, onePeriodMatrix_explicit,
     infinityPeriodMatrix_explicit, Two.mul_matrix₂, Two.mul_matrix₂]
-  apply LinearAlgebra.Matrix.matrix_ext
+  apply matrix_ext
   intro row column
   rcases Data.Fin.Two.finTwo_cases row with rowZero | rowOne <;>
     rcases Data.Fin.Two.finTwo_cases column with columnZero | columnOne <;>
@@ -245,7 +245,7 @@ theorem explicit_period_product_right :
 set_option genInjectivity false in
 /-- Two certified loops based at the same Legendre chamber, together with finite Artin certificates identifying their
 extracted words as the standard pure loops around zero and one. -/
-structure StandardLoops {parameter : Paths.Gaussian}
+structure StandardLoops {parameter : Gaussian}
     (frame : Frame parameter) where
   /-- The certified zero loop based at the retained original root chamber. -/ zeroPath : Path
     frame frame
@@ -261,62 +261,62 @@ constructive_injectivity StandardLoops
 namespace StandardLoops
 
 /-- Concatenate the retained zero loop followed by the retained one loop. -/
-@[expose] def combinedPath {parameter : Paths.Gaussian}
-    {frame : Curves.Legendre.Monodromy.Frame parameter} (loops : Curves.Legendre.Monodromy.StandardLoops frame) :
-      Curves.Legendre.Monodromy.Path frame frame :=
+@[expose] def combinedPath {parameter : Gaussian}
+    {frame : Frame parameter} (loops : StandardLoops frame) :
+      Path frame frame :=
   loops.zeroPath.append loops.onePath
 
 /-- The infinity loop is not extra remembered data: it is path reversal of the zero-then-one product under the locked
 concatenation convention. -/
-@[expose] def infinityPath {parameter : Paths.Gaussian}
-    {frame : Curves.Legendre.Monodromy.Frame parameter} (loops : Curves.Legendre.Monodromy.StandardLoops frame) :
-      Curves.Legendre.Monodromy.Path frame frame :=
+@[expose] def infinityPath {parameter : Gaussian}
+    {frame : Frame parameter} (loops : StandardLoops frame) :
+      Path frame frame :=
   loops.combinedPath.reverse
 
 /-- Concatenate the combined zero-then-one path with its reversed infinity path. -/
-@[expose] def productPath {parameter : Paths.Gaussian}
-    {frame : Curves.Legendre.Monodromy.Frame parameter} (loops : Curves.Legendre.Monodromy.StandardLoops frame) :
-      Curves.Legendre.Monodromy.Path frame frame :=
+@[expose] def productPath {parameter : Gaussian}
+    {frame : Frame parameter} (loops : StandardLoops frame) :
+      Path frame frame :=
   loops.combinedPath.append loops.infinityPath
 
 /-- The retained certified zero path has the standard homology action. -/
-theorem zeroPath_matrix {parameter : Paths.Gaussian}
-    {frame : Curves.Legendre.Monodromy.Frame parameter} (loops : Curves.Legendre.Monodromy.StandardLoops frame) :
+theorem zeroPath_matrix {parameter : Gaussian}
+    {frame : Frame parameter} (loops : StandardLoops frame) :
     Words.wordMatrix loops.zeroPath.word = zeroMatrix :=
-  (Words.equivalent_matrix_eq loops.zeroWord).trans Curves.Legendre.Monodromy.zeroBraid_matrix
+  (Words.equivalent_matrix_eq loops.zeroWord).trans zeroBraid_matrix
 
 /-- The retained certified one path has the standard homology action. -/
-theorem onePath_matrix {parameter : Paths.Gaussian}
-    {frame : Curves.Legendre.Monodromy.Frame parameter} (loops : Curves.Legendre.Monodromy.StandardLoops frame) :
+theorem onePath_matrix {parameter : Gaussian}
+    {frame : Frame parameter} (loops : StandardLoops frame) :
     Words.wordMatrix loops.onePath.word = oneMatrix :=
-  (Words.equivalent_matrix_eq loops.oneWord).trans Curves.Legendre.Monodromy.oneBraid_matrix
+  (Words.equivalent_matrix_eq loops.oneWord).trans oneBraid_matrix
 
 /-- The retained certified zero path has the standard dual period action. -/
 theorem zeroPath_periodMatrix
-    {parameter : Paths.Gaussian}
-    {frame : Curves.Legendre.Monodromy.Frame parameter} (loops : Curves.Legendre.Monodromy.StandardLoops frame) :
+    {parameter : Gaussian}
+    {frame : Frame parameter} (loops : StandardLoops frame) :
     Dual.periodMatrix loops.zeroPath.word = zeroPeriodMatrix :=
-  (Dual.equivalent_periodMatrix_eq loops.zeroWord).trans Curves.Legendre.Monodromy.zeroBraid_periodMatrix
+  (Dual.equivalent_periodMatrix_eq loops.zeroWord).trans zeroBraid_periodMatrix
 
 /-- The retained certified one path has the standard dual period action. -/
 theorem onePath_periodMatrix
-    {parameter : Paths.Gaussian}
-    {frame : Curves.Legendre.Monodromy.Frame parameter} (loops : Curves.Legendre.Monodromy.StandardLoops frame) :
+    {parameter : Gaussian}
+    {frame : Frame parameter} (loops : StandardLoops frame) :
     Dual.periodMatrix loops.onePath.word = onePeriodMatrix :=
-  (Dual.equivalent_periodMatrix_eq loops.oneWord).trans Curves.Legendre.Monodromy.oneBraid_periodMatrix
+  (Dual.equivalent_periodMatrix_eq loops.oneWord).trans oneBraid_periodMatrix
 
 /-- The combined retained path acts by the ordered product of the one and zero homology matrices. -/
-theorem combinedPath_matrix {parameter : Paths.Gaussian}
-    {frame : Curves.Legendre.Monodromy.Frame parameter} (loops : Curves.Legendre.Monodromy.StandardLoops frame) :
-    Words.wordMatrix loops.combinedPath.word = Multiplication.mul Curves.Legendre.Monodromy.oneMatrix zeroMatrix := by
+theorem combinedPath_matrix {parameter : Gaussian}
+    {frame : Frame parameter} (loops : StandardLoops frame) :
+    Words.wordMatrix loops.combinedPath.word = Multiplication.mul oneMatrix zeroMatrix := by
   rw [combinedPath, Path.word_append,
     Words.wordMatrix_append, loops.zeroPath_matrix, loops.onePath_matrix]
 
 /-- Reversing a certified path gives a two-sided inverse homology matrix. -/
 theorem reversePath_matrix_identities
-    {start finish : Paths.Gaussian}
-    {left : Curves.Legendre.Monodromy.Frame start} {right : Curves.Legendre.Monodromy.Frame finish} (path :
-      Curves.Legendre.Monodromy.Path left right) :
+    {start finish : Gaussian}
+    {left : Frame start} {right : Frame finish} (path :
+      Path left right) :
     Multiplication.mul (Words.wordMatrix path.reverse.word) (Words.wordMatrix path.word) = Multiplication.identity ∧
       Multiplication.mul (Words.wordMatrix path.word) (Words.wordMatrix path.reverse.word) = Multiplication.identity :=
         by
@@ -325,8 +325,8 @@ theorem reversePath_matrix_identities
 
 /-- The infinity matrix follows from reversal and the already certified zero and one matrices. -/
 theorem infinityPath_matrix
-    {parameter : Paths.Gaussian}
-    {frame : Curves.Legendre.Monodromy.Frame parameter} (loops : Curves.Legendre.Monodromy.StandardLoops frame) :
+    {parameter : Gaussian}
+    {frame : Frame parameter} (loops : StandardLoops frame) :
     Words.wordMatrix loops.infinityPath.word = infinityMatrix := by
   have reverseLeft := (reversePath_matrix_identities loops.combinedPath).1
   change Multiplication.mul (Words.wordMatrix loops.infinityPath.word)
@@ -337,8 +337,8 @@ theorem infinityPath_matrix
         Multiplication.mul (Words.wordMatrix loops.infinityPath.word) Multiplication.identity :=
       (Multiplication.mul_identity_int _).symm
     _ = Multiplication.mul (Words.wordMatrix loops.infinityPath.word)
-          (Multiplication.mul (Words.wordMatrix loops.combinedPath.word) Curves.Legendre.Monodromy.infinityMatrix) := by
-      rw [combined, Curves.Legendre.Monodromy.explicit_loop_product_right]
+          (Multiplication.mul (Words.wordMatrix loops.combinedPath.word) infinityMatrix) := by
+      rw [combined, explicit_loop_product_right]
     _ = Multiplication.mul
           (Multiplication.mul (Words.wordMatrix loops.infinityPath.word)
             (Words.wordMatrix loops.combinedPath.word)) infinityMatrix :=
@@ -348,35 +348,35 @@ theorem infinityPath_matrix
 
 /-- The derived reversed infinity path has the standard dual period action. -/
 theorem infinityPath_periodMatrix
-    {parameter : Paths.Gaussian}
-    {frame : Curves.Legendre.Monodromy.Frame parameter} (loops : Curves.Legendre.Monodromy.StandardLoops frame) :
-    Purelib.Topology.Knot.Braid.ThreeStrand.Integral.Dual.periodMatrix loops.infinityPath.word = infinityPeriodMatrix :=
+    {parameter : Gaussian}
+    {frame : Frame parameter} (loops : StandardLoops frame) :
+    Dual.periodMatrix loops.infinityPath.word = infinityPeriodMatrix :=
       by
-  unfold Dual.periodMatrix Curves.Legendre.Monodromy.infinityPeriodMatrix
+  unfold Dual.periodMatrix infinityPeriodMatrix
   rw [loops.infinityPath_matrix]
 
 /-- The retained combined path followed by its reverse has identity homology action. -/
 theorem productPath_matrix
-    {parameter : Paths.Gaussian}
-    {frame : Curves.Legendre.Monodromy.Frame parameter} (loops : Curves.Legendre.Monodromy.StandardLoops frame) :
+    {parameter : Gaussian}
+    {frame : Frame parameter} (loops : StandardLoops frame) :
     Words.wordMatrix loops.productPath.word = Multiplication.identity := by
   rw [productPath, Path.word_append,
     Words.wordMatrix_append, loops.infinityPath_matrix,
-    loops.combinedPath_matrix, Curves.Legendre.Monodromy.explicit_loop_product_left]
+    loops.combinedPath_matrix, explicit_loop_product_left]
 
 /-- The retained combined path followed by its reverse has identity dual period action. -/
 theorem productPath_periodMatrix
-    {parameter : Paths.Gaussian}
-    {frame : Curves.Legendre.Monodromy.Frame parameter} (loops : Curves.Legendre.Monodromy.StandardLoops frame) :
-    Purelib.Topology.Knot.Braid.ThreeStrand.Integral.Dual.periodMatrix loops.productPath.word = Multiplication.identity
+    {parameter : Gaussian}
+    {frame : Frame parameter} (loops : StandardLoops frame) :
+    Dual.periodMatrix loops.productPath.word = Multiplication.identity
       := by
   unfold Dual.periodMatrix
   rw [loops.productPath_matrix, Transpose.transpose_identity]
 
 /-- The certified zero loop returns every original root owner to itself. -/
 theorem zero_root_transport
-    {parameter : Paths.Gaussian}
-    {frame : Curves.Legendre.Monodromy.Frame parameter} (loops : Curves.Legendre.Monodromy.StandardLoops frame) (label :
+    {parameter : Gaussian}
+    {frame : Frame parameter} (loops : StandardLoops frame) (label :
       Fin 3) :
     loops.zeroPath.ownerTransport.forward (frame.labels.forward label) =
       frame.labels.forward label := by
@@ -388,15 +388,15 @@ theorem zero_root_transport
   have wordFixed : loops.zeroPath.word.permutation.forward position =
       position :=
     (loops.zeroWord.permutationSame position).trans
-      (Curves.Legendre.Monodromy.zeroBraid_permutation position)
+      (zeroBraid_permutation position)
   rw [← ownerEq]
   exact (loops.zeroPath.ownerTransport_agrees position).trans
     (congrArg frame.projected.ownerIndex wordFixed)
 
 /-- The certified one loop returns every original root owner to itself. -/
 theorem one_root_transport
-    {parameter : Paths.Gaussian}
-    {frame : Curves.Legendre.Monodromy.Frame parameter} (loops : Curves.Legendre.Monodromy.StandardLoops frame) (label :
+    {parameter : Gaussian}
+    {frame : Frame parameter} (loops : StandardLoops frame) (label :
       Fin 3) :
     loops.onePath.ownerTransport.forward (frame.labels.forward label) =
       frame.labels.forward label := by
@@ -408,15 +408,15 @@ theorem one_root_transport
   have wordFixed : loops.onePath.word.permutation.forward position =
       position :=
     (loops.oneWord.permutationSame position).trans
-      (Curves.Legendre.Monodromy.oneBraid_permutation position)
+      (oneBraid_permutation position)
   rw [← ownerEq]
   exact (loops.onePath.ownerTransport_agrees position).trans
     (congrArg frame.projected.ownerIndex wordFixed)
 
 /-- The first finite headline package: root transport, integral symplectic Picard--Lefschetz matrices, reversal, and the
 loop-product relation all come from the same certified paths. -/
-structure Certificate {parameter : Paths.Gaussian}
-    {frame : Curves.Legendre.Monodromy.Frame parameter} (loops : Curves.Legendre.Monodromy.StandardLoops frame) : Prop
+structure Certificate {parameter : Gaussian}
+    {frame : Frame parameter} (loops : StandardLoops frame) : Prop
       where
   /-- The retained zero loop fixes each original labelled root owner. -/ zeroRoots : forall label,
     loops.zeroPath.ownerTransport.forward
@@ -425,19 +425,19 @@ structure Certificate {parameter : Paths.Gaussian}
     loops.onePath.ownerTransport.forward
     (frame.labels.forward label) = frame.labels.forward label
   /-- The zero path realizes the displayed zero homology matrix. -/ zeroAction : Words.wordMatrix loops.zeroPath.word =
-    Curves.Legendre.Monodromy.zeroMatrix
+    zeroMatrix
   /-- The one path realizes the displayed one homology matrix. -/ oneAction : Words.wordMatrix loops.onePath.word =
-    Curves.Legendre.Monodromy.oneMatrix
+    oneMatrix
   /-- The derived infinity path realizes the displayed infinity homology matrix. -/ infinityAction : Words.wordMatrix
-    loops.infinityPath.word = Curves.Legendre.Monodromy.infinityMatrix
+    loops.infinityPath.word = infinityMatrix
   /-- The concatenated loop product realizes the identity homology matrix. -/ productAction : Words.wordMatrix
     loops.productPath.word = Multiplication.identity
   /-- The zero path realizes the displayed zero dual period matrix. -/ zeroPeriodAction : Dual.periodMatrix
-    loops.zeroPath.word = Curves.Legendre.Monodromy.zeroPeriodMatrix
+    loops.zeroPath.word = zeroPeriodMatrix
   /-- The one path realizes the displayed one dual period matrix. -/ onePeriodAction : Dual.periodMatrix
-    loops.onePath.word = Curves.Legendre.Monodromy.onePeriodMatrix
+    loops.onePath.word = onePeriodMatrix
   /-- The derived infinity path realizes the displayed infinity dual period matrix. -/ infinityPeriodAction :
-    Dual.periodMatrix loops.infinityPath.word = Curves.Legendre.Monodromy.infinityPeriodMatrix
+    Dual.periodMatrix loops.infinityPath.word = infinityPeriodMatrix
   /-- The concatenated loop product realizes the identity dual period matrix. -/ productPeriodAction : Dual.periodMatrix
     loops.productPath.word = Multiplication.identity
   /-- Transport around zero preserves the integral homology intersection pairing. -/ zeroSymplectic : forall left right,
@@ -459,8 +459,8 @@ structure Certificate {parameter : Paths.Gaussian}
 
 The infinity and product guarantees are derived from path reversal and concatenation, while the Artin witnesses identify
 the zero and one actions. -/
-theorem certificate {parameter : Paths.Gaussian}
-    {frame : Curves.Legendre.Monodromy.Frame parameter} (loops : Curves.Legendre.Monodromy.StandardLoops frame) :
+theorem certificate {parameter : Gaussian}
+    {frame : Frame parameter} (loops : StandardLoops frame) :
     Certificate loops where
   zeroRoots := loops.zero_root_transport
   oneRoots := loops.one_root_transport

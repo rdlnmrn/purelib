@@ -10,6 +10,9 @@ import Purelib.LinearAlgebra.Coordinates3.Vector
 public import Purelib.LinearAlgebra.Coordinates3.Ray
 import Purelib.Tactic.Ring
 
+open Purelib.Geometry.Quadratic.Ternary
+open Purelib.Geometry.Rotations.Ternary.Basic.TernaryForm
+
 /-!
 # Orientation of time-first Lorentz rotations
 
@@ -36,12 +39,12 @@ variable {K : Type*} [ExplicitField K] (oneNonzero : (1 : K) ≠ 0)
 /-- Inverting a Lorentz rotation negates the vector read from its original computed anchor. -/
 theorem rotationAnchorVector_inverse (rotation : (Form.lorentz oneNonzero).SpecialOrthogonal)
     (defined : rotation.anchorDenominator ≠ 0) :
-    rotationAnchorVector oneNonzero (Basic.TernaryForm.SpecialOrthogonal.inverse rotation)
+    rotationAnchorVector oneNonzero (SpecialOrthogonal.inverse rotation)
         (by rw [rotation.anchorDenominator_inverse]; exact defined) =
       Vector3.neg (rotationAnchorVector oneNonzero rotation defined) := by
   unfold rotationAnchorVector
   rw [rotation.anchor_inverse defined]
-  ext <;> unfold Quadratic.Ternary.Lorentz.anchorVector Matrix3.neg Vector3.neg <;> ring1
+  ext <;> unfold Lorentz.anchorVector Matrix3.neg Vector3.neg <;> ring1
 
 /-- Inversion takes every nonzero original Lorentz anchor to its distinct opposite ray.
 
@@ -54,7 +57,7 @@ theorem rotationAnchorVector_inverse_distinct_ray {L : Type*} [RayOrderedExplici
     (defined : rotation.anchorDenominator ≠ 0)
     (anchorNonzero : rotationAnchorVector oneNonzero rotation defined ≠ Vector3.zero) :
     ¬ Vector3.RayEquivalent (rotationAnchorVector oneNonzero rotation defined)
-      (rotationAnchorVector oneNonzero (Basic.TernaryForm.SpecialOrthogonal.inverse rotation)
+      (rotationAnchorVector oneNonzero (SpecialOrthogonal.inverse rotation)
         (by rw [rotation.anchorDenominator_inverse]; exact defined)) := by
   rw [rotationAnchorVector_inverse oneNonzero rotation defined]
   exact Vector3.not_rayEquivalent_neg _ anchorNonzero
@@ -70,10 +73,10 @@ theorem rowMul_cap_of_perpendicular (axis vector : Vector3 K)
     Matrix3.rowMul vector (cap oneNonzero axis defined) =
       Vector3.scale (capDenominator oneNonzero axis)⁻¹
         (Vector3.add (Vector3.scale (1 - (Form.lorentz oneNonzero).quadrance axis) vector)
-          (Vector3.scale 2 (Quadratic.Ternary.Lorentz.cross oneNonzero axis vector))) := by
+          (Vector3.scale 2 (Lorentz.cross oneNonzero axis vector))) := by
   rw [cap_quadratic, Matrix3.rowMul_add, Matrix3.rowMul_identity, Matrix3.rowMul_scale,
-    Matrix3.rowMul_add, Quadratic.Ternary.Lorentz.rowMul_anchor,
-    Quadratic.Ternary.Lorentz.anchor_square, Matrix3.rowMul_sub, Matrix3.rowMul_outer,
+    Matrix3.rowMul_add, Lorentz.rowMul_anchor,
+    Lorentz.anchor_square, Matrix3.rowMul_sub, Matrix3.rowMul_outer,
     Matrix3.rowMul_scale, Matrix3.rowMul_identity,
     ← (Form.lorentz oneNonzero).bilinear_eq_dot_dual, perpendicular]
   have cancellation := ExplicitField.mul_inv_cancel (capDenominator oneNonzero axis) defined
@@ -115,22 +118,22 @@ theorem determinant_cap_frame (axis vector : Vector3 K)
     rw [(Form.lorentz oneNonzero).bilinear_comm]
     exact perpendicular
   have crossQuadrance : (Form.lorentz oneNonzero).quadrance
-      (Quadratic.Ternary.Lorentz.cross oneNonzero axis vector) =
+      (Lorentz.cross oneNonzero axis vector) =
         (Form.lorentz oneNonzero).quadrance axis * (Form.lorentz oneNonzero).quadrance vector := by
-    have lagrange := Quadratic.Ternary.Lorentz.lagrange oneNonzero axis vector
+    have lagrange := Lorentz.lagrange oneNonzero axis vector
     rw [axisPerpendicular] at lagrange
     calc
       _ = 0 ^ 2 + (Form.lorentz oneNonzero).quadrance
-        (Quadratic.Ternary.Lorentz.cross oneNonzero axis vector) := by ring1
+        (Lorentz.cross oneNonzero axis vector) := by ring1
       _ = _ := lagrange
-  have triple : Vector3.determinant axis vector (Quadratic.Ternary.Lorentz.cross oneNonzero axis vector) =
-      -(Form.lorentz oneNonzero).quadrance (Quadratic.Ternary.Lorentz.cross oneNonzero axis vector) := by
-    have pairing := Quadratic.Ternary.Lorentz.scalar_triple_product oneNonzero axis vector
-      (Quadratic.Ternary.Lorentz.cross oneNonzero axis vector)
-    change (Form.lorentz oneNonzero).quadrance (Quadratic.Ternary.Lorentz.cross oneNonzero axis vector) =
-      -Vector3.determinant axis vector (Quadratic.Ternary.Lorentz.cross oneNonzero axis vector) at pairing
+  have triple : Vector3.determinant axis vector (Lorentz.cross oneNonzero axis vector) =
+      -(Form.lorentz oneNonzero).quadrance (Lorentz.cross oneNonzero axis vector) := by
+    have pairing := Lorentz.scalar_triple_product oneNonzero axis vector
+      (Lorentz.cross oneNonzero axis vector)
+    change (Form.lorentz oneNonzero).quadrance (Lorentz.cross oneNonzero axis vector) =
+      -Vector3.determinant axis vector (Lorentz.cross oneNonzero axis vector) at pairing
     calc
-      _ = -(-Vector3.determinant axis vector (Quadratic.Ternary.Lorentz.cross oneNonzero axis vector)) := by ring1
+      _ = -(-Vector3.determinant axis vector (Lorentz.cross oneNonzero axis vector)) := by ring1
       _ = _ := congrArg (fun scalar : K => -scalar) pairing.symm
   rw [rowMul_cap_of_perpendicular oneNonzero axis vector defined perpendicular,
     Vector3.determinant_scale_third, Vector3.determinant_add_third,
@@ -162,7 +165,7 @@ theorem determinant_cap_frame_pos_of_timelike {F : Type*} [RayOrderedExplicitFie
     (perpendicular : (Form.lorentz oneNonzero).Perpendicular vector axis)
     (nonzero : vector ≠ Vector3.zero) :
     0 < Vector3.determinant axis vector (Matrix3.rowMul vector (cap oneNonzero axis defined)) := by
-  have testPositive := Quadratic.Ternary.Lorentz.neg_quadrance_pos_of_perpendicular_timelike
+  have testPositive := Lorentz.neg_quadrance_pos_of_perpendicular_timelike
     oneNonzero axis vector positive perpendicular nonzero
   have denominatorPositive : 0 < capDenominator oneNonzero axis :=
     OrderedExplicitField.add_pos_direct OrderedExplicitField.zero_lt_one_direct positive
@@ -256,7 +259,7 @@ theorem proportionRotation_mul_time_pos {F : Type*} [RayOrderedExplicitField F]
     (rightDefined : rightScalar ^ 2 + (Form.lorentz oneNonzero).quadrance rightVector ≠ 0)
     (leftPositive : 0 < (proportionRotation oneNonzero leftScalar leftVector leftDefined).matrix.tt)
     (rightPositive : 0 < (proportionRotation oneNonzero rightScalar rightVector rightDefined).matrix.tt) :
-    0 < (Basic.TernaryForm.SpecialOrthogonal.mul
+    0 < (SpecialOrthogonal.mul
       (proportionRotation oneNonzero leftScalar leftVector leftDefined)
       (proportionRotation oneNonzero rightScalar rightVector rightDefined)).matrix.tt := by
   rw [← proportionRotation_mul]
@@ -271,7 +274,7 @@ theorem proportionRotation_inverse_time_pos {F : Type*} [RayOrderedExplicitField
     (oneNonzero : (1 : F) ≠ 0) (scalar : F) (vector : Vector3 F)
     (defined : scalar ^ 2 + (Form.lorentz oneNonzero).quadrance vector ≠ 0)
     (positive : 0 < (proportionRotation oneNonzero scalar vector defined).matrix.tt) :
-    0 < (Basic.TernaryForm.SpecialOrthogonal.inverse
+    0 < (SpecialOrthogonal.inverse
       (proportionRotation oneNonzero scalar vector defined)).matrix.tt := by
   rw [← proportionRotation_conjugate]
   apply (proportionRotation_time_pos_iff oneNonzero _ _ _).mpr
@@ -280,7 +283,7 @@ theorem proportionRotation_inverse_time_pos {F : Type*} [RayOrderedExplicitField
 
 /-- The original Lorentz identity rotation has positive time entry. -/
 theorem identity_time_pos {F : Type*} [RayOrderedExplicitField F] (oneNonzero : (1 : F) ≠ 0) :
-    0 < (Basic.TernaryForm.SpecialOrthogonal.identity (Form.lorentz oneNonzero)).matrix.tt :=
+    0 < (SpecialOrthogonal.identity (Form.lorentz oneNonzero)).matrix.tt :=
   OrderedExplicitField.zero_lt_one_direct
 
 /-- The product of two original Lorentz rotations with positive time entry has positive time entry.
@@ -292,7 +295,7 @@ multiplicative norm law and return the original certified product.
 theorem rotation_mul_time_pos {F : Type*} [RayOrderedExplicitField F]
     (oneNonzero : (1 : F) ≠ 0) (left right : (Form.lorentz oneNonzero).SpecialOrthogonal)
     (leftPositive : 0 < left.matrix.tt) (rightPositive : 0 < right.matrix.tt) :
-    0 < (Basic.TernaryForm.SpecialOrthogonal.mul left right).matrix.tt := by
+    0 < (SpecialOrthogonal.mul left right).matrix.tt := by
   letI : DecidableEq F := OrderedExplicitField.eq_decidable
   let twoNonzero : (2 : F) ≠ 0 := RayOrderedExplicitField.two_ne_zero
   let leftValue := rotationProportion oneNonzero twoNonzero left
@@ -311,7 +314,7 @@ theorem rotation_mul_time_pos {F : Type*} [RayOrderedExplicitField F]
 theorem rotation_inverse_time_pos {F : Type*} [RayOrderedExplicitField F]
     (oneNonzero : (1 : F) ≠ 0) (rotation : (Form.lorentz oneNonzero).SpecialOrthogonal)
     (positive : 0 < rotation.matrix.tt) :
-    0 < (Basic.TernaryForm.SpecialOrthogonal.inverse rotation).matrix.tt := by
+    0 < (SpecialOrthogonal.inverse rotation).matrix.tt := by
   letI : DecidableEq F := OrderedExplicitField.eq_decidable
   let twoNonzero : (2 : F) ≠ 0 := RayOrderedExplicitField.two_ne_zero
   let value := rotationProportion oneNonzero twoNonzero rotation

@@ -62,30 +62,30 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBank (Bank)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners (Owners OwnedEndpoints)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths (ComparedCells)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap}
 
 set_option genInjectivity false in
 /-- A dependent bank of paid endpoint-pair requests indexed by the exact original owner spine. -/
-inductive EndpointRequests (target : InverseRootPolynomial.Coordinate) (floor : Nat) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      ParentOwners.Owners bank → Type 1
+inductive EndpointRequests (target : Coordinate) (floor : Nat) :
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      Owners bank → Type 1
   /-- The empty original owner bank has no endpoint-pair requests. -/ | nil :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentEndpoints.EndpointRequests target floor .nil
+    ParentEndpoints.EndpointRequests target floor .nil
   /-- Prepend the paid request for one original owner pair to the retained tail requests. -/ | cons {edge :
-    ClearSheetContinuation.Subdivision.ParameterEdge} {remaining : List
-    ClearSheetContinuation.Subdivision.ParameterEdge} {cell : UniformReciprocalCover.Cell data edge}
-      {comparison : ArcSamples.Data regular cell} {bank : ParentBank.Bank regular data remaining}
-      {first : ParentOwners.OwnedEndpoints regular cell} {rest : ParentOwners.Owners bank}
-      (head : EndpointPairs.PairRequest first.bounds target floor) (tail :
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentEndpoints.EndpointRequests target floor rest) :
-      Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentEndpoints.EndpointRequests target floor (.cons
+    ParameterEdge} {remaining : List
+    ParameterEdge} {cell : Cell data edge}
+      {comparison : ArcSamples.Data regular cell} {bank : Bank regular data remaining}
+      {first : OwnedEndpoints regular cell} {rest : Owners bank}
+      (head : PairRequest first.bounds target floor) (tail :
+        ParentEndpoints.EndpointRequests target floor rest) :
+      ParentEndpoints.EndpointRequests target floor (.cons
         (comparison := comparison) first rest)
 
 constructive_injectivity EndpointRequests
@@ -93,61 +93,61 @@ constructive_injectivity EndpointRequests
 namespace EndpointRequests
 
 /-- Request the original cached endpoint owners at a shared target and caller-supplied reading floor. -/
-@[expose] def build (target : InverseRootPolynomial.Coordinate) (positive : 0 < target) (floor : Nat) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      (owners : ParentOwners.Owners bank) → Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentEndpoints.EndpointRequests
+@[expose] def build (target : Coordinate) (positive : 0 < target) (floor : Nat) :
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      (owners : Owners bank) → EndpointRequests
       target floor owners
   | _, _, .nil => .nil
   | _, _, .cons first rest => .cons (PairRequest.build first.bounds target positive floor)
-    (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentEndpoints.EndpointRequests.build target positive floor
+    (EndpointRequests.build target positive floor
     rest)
 
-variable {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
+variable {target : Coordinate} {floor : Nat}
 
 /-- Read the maximum original polynomial stage required by the retained endpoint requests. -/
-@[expose] def maximum : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank
-  regular data edges} → {owners : ParentOwners.Owners bank} →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentEndpoints.EndpointRequests target floor owners → Nat
+@[expose] def maximum : {edges : List ParameterEdge} → {bank : Bank
+  regular data edges} → {owners : Owners bank} →
+    EndpointRequests target floor owners → Nat
   | _, _, _, .nil => floor
   | _, _, _, .cons head tail => max head.index tail.maximum
 
 /-- Read the separate maximum original root-reading stage required by the retained endpoint requests. -/
-@[expose] def readingMaximum : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank
-  regular data edges} → {owners : ParentOwners.Owners bank} →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentEndpoints.EndpointRequests target floor owners → Nat
+@[expose] def readingMaximum : {edges : List ParameterEdge} → {bank : Bank
+  regular data edges} → {owners : Owners bank} →
+    EndpointRequests target floor owners → Nat
   | _, _, _, .nil => floor
   | _, _, _, .cons head tail => max head.readingIndex tail.readingMaximum
 
 variable {index depth readingIndex : Nat} {source :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
-  {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  SourcePrimitive data index}
+  {box : Geometry.Rational.Box} {capSample :
+    Cap.Primitives.Sample cap differential index box}
 
 /-- The exact original endpoint evaluations paired along the retained requests and compared-cell spine. -/
-@[expose] def EvaluationData {readingIndex : Nat} : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} →
-  {bank : ParentBank.Bank regular data edges} → {owners : ParentOwners.Owners bank} →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentEndpoints.EndpointRequests target floor owners →
-      ParentPaths.ComparedCells source capSample depth bank → Type 1
+@[expose] def EvaluationData {readingIndex : Nat} : {edges : List ParameterEdge} →
+  {bank : Bank regular data edges} → {owners : Owners bank} →
+    EndpointRequests target floor owners →
+      ComparedCells source capSample depth bank → Type 1
   | _, _, _, .nil, .nil => PUnit
   | _, _, _, .cons request rest, .cons cell cells =>
       PairRequest.Evaluation request cell.sample readingIndex ×
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentEndpoints.EndpointRequests.EvaluationData
+        EndpointRequests.EvaluationData
         (readingIndex := readingIndex) rest cells
 
 /-- Evaluate the original retained endpoint requests on the actual cached compared cells once both independent stage
 floors are met. -/
-@[expose] def evaluate : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank
-  regular data edges} → {owners : ParentOwners.Owners bank} →
-    (requests : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentEndpoints.EndpointRequests target floor owners) →
-      (cells : ParentPaths.ComparedCells source capSample depth bank) →
+@[expose] def evaluate : {edges : List ParameterEdge} → {bank : Bank
+  regular data edges} → {owners : Owners bank} →
+    (requests : EndpointRequests target floor owners) →
+      (cells : ComparedCells source capSample depth bank) →
       requests.maximum ≤ index → requests.readingMaximum ≤ readingIndex →
-        Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentEndpoints.EndpointRequests.EvaluationData (readingIndex :=
+        EvaluationData (readingIndex :=
         readingIndex) requests cells
   | _, _, _, .nil, .nil, _, _ => ⟨⟩
   | _, _, _, .cons request rest, .cons cell cells, later, readingLater =>
       ⟨request.evaluate cell.sample ((Data.Nat.Order.le_max_left _ _).trans later) readingIndex
         ((Data.Nat.Order.le_max_left _ _).trans readingLater),
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentEndpoints.EndpointRequests.evaluate rest cells
+        EndpointRequests.evaluate rest cells
           ((Data.Nat.Order.le_max_right _ _).trans later) ((Data.Nat.Order.le_max_right _ _).trans readingLater)⟩
 
 end EndpointRequests

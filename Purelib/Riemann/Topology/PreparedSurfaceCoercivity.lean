@@ -18,6 +18,8 @@ import Purelib.Riemann.Periods.PeriodMatrix
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction
+
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_antitone)
 
 @[expose] public section
@@ -62,14 +64,14 @@ open Purelib.Data
 theorem squareErrorBudget_nonnegative {squared radius : Coordinate}
     (squaredNonnegative : 0 <= squared) (radiusPositive : 0 < radius) :
     0 <= squareErrorBudget squared radius :=
-  add_nonneg (Rat.Fraction.Order.Field.div_nonneg_direct
+  add_nonneg (Order.Field.div_nonneg_direct
     squaredNonnegative radiusPositive.le) radiusPositive.le
 
 /-- The computed rational budget's square bounds the supplied nonnegative squared error. -/
 theorem squared_le_squareErrorBudget_sq {squared radius : Coordinate}
     (squaredNonnegative : 0 <= squared) (radiusPositive : 0 < radius) :
     squared <= squareErrorBudget squared radius ^ 2 := by
-  have cancel := Rat.Fraction.Field.div_mul_cancel_of_ne
+  have cancel := Field.div_mul_cancel_of_ne
     squared radius radiusPositive.ne'
   have identity : squareErrorBudget squared radius ^ 2 - squared =
       (squared / radius) ^ 2 + squared + radius ^ 2 := by
@@ -78,22 +80,22 @@ theorem squared_le_squareErrorBudget_sq {squared radius : Coordinate}
       _ = (squared / radius) ^ 2 +
           2 * ((squared / radius) * radius) + radius ^ 2 - squared := by ring1
       _ = _ := by rw [cancel]; ring1
-  apply Rat.Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  apply Order.Arithmetic.le_of_sub_nonneg_direct
   rw [identity]
   exact add_nonneg
-    (add_nonneg (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct _) squaredNonnegative)
-    (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct _)
+    (add_nonneg (Order.Arithmetic.sq_nonneg_direct _) squaredNonnegative)
+    (Order.Arithmetic.sq_nonneg_direct _)
 
 /-- A quadratic squared-error rate gives a linear rate for the computed rational budget. -/
 theorem squareErrorBudget_le_of_squared_le {squared radius factor : Coordinate}
     (radiusPositive : 0 < radius) (bounded : squared <= factor * radius ^ 2) :
     squareErrorBudget squared radius <= (factor + 1) * radius := by
   have divided : squared / radius <= factor * radius :=
-    (Rat.Fraction.Order.Field.div_le_iff_pos radiusPositive).2
+    (Order.Field.div_le_iff_pos radiusPositive).2
       (bounded.trans_eq (by ring1))
   calc
     squareErrorBudget squared radius <= factor * radius + radius :=
-      Rat.Fraction.Order.Arithmetic.add_le_add_right_direct divided radius
+      Order.Arithmetic.add_le_add_right_direct divided radius
     _ = (factor + 1) * radius := by ring1
 
 /-- One quarter of the product of the two Gaussian quadrances. -/
@@ -104,8 +106,8 @@ def crossErrorSquare (first second : Gaussian) : Coordinate :=
 /-- The cross-error squared allowance is nonnegative. -/
 public theorem crossErrorSquare_nonnegative (first second : Gaussian) :
     0 <= crossErrorSquare first second :=
-  Rat.Fraction.Order.Field.div_nonneg_direct
-    (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
+  Order.Field.div_nonneg_direct
+    (Order.Arithmetic.mul_nonneg_direct
       (Gaussian.Norm.Basic.normSq_nonneg first)
       (Gaussian.Norm.Basic.normSq_nonneg second)) (by decide)
 
@@ -193,9 +195,9 @@ theorem computedAffineTriangleError_exact_totalBudget
     Energy.AffineTriangle.affinePrimitiveIncrementError, Energy.AffineTriangle.affinePrimitiveIncrement,
     Gaussian.Basic.sub_self, crossErrorSquare,
     Gaussian.Norm.Basic.normSq_zero,
-    Rat.Fraction.Field.zero_mul_direct,
-    Rat.Fraction.Field.mul_zero_direct, squareErrorBudget,
-    Rat.Fraction.Field.div_eq_mul_inv_direct,
+    Field.zero_mul_direct,
+    Field.mul_zero_direct, squareErrorBudget,
+    Field.div_eq_mul_inv_direct,
     _root_.zero_add]
   ring1
 
@@ -352,7 +354,7 @@ theorem triangleEnergySum_eq_boundaryEnergy
     (fun vertex => Energy.Polygon.energyPrimitivePoint (sample.primitiveValue vertex))]
   unfold Energy.AffineTriangle.triangleEnergy Polygon.Stokes.triangleWedgeSum
   rw [Gaussian.Energy.sumFin_im]
-  simp only [Rat.Fraction.Field.div_eq_mul_inv_direct]
+  simp only [Field.div_eq_mul_inv_direct]
   exact FiniteSum.Fin.sumFin_mul_right _ _
 
 open Purelib.Algebra in
@@ -383,17 +385,17 @@ theorem boundaryEnergy_sub_budget_le (actual reference : Gaussian)
   have imaginarySquare : (actual - reference).im ^ 2 <=
       Gaussian.Norm.Basic.normSq (actual - reference) :=
     le_add_of_nonneg_left
-      (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct (actual - reference).re)
-  have imaginaryBound := Rat.Fraction.Order.Arithmetic.le_of_sq_le_sq_direct
-    (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
+      (Order.Arithmetic.sq_nonneg_direct (actual - reference).re)
+  have imaginaryBound := Order.Arithmetic.le_of_sq_le_sq_direct
+    (Order.Arithmetic.mul_nonneg_direct
       (show (0 : Coordinate) <= 4 by decide) nonnegative)
     (imaginarySquare.trans close)
-  have scaled := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+  have scaled := Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
     imaginaryBound (show (0 : Coordinate) <= (4 : Coordinate)⁻¹ by decide)
-  have shifted := Rat.Fraction.Order.Arithmetic.add_le_add_right_direct
+  have shifted := Order.Arithmetic.add_le_add_right_direct
     scaled (reference.im / 4 - budget)
   simpa only [Gaussian.Basic.sub_im,
-    Rat.Fraction.Field.div_eq_mul_inv_direct] using
+    Field.div_eq_mul_inv_direct] using
     (show actual.im * (4 : Coordinate)⁻¹ - budget <=
       reference.im * (4 : Coordinate)⁻¹ from by
       calc
@@ -401,13 +403,13 @@ theorem boundaryEnergy_sub_budget_le (actual reference : Gaussian)
             (actual - reference).im * (4 : Coordinate)⁻¹ +
               (reference.im / 4 - budget) := by
           simp only [Gaussian.Basic.sub_im,
-            Rat.Fraction.Field.div_eq_mul_inv_direct]
+            Field.div_eq_mul_inv_direct]
           ring1
         _ <= 4 * budget * (4 : Coordinate)⁻¹ +
             (reference.im / 4 - budget) := shifted
         _ = reference.im * (4 : Coordinate)⁻¹ := by
           rw [show (4 : Coordinate)⁻¹ = (1 / 4 : Coordinate) by decide]
-          simp only [Rat.Fraction.Field.div_eq_mul_inv_direct]
+          simp only [Field.div_eq_mul_inv_direct]
           have fourCancel : (4 : Coordinate) * (4 : Coordinate)⁻¹ = 1 := by decide
           calc
             _ = budget * ((4 : Coordinate) * (4 : Coordinate)⁻¹) +
@@ -419,16 +421,16 @@ theorem boundaryEnergy_sub_budget_le_of_im (actual reference : Gaussian)
     (budget : Coordinate) (nonnegative : 0 <= budget)
     (close : (actual - reference).im ^ 2 <= (4 * budget) ^ 2) :
     actual.im / 4 - budget <= reference.im / 4 := by
-  have imaginaryBound := Rat.Fraction.Order.Arithmetic.le_of_sq_le_sq_direct
-    (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
+  have imaginaryBound := Order.Arithmetic.le_of_sq_le_sq_direct
+    (Order.Arithmetic.mul_nonneg_direct
       (show (0 : Coordinate) <= 4 by decide) nonnegative)
     close
-  have scaled := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+  have scaled := Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
     imaginaryBound (show (0 : Coordinate) <= (4 : Coordinate)⁻¹ by decide)
-  have shifted := Rat.Fraction.Order.Arithmetic.add_le_add_right_direct
+  have shifted := Order.Arithmetic.add_le_add_right_direct
     scaled (reference.im / 4 - budget)
   simpa only [Gaussian.Basic.sub_im,
-    Rat.Fraction.Field.div_eq_mul_inv_direct] using
+    Field.div_eq_mul_inv_direct] using
     (show actual.im * (4 : Coordinate)⁻¹ - budget <=
       reference.im * (4 : Coordinate)⁻¹ from by
       calc
@@ -436,13 +438,13 @@ theorem boundaryEnergy_sub_budget_le_of_im (actual reference : Gaussian)
             (actual - reference).im * (4 : Coordinate)⁻¹ +
               (reference.im / 4 - budget) := by
           simp only [Gaussian.Basic.sub_im,
-            Rat.Fraction.Field.div_eq_mul_inv_direct]
+            Field.div_eq_mul_inv_direct]
           ring1
         _ <= 4 * budget * (4 : Coordinate)⁻¹ +
             (reference.im / 4 - budget) := shifted
         _ = reference.im * (4 : Coordinate)⁻¹ := by
           rw [show (4 : Coordinate)⁻¹ = (1 / 4 : Coordinate) by decide]
-          simp only [Rat.Fraction.Field.div_eq_mul_inv_direct]
+          simp only [Field.div_eq_mul_inv_direct]
           have fourCancel : (4 : Coordinate) * (4 : Coordinate)⁻¹ = 1 := by decide
           calc
             _ = budget * ((4 : Coordinate) * (4 : Coordinate)⁻¹) +
@@ -463,7 +465,7 @@ The supplied boundary quadrance check identifies the same cached surface boundar
 commutator boundary. -/
 theorem affineEnergy_sub_budgets_le_periodPairing
     (sample : AffineSurfaceSample vertexCount faceCount)
-    (aPeriods bPeriods : Purelib.LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (aPeriods bPeriods : Gaussian.Energy.GaussianVector genus)
     (boundaryBudget : Coordinate) (nonnegative : 0 <= boundaryBudget)
     (close : Gaussian.Norm.Basic.normSq
         (sample.boundaryArea - Energy.Polygon.energyBoundaryArea aPeriods bPeriods) <=
@@ -471,7 +473,7 @@ theorem affineEnergy_sub_budgets_le_periodPairing
     sample.affineEnergy - sample.errorBudget - boundaryBudget <=
       Gaussian.Energy.periodPairingEnergy aPeriods bPeriods := by
   rw [Energy.Polygon.periodPairingEnergy_eq_boundaryArea_im_div_four]
-  exact (Rat.Fraction.Order.Arithmetic.sub_le_sub_right_direct sample.affineEnergy_sub_errorBudget_le_boundaryEnergy
+  exact (Order.Arithmetic.sub_le_sub_right_direct sample.affineEnergy_sub_errorBudget_le_boundaryEnergy
     boundaryBudget).trans
       (boundaryEnergy_sub_budget_le _ _ boundaryBudget nonnegative close)
 
@@ -486,7 +488,7 @@ theorem affineEnergy_sub_budgets_le_raw
     {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
     (sample : AffineSurfaceSample vertexCount faceCount)
     (data : Periods.PeriodMatrix.PeriodData curve)
-    (coefficients : Purelib.LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (coefficients : Gaussian.Energy.GaussianVector genus)
     (sampleIndex : Nat) (boundaryBudget : Coordinate)
     (nonnegative : 0 <= boundaryBudget)
     (close : Gaussian.Norm.Basic.normSq
@@ -528,7 +530,7 @@ theorem error_lt_half_at_energyRefinement {scale lower : Coordinate}
   (quarterRadius_antitone scaleNonnegative refined).trans_lt
     (Rational.Geometric.Search.firstQuarterBelow_accurate scale scaleNonnegative
       current (lower / 2)
-      (Rat.Fraction.Order.Field.div_pos_direct lowerPositive (by decide)))
+      (Order.Field.div_pos_direct lowerPositive (by decide)))
 
 namespace AffineSurfaceSample
 
@@ -542,7 +544,7 @@ positive lower bound. -/
 theorem half_lower_lt_periodPairing_of_refined
     {vertexCount faceCount genus : Nat}
     (sample : AffineSurfaceSample vertexCount faceCount)
-    (aPeriods bPeriods : Purelib.LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (aPeriods bPeriods : Gaussian.Energy.GaussianVector genus)
     {scale lower boundaryBudget : Coordinate}
     (scaleNonnegative : 0 <= scale) (lowerPositive : 0 < lower)
     (boundaryNonnegative : 0 <= boundaryBudget)
@@ -559,18 +561,18 @@ theorem half_lower_lt_periodPairing_of_refined
     (error_lt_half_at_energyRefinement scaleNonnegative lowerPositive
       current index refined)
   have halfIdentity : lower - lower / 2 = lower / 2 := by
-    simp only [Rat.Fraction.Field.div_eq_mul_inv_direct]
+    simp only [Field.div_eq_mul_inv_direct]
     have twoCancel : (2 : Coordinate) * (2 : Coordinate)⁻¹ = 1 := by decide
     calc
       _ = lower * ((2 : Coordinate) * (2 : Coordinate)⁻¹) -
           lower * (2 : Coordinate)⁻¹ := by rw [twoCancel]; ring1
       _ = _ := by ring1
-  have margin := Rat.Fraction.Order.Arithmetic.sub_lt_sub_left_direct errorSmall lower
+  have margin := Order.Arithmetic.sub_lt_sub_left_direct errorSmall lower
   rw [halfIdentity] at margin
   calc
     lower / 2 < lower - (sample.errorBudget + boundaryBudget) := margin
     _ <= sample.affineEnergy - (sample.errorBudget + boundaryBudget) :=
-      Rat.Fraction.Order.Arithmetic.sub_le_sub_right_direct surfaceLower _
+      Order.Arithmetic.sub_le_sub_right_direct surfaceLower _
     _ = sample.affineEnergy - sample.errorBudget - boundaryBudget := by ring1
     _ <= Gaussian.Energy.periodPairingEnergy aPeriods bPeriods :=
       sample.affineEnergy_sub_budgets_le_periodPairing aPeriods bPeriods
@@ -584,7 +586,7 @@ The conclusion consumes the retained face error and actual boundary comparison d
 theorem half_lower_lt_periodPairing_of_allowance
     {vertexCount faceCount genus : Nat}
     (sample : AffineSurfaceSample vertexCount faceCount)
-    (aPeriods bPeriods : Purelib.LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (aPeriods bPeriods : Gaussian.Energy.GaussianVector genus)
     {lower boundaryBudget : Coordinate}
     (boundaryNonnegative : 0 <= boundaryBudget)
     (surfaceLower : lower <= sample.affineEnergy)
@@ -594,18 +596,18 @@ theorem half_lower_lt_periodPairing_of_allowance
       (4 * boundaryBudget) ^ 2) :
     lower / 2 < Gaussian.Energy.periodPairingEnergy aPeriods bPeriods := by
   have halfIdentity : lower - lower / 2 = lower / 2 := by
-    simp only [Rat.Fraction.Field.div_eq_mul_inv_direct]
+    simp only [Field.div_eq_mul_inv_direct]
     have twoCancel : (2 : Coordinate) * (2 : Coordinate)⁻¹ = 1 := by decide
     calc
       _ = lower * ((2 : Coordinate) * (2 : Coordinate)⁻¹) -
           lower * (2 : Coordinate)⁻¹ := by rw [twoCancel]; ring1
       _ = _ := by ring1
-  have margin := Rat.Fraction.Order.Arithmetic.sub_lt_sub_left_direct allowance lower
+  have margin := Order.Arithmetic.sub_lt_sub_left_direct allowance lower
   rw [halfIdentity] at margin
   calc
     lower / 2 < lower - (sample.errorBudget + boundaryBudget) := margin
     _ <= sample.affineEnergy - (sample.errorBudget + boundaryBudget) :=
-      Rat.Fraction.Order.Arithmetic.sub_le_sub_right_direct surfaceLower _
+      Order.Arithmetic.sub_le_sub_right_direct surfaceLower _
     _ = sample.affineEnergy - sample.errorBudget - boundaryBudget := by ring1
     _ <= Gaussian.Energy.periodPairingEnergy aPeriods bPeriods :=
       sample.affineEnergy_sub_budgets_le_periodPairing aPeriods bPeriods
@@ -625,7 +627,7 @@ theorem half_lower_lt_unnormalizedEnergyForm_of_refined
     {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
     (sample : AffineSurfaceSample vertexCount faceCount)
     (data : Periods.PeriodMatrix.PeriodData curve)
-    (coefficients : Purelib.LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (coefficients : Gaussian.Energy.GaussianVector genus)
     {scale lower boundaryBudget : Coordinate}
     (scaleNonnegative : 0 <= scale) (lowerPositive : 0 < lower)
     (boundaryNonnegative : 0 <= boundaryBudget)
@@ -662,7 +664,7 @@ theorem half_lower_lt_unnormalizedEnergyForm_of_allowance
     {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
     (sample : AffineSurfaceSample vertexCount faceCount)
     (data : Periods.PeriodMatrix.PeriodData curve)
-    (coefficients : Purelib.LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (coefficients : Gaussian.Energy.GaussianVector genus)
     {lower boundaryBudget : Coordinate}
     (boundaryNonnegative : 0 <= boundaryBudget)
     (surfaceLower : lower <= sample.affineEnergy)

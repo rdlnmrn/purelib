@@ -25,6 +25,8 @@ import Mathlib.Data.Nat.Cast.Defs
 import Mathlib.Data.Nat.Init
 import Purelib.Tactic.Ring
 
+open Purelib.Algebra.Field
+
 public section
 
 /-!
@@ -55,14 +57,14 @@ open Purelib.Geometry.Rotations.Cayley.Cap
 
 open Purelib.LinearAlgebra.Coordinates3
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 section RotationProportion
 
 /-- The affine inverse branch of Theorem 58. -/
-@[expose] public def RotationProportion.affine (rotation : Rotations.Basic.Rotation K)
+@[expose] public def RotationProportion.affine (rotation : Rotation K)
     (notHalfTurn : Spread.halfSpread rotation ≠ 1)
-    (twoNonzero : (2 : K) ≠ 0) : Projective.Basic.NonNullProportion K where
+    (twoNonzero : (2 : K) ≠ 0) : NonNullProportion K where
   scalar := 1
   vector := Recovery.rotationAnchorVector rotation notHalfTurn
   normNonzero := by
@@ -70,20 +72,20 @@ section RotationProportion
       Recovery.rotationAnchorVector_capDefined rotation notHalfTurn twoNonzero
 
 /-- The scalar-one representative computed from the recovered anchor has the original rotation matrix. -/
-theorem RotationProportion.affine_rotationMatrix (rotation : Rotations.Basic.Rotation K)
+theorem RotationProportion.affine_rotationMatrix (rotation : Rotation K)
     (notHalfTurn : Spread.halfSpread rotation ≠ 1)
     (twoNonzero : (2 : K) ≠ 0) :
-    (NonNullProportion.rotationMatrix (Geometry.Rotations.Projective.Correspondence.RotationProportion.affine rotation
+    (NonNullProportion.rotationMatrix (RotationProportion.affine rotation
       notHalfTurn twoNonzero)) =
       rotation.matrix := by
-  let proportion := Geometry.Rotations.Projective.Correspondence.RotationProportion.affine rotation notHalfTurn
+  let proportion := RotationProportion.affine rotation notHalfTurn
     twoNonzero
   have scalarValue : proportion.scalar = 1 := rfl
   have vectorValue :
       proportion.vector = Recovery.rotationAnchorVector rotation notHalfTurn := rfl
   have scalarNonzero : proportion.scalar ≠ 0 := by
     rw [scalarValue]
-    exact Purelib.Algebra.Field.Characteristic.Nonzero.one_ne_zero_of_two_ne_zero twoNonzero
+    exact Characteristic.Nonzero.one_ne_zero_of_two_ne_zero twoNonzero
   calc
     (NonNullProportion.rotationMatrix proportion) =
         Cap.cap (Coordinates3.Vector.scale proportion.scalar⁻¹ proportion.vector)
@@ -94,55 +96,55 @@ theorem RotationProportion.affine_rotationMatrix (rotation : Rotations.Basic.Rot
         (Recovery.rotationAnchorVector_capDefined rotation notHalfTurn twoNonzero) := by
       congr 1
       rw [scalarValue, vectorValue,
-        Purelib.Algebra.Field.Inverse.inverse_one
-          (Purelib.Algebra.Field.Characteristic.Nonzero.one_ne_zero_of_two_ne_zero
+        Inverse.inverse_one
+          (Characteristic.Nonzero.one_ne_zero_of_two_ne_zero
           twoNonzero), Coordinates3.Vector.one_scale]
     _ = rotation.matrix := Recovery.cap_rotationAnchor rotation notHalfTurn twoNonzero
 
 /-- The vector `w` in the paper's unnormalized inverse `(1 + tr(ρ) : w)`. -/
-@[expose] public def RotationProportion.affineHomogeneousVector (rotation : Rotations.Basic.Rotation K)
+@[expose] public def RotationProportion.affineHomogeneousVector (rotation : Rotation K)
     (notHalfTurn : Spread.halfSpread rotation ≠ 1) : Coordinates3.Vector K :=
   Coordinates3.Vector.scale (1 + Matrix3.trace rotation.matrix)
     (Recovery.rotationAnchorVector rotation notHalfTurn)
 
 /-- The affine inverse in exactly the homogeneous scale printed in Theorem 58. -/
-@[expose] public def RotationProportion.affineHomogeneous (rotation : Rotations.Basic.Rotation K)
+@[expose] public def RotationProportion.affineHomogeneous (rotation : Rotation K)
     (notHalfTurn : Spread.halfSpread rotation ≠ 1)
-    (twoNonzero : (2 : K) ≠ 0) : Projective.Basic.NonNullProportion K :=
+    (twoNonzero : (2 : K) ≠ 0) : NonNullProportion K :=
   NonNullProportion.scale (1 + Matrix3.trace rotation.matrix)
     (Recovery.rotationAnchorDenominator_ne_zero rotation notHalfTurn twoNonzero)
-    (Geometry.Rotations.Projective.Correspondence.RotationProportion.affine rotation notHalfTurn twoNonzero)
+    (RotationProportion.affine rotation notHalfTurn twoNonzero)
 
 /-- The homogeneous affine representative has scalar coordinate `1 + tr R`. -/
-theorem RotationProportion.affineHomogeneous_scalar (rotation : Rotations.Basic.Rotation K)
+theorem RotationProportion.affineHomogeneous_scalar (rotation : Rotation K)
     (notHalfTurn : Spread.halfSpread rotation ≠ 1)
     (twoNonzero : (2 : K) ≠ 0) :
-    (Projective.Correspondence.RotationProportion.affineHomogeneous rotation notHalfTurn twoNonzero).scalar =
+    (RotationProportion.affineHomogeneous rotation notHalfTurn twoNonzero).scalar =
       1 + Matrix3.trace rotation.matrix := by
-  unfold Projective.Correspondence.RotationProportion.affineHomogeneous NonNullProportion.scale
-    Projective.Correspondence.RotationProportion.affine Proportion.scale
+  unfold RotationProportion.affineHomogeneous NonNullProportion.scale
+    RotationProportion.affine Proportion.scale
   ring1
 
 /-- The homogeneous affine representative retains its displayed scaled anchor vector. -/
-theorem RotationProportion.affineHomogeneous_vector (rotation : Rotations.Basic.Rotation K)
+theorem RotationProportion.affineHomogeneous_vector (rotation : Rotation K)
     (notHalfTurn : Spread.halfSpread rotation ≠ 1)
     (twoNonzero : (2 : K) ≠ 0) :
-    (Geometry.Rotations.Projective.Correspondence.RotationProportion.affineHomogeneous rotation notHalfTurn
+    (RotationProportion.affineHomogeneous rotation notHalfTurn
       twoNonzero).vector =
-      Geometry.Rotations.Projective.Correspondence.RotationProportion.affineHomogeneousVector rotation notHalfTurn :=
+      RotationProportion.affineHomogeneousVector rotation notHalfTurn :=
         rfl
 
 /-- The displayed inverse vector satisfies `A_w=ρ-ρᵀ=2ρ_as`. -/
-theorem RotationProportion.anchor_affineHomogeneousVector (rotation : Rotations.Basic.Rotation K)
+theorem RotationProportion.anchor_affineHomogeneousVector (rotation : Rotation K)
     (notHalfTurn : Spread.halfSpread rotation ≠ 1)
     (twoNonzero : (2 : K) ≠ 0) :
-    Antisymmetric.anchor (Projective.Correspondence.RotationProportion.affineHomogeneousVector rotation notHalfTurn) =
+    Antisymmetric.anchor (RotationProportion.affineHomogeneousVector rotation notHalfTurn) =
       Matrix3.sub rotation.matrix (Matrix3.transpose rotation.matrix) := by
   have denominatorNonzero := Recovery.rotationAnchorDenominator_ne_zero rotation
     notHalfTurn twoNonzero
-  have cancel := Algebra.Field.ExplicitField.mul_inv_cancel
+  have cancel := ExplicitField.mul_inv_cancel
     (1 + Matrix3.trace rotation.matrix) denominatorNonzero
-  unfold Projective.Correspondence.RotationProportion.affineHomogeneousVector
+  unfold RotationProportion.affineHomogeneousVector
   rw [Antisymmetric.anchor_scale,
     Recovery.anchor_rotationAnchorVector rotation notHalfTurn twoNonzero]
   unfold Recovery.rotationAnchor
@@ -150,68 +152,68 @@ theorem RotationProportion.anchor_affineHomogeneousVector (rotation : Rotations.
   have coefficient :
       (1 + Matrix3.trace rotation.matrix) *
           (1 / (1 + Matrix3.trace rotation.matrix)) = 1 := by
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv, one_mul]
+    simp only [ExplicitField.div_eq_mul_inv, one_mul]
     exact cancel
   rw [coefficient, Matrix3.one_scale]
 
 /-- Twice the antisymmetric part of a matrix equals the matrix minus its transpose when two is nonzero. -/
-theorem RotationProportion.two_mul_antisymmetricPart (matrix : Coordinates3.Matrix3 K)
+theorem RotationProportion.two_mul_antisymmetricPart (matrix : Matrix3 K)
     (twoNonzero : (2 : K) ≠ 0) :
     Matrix3.scale 2 (Antisymmetric.antisymmetricPart matrix) =
       Matrix3.sub matrix (Matrix3.transpose matrix) := by
-  have cancel := Algebra.Field.ExplicitField.mul_inv_cancel (2 : K) twoNonzero
+  have cancel := ExplicitField.mul_inv_cancel (2 : K) twoNonzero
   unfold Antisymmetric.antisymmetricPart
   rw [Matrix3.scale_scale]
   have coefficient : (2 : K) * (1 / 2) = 1 := by
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv, one_mul]
+    simp only [ExplicitField.div_eq_mul_inv, one_mul]
     exact cancel
   rw [coefficient, Matrix3.one_scale]
 
 /-- The homogeneous affine vector encodes twice the antisymmetric part of its rotation. -/
 theorem RotationProportion.anchor_affineHomogeneousVector_eq_two_antisymmetricPart
-    (rotation : Rotations.Basic.Rotation K) (notHalfTurn : Spread.halfSpread rotation ≠ 1)
+    (rotation : Rotation K) (notHalfTurn : Spread.halfSpread rotation ≠ 1)
     (twoNonzero : (2 : K) ≠ 0) :
-    Antisymmetric.anchor (Geometry.Rotations.Projective.Correspondence.RotationProportion.affineHomogeneousVector
+    Antisymmetric.anchor (RotationProportion.affineHomogeneousVector
       rotation notHalfTurn) =
       Matrix3.scale 2 (Antisymmetric.antisymmetricPart rotation.matrix) := by
-  rw [Geometry.Rotations.Projective.Correspondence.RotationProportion.anchor_affineHomogeneousVector rotation
+  rw [RotationProportion.anchor_affineHomogeneousVector rotation
     notHalfTurn twoNonzero,
-    Geometry.Rotations.Projective.Correspondence.RotationProportion.two_mul_antisymmetricPart rotation.matrix
+    RotationProportion.two_mul_antisymmetricPart rotation.matrix
       twoNonzero]
 
 /-- The homogeneous affine representative gives the original rotation matrix. -/
-theorem RotationProportion.affineHomogeneous_rotationMatrix (rotation : Rotations.Basic.Rotation K)
+theorem RotationProportion.affineHomogeneous_rotationMatrix (rotation : Rotation K)
     (notHalfTurn : Spread.halfSpread rotation ≠ 1)
     (twoNonzero : (2 : K) ≠ 0) :
-    (NonNullProportion.rotationMatrix (Projective.Correspondence.RotationProportion.affineHomogeneous rotation
+    (NonNullProportion.rotationMatrix (RotationProportion.affineHomogeneous rotation
       notHalfTurn twoNonzero)) =
       rotation.matrix := by
-  unfold Projective.Correspondence.RotationProportion.affineHomogeneous
+  unfold RotationProportion.affineHomogeneous
   rw [NonNullProportion.rotationMatrix_scale,
-    Geometry.Rotations.Projective.Correspondence.RotationProportion.affine_rotationMatrix rotation notHalfTurn
+    RotationProportion.affine_rotationMatrix rotation notHalfTurn
       twoNonzero]
 
 /-- The infinity inverse branch of Theorem 58, using the executable row-pivot axis selected in the constructive
 half-turn classification. -/
-@[expose] public def RotationProportion.atInfinity [DecidableEq K] (rotation : Rotations.Basic.Rotation K)
+@[expose] public def RotationProportion.atInfinity [DecidableEq K] (rotation : Rotation K)
     (halfTurnSpread : Spread.halfSpread rotation = 1)
-    (twoNonzero : (2 : K) ≠ 0) : Projective.Basic.NonNullProportion K where
+    (twoNonzero : (2 : K) ≠ 0) : NonNullProportion K where
   scalar := 0
   vector := Recovery.halfTurnAxis rotation halfTurnSpread twoNonzero
   normNonzero := by
-    unfold Purelib.Algebra.Quaternion.Projective.Basic.Proportion.norm
+    unfold Proportion.norm
     rw [show (0 : K) ^ 2 = 0 by ring1, zero_add]
     exact Recovery.halfTurnAxis_nonNull rotation halfTurnSpread twoNonzero
 
 /-- The scalar-zero representative of a half-spread-one rotation gives the original matrix. -/
 theorem RotationProportion.atInfinity_rotationMatrix [DecidableEq K]
-    (rotation : Rotations.Basic.Rotation K) (halfTurnSpread : Spread.halfSpread rotation = 1)
+    (rotation : Rotation K) (halfTurnSpread : Spread.halfSpread rotation = 1)
     (twoNonzero : (2 : K) ≠ 0) :
-    (NonNullProportion.rotationMatrix (Geometry.Rotations.Projective.Correspondence.RotationProportion.atInfinity
+    (NonNullProportion.rotationMatrix (RotationProportion.atInfinity
       rotation halfTurnSpread twoNonzero)) =
       rotation.matrix := by
   rw [NonNullProportion.rotationMatrix_eq_halfTurn
-    (Geometry.Rotations.Projective.Correspondence.RotationProportion.atInfinity rotation halfTurnSpread twoNonzero) (by
+    (RotationProportion.atInfinity rotation halfTurnSpread twoNonzero) (by
       rfl)]
   exact (Recovery.rotation_eq_halfTurn_halfTurnAxis rotation halfTurnSpread
     twoNonzero).symm
@@ -223,7 +225,7 @@ nonzero, and multiplying that image by two gives the specified image of
 `I + R`. Coordinate basis inputs give each of its three rows.
 -/
 theorem RotationProportion.halfTurn_image_nonNull [DecidableEq K]
-    (rotation : Rotations.Basic.Rotation K) (halfTurnSpread : Spread.halfSpread rotation = 1)
+    (rotation : Rotation K) (halfTurnSpread : Spread.halfSpread rotation = 1)
     (twoNonzero : (2 : K) ≠ 0) (vector : Coordinates3.Vector K)
     (nonzero : Matrix3.rowMul vector (Matrix3.add Matrix3.identity rotation.matrix) ≠ Coordinates3.Vector.zero) :
     (Matrix3.rowMul vector (Matrix3.add Matrix3.identity rotation.matrix)).quadrance ≠ 0 := by
@@ -252,11 +254,11 @@ half-turn axis. The normalized projector readback proves that this image has
 the same axis line, so its original projective rotation is exactly `R`.
 -/
 theorem RotationProportion.halfTurn_image_rotationMatrix [DecidableEq K]
-    (rotation : Rotations.Basic.Rotation K) (halfTurnSpread : Spread.halfSpread rotation = 1)
+    (rotation : Rotation K) (halfTurnSpread : Spread.halfSpread rotation = 1)
     (twoNonzero : (2 : K) ≠ 0) (vector : Coordinates3.Vector K)
     (nonzero : Matrix3.rowMul vector (Matrix3.add Matrix3.identity rotation.matrix) ≠ Coordinates3.Vector.zero) :
     NonNullProportion.rotationMatrix
-      (Projective.Basic.NonNullProportion.ofNonNullVector
+      (NonNullProportion.ofNonNullVector
         (Matrix3.rowMul vector (Matrix3.add Matrix3.identity rotation.matrix))
         (RotationProportion.halfTurn_image_nonNull rotation halfTurnSpread twoNonzero vector nonzero)) =
       rotation.matrix := by
@@ -297,41 +299,41 @@ theorem RotationProportion.halfTurn_image_rotationMatrix [DecidableEq K]
 The scalar is respectively one or zero, and the original chart supplies the norm certificate. -/
 private def
   RotationProportion.ofAxisChart
-  (rotation : Rotations.Basic.Rotation K) (axis : Coordinates3.Vector K)
-    (chart : Recovery.RotationAxisChart rotation axis) : Projective.Basic.NonNullProportion K :=
+  (rotation : Rotation K) (axis : Coordinates3.Vector K)
+    (chart : RotationAxisChart rotation axis) : NonNullProportion K :=
   match chart with
   | .affine _ defined _ =>
       { scalar := 1
         vector := axis
         normNonzero := by
-          simpa only [Purelib.Algebra.Quaternion.Projective.Basic.Proportion.norm, Cap.capDenominator, one_pow] using
+          simpa only [Proportion.norm, Cap.capDenominator, one_pow] using
             defined }
   | .halfTurn _ axisNonNull _ =>
       { scalar := 0
         vector := axis
         normNonzero := by
-          unfold Purelib.Algebra.Quaternion.Projective.Basic.Proportion.norm
+          unfold Proportion.norm
           rw [show (0 : K) ^ 2 = 0 by ring1, zero_add]
           exact axisNonNull }
 
 /-- The quaternion proportion built from an axis chart gives the original rotation matrix. -/
 private theorem
   RotationProportion.ofAxisChart_rotationMatrix
-  (rotation : Rotations.Basic.Rotation K)
-    (axis : Coordinates3.Vector K) (chart : Recovery.RotationAxisChart rotation axis)
+  (rotation : Rotation K)
+    (axis : Coordinates3.Vector K) (chart : RotationAxisChart rotation axis)
     (twoNonzero : (2 : K) ≠ 0) :
     (NonNullProportion.rotationMatrix
-      (Geometry.Rotations.Projective.Correspondence.RotationProportion.ofAxisChart rotation
+      (RotationProportion.ofAxisChart rotation
       axis chart)) = rotation.matrix := by
   cases chart with
   | affine notHalfTurn defined matrixEq =>
       let proportion :=
-        Geometry.Rotations.Projective.Correspondence.RotationProportion.ofAxisChart rotation
+        RotationProportion.ofAxisChart rotation
         axis
         (RotationAxisChart.affine notHalfTurn defined matrixEq)
       have scalarNonzero : proportion.scalar ≠ 0 := by
         change (1 : K) ≠ 0
-        exact Purelib.Algebra.Field.Characteristic.Nonzero.one_ne_zero_of_two_ne_zero
+        exact Characteristic.Nonzero.one_ne_zero_of_two_ne_zero
           twoNonzero
       calc
         (NonNullProportion.rotationMatrix proportion) =
@@ -342,14 +344,14 @@ private theorem
         _ = Cap.cap axis defined := by
           congr 1
           change Coordinates3.Vector.scale (1 : K)⁻¹ axis = axis
-          rw [Purelib.Algebra.Field.Inverse.inverse_one
-            (Purelib.Algebra.Field.Characteristic.Nonzero.one_ne_zero_of_two_ne_zero
+          rw [Inverse.inverse_one
+            (Characteristic.Nonzero.one_ne_zero_of_two_ne_zero
             twoNonzero),
             Coordinates3.Vector.one_scale]
         _ = rotation.matrix := matrixEq.symm
   | halfTurn halfTurnSpread axisNonNull matrixEq =>
       let proportion :=
-        Geometry.Rotations.Projective.Correspondence.RotationProportion.ofAxisChart rotation
+        RotationProportion.ofAxisChart rotation
         axis
         (RotationAxisChart.halfTurn halfTurnSpread axisNonNull matrixEq)
       calc
@@ -359,40 +361,40 @@ private theorem
 
 /-- The executable inverse representative from Theorem 58. It consumes the canonical axis wrapper, so the
 affine/infinity chart decision and axis extraction are shared with the spread and reflection-factorization APIs. -/
-@[expose] public def RotationProportion.ofRotation [DecidableEq K] (rotation : Rotations.Basic.Rotation K)
-    (twoNonzero : (2 : K) ≠ 0) : Projective.Basic.NonNullProportion K :=
+@[expose] public def RotationProportion.ofRotation [DecidableEq K] (rotation : Rotation K)
+    (twoNonzero : (2 : K) ≠ 0) : NonNullProportion K :=
   let witness := Recovery.rotationAxisSpreadWitness rotation twoNonzero
   match witness.chart with
   | .affine _ defined _ =>
       { scalar := 1
         vector := witness.axis
         normNonzero := by
-          simpa only [Purelib.Algebra.Quaternion.Projective.Basic.Proportion.norm, Cap.capDenominator, one_pow] using
+          simpa only [Proportion.norm, Cap.capDenominator, one_pow] using
             defined }
   | .halfTurn _ axisNonNull _ =>
       { scalar := 0
         vector := witness.axis
         normNonzero := by
-          unfold Purelib.Algebra.Quaternion.Projective.Basic.Proportion.norm
+          unfold Proportion.norm
           rw [show (0 : K) ^ 2 = 0 by ring1, zero_add]
           exact axisNonNull }
 
 /-- The executable representative selected for a rotation gives that rotation matrix. -/
 theorem RotationProportion.ofRotation_rotationMatrix [DecidableEq K]
-    (rotation : Rotations.Basic.Rotation K) (twoNonzero : (2 : K) ≠ 0) :
-    (NonNullProportion.rotationMatrix (Geometry.Rotations.Projective.Correspondence.RotationProportion.ofRotation
+    (rotation : Rotation K) (twoNonzero : (2 : K) ≠ 0) :
+    (NonNullProportion.rotationMatrix (RotationProportion.ofRotation
       rotation twoNonzero)) = rotation.matrix :=
   by
     let witness := Recovery.rotationAxisSpreadWitness rotation twoNonzero
-    have same : Geometry.Rotations.Projective.Correspondence.RotationProportion.ofRotation rotation twoNonzero =
-        Geometry.Rotations.Projective.Correspondence.RotationProportion.ofAxisChart rotation
+    have same : RotationProportion.ofRotation rotation twoNonzero =
+        RotationProportion.ofAxisChart rotation
           witness.axis witness.chart := by
-      dsimp [Geometry.Rotations.Projective.Correspondence.RotationProportion.ofRotation,
-        Geometry.Rotations.Projective.Correspondence.RotationProportion.ofAxisChart, witness]
+      dsimp [RotationProportion.ofRotation,
+        RotationProportion.ofAxisChart, witness]
       cases (Recovery.rotationAxisSpreadWitness rotation twoNonzero).chart <;> rfl
     rw [same]
     exact
-      Purelib.Geometry.Rotations.Projective.Correspondence.RotationProportion.ofAxisChart_rotationMatrix
+      RotationProportion.ofAxisChart_rotationMatrix
       rotation witness.axis witness.chart twoNonzero
 
 end RotationProportion
@@ -423,7 +425,7 @@ theorem NonNullProportion.vector_eq_scale_of_halfTurn_fixed (axis other : Coordi
   rw [Reflection.rowMul_reflection] at reflectedNeg
   apply Coordinates3.Vector.ext
   · apply
-      Purelib.Algebra.Field.Characteristic.Nonzero.eq_of_two_mul_eq_two_mul
+      Characteristic.Nonzero.eq_of_two_mul_eq_two_mul
       twoNonzero
     have coordinate := congrArg Coordinates3.Vector.t reflectedNeg
     calc
@@ -441,10 +443,10 @@ theorem NonNullProportion.vector_eq_scale_of_halfTurn_fixed (axis other : Coordi
             coordinate
       _ = 2 *
           (Coordinates3.Vector.dot other axis / axis.quadrance * axis.t) := by
-        simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+        simp only [ExplicitField.div_eq_mul_inv]
         ring1
   · apply
-      Purelib.Algebra.Field.Characteristic.Nonzero.eq_of_two_mul_eq_two_mul
+      Characteristic.Nonzero.eq_of_two_mul_eq_two_mul
       twoNonzero
     have coordinate := congrArg Coordinates3.Vector.r reflectedNeg
     calc
@@ -462,10 +464,10 @@ theorem NonNullProportion.vector_eq_scale_of_halfTurn_fixed (axis other : Coordi
             coordinate
       _ = 2 *
           (Coordinates3.Vector.dot other axis / axis.quadrance * axis.r) := by
-        simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+        simp only [ExplicitField.div_eq_mul_inv]
         ring1
   · apply
-      Purelib.Algebra.Field.Characteristic.Nonzero.eq_of_two_mul_eq_two_mul
+      Characteristic.Nonzero.eq_of_two_mul_eq_two_mul
       twoNonzero
     have coordinate := congrArg Coordinates3.Vector.s reflectedNeg
     calc
@@ -483,7 +485,7 @@ theorem NonNullProportion.vector_eq_scale_of_halfTurn_fixed (axis other : Coordi
             coordinate
       _ = 2 *
           (Coordinates3.Vector.dot other axis / axis.quadrance * axis.s) := by
-        simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+        simp only [ExplicitField.div_eq_mul_inv]
         ring1
 
 /-- Equality of two half turns forces equality of their represented projective axis lines. -/
@@ -497,7 +499,7 @@ theorem NonNullProportion.vector_scale_of_halfTurn_eq (left right : Coordinates3
   have rightFixed : Matrix3.rowMul right (Reflection.halfTurn left leftNonNull) = right := by
     rw [equal, Reflection.rowMul_self_halfTurn]
   have rightValue : right = Coordinates3.Vector.scale factor left :=
-    Geometry.Rotations.Projective.Correspondence.NonNullProportion.vector_eq_scale_of_halfTurn_fixed left right
+    NonNullProportion.vector_eq_scale_of_halfTurn_fixed left right
       leftNonNull twoNonzero
       rightFixed
   have factorNonzero : factor ≠ 0 := by
@@ -511,7 +513,7 @@ open Purelib.Geometry.Rotations.Projective.Action.NonNullProportion in
 /-- Equal represented rotation matrices have equal half spread. -/
 private theorem
   NonNullProportion.halfSpread_eq_of_rotationMatrix_eq
-    {left right : Projective.Basic.NonNullProportion K}
+    {left right : NonNullProportion K}
     (equal : (NonNullProportion.rotationMatrix left) = (NonNullProportion.rotationMatrix right)) :
     Spread.halfSpread (NonNullProportion.rotation left) = Spread.halfSpread (NonNullProportion.rotation right) := by
   unfold Spread.halfSpread rotation
@@ -520,7 +522,7 @@ private theorem
 /-- Equal rotation matrices from scalar-nonzero representatives determine an explicit nonzero projective scale. -/
 private theorem
   NonNullProportion.affineEquivalent_of_rotationMatrix_eq
-    (left right : Projective.Basic.NonNullProportion K)
+    (left right : NonNullProportion K)
     (leftScalarNonzero : left.scalar ≠ 0)
     (rightScalarNonzero : right.scalar ≠ 0)
     (twoNonzero : (2 : K) ≠ 0)
@@ -535,11 +537,11 @@ private theorem
     Cap.cap_injective twoNonzero _ _ _ _ capEqual
   let factor := right.scalar * left.scalar⁻¹
   have factorNonzero : factor ≠ 0 :=
-    Algebra.Field.ExplicitField.mul_ne_zero rightScalarNonzero
-      (Algebra.Field.ExplicitField.inv_ne_zero leftScalarNonzero)
-  have leftCancel := Algebra.Field.ExplicitField.mul_inv_cancel
+    ExplicitField.mul_ne_zero rightScalarNonzero
+      (ExplicitField.inv_ne_zero leftScalarNonzero)
+  have leftCancel := ExplicitField.mul_inv_cancel
     left.scalar leftScalarNonzero
-  have rightCancel := Algebra.Field.ExplicitField.mul_inv_cancel
+  have rightCancel := ExplicitField.mul_inv_cancel
     right.scalar rightScalarNonzero
   have reverseLeftCancel : left.scalar⁻¹ * left.scalar = 1 := by
     calc
@@ -604,7 +606,7 @@ open Purelib.Geometry.Rotations.Projective.Correspondence.NonNullProportion in
 /-- Equal rotation matrices from scalar-zero representatives determine an explicit nonzero projective scale. -/
 private theorem
   NonNullProportion.infinityEquivalent_of_rotationMatrix_eq
-    (left right : Projective.Basic.NonNullProportion K)
+    (left right : NonNullProportion K)
     (leftScalarZero : left.scalar = 0)
     (rightScalarZero : right.scalar = 0)
     (twoNonzero : (2 : K) ≠ 0)
@@ -627,11 +629,11 @@ private theorem
 /-- Injectivity in Theorem 58, stated exactly at representative level: equal rotation matrices are equivalent by a
 displayed nonzero scale. -/
 theorem NonNullProportion.equivalent_of_rotationMatrix_eq [DecidableEq K]
-    (left right : Projective.Basic.NonNullProportion K) (twoNonzero : (2 : K) ≠ 0)
+    (left right : NonNullProportion K) (twoNonzero : (2 : K) ≠ 0)
     (equal : (NonNullProportion.rotationMatrix left) = (NonNullProportion.rotationMatrix right)) :
     left.Equivalent right := by
   have spreadEqual :=
-    Purelib.Geometry.Rotations.Projective.Correspondence.NonNullProportion.halfSpread_eq_of_rotationMatrix_eq
+    NonNullProportion.halfSpread_eq_of_rotationMatrix_eq
     equal
   by_cases leftScalarZero : left.scalar = 0
   · have leftSpreadOne : Spread.halfSpread (NonNullProportion.rotation left) = 1 :=
@@ -642,7 +644,7 @@ theorem NonNullProportion.equivalent_of_rotationMatrix_eq [DecidableEq K]
     have rightScalarZero :=
       (NonNullProportion.halfSpread_rotation_eq_one_iff right twoNonzero).1 rightSpreadOne
     exact
-      Purelib.Geometry.Rotations.Projective.Correspondence.NonNullProportion.infinityEquivalent_of_rotationMatrix_eq
+      NonNullProportion.infinityEquivalent_of_rotationMatrix_eq
       left right leftScalarZero
       rightScalarZero twoNonzero equal
   · have rightScalarNonzero : right.scalar ≠ 0 := by
@@ -655,16 +657,16 @@ theorem NonNullProportion.equivalent_of_rotationMatrix_eq [DecidableEq K]
       exact leftScalarZero
         ((NonNullProportion.halfSpread_rotation_eq_one_iff left twoNonzero).1 leftSpreadOne)
     exact
-      Purelib.Geometry.Rotations.Projective.Correspondence.NonNullProportion.affineEquivalent_of_rotationMatrix_eq
+      NonNullProportion.affineEquivalent_of_rotationMatrix_eq
       left right leftScalarZero
       rightScalarNonzero twoNonzero equal
 
 /-- The injective half of Theorem 58 as an iff, paired with scale invariance. -/
 theorem NonNullProportion.rotationMatrix_eq_iff_equivalent [DecidableEq K]
-    (left right : Projective.Basic.NonNullProportion K) (twoNonzero : (2 : K) ≠ 0) :
+    (left right : NonNullProportion K) (twoNonzero : (2 : K) ≠ 0) :
     (NonNullProportion.rotationMatrix left) = (NonNullProportion.rotationMatrix right) ↔ left.Equivalent right := by
   constructor
-  · exact Geometry.Rotations.Projective.Correspondence.NonNullProportion.equivalent_of_rotationMatrix_eq left right
+  · exact NonNullProportion.equivalent_of_rotationMatrix_eq left right
       twoNonzero
   · intro equivalent
     exact NonNullProportion.rotationMatrix_respects_equivalent equivalent
@@ -675,11 +677,11 @@ The scale witness compares the original quaternion coordinates with the
 original unit. No normalization or quotient replaces the retained input.
 -/
 theorem NonNullProportion.rotationMatrix_eq_identity_iff_scalar [DecidableEq K]
-    (proportion : Projective.Basic.NonNullProportion K) (twoNonzero : (2 : K) ≠ 0) :
+    (proportion : NonNullProportion K) (twoNonzero : (2 : K) ≠ 0) :
     NonNullProportion.rotationMatrix proportion = Matrix3.identity ↔
       ∃ factor : K, factor ≠ 0 ∧ proportion.toProportion = Proportion.scale factor Proportion.identity := by
   have equivalent := NonNullProportion.rotationMatrix_eq_iff_equivalent
-    (Projective.Basic.NonNullProportion.identity proportion) proportion twoNonzero
+    (NonNullProportion.identity proportion) proportion twoNonzero
   rw [NonNullProportion.rotationMatrix_identity] at equivalent
   constructor
   · intro identityMatrix
@@ -692,31 +694,31 @@ end NonNullProportion
 set_option genInjectivity false in
 /-- The quotient-free group laws asserted by Corollary 60. Equality of projective points is
 `NonNullProportion.Equivalent`; representative associativity and identity happen to hold as literal equalities. -/
-structure ProjectiveProportionGroupLaws (K : Type*) [Algebra.Field.ExplicitField K]
+structure ProjectiveProportionGroupLaws (K : Type*) [ExplicitField K]
     where
-  /-- The retained non-null quaternion identity representative. -/ identity : Projective.Basic.NonNullProportion K
-  /-- The retained inverse operation on non-null representatives. -/ inverse : Projective.Basic.NonNullProportion K →
-    Projective.Basic.NonNullProportion K
+  /-- The retained non-null quaternion identity representative. -/ identity : NonNullProportion K
+  /-- The retained inverse operation on non-null representatives. -/ inverse : NonNullProportion K →
+    NonNullProportion K
   /-- Quaternion multiplication associates as a literal representative equality. -/ associative : ∀ (first second third
-    : Projective.Basic.NonNullProportion K),
+    : NonNullProportion K),
     NonNullProportion.mul (NonNullProportion.mul first second) third =
       NonNullProportion.mul first (NonNullProportion.mul second third)
   /-- The retained identity is a left unit as a literal representative equality. -/ leftIdentity : ∀ (proportion :
-    Projective.Basic.NonNullProportion K),
+    NonNullProportion K),
     NonNullProportion.mul identity proportion = proportion
   /-- The retained identity is a right unit as a literal representative equality. -/ rightIdentity : ∀ (proportion :
-    Projective.Basic.NonNullProportion K),
+    NonNullProportion K),
     NonNullProportion.mul proportion identity = proportion
   /-- The inverse times its representative is projectively equivalent to the retained identity. -/ leftInverse : ∀
-    (proportion : Projective.Basic.NonNullProportion K),
+    (proportion : NonNullProportion K),
     (NonNullProportion.mul (inverse proportion) proportion).Equivalent
       identity
   /-- The representative times its inverse is projectively equivalent to the retained identity. -/ rightInverse : ∀
-    (proportion : Projective.Basic.NonNullProportion K),
+    (proportion : NonNullProportion K),
     (NonNullProportion.mul proportion (inverse proportion)).Equivalent
       identity
   /-- Multiplication respects explicit projective scaling in both factors. -/ respectsEquivalent : ∀ {left left' right
-    right' : Projective.Basic.NonNullProportion K},
+    right' : NonNullProportion K},
     left.Equivalent left' → right.Equivalent right' →
       (NonNullProportion.mul left right).Equivalent
         (NonNullProportion.mul left' right')
@@ -725,15 +727,15 @@ constructive_injectivity ProjectiveProportionGroupLaws
 
 /-- Corollary 60's projective group, with inverse given by quaternion conjugation. -/
 @[expose] public def projectiveProportionGroupLaws (twoNonzero : (2 : K) ≠ 0) :
-    Geometry.Rotations.Projective.Correspondence.ProjectiveProportionGroupLaws K := by
-  let identity : Projective.Basic.NonNullProportion K :=
+    ProjectiveProportionGroupLaws K := by
+  let identity : NonNullProportion K :=
     { scalar := 1
       vector := Coordinates3.Vector.zero
       normNonzero := by
-        unfold Purelib.Algebra.Quaternion.Projective.Basic.Proportion.norm
+        unfold Proportion.norm
         rw [Coordinates3.Vector.quadrance_zero]
         simpa only [one_pow, add_zero] using
-          Purelib.Algebra.Field.Characteristic.Nonzero.one_ne_zero_of_two_ne_zero twoNonzero
+          Characteristic.Nonzero.one_ne_zero_of_two_ne_zero twoNonzero
             }
   refine
     { identity := identity
@@ -759,17 +761,17 @@ constructive_injectivity ProjectiveProportionGroupLaws
   · intro proportion
     apply NonNullProportion.equivalent_symm
     refine ⟨proportion.toProportion.norm, proportion.normNonzero, ?_⟩
-    change Projective.Basic.Proportion.mul
-        (Projective.Basic.Proportion.conjugate proportion.toProportion)
+    change Proportion.mul
+        (Proportion.conjugate proportion.toProportion)
         proportion.toProportion =
-      Proportion.scale proportion.toProportion.norm Projective.Basic.Proportion.identity
+      Proportion.scale proportion.toProportion.norm Proportion.identity
     exact Proportion.conjugate_mul proportion.toProportion
   · intro proportion
     apply NonNullProportion.equivalent_symm
     refine ⟨proportion.toProportion.norm, proportion.normNonzero, ?_⟩
-    change Projective.Basic.Proportion.mul proportion.toProportion
-        (Projective.Basic.Proportion.conjugate proportion.toProportion) =
-      Proportion.scale proportion.toProportion.norm Projective.Basic.Proportion.identity
+    change Proportion.mul proportion.toProportion
+        (Proportion.conjugate proportion.toProportion) =
+      Proportion.scale proportion.toProportion.norm Proportion.identity
     exact Proportion.mul_conjugate proportion.toProportion
   · intro left left' right right' leftEquivalent rightEquivalent
     exact NonNullProportion.mul_respects_equivalent leftEquivalent
@@ -777,17 +779,17 @@ constructive_injectivity ProjectiveProportionGroupLaws
 
 set_option genInjectivity false in
 /-- A quotient-free executable formulation of Theorem 58's bijection and multiplicativity. -/
-structure ProjectiveRotationTheorem (K : Type*) [Algebra.Field.ExplicitField K]
+structure ProjectiveRotationTheorem (K : Type*) [ExplicitField K]
     [DecidableEq K] where
-  /-- Compute a non-null quaternion representative for each rotation. -/ representative : Rotations.Basic.Rotation K →
-    Projective.Basic.NonNullProportion K
+  /-- Compute a non-null quaternion representative for each rotation. -/ representative : Rotation K →
+    NonNullProportion K
   /-- Each computed representative gives the original rotation matrix. -/ represents : ∀ rotation,
     (NonNullProportion.rotationMatrix (representative rotation)) = rotation.matrix
   /-- Equal represented rotation matrices admit an explicit nonzero projective scale. -/ injective : ∀ (left right :
-    Projective.Basic.NonNullProportion K),
+    NonNullProportion K),
     (NonNullProportion.rotationMatrix left) = (NonNullProportion.rotationMatrix right) → left.Equivalent right
   /-- Quaternion multiplication gives the row-order product of represented rotation matrices. -/ multiplicative : ∀
-    (left right : Projective.Basic.NonNullProportion K),
+    (left right : NonNullProportion K),
     (NonNullProportion.rotationMatrix (NonNullProportion.mul left right)) =
       Matrix3.mul (NonNullProportion.rotationMatrix left) (NonNullProportion.rotationMatrix right)
 
@@ -798,13 +800,13 @@ constructive_injectivity ProjectiveRotationTheorem
 With decidable equality and nonzero two, compute a representative for every rotation and retain recovery, injectivity up
 to projective equivalence, and multiplication laws (Theorem 58 and Corollary 60). -/
 @[expose] public def projectiveRotationTheorem [DecidableEq K]
-    (twoNonzero : (2 : K) ≠ 0) : Geometry.Rotations.Projective.Correspondence.ProjectiveRotationTheorem K where
+    (twoNonzero : (2 : K) ≠ 0) : ProjectiveRotationTheorem K where
   representative := fun rotation =>
-    Geometry.Rotations.Projective.Correspondence.RotationProportion.ofRotation rotation twoNonzero
+    RotationProportion.ofRotation rotation twoNonzero
   represents := fun rotation =>
-    Geometry.Rotations.Projective.Correspondence.RotationProportion.ofRotation_rotationMatrix rotation twoNonzero
+    RotationProportion.ofRotation_rotationMatrix rotation twoNonzero
   injective := fun left right equal =>
-    Geometry.Rotations.Projective.Correspondence.NonNullProportion.equivalent_of_rotationMatrix_eq left right twoNonzero
+    NonNullProportion.equivalent_of_rotationMatrix_eq left right twoNonzero
       equal
   multiplicative := NonNullProportion.rotationMatrix_mul
 

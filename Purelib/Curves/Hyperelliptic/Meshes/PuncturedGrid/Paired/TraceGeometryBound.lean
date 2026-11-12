@@ -55,30 +55,30 @@ open Purelib.RootIsolation
 trace owners, so no numerical magnitude hypothesis remains. -/
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.TraceGeometryBound
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {firstFace lastFace :
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {firstFace lastFace :
       Meshes.PuncturedGridFaces.RegularFace
     bank}
-  {firstModels : Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames firstFace}
-    {lastModels : Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames lastFace}
+  {firstModels : Face.InverseModels.BranchCellBank.FaceModels frames firstFace}
+    {lastModels : Face.InverseModels.BranchCellBank.FaceModels frames lastFace}
   {start : Gaussian.Basic.Canonical} {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)}
-  {leftEntry : Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry firstModels start owner} {rightEntry :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry lastModels start owner}
-  {leftDomain : Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain firstModels leftEntry.sheet} {rightDomain :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain lastModels rightEntry.sheet}
-  {count : Nat} {firstDifferential secondDifferential : Hyperelliptic.Differentials.Basic.Differential genus}
+  {leftEntry : Face.Entries.FaceModels.Entry firstModels start owner} {rightEntry :
+    Face.Entries.FaceModels.Entry lastModels start owner}
+  {leftDomain : Face.Periods.PeriodDomain firstModels leftEntry.sheet} {rightDomain :
+    Face.Periods.PeriodDomain lastModels rightEntry.sheet}
+  {count : Nat} {firstDifferential secondDifferential : Differentials.Basic.Differential genus}
     {firstSheet secondSheet : Fin 2}
 
 namespace PairedTraceRequest
 
 variable {piece : Paths.RectangularPairedSegments.PairedSegmentPiece leftDomain.geometry rightDomain.geometry}
   {trace : Integration.RectangularPairedPointBanks.Trace piece count}
-  {firstBank : Hyperelliptic.Meshes.PuncturedGrid.TraceContactBanks.TraceContactBank leftEntry rightEntry leftDomain
+  {firstBank : TraceContactBanks.TraceContactBank leftEntry rightEntry leftDomain
     rightDomain
     (fun vertex => trace.points vertex) firstDifferential firstSheet}
-  {secondBank : Hyperelliptic.Meshes.PuncturedGrid.TraceContactBanks.TraceContactBank leftEntry rightEntry leftDomain
+  {secondBank : TraceContactBanks.TraceContactBank leftEntry rightEntry leftDomain
     rightDomain
     (fun vertex => trace.points vertex) secondDifferential secondSheet}
   {target : Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
@@ -91,17 +91,17 @@ theorem trace_accurate
       (Readings.PreparedPrimitiveSamples.differentialNumerator firstDifferential))
     (secondBounds : Comparison.PrimitiveEdgeComparison.PrimitiveOverlapBounds lastFace.clearance
       (Readings.PreparedPrimitiveSamples.differentialNumerator secondDifferential))
-    (request : Hyperelliptic.Meshes.PuncturedGrid.Paired.TraceRequest.PairedTraceRequest firstBank secondBank (max
+    (request : TraceRequest.PairedTraceRequest firstBank secondBank (max
       (Readings.RectangularSeamBounds.boundarySlope firstBounds) (Readings.RectangularSeamBounds.boundarySlope
       secondBounds)) target floor)
     {stage : Nat} (later : request.index ≤ stage)
-    (firstLeft : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives leftDomain firstDifferential
+    (firstLeft : Face.PrimitiveData.DomainPrimitives leftDomain firstDifferential
       stage)
-    (firstRight : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives rightDomain firstDifferential
+    (firstRight : Face.PrimitiveData.DomainPrimitives rightDomain firstDifferential
       stage)
-    (secondLeft : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives leftDomain secondDifferential
+    (secondLeft : Face.PrimitiveData.DomainPrimitives leftDomain secondDifferential
       stage)
-    (secondRight : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives rightDomain secondDifferential
+    (secondRight : Face.PrimitiveData.DomainPrimitives rightDomain secondDifferential
       stage)
     (left : Periods.CenteredBilinearPath.Sample (fun vertex => ⟨(trace.leftReadings firstLeft.anchors
       firstLeft.offsets).values vertex,
@@ -109,7 +109,7 @@ theorem trace_accurate
     (right : Periods.CenteredBilinearPath.Sample (fun vertex => ⟨(trace.rightReadings firstRight.anchors
       firstRight.offsets).values vertex,
       (trace.rightReadings secondRight.anchors secondRight.offsets).values vertex⟩)) :
-    Data.Gaussian.Norm.Basic.normSq ((left.originalArea - right.originalArea) - (left.endpoint - right.endpoint)) <
+    Gaussian.Norm.Basic.normSq ((left.originalArea - right.originalArea) - (left.endpoint - right.endpoint)) <
       target :=
   request.accurate later firstLeft firstRight secondLeft secondRight
     (trace.leftReadings firstLeft.anchors firstLeft.offsets) (trace.rightReadings firstRight.anchors firstRight.offsets)

@@ -17,6 +17,8 @@ import Mathlib.Algebra.Ring.Commute
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.Gaussian
 open Purelib.Data.Rat
 open Purelib.Data.Rat.Dyadic
@@ -206,18 +208,18 @@ public theorem firstConnectorPoint_normSq_le (n : Nat) (bound : n ≤ 40)
   :
     Norm.Basic.normSq
       (Components.Basic.point (-((n : Fraction.Rational) / 32)) (-1 / 2)) ≤ (29 / 16 : Fraction.Rational) := by
-  have nNonnegative : (0 : Fraction.Rational) ≤ n := Fraction.Order.NatCast.qNatNonnegative n
+  have nNonnegative : (0 : Fraction.Rational) ≤ n := NatCast.qNatNonnegative n
   have ratioNonnegative : (0 : Fraction.Rational) ≤ (n : Fraction.Rational) / 32 :=
-    Fraction.Order.Field.div_nonneg_direct nNonnegative
-      (Fraction.Order.NatCast.natCast_pos_direct 32 (by omega)).le
+    Field.div_nonneg_direct nNonnegative
+      (NatCast.natCast_pos_direct 32 (by omega)).le
   have nLeForty : (n : Fraction.Rational) ≤ 40 :=
     Fraction.Cast.Order.natCast_le_direct bound
   have ratioLe : ((n : Fraction.Rational) / 32) ≤ 5 / 4 := by
     apply Fraction.Compatibility.divLeDivOfCrossMul
-      (Fraction.Order.NatCast.natCast_pos_direct 32 (by omega)) (Fraction.Order.NatCast.natCast_pos_direct 4 (by omega))
+      (NatCast.natCast_pos_direct 32 (by omega)) (NatCast.natCast_pos_direct 4 (by omega))
     calc
       (n : Fraction.Rational) * 4 ≤ 40 * 4 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           nLeForty (by decide)
       _ = 5 * 32 := by ring1
   have negHalf : (-1 / 2 : Fraction.Rational) = -(1 / 2) := by
@@ -230,7 +232,7 @@ public theorem firstConnectorPoint_normSq_le (n : Nat) (bound : n ≤ 40)
     ((n : Fraction.Rational) / 32) ^ 2 + (1 / 2 : Fraction.Rational) ^ 2 ≤
         (5 / 4 : Fraction.Rational) ^ 2 + (1 / 2 : Fraction.Rational) ^ 2 :=
       add_le_add
-        (Fraction.Order.Arithmetic.pow_le_pow_direct
+        (Arithmetic.pow_le_pow_direct
           ratioNonnegative ratioLe 2) le_rfl
     _ = 29 / 16 := by with_unfolding_all decide
 
@@ -296,9 +298,9 @@ theorem eighthScaledPointsNormLe
         (sourceImaginary - targetImaginary) ^ 2) *
           Grid.GridFineUnit ^ 2 := by ring1
     _ ≤ 17179869184 * Grid.GridFineUnit ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         coefficientLe
-          (Fraction.Order.Arithmetic.sq_nonneg_direct Grid.GridFineUnit)
+          (Arithmetic.sq_nonneg_direct Grid.GridFineUnit)
     _ = (1 / 64 : Fraction.Rational) := by
       rw [Grid.oneSixtyFourthQuarticGridFine]
       conv_rhs => rw [Grid.GridFineUnit_eq_scaled_square]
@@ -319,18 +321,18 @@ private theorem quarticGridPointNormLeFour
   change (real * (1 / 1048576 : Fraction.Rational)) ^ 2 +
       (imaginary * (1 / 1048576 : Fraction.Rational)) ^ 2 ≤ 4
   have unitSquareNonnegative : (0 : Fraction.Rational) ≤ (1 / 1048576 : Fraction.Rational) ^ 2 :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct _
+    Arithmetic.sq_nonneg_direct _
   calc
     (real * (1 / 1048576 : Fraction.Rational)) ^ 2 +
         (imaginary * (1 / 1048576 : Fraction.Rational)) ^ 2 =
       (real ^ 2 + imaginary ^ 2) * (1 / 1048576 : Fraction.Rational) ^ 2 := by ring1
     _ ≤ 4398046511104 * (1 / 1048576 : Fraction.Rational) ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         coefficientLe unitSquareNonnegative
     _ = (4 : Fraction.Rational) := by
       have cancel : (1 / 1048576 : Fraction.Rational) * 1048576 = 1 :=
         Fraction.Field.div_mul_cancel_of_ne _ _
-          (Fraction.Order.NatCast.natCast_pos_direct 1048576 (by omega)).ne'
+          (NatCast.natCast_pos_direct 1048576 (by omega)).ne'
       rw [pow_two]
       calc
         4398046511104 *
@@ -379,9 +381,9 @@ theorem fifthScaledPointsNormLe
         (sourceImaginary - targetImaginary) ^ 2) *
           Grid.GridFineUnit ^ 2 := by ring1
     _ ≤ 536870912 * Grid.GridFineUnit ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         coefficientLe
-          (Fraction.Order.Arithmetic.sq_nonneg_direct Grid.GridFineUnit)
+          (Arithmetic.sq_nonneg_direct Grid.GridFineUnit)
     _ = (1 / 2048 : Fraction.Rational) := by
       have gridFine := Grid.scaledQuarticGrid
         1 512 2048 (by omega) (by ring1)
@@ -405,18 +407,18 @@ private theorem quarticGridPointNormLeFour
   change (real * (1 / 1048576 : Fraction.Rational)) ^ 2 +
       (imaginary * (1 / 1048576 : Fraction.Rational)) ^ 2 ≤ 4
   have unitSquareNonnegative : (0 : Fraction.Rational) ≤ (1 / 1048576 : Fraction.Rational) ^ 2 :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct _
+    Arithmetic.sq_nonneg_direct _
   calc
     (real * (1 / 1048576 : Fraction.Rational)) ^ 2 +
         (imaginary * (1 / 1048576 : Fraction.Rational)) ^ 2 =
       (real ^ 2 + imaginary ^ 2) * (1 / 1048576 : Fraction.Rational) ^ 2 := by ring1
     _ ≤ 4398046511104 * (1 / 1048576 : Fraction.Rational) ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         coefficientLe unitSquareNonnegative
     _ = (4 : Fraction.Rational) := by
       have cancel : (1 / 1048576 : Fraction.Rational) * 1048576 = 1 :=
         Fraction.Field.div_mul_cancel_of_ne _ _
-          (Fraction.Order.NatCast.natCast_pos_direct 1048576 (by omega)).ne'
+          (NatCast.natCast_pos_direct 1048576 (by omega)).ne'
       rw [pow_two]
       calc
         4398046511104 *
@@ -463,9 +465,9 @@ theorem fourthScaledPointsNormLe
         (sourceImaginary - targetImaginary) ^ 2) *
           Grid.GridFineUnit ^ 2 := by ring1
     _ ≤ 2147483648 * Grid.GridFineUnit ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         coefficientLe
-          (Fraction.Order.Arithmetic.sq_nonneg_direct Grid.GridFineUnit)
+          (Arithmetic.sq_nonneg_direct Grid.GridFineUnit)
     _ = (1 / 512 : Fraction.Rational) := by
       have gridFine := Grid.scaledQuarticGrid
         1 2048 512 (by omega) (by ring1)
@@ -485,18 +487,18 @@ theorem quarticGridPointNormLeFour
   change (real * (1 / 1048576 : Fraction.Rational)) ^ 2 +
       (imaginary * (1 / 1048576 : Fraction.Rational)) ^ 2 ≤ 4
   have unitSquareNonnegative : (0 : Fraction.Rational) ≤ (1 / 1048576 : Fraction.Rational) ^ 2 :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct _
+    Arithmetic.sq_nonneg_direct _
   calc
     (real * (1 / 1048576 : Fraction.Rational)) ^ 2 +
         (imaginary * (1 / 1048576 : Fraction.Rational)) ^ 2 =
       (real ^ 2 + imaginary ^ 2) * (1 / 1048576 : Fraction.Rational) ^ 2 := by ring1
     _ ≤ 4398046511104 * (1 / 1048576 : Fraction.Rational) ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         coefficientLe unitSquareNonnegative
     _ = (4 : Fraction.Rational) := by
       have cancel : (1 / 1048576 : Fraction.Rational) * 1048576 = 1 :=
         Fraction.Field.div_mul_cancel_of_ne _ _
-          (Fraction.Order.NatCast.natCast_pos_direct 1048576 (by omega)).ne'
+          (NatCast.natCast_pos_direct 1048576 (by omega)).ne'
       rw [pow_two]
       calc
         4398046511104 *
@@ -542,8 +544,8 @@ public theorem scaledPointsNormLe
       ((sourceReal - targetReal) ^ 2 +
         (sourceImaginary - targetImaginary) ^ 2) * Grid.fineUnit ^ 2 := by ring1
     _ ≤ 34359738368 * Grid.fineUnit ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-        coefficientLe (Fraction.Order.Arithmetic.sq_nonneg_direct Grid.fineUnit)
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
+        coefficientLe (Arithmetic.sq_nonneg_direct Grid.fineUnit)
     _ = (1 / 32 : Fraction.Rational) := by
       change 34359738368 * Grid.GridFineUnit ^ 2 =
         (1 / 32 : Fraction.Rational)
@@ -593,9 +595,9 @@ theorem seventhScaledPointsNormLe
         (sourceImaginary - targetImaginary) ^ 2) *
           Grid.GridFineUnit ^ 2 := by ring1
     _ ≤ 2147483648 * Grid.GridFineUnit ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         coefficientLe
-          (Fraction.Order.Arithmetic.sq_nonneg_direct Grid.GridFineUnit)
+          (Arithmetic.sq_nonneg_direct Grid.GridFineUnit)
     _ = (1 / 512 : Fraction.Rational) := by
       have gridFine := Grid.scaledQuarticGrid
         1 2048 512 (by omega) (by ring1)
@@ -619,18 +621,18 @@ private theorem quarticGridPointNormLeFour
   change (real * (1 / 1048576 : Fraction.Rational)) ^ 2 +
       (imaginary * (1 / 1048576 : Fraction.Rational)) ^ 2 ≤ 4
   have unitSquareNonnegative : (0 : Fraction.Rational) ≤ (1 / 1048576 : Fraction.Rational) ^ 2 :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct _
+    Arithmetic.sq_nonneg_direct _
   calc
     (real * (1 / 1048576 : Fraction.Rational)) ^ 2 +
         (imaginary * (1 / 1048576 : Fraction.Rational)) ^ 2 =
       (real ^ 2 + imaginary ^ 2) * (1 / 1048576 : Fraction.Rational) ^ 2 := by ring1
     _ ≤ 4398046511104 * (1 / 1048576 : Fraction.Rational) ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         coefficientLe unitSquareNonnegative
     _ = (4 : Fraction.Rational) := by
       have cancel : (1 / 1048576 : Fraction.Rational) * 1048576 = 1 :=
         Fraction.Field.div_mul_cancel_of_ne _ _
-          (Fraction.Order.NatCast.natCast_pos_direct 1048576 (by omega)).ne'
+          (NatCast.natCast_pos_direct 1048576 (by omega)).ne'
       rw [pow_two]
       calc
         4398046511104 *
@@ -679,9 +681,9 @@ theorem sixthScaledPointsNormLe
         (sourceImaginary - targetImaginary) ^ 2) *
           Grid.GridFineUnit ^ 2 := by ring1
     _ ≤ 536870912 * Grid.GridFineUnit ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         coefficientLe
-          (Fraction.Order.Arithmetic.sq_nonneg_direct Grid.GridFineUnit)
+          (Arithmetic.sq_nonneg_direct Grid.GridFineUnit)
     _ = (1 / 2048 : Fraction.Rational) := by
       have gridFine := Grid.scaledQuarticGrid
         1 512 2048 (by omega) (by ring1)
@@ -705,18 +707,18 @@ private theorem quarticGridPointNormLeFour
   change (real * (1 / 1048576 : Fraction.Rational)) ^ 2 +
       (imaginary * (1 / 1048576 : Fraction.Rational)) ^ 2 ≤ 4
   have unitSquareNonnegative : (0 : Fraction.Rational) ≤ (1 / 1048576 : Fraction.Rational) ^ 2 :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct _
+    Arithmetic.sq_nonneg_direct _
   calc
     (real * (1 / 1048576 : Fraction.Rational)) ^ 2 +
         (imaginary * (1 / 1048576 : Fraction.Rational)) ^ 2 =
       (real ^ 2 + imaginary ^ 2) * (1 / 1048576 : Fraction.Rational) ^ 2 := by ring1
     _ ≤ 4398046511104 * (1 / 1048576 : Fraction.Rational) ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         coefficientLe unitSquareNonnegative
     _ = (4 : Fraction.Rational) := by
       have cancel : (1 / 1048576 : Fraction.Rational) * 1048576 = 1 :=
         Fraction.Field.div_mul_cancel_of_ne _ _
-          (Fraction.Order.NatCast.natCast_pos_direct 1048576 (by omega)).ne'
+          (NatCast.natCast_pos_direct 1048576 (by omega)).ne'
       rw [pow_two]
       calc
         4398046511104 *
@@ -764,8 +766,8 @@ public theorem thirdScaledPointsNormLe
       ((sourceReal - targetReal) ^ 2 +
         (sourceImaginary - targetImaginary) ^ 2) * Grid.GridFineUnit ^ 2 := by ring1
     _ ≤ 17179869184 * Grid.GridFineUnit ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-        coefficientLe (Fraction.Order.Arithmetic.sq_nonneg_direct Grid.GridFineUnit)
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
+        coefficientLe (Arithmetic.sq_nonneg_direct Grid.GridFineUnit)
     _ = (1 / 64 : Fraction.Rational) := by
       rw [Grid.oneSixtyFourthQuarticGridFine]
       conv_rhs => rw [Grid.GridFineUnit_eq_scaled_square]
@@ -782,18 +784,18 @@ theorem quarticGridPointNormLe256
   change (real * (1 / 1048576 : Fraction.Rational)) ^ 2 +
       (imaginary * (1 / 1048576 : Fraction.Rational)) ^ 2 ≤ 256
   have unitSquareNonnegative : (0 : Fraction.Rational) ≤ (1 / 1048576 : Fraction.Rational) ^ 2 :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct _
+    Arithmetic.sq_nonneg_direct _
   calc
     (real * (1 / 1048576 : Fraction.Rational)) ^ 2 +
         (imaginary * (1 / 1048576 : Fraction.Rational)) ^ 2 =
       (real ^ 2 + imaginary ^ 2) * (1 / 1048576 : Fraction.Rational) ^ 2 := by ring1
     _ ≤ 281474976710656 * (1 / 1048576 : Fraction.Rational) ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         coefficientLe unitSquareNonnegative
     _ = (256 : Fraction.Rational) := by
       have cancel : (1 / 1048576 : Fraction.Rational) * 1048576 = 1 :=
         Fraction.Field.div_mul_cancel_of_ne _ _
-          (Fraction.Order.NatCast.natCast_pos_direct 1048576 (by omega)).ne'
+          (NatCast.natCast_pos_direct 1048576 (by omega)).ne'
       rw [pow_two]
       calc
         281474976710656 *

@@ -12,6 +12,8 @@ import Purelib.Tactic.QuotientFreeOmega
 public import Purelib.Data.CCL.Encoding.Block.Matrix
 import Purelib.Geometry.Projective.Line.Basic
 
+open Purelib.Data.CCL.Transducer.Mode.Semantics
+
 section
 @[expose] public section
 
@@ -35,13 +37,13 @@ open Purelib.Data.Gaussian in
 The witness belongs to the earlier mode's exact process state. The relation compares their parser-tail projective points
 without inserting a block or changing either process owner. -/
 def NeutralTransition (before after :
-  Data.CCL.Transducer.Mode) : Prop
+  Mode) : Prop
   :=
-  ∀ {tail : Basic.Canonical}, Mode.Semantics.SemanticMode.possible after tail →
+  ∀ {tail : Basic.Canonical}, SemanticMode.possible after tail →
     ∃ previous : Basic.Canonical,
-      Mode.Semantics.SemanticMode.possible before previous ∧
-        (Mode.Semantics.SemanticMode.parserTail before previous).Equivalent
-          (Mode.Semantics.SemanticMode.parserTail after tail)
+      SemanticMode.possible before previous ∧
+        (SemanticMode.parserTail before previous).Equivalent
+          (SemanticMode.parserTail after tail)
 
 open Purelib.Data.CCL.Encoding in
 open Purelib.Data.CCL.Transducer in
@@ -52,16 +54,16 @@ open Purelib.Geometry.Projective in
 Keep an earlier possible witness and a safe projective tail for this same block. The earlier parser tail equals its
 block-matrix image, while the safe tail equals the later parser tail projectively. -/
 def ContractingTransition (before after :
-  Data.CCL.Transducer.Mode)
-  (entry : Data.CCL.Encoding.Block.Redundant) : Prop :=
-  ∀ {tail : Basic.Canonical}, Mode.Semantics.SemanticMode.possible after tail →
+  Mode)
+  (entry : Block.Redundant) : Prop :=
+  ∀ {tail : Basic.Canonical}, SemanticMode.possible after tail →
     ∃ previous : Basic.Canonical,
-      Mode.Semantics.SemanticMode.possible before previous ∧
-        ∃ blockTail : Geometry.Projective.SectorBlock.Safe.Tail entry.sector,
-          (Mode.Semantics.SemanticMode.parserTail before previous).Equivalent
+      SemanticMode.possible before previous ∧
+        ∃ blockTail : SectorBlock.Safe.Tail entry.sector,
+          (SemanticMode.parserTail before previous).Equivalent
               (Line.Matrix.act entry.matrix blockTail.point) ∧
             blockTail.point.Equivalent
-              (Mode.Semantics.SemanticMode.parserTail after tail)
+              (SemanticMode.parserTail after tail)
 
 namespace NeutralTransition
 
@@ -69,7 +71,7 @@ open Purelib.Data.CCL.Transducer in
 open Purelib.Geometry.Projective in
 /-- Compose neutral transitions through their exact retained middle mode and possible witness. -/
 theorem trans {before middle after :
-  Data.CCL.Transducer.Mode}
+  Mode}
     (first : NeutralTransition before middle)
     (second : NeutralTransition middle after) :
     NeutralTransition before after := by
@@ -81,15 +83,15 @@ theorem trans {before middle after :
   exact ⟨previous, previousPossible,
     Line.Gaussian.Proj.equivalent_trans
       firstEquivalent secondEquivalent
-      (Mode.Semantics.SemanticMode.parserTail_valid middle middleValue)
-      (Mode.Semantics.SemanticMode.parserTail_valid after tail)⟩
+      (SemanticMode.parserTail_valid middle middleValue)
+      (SemanticMode.parserTail_valid after tail)⟩
 
 open Purelib.Data.CCL.Encoding in
 open Purelib.Data.CCL.Transducer in
 open Purelib.Geometry.Projective in
 /-- Prepend a neutral transition to a contracting transition while retaining the same safe block and tail. -/
 theorem thenContracting {before middle after
-  : Data.CCL.Transducer.Mode} {entry : Data.CCL.Encoding.Block.Redundant}
+  : Mode} {entry : Block.Redundant}
     (first : NeutralTransition before middle)
     (second : ContractingTransition middle after entry) :
     ContractingTransition before after entry := by
@@ -105,7 +107,7 @@ theorem thenContracting {before middle after
   exact ⟨previous, previousPossible, blockTail,
     Line.Gaussian.Proj.equivalent_trans
       firstEquivalent outputEquivalent
-      (Mode.Semantics.SemanticMode.parserTail_valid middle middleValue) imageValid,
+      (SemanticMode.parserTail_valid middle middleValue) imageValid,
     tailEquivalent⟩
 
 end NeutralTransition
@@ -113,10 +115,10 @@ end NeutralTransition
 open Purelib.Data.CCL.Encoding in
 open Purelib.Data.CCL.Transducer in
 /-- Classify a transition as projectively neutral or contracting through one exact retained safe block. -/
-def AccountedStep (before after : Data.CCL.Transducer.Mode) :
+def AccountedStep (before after : Mode) :
   Prop :=
   NeutralTransition before after ∨
-    ∃ entry : Data.CCL.Encoding.Block.Redundant, ContractingTransition before after entry
+    ∃ entry : Block.Redundant, ContractingTransition before after entry
 end Purelib.Data.CCL.Transducer.Contraction.Transition
 
 end

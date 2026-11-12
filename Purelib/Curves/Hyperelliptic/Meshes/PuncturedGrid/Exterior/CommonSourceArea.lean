@@ -68,6 +68,10 @@ import Purelib.Riemann.RootContinuation.PreparedGridRootClosure
 import Purelib.Riemann.Topology.PreparedBankRootChains
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonScheduledTrace.CommonBasisRequest
+
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.WeightedResampling.BasisCommonParentBank
 
 public section
@@ -84,35 +88,35 @@ open Purelib.Riemann
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
-variable {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
-  {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {target coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
+variable {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {retained : Basis.Preparation.CommonBasisPreparation prepared}
+  {basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {target coefficientTarget : InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
     energyFloor radialDepth : Nat}
-  {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+  {box : Rational.Box} {capSample : Charts.Reciprocal.Cap.Primitives.Sample cap
     differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 namespace CommonBasisRequest
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisRequest retained basis
+variable {request : Basis.Preparation.CommonBasisRequest retained basis
   target coefficientTarget coverFloor floor}
   {plans : request.Plans capSample polynomials minimum} {inputs : retained.Inputs index}
-  {readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
+  {readings : Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
     request.schedule.bank plans inputs stage}
-  {fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.FanPreparation request plans
+  {fans : Basis.Connection.CommonBasisRequest.FanPreparation request plans
     inputs readings energyFloor}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -123,12 +127,12 @@ open Purelib.Data.Gaussian.Basic.Canonical
 
 /-- The complete source polygon, centered at zero without dropping excursions. -/
 @[expose] def sourceAreaAt (sample :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.Sampled fans coefficients radialDepth)
+  Basis.Connection.CommonBasisRequest.Sampled fans coefficients radialDepth)
     (comparisons :
       (CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
-      sample)) (periodStage : Nat) : Normalization.InverseRootPolynomial.Gaussian :=
+      sample)) (periodStage : Nat) : InverseRootPolynomial.Gaussian :=
   Path.IncrementArea.pathArea
-    ((Hyperelliptic.Charts.Reciprocal.Disk.Basis.WeightedResampling.BasisCommonParentBank.Samples.sourceResamplingPairs
+    ((Samples.sourceResamplingPairs
     (Paths.PreparedScheduledPrimitivePaths.RootClosedState.spatialDepth program.period.initial
       (Integration.PreparedRefinementProgramCore.standardDifferentials genus) periodStage)
     retained.anchors retained.sources request.schedule.bank plans inputs readings fans sample.parents comparisons).map
@@ -136,99 +140,99 @@ open Purelib.Data.Gaussian.Basic.Canonical
 
 /-- Existing component budgets pay the actual source path's initial ribbon. -/
 theorem source_centering_bound (sample :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.Sampled fans coefficients radialDepth)
+  Basis.Connection.CommonBasisRequest.Sampled fans coefficients radialDepth)
     (comparisons :
       (CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
       sample))
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+    (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
     (later : request.readingStage plans ≤ stage) (periodStage : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonScheduledTrace.CommonBasisRequest.Sampled.sourceTraceAt sample
+    Gaussian.Norm.Basic.normSq
+      ((Sampled.sourceTraceAt sample
       comparisons periodStage) -
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonSourceArea.CommonBasisRequest.Sampled.sourceAreaAt sample
+      (Sampled.sourceAreaAt sample
       comparisons periodStage)) ≤
-      6 * target^2 * (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := open Purelib.Data.Rat
+      6 * target^2 * (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := open Rat
         in by
-  have bounded := Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceReturn.Samples.SourceRestoration.source_ribbon_bound
+  have bounded := Charts.Reciprocal.Disk.Basis.SourceReturn.Samples.SourceRestoration.source_ribbon_bound
     sample.parents comparisons
     request.schedule.joins request.closing branch (request.joins_later plans later) (request.closing_later plans later)
   dsimp only at bounded
-  rw [Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.right
+  rw [Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.right
     (Paths.PreparedScheduledPrimitivePaths.RootClosedState.spatialDepth program.period.initial
     (Integration.PreparedRefinementProgramCore.standardDifferentials genus) periodStage)] at bounded
-  have paid := Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRibbonBudget.ribbon_paid basis
+  have paid := Charts.Reciprocal.Disk.Basis.SourceRibbonBudget.ribbon_paid basis
     program.cache.parents.length request.allocation.allowance
 
       (Samples.weightedSourceSlopeMaximum_nonnegative
       retained.anchors retained.sources)
     request.source_trace_paid request.trace_comparison_paid request.return_paid
-  unfold Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonScheduledTrace.CommonBasisRequest.Sampled.sourceTraceAt
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonSourceArea.CommonBasisRequest.Sampled.sourceAreaAt
-  rw [Path.IncrementArea.traceArea_eq, Purelib.Algebra.Group.add_sub_cancel_left]
-  exact bounded.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct paid
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+  unfold Sampled.sourceTraceAt
+    Sampled.sourceAreaAt
+  rw [Path.IncrementArea.traceArea_eq, Algebra.Group.add_sub_cancel_left]
+  exact bounded.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct paid
+    (Arithmetic.sq_nonneg_direct _))
 
 /-- Centering costs one further allowance; geometric closure is never used
 as a claim that the finite integral sum or its ribbon vanishes. -/
 theorem source_area_lower (sample :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.Sampled fans coefficients radialDepth)
+  Basis.Connection.CommonBasisRequest.Sampled fans coefficients radialDepth)
     (comparisons :
       (CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
       sample)) (trace :
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedTrace
+      (CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedTrace
       sample comparisons))
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+    (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
     (later : request.readingStage plans ≤ stage) (periodStage : Nat) :
     -(5 * target * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) ≤
-      (-((Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonSourceArea.CommonBasisRequest.Sampled.sourceAreaAt sample
-        comparisons periodStage))).im / 4 := open Purelib.Algebra in open Purelib.Data.Rat in by
+      (-((Sampled.sourceAreaAt sample
+        comparisons periodStage))).im / 4 := open Algebra in open Rat in by
   have normNonnegative : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
       (FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 :
-        Normalization.InverseRootPolynomial.Coordinate)) _
+        InverseRootPolynomial.Coordinate)) _
         (fun row => Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
   have targetNonnegative : 0 ≤ target :=
-    ((Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by
-        decide : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤ 4)
+    ((Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by
+        decide : (0 : InverseRootPolynomial.Coordinate) ≤ 4)
       (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le program.cache.parents.length)))
         request.allocation.positive.le).trans_eq
       request.allocation.loss_eq.symm).trans request.allocation.paid
   have bounded :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonSourceArea.CommonBasisRequest.Sampled.source_centering_bound
+    Sampled.source_centering_bound
     sample comparisons branch later periodStage
-  have error : Data.Gaussian.Norm.Basic.normSq
-    ((-(Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonScheduledTrace.CommonBasisRequest.Sampled.sourceTraceAt sample
+  have error : Gaussian.Norm.Basic.normSq
+    ((-(Sampled.sourceTraceAt sample
     comparisons periodStage)) -
-      (-(Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonSourceArea.CommonBasisRequest.Sampled.sourceAreaAt sample
+      (-(Sampled.sourceAreaAt sample
         comparisons periodStage))) ≤ (4 * (target * Readings.PreparedObservationCoercivity.coefficientNormSq
         coefficients))^2 := by
     rw [show
-      (-(Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonScheduledTrace.CommonBasisRequest.Sampled.sourceTraceAt
+      (-(Sampled.sourceTraceAt
       sample comparisons periodStage)) -
-      (-(Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonSourceArea.CommonBasisRequest.Sampled.sourceAreaAt sample
+      (-(Sampled.sourceAreaAt sample
       comparisons periodStage)) =
-      -((Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonScheduledTrace.CommonBasisRequest.Sampled.sourceTraceAt
+      -((Sampled.sourceTraceAt
         sample comparisons periodStage) -
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonSourceArea.CommonBasisRequest.Sampled.sourceAreaAt sample
+        (Sampled.sourceAreaAt sample
         comparisons periodStage)) by ring1, Gaussian.Norm.Basic.normSq_neg]
     exact bounded.trans ((show 6 * target^2 * (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)^2
       =
       6 * (target * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)^2 by ring1).trans_le
-      ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide : (6 :
-        Normalization.InverseRootPolynomial.Coordinate) ≤ 16) (Fraction.Order.Arithmetic.sq_nonneg_direct _)).trans_eq
+      ((Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide : (6 :
+        InverseRootPolynomial.Coordinate) ≤ 16) (Arithmetic.sq_nonneg_direct _)).trans_eq
         (by ring1)))
   have comparison := Topology.PreparedSurfaceCoercivity.boundaryEnergy_sub_budget_le
-    (-(Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonScheduledTrace.CommonBasisRequest.Sampled.sourceTraceAt sample
+    (-(Sampled.sourceTraceAt sample
       comparisons periodStage))
-      (-(Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonSourceArea.CommonBasisRequest.Sampled.sourceAreaAt sample
+      (-(Sampled.sourceAreaAt sample
       comparisons periodStage))
     (target * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct targetNonnegative normNonnegative) error
+      (Arithmetic.mul_nonneg_direct targetNonnegative normNonnegative) error
   exact (show -(5 * target * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) =
     -(4 * target * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) - target *
       Readings.PreparedObservationCoercivity.coefficientNormSq coefficients by ring1).trans_le
-    ((Fraction.Order.Arithmetic.sub_le_sub_right_direct
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonScheduledTrace.CommonBasisRequest.Sampled.source_lower sample
+    ((Arithmetic.sub_le_sub_right_direct
+      (Sampled.source_lower sample
       comparisons trace branch later periodStage)
       (target * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)).trans comparison)
 

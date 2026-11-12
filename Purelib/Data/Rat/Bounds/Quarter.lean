@@ -26,7 +26,7 @@ public theorem quarter_pos {target : Fraction.Rational} (positive : 0 < target) 
 
 Cancellation by the nonzero rational denominators identifies the two-quarter
 sum with one half. Multiplying that half by two recovers the same input. -/
-private theorem four_quarters (target : Fraction.Rational) :
+public theorem four_quarters (target : Fraction.Rational) :
     2 * (target / 4 + target / 4) = target := by
   have quarterSum : target / 4 + target / 4 = target / 2 := by
     apply Fraction.Field.mul_right_cancel_of_ne

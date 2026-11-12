@@ -102,6 +102,17 @@ import Purelib.RootIsolation.Exact.Basic
 import Purelib.RootIsolation.FTA.Squarefree.Basic
 import Purelib.RootIsolation.State.WindingOne.Raw
 
+open Purelib.NumberTheory.Approximation.Dirichlet.Window
+open Purelib.Data.GaussianInt
+open Purelib.Polynomial.Dense.Gaussian.Residual.NaturalDenominator
+open Purelib.Data.ComplexContinuedFraction.Hurwitz
+open Purelib.NumberTheory.Approximation.Dirichlet.Window.IndexOne.Bounds
+open Purelib.Polynomial.Elimination.Axis.Certificate.AxisSafeCuts
+open Purelib.Data.Gaussian.Norm
+open Purelib.RationalFunctions.Approximation.Height.Basic
+open Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput
+open Purelib.Data.GaussianInt.Fraction.Canonical
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -147,16 +158,16 @@ abbrev SquarefreeCertificate := Paper.SquarefreeCertificate
 /-- A protected local quotient context retaining its source and opposite polynomials. -/
 abbrev LocalQuotientContext := Paper.LocalQuotientContext
 /-- A displayed Gaussian-integer numerator and nonzero Gaussian-integer denominator. -/
-abbrev HurwitzFraction := Data.GaussianInt.Fraction
+abbrev HurwitzFraction := Fraction
 /-- A Gaussian fraction in the deterministic reduced canonical form. -/
 abbrev ReducedHurwitzFraction :=
-  Data.GaussianInt.Fraction.Canonical.CanonicalFraction
+  CanonicalFraction
 /-- One finite stage of the Hurwitz expansion of a displayed Gaussian fraction. -/
-abbrev HurwitzStage := Data.ComplexContinuedFraction.Hurwitz.Trace.Stage
+abbrev HurwitzStage := Trace.Stage
 /-- The generation certificate linking a Hurwitz stage to its original source. -/
 abbrev HurwitzGenerated := Hurwitz.Geometry.Generated
 /-- A numerator–denominator pair of Gaussian integers in the Hurwitz continuant calculation. -/
-abbrev HurwitzConvergentPair := Data.GaussianInt.Pair.Basic.ConvergentPair
+abbrev HurwitzConvergentPair := Pair.Basic.ConvergentPair
 /-- The project-owned Gaussian integer coefficient type. -/
 abbrev GaussianInt := Data.GaussianInt
 /-- A normalized Gaussian working record before erasing its representation data. -/
@@ -167,7 +178,7 @@ abbrev StageTwoInput := Approximation.Resource.Certificate.StageTwoInput
 /-- The positive integer scale obtained by clearing the finitely many
 Gaussian-rational coefficients of a displayed polynomial. -/
 def denominatorCoefficientScale (p : GaussianPolynomial) : Nat :=
-  Polynomial.Dense.Gaussian.Denominator.Clearing.coefficientScale p
+  Dense.Gaussian.Denominator.Clearing.coefficientScale p
 
 /-- Necessary denominator-height inequality for every displayed sample with
 nonzero residual. -/
@@ -177,7 +188,7 @@ theorem one_le_scaled_height_mul_residual
     (1 : Coordinate) ≤
       (denominatorCoefficientScale p : Coordinate) ^ 2 *
         (fraction.height : Coordinate) ^ p.natDegree *
-          Data.Gaussian.Norm.Basic.normSq
+          Basic.normSq
             (p.eval fraction.value) :=
   Dense.Gaussian.Residual.NaturalDenominator.one_le_scaled_height_mul_residual
     p nonzero fraction residualNonzero
@@ -188,7 +199,7 @@ theorem scaledHeightResidual_eq_integralNorm
     (fraction : GaussianFraction) :
     (denominatorCoefficientScale p : Coordinate) ^ 2 *
           (fraction.height : Coordinate) ^ p.natDegree *
-        Data.Gaussian.Norm.Basic.normSq
+        Basic.normSq
           (p.eval fraction.value) =
       (Data.GaussianInt.normNat
         (Dense.Gaussian.Residual.NaturalDenominator.residualNumerator p fraction) : Coordinate) :=
@@ -204,7 +215,7 @@ theorem one_le_scaled_gaussianHeight_mul_residual
     (1 : Coordinate) ≤
       (denominatorCoefficientScale p : Coordinate) ^ 2 *
         (fraction.height : Coordinate) ^ p.natDegree *
-          Data.Gaussian.Norm.Basic.normSq
+          Basic.normSq
             (p.eval fraction.value) :=
   Dense.Gaussian.Residual.GaussianDenominator.one_le_scaled_height_mul_residual
     p nonzero fraction residualNonzero
@@ -213,35 +224,35 @@ theorem one_le_scaled_gaussianHeight_mul_residual
 canonicalisation on a displayed Gaussian fraction. -/
 def canonicalReducedGaussianFraction (fraction : HurwitzFraction) :
     ReducedHurwitzFraction :=
-  Data.GaussianInt.Fraction.Canonical.Height.canonicalReduction fraction
+  Height.canonicalReduction fraction
 
 /-- Canonical Gaussian reduction preserves the value of the displayed fraction. -/
 theorem canonicalReducedGaussianFraction_value (fraction : HurwitzFraction) :
     (canonicalReducedGaussianFraction fraction).value = fraction.value :=
-  Data.GaussianInt.Fraction.Canonical.Height.canonicalReduction_value fraction
+  Height.canonicalReduction_value fraction
 
 /-- Presentation-independent denominator quadrance obtained by canonical
 Gaussian Euclidean reduction. -/
 def intrinsicGaussianDenominatorHeight (fraction : HurwitzFraction) : Nat :=
-  Data.GaussianInt.Fraction.Canonical.Height.intrinsicHeight fraction
+  Height.intrinsicHeight fraction
 
 /-- The intrinsic reduced Gaussian denominator height is strictly positive. -/
 theorem intrinsicGaussianDenominatorHeight_pos (fraction : HurwitzFraction) :
     0 < intrinsicGaussianDenominatorHeight fraction :=
-  Data.GaussianInt.Fraction.Canonical.Height.intrinsicHeight_pos fraction
+  Height.intrinsicHeight_pos fraction
 
 /-- The intrinsic reduced height is at most the height of the displayed denominator. -/
 theorem intrinsicGaussianDenominatorHeight_le_displayed
     (fraction : HurwitzFraction) :
     intrinsicGaussianDenominatorHeight fraction ≤ fraction.height :=
-  Data.GaussianInt.Fraction.Canonical.Height.intrinsicHeight_le_height fraction
+  Height.intrinsicHeight_le_height fraction
 
 /-- Equal-valued Gaussian fractions have the same intrinsic reduced denominator height. -/
 theorem intrinsicGaussianDenominatorHeight_eq_of_value_eq
     (left right : HurwitzFraction) (valueEqual : left.value = right.value) :
     intrinsicGaussianDenominatorHeight left =
       intrinsicGaussianDenominatorHeight right :=
-  Data.GaussianInt.Fraction.Canonical.Height.intrinsicHeight_eq_of_value_eq
+  Height.intrinsicHeight_eq_of_value_eq
     left right valueEqual
 
 /-- Exact integral identity behind the intrinsic reduced Gaussian-height
@@ -252,7 +263,7 @@ theorem scaledIntrinsicGaussianHeightResidual_eq_integralNorm
     (denominatorCoefficientScale p : Coordinate) ^ 2 *
           (intrinsicGaussianDenominatorHeight fraction : Coordinate) ^
             p.natDegree *
-        Data.Gaussian.Norm.Basic.normSq
+        Basic.normSq
           (p.eval fraction.value) =
       (Data.GaussianInt.normNat
         (Dense.Gaussian.Residual.GaussianDenominator.Intrinsic.intrinsicResidualNumerator p
@@ -270,7 +281,7 @@ theorem one_le_scaled_intrinsicGaussianHeight_mul_residual
       (denominatorCoefficientScale p : Coordinate) ^ 2 *
         (intrinsicGaussianDenominatorHeight fraction : Coordinate) ^
             p.natDegree *
-          Data.Gaussian.Norm.Basic.normSq
+          Basic.normSq
             (p.eval fraction.value) :=
   Dense.Gaussian.Residual.GaussianDenominator.Intrinsic.one_le_scaled_intrinsicHeight_mul_residual
     p nonzero fraction residualNonzero
@@ -281,18 +292,18 @@ theorem denominatorHeightBound_isSharp
     (degree scale denominator : Nat) (scalePositive : 0 < scale)
     (denominatorPositive : 0 < denominator) :
     (denominatorCoefficientScale
-        (Dense.Gaussian.Residual.NaturalDenominator.Sharp.sharpPolynomial degree scale
+        (Sharp.sharpPolynomial degree scale
           scalePositive) : Coordinate) ^ 2 *
-          ((Dense.Gaussian.Residual.NaturalDenominator.Sharp.sharpFraction denominator
+          ((Sharp.sharpFraction denominator
             denominatorPositive).height : Coordinate) ^
-            (Dense.Gaussian.Residual.NaturalDenominator.Sharp.sharpPolynomial degree scale
+            (Sharp.sharpPolynomial degree scale
               scalePositive).natDegree *
-        Data.Gaussian.Norm.Basic.normSq
-          ((Dense.Gaussian.Residual.NaturalDenominator.Sharp.sharpPolynomial degree scale
+        Basic.normSq
+          ((Sharp.sharpPolynomial degree scale
             scalePositive).eval
-              (Dense.Gaussian.Residual.NaturalDenominator.Sharp.sharpFraction denominator
+              (Sharp.sharpFraction denominator
                 denominatorPositive).value) = 1 :=
-  Dense.Gaussian.Residual.NaturalDenominator.Sharp.scaled_height_mul_residual_eq_one
+  Sharp.scaled_height_mul_residual_eq_one
     degree scale denominator scalePositive denominatorPositive
 
 /-- Execute Newton-band extraction and return an interior Gaussian-rational
@@ -302,7 +313,7 @@ def approximateWithHeight
     (degreeAtLeastTwo : 2 ≤ p.natDegree)
     (squarefree : SquarefreeCertificate p)
     (elimination :
-      Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
+      AxisEliminationCertificate p degreeBound)
     (current : RootIsolation.State.Raw.RawWindingState p ambient)
     {epsilon : Coordinate} (epsilonPositive : 0 < epsilon) :
     RootIsolation.Approximation.Denominator.Output degreeAtLeastTwo squarefree elimination
@@ -317,7 +328,7 @@ def approximateWithTarget
     (degreeAtLeastTwo : 2 ≤ p.natDegree)
     (squarefree : SquarefreeCertificate p)
     (elimination :
-      Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
+      AxisEliminationCertificate p degreeBound)
     (current : RootIsolation.State.Raw.RawWindingState p ambient)
     (target : Coordinate) :
     RootIsolation.Approximation.Denominator.Output degreeAtLeastTwo squarefree elimination
@@ -333,10 +344,10 @@ theorem approximateWithTarget_residual_le
     (degreeAtLeastTwo : 2 ≤ p.natDegree)
     (squarefree : SquarefreeCertificate p)
     (elimination :
-      Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
+      AxisEliminationCertificate p degreeBound)
     (current : RootIsolation.State.Raw.RawWindingState p ambient)
     {target : Coordinate} (targetPositive : 0 < target) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       (p.eval (approximateWithTarget degreeAtLeastTwo squarefree elimination
         current target).fraction.value) ≤ target := by
   let retained := approximateWithTarget degreeAtLeastTwo squarefree elimination current target
@@ -344,7 +355,7 @@ theorem approximateWithTarget_residual_le
       (p.eval retained.fraction.value) ≤ target :=
     RootIsolation.Approximation.Denominator.approximateTarget_residual_le degreeAtLeastTwo
       squarefree elimination current targetPositive
-  exact (Data.Gaussian.Norm.Basic.normSq_eq_canonical
+  exact (Basic.normSq_eq_canonical
     (p.eval retained.fraction.value)).trans_le bound
 
 /-- Exact finite minimization of residual over all displayed
@@ -386,9 +397,9 @@ def approximateQuotientWithHeight
     (degreeAtLeastTwo : 2 ≤ source.natDegree)
     (squarefree : SquarefreeCertificate source)
     (elimination :
-      Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate source degreeBound)
+      AxisEliminationCertificate source degreeBound)
     {epsilon : Coordinate} (epsilonPositive : 0 < epsilon) :
-    RationalFunctions.Approximation.Height.Basic.Output context degreeAtLeastTwo squarefree
+    Output context degreeAtLeastTwo squarefree
       elimination epsilon :=
   RationalFunctions.Approximation.Height.Build.approximate context degreeAtLeastTwo
     squarefree elimination epsilonPositive
@@ -402,9 +413,9 @@ def approximateQuotientWithTarget
     (degreeAtLeastTwo : 2 ≤ source.natDegree)
     (squarefree : SquarefreeCertificate source)
     (elimination :
-      Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate source degreeBound)
+      AxisEliminationCertificate source degreeBound)
     (target : Coordinate) :
-    RationalFunctions.Approximation.Height.Basic.Output context degreeAtLeastTwo squarefree
+    Output context degreeAtLeastTwo squarefree
       elimination
         (Approximation.Rational.QuadraticTarget.Basic.targetEpsilon
           (RationalFunctions.Approximation.Height.Budget.targetCoefficient context) target) :=
@@ -419,7 +430,7 @@ theorem approximateQuotientWithTarget_residual_le
     (degreeAtLeastTwo : 2 ≤ source.natDegree)
     (squarefree : SquarefreeCertificate source)
     (elimination :
-      Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate source degreeBound)
+      AxisEliminationCertificate source degreeBound)
     {target : Coordinate} (targetPositive : 0 < target) :
     Paper.quotientResidualSq source opposite
         (approximateQuotientWithTarget context degreeAtLeastTwo squarefree
@@ -478,7 +489,7 @@ strict/equal-height best-approximation predicate. -/
 theorem terminalHurwitzConvergent_isBest
     {source : HurwitzFraction} (stage : HurwitzStage source)
     (generated : HurwitzGenerated source stage)
-    (terminal : Data.GaussianInt.Division.Nearest.remainder stage.quotient = 0) :
+    (terminal : Division.Nearest.remainder stage.quotient = 0) :
     Best.Basic.IsBest source.value stage.current :=
   Hurwitz.Lakein.Stage.isBest_of_generated_of_terminal
     stage generated terminal
@@ -642,7 +653,7 @@ def RationalSiteApproximationCapability
     {source opposite : GaussianPolynomial}
     {input : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput source opposite}
     {context : Dense.Gaussian.Multiplicity.Basis.Context.Basic.PositiveContext input.entries} :
-    Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.FactorObservation input context → Type
+    FactorObservation input context → Type
   | .exact root _ _ =>
       Best.RootIsolation.PointBestResponse root.point
   | .higher boxes degree =>
@@ -661,7 +672,7 @@ def strengthenRationalSite
     {input : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput source opposite}
     {context : Dense.Gaussian.Multiplicity.Basis.Context.Basic.PositiveContext input.entries}
     (observation :
-      Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.FactorObservation input context) :
+      FactorObservation input context) :
     RationalSiteApproximationCapability observation := by
   cases observation with
   | exact root degree oppositeAtRoot =>
@@ -782,7 +793,7 @@ theorem exists_bestBelow_of_small
 displayed approximation pairs. -/
 def coefficientIndexQuadrance
     (left right : HurwitzConvergentPair) : Nat :=
-  Data.GaussianInt.Pair.LinearCombination.coefficientIndexQuadrance left right
+  Pair.LinearCombination.coefficientIndexQuadrance left right
 
 /-- Consecutive best levels are represented by coefficientwise independent
 pairs, so their displayed determinant quadrance is positive. -/
@@ -809,8 +820,8 @@ theorem consecutiveBest_coefficientSpan_or_centeredCoset
     (source : HurwitzFraction) (lower upper candidate : HurwitzConvergentPair)
     (consecutive : Best.Consecutive.Basic.AreConsecutiveBest
       source.value lower upper) :
-    Data.GaussianInt.Pair.LinearCombination.InCoefficientSpan lower upper candidate ∨
-      Data.GaussianInt.Pair.LinearCombination.InCenteredCoefficientCoset
+    Pair.LinearCombination.InCoefficientSpan lower upper candidate ∨
+      Pair.LinearCombination.InCenteredCoefficientCoset
         lower upper candidate :=
   (Best.Consecutive.Index.AreConsecutiveBest.coefficientSpan_or_centeredCoset consecutive) candidate
 
@@ -824,18 +835,18 @@ theorem consecutiveBest_exists_centeredCoefficientPair
     (leftCoefficient rightCoefficient :
       Data.GaussianInt)
     (leftNotDivisible :
-      ¬ Data.GaussianInt.Divisibility.Basic.Divides
-        (Data.GaussianInt.Pair.LinearCombination.coefficientDeterminant lower upper)
+      ¬ Divisibility.Basic.Divides
+        (Pair.LinearCombination.coefficientDeterminant lower upper)
           leftCoefficient)
     (rightNotDivisible :
-      ¬ Data.GaussianInt.Divisibility.Basic.Divides
-        (Data.GaussianInt.Pair.LinearCombination.coefficientDeterminant lower upper)
+      ¬ Divisibility.Basic.Divides
+        (Pair.LinearCombination.coefficientDeterminant lower upper)
           rightCoefficient) :
     ∃ candidate : HurwitzConvergentPair,
-      Data.GaussianInt.Pair.LinearCombination.scalePair
-          (Data.GaussianInt.Pair.LinearCombination.coefficientDeterminant lower upper)
+      Pair.LinearCombination.scalePair
+          (Pair.LinearCombination.coefficientDeterminant lower upper)
           candidate =
-        Data.GaussianInt.Pair.LinearCombination.linearCombination lower upper
+        Pair.LinearCombination.linearCombination lower upper
           leftCoefficient rightCoefficient :=
   (Best.Consecutive.Index.AreConsecutiveBest.exists_centeredCoefficientPair consecutive) indexTwo
     leftCoefficient rightCoefficient leftNotDivisible rightNotDivisible
@@ -854,10 +865,10 @@ theorem consecutiveBest_indexTwoTransition
         Data.GaussianInt,
       Data.GaussianInt.normNat
           lowerCoefficient = 1 ∧
-      Data.GaussianInt.Divisibility.Basic.Divides
-        (Data.GaussianInt.Pair.LinearCombination.coefficientDeterminant lower middle)
+      Divisibility.Basic.Divides
+        (Pair.LinearCombination.coefficientDeterminant lower middle)
           middleCoefficient ∧
-      upper = Data.GaussianInt.Pair.LinearCombination.linearCombination lower middle
+      upper = Pair.LinearCombination.linearCombination lower middle
         lowerCoefficient middleCoefficient :=
   (Best.Consecutive.NormalForm.AreConsecutiveBest.integralTransition_with_divisible_middleCoefficient first) second
     leftIndexTwo rightIndexTwo
@@ -891,8 +902,8 @@ theorem consecutiveBest_indexTwoEnumeratedTransition
       (Data.GaussianInt.normNat step = 1 ∨
         Data.GaussianInt.normNat step = 2 ∨
         Data.GaussianInt.normNat step = 4) ∧
-      upper = Data.GaussianInt.Pair.LinearCombination.linearCombination lower middle lowerUnit
-        (Data.GaussianInt.Pair.LinearCombination.coefficientDeterminant lower middle * step) :=
+      upper = Pair.LinearCombination.linearCombination lower middle lowerUnit
+        (Pair.LinearCombination.coefficientDeterminant lower middle * step) :=
   (Best.Consecutive.NormalForm.AreConsecutiveBest.repeatedIndexTwo_enumeratedNormalForm first) second leftIndexTwo
     rightIndexTwo
 
@@ -941,28 +952,28 @@ between two consecutive best levels. -/
 def consecutiveDirichletWindowQuadrance
     (source : HurwitzFraction)
     (lower upper : HurwitzConvergentPair) : Coordinate :=
-  Dirichlet.Window.SourceBound.dirichletWindowQuadrance
+  SourceBound.dirichletWindowQuadrance
     source.value lower upper
 
 /-- One displayed coefficient-index quadrance for every adjacent pair in a
 finite list of approximation records. -/
 def consecutiveCoefficientIndexQuadrances
     (pairs : List HurwitzConvergentPair) : List Nat :=
-  Dirichlet.Window.Chain.coefficientIndexQuadrances pairs
+  Chain.coefficientIndexQuadrances pairs
 
 /-- One exact squared Dirichlet-window product for every adjacent pair in a
 finite list of approximation records. -/
 def consecutiveDirichletWindowQuadrances
     (source : HurwitzFraction)
     (pairs : List HurwitzConvergentPair) : List Coordinate :=
-  Dirichlet.Window.Chain.dirichletWindowQuadrances source.value pairs
+  Chain.dirichletWindowQuadrances source.value pairs
 
 /-- The adjacent-window list and coefficient-index list have the same length. -/
 theorem consecutiveDirichletWindowQuadrances_length_eq_indexQuadrances_length
     (source : HurwitzFraction) (pairs : List HurwitzConvergentPair) :
     (consecutiveDirichletWindowQuadrances source pairs).length =
       (consecutiveCoefficientIndexQuadrances pairs).length :=
-  Dirichlet.Window.Chain.dirichletWindowQuadrances_length_eq_coefficientIndexQuadrances_length
+  Chain.dirichletWindowQuadrances_length_eq_coefficientIndexQuadrances_length
     source.value pairs
 
 /-- The determinant index is strictly below four times the exact consecutive
@@ -974,7 +985,7 @@ theorem consecutiveBest_index_lt_four_mul_dirichletWindow
       source.value lower upper) :
     (coefficientIndexQuadrance lower upper : Coordinate) <
       4 * consecutiveDirichletWindowQuadrance source lower upper :=
-  (Dirichlet.Window.SourceBound.AreConsecutiveBest.coefficientIndexQuadrance_lt_four_mul_dirichletWindow consecutive)
+  (SourceBound.AreConsecutiveBest.coefficientIndexQuadrance_lt_four_mul_dirichletWindow consecutive)
 
 /-- Every consecutive window product is strictly greater than one quarter,
 in a division-free statement. -/
@@ -985,7 +996,7 @@ theorem one_lt_four_mul_consecutiveDirichletWindow
       source.value lower upper) :
     (1 : Coordinate) <
       4 * consecutiveDirichletWindowQuadrance source lower upper :=
-  (Dirichlet.Window.SourceBound.AreConsecutiveBest.one_lt_four_mul_dirichletWindow consecutive)
+  (SourceBound.AreConsecutiveBest.one_lt_four_mul_dirichletWindow consecutive)
 
 /-- An index-two consecutive window product is strictly greater than one
 half, again stated without division. -/
@@ -997,212 +1008,212 @@ theorem two_lt_four_mul_consecutiveDirichletWindow_of_indexTwo
     (indexTwo : coefficientIndexQuadrance lower upper = 2) :
     (2 : Coordinate) <
       4 * consecutiveDirichletWindowQuadrance source lower upper :=
-  (Dirichlet.Window.SourceBound.AreConsecutiveBest.two_lt_four_mul_dirichletWindow_of_indexTwo consecutive) indexTwo
+  (SourceBound.AreConsecutiveBest.two_lt_four_mul_dirichletWindow_of_indexTwo consecutive) indexTwo
 
 /-- Normalized determinant gap associated to two consecutive best levels. -/
 def consecutiveNormalizedDeterminantGap
     (source : HurwitzFraction)
     (lower upper : HurwitzConvergentPair) : Coordinate :=
-  Data.Gaussian.Norm.Basic.normSq
-    (1 - Dirichlet.Window.Basic.denominatorRatio lower upper *
-      Dirichlet.Window.Basic.errorRatio source.value lower upper)
+  Basic.normSq
+    (1 - Basic.denominatorRatio lower upper *
+      Basic.errorRatio source.value lower upper)
 
 /-- Displayed refined normalized-gap threshold, exactly `35/408`. -/
 def refinedNormalizedDeterminantGapThreshold : Coordinate :=
-  Dirichlet.Window.Basic.refinedGapThreshold
+  Basic.refinedGapThreshold
 
 /-- The refined normalized-gap threshold 35/408 is less than one half. -/
 theorem refinedNormalizedDeterminantGapThreshold_lt_half :
     refinedNormalizedDeterminantGapThreshold < (1 / 2 : Coordinate) :=
-  Dirichlet.Window.Basic.refinedGapThreshold_lt_half
+  Basic.refinedGapThreshold_lt_half
 
 /-- The refined threshold satisfies the nonnegative quadratic boundary test. -/
 theorem refinedNormalizedDeterminantGapThreshold_quadratic_nonnegative :
     0 ≤ refinedNormalizedDeterminantGapThreshold ^ 2 -
       3 * refinedNormalizedDeterminantGapThreshold + 1 / 4 :=
-  Dirichlet.Window.Basic.refinedGapThreshold_quadratic_nonnegative
+  Basic.refinedGapThreshold_quadratic_nonnegative
 
 /-- Clearing the refined gap threshold's denominator yields thirty-five. -/
 theorem refinedNormalizedDeterminantGapThreshold_mul_denominator :
     refinedNormalizedDeterminantGapThreshold * 408 = 35 :=
-  Dirichlet.Window.Basic.refinedGapThreshold_mul_denominator
+  Basic.refinedGapThreshold_mul_denominator
 
 /-- Displayed refined universal squared-window bound, exactly `816/35`. -/
 def refinedUniversalDirichletWindowBound : Coordinate :=
-  Dirichlet.Window.Basic.refinedUniversalWindowBound
+  Basic.refinedUniversalWindowBound
 
 /-- Displayed factor `408/35` multiplying one coefficient index in the
 refined squared-window bound. -/
 def refinedIndexDirichletWindowFactor : Coordinate :=
-  Dirichlet.Window.Basic.refinedIndexFactor
+  Basic.refinedIndexFactor
 
 /-- Clearing the refined index factor's denominator yields 408. -/
 theorem refinedIndexDirichletWindowFactor_mul_denominator :
     refinedIndexDirichletWindowFactor * 35 = 408 :=
-  Dirichlet.Window.Basic.refinedIndexFactor_mul_denominator
+  Basic.refinedIndexFactor_mul_denominator
 
 /-- Clearing the refined universal window bound's denominator yields 816. -/
 theorem refinedUniversalDirichletWindowBound_mul_denominator :
     refinedUniversalDirichletWindowBound * 35 = 816 :=
-  Dirichlet.Window.Basic.refinedUniversalWindowBound_mul_denominator
+  Basic.refinedUniversalWindowBound_mul_denominator
 
 /-- Displayed quadratic-boundary threshold, exactly `102/1189`. -/
 def quadraticNormalizedDeterminantGapThreshold : Coordinate :=
-  Dirichlet.Window.Basic.quadraticGapThreshold
+  Basic.quadraticGapThreshold
 
 /-- Exact reciprocal factor `1189/102` for the quadratic-boundary threshold. -/
 def quadraticIndexDirichletWindowFactor : Coordinate :=
-  Dirichlet.Window.Basic.quadraticIndexFactor
+  Basic.quadraticIndexFactor
 
 /-- Index-aware universal squared-window bound, exactly `1189/102`. -/
 def indexAwareUniversalDirichletWindowBound : Coordinate :=
-  Dirichlet.Window.Basic.quadraticIndexFactor
+  Basic.quadraticIndexFactor
 
 /-- Centered index-two normalized determinant-gap bound, exactly `71/56`. -/
 def centeredIndexTwoNormalizedDeterminantGap : Coordinate :=
-  Dirichlet.Window.IndexTwo.Bounds.centeredGapThreshold
+  IndexTwo.Bounds.centeredGapThreshold
 
 /-- Clearing the centered index-two gap denominator yields seventy-one. -/
 theorem centeredIndexTwoNormalizedDeterminantGap_mul_denominator :
     centeredIndexTwoNormalizedDeterminantGap * 56 = 71 :=
-  Dirichlet.Window.IndexTwo.Bounds.centeredGapThreshold_mul_denominator
+  IndexTwo.Bounds.centeredGapThreshold_mul_denominator
 
 /-- Centered index-two squared-window bound, exactly `112/71`. -/
 def centeredIndexTwoDirichletWindowBound : Coordinate :=
-  Dirichlet.Window.IndexTwo.Bounds.centeredWindowBound
+  IndexTwo.Bounds.centeredWindowBound
 
 /-- Clearing the centered index-two window-bound denominator yields 112. -/
 theorem centeredIndexTwoDirichletWindowBound_mul_denominator :
     centeredIndexTwoDirichletWindowBound * 71 = 112 :=
-  Dirichlet.Window.IndexTwo.Bounds.centeredWindowBound_mul_denominator
+  IndexTwo.Bounds.centeredWindowBound_mul_denominator
 
 /-- Finite-octant universal squared-window bound, exactly `112/71`. -/
 def octantUniversalDirichletWindowBound : Coordinate :=
-  Dirichlet.Window.IndexOne.Bounds.normTwoIndexOneWindowBound
+  IndexOne.Bounds.normTwoIndexOneWindowBound
 
 /-- Clearing the finite-octant universal window-bound denominator yields 112. -/
 theorem octantUniversalDirichletWindowBound_mul_denominator :
     octantUniversalDirichletWindowBound * 71 = 112 :=
-  Dirichlet.Window.IndexOne.Bounds.normTwoIndexOneWindowBound_mul_denominator
+  IndexOne.Bounds.normTwoIndexOneWindowBound_mul_denominator
 
 /-- Improved finite-octant normalized-gap certificate, exactly `71/112`. -/
 def octantNormalizedDeterminantGap : Coordinate :=
-  Dirichlet.Window.IndexOne.Bounds.normTwoIndexOneGapThreshold
+  IndexOne.Bounds.normTwoIndexOneGapThreshold
 
 /-- Clearing the finite-octant normalized-gap denominator yields seventy-one. -/
 theorem octantNormalizedDeterminantGap_mul_denominator :
     octantNormalizedDeterminantGap * 112 = 71 :=
-  Dirichlet.Window.IndexOne.Bounds.normTwoIndexOneGapThreshold_mul_denominator
+  IndexOne.Bounds.normTwoIndexOneGapThreshold_mul_denominator
 
 /-- Improved determinant-index-one squared-window bound, exactly `112/71`. -/
 def octantIndexOneDirichletWindowBound : Coordinate :=
-  Dirichlet.Window.IndexOne.Bounds.normTwoIndexOneWindowBound
+  IndexOne.Bounds.normTwoIndexOneWindowBound
 
 /-- Clearing the finite-octant index-one window-bound denominator yields 112. -/
 theorem octantIndexOneDirichletWindowBound_mul_denominator :
     octantIndexOneDirichletWindowBound * 71 = 112 :=
-  Dirichlet.Window.IndexOne.Bounds.normTwoIndexOneWindowBound_mul_denominator
+  IndexOne.Bounds.normTwoIndexOneWindowBound_mul_denominator
 
 /-- Near-optimal dyadic base gap, exactly `205/256`. -/
 def dyadicNormalizedDeterminantGap : Coordinate :=
-  Dirichlet.Window.IndexOne.Bounds.sharpIndexOneGapBound
+  IndexOne.Bounds.sharpIndexOneGapBound
 
 /-- The dyadic gap multiplied by 256 is 205. -/
 theorem dyadicNormalizedDeterminantGap_mul_denominator :
     dyadicNormalizedDeterminantGap * (2 : Coordinate) ^ 8 =
       13 * 16 - 3 :=
-  Dirichlet.Window.IndexOne.Bounds.sharpIndexOneGapBound_mul_denominator
+  IndexOne.Bounds.sharpIndexOneGapBound_mul_denominator
 
 /-- Matching determinant-index-two gap, exactly `205/128`. -/
 def dyadicCenteredIndexTwoNormalizedDeterminantGap : Coordinate :=
-  Dirichlet.Window.IndexTwo.Bounds.dyadicCenteredGapThreshold
+  IndexTwo.Bounds.dyadicCenteredGapThreshold
 
 /-- Near-optimal dyadic universal squared-window bound, exactly `256/205`. -/
 def dyadicUniversalDirichletWindowBound : Coordinate :=
-  Dirichlet.Window.IndexOne.Bounds.sharpIndexOneWindowBound
+  IndexOne.Bounds.sharpIndexOneWindowBound
 
 /-- The dyadic universal window bound multiplied by 205 is 256. -/
 theorem dyadicUniversalDirichletWindowBound_mul_denominator :
     dyadicUniversalDirichletWindowBound * (13 * 16 - 3 : Coordinate) =
       (2 : Coordinate) ^ 8 :=
-  Dirichlet.Window.IndexOne.Bounds.sharpIndexOneWindowBound_mul_denominator
+  IndexOne.Bounds.sharpIndexOneWindowBound_mul_denominator
 
 /-- Universal squared-window bound obtained from the quadratic gap alone,
 exactly `1189/51`. -/
 def quadraticUniversalDirichletWindowBound : Coordinate :=
-  Dirichlet.Window.Basic.quadraticUniversalWindowBound
+  Basic.quadraticUniversalWindowBound
 
 /-- The quadratic normalized-gap threshold 102/1189 is less than one half. -/
 theorem quadraticNormalizedDeterminantGapThreshold_lt_half :
     quadraticNormalizedDeterminantGapThreshold < (1 / 2 : Coordinate) :=
-  Dirichlet.Window.Basic.quadraticGapThreshold_lt_half
+  Basic.quadraticGapThreshold_lt_half
 
 /-- The quadratic normalized-gap threshold satisfies the nonnegative boundary test. -/
 theorem quadraticNormalizedDeterminantGapThreshold_quadratic_nonnegative :
     0 ≤ quadraticNormalizedDeterminantGapThreshold ^ 2 -
       3 * quadraticNormalizedDeterminantGapThreshold + 1 / 4 :=
-  Dirichlet.Window.Basic.quadraticGapThreshold_quadratic_nonnegative
+  Basic.quadraticGapThreshold_quadratic_nonnegative
 
 /-- The cleared integer boundary certificate 4·102² − 12·102·1189 + 1189² equals one. -/
 theorem quadraticNormalizedDeterminantGapThreshold_integerCertificate :
     (4 * 102 ^ 2 - 12 * 102 * 1189 + 1189 ^ 2 : Int) = 1 :=
-  Dirichlet.Window.Basic.quadraticGapThreshold_integerCertificate
+  Basic.quadraticGapThreshold_integerCertificate
 
 /-- Clearing the quadratic universal window-bound denominator yields 1189. -/
 theorem quadraticUniversalDirichletWindowBound_mul_denominator :
     quadraticUniversalDirichletWindowBound * 51 = 1189 :=
-  Dirichlet.Window.Basic.quadraticUniversalWindowBound_mul_denominator
+  Basic.quadraticUniversalWindowBound_mul_denominator
 
 /-- Clearing the index-aware universal window-bound denominator yields 1189. -/
 theorem indexAwareUniversalDirichletWindowBound_mul_denominator :
     indexAwareUniversalDirichletWindowBound * 102 = 1189 :=
-  Dirichlet.Window.IndexTwo.Bounds.quadraticIndexFactor_mul_denominator
+  IndexTwo.Bounds.quadraticIndexFactor_mul_denominator
 
 /-- The quadratic universal window bound is smaller than the refined universal bound. -/
 theorem quadraticUniversalDirichletWindowBound_lt_refined :
     quadraticUniversalDirichletWindowBound <
       refinedUniversalDirichletWindowBound :=
-  Dirichlet.Window.Basic.quadraticUniversalWindowBound_lt_refinedUniversalWindowBound
+  Basic.quadraticUniversalWindowBound_lt_refinedUniversalWindowBound
 
 /-- Displayed refined bound `1224/35` for the sum of two successive squared
 Dirichlet-window products. -/
 def refinedTwoWindowDirichletSumBound : Coordinate :=
-  Dirichlet.Window.Block.refinedTwoWindowSumBound
+  Block.refinedTwoWindowSumBound
 
 /-- Clearing the refined two-window sum-bound denominator yields 1224. -/
 theorem refinedTwoWindowDirichletSumBound_mul_denominator :
     refinedTwoWindowDirichletSumBound * 35 = 1224 :=
-  Dirichlet.Window.Block.refinedTwoWindowSumBound_mul_denominator
+  Block.refinedTwoWindowSumBound_mul_denominator
 
 /-- Sharper displayed bound `1189/34` for the sum of two successive squared
 Dirichlet-window products. -/
 def quadraticTwoWindowDirichletSumBound : Coordinate :=
-  Dirichlet.Window.Block.quadraticTwoWindowSumBound
+  Block.quadraticTwoWindowSumBound
 
 /-- Clearing the quadratic two-window sum-bound denominator yields 1189. -/
 theorem quadraticTwoWindowDirichletSumBound_mul_denominator :
     quadraticTwoWindowDirichletSumBound * 34 = 1189 :=
-  Dirichlet.Window.Block.quadraticTwoWindowSumBound_mul_denominator
+  Block.quadraticTwoWindowSumBound_mul_denominator
 
 /-- Improved finite-octant bound `224/71` for the sum of two successive
 squared Dirichlet-window products. -/
 def octantTwoWindowDirichletSumBound : Coordinate :=
-  Dirichlet.Window.Block.octantTwoWindowSumBound
+  Block.octantTwoWindowSumBound
 
 /-- Clearing the finite-octant two-window sum-bound denominator yields 224. -/
 theorem octantTwoWindowDirichletSumBound_mul_denominator :
     octantTwoWindowDirichletSumBound * 71 = 224 :=
-  Dirichlet.Window.Block.octantTwoWindowSumBound_mul_denominator
+  Block.octantTwoWindowSumBound_mul_denominator
 
 /-- Near-optimal dyadic bound `512/205` for the sum of two successive
 squared Dirichlet-window products. -/
 def dyadicTwoWindowDirichletSumBound : Coordinate :=
-  Dirichlet.Window.Block.dyadicTwoWindowSumBound
+  Block.dyadicTwoWindowSumBound
 
 /-- Clearing the dyadic two-window sum-bound denominator yields 512. -/
 theorem dyadicTwoWindowDirichletSumBound_mul_denominator :
     dyadicTwoWindowDirichletSumBound * 205 = 512 :=
-  Dirichlet.Window.Block.dyadicTwoWindowSumBound_mul_denominator
+  Block.dyadicTwoWindowSumBound_mul_denominator
 
 /-- The normalized determinant gap of consecutive best levels is at least
 `1/12`. -/
@@ -1213,7 +1224,7 @@ theorem one_twelfth_le_consecutiveNormalizedDeterminantGap
       source.value lower upper) :
     (1 / 12 : Coordinate) ≤
       consecutiveNormalizedDeterminantGap source lower upper :=
-  Dirichlet.Window.Basic.AreConsecutiveBest.one_twelfth_le_normalizedDeterminantGap
+  Basic.AreConsecutiveBest.one_twelfth_le_normalizedDeterminantGap
     consecutive
 
 /-- The three neighbouring coefficients in the finite octant containing the
@@ -1225,7 +1236,7 @@ theorem half_le_consecutiveNormalizedDeterminantGap
       source.value lower upper) :
     (1 / 2 : Coordinate) ≤
       consecutiveNormalizedDeterminantGap source lower upper :=
-  Dirichlet.Window.IndexOne.Bounds.AreConsecutiveBest.half_le_normalizedDeterminantGap
+  AreConsecutiveBest.half_le_normalizedDeterminantGap
     consecutive
 
 /-- The exact finite chamber calculation with the norm-two leading
@@ -1238,7 +1249,7 @@ theorem octantGap_le_consecutiveNormalizedDeterminantGap
       source.value lower upper) :
     octantNormalizedDeterminantGap ≤
       consecutiveNormalizedDeterminantGap source lower upper :=
-  Dirichlet.Window.IndexOne.Bounds.AreConsecutiveBest.normTwoIndexOneGapThreshold_le_normalizedDeterminantGap
+  AreConsecutiveBest.normTwoIndexOneGapThreshold_le_normalizedDeterminantGap
     consecutive
 
 /-- The five-obstruction chamber forces every consecutive normalized gap
@@ -1250,7 +1261,7 @@ theorem dyadicGap_le_consecutiveNormalizedDeterminantGap
       source.value lower upper) :
     dyadicNormalizedDeterminantGap ≤
       consecutiveNormalizedDeterminantGap source lower upper :=
-  Dirichlet.Window.IndexOne.Bounds.AreConsecutiveBest.sharpIndexOneGapBound_le_normalizedDeterminantGap
+  AreConsecutiveBest.sharpIndexOneGapBound_le_normalizedDeterminantGap
     consecutive
 
 /-- In determinant index two, the oriented centered chamber forces the
@@ -1263,7 +1274,7 @@ theorem dyadicCenteredIndexTwoGap_le_consecutiveNormalizedDeterminantGap
     (indexTwo : coefficientIndexQuadrance lower upper = 2) :
     dyadicCenteredIndexTwoNormalizedDeterminantGap ≤
       consecutiveNormalizedDeterminantGap source lower upper :=
-  Dirichlet.Window.IndexOne.Bounds.AreConsecutiveBest.dyadicCenteredGapThreshold_le_normalizedDeterminantGap_of_indexTwo
+  AreConsecutiveBest.dyadicCenteredGapThreshold_le_normalizedDeterminantGap_of_indexTwo
     consecutive indexTwo
 
 /-- Exact root-free index-two gap family.  Every displayed rational `gap`
@@ -1280,9 +1291,9 @@ theorem twice_gapThreshold_le_consecutiveNormalizedDeterminantGap_of_indexTwo
     (indexTwo : coefficientIndexQuadrance lower upper = 2) :
     2 * gap ≤ consecutiveNormalizedDeterminantGap source lower upper := by
   exact
-    Dirichlet.Window.IndexOne.Bounds.AreConsecutiveBest.twice_gapThreshold_le_normalizedDeterminantGap_of_indexTwo
+    AreConsecutiveBest.twice_gapThreshold_le_normalizedDeterminantGap_of_indexTwo
       gap ⟨threeFourthsLe, gapLtOne, by
-        unfold Dirichlet.Window.IndexOne.Optimal.gapPolynomial
+        unfold IndexOne.Optimal.gapPolynomial
         exact quadraticNonnegative⟩ consecutive indexTwo
 
 /-- The explicit `12,5` weighted certificate sharpens the normalized gap to
@@ -1294,7 +1305,7 @@ theorem refinedThreshold_le_consecutiveNormalizedDeterminantGap
       source.value lower upper) :
     refinedNormalizedDeterminantGapThreshold ≤
       consecutiveNormalizedDeterminantGap source lower upper :=
-  Dirichlet.Window.Basic.AreConsecutiveBest.refinedGap_le_normalizedDeterminantGap
+  Basic.AreConsecutiveBest.refinedGap_le_normalizedDeterminantGap
     consecutive
 
 /-- The rational boundary certificate `102/1189` is a sharper lower bound
@@ -1306,7 +1317,7 @@ theorem quadraticThreshold_le_consecutiveNormalizedDeterminantGap
       source.value lower upper) :
     quadraticNormalizedDeterminantGapThreshold ≤
       consecutiveNormalizedDeterminantGap source lower upper :=
-  Dirichlet.Window.Basic.AreConsecutiveBest.threshold_le_normalizedDeterminantGap_of_quadratic
+  Basic.AreConsecutiveBest.threshold_le_normalizedDeterminantGap_of_quadratic
     consecutive quadraticNormalizedDeterminantGapThreshold
       quadraticNormalizedDeterminantGapThreshold_lt_half
       quadraticNormalizedDeterminantGapThreshold_quadratic_nonnegative
@@ -1324,7 +1335,7 @@ theorem consecutiveNormalizedDeterminantGap_boundary
       consecutiveNormalizedDeterminantGap source lower upper ^ 2 -
           3 * consecutiveNormalizedDeterminantGap source lower upper +
         1 / 4 < 0 :=
-  Dirichlet.Window.Basic.AreConsecutiveBest.normalizedDeterminantGap_boundary
+  Basic.AreConsecutiveBest.normalizedDeterminantGap_boundary
     consecutive
 
 /-- Certify any displayed rational normalized-gap threshold below one half by
@@ -1339,7 +1350,7 @@ theorem threshold_le_consecutiveNormalizedDeterminantGap_of_quadratic
     (thresholdPolynomialNonnegative :
       0 ≤ threshold ^ 2 - 3 * threshold + 1 / 4) :
     threshold ≤ consecutiveNormalizedDeterminantGap source lower upper :=
-  Dirichlet.Window.Basic.AreConsecutiveBest.threshold_le_normalizedDeterminantGap_of_quadratic
+  Basic.AreConsecutiveBest.threshold_le_normalizedDeterminantGap_of_quadratic
     consecutive threshold thresholdLtHalf thresholdPolynomialNonnegative
 
 /-- Direct division-free window bound furnished by any displayed rational
@@ -1355,7 +1366,7 @@ theorem quadraticThreshold_mul_consecutiveDirichletWindow_le_index
       0 ≤ threshold ^ 2 - 3 * threshold + 1 / 4) :
     threshold * consecutiveDirichletWindowQuadrance source lower upper ≤
       (coefficientIndexQuadrance lower upper : Coordinate) :=
-  Dirichlet.Window.Basic.AreConsecutiveBest.quadraticThreshold_mul_dirichletWindow_le_index
+  Basic.AreConsecutiveBest.quadraticThreshold_mul_dirichletWindow_le_index
     consecutive threshold thresholdLtHalf thresholdPolynomialNonnegative
 
 /-- Universal division-free form of the quadratic-threshold window bound. -/
@@ -1369,7 +1380,7 @@ theorem quadraticThreshold_mul_consecutiveDirichletWindow_le_two
     (thresholdPolynomialNonnegative :
       0 ≤ threshold ^ 2 - 3 * threshold + 1 / 4) :
     threshold * consecutiveDirichletWindowQuadrance source lower upper ≤ 2 :=
-  Dirichlet.Window.Basic.AreConsecutiveBest.quadraticThreshold_mul_dirichletWindow_le_two
+  Basic.AreConsecutiveBest.quadraticThreshold_mul_dirichletWindow_le_two
     consecutive threshold thresholdLtHalf thresholdPolynomialNonnegative
 
 /-- The exact window product times its normalized determinant gap equals the
@@ -1382,7 +1393,7 @@ theorem consecutiveDirichletWindow_mul_normalizedGap_eq_index
     consecutiveDirichletWindowQuadrance source lower upper *
         consecutiveNormalizedDeterminantGap source lower upper =
       (coefficientIndexQuadrance lower upper : Coordinate) :=
-  Dirichlet.Window.Basic.AreConsecutiveBest.dirichletWindow_mul_normalizedGap_eq_index
+  Basic.AreConsecutiveBest.dirichletWindow_mul_normalizedGap_eq_index
     consecutive
 
 /-- A consecutive squared Dirichlet-window product is at most twelve times
@@ -1394,7 +1405,7 @@ theorem consecutiveBest_dirichletWindow_le_twelve_mul_index
       source.value lower upper) :
     consecutiveDirichletWindowQuadrance source lower upper ≤
       12 * (coefficientIndexQuadrance lower upper : Coordinate) :=
-  Dirichlet.Window.Basic.AreConsecutiveBest.dirichletWindowQuadrance_le_twelve_mul_index
+  Basic.AreConsecutiveBest.dirichletWindowQuadrance_le_twelve_mul_index
     consecutive
 
 /-- Every consecutive squared Dirichlet-window product is at most `24`,
@@ -1405,7 +1416,7 @@ theorem consecutiveBest_dirichletWindow_le_twentyFour
     (consecutive : Best.Consecutive.Basic.AreConsecutiveBest
       source.value lower upper) :
     consecutiveDirichletWindowQuadrance source lower upper ≤ 24 :=
-  Dirichlet.Window.Basic.AreConsecutiveBest.dirichletWindowQuadrance_le_twentyFour
+  Basic.AreConsecutiveBest.dirichletWindowQuadrance_le_twentyFour
     consecutive
 
 /-- Every consecutive squared Dirichlet-window product is at most the
@@ -1417,7 +1428,7 @@ theorem consecutiveBest_dirichletWindow_le_refinedUniversalBound
       source.value lower upper) :
     consecutiveDirichletWindowQuadrance source lower upper ≤
       refinedUniversalDirichletWindowBound :=
-  Dirichlet.Window.Basic.AreConsecutiveBest.dirichletWindowQuadrance_le_refinedUniversalBound
+  Basic.AreConsecutiveBest.dirichletWindowQuadrance_le_refinedUniversalBound
     consecutive
 
 /-- The quadratic-boundary certificate bounds a consecutive squared window
@@ -1430,7 +1441,7 @@ theorem consecutiveBest_dirichletWindow_le_quadraticIndexFactor
     consecutiveDirichletWindowQuadrance source lower upper ≤
       quadraticIndexDirichletWindowFactor *
         (coefficientIndexQuadrance lower upper : Coordinate) :=
-  Dirichlet.Window.Basic.AreConsecutiveBest.dirichletWindowQuadrance_le_quadraticIndexFactor
+  Basic.AreConsecutiveBest.dirichletWindowQuadrance_le_quadraticIndexFactor
     consecutive
 
 /-- In determinant index two, the centered coefficient coset forces the
@@ -1443,7 +1454,7 @@ theorem centeredIndexTwoNormalizedDeterminantGap_le_consecutive
     (indexTwo : coefficientIndexQuadrance lower upper = 2) :
     centeredIndexTwoNormalizedDeterminantGap ≤
       consecutiveNormalizedDeterminantGap source lower upper :=
-  Dirichlet.Window.IndexTwo.Bounds.AreConsecutiveBest.seventyOne_fiftySixths_le_normalizedDeterminantGap_of_indexTwo
+  AreConsecutiveBest.seventyOne_fiftySixths_le_normalizedDeterminantGap_of_indexTwo
     consecutive indexTwo
 
 /-- Compatibility form of the strengthened centered index-two gap. -/
@@ -1455,7 +1466,7 @@ theorem one_le_consecutiveNormalizedDeterminantGap_of_indexTwo
     (indexTwo : coefficientIndexQuadrance lower upper = 2) :
     (1 : Coordinate) ≤
       consecutiveNormalizedDeterminantGap source lower upper :=
-  Dirichlet.Window.IndexTwo.Bounds.AreConsecutiveBest.one_le_normalizedDeterminantGap_of_indexTwo
+  AreConsecutiveBest.one_le_normalizedDeterminantGap_of_indexTwo
     consecutive indexTwo
 
 /-- A determinant-index-two consecutive squared window is at most
@@ -1480,7 +1491,7 @@ theorem consecutiveBest_dirichletWindow_le_two_of_indexTwo
       source.value lower upper)
     (indexTwo : coefficientIndexQuadrance lower upper = 2) :
     consecutiveDirichletWindowQuadrance source lower upper ≤ 2 :=
-  Dirichlet.Window.IndexTwo.Bounds.AreConsecutiveBest.dirichletWindowQuadrance_le_two_of_indexTwo
+  AreConsecutiveBest.dirichletWindowQuadrance_le_two_of_indexTwo
     consecutive indexTwo
 
 /-- A determinant-index-one consecutive squared window is at most `2`. -/
@@ -1491,7 +1502,7 @@ theorem consecutiveBest_dirichletWindow_le_two_of_indexOne
       source.value lower upper)
     (indexOne : coefficientIndexQuadrance lower upper = 1) :
     consecutiveDirichletWindowQuadrance source lower upper ≤ 2 :=
-  Dirichlet.Window.IndexOne.Bounds.AreConsecutiveBest.dirichletWindowQuadrance_le_two_of_indexOne
+  AreConsecutiveBest.dirichletWindowQuadrance_le_two_of_indexOne
     consecutive indexOne
 
 /-- A determinant-index-one consecutive squared window is at most the
@@ -1504,7 +1515,7 @@ theorem consecutiveBest_dirichletWindow_le_octantIndexOneBound
     (indexOne : coefficientIndexQuadrance lower upper = 1) :
     consecutiveDirichletWindowQuadrance source lower upper ≤
       octantIndexOneDirichletWindowBound :=
-  Dirichlet.Window.IndexOne.Bounds.AreConsecutiveBest.dirichletWindowQuadrance_le_normTwoIndexOneWindowBound_of_indexOne
+  AreConsecutiveBest.dirichletWindowQuadrance_le_normTwoIndexOneWindowBound_of_indexOne
     consecutive indexOne
 
 /-- Finite-octant source-independent squared-window bound `112/71`. -/
@@ -1515,7 +1526,7 @@ theorem consecutiveBest_dirichletWindow_le_octantUniversalBound
       source.value lower upper) :
     consecutiveDirichletWindowQuadrance source lower upper ≤
       octantUniversalDirichletWindowBound :=
-  Dirichlet.Window.IndexOne.Bounds.AreConsecutiveBest.dirichletWindowQuadrance_le_normTwoUniversalWindowBound
+  AreConsecutiveBest.dirichletWindowQuadrance_le_normTwoUniversalWindowBound
     consecutive
 
 /-- Near-optimal dyadic source-independent squared-window bound `256/205`. -/
@@ -1526,7 +1537,7 @@ theorem consecutiveBest_dirichletWindow_le_dyadicUniversalBound
       source.value lower upper) :
     consecutiveDirichletWindowQuadrance source lower upper ≤
       dyadicUniversalDirichletWindowBound :=
-  Dirichlet.Window.IndexOne.Bounds.AreConsecutiveBest.dirichletWindowQuadrance_le_sharpDyadicUniversalWindowBound
+  AreConsecutiveBest.dirichletWindowQuadrance_le_sharpDyadicUniversalWindowBound
     consecutive
 
 /-- Exact root-free universal Dirichlet-window family.  Every displayed
@@ -1542,9 +1553,9 @@ theorem gapThreshold_mul_consecutiveDirichletWindow_le_one
     (consecutive : Best.Consecutive.Basic.AreConsecutiveBest
       source.value lower upper) :
     gap * consecutiveDirichletWindowQuadrance source lower upper ≤ 1 := by
-  exact Dirichlet.Window.IndexOne.Bounds.AreConsecutiveBest.gapThreshold_mul_dirichletWindow_le_one
+  exact AreConsecutiveBest.gapThreshold_mul_dirichletWindow_le_one
     gap ⟨threeFourthsLe, gapLtOne, by
-      unfold Dirichlet.Window.IndexOne.Optimal.gapPolynomial
+      unfold IndexOne.Optimal.gapPolynomial
       exact quadraticNonnegative⟩ consecutive
 
 /-! ## Finite sharpness beyond every requested scale -/
@@ -1640,7 +1651,7 @@ theorem consecutiveBest_dirichletWindow_le_indexAwareUniversalBound
       source.value lower upper) :
     consecutiveDirichletWindowQuadrance source lower upper ≤
       indexAwareUniversalDirichletWindowBound :=
-  Dirichlet.Window.IndexTwo.Bounds.AreConsecutiveBest.dirichletWindowQuadrance_le_quadraticIndexFactorUniversal
+  AreConsecutiveBest.dirichletWindowQuadrance_le_quadraticIndexFactorUniversal
     consecutive
 
 /-- Quadratic-gap-only source-independent squared-window bound `1189/51`. -/
@@ -1651,7 +1662,7 @@ theorem consecutiveBest_dirichletWindow_le_quadraticUniversalBound
       source.value lower upper) :
     consecutiveDirichletWindowQuadrance source lower upper ≤
       quadraticUniversalDirichletWindowBound :=
-  Dirichlet.Window.Basic.AreConsecutiveBest.dirichletWindowQuadrance_le_quadraticUniversalBound
+  Basic.AreConsecutiveBest.dirichletWindowQuadrance_le_quadraticUniversalBound
     consecutive
 
 /-- The coefficient-index quadrances of two successive consecutive best
@@ -1665,7 +1676,7 @@ theorem successiveBest_coefficientIndexQuadrance_add_le_three
       source.value middle upper) :
     coefficientIndexQuadrance lower middle +
         coefficientIndexQuadrance middle upper ≤ 3 :=
-  Dirichlet.Window.Block.coefficientIndexQuadrance_add_le_three first second
+  Block.coefficientIndexQuadrance_add_le_three first second
 
 /-- For every displayed rational threshold passing the quadratic test, one
 of two successive windows satisfies the scaled index-one bound. -/
@@ -1682,7 +1693,7 @@ theorem quadraticThreshold_mul_one_successiveDirichletWindow_le_one
       0 ≤ threshold ^ 2 - 3 * threshold + 1 / 4) :
     threshold * consecutiveDirichletWindowQuadrance source lower middle ≤ 1 ∨
       threshold * consecutiveDirichletWindowQuadrance source middle upper ≤ 1 :=
-  Dirichlet.Window.Block.quadraticThreshold_mul_one_dirichletWindow_le_one
+  Block.quadraticThreshold_mul_one_dirichletWindow_le_one
     first second threshold thresholdLtHalf thresholdPolynomialNonnegative
 
 /-- Parameterized two-window certificate: every rational threshold passing
@@ -1701,7 +1712,7 @@ theorem quadraticThreshold_mul_successiveDirichletWindowSum_le_three
     threshold *
         (consecutiveDirichletWindowQuadrance source lower middle +
           consecutiveDirichletWindowQuadrance source middle upper) ≤ 3 :=
-  Dirichlet.Window.Block.quadraticThreshold_mul_dirichletWindowSum_le_three
+  Block.quadraticThreshold_mul_dirichletWindowSum_le_three
     first second threshold thresholdLtHalf thresholdPolynomialNonnegative
 
 /-- Exact root-free two-window family: every displayed rational passing the
@@ -1719,9 +1730,9 @@ theorem gapThreshold_mul_successiveDirichletWindowSum_le_two
     gap * (consecutiveDirichletWindowQuadrance source lower middle +
       consecutiveDirichletWindowQuadrance source middle upper) ≤ 2 := by
   exact
-    Dirichlet.Window.Block.gapThreshold_mul_dirichletWindowQuadrance_add_le_two
+    Block.gapThreshold_mul_dirichletWindowQuadrance_add_le_two
       gap ⟨threeFourthsLe, gapLtOne, by
-        unfold Dirichlet.Window.IndexOne.Optimal.gapPolynomial
+        unfold IndexOne.Optimal.gapPolynomial
         exact quadraticNonnegative⟩ first second
 
 /-- Among two successive consecutive best transitions, at least one squared
@@ -1737,7 +1748,7 @@ theorem successiveBest_one_dirichletWindow_le_refinedIndexFactor
         refinedIndexDirichletWindowFactor ∨
       consecutiveDirichletWindowQuadrance source middle upper ≤
         refinedIndexDirichletWindowFactor :=
-  Dirichlet.Window.Block.one_dirichletWindowQuadrance_le_refinedIndexFactor
+  Block.one_dirichletWindowQuadrance_le_refinedIndexFactor
     first second
 
 /-- Two successive squared Dirichlet-window products have sum at most the
@@ -1752,7 +1763,7 @@ theorem successiveBest_dirichletWindow_add_le_refinedTwoWindowSumBound
     consecutiveDirichletWindowQuadrance source lower middle +
         consecutiveDirichletWindowQuadrance source middle upper ≤
       refinedTwoWindowDirichletSumBound :=
-  Dirichlet.Window.Block.dirichletWindowQuadrance_add_le_refinedTwoWindowSumBound
+  Block.dirichletWindowQuadrance_add_le_refinedTwoWindowSumBound
     first second
 
 /-- Among two successive transitions, one squared window satisfies the
@@ -1768,7 +1779,7 @@ theorem successiveBest_one_dirichletWindow_le_quadraticIndexFactor
         quadraticIndexDirichletWindowFactor ∨
       consecutiveDirichletWindowQuadrance source middle upper ≤
         quadraticIndexDirichletWindowFactor :=
-  Dirichlet.Window.Block.one_dirichletWindowQuadrance_le_quadraticIndexFactor
+  Block.one_dirichletWindowQuadrance_le_quadraticIndexFactor
     first second
 
 /-- Sharper two-window sum bound `1189/34`. -/
@@ -1782,7 +1793,7 @@ theorem successiveBest_dirichletWindow_add_le_quadraticTwoWindowSumBound
     consecutiveDirichletWindowQuadrance source lower middle +
         consecutiveDirichletWindowQuadrance source middle upper ≤
       quadraticTwoWindowDirichletSumBound :=
-  Dirichlet.Window.Block.dirichletWindowQuadrance_add_le_quadraticTwoWindowSumBound
+  Block.dirichletWindowQuadrance_add_le_quadraticTwoWindowSumBound
     first second
 
 /-- Index-aware two-window sum bound `1189/51`. -/
@@ -1796,7 +1807,7 @@ theorem successiveBest_dirichletWindow_add_le_indexAwareTwoWindowSumBound
     consecutiveDirichletWindowQuadrance source lower middle +
         consecutiveDirichletWindowQuadrance source middle upper ≤
       quadraticUniversalDirichletWindowBound :=
-  Dirichlet.Window.Block.dirichletWindowQuadrance_add_le_quadraticUniversalWindowBound
+  Block.dirichletWindowQuadrance_add_le_quadraticUniversalWindowBound
     first second
 
 /-- Improved finite-octant two-window sum bound `224/71`. -/
@@ -1810,7 +1821,7 @@ theorem successiveBest_dirichletWindow_add_le_octantTwoWindowSumBound
     consecutiveDirichletWindowQuadrance source lower middle +
         consecutiveDirichletWindowQuadrance source middle upper ≤
       octantTwoWindowDirichletSumBound :=
-  Dirichlet.Window.Block.dirichletWindowQuadrance_add_le_octantTwoWindowSumBound
+  Block.dirichletWindowQuadrance_add_le_octantTwoWindowSumBound
     first second
 
 /-- Near-optimal dyadic two-window sum bound `512/205`. -/
@@ -1824,7 +1835,7 @@ theorem successiveBest_dirichletWindow_add_le_dyadicTwoWindowSumBound
     consecutiveDirichletWindowQuadrance source lower middle +
         consecutiveDirichletWindowQuadrance source middle upper ≤
       dyadicTwoWindowDirichletSumBound :=
-  Dirichlet.Window.Block.dirichletWindowQuadrance_add_le_dyadicTwoWindowSumBound
+  Block.dirichletWindowQuadrance_add_le_dyadicTwoWindowSumBound
     first second
 
 /-- Finite-octant two-window sum bound `4`. -/
@@ -1837,7 +1848,7 @@ theorem successiveBest_dirichletWindow_add_le_four
       source.value middle upper) :
     consecutiveDirichletWindowQuadrance source lower middle +
         consecutiveDirichletWindowQuadrance source middle upper ≤ 4 :=
-  Dirichlet.Window.Block.dirichletWindowQuadrance_add_le_four first second
+  Block.dirichletWindowQuadrance_add_le_four first second
 
 /-- Exact parity-sensitive form of the alternating index-two pattern along a
 finite displayed chain. -/
@@ -1848,7 +1859,7 @@ theorem bestChain_two_mul_coefficientIndexQuadrances_sum_le_with_parity
     2 * (consecutiveCoefficientIndexQuadrances pairs).sum ≤
       3 * (consecutiveCoefficientIndexQuadrances pairs).length +
         (consecutiveCoefficientIndexQuadrances pairs).length % 2 :=
-  Dirichlet.Window.Chain.two_mul_coefficientIndexQuadrances_sum_le_with_parity
+  Chain.two_mul_coefficientIndexQuadrances_sum_le_with_parity
     pairs chain
 
 /-- Parity-free consequence of the finite-chain index bound. -/
@@ -1858,7 +1869,7 @@ theorem bestChain_two_mul_coefficientIndexQuadrances_sum_le
       (Best.Consecutive.Basic.AreConsecutiveBest source.value)) :
     2 * (consecutiveCoefficientIndexQuadrances pairs).sum ≤
       3 * (consecutiveCoefficientIndexQuadrances pairs).length + 1 :=
-  Dirichlet.Window.Chain.two_mul_coefficientIndexQuadrances_sum_le pairs chain
+  Chain.two_mul_coefficientIndexQuadrances_sum_le pairs chain
 
 /-- The quadratic threshold times the total exact window cost of a finite
 displayed chain is at most its computed coefficient-index sum. -/
@@ -1872,7 +1883,7 @@ theorem bestChain_quadraticThreshold_mul_windowSum_le_indexSum
       0 ≤ threshold ^ 2 - 3 * threshold + 1 / 4) :
     threshold * (consecutiveDirichletWindowQuadrances source pairs).sum ≤
       ((consecutiveCoefficientIndexQuadrances pairs).sum : Coordinate) :=
-  Dirichlet.Window.Chain.quadraticThreshold_mul_dirichletWindowQuadrances_sum_le_indexSum
+  Chain.quadraticThreshold_mul_dirichletWindowQuadrances_sum_le_indexSum
     pairs chain threshold thresholdLtHalf thresholdPolynomialNonnegative
 
 /-- Uniform division-free finite-chain certificate obtained by combining the
@@ -1888,7 +1899,7 @@ theorem bestChain_two_mul_quadraticThreshold_mul_windowSum_le
     2 * threshold *
         (consecutiveDirichletWindowQuadrances source pairs).sum ≤
       (3 * (consecutiveCoefficientIndexQuadrances pairs).length + 1 : Nat) :=
-  Dirichlet.Window.Chain.two_mul_quadraticThreshold_mul_dirichletWindowQuadrances_sum_le
+  Chain.two_mul_quadraticThreshold_mul_dirichletWindowQuadrances_sum_le
     pairs chain threshold thresholdLtHalf thresholdPolynomialNonnegative
 
 /-- Exact parity-sensitive finite-chain window certificate. -/
@@ -1904,7 +1915,7 @@ theorem bestChain_two_mul_quadraticThreshold_mul_windowSum_le_with_parity
         (consecutiveDirichletWindowQuadrances source pairs).sum ≤
       (3 * (consecutiveCoefficientIndexQuadrances pairs).length +
         (consecutiveCoefficientIndexQuadrances pairs).length % 2 : Nat) :=
-  Dirichlet.Window.Chain.two_mul_quadraticThreshold_mul_dirichletWindowQuadrances_sum_le_with_parity
+  Chain.two_mul_quadraticThreshold_mul_dirichletWindowQuadrances_sum_le_with_parity
     pairs chain threshold thresholdLtHalf thresholdPolynomialNonnegative
 
 /-- Concrete sharp finite-chain bound obtained from the certified threshold
@@ -1917,7 +1928,7 @@ theorem bestChain_two_mul_windowSum_le_refinedIndexFactor_mul_parityBound
       refinedIndexDirichletWindowFactor *
         (3 * (consecutiveCoefficientIndexQuadrances pairs).length +
           (consecutiveCoefficientIndexQuadrances pairs).length % 2 : Nat) :=
-  Dirichlet.Window.Chain.two_mul_dirichletWindowQuadrances_sum_le_refinedIndexFactor_mul_parityBound
+  Chain.two_mul_dirichletWindowQuadrances_sum_le_refinedIndexFactor_mul_parityBound
     pairs chain
 
 /-- Sharper concrete finite-chain bound obtained from threshold `102/1189`
@@ -1930,7 +1941,7 @@ theorem bestChain_two_mul_windowSum_le_quadraticIndexFactor_mul_parityBound
       quadraticIndexDirichletWindowFactor *
         (3 * (consecutiveCoefficientIndexQuadrances pairs).length +
           (consecutiveCoefficientIndexQuadrances pairs).length % 2 : Nat) :=
-  Dirichlet.Window.Chain.two_mul_dirichletWindowQuadrances_sum_le_quadraticIndexFactor_mul_parityBound
+  Chain.two_mul_dirichletWindowQuadrances_sum_le_quadraticIndexFactor_mul_parityBound
     pairs chain
 
 /-- Direct accumulated index-aware bound: each transition in the supplied
@@ -1942,7 +1953,7 @@ theorem bestChain_windowSum_le_indexAwareUniversalBound_mul_length
     (consecutiveDirichletWindowQuadrances source pairs).sum ≤
       indexAwareUniversalDirichletWindowBound *
         ((consecutiveCoefficientIndexQuadrances pairs).length : Coordinate) :=
-  Dirichlet.Window.Chain.dirichletWindowQuadrances_sum_le_quadraticIndexFactor_mul_length
+  Chain.dirichletWindowQuadrances_sum_le_quadraticIndexFactor_mul_length
     pairs chain
 
 /-- Direct accumulated finite-octant bound: each transition contributes at
@@ -1954,7 +1965,7 @@ theorem bestChain_windowSum_le_octantUniversalBound_mul_length
     (consecutiveDirichletWindowQuadrances source pairs).sum ≤
       octantUniversalDirichletWindowBound *
         ((consecutiveCoefficientIndexQuadrances pairs).length : Coordinate) :=
-  Dirichlet.Window.Chain.dirichletWindowQuadrances_sum_le_normTwoUniversalWindowBound_mul_length
+  Chain.dirichletWindowQuadrances_sum_le_normTwoUniversalWindowBound_mul_length
     pairs chain
 
 /-- The near-optimal dyadic bound accumulates along every supplied finite
@@ -1963,12 +1974,12 @@ theorem bestChain_windowSum_le_dyadicUniversalBound_mul_length
     (source : HurwitzFraction) (pairs : List HurwitzConvergentPair)
     (chain : pairs.IsChain
       (Best.Consecutive.Basic.AreConsecutiveBest source.value)) :
-    (Dirichlet.Window.Chain.dirichletWindowQuadrances
+    (Chain.dirichletWindowQuadrances
         source.value pairs).sum ≤
       dyadicUniversalDirichletWindowBound *
-        ((Dirichlet.Window.Chain.coefficientIndexQuadrances pairs).length :
+        ((Chain.coefficientIndexQuadrances pairs).length :
           Coordinate) :=
-  Dirichlet.Window.Chain.dirichletWindowQuadrances_sum_le_sharpDyadicUniversalWindowBound_mul_length
+  Chain.dirichletWindowQuadrances_sum_le_sharpDyadicUniversalWindowBound_mul_length
     pairs chain
 
 /-- Exact root-free finite-chain family: the displayed gap times the window
@@ -1983,9 +1994,9 @@ theorem gapThreshold_mul_bestChain_windowSum_le_length
     gap * (consecutiveDirichletWindowQuadrances source pairs).sum ≤
       ((consecutiveCoefficientIndexQuadrances pairs).length : Coordinate) := by
   exact
-    Dirichlet.Window.Chain.gapThreshold_mul_dirichletWindowQuadrances_sum_le_length
+    Chain.gapThreshold_mul_dirichletWindowQuadrances_sum_le_length
       gap ⟨threeFourthsLe, gapLtOne, by
-        unfold Dirichlet.Window.IndexOne.Optimal.gapPolynomial
+        unfold IndexOne.Optimal.gapPolynomial
         exact quadraticNonnegative⟩ pairs chain
 
 /-- Compatibility theorem for the earlier `28/15` finite-octant chain bound:
@@ -1996,7 +2007,7 @@ theorem bestChain_fifteen_mul_windowSum_le_twentyEight_mul_length
       (Best.Consecutive.Basic.AreConsecutiveBest source.value)) :
     15 * (consecutiveDirichletWindowQuadrances source pairs).sum ≤
       (28 * (consecutiveCoefficientIndexQuadrances pairs).length : Nat) :=
-  Dirichlet.Window.Chain.fifteen_mul_dirichletWindowQuadrances_sum_le_twentyEight_mul_length
+  Chain.fifteen_mul_dirichletWindowQuadrances_sum_le_twentyEight_mul_length
     pairs chain
 
 /-- Compatibility with the earlier parity-sensitive finite-octant bound. -/
@@ -2007,7 +2018,7 @@ theorem bestChain_fifteen_mul_windowSum_le_with_parity
     15 * (consecutiveDirichletWindowQuadrances source pairs).sum ≤
       (29 * (consecutiveCoefficientIndexQuadrances pairs).length +
         (consecutiveCoefficientIndexQuadrances pairs).length % 2 : Nat) :=
-  Dirichlet.Window.Chain.fifteen_mul_dirichletWindowQuadrances_sum_le_with_parity
+  Chain.fifteen_mul_dirichletWindowQuadrances_sum_le_with_parity
     pairs chain
 
 /-- Direct finite-octant chain bound: each transition contributes at most
@@ -2018,7 +2029,7 @@ theorem bestChain_windowSum_le_two_mul_length
       (Best.Consecutive.Basic.AreConsecutiveBest source.value)) :
     (consecutiveDirichletWindowQuadrances source pairs).sum ≤
       2 * ((consecutiveCoefficientIndexQuadrances pairs).length : Coordinate) :=
-  Dirichlet.Window.Chain.dirichletWindowQuadrances_sum_le_two_mul_length
+  Chain.dirichletWindowQuadrances_sum_le_two_mul_length
     pairs chain
 
 /-- A successor returned by the executable selector supplies the approximation
@@ -2038,7 +2049,7 @@ theorem mem_consecutiveBestSuccessors_witnesses_dirichletWindow
         consecutiveDirichletWindowQuadrance source lower upper := by
   have consecutive :=
     (mem_consecutiveBestSuccessors_iff source lower upper).mp member
-  exact (Dirichlet.Window.SourceBound.AreConsecutiveBest.lower_witnesses_dirichletWindow consecutive) request aboveLower
+  exact (SourceBound.AreConsecutiveBest.lower_witnesses_dirichletWindow consecutive) request aboveLower
     noHigherThanUpper
 
 /-- The displayed source denominator bounds every consecutive Dirichlet
@@ -2050,7 +2061,7 @@ theorem mem_consecutiveBestSuccessors_dirichletWindow_le_sourceBound
       (Data.GaussianInt.normNat
         source.denominator : Coordinate) / 2 :=
   ((mem_consecutiveBestSuccessors_iff source lower upper).mp member)
-    |> Dirichlet.Window.SourceBound.AreConsecutiveBest.dirichletWindowQuadrance_le_sourceBound
+    |> SourceBound.AreConsecutiveBest.dirichletWindowQuadrance_le_sourceBound
 
 /-- Every successor returned by the executable selector has squared
 Dirichlet-window product at most `24`, independently of the source. -/
@@ -2316,29 +2327,29 @@ theorem homogeneousEvaluation_norm_le_envelope
 /-- Binary-width bound on the number of clauses in the terminating Hurwitz
 encoder. -/
 def hurwitzStepBudget (fraction : HurwitzFraction) : Nat :=
-  Data.ComplexContinuedFraction.Hurwitz.Resource.hurwitzStepBudget fraction
+  Resource.hurwitzStepBudget fraction
 
 /-- The finite Hurwitz encoding length is bounded by its source-computed step budget. -/
 theorem hurwitzEncoding_length_le_budget (fraction : HurwitzFraction) :
-    (Data.ComplexContinuedFraction.Hurwitz.Encoding.encode fraction).length ≤
+    (Encoding.encode fraction).length ≤
       hurwitzStepBudget fraction :=
-  Data.ComplexContinuedFraction.Hurwitz.Resource.hurwitz_length_le_stepBudget fraction
+  Resource.hurwitz_length_le_stepBudget fraction
 
 /-- Source-only quadrance budget for both members of the encoded continuant. -/
 def hurwitzContinuantNormBudget (fraction : HurwitzFraction) : Nat :=
-  Data.ComplexContinuedFraction.Hurwitz.Resource.hurwitzContinuantNormBudget fraction
+  Resource.hurwitzContinuantNormBudget fraction
 
 /-- Both numerator and denominator of the encoded continuant satisfy the source-only norm budget. -/
 theorem hurwitzContinuant_norm_le_budget (fraction : HurwitzFraction) :
     Data.GaussianInt.normNat
-          (Data.ComplexContinuedFraction.Hurwitz.Continuant.continuant
-            (Data.ComplexContinuedFraction.Hurwitz.Encoding.encode fraction)).numerator ≤
+          (Continuant.continuant
+            (Encoding.encode fraction)).numerator ≤
         hurwitzContinuantNormBudget fraction ∧
       Data.GaussianInt.normNat
-          (Data.ComplexContinuedFraction.Hurwitz.Continuant.continuant
-            (Data.ComplexContinuedFraction.Hurwitz.Encoding.encode fraction)).denominator ≤
+          (Continuant.continuant
+            (Encoding.encode fraction)).denominator ≤
         hurwitzContinuantNormBudget fraction :=
-  Data.ComplexContinuedFraction.Hurwitz.Resource.encodedContinuant_norm_le_budget fraction
+  Resource.encodedContinuant_norm_le_budget fraction
 
 /-- Aggregate accounted-operation budget for the normalized Newton and
 RFAP-II post-processing calculations. -/

@@ -56,37 +56,37 @@ all at least `5/8`. -/
 structure DirectClearanceFiveEighths (parameter :
   Canonical) (box : Box) where
   /-- The left side resultant of the original quadratic owner is nonzero. -/ leftNonzero :
-    SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+    QuadraticAxisElimination.verticalDeterminant
       parameter box.xLower ≠ 0
   /-- The right side resultant of the original quadratic owner is nonzero. -/ rightNonzero :
-    SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+    QuadraticAxisElimination.verticalDeterminant
       parameter box.xUpper ≠ 0
   /-- The bottom side resultant of the original quadratic owner is nonzero. -/ bottomNonzero :
-    SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+    QuadraticAxisElimination.horizontalDeterminant
       parameter box.yLower ≠ 0
   /-- The top side resultant of the original quadratic owner is nonzero. -/ topNonzero :
-    SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+    QuadraticAxisElimination.horizontalDeterminant
       parameter box.yUpper ≠ 0
   /-- The retained direct-clearance construction on the original owner's box. -/ clearance :
     Clearance.Box.Boundary.Basic.BoundaryClearance
-    (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+    (Power.Gaussian.rootPolynomial parameter
       Riemann.RootContinuation.SquareRootDegree.degreeTwo) box
   /-- The cached construction equals the one computed from the retained four nonzero side resultants. -/ clearance_eq :
     clearance =
-    SquareRoot.Clearance.ExactQuadraticOwnerClearance.directBoundaryClearance
+    ExactQuadraticOwnerClearance.directBoundaryClearance
       parameter box leftNonzero rightNonzero bottomNonzero topNonzero
   /-- The cached clearance is at least five eighths. -/ fiveEighths_le : (5 / 8 : Fraction.Rational) ≤ clearance.bound
   /-- The original box's direct quadratic boundary bound is at most three halves. -/ directBound_le_threeHalves :
     min
-      (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound
+      (QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound
         parameter box box.xLower)
       (min
-        (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound
+        (QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound
           parameter box box.xUpper)
         (min
-          (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
+          (QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
             parameter box box.yLower)
-          (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
+          (QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
             parameter box box.yUpper))) ≤ (3 / 2 : Fraction.Rational)
 
 constructive_injectivity DirectClearanceFiveEighths
@@ -99,40 +99,40 @@ three-halves bound on the same box. -/
   directClearanceFiveEighthsOfChecks
     (parameter : Canonical) (box : Box)
     (leftNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xLower ≠ 0)
     (rightNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+      QuadraticAxisElimination.verticalDeterminant
         parameter box.xUpper ≠ 0)
     (bottomNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter box.yLower ≠ 0)
     (topNonzero :
-      SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+      QuadraticAxisElimination.horizontalDeterminant
         parameter box.yUpper ≠ 0)
     (leftLe : (5 / 8 : Fraction.Rational) ≤
-      SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound
+      QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound
         parameter box box.xLower)
     (rightLe : (5 / 8 : Fraction.Rational) ≤
-      SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound
+      QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound
         parameter box box.xUpper)
     (bottomLe : (5 / 8 : Fraction.Rational) ≤
-      SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
+      QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
         parameter box box.yLower)
     (topLe : (5 / 8 : Fraction.Rational) ≤
-      SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
+      QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
         parameter box box.yUpper)
     (upper :
       min
-        (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound
+        (QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound
           parameter box box.xLower)
         (min
-          (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound
+          (QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound
             parameter box box.xUpper)
           (min
-            (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
+            (QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
               parameter box box.yLower)
-            (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
+            (QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
               parameter box box.yUpper))) ≤ (3 / 2 : Fraction.Rational)) :
     DirectClearanceFiveEighths parameter box :=
   { leftNonzero := leftNonzero
@@ -140,11 +140,11 @@ three-halves bound on the same box. -/
     bottomNonzero := bottomNonzero
     topNonzero := topNonzero
     clearance :=
-      SquareRoot.Clearance.ExactQuadraticOwnerClearance.directBoundaryClearance
+      ExactQuadraticOwnerClearance.directBoundaryClearance
         parameter box leftNonzero rightNonzero bottomNonzero topNonzero
     clearance_eq := rfl
     fiveEighths_le :=
-      SquareRoot.Clearance.ExactQuadraticOwnerClearance.le_directBoundaryClearance_bound
+      ExactQuadraticOwnerClearance.le_directBoundaryClearance_bound
         parameter box leftNonzero rightNonzero bottomNonzero topNonzero (5 / 8)
           leftLe rightLe bottomLe topLe
     directBound_le_threeHalves := upper }
@@ -156,18 +156,18 @@ theorem fiveEighthsLeStrengthenFromDirectCache
     (box : Box) (boxEq : owner.track.initial.box = box)
     (cache : DirectClearanceFiveEighths parameter box) : (5 / 8 :
       Fraction.Rational) ≤
-      (SquareRoot.Clearance.ExactQuadraticOwnerClearance.strengthenQuadraticOwner
+      (ExactQuadraticOwnerClearance.strengthenQuadraticOwner
         owner).track.initial.clearance.bound := by
   subst box
   calc
     (5 / 8 : Fraction.Rational) ≤ cache.clearance.bound := cache.fiveEighths_le
-    _ = (SquareRoot.Clearance.ExactQuadraticOwnerClearance.directBoundaryClearance
+    _ = (ExactQuadraticOwnerClearance.directBoundaryClearance
         parameter owner.track.initial.box cache.leftNonzero cache.rightNonzero
           cache.bottomNonzero cache.topNonzero).bound :=
       congrArg Clearance.Box.Boundary.Basic.BoundaryClearance.bound cache.clearance_eq
-    _ ≤ (SquareRoot.Clearance.ExactQuadraticOwnerClearance.strengthenQuadraticOwner
+    _ ≤ (ExactQuadraticOwnerClearance.strengthenQuadraticOwner
         owner).track.initial.clearance.bound :=
-      SquareRoot.Clearance.ExactQuadraticOwnerClearance.directBoundaryClearance_le_strengthenQuadraticOwner
+      ExactQuadraticOwnerClearance.directBoundaryClearance_le_strengthenQuadraticOwner
         owner
           cache.leftNonzero cache.rightNonzero cache.bottomNonzero
             cache.topNonzero
@@ -178,28 +178,28 @@ The certificate refers to the original quadratic owner's exact box and polynomia
 structure DirectClearanceNineSixteenths (parameter
   : Canonical) (box : Box) where
   /-- The left side resultant of the original quadratic owner is nonzero. -/ leftNonzero :
-    SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+    QuadraticAxisElimination.verticalDeterminant
       parameter box.xLower ≠ 0
   /-- The right side resultant of the original quadratic owner is nonzero. -/ rightNonzero :
-    SquareRoot.Clearance.QuadraticAxisElimination.verticalDeterminant
+    QuadraticAxisElimination.verticalDeterminant
       parameter box.xUpper ≠ 0
   /-- The bottom side resultant of the original quadratic owner is nonzero. -/ bottomNonzero :
-    SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+    QuadraticAxisElimination.horizontalDeterminant
       parameter box.yLower ≠ 0
   /-- The top side resultant of the original quadratic owner is nonzero. -/ topNonzero :
-    SquareRoot.Clearance.QuadraticAxisElimination.horizontalDeterminant
+    QuadraticAxisElimination.horizontalDeterminant
       parameter box.yUpper ≠ 0
   /-- The original box's direct quadratic boundary bound is at most nine sixteenths. -/ directBound_le :
     min
-      (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound
+      (QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound
         parameter box box.xLower)
       (min
-        (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound
+        (QuadraticLineClearance.ExactQuadraticOwnerClearance.directVerticalClearanceBound
           parameter box box.xUpper)
         (min
-          (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
+          (QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
             parameter box box.yLower)
-          (SquareRoot.Clearance.QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
+          (QuadraticLineClearance.ExactQuadraticOwnerClearance.directHorizontalClearanceBound
             parameter box box.yUpper))) ≤ (9 / 16 : Fraction.Rational)
 end Purelib.RootIsolation.SquareRoot.Clearance.CachedBounds.Small
 

@@ -41,9 +41,9 @@ its computed box value majorant. The threshold is the reciprocal of
 sixteen times that same positive majorant. -/
 @[expose] public def leftThreshold
     {p q : Basic.CanonicalCoefficients.CoefficientPolynomial} (coprime :
-      Dense.Gaussian.Coprime.Basic.CoprimeCertificate p q)
+      Basic.CoprimeCertificate p q)
     (ambient : Box) : Fraction.Rational :=
-  1 / (16 * Dense.Gaussian.Bounds.Box.denseEvalNormMajorant coprime.left ambient)
+  1 / (16 * Bounds.Box.denseEvalNormMajorant coprime.left ambient)
 
 /-- Positive squared-norm margin forced on the right member once the left
 residual is below `leftThreshold`.
@@ -53,9 +53,9 @@ its computed box value majorant. The margin is the reciprocal of sixteen
 times that same positive majorant. -/
 @[expose] public def rightMargin
     {p q : Basic.CanonicalCoefficients.CoefficientPolynomial} (coprime :
-      Dense.Gaussian.Coprime.Basic.CoprimeCertificate p q)
+      Basic.CoprimeCertificate p q)
     (ambient : Box) : Fraction.Rational :=
-  1 / (16 * Dense.Gaussian.Bounds.Box.denseEvalNormMajorant coprime.right ambient)
+  1 / (16 * Bounds.Box.denseEvalNormMajorant coprime.right ambient)
 
 /-- The residual threshold obtained from the positive left Bezout-cofactor majorant is positive.
 
@@ -64,11 +64,11 @@ Multiplication by sixteen retains positivity, so its displayed reciprocal
 gives a positive residual threshold on the original box. -/
 public theorem leftThreshold_pos
     {p q : Basic.CanonicalCoefficients.CoefficientPolynomial} (coprime :
-      Dense.Gaussian.Coprime.Basic.CoprimeCertificate p q)
-    (ambient : Box) : 0 < Dense.Gaussian.Coprime.Bounds.Box.leftThreshold coprime ambient := by
+      Basic.CoprimeCertificate p q)
+    (ambient : Box) : 0 < leftThreshold coprime ambient := by
   apply Fraction.Order.Field.div_pos_direct (by decide)
   exact Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-    (Dense.Gaussian.Bounds.Box.denseEvalNormMajorant_pos coprime.left ambient)
+    (Bounds.Box.denseEvalNormMajorant_pos coprime.left ambient)
 
 /-- The forced right-value margin obtained from the positive right Bezout-cofactor majorant is positive.
 
@@ -77,11 +77,11 @@ Multiplication by sixteen retains positivity, so its displayed reciprocal
 gives a positive right-value margin on the original box. -/
 public theorem rightMargin_pos
     {p q : Basic.CanonicalCoefficients.CoefficientPolynomial} (coprime :
-      Dense.Gaussian.Coprime.Basic.CoprimeCertificate p q)
-    (ambient : Box) : 0 < Dense.Gaussian.Coprime.Bounds.Box.rightMargin coprime ambient := by
+      Basic.CoprimeCertificate p q)
+    (ambient : Box) : 0 < rightMargin coprime ambient := by
   apply Fraction.Order.Field.div_pos_direct (by decide)
   exact Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-    (Dense.Gaussian.Bounds.Box.denseEvalNormMajorant_pos coprime.right ambient)
+    (Bounds.Box.denseEvalNormMajorant_pos coprime.right ambient)
 
 /-- The finite Bézout identity gives a uniform right-value margin wherever
 the displayed left residual is sufficiently small.
@@ -92,44 +92,44 @@ reciprocal scales force the right quadrance above its margin whenever
 the left quadrance is below the supplied residual threshold. -/
 public theorem rightMargin_le_of_left_small
     {p q : Basic.CanonicalCoefficients.CoefficientPolynomial} (coprime :
-      Dense.Gaussian.Coprime.Basic.CoprimeCertificate p q)
+      Basic.CoprimeCertificate p q)
     (ambient : Box) {z : Gaussian.Basic.Canonical} (inside : ambient.Contains z)
-    (small : Data.Gaussian.Norm.Basic.normSq (p.eval z) ≤ Dense.Gaussian.Coprime.Bounds.Box.leftThreshold coprime
+    (small : Gaussian.Norm.Basic.normSq (p.eval z) ≤ leftThreshold coprime
       ambient) :
-    Dense.Gaussian.Coprime.Bounds.Box.rightMargin coprime ambient ≤ Data.Gaussian.Norm.Basic.normSq (q.eval z) :=
+    rightMargin coprime ambient ≤ Gaussian.Norm.Basic.normSq (q.eval z) :=
       open Purelib in by
-  let leftMajorant := Dense.Gaussian.Bounds.Box.denseEvalNormMajorant coprime.left ambient
-  let rightMajorant := Dense.Gaussian.Bounds.Box.denseEvalNormMajorant coprime.right ambient
+  let leftMajorant := Bounds.Box.denseEvalNormMajorant coprime.left ambient
+  let rightMajorant := Bounds.Box.denseEvalNormMajorant coprime.right ambient
   let leftValue := coprime.left.eval z
   let rightValue := coprime.right.eval z
   let pValue := p.eval z
   let qValue := q.eval z
   have leftMajorantPositive : 0 < leftMajorant :=
-    Dense.Gaussian.Bounds.Box.denseEvalNormMajorant_pos coprime.left ambient
+    Bounds.Box.denseEvalNormMajorant_pos coprime.left ambient
   have rightMajorantPositive : 0 < rightMajorant :=
-    Dense.Gaussian.Bounds.Box.denseEvalNormMajorant_pos coprime.right ambient
-  have leftBound : Data.Gaussian.Norm.Basic.normSq leftValue ≤ leftMajorant :=
-    Dense.Gaussian.Bounds.Box.normSq_eval_le_denseEvalNormMajorant coprime.left inside
-  have rightBound : Data.Gaussian.Norm.Basic.normSq rightValue ≤ rightMajorant :=
-    Dense.Gaussian.Bounds.Box.normSq_eval_le_denseEvalNormMajorant coprime.right inside
-  by_cases marginBound : Dense.Gaussian.Coprime.Bounds.Box.rightMargin coprime ambient ≤
-    Data.Gaussian.Norm.Basic.normSq qValue
+    Bounds.Box.denseEvalNormMajorant_pos coprime.right ambient
+  have leftBound : Gaussian.Norm.Basic.normSq leftValue ≤ leftMajorant :=
+    Bounds.Box.normSq_eval_le_denseEvalNormMajorant coprime.left inside
+  have rightBound : Gaussian.Norm.Basic.normSq rightValue ≤ rightMajorant :=
+    Bounds.Box.normSq_eval_le_denseEvalNormMajorant coprime.right inside
+  by_cases marginBound : rightMargin coprime ambient ≤
+    Gaussian.Norm.Basic.normSq qValue
   · exact marginBound
-  · have qBound : Data.Gaussian.Norm.Basic.normSq qValue ≤ Dense.Gaussian.Coprime.Bounds.Box.rightMargin coprime
+  · have qBound : Gaussian.Norm.Basic.normSq qValue ≤ rightMargin coprime
       ambient :=
       (lt_of_not_ge marginBound).le
-    have leftProduct : Data.Gaussian.Norm.Basic.normSq leftValue * Data.Gaussian.Norm.Basic.normSq pValue ≤
-        leftMajorant * Dense.Gaussian.Coprime.Bounds.Box.leftThreshold coprime ambient :=
+    have leftProduct : Gaussian.Norm.Basic.normSq leftValue * Gaussian.Norm.Basic.normSq pValue ≤
+        leftMajorant * leftThreshold coprime ambient :=
       Fraction.Order.Arithmetic.mul_le_mul_direct leftBound small
         (Gaussian.Norm.Basic.normSq_nonneg pValue) leftMajorantPositive.le
-    have rightProduct : Data.Gaussian.Norm.Basic.normSq rightValue * Data.Gaussian.Norm.Basic.normSq qValue ≤
-        rightMajorant * Dense.Gaussian.Coprime.Bounds.Box.rightMargin coprime ambient :=
+    have rightProduct : Gaussian.Norm.Basic.normSq rightValue * Gaussian.Norm.Basic.normSq qValue ≤
+        rightMajorant * rightMargin coprime ambient :=
       Fraction.Order.Arithmetic.mul_le_mul_direct rightBound qBound
         (Gaussian.Norm.Basic.normSq_nonneg qValue) rightMajorantPositive.le
-    have leftScaled : leftMajorant * Dense.Gaussian.Coprime.Bounds.Box.leftThreshold coprime ambient ≤
+    have leftScaled : leftMajorant * leftThreshold coprime ambient ≤
         (1 / 16 : Fraction.Rational) := by
       exact InverseScale.majorant_mul_scaled_inverse_le leftMajorantPositive
-    have rightScaled : rightMajorant * Dense.Gaussian.Coprime.Bounds.Box.rightMargin coprime ambient ≤
+    have rightScaled : rightMajorant * rightMargin coprime ambient ≤
         (1 / 16 : Fraction.Rational) := by
       exact InverseScale.majorant_mul_scaled_inverse_le rightMajorantPositive
     have sumNorm := Gaussian.Norm.Bounds.normSq_add_le_two
@@ -139,12 +139,12 @@ public theorem rightMargin_le_of_left_small
     have impossible : (1 : Fraction.Rational) ≤ 1 / 4 := by
       calc
         (1 : Fraction.Rational) =
-            Data.Gaussian.Norm.Basic.normSq (leftValue * pValue + rightValue * qValue) := by
+            Gaussian.Norm.Basic.normSq (leftValue * pValue + rightValue * qValue) := by
           rw [← bezout, Gaussian.Norm.Basic.normSq_one]
-        _ ≤ 2 * (Data.Gaussian.Norm.Basic.normSq (leftValue * pValue) +
-              Data.Gaussian.Norm.Basic.normSq (rightValue * qValue)) := sumNorm
-        _ = 2 * (Data.Gaussian.Norm.Basic.normSq leftValue * Data.Gaussian.Norm.Basic.normSq pValue +
-              Data.Gaussian.Norm.Basic.normSq rightValue * Data.Gaussian.Norm.Basic.normSq qValue) := by
+        _ ≤ 2 * (Gaussian.Norm.Basic.normSq (leftValue * pValue) +
+              Gaussian.Norm.Basic.normSq (rightValue * qValue)) := sumNorm
+        _ = 2 * (Gaussian.Norm.Basic.normSq leftValue * Gaussian.Norm.Basic.normSq pValue +
+              Gaussian.Norm.Basic.normSq rightValue * Gaussian.Norm.Basic.normSq qValue) := by
           rw [Gaussian.Norm.Basic.normSq_mul, Gaussian.Norm.Basic.normSq_mul]
         _ ≤ 2 * ((1 / 16 : Fraction.Rational) + 1 / 16) :=
           Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct

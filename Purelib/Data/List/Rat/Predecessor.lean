@@ -6,6 +6,8 @@ import Purelib.Data.Rat.Fraction.Order.Arithmetic
 import Purelib.Data.Rat.Fraction
 public import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.Rat.Fraction
 
 section
@@ -109,18 +111,18 @@ private theorem greatestAtMost_some_spec :
             have resultEqual : result = max head current :=
               Option.some.inj selected.symm
             subst result
-            refine ⟨?_, Rat.Fraction.Order.Basic.max_le headLe tailSpec.2.1, ?_⟩
-            · rcases Rat.Fraction.Order.Basic.le_total head current with headLeCurrent | currentLeHead
-              · rw [Rat.Fraction.Order.Basic.max_eq_right headLeCurrent]
+            refine ⟨?_, Basic.max_le headLe tailSpec.2.1, ?_⟩
+            · rcases Basic.le_total head current with headLeCurrent | currentLeHead
+              · rw [Basic.max_eq_right headLeCurrent]
                 exact List.mem_cons_of_mem head tailSpec.1
-              · rw [Rat.Fraction.Order.Basic.max_eq_left currentLeHead]
+              · rw [Basic.max_eq_left currentLeHead]
                 exact List.mem_cons_self
             · intro value member valueLe
               rcases List.Membership.mem_cons.mp member with equal | tailMember
               · subst value
-                exact Rat.Fraction.Order.Basic.le_max_left _ _
+                exact Basic.le_max_left _ _
               · exact (tailSpec.2.2 value tailMember valueLe).trans
-                  (Rat.Fraction.Order.Basic.le_max_right _ _)
+                  (Basic.le_max_right _ _)
           · simp only [-eq_self, -iff_self, tailResult] at selected
             rw [if_neg headLe] at selected
             have resultEqual : result = current := Option.some.inj selected.symm

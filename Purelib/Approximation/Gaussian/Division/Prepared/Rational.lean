@@ -32,6 +32,13 @@ open Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed
 
 open Purelib.Approximation.Gaussian.Provenance
 
+/-- Prepare the original rational channel using its exact nonzero reading and retained source comparison. -/
+@[expose] def prepare {channel : Coherent.CoherentNamed} (sidecar : Rational.Basic.RationalSidecar channel)
+    (nonzero : sidecar.value ≠ 0) : Division.Prepared channel :=
+  { denominator := Coherence.exact sidecar.value
+    apart := exactApart sidecar.value nonzero
+    equivalent := sidecar.equivalent }
+
 /-- Decide division preparation from a retained rational sidecar.
 
 A zero value supplies the channel's operational zero identity. A nonzero value
@@ -44,10 +51,7 @@ with the original channel. -/
         unfold Purelib.Approximation.Gaussian.Equivalence.Zero.ZeroIdentity;
         simpa only [zero]
           using sidecar.equivalent)
-  else .prepared
-    { denominator := Coherence.exact sidecar.value
-      apart := exactApart sidecar.value zero
-      equivalent := sidecar.equivalent }
+  else .prepared (sidecar.prepare zero)
 end Purelib.Approximation.Gaussian.Provenance.Rational.Basic.RationalSidecar
 
 end

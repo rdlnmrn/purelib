@@ -13,6 +13,8 @@ import Purelib.Tactic.Ring
 public import Purelib.Riemann.Normalization.InverseRootPolynomial
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! A pre-acquisition allocation pays the complete homogeneous trace error.
@@ -46,9 +48,9 @@ structure WeightedTraceAllocation (target sourceBound originBound resamplingScal
   /-- Each model-error allowance is strictly positive. -/ half_positive : 0 < half
   /-- The retained dyadic floor paying the resampling error. -/ coverFloor : Nat
   /-- The cover floor is the explicit first-quarter search from zero. -/ coverFloor_eq : coverFloor =
-    Rational.Geometric.Search.firstQuarterBelow resamplingScale 0 (target / 4)
+    firstQuarterBelow resamplingScale 0 (target / 4)
   /-- The retained cover floor pays the resampling error within one quarter of the target. -/ resampling_paid :
-    Rational.Geometric.Basic.quarterRadius resamplingScale coverFloor ≤ target / 4
+    quarterRadius resamplingScale coverFloor ≤ target / 4
 
 constructive_injectivity WeightedTraceAllocation
 
@@ -66,33 +68,33 @@ explicit cover floor before acquiring a polynomial bank. -/
     WeightedTraceAllocation target sourceBound originBound resamplingScale := by
   let weight := 64 * (sourceBound + 1) + 8 * originBound
   have weightNonnegative : 0 ≤ weight := add_nonneg
-    (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Coordinate) ≤ 64) (add_nonneg
+    (Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Coordinate) ≤ 64) (add_nonneg
       sourceNonnegative (by decide)))
-    (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 8) originNonnegative)
-  have quarterPositive : 0 < target / 4 := Rat.Fraction.Order.Field.div_pos_direct positive (by decide)
+    (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 8) originNonnegative)
+  have quarterPositive : 0 < target / 4 := Field.div_pos_direct positive (by decide)
   let tolerance := min 1 (Rational.Budget.Weighted.allowance (target / 4) weight)
-  have tolerancePositive : 0 < tolerance := Purelib.Data.Rat.Fraction.Order.Basic.lt_min (by decide)
+  have tolerancePositive : 0 < tolerance := Basic.lt_min (by decide)
     (Rational.Budget.Weighted.allowance_positive quarterPositive weightNonnegative)
   have paid : 64 * tolerance * (sourceBound + tolerance) + 8 * originBound * tolerance ≤ target / 4 := by
     have linear : 64 * tolerance * (sourceBound + tolerance) + 8 * originBound * tolerance ≤
         64 * tolerance * (sourceBound + 1) + 8 * originBound * tolerance :=
-          Rat.Fraction.Order.Arithmetic.add_le_add_direct
-      (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Rat.Fraction.Order.Arithmetic.add_le_add_direct
-        le_rfl (Purelib.Data.Rat.Fraction.Order.Basic.min_le_left 1 _))
-        (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Coordinate) ≤ 64)
+          Arithmetic.add_le_add_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
+        le_rfl (Basic.min_le_left 1 _))
+        (Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Coordinate) ≤ 64)
           tolerancePositive.le))
       (le_rfl : 8 * originBound * tolerance ≤ 8 * originBound * tolerance)
-    have budget := (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Purelib.Data.Rat.Fraction.Order.Basic.min_le_right 1 _) weightNonnegative).trans
+    have budget := (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Basic.min_le_right 1 _) weightNonnegative).trans
       (Rational.Budget.Weighted.mul_allowance_le quarterPositive.le weightNonnegative)
     exact (linear.trans_eq (show 64 * tolerance * (sourceBound + 1) + 8 * originBound * tolerance = weight * tolerance
       by
       dsimp only [weight]; ring1)).trans budget
   exact ⟨sourceNonnegative, originNonnegative, scaleNonnegative, tolerance, rfl, tolerancePositive,
-    Purelib.Data.Rat.Fraction.Order.Basic.min_le_left _ _, paid,
-    tolerance / 2, rfl, Rat.Fraction.Order.Field.div_pos_direct tolerancePositive (by decide),
-      Rational.Geometric.Search.firstQuarterBelow resamplingScale 0 (target / 4), rfl,
-    (Rational.Geometric.Search.firstQuarterBelow_accurate resamplingScale scaleNonnegative 0 (target / 4)
+    Basic.min_le_left _ _, paid,
+    tolerance / 2, rfl, Field.div_pos_direct tolerancePositive (by decide),
+      firstQuarterBelow resamplingScale 0 (target / 4), rfl,
+    (firstQuarterBelow_accurate resamplingScale scaleNonnegative 0 (target / 4)
       quarterPositive).le⟩
 
 variable {target sourceBound originBound resamplingScale : Coordinate}
@@ -113,23 +115,23 @@ The estimate includes the starting-value ribbon and twice the sum of model and r
 theorem paid (allocation : WeightedTraceAllocation target sourceBound originBound resamplingScale)
     {coverFloor : Nat} (later : allocation.coverFloor ≤ coverFloor) {error : Coordinate}
     (errorNonnegative : 0 ≤ error) (errorLe : error ≤ allocation.tolerance) :
-    2 * (Rational.Geometric.Basic.quarterRadius resamplingScale coverFloor + (64 * error * (sourceBound + error) + 8 *
+    2 * (quarterRadius resamplingScale coverFloor + (64 * error * (sourceBound + error) + 8 *
       originBound * error)) ≤ target := by
-  have product := Rat.Fraction.Order.Arithmetic.mul_le_mul_direct errorLe
-    (Rat.Fraction.Order.Arithmetic.add_le_add_direct le_rfl errorLe)
+  have product := Arithmetic.mul_le_mul_direct errorLe
+    (Arithmetic.add_le_add_direct le_rfl errorLe)
     (add_nonneg allocation.source_nonnegative errorNonnegative) allocation.tolerance_positive.le
   have areaLe : 64 * error * (sourceBound + error) ≤
       64 * allocation.tolerance * (sourceBound + allocation.tolerance) := by
     rw [Rat.Fraction.Field.mul_assoc, Rat.Fraction.Field.mul_assoc]
-    exact Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct product (by
+    exact Arithmetic.mul_le_mul_of_nonneg_left_direct product (by
         decide +kernel : (0 : Coordinate) ≤ 64)
-  have modelLe := (Rat.Fraction.Order.Arithmetic.add_le_add_direct areaLe
-    (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct errorLe
-      (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 8)
+  have modelLe := (Arithmetic.add_le_add_direct areaLe
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct errorLe
+      (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 8)
         allocation.origin_nonnegative))).trans allocation.model_paid
   have resamplingLe := (quarterRadius_antitone allocation.scale_nonnegative
     later).trans allocation.resampling_paid
-  exact (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Rat.Fraction.Order.Arithmetic.add_le_add_direct
+  exact (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
     resamplingLe modelLe)
     (by decide : (0 : Coordinate) ≤ 2)).trans_eq
       ((show 2 * (target / 4 + target / 4) = (target / 4) * 4 by ring1).trans

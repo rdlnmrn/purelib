@@ -17,6 +17,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib.Approximation.Gaussian.Request.Basic (Name)
 
 open Purelib
@@ -84,7 +86,7 @@ input request. -/
 public theorem multiplicativeInputTarget_pos (left right : Name)
     {target : Fraction.Rational} (positive : 0 < target) :
     0 < multiplicativeInputTarget left right target := by
-  apply Fraction.Order.Field.div_pos_direct positive
+  apply Field.div_pos_direct positive
   exact Arithmetic.add_pos_of_pos_of_nonneg_direct positive
       (Arithmetic.le_of_lt_direct
         (multiplicativeCoefficient_pos left right))
@@ -98,7 +100,7 @@ bound by one. -/
 public theorem multiplicativeInputTarget_lt_one (left right : Name)
     {target : Fraction.Rational} (positive : 0 < target) :
     multiplicativeInputTarget left right target < 1 := by
-  apply (Fraction.Order.Field.div_lt_iff_pos
+  apply (Field.div_lt_iff_pos
     (Arithmetic.add_pos_of_pos_of_nonneg_direct positive
       (Arithmetic.le_of_lt_direct
         (multiplicativeCoefficient_pos left right)))).2
@@ -133,7 +135,7 @@ public theorem multiplicative_budget_lt (left right : Name)
         (target * coefficient) / (target + coefficient) := by
       exact Fraction.Field.quotient_mul_reorder _ _ _
     _ < target := by
-      apply (Fraction.Order.Field.div_lt_iff_pos denominatorPositive).2
+      apply (Field.div_lt_iff_pos denominatorPositive).2
       have coefficientLt : coefficient < target + coefficient := by
         calc
           coefficient = 0 + coefficient := (_root_.zero_add coefficient).symm
@@ -224,20 +226,20 @@ The two original ball radii satisfy the same common request, and their centres
 satisfy the retained magnitude bounds. Direct scalar multiplication and
 addition bound the original product-radius formula below the positive output
 target. -/
-public theorem mul_radius_lt (leftName rightName : Name) (left right : Enclosure.Ball)
+public theorem mul_radius_lt (leftName rightName : Name) (left right : Ball)
     {target : Fraction.Rational} (positive : 0 < target)
     (leftSmall :
       left.radiusSq < multiplicativeInputTarget leftName rightName target)
     (rightSmall :
       right.radiusSq < multiplicativeInputTarget leftName rightName target)
-    (leftCenter : Data.Gaussian.Norm.Basic.normSq left.center ≤ leftName.centerBound)
-    (rightCenter : Data.Gaussian.Norm.Basic.normSq right.center ≤ rightName.centerBound) :
+    (leftCenter : Basic.normSq left.center ≤ leftName.centerBound)
+    (rightCenter : Basic.normSq right.center ≤ rightName.centerBound) :
     (left.mul right).radiusSq < target := by
   let epsilon : Fraction.Rational := multiplicativeInputTarget leftName rightName target
   let leftRadius : Fraction.Rational := left.radiusSq
   let rightRadius : Fraction.Rational := right.radiusSq
-  let leftNorm : Fraction.Rational := Data.Gaussian.Norm.Basic.normSq left.center
-  let rightNorm : Fraction.Rational := Data.Gaussian.Norm.Basic.normSq right.center
+  let leftNorm : Fraction.Rational := Basic.normSq left.center
+  let rightNorm : Fraction.Rational := Basic.normSq right.center
   let leftBound : Fraction.Rational := leftName.centerBound
   let rightBound : Fraction.Rational := rightName.centerBound
   have bound :
@@ -274,14 +276,14 @@ bounds; the output centre bound is their product. -/
     Arithmetic.mul_nonneg_direct left.centerBound_nonneg
       right.centerBound_nonneg
   center_bounded target positive := by
-    change Data.Gaussian.Norm.Basic.normSq
+    change Basic.normSq
       ((left.request (multiplicativeInputTarget left right target) _).center *
         (right.request (multiplicativeInputTarget left right target) _).center) ≤
       left.centerBound * right.centerBound
-    rw [Data.Gaussian.Norm.Basic.normSq_mul]
+    rw [Basic.normSq_mul]
     exact Arithmetic.mul_le_mul_direct
       (left.center_bounded _ _) (right.center_bounded _ _)
-      (Data.Gaussian.Norm.Basic.normSq_nonneg _) left.centerBound_nonneg
+      (Basic.normSq_nonneg _) left.centerBound_nonneg
 
 /-- The product request admits products of readings admitted by the two original
 common-target operand requests.
@@ -296,7 +298,7 @@ public theorem request_contains_mul (left right : Name) {target : Fraction.Ratio
     (yInside : (right.request (multiplicativeInputTarget left right target)
       (multiplicativeInputTarget_pos left right positive)).Contains y) :
     (left.mul right).request target positive |>.Contains (x * y) :=
-  Enclosure.Ball.contains_mul xInside yInside
+  Ball.contains_mul xInside yInside
 
 end Purelib.Approximation.Gaussian.Request.Basic.Name
 

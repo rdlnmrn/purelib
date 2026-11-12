@@ -1,4 +1,5 @@
 module
+public import Purelib.Data.Rat.Interval.Bisection
 import Purelib.Data.List.Append
 import Purelib.Data.List.Map
 import Purelib.Data.List.Flatten
@@ -70,6 +71,28 @@ theorem dyadicIncrements_sum (value : Fraction.Rational → Basic.Canonical) (de
       exact Basic.add_zero _
   | succ depth ih => rw [DyadicPrimitivePaths.dyadicIncrements, IncrementArea.sum_append, ih, ih]; ring1
 
+/-- The original dyadic increments are the exact ordered endpoint increments of the same interval parts.
+
+The statement retains the entire increment list, including repeated
+values and their original order. The common midpoint identity identifies
+both existing finite subdivision presentations without another sum proof.
+-/
+theorem dyadicIncrements_eq_parts (value : Fraction.Rational → Basic.Canonical) (depth : Nat)
+    (span : Interval.Bounds) :
+    dyadicIncrements value depth span.lower span.upper =
+      (Interval.Bisection.parts depth span).map (fun part => value part.upper - value part.lower) := by
+  induction depth generalizing span with
+  | zero => rfl
+  | succ depth inductionHypothesis =>
+      rewrite [dyadicIncrements, Interval.Bisection.parts_split, Map.map_append]
+      have middle : PreparedBoxPartitions.midpoint span.lower span.upper = Interval.Bisection.midpoint span :=
+        PreparedBoxPartitions.midpoint_eq_average span.lower span.upper
+      exact congrArg₂ List.append
+        ((congrArg (fun time => dyadicIncrements value depth span.lower time) middle).trans
+          (inductionHypothesis (Interval.Bisection.leftHalf span)))
+        ((congrArg (fun time => dyadicIncrements value depth time span.upper) middle).trans
+          (inductionHypothesis (Interval.Bisection.rightHalf span)))
+
 /-- The original dyadic increment list has exactly two to the depth entries.
 
 Each subdivision doubles the retained list length by concatenating its two
@@ -138,14 +161,8 @@ theorem dyadicEdges_flatten_increments (value : Fraction.Rational → Basic.Cano
       rw [ClearSheetContinuation.Subdivision.dyadicEdges, Map.map_append, Flatten.flatten_append, ih, ih, Nat.succ_add,
         DyadicPrimitivePaths.dyadicIncrements]
       have middle : ClearSheetContinuation.midpoint first.parameter last.parameter =
-          PreparedBoxPartitions.midpoint first.parameter last.parameter := by
-        unfold ClearSheetContinuation.midpoint PreparedBoxPartitions.midpoint
-        apply Fraction.Field.mul_right_cancel_of_ne (c := 2) (by decide)
-        calc
-          _ = first.parameter + last.parameter := Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
-          _ = first.parameter * 2 + ((last.parameter - first.parameter) / 2) * 2 := by
-            rw [Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)]; ring1
-          _ = _ := by ring1
+          PreparedBoxPartitions.midpoint first.parameter last.parameter :=
+        (PreparedBoxPartitions.midpoint_eq_average first.parameter last.parameter).symm
       change dyadicIncrements value (coarse + fine) first.parameter
           (ClearSheetContinuation.midpoint first.parameter last.parameter) ++
         dyadicIncrements value (coarse + fine)

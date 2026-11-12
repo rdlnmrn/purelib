@@ -19,6 +19,8 @@ import Mathlib.Data.Nat.Init
 import Purelib.Data.Rat.Fraction
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -49,7 +51,7 @@ namespace Purelib.Geometry.Projective.Chordal.Probe
 /-- Squared output separation of the nonconstant `omega`-distance probe is at most twice the squared chordal separation
 of its valid inputs. -/
 theorem chordalOmegaProbe_squaredSensitive :
-    Probe.SquaredProbeSensitive Probe.chordalOmegaProbe 2 := by
+    SquaredProbeSensitive chordalOmegaProbe 2 := by
   intro left right leftValid rightValid
   let leftWeight := Proj.weight left
   let rightWeight := Proj.weight right
@@ -63,31 +65,31 @@ theorem chordalOmegaProbe_squaredSensitive :
   have denominatorPositive : 0 < denominator :=
     Fraction.Order.Arithmetic.mul_pos_direct leftWeightPositive
       rightWeightPositive
-  have probeDifference : Probe.chordalOmegaProbe left - Probe.chordalOmegaProbe right =
-      (Data.Gaussian.Norm.Basic.normSq first - Data.Gaussian.Norm.Basic.normSq second) / denominator
+  have probeDifference : chordalOmegaProbe left - chordalOmegaProbe right =
+      (Basic.normSq first - Basic.normSq second) / denominator
         := by
-    rw [Probe.chordalSq_omega_eq_weight, Probe.chordalSq_omega_eq_weight]
-    change Data.Gaussian.Norm.Basic.normSq left.q / leftWeight - Data.Gaussian.Norm.Basic.normSq
+    rw [chordalSq_omega_eq_weight, chordalSq_omega_eq_weight]
+    change Basic.normSq left.q / leftWeight - Basic.normSq
       right.q / rightWeight =
-      (Data.Gaussian.Norm.Basic.normSq first - Data.Gaussian.Norm.Basic.normSq second) / (leftWeight *
+      (Basic.normSq first - Basic.normSq second) / (leftWeight *
         rightWeight)
     calc
-      Data.Gaussian.Norm.Basic.normSq left.q / leftWeight - Data.Gaussian.Norm.Basic.normSq right.q /
+      Basic.normSq left.q / leftWeight - Basic.normSq right.q /
         rightWeight =
-          (Data.Gaussian.Norm.Basic.normSq left.q * rightWeight -
-            Data.Gaussian.Norm.Basic.normSq right.q * leftWeight) /
+          (Basic.normSq left.q * rightWeight -
+            Basic.normSq right.q * leftWeight) /
               (leftWeight * rightWeight) :=
         Fraction.Field.div_sub_div_direct
-          (Data.Gaussian.Norm.Basic.normSq left.q) leftWeight (Data.Gaussian.Norm.Basic.normSq
+          (Basic.normSq left.q) leftWeight (Basic.normSq
             right.q) rightWeight
           leftWeightPositive.ne' rightWeightPositive.ne'
-      _ = (Data.Gaussian.Norm.Basic.normSq first - Data.Gaussian.Norm.Basic.normSq second) /
+      _ = (Basic.normSq first - Basic.normSq second) /
           (leftWeight * rightWeight) := by
         apply congrArg (fun numerator =>
           numerator / (leftWeight * rightWeight))
         dsimp only [first, second, leftWeight, rightWeight,
           Proj.weight]
-        rw [Data.Gaussian.Norm.Basic.normSq_mul, Data.Gaussian.Norm.Basic.normSq_mul]
+        rw [Basic.normSq_mul, Basic.normSq_mul]
         ring1
   have crossIdentity : first - second =
       -(Proj.cross left right) := by
@@ -97,74 +99,74 @@ theorem chordalOmegaProbe_squaredSensitive :
         Data.Gaussian.Basic.mul_im, Data.Gaussian.Basic.neg_re, Data.Gaussian.Basic.neg_im] <;>
       ring1
   have numeratorBound :
-      (Data.Gaussian.Norm.Basic.normSq first - Data.Gaussian.Norm.Basic.normSq second) ^ 2 ≤
-        2 * Data.Gaussian.Norm.Basic.normSq (Proj.cross left right) * denominator := by
+      (Basic.normSq first - Basic.normSq second) ^ 2 ≤
+        2 * Basic.normSq (Proj.cross left right) * denominator := by
     have differenceBound := Data.Gaussian.normSq_difference_sq_le_two_mul first second
-    rw [crossIdentity, Data.Gaussian.Norm.Basic.normSq_neg] at differenceBound
+    rw [crossIdentity, Basic.normSq_neg] at differenceBound
     calc
-      (Data.Gaussian.Norm.Basic.normSq first - Data.Gaussian.Norm.Basic.normSq second) ^ 2 ≤
-          2 * Data.Gaussian.Norm.Basic.normSq (Proj.cross left right) *
-            (Data.Gaussian.Norm.Basic.normSq first + Data.Gaussian.Norm.Basic.normSq second) :=
+      (Basic.normSq first - Basic.normSq second) ^ 2 ≤
+          2 * Basic.normSq (Proj.cross left right) *
+            (Basic.normSq first + Basic.normSq second) :=
               differenceBound
-      _ ≤ 2 * Data.Gaussian.Norm.Basic.normSq (Proj.cross left right) *
+      _ ≤ 2 * Basic.normSq (Proj.cross left right) *
           denominator :=
         Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Probe.crossProductNorms_le_weightProduct left right)
+          (crossProductNorms_le_weightProduct left right)
           (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-            (Data.Gaussian.Norm.Basic.normSq_nonneg (Proj.cross left right)))
+            (Basic.normSq_nonneg (Proj.cross left right)))
   have quotientSquare :
-      ((Data.Gaussian.Norm.Basic.normSq first - Data.Gaussian.Norm.Basic.normSq second) / denominator)
+      ((Basic.normSq first - Basic.normSq second) / denominator)
         ^ 2 =
-        (Data.Gaussian.Norm.Basic.normSq first - Data.Gaussian.Norm.Basic.normSq second) ^ 2 /
+        (Basic.normSq first - Basic.normSq second) ^ 2 /
           denominator ^ 2 := by
     calc
-      ((Data.Gaussian.Norm.Basic.normSq first - Data.Gaussian.Norm.Basic.normSq second) / denominator)
+      ((Basic.normSq first - Basic.normSq second) / denominator)
         ^ 2 =
-          ((Data.Gaussian.Norm.Basic.normSq first - Data.Gaussian.Norm.Basic.normSq second) /
+          ((Basic.normSq first - Basic.normSq second) /
             denominator) *
-            ((Data.Gaussian.Norm.Basic.normSq first - Data.Gaussian.Norm.Basic.normSq second) /
+            ((Basic.normSq first - Basic.normSq second) /
               denominator) := by ring1
-      _ = ((Data.Gaussian.Norm.Basic.normSq first - Data.Gaussian.Norm.Basic.normSq second) *
-          (Data.Gaussian.Norm.Basic.normSq first - Data.Gaussian.Norm.Basic.normSq second)) /
+      _ = ((Basic.normSq first - Basic.normSq second) *
+          (Basic.normSq first - Basic.normSq second)) /
             (denominator * denominator) :=
         Fraction.Field.div_mul_div_direct _ _ _ _
-      _ = (Data.Gaussian.Norm.Basic.normSq first - Data.Gaussian.Norm.Basic.normSq second) ^ 2 /
+      _ = (Basic.normSq first - Basic.normSq second) ^ 2 /
           (denominator * denominator) := by
         apply congrArg (fun numerator =>
           numerator / (denominator * denominator))
         ring1
-      _ = (Data.Gaussian.Norm.Basic.normSq first - Data.Gaussian.Norm.Basic.normSq second) ^ 2 /
+      _ = (Basic.normSq first - Basic.normSq second) ^ 2 /
           denominator ^ 2 := by
         apply congrArg (fun divisor =>
-          (Data.Gaussian.Norm.Basic.normSq first - Data.Gaussian.Norm.Basic.normSq second) ^ 2 /
+          (Basic.normSq first - Basic.normSq second) ^ 2 /
             divisor)
         ring1
   rw [NaturalLp.rationalSeparation_sq, probeDifference,
-    quotientSquare, Chordal.Basic.chordalSq_eq_cross]
+    quotientSquare, Basic.chordalSq_eq_cross]
   have denominatorSquarePositive : 0 < denominator ^ 2 :=
     Fraction.Order.Arithmetic.pow_pos_direct denominatorPositive 2
   apply (Fraction.Order.Field.div_le_iff_pos
     denominatorSquarePositive).2
   calc
-    (Data.Gaussian.Norm.Basic.normSq first - Data.Gaussian.Norm.Basic.normSq second) ^ 2 ≤
-        2 * Data.Gaussian.Norm.Basic.normSq (Proj.cross left right) * denominator :=
+    (Basic.normSq first - Basic.normSq second) ^ 2 ≤
+        2 * Basic.normSq (Proj.cross left right) * denominator :=
       numeratorBound
     _ = (2 *
-        (Data.Gaussian.Norm.Basic.normSq (Proj.cross left right) / denominator)) *
+        (Basic.normSq (Proj.cross left right) / denominator)) *
           denominator ^ 2 := by
       rw [pow_two]
       have cancel := Fraction.Field.div_mul_cancel_of_ne
-        (Data.Gaussian.Norm.Basic.normSq (Proj.cross left right)) denominator
+        (Basic.normSq (Proj.cross left right)) denominator
         denominatorPositive.ne'
       have replaceCancel := congrArg (fun value =>
         2 * value * denominator) cancel
       calc
-        2 * Data.Gaussian.Norm.Basic.normSq (Proj.cross left right) * denominator =
-            2 * ((Data.Gaussian.Norm.Basic.normSq (Proj.cross left right) /
+        2 * Basic.normSq (Proj.cross left right) * denominator =
+            2 * ((Basic.normSq (Proj.cross left right) /
               denominator) * denominator) * denominator :=
           replaceCancel.symm
         _ = (2 *
-            (Data.Gaussian.Norm.Basic.normSq (Proj.cross left right) / denominator)) *
+            (Basic.normSq (Proj.cross left right) / denominator)) *
               (denominator * denominator) := by ring1
 
 end Purelib.Geometry.Projective.Chordal.Probe

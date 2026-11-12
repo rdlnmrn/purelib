@@ -28,13 +28,13 @@ that head; otherwise the same tail is scanned and the head is retained unchanged
   | head :: tail =>
       if cut < head then cut :: head :: tail
       else if cut = head then head :: tail
-      else head :: Purelib.Data.List.Sort.Key.insertRational cut tail
+      else head :: Key.insertRational cut tail
 /-- Insertion retains exactly the original list members and the supplied cut.
 
 The equivalence follows each original comparison branch. List membership is
 transported through its constructors, so equality removal keeps the same member. -/
 public theorem mem_insertRational (cut value : Rational) : ∀ cuts,
-    value ∈ Purelib.Data.List.Sort.Key.insertRational cut cuts ↔ value = cut ∨ value ∈ cuts
+    value ∈ insertRational cut cuts ↔ value = cut ∨ value ∈ cuts
   | [] => by
       constructor
       · intro member
@@ -47,7 +47,7 @@ public theorem mem_insertRational (cut value : Rational) : ∀ cuts,
           exact List.Mem.head []
         · nomatch impossible
   | head :: tail => by
-      unfold Purelib.Data.List.Sort.Key.insertRational
+      unfold insertRational
       by_cases before : cut < head
       · rewrite [if_pos before]
         constructor
@@ -77,27 +77,27 @@ public theorem mem_insertRational (cut value : Rational) : ∀ cuts,
             cases member with
             | head => exact Or.inr (List.Mem.head tail)
             | tail _ inInserted =>
-                rcases (Purelib.Data.List.Sort.Key.mem_insertRational cut value tail).mp inInserted with atCut | old
+                rcases (Key.mem_insertRational cut value tail).mp inInserted with atCut | old
                 · exact Or.inl atCut
                 · exact Or.inr (List.Mem.tail head old)
           · intro member
             rcases member with atCut | old
-            · exact List.Mem.tail head ((Purelib.Data.List.Sort.Key.mem_insertRational cut value tail).mpr (Or.inl
+            · exact List.Mem.tail head ((Key.mem_insertRational cut value tail).mpr (Or.inl
               atCut))
             · cases old with
               | head => exact List.Mem.head _
               | tail _ inTail =>
-                  exact List.Mem.tail head ((Purelib.Data.List.Sort.Key.mem_insertRational cut value tail).mpr (Or.inr
+                  exact List.Mem.tail head ((Key.mem_insertRational cut value tail).mpr (Or.inr
                     inTail))
 /-- Rational insertion with equality removal preserves strict pairwise ordering.
 
 Each earlier original entry is strictly below every later entry. The inserted
 cut is related directly to the head and retained tail by asymmetric weak bounds. -/
 public theorem insertRational_sorted (cut : Rational) : ∀ {cuts},
-    cuts.Pairwise (· < ·) → (Purelib.Data.List.Sort.Key.insertRational cut cuts).Pairwise (· < ·)
+    cuts.Pairwise (· < ·) → (insertRational cut cuts).Pairwise (· < ·)
   | [], _ => List.Pairwise.cons (fun _ impossible => nomatch impossible) List.Pairwise.nil
   | head :: tail, sorted => by
-      unfold Purelib.Data.List.Sort.Key.insertRational
+      unfold insertRational
       cases sorted with
       | cons headRelated tailSorted =>
           by_cases before : cut < head
@@ -108,9 +108,9 @@ public theorem insertRational_sorted (cut : Rational) : ∀ {cuts},
               | head => exact before
               | tail _ inTail =>
                   have retained : head < value := headRelated value inTail
-                  exact ⟨Rat.Fraction.Order.Basic.le_trans cut head value before.1 retained.1,
+                  exact ⟨Basic.le_trans cut head value before.1 retained.1,
                     fun reverse => before.2
-                      (Rat.Fraction.Order.Basic.le_trans head value cut retained.1 reverse)⟩
+                      (Basic.le_trans head value cut retained.1 reverse)⟩
             · exact List.Pairwise.cons headRelated tailSorted
           · rewrite [if_neg before]
             by_cases equal : cut = head
@@ -123,11 +123,11 @@ public theorem insertRational_sorted (cut : Rational) : ∀ {cuts},
                   ⟨headLe, fun reverse => equal
                     (Basic.Compatibility.le_antisymm cut head reverse headLe)⟩
                 intro value member
-                rcases (Purelib.Data.List.Sort.Key.mem_insertRational cut value tail).mp member with atCut | inTail
+                rcases (mem_insertRational cut value tail).mp member with atCut | inTail
                 · cases atCut
                   exact headLess
                 · exact headRelated value inTail
-              · exact Purelib.Data.List.Sort.Key.insertRational_sorted cut tailSorted
+              · exact Key.insertRational_sorted cut tailSorted
 end Purelib.Data.List.Sort.Key
 
 end

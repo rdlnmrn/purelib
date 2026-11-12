@@ -101,6 +101,7 @@ theorem chainRaw_eq_endpoint_corrections_of_halfPlane
       simp only [Winding.Polygon.Basic.chainRaw, Polygon.Chain.terminal, Dense.Gaussian.Path.Segment.segment,
         Dense.Rational.Pair.Path.Basic.PolynomialEdge.doubledWinding]
       dsimp only [Dense.Rational.Pair.Path.Basic.PolynomialEdge.ofLine] at edge ⊢
+      simp only [Dense.Gaussian.Path.Components.pathParts_eq]
       simp only [Dense.Gaussian.Path.Components.eval_pathReal, Dense.Gaussian.Path.Components.eval_pathImag,
         Affine.Segment.line_segment_zero,
         Affine.Segment.line_segment_one] at edge

@@ -7,6 +7,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 public section
 
@@ -42,7 +44,7 @@ open Purelib.Data.Rat.Interval
 
 open Purelib.Data in
 /-- Two retained rational intervals with equal endpoints are equal records. -/
-@[ext] theorem ext {left right : Rat.Interval}
+@[ext] theorem ext {left right : Interval}
     (lower : left.lower = right.lower)
     (upper : left.upper = right.upper) : left = right := by
   cases left with
@@ -57,48 +59,48 @@ section
 open Purelib.Data
 open Purelib.Data.Rat
 /-- Construct the singleton rational interval at the supplied value. -/
-@[expose] def exact (value : Fraction.Rational) : Rat.Interval :=
+@[expose] def exact (value : Fraction.Rational) : Interval :=
   ⟨value, value, le_rfl⟩
 
 /-- Read the interval width as its upper endpoint minus its lower endpoint. -/
-@[expose] def width (bound : Rat.Interval) : Fraction.Rational :=
+@[expose] def width (bound : Interval) : Fraction.Rational :=
   bound.upper - bound.lower
 
 end
 
 open Purelib.Data in
 /-- Every retained rational interval has nonnegative width. -/
-theorem width_nonneg (bound : Rat.Interval) : 0 ≤ bound.width :=
-  Purelib.Data.Rat.Fraction.Order.Arithmetic.sub_nonneg_direct bound.valid
+theorem width_nonneg (bound : Interval) : 0 ≤ bound.width :=
+  Arithmetic.sub_nonneg_direct bound.valid
 
 open Purelib.Data.Rat in
 /-- A singleton rational interval has zero width. -/
 @[simp] theorem exact_width (value : Fraction.Rational) :
     (exact value).width = 0 := by
-  dsimp only [Interval.width, exact]
+  dsimp only [width, exact]
   ring1
 
 section
 open Purelib.Data
 open Purelib.Data.Rat
 /-- Require a rational value to lie between the retained lower and upper endpoints. -/
-@[expose] def Contains (bound : Rat.Interval) (value : Fraction.Rational) : Prop :=
+@[expose] def Contains (bound : Interval) (value : Fraction.Rational) : Prop :=
   bound.lower ≤ value ∧ value ≤ bound.upper
 
 /-- Decide containment using the two concrete rational endpoint comparisons. -/
-instance containsDecidable (bound : Rat.Interval) (value : Fraction.Rational) :
+instance containsDecidable (bound : Interval) (value : Fraction.Rational) :
     Decidable (bound.Contains value) := by
-  unfold Interval.Contains
+  unfold Contains
   infer_instance
 
 /-- Two values contained in a zero-width rational interval are equal. -/
 theorem eq_of_contains_of_contains_of_width_eq_zero
-    {bound : Rat.Interval} {left right : Fraction.Rational}
+    {bound : Interval} {left right : Fraction.Rational}
     (leftInside : bound.Contains left)
     (rightInside : bound.Contains right)
     (widthZero : bound.width = 0) : left = right := by
   have upperLeLower : bound.upper ≤ bound.lower := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     change bound.upper - bound.lower = 0 at widthZero
     calc
       0 ≤ -(bound.upper - bound.lower) := by
@@ -127,7 +129,7 @@ open Purelib.Data
 
 The constructor uses the exact sums of the two lower and two upper endpoints. The retained validity witnesses prove the
 new endpoint order, and containment transports the sum of any two input values. -/
-@[expose] def add (left right : Rat.Interval) : Rat.Interval where
+@[expose] def add (left right : Interval) : Interval where
   lower := left.lower + right.lower
   upper := left.upper + right.upper
   valid := add_le_add left.valid right.valid
@@ -135,23 +137,23 @@ new endpoint order, and containment transports the sum of any two input values. 
 section
 open Purelib.Data.Rat
 /-- The sum interval's lower endpoint is the sum of the two lower endpoints. -/
-@[simp] theorem add_lower (left right : Rat.Interval) :
-    (Interval.add left right).lower = left.lower + right.lower := rfl
+@[simp] theorem add_lower (left right : Interval) :
+    (add left right).lower = left.lower + right.lower := rfl
 
 /-- The sum interval's upper endpoint is the sum of the two upper endpoints. -/
-@[simp] theorem add_upper (left right : Rat.Interval) :
-    (Interval.add left right).upper = left.upper + right.upper := rfl
+@[simp] theorem add_upper (left right : Interval) :
+    (add left right).upper = left.upper + right.upper := rfl
 
 /-- The width of the sum interval is the sum of the input widths. -/
-theorem add_width (left right : Rat.Interval) :
-    (Interval.add left right).width = left.width + right.width := by
-  dsimp only [Interval.width, Interval.add]
+theorem add_width (left right : Interval) :
+    (add left right).width = left.width + right.width := by
+  dsimp only [width, add]
   ring1
 
 /-- The sum interval contains the sum of any two values contained in its inputs. -/
-theorem add_contains {left right : Rat.Interval} {x y : Fraction.Rational}
+theorem add_contains {left right : Interval} {x y : Fraction.Rational}
     (leftInside : left.Contains x) (rightInside : right.Contains y) :
-    (Interval.add left right).Contains (x + y) :=
+    (add left right).Contains (x + y) :=
   ⟨add_le_add leftInside.1 rightInside.1,
     add_le_add leftInside.2 rightInside.2⟩
 
@@ -159,47 +161,47 @@ theorem add_contains {left right : Rat.Interval} {x y : Fraction.Rational}
 
 The upper endpoint becomes the negation of the original lower endpoint, and the lower endpoint becomes the negation of
 the original upper endpoint. The reversed order proof is retained in the new interval. -/
-@[expose] def neg (bound : Rat.Interval) : Rat.Interval where
+@[expose] def neg (bound : Interval) : Interval where
   lower := -bound.upper
   upper := -bound.lower
-  valid := Fraction.Order.Arithmetic.neg_le_neg_direct bound.valid
+  valid := Arithmetic.neg_le_neg_direct bound.valid
 
 end
 
 /-- The negated interval's lower endpoint is the negation of the original upper endpoint. -/
-@[simp] theorem neg_lower (bound : Rat.Interval) :
+@[simp] theorem neg_lower (bound : Interval) :
     bound.neg.lower = -bound.upper := rfl
 
 /-- The negated interval's upper endpoint is the negation of the original lower endpoint. -/
-@[simp] theorem neg_upper (bound : Rat.Interval) :
+@[simp] theorem neg_upper (bound : Interval) :
     bound.neg.upper = -bound.lower := rfl
 
 section
 open Purelib.Data.Rat
 /-- Negating an interval preserves its width. -/
-theorem neg_width (bound : Rat.Interval) : bound.neg.width = bound.width := by
-  dsimp only [Interval.neg, Interval.width]
+theorem neg_width (bound : Interval) : bound.neg.width = bound.width := by
+  dsimp only [neg, width]
   ring1
 
 /-- Negating an interval retains containment of the negated value. -/
-theorem neg_contains {bound : Rat.Interval} {value : Fraction.Rational}
+theorem neg_contains {bound : Interval} {value : Fraction.Rational}
     (inside : bound.Contains value) : bound.neg.Contains (-value) :=
-  ⟨Fraction.Order.Arithmetic.neg_le_neg_direct inside.2,
-    Fraction.Order.Arithmetic.neg_le_neg_direct inside.1⟩
+  ⟨Arithmetic.neg_le_neg_direct inside.2,
+    Arithmetic.neg_le_neg_direct inside.1⟩
 
 /-- Negating a rational interval twice recovers the original record. -/
-@[simp] theorem neg_neg_bound (bound : Rat.Interval) : bound.neg.neg = bound := by
-  apply Interval.ext <;> dsimp only [Interval.neg] <;> ring1
+@[simp] theorem neg_neg_bound (bound : Interval) : bound.neg.neg = bound := by
+  apply ext <;> dsimp only [neg] <;> ring1
 
 /-- The negated interval contains a value exactly when the original contains its negation. -/
-theorem neg_contains_iff {bound : Rat.Interval} {value : Fraction.Rational} :
+theorem neg_contains_iff {bound : Interval} {value : Fraction.Rational} :
     bound.neg.Contains value ↔ bound.Contains (-value) := by
   constructor
   · intro inside
-    have transported := Interval.neg_contains inside
-    simpa only [Interval.neg_neg_bound] using transported
+    have transported := neg_contains inside
+    simpa only [neg_neg_bound] using transported
   · intro inside
-    have transported := Interval.neg_contains inside
+    have transported := neg_contains inside
     have doubleNegation : -(-value) = value := by ring1
     rw [doubleNegation] at transported
     exact transported
@@ -207,48 +209,48 @@ theorem neg_contains_iff {bound : Rat.Interval} {value : Fraction.Rational} :
 end
 
 /-- Construct a difference interval by adding the left interval to the negation of the right. -/
-@[expose] def sub (left right : Rat.Interval) : Rat.Interval :=
+@[expose] def sub (left right : Interval) : Interval :=
   left.add right.neg
 
 section
 open Purelib.Data.Rat
 /-- The width of a difference interval is the sum of its input widths. -/
-theorem sub_width (left right : Rat.Interval) :
+theorem sub_width (left right : Interval) :
     (left.sub right).width = left.width + right.width := by
-  rw [Interval.sub, Interval.add_width, Interval.neg_width]
+  rw [sub, add_width, neg_width]
 
 /-- The difference interval contains the difference of any two values contained in its inputs. -/
-theorem sub_contains {left right : Rat.Interval} {x y : Fraction.Rational}
+theorem sub_contains {left right : Interval} {x y : Fraction.Rational}
     (leftInside : left.Contains x) (rightInside : right.Contains y) :
     (left.sub right).Contains (x - y) := by
   change (left.add right.neg).Contains (x + -y)
-  exact Interval.add_contains leftInside (Interval.neg_contains rightInside)
+  exact add_contains leftInside (neg_contains rightInside)
 
 /-- Multiply both interval endpoints by a supplied nonnegative rational factor.
 
 The explicit nonnegativity witness preserves endpoint order under multiplication. The original endpoints are scaled
 directly, without selecting a sign branch or changing the nominal interval carrier. -/
 @[expose] def scale (factor : Fraction.Rational) (nonnegative : 0 ≤ factor)
-    (bound : Rat.Interval) : Rat.Interval where
+    (bound : Interval) : Interval where
   lower := factor * bound.lower
   upper := factor * bound.upper
-  valid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  valid := Arithmetic.mul_le_mul_of_nonneg_left_direct
     bound.valid nonnegative
 
 /-- Scaling by a nonnegative rational multiplies interval width by that same factor. -/
 theorem scale_width (factor : Fraction.Rational) (nonnegative : 0 ≤ factor)
-    (bound : Rat.Interval) :
-    (Interval.scale factor nonnegative bound).width = factor * bound.width := by
-  dsimp only [Interval.width, Interval.scale]
+    (bound : Interval) :
+    (scale factor nonnegative bound).width = factor * bound.width := by
+  dsimp only [width, scale]
   ring1
 
 /-- Nonnegative interval scaling retains containment of the correspondingly scaled value. -/
 theorem scale_contains {factor : Fraction.Rational} (nonnegative : 0 ≤ factor)
-    {bound : Rat.Interval} {value : Fraction.Rational} (inside : bound.Contains value) :
-    (Interval.scale factor nonnegative bound).Contains (factor * value) :=
-  ⟨Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    {bound : Interval} {value : Fraction.Rational} (inside : bound.Contains value) :
+    (scale factor nonnegative bound).Contains (factor * value) :=
+  ⟨Arithmetic.mul_le_mul_of_nonneg_left_direct
       inside.1 nonnegative,
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       inside.2 nonnegative⟩
 
 end
@@ -257,7 +259,7 @@ end
 
 The lower field compares the outer lower endpoint to the inner lower endpoint, and the upper field compares the inner
 upper endpoint to the outer upper endpoint. These witnesses transport containment and bound the inner width. -/
-structure Refines (inner outer : Rat.Interval) : Prop where
+structure Refines (inner outer : Interval) : Prop where
   /-- The outer lower endpoint is at most the inner lower endpoint. -/ lower : outer.lower ≤ inner.lower
   /-- The inner upper endpoint is at most the outer upper endpoint. -/ upper : inner.upper ≤ outer.upper
 
@@ -269,55 +271,55 @@ section
 open Purelib.Data
 open Purelib.Data.Rat
 /-- Every rational interval refines itself. -/
-theorem refl (bound : Rat.Interval) : Interval.Refines bound bound :=
+theorem refl (bound : Interval) : Refines bound bound :=
   ⟨le_rfl, le_rfl⟩
 
 /-- Compose rational interval refinement through the same retained middle interval. -/
-theorem trans {inner middle outer : Rat.Interval}
-    (innerMiddle : Interval.Refines inner middle)
-    (middleOuter : Interval.Refines middle outer) : Interval.Refines inner outer :=
+theorem trans {inner middle outer : Interval}
+    (innerMiddle : Refines inner middle)
+    (middleOuter : Refines middle outer) : Refines inner outer :=
   ⟨middleOuter.lower.trans innerMiddle.lower,
     innerMiddle.upper.trans middleOuter.upper⟩
 
 /-- An outer interval contains every value contained in an interval refining it. -/
-theorem contains {inner outer : Rat.Interval} (refines : Interval.Refines inner outer)
+theorem contains {inner outer : Interval} (refines : Refines inner outer)
     {value : Fraction.Rational} (inside : inner.Contains value) :
     outer.Contains value :=
   ⟨refines.lower.trans inside.1, inside.2.trans refines.upper⟩
 
 /-- Refining a rational interval cannot increase its width. -/
-theorem width_le {inner outer : Rat.Interval} (refines : Interval.Refines inner outer) :
+theorem width_le {inner outer : Interval} (refines : Refines inner outer) :
     inner.width ≤ outer.width :=
-  Fraction.Order.Arithmetic.sub_le_sub_direct refines.upper refines.lower
+  Arithmetic.sub_le_sub_direct refines.upper refines.lower
 
 /-- Adding two interval refinements preserves endpoint refinement. -/
-theorem add {innerLeft outerLeft innerRight outerRight : Rat.Interval}
-    (left : Interval.Refines innerLeft outerLeft)
-    (right : Interval.Refines innerRight outerRight) :
-    Interval.Refines (innerLeft.add innerRight) (outerLeft.add outerRight) :=
+theorem add {innerLeft outerLeft innerRight outerRight : Interval}
+    (left : Refines innerLeft outerLeft)
+    (right : Refines innerRight outerRight) :
+    Refines (innerLeft.add innerRight) (outerLeft.add outerRight) :=
   ⟨add_le_add left.lower right.lower,
     add_le_add left.upper right.upper⟩
 
 /-- Negation preserves rational interval refinement. -/
-theorem neg {inner outer : Rat.Interval} (refines : Interval.Refines inner outer) :
-    Interval.Refines inner.neg outer.neg :=
-  ⟨Fraction.Order.Arithmetic.neg_le_neg_direct refines.upper,
-    Fraction.Order.Arithmetic.neg_le_neg_direct refines.lower⟩
+theorem neg {inner outer : Interval} (refines : Refines inner outer) :
+    Refines inner.neg outer.neg :=
+  ⟨Arithmetic.neg_le_neg_direct refines.upper,
+    Arithmetic.neg_le_neg_direct refines.lower⟩
 
 /-- Subtracting two interval refinements preserves endpoint refinement. -/
-theorem sub {innerLeft outerLeft innerRight outerRight : Rat.Interval}
-    (left : Interval.Refines innerLeft outerLeft)
-    (right : Interval.Refines innerRight outerRight) :
-    Interval.Refines (innerLeft.sub innerRight) (outerLeft.sub outerRight) :=
+theorem sub {innerLeft outerLeft innerRight outerRight : Interval}
+    (left : Refines innerLeft outerLeft)
+    (right : Refines innerRight outerRight) :
+    Refines (innerLeft.sub innerRight) (outerLeft.sub outerRight) :=
   left.add right.neg
 
 /-- Scaling both intervals by the same nonnegative rational preserves refinement. -/
 theorem scale (factor : Fraction.Rational) (nonnegative : 0 ≤ factor)
-    {inner outer : Rat.Interval} (refines : Interval.Refines inner outer) :
-    Interval.Refines (inner.scale factor nonnegative) (outer.scale factor nonnegative) :=
-  ⟨Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    {inner outer : Interval} (refines : Refines inner outer) :
+    Refines (inner.scale factor nonnegative) (outer.scale factor nonnegative) :=
+  ⟨Arithmetic.mul_le_mul_of_nonneg_left_direct
       refines.lower nonnegative,
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       refines.upper nonnegative⟩
 
 end
@@ -327,20 +329,20 @@ end Refines
 section
 open Purelib.Data
 /-- Require each interval's lower endpoint to be at most the other interval's upper endpoint. -/
-@[expose] def Overlaps (left right : Rat.Interval) : Prop :=
+@[expose] def Overlaps (left right : Interval) : Prop :=
   left.lower ≤ right.upper ∧ right.lower ≤ left.upper
 
 open Purelib.Data.Rat in
 /-- Decide overlap using the two retained endpoint comparisons. -/
-instance overlapsDecidable (left right : Rat.Interval) :
+instance overlapsDecidable (left right : Interval) :
     Decidable (left.Overlaps right) := by
-  unfold Interval.Overlaps
+  unfold Overlaps
   infer_instance
 
 section
 open Purelib.Data.Rat
 /-- Two rational intervals containing a common value overlap. -/
-theorem overlaps_of_common {left right : Rat.Interval} {value : Fraction.Rational}
+theorem overlaps_of_common {left right : Interval} {value : Fraction.Rational}
     (leftInside : left.Contains value) (rightInside : right.Contains value) :
     left.Overlaps right :=
   ⟨leftInside.1.trans rightInside.2,
@@ -350,73 +352,73 @@ theorem overlaps_of_common {left right : Rat.Interval} {value : Fraction.Rationa
 
 Take the maximum of the two lower endpoints, a total executable rational operation. The overlap hypothesis is required
 only for the theorem that this candidate belongs to both original intervals. -/
-@[expose] def overlapWitness (left right : Rat.Interval) : Fraction.Rational :=
+@[expose] def overlapWitness (left right : Interval) : Fraction.Rational :=
   max left.lower right.lower
 
 /-- When two intervals overlap, their chosen overlap witness lies in both. -/
-theorem overlapWitness_inside {left right : Rat.Interval}
+theorem overlapWitness_inside {left right : Interval}
     (overlaps : left.Overlaps right) :
-    left.Contains (Interval.overlapWitness left right) ∧
-      right.Contains (Interval.overlapWitness left right) :=
-  ⟨⟨Fraction.Order.Basic.le_max_left _ _, Fraction.Order.Basic.max_le left.valid overlaps.2⟩,
-    ⟨Fraction.Order.Basic.le_max_right _ _, Fraction.Order.Basic.max_le overlaps.1 right.valid⟩⟩
+    left.Contains (overlapWitness left right) ∧
+      right.Contains (overlapWitness left right) :=
+  ⟨⟨Basic.le_max_left _ _, Basic.max_le left.valid overlaps.2⟩,
+    ⟨Basic.le_max_right _ _, Basic.max_le overlaps.1 right.valid⟩⟩
 
 /-- Both directed differences between contained values are bounded by the interval width. -/
-theorem pairwise_difference_le {bound : Rat.Interval} {left right : Fraction.Rational}
+theorem pairwise_difference_le {bound : Interval} {left right : Fraction.Rational}
     (leftInside : bound.Contains left)
     (rightInside : bound.Contains right) :
     left - right ≤ bound.width ∧ right - left ≤ bound.width :=
-  ⟨Fraction.Order.Arithmetic.sub_le_sub_direct leftInside.2 rightInside.1,
-    Fraction.Order.Arithmetic.sub_le_sub_direct rightInside.2 leftInside.1⟩
+  ⟨Arithmetic.sub_le_sub_direct leftInside.2 rightInside.1,
+    Arithmetic.sub_le_sub_direct rightInside.2 leftInside.1⟩
 
 /-- Choose the retained lower endpoint as an explicit interval sample. -/
-@[expose] def sample (bound : Rat.Interval) : Fraction.Rational :=
+@[expose] def sample (bound : Interval) : Fraction.Rational :=
   bound.lower
 
 end
 
 /-- The chosen lower-endpoint sample lies in its original interval. -/
-theorem sample_contains (bound : Rat.Interval) : bound.Contains bound.sample :=
+theorem sample_contains (bound : Interval) : bound.Contains bound.sample :=
   ⟨le_rfl, bound.valid⟩
 
 open Purelib.Data.Rat
 /-- Both directed differences between a contained value and the chosen sample are bounded by interval width. -/
-theorem sample_difference_le {bound : Rat.Interval} {value : Fraction.Rational}
+theorem sample_difference_le {bound : Interval} {value : Fraction.Rational}
     (inside : bound.Contains value) :
     value - bound.sample ≤ bound.width ∧
       bound.sample - value ≤ bound.width :=
-  Interval.pairwise_difference_le inside bound.sample_contains
+  pairwise_difference_le inside bound.sample_contains
 
 /-! ## Exact finite interval cuts -/
 
 /-- Keep the original lower endpoint and use the supplied contained cut as the new upper endpoint. -/
-@[expose] def cutLeft (bound : Rat.Interval) (cut : Fraction.Rational)
-    (inside : bound.Contains cut) : Rat.Interval :=
+@[expose] def cutLeft (bound : Interval) (cut : Fraction.Rational)
+    (inside : bound.Contains cut) : Interval :=
   ⟨bound.lower, cut, inside.1⟩
 
 /-- Use the supplied contained cut as lower endpoint and keep the original upper endpoint. -/
-@[expose] def cutRight (bound : Rat.Interval) (cut : Fraction.Rational)
-    (inside : bound.Contains cut) : Rat.Interval :=
+@[expose] def cutRight (bound : Interval) (cut : Fraction.Rational)
+    (inside : bound.Contains cut) : Interval :=
   ⟨cut, bound.upper, inside.2⟩
 
 /-- A left cut at a contained rational refines the original interval. -/
-theorem cutLeft_refines (bound : Rat.Interval) (cut : Fraction.Rational)
+theorem cutLeft_refines (bound : Interval) (cut : Fraction.Rational)
     (inside : bound.Contains cut) :
-    Interval.Refines (bound.cutLeft cut inside) bound :=
+    Refines (bound.cutLeft cut inside) bound :=
   ⟨le_rfl, inside.2⟩
 
 /-- A right cut at a contained rational refines the original interval. -/
-theorem cutRight_refines (bound : Rat.Interval) (cut : Fraction.Rational)
+theorem cutRight_refines (bound : Interval) (cut : Fraction.Rational)
     (inside : bound.Contains cut) :
-    Interval.Refines (bound.cutRight cut inside) bound :=
+    Refines (bound.cutRight cut inside) bound :=
   ⟨inside.1, le_rfl⟩
 
 /-- The widths of the two intervals cut at one contained rational sum to the original width. -/
-theorem cut_width_add (bound : Rat.Interval) (cut : Fraction.Rational)
+theorem cut_width_add (bound : Interval) (cut : Fraction.Rational)
     (inside : bound.Contains cut) :
     (bound.cutLeft cut inside).width +
       (bound.cutRight cut inside).width = bound.width := by
-  dsimp only [Interval.cutLeft, Interval.cutRight, Interval.width]
+  dsimp only [cutLeft, cutRight, width]
   ring1
 
 end
@@ -448,7 +450,7 @@ open Purelib.Data in
 open Purelib.Data.Rat in
 /-- Construct the original rational interval from its supplied ordered endpoints. -/
 @[expose] def quantileCutBound (lower upper : Fraction.Rational) (order : lower ≤ upper) :
-    Rat.Interval :=
+    Interval :=
   ⟨lower, upper, order⟩
 end Purelib.Data.Rat.Interval
 

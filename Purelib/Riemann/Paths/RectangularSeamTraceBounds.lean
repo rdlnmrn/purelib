@@ -29,6 +29,8 @@ import Purelib.Riemann.Normalization.InverseRootPolynomial
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! Actual scalar model bounds retained for paired seam comparisons. -/
@@ -52,9 +54,9 @@ open Purelib.Data.Gaussian in
 private abbrev Gaussian := Basic.Canonical
 open Purelib.Polynomial.Dense.Gaussian in
 /-- The original dense Gaussian primitive polynomial carrier. -/
-private abbrev Polynomial := Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+private abbrev Polynomial := Basic.CanonicalCoefficients.CoefficientPolynomial
 /-- The retained rational box carrier of the trace geometry. -/
-private abbrev Box := Purelib.Geometry.Rational.Box
+private abbrev Box := Geometry.Rational.Box
 
 /-- Pointwise, increment and drift bounds for two original unit-interval traces.
 
@@ -90,22 +92,22 @@ theorem SeamTraceBounds.paired_dyadic_bound
     (fun parameter => ⟨leftFirst parameter, leftSecond parameter⟩)
     (fun parameter => ⟨rightFirst parameter, rightSecond parameter⟩)
     (error := max firstError secondError) (slope := max firstSlope secondSlope) (drift := max firstDrift secondDrift)
-    (fun parameter inside => ⟨(first.errors parameter inside).trans (Fraction.Order.Basic.le_max_left _ _),
-      (second.errors parameter inside).trans (Fraction.Order.Basic.le_max_right _ _)⟩)
+    (fun parameter inside => ⟨(first.errors parameter inside).trans (Basic.le_max_left _ _),
+      (second.errors parameter inside).trans (Basic.le_max_right _ _)⟩)
     (fun start finish startInside finishInside =>
       ⟨(first.increments start finish startInside finishInside).trans
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (Fraction.Order.Basic.le_max_left _ _)
-            (Fraction.Order.Arithmetic.sq_nonneg_direct _)),
+          (Arithmetic.mul_le_mul_of_nonneg_right_direct (Basic.le_max_left _ _)
+            (Arithmetic.sq_nonneg_direct _)),
         (second.increments start finish startInside finishInside).trans
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (Fraction.Order.Basic.le_max_right _ _)
-            (Fraction.Order.Arithmetic.sq_nonneg_direct _))⟩)
+          (Arithmetic.mul_le_mul_of_nonneg_right_direct (Basic.le_max_right _ _)
+            (Arithmetic.sq_nonneg_direct _))⟩)
     (fun start finish startInside finishInside =>
       ⟨(first.drifts start finish startInside finishInside).trans
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (Fraction.Order.Basic.le_max_left _ _)
-            (Fraction.Order.Arithmetic.sq_nonneg_direct _)),
+          (Arithmetic.mul_le_mul_of_nonneg_right_direct (Basic.le_max_left _ _)
+            (Arithmetic.sq_nonneg_direct _)),
         (second.drifts start finish startInside finishInside).trans
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (Fraction.Order.Basic.le_max_right _ _)
-            (Fraction.Order.Arithmetic.sq_nonneg_direct _))⟩)
+          (Arithmetic.mul_le_mul_of_nonneg_right_direct (Basic.le_max_right _ _)
+            (Arithmetic.sq_nonneg_direct _))⟩)
     depth (show (0 : Coordinate) ≤ 0 ∧ 0 ≤ 1 from ⟨le_rfl, by decide⟩)
     (show (0 : Coordinate) ≤ 1 ∧ 1 ≤ 1 from ⟨by decide, le_rfl⟩) (by decide : (0 : Coordinate) ≤ 1)
   rw [Norm.Basic.normSq_eq_canonical] at bound
@@ -148,23 +150,23 @@ private theorem translated_increment_le {coefficient : Polynomial} {box : Box}
         primitive.value.eval (Affine.line start (finish - start) last) -
           primitive.value.eval (Affine.line start (finish - start) first) by ring1]
   have coefficientAdapter (parameter : Coordinate) (insideParameter : 0 ≤ parameter ∧ parameter ≤ 1) :
-      Data.Gaussian.Norm.Basic.normSq (coefficient.eval (Affine.line start (finish - start) parameter)) ≤ ceiling := by
+      Norm.Basic.normSq (coefficient.eval (Affine.line start (finish - start) parameter)) ≤ ceiling := by
     rw [Norm.Basic.normSq_eq_canonical]
     exact coefficientBound parameter insideParameter
   have lengthAdapter := lengthBound
   rw [← Norm.Basic.normSq_eq_canonical] at lengthAdapter
   have estimate := Primitive.Segment.Bounds.DensePrimitive.segment_increment_le primitive start (finish - start) (⟨0, 1,
-    by decide⟩ : Data.Rat.Interval.Bounds)
+    by decide⟩ : Interval.Bounds)
     inside ceiling coefficientAdapter lastInside firstInside
   rw [Norm.Basic.normSq_eq_canonical] at estimate
-  exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct lengthAdapter
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) ceilingNonnegative))
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+  exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct lengthAdapter
+      (Arithmetic.mul_nonneg_direct (by decide) ceilingNonnegative))
+        (Arithmetic.sq_nonneg_direct _))
 
 namespace GridPrimitiveAccuracy
 
-variable {polynomial numerator : Polynomial} {ambient : Purelib.Riemann.Normalization.InverseRootPolynomial.Box}
+variable {polynomial numerator : Polynomial} {ambient : Normalization.InverseRootPolynomial.Box}
   {clearance : RegionClearance polynomial ambient}
     {bounds : PrimitiveOverlapBounds clearance numerator} {columns rows : Nat} {target : Coordinate}
     {geometry : Geometry columns rows} {bank : Bank polynomial geometry}
@@ -207,7 +209,7 @@ theorem horizontal_trace_bounds (request : GridPrimitiveAccuracy bounds columns 
         boundarySlope bounds * (last - first) ^ 2 := by
     apply translated_increment_le (primitives.dense column.succ row) (offsets.values column.succ row) start finish
       (bounds.numeratorUpper * bounds.inverseUpper) ambient.diagonalSq
-      (Fraction.Order.Arithmetic.mul_nonneg_direct bounds.numeratorUpper_nonnegative bounds.inverseUpper_positive.le)
+      (Arithmetic.mul_nonneg_direct bounds.numeratorUpper_nonnegative bounds.inverseUpper_positive.le)
       (fun _ inside => edge.right_contains_at inside) ?_ lengthBound firstInside lastInside
     intro parameter inside
     rw [primitives.coefficient_eq]
@@ -222,10 +224,10 @@ theorem horizontal_trace_bounds (request : GridPrimitiveAccuracy bounds columns 
           request.edgeBound * (last - first) ^ 2 := by
     simp only [PrimitiveAnchors.alignedValue, translated_gap]
     have estimate := primitives.horizontal_gap_increment_le bounds refines column row firstInside lastInside
-    exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct
       (request.local_scale_bound (bank.refine_uniform_bound request.index column.castSucc row)
-        (bank.refine_uniform_bound request.index column.succ row) (Basic.Canonical.normSq_nonneg _) lengthBound)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+        (bank.refine_uniform_bound request.index column.succ row) (normSq_nonneg _) lengthBound)
+      (Arithmetic.sq_nonneg_direct _))
   exact ⟨(fun _ inside => request.horizontal_bound anchors offsets refines column row inside), rightLe, driftLe⟩
 
 /-- Construct the original upper/lower trace bounds from retained grid primitive accuracy.
@@ -262,7 +264,7 @@ theorem vertical_trace_bounds (request : GridPrimitiveAccuracy bounds columns ta
     apply translated_increment_le (primitives.dense column row.castSucc) (offsets.values column row.castSucc) start
       finish
       (bounds.numeratorUpper * bounds.inverseUpper) ambient.diagonalSq
-      (Fraction.Order.Arithmetic.mul_nonneg_direct bounds.numeratorUpper_nonnegative bounds.inverseUpper_positive.le)
+      (Arithmetic.mul_nonneg_direct bounds.numeratorUpper_nonnegative bounds.inverseUpper_positive.le)
       (fun _ inside => edge.left_contains_at inside) ?_ lengthBound firstInside lastInside
     intro parameter inside
     rw [primitives.coefficient_eq]
@@ -284,10 +286,10 @@ theorem vertical_trace_bounds (request : GridPrimitiveAccuracy bounds columns ta
     rw [reversed_gap]
     rw [← Norm.Basic.normSq_eq_canonical, Norm.Basic.normSq_neg, Norm.Basic.normSq_eq_canonical]
     have estimate := primitives.vertical_gap_increment_le bounds refines column row firstInside lastInside
-    exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct
       (request.local_scale_bound (bank.refine_uniform_bound request.index column row.castSucc)
-        (bank.refine_uniform_bound request.index column row.succ) (Basic.Canonical.normSq_nonneg _) lengthBound)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+        (bank.refine_uniform_bound request.index column row.succ) (normSq_nonneg _) lengthBound)
+      (Arithmetic.sq_nonneg_direct _))
   exact ⟨errorLe, rightLe, driftLe⟩
 
 end GridPrimitiveAccuracy

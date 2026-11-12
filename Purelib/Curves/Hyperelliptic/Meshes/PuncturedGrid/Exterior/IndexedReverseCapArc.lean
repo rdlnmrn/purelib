@@ -112,21 +112,21 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Gaussian.Norm.Basic (normSq_nonneg)
 open Purelib.Data.Rat.Fraction.Compatibility
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential} {target : Coordinate} {minimum
     stage fine index : Nat}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
   {plan : PairedSourcePlan occurrence
     other target minimum}
 
@@ -143,33 +143,33 @@ open Purelib.Integration.Path.ConjugateIncrementComparison (conjugateFirst)
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedReverseCapArc
 
 /-- The owner, source and cap allowances pay the complete assembled reverse-comparison target. -/
-private theorem total_paid {owner source cap target : InverseRootPolynomial.Coordinate}
+private theorem total_paid {owner source cap target : Coordinate}
     (ownerLe : owner ≤ target / 8) (sourceLe : source ≤ target / 8) (capLe : cap ≤ target / 4) :
     2 * (owner + 2 * (source + cap / 4)) ≤ target := by
   have bound := Fraction.Order.Arithmetic.add_le_add_direct
     (Fraction.Order.Arithmetic.add_le_add_direct
       (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct ownerLe (by
-          decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2))
+          decide : (0 : Coordinate) ≤ 2))
       (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct sourceLe (by
-          decide : (0 : InverseRootPolynomial.Coordinate) ≤ 4))) capLe
+          decide : (0 : Coordinate) ≤ 4))) capLe
   have rearrange : 2 * (owner + 2 * (source + cap / 4)) =
       2 * owner + 4 * source + (cap / 4) * 4 := by ring1
   rw [Fraction.Field.div_mul_cancel_of_ne cap 4 (by decide)] at rearrange
   have paid : 2 * (target / 8) + 4 * (target / 8) + target / 4 = target := by
     have factor : 2 * (target / 8) + 4 * (target / 8) + target / 4 =
-        (6 * (8 : InverseRootPolynomial.Coordinate)⁻¹ + (4 : InverseRootPolynomial.Coordinate)⁻¹) * target := by
+        (6 * (8 : Coordinate)⁻¹ + (4 : Coordinate)⁻¹) * target := by
       simp only [Algebra.Field.ExplicitField.div_eq_mul_inv, -eq_self, -iff_self]
       ring1
-    rw [factor, show (6 : InverseRootPolynomial.Coordinate) * 8⁻¹ + 4⁻¹ = 1 by decide +kernel, Fraction.Field.one_mul]
+    rw [factor, show (6 : Coordinate) * 8⁻¹ + 4⁻¹ = 1 by decide +kernel, Fraction.Field.one_mul]
   exact rearrange.trans_le (bound.trans_eq paid)
 
 /-- The retained conjugated physical area and original reversed cap-arc correction differ by less than the requested
 squared-norm target. -/
-@[expose] def ReverseCapArcTarget {Vertex : Type} {values : Vertex → Stokes.PrimitivePoint}
-    {whole : JoinedTrace.VertexTrace Vertex}
-    (original : CenteredBilinearPath.Sample (fun vertex => ConjugateIncrementComparison.conjugateFirst (values
+@[expose] def ReverseCapArcTarget {Vertex : Type} {values : Vertex → PrimitivePoint}
+    {whole : VertexTrace Vertex}
+    (original : Sample (fun vertex => ConjugateIncrementComparison.conjugateFirst (values
       (whole.indexed vertex))))
-    (requested : InverseRootPolynomial.Coordinate) : Prop :=
+    (requested : Coordinate) : Prop :=
     Data.Gaussian.Norm.Basic.normSq (original.centeredArea +
       (Bilinear.arcArea
         (fun point => ConjugateIncrementComparison.conjugateFirst ⟨sample.primitive.value.eval point,
@@ -190,23 +190,23 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedReve
 The construction retains descending parameter and parent words, original owner readbacks and paid source refinement; the
 grouped parent list is certified against the exact retained bank. -/
 theorem reverse_conjugate_cap_arc_of_indexed {Vertex : Type} {count : Nat}
-    {values : Vertex → Stokes.PrimitivePoint} {traces : Fin (count + 1) → JoinedTrace.VertexTrace Vertex}
+    {values : Vertex → PrimitivePoint} {traces : Fin (count + 1) → VertexTrace Vertex}
     (family : FragmentFamilies.JoinedFragmentFamily (evaluated := evaluated) (data := data) (otherData := otherData)
       values traces)
     (items : List (IndexedFragmentGrouping.IndexedOwnedFragment evaluated data otherData))
     (readback : items.map IndexedOwnedFragment.fragment = family.fragments)
-    {whole : JoinedTrace.VertexTrace Vertex}
-    (original : CenteredBilinearPath.Sample (fun vertex => ConjugateIncrementComparison.conjugateFirst (values
+    {whole : VertexTrace Vertex}
+    (original : Sample (fun vertex => ConjugateIncrementComparison.conjugateFirst (values
       (whole.indexed vertex))))
     (traceEq : whole = VertexTrace.concatenate traces) (later : plan.parents.index ≤ stage)
-    {requested : InverseRootPolynomial.Coordinate} {floor : Nat}
+    {requested : Coordinate} {floor : Nat}
     (request : SourceRunRefinement plan.parents.plans.length (SourceRunRefinement.sourceRunDensity
       plan) (requested / 8) floor)
     (word : IndexedOwnedFragment.ReverseWord items) (parentWord : IndexedOwnedFragment.ReverseParentWord items)
     (fineEnough : ∀ item ∈ items, IndexedOwnedFragment.ReverseFineEnough item request.width)
     (refined : request.depth ≤ plan.parents.depth + fine)
     (ownerPaid : family.error ≤ requested / 8) (capPaid : target ≤ requested / 4) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedReverseCapArc.ReverseCapArcTarget (sample := sample)
+    ReverseCapArcTarget (sample := sample)
       (otherSample := otherSample) (occurrence := occurrence)
       (plan := plan) (fine := fine) original requested := by
   let grouped := IndexedOwnedGrouping.build items
@@ -228,7 +228,7 @@ theorem reverse_conjugate_cap_arc_of_indexed {Vertex : Type} {count : Nat}
     (groups.reverse.map ReverseGroupedSourceFragments.resampled) ordered widths refined
   exact (JoinedFragmentFamily.reverse_conjugate_cap_arc_bound family groups partition parentOrder original traceEq
     later).trans_le
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedReverseCapArc.total_paid ownerPaid sourcePaid.le capPaid)
+    (IndexedReverseCapArc.total_paid ownerPaid sourcePaid.le capPaid)
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedReverseCapArc.JoinedFragmentFamily
 

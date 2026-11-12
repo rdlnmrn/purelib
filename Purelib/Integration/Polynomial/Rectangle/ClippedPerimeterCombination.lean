@@ -21,6 +21,8 @@ import Purelib.Integration.Polynomial.Rectangle.Boundary.Assembly
 import Purelib.Data.Gaussian.Basic
 import Purelib.Polynomial.Geometry.Grid.ClearGrid
 
+open Purelib.Riemann.Normalization.InverseRootPolynomial
+
 @[expose] public section
 
 /-! Coefficient expansion of each retained perimeter side, including its
@@ -31,25 +33,25 @@ namespace Purelib.Integration.Polynomial.Rectangle.ClippedPerimeterCombination
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_add)
 attribute [local congr] Purelib.Algebra.FiniteSum.Fin.sumFin_congr
 variable {columns rows leftCount rightCount : Nat} {geometry :
-  Purelib.Riemann.Normalization.RectangularInverseModels.Geometry columns rows}
-  {cuts : Purelib.Riemann.Paths.RectangularSegmentSplitting.GridCuts geometry} {box :
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Box} {mesh :
-    Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh cuts box}
-  (left : Fin leftCount → Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian) (right : Fin rightCount →
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian)
+  Riemann.Normalization.RectangularInverseModels.Geometry columns rows}
+  {cuts : Riemann.Paths.RectangularSegmentSplitting.GridCuts geometry} {box :
+    Box} {mesh :
+    Riemann.Meshes.RectangularObservationMesh.ObservationMesh cuts box}
+  (left : Fin leftCount → Gaussian) (right : Fin rightCount →
+    Gaussian)
   (first : Fin leftCount → Fin (columns + 1) → Fin (rows + 1) →
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian →
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian)
+    Gaussian →
+    Gaussian)
   (second : Fin rightCount → Fin (columns + 1) → Fin (rows + 1) →
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian →
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian)
-  {assembly : Purelib.Riemann.Readings.RectangularObservationAssembly.ObservationMesh.ClippedAssembly mesh (fun column
+    Gaussian →
+    Gaussian)
+  {assembly : Riemann.Readings.RectangularObservationAssembly.ObservationMesh.ClippedAssembly mesh (fun column
     row point =>
     ⟨sumFin (fun i => left i * first i column row point),
-      Purelib.Algebra.FiniteSum.Fin.sumFin (fun j => right j * second j column row point)⟩)}
+      sumFin (fun j => right j * second j column row point)⟩)}
   (perimeter : assembly.Perimeter)
   {pairs : (i : Fin leftCount) → (j : Fin rightCount) →
-    Purelib.Riemann.Readings.RectangularObservationAssembly.ObservationMesh.ClippedAssembly mesh
+    Riemann.Readings.RectangularObservationAssembly.ObservationMesh.ClippedAssembly mesh
     (fun column row point => ⟨first i column row point, second j column row point⟩)}
   (perimeters : (i : Fin leftCount) → (j : Fin rightCount) → (pairs i j).Perimeter)
 
@@ -61,51 +63,51 @@ open Purelib.Riemann.Periods
 /-- The retained stitched bottom perimeter area is the double weighted sum of the original pair perimeters' bottom
 areas. -/
 theorem bottom_combination :
-    perimeter.bottom = FiniteSum.Fin.sumFin (fun i => FiniteSum.Fin.sumFin (fun j => left i * right j * (perimeters i
+    perimeter.bottom = sumFin (fun i => sumFin (fun j => left i * right j * (perimeters i
       j).bottom)) := by
   rw [perimeter.bottom_eq]
   simp only [(perimeters _ _).bottom_eq, assembly.sides_eq, assembly.corners_eq,
     (pairs _ _).sides_eq, (pairs _ _).corners_eq, RectangularObservationMesh.ObservationMesh.sideGrid,
       RectangularObservationMesh.ObservationMesh.cellSides, RectangularObservationMesh.ObservationMesh.cornerGrid,
     PreparedBoxBoundary.horizontalBoundary_combination,
-    BilinearCombination.edgeArea_combination, mul_add, FiniteSum.Fin.sumFin_add]
+    BilinearCombination.edgeArea_combination, mul_add, sumFin_add]
   rw [BilinearCombination.sumFin_combination, BilinearCombination.sumFin_combination]
 
 /-- The retained stitched right perimeter area is the double weighted sum of the original pair perimeters' right areas.
 -/
 theorem right_combination :
-    perimeter.right = FiniteSum.Fin.sumFin (fun i => FiniteSum.Fin.sumFin (fun j => left i * right j * (perimeters i
+    perimeter.right = sumFin (fun i => sumFin (fun j => left i * right j * (perimeters i
       j).right)) := by
   rw [perimeter.right_eq]
   simp only [(perimeters _ _).right_eq, assembly.sides_eq, assembly.corners_eq,
     (pairs _ _).sides_eq, (pairs _ _).corners_eq, RectangularObservationMesh.ObservationMesh.sideGrid,
       RectangularObservationMesh.ObservationMesh.cellSides, RectangularObservationMesh.ObservationMesh.cornerGrid,
     PreparedBoxBoundary.verticalBoundary_combination,
-    BilinearCombination.edgeArea_combination, mul_add, FiniteSum.Fin.sumFin_add]
+    BilinearCombination.edgeArea_combination, mul_add, sumFin_add]
   rw [BilinearCombination.sumFin_combination, BilinearCombination.sumFin_combination]
 
 /-- The retained stitched top perimeter area is the double weighted sum of the original pair perimeters' top areas. -/
 theorem top_combination :
-    perimeter.top = FiniteSum.Fin.sumFin (fun i => FiniteSum.Fin.sumFin (fun j => left i * right j * (perimeters i
+    perimeter.top = sumFin (fun i => sumFin (fun j => left i * right j * (perimeters i
       j).top)) := by
   rw [perimeter.top_eq]
   simp only [(perimeters _ _).top_eq, assembly.sides_eq, assembly.corners_eq,
     (pairs _ _).sides_eq, (pairs _ _).corners_eq, RectangularObservationMesh.ObservationMesh.sideGrid,
       RectangularObservationMesh.ObservationMesh.cellSides, RectangularObservationMesh.ObservationMesh.cornerGrid,
     PreparedBoxBoundary.horizontalBoundary_combination,
-    BilinearCombination.edgeArea_combination, mul_add, FiniteSum.Fin.sumFin_add]
+    BilinearCombination.edgeArea_combination, mul_add, sumFin_add]
   rw [BilinearCombination.sumFin_combination, BilinearCombination.sumFin_combination]
 
 /-- The retained stitched left perimeter area is the double weighted sum of the original pair perimeters' left areas. -/
 theorem left_combination :
-    perimeter.left = FiniteSum.Fin.sumFin (fun i => FiniteSum.Fin.sumFin (fun j => left i * right j * (perimeters i
+    perimeter.left = sumFin (fun i => sumFin (fun j => left i * right j * (perimeters i
       j).left)) := by
   rw [perimeter.left_eq]
   simp only [(perimeters _ _).left_eq, assembly.sides_eq, assembly.corners_eq,
     (pairs _ _).sides_eq, (pairs _ _).corners_eq, RectangularObservationMesh.ObservationMesh.sideGrid,
       RectangularObservationMesh.ObservationMesh.cellSides, RectangularObservationMesh.ObservationMesh.cornerGrid,
     PreparedBoxBoundary.verticalBoundary_combination,
-    BilinearCombination.edgeArea_combination, mul_add, FiniteSum.Fin.sumFin_add]
+    BilinearCombination.edgeArea_combination, mul_add, sumFin_add]
   rw [BilinearCombination.sumFin_combination, BilinearCombination.sumFin_combination]
 
 end

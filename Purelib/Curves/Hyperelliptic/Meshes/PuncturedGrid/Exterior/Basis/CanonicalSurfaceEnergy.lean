@@ -70,16 +70,16 @@ open Purelib
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
 
 namespace AllSurfacePreparation
@@ -91,20 +91,20 @@ components. -/
 private theorem component_energy_sum_upper
     (remaining joining :
       SurfaceComponent
-      regular domains differential → Normalization.InverseRootPolynomial.Gaussian)
-    (bound : Normalization.InverseRootPolynomial.Coordinate) :
+      regular domains differential → InverseRootPolynomial.Gaussian)
+    (bound : InverseRootPolynomial.Coordinate) :
     (components : List
       (SurfaceComponent
       regular domains differential)) →
     (∀ component ∈ components, (remaining component + joining component).im / 4 ≤ bound) →
-    (Data.Gaussian.Norm.Sum.Basic.gaussianSum (components.map remaining) + Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    (Gaussian.Norm.Sum.Basic.gaussianSum (components.map remaining) + Gaussian.Norm.Sum.Basic.gaussianSum
       (components.map joining)).im / 4 ≤
-      (components.length : Normalization.InverseRootPolynomial.Coordinate) * bound
+      (components.length : InverseRootPolynomial.Coordinate) * bound
   | [], _ => by
-      change ((0 : Normalization.InverseRootPolynomial.Gaussian) + 0).im / 4 ≤ (0 :
-        Normalization.InverseRootPolynomial.Coordinate) * bound
+      change ((0 : InverseRootPolynomial.Gaussian) + 0).im / 4 ≤ (0 :
+        InverseRootPolynomial.Coordinate) * bound
       rw [Gaussian.Basic.zero_add]
-      change (0 : Normalization.InverseRootPolynomial.Coordinate) / 4 ≤ 0 * bound
+      change (0 : InverseRootPolynomial.Coordinate) / 4 ≤ 0 * bound
       simp only [Fraction.Field.div_eq_mul_inv_direct, zero_mul, -eq_self, -iff_self]
       exact le_refl _
   | head :: tail, bounds => by
@@ -114,57 +114,57 @@ private theorem component_energy_sum_upper
         remaining joining bound tail
         (fun component member => bounds component (List.mem_cons_of_mem head member))
       have both := Fraction.Order.Arithmetic.add_le_add_direct first rest
-      have split : (Data.Gaussian.Norm.Sum.Basic.gaussianSum ((head :: tail).map remaining) +
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum ((head :: tail).map joining)).im / 4 =
+      have split : (Gaussian.Norm.Sum.Basic.gaussianSum ((head :: tail).map remaining) +
+        Gaussian.Norm.Sum.Basic.gaussianSum ((head :: tail).map joining)).im / 4 =
           (remaining head + joining head).im / 4 +
-            (Data.Gaussian.Norm.Sum.Basic.gaussianSum (tail.map remaining) + Data.Gaussian.Norm.Sum.Basic.gaussianSum
+            (Gaussian.Norm.Sum.Basic.gaussianSum (tail.map remaining) + Gaussian.Norm.Sum.Basic.gaussianSum
               (tail.map joining)).im / 4 := by
-        change ((remaining head + Data.Gaussian.Norm.Sum.Basic.gaussianSum (tail.map remaining)) +
-          (joining head + Data.Gaussian.Norm.Sum.Basic.gaussianSum (tail.map joining))).im / 4 = _
+        change ((remaining head + Gaussian.Norm.Sum.Basic.gaussianSum (tail.map remaining)) +
+          (joining head + Gaussian.Norm.Sum.Basic.gaussianSum (tail.map joining))).im / 4 = _
         simp only [Gaussian.Basic.add_im, Fraction.Field.div_eq_mul_inv_direct, -eq_self, -iff_self]
         ring1
       exact split.trans_le (both.trans_eq (by
-        simp only [List.length_cons, Algebra.NatCast.add, Nat.cast_one, -eq_self, -iff_self]
+        simp only [List.length_cons, NatCast.add, Nat.cast_one, -eq_self, -iff_self]
         ring1))
 
 /-- Sum the complete component estimates and identify exactly the canonical exterior sum.
 Each remaining term retains its component's side and endpoint corrections. -/
 theorem built_canonical_energy_upper {stage : Nat}
-    (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage) (coefficients
+    (cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage) (coefficients
       : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
-    (readings : (row : Fin genus) → Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings
+    (readings : (row : Fin genus) → TrianglePrimitiveReadings.TriangleReadings
       (cache.get row) lifted.mesh)
     (remaining :
       SurfaceComponent
-      regular domains differential → Normalization.InverseRootPolynomial.Gaussian) {allowance :
-      Normalization.InverseRootPolynomial.Coordinate}
+      regular domains differential → InverseRootPolynomial.Gaussian) {allowance :
+      InverseRootPolynomial.Coordinate}
     (bounded : ∀ component ∈
       (build
       (lifted := lifted) regular domains differential).components,
       (remaining component + Path.PairedIncrementArea.area (component.program.indexed.map
         (fun edge => Path.ConjugatePathReadback.conjugateDiagonal (FiniteSum.Fin.sumFin fun row => coefficients row *
-          Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values
+          CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values
             edge)))).im / 4 ≤
         allowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) :
-    (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    (Gaussian.Norm.Sum.Basic.gaussianSum
       ((build
       regular domains differential).components.map remaining) +
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (lifted.exteriorBoundaries.map (fun word => Path.PairedIncrementArea.area
+      Gaussian.Norm.Sum.Basic.gaussianSum (lifted.exteriorBoundaries.map (fun word => Path.PairedIncrementArea.area
         (word.map
         (fun edge => Path.ConjugatePathReadback.conjugateDiagonal (FiniteSum.Fin.sumFin fun row => coefficients row *
-          Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values
+          CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values
             edge)))))).im / 4 ≤
 
         ((build
         (lifted := lifted) regular domains differential).components.length :
-        Normalization.InverseRootPolynomial.Coordinate) *
+        InverseRootPolynomial.Coordinate) *
         allowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := by
   have bound :=
     component_energy_sum_upper
     remaining
     (fun component => Path.PairedIncrementArea.area (component.program.indexed.map
       (fun edge => Path.ConjugatePathReadback.conjugateDiagonal (FiniteSum.Fin.sumFin fun row => coefficients row *
-        Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values edge))))
+        CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values edge))))
     (allowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)
 
       (build

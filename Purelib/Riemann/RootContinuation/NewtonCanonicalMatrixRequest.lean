@@ -97,7 +97,7 @@ open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius quarterRadius
 open Purelib.Approximation.Rational.Geometric.Search (firstQuarterBelow firstQuarterBelow_accurate)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -114,9 +114,9 @@ set_option genInjectivity false in
 
 Keeps separate quarter-target preparations, numerical and fragment thresholds, and geometric sample-error witnesses at a
 common index. -/
-structure CanonicalMatrixEntry (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+structure CanonicalMatrixEntry (prepared : Prepared paired)
     (geometry : PeriodGeometry base.bank.toBranchCellBank)
-    (differential cycle : Fin genus) (target : Fraction.Rational) (minimum : Nat) where
+    (differential cycle : Fin genus) (target : Rational) (minimum : Nat) where
   /-- Original A-cycle preparation at one quarter of the target. -/ a : ACanonicalPreparation prepared geometry
     differential cycle (target / 4) minimum
   /-- Original B-cycle preparation at one quarter of the target. -/ b : BCanonicalPreparation prepared geometry
@@ -127,10 +127,10 @@ structure CanonicalMatrixEntry (prepared : Meshes.PuncturedGrid.Paired.PeriodPro
   /-- The common entry index follows the A fragment threshold. -/ a_period : a.request.fragments.stage ≤ index
   /-- The common entry index follows the B fragment threshold. -/ b_period : b.request.fragments.stage ≤ index
   /-- The original A-program geometric error is at most one quarter of the target. -/ a_witness :
-    Geometric.Basic.quarterRadius (max (prepared.periodData.aProgram differential cycle).integral.errorScale 1) index ≤
+    quarterRadius (max (prepared.periodData.aProgram differential cycle).integral.errorScale 1) index ≤
     target / 4
   /-- The original B-program geometric error is at most one quarter of the target. -/ b_witness :
-    Geometric.Basic.quarterRadius (max (prepared.periodData.bProgram differential cycle).integral.errorScale 1) index ≤
+    quarterRadius (max (prepared.periodData.bProgram differential cycle).integral.errorScale 1) index ≤
     target / 4
 
 constructive_injectivity CanonicalMatrixEntry
@@ -144,21 +144,21 @@ open Purelib.Data.Rat in
 
 Builds A and B preparations, searches their original geometric error scales, and takes the maximum of numerical,
 fragment and witness thresholds. -/
-@[expose] def build (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+@[expose] def build (prepared : Prepared paired)
     (geometry : PeriodGeometry base.bank.toBranchCellBank)
-    (differential cycle : Fin genus) (target : Fraction.Rational) (positive : 0 < target) (minimum : Nat) :
+    (differential cycle : Fin genus) (target : Rational) (positive : 0 < target) (minimum : Nat) :
     CanonicalMatrixEntry prepared geometry differential cycle target minimum := by
-  let partPositive := Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Fraction.Rational) < 4)
+  let partPositive := Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Rational) < 4)
   let a := ACanonicalPreparation.build prepared geometry differential cycle (target / 4) partPositive minimum
   let b := BCanonicalPreparation.build prepared geometry differential cycle (target / 4) partPositive minimum
   let aScale := max (prepared.periodData.aProgram differential cycle).integral.errorScale 1
   let bScale := max (prepared.periodData.bProgram differential cycle).integral.errorScale 1
-  have aNonnegative : 0 ≤ aScale := (by decide : (0 : Fraction.Rational) ≤ 1).trans (Fraction.Order.Basic.le_max_right _
+  have aNonnegative : 0 ≤ aScale := (by decide : (0 : Rational) ≤ 1).trans (Fraction.Order.Basic.le_max_right _
     _)
-  have bNonnegative : 0 ≤ bScale := (by decide : (0 : Fraction.Rational) ≤ 1).trans (Fraction.Order.Basic.le_max_right _
+  have bNonnegative : 0 ≤ bScale := (by decide : (0 : Rational) ≤ 1).trans (Fraction.Order.Basic.le_max_right _
     _)
-  let aWitness := Geometric.Search.firstQuarterBelow aScale minimum (target / 4)
-  let bWitness := Geometric.Search.firstQuarterBelow bScale minimum (target / 4)
+  let aWitness := firstQuarterBelow aScale minimum (target / 4)
+  let bWitness := firstQuarterBelow bScale minimum (target / 4)
   let index := max (max a.numericalIndex b.numericalIndex)
     (max (max a.request.fragments.stage b.request.fragments.stage) (max aWitness bWitness))
   have numerics : max a.numericalIndex b.numericalIndex ≤ index := Data.Nat.Order.le_max_left _ _
@@ -171,10 +171,10 @@ fragment and witness thresholds. -/
     (Data.Nat.Order.le_max_left _ _).trans periods, (Data.Nat.Order.le_max_right _ _).trans periods, ?_, ?_⟩
   · exact (quarterRadius_antitone aNonnegative ((Data.Nat.Order.le_max_left _ _).trans
       witnesses)).trans
-      (Geometric.Search.firstQuarterBelow_accurate aScale aNonnegative minimum (target / 4) partPositive).le
+      (firstQuarterBelow_accurate aScale aNonnegative minimum (target / 4) partPositive).le
   · exact (quarterRadius_antitone bNonnegative ((Data.Nat.Order.le_max_right _ _).trans
       witnesses)).trans
-      (Geometric.Search.firstQuarterBelow_accurate bScale bNonnegative minimum (target / 4) partPositive).le
+      (firstQuarterBelow_accurate bScale bNonnegative minimum (target / 4) partPositive).le
 
 end CanonicalMatrixEntry
 
@@ -184,16 +184,16 @@ open Purelib.Data.Rat in
 /-- Dependent bank of canonical matrix entries by differential and cycle.
 
 Every entry retains the same original period geometry, positive target and requested stage floor. -/
-@[expose] def CanonicalMatrixEntries (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
-    (geometry : PeriodGeometry base.bank.toBranchCellBank) (target : Fraction.Rational) (minimum : Nat) :=
+@[expose] def CanonicalMatrixEntries (prepared : Prepared paired)
+    (geometry : PeriodGeometry base.bank.toBranchCellBank) (target : Rational) (minimum : Nat) :=
   Vector.DependentVector (fun differential : Fin genus => Vector.DependentVector (fun cycle : Fin genus =>
     CanonicalMatrixEntry prepared geometry differential cycle target minimum))
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Rat in
 /-- Every retained matrix-entry index lies below the supplied index. -/
-@[expose] def CanonicalMatrixEntries.IndexBound {prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired}
-    {geometry : PeriodGeometry base.bank.toBranchCellBank} {target : Fraction.Rational} {minimum : Nat}
+@[expose] def CanonicalMatrixEntries.IndexBound {prepared : Prepared paired}
+    {geometry : PeriodGeometry base.bank.toBranchCellBank} {target : Rational} {minimum : Nat}
     (entries : CanonicalMatrixEntries prepared geometry target minimum) (index : Nat) : Prop :=
   ∀ differential cycle, ((entries.get differential).get cycle).index ≤ index
 
@@ -204,8 +204,8 @@ set_option genInjectivity false in
 
 Retains target positivity and all differential/cycle entries, with a common stage after their thresholds and the
 requested floor. -/
-structure CanonicalMatrixRequest (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
-    (geometry : PeriodGeometry base.bank.toBranchCellBank) (target : Fraction.Rational) (minimum : Nat) where
+structure CanonicalMatrixRequest (prepared : Prepared paired)
+    (geometry : PeriodGeometry base.bank.toBranchCellBank) (target : Rational) (minimum : Nat) where
   /-- Strict positivity of the requested matrix target. -/ positive : 0 < target
   /-- Actual dependent bank of differential/cycle preparations. -/ entries : CanonicalMatrixEntries prepared geometry
     target minimum
@@ -224,9 +224,9 @@ open Purelib.Data.Rat in
 
 Constructs the differential/cycle bank once and takes the maximum of the requested floor and all retained entry indices.
 -/
-@[expose] def build (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+@[expose] def build (prepared : Prepared paired)
     (geometry : PeriodGeometry base.bank.toBranchCellBank)
-    (target : Fraction.Rational) (positive : 0 < target) (minimum : Nat) :
+    (target : Rational) (positive : 0 < target) (minimum : Nat) :
     CanonicalMatrixRequest prepared geometry target minimum := by
   let entries : CanonicalMatrixEntries prepared geometry target minimum := Vector.DependentVector.ofFn fun differential
     =>
@@ -254,36 +254,36 @@ open Purelib.Riemann.RootContinuation
 At a stage after the retained common index, combines the actual canonical preparation and geometric sample-error
 witness, keeping the original refined sheet and triangle cache. -/
 theorem a_accurate (request : CanonicalMatrixRequest prepared geometry target minimum)
-    (stage : Nat) (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics geometry.domains stage)
+    (stage : Nat) (cache : Numerics geometry.domains stage)
     (triangles : Vector.DependentVector (fun basis : Fin genus =>
-      Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get basis) geometry.lifted.mesh))
+      TriangleReadings (cache.get basis) geometry.lifted.mesh))
     (later : request.index ≤ stage) (differential cycle : Fin genus) :
-    let values := fun basis => Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation geometry.lifted.mesh
+    let values := fun basis => edgeValuation geometry.lifted.mesh
       (triangles.get basis).values
     let matrix := resplitPeriodMatrix prepared geometry.grid.shrunk.included geometry.lifted.edges
       geometry.lifted.vertices
       (canonicalPeriodSheet (lifted := lifted) (sheet := sheet) geometry) values false
-    Data.Gaussian.Norm.Basic.normSq (matrix differential cycle - sampledMatrix prepared.periodData.aMatrix stage
+    normSq (matrix differential cycle - sampledMatrix prepared.periodData.aMatrix stage
       differential
       cycle) ≤ target := by
   intro values matrix
   let entry := (request.entries.get differential).get cycle
   have entryLater : entry.index ≤ stage := (request.index_ge differential cycle).trans later
-  have positive := Fraction.Order.Field.div_pos_direct request.positive (by decide : (0 : Fraction.Rational) < 4)
+  have positive := Fraction.Order.Field.div_pos_direct request.positive (by decide : (0 : Rational) < 4)
   have close := NewtonCanonicalSampleComparison.ACanonicalPreparation.sample_accurate
     entry.a positive stage cache (triangles.get differential)
     (entry.a_numerical.trans entryLater) stage (entry.a_period.trans entryLater)
   have nonnegative : 0 ≤ max (prepared.periodData.aProgram differential cycle).integral.errorScale 1 :=
-    (by decide : (0 : Fraction.Rational) ≤ 1).trans (Fraction.Order.Basic.le_max_right _ _)
+    (by decide : (0 : Rational) ≤ 1).trans (Fraction.Order.Basic.le_max_right _ _)
   have witness := (quarterRadius_antitone nonnegative entryLater).trans entry.a_witness
-  have paid : 2 * (target / 4 + Geometric.Basic.quarterRadius
+  have paid : 2 * (target / 4 + quarterRadius
       (max (prepared.periodData.aProgram differential cycle).integral.errorScale 1) stage) ≤ target := by
     calc
       _ ≤ 2 * (target / 4 + target / 4) := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
         (Fraction.Order.Arithmetic.add_le_add_direct (le_refl _) witness) (by decide)
       _ = target := (by ring1 : 2 * (target / 4 + target / 4) = target / 4 * 4).trans
         (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))
-  change Data.Gaussian.Norm.Basic.normSq (resplitPeriodMatrix prepared geometry.grid.shrunk.included
+  change normSq (resplitPeriodMatrix prepared geometry.grid.shrunk.included
     geometry.lifted.edges
     geometry.lifted.vertices
     (canonicalPeriodSheet (lifted := lifted) (sheet := sheet) geometry) values false differential cycle - _) ≤ target
@@ -295,36 +295,36 @@ theorem a_accurate (request : CanonicalMatrixRequest prepared geometry target mi
 At a stage after the retained common index, combines the actual B preparation and geometric sample-error witness,
 preserving the B-cycle selection and original cache. -/
 theorem b_accurate (request : CanonicalMatrixRequest prepared geometry target minimum)
-    (stage : Nat) (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics geometry.domains stage)
+    (stage : Nat) (cache : Numerics geometry.domains stage)
     (triangles : Vector.DependentVector (fun basis : Fin genus =>
-      Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get basis) geometry.lifted.mesh))
+      TriangleReadings (cache.get basis) geometry.lifted.mesh))
     (later : request.index ≤ stage) (differential cycle : Fin genus) :
-    let values := fun basis => Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation geometry.lifted.mesh
+    let values := fun basis => edgeValuation geometry.lifted.mesh
       (triangles.get basis).values
     let matrix := resplitPeriodMatrix prepared geometry.grid.shrunk.included geometry.lifted.edges
       geometry.lifted.vertices
       (canonicalPeriodSheet (lifted := lifted) (sheet := sheet) geometry) values true
-    Data.Gaussian.Norm.Basic.normSq (matrix differential cycle - sampledMatrix prepared.periodData.bMatrix stage
+    normSq (matrix differential cycle - sampledMatrix prepared.periodData.bMatrix stage
       differential
       cycle) ≤ target := by
   intro values matrix
   let entry := (request.entries.get differential).get cycle
   have entryLater : entry.index ≤ stage := (request.index_ge differential cycle).trans later
-  have positive := Fraction.Order.Field.div_pos_direct request.positive (by decide : (0 : Fraction.Rational) < 4)
+  have positive := Fraction.Order.Field.div_pos_direct request.positive (by decide : (0 : Rational) < 4)
   have close := NewtonCanonicalSampleComparison.BCanonicalPreparation.sample_accurate
     entry.b positive stage cache (triangles.get differential)
     (entry.b_numerical.trans entryLater) stage (entry.b_period.trans entryLater)
   have nonnegative : 0 ≤ max (prepared.periodData.bProgram differential cycle).integral.errorScale 1 :=
-    (by decide : (0 : Fraction.Rational) ≤ 1).trans (Fraction.Order.Basic.le_max_right _ _)
+    (by decide : (0 : Rational) ≤ 1).trans (Fraction.Order.Basic.le_max_right _ _)
   have witness := (quarterRadius_antitone nonnegative entryLater).trans entry.b_witness
-  have paid : 2 * (target / 4 + Geometric.Basic.quarterRadius
+  have paid : 2 * (target / 4 + quarterRadius
       (max (prepared.periodData.bProgram differential cycle).integral.errorScale 1) stage) ≤ target := by
     calc
       _ ≤ 2 * (target / 4 + target / 4) := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
         (Fraction.Order.Arithmetic.add_le_add_direct (le_refl _) witness) (by decide)
       _ = target := (by ring1 : 2 * (target / 4 + target / 4) = target / 4 * 4).trans
         (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))
-  change Data.Gaussian.Norm.Basic.normSq (resplitPeriodMatrix prepared geometry.grid.shrunk.included
+  change normSq (resplitPeriodMatrix prepared geometry.grid.shrunk.included
     geometry.lifted.edges
     geometry.lifted.vertices
     (canonicalPeriodSheet (lifted := lifted) (sheet := sheet) geometry) values true differential cycle - _) ≤ target

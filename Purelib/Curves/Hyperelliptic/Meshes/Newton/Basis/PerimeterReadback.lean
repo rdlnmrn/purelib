@@ -74,7 +74,7 @@ open Purelib.Riemann.Readings.RectangularObservationAssembly.ObservationMesh (Cl
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target
@@ -82,12 +82,12 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     NewtonGrid preparation target radius}
   {lifted : LiftedPuncturedGrid grid.punctured} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames grid.faces.regulars}
   {occurrence :
-    PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
 
 open Purelib.Riemann.Readings.RectangularPointReadings (PointReadings)
@@ -103,7 +103,7 @@ open Purelib.Integration.Path.ConjugatePathReadback (conjugateDiagonal)
 variable {stage : Nat}
   {cuts : GridCuts ((domains.get
     occurrence.sideOccurrence.position).domain occurrence.sideOccurrence.sheet).geometry}
-  {meshBox : Purelib.Geometry.Rational.Box} {mesh :
+  {meshBox : Geometry.Rational.Box} {mesh :
     ObservationMesh cuts meshBox}
 
 namespace SharedPerimeter
@@ -115,7 +115,7 @@ open Purelib.Data.Gaussian.Basic (conj_add conj_mul)
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PerimeterReadback.SharedPerimeter in
 /-- Gaussian conjugation commutes with the original explicit finite sum. -/
-private theorem conjugate_sum {count : Nat} (values : Fin count → InverseRootPolynomial.Gaussian) :
+private theorem conjugate_sum {count : Nat} (values : Fin count → Gaussian) :
     Data.Gaussian.Basic.conj (FiniteSum.Fin.sumFin values) = FiniteSum.Fin.sumFin (fun row =>
       Data.Gaussian.Basic.conj (values row)) := by
   induction count with
@@ -125,31 +125,31 @@ private theorem conjugate_sum {count : Nat} (values : Fin count → InverseRootP
       FiniteSum.Fin.sumFin_succ]
 
 /-- Both constructions read the same weighted primitive in the same retained owner. -/
-theorem gridValues_eq_seam (cache : RegularMeshes.Numerics domains stage) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+theorem gridValues_eq_seam (cache : Numerics domains stage) (coefficients :
+  GaussianVector genus)
     (column row : Fin (((domains.get occurrence.sideOccurrence.position).domain occurrence.sideOccurrence.sheet).steps +
       1))
-    (point : InverseRootPolynomial.Gaussian) :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PerimeterReadback.SharedPerimeter.gridValues
+    (point : Gaussian) :
+    SharedPerimeter.gridValues
       (occurrence := occurrence) cache coefficients column row point =
-      Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.SeamAreas.seamValues (sheet := occurrence.sideOccurrence.sheet)
+      SeamAreas.seamValues (sheet := occurrence.sideOccurrence.sheet)
         cache coefficients occurrence.sideOccurrence.position column row point := by
   unfold SharedPerimeter.gridValues SeamAreas.seamValues Integration.Path.ConjugatePathReadback.conjugateDiagonal
-  apply congrArg (fun first => (⟨first, _⟩ : Stokes.PrimitivePoint))
+  apply congrArg (fun first => (⟨first, _⟩ : PrimitivePoint))
   exact (conjugate_sum _).trans
     (FiniteSum.Fin.sumFin_congr (fun basis => Data.Gaussian.Basic.conj_mul _ _))
 
 variable (traces : PerimeterTraces mesh) (cache :
   Numerics domains stage)
-  (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+  (coefficients : GaussianVector genus)
   (assembly : ClippedAssembly mesh
-    (Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.SeamAreas.seamValues (sheet := occurrence.sideOccurrence.sheet)
+    (SeamAreas.seamValues (sheet := occurrence.sideOccurrence.sheet)
     cache coefficients occurrence.sideOccurrence.position))
   (perimeter : assembly.Perimeter)
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PerimeterReadback.SharedPerimeter
 /-- Read the acquired bottom area in the Newton whole-face assembly. -/
-theorem bottom_original_area_seam (sample : CenteredBilinearPath.Sample (values (occurrence := occurrence) traces cache
+theorem bottom_original_area_seam (sample : Sample (values (occurrence := occurrence) traces cache
   coefficients .bottom)) :
     sample.originalArea = perimeter.bottom := by
   apply sample.originalArea_eq.trans
@@ -164,7 +164,7 @@ theorem bottom_original_area_seam (sample : CenteredBilinearPath.Sample (values 
       coefficients _ _ _
 
 /-- Read the acquired right area in the Newton whole-face assembly. -/
-theorem right_original_area_seam (sample : CenteredBilinearPath.Sample (values (occurrence := occurrence) traces cache
+theorem right_original_area_seam (sample : Sample (values (occurrence := occurrence) traces cache
   coefficients .right)) :
     sample.originalArea = perimeter.right := by
   apply sample.originalArea_eq.trans
@@ -179,7 +179,7 @@ theorem right_original_area_seam (sample : CenteredBilinearPath.Sample (values (
       coefficients _ _ _
 
 /-- Read the acquired top area in the Newton whole-face assembly. -/
-theorem top_original_area_seam (sample : CenteredBilinearPath.Sample (values (occurrence := occurrence) traces cache
+theorem top_original_area_seam (sample : Sample (values (occurrence := occurrence) traces cache
   coefficients .top)) :
     sample.originalArea = perimeter.top := by
   apply sample.originalArea_eq.trans
@@ -194,7 +194,7 @@ theorem top_original_area_seam (sample : CenteredBilinearPath.Sample (values (oc
       coefficients _ _ _
 
 /-- Read the acquired left area in the Newton whole-face assembly. -/
-theorem left_original_area_seam (sample : CenteredBilinearPath.Sample (values (occurrence := occurrence) traces cache
+theorem left_original_area_seam (sample : Sample (values (occurrence := occurrence) traces cache
   coefficients .left)) :
     sample.originalArea = perimeter.left := by
   apply sample.originalArea_eq.trans

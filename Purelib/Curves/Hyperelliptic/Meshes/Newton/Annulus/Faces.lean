@@ -103,16 +103,16 @@ open Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank (Newton
 open Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid (punctured)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target
-    radius : Purelib.Data.Rat.Fraction.Rational}
+    radius : Fraction.Rational}
 
 open Purelib.Polynomial.Geometry.Grid.Incidence.Interval in
 /-- An adjacent grid interval containing a strict interior point cannot cross either retained endpoint coordinate. -/
 private theorem interval_contains_point {Alpha : Type} {key : Alpha → Fraction.Rational} (entries : List Alpha)
-    (ordered : entries.Pairwise (fun left right => key left < key right)) {interval : ClearGrid.Interval key}
+    (ordered : entries.Pairwise (fun left right => key left < key right)) {interval : Grid.Interval key}
     (member : interval ∈ Interval.adjacent entries ordered) {lower upper point : Fraction.Rational}
     (lowerMember : lower ∈ entries.map key) (upperMember : upper ∈ entries.map key)
     (strict : lower < point ∧ point < upper) (inside : key interval.lower ≤ point ∧ point ≤ key interval.upper) :
@@ -127,10 +127,10 @@ private theorem interval_contains_point {Alpha : Type} {key : Alpha → Fraction
 
 /-- Even a point on an internal grid line is assigned to a cell contained in the band: an adjacent interval cannot cross
 a retained band coordinate. -/
-private theorem cell_refines_at_point (grid : BranchCellBank.NewtonGrid preparation target radius) (index : Data.Index
+private theorem cell_refines_at_point (grid : NewtonGrid preparation target radius) (index : Data.Index
   branches)
-    (cell : ClearGrid.Cell curve.polynomial (Cuts.Ambient curve)) (member : cell ∈ grid.punctured.bank.grid.cells)
-      {point : Data.Gaussian.Basic.Canonical}
+    (cell : Grid.Cell curve.polynomial (Cuts.Ambient curve)) (member : cell ∈ grid.punctured.bank.grid.cells)
+      {point : Basic.Canonical}
     (strict : (grid.bands.box index).StrictContains point) (inside : cell.box.Contains point) :
     cell.box.Refines (grid.bands.box index) := by
   rcases Flatten.mem_flatMap.mp member with ⟨horizontal, horizontalMember, member⟩
@@ -146,7 +146,7 @@ private theorem cell_refines_at_point (grid : BranchCellBank.NewtonGrid preparat
 
 /-- A finite list with distinct retained keys has exactly the selected keyed contribution in its conditional sum. -/
 private theorem sum_unique {Alpha : Type} {count : Nat} (key : Alpha → Fin count) (index : Fin count) (value :
-  Data.Gaussian.Basic.Canonical) :
+  Basic.Canonical) :
     ∀ (entries : List Alpha), entries.Pairwise (fun first second => key first ≠ key second) →
       (∃ entry ∈ entries, key entry = index) →
       CellBoundary.sumValues (fun entry => if key entry = index then value else 0) entries = value
@@ -173,13 +173,13 @@ set_option genInjectivity false in
 /-- The retained regular grid faces between one original Newton band and its selected hole.
 
 The exact filtered classification list and window retain the original grid and branch occurrence. -/
-structure AnnularFaces (grid : BranchCellBank.NewtonGrid preparation target radius) (index : Data.Index branches) where
+structure AnnularFaces (grid : NewtonGrid preparation target radius) (index : Data.Index branches) where
   /-- The cached original regular faces contained in the selected Newton band. -/ faces : List
-    (PuncturedGridFaces.RegularFace grid.shrunk.prepared.toBranchCellBank)
+    (RegularFace grid.shrunk.prepared.toBranchCellBank)
   /-- The cached face list is exactly the original regular classification filtered by containment in this band. -/
     faces_eq : faces = grid.faces.regulars.filter (fun face => decide (face.cell.box.Refines (grid.bands.box index)))
   /-- The retained grid window with the exact original Newton band boundary. -/ window :
-    Polynomial.Geometry.Grid.WindowBoundary.Window
+    Window
     grid.shrunk.prepared.grid (grid.bands.box index)
 
 constructive_injectivity AnnularFaces
@@ -187,51 +187,51 @@ constructive_injectivity AnnularFaces
 namespace AnnularFaces
 
 variable {grid : NewtonGrid preparation target
-  radius} {index : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
+  radius} {index : Data.Index branches}
 
 /-- Cache the band's regular faces and its window from the original grid classification and retained axis coordinates.
 -/
-@[expose] def build (grid : BranchCellBank.NewtonGrid preparation target radius) (index : Data.Index branches) :
-  Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index :=
+@[expose] def build (grid : NewtonGrid preparation target radius) (index : Data.Index branches) :
+  AnnularFaces grid index :=
   ⟨grid.faces.regulars.filter (fun face => decide (face.cell.box.Refines (grid.bands.box index))), rfl,
     Window.build _ _ (grid.band_x_lines index).1 (grid.band_x_lines index).2
       (grid.band_y_lines index).1 (grid.band_y_lines index).2⟩
 
 /-- Read the complete original grid-cell list retained by the band window. -/
-@[expose] def cells (annulus : Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index) : List
-  (ClearGrid.Cell curve.polynomial (Cuts.Ambient curve)) := annulus.window.cells
+@[expose] def cells (annulus : AnnularFaces grid index) : List
+  (Grid.Cell curve.polynomial (Cuts.Ambient curve)) := annulus.window.cells
 
 /-- The retained window cells are exactly the original grid cells contained in the selected band. -/
-theorem cells_eq (annulus : Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index) :
+theorem cells_eq (annulus : AnnularFaces grid index) :
     annulus.cells = grid.punctured.bank.grid.cells.filter (fun cell => decide (cell.box.Refines (grid.bands.box index)))
       :=
   annulus.window.cells_eq
 
 /-- Opposite sides reuse the same retained axis spine. No band extraction, axis search or cell classification is
 repeated when reading this walk. -/
-@[expose] def boundary (annulus : Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index) :
+@[expose] def boundary (annulus : AnnularFaces grid index) :
     Walks.Walk grid.shrunk.prepared.grid
       (Components.Basic.point (grid.bands.box index).xLower (grid.bands.box index).yLower)
       (Components.Basic.point (grid.bands.box index).xLower (grid.bands.box index).yLower) := annulus.window.boundary
 
 /-- The retained subdivided outer band boundary has raw winding four. -/
-theorem boundary_winding (annulus : Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index) :
+theorem boundary_winding (annulus : AnnularFaces grid index) :
     ClearPath.rawWinding annulus.boundary.path = 4 := by
   rw [boundary, annulus.window.boundary_winding, ←
     grid.bands.state_box index]
   exact (grid.bands.neighborhoods.states index).rawWindingFour
 
 /-- Every retained annular face lies within its original selected Newton band. -/
-theorem face_inside (annulus : Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index) {face :
-  PuncturedGridFaces.RegularFace grid.shrunk.prepared.toBranchCellBank}
+theorem face_inside (annulus : AnnularFaces grid index) {face :
+  RegularFace grid.shrunk.prepared.toBranchCellBank}
     (member : face ∈ annulus.faces) : face.cell.box.Refines (grid.bands.box index) := by
   rw [annulus.faces_eq] at member
   exact of_decide_eq_true (Data.List.Filter.mem_filter.mp member).2
 
 /-- Coverage is proved from the retained classification spine and the exclusion of every other branch hole, not assumed
 by the annulus cache. -/
-theorem covers (annulus : Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index) {cell :
-  ClearGrid.Cell curve.polynomial (Cuts.Ambient curve)}
+theorem covers (annulus : AnnularFaces grid index) {cell :
+  Grid.Cell curve.polynomial (Cuts.Ambient curve)}
     (member : cell ∈ grid.punctured.bank.grid.cells) (inside : cell.box.Refines (grid.bands.box index))
     (different : cell ≠ grid.punctured.bank.toBranchCellBank.cell index) :
     ∃ face ∈ annulus.faces, face.cell = cell := by
@@ -245,20 +245,20 @@ theorem covers (annulus : Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.Annul
 
 /-- Every rational point in the open band but outside the closed hole is covered by a retained regular face, including
 points on internal grid seams. -/
-theorem point_covered (annulus : Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index) {point :
-  Data.Gaussian.Basic.Canonical}
+theorem point_covered (annulus : AnnularFaces grid index) {point :
+  Basic.Canonical}
     (inside : (grid.bands.box index).StrictContains point)
     (outsideHole : ¬(grid.punctured.bank.toBranchCellBank.cell index).box.Contains point) :
     ∃ face ∈ annulus.faces, face.cell.box.Contains point := by
   have proper := (grid.bands.entries.get index).selection.sample.output.proper
-  let found := Polynomial.Geometry.Grid.ClearGridCoverage.locate grid.punctured.bank.grid point
-    (Polynomial.Geometry.Grid.FromStates.spanned_of_keys _ _ (grid.band_x_lines index).1 (grid.band_x_lines index).2
+  let found := ClearGridCoverage.locate grid.punctured.bank.grid point
+    (FromStates.spanned_of_keys _ _ (grid.band_x_lines index).1 (grid.band_x_lines index).2
       proper.1 ⟨inside.1.le,
       inside.2.1.le⟩)
-    (Polynomial.Geometry.Grid.FromStates.spanned_of_keys _ _ (grid.band_y_lines index).1 (grid.band_y_lines index).2
+    (FromStates.spanned_of_keys _ _ (grid.band_y_lines index).1 (grid.band_y_lines index).2
       proper.2 ⟨inside.2.2.1.le,
       inside.2.2.2.le⟩)
-  have included := Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.cell_refines_at_point grid index found.cell
+  have included := Faces.cell_refines_at_point grid index found.cell
     found.member inside found.contains
   have different : found.cell ≠ grid.punctured.bank.toBranchCellBank.cell index := by
     intro equal
@@ -268,9 +268,9 @@ theorem point_covered (annulus : Curves.Hyperelliptic.Meshes.Newton.Annulus.Face
 
 set_option genInjectivity false in
 /-- A retained original regular face containing the displayed point in the same annulus. -/
-structure Located (annulus : Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index) (point :
-  Data.Gaussian.Basic.Canonical) where
-  /-- The retained original regular face containing the displayed point. -/ face : PuncturedGridFaces.RegularFace
+structure Located (annulus : AnnularFaces grid index) (point :
+  Basic.Canonical) where
+  /-- The retained original regular face containing the displayed point. -/ face : RegularFace
     grid.shrunk.prepared.toBranchCellBank
   /-- The retained face belongs to this exact annulus's cached list. -/ member : face ∈ annulus.faces
   /-- The retained face box contains the displayed point. -/ contains : face.cell.box.Contains point
@@ -281,10 +281,10 @@ constructive_injectivity Located
 
 The rational containment decision examines each retained face in list order. Coverage
 certifies a successful result without changing that first-occurrence selection. -/
-@[expose] def findFace (point : Data.Gaussian.Basic.Canonical) :
-    ∀ (faces : List (PuncturedGridFaces.RegularFace grid.shrunk.prepared.toBranchCellBank)),
+@[expose] def findFace (point : Basic.Canonical) :
+    ∀ (faces : List (RegularFace grid.shrunk.prepared.toBranchCellBank)),
       (∃ face ∈ faces, face.cell.box.Contains point) →
-      { face : PuncturedGridFaces.RegularFace grid.shrunk.prepared.toBranchCellBank // face ∈ faces ∧
+      { face : RegularFace grid.shrunk.prepared.toBranchCellBank // face ∈ faces ∧
         face.cell.box.Contains point }
   | [], found => False.elim (by obtain ⟨_, member, _⟩ := found; cases member)
   | face :: tail, found =>
@@ -299,8 +299,8 @@ certifies a successful result without changing that first-occurrence selection. 
 
 /-- An executable witness from the cached face list. The lookup checks only finite rational containment and never
 reacquires analytic clearance. -/
-@[expose] def locate (annulus : Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index) (point :
-  Data.Gaussian.Basic.Canonical)
+@[expose] def locate (annulus : AnnularFaces grid index) (point :
+  Basic.Canonical)
     (inside : (grid.bands.box index).StrictContains point)
     (outsideHole : ¬(grid.punctured.bank.toBranchCellBank.cell index).box.Contains point) :
       Located annulus point :=
@@ -309,8 +309,8 @@ reacquires analytic clearance. -/
   ⟨found.val, found.property.1, found.property.2⟩
 
 /-- The filtered hole contribution in one Newton band is exactly its original selected branch hole. -/
-private theorem hole_sum (grid : BranchCellBank.NewtonGrid preparation target radius) (index : Data.Index branches)
-    (value : ClearGrid.Cell curve.polynomial (Cuts.Ambient curve) → Data.Gaussian.Basic.Canonical) :
+private theorem hole_sum (grid : NewtonGrid preparation target radius) (index : Data.Index branches)
+    (value : Grid.Cell curve.polynomial (Cuts.Ambient curve) → Basic.Canonical) :
     CellBoundary.sumValues (fun hole => if hole.cell.box.Refines (grid.bands.box index) then value hole.cell else 0)
       grid.faces.holes =
       value (grid.punctured.bank.toBranchCellBank.cell index) := by
@@ -325,13 +325,13 @@ private theorem hole_sum (grid : BranchCellBank.NewtonGrid preparation target ra
       · have outside : ¬hole.cell.box.Refines (grid.bands.box index) := fun inside => same (grid.hole_index hole index
           inside)
         rw [if_neg outside, if_neg same])]
-  exact Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.sum_unique (fun hole => hole.index) index _ grid.faces.holes
+  exact Faces.sum_unique (fun hole => hole.index) index _ grid.faces.holes
     grid.faces.holes_pairwise (grid.faces.hole_complete index)
 
 /-- Exact cellwise decomposition of the actual band region. In particular, the only removed contribution is the actual
 selected grid hole. -/
-theorem sum_balance (annulus : Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index) (value :
-  ClearGrid.Cell curve.polynomial (Cuts.Ambient curve) → Data.Gaussian.Basic.Canonical) :
+theorem sum_balance (annulus : AnnularFaces grid index) (value :
+  Grid.Cell curve.polynomial (Cuts.Ambient curve) → Basic.Canonical) :
     CellBoundary.sumValues (fun face => value face.cell) annulus.faces + value
       (grid.punctured.bank.toBranchCellBank.cell index) =
       CellBoundary.sumValues value annulus.cells := by
@@ -345,12 +345,12 @@ theorem sum_balance (annulus : Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.
 
 /-- Exact annular incidence on the actual subdivided outer walk and actual inner cell. Arbitrary shared edge readings
 are allowed; this is not yet a claim identifying independently prepared integration programs. -/
-theorem boundary_balance (annulus : Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index) (values :
-  CellBoundary.EdgeValues) :
+theorem boundary_balance (annulus : AnnularFaces grid index) (values :
+  EdgeValues) :
     CellBoundary.sumValues (fun face => values.walk face.boundary) annulus.faces +
       values.cellBoundary (grid.shrunk.prepared.toBranchCellBank.cell index) = values.walk annulus.boundary := by
   have regular := CellBoundary.sumValues_congr
-    (fun face : PuncturedGridFaces.RegularFace grid.shrunk.prepared.toBranchCellBank => values.walk face.boundary)
+    (fun face : RegularFace grid.shrunk.prepared.toBranchCellBank => values.walk face.boundary)
     (fun face => values.cellBoundary face.cell) annulus.faces
     (fun face _ => Cell.boundaryWalk_value face.cell face.member values)
   exact (congrArg (fun total => total + values.cellBoundary (grid.shrunk.prepared.toBranchCellBank.cell index))
@@ -359,8 +359,8 @@ theorem boundary_balance (annulus : Curves.Hyperelliptic.Meshes.Newton.Annulus.F
 
 /-- The sum over retained annular face boundaries is the retained outer boundary value minus the original selected hole
 boundary value. -/
-theorem boundary_eq_outer_sub_hole (annulus : Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index)
-  (values : CellBoundary.EdgeValues) :
+theorem boundary_eq_outer_sub_hole (annulus : AnnularFaces grid index)
+  (values : EdgeValues) :
     CellBoundary.sumValues (fun face => values.walk face.boundary) annulus.faces = values.walk annulus.boundary -
       values.walk (Cell.boundaryWalk
         (grid.shrunk.prepared.toBranchCellBank.cell index)

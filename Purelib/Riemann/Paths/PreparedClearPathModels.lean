@@ -43,6 +43,10 @@ import Mathlib.Order.Basic
 import Mathlib.Data.Nat.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Geometry
+
+open Purelib.Curves.Hyperelliptic
+
 @[expose] public section
 
 /-!
@@ -65,28 +69,28 @@ abbrev Gaussian := Basic.Canonical
 open Purelib.Polynomial.Dense.Gaussian in
 /-- A dense polynomial over canonical Gaussian rationals. -/
 abbrev GaussianPolynomial :=
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+  Basic.CanonicalCoefficients.CoefficientPolynomial
 /-- The original rational box type. -/
-abbrev Box := Purelib.Geometry.Rational.Box
+abbrev Box := Geometry.Rational.Box
 /-- The original square-root continuation owner at its retained radicand. -/
-abbrev Owner := Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+abbrev Owner := Topology.SquareRootContinuationChain.Owner
 /-- A subdivision parameter with its original unit-interval bounds. -/
-abbrev Endpoint := Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.Endpoint
+abbrev Endpoint := Branches.ClearSheetContinuation.Subdivision.Endpoint
 /-- A polynomial cell model with retained endpoints, observations and local allowance. -/
-abbrev CellModel := Purelib.Integration.Polynomial.Gaussian.Cell.Basic.CellModel
+abbrev CellModel := Integration.Polynomial.Gaussian.Cell.Basic.CellModel
 open Purelib in
 open Purelib.Curves.Hyperelliptic.Differentials in
 /-- A coherent wedge-coefficient family certified equivalent to zero at each bounded parameter. -/
-abbrev WedgeChart {genus : Nat} (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+abbrev WedgeChart {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (leftDifferential rightDifferential : Basic.Differential genus) :=
-  Purelib.Riemann.Integration.PreparedSubdivisionModelCore.WedgeChart curve leftDifferential
+  Integration.PreparedSubdivisionModelCore.WedgeChart curve leftDifferential
     rightDifferential
 open Purelib.Polynomial in
 open Purelib.Riemann.Branches in
 /-- The original dependent subdivision retaining its segment, starting endpoint and owner. -/
 abbrev PreparedSubdivision {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter))) :=
@@ -109,7 +113,7 @@ open Purelib.RootIsolation in
 The cast uses the exact segment start equation and preserves the original root track and owner data. -/
 def ownerAtStart {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (owner : Owner (polynomial.eval start)) :
     Owner (polynomial.eval (segment.pointAt zeroEndpoint.parameter)) := by
   exact SquareRoot.Owner.Transport.castOwnerParameter
@@ -122,15 +126,15 @@ open Purelib.Polynomial
 /-- Transport the zero-parameter owner back to the original displayed start radicand. -/
 def ownerAtDisplayedStart {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (owner : Owner (polynomial.eval (segment.pointAt 0))) :
     Owner (polynomial.eval start) := by
-  simpa only [Geometry.ClearPath.ClearSegment.pointAt_zero] using owner
+  simpa only [ClearPath.ClearSegment.pointAt_zero] using owner
 
 /-- The displayed-start transport preserves the owner up to heterogeneous equality. -/
 theorem ownerAtDisplayedStart_heq {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (owner : Owner (polynomial.eval (segment.pointAt 0))) :
     HEq (ownerAtDisplayedStart segment owner) owner := by
   unfold ownerAtDisplayedStart
@@ -144,7 +148,7 @@ open Purelib.RootIsolation in
 /-- Transporting a zero-parameter owner to the displayed start and back returns the exact original owner. -/
 theorem ownerAtStart_ownerAtDisplayedStart {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (owner : Owner (polynomial.eval (segment.pointAt 0))) :
     ownerAtStart segment (ownerAtDisplayedStart segment owner) = owner := by
   apply eq_of_heq
@@ -160,13 +164,13 @@ The construction uses the bounded zero-to-one dyadic path, then transports its e
 segment equations. -/
 def dyadicRefineSegment {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (depth : Nat) :
-    Polynomial.Geometry.ClearPath polynomial ambient start finish :=
+    Geometry.ClearPath polynomial ambient start finish :=
   ((ClearSheetContinuation.Subdivision.dyadicPath segment within
       depth zeroEndpoint oneEndpoint).castStart (by
-        exact Geometry.ClearPath.ClearSegment.pointAt_zero _)).castFinish (by
-          exact Geometry.ClearPath.ClearSegment.pointAt_one _)
+        exact ClearPath.ClearSegment.pointAt_zero _)).castFinish (by
+          exact ClearPath.ClearSegment.pointAt_one _)
 
 /-- A depth-`depth` segment refinement has exactly `2 ^ depth` segments.
 
@@ -175,11 +179,11 @@ depth and source owners are preserved in this scalar readback. -/
 @[simp] theorem dyadicRefineSegment_segmentCount
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (depth : Nat) :
     (dyadicRefineSegment segment within depth).segmentCount = 2 ^ depth := by
-  rewrite [dyadicRefineSegment, Polynomial.Geometry.ClearPath.segmentCount_castFinish,
-    Polynomial.Geometry.ClearPath.segmentCount_castStart,
+  rewrite [dyadicRefineSegment, ClearPath.segmentCount_castFinish,
+    ClearPath.segmentCount_castStart,
     ClearSheetContinuation.Subdivision.dyadicPath_segmentCount]
   exact Eq.refl _
 
@@ -193,7 +197,7 @@ The initial owner is the original displayed-start owner transported to parameter
 identifies the segment's displayed finish. -/
 structure CompleteSegment {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (owner : Owner (polynomial.eval start)) where
   /-- The actual prepared subdivision starting at parameter zero with the original transported source owner. -/
@@ -215,7 +219,7 @@ The success equation supplies its exact terminal parameter, preserving the retur
 owner. -/
 def ofTryDyadic {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (owner : Owner (polynomial.eval start))
     (depth : Nat) (rootDiameter : Fraction.Rational)
@@ -237,7 +241,7 @@ def ofTryDyadic {polynomial : GaussianPolynomial} {ambient : Box}
 /-- Construct a complete prepared segment from the original dyadic mesh-safety certificate. -/
 def ofSafeDyadic {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (owner : Owner (polynomial.eval start))
     (depth : Nat) (rootDiameter : Fraction.Rational)
@@ -254,7 +258,7 @@ def ofSafeDyadic {polynomial : GaussianPolynomial} {ambient : Box}
 /-- Construct a complete prepared segment from safety of the actual executed dyadic preparation. -/
 def ofExecutedDyadic {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (owner : Owner (polynomial.eval start))
     (depth : Nat) (rootDiameter : Fraction.Rational)
@@ -273,7 +277,7 @@ def ofExecutedDyadic {polynomial : GaussianPolynomial} {ambient : Box}
 @[simp] theorem ofTryDyadic_stepCount
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (owner : Owner (polynomial.eval start))
     (depth : Nat) (rootDiameter : Fraction.Rational)
@@ -293,7 +297,7 @@ def ofExecutedDyadic {polynomial : GaussianPolynomial} {ambient : Box}
 theorem ofTryDyadic_parameterEdges
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (owner : Owner (polynomial.eval start))
     (depth : Nat) (rootDiameter : Fraction.Rational)
@@ -315,7 +319,7 @@ theorem ofTryDyadic_parameterEdges
 theorem ofTryDyadic_requests
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (owner : Owner (polynomial.eval start))
     (depth : Nat) (rootDiameter : Fraction.Rational)
@@ -337,7 +341,7 @@ theorem ofTryDyadic_requests
 @[simp] theorem ofSafeDyadic_stepCount
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (owner : Owner (polynomial.eval start))
     (depth : Nat) (rootDiameter : Fraction.Rational)
@@ -354,7 +358,7 @@ theorem ofTryDyadic_requests
 theorem ofSafeDyadic_parameterEdges
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (owner : Owner (polynomial.eval start))
     (depth : Nat) (rootDiameter : Fraction.Rational)
@@ -373,7 +377,7 @@ theorem ofSafeDyadic_parameterEdges
 theorem ofSafeDyadic_requests
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (owner : Owner (polynomial.eval start))
     (depth : Nat) (rootDiameter : Fraction.Rational)
@@ -392,7 +396,7 @@ theorem ofSafeDyadic_requests
 @[simp] theorem ofExecutedDyadic_stepCount
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (owner : Owner (polynomial.eval start))
     (depth : Nat) (rootDiameter : Fraction.Rational)
@@ -410,7 +414,7 @@ theorem ofSafeDyadic_requests
 theorem ofExecutedDyadic_parameterEdges
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (owner : Owner (polynomial.eval start))
     (depth : Nat) (rootDiameter : Fraction.Rational)
@@ -430,7 +434,7 @@ theorem ofExecutedDyadic_parameterEdges
 theorem ofSafeDyadic_parameterEdges_add
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (owner : Owner (polynomial.eval start))
     (earlier additional : Nat)
@@ -458,22 +462,22 @@ The original retained segment and tail certificates supply the displayed finite 
 depth and source owners are preserved in this scalar readback. -/
 theorem start_eq {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient}
     {owner : Owner (polynomial.eval start)}
     (_prepared : CompleteSegment segment within owner) :
     segment.pointAt zeroEndpoint.parameter = start := by
-  exact Geometry.ClearPath.ClearSegment.pointAt_zero _
+  exact ClearPath.ClearSegment.pointAt_zero _
 
 /-- The complete subdivision's actual terminal coordinate is the original displayed finish. -/
 theorem finish_eq {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient}
     {owner : Owner (polynomial.eval start)}
     (prepared : CompleteSegment segment within owner) :
     segment.pointAt prepared.subdivision.endpoint.parameter = finish := by
-  rw [prepared.endpoint_eq, Geometry.ClearPath.ClearSegment.pointAt_one]
+  rw [prepared.endpoint_eq, ClearPath.ClearSegment.pointAt_one]
 
 end
 
@@ -482,7 +486,7 @@ open Purelib.RootIsolation in
 /-- Transport the actual terminal subdivision owner to the segment's displayed finish radicand. -/
 def terminalOwner {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient}
     {owner : Owner (polynomial.eval start)}
     (prepared : CompleteSegment segment within owner) :
@@ -494,7 +498,7 @@ open Purelib.Polynomial in
 /-- The exact terminal owner at the segment's displayed finish. -/
 def finishOwner {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient}
     {owner : Owner (polynomial.eval start)}
     (prepared : CompleteSegment segment within owner) :
@@ -507,7 +511,7 @@ open Purelib.RootIsolation in
 theorem finishOwner_heq_terminalOwner
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient}
     {owner : Owner (polynomial.eval start)}
     (prepared : CompleteSegment segment within owner) :
@@ -522,7 +526,7 @@ open Purelib.Riemann.RootContinuation in
 def terminalRootEquivalentFinishOwner
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient}
     {owner : Owner (polynomial.eval start)}
     (prepared : CompleteSegment segment within owner) :
@@ -537,11 +541,11 @@ open Purelib.Polynomial in
 /-- Read the original prepared subdivision as a clear path with its displayed endpoint indices. -/
 def clearPath {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient}
     {owner : Owner (polynomial.eval start)}
     (prepared : CompleteSegment segment within owner) :
-    Polynomial.Geometry.ClearPath polynomial ambient start finish :=
+    Geometry.ClearPath polynomial ambient start finish :=
   (prepared.subdivision.toClearPath.castStart prepared.start_eq).castFinish
     prepared.finish_eq
 
@@ -552,10 +556,10 @@ open Purelib.Polynomial in
 open Purelib.Riemann.Integration in
 /-- Read the original subdivision's edges with their exact canonical center states. -/
 def centeredEdges {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment curve.polynomial ambient start finish}
     {within : segment.WithinAmbient}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (prepared : CompleteSegment segment within owner) :
@@ -573,10 +577,10 @@ open Purelib.Polynomial
 open Purelib.Riemann.Integration
 /-- The sum of retained geometric lower estimates for the integral sample's real coordinate. -/
 def integralRealLower {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment curve.polynomial ambient start finish}
     {within : segment.WithinAmbient}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (prepared : CompleteSegment segment within owner) :
@@ -586,10 +590,10 @@ def integralRealLower {genus : Nat}
 
 /-- The sum of retained geometric lower estimates for the integral sample's negated real coordinate. -/
 def negatedIntegralRealLower {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment curve.polynomial ambient start finish}
     {within : segment.WithinAmbient}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (prepared : CompleteSegment segment within owner) :
@@ -600,10 +604,10 @@ def negatedIntegralRealLower {genus : Nat}
 /-- The sum of retained geometric lower estimates for the integral sample's scalar projection onto the supplied Gaussian
 direction. -/
 def directionalIntegralLower {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment curve.polynomial ambient start finish}
     {within : segment.WithinAmbient}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (direction : Gaussian)
@@ -618,10 +622,10 @@ open Purelib.Polynomial
 open Purelib.Riemann.Integration
 /-- The canonical centered edge list has the original subdivision's step count. -/
 @[simp] theorem centeredEdges_length {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment curve.polynomial ambient start finish}
     {within : segment.WithinAmbient}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (prepared : CompleteSegment segment within owner) :
@@ -633,10 +637,10 @@ open Purelib.Riemann.Integration
 
 /-- The centered edges retain the exact original subdivision parameter-edge list. -/
 theorem centeredEdges_parameterEdges {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment curve.polynomial ambient start finish}
     {within : segment.WithinAmbient}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (prepared : CompleteSegment segment within owner) :
@@ -649,10 +653,10 @@ theorem centeredEdges_parameterEdges {genus : Nat}
 
 /-- The centered edges retain the exact original cached prepared-box list. -/
 theorem centeredEdges_preparedBoxes {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment curve.polynomial ambient start finish}
     {within : segment.WithinAmbient}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (prepared : CompleteSegment segment within owner) :
@@ -666,10 +670,10 @@ theorem centeredEdges_preparedBoxes {genus : Nat}
 
 /-- The canonical centered edge models are exactly the canonical centered subdivision's certified cells. -/
 theorem centeredEdges_models {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment curve.polynomial ambient start finish}
     {within : segment.WithinAmbient}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (prepared : CompleteSegment segment within owner) :
@@ -694,7 +698,7 @@ their ordered concatenation. -/
 theorem clearPath_eq_dyadicRefineSegment_of_parameterEdges
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (owner : Owner (polynomial.eval start))
     (prepared : CompleteSegment segment within owner)
@@ -704,9 +708,9 @@ theorem clearPath_eq_dyadicRefineSegment_of_parameterEdges
         zeroEndpoint oneEndpoint) :
     prepared.clearPath = dyadicRefineSegment segment within depth := by
   let startEqual : segment.pointAt zeroEndpoint.parameter = start := by
-    exact Geometry.ClearPath.ClearSegment.pointAt_zero _
+    exact ClearPath.ClearSegment.pointAt_zero _
   let finishEqual : segment.pointAt oneEndpoint.parameter = finish := by
-    exact Geometry.ClearPath.ClearSegment.pointAt_one _
+    exact ClearPath.ClearSegment.pointAt_one _
   have mesh :=
     PreparedSheetContinuation.Subdivision.toClearPath_eq_geometricPath_parameterEdges
       prepared.subdivision
@@ -779,8 +783,8 @@ theorem clearPath_eq_dyadicRefineSegment_of_parameterEdges
                 (PreparedSheetContinuation.Subdivision.endpoint_eq_finalTarget_parameterEdges
                     prepared.subdivision))).castFinish
               actualFinishEqual).castFinish dyadicFinishEqual := by
-        rewrite [Polynomial.Geometry.ClearPath.castFinish_castFinish,
-          Polynomial.Geometry.ClearPath.castFinish_castFinish]
+        rewrite [ClearPath.castFinish_castFinish,
+          ClearPath.castFinish_castFinish]
         exact Eq.refl _
       _ = ((ClearSheetContinuation.Subdivision.geometricPath
             segment within zeroEndpoint actualTargets).castFinish
@@ -795,14 +799,14 @@ theorem clearPath_eq_dyadicRefineSegment_of_parameterEdges
       _ = ClearSheetContinuation.Subdivision.dyadicPath segment
           within depth zeroEndpoint oneEndpoint := rfl
   have transported := congrArg
-    (fun refined : Polynomial.Geometry.ClearPath polynomial ambient
+    (fun refined : Geometry.ClearPath polynomial ambient
         (segment.pointAt zeroEndpoint.parameter)
         (segment.pointAt oneEndpoint.parameter) =>
       (refined.castStart startEqual).castFinish finishEqual) meshAtEndpoint
   dsimp only [clearPath, dyadicRefineSegment]
-  rewrite [Polynomial.Geometry.ClearPath.castStart_castFinish,
-    Polynomial.Geometry.ClearPath.castFinish_castFinish] at transported
-  rewrite [Polynomial.Geometry.ClearPath.castStart_castFinish]
+  rewrite [ClearPath.castStart_castFinish,
+    ClearPath.castFinish_castFinish] at transported
+  rewrite [ClearPath.castStart_castFinish]
   exact transported
 
 section
@@ -816,7 +820,7 @@ depth and source owners are preserved in this scalar readback. -/
 theorem ofTryDyadic_clearPath
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (owner : Owner (polynomial.eval start))
     (depth : Nat) (rootDiameter : Fraction.Rational)
@@ -829,29 +833,29 @@ theorem ofTryDyadic_clearPath
     (ofTryDyadic segment within owner depth rootDiameter rootDiameterPositive
       success).clearPath = dyadicRefineSegment segment within depth := by
   let startEqual : segment.pointAt zeroEndpoint.parameter = start := by
-    exact Geometry.ClearPath.ClearSegment.pointAt_zero _
+    exact ClearPath.ClearSegment.pointAt_zero _
   let finishEqual : segment.pointAt oneEndpoint.parameter = finish := by
-    exact Geometry.ClearPath.ClearSegment.pointAt_one _
+    exact ClearPath.ClearSegment.pointAt_one _
   have mesh :=
     PreparedSheetContinuation.Subdivision.tryDyadic_toClearPath_eq_dyadicPath
       segment within zeroEndpoint oneEndpoint (ownerAtStart segment owner) depth
         rootDiameter rootDiameterPositive success
   have transported := congrArg
-    (fun refined : Polynomial.Geometry.ClearPath polynomial ambient
+    (fun refined : Geometry.ClearPath polynomial ambient
         (segment.pointAt zeroEndpoint.parameter)
         (segment.pointAt oneEndpoint.parameter) =>
       (refined.castStart startEqual).castFinish finishEqual) mesh
   dsimp only [clearPath, ofTryDyadic, dyadicRefineSegment]
-  rewrite [Polynomial.Geometry.ClearPath.castStart_castFinish,
-    Polynomial.Geometry.ClearPath.castFinish_castFinish] at transported
-  rewrite [Polynomial.Geometry.ClearPath.castStart_castFinish]
+  rewrite [ClearPath.castStart_castFinish,
+    ClearPath.castFinish_castFinish] at transported
+  rewrite [ClearPath.castStart_castFinish]
   exact transported
 
 /-- The mesh-safe complete subdivision has exactly the geometric dyadic refinement as its clear path. -/
 theorem ofSafeDyadic_clearPath
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (owner : Owner (polynomial.eval start))
     (depth : Nat) (rootDiameter : Fraction.Rational)
@@ -868,7 +872,7 @@ theorem ofSafeDyadic_clearPath
 theorem ofExecutedDyadic_clearPath
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (owner : Owner (polynomial.eval start))
     (depth : Nat) (rootDiameter : Fraction.Rational)
@@ -894,10 +898,10 @@ open Purelib.Riemann.Integration
 /-- The mesh-safe complete subdivision has canonical centered edges with exactly the requested dyadic parameter edges.
 -/
 theorem ofSafeDyadic_centeredEdges_parameterEdges {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment curve.polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (owner : Owner (curve.polynomial.eval start))
     (sheet : Fin 2) (depth : Nat)
@@ -916,10 +920,10 @@ theorem ofSafeDyadic_centeredEdges_parameterEdges {genus : Nat}
 /-- The actual successful complete subdivision has canonical centered edges with exactly the requested dyadic parameter
 edges. -/
 theorem ofTryDyadic_centeredEdges_parameterEdges {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment curve.polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (owner : Owner (curve.polynomial.eval start))
     (sheet : Fin 2) (depth : Nat)
@@ -946,8 +950,8 @@ open Purelib.Polynomial
 /-- Refine every original clear-path segment at the same dyadic depth and concatenate in order. -/
 def dyadicRefinePath {polynomial : GaussianPolynomial} {ambient : Box} :
     {start finish : Gaussian} ->
-      (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) ->
-        path.WithinAmbient -> Nat -> Polynomial.Geometry.ClearPath polynomial ambient start finish
+      (path : Geometry.ClearPath polynomial ambient start finish) ->
+        path.WithinAmbient -> Nat -> Geometry.ClearPath polynomial ambient start finish
   | _, _, .nil point, _within, _depth => .nil point
   | _, _, .cons head tail, within, depth =>
       (dyadicRefineSegment head within.head depth).append
@@ -959,9 +963,9 @@ When the depth list ends, the unchanged original path tail is retained; extra de
 nothing. -/
 def dyadicRefinePathScheduled {polynomial : GaussianPolynomial}
     {ambient : Box} : {start finish : Gaussian} ->
-      (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) ->
+      (path : Geometry.ClearPath polynomial ambient start finish) ->
         path.WithinAmbient -> List Nat ->
-          Polynomial.Geometry.ClearPath polynomial ambient start finish
+          Geometry.ClearPath polynomial ambient start finish
   | _, _, .nil point, _within, _depths => .nil point
   | _, _, .cons head tail, _within, [] => .cons head tail
   | _, _, .cons head tail, within, depth :: depths =>
@@ -973,7 +977,7 @@ open Purelib.Riemann.Branches in
 private theorem geometricPath_withinAmbient
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (current : ClearSheetContinuation.Subdivision.Endpoint) :
     forall remaining :
@@ -991,7 +995,7 @@ private theorem geometricPath_withinAmbient
 private theorem castStart_withinAmbient
     {polynomial : GaussianPolynomial} {ambient : Box}
     {left right finish : Gaussian}
-    (path : Polynomial.Geometry.ClearPath polynomial ambient left finish)
+    (path : Geometry.ClearPath polynomial ambient left finish)
     (within : path.WithinAmbient) (equal : left = right) :
     (path.castStart equal).WithinAmbient := by
   subst right
@@ -1001,7 +1005,7 @@ private theorem castStart_withinAmbient
 private theorem castFinish_withinAmbient
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start left right : Gaussian}
-    (path : Polynomial.Geometry.ClearPath polynomial ambient start left)
+    (path : Geometry.ClearPath polynomial ambient start left)
     (within : path.WithinAmbient) (equal : left = right) :
     (path.castFinish equal).WithinAmbient := by
   subst right
@@ -1012,7 +1016,7 @@ open Purelib.Riemann.Branches in
 theorem dyadicRefineSegment_withinAmbient
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (depth : Nat) :
     (dyadicRefineSegment segment within depth).WithinAmbient := by
   unfold dyadicRefineSegment
@@ -1026,7 +1030,7 @@ theorem dyadicRefineSegment_withinAmbient
 theorem dyadicRefinePath_withinAmbient
     {polynomial : GaussianPolynomial} {ambient : Box} :
     forall {start finish : Gaussian}
-      (path : Polynomial.Geometry.ClearPath polynomial ambient start finish)
+      (path : Geometry.ClearPath polynomial ambient start finish)
       (within : path.WithinAmbient) (depth : Nat),
       (dyadicRefinePath path within depth).WithinAmbient
   | _, _, .nil point, _within, _depth => .nil point
@@ -1038,7 +1042,7 @@ theorem dyadicRefinePath_withinAmbient
 theorem dyadicRefinePathScheduled_withinAmbient
     {polynomial : GaussianPolynomial} {ambient : Box} :
     forall {start finish : Gaussian}
-      (path : Polynomial.Geometry.ClearPath polynomial ambient start finish)
+      (path : Geometry.ClearPath polynomial ambient start finish)
       (within : path.WithinAmbient) (depths : List Nat),
       (dyadicRefinePathScheduled path within depths).WithinAmbient
   | _, _, .nil point, _within, _depths => by
@@ -1056,7 +1060,7 @@ depth and source owners are preserved in this scalar readback. -/
 @[simp] theorem dyadicRefinePath_segmentCount
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (path : Polynomial.Geometry.ClearPath polynomial ambient start finish)
+    (path : Geometry.ClearPath polynomial ambient start finish)
     (within : path.WithinAmbient) (depth : Nat) :
     (dyadicRefinePath path within depth).segmentCount =
       2 ^ depth * path.segmentCount := by
@@ -1065,7 +1069,7 @@ depth and source owners are preserved in this scalar readback. -/
   | cons head tail inductionHypothesis =>
       change ((dyadicRefineSegment head within.head depth).append
         (dyadicRefinePath tail within.tail depth)).segmentCount = _
-      rewrite [Polynomial.Geometry.ClearPath.segmentCount_append,
+      rewrite [ClearPath.segmentCount_append,
         dyadicRefineSegment_segmentCount, inductionHypothesis within.tail]
       change 2 ^ depth + 2 ^ depth * tail.segmentCount = 2 ^ depth * (tail.segmentCount + 1)
       rw [Nat.mul_add, Nat.mul_one, Nat.add_comm]
@@ -1080,7 +1084,7 @@ open Purelib.Riemann.Branches in
 The finite recursion retains the original segment geometry; the empty path contributes depth zero. -/
 def sufficientDepth {polynomial : GaussianPolynomial} {ambient : Box} :
     {start finish : Gaussian} ->
-      Polynomial.Geometry.ClearPath polynomial ambient start finish ->
+      Geometry.ClearPath polynomial ambient start finish ->
         Fraction.Rational -> Nat
   | _, _, .nil _point, _rootDiameter => 0
   | _, _, .cons head tail, rootDiameter =>
@@ -1100,8 +1104,8 @@ depth and source owners are preserved in this scalar readback. -/
 theorem headSufficientDepth_le
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start middle finish : Gaussian}
-    (head : Geometry.ClearPath.ClearSegment polynomial ambient start middle)
-    (tail : Polynomial.Geometry.ClearPath polynomial ambient middle finish)
+    (head : ClearPath.ClearSegment polynomial ambient start middle)
+    (tail : Geometry.ClearPath polynomial ambient middle finish)
     (rootDiameter : Fraction.Rational) :
     PreparedSheetContinuation.Subdivision.sufficientDyadicDepth
         head zeroEndpoint oneEndpoint rootDiameter <=
@@ -1121,8 +1125,8 @@ depth and source owners are preserved in this scalar readback. -/
 theorem tailSufficientDepth_le
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start middle finish : Gaussian}
-    (head : Geometry.ClearPath.ClearSegment polynomial ambient start middle)
-    (tail : Polynomial.Geometry.ClearPath polynomial ambient middle finish)
+    (head : ClearPath.ClearSegment polynomial ambient start middle)
+    (tail : Geometry.ClearPath polynomial ambient middle finish)
     (rootDiameter : Fraction.Rational) :
     sufficientDepth tail rootDiameter <=
       sufficientDepth (.cons head tail) rootDiameter :=
@@ -1139,15 +1143,15 @@ Each tail begins with the preceding complete segment's exact finish owner, retai
 and source owner. -/
 inductive PreparedPath {polynomial : GaussianPolynomial} {ambient : Box} :
     {start finish : Gaussian} ->
-      (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) ->
+      (path : Geometry.ClearPath polynomial ambient start finish) ->
         Owner (polynomial.eval start) -> Type
   /-- Retain the empty prepared path at the original point and root owner. -/ | nil (point : Gaussian) (owner : Owner
     (polynomial.eval point)) :
       PreparedPath (.nil point) owner
   /-- Retain the original head segment and its certificate, with the tail starting at the head's exact finish owner. -/
     | cons {start middle finish : Gaussian}
-      (head : Geometry.ClearPath.ClearSegment polynomial ambient start middle)
-      (tail : Polynomial.Geometry.ClearPath polynomial ambient middle finish)
+      (head : ClearPath.ClearSegment polynomial ambient start middle)
+      (tail : Geometry.ClearPath polynomial ambient middle finish)
       (owner : Owner (polynomial.eval start))
       (headWithin : head.WithinAmbient)
       (preparedHead : CompleteSegment head headWithin owner)
@@ -1169,7 +1173,7 @@ Successful segments pass their actual finish owner to the next segment. Success 
 `none` is the unsuccessful outcome of this finite attempt. -/
 def tryDyadic {polynomial : GaussianPolynomial} {ambient : Box} :
     {start finish : Gaussian} ->
-      (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) ->
+      (path : Geometry.ClearPath polynomial ambient start finish) ->
         path.WithinAmbient ->
           (owner : Owner (polynomial.eval start)) ->
             (depth : Nat) ->
@@ -1202,7 +1206,7 @@ def ExecutedDyadicPathSafe {polynomial : GaussianPolynomial} {ambient : Box}
     (depth : Nat) (rootDiameter : Fraction.Rational)
     (rootDiameterPositive : 0 < rootDiameter) :
     {start finish : Gaussian} ->
-      (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) ->
+      (path : Geometry.ClearPath polynomial ambient start finish) ->
         path.WithinAmbient ->
           (owner : Owner (polynomial.eval start)) -> Prop
   | _, _, .nil _point, _within, _owner => True
@@ -1224,7 +1228,7 @@ def executedDyadicPathSafeDecidable
     (depth : Nat) (rootDiameter : Fraction.Rational)
     (rootDiameterPositive : 0 < rootDiameter) :
     {start finish : Gaussian} ->
-      (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) ->
+      (path : Geometry.ClearPath polynomial ambient start finish) ->
         (within : path.WithinAmbient) ->
           (owner : Owner (polynomial.eval start)) ->
             Decidable (ExecutedDyadicPathSafe depth rootDiameter
@@ -1293,7 +1297,7 @@ instance executedDyadicPathSafeInstance
     (depth : Nat) (rootDiameter : Fraction.Rational)
     (rootDiameterPositive : 0 < rootDiameter)
     {start finish : Gaussian}
-    (path : Polynomial.Geometry.ClearPath polynomial ambient start finish)
+    (path : Geometry.ClearPath polynomial ambient start finish)
     (within : path.WithinAmbient)
     (owner : Owner (polynomial.eval start)) :
     Decidable (ExecutedDyadicPathSafe depth rootDiameter rootDiameterPositive
@@ -1310,7 +1314,7 @@ def ofExecutedDyadicPathSafe
     (depth : Nat) (rootDiameter : Fraction.Rational)
     (rootDiameterPositive : 0 < rootDiameter) :
     {start finish : Gaussian} ->
-      (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) ->
+      (path : Geometry.ClearPath polynomial ambient start finish) ->
         (within : path.WithinAmbient) ->
           (owner : Owner (polynomial.eval start)) ->
             ExecutedDyadicPathSafe depth rootDiameter rootDiameterPositive path
@@ -1361,9 +1365,9 @@ open Purelib.Polynomial in
 /-- Concatenate the actual complete prepared segment paths in original order. -/
 def toClearPath {polynomial : GaussianPolynomial} {ambient : Box} :
     {start finish : Gaussian} ->
-      {path : Polynomial.Geometry.ClearPath polynomial ambient start finish} ->
+      {path : Geometry.ClearPath polynomial ambient start finish} ->
         {owner : Owner (polynomial.eval start)} ->
-          PreparedPath path owner -> Polynomial.Geometry.ClearPath polynomial ambient start finish
+          PreparedPath path owner -> Geometry.ClearPath polynomial ambient start finish
   | _, _, _, _, .nil point _owner => .nil point
   | _, _, _, _, .cons head tail owner _headWithin preparedHead preparedTail =>
       preparedHead.clearPath.append preparedTail.toClearPath
@@ -1375,11 +1379,11 @@ open Purelib.Data.Rat
 open Purelib.Polynomial
 /-- The sum of retained geometric lower estimates for the integral sample's real coordinate. -/
 def integralRealLower {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus) (sheet : Fin 2)
     {ambient : Box} :
     {start finish : Gaussian} ->
-      {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish} ->
+      {path : Geometry.ClearPath curve.polynomial ambient start finish} ->
       {owner : Owner (curve.polynomial.eval start)} ->
         PreparedPath path owner -> Fraction.Rational
   | _, _, _, _, .nil _point _owner => 0
@@ -1390,11 +1394,11 @@ def integralRealLower {genus : Nat}
 
 /-- The sum of retained geometric lower estimates for the integral sample's negated real coordinate. -/
 def negatedIntegralRealLower {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus) (sheet : Fin 2)
     {ambient : Box} :
     {start finish : Gaussian} ->
-      {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish} ->
+      {path : Geometry.ClearPath curve.polynomial ambient start finish} ->
       {owner : Owner (curve.polynomial.eval start)} ->
         PreparedPath path owner -> Fraction.Rational
   | _, _, _, _, .nil _point _owner => 0
@@ -1406,12 +1410,12 @@ def negatedIntegralRealLower {genus : Nat}
 /-- The sum of retained geometric lower estimates for the integral sample's scalar projection onto the supplied Gaussian
 direction. -/
 def directionalIntegralLower {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus) (sheet : Fin 2)
     (direction : Gaussian)
     {ambient : Box} :
     {start finish : Gaussian} ->
-      {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish} ->
+      {path : Geometry.ClearPath curve.polynomial ambient start finish} ->
       {owner : Owner (curve.polynomial.eval start)} ->
         PreparedPath path owner -> Fraction.Rational
   | _, _, _, _, .nil _point _owner => 0
@@ -1433,15 +1437,15 @@ inductive CheckedDyadic {polynomial : GaussianPolynomial} {ambient : Box}
     (depth : Nat) (rootDiameter : Fraction.Rational)
     (rootDiameterPositive : 0 < rootDiameter) :
     {start finish : Gaussian} ->
-      (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) ->
+      (path : Geometry.ClearPath polynomial ambient start finish) ->
         Owner (polynomial.eval start) -> Type
   /-- The empty certified path at the original point and source owner. -/ | nil (point : Gaussian) (owner : Owner
     (polynomial.eval point)) :
       CheckedDyadic depth rootDiameter rootDiameterPositive (.nil point) owner
   /-- Retain the original head segment with its mesh-safety certificate, and the certified tail at the head's exact
     finish owner. -/ | cons {start middle finish : Gaussian}
-      (head : Geometry.ClearPath.ClearSegment polynomial ambient start middle)
-      (tail : Polynomial.Geometry.ClearPath polynomial ambient middle finish)
+      (head : ClearPath.ClearSegment polynomial ambient start middle)
+      (tail : Geometry.ClearPath polynomial ambient middle finish)
       (owner : Owner (polynomial.eval start))
       (headWithin : head.WithinAmbient)
       (headSafe :
@@ -1467,7 +1471,7 @@ The bound is specialized to each original segment; every successor owner is the 
 predecessor. -/
 def totalAt {polynomial : GaussianPolynomial} {ambient : Box} :
     {start finish : Gaussian} ->
-      (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) ->
+      (path : Geometry.ClearPath polynomial ambient start finish) ->
         path.WithinAmbient ->
           (owner : Owner (polynomial.eval start)) ->
             (depth : Nat) ->
@@ -1504,7 +1508,7 @@ def within {polynomial : GaussianPolynomial} {ambient : Box}
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter} :
     {start finish : Gaussian} ->
-      {path : Polynomial.Geometry.ClearPath polynomial ambient start finish} ->
+      {path : Geometry.ClearPath polynomial ambient start finish} ->
         {owner : Owner (polynomial.eval start)} ->
           CheckedDyadic depth rootDiameter rootDiameterPositive path owner ->
             path.WithinAmbient
@@ -1519,7 +1523,7 @@ def prepared {polynomial : GaussianPolynomial} {ambient : Box}
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter} :
     {start finish : Gaussian} ->
-      {path : Polynomial.Geometry.ClearPath polynomial ambient start finish} ->
+      {path : Geometry.ClearPath polynomial ambient start finish} ->
         {owner : Owner (polynomial.eval start)} ->
           CheckedDyadic depth rootDiameter rootDiameterPositive path owner ->
             PreparedPath path owner
@@ -1538,7 +1542,7 @@ theorem prepared_toClearPath_eq_dyadicRefinePath
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath polynomial ambient start finish}
+    {path : Geometry.ClearPath polynomial ambient start finish}
     {owner : Owner (polynomial.eval start)}
     (checked : CheckedDyadic depth rootDiameter rootDiameterPositive path
       owner) :
@@ -1566,7 +1570,7 @@ inductive ExecutedCheckedDyadic {polynomial : GaussianPolynomial}
     (depth : Nat) (rootDiameter : Fraction.Rational)
     (rootDiameterPositive : 0 < rootDiameter) :
     {start finish : Gaussian} ->
-      (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) ->
+      (path : Geometry.ClearPath polynomial ambient start finish) ->
         Owner (polynomial.eval start) -> Type
   /-- The empty certified path at the original point and source owner. -/ | nil (point : Gaussian) (owner : Owner
     (polynomial.eval point)) :
@@ -1574,8 +1578,8 @@ inductive ExecutedCheckedDyadic {polynomial : GaussianPolynomial}
         (.nil point) owner
   /-- Retain the original head segment with its executed mesh-safety certificate, and the certified tail at the head's
     exact finish owner. -/ | cons {start middle finish : Gaussian}
-      (head : Geometry.ClearPath.ClearSegment polynomial ambient start middle)
-      (tail : Polynomial.Geometry.ClearPath polynomial ambient middle finish)
+      (head : ClearPath.ClearSegment polynomial ambient start middle)
+      (tail : Geometry.ClearPath polynomial ambient middle finish)
       (owner : Owner (polynomial.eval start))
       (headWithin : head.WithinAmbient)
       (headSafe :
@@ -1601,7 +1605,7 @@ def within {polynomial : GaussianPolynomial} {ambient : Box}
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter} :
     {start finish : Gaussian} ->
-      {path : Polynomial.Geometry.ClearPath polynomial ambient start finish} ->
+      {path : Geometry.ClearPath polynomial ambient start finish} ->
         {owner : Owner (polynomial.eval start)} ->
           ExecutedCheckedDyadic depth rootDiameter rootDiameterPositive path
             owner -> path.WithinAmbient
@@ -1616,7 +1620,7 @@ def prepared {polynomial : GaussianPolynomial} {ambient : Box}
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter} :
     {start finish : Gaussian} ->
-      {path : Polynomial.Geometry.ClearPath polynomial ambient start finish} ->
+      {path : Geometry.ClearPath polynomial ambient start finish} ->
         {owner : Owner (polynomial.eval start)} ->
           ExecutedCheckedDyadic depth rootDiameter rootDiameterPositive path
             owner -> PreparedPath path owner
@@ -1634,7 +1638,7 @@ def ofPathSafe {polynomial : GaussianPolynomial} {ambient : Box}
     (depth : Nat) (rootDiameter : Fraction.Rational)
     (rootDiameterPositive : 0 < rootDiameter) :
     {start finish : Gaussian} ->
-      (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) ->
+      (path : Geometry.ClearPath polynomial ambient start finish) ->
         (within : path.WithinAmbient) ->
           (owner : Owner (polynomial.eval start)) ->
             ExecutedDyadicPathSafe depth rootDiameter rootDiameterPositive path
@@ -1692,7 +1696,7 @@ theorem prepared_toClearPath_eq_dyadicRefinePath
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath polynomial ambient start finish}
+    {path : Geometry.ClearPath polynomial ambient start finish}
     {owner : Owner (polynomial.eval start)}
     (checked : ExecutedCheckedDyadic depth rootDiameter rootDiameterPositive
       path owner) :
@@ -1711,7 +1715,7 @@ open Purelib.Polynomial in
 /-- Sum the actual subdivision step counts of the complete prepared segments in order. -/
 def stepCount {polynomial : GaussianPolynomial} {ambient : Box} :
     {start finish : Gaussian} ->
-      {path : Polynomial.Geometry.ClearPath polynomial ambient start finish} ->
+      {path : Geometry.ClearPath polynomial ambient start finish} ->
         {owner : Owner (polynomial.eval start)} -> PreparedPath path owner -> Nat
   | _, _, _, _, .nil _ _ => 0
   | _, _, _, _, .cons _ _ _ _ preparedHead preparedTail =>
@@ -1730,7 +1734,7 @@ depth and source owners are preserved in this scalar readback. -/
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath polynomial ambient start finish}
+    {path : Geometry.ClearPath polynomial ambient start finish}
     {owner : Owner (polynomial.eval start)}
     (checked : ExecutedCheckedDyadic depth rootDiameter rootDiameterPositive
       path owner) :
@@ -1752,10 +1756,10 @@ open Purelib.Polynomial
 open Purelib.Riemann.Integration
 /-- Read all original prepared differential edges in path and subdivision order. -/
 def preparedEdges {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) :
     PreparedPath path owner ->
@@ -1769,10 +1773,10 @@ def preparedEdges {genus : Nat}
 
 /-- Read the zero wedge-coefficient charts of the original prepared segments in order. -/
 def wedgeCharts {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (leftDifferential rightDifferential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) :
     (prepared : PreparedPath path owner) ->
@@ -1789,10 +1793,10 @@ open Purelib.Data in
 The original retained segment and tail certificates supply the displayed finite geometry. Their exact endpoints, dyadic
 depth and source owners are preserved in this scalar readback. -/
 @[simp] theorem wedgeCharts_length {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (leftDifferential rightDifferential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (prepared : PreparedPath path owner) :
     (wedgeCharts curve leftDifferential rightDifferential sheet
@@ -1821,7 +1825,7 @@ theorem prepared_stepCount
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath polynomial ambient start finish}
+    {path : Geometry.ClearPath polynomial ambient start finish}
     {owner : Owner (polynomial.eval start)}
     (checked : CheckedDyadic depth rootDiameter rootDiameterPositive path
       owner) :
@@ -1844,7 +1848,7 @@ open Purelib.Riemann.Branches
 /-- Variation below the retained predicted clearance floor certifies the original segment's dyadic mesh safety. -/
 theorem dyadicSafeOfVariation {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (owner : Owner (polynomial.eval start))
     (depth : Nat) (rootDiameter : Fraction.Rational)
     (rootDiameterPositive : 0 < rootDiameter)
@@ -1865,7 +1869,7 @@ theorem dyadicSafeOfVariation {polynomial : GaussianPolynomial} {ambient : Box}
 /-- Construct a complete segment from the retained variation-versus-predicted-clearance inequality. -/
 def completeSegmentOfVariation {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (owner : Owner (polynomial.eval start))
     (depth : Nat) (rootDiameter : Fraction.Rational)
@@ -1898,7 +1902,7 @@ inductive ClearanceCheckedDyadic {polynomial : GaussianPolynomial}
     (depth : Nat) (rootDiameter : Fraction.Rational)
     (rootDiameterPositive : 0 < rootDiameter) :
     {start finish : Gaussian} ->
-      (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) ->
+      (path : Geometry.ClearPath polynomial ambient start finish) ->
         Owner (polynomial.eval start) -> Type
   /-- The empty certified path at the original point and source owner. -/ | nil (point : Gaussian) (owner : Owner
     (polynomial.eval point)) :
@@ -1906,8 +1910,8 @@ inductive ClearanceCheckedDyadic {polynomial : GaussianPolynomial}
         (.nil point) owner
   /-- Retain the original head segment with its variation-versus-predicted-clearance inequality, and the certified tail
     at the head's exact finish owner. -/ | cons {start middle finish : Gaussian}
-      (head : Geometry.ClearPath.ClearSegment polynomial ambient start middle)
-      (tail : Polynomial.Geometry.ClearPath polynomial ambient middle finish)
+      (head : ClearPath.ClearSegment polynomial ambient start middle)
+      (tail : Geometry.ClearPath polynomial ambient middle finish)
       (owner : Owner (polynomial.eval start))
       (headWithin : head.WithinAmbient)
       (below :
@@ -1940,7 +1944,7 @@ def execute? {polynomial : GaussianPolynomial} {ambient : Box}
     (depth : Nat) (rootDiameter : Fraction.Rational)
     (rootDiameterPositive : 0 < rootDiameter) :
     {start finish : Gaussian} ->
-      (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) ->
+      (path : Geometry.ClearPath polynomial ambient start finish) ->
         path.WithinAmbient ->
           (owner : Owner (polynomial.eval start)) ->
             Option (ClearanceCheckedDyadic depth rootDiameter
@@ -1971,7 +1975,7 @@ def executeUniform? {polynomial : GaussianPolynomial} {ambient : Box}
     (depth : Nat) (rootDiameter : Fraction.Rational)
     (rootDiameterPositive : 0 < rootDiameter) :
     {start finish : Gaussian} ->
-      (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) ->
+      (path : Geometry.ClearPath polynomial ambient start finish) ->
         path.WithinAmbient ->
           (owner : Owner (polynomial.eval start)) ->
             Option (ClearanceCheckedDyadic depth rootDiameter
@@ -2014,7 +2018,7 @@ def executeMeshSafe? {polynomial : GaussianPolynomial} {ambient : Box}
     (depth : Nat) (rootDiameter : Fraction.Rational)
     (rootDiameterPositive : 0 < rootDiameter) :
     {start finish : Gaussian} ->
-      (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) ->
+      (path : Geometry.ClearPath polynomial ambient start finish) ->
         path.WithinAmbient ->
           (owner : Owner (polynomial.eval start)) ->
             Option (CheckedDyadic depth rootDiameter rootDiameterPositive path
@@ -2041,7 +2045,7 @@ def checked {polynomial : GaussianPolynomial} {ambient : Box}
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter} :
     {start finish : Gaussian} ->
-      {path : Polynomial.Geometry.ClearPath polynomial ambient start finish} ->
+      {path : Geometry.ClearPath polynomial ambient start finish} ->
         {owner : Owner (polynomial.eval start)} ->
           ClearanceCheckedDyadic depth rootDiameter rootDiameterPositive path
               owner ->
@@ -2061,7 +2065,7 @@ def within {polynomial : GaussianPolynomial} {ambient : Box}
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath polynomial ambient start finish}
+    {path : Geometry.ClearPath polynomial ambient start finish}
     {owner : Owner (polynomial.eval start)}
     (checked : ClearanceCheckedDyadic depth rootDiameter rootDiameterPositive
       path owner) : path.WithinAmbient :=
@@ -2074,7 +2078,7 @@ def prepared {polynomial : GaussianPolynomial} {ambient : Box}
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath polynomial ambient start finish}
+    {path : Geometry.ClearPath polynomial ambient start finish}
     {owner : Owner (polynomial.eval start)}
     (checked : ClearanceCheckedDyadic depth rootDiameter rootDiameterPositive
       path owner) : PreparedPath path owner :=
@@ -2089,7 +2093,7 @@ theorem prepared_toClearPath_eq_dyadicRefinePath
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath polynomial ambient start finish}
+    {path : Geometry.ClearPath polynomial ambient start finish}
     {owner : Owner (polynomial.eval start)}
     (checked : ClearanceCheckedDyadic depth rootDiameter rootDiameterPositive
       path owner) :
@@ -2106,7 +2110,7 @@ depth and source owners are preserved in this scalar readback. -/
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath polynomial ambient start finish}
+    {path : Geometry.ClearPath polynomial ambient start finish}
     {owner : Owner (polynomial.eval start)}
     (checked : ClearanceCheckedDyadic depth rootDiameter rootDiameterPositive
       path owner) :
@@ -2124,7 +2128,7 @@ The original retained segment and tail certificates supply the displayed finite 
 depth and source owners are preserved in this scalar readback. -/
 theorem tryDyadic_stepCount {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (path : Polynomial.Geometry.ClearPath polynomial ambient start finish)
+    (path : Geometry.ClearPath polynomial ambient start finish)
     (within : path.WithinAmbient)
     (owner : Owner (polynomial.eval start))
     (depth : Nat) (rootDiameter : Fraction.Rational)
@@ -2158,7 +2162,7 @@ theorem tryDyadic_stepCount {polynomial : GaussianPolynomial} {ambient : Box}
 theorem tryDyadic_toClearPath_eq_dyadicRefinePath
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (path : Polynomial.Geometry.ClearPath polynomial ambient start finish)
+    (path : Geometry.ClearPath polynomial ambient start finish)
     (within : path.WithinAmbient)
     (owner : Owner (polynomial.eval start))
     (depth : Nat) (rootDiameter : Fraction.Rational)
@@ -2273,7 +2277,7 @@ open Purelib.Polynomial in
 /-- Every actual subdivision edge of the prepared path has strictly ordered parameters. -/
 def AllEdgesProper {polynomial : GaussianPolynomial} {ambient : Box} :
     {start finish : Gaussian} ->
-      {path : Polynomial.Geometry.ClearPath polynomial ambient start finish} ->
+      {path : Geometry.ClearPath polynomial ambient start finish} ->
         {owner : Owner (polynomial.eval start)} ->
           PreparedPath path owner -> Prop
   | _, _, _, _, .nil _point _owner => True
@@ -2290,7 +2294,7 @@ def AllRequestsDyadic {polynomial : GaussianPolynomial} {ambient : Box}
     (depth : Nat) (rootDiameter : Fraction.Rational)
     (rootDiameterPositive : 0 < rootDiameter) :
     {start finish : Gaussian} ->
-      {path : Polynomial.Geometry.ClearPath polynomial ambient start finish} ->
+      {path : Geometry.ClearPath polynomial ambient start finish} ->
         {owner : Owner (polynomial.eval start)} ->
           PreparedPath path owner -> Prop
   | _, _, _, _, .nil _point _owner => True
@@ -2313,7 +2317,7 @@ structure CertifiedDyadic {polynomial : GaussianPolynomial} {ambient : Box}
     (depth : Nat) (rootDiameter : Fraction.Rational)
     (rootDiameterPositive : 0 < rootDiameter)
     {start finish : Gaussian}
-    (path : Polynomial.Geometry.ClearPath polynomial ambient start finish)
+    (path : Geometry.ClearPath polynomial ambient start finish)
     (owner : Owner (polynomial.eval start)) where
   /-- The original clear path is contained in its retained ambient box. -/ within : path.WithinAmbient
   /-- The actual prepared path at the original source owner. -/ prepared : PreparedPath path owner
@@ -2339,7 +2343,7 @@ inductive DyadicBank {polynomial : GaussianPolynomial} {ambient : Box}
     (depth : Nat) (rootDiameter : Fraction.Rational)
     (rootDiameterPositive : 0 < rootDiameter)
     {start finish : Gaussian}
-    (path : Polynomial.Geometry.ClearPath polynomial ambient start finish)
+    (path : Geometry.ClearPath polynomial ambient start finish)
     (owner : Owner (polynomial.eval start)) : Type
   /-- Retain the exact dyadic mesh-safety certificates and their dependent successor owners. -/ | safe
       (checked : CheckedDyadic depth rootDiameter rootDiameterPositive path
@@ -2370,7 +2374,7 @@ open Purelib.Polynomial
 /-- Retain the actual segment execution certificates derived from the original path-safety witness. -/
 def ofExecutedPathSafe {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (path : Polynomial.Geometry.ClearPath polynomial ambient start finish)
+    (path : Geometry.ClearPath polynomial ambient start finish)
     (within : path.WithinAmbient)
     (owner : Owner (polynomial.eval start))
     (depth : Nat) (rootDiameter : Fraction.Rational)
@@ -2391,7 +2395,7 @@ def within {polynomial : GaussianPolynomial} {ambient : Box}
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath polynomial ambient start finish}
+    {path : Geometry.ClearPath polynomial ambient start finish}
     {owner : Owner (polynomial.eval start)} :
     DyadicBank depth rootDiameter rootDiameterPositive path owner ->
       path.WithinAmbient
@@ -2407,7 +2411,7 @@ def prepared {polynomial : GaussianPolynomial} {ambient : Box}
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath polynomial ambient start finish}
+    {path : Geometry.ClearPath polynomial ambient start finish}
     {owner : Owner (polynomial.eval start)} :
     DyadicBank depth rootDiameter rootDiameterPositive path owner ->
       PreparedPath path owner
@@ -2423,13 +2427,13 @@ open Purelib.Data.Rat
 open Purelib.Polynomial
 /-- The sum of retained geometric lower estimates for the integral sample's real coordinate. -/
 def integralRealLower {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     (sheet : Fin 2)
     {ambient : Box} {start finish : Gaussian}
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : DyadicBank depth rootDiameter rootDiameterPositive path owner) :
     Fraction.Rational :=
@@ -2437,13 +2441,13 @@ def integralRealLower {genus : Nat}
 
 /-- The sum of retained geometric lower estimates for the integral sample's negated real coordinate. -/
 def negatedIntegralRealLower {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     (sheet : Fin 2)
     {ambient : Box} {start finish : Gaussian}
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : DyadicBank depth rootDiameter rootDiameterPositive path owner) :
     Fraction.Rational :=
@@ -2462,7 +2466,7 @@ theorem prepared_stepCount
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath polynomial ambient start finish}
+    {path : Geometry.ClearPath polynomial ambient start finish}
     {owner : Owner (polynomial.eval start)}
     (bank : DyadicBank depth rootDiameter rootDiameterPositive path owner) :
     bank.prepared.stepCount = 2 ^ depth * path.segmentCount := by
@@ -2483,7 +2487,7 @@ theorem prepared_toClearPath_eq_dyadicRefinePath
     {depth : Nat} {rootDiameter : Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath polynomial ambient start finish}
+    {path : Geometry.ClearPath polynomial ambient start finish}
     {owner : Owner (polynomial.eval start)}
     (bank : DyadicBank depth rootDiameter rootDiameterPositive path owner) :
     bank.prepared.toClearPath = dyadicRefinePath path bank.within depth := by
@@ -2507,15 +2511,15 @@ set_option genInjectivity false in
 The certificate keeps the exact prepared clear path and the supplied differential as indices of every cell's algebraic
 certificate. -/
 structure Certified {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (prepared : PreparedPath path owner) where
   /-- The original ordered model cells along the selected prepared-path sheet lift. -/ cells : List CellModel
   /-- Uniform algebraic certificates for these exact cells on the original lifted prepared path. -/ certificates :
-    Curves.Hyperelliptic.Integration.Algebraic.Path.Basis.UniformPathCertificates curve differential cells
+    Integration.Algebraic.Path.Basis.UniformPathCertificates curve differential cells
     (ClearPath.liftOnSheet sheet prepared.toClearPath)
 
 constructive_injectivity Certified
@@ -2529,10 +2533,10 @@ set_option genInjectivity false in
 Both models use the same original prepared path and sheet; the chart list carries a zero coefficient certificate at
 every query. -/
 structure HolomorphicCertificate {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (leftDifferential rightDifferential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (prepared : PreparedPath path owner) where
   /-- The uniformly certified model for the first differential on the original path and sheet. -/ leftModel : Certified
@@ -2559,10 +2563,10 @@ open Purelib.Riemann.Integration in
 Each complete segment uses its automatically aligned centers. Endpoint transports and ordered concatenation preserve the
 original lifted geometry and link the actual cell certificates. -/
 def certify {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) :
     (prepared : PreparedPath path owner) ->
@@ -2575,7 +2579,7 @@ def certify {genus : Nat}
         PreparedSubdivisionAutomaticModels.certifyAutomaticallyAlignedSubdivision
           curve differential sheet preparedHead.subdivision
       let tailCertified := certify curve differential sheet preparedTail
-      let headCertificates : Curves.Hyperelliptic.Integration.Algebraic.Path.Basis.UniformPathCertificates curve
+      let headCertificates : Integration.Algebraic.Path.Basis.UniformPathCertificates curve
         differential
           headCertified.cells
           (ClearPath.liftOnSheet sheet preparedHead.clearPath) := by
@@ -2585,10 +2589,10 @@ def certify {genus : Nat}
         let finishEqual := congrArg (fun coordinate : Gaussian =>
           ({ coordinate := coordinate, sheet := sheet } : Lifted.Basic.LiftedPoint 2))
             preparedHead.finish_eq
-        let castStart := Curves.Hyperelliptic.Integration.Algebraic.Path.Basis.UniformPathCertificates.castStart
+        let castStart := Integration.Algebraic.Path.Basis.UniformPathCertificates.castStart
           startEqual
           headCertified.certificates
-        let castFinish := Curves.Hyperelliptic.Integration.Algebraic.Path.Basis.UniformPathCertificates.castFinish
+        let castFinish := Integration.Algebraic.Path.Basis.UniformPathCertificates.castFinish
           finishEqual
           castStart
         simpa only [CompleteSegment.clearPath,
@@ -2598,7 +2602,7 @@ def certify {genus : Nat}
         { cells := headCertified.cells ++ tailCertified.cells
           certificates := by
             rw [toClearPath, ClearPath.liftOnSheet_append]
-            exact Curves.Hyperelliptic.Integration.Algebraic.Path.Basis.UniformPathCertificates.append _
+            exact Integration.Algebraic.Path.Basis.UniformPathCertificates.append _
               headCertificates
               tailCertified.certificates }
 
@@ -2612,10 +2616,10 @@ open Purelib.Riemann.Integration
 The estimate follows the original ordered segments and the exact automatically aligned cell models used by
 certification. -/
 theorem integralRealLower_le_certify {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (exponentZero : differential.exponent = 0) :
     forall prepared : PreparedPath path owner,
@@ -2672,10 +2676,10 @@ theorem integralRealLower_le_certify {genus : Nat}
 The estimate follows the original ordered segments and the exact automatically aligned cell models used by
 certification. -/
 theorem negatedIntegralRealLower_le_certify {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (exponentZero : differential.exponent = 0) :
     forall prepared : PreparedPath path owner,
@@ -2740,10 +2744,10 @@ the supplied Gaussian direction.
 The estimate follows the original ordered segments and the exact automatically aligned cell models used by
 certification. -/
 theorem directionalIntegralLower_le_certify {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (direction : Gaussian)
     (exponentZero : differential.exponent = 0) :
@@ -2826,10 +2830,10 @@ open Purelib.Polynomial in
 open Purelib.Riemann.Integration in
 /-- Retain the exact constant coefficient certificate of every automatically aligned model cell. -/
 def certify_constantCells {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) :
     (prepared : PreparedPath path owner) ->
@@ -2850,10 +2854,10 @@ open Purelib.Data in
 The original retained segment and tail certificates supply the displayed finite geometry. Their exact endpoints, dyadic
 depth and source owners are preserved in this scalar readback. -/
 @[simp] theorem certify_cellCount {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (prepared : PreparedPath path owner) :
     (certify curve differential sheet prepared).cells.length =
@@ -2874,10 +2878,10 @@ open Purelib.Polynomial in
 The two cell lists and chart list have the same original step count, and each model retains its own differential and
 uniform certificates. -/
 def certifyHolomorphic {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (leftDifferential rightDifferential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (prepared : PreparedPath path owner) :
     HolomorphicCertificate curve leftDifferential rightDifferential sheet

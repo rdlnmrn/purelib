@@ -39,15 +39,15 @@ open Purelib.Algebra
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Field.ExplicitField K]
 
 /-- The folium parametrization gives a point on the cubic when its denominator is nonzero. -/
 theorem example_19_5 [Nontrivial K]
     (parameter : K)
-    (denominatorNonzero : Purelib.Curves.Plane.Folium.Parametrization.parameterDenominator parameter ≠ 0) :
-    (Purelib.Curves.Plane.Folium.curve (K := K)).Contains (Purelib.Curves.Plane.Folium.Parametrization.parameterPoint
+    (denominatorNonzero : Parametrization.parameterDenominator parameter ≠ 0) :
+    (Curves.Plane.Folium.curve (K := K)).Contains (Parametrization.parameterPoint
         parameter) :=
-  Purelib.Curves.Plane.Folium.Parametrization.parameterPoint_contains parameter denominatorNonzero
+  Parametrization.parameterPoint_contains parameter denominatorNonzero
 
 section
 end
@@ -55,9 +55,9 @@ end
 /-- The cleared tangent determinant equals the negative folium discriminant polynomial. -/
 theorem example_19_8 (parameter : K) :
     4 * (3 * parameter * (3 * parameter ^ 2)) -
-        (-(Purelib.Curves.Plane.Folium.Parametrization.parameterDenominator parameter)) ^ 2 =
-      -(Purelib.Curves.Plane.Folium.Tangent.Discriminant.determinantPolynomial parameter) :=
-  Purelib.Curves.Plane.Folium.Tangent.Discriminant.four_mul_associatedMatrixDeterminant parameter
+        (-(Parametrization.parameterDenominator parameter)) ^ 2 =
+      -(Tangent.Discriminant.determinantPolynomial parameter) :=
+  Tangent.Discriminant.four_mul_associatedMatrixDeterminant parameter
 
 end
 

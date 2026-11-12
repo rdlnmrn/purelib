@@ -12,6 +12,8 @@ import Purelib.Approximation.Gaussian.Process.Division
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Approximation.Gaussian.Process.Coherence.Basic
+
 open Purelib
 
 open Purelib.Approximation
@@ -46,16 +48,16 @@ The outer request bound uses the original process center bounds and the denomina
 private theorem
   quotient_refine_component_allowance_lt
     {numeratorProcess denominatorProcess : Process}
-    (numeratorCoherent : Gaussian.Process.Coherence.Basic.Coherent numeratorProcess)
-    (denominatorCoherent : Gaussian.Process.Coherence.Basic.Coherent denominatorProcess)
-    (apart : Process.Apart denominatorProcess)
+    (numeratorCoherent : Coherent numeratorProcess)
+    (denominatorCoherent : Coherent denominatorProcess)
+    (apart : Apart denominatorProcess)
     (state : numeratorProcess.State × denominatorProcess.State)
     (request : Fraction.Rational) (requestPositive : 0 < request)
     (target : Fraction.Rational) (targetPositive : 0 < target)
     (requestSmall : request <
-      Gaussian.Process.Coherence.Basic.Coherent.divisionOuterTarget
+      Coherent.divisionOuterTarget
         numeratorProcess denominatorProcess apart.lowerSq
-        (Gaussian.Process.Coherence.Basic.Coherent.commonRequest
+        (Coherent.commonRequest
           (numeratorCoherent.accuracyRequest target)
           (denominatorCoherent.accuracyRequest target))) :
     let refined := (numeratorProcess.div denominatorProcess apart).refine
@@ -68,7 +70,7 @@ private theorem
     numeratorCoherent.accuracyRequest_pos targetPositive
   have denominatorRequestPositive : 0 < denominatorRequest :=
     denominatorCoherent.accuracyRequest_pos targetPositive
-  let sharedRequest := Gaussian.Process.Coherence.Basic.Coherent.commonRequest
+  let sharedRequest := Coherent.commonRequest
     numeratorRequest denominatorRequest
   let numeratorName := Name.centerOnly
     (numeratorProcess.ball state.1).center numeratorProcess.centerBound
@@ -85,15 +87,15 @@ private theorem
       numeratorName denominatorName apart.lowerSq apart.positive
         requestPositive
   have inputLtShared : inputRequest < sharedRequest :=
-    Gaussian.Process.Coherence.Basic.Coherent.processDivisionInputTarget_lt
+    Coherent.processDivisionInputTarget_lt
       numeratorName denominatorName rfl rfl apart.positive requestSmall
   have inputLtNumerator : inputRequest < numeratorRequest :=
     inputLtShared.trans
-      (Gaussian.Process.Coherence.Basic.Coherent.commonRequest_lt_left
+      (Coherent.commonRequest_lt_left
         numeratorRequestPositive denominatorRequestPositive)
   have inputLtDenominator : inputRequest < denominatorRequest :=
     inputLtShared.trans
-      (Gaussian.Process.Coherence.Basic.Coherent.commonRequest_lt_right
+      (Coherent.commonRequest_lt_right
         numeratorRequestPositive denominatorRequestPositive)
   change
     numeratorCoherent.allowance
@@ -111,31 +113,31 @@ allowances lie below the positive target. -/
 public theorem
   quotient_stateAt_component_allowance_lt
     {numeratorProcess denominatorProcess : Process}
-    (numeratorCoherent : Gaussian.Process.Coherence.Basic.Coherent numeratorProcess)
-    (denominatorCoherent : Gaussian.Process.Coherence.Basic.Coherent denominatorProcess)
-    (apart : Process.Apart denominatorProcess)
+    (numeratorCoherent : Coherent numeratorProcess)
+    (denominatorCoherent : Coherent denominatorProcess)
+    (apart : Apart denominatorProcess)
     (start : numeratorProcess.State × denominatorProcess.State)
     (index : Nat) (target : Fraction.Rational) (targetPositive : 0 < target)
-    (requestSmall : Gaussian.Process.Sampling.refinementTarget index <
-      Gaussian.Process.Coherence.Basic.Coherent.divisionOuterTarget
+    (requestSmall : Sampling.refinementTarget index <
+      Coherent.divisionOuterTarget
         numeratorProcess denominatorProcess apart.lowerSq
-        (Gaussian.Process.Coherence.Basic.Coherent.commonRequest
+        (Coherent.commonRequest
           (numeratorCoherent.accuracyRequest target)
           (denominatorCoherent.accuracyRequest target))) :
-    let state := Gaussian.Process.Sampling.stateAt
+    let state := Sampling.stateAt
       (numeratorProcess.div denominatorProcess apart) start index
     numeratorCoherent.allowance state.1 < target ∧
       denominatorCoherent.allowance state.2 < target := by
   cases index with
   | zero =>
-      exact Approximation.Gaussian.Process.Coherent.Division.Sampling.quotient_refine_component_allowance_lt
+      exact quotient_refine_component_allowance_lt
         numeratorCoherent
         denominatorCoherent apart start _ _ target targetPositive requestSmall
   | succ index =>
-      exact Approximation.Gaussian.Process.Coherent.Division.Sampling.quotient_refine_component_allowance_lt
+      exact quotient_refine_component_allowance_lt
         numeratorCoherent
         denominatorCoherent apart
-          (Gaussian.Process.Sampling.stateAt
+          (Sampling.stateAt
             (numeratorProcess.div denominatorProcess apart) start index)
           _ _ target targetPositive requestSmall
 

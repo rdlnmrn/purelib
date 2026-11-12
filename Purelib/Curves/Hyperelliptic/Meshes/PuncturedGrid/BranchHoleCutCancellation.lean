@@ -132,7 +132,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
@@ -144,16 +144,16 @@ set_option genInjectivity false in
 
 The retained eight cut occurrences share the paired two-sheet source cache and covered sewing contacts; their finite sum
 includes all inherited offsets. -/
-structure BranchHoleCutRequest (hole : PuncturedGridFaces.BranchHole base.bank.toBranchCellBank)
-    (covered : ContactBanks.ContactPreparations contacts differential domains) (target :
-      InverseRootPolynomial.Coordinate) (floor : Nat) where
+structure BranchHoleCutRequest (hole : BranchHole base.bank.toBranchCellBank)
+    (covered : ContactPreparations contacts differential domains) (target :
+      Coordinate) (floor : Nat) where
   /-- The retained two-sheet cancellation request on the actual original inward hole boundary. -/ paired :
-    WalkCancellation.PairedWalkRequest (mesh := lifted.mesh) domains differential hole.inwardBoundary (target / 4)
+    PairedWalkRequest (mesh := lifted.mesh) domains differential hole.inwardBoundary (target / 4)
   /-- The actual one-sided cut occurrences projecting to the original lifted hole word. -/ cut :
-    BranchHoleCutWords.PhysicalCutWord lifted (hole.liftedBoundary lifted.vertices lifted.edges)
+    PhysicalCutWord lifted (hole.liftedBoundary lifted.vertices lifted.edges)
   /-- The cut occurrences use exactly the paired request's retained source list. -/ cut_sources : cut.sources.sources =
     paired.sources
-  /-- The retained sewing-path budget for these actual eight cut occurrences. -/ path : SewnPathRequests.PathRequest
+  /-- The retained sewing-path budget for these actual eight cut occurrences. -/ path : PathRequest
     lifted.cutPolygon.patch.assembly 8 (target / 4)
   /-- Every original assembly contact is present in the supplied retained contact bank. -/ coverage : ∀ contact ∈
     SewnPrimitiveContacts.sourceContacts lifted.cutPolygon.patch.assembly, contact ∈ contacts
@@ -171,14 +171,14 @@ variable {hole : BranchHole base.bank.toBranchCellBank}
 /-- Several holes share the expensive contact budgets. Only the requested floor is adjusted; the cached budget vector
 and its maximum are retained. -/
 @[expose] def ofCachedContacts
-    (paired : WalkCancellation.PairedWalkRequest (mesh := lifted.mesh) domains differential hole.inwardBoundary (target
+    (paired : PairedWalkRequest (mesh := lifted.mesh) domains differential hole.inwardBoundary (target
       / 4))
-    (cut : BranchHoleCutWords.PhysicalCutWord lifted (hole.liftedBoundary lifted.vertices lifted.edges))
+    (cut : PhysicalCutWord lifted (hole.liftedBoundary lifted.vertices lifted.edges))
     (matching : cut.sources.sources = paired.sources)
-    (path : SewnPathRequests.PathRequest lifted.cutPolygon.patch.assembly 8 (target / 4))
+    (path : PathRequest lifted.cutPolygon.patch.assembly 8 (target / 4))
     (coverage : ∀ contact ∈ SewnPrimitiveContacts.sourceContacts lifted.cutPolygon.patch.assembly, contact ∈ contacts)
     (cached : ContactPreparations.Request covered path.tolerance 0) (floor : Nat) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHoleCutCancellation.BranchHoleCutRequest hole covered target floor
+    BranchHoleCutRequest hole covered target floor
       :=
   ⟨paired, cut, matching, path, coverage,
     { positive := cached.positive
@@ -190,13 +190,13 @@ and its maximum are retained. -/
 
 /-- Accuracy selection preserves the paired source cache, the shared contact geometry and the already computed assembly
 profile. -/
-@[expose] def ofPaired (hole : PuncturedGridFaces.BranchHole base.bank.toBranchCellBank) (retained : hole ∈
+@[expose] def ofPaired (hole : BranchHole base.bank.toBranchCellBank) (retained : hole ∈
   base.faces.holes)
-    (paired : WalkCancellation.PairedWalkRequest (mesh := lifted.mesh) domains differential hole.inwardBoundary (target
+    (paired : PairedWalkRequest (mesh := lifted.mesh) domains differential hole.inwardBoundary (target
       / 4))
-    (prepared : BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch lifted.cutBoundaryPairs
+    (prepared : BoundaryContactPreparations lifted.cutPolygon.patch lifted.cutBoundaryPairs
       differential domains)
-    (floor : Nat) : Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHoleCutCancellation.BranchHoleCutRequest hole
+    (floor : Nat) : BranchHoleCutRequest hole
       prepared.prepared target floor :=
   let cut := BranchHoleCutWords.holeCutWord lifted hole retained
   let path := PathRequest.ofProfile prepared.profile prepared.profile_eq 8 (target / 4) paired.positive
@@ -207,47 +207,47 @@ profile. -/
 
 /-- Prepare the original hole's paired cancellation and reuse the retained boundary contacts to pay its complete
 cut-word increment. -/
-@[expose] def build (hole : PuncturedGridFaces.BranchHole base.bank.toBranchCellBank) (retained : hole ∈
+@[expose] def build (hole : BranchHole base.bank.toBranchCellBank) (retained : hole ∈
   base.faces.holes)
-    (prepared : BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch lifted.cutBoundaryPairs
+    (prepared : BoundaryContactPreparations lifted.cutPolygon.patch lifted.cutBoundaryPairs
       differential domains)
-    (target : InverseRootPolynomial.Coordinate) (positive : 0 < target) (floor : Nat) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHoleCutCancellation.BranchHoleCutRequest hole prepared.prepared
+    (target : Coordinate) (positive : 0 < target) (floor : Nat) :
+      BranchHoleCutRequest hole prepared.prepared
       target floor :=
   ofPaired hole retained
     (BranchHoleCancellation.cancellationRequest hole lifted.mesh domains differential (target / 4)
     (Fraction.Order.Field.div_pos_direct positive (by decide))) prepared floor
 
 /-- The retained cut-hole contact stage meets the original caller floor. -/
-theorem floor_le (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHoleCutCancellation.BranchHoleCutRequest
+theorem floor_le (request : BranchHoleCutRequest
   hole covered target floor) : floor ≤ request.contactRequest.index :=
   (Data.Nat.Order.le_max_left _ _).trans request.contactRequest.floor_le
 
 /-- Every stage paying the retained cut-hole contacts also pays its original paired cancellation request. -/
-theorem paired_later (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHoleCutCancellation.BranchHoleCutRequest
+theorem paired_later (request : BranchHoleCutRequest
   hole covered target floor) {index : Nat}
     (later : request.contactRequest.index ≤ index) : request.paired.index ≤ index :=
   (Data.Nat.Order.le_max_right _ _).trans (request.contactRequest.floor_le.trans later)
 
 /-- The retained cut occurrences project exactly to the original lifted branch-hole boundary. -/
-theorem cut_project (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHoleCutCancellation.BranchHoleCutRequest
+theorem cut_project (request : BranchHoleCutRequest
   hole covered target floor) :
     request.cut.edges.map (OrientedEdge.map lifted.cutPolygon.patch.cut.vertexLabels) =
       hole.liftedBoundary lifted.vertices lifted.edges :=
   request.cut.project
 
 /-- The actual retained branch-hole cut word has exactly eight occurrences. -/
-theorem cut_length (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHoleCutCancellation.BranchHoleCutRequest
+theorem cut_length (request : BranchHoleCutRequest
   hole covered target floor) : request.cut.edges.length = 8 :=
   request.cut.length_eq.trans (hole.liftedBoundary_length lifted.vertices lifted.edges)
 
 /-- These are the sewn cut values, including all ancestor offsets. The proof pays their full finite sum without assuming
 a closed cut-vertex path. -/
-theorem accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHoleCutCancellation.BranchHoleCutRequest
+theorem accurate (request : BranchHoleCutRequest
   hole covered target floor) {index : Nat}
     (later : request.contactRequest.index ≤ index)
-    {shared : PrimitiveData.FacePrimitiveBank differential index domains} (triangles :
-      TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh)
+    {shared : FacePrimitiveBank differential index domains} (triangles :
+      TriangleReadings shared lifted.mesh)
     (surface : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch triangles.values) :
     Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (request.cut.edges.map fun
       edge => surface.sewn.values edge.finish - surface.sewn.values edge.start)) < target := by
@@ -261,7 +261,7 @@ theorem accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHole
   have bound := ((CachedSample.pathSample surface request.cut.sources)).sum_magnitude_bound original.le
   apply bound.trans_lt
   have paid := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by
-      decide : (0 : InverseRootPolynomial.Coordinate) < 2)
+      decide : (0 : Coordinate) < 2)
     (Fraction.Order.Arithmetic.add_lt_add_right_direct sewing (target / 4))
   apply paid.trans_eq
   rw [show 2 * (target / 4 + target / 4) = (target / 4) * 4 by ring1]
@@ -270,11 +270,11 @@ theorem accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHole
 /-- The physical-loop value used by the standard/chord chain comparison is small for the actual retained cut-generator
 increments. -/
 theorem generator_accurate (request :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHoleCutCancellation.BranchHoleCutRequest hole covered target floor)
+  BranchHoleCutRequest hole covered target floor)
   {index : Nat}
     (later : request.contactRequest.index ≤ index)
-    {shared : PrimitiveData.FacePrimitiveBank differential index domains} (triangles :
-      TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh)
+    {shared : FacePrimitiveBank differential index domains} (triangles :
+      TriangleReadings shared lifted.mesh)
     (surface : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch triangles.values) :
     Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (ProjectedEdgePairing.generatorValue
       lifted.cutBoundaryPairs (fun column =>

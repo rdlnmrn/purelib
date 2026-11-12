@@ -89,10 +89,11 @@ abbrev NamedEquivalent := Purelib.Approximation.Gaussian.Equivalence.NamedEquiva
 
 namespace Bounds.PreparedSeed
 
+variable {mode : Purelib.Polynomial.Geometry.ClearPath.ClearSegment.Mode}
 variable {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
   Purelib.Geometry.Rational.Box} {start finish : Purelib.Data.Gaussian.Basic.Canonical}
-  {segment : Purelib.Polynomial.Geometry.ClearPath.ClearSegment polynomial ambient start finish} {bounds : Bounds
-    segment}
+  {segment : Purelib.Polynomial.Geometry.ClearPath.ClearSegment polynomial ambient start finish mode}
+  {requested : Option (Bounds.PointRadius segment)} {bounds : Bounds segment requested}
   {parameter : Purelib.Data.Rat.Fraction.Rational} {inside : 0 ≤ parameter ∧ parameter ≤ 1}
   {owner : Owner (polynomial.eval (segment.pointAt parameter))}
 
@@ -196,6 +197,21 @@ theorem radius_lower (patch : PreparedPatch parent) (count : Nat) :
     patch.bounds.radius ≤ (patch.neighborhood count).radius :=
   (patch.seed.radius_lower count).trans (grow_radius_ge _)
 
+/-- A point within the retained uniform squared radius lies in this SAME original grown neighborhood.
+
+The original seed's uniform-box refinement supplies containment before
+its checked growth. This needs only the displayed geometric distance;
+no root or sheet agreement is inferred from that distance.
+-/
+theorem point_inside_of_distance (patch : PreparedPatch parent) (count : Nat) {point : Basic.Canonical}
+    (near : Norm.Basic.normSq (point - parent.edge.point 0) ≤ patch.bounds.radius ^ 2) :
+    (patch.neighborhood count).box.Contains point := by
+  have distance := near
+  rewrite [parent.edge.point_zero] at distance
+  have centered := Geometry.Rational.Box.Square.Centered.centeredBox_contains_of_normSq_sub_le
+    patch.bounds.radius_positive.le distance
+  exact (grow_box_refines _).contains ((patch.seed.uniformBox_refines count).contains centered)
+
 /-- Original uniform-mesh membership places the parent finish point in the retained neighborhood. -/
 theorem finish_inside_of_mesh (patch : PreparedPatch parent) (count : Nat)
     (mesh : Mesh patch.bounds) (member : parent.parameterEdge ∈ mesh.edges) :
@@ -263,6 +279,20 @@ while comparing its name with the sample certificate. -/
     (sample : ContinuedNeighborhood.Point (patch.neighborhood count) (parent.edge.point fraction)) :
     NamedEquivalent (parent.edge.rootName fraction inside) sample.certificate.value.name :=
   patch.point_equivalent_at count fraction inside rfl pointInside sample
+
+open Purelib.Riemann.Integration
+
+/-- The actual prepared parent's unchanged neighborhood has a strict computed whole-box movement margin.
+
+The retained seed's original default and uniform radius payments feed the
+original accepted/rejected growth operation. No additional movement
+hypothesis, new patch, point query or owner selection is required.
+-/
+theorem movementCeiling_lt (patch : PreparedPatch parent) (count : Nat) :
+    CheckedPrimitiveNeighborhoods.movementCeiling (patch.neighborhood count) <
+      (patch.neighborhood count).continuationAllowance :=
+  CheckedPrimitiveNeighborhoods.grow_movementCeiling_lt (patch.seed.neighborhood count)
+    (patch.seed.neighborhood_movement_error count)
 
 end PreparedPatch
 

@@ -109,66 +109,66 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.ChordFamily
 
 open Purelib.Riemann.Periods.PreparedRootClosedPeriodBank
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
-  {base : Meshes.FramedPuncturedGrid curve (Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve
+  {base : Meshes.FramedPuncturedGrid curve (Branches.BranchConfiguration.configurationOfData curve
     branches).branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base}
   {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
-  {index differential : Fin genus} {source : Hyperelliptic.Differentials.Basic.Differential genus}
-  {prepared : Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutChordPrograms lifted source}
-  {components : Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples prepared.programs differential}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {family : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily prepared.programs.programs domains
+  {index differential : Fin genus} {source : Differentials.Basic.Differential genus}
+  {prepared : Cut.CyclePrograms.CutChordPrograms lifted source}
+  {components : Cut.ChainPeriods.ComponentSamples prepared.programs differential}
+  {domains : Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {family : Cut.PeriodFamilies.PrimitiveFamily prepared.programs.programs domains
     differential}
   {targets : Data.Vector Fraction.Rational lifted.cutBoundaryWord.alphabet.count}
-  {floor : Nat} {budget : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily.Budget family targets
+  {floor : Nat} {budget : Cut.PeriodFamilies.PrimitiveFamily.Budget family targets
     floor}
   {minimumStages : Data.Vector Nat lifted.cutBoundaryWord.alphabet.count}
   {minimum : Nat} {target : Fraction.Rational} {extraPoints : List Gaussian.Basic.Canonical}
   {raw : List (Handle.Basic.PivotIndices lifted.cutBoundaryWord.alphabet.count)}
-  (normal : LinearAlgebra.Alternating.NormalForm integral.paired raw)
-  (period : Periods.PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodRow curve)
-  (periodEq : period = (Periods.PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodBank.ofData curve
+  (normal : NormalForm integral.paired raw)
+  (period : PreparedCycleModels.RootClosedPeriodRow curve)
+  (periodEq : period = (PreparedCycleModels.RootClosedPeriodBank.ofData curve
     branches).rows index)
-  (periods : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChordPeriods.ChordPeriods
-    (Hyperelliptic.Meshes.PuncturedGrid.Standard.TourIntersection.IntersectionRow.ofPeriod lifted integral normal index
+  (periods : TourChordPeriods.ChordPeriods
+    (TourIntersection.IntersectionRow.ofPeriod lifted integral normal index
       period periodEq).span prepared components)
   (readings : FamilyReadings
-    (Hyperelliptic.Meshes.PuncturedGrid.Standard.TourIntersection.IntersectionRow.ofPeriod lifted integral normal index
+    (TourIntersection.IntersectionRow.ofPeriod lifted integral normal index
     period periodEq)
     budget minimumStages minimum (target / 4) extraPoints)
 
 /-- The original a-chord chain and its retained physical correction approximate the standard a-period at each actual
 component sample stage. -/
 theorem a_chord_at_component (entry : Fin lifted.cutBoundaryWord.alphabet.count) :
-    let value := Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
+    let value := CanonicalEdgeValues.edgeValuation lifted.mesh
       readings.standard.triangles.values
-    Data.Gaussian.Norm.Basic.normSq ((Topology.Surface.Chord.Spanning.CutCycleChain.edgeValue periods.a.chain value
+    Gaussian.Norm.Basic.normSq ((Topology.Surface.Chord.Spanning.CutCycleChain.edgeValue periods.a.chain value
       + Topology.Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine periods.aGeometry.physical
         (fun column => value (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map
           lifted.cutPolygon.patch.cut.vertexLabels (lifted.cutBoundaryWord.alphabet.generators column)))) -
       (((Integration.PreparedRefinementPrograms.rawPeriodDataOfData curve branches).aProgram differential
         index).integral.model
         (readings.requested.periods.get entry).sample.stage).integralSample) < target :=
-  Hyperelliptic.Meshes.PuncturedGrid.Standard.PhysicalCut.a_chord_chain_accurate normal period periodEq periods
+  PhysicalCut.a_chord_chain_accurate normal period periodEq periods
     readings.standard _
     (readings.component_stage_later entry)
 
 /-- The original b-chord chain and its retained physical correction approximate the standard b-period at each actual
 component sample stage. -/
 theorem b_chord_at_component (entry : Fin lifted.cutBoundaryWord.alphabet.count) :
-    let value := Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
+    let value := CanonicalEdgeValues.edgeValuation lifted.mesh
       readings.standard.triangles.values
-    Data.Gaussian.Norm.Basic.normSq ((Topology.Surface.Chord.Spanning.CutCycleChain.edgeValue periods.b.chain value
+    Gaussian.Norm.Basic.normSq ((Topology.Surface.Chord.Spanning.CutCycleChain.edgeValue periods.b.chain value
       + Topology.Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine periods.bGeometry.physical
         (fun column => value (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map
           lifted.cutPolygon.patch.cut.vertexLabels (lifted.cutBoundaryWord.alphabet.generators column)))) -
       (((Integration.PreparedRefinementPrograms.rawPeriodDataOfData curve branches).bProgram differential
         index).integral.model
         (readings.requested.periods.get entry).sample.stage).integralSample) < target :=
-  Hyperelliptic.Meshes.PuncturedGrid.Standard.PhysicalCut.b_chord_chain_accurate normal period periodEq periods
+  PhysicalCut.b_chord_chain_accurate normal period periodEq periods
     readings.standard _
     (readings.component_stage_later entry)
 

@@ -55,47 +55,47 @@ result is exactly the constructive one-bit semantic decision.
 namespace Purelib.Geometry.CCL.Parser.Formula
 
 /-- Complete finite formula for a proposed next raw bit. -/
-@[expose] def advanceFormula (state : Data.CCL.Encoding.Parser.State) (bit :
+@[expose] def advanceFormula (state : State) (bit :
   Bool) :
-  Formula.BoundaryFormula :=
+  BoundaryFormula :=
   match state.phase with
-  | .initial => Formula.stateFormula (State.step state bit)
-  | .highUnary _ => Formula.stateFormula (State.step state bit)
-  | .lowUnary _ => Formula.stateFormula (State.step state bit)
-  | .loopUnary _ => Formula.stateFormula (State.step state bit)
+  | .initial => stateFormula (State.step state bit)
+  | .highUnary _ => stateFormula (State.step state bit)
+  | .lowUnary _ => stateFormula (State.step state bit)
+  | .loopUnary _ => stateFormula (State.step state bit)
   | .sector kind exponent bits =>
       match bits with
-      | .zero => Formula.stateFormula (State.step state bit)
-      | .one _ => Formula.stateFormula (State.step state bit)
+      | .zero => stateFormula (State.step state bit)
+      | .one _ => stateFormula (State.step state bit)
       | .two first second =>
           let sector := Code.sectorOfBits first second bit
           .and
-            (Formula.radialFormula kind exponent Coordinates2.Matrix.identityMatrix)
+            (radialFormula kind exponent Coordinates2.Matrix.identityMatrix)
             (.and
               (Sector.sectorFormula sector
-                (Parser.normalizedMatrix kind exponent Coordinates2.Matrix.identityMatrix))
-              (.atom ⟨Formula.residualForm kind exponent sector, .positive⟩))
+                (normalizedMatrix kind exponent Coordinates2.Matrix.identityMatrix))
+              (.atom ⟨residualForm kind exponent sector, .positive⟩))
 
 /-- Only the newly introduced part of a proposed child predicate. Retained history is supplied by the persistent-prefix
 invariant. -/
 @[expose] def incrementalAdvanceFormula (state :
-  Data.CCL.Encoding.Parser.State) (bit : Bool) :
-  Formula.BoundaryFormula :=
+  State) (bit : Bool) :
+  BoundaryFormula :=
   match state.phase with
-  | .initial => Formula.activeFormula (State.step state bit).phase
-  | .highUnary _ => Formula.activeFormula (State.step state bit).phase
-  | .lowUnary _ => Formula.activeFormula (State.step state bit).phase
-  | .loopUnary _ => Formula.activeFormula (State.step state bit).phase
+  | .initial => activeFormula (State.step state bit).phase
+  | .highUnary _ => activeFormula (State.step state bit).phase
+  | .lowUnary _ => activeFormula (State.step state bit).phase
+  | .loopUnary _ => activeFormula (State.step state bit).phase
   | .sector _ _ bits =>
       match bits with
-      | .zero => Formula.activeFormula (State.step state bit).phase
-      | .one _ => Formula.activeFormula (State.step state bit).phase
+      | .zero => activeFormula (State.step state bit).phase
+      | .one _ => activeFormula (State.step state bit).phase
       | .two _ _ => advanceFormula state bit
 
 /-- A current state formula plus the new child predicate entails the full child formula. -/
 theorem advanceFormula_holds_of_current_incremental
-    (state : Data.CCL.Encoding.Parser.State) (bit : Bool) (value : Data.Gaussian.Basic.Canonical)
-    (current : (Formula.stateFormula state).Holds value)
+    (state : State) (bit : Bool) (value : Data.Gaussian.Basic.Canonical)
+    (current : (stateFormula state).Holds value)
     (incremental : (incrementalAdvanceFormula state bit).Holds value) :
     (advanceFormula state bit).Holds value := by
   rcases state with ⟨phase, matrix, history⟩
@@ -103,28 +103,28 @@ theorem advanceFormula_holds_of_current_incremental
   | initial =>
       cases bit <;>
         simpa only [advanceFormula, incrementalAdvanceFormula,
-          Formula.stateFormula,
+          stateFormula,
           State.step, BoundaryFormula.Holds, if_pos (Eq.refl true), if_neg (show false ≠ true from Bool.noConfusion),
             -eq_self, -iff_self]
           using And.intro current.1 incremental
   | highUnary count =>
       cases bit <;>
         simpa only [advanceFormula, incrementalAdvanceFormula,
-          Formula.stateFormula,
+          stateFormula,
           State.step, BoundaryFormula.Holds, if_pos (Eq.refl true), if_neg (show false ≠ true from Bool.noConfusion),
             -eq_self, -iff_self]
           using And.intro current.1 incremental
   | lowUnary count =>
       cases bit <;>
         simpa only [advanceFormula, incrementalAdvanceFormula,
-          Formula.stateFormula,
+          stateFormula,
           State.step, BoundaryFormula.Holds, if_pos (Eq.refl true), if_neg (show false ≠ true from Bool.noConfusion),
             -eq_self, -iff_self]
           using And.intro current.1 incremental
   | loopUnary count =>
       cases bit <;>
         simpa only [advanceFormula, incrementalAdvanceFormula,
-          Formula.stateFormula,
+          stateFormula,
           State.step, BoundaryFormula.Holds, if_pos (Eq.refl true), if_neg (show false ≠ true from Bool.noConfusion),
             -eq_self, -iff_self]
           using And.intro current.1 incremental
@@ -132,12 +132,12 @@ theorem advanceFormula_holds_of_current_incremental
       cases bits with
       | zero =>
           simpa only [advanceFormula, incrementalAdvanceFormula,
-            Formula.stateFormula,
+            stateFormula,
             State.step, BoundaryFormula.Holds, -eq_self, -iff_self]
             using And.intro current.1 incremental
       | one first =>
           simpa only [advanceFormula, incrementalAdvanceFormula,
-            Formula.stateFormula,
+            stateFormula,
             State.step, BoundaryFormula.Holds, -eq_self, -iff_self]
             using And.intro current.1 incremental
       | two first second => exact incremental
@@ -146,7 +146,7 @@ theorem advanceFormula_holds_of_current_incremental
 `advanceFormula_holds_of_current_incremental`, this identifies the incremental formula as exactly the history-free
 obligation once the current prefix is already represented. -/
 theorem incrementalAdvanceFormula_holds_of_advance
-    (state : Data.CCL.Encoding.Parser.State) (bit : Bool) (value : Data.Gaussian.Basic.Canonical)
+    (state : State) (bit : Bool) (value : Data.Gaussian.Basic.Canonical)
     (advance : (advanceFormula state bit).Holds value) :
     (incrementalAdvanceFormula state bit).Holds value := by
   rcases state with ⟨phase, matrix, history⟩
@@ -154,28 +154,28 @@ theorem incrementalAdvanceFormula_holds_of_advance
   | initial =>
       cases bit <;>
         simpa only [advanceFormula, incrementalAdvanceFormula,
-          Formula.stateFormula,
+          stateFormula,
           State.step, BoundaryFormula.Holds, if_pos (Eq.refl true), if_neg (show false ≠ true from Bool.noConfusion),
             -eq_self, -iff_self]
           using advance.2
   | highUnary count =>
       cases bit <;>
         simpa only [advanceFormula, incrementalAdvanceFormula,
-          Formula.stateFormula,
+          stateFormula,
           State.step, BoundaryFormula.Holds, if_pos (Eq.refl true), if_neg (show false ≠ true from Bool.noConfusion),
             -eq_self, -iff_self]
           using advance.2
   | lowUnary count =>
       cases bit <;>
         simpa only [advanceFormula, incrementalAdvanceFormula,
-          Formula.stateFormula,
+          stateFormula,
           State.step, BoundaryFormula.Holds, if_pos (Eq.refl true), if_neg (show false ≠ true from Bool.noConfusion),
             -eq_self, -iff_self]
           using advance.2
   | loopUnary count =>
       cases bit <;>
         simpa only [advanceFormula, incrementalAdvanceFormula,
-          Formula.stateFormula,
+          stateFormula,
           State.step, BoundaryFormula.Holds, if_pos (Eq.refl true), if_neg (show false ≠ true from Bool.noConfusion),
             -eq_self, -iff_self]
           using advance.2
@@ -183,54 +183,54 @@ theorem incrementalAdvanceFormula_holds_of_advance
       cases bits with
       | zero =>
           simpa only [advanceFormula, incrementalAdvanceFormula,
-            Formula.stateFormula,
+            stateFormula,
             State.step, BoundaryFormula.Holds, -eq_self, -iff_self] using advance.2
       | one first =>
           simpa only [advanceFormula, incrementalAdvanceFormula,
-            Formula.stateFormula,
+            stateFormula,
             State.step, BoundaryFormula.Holds, -eq_self, -iff_self] using advance.2
       | two first second => exact advance
 
 /-- The compiled formula is propositionally identical to the affine next-bit predicate. -/
 theorem advanceFormula_iff
-    (state : Data.CCL.Encoding.Parser.State) (bit : Bool) (value : Data.Gaussian.Basic.Canonical) :
+    (state : State) (bit : Bool) (value : Data.Gaussian.Basic.Canonical) :
     (advanceFormula state bit).Holds value ↔
       Next.CanAdvanceAt state bit value := by
   rcases state with ⟨phase, matrix, history⟩
   cases phase with
   | initial =>
-      exact Formula.stateFormula_iff
+      exact stateFormula_iff
         (State.step ⟨.initial, matrix, history⟩ bit) value
   | highUnary count =>
-      exact Formula.stateFormula_iff
+      exact stateFormula_iff
         (State.step ⟨.highUnary count, matrix, history⟩ bit) value
   | lowUnary count =>
-      exact Formula.stateFormula_iff
+      exact stateFormula_iff
         (State.step ⟨.lowUnary count, matrix, history⟩ bit) value
   | loopUnary count =>
-      exact Formula.stateFormula_iff
+      exact stateFormula_iff
         (State.step ⟨.loopUnary count, matrix, history⟩ bit) value
   | sector kind exponent bits =>
       cases bits with
       | zero =>
-          exact Formula.stateFormula_iff
+          exact stateFormula_iff
             (State.step ⟨.sector kind exponent .zero, matrix, history⟩ bit) value
       | one first =>
-          exact Formula.stateFormula_iff
+          exact stateFormula_iff
             (State.step ⟨.sector kind exponent (.one first), matrix, history⟩ bit)
               value
       | two first second =>
           let sector := Code.sectorOfBits first second bit
           have identityDenominator := Homography.identityMatrix_denominator_ne value
           rw [advanceFormula]
-          simp only [BoundaryFormula.Holds, Atom.Holds, Data.Rat.SignTest.Holds, -eq_self, -iff_self]
-          have radialEquivalent := Formula.radialFormula_iff kind exponent Coordinates2.Matrix.identityMatrix value
+          simp only [BoundaryFormula.Holds, Atom.Holds, SignTest.Holds, -eq_self, -iff_self]
+          have radialEquivalent := radialFormula_iff kind exponent Coordinates2.Matrix.identityMatrix value
             identityDenominator
           rewrite [Homography.homographic_identityMatrix] at radialEquivalent
-          have sectorEquivalent := Formula.normalizedSectorFormula_iff kind exponent sector
+          have sectorEquivalent := normalizedSectorFormula_iff kind exponent sector
             Coordinates2.Matrix.identityMatrix value identityDenominator
           rewrite [Homography.homographic_identityMatrix] at sectorEquivalent
-          rewrite [Formula.eval_residualForm]
+          rewrite [eval_residualForm]
           constructor
           · rintro ⟨radial, sectorHolds, positive⟩
             refine ⟨⟨radialEquivalent.mp radial, sectorEquivalent.mp sectorHolds⟩, ?_⟩
@@ -243,7 +243,7 @@ theorem advanceFormula_iff
 
 /-- The two compiled child formulas are mutually exclusive at every affine tail, including equality boundaries. -/
 theorem advanceFormula_unique_at
-    (state : Data.CCL.Encoding.Parser.State) (before : Data.Gaussian.Basic.Canonical)
+    (state : State) (before : Data.Gaussian.Basic.Canonical)
     {left right : Bool}
     (leftHolds : (advanceFormula state left).Holds before)
     (rightHolds : (advanceFormula state right).Holds before) :

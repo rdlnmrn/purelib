@@ -53,7 +53,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Approximation.Rational.Budget.Aggregate (perTerm perTerm_positive)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -63,38 +63,38 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     sheet} {paired : Paired ordered}
     (prepared : Prepared paired)
   {fine : Polynomial.Geometry.Grid.ClearGrid curve.polynomial
-    (Purelib.Curves.Hyperelliptic.Branches.Cuts.Ambient curve)}
-  (included : Purelib.Polynomial.Geometry.Grid.Extension.CoordinateInclusion base.bank.grid fine)
+    (Curves.Hyperelliptic.Branches.Cuts.Ambient curve)}
+  (included : Polynomial.Geometry.Grid.Extension.CoordinateInclusion base.bank.grid fine)
   {frames : RootIsolation.SquareRoot.Grid.RootFrames fine} (edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames) (vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank fine)
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames) (vertices :
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank fine)
 
 open Purelib.Algebra in
 open Purelib.Topology in
 open Purelib.Data in
 open Purelib.LinearAlgebra in
 /-- The word value of a finite coefficient combination equals the corresponding combination of original word values. -/
-private theorem combined_word (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+private theorem combined_word (coefficients : Gaussian.Energy.GaussianVector genus)
     (values : Fin genus → OrientedEdge vertices.count → Gaussian.Basic.Canonical) (word : List (OrientedEdge
       vertices.count)) :
-    Surface.Sewing.SewingRetraction.wordValue (combinedEdgeValue vertices coefficients values) word =
-      FiniteSum.Fin.sumFin (fun basis => coefficients basis * Surface.Sewing.SewingRetraction.wordValue (values basis)
+    wordValue (combinedEdgeValue vertices coefficients values) word =
+      sumFin (fun basis => coefficients basis * wordValue (values basis)
         word) := by
   induction word with
   | nil =>
       exact (FiniteSum.Fin.sumFin_congr (fun basis =>
-        show coefficients basis * Surface.Sewing.SewingRetraction.wordValue (values basis) [] = 0 from mul_zero
+        show coefficients basis * wordValue (values basis) [] = 0 from mul_zero
           _)).trans
           FiniteSum.Fin.sumFin_zero |>.symm
   | cons edge rest ih =>
       change combinedEdgeValue vertices coefficients values edge +
-        Surface.Sewing.SewingRetraction.wordValue (combinedEdgeValue vertices coefficients values) rest = _
+        wordValue (combinedEdgeValue vertices coefficients values) rest = _
       rw [ih, combinedEdgeValue, ← FiniteSum.Fin.sumFin_add]
       apply FiniteSum.Fin.sumFin_congr
       intro basis
-      change coefficients basis * values basis edge + coefficients basis * Surface.Sewing.SewingRetraction.wordValue
+      change coefficients basis * values basis edge + coefficients basis * wordValue
         (values basis) rest =
-        coefficients basis * (values basis edge + Surface.Sewing.SewingRetraction.wordValue (values basis) rest)
+        coefficients basis * (values basis edge + wordValue (values basis) rest)
       ring1
 
 section
@@ -102,8 +102,8 @@ open Purelib.Algebra
 open Purelib.Data
 /-- Gaussian conjugation commutes with the finite indexed sum. -/
 private theorem conjugate_sum {count : Nat} (values : Fin count → Gaussian.Basic.Canonical) :
-    Data.Gaussian.Basic.conj (FiniteSum.Fin.sumFin values) =
-      FiniteSum.Fin.sumFin (fun index => Data.Gaussian.Basic.conj (values index)) := by
+    Gaussian.Basic.conj (sumFin values) =
+      sumFin (fun index => Gaussian.Basic.conj (values index)) := by
   induction count with
   | zero => rfl
   | succ count ih =>
@@ -112,9 +112,9 @@ private theorem conjugate_sum {count : Nat} (values : Fin count → Gaussian.Bas
 
 /-- Conjugating a finite coefficient combination conjugates both its coefficients and values. -/
 private theorem conjugate_combination (coefficients values : Fin genus → Gaussian.Basic.Canonical) :
-    Data.Gaussian.Basic.conj (FiniteSum.Fin.sumFin (fun basis => coefficients basis * values basis)) =
-      FiniteSum.Fin.sumFin (fun basis => Data.Gaussian.Basic.conj (coefficients basis) *
-        Data.Gaussian.Basic.conj (values basis)) := by
+    Gaussian.Basic.conj (sumFin (fun basis => coefficients basis * values basis)) =
+      sumFin (fun basis => Gaussian.Basic.conj (coefficients basis) *
+        Gaussian.Basic.conj (values basis)) := by
   rw [conjugate_sum]
   exact FiniteSum.Fin.sumFin_congr fun basis => Gaussian.Basic.conj_mul _ _
 
@@ -132,14 +132,14 @@ open Purelib.LinearAlgebra in
 The equality keeps the original corrected ordered A/B words, refined edge owners and selected sheet, including every
 off-diagonal basis pair. -/
 theorem combined_conjugate_period_area (newSheet : Fin 2)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (coefficients : Gaussian.Energy.GaussianVector genus)
     (values : Fin genus → OrientedEdge vertices.count → Gaussian.Basic.Canonical) :
-    Hyperelliptic.Meshes.Newton.OriginalPeriodArea.resplitPeriodArea prepared included edges vertices newSheet
+    resplitPeriodArea prepared included edges vertices newSheet
       (combinedEdgeValue vertices coefficients values) =
-      FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second =>
-        Data.Gaussian.Basic.conj (coefficients first) * coefficients second *
+      sumFin (fun first => sumFin (fun second =>
+        Gaussian.Basic.conj (coefficients first) * coefficients second *
           conjugateResplitPeriodArea prepared included edges vertices newSheet (values first) (values second))) := by
-  unfold Hyperelliptic.Meshes.Newton.OriginalPeriodArea.resplitPeriodArea conjugateResplitPeriodArea
+  unfold resplitPeriodArea conjugateResplitPeriodArea
   rw [← Periods.BilinearCombination.sumFin_combination]
   apply FiniteSum.Fin.sumFin_congr
   intro cycle
@@ -151,11 +151,11 @@ theorem combined_conjugate_period_area (newSheet : Fin 2)
     (included.resplit (prepared.bWalk cycle).closed.walk (SquareRoot.Grid.LiftedVertices.VertexBank.coordinate_onGrid
       lifted.vertices _)) newSheet
   have expanded := Periods.BilinearCombination.edgeArea_combination
-    (fun basis => Data.Gaussian.Basic.conj (coefficients basis)) coefficients
-    (fun basis => Data.Gaussian.Basic.conj (Surface.Sewing.SewingRetraction.wordValue (values basis) aWord))
-    (fun basis => Data.Gaussian.Basic.conj (Surface.Sewing.SewingRetraction.wordValue (values basis) bWord))
-    (fun basis => Surface.Sewing.SewingRetraction.wordValue (values basis) aWord) (fun basis =>
-      Surface.Sewing.SewingRetraction.wordValue (values basis) bWord)
+    (fun basis => Gaussian.Basic.conj (coefficients basis)) coefficients
+    (fun basis => Gaussian.Basic.conj (wordValue (values basis) aWord))
+    (fun basis => Gaussian.Basic.conj (wordValue (values basis) bWord))
+    (fun basis => wordValue (values basis) aWord) (fun basis =>
+      wordValue (values basis) bWord)
   rw [← conjugate_combination, ← conjugate_combination] at expanded
   exact expanded
 
@@ -166,13 +166,13 @@ open Purelib.LinearAlgebra in
 
 The original corrected A/B period matrices retain the factor of two and imaginary-part division by four. -/
 theorem combined_conjugate_raw_energy (newSheet : Fin 2)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (coefficients : Gaussian.Energy.GaussianVector genus)
     (values : Fin genus → OrientedEdge vertices.count → Gaussian.Basic.Canonical) :
     Gaussian.Energy.unnormalizedEnergyForm coefficients
       (resplitPeriodMatrix prepared included edges vertices newSheet values false)
       (resplitPeriodMatrix prepared included edges vertices newSheet values true) =
-      (2 * FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second =>
-        Data.Gaussian.Basic.conj (coefficients first) * coefficients second *
+      (2 * sumFin (fun first => sumFin (fun second =>
+        Gaussian.Basic.conj (coefficients first) * coefficients second *
           conjugateResplitPeriodArea prepared included edges vertices newSheet (values first) (values second)))).im / 4
             := by
   rw [combined_raw_energy prepared, combined_conjugate_period_area prepared]

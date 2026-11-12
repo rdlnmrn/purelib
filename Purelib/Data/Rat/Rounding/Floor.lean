@@ -35,7 +35,12 @@ Divide its signed numerator by its strictly positive denominator using integer
 Euclidean division. The same original quotient is the lower integer endpoint
 for both positive and negative inputs. -/
 @[expose] public def floor (source : Fraction.Rational) : Int :=
-  source.num / (source.den : Int)
+  source.num / Int.ofNat source.den
+
+/-- Floor retains the original integer quotient, with the denominator converted directly from its natural display. -/
+public theorem floor_eq (source : Fraction.Rational) :
+    floor source = source.num / (source.den : Int) :=
+  congrArg (fun denominator : Int => source.num / denominator) (Int.ofNat_eq_natCast source.den)
 
 /-- An integer cast lies below a rational exactly when it lies below its floor.
 
@@ -44,6 +49,7 @@ comparison to the same Euclidean quotient. Direct quotient monotonicity and
 reconstruction establish both directions without changing the quotient. -/
 public theorem intCast_le_iff_floor (integer : Int) (source : Fraction.Rational) :
     (integer : Fraction.Rational) ≤ source ↔ integer ≤ floor source := by
+  rewrite [floor_eq]
   rw [Fraction.Cast.intCast_eq_fromInt]
   change integer * (source.den : Int) ≤ source.num * 1 ↔
     integer ≤ source.num / (source.den : Int)

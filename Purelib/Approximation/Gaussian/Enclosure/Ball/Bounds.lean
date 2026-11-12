@@ -54,7 +54,7 @@ namespace Purelib.Approximation.Gaussian.Enclosure.Ball.Bounds
 def unaryCandidateLower (ball :
     Ball) :
   Fraction.Rational :=
-  (Data.Gaussian.Norm.Basic.normSq ball.center - 16 * ball.radiusSq) / (16 / 15)
+  (Basic.normSq ball.center - 16 * ball.radiusSq) / (16 / 15)
 
 /-- The rational coefficient sixteen fifteenths is strictly positive. -/
 public theorem sixteen_fifteenths_pos :
@@ -66,22 +66,22 @@ theorem unaryCandidateLower_le {ball :
     Ball}
   {value : Data.Gaussian.Basic.Canonical}
     (inside : ball.Contains value) :
-    unaryCandidateLower ball ≤ Data.Gaussian.Norm.Basic.normSq
+    unaryCandidateLower ball ≤ Basic.normSq
       value := by
   have centerDecomposition :
       ball.center = (ball.center - value) + value := by
     apply Data.Gaussian.Basic.ext <;>
       simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im, Data.Gaussian.Basic.add_re,
         Data.Gaussian.Basic.add_im] <;> ring1
-  have errorNorm : Data.Gaussian.Norm.Basic.normSq (ball.center - value) ≤ ball.radiusSq := by
+  have errorNorm : Basic.normSq (ball.center - value) ≤ ball.radiusSq := by
     have difference : ball.center - value = -(value - ball.center) := by
       apply Data.Gaussian.Basic.ext <;>
         simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im, Data.Gaussian.Basic.neg_re,
           Data.Gaussian.Basic.neg_im] <;> ring1
-    rw [difference, Data.Gaussian.Norm.Basic.normSq_neg]
+    rw [difference, Basic.normSq_neg]
     exact inside
-  have centerUpper : Data.Gaussian.Norm.Basic.normSq ball.center ≤
-      16 * ball.radiusSq + (16 / 15) * Data.Gaussian.Norm.Basic.normSq value := by
+  have centerUpper : Basic.normSq ball.center ≤
+      16 * ball.radiusSq + (16 / 15) * Basic.normSq value := by
     rw [centerDecomposition]
     exact (Weighted.normSq_add_le_weighted
       (ball.center - value) value).trans
@@ -93,10 +93,10 @@ theorem unaryCandidateLower_le {ball :
   apply Fraction.Order.Arithmetic.le_of_add_le_add_right_direct
     (c := 16 * ball.radiusSq)
   calc
-    Data.Gaussian.Norm.Basic.normSq ball.center - 16 * ball.radiusSq + 16 * ball.radiusSq =
-        Data.Gaussian.Norm.Basic.normSq ball.center := by ring1
-    _ ≤ 16 * ball.radiusSq + (16 / 15) * Data.Gaussian.Norm.Basic.normSq value := centerUpper
-    _ = Data.Gaussian.Norm.Basic.normSq value * (16 / 15) + 16 * ball.radiusSq := by ring1
+    Basic.normSq ball.center - 16 * ball.radiusSq + 16 * ball.radiusSq =
+        Basic.normSq ball.center := by ring1
+    _ ≤ 16 * ball.radiusSq + (16 / 15) * Basic.normSq value := centerUpper
+    _ = Basic.normSq value * (16 / 15) + 16 * ball.radiusSq := by ring1
 end Purelib.Approximation.Gaussian.Enclosure.Ball.Bounds
 
 end
@@ -123,7 +123,7 @@ namespace Purelib.Approximation.Gaussian.Enclosure.Ball.Bounds
 def smallUpper (ball :
     Ball) : Fraction.Rational
   :=
-  2 * (ball.radiusSq + Data.Gaussian.Norm.Basic.normSq ball.center)
+  2 * (ball.radiusSq + Basic.normSq ball.center)
 
 end Purelib.Approximation.Gaussian.Enclosure.Ball.Bounds
 

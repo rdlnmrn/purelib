@@ -25,6 +25,8 @@ import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense
+
 open Purelib.Algebra.Field
 
 open Purelib.Data.Rat
@@ -54,23 +56,23 @@ namespace Purelib.NumberTheory.Cyclotomic.Basic
 /-- Fuelled implementation of the finite cyclotomic construction.  The
 first argument is structural recursion fuel; the proof below shows that any
 fuel strictly larger than the requested stage gives the same result. -/
-def cyclotomicAux : Nat → Nat → Polynomial.Dense.Rational.Divisibility.CoefficientPolynomial
-  | 0, _ => Dense.Basic.DensePolynomial.constant 1
-  | _ + 1, 0 => Dense.Basic.DensePolynomial.constant 1
+def cyclotomicAux : Nat → Nat → Rational.Divisibility.CoefficientPolynomial
+  | 0, _ => Basic.DensePolynomial.constant 1
+  | _ + 1, 0 => Basic.DensePolynomial.constant 1
   | fuel + 1, number + 1 =>
-      let properProduct := Dense.Rational.FiniteProduct.productFin (number + 2) fun divisor =>
+      let properProduct := Rational.FiniteProduct.productFin (number + 2) fun divisor =>
         if _evidence : 2 ≤ divisor.val ∧ divisor.val ∣ number + 1 then
-          Purelib.NumberTheory.Cyclotomic.Basic.cyclotomicAux fuel ((number + 1) / divisor.val)
-        else Dense.Basic.DensePolynomial.constant 1
-      (Dense.Basic.DensePolynomial.divMod (Dense.Rational.PowerMinusOne.powerMinusOne (number + 1))
+          Basic.cyclotomicAux fuel ((number + 1) / divisor.val)
+        else Basic.DensePolynomial.constant 1
+      (Basic.DensePolynomial.divMod (Rational.PowerMinusOne.powerMinusOne (number + 1))
         properProduct).quotient
 
 /-- Extra structural fuel does not change a stage once the fuel exceeds its
 index. -/
 theorem cyclotomicAux_eq_of_enough_fuel : ∀ number : Nat,
     ∀ leftFuel rightFuel : Nat, number < leftFuel → number < rightFuel →
-      Cyclotomic.Basic.cyclotomicAux leftFuel number =
-        Cyclotomic.Basic.cyclotomicAux rightFuel number := by
+      cyclotomicAux leftFuel number =
+        cyclotomicAux rightFuel number := by
   intro number
   induction number using Nat.strong_induction_on with
   | h number inductionHypothesis =>
@@ -84,11 +86,11 @@ theorem cyclotomicAux_eq_of_enough_fuel : ∀ number : Nat,
               cases number with
               | zero => rfl
               | succ previous =>
-                  rw [Cyclotomic.Basic.cyclotomicAux, Cyclotomic.Basic.cyclotomicAux]
+                  rw [cyclotomicAux, cyclotomicAux]
                   apply congrArg fun product =>
-                    (Dense.Basic.DensePolynomial.divMod (Dense.Rational.PowerMinusOne.powerMinusOne (previous + 1))
+                    (Basic.DensePolynomial.divMod (Rational.PowerMinusOne.powerMinusOne (previous + 1))
                       product).quotient
-                  apply Dense.Rational.FiniteProduct.productFin_congr
+                  apply Rational.FiniteProduct.productFin_congr
                   intro divisor
                   by_cases selected :
                       2 ≤ divisor.val ∧ divisor.val ∣ previous + 1
@@ -103,42 +105,42 @@ theorem cyclotomicAux_eq_of_enough_fuel : ∀ number : Nat,
 
 /-- Executable finite cyclotomic factor, evaluated with the least uniformly
 sufficient structural fuel. -/
-def cyclotomic (number : Nat) : (Dense.Basic.DensePolynomial
+def cyclotomic (number : Nat) : (Basic.DensePolynomial
   Fraction.Rational) :=
-  Cyclotomic.Basic.cyclotomicAux (number + 1) number
+  cyclotomicAux (number + 1) number
 
 /-- One slot in the literal divisor-coordinate product at stage `number`. -/
 def properCyclotomicFactor (number : Nat) (divisor : Fin (number + 1)) :
-    (Dense.Basic.DensePolynomial Fraction.Rational) :=
+    (Basic.DensePolynomial Fraction.Rational) :=
     if _evidence : 2 ≤ divisor.val ∧ divisor.val ∣ number then
-      Cyclotomic.Basic.cyclotomic (number / divisor.val)
-    else Dense.Basic.DensePolynomial.constant 1
+      cyclotomic (number / divisor.val)
+    else Basic.DensePolynomial.constant 1
 
 /-- The literal product of all earlier divisor-indexed factors used to
 construct `cyclotomic number`. -/
-def properCyclotomicProduct (number : Nat) : (Dense.Basic.DensePolynomial
+def properCyclotomicProduct (number : Nat) : (Basic.DensePolynomial
   Fraction.Rational) :=
-  Dense.Rational.FiniteProduct.productFin (number + 1) (Cyclotomic.Basic.properCyclotomicFactor number)
+  Rational.FiniteProduct.productFin (number + 1) (properCyclotomicFactor number)
 
 /-- The stage-zero convention is the unit polynomial. -/
 @[simp] theorem cyclotomic_zero :
-    Cyclotomic.Basic.cyclotomic 0 = Dense.Basic.DensePolynomial.constant 1 := rfl
+    cyclotomic 0 = Basic.DensePolynomial.constant 1 := rfl
 
 /-- A positive cyclotomic stage is the quotient of the power-minus-one polynomial by its proper-divisor product. -/
 theorem cyclotomic_succ (number : Nat) :
-    Cyclotomic.Basic.cyclotomic (number + 1) =
-      (Dense.Basic.DensePolynomial.divMod (Dense.Rational.PowerMinusOne.powerMinusOne (number + 1))
-        (Cyclotomic.Basic.properCyclotomicProduct (number + 1))).quotient := by
-  unfold Cyclotomic.Basic.cyclotomic
-  rw [Cyclotomic.Basic.cyclotomicAux]
-  unfold Cyclotomic.Basic.properCyclotomicProduct Cyclotomic.Basic.properCyclotomicFactor
+    cyclotomic (number + 1) =
+      (Basic.DensePolynomial.divMod (Rational.PowerMinusOne.powerMinusOne (number + 1))
+        (properCyclotomicProduct (number + 1))).quotient := by
+  unfold cyclotomic
+  rw [cyclotomicAux]
+  unfold properCyclotomicProduct properCyclotomicFactor
   apply congrArg fun product =>
-    (Dense.Basic.DensePolynomial.divMod (Dense.Rational.PowerMinusOne.powerMinusOne (number + 1)) product).quotient
-  apply Dense.Rational.FiniteProduct.productFin_congr
+    (Basic.DensePolynomial.divMod (Rational.PowerMinusOne.powerMinusOne (number + 1)) product).quotient
+  apply Rational.FiniteProduct.productFin_congr
   intro divisor
   by_cases selected : 2 ≤ divisor.val ∧ divisor.val ∣ number + 1
   · rw [dif_pos selected, dif_pos selected]
-    apply Cyclotomic.Basic.cyclotomicAux_eq_of_enough_fuel
+    apply cyclotomicAux_eq_of_enough_fuel
     · exact Division.div_lt_self (by omega0) (by omega0)
     · omega0
   · rw [dif_neg selected, dif_neg selected]
@@ -148,8 +150,8 @@ literal quotient-coordinate product. -/
 theorem cyclotomic_evalDvd_properProduct
     {divisor number : Nat} (divisorPositive : 0 < divisor)
     (divides : divisor ∣ number) (proper : divisor < number) :
-    Dense.Rational.Divisibility.EvalDvd (Cyclotomic.Basic.cyclotomic divisor)
-      (Cyclotomic.Basic.properCyclotomicProduct number) := by
+    Rational.Divisibility.EvalDvd (cyclotomic divisor)
+      (properCyclotomicProduct number) := by
   let coordinate : Fin (number + 1) :=
     ⟨number / divisor, Nat.lt_succ_of_le (Division.div_le_self _ _)⟩
   have coordinateDivides : coordinate.val ∣ number := by
@@ -158,37 +160,37 @@ theorem cyclotomic_evalDvd_properProduct
     exact (Division.div_mul_cancel divides).symm
   have coordinateLarge : 2 ≤ coordinate.val := by
     exact Divisor.divisorQuotient_two_le divisorPositive divides proper
-  have selected : Cyclotomic.Basic.properCyclotomicFactor number coordinate =
-      Cyclotomic.Basic.cyclotomic divisor := by
-    unfold Cyclotomic.Basic.properCyclotomicFactor
+  have selected : properCyclotomicFactor number coordinate =
+      cyclotomic divisor := by
+    unfold properCyclotomicFactor
     rw [dif_pos ⟨coordinateLarge, coordinateDivides⟩]
     congr 1
     exact Divisor.divide_by_divisorQuotient (by omega0) divides
-  rw [Cyclotomic.Basic.properCyclotomicProduct]
+  rw [properCyclotomicProduct]
   rw [← selected]
-  exact Dense.Rational.FiniteProduct.evalDvd_factor_productFin (number + 1)
-    (Cyclotomic.Basic.properCyclotomicFactor number) coordinate
+  exact Rational.FiniteProduct.evalDvd_factor_productFin (number + 1)
+    (properCyclotomicFactor number) coordinate
 
 /-- The simultaneous induction invariant for the finite construction. -/
 structure StageSpec (number : Nat) : Prop where
   /-- The computed cyclotomic factor is already in normalized coefficient form. -/ normalized :
-    (Cyclotomic.Basic.cyclotomic number).normalize = Cyclotomic.Basic.cyclotomic number
-  /-- The computed cyclotomic factor is nonzero. -/ nonzero : (Cyclotomic.Basic.cyclotomic number).isZero = false
+    (cyclotomic number).normalize = cyclotomic number
+  /-- The computed cyclotomic factor is nonzero. -/ nonzero : (cyclotomic number).isZero = false
   /-- The proper-divisor product times this factor evaluates to the power-minus-one polynomial. -/ factorization :
-    Dense.Rational.Divisibility.EvalEq (Dense.Rational.PowerMinusOne.powerMinusOne number)
-    (Cyclotomic.Basic.properCyclotomicProduct number * Cyclotomic.Basic.cyclotomic number)
+    Rational.Divisibility.EvalEq (Rational.PowerMinusOne.powerMinusOne number)
+    (properCyclotomicProduct number * cyclotomic number)
   /-- The retained factor and its proper-divisor product admit an evaluation Bézout identity. -/ properCoprime :
-    Dense.Rational.Divisibility.EvalCoprime (Cyclotomic.Basic.properCyclotomicProduct number)
-    (Cyclotomic.Basic.cyclotomic number)
+    Rational.Divisibility.EvalCoprime (properCyclotomicProduct number)
+    (cyclotomic number)
   /-- Every earlier positive cyclotomic factor is evaluation-coprime to this stage. -/ earlierCoprime : ∀ earlier : Nat,
     0 < earlier → earlier < number →
-    Dense.Rational.Divisibility.EvalCoprime (Cyclotomic.Basic.cyclotomic earlier) (Cyclotomic.Basic.cyclotomic number)
+    Rational.Divisibility.EvalCoprime (cyclotomic earlier) (cyclotomic number)
 
 open Purelib.Data in
 /-- Every positive stage of the executable construction is exact, nonzero,
 and coprime to all earlier stages. -/
 theorem cyclotomic_stageSpec :
-    ∀ number : Nat, 0 < number → Cyclotomic.Basic.StageSpec number
+    ∀ number : Nat, 0 < number → StageSpec number
   | 0, positive => False.elim ((Nat.not_lt_zero 0) positive)
   | previous + 1, positive => by
       have quotientPositive (stage : Nat) (stagePositive : 0 < stage)
@@ -208,41 +210,41 @@ theorem cyclotomic_stageSpec :
       have factorNormalized (stage : Nat) (stagePositive : 0 < stage)
           (stageBound : stage ≤ previous + 1)
           (index : Fin (stage + 1)) :
-          (Cyclotomic.Basic.properCyclotomicFactor stage index).normalize =
-            Cyclotomic.Basic.properCyclotomicFactor stage index := by
+          (properCyclotomicFactor stage index).normalize =
+            properCyclotomicFactor stage index := by
         by_cases selected : 2 ≤ index.val ∧ index.val ∣ stage
-        · rw [Cyclotomic.Basic.properCyclotomicFactor, dif_pos selected]
+        · rw [properCyclotomicFactor, dif_pos selected]
           have quotientLt := quotientProper stage stagePositive index selected
-          exact (Purelib.NumberTheory.Cyclotomic.Basic.cyclotomic_stageSpec (stage / index.val)
+          exact (Basic.cyclotomic_stageSpec (stage / index.val)
             (quotientPositive stage stagePositive index selected)).normalized
-        · rw [Cyclotomic.Basic.properCyclotomicFactor, dif_neg selected]
-          exact Dense.Basic.DensePolynomial.normalize_constant_of_ne
+        · rw [properCyclotomicFactor, dif_neg selected]
+          exact Basic.DensePolynomial.normalize_constant_of_ne
             Fraction.Field.zero_ne_one.symm
       have factorNonzero (stage : Nat) (stagePositive : 0 < stage)
           (stageBound : stage ≤ previous + 1)
           (index : Fin (stage + 1)) :
-          (Cyclotomic.Basic.properCyclotomicFactor stage index).isZero = false := by
+          (properCyclotomicFactor stage index).isZero = false := by
         by_cases selected : 2 ≤ index.val ∧ index.val ∣ stage
-        · rw [Cyclotomic.Basic.properCyclotomicFactor, dif_pos selected]
+        · rw [properCyclotomicFactor, dif_pos selected]
           have quotientLt := quotientProper stage stagePositive index selected
-          exact (Purelib.NumberTheory.Cyclotomic.Basic.cyclotomic_stageSpec (stage / index.val)
+          exact (Basic.cyclotomic_stageSpec (stage / index.val)
             (quotientPositive stage stagePositive index selected)).nonzero
-        · rw [Cyclotomic.Basic.properCyclotomicFactor, dif_neg selected]
-          exact Dense.Basic.DensePolynomial.isZero_false_of_eval_ne (x := 0) (by
-            rw [Dense.Basic.DensePolynomial.eval_constant]
+        · rw [properCyclotomicFactor, dif_neg selected]
+          exact Basic.DensePolynomial.isZero_false_of_eval_ne (x := 0) (by
+            rw [Basic.DensePolynomial.eval_constant]
             exact Fraction.Field.zero_ne_one.symm)
       have factorsPairwise (stage : Nat) (stagePositive : 0 < stage)
           (stageBound : stage ≤ previous + 1) :
           ∀ first second : Fin (stage + 1), first ≠ second →
-            Dense.Rational.Divisibility.EvalCoprime (Cyclotomic.Basic.properCyclotomicFactor stage first)
-              (Cyclotomic.Basic.properCyclotomicFactor stage second) := by
+            Rational.Divisibility.EvalCoprime (properCyclotomicFactor stage first)
+              (properCyclotomicFactor stage second) := by
         intro first second different
         by_cases firstSelected :
             2 ≤ first.val ∧ first.val ∣ stage
         · by_cases secondSelected :
               2 ≤ second.val ∧ second.val ∣ stage
-          · rw [Cyclotomic.Basic.properCyclotomicFactor, dif_pos firstSelected,
-              Cyclotomic.Basic.properCyclotomicFactor, dif_pos secondSelected]
+          · rw [properCyclotomicFactor, dif_pos firstSelected,
+              properCyclotomicFactor, dif_pos secondSelected]
             have firstPositive := quotientPositive stage stagePositive
               first firstSelected
             have secondPositive := quotientPositive stage stagePositive
@@ -265,33 +267,33 @@ theorem cyclotomic_stageSpec :
                 _ = stage / first.val * second.val := by
                   rw [quotientEqual]
             by_cases ordered : stage / first.val < stage / second.val
-            · exact (Purelib.NumberTheory.Cyclotomic.Basic.cyclotomic_stageSpec (stage / second.val)
+            · exact (Basic.cyclotomic_stageSpec (stage / second.val)
                 secondPositive).earlierCoprime (stage / first.val)
                   firstPositive ordered
             · have reverse : stage / second.val < stage / first.val := by
                 omega0
-              exact Dense.Rational.Divisibility.evalCoprime_symm
-                ((Purelib.NumberTheory.Cyclotomic.Basic.cyclotomic_stageSpec (stage / first.val)
+              exact Rational.Divisibility.evalCoprime_symm
+                ((Basic.cyclotomic_stageSpec (stage / first.val)
                   firstPositive).earlierCoprime (stage / second.val)
                     secondPositive reverse)
-          · rw [Cyclotomic.Basic.properCyclotomicFactor, dif_pos firstSelected,
-              Cyclotomic.Basic.properCyclotomicFactor, dif_neg secondSelected]
-            exact Dense.Rational.Divisibility.evalCoprime_one_right _
+          · rw [properCyclotomicFactor, dif_pos firstSelected,
+              properCyclotomicFactor, dif_neg secondSelected]
+            exact Rational.Divisibility.evalCoprime_one_right _
         · by_cases secondSelected :
               2 ≤ second.val ∧ second.val ∣ stage
-          · rw [Cyclotomic.Basic.properCyclotomicFactor, dif_neg firstSelected,
-              Cyclotomic.Basic.properCyclotomicFactor, dif_pos secondSelected]
-            exact Dense.Rational.Divisibility.evalCoprime_one_left _
-          · rw [Cyclotomic.Basic.properCyclotomicFactor, dif_neg firstSelected,
-              Cyclotomic.Basic.properCyclotomicFactor, dif_neg secondSelected]
-            exact Dense.Rational.Divisibility.evalCoprime_one_left _
+          · rw [properCyclotomicFactor, dif_neg firstSelected,
+              properCyclotomicFactor, dif_pos secondSelected]
+            exact Rational.Divisibility.evalCoprime_one_left _
+          · rw [properCyclotomicFactor, dif_neg firstSelected,
+              properCyclotomicFactor, dif_neg secondSelected]
+            exact Rational.Divisibility.evalCoprime_one_left _
       have factorsDividePower : ∀ index : Fin (previous + 2),
-          Dense.Rational.Divisibility.EvalDvd (Cyclotomic.Basic.properCyclotomicFactor (previous + 1) index)
-            (Dense.Rational.PowerMinusOne.powerMinusOne (previous + 1)) := by
+          Rational.Divisibility.EvalDvd (properCyclotomicFactor (previous + 1) index)
+            (Rational.PowerMinusOne.powerMinusOne (previous + 1)) := by
         intro index
         by_cases selected :
             2 ≤ index.val ∧ index.val ∣ previous + 1
-        · rw [Cyclotomic.Basic.properCyclotomicFactor, dif_pos selected]
+        · rw [properCyclotomicFactor, dif_pos selected]
           let quotient := (previous + 1) / index.val
           have quotientPos : 0 < quotient :=
             quotientPositive (previous + 1) positive index selected
@@ -299,50 +301,50 @@ theorem cyclotomic_stageSpec :
             quotientProper (previous + 1) positive index selected
           have quotientDvd : quotient ∣ previous + 1 :=
             quotientDivides (previous + 1) index selected
-          apply Dense.Rational.Divisibility.evalDvd_trans
-            (Dense.Rational.Divisibility.evalDvd_right_of_factorization
-              (Purelib.NumberTheory.Cyclotomic.Basic.cyclotomic_stageSpec quotient quotientPos).factorization)
-          exact Dense.Rational.PowerMinusOne.powerMinusOne_evalDvd_of_dvd quotientDvd
-        · rw [Cyclotomic.Basic.properCyclotomicFactor, dif_neg selected]
-          exact Dense.Rational.Divisibility.evalDvd_one _
+          apply Rational.Divisibility.evalDvd_trans
+            (Rational.Divisibility.evalDvd_right_of_factorization
+              (Basic.cyclotomic_stageSpec quotient quotientPos).factorization)
+          exact Rational.PowerMinusOne.powerMinusOne_evalDvd_of_dvd quotientDvd
+        · rw [properCyclotomicFactor, dif_neg selected]
+          exact Rational.Divisibility.evalDvd_one _
       have properDividesPower :
-          Dense.Rational.Divisibility.EvalDvd (Cyclotomic.Basic.properCyclotomicProduct (previous + 1))
-            (Dense.Rational.PowerMinusOne.powerMinusOne (previous + 1)) := by
-        rw [Cyclotomic.Basic.properCyclotomicProduct]
-        exact Dense.Rational.FiniteProduct.evalDvd_productFin_of_pairwise (previous + 2)
-          (Cyclotomic.Basic.properCyclotomicFactor (previous + 1))
-          (Dense.Rational.PowerMinusOne.powerMinusOne (previous + 1)) factorsDividePower
+          Rational.Divisibility.EvalDvd (properCyclotomicProduct (previous + 1))
+            (Rational.PowerMinusOne.powerMinusOne (previous + 1)) := by
+        rw [properCyclotomicProduct]
+        exact Rational.FiniteProduct.evalDvd_productFin_of_pairwise (previous + 2)
+          (properCyclotomicFactor (previous + 1))
+          (Rational.PowerMinusOne.powerMinusOne (previous + 1)) factorsDividePower
           (factorsPairwise (previous + 1) positive (Nat.le_refl _))
       have properNonzero :
-          (Cyclotomic.Basic.properCyclotomicProduct (previous + 1)).isZero = false := by
-        rw [Cyclotomic.Basic.properCyclotomicProduct]
-        exact Dense.Rational.FiniteProduct.productFin_nonzero (previous + 2)
-          (Cyclotomic.Basic.properCyclotomicFactor (previous + 1))
+          (properCyclotomicProduct (previous + 1)).isZero = false := by
+        rw [properCyclotomicProduct]
+        exact Rational.FiniteProduct.productFin_nonzero (previous + 2)
+          (properCyclotomicFactor (previous + 1))
           (factorNonzero (previous + 1) positive (Nat.le_refl _))
       have remainderZero :
-          (Dense.Basic.DensePolynomial.divMod (Dense.Rational.PowerMinusOne.powerMinusOne (previous + 1))
-            (Cyclotomic.Basic.properCyclotomicProduct (previous + 1))).remainder.isZero = true :=
-        Dense.Rational.Divisibility.divMod_remainder_isZero_of_evalDvd _ _ properNonzero
+          (Basic.DensePolynomial.divMod (Rational.PowerMinusOne.powerMinusOne (previous + 1))
+            (properCyclotomicProduct (previous + 1))).remainder.isZero = true :=
+        Rational.Divisibility.divMod_remainder_isZero_of_evalDvd _ _ properNonzero
           properDividesPower
-      have factorization : Dense.Rational.Divisibility.EvalEq (Dense.Rational.PowerMinusOne.powerMinusOne (previous +
+      have factorization : Rational.Divisibility.EvalEq (Rational.PowerMinusOne.powerMinusOne (previous +
         1))
-          (Cyclotomic.Basic.properCyclotomicProduct (previous + 1) *
-            Cyclotomic.Basic.cyclotomic (previous + 1)) := by
+          (properCyclotomicProduct (previous + 1) *
+            cyclotomic (previous + 1)) := by
         intro point
-        have division := Dense.Basic.DensePolynomial.divMod_eval_equation
-          (Dense.Rational.PowerMinusOne.powerMinusOne (previous + 1))
-          (Cyclotomic.Basic.properCyclotomicProduct (previous + 1)) point
-        have remainderAtPoint := Dense.Basic.DensePolynomial.eval_eq_zero_of_isZero remainderZero point
+        have division := Basic.DensePolynomial.divMod_eval_equation
+          (Rational.PowerMinusOne.powerMinusOne (previous + 1))
+          (properCyclotomicProduct (previous + 1)) point
+        have remainderAtPoint := Basic.DensePolynomial.eval_eq_zero_of_isZero remainderZero point
         rw [remainderAtPoint, zero_add] at division
-        rw [Cyclotomic.Basic.cyclotomic_succ, Dense.Basic.DensePolynomial.eval_mul]
+        rw [cyclotomic_succ, Basic.DensePolynomial.eval_mul]
         exact division.symm
       have cyclotomicNonzero :
-          (Cyclotomic.Basic.cyclotomic (previous + 1)).isZero = false := by
-        by_cases zero : (Cyclotomic.Basic.cyclotomic (previous + 1)).isZero = true
-        · have zeroAtPoint := Dense.Basic.DensePolynomial.eval_eq_zero_of_isZero zero (0 : Fraction.Rational)
+          (cyclotomic (previous + 1)).isZero = false := by
+        by_cases zero : (cyclotomic (previous + 1)).isZero = true
+        · have zeroAtPoint := Basic.DensePolynomial.eval_eq_zero_of_isZero zero (0 : Fraction.Rational)
           have identity := factorization (0 : Fraction.Rational)
-          rw [Dense.Rational.PowerMinusOne.eval_powerMinusOne, zero_pow (by omega0),
-            Dense.Basic.DensePolynomial.eval_mul,
+          rw [Rational.PowerMinusOne.eval_powerMinusOne, zero_pow (by omega0),
+            Basic.DensePolynomial.eval_mul,
             zeroAtPoint, mul_zero] at identity
           have oneZero : (1 : Fraction.Rational) = 0 := by
             calc
@@ -351,23 +353,23 @@ theorem cyclotomic_stageSpec :
               _ = 0 := by ring0
           exact (Fraction.Field.zero_ne_one oneZero.symm).elim
         · exact Bool.Decide.bool_eq_false_of_not_eq_true _ zero
-      have properCoprime : Dense.Rational.Divisibility.EvalCoprime
-          (Cyclotomic.Basic.properCyclotomicProduct (previous + 1))
-          (Cyclotomic.Basic.cyclotomic (previous + 1)) :=
-        Dense.Rational.Divisibility.evalCoprime_factors_of_squarefree
-          (Dense.Rational.PowerMinusOne.powerMinusOne_normalized (previous + 1)) factorization
-          (Dense.Rational.PowerMinusOne.powerMinusOne_evalCoprime_derivative previous)
+      have properCoprime : Rational.Divisibility.EvalCoprime
+          (properCyclotomicProduct (previous + 1))
+          (cyclotomic (previous + 1)) :=
+        Rational.Divisibility.evalCoprime_factors_of_squarefree
+          (Rational.PowerMinusOne.powerMinusOne_normalized (previous + 1)) factorization
+          (Rational.PowerMinusOne.powerMinusOne_evalCoprime_derivative previous)
       have properProductDivides (divisor : Nat) (divisorPositive : 0 < divisor)
           (divisorProper : divisor < previous + 1)
           (divisorDivides : divisor ∣ previous + 1) :
-          Dense.Rational.Divisibility.EvalDvd (Cyclotomic.Basic.properCyclotomicProduct divisor)
-            (Cyclotomic.Basic.properCyclotomicProduct (previous + 1)) := by
-        rw [Cyclotomic.Basic.properCyclotomicProduct]
-        apply Dense.Rational.FiniteProduct.evalDvd_productFin_of_pairwise
+          Rational.Divisibility.EvalDvd (properCyclotomicProduct divisor)
+            (properCyclotomicProduct (previous + 1)) := by
+        rw [properCyclotomicProduct]
+        apply Rational.FiniteProduct.evalDvd_productFin_of_pairwise
         · intro index
           by_cases selected :
               2 ≤ index.val ∧ index.val ∣ divisor
-          · rw [Cyclotomic.Basic.properCyclotomicFactor, dif_pos selected]
+          · rw [properCyclotomicFactor, dif_pos selected]
             have quotientPos := quotientPositive divisor divisorPositive
               index selected
             have quotientDvdDivisor := quotientDivides divisor index selected
@@ -375,89 +377,89 @@ theorem cyclotomic_stageSpec :
               Divisibility.trans quotientDvdDivisor divisorDivides
             have quotientLtDivisor := quotientProper divisor divisorPositive
               index selected
-            exact Cyclotomic.Basic.cyclotomic_evalDvd_properProduct quotientPos
+            exact cyclotomic_evalDvd_properProduct quotientPos
               quotientDvdCurrent (by omega0)
-          · rw [Cyclotomic.Basic.properCyclotomicFactor, dif_neg selected]
-            exact Dense.Rational.Divisibility.evalDvd_one _
+          · rw [properCyclotomicFactor, dif_neg selected]
+            exact Rational.Divisibility.evalDvd_one _
         · exact factorsPairwise divisor divisorPositive
             (Nat.le_of_lt divisorProper)
       have earlierCoprime : ∀ earlier : Nat, 0 < earlier →
           earlier < previous + 1 →
-          Dense.Rational.Divisibility.EvalCoprime (Cyclotomic.Basic.cyclotomic earlier)
-            (Cyclotomic.Basic.cyclotomic (previous + 1)) := by
+          Rational.Divisibility.EvalCoprime (cyclotomic earlier)
+            (cyclotomic (previous + 1)) := by
         intro earlier earlierPositive earlierProper
         let common :=
-          (Nat.GCD.Extended.compute earlier (previous + 1)).gcd
+          (GCD.Extended.compute earlier (previous + 1)).gcd
         have commonPositive : 0 < common := by
-          exact Nat.GCD.Extended.compute_gcd_positive_right earlier positive
+          exact GCD.Extended.compute_gcd_positive_right earlier positive
         have commonDividesCurrent : common ∣ previous + 1 := by
-          exact (Nat.GCD.Extended.compute_spec earlier (previous + 1)).2.2
+          exact (GCD.Extended.compute_spec earlier (previous + 1)).2.2
         have commonAtMostEarlier : common ≤ earlier := by
           exact Divisibility.le_of_dvd earlierPositive
-            (Nat.GCD.Extended.compute_spec earlier (previous + 1)).2.1
+            (GCD.Extended.compute_spec earlier (previous + 1)).2.1
         have commonProper : common < previous + 1 := by omega0
-        have commonStage := Purelib.NumberTheory.Cyclotomic.Basic.cyclotomic_stageSpec common commonPositive
+        have commonStage := Basic.cyclotomic_stageSpec common commonPositive
         have commonProperProductDivides := properProductDivides common
           commonPositive commonProper commonDividesCurrent
         have commonCyclotomicDivides :=
-          Cyclotomic.Basic.cyclotomic_evalDvd_properProduct commonPositive
+          cyclotomic_evalDvd_properProduct commonPositive
             commonDividesCurrent commonProper
-        have representedCommonDivides : Dense.Rational.Divisibility.EvalDvd
-            (Cyclotomic.Basic.properCyclotomicProduct common * Cyclotomic.Basic.cyclotomic common)
-            (Cyclotomic.Basic.properCyclotomicProduct (previous + 1)) :=
-          Dense.Rational.Divisibility.evalDvd_mul_of_coprime commonProperProductDivides
+        have representedCommonDivides : Rational.Divisibility.EvalDvd
+            (properCyclotomicProduct common * cyclotomic common)
+            (properCyclotomicProduct (previous + 1)) :=
+          Rational.Divisibility.evalDvd_mul_of_coprime commonProperProductDivides
             commonCyclotomicDivides commonStage.properCoprime
-        have commonPowerDivides : Dense.Rational.Divisibility.EvalDvd (Dense.Rational.PowerMinusOne.powerMinusOne
+        have commonPowerDivides : Rational.Divisibility.EvalDvd (Rational.PowerMinusOne.powerMinusOne
           common)
-            (Cyclotomic.Basic.properCyclotomicProduct (previous + 1)) :=
-          Dense.Rational.Divisibility.evalDvd_of_evalEq_divisor commonStage.factorization
+            (properCyclotomicProduct (previous + 1)) :=
+          Rational.Divisibility.evalDvd_of_evalEq_divisor commonStage.factorization
             representedCommonDivides
-        have commonPowerCoprime : Dense.Rational.Divisibility.EvalCoprime (Dense.Rational.PowerMinusOne.powerMinusOne
+        have commonPowerCoprime : Rational.Divisibility.EvalCoprime (Rational.PowerMinusOne.powerMinusOne
           common)
-            (Cyclotomic.Basic.cyclotomic (previous + 1)) :=
-          Dense.Rational.Divisibility.evalCoprime_of_evalDvd_left commonPowerDivides properCoprime
-        rcases Dense.Rational.PowerMinusOne.powerMinusOne_evalBezout_gcd earlier (previous + 1) with
+            (cyclotomic (previous + 1)) :=
+          Rational.Divisibility.evalCoprime_of_evalDvd_left commonPowerDivides properCoprime
+        rcases Rational.PowerMinusOne.powerMinusOne_evalBezout_gcd earlier (previous + 1) with
           ⟨gcdLeft, gcdRight, gcdIdentity⟩
         rcases commonPowerCoprime with
           ⟨commonLeft, cyclotomicRight, commonIdentity⟩
-        have earlierPowerCoprime : Dense.Rational.Divisibility.EvalCoprime (Dense.Rational.PowerMinusOne.powerMinusOne
+        have earlierPowerCoprime : Rational.Divisibility.EvalCoprime (Rational.PowerMinusOne.powerMinusOne
           earlier)
-            (Cyclotomic.Basic.cyclotomic (previous + 1)) := by
+            (cyclotomic (previous + 1)) := by
           refine ⟨commonLeft * gcdLeft,
-            commonLeft * gcdRight * Cyclotomic.Basic.properCyclotomicProduct (previous + 1) +
+            commonLeft * gcdRight * properCyclotomicProduct (previous + 1) +
               cyclotomicRight, ?_⟩
           intro point
-          simp only [-eq_self, -iff_self, Dense.Basic.DensePolynomial.eval_mul, Dense.Basic.DensePolynomial.eval_add]
+          simp only [-eq_self, -iff_self, Basic.DensePolynomial.eval_mul, Basic.DensePolynomial.eval_add]
           have gcdAtPoint := gcdIdentity point
-          change (Dense.Rational.PowerMinusOne.powerMinusOne common).eval point = _ at gcdAtPoint
+          change (Rational.PowerMinusOne.powerMinusOne common).eval point = _ at gcdAtPoint
           calc
-            1 = commonLeft.eval point * (Dense.Rational.PowerMinusOne.powerMinusOne common).eval point +
+            1 = commonLeft.eval point * (Rational.PowerMinusOne.powerMinusOne common).eval point +
                 cyclotomicRight.eval point *
-                  (Cyclotomic.Basic.cyclotomic (previous + 1)).eval point :=
+                  (cyclotomic (previous + 1)).eval point :=
               commonIdentity point
             _ = commonLeft.eval point *
-                  (gcdLeft.eval point * (Dense.Rational.PowerMinusOne.powerMinusOne earlier).eval point +
+                  (gcdLeft.eval point * (Rational.PowerMinusOne.powerMinusOne earlier).eval point +
                     gcdRight.eval point *
-                      (Dense.Rational.PowerMinusOne.powerMinusOne (previous + 1)).eval point) +
+                      (Rational.PowerMinusOne.powerMinusOne (previous + 1)).eval point) +
                 cyclotomicRight.eval point *
-                  (Cyclotomic.Basic.cyclotomic (previous + 1)).eval point := by
+                  (cyclotomic (previous + 1)).eval point := by
                     rw [gcdAtPoint]
             _ = (commonLeft.eval point * gcdLeft.eval point) *
-                  (Dense.Rational.PowerMinusOne.powerMinusOne earlier).eval point +
+                  (Rational.PowerMinusOne.powerMinusOne earlier).eval point +
                 (commonLeft.eval point * gcdRight.eval point *
-                    (Cyclotomic.Basic.properCyclotomicProduct (previous + 1)).eval point +
+                    (properCyclotomicProduct (previous + 1)).eval point +
                   cyclotomicRight.eval point) *
-                    (Cyclotomic.Basic.cyclotomic (previous + 1)).eval point := by
-                      rw [factorization point, Dense.Basic.DensePolynomial.eval_mul]
+                    (cyclotomic (previous + 1)).eval point := by
+                      rw [factorization point, Basic.DensePolynomial.eval_mul]
                       ring0
-        exact Dense.Rational.Divisibility.evalCoprime_of_evalDvd_left
-          (Dense.Rational.Divisibility.evalDvd_right_of_factorization
-            (Purelib.NumberTheory.Cyclotomic.Basic.cyclotomic_stageSpec earlier earlierPositive).factorization)
+        exact Rational.Divisibility.evalCoprime_of_evalDvd_left
+          (Rational.Divisibility.evalDvd_right_of_factorization
+            (Basic.cyclotomic_stageSpec earlier earlierPositive).factorization)
           earlierPowerCoprime
       exact
         { normalized := by
-            rw [Cyclotomic.Basic.cyclotomic_succ]
-            exact Dense.Rational.Division.Normalized.divMod_quotient_normalized _ _
+            rw [cyclotomic_succ]
+            exact Rational.Division.Normalized.divMod_quotient_normalized _ _
           nonzero := cyclotomicNonzero
           factorization := factorization
           properCoprime := properCoprime
@@ -468,51 +470,51 @@ decreasing_by all_goals omega0
 /-- Every slot in the proper-divisor product at a positive stage is nonzero. -/
 theorem properCyclotomicFactor_nonzero (number : Nat)
     (positive : 0 < number) (index : Fin (number + 1)) :
-    (Cyclotomic.Basic.properCyclotomicFactor number index).isZero = false := by
+    (properCyclotomicFactor number index).isZero = false := by
   by_cases selected : 2 ≤ index.val ∧ index.val ∣ number
-  · rw [Cyclotomic.Basic.properCyclotomicFactor, dif_pos selected]
-    exact (Cyclotomic.Basic.cyclotomic_stageSpec (number / index.val)
+  · rw [properCyclotomicFactor, dif_pos selected]
+    exact (cyclotomic_stageSpec (number / index.val)
       (Divisor.divisorQuotient_positive positive selected.2)).nonzero
-  · rw [Cyclotomic.Basic.properCyclotomicFactor, dif_neg selected]
-    exact Dense.Basic.DensePolynomial.isZero_false_of_eval_ne (x := 0) (by
-      rw [Dense.Basic.DensePolynomial.eval_constant]
+  · rw [properCyclotomicFactor, dif_neg selected]
+    exact Basic.DensePolynomial.isZero_false_of_eval_ne (x := 0) (by
+      rw [Basic.DensePolynomial.eval_constant]
       exact Fraction.Field.zero_ne_one.symm)
 
 /-- The complete proper-divisor product at a positive stage is nonzero. -/
 theorem properCyclotomicProduct_nonzero (number : Nat)
     (positive : 0 < number) :
-    (Cyclotomic.Basic.properCyclotomicProduct number).isZero = false := by
-  rw [Cyclotomic.Basic.properCyclotomicProduct]
-  exact Dense.Rational.FiniteProduct.productFin_nonzero (number + 1) (Cyclotomic.Basic.properCyclotomicFactor number)
-    (Cyclotomic.Basic.properCyclotomicFactor_nonzero number positive)
+    (properCyclotomicProduct number).isZero = false := by
+  rw [properCyclotomicProduct]
+  exact Rational.FiniteProduct.productFin_nonzero (number + 1) (properCyclotomicFactor number)
+    (properCyclotomicFactor_nonzero number positive)
 
 open Purelib.Data in
 /-- The executable quotient at positive index `n` has exactly the finite
 Euler-totient degree. -/
 theorem cyclotomic_natDegree : ∀ number : Nat, 0 < number →
-    (Cyclotomic.Basic.cyclotomic number).natDegree = Totient.Basic.totient number
+    (cyclotomic number).natDegree = Totient.Basic.totient number
   | 0, positive => False.elim ((Nat.not_lt_zero 0) positive)
   | previous + 1, positive => by
       have termSplit (index : Fin (previous + 2)) :
-          (if Nat.Decide.divisibilityTest index.val (previous + 1) then
+          (if Decide.divisibilityTest index.val (previous + 1) then
               Totient.Basic.totient ((previous + 1) / index.val) else 0) =
-            (Cyclotomic.Basic.properCyclotomicFactor (previous + 1) index).natDegree +
-              (if Nat.Decide.natEquals index.val 1 then
+            (properCyclotomicFactor (previous + 1) index).natDegree +
+              (if Decide.natEquals index.val 1 then
                 Totient.Basic.totient (previous + 1) else 0) := by
         by_cases divides : index.val ∣ previous + 1
-        · rw [show Nat.Decide.divisibilityTest index.val (previous + 1) = true by
-              exact (Nat.Decide.divisibilityTest_eq_true _ _).2 divides]
+        · rw [show Decide.divisibilityTest index.val (previous + 1) = true by
+              exact (Decide.divisibilityTest_eq_true _ _).2 divides]
           by_cases large : 2 ≤ index.val
           · have selected : 2 ≤ index.val ∧ index.val ∣ previous + 1 :=
               ⟨large, divides⟩
             have indexNotOne : index.val ≠ 1 := by omega0
-            rw [if_pos rfl, Cyclotomic.Basic.properCyclotomicFactor, dif_pos selected,
-              Purelib.NumberTheory.Cyclotomic.Basic.cyclotomic_natDegree ((previous + 1) / index.val)
+            rw [if_pos rfl, properCyclotomicFactor, dif_pos selected,
+              Basic.cyclotomic_natDegree ((previous + 1) / index.val)
                 (Divisor.divisorQuotient_positive positive divides),
-              show Nat.Decide.natEquals index.val 1 = false by
+              show Decide.natEquals index.val 1 = false by
                 exact Bool.Decide.bool_eq_false_of_not_eq_true _ (fun equal =>
                   indexNotOne
-                    ((Nat.Decide.natEquals_eq_true index.val 1).1 equal)),
+                    ((Decide.natEquals_eq_true index.val 1).1 equal)),
               if_neg (by decide), Nat.add_zero]
             omega0
           · have indexPositive : 0 < index.val := by
@@ -527,12 +529,12 @@ theorem cyclotomic_natDegree : ∀ number : Nat, 0 < number →
             have indexOne : index.val = 1 := by omega0
             have notSelected : ¬(2 ≤ index.val ∧
                 index.val ∣ previous + 1) := by omega0
-            rw [if_pos rfl, Cyclotomic.Basic.properCyclotomicFactor, dif_neg notSelected,
+            rw [if_pos rfl, properCyclotomicFactor, dif_neg notSelected,
               indexOne, Division.div_one,
-              show Nat.Decide.natEquals 1 1 = true by
-                exact (Nat.Decide.natEquals_eq_true 1 1).2 rfl,
+              show Decide.natEquals 1 1 = true by
+                exact (Decide.natEquals_eq_true 1 1).2 rfl,
               if_pos rfl]
-            rw [Dense.Rational.Divisibility.natDegree_constant_one, Nat.zero_add]
+            rw [Rational.Divisibility.natDegree_constant_one, Nat.zero_add]
         · have notSelected : ¬(2 ≤ index.val ∧
               index.val ∣ previous + 1) := fun selected =>
                 divides selected.2
@@ -541,61 +543,61 @@ theorem cyclotomic_natDegree : ∀ number : Nat, 0 < number →
             apply divides
             rw [indexOne]
             exact one_dvd _
-          rw [show Nat.Decide.divisibilityTest index.val (previous + 1) = false by
+          rw [show Decide.divisibilityTest index.val (previous + 1) = false by
                 exact Bool.Decide.bool_eq_false_of_not_eq_true _ (fun truth =>
-                  divides ((Nat.Decide.divisibilityTest_eq_true _ _).1 truth)),
-            if_neg (by decide), Cyclotomic.Basic.properCyclotomicFactor, dif_neg notSelected,
-            show Nat.Decide.natEquals index.val 1 = false by
+                  divides ((Decide.divisibilityTest_eq_true _ _).1 truth)),
+            if_neg (by decide), properCyclotomicFactor, dif_neg notSelected,
+            show Decide.natEquals index.val 1 = false by
                 exact Bool.Decide.bool_eq_false_of_not_eq_true _ (fun equal =>
                   indexNotOne
-                    ((Nat.Decide.natEquals_eq_true index.val 1).1 equal)),
+                    ((Decide.natEquals_eq_true index.val 1).1 equal)),
             if_neg (by decide)]
-          rw [Dense.Rational.Divisibility.natDegree_constant_one, Nat.zero_add]
+          rw [Rational.Divisibility.natDegree_constant_one, Nat.zero_add]
       have divisorSumSplit :
           Totient.Basic.divisorQuotientTotientSum (previous + 1) =
-            Nat.FiniteSum.sumFinNat (previous + 2) (fun index =>
-              (Cyclotomic.Basic.properCyclotomicFactor (previous + 1) index).natDegree) +
+            FiniteSum.sumFinNat (previous + 2) (fun index =>
+              (properCyclotomicFactor (previous + 1) index).natDegree) +
               Totient.Basic.totient (previous + 1) := by
         unfold Totient.Basic.divisorQuotientTotientSum
         calc
-          Nat.FiniteSum.natSum (previous + 2) (fun divisor =>
-              if Nat.Decide.divisibilityTest divisor (previous + 1) then
+          FiniteSum.natSum (previous + 2) (fun divisor =>
+              if Decide.divisibilityTest divisor (previous + 1) then
                 Totient.Basic.totient ((previous + 1) / divisor) else 0) =
-            Nat.FiniteSum.sumFinNat (previous + 2) (fun index =>
-                (Cyclotomic.Basic.properCyclotomicFactor (previous + 1) index).natDegree) +
-              Nat.FiniteSum.natSum (previous + 2) (fun divisor =>
-                if Nat.Decide.natEquals divisor 1 then
+            FiniteSum.sumFinNat (previous + 2) (fun index =>
+                (properCyclotomicFactor (previous + 1) index).natDegree) +
+              FiniteSum.natSum (previous + 2) (fun divisor =>
+                if Decide.natEquals divisor 1 then
                   Totient.Basic.totient (previous + 1) else 0) :=
-              Nat.FiniteSum.natSum_eq_sumFinNat_add _ _ _ _ termSplit
-          _ = Nat.FiniteSum.sumFinNat (previous + 2) (fun index =>
-                (Cyclotomic.Basic.properCyclotomicFactor (previous + 1) index).natDegree) +
+              FiniteSum.natSum_eq_sumFinNat_add _ _ _ _ termSplit
+          _ = FiniteSum.sumFinNat (previous + 2) (fun index =>
+                (properCyclotomicFactor (previous + 1) index).natDegree) +
               Totient.Basic.totient (previous + 1) := by
-                rw [Nat.FiniteSum.natSum_singletonWeight]
-                rw [show Nat.Decide.natLess 1 (previous + 2) = true by
-                  exact (Nat.Decide.natLess_eq_true 1 (previous + 2)).2
+                rw [FiniteSum.natSum_singletonWeight]
+                rw [show Decide.natLess 1 (previous + 2) = true by
+                  exact (Decide.natLess_eq_true 1 (previous + 2)).2
                     (by omega0)]
                 rfl
       have properDegree :
-          (Cyclotomic.Basic.properCyclotomicProduct (previous + 1)).natDegree =
-            Nat.FiniteSum.sumFinNat (previous + 2) (fun index =>
-              (Cyclotomic.Basic.properCyclotomicFactor (previous + 1) index).natDegree) := by
-        rw [Cyclotomic.Basic.properCyclotomicProduct]
-        exact Dense.Rational.FiniteProduct.natDegree_productFin (previous + 2)
-          (Cyclotomic.Basic.properCyclotomicFactor (previous + 1))
-          (Cyclotomic.Basic.properCyclotomicFactor_nonzero (previous + 1) positive)
-      have stage := Cyclotomic.Basic.cyclotomic_stageSpec (previous + 1) positive
-      have representedFactorization : Dense.Rational.PowerMinusOne.powerMinusOne (previous + 1) =
-          Cyclotomic.Basic.properCyclotomicProduct (previous + 1) *
-            Cyclotomic.Basic.cyclotomic (previous + 1) :=
-        Dense.Rational.Extensionality.rational_normalized_eq_of_eval_eq
-          (Dense.Rational.PowerMinusOne.powerMinusOne_normalized (previous + 1))
-            (Dense.Basic.DensePolynomial.normalize_mul _ _)
+          (properCyclotomicProduct (previous + 1)).natDegree =
+            FiniteSum.sumFinNat (previous + 2) (fun index =>
+              (properCyclotomicFactor (previous + 1) index).natDegree) := by
+        rw [properCyclotomicProduct]
+        exact Rational.FiniteProduct.natDegree_productFin (previous + 2)
+          (properCyclotomicFactor (previous + 1))
+          (properCyclotomicFactor_nonzero (previous + 1) positive)
+      have stage := cyclotomic_stageSpec (previous + 1) positive
+      have representedFactorization : Rational.PowerMinusOne.powerMinusOne (previous + 1) =
+          properCyclotomicProduct (previous + 1) *
+            cyclotomic (previous + 1) :=
+        Rational.Extensionality.rational_normalized_eq_of_eval_eq
+          (Rational.PowerMinusOne.powerMinusOne_normalized (previous + 1))
+            (Basic.DensePolynomial.normalize_mul _ _)
           stage.factorization
       have degreeIdentity := congrArg
-        (fun polynomial : Polynomial.Dense.Rational.Divisibility.CoefficientPolynomial => polynomial.natDegree)
+        (fun polynomial : Rational.Divisibility.CoefficientPolynomial => polynomial.natDegree)
         representedFactorization
-      rw [Dense.Rational.PowerMinusOne.powerMinusOne_natDegree previous,
-        Dense.Basic.DensePolynomial.natDegree_mul (Cyclotomic.Basic.properCyclotomicProduct_nonzero (previous + 1)
+      rw [Rational.PowerMinusOne.powerMinusOne_natDegree previous,
+        Basic.DensePolynomial.natDegree_mul (properCyclotomicProduct_nonzero (previous + 1)
           positive)
           stage.nonzero,
         properDegree] at degreeIdentity
@@ -641,28 +643,28 @@ section IntegerPolynomial
 theorem
   cyclotomic_one_eq_powerMinusOne_one
   :
-    Cyclotomic.Basic.cyclotomic 1 =
-      Dense.Rational.PowerMinusOne.powerMinusOne 1 := by
-  apply Dense.Rational.Extensionality.rational_normalized_eq_of_eval_eq
-    (Cyclotomic.Basic.cyclotomic_stageSpec 1 (by omega0)).normalized
-    (Dense.Rational.PowerMinusOne.powerMinusOne_normalized 1)
+    cyclotomic 1 =
+      Rational.PowerMinusOne.powerMinusOne 1 := by
+  apply Rational.Extensionality.rational_normalized_eq_of_eval_eq
+    (cyclotomic_stageSpec 1 (by omega0)).normalized
+    (Rational.PowerMinusOne.powerMinusOne_normalized 1)
   intro point
   have factorization :=
-    (Cyclotomic.Basic.cyclotomic_stageSpec 1 (by omega0)).factorization
+    (cyclotomic_stageSpec 1 (by omega0)).factorization
       point
   have properValue :
-      (Cyclotomic.Basic.properCyclotomicProduct 1).eval point = 1 := by
-    unfold Cyclotomic.Basic.properCyclotomicProduct
-    rw [Dense.Rational.FiniteProduct.productFin_succ,
-      Dense.Rational.FiniteProduct.productFin_succ,
-      Dense.Rational.FiniteProduct.productFin_zero]
-    simp only [-eq_self, -iff_self, Cyclotomic.Basic.properCyclotomicFactor,
+      (properCyclotomicProduct 1).eval point = 1 := by
+    unfold properCyclotomicProduct
+    rw [Rational.FiniteProduct.productFin_succ,
+      Rational.FiniteProduct.productFin_succ,
+      Rational.FiniteProduct.productFin_zero]
+    simp only [-eq_self, -iff_self, properCyclotomicFactor,
       Fin.val_last, Fin.val_castSucc]
     rw [dif_neg (by omega0), dif_neg (by omega0)]
-    simp only [-eq_self, -iff_self, Dense.Basic.DensePolynomial.eval_mul,
-      Dense.Basic.DensePolynomial.eval_constant, one_mul]
+    simp only [-eq_self, -iff_self, Basic.DensePolynomial.eval_mul,
+      Basic.DensePolynomial.eval_constant, one_mul]
     rfl
-  rw [Dense.Basic.DensePolynomial.eval_mul,
+  rw [Basic.DensePolynomial.eval_mul,
     properValue, one_mul] at factorization
   exact factorization.symm
 end IntegerPolynomial

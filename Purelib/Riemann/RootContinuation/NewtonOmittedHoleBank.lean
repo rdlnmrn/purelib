@@ -66,7 +66,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target radius : Rational}
@@ -84,8 +84,8 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 open Purelib.Curves.Hyperelliptic in
 set_option genInjectivity false in
 /-- The four retained omitted-hole decisions for one original regular face. -/
-structure OmittedHoleRow (excision : Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted) (traces :
-  Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request)
+structure OmittedHoleRow (excision : AllHoleExcision grid lifted) (traces :
+  PerimeterTraceBank request)
     (i j : Fin genus) (position : Fin grid.faces.regulars.length) where
   /-- The retained original bottom-side omitted-hole decision. -/ bottom : OmittedHoleDecision excision traces i j
     position .bottom
@@ -127,8 +127,8 @@ theorem index_le (row : OmittedHoleRow excision traces i j position) (side : Gri
 section
 open Purelib.Curves.Hyperelliptic
 /-- Construct the four original side decisions from the exact retained face-neighbor row. -/
-@[expose] def build (excision : Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted) (traces :
-  Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request) (i j : Fin genus)
+@[expose] def build (excision : AllHoleExcision grid lifted) (traces :
+  PerimeterTraceBank request) (i j : Fin genus)
     (position : Fin grid.faces.regulars.length) (neighbors : PuncturedFaces.FaceNeighbors grid.faces
       (grid.faces.regulars[position.val]'position.isLt)) :
     OmittedHoleRow excision traces i j position :=
@@ -138,10 +138,10 @@ open Purelib.Curves.Hyperelliptic
     OmittedHoleDecision.build excision traces i j position .left neighbors.left⟩
 
 /-- Read both sheets' original signed side occurrences in bottom, right, negative top, negative left order. -/
-@[expose] def values {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains
+@[expose] def values {stage : Nat} {cache : RegularMeshes.Numerics domains
   stage}
     (row : OmittedHoleRow excision traces i j position) (perimeters :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters (request := request) cache.normalize i j) : List
+      FacePerimeters (request := request) cache.normalize i j) : List
       Gaussian :=
   [row.bottom.value perimeters 0, row.right.value perimeters 0, -row.top.value perimeters 0, -row.left.value perimeters
     0,
@@ -149,10 +149,10 @@ open Purelib.Curves.Hyperelliptic
      1]
 
 /-- The retained original face row contributes exactly eight signed sheet-side occurrences. -/
-theorem values_length {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains
+theorem values_length {stage : Nat} {cache : RegularMeshes.Numerics domains
   stage}
     (row : OmittedHoleRow excision traces i j position) (perimeters :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters (request := request) cache.normalize i j) :
+      FacePerimeters (request := request) cache.normalize i j) :
     (row.values perimeters).length = 8 := rfl
 
 end
@@ -161,13 +161,13 @@ open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
 /-- A bound for each original side and sheet controls every retained signed row occurrence. -/
-theorem values_bound {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains
+theorem values_bound {stage : Nat} {cache : RegularMeshes.Numerics domains
   stage}
     (row : OmittedHoleRow excision traces i j position) (perimeters :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters (request := request) cache.normalize i j)
-    {bound : Fraction.Rational} (bounded : ∀ side sheet, Data.Gaussian.Norm.Basic.normSq ((row.sideDecision side).value
+      FacePerimeters (request := request) cache.normalize i j)
+    {bound : Rational} (bounded : ∀ side sheet, normSq ((row.sideDecision side).value
       perimeters sheet) ≤ bound) :
-    ∀ value ∈ row.values perimeters, Data.Gaussian.Norm.Basic.normSq value ≤ bound := by
+    ∀ value ∈ row.values perimeters, normSq value ≤ bound := by
   intro value member
   rcases Data.List.Membership.mem_cons.mp member with rfl | member
   · exact bounded .bottom 0
@@ -196,8 +196,8 @@ set_option genInjectivity false in
 
 The dependent vector preserves original face indices, and the common stage bounds the exact retained stage of every row.
 -/
-structure OmittedHoleBank (excision : Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted) (traces :
-  Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request) (i j : Fin genus) where
+structure OmittedHoleBank (excision : AllHoleExcision grid lifted) (traces :
+  PerimeterTraceBank request) (i j : Fin genus) where
   /-- The dependent decision rows indexed by original regular faces. -/ rows : Vector.DependentVector (OmittedHoleRow
     excision traces i j)
   /-- The retained stage covering every exact original row request. -/ index : Nat
@@ -213,8 +213,8 @@ variable {excision : AllHoleExcision grid lifted} {traces :
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data in
 /-- Cache the original face-neighbor decisions and retain a stage covering every exact row request. -/
-@[expose] def build (excision : Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted) (traces :
-  Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request) (i j : Fin genus)
+@[expose] def build (excision : AllHoleExcision grid lifted) (traces :
+  PerimeterTraceBank request) (i j : Fin genus)
     (neighbors : PuncturedFaces.NeighborBank grid.faces) : OmittedHoleBank excision traces i j :=
   let rows := Vector.DependentVector.ofFn (fun position => OmittedHoleRow.build excision traces i j position
     (neighbors.entries.get position))
@@ -223,18 +223,18 @@ open Purelib.Data in
 section
 open Purelib.Curves.Hyperelliptic
 /-- Flatten the original regular faces' signed sheet-side occurrences in retained finite-index order. -/
-@[expose] def values {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains
+@[expose] def values {stage : Nat} {cache : RegularMeshes.Numerics domains
   stage}
     (bank : OmittedHoleBank excision traces i j) (perimeters :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters (request := request) cache.normalize i j) : List
+      FacePerimeters (request := request) cache.normalize i j) : List
       Gaussian :=
   (List.finRange grid.faces.regulars.length).flatMap (fun p => (bank.rows.get p).values perimeters)
 
 /-- The retained omitted-hole bank contributes exactly eight signed occurrences per original regular face. -/
-theorem values_length {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains
+theorem values_length {stage : Nat} {cache : RegularMeshes.Numerics domains
   stage}
     (bank : OmittedHoleBank excision traces i j) (perimeters :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters (request := request) cache.normalize i j) :
+      FacePerimeters (request := request) cache.normalize i j) :
     (bank.values perimeters).length = 8 * grid.faces.regulars.length := by
   have count (positions : List (Fin grid.faces.regulars.length)) :
       (positions.flatMap (fun p => (bank.rows.get p).values perimeters)).length = 8 * positions.length := by
@@ -254,13 +254,13 @@ open Purelib.Data.Gaussian in
 open Purelib.Data.List in
 open Purelib.Data.Rat in
 /-- A bound for every original face, side and sheet controls every retained signed bank occurrence. -/
-theorem values_bound {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains
+theorem values_bound {stage : Nat} {cache : RegularMeshes.Numerics domains
   stage}
     (bank : OmittedHoleBank excision traces i j) (perimeters :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters (request := request) cache.normalize i j)
-    {bound : Fraction.Rational} (bounded : ∀ position side sheet, Data.Gaussian.Norm.Basic.normSq (((bank.rows.get
+      FacePerimeters (request := request) cache.normalize i j)
+    {bound : Rational} (bounded : ∀ position side sheet, normSq (((bank.rows.get
       position).sideDecision side).value perimeters sheet) ≤ bound) :
-    ∀ value ∈ bank.values perimeters, Data.Gaussian.Norm.Basic.normSq value ≤ bound := by
+    ∀ value ∈ bank.values perimeters, normSq value ≤ bound := by
   intro value member
   obtain ⟨position, _, belongs⟩ := Flatten.mem_flatMap.mp member
   exact (bank.rows.get position).values_bound perimeters (bounded position) value belongs

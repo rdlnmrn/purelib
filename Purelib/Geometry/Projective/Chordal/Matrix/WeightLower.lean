@@ -16,6 +16,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -56,7 +58,7 @@ Multiply by the determinant quadrance and divide by the adjugate action coeffici
 private def transformedWeightLower (matrix
   : GaussianMatrix)
     (sourceLower : Fraction.Rational) : Fraction.Rational :=
-  Data.Gaussian.Norm.Basic.normSq (BoundaryAdjugate.determinant matrix) * sourceLower /
+  Basic.normSq (BoundaryAdjugate.determinant matrix) * sourceLower /
     Mat2.actionWeightCoefficient
       (BoundaryAdjugate.adjugate matrix)
 
@@ -69,7 +71,7 @@ private theorem transformedWeightLower_pos
     0 < transformedWeightLower matrix sourceLower := by
   exact Fraction.Order.Field.div_pos_direct
     (Fraction.Order.Arithmetic.mul_pos_direct
-      (Data.Gaussian.Norm.Basic.normSq_pos determinantNonzero) sourceLowerPositive)
+      (Basic.normSq_pos determinantNonzero) sourceLowerPositive)
     (Mat2.actionWeightCoefficient_pos
       (BoundaryAdjugate.adjugate matrix))
 
@@ -126,11 +128,11 @@ private theorem transformedWeightLower_le
   have coefficientPositive : 0 < coefficient :=
     Mat2.actionWeightCoefficient_pos inverse
   have scaledLower :
-      Data.Gaussian.Norm.Basic.normSq (BoundaryAdjugate.determinant matrix) * sourceLower ≤
-        Data.Gaussian.Norm.Basic.normSq (BoundaryAdjugate.determinant matrix) *
+      Basic.normSq (BoundaryAdjugate.determinant matrix) * sourceLower ≤
+        Basic.normSq (BoundaryAdjugate.determinant matrix) *
           Proj.weight point :=
     Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct sourceLowerLe
-      (Data.Gaussian.Norm.Basic.normSq_nonneg (BoundaryAdjugate.determinant matrix))
+      (Basic.normSq_nonneg (BoundaryAdjugate.determinant matrix))
   have inverseUpper :=
     Mat2.act_weight_le inverse image
   have inverseIdentity : Line.Matrix.act inverse image =
@@ -141,14 +143,14 @@ private theorem transformedWeightLower_le
       Proj.weight
           (Proj.scale
             (BoundaryAdjugate.determinant matrix) point) =
-        Data.Gaussian.Norm.Basic.normSq (BoundaryAdjugate.determinant matrix) *
+        Basic.normSq (BoundaryAdjugate.determinant matrix) *
           Proj.weight point :=
     Proj.weight_scale
       (BoundaryAdjugate.determinant matrix) point
   apply (Fraction.Order.Field.div_le_iff_pos coefficientPositive).2
   calc
-    Data.Gaussian.Norm.Basic.normSq (BoundaryAdjugate.determinant matrix) * sourceLower ≤
-        Data.Gaussian.Norm.Basic.normSq (BoundaryAdjugate.determinant matrix) *
+    Basic.normSq (BoundaryAdjugate.determinant matrix) * sourceLower ≤
+        Basic.normSq (BoundaryAdjugate.determinant matrix) *
           Proj.weight point := scaledLower
     _ = Proj.weight
         (Line.Matrix.act inverse image) := by
@@ -204,7 +206,7 @@ theorem transformedPointWeightLower
     (point : GaussianLine)
     (sourceLowerLe : sourceLower ≤
       Proj.weight point) :
-    Data.Gaussian.Norm.Basic.normSq (BoundaryAdjugate.determinant matrix) * sourceLower /
+    Basic.normSq (BoundaryAdjugate.determinant matrix) * sourceLower /
       Mat2.actionWeightCoefficient
         (BoundaryAdjugate.adjugate matrix) ≤
       Proj.weight
@@ -216,11 +218,11 @@ theorem transformedPointWeightLower
   have coefficientPositive : 0 < coefficient :=
     Mat2.actionWeightCoefficient_pos inverse
   have scaledLower :
-      Data.Gaussian.Norm.Basic.normSq (BoundaryAdjugate.determinant matrix) * sourceLower ≤
-        Data.Gaussian.Norm.Basic.normSq (BoundaryAdjugate.determinant matrix) *
+      Basic.normSq (BoundaryAdjugate.determinant matrix) * sourceLower ≤
+        Basic.normSq (BoundaryAdjugate.determinant matrix) *
           Proj.weight point :=
     Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct sourceLowerLe
-      (Data.Gaussian.Norm.Basic.normSq_nonneg (BoundaryAdjugate.determinant matrix))
+      (Basic.normSq_nonneg (BoundaryAdjugate.determinant matrix))
   have inverseUpper :=
     Mat2.act_weight_le inverse image
   have inverseIdentity : Line.Matrix.act inverse image =
@@ -231,14 +233,14 @@ theorem transformedPointWeightLower
       Proj.weight
           (Proj.scale
             (BoundaryAdjugate.determinant matrix) point) =
-        Data.Gaussian.Norm.Basic.normSq (BoundaryAdjugate.determinant matrix) *
+        Basic.normSq (BoundaryAdjugate.determinant matrix) *
           Proj.weight point :=
     Proj.weight_scale
       (BoundaryAdjugate.determinant matrix) point
   apply (Fraction.Order.Field.div_le_iff_pos coefficientPositive).2
   calc
-    Data.Gaussian.Norm.Basic.normSq (BoundaryAdjugate.determinant matrix) * sourceLower ≤
-        Data.Gaussian.Norm.Basic.normSq (BoundaryAdjugate.determinant matrix) *
+    Basic.normSq (BoundaryAdjugate.determinant matrix) * sourceLower ≤
+        Basic.normSq (BoundaryAdjugate.determinant matrix) *
           Proj.weight point := scaledLower
     _ = Proj.weight
         (Line.Matrix.act inverse image) := by

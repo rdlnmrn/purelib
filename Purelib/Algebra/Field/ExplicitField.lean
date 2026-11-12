@@ -481,6 +481,51 @@ public theorem mul_four_ne_zero {a b c d : K}
 end Purelib.Algebra.Field.ExplicitField
 end
 
+public section
+
+namespace Purelib.Algebra.Field.ExplicitField
+
+variable {K : Type*} [ExplicitField K]
+
+/-- Every finite power of a supplied nonzero scalar is nonzero.
+
+The scalar itself supplies nontriviality for the exponent-zero case; no
+additional carrier or field instance is selected. -/
+theorem pow_ne_zero_of_ne_zero {value : K} (nonzero : value ≠ 0) :
+    (exponent : Nat) → value ^ exponent ≠ 0
+  | 0 => by
+      rw [pow_zero]
+      intro unitZero
+      apply nonzero
+      calc
+        value = value * 1 := (mul_one value).symm
+        _ = 0 := by rw [unitZero, mul_zero]
+  | exponent + 1 => by
+      rw [pow_succ]
+      exact ExplicitField.mul_ne_zero (pow_ne_zero_of_ne_zero nonzero exponent) nonzero
+
+/-- The inverse of a finite power of a supplied nonzero scalar is the
+corresponding finite power of its explicit inverse. -/
+theorem inverse_pow_nonzero {value : K} (nonzero : value ≠ 0) (exponent : Nat) :
+    (value ^ exponent)⁻¹ = value⁻¹ ^ exponent := by
+  have productUnit : value ^ exponent * value⁻¹ ^ exponent = 1 := by
+    induction exponent with
+    | zero => rw [pow_zero, pow_zero, mul_one]
+    | succ exponent previous =>
+        calc
+          value ^ (exponent + 1) * value⁻¹ ^ (exponent + 1) =
+              (value ^ exponent * value⁻¹ ^ exponent) * (value * value⁻¹) := by
+            rw [pow_succ, pow_succ]
+            ring1
+          _ = 1 := by rw [previous, ExplicitField.mul_inv_cancel value nonzero, mul_one]
+  have powerNonzero := pow_ne_zero_of_ne_zero nonzero exponent
+  exact ExplicitField.eq_of_mul_eq_mul_left powerNonzero
+    ((ExplicitField.mul_inv_cancel (value ^ exponent) powerNonzero).trans productUnit.symm)
+
+end Purelib.Algebra.Field.ExplicitField
+
+end
+
 end
 
 public section
@@ -514,6 +559,16 @@ public theorem one_sub_ne_zero_of_ne_one {value : K}
   calc
     value = 1 - (1 - value) := by ring1
     _ = 1 := by rw [differenceZero]; ring1
+
+/-- Inverting the same supplied nonzero scalar twice returns the original scalar.
+
+Cancellation uses the retained scalar's explicit nonzero certificate and its
+same explicit inverse, without choosing a second reciprocal witness.
+-/
+theorem inverse_inverse_nonzero {value : K} (nonzero : value ≠ 0) : value⁻¹⁻¹ = value := by
+  apply ExplicitField.eq_of_mul_eq_mul_left (ExplicitField.inv_ne_zero nonzero)
+  rw [ExplicitField.mul_inv_cancel _ (ExplicitField.inv_ne_zero nonzero), mul_comm value⁻¹ value,
+    ExplicitField.mul_inv_cancel value nonzero]
 
 end Purelib.Algebra.Field.ExplicitField
 end

@@ -50,18 +50,18 @@ stepped state's exact history and active conditions at the unchanged tail. -/
 @[expose] def CanAdvanceAt (state : State) (bit : Bool)
   (before : Basic.Canonical) : Prop :=
   match state.phase with
-  | .initial => (Parser.State.step state bit).Holds before
-  | .highUnary _ => (Parser.State.step state bit).Holds before
-  | .lowUnary _ => (Parser.State.step state bit).Holds before
-  | .loopUnary _ => (Parser.State.step state bit).Holds before
+  | .initial => (State.step state bit).Holds before
+  | .highUnary _ => (State.step state bit).Holds before
+  | .lowUnary _ => (State.step state bit).Holds before
+  | .loopUnary _ => (State.step state bit).Holds before
   | .sector kind exponent bits =>
       match bits with
-      | .zero => (Parser.State.step state bit).Holds before
-      | .one _ => (Parser.State.step state bit).Holds before
+      | .zero => (State.step state bit).Holds before
+      | .one _ => (State.step state bit).Holds before
       | .two first second =>
           let sector := Sector.Code.sectorOfBits first second bit
-          Parser.Semantics.Basic.fullBlockHolds kind exponent sector before ∧
-            Parser.Semantics.Basic.normalizedValue kind exponent before - sector.rep ≠ 0
+          Semantics.Basic.fullBlockHolds kind exponent sector before ∧
+            Semantics.Basic.normalizedValue kind exponent before - sector.rep ≠ 0
 
 open Purelib.Data.CCL.Encoding in
 open Purelib.Data.Gaussian in
@@ -73,33 +73,72 @@ instance canAdvanceAtDecidable
   cases phase with
   | initial =>
       exact decidable_of_iff
-        ((Parser.State.step ⟨.initial, matrix, history⟩ bit).holdsBool before = true)
+        ((State.step ⟨.initial, matrix, history⟩ bit).holdsBool before = true)
         (State.holdsBool_eq_true _ before)
   | highUnary count =>
       exact decidable_of_iff
-        ((Parser.State.step ⟨.highUnary count, matrix, history⟩ bit).holdsBool before = true)
+        ((State.step ⟨.highUnary count, matrix, history⟩ bit).holdsBool before = true)
         (State.holdsBool_eq_true _ before)
   | lowUnary count =>
       exact decidable_of_iff
-        ((Parser.State.step ⟨.lowUnary count, matrix, history⟩ bit).holdsBool before = true)
+        ((State.step ⟨.lowUnary count, matrix, history⟩ bit).holdsBool before = true)
         (State.holdsBool_eq_true _ before)
   | loopUnary count =>
       exact decidable_of_iff
-        ((Parser.State.step ⟨.loopUnary count, matrix, history⟩ bit).holdsBool before = true)
+        ((State.step ⟨.loopUnary count, matrix, history⟩ bit).holdsBool before = true)
         (State.holdsBool_eq_true _ before)
   | sector kind exponent bits =>
       cases bits with
       | zero =>
           exact decidable_of_iff
-            ((Parser.State.step ⟨.sector kind exponent .zero, matrix, history⟩ bit).holdsBool before = true)
+            ((State.step ⟨.sector kind exponent .zero, matrix, history⟩ bit).holdsBool before = true)
             (State.holdsBool_eq_true _ before)
       | one first =>
           exact decidable_of_iff
-            ((Parser.State.step ⟨.sector kind exponent (.one first), matrix, history⟩ bit).holdsBool before = true)
+            ((State.step ⟨.sector kind exponent (.one first), matrix, history⟩ bit).holdsBool before = true)
             (State.holdsBool_eq_true _ before)
       | two first second =>
           dsimp only [CanAdvanceAt]
           infer_instance
+
+section
+
+open Purelib.Data.Gaussian
+
+/-- Decide an original next-bit condition using its retained valid history.
+
+Unary and unfinished-sector steps preserve that exact history, so only their
+new active condition needs evaluation. Completing a sector checks the original
+full-block and nonzero-residual conditions. The returned decision certifies
+the same complete predicate as the unrestricted decision above.
+-/
+@[expose] def decideAdvance (state : State) (before : Basic.Canonical)
+    (holds : state.Holds before) (bit : Bool) : Decidable (CanAdvanceAt state bit before) := by
+  let unchangedHistoryDecidable (earlier next : State) (before : Basic.Canonical)
+      (history : ∀ constraint ∈ earlier.history, constraint.Holds before)
+      (same : next.history = earlier.history) : Decidable (next.Holds before) :=
+    match Semantics.Basic.activeHoldsDecidable next.phase before with
+    | .isTrue active => .isTrue ⟨fun constraint member => history constraint (same ▸ member), active⟩
+    | .isFalse missing => .isFalse (fun accepted => missing accepted.2)
+  rcases state with ⟨phase, matrix, history⟩
+  cases phase with
+  | initial =>
+      cases bit <;> exact unchangedHistoryDecidable _ _ before holds.1 rfl
+  | highUnary count =>
+      cases bit <;> exact unchangedHistoryDecidable _ _ before holds.1 rfl
+  | lowUnary count =>
+      cases bit <;> exact unchangedHistoryDecidable _ _ before holds.1 rfl
+  | loopUnary count =>
+      cases bit <;> exact unchangedHistoryDecidable _ _ before holds.1 rfl
+  | sector kind exponent bits =>
+      cases bits with
+      | zero => exact unchangedHistoryDecidable _ _ before holds.1 rfl
+      | one first => exact unchangedHistoryDecidable _ _ before holds.1 rfl
+      | two first second =>
+          dsimp only [CanAdvanceAt]
+          infer_instance
+
+end
 
 open Purelib.Data.CCL.Encoding in
 open Purelib.Data.ComplexContinuedFraction.Encoding in
@@ -140,34 +179,34 @@ theorem not_canAdvanceAt_false_and_true
             ⟨_, falseSector, falseMember, falseSectorHolds⟩
           rcases trueHolds.2 with
             ⟨_, trueSector, trueMember, trueSectorHolds⟩
-          have sectorEqual := ComplexContinuedFraction.Encoding.Sector.holds_unique falseSectorHolds
+          have sectorEqual := Sector.holds_unique falseSectorHolds
             trueSectorHolds
           subst trueSector
           have falsePrefix : BinaryPrefix.Decision.isWordPrefix [false] falseSector.code = true :=
-            (Purelib.Data.List.Filter.mem_filter.mp falseMember).2
+            (Filter.mem_filter.mp falseMember).2
           have truePrefix : BinaryPrefix.Decision.isWordPrefix [true] falseSector.code = true :=
-            (Purelib.Data.List.Filter.mem_filter.mp trueMember).2
+            (Filter.mem_filter.mp trueMember).2
           cases falseSector <;> first | exact Bool.noConfusion falsePrefix | exact Bool.noConfusion truePrefix
       | one first =>
           rcases falseHolds.2 with
             ⟨_, falseSector, falseMember, falseSectorHolds⟩
           rcases trueHolds.2 with
             ⟨_, trueSector, trueMember, trueSectorHolds⟩
-          have sectorEqual := ComplexContinuedFraction.Encoding.Sector.holds_unique falseSectorHolds
+          have sectorEqual := Sector.holds_unique falseSectorHolds
             trueSectorHolds
           subst trueSector
           have falsePrefix :
               BinaryPrefix.Decision.isWordPrefix [first, false] falseSector.code = true :=
-            (Purelib.Data.List.Filter.mem_filter.mp falseMember).2
+            (Filter.mem_filter.mp falseMember).2
           have truePrefix :
               BinaryPrefix.Decision.isWordPrefix [first, true] falseSector.code = true :=
-            (Purelib.Data.List.Filter.mem_filter.mp trueMember).2
+            (Filter.mem_filter.mp trueMember).2
           cases first <;> cases falseSector <;>
             first
             | exact Bool.noConfusion falsePrefix
             | exact Bool.noConfusion truePrefix
       | two first second =>
-          have sectorEqual := ComplexContinuedFraction.Encoding.Sector.holds_unique falseHolds.1.2
+          have sectorEqual := Sector.holds_unique falseHolds.1.2
             trueHolds.1.2
           cases first <;> cases second <;> cases sectorEqual
 
@@ -202,41 +241,41 @@ theorem canStep_iff_canAdvanceAt
     (state : State) (input before : Basic.Canonical)
     (determinantNonzero :
       Matrix2.Matrix2.determinant state.matrix ≠ 0)
-    (beforeRepresents : Parser.Semantics.State.Represents state input before)
+    (beforeRepresents : Semantics.State.Represents state input before)
     (bit : Bool) :
-    Parser.Semantics.Prefix.CanStep state input bit ↔ CanAdvanceAt state bit before := by
+    Semantics.Prefix.CanStep state input bit ↔ CanAdvanceAt state bit before := by
   constructor
   · rintro ⟨after, afterRepresents⟩
-    have previousRepresents := Parser.Semantics.Transition.step_represents_previous state bit input after
+    have previousRepresents := Semantics.Transition.step_represents_previous state bit input after
       afterRepresents
-    have previousEqual := Parser.Semantics.State.Represents.tail_unique determinantNonzero
+    have previousEqual := Semantics.State.Represents.tail_unique determinantNonzero
       beforeRepresents previousRepresents
     rcases state with ⟨phase, matrix, history⟩
     cases phase with
     | initial =>
-        simp only [Parser.Semantics.Transition.previousTail, -eq_self, -iff_self] at previousEqual
+        simp only [Semantics.Transition.previousTail, -eq_self, -iff_self] at previousEqual
         subst before
         simpa [CanAdvanceAt] using afterRepresents.2.2
     | highUnary count =>
-        simp only [Parser.Semantics.Transition.previousTail, -eq_self, -iff_self] at previousEqual
+        simp only [Semantics.Transition.previousTail, -eq_self, -iff_self] at previousEqual
         subst before
         simpa [CanAdvanceAt] using afterRepresents.2.2
     | lowUnary count =>
-        simp only [Parser.Semantics.Transition.previousTail, -eq_self, -iff_self] at previousEqual
+        simp only [Semantics.Transition.previousTail, -eq_self, -iff_self] at previousEqual
         subst before
         simpa [CanAdvanceAt] using afterRepresents.2.2
     | loopUnary count =>
-        simp only [Parser.Semantics.Transition.previousTail, -eq_self, -iff_self] at previousEqual
+        simp only [Semantics.Transition.previousTail, -eq_self, -iff_self] at previousEqual
         subst before
         simpa [CanAdvanceAt] using afterRepresents.2.2
     | sector kind exponent bits =>
         cases bits with
         | zero =>
-            simp only [Parser.Semantics.Transition.previousTail, -eq_self, -iff_self] at previousEqual
+            simp only [Semantics.Transition.previousTail, -eq_self, -iff_self] at previousEqual
             subst before
             simpa [CanAdvanceAt] using afterRepresents.2.2
         | one first =>
-            simp only [Parser.Semantics.Transition.previousTail, -eq_self, -iff_self] at previousEqual
+            simp only [Semantics.Transition.previousTail, -eq_self, -iff_self] at previousEqual
             subst before
             simpa [CanAdvanceAt] using afterRepresents.2.2
         | two first second =>
@@ -251,15 +290,15 @@ theorem canStep_iff_canAdvanceAt
               exact List.mem_cons_self
             have previousEqual' :
                 before = Homography.Basic.homographic block after := by
-              simpa [Parser.Semantics.Transition.previousTail, sector, block] using previousEqual
-            have full : Parser.Semantics.Basic.fullBlockHolds kind exponent sector before := by
+              simpa [Semantics.Transition.previousTail, sector, block] using previousEqual
+            have full : Semantics.Basic.fullBlockHolds kind exponent sector before := by
               rw [previousEqual']
               exact newest.2
             have residual :
-                Parser.Semantics.Basic.normalizedValue kind exponent before - sector.rep ≠ 0 := by
+                Semantics.Basic.normalizedValue kind exponent before - sector.rep ≠ 0 := by
               intro residualZero
               have terminal :
-                  Parser.Semantics.Basic.normalizedValue kind exponent before = sector.rep :=
+                  Semantics.Basic.normalizedValue kind exponent before = sector.rep :=
                 Basic.gaussian_eq_of_sub_eq_zero residualZero
               have normalizedTail := Block.Semantics.normalizedValue_block_homographic
                 kind exponent sector after (by
@@ -267,11 +306,11 @@ theorem canStep_iff_canAdvanceAt
               have terminalEquation :
                   sector.rep = sector.rep + (Basic.Canonical.gamma * after)⁻¹ := by
                 calc
-                  sector.rep = Parser.Semantics.Basic.normalizedValue kind exponent before :=
+                  sector.rep = Semantics.Basic.normalizedValue kind exponent before :=
                     terminal.symm
-                  _ = Parser.Semantics.Basic.normalizedValue kind exponent
+                  _ = Semantics.Basic.normalizedValue kind exponent
                       (Homography.Basic.homographic block after) := congrArg
-                        (Parser.Semantics.Basic.normalizedValue kind exponent) previousEqual'
+                        (Semantics.Basic.normalizedValue kind exponent) previousEqual'
                   _ = sector.rep + (Basic.Canonical.gamma * after)⁻¹ := by
                     simpa only [block, -eq_self, -iff_self] using normalizedTail
               have inverseZero : (Basic.Canonical.gamma * after)⁻¹ = 0 := by
@@ -283,12 +322,12 @@ theorem canStep_iff_canAdvanceAt
                   have cancelled : (0 : Fraction.Rational) = (Basic.Canonical.gamma * after)⁻¹.re :=
                     calc
                       0 = (sector.rep.re + 0) - sector.rep.re :=
-                        (Purelib.Algebra.Group.add_sub_cancel_left _ _).symm
+                        (Algebra.Group.add_sub_cancel_left _ _).symm
                       _ = (sector.rep.re + (Basic.Canonical.gamma * after)⁻¹.re) - sector.rep.re :=
                         congrArg (fun value => value - sector.rep.re)
                           ((AddZeroClass.add_zero sector.rep.re).trans realEquation)
                       _ = (Basic.Canonical.gamma * after)⁻¹.re :=
-                        Purelib.Algebra.Group.add_sub_cancel_left _ _
+                        Algebra.Group.add_sub_cancel_left _ _
                   exact cancelled.symm
                 · have imaginaryEquation := congrArg
                       Basic.im terminalEquation
@@ -297,12 +336,12 @@ theorem canStep_iff_canAdvanceAt
                   have cancelled : (0 : Fraction.Rational) = (Basic.Canonical.gamma * after)⁻¹.im :=
                     calc
                       0 = (sector.rep.im + 0) - sector.rep.im :=
-                        (Purelib.Algebra.Group.add_sub_cancel_left _ _).symm
+                        (Algebra.Group.add_sub_cancel_left _ _).symm
                       _ = (sector.rep.im + (Basic.Canonical.gamma * after)⁻¹.im) - sector.rep.im :=
                         congrArg (fun value => value - sector.rep.im)
                           ((AddZeroClass.add_zero sector.rep.im).trans imaginaryEquation)
                       _ = (Basic.Canonical.gamma * after)⁻¹.im :=
-                        Purelib.Algebra.Group.add_sub_cancel_left _ _
+                        Algebra.Group.add_sub_cancel_left _ _
                   exact cancelled.symm
               have afterNonzero := Block.Semantics.tail_ne_of_block_denominator kind exponent
                 sector after (by simpa only [block, -eq_self, -iff_self] using newest.1)
@@ -314,50 +353,50 @@ theorem canStep_iff_canAdvanceAt
     cases phase with
     | initial =>
         refine ⟨before, ?_⟩
-        apply Parser.Semantics.Transition.step_represents_next
+        apply Semantics.Transition.step_represents_next
           ⟨.initial, matrix, history⟩ bit input before
-        · simpa [Parser.Semantics.Transition.previousTail] using beforeRepresents
+        · simpa [Semantics.Transition.previousTail] using beforeRepresents
         · simpa [CanAdvanceAt] using advance
     | highUnary count =>
         refine ⟨before, ?_⟩
-        apply Parser.Semantics.Transition.step_represents_next
+        apply Semantics.Transition.step_represents_next
           ⟨.highUnary count, matrix, history⟩ bit input before
-        · simpa [Parser.Semantics.Transition.previousTail] using beforeRepresents
+        · simpa [Semantics.Transition.previousTail] using beforeRepresents
         · simpa [CanAdvanceAt] using advance
     | lowUnary count =>
         refine ⟨before, ?_⟩
-        apply Parser.Semantics.Transition.step_represents_next
+        apply Semantics.Transition.step_represents_next
           ⟨.lowUnary count, matrix, history⟩ bit input before
-        · simpa [Parser.Semantics.Transition.previousTail] using beforeRepresents
+        · simpa [Semantics.Transition.previousTail] using beforeRepresents
         · simpa [CanAdvanceAt] using advance
     | loopUnary count =>
         refine ⟨before, ?_⟩
-        apply Parser.Semantics.Transition.step_represents_next
+        apply Semantics.Transition.step_represents_next
           ⟨.loopUnary count, matrix, history⟩ bit input before
-        · simpa [Parser.Semantics.Transition.previousTail] using beforeRepresents
+        · simpa [Semantics.Transition.previousTail] using beforeRepresents
         · simpa [CanAdvanceAt] using advance
     | sector kind exponent bits =>
         cases bits with
         | zero =>
             refine ⟨before, ?_⟩
-            apply Parser.Semantics.Transition.step_represents_next
+            apply Semantics.Transition.step_represents_next
               ⟨.sector kind exponent .zero, matrix, history⟩ bit input before
-            · simpa [Parser.Semantics.Transition.previousTail] using beforeRepresents
+            · simpa [Semantics.Transition.previousTail] using beforeRepresents
             · simpa [CanAdvanceAt] using advance
         | one first =>
             refine ⟨before, ?_⟩
-            apply Parser.Semantics.Transition.step_represents_next
+            apply Semantics.Transition.step_represents_next
               ⟨.sector kind exponent (.one first), matrix, history⟩ bit input
                 before
-            · simpa [Parser.Semantics.Transition.previousTail] using beforeRepresents
+            · simpa [Semantics.Transition.previousTail] using beforeRepresents
             · simpa [CanAdvanceAt] using advance
         | two first second =>
             let sector := Sector.Code.sectorOfBits first second bit
             let tail :=
-              (Basic.Canonical.gamma * (Parser.Semantics.Basic.normalizedValue kind exponent before - sector.rep))⁻¹
+              (Basic.Canonical.gamma * (Semantics.Basic.normalizedValue kind exponent before - sector.rep))⁻¹
             rcases advance with ⟨full, residual⟩
             refine ⟨tail, ?_⟩
-            have completed := Parser.Semantics.Transition.completeSector_represents_next
+            have completed := Semantics.Transition.completeSector_represents_next
               ⟨.sector kind exponent (.two first second), matrix, history⟩
               kind exponent first second bit input before tail rfl
               beforeRepresents
@@ -369,10 +408,10 @@ theorem canStep_iff_canAdvanceAt
                     using Block.Semantics.block_inverse_denominator_ne kind exponent sector before residual)
               (by simpa only [sector, -eq_self, -iff_self] using full)
               (by
-                have loopActive := Parser.Semantics.Normalization.inverse_selected_loop_active kind exponent
+                have loopActive := Semantics.Normalization.inverse_selected_loop_active kind exponent
                   sector before full residual
                 simpa only [tail, sector, -eq_self, -iff_self] using loopActive)
-            simpa only [Parser.Semantics.Transition.step_eq_completeSector
+            simpa only [Semantics.Transition.step_eq_completeSector
               ⟨.sector kind exponent (.two first second), matrix, history⟩
               kind exponent first second bit rfl, -eq_self, -iff_self] using completed
 
@@ -386,10 +425,10 @@ extension; success retains the actual bit and its existential tail representatio
 inductive LocalDecision (state : State) (input :
   Basic.Canonical) where
   /-- Certify that neither Boolean next bit can represent the original input from this state. -/ | terminal (none : ∀
-    bit, ¬Parser.Semantics.Prefix.CanStep state input bit)
+    bit, ¬Semantics.Prefix.CanStep state input bit)
   /-- Retain the actual next bit, its possible representation and uniqueness among all Boolean extensions. -/ | next
-    (bit : Bool) (possible : Parser.Semantics.Prefix.CanStep state input bit)
-      (unique : ∀ other, Parser.Semantics.Prefix.CanStep state input other → other = bit)
+    (bit : Bool) (possible : Semantics.Prefix.CanStep state input bit)
+      (unique : ∀ other, Semantics.Prefix.CanStep state input other → other = bit)
 
 constructive_injectivity LocalDecision
 
@@ -399,27 +438,34 @@ open Purelib.LinearAlgebra.Coordinates2 renaming Matrix -> Matrix2 in
 /-- Decide the next bit or terminality of a nonsingular parser state at its retained represented tail.
 
 Test the exact false advance condition first, then true. Return the original next-bit witness with uniqueness, or retain
-both failed tests as a proof that no Boolean extension represents the input. -/
+both failed tests as a proof that no Boolean extension represents the input.
+Reuse the represented state's certified history instead of rechecking its
+unchanged constraints at every unary or unfinished-sector bit.
+-/
 @[expose] def decideLocal
     (state : State) (input before : Basic.Canonical)
     (determinantNonzero :
       Matrix2.Matrix2.determinant state.matrix ≠ 0)
-    (beforeRepresents : Parser.Semantics.State.Represents state input before) :
+    (beforeRepresents : Semantics.State.Represents state input before) :
     LocalDecision state input := by
+  letI : Decidable (CanAdvanceAt state false before) :=
+    decideAdvance state before beforeRepresents.2.2 false
   by_cases falseAdvance : CanAdvanceAt state false before
-  · have falsePossible : Parser.Semantics.Prefix.CanStep state input false :=
+  · have falsePossible : Semantics.Prefix.CanStep state input false :=
       (canStep_iff_canAdvanceAt state input before determinantNonzero
         beforeRepresents false).2 falseAdvance
     exact .next false falsePossible (by
       intro other otherPossible
-      exact Parser.Semantics.Prefix.canStep_unique determinantNonzero otherPossible falsePossible)
-  · by_cases trueAdvance : CanAdvanceAt state true before
-    · have truePossible : Parser.Semantics.Prefix.CanStep state input true :=
+      exact Semantics.Prefix.canStep_unique determinantNonzero otherPossible falsePossible)
+  · letI : Decidable (CanAdvanceAt state true before) :=
+      decideAdvance state before beforeRepresents.2.2 true
+    by_cases trueAdvance : CanAdvanceAt state true before
+    · have truePossible : Semantics.Prefix.CanStep state input true :=
         (canStep_iff_canAdvanceAt state input before determinantNonzero
           beforeRepresents true).2 trueAdvance
       exact .next true truePossible (by
         intro other otherPossible
-        exact Parser.Semantics.Prefix.canStep_unique determinantNonzero otherPossible truePossible)
+        exact Semantics.Prefix.canStep_unique determinantNonzero otherPossible truePossible)
     · exact .terminal (by
         intro bit possible
         cases bit

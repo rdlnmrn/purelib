@@ -23,6 +23,9 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian.Path
+open Purelib.Polynomial.Dense.Rational.CauchyIndex.Basic
+
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 
 open Purelib.Data
@@ -63,10 +66,10 @@ structure SegmentHomotopyFormula
     sourceFinish ≠ 0
   /-- The synchronized coordinate pairs carry both the conjugate-product and half-plane formulas. -/ data :
     Dense.Rational.CauchyIndex.Comparison.Basic.LineData
-    (Dense.Gaussian.Path.Components.pathReal p sourceStart (sourceFinish - sourceStart))
-    (Dense.Gaussian.Path.Components.pathImag p sourceStart (sourceFinish - sourceStart))
-    (Dense.Gaussian.Path.Components.pathReal q targetStart (targetFinish - targetStart))
-    (Dense.Gaussian.Path.Components.pathImag q targetStart (targetFinish - targetStart)) 0 1
+    (Components.pathReal p sourceStart (sourceFinish - sourceStart))
+    (Components.pathImag p sourceStart (sourceFinish - sourceStart))
+    (Components.pathReal q targetStart (targetFinish - targetStart))
+    (Components.pathImag q targetStart (targetFinish - targetStart)) 0 1
 
 /-- One synchronized Rouché segment changes raw winding only by the
 difference of its two displayed endpoint corrections. -/
@@ -75,66 +78,25 @@ theorem segmentRaw_eq_of_homotopy
     {sourceStart sourceFinish targetStart targetFinish : Gaussian.Basic.Canonical}
     (formula : SegmentHomotopyFormula p q
       sourceStart sourceFinish targetStart targetFinish) :
-    (Dense.Gaussian.Path.Segment.segment q targetStart targetFinish).doubledWinding =
-      (Dense.Gaussian.Path.Segment.segment p sourceStart sourceFinish).doubledWinding +
+    (Segment.segment q targetStart targetFinish).doubledWinding =
+      (Segment.segment p sourceStart sourceFinish).doubledWinding +
         Gaussian.Sign.CauchyComparison.vertexHomotopyCorrection2
           (p.eval sourceStart) (q.eval targetStart) -
         Gaussian.Sign.CauchyComparison.vertexHomotopyCorrection2
           (p.eval sourceFinish) (q.eval targetFinish) := open Purelib in by
   have sourceStartPair :=
-    Dense.Gaussian.Path.Components.Nonzero.ofLine_coordinatePair_ne_zero p
+    Components.Nonzero.ofLine_coordinatePair_ne_zero p
       sourceStart (sourceFinish - sourceStart) 0 (by
         simpa only [Affine.Segment.line_segment_zero] using formula.sourceStartNonzero)
   have sourceFinishPair :=
-    Dense.Gaussian.Path.Components.Nonzero.ofLine_coordinatePair_ne_zero p
+    Components.Nonzero.ofLine_coordinatePair_ne_zero p
       sourceStart (sourceFinish - sourceStart) 1 (by
         simpa only [Affine.Segment.line_segment_one] using formula.sourceFinishNonzero)
-  have conjugate := Dense.Rational.CauchyIndex.Basic.cauchyIndex2_neg_denominator
-    sourceStartPair sourceFinishPair
-  have half := formula.data.halfPlane
-  have product := formula.data.product
-  unfold Dense.Rational.CauchyIndex.HalfPlane.Formula at half
-  unfold Dense.Rational.CauchyIndex.Product.Basic.AuxiliaryProductFormula
-    Dense.Rational.CauchyIndex.Product.Basic.auxiliaryEndpointCorrection2 at product
-  simp only [Dense.Rational.Pair.ConjugateProduct.eval_roucheReal,
-    Dense.Rational.Pair.ConjugateProduct.eval_roucheImag, Dense.Basic.DensePolynomial.eval_neg,
-    Dense.Gaussian.Path.Components.eval_pathReal, Dense.Gaussian.Path.Components.eval_pathImag,
-      Affine.Segment.line_segment_zero,
-    Affine.Segment.line_segment_one] at half product
-  rw [conjugate] at product
-  unfold Dense.Gaussian.Path.Segment.segment Dense.Rational.Pair.Path.Basic.PolynomialEdge.doubledWinding
-    Gaussian.Sign.CauchyComparison.vertexHomotopyCorrection2
-  dsimp only [Dense.Rational.Pair.Path.Basic.PolynomialEdge.ofLine]
-  have targetIdentity :
-      Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2
-          (Dense.Gaussian.Path.Components.pathReal q targetStart (targetFinish - targetStart))
-          (Dense.Gaussian.Path.Components.pathImag q targetStart (targetFinish - targetStart)) 0 1 =
-        Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2
-            (Dense.Gaussian.Path.Components.pathReal p sourceStart (sourceFinish - sourceStart))
-            (Dense.Gaussian.Path.Components.pathImag p sourceStart (sourceFinish - sourceStart)) 0 1 +
-          Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2
-            (Dense.Rational.Pair.ConjugateProduct.roucheReal
-              (Dense.Gaussian.Path.Components.pathReal p sourceStart (sourceFinish - sourceStart))
-              (Dense.Gaussian.Path.Components.pathImag p sourceStart (sourceFinish - sourceStart))
-              (Dense.Gaussian.Path.Components.pathReal q targetStart (targetFinish - targetStart))
-              (Dense.Gaussian.Path.Components.pathImag q targetStart (targetFinish - targetStart)))
-            (Dense.Rational.Pair.ConjugateProduct.roucheImag
-              (Dense.Gaussian.Path.Components.pathReal p sourceStart (sourceFinish - sourceStart))
-              (Dense.Gaussian.Path.Components.pathImag p sourceStart (sourceFinish - sourceStart))
-              (Dense.Gaussian.Path.Components.pathReal q targetStart (targetFinish - targetStart))
-              (Dense.Gaussian.Path.Components.pathImag q targetStart (targetFinish - targetStart))) 0 1 +
-          (Data.Rat.Sign.Jump.signJump 1
-            (((p.eval sourceStart).re * (q.eval targetStart).im -
-              (p.eval sourceStart).im * (q.eval targetStart).re) *
-              (-(p.eval sourceStart).im * (q.eval targetStart).im)) : Int) -
-          (Data.Rat.Sign.Jump.signJump 1
-            (((p.eval sourceFinish).re * (q.eval targetFinish).im -
-              (p.eval sourceFinish).im * (q.eval targetFinish).re) *
-              (-(p.eval sourceFinish).im * (q.eval targetFinish).im)) : Int) := by
-    rw [product]
-    ring1
-  rw [targetIdentity, half]
-  ring1
+  have indexFormula := formula.data.index_eq sourceStartPair sourceFinishPair
+  simpa only [Segment.segment, Dense.Rational.Pair.Path.Basic.PolynomialEdge.doubledWinding,
+    Dense.Rational.Pair.Path.Basic.PolynomialEdge.ofLine, Components.pathParts_eq,
+    Components.eval_pathReal, Components.eval_pathImag,
+    Affine.Segment.line_segment_zero, Affine.Segment.line_segment_one] using indexFormula
 
 /-- Synchronized segment formulas for two open chains with the same finite
 number of edges. -/
@@ -183,22 +145,22 @@ theorem chainRaw_eq_of_homotopy
       (targetStart : Gaussian.Basic.Canonical) (targetVertices : List Gaussian.Basic.Canonical),
       ChainHomotopyFormula p q sourceStart sourceVertices
         targetStart targetVertices →
-      Winding.Polygon.Basic.chainRaw q targetStart targetVertices =
-        Winding.Polygon.Basic.chainRaw p sourceStart sourceVertices +
+      Basic.chainRaw q targetStart targetVertices =
+        Basic.chainRaw p sourceStart sourceVertices +
           Gaussian.Sign.CauchyComparison.vertexHomotopyCorrection2
             (p.eval sourceStart) (q.eval targetStart) -
           Gaussian.Sign.CauchyComparison.vertexHomotopyCorrection2
             (p.eval (Polygon.Chain.terminal sourceStart sourceVertices))
             (q.eval (Polygon.Chain.terminal targetStart targetVertices))
   | sourceStart, [], targetStart, [], .nil _ _ => by
-      simp only [Winding.Polygon.Basic.chainRaw, Polygon.Chain.terminal]
+      simp only [Basic.chainRaw, Polygon.Chain.terminal]
       ring1
   | sourceStart, sourceFinish :: sourceRemaining,
       targetStart, targetFinish :: targetRemaining, .cons edge tail => by
       have edgeFormula := segmentRaw_eq_of_homotopy edge
       have tailFormula := chainRaw_eq_of_homotopy p q
         sourceFinish sourceRemaining targetFinish targetRemaining tail
-      simp only [Winding.Polygon.Basic.chainRaw, Polygon.Chain.terminal]
+      simp only [Basic.chainRaw, Polygon.Chain.terminal]
       rw [edgeFormula, tailFormula]
       ring1
 
@@ -218,9 +180,9 @@ theorem closedRaw_eq_of_homotopy
     (targetBase : Gaussian.Basic.Canonical) (targetVertices : List Gaussian.Basic.Canonical)
     (formula : ClosedHomotopyFormula p q
       sourceBase sourceVertices targetBase targetVertices) :
-    Winding.Polygon.Basic.closedRaw q targetBase targetVertices =
-      Winding.Polygon.Basic.closedRaw p sourceBase sourceVertices := by
-  unfold Winding.Polygon.Basic.closedRaw
+    Basic.closedRaw q targetBase targetVertices =
+      Basic.closedRaw p sourceBase sourceVertices := by
+  unfold Basic.closedRaw
   rw [chainRaw_eq_of_homotopy p q
     sourceBase (sourceVertices ++ [sourceBase])
     targetBase (targetVertices ++ [targetBase]) formula,

@@ -61,12 +61,12 @@ quarter-quadrance disk.
 
 The disk bounds the original Gaussian power. The reciprocal natural
 coefficient has square at most one, preserving the matching quarter-power bound. -/
-theorem log1pSecondRelTerm_bound {u : Data.Gaussian.Basic.Canonical}
-    (disk : Data.Gaussian.Norm.Basic.normSq u ≤ 1 / 4) (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (Sample.log1pSecondRelTerm u index) ≤
+theorem log1pSecondRelTerm_bound {u : Basic.Canonical}
+    (disk : Norm.Basic.normSq u ≤ 1 / 4) (index : Nat) :
+    Norm.Basic.normSq (Sample.log1pSecondRelTerm u index) ≤
       (1 / 4 : Fraction.Rational) ^ index := by
   rw [Sample.log1pSecondRelTerm, Scale.normSq_scale,
-    Power.normSq_pow, Data.Gaussian.Norm.Basic.normSq_neg]
+    Power.normSq_pow, Norm.Basic.normSq_neg]
   have coefficientBound :
       (-(1 / ((index + 2 : Nat) : Fraction.Rational))) ^ 2 ≤ 1 := by
     calc
@@ -76,13 +76,13 @@ theorem log1pSecondRelTerm_bound {u : Data.Gaussian.Basic.Canonical}
         rw [show index + 2 = (index + 1) + 1 by ring1]
       _ ≤ 1 := ReciprocalNatural.reciprocalNatSq_le_one (index + 1)
   have powerBound := Fraction.Order.Arithmetic.pow_le_pow_direct
-    (Data.Gaussian.Norm.Basic.normSq_nonneg u) disk index
+    (Norm.Basic.normSq_nonneg u) disk index
   calc
     (-(1 / ((index + 2 : Nat) : Fraction.Rational))) ^ 2 *
-          Data.Gaussian.Norm.Basic.normSq u ^ index ≤
+          Norm.Basic.normSq u ^ index ≤
         1 * (1 / 4 : Fraction.Rational) ^ index :=
       Fraction.Order.Arithmetic.mul_le_mul_direct coefficientBound powerBound
-        (Fraction.Order.Arithmetic.pow_nonneg_direct (Data.Gaussian.Norm.Basic.normSq_nonneg u) index)
+        (Fraction.Order.Arithmetic.pow_nonneg_direct (Norm.Basic.normSq_nonneg u) index)
         (by decide)
     _ = (1 / 4 : Fraction.Rational) ^ index :=
       Fraction.Field.one_mul _
@@ -91,14 +91,14 @@ theorem log1pSecondRelTerm_bound {u : Data.Gaussian.Basic.Canonical}
 
 The sample sums exactly the retained finite prefix of indexed terms.
 Its geometric norm bound uses the same quarter-power term estimates on the disk. -/
-theorem log1pSecondRelSample_bounded {u : Data.Gaussian.Basic.Canonical}
-    (disk : Data.Gaussian.Norm.Basic.normSq u ≤ 1 / 4) (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (Sample.log1pSecondRelSample u index) ≤ 4 := by
+theorem log1pSecondRelSample_bounded {u : Basic.Canonical}
+    (disk : Norm.Basic.normSq u ≤ 1 / 4) (index : Nat) :
+    Norm.Basic.normSq (Sample.log1pSecondRelSample u index) ≤ 4 := by
   exact FiniteSum.Geometric.sum_geometric_normSq_le
     (Sample.log1pSecondRelTerm u) (index + 1) 1 (by decide)
       (fun termIndex => by
         simpa only [Fraction.Field.one_mul] using
-          Approximation.Gaussian.Logarithm.OnePlus.SecondRelative.Bounds.log1pSecondRelTerm_bound disk termIndex)
+          log1pSecondRelTerm_bound disk termIndex)
 
 open Purelib.Data.Nat in
 /-- Later second-relative logarithm samples stay within the earlier index's scale-one quarter-radius allowance.
@@ -106,20 +106,20 @@ open Purelib.Data.Nat in
 The retained index order identifies the later prefix as the earlier prefix
 plus its exact natural-difference tail. The geometric term bound controls that
 finite tail at the original earlier index. -/
-theorem log1pSecondRelSample_later_close {u : Data.Gaussian.Basic.Canonical}
-    (disk : Data.Gaussian.Norm.Basic.normSq u ≤ 1 / 4) {earlier later : Nat}
+theorem log1pSecondRelSample_later_close {u : Basic.Canonical}
+    (disk : Norm.Basic.normSq u ≤ 1 / 4) {earlier later : Nat}
     (order : earlier ≤ later) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (Sample.log1pSecondRelSample u later -
           Sample.log1pSecondRelSample u earlier) ≤
-      Geometric.Basic.quarterRadius 1 earlier := by
+      Basic.quarterRadius 1 earlier := by
   obtain ⟨extra, rfl⟩ : ∃ extra : Nat, later = earlier + extra :=
     ⟨later - earlier, (Subtraction.add_sub_of_le order).symm⟩
   rw [Sample.log1pSecondRelSample, Sample.log1pSecondRelSample,
     show earlier + extra + 1 = earlier + 1 + extra by ring1,
     Prefix.sum_append]
   have tailBound :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (Prefix.sum
             (fun index => Sample.log1pSecondRelTerm u (earlier + 1 + index))
               extra) ≤
@@ -130,14 +130,14 @@ theorem log1pSecondRelSample_later_close {u : Data.Gaussian.Basic.Canonical}
       (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) _)
       (fun index => by
         calc
-          Data.Gaussian.Norm.Basic.normSq (Sample.log1pSecondRelTerm u (earlier + 1 + index)) ≤
+          Norm.Basic.normSq (Sample.log1pSecondRelTerm u (earlier + 1 + index)) ≤
               (1 / 4 : Fraction.Rational) ^ (earlier + 1 + index) :=
-            Approximation.Gaussian.Logarithm.OnePlus.SecondRelative.Bounds.log1pSecondRelTerm_bound disk _
+            log1pSecondRelTerm_bound disk _
           _ = (1 / 4 : Fraction.Rational) ^ (earlier + 1) *
               (1 / 4 : Fraction.Rational) ^ index :=
             Quarter.quarterPower_shift earlier index)
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (Prefix.sum
               (Sample.log1pSecondRelTerm u) (earlier + 1) +
             Prefix.sum
@@ -145,17 +145,17 @@ theorem log1pSecondRelSample_later_close {u : Data.Gaussian.Basic.Canonical}
                 extra -
           Prefix.sum
             (Sample.log1pSecondRelTerm u) (earlier + 1)) =
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
         (Prefix.sum
           (fun index => Sample.log1pSecondRelTerm u (earlier + 1 + index))
             extra) := by
         congr 1
-        apply Data.Gaussian.Basic.ext <;>
+        apply Basic.ext <;>
           simp only [Basic.add_re, Basic.add_im, Basic.sub_re, Basic.sub_im] <;> ring1
     _ ≤ 4 * (1 / 4 : Fraction.Rational) ^ (earlier + 1) := tailBound
-    _ = Geometric.Basic.quarterRadius 1 earlier := by
+    _ = Basic.quarterRadius 1 earlier := by
       rw [Quarter.four_mul_quarterPower_succ,
-        Geometric.Basic.quarterRadius_eq_mul_pow,
+        Basic.quarterRadius_eq_mul_pow,
         Fraction.Field.one_mul]
 end Purelib.Approximation.Gaussian.Logarithm.OnePlus.SecondRelative.Bounds
 

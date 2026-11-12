@@ -141,10 +141,10 @@ term and sixteen times that residual separately. -/
 theorem refine_anchor_mismatch (cell : TransportedCell bounds source inner)
     (root : Gaussian) (inside : cell.aligned.seed.owner.track.initial.box.Contains root)
     {rootError : Coordinate} (nonnegative : 0 ≤ rootError) (small : rootError ≤ 1 / 4096)
-    (residual : Data.Gaussian.Norm.Basic.normSq (root ^ 2 - polynomial.eval inner.anchor) ≤ rootError *
-      Data.Gaussian.Norm.Basic.normSq (polynomial.eval inner.anchor))
+    (residual : normSq (root ^ 2 - polynomial.eval inner.anchor) ≤ rootError *
+      normSq (polynomial.eval inner.anchor))
     (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (1 - root * (cell.model.refine index).value.eval inner.anchor) ≤
+    normSq (1 - root * (cell.model.refine index).value.eval inner.anchor) ≤
       Geometric.Basic.quarterRadius (1 / 256) index + 16 * rootError := by
   apply InverseRootComparison.Model.refine_mismatch_bound
     (initialBound := (1 / 256 : Fraction.Rational)) cell.model inner.anchor inner.contains_anchor root nonnegative
@@ -189,7 +189,7 @@ open Purelib.Data.Gaussian in
 /-- The requested model's inverse-root residual is strictly below its target at every point of the original cell. -/
 theorem residual_lt {cell : TransportedCell bounds source inner} {target : Coordinate}
     (request : Request cell target) (point : Gaussian) (inside : inner.Contains point) :
-    Data.Gaussian.Norm.Basic.normSq (1 - polynomial.eval point * (request.model.value.eval point) ^ 2) < target := by
+    normSq (1 - polynomial.eval point * (request.model.value.eval point) ^ 2) < target := by
   rw [← request.model.residual_eq]
   have scalar := (request.model.residualBound point inside).trans_lt request.accurate
   simpa only [Norm.Basic.normSq_eq_canonical] using scalar
@@ -212,18 +212,18 @@ open Purelib.Riemann.Normalization.OwnerSeededInverseRoot (SeededNeighborhood)
 The auxiliary neighborhood uses the acquired cell seed. The two models may
 have different boxes and independent refinement indices; their root and
 polynomial sign remain those of the supplied owners. -/
-theorem anchor_nearest {polynomial : InverseRootPolynomial.Polynomial} {box inner : InverseRootPolynomial.Box}
-    {clearance : RegularFaceInverseModels.Clearance polynomial box} {bounds : RegularFaceInverseModels.Bounds clearance}
-    {source : OwnerSeededInverseRoot.Owner (polynomial.eval box.anchor)} (cell :
-      TransportedFaceInverseModels.TransportedCell bounds source inner)
-    {count : Nat} {patch : ContinuedInverseRoot.ContinuedNeighborhood polynomial count}
+theorem anchor_nearest {polynomial : Polynomial} {box inner : Box}
+    {clearance : Clearance polynomial box} {bounds : Bounds clearance}
+    {source : Owner (polynomial.eval box.anchor)} (cell :
+      TransportedCell bounds source inner)
+    {count : Nat} {patch : ContinuedNeighborhood polynomial count}
     (sample : ContinuedNeighborhood.Point patch inner.anchor) (inside : patch.box.Contains inner.anchor)
     (roots : Gaussian.Equivalence.NamedEquivalent
       (OwnerTraceReadings.ownerName cell.aligned.seed.owner) sample.certificate.value.name)
     (leftIndex rightIndex : Nat) :
-    Data.Gaussian.Norm.Basic.normSq ((cell.model.refine leftIndex).value.eval inner.anchor - (patch.base.refine
+    normSq ((cell.model.refine leftIndex).value.eval inner.anchor - (patch.base.refine
       rightIndex).value.eval inner.anchor) ≤
-      Data.Gaussian.Norm.Basic.normSq ((cell.model.refine leftIndex).value.eval inner.anchor +
+      normSq ((cell.model.refine leftIndex).value.eval inner.anchor +
         (patch.base.refine rightIndex).value.eval inner.anchor) := by
   let site := ObservationNeighborhood.ofPoint polynomial 0 inner.anchor
     cell.traced.finishOwner.parameterNonzero
@@ -233,7 +233,7 @@ theorem anchor_nearest {polynomial : InverseRootPolynomial.Polynomial} {box inne
   have equal : cell.model.value.eval inner.anchor = auxiliary.base.model.value.eval inner.anchor := by
     rw [cell.value_eq, auxiliary.base.model_value_eq]
     rfl
-  rw [InverseRootPolynomial.Model.refine_eval_eq cell.model auxiliary.base.model inner.anchor equal leftIndex]
+  rw [Model.refine_eval_eq cell.model auxiliary.base.model inner.anchor equal leftIndex]
   have scalar := first.equivalent_nearest sample auxiliary.center_inside inside roots leftIndex rightIndex
   simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical, SeededNeighborhood.refine] using scalar
 

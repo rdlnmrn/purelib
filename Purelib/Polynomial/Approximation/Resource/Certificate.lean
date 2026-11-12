@@ -36,6 +36,11 @@ import Purelib.Data.Gaussian.Field
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.Polynomial.Dense.Basic
 
+open Purelib.Polynomial.Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator
+open Purelib.Data.ComplexContinuedFraction.Hurwitz
+open Purelib.Approximation.Rational.QuadraticTarget
+open Purelib.Polynomial.Dense.Gaussian.Newton
+
 open Purelib.Data.ComplexContinuedFraction.Hurwitz (Encoding)
 
 open Purelib.Approximation.Gaussian
@@ -74,16 +79,16 @@ evaluation; constructing RFAP-I eliminants and the supplied Newton band is
 outside this record. -/
 structure StageTwoInput where
   /-- The retained normalized Gaussian polynomial for the Newton calculation. -/ polynomial :
-    Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+    Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
   /-- The supplied Gaussian point at which the polynomial and derivative are evaluated. -/ anchor :
-    Gaussian.Basic.Canonical
+    Basic.Canonical
   /-- The retained rational radius used to construct the Gaussian grid. -/ radius : Fraction.Rational
   /-- The displayed Gaussian-integer numerator for homogeneous evaluation. -/ homogeneousNumerator : GaussianInt
   /-- The displayed Gaussian-integer denominator for homogeneous evaluation. -/ homogeneousDenominator : GaussianInt
   /-- The already cleared finite coefficient list used by homogeneous evaluation. -/ homogeneousCoefficients : List
     GaussianInt
   /-- The displayed Gaussian-integer fraction encoded by finite Hurwitz recursion. -/ hurwitzSource :
-    GaussianInt.Fraction
+    Fraction
   /-- The rational coefficient in the quadratic target request. -/ targetCoefficient : Fraction.Rational
   /-- The rational target for the bounded square-threshold request. -/ target : Fraction.Rational
 
@@ -115,9 +120,9 @@ section
 /-- Semantic Newton centre obtained by erasing the normalized working
 record. -/
 def center (input :
-  StageTwoInput) : Gaussian.Basic.Canonical :=
-  Gaussian.Basic.value
-    (Dense.Gaussian.Newton.Basic.newtonCenter input.polynomial input.anchor)
+  StageTwoInput) : Basic.Canonical :=
+  Basic.value
+    (Basic.newtonCenter input.polynomial input.anchor)
 
 end
 end Purelib.Polynomial.Approximation.Resource.Certificate.StageTwoInput
@@ -146,16 +151,16 @@ normalized Newton update, grid construction, homogeneous evaluation, finite
 Hurwitz encoding, and square-threshold scan. -/
 def stageTwoAccountedSteps (input :
   StageTwoInput) : Nat :=
-  Dense.Gaussian.Newton.Resource.newtonSteps input.polynomial input.anchor +
+  Resource.newtonSteps input.polynomial input.anchor +
     Grid.Resource.gridArithmeticSteps input.center input.radius +
-    Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousStepBudget
+    Resource.homogeneousStepBudget
       input.homogeneousCoefficients +
-    Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousMultiplicationBudget
+    Resource.homogeneousMultiplicationBudget
       input.homogeneousCoefficients +
     (Encoding.encode input.hurwitzSource).length +
-    Data.ComplexContinuedFraction.Hurwitz.Resource.continuantArithmeticSteps
+    Resource.continuantArithmeticSteps
       (Encoding.encode input.hurwitzSource) +
-    (Approximation.Rational.QuadraticTarget.Resource.targetCeiling input.targetCoefficient input.target + 1)
+    (Resource.targetCeiling input.targetCoefficient input.target + 1)
 end Purelib.Polynomial.Approximation.Resource.Certificate
 
 end
@@ -186,22 +191,22 @@ structure StageTwoResourcesWithin (input :
   /-- The exact combined accounted clause count is at most the retained step budget. -/ accountedSteps :
     stageTwoAccountedSteps input ≤ steps
   /-- Every original polynomial Horner trace entry fits the retained bit budget. -/ sourceTrace : ∀ {candidate :
-    Gaussian.Basic.Number},
+    Basic.Number},
     candidate ∈ Dense.Gaussian.Evaluation.Trace.trace input.anchor
         input.polynomial.coeffs →
-      Gaussian.Resource.workingGaussianWidth candidate ≤ bits
+      Resource.workingGaussianWidth candidate ≤ bits
   /-- Every derivative Horner trace entry fits the retained bit budget. -/ derivativeTrace : ∀ {candidate :
-    Gaussian.Basic.Number},
+    Basic.Number},
     candidate ∈ Dense.Gaussian.Evaluation.Trace.trace input.anchor
         (Dense.Derivative.derivative input.polynomial).coeffs →
-      Gaussian.Resource.workingGaussianWidth candidate ≤ bits
+      Resource.workingGaussianWidth candidate ≤ bits
   /-- The normalized Newton center record fits the retained bit budget. -/ newtonCenter :
-    Gaussian.Resource.workingGaussianWidth
-      (Dense.Gaussian.Newton.Basic.newtonCenter input.polynomial input.anchor) ≤
+    Resource.workingGaussianWidth
+      (Basic.newtonCenter input.polynomial input.anchor) ≤
     bits
   /-- The normalized Newton quotient record fits the retained bit budget. -/ newtonQuotient :
-    Gaussian.Resource.workingGaussianWidth
-      (Dense.Gaussian.Newton.Resource.normalizedNewtonQuotient input.polynomial input.anchor) ≤ bits
+    Resource.workingGaussianWidth
+      (Resource.normalizedNewtonQuotient input.polynomial input.anchor) ≤ bits
   /-- The grid's normalized half-to-radius quotient fits the retained bit budget. -/ gridDivision :
     Fraction.Resource.Width.rationalRecordWidth
       (Fraction.Arithmetic.normalizedDiv (1 / 2 : Fraction.Rational)
@@ -217,35 +222,35 @@ structure StageTwoResourcesWithin (input :
         (Approximation.Rational.Grid.Basic.gridDenominator input.radius : Fraction.Rational)
         input.center.im) ≤ bits
   /-- The returned common-denominator Gaussian grid record fits the retained bit budget. -/ gridRecord :
-    Gaussian.Fraction.NaturalDenominator.Resource.commonFractionWidth
+    Fraction.NaturalDenominator.Resource.commonFractionWidth
       (Grid.Basic.gridFraction input.center input.radius) ≤ bits
   /-- Every retained homogeneous suffix evaluation fits the bit budget. -/ homogeneousTrace : ∀ {candidate :
     GaussianInt},
-    candidate ∈ Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousTrace
+    candidate ∈ Resource.homogeneousTrace
       input.homogeneousNumerator
         input.homogeneousDenominator input.homogeneousCoefficients →
-      GaussianInt.Resource.gaussianIntWidth candidate ≤ bits
+      Resource.gaussianIntWidth candidate ≤ bits
   /-- Every emitted Gaussian-integer Hurwitz digit fits the bit budget. -/ hurwitzDigit : ∀ {candidate : GaussianInt},
     candidate ∈ Encoding.encode input.hurwitzSource →
-      GaussianInt.Resource.gaussianIntWidth candidate ≤ bits
+      Resource.gaussianIntWidth candidate ≤ bits
   /-- Both components of every retained continuant trace pair fit the bit budget. -/ continuantTrace : ∀ {pair :
-    GaussianInt.Pair.Basic.ConvergentPair},
-    pair ∈ Data.ComplexContinuedFraction.Hurwitz.Resource.continuantTrace
+    Pair.Basic.ConvergentPair},
+    pair ∈ Resource.continuantTrace
       (Encoding.encode
         input.hurwitzSource) →
-      GaussianInt.Resource.gaussianIntWidth pair.numerator ≤ bits ∧
-        GaussianInt.Resource.gaussianIntWidth pair.denominator ≤ bits
+      Resource.gaussianIntWidth pair.numerator ≤ bits ∧
+        Resource.gaussianIntWidth pair.denominator ≤ bits
   /-- The final Hurwitz continuant numerator fits the retained bit budget. -/ continuantNumerator :
-    GaussianInt.Resource.gaussianIntWidth
-      (Data.ComplexContinuedFraction.Hurwitz.Continuant.continuant
+    Resource.gaussianIntWidth
+      (Continuant.continuant
         (Encoding.encode input.hurwitzSource)).numerator ≤ bits
   /-- The final Hurwitz continuant denominator fits the retained bit budget. -/ continuantDenominator :
-    GaussianInt.Resource.gaussianIntWidth
-      (Data.ComplexContinuedFraction.Hurwitz.Continuant.continuant
+    Resource.gaussianIntWidth
+      (Continuant.continuant
         (Encoding.encode input.hurwitzSource)).denominator ≤ bits
   /-- The returned quadratic-target denominator fits the retained bit budget. -/ targetDenominator :
     Data.Nat.BitWidth.natWidth
-      (Approximation.Rational.QuadraticTarget.Basic.targetDenominator input.targetCoefficient
+      (Basic.targetDenominator input.targetCoefficient
         input.target) ≤ bits
 end Purelib.Polynomial.Approximation.Resource.Certificate
 
@@ -272,12 +277,12 @@ open Purelib.Data.GaussianInt
 def stageTwoIntegralBitBudget (input :
   StageTwoInput) : Nat :=
   max (Data.Nat.BitWidth.natWidth
-    (Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousWorkingEnvelope
+    (Resource.homogeneousWorkingEnvelope
     input.homogeneousNumerator
     input.homogeneousDenominator input.homogeneousCoefficients))
-    (max (Data.Nat.BitWidth.natWidth (Data.ComplexContinuedFraction.Hurwitz.Step.digitNormBudget
+    (max (Data.Nat.BitWidth.natWidth (Step.digitNormBudget
       input.hurwitzSource))
-      (Data.Nat.BitWidth.natWidth (Data.ComplexContinuedFraction.Hurwitz.Resource.hurwitzContinuantNormBudget
+      (Data.Nat.BitWidth.natWidth (Resource.hurwitzContinuantNormBudget
         input.hurwitzSource)))
 end Purelib.Polynomial.Approximation.Resource.Certificate
 
@@ -303,7 +308,7 @@ open Purelib.Data.GaussianInt
 /-- Bit-width budget for normalized Newton and grid working records. -/
 def stageTwoRationalBitBudget (input :
   StageTwoInput) : Nat :=
-  max (Dense.Gaussian.Newton.Resource.normalizedNewtonBitBudget input.polynomial input.anchor)
+  max (Resource.normalizedNewtonBitBudget input.polynomial input.anchor)
     (max (Grid.Resource.gridArithmeticBitBudget input.center input.radius)
       (Grid.Resource.gridRecordBitBudget input.center input.radius))
 end Purelib.Polynomial.Approximation.Resource.Certificate
@@ -333,7 +338,7 @@ def stageTwoBitBudget (input :
   StageTwoInput) : Nat :=
   max (stageTwoRationalBitBudget input)
     (max (stageTwoIntegralBitBudget input)
-      (Data.Nat.BitWidth.natWidth (Approximation.Rational.QuadraticTarget.Resource.targetCeiling input.targetCoefficient
+      (Data.Nat.BitWidth.natWidth (Resource.targetCeiling input.targetCoefficient
         input.target + 1)))
 end Purelib.Polynomial.Approximation.Resource.Certificate
 
@@ -359,15 +364,15 @@ open Purelib.Data.GaussianInt
 /-- Source recurrence bounding the sum of the same accounted clauses. -/
 def stageTwoStepBudget (input :
   StageTwoInput) : Nat :=
-  Dense.Gaussian.Newton.Resource.normalizedNewtonStepBudget input.polynomial input.anchor +
+  Resource.normalizedNewtonStepBudget input.polynomial input.anchor +
     Grid.Resource.gridArithmeticStepBudget input.center input.radius +
-    Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousStepBudget
+    Resource.homogeneousStepBudget
       input.homogeneousCoefficients +
-    Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousMultiplicationBudget
+    Resource.homogeneousMultiplicationBudget
       input.homogeneousCoefficients +
-    Data.ComplexContinuedFraction.Hurwitz.Resource.hurwitzStepBudget input.hurwitzSource +
-    Data.ComplexContinuedFraction.Hurwitz.Resource.hurwitzContinuantStepBudget input.hurwitzSource +
-    Approximation.Rational.QuadraticTarget.Resource.targetComparisonBudget input.targetCoefficient input.target
+    Resource.hurwitzStepBudget input.hurwitzSource +
+    Resource.hurwitzContinuantStepBudget input.hurwitzSource +
+    Resource.targetComparisonBudget input.targetCoefficient input.target
 end Purelib.Polynomial.Approximation.Resource.Certificate
 
 end
@@ -394,11 +399,11 @@ theorem stageTwoAccountedSteps_le_budget (input :
   StageTwoInput) :
     stageTwoAccountedSteps input ≤
       stageTwoStepBudget input := by
-  have newton := Dense.Gaussian.Newton.Resource.normalizedNewton_steps_le_budget
+  have newton := Resource.normalizedNewton_steps_le_budget
     input.polynomial input.anchor
   have grid := Grid.Resource.gridArithmeticSteps_le_budget input.center input.radius
-  have hurwitz := Data.ComplexContinuedFraction.Hurwitz.Resource.hurwitz_length_le_stepBudget input.hurwitzSource
-  have continuant := Data.ComplexContinuedFraction.Hurwitz.Resource.encodedContinuant_steps_le_budget
+  have hurwitz := Resource.hurwitz_length_le_stepBudget input.hurwitzSource
+  have continuant := Resource.encodedContinuant_steps_le_budget
     input.hurwitzSource
   have combined := Nat.add_le_add
     (Nat.add_le_add
@@ -406,15 +411,15 @@ theorem stageTwoAccountedSteps_le_budget (input :
         (Nat.add_le_add
           (Nat.add_le_add
             (Nat.add_le_add newton grid)
-            (le_refl (Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousStepBudget
+            (le_refl (Resource.homogeneousStepBudget
               input.homogeneousCoefficients)))
-          (le_refl (Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousMultiplicationBudget
+          (le_refl (Resource.homogeneousMultiplicationBudget
             input.homogeneousCoefficients))) hurwitz)
         continuant)
-    (le_refl (Approximation.Rational.QuadraticTarget.Resource.targetCeiling input.targetCoefficient input.target + 1))
+    (le_refl (Resource.targetCeiling input.targetCoefficient input.target + 1))
   simpa only [stageTwoAccountedSteps,
     stageTwoStepBudget,
-    Approximation.Rational.QuadraticTarget.Resource.targetComparisonBudget,
+    Resource.targetComparisonBudget,
       Data.Nat.SquareThreshold.Resource.squareThresholdComparisonBudget] using combined
 end Purelib.Polynomial.Approximation.Resource.Certificate
 
@@ -447,17 +452,17 @@ theorem stageTwo_resource_certificate (input :
   have rationalLe : stageTwoRationalBitBudget input ≤
       stageTwoBitBudget input := by
     unfold stageTwoBitBudget
-    exact Purelib.Data.Nat.Order.le_max_left _ _
+    exact Data.Nat.Order.le_max_left _ _
   have integralLe : stageTwoIntegralBitBudget input ≤
       stageTwoBitBudget input := by
     unfold stageTwoBitBudget
-    exact (Purelib.Data.Nat.Order.le_max_left _ _).trans (Purelib.Data.Nat.Order.le_max_right _ _)
+    exact (Data.Nat.Order.le_max_left _ _).trans (Data.Nat.Order.le_max_right _ _)
   have targetLe :
-      Data.Nat.BitWidth.natWidth (Approximation.Rational.QuadraticTarget.Resource.targetCeiling input.targetCoefficient
+      Data.Nat.BitWidth.natWidth (Resource.targetCeiling input.targetCoefficient
         input.target + 1) ≤
         stageTwoBitBudget input := by
     unfold stageTwoBitBudget
-    exact (Purelib.Data.Nat.Order.le_max_right _ _).trans (Purelib.Data.Nat.Order.le_max_right _ _)
+    exact (Data.Nat.Order.le_max_right _ _).trans (Data.Nat.Order.le_max_right _ _)
   refine
     { accountedSteps := stageTwoAccountedSteps_le_budget input
       sourceTrace := ?_
@@ -475,77 +480,77 @@ theorem stageTwo_resource_certificate (input :
       continuantDenominator := ?_
       targetDenominator := ?_ }
   · intro candidate member
-    exact (Dense.Gaussian.Newton.Resource.normalizedNewton_sourceTrace_width_le_budget
+    exact (Resource.normalizedNewton_sourceTrace_width_le_budget
       input.polynomial input.anchor member).trans
-        ((Purelib.Data.Nat.Order.le_max_left _ _).trans rationalLe)
+        ((Data.Nat.Order.le_max_left _ _).trans rationalLe)
   · intro candidate member
-    exact (Dense.Gaussian.Newton.Resource.normalizedNewton_derivativeTrace_width_le_budget
+    exact (Resource.normalizedNewton_derivativeTrace_width_le_budget
       input.polynomial input.anchor member).trans
-        ((Purelib.Data.Nat.Order.le_max_left _ _).trans rationalLe)
-  · exact (Dense.Gaussian.Newton.Resource.normalizedNewtonCenter_width_le_budget
+        ((Data.Nat.Order.le_max_left _ _).trans rationalLe)
+  · exact (Resource.normalizedNewtonCenter_width_le_budget
       input.polynomial input.anchor).trans
-        ((Purelib.Data.Nat.Order.le_max_left _ _).trans rationalLe)
-  · exact (Dense.Gaussian.Newton.Resource.normalizedNewtonQuotient_width_le_budget
+        ((Data.Nat.Order.le_max_left _ _).trans rationalLe)
+  · exact (Resource.normalizedNewtonQuotient_width_le_budget
       input.polynomial input.anchor).trans
-        ((Purelib.Data.Nat.Order.le_max_left _ _).trans rationalLe)
+        ((Data.Nat.Order.le_max_left _ _).trans rationalLe)
   · exact (Grid.Resource.gridDivision_width_le_budget input.center input.radius).trans
-      ((Purelib.Data.Nat.Order.le_max_left _ _).trans ((Purelib.Data.Nat.Order.le_max_right _ _).trans rationalLe))
+      ((Data.Nat.Order.le_max_left _ _).trans ((Data.Nat.Order.le_max_right _ _).trans rationalLe))
   · exact (Grid.Resource.gridRealProduct_width_le_budget input.center input.radius).trans
-      ((Purelib.Data.Nat.Order.le_max_left _ _).trans ((Purelib.Data.Nat.Order.le_max_right _ _).trans rationalLe))
+      ((Data.Nat.Order.le_max_left _ _).trans ((Data.Nat.Order.le_max_right _ _).trans rationalLe))
   · exact (Grid.Resource.gridImaginaryProduct_width_le_budget input.center input.radius).trans
-      ((Purelib.Data.Nat.Order.le_max_left _ _).trans ((Purelib.Data.Nat.Order.le_max_right _ _).trans rationalLe))
+      ((Data.Nat.Order.le_max_left _ _).trans ((Data.Nat.Order.le_max_right _ _).trans rationalLe))
   · exact (Grid.Resource.gridFraction_width_le_budget input.center input.radius).trans
-      ((Purelib.Data.Nat.Order.le_max_right _ _).trans ((Purelib.Data.Nat.Order.le_max_right _ _).trans rationalLe))
+      ((Data.Nat.Order.le_max_right _ _).trans ((Data.Nat.Order.le_max_right _ _).trans rationalLe))
   · intro candidate member
-    exact (GaussianInt.Resource.gaussianIntWidth_le_budget
-      (Dense.GaussianInt.Evaluation.Homogeneous.NaturalDenominator.Resource.homogeneousTrace_norm_le_workingEnvelope
+    exact (Resource.gaussianIntWidth_le_budget
+      (Resource.homogeneousTrace_norm_le_workingEnvelope
         input.homogeneousNumerator input.homogeneousDenominator
         input.homogeneousCoefficients member)).trans
-          ((Purelib.Data.Nat.Order.le_max_left _ _).trans integralLe)
+          ((Data.Nat.Order.le_max_left _ _).trans integralLe)
   · intro candidate member
-    exact (GaussianInt.Resource.gaussianIntWidth_le_budget
+    exact (Resource.gaussianIntWidth_le_budget
       (Encoding.encode_digit_norm_le input.hurwitzSource
         member)).trans
-          ((Purelib.Data.Nat.Order.le_max_left _ _).trans ((Purelib.Data.Nat.Order.le_max_right _ _).trans integralLe))
+          ((Data.Nat.Order.le_max_left _ _).trans ((Data.Nat.Order.le_max_right _ _).trans integralLe))
   · intro pair member
-    have bound := Data.ComplexContinuedFraction.Hurwitz.Resource.continuantTrace_norm_le_envelope
+    have bound := Resource.continuantTrace_norm_le_envelope
       (fun candidate candidateMember =>
         Encoding.encode_digit_norm_le input.hurwitzSource
           candidateMember) member
-    have lengthLe := Data.ComplexContinuedFraction.Hurwitz.Resource.hurwitz_length_le_stepBudget input.hurwitzSource
+    have lengthLe := Resource.hurwitz_length_le_stepBudget input.hurwitzSource
     have basePositive : 0 < 2 *
-        (Data.ComplexContinuedFraction.Hurwitz.Step.digitNormBudget input.hurwitzSource + 1) := by
+        (Step.digitNormBudget input.hurwitzSource + 1) := by
       exact Nat.mul_pos (by decide) (Nat.zero_lt_succ _)
-    have envelopeLe : Data.ComplexContinuedFraction.Hurwitz.Resource.continuantNormEnvelope
-          (Data.ComplexContinuedFraction.Hurwitz.Step.digitNormBudget input.hurwitzSource)
+    have envelopeLe : Resource.continuantNormEnvelope
+          (Step.digitNormBudget input.hurwitzSource)
           (Encoding.encode input.hurwitzSource).length ≤
-        Data.ComplexContinuedFraction.Hurwitz.Resource.hurwitzContinuantNormBudget input.hurwitzSource :=
+        Resource.hurwitzContinuantNormBudget input.hurwitzSource :=
       Nat.pow_le_pow_right basePositive lengthLe
-    exact ⟨(GaussianInt.Resource.gaussianIntWidth_le_budget
+    exact ⟨(Resource.gaussianIntWidth_le_budget
       (bound.1.trans envelopeLe)).trans
-        ((Purelib.Data.Nat.Order.le_max_right _ _).trans
-          ((Purelib.Data.Nat.Order.le_max_right _ _).trans integralLe)),
-      (GaussianInt.Resource.gaussianIntWidth_le_budget
+        ((Data.Nat.Order.le_max_right _ _).trans
+          ((Data.Nat.Order.le_max_right _ _).trans integralLe)),
+      (Resource.gaussianIntWidth_le_budget
         (bound.2.trans envelopeLe)).trans
-          ((Purelib.Data.Nat.Order.le_max_right _ _).trans
-            ((Purelib.Data.Nat.Order.le_max_right _ _).trans integralLe))⟩
-  · have bound := (Data.ComplexContinuedFraction.Hurwitz.Resource.encodedContinuant_norm_le_budget
+          ((Data.Nat.Order.le_max_right _ _).trans
+            ((Data.Nat.Order.le_max_right _ _).trans integralLe))⟩
+  · have bound := (Resource.encodedContinuant_norm_le_budget
       input.hurwitzSource).1
-    exact (GaussianInt.Resource.gaussianIntWidth_le_budget bound).trans
-      ((Purelib.Data.Nat.Order.le_max_right _ _).trans ((Purelib.Data.Nat.Order.le_max_right _ _).trans integralLe))
-  · have bound := (Data.ComplexContinuedFraction.Hurwitz.Resource.encodedContinuant_norm_le_budget
+    exact (Resource.gaussianIntWidth_le_budget bound).trans
+      ((Data.Nat.Order.le_max_right _ _).trans ((Data.Nat.Order.le_max_right _ _).trans integralLe))
+  · have bound := (Resource.encodedContinuant_norm_le_budget
       input.hurwitzSource).2
-    exact (GaussianInt.Resource.gaussianIntWidth_le_budget bound).trans
-      ((Purelib.Data.Nat.Order.le_max_right _ _).trans ((Purelib.Data.Nat.Order.le_max_right _ _).trans integralLe))
+    exact (Resource.gaussianIntWidth_le_budget bound).trans
+      ((Data.Nat.Order.le_max_right _ _).trans ((Data.Nat.Order.le_max_right _ _).trans integralLe))
   · have threshold := Data.Nat.SquareThreshold.Resource.squareThreshold_le_add_one
-      (Approximation.Rational.QuadraticTarget.Resource.targetCeiling input.targetCoefficient input.target)
+      (Resource.targetCeiling input.targetCoefficient input.target)
     have width : Data.Nat.BitWidth.natWidth
-        (Approximation.Rational.QuadraticTarget.Basic.targetDenominator input.targetCoefficient
+        (Basic.targetDenominator input.targetCoefficient
           input.target) ≤
-        Data.Nat.BitWidth.natWidth (Approximation.Rational.QuadraticTarget.Resource.targetCeiling
+        Data.Nat.BitWidth.natWidth (Resource.targetCeiling
           input.targetCoefficient input.target + 1) := by
-      unfold Approximation.Rational.QuadraticTarget.Basic.targetDenominator
-        Approximation.Rational.QuadraticTarget.Resource.targetCeiling
+      unfold Basic.targetDenominator
+        Resource.targetCeiling
       exact Data.Nat.BitWidth.natWidth_mono threshold
     exact width.trans targetLe
 

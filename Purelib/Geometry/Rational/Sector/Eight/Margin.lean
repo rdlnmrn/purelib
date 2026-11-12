@@ -15,6 +15,9 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+open Purelib.Data.Gaussian.Norm
+
 /-!
 # Redundant safe regions for constructive CCL output
 
@@ -53,13 +56,13 @@ private theorem axial_residual_le_seven_sixteenths
     · exact above
     · have xUpper : x ≤ 3 / 4 := le_of_not_gt above
       have xSquareUpper : x ^ 2 ≤ (3 / 4 : Fraction.Rational) ^ 2 :=
-        Fraction.Order.Arithmetic.pow_le_pow_direct xNonnegative xUpper 2
+        Arithmetic.pow_le_pow_direct xNonnegative xUpper 2
       have normTooSmall : x ^ 2 + y ^ 2 < 1 := by
         calc
           x ^ 2 + y ^ 2 < (3 / 4 : Fraction.Rational) ^ 2 + 1 / 4 :=
-            (Fraction.Order.Arithmetic.add_lt_add_left_direct
+            (Arithmetic.add_lt_add_left_direct
               ySquareLt _).trans_le
-              (Fraction.Order.Arithmetic.add_le_add_right_direct xSquareUpper _)
+              (Arithmetic.add_le_add_right_direct xSquareUpper _)
           _ = 13 / 16 := by decide
           _ < 1 := by decide
       exact ((not_lt_of_ge normLower) normTooSmall).elim
@@ -69,12 +72,12 @@ private theorem axial_residual_le_seven_sixteenths
         calc
         -(3 / 8 : Fraction.Rational) < -1 / 4 := by decide
         _ < x - 1 := by
-          apply Fraction.Order.Arithmetic.add_lt_add_right_direct
+          apply Arithmetic.add_lt_add_right_direct
             xAboveThreeQuarters (-1)).le
     have differenceUpper : x - 1 ≤ (3 / 8 : Fraction.Rational) := by
       calc
         x - 1 = -1 + x := by ring1
-        _ ≤ -1 + 11 / 8 := Fraction.Order.Arithmetic.add_le_add_direct le_rfl moderate
+        _ ≤ -1 + 11 / 8 := Arithmetic.add_le_add_direct le_rfl moderate
         _ = 3 / 8 := by decide
     have differenceSquare : (x - 1) ^ 2 ≤ (3 / 8 : Fraction.Rational) ^ 2 :=
       Bounds.Square.square_le_of_two_sided differenceLower differenceUpper
@@ -83,29 +86,29 @@ private theorem axial_residual_le_seven_sixteenths
     calc
       (x - 1) ^ 2 + y ^ 2 <
           (3 / 8 : Fraction.Rational) ^ 2 + 1 / 4 :=
-        (Fraction.Order.Arithmetic.add_lt_add_left_direct
+        (Arithmetic.add_lt_add_left_direct
               ySquareLt _).trans_le
-              (Fraction.Order.Arithmetic.add_le_add_right_direct differenceSquare _)
+              (Arithmetic.add_le_add_right_direct differenceSquare _)
       _ < 3 / 16 + 1 / 4 :=
-        Fraction.Order.Arithmetic.add_lt_add_right_direct
+        Arithmetic.add_lt_add_right_direct
           squareStrict (1 / 4)
       _ = 7 / 16 := by decide
   · have xAbove : 11 / 8 < x := lt_of_not_ge moderate
     have doubled : (2 : Fraction.Rational) * (11 / 8 : Fraction.Rational) < 2 * x :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+      Arithmetic.mul_lt_mul_of_pos_left_direct
         (by decide) xAbove
     have residualIdentity :
         (x - 1) ^ 2 + y ^ 2 = (x ^ 2 + y ^ 2) - 2 * x + 1 := by
       ring1
     rw [residualIdentity]
     have negDoubled : -(2 * x) < -(2 * (11 / 8 : Fraction.Rational)) :=
-      Fraction.Order.Arithmetic.neg_lt_neg_direct doubled
+      Arithmetic.neg_lt_neg_direct doubled
     have beforeOne :
         (x ^ 2 + y ^ 2) + -(2 * x) <
           13 / 6 + -(2 * (11 / 8 : Fraction.Rational)) :=
-      (Fraction.Order.Arithmetic.add_lt_add_left_direct
+      (Arithmetic.add_lt_add_left_direct
               negDoubled _).trans_le
-              (Fraction.Order.Arithmetic.add_le_add_right_direct normUpper _)
+              (Arithmetic.add_le_add_right_direct normUpper _)
     exact (show (x ^ 2 + y ^ 2) - 2 * x + 1 < 7 / 16 from by
       calc
         (x ^ 2 + y ^ 2) - 2 * x + 1 <
@@ -114,7 +117,7 @@ private theorem axial_residual_le_seven_sixteenths
             (x ^ 2 + y ^ 2) - 2 * x + 1 =
                 1 + ((x ^ 2 + y ^ 2) + -(2 * x)) := by ring1
             _ < 1 + (13 / 6 + -(2 * (11 / 8 : Fraction.Rational))) :=
-              Fraction.Order.Arithmetic.add_lt_add_left_direct beforeOne 1
+              Arithmetic.add_lt_add_left_direct beforeOne 1
             _ = 13 / 6 - 2 * (11 / 8 : Fraction.Rational) + 1 := by ring1
         _ = 5 / 12 := by decide
         _ < 7 / 16 := by decide).le
@@ -163,7 +166,7 @@ private theorem translated_p_above_third
   · exact above
   · have pUpper : p ≤ 1 / 3 := le_of_not_gt above
     have pSquareUpper : p ^ 2 ≤ (1 / 3 : Fraction.Rational) ^ 2 :=
-      Fraction.Order.Arithmetic.pow_le_pow_direct pNonnegative pUpper 2
+      Arithmetic.pow_le_pow_direct pNonnegative pUpper 2
     have pqUpper : p + q ≤ (4 / 9 : Fraction.Rational) := by
       calc
         p + q ≤ (1 / 3 : Fraction.Rational) + (1 / 3 : Fraction.Rational) ^ 2 :=
@@ -180,10 +183,10 @@ differences. -/
 private theorem translated_difference_order
     (p q : Fraction.Rational) (qLeSquareP : q ≤ p ^ 2) :
     p - p ^ 2 ≤ p - q := by
-  have negated := Fraction.Order.Arithmetic.neg_le_neg_direct qLeSquareP
+  have negated := Arithmetic.neg_le_neg_direct qLeSquareP
   calc
     p - p ^ 2 = p + -(p ^ 2) := by ring1
-    _ ≤ p + -q := Fraction.Order.Arithmetic.add_le_add_direct le_rfl negated
+    _ ≤ p + -q := Arithmetic.add_le_add_direct le_rfl negated
     _ = p - q := by ring1
 
 /-- The translated annulus inequalities force p minus q to be at least one sixteenth.
@@ -203,7 +206,7 @@ private theorem translated_diagonal_gap
       (7 : Fraction.Rational) (8 * p) with
   | isTrue highScaled =>
     have doubled : (7 / 4 : Fraction.Rational) ≤ 2 * p := by
-      apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+      apply Arithmetic.le_of_mul_le_mul_right_direct
         (c := (4 : Fraction.Rational)) _ (by decide)
       calc
         (7 / 4 : Fraction.Rational) * 4 = 7 :=
@@ -211,16 +214,16 @@ private theorem translated_diagonal_gap
         _ ≤ 8 * p := highScaled
         _ = (2 * p) * 4 := by ring1
     have upperSlack : 0 ≤ 5 / 3 - (p + q) :=
-      Fraction.Order.Arithmetic.sub_nonneg_direct upperPQ
+      Arithmetic.sub_nonneg_direct upperPQ
     have highSlack : 0 ≤ 2 * p - 7 / 4 :=
-      Fraction.Order.Arithmetic.sub_nonneg_direct doubled
+      Arithmetic.sub_nonneg_direct doubled
     have twelfthLower : (1 / 12 : Fraction.Rational) ≤ p - q := by
       have differenceNonnegative : 0 ≤ (p - q) - 1 / 12 := by
         calc
           0 ≤ (2 * p - 7 / 4) + (5 / 3 - (p + q)) :=
             add_nonneg highSlack upperSlack
           _ = (p - q) - 1 / 12 := high_slack_identity p q
-      apply Fraction.Order.Arithmetic.le_of_add_le_add_right_direct
+      apply Arithmetic.le_of_add_le_add_right_direct
         (c := -(1 / 12 : Fraction.Rational))
       calc
         (1 / 12 : Fraction.Rational) + -(1 / 12) = 0 := by ring1
@@ -231,7 +234,7 @@ private theorem translated_diagonal_gap
     have belowScaled : 8 * p < (7 : Fraction.Rational) :=
       lt_of_not_ge notHighScaled
     have below : p < 7 / 8 := by
-      apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+      apply Arithmetic.lt_of_mul_lt_mul_right_direct
         (c := (8 : Fraction.Rational)) _ (by decide)
       calc
         p * 8 = 8 * p := by ring1
@@ -241,21 +244,21 @@ private theorem translated_diagonal_gap
             (by decide)).symm
     have oneMinusEighth : (1 / 8 : Fraction.Rational) < 1 - p := by
       have negated : -(7 / 8 : Fraction.Rational) < -p :=
-        Fraction.Order.Arithmetic.neg_lt_neg_direct below
+        Arithmetic.neg_lt_neg_direct below
       calc
         (1 / 8 : Fraction.Rational) = 1 + -(7 / 8) := by decide
-        _ < 1 + -p := Fraction.Order.Arithmetic.add_lt_add_left_direct negated 1
+        _ < 1 + -p := Arithmetic.add_lt_add_left_direct negated 1
         _ = 1 - p := by ring1
     by_cases half : 1 / 2 ≤ p
     · have productLower : (1 / 16 : Fraction.Rational) < p * (1 - p) := by
         have scaled :=
-          Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+          Arithmetic.mul_lt_mul_of_pos_left_direct
             (by decide : (0 : Fraction.Rational) < 1 / 2) oneMinusEighth
         calc
           (1 / 16 : Fraction.Rational) = (1 / 2) * (1 / 8) := by decide
           _ < (1 / 2) * (1 - p) := scaled
           _ ≤ p * (1 - p) :=
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+            Arithmetic.mul_le_mul_of_nonneg_right_direct
               half ((by decide : (0 : Fraction.Rational) < 1 / 8).trans
                 oneMinusEighth).le
       exact (show (1 / 16 : Fraction.Rational) < p - q from by
@@ -265,14 +268,14 @@ private theorem translated_diagonal_gap
           _ ≤ p - q := differenceOrder).le
     · have pBelowHalf : p < 1 / 2 := lt_of_not_ge half
       have halfBelowOneMinus : (1 / 2 : Fraction.Rational) < 1 - p := by
-        have negated := Fraction.Order.Arithmetic.neg_lt_neg_direct pBelowHalf
+        have negated := Arithmetic.neg_lt_neg_direct pBelowHalf
         calc
           (1 / 2 : Fraction.Rational) = 1 + -(1 / 2) := by decide
-          _ < 1 + -p := Fraction.Order.Arithmetic.add_lt_add_left_direct negated 1
+          _ < 1 + -p := Arithmetic.add_lt_add_left_direct negated 1
           _ = 1 - p := by ring1
       have productLower : (1 / 6 : Fraction.Rational) < p * (1 - p) := by
         have scaled :=
-          Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+          Arithmetic.mul_lt_mul_of_pos_left_direct
             (by decide : (0 : Fraction.Rational) < 1 / 3) halfBelowOneMinus
         have rightPositive : 0 < 1 - p :=
           (by decide : (0 : Fraction.Rational) < 1 / 2).trans halfBelowOneMinus
@@ -280,7 +283,7 @@ private theorem translated_diagonal_gap
           (1 / 6 : Fraction.Rational) = (1 / 3) * (1 / 2) := by decide
           _ < (1 / 3) * (1 - p) := scaled
           _ < p * (1 - p) :=
-            Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+            Arithmetic.mul_lt_mul_of_pos_right_direct
               pAboveThird rightPositive
       exact (show (1 / 16 : Fraction.Rational) < p - q from by
         calc
@@ -304,9 +307,9 @@ private theorem diagonal_residual_le_seven_sixteenths
   generalize pDefinition : a + b = p
   generalize qDefinition : a ^ 2 + b ^ 2 = q
   have aNonnegative : 0 ≤ a :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct xLower
+    Arithmetic.sub_nonneg_direct xLower
   have bNonnegative : 0 ≤ b :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct yLower
+    Arithmetic.sub_nonneg_direct yLower
   have pNonnegative : 0 ≤ p := by
     rw [← pDefinition]
     exact add_nonneg aNonnegative bNonnegative
@@ -325,14 +328,14 @@ private theorem diagonal_residual_le_seven_sixteenths
         dsimp only [a, b]
         ring1
   have lowerPQ : (1 / 2 : Fraction.Rational) ≤ p + q := by
-    apply Fraction.Order.Arithmetic.le_of_add_le_add_right_direct
+    apply Arithmetic.le_of_add_le_add_right_direct
       (c := (1 / 2 : Fraction.Rational))
     calc
       (1 / 2 : Fraction.Rational) + 1 / 2 = 1 := by decide
       _ ≤ x ^ 2 + y ^ 2 := normLower
       _ = (p + q) + 1 / 2 := normIdentity
   have upperPQ : p + q ≤ (5 / 3 : Fraction.Rational) := by
-    apply Fraction.Order.Arithmetic.le_of_add_le_add_right_direct
+    apply Arithmetic.le_of_add_le_add_right_direct
       (c := (1 / 2 : Fraction.Rational))
     calc
       (p + q) + 1 / 2 = x ^ 2 + y ^ 2 := normIdentity.symm
@@ -340,8 +343,8 @@ private theorem diagonal_residual_le_seven_sixteenths
       _ = (5 / 3 : Fraction.Rational) + 1 / 2 := by decide
   have qLeSquareP : q ≤ p ^ 2 := by
     have twiceProductNonnegative : 0 ≤ 2 * (a * b) :=
-      Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-        (Fraction.Order.Arithmetic.mul_nonneg_direct
+      Arithmetic.mul_nonneg_direct (by decide)
+        (Arithmetic.mul_nonneg_direct
           aNonnegative bNonnegative)
     calc
       q = q + 0 := by ring1
@@ -376,9 +379,9 @@ private theorem diagonal_residual_le_seven_sixteenths
   have differenceNonnegative : 0 ≤ 7 / 16 - (q - p + 1 / 2) := by
     calc
       0 ≤ (p - q) - 1 / 16 :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct gapLower
+        Arithmetic.sub_nonneg_direct gapLower
       _ = 7 / 16 - (q - p + 1 / 2) := diagonal_gap_identity p q
-  apply Fraction.Order.Arithmetic.le_of_add_le_add_right_direct
+  apply Arithmetic.le_of_add_le_add_right_direct
     (c := -(q - p + 1 / 2))
   calc
     q - p + 1 / 2 + -(q - p + 1 / 2) = 0 := by ring1
@@ -391,7 +394,7 @@ separates safe-sector output from the next-unary output without an equality test
 The exact Gaussian value retains squared norm between one and thirteen sixths. This closed rational band includes the
 canonical normalization band. -/
 @[expose] public def ExtendedBand (value : Data.Gaussian.Basic.Canonical) : Prop :=
-  1 ≤ Data.Gaussian.Norm.Basic.normSq value ∧ Data.Gaussian.Norm.Basic.normSq value ≤ 13 / 6
+  1 ≤ Basic.normSq value ∧ Basic.normSq value ≤ 13 / 6
 
 /-- Decide membership in the enlarged normalization band by its two rational quadrance comparisons.
 
@@ -408,10 +411,10 @@ The original eight-sector selection table and supplied enlarged band determine t
 diagonal scalar certificates bound its same Gaussian residual. -/
 public theorem extendedBand_residual_le_seven_sixteenths
     {value : Data.Gaussian.Basic.Canonical} (band : ExtendedBand value) :
-    Data.Gaussian.Norm.Basic.normSq (value - (Data.ComplexContinuedFraction.Encoding.Sector.select value).rep) ≤ 7 / 16
+    Basic.normSq (value - (Data.ComplexContinuedFraction.Encoding.Sector.select value).rep) ≤ 7 / 16
       := by
   have normLower := band.1
-  rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical value] at normLower
+  rw [Basic.normSq_eq_canonical value] at normLower
   have holds := Data.ComplexContinuedFraction.Encoding.Sector.select_spec value normLower
   rcases band with ⟨normLower, normUpper⟩
   generalize selected : Data.ComplexContinuedFraction.Encoding.Sector.select value = sector at holds ⊢
@@ -441,8 +444,8 @@ public theorem extendedBand_residual_le_seven_sixteenths
           _ ≤ 13 / 6 := normUpper
       have result := axial_residual_le_seven_sixteenths
         value.im (-value.re)
-        yLower (Fraction.Order.Arithmetic.neg_lt_neg_direct xUpper)
-        (Fraction.Order.Arithmetic.neg_lt_neg_direct xLower)
+        yLower (Arithmetic.neg_lt_neg_direct xUpper)
+        (Arithmetic.neg_lt_neg_direct xLower)
         rotatedLower rotatedUpper
       change (value.re - 0) ^ 2 + (value.im - 1) ^ 2 ≤ 7 / 16
       calc
@@ -462,7 +465,7 @@ public theorem extendedBand_residual_le_seven_sixteenths
           _ ≤ 13 / 6 := normUpper
       have result := diagonal_residual_le_seven_sixteenths
         value.im (-value.re) yLower
-        (Fraction.Order.Arithmetic.neg_le_neg_direct xUpper)
+        (Arithmetic.neg_le_neg_direct xUpper)
         rotatedLower rotatedUpper
       change (value.re - -1) ^ 2 + (value.im - 1) ^ 2 ≤ 7 / 16
       calc
@@ -482,9 +485,9 @@ public theorem extendedBand_residual_le_seven_sixteenths
           _ ≤ 13 / 6 := normUpper
       have result := axial_residual_le_seven_sixteenths
         (-value.re) (-value.im)
-        (Fraction.Order.Arithmetic.neg_le_neg_direct xUpper)
-        (Fraction.Order.Arithmetic.neg_lt_neg_direct yUpper)
-        (Fraction.Order.Arithmetic.neg_lt_neg_direct yLower)
+        (Arithmetic.neg_le_neg_direct xUpper)
+        (Arithmetic.neg_lt_neg_direct yUpper)
+        (Arithmetic.neg_lt_neg_direct yLower)
         rotatedLower rotatedUpper
       change (value.re - -1) ^ 2 + (value.im - 0) ^ 2 ≤ 7 / 16
       calc
@@ -504,8 +507,8 @@ public theorem extendedBand_residual_le_seven_sixteenths
           _ ≤ 13 / 6 := normUpper
       have result := diagonal_residual_le_seven_sixteenths
         (-value.re) (-value.im)
-        (Fraction.Order.Arithmetic.neg_le_neg_direct xUpper)
-        (Fraction.Order.Arithmetic.neg_le_neg_direct yUpper)
+        (Arithmetic.neg_le_neg_direct xUpper)
+        (Arithmetic.neg_le_neg_direct yUpper)
         rotatedLower rotatedUpper
       change (value.re - -1) ^ 2 + (value.im - -1) ^ 2 ≤ 7 / 16
       calc
@@ -525,7 +528,7 @@ public theorem extendedBand_residual_le_seven_sixteenths
           _ ≤ 13 / 6 := normUpper
       have result := axial_residual_le_seven_sixteenths
         (-value.im) value.re
-        (Fraction.Order.Arithmetic.neg_le_neg_direct yUpper)
+        (Arithmetic.neg_le_neg_direct yUpper)
         xLower xUpper rotatedLower rotatedUpper
       change (value.re - 0) ^ 2 + (value.im - -1) ^ 2 ≤ 7 / 16
       calc
@@ -545,7 +548,7 @@ public theorem extendedBand_residual_le_seven_sixteenths
           _ ≤ 13 / 6 := normUpper
       have result := diagonal_residual_le_seven_sixteenths
         (-value.im) value.re
-        (Fraction.Order.Arithmetic.neg_le_neg_direct yUpper) xLower
+        (Arithmetic.neg_le_neg_direct yUpper) xLower
         rotatedLower rotatedUpper
       change (value.re - 1) ^ 2 + (value.im - -1) ^ 2 ≤ 7 / 16
       calc
@@ -559,11 +562,11 @@ The canonical squared-norm upper bound of two is below thirteen sixths. The same
 therefore satisfies the enlarged-band residual certificate. -/
 public theorem canonical_residual_le_seven_sixteenths
     {value : Data.Gaussian.Basic.Canonical} (band : Data.ComplexContinuedFraction.Encoding.Sector.Band value) :
-    Data.Gaussian.Norm.Basic.normSq (value - (Data.ComplexContinuedFraction.Encoding.Sector.select value).rep) ≤ 7 / 16
+    Basic.normSq (value - (Data.ComplexContinuedFraction.Encoding.Sector.select value).rep) ≤ 7 / 16
       := by
   have normLower := band.1
   have normUpper := band.2
-  rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical value] at normLower normUpper
+  rw [← Basic.normSq_eq_canonical value] at normLower normUpper
   exact extendedBand_residual_le_seven_sixteenths
     ⟨normLower, normUpper.trans (by decide)⟩
 end Purelib.Geometry.Rational.Sector.Eight.Margin

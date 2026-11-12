@@ -81,24 +81,24 @@ open Purelib.Riemann.Integration.RectangularAxisParameterRange (AxisParameterRan
 open Purelib.Geometry.Rectangle.SourceIntervals (axisCoordinate)
 open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBank (ParentBlockBank)
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential other :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential other :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters (signedAxis signedInterval)
 
 /-- The first physical block of a reversed occurrence starts at the final retained source parent and parameter one. -/
 private theorem at_axis_start {vertical : Bool} {physical : PreparedAxisPartitions.Interval}
-    (block : ParentBlocks.ParentBlock occurrence vertical false physical) (axis : vertical = occurrence.sourceVertical)
+    (block : ParentBlock occurrence vertical false physical) (axis : vertical = occurrence.sourceVertical)
     (forward : occurrence.sourceForward = false)
     (start : physical.lower = SourceIntervals.axisCoordinate vertical occurrence.finish) :
     block.index.val + 1 = occurrence.compared.entered.cache.parents.length ∧ block.firstParameter = 1 := by
@@ -107,7 +107,7 @@ private theorem at_axis_start {vertical : Bool} {physical : PreparedAxisPartitio
 
 /-- The last physical block of a reversed occurrence ends at retained source parent zero and parameter zero. -/
 private theorem at_axis_finish {vertical : Bool} {physical : PreparedAxisPartitions.Interval}
-    (block : ParentBlocks.ParentBlock occurrence vertical false physical) (axis : vertical = occurrence.sourceVertical)
+    (block : ParentBlock occurrence vertical false physical) (axis : vertical = occurrence.sourceVertical)
     (forward : occurrence.sourceForward = false)
     (finish : physical.upper = SourceIntervals.axisCoordinate vertical occurrence.start) :
     block.index.val = 0 ∧ block.lastParameter = 0 := by
@@ -116,10 +116,10 @@ private theorem at_axis_finish {vertical : Bool} {physical : PreparedAxisPartiti
 
 namespace ParentBlockBank
 open Purelib.Riemann.Meshes.RectangularObservationMesh (ObservationMesh)
-variable {columns rows : Nat} {geometry : Purelib.Riemann.Normalization.RectangularInverseModels.Geometry columns rows}
-  {cuts : Purelib.Riemann.Paths.RectangularSegmentSplitting.GridCuts geometry}
-  {meshBox : Purelib.Geometry.Rational.Box} {mesh :
-    Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh cuts meshBox}
+variable {columns rows : Nat} {geometry : RectangularInverseModels.Geometry columns rows}
+  {cuts : GridCuts geometry}
+  {meshBox : Geometry.Rational.Box} {mesh :
+    ObservationMesh cuts meshBox}
 
 /-- The actual face box identifies the first and last physical intervals with the occurrence span and supplies both
 terminal parent certificates. -/
@@ -135,13 +135,13 @@ theorem horizontal_reverse_endpoints (bank : ParentBank.ParentBlockBank occurren
   have finish := occurrence.source_span_endpoints.2
   simp only [SurfaceOccurrence.sourceSpan, axis, forward, SourceBlockParameters.signedAxis,
     SourceBlockParameters.signedInterval, if_neg Bool.false_ne_true, -eq_self, -iff_self] at start finish
-  have startUnsigned := congrArg (fun value : InverseRootPolynomial.Coordinate => -value) start
-  have finishUnsigned := congrArg (fun value : InverseRootPolynomial.Coordinate => -value) finish
+  have startUnsigned := congrArg (fun value : Coordinate => -value) start
+  have finishUnsigned := congrArg (fun value : Coordinate => -value) finish
   simp only [neg_neg, -eq_self, -iff_self] at startUnsigned finishUnsigned
-  have initial := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseMeshEndpoints.at_axis_start (bank.get
+  have initial := ReverseMeshEndpoints.at_axis_start (bank.get
     (Fin.cast mesh.boundaryColumns_eq 0)) axis.symm forward
     (mesh.x_first.trans (by rw [boxEq]; exact finishUnsigned.symm))
-  have final := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseMeshEndpoints.at_axis_finish (bank.get
+  have final := ReverseMeshEndpoints.at_axis_finish (bank.get
     (Fin.cast mesh.boundaryColumns_eq (Fin.last mesh.boundaryColumns))) axis.symm forward
     (mesh.x_last.trans (by rw [boxEq]; exact startUnsigned.symm))
   exact ⟨initial.1, initial.2, final.1, final.2⟩
@@ -160,13 +160,13 @@ theorem vertical_reverse_endpoints (bank : ParentBank.ParentBlockBank occurrence
   have finish := occurrence.source_span_endpoints.2
   simp only [SurfaceOccurrence.sourceSpan, axis, forward, SourceBlockParameters.signedAxis,
     SourceBlockParameters.signedInterval, if_neg Bool.false_ne_true, -eq_self, -iff_self] at start finish
-  have startUnsigned := congrArg (fun value : InverseRootPolynomial.Coordinate => -value) start
-  have finishUnsigned := congrArg (fun value : InverseRootPolynomial.Coordinate => -value) finish
+  have startUnsigned := congrArg (fun value : Coordinate => -value) start
+  have finishUnsigned := congrArg (fun value : Coordinate => -value) finish
   simp only [neg_neg, -eq_self, -iff_self] at startUnsigned finishUnsigned
-  have initial := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseMeshEndpoints.at_axis_start (bank.get
+  have initial := ReverseMeshEndpoints.at_axis_start (bank.get
     (Fin.cast mesh.boundaryRows_eq 0)) axis.symm forward
     (mesh.y_first.trans (by rw [boxEq]; exact finishUnsigned.symm))
-  have final := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseMeshEndpoints.at_axis_finish (bank.get
+  have final := ReverseMeshEndpoints.at_axis_finish (bank.get
     (Fin.cast mesh.boundaryRows_eq (Fin.last mesh.boundaryRows))) axis.symm forward
     (mesh.y_last.trans (by rw [boxEq]; exact startUnsigned.symm))
   exact ⟨initial.1, initial.2, final.1, final.2⟩

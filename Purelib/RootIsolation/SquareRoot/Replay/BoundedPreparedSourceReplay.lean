@@ -46,24 +46,24 @@ open Purelib.Riemann.Branches Purelib.Riemann.Integration Purelib.Riemann.Readin
 open Purelib.Riemann.RootContinuation Purelib.RootIsolation.SquareRoot.Replay
 open Purelib.Riemann.Branches.PreparedSheetContinuation
 
-variable {polynomial : Riemann.Branches.PreparedSheetContinuation.GaussianPolynomial} {ambient :
-  Riemann.Branches.PreparedSheetContinuation.Box} {start finish : Riemann.Branches.PreparedSheetContinuation.Gaussian}
+variable {polynomial : GaussianPolynomial} {ambient :
+  Box} {start finish : Gaussian}
   (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) (current :
-    Riemann.Branches.PreparedSheetContinuation.Endpoint)
-  (owner : Riemann.Branches.PreparedSheetContinuation.Owner (polynomial.eval (segment.pointAt current.parameter)))
-    (request : Riemann.Branches.PreparedSheetContinuation.StepRequest)
+    Endpoint)
+  (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
+    (request : StepRequest)
 
 /-- The original bounded preparation's typed accepted or inconclusive result. -/
-abbrev Outcome := Except (Readings.BoundedPreparedSource.Inconclusive segment current owner request)
-  (Readings.BoundedPreparedSource.Accepted segment current owner request)
+abbrev Outcome := Except (BoundedPreparedSource.Inconclusive segment current owner request)
+  (BoundedPreparedSource.Accepted segment current owner request)
 
 set_option genInjectivity false in
 /-- A retained outcome equal to the exact original bounded source-checking procedure. -/
 structure Checked where
   /-- The exact retained accepted or inconclusive outcome. -/ value :
-    SquareRoot.Replay.BoundedPreparedSourceReplay.Outcome segment current owner request
+    Outcome segment current owner request
   /-- The original bounded source checker returns this retained outcome. -/ equation :
-    Readings.BoundedPreparedSource.check segment current owner request = value
+    BoundedPreparedSource.check segment current owner request = value
 
 constructive_injectivity Checked
 
@@ -72,18 +72,18 @@ set_option genInjectivity false in
 checkpoint.  This is an unresolved replay branch, not a bounded-check error. -/
 structure PendingMoves where
   /-- The original inherited owner's cached readiness measurements. -/ readiness :
-    SquareRoot.Replay.PreparedSourceReplay.Readiness segment current request owner
+    PreparedSourceReplay.Readiness segment current request owner
   /-- The cached inherited owner passes the original readiness conditions. -/ ready : readiness.Ready
   /-- The original segment variation bound retained for the carrying comparisons. -/ movement :
-    Riemann.Branches.PreparedSheetContinuation.Coordinate
+    Coordinate
   /-- The retained movement equals the original variation-bound computation. -/ movement_eq : movement =
-    Riemann.Branches.ClearSheetContinuation.variationBound segment current.parameter request.endpoint.parameter
+    ClearSheetContinuation.variationBound segment current.parameter request.endpoint.parameter
   /-- The ready inherited owner does not carry the retained movement. -/ inheritedMiss : ¬ movement <
     readiness.clearance
-  /-- The actual same-box strengthened owner. -/ strengthened : Riemann.Branches.PreparedSheetContinuation.Owner
+  /-- The actual same-box strengthened owner. -/ strengthened : Owner
     (polynomial.eval (segment.pointAt current.parameter))
   /-- The retained strengthened owner equals the original strengthening of the inherited owner. -/ strengthened_eq :
-    strengthened = SquareRoot.Clearance.ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner
+    strengthened = Clearance.ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner
   /-- The original strengthened owner still does not carry the retained movement. -/ strengthenedMiss : ¬ movement <
     strengthened.track.initial.clearance.bound
   /-- The number of moving-reset attempts retained by the original bounded checker. -/ movingBudget : Nat := 2
@@ -98,45 +98,45 @@ Ready inherited and strengthened sources may finish immediately; other branches 
 or the pending moving-reset comparisons. -/
 inductive Start where
   /-- The original bounded outcome is already identified exactly. -/ | checked (result :
-    SquareRoot.Replay.BoundedPreparedSourceReplay.Checked segment current owner request)
+    Checked segment current owner request)
   /-- Retain the inherited readiness measurements and their failed condition for diameter replay. -/ | diameter
-    (readiness : SquareRoot.Replay.PreparedSourceReplay.Readiness segment current request owner) (notReady : ¬
+    (readiness : PreparedSourceReplay.Readiness segment current request owner) (notReady : ¬
     readiness.Ready)
   /-- Retain the successful readiness and failed carrying comparisons preceding moving-reset replay. -/ | moving
-    (pending : SquareRoot.Replay.BoundedPreparedSourceReplay.PendingMoves segment current owner request)
+    (pending : PendingMoves segment current owner request)
 
 constructive_injectivity Start
 
 /-- The inherited and same-box cases need no root proposal generation. -/
-@[expose] def begin (inputs : SquareRoot.Replay.PreparedSourceReplay.Inputs segment request.rootDiameter) :
-  SquareRoot.Replay.BoundedPreparedSourceReplay.Start segment current owner request := by
-  let readiness := SquareRoot.Replay.PreparedSourceReplay.Readiness.capture segment current request owner inputs
+@[expose] def begin (inputs : PreparedSourceReplay.Inputs segment request.rootDiameter) :
+  Start segment current owner request := by
+  let readiness := PreparedSourceReplay.Readiness.capture segment current request owner inputs
   if ready : readiness.Ready then
     have originalReady := readiness.ready_iff.mp ready
-    let movement := Riemann.Branches.ClearSheetContinuation.variationBound segment current.parameter
+    let movement := ClearSheetContinuation.variationBound segment current.parameter
       request.endpoint.parameter
     if carries : movement < readiness.clearance then
       have small : movement < owner.track.initial.clearance.bound := by
         rw [← readiness.clearance_eq]
         exact carries
-      let accepted : Readings.BoundedPreparedSource.Accepted segment current owner request :=
-        ⟨⟨owner, (Riemann.Branches.PreparedSheetContinuation.prepared_eq_self_of_ready segment current owner request
+      let accepted : BoundedPreparedSource.Accepted segment current owner request :=
+        ⟨⟨owner, (prepared_eq_self_of_ready segment current owner request
           originalReady small).symm⟩, small⟩
       exact .checked ⟨.ok accepted, by
-        unfold Readings.BoundedPreparedSource.check
+        unfold BoundedPreparedSource.check
         rw [dif_pos originalReady, dif_pos small]⟩
     else
       have inheritedMiss : ¬ movement < owner.track.initial.clearance.bound := by
         rw [← readiness.clearance_eq]
         exact carries
-      let strengthened := SquareRoot.Clearance.ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner
+      let strengthened := Clearance.ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner
       if stronger : movement < strengthened.track.initial.clearance.bound then
-        let accepted : Readings.BoundedPreparedSource.Accepted segment current owner request :=
-          ⟨⟨strengthened, (Riemann.Branches.PreparedSheetContinuation.prepared_eq_strengthenQuadraticOwner_of_ready
+        let accepted : BoundedPreparedSource.Accepted segment current owner request :=
+          ⟨⟨strengthened, (prepared_eq_strengthenQuadraticOwner_of_ready
             segment current owner request
               originalReady inheritedMiss stronger).symm⟩, stronger⟩
         exact .checked ⟨.ok accepted, by
-          unfold Readings.BoundedPreparedSource.check
+          unfold BoundedPreparedSource.check
           rw [dif_pos originalReady, dif_neg inheritedMiss, dif_pos stronger]⟩
       else
         exact .moving ⟨readiness, ready, movement, rfl, carries, strengthened, rfl, stronger, 2, rfl⟩
@@ -144,31 +144,31 @@ constructive_injectivity Start
 
 /-- A restored attempt identifies both success and finite failure of the
 original bounded checker.  No remaining source search is executed. -/
-@[expose] def finishDiameter (notReady : ¬ Riemann.Branches.PreparedSheetContinuation.AlreadyPrepared segment current
+@[expose] def finishDiameter (notReady : ¬ AlreadyPrepared segment current
   owner request)
-    (attempt : Option (Riemann.RootContinuation.CheckedSquareRootPreparation.Result segment current.parameter owner
+    (attempt : Option (CheckedSquareRootPreparation.Result segment current.parameter owner
       request.rootDiameter))
-    (found : (Riemann.RootContinuation.CheckedSquareRootPreparation.attempt segment current.parameter owner
+    (found : (CheckedSquareRootPreparation.attempt segment current.parameter owner
       request.rootDiameter).value = attempt)
-    (diagnostic : attempt = none → Riemann.RootContinuation.CheckedSquareRootPreparation.Failure
+    (diagnostic : attempt = none → CheckedSquareRootPreparation.Failure
       segment current.parameter owner request.rootDiameter) :
-    SquareRoot.Replay.BoundedPreparedSourceReplay.Checked segment current owner request := by
-  let movement := Riemann.Branches.ClearSheetContinuation.variationBound segment current.parameter
+    Checked segment current owner request := by
+  let movement := ClearSheetContinuation.variationBound segment current.parameter
     request.endpoint.parameter
   cases attempt with
   | none =>
-      let report : Readings.BoundedPreparedSource.Inconclusive segment current owner request :=
+      let report : BoundedPreparedSource.Inconclusive segment current owner request :=
         ⟨owner, rfl, current, rfl, request, rfl, movement, rfl, 2, rfl,
           .proposalUnavailable notReady found (diagnostic rfl)⟩
       exact ⟨.error report, report.check_error⟩
   | some candidate =>
       if carries : movement < candidate.value.track.initial.clearance.bound then
-        let accepted : Readings.BoundedPreparedSource.Accepted segment current owner request :=
-          ⟨⟨candidate.value, (Riemann.Branches.PreparedSheetContinuation.prepared_eq_checked_of_not_ready segment
+        let accepted : BoundedPreparedSource.Accepted segment current owner request :=
+          ⟨⟨candidate.value, (prepared_eq_checked_of_not_ready segment
             current owner request
               notReady candidate found carries).symm⟩, carries⟩
         exact ⟨.ok accepted, by
-          unfold Readings.BoundedPreparedSource.check
+          unfold BoundedPreparedSource.check
           rw [dif_neg notReady]
           dsimp only
           split
@@ -179,7 +179,7 @@ original bounded checker.  No remaining source search is executed. -/
             cases same
             rw [dif_pos carries]⟩
       else
-        let report : Readings.BoundedPreparedSource.Inconclusive segment current owner request :=
+        let report : BoundedPreparedSource.Inconclusive segment current owner request :=
           ⟨owner, rfl, current, rfl, request, rfl, movement, rfl, 2, rfl,
             .proposalMiss notReady candidate found carries⟩
         exact ⟨.error report, report.check_error⟩

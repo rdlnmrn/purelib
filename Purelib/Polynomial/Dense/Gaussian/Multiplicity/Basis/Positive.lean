@@ -47,103 +47,103 @@ structure PositiveEntry where
 constructive_injectivity PositiveEntry
 
 /-- Read the retained positive-degree squarefree factor from a positive multiplicity entry. -/
-@[expose] def PositiveEntry.factor (entry : Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry) :
-  Dense.Gaussian.Squarefree.Decomposition.Basic.Factor :=
+@[expose] def PositiveEntry.factor (entry : PositiveEntry) :
+  Squarefree.Decomposition.Basic.Factor :=
   entry.part.toFactor entry.degreePositive
 
 /-- Remove only degree-zero unit parts from the exact multiplicity basis. -/
-@[expose] def positiveEntries : List Dense.Gaussian.Multiplicity.Basis.Basic.BasisEntry → List
-  Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry
+@[expose] def positiveEntries : List Basic.BasisEntry → List
+  PositiveEntry
   | [] => []
   | entry :: entries =>
       if degreeZero : entry.part.polynomial.natDegree = 0 then
-        Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis.Positive.positiveEntries entries
+        Positive.positiveEntries entries
       else
         { part := entry.part
           degreePositive := Nat.pos_of_ne_zero degreeZero
           multiplicity := entry.multiplicity
           multiplicityPositive := entry.multiplicityPositive } ::
-            Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis.Positive.positiveEntries entries
+            Positive.positiveEntries entries
 
 /-- Weighted product of only the positive-degree factors sent to isolation. -/
-@[expose] def positiveValue : List Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry → Gaussian.Basic.Canonical →
+@[expose] def positiveValue : List PositiveEntry → Gaussian.Basic.Canonical →
   Gaussian.Basic.Canonical
   | [], _ => 1
   | entry :: entries, point =>
       entry.part.polynomial.eval point ^ entry.multiplicity *
-        Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis.Positive.positiveValue entries point
+        Positive.positiveValue entries point
 
 /-- Product of the omitted nonzero degree-zero parts, evaluated at zero.
 Degree-zero normalization makes this independent of the queried point. -/
-@[expose] def unitValue : List Dense.Gaussian.Multiplicity.Basis.Basic.BasisEntry → Gaussian.Basic.Canonical
+@[expose] def unitValue : List Basic.BasisEntry → Gaussian.Basic.Canonical
   | [] => 1
   | entry :: entries =>
       if entry.part.polynomial.natDegree = 0 then
         entry.part.polynomial.eval 0 ^ entry.multiplicity *
-          Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis.Positive.unitValue entries
+          Positive.unitValue entries
       else
-        Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis.Positive.unitValue entries
+        Positive.unitValue entries
 
 /-- Split the original weighted product into its constant unit factor and retained positive-degree factors.
 
 The equality holds at every displayed Gaussian point, using exact normalization of each omitted degree-zero part. -/
 theorem basisValue_eq_unitValue_mul_positiveValue
-    (source : List Dense.Gaussian.Multiplicity.Basis.Basic.BasisEntry) (point : Gaussian.Basic.Canonical) :
-    Dense.Gaussian.Multiplicity.Basis.Basic.basisValue source point =
-      Dense.Gaussian.Multiplicity.Basis.Positive.unitValue source *
-        Dense.Gaussian.Multiplicity.Basis.Positive.positiveValue
-        (Dense.Gaussian.Multiplicity.Basis.Positive.positiveEntries source) point := by
+    (source : List Basic.BasisEntry) (point : Gaussian.Basic.Canonical) :
+    Basic.basisValue source point =
+      unitValue source *
+        positiveValue
+        (positiveEntries source) point := by
   induction source with
   | nil =>
-      simp only [Dense.Gaussian.Multiplicity.Basis.Basic.basisValue,
-        Dense.Gaussian.Multiplicity.Basis.Positive.unitValue,
-        Dense.Gaussian.Multiplicity.Basis.Positive.positiveEntries,
-        Dense.Gaussian.Multiplicity.Basis.Positive.positiveValue,
+      simp only [Basic.basisValue,
+        unitValue,
+        positiveEntries,
+        positiveValue,
         mul_one, -eq_self]
       rfl
   | cons entry entries inductionHypothesis =>
-      rw [Dense.Gaussian.Multiplicity.Basis.Basic.basisValue, Dense.Gaussian.Multiplicity.Basis.Positive.unitValue,
-        Dense.Gaussian.Multiplicity.Basis.Positive.positiveEntries]
+      rw [Basic.basisValue, unitValue,
+        positiveEntries]
       split
       · rename_i degreeZero
         have constantIdentity : entry.part.polynomial =
-            Dense.Basic.DensePolynomial.constant entry.part.polynomial.leadingCoeff := by
+            Basic.DensePolynomial.constant entry.part.polynomial.leadingCoeff := by
           calc
             entry.part.polynomial = entry.part.polynomial.normalize :=
               entry.part.normalized.symm
-            _ = Dense.Basic.DensePolynomial.constant entry.part.polynomial.leadingCoeff :=
-              Dense.Basic.DensePolynomial.normalize_eq_constant_leadingCoeff_of_degree_zero
+            _ = Basic.DensePolynomial.constant entry.part.polynomial.leadingCoeff :=
+              Basic.DensePolynomial.normalize_eq_constant_leadingCoeff_of_degree_zero
                 entry.part.nonzero degreeZero
         rw [constantIdentity]
-        simp only [Dense.Basic.DensePolynomial.eval_constant]
+        simp only [Basic.DensePolynomial.eval_constant]
         rw [inductionHypothesis]
         ring1
-      · simp only [Dense.Gaussian.Multiplicity.Basis.Positive.positiveValue]
+      · simp only [positiveValue]
         rw [inductionHypothesis]
         ring1
 
 /-- The product of the omitted normalized degree-zero parts is nonzero. -/
-theorem unitValue_ne_zero (source : List Dense.Gaussian.Multiplicity.Basis.Basic.BasisEntry) :
-    Dense.Gaussian.Multiplicity.Basis.Positive.unitValue source ≠ 0 := by
+theorem unitValue_ne_zero (source : List Basic.BasisEntry) :
+    unitValue source ≠ 0 := by
   induction source with
   | nil =>
-      simp only [Dense.Gaussian.Multiplicity.Basis.Positive.unitValue]
+      simp only [unitValue]
       exact one_ne_zero
   | cons entry entries inductionHypothesis =>
-      rw [Dense.Gaussian.Multiplicity.Basis.Positive.unitValue]
+      rw [unitValue]
       split
       · rename_i degreeZero
         have constantIdentity : entry.part.polynomial =
-            Dense.Basic.DensePolynomial.constant entry.part.polynomial.leadingCoeff := by
+            Basic.DensePolynomial.constant entry.part.polynomial.leadingCoeff := by
           calc
             entry.part.polynomial = entry.part.polynomial.normalize :=
               entry.part.normalized.symm
-            _ = Dense.Basic.DensePolynomial.constant entry.part.polynomial.leadingCoeff :=
-              Dense.Basic.DensePolynomial.normalize_eq_constant_leadingCoeff_of_degree_zero
+            _ = Basic.DensePolynomial.constant entry.part.polynomial.leadingCoeff :=
+              Basic.DensePolynomial.normalize_eq_constant_leadingCoeff_of_degree_zero
                 entry.part.nonzero degreeZero
         have valueNonzero : entry.part.polynomial.eval 0 ≠ 0 := by
-          rw [constantIdentity, Dense.Basic.DensePolynomial.eval_constant]
-          exact Dense.Basic.DensePolynomial.leadingCoeff_ne_zero entry.part.nonzero
+          rw [constantIdentity, Basic.DensePolynomial.eval_constant]
+          exact Basic.DensePolynomial.leadingCoeff_ne_zero entry.part.nonzero
         exact Gaussian.Field.mul_ne_zero_direct
           (Gaussian.Power.pow_ne_zero_direct _
             valueNonzero _) inductionHypothesis
@@ -151,15 +151,15 @@ theorem unitValue_ne_zero (source : List Dense.Gaussian.Multiplicity.Basis.Basic
 
 /-- Every retained positive-degree part is the same part as an entry of the original basis. -/
 theorem PositiveEntry.part_mem_of_mem_positiveEntries
-    {entry : Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry} : ∀ {source : List
-      Dense.Gaussian.Multiplicity.Basis.Basic.BasisEntry},
-    entry ∈ Dense.Gaussian.Multiplicity.Basis.Positive.positiveEntries source →
+    {entry : PositiveEntry} : ∀ {source : List
+      Basic.BasisEntry},
+    entry ∈ positiveEntries source →
     ∃ sourceEntry ∈ source, entry.part = sourceEntry.part
   | [], member => by
       change entry ∈ [] at member
       nomatch member
   | sourceEntry :: source, member => by
-      rw [Dense.Gaussian.Multiplicity.Basis.Positive.positiveEntries] at member
+      rw [positiveEntries] at member
       split at member
       · rcases entry.part_mem_of_mem_positiveEntries member with
           ⟨found, foundMember, same⟩
@@ -172,16 +172,16 @@ theorem PositiveEntry.part_mem_of_mem_positiveEntries
 
 /-- Removing unit parts preserves pairwise coprimality of every factor sent
 to isolation. -/
-theorem positiveEntries_pairwise : ∀ {source : List Dense.Gaussian.Multiplicity.Basis.Basic.BasisEntry},
-    Dense.Gaussian.Multiplicity.Basis.Basic.BasisPairwise source →
-    (Dense.Gaussian.Multiplicity.Basis.Positive.positiveEntries source).Pairwise fun left right =>
+theorem positiveEntries_pairwise : ∀ {source : List Basic.BasisEntry},
+    Basic.BasisPairwise source →
+    (positiveEntries source).Pairwise fun left right =>
       CoprimeRelation left.part right.part
   | [], _ => List.Pairwise.nil
   | sourceEntry :: source, pairwise => by
       have pairwiseParts := List.pairwise_cons.mp pairwise
-      rw [Dense.Gaussian.Multiplicity.Basis.Positive.positiveEntries]
+      rw [positiveEntries]
       split
-      · exact Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis.Positive.positiveEntries_pairwise pairwiseParts.2
+      · exact Positive.positiveEntries_pairwise pairwiseParts.2
       · apply List.pairwise_cons.mpr
         constructor
         · intro entry member
@@ -189,30 +189,30 @@ theorem positiveEntries_pairwise : ∀ {source : List Dense.Gaussian.Multiplicit
             ⟨found, foundMember, same⟩
           rw [same]
           exact pairwiseParts.1 found foundMember
-        · exact Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis.Positive.positiveEntries_pairwise pairwiseParts.2
+        · exact Positive.positiveEntries_pairwise pairwiseParts.2
 
 /-- A basis with no retained positive-degree entries has weighted degree zero. -/
 theorem basisDegree_eq_zero_of_positiveEntries_eq_nil :
-    ∀ (source : List Dense.Gaussian.Multiplicity.Basis.Basic.BasisEntry),
-      Dense.Gaussian.Multiplicity.Basis.Positive.positiveEntries source = [] →
-      Dense.Gaussian.Multiplicity.Basis.Basic.basisDegree source = 0
+    ∀ (source : List Basic.BasisEntry),
+      positiveEntries source = [] →
+      Basic.basisDegree source = 0
   | [], _ => rfl
   | entry :: entries, empty => by
-      rw [Dense.Gaussian.Multiplicity.Basis.Positive.positiveEntries] at empty
+      rw [positiveEntries] at empty
       split at empty
       · rename_i degreeZero
-        rw [Dense.Gaussian.Multiplicity.Basis.Basic.basisDegree, degreeZero, Nat.mul_zero, Nat.zero_add,
-          Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis.Positive.basisDegree_eq_zero_of_positiveEntries_eq_nil
+        rw [Basic.basisDegree, degreeZero, Nat.mul_zero, Nat.zero_add,
+          Positive.basisDegree_eq_zero_of_positiveEntries_eq_nil
             entries empty]
       · exact (List.cons_ne_nil _ _ empty).elim
 
 /-- A positive weighted basis degree guarantees a nonempty list of positive-degree entries. -/
 theorem positiveEntries_ne_nil_of_basisDegree_positive
-    {source : List Dense.Gaussian.Multiplicity.Basis.Basic.BasisEntry} (positive : 0 <
-      Dense.Gaussian.Multiplicity.Basis.Basic.basisDegree source) :
-    Dense.Gaussian.Multiplicity.Basis.Positive.positiveEntries source ≠ [] := by
+    {source : List Basic.BasisEntry} (positive : 0 <
+      Basic.basisDegree source) :
+    positiveEntries source ≠ [] := by
   intro empty
-  have zero := Dense.Gaussian.Multiplicity.Basis.Positive.basisDegree_eq_zero_of_positiveEntries_eq_nil source empty
+  have zero := basisDegree_eq_zero_of_positiveEntries_eq_nil source empty
   rw [zero] at positive
   exact Nat.lt_irrefl 0 positive
 end Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis.Positive

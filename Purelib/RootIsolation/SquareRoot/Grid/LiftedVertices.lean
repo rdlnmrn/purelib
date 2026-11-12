@@ -19,6 +19,8 @@ import Purelib.Riemann.Paths.OwnerTraceReadings
 import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Polynomial.Geometry
+
 public section
 
 /-!
@@ -62,15 +64,15 @@ retained coordinate count, preserving both finite indices. -/
 
 /-- Decoding an encoded lifted index recovers its original base vertex. -/
 theorem base_encode {count : Nat} (index : Fin count) (sheet : Fin 2) : base
-  (SquareRoot.Grid.LiftedVertices.SheetIndex.encode index sheet) = index := by
+  (encode index sheet) = index := by
   apply Fin.ext
   change (2 * index.val + sheet.val) / 2 = index.val
   have := sheet.isLt
   omega
 
 /-- Decoding an encoded lifted index recovers its original sheet. -/
-theorem sheet_encode {count : Nat} (index : Fin count) (sheet : Fin 2) : SquareRoot.Grid.LiftedVertices.SheetIndex.sheet
-  (SquareRoot.Grid.LiftedVertices.SheetIndex.encode index sheet) = sheet := by
+theorem sheet_encode {count : Nat} (index : Fin count) (sheet : Fin 2) : SheetIndex.sheet
+  (encode index sheet) = sheet := by
   apply Fin.ext
   change (2 * index.val + sheet.val) % 2 = sheet.val
   have := sheet.isLt
@@ -80,7 +82,7 @@ theorem sheet_encode {count : Nat} (index : Fin count) (sheet : Fin 2) : SquareR
 
 The quotient and remainder by two retain the supplied index's scalar value;
 the original finite bound remains attached to the reconstructed index. -/
-theorem encode_decode {count : Nat} (index : Fin (2 * count)) : SquareRoot.Grid.LiftedVertices.SheetIndex.encode (base
+theorem encode_decode {count : Nat} (index : Fin (2 * count)) : encode (base
   index) (sheet index) = index := by
   apply Fin.ext
   change 2 * (index.val / 2) + index.val % 2 = index.val
@@ -88,31 +90,31 @@ theorem encode_decode {count : Nat} (index : Fin (2 * count)) : SquareRoot.Grid.
 
 end SheetIndex
 
-variable {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient : Box}
+variable {polynomial : ClearPath.GaussianPolynomial} {ambient : Box}
 
 set_option genInjectivity false in
 /-- A finite coordinate bank with exact two-way grid coverage.
 
 The retained coordinate list contains every grid vertex and only grid vertices.
 Its order determines the first-occurrence index shared by the two sheets. -/
-structure VertexBank (grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient) where
+structure VertexBank (grid : Grid.ClearGrid polynomial ambient) where
   /-- The retained finite list of Gaussian base coordinates. -/ coordinates : List Gaussian.Basic.Canonical
   /-- Every actual grid vertex occurs in the retained coordinate list. -/ covers : ∀ point,
-    Polynomial.Geometry.Grid.FromStates.ContainsVertex grid point → point ∈ coordinates
+    Grid.FromStates.ContainsVertex grid point → point ∈ coordinates
   /-- Every retained coordinate is an actual vertex of the original grid. -/ onGrid : ∀ point ∈ coordinates,
-    Polynomial.Geometry.Grid.FromStates.ContainsVertex grid point
+    Grid.FromStates.ContainsVertex grid point
 
 constructive_injectivity VertexBank
 
 namespace VertexBank
 
-variable {grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient}
+variable {grid : Grid.ClearGrid polynomial ambient}
 
 /-- Build a coordinate bank by traversing the Cartesian product of the original grid's vertical and horizontal lines.
 
 The two coverage proofs retain this exact list; constructing the bank performs no root preparation. -/
-@[expose] def build (grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient) :
-  SquareRoot.Grid.LiftedVertices.VertexBank
+@[expose] def build (grid : Grid.ClearGrid polynomial ambient) :
+  VertexBank
   grid := by
   let coordinates := grid.vertical.flatMap fun vertical =>
     grid.horizontal.map fun horizontal => point vertical.coordinate horizontal.coordinate
@@ -129,72 +131,92 @@ The two coverage proofs retain this exact list; constructing the bank performs n
     exact ⟨Data.List.Map.mem_map_of_mem verticalMember, Data.List.Map.mem_map_of_mem horizontalMember⟩
 
 /-- Twice the retained coordinate-list length, accounting for both sheets at every base entry. -/
-@[expose] def count (vertices : SquareRoot.Grid.LiftedVertices.VertexBank grid) : Nat := 2 * vertices.coordinates.length
+@[expose] def count (vertices : VertexBank grid) : Nat := 2 * vertices.coordinates.length
 
 /-- Read the base coordinate stored at a lifted index. -/
-@[expose] def coordinate (vertices : SquareRoot.Grid.LiftedVertices.VertexBank grid) (index : Fin vertices.count) :
+@[expose] def coordinate (vertices : VertexBank grid) (index : Fin vertices.count) :
   Gaussian.Basic.Canonical :=
-  Topology.Mesh.CoordinateTriangulation.vertexAt vertices.coordinates (SquareRoot.Grid.LiftedVertices.SheetIndex.base
+  Topology.Mesh.CoordinateTriangulation.vertexAt vertices.coordinates (SheetIndex.base
     index)
 
 /-- Read the sheet retained by a lifted index. -/
-@[expose] def sheet (vertices : SquareRoot.Grid.LiftedVertices.VertexBank grid) (index : Fin vertices.count) : Fin 2 :=
-  SquareRoot.Grid.LiftedVertices.SheetIndex.sheet index
+@[expose] def sheet (vertices : VertexBank grid) (index : Fin vertices.count) : Fin 2 :=
+  SheetIndex.sheet index
 
 /-- Find the first retained occurrence of a grid point and pair it with its sheet.
 
 The lookup consumes the cached coordinate list and its coverage witness.
 Encoding its retained position preserves the separately supplied sheet. -/
-@[expose] def index (vertices : SquareRoot.Grid.LiftedVertices.VertexBank grid) (point : Gaussian.Basic.Canonical)
-  (member : Polynomial.Geometry.Grid.FromStates.ContainsVertex grid point) (sheet : Fin 2) : Fin vertices.count :=
-  SquareRoot.Grid.LiftedVertices.SheetIndex.encode (Topology.Mesh.CoordinateTriangulation.lookupVertex point
+@[expose] def index (vertices : VertexBank grid) (point : Gaussian.Basic.Canonical)
+  (member : Grid.FromStates.ContainsVertex grid point) (sheet : Fin 2) : Fin vertices.count :=
+  SheetIndex.encode (Topology.Mesh.CoordinateTriangulation.lookupVertex point
     vertices.coordinates (vertices.covers point member)).index sheet
 
 /-- The lifted index computed for a grid point reads back that exact point.
 
 Decoding recovers the first retained base position, whose cached coordinate
 is identified by the original lookup certificate. -/
-theorem coordinate_index (vertices : SquareRoot.Grid.LiftedVertices.VertexBank grid) (point : Gaussian.Basic.Canonical)
-  (member : Polynomial.Geometry.Grid.FromStates.ContainsVertex grid point) (sheet : Fin 2) :
+theorem coordinate_index (vertices : VertexBank grid) (point : Gaussian.Basic.Canonical)
+  (member : Grid.FromStates.ContainsVertex grid point) (sheet : Fin 2) :
     vertices.coordinate (vertices.index point member sheet) = point := by
-  rw [SquareRoot.Grid.LiftedVertices.VertexBank.coordinate, SquareRoot.Grid.LiftedVertices.VertexBank.index,
-    SquareRoot.Grid.LiftedVertices.SheetIndex.base_encode]
+  rw [coordinate, VertexBank.index,
+    SheetIndex.base_encode]
   exact (Topology.Mesh.CoordinateTriangulation.lookupVertex point vertices.coordinates (vertices.covers point
     member)).coordinate_eq
 
 /-- The lifted index computed for a grid point retains the supplied sheet. -/
-theorem sheet_index (vertices : SquareRoot.Grid.LiftedVertices.VertexBank grid) (point : Gaussian.Basic.Canonical)
-  (member : Polynomial.Geometry.Grid.FromStates.ContainsVertex grid point) (sheet : Fin 2) :
+theorem sheet_index (vertices : VertexBank grid) (point : Gaussian.Basic.Canonical)
+  (member : Grid.FromStates.ContainsVertex grid point) (sheet : Fin 2) :
     vertices.sheet (vertices.index point member sheet) = sheet :=
-  SquareRoot.Grid.LiftedVertices.SheetIndex.sheet_encode _ _
+  SheetIndex.sheet_encode _ _
 
 /-- Distinct sheets remain distinct indices above the same rational base point.
 
 Reading back the sheet from the retained lifted index identifies the supplied
 sheet, so coordinate deduplication keeps the two sheet occurrences separate. -/
-theorem index_same_sheet (vertices : SquareRoot.Grid.LiftedVertices.VertexBank grid) (point : Gaussian.Basic.Canonical)
-  (member : Polynomial.Geometry.Grid.FromStates.ContainsVertex grid point)
+theorem index_same_sheet (vertices : VertexBank grid) (point : Gaussian.Basic.Canonical)
+  (member : Grid.FromStates.ContainsVertex grid point)
     (first second : Fin 2) (equal : vertices.index point member first = vertices.index point member second) : first =
       second :=
   (vertices.sheet_index point member first).symm.trans ((congrArg vertices.sheet equal).trans (vertices.sheet_index
     point member second))
 
 /-- The coordinate read at every lifted index is an actual original-grid vertex. -/
-theorem coordinate_onGrid (vertices : SquareRoot.Grid.LiftedVertices.VertexBank grid) (index : Fin vertices.count) :
-  Polynomial.Geometry.Grid.FromStates.ContainsVertex grid (vertices.coordinate index) :=
+theorem coordinate_onGrid (vertices : VertexBank grid) (index : Fin vertices.count) :
+  Grid.FromStates.ContainsVertex grid (vertices.coordinate index) :=
   vertices.onGrid _ (by
-    change vertices.coordinates[(SquareRoot.Grid.LiftedVertices.SheetIndex.base
-      index).val]'((SquareRoot.Grid.LiftedVertices.SheetIndex.base index).isLt) ∈ vertices.coordinates
-    exact List.getElem_mem (SquareRoot.Grid.LiftedVertices.SheetIndex.base index).isLt)
+    change vertices.coordinates[(SheetIndex.base
+      index).val]'((SheetIndex.base index).isLt) ∈ vertices.coordinates
+    exact List.getElem_mem (SheetIndex.base index).isLt)
 
 /-- Every lifted index names its actual cached root occurrence.
 
 The coordinate readback supplies the original grid-vertex witness to the
 retained root frame, which selects the owner at the retained sheet. -/
-@[expose] def owner (vertices : SquareRoot.Grid.LiftedVertices.VertexBank grid) (frames :
+@[expose] def owner (vertices : VertexBank grid) (frames :
   RootFrames grid) (index : Fin vertices.count) :
     Riemann.Topology.SquareRootContinuationChain.Owner (polynomial.eval (vertices.coordinate index)) :=
   (frames.frameAt _ (vertices.coordinate_onGrid index)).owners (vertices.sheet index)
+
+/-- The original vertex lookup reads the whole owner from the SAME retained frame and sheet.
+
+The coordinate and sheet readbacks reindex the original frame lookup.
+No comparison between independently acquired owners is inferred from a
+coordinate equality.
+-/
+theorem owner_index_heq (vertices : VertexBank grid) (frames : RootFrames grid)
+    (point : Gaussian.Basic.Canonical) (member : Grid.FromStates.ContainsVertex grid point) (sheet : Fin 2) :
+    HEq (vertices.owner frames (vertices.index point member sheet))
+      ((frames.frameAt point member).owners sheet) := by
+  unfold VertexBank.owner
+  rewrite [VertexBank.sheet_index]
+  have owners : ∀ first last (left : Grid.FromStates.ContainsVertex grid first)
+      (right : Grid.FromStates.ContainsVertex grid last), first = last →
+      HEq ((frames.frameAt first left).owners sheet) ((frames.frameAt last right).owners sheet) := by
+    intro first last left right equal
+    cases equal
+    rfl
+  exact owners _ _ _ _ (vertices.coordinate_index point member sheet)
 
 end VertexBank
 

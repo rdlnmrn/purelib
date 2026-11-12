@@ -132,6 +132,40 @@ evaluating its preparation floor, then retains a sufficient geometric depth and 
       (Fraction.Order.Basic.min_le_right _ _) errorNonnegative).trans (Weighted.mul_allowance_le thirdPositive.le
         errorNonnegative)
 
+variable {target movement taylorWeight errorWeight preparedScale denominatorLower : Fraction.Rational}
+variable {preparationDepth : Fraction.Rational → Nat}
+
+/-- Reindex only the target payment while retaining the same complete original numerical spatial budget.
+
+The supplied scalar inequalities concern this actual budget's retained depth
+and error. Its error, root-diameter request, depth and preparation floor are
+unchanged; neither finite search nor numerical preparation runs again.
+-/
+@[expose] def atTarget
+    (budget : SpatialBudget target movement taylorWeight errorWeight preparedScale denominatorLower preparationDepth)
+    (next : Fraction.Rational)
+    (taylorPaid : taylorWeight * Geometric.Basic.quarterRadius movement budget.depth ≤ next / 3)
+    (errorPaid : errorWeight * budget.error ≤ next / 3) :
+    SpatialBudget next movement taylorWeight errorWeight preparedScale denominatorLower preparationDepth :=
+  { error := budget.error
+    error_positive := budget.error_positive
+    relative_small := budget.relative_small
+    rootDiameter := budget.rootDiameter
+    rootDiameter_positive := budget.rootDiameter_positive
+    depth := budget.depth
+    prepared_depth := budget.prepared_depth
+    modelError_le := budget.modelError_le
+    taylor_le := taylorPaid
+    error_le := errorPaid }
+
+/-- Retaining the original target preserves the entire original spatial budget, including all numerical caches. -/
+theorem atTarget_self
+    (budget : SpatialBudget target movement taylorWeight errorWeight preparedScale denominatorLower preparationDepth)
+    (taylorPaid : taylorWeight * Geometric.Basic.quarterRadius movement budget.depth ≤ target / 3)
+    (errorPaid : errorWeight * budget.error ≤ target / 3) : budget.atTarget target taylorPaid errorPaid = budget := by
+  cases budget
+  rfl
+
 end SpatialBudget
 
 end Purelib.Approximation.Rational.Budget.Spatial

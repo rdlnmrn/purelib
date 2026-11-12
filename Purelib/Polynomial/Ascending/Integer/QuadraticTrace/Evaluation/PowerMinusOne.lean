@@ -34,35 +34,35 @@ namespace Purelib.Polynomial.Ascending.Integer.QuadraticTrace.Evaluation.PowerMi
 /-- Formal quadratic evaluation of the unit monomial gives the retained generator power. -/
 theorem eval_monomialCoefficients_pair {K : Type*} [ExplicitField K] :
     ∀ degree : Nat, ∀ trace : K,
-    Algebra.Quadratic.TracePair.eval (Ascending.Integer.PowerMinusOne.IntegerPolynomial.monomialCoefficients degree)
+    TracePair.eval (PowerMinusOne.IntegerPolynomial.monomialCoefficients degree)
       trace =
-      Algebra.Quadratic.TracePair.alphaPower degree trace
+      TracePair.alphaPower degree trace
   | 0, trace => by
-      apply Algebra.Quadratic.TracePair.ext <;>
-        simp only [Ascending.Integer.PowerMinusOne.IntegerPolynomial.monomialCoefficients,
-          Algebra.Quadratic.TracePair.eval,
-          Algebra.Quadratic.TracePair.alphaPower,
-          Algebra.Quadratic.TracePair.one, Algebra.Quadratic.TracePair.zero, -eq_self, -iff_self] <;> ring0
+      apply TracePair.ext <;>
+        simp only [PowerMinusOne.IntegerPolynomial.monomialCoefficients,
+          TracePair.eval,
+          TracePair.alphaPower,
+          TracePair.one, TracePair.zero, -eq_self, -iff_self] <;> ring0
   | degree + 1, trace => by
-      rw [Ascending.Integer.PowerMinusOne.IntegerPolynomial.monomialCoefficients,
-        Algebra.Quadratic.TracePair.eval_shift,
+      rw [PowerMinusOne.IntegerPolynomial.monomialCoefficients,
+        TracePair.eval_shift,
 
           eval_monomialCoefficients_pair
           degree trace,
-        Algebra.Quadratic.TracePair.alphaPower_succ]
+        TracePair.alphaPower_succ]
 
 /-- Formal quadratic evaluation of the power-minus-one table gives the generator power minus one. -/
 theorem eval_powerMinusOneCoefficients_pair
     {K : Type*} [ExplicitField K] (degree : Nat) (trace : K) :
-    Algebra.Quadratic.TracePair.eval (Ascending.Integer.PowerMinusOne.IntegerPolynomial.powerMinusOneCoefficients
+    TracePair.eval (PowerMinusOne.IntegerPolynomial.powerMinusOneCoefficients
       degree) trace =
-      Algebra.Quadratic.TracePair.sub (Algebra.Quadratic.TracePair.alphaPower degree trace)
-        Algebra.Quadratic.TracePair.one := by
-  rw [Ascending.Integer.PowerMinusOne.IntegerPolynomial.powerMinusOneCoefficients, Algebra.Quadratic.TracePair.eval_sub,
+      TracePair.sub (TracePair.alphaPower degree trace)
+        TracePair.one := by
+  rw [PowerMinusOne.IntegerPolynomial.powerMinusOneCoefficients, TracePair.eval_sub,
     eval_monomialCoefficients_pair]
-  apply Algebra.Quadratic.TracePair.ext <;>
-    simp only [Algebra.Quadratic.TracePair.eval, Algebra.Quadratic.TracePair.one, Algebra.Quadratic.TracePair.zero,
-      Algebra.Quadratic.TracePair.sub, -eq_self, -iff_self] <;> ring0
+  apply TracePair.ext <;>
+    simp only [TracePair.eval, TracePair.one, TracePair.zero,
+      TracePair.sub, -eq_self, -iff_self] <;> ring0
 end Purelib.Polynomial.Ascending.Integer.QuadraticTrace.Evaluation.PowerMinusOne.IntegerPolynomial
 
 end

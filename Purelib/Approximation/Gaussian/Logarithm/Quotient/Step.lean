@@ -60,43 +60,43 @@ set_option genInjectivity false in
 /-- One certified scheduler transition. Readiness acquisition is progress: it replaces one pending child by retained
 evidence and never recomputes it. -/
 inductive Progress (client :
-    Client) : Purelib.Approximation.Gaussian.Logarithm.Quotient.State
-  client → Purelib.Approximation.Gaussian.Logarithm.Quotient.State client → Type 2
+    Client) : State
+  client → State client → Type 2
   /-- Advance only the logarithm search by its certified refinement and toggle scheduling priority. -/ | logRefined
     (logState next : LogarithmState.State client.argument)
       (progress : LogarithmState.Progress logState next)
-      (denominatorSlot : State.DenominatorSlot client) (cursor : Bool) :
+      (denominatorSlot : DenominatorSlot client) (cursor : Bool) :
       Progress client
-        (Approximation.Gaussian.Logarithm.Quotient.State.withLogSearching logState denominatorSlot cursor)
-        (Approximation.Gaussian.Logarithm.Quotient.State.withLogSearching next denominatorSlot (!cursor))
+        (State.withLogSearching logState denominatorSlot cursor)
+        (State.withLogSearching next denominatorSlot (!cursor))
   /-- Replace only the pending logarithm child with its cached ready chart and toggle scheduling priority. -/ |
     logPrepared (logState : LogarithmState.State client.argument)
       (output : Anchored.AnchoredChart (LogarithmState.preparedTarget logState))
-      (valid : Purelib.Approximation.Gaussian.Logarithm.Chart.Partial.Ready client.sourceInput client.argument
+      (valid : Partial.Ready client.sourceInput client.argument
         client.source
         logState output)
-      (denominatorSlot : State.DenominatorSlot client) (cursor : Bool) :
+      (denominatorSlot : DenominatorSlot client) (cursor : Bool) :
       Progress client
-        (Approximation.Gaussian.Logarithm.Quotient.State.withLogSearching logState denominatorSlot cursor)
-        (Approximation.Gaussian.Logarithm.Quotient.State.withLogReady logState output valid denominatorSlot (!cursor))
+        (State.withLogSearching logState denominatorSlot cursor)
+        (State.withLogReady logState output valid denominatorSlot (!cursor))
   /-- Advance only the denominator search by its certified refinement and toggle scheduling priority. -/ |
-    denominatorRefined (logSlot : State.LogSlot client)
-      (denominatorState next : Purelib.Approximation.Gaussian.Name.Coherent.Refinement.State client.denominator)
+    denominatorRefined (logSlot : LogSlot client)
+      (denominatorState next : Coherent.Refinement.State client.denominator)
       (progress : State.Progress denominatorState next) (cursor : Bool) :
       Progress client
-        (Approximation.Gaussian.Logarithm.Quotient.State.withDenominatorSearching logSlot denominatorState cursor)
-        (Approximation.Gaussian.Logarithm.Quotient.State.withDenominatorSearching logSlot next (!cursor))
+        (State.withDenominatorSearching logSlot denominatorState cursor)
+        (State.withDenominatorSearching logSlot next (!cursor))
   /-- Replace only the pending denominator child with its cached apartness certificate and toggle scheduling priority.
   -/
-  | denominatorPrepared (logSlot : State.LogSlot client)
-      (denominatorState : Purelib.Approximation.Gaussian.Name.Coherent.Refinement.State client.denominator)
+  | denominatorPrepared (logSlot : LogSlot client)
+      (denominatorState : Coherent.Refinement.State client.denominator)
       (evidence : Possible.PossibleApart
-        (Gaussian.Process.Based.based client.denominator.name.process
+        (Process.Based.based client.denominator.name.process
           denominatorState.source))
       (cursor : Bool) :
       Progress client
-        (Approximation.Gaussian.Logarithm.Quotient.State.withDenominatorSearching logSlot denominatorState cursor)
-        (Approximation.Gaussian.Logarithm.Quotient.State.withDenominatorReady logSlot denominatorState evidence
+        (State.withDenominatorSearching logSlot denominatorState cursor)
+        (State.withDenominatorReady logSlot denominatorState evidence
             (!cursor))
 
 constructive_injectivity Progress
@@ -104,13 +104,13 @@ constructive_injectivity Progress
 set_option genInjectivity false in
 /-- Finite reachability contains only the current dependency-tree states, not an unbounded execution log. -/
 inductive Reachable {client :
-    Client} : Purelib.Approximation.Gaussian.Logarithm.Quotient.State
-  client → Purelib.Approximation.Gaussian.Logarithm.Quotient.State client → Type 2
+    Client} : State
+  client → State client → Type 2
   /-- The current scheduler state is reachable from itself. -/ | refl (state :
-    Purelib.Approximation.Gaussian.Logarithm.Quotient.State client) :
+    State client) :
     Reachable state state
   /-- Prepend one certified scheduler transition to a finite reachability witness. -/ | tail {start middle finish :
-    Purelib.Approximation.Gaussian.Logarithm.Quotient.State client} :
+    State client} :
       Progress client start middle →
         Reachable middle finish →
         Reachable start finish
@@ -121,11 +121,11 @@ set_option genInjectivity false in
 /-- One global scheduler tick. -/
 inductive StepResult (client :
     Client) (current :
-  Purelib.Approximation.Gaussian.Logarithm.Quotient.State client) : Type 2
+  State client) : Type 2
   /-- Return the ordinary quotient output and its certificate retaining both ready child results. -/ | ready (output :
-    Coherent.CoherentNamed) (valid : Purelib.Approximation.Gaussian.Logarithm.Quotient.Ready client output)
+    Coherent.CoherentNamed) (valid : Ready client output)
   /-- Retain the next scheduler state and the certified transition from the current state. -/ | progressed (next :
-    Purelib.Approximation.Gaussian.Logarithm.Quotient.State client) (progress :
+    State client) (progress :
       Progress client current next)
   /-- Retain the typed child requirement together with equality to the unchanged current scheduler state. -/ | blocked
     (request : Requirement.Blocked client) (retained : request.state = current)
@@ -136,18 +136,18 @@ constructive_injectivity StepResult
 @[expose] def advanceLog (client :
     Client)
     (logState : LogarithmState.State client.argument)
-    (denominatorSlot : State.DenominatorSlot client) (cursor : Bool) :
+    (denominatorSlot : DenominatorSlot client) (cursor : Bool) :
     StepResult client
-        (Approximation.Gaussian.Logarithm.Quotient.State.withLogSearching logState denominatorSlot
+        (State.withLogSearching logState denominatorSlot
       cursor) :=
-  match Chart.Partial.Step.step client.sourceInput client.argument client.source logState with
+  match Step.step client.sourceInput client.argument client.source logState with
   | .ready output valid =>
       .progressed
-        (Approximation.Gaussian.Logarithm.Quotient.State.withLogReady logState output valid denominatorSlot (!cursor))
+        (State.withLogReady logState output valid denominatorSlot (!cursor))
         (.logPrepared logState output valid denominatorSlot cursor)
   | .progressed next progress =>
       .progressed
-        (Approximation.Gaussian.Logarithm.Quotient.State.withLogSearching next denominatorSlot (!cursor))
+        (State.withLogSearching next denominatorSlot (!cursor))
         (.logRefined logState next progress denominatorSlot cursor)
   | .blocked requirement =>
       .blocked (.logarithm logState requirement denominatorSlot cursor) rfl
@@ -156,27 +156,27 @@ constructive_injectivity StepResult
 not-yet-ready logarithm numerator. -/
 @[expose] def advanceDenominator (client :
     Client)
-  (logSlot : State.LogSlot client)
-    (denominatorState : Purelib.Approximation.Gaussian.Name.Coherent.Refinement.State client.denominator) (cursor :
+  (logSlot : LogSlot client)
+    (denominatorState : Coherent.Refinement.State client.denominator) (cursor :
       Bool) :
     StepResult client
-      (Approximation.Gaussian.Logarithm.Quotient.State.withDenominatorSearching logSlot denominatorState cursor) :=
+      (State.withDenominatorSearching logSlot denominatorState cursor) :=
   match Preparation.prepare client.denominator denominatorState with
   | .prepared evidence =>
       .progressed
-        (Approximation.Gaussian.Logarithm.Quotient.State.withDenominatorReady logSlot denominatorState evidence
+        (State.withDenominatorReady logSlot denominatorState evidence
             (!cursor))
         (.denominatorPrepared logSlot denominatorState evidence cursor)
   | .progressed next progress =>
       .progressed
-        (Approximation.Gaussian.Logarithm.Quotient.State.withDenominatorSearching logSlot next (!cursor))
+        (State.withDenominatorSearching logSlot next (!cursor))
         (.denominatorRefined logSlot denominatorState next progress cursor)
 
 /-- Deterministic round-robin scheduler. If only one child is pending it is selected directly; if both are pending,
 `cursor` selects the next child. -/
 @[expose] def step (client :
     Client) : (state :
-  Purelib.Approximation.Gaussian.Logarithm.Quotient.State client) →
+  State client) →
     StepResult client state
   | ⟨.ready logState logOutput logValid,
       .ready denominatorState denominatorEvidence, _cursor⟩ =>

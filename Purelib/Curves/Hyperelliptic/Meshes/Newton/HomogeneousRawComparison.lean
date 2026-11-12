@@ -55,6 +55,8 @@ import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Tactic.Ring
 
+open Purelib.Topology.Surface.Sewing
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -71,23 +73,23 @@ open Purelib.Riemann
 inequality, with the actual hole and exterior areas still displayed. -/
 namespace Purelib.Curves.Hyperelliptic.Meshes.Newton.HomogeneousRawComparison
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
-    {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered} {prepared :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired}
+    PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {ordered : PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
+    {paired : PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered} {prepared :
+    PuncturedGrid.Paired.PeriodPrograms.Prepared paired}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation base.bank.toBranchCellBank}
     {target radius : Fraction.Rational}
   {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius} {current :
     Meshes.LiftedPuncturedGrid grid.punctured}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
     {newSheet : Fin 2}
-  {excision : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid current}
-  {magnitudes : Data.Vector.DependentVector (fun basis : Fin genus =>
-    Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+  {excision : AllHoles.Excision.AllHoleExcision grid current}
+  {magnitudes : Vector.DependentVector (fun basis : Fin genus =>
+    PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
     (Periods.PeriodMatrix.standardDifferential basis))}
   {error : Fraction.Rational} {floor : Nat}
 
@@ -96,14 +98,14 @@ namespace Request
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {allowance : Fraction.Rational}
-  {request : Hyperelliptic.Meshes.Newton.HomogeneousPhysicalComparison.Request prepared newSheet excision magnitudes
-    (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance / 4) floor}
-  {stage : Nat} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
-  {triangles : Data.Vector.DependentVector (fun basis : Fin genus =>
-    Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get basis) current.mesh)}
-  {surfaces : Topology.Surface.Sewing.SewnEnergyCombination.EnergySurfaces current.cutPolygon.patch (fun basis =>
+  {request : HomogeneousPhysicalComparison.Request prepared newSheet excision magnitudes
+    (Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance / 4) floor}
+  {stage : Nat} {cache : PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  {triangles : Vector.DependentVector (fun basis : Fin genus =>
+    PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get basis) current.mesh)}
+  {surfaces : SewnEnergyCombination.EnergySurfaces current.cutPolygon.patch (fun basis =>
     (triangles.get basis).values)}
-  {pairs : Topology.Surface.Sewing.SewnEnergyCombination.EnergyPairs surfaces}
+  {pairs : SewnEnergyCombination.EnergyPairs surfaces}
 
 open Purelib.Algebra in
 open Purelib.Integration in
@@ -111,33 +113,33 @@ open Purelib.Integration in
 
 The positive allowance pays the squared comparison error at the common cut stage. The actual hole contribution and twice
 the exterior contribution remain in the displayed boundary energy. -/
-theorem Samples.raw_lower (samples : Hyperelliptic.Meshes.Newton.HomogeneousPhysicalComparison.Request.Samples triangles
+theorem Samples.raw_lower (samples : HomogeneousPhysicalComparison.Request.Samples triangles
   surfaces pairs request)
-    {minimum : Nat} (cut : Hyperelliptic.Meshes.Newton.HomogeneousCutRequest.Request.CutRequest request
-      (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance / 4)
+    {minimum : Nat} (cut : HomogeneousCutRequest.Request.CutRequest request
+      (Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance / 4)
       minimum)
     (later : cut.index ≤ stage) (positive : 0 < allowance)
-    (holes : Hyperelliptic.Meshes.Newton.HomogeneousBoundaryComparison.Request.HoleSamples triangles excision)
+    (holes : HomogeneousBoundaryComparison.Request.HoleSamples triangles excision)
       (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    let values := fun basis => Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh
+    let values := fun basis => PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh
       (triangles.get basis).values
     let aMatrix := Periods.NewtonCombinedPeriodArea.resplitPeriodMatrix prepared grid.shrunk.included current.edges
       current.vertices newSheet values false
     let bMatrix := Periods.NewtonCombinedPeriodArea.resplitPeriodMatrix prepared grid.shrunk.included current.edges
       current.vertices newSheet values true
-    (Topology.Surface.Sewing.SewnEnergyCombination.energyBoundary surfaces coefficients + holes.area coefficients - 2 *
+    (SewnEnergyCombination.energyBoundary surfaces coefficients + holes.area coefficients - 2 *
       samples.exterior coefficients).im / 4 -
       allowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ≤
         LinearAlgebra.Gaussian.Energy.unnormalizedEnergyForm coefficients aMatrix bMatrix := by
   intro values aMatrix bMatrix
-  let target := Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance
+  let target := Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance
   let period := Energy.Polygon.energyBoundaryArea
     (LinearAlgebra.Gaussian.Energy.periodCombination coefficients aMatrix)
       (LinearAlgebra.Gaussian.Energy.periodCombination coefficients bMatrix)
-  have close := Hyperelliptic.Meshes.Newton.HomogeneousBoundaryComparison.Request.Samples.physical_accurate samples cut
+  have close := HomogeneousBoundaryComparison.Request.Samples.physical_accurate samples cut
     later holes coefficients
   have coefficientSumEq :
-      (FiniteSum.Fin.sumFin fun basis => Data.Gaussian.Norm.Basic.normSq (coefficients basis)) =
+      (FiniteSum.Fin.sumFin fun basis => Gaussian.Norm.Basic.normSq (coefficients basis)) =
         Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := by
     unfold Readings.PreparedObservationCoercivity.coefficientNormSq
     apply FiniteSum.Fin.sumFin_congr
@@ -165,24 +167,24 @@ theorem Samples.raw_lower (samples : Hyperelliptic.Meshes.Newton.HomogeneousPhys
         rw [allocation]
       _ ≤ (4 * allowance)^2 * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients^2 :=
         Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-          (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget_paid positive)
+          (Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget_paid positive)
           (Fraction.Order.Arithmetic.sq_nonneg_direct _)
       _ = _ := by ring1
   have scalar (surface holes exterior period : Gaussian.Basic.Canonical) :
       surface + holes - 2 * exterior - period = surface + holes - (period + 2 * exterior) := by ring1
-  have squared : Data.Gaussian.Norm.Basic.normSq ((Topology.Surface.Sewing.SewnEnergyCombination.energyBoundary
+  have squared : Gaussian.Norm.Basic.normSq ((SewnEnergyCombination.energyBoundary
     surfaces coefficients + holes.area coefficients -
       2 * samples.exterior coefficients) - period) ≤ (4 * (allowance *
         Readings.PreparedObservationCoercivity.coefficientNormSq coefficients))^2 := by
     rw [scalar]
-    change Data.Gaussian.Norm.Basic.normSq
-      (Topology.Surface.Sewing.SewnEnergyCombination.energyBoundary surfaces coefficients + holes.area coefficients -
+    change Gaussian.Norm.Basic.normSq
+      (SewnEnergyCombination.energyBoundary surfaces coefficients + holes.area coefficients -
         (period + 2 * samples.exterior coefficients)) ≤
       2 * (genus : Fraction.Rational)^2 *
         Readings.PreparedObservationCoercivity.coefficientNormSq coefficients^2 * (target / 4 + target / 4) at close
     exact close.trans paid
   have comparison := Topology.PreparedSurfaceCoercivity.boundaryEnergy_sub_budget_le
-    (Topology.Surface.Sewing.SewnEnergyCombination.energyBoundary surfaces coefficients + holes.area coefficients - 2 *
+    (SewnEnergyCombination.energyBoundary surfaces coefficients + holes.area coefficients - 2 *
       samples.exterior coefficients)
     period (allowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)
       (Fraction.Order.Arithmetic.mul_nonneg_direct positive.le normNonnegative) squared

@@ -1,8 +1,10 @@
 module
 import Purelib.Algebra.Semiring.Normalization
+import Purelib.Algebra.Ring.Multiplication
 import Purelib.Data.Nat.Subtraction
 public import Purelib.Curves.Hyperelliptic.Basic
 public import Purelib.Curves.Hyperelliptic.Differentials.Basic
+public import Purelib.Algebra.Quadratic.Pair.Polynomial.Derivative
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Gaussian.Field
 import Purelib.Data.Gaussian.Power
@@ -57,7 +59,11 @@ namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
 open Purelib.Data.Gaussian.Basic.Canonical
+open Purelib.Data.Gaussian.Basic
 open Purelib.Polynomial.Dense.Basic.DensePolynomial (shift eval_shift)
+open Purelib.Algebra.Quadratic.Pair.Polynomial (Expression)
+open Purelib.Algebra.Quadratic
+open Purelib.Algebra
 
 /-- Exact Gaussian rational coordinates in the reciprocal chart. -/
 abbrev Gaussian := Data.Gaussian.Basic.Canonical
@@ -188,6 +194,62 @@ theorem differential_balance {genus : Nat} (differential : Differentials.Basic.D
       change differential.index.val + 2 + (genus - differential.index.val) = genus + 1 + 1
       rw [Nat.add_right_comm _ 2,
         Data.Nat.Subtraction.add_sub_of_le (Nat.le_of_lt_succ differential.index.isLt)]
+
+/-- The reversed differential numerator includes the original inversion sign. -/
+def numerator {genus : Nat} (differential : Differential genus) : GaussianPolynomial :=
+  shift (reversedDifferential differential).exponent (DensePolynomial.constant (-1))
+
+/-- Read the retained reciprocal numerator at the original chart coordinate. -/
+theorem numerator_eval {genus : Nat} (differential : Differential genus) (point : Gaussian) :
+    (numerator differential).eval point = -point ^ (reversedDifferential differential).exponent := by
+  rewrite [numerator, eval_shift, DensePolynomial.eval_constant, Ring.Multiplication.neg_mul, Canonical.one_mul]
+  rfl
+
+/-- The reduced reciprocal differential has its original chart radicand as denominator. -/
+def coefficientExpression {genus : Nat} (radicand : GaussianPolynomial)
+    (differential : Differential genus) : Expression radicand :=
+  (Expression.inverseRoot radicand).scale (numerator differential)
+
+/-- The unreduced affine pullback retains the inverse-coordinate denominator before polynomial cancellation. -/
+def pullbackExpression {genus : Nat} (radicand : GaussianPolynomial)
+    (differential : Differential genus) : Expression radicand :=
+  ⟨⟨0, shift (genus + 1) (DensePolynomial.constant (-1))⟩,
+    shift (differential.exponent + 2) (DensePolynomial.constant 1) * radicand⟩
+
+/-- The two original coefficient tables satisfy the exact denominator-cleared reciprocal law.
+
+The finite exponent balance proves the coefficient check at every radicand.
+The unreduced source domain still requires a nonzero chart coordinate; this
+identity does not discard that guard at a regular reciprocal origin.
+-/
+theorem pullback_equal {genus : Nat} (radicand : GaussianPolynomial) (differential : Differential genus) :
+    (pullbackExpression radicand differential).Equal (coefficientExpression radicand differential) := by
+  apply Expression.equal_of_cross_eval
+  · intro point
+    simp only [-eq_self, -iff_self, pullbackExpression, coefficientExpression, Expression.scale, Pair.scale,
+      Expression.inverseRoot, Expression.oddReciprocal, DensePolynomial.eval_zero,
+      DensePolynomial.eval_mul, Dense.Power.eval_power,
+      Nat.zero_add, pow_one, Data.Gaussian.Basic.mul_zero, Data.Gaussian.Basic.zero_mul]
+    rfl
+  · intro point
+    simp only [-eq_self, -iff_self, pullbackExpression, coefficientExpression, Expression.scale, Pair.scale,
+      Expression.inverseRoot, Expression.oddReciprocal, DensePolynomial.eval_mul,
+      DensePolynomial.eval_constant, Dense.Power.eval_power, Nat.zero_add, pow_one]
+    rewrite [numerator_eval, eval_shift, DensePolynomial.eval_constant,
+      eval_shift, DensePolynomial.eval_constant, Canonical.one_mul, Data.Gaussian.Basic.mul_one,
+      Ring.Multiplication.neg_mul, Canonical.one_mul,
+      ← differential_balance differential, pow_add]
+    rewrite [Canonical.mul_comm (point ^ (differential.exponent + 2)), Ring.Multiplication.neg_mul,
+      Canonical.mul_assoc, Ring.Multiplication.neg_mul]
+    rfl
+
+/-- The original coordinate and radicand guards admit the unreduced affine pullback. -/
+theorem defined_pullback {genus : Nat} (radicand : GaussianPolynomial) (differential : Differential genus)
+    (point : Gaussian) (pointNonzero : point ≠ 0) (radicandNonzero : radicand.eval point ≠ 0) :
+    (pullbackExpression radicand differential).Defined point := by
+  change (shift (differential.exponent + 2) (DensePolynomial.constant 1) * radicand).eval point ≠ 0
+  rewrite [DensePolynomial.eval_mul, eval_shift, DensePolynomial.eval_constant, Canonical.one_mul]
+  exact Data.Gaussian.Field.mul_ne_zero_direct (Power.pow_ne_zero_direct _ pointNonzero _) radicandNonzero
 
 /-- Evaluate the monomial differential coefficient divided by the retained sheet value. -/
 def coefficient {genus : Nat} (differential : Differentials.Basic.Differential genus) (point root :

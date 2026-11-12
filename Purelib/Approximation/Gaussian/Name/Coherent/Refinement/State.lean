@@ -44,7 +44,7 @@ set_option genInjectivity false in
 /-- Retained automatic-search state for one fixed coherent denominator. `persists` records finite provenance back to the
 denominator's original named state, while `nextIndex` selects the next canonical positive rational request. -/
 structure State (denominator :
-  Coherent.CoherentNamed) where
+  CoherentNamed) where
   /-- The retained state of the original denominator process. -/ source : denominator.name.process.State
   /-- The index of the next canonical positive rational refinement request. -/ nextIndex : Nat
   /-- Every candidate possible at the retained state remains possible at the original denominator state. -/ persists : ∀
@@ -62,7 +62,7 @@ namespace State
 
 /-- The initial search state performs no refinement and has reflexive candidate provenance. -/
 def initial (denominator :
-  Coherent.CoherentNamed) : State denominator where
+  CoherentNamed) : State denominator where
   source := denominator.name.state
   nextIndex := 0
   persists := fun possible => possible
@@ -70,48 +70,48 @@ def initial (denominator :
 /-- One deterministic unit of automatic work. The retained source is refined in place, and its provenance proof is
 composed with refinement persistence. -/
 def advance {denominator :
-  Coherent.CoherentNamed}
+  CoherentNamed}
     (state : State denominator) :
       State denominator where
   source := denominator.name.process.refine state.source
-    (Gaussian.Process.Sampling.refinementTarget state.nextIndex)
-    (Gaussian.Process.Sampling.refinementTarget_pos state.nextIndex)
+    (Process.Sampling.refinementTarget state.nextIndex)
+    (Process.Sampling.refinementTarget_pos state.nextIndex)
   nextIndex := state.nextIndex + 1
   persists := fun possible =>
     state.persists
       (denominator.name.process.refine_persists state.source
-        (Gaussian.Process.Sampling.refinementTarget state.nextIndex)
-        (Gaussian.Process.Sampling.refinementTarget_pos state.nextIndex)
+        (Process.Sampling.refinementTarget state.nextIndex)
+        (Process.Sampling.refinementTarget_pos state.nextIndex)
         possible)
 
 /-- The initial search retains the denominator's original named state. -/
 @[simp] theorem initial_source (denominator :
-  Coherent.CoherentNamed) :
+  CoherentNamed) :
     (initial denominator).source = denominator.name.state :=
       rfl
 
 /-- The initial search begins at refinement index zero. -/
 @[simp] theorem initial_nextIndex
-  (denominator : Coherent.CoherentNamed) :
+  (denominator : CoherentNamed) :
     (initial denominator).nextIndex = 0 := rfl
 
 /-- Advancing the search performs the canonical refinement of its retained source state. -/
 @[simp] theorem advance_source {denominator :
-  Coherent.CoherentNamed}
+  CoherentNamed}
     (state : State denominator) :
     state.advance.source = denominator.name.process.refine state.source
-      (Gaussian.Process.Sampling.refinementTarget state.nextIndex)
-      (Gaussian.Process.Sampling.refinementTarget_pos state.nextIndex) := rfl
+      (Process.Sampling.refinementTarget state.nextIndex)
+      (Process.Sampling.refinementTarget_pos state.nextIndex) := rfl
 
 /-- Advancing the search increments the refinement index by one. -/
 @[simp] theorem advance_nextIndex
-  {denominator : Coherent.CoherentNamed}
+  {denominator : CoherentNamed}
     (state : State denominator) :
     state.advance.nextIndex = state.nextIndex + 1 := rfl
 
 /-- Every retained candidate still has the promised provenance at the original named denominator state. -/
 theorem possible_at_initial {denominator :
-  Coherent.CoherentNamed}
+  CoherentNamed}
     (state : State denominator) {value :
       Canonical}
     (possible : denominator.name.process.Possible state.source value) :
@@ -124,7 +124,7 @@ namespace State
 
 /-- A genuine automatic transition. There is exactly one transition from a state: its canonical finite refinement. -/
 inductive Progress {denominator :
-  Coherent.CoherentNamed} :
+  CoherentNamed} :
     State denominator →
       State denominator → Type
   /-- The canonical single refinement transition from a retained search state. -/ | refined (state :
@@ -137,23 +137,23 @@ namespace State.Progress
 
 /-- One automatic transition preserves every candidate admitted by its target as a candidate admitted by its source. -/
 theorem possible_persists {denominator :
-  Coherent.CoherentNamed}
+  CoherentNamed}
     {current next : State denominator} (progress :
-      Approximation.Gaussian.Name.Coherent.Refinement.State.Progress current next)
+      Progress current next)
     {value : Canonical}
     (possible : denominator.name.process.Possible next.source value) :
     denominator.name.process.Possible current.source value := by
   cases progress
   exact denominator.name.process.refine_persists current.source
-    (Gaussian.Process.Sampling.refinementTarget current.nextIndex)
-    (Gaussian.Process.Sampling.refinementTarget_pos current.nextIndex)
+    (Process.Sampling.refinementTarget current.nextIndex)
+    (Process.Sampling.refinementTarget_pos current.nextIndex)
     possible
 
 /-- Every certified automatic transition increments the refinement index by one. -/
 @[simp] theorem nextIndex_eq {denominator
-  : Coherent.CoherentNamed}
+  : CoherentNamed}
     {current next : State denominator} (progress :
-      Approximation.Gaussian.Name.Coherent.Refinement.State.Progress current next) :
+      Progress current next) :
     next.nextIndex = current.nextIndex + 1 := by
   cases progress
   rfl
@@ -166,7 +166,7 @@ set_option genInjectivity false in
 /-- Finite reflexive-transitive reachability generated only by certified automatic refinement steps. No completed
 execution history is stored. -/
 inductive Reachable {denominator :
-  Coherent.CoherentNamed} :
+  CoherentNamed} :
     State denominator →
       State denominator → Type
   /-- The empty finite refinement path from a state to itself. -/ | refl (state :
@@ -174,7 +174,7 @@ inductive Reachable {denominator :
     Reachable state state
   /-- Prepend one certified refinement transition to an existing finite path. -/ | tail {first middle last :
     State denominator} :
-      Approximation.Gaussian.Name.Coherent.Refinement.State.Progress first middle →
+      Progress first middle →
         Reachable middle last →
         Reachable first last
 
@@ -190,9 +190,9 @@ namespace State.Reachable
 
 /-- Candidate persistence composes along every finite execution. -/
 theorem possible_persists {denominator :
-  Coherent.CoherentNamed}
+  CoherentNamed}
     {first last : State denominator} (reachable :
-      Approximation.Gaussian.Name.Coherent.Refinement.State.Reachable first last)
+      Reachable first last)
     {value : Canonical}
     (possible : denominator.name.process.Possible last.source value) :
     denominator.name.process.Possible first.source value := by
@@ -203,6 +203,44 @@ theorem possible_persists {denominator :
 
 end State.Reachable
 end Purelib.Approximation.Gaussian.Name.Coherent.Refinement
+
+end
+
+public section
+
+namespace Purelib.Approximation.Gaussian.Name.Coherent.Refinement.State
+
+open Purelib.Approximation.Gaussian
+open Purelib.Approximation.Gaussian.Name.Coherent (CoherentNamed)
+
+/-- Retain the canonical sampled state and its next unused refinement index.
+
+The original named process is sampled once at the supplied index. Candidate
+persistence refers to that same returned source, and later retries continue
+with the immediately following canonical request.
+-/
+@[expose] def sampled (denominator : CoherentNamed) (index : Nat) : State denominator where
+  source := Process.Sampling.stateAt denominator.name.process denominator.name.state index
+  nextIndex := index + 1
+  persists := fun possible => Process.Sampling.stateAt_possible_at_start
+    denominator.name.process denominator.name.state index possible
+
+/-- A sampled refinement state retains the original canonical source at its supplied index. -/
+theorem sampled_source (denominator : CoherentNamed) (index : Nat) :
+    (sampled denominator index).source =
+      Process.Sampling.stateAt denominator.name.process denominator.name.state index := rfl
+
+/-- The next request follows all canonical refinements already performed by sampling. -/
+theorem sampled_nextIndex (denominator : CoherentNamed) (index : Nat) :
+    (sampled denominator index).nextIndex = index + 1 := rfl
+
+/-- The retained sampled source pays its original indexed squared-radius request. -/
+theorem sampled_accurate (denominator : CoherentNamed) (index : Nat) :
+    (denominator.name.process.ball (sampled denominator index).source).radiusSq <
+      Process.Sampling.refinementTarget index :=
+  Process.Sampling.stateAt_accurate denominator.name.process denominator.name.state index
+
+end Purelib.Approximation.Gaussian.Name.Coherent.Refinement.State
 
 end
 

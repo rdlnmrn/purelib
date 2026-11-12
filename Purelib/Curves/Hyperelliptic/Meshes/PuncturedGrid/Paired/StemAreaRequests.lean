@@ -114,27 +114,27 @@ open Purelib.Topology.Mesh.RetracingWords (wordArea wordArea_reverse)
 open Purelib.Data.Gaussian.Basic.Canonical
 open Purelib.Data.Rat.Fraction.Order.Arithmetic (mul_le_mul_of_nonneg_left_direct add_le_add_direct)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
-    base.faces.regulars} {differential : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+    BasedBranchBank lifted}
+  {domains : FaceDomainBank lifted.frames
+    base.faces.regulars} {differential : Differential genus}
 
 set_option genInjectivity false in
 /-- A paid cancellation request for the two actual stem chart areas of a corrected branch excursion.
 
 The same paired placement and fixed magnitude reference supply both source/chart transfers and the intervening
 opposite-sheet comparison. -/
-structure StemAreaRequest (bank : LiftedPuncturedGrid.BasedBranchBank lifted) (fixed : MagnitudeBank.FaceMagnitudeBank
+structure StemAreaRequest (bank : BasedBranchBank lifted) (fixed : FaceMagnitudeBank
   domains differential)
-    (branch : BranchIsolation.Data.Index branches) (sheet : Fin 2) (target : Fraction.Rational) where
+    (branch : BranchIsolation.Data.Index branches) (sheet : Fin 2) (target : Rational) where
   /-- The requested total stem error is strictly positive. -/ positive : 0 < target
-  /-- The retained allowance for each of the three stem-area comparisons. -/ partTarget : Fraction.Rational
+  /-- The retained allowance for each of the three stem-area comparisons. -/ partTarget : Rational
   /-- The common comparison allowance is exactly one tenth of the requested target. -/ partTarget_eq : partTarget =
     target / 10
-  /-- The actual paired source placement of the retained branch stem. -/ paired : WalkOccurrences.PairedWalk lifted.mesh
+  /-- The actual paired source placement of the retained branch stem. -/ paired : PairedWalk lifted.mesh
     (bank.rows.get branch).stem
   /-- The opposite-sheet source-area request on that exact paired stem. -/ opposite : AreaRequest fixed paired
     partTarget
@@ -150,15 +150,15 @@ constructive_injectivity StemAreaRequest
 
 namespace StemAreaRequest
 
-variable {fixed : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
-  differential} {branch : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
-  {sheet : Fin 2} {target : Purelib.Data.Rat.Fraction.Rational}
+variable {fixed : FaceMagnitudeBank domains
+  differential} {branch : BranchIsolation.Data.Index branches}
+  {sheet : Fin 2} {target : Rational}
 
 /-- Select the paired stem once, prepare the three area requests at the common one-tenth allowance and cache their
 maximum stage. -/
-def build (bank : LiftedPuncturedGrid.BasedBranchBank lifted) (fixed : MagnitudeBank.FaceMagnitudeBank domains
+def build (bank : BasedBranchBank lifted) (fixed : FaceMagnitudeBank domains
   differential)
-    (branch : BranchIsolation.Data.Index branches) (sheet : Fin 2) (target : Fraction.Rational) (positive : 0 < target)
+    (branch : BranchIsolation.Data.Index branches) (sheet : Fin 2) (target : Rational) (positive : 0 < target)
       :
     StemAreaRequest bank fixed branch sheet target :=
   let partTarget := target / 10
@@ -178,7 +178,7 @@ private theorem otherSheet_different (sheet : Fin 2) :
 
 /-- The actual single-differential reading parent on the retained lifted mesh. -/
 @[reducible] def AreaSample :=
-  SourceChartComparison.SingleReadings (owner := SourceChartComparison.ownerFromMesh lifted.mesh) domains differential
+  SingleReadings (owner := SourceChartComparison.ownerFromMesh lifted.mesh) domains differential
 
 /-- The paid common stem stage also pays its retained opposite-sheet area request. -/
 theorem OppositeStage (request : StemAreaRequest bank fixed branch sheet target)
@@ -214,7 +214,7 @@ theorem OppositeStage (request : StemAreaRequest bank fixed branch sheet target)
       ≤ sample.stage}
     {opposite : OppositePart request sample later}
     (first : FirstPart request sample opposite) (second : SecondPart request sample opposite)
-    (residual : Data.Gaussian.Basic.Canonical) : Prop := residual = first.chartArea - second.chartArea
+    (residual : Gaussian.Basic.Canonical) : Prop := residual = first.chartArea - second.chartArea
 
 /-- The cached stem bound combines the two source/chart errors with the intervening opposite-sheet error. -/
 @[reducible] def BoundIdentity {request : StemAreaRequest bank fixed branch sheet target}
@@ -222,7 +222,7 @@ theorem OppositeStage (request : StemAreaRequest bank fixed branch sheet target)
       ≤ sample.stage}
     (opposite : OppositePart request sample later)
     (first : FirstPart request sample opposite) (second : SecondPart request sample opposite)
-    (bound : Fraction.Rational) : Prop := bound = 2 * (first.areaBound + 2 * (opposite.areaBound + second.areaBound))
+    (bound : Rational) : Prop := bound = 2 * (first.areaBound + 2 * (opposite.areaBound + second.areaBound))
 
 set_option genInjectivity false in
 /-- The actual stem-area realization on the retained request and reading parent.
@@ -243,10 +243,10 @@ structure Realization (request : StemAreaRequest bank fixed branch sheet target)
     sample opposite
   /-- The second source/chart comparison consuming the retained other-sheet source observation. -/ second : SecondPart
     request sample opposite
-  /-- The cached signed discrepancy of the two retained stem chart areas. -/ residual : Data.Gaussian.Basic.Canonical
+  /-- The cached signed discrepancy of the two retained stem chart areas. -/ residual : Gaussian.Basic.Canonical
   /-- The residual cache satisfies the actual retained chart-area identity. -/ residual_eq : ResidualIdentity first
     second residual
-  /-- The cached complete three-comparison stem-area bound. -/ areaBound : Fraction.Rational
+  /-- The cached complete three-comparison stem-area bound. -/ areaBound : Rational
   /-- The bound cache satisfies the retained three-comparison arithmetic identity. -/ areaBound_eq : BoundIdentity
     opposite first second areaBound
   /-- The actual residual squared norm is bounded by the cached area bound. -/ bounded : normSq residual ≤ areaBound
@@ -283,8 +283,8 @@ def realize (request : StemAreaRequest bank fixed branch sheet target)
       (Fraction.Order.Arithmetic.add_le_add_direct first.budget
         (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
         (Fraction.Order.Arithmetic.add_le_add_direct opposite.budget second.budget) (by
-            decide : (0 : Fraction.Rational) ≤ 2)))
-      (by decide : (0 : Fraction.Rational) ≤ 2)
+            decide : (0 : Rational) ≤ 2)))
+      (by decide : (0 : Rational) ≤ 2)
     refine inner.trans_eq ?_
     rw [request.partTarget_eq]
     exact AreaComparison.stem_tenth_payment target
@@ -333,8 +333,8 @@ end Realization
 
 /-- At a paid stage, the difference of the two actual stem-word areas has squared norm at most the requested target. -/
 theorem accurate (request : StemAreaRequest bank fixed branch sheet target)
-    {stage : Nat} {shared : PrimitiveData.FacePrimitiveBank differential stage domains} (readings :
-      TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh)
+    {stage : Nat} {shared : FacePrimitiveBank differential stage domains} (readings :
+      TriangleReadings shared lifted.mesh)
     (later : request.index ≤ stage) :
     normSq (RetracingWords.wordArea (CanonicalEdgeValues.edgeValuation lifted.mesh readings.values) (bank.stemWord
       branch sheet) -
@@ -349,8 +349,8 @@ theorem accurate (request : StemAreaRequest bank fixed branch sheet target)
 /-- This is precisely the first defect in `stemError_bound`, for the actual return word and the valuation consumed by
 the corrected identity. -/
 theorem return_area_accurate (request : StemAreaRequest bank fixed branch sheet target)
-    {stage : Nat} {shared : PrimitiveData.FacePrimitiveBank differential stage domains} (readings :
-      TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh)
+    {stage : Nat} {shared : FacePrimitiveBank differential stage domains} (readings :
+      TriangleReadings shared lifted.mesh)
     (later : request.index ≤ stage) :
     normSq (RetracingWords.wordArea (CanonicalEdgeValues.edgeValuation lifted.mesh readings.values) (bank.stemWord
       branch sheet) +

@@ -40,6 +40,8 @@ import Purelib.Integration.Path.Dyadic.SourceResampling
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Algebra.Group.Basic
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank
@@ -90,54 +92,54 @@ open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 
 /-- The explicit squared-norm envelope of an actual retained cross term, using its coefficient and both original word
 values. -/
-def Inclusion.ConnectorBounds.connectorEstimate (value : Stokes.OrientedEdge count → Data.Gaussian.Basic.Canonical) :
-  RetracingWords.AreaTerm
-  count → Fraction.Rational
+def Inclusion.ConnectorBounds.connectorEstimate (value : OrientedEdge count → Data.Gaussian.Basic.Canonical) :
+  AreaTerm
+  count → Rational
   | .polygon _ => 0
   | .cross coefficient first last =>
-      Data.Gaussian.Norm.Basic.normSq (coefficient : Data.Gaussian.Basic.Canonical) * (4 *
-        Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue value first) *
-        Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue value last))
+      Basic.normSq (coefficient : Data.Gaussian.Basic.Canonical) * (4 *
+        Basic.normSq (SewingRetraction.wordValue value first) *
+        Basic.normSq (SewingRetraction.wordValue value last))
 
 /-- An actual certified connector cross term satisfies its retained coefficient-and-word magnitude envelope. -/
-private theorem Inclusion.ConnectorBounds.connector_estimate (value : Stokes.OrientedEdge count →
+private theorem Inclusion.ConnectorBounds.connector_estimate (value : OrientedEdge count →
   Data.Gaussian.Basic.Canonical) (term :
-  RetracingWords.AreaTerm count)
-    (cross : CircuitPartition.IsConnectorTerm term) : Data.Gaussian.Norm.Basic.normSq (term.evaluate value) ≤
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ConnectorBounds.connectorEstimate value term := by
+  AreaTerm count)
+    (cross : IsConnectorTerm term) : Basic.normSq (term.evaluate value) ≤
+      Inclusion.ConnectorBounds.connectorEstimate value term := by
   cases term with
   | polygon => exact cross.elim
   | cross coefficient first last =>
-      change Data.Gaussian.Norm.Basic.normSq ((coefficient : Data.Gaussian.Basic.Canonical) *
+      change Basic.normSq ((coefficient : Data.Gaussian.Basic.Canonical) *
         BoundaryRibbon.area (SewingRetraction.wordValue value first) (SewingRetraction.wordValue value last)) ≤ _
-      rw [Data.Gaussian.Norm.Basic.normSq_mul]
+      rw [Basic.normSq_mul]
       exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (BoundaryRibbon.area_bound _ _) (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+        (BoundaryRibbon.area_bound _ _) (Basic.normSq_nonneg _)
 
 /-- Evaluating the retained area-term list gives exactly the Gaussian sum of its actual term readings. -/
-private theorem Inclusion.ConnectorBounds.total_eq (value : Stokes.OrientedEdge count → Data.Gaussian.Basic.Canonical)
+private theorem Inclusion.ConnectorBounds.total_eq (value : OrientedEdge count → Data.Gaussian.Basic.Canonical)
   (terms : List
-  (RetracingWords.AreaTerm count)) :
-    AreaTerm.total value terms = Data.Gaussian.Norm.Sum.Basic.gaussianSum (terms.map (AreaTerm.evaluate value)) :=
+  (AreaTerm count)) :
+    AreaTerm.total value terms = Sum.Basic.gaussianSum (terms.map (AreaTerm.evaluate value)) :=
       by
   induction terms with
   | nil => rfl
   | cons term tail ih => exact congrArg (term.evaluate value + ·) ih
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {faces : PuncturedFaces bank} {grid :
-    Polynomial.Geometry.Grid.ClearGrid curve.polynomial (Ambient
+    ClearGrid curve.polynomial (Ambient
     curve)}
-  {included : Purelib.Polynomial.Geometry.Grid.Extension.CoordinateInclusion bank.grid grid}
+  {included : Extension.CoordinateInclusion bank.grid grid}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank grid}
-  {start : Purelib.Data.Gaussian.Basic.Canonical} {member :
-    Polynomial.Geometry.Grid.FromStates.ContainsVertex bank.grid start}
-  {tree : Purelib.Polynomial.Geometry.Grid.RowCircuitOrder.CellCircuits bank.grid start} {partition :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames} {vertices :
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank grid}
+  {start : Data.Gaussian.Basic.Canonical} {member :
+    FromStates.ContainsVertex bank.grid start}
+  {tree : RowCircuitOrder.CellCircuits bank.grid start} {partition :
     CircuitPartition faces tree}
     {sheet : Fin 2}
 
@@ -145,25 +147,25 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 assertion: the displayed cross-factor envelope must still be paid by the analytic requests. -/
 theorem
   OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitCompiled.connector_error_bound
-    (compiled : CircuitPartition.ResplitCompiled included edges vertices member partition sheet)
-    (value : Stokes.OrientedEdge vertices.count → Data.Gaussian.Basic.Canonical) :
-    Data.Gaussian.Norm.Basic.normSq (AreaTerm.total value compiled.areaTerms -
+    (compiled : ResplitCompiled included edges vertices member partition sheet)
+    (value : OrientedEdge vertices.count → Data.Gaussian.Basic.Canonical) :
+    Basic.normSq (AreaTerm.total value compiled.areaTerms -
       CellBoundary.sumValues (fun occurrence => RetracingWords.wordArea value occurrence.word) compiled.regulars) ≤
-      (compiled.connectorTerms.length : Fraction.Rational) * ((compiled.connectorTerms.length : Fraction.Rational) *
+      (compiled.connectorTerms.length : Rational) * ((compiled.connectorTerms.length : Rational) *
         SourceSampleResampling.maximum (compiled.connectorTerms.map
-          (Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ConnectorBounds.connectorEstimate value))) := by
+          (Inclusion.ConnectorBounds.connectorEstimate value))) := by
   rw [compiled.area_split, Algebra.Group.add_sub_cancel_left,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ConnectorBounds.total_eq]
-  have bound := Data.Gaussian.Norm.Sum.Bounds.normSq_sum_le
+    Inclusion.ConnectorBounds.total_eq]
+  have bound := Sum.Bounds.normSq_sum_le
     (compiled.connectorTerms.map (AreaTerm.evaluate value))
     (SourceSampleResampling.maximum (compiled.connectorTerms.map
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ConnectorBounds.connectorEstimate value))) (by
+      (Inclusion.ConnectorBounds.connectorEstimate value))) (by
       intro reading belongs
       obtain ⟨term, termMember, equal⟩ := Map.mem_map.mp belongs
       rw [← equal]
-      exact (Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ConnectorBounds.connector_estimate value term
+      exact (Inclusion.ConnectorBounds.connector_estimate value term
         (compiled.connector_only term termMember)).trans
         (SourceSampleResampling.le_maximum (Map.mem_map_of_mem termMember)))
-  simpa only [Data.List.Map.length_map] using bound
+  simpa only [Map.length_map] using bound
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid

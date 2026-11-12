@@ -35,9 +35,9 @@ open Purelib.Topology.Surface.Sewing.SewnPrimitiveFaces (FaceBank FaceTrace)
 open Purelib.Topology.Surface.Sewing.SewnPrimitiveSamples (CachedSample)
 open Purelib.Data.List
 
-variable {vertexCount faceCount : Nat} {faces : Fin faceCount → Purelib.Topology.Polygon.Stokes.OrientedTriangle
+variable {vertexCount faceCount : Nat} {faces : Fin faceCount → Topology.Polygon.Stokes.OrientedTriangle
   vertexCount}
-  {localValues : Fin faceCount → Purelib.Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues 3}
+  {localValues : Fin faceCount → Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues 3}
 
 open Purelib.Integration in
 open Purelib.Topology.Polygon in
@@ -49,7 +49,7 @@ The bank retains the exact triangle and source lists. Structural map readback
 identifies the supplied member without replacing its source occurrence. -/
 theorem FaceBank.trace_projection {indices : List (Fin faceCount)} {boundary : List (Stokes.OrientedEdge vertexCount)}
     {patch : Cut.Patch.CutPatch faces indices boundary} {values : PrimitiveSewing.PrimitiveValues patch.count}
-    (bank : SewnPrimitiveFaces.FaceBank patch localValues values) (trace : SewnPrimitiveFaces.FaceTrace localValues
+    (bank : FaceBank patch localValues values) (trace : FaceTrace localValues
       values) (member : trace ∈ bank.entries) :
     VertexSewing.OrientedTriangle.map patch.vertexLabels trace.triangle = faces trace.source := by
   have equal := (congrArg (List.map (VertexSewing.OrientedTriangle.map patch.vertexLabels)) bank.triangles_eq).trans
@@ -59,8 +59,8 @@ theorem FaceBank.trace_projection {indices : List (Fin faceCount)} {boundary : L
 
 namespace CachedSample
 
-variable {patch : Purelib.Topology.Surface.Sewing.SewingTree.SewnPatch faces} (sample :
-  Purelib.Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample patch localValues)
+variable {patch : Topology.Surface.Sewing.SewingTree.SewnPatch faces} (sample :
+  CachedSample patch localValues)
 
 open Purelib.Data.Gaussian in
 open Purelib.Topology.Polygon in
@@ -71,14 +71,14 @@ set_option genInjectivity false in
 The selection predicate acts on retained source indices; each cached list and area has an exact readback to those
 original traces. -/
 structure FaceSelection (keep : Fin faceCount → Bool) where
-  /-- The retained selected traces from the original face bank. -/ traces : List (SewnPrimitiveFaces.FaceTrace
+  /-- The retained selected traces from the original face bank. -/ traces : List (FaceTrace
     localValues sample.sewn.values)
   /-- The traces equal the original bank filtered by its exact source selection. -/ traces_eq : traces =
     sample.faces.entries.filter (fun trace => keep trace.source)
   /-- The cached triangles of the retained selected traces. -/ triangles : List (Stokes.OrientedTriangle
     patch.cut.count)
   /-- The triangles are exactly the triangle projection of the retained traces. -/ triangles_eq : triangles = traces.map
-    SewnPrimitiveFaces.FaceTrace.triangle
+    FaceTrace.triangle
   /-- The cached area of the retained selected triangle boundaries. -/ area : Basic.Canonical
   /-- The cached area is the exact boundary sum using the original sample energy values. -/ area_eq : area =
     Stokes.edgeListArea sample.energyValues (triangles.flatMap Stokes.OrientedTriangle.boundary)
@@ -95,9 +95,9 @@ open Purelib.Topology.Surface.Sewing in
 The predicate filters the retained face-bank entries in their source order.
 Triangle readback and the exact flattened boundary sum certify those caches. -/
 @[expose] def build (keep : Fin faceCount → Bool) :
-  Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection sample keep :=
+  FaceSelection sample keep :=
   let traces := sample.faces.entries.filter (fun trace => keep trace.source)
-  let triangles := traces.map SewnPrimitiveFaces.FaceTrace.triangle
+  let triangles := traces.map FaceTrace.triangle
   ⟨traces, rfl, triangles, rfl, Stokes.edgeListArea sample.energyValues (triangles.flatMap
     Stokes.OrientedTriangle.boundary), rfl⟩
 
@@ -110,20 +110,20 @@ open Purelib.Topology.Surface.Sewing
 
 The selection readback retains original-bank membership of the displayed
 trace, whose projection uses the same source index and cut labels. -/
-theorem trace_projection (selected : Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection sample
+theorem trace_projection (selected : FaceSelection sample
   keep)
-    (trace : SewnPrimitiveFaces.FaceTrace localValues sample.sewn.values) (member : trace ∈ selected.traces) :
+    (trace : FaceTrace localValues sample.sewn.values) (member : trace ∈ selected.traces) :
     VertexSewing.OrientedTriangle.map patch.cut.vertexLabels trace.triangle = faces trace.source := by
   rw [selected.traces_eq] at member
-  exact Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.FaceBank.trace_projection
+  exact FaceBank.trace_projection
     sample.faces trace (Filter.mem_filter.mp member).1
 
 /-- Every selected trace's source index satisfies the selection predicate.
 
 Membership is transferred through the retained filtered-list equality,
 keeping the predicate and the exact source occurrence together. -/
-theorem trace_kept (selected : Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection sample keep)
-    (trace : SewnPrimitiveFaces.FaceTrace localValues sample.sewn.values) (member : trace ∈ selected.traces) : keep
+theorem trace_kept (selected : FaceSelection sample keep)
+    (trace : FaceTrace localValues sample.sewn.values) (member : trace ∈ selected.traces) : keep
       trace.source = true := by
   rw [selected.traces_eq] at member
   exact (Filter.mem_filter.mp member).2
@@ -137,7 +137,7 @@ open Purelib.Topology.Polygon in
 
 The retained triangle and trace readbacks identify the same selected
 occurrences, preserving their boundary order and energy values. -/
-theorem area_readback (selected : Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection sample
+theorem area_readback (selected : FaceSelection sample
   keep) :
     selected.area = CellBoundary.sumValues (fun trace => Stokes.edgeListArea sample.energyValues
       trace.triangle.boundary)
@@ -153,14 +153,14 @@ open Purelib.Topology.Surface.Sewing
 
 Both selections retain the same sample. Their complementary predicates
 partition its face occurrences and the exact sewn boundary-area equality. -/
-theorem partition (selected : Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection sample keep)
-    (remaining : Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection sample (fun index => !(keep
+theorem partition (selected : FaceSelection sample keep)
+    (remaining : FaceSelection sample (fun index => !(keep
       index))) :
     selected.area + remaining.area = sample.boundaryArea := by
   rw [selected.area_readback, remaining.area_readback,
     CellBoundary.sum_filter_partition]
   rw [← CellBoundary.sumValues_map (fun triangle : Stokes.OrientedTriangle patch.cut.count =>
-    Stokes.edgeListArea sample.energyValues triangle.boundary) SewnPrimitiveFaces.FaceTrace.triangle,
+    Stokes.edgeListArea sample.energyValues triangle.boundary) FaceTrace.triangle,
     sample.faces.triangles_eq, ← WitnessReadbacks.triangles_area]
   exact sample.surface_eq_boundary
 
@@ -171,22 +171,22 @@ All selections retain the same original sewn sample and source indices, so the f
 theorem family_partition {Label : Type} (labels : List Label) (keep : Label → Fin faceCount → Bool)
     (disjoint : labels.Pairwise (fun first second => ∀ index,
       keep first index = true → keep second index = true → False))
-    (selected : (label : Label) → Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection sample
+    (selected : (label : Label) → FaceSelection sample
       (keep label))
-    (remaining : Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection sample (fun index =>
+    (remaining : FaceSelection sample (fun index =>
       !(labels.any (fun label => keep label index)))) :
     CellBoundary.sumValues (fun label => (selected label).area) labels + remaining.area = sample.boundaryArea := by
   have areas := CellBoundary.sumValues_congr _ _ labels
     (fun label _ => (selected label).area_readback)
-  have separate : labels.Pairwise (fun first second => ∀ trace : SewnPrimitiveFaces.FaceTrace localValues
+  have separate : labels.Pairwise (fun first second => ∀ trace : FaceTrace localValues
     sample.sewn.values,
       keep first trace.source = true → keep second trace.source = true → False) :=
-    disjoint.imp (fun separated (trace : SewnPrimitiveFaces.FaceTrace localValues sample.sewn.values) => separated
+    disjoint.imp (fun separated (trace : FaceTrace localValues sample.sewn.values) => separated
       trace.source)
   rw [areas, ← CellBoundary.sum_filter_family _ _ labels separate,
     remaining.area_readback, CellBoundary.sum_filter_partition]
   rw [← CellBoundary.sumValues_map (fun triangle : Stokes.OrientedTriangle patch.cut.count =>
-    Stokes.edgeListArea sample.energyValues triangle.boundary) SewnPrimitiveFaces.FaceTrace.triangle,
+    Stokes.edgeListArea sample.energyValues triangle.boundary) FaceTrace.triangle,
     sample.faces.triangles_eq, ← WitnessReadbacks.triangles_area]
   exact sample.surface_eq_boundary
 
@@ -202,7 +202,7 @@ distinct. -/
 structure AreaExcision where
   /-- The retained predicate selecting the original faces that remain. -/ keep : Fin faceCount → Bool
   /-- The retained remaining selection indexed by the exact original sample and predicate. -/ remaining :
-    Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection sample keep
+    FaceSelection sample keep
   /-- The retained signed area removed from the original sample. -/ removedArea : Basic.Canonical
   /-- The removed and remaining cached areas add to the original boundary area. -/ partition : removedArea +
     remaining.area = sample.boundaryArea
@@ -219,10 +219,10 @@ open Purelib.Integration in
 The retained remaining selection keeps the complement predicate, and the removed area reuses the original selected cache
 with its partition equality. -/
 @[expose] def build {keep : Fin faceCount → Bool}
-    (removed : Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection sample keep)
-    (remaining : Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection
+    (removed : FaceSelection sample keep)
+    (remaining : FaceSelection
       sample (fun index => !(keep index))) :
-    Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.AreaExcision sample :=
+    AreaExcision sample :=
   ⟨_, remaining, removed.area, removed.partition remaining⟩
 
 open Purelib.Data.Gaussian in
@@ -231,7 +231,7 @@ open Purelib.Integration in
 
 The excision partition retains signed removed and remaining contributions,
 so the scalar error equals that of the full sample against the reference. -/
-theorem comparison_error (excision : Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.AreaExcision sample)
+theorem comparison_error (excision : AreaExcision sample)
     (periodArea : Basic.Canonical) :
     excision.remaining.area - (periodArea - excision.removedArea) = sample.boundaryArea - periodArea := by
   rw [← excision.partition]
@@ -244,12 +244,12 @@ open Purelib.Integration in
 
 The same target and squared Gaussian error are retained while the reference
 area is adjusted by the cached signed removed contribution. -/
-theorem accurate (excision : Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.AreaExcision sample)
+theorem accurate (excision : AreaExcision sample)
     (periodArea : Basic.Canonical) {target : Fraction.Rational}
-    (bound : Data.Gaussian.Norm.Basic.normSq (sample.boundaryArea - periodArea) < target) :
-    Data.Gaussian.Norm.Basic.normSq
+    (bound : Norm.Basic.normSq (sample.boundaryArea - periodArea) < target) :
+    Norm.Basic.normSq
       (excision.remaining.area - (periodArea - excision.removedArea)) < target :=
-  Eq.mpr (congrArg (fun value => Data.Gaussian.Norm.Basic.normSq value < target)
+  Eq.mpr (congrArg (fun value => Norm.Basic.normSq value < target)
     (excision.comparison_error periodArea)) bound
 
 end AreaExcision

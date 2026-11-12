@@ -174,13 +174,13 @@ open Purelib.LinearAlgebra.Alternating.Handle.Basic (PivotIndices)
 open _root_.Purelib.LinearAlgebra.Alternating (NormalForm)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {source :
     Differential genus} {boundary :
     BoundaryProgram lifted
     source}
-  {segments : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank boundary.program.period}
+  {segments : PeriodSegmentBanks.SegmentBank boundary.program.period}
     {differential : Fin genus}
   {comparison : PrimitiveBank
     (FaceBank.ofSegments boundary.program segments)
@@ -195,26 +195,26 @@ set_option genInjectivity false in
 
 The retained boundary magnitude and word count pay every correction product; the actual period and contact requests
 share one cached minimum stage. -/
-structure WordAreaBudget (family : PeriodFamilies.PrimitiveFamily programs comparison.domains differential)
-    (prepared : BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch pairing
+structure WordAreaBudget (family : PrimitiveFamily programs comparison.domains differential)
+    (prepared : BoundaryContactPreparations lifted.cutPolygon.patch pairing
       (PeriodMatrix.standardDifferential differential) comparison.domains)
-    (reference : BoundaryPrimitiveReferences.BoundaryReference boundary comparison prepared.prepared)
-    (lengthBound : Nat) (pathTarget areaTarget : InverseRootPolynomial.Coordinate) (targets : Data.Vector
-      InverseRootPolynomial.Coordinate count) (floor : Nat) where
+    (reference : BoundaryReference boundary comparison prepared.prepared)
+    (lengthBound : Nat) (pathTarget areaTarget : Coordinate) (targets : Data.Vector
+      Coordinate count) (floor : Nat) where
   /-- The requested complete word-area target is strictly positive. -/ positive : 0 < areaTarget
   /-- The cached correction weight from the original boundary magnitude and complete word count. -/ weight :
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The retained correction weight is the exact original word-area weight. -/ weight_eq : weight =
     CutWordArea.areaWeight reference.bound boundary.count
   /-- The cached positive word-error target allocated from the original area target. -/ wordTarget :
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The word-error target is the weighted allowance for the retained correction scale. -/ wordTarget_eq : wordTarget =
     Weighted.allowance areaTarget weight
   /-- The cached stage floor shared by the original reference and word request. -/ minimum : Nat
   /-- The retained minimum is the maximum of the supplied floor and original reference contact stage. -/ minimum_eq :
     minimum = max floor reference.reference.contactRequest.index
   /-- The actual original word request paying the retained positive correction allowance. -/ word :
-    WordRequests.WordBudget family prepared lengthBound pathTarget wordTarget targets minimum
+    WordBudget family prepared lengthBound pathTarget wordTarget targets minimum
 
 constructive_injectivity WordAreaBudget
 
@@ -223,7 +223,7 @@ namespace WordAreaBudget
 variable {family : PrimitiveFamily programs
   comparison.domains differential}
   {prepared : BoundaryContactPreparations
-    lifted.cutPolygon.patch pairing (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential differential)
+    lifted.cutPolygon.patch pairing (PeriodMatrix.standardDifferential differential)
     comparison.domains}
   {reference : BoundaryReference boundary
     comparison prepared.prepared}
@@ -233,15 +233,15 @@ variable {family : PrimitiveFamily programs
 
 /-- Compute the original boundary correction weight and common reference stage, then prepare the exact retained word
 request. -/
-@[expose] def build (family : PeriodFamilies.PrimitiveFamily programs comparison.domains differential)
-    (prepared : BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch pairing
+@[expose] def build (family : PrimitiveFamily programs comparison.domains differential)
+    (prepared : BoundaryContactPreparations lifted.cutPolygon.patch pairing
       (PeriodMatrix.standardDifferential differential) comparison.domains)
-    (reference : BoundaryPrimitiveReferences.BoundaryReference boundary comparison prepared.prepared)
-    (lengthBound : Nat) (pathTarget : InverseRootPolynomial.Coordinate) (pathPositive : 0 < pathTarget)
-    (areaTarget : InverseRootPolynomial.Coordinate) (areaPositive : 0 < areaTarget)
-    (targets : Data.Vector InverseRootPolynomial.Coordinate count) (positive : ∀ index, 0 < targets index)
+    (reference : BoundaryReference boundary comparison prepared.prepared)
+    (lengthBound : Nat) (pathTarget : Coordinate) (pathPositive : 0 < pathTarget)
+    (areaTarget : Coordinate) (areaPositive : 0 < areaTarget)
+    (targets : Data.Vector Coordinate count) (positive : ∀ index, 0 < targets index)
       (floor : Nat) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordAreaRequests.WordAreaBudget family prepared reference lengthBound
+    WordAreaBudget family prepared reference lengthBound
       pathTarget areaTarget targets floor :=
   let weight := CutWordArea.areaWeight reference.bound boundary.count
   let wordTarget := Weighted.allowance areaTarget weight
@@ -253,7 +253,7 @@ request. -/
       lengthBound pathTarget pathPositive wordTarget wordPositive targets positive minimum⟩
 
 /-- The actual word-period stage pays the original boundary reference contact request. -/
-theorem reference_later (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordAreaRequests.WordAreaBudget family
+theorem reference_later (budget : WordAreaBudget family
   prepared reference lengthBound pathTarget areaTarget targets floor) :
     reference.reference.contactRequest.index ≤ budget.word.request.periods.index := by
   have floorLe : reference.reference.contactRequest.index ≤ budget.minimum := by
@@ -262,14 +262,14 @@ theorem reference_later (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.
   exact floorLe.trans budget.word.floor_le
 
 /-- The actual word-period stage retains the supplied original minimum floor. -/
-theorem floor_le (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordAreaRequests.WordAreaBudget family prepared
+theorem floor_le (budget : WordAreaBudget family prepared
   reference lengthBound pathTarget areaTarget targets floor) :
     floor ≤ budget.word.request.periods.index := by
   have floorLe : floor ≤ budget.minimum := by rw [budget.minimum_eq]; exact Data.Nat.Order.le_max_left _ _
   exact floorLe.trans budget.word.floor_le
 
 /-- The retained per-pair allowance equals the original weighted area allocation at the complete word count. -/
-theorem perPair_eq (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordAreaRequests.WordAreaBudget family
+theorem perPair_eq (budget : WordAreaBudget family
   prepared reference lengthBound pathTarget areaTarget targets floor) :
     budget.word.request.perPair = Aggregate.perTerm
       (Weighted.allowance areaTarget
@@ -283,15 +283,15 @@ theorem perPair_eq (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordA
 
 /-- The original complete closed-word correction satisfies the requested area target using the retained boundary
 magnitude and contact estimates. -/
-theorem correction_accurate (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordAreaRequests.WordAreaBudget
+theorem correction_accurate (budget : WordAreaBudget
   family prepared reference lengthBound pathTarget areaTarget targets floor)
     {minimumStages : Data.Vector Nat count} {requested : PrimitiveFamily.Requested
       budget.word.request.periods minimumStages}
-    (sample : Requested.Sewn requested lifted.cutPolygon.patch) (centered : CenteredSewnSamples.Centered sample.surface)
+    (sample : Requested.Sewn requested lifted.cutPolygon.patch) (centered : Centered sample.surface)
     (wordSample : CutBoundaryWord.AreaSample (ProjectedEdgePairing.boundaryWord pairing) centered.energyValues
       (centered.energyValues lifted.cutPolygon.patch.cut.anchor)) :
     Data.Gaussian.Norm.Basic.normSq wordSample.closedCorrection < areaTarget := by
-  have endpoints (edge : Stokes.OrientedEdge lifted.cutPolygon.patch.cut.count) (member : edge ∈
+  have endpoints (edge : OrientedEdge lifted.cutPolygon.patch.cut.count) (member : edge ∈
     lifted.cutPolygon.patch.cut.boundary) :
       PrimitivePoint.Bounded (centered.energyValues edge.start) reference.bound ∧ PrimitivePoint.Bounded
         (centered.energyValues edge.finish) reference.bound := by
@@ -304,7 +304,7 @@ theorem correction_accurate (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.
       rw [centered.right_eq, centered.primitives_eq]
       simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using
         reference.finish_bounded budget.reference_later sample.triangles sample.surface edge member
-  have entryMember (entry : BoundaryWord.CutWordEntry lifted.cutPolygon.patch.cut.vertexLabels
+  have entryMember (entry : CutWordEntry lifted.cutPolygon.patch.cut.vertexLabels
     (ProjectedEdgePairing.boundaryWord pairing).alphabet.generators)
       (member : entry ∈ (ProjectedEdgePairing.boundaryWord pairing).alphabet.entries) : entry.edge ∈
         lifted.cutPolygon.patch.cut.boundary := by
@@ -338,11 +338,11 @@ theorem correction_accurate (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.
 
 /-- The target concerns the actual cached surface boundary and its entire computed matrix, with no caller-supplied drift
 or magnitude inequalities. -/
-theorem boundary_accurate (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordAreaRequests.WordAreaBudget family
+theorem boundary_accurate (budget : WordAreaBudget family
   prepared reference lengthBound pathTarget areaTarget targets floor)
     {minimumStages : Data.Vector Nat count} {requested : PrimitiveFamily.Requested
       budget.word.request.periods minimumStages}
-    (sample : Requested.Sewn requested lifted.cutPolygon.patch) (centered : CenteredSewnSamples.Centered sample.surface)
+    (sample : Requested.Sewn requested lifted.cutPolygon.patch) (centered : Centered sample.surface)
     (wordSample : CutBoundaryWord.AreaSample (ProjectedEdgePairing.boundaryWord pairing) centered.energyValues
       (centered.energyValues lifted.cutPolygon.patch.cut.anchor)) :
     Data.Gaussian.Norm.Basic.normSq (sample.surface.boundaryArea -
@@ -359,18 +359,18 @@ theorem boundary_accurate (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cu
 
 /-- Normalizing the paired block removes only the now-paid compatibility correction. The one-sided and mixed
 physical-boundary matrix remains. -/
-theorem handles_accurate (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordAreaRequests.WordAreaBudget family
+theorem handles_accurate (budget : WordAreaBudget family
   prepared reference lengthBound pathTarget areaTarget targets floor)
     {minimumStages : Data.Vector Nat count} {requested : PrimitiveFamily.Requested
       budget.word.request.periods minimumStages}
-    (sample : Requested.Sewn requested lifted.cutPolygon.patch) (centered : CenteredSewnSamples.Centered sample.surface)
+    (sample : Requested.Sewn requested lifted.cutPolygon.patch) (centered : Centered sample.surface)
     (wordSample : CutBoundaryWord.AreaSample (ProjectedEdgePairing.boundaryWord pairing) centered.energyValues
       (centered.energyValues lifted.cutPolygon.patch.cut.anchor))
-    (integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord (ProjectedEdgePairing.boundaryWord pairing)) {raw
+    (integral : IntegralPairing.CutBoundaryWord (ProjectedEdgePairing.boundaryWord pairing)) {raw
       : List
-      (Handle.Basic.PivotIndices (ProjectedEdgePairing.boundaryWord pairing).alphabet.count)}
+      (PivotIndices (ProjectedEdgePairing.boundaryWord pairing).alphabet.count)}
     (normal : LinearAlgebra.Alternating.NormalForm integral.paired raw) (evaluated :
-      Topology.Surface.Boundary.NormalFormArea normal
+      NormalFormArea normal
       wordSample.values) :
     Data.Gaussian.Norm.Basic.normSq (sample.surface.boundaryArea - (2 * evaluated.area +
       Pairing.contract (fun row column => integral.remaining row column) wordSample.values)) < areaTarget := by

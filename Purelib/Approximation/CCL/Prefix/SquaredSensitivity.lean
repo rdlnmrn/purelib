@@ -23,6 +23,8 @@ import Purelib.Data.Rat.Fraction
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Geometry.Projective.Line
+
 open Purelib
 
 open Purelib.Approximation.CCL
@@ -67,10 +69,10 @@ namespace Purelib.Approximation.CCL.Prefix
 
 /-- Canonical CCL realizations inherit the squared probe-separation budget of their completed prefix. -/
 theorem realized_probe_separation_sq_le
-    {blocks : List Data.CCL.Encoding.Block} {leftPoint rightPoint : Geometry.Projective.Line.GaussianLine}
-    (leftRealizes : Cylinder.Basic.Realizes blocks leftPoint)
-    (rightRealizes : Cylinder.Basic.Realizes blocks rightPoint)
-    (probe : Geometry.Projective.Line.GaussianLine → Coordinate) (factor : Coordinate)
+    {blocks : List Block} {leftPoint rightPoint : GaussianLine}
+    (leftRealizes : Realizes blocks leftPoint)
+    (rightRealizes : Realizes blocks rightPoint)
+    (probe : GaussianLine → Coordinate) (factor : Coordinate)
     (factorNonnegative : 0 ≤ factor)
     (sensitive : Probe.SquaredProbeSensitive probe factor) :
     Distance.rationalSeparation
@@ -86,10 +88,10 @@ theorem realized_probe_separation_sq_le
 
 /-- The same squared budget applies to exact projectively rescaled encoder traces. -/
 theorem projectiveRealized_probe_separation_sq_le
-    {blocks : List Data.CCL.Encoding.Block} {leftPoint rightPoint : Geometry.Projective.Line.GaussianLine}
-    (leftRealizes : Projective.ProjectiveRealizes blocks leftPoint)
-    (rightRealizes : Projective.ProjectiveRealizes blocks rightPoint)
-    (probe : Geometry.Projective.Line.GaussianLine → Coordinate) (factor : Coordinate)
+    {blocks : List Block} {leftPoint rightPoint : GaussianLine}
+    (leftRealizes : ProjectiveRealizes blocks leftPoint)
+    (rightRealizes : ProjectiveRealizes blocks rightPoint)
+    (probe : GaussianLine → Coordinate) (factor : Coordinate)
     (factorNonnegative : 0 ≤ factor)
     (sensitive : Probe.SquaredProbeSensitive probe factor) :
     Distance.rationalSeparation
@@ -105,7 +107,7 @@ theorem projectiveRealized_probe_separation_sq_le
 /-- Meeting the squared-probe request makes one sensitivity-scaled cylinder budget at most half the square of the
 supplied rational tolerance. -/
 theorem scaledCylinderSpread_le_half_sq_of_requested
-    {blocks : List Data.CCL.Encoding.Block} (epsilon factor : Coordinate)
+    {blocks : List Block} (epsilon factor : Coordinate)
     (epsilonPositive : 0 < epsilon) (factorPositive : 0 < factor)
     (enough : Budget.requiredSquaredProbeBlockCount epsilon factor ≤
       blocks.length) :
@@ -136,10 +138,10 @@ theorem scaledCylinderSpread_le_half_sq_of_requested
 /-- A completed canonical prefix meeting the computed squared-probe request makes every two of its realizations strictly
 closer than the supplied positive rational probe tolerance. -/
 theorem realizedSquaredProbe_separation_lt_of_requested
-    {blocks : List Data.CCL.Encoding.Block} {leftPoint rightPoint : Geometry.Projective.Line.GaussianLine}
-    (leftRealizes : Cylinder.Basic.Realizes blocks leftPoint)
-    (rightRealizes : Cylinder.Basic.Realizes blocks rightPoint)
-    (probe : Geometry.Projective.Line.GaussianLine → Coordinate) (factor : Coordinate)
+    {blocks : List Block} {leftPoint rightPoint : GaussianLine}
+    (leftRealizes : Realizes blocks leftPoint)
+    (rightRealizes : Realizes blocks rightPoint)
+    (probe : GaussianLine → Coordinate) (factor : Coordinate)
     (factorPositive : 0 < factor)
     (sensitive : Probe.SquaredProbeSensitive probe factor)
     (epsilon : Coordinate) (epsilonPositive : 0 < epsilon)
@@ -147,9 +149,9 @@ theorem realizedSquaredProbe_separation_lt_of_requested
       blocks.length) :
     Distance.rationalSeparation
         (probe leftPoint) (probe rightPoint) < epsilon := by
-  have squaredLe := Approximation.CCL.Prefix.realized_probe_separation_sq_le leftRealizes rightRealizes
+  have squaredLe := realized_probe_separation_sq_le leftRealizes rightRealizes
     probe factor factorPositive.le sensitive
-  have budgetLe := Approximation.CCL.Prefix.scaledCylinderSpread_le_half_sq_of_requested epsilon factor
+  have budgetLe := scaledCylinderSpread_le_half_sq_of_requested epsilon factor
     epsilonPositive factorPositive enough
   have squaresSmall := squaredLe.trans_lt
     (budgetLe.trans_lt (Quadratic.Bounds.half_sq_lt_sq epsilonPositive))
@@ -158,10 +160,10 @@ theorem realizedSquaredProbe_separation_lt_of_requested
 /-- Projectively rescaled realizations meeting the same finite request obey the same strict rational probe-separation
 bound. -/
 theorem projectiveRealizedSquaredProbe_separation_lt_of_requested
-    {blocks : List Data.CCL.Encoding.Block} {leftPoint rightPoint : Geometry.Projective.Line.GaussianLine}
-    (leftRealizes : Projective.ProjectiveRealizes blocks leftPoint)
-    (rightRealizes : Projective.ProjectiveRealizes blocks rightPoint)
-    (probe : Geometry.Projective.Line.GaussianLine → Coordinate) (factor : Coordinate)
+    {blocks : List Block} {leftPoint rightPoint : GaussianLine}
+    (leftRealizes : ProjectiveRealizes blocks leftPoint)
+    (rightRealizes : ProjectiveRealizes blocks rightPoint)
+    (probe : GaussianLine → Coordinate) (factor : Coordinate)
     (factorPositive : 0 < factor)
     (sensitive : Probe.SquaredProbeSensitive probe factor)
     (epsilon : Coordinate) (epsilonPositive : 0 < epsilon)
@@ -169,9 +171,9 @@ theorem projectiveRealizedSquaredProbe_separation_lt_of_requested
       blocks.length) :
     Distance.rationalSeparation
         (probe leftPoint) (probe rightPoint) < epsilon := by
-  have squaredLe := Approximation.CCL.Prefix.projectiveRealized_probe_separation_sq_le
+  have squaredLe := projectiveRealized_probe_separation_sq_le
     leftRealizes rightRealizes probe factor factorPositive.le sensitive
-  have budgetLe := Approximation.CCL.Prefix.scaledCylinderSpread_le_half_sq_of_requested epsilon factor
+  have budgetLe := scaledCylinderSpread_le_half_sq_of_requested epsilon factor
     epsilonPositive factorPositive enough
   have squaresSmall := squaredLe.trans_lt
     (budgetLe.trans_lt (Quadratic.Bounds.half_sq_lt_sq epsilonPositive))

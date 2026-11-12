@@ -42,20 +42,20 @@ open Purelib.Approximation.Gaussian.Name.Coherent (CoherentNamed)
 /-! ## Ready output and schedule independence -/
 
 /-- The ordinary productive fractional output returned after readiness. -/
-def readyOutput (matrix : LinearAlgebra.Matrix.Basic.IntegralMatrix) (tau : Coherent.CoherentNamed)
-    (preparation : Division.Prepared.DenominatorPreparation
+def readyOutput (matrix : Basic.IntegralMatrix) (tau : CoherentNamed)
+    (preparation : Prepared.DenominatorPreparation
       (fractionalDenominator matrix tau)) : CoherentNamed :=
   fractionalLinear matrix tau preparation
 
 /-- Different finite schedules which prepare the same exact transformed denominator produce operationally equivalent
 outputs. -/
-def ready_respects (matrix : LinearAlgebra.Matrix.Basic.IntegralMatrix) (tau : Coherent.CoherentNamed)
-    (first second : Division.Prepared.DenominatorPreparation
+def ready_respects (matrix : Basic.IntegralMatrix) (tau : CoherentNamed)
+    (first second : Prepared.DenominatorPreparation
       (fractionalDenominator matrix tau)) :
-    Gaussian.Equivalence.NamedEquivalent
-      (Approximation.Gaussian.FractionalAction.Integral.Acquisition.Output.readyOutput matrix tau first).name
-      (Approximation.Gaussian.FractionalAction.Integral.Acquisition.Output.readyOutput matrix tau second).name := by
-  simpa only [Approximation.Gaussian.FractionalAction.Integral.Acquisition.Output.readyOutput] using
+    Equivalence.NamedEquivalent
+      (readyOutput matrix tau first).name
+      (readyOutput matrix tau second).name := by
+  simpa only [readyOutput] using
     Comparison.fractionalLinear_preparation_independent matrix tau first second
 end Purelib.Approximation.Gaussian.FractionalAction.Integral.Acquisition.Output
 
@@ -80,11 +80,11 @@ set_option genInjectivity false in
 
 The matrix satisfies the supplied specification; the output equality identifies the cached executable value with
 evaluation using that exact matrix and preparation. -/
-structure ReadyPayload (specification : LinearAlgebra.Matrix.Basic.IntegralMatrix → Prop)
-    (preparationType : LinearAlgebra.Matrix.Basic.IntegralMatrix → Type 1)
+structure ReadyPayload (specification : Basic.IntegralMatrix → Prop)
+    (preparationType : Basic.IntegralMatrix → Type 1)
     (evaluate :
-      (matrix : LinearAlgebra.Matrix.Basic.IntegralMatrix) → preparationType matrix → Coherent.CoherentNamed) where
-  /-- The cached integral matrix used by the prepared action. -/ matrix : LinearAlgebra.Matrix.Basic.IntegralMatrix
+      (matrix : Basic.IntegralMatrix) → preparationType matrix → Coherent.CoherentNamed) where
+  /-- The cached integral matrix used by the prepared action. -/ matrix : Basic.IntegralMatrix
   /-- The cached matrix satisfies the requested matrix specification. -/ matrix_eq : specification matrix
   /-- The retained preparation indexed by the cached matrix. -/ preparation : preparationType matrix
   /-- The cached coherent result of the prepared action. -/ output : Coherent.CoherentNamed

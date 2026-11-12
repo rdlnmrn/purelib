@@ -56,20 +56,20 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes (Regu
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes (CommonCuts Preflights)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest (TwoSheetRequest)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {faces : List
-    (Purelib.Riemann.Meshes.PuncturedGridFaces.RegularFace bank)} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces}
-  {cuts : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+    (RegularFace bank)} {domains :
+    FaceDomainBank frames faces}
+  {cuts : CommonCuts domains}
     {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
-    {target : Purelib.Data.Rat.Fraction.Rational}
+    Preflights domains sheet}
+    {target : Rational}
 
-variable (request : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet
-  => Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet
+variable (request : TwoSheetRequest (fun sheet
+  => RegularMeshes.build domains cuts sheet
   coarseDepth) fixed target)
 
 /-- Match the actual top and bottom observation boundaries of two vertically adjacent retained faces.
@@ -82,7 +82,7 @@ def matchedTopBottom (firstSheet lastSheet : Fin 2) (first last : Fin faces.leng
     (adjacent : faces[first.val].cell.box.yUpper = faces[last.val].cell.box.yLower) :
     let firstMesh := (request.entries.get firstSheet).meshes.entries.get first
     let lastMesh := (request.entries.get lastSheet).meshes.entries.get last
-    ObservationMesh.MatchedHorizontalSide firstMesh lastMesh
+    MatchedHorizontalSide firstMesh lastMesh
       (Fin.cast firstMesh.boundaryRows_eq (Fin.last firstMesh.boundaryRows))
       (Fin.cast lastMesh.boundaryRows_eq 0) faces[first.val].cell.box.yUpper := by
   let firstMesh := (request.entries.get firstSheet).meshes.entries.get first
@@ -107,7 +107,7 @@ def matchedRightLeft (firstSheet lastSheet : Fin 2) (first last : Fin faces.leng
     (adjacent : faces[first.val].cell.box.xUpper = faces[last.val].cell.box.xLower) :
     let firstMesh := (request.entries.get firstSheet).meshes.entries.get first
     let lastMesh := (request.entries.get lastSheet).meshes.entries.get last
-    ObservationMesh.MatchedVerticalSide firstMesh lastMesh
+    MatchedVerticalSide firstMesh lastMesh
       (Fin.cast firstMesh.boundaryColumns_eq (Fin.last firstMesh.boundaryColumns))
       (Fin.cast lastMesh.boundaryColumns_eq 0) faces[first.val].cell.box.xUpper := by
   let firstMesh := (request.entries.get firstSheet).meshes.entries.get first

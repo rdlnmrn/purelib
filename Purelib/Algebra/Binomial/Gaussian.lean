@@ -35,20 +35,20 @@ Pascal-recursive choose function. -/
 
 The bounded sum includes exactly row plus one terms, from column zero through the row. -/
 @[expose] def binomialSum (x y : Gaussian.Basic.Canonical) (row : Nat) : Gaussian.Basic.Canonical :=
-  Prefix.sum (Binomial.Gaussian.binomialTerm x y row) (row + 1)
+  Prefix.sum (binomialTerm x y row) (row + 1)
 
 /-- The first Gaussian binomial term is the second input raised to the row power. -/
 theorem binomialTerm_zero (x y : Gaussian.Basic.Canonical) (row : Nat) :
-    Binomial.Gaussian.binomialTerm x y row 0 = y ^ row := by
-  rw [Binomial.Gaussian.binomialTerm, Choose.Pascal.choose_zero_right, Nat.sub_zero, pow_zero]
+    binomialTerm x y row 0 = y ^ row := by
+  rw [binomialTerm, Choose.Pascal.choose_zero_right, Nat.sub_zero, pow_zero]
   apply Gaussian.Basic.ext <;>
     simp only [Gaussian.Basic.mul_re, Gaussian.Basic.mul_im, Gaussian.Basic.one_re, Gaussian.Basic.one_im, Nat.cast_one]
       <;> ring1
 
 /-- The first column beyond a Gaussian binomial row has zero term. -/
 theorem binomialTerm_beyond (x y : Gaussian.Basic.Canonical) (row : Nat) :
-    Binomial.Gaussian.binomialTerm x y row (row + 1) = 0 := by
-  rw [Binomial.Gaussian.binomialTerm, Choose.Pascal.choose_eq_zero_of_lt (Nat.lt_succ_self row)]
+    binomialTerm x y row (row + 1) = 0 := by
+  rw [binomialTerm, Choose.Pascal.choose_eq_zero_of_lt (Nat.lt_succ_self row)]
   change _ * (0 : Gaussian.Basic.Canonical) = 0
   exact Gaussian.Basic.mul_zero _
 
@@ -58,13 +58,13 @@ For a column within the preceding row, the new term is the sum of the two neighb
 corresponding input. -/
 theorem binomialTerm_pascal (x y : Gaussian.Basic.Canonical) (row column : Nat)
     (order : column ≤ row) :
-    Binomial.Gaussian.binomialTerm x y (row + 1) (column + 1) =
-      x * Binomial.Gaussian.binomialTerm x y row column +
-        y * Binomial.Gaussian.binomialTerm x y row (column + 1) := by
+    binomialTerm x y (row + 1) (column + 1) =
+      x * binomialTerm x y row column +
+        y * binomialTerm x y row (column + 1) := by
   by_cases endpoint : column = row
   · subst column
-    rw [Binomial.Gaussian.binomialTerm_beyond]
-    simp only [Binomial.Gaussian.binomialTerm, Choose.Pascal.choose_self, Nat.sub_self,
+    rw [binomialTerm_beyond]
+    simp only [binomialTerm, Choose.Pascal.choose_self, Nat.sub_self,
       pow_zero, pow_succ]
     rw [Gaussian.Basic.mul_zero,
       Gaussian.Basic.add_zero]
@@ -74,7 +74,7 @@ theorem binomialTerm_pascal (x y : Gaussian.Basic.Canonical) (row column : Nat)
   · have strict : column < row := Nat.lt_of_le_of_ne order endpoint
     have subtractionIdentity :
         row - column = (row - (column + 1)) + 1 := by omega
-    rw [Binomial.Gaussian.binomialTerm, Binomial.Gaussian.binomialTerm, Binomial.Gaussian.binomialTerm,
+    rw [binomialTerm, binomialTerm, binomialTerm,
       Choose.Pascal.choose_succ_succ,
       Nat.succ_sub_succ_eq_sub, pow_succ, subtractionIdentity, pow_succ,
       NatCast.add]
@@ -85,32 +85,32 @@ theorem binomialTerm_pascal (x y : Gaussian.Basic.Canonical) (row column : Nat)
 
 The bounded sums retain exactly their respective row lengths. -/
 theorem binomialSum_succ (x y : Gaussian.Basic.Canonical) (row : Nat) :
-    Binomial.Gaussian.binomialSum x y (row + 1) = (x + y) * Binomial.Gaussian.binomialSum x y row := by
-  rw [Binomial.Gaussian.binomialSum, Binomial.Gaussian.binomialSum, Prefix.sum_succ_front,
-    Binomial.Gaussian.binomialTerm_zero]
+    binomialSum x y (row + 1) = (x + y) * binomialSum x y row := by
+  rw [binomialSum, binomialSum, Prefix.sum_succ_front,
+    binomialTerm_zero]
   have pascalSum :
       Prefix.sum
-          (fun index => Binomial.Gaussian.binomialTerm x y (row + 1) (index + 1))
+          (fun index => binomialTerm x y (row + 1) (index + 1))
           (row + 1) =
         Prefix.sum
           (fun index =>
-            x * Binomial.Gaussian.binomialTerm x y row index +
-              y * Binomial.Gaussian.binomialTerm x y row (index + 1))
+            x * binomialTerm x y row index +
+              y * binomialTerm x y row (index + 1))
           (row + 1) :=
     Prefix.sum_congr_lt (row + 1)
       (fun index order =>
-        Binomial.Gaussian.binomialTerm_pascal x y row index (Nat.le_of_lt_succ order))
+        binomialTerm_pascal x y row index (Nat.le_of_lt_succ order))
   have shiftedEnd :
-      Prefix.sum (fun index => Binomial.Gaussian.binomialTerm x y row (index + 1)) (row + 1) =
-        Prefix.sum (fun index => Binomial.Gaussian.binomialTerm x y row (index + 1)) row := by
-    rw [Prefix.sum_succ, Binomial.Gaussian.binomialTerm_beyond,
+      Prefix.sum (fun index => binomialTerm x y row (index + 1)) (row + 1) =
+        Prefix.sum (fun index => binomialTerm x y row (index + 1)) row := by
+    rw [Prefix.sum_succ, binomialTerm_beyond,
       Gaussian.Basic.add_zero]
   rw [pascalSum, Prefix.sum_add,
-    ← Prefix.mul_sum_left x (Binomial.Gaussian.binomialTerm x y row),
+    ← Prefix.mul_sum_left x (binomialTerm x y row),
     ← Prefix.mul_sum_left y
-      (fun index => Binomial.Gaussian.binomialTerm x y row (index + 1)),
+      (fun index => binomialTerm x y row (index + 1)),
     shiftedEnd,
-    Prefix.sum_succ_front (Binomial.Gaussian.binomialTerm x y row), Binomial.Gaussian.binomialTerm_zero, pow_succ]
+    Prefix.sum_succ_front (binomialTerm x y row), binomialTerm_zero, pow_succ]
   apply Gaussian.Basic.ext <;>
     simp only [Gaussian.Basic.add_re, Gaussian.Basic.add_im, Gaussian.Basic.mul_re, Gaussian.Basic.mul_im] <;> ring1
 
@@ -124,21 +124,21 @@ namespace Purelib.Algebra.Binomial.Gaussian
 /-- The bounded Gaussian binomial row sum equals the power of the input sum.
 
 Finite recursion covers every natural row without an infinite series. -/
-public theorem binomial (x y : Purelib.Data.Gaussian.Basic.Canonical) : ∀ row : Nat,
-    Purelib.Algebra.Binomial.Gaussian.binomialSum x y row = (x + y) ^ row
+public theorem binomial (x y : Data.Gaussian.Basic.Canonical) : ∀ row : Nat,
+    binomialSum x y row = (x + y) ^ row
   | 0 => by
-      rw [Purelib.Algebra.Binomial.Gaussian.binomialSum, Purelib.Algebra.FiniteSum.Prefix.sum_succ,
-        Purelib.Algebra.FiniteSum.Prefix.sum_zero,
-        Purelib.Algebra.Binomial.Gaussian.binomialTerm_zero, pow_zero, pow_zero]
-      apply Purelib.Data.Gaussian.Basic.ext <;>
-        simp only [Purelib.Data.Gaussian.Basic.add_re, Purelib.Data.Gaussian.Basic.add_im,
-          Purelib.Data.Gaussian.Basic.zero_re, Purelib.Data.Gaussian.Basic.zero_im,
-          Purelib.Data.Gaussian.Basic.one_re, Purelib.Data.Gaussian.Basic.one_im] <;> ring1
+      rw [binomialSum, FiniteSum.Prefix.sum_succ,
+        FiniteSum.Prefix.sum_zero,
+        binomialTerm_zero, pow_zero, pow_zero]
+      apply Data.Gaussian.Basic.ext <;>
+        simp only [Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im,
+          Data.Gaussian.Basic.zero_re, Data.Gaussian.Basic.zero_im,
+          Data.Gaussian.Basic.one_re, Data.Gaussian.Basic.one_im] <;> ring1
   | row + 1 => by
-      rw [Purelib.Algebra.Binomial.Gaussian.binomialSum_succ, Purelib.Algebra.Binomial.Gaussian.binomial x y row,
+      rw [binomialSum_succ, Gaussian.binomial x y row,
         pow_succ]
-      apply Purelib.Data.Gaussian.Basic.ext <;>
-        simp only [Purelib.Data.Gaussian.Basic.add_re, Purelib.Data.Gaussian.Basic.add_im,
-          Purelib.Data.Gaussian.Basic.mul_re, Purelib.Data.Gaussian.Basic.mul_im] <;> ring1
+      apply Data.Gaussian.Basic.ext <;>
+        simp only [Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im,
+          Data.Gaussian.Basic.mul_re, Data.Gaussian.Basic.mul_im] <;> ring1
 end Purelib.Algebra.Binomial.Gaussian
 end

@@ -36,26 +36,26 @@ namespace Purelib.RootIsolation.Track.CCL.Productivity
 /-- Every finite bit request extends the original track cursor's emitted prefix and produces exactly the requested
 number of bits. -/
 theorem initial_productive {p :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+  Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
   {ambient : Box}
-    (track : Track.Basic.WindingOneTrack p ambient) (count : Nat) :
-    (Track.Approximation.Name.initialNamed track).machine.emitted.IsPrefix
+    (track : Basic.WindingOneTrack p ambient) (count : Nat) :
+    (Approximation.Name.initialNamed track).machine.emitted.IsPrefix
         (Machine.Advance.advance
-          (Track.Approximation.Name.initialNamed track).machine count).emitted ∧
+          (Approximation.Name.initialNamed track).machine count).emitted ∧
       (Machine.Advance.advance
-          (Track.Approximation.Name.initialNamed track).machine count).emitted.length = count :=
-  (Track.Approximation.Name.initialNamed track).productive count
+          (Approximation.Name.initialNamed track).machine count).emitted.length = count :=
+  (Approximation.Name.initialNamed track).productive count
 
 /-- Advancing the initial retained track cursor preserves the machine grammar invariant. -/
 theorem initial_grammar {p :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+  Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
   {ambient : Box}
-    (track : Track.Basic.WindingOneTrack p ambient) (count : Nat) :
-    Data.CCL.Transducer.Machine.Grammar.Invariant
+    (track : Basic.WindingOneTrack p ambient) (count : Nat) :
+    Machine.Grammar.Invariant
       (Machine.Advance.advance
-        (Track.Approximation.Name.initialNamed track).machine count) :=
+        (Approximation.Name.initialNamed track).machine count) :=
   open Purelib.Approximation.Gaussian in Name.CCL.Grammar.Named.machine_advance_invariant
-    (Track.Approximation.Name.initialNamed track) count
+    (Approximation.Name.initialNamed track) count
 end Purelib.RootIsolation.Track.CCL.Productivity
 
 end

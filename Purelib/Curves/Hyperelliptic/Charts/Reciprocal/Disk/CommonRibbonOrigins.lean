@@ -85,36 +85,36 @@ open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 open Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision (Endpoint dyadicEdges)
 
 /-- Changing the original paired primitive origin subtracts its explicit endpoint wedge from finite dyadic area. -/
-theorem dyadicArea_sub_origin (values : InverseRootPolynomial.Coordinate → Stokes.PrimitivePoint) (origin :
-  Stokes.PrimitivePoint)
+theorem dyadicArea_sub_origin (values : InverseRootPolynomial.Coordinate → PrimitivePoint) (origin :
+  PrimitivePoint)
     (depth : Nat) (first last : InverseRootPolynomial.Coordinate) :
-    DyadicBilinearBoundaryRibbon.dyadicArea (fun parameter => (values parameter).sub origin) depth first last =
-      DyadicBilinearBoundaryRibbon.dyadicArea values depth first last - Stokes.edgeArea origin ((values last).sub
+    dyadicArea (fun parameter => (values parameter).sub origin) depth first last =
+      dyadicArea values depth first last - edgeArea origin ((values last).sub
         (values first)) := by
   induction depth generalizing first last with
   | zero =>
-    rw [DyadicBilinearBoundaryRibbon.dyadicArea_zero, DyadicBilinearBoundaryRibbon.dyadicArea_zero]; simp only
-      [-eq_self, -iff_self, Stokes.edgeArea, PrimitivePoint.sub]; ring1
+    rw [dyadicArea_zero, dyadicArea_zero]; simp only
+      [-eq_self, -iff_self, edgeArea, PrimitivePoint.sub]; ring1
   | succ depth ih =>
-      rw [DyadicBilinearBoundaryRibbon.dyadicArea_succ, DyadicBilinearBoundaryRibbon.dyadicArea_succ, ih, ih]
-      simp only [-eq_self, -iff_self, Stokes.edgeArea, PrimitivePoint.sub]
+      rw [dyadicArea_succ, dyadicArea_succ, ih, ih]
+      simp only [-eq_self, -iff_self, edgeArea, PrimitivePoint.sub]
       ring1
 
 /-- Summing original fine areas over a complete coarse dyadic edge list gives the combined-depth area. -/
-theorem dyadicEdges_sum_area (values : InverseRootPolynomial.Coordinate → Stokes.PrimitivePoint) (coarse fine : Nat)
-  (first last : ClearSheetContinuation.Subdivision.Endpoint) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum ((ClearSheetContinuation.Subdivision.dyadicEdges coarse first
-      last).map (fun edge => DyadicBilinearBoundaryRibbon.dyadicArea values fine edge.left.parameter
+theorem dyadicEdges_sum_area (values : InverseRootPolynomial.Coordinate → PrimitivePoint) (coarse fine : Nat)
+  (first last : Endpoint) :
+    gaussianSum ((dyadicEdges coarse first
+      last).map (fun edge => dyadicArea values fine edge.left.parameter
       edge.right.parameter)) =
-      DyadicBilinearBoundaryRibbon.dyadicArea values (coarse + fine) first.parameter last.parameter := by
+      dyadicArea values (coarse + fine) first.parameter last.parameter := by
   induction coarse generalizing first last with
   | zero =>
-      change DyadicBilinearBoundaryRibbon.dyadicArea values fine first.parameter last.parameter + 0 =
-        DyadicBilinearBoundaryRibbon.dyadicArea values (0 + fine) first.parameter last.parameter
+      change dyadicArea values fine first.parameter last.parameter + 0 =
+        dyadicArea values (0 + fine) first.parameter last.parameter
       rw [Nat.zero_add, add_zero]
   | succ coarse ih =>
-      rw [ClearSheetContinuation.Subdivision.dyadicEdges, Purelib.Data.List.Map.map_append, IncrementArea.sum_append,
-        ih, ih, Nat.succ_add, DyadicBilinearBoundaryRibbon.dyadicArea_succ]
+      rw [dyadicEdges, Data.List.Map.map_append, IncrementArea.sum_append,
+        ih, ih, Nat.succ_add, dyadicArea_succ]
       have middle : ClearSheetContinuation.midpoint first.parameter last.parameter =
           PreparedBoxPartitions.midpoint first.parameter last.parameter := by
         unfold ClearSheetContinuation.midpoint PreparedBoxPartitions.midpoint
@@ -124,9 +124,9 @@ theorem dyadicEdges_sum_area (values : InverseRootPolynomial.Coordinate → Stok
           _ = first.parameter * 2 + ((last.parameter - first.parameter) / 2) * 2 := by
             rw [Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)]; ring1
           _ = _ := by ring1
-      change DyadicBilinearBoundaryRibbon.dyadicArea values (coarse + fine) first.parameter
+      change dyadicArea values (coarse + fine) first.parameter
         (ClearSheetContinuation.midpoint _ _) +
-        DyadicBilinearBoundaryRibbon.dyadicArea values (coarse + fine) (ClearSheetContinuation.midpoint _ _)
+        dyadicArea values (coarse + fine) (ClearSheetContinuation.midpoint _ _)
           last.parameter = _
       rw [middle]
 
@@ -153,22 +153,22 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonOrigins.Bil
   dyadicEdges_sum_area)
 variable {genus count otherCount : Nat} {curve : HyperellipticCurve genus}
   {differential other : Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
   {parent : CenteredEdge curve differential} {patch :
     PreparedPatch parent}
   {otherPatch : PreparedPatch
-    (Purelib.Riemann.Integration.PreparedEdgeRecasting.recastCenteredEdge other parent)}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {otherData :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
+    (recastCenteredEdge other parent)}
+  {data : UniformReciprocalModels.Data patch count} {otherData :
+    UniformReciprocalModels.Data otherPatch otherCount}
   {firstCover : Cover data} {secondCover :
     Cover otherData}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {common :
+  {regular : RegularBounds.Data cap} {common :
     CommonCover firstCover secondCover}
-  {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {minimum stage depth : Nat} {box otherBox :
-    Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {target : InverseRootPolynomial.Coordinate} {minimum stage depth : Nat} {box otherBox :
+    Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Cap.Primitives.Sample cap other stage otherBox}
   {source : SourcePrimitive data stage}
     {otherSource : SourcePrimitive otherData
     stage}
@@ -176,75 +176,75 @@ variable {genus count otherCount : Nat} {curve : HyperellipticCurve genus}
     target minimum}
 
 /-- Pair the two original source primitive values before subtracting their separate cell origins. -/
-@[expose] def sourceValues (source : UniformReciprocalPrimitives.SourcePrimitive data stage) (otherSource :
-  UniformReciprocalPrimitives.SourcePrimitive otherData stage)
+@[expose] def sourceValues (source : SourcePrimitive data stage) (otherSource :
+  SourcePrimitive otherData stage)
     (parameter : InverseRootPolynomial.Coordinate) : PrimitivePoint :=
   ⟨source.primitive.value.eval (parent.edge.point parameter), otherSource.primitive.value.eval (parent.edge.point
     parameter)⟩
 
 /-- Read both original source primitive origins from this exact retained interval's cell owners. -/
-@[expose] def Entry.sourceOrigin (entry : CommonRibbonRequest.Entry request sample otherSample source otherSource depth)
+@[expose] def Entry.sourceOrigin (entry : Entry request sample otherSample source otherSource depth)
   : PrimitivePoint :=
   ⟨source.primitive.value.eval (parent.edge.point entry.plan.interval.first.owner.left.parameter),
     otherSource.primitive.value.eval (parent.edge.point entry.plan.interval.second.owner.left.parameter)⟩
 
 /-- The explicit wedge of the retained original source origin with the interval's actual paired increment. -/
-@[expose] def Entry.sourceOriginTerm (entry : CommonRibbonRequest.Entry request sample otherSample source otherSource
-  depth) : Data.Gaussian.Basic.Canonical :=
-  Stokes.edgeArea entry.sourceOrigin
+@[expose] def Entry.sourceOriginTerm (entry : Entry request sample otherSample source otherSource
+  depth) : Canonical :=
+  edgeArea entry.sourceOrigin
     ((sourceValues source otherSource
     entry.plan.interval.edge.right.parameter).sub
     (sourceValues source otherSource
       entry.plan.interval.edge.left.parameter))
 
 /-- Adding the actual retained source-origin correction recovers the original unanchored finite dyadic source area. -/
-theorem Entry.source_area_unanchored (entry : CommonRibbonRequest.Entry request sample otherSample source otherSource
+theorem Entry.source_area_unanchored (entry : Entry request sample otherSample source otherSource
   depth) :
-    entry.evaluated.sourceArea + entry.sourceOriginTerm = DyadicBilinearBoundaryRibbon.dyadicArea
+    entry.evaluated.sourceArea + entry.sourceOriginTerm = dyadicArea
       (sourceValues source
       otherSource) depth
       entry.plan.interval.edge.left.parameter entry.plan.interval.edge.right.parameter := by
   rw [entry.evaluated.sourceArea_eq]
-  change DyadicBilinearBoundaryRibbon.dyadicArea (fun parameter =>
+  change dyadicArea (fun parameter =>
     (sourceValues source otherSource
     parameter).sub entry.sourceOrigin) depth _ _ + _ = _
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonOrigins.Bilinear.dyadicArea_sub_origin]
+  rw [CommonRibbonOrigins.Bilinear.dyadicArea_sub_origin]
   change (_ - entry.sourceOriginTerm) + entry.sourceOriginTerm = _
   ring1
 
 /-- Adding the actual retained source-origin correction recovers the original unanchored finite dyadic source area. -/
-theorem Evaluation.source_area_unanchored (evaluated : CommonRibbonRequest.Evaluation request sample otherSample source
+theorem Evaluation.source_area_unanchored (evaluated : Evaluation request sample otherSample source
   otherSource depth) :
-    evaluated.sourceArea + Data.Gaussian.Norm.Sum.Basic.gaussianSum (evaluated.entries.map
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.Entry.sourceOriginTerm) =
-      DyadicBilinearBoundaryRibbon.dyadicArea
+    evaluated.sourceArea + gaussianSum (evaluated.entries.map
+      Entry.sourceOriginTerm) =
+      dyadicArea
         (sourceValues source
         otherSource) (common.depth + depth) 0 1 := by
-  have aggregate (entries : List (CommonRibbonRequest.Entry request sample otherSample source otherSource depth)) :
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map (fun entry => entry.evaluated.sourceArea)) +
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map
-        Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.Entry.sourceOriginTerm) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map (fun entry => DyadicBilinearBoundaryRibbon.dyadicArea
+  have aggregate (entries : List (Entry request sample otherSample source otherSource depth)) :
+      gaussianSum (entries.map (fun entry => entry.evaluated.sourceArea)) +
+        gaussianSum (entries.map
+        Entry.sourceOriginTerm) =
+      gaussianSum (entries.map (fun entry => dyadicArea
         (sourceValues source
         otherSource) depth
         entry.plan.interval.edge.left.parameter entry.plan.interval.edge.right.parameter)) := by
     induction entries with
-    | nil => change (0 : Data.Gaussian.Basic.Canonical) + 0 = 0; ring1
+    | nil => change (0 : Canonical) + 0 = 0; ring1
     | cons head tail ih =>
         change (_ + _) + (_ + _) = _ + _
-        have rearrange (a b c d : Data.Gaussian.Basic.Canonical) : (a + b) + (c + d) = (a + c) + (b + d) := by ring1
+        have rearrange (a b c d : Canonical) : (a + b) + (c + d) = (a + c) + (b + d) := by ring1
         rw [rearrange, head.source_area_unanchored, ih]
   have plans := congrArg (List.map (fun plan => plan.interval.edge)) evaluated.plans_eq
   have intervals := congrArg (List.map CommonInterval.edge) request.intervals_eq
-  rw [Purelib.Data.List.Map.map_map] at plans intervals
+  rw [Data.List.Map.map_map] at plans intervals
   have edges := (plans.trans intervals).trans common.edges_eq
   rw [evaluated.sourceArea_eq, aggregate]
-  have mapped := congrArg (fun edges => Data.Gaussian.Norm.Sum.Basic.gaussianSum (edges.map (fun edge =>
-    DyadicBilinearBoundaryRibbon.dyadicArea
+  have mapped := congrArg (fun edges => gaussianSum (edges.map (fun edge =>
+    dyadicArea
       (sourceValues source
       otherSource) depth edge.left.parameter edge.right.parameter))) edges
-  rw [Purelib.Data.List.Map.map_map] at mapped
-  exact mapped.trans (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonOrigins.Bilinear.dyadicEdges_sum_area _
+  rw [Data.List.Map.map_map] at mapped
+  exact mapped.trans (CommonRibbonOrigins.Bilinear.dyadicEdges_sum_area _
     common.depth depth _ _)
 
 namespace Evaluation
@@ -252,28 +252,28 @@ namespace Evaluation
 set_option genInjectivity false in
 /-- The actual source path and its one-pass summary, with every change of origin and the open-path endpoint chord
 retained in the correction. -/
-structure SourcePath (evaluated : CommonRibbonRequest.Evaluation request sample otherSample source otherSource depth)
+structure SourcePath (evaluated : Evaluation request sample otherSample source otherSource depth)
   where
-  /-- The cached original complete paired source increment path. -/ path : List Stokes.PrimitivePoint
+  /-- The cached original complete paired source increment path. -/ path : List PrimitivePoint
   /-- The retained source path uses the original paired values at the exact combined common-cover depth. -/ path_eq :
     path = DyadicPairedPrimitivePaths.increments
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues source otherSource)
+    (sourceValues source otherSource)
     (common.depth + depth) 0 1
-  /-- The cached original paired source path's total and area certificate. -/ summary : PairedIncrementArea.Summary path
-  /-- The cached sum of actual original source-origin correction wedges. -/ origins : Data.Gaussian.Basic.Canonical
+  /-- The cached original paired source path's total and area certificate. -/ summary : Summary path
+  /-- The cached sum of actual original source-origin correction wedges. -/ origins : Canonical
   /-- The origin correction is exactly the sum over the retained original interval entries. -/ origins_eq : origins =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (evaluated.entries.map
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.Entry.sourceOriginTerm)
-  /-- The cached original open source endpoint chord area. -/ chord : Data.Gaussian.Basic.Canonical
+    gaussianSum (evaluated.entries.map
+    Entry.sourceOriginTerm)
+  /-- The cached original open source endpoint chord area. -/ chord : Canonical
   /-- The chord is exactly the wedge of the original source values at parameters zero and one. -/ chord_eq : chord =
-    Stokes.edgeArea (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues
+    edgeArea (sourceValues
     source otherSource 0)
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues source otherSource
+    (sourceValues source otherSource
     1)
   /-- The original source path area equals the retained interval area plus origins minus the explicit endpoint chord. -/
     area_eq : summary.areaValue = evaluated.sourceArea + origins - chord
   /-- The cached full correction combining original ribbon endpoints, cell origins and the open chord. -/ correction :
-    Data.Gaussian.Basic.Canonical
+    Canonical
   /-- The retained full correction is exactly endpoint correction plus source origins minus chord. -/ correction_eq :
     correction = evaluated.endpoint + origins - chord
   /-- The actual original source path and retained cap areas satisfy the paid target after the full explicit correction.
@@ -284,16 +284,16 @@ constructive_injectivity SourcePath
 
 /-- Cache the original full paired source path and summary, retaining all cell-origin and open endpoint chord
 corrections. -/
-@[expose] def sourcePath (evaluated : CommonRibbonRequest.Evaluation request sample otherSample source otherSource
+@[expose] def sourcePath (evaluated : Evaluation request sample otherSample source otherSource
   depth) : SourcePath
   evaluated := by
-  let values := Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues source
+  let values := sourceValues source
     otherSource
   let path := DyadicPairedPrimitivePaths.increments values (common.depth + depth) 0 1
   let summary := Summary.build path
-  let origins := Data.Gaussian.Norm.Sum.Basic.gaussianSum (evaluated.entries.map
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.Entry.sourceOriginTerm)
-  let chord := Stokes.edgeArea (values 0) (values 1)
+  let origins := gaussianSum (evaluated.entries.map
+    Entry.sourceOriginTerm)
+  let chord := edgeArea (values 0) (values 1)
   have area : summary.areaValue = evaluated.sourceArea + origins - chord := by
     rw [summary.area_eq, DyadicPairedPrimitivePaths.increments_area, ← evaluated.source_area_unanchored]
   have equal : summary.areaValue - evaluated.capArea - (evaluated.endpoint + origins - chord) = evaluated.remainder :=

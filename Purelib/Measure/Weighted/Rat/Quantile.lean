@@ -14,6 +14,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Mathlib.Order.Basic
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 public section
 
@@ -120,12 +122,12 @@ weight subtracted, transporting its membership and strict/weak cut bounds back t
               (eventWeight_nonneg remaining (atMostEvent atom.item)))
       · let adjusted := level - atom.weight
         have atomLessLevel : atom.weight < level :=
-          Fraction.Order.Arithmetic.lt_of_not_ge_direct crosses
+          Arithmetic.lt_of_not_ge_direct crosses
         have adjustedPositive : 0 < adjusted :=
-          Fraction.Order.Arithmetic.sub_pos_direct atomLessLevel
+          Arithmetic.sub_pos_direct atomLessLevel
         have adjustedBounded : adjusted ≤ totalWeight remaining := by
           have shifted :=
-            Fraction.Order.Arithmetic.add_le_add_right_direct bounded
+            Arithmetic.add_le_add_right_direct bounded
               (-atom.weight)
           calc
             adjusted = level + -atom.weight := by
@@ -167,10 +169,10 @@ weight subtracted, transporting its membership and strict/weak cut bounds back t
                 atom.weight +
                   eventWeight remaining
                     (strictlyBelowEvent tailResult.threshold) :=
-              Fraction.Order.Arithmetic.add_le_add_direct
+              Arithmetic.add_le_add_direct
                 headContributionLe le_rfl
             _ < atom.weight + adjusted :=
-              Fraction.Order.Arithmetic.add_lt_add_left_direct
+              Arithmetic.add_lt_add_left_direct
                 tailResult.below atom.weight
             _ = level := by
               dsimp only [adjusted]
@@ -186,7 +188,7 @@ weight subtracted, transporting its membership and strict/weak cut bounds back t
             _ ≤ atom.weight +
                   eventWeight remaining
                     (atMostEvent tailResult.threshold) :=
-              Fraction.Order.Arithmetic.add_le_add_direct le_rfl
+              Arithmetic.add_le_add_direct le_rfl
                 tailResult.cumulative
 
 /-- The certified sorted quantile returns exactly the threshold computed by the retained numerical scan.
@@ -210,12 +212,12 @@ theorem sortedQuantile_threshold_eq :
         rw [dif_pos crosses, if_pos crosses]
       · let adjusted := level - atom.weight
         have atomLessLevel : atom.weight < level :=
-          Fraction.Order.Arithmetic.lt_of_not_ge_direct crosses
+          Arithmetic.lt_of_not_ge_direct crosses
         have adjustedPositive : 0 < adjusted :=
-          Fraction.Order.Arithmetic.sub_pos_direct atomLessLevel
+          Arithmetic.sub_pos_direct atomLessLevel
         have adjustedBounded : adjusted ≤ totalWeight remaining := by
           have shifted :=
-            Fraction.Order.Arithmetic.add_le_add_right_direct bounded
+            Arithmetic.add_le_add_right_direct bounded
               (-atom.weight)
           calc
             adjusted = level + -atom.weight := by

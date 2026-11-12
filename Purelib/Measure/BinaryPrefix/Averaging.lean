@@ -10,6 +10,8 @@ public import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.List.BinaryPrefix (CCLMeasureWord)
 
 section
@@ -53,7 +55,7 @@ theorem rawChildMean_sq_le (value : CCLMeasureWord →
   let rightValue := value (word ++ [true])
   change (half * leftValue + half * rightValue) ^ 2 ≤
     half * leftValue ^ 2 + half * rightValue ^ 2
-  apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  apply Arithmetic.le_of_sub_nonneg_direct
   have halfSubSquare : half - half ^ 2 = half ^ 2 := by
     decide
   have differenceIdentity :
@@ -71,9 +73,9 @@ theorem rawChildMean_sq_le (value : CCLMeasureWord →
         rw [halfSubSquare]
       _ = half ^ 2 * (leftValue - rightValue) ^ 2 := by ring1
   rw [differenceIdentity]
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.sq_nonneg_direct half)
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+  exact Arithmetic.mul_nonneg_direct
+    (Arithmetic.sq_nonneg_direct half)
+    (Arithmetic.sq_nonneg_direct _)
 
 /-- Iterate fair two-child averaging for the supplied finite number of levels.
 
@@ -94,7 +96,7 @@ def rawChildVariance (value : CCLMeasureWord → Fraction.Rational)
 theorem rawChildVariance_nonnegative
     (value : CCLMeasureWord → Fraction.Rational) (word : CCLMeasureWord) :
     0 ≤ rawChildVariance value word :=
-  Fraction.Order.Arithmetic.sub_nonneg_direct (rawChildMean_sq_le value word)
+  Arithmetic.sub_nonneg_direct (rawChildMean_sq_le value word)
 
 /-- A pointwise nonnegative observable has nonnegative two-child mean. -/
 theorem rawChildMean_nonnegative (value : CCLMeasureWord →
@@ -103,9 +105,9 @@ theorem rawChildMean_nonnegative (value : CCLMeasureWord →
     0 ≤ rawChildMean value word := by
   unfold rawChildMean
   exact add_nonneg
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    (Arithmetic.mul_nonneg_direct (by decide)
       (nonnegative (word ++ [false])))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    (Arithmetic.mul_nonneg_direct (by decide)
       (nonnegative (word ++ [true])))
 
 /-- Accumulate the conditional child variances through a finite binary refinement depth.

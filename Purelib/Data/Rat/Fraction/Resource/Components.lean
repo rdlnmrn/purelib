@@ -162,13 +162,19 @@ theorem Size.add_numerator_le (left right : Rational) :
 
 /-- The canonical product denominator is bounded by the product of the input denominators. -/
 theorem Size.mul_denominator_le (left right : Rational) :
-    (left * right).den ≤ left.den * right.den :=
-  mulRaw_denominator_le left right
+    (left * right).den ≤ left.den * right.den := by
+  change (mul left right).den ≤ _
+  rewrite [mul_eq_normalize]
+  exact (normalize_denominator_le (mulRaw left right)).trans
+    (mulRaw_denominator_le left right)
 
 /-- The canonical product numerator magnitude is bounded by the product of the input numerator magnitudes. -/
 theorem Size.mul_numerator_le (left right : Rational) :
-    (left * right).num.natAbs ≤ left.num.natAbs * right.num.natAbs :=
-  mulRaw_numerator_le left right
+    (left * right).num.natAbs ≤ left.num.natAbs * right.num.natAbs := by
+  change (mul left right).num.natAbs ≤ _
+  rewrite [mul_eq_normalize]
+  exact (normalize_numerator_le (mulRaw left right)).trans
+    (mulRaw_numerator_le left right)
 
 end
 

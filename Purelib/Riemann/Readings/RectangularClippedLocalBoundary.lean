@@ -53,6 +53,24 @@ original model cell. -/
   | triangle :: rest => PreparedBoxBoundary.coordinateWedge (values triangle.column triangle.row) triangle.triangle +
     localWedges values rest
 
+/-- Equal wedges at every original triangle yield equal complete ordered local sums.
+
+The pointwise scalar certificate uses each retained triangle's column, row
+and corners. Structural recursion transports that head equality and the
+unchanged tail without comparing whole value functions.
+-/
+theorem localWedges_congr
+    (first last : Fin (columns + 1) → Fin (rows + 1) → Gaussian → PrimitivePoint)
+    (agree : ∀ triangle : ModelTriangle geometry,
+      coordinateWedge (first triangle.column triangle.row) triangle.triangle =
+      coordinateWedge (last triangle.column triangle.row) triangle.triangle)
+    (triangles : List (ModelTriangle geometry)) :
+    localWedges first triangles = localWedges last triangles := by
+  induction triangles with
+  | nil => rfl
+  | cons triangle rest ih =>
+      exact congrArg₂ (fun head tail : Gaussian => head + tail) (agree triangle) ih
+
 /-- The owner-indexed local wedge sum preserves concatenation of the original triangle lists.
 
 The head wedge remains fixed while scalar addition transports the tail

@@ -17,6 +17,9 @@ from .typed import TypedDecoder
 
 class KernelError(Exception):pass
 
+class SuppliedRejection(KernelError):
+    """The kernel rejected an actual supplied-body insertion attempt."""
+
 def digest(path):
     with Path(path).open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
 
@@ -115,6 +118,7 @@ class Native:
     def receive(self):
         header=self.read(9);tag=header[0];size=struct.unpack('<Q',header[1:])[0];body=self.read(size)
         if tag==1:raise KernelError(body.decode('utf8','strict'))
+        if tag==2:raise SuppliedRejection(body.decode('utf8','strict'))
         if tag!=0:raise InvalidArtifact('unknown native kernel response tag')
         return body
     def call(self,op,payload=b''):
@@ -125,13 +129,29 @@ class Native:
         if raw not in (b'\0',b'\1'):raise InvalidArtifact('invalid kernel membership result')
         return raw==b'\1'
     def add(self,slot,index,mode,name):self.call(5,struct.pack('<QQQ',slot,index,mode)+name.encode('utf8'))
+    def supplied(self,index,body='compiled'):
+        """Check a compiled theorem body and type under a fresh name.
+
+        The native service selects both expressions from its second loaded
+        artifact, constructs a theorem around them and checks it in an isolated
+        copy of the current environment. The other supported body selectors
+        request official-runtime construction of specific invalid expressions
+        for controls. A return proves a call reached the kernel; transport and
+        input failures are not kernel rejections.
+        """
+        selectors={'compiled':0,'unresolved':1,'metavariable':2,'loose-index':3,'wrong-type':4}
+        if body not in selectors:raise InvalidArtifact('unsupported supplied body selector')
+        result=self.call(9,struct.pack('<QQ',index,selectors[body]))
+        if result!=b'checked-insertion':raise InvalidArtifact('invalid supplied insertion response')
     def compare(self,op,index,name):self.call(op,struct.pack('<Q',index)+name.encode('utf8'))
     def close(self):
         try:
             if self.process.poll() is None:
                 try:self.call(0)
                 except (BrokenPipeError,InvalidArtifact,KernelError):pass
-            self.process.stdin.close();code=self.process.wait()
+            try:self.process.stdin.close()
+            except BrokenPipeError:pass
+            code=self.process.wait()
             stderr=self.process.stderr.read()
             if code not in (0,1) or stderr:raise InvalidArtifact('native kernel terminated unexpectedly: '+stderr.decode('utf8','replace'))
         finally:self.done.set();self.monitor.join();self.process.stdout.close();self.process.stderr.close()

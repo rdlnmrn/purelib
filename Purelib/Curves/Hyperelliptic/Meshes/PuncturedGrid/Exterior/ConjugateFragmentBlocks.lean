@@ -86,21 +86,21 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Gaussian.Norm.Basic (normSq_nonneg)
 open Purelib.Data.Rat.Fraction.Compatibility
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential} {target : Coordinate} {minimum
     stage fine index : Nat}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
   {plan : PairedSourcePlan occurrence
     other target minimum}
 
@@ -110,8 +110,8 @@ open Purelib.Integration.Path.DyadicConjugateIncrementComparison.PairedIncrement
 
 /-- Conjugating the first coordinate commutes with the original centered sample's increment list. -/
 private theorem conjugate_sample_increments {count : Nat}
-    {values : Fin (count + 1) → Stokes.PrimitivePoint} (original : CenteredBilinearPath.Sample values)
-    (changed : CenteredBilinearPath.Sample (fun vertex => ConjugateIncrementComparison.conjugateFirst (values vertex)))
+    {values : Fin (count + 1) → Stokes.PrimitivePoint} (original : Sample values)
+    (changed : Sample (fun vertex => ConjugateIncrementComparison.conjugateFirst (values vertex)))
       :
     (CenteredPathIncrements.Sample.increments original).map ConjugateIncrementComparison.conjugateFirst =
       (CenteredPathIncrements.Sample.increments changed) := by
@@ -144,17 +144,17 @@ theorem conjugate_area_accurate (fragment : PairedFragmentBlocks.OwnedFragment e
       PairedIncrementArea.area
         (conjugatePair
         fragment).2) ≤ fragment.areaError := by
-  let owned := CenteredBilinearPath.Sample.build (fun vertex => ConjugateIncrementComparison.conjugateFirst
+  let owned := Sample.build (fun vertex => ConjugateIncrementComparison.conjugateFirst
     (PairedOwnedFragments.ownedValues fragment.first fragment.second vertex))
-  let source := CenteredBilinearPath.Sample.build (fun vertex => ConjugateIncrementComparison.conjugateFirst
+  let source := Sample.build (fun vertex => ConjugateIncrementComparison.conjugateFirst
     (PairedFragmentValues.sourceValues fragment.entry (fragment.parameters vertex)))
   change Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area ((CenteredPathIncrements.Sample.increments
     fragment.owned).map ConjugateIncrementComparison.conjugateFirst) -
     PairedIncrementArea.area ((CenteredPathIncrements.Sample.increments fragment.source).map
       ConjugateIncrementComparison.conjugateFirst)) ≤ _
-  rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateFragmentBlocks.conjugate_sample_increments
+  rw [ConjugateFragmentBlocks.conjugate_sample_increments
     fragment.owned owned,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateFragmentBlocks.conjugate_sample_increments
+    ConjugateFragmentBlocks.conjugate_sample_increments
     fragment.source source,
     CenteredPathIncrements.Sample.increments_area owned, CenteredPathIncrements.Sample.increments_area source]
   exact ConjugateOwnedFragments.conjugate_owned_fragment_area_bound evaluated fragment.entry fragment.member
@@ -207,20 +207,20 @@ end OwnedFragment
 
 /-- Full flattened path comparison, including its cross-fragment polygon. The finite maxima are computed from the proved
 local bounds; no analytic estimate or equality of differently owned endpoints is an input. -/
-theorem conjugate_owned_fragments_area_bound {evaluated : PairedSourcePlan.ParentEvaluation plan sample otherSample
+theorem conjugate_owned_fragments_area_bound {evaluated : ParentEvaluation plan sample otherSample
   fine}
-    {data : PairedFragmentValues.FirstData occurrence index} {otherData : PairedFragmentValues.SecondData occurrence
+    {data : FirstData occurrence index} {otherData : SecondData occurrence
       other index}
     (fragments : List (PairedFragmentBlocks.OwnedFragment evaluated data otherData)) :
     Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area ((fragments.map
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateFragmentBlocks.OwnedFragment.conjugatePair).map
+      OwnedFragment.conjugatePair).map
       Prod.fst).flatten -
       PairedIncrementArea.area ((fragments.map
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateFragmentBlocks.OwnedFragment.conjugatePair).map
+        OwnedFragment.conjugatePair).map
         Prod.snd).flatten) ≤
       PairedFragmentBlocks.fragmentBlockError fragments := by
   have estimate := PairedBlockComparison.blocks_area_difference_bound (fragments.map
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateFragmentBlocks.OwnedFragment.conjugatePair)
+    OwnedFragment.conjugatePair)
     (PairedFragmentBlocks.maximum_nonnegative OwnedFragment.totalError fragments)
       (PairedFragmentBlocks.maximum_nonnegative OwnedFragment.totalBound fragments)
     (by
@@ -253,14 +253,14 @@ theorem conjugate_owned_fragments_area_bound {evaluated : PairedSourcePlan.Paren
         fragment).1.trans (PairedFragmentBlocks.le_maximum _ present),
         (OwnedFragment.conjugate_source_bounded
         fragment).2.trans (PairedFragmentBlocks.le_maximum _ present)⟩)
-  rwa [Data.List.Map.length_map] at estimate
+  rwa [Map.length_map] at estimate
 
 /-- The existing local allocation pays the conjugate full-path error too. -/
-theorem conjugate_owned_fragments_area_lt {evaluated : PairedSourcePlan.ParentEvaluation plan sample otherSample fine}
-    {data : PairedFragmentValues.FirstData occurrence index} {otherData : PairedFragmentValues.SecondData occurrence
+theorem conjugate_owned_fragments_area_lt {evaluated : ParentEvaluation plan sample otherSample fine}
+    {data : FirstData occurrence index} {otherData : SecondData occurrence
       other index}
     (fragments : List (PairedFragmentBlocks.OwnedFragment evaluated data otherData)) {bound target :
-      InverseRootPolynomial.Coordinate}
+      Coordinate}
     (nonnegative : 0 ≤ bound) (positive : 0 < target)
     (areas : ∀ fragment ∈ fragments, fragment.areaError ≤ PairedFragmentBlocks.fragmentLocalTolerance fragments.length
       bound target)
@@ -268,10 +268,10 @@ theorem conjugate_owned_fragments_area_lt {evaluated : PairedSourcePlan.ParentEv
       bound target)
     (totals : ∀ fragment ∈ fragments, fragment.totalBound ≤ bound) :
     Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area ((fragments.map
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateFragmentBlocks.OwnedFragment.conjugatePair).map
+      OwnedFragment.conjugatePair).map
       Prod.fst).flatten -
       PairedIncrementArea.area ((fragments.map
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateFragmentBlocks.OwnedFragment.conjugatePair).map
+        OwnedFragment.conjugatePair).map
         Prod.snd).flatten) < target :=
   (conjugate_owned_fragments_area_bound
     fragments).trans_lt
@@ -279,16 +279,16 @@ theorem conjugate_owned_fragments_area_lt {evaluated : PairedSourcePlan.ParentEv
 
 /-- Conjugating every retained fragment pair gives the conjugation of the complete original owned and source increment
 lists. -/
-private theorem conjugate_blocks {evaluated : PairedSourcePlan.ParentEvaluation plan sample otherSample fine}
-    {data : PairedFragmentValues.FirstData occurrence index} {otherData : PairedFragmentValues.SecondData occurrence
+private theorem conjugate_blocks {evaluated : ParentEvaluation plan sample otherSample fine}
+    {data : FirstData occurrence index} {otherData : SecondData occurrence
       other index}
     (fragments : List (PairedFragmentBlocks.OwnedFragment evaluated data otherData)) :
     ((fragments.map
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateFragmentBlocks.OwnedFragment.conjugatePair).map
+      OwnedFragment.conjugatePair).map
       Prod.fst).flatten =
       (((fragments.map OwnedFragment.pair).map Prod.fst).flatten).map ConjugateIncrementComparison.conjugateFirst ∧
     ((fragments.map
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateFragmentBlocks.OwnedFragment.conjugatePair).map
+      OwnedFragment.conjugatePair).map
       Prod.snd).flatten =
       (FragmentFamilies.fragmentSourcePath fragments).map conjugateFirst := by
   induction fragments with
@@ -298,32 +298,32 @@ private theorem conjugate_blocks {evaluated : PairedSourcePlan.ParentEvaluation 
     · change (CenteredPathIncrements.Sample.increments fragment.owned).map ConjugateIncrementComparison.conjugateFirst
         ++ _ =
         ((CenteredPathIncrements.Sample.increments fragment.owned) ++ _).map ConjugateIncrementComparison.conjugateFirst
-      rw [Data.List.Map.map_append, ih.1]
+      rw [Map.map_append, ih.1]
     · change (CenteredPathIncrements.Sample.increments fragment.source).map ConjugateIncrementComparison.conjugateFirst
         ++ _ =
         ((CenteredPathIncrements.Sample.increments fragment.source) ++ _).map
           ConjugateIncrementComparison.conjugateFirst
-      rw [Data.List.Map.map_append, ih.2]
+      rw [Map.map_append, ih.2]
       rfl
 
 /-- Compare the actual whole-side conjugate sample with the retained source path. The intervening owner junctions and
 complete polygon are preserved. -/
 theorem JoinedFragmentFamily.conjugate_area_bound
-    {evaluated : PairedSourcePlan.ParentEvaluation plan sample otherSample fine}
-    {data : PairedFragmentValues.FirstData occurrence index} {otherData : PairedFragmentValues.SecondData occurrence
+    {evaluated : ParentEvaluation plan sample otherSample fine}
+    {data : FirstData occurrence index} {otherData : SecondData occurrence
       other index}
     {Vertex : Type} {count : Nat}
     {values : Vertex → Stokes.PrimitivePoint}
-    {traces : Fin (count + 1) → JoinedTrace.VertexTrace Vertex}
+    {traces : Fin (count + 1) → VertexTrace Vertex}
     (family : FragmentFamilies.JoinedFragmentFamily (evaluated := evaluated) (data := data) (otherData := otherData)
       values traces)
-    {whole : JoinedTrace.VertexTrace Vertex}
-    (original : CenteredBilinearPath.Sample (fun vertex => ConjugateIncrementComparison.conjugateFirst (values
+    {whole : VertexTrace Vertex}
+    (original : Sample (fun vertex => ConjugateIncrementComparison.conjugateFirst (values
       (whole.indexed vertex))))
     (traceEq : whole = VertexTrace.concatenate traces) :
     Data.Gaussian.Norm.Basic.normSq (original.centeredArea - PairedIncrementArea.area
       (family.sourceIncrements.map ConjugateIncrementComparison.conjugateFirst)) ≤ family.error := by
-  let raw := CenteredBilinearPath.Sample.build (fun vertex => values (whole.indexed vertex))
+  let raw := Sample.build (fun vertex => values (whole.indexed vertex))
   have bound :=
     conjugate_owned_fragments_area_bound
     family.fragments

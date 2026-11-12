@@ -2,9 +2,11 @@
 """Exercise the real axiom verifier across explicit and old-style modules."""
 
 import hashlib
+import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -28,9 +30,15 @@ class AxiomModuleFixtureTests(unittest.TestCase):
         self.objects = self.root / "objects/ModuleVerification"
         self.sources.mkdir(parents=True)
         self.objects.mkdir(parents=True)
-        self.base_path = subprocess.check_output(
-            [str(LAKE), "env", "printenv", "LEAN_PATH"], cwd=ROOT, text=True).strip()
-        self.env = {**os.environ, "LEAN_PATH": f"{self.objects.parent}:{self.base_path}"}
+        raw = subprocess.check_output(
+            [str(LAKE), "env", "python3", "-c", "import json,os; print(json.dumps(dict(os.environ)))"],
+            cwd=ROOT, text=True)
+        self.env = json.loads(raw)
+        self.env["LEAN_PATH"] = str(self.objects.parent) + os.pathsep + self.env["LEAN_PATH"]
+        self.lean = shutil.which("lean", path=self.env["PATH"])
+        self.python = shutil.which("python3", path=self.env["PATH"])
+        self.assertIsNotNone(self.lean)
+        self.assertIsNotNone(self.python)
         for name in ("Explicit", "Facade", "Legacy"):
             source = (FIXTURES / f"{name}.lean").read_text()
             source = source.replace("propext Iff.rfl", "rfl")
@@ -38,8 +46,7 @@ class AxiomModuleFixtureTests(unittest.TestCase):
             self.compile(name)
 
     def run_lean(self, *args, success=True):
-        result = subprocess.run([str(LAKE), "env", "env", f"LEAN_PATH={self.env['LEAN_PATH']}",
-                                 "lean", *map(str, args)], cwd=ROOT, text=True,
+        result = subprocess.run([self.lean, *map(str, args)], cwd=ROOT, env=self.env, text=True,
                                 capture_output=True)
         if success:
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -61,10 +68,9 @@ class AxiomModuleFixtureTests(unittest.TestCase):
         imports = self.root / "imports.txt"
         imports.write_text("\n".join([modules[-1]] if transitive_only else modules) + "\n")
         # Audit assigned owners through their actual retained direct imports.
-        report = subprocess.run([str(LAKE), "env", "env", f"LEAN_PATH={self.env['LEAN_PATH']}",
-            "python3", ROOT / "scripts/project-module-data.py", "audit", "--project", project,
+        report = subprocess.run([self.python, ROOT / "scripts/project-module-data.py", "audit", "--project", project,
             "--assigned", assigned, "--imports", imports, "--canonical", "false", "--result", result],
-            cwd=ROOT, text=True, capture_output=True)
+            cwd=ROOT, env=self.env, text=True, capture_output=True)
         self.assertEqual(report.returncode == 0, success, report.stdout + report.stderr)
         return report, result
 
@@ -141,12 +147,11 @@ public theorem _root_.ModuleVerification._SourceNamespace.clean : True := by
         inventory = self.root / "inputs.json"
         manifest.write_text("ModuleVerification.Explicit\nModuleVerification.Facade\n"
                             "ModuleVerification.Legacy\n")
-        subprocess.run([str(LAKE), 'env', 'env', f"LEAN_PATH={self.env['LEAN_PATH']}",
-                        'python3', ROOT / 'scripts/project-module-data.py', 'inputs',
-                        manifest, inventory], cwd=ROOT, check=True)
+        subprocess.run([self.python, ROOT / 'scripts/project-module-data.py', 'inputs',
+                        manifest, inventory], cwd=ROOT, env=self.env, check=True)
         result = subprocess.run(
-            ["python3", "-m", "scripts.axioms.input_keys", "--lean-path",
-             self.env["LEAN_PATH"], str(inventory)], cwd=ROOT, text=True,
+            [self.python, "-m", "scripts.axioms.input_keys", "--lean-path",
+             self.env["LEAN_PATH"], str(inventory)], cwd=ROOT, env=self.env, text=True,
             capture_output=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         return dict(line.split("\t") for line in result.stdout.splitlines())
@@ -226,8 +231,8 @@ private structure _root_.ModuleVerification._SourceNamespace.Pair where
                       transitive_missing.stdout + transitive_missing.stderr)
         inventory = self.root / "inputs.json"
         key_result = subprocess.run(
-            ["python3", "-m", "scripts.axioms.input_keys", "--lean-path",
-             self.env["LEAN_PATH"], str(inventory)], cwd=ROOT, text=True,
+            [self.python, "-m", "scripts.axioms.input_keys", "--lean-path",
+             self.env["LEAN_PATH"], str(inventory)], cwd=ROOT, env=self.env, text=True,
             capture_output=True)
         self.assertNotEqual(key_result.returncode, 0)
         self.assertIn("missing compiled input", key_result.stderr)

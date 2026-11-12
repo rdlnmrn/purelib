@@ -53,6 +53,10 @@ import Purelib.Riemann.Periods.PeriodMatrix
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Riemann.Meshes.PuncturedGridFaces
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces
+
 public section
 
 /-! The fixed-corner sum is an exact sum of the retained source triangle areas. -/
@@ -72,21 +76,21 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.V
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
     bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
-  {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
-  {cuts : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
-    {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+  {faces : PuncturedFaces bank} {domains :
+    Face.DomainBanks.FaceDomainBank frames faces.regulars}
+  {cuts : RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
+    {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet} {target : Fraction.Rational}
   {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
   {firstPosition : Fin faces.regulars.length} {firstSheet : Fin 2}
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+variable {request : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+  RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
   target}
 
 variable {i j : Fin genus} {firstParent secondParent : Fin 2} {tolerance : Fraction.Rational} {floor stage : Nat}
@@ -94,68 +98,68 @@ variable {i j : Fin genus} {firstParent secondParent : Fin 2} {tolerance : Fract
 
 attribute [local congr] FiniteSum.Fin.sumFin_congr
 
-variable {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+variable {cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage}
 /-- The original upper triangle area for a matched horizontal crossing, or zero for a separated outcome. -/
 @[expose] def HorizontalOutcome.triangleArea (outcome :
-  Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.HorizontalOutcome request first nextPosition)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
-      Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
+  Matched.CrossingBank.HorizontalOutcome request first nextPosition)
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
+      TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
       Gaussian.Basic.Canonical :=
   match outcome with
-  | .matched _ => Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+  | .matched _ => CornerTriangleAreas.TriangleReadings.bilinearArea left right
     (mesh.triangleIndex firstPosition firstSheet true)
   | .separated _ => 0
 
 /-- The normalized horizontal corner jump is the negative of its retained source triangle area. -/
 theorem HorizontalOutcome.cornerJump_eq_triangleArea (outcome :
-  Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.HorizontalOutcome request first nextPosition)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
-      Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
+  Matched.CrossingBank.HorizontalOutcome request first nextPosition)
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
+      TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
     outcome.cornerJump cache.normalize i j =
-      -Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.HorizontalOutcome.triangleArea outcome left right := by
+      -HorizontalOutcome.triangleArea outcome left right := by
   cases outcome with
   | matched joined =>
-    exact Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.normalized_horizontal_jump left right
+    exact CornerTriangleAreas.TriangleReadings.normalized_horizontal_jump left right
       firstPosition nextPosition firstSheet joined.crossing.next.sheet
   | separated obstruction => exact (neg_zero).symm
 
 /-- The original lower triangle area for a matched vertical crossing, or zero for a separated outcome. -/
 @[expose] def VerticalOutcome.triangleArea (outcome :
-  Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.VerticalOutcome request first nextPosition)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
-      Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
+  Matched.CrossingBank.VerticalOutcome request first nextPosition)
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
+      TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
       Gaussian.Basic.Canonical :=
   match outcome with
-  | .matched _ => Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+  | .matched _ => CornerTriangleAreas.TriangleReadings.bilinearArea left right
     (mesh.triangleIndex firstPosition firstSheet false)
   | .separated _ => 0
 
 /-- The normalized vertical corner jump is its retained source triangle area. -/
 theorem VerticalOutcome.cornerJump_eq_triangleArea (outcome :
-  Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.VerticalOutcome request first nextPosition)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
-      Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
+  Matched.CrossingBank.VerticalOutcome request first nextPosition)
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
+      TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
     outcome.cornerJump cache.normalize i j =
-      Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.VerticalOutcome.triangleArea outcome left right := by
+      VerticalOutcome.triangleArea outcome left right := by
   cases outcome with
   | matched joined =>
-    exact Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.normalized_vertical_jump left right
+    exact CornerTriangleAreas.TriangleReadings.normalized_vertical_jump left right
       firstPosition nextPosition firstSheet joined.crossing.next.sheet
   | separated obstruction => rfl
 
 /-- The horizontal outcome selects exactly the original upper triangle when its two face boxes match. -/
 theorem HorizontalOutcome.triangleArea_eq_if (outcome :
-  Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.HorizontalOutcome request first nextPosition)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
-      Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
-    Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.HorizontalOutcome.triangleArea outcome left right =
+  Matched.CrossingBank.HorizontalOutcome request first nextPosition)
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
+      TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
+    HorizontalOutcome.triangleArea outcome left right =
       if Meshes.GridLiftedDualSteps.GridSide.Matches .top faces.regulars[firstPosition.val].cell.box
         faces.regulars[nextPosition.val].cell.box then
-        Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+        CornerTriangleAreas.TriangleReadings.bilinearArea left right
           (mesh.triangleIndex firstPosition firstSheet true) else 0 := by
   cases outcome with
   | matched joined =>
-    rw [if_pos (Hyperelliptic.Meshes.PuncturedGrid.NeighborCrossingAgreement.HorizontalCrossing.physical_match joined)];
+    rw [if_pos (NeighborCrossingAgreement.HorizontalCrossing.physical_match joined)];
       rfl
   | separated obstruction =>
       have different : ¬ Meshes.GridLiftedDualSteps.GridSide.Matches .top faces.regulars[firstPosition.val].cell.box
@@ -170,17 +174,17 @@ theorem HorizontalOutcome.triangleArea_eq_if (outcome :
 
 /-- The vertical outcome selects exactly the original lower triangle when its two face boxes match. -/
 theorem VerticalOutcome.triangleArea_eq_if (outcome :
-  Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.VerticalOutcome request first nextPosition)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
-      Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
-    Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.VerticalOutcome.triangleArea outcome left right =
+  Matched.CrossingBank.VerticalOutcome request first nextPosition)
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
+      TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
+    VerticalOutcome.triangleArea outcome left right =
       if Meshes.GridLiftedDualSteps.GridSide.Matches .right faces.regulars[firstPosition.val].cell.box
         faces.regulars[nextPosition.val].cell.box then
-        Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+        CornerTriangleAreas.TriangleReadings.bilinearArea left right
           (mesh.triangleIndex firstPosition firstSheet false) else 0 := by
   cases outcome with
   | matched joined =>
-    rw [if_pos (Hyperelliptic.Meshes.PuncturedGrid.NeighborCrossingAgreement.VerticalCrossing.physical_match joined)];
+    rw [if_pos (NeighborCrossingAgreement.VerticalCrossing.physical_match joined)];
       rfl
   | separated obstruction =>
       have different : ¬ Meshes.GridLiftedDualSteps.GridSide.Matches .right faces.regulars[firstPosition.val].cell.box
@@ -196,79 +200,79 @@ theorem VerticalOutcome.triangleArea_eq_if (outcome :
 /-- Actual source triangle occurrences selected by retained regular crossings. -/
 @[expose] def CrossingBank.triangleArea (retained : Matched.CrossingBank
   request mesh)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
-      Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
+      TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
       Gaussian.Basic.Canonical :=
   FiniteSum.Fin.sumFin (fun a => FiniteSum.Fin.sumFin (fun b => FiniteSum.Fin.sumFin (fun c =>
-    Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.VerticalOutcome.triangleArea (((retained.vertical.get
+    VerticalOutcome.triangleArea (((retained.vertical.get
       a).get b).get c) left right))) +
   FiniteSum.Fin.sumFin (fun a => FiniteSum.Fin.sumFin (fun b => FiniteSum.Fin.sumFin (fun c =>
-    Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.HorizontalOutcome.triangleArea (((retained.horizontal.get
+    HorizontalOutcome.triangleArea (((retained.horizontal.get
       a).get b).get c) left right)))
 
 /-- The complete normalized crossing-bank corner jump is the sum of its actual retained source triangle areas. -/
 theorem CrossingBank.cornerJump_eq_triangleArea (retained :
   Matched.CrossingBank request mesh)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
-      Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
+      TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
     retained.cornerJump cache.normalize i j =
-      Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.CrossingBank.triangleArea retained left right := by
+      CrossingBank.triangleArea retained left right := by
   have vertical := FiniteSum.Fin.sumFin_congr (fun a =>
     FiniteSum.Fin.sumFin_congr (fun b => FiniteSum.Fin.sumFin_congr (fun c =>
-      Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.VerticalOutcome.cornerJump_eq_triangleArea
+      VerticalOutcome.cornerJump_eq_triangleArea
         (((retained.vertical.get a).get b).get c) left right)))
   have horizontal := FiniteSum.Fin.sumFin_congr (fun a =>
     FiniteSum.Fin.sumFin_congr (fun b => FiniteSum.Fin.sumFin_congr (fun c =>
-      Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.HorizontalOutcome.cornerJump_eq_triangleArea
+      HorizontalOutcome.cornerJump_eq_triangleArea
         (((retained.horizontal.get a).get b).get c) left right)))
   unfold Matched.CrossingBank.cornerJump
-    Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.CrossingBank.triangleArea
+    CrossingBank.triangleArea
   rw [vertical, horizontal]
   simp only [FiniteSum.Fin.sumFin_neg, -eq_self, -iff_self]
   ring1
 
 /-- Sum the original triangle areas whose right or top neighbor is a regular face, preserving both sheets. -/
-@[expose] def regularTriangleArea (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank faces)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
-      Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
+@[expose] def regularTriangleArea (neighbors : PuncturedFaces.NeighborBank faces)
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
+      TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
       Gaussian.Basic.Canonical :=
   FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun sheet =>
-    Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.regularValue
+    SideNeighbor.regularValue
       (neighbors.entries.get position).right
-      (Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+      (CornerTriangleAreas.TriangleReadings.bilinearArea left right
       (mesh.triangleIndex position sheet false)) +
-    Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.regularValue
+    SideNeighbor.regularValue
       (neighbors.entries.get position).top
-      (Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+      (CornerTriangleAreas.TriangleReadings.bilinearArea left right
       (mesh.triangleIndex position sheet true))))
 
 /-- The crossing-bank triangle sum equals the original regular-neighbor triangle sum. -/
 theorem CrossingBank.triangleArea_eq_regular (retained :
   Matched.CrossingBank request mesh)
-    (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank faces)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
-      Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
-    Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.CrossingBank.triangleArea retained left right =
-      Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.regularTriangleArea neighbors left right := by
+    (neighbors : PuncturedFaces.NeighborBank faces)
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
+      TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
+    CrossingBank.triangleArea retained left right =
+      CrossingTriangleAreas.regularTriangleArea neighbors left right := by
   have vertical := FiniteSum.Fin.sumFin_congr (fun a =>
     FiniteSum.Fin.sumFin_congr (fun b => FiniteSum.Fin.sumFin_congr (fun c =>
-      Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.VerticalOutcome.triangleArea_eq_if
+      VerticalOutcome.triangleArea_eq_if
         (((retained.vertical.get a).get b).get c) left right)))
   have horizontal := FiniteSum.Fin.sumFin_congr (fun a =>
     FiniteSum.Fin.sumFin_congr (fun b => FiniteSum.Fin.sumFin_congr (fun c =>
-      Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.HorizontalOutcome.triangleArea_eq_if
+      HorizontalOutcome.triangleArea_eq_if
         (((retained.horizontal.get a).get b).get c) left right)))
-  unfold Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.CrossingBank.triangleArea
+  unfold CrossingBank.triangleArea
   rw [vertical, horizontal]
   have verticalMatch (a : Fin faces.regulars.length) (b : Fin 2) :=
-    Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.sum_matching
+    SideNeighbor.sum_matching
       (neighbors.entries.get a).right
-      (Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+      (CornerTriangleAreas.TriangleReadings.bilinearArea left right
         (mesh.triangleIndex a b false))
   have horizontalMatch (a : Fin faces.regulars.length) (b : Fin 2) :=
-    Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.sum_matching
+    SideNeighbor.sum_matching
       (neighbors.entries.get a).top
-      (Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+      (CornerTriangleAreas.TriangleReadings.bilinearArea left right
         (mesh.triangleIndex a b true))
   have verticalRows := FiniteSum.Fin.sumFin_congr (fun a =>
     FiniteSum.Fin.sumFin_congr (fun b =>
@@ -277,129 +281,129 @@ theorem CrossingBank.triangleArea_eq_regular (retained :
     FiniteSum.Fin.sumFin_congr (fun b =>
       (by simpa only [List.get_eq_getElem, -eq_self, -iff_self] using horizontalMatch a b)))
   rw [verticalRows, horizontalRows]
-  simp only [Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.regularTriangleArea, FiniteSum.Fin.sumFin_add,
+  simp only [CrossingTriangleAreas.regularTriangleArea, FiniteSum.Fin.sumFin_add,
     -eq_self, -iff_self]
   rfl
 
 /-- The complementary source triangles touch a hole or the outer frame. -/
-@[expose] def physicalTriangleArea (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank faces)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
-      Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
+@[expose] def physicalTriangleArea (neighbors : PuncturedFaces.NeighborBank faces)
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
+      TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
       Gaussian.Basic.Canonical :=
   FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun sheet =>
-    Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.physicalValue
+    SideNeighbor.physicalValue
       (neighbors.entries.get position).right
-      (Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+      (CornerTriangleAreas.TriangleReadings.bilinearArea left right
       (mesh.triangleIndex position sheet false)) +
-    Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.physicalValue
+    SideNeighbor.physicalValue
       (neighbors.entries.get position).top
-      (Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+      (CornerTriangleAreas.TriangleReadings.bilinearArea left right
       (mesh.triangleIndex position sheet true))))
 
 /-- Sum both original triangle areas on every regular face and both sheets. -/
-@[expose] def fullTriangleArea (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings
-  (cache.get i) mesh) (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get
+@[expose] def fullTriangleArea (left : TrianglePrimitiveReadings.TriangleReadings
+  (cache.get i) mesh) (right : TrianglePrimitiveReadings.TriangleReadings (cache.get
   j) mesh) : Gaussian.Basic.Canonical :=
   FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun sheet =>
-    Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right (mesh.triangleIndex
+    CornerTriangleAreas.TriangleReadings.bilinearArea left right (mesh.triangleIndex
       position sheet false) +
-    Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right (mesh.triangleIndex
+    CornerTriangleAreas.TriangleReadings.bilinearArea left right (mesh.triangleIndex
       position sheet true)))
 
 /-- The complete original triangle sum partitions into regular-neighbor and physical-boundary triangle sums. -/
-theorem fullTriangleArea_partition (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank faces)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
-      Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
-    Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.fullTriangleArea left right =
-      Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.regularTriangleArea neighbors left right +
-      Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.physicalTriangleArea neighbors left right := by
+theorem fullTriangleArea_partition (neighbors : PuncturedFaces.NeighborBank faces)
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
+      TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
+    CrossingTriangleAreas.fullTriangleArea left right =
+      CrossingTriangleAreas.regularTriangleArea neighbors left right +
+      CrossingTriangleAreas.physicalTriangleArea neighbors left right := by
   have equal := FiniteSum.Fin.sumFin_congr (fun position =>
     FiniteSum.Fin.sumFin_congr (fun sheet =>
       congrArg₂ (fun a b : Gaussian.Basic.Canonical => a + b)
-        (Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.value_split
+        (SideNeighbor.value_split
           (neighbors.entries.get position).right
-          (Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+          (CornerTriangleAreas.TriangleReadings.bilinearArea left right
           (mesh.triangleIndex position sheet false)))
-        (Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.value_split
+        (SideNeighbor.value_split
           (neighbors.entries.get position).top
-          (Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+          (CornerTriangleAreas.TriangleReadings.bilinearArea left right
           (mesh.triangleIndex position sheet true)))))
-  unfold Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.fullTriangleArea
+  unfold CrossingTriangleAreas.fullTriangleArea
   rw [equal]
-  simp only [Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.regularTriangleArea,
-    Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.physicalTriangleArea, FiniteSum.Fin.sumFin_add, -eq_self,
+  simp only [CrossingTriangleAreas.regularTriangleArea,
+    CrossingTriangleAreas.physicalTriangleArea, FiniteSum.Fin.sumFin_add, -eq_self,
     -iff_self]
   ring1
 
 /-- The retained local and corner requests pay the original local-total comparison with physical perimeters and actual
 crossing triangles. -/
 theorem CrossingRequests.TotalRequest.local_physical_triangle_paid
-    (exterior : Hyperelliptic.Meshes.PuncturedGrid.RegularExteriorRequest.ExteriorBoundaryRequest (fun sheet =>
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+    (exterior : RegularExteriorRequest.ExteriorBoundaryRequest (fun sheet =>
+      RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
       ((target / 4) / 4))
     {retained : Matched.CrossingBank exterior.prepared.energy mesh}
-    (total : Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingTotal.CrossingRequests.TotalRequest retained i j
+    (total : Matched.CrossingTotal.CrossingRequests.TotalRequest retained i j
       firstParent secondParent (((target / 4) / 4) / 4) floor)
-    (corner : Hyperelliptic.Meshes.PuncturedGrid.CrossingCornerBudget.CornerRequest fixed i j (target / 4))
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
-      Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.CrossingRequests.Samples total.allocated
+    (corner : CrossingCornerBudget.CornerRequest fixed i j (target / 4))
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
+      TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
+    (samples : Matched.CrossingSamples.CrossingRequests.Samples total.allocated
       cache.normalize)
     (original : Matched.FacePerimeters (request :=
       exterior.prepared.energy) cache i j)
     (normalized : Matched.FacePerimeters (request :=
       exterior.prepared.energy) cache.normalize i j)
-    (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank faces) (positive : 0 < target)
+    (neighbors : PuncturedFaces.NeighborBank faces) (positive : 0 < target)
     (later : total.allocated.index ≤ stage) (cornerLater : corner.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.localTotalSum original -
-      Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors -
-      Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.CrossingBank.triangleArea retained left right) ≤ target
+    Gaussian.Norm.Basic.normSq
+      (NormalizedFaceAreas.FacePerimeters.localTotalSum original -
+      GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors -
+      CrossingBank.triangleArea retained left right) ≤ target
         := by
-  rw [← Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.CrossingBank.cornerJump_eq_triangleArea retained left
+  rw [← CrossingBank.cornerJump_eq_triangleArea retained left
     right]
-  exact Hyperelliptic.Meshes.PuncturedGrid.LocalCornerFormula.CrossingRequests.TotalRequest.local_physical_corner_paid
+  exact LocalCornerFormula.CrossingRequests.TotalRequest.local_physical_corner_paid
     exterior total corner samples original normalized neighbors positive later cornerLater
 
 /-- The complete original triangle comparison retains the physical perimeter minus its physical-boundary triangle
 correction within the paid target. -/
 theorem CrossingRequests.TotalRequest.local_full_triangle_paid
-    (exterior : Hyperelliptic.Meshes.PuncturedGrid.RegularExteriorRequest.ExteriorBoundaryRequest (fun sheet =>
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+    (exterior : RegularExteriorRequest.ExteriorBoundaryRequest (fun sheet =>
+      RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
       ((target / 4) / 4))
     {retained : Matched.CrossingBank exterior.prepared.energy mesh}
-    (total : Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingTotal.CrossingRequests.TotalRequest retained i j
+    (total : Matched.CrossingTotal.CrossingRequests.TotalRequest retained i j
       firstParent secondParent (((target / 4) / 4) / 4) floor)
-    (corner : Hyperelliptic.Meshes.PuncturedGrid.CrossingCornerBudget.CornerRequest fixed i j (target / 4))
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
-      Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.CrossingRequests.Samples total.allocated
+    (corner : CrossingCornerBudget.CornerRequest fixed i j (target / 4))
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
+      TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
+    (samples : Matched.CrossingSamples.CrossingRequests.Samples total.allocated
       cache.normalize)
     (original : Matched.FacePerimeters (request :=
       exterior.prepared.energy) cache i j)
     (normalized : Matched.FacePerimeters (request :=
       exterior.prepared.energy) cache.normalize i j)
-    (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank faces) (positive : 0 < target)
+    (neighbors : PuncturedFaces.NeighborBank faces) (positive : 0 < target)
     (later : total.allocated.index ≤ stage) (cornerLater : corner.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.localTotalSum original -
-      Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.fullTriangleArea left right -
-      (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors
-        - Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.physicalTriangleArea neighbors left right)) ≤ target
+    Gaussian.Norm.Basic.normSq
+      (NormalizedFaceAreas.FacePerimeters.localTotalSum original -
+      CrossingTriangleAreas.fullTriangleArea left right -
+      (GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors
+        - CrossingTriangleAreas.physicalTriangleArea neighbors left right)) ≤ target
         := by
   have estimate :=
-    Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.CrossingRequests.TotalRequest.local_physical_triangle_paid
+    CrossingRequests.TotalRequest.local_physical_triangle_paid
     exterior total corner left right samples original normalized neighbors positive later cornerLater
-  rw [Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.CrossingBank.triangleArea_eq_regular retained neighbors
+  rw [CrossingBank.triangleArea_eq_regular retained neighbors
     left right] at estimate
-  have equal : Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.localTotalSum original -
-    Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.fullTriangleArea left right -
-      (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors
-        - Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.physicalTriangleArea neighbors left right) =
-      Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.localTotalSum original -
-        Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors
-        - Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.regularTriangleArea neighbors left right := by
-    rw [Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.fullTriangleArea_partition neighbors left right]
+  have equal : NormalizedFaceAreas.FacePerimeters.localTotalSum original -
+    CrossingTriangleAreas.fullTriangleArea left right -
+      (GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors
+        - CrossingTriangleAreas.physicalTriangleArea neighbors left right) =
+      NormalizedFaceAreas.FacePerimeters.localTotalSum original -
+        GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors
+        - CrossingTriangleAreas.regularTriangleArea neighbors left right := by
+    rw [CrossingTriangleAreas.fullTriangleArea_partition neighbors left right]
     ring1
   rw [equal]
   exact estimate

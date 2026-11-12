@@ -41,23 +41,23 @@ open Purelib.Approximation.Gaussian.Exponential
 
 The retained starting denominator and finite degree determine the entire
 product. Coordinate identities compare the same Gaussian power and exact scale. -/
-theorem hornerTerm_eq_scaled_power (x : Gaussian.Basic.Canonical) :
+theorem hornerTerm_eq_scaled_power (x : Basic.Canonical) :
     ∀ (degree denominator : Nat),
-      Exponential.Taylor.Basic.hornerTerm x denominator degree =
+      Taylor.Basic.hornerTerm x denominator degree =
         Scale.scale
           (1 / (Consecutive.consecutiveProduct denominator degree : Fraction.Rational))
           (x ^ degree)
   | 0, denominator => by
-      rw [Exponential.Taylor.Basic.hornerTerm_zero, Consecutive.consecutiveProduct_zero]
-      apply Gaussian.Basic.ext <;>
+      rw [Taylor.Basic.hornerTerm_zero, Consecutive.consecutiveProduct_zero]
+      apply Basic.ext <;>
         simp only [Scale.scale_re,
-          Scale.scale_im, pow_zero, Gaussian.Basic.one_re, Gaussian.Basic.one_im] <;>
+          Scale.scale_im, pow_zero, Basic.one_re, Basic.one_im] <;>
         change _ = (1 / (1 : Fraction.Rational)) * _ <;>
         rw [show (1 / (1 : Fraction.Rational)) = 1 by decide,
           Fraction.Field.one_mul]
   | degree + 1, denominator => by
-      rw [Exponential.Taylor.Basic.hornerTerm_succ,
-        Purelib.Approximation.Gaussian.Exponential.Horner.Taylor.hornerTerm_eq_scaled_power x degree (denominator + 1),
+      rw [Taylor.Basic.hornerTerm_succ,
+        Taylor.hornerTerm_eq_scaled_power x degree (denominator + 1),
         Consecutive.consecutiveProduct_succ_head, NatCast.mul, pow_succ]
       have coefficient :
           1 / ((denominator : Fraction.Rational) *
@@ -67,88 +67,88 @@ theorem hornerTerm_eq_scaled_power (x : Gaussian.Basic.Canonical) :
         by rw [Fraction.Field.div_mul_div_direct,
           Fraction.Field.one_mul]
       rw [coefficient]
-      apply Gaussian.Basic.ext <;>
+      apply Basic.ext <;>
         simp only [Scale.scale_re,
-          Scale.scale_im, Gaussian.Basic.mul_re, Gaussian.Basic.mul_im] <;> ring1
+          Scale.scale_im, Basic.mul_re, Basic.mul_im] <;> ring1
 
 /-- Starting a Horner monomial at one gives the factorial-scaled Taylor term.
 
 The finite consecutive product starting at one equals the same degree factorial,
 so both expressions retain the same exact Gaussian power and reciprocal scale. -/
-theorem hornerTerm_one_eq_taylorTerm (x : Gaussian.Basic.Canonical) (degree : Nat) :
-    Exponential.Taylor.Basic.hornerTerm x 1 degree = Exponential.Taylor.Basic.taylorTerm x degree := by
-  rw [Horner.Taylor.hornerTerm_eq_scaled_power, Exponential.Taylor.Basic.taylorTerm,
+theorem hornerTerm_one_eq_taylorTerm (x : Basic.Canonical) (degree : Nat) :
+    Taylor.Basic.hornerTerm x 1 degree = Taylor.Basic.taylorTerm x degree := by
+  rw [hornerTerm_eq_scaled_power, Taylor.Basic.taylorTerm,
     Consecutive.consecutiveProduct_one_eq_factorial]
 
 /-- Increasing Horner depth adds its final displayed monomial.
 
 Structural induction distributes the retained Gaussian multiplication and scale
 over the lower-depth value and the next finite contribution. -/
-theorem horner_succ_eq_add_hornerTerm (x : Gaussian.Basic.Canonical) :
+theorem horner_succ_eq_add_hornerTerm (x : Basic.Canonical) :
     ∀ (degree denominator : Nat),
-      Horner.Basic.horner x denominator (degree + 1) =
-        Horner.Basic.horner x denominator degree +
-          Exponential.Taylor.Basic.hornerTerm x denominator (degree + 1)
+      Basic.horner x denominator (degree + 1) =
+        Basic.horner x denominator degree +
+          Taylor.Basic.hornerTerm x denominator (degree + 1)
   | 0, denominator => by
-      rw [Horner.Basic.horner_succ,
-        Horner.Basic.horner_zero,
-        Horner.Basic.horner_zero,
-        Horner.Basic.step_eq, Exponential.Taylor.Basic.hornerTerm_succ, Exponential.Taylor.Basic.hornerTerm_zero]
+      rw [Basic.horner_succ,
+        Basic.horner_zero,
+        Basic.horner_zero,
+        Basic.step_eq, Taylor.Basic.hornerTerm_succ, Taylor.Basic.hornerTerm_zero]
   | degree + 1, denominator => by
       calc
-        Horner.Basic.horner x denominator (degree + 1 + 1) =
-            Horner.Basic.step x denominator
-              (Horner.Basic.horner x (denominator + 1)
+        Basic.horner x denominator (degree + 1 + 1) =
+            Basic.step x denominator
+              (Basic.horner x (denominator + 1)
                 (degree + 1)) := rfl
-        _ = Horner.Basic.step x denominator
-              (Horner.Basic.horner x (denominator + 1) degree +
-                Exponential.Taylor.Basic.hornerTerm x (denominator + 1) (degree + 1)) := by
-          rw [Purelib.Approximation.Gaussian.Exponential.Horner.Taylor.horner_succ_eq_add_hornerTerm x degree
+        _ = Basic.step x denominator
+              (Basic.horner x (denominator + 1) degree +
+                Taylor.Basic.hornerTerm x (denominator + 1) (degree + 1)) := by
+          rw [Taylor.horner_succ_eq_add_hornerTerm x degree
             (denominator + 1)]
-        _ = Horner.Basic.step x denominator
-              (Horner.Basic.horner x (denominator + 1) degree) +
-            Exponential.Taylor.Basic.hornerTerm x denominator (degree + 1 + 1) := by
-          rw [Horner.Basic.step_eq,
-            Horner.Basic.step_eq]
+        _ = Basic.step x denominator
+              (Basic.horner x (denominator + 1) degree) +
+            Taylor.Basic.hornerTerm x denominator (degree + 1 + 1) := by
+          rw [Basic.step_eq,
+            Basic.step_eq]
           change
             1 + Scale.scale
                 (1 / (denominator : Fraction.Rational))
-                (x * (Horner.Basic.horner x
+                (x * (Basic.horner x
                     (denominator + 1) degree +
-                  Exponential.Taylor.Basic.hornerTerm x (denominator + 1) (degree + 1))) =
+                  Taylor.Basic.hornerTerm x (denominator + 1) (degree + 1))) =
               (1 + Scale.scale
                 (1 / (denominator : Fraction.Rational))
-                (x * Horner.Basic.horner x
+                (x * Basic.horner x
                   (denominator + 1) degree)) +
                 Scale.scale
                   (1 / (denominator : Fraction.Rational))
-                  (x * Exponential.Taylor.Basic.hornerTerm x (denominator + 1) (degree + 1))
-          apply Gaussian.Basic.ext <;>
+                  (x * Taylor.Basic.hornerTerm x (denominator + 1) (degree + 1))
+          apply Basic.ext <;>
             simp only [Scale.scale_re,
-              Scale.scale_im, Basic.add_re, Basic.add_im, Gaussian.Basic.mul_re,
-              Gaussian.Basic.mul_im, Basic.one_re, Basic.one_im] <;> ring1
-        _ = Horner.Basic.horner x denominator (degree + 1) +
-            Exponential.Taylor.Basic.hornerTerm x denominator (degree + 1 + 1) := rfl
+              Scale.scale_im, Basic.add_re, Basic.add_im, Basic.mul_re,
+              Basic.mul_im, Basic.one_re, Basic.one_im] <;> ring1
+        _ = Basic.horner x denominator (degree + 1) +
+            Taylor.Basic.hornerTerm x denominator (degree + 1 + 1) := rfl
 
 /-- The finite Horner program equals the bounded Taylor polynomial.
 
 The successor identity adds the same factorial-scaled monomial to both retained
 finite recurrences, starting from their common constant value. -/
-theorem horner_one_eq_truncatedExp (x : Gaussian.Basic.Canonical) : ∀ degree : Nat,
-    Horner.Basic.horner x 1 degree = Exponential.Taylor.Basic.truncatedExp x degree
+theorem horner_one_eq_truncatedExp (x : Basic.Canonical) : ∀ degree : Nat,
+    Basic.horner x 1 degree = Taylor.Basic.truncatedExp x degree
   | 0 => rfl
   | degree + 1 => by
-      rw [Horner.Taylor.horner_succ_eq_add_hornerTerm,
-        Purelib.Approximation.Gaussian.Exponential.Horner.Taylor.horner_one_eq_truncatedExp x degree,
-        Horner.Taylor.hornerTerm_one_eq_taylorTerm, Exponential.Taylor.Basic.truncatedExp_succ]
+      rw [horner_succ_eq_add_hornerTerm,
+        Taylor.horner_one_eq_truncatedExp x degree,
+        hornerTerm_one_eq_taylorTerm, Taylor.Basic.truncatedExp_succ]
 
 /-- An exponential Horner sample equals its finite Taylor truncation.
 
 The sample uses depth plus one as its retained polynomial degree. The equality
 identifies that finite Gaussian value with the same bounded factorial recurrence. -/
-theorem sample_eq_truncatedExp (x : Gaussian.Basic.Canonical) (depth : Nat) :
-    Sample.sample x depth = Exponential.Taylor.Basic.truncatedExp x (depth + 1) := by
-  change Horner.Basic.horner x 1 (depth + 1) = _
-  exact Horner.Taylor.horner_one_eq_truncatedExp x (depth + 1)
+theorem sample_eq_truncatedExp (x : Basic.Canonical) (depth : Nat) :
+    Sample.sample x depth = Taylor.Basic.truncatedExp x (depth + 1) := by
+  change Basic.horner x 1 (depth + 1) = _
+  exact horner_one_eq_truncatedExp x (depth + 1)
 end Purelib.Approximation.Gaussian.Exponential.Horner.Taylor
 end

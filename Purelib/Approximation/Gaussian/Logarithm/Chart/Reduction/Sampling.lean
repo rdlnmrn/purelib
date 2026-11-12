@@ -22,6 +22,8 @@ import Purelib.Data.Gaussian.Field
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Approximation.Gaussian.Process.Coherence.Basic
+
 public section
 
 /-!
@@ -60,10 +62,10 @@ smaller than the displayed target.
 The bound follows the actual numerator and prepared-denominator refinement schedules, preserving their distinct input
 states. -/
 private theorem reducedRefine_input_allowances_lt
-    (input : Gaussian.Name.Basic.Named) (chart : Chart input)
+    (input : Name.Basic.Named) (chart : Chart input)
     (inputCoherent :
-      Gaussian.Process.Coherence.Basic.Coherent input.process)
-    (state : (Reduction.reduced input chart.factor
+      Coherent input.process)
+    (state : (reduced input chart.factor
       chart.denominatorApart).process.State)
     (request : Fraction.Rational)
     (requestPositive : 0 < request)
@@ -71,15 +73,15 @@ private theorem reducedRefine_input_allowances_lt
     (targetPositive : 0 < target)
     (requestSmall :
       request <
-        Gaussian.Process.Coherence.Basic.Coherent.divisionOuterTarget
+        Coherent.divisionOuterTarget
           (Reduction.numerator input chart.factor).process
           (Reduction.preparedDenominator input
             chart.factor chart.denominatorApart).process
-          (Reduction.preparedDenominatorApart input
+          (preparedDenominatorApart input
             chart.factor chart.denominatorApart).certificate.lowerSq
           (inputCoherent.accuracyRequest target)) :
     let refined :=
-      (Reduction.reduced input chart.factor
+      (reduced input chart.factor
         chart.denominatorApart).process.refine state request requestPositive
     inputCoherent.allowance refined.1.1.2 < target ∧
       inputCoherent.allowance refined.2.source.1.2 < target := by
@@ -89,7 +91,7 @@ private theorem reducedRefine_input_allowances_lt
     Reduction.preparedDenominator input chart.factor
       chart.denominatorApart
   let denominatorApart :=
-    (Reduction.preparedDenominatorApart input
+    (preparedDenominatorApart input
       chart.factor chart.denominatorApart).certificate
   let leftName := Name.centerOnly
     (numerator.process.ball state.1).center numerator.process.centerBound
@@ -109,15 +111,15 @@ private theorem reducedRefine_input_allowances_lt
         requestPositive
   have divisionInputSmall :
       divisionInput < inputCoherent.accuracyRequest target :=
-    Gaussian.Process.Coherence.Basic.Coherent.processDivisionInputTarget_lt
+    Coherent.processDivisionInputTarget_lt
       leftName rightName rfl rfl denominatorApart.positive requestSmall
   let numeratorAddInput :=
     Name.additiveInputTarget divisionInput
   have numeratorAddPositive : 0 < numeratorAddInput :=
-    Purelib.Data.Rat.Bounds.Quarter.quarter_pos
+    Bounds.Quarter.quarter_pos
       divisionInputPositive
   have numeratorAddSmall : numeratorAddInput < divisionInput :=
-    Gaussian.Process.Coherence.Basic.Coherent.additiveInputTarget_lt_target
+    Coherent.additiveInputTarget_lt_target
       divisionInputPositive
   let numeratorFactorName :=
     Name.centerOnly
@@ -142,7 +144,7 @@ private theorem reducedRefine_input_allowances_lt
       numeratorFactorName numeratorInputName numeratorAddPositive
   have numeratorInputSmall :
       numeratorInput < inputCoherent.accuracyRequest target :=
-    (Gaussian.Process.Coherence.Basic.Coherent.processMultiplicativeInputTarget_lt_target
+    (Coherent.processMultiplicativeInputTarget_lt_target
       numeratorFactorName numeratorInputName numeratorAddPositive).trans
         (numeratorAddSmall.trans divisionInputSmall)
   let apartInput := Common.commonTarget
@@ -156,9 +158,9 @@ private theorem reducedRefine_input_allowances_lt
   let denominatorAddInput :=
     Name.additiveInputTarget apartInput
   have denominatorAddPositive : 0 < denominatorAddInput :=
-    Purelib.Data.Rat.Bounds.Quarter.quarter_pos apartInputPositive
+    Bounds.Quarter.quarter_pos apartInputPositive
   have denominatorAddSmall : denominatorAddInput < apartInput :=
-    Gaussian.Process.Coherence.Basic.Coherent.additiveInputTarget_lt_target
+    Coherent.additiveInputTarget_lt_target
       apartInputPositive
   let denominatorFactorName :=
     Name.centerOnly
@@ -183,7 +185,7 @@ private theorem reducedRefine_input_allowances_lt
       denominatorFactorName denominatorInputName denominatorAddPositive
   have denominatorInputSmall :
       denominatorInput < inputCoherent.accuracyRequest target :=
-    (Gaussian.Process.Coherence.Basic.Coherent.processMultiplicativeInputTarget_lt_target
+    (Coherent.processMultiplicativeInputTarget_lt_target
       denominatorFactorName denominatorInputName denominatorAddPositive).trans
         (denominatorAddSmall.trans (apartInputSmall.trans divisionInputSmall))
   change inputCoherent.allowance
@@ -200,48 +202,48 @@ private theorem reducedRefine_input_allowances_lt
 /-- At a canonical reduced-chart sample index satisfying the retained outer request bound, both original input
 allowances are below the positive target. -/
 public theorem reducedStateAt_input_allowances_lt
-    (input : Gaussian.Name.Basic.Named) (chart : Chart input)
+    (input : Name.Basic.Named) (chart : Chart input)
     (inputCoherent :
-      Gaussian.Process.Coherence.Basic.Coherent input.process)
-    (start : (Reduction.reduced input chart.factor
+      Coherent input.process)
+    (start : (reduced input chart.factor
       chart.denominatorApart).process.State)
     (index : Nat) (target : Fraction.Rational)
     (targetPositive : 0 < target)
     (requestSmall :
-      Gaussian.Process.Sampling.refinementTarget index <
-        Gaussian.Process.Coherence.Basic.Coherent.divisionOuterTarget
+      Process.Sampling.refinementTarget index <
+        Coherent.divisionOuterTarget
           (Reduction.numerator input chart.factor).process
           (Reduction.preparedDenominator input
             chart.factor chart.denominatorApart).process
-          (Reduction.preparedDenominatorApart input
+          (preparedDenominatorApart input
             chart.factor chart.denominatorApart).certificate.lowerSq
           (inputCoherent.accuracyRequest target)) :
-    let state := Gaussian.Process.Sampling.stateAt
-      (Reduction.reduced input chart.factor
+    let state := Process.Sampling.stateAt
+      (reduced input chart.factor
         chart.denominatorApart).process start index
     inputCoherent.allowance state.1.1.2 < target ∧
       inputCoherent.allowance state.2.source.1.2 < target := by
   cases index with
   | zero =>
-      exact Approximation.Gaussian.Logarithm.Chart.Reduction.Sampling.reducedRefine_input_allowances_lt input chart
+      exact reducedRefine_input_allowances_lt input chart
         inputCoherent start
         _ _ target targetPositive requestSmall
   | succ index =>
-      exact Approximation.Gaussian.Logarithm.Chart.Reduction.Sampling.reducedRefine_input_allowances_lt input chart
+      exact reducedRefine_input_allowances_lt input chart
         inputCoherent
-        (Gaussian.Process.Sampling.stateAt
-          (Reduction.reduced input chart.factor
+        (Process.Sampling.stateAt
+          (reduced input chart.factor
             chart.denominatorApart).process start index)
         _ _ target targetPositive requestSmall
 
 /-- Every finite candidate of the stateful reduced process exposes the two finite input candidates independently used by
 its numerator and denominator. -/
-theorem reducedPossible_sources (input : Gaussian.Name.Basic.Named) (chart : Chart input)
-    {state : (Reduction.reduced input chart.factor
+theorem reducedPossible_sources (input : Name.Basic.Named) (chart : Chart input)
+    {state : (reduced input chart.factor
       chart.denominatorApart).process.State}
     {value : Data.Gaussian.Basic.Canonical}
     (possible :
-      (Reduction.reduced input chart.factor
+      (reduced input chart.factor
         chart.denominatorApart).process.Possible state value) :
     ∃ numeratorSource denominatorSource : Data.Gaussian.Basic.Canonical,
       input.process.Possible state.1.1.2 numeratorSource ∧
@@ -251,10 +253,10 @@ theorem reducedPossible_sources (input : Gaussian.Name.Basic.Named) (chart : Cha
   rcases possible with
     ⟨numeratorValue, denominatorValue, numeratorPossible,
       denominatorPossible, valueEqual⟩
-  rcases Reduction.numerator_possible
+  rcases numerator_possible
       input chart.factor numeratorPossible with
     ⟨numeratorSource, numeratorSourcePossible, numeratorEqual⟩
-  rcases Reduction.denominator_possible
+  rcases denominator_possible
       input chart.factor denominatorPossible with
     ⟨denominatorSource, denominatorSourcePossible, denominatorEqual⟩
   exact ⟨numeratorSource, denominatorSource, numeratorSourcePossible,

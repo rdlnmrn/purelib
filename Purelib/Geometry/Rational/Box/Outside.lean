@@ -4,7 +4,7 @@ import Purelib.Data.Rat.Fraction
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Rat.Bounds.Square
 import Purelib.Data.Rat.Fraction.Order.Arithmetic
-public import Purelib.Geometry.Rational.Box.Basic
+public import Purelib.Geometry.Rational.Box.Refinement
 import Mathlib.Algebra.Group.Defs
 import Mathlib.Algebra.Ring.Defs
 import Mathlib.Order.Defs.LinearOrder
@@ -12,6 +12,9 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
+
+open Purelib.Data.Rat.Fraction.Order
+open Purelib.Data.Gaussian.Norm
 
 open Purelib
 
@@ -41,7 +44,7 @@ evaluation, and at most one call to the already-total winding refinement.
 namespace Purelib.Geometry.Rational.Box
 
 /-- One explicit coordinate side by which a rational point is outside a rational box. -/
-inductive OutsideSide (box : Rational.Box) (point :
+inductive OutsideSide (box : Box) (point :
   Data.Gaussian.Basic.Canonical) where
   /-- The point lies strictly to the left of the box. -/ | left (less : point.re < box.xLower)
   /-- The point lies strictly to the right of the box. -/ | right (less : box.xUpper < point.re)
@@ -49,7 +52,7 @@ inductive OutsideSide (box : Rational.Box) (point :
   /-- The point lies strictly above the box. -/ | top (less : box.yUpper < point.im)
 
 /-- A failed finite membership test computes a strict outside side. -/
-def outsideSide {box : Rational.Box} {point :
+def outsideSide {box : Box} {point :
   Data.Gaussian.Basic.Canonical}
     (outside : ¬box.Contains point) : OutsideSide box point := by
   by_cases left : point.re < box.xLower
@@ -65,8 +68,25 @@ def outsideSide {box : Rational.Box} {point :
 
 namespace OutsideSide
 
+/-- The same strict outside coordinate remains outside every retained subbox.
+
+The original direction and excluded point are preserved. Only the relevant
+inner endpoint comparison is composed with the supplied box refinement.
+-/
+def ofRefines {inner outer : Box} {point : Data.Gaussian.Basic.Canonical}
+    (side : OutsideSide outer point) (refines : inner.Refines outer) : OutsideSide inner point :=
+  match side with
+  | .left less => .left ⟨Basic.le_trans _ _ _ less.1 refines.1,
+      fun reverse => less.2 (Basic.le_trans _ _ _ refines.1 reverse)⟩
+  | .right less => .right ⟨Basic.le_trans _ _ _ refines.2.1 less.1,
+      fun reverse => less.2 (Basic.le_trans _ _ _ reverse refines.2.1)⟩
+  | .bottom less => .bottom ⟨Basic.le_trans _ _ _ less.1 refines.2.2.1,
+      fun reverse => less.2 (Basic.le_trans _ _ _ refines.2.2.1 reverse)⟩
+  | .top less => .top ⟨Basic.le_trans _ _ _ refines.2.2.2 less.1,
+      fun reverse => less.2 (Basic.le_trans _ _ _ reverse refines.2.2.2)⟩
+
 /-- Squared coordinate distance certified by an outside side. -/
-def margin {box : Rational.Box} {point :
+def margin {box : Box} {point :
   Data.Gaussian.Basic.Canonical} :
     OutsideSide box point → Fraction.Rational
   | .left _ => (box.xLower - point.re) ^ 2
@@ -75,123 +95,123 @@ def margin {box : Rational.Box} {point :
   | .top _ => (point.im - box.yUpper) ^ 2
 
 /-- Every certified strict outside side has positive squared coordinate margin. -/
-theorem margin_pos {box : Rational.Box} {point :
+theorem margin_pos {box : Box} {point :
   Data.Gaussian.Basic.Canonical}
     (side : OutsideSide box point) : 0 < side.margin := by
   cases side with
   | left less =>
       rw [margin, pow_two]
-      exact Fraction.Order.Arithmetic.mul_pos_direct
-        (Fraction.Order.Arithmetic.sub_pos_direct less)
-        (Fraction.Order.Arithmetic.sub_pos_direct less)
+      exact Arithmetic.mul_pos_direct
+        (Arithmetic.sub_pos_direct less)
+        (Arithmetic.sub_pos_direct less)
   | right less =>
       rw [margin, pow_two]
-      exact Fraction.Order.Arithmetic.mul_pos_direct
-        (Fraction.Order.Arithmetic.sub_pos_direct less)
-        (Fraction.Order.Arithmetic.sub_pos_direct less)
+      exact Arithmetic.mul_pos_direct
+        (Arithmetic.sub_pos_direct less)
+        (Arithmetic.sub_pos_direct less)
   | bottom less =>
       rw [margin, pow_two]
-      exact Fraction.Order.Arithmetic.mul_pos_direct
-        (Fraction.Order.Arithmetic.sub_pos_direct less)
-        (Fraction.Order.Arithmetic.sub_pos_direct less)
+      exact Arithmetic.mul_pos_direct
+        (Arithmetic.sub_pos_direct less)
+        (Arithmetic.sub_pos_direct less)
   | top less =>
       rw [margin, pow_two]
-      exact Fraction.Order.Arithmetic.mul_pos_direct
-        (Fraction.Order.Arithmetic.sub_pos_direct less)
-        (Fraction.Order.Arithmetic.sub_pos_direct less)
+      exact Arithmetic.mul_pos_direct
+        (Arithmetic.sub_pos_direct less)
+        (Arithmetic.sub_pos_direct less)
 
 /-- Every point of the box stays at least the displayed squared coordinate distance from the excluded point.
 
 The retained side witness selects the original coordinate gap, whose square is bounded by the corresponding coordinate
 difference and then by the full quadrance. -/
 theorem margin_le_normSq_sub
-    {box : Rational.Box} {point value : Data.Gaussian.Basic.Canonical}
+    {box : Box} {point value : Data.Gaussian.Basic.Canonical}
     (side : OutsideSide box point) (inside : box.Contains value) :
-    side.margin ≤ Data.Gaussian.Norm.Basic.normSq (value - point) := by
+    side.margin ≤ Basic.normSq (value - point) := by
   cases side with
   | left less =>
       have gapNonnegative : 0 ≤ box.xLower - point.re :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct less.le
+        Arithmetic.sub_nonneg_direct less.le
       have coordinateNonnegative : 0 ≤ value.re - point.re :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct (less.le.trans inside.1)
+        Arithmetic.sub_nonneg_direct (less.le.trans inside.1)
       have gapOrder : box.xLower - point.re ≤ value.re - point.re :=
-        Fraction.Order.Arithmetic.sub_le_sub_right_direct inside.1 point.re
+        Arithmetic.sub_le_sub_right_direct inside.1 point.re
       calc
-        (OutsideSide.left less).margin =
+        (left less).margin =
             (box.xLower - point.re) ^ 2 := rfl
         _ ≤ (value.re - point.re) ^ 2 :=
-          Purelib.Data.Rat.Bounds.Square.sq_le_sq_of_nonneg gapOrder gapNonnegative coordinateNonnegative
+          Bounds.Square.sq_le_sq_of_nonneg gapOrder gapNonnegative coordinateNonnegative
         _ ≤ (value.re - point.re) ^ 2 +
             (value.im - point.im) ^ 2 :=
           le_add_of_nonneg_right
-            (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-        _ = Data.Gaussian.Norm.Basic.normSq (value - point) := by
-          simp only [Data.Gaussian.Norm.Basic.normSq, Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+            (Arithmetic.sq_nonneg_direct _)
+        _ = Basic.normSq (value - point) := by
+          simp only [Basic.normSq, Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
             -eq_self, -iff_self]
           rfl
   | right less =>
       have gapNonnegative : 0 ≤ point.re - box.xUpper :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct less.le
+        Arithmetic.sub_nonneg_direct less.le
       have coordinateNonnegative : 0 ≤ point.re - value.re :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct
+        Arithmetic.sub_nonneg_direct
           (inside.2.1.trans less.le)
       have gapOrder : point.re - box.xUpper ≤ point.re - value.re :=
-        Fraction.Order.Arithmetic.sub_le_sub_left_direct inside.2.1 point.re
+        Arithmetic.sub_le_sub_left_direct inside.2.1 point.re
       calc
-        (OutsideSide.right less).margin =
+        (right less).margin =
             (point.re - box.xUpper) ^ 2 := rfl
         _ ≤ (point.re - value.re) ^ 2 :=
-          Purelib.Data.Rat.Bounds.Square.sq_le_sq_of_nonneg gapOrder gapNonnegative coordinateNonnegative
+          Bounds.Square.sq_le_sq_of_nonneg gapOrder gapNonnegative coordinateNonnegative
         _ = (value.re - point.re) ^ 2 := by ring1
         _ ≤ (value.re - point.re) ^ 2 +
             (value.im - point.im) ^ 2 :=
           le_add_of_nonneg_right
-            (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-        _ = Data.Gaussian.Norm.Basic.normSq (value - point) := by
-          simp only [Data.Gaussian.Norm.Basic.normSq, Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+            (Arithmetic.sq_nonneg_direct _)
+        _ = Basic.normSq (value - point) := by
+          simp only [Basic.normSq, Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
             -eq_self, -iff_self]
           rfl
   | bottom less =>
       have gapNonnegative : 0 ≤ box.yLower - point.im :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct less.le
+        Arithmetic.sub_nonneg_direct less.le
       have coordinateNonnegative : 0 ≤ value.im - point.im :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct
+        Arithmetic.sub_nonneg_direct
           (less.le.trans inside.2.2.1)
       have gapOrder : box.yLower - point.im ≤ value.im - point.im :=
-        Fraction.Order.Arithmetic.sub_le_sub_right_direct inside.2.2.1 point.im
+        Arithmetic.sub_le_sub_right_direct inside.2.2.1 point.im
       calc
-        (OutsideSide.bottom less).margin =
+        (bottom less).margin =
             (box.yLower - point.im) ^ 2 := rfl
         _ ≤ (value.im - point.im) ^ 2 :=
-          Purelib.Data.Rat.Bounds.Square.sq_le_sq_of_nonneg gapOrder gapNonnegative coordinateNonnegative
+          Bounds.Square.sq_le_sq_of_nonneg gapOrder gapNonnegative coordinateNonnegative
         _ ≤ (value.re - point.re) ^ 2 +
             (value.im - point.im) ^ 2 :=
           le_add_of_nonneg_left
-            (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-        _ = Data.Gaussian.Norm.Basic.normSq (value - point) := by
-          simp only [Data.Gaussian.Norm.Basic.normSq, Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+            (Arithmetic.sq_nonneg_direct _)
+        _ = Basic.normSq (value - point) := by
+          simp only [Basic.normSq, Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
             -eq_self, -iff_self]
           rfl
   | top less =>
       have gapNonnegative : 0 ≤ point.im - box.yUpper :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct less.le
+        Arithmetic.sub_nonneg_direct less.le
       have coordinateNonnegative : 0 ≤ point.im - value.im :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct
+        Arithmetic.sub_nonneg_direct
           (inside.2.2.2.trans less.le)
       have gapOrder : point.im - box.yUpper ≤ point.im - value.im :=
-        Fraction.Order.Arithmetic.sub_le_sub_left_direct inside.2.2.2 point.im
+        Arithmetic.sub_le_sub_left_direct inside.2.2.2 point.im
       calc
-        (OutsideSide.top less).margin =
+        (top less).margin =
             (point.im - box.yUpper) ^ 2 := rfl
         _ ≤ (point.im - value.im) ^ 2 :=
-          Purelib.Data.Rat.Bounds.Square.sq_le_sq_of_nonneg gapOrder gapNonnegative coordinateNonnegative
+          Bounds.Square.sq_le_sq_of_nonneg gapOrder gapNonnegative coordinateNonnegative
         _ = (value.im - point.im) ^ 2 := by ring1
         _ ≤ (value.re - point.re) ^ 2 +
             (value.im - point.im) ^ 2 :=
           le_add_of_nonneg_left
-            (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-        _ = Data.Gaussian.Norm.Basic.normSq (value - point) := by
-          simp only [Data.Gaussian.Norm.Basic.normSq, Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+            (Arithmetic.sq_nonneg_direct _)
+        _ = Basic.normSq (value - point) := by
+          simp only [Basic.normSq, Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
             -eq_self, -iff_self]
           rfl
 

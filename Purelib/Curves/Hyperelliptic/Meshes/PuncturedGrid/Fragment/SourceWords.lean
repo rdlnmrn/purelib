@@ -98,11 +98,11 @@ open Purelib.Approximation.Gaussian.Name.Basic (Named)
 open Purelib.Approximation.Gaussian.Equivalence (NamedEquivalent)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
   {source : Differential genus} {axes :
     PrimitiveAxes base.bank.grid}
   {domains : FaceDomainBank frames
@@ -114,21 +114,21 @@ root-equivalence evidence. -/
 inductive PathSourceWords {ambient : Rational.Box} :
     {start finish : Data.Gaussian.Basic.Canonical} → Polynomial.Geometry.ClearPath curve.polynomial ambient start
       finish →
-      Gaussian.Name.Basic.Named → Gaussian.Name.Basic.Named →
-      List (RootedWords.LiftedFragment axes domains mesh source count target) → Prop
+      Named → Named →
+      List (LiftedFragment axes domains mesh source count target) → Prop
   /-- The stationary empty source path retains the actual endpoint root-name comparison. -/ | nil (point :
-    Data.Gaussian.Basic.Canonical) {firstName lastName : Gaussian.Name.Basic.Named}
-      (equivalent : Nonempty (Gaussian.Equivalence.NamedEquivalent firstName lastName)) :
+    Data.Gaussian.Basic.Canonical) {firstName lastName : Named}
+      (equivalent : Nonempty (NamedEquivalent firstName lastName)) :
       PathSourceWords (.nil point) firstName
         lastName []
   /-- Retain one original source segment's connected rooted fragment block and exact parent provenance before the
     remaining path. -/ | cons {start middle finish : Data.Gaussian.Basic.Canonical} {segment : ClearPath.ClearSegment
     curve.polynomial ambient start middle}
       {tail : Polynomial.Geometry.ClearPath curve.polynomial ambient middle finish} {firstName middleName lastName :
-        Gaussian.Name.Basic.Named}
-      {block pieces : List (RootedWords.LiftedFragment axes domains mesh source count target)}
-      (word : LiftedFragment.RootedWord block start firstName middle middleName)
-      (original : ∀ piece ∈ block, PreparedSegmentSources.SegmentSource segment piece.parent)
+        Named}
+      {block pieces : List (LiftedFragment axes domains mesh source count target)}
+      (word : RootedWord block start firstName middle middleName)
+      (original : ∀ piece ∈ block, SegmentSource segment piece.parent)
       (remaining : PathSourceWords tail
         middleName lastName pieces) :
       PathSourceWords (.cons segment tail)
@@ -141,12 +141,12 @@ same data. -/
 theorem ofParents {ambient : Rational.Box} {start finish : Data.Gaussian.Basic.Canonical}
     {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish} {sheet : Fin 2}
     {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)} (original :
-      PreparedPathSources.PathSources sheet path parents)
-    {pieces : List (RootedWords.LiftedFragment axes domains mesh source count target)} (groups :
-      LiftedFragment.ParentGroups parents pieces)
-    {firstName lastName : Gaussian.Name.Basic.Named} (roots : PreparedRefinementRootChains.RootChain parents firstName
+      PathSources sheet path parents)
+    {pieces : List (LiftedFragment axes domains mesh source count target)} (groups :
+      ParentGroups parents pieces)
+    {firstName lastName : Named} (roots : RootChain parents firstName
       lastName) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceWords.PathSourceWords path firstName lastName pieces := by
+    PathSourceWords path firstName lastName pieces := by
   induction original generalizing pieces firstName lastName with
   | nil point =>
       cases groups
@@ -165,10 +165,10 @@ theorem ofParents {ambient : Rational.Box} {start finish : Data.Gaussian.Basic.C
 word. -/
 theorem rooted {ambient : Rational.Box} {start finish : Data.Gaussian.Basic.Canonical}
     {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish} {firstName lastName :
-      Gaussian.Name.Basic.Named}
-    {pieces : List (RootedWords.LiftedFragment axes domains mesh source count target)}
-    (words : Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceWords.PathSourceWords path firstName lastName
-      pieces) : LiftedFragment.RootedWord pieces start firstName finish lastName := by
+      Named}
+    {pieces : List (LiftedFragment axes domains mesh source count target)}
+    (words : PathSourceWords path firstName lastName
+      pieces) : RootedWord pieces start firstName finish lastName := by
   induction words with
   | nil point equivalent => exact .nil rfl equivalent
   | cons word original remaining ih => exact word.append ih
@@ -176,12 +176,12 @@ theorem rooted {ambient : Rational.Box} {start finish : Data.Gaussian.Basic.Cano
 end PathSourceWords
 
 /-- The four exact source legs, with shared root names at every handoff. -/
-inductive TourSourceWords (tour : PreparedBoundaryClosure.ClosedBoundaryDoublePath curve) (firstName lastName :
-  Gaussian.Name.Basic.Named) :
-    List (RootedWords.LiftedFragment axes domains mesh source count target) → Prop
+inductive TourSourceWords (tour : ClosedBoundaryDoublePath curve) (firstName lastName :
+  Named) :
+    List (LiftedFragment axes domains mesh source count target) → Prop
   /-- Retain the four actual source-tour leg groupings and their shared endpoint root names in traversal order. -/ | mk
-    {forward right backward left : List (RootedWords.LiftedFragment axes domains mesh source count target)}
-      {afterForward afterRight afterBackward : Gaussian.Name.Basic.Named}
+    {forward right backward left : List (LiftedFragment axes domains mesh source count target)}
+      {afterForward afterRight afterBackward : Named}
       (forwardWords : PathSourceWords
         tour.joined.data.connector firstName afterForward forward)
       (rightWords : PathSourceWords
@@ -196,14 +196,14 @@ inductive TourSourceWords (tour : PreparedBoundaryClosure.ClosedBoundaryDoublePa
 namespace TourSourceWords
 
 /-- Recover the original four tour-leg fragment groupings from the retained parent and root spines. -/
-theorem ofParents {tour : PreparedBoundaryClosure.ClosedBoundaryDoublePath curve}
+theorem ofParents {tour : ClosedBoundaryDoublePath curve}
     {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)} (original :
-      PreparedTourSources.TourSources tour parents)
-    {pieces : List (RootedWords.LiftedFragment axes domains mesh source count target)} (groups :
-      LiftedFragment.ParentGroups parents pieces)
-    {firstName lastName : Gaussian.Name.Basic.Named} (roots : PreparedRefinementRootChains.RootChain parents firstName
+      TourSources tour parents)
+    {pieces : List (LiftedFragment axes domains mesh source count target)} (groups :
+      ParentGroups parents pieces)
+    {firstName lastName : Named} (roots : RootChain parents firstName
       lastName) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceWords.TourSourceWords tour firstName lastName pieces := by
+    TourSourceWords tour firstName lastName pieces := by
   cases original with
   | @mk forward right backward left forwardSource rightSource backwardSource leftSource =>
       obtain ⟨firstThree, last, equal, firstThreePart, lastPart⟩ := groups.split ((forward ++ right) ++ backward)
@@ -213,22 +213,22 @@ theorem ofParents {tour : PreparedBoundaryClosure.ClosedBoundaryDoublePath curve
       obtain ⟨afterRight, ⟨firstTwoRoots⟩, ⟨thirdRoots⟩⟩ := firstThreeRoots.split (forward ++ right)
       obtain ⟨afterForward, ⟨firstRoots⟩, ⟨secondRoots⟩⟩ := firstTwoRoots.split forward
       rw [equal, firstThreeEq, firstTwoEq]
-      exact .mk (Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceWords.PathSourceWords.ofParents forwardSource
+      exact .mk (PathSourceWords.ofParents forwardSource
         firstPart firstRoots)
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceWords.PathSourceWords.ofParents rightSource secondPart
+        (PathSourceWords.ofParents rightSource secondPart
           secondRoots)
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceWords.PathSourceWords.ofParents backwardSource
+        (PathSourceWords.ofParents backwardSource
           thirdPart thirdRoots)
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceWords.PathSourceWords.ofParents leftSource lastPart
+        (PathSourceWords.ofParents leftSource lastPart
           lastRoots)
 
 /-- Concatenate the four original source-leg words while retaining every coordinate and root junction. -/
-theorem rooted {tour : PreparedBoundaryClosure.ClosedBoundaryDoublePath curve} {firstName lastName :
-  Gaussian.Name.Basic.Named}
-    {pieces : List (RootedWords.LiftedFragment axes domains mesh source count target)}
-    (words : Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceWords.TourSourceWords tour firstName lastName
+theorem rooted {tour : ClosedBoundaryDoublePath curve} {firstName lastName :
+  Named}
+    {pieces : List (LiftedFragment axes domains mesh source count target)}
+    (words : TourSourceWords tour firstName lastName
       pieces) :
-    LiftedFragment.RootedWord pieces tour.joined.data.leftState.box.anchor firstName
+    RootedWord pieces tour.joined.data.leftState.box.anchor firstName
       tour.joined.data.leftState.box.anchor lastName := by
   cases words with
   | mk forward right backward left =>

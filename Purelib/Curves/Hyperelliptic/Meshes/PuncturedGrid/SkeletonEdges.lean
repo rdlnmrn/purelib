@@ -148,19 +148,19 @@ private theorem adjacent_lower_ordered {Alpha : Type} {key : Alpha → Fraction.
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges
 
-variable {polynomial : Purelib.Polynomial.Geometry.ClearPath.GaussianPolynomial} {ambient :
-  Purelib.Geometry.Rational.Box} {grid : Polynomial.Geometry.Grid.ClearGrid polynomial
+variable {polynomial : Polynomial.Geometry.ClearPath.GaussianPolynomial} {ambient :
+  Geometry.Rational.Box} {grid : ClearGrid polynomial
   ambient}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames grid}
+  {frames : RootFrames grid}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges
 
 /-- The original horizontal interval, horizontal line and retained source sheet selecting one lifted horizontal edge. -/
-abbrev HorizontalSlot (grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient) := (Fin grid.xIntervals.length ×
+abbrev HorizontalSlot (grid : ClearGrid polynomial ambient) := (Fin grid.xIntervals.length ×
   Fin
   grid.horizontal.length) × Fin 2
 /-- The original vertical interval, vertical line and retained source sheet selecting one lifted vertical edge. -/
-abbrev VerticalSlot (grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient) := (Fin grid.yIntervals.length × Fin
+abbrev VerticalSlot (grid : ClearGrid polynomial ambient) := (Fin grid.yIntervals.length × Fin
   grid.vertical.length) × Fin 2
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges
@@ -169,24 +169,24 @@ namespace Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
 
 /-- Read the actual retained root transport edge selected by the original horizontal interval, line and sheet. -/
 @[expose] def horizontalEdge (edges :
-  RootEdgeBank frames) (vertices : LiftedVertices.VertexBank grid) (slot :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.HorizontalSlot grid) :
-    Stokes.OrientedEdge vertices.count :=
+  RootEdgeBank frames) (vertices : VertexBank grid) (slot :
+  SkeletonEdges.HorizontalSlot grid) :
+    OrientedEdge vertices.count :=
   edges.indexedEdge vertices (.horizontal grid.xIntervals[slot.1.1.val] (List.getElem_mem _)
     grid.horizontal[slot.1.2.val] (List.getElem_mem _)) slot.2
 
 /-- Read the actual retained root transport edge selected by the original vertical interval, line and sheet. -/
 @[expose] def verticalEdge (edges :
-  RootEdgeBank frames) (vertices : LiftedVertices.VertexBank grid) (slot :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.VerticalSlot grid) :
-    Stokes.OrientedEdge vertices.count :=
+  RootEdgeBank frames) (vertices : VertexBank grid) (slot :
+  SkeletonEdges.VerticalSlot grid) :
+    OrientedEdge vertices.count :=
   edges.indexedEdge vertices (.vertical grid.yIntervals[slot.1.1.val] (List.getElem_mem _)
     grid.vertical[slot.1.2.val] (List.getElem_mem _)) slot.2
 
 /-- The retained horizontal edge endpoints have the exact original grid coordinates. -/
 theorem horizontalEdge_coordinates (edges :
-  RootEdgeBank frames) (vertices : LiftedVertices.VertexBank grid) (slot :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.HorizontalSlot grid) :
+  RootEdgeBank frames) (vertices : VertexBank grid) (slot :
+  SkeletonEdges.HorizontalSlot grid) :
     vertices.coordinate (edges.horizontalEdge vertices slot).start =
         Components.Basic.point grid.xIntervals[slot.1.1.val].lower.coordinate grid.horizontal[slot.1.2.val].coordinate ∧
       vertices.coordinate (edges.horizontalEdge vertices slot).finish =
@@ -198,8 +198,8 @@ theorem horizontalEdge_coordinates (edges :
 
 /-- The retained vertical edge endpoints have the exact original grid coordinates. -/
 theorem verticalEdge_coordinates (edges :
-  RootEdgeBank frames) (vertices : LiftedVertices.VertexBank grid) (slot :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.VerticalSlot grid) :
+  RootEdgeBank frames) (vertices : VertexBank grid) (slot :
+  SkeletonEdges.VerticalSlot grid) :
     vertices.coordinate (edges.verticalEdge vertices slot).start =
         Components.Basic.point grid.vertical[slot.1.2.val].coordinate grid.yIntervals[slot.1.1.val].lower.coordinate ∧
       vertices.coordinate (edges.verticalEdge vertices slot).finish =
@@ -217,18 +217,18 @@ namespace Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
 
 /-- The actual lifted horizontal edge determines its original interval, line and source sheet. -/
 theorem horizontalEdge_injective (edges :
-  RootEdgeBank frames) (vertices : LiftedVertices.VertexBank grid) :
+  RootEdgeBank frames) (vertices : VertexBank grid) :
     Function.Injective (edges.horizontalEdge vertices) := by
   intro first last same
   have points := (edges.horizontalEdge_coordinates vertices first).1.symm.trans
     ((congrArg (fun edge => vertices.coordinate edge.start) same).trans (edges.horizontalEdge_coordinates vertices
       last).1)
-  have intervals := Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.key_index_injective grid.xIntervals
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.adjacent_lower_ordered _ grid.vertical_ordered)
-    (congrArg Data.Gaussian.Basic.re points)
-  have lines := Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.key_index_injective grid.horizontal
+  have intervals := SkeletonEdges.key_index_injective grid.xIntervals
+    (SkeletonEdges.adjacent_lower_ordered _ grid.vertical_ordered)
+    (congrArg Basic.re points)
+  have lines := SkeletonEdges.key_index_injective grid.horizontal
     grid.horizontal_ordered
-    (congrArg Data.Gaussian.Basic.im points)
+    (congrArg Basic.im points)
   have sheets := congrArg (fun edge => vertices.sheet edge.start) same
   simp only [horizontalEdge, RootEdgeBank.indexedEdge,
     vertices.sheet_index] at sheets
@@ -236,18 +236,18 @@ theorem horizontalEdge_injective (edges :
 
 /-- The actual lifted vertical edge determines its original interval, line and source sheet. -/
 theorem verticalEdge_injective (edges :
-  RootEdgeBank frames) (vertices : LiftedVertices.VertexBank grid) :
+  RootEdgeBank frames) (vertices : VertexBank grid) :
     Function.Injective (edges.verticalEdge vertices) := by
   intro first last same
   have points := (edges.verticalEdge_coordinates vertices first).1.symm.trans
     ((congrArg (fun edge => vertices.coordinate edge.start) same).trans (edges.verticalEdge_coordinates vertices
       last).1)
-  have intervals := Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.key_index_injective grid.yIntervals
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.adjacent_lower_ordered _ grid.horizontal_ordered)
-    (congrArg Data.Gaussian.Basic.im points)
-  have lines := Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.key_index_injective grid.vertical
+  have intervals := SkeletonEdges.key_index_injective grid.yIntervals
+    (SkeletonEdges.adjacent_lower_ordered _ grid.horizontal_ordered)
+    (congrArg Basic.im points)
+  have lines := SkeletonEdges.key_index_injective grid.vertical
     grid.vertical_ordered
-    (congrArg Data.Gaussian.Basic.re points)
+    (congrArg Basic.re points)
   have sheets := congrArg (fun edge => vertices.sheet edge.start) same
   simp only [verticalEdge, RootEdgeBank.indexedEdge,
     vertices.sheet_index] at sheets
@@ -262,7 +262,7 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges
 open Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank in
 /-- Positive coordinate direction is independent of the arbitrary cache's integer ordering and is incompatible with the
 reverse of another such edge. -/
-@[expose] def PositiveAxis (vertices : LiftedVertices.VertexBank grid) (edge : Stokes.OrientedEdge vertices.count) :
+@[expose] def PositiveAxis (vertices : VertexBank grid) (edge : OrientedEdge vertices.count) :
   Prop :=
   ((vertices.coordinate edge.start).re < (vertices.coordinate edge.finish).re ∧
     (vertices.coordinate edge.start).im = (vertices.coordinate edge.finish).im) ∨
@@ -275,21 +275,21 @@ namespace Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
 
 /-- Every enumerated horizontal lifted edge points in the original positive coordinate direction. -/
 theorem horizontalEdge_positive (edges :
-  RootEdgeBank frames) (vertices : LiftedVertices.VertexBank grid) (slot :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.HorizontalSlot grid) :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.PositiveAxis vertices (edges.horizontalEdge vertices
+  RootEdgeBank frames) (vertices : VertexBank grid) (slot :
+  SkeletonEdges.HorizontalSlot grid) :
+    SkeletonEdges.PositiveAxis vertices (edges.horizontalEdge vertices
       slot) := by
-  unfold Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.PositiveAxis
+  unfold SkeletonEdges.PositiveAxis
   rw [(edges.horizontalEdge_coordinates vertices slot).1, (edges.horizontalEdge_coordinates vertices slot).2]
   exact Or.inl ⟨grid.xIntervals[slot.1.1.val].ordered, rfl⟩
 
 /-- Every enumerated vertical lifted edge points in the original positive coordinate direction. -/
 theorem verticalEdge_positive (edges :
-  RootEdgeBank frames) (vertices : LiftedVertices.VertexBank grid) (slot :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.VerticalSlot grid) :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.PositiveAxis vertices (edges.verticalEdge vertices
+  RootEdgeBank frames) (vertices : VertexBank grid) (slot :
+  SkeletonEdges.VerticalSlot grid) :
+    SkeletonEdges.PositiveAxis vertices (edges.verticalEdge vertices
       slot) := by
-  unfold Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.PositiveAxis
+  unfold SkeletonEdges.PositiveAxis
   rw [(edges.verticalEdge_coordinates vertices slot).1, (edges.verticalEdge_coordinates vertices slot).2]
   exact Or.inr ⟨rfl, grid.yIntervals[slot.1.1.val].ordered⟩
 
@@ -297,21 +297,21 @@ theorem verticalEdge_positive (edges :
 
 Each occurrence uses the cached root transport and vertex bank of the original grid. -/
 @[expose] def skeleton (edges :
-  RootEdgeBank frames) (vertices : LiftedVertices.VertexBank grid) : List (Stokes.OrientedEdge
+  RootEdgeBank frames) (vertices : VertexBank grid) : List (OrientedEdge
   vertices.count) :=
-  (Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.slots grid.xIntervals.length grid.horizontal.length).map
+  (SkeletonEdges.slots grid.xIntervals.length grid.horizontal.length).map
     (edges.horizontalEdge vertices) ++
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.slots grid.yIntervals.length grid.vertical.length).map
+    (SkeletonEdges.slots grid.yIntervals.length grid.vertical.length).map
       (edges.verticalEdge vertices)
 
 /-- The retained skeleton count is twice the sum of the original horizontal and vertical grid-edge counts. -/
 theorem skeleton_length (edges :
-  RootEdgeBank frames) (vertices : LiftedVertices.VertexBank grid) :
+  RootEdgeBank frames) (vertices : VertexBank grid) :
     (edges.skeleton vertices).length =
       2 * (grid.xIntervals.length * grid.horizontal.length + grid.yIntervals.length * grid.vertical.length) := by
   rw [skeleton, Append.length_append, Map.length_map,
-    Map.length_map, Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.slots_length,
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.slots_length, Nat.mul_add]
+    Map.length_map, SkeletonEdges.slots_length,
+    SkeletonEdges.slots_length, Nat.mul_add]
 
 end Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
 
@@ -321,7 +321,7 @@ namespace Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
 
 /-- A retained skeleton edge is exactly a horizontal or vertical original slot occurrence. -/
 theorem skeleton_mem (edges :
-  RootEdgeBank frames) (vertices : LiftedVertices.VertexBank grid) (edge : Stokes.OrientedEdge
+  RootEdgeBank frames) (vertices : VertexBank grid) (edge : OrientedEdge
   vertices.count) :
     edge ∈ edges.skeleton vertices ↔
       (∃ slot, edges.horizontalEdge vertices slot = edge) ∨ (∃ slot, edges.verticalEdge vertices slot = edge) := by
@@ -335,27 +335,27 @@ theorem skeleton_mem (edges :
   · intro member
     rcases member with ⟨slot, equal⟩ | ⟨slot, equal⟩
     · exact Membership.mem_append.mpr (Or.inl (Map.mem_map.mpr ⟨slot,
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.slots_mem slot, equal⟩))
+        SkeletonEdges.slots_mem slot, equal⟩))
     · exact Membership.mem_append.mpr (Or.inr (Map.mem_map.mpr ⟨slot,
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.slots_mem slot, equal⟩))
+        SkeletonEdges.slots_mem slot, equal⟩))
 
 /-- Every retained skeleton edge points in one positive original coordinate direction. -/
 theorem skeleton_positive (edges :
-  RootEdgeBank frames) (vertices : LiftedVertices.VertexBank grid)
-    {edge : Stokes.OrientedEdge vertices.count} (member : edge ∈ edges.skeleton vertices) :
-      Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.PositiveAxis vertices edge := by
+  RootEdgeBank frames) (vertices : VertexBank grid)
+    {edge : OrientedEdge vertices.count} (member : edge ∈ edges.skeleton vertices) :
+      SkeletonEdges.PositiveAxis vertices edge := by
   rcases (edges.skeleton_mem vertices edge).mp member with ⟨slot, rfl⟩ | ⟨slot, rfl⟩
   · exact edges.horizontalEdge_positive vertices slot
   · exact edges.verticalEdge_positive vertices slot
 
 /-- The actual lifted grid skeleton enumeration contains no repeated oriented edge. -/
 theorem skeleton_nodup (edges :
-  RootEdgeBank frames) (vertices : LiftedVertices.VertexBank grid) : (edges.skeleton vertices).Nodup := by
+  RootEdgeBank frames) (vertices : VertexBank grid) : (edges.skeleton vertices).Nodup := by
   refine Nodup.nodup_append
-    (Data.List.Nodup.nodup_map_of_injective (edges.horizontalEdge_injective vertices)
-      (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.slots_nodup _ _))
-    (Data.List.Nodup.nodup_map_of_injective (edges.verticalEdge_injective vertices)
-      (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonEdges.slots_nodup _ _)) ?_
+    (Nodup.nodup_map_of_injective (edges.horizontalEdge_injective vertices)
+      (SkeletonEdges.slots_nodup _ _))
+    (Nodup.nodup_map_of_injective (edges.verticalEdge_injective vertices)
+      (SkeletonEdges.slots_nodup _ _)) ?_
   intro first firstMember last lastMember same
   obtain ⟨firstSlot, _, firstEq⟩ := Map.mem_map.mp firstMember
   obtain ⟨lastSlot, _, lastEq⟩ := Map.mem_map.mp lastMember
@@ -376,9 +376,9 @@ namespace Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
 
 /-- Every original positive horizontal grid edge on either retained sheet occurs in the skeleton. -/
 theorem horizontal_mem_skeleton (edges :
-  RootEdgeBank frames) (vertices : LiftedVertices.VertexBank grid)
-    (interval : ClearGrid.Interval (VerticalLine.coordinate (polynomial := polynomial) (ambient := ambient)))
-    (adjacent : interval ∈ grid.xIntervals) (line : ClearGrid.HorizontalLine polynomial ambient) (member : line ∈
+  RootEdgeBank frames) (vertices : VertexBank grid)
+    (interval : Grid.Interval (VerticalLine.coordinate (polynomial := polynomial) (ambient := ambient)))
+    (adjacent : interval ∈ grid.xIntervals) (line : HorizontalLine polynomial ambient) (member : line ∈
       grid.horizontal)
     (sheet : Fin 2) : edges.indexedEdge vertices (.horizontal interval adjacent line member) sheet ∈ edges.skeleton
       vertices := by
@@ -388,9 +388,9 @@ theorem horizontal_mem_skeleton (edges :
 
 /-- Every original positive vertical grid edge on either retained sheet occurs in the skeleton. -/
 theorem vertical_mem_skeleton (edges :
-  RootEdgeBank frames) (vertices : LiftedVertices.VertexBank grid)
-    (interval : ClearGrid.Interval (HorizontalLine.coordinate (polynomial := polynomial) (ambient := ambient)))
-    (adjacent : interval ∈ grid.yIntervals) (line : ClearGrid.VerticalLine polynomial ambient) (member : line ∈
+  RootEdgeBank frames) (vertices : VertexBank grid)
+    (interval : Grid.Interval (HorizontalLine.coordinate (polynomial := polynomial) (ambient := ambient)))
+    (adjacent : interval ∈ grid.yIntervals) (line : VerticalLine polynomial ambient) (member : line ∈
       grid.vertical)
     (sheet : Fin 2) : edges.indexedEdge vertices (.vertical interval adjacent line member) sheet ∈ edges.skeleton
       vertices := by
@@ -407,10 +407,10 @@ namespace Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
 /-- Arbitrary reversals select the appropriate source sheet using the proved inverse of the same retained root-edge
 transport. -/
 theorem indexedEdge_skeleton (edges :
-  RootEdgeBank frames) (vertices : LiftedVertices.VertexBank grid)
-    (reference : ∀ point, Polynomial.Geometry.Grid.FromStates.ContainsVertex grid point →
+  RootEdgeBank frames) (vertices : VertexBank grid)
+    (reference : ∀ point, ContainsVertex grid point →
       OwnerLoopMonodromy.WindingOneLoop polynomial point) :
-    ∀ {start finish : Data.Gaussian.Basic.Canonical} (edge : Walks.Edge grid start finish) (sheet : Fin 2),
+    ∀ {start finish : Basic.Canonical} (edge : Edge grid start finish) (sheet : Fin 2),
       edges.indexedEdge vertices edge sheet ∈ edges.skeleton vertices ∨
         (edges.indexedEdge vertices edge sheet).reverse ∈ edges.skeleton vertices
   | _, _, .horizontal interval adjacent line member, sheet =>
@@ -431,18 +431,18 @@ theorem indexedEdge_skeleton (edges :
 end Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {frames : RootFrames base.bank.grid} {vertices :
     VertexBank base.bank.grid}
-  {edges : Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+  {edges : RootEdgeBank frames}
 
 namespace Purelib.Curves.Hyperelliptic.Branches.BranchCellBank.LiftedMesh
 
 open Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank in
 /-- Every retained skeleton edge belongs to an original lifted triangle, up to reversal. -/
 theorem skeleton_supported (mesh :
-  GridLiftedMesh.LiftedMesh vertices edges base.faces) {edge : Stokes.OrientedEdge vertices.count}
+  GridLiftedMesh.LiftedMesh vertices edges base.faces) {edge : OrientedEdge vertices.count}
     (member : edge ∈ edges.skeleton vertices) :
     edge ∈ Stokes.triangleEdgeOccurrences mesh.triangulation.faces ∨
       edge.reverse ∈ Stokes.triangleEdgeOccurrences mesh.triangulation.faces := by

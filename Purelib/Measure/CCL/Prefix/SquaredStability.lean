@@ -24,6 +24,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Mathlib.Order.Basic
 
+open Purelib.Approximation.CCL
+
 section
 public section
 
@@ -52,7 +54,7 @@ open Purelib.Geometry.Projective
 /-- Two completed-prefix realizations of a squared-sensitive probe have powered L2 distance bounded by expected scaled
 cylinder spread. -/
 theorem prefixFamilyProbe_poweredL2Distance_le_of_squaredSensitive
-    (distribution : Measure.Distribution
+    (distribution : Distribution
       Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
@@ -66,22 +68,22 @@ theorem prefixFamilyProbe_poweredL2Distance_le_of_squaredSensitive
         (fun certificate => probe (leftPoints certificate))
         (fun certificate => probe (rightPoints certificate)) ≤
       distribution.expectation fun certificate =>
-        factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks := by
+        factor * Cylinder.cylinderSpread certificate.blocks := by
   change distribution.expectation (fun certificate =>
       (probe (leftPoints certificate) - probe (rightPoints certificate)) ^ 2) ≤
     distribution.expectation fun certificate =>
-      factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks
+      factor * Cylinder.cylinderSpread certificate.blocks
   apply distribution.expectation_mono
   intro atom member
   rw [← Distance.NaturalLp.rationalSeparation_sq]
-  exact Approximation.CCL.Prefix.realized_probe_separation_sq_le
+  exact Prefix.realized_probe_separation_sq_le
     (leftRealizes atom member) (rightRealizes atom member)
     probe factor factorNonnegative sensitive
 
 /-- Two projective-prefix realizations have squared-probe powered L2 distance bounded by expected scaled cylinder
 spread. -/
 theorem projectivePrefixFamilyProbe_poweredL2Distance_le_of_squaredSensitive
-    (distribution : Measure.Distribution
+    (distribution : Distribution
       Cylinder.CompletedProjectivePrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
@@ -98,15 +100,15 @@ theorem projectivePrefixFamilyProbe_poweredL2Distance_le_of_squaredSensitive
         (fun certificate => probe (leftPoints certificate))
         (fun certificate => probe (rightPoints certificate)) ≤
       distribution.expectation fun certificate =>
-        factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks := by
+        factor * Cylinder.cylinderSpread certificate.blocks := by
   change distribution.expectation (fun certificate =>
       (probe (leftPoints certificate) - probe (rightPoints certificate)) ^ 2) ≤
     distribution.expectation fun certificate =>
-      factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks
+      factor * Cylinder.cylinderSpread certificate.blocks
   apply distribution.expectation_mono
   intro atom member
   rw [← Distance.NaturalLp.rationalSeparation_sq]
-  exact Approximation.CCL.Prefix.projectiveRealized_probe_separation_sq_le
+  exact Prefix.projectiveRealized_probe_separation_sq_le
     (leftRealizes atom member) (rightRealizes atom member)
     probe factor factorNonnegative sensitive
 
@@ -120,7 +122,7 @@ open Purelib.Geometry.Projective
 open Purelib.Measure
 /-- Squared expectation separation between completed-prefix realizations is bounded by expected scaled spread. -/
 theorem prefixFamilyProbe_expectation_separation_sq_le_of_squaredSensitive
-    (distribution : Measure.Distribution
+    (distribution : Distribution
       Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
@@ -136,17 +138,17 @@ theorem prefixFamilyProbe_expectation_separation_sq_le_of_squaredSensitive
         (distribution.expectation fun certificate =>
           probe (rightPoints certificate)) ^ 2 ≤
       distribution.expectation fun certificate =>
-        factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks := by
+        factor * Cylinder.cylinderSpread certificate.blocks := by
   exact (distribution.expectation_separation_sq_le_poweredL2Distance
     (fun certificate => probe (leftPoints certificate))
     (fun certificate => probe (rightPoints certificate))).trans
-      (CCL.Prefix.prefixFamilyProbe_poweredL2Distance_le_of_squaredSensitive
+      (prefixFamilyProbe_poweredL2Distance_le_of_squaredSensitive
         distribution probe factor factorNonnegative sensitive
         leftPoints rightPoints leftRealizes rightRealizes)
 
 /-- Squared expectation separation between projective-prefix realizations is bounded by expected scaled spread. -/
 theorem projectivePrefixFamilyProbe_expectation_separation_sq_le_of_squaredSensitive
-    (distribution : Measure.Distribution
+    (distribution : Distribution
       Cylinder.CompletedProjectivePrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
@@ -165,11 +167,11 @@ theorem projectivePrefixFamilyProbe_expectation_separation_sq_le_of_squaredSensi
         (distribution.expectation fun certificate =>
           probe (rightPoints certificate)) ^ 2 ≤
       distribution.expectation fun certificate =>
-        factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks := by
+        factor * Cylinder.cylinderSpread certificate.blocks := by
   exact (distribution.expectation_separation_sq_le_poweredL2Distance
     (fun certificate => probe (leftPoints certificate))
     (fun certificate => probe (rightPoints certificate))).trans
-      (CCL.Prefix.projectivePrefixFamilyProbe_poweredL2Distance_le_of_squaredSensitive
+      (projectivePrefixFamilyProbe_poweredL2Distance_le_of_squaredSensitive
         distribution probe factor factorNonnegative sensitive
         leftPoints rightPoints leftRealizes rightRealizes)
 
@@ -186,7 +188,7 @@ open Purelib.Riemann.Integration
 /-- The requested squared-probe block budget makes two completed-prefix realizing expectations strictly closer than
 epsilon. -/
 theorem prefixFamilySquaredProbe_expectations_pairwise_separation_lt_requested
-    (distribution : Measure.Distribution
+    (distribution : Distribution
       Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)
@@ -206,18 +208,18 @@ theorem prefixFamilySquaredProbe_expectations_pairwise_separation_lt_requested
         (distribution.expectation fun certificate =>
           probe (rightPoints certificate)) < epsilon := by
   have squaredLe :=
-    CCL.Prefix.prefixFamilyProbe_expectation_separation_sq_le_of_squaredSensitive
+    prefixFamilyProbe_expectation_separation_sq_le_of_squaredSensitive
       distribution probe factor factorPositive.le sensitive
       leftPoints rightPoints leftRealizes rightRealizes
   have budgetLe : distribution.expectation (fun certificate =>
-        factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks) ≤ epsilon ^ 2 / 2 := by
+        factor * Cylinder.cylinderSpread certificate.blocks) ≤ epsilon ^ 2 / 2 := by
     calc
       distribution.expectation (fun certificate =>
-            factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks) ≤
+            factor * Cylinder.cylinderSpread certificate.blocks) ≤
           distribution.expectation (fun _ => epsilon ^ 2 / 2) := by
         apply distribution.expectation_mono
         intro atom member
-        exact Approximation.CCL.Prefix.scaledCylinderSpread_le_half_sq_of_requested epsilon factor
+        exact Prefix.scaledCylinderSpread_le_half_sq_of_requested epsilon factor
           epsilonPositive factorPositive (enough atom member)
       _ = epsilon ^ 2 / 2 := distribution.expectation_constant _
   have squaresSmall := squaredLe.trans_lt
@@ -227,7 +229,7 @@ theorem prefixFamilySquaredProbe_expectations_pairwise_separation_lt_requested
 /-- The requested squared-probe block budget makes two projective-prefix realizing expectations strictly closer than
 epsilon. -/
 theorem projectivePrefixFamilySquaredProbe_expectations_pairwise_separation_lt_requested
-    (distribution : Measure.Distribution
+    (distribution : Distribution
       Cylinder.CompletedProjectivePrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)
@@ -250,18 +252,18 @@ theorem projectivePrefixFamilySquaredProbe_expectations_pairwise_separation_lt_r
         (distribution.expectation fun certificate =>
           probe (rightPoints certificate)) < epsilon := by
   have squaredLe :=
-    CCL.Prefix.projectivePrefixFamilyProbe_expectation_separation_sq_le_of_squaredSensitive
+    projectivePrefixFamilyProbe_expectation_separation_sq_le_of_squaredSensitive
       distribution probe factor factorPositive.le sensitive
       leftPoints rightPoints leftRealizes rightRealizes
   have budgetLe : distribution.expectation (fun certificate =>
-        factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks) ≤ epsilon ^ 2 / 2 := by
+        factor * Cylinder.cylinderSpread certificate.blocks) ≤ epsilon ^ 2 / 2 := by
     calc
       distribution.expectation (fun certificate =>
-            factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks) ≤
+            factor * Cylinder.cylinderSpread certificate.blocks) ≤
           distribution.expectation (fun _ => epsilon ^ 2 / 2) := by
         apply distribution.expectation_mono
         intro atom member
-        exact Approximation.CCL.Prefix.scaledCylinderSpread_le_half_sq_of_requested epsilon factor
+        exact Prefix.scaledCylinderSpread_le_half_sq_of_requested epsilon factor
           epsilonPositive factorPositive (enough atom member)
       _ = epsilon ^ 2 / 2 := distribution.expectation_constant _
   have squaresSmall := squaredLe.trans_lt

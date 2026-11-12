@@ -65,7 +65,7 @@ namespace Purelib.Approximation.Gaussian.Name.Coherent.Division.Sample
 /-- Geometric error scale for equal-index quotients. The factor eight is the finite Gaussian triangle cost combined with
 the canonical quarter-radius movement of each operand sampler. -/
 def sampledQuotientErrorScale (numerator denominator
-  : Coherent.CoherentNamed)
+  : CoherentNamed)
     (apart : Named.Apart denominator.name) : Fraction.Rational :=
   (8 *
       ((Sampling.approximation denominator.name).centerBound +
@@ -74,7 +74,7 @@ def sampledQuotientErrorScale (numerator denominator
 
 /-- The equal-index quotient error scale is nonnegative under the retained denominator apartness certificate. -/
 theorem sampledQuotientErrorScale_nonnegative
-    (numerator denominator : Coherent.CoherentNamed)
+    (numerator denominator : CoherentNamed)
     (apart : Named.Apart denominator.name) :
     0 <= sampledQuotientErrorScale numerator denominator
       apart := by
@@ -91,14 +91,14 @@ theorem sampledQuotientErrorScale_nonnegative
 
 /-- Equal-index finite Gaussian quotients of two canonical CCL samplers. -/
 def sampledQuotientApproximation (numerator
-  denominator : Coherent.CoherentNamed)
-    (apart : Named.Apart denominator.name) : Gaussian.Sequence.ApproximationData where
+  denominator : CoherentNamed)
+    (apart : Named.Apart denominator.name) : Sequence.ApproximationData where
   sample index :=
     (Sampling.approximation numerator.name).sample index /
       (Sampling.approximation denominator.name).sample index
-  radiusSq := Geometric.Basic.quarterRadius
+  radiusSq := Basic.quarterRadius
     (sampledQuotientErrorScale numerator denominator apart)
-  radiusSq_nonneg := Geometric.Basic.quarterRadius_nonneg
+  radiusSq_nonneg := Basic.quarterRadius_nonneg
     (sampledQuotientErrorScale_nonnegative numerator denominator
       apart)
   later_close := by
@@ -108,29 +108,29 @@ def sampledQuotientApproximation (numerator
     let denominatorSource :=
       Sampling.approximation denominator.name
     have numeratorMovement :
-        Data.Gaussian.Norm.Basic.normSq (numeratorSource.sample later -
+        Basic.normSq (numeratorSource.sample later -
             numeratorSource.sample earlier) <=
-          Geometric.Basic.quarterRadius 4 earlier := by
+          Basic.quarterRadius 4 earlier := by
       simpa only [numeratorSource, Sampling.approximation]
         using numeratorSource.later_close order
     have denominatorMovementForward :
-        Data.Gaussian.Norm.Basic.normSq (denominatorSource.sample later -
+        Basic.normSq (denominatorSource.sample later -
             denominatorSource.sample earlier) <=
-          Geometric.Basic.quarterRadius 4 earlier := by
+          Basic.quarterRadius 4 earlier := by
       simpa only [denominatorSource, Sampling.approximation]
         using denominatorSource.later_close order
     have denominatorMovement :
-        Data.Gaussian.Norm.Basic.normSq (denominatorSource.sample earlier -
+        Basic.normSq (denominatorSource.sample earlier -
             denominatorSource.sample later) <=
-          Geometric.Basic.quarterRadius 4 earlier := by
+          Basic.quarterRadius 4 earlier := by
       have identity : denominatorSource.sample earlier -
           denominatorSource.sample later =
             -(denominatorSource.sample later -
               denominatorSource.sample earlier) := by
         apply Data.Gaussian.Basic.ext <;>
-          simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-            Purelib.Data.Gaussian.Basic.neg_re, Purelib.Data.Gaussian.Basic.neg_im] <;> ring1
-      rw [identity, Data.Gaussian.Norm.Basic.normSq_neg]
+          simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+            Data.Gaussian.Basic.neg_re, Data.Gaussian.Basic.neg_im] <;> ring1
+      rw [identity, Basic.normSq_neg]
       exact denominatorMovementForward
     have quotientBound :=
       Quotient.ApproximationQuotientVariation.normSq_div_sub_div_le
@@ -142,8 +142,8 @@ def sampledQuotientApproximation (numerator
         (numeratorSlope := (1 : Fraction.Rational))
         (numeratorBound := numeratorSource.centerBound)
         (denominatorBound := denominatorSource.centerBound)
-        (pointMovement := Geometric.Basic.quarterRadius 4 earlier)
-        (rootMovement := Geometric.Basic.quarterRadius 4 earlier)
+        (pointMovement := Basic.quarterRadius 4 earlier)
+        (rootMovement := Basic.quarterRadius 4 earlier)
         (by
           simpa only [Fraction.Field.one_mul]
             using numeratorMovement)
@@ -152,29 +152,29 @@ def sampledQuotientApproximation (numerator
         denominatorMovement
         (Apart.Sampling.sampled_lower denominator apart later)
         (Apart.Sampling.sampled_lower denominator apart earlier)
-    change Data.Gaussian.Norm.Basic.normSq
+    change Basic.normSq
         (numeratorSource.sample later / denominatorSource.sample later -
           numeratorSource.sample earlier / denominatorSource.sample earlier) <=
-      Geometric.Basic.quarterRadius
+      Basic.quarterRadius
         (sampledQuotientErrorScale numerator denominator apart)
           earlier
     calc
-      Data.Gaussian.Norm.Basic.normSq
+      Basic.normSq
           (numeratorSource.sample later / denominatorSource.sample later -
             numeratorSource.sample earlier /
               denominatorSource.sample earlier) <=
-        Purelib.Approximation.Rational.Budget.Quotient.quotientBound
+        Quotient.quotientBound
           1 numeratorSource.centerBound denominatorSource.centerBound
           apart.certificate.lowerSq
-          (Geometric.Basic.quarterRadius 4 earlier)
-          (Geometric.Basic.quarterRadius 4 earlier) := quotientBound
-      _ = Geometric.Basic.quarterRadius
+          (Basic.quarterRadius 4 earlier)
+          (Basic.quarterRadius 4 earlier) := quotientBound
+      _ = Basic.quarterRadius
           (sampledQuotientErrorScale numerator denominator apart)
             earlier := by
-        rw [Geometric.Basic.quarterRadius_eq_mul_pow,
-          Geometric.Basic.quarterRadius_eq_mul_pow]
+        rw [Basic.quarterRadius_eq_mul_pow,
+          Basic.quarterRadius_eq_mul_pow]
         dsimp only [numeratorSource, denominatorSource]
-        unfold Purelib.Approximation.Rational.Budget.Quotient.quotientBound
+        unfold Quotient.quotientBound
           sampledQuotientErrorScale
         let geometric : Fraction.Rational := (1 / 4 : Fraction.Rational) ^ earlier
         change
@@ -220,20 +220,20 @@ def sampledQuotientApproximation (numerator
     let denominatorSource :=
       Sampling.approximation denominator.name
     have denominatorLower := Apart.Sampling.sampled_lower denominator apart index
-    have denominatorPositive : 0 < Data.Gaussian.Norm.Basic.normSq (denominatorSource.sample index) :=
+    have denominatorPositive : 0 < Basic.normSq (denominatorSource.sample index) :=
       apart.certificate.positive.trans_le denominatorLower
     have denominatorNonzero : denominatorSource.sample index ≠ 0 := by
       intro zero
-      rw [zero, Data.Gaussian.Norm.Basic.normSq_zero] at denominatorPositive
+      rw [zero, Basic.normSq_zero] at denominatorPositive
       exact (lt_irrefl _ denominatorPositive).elim
     rw [Data.Gaussian.Field.normSq_div _ _ denominatorNonzero]
     calc
-      Data.Gaussian.Norm.Basic.normSq (numeratorSource.sample index) /
-          Data.Gaussian.Norm.Basic.normSq (denominatorSource.sample index) <=
-        Data.Gaussian.Norm.Basic.normSq (numeratorSource.sample index) /
+      Basic.normSq (numeratorSource.sample index) /
+          Basic.normSq (denominatorSource.sample index) <=
+        Basic.normSq (numeratorSource.sample index) /
           apart.certificate.lowerSq :=
         Fraction.Order.Field.div_le_div_of_nonneg_left_direct
-          (Data.Gaussian.Norm.Basic.normSq_nonneg _) apart.certificate.positive denominatorLower
+          (Basic.normSq_nonneg _) apart.certificate.positive denominatorLower
       _ <= numeratorSource.centerBound / apart.certificate.lowerSq := by
         rw [Fraction.Field.div_eq_mul_inv_direct,
           Fraction.Field.div_eq_mul_inv_direct]
@@ -244,7 +244,7 @@ def sampledQuotientApproximation (numerator
 
 /-- The quotient approximation divides the original canonical numerator and denominator samples at the same index. -/
 @[simp] theorem sampledQuotientApproximation_sample
-    (numerator denominator : Coherent.CoherentNamed)
+    (numerator denominator : CoherentNamed)
     (apart : Named.Apart denominator.name) (index : Nat) :
     (sampledQuotientApproximation numerator denominator
       apart).sample index =

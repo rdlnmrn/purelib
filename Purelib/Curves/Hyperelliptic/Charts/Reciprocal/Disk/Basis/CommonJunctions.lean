@@ -62,75 +62,75 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse (Uni
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds (BasisBounds)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule (BasisCommonChartRequests)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {cover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {covers :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {bounds :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
-  {depth floor sourceFloor : Nat} {target allowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {cover : Cover data} {covers :
+    BasisSourceCovers parent}
+  {regular : RegularBounds.Data cap} {bounds :
+    UniformBounds regular.padded}
+  {depth floor sourceFloor : Nat} {target allowance : Coordinate}
 
 /-- The retained physical joins and basis comparison requests between consecutive common intervals.
 
 The dependent request spine keeps each actual endpoint pair and its numerical threshold together; empty and singleton
 spines have no junction. -/
-def Junctions (basis : ReciprocalPaddedBasisBounds.BasisBounds bounds)
-    (joinTarget : InverseRootPolynomial.Coordinate) (joinFloor : Nat) :
-    {intervals : List (CommonCover.BasisCommonInterval cover covers)} →
-    CommonChartSchedule.BasisCommonChartRequests regular depth target allowance floor sourceFloor intervals → Type
+def Junctions (basis : BasisBounds bounds)
+    (joinTarget : Coordinate) (joinFloor : Nat) :
+    {intervals : List (BasisCommonInterval cover covers)} →
+    BasisCommonChartRequests regular depth target allowance floor sourceFloor intervals → Type
   | _, .nil => PUnit
   | _, .cons _ .nil => PUnit
   | _, .cons first (.cons next remaining) =>
-      (joined : ArcOwners.Join first.request.last.point next.request.first.point) ×
-        (JunctionRequests.BasisRequest basis joined joinTarget joinFloor ×
-          Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonJunctions.Junctions basis joinTarget joinFloor
+      (joined : Join first.request.last.point next.request.first.point) ×
+        (BasisRequest basis joined joinTarget joinFloor ×
+          CommonJunctions.Junctions basis joinTarget joinFloor
           (.cons next remaining))
 
 namespace Junctions
 
 /-- Consecutive intervals share a physical endpoint even when their retained anchor cells and independently read root
 coordinates differ. -/
-def build (basis : ReciprocalPaddedBasisBounds.BasisBounds bounds)
-    (joinTarget : InverseRootPolynomial.Coordinate) (positive : 0 < joinTarget) (joinFloor : Nat) :
-    {intervals : List (CommonCover.BasisCommonInterval cover covers)} →
-    (requests : CommonChartSchedule.BasisCommonChartRequests regular depth target allowance floor sourceFloor intervals)
+def build (basis : BasisBounds bounds)
+    (joinTarget : Coordinate) (positive : 0 < joinTarget) (joinFloor : Nat) :
+    {intervals : List (BasisCommonInterval cover covers)} →
+    (requests : BasisCommonChartRequests regular depth target allowance floor sourceFloor intervals)
       →
-    BasisCommonInterval.Links intervals → Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonJunctions.Junctions
+    BasisCommonInterval.Links intervals → Junctions
       basis joinTarget joinFloor requests
   | _, .nil, _ => ⟨⟩
   | _, .cons _ .nil, _ => ⟨⟩
   | _, .cons first (.cons next remaining), links =>
       let joined := Join.ofSameParent first.request.last.point next.request.first.point links.1
       ⟨joined, BasisRequest.build basis joined joinTarget positive joinFloor,
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonJunctions.Junctions.build basis joinTarget
+        Junctions.build basis joinTarget
           positive joinFloor (.cons next remaining) links.2⟩
 
-variable {basis : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {joinTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {joinFloor : Nat}
+variable {basis : BasisBounds bounds}
+  {joinTarget : Coordinate} {joinFloor : Nat}
 
 /-- The maximum retained junction threshold, including the supplied stage floor. -/
-def stage : {intervals : List (CommonCover.BasisCommonInterval cover covers)} →
-    (requests : CommonChartSchedule.BasisCommonChartRequests regular depth target allowance floor sourceFloor intervals)
+def stage : {intervals : List (BasisCommonInterval cover covers)} →
+    (requests : BasisCommonChartRequests regular depth target allowance floor sourceFloor intervals)
       →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonJunctions.Junctions basis joinTarget joinFloor requests →
+    Junctions basis joinTarget joinFloor requests →
       Nat
   | _, .nil, _ => joinFloor
   | _, .cons _ .nil, _ => joinFloor
   | _, .cons _ (.cons next remaining), joins => max joins.2.1.index
-    (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonJunctions.Junctions.stage (.cons next remaining)
+    (Junctions.stage (.cons next remaining)
     joins.2.2)
 
 /-- The common junction stage is at least the original requested floor. -/
-theorem floor_le : {intervals : List (CommonCover.BasisCommonInterval cover covers)} →
-    (requests : CommonChartSchedule.BasisCommonChartRequests regular depth target allowance floor sourceFloor intervals)
+theorem floor_le : {intervals : List (BasisCommonInterval cover covers)} →
+    (requests : BasisCommonChartRequests regular depth target allowance floor sourceFloor intervals)
       →
-    (joins : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonJunctions.Junctions basis joinTarget joinFloor
-      requests) → joinFloor ≤ Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonJunctions.Junctions.stage requests
+    (joins : Junctions basis joinTarget joinFloor
+      requests) → joinFloor ≤ stage requests
       joins
   | _, .nil, _ => Nat.le_refl _
   | _, .cons _ .nil, _ => Nat.le_refl _

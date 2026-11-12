@@ -7,6 +7,7 @@ public import Purelib.Data.Rat.Fraction.Order.Arithmetic
 public import Purelib.Geometry.Rational.Box.Basic
 public import Purelib.Polynomial.Dense.Gaussian.Basic
 public import Purelib.Polynomial.Dense.Multiplication
+public import Purelib.Polynomial.Dense.Gaussian.Factorization.Identity
 
 import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Polynomial.Dense.Evaluation
@@ -149,5 +150,119 @@ winding four to the original polynomial on the selected rectangle.
 
 namespace Purelib.RootIsolation.Newton.Band
 end Purelib.RootIsolation.Newton.Band
+
+end
+
+end
+
+end
+
+end
+
+public section
+
+namespace Purelib.Polynomial.Clearance.Box.Line.Basic
+
+open Purelib.Polynomial.Dense.Gaussian
+
+namespace VerticalLineClearance
+
+/-- Transport the retained product clearance to its original coefficient source.
+
+The original multiplication operation computes the same bound from both
+supplied line certificates. The coefficient identity transports only its
+pointwise evaluation guarantee; it does not replace either input polynomial.
+-/
+def ofProductIdentity {source leftPolynomial rightPolynomial : CoefficientPolynomial}
+    {ambient : Geometry.Rational.Box} {x : Fraction.Rational}
+    (identity : Factorization.Identity.ProductIdentity source leftPolynomial rightPolynomial)
+    (left : VerticalLineClearance leftPolynomial ambient x)
+    (right : VerticalLineClearance rightPolynomial ambient x) :
+    VerticalLineClearance source ambient x :=
+  let retained := left.mul right
+  { bound := retained.bound
+    positive := retained.positive
+    lower := by
+      intro y lower upper
+      let point := Gaussian.Components.Basic.point x y
+      have same : (leftPolynomial * rightPolynomial).eval point = source.eval point :=
+        (Dense.Basic.DensePolynomial.eval_mul leftPolynomial rightPolynomial point).trans
+          (Factorization.Identity.eval_factorization identity point).symm
+      exact Eq.mp (congrArg (fun value : Canonical => retained.bound ≤ Canonical.normSq value) same)
+        (retained.lower y lower upper) }
+
+/-- Source transport retains the exact bound computed by the original line multiplication. -/
+theorem ofProductIdentity_bound {source leftPolynomial rightPolynomial : CoefficientPolynomial}
+    {ambient : Geometry.Rational.Box} {x : Fraction.Rational}
+    (identity : Factorization.Identity.ProductIdentity source leftPolynomial rightPolynomial)
+    (left : VerticalLineClearance leftPolynomial ambient x)
+    (right : VerticalLineClearance rightPolynomial ambient x) :
+    (ofProductIdentity identity left right).bound = (left.mul right).bound := by
+  unfold ofProductIdentity
+  rfl
+
+/-- Canonical source transport retains the complete original multiplication certificate. -/
+theorem ofProductIdentity_mul {leftPolynomial rightPolynomial : CoefficientPolynomial}
+    {ambient : Geometry.Rational.Box} {x : Fraction.Rational}
+    (identity : Factorization.Identity.ProductIdentity
+      (leftPolynomial * rightPolynomial) leftPolynomial rightPolynomial)
+    (left : VerticalLineClearance leftPolynomial ambient x)
+    (right : VerticalLineClearance rightPolynomial ambient x) :
+    ofProductIdentity identity left right = left.mul right := by
+  unfold ofProductIdentity
+  rfl
+
+end VerticalLineClearance
+
+namespace HorizontalLineClearance
+
+/-- Transport the retained product clearance to its original coefficient source.
+
+The original multiplication operation computes the same bound from both
+supplied line certificates. The coefficient identity transports only its
+pointwise evaluation guarantee; it does not replace either input polynomial.
+-/
+def ofProductIdentity {source leftPolynomial rightPolynomial : CoefficientPolynomial}
+    {ambient : Geometry.Rational.Box} {y : Fraction.Rational}
+    (identity : Factorization.Identity.ProductIdentity source leftPolynomial rightPolynomial)
+    (left : HorizontalLineClearance leftPolynomial ambient y)
+    (right : HorizontalLineClearance rightPolynomial ambient y) :
+    HorizontalLineClearance source ambient y :=
+  let retained := left.mul right
+  { bound := retained.bound
+    positive := retained.positive
+    lower := by
+      intro x lower upper
+      let point := Gaussian.Components.Basic.point x y
+      have same : (leftPolynomial * rightPolynomial).eval point = source.eval point :=
+        (Dense.Basic.DensePolynomial.eval_mul leftPolynomial rightPolynomial point).trans
+          (Factorization.Identity.eval_factorization identity point).symm
+      exact Eq.mp (congrArg (fun value : Canonical => retained.bound ≤ Canonical.normSq value) same)
+        (retained.lower x lower upper) }
+
+/-- Source transport retains the exact bound computed by the original line multiplication. -/
+theorem ofProductIdentity_bound {source leftPolynomial rightPolynomial : CoefficientPolynomial}
+    {ambient : Geometry.Rational.Box} {y : Fraction.Rational}
+    (identity : Factorization.Identity.ProductIdentity source leftPolynomial rightPolynomial)
+    (left : HorizontalLineClearance leftPolynomial ambient y)
+    (right : HorizontalLineClearance rightPolynomial ambient y) :
+    (ofProductIdentity identity left right).bound = (left.mul right).bound := by
+  unfold ofProductIdentity
+  rfl
+
+/-- Canonical source transport retains the complete original multiplication certificate. -/
+theorem ofProductIdentity_mul {leftPolynomial rightPolynomial : CoefficientPolynomial}
+    {ambient : Geometry.Rational.Box} {y : Fraction.Rational}
+    (identity : Factorization.Identity.ProductIdentity
+      (leftPolynomial * rightPolynomial) leftPolynomial rightPolynomial)
+    (left : HorizontalLineClearance leftPolynomial ambient y)
+    (right : HorizontalLineClearance rightPolynomial ambient y) :
+    ofProductIdentity identity left right = left.mul right := by
+  unfold ofProductIdentity
+  rfl
+
+end HorizontalLineClearance
+
+end Purelib.Polynomial.Clearance.Box.Line.Basic
 
 end

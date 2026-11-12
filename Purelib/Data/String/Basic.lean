@@ -171,15 +171,68 @@ public def trimAscii (text : _root_.String) : _root_.String :=
   let bounds := trimBounds text text.utf8ByteSize ⟨0⟩ none ⟨0⟩
   _root_.String.Internal.extract text bounds.1 bounds.2
 
+/-- Count the original String's decoded Unicode scalar characters.
+
+The certified decoder is observed once and its retained character list supplies
+its length. Failure contradicts the original String's own UTF8 validity field;
+no invalid branch returns a guessed count or counts encoded bytes instead. -/
+public def length (text : _root_.String) : Nat :=
+  match decoded : UTF8.decode? text.toByteArray with
+  | some characters => characters.val.length
+  | none => False.elim
+      (((UTF8.decode_none_iff text.toByteArray).mp decoded) text.isValidUTF8)
+
+/-- The length of an original String is the length of its original UTF8 scalar list.
+
+Every supplied finite character list whose encoding is the original stored byte
+array yields the same count, including multibyte scalars and embedded NUL. The
+statement concerns the original String and Char carriers without an ASCII premise. -/
+public theorem length_of_utf8_encoding (text : _root_.String) (characters : List Char)
+    (same : text.toByteArray = characters.utf8Encode) :
+    length text = characters.length := by
+  have readback : (UTF8.decode? text.toByteArray).map (fun decoded => decoded.val) =
+      some characters := by
+    rw [same]
+    exact UTF8.decode_utf8Encode characters
+  unfold length
+  split
+  · rename_i retained accepted
+    rw [accepted] at readback
+    change some retained.val = some characters at readback
+    exact congrArg List.length (Option.some.inj readback)
+  · rename_i rejected
+    exact False.elim (((UTF8.decode_none_iff text.toByteArray).mp rejected) text.isValidUTF8)
+
 /-- Construct an original string from exactly certified finite UTF8 bytes.
 
 Successful decoding retains the original byte array in the original String
-constructor. Its proof field uses the retained character-list encoding equality;
-failure returns none without an unchecked conversion or replacement character. -/
+constructor. The certified validity decision supplies only its proof field;
+native conversion need not materialize a character list that it discards.
+Failure returns none without a replacement character or accepting invalid bytes. -/
 public def fromUTF8? (bytes : _root_.ByteArray) : Option _root_.String :=
-  match UTF8.decode? bytes with
-  | none => none
-  | some decoded => some ⟨bytes, UTF8.valid decoded⟩
+  match UTF8.decValid bytes with
+  | .isFalse _ => none
+  | .isTrue valid => some ⟨bytes, valid⟩
+
+/-- Certified validity conversion preserves the complete original decoder result.
+
+Both procedures return none exactly for invalid bytes. On success they retain
+the same original byte array and differ only in the proof of its UTF8 validity;
+this all-input equality includes embedded NULs and malformed encodings. -/
+private theorem fromUTF8?_eq_decode (bytes : _root_.ByteArray) :
+    fromUTF8? bytes = (match UTF8.decode? bytes with
+      | none => none
+      | some decoded => some ⟨bytes, UTF8.valid decoded⟩) := by
+  unfold fromUTF8?
+  cases decoded : UTF8.decode? bytes with
+  | none =>
+      cases UTF8.decValid bytes with
+      | isFalse _ => rfl
+      | isTrue valid => exact False.elim (((UTF8.decode_none_iff bytes).mp decoded) valid)
+  | some witness =>
+      cases UTF8.decValid bytes with
+      | isFalse invalid => exact False.elim (invalid (UTF8.valid witness))
+      | isTrue _ => rfl
 
 /-- A successful certified conversion retains every original input byte.
 
@@ -187,7 +240,7 @@ The returned original String stores the supplied byte array itself. Its decoded
 character witness changes only the proof of validity, never the stored encoding. -/
 public theorem fromUTF8?_toByteArray {bytes : _root_.ByteArray} {text : _root_.String}
     (retained : fromUTF8? bytes = some text) : text.toByteArray = bytes := by
-  unfold fromUTF8? at retained
+  rewrite [fromUTF8?_eq_decode] at retained
   cases decoded : UTF8.decode? bytes with
   | none =>
       rw [decoded] at retained

@@ -49,6 +49,8 @@ import Purelib.Topology.Polygon.Stokes
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-! Opposite-sheet paired polygon comparison for the actual edge valuation,
@@ -86,16 +88,16 @@ open Purelib.Data.Gaussian.Norm.Basic (normSq_neg)
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid}
-  {edges : Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames} {mesh : LiftedMesh vertices edges
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid}
+  {edges : RootIsolation.SquareRoot.Grid.RootEdgeBank frames} {mesh : LiftedMesh vertices edges
     base.faces}
   {domains : FaceDomainBank frames
     base.faces.regulars}
   {leftDifferential rightDifferential : Differential genus}
-  {start finish : Canonical} {walk : Purelib.Polynomial.Geometry.Grid.Walks.Walk
+  {start finish : Canonical} {walk : Polynomial.Geometry.Grid.Walks.Walk
     base.bank.grid start finish}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PolygonRequests
@@ -106,8 +108,8 @@ set_option genInjectivity false in
 The opposite-source and two source/chart requests share the same retained occurrences, each using one tenth of the
 target. -/
 structure PolygonRequest (leftFixed : FaceMagnitudeBank domains leftDifferential)
-    (rightFixed : FaceMagnitudeBank domains rightDifferential) (paired : WalkOccurrences.PairedWalk mesh walk)
-    (first last : Fin 2) (error : Fraction.Rational) where
+    (rightFixed : FaceMagnitudeBank domains rightDifferential) (paired : PairedWalk mesh walk)
+    (first last : Fin 2) (error : Rational) where
   /-- The opposite-sheet bilinear source-area request on the retained paired walk. -/ opposite : BilinearAreaRequest
     leftFixed rightFixed paired (error / 10)
   /-- The first-sheet paired source/chart area request on those same retained source occurrences. -/ leftChart :
@@ -129,10 +131,10 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PolygonReques
 /-- Prepare the opposite-source and both source/chart requests with their common one-tenth allowance. -/
 @[expose] def build (leftFixed : FaceMagnitudeBank domains leftDifferential) (rightFixed : FaceMagnitudeBank domains
   rightDifferential)
-    (paired : WalkOccurrences.PairedWalk mesh walk) (first last : Fin 2) (error : Fraction.Rational) (positive : 0 <
+    (paired : PairedWalk mesh walk) (first last : Fin 2) (error : Rational) (positive : 0 <
       error) :
     PolygonRequest leftFixed rightFixed paired first last error :=
-  have partPositive := Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Fraction.Rational) < 10)
+  have partPositive := Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Rational) < 10)
   ⟨BilinearAreaRequest.build leftFixed rightFixed paired (error / 10) partPositive,
     PairedChartAreaRequest.build leftFixed rightFixed (paired.sources first)
       (SignedSourceChartRequests.paired_sources_nonloop paired first) (error / 10) partPositive,
@@ -152,14 +154,14 @@ theorem fixed_later (request : PolygonRequest leftFixed rightFixed paired first 
 /-- All source choices are replaced by the actual projected edge readings before the requested bound is exposed to the
 branch comparison. -/
 theorem accurate (request : PolygonRequest leftFixed rightFixed paired first last error)
-    {stage : Nat} {leftBank : PrimitiveData.FacePrimitiveBank leftDifferential stage domains}
-    {rightBank : PrimitiveData.FacePrimitiveBank rightDifferential stage domains}
-    (leftReadings : TrianglePrimitiveReadings.TriangleReadings leftBank mesh) (rightReadings :
-      TrianglePrimitiveReadings.TriangleReadings rightBank mesh)
+    {stage : Nat} {leftBank : FacePrimitiveBank leftDifferential stage domains}
+    {rightBank : FacePrimitiveBank rightDifferential stage domains}
+    (leftReadings : TriangleReadings leftBank mesh) (rightReadings :
+      TriangleReadings rightBank mesh)
     (later : request.index ≤ stage) (different : first ≠ last) :
     let value := fun edge => (⟨edgeValuation mesh leftReadings.values edge,
       CanonicalEdgeValues.edgeValuation mesh rightReadings.values edge⟩ : PrimitivePoint)
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area ((edges.indexedEdges vertices walk first).map
+    Basic.normSq (PairedIncrementArea.area ((edges.indexedEdges vertices walk first).map
       value) -
       PairedIncrementArea.area ((edges.indexedEdges vertices walk last).map value)) ≤ error := by
   intro value
@@ -187,23 +189,23 @@ theorem accurate (request : PolygonRequest leftFixed rightFixed paired first las
     unfold polygon
     rw [← paired.sources_project sheet, Map.map_map]
     rfl
-  change Data.Gaussian.Norm.Basic.normSq (source first - source last) ≤ error / 10 at opposite
-  change Data.Gaussian.Norm.Basic.normSq (source first - PairedIncrementArea.area
+  change Basic.normSq (source first - source last) ≤ error / 10 at opposite
+  change Basic.normSq (source first - PairedIncrementArea.area
     ((paired.sources first).map (fun source => value (source.project mesh.triangulation.faces)))) ≤ error / 10 at left
-  change Data.Gaussian.Norm.Basic.normSq (source last - PairedIncrementArea.area
+  change Basic.normSq (source last - PairedIncrementArea.area
     ((paired.sources last).map (fun source => value (source.project mesh.triangulation.faces)))) ≤ error / 10 at right
   rw [readback first] at left
   rw [readback last] at right
-  have reversed : Data.Gaussian.Norm.Basic.normSq (polygon first - source first) ≤ error / 10 := by
+  have reversed : Basic.normSq (polygon first - source first) ≤ error / 10 := by
     rw [show polygon first - source first = -(source first - polygon first) by ring1,
-      Data.Gaussian.Norm.Basic.normSq_neg]
+      Basic.normSq_neg]
     exact left
-  have middle : Data.Gaussian.Norm.Basic.normSq (source first - polygon last) ≤ 2 * (error / 10 + error / 10)
+  have middle : Basic.normSq (source first - polygon last) ≤ 2 * (error / 10 + error / 10)
     :=
-    (Data.Gaussian.Norm.Bounds.normSq_sub_le_via (source first) (source last) (polygon last)).trans
+    (Bounds.normSq_sub_le_via (source first) (source last) (polygon last)).trans
       (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct opposite
         right) (by decide))
-  have estimate := (Data.Gaussian.Norm.Bounds.normSq_sub_le_via (polygon first) (source first) (polygon last)).trans
+  have estimate := (Bounds.normSq_sub_le_via (polygon first) (source first) (polygon last)).trans
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct reversed
       middle) (by decide))
   exact estimate.trans_eq ((by ring1 : 2 * (error / 10 + 2 * (error / 10 + error / 10)) = error / 10 * 10).trans

@@ -42,11 +42,11 @@ A triple formed by the previous term, the fixed spread and the current term yiel
 recurrence term. -/
 private theorem spreadTriple_next
     (previous current value : K)
-    (triple : Geometry.Trigonometry.Spread.Triple.TripleSpread.SpreadTriple previous value current) :
-    Geometry.Trigonometry.Spread.Triple.TripleSpread.SpreadTriple current value
+    (triple : Trigonometry.Spread.Triple.TripleSpread.SpreadTriple previous value current) :
+    Trigonometry.Spread.Triple.TripleSpread.SpreadTriple current value
       (2 * (1 - 2 * value) * current - previous + 2 * value) := by
-  unfold Geometry.Trigonometry.Spread.Triple.TripleSpread.SpreadTriple
-    Geometry.Trigonometry.Spread.Triple.TripleSpread.tripleSpreadFunction at triple ⊢
+  unfold Trigonometry.Spread.Triple.TripleSpread.SpreadTriple
+    Trigonometry.Spread.Triple.TripleSpread.tripleSpreadFunction at triple ⊢
   calc
     (current + value +
             (2 * (1 - 2 * value) * current - previous + 2 * value)) ^ 2 -
@@ -69,19 +69,19 @@ variable {K : Type*} [ExplicitField K]
 
 The triple-spread identity holds at every natural index in the supplied explicit field. -/
 theorem recursive_spreads (index : Nat) (value : K) :
-    Geometry.Trigonometry.Spread.Triple.TripleSpread.SpreadTriple (Recurrence.Spread.Basic.spreadPolynomial index value)
+    Geometry.Trigonometry.Spread.Triple.TripleSpread.SpreadTriple (Basic.spreadPolynomial index value)
       value
-      (Recurrence.Spread.Basic.spreadPolynomial (index + 1) value) := by
+      (Basic.spreadPolynomial (index + 1) value) := by
   induction index with
   | zero =>
-      unfold Recurrence.Spread.Basic.spreadPolynomial Geometry.Trigonometry.Spread.Triple.TripleSpread.SpreadTriple
+      unfold Basic.spreadPolynomial Geometry.Trigonometry.Spread.Triple.TripleSpread.SpreadTriple
         Geometry.Trigonometry.Spread.Triple.TripleSpread.tripleSpreadFunction
       ring1
   | succ index inductionHypothesis =>
       have next := spreadTriple_next
-        (Recurrence.Spread.Basic.spreadPolynomial index value)
-        (Recurrence.Spread.Basic.spreadPolynomial (index + 1) value) value inductionHypothesis
-      simpa only [Nat.succ_eq_add_one, Recurrence.Spread.Basic.spreadPolynomial_succ_succ] using next
+        (Basic.spreadPolynomial index value)
+        (Basic.spreadPolynomial (index + 1) value) value inductionHypothesis
+      simpa only [Nat.succ_eq_add_one, Basic.spreadPolynomial_succ_succ] using next
 end Purelib.Polynomial.Recurrence.Spread.Triple
 
 end

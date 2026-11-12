@@ -157,6 +157,24 @@ inductive DirectedRefinement : List (CenteredEdge curve source) → List (Center
 
 namespace DirectedRefinement
 
+/-- Append two actual directed refinements in their original parent/child occurrence order.
+
+Each connected block, pointwise root witness and positive displacement
+factor is unchanged. Only associativity transports the literal child list;
+no parent, root comparison or geometry producer is run.
+-/
+theorem append :
+    {firstParents lastParents firstChildren lastChildren : List (CenteredEdge curve source)} →
+    DirectedRefinement firstParents firstChildren → DirectedRefinement lastParents lastChildren →
+      DirectedRefinement (firstParents ++ lastParents) (firstChildren ++ lastChildren)
+  | _, _, _, _, .nil, last => last
+  | _, lastParents, _, lastChildren,
+      .cons (parent := parent) (parents := parents) (block := block) (children := children)
+        chain roots direction tail, last =>
+      Eq.mp (congrArg (fun output => DirectedRefinement (parent :: (parents ++ lastParents)) output)
+        (Purelib.Data.List.Append.append_assoc block children lastChildren).symm)
+        (.cons chain roots direction (append tail last))
+
 /-- The original parent list is a directed refinement of itself. -/
 theorem refl : ∀ parents : List (CenteredEdge curve source), DirectedRefinement parents parents
   | [] => .nil

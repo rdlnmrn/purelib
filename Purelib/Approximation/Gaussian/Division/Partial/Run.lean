@@ -41,14 +41,14 @@ set_option genInjectivity false in
 consumed. -/
 inductive RunResult (numerator denominator :
   Coherent.CoherentNamed)
-    (start : Approximation.Gaussian.Name.Coherent.Refinement.State denominator) : Nat → Type 2
+    (start : State denominator) : Nat → Type 2
   /-- Retain the successful denominator state, its finite reachability, the actual quotient and its indexed readiness
-    certificate. -/ | ready {fuel : Nat} (state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator)
+    certificate. -/ | ready {fuel : Nat} (state : State denominator)
       (reachable : State.Reachable start state) (output : Coherent.CoherentNamed)
       (valid : Ready numerator denominator state output) :
       RunResult numerator denominator start fuel
   /-- Retain the final denominator state and finite reachability when the supplied fuel is exhausted. -/ | exhausted
-    {fuel : Nat} (state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator)
+    {fuel : Nat} (state : State denominator)
       (reachable : State.Reachable start state) :
       RunResult numerator denominator start fuel
 
@@ -57,12 +57,12 @@ constructive_injectivity RunResult
 /-- Structurally recursive finite runner. Fuel is consumed only after a real `progressed` transition. At zero fuel the
 retained state is returned unchanged. -/
 def attempt (numerator denominator :
-  Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed)
-    (state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator) :
+  Coherent.CoherentNamed)
+    (state : State denominator) :
     (fuel : Nat) → RunResult numerator denominator state fuel
   | 0 => .exhausted state (.refl state)
   | fuel + 1 =>
-      match Purelib.Approximation.Gaussian.Division.Partial.Step.step numerator denominator state with
+      match Step.step numerator denominator state with
       | .ready output valid => .ready state (.refl state) output valid
       | .progressed next progress =>
           match attempt numerator denominator next fuel with
@@ -74,13 +74,13 @@ def attempt (numerator denominator :
 /-- A zero-fuel division attempt returns the unchanged source state with reflexive reachability. -/
 @[simp] theorem attempt_zero (numerator denominator :
   Coherent.CoherentNamed)
-    (state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator) :
+    (state : State denominator) :
     attempt numerator denominator state 0 =
       .exhausted state (.refl state) := rfl
 
 /-- A ready one-step result terminates every positive-fuel run immediately; unused fuel is irrelevant finite budget. -/
 theorem attempt_succ_eq_ready_of_step_ready
-    (numerator denominator : Coherent.CoherentNamed) (state : Approximation.Gaussian.Name.Coherent.Refinement.State
+    (numerator denominator : Coherent.CoherentNamed) (state : State
         denominator)
     (fuel : Nat) (output : Coherent.CoherentNamed)
     (valid : Ready numerator denominator state output)
@@ -92,7 +92,7 @@ theorem attempt_succ_eq_ready_of_step_ready
 /-- A progressed step prefixes its reachability certificate to a recursively ready finite run. -/
 theorem attempt_succ_eq_ready_of_step_progressed
     (numerator denominator : Coherent.CoherentNamed)
-    (state next final : Approximation.Gaussian.Name.Coherent.Refinement.State denominator) (fuel : Nat)
+    (state next final : State denominator) (fuel : Nat)
     (progress : State.Progress state next) (reachable : State.Reachable next final)
     (output : Coherent.CoherentNamed) (valid : Ready numerator denominator final
         output)
@@ -109,7 +109,7 @@ theorem attempt_succ_eq_ready_of_step_progressed
 /-- A progressed step likewise retains its transition when the recursive run exhausts its remaining fuel. -/
 theorem attempt_succ_eq_exhausted_of_step_progressed
     (numerator denominator : Coherent.CoherentNamed)
-    (state next final : Approximation.Gaussian.Name.Coherent.Refinement.State denominator) (fuel : Nat)
+    (state next final : State denominator) (fuel : Nat)
     (progress : State.Progress state next) (reachable : State.Reachable next final)
     (stepProgressed : Step.step numerator denominator state =
       .progressed next progress)

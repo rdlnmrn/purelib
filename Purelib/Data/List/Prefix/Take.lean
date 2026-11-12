@@ -79,6 +79,19 @@ public theorem length_take {Alpha : Type u} (entries : List Alpha) (count : Nat)
             simp only [-eq_self, -iff_self, Nat.min_def, if_neg within, if_neg beyond]
             rfl
 
+/-- Taking a finite prefix never exceeds the requested count.
+
+Structural recursion follows the original take operation. Empty lists give
+the zero bound; a retained head transports the tail's bound by successor. -/
+public theorem length_take_le {Alpha : Type u} (entries : List Alpha) (count : Nat) :
+    (entries.take count).length ≤ count := by
+  induction count generalizing entries with
+  | zero => exact Nat.le_refl 0
+  | succ count ih =>
+      cases entries with
+      | nil => exact Nat.zero_le _
+      | cons entry remaining => exact Nat.succ_le_succ (ih remaining)
+
 /-- A take within the original list length retains exactly the requested length. -/
 public theorem length_take_of_le {Alpha : Type u} {entries : List Alpha} {count : Nat}
     (within : count ≤ entries.length) : (entries.take count).length = count :=

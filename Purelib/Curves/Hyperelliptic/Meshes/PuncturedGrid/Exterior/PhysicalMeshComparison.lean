@@ -52,27 +52,27 @@ open Purelib.Riemann
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet} {surfaceTarget target : Fraction.Rational}
   {minimum floor stage depth coarseDepth : Nat} {box : Rational.Box}
   {basis : PhysicalBasisRequest regular domains target
     minimum floor}
-  {previous : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+  {previous : RegularDomainMeshes.RegularMeshes.CommonCuts domains}
   (selected : BasisSourceCuts basis.preparations previous)
-  {initial : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet coarseDepth)
+  {initial : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+    RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet coarseDepth)
     fixed surfaceTarget}
   {request : PhysicalMeshRequest basis initial} {cache :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box}
+    RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap stage box}
 
 namespace OccurrenceReadings
 
@@ -85,8 +85,8 @@ theorem accurate {first second : Fin genus}
     (entry : request.OccurrenceReadings cache first second i)
     (evaluated : basis.Evaluations polynomials depth)
     (later : request.index ≤ stage) (spatial : basis.depth ≤ depth) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalArcAggregation.physicalArcError ((basis.preparations.get
+    Gaussian.Norm.Basic.normSq
+      (PhysicalArcAggregation.physicalArcError ((basis.preparations.get
       first).occurrences[i.val]'i.isLt)
       (polynomials.get first) (polynomials.get second) depth entry.original.centeredArea) <
       ((basis.entries.get first).get second).allowance := by
@@ -94,12 +94,12 @@ theorem accurate {first second : Fin genus}
   let schedule := (basis.schedules.get first).get second
   let prepared := (schedule.entries.get i).sources
   let source := ((evaluated.get first).get second).get i
-  let sources := Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceGeometry.sourceBank
+  let sources := SourceGeometry.sourceBank
     (selected.select first) (List.getElem_mem i.isLt)
     request.surface source
   have ownerLater := (schedule.owner_ge i).trans
     ((basis.index_ge first second).trans (request.basis_le.trans later))
-  have sourceLater := (Data.Nat.Order.le_max_left _ _).trans ((schedule.source_ge i).trans
+  have sourceLater := (Nat.Order.le_max_left _ _).trans ((schedule.source_ge i).trans
     ((basis.index_ge first second).trans (request.basis_le.trans later)))
   have depthEq : schedule.physicalDepth = (request.mesh first i).depth :=
     (basis.physicalDepth_eq first second).trans (request.depth_eq.symm.trans
@@ -127,14 +127,14 @@ theorem accurate (entries : request.Readings cache)
   intro first second i
   have bound := (((entries.get first).get second).get i).accurate selected evaluated later spatial
   simpa only [samples,
-    Data.Vector.DependentVector.ofFn_get, -eq_self, -iff_self] using bound
+    Vector.DependentVector.ofFn_get, -eq_self, -iff_self] using bound
 
 /-- Assemble the physical basis matrix with internally proved occurrence
 accuracy, using the already retained samples and query-refined source bank. -/
 @[expose] def assemble (entries : request.Readings cache)
     (evaluated : basis.Evaluations polynomials depth)
     (later : request.index ≤ stage) (spatial : basis.depth ≤ depth) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalBasisSamples.PhysicalBasisArcSamples (regular := regular)
+    PhysicalBasisSamples.PhysicalBasisArcSamples (regular := regular)
       (domains := domains) polynomials target minimum floor depth :=
   PhysicalBasisRequest.assemble
     basis polynomials evaluated spatial entries.counts entries.values entries.samples

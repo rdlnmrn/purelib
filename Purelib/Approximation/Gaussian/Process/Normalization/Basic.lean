@@ -16,6 +16,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Finite loop-domain normalization
 
@@ -47,7 +49,7 @@ structure LoopDomain (process : Process) where
   /-- The retained rational lower quadrance of every possible process reading. -/ lowerSq : Fraction.Rational
   /-- Every possible reading at every retained state meets the same lower quadrance. -/ lower : ∀ (state :
     process.State) {value : Gaussian.Basic.Canonical},
-    process.Possible state value → lowerSq ≤ Data.Gaussian.Norm.Basic.normSq value
+    process.Possible state value → lowerSq ≤ Basic.normSq value
   /-- The displayed rational triangle-estimate weight. -/ weight : Fraction.Rational
   /-- The retained triangle weight is strictly positive. -/ weightPositive : 0 < weight
   /-- The weight's centre coefficient lies strictly below the retained lower quadrance. -/ coefficient_lt : (weight + 1)
@@ -67,23 +69,23 @@ is exactly two divided by that positive gap. No finite witness is replaced. -/
     (aboveOne : 1 < apart.lowerSq) : LoopDomain process := by
   let gap := apart.lowerSq - 1
   have gapPositive : 0 < gap :=
-    Fraction.Order.Arithmetic.sub_pos_direct aboveOne
+    Arithmetic.sub_pos_direct aboveOne
   let weight := 2 / gap
   have weightPositive : 0 < weight :=
-    Fraction.Order.Field.div_pos_direct (by decide) gapPositive
+    Field.div_pos_direct (by decide) gapPositive
   have weightGap : weight * gap = 2 := by
     dsimp only [weight]
     exact Fraction.Field.div_mul_cancel_of_ne 2 gap
       gapPositive.ne'
   have coefficientLt : (weight + 1) / weight < apart.lowerSq := by
-    apply (Fraction.Order.Field.div_lt_iff_pos weightPositive).2
-    apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+    apply (Field.div_lt_iff_pos weightPositive).2
+    apply Arithmetic.lt_of_mul_lt_mul_right_direct
       (c := gap) _ gapPositive
     have gapLtTwice : gap < 2 * gap := by
       calc
         gap = 0 + gap := (zero_add gap).symm
         _ < gap + gap :=
-          Fraction.Order.Arithmetic.add_lt_add_right_direct gapPositive gap
+          Arithmetic.add_lt_add_right_direct gapPositive gap
         _ = 2 * gap := by ring1
     calc
       (weight + 1) * gap = 2 + gap := by
@@ -94,7 +96,7 @@ is exactly two divided by that positive gap. No finite witness is replaced. -/
         calc
           2 + gap = gap + 2 := add_comm _ _
           _ < 2 * gap + 2 :=
-            Fraction.Order.Arithmetic.add_lt_add_right_direct gapLtTwice 2
+            Arithmetic.add_lt_add_right_direct gapLtTwice 2
           _ = 2 + 2 * gap := add_comm _ _
       _ = (apart.lowerSq * weight) * gap := by
         calc
@@ -125,7 +127,7 @@ The original loop-domain coefficient inequality makes its displayed
 lower-minus-coefficient difference strictly positive. -/
 public theorem slack_pos {process : Process} (domain : LoopDomain process) :
     0 < domain.slack :=
-  Fraction.Order.Arithmetic.sub_pos_direct domain.coefficient_lt
+  Arithmetic.sub_pos_direct domain.coefficient_lt
 
 /-- The loop-domain squared-error request obtained by dividing its margin by weight plus one.
 
@@ -141,7 +143,7 @@ The original weight is positive and rational one is nonnegative. The
 direct mixed positive-sum law gives positivity of the same denominator. -/
 public theorem weight_add_one_pos {process : Process}
     (domain : LoopDomain process) : 0 < domain.weight + 1 :=
-  Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct
+  Arithmetic.add_pos_of_pos_of_nonneg_direct
     domain.weightPositive (show (0 : Fraction.Rational) ≤ 1 by decide)
 
 /-- The finite loop normalization squared-error target is strictly positive.
@@ -150,7 +152,7 @@ Both the retained slack and weight-plus-one denominator are positive,
 so their original quotient is a strictly positive rational request. -/
 public theorem normalizationTarget_pos {process : Process}
     (domain : LoopDomain process) : 0 < domain.normalizationTarget :=
-  Fraction.Order.Field.div_pos_direct domain.slack_pos
+  Field.div_pos_direct domain.slack_pos
     domain.weight_add_one_pos
 
 /-- A fine enough ball around one admitted rational candidate has normalized centre norm at least one.
@@ -160,7 +162,7 @@ compare the retained candidate lower norm with the same ball centre and radius. 
 public theorem center_normalized_of_fine {process : Process}
     (domain : LoopDomain process) (state : process.State)
     (fine : (process.ball state).radiusSq < domain.normalizationTarget) :
-    1 ≤ Data.Gaussian.Norm.Basic.normSq (process.ball state).center := by
+    1 ≤ Basic.normSq (process.ball state).center := by
   rcases process.witness state with ⟨witness, possible⟩
   have inside := process.possible_inside possible
   have witnessLower := domain.lower state possible
@@ -169,47 +171,47 @@ public theorem center_normalized_of_fine {process : Process}
     dsimp only [error]
     apply Gaussian.Basic.ext <;>
       simp only [Gaussian.Basic.sub_re, Gaussian.Basic.sub_im, Gaussian.Basic.add_re, Gaussian.Basic.add_im] <;> ring1
-  by_cases normalized : 1 ≤ Data.Gaussian.Norm.Basic.normSq (process.ball state).center
+  by_cases normalized : 1 ≤ Basic.normSq (process.ball state).center
   · exact normalized
-  · have centerLt : Data.Gaussian.Norm.Basic.normSq (process.ball state).center < 1 :=
+  · have centerLt : Basic.normSq (process.ball state).center < 1 :=
       lt_of_not_ge normalized
     have coefficientPositive :
         0 < (domain.weight + 1) / domain.weight :=
-      Fraction.Order.Field.div_pos_direct domain.weight_add_one_pos
+      Field.div_pos_direct domain.weight_add_one_pos
         domain.weightPositive
-    have errorNorm : Data.Gaussian.Norm.Basic.normSq error ≤ (process.ball state).radiusSq := by
+    have errorNorm : Basic.normSq error ≤ (process.ball state).radiusSq := by
       exact inside
     have errorTerm :
-        (domain.weight + 1) * Data.Gaussian.Norm.Basic.normSq error < domain.slack := by
-      have errorSmall : Data.Gaussian.Norm.Basic.normSq error < domain.normalizationTarget :=
+        (domain.weight + 1) * Basic.normSq error < domain.slack := by
+      have errorSmall : Basic.normSq error < domain.normalizationTarget :=
         errorNorm.trans_lt fine
-      have scaled := (Fraction.Order.Field.lt_div_iff_pos
+      have scaled := (Field.lt_div_iff_pos
         domain.weight_add_one_pos).1 errorSmall
       calc
-        (domain.weight + 1) * Data.Gaussian.Norm.Basic.normSq error =
-            Data.Gaussian.Norm.Basic.normSq error * (domain.weight + 1) :=
+        (domain.weight + 1) * Basic.normSq error =
+            Basic.normSq error * (domain.weight + 1) :=
           Fraction.Field.mul_comm _ _
         _ < domain.slack := scaled
     have centerTerm :
         ((domain.weight + 1) / domain.weight) *
-            Data.Gaussian.Norm.Basic.normSq (process.ball state).center <
+            Basic.normSq (process.ball state).center <
           (domain.weight + 1) / domain.weight := by
-      have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+      have scaled := Arithmetic.mul_lt_mul_of_pos_left_direct
         coefficientPositive centerLt
       simpa only [Fraction.Field.mul_one_direct] using scaled
-    have strictUpper : Data.Gaussian.Norm.Basic.normSq witness < domain.lowerSq := by
+    have strictUpper : Basic.normSq witness < domain.lowerSq := by
       rw [decomposition]
       calc
-        Data.Gaussian.Norm.Basic.normSq (error + (process.ball state).center) ≤
-            (domain.weight + 1) * Data.Gaussian.Norm.Basic.normSq error +
+        Basic.normSq (error + (process.ball state).center) ≤
+            (domain.weight + 1) * Basic.normSq error +
               ((domain.weight + 1) / domain.weight) *
-                Data.Gaussian.Norm.Basic.normSq (process.ball state).center :=
+                Basic.normSq (process.ball state).center :=
           Weighted.normSq_add_le_parameter domain.weight domain.weightPositive _ _
         _ < domain.slack +
             (domain.weight + 1) / domain.weight :=
-          Fraction.Order.Arithmetic.add_lt_add_direct errorTerm centerTerm
+          Arithmetic.add_lt_add_direct errorTerm centerTerm
         _ = domain.lowerSq := by
-          unfold LoopDomain.slack
+          unfold slack
           ring1
     exact ((not_lt_of_ge witnessLower) strictUpper).elim
 end LoopDomain

@@ -18,6 +18,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation.Gaussian.Enclosure
@@ -47,50 +49,50 @@ namespace Purelib.Approximation.Gaussian.Enclosure.Ball.RationalInterval
 
 /-- A rational interval as a real-axis Gaussian ball. The lower endpoint is the canonical centre and the interval width
 supplies a square error bound. -/
-def ballOfBound (bound : Rat.Interval) :
-  Approximation.Gaussian.Enclosure.Ball where
+def ballOfBound (bound : Interval) :
+  Ball where
   center := RationalEmbedding.realPoint bound.sample
   radiusSq := bound.width ^ 2
-  radiusSq_nonneg := Fraction.Order.Arithmetic.sq_nonneg_direct bound.width
+  radiusSq_nonneg := Arithmetic.sq_nonneg_direct bound.width
 
 /-- The real coordinate of the interval ball's centre is the original interval sample. -/
 @[simp] theorem ballOfBound_center_re (bound :
-  Rat.Interval) :
+  Interval) :
     (ballOfBound bound).center.re = bound.sample :=
   rfl
 
 /-- The imaginary coordinate of the interval ball's centre is zero. -/
 @[simp] theorem ballOfBound_center_im (bound :
-  Rat.Interval) :
+  Interval) :
     (ballOfBound bound).center.im = 0 :=
   rfl
 
 /-- The interval ball's squared radius is the square of the original interval width. -/
 @[simp] theorem ballOfBound_radiusSq (bound :
-  Rat.Interval) :
+  Interval) :
     (ballOfBound bound).radiusSq = bound.width ^ 2 :=
   rfl
 
 /-- Every displayed rational admitted by the interval is admitted by its real-axis Gaussian ball. -/
 theorem ballOfBound_contains {bound :
-  Rat.Interval}
+  Interval}
     {value : Fraction.Rational} (inside : bound.Contains value) :
     (ballOfBound bound).Contains (RationalEmbedding.realPoint
       value) := by
-  unfold Approximation.Gaussian.Enclosure.Ball.Contains
+  unfold Contains
   rw [show (ballOfBound bound).center =
     RationalEmbedding.realPoint bound.sample by rfl,
     RationalEmbedding.realPoint_sub, RationalEmbedding.normSq_realPoint]
   have directed := Interval.sample_difference_le inside
-  apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  apply Arithmetic.le_of_sub_nonneg_direct
   calc
     0 ≤ (bound.width - (value - bound.sample)) *
           (bound.width + (value - bound.sample)) := by
-      apply Fraction.Order.Arithmetic.mul_nonneg_direct
-      · exact Fraction.Order.Arithmetic.sub_nonneg_direct directed.1
+      apply Arithmetic.mul_nonneg_direct
+      · exact Arithmetic.sub_nonneg_direct directed.1
       · have nonnegative :
           0 ≤ bound.width - (bound.sample - value) :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct directed.2
+        Arithmetic.sub_nonneg_direct directed.2
         calc
           0 ≤ bound.width - (bound.sample - value) := nonnegative
           _ = bound.width + (value - bound.sample) := by ring1
@@ -99,32 +101,32 @@ theorem ballOfBound_contains {bound :
 /-- A coarse explicit bound for every later real-axis ball centre, obtained from containment in one displayed outer
 interval. -/
 theorem ballOfBound_center_bounded {inner outer :
-  Rat.Interval}
+  Interval}
     (refines : Interval.Refines inner outer) :
-    Data.Gaussian.Norm.Basic.normSq (ballOfBound
+    Norm.Basic.normSq (ballOfBound
       inner).center ≤
-      2 * (Data.Gaussian.Norm.Basic.normSq (RationalEmbedding.realPoint outer.sample) + outer.width ^ 2) := by
+      2 * (Norm.Basic.normSq (RationalEmbedding.realPoint outer.sample) + outer.width ^ 2) := by
   have sampleInside : outer.Contains inner.sample :=
     refines.contains inner.sample_contains
   have differenceInside :
-      Data.Gaussian.Norm.Basic.normSq (RationalEmbedding.realPoint inner.sample - RationalEmbedding.realPoint
+      Norm.Basic.normSq (RationalEmbedding.realPoint inner.sample - RationalEmbedding.realPoint
         outer.sample) ≤
         outer.width ^ 2 := by
     simpa only [ballOfBound,
-        Approximation.Gaussian.Enclosure.Ball.Contains] using
+        Contains] using
       ballOfBound_contains sampleInside
   have decomposition :
       RationalEmbedding.realPoint inner.sample = RationalEmbedding.realPoint outer.sample +
         (RationalEmbedding.realPoint inner.sample - RationalEmbedding.realPoint outer.sample) := by
-    apply Data.Gaussian.Basic.ext <;>
+    apply Basic.ext <;>
       simp only [RationalEmbedding.realPoint_re, RationalEmbedding.realPoint_im, Basic.add_re, Basic.add_im,
         Basic.sub_re, Basic.sub_im] <;>
       ring1
   rw [show (ballOfBound inner).center =
     RationalEmbedding.realPoint inner.sample by rfl,
     decomposition]
-  exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  exact (Norm.Bounds.normSq_add_le_two _ _).trans
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
       (add_le_add le_rfl differenceInside) (by decide))
 end Purelib.Approximation.Gaussian.Enclosure.Ball.RationalInterval
 

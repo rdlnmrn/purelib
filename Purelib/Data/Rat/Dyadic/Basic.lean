@@ -1,4 +1,6 @@
 module
+public import Init.Data.Nat.Log2
+public import Purelib.Data.Rat.Fraction.Cast
 import Purelib.Data.Rat.Fraction
 public import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Arithmetic
@@ -43,6 +45,22 @@ def power (exponent : Nat) : Fraction.Rational := (2 : Fraction.Rational) ^
 def factor : Dyadic.Basic.Direction → Nat → Fraction.Rational
   | .down, exponent => 1 / Dyadic.Basic.power exponent
   | .up, exponent => Dyadic.Basic.power exponent
+
+/-- Estimate a reciprocal binary magnitude from the difference of the retained numerator and denominator widths.
+
+This exponent is only a speculative scale choice. Its clients must check every
+required inequality directly; no near-optimality or lower-bound claim is made.
+-/
+def magnitudeExponent (value : Fraction.Rational) : Nat :=
+  value.den.log2 + 1 - value.num.natAbs.log2
+
+/-- Form a genuine reciprocal power of two at the speculative magnitude exponent.
+
+The integer cast retains the complete binary denominator directly. Acceptance
+of a geometric proposal is independent of this untrusted scale heuristic.
+-/
+def magnitudeScale (value : Fraction.Rational) : Fraction.Rational :=
+  1 / Fraction.Cast.fromInt (Int.ofNat (2 ^ magnitudeExponent value))
 
 /-- Scale a rational down by division or up by multiplication by the selected power of two. -/
 def normalized (value : Fraction.Rational) : Dyadic.Basic.Direction → Nat →

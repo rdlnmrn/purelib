@@ -37,12 +37,12 @@ public section
 
 The exact alias retains the original finite coefficient list and executable
 normalization, without changing the represented polynomial's owner. -/
-abbrev CoefficientPolynomial := Dense.Basic.DensePolynomial Fraction.Rational
+abbrev CoefficientPolynomial := Basic.DensePolynomial Fraction.Rational
 
 /-- The dense linear polynomial with coefficients `[slope, origin]`.
 
 It evaluates to the affine expression `origin + slope * point`, including zero slopes. -/
-@[expose] def linear (origin slope : Fraction.Rational) : (Dense.Basic.DensePolynomial Fraction.Rational) := ⟨[slope,
+@[expose] def linear (origin slope : Fraction.Rational) : (Basic.DensePolynomial Fraction.Rational) := ⟨[slope,
   origin]⟩
 
 /-- Evaluate the displayed linear polynomial as its affine expression. -/
@@ -58,7 +58,7 @@ leading zero prefix cannot increase this two-entry list's length. -/
 private theorem linear_degreeCount_le (origin slope : Fraction.Rational) :
     (linear origin slope).degreeCount ≤ 2 := by
   change ([slope, origin].dropWhile (· = 0)).length ≤ 2
-  exact Purelib.Data.List.DropWhile.length_le (fun value : Fraction.Rational => decide (value = 0))
+  exact Data.List.DropWhile.length_le (fun value : Fraction.Rational => decide (value = 0))
     [slope, origin]
 
 /-- One polynomial Horner step for affine substitution.
@@ -66,23 +66,23 @@ private theorem linear_degreeCount_le (origin slope : Fraction.Rational) :
 Multiply the accumulator by the displayed linear polynomial and add the normalized constant coefficient. -/
 @[expose] def step (origin slope : Fraction.Rational) (accumulator : CoefficientPolynomial) (coefficient :
   Fraction.Rational) :
-  (Dense.Basic.DensePolynomial Fraction.Rational) :=
-  accumulator * linear origin slope + (Dense.Basic.DensePolynomial.constant coefficient).normalize
+  (Basic.DensePolynomial Fraction.Rational) :=
+  accumulator * linear origin slope + (Basic.DensePolynomial.constant coefficient).normalize
 
 /-- One affine Horner step increases normalized coefficient count by at most one. -/
 private theorem step_degreeCount_le (origin slope : Fraction.Rational)
     (accumulator : CoefficientPolynomial) (coefficient : Fraction.Rational) :
     (step origin slope accumulator coefficient).degreeCount ≤ accumulator.degreeCount + 1 := by
-  have product := Dense.Basic.DensePolynomial.degreeCount_mul_le accumulator (linear origin slope)
+  have product := Basic.DensePolynomial.degreeCount_mul_le accumulator (linear origin slope)
   have lineBound := linear_degreeCount_le origin slope
-  have addition := Dense.Basic.DensePolynomial.degreeCount_add_le_of_normalized
-    (Dense.Basic.DensePolynomial.normalize_mul accumulator (linear origin slope))
-    (Dense.Basic.DensePolynomial.normalize_normalize (Dense.Basic.DensePolynomial.constant coefficient))
-  have constantBound := Dense.Basic.DensePolynomial.degreeCount_constant_le_one coefficient
-  rw [Dense.Basic.DensePolynomial.degreeCount_normalize] at addition
+  have addition := Basic.DensePolynomial.degreeCount_add_le_of_normalized
+    (Basic.DensePolynomial.normalize_mul accumulator (linear origin slope))
+    (Basic.DensePolynomial.normalize_normalize (Basic.DensePolynomial.constant coefficient))
+  have constantBound := Basic.DensePolynomial.degreeCount_constant_le_one coefficient
+  rw [Basic.DensePolynomial.degreeCount_normalize] at addition
   apply addition.trans
-  rw [Purelib.Data.Nat.Order.max_eq_natMax]
-  exact Purelib.Data.Nat.Order.max_le (by omega) (by omega)
+  rw [Data.Nat.Order.max_eq_natMax]
+  exact Data.Nat.Order.max_le (by omega) (by omega)
 
 /-- An affine Horner fold preserves a normalized starting accumulator. -/
 private theorem fold_normalized (origin slope : Fraction.Rational) :
@@ -93,7 +93,7 @@ private theorem fold_normalized (origin slope : Fraction.Rational) :
   | [], _, normalized => normalized
   | coefficient :: remaining, accumulator, _ =>
       fold_normalized origin slope remaining (step origin slope accumulator coefficient)
-        (Dense.Basic.DensePolynomial.normalize_add _ _)
+        (Basic.DensePolynomial.normalize_add _ _)
 
 /-- Bound the coefficient count after an affine Horner fold.
 
@@ -123,9 +123,9 @@ private theorem fold_eval (origin slope point : Fraction.Rational) :
       rw [List.foldl_cons, fold_eval]
       have computed : (step origin slope accumulator coefficient).eval point =
           accumulator.eval point * (origin + slope * point) + coefficient := by
-        rw [step, Dense.Basic.DensePolynomial.eval_add,
-          Dense.Basic.DensePolynomial.eval_mul, Dense.Basic.DensePolynomial.eval_normalize,
-          Dense.Basic.DensePolynomial.eval_constant, linear_eval]
+        rw [step, Basic.DensePolynomial.eval_add,
+          Basic.DensePolynomial.eval_mul, Basic.DensePolynomial.eval_normalize,
+          Basic.DensePolynomial.eval_constant, linear_eval]
       change remaining.foldl
         (fun value coefficient => value * (origin + slope * point) + coefficient)
         ((step origin slope accumulator coefficient).eval point) = _
@@ -135,7 +135,7 @@ private theorem fold_eval (origin slope point : Fraction.Rational) :
 
 /-- Canonical finite affine substitution, accepting nonnormalized inputs. -/
 @[expose] def subst (polynomial : CoefficientPolynomial) (origin slope : Fraction.Rational) :
-  (Dense.Basic.DensePolynomial
+  (Basic.DensePolynomial
   Fraction.Rational) :=
   polynomial.normalize.coeffs.foldl (step origin slope) 0
 
@@ -148,7 +148,7 @@ theorem subst_normalized (polynomial : CoefficientPolynomial) (origin slope : Fr
 theorem subst_normalize (polynomial : CoefficientPolynomial) (origin slope : Fraction.Rational) :
     subst polynomial.normalize origin slope = subst polynomial origin slope := by
   unfold subst
-  rw [Dense.Basic.DensePolynomial.normalize_normalize]
+  rw [Basic.DensePolynomial.normalize_normalize]
 
 /-- Evaluate an affine-substituted polynomial at a rational point.
 
@@ -157,7 +157,7 @@ theorem subst_eval (polynomial : CoefficientPolynomial) (origin slope point : Fr
     (subst polynomial origin slope).eval point = polynomial.eval (origin + slope * point) := by
   rw [subst, fold_eval]
   change polynomial.normalize.eval (origin + slope * point) = _
-  exact Dense.Basic.DensePolynomial.eval_normalize _ _
+  exact Basic.DensePolynomial.eval_normalize _ _
 
 /-- Affine substitution never increases normalized coefficient count. -/
 theorem subst_degreeCount_le (polynomial : CoefficientPolynomial) (origin slope : Fraction.Rational) :
@@ -173,10 +173,10 @@ original polynomial. -/
 theorem subst_inverse (polynomial : CoefficientPolynomial) (origin slope : Fraction.Rational) (nonzero : slope ≠ 0) :
     subst (subst polynomial origin slope) (-origin / slope) slope⁻¹ = polynomial.normalize := open Purelib.Algebra.Field
       in by
-  apply Dense.Rational.Extensionality.rational_normalized_eq_of_eval_eq
-    (subst_normalized _ _ _) (Dense.Basic.DensePolynomial.normalize_normalize _)
+  apply Extensionality.rational_normalized_eq_of_eval_eq
+    (subst_normalized _ _ _) (Basic.DensePolynomial.normalize_normalize _)
   intro point
-  rw [subst_eval, subst_eval, Dense.Basic.DensePolynomial.eval_normalize]
+  rw [subst_eval, subst_eval, Basic.DensePolynomial.eval_normalize]
   have inverse : origin + slope * (-origin / slope + slope⁻¹ * point) = point := by
     calc
       _ = origin + (-origin + point) * (slope * slope⁻¹) := by
@@ -191,7 +191,7 @@ theorem subst_degreeCount (polynomial : CoefficientPolynomial) (origin slope : F
     (subst polynomial origin slope).degreeCount = polynomial.degreeCount := by
   apply Nat.le_antisymm (subst_degreeCount_le polynomial origin slope)
   have reverse := subst_degreeCount_le (subst polynomial origin slope) (-origin / slope) slope⁻¹
-  rw [subst_inverse polynomial origin slope nonzero, Dense.Basic.DensePolynomial.degreeCount_normalize] at reverse
+  rw [subst_inverse polynomial origin slope nonzero, Basic.DensePolynomial.degreeCount_normalize] at reverse
   exact reverse
 
 /-- A nonzero affine slope preserves the polynomial zero test. -/
@@ -199,51 +199,51 @@ theorem subst_isZero (polynomial : CoefficientPolynomial) (origin slope : Fracti
     (subst polynomial origin slope).isZero = polynomial.isZero := by
   cases zero : polynomial.isZero with
   | true =>
-      apply Dense.Basic.DensePolynomial.isZero_true_of_degreeCount_eq_zero
-      rw [subst_degreeCount polynomial origin slope nonzero, Dense.Basic.DensePolynomial.degreeCount_eq_zero_of_isZero
+      apply Basic.DensePolynomial.isZero_true_of_degreeCount_eq_zero
+      rw [subst_degreeCount polynomial origin slope nonzero, Basic.DensePolynomial.degreeCount_eq_zero_of_isZero
         zero]
   | false =>
-      apply Purelib.Data.Bool.Decide.bool_eq_false_of_not_eq_true
+      apply Data.Bool.Decide.bool_eq_false_of_not_eq_true
       intro transformedZero
-      have degreeZero := Dense.Basic.DensePolynomial.degreeCount_eq_zero_of_isZero transformedZero
+      have degreeZero := Basic.DensePolynomial.degreeCount_eq_zero_of_isZero transformedZero
       rw [subst_degreeCount polynomial origin slope nonzero] at degreeZero
-      have positive := Dense.Basic.DensePolynomial.degreeCount_pos_of_isZero_false zero
+      have positive := Basic.DensePolynomial.degreeCount_pos_of_isZero_false zero
       omega
 
 /-- Affine substitution commutes with polynomial negation. -/
 theorem subst_neg (polynomial : CoefficientPolynomial) (origin slope : Fraction.Rational) :
     subst (-polynomial) origin slope = -(subst polynomial origin slope) := by
-  apply Dense.Rational.Extensionality.rational_normalized_eq_of_eval_eq
-    (subst_normalized _ _ _) (Dense.Basic.DensePolynomial.normalize_neg _)
+  apply Extensionality.rational_normalized_eq_of_eval_eq
+    (subst_normalized _ _ _) (Basic.DensePolynomial.normalize_neg _)
   intro point
-  rw [subst_eval, Dense.Basic.DensePolynomial.eval_neg, Dense.Basic.DensePolynomial.eval_neg, subst_eval]
+  rw [subst_eval, Basic.DensePolynomial.eval_neg, Basic.DensePolynomial.eval_neg, subst_eval]
 
 /-- Invertible affine substitution commutes with the actual finite
 long-division remainder, not just with its evaluation specification. -/
 theorem subst_remainder (dividend divisor : CoefficientPolynomial) (origin slope : Fraction.Rational) (nonzero : slope
   ≠ 0) :
-    (Dense.Basic.DensePolynomial.divMod (subst dividend origin slope) (subst divisor origin slope)).remainder =
-      subst (Dense.Basic.DensePolynomial.divMod dividend divisor).remainder origin slope := by
+    (Basic.DensePolynomial.divMod (subst dividend origin slope) (subst divisor origin slope)).remainder =
+      subst (Basic.DensePolynomial.divMod dividend divisor).remainder origin slope := by
   cases zero : divisor.isZero with
   | true =>
       have transformedZero : (subst divisor origin slope).isZero = true := by
         rw [subst_isZero divisor origin slope nonzero, zero]
-      rw [Dense.Rational.Division.remainder_of_divisor_zero _ _ transformedZero,
-        Dense.Rational.Division.remainder_of_divisor_zero _ _ zero,
+      rw [Division.remainder_of_divisor_zero _ _ transformedZero,
+        Division.remainder_of_divisor_zero _ _ zero,
         subst_normalize, subst_normalized]
   | false =>
       symm
-      apply Dense.Rational.Division.remainder_unique
+      apply Division.remainder_unique
         (subst dividend origin slope) (subst divisor origin slope)
-        (subst (Dense.Basic.DensePolynomial.divMod dividend divisor).quotient origin slope)
-        (subst (Dense.Basic.DensePolynomial.divMod dividend divisor).remainder origin slope)
+        (subst (Basic.DensePolynomial.divMod dividend divisor).quotient origin slope)
+        (subst (Basic.DensePolynomial.divMod dividend divisor).remainder origin slope)
       · rw [subst_isZero divisor origin slope nonzero, zero]
       · exact subst_normalized _ _ _
       · rw [subst_degreeCount _ origin slope nonzero, subst_degreeCount _ origin slope nonzero]
-        exact Dense.Basic.DensePolynomial.divMod_remainder_degreeCount_lt dividend divisor zero
+        exact Basic.DensePolynomial.divMod_remainder_degreeCount_lt dividend divisor zero
       · intro point
         rw [subst_eval, subst_eval, subst_eval, subst_eval]
-        exact Dense.Basic.DensePolynomial.divMod_eval_equation dividend divisor _
+        exact Basic.DensePolynomial.divMod_eval_equation dividend divisor _
 
 end
 

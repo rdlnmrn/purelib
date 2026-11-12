@@ -91,23 +91,23 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FamilyBounds (Pr
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram
   (SurfaceOccurrence)
 open Purelib.Riemann.Normalization
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential other :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential other :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-    regular domains differential} {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {minimum
+    SurfaceOccurrence
+    regular domains differential} {target : Coordinate} {minimum
     stage fine index : Nat}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
-  {plan : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan occurrence
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {plan : PairedSourcePlan occurrence
     other target minimum}
 
 open Purelib.Data.Rat.Fraction.Compatibility
@@ -116,26 +116,26 @@ open Purelib.Integration.Path.NoisyPathArea (LengthErrorBudget)
 set_option genInjectivity false in
 /-- The coarse side count includes every retained piece and intervening junction. Its coefficients do not depend on the
 later primitive samples. -/
-structure PhysicalOwnerBudget (plan : PairedSourceReferences.PairedSourcePlan occurrence other target minimum)
-    (count : Nat) (requested : InverseRootPolynomial.Coordinate) where
+structure PhysicalOwnerBudget (plan : PairedSourcePlan occurrence other target minimum)
+    (count : Nat) (requested : Coordinate) where
   /-- The retained pre-acquisition density and source-slope bounds of the original paired plan. -/ bounds :
-    FamilyBounds.PreOwnerBounds plan
+    PreOwnerBounds plan
   /-- The original fragment area budget paid at the count-weighted complete-family target. -/ area :
-    PairedFragmentBlocks.FragmentAreaBudget bounds.density
+    FragmentAreaBudget bounds.density
     (JoinedFragmentFamily.familyLocalTarget (count + count + 1) plan.parents.slope requested)
   /-- The retained complete cell-query bank for the exact selected area tolerance. -/ queries :
-    FamilyBounds.PreOwnerQueries occurrence other area.tolerance
+    PreOwnerQueries occurrence other area.tolerance
 
 constructive_injectivity PhysicalOwnerBudget
 
 namespace PhysicalOwnerBudget
-variable {count : Nat} {requested : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+variable {count : Nat} {requested : Coordinate}
 
 /-- Prepare the complete physical-side density, count-weighted area tolerance and cell-query requirements before
 numerical acquisition. -/
-@[expose] def build (plan : PairedSourceReferences.PairedSourcePlan occurrence other target minimum)
-    (count : Nat) (requested : InverseRootPolynomial.Coordinate) (positive : 0 < requested) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOwnerRequest.PhysicalOwnerBudget plan count requested :=
+@[expose] def build (plan : PairedSourcePlan occurrence other target minimum)
+    (count : Nat) (requested : Coordinate) (positive : 0 < requested) :
+    PhysicalOwnerBudget plan count requested :=
   let bounds := PreOwnerBounds.build plan
   let area := JoinedFragmentFamily.familyAreaBudget (count + count + 1) plan.parents.slope
     bounds.density requested plan.parents.slope_nonnegative bounds.density_nonnegative positive
@@ -143,26 +143,26 @@ numerical acquisition. -/
 
 /-- The common floor paying both the original source minimum and retained query bank. -/
 @[expose] def sourceMinimum (budget :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOwnerRequest.PhysicalOwnerBudget plan count requested) :
+  PhysicalOwnerBudget plan count requested) :
   Nat :=
   max minimum budget.queries.sourceMinimum
 
 /-- Retain the original paired source plan at the common paid source floor. -/
 @[expose] def refinedPlan (budget :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOwnerRequest.PhysicalOwnerBudget plan count requested) :
-    PairedSourceReferences.PairedSourcePlan occurrence other target budget.sourceMinimum :=
+  PhysicalOwnerBudget plan count requested) :
+    PairedSourcePlan occurrence other target budget.sourceMinimum :=
   FamilyBounds.withMinimum plan budget.sourceMinimum
 
 /-- Transport the original cached pre-owner bounds to the refined source floor. -/
 @[expose] def refinedBounds (budget :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOwnerRequest.PhysicalOwnerBudget plan count requested) :
-  FamilyBounds.PreOwnerBounds budget.refinedPlan :=
+  PhysicalOwnerBudget plan count requested) :
+  PreOwnerBounds budget.refinedPlan :=
   budget.bounds.withMinimum budget.sourceMinimum
 
 /-- Reuse the computed tolerance and only transport its scalar certificates. -/
 @[expose] def refinedArea (budget :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOwnerRequest.PhysicalOwnerBudget plan count requested) :
-    PairedFragmentBlocks.FragmentAreaBudget budget.refinedBounds.density
+  PhysicalOwnerBudget plan count requested) :
+    FragmentAreaBudget budget.refinedBounds.density
       (JoinedFragmentFamily.familyLocalTarget (count + count + 1) budget.refinedPlan.parents.slope requested) := by
   let same := congrArg (fun slope => JoinedFragmentFamily.familyLocalTarget
     (count + count + 1) slope requested)
@@ -176,16 +176,16 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOwnerReq
 set_option genInjectivity false in
 /-- Each finite trace depth gets owner requests using the already selected query cap. Unit length allowances also cover
 stationary owner junctions. -/
-structure Owners (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOwnerRequest.PhysicalOwnerBudget
+structure Owners (budget : PhysicalOwnerBudget
   plan count requested) (edges : Nat) where
   /-- The requested unit-length budget for the retained physical trace's actual edge count. -/ piece :
     RequestedLengthBudget.Requested edges 1 budget.area.tolerance
   /-- The requested unit-length budget for one original stationary owner junction. -/ junction :
     RequestedLengthBudget.Requested 1 1 budget.area.tolerance
   /-- The retained paired owner request for the original physical-piece tolerance. -/ owners :
-    PairedOwnerRequest.OwnerRequest occurrence other piece.budget.tolerance
+    OwnerRequest occurrence other piece.budget.tolerance
   /-- The retained paired owner request for the original junction tolerance. -/ junctionOwners :
-    PairedOwnerRequest.OwnerRequest occurrence other junction.budget.tolerance
+    OwnerRequest occurrence other junction.budget.tolerance
   /-- The common face stage paying original query, piece-owner and junction-owner requests. -/ index : Nat
   /-- The common face stage is exactly the maximum of its three retained requirements. -/ index_eq : index = max
     budget.queries.faceIndex (max owners.index junctionOwners.index)
@@ -196,7 +196,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOwnerReq
 /-- Prepare piece and junction owner requests at the original selected tolerance and cache their common paid face stage.
 -/
 @[expose] def owners (budget :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOwnerRequest.PhysicalOwnerBudget plan count requested)
+  PhysicalOwnerBudget plan count requested)
   (edges : Nat) : budget.Owners edges :=
   let piece := RequestedLengthBudget.requested edges 1 budget.area.tolerance (by decide) budget.area.tolerance_positive
   let junction := RequestedLengthBudget.requested 1 1 budget.area.tolerance (by decide) budget.area.tolerance_positive
@@ -208,20 +208,20 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOwnerReq
 set_option genInjectivity false in
 /-- Cache the refined plan before evaluating sources. Its certificates retain both the original cap and the original
 query-index ownership. -/
-structure Prepared (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOwnerRequest.PhysicalOwnerBudget
+structure Prepared (budget : PhysicalOwnerBudget
   plan count requested) where
   /-- The cached original paired source plan at the common paid source floor. -/ plan :
-    PairedSourceReferences.PairedSourcePlan occurrence other target budget.sourceMinimum
+    PairedSourcePlan occurrence other target budget.sourceMinimum
   /-- The cached source plan is exactly the original budget's floor refinement. -/ plan_eq : plan = budget.refinedPlan
   /-- The retained pre-acquisition density and source-slope bounds of the original paired plan. -/ bounds :
-    FamilyBounds.PreOwnerBounds plan
+    PreOwnerBounds plan
   /-- The original fragment area budget paid at the count-weighted complete-family target. -/ area :
-    PairedFragmentBlocks.FragmentAreaBudget bounds.density
+    FragmentAreaBudget bounds.density
     (JoinedFragmentFamily.familyLocalTarget (count + count + 1) plan.parents.slope requested)
   /-- The transported area budget retains the original computed tolerance. -/ tolerance_eq : area.tolerance =
     budget.area.tolerance
   /-- The retained complete cell-query bank for the exact selected area tolerance. -/ queries :
-    FamilyBounds.PreOwnerQueries occurrence other area.tolerance
+    PreOwnerQueries occurrence other area.tolerance
   /-- The retained query bank's source floor is paid by the common source minimum. -/ sourcePaid : queries.sourceMinimum
     ≤ budget.sourceMinimum
   /-- Transporting the source floor preserves the original query face stage. -/ face_eq : queries.faceIndex =
@@ -232,7 +232,7 @@ constructive_injectivity Prepared
 /-- Cache the refined original plan and transport its exact area and query certificates without recomputing tolerance.
 -/
 @[expose] def prepare (budget :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOwnerRequest.PhysicalOwnerBudget plan count requested) :
+  PhysicalOwnerBudget plan count requested) :
   budget.Prepared := by
   refine {
     plan := budget.refinedPlan
@@ -243,8 +243,8 @@ constructive_injectivity Prepared
     queries := ?_
     sourcePaid := ?_
     face_eq := ?_ }
-  · dsimp only [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOwnerRequest.PhysicalOwnerBudget.refinedArea]
-  · dsimp only [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOwnerRequest.PhysicalOwnerBudget.refinedArea]
+  · dsimp only [PhysicalOwnerBudget.refinedArea]
+  · dsimp only [PhysicalOwnerBudget.refinedArea]
     exact budget.queries
   · exact Data.Nat.Order.le_max_right _ _
   · rfl
@@ -252,10 +252,10 @@ constructive_injectivity Prepared
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOwnerRequest.PhysicalOwnerBudget in
 /-- Pay a retained family from the preselected query floor and cap. -/
 theorem Prepared.error_lt {budget :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOwnerRequest.PhysicalOwnerBudget plan count requested}
+  PhysicalOwnerBudget plan count requested}
   (prepared : budget.Prepared)
-    {evaluated : PairedSourcePlan.ParentEvaluation prepared.plan sample otherSample fine}
-    {data : PairedFragmentValues.FirstData occurrence index} {otherData : PairedFragmentValues.SecondData occurrence
+    {evaluated : ParentEvaluation prepared.plan sample otherSample fine}
+    {data : FirstData occurrence index} {otherData : SecondData occurrence
       other index}
     {Vertex : Type} {values : Vertex → Stokes.PrimitivePoint}
     {traces : Fin (count + 1) → JoinedTrace.VertexTrace Vertex}
@@ -271,7 +271,7 @@ theorem Prepared.error_lt {budget :
     (fun fragment member => (owners fragment member).trans_eq prepared.tolerance_eq.symm)
 
 namespace Owners
-variable {budget : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOwnerRequest.PhysicalOwnerBudget
+variable {budget : PhysicalOwnerBudget
   plan count requested} {edges : Nat}
 
 /-- The selected face stage pays the original cell-query bank. -/

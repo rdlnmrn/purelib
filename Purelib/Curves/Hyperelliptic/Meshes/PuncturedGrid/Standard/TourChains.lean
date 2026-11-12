@@ -105,13 +105,13 @@ open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 
 set_option genInjectivity false in
 /-- A materialized decomposition of one actual indexed word. -/
-structure FourLegWord {count : Nat} (word : List (Stokes.OrientedEdge count)) where
-  /-- The retained forward connector word or its exact numerical summary. -/ forward : List (Stokes.OrientedEdge count)
-  /-- The retained right branch-boundary word or its exact numerical summary. -/ rightLoop : List (Stokes.OrientedEdge
+structure FourLegWord {count : Nat} (word : List (OrientedEdge count)) where
+  /-- The retained forward connector word or its exact numerical summary. -/ forward : List (OrientedEdge count)
+  /-- The retained right branch-boundary word or its exact numerical summary. -/ rightLoop : List (OrientedEdge
     count)
-  /-- The retained backward connector word or its exact numerical summary. -/ backward : List (Stokes.OrientedEdge
+  /-- The retained backward connector word or its exact numerical summary. -/ backward : List (OrientedEdge
     count)
-  /-- The retained left branch-boundary word or its exact numerical summary. -/ leftLoop : List (Stokes.OrientedEdge
+  /-- The retained left branch-boundary word or its exact numerical summary. -/ leftLoop : List (OrientedEdge
     count)
   /-- The original indexed word is exactly the four retained legs in their actual traversal order. -/ word_eq : word =
     forward ++ (rightLoop ++ (backward ++ leftLoop))
@@ -123,42 +123,42 @@ namespace FourLegWord
 variable {count : Nat} {word : List (OrientedEdge count)}
 
 /-- Transport the four retained legs along equality of their original indexed word. -/
-def castWord (legs : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains.PolygonStokes.FourLegWord word)
-  {other : List (Stokes.OrientedEdge count)} (equal : word = other) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains.PolygonStokes.FourLegWord other :=
+def castWord (legs : FourLegWord word)
+  {other : List (OrientedEdge count)} (equal : word = other) :
+    FourLegWord other :=
   ⟨legs.forward, legs.rightLoop, legs.backward, legs.leftLoop, equal.symm.trans legs.word_eq⟩
 
 set_option genInjectivity false in
 /-- Local source increments or already sewn increments may be supplied. The statement never assumes they are an exact
 global vertex primitive. -/
-structure Sample (legs : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains.PolygonStokes.FourLegWord word)
-  (value : Stokes.OrientedEdge count → Data.Gaussian.Basic.Canonical) where
-  /-- The retained forward connector word or its exact numerical summary. -/ forward : IncrementArea.Summary
+structure Sample (legs : FourLegWord word)
+  (value : OrientedEdge count → Gaussian) where
+  /-- The retained forward connector word or its exact numerical summary. -/ forward : Summary
     (legs.forward.map value)
-  /-- The retained right branch-boundary word or its exact numerical summary. -/ rightLoop : IncrementArea.Summary
+  /-- The retained right branch-boundary word or its exact numerical summary. -/ rightLoop : Summary
     (legs.rightLoop.map value)
-  /-- The retained backward connector word or its exact numerical summary. -/ backward : IncrementArea.Summary
+  /-- The retained backward connector word or its exact numerical summary. -/ backward : Summary
     (legs.backward.map value)
-  /-- The retained left branch-boundary word or its exact numerical summary. -/ leftLoop : IncrementArea.Summary
+  /-- The retained left branch-boundary word or its exact numerical summary. -/ leftLoop : Summary
     (legs.leftLoop.map value)
 
 constructive_injectivity Sample
 
 namespace Sample
 
-variable {legs : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains.PolygonStokes.FourLegWord word}
+variable {legs : FourLegWord word}
   {value : OrientedEdge count → Canonical}
 
 /-- Materialize each actual leg's increment summary once from the supplied edge readings. -/
-def build (legs : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains.PolygonStokes.FourLegWord word) (value :
-  Stokes.OrientedEdge count → Data.Gaussian.Basic.Canonical) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains.PolygonStokes.FourLegWord.Sample legs value :=
-  ⟨Summary.build (legs.forward.map value), IncrementArea.Summary.build (legs.rightLoop.map value),
-    IncrementArea.Summary.build (legs.backward.map value), IncrementArea.Summary.build (legs.leftLoop.map value)⟩
+def build (legs : FourLegWord word) (value :
+  OrientedEdge count → Gaussian) :
+  Sample legs value :=
+  ⟨Summary.build (legs.forward.map value), Summary.build (legs.rightLoop.map value),
+    Summary.build (legs.backward.map value), Summary.build (legs.leftLoop.map value)⟩
 
 /-- Compose the four retained summaries; do not evaluate any leg again. -/
-def combined (sample : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains.PolygonStokes.FourLegWord.Sample
-  legs value) : IncrementArea.Summary (word.map value) :=
+def combined (sample : Sample
+  legs value) : Summary (word.map value) :=
   let summary := sample.forward.append (sample.rightLoop.append (sample.backward.append sample.leftLoop))
   have mapped : word.map value = legs.forward.map value ++
       (legs.rightLoop.map value ++ (legs.backward.map value ++ legs.leftLoop.map value)) := by
@@ -172,7 +172,7 @@ def combined (sample : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourCh
 
 /-- The complete retained tour total is the sum of its four actual leg totals. -/
 theorem total_eq (sample :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains.PolygonStokes.FourLegWord.Sample legs value) :
+  Sample legs value) :
     sample.combined.total = sample.forward.total + sample.rightLoop.total + sample.backward.total +
       sample.leftLoop.total := by
   change _ + (_ + (_ + _)) = _
@@ -180,7 +180,7 @@ theorem total_eq (sample :
 
 /-- Both internal branch-loop areas and all six inter-leg terms survive. This is the full cumulative polygon, not the
 polygon of four totals alone. -/
-theorem area_eq (sample : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains.PolygonStokes.FourLegWord.Sample
+theorem area_eq (sample : Sample
   legs value) :
     sample.combined.area =
       sample.forward.area + sample.rightLoop.area + sample.backward.area + sample.leftLoop.area +
@@ -191,14 +191,14 @@ theorem area_eq (sample : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.Tou
       BoundaryRibbon.area sample.rightLoop.total sample.leftLoop.total +
       BoundaryRibbon.area sample.backward.total sample.leftLoop.total := by
   change _ + (_ + (_ + _ + _) + _) + _ = _
-  dsimp only [IncrementArea.Summary.append]
+  dsimp only [Summary.append]
   rw [IncrementArea.area_add_right, IncrementArea.area_add_right, IncrementArea.area_add_right]
   ring1
 
 /-- The exact correction incurred by suppressing both branch loops. All operands are retained numerical summaries,
 independent of subdivision size. -/
 def branchCorrection (sample :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains.PolygonStokes.FourLegWord.Sample legs value) : Gaussian
+  Sample legs value) : Gaussian
   :=
   sample.rightLoop.area + sample.leftLoop.area +
     BoundaryRibbon.area sample.forward.total sample.rightLoop.total +
@@ -209,16 +209,16 @@ def branchCorrection (sample :
 
 /-- Deleting both retained branch loops changes the complete area by exactly the cached branch correction. -/
 theorem branchCorrection_eq (sample :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains.PolygonStokes.FourLegWord.Sample legs value) :
+  Sample legs value) :
     sample.combined.area - (sample.forward.append sample.backward).area = sample.branchCorrection := by
   rw [sample.area_eq]
-  dsimp only [IncrementArea.Summary.append,
+  dsimp only [Summary.append,
     branchCorrection]
   ring1
 
 /-- Even vanishing loop totals leave their complete internal areas. -/
 theorem branchCorrection_of_zero_totals (sample :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains.PolygonStokes.FourLegWord.Sample legs value)
+  Sample legs value)
     (rightZero : sample.rightLoop.total = 0) (leftZero : sample.leftLoop.total = 0) :
     sample.branchCorrection = sample.rightLoop.area + sample.leftLoop.area := by
   unfold branchCorrection
@@ -228,12 +228,12 @@ theorem branchCorrection_of_zero_totals (sample :
 
 /-- The original full increment polygon has exactly the area of the composed retained summaries. -/
 theorem polygon_eq (sample :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains.PolygonStokes.FourLegWord.Sample legs value) :
+  Sample legs value) :
     IncrementArea.pathArea (word.map value) = sample.combined.area := sample.combined.area_eq.symm
 
 /-- The original full increment list sums to the total of the composed retained summaries. -/
 theorem increments_eq (sample :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains.PolygonStokes.FourLegWord.Sample legs value) :
+  Sample legs value) :
     Data.Gaussian.Norm.Sum.Basic.gaussianSum (word.map value) = sample.combined.total :=
       sample.combined.total_eq.symm
 
@@ -256,19 +256,19 @@ open Purelib.Polynomial.Geometry.Grid.Winding (splitPath_winding)
 open Purelib.Riemann.Paths.PreparedPathWinding.ClearPath (rawWinding)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {ambient :
-  Purelib.Geometry.Rational.Box}
-  {grid : Polynomial.Geometry.Grid.ClearGrid curve.polynomial ambient} {frames :
-    RootIsolation.SquareRoot.Grid.RootFrames grid}
+  Geometry.Rational.Box}
+  {grid : ClearGrid curve.polynomial ambient} {frames :
+    RootFrames grid}
 
 /-- Split winding is enough to determine every actual sheet join. The constructor keeps the original backward split
 rather than substituting an independently prepared or merely endpoint-equal reverse path. -/
-def tourLegs (edges : RootEdgeBank frames) (vertices : LiftedVertices.VertexBank grid)
-    (reference : ∀ point, Polynomial.Geometry.Grid.FromStates.ContainsVertex grid point →
+def tourLegs (edges : RootEdgeBank frames) (vertices : VertexBank grid)
+    (reference : ∀ point, ContainsVertex grid point →
       OwnerLoopMonodromy.WindingOneLoop curve.polynomial point)
-    (tour : PreparedBoundaryClosure.ClosedBoundaryDoublePath curve) (onGrid : Grid.ContainsTourVertices grid tour)
+    (tour : ClosedBoundaryDoublePath curve) (onGrid : ContainsTourVertices grid tour)
     (rightWinding : ClearPath.rawWinding tour.joined.data.rightBoundaryPath = 4)
     (leftWinding : ClearPath.rawWinding tour.joined.data.leftBoundaryPath = 4) (sheet : Fin 2) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains.PolygonStokes.FourLegWord (edges.indexedEdges vertices
+    FourLegWord (edges.indexedEdges vertices
       (Grid.splitTour grid tour onGrid) sheet) := by
   let forward := Walks.splitPath grid tour.joined.data.connector onGrid.1
   let right := Walks.splitPath grid tour.joined.data.rightBoundaryPath onGrid.2.1
@@ -315,17 +315,17 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.Standa
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains.RootEdgeBank (tourLegs)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
   {base : FramedPuncturedGrid curve
-    (Purelib.Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).branches higher}
+    (BranchConfiguration.configurationOfData curve branches).branches higher}
   {lifted : LiftedPuncturedGrid base} {index : Fin genus}
 
 /-- The actual A face word, using the already retained tour and sheet. -/
 def aLegs (pair : StandardTours.Pair lifted index) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains.PolygonStokes.FourLegWord pair.aFaces.geometry.indexed
+  FourLegWord pair.aFaces.geometry.indexed
   :=
-  (Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains.RootEdgeBank.tourLegs lifted.edges lifted.vertices (fun
+  (RootEdgeBank.tourLegs lifted.edges lifted.vertices (fun
     point member => (BranchCellBank.referenceAt base.bank.toBranchCellBank point member).toLoop)
     pair.source.aTour pair.aOnGrid
     (by rw [pair.source_eq]; exact (StandardTours.aTourOfData_boundaryWindings curve branches index).1)
@@ -337,9 +337,9 @@ def aLegs (pair : StandardTours.Pair lifted index) :
 
 /-- The actual B face word includes both moving branch-boundary loops. -/
 def bLegs (pair : StandardTours.Pair lifted index) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains.PolygonStokes.FourLegWord pair.bFaces.geometry.indexed
+  FourLegWord pair.bFaces.geometry.indexed
   :=
-  (Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourChains.RootEdgeBank.tourLegs lifted.edges lifted.vertices (fun
+  (RootEdgeBank.tourLegs lifted.edges lifted.vertices (fun
     point member => (BranchCellBank.referenceAt base.bank.toBranchCellBank point member).toLoop)
     pair.source.bTour pair.bOnGrid
     (by rw [pair.source_eq]; exact (StandardTours.bTourOfData_boundaryWindings curve branches index).1)

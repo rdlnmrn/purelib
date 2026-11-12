@@ -5,6 +5,7 @@ import Purelib.Data.CCL.Progressive.Cursor.Image
 import Purelib.Data.CCL.Transducer.Machine.Basic
 import Purelib.Data.CCL.Transducer.Machine.Semantics.Basic
 import Purelib.Data.CCL.Transducer.Mode.Semantics
+import Purelib.Data.CCL.Transducer.Machine.History
 import Purelib.Geometry.Projective.Chordal.Basic
 import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Polynomial.Dense.Gaussian.Basic
@@ -27,6 +28,10 @@ import Purelib.RationalFunctions.ArgumentPrinciple.CCL.Basic
 import Purelib.RationalFunctions.ArgumentPrinciple.General
 import Purelib.RationalFunctions.Reduction.Basic
 import Purelib.RationalFunctions.Reduction.Nonzero
+
+open Purelib.RationalFunctions.ArgumentPrinciple.CCL.Basic
+
+open Purelib.Polynomial.Dense.Gaussian.Basic
 
 open Purelib
 
@@ -65,172 +70,197 @@ actual infinite stream is introduced.
 namespace Purelib.RootIsolation.Multiplicity.CCL.Polynomial.Persistent
 namespace NonzeroResult
 
+open Purelib.Data.CCL.Transducer (Machine)
+
 /-- Persistent finite state of one polynomial root stream. -/
 abbrev RootState
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-      Multiplicity.CCL.Polynomial.Basic.NonzeroResult p)
-    (index : (Multiplicity.CCL.Polynomial.Index.NonzeroResult.RootIndex result)) :=
-  (ArgumentPrinciple.CCL.Basic.NonzeroResult.ZeroPersistentState result) index
+    {p : CanonicalCoefficients.CoefficientPolynomial} (result :
+      Basic.NonzeroResult p)
+    (index : (Index.NonzeroResult.RootIndex result)) :=
+  (NonzeroResult.ZeroPersistentState result) index
 
 /-- Empty-prefix persistent state of one root stream. -/
 @[expose] def rootInitial
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-      Multiplicity.CCL.Polynomial.Basic.NonzeroResult p)
-    (index : (Multiplicity.CCL.Polynomial.Index.NonzeroResult.RootIndex result)) :
-      (Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.RootState result) index :=
-  (ArgumentPrinciple.CCL.Basic.NonzeroResult.zeroPersistentInitial result) index
+    {p : CanonicalCoefficients.CoefficientPolynomial} (result :
+      Basic.NonzeroResult p)
+    (index : (Index.NonzeroResult.RootIndex result)) :
+      (RootState result) index :=
+  (NonzeroResult.zeroPersistentInitial result) index
 
 /-- Append `count` bits to one persistent root stream and contract its
 sidecar below `epsilon ^ 2`. -/
 @[expose] def rootRequest
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-      Multiplicity.CCL.Polynomial.Basic.NonzeroResult p)
-    (index : (Multiplicity.CCL.Polynomial.Index.NonzeroResult.RootIndex result)) (current :
-      (Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.RootState result) index)
+    {p : CanonicalCoefficients.CoefficientPolynomial} (result :
+      Basic.NonzeroResult p)
+    (index : (Index.NonzeroResult.RootIndex result)) (current :
+      (RootState result) index)
     (epsilon : Fraction.Rational) (positive : 0 < epsilon) (count : Nat) :
-    (Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.RootState result) index :=
-  (ArgumentPrinciple.CCL.Basic.NonzeroResult.zeroPersistentRequest result) index current epsilon positive count
+    (RootState result) index :=
+  (NonzeroResult.zeroPersistentRequest result) index current epsilon positive count
 
 /-- Current raw CCL machine of one persistent root state. -/
 @[expose] def rootMachine
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-      Multiplicity.CCL.Polynomial.Basic.NonzeroResult p)
-    (index : (Multiplicity.CCL.Polynomial.Index.NonzeroResult.RootIndex result)) (state :
-      (Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.RootState result) index) :
-    Data.CCL.Transducer.Machine :=
-  Multiplicity.Side.CCL.Persistent.sidePersistentMachine
+    {p : CanonicalCoefficients.CoefficientPolynomial} (result :
+      Basic.NonzeroResult p)
+    (index : (Index.NonzeroResult.RootIndex result)) (state :
+      (RootState result) index) :
+    CCL.Transducer.Machine :=
+  Side.CCL.Persistent.sidePersistentMachine
     result.rfap.numeratorSites result.numeratorCCL index state
 
 /-- Current exposed finite raw word of one persistent root state. -/
 @[expose] def rootWord
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-      Multiplicity.CCL.Polynomial.Basic.NonzeroResult p)
-    (index : (Multiplicity.CCL.Polynomial.Index.NonzeroResult.RootIndex result)) (state :
-      (Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.RootState result) index) : List.Basic.BinaryWord
+    {p : CanonicalCoefficients.CoefficientPolynomial} (result :
+      Basic.NonzeroResult p)
+    (index : (Index.NonzeroResult.RootIndex result)) (state :
+      (RootState result) index) : List.Basic.BinaryWord
       :=
-  ((Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootMachine result) index state).emitted
+  ((rootMachine result) index state).emitted
 
 /-- Current optional numerical box.  Exact rational roots return `none`;
 higher RAT sites return their current nested winding box. -/
 @[expose] def rootBox?
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-      Multiplicity.CCL.Polynomial.Basic.NonzeroResult p)
-    (index : (Multiplicity.CCL.Polynomial.Index.NonzeroResult.RootIndex result)) (state :
-      (Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.RootState result) index) :
+    {p : CanonicalCoefficients.CoefficientPolynomial} (result :
+      Basic.NonzeroResult p)
+    (index : (Index.NonzeroResult.RootIndex result)) (state :
+      (RootState result) index) :
     Option Box :=
-  Multiplicity.Side.CCL.Persistent.sidePersistentBox?
+  Side.CCL.Persistent.sidePersistentBox?
     result.rfap.numeratorSites result.numeratorCCL index state
 
 /-- Every persistent state retains exact raw-parser semantics for its original
 exact site or initial RAT box. -/
 theorem rootState_exact
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-      Multiplicity.CCL.Polynomial.Basic.NonzeroResult p)
-    (index : (Multiplicity.CCL.Polynomial.Index.NonzeroResult.RootIndex result)) (state :
-      (Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.RootState result) index) :
-    Data.CCL.Transducer.Machine.Semantics.Basic.ExactCursor
-      ((Multiplicity.CCL.Polynomial.Name.NonzeroResult.rootName result) index).process
-      ((Multiplicity.CCL.Polynomial.Name.NonzeroResult.rootName result) index).state
-      ((Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootMachine result) index state) :=
-  Multiplicity.Side.CCL.Name.sidePersistentExact
+    {p : CanonicalCoefficients.CoefficientPolynomial} (result :
+      Basic.NonzeroResult p)
+    (index : (Index.NonzeroResult.RootIndex result)) (state :
+      (RootState result) index) :
+    CCL.Transducer.Machine.Semantics.Basic.ExactCursor
+      ((Name.NonzeroResult.rootName result) index).process
+      ((Name.NonzeroResult.rootName result) index).state
+      ((rootMachine result) index state) :=
+  Side.CCL.Name.sidePersistentExact
     result.rfap.numeratorSites result.numeratorCCL index state
 
 /-- A root request never retracts an exposed bit. -/
 theorem rootRequest_word_extends
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-      Multiplicity.CCL.Polynomial.Basic.NonzeroResult p)
-    (index : (Multiplicity.CCL.Polynomial.Index.NonzeroResult.RootIndex result)) (current :
-      (Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.RootState result) index)
+    {p : CanonicalCoefficients.CoefficientPolynomial} (result :
+      Basic.NonzeroResult p)
+    (index : (Index.NonzeroResult.RootIndex result)) (current :
+      (RootState result) index)
     (epsilon : Fraction.Rational) (positive : 0 < epsilon) (count : Nat) :
-    ((Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootWord result) index current).IsPrefix
-      ((Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootWord result) index
-        ((Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootRequest result) index current epsilon positive
+    ((rootWord result) index current).IsPrefix
+      ((rootWord result) index
+        ((rootRequest result) index current epsilon positive
           count)) :=
-  (ArgumentPrinciple.CCL.Basic.NonzeroResult.zeroPersistentRequest_word_extends result) index current epsilon positive
+  (NonzeroResult.zeroPersistentRequest_word_extends result) index current epsilon positive
     count
 
 /-- A root request appends exactly the requested number of exposed bits. -/
 theorem rootRequest_word_length
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-      Multiplicity.CCL.Polynomial.Basic.NonzeroResult p)
-    (index : (Multiplicity.CCL.Polynomial.Index.NonzeroResult.RootIndex result)) (current :
-      (Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.RootState result) index)
+    {p : CanonicalCoefficients.CoefficientPolynomial} (result :
+      Basic.NonzeroResult p)
+    (index : (Index.NonzeroResult.RootIndex result)) (current :
+      (RootState result) index)
     (epsilon : Fraction.Rational) (positive : 0 < epsilon) (count : Nat) :
-    ((Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootWord result) index
-      ((Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootRequest result) index current epsilon positive
+    ((rootWord result) index
+      ((rootRequest result) index current epsilon positive
         count)).length =
-        ((Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootWord result) index current).length + count :=
-  Multiplicity.Side.CCL.Persistent.sidePersistentRequest_word_length
+        ((rootWord result) index current).length + count :=
+  Side.CCL.Persistent.sidePersistentRequest_word_length
     result.rfap.numeratorSites result.numeratorCCL index current
       epsilon positive count
 
 /-- Exact roots remain exact; a higher root request returns a box nested in
 its preceding RAT box. -/
 theorem rootRequest_box_refines
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-      Multiplicity.CCL.Polynomial.Basic.NonzeroResult p)
-    (index : (Multiplicity.CCL.Polynomial.Index.NonzeroResult.RootIndex result)) (current :
-      (Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.RootState result) index)
+    {p : CanonicalCoefficients.CoefficientPolynomial} (result :
+      Basic.NonzeroResult p)
+    (index : (Index.NonzeroResult.RootIndex result)) (current :
+      (RootState result) index)
     (epsilon : Fraction.Rational) (positive : 0 < epsilon) (count : Nat) :
-    match (Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootBox? result) index
-        ((Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootRequest result) index current epsilon positive
+    match (rootBox? result) index
+        ((rootRequest result) index current epsilon positive
           count),
-      (Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootBox? result) index current with
+      (rootBox? result) index current with
     | none, none => True
     | some inner, some outer => inner.Refines outer
     | none, some _ => False
     | some _, none => False :=
-  Multiplicity.Side.CCL.Persistent.sidePersistentRequest_box_refines
+  Side.CCL.Persistent.sidePersistentRequest_box_refines
     result.rfap.numeratorSites result.numeratorCCL index current
       epsilon positive count
 
 /-- A higher root request meets the requested numerical box accuracy; exact
 roots require no box. -/
 theorem rootRequest_box_accurate
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-      Multiplicity.CCL.Polynomial.Basic.NonzeroResult p)
-    (index : (Multiplicity.CCL.Polynomial.Index.NonzeroResult.RootIndex result)) (current :
-      (Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.RootState result) index)
+    {p : CanonicalCoefficients.CoefficientPolynomial} (result :
+      Basic.NonzeroResult p)
+    (index : (Index.NonzeroResult.RootIndex result)) (current :
+      (RootState result) index)
     (epsilon : Fraction.Rational) (positive : 0 < epsilon) (count : Nat) :
-    match (Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootBox? result) index
-      ((Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootRequest result) index current epsilon positive count)
+    match (rootBox? result) index
+      ((rootRequest result) index current epsilon positive count)
         with
     | none => True
     | some box => box.diagonalSq ≤ epsilon ^ 2 :=
-  (ArgumentPrinciple.CCL.Basic.NonzeroResult.zeroPersistentRequest_box_accurate result) index current epsilon positive
+  (NonzeroResult.zeroPersistentRequest_box_accurate result) index current epsilon positive
     count
 
 /-- The projective CCL sidecar after a root request has pairwise squared
 diameter at most `epsilon ^ 2`. -/
 theorem rootRequest_cylinder_accurate
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-      Multiplicity.CCL.Polynomial.Basic.NonzeroResult p)
-    (index : (Multiplicity.CCL.Polynomial.Index.NonzeroResult.RootIndex result)) (current :
-      (Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.RootState result) index)
+    {p : CanonicalCoefficients.CoefficientPolynomial} (result :
+      Basic.NonzeroResult p)
+    (index : (Index.NonzeroResult.RootIndex result)) (current :
+      (RootState result) index)
     (epsilon : Fraction.Rational) (positive : 0 < epsilon) (count : Nat)
     {left right : Gaussian.Basic.Canonical}
     (leftPossible :
-      Data.CCL.Transducer.Mode.Semantics.SemanticMode.possible
-        ((Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootMachine result) index
-          ((Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootRequest result) index current epsilon positive
+      CCL.Transducer.Mode.Semantics.SemanticMode.possible
+        ((rootMachine result) index
+          ((rootRequest result) index current epsilon positive
             count)).mode left)
     (rightPossible :
-      Data.CCL.Transducer.Mode.Semantics.SemanticMode.possible
-        ((Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootMachine result) index
-          ((Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootRequest result) index current epsilon positive
+      CCL.Transducer.Mode.Semantics.SemanticMode.possible
+        ((rootMachine result) index
+          ((rootRequest result) index current epsilon positive
             count)).mode right) :
     Geometry.Projective.Chordal.Basic.chordalSq
-        (Data.CCL.Progressive.Cursor.Image.Machine.image
-          ((Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootMachine result) index
-            ((Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootRequest result) index current epsilon positive
+        (CCL.Progressive.Cursor.Image.Machine.image
+          ((rootMachine result) index
+            ((rootRequest result) index current epsilon positive
               count)) left)
-        (Data.CCL.Progressive.Cursor.Image.Machine.image
-          ((Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootMachine result) index
-            ((Multiplicity.CCL.Polynomial.Persistent.NonzeroResult.rootRequest result) index current epsilon positive
+        (CCL.Progressive.Cursor.Image.Machine.image
+          ((rootMachine result) index
+            ((rootRequest result) index current epsilon positive
               count)) right) ≤
       epsilon ^ 2 :=
-  (ArgumentPrinciple.CCL.Basic.NonzeroResult.zeroPersistentRequest_cylinder_accurate result) index current epsilon
+  (NonzeroResult.zeroPersistentRequest_cylinder_accurate result) index current epsilon
     positive count leftPossible rightPossible
+/-- Handle the original polynomial-root request with its same result, site index and retained cursor history.
+
+The exact numerical action belongs to this original root's actual reduced-side
+observation. The returned complete state is the original `rootRequest` result;
+the same history and original process identity remain available for the next
+request, including across its retained pending queue and inverse charts.
+-/
+def withRootRequest {m : Type → Type} [Monad m] {α : Type} {initial : Machine.Snapshot}
+    {p : CanonicalCoefficients.CoefficientPolynomial} (result : Basic.NonzeroResult p)
+    (index : Index.NonzeroResult.RootIndex result)
+    (execute : Side.CCL.Persistent.NumericalHandler m result.rfap.numeratorSites result.numeratorCCL index)
+    (current : RootState result index) (history : Machine.History initial)
+    (cursorEq : history.current.machine = rootMachine result index current)
+    (sourceEq : history.current.source =
+      Side.CCL.Persistent.sourceProcess result.rfap.numeratorSites result.numeratorCCL index)
+    (epsilon : Fraction.Rational) (positive : 0 < epsilon) (count : Nat)
+    (use : (next : RootState result index) → next = rootRequest result index current epsilon positive count →
+      (retained : Machine.History initial) → retained.current.machine = rootMachine result index next →
+        retained.current.source =
+          Side.CCL.Persistent.sourceProcess result.rfap.numeratorSites result.numeratorCCL index → m α) : m α :=
+  Side.CCL.Persistent.withRequest result.rfap.numeratorSites result.numeratorCCL index execute current history
+    cursorEq sourceEq epsilon positive count use
+
 end NonzeroResult
 
 end Purelib.RootIsolation.Multiplicity.CCL.Polynomial.Persistent

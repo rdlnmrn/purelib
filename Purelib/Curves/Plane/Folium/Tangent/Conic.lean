@@ -52,41 +52,41 @@ namespace Purelib.Curves.Plane.Folium.Tangent.Conic
 
 section Folium
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 /-- Equation (19.6), the second-order tangent conic in the source's cleared coefficient representative. -/
 def tangentConic [Nontrivial K]
     (parameter : K)
-    (denominatorNonzero : Parametrization.parameterDenominator parameter ≠ 0) : Conic K where
-  d := 3 * parameter * Parametrization.parameterDenominator parameter
-  e := -(Parametrization.parameterDenominator parameter ^ 2)
-  f := 3 * parameter ^ 2 * Parametrization.parameterDenominator parameter
+    (denominatorNonzero : parameterDenominator parameter ≠ 0) : Conic K where
+  d := 3 * parameter * parameterDenominator parameter
+  e := -(parameterDenominator parameter ^ 2)
+  f := 3 * parameter ^ 2 * parameterDenominator parameter
   a := 9 * parameter ^ 2
   b := 9 * parameter ^ 4
   c := 9 * parameter ^ 3
   quadratic_nonzero := Or.inr (Or.inl (by
     have squareNonzero :
-        Parametrization.parameterDenominator parameter * Parametrization.parameterDenominator parameter ≠ 0 :=
-      Algebra.Field.ExplicitField.mul_ne_zero
+        parameterDenominator parameter * parameterDenominator parameter ≠ 0 :=
+      ExplicitField.mul_ne_zero
         denominatorNonzero denominatorNonzero
     intro negativeSquareZero
     apply squareNonzero
     calc
-      Parametrization.parameterDenominator parameter * Parametrization.parameterDenominator parameter =
-          Parametrization.parameterDenominator parameter ^ 2 := by ring1
-      _ = -(-(Parametrization.parameterDenominator parameter ^ 2)) := by ring1
+      parameterDenominator parameter * parameterDenominator parameter =
+          parameterDenominator parameter ^ 2 := by ring1
+      _ = -(-(parameterDenominator parameter ^ 2)) := by ring1
       _ = 0 := by rw [negativeSquareZero]; ring1))
 
 /-- The conic (19.6) contains the point at which it is tangent. -/
 theorem tangentConic_contains [Nontrivial K]
     (parameter : K)
-    (denominatorNonzero : Parametrization.parameterDenominator parameter ≠ 0) :
+    (denominatorNonzero : parameterDenominator parameter ≠ 0) :
     (tangentConic parameter denominatorNonzero).Contains
-      (Parametrization.parameterPoint parameter) := by
-  let denominator := Parametrization.parameterDenominator parameter
+      (parameterPoint parameter) := by
+  let denominator := parameterDenominator parameter
   unfold tangentConic Conic.Contains Conic.evaluate
-    Parametrization.parameterPoint
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    parameterPoint
+  simp only [ExplicitField.div_eq_mul_inv]
   change
     (3 * parameter * denominator) *
           (((-3 * parameter) * denominator⁻¹) ^ 2) +
@@ -125,11 +125,11 @@ theorem tangentConic_contains [Nontrivial K]
       ring1
     _ = (quadratic + linear * denominator + constant * denominator ^ 2) *
         denominator⁻¹ ^ 2 :=
-      Purelib.Algebra.Field.Inverse.clear_quadratic_denominator denominatorNonzero
+      Inverse.clear_quadratic_denominator denominatorNonzero
     _ = 0 := by
       have cleared :
           quadratic + linear * denominator + constant * denominator ^ 2 = 0 := by
-        unfold quadratic linear constant denominator Parametrization.parameterDenominator
+        unfold quadratic linear constant denominator parameterDenominator
         ring1
       rw [cleared]
       ring1
@@ -139,37 +139,37 @@ the characteristic is not three. -/
 theorem secondOrderNonSingular_parameterPoint [Nontrivial K]
     (parameter : K) (threeNonzero : (3 : K) ≠ 0) :
     (curve (K := K)).IsSecondOrderNonSingularAt
-      (Parametrization.parameterPoint parameter) := by
+      (parameterPoint parameter) := by
   right
   left
-  unfold CubicCurve.taylorE Folium.curve Parametrization.parameterPoint
+  unfold CubicCurve.taylorE curve parameterPoint
   simpa only [zero_mul, add_zero, mul_zero] using threeNonzero
 
 /-- Equation (19.6) is the general second-order Taylor conic. The equality is recorded coefficientwise after clearing
 the common nonzero scale: `3·(printed coefficient) = -(1+t³)²·(Taylor coefficient)`. -/
 theorem tangentConic_formula_cleared [Nontrivial K]
     (parameter : K) (threeNonzero : (3 : K) ≠ 0)
-    (denominatorNonzero : Parametrization.parameterDenominator parameter ≠ 0) :
+    (denominatorNonzero : parameterDenominator parameter ≠ 0) :
     let secondOrder :=
       secondOrderNonSingular_parameterPoint (K := K) parameter threeNonzero
-    let taylor := CubicCurve.tangentConic (Folium.curve (K := K))
-      (Parametrization.parameterPoint parameter) secondOrder
+    let taylor := CubicCurve.tangentConic (curve (K := K))
+      (parameterPoint parameter) secondOrder
     let printed := tangentConic parameter denominatorNonzero
-    3 * printed.d = -(Parametrization.parameterDenominator parameter ^ 2) * taylor.d ∧
-      3 * printed.e = -(Parametrization.parameterDenominator parameter ^ 2) * taylor.e ∧
-      3 * printed.f = -(Parametrization.parameterDenominator parameter ^ 2) * taylor.f ∧
-      3 * printed.a = -(Parametrization.parameterDenominator parameter ^ 2) * taylor.a ∧
-      3 * printed.b = -(Parametrization.parameterDenominator parameter ^ 2) * taylor.b ∧
-      3 * printed.c = -(Parametrization.parameterDenominator parameter ^ 2) * taylor.c := by
+    3 * printed.d = -(parameterDenominator parameter ^ 2) * taylor.d ∧
+      3 * printed.e = -(parameterDenominator parameter ^ 2) * taylor.e ∧
+      3 * printed.f = -(parameterDenominator parameter ^ 2) * taylor.f ∧
+      3 * printed.a = -(parameterDenominator parameter ^ 2) * taylor.a ∧
+      3 * printed.b = -(parameterDenominator parameter ^ 2) * taylor.b ∧
+      3 * printed.c = -(parameterDenominator parameter ^ 2) * taylor.c := by
   dsimp only
-  let denominator := Parametrization.parameterDenominator parameter
+  let denominator := parameterDenominator parameter
   let secondOrder :=
     secondOrderNonSingular_parameterPoint (K := K) parameter threeNonzero
-  let taylor := CubicCurve.tangentConic (Folium.curve (K := K))
-    (Parametrization.parameterPoint parameter) secondOrder
+  let taylor := CubicCurve.tangentConic (curve (K := K))
+    (parameterPoint parameter) secondOrder
   let printed := tangentConic parameter denominatorNonzero
   have cancel : denominator * denominator⁻¹ = (1 : K) :=
-    Algebra.Field.ExplicitField.mul_inv_cancel denominator denominatorNonzero
+    ExplicitField.mul_inv_cancel denominator denominatorNonzero
   have denominatorSquareInverse :
       denominator ^ 2 * denominator⁻¹ = denominator := by
     calc
@@ -184,36 +184,36 @@ theorem tangentConic_formula_cleared [Nontrivial K]
       _ = 1 := by rw [cancel]; ring1
   have taylorD : taylor.d = -9 * parameter * denominator⁻¹ := by
     unfold taylor CubicCurve.tangentConic Conic.translateConic
-      CubicCurve.standardTangentConic CubicCurve.taylorD Folium.curve Parametrization.parameterPoint
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+      CubicCurve.standardTangentConic CubicCurve.taylorD curve parameterPoint
+    simp only [ExplicitField.div_eq_mul_inv]
     ring1
   have taylorE : taylor.e = 3 := by
     unfold taylor CubicCurve.tangentConic Conic.translateConic
-      CubicCurve.standardTangentConic CubicCurve.taylorE Folium.curve
+      CubicCurve.standardTangentConic CubicCurve.taylorE curve
     ring1
   have taylorF : taylor.f = -9 * parameter ^ 2 * denominator⁻¹ := by
     unfold taylor CubicCurve.tangentConic Conic.translateConic
-      CubicCurve.standardTangentConic CubicCurve.taylorF Folium.curve Parametrization.parameterPoint
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+      CubicCurve.standardTangentConic CubicCurve.taylorF curve parameterPoint
+    simp only [ExplicitField.div_eq_mul_inv]
     ring1
   have taylorA : taylor.a = -27 * parameter ^ 2 * denominator⁻¹ ^ 2 := by
     unfold taylor CubicCurve.tangentConic Conic.translateConic
       CubicCurve.standardTangentConic CubicCurve.taylorD CubicCurve.taylorE
-      CubicCurve.taylorA Folium.curve Parametrization.parameterPoint
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+      CubicCurve.taylorA curve parameterPoint
+    simp only [ExplicitField.div_eq_mul_inv]
     ring1
   have taylorB : taylor.b = -27 * parameter ^ 4 * denominator⁻¹ ^ 2 := by
     unfold taylor CubicCurve.tangentConic Conic.translateConic
       CubicCurve.standardTangentConic CubicCurve.taylorE CubicCurve.taylorF
-      CubicCurve.taylorB Folium.curve Parametrization.parameterPoint
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+      CubicCurve.taylorB curve parameterPoint
+    simp only [ExplicitField.div_eq_mul_inv]
     ring1
   have taylorC : taylor.c = -27 * parameter ^ 3 * denominator⁻¹ ^ 2 := by
     unfold taylor CubicCurve.tangentConic Conic.translateConic
       CubicCurve.standardTangentConic CubicCurve.taylorD CubicCurve.taylorE
-      CubicCurve.taylorF CubicCurve.taylorA CubicCurve.taylorB Folium.curve
-      Parametrization.parameterPoint
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+      CubicCurve.taylorF CubicCurve.taylorA CubicCurve.taylorB curve
+      parameterPoint
+    simp only [ExplicitField.div_eq_mul_inv]
     ring1
   dsimp only [tangentConic]
   change
@@ -274,12 +274,12 @@ theorem tangentConic_formula_cleared [Nontrivial K]
 /-- At the singular parameter `t=0`, equation (19.6) is the pair of lines `xy=0`, up to the harmless nonzero coefficient
 `-1`. -/
 theorem tangentConic_at_zero [Nontrivial K]
-    (oneNonzero : Parametrization.parameterDenominator (0 : K) ≠ 0) :
+    (oneNonzero : parameterDenominator (0 : K) ≠ 0) :
     let conic := tangentConic (0 : K) oneNonzero
     conic.d = 0 ∧ conic.e = -1 ∧ conic.f = 0 ∧
       conic.a = 0 ∧ conic.b = 0 ∧ conic.c = 0 ∧
-      ∀ point : Geometry.Plane.Point K, conic.evaluate point = -(point.x * point.y) := by
-  dsimp only [tangentConic, Parametrization.parameterDenominator]
+      ∀ point : Plane.Point K, conic.evaluate point = -(point.x * point.y) := by
+  dsimp only [tangentConic, parameterDenominator]
   refine ⟨by ring1, by ring1, by ring1, by ring1, by ring1, by ring1, ?_⟩
   intro point
   unfold Conic.evaluate
@@ -290,46 +290,46 @@ whenever `(tu)³=1`. -/
 theorem tangentConic_contains_of_parameter_product_cube
   [Nontrivial K]
     (parameter reciprocalParameter : K)
-    (parameterDenominatorNonzero : Parametrization.parameterDenominator parameter ≠
+    (parameterDenominatorNonzero : parameterDenominator parameter ≠
       0)
     (reciprocalDenominatorNonzero :
-      Parametrization.parameterDenominator reciprocalParameter ≠ 0)
+      parameterDenominator reciprocalParameter ≠ 0)
     (productCube : (parameter * reciprocalParameter) ^ 3 = 1) :
     (tangentConic parameter parameterDenominatorNonzero).Contains
-      (Parametrization.parameterPoint reciprocalParameter) := by
-  let denominator := Parametrization.parameterDenominator reciprocalParameter
+      (parameterPoint reciprocalParameter) := by
+  let denominator := parameterDenominator reciprocalParameter
   let quadratic :=
-    27 * parameter * Parametrization.parameterDenominator parameter *
+    27 * parameter * parameterDenominator parameter *
         reciprocalParameter ^ 2 -
-      9 * Parametrization.parameterDenominator parameter ^ 2 *
+      9 * parameterDenominator parameter ^ 2 *
         reciprocalParameter ^ 3 +
-      27 * parameter ^ 2 * Parametrization.parameterDenominator parameter *
+      27 * parameter ^ 2 * parameterDenominator parameter *
         reciprocalParameter ^ 4
   let linear :=
     -27 * parameter ^ 2 * reciprocalParameter -
       27 * parameter ^ 4 * reciprocalParameter ^ 2
   let constant := 9 * parameter ^ 3
   unfold Conic.Contains tangentConic Conic.evaluate
-    Parametrization.parameterPoint
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    parameterPoint
+  simp only [ExplicitField.div_eq_mul_inv]
   calc
-    3 * parameter * Parametrization.parameterDenominator parameter *
+    3 * parameter * parameterDenominator parameter *
               (-3 * reciprocalParameter *
-                (Parametrization.parameterDenominator reciprocalParameter)⁻¹) ^ 2 +
-            -Parametrization.parameterDenominator parameter ^ 2 *
+                (parameterDenominator reciprocalParameter)⁻¹) ^ 2 +
+            -parameterDenominator parameter ^ 2 *
                 (-3 * reciprocalParameter *
-                  (Parametrization.parameterDenominator reciprocalParameter)⁻¹) *
+                  (parameterDenominator reciprocalParameter)⁻¹) *
               (-3 * reciprocalParameter ^ 2 *
-                (Parametrization.parameterDenominator reciprocalParameter)⁻¹) +
-          3 * parameter ^ 2 * Parametrization.parameterDenominator parameter *
+                (parameterDenominator reciprocalParameter)⁻¹) +
+          3 * parameter ^ 2 * parameterDenominator parameter *
             (-3 * reciprocalParameter ^ 2 *
-              (Parametrization.parameterDenominator reciprocalParameter)⁻¹) ^ 2 +
+              (parameterDenominator reciprocalParameter)⁻¹) ^ 2 +
         9 * parameter ^ 2 *
           (-3 * reciprocalParameter *
-            (Parametrization.parameterDenominator reciprocalParameter)⁻¹) +
+            (parameterDenominator reciprocalParameter)⁻¹) +
       9 * parameter ^ 4 *
           (-3 * reciprocalParameter ^ 2 *
-            (Parametrization.parameterDenominator reciprocalParameter)⁻¹) +
+            (parameterDenominator reciprocalParameter)⁻¹) +
         9 * parameter ^ 3 =
       quadratic * denominator⁻¹ ^ 2 +
         linear * denominator⁻¹ + constant := by
@@ -337,7 +337,7 @@ theorem tangentConic_contains_of_parameter_product_cube
       ring1
     _ = (quadratic + linear * denominator + constant * denominator ^ 2) *
         denominator⁻¹ ^ 2 :=
-      Purelib.Algebra.Field.Inverse.clear_quadratic_denominator reciprocalDenominatorNonzero
+      Inverse.clear_quadratic_denominator reciprocalDenominatorNonzero
     _ = 0 := by
       have clearedZero :
           quadratic + linear * denominator + constant * denominator ^ 2 = 0 := by
@@ -347,7 +347,7 @@ theorem tangentConic_contains_of_parameter_product_cube
                 (3 * parameter * reciprocalParameter ^ 2 -
                   reciprocalParameter ^ 3 + parameter ^ 3 -
                   3 * parameter ^ 2 * reciprocalParameter) := by
-            unfold quadratic linear constant denominator Parametrization.parameterDenominator
+            unfold quadratic linear constant denominator parameterDenominator
             ring1
           _ = 0 := by rw [productCube]; ring1
       rw [clearedZero]

@@ -34,15 +34,15 @@ namespace Purelib.Polynomial.Dense.Rational.CauchyIndex.Product.Basic
 /-- The sign jump from one to the product of the three denominator-coordinate values. -/
 def auxiliaryEndpointCorrection2
     (B D H : CoordinatePolynomial) (x : Fraction.Rational) : Nat :=
-  Data.Rat.Sign.Jump.signJump 1 (H.eval x * (B.eval x * D.eval x))
+  Sign.Jump.signJump 1 (H.eval x * (B.eval x * D.eval x))
 
 /-- The doubled Cauchy-index product identity with endpoint corrections.
 
 It relates the displayed product pair to the two factor pairs, retaining the correction at each oriented endpoint. -/
 def AuxiliaryProductFormula
     (A B C D E H : CoordinatePolynomial) (a b : Fraction.Rational) : Prop :=
-  Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 E H a b =
-    Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 A B a b + Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 C
+  Basic.Sturm.cauchyIndex2 E H a b =
+    Basic.Sturm.cauchyIndex2 A B a b + Basic.Sturm.cauchyIndex2 C
       D a b -
       (auxiliaryEndpointCorrection2 B D H a : Int) +
       auxiliaryEndpointCorrection2 B D H b
@@ -54,9 +54,9 @@ theorem AuxiliaryProductFormula.add
     (right : AuxiliaryProductFormula A B C D E H b c) :
     AuxiliaryProductFormula A B C D E H a c := by
   unfold AuxiliaryProductFormula at left right ⊢
-  rw [Dense.Rational.CauchyIndex.Basic.cauchyIndex2_add E H a b c,
-    Dense.Rational.CauchyIndex.Basic.cauchyIndex2_add A B a b c,
-    Dense.Rational.CauchyIndex.Basic.cauchyIndex2_add C D a b c]
+  rw [Basic.cauchyIndex2_add E H a b c,
+    Basic.cauchyIndex2_add A B a b c,
+    Basic.cauchyIndex2_add C D a b c]
   rw [left, right]
   ring1
 
@@ -66,9 +66,9 @@ theorem AuxiliaryProductFormula.reverse
     (formula : AuxiliaryProductFormula A B C D E H a b) :
     AuxiliaryProductFormula A B C D E H b a := by
   unfold AuxiliaryProductFormula at formula ⊢
-  rw [Dense.Rational.CauchyIndex.Basic.cauchyIndex2_reverse E H a b,
-    Dense.Rational.CauchyIndex.Basic.cauchyIndex2_reverse A B a b,
-    Dense.Rational.CauchyIndex.Basic.cauchyIndex2_reverse C D a b]
+  rw [Basic.cauchyIndex2_reverse E H a b,
+    Basic.cauchyIndex2_reverse A B a b,
+    Basic.cauchyIndex2_reverse C D a b]
   rw [formula]
   ring1
 

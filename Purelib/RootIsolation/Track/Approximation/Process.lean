@@ -15,6 +15,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Geometry.Rational.Box.Bounds
 import Purelib.Geometry.Rational.Box.Sample
 
+open Purelib.Data.Rat.Bounds
+
 open Purelib.Approximation.Gaussian
 
 open Purelib
@@ -42,9 +44,9 @@ namespace Purelib.RootIsolation.Track.Approximation.Process
 /-- Convert one Paper-I winding-one track into an arbitrarily accurate finite
 ball process. -/
 def toProcess {p :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+  Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
   {ambient : Box}
-    (track : Track.Basic.WindingOneTrack p ambient) : Approximation.Gaussian.Process where
+    (track : Basic.WindingOneTrack p ambient) : Process where
   State := State.WindingOne.Basic.WindingOneState p ambient
   ball state := Enclosure.Ball.ofBox state.box
   Possible state value := state.box.Contains value
@@ -54,20 +56,20 @@ def toProcess {p :
     exact Enclosure.Ball.contains_ofBox inside
   refine state target positive :=
     track.refine state
-      (Data.Rat.Bounds.AccuracyRadius.accuracyRadius target)
-      (Data.Rat.Bounds.AccuracyRadius.accuracyRadius_pos positive)
+      (AccuracyRadius.accuracyRadius target)
+      (AccuracyRadius.accuracyRadius_pos positive)
   refine_persists := by
     intro state target positive value inside
     exact (track.nested state
-      (Data.Rat.Bounds.AccuracyRadius.accuracyRadius target)
-      (Data.Rat.Bounds.AccuracyRadius.accuracyRadius_pos positive)).contains
+      (AccuracyRadius.accuracyRadius target)
+      (AccuracyRadius.accuracyRadius_pos positive)).contains
         inside
   accurate := by
     intro state target positive
     exact (track.accurate state
-      (Data.Rat.Bounds.AccuracyRadius.accuracyRadius target)
-      (Data.Rat.Bounds.AccuracyRadius.accuracyRadius_pos positive)).trans_lt
-        (Data.Rat.Bounds.AccuracyRadius.accuracyRadius_sq_lt positive)
+      (AccuracyRadius.accuracyRadius target)
+      (AccuracyRadius.accuracyRadius_pos positive)).trans_lt
+        (AccuracyRadius.accuracyRadius_sq_lt positive)
   centerBound := ambient.normSqBound
   centerBound_nonneg := ambient.normSqBound_nonneg
   center_bounded := by
@@ -77,10 +79,10 @@ def toProcess {p :
 
 /-- The process enclosure of a retained state is exactly the ball obtained from its original box. -/
 @[simp] theorem toProcess_ball
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
-    (track : Track.Basic.WindingOneTrack p ambient) (state : State.WindingOne.Basic.WindingOneState p ambient) :
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    (track : Basic.WindingOneTrack p ambient) (state : State.WindingOne.Basic.WindingOneState p ambient) :
     (toProcess track).ball state =
-      Approximation.Gaussian.Enclosure.Ball.ofBox state.box := rfl
+      Enclosure.Ball.ofBox state.box := rfl
 end Purelib.RootIsolation.Track.Approximation.Process
 
 end

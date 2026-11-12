@@ -14,8 +14,11 @@ import Purelib.Data.Rat.Fraction.Order.Field
 import Purelib.Geometry.Rational.Affine
 
 public import Purelib.Riemann.Normalization.ContinuedInverseRoot
+public import Purelib.Riemann.Normalization.InverseModelRootSamples
 public import Purelib.Riemann.Normalization.InverseModelEdgeTransition
 import Purelib.Tactic.Ring
+
+open Purelib.Data.Rat.Fraction.Order
 
 @[expose] public section
 
@@ -54,14 +57,14 @@ private theorem nearest_of_common_mismatch {root left right : Gaussian}
     normSq (left - right) ≤ normSq (left + right) := by
   have rootNonzero : root ≠ 0 := by
     intro zero
-    rw [zero, Gaussian.Basic.zero_mul, Gaussian.Basic.sub_zero, Gaussian.Basic.Canonical.normSq_one] at leftSmall
+    rw [zero, Gaussian.Basic.zero_mul, Gaussian.Basic.sub_zero, normSq_one] at leftSmall
     exact (not_lt_of_ge leftSmall) (by decide +kernel : (1 / 32 : Coordinate) < 1)
   have lower : (15 / 32 : Coordinate) ≤ normSq (root * left) := by
     have bound := Gaussian.Norm.Bounds.half_normSq_sub_le_normSq_sub (1 : Gaussian) (1 - root * left)
     simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at bound
-    rw [show (1 : Gaussian) - (1 - root * left) = root * left by ring1, Gaussian.Basic.Canonical.normSq_one] at bound
+    rw [show (1 : Gaussian) - (1 - root * left) = root * left by ring1, normSq_one] at bound
     exact (show (15 / 32 : Coordinate) = 1 / 2 - 1 / 32 by decide +kernel).trans_le
-      ((Rat.Fraction.Order.Arithmetic.sub_le_sub_left_direct leftSmall _).trans bound)
+      ((Arithmetic.sub_le_sub_left_direct leftSmall _).trans bound)
   have difference : normSq (root * (left - right)) ≤ normSq (root * left) := by
     calc
       _ = normSq ((1 - root * right) - (1 - root * left)) := congrArg normSq (by ring1)
@@ -69,26 +72,67 @@ private theorem nearest_of_common_mismatch {root left right : Gaussian}
           simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
             using (Gaussian.Norm.Bounds.normSq_sub_le_two _ _))
       _ ≤ 2 * (1 / 32 + 1 / 32 : Coordinate) :=
-        Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add rightSmall leftSmall) (by decide)
+        Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add rightSmall leftSmall) (by decide)
       _ ≤ 15 / 32 := by decide +kernel
       _ ≤ _ := lower
   have close : normSq (left - right) ≤ normSq left := by
-    rw [Gaussian.Basic.Canonical.normSq_mul, Gaussian.Basic.Canonical.normSq_mul, Rat.Fraction.Field.mul_comm (normSq
+    rw [normSq_mul, normSq_mul, Rat.Fraction.Field.mul_comm (normSq
       root),
       Rat.Fraction.Field.mul_comm (normSq root)] at difference
-    exact Rat.Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct difference (by
+    exact Arithmetic.le_of_mul_le_mul_right_direct difference (by
         simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
           using (Gaussian.Norm.Basic.normSq_pos rootNonzero))
-  apply Rat.Fraction.Order.Arithmetic.le_of_add_le_add_right_direct (c := normSq (left - right))
+  apply Arithmetic.le_of_add_le_add_right_direct (c := normSq (left - right))
   calc
     _ = 2 * normSq (left - right) := by ring1
-    _ ≤ 2 * normSq left := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct close (by decide)
+    _ ≤ 2 * normSq left := Arithmetic.mul_le_mul_of_nonneg_left_direct close (by decide)
     _ ≤ 2 * (normSq left + normSq right) :=
-      Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (le_add_of_nonneg_right
-        (Gaussian.Basic.Canonical.normSq_nonneg _)) (by decide)
+      Arithmetic.mul_le_mul_of_nonneg_left_direct (le_add_of_nonneg_right
+        (normSq_nonneg _)) (by decide)
     _ = _ := by
       simp only [normSq, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im, Gaussian.Basic.add_re, Gaussian.Basic.add_im];
       ring1
+
+open Purelib.Approximation in
+open Purelib.Data in
+/-- One actual finite comparison transfers two normalized sample bounds to the original nearest-sheet inequality. -/
+private theorem nearest_of_equivalent_samples (first last : Gaussian.Sequence.ApproximationData)
+    (equivalent : Gaussian.Equivalence.Equivalent first last) (firstStart lastStart : Nat)
+    (left right : InverseRootPolynomial.Gaussian)
+    (leftSmall : ∀ index, firstStart ≤ index → normSq (1 - first.sample index * left) ≤ 1 / 32)
+    (rightSmall : ∀ index, lastStart ≤ index → normSq (1 - last.sample index * right) ≤ 1 / 128) :
+    normSq (left - right) ≤ normSq (left + right) := by
+  let scale := normSq right + 1
+  have scalePositive : 0 < scale := lt_of_lt_of_le (by decide +kernel : (0 : Coordinate) < 1)
+    (le_add_of_nonneg_left (normSq_nonneg _))
+  let target : Coordinate := (1 / 128) / scale
+  have targetPositive : 0 < target := Field.div_pos_direct (by decide +kernel) scalePositive
+  let comparison := equivalent.compare firstStart lastStart target targetPositive
+  let firstValue := first.sample comparison.leftIndex
+  let secondValue := last.sample comparison.rightIndex
+  have firstMismatch := leftSmall comparison.leftIndex comparison.left_ge
+  have secondMismatch := rightSmall comparison.rightIndex comparison.right_ge
+  have close : normSq (firstValue - secondValue) ≤ target := by
+    simpa only [Gaussian.Norm.Basic.normSq_eq_canonical, firstValue, secondValue] using
+      (comparison.close (Nat.le_refl _) (Nat.le_refl _)).le
+  have multiplied : normSq ((firstValue - secondValue) * right) ≤ 1 / 128 := by
+    rw [normSq_mul]
+    calc
+      _ ≤ target * normSq right :=
+        Arithmetic.mul_le_mul_of_nonneg_right_direct close (normSq_nonneg _)
+      _ ≤ target * scale := Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (le_add_of_nonneg_right (by decide +kernel : (0 : Coordinate) ≤ 1)) targetPositive.le
+      _ = 1 / 128 := Rat.Fraction.Field.div_mul_cancel_of_ne _ _ scalePositive.ne'
+  apply nearest_of_common_mismatch firstMismatch
+  calc
+    _ = normSq ((1 - secondValue * right) - (firstValue - secondValue) * right) :=
+      congrArg normSq (by ring1)
+    _ ≤ 2 * (normSq (1 - secondValue * right) + normSq ((firstValue - secondValue) * right)) := by
+      simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using
+        (Gaussian.Norm.Bounds.normSq_sub_le_two _ _)
+    _ ≤ 2 * (1 / 128 + 1 / 128 : Coordinate) := Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct secondMismatch multiplied) (by decide +kernel)
+    _ = 1 / 32 := by decide +kernel
 
 end Purelib.Riemann.Normalization.ContinuedInverseRootOverlap
 
@@ -100,8 +144,8 @@ variable {polynomial : Polynomial} {leftCount rightCount : Nat}
 
 namespace Purelib.Riemann.Normalization.ContinuedInverseRoot.ContinuedNeighborhood.Point
 
-open Purelib.Approximation in
-open Purelib.Data in
+open Purelib.Approximation
+open Purelib.Data
 /-- Operationally equivalent roots select the same polynomial sheet at independent refinement indices.
 
 The shared point lies in both continuation boxes. A finite root comparison proves the nearestness inequality without
@@ -119,48 +163,54 @@ theorem equivalent_nearest (first
     (first.certificate.value.basedEquivalent (first.residualState (1 / 4096) (by decide +kernel))).symm
     (Gaussian.Equivalence.NamedEquivalent.trans roots
       (second.certificate.value.basedEquivalent (second.residualState (1 / 4096) (by decide +kernel))))
-  let rightValue := (right.base.refine rightIndex).value.eval point
-  let scale := normSq rightValue + 1
-  have scalePositive : 0 < scale := lt_of_lt_of_le (by decide : (0 : Coordinate) < 1)
-    (le_add_of_nonneg_left (Gaussian.Basic.Canonical.normSq_nonneg _))
-  let target : Coordinate := (1 / 128) / scale
-  have targetPositive : 0 < target := Rat.Fraction.Order.Field.div_pos_direct (by decide +kernel) scalePositive
-  let comparison := equivalent.compare 0 0 target targetPositive
-  let firstValue := Gaussian.Process.Sampling.witnessAt firstRoot.name.process firstRoot.name.state comparison.leftIndex
-  let secondValue := Gaussian.Process.Sampling.witnessAt secondRoot.name.process secondRoot.name.state
-    comparison.rightIndex
-  have firstPossible := Gaussian.Process.Sampling.witnessAt_possible_start firstRoot.name.process firstRoot.name.state
-    comparison.leftIndex
-  have secondPossible := Gaussian.Process.Sampling.witnessAt_possible_start secondRoot.name.process
-    secondRoot.name.state comparison.rightIndex
-  have firstMismatch : normSq (1 - firstValue * (left.base.refine leftIndex).value.eval point) ≤ 1 / 128 :=
-    (first.polynomial_mismatch leftInside (1 / 4096) (by decide +kernel) le_rfl firstPossible leftIndex).trans
-      ((add_le_add (Rational.Geometric.Basic.quarterRadius_le_scale (by decide +kernel) leftIndex) le_rfl).trans_eq
+  apply ContinuedInverseRootOverlap.nearest_of_equivalent_samples
+    (Gaussian.Name.Sampling.approximation firstRoot.name) (Gaussian.Name.Sampling.approximation secondRoot.name)
+    equivalent 0 0 ((left.base.refine leftIndex).value.eval point) ((right.base.refine rightIndex).value.eval point)
+  · intro index _
+    have possible := Gaussian.Process.Sampling.witnessAt_possible_start
+      firstRoot.name.process firstRoot.name.state index
+    have mismatch := first.polynomial_mismatch leftInside (1 / 4096) (by decide +kernel) le_rfl possible leftIndex
+    exact (mismatch.trans ((Arithmetic.add_le_add_direct
+      (Rational.Geometric.Basic.quarterRadius_le_scale (by decide +kernel) leftIndex) le_rfl).trans_eq
+        (by decide +kernel : (1 / 256 : Coordinate) + 16 * (1 / 4096) = 1 / 128))).trans (by decide +kernel)
+  · intro index _
+    have possible := Gaussian.Process.Sampling.witnessAt_possible_start
+      secondRoot.name.process secondRoot.name.state index
+    have mismatch := second.polynomial_mismatch rightInside (1 / 4096) (by decide +kernel) le_rfl possible rightIndex
+    exact mismatch.trans ((Arithmetic.add_le_add_direct
+      (Rational.Geometric.Basic.quarterRadius_le_scale (by decide +kernel) rightIndex) le_rfl).trans_eq
         (by decide +kernel : (1 / 256 : Coordinate) + 16 * (1 / 4096) = 1 / 128))
-  have secondMismatch : normSq (1 - secondValue * rightValue) ≤ 1 / 128 :=
-    (second.polynomial_mismatch rightInside (1 / 4096) (by decide +kernel) le_rfl secondPossible rightIndex).trans
-      ((add_le_add (Rational.Geometric.Basic.quarterRadius_le_scale (by decide +kernel) rightIndex) le_rfl).trans_eq
+
+/-- Actual finite samples of one original inverse model and an operationally equal continued root select the same sheet.
+
+The model cache supplies its exact original root samples and containment.
+A single finite comparison to the continued root's actual residual state
+pays the normalized sample mismatch, at independent model indices. The
+model, polynomial, numerical caches and continued owner are all retained.
+-/
+theorem samples_nearest {leftBox : InverseRootPolynomial.Box}
+    {model : Model polynomial leftBox} (data : InverseModelRootSamples.RootSamples model point)
+    (small : model.bound ≤ 1 / 256) (leftInside : leftBox.Contains point)
+    (second : Point right point) (rightInside : right.box.Contains point)
+    (roots : Gaussian.Equivalence.Equivalent (data.approximation small leftInside)
+      (Gaussian.Name.Sampling.approximation second.certificate.value.name)) (leftIndex rightIndex : Nat) :
+    normSq ((model.refine (leftIndex + 2)).value.eval point - (right.base.refine rightIndex).value.eval point) ≤
+      normSq ((model.refine (leftIndex + 2)).value.eval point + (right.base.refine rightIndex).value.eval point) := by
+  let secondRoot := second.certificate.value.based (second.residualState (1 / 4096) (by decide +kernel))
+  let equivalent := roots.trans
+    (second.certificate.value.basedEquivalent (second.residualState (1 / 4096) (by decide +kernel)))
+  apply ContinuedInverseRootOverlap.nearest_of_equivalent_samples (data.approximation small leftInside)
+    (Gaussian.Name.Sampling.approximation secondRoot.name) equivalent (leftIndex + 2) 0
+    ((model.refine (leftIndex + 2)).value.eval point) ((right.base.refine rightIndex).value.eval point)
+  · intro index later
+    exact data.sample_polynomial_mismatch small leftInside leftIndex index later
+  · intro index _
+    have possible := Gaussian.Process.Sampling.witnessAt_possible_start
+      secondRoot.name.process secondRoot.name.state index
+    have mismatch := second.polynomial_mismatch rightInside (1 / 4096) (by decide +kernel) le_rfl possible rightIndex
+    exact mismatch.trans ((Arithmetic.add_le_add_direct
+      (Rational.Geometric.Basic.quarterRadius_le_scale (by decide +kernel) rightIndex) le_rfl).trans_eq
         (by decide +kernel : (1 / 256 : Coordinate) + 16 * (1 / 4096) = 1 / 128))
-  have close : normSq (firstValue - secondValue) ≤ target := (by simpa only [Gaussian.Name.Sampling.approximation,
-    Gaussian.Norm.Basic.normSq_eq_canonical, firstValue, secondValue] using ((comparison.close (Nat.le_refl _)
-    (Nat.le_refl _)).le))
-  have multiplied : normSq ((firstValue - secondValue) * rightValue) ≤ 1 / 128 := by
-    rw [Gaussian.Basic.Canonical.normSq_mul]
-    calc
-      _ ≤ target * normSq rightValue :=
-        Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct close (Gaussian.Basic.Canonical.normSq_nonneg _)
-      _ ≤ target * scale := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (le_add_of_nonneg_right (by decide : (0 : Coordinate) ≤ 1)) targetPositive.le
-      _ = 1 / 128 := Rat.Fraction.Field.div_mul_cancel_of_ne _ _ scalePositive.ne'
-  apply ContinuedInverseRootOverlap.nearest_of_common_mismatch (firstMismatch.trans (by decide +kernel))
-  calc
-    _ = normSq ((1 - secondValue * rightValue) - (firstValue - secondValue) * rightValue) := congrArg normSq (by ring1)
-    _ ≤ 2 * (normSq (1 - secondValue * rightValue) + normSq ((firstValue - secondValue) * rightValue)) := (by
-        simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
-          using (Gaussian.Norm.Bounds.normSq_sub_le_two _ _))
-    _ ≤ 2 * (1 / 128 + 1 / 128 : Coordinate) :=
-      Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add secondMismatch multiplied) (by decide)
-    _ = 1 / 32 := by decide +kernel
 
 end Purelib.Riemann.Normalization.ContinuedInverseRoot.ContinuedNeighborhood.Point
 
@@ -178,7 +228,7 @@ Retain the supplied model caches and their evaluation equations; execution compu
 values at the shared point. -/
 def ofEquivalentPoints {polynomial : Polynomial} {leftCount rightCount : Nat}
     {left : ContinuedNeighborhood polynomial leftCount} {right : ContinuedNeighborhood polynomial rightCount}
-    {point : Gaussian} (first : ContinuedNeighborhood.Point left point) (second : ContinuedNeighborhood.Point right
+    {point : Gaussian} (first : Point left point) (second : Point right
       point)
     (leftInside : left.box.Contains point) (rightInside : right.box.Contains point)
     (roots : Gaussian.Equivalence.NamedEquivalent first.certificate.value.name second.certificate.value.name)
@@ -192,7 +242,7 @@ def ofEquivalentPoints {polynomial : Polynomial} {leftCount rightCount : Nat}
   ⟨leftValue, rfl, rightValue, rfl, ⟨false, rightValue, rfl, by
     dsimp only [leftValue, rightValue]
     rw [leftEq, rightEq]
-    exact ContinuedInverseRoot.ContinuedNeighborhood.Point.equivalent_nearest first second leftInside
+    exact Point.equivalent_nearest first second leftInside
       rightInside roots leftIndex rightIndex⟩⟩
 
 end Purelib.Riemann.Normalization.ContinuedInverseRootOverlap.OverlapSample
@@ -205,7 +255,7 @@ Both endpoints lie in both continuation boxes, and the supplied cached models ag
 refinements. The starting overlap fixes the unflipped sign along the whole edge. -/
 def ofEquivalentPoints {polynomial : Polynomial} {leftCount rightCount : Nat}
     {left : ContinuedNeighborhood polynomial leftCount} {right : ContinuedNeighborhood polynomial rightCount}
-    {start finish : Gaussian} (first : ContinuedNeighborhood.Point left start) (second : ContinuedNeighborhood.Point
+    {start finish : Gaussian} (first : Point left start) (second : Point
       right start)
     (leftStart : left.box.Contains start) (leftFinish : left.box.Contains finish)
     (rightStart : right.box.Contains start) (rightFinish : right.box.Contains finish)
@@ -243,10 +293,10 @@ theorem unflipped_distance_le {polynomial : Polynomial} {leftBox rightBox : Box}
       right.value.eval (Rational.Affine.line start (finish - start) parameter)) ≤
     6 * (left.bound + right.bound) * normSq (left.value.eval (Rational.Affine.line start (finish - start) parameter)) :=
       by
-  have bound := Normalization.InverseModelEdgeTransition.EdgeTransition.sampleAt_distance_le edge parameter inside
-  rw [Normalization.InverseModelEdgeTransition.EdgeTransition.sampleAt_selected edge] at bound
+  have bound := EdgeTransition.sampleAt_distance_le edge parameter inside
+  rw [EdgeTransition.sampleAt_selected edge] at bound
   have signEq : edge.sign = 1 := by
-    unfold Normalization.InverseModelEdgeTransition.EdgeTransition.sign; rw [unflipped];
+    unfold EdgeTransition.sign; rw [unflipped];
     rfl
   rw [signEq, _root_.one_mul] at bound
   exact bound

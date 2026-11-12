@@ -98,35 +98,35 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.Lifted
 open Purelib.Riemann.Normalization
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {faces : Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces bank} {mesh :
-    Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
-  {start finish : Purelib.Data.Gaussian.Basic.Canonical} {segment : Purelib.Polynomial.Geometry.ClearPath.ClearSegment
-    curve.polynomial (Purelib.Curves.Hyperelliptic.Branches.Cuts.Ambient curve) start finish}
-  {owner : Purelib.Riemann.Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {piece :
-    Purelib.Riemann.Paths.PreparedPathDecomposition.CoveredSegment segment owner}
-  {placement : Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh.SegmentFace mesh segment} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} {parentSheet : Fin 2}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {compared : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+  {faces : PuncturedFaces bank} {mesh :
+    LiftedMesh vertices edges faces}
+  {start finish : Data.Gaussian.Basic.Canonical} {segment : ClearSegment
+    curve.polynomial (Ambient curve) start finish}
+  {owner : Owner (curve.polynomial.eval start)} {piece :
+    CoveredSegment segment owner}
+  {placement : SegmentFace mesh segment} {differential :
+    Differential genus} {parentSheet : Fin 2}
+  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {compared : SegmentComparison
     placement piece differential parentSheet}
 
 variable {prepared :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapPreparation
-  regular compared} {target areaTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
+  CapPreparation
+  regular compared} {target areaTarget : Coordinate} {floor : Nat}
   {request :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapRequest
+    CapRequest
     prepared target areaTarget floor} {index depth readingIndex : Nat} {box :
-    Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+    Geometry.Rational.Box}
+  {sample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapRequest
 namespace Evaluation
@@ -134,7 +134,7 @@ namespace Evaluation
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapRequest in
 /-- The stored odd-degree certificate excludes the ramified case when the curve has even degree. No new request or
 numerical evaluation is selected. -/
-theorem regular_witnesses (evaluated : CapRequest.Evaluation request sample depth readingIndex)
+theorem regular_witnesses (evaluated : Evaluation request sample depth readingIndex)
     (degree : curve.polynomial.natDegree = 2 * genus + 2) :
     ∃ paths, evaluated.capPath = paths.flatten ∧
       Nonempty (Charts.Reciprocal.Disk.RegularWitnesses sample depth prepared.path.bank paths) := by
@@ -156,7 +156,7 @@ namespace Evaluation
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapRequest in
 /-- For even degree, the retained cap area equals the complete original unsigned regular primitive path area. -/
-theorem regular_area_unsigned (evaluated : CapRequest.Evaluation request sample depth readingIndex)
+theorem regular_area_unsigned (evaluated : Evaluation request sample depth readingIndex)
     (degree : curve.polynomial.natDegree = 2 * genus + 2) :
     evaluated.right.area = IncrementArea.pathArea (SideBank.regularPrimitivePaths sample.primitive.value depth
       prepared.path.bank).flatten := by
@@ -199,26 +199,26 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.
 open Purelib.Riemann.Normalization
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins (SideBank)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {domains : FaceDomainBank lifted.frames
     base.faces.regulars}
-  {index depth readingIndex : Nat} {box : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains}
-  {localTarget localArea : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
+  {index depth readingIndex : Nat} {box : Geometry.Rational.Box}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
+    FacePrimitiveBank differential index domains}
+  {localTarget localArea : Coordinate} {floor : Nat}
 
 /-- Grouping certificates is proof-side only. The actual flattened cap paths and their numerical summaries stay in the
 supplied surface samples. -/
 theorem
   SurfaceRequests.AllSurfacePreparation.SampledEntry.regular_witnesses
-    (values : List (AllSurfacePreparation.SampledEntry (regular := regular) sample shared depth readingIndex localTarget
+    (values : List (SampledEntry (regular := regular) sample shared depth readingIndex localTarget
       localArea floor))
     (degree : curve.polynomial.natDegree = 2 * genus + 2) :
     ∃ paths, (values.map (fun value => value.evaluated.capPath)).flatten = paths.flatten ∧
@@ -238,8 +238,8 @@ root chain. -/
 theorem
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation.regular_cap_area
   {program : PeriodPrograms.ExteriorProgram lifted differential}
-    (prepared : ExteriorProgram.SurfacePreparation regular domains program)
-    (values : List (AllSurfacePreparation.SampledEntry (regular := regular) sample shared depth readingIndex localTarget
+    (prepared : SurfacePreparation regular domains program)
+    (values : List (SampledEntry (regular := regular) sample shared depth readingIndex localTarget
       localArea floor))
     (occurrences : values.map (fun value => value.entry.occurrence) = prepared.occurrences)
     (degree : curve.polynomial.natDegree = 2 * genus + 2) :
@@ -247,7 +247,7 @@ theorem
       IncrementArea.pathArea (SideBank.regularPrimitivePaths sample.primitive.value depth (SurfaceOccurrence.capSpine
         prepared.occurrences).bank).flatten := by
   obtain ⟨paths, pathsEq, witnesses⟩ :=
-    SurfaceRequests.AllSurfacePreparation.SampledEntry.regular_witnesses
+    SampledEntry.regular_witnesses
     values degree
   rw [occurrences] at witnesses
   obtain ⟨witnesses⟩ := witnesses

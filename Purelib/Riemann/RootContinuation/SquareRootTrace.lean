@@ -22,6 +22,7 @@ public import Purelib.Polynomial.Winding.Polygon.Power
 import Purelib.Polynomial.Winding.Polygon.Product
 
 public import Purelib.Riemann.RootContinuation.SquareRootTraceHomotopy
+import Purelib.Data.Gaussian.Norm.SquareResidual
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Nat.Coprime.Basic
 import Purelib.Data.Gaussian.Field
@@ -73,7 +74,7 @@ set_option genInjectivity false in
 
 The variation polynomial retains its exact affine-base evaluation equation, and its cached movement bound holds
 throughout the original unit interval. -/
-structure EdgeData (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+structure EdgeData (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (start finish baseStart baseFinish : Basic.Canonical) where
   /-- The cached squared norm of the original starting root. -/ rootNorm : Fraction.Rational
   /-- The cache equals the exact original starting root's squared norm. -/ rootNorm_eq : rootNorm = normSq start
@@ -85,7 +86,7 @@ structure EdgeData (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoeffi
   /-- The cache equals the squared original root-square minus the original base-start evaluation. -/ residual_eq :
     residual = normSq (start ^ 2 - polynomial.eval baseStart)
   /-- The retained polynomial describing base-polynomial variation along the original affine segment. -/ variation :
-    Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+    Basic.CanonicalCoefficients.CoefficientPolynomial
   /-- The retained variation evaluates exactly to the original moving base value minus its start value. -/ variation_eq
     : ∀ time : Fraction.Rational, variation.eval (Cast.Path.ofCoordinate time) =
     polynomial.eval (Affine.line baseStart (baseFinish - baseStart) time) - polynomial.eval baseStart
@@ -99,39 +100,108 @@ constructive_injectivity EdgeData
 
 namespace EdgeData
 
+open Purelib.Geometry.Rational
+
 open Purelib.Data.Gaussian in
 open Purelib.Polynomial in
 open Purelib.Polynomial.Dense.Gaussian in
-/-- Cache the original root norm, displacement and residual together with the normalized base variation polynomial and
-exact box majorant. -/
-def build (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
-    (start finish baseStart baseFinish : Basic.Canonical) :
+/-- The normalized original polynomial variation along an exact affine base segment. -/
+def baseVariation (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
+    (baseStart baseFinish : Basic.Canonical) : Basic.CanonicalCoefficients.CoefficientPolynomial :=
+  (Substitution.Affine.composeLine polynomial baseStart (baseFinish - baseStart) -
+    constant (polynomial.eval baseStart)).normalize
+
+open Purelib.Data.Gaussian in
+open Purelib.Data.Rat in
+open Purelib.Polynomial in
+open Purelib.Polynomial.Dense.Gaussian in
+/-- The original normalized variation evaluates to the exact moving polynomial value minus its retained start. -/
+theorem baseVariation_eval (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
+    (baseStart baseFinish : Data.Gaussian.Basic.Canonical) (time : Fraction.Rational) :
+    (baseVariation polynomial baseStart baseFinish).eval (Cast.Path.ofCoordinate time) =
+      polynomial.eval (Affine.line baseStart (baseFinish - baseStart) time) - polynomial.eval baseStart := by
+  unfold baseVariation
+  rw [eval_normalize, eval_sub, eval_constant, Substitution.Affine.eval_composeLine]
+
+open Purelib.Data.Gaussian in
+open Purelib.Polynomial in
+open Purelib.Polynomial.Dense.Gaussian in
+/-- Retain one actual variation cache and its certified movement budget in the original trace-edge data.
+
+The original root endpoints and base endpoints stay as indices. A supplied
+whole-interval bound can come from the canonical coefficient fold or an
+independently retained geometric polynomial bound; the same exact variation
+and all scalar caches are stored once.
+-/
+def ofVariation (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
+    (start finish baseStart baseFinish : Basic.Canonical)
+    (variation : Basic.CanonicalCoefficients.CoefficientPolynomial)
+    (variation_eq : ∀ time : Data.Rat.Fraction.Rational,
+      variation.eval (Cast.Path.ofCoordinate time) =
+        polynomial.eval (Affine.line baseStart (baseFinish - baseStart) time) - polynomial.eval baseStart)
+    (movementBound : Data.Rat.Fraction.Rational)
+    (movementBound_valid : ∀ time : Data.Rat.Fraction.Rational, parameterInterval.Contains time →
+      normSq (variation.eval (Cast.Path.ofCoordinate time)) ≤ movementBound) :
     EdgeData polynomial start finish baseStart baseFinish :=
-  let baseValue := polynomial.eval baseStart
-  let variation := (Substitution.Affine.composeLine polynomial baseStart (baseFinish - baseStart) -
-    Dense.Basic.DensePolynomial.constant baseValue).normalize
   { rootNorm := normSq start
     rootNorm_eq := rfl
     distance := normSq (finish - start)
     distance_eq := rfl
-    residual := normSq (start ^ 2 - baseValue)
+    residual := normSq (start ^ 2 - polynomial.eval baseStart)
     residual_eq := rfl
     variation := variation
-    variation_eq := by
-      intro time
-      rw [Dense.Basic.DensePolynomial.eval_normalize, Dense.Basic.DensePolynomial.eval_sub,
-        Dense.Basic.DensePolynomial.eval_constant, Substitution.Affine.eval_composeLine]
-    movementBound := Bounds.Box.denseEvalNormBound variation parameterBox
-    movementBound_valid := by
+    variation_eq := variation_eq
+    movementBound := movementBound
+    movementBound_valid := movementBound_valid }
+
+open Purelib.Data.Gaussian in
+open Purelib.Data.Rat in
+/-- Retain the original base-variation cache while consuming new actual root-reading scalar caches.
+
+The polynomial, both base endpoints, complete variation and movement budget
+remain the original data. Only the two root endpoints change; the supplied
+norm/residual caches are consumed directly, and their new pair distance is
+computed once.
+-/
+def withRootCaches
+    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {start finish baseStart baseFinish : Basic.Canonical}
+    (data : EdgeData polynomial start finish baseStart baseFinish)
+    (first last : Basic.Canonical) (firstNorm : Fraction.Rational)
+    (firstNorm_eq : firstNorm = normSq first) (firstResidual : Fraction.Rational)
+    (firstResidual_eq : firstResidual = normSq (first ^ 2 - polynomial.eval baseStart)) :
+    EdgeData polynomial first last baseStart baseFinish where
+  rootNorm := firstNorm
+  rootNorm_eq := firstNorm_eq
+  distance := normSq (last - first)
+  distance_eq := rfl
+  residual := firstResidual
+  residual_eq := firstResidual_eq
+  variation := data.variation
+  variation_eq := data.variation_eq
+  movementBound := data.movementBound
+  movementBound_valid := data.movementBound_valid
+
+open Purelib.Data.Gaussian in
+open Purelib.Polynomial in
+open Purelib.Polynomial.Dense.Gaussian in
+/-- Cache the original root norm, displacement and residual with the normalized variation and exact box majorant. -/
+def build (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
+    (start finish baseStart baseFinish : Basic.Canonical) :
+    EdgeData polynomial start finish baseStart baseFinish :=
+  let variation := EdgeData.baseVariation polynomial baseStart baseFinish
+  ofVariation polynomial start finish baseStart baseFinish variation
+    (EdgeData.baseVariation_eval polynomial baseStart baseFinish)
+    (Bounds.Box.denseEvalNormBound variation parameterBox) (by
       intro time inside
       have scalarBound := Bounds.Box.normSq_eval_le_denseEvalNormBound variation
         (show parameterBox.Contains (Cast.Path.ofCoordinate time) from
           ⟨inside.1, inside.2, le_rfl, le_rfl⟩)
-      simpa only [Norm.Basic.normSq_eq_canonical] using scalarBound }
+      simpa only [Norm.Basic.normSq_eq_canonical] using scalarBound)
 
 variable {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {start finish
   baseStart baseFinish :
-  Purelib.Data.Gaussian.Basic.Canonical}
+  Data.Gaussian.Basic.Canonical}
 
 /-- The original root norm is positive and the retained displacement, residual and base movement satisfy the three
 one-one-thousand-twenty-fourth thresholds. -/
@@ -164,7 +234,7 @@ set_option genInjectivity false in
 
 The original ordered fields retain the same dependent source and target indices. Equality of the retained constructor is
 characterized by its original field equalities, with all caches and relation witnesses preserved. -/
-structure Edge (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+structure Edge (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (start finish baseStart baseFinish : Basic.Canonical) where
   /-- The original exact root/base edge data retained by this certificate. -/ data : EdgeData polynomial start finish
     baseStart baseFinish
@@ -176,7 +246,7 @@ namespace Edge
 
 variable {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {start finish
   baseStart baseFinish :
-  Purelib.Data.Gaussian.Basic.Canonical}
+  Data.Gaussian.Basic.Canonical}
 
 /-- Check the retained edge data and return its original certified trace edge exactly when the smallness predicate
 holds. -/
@@ -190,7 +260,7 @@ open Purelib.Data.Rat in
 theorem nonzero (edge : Edge polynomial start finish baseStart baseFinish) : start ≠ 0 := by
   intro zero
   have positive := edge.checked.1
-  rw [edge.data.rootNorm_eq, zero, Basic.Canonical.normSq_zero] at positive
+  rw [edge.data.rootNorm_eq, zero, normSq_zero] at positive
   exact (lt_irrefl (0 : Fraction.Rational)) positive
 
 /-- The original endpoint displacement satisfies the retained root-norm-relative squared distance bound. -/
@@ -198,6 +268,13 @@ theorem distance (edge : Edge polynomial start finish baseStart baseFinish) :
     normSq (finish - start) ≤ normSq start / 1024 := by
   have small := edge.checked.2.1
   rw [edge.data.rootNorm_eq, edge.data.distance_eq] at small
+  exact small
+
+/-- The original first root's square residual satisfies the retained root-norm-relative budget. -/
+theorem residual (edge : Edge polynomial start finish baseStart baseFinish) :
+    normSq (start ^ 2 - polynomial.eval baseStart) ≤ normSq start ^ 2 / 1024 := by
+  have small := edge.checked.2.2.1
+  rewrite [edge.data.rootNorm_eq, edge.data.residual_eq] at small
   exact small
 
 open Purelib.Polynomial in
@@ -209,9 +286,7 @@ theorem homotopy (edge : Edge polynomial start finish baseStart baseFinish) :
       (Power.Coordinate.coordinatePositivePower 1) polynomial
       start finish baseStart baseFinish := by
   apply segmentHomotopy polynomial edge.nonzero edge.distance
-  · have small := edge.checked.2.2.1
-    rw [edge.data.rootNorm_eq, edge.data.residual_eq] at small
-    exact small
+  · exact edge.residual
   · intro time inside
     have small := edge.checked.2.2.2
     rw [edge.data.rootNorm_eq] at small
@@ -226,7 +301,7 @@ set_option genInjectivity false in
 
 Each step keeps the exact previous and next points for both traces, and the tail preserves the original paired ordering.
 -/
-inductive Chain (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) :
+inductive Chain (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial) :
     Basic.Canonical → List Basic.Canonical → Basic.Canonical → List Basic.Canonical → Type
   /-- The empty paired trace retains its original starting root and base point. -/ | nil (start baseStart :
     Basic.Canonical) : Chain polynomial start [] baseStart []
@@ -246,6 +321,47 @@ variable {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.Coe
 open Purelib.Data.Gaussian
 open Purelib.Polynomial
 open Purelib.Polynomial.Dense.Gaussian
+open Purelib.Geometry.Rational
+open Purelib.Data.Rat
+
+/-- The actual terminal root of a short trace remains near one retained original reference reading.
+
+All actual base vertices have their own radicand-movement payment. The
+original Edge caches supply every intermediate root displacement and square
+residual; only the actual last reading's residual is separate. Induction
+keeps the same reference value and its squared norm throughout the trace.
+-/
+theorem terminal_near_reference {reference referenceParameter : Basic.Canonical}
+    (positive : 0 < normSq reference)
+    (referenceResidual : normSq (reference * reference - referenceParameter) ≤ normSq reference ^ 2 / 1024) :
+    ∀ {start baseStart : Basic.Canonical} {roots bases : List Basic.Canonical}
+      (_trace : Chain polynomial start roots baseStart bases),
+      normSq (start - reference) ≤ normSq reference / 16 →
+      (∀ point ∈ bases, normSq (referenceParameter - polynomial.eval point) ≤ normSq reference ^ 2 / 1024) →
+      normSq ((Polygon.Chain.terminal start roots) ^ 2 -
+        polynomial.eval (Polygon.Chain.terminal baseStart bases)) ≤
+          normSq (Polygon.Chain.terminal start roots) ^ 2 / 1024 →
+      normSq (Polygon.Chain.terminal start roots - reference) ≤ normSq reference / 16 := by
+  intro start baseStart roots bases trace
+  induction trace with
+  | nil start baseStart =>
+      intro near _ _
+      exact near
+  | @cons start finish baseStart baseFinish roots bases edge tail inductionHypothesis =>
+      intro near movement lastResidual
+      have nextResidual : normSq (finish * finish - polynomial.eval baseFinish) ≤ normSq finish ^ 2 / 1024 := by
+        cases tail with
+        | nil => simpa only [Polygon.Chain.terminal, pow_two] using lastResidual
+        | cons nextEdge rest => simpa only [pow_two] using nextEdge.residual
+      have nearQuarter : normSq (start - reference) ≤ normSq reference / 4 := near.trans (by
+        simp only [Fraction.Field.div_eq_mul_inv_direct]
+        exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (by decide +kernel) positive.le)
+      have nextNear := Norm.SquareResidual.near_of_short_step
+        positive nearQuarter edge.distance referenceResidual nextResidual
+        (movement baseFinish (List.Mem.head _))
+      exact inductionHypothesis nextNear
+        (fun point member => movement point (List.Mem.tail baseFinish member)) lastResidual
+
 /-- Construct the original root-coordinate phase formula along the retained certified trace chain. -/
 def phase : ∀ {start baseStart : Basic.Canonical} {roots bases : List Basic.Canonical},
     Chain polynomial start roots baseStart bases →
@@ -277,7 +393,7 @@ end Chain
 open Purelib.Data.Gaussian in
 open Purelib.Polynomial.Dense.Gaussian in
 /-- The original paired trace chain with the exact starting root and base point appended to close both lists. -/
-abbrev Closed (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (start :
+abbrev Closed (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial) (start :
   Basic.Canonical) (roots : List Basic.Canonical)
     (baseStart : Basic.Canonical) (bases : List Basic.Canonical) :=
   Chain polynomial start (roots ++ [start]) baseStart (bases ++ [baseStart])
@@ -291,11 +407,11 @@ winding.
 
 Both original closed point lists remain indices, and the retained equation expresses the square-root trace's winding
 relation without replacing either trace. -/
-structure WindingComparison (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+structure WindingComparison (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
   (start : Basic.Canonical)
     (roots : List Basic.Canonical) (baseStart : Basic.Canonical) (bases : List Basic.Canonical) where
   /-- The retained normalized winding certificate of the exact original root trace. -/ root :
-    Polynomial.Winding.Polygon.Normalized Monomial.Coordinate.coordinatePolynomial start roots
+    Winding.Polygon.Normalized Monomial.Coordinate.coordinatePolynomial start roots
   /-- The original base polynomial raw winding equals eight times the retained root winding. -/ raw_eq :
     Winding.Polygon.Basic.closedRaw polynomial baseStart bases = 8 * root.winding
 
@@ -304,7 +420,7 @@ constructive_injectivity WindingComparison
 namespace WindingComparison
 
 variable {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {start baseStart :
-  Purelib.Data.Gaussian.Basic.Canonical} {roots bases : List Purelib.Data.Gaussian.Basic.Canonical}
+  Data.Gaussian.Basic.Canonical} {roots bases : List Data.Gaussian.Basic.Canonical}
 
 open Purelib.Polynomial in
 open Purelib.Polynomial.Dense.Gaussian in
@@ -315,10 +431,10 @@ winding equation, preserving both trace lists. -/
 def build (trace : Closed polynomial start roots baseStart bases) :
     WindingComparison polynomial start roots baseStart bases :=
   let raw := Winding.Polygon.Basic.closedRaw Monomial.Coordinate.coordinatePolynomial start roots
-  let root : Polynomial.Winding.Polygon.Normalized Monomial.Coordinate.coordinatePolynomial start roots :=
+  let root : Winding.Polygon.Normalized Monomial.Coordinate.coordinatePolynomial start roots :=
     { winding := raw / 4
       raw_eq := by
-        have divisible := (Polynomial.Winding.Polygon.Normalized.ofPhaseFormula _ _ _ trace.phase).raw_eq
+        have divisible := (Winding.Polygon.Normalized.ofPhaseFormula _ _ _ trace.phase).raw_eq
         change raw = 4 * (raw / 4)
         change raw = 4 * _ at divisible
         omega }
@@ -333,7 +449,7 @@ def build (trace : Closed polynomial start roots baseStart bases) :
 open Purelib.Polynomial
 /-- Normalize the original base-polynomial winding as twice the retained root winding. -/
 def normalizedBase (comparison : WindingComparison polynomial start roots baseStart bases) :
-    Polynomial.Winding.Polygon.Normalized polynomial baseStart bases where
+    Winding.Polygon.Normalized polynomial baseStart bases where
   winding := 2 * comparison.root.winding
   raw_eq := by rw [comparison.raw_eq]; ring1
 

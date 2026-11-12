@@ -95,94 +95,94 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins (SideBank)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank (Requests Evaluations)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests (ChartReplacements)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap}
   {sourceTarget reciprocalTarget coefficientTarget totalTarget areaTarget target :
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {minimum index depth readingIndex : Nat} {box : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+    Coordinate}
+  {minimum index depth readingIndex : Nat} {box : Geometry.Rational.Box}
+  {sample : Primitives.Sample cap differential index box}
 
 /-- The complete original parent energy requests on the retained chart replacements at a common target and floor. -/
-@[expose] def EnergyPreparations (energyTarget : InverseRootPolynomial.Coordinate) (energyFloor : Nat) :
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
+@[expose] def EnergyPreparations (energyTarget : Coordinate) (energyFloor : Nat) :
+    {parents : List (CenteredEdge curve differential)} → {covers :
       UniformReciprocalCover.ParentCovers parents} →
-    {prepared : ParentJoins.SideBank regular covers} → {requests : SideBank.Requests sourceTarget reciprocalTarget
+    {prepared : SideBank regular covers} → {requests : Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared} →
-    (evaluated : SideBank.Evaluations sample depth readingIndex requests) → SideChartRequests.ChartReplacements target
+    (evaluated : Evaluations sample depth readingIndex requests) → ChartReplacements target
       evaluated → Type 1
   | _, _, _, _, .nil, .nil => PUnit
   | _, _, _, _, .cons first rest, .cons _ head tail =>
       ParentEnergy.EnergyPreparation head.charts first.cap.polynomial.cells head.vertices energyTarget energyFloor ×
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideEnergyRequests.EnergyPreparations energyTarget
+        SideEnergyRequests.EnergyPreparations energyTarget
           energyFloor rest tail
 
 /-- Reuse the supplied polynomial-bound cache to prepare every actual parent energy request on its retained chart
 sample. -/
-@[expose] def prepareEnergy (bounds : Cap.EnergyBounds sample RootRadialGeometry.domain)
-    (energyTarget : InverseRootPolynomial.Coordinate) (positive : 0 < energyTarget) (energyFloor : Nat) :
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
+@[expose] def prepareEnergy (bounds : EnergyBounds sample RootRadialGeometry.domain)
+    (energyTarget : Coordinate) (positive : 0 < energyTarget) (energyFloor : Nat) :
+    {parents : List (CenteredEdge curve differential)} → {covers :
       UniformReciprocalCover.ParentCovers parents} →
-    {prepared : ParentJoins.SideBank regular covers} → {requests : SideBank.Requests sourceTarget reciprocalTarget
+    {prepared : SideBank regular covers} → {requests : Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared} →
-    (evaluated : SideBank.Evaluations sample depth readingIndex requests) → (charts :
-      SideChartRequests.ChartReplacements target evaluated) →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideEnergyRequests.EnergyPreparations energyTarget energyFloor evaluated
+    (evaluated : Evaluations sample depth readingIndex requests) → (charts :
+      ChartReplacements target evaluated) →
+    EnergyPreparations energyTarget energyFloor evaluated
       charts
   | _, _, _, _, .nil, .nil => ⟨⟩
   | _, _, _, _, .cons _ rest, .cons _ head tail =>
       ⟨ChartReplacement.prepareEnergy head bounds energyTarget positive energyFloor,
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideEnergyRequests.prepareEnergy bounds energyTarget
+        SideEnergyRequests.prepareEnergy bounds energyTarget
           positive energyFloor rest tail⟩
 
-variable {energyTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {energyFloor energyDepth : Nat}
+variable {energyTarget : Coordinate} {energyFloor energyDepth : Nat}
 
 /-- Read the maximum required radial depth of all actual parent energy preparations and the original floor. -/
 @[expose] def EnergyPreparations.maximum :
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
+    {parents : List (CenteredEdge curve differential)} → {covers :
       UniformReciprocalCover.ParentCovers parents} →
-    {prepared : ParentJoins.SideBank regular covers} → {requests : SideBank.Requests sourceTarget reciprocalTarget
+    {prepared : SideBank regular covers} → {requests : Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared} →
-    (evaluated : SideBank.Evaluations sample depth readingIndex requests) → (charts :
-      SideChartRequests.ChartReplacements target evaluated) →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideEnergyRequests.EnergyPreparations energyTarget energyFloor evaluated
+    (evaluated : Evaluations sample depth readingIndex requests) → (charts :
+      ChartReplacements target evaluated) →
+    EnergyPreparations energyTarget energyFloor evaluated
       charts → Nat
   | _, _, _, _, .nil, .nil, _ => energyFloor
   | _, _, _, _, .cons _ rest, .cons _ _ tail, preparations => max preparations.1.requests.maximum (maximum rest tail
     preparations.2)
 
 /-- The complete original parent energy evaluations retaining equality to one supplied common radial depth. -/
-@[expose] def EnergyData (energyTarget : InverseRootPolynomial.Coordinate) (energyFloor energyDepth : Nat) :
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
+@[expose] def EnergyData (energyTarget : Coordinate) (energyFloor energyDepth : Nat) :
+    {parents : List (CenteredEdge curve differential)} → {covers :
       UniformReciprocalCover.ParentCovers parents} →
-    {prepared : ParentJoins.SideBank regular covers} → {requests : SideBank.Requests sourceTarget reciprocalTarget
+    {prepared : SideBank regular covers} → {requests : Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared} →
-    (evaluated : SideBank.Evaluations sample depth readingIndex requests) → SideChartRequests.ChartReplacements target
+    (evaluated : Evaluations sample depth readingIndex requests) → ChartReplacements target
       evaluated → Type 1
   | _, _, _, _, .nil, .nil => PUnit
   | _, _, _, _, .cons (request := request) first rest, .cons _ head tail =>
       {energy : RestoredParentEnergy.RequestedEnergy head.charts first.cap.polynomial.cells head.vertices
         request.cap.endpoints energyTarget energyFloor // energy.depth = energyDepth} ×
-          Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideEnergyRequests.EnergyData energyTarget energyFloor
+          SideEnergyRequests.EnergyData energyTarget energyFloor
           energyDepth rest tail
 
 /-- Evaluate every original retained energy preparation once at the supplied shared radial depth, parameters and
 positive parent orientations. -/
 @[expose] def EnergyPreparations.evaluate (branch : HyperellipticReciprocal.originOrder curve = 1)
     (parameters : RadialTriangles.Parameters energyDepth) :
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
+    {parents : List (CenteredEdge curve differential)} → {covers :
       UniformReciprocalCover.ParentCovers parents} →
-    {prepared : ParentJoins.SideBank regular covers} → {requests : SideBank.Requests sourceTarget reciprocalTarget
+    {prepared : SideBank regular covers} → {requests : Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared} →
-    (evaluated : SideBank.Evaluations sample depth readingIndex requests) → (charts :
-      SideChartRequests.ChartReplacements target evaluated) →
-    (preparations : Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideEnergyRequests.EnergyPreparations energyTarget
+    (evaluated : Evaluations sample depth readingIndex requests) → (charts :
+      ChartReplacements target evaluated) →
+    (preparations : EnergyPreparations energyTarget
       energyFloor evaluated charts) →
     (∀ parent ∈ parents, 0 < AffineTriangle.crossEnergy (parent.edge.point 0) (parent.edge.point 1)) →
     preparations.maximum evaluated charts ≤ energyDepth →
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideEnergyRequests.EnergyData energyTarget energyFloor energyDepth
+      EnergyData energyTarget energyFloor energyDepth
       evaluated charts
   | _, _, _, _, .nil, .nil, _, _, _ => ⟨⟩
   | _, _, _, _, .cons _ rest, .cons _ head tail, preparations, oriented, later =>

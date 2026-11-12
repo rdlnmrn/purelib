@@ -34,6 +34,10 @@ import Mathlib.Algebra.Ring.Defs
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Ascending.Integer.QuadraticTrace.Reduction
+open Purelib.Algebra.Quadratic
+open Purelib.Polynomial.Dense.Rational.AscendingInteger
+
 open Purelib.Algebra.Field
 
 open Purelib.Data.Rat
@@ -77,14 +81,14 @@ theorem
   ExerciseEightThirteen.IntegerPolynomial.eval_norm_cyclotomicCoefficients_one
   (value : K) :
     Ascending.Integer.Basic.eval
-        (Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.normCoefficients
+        (IntegerPolynomial.normCoefficients
           (Cyclotomic.Integer.cyclotomicCoefficients 1))
         (2 - 4 * value) =
       4 * value := open Purelib in by
   have coefficientIdentity :
-      Dense.Rational.AscendingInteger.Basic.ofAscending
+      Basic.ofAscending
           (Cyclotomic.Integer.cyclotomicCoefficients 1) =
-        Dense.Rational.AscendingInteger.Basic.ofAscending
+        Basic.ofAscending
           (Ascending.Integer.PowerMinusOne.IntegerPolynomial.powerMinusOneCoefficients
             1) := by
     rw [Cyclotomic.Integer.ofAscending_cyclotomicCoefficients
@@ -92,35 +96,35 @@ theorem
       Dense.Rational.PowerMinusOne.Integer.ofAscending_powerMinusOneCoefficients,
       Cyclotomic.Basic.ExerciseEightThirteen.IntegerPolynomial.cyclotomic_one_eq_powerMinusOne_one]
   have pairIdentity :=
-    Algebra.Quadratic.TracePair.eval_eq_of_ofAscending_eq
+    TracePair.eval_eq_of_ofAscending_eq
       coefficientIdentity (2 - 4 * value)
   calc
     Ascending.Integer.Basic.eval
-        (Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.normCoefficients
+        (IntegerPolynomial.normCoefficients
           (Cyclotomic.Integer.cyclotomicCoefficients 1))
         (2 - 4 * value) =
-      Algebra.Quadratic.TracePair.norm (2 - 4 * value)
-        (Algebra.Quadratic.TracePair.eval
+      TracePair.norm (2 - 4 * value)
+        (TracePair.eval
           (Cyclotomic.Integer.cyclotomicCoefficients 1)
           (2 - 4 * value)) :=
-        Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.eval_normCoefficients _ _
-    _ = Algebra.Quadratic.TracePair.norm (2 - 4 * value)
-        (Algebra.Quadratic.TracePair.eval
+        IntegerPolynomial.eval_normCoefficients _ _
+    _ = TracePair.norm (2 - 4 * value)
+        (TracePair.eval
           (Ascending.Integer.PowerMinusOne.IntegerPolynomial.powerMinusOneCoefficients
             1) (2 - 4 * value)) := by
           rw [pairIdentity]
     _ = Ascending.Integer.Basic.eval
-        (Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.normCoefficients
+        (IntegerPolynomial.normCoefficients
           (Ascending.Integer.PowerMinusOne.IntegerPolynomial.powerMinusOneCoefficients
             1)) (2 - 4 * value) :=
-        (Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.eval_normCoefficients
+        (IntegerPolynomial.eval_normCoefficients
           _ _).symm
-    _ = 2 - Algebra.Quadratic.TracePair.lucas 1
+    _ = 2 - TracePair.lucas 1
           (2 - 4 * value) :=
-        Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.eval_norm_powerMinusOneCoefficients
+        IntegerPolynomial.eval_norm_powerMinusOneCoefficients
           1 (2 - 4 * value)
     _ = 4 * value := by
-      rw [Algebra.Quadratic.TracePair.lucas]
+      rw [TracePair.lucas]
       ring0
 
 /-- Each non-endpoint quotient slot has the same norm as its spread-factor
@@ -129,7 +133,7 @@ theorem
   ExerciseEightThirteen.IntegerPolynomial.eval_norm_properCyclotomicFactorCoefficients
     (number : Nat) (divisor : Fin number) (value : K) :
     Ascending.Integer.Basic.eval
-        (Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.normCoefficients
+        (IntegerPolynomial.normCoefficients
           (Cyclotomic.Integer.properCyclotomicFactorCoefficients
             number divisor.castSucc)) (2 - 4 * value) =
       Ascending.Integer.Basic.eval
@@ -157,16 +161,16 @@ theorem
       dif_neg selectedCast,
         IntegerPolynomial.properSpreadCyclotomicFactorCoefficients,
       dif_neg selected,
-      Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.eval_normCoefficients]
+      IntegerPolynomial.eval_normCoefficients]
     have subZero (scalar : K) : scalar - 0 = scalar := by
       exact (@SubNegMonoid.sub_eq_add_neg K
         SubtractionMonoid.toSubNegMonoid scalar 0).trans
           ((congrArg (fun value : K => scalar + value)
             (SubtractionMonoid.neg_eq_of_add 0 0 (AddZeroClass.add_zero 0))).trans
               (AddZeroClass.add_zero scalar))
-    simp only [-eq_self, -iff_self, subZero,Algebra.Quadratic.TracePair.eval,
-      Algebra.Quadratic.TracePair.norm,
-      Algebra.Quadratic.TracePair.zero,
+    simp only [-eq_self, -iff_self, subZero,TracePair.eval,
+      TracePair.norm,
+      TracePair.zero,
         Ascending.Integer.Basic.eval_cons, Ascending.Integer.Basic.eval_nil, Int.cast_one, mul_zero, mul_one, add_zero ]
     rfl
 
@@ -176,7 +180,7 @@ theorem
   ExerciseEightThirteen.IntegerPolynomial.eval_norm_properCyclotomicProductCoefficients
     (number : Nat) (twoLe : 2 ≤ number) (value : K) :
     Ascending.Integer.Basic.eval
-        (Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.normCoefficients
+        (IntegerPolynomial.normCoefficients
           (Cyclotomic.Integer.properCyclotomicProductCoefficients number))
         (2 - 4 * value) =
       4 * value *
@@ -187,12 +191,12 @@ theorem
 
       IntegerPolynomial.properSpreadCyclotomicProductCoefficients
   rw [Dense.Rational.FiniteProduct.Integer.coefficientProductFin_succ,
-    Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.eval_normCoefficients_mul,
+    IntegerPolynomial.eval_normCoefficients_mul,
     Ascending.Integer.QuadraticTrace.Products.ExerciseEightThirteen.IntegerPolynomial.eval_norm_coefficientProductFin]
   have prefixIdentity :=
     Ascending.Integer.Products.ExerciseEightThirteen.IntegerPolynomial.eval_coefficientProductFin_congr number
     (fun divisor =>
-      Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.normCoefficients
+      IntegerPolynomial.normCoefficients
         (Cyclotomic.Integer.properCyclotomicFactorCoefficients
           number divisor.castSucc))
 
@@ -229,24 +233,24 @@ theorem
     (K := K) number positive (2 - 4 * value)
   calc
     4 * Basic.spreadPolynomial number value =
-        2 - Recurrence.Lucas.Basic.lucas number (2 - 4 * value) :=
+        2 - Lucas.Basic.lucas number (2 - 4 * value) :=
       Lucas.ExerciseEightThirteen.spread_lucas_cleared number value
-    _ = 2 - Algebra.Quadratic.TracePair.lucas number
+    _ = 2 - TracePair.lucas number
           (2 - 4 * value) := by
-      rw [Recurrence.Lucas.Basic.ExerciseEightThirteen.IntegerPolynomial.tracePair_lucas_eqLucas]
+      rw [Lucas.Basic.ExerciseEightThirteen.IntegerPolynomial.tracePair_lucas_eqLucas]
     _ = Ascending.Integer.Basic.eval
-        (Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.normCoefficients
+        (IntegerPolynomial.normCoefficients
           (Ascending.Integer.PowerMinusOne.IntegerPolynomial.powerMinusOneCoefficients
             number)) (2 - 4 * value) :=
-      (Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.eval_norm_powerMinusOneCoefficients
+      (IntegerPolynomial.eval_norm_powerMinusOneCoefficients
         number (2 - 4 * value)).symm
     _ = Ascending.Integer.Basic.eval
-          (Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.normCoefficients
+          (IntegerPolynomial.normCoefficients
             (Cyclotomic.Integer.properCyclotomicProductCoefficients
               number))
           (2 - 4 * value) *
         Ascending.Integer.Basic.eval
-          (Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.normCoefficients
+          (IntegerPolynomial.normCoefficients
             (Cyclotomic.Integer.cyclotomicCoefficients number))
           (2 - 4 * value) := normFactorization
     _ = (4 * value *
@@ -318,19 +322,19 @@ the characteristic-independent artifact transported below. -/
 theorem
   ExerciseEightThirteen.IntegerPolynomial.ofAscending_spreadCyclotomic_factorization
     (number : Nat) (positive : 0 < number) :
-    Dense.Rational.AscendingInteger.Basic.ofAscending
+    Basic.ofAscending
         (Coefficients.ExerciseEightThirteen.IntegerPolynomial.spreadPolynomialCoefficients
           number) =
-      Dense.Rational.AscendingInteger.Basic.ofAscending
+      Basic.ofAscending
 
           (IntegerPolynomial.spreadCyclotomicDivisorProductCoefficients
           number) := by
   apply Dense.Rational.Extensionality.rational_normalized_eq_of_eval_eq
-    (Dense.Rational.AscendingInteger.Basic.ofAscending_normalized _)
-    (Dense.Rational.AscendingInteger.Basic.ofAscending_normalized _)
+    (Basic.ofAscending_normalized _)
+    (Basic.ofAscending_normalized _)
   intro value
-  rw [Dense.Rational.AscendingInteger.Basic.eval_ofAscending,
-    Dense.Rational.AscendingInteger.Basic.eval_ofAscending,
+  rw [Basic.eval_ofAscending,
+    Basic.eval_ofAscending,
     Coefficients.ExerciseEightThirteen.IntegerPolynomial.eval_spreadPolynomialCoefficients]
   cases number with
   | zero => exact False.elim (by omega0)
@@ -345,7 +349,7 @@ theorem
           rfl
       | succ index =>
           apply
-            Purelib.Polynomial.Recurrence.Spread.Cyclotomic.Factorization.rational_eq_of_four_mul_eq
+            rational_eq_of_four_mul_eq
           exact
             ExerciseEightThirteen.IntegerPolynomial.spreadCyclotomic_factorization_cleared
             (K := Fraction.Rational) (index + 2) (by omega0) value
@@ -360,7 +364,7 @@ theorem
         (IntegerPolynomial.spreadCyclotomicDivisorProductCoefficients
         number) value := by
   have transported :=
-    Dense.Rational.AscendingInteger.Certificate.eval_eq_of_ofAscending_eq
+    Certificate.eval_eq_of_ofAscending_eq
 
         (ExerciseEightThirteen.IntegerPolynomial.ofAscending_spreadCyclotomic_factorization
         number positive) value

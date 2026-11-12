@@ -31,8 +31,8 @@ attribute [local congr] FiniteSum.Fin.sumFin_congr
 
 /-- Equal Gaussian casts of integers imply equal original integers. -/
 private theorem cast_injective
-  {first last : Int} (equal : (first : SquareMatrix.Inverse.IntegralSymplecticRows.Gaussian) = (last :
-  SquareMatrix.Inverse.IntegralSymplecticRows.Gaussian)) : first = last := open Purelib.Data.Rat in by
+  {first last : Int} (equal : (first : Gaussian) = (last :
+  Gaussian)) : first = last := open Purelib.Data.Rat in by
   apply Fraction.Cast.Compatibility.intCast_injective_direct
   exact (Data.Gaussian.Cast.gaussian_int_re _).symm.trans ((congrArg Data.Gaussian.Basic.re equal).trans
     (Data.Gaussian.Cast.gaussian_int_re _))
@@ -41,11 +41,11 @@ private theorem cast_injective
 private theorem cast_wedge {n :
   Nat} (p q r s : Fin n → Int) :
     ((FiniteSum.Fin.sumFin (fun index => p index * s index - q index * r index) : Int) :
-      SquareMatrix.Inverse.IntegralSymplecticRows.Gaussian) =
-      FiniteSum.Fin.sumFin (fun index => (p index : SquareMatrix.Inverse.IntegralSymplecticRows.Gaussian) * (s index :
-        SquareMatrix.Inverse.IntegralSymplecticRows.Gaussian) - (q index :
-        SquareMatrix.Inverse.IntegralSymplecticRows.Gaussian) * (r index :
-        SquareMatrix.Inverse.IntegralSymplecticRows.Gaussian)) := by
+      Gaussian) =
+      FiniteSum.Fin.sumFin (fun index => (p index : Gaussian) * (s index :
+        Gaussian) - (q index :
+        Gaussian) * (r index :
+        Gaussian)) := by
   rw [FiniteSum.Fin.cast_sum]
   exact FiniteSum.Fin.sumFin_congr (fun index => by
       rw [Ring.IntCast.sub, Ring.IntCast.intCast_mul, Ring.IntCast.intCast_mul])
@@ -53,10 +53,10 @@ private theorem cast_wedge {n :
 /-- Casting an integer coordinate-equality indicator preserves its zero-or-one value. -/
 private theorem cast_delta {n :
   Nat} (row column : Fin n) :
-    ((if row = column then 1 else 0 : Int) : SquareMatrix.Inverse.IntegralSymplecticRows.Gaussian) = if row = column
+    ((if row = column then 1 else 0 : Int) : Gaussian) = if row = column
       then 1 else 0 := by
   by_cases same : row = column
-  · rw [if_pos same, if_pos same, (show ((1 : Int) : SquareMatrix.Inverse.IntegralSymplecticRows.Gaussian) = 1 from
+  · rw [if_pos same, if_pos same, (show ((1 : Int) : Gaussian) = 1 from
       rfl)]
   · rw [if_neg same, if_neg same, Ring.IntCast.cast_zero]
 
@@ -79,51 +79,51 @@ theorem row_identities {n : Nat}
       ∧
     (∀ row column, FiniteSum.Fin.sumFin (fun index => p row index * s column index - q row index * r column index) =
       if row = column then 1 else 0) := by
-  let gp := SquareMatrix.matrixOfFn (fun row column => (p row column :
-    SquareMatrix.Inverse.IntegralSymplecticRows.Gaussian))
-  let gq := SquareMatrix.matrixOfFn (fun row column => (q row column :
-    SquareMatrix.Inverse.IntegralSymplecticRows.Gaussian))
-  let gr := SquareMatrix.matrixOfFn (fun row column => (r row column :
-    SquareMatrix.Inverse.IntegralSymplecticRows.Gaussian))
-  let gs := SquareMatrix.matrixOfFn (fun row column => (s row column :
-    SquareMatrix.Inverse.IntegralSymplecticRows.Gaussian))
+  let gp := matrixOfFn (fun row column => (p row column :
+    Gaussian))
+  let gq := matrixOfFn (fun row column => (q row column :
+    Gaussian))
+  let gr := matrixOfFn (fun row column => (r row column :
+    Gaussian))
+  let gs := matrixOfFn (fun row column => (s row column :
+    Gaussian))
   have gpp (row column : Fin n) : FiniteSum.Fin.sumFin (fun index => gp index row * gr index column - gr index row * gp
     index column) = 0 := by
-    simp only [-eq_self, -iff_self, gp, gr, SquareMatrix.matrixOfFn_apply]
-    exact (LinearAlgebra.Matrix.Inverse.IntegralSymplecticRows.cast_wedge _ _ _ _).symm.trans
-      ((congrArg (fun value : Int => (value : SquareMatrix.Inverse.IntegralSymplecticRows.Gaussian)) (pp row
+    simp only [-eq_self, -iff_self, gp, gr, matrixOfFn_apply]
+    exact (cast_wedge _ _ _ _).symm.trans
+      ((congrArg (fun value : Int => (value : Gaussian)) (pp row
       column)).trans Ring.IntCast.cast_zero)
   have gqq (row column : Fin n) : FiniteSum.Fin.sumFin (fun index => gq index row * gs index column - gs index row * gq
     index column) = 0 := by
-    simp only [-eq_self, -iff_self, gq, gs, SquareMatrix.matrixOfFn_apply]
-    exact (LinearAlgebra.Matrix.Inverse.IntegralSymplecticRows.cast_wedge _ _ _ _).symm.trans
-      ((congrArg (fun value : Int => (value : SquareMatrix.Inverse.IntegralSymplecticRows.Gaussian)) (qq row
+    simp only [-eq_self, -iff_self, gq, gs, matrixOfFn_apply]
+    exact (cast_wedge _ _ _ _).symm.trans
+      ((congrArg (fun value : Int => (value : Gaussian)) (qq row
       column)).trans Ring.IntCast.cast_zero)
   have gpq (row column : Fin n) : FiniteSum.Fin.sumFin (fun index => gp index row * gs index column - gr index row * gq
     index column) =
       if row = column then 1 else 0 := by
-    simp only [-eq_self, -iff_self, gp, gq, gr, gs, SquareMatrix.matrixOfFn_apply]
-    exact (LinearAlgebra.Matrix.Inverse.IntegralSymplecticRows.cast_wedge _ _ _ _).symm.trans
-      ((congrArg (fun value : Int => (value : SquareMatrix.Inverse.IntegralSymplecticRows.Gaussian)) (pq row
-      column)).trans (LinearAlgebra.Matrix.Inverse.IntegralSymplecticRows.cast_delta row column))
+    simp only [-eq_self, -iff_self, gp, gq, gr, gs, matrixOfFn_apply]
+    exact (cast_wedge _ _ _ _).symm.trans
+      ((congrArg (fun value : Int => (value : Gaussian)) (pq row
+      column)).trans (cast_delta row column))
   refine ⟨?_, ?_, ?_⟩
   · intro row column
-    have equal := SquareMatrix.Inverse.SymplecticBlockIdentities.first_row_wedges gp gq gr gs gpp gqq gpq row column
-    simp only [-eq_self, -iff_self, gp, gq, SquareMatrix.matrixOfFn_apply] at equal
-    exact LinearAlgebra.Matrix.Inverse.IntegralSymplecticRows.cast_injective
-      ((LinearAlgebra.Matrix.Inverse.IntegralSymplecticRows.cast_wedge _ _ _ _).trans (equal.trans
+    have equal := SymplecticBlockIdentities.first_row_wedges gp gq gr gs gpp gqq gpq row column
+    simp only [-eq_self, -iff_self, gp, gq, matrixOfFn_apply] at equal
+    exact cast_injective
+      ((cast_wedge _ _ _ _).trans (equal.trans
       Ring.IntCast.cast_zero.symm))
   · intro row column
-    have equal := SquareMatrix.Inverse.SymplecticBlockIdentities.last_row_wedges gp gq gr gs gpp gqq gpq row column
-    simp only [-eq_self, -iff_self, gr, gs, SquareMatrix.matrixOfFn_apply] at equal
-    exact LinearAlgebra.Matrix.Inverse.IntegralSymplecticRows.cast_injective
-      ((LinearAlgebra.Matrix.Inverse.IntegralSymplecticRows.cast_wedge _ _ _ _).trans (equal.trans
+    have equal := SymplecticBlockIdentities.last_row_wedges gp gq gr gs gpp gqq gpq row column
+    simp only [-eq_self, -iff_self, gr, gs, matrixOfFn_apply] at equal
+    exact cast_injective
+      ((cast_wedge _ _ _ _).trans (equal.trans
       Ring.IntCast.cast_zero.symm))
   · intro row column
-    have equal := SquareMatrix.Inverse.SymplecticBlockIdentities.mixed_row_wedges gp gq gr gs gpp gqq gpq row column
-    simp only [-eq_self, -iff_self, gp, gq, gr, gs, SquareMatrix.matrixOfFn_apply] at equal
-    exact LinearAlgebra.Matrix.Inverse.IntegralSymplecticRows.cast_injective
-      ((LinearAlgebra.Matrix.Inverse.IntegralSymplecticRows.cast_wedge _ _ _ _).trans (equal.trans
-      (LinearAlgebra.Matrix.Inverse.IntegralSymplecticRows.cast_delta row column).symm))
+    have equal := SymplecticBlockIdentities.mixed_row_wedges gp gq gr gs gpp gqq gpq row column
+    simp only [-eq_self, -iff_self, gp, gq, gr, gs, matrixOfFn_apply] at equal
+    exact cast_injective
+      ((cast_wedge _ _ _ _).trans (equal.trans
+      (cast_delta row column).symm))
 
 end Purelib.LinearAlgebra.Matrix.Inverse.IntegralSymplecticRows

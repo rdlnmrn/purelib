@@ -21,6 +21,8 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian.Bounds.Box
+
 open Purelib.Data
 
 open Purelib.Geometry.Rational
@@ -50,33 +52,33 @@ namespace Purelib.RootIsolation.State.WindingOne.Exclusion
 /-- A displayed clear point whose value dominates the current box variation
 cannot lie in a winding-one box. -/
 theorem not_contains_of_margin
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
     (degreePositive : 0 < p.natDegree)
-    (current : State.WindingOne.Basic.WindingOneState p ambient) (point : Gaussian.Basic.Canonical)
-    (margin : Dense.Gaussian.Bounds.Box.Exclusion.Uniform.exclusionCoefficient p ambient * current.box.diagonalSq <
-      Data.Gaussian.Norm.Basic.normSq (p.eval point)) :
+    (current : Basic.WindingOneState p ambient) (point : Gaussian.Basic.Canonical)
+    (margin : Exclusion.Uniform.exclusionCoefficient p ambient * current.box.diagonalSq <
+      Gaussian.Norm.Basic.normSq (p.eval point)) :
     ¬current.box.Contains point := by
   intro inside
   let certificate :
-      Dense.Gaussian.Bounds.Box.Residual.Nearby.NearbyClearPointCertificate
+      Residual.Nearby.NearbyClearPointCertificate
         p ambient current.box :=
     { point := point
       point_mem := current.refinesAmbient.contains inside
-      clearance := Data.Gaussian.Norm.Basic.normSq (p.eval point)
+      clearance := Gaussian.Norm.Basic.normSq (p.eval point)
       radiusSq := current.box.diagonalSq
       clearance_lower := le_rfl
       anchor_distance := current.box.normSq_sub_anchor_le inside
       dominates := by
         calc
           2 *
-              (Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound
+              (Residual.anchorResidualBound
                   p ambient current.box +
                 Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient * current.box.diagonalSq) =
-              Dense.Gaussian.Bounds.Box.Exclusion.Uniform.exclusionCoefficient p ambient * current.box.diagonalSq := by
-            simp only [Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound,
-              Dense.Gaussian.Bounds.Box.Exclusion.Uniform.exclusionCoefficient]
+              Exclusion.Uniform.exclusionCoefficient p ambient * current.box.diagonalSq := by
+            simp only [Residual.anchorResidualBound,
+              Exclusion.Uniform.exclusionCoefficient]
             ring1
-          _ < Data.Gaussian.Norm.Basic.normSq (p.eval point) := margin }
+          _ < Gaussian.Norm.Basic.normSq (p.eval point) := margin }
   have windingZero :=
     Winding.Box.Residual.Nearby.quadrupledBoxWinding_eq_zero_of_nearby_clear_point
       p degreePositive current.refinesAmbient current.proper certificate

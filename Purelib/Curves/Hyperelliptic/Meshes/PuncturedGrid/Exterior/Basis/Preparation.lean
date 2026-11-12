@@ -67,6 +67,8 @@ import Purelib.Riemann.Periods.PreparedGridPeriodPrograms
 import Purelib.Riemann.RootContinuation.PreparedGridRootClosure
 import Purelib.Riemann.Topology.PreparedBankRootChains
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis
+
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.WeightedResampling.BasisCommonParentBank
 
 open Purelib.Approximation
@@ -90,15 +92,15 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Prepa
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
@@ -107,14 +109,14 @@ set_option genInjectivity false in
 
 The anchor identity binds the common parent bank to the retained surface preparation. -/
 structure CommonBasisPreparation (prepared :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
   regular domains program) where
   /-- The retained covers of the original program's anchor-differential parents. -/ anchors :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers program.cache.parents
+    Charts.Reciprocal.UniformReciprocalCover.ParentCovers program.cache.parents
   /-- The anchor covers are exactly those of the original surface preparation. -/ anchors_eq : anchors =
     prepared.sourceCovers
   /-- The recast original parent covers for every standard basis differential. -/ sources :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisParentSourceCovers program.cache.parents
+    SourceLocations.BasisParentSourceCovers program.cache.parents
 
 constructive_injectivity CommonBasisPreparation
 
@@ -122,8 +124,8 @@ namespace CommonBasisPreparation
 
 /-- Construct all basis source covers by recasting the original exterior program cache. -/
 @[expose] def build (prepared :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
-  regular domains program) : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation
+  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+  regular domains program) : CommonBasisPreparation
   prepared :=
   ⟨prepared.sourceCovers, rfl,
     Data.Vector.DependentVector.ofFn fun row => prepared.otherSourceCovers (Periods.PeriodMatrix.standardDifferential
@@ -131,19 +133,19 @@ namespace CommonBasisPreparation
 
 /-- Retain these numerical values across every common-parent acquisition
 and every coefficient vector evaluated at the selected index. -/
-@[expose] def Inputs (retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation
+@[expose] def Inputs (retained : CommonBasisPreparation
   prepared) (index : Nat) :=
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.NumericalBank index retained.anchors retained.sources
+  CommonParentPlans.NumericalBank index retained.anchors retained.sources
 
 /-- Acquire the numerical bank at the supplied stage for these exact retained anchor and basis covers. -/
-@[expose] def inputs (retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation
+@[expose] def inputs (retained : CommonBasisPreparation
   prepared) (index : Nat) : retained.Inputs index :=
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonNumericalBank.NumericalBank.build index retained.anchors
+  CommonNumericalBank.NumericalBank.build index retained.anchors
     retained.sources
 
 end CommonBasisPreparation
 
-variable {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+variable {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
 
 set_option genInjectivity false in
 /-- A paid common-basis parent schedule with its actual closing root junction.
@@ -151,102 +153,102 @@ set_option genInjectivity false in
 Concatenation, trace, return and source-restoration costs retain their distinct bounds, while one cached stage covers
 both internal and closing joins. -/
 structure CommonBasisRequest (retained :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared)
-    (basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds)
-    (target coefficientTarget : Normalization.InverseRootPolynomial.Coordinate) (coverFloor floor : Nat) where
+  CommonBasisPreparation prepared)
+    (basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds)
+    (target coefficientTarget : InverseRootPolynomial.Coordinate) (coverFloor floor : Nat) where
   /-- The complete original parent-count allocation for the common target. -/ allocation :
     Budget.Trace.Family.BasisFamilyAllowance program.cache.parents.length target
   /-- The common concatenation scale is paid by the squared target. -/ comparison_paid :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPreparedConcatenation.Samples.concatenationScale (basis := basis)
+    CommonPreparedConcatenation.Samples.concatenationScale (basis := basis)
     (allowance := allocation.allowance)
     program.cache.parents.length ≤ target^2
   /-- The common trace-comparison scale is paid by the squared target. -/ trace_comparison_paid :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPreparedConcatenation.Samples.traceComparisonScale (basis := basis)
+    CommonPreparedConcatenation.Samples.traceComparisonScale (basis := basis)
     (allowance := allocation.allowance)
     program.cache.parents.length ≤ target^2
   /-- The retained source-return scale is paid by the squared target. -/ return_paid :
-    Charts.Reciprocal.Disk.Basis.CommonParentReturn.BasisCommonParentRequest.Plan.Acquisition.Sample.returnScale
+    CommonParentReturn.BasisCommonParentRequest.Plan.Acquisition.Sample.returnScale
     (basis := basis) (allowance := allocation.allowance) ≤ target^2
   /-- The original weighted source-trace restoration scale is paid by the squared target. -/ source_trace_paid :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationTrace.Samples.SourceRestoration.traceScale
+    SourceRestorationTrace.Samples.SourceRestoration.traceScale
     (basis := basis) (allowance := allocation.allowance) program.cache.parents.length
 
-        (Charts.Reciprocal.Disk.Basis.WeightedResampling.BasisCommonParentBank.Samples.weightedSourceSlopeMaximum
+        (Samples.weightedSourceSlopeMaximum
         retained.anchors retained.sources) ≤ target^2
   /-- The retained common-parent schedule for these anchor and basis covers. -/ schedule :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.Schedule retained.anchors
+    CommonParentJoins.BasisCommonParentBank.Schedule retained.anchors
     retained.sources basis allocation.allowance coefficientTarget coverFloor floor
   /-- The actual closing junction on the schedule's exact retained parent bank. -/ closing :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonClosingJoins.BasisCommonParentBank.ClosingJunction retained.anchors
+    CommonClosingJoins.BasisCommonParentBank.ClosingJunction retained.anchors
     retained.sources schedule.bank
   /-- The cached stage covering both the schedule and its closing junction. -/ index : Nat
   /-- The cached stage is the maximum of the internal schedule and closing-junction stages. -/ index_eq : index = max
     schedule.index
-    (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonClosingJoins.BasisCommonParentBank.ClosingJunction.stage
+    (CommonClosingJoins.BasisCommonParentBank.ClosingJunction.stage
     retained.anchors retained.sources schedule.bank closing)
 
 constructive_injectivity CommonBasisRequest
 
 namespace CommonBasisRequest
 
-variable {retained : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation
+variable {retained : CommonBasisPreparation
   prepared}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {target coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage :
+  {basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {target coefficientTarget : InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage :
     Nat} {box : Rational.Box}
 
 /-- Allocate the common-basis comparison costs and prepare the original parent and closing-junction schedule.
 
 The original program provides its retained root return; the positive area and coefficient tolerances determine the
 allocations. -/
-@[expose] def build (retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation
+@[expose] def build (retained : CommonBasisPreparation
   prepared)
-    (basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds)
-    (target coefficientTarget : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < target)
+    (basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds)
+    (target coefficientTarget : InverseRootPolynomial.Coordinate) (positive : 0 < target)
       (coefficientPositive : 0 < coefficientTarget)
-    (coverFloor floor : Nat) : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisRequest retained
+    (coverFloor floor : Nat) : CommonBasisRequest retained
       basis target coefficientTarget coverFloor floor :=
-  let budget := Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedFamilyAllowance.BasisPreparedFamilyAllowance.build
+  let budget := PreparedFamilyAllowance.BasisPreparedFamilyAllowance.build
     basis program.cache.parents.length target
 
-      (Charts.Reciprocal.Disk.Basis.WeightedResampling.BasisCommonParentBank.Samples.weightedSourceSlopeMaximum
+      (Samples.weightedSourceSlopeMaximum
       retained.anchors retained.sources) positive
 
       (Samples.weightedSourceSlopeMaximum_nonnegative
       retained.anchors retained.sources)
   let allocation := budget.allocation
-  let schedule := Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.Schedule.ofCache
+  let schedule := CommonParentJoins.BasisCommonParentBank.Schedule.ofCache
     program.cache retained.anchors retained.sources basis
     allocation.allowance coefficientTarget allocation.positive coefficientPositive coverFloor floor
   let closing :=
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonClosingJoins.BasisCommonParentBank.ClosingJunction.build
+    CommonClosingJoins.BasisCommonParentBank.ClosingJunction.build
     retained.anchors retained.sources schedule.bank
     (RootContinuation.PreparedCachedParentRoots.ParentCache.rootChain program.cache) program.cache.chain rfl (by
       change Gaussian.Equivalence.NamedEquivalent
         (Paths.OwnerTraceReadings.ownerName (Paths.PreparedPathGluing.finishOwner
           program.period.closed.traced.prepared))
-        (Paths.OwnerTraceReadings.ownerName (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.exteriorOwner
+        (Paths.OwnerTraceReadings.ownerName (PeriodPrograms.exteriorOwner
           lifted program.sheet))
       rw [← program.period.closed.traced.finishOwner_eq]
       exact program.period.closed.rootReturn)
   ⟨allocation, budget.paid, budget.trace_paid, budget.return_paid, budget.source_trace_paid, schedule, closing,
     max schedule.index
-      (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonClosingJoins.BasisCommonParentBank.ClosingJunction.stage
+      (CommonClosingJoins.BasisCommonParentBank.ClosingJunction.stage
       retained.anchors retained.sources schedule.bank closing), rfl⟩
 
-variable (request : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisRequest
+variable (request : CommonBasisRequest
   retained basis target coefficientTarget coverFloor floor)
-  (capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box)
-  (polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box)
+  (capSample : Charts.Reciprocal.Cap.Primitives.Sample cap differential index box)
+  (polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box)
 
 /-- The exact common-parent plans for the supplied cap sample, basis polynomials and retained schedule. -/
 @[expose] def Plans (minimum : Nat) :=
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Plans capSample polynomials minimum retained.anchors
+  CommonParentPlans.Plans capSample polynomials minimum retained.anchors
     retained.sources request.schedule.bank
 
 /-- Construct the retained common-parent plans at the supplied minimum stage. -/
 @[expose] def plans (minimum : Nat) : request.Plans capSample polynomials minimum :=
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Plans.build capSample polynomials minimum
+  CommonParentPlans.Plans.build capSample polynomials minimum
     retained.anchors retained.sources request.schedule.bank
 
 variable {capSample polynomials}
@@ -254,12 +256,12 @@ variable {capSample polynomials}
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisRequest in
 /-- Root readings pay the closing comparison as well as every internal join. -/
 @[expose] def readingStage (plans : request.Plans capSample polynomials minimum) : Nat :=
-  max request.index (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Schedule.readingStage request.schedule
+  max request.index (CommonParentPlans.Schedule.readingStage request.schedule
     plans)
 
 /-- The cached common request stage dominates its internal parent schedule. -/
 theorem schedule_index_le : request.schedule.index ≤ request.index :=
-  (Purelib.Data.Nat.Order.le_max_left ..).trans_eq request.index_eq.symm
+  (Data.Nat.Order.le_max_left ..).trans_eq request.index_eq.symm
 
 section
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisRequest
@@ -267,15 +269,15 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparatio
 theorem joins_later (plans : request.Plans capSample polynomials minimum)
     (later : request.readingStage plans ≤ stage) :
     request.schedule.joins.stage retained.anchors retained.sources request.schedule.bank ≤ stage :=
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Schedule.joins_later request.schedule plans
-    ((Purelib.Data.Nat.Order.le_max_right ..).trans later)
+  CommonParentPlans.Schedule.joins_later request.schedule plans
+    ((Data.Nat.Order.le_max_right ..).trans later)
 
 /-- A stage after the retained reading threshold also pays the actual closing root junction. -/
 theorem closing_later (plans : request.Plans capSample polynomials minimum)
     (later : request.readingStage plans ≤ stage) :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonClosingJoins.BasisCommonParentBank.ClosingJunction.stage
+    CommonClosingJoins.BasisCommonParentBank.ClosingJunction.stage
       retained.anchors retained.sources request.schedule.bank request.closing ≤ stage :=
-  (Purelib.Data.Nat.Order.le_max_right ..).trans (request.index_eq.symm.trans_le ((Purelib.Data.Nat.Order.le_max_left
+  (Data.Nat.Order.le_max_right ..).trans (request.index_eq.symm.trans_le ((Data.Nat.Order.le_max_left
     ..).trans later))
 
 end
@@ -286,14 +288,14 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparatio
 /-- Acquire the exact occurrence-derived parent bank. Both odd laps retain
 all their original parents and inherit orientation from the exterior program. -/
 @[expose] def acquire (plans : request.Plans capSample polynomials minimum) (inputs : retained.Inputs index)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+    (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
     (modelLater : request.index ≤ index) (stage : Nat)
     (later : request.readingStage plans ≤ stage) :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
+    CommonParentPlans.Readings retained.anchors retained.sources
       request.schedule.bank plans inputs stage :=
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Schedule.acquire request.schedule plans inputs branch
+  CommonParentPlans.Schedule.acquire request.schedule plans inputs branch
     program.parents_oriented (request.schedule_index_le.trans modelLater) stage
-    ((Purelib.Data.Nat.Order.le_max_right ..).trans later)
+    ((Data.Nat.Order.le_max_right ..).trans later)
 
 end CommonBasisRequest
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation

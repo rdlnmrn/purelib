@@ -15,6 +15,8 @@ import Purelib.LinearAlgebra.PolynomialMatrix.Inverse.Scaled.Basic
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
 
+open Purelib.Polynomial.Dense.Bivariate.Gaussian.Reflection.Basic
+
 open Purelib.Polynomial.Dense.Basic (DensePolynomial)
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 
@@ -46,11 +48,11 @@ retained up to this scalar multiplication. -/
 def normalizedLeftCofactor (p :
   CoefficientPolynomial)
     (degreePositive : 0 < p.natDegree) (parameter : Fraction.Rational) :
-    (Dense.Basic.DensePolynomial Gaussian.Basic.Canonical) :=
+    (DensePolynomial Gaussian.Basic.Canonical) :=
   let gaussianParameter :=
     Gaussian.Cast.Path.ofCoordinate parameter
-  DensePolynomial.scale ((Elimination.Separated.Bezout.separatedData p).scalar.eval gaussianParameter)⁻¹
-    (Elimination.Separated.Bezout.leftCofactor p degreePositive gaussianParameter)
+  DensePolynomial.scale ((separatedData p).scalar.eval gaussianParameter)⁻¹
+    (leftCofactor p degreePositive gaussianParameter)
 
 /-- Scale the right separated Bézout cofactor by the inverse evaluated Sylvester scalar.
 
@@ -59,11 +61,11 @@ retained up to this scalar multiplication. -/
 def normalizedRightCofactor (p :
   CoefficientPolynomial)
     (degreePositive : 0 < p.natDegree) (parameter : Fraction.Rational) :
-    (Dense.Basic.DensePolynomial Gaussian.Basic.Canonical) :=
+    (DensePolynomial Gaussian.Basic.Canonical) :=
   let gaussianParameter :=
     Gaussian.Cast.Path.ofCoordinate parameter
-  DensePolynomial.scale ((Elimination.Separated.Bezout.separatedData p).scalar.eval gaussianParameter)⁻¹
-    (Elimination.Separated.Bezout.rightCofactor p degreePositive gaussianParameter)
+  DensePolynomial.scale ((separatedData p).scalar.eval gaussianParameter)⁻¹
+    (rightCofactor p degreePositive gaussianParameter)
 
 /-- The normalized separated cofactors give an exact Bézout identity equal to one.
 
@@ -73,11 +75,11 @@ theorem normalizedSeparatedIdentity (p :
   CoefficientPolynomial)
     (nonzero : p.isZero = false) (degreePositive : 0 < p.natDegree)
     (parameter : Fraction.Rational)
-    (scalarNonzero : (Elimination.Separated.Bezout.separatedData p).scalar.eval
+    (scalarNonzero : (separatedData p).scalar.eval
       (Gaussian.Cast.Path.ofCoordinate parameter) ≠ 0)
     (outer : Gaussian.Basic.Canonical) :
     (normalizedLeftCofactor p degreePositive parameter).eval outer *
-        Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected p) outer
+        Dense.Bivariate.Basic.eval (SeparatedVariables.reflected p) outer
           (Gaussian.Cast.Path.ofCoordinate parameter) +
       (normalizedRightCofactor p degreePositive parameter).eval outer *
         Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.lifted p) outer
@@ -85,33 +87,33 @@ theorem normalizedSeparatedIdentity (p :
   rw [normalizedLeftCofactor,
     normalizedRightCofactor, DensePolynomial.eval_scale,
     DensePolynomial.eval_scale]
-  let scalar := (Elimination.Separated.Bezout.separatedData p).scalar.eval
+  let scalar := (separatedData p).scalar.eval
     (Gaussian.Cast.Path.ofCoordinate parameter)
-  have identity := Elimination.Separated.Bezout.separated_bezout_identity p nonzero degreePositive outer
+  have identity := separated_bezout_identity p nonzero degreePositive outer
     (Gaussian.Cast.Path.ofCoordinate parameter)
-  change scalar⁻¹ * (Elimination.Separated.Bezout.leftCofactor p degreePositive
+  change scalar⁻¹ * (leftCofactor p degreePositive
       (Gaussian.Cast.Path.ofCoordinate parameter)).eval outer *
-        Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected p) outer
+        Dense.Bivariate.Basic.eval (SeparatedVariables.reflected p) outer
           (Gaussian.Cast.Path.ofCoordinate parameter) +
-      scalar⁻¹ * (Elimination.Separated.Bezout.rightCofactor p degreePositive
+      scalar⁻¹ * (rightCofactor p degreePositive
         (Gaussian.Cast.Path.ofCoordinate parameter)).eval outer *
           Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.lifted p) outer
             (Gaussian.Cast.Path.ofCoordinate parameter) = 1
   calc
-    scalar⁻¹ * (Elimination.Separated.Bezout.leftCofactor p degreePositive
+    scalar⁻¹ * (leftCofactor p degreePositive
           (Gaussian.Cast.Path.ofCoordinate parameter)).eval outer *
-          Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected p) outer
+          Dense.Bivariate.Basic.eval (SeparatedVariables.reflected p) outer
             (Gaussian.Cast.Path.ofCoordinate parameter) +
-        scalar⁻¹ * (Elimination.Separated.Bezout.rightCofactor p degreePositive
+        scalar⁻¹ * (rightCofactor p degreePositive
           (Gaussian.Cast.Path.ofCoordinate parameter)).eval outer *
           Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.lifted p) outer
             (Gaussian.Cast.Path.ofCoordinate parameter) =
       scalar⁻¹ *
-        ((Elimination.Separated.Bezout.leftCofactor p degreePositive
+        ((leftCofactor p degreePositive
             (Gaussian.Cast.Path.ofCoordinate parameter)).eval outer *
-            Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected p) outer
+            Dense.Bivariate.Basic.eval (SeparatedVariables.reflected p) outer
               (Gaussian.Cast.Path.ofCoordinate parameter) +
-          (Elimination.Separated.Bezout.rightCofactor p degreePositive
+          (rightCofactor p degreePositive
             (Gaussian.Cast.Path.ofCoordinate parameter)).eval outer *
             Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.lifted p) outer
               (Gaussian.Cast.Path.ofCoordinate parameter)) := by

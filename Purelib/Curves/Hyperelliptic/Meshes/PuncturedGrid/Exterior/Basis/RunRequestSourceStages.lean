@@ -83,20 +83,20 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChai
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {count : Nat} {patch : PreparedPatch parent}
-  {sourceData : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
+  {sourceData : Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
     Cover sourceData}
   {covers : BasisSourceCovers parent} {minimum
     floor index depth : Nat}
@@ -104,7 +104,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {areaAllowance sourceTarget coefficientTarget : Coordinate}
   {request : BasisPreparedCommonRequest
     regular common areaAllowance sourceTarget coefficientTarget floor}
-  {box : Purelib.Geometry.Rational.Box}
+  {box : Geometry.Rational.Box}
   {polynomials : RegularBasisPolynomials cap
     index box}
   {originals :
@@ -146,12 +146,12 @@ variable {first last : BasisSourceCovers
   parent}
   {fragmentCount runMinimum : Nat} {target : Coordinate}
   (equal : first = last) (selected :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedRuns.RunRequest occurrence first
+    RunRequest occurrence first
     fragmentCount target runMinimum)
 
 /-- Transport the retained run request along an exact equality of its original source-cover owner. -/
-def castSources : RequestedRuns.RunRequest occurrence last fragmentCount target runMinimum :=
-  Eq.mp (congrArg (fun sources => RequestedRuns.RunRequest occurrence sources fragmentCount target runMinimum) equal)
+def castSources : RunRequest occurrence last fragmentCount target runMinimum :=
+  Eq.mp (congrArg (fun sources => RunRequest occurrence sources fragmentCount target runMinimum) equal)
     selected
 
 /-- Transporting the exact source-cover owner preserves the retained source query minimum. -/

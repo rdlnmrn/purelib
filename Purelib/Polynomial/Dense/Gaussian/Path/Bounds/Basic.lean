@@ -26,6 +26,8 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Rational.Bounds
+
 /-!
 # Cached polynomial bounds on a retained affine path
 
@@ -56,19 +58,19 @@ set_option genInjectivity false in
 The record retains the composed parameter polynomial, coordinate tables, interval enclosures, endpoint sample and both
 quantitative floors. Each cache is linked to its exact construction on the supplied oriented affine path. -/
 public structure Data (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial) (origin direction : Canonical)
-    (interval : Data.Rat.Interval.Bounds) where
+    (interval : Interval.Bounds) where
   /-- The retained Gaussian coefficient table for composition with the original oriented line. -/ parameterPolynomial :
     Basic.CanonicalCoefficients.CoefficientPolynomial
   /-- The cached parameter polynomial is exactly the original affine substitution. -/ parameterPolynomial_eq :
-    parameterPolynomial = Dense.Gaussian.Substitution.Affine.composeLine polynomial origin direction
+    parameterPolynomial = Substitution.Affine.composeLine polynomial origin direction
   /-- The retained real coordinate polynomial of the parameter table. -/ realPolynomial :
-    Dense.Rational.Basic.CoordinatePolynomial
+    Rational.Basic.CoordinatePolynomial
   /-- The retained real table is exactly the parameter polynomial's real-part table. -/ realPolynomial_eq :
-    realPolynomial = Dense.Gaussian.Components.realPart parameterPolynomial
+    realPolynomial = Components.realPart parameterPolynomial
   /-- The retained imaginary coordinate polynomial of the parameter table. -/ imagPolynomial :
-    Dense.Rational.Basic.CoordinatePolynomial
+    Rational.Basic.CoordinatePolynomial
   /-- The retained imaginary table is exactly the parameter polynomial's imaginary-part table. -/ imagPolynomial_eq :
-    imagPolynomial = Dense.Gaussian.Components.imagPart parameterPolynomial
+    imagPolynomial = Components.imagPart parameterPolynomial
   /-- The cached component enclosures indexed by the retained coordinate tables and original interval. -/ enclosures :
     Clearance.Pair.Enclosure.Components realPolynomial imagPolynomial interval
   /-- The cached exact Gaussian value at the interval's lower endpoint. -/ sample : Canonical
@@ -78,14 +80,14 @@ public structure Data (polynomial : Basic.CanonicalCoefficients.CoefficientPolyn
   /-- The value ceiling is exactly the cached enclosure ceiling. -/ valueBound_eq : valueBound = enclosures.normCeiling
   /-- The cached sum of the real and imaginary squared-Lipschitz bounds. -/ slopeBound : Fraction.Rational
   /-- The slope cache equals the two coefficient-computed coordinate bounds on the original interval. -/ slopeBound_eq :
-    slopeBound = Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound realPolynomial interval +
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound imagPolynomial interval
+    slopeBound = Lipschitz.denseEvalSqLipschitzBound realPolynomial interval +
+    Lipschitz.denseEvalSqLipschitzBound imagPolynomial interval
   /-- The optional retained refinement cover for the exact coordinate tables and interval. -/ clearance : Option
     (Clearance.Pair.Cover.Retained realPolynomial imagPolynomial interval)
   /-- The combined sample, enclosure and optional-cover quadrance floor. -/ lowerBound : Fraction.Rational
   /-- The cached floor is exactly the maximum of the three retained lower-bound proposals. -/ lowerBound_eq : lowerBound
-    = max (max (Data.Gaussian.Norm.Basic.normSq sample / 2 -
-    slopeBound * Data.Rat.Interval.Radius.sampleRadiusSq interval interval.lower) enclosures.normFloor)
+    = max (max (Norm.Basic.normSq sample / 2 -
+    slopeBound * Interval.Radius.sampleRadiusSq interval interval.lower) enclosures.normFloor)
       (Clearance.Pair.Cover.Retained.optionalNorm clearance)
 
 constructive_injectivity Data
@@ -98,15 +100,15 @@ caches, their coefficient-derived slope and the stronger sample/enclosure floor 
 -/
 @[expose] public def prepareCoarse (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial) (origin direction :
   Canonical)
-    (interval : Data.Rat.Interval.Bounds) : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction
+    (interval : Interval.Bounds) : Data polynomial origin direction
       interval :=
-  let parameterPolynomial := Dense.Gaussian.Substitution.Affine.composeLine polynomial origin direction
-  let realPolynomial := Dense.Gaussian.Components.realPart parameterPolynomial
-  let imagPolynomial := Dense.Gaussian.Components.imagPart parameterPolynomial
+  let parameterPolynomial := Substitution.Affine.composeLine polynomial origin direction
+  let realPolynomial := Components.realPart parameterPolynomial
+  let imagPolynomial := Components.imagPart parameterPolynomial
   let enclosures := Clearance.Pair.Enclosure.Components.prepare realPolynomial imagPolynomial interval
   let sample := parameterPolynomial.eval (Cast.Path.ofCoordinate interval.lower)
-  let slopeBound := Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound realPolynomial interval +
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound imagPolynomial interval
+  let slopeBound := Lipschitz.denseEvalSqLipschitzBound realPolynomial interval +
+    Lipschitz.denseEvalSqLipschitzBound imagPolynomial interval
   { parameterPolynomial, parameterPolynomial_eq := rfl
     realPolynomial, realPolynomial_eq := rfl
     imagPolynomial, imagPolynomial_eq := rfl
@@ -115,8 +117,8 @@ caches, their coefficient-derived slope and the stronger sample/enclosure floor 
     valueBound := enclosures.normCeiling, valueBound_eq := rfl
     slopeBound, slopeBound_eq := rfl
     clearance := none
-    lowerBound := max (Data.Gaussian.Norm.Basic.normSq sample / 2 -
-      slopeBound * Data.Rat.Interval.Radius.sampleRadiusSq interval interval.lower) enclosures.normFloor
+    lowerBound := max (Norm.Basic.normSq sample / 2 -
+      slopeBound * Interval.Radius.sampleRadiusSq interval interval.lower) enclosures.normFloor
     lowerBound_eq := by
       exact (Fraction.Order.Basic.max_eq_left (enclosures.normFloor_nonnegative.trans (Fraction.Order.Basic.le_max_right
         _ _))).symm }
@@ -124,13 +126,13 @@ caches, their coefficient-derived slope and the stronger sample/enclosure floor 
 namespace Data
 
 variable {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial} {origin direction : Canonical} {interval :
-  Data.Rat.Interval.Bounds}
+  Interval.Bounds}
 
 /-- Evaluate the retained parameter polynomial at the supplied exact rational parameter.
 
 The operation evaluates the cached parameter polynomial at the supplied rational parameter. It reuses the retained
 affine composition instead of composing the source coefficient table again. -/
-@[expose] public def value (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction interval)
+@[expose] public def value (data : Data polynomial origin direction interval)
   (parameter : Fraction.Rational) : Canonical :=
   data.parameterPolynomial.eval (Cast.Path.ofCoordinate parameter)
 
@@ -138,37 +140,37 @@ affine composition instead of composing the source coefficient table again. -/
 
 The retained parameter-polynomial equality links its evaluation to the exact source polynomial on the supplied oriented
 affine line. -/
-public theorem value_eq (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction interval) (parameter :
+public theorem value_eq (data : Data polynomial origin direction interval) (parameter :
   Fraction.Rational) :
     data.value parameter = polynomial.eval (Affine.line origin direction parameter) := by
-  rw [Dense.Gaussian.Path.Bounds.Basic.Data.value, data.parameterPolynomial_eq,
-    Dense.Gaussian.Substitution.Affine.eval_composeLine]
+  rw [value, data.parameterPolynomial_eq,
+    Substitution.Affine.eval_composeLine]
 
 /-- The retained real coordinate polynomial evaluates to the real part of the cached path value.
 
 The retained real coefficient table is the real-part projection of the cached parameter polynomial. Evaluation
 transports that projection at the supplied parameter. -/
-public theorem real_eval (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction interval) (parameter
+public theorem real_eval (data : Data polynomial origin direction interval) (parameter
   : Fraction.Rational) :
     data.realPolynomial.eval parameter = (data.value parameter).re := by
-  rw [data.realPolynomial_eq, Dense.Gaussian.Components.eval_realPart]
+  rw [data.realPolynomial_eq, Components.eval_realPart]
   rfl
 
 /-- The retained imaginary coordinate polynomial evaluates to the imaginary part of the cached path value.
 
 The retained imaginary coefficient table is the imaginary-part projection of the cached parameter polynomial. Evaluation
 transports that projection at the supplied parameter. -/
-public theorem imag_eval (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction interval) (parameter
+public theorem imag_eval (data : Data polynomial origin direction interval) (parameter
   : Fraction.Rational) :
     data.imagPolynomial.eval parameter = (data.value parameter).im := by
-  rw [data.imagPolynomial_eq, Dense.Gaussian.Components.eval_imagPart]
+  rw [data.imagPolynomial_eq, Components.eval_imagPart]
   rfl
 
 /-- The cached component-enclosure value ceiling is nonnegative.
 
 The retained value ceiling is exactly the cached enclosure ceiling. Both component interval square bounds are
 nonnegative. -/
-public theorem valueBound_nonnegative (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction
+public theorem valueBound_nonnegative (data : Data polynomial origin direction
   interval) :
     0 ≤ data.valueBound := by
   rw [data.valueBound_eq]
@@ -178,10 +180,10 @@ public theorem valueBound_nonnegative (data : Dense.Gaussian.Path.Bounds.Basic.D
 
 The retained component enclosure ceiling is bounded by the two scalar Horner majorants. This compares the same
 coordinate tables and parameter interval. -/
-public theorem valueBound_le_horner (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction interval)
+public theorem valueBound_le_horner (data : Data polynomial origin direction interval)
   :
-    data.valueBound ≤ Dense.Rational.Bounds.Horner.evalSqBound data.realPolynomial interval +
-      Dense.Rational.Bounds.Horner.evalSqBound data.imagPolynomial interval := by
+    data.valueBound ≤ Horner.evalSqBound data.realPolynomial interval +
+      Horner.evalSqBound data.imagPolynomial interval := by
   rw [data.valueBound_eq]
   exact data.enclosures.normCeiling_le_horner
 
@@ -189,20 +191,20 @@ public theorem valueBound_le_horner (data : Dense.Gaussian.Path.Bounds.Basic.Dat
 
 The cached slope is the sum of two nonnegative squared-Lipschitz bounds for the retained coordinate coefficient tables.
 -/
-public theorem slopeBound_nonnegative (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction
+public theorem slopeBound_nonnegative (data : Data polynomial origin direction
   interval) :
     0 ≤ data.slopeBound := by
   rw [data.slopeBound_eq]
-  exact add_nonneg (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg _ _).2
-    (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg _ _).2
+  exact add_nonneg (Lipschitz.denseHornerSqBounds_nonneg _ _).2
+    (Lipschitz.denseHornerSqBounds_nonneg _ _).2
 
 /-- The cached value ceiling bounds path evaluation quadrance throughout the original interval.
 
 Interval membership bounds both cached coordinate evaluations by their retained enclosure square ceilings. Their exact
 sum is the cached path-value ceiling. -/
-public theorem normSq_value_le (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction interval)
+public theorem normSq_value_le (data : Data polynomial origin direction interval)
     {parameter : Fraction.Rational} (inside : interval.Contains parameter) :
-    Data.Gaussian.Norm.Basic.normSq (data.value parameter) ≤ data.valueBound := by
+    Norm.Basic.normSq (data.value parameter) ≤ data.valueBound := by
   have bounds := data.enclosures.sum_sq_le inside
   rw [data.real_eval, data.imag_eval, ← data.valueBound_eq] at bounds
   exact bounds
@@ -212,14 +214,14 @@ estimates can use it without approximating a square root of a squared bound.
 
 The readback combines the cached enclosure coordinate floor with the optional retained-cover floor. It performs no new
 enclosure fold or refinement. -/
-@[expose] public def coordinateLower (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction interval)
+@[expose] public def coordinateLower (data : Data polynomial origin direction interval)
   : Fraction.Rational :=
   max data.enclosures.coordinateFloor (Clearance.Pair.Cover.Retained.optionalCoordinate data.clearance)
 
 /-- The combined enclosure and retained-cover coordinate floor is nonnegative.
 
 The enclosure coordinate floor is nonnegative and below the readback maximum with the optional retained-cover floor. -/
-public theorem coordinateLower_nonnegative (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction
+public theorem coordinateLower_nonnegative (data : Data polynomial origin direction
   interval) :
     0 ≤ data.coordinateLower := data.enclosures.coordinateFloor_nonnegative.trans (Fraction.Order.Basic.le_max_left _ _)
 
@@ -227,7 +229,7 @@ public theorem coordinateLower_nonnegative (data : Dense.Gaussian.Path.Bounds.Ba
 
 Both floor proposals bound the same pair of cached coordinate evaluations on the supplied interval. Their maximum
 preserves those distinct coordinate bounds. -/
-public theorem coordinateLower_le_value (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction
+public theorem coordinateLower_le_value (data : Data polynomial origin direction
   interval)
     {parameter : Fraction.Rational} (inside : interval.Contains parameter) :
     data.coordinateLower ≤ max (Fraction.abs ((data.value parameter).re)) (Fraction.abs ((data.value parameter).im)) :=
@@ -242,7 +244,7 @@ public theorem coordinateLower_le_value (data : Dense.Gaussian.Path.Bounds.Basic
 
 The exact affine evaluation equality transports the cached coordinate bound to the source polynomial without changing
 origin or direction. -/
-public theorem coordinateLower_le (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction interval)
+public theorem coordinateLower_le (data : Data polynomial origin direction interval)
     {parameter : Fraction.Rational} (inside : interval.Contains parameter) :
     data.coordinateLower ≤ max (Fraction.abs ((polynomial.eval (Affine.line origin direction parameter)).re))
       (Fraction.abs ((polynomial.eval (Affine.line origin direction parameter)).im)) := by
@@ -253,7 +255,7 @@ public theorem coordinateLower_le (data : Dense.Gaussian.Path.Bounds.Basic.Data 
 
 The optional retained-cover floor is nonnegative. It is below the cached maximum with the sample and enclosure
 proposals. -/
-public theorem lowerBound_nonnegative (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction
+public theorem lowerBound_nonnegative (data : Data polynomial origin direction
   interval) :
     0 ≤ data.lowerBound := by
   rw [data.lowerBound_eq]
@@ -264,10 +266,10 @@ public theorem lowerBound_nonnegative (data : Dense.Gaussian.Path.Bounds.Basic.D
 
 The sample-and-variation proposal is one argument of the cached maximum. Combining enclosure or cover bounds therefore
 preserves this proposal. -/
-public theorem sampleMargin_le_lowerBound (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction
+public theorem sampleMargin_le_lowerBound (data : Data polynomial origin direction
   interval) :
-    Data.Gaussian.Norm.Basic.normSq data.sample / 2 - data.slopeBound *
-      Data.Rat.Interval.Radius.sampleRadiusSq interval interval.lower ≤ data.lowerBound := by
+    Norm.Basic.normSq data.sample / 2 - data.slopeBound *
+      Interval.Radius.sampleRadiusSq interval interval.lower ≤ data.lowerBound := by
   rw [data.lowerBound_eq]
   exact (Fraction.Order.Basic.le_max_left _ _).trans (Fraction.Order.Basic.le_max_left _ _)
 
@@ -275,16 +277,16 @@ public theorem sampleMargin_le_lowerBound (data : Dense.Gaussian.Path.Bounds.Bas
 
 Both supplied parameters belong to the same retained interval. The original two squared-Lipschitz comparisons sum to the
 cached slope times their squared difference. -/
-public theorem normSq_value_sub_le (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction interval)
+public theorem normSq_value_sub_le (data : Data polynomial origin direction interval)
     {left right : Fraction.Rational} (leftInside : interval.Contains left)
     (rightInside : interval.Contains right) :
-    Data.Gaussian.Norm.Basic.normSq (data.value left - data.value right) ≤ data.slopeBound * (left - right) ^ 2 := by
+    Norm.Basic.normSq (data.value left - data.value right) ≤ data.slopeBound * (left - right) ^ 2 := by
   have bounds := add_le_add
-    (Dense.Rational.Bounds.Lipschitz.eval_sub_sq_le data.realPolynomial interval leftInside rightInside)
-    (Dense.Rational.Bounds.Lipschitz.eval_sub_sq_le data.imagPolynomial interval leftInside rightInside)
+    (Lipschitz.eval_sub_sq_le data.realPolynomial interval leftInside rightInside)
+    (Lipschitz.eval_sub_sq_le data.imagPolynomial interval leftInside rightInside)
   rw [data.real_eval, data.real_eval, data.imag_eval, data.imag_eval] at bounds
   calc
-    Data.Gaussian.Norm.Basic.normSq (data.value left - data.value right) ≤ _ := bounds
+    Norm.Basic.normSq (data.value left - data.value right) ≤ _ := bounds
     _ = data.slopeBound * (left - right) ^ 2 := by
       rw [data.slopeBound_eq]
       ring1
@@ -295,28 +297,28 @@ parameter polynomial or recomputing its Horner slope at the root.
 
 The certificate consumes the cached lower-endpoint sample and slope. Only its retained radius is read from the same
 interval; both coordinate evaluations and their Horner slopes are reused. -/
-@[expose] public def sampleCertificate (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction
+@[expose] public def sampleCertificate (data : Data polynomial origin direction
   interval) :
     Clearance.Pair.Sample.Certificate data.realPolynomial data.imagPolynomial interval :=
-  let radiusSq := Data.Rat.Interval.Radius.sampleRadiusSq interval interval.lower
+  let radiusSq := Interval.Radius.sampleRadiusSq interval interval.lower
   { sample := data.sample
     sample_eq := by
       rw [data.sample_eq]
-      exact Purelib.Data.Gaussian.Basic.ext
+      exact Basic.ext
         (data.real_eval (parameter := interval.lower)).symm
         (data.imag_eval (parameter := interval.lower)).symm
     slopeBound := data.slopeBound, slopeBound_eq := data.slopeBound_eq
     radiusSq, radiusSq_eq := rfl
-    normFloor := Data.Gaussian.Norm.Basic.normSq data.sample / 2 - data.slopeBound * radiusSq, normFloor_eq := rfl }
+    normFloor := Norm.Basic.normSq data.sample / 2 - data.slopeBound * radiusSq, normFloor_eq := rfl }
 
 /-- The computed lower bound is valid even when neither proposal gives a
 positive margin.  Such a zero bound is inconclusive, not a root certificate.
 
 The sample, enclosure and optional retained cover each bound the same cached path quadrance. Their displayed maximum is
 therefore a valid uniform floor. -/
-public theorem lowerBound_le_value (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction interval)
+public theorem lowerBound_le_value (data : Data polynomial origin direction interval)
     {parameter : Fraction.Rational} (inside : interval.Contains parameter) :
-    data.lowerBound ≤ Data.Gaussian.Norm.Basic.normSq (data.value parameter) := by
+    data.lowerBound ≤ Norm.Basic.normSq (data.value parameter) := by
   rw [data.lowerBound_eq]
   apply Fraction.Order.Basic.max_le
   · apply Fraction.Order.Basic.max_le
@@ -334,9 +336,9 @@ public theorem lowerBound_le_value (data : Dense.Gaussian.Path.Bounds.Basic.Data
 
 The exact affine evaluation equality transfers the cached quadrance floor to the supplied polynomial on its oriented
 path. -/
-public theorem lowerBound_le (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction interval)
+public theorem lowerBound_le (data : Data polynomial origin direction interval)
     {parameter : Fraction.Rational} (inside : interval.Contains parameter) :
-    data.lowerBound ≤ Data.Gaussian.Norm.Basic.normSq (polynomial.eval (Affine.line origin direction parameter)) := by
+    data.lowerBound ≤ Norm.Basic.normSq (polynomial.eval (Affine.line origin direction parameter)) := by
   rw [← data.value_eq]
   exact data.lowerBound_le_value inside
 
@@ -344,7 +346,7 @@ public theorem lowerBound_le (data : Dense.Gaussian.Path.Bounds.Basic.Data polyn
 
 A positive retained floor bounds the source evaluation quadrance at each contained parameter. A zero evaluation would
 have zero quadrance and violate that strict bound. -/
-public theorem eval_nonzero (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction interval)
+public theorem eval_nonzero (data : Data polynomial origin direction interval)
     (positive : 0 < data.lowerBound) {parameter : Fraction.Rational}
     (inside : interval.Contains parameter) :
     polynomial.eval (Affine.line origin direction parameter) ≠ 0 := by

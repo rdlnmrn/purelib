@@ -66,40 +66,40 @@ open Purelib
 /-! Existing geometric references bound every normalized corner pair. -/
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid}
 
 open Purelib.Topology.Polygon.Stokes (PrimitivePoint edgeArea)
 
 namespace FaceMagnitudeBank
 variable {faces : List (Meshes.PuncturedGridFaces.RegularFace bank)} {domains :
-  Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces}
-  {differential : Hyperelliptic.Differentials.Basic.Differential genus} {stage : Nat}
+  Face.DomainBanks.FaceDomainBank frames faces}
+  {differential : Differentials.Basic.Differential genus} {stage : Nat}
 
 /-- Every original normalized corner reading satisfies the retained geometric magnitude bound at any sufficiently late
 stage. -/
-theorem normalized_corner_bound (fixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+theorem normalized_corner_bound (fixed : Face.MagnitudeBank.FaceMagnitudeBank domains
   differential)
-    (later : fixed.index ≤ stage) (cached : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    (later : fixed.index ≤ stage) (cached : Face.PrimitiveData.FacePrimitiveBank
       differential stage domains)
     (position : Fin faces.length) (sheet : Fin 2) (corner : Fin 4) :
-    Data.Gaussian.Norm.Basic.normSq (((cached.normalize.get position).atSheet sheet).corners.values corner) ≤
+    Gaussian.Norm.Basic.normSq (((cached.normalize.get position).atSheet sheet).corners.values corner) ≤
       fixed.bound := by
   rw [cached.normalize_get,
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitives.normalize_atSheet,
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives.normalize_corner, fixed.bound_eq]
+    Face.PrimitiveData.FacePrimitives.normalize_atSheet,
+    Face.PrimitiveData.DomainPrimitives.normalize_corner, fixed.bound_eq]
   exact fixed.entries.bounded (fixed.index_eq ▸ later) cached position sheet corner
 
 end FaceMagnitudeBank
 namespace RegularMeshes.Numerics
 variable {faces : List (Meshes.PuncturedGridFaces.RegularFace bank)} {domains :
-  Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces} {stage : Nat}
+  Face.DomainBanks.FaceDomainBank frames faces} {stage : Nat}
   {i j : Fin genus}
 
 /-- Read the two selected original differential values at one retained face, sheet and corner. -/
-def cornerPair (cached : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage) (i
+def cornerPair (cached : RegularDomainMeshes.RegularMeshes.Numerics domains stage) (i
   j : Fin genus)
     (position : Fin faces.length) (sheet : Fin 2) (corner : Fin 4) : PrimitivePoint :=
   ⟨(cached.atDomain position sheet i).corners.values corner,
@@ -107,21 +107,21 @@ def cornerPair (cached : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.
 
 /-- Both components of an original normalized corner pair are bounded by the sum of their retained reference bounds. -/
 theorem normalized_corner_pair_bound
-    (first : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    (first : Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential i))
-    (second : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    (second : Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential j))
     (firstLater : first.index ≤ stage) (secondLater : second.index ≤ stage)
-    (cached : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage) (position :
+    (cached : RegularDomainMeshes.RegularMeshes.Numerics domains stage) (position :
       Fin faces.length) (sheet : Fin 2) (corner : Fin 4) :
     (Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded
-      (Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cached.normalize i
+      (Numerics.cornerPair cached.normalize i
       j position sheet corner)) (first.bound + second.bound) := by
-  unfold Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair
+  unfold Numerics.cornerPair
   change Gaussian.Basic.Canonical.normSq _ ≤ _ ∧ Gaussian.Basic.Canonical.normSq _ ≤ _
   rw [cached.normalize_atDomain, cached.normalize_atDomain,
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives.normalize_corner,
-      Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives.normalize_corner]
+    Face.PrimitiveData.DomainPrimitives.normalize_corner,
+      Face.PrimitiveData.DomainPrimitives.normalize_corner]
   have left := first.entries.bounded (first.index_eq ▸ firstLater) (cached.get i) position sheet corner
   have right := second.entries.bounded (second.index_eq ▸ secondLater) (cached.get j) position sheet corner
   rw [← first.bound_eq] at left
@@ -132,33 +132,33 @@ theorem normalized_corner_pair_bound
 
 /-- The difference of two original normalized corner pairs is bounded by four times the retained reference-bound sum. -/
 theorem normalized_corner_difference_bound
-    (first : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    (first : Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential i))
-    (second : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    (second : Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential j))
     (firstLater : first.index ≤ stage) (secondLater : second.index ≤ stage)
-    (cached : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage)
+    (cached : RegularDomainMeshes.RegularMeshes.Numerics domains stage)
     (leftPosition rightPosition : Fin faces.length) (leftSheet rightSheet : Fin 2) (leftCorner rightCorner : Fin 4) :
     (Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded
-      ((Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cached.normalize
+      ((Numerics.cornerPair cached.normalize
       i j leftPosition leftSheet leftCorner).sub
-      (Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cached.normalize i
+      (Numerics.cornerPair cached.normalize i
         j rightPosition rightSheet rightCorner))) (4 * (first.bound + second.bound)) := by
   have left :=
-    Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.normalized_corner_pair_bound
+    Numerics.normalized_corner_pair_bound
     first second firstLater secondLater cached leftPosition leftSheet leftCorner
   have right :=
-    Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.normalized_corner_pair_bound
+    Numerics.normalized_corner_pair_bound
     first second firstLater secondLater cached rightPosition rightSheet rightCorner
   have firstScalar := Gaussian.Norm.Bounds.normSq_sub_le_two
-    (Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cached.normalize i j
+    (Numerics.cornerPair cached.normalize i j
       leftPosition leftSheet leftCorner).left
-    (Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cached.normalize i j
+    (Numerics.cornerPair cached.normalize i j
       rightPosition rightSheet rightCorner).left
   have secondScalar := Gaussian.Norm.Bounds.normSq_sub_le_two
-    (Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cached.normalize i j
+    (Numerics.cornerPair cached.normalize i j
       leftPosition leftSheet leftCorner).right
-    (Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cached.normalize i j
+    (Numerics.cornerPair cached.normalize i j
       rightPosition rightSheet rightCorner).right
   simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at firstScalar secondScalar
   constructor
@@ -170,31 +170,31 @@ theorem normalized_corner_difference_bound
         right.2) (by decide)).trans_eq (by ring1))
 
 /-- Read the exact cross-area of the original corner-to-origin jump and retained within-face increment. -/
-def cornerJump (cached : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage) (i
+def cornerJump (cached : RegularDomainMeshes.RegularMeshes.Numerics domains stage) (i
   j : Fin genus)
     (leftPosition rightPosition : Fin faces.length) (leftSheet rightSheet : Fin 2)
     (origin terminal : Fin 4) : Gaussian.Basic.Canonical :=
   Topology.Polygon.Stokes.edgeArea
-    ((Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cached i j
+    ((Numerics.cornerPair cached i j
     leftPosition leftSheet origin).sub
-      (Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cached i j
+      (Numerics.cornerPair cached i j
         rightPosition rightSheet 0))
-    ((Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cached i j
+    ((Numerics.cornerPair cached i j
       leftPosition leftSheet terminal).sub
-      (Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cached i j
+      (Numerics.cornerPair cached i j
         leftPosition leftSheet origin))
 
 /-- The original normalized corner jump has squared norm at most sixty-four times the squared reference-bound sum. -/
 theorem normalized_corner_jump_bound
-    (first : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    (first : Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential i))
-    (second : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    (second : Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential j))
     (firstLater : first.index ≤ stage) (secondLater : second.index ≤ stage)
-    (cached : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage)
+    (cached : RegularDomainMeshes.RegularMeshes.Numerics domains stage)
     (leftPosition rightPosition : Fin faces.length) (leftSheet rightSheet : Fin 2) (origin terminal : Fin 4) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerJump cached.normalize i
+    Gaussian.Norm.Basic.normSq
+      (Numerics.cornerJump cached.normalize i
       j leftPosition rightPosition leftSheet rightSheet origin terminal) ≤
       64 * (first.bound + second.bound)^2 := by
   rw [Gaussian.Norm.Basic.normSq_eq_canonical]
@@ -210,27 +210,27 @@ theorem normalized_corner_jump_bound
 /-- Perturbing both original corner-jump arguments within the retained small error gives the explicit linear area-error
 allowance. -/
 theorem normalized_corner_jump_perturbation
-    (first : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    (first : Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential i))
-    (second : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    (second : Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential j))
     (firstLater : first.index ≤ stage) (secondLater : second.index ≤ stage)
-    (cached : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage)
+    (cached : RegularDomainMeshes.RegularMeshes.Numerics domains stage)
     (leftPosition rightPosition : Fin faces.length) (leftSheet rightSheet : Fin 2) (origin terminal : Fin 4)
-    (jump increment : Topology.Polygon.Stokes.PrimitivePoint) {error : Fraction.Rational} (errorNonnegative : 0 ≤ error)
+    (jump increment : PrimitivePoint) {error : Fraction.Rational} (errorNonnegative : 0 ≤ error)
       (small : error ≤ 1)
     (jumpError : Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (jump.sub
-      ((Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cached.normalize
+      ((Numerics.cornerPair cached.normalize
       i j leftPosition leftSheet origin).sub
-      (Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cached.normalize i
+      (Numerics.cornerPair cached.normalize i
         j rightPosition rightSheet 0))) error)
     (incrementError : Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (increment.sub
-      ((Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cached.normalize
+      ((Numerics.cornerPair cached.normalize
       i j leftPosition leftSheet terminal).sub
-      (Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerPair cached.normalize i
+      (Numerics.cornerPair cached.normalize i
         j leftPosition leftSheet origin))) error) :
-    Data.Gaussian.Norm.Basic.normSq (Topology.Polygon.Stokes.edgeArea jump increment -
-      Hyperelliptic.Meshes.PuncturedGrid.NormalizedCornerMagnitude.RegularMeshes.Numerics.cornerJump cached.normalize i
+    Gaussian.Norm.Basic.normSq (Topology.Polygon.Stokes.edgeArea jump increment -
+      Numerics.cornerJump cached.normalize i
       j leftPosition rightPosition leftSheet rightSheet origin terminal) ≤
       32 * (4 * (first.bound + second.bound) + 1) * error :=
   Topology.Surface.Boundary.HandleAreaBounds.PrimitivePoint.area_difference_bound

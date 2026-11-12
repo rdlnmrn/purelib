@@ -37,6 +37,8 @@ import Purelib.Riemann.Meshes.FramedPuncturedGrid
 import Purelib.Riemann.Meshes.PuncturedGridFaces
 import Purelib.Riemann.Meshes.ShrinkingPuncturedGrid
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RunFaceSynchronization.CommonBasisPreparation
+
 public section
 
 /-! Acquire one numerical threshold for the synchronized observation and physical owner banks. -/
@@ -53,19 +55,19 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRun
 
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.DepthRefinement
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
-    Normalization.InverseRootPolynomial.Coordinate}
+    InverseRootPolynomial.Coordinate}
   {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-  {lifted : Meshes.LiftedPuncturedGrid grid.punctured} {differential : Hyperelliptic.Differentials.Basic.Differential
+  {lifted : Meshes.LiftedPuncturedGrid grid.punctured} {differential : Differentials.Basic.Differential
     genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
+  {program : PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
@@ -77,25 +79,25 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.Regul
 variable {whole :
   PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
   regular domains differential} {previous :
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+  CommonCuts domains}
   {selected : PuncturedGrid.Exterior.SourceCuts whole previous}
   {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {meshTarget :
-    Normalization.InverseRootPolynomial.Coordinate}
-  {request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
-    (fun sheet => Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
+    Preflights domains sheet} {meshTarget :
+    InverseRootPolynomial.Coordinate}
+  {request : PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
+    (fun sheet => PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
       coarseDepth) fixed meshTarget}
-  {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared} {index :
+  {retained : PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared} {index :
     Nat} {inputs : retained.Inputs index}
-  {requested : Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
-  (schedules : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.Schedules
+  {requested : InverseRootPolynomial.Coordinate} {minimum : Nat}
+  (schedules : Schedules
     selected request retained inputs requested minimum)
 
 variable {observations : RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {partitions :
   Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid}
   {surfaceCoarse : (sheet : Fin 2) → Topology.NewtonRequestedSurfaceEnergy.SurfaceMeshes partitions domains sheet}
   {surfaceFixed : (sheet : Fin 2) → RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet}
-    {surfaceTarget : Normalization.InverseRootPolynomial.Coordinate}
+    {surfaceTarget : InverseRootPolynomial.Coordinate}
   (initialSurface : Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests surfaceCoarse surfaceFixed
     surfaceTarget)
 
@@ -103,19 +105,19 @@ section SurfaceAcquisition
 variable {schedules initialSurface} (acquired :
   SurfaceAcquisition schedules initialSurface)
   (vertices : (outer : Fin prepared.occurrences.length) → Fin
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.capacities selected
+    (PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.capacities selected
     acquired.spatial.refined outer) → Nat)
 
 set_option genInjectivity false in
 /-- Cache the shared physical owners and their numerical floor together with the observation threshold. -/
 structure NumericalAcquisition where
   /-- The computed shared physical-piece, junction and parent owner banks for the acquired geometry. -/ owners :
-    PuncturedGrid.Exterior.Basis.RunFaceSynchronization.CommonBasisPreparation.ParentRunSchedules.SharedOwnerBanks
+    ParentRunSchedules.SharedOwnerBanks
     acquired.spatial.requests
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedPhysicalComponent.RequestedSurfaceRuns.pieceCounts
+    (PuncturedGrid.Exterior.Basis.RequestedPhysicalComponent.RequestedSurfaceRuns.pieceCounts
       selected acquired.spatial.refined) vertices
   /-- The retained common face stage paying these exact shared-owner banks and the physical mesh floor. -/ face :
-    PuncturedGrid.Exterior.Basis.RunFaceSynchronization.CommonBasisPreparation.ParentRunSchedules.FaceStage
+    ParentRunSchedules.FaceStage
     owners acquired.spatial.refined.index
   /-- The common numerical threshold paying both the acquired geometry and retained face owners. -/ index : Nat
   /-- The numerical threshold is exactly the maximum of the acquired geometry and face stages. -/ index_eq : index = max
@@ -131,12 +133,12 @@ requirements. -/
   NumericalAcquisition
   acquired vertices :=
   let owners :=
-    PuncturedGrid.Exterior.Basis.RunFaceSynchronization.CommonBasisPreparation.ParentRunSchedules.prepareSharedOwners
+    ParentRunSchedules.prepareSharedOwners
     acquired.spatial.requests
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedPhysicalComponent.RequestedSurfaceRuns.pieceCounts
+    (PuncturedGrid.Exterior.Basis.RequestedPhysicalComponent.RequestedSurfaceRuns.pieceCounts
       selected acquired.spatial.refined) vertices
   let face :=
-    PuncturedGrid.Exterior.Basis.RunFaceSynchronization.CommonBasisPreparation.ParentRunSchedules.FaceStage.build
+    ParentRunSchedules.FaceStage.build
     owners acquired.spatial.refined.index
   ⟨owners, face, max acquired.index face.stage, rfl⟩
 

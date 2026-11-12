@@ -26,6 +26,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -63,20 +65,20 @@ theorem norm_le_dot (alignment : SignAlignment reference candidate)
     (leftSmall : leftError ≤ 1 / 16) (rightSmall : rightError ≤ 1 / 16) :
     normSq reference ≤ 16 * overlapDot reference alignment.value := by
   have allowance : 24 * (leftError + rightError) ≤ (3 : Coordinate) :=
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add leftSmall rightSmall)
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add leftSmall rightSmall)
       (by decide)).trans_eq (by decide +kernel : (24 : Coordinate) * (1 / 16 + 1 / 16) = 3)
   have distance : normSq (reference - alignment.value) * 4 ≤ 3 * normSq reference := by
     calc
       _ ≤ (6 * (leftError + rightError) * normSq reference) * 4 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           (alignment.distance_le leftResidual rightResidual leftSmall) (by decide)
       _ = (24 * (leftError + rightError)) * normSq reference := by ring1
-      _ ≤ _ := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct allowance (Basic.Canonical.normSq_nonneg _)
+      _ ≤ _ := Arithmetic.mul_le_mul_of_nonneg_right_direct allowance (normSq_nonneg _)
   calc
     _ = normSq reference * 4 - 3 * normSq reference := by ring1
     _ ≤ normSq (reference + alignment.value) * 4 - normSq (reference - alignment.value) * 4 :=
-      Fraction.Order.Arithmetic.sub_le_sub_direct
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct alignment.sum_norm_lower (by decide)) distance
+      Arithmetic.sub_le_sub_direct
+        (Arithmetic.mul_le_mul_of_nonneg_right_direct alignment.sum_norm_lower (by decide)) distance
     _ = _ := by simp only [normSq, Basic.add_re, Basic.add_im, Basic.sub_re, Basic.sub_im, overlapDot]; ring1
 
 /-- The aligned dot product is strictly positive when both inverse-root residual bounds are at most one sixteenth. -/
@@ -88,10 +90,10 @@ theorem dot_positive (alignment : SignAlignment reference candidate)
   have referencePositive := Norm.Basic.normSq_pos (inverse_value_ne_zero (leftResidual.trans leftSmall))
   rw [Norm.Basic.normSq_eq_canonical] at referencePositive
   have positive := referencePositive.trans_le
-    (SignAlignment.norm_le_dot alignment leftResidual rightResidual leftSmall rightSmall)
+    (norm_le_dot alignment leftResidual rightResidual leftSmall rightSmall)
   by_cases dotPositive : 0 < overlapDot reference alignment.value
   · exact dotPositive
-  · have nonpositive := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  · have nonpositive := Arithmetic.mul_le_mul_of_nonneg_left_direct
       (le_of_not_gt dotPositive) (by decide : (0 : Coordinate) ≤ 16)
     rw [Fraction.Field.mul_zero_direct] at nonpositive
     exact (not_lt_of_ge nonpositive positive).elim
@@ -106,7 +108,7 @@ theorem flip_eq_dot_sign (alignment : SignAlignment reference candidate)
     (rightResidual : normSq (1 - parameter * candidate ^ 2) ≤ rightError)
     (leftSmall : leftError ≤ 1 / 16) (rightSmall : rightError ≤ 1 / 16) :
     alignment.flip = !(decide (0 ≤ overlapDot reference candidate)) := by
-  have positive := SignAlignment.dot_positive alignment leftResidual rightResidual leftSmall rightSmall
+  have positive := dot_positive alignment leftResidual rightResidual leftSmall rightSmall
   rw [alignment.value_eq] at positive
   rcases alignment with ⟨flip, value, valueEq, nearest⟩
   cases flip with
@@ -120,7 +122,7 @@ theorem flip_eq_dot_sign (alignment : SignAlignment reference candidate)
         simp only [overlapDot, Basic.neg_re, Basic.neg_im]
         ring1
       rw [negIdentity] at positive
-      have translated := Fraction.Order.Arithmetic.add_lt_add_right_direct positive (overlapDot reference candidate)
+      have translated := Arithmetic.add_lt_add_right_direct positive (overlapDot reference candidate)
       have negative : overlapDot reference candidate < 0 := by
         calc
           _ = 0 + overlapDot reference candidate := by ring1
@@ -139,8 +141,8 @@ theorem dot_squared_lower (alignment : SignAlignment reference candidate)
     (leftSmall : leftError ≤ 1 / 16) (rightSmall : rightError ≤ 1 / 16)
     {majorant : Coordinate} (majorantPositive : 0 < majorant) (upper : normSq parameter ≤ majorant) :
     1 / (768 * majorant) ≤ overlapDot reference candidate ^ 2 := by
-  have squared := Fraction.Order.Arithmetic.pow_le_pow_direct (Basic.Canonical.normSq_nonneg reference)
-    (SignAlignment.norm_le_dot alignment leftResidual rightResidual leftSmall rightSmall) 2
+  have squared := Arithmetic.pow_le_pow_direct (normSq_nonneg reference)
+    (norm_le_dot alignment leftResidual rightResidual leftSmall rightSmall) 2
   have signSquare : overlapDot reference alignment.value ^ 2 = overlapDot reference candidate ^ 2 := by
     rw [alignment.value_eq]
     cases alignment.flip
@@ -153,17 +155,17 @@ theorem dot_squared_lower (alignment : SignAlignment reference candidate)
       _ ≤ (16 * overlapDot reference alignment.value) ^ 2 := squared
       _ = 256 * overlapDot reference alignment.value ^ 2 := by ring1
       _ = _ := by rw [signSquare]
-  apply (Fraction.Order.Field.div_le_iff_pos
-    (Fraction.Order.Arithmetic.mul_pos_direct (by decide +kernel : (0 : Coordinate) < 768) majorantPositive)).2
+  apply (Field.div_le_iff_pos
+    (Arithmetic.mul_pos_direct (by decide +kernel : (0 : Coordinate) < 768) majorantPositive)).2
   calc
     _ = 3 * (1 / 3 : Coordinate) := by decide
     _ ≤ 3 * (normSq parameter * normSq reference ^ 2) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (normalized_value_lower (leftResidual.trans leftSmall)) (by decide)
     _ ≤ 3 * (majorant * (256 * overlapDot reference candidate ^ 2)) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.mul_le_mul_direct upper squareBound
-          (Fraction.Order.Arithmetic.sq_nonneg_direct _) majorantPositive.le) (by decide)
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.mul_le_mul_direct upper squareBound
+          (Arithmetic.sq_nonneg_direct _) majorantPositive.le) (by decide)
     _ = _ := by ring1
 
 end SignAlignment
@@ -199,7 +201,7 @@ theorem eval_overlapPolynomial (left right : Polynomial) (origin direction : Gau
 
 namespace Model
 
-variable {polynomial : Polynomial} {leftBox rightBox : Purelib.Riemann.Normalization.InverseRootPolynomial.Box}
+variable {polynomial : Polynomial} {leftBox rightBox : InverseRootPolynomial.Box}
 
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
@@ -210,10 +212,10 @@ open Purelib.Polynomial.Dense.Gaussian in
 
 The whole rational interval lies in both original model boxes. A positive squared-dot lower bound and the constructive
 polynomial sign theorem preserve the sign between the two parameters. -/
-theorem edge_flip_eq {polynomial : Polynomial} {leftBox rightBox : Purelib.Geometry.Rational.Box} (left : Model
+theorem edge_flip_eq {polynomial : Polynomial} {leftBox rightBox : Geometry.Rational.Box} (left : Model
   polynomial leftBox) (right :
   Model polynomial rightBox)
-    (origin direction : Gaussian) (interval : Data.Rat.Interval.Bounds)
+    (origin direction : Gaussian) (interval : Interval.Bounds)
     (leftInside : ∀ parameter, interval.Contains parameter → leftBox.Contains (Affine.line origin direction parameter))
     (rightInside : ∀ parameter, interval.Contains parameter → rightBox.Contains (Affine.line origin direction
       parameter))
@@ -233,8 +235,8 @@ theorem edge_flip_eq {polynomial : Polynomial} {leftBox rightBox : Purelib.Geome
   let majorant := Bounds.Box.denseEvalNormMajorant polynomial leftBox
   have majorantPositive : 0 < majorant := Bounds.Box.denseEvalNormMajorant_pos polynomial leftBox
   have gapPositive : (0 : Coordinate) < 1 / (768 * majorant) :=
-    Fraction.Order.Field.div_pos_direct (by decide)
-      (Fraction.Order.Arithmetic.mul_pos_direct (by decide +kernel) majorantPositive)
+    Field.div_pos_direct (by decide)
+      (Arithmetic.mul_pos_direct (by decide +kernel) majorantPositive)
   have gap (parameter : Coordinate) (inside : interval.Contains parameter) :
       1 / (768 * majorant) ≤ (overlapPolynomial left.value right.value origin direction).eval parameter ^ 2 := by
     rw [eval_overlapPolynomial]

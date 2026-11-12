@@ -54,6 +54,10 @@ import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Riemann.Integration.RectangularPrimitiveOverlap
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Riemann.Readings.RectangularMatchedObservationSides
+
 open Purelib.Riemann.Readings.RectangularMatchedEnergyRibbons.RectangularInverseModels.ObservationMesh
 
 open Purelib.Curves
@@ -80,14 +84,14 @@ the complete trace count and open endpoint correction remain explicit. -/
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainMatchedEnergy
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face : Meshes.PuncturedGridFaces.RegularFace bank}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {face : Meshes.PuncturedGridFaces.RegularFace bank}
       {models
-    : Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames face} {sheet : Fin 2}
-  {domain : Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain models sheet} {preflight :
-    Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight domain}
+    : Face.InverseModels.BranchCellBank.FaceModels frames face} {sheet : Fin 2}
+  {domain : Face.Periods.PeriodDomain models sheet} {preflight :
+    DomainBasisBounds.EnergyPreflight domain}
   {leftBox rightBox : Rational.Box} {left : Meshes.RectangularObservationMesh.ObservationMesh
     domain.cuts leftBox} {right : Meshes.RectangularObservationMesh.ObservationMesh domain.cuts rightBox}
   {depth stage : Nat} {localTarget target : Fraction.Rational}
@@ -98,33 +102,33 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
 
 /-- The original matched-trace magnitude is nonnegative when its slope is nonnegative. -/
 theorem matchedMagnitude_nonnegative {slope : Fraction.Rational} (nonnegative : 0 ≤ slope) (segments : Nat) :
-    0 ≤ Hyperelliptic.Meshes.PuncturedGrid.DomainMatchedEnergy.matchedMagnitude slope segments :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg nonnegative
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg (by decide) nonnegative))))
+    0 ≤ DomainMatchedEnergy.matchedMagnitude slope segments :=
+  Arithmetic.mul_nonneg_direct (by decide) (add_nonneg nonnegative
+    (Arithmetic.mul_nonneg_direct (Arithmetic.sq_nonneg_direct _)
+      (Arithmetic.mul_nonneg_direct (by decide) (add_nonneg (by decide) nonnegative))))
 
 /-- Increasing the retained slope increases the matched-trace magnitude ceiling. -/
 private theorem magnitude_mono {first last : Fraction.Rational} (bound : first ≤ last) (segments : Nat) :
-    Hyperelliptic.Meshes.PuncturedGrid.DomainMatchedEnergy.matchedMagnitude first segments ≤
-      Hyperelliptic.Meshes.PuncturedGrid.DomainMatchedEnergy.matchedMagnitude last segments :=
-  Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.add_le_add_direct bound
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Fraction.Order.Arithmetic.add_le_add_direct le_rfl bound) (by decide))
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _))) (by decide)
+    DomainMatchedEnergy.matchedMagnitude first segments ≤
+      DomainMatchedEnergy.matchedMagnitude last segments :=
+  Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_direct bound
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.add_le_add_direct le_rfl bound) (by decide))
+        (Arithmetic.sq_nonneg_direct _))) (by decide)
 
 set_option genInjectivity false in
 /-- A fixed trace geometry determines the numerical stage independently of
 the eventual coefficient vector. Both the allowance and model requests are
 retained, so a later shared numerical bank can discharge the same request. -/
-structure MatchedEnergyRequest (preflight : Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight domain)
+structure MatchedEnergyRequest (preflight : DomainBasisBounds.EnergyPreflight domain)
     (slope : Fraction.Rational) (segments count : Nat) (target : Fraction.Rational) where
   /-- The original trace-count budget with its retained common magnitude and positive reading cap. -/ budget :
     Path.EnergyRibbonCombination.CombinationBudget count
-    (Hyperelliptic.Meshes.PuncturedGrid.DomainMatchedEnergy.matchedMagnitude slope segments) target
+    (DomainMatchedEnergy.matchedMagnitude slope segments) target
   /-- The basis model request at that exact retained trace budget cap. -/ models :
-    Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight.Request preflight budget.cap
+    DomainBasisBounds.EnergyPreflight.Request preflight budget.cap
 
 constructive_injectivity MatchedEnergyRequest
 
@@ -132,46 +136,46 @@ namespace MatchedEnergyRequest
 
 /-- Allocate the matched-trace budget from its original geometry and request the basis models at the same positive cap.
 -/
-@[expose] def build (preflight : Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight domain) (slope :
+@[expose] def build (preflight : DomainBasisBounds.EnergyPreflight domain) (slope :
   Fraction.Rational) (segments count : Nat) (target : Fraction.Rational)
     (nonnegative : 0 ≤ slope) (positive : 0 < target) :
-      Hyperelliptic.Meshes.PuncturedGrid.DomainMatchedEnergy.MatchedEnergyRequest preflight slope segments count target
+      MatchedEnergyRequest preflight slope segments count target
       :=
   let budget := Path.EnergyRibbonCombination.CombinationBudget.build count
-    (Hyperelliptic.Meshes.PuncturedGrid.DomainMatchedEnergy.matchedMagnitude slope segments) target
-    (Hyperelliptic.Meshes.PuncturedGrid.DomainMatchedEnergy.matchedMagnitude_nonnegative nonnegative segments) positive
-  ⟨budget, Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight.Request.build preflight budget.cap
+    (DomainMatchedEnergy.matchedMagnitude slope segments) target
+    (DomainMatchedEnergy.matchedMagnitude_nonnegative nonnegative segments) positive
+  ⟨budget, DomainBasisBounds.EnergyPreflight.Request.build preflight budget.cap
     budget.positive⟩
 
 variable {leftRow : Fin left.partition.y.intervals.length} {rightRow : Fin right.partition.y.intervals.length}
   {height : Fraction.Rational} {horizontal :
-    Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedHorizontalSide left right leftRow rightRow
+    ObservationMesh.MatchedHorizontalSide left right leftRow rightRow
     height}
   {leftColumn : Fin left.partition.x.intervals.length} {rightColumn : Fin right.partition.x.intervals.length}
   {coordinate : Fraction.Rational} {vertical :
-    Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedVerticalSide left right leftColumn rightColumn
+    ObservationMesh.MatchedVerticalSide left right leftColumn rightColumn
     coordinate}
 
 /-- The actual retained horizontal basis ribbons satisfy the homogeneous combined energy bound at a sufficient common
 model stage. -/
 theorem horizontal_combination_bound (tolerance :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.ReadingCaps.DomainPrimitives.FaceExteriorTolerance preflight left
+  Exterior.ReadingCaps.DomainPrimitives.FaceExteriorTolerance preflight left
   localTarget)
     (trace : horizontal.Trace depth)
-    (request : Hyperelliptic.Meshes.PuncturedGrid.DomainMatchedEnergy.MatchedEnergyRequest preflight tolerance.slope
+    (request : MatchedEnergyRequest preflight tolerance.slope
       left.boundaryColumns trace.vertices.rest.length target)
     (later : request.models.index ≤ stage)
-    (cached : (row : Fin genus) → Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives domain
+    (cached : (row : Fin genus) → Face.PrimitiveData.DomainPrimitives domain
       (Periods.PeriodMatrix.standardDifferential row) stage)
     (ribbons : Data.Vector (Path.BoundaryRibbon.Ribbon trace.vertices.rest.length) genus)
     (readback : ∀ row, ribbons row =
       MatchedHorizontalSide.Trace.energyRibbon
       trace (cached row).anchors (cached row).offsets)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    Data.Gaussian.Norm.Basic.normSq (Path.EnergyRibbonCombination.combine (fun row => coefficients row) (fun row =>
+    Gaussian.Norm.Basic.normSq (Path.EnergyRibbonCombination.combine (fun row => coefficients row) (fun row =>
       ribbons row)).difference ≤
       (genus : Fraction.Rational) ^ 2 * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
-        target := open Purelib.Algebra in by
+        target := open Algebra in by
   have coefficientNorm := FiniteSum.Fin.sumFin_congr
     (fun row : Fin genus => Gaussian.Norm.Basic.normSq_eq_canonical (coefficients row))
   unfold Readings.PreparedObservationCoercivity.coefficientNormSq
@@ -184,20 +188,20 @@ theorem horizontal_combination_bound (tolerance :
       MatchedHorizontalSide.Trace.energyRibbon
       trace (cached row).anchors (cached row).offsets
     rw [ribbon.errors_eq]
-    change Data.Gaussian.Norm.Basic.normSq ((trace.leftReadings (cached row).anchors (cached row).offsets).values
+    change Gaussian.Norm.Basic.normSq ((trace.leftReadings (cached row).anchors (cached row).offsets).values
       vertex -
       (trace.rightReadings (cached row).anchors (cached row).offsets).values vertex) ≤ _
     rw [trace.leftReadings_value, trace.rightReadings_value]
-    have scalar := Data.Rat.Fraction.Order.Basic.le_trans _ _ _ (accuracy.overlap_bound (cached row).anchors (cached
+    have scalar := Basic.le_trans _ _ _ (accuracy.overlap_bound (cached row).anchors (cached
       row).offsets domain.patch.cell_refines
       (trace.leftOwner (trace.vertices.indexed vertex)).column (trace.rightOwner (trace.vertices.indexed vertex)).column
       (trace.leftOwner (trace.vertices.indexed vertex)).row (trace.rightOwner (trace.vertices.indexed vertex)).row
       (trace.leftOwner (trace.vertices.indexed vertex)).contains (trace.rightOwner (trace.vertices.indexed
         vertex)).contains)
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct accuracy.accurate.le (by decide))
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct accuracy.accurate.le (by decide))
     rw [Gaussian.Norm.Basic.normSq_eq_canonical]
-    simp only [Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedHorizontalSide.Trace.leftOwner,
-      Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedHorizontalSide.Trace.rightOwner] at scalar
+    simp only [ObservationMesh.MatchedHorizontalSide.Trace.leftOwner,
+      ObservationMesh.MatchedHorizontalSide.Trace.rightOwner] at scalar
     exact scalar
   · intro row vertex
     rw [readback row]
@@ -205,11 +209,11 @@ theorem horizontal_combination_bound (tolerance :
     have estimate := Integration.RectangularWholeSideMagnitude.matched_readings_magnitude accuracy (cached row).anchors
       (cached row).offsets domain.patch.cell_refines
       (accuracy.accurate.le.trans request.budget.le_one) trace vertex
-    change Data.Gaussian.Norm.Basic.normSq
+    change Gaussian.Norm.Basic.normSq
       ((trace.rightReadings (cached row).anchors (cached row).offsets).values vertex -
         (trace.rightReadings (cached row).anchors (cached row).offsets).values 0) ≤ _
-    have scalar := Data.Rat.Fraction.Order.Basic.le_trans _ _ _ estimate
-      (Hyperelliptic.Meshes.PuncturedGrid.DomainMatchedEnergy.magnitude_mono (tolerance.row_le row)
+    have scalar := Basic.le_trans _ _ _ estimate
+      (DomainMatchedEnergy.magnitude_mono (tolerance.row_le row)
         left.boundaryColumns)
     rw [Gaussian.Norm.Basic.normSq_eq_canonical]
     exact scalar
@@ -217,23 +221,23 @@ theorem horizontal_combination_bound (tolerance :
 /-- The actual retained vertical basis ribbons satisfy the homogeneous combined energy bound at a sufficient common
 model stage. -/
 theorem vertical_combination_bound (tolerance :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.ReadingCaps.DomainPrimitives.FaceExteriorTolerance preflight left
+  Exterior.ReadingCaps.DomainPrimitives.FaceExteriorTolerance preflight left
   localTarget)
     (trace : vertical.Trace depth)
-    (request : Hyperelliptic.Meshes.PuncturedGrid.DomainMatchedEnergy.MatchedEnergyRequest preflight tolerance.slope
+    (request : MatchedEnergyRequest preflight tolerance.slope
       left.boundaryRows trace.vertices.rest.length target)
     (later : request.models.index ≤ stage)
-    (cached : (row : Fin genus) → Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives domain
+    (cached : (row : Fin genus) → Face.PrimitiveData.DomainPrimitives domain
       (Periods.PeriodMatrix.standardDifferential row) stage)
     (ribbons : Data.Vector (Path.BoundaryRibbon.Ribbon trace.vertices.rest.length) genus)
     (readback : ∀ row, ribbons row =
       MatchedVerticalSide.Trace.energyRibbon
       trace (cached row).anchors (cached row).offsets)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    Data.Gaussian.Norm.Basic.normSq (Path.EnergyRibbonCombination.combine (fun row => coefficients row) (fun row =>
+    Gaussian.Norm.Basic.normSq (Path.EnergyRibbonCombination.combine (fun row => coefficients row) (fun row =>
       ribbons row)).difference ≤
       (genus : Fraction.Rational) ^ 2 * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
-        target := open Purelib.Algebra in by
+        target := open Algebra in by
   have coefficientNorm := FiniteSum.Fin.sumFin_congr
     (fun row : Fin genus => Gaussian.Norm.Basic.normSq_eq_canonical (coefficients row))
   unfold Readings.PreparedObservationCoercivity.coefficientNormSq
@@ -246,20 +250,20 @@ theorem vertical_combination_bound (tolerance :
       MatchedVerticalSide.Trace.energyRibbon
       trace (cached row).anchors (cached row).offsets
     rw [ribbon.errors_eq]
-    change Data.Gaussian.Norm.Basic.normSq ((trace.leftReadings (cached row).anchors (cached row).offsets).values
+    change Gaussian.Norm.Basic.normSq ((trace.leftReadings (cached row).anchors (cached row).offsets).values
       vertex -
       (trace.rightReadings (cached row).anchors (cached row).offsets).values vertex) ≤ _
     rw [trace.leftReadings_value, trace.rightReadings_value]
-    have scalar := Data.Rat.Fraction.Order.Basic.le_trans _ _ _ (accuracy.overlap_bound (cached row).anchors (cached
+    have scalar := Basic.le_trans _ _ _ (accuracy.overlap_bound (cached row).anchors (cached
       row).offsets domain.patch.cell_refines
       (trace.leftOwner (trace.vertices.indexed vertex)).column (trace.rightOwner (trace.vertices.indexed vertex)).column
       (trace.leftOwner (trace.vertices.indexed vertex)).row (trace.rightOwner (trace.vertices.indexed vertex)).row
       (trace.leftOwner (trace.vertices.indexed vertex)).contains (trace.rightOwner (trace.vertices.indexed
         vertex)).contains)
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct accuracy.accurate.le (by decide))
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct accuracy.accurate.le (by decide))
     rw [Gaussian.Norm.Basic.normSq_eq_canonical]
-    simp only [Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedVerticalSide.Trace.leftOwner,
-      Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedVerticalSide.Trace.rightOwner] at scalar
+    simp only [ObservationMesh.MatchedVerticalSide.Trace.leftOwner,
+      ObservationMesh.MatchedVerticalSide.Trace.rightOwner] at scalar
     exact scalar
   · intro row vertex
     rw [readback row]
@@ -267,11 +271,11 @@ theorem vertical_combination_bound (tolerance :
     have estimate := Integration.RectangularWholeVerticalSideMagnitude.matched_vertical_readings_magnitude accuracy
       (cached row).anchors (cached row).offsets domain.patch.cell_refines
       (accuracy.accurate.le.trans request.budget.le_one) trace vertex
-    change Data.Gaussian.Norm.Basic.normSq
+    change Gaussian.Norm.Basic.normSq
       ((trace.rightReadings (cached row).anchors (cached row).offsets).values vertex -
         (trace.rightReadings (cached row).anchors (cached row).offsets).values 0) ≤ _
-    have scalar := Data.Rat.Fraction.Order.Basic.le_trans _ _ _ estimate
-      (Hyperelliptic.Meshes.PuncturedGrid.DomainMatchedEnergy.magnitude_mono (tolerance.row_le row) left.boundaryRows)
+    have scalar := Basic.le_trans _ _ _ estimate
+      (DomainMatchedEnergy.magnitude_mono (tolerance.row_le row) left.boundaryRows)
     rw [Gaussian.Norm.Basic.normSq_eq_canonical]
     exact scalar
 

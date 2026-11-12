@@ -250,4 +250,17 @@ public theorem div_le_of_lt_mul_succ {value divisor bound : Nat}
     rw [reconstructed] at contained
     exact False.elim (Nat.not_lt_of_ge (Nat.le_trans multiple contained) below)
 
+/-- A dividend below a displayed divisor multiple has a strictly smaller quotient.
+
+The successor-bound equation gives the quotient bound directly. A zero displayed
+bound would contradict the original strict dividend bound.
+-/
+public theorem div_lt_of_lt_mul {value divisor bound : Nat}
+    (below : value < divisor * bound) : value / divisor < bound := by
+  cases bound with
+  | zero =>
+      rewrite [Nat.mul_zero] at below
+      exact (Nat.not_lt_zero value below).elim
+  | succ bound => exact Nat.lt_succ_of_le (div_le_of_lt_mul_succ below)
+
 end Purelib.Data.Nat.Division

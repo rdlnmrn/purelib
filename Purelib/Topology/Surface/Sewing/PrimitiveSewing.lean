@@ -73,7 +73,7 @@ open Purelib.Data.Gaussian.Basic.Canonical
 open Purelib.Data.Vector.Basic (vectorOfFn vectorOfFn_apply)
 
 /-- Gaussian primitive readings indexed by the original finite cut-vertex bank. -/
-abbrev PrimitiveValues (count : Nat) := Data.Vector Gaussian.Basic.Canonical count
+abbrev PrimitiveValues (count : Nat) := Data.Vector Canonical count
 
 namespace EndpointGluing
 
@@ -82,19 +82,19 @@ open Purelib.Topology.Surface.Sewing.VertexSewing.EndpointGluing (left right rig
 variable {firstCount secondCount : Nat}
 
 /-- Cache the original left primitive and the translated right primitive in their combined vertex bank. -/
-def concatenate (first : PrimitiveSewing.PrimitiveValues firstCount) (second : PrimitiveSewing.PrimitiveValues
-  secondCount) (shift : Gaussian.Basic.Canonical) :
-    PrimitiveSewing.PrimitiveValues (firstCount + secondCount) :=
-  Data.Vector.Basic.vectorOfFn fun index => if inside : index.val < firstCount then first ⟨index.val, inside⟩
+def concatenate (first : PrimitiveValues firstCount) (second : PrimitiveValues
+  secondCount) (shift : Canonical) :
+    PrimitiveValues (firstCount + secondCount) :=
+  vectorOfFn fun index => if inside : index.val < firstCount then first ⟨index.val, inside⟩
     else second ⟨index.val - firstCount, by omega⟩ + shift
 
 open Purelib.Topology.Surface.Sewing.VertexSewing.EndpointGluing in
 /-- The combined primitive preserves every original left-bank value. -/
-theorem concatenate_left (first : PrimitiveSewing.PrimitiveValues firstCount) (second : PrimitiveSewing.PrimitiveValues
+theorem concatenate_left (first : PrimitiveValues firstCount) (second : PrimitiveValues
   secondCount)
-    (shift : Gaussian.Basic.Canonical) (index : Fin firstCount) : EndpointGluing.concatenate first second shift (left
+    (shift : Canonical) (index : Fin firstCount) : concatenate first second shift (left
       index) = first index := by
-  rw [EndpointGluing.concatenate, Data.Vector.Basic.vectorOfFn_apply]
+  rw [concatenate, vectorOfFn_apply]
   exact dif_pos index.isLt
 
 open Purelib.Topology.Surface.Sewing.VertexSewing.EndpointGluing in
@@ -103,20 +103,20 @@ set_option genInjectivity false in
 
 The right primitive is translated at the first endpoint; the second endpoint keeps its exact defect and
 squared-magnitude charge. -/
-structure PrimitiveSew (first : PrimitiveSewing.PrimitiveValues firstCount) (second : PrimitiveSewing.PrimitiveValues
+structure PrimitiveSew (first : PrimitiveValues firstCount) (second : PrimitiveValues
   secondCount)
-    (firstEdge : Stokes.OrientedEdge firstCount) (secondEdge : Stokes.OrientedEdge secondCount) where
-  /-- Cached translation aligning the first original seam endpoint. -/ shift : Gaussian.Basic.Canonical
+    (firstEdge : OrientedEdge firstCount) (secondEdge : OrientedEdge secondCount) where
+  /-- Cached translation aligning the first original seam endpoint. -/ shift : Canonical
   /-- The shift is the left finish value minus the original right start value. -/ shift_eq : shift = first
     firstEdge.finish - second secondEdge.start
-  /-- Cached discrepancy at the second original seam endpoint after translation. -/ defect : Gaussian.Basic.Canonical
+  /-- Cached discrepancy at the second original seam endpoint after translation. -/ defect : Canonical
   /-- The defect is the left start value minus the translated original right finish value. -/ defect_eq : defect = first
     firstEdge.start - (second secondEdge.finish + shift)
   /-- Cached squared magnitude of the retained endpoint defect. -/ charge : Fraction.Rational
   /-- The charge is exactly the norm square of the original retained defect. -/ charge_eq : charge =
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
     defect
-  /-- Cached primitive on the original combined cut-vertex bank. -/ values : PrimitiveSewing.PrimitiveValues (firstCount
+  /-- Cached primitive on the original combined cut-vertex bank. -/ values : PrimitiveValues (firstCount
     + secondCount)
   /-- Every original left reading is preserved under the retained left embedding. -/ left_eq : ∀ index, values (left
     index) = first index
@@ -128,9 +128,9 @@ constructive_injectivity PrimitiveSew
 
 namespace PrimitiveSew
 
-variable {first : Purelib.Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues firstCount} {second :
-  Purelib.Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues secondCount}
-  {firstEdge : Stokes.OrientedEdge firstCount} {secondEdge : Stokes.OrientedEdge secondCount}
+variable {first : PrimitiveValues firstCount} {second :
+  PrimitiveValues secondCount}
+  {firstEdge : OrientedEdge firstCount} {secondEdge : OrientedEdge secondCount}
 
 open Purelib.Topology.Surface.Sewing.VertexSewing.EndpointGluing in
 /-- Cache the seam translation, retained endpoint defect, charge and combined primitive values.
@@ -138,28 +138,28 @@ open Purelib.Topology.Surface.Sewing.VertexSewing.EndpointGluing in
 The first original seam endpoint determines the translation. The distinct second
 endpoint retains the exact mismatch, while all other bounded right-bank positions
 keep the original translated readings. -/
-def build (first : PrimitiveSewing.PrimitiveValues firstCount) (second : PrimitiveSewing.PrimitiveValues secondCount)
-    (firstEdge : Stokes.OrientedEdge firstCount) (secondEdge : Stokes.OrientedEdge secondCount)
-    (distinct : secondEdge.start ≠ secondEdge.finish) : EndpointGluing.PrimitiveSew first second firstEdge secondEdge :=
+def build (first : PrimitiveValues firstCount) (second : PrimitiveValues secondCount)
+    (firstEdge : OrientedEdge firstCount) (secondEdge : OrientedEdge secondCount)
+    (distinct : secondEdge.start ≠ secondEdge.finish) : PrimitiveSew first second firstEdge secondEdge :=
   let shift := first firstEdge.finish - second secondEdge.start
   let defect := first firstEdge.start - (second secondEdge.finish + shift)
   { shift := shift, shift_eq := rfl, defect := defect, defect_eq := rfl
-    charge := Data.Gaussian.Norm.Basic.normSq defect, charge_eq := rfl
-    values := EndpointGluing.concatenate first second shift
-    left_eq := EndpointGluing.concatenate_left first second shift
+    charge := Gaussian.Norm.Basic.normSq defect, charge_eq := rfl
+    values := concatenate first second shift
+    left_eq := concatenate_left first second shift
     right_eq := by
       intro index
       by_cases atStart : index = secondEdge.start
       · subst index
-        rw [EndpointGluing.right_start, EndpointGluing.concatenate_left, if_neg distinct]
+        rw [right_start, concatenate_left, if_neg distinct]
         dsimp only [shift]
         ring1
       · by_cases atFinish : index = secondEdge.finish
         · subst index
-          rw [EndpointGluing.right_finish firstEdge secondEdge distinct, EndpointGluing.concatenate_left, if_pos rfl]
+          rw [right_finish firstEdge secondEdge distinct, concatenate_left, if_pos rfl]
           dsimp only [defect]
           ring1
-        · rw [right, if_neg atStart, if_neg atFinish, EndpointGluing.concatenate, Data.Vector.Basic.vectorOfFn_apply]
+        · rw [right, if_neg atStart, if_neg atFinish, concatenate, vectorOfFn_apply]
           rw [dif_neg (show ¬ firstCount + index.val < firstCount by omega),
             if_neg atFinish, Gaussian.Basic.add_zero]
           apply congrArg (fun position : Fin secondCount => second position + shift)
@@ -167,14 +167,14 @@ def build (first : PrimitiveSewing.PrimitiveValues firstCount) (second : Primiti
           exact Data.Nat.Subtraction.add_sub_cancel_left firstCount index.val }
 
 /-- The retained squared endpoint-defect charge is nonnegative. -/
-theorem charge_nonnegative (sample : EndpointGluing.PrimitiveSew first second firstEdge secondEdge) : 0 ≤ sample.charge
+theorem charge_nonnegative (sample : PrimitiveSew first second firstEdge secondEdge) : 0 ≤ sample.charge
   := by
   rw [sample.charge_eq]
   exact Gaussian.Norm.Basic.normSq_nonneg _
 
 /-- Only the sum of the oppositely oriented seam increments is paid. An arbitrary constant translation of either local
 primitive is harmless. -/
-theorem defect_eq_increments (sample : EndpointGluing.PrimitiveSew first second firstEdge secondEdge) :
+theorem defect_eq_increments (sample : PrimitiveSew first second firstEdge secondEdge) :
     sample.defect = -((first firstEdge.finish - first firstEdge.start) +
       (second secondEdge.finish - second secondEdge.start)) := by
   rw [sample.defect_eq, sample.shift_eq]
@@ -182,18 +182,18 @@ theorem defect_eq_increments (sample : EndpointGluing.PrimitiveSew first second 
 
 /-- Existing errors in the two input patches are paid before the local model mismatch. None of these three allowances is
 silently discarded. -/
-theorem charge_le (sample : EndpointGluing.PrimitiveSew first second firstEdge secondEdge)
-    (leftModel rightModel : Gaussian.Basic.Canonical) (leftError rightError mismatch : Fraction.Rational)
-    (leftBound : Data.Gaussian.Norm.Basic.normSq ((first firstEdge.finish - first firstEdge.start) - leftModel) ≤
+theorem charge_le (sample : PrimitiveSew first second firstEdge secondEdge)
+    (leftModel rightModel : Canonical) (leftError rightError mismatch : Fraction.Rational)
+    (leftBound : Gaussian.Norm.Basic.normSq ((first firstEdge.finish - first firstEdge.start) - leftModel) ≤
       leftError)
-    (rightBound : Data.Gaussian.Norm.Basic.normSq ((second secondEdge.finish - second secondEdge.start) - rightModel) ≤
+    (rightBound : Gaussian.Norm.Basic.normSq ((second secondEdge.finish - second secondEdge.start) - rightModel) ≤
       rightError)
-    (matched : Data.Gaussian.Norm.Basic.normSq (leftModel + rightModel) ≤ mismatch) :
+    (matched : Gaussian.Norm.Basic.normSq (leftModel + rightModel) ≤ mismatch) :
     sample.charge ≤ 4 * (leftError + rightError) + 2 * mismatch := by
   rw [sample.charge_eq, sample.defect_eq_increments, Gaussian.Norm.Basic.normSq_neg]
   let leftGap := (first firstEdge.finish - first firstEdge.start) - leftModel
   let rightGap := (second secondEdge.finish - second secondEdge.start) - rightModel
-  have gaps : Data.Gaussian.Norm.Basic.normSq (leftGap + rightGap) ≤ 2 * (leftError + rightError) :=
+  have gaps : Gaussian.Norm.Basic.normSq (leftGap + rightGap) ≤ 2 * (leftError + rightError) :=
     (Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
       (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add leftBound rightBound) (by decide))
   have equal : (first firstEdge.finish - first firstEdge.start) + (second secondEdge.finish - second secondEdge.start) =
@@ -209,9 +209,9 @@ open Purelib.Topology.Surface.Sewing.VertexSewing.EndpointGluing
 The selected finish endpoint retains precisely the cached defect. Every other
 original right-bank index has zero residual after removing the same translation,
 so the retained norm-square charge bounds both cases. -/
-theorem right_discrepancy (sample : EndpointGluing.PrimitiveSew first second firstEdge secondEdge) (index : Fin
+theorem right_discrepancy (sample : PrimitiveSew first second firstEdge secondEdge) (index : Fin
   secondCount) :
-    Data.Gaussian.Norm.Basic.normSq (sample.values (right firstEdge secondEdge index) - (second index + sample.shift))
+    Gaussian.Norm.Basic.normSq (sample.values (right firstEdge secondEdge index) - (second index + sample.shift))
       ≤ sample.charge
       := by
   rw [sample.right_eq, sample.charge_eq]
@@ -224,9 +224,9 @@ theorem right_discrepancy (sample : EndpointGluing.PrimitiveSew first second fir
 
 /-- The two endpoint corrections are the same cached defect, so their difference costs at most one charge, including
 reversed or degenerate edges. -/
-theorem right_increment (sample : EndpointGluing.PrimitiveSew first second firstEdge secondEdge) (start finish : Fin
+theorem right_increment (sample : PrimitiveSew first second firstEdge secondEdge) (start finish : Fin
   secondCount) :
-    Data.Gaussian.Norm.Basic.normSq ((sample.values (right firstEdge secondEdge finish) - sample.values (right
+    Gaussian.Norm.Basic.normSq ((sample.values (right firstEdge secondEdge finish) - sample.values (right
       firstEdge secondEdge
       start)) -
       (second finish - second start)) ≤ sample.charge := by
@@ -254,7 +254,7 @@ end EndpointGluing
 
 namespace CutPatch.Assembly
 
-variable {vertexCount faceCount : Nat} {faces : Fin faceCount → Stokes.OrientedTriangle vertexCount}
+variable {vertexCount faceCount : Nat} {faces : Fin faceCount → OrientedTriangle vertexCount}
 
 open Purelib.Topology.Surface.Sewing.VertexSewing.EndpointGluing in
 set_option genInjectivity false in
@@ -263,29 +263,29 @@ set_option genInjectivity false in
 Each triangle keeps its supplied reading. Each original sew node retains both
 input certificates together with the exact translation, endpoint mismatch and
 norm-square charge of its selected seam. -/
-inductive Readings (localValues : Fin faceCount → PrimitiveSewing.PrimitiveValues 3) :
-    {indices : List (Fin faceCount)} → {boundary : List (Stokes.OrientedEdge vertexCount)} →
-    {patch : Patch.CutPatch faces indices boundary} → CutPatch.Assembly faces patch → PrimitiveSewing.PrimitiveValues
+inductive Readings (localValues : Fin faceCount → PrimitiveValues 3) :
+    {indices : List (Fin faceCount)} → {boundary : List (OrientedEdge vertexCount)} →
+    {patch : CutPatch faces indices boundary} → Assembly faces patch → PrimitiveValues
       patch.count → Type where
   /-- Retain the supplied primitive of one original triangle assembly. -/ | triangle (index : Fin faceCount) :
-    Purelib.Topology.Surface.Sewing.PrimitiveSewing.CutPatch.Assembly.Readings localValues (.triangle index)
+    Assembly.Readings localValues (.triangle index)
     (localValues index)
   /-- Combine the two original reading certificates using the retained seam primitive and its defect. -/ | sew
     {firstIndices secondIndices : List (Fin faceCount)}
-      {firstBoundary secondBoundary : List (Stokes.OrientedEdge vertexCount)}
-      {first : Patch.CutPatch faces firstIndices firstBoundary} {second : Patch.CutPatch faces secondIndices
+      {firstBoundary secondBoundary : List (OrientedEdge vertexCount)}
+      {first : CutPatch faces firstIndices firstBoundary} {second : CutPatch faces secondIndices
         secondBoundary}
-      {leftAssembly : CutPatch.Assembly faces first} {rightAssembly : CutPatch.Assembly faces second}
-      {firstBase : PolygonStokes.BoundarySplit firstBoundary} {secondBase : PolygonStokes.BoundarySplit secondBoundary}
-      {opposite : secondBase.edge = firstBase.edge.reverse} {seam : CutPatch.Seam first second firstBase secondBase}
-      {leftValues : PrimitiveSewing.PrimitiveValues first.count} {rightValues : PrimitiveSewing.PrimitiveValues
+      {leftAssembly : Assembly faces first} {rightAssembly : Assembly faces second}
+      {firstBase : BoundarySplit firstBoundary} {secondBase : BoundarySplit secondBoundary}
+      {opposite : secondBase.edge = firstBase.edge.reverse} {seam : Seam first second firstBase secondBase}
+      {leftValues : PrimitiveValues first.count} {rightValues : PrimitiveValues
         second.count}
-      (left : Purelib.Topology.Surface.Sewing.PrimitiveSewing.CutPatch.Assembly.Readings localValues leftAssembly
-        leftValues) (right : Purelib.Topology.Surface.Sewing.PrimitiveSewing.CutPatch.Assembly.Readings localValues
+      (left : Assembly.Readings localValues leftAssembly
+        leftValues) (right : Assembly.Readings localValues
         rightAssembly rightValues)
-      (joined : PrimitiveSewing.EndpointGluing.PrimitiveSew leftValues rightValues seam.firstLift.split.edge
+      (joined : EndpointGluing.PrimitiveSew leftValues rightValues seam.firstLift.split.edge
         seam.secondLift.split.edge) :
-      Purelib.Topology.Surface.Sewing.PrimitiveSewing.CutPatch.Assembly.Readings localValues (.sew leftAssembly
+      Assembly.Readings localValues (.sew leftAssembly
         rightAssembly firstBase secondBase opposite seam) joined.values
 
 constructive_injectivity Readings
@@ -294,10 +294,10 @@ namespace Readings
 
 open Purelib.Topology.Surface.Sewing.VertexSewing.EndpointGluing
 /-- Read every original seam charge from the retained assembly reading tree. -/
-def charges {localValues : Fin faceCount → PrimitiveSewing.PrimitiveValues 3} :
-    {indices : List (Fin faceCount)} → {boundary : List (Stokes.OrientedEdge vertexCount)} →
-    {patch : Patch.CutPatch faces indices boundary} → {assembly : CutPatch.Assembly faces patch} →
-    {values : PrimitiveSewing.PrimitiveValues patch.count} → Assembly.Readings localValues assembly values → List
+def charges {localValues : Fin faceCount → PrimitiveValues 3} :
+    {indices : List (Fin faceCount)} → {boundary : List (OrientedEdge vertexCount)} →
+    {patch : CutPatch faces indices boundary} → {assembly : Assembly faces patch} →
+    {values : PrimitiveValues patch.count} → Readings localValues assembly values → List
       Fraction.Rational
   | _, _, _, _, _, .triangle _ => []
   | _, _, _, _, _, .sew left right joined => joined.charge :: (left.charges ++ right.charges)
@@ -307,15 +307,15 @@ def charges {localValues : Fin faceCount → PrimitiveSewing.PrimitiveValues 3} 
 Each original sew node retains one charge before the two unchanged charge
 tails. Their displayed lengths add to the original two face-occurrence counts,
 including the leaf assembly with no join charge. -/
-theorem charges_length {localValues : Fin faceCount → PrimitiveSewing.PrimitiveValues 3}
-    {indices : List (Fin faceCount)} {boundary : List (Stokes.OrientedEdge vertexCount)}
-    {patch : Patch.CutPatch faces indices boundary} {assembly : CutPatch.Assembly faces patch}
-    {values : PrimitiveSewing.PrimitiveValues patch.count} (readings : Assembly.Readings localValues assembly values) :
+theorem charges_length {localValues : Fin faceCount → PrimitiveValues 3}
+    {indices : List (Fin faceCount)} {boundary : List (OrientedEdge vertexCount)}
+    {patch : CutPatch faces indices boundary} {assembly : Assembly faces patch}
+    {values : PrimitiveValues patch.count} (readings : Readings localValues assembly values) :
     readings.charges.length + 1 = indices.length := by
   induction readings with
   | triangle => rfl
   | sew left right joined ihLeft ihRight =>
-      simp only [Readings.charges, List.length_cons, Append.length_append]
+      simp only [charges, List.length_cons, Append.length_append]
       omega
 
 end Readings
@@ -326,12 +326,12 @@ set_option genInjectivity false in
 The assembly-indexed reading certificate owns these exact values. Its ordered
 charge list is cached with an equality to that same retained certificate, so
 readback uses the original seam tree. -/
-structure Sample {indices : List (Fin faceCount)} {boundary : List (Stokes.OrientedEdge vertexCount)}
-    {patch : Patch.CutPatch faces indices boundary} (assembly : CutPatch.Assembly faces patch) (localValues : Fin
-      faceCount → PrimitiveSewing.PrimitiveValues 3) where
-  /-- Cached primitive on the original assembly's cut vertices. -/ values : PrimitiveSewing.PrimitiveValues patch.count
+structure Sample {indices : List (Fin faceCount)} {boundary : List (OrientedEdge vertexCount)}
+    {patch : CutPatch faces indices boundary} (assembly : Assembly faces patch) (localValues : Fin
+      faceCount → PrimitiveValues 3) where
+  /-- Cached primitive on the original assembly's cut vertices. -/ values : PrimitiveValues patch.count
   /-- Retained construction certificate connecting the exact primitive values to the original assembly. -/ readings :
-    Assembly.Readings localValues assembly values
+    Readings localValues assembly values
   /-- Cached complete list of original seam-defect charges. -/ charges : List Fraction.Rational
   /-- The charge cache reads exactly the retained assembly certificate. -/ charges_eq : charges = readings.charges
 
@@ -341,15 +341,15 @@ open Purelib.Topology.Surface.Sewing.PrimitiveSewing.CutPatch.Assembly
   Purelib.Topology.Surface.Sewing.VertexSewing.EndpointGluing in
 /-- Every checked cut assembly has primitive readings. Only local triangle values are requested; compatibility, a
 successful scan, or extra geometry is not a premise. The nonzero mismatches remain available in the result. -/
-def sample (localValues : Fin faceCount → PrimitiveSewing.PrimitiveValues 3) :
-    {indices : List (Fin faceCount)} → {boundary : List (Stokes.OrientedEdge vertexCount)} →
-    {patch : Patch.CutPatch faces indices boundary} → (assembly : CutPatch.Assembly faces patch) → Assembly.Sample
+def sample (localValues : Fin faceCount → PrimitiveValues 3) :
+    {indices : List (Fin faceCount)} → {boundary : List (OrientedEdge vertexCount)} →
+    {patch : CutPatch faces indices boundary} → (assembly : Assembly faces patch) → Sample
       assembly localValues
   | _, _, _, .triangle index => ⟨localValues index, .triangle index, [], rfl⟩
   | _, _, _, .sew left right firstBase secondBase opposite seam =>
       let leftSample := sample localValues left
       let rightSample := sample localValues right
-      let joined := PrimitiveSewing.EndpointGluing.PrimitiveSew.build leftSample.values rightSample.values
+      let joined := EndpointGluing.PrimitiveSew.build leftSample.values rightSample.values
         seam.firstLift.split.edge seam.secondLift.split.edge
         (by apply CutPatch.nonloop; exact seam.secondLift.split.edge_mem)
       ⟨joined.values, .sew leftSample.readings rightSample.readings joined,
@@ -358,20 +358,20 @@ def sample (localValues : Fin faceCount → PrimitiveSewing.PrimitiveValues 3) :
 
 open Purelib.Topology.Surface.Sewing.PrimitiveSewing.CutPatch.Assembly in
 /-- The cached charge list contains one charge per original assembly join. -/
-theorem Sample.charges_length {localValues : Fin faceCount → PrimitiveSewing.PrimitiveValues 3}
-    {indices : List (Fin faceCount)} {boundary : List (Stokes.OrientedEdge vertexCount)}
-    {patch : Patch.CutPatch faces indices boundary} {assembly : CutPatch.Assembly faces patch}
-    (sample : Assembly.Sample assembly localValues) : sample.charges.length + 1 = indices.length := by
+theorem Sample.charges_length {localValues : Fin faceCount → PrimitiveValues 3}
+    {indices : List (Fin faceCount)} {boundary : List (OrientedEdge vertexCount)}
+    {patch : CutPatch faces indices boundary} {assembly : Assembly faces patch}
+    (sample : Sample assembly localValues) : sample.charges.length + 1 = indices.length := by
   rw [sample.charges_eq]
   exact sample.readings.charges_length
 
 end CutPatch.Assembly
 
 /-- Build retained primitive values and seam charges for the exact original sewn patch assembly. -/
-def SewnPatch.primitiveSample {vertexCount faceCount : Nat} {faces : Fin faceCount → Stokes.OrientedTriangle
+def SewnPatch.primitiveSample {vertexCount faceCount : Nat} {faces : Fin faceCount → OrientedTriangle
   vertexCount}
-    (patch : SewingTree.SewnPatch faces) (localValues : Fin faceCount → PrimitiveSewing.PrimitiveValues 3) :
-    PrimitiveSewing.CutPatch.Assembly.Sample patch.assembly localValues := PrimitiveSewing.CutPatch.Assembly.sample
+    (patch : SewnPatch faces) (localValues : Fin faceCount → PrimitiveValues 3) :
+    CutPatch.Assembly.Sample patch.assembly localValues := CutPatch.Assembly.sample
       localValues patch.assembly
 
 end Purelib.Topology.Surface.Sewing.PrimitiveSewing

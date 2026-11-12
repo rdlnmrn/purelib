@@ -111,7 +111,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Approximation.Rational.Budget.Aggregate (perTerm perTerm_positive)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -133,32 +133,32 @@ section
 open Purelib.Curves.Hyperelliptic
 open Purelib.Data.Rat
 /-- The exact original four-period row magnitude identity. -/
-@[expose] def CanonicalRowMagnitudeEq (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired) (first
-  second cycle : Fin genus) (magnitude : Fraction.Rational) : Prop :=
-  magnitude = Meshes.PuncturedGrid.Paired.BilinearRequests.rowMagnitude prepared first second cycle
+@[expose] def CanonicalRowMagnitudeEq (prepared : Prepared paired) (first
+  second cycle : Fin genus) (magnitude : Rational) : Prop :=
+  magnitude = rowMagnitude prepared first second cycle
 
 /-- The retained first-differential canonical A preparation for this original boundary and cycle. -/
-@[expose] def CanonicalRowFirstA (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+@[expose] def CanonicalRowFirstA (prepared : Prepared paired)
     (boundary : BoundaryPreparation preparation first second boundaryTarget radius floor)
-    (cycle : Fin genus) (minimum : Nat) (allowance : Fraction.Rational) :=
+    (cycle : Fin genus) (minimum : Nat) (allowance : Rational) :=
   ACanonicalPreparation prepared boundary.periodGeometry first cycle allowance minimum
 
 /-- The retained second-differential canonical A preparation for this original boundary and cycle. -/
-@[expose] def CanonicalRowSecondA (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+@[expose] def CanonicalRowSecondA (prepared : Prepared paired)
     (boundary : BoundaryPreparation preparation first second boundaryTarget radius floor)
-    (cycle : Fin genus) (minimum : Nat) (allowance : Fraction.Rational) :=
+    (cycle : Fin genus) (minimum : Nat) (allowance : Rational) :=
   ACanonicalPreparation prepared boundary.periodGeometry second cycle allowance minimum
 
 /-- The retained first-differential canonical B preparation for this original boundary and cycle. -/
-@[expose] def CanonicalRowFirstB (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+@[expose] def CanonicalRowFirstB (prepared : Prepared paired)
     (boundary : BoundaryPreparation preparation first second boundaryTarget radius floor)
-    (cycle : Fin genus) (minimum : Nat) (allowance : Fraction.Rational) :=
+    (cycle : Fin genus) (minimum : Nat) (allowance : Rational) :=
   BCanonicalPreparation prepared boundary.periodGeometry first cycle allowance minimum
 
 /-- The retained second-differential canonical B preparation for this original boundary and cycle. -/
-@[expose] def CanonicalRowSecondB (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+@[expose] def CanonicalRowSecondB (prepared : Prepared paired)
     (boundary : BoundaryPreparation preparation first second boundaryTarget radius floor)
-    (cycle : Fin genus) (minimum : Nat) (allowance : Fraction.Rational) :=
+    (cycle : Fin genus) (minimum : Nat) (allowance : Rational) :=
   BCanonicalPreparation prepared boundary.periodGeometry second cycle allowance minimum
 
 end
@@ -171,14 +171,14 @@ set_option genInjectivity false in
 
 The retained magnitude, original boundary and cycle index distinct first/second A/B requests with the same target and
 minimum stage. -/
-structure CanonicalDeterminantRow (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+structure CanonicalDeterminantRow (prepared : Prepared paired)
     (boundary : BoundaryPreparation preparation first second boundaryTarget radius floor)
-    (cycle : Fin genus) (target : Fraction.Rational) (minimum : Nat) : Type 2 where
-  /-- The retained magnitude bound for the original four period samples. -/ magnitude : Fraction.Rational
+    (cycle : Fin genus) (target : Rational) (minimum : Nat) : Type 2 where
+  /-- The retained magnitude bound for the original four period samples. -/ magnitude : Rational
   /-- The magnitude is exactly the original row magnitude. -/ magnitude_eq : CanonicalRowMagnitudeEq prepared first
     second cycle magnitude
   /-- The paid handle-area budget for this original determinant row. -/ budget :
-    Boundary.HandleAreaBudgets.HandleAreaBudget magnitude 1 target
+    HandleAreaBudget magnitude 1 target
   /-- The retained first-differential A preparation. -/ firstA : CanonicalRowFirstA prepared boundary cycle minimum
     budget.rowTarget
   /-- The retained second-differential A preparation. -/ secondA : CanonicalRowSecondA prepared boundary cycle minimum
@@ -202,15 +202,15 @@ open Purelib.Topology.Surface in
 
 The actual row magnitude and positive target determine the handle allowance; all four requests retain the original
 boundary and cycle. -/
-@[expose] def build (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+@[expose] def build (prepared : Prepared paired)
     (boundary : BoundaryPreparation preparation first second boundaryTarget radius floor)
-    (cycle : Fin genus) (target : Fraction.Rational) (positive : 0 < target) (minimum : Nat) :
+    (cycle : Fin genus) (target : Rational) (positive : 0 < target) (minimum : Nat) :
     CanonicalDeterminantRow prepared boundary cycle target minimum :=
-  let nonnegative : 0 ≤ Meshes.PuncturedGrid.Paired.BilinearRequests.rowMagnitude prepared first second cycle :=
+  let nonnegative : 0 ≤ rowMagnitude prepared first second cycle :=
     (prepared.periodData.aProgram first cycle).integral.centerBound_nonneg.trans
       ((Fraction.Order.Basic.le_max_left _ _).trans (Fraction.Order.Basic.le_max_left _ _))
-  let budget := Boundary.HandleAreaBudgets.HandleAreaBudget.build
-    (Meshes.PuncturedGrid.Paired.BilinearRequests.rowMagnitude prepared first second cycle) nonnegative 1 target
+  let budget := HandleAreaBudget.build
+    (rowMagnitude prepared first second cycle) nonnegative 1 target
     positive
   ⟨rowMagnitude prepared first second cycle, rfl, budget, ACanonicalPreparation.build prepared boundary.periodGeometry
     first cycle budget.rowTarget budget.row_positive minimum,
@@ -259,26 +259,26 @@ open Purelib.Topology.Surface in
 Both numerical and period stages must meet their separate maximum floors; the exact A/B order and common row budget
 preserve the original determinant sign. -/
 theorem accurate (data : CanonicalDeterminantRow prepared boundary cycle target minimum)
-    (numericalIndex : Nat) (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics boundary.domains
+    (numericalIndex : Nat) (cache : Numerics boundary.domains
       numericalIndex)
-    (left : Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get first) boundary.lifted.mesh)
-    (right : Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get second) boundary.lifted.mesh)
+    (left : TriangleReadings (cache.get first) boundary.lifted.mesh)
+    (right : TriangleReadings (cache.get second) boundary.lifted.mesh)
     (later : data.numericalIndex ≤ numericalIndex) (stage : Nat) (after : data.periodStage ≤ stage) :
     let incoming := canonicalPeriodSheet (lifted := lifted) (sheet := sheet) boundary.periodGeometry
     let aWord := boundary.lifted.edges.indexedEdges boundary.lifted.vertices
       (boundary.fine.family.single.grid.shrunk.included.resplit (prepared.aWalk cycle).closed.walk
         (lifted.vertices.coordinate_onGrid
-          (Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.anchor lifted sheet))) incoming
+          (BasedBranchBank.anchor lifted sheet))) incoming
     let bWord := boundary.lifted.edges.indexedEdges boundary.lifted.vertices
       (boundary.fine.family.single.grid.shrunk.included.resplit (prepared.bWalk cycle).closed.walk
         (lifted.vertices.coordinate_onGrid
-          (Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.anchor lifted sheet))) incoming
-    let leftValue := Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation boundary.lifted.mesh left.values
-    let rightValue := Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation boundary.lifted.mesh right.values
-    Data.Gaussian.Norm.Basic.normSq ((Sewing.SewingRetraction.wordValue leftValue aWord *
-      Sewing.SewingRetraction.wordValue
+          (BasedBranchBank.anchor lifted sheet))) incoming
+    let leftValue := edgeValuation boundary.lifted.mesh left.values
+    let rightValue := edgeValuation boundary.lifted.mesh right.values
+    normSq ((wordValue leftValue aWord *
+      wordValue
       rightValue bWord -
-      Sewing.SewingRetraction.wordValue leftValue bWord * Sewing.SewingRetraction.wordValue rightValue aWord) -
+      wordValue leftValue bWord * wordValue rightValue aWord) -
       (((prepared.periodData.aProgram first cycle).integral.model stage).integralSample *
         ((prepared.periodData.bProgram second cycle).integral.model stage).integralSample -
        ((prepared.periodData.bProgram first cycle).integral.model stage).integralSample *
@@ -300,22 +300,22 @@ theorem accurate (data : CanonicalDeterminantRow prepared boundary cycle target 
   have secondB := NewtonCanonicalPeriodReadback.BCanonicalPreparation.word_accurate data.secondB
     data.budget.row_positive numericalIndex cache right
     ((Nat.Order.le_max_right _ _).trans bLater) stage ((Nat.Order.le_max_right _ _).trans bAfter)
-  have boundA1 : Basic.Canonical.normSq (((prepared.periodData.aProgram first cycle).integral.model
+  have boundA1 : Canonical.normSq (((prepared.periodData.aProgram first cycle).integral.model
     stage).integralSample) ≤ data.magnitude :=
     ((prepared.periodData.aProgram first cycle).integral.sample_bounded stage).trans
       (((Fraction.Order.Basic.le_max_left _ _).trans (Fraction.Order.Basic.le_max_left _ _)).trans_eq
         data.magnitude_eq.symm)
-  have boundA2 : Basic.Canonical.normSq (((prepared.periodData.aProgram second cycle).integral.model
+  have boundA2 : Canonical.normSq (((prepared.periodData.aProgram second cycle).integral.model
     stage).integralSample) ≤ data.magnitude :=
     ((prepared.periodData.aProgram second cycle).integral.sample_bounded stage).trans
       (((Fraction.Order.Basic.le_max_right _ _).trans (Fraction.Order.Basic.le_max_left _ _)).trans_eq
         data.magnitude_eq.symm)
-  have boundB1 : Basic.Canonical.normSq (((prepared.periodData.bProgram first cycle).integral.model
+  have boundB1 : Canonical.normSq (((prepared.periodData.bProgram first cycle).integral.model
     stage).integralSample) ≤ data.magnitude :=
     ((prepared.periodData.bProgram first cycle).integral.sample_bounded stage).trans
       (((Fraction.Order.Basic.le_max_left _ _).trans (Fraction.Order.Basic.le_max_right _ _)).trans_eq
         data.magnitude_eq.symm)
-  have boundB2 : Basic.Canonical.normSq (((prepared.periodData.bProgram second cycle).integral.model
+  have boundB2 : Canonical.normSq (((prepared.periodData.bProgram second cycle).integral.model
     stage).integralSample) ≤ data.magnitude :=
     ((prepared.periodData.bProgram second cycle).integral.sample_bounded stage).trans
       (((Fraction.Order.Basic.le_max_right _ _).trans (Fraction.Order.Basic.le_max_right _ _)).trans_eq
@@ -325,8 +325,8 @@ theorem accurate (data : CanonicalDeterminantRow prepared boundary cycle target 
       ((prepared.periodData.aProgram second cycle).integral.model stage).integralSample⟩)
     (last := ⟨((prepared.periodData.bProgram first cycle).integral.model stage).integralSample,
       ((prepared.periodData.bProgram second cycle).integral.model stage).integralSample⟩)
-    (changedFirst := ⟨wordValue leftValue aWord, Sewing.SewingRetraction.wordValue rightValue aWord⟩)
-    (changedLast := ⟨wordValue leftValue bWord, Sewing.SewingRetraction.wordValue rightValue bWord⟩)
+    (changedFirst := ⟨wordValue leftValue aWord, wordValue rightValue aWord⟩)
+    (changedLast := ⟨wordValue leftValue bWord, wordValue rightValue bWord⟩)
     data.budget.magnitude_nonnegative
     data.budget.row_positive.le data.budget.row_le_one
     ⟨boundA1, boundA2⟩ ⟨boundB1, boundB2⟩
@@ -335,32 +335,32 @@ theorem accurate (data : CanonicalDeterminantRow prepared boundary cycle target 
         have h := firstA.le
         change Fraction.Order.Basic.LessEqual _ _ at h
         simpa only [aWord, leftValue, incoming,
-          NewtonRequestedBoundary.BoundaryPreparation.periodGeometry,
-          Stokes.PrimitivePoint.sub,
+          BoundaryPreparation.periodGeometry,
+          PrimitivePoint.sub,
           Norm.Basic.normSq_eq_canonical] using h,
       by
         change Fraction.Order.Basic.LessEqual _ _
         have h := secondA.le
         change Fraction.Order.Basic.LessEqual _ _ at h
         simpa only [aWord, rightValue, incoming,
-          NewtonRequestedBoundary.BoundaryPreparation.periodGeometry,
-          Stokes.PrimitivePoint.sub,
+          BoundaryPreparation.periodGeometry,
+          PrimitivePoint.sub,
           Norm.Basic.normSq_eq_canonical] using h⟩
     ⟨by
         change Fraction.Order.Basic.LessEqual _ _
         have h := firstB.le
         change Fraction.Order.Basic.LessEqual _ _ at h
         simpa only [bWord, leftValue, incoming,
-          NewtonRequestedBoundary.BoundaryPreparation.periodGeometry,
-          Stokes.PrimitivePoint.sub,
+          BoundaryPreparation.periodGeometry,
+          PrimitivePoint.sub,
           Norm.Basic.normSq_eq_canonical] using h,
       by
         change Fraction.Order.Basic.LessEqual _ _
         have h := secondB.le
         change Fraction.Order.Basic.LessEqual _ _ at h
         simpa only [bWord, rightValue, incoming,
-          NewtonRequestedBoundary.BoundaryPreparation.periodGeometry,
-          Stokes.PrimitivePoint.sub,
+          BoundaryPreparation.periodGeometry,
+          PrimitivePoint.sub,
           Norm.Basic.normSq_eq_canonical] using h⟩).trans data.paid
 
 end CanonicalDeterminantRow

@@ -83,32 +83,32 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSa
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners (Point)
 open Purelib.Riemann.Periods.PeriodMatrix (standardDifferential)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {covers :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {covers :
+    BasisSourceCovers parent}
+  {index : Nat} {box : Geometry.Rational.Box}
 
 namespace BasisSourceLocations
 
-variable {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge} {model :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell}
-  {parameter : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {anchor :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap model parameter}
+variable {edge : ParameterEdge} {cell :
+  Cell data edge} {model :
+  RootModel cell}
+  {parameter : Coordinate} {anchor :
+    Point cap model parameter}
 
 /-- Transporting a retained reciprocal sample across an exact source-owner equality preserves every scalar pullback
 polynomial evaluation. -/
 private theorem cast_sample_value {row : Fin genus}
-    (first last : SourceRequests.BasisSourceOwner regular anchor row) (equal : first = last)
-    (polynomial : Primitives.Sample cap (PeriodMatrix.standardDifferential row) index box)
-    (sample : ArcSamples.Sample last.comparison polynomial) (point : InverseRootPolynomial.Gaussian) :
-    ((congrArg (fun owner : SourceRequests.BasisSourceOwner regular anchor row =>
+    (first last : BasisSourceOwner regular anchor row) (equal : first = last)
+    (polynomial : Primitives.Sample cap (standardDifferential row) index box)
+    (sample : ArcSamples.Sample last.comparison polynomial) (point : Gaussian) :
+    ((congrArg (fun owner : BasisSourceOwner regular anchor row =>
       ArcSamples.Sample owner.comparison polynomial) equal).mpr sample).pullback.value.eval point =
       sample.pullback.value.eval point := by
   cases equal
@@ -116,43 +116,43 @@ private theorem cast_sample_value {row : Fin genus}
 
 /-- The retained row of a located sample bank evaluates exactly the original source location's cached pullback
 polynomial. -/
-theorem samples_value (locations : SourceLocations.BasisSourceLocations regular anchor covers)
-    (bank : BasisSourceLocations.SampleBank covers index) (polynomials : CapBasisEnergy.RegularBasisPolynomials cap
+theorem samples_value (locations : BasisSourceLocations regular anchor covers)
+    (bank : SampleBank covers index) (polynomials : RegularBasisPolynomials cap
       index box)
-    (row : Fin genus) (point : InverseRootPolynomial.Gaussian) :
+    (row : Fin genus) (point : Gaussian) :
     ((locations.samples bank polynomials).get row).pullback.value.eval point =
       ((locations.get row).sample (bank.get row) (polynomials.get row)).pullback.value.eval point := by
   unfold BasisSourceLocations.samples
   rw [DependentVector.ofFn_get]
-  exact Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPullbackReadback.BasisSourceLocations.cast_sample_value
+  exact cast_sample_value
     _ _ (locations.owners_get row) _ _ point
 
 end BasisSourceLocations
 
 namespace BasisCommonInterval
 
-variable {cover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {edge :
-  Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge} {model :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell}
-  {parameter : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+variable {cover : Cover data} {edge :
+  ParameterEdge} {cell :
+  Cell data edge} {model :
+  RootModel cell}
+  {parameter : Coordinate}
 
 /-- Changing the root-reading anchor does not resample the interval's retained source cells or change their pullback
 polynomial values. -/
-theorem locations_sample_value (interval : CommonCover.BasisCommonInterval cover covers)
-    (regular : RegularBounds.Data cap) (anchor : ArcOwners.Point cap model parameter)
+theorem locations_sample_value (interval : BasisCommonInterval cover covers)
+    (regular : RegularBounds.Data cap) (anchor : Point cap model parameter)
     (between : interval.edge.left.parameter ≤ parameter ∧ parameter ≤ interval.edge.right.parameter)
-    (bank : BasisSourceLocations.SampleBank covers index) (polynomials : CapBasisEnergy.RegularBasisPolynomials cap
+    (bank : SampleBank covers index) (polynomials : RegularBasisPolynomials cap
       index box)
-    (row : Fin genus) (point : InverseRootPolynomial.Gaussian) :
-    (((Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval.locations interval
+    (row : Fin genus) (point : Gaussian) :
+    (((BasisCommonInterval.locations interval
       regular anchor between).samples bank polynomials).get row).pullback.value.eval point =
 
-        (((CommonPrimitiveSamples.BasisCommonInterval.comparisonLocations
+        (((comparisonLocations
         interval regular).samples bank polynomials).get row).pullback.value.eval point := by
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPullbackReadback.BasisSourceLocations.samples_value,
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPullbackReadback.BasisSourceLocations.samples_value]
-  unfold BasisCommonInterval.locations BasisCommonInterval.comparisonLocations
+  rw [BasisSourceLocations.samples_value,
+    BasisSourceLocations.samples_value]
+  unfold BasisCommonInterval.locations comparisonLocations
   rw [DependentVector.ofFn_get]
   unfold BasisCommonInterval.locations
   rw [DependentVector.ofFn_get]

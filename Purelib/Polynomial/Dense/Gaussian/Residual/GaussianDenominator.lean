@@ -59,8 +59,8 @@ fraction. -/
 def residualNumerator (p :
   CoefficientPolynomial) (fraction : GaussianInt.Fraction) :
     GaussianInt :=
-  Dense.GaussianInt.Evaluation.Homogeneous.homogeneousEval fraction.numerator fraction.denominator
-    (Dense.Gaussian.Denominator.Clearing.LCM.lcmClear p.normalize.coeffs).coefficients
+  GaussianInt.Evaluation.Homogeneous.homogeneousEval fraction.numerator fraction.denominator
+    (Clearing.LCM.lcmClear p.normalize.coeffs).coefficients
 
 /-- Homogeneous integer residual readback retains the exact cleared polynomial evaluation.
 
@@ -71,34 +71,34 @@ theorem residualNumerator_identity
     (fraction : GaussianInt.Fraction) :
     GaussianInt.toGaussian (residualNumerator p fraction) =
       GaussianInt.toGaussian fraction.denominator ^ p.natDegree *
-        (⟨(Dense.Gaussian.Denominator.Clearing.coefficientScale p : Fraction.Rational), 0⟩ *
+        (⟨(Clearing.coefficientScale p : Fraction.Rational), 0⟩ *
           p.eval fraction.value) := by
   obtain ⟨tail, coefficients, tailLength⟩ :=
     DensePolynomial.normalized_coeffs_shape nonzero
   unfold residualNumerator
-    Dense.Gaussian.Denominator.Clearing.coefficientScale
+    Clearing.coefficientScale
   rw [show p.normalize.coeffs = p.leadingCoeff :: tail from coefficients]
-  rw [show (Dense.Gaussian.Denominator.Clearing.LCM.lcmClear
+  rw [show (Clearing.LCM.lcmClear
       (p.leadingCoeff :: tail)).coefficients =
         Gaussian.Fraction.NaturalDenominator.ScaledNumerator.scaledGaussianCoefficient
-            (Dense.Gaussian.Denominator.Clearing.LCM.lcmScale (p.leadingCoeff :: tail))
+            (Clearing.LCM.lcmScale (p.leadingCoeff :: tail))
             p.leadingCoeff ::
           tail.map (Gaussian.Fraction.NaturalDenominator.ScaledNumerator.scaledGaussianCoefficient
-            (Dense.Gaussian.Denominator.Clearing.LCM.lcmScale (p.leadingCoeff :: tail)))
+            (Clearing.LCM.lcmScale (p.leadingCoeff :: tail)))
     from rfl]
-  rw [Dense.GaussianInt.Evaluation.Homogeneous.homogeneousEval_cons_eq_scaled]
+  rw [GaussianInt.Evaluation.Homogeneous.homogeneousEval_cons_eq_scaled]
   have remainingLength :
       (tail.map (Gaussian.Fraction.NaturalDenominator.ScaledNumerator.scaledGaussianCoefficient
-        (Dense.Gaussian.Denominator.Clearing.LCM.lcmScale
+        (Clearing.LCM.lcmScale
           (p.leadingCoeff :: tail)))).length = p.natDegree := by
     exact (Map.length_map _ tail).trans tailLength
   rw [remainingLength]
   change
     GaussianInt.toGaussian fraction.denominator ^ p.natDegree *
-        Dense.GaussianInt.Evaluation.evalIntegers fraction.value
-          (Dense.Gaussian.Denominator.Clearing.LCM.lcmClear
+        GaussianInt.Evaluation.evalIntegers fraction.value
+          (Clearing.LCM.lcmClear
             (p.leadingCoeff :: tail)).coefficients = _
-  rw [Dense.Gaussian.Denominator.Clearing.LCM.eval_lcmClear]
+  rw [Clearing.LCM.eval_lcmClear]
   rw [← DensePolynomial.eval_normalize]
   unfold DensePolynomial.eval
   rw [coefficients]
@@ -112,30 +112,30 @@ identity. -/
 theorem scaled_height_mul_residual_eq_normNat
     (p : CoefficientPolynomial) (nonzero : p.isZero = false)
     (fraction : GaussianInt.Fraction) :
-    (Dense.Gaussian.Denominator.Clearing.coefficientScale p : Fraction.Rational) ^ 2 *
+    (Clearing.coefficientScale p : Fraction.Rational) ^ 2 *
           (fraction.height : Fraction.Rational) ^ p.natDegree *
-        Data.Gaussian.Norm.Basic.normSq (p.eval fraction.value) =
+        Gaussian.Norm.Basic.normSq (p.eval fraction.value) =
       (GaussianInt.normNat (residualNumerator p fraction) :
         Fraction.Rational) := by
   have denominatorNorm :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian fraction.denominator) =
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian fraction.denominator) =
         (fraction.height : Fraction.Rational) := by
     exact GaussianInt.normSq_toGaussian fraction.denominator
   have scaleNorm :
-      Data.Gaussian.Norm.Basic.normSq
-          (⟨(Dense.Gaussian.Denominator.Clearing.coefficientScale p : Fraction.Rational), 0⟩ :
+      Gaussian.Norm.Basic.normSq
+          (⟨(Clearing.coefficientScale p : Fraction.Rational), 0⟩ :
             Gaussian.Basic.Canonical) =
-        (Dense.Gaussian.Denominator.Clearing.coefficientScale p : Fraction.Rational) ^ 2 := by
+        (Clearing.coefficientScale p : Fraction.Rational) ^ 2 := by
     change
-      (Dense.Gaussian.Denominator.Clearing.coefficientScale p : Fraction.Rational) ^ 2 + 0 ^ 2 = _
-    rw [pow_two (0 : Rat.Fraction.Rational), zero_mul, add_zero]
+      (Clearing.coefficientScale p : Fraction.Rational) ^ 2 + 0 ^ 2 = _
+    rw [pow_two (0 : Fraction.Rational), zero_mul, add_zero]
   rw [← GaussianInt.normSq_toGaussian, residualNumerator_identity p nonzero
     fraction,
     Gaussian.Norm.Basic.normSq_mul, Gaussian.Norm.Basic.normSq_mul, Gaussian.Power.normSq_pow, denominatorNorm,
       scaleNorm]
   rw [mul_comm
-    ((Dense.Gaussian.Denominator.Clearing.coefficientScale p : Rat.Fraction.Rational) ^ 2)
-    ((fraction.height : Rat.Fraction.Rational) ^ p.natDegree), mul_assoc]
+    ((Clearing.coefficientScale p : Fraction.Rational) ^ 2)
+    ((fraction.height : Fraction.Rational) ^ p.natDegree), mul_assoc]
 
 /-- A nonzero polynomial evaluation gives a nonzero integral residual numerator. -/
 theorem residualNumerator_ne_zero
@@ -149,9 +149,9 @@ theorem residualNumerator_ne_zero
     fraction]
     at embeddedZero
   have denominatorNonzero := fraction.denominatorGaussianNonzero
-  have scalePositive := Dense.Gaussian.Denominator.Clearing.coefficientScale_pos p
+  have scalePositive := Clearing.coefficientScale_pos p
   have scaleNonzero :
-      (⟨(Dense.Gaussian.Denominator.Clearing.coefficientScale p : Fraction.Rational), 0⟩ :
+      (⟨(Clearing.coefficientScale p : Fraction.Rational), 0⟩ :
         Gaussian.Basic.Canonical) ≠ 0 := by
     intro zero
     have realZero := congrArg Gaussian.Basic.re zero
@@ -171,9 +171,9 @@ theorem one_le_scaled_height_mul_residual
     (fraction : GaussianInt.Fraction)
     (residualNonzero : p.eval fraction.value ≠ 0) :
     (1 : Fraction.Rational) ≤
-      (Dense.Gaussian.Denominator.Clearing.coefficientScale p : Fraction.Rational) ^ 2 *
+      (Clearing.coefficientScale p : Fraction.Rational) ^ 2 *
         (fraction.height : Fraction.Rational) ^ p.natDegree *
-          Data.Gaussian.Norm.Basic.normSq (p.eval fraction.value) := by
+          Gaussian.Norm.Basic.normSq (p.eval fraction.value) := by
   have numeratorPositive := GaussianInt.normNat_pos
     (residualNumerator_ne_zero p nonzero fraction residualNonzero)
   have castLower : (1 : Fraction.Rational) ≤

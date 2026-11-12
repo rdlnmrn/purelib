@@ -30,6 +30,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.CCL.Encoding (Block)
 open Purelib.Data.CCL.Encoding.Cylinder.Basic (Realizes)
 
@@ -56,11 +58,11 @@ open Purelib.Measure in
 /-- Enclose squared mean error between zero and the original expected probe radius squared. -/
 def prefixFamilyProbeMeanSquareErrorBound
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
-    (factor : Fraction.Rational) : Data.Rat.Interval where
+      Distribution Cylinder.CompletedPrefixCertificate)
+    (factor : Fraction.Rational) : Interval where
   lower := 0
-  upper := CCL.Prefix.prefixFamilyProbeRadius distribution factor ^ 2
-  valid := Fraction.Order.Arithmetic.sq_nonneg_direct _
+  upper := prefixFamilyProbeRadius distribution factor ^ 2
+  valid := Arithmetic.sq_nonneg_direct _
 
 open Purelib.Data.CCL.Encoding in
 open Purelib.Data.Rat in
@@ -69,7 +71,7 @@ open Purelib.Measure in
 /-- The squared mean-error enclosure contains the squared difference from the retained witness expectation. -/
 theorem prefixFamilyProbeMeanSquareErrorBound_contains
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
     (sensitive : ∀ left right,
@@ -80,14 +82,14 @@ theorem prefixFamilyProbeMeanSquareErrorBound_contains
       Realizes atom.item.blocks (points atom.item)) :
     (prefixFamilyProbeMeanSquareErrorBound distribution factor).Contains
       (((distribution.expectation fun certificate => probe (points certificate)) -
-        CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) ^ 2) := by
+        prefixFamilyProbeWitnessExpectation distribution probe) ^ 2) := by
   have separationLe :=
-    CCL.Prefix.prefixFamilyProbe_expectation_separation_witness_le distribution probe
+    prefixFamilyProbe_expectation_separation_witness_le distribution probe
       factor factorNonnegative sensitive points pointsRealize
-  have powered := Fraction.Order.Arithmetic.pow_le_pow_direct
+  have powered := Arithmetic.pow_le_pow_direct
     (Distance.rationalSeparation_nonneg _ _) separationLe 2
   rw [Distance.NaturalLp.rationalSeparation_sq] at powered
-  exact ⟨Fraction.Order.Arithmetic.sq_nonneg_direct _, powered⟩
+  exact ⟨Arithmetic.sq_nonneg_direct _, powered⟩
 
 section
 open Purelib.Data
@@ -101,7 +103,7 @@ The same original certificate distribution supplies both terms, with separate me
 factors. -/
 def prefixFamilyProbeCenteredVarianceBound
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational)
     (meanFactor : Fraction.Rational)
     (deviationFactor : Fraction.Rational)
@@ -109,20 +111,20 @@ def prefixFamilyProbeCenteredVarianceBound
     (deviationSensitive : ∀ left right,
       Distance.rationalSeparation
           (Function.Rat.poweredDeviationProbe probe
-            (CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) 2 left)
+            (prefixFamilyProbeWitnessExpectation distribution probe) 2 left)
           (Function.Rat.poweredDeviationProbe probe
-            (CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) 2 right) ≤
+            (prefixFamilyProbeWitnessExpectation distribution probe) 2 right) ≤
         deviationFactor * Chordal.Basic.chordalSq left right) :
-    Data.Rat.Interval :=
-  (CCL.Prefix.prefixFamilyProbePoweredDeviationBound distribution probe
-    (CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) 2
+    Interval :=
+  (prefixFamilyProbePoweredDeviationBound distribution probe
+    (prefixFamilyProbeWitnessExpectation distribution probe) 2
     deviationFactor deviationFactorNonnegative deviationSensitive).sub
   (prefixFamilyProbeMeanSquareErrorBound distribution meanFactor)
 
 /-- The centered variance enclosure contains every probe variance realized by the retained prefixes. -/
 theorem prefixFamilyProbeCenteredVarianceBound_contains
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational)
     (meanFactor : Fraction.Rational) (meanFactorNonnegative : 0 ≤ meanFactor)
     (meanSensitive : ∀ left right,
@@ -133,9 +135,9 @@ theorem prefixFamilyProbeCenteredVarianceBound_contains
     (deviationSensitive : ∀ left right,
       Distance.rationalSeparation
           (Function.Rat.poweredDeviationProbe probe
-            (CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) 2 left)
+            (prefixFamilyProbeWitnessExpectation distribution probe) 2 left)
           (Function.Rat.poweredDeviationProbe probe
-            (CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) 2 right) ≤
+            (prefixFamilyProbeWitnessExpectation distribution probe) 2 right) ≤
         deviationFactor * Chordal.Basic.chordalSq left right)
     (points : Cylinder.CompletedPrefixCertificate → Line.GaussianLine)
     (pointsRealize : ∀ atom, atom ∈ distribution.atoms →
@@ -144,14 +146,14 @@ theorem prefixFamilyProbeCenteredVarianceBound_contains
       deviationFactor deviationFactorNonnegative
       deviationSensitive).Contains
       (distribution.variance fun certificate => probe (points certificate)) := by
-  let center := CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe
+  let center := prefixFamilyProbeWitnessExpectation distribution probe
   let value := fun certificate => probe (points certificate)
   have deviationInside :=
-    CCL.Prefix.prefixFamilyProbePoweredDeviationBound_contains distribution probe center 2
+    prefixFamilyProbePoweredDeviationBound_contains distribution probe center 2
       deviationFactor deviationFactorNonnegative deviationSensitive points
       pointsRealize
   have varianceAroundInside :
-      (CCL.Prefix.prefixFamilyProbePoweredDeviationBound distribution probe center 2
+      (prefixFamilyProbePoweredDeviationBound distribution probe center 2
         deviationFactor deviationFactorNonnegative deviationSensitive).Contains
         (distribution.varianceAround value center) := by
     rw [distribution.varianceAround_eq_poweredL2Distance_constant,
@@ -174,7 +176,7 @@ theorem prefixFamilyProbeCenteredVarianceBound_contains
 /-- Centered variance width equals the deviation enclosure's width plus the expected mean radius squared. -/
 theorem prefixFamilyProbeCenteredVarianceBound_width
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational)
     (meanFactor : Fraction.Rational)
     (deviationFactor : Fraction.Rational)
@@ -182,44 +184,44 @@ theorem prefixFamilyProbeCenteredVarianceBound_width
     (deviationSensitive : ∀ left right,
       Distance.rationalSeparation
           (Function.Rat.poweredDeviationProbe probe
-            (CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) 2 left)
+            (prefixFamilyProbeWitnessExpectation distribution probe) 2 left)
           (Function.Rat.poweredDeviationProbe probe
-            (CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) 2 right) ≤
+            (prefixFamilyProbeWitnessExpectation distribution probe) 2 right) ≤
         deviationFactor * Chordal.Basic.chordalSq left right) :
     (prefixFamilyProbeCenteredVarianceBound distribution probe meanFactor
       deviationFactor deviationFactorNonnegative
       deviationSensitive).width =
-      (CCL.Prefix.prefixFamilyProbePoweredDeviationBound distribution probe
-        (CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) 2
+      (prefixFamilyProbePoweredDeviationBound distribution probe
+        (prefixFamilyProbeWitnessExpectation distribution probe) 2
         deviationFactor deviationFactorNonnegative deviationSensitive).width +
-      CCL.Prefix.prefixFamilyProbeRadius distribution meanFactor ^ 2 := by
+      prefixFamilyProbeRadius distribution meanFactor ^ 2 := by
   unfold prefixFamilyProbeCenteredVarianceBound
   rw [Interval.sub_width]
-  change _ + (CCL.Prefix.prefixFamilyProbeRadius distribution meanFactor ^ 2 - 0) = _
+  change _ + (prefixFamilyProbeRadius distribution meanFactor ^ 2 - 0) = _
   ring1
 
 /-- Separate strict half-target deviation and squared-mean budgets make the variance enclosure narrower than the target.
 -/
 theorem prefixFamilyProbeCenteredVarianceBound_width_lt_of_budgets
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational)
     (meanFactor deviationFactor : Fraction.Rational)
     (deviationFactorNonnegative : 0 ≤ deviationFactor)
     (deviationSensitive : ∀ left right,
       Distance.rationalSeparation
           (Function.Rat.poweredDeviationProbe probe
-            (CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) 2 left)
+            (prefixFamilyProbeWitnessExpectation distribution probe) 2 left)
           (Function.Rat.poweredDeviationProbe probe
-            (CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) 2 right) ≤
+            (prefixFamilyProbeWitnessExpectation distribution probe) 2 right) ≤
         deviationFactor * Chordal.Basic.chordalSq left right)
     (target : Fraction.Rational)
     (deviationBudget :
-      (CCL.Prefix.prefixFamilyProbePoweredDeviationBound distribution probe
-        (CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) 2
+      (prefixFamilyProbePoweredDeviationBound distribution probe
+        (prefixFamilyProbeWitnessExpectation distribution probe) 2
         deviationFactor deviationFactorNonnegative deviationSensitive).width <
           target / 2)
-    (meanBudget : CCL.Prefix.prefixFamilyProbeRadius distribution meanFactor ^ 2 <
+    (meanBudget : prefixFamilyProbeRadius distribution meanFactor ^ 2 <
       target / 2) :
     (prefixFamilyProbeCenteredVarianceBound distribution probe meanFactor
       deviationFactor deviationFactorNonnegative deviationSensitive).width <
@@ -227,7 +229,7 @@ theorem prefixFamilyProbeCenteredVarianceBound_width_lt_of_budgets
   rw [prefixFamilyProbeCenteredVarianceBound_width]
   calc
     _ < target / 2 + target / 2 :=
-      Fraction.Order.Arithmetic.add_lt_add_direct deviationBudget meanBudget
+      Arithmetic.add_lt_add_direct deviationBudget meanBudget
     _ = (target / 2) * 2 := by ring1
     _ = target :=
       Fraction.Field.div_mul_cancel_of_ne target 2 (by decide)
@@ -240,12 +242,12 @@ open Purelib.Measure in
 /-- Enclose squared mean error using the expected radius after the retained suffix extensions. -/
 def extendedPrefixFamilyProbeMeanSquareErrorBound
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (suffix : Cylinder.CompletedPrefixCertificate → List Block)
-    (factor : Fraction.Rational) : Data.Rat.Interval where
+    (factor : Fraction.Rational) : Interval where
   lower := 0
-  upper := CCL.Prefix.extendedPrefixFamilyProbeRadius distribution suffix factor ^ 2
-  valid := Fraction.Order.Arithmetic.sq_nonneg_direct _
+  upper := extendedPrefixFamilyProbeRadius distribution suffix factor ^ 2
+  valid := Arithmetic.sq_nonneg_direct _
 
 open Purelib.Data.CCL.Encoding in
 open Purelib.Data.Rat in
@@ -255,7 +257,7 @@ open Purelib.Measure in
 realization. -/
 theorem extendedPrefixFamilyProbeMeanSquareErrorBound_contains
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (suffix : Cylinder.CompletedPrefixCertificate → List Block)
     (extendedRealizes : ∀ certificate,
       Realizes
@@ -272,11 +274,11 @@ theorem extendedPrefixFamilyProbeMeanSquareErrorBound_contains
     (extendedPrefixFamilyProbeMeanSquareErrorBound distribution suffix factor)
       |>.Contains
         (((distribution.expectation fun certificate => probe (points certificate)) -
-          CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) ^ 2) := by
+          prefixFamilyProbeWitnessExpectation distribution probe) ^ 2) := by
   have l1Bound : distribution.l1Distance
       (fun certificate => probe (points certificate))
       (fun certificate => probe certificate.witness) ≤
-      CCL.Prefix.extendedPrefixFamilyProbeRadius distribution suffix factor := by
+      extendedPrefixFamilyProbeRadius distribution suffix factor := by
     change distribution.expectation (fun certificate =>
         Distance.rationalSeparation
           (probe (points certificate)) (probe certificate.witness)) ≤
@@ -290,10 +292,10 @@ theorem extendedPrefixFamilyProbeMeanSquareErrorBound_contains
     (distribution.expectation_separation_le_l1Distance
       (fun certificate => probe (points certificate))
       (fun certificate => probe certificate.witness)).trans l1Bound
-  have powered := Fraction.Order.Arithmetic.pow_le_pow_direct
+  have powered := Arithmetic.pow_le_pow_direct
     (Distance.rationalSeparation_nonneg _ _) separationLe 2
   rw [Distance.NaturalLp.rationalSeparation_sq] at powered
-  exact ⟨Fraction.Order.Arithmetic.sq_nonneg_direct _, powered⟩
+  exact ⟨Arithmetic.sq_nonneg_direct _, powered⟩
 
 open Purelib.Data.CCL.Encoding in
 open Purelib.Data.Rat in
@@ -301,7 +303,7 @@ open Purelib.Measure in
 /-- Suffix extension refines the squared mean-error enclosure for a nonnegative sensitivity factor. -/
 theorem extendedPrefixFamilyProbeMeanSquareErrorBound_refines
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (suffix : Cylinder.CompletedPrefixCertificate → List Block)
     (factor : Fraction.Rational) (factorNonnegative : 0 ≤ factor) :
     Interval.Refines
@@ -309,10 +311,10 @@ theorem extendedPrefixFamilyProbeMeanSquareErrorBound_refines
       (prefixFamilyProbeMeanSquareErrorBound distribution factor) := by
   constructor
   · exact le_rfl
-  · exact Fraction.Order.Arithmetic.pow_le_pow_direct
-      (CCL.Prefix.extendedPrefixFamilyProbeRadius_nonnegative distribution suffix factor
+  · exact Arithmetic.pow_le_pow_direct
+      (extendedPrefixFamilyProbeRadius_nonnegative distribution suffix factor
         factorNonnegative)
-      (CCL.Prefix.extendedPrefixFamilyProbeRadius_le distribution suffix factor
+      (extendedPrefixFamilyProbeRadius_le distribution suffix factor
         factorNonnegative)
       2
 
@@ -324,7 +326,7 @@ open Purelib.Measure
 /-- Construct the centered variance enclosure after suffix extension while retaining the original witness mean. -/
 def extendedPrefixFamilyProbeCenteredVarianceBound
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (suffix : Cylinder.CompletedPrefixCertificate → List Block)
     (extendedRealizes : ∀ certificate,
       Realizes
@@ -335,22 +337,22 @@ def extendedPrefixFamilyProbeCenteredVarianceBound
     (deviationSensitive : ∀ left right,
       Distance.rationalSeparation
           (Function.Rat.poweredDeviationProbe probe
-            (CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) 2 left)
+            (prefixFamilyProbeWitnessExpectation distribution probe) 2 left)
           (Function.Rat.poweredDeviationProbe probe
-            (CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) 2 right) ≤
+            (prefixFamilyProbeWitnessExpectation distribution probe) 2 right) ≤
         deviationFactor * Chordal.Basic.chordalSq left right) :
-    Data.Rat.Interval :=
-  (CCL.Prefix.extendedPrefixFamilyProbeExpectationBound distribution suffix
+    Interval :=
+  (extendedPrefixFamilyProbeExpectationBound distribution suffix
     extendedRealizes
     (Function.Rat.poweredDeviationProbe probe
-      (CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) 2)
+      (prefixFamilyProbeWitnessExpectation distribution probe) 2)
     deviationFactor deviationFactorNonnegative deviationSensitive).sub
   (extendedPrefixFamilyProbeMeanSquareErrorBound distribution suffix meanFactor)
 
 /-- The extended centered enclosure contains the variance of every realization of the exact extended blocks. -/
 theorem extendedPrefixFamilyProbeCenteredVarianceBound_contains
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (suffix : Cylinder.CompletedPrefixCertificate → List Block)
     (extendedRealizes : ∀ certificate,
       Realizes
@@ -365,9 +367,9 @@ theorem extendedPrefixFamilyProbeCenteredVarianceBound_contains
     (deviationSensitive : ∀ left right,
       Distance.rationalSeparation
           (Function.Rat.poweredDeviationProbe probe
-            (CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) 2 left)
+            (prefixFamilyProbeWitnessExpectation distribution probe) 2 left)
           (Function.Rat.poweredDeviationProbe probe
-            (CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) 2 right) ≤
+            (prefixFamilyProbeWitnessExpectation distribution probe) 2 right) ≤
         deviationFactor * Chordal.Basic.chordalSq left right)
     (points : Cylinder.CompletedPrefixCertificate → Line.GaussianLine)
     (pointsRealize : ∀ atom, atom ∈ distribution.atoms →
@@ -377,14 +379,14 @@ theorem extendedPrefixFamilyProbeCenteredVarianceBound_contains
       extendedRealizes probe meanFactor deviationFactor
       deviationFactorNonnegative deviationSensitive).Contains
       (distribution.variance fun certificate => probe (points certificate)) := by
-  let center := CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe
+  let center := prefixFamilyProbeWitnessExpectation distribution probe
   let value := fun certificate => probe (points certificate)
   have deviationInside :=
-    CCL.Prefix.extendedPrefixFamilyProbeExpectationBound_contains distribution suffix
+    extendedPrefixFamilyProbeExpectationBound_contains distribution suffix
       extendedRealizes (Function.Rat.poweredDeviationProbe probe center 2) deviationFactor
       deviationFactorNonnegative deviationSensitive points pointsRealize
   have varianceAroundInside :
-      (CCL.Prefix.extendedPrefixFamilyProbeExpectationBound distribution suffix
+      (extendedPrefixFamilyProbeExpectationBound distribution suffix
         extendedRealizes (Function.Rat.poweredDeviationProbe probe center 2)
         deviationFactor deviationFactorNonnegative deviationSensitive).Contains
         (distribution.varianceAround value center) := by
@@ -409,7 +411,7 @@ theorem extendedPrefixFamilyProbeCenteredVarianceBound_contains
 /-- Suffix extension refines both terms of the original centered variance enclosure. -/
 theorem extendedPrefixFamilyProbeCenteredVarianceBound_refines
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (suffix : Cylinder.CompletedPrefixCertificate → List Block)
     (extendedRealizes : ∀ certificate,
       Realizes
@@ -421,9 +423,9 @@ theorem extendedPrefixFamilyProbeCenteredVarianceBound_refines
     (deviationSensitive : ∀ left right,
       Distance.rationalSeparation
           (Function.Rat.poweredDeviationProbe probe
-            (CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) 2 left)
+            (prefixFamilyProbeWitnessExpectation distribution probe) 2 left)
           (Function.Rat.poweredDeviationProbe probe
-            (CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) 2 right) ≤
+            (prefixFamilyProbeWitnessExpectation distribution probe) 2 right) ≤
         deviationFactor * Chordal.Basic.chordalSq left right) :
     Interval.Refines
       (extendedPrefixFamilyProbeCenteredVarianceBound distribution suffix
@@ -432,10 +434,10 @@ theorem extendedPrefixFamilyProbeCenteredVarianceBound_refines
       (prefixFamilyProbeCenteredVarianceBound distribution probe meanFactor
         deviationFactor deviationFactorNonnegative deviationSensitive) := by
   apply Interval.Refines.sub
-  · exact CCL.Prefix.extendedPrefixFamilyProbeExpectationBound_refines distribution
+  · exact extendedPrefixFamilyProbeExpectationBound_refines distribution
       suffix extendedRealizes
       (Function.Rat.poweredDeviationProbe probe
-        (CCL.Prefix.prefixFamilyProbeWitnessExpectation distribution probe) 2)
+        (prefixFamilyProbeWitnessExpectation distribution probe) 2)
       deviationFactor deviationFactorNonnegative deviationSensitive
   · exact extendedPrefixFamilyProbeMeanSquareErrorBound_refines distribution
       suffix meanFactor meanFactorNonnegative

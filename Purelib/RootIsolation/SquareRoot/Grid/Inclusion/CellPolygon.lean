@@ -41,13 +41,14 @@ variable {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient : Box} {o
 
 /-- The four monotone sides retain their actual sheets and order; the top
 and left sides use the existing certified reverse transport. -/
-theorem cell_boundary_comparison (cell : Geometry.Grid.ClearGrid.Cell polynomial ambient) (member : cell ∈
+theorem cell_boundary_comparison_anchored (cell : Geometry.Grid.ClearGrid.Cell polynomial ambient) (member : cell ∈
   original.cells)
     (window : WindowBoundary.Window grid cell.box)
     {frames : RootIsolation.SquareRoot.Grid.RootFrames grid} (edges : SquareRoot.Grid.RootEdgeBank frames)
       (vertices : SquareRoot.Grid.LiftedVertices.VertexBank grid)
-    (reference : ∀ point, FromStates.ContainsVertex grid point →
-      Riemann.Paths.OwnerLoopMonodromy.WindingOneLoop polynomial point) :
+    {anchor : Data.Gaussian.Basic.Canonical}
+    (reference : Riemann.Paths.OwnerLoopMonodromy.WindingOneLoop polynomial anchor)
+    (anchorMember : FromStates.ContainsVertex grid anchor) :
     SquareRoot.Grid.RootEdgeBank.ChainComparison edges vertices (included.resplit
       (Geometry.Grid.CellBoundary.Cell.boundaryWalk cell member) (Geometry.Grid.ClearGrid.Cell.anchor_mem cell member))
       window.boundary := by
@@ -72,7 +73,7 @@ theorem cell_boundary_comparison (cell : Geometry.Grid.ClearGrid.Cell polynomial
     (Data.List.Map.mem_map_of_mem xEnds.2) window.x window.top
   have leftEq := included.resplit_verticalIncreasing cell.horizontal.lower xEnds.1 y
     (Data.List.Map.mem_map_of_mem yEnds.2) window.y window.left
-  have compared := included.resplit_rectangle edges vertices reference bottom right top left
+  have compared := included.resplit_rectangle_anchored edges vertices reference anchorMember bottom right top left
     (Geometry.Grid.ClearGrid.Cell.anchor_mem cell member)
     ⟨Data.List.Map.mem_map_of_mem xEnds.2, Data.List.Map.mem_map_of_mem yEnds.1⟩
     ⟨Data.List.Map.mem_map_of_mem xEnds.1, Data.List.Map.mem_map_of_mem yEnds.2⟩
@@ -84,5 +85,21 @@ theorem cell_boundary_comparison (cell : Geometry.Grid.ClearGrid.Cell polynomial
       ((included.resplit top _).reverse.append (included.resplit left _).reverse))) at compared
   rw [bottomEq, rightEq, topEq, leftEq] at compared
   exact compared
+
+/-- The four monotone sides retain their actual sheets and order; the top
+and left sides use the existing certified reverse transport. -/
+theorem cell_boundary_comparison (cell : Geometry.Grid.ClearGrid.Cell polynomial ambient) (member : cell ∈
+  original.cells)
+    (window : WindowBoundary.Window grid cell.box)
+    {frames : RootIsolation.SquareRoot.Grid.RootFrames grid} (edges : SquareRoot.Grid.RootEdgeBank frames)
+      (vertices : SquareRoot.Grid.LiftedVertices.VertexBank grid)
+    (reference : ∀ point, FromStates.ContainsVertex grid point →
+      Riemann.Paths.OwnerLoopMonodromy.WindingOneLoop polynomial point) :
+    SquareRoot.Grid.RootEdgeBank.ChainComparison edges vertices (included.resplit
+      (Geometry.Grid.CellBoundary.Cell.boundaryWalk cell member) (Geometry.Grid.ClearGrid.Cell.anchor_mem cell member))
+      window.boundary :=
+  included.cell_boundary_comparison_anchored cell member window edges vertices
+    (reference cell.box.anchor (included.vertex (ClearGrid.Cell.anchor_mem cell member)))
+    (included.vertex (ClearGrid.Cell.anchor_mem cell member))
 
 end Purelib.Polynomial.Geometry.Grid.Extension.CoordinateInclusion

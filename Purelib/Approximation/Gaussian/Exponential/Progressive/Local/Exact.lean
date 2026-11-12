@@ -22,6 +22,8 @@ import Purelib.Data.Rat.Fraction
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Data.Gaussian.Norm
+
 namespace Purelib.Approximation.Gaussian.Exponential.Progressive.Local.Exact
 
 open Purelib
@@ -52,36 +54,36 @@ assert that a completed exponential or logarithm value has been selected.
 
 /-- The progressive local-exponential approximation at an exact Gaussian input in the unit disk. -/
 @[expose] def exactLocalExpApproximation (value : Data.Gaussian.Basic.Canonical)
-    (unit : Data.Gaussian.Norm.Basic.normSq value ≤ 1) : Gaussian.Sequence.ApproximationData :=
+    (unit : Basic.normSq value ≤ 1) : ApproximationData :=
   Name.approximation
     (Named.exact value)
     (Name.UnitDisk.exact value unit)
 
 /-- The productive name generated from the exact-input local-exponential approximation. -/
 @[expose] def exactLocalExpNamed (value : Data.Gaussian.Basic.Canonical) (unit :
-  Data.Gaussian.Norm.Basic.normSq value ≤ 1) :
-    Gaussian.Name.Basic.Named :=
-  (Approximation.Gaussian.Exponential.Progressive.Local.Exact.exactLocalExpApproximation value unit).toNamed
+  Basic.normSq value ≤ 1) :
+    Named :=
+  (exactLocalExpApproximation value unit).toNamed
 
 /-- The exact-input progressive exponential sample is the finite Horner exponential at the same index. -/
 @[simp] theorem exactLocalExpApproximation_sample
-    (value : Data.Gaussian.Basic.Canonical) (unit : Data.Gaussian.Norm.Basic.normSq value ≤ 1) (index : Nat) :
-    (Approximation.Gaussian.Exponential.Progressive.Local.Exact.exactLocalExpApproximation value unit).sample index =
-      Gaussian.Exponential.Horner.Sample.sample value index :=
+    (value : Data.Gaussian.Basic.Canonical) (unit : Basic.normSq value ≤ 1) (index : Nat) :
+    (exactLocalExpApproximation value unit).sample index =
+      Horner.Sample.sample value index :=
   rfl
 
 /-- The local exponential addition theorem now stated for the actual arithmetic expression tree: the left side is
 `Named.mul` of the two local progressive exponential outputs, not a separately wrapped product stream. -/
 @[expose] def localExp_add_actual_named_equivalent {x y : Data.Gaussian.Basic.Canonical}
-    (xUnit : Data.Gaussian.Norm.Basic.normSq x ≤ 1) (yUnit : Data.Gaussian.Norm.Basic.normSq y ≤ 1)
-    (sumUnit : Data.Gaussian.Norm.Basic.normSq (x + y) ≤ 1) :
-    Gaussian.Equivalence.NamedEquivalent
+    (xUnit : Basic.normSq x ≤ 1) (yUnit : Basic.normSq y ≤ 1)
+    (sumUnit : Basic.normSq (x + y) ≤ 1) :
+    NamedEquivalent
       (Named.mul
-        (Approximation.Gaussian.Exponential.Progressive.Local.Exact.exactLocalExpNamed x xUnit)
-          (Approximation.Gaussian.Exponential.Progressive.Local.Exact.exactLocalExpNamed y yUnit))
-      (Approximation.Gaussian.Exponential.Progressive.Local.Exact.exactLocalExpNamed (x + y) sumUnit) := by
-  let leftApproximation := Approximation.Gaussian.Exponential.Progressive.Local.Exact.exactLocalExpApproximation x xUnit
-  let rightApproximation := Approximation.Gaussian.Exponential.Progressive.Local.Exact.exactLocalExpApproximation y
+        (exactLocalExpNamed x xUnit)
+          (exactLocalExpNamed y yUnit))
+      (exactLocalExpNamed (x + y) sumUnit) := by
+  let leftApproximation := exactLocalExpApproximation x xUnit
+  let rightApproximation := exactLocalExpApproximation y
     yUnit
   let productApproximation :=
     Sequence.expProductApproximation
@@ -89,19 +91,19 @@ assert that a completed exponential or logarithm value has been selected.
   let sumApproximation :=
     Sequence.approximation (x + y) sumUnit
   have arithmeticBridge :
-      Gaussian.Equivalence.NamedEquivalent
+      NamedEquivalent
         (Named.mul
           leftApproximation.toNamed rightApproximation.toNamed)
         productApproximation.toNamed :=
     Bridge.mulToNamed_equivalent_pointwise leftApproximation rightApproximation
       productApproximation (by intro index; rfl)
   have analyticLaw :
-      Gaussian.Equivalence.NamedEquivalent productApproximation.toNamed sumApproximation.toNamed :=
+      NamedEquivalent productApproximation.toNamed sumApproximation.toNamed :=
     Law.exp_add_named_equivalent
       xUnit yUnit sumUnit
   have sumSamples : ∀ index,
       sumApproximation.sample index =
-        (Approximation.Gaussian.Exponential.Progressive.Local.Exact.exactLocalExpApproximation (x + y) sumUnit).sample
+        (exactLocalExpApproximation (x + y) sumUnit).sample
           index := by
     intro index
     rfl
@@ -110,7 +112,7 @@ assert that a completed exponential or logarithm value has been selected.
     (NamedEquivalent.trans analyticLaw
       (Equivalence.approximationEquivalent_toNamed
         (Equivalence.approximationEquivalentOfSamplesEq sumApproximation
-          (Approximation.Gaussian.Exponential.Progressive.Local.Exact.exactLocalExpApproximation (x + y) sumUnit)
+          (exactLocalExpApproximation (x + y) sumUnit)
             sumSamples)))
 
 end

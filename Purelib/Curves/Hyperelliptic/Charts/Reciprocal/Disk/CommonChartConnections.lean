@@ -67,6 +67,8 @@ import Purelib.Topology.Surface.Cut.PrimitiveJumps
 import Purelib.Tactic.Ring
 import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedRadialRibbon
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! Complete-bank junction bounds consume the original cached chart readings. -/
@@ -100,17 +102,17 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 variable {genus count otherCount depth floor index : Nat} {curve : HyperellipticCurve
   genus}
   {differential other : Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent}
   {otherPatch : PreparedPatch
-    (Purelib.Riemann.Integration.PreparedEdgeRecasting.recastCenteredEdge other parent)}
+    (recastCenteredEdge other parent)}
   {data : Data patch count} {otherData :
     Data otherPatch otherCount}
   {cover : Cover data} {otherCover :
     Cover otherData}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {common :
+  {regular : RegularBounds.Data cap} {common :
     CommonCover cover otherCover}
   {target : Coordinate} {request :
     ChartRequest regular common depth target floor}
@@ -127,16 +129,16 @@ variable (evaluated : Evaluation
   request index)
 
 /-- Read the actual first paired chart point already cached for the selected original interval. -/
-@[expose] def firstChartPoint (i : Fin common.intervals.length) : Stokes.PrimitivePoint :=
+@[expose] def firstChartPoint (i : Fin common.intervals.length) : PrimitivePoint :=
   ((evaluated.entries.get i).evaluated.chart.retained.area.evaluated.readings.get 0).chartPoint
 
 /-- Read the actual last paired chart point already cached for that same original interval. -/
-@[expose] def lastChartPoint (i : Fin common.intervals.length) : Stokes.PrimitivePoint :=
+@[expose] def lastChartPoint (i : Fin common.intervals.length) : PrimitivePoint :=
   ((evaluated.entries.get i).evaluated.chart.retained.area.evaluated.readings.get
     (Fin.last (request.plans.get i).geometry.tail.length)).chartPoint
 
 /-- The actual next-first minus previous-last paired chart connector at the retained junction. -/
-@[expose] def junctionGap (i : Fin (common.intervals.length - 1)) : Stokes.PrimitivePoint :=
+@[expose] def junctionGap (i : Fin (common.intervals.length - 1)) : PrimitivePoint :=
   (firstChartPoint evaluated
     (CommonChartBank.junctionRight common i)).sub
     (lastChartPoint evaluated
@@ -155,15 +157,15 @@ theorem chartTolerance_prepared (i : Fin common.intervals.length) :
   have nonnegative : 0 ≤ area.magnitude := area.magnitude_eq.symm ▸
     entry.evaluated.chart.retained.request.magnitude_nonnegative
   have positive : 0 < ((request.plans.get i).budget.tolerance / 4) / 4 :=
-    Fraction.Order.Field.div_pos_direct (Fraction.Order.Field.div_pos_direct (request.plans.get i).budget.positive (by
+    Field.div_pos_direct (Field.div_pos_direct (request.plans.get i).budget.positive (by
       decide)) (by decide)
   have bound := area.budget.tolerance_le nonnegative positive
-  have scalar (value : InverseRootPolynomial.Coordinate) : ((value / 4) / 4) / 2 = value / 32 := by
+  have scalar (value : Coordinate) : ((value / 4) / 4) / 2 = value / 32 := by
     calc
-      _ = value * ((4 : InverseRootPolynomial.Coordinate)⁻¹ * 4⁻¹ * 2⁻¹) := by
+      _ = value * ((4 : Coordinate)⁻¹ * 4⁻¹ * 2⁻¹) := by
         simp only [Fraction.Field.div_eq_mul_inv_direct, -eq_self, -iff_self];
         ring1
-      _ = value * (32 : InverseRootPolynomial.Coordinate)⁻¹ := congrArg (fun coefficient => value * coefficient) (by
+      _ = value * (32 : Coordinate)⁻¹ := congrArg (fun coefficient => value * coefficient) (by
         decide +kernel)
   exact bound.trans_eq (scalar _)
 
@@ -173,15 +175,15 @@ theorem chartTolerance_le (i : Fin common.intervals.length) :
       request.allowance / 32 :=
   (chartTolerance_prepared evaluated
     i).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (request.plans.get i).budget.bounded
-      (by decide +kernel : (0 : InverseRootPolynomial.Coordinate) ≤ (32 : InverseRootPolynomial.Coordinate)⁻¹))
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct (request.plans.get i).budget.bounded
+      (by decide +kernel : (0 : Coordinate) ≤ (32 : Coordinate)⁻¹))
 
 /-- The actual retained chart tolerance satisfies the original padded root-square clearance. -/
 theorem chartTolerance_padded (i : Fin common.intervals.length) :
     chartTolerance evaluated i ≤
       regular.padded.squareTolerance := by
-  have shrink := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (by decide +kernel : (32 : InverseRootPolynomial.Coordinate)⁻¹ ≤ 1) (request.plans.get i).budget.positive.le
+  have shrink := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (by decide +kernel : (32 : Coordinate)⁻¹ ≤ 1) (request.plans.get i).budget.positive.le
   exact (chartTolerance_prepared evaluated
     i).trans
     ((shrink.trans_eq (mul_one _)).trans (request.plans.get i).budget.padded_paid)
@@ -226,8 +228,8 @@ theorem chart_square_inside (branch : HyperellipticReciprocal.originOrder curve 
   rw [branch, pow_one, Data.Gaussian.Norm.Basic.normSq_eq_canonical] at square
   exact regular.padded.contains_square
     (ReciprocalExteriorCollar.inverse_inDisk curve (data.boundary.point
-      ⟨(CommonChartPreparation.IntervalAt common i).first.owner.left.inside.1.trans owner.root.between.1,
-        owner.root.between.2.trans (CommonChartPreparation.IntervalAt common i).first.owner.right.inside.2⟩))
+      ⟨(IntervalAt common i).first.owner.left.inside.1.trans owner.root.between.1,
+        owner.root.between.2.trans (IntervalAt common i).first.owner.right.inside.2⟩))
     (square.le.trans
       (chartTolerance_padded evaluated i))
 
@@ -255,7 +257,7 @@ theorem radial_chord_inside (branch : HyperellipticReciprocal.originOrder curve 
 /-- Both local area searches retain the preselected complete-bank junction floor, even when they finish at different
 stages. -/
 theorem junction_coordinate_accurate (i : Fin (common.intervals.length - 1)) :
-    Data.Gaussian.Norm.Basic.normSq (((evaluated.entries.get (CommonChartBank.junctionRight common
+    normSq (((evaluated.entries.get (CommonChartBank.junctionRight common
       i)).evaluated.chart.retained.area.evaluated.readings.get 0).first.coordinate -
       ((evaluated.entries.get (CommonChartBank.junctionLeft common
         i)).evaluated.chart.retained.area.evaluated.readings.get
@@ -267,9 +269,9 @@ theorem junction_coordinate_accurate (i : Fin (common.intervals.length - 1)) :
     (left.evaluated.chart.retained.area.evaluated.readings.get (Fin.last (request.plans.get
       (CommonChartBank.junctionLeft common i)).geometry.tail.length))
     (right.evaluated.chart.retained.area.evaluated.readings.get 0)
-    ((Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartConnections.junction_le_readingFloor i).trans
+    ((junction_le_readingFloor i).trans
       left.readingLater)
-    ((Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartConnections.junction_le_readingFloor i).trans
+    ((junction_le_readingFloor i).trans
       right.readingLater)
 
 /-- The bank's original allowance pays the actual paired chart connector, including the two chart-reading errors. No
@@ -284,26 +286,26 @@ theorem junction_bounded (i : Fin (common.intervals.length - 1)) :
     (left.evaluated.chart.retained.area.evaluated.readings.get (Fin.last (request.plans.get
       (CommonChartBank.junctionLeft common i)).geometry.tail.length))
     (right.evaluated.chart.retained.area.evaluated.readings.get 0)
-    ((Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartConnections.junction_le_readingFloor i).trans
+    ((junction_le_readingFloor i).trans
       left.readingLater)
-    ((Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartConnections.junction_le_readingFloor i).trans
+    ((junction_le_readingFloor i).trans
       right.readingLater)
-  have leftBound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  have leftBound := Arithmetic.mul_le_mul_of_nonneg_left_direct
     (chartTolerance_le evaluated
-    (CommonChartBank.junctionLeft common i)) (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 4)
-  have rightBound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (CommonChartBank.junctionLeft common i)) (by decide : (0 : Coordinate) ≤ 4)
+  have rightBound := Arithmetic.mul_le_mul_of_nonneg_left_direct
     (chartTolerance_le evaluated
-    (CommonChartBank.junctionRight common i)) (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 4)
-  have paid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.add_le_add_direct rightBound (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct (le_refl (request.allowance / 16)) leftBound) (by
-          decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)))
-    (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
+    (CommonChartBank.junctionRight common i)) (by decide : (0 : Coordinate) ≤ 4)
+  have paid := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_direct rightBound (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct (le_refl (request.allowance / 16)) leftBound) (by
+          decide : (0 : Coordinate) ≤ 2)))
+    (by decide : (0 : Coordinate) ≤ 2)
   have scalar : 2 * (4 * (request.allowance / 32) + 2 * (request.allowance / 16 + 4 * (request.allowance / 32))) =
       request.allowance := by
     calc
-      _ = request.allowance * (24 * (32 : InverseRootPolynomial.Coordinate)⁻¹ + 4 * (16 :
-        InverseRootPolynomial.Coordinate)⁻¹) := by
+      _ = request.allowance * (24 * (32 : Coordinate)⁻¹ + 4 * (16 :
+        Coordinate)⁻¹) := by
         simp only [Fraction.Field.div_eq_mul_inv_direct, -eq_self, -iff_self]; ring1
       _ = request.allowance * 1 := congrArg (fun coefficient => request.allowance * coefficient) (by decide +kernel)
       _ = request.allowance := mul_one _

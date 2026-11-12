@@ -10,6 +10,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Basic
+
 /-!
 # Choice-free completed-block chordal contraction
 
@@ -29,29 +31,29 @@ open Purelib.Data.Rat
 
 The denominator is the square of one plus the nonnegative squared norm, so it is strictly positive. The exact rational
 factor lies at most one half and is positive precisely away from the zero input. -/
-def factor (scale : Gaussian.Basic.Canonical) : Fraction.Rational :=
-  2 * Gaussian.Basic.Canonical.normSq scale / (1 + Gaussian.Basic.Canonical.normSq scale) ^ 2
+def factor (scale : Canonical) : Fraction.Rational :=
+  2 * Canonical.normSq scale / (1 + Canonical.normSq scale) ^ 2
 
 /-- The balanced squared-norm ratio is positive for a nonzero canonical Gaussian input. -/
-theorem factor_pos {scale : Gaussian.Basic.Canonical} (scaleNonzero : scale ≠ 0) :
+theorem factor_pos {scale : Canonical} (scaleNonzero : scale ≠ 0) :
     0 < factor scale := by
-  have scalePositive : 0 < Gaussian.Basic.Canonical.normSq scale := by
+  have scalePositive : 0 < Canonical.normSq scale := by
     simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using
       Gaussian.Norm.Basic.normSq_pos scaleNonzero
-  have numeratorPositive : 0 < 2 * Gaussian.Basic.Canonical.normSq scale :=
+  have numeratorPositive : 0 < 2 * Canonical.normSq scale :=
     Fraction.Order.Arithmetic.mul_pos_direct (by decide) scalePositive
-  have sumPositive : 0 < 1 + Gaussian.Basic.Canonical.normSq scale :=
-    add_pos_of_pos_of_nonneg (by decide) (Gaussian.Basic.Canonical.normSq_nonneg scale)
-  have denominatorPositive : 0 < (1 + Gaussian.Basic.Canonical.normSq scale) ^ 2 :=
+  have sumPositive : 0 < 1 + Canonical.normSq scale :=
+    add_pos_of_pos_of_nonneg (by decide) (Canonical.normSq_nonneg scale)
+  have denominatorPositive : 0 < (1 + Canonical.normSq scale) ^ 2 :=
     Fraction.Order.Arithmetic.pow_pos_direct sumPositive 2
   exact Fraction.Order.Field.div_pos_direct numeratorPositive
     denominatorPositive
 
 /-- The balanced squared-norm ratio is at most one half for every canonical Gaussian input. -/
-theorem factor_le_half (scale : Gaussian.Basic.Canonical) : factor
+theorem factor_le_half (scale : Canonical) : factor
   scale ≤ 1 / 2 := by
-  let length := Gaussian.Basic.Canonical.normSq scale
-  have lengthNonnegative : 0 ≤ length := Gaussian.Basic.Canonical.normSq_nonneg scale
+  let length := Canonical.normSq scale
+  have lengthNonnegative : 0 ≤ length := Canonical.normSq_nonneg scale
   have sumPositive : 0 < 1 + length :=
     add_pos_of_pos_of_nonneg (by decide) lengthNonnegative
   have denominatorPositive : 0 < (1 + length) ^ 2 :=

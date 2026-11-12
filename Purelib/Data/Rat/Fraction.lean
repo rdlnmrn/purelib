@@ -115,6 +115,14 @@ deriving DecidableEq
 
 constructive_injectivity Rational
 
+open Purelib.Data.Int in
+/-- The canonical denominator-one record for an integer. -/
+def Cast.fromInt (value : Int) : Rational :=
+  ⟨value, 1, by decide,
+    ⟨⟨0, 1, by
+      change 0 * value.natAbs + 1 * (1 : Int) = 1
+      rw [Arithmetic.zero_mul, Int.one_mul, Arithmetic.zero_add]⟩⟩⟩
+
 /-- Forget only reducedness, retaining the exact integer numerator, natural denominator and positivity proof. -/
 def Rational.toRaw (fraction : Rational) : RawFraction :=
   ⟨fraction.num, fraction.den, fraction.den_pos⟩

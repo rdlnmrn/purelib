@@ -35,6 +35,8 @@ smaller Newton-band side without replacing its clearance or root preparation.
 
 namespace Purelib.Riemann.Paths.PreparedSegmentBoundaryGeometry
 
+open Purelib.Polynomial.Geometry.ClearPath.ClearSegment (pointAt_eq_line)
+
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
 open Purelib.Riemann.Integration.PreparedSubdivisionModelCore (CenteredEdge)
@@ -117,9 +119,9 @@ theorem segment_parent_boundary (cache : ParentCache piece.path differential she
     {parent : CenteredEdge curve differential} (member : parent ∈ cache.parents) : ParentOnBoundary parent box := by
   have endpoints := segment_parent_endpoints cache member
   refine ⟨?_, ?_, ?_⟩
-  · rw [endpoints.1, Paths.PreparedPathWinding.ClearSegment.pointAt_eq_line segment]
+  · rw [endpoints.1, pointAt_eq_line segment]
     exact Rational.Box.contains_line first last parent.parameterEdge.left.inside
-  · rw [endpoints.2, Paths.PreparedPathWinding.ClearSegment.pointAt_eq_line segment]
+  · rw [endpoints.2, pointAt_eq_line segment]
     exact Rational.Box.contains_line first last parent.parameterEdge.right.inside
   · rw [endpoints.1, endpoints.2]
     exact side.pointAt segment _ _

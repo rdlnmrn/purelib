@@ -103,21 +103,21 @@ open Purelib.Topology.Mesh.RetracingWords (sum_map_eq_wordValue)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms (exteriorPrograms
   exteriorPrograms_indexed)
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
-  {lifted : LiftedPuncturedGrid base} {differential : Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : LiftedPuncturedGrid base} {differential : Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
   {prepared :
-    Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
     regular domains differential} {target areaTarget : Coordinate} {floor : Nat}
-  {index depth readingIndex : Nat} {box : Purelib.Geometry.Rational.Box}
-  {sample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {shared : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains}
-  {request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request prepared
+  {index depth readingIndex : Nat} {box : Geometry.Rational.Box}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {shared : FacePrimitiveBank differential index domains}
+  {request : Request prepared
     target areaTarget floor}
 
 namespace Exterior.SurfaceRequests.AllSurfacePreparation.Request.Evaluation
@@ -126,21 +126,21 @@ namespace Exterior.SurfaceRequests.AllSurfacePreparation.Request.Evaluation
 total. -/
 theorem
   canonical_component_integral
-  (evaluated : AllSurfacePreparation.Request.Evaluation request sample shared depth readingIndex)
+  (evaluated : Evaluation request sample shared depth readingIndex)
     (grouped : ComponentSamples sample shared depth readingIndex request.localTarget
       request.budget.areaTarget floor
       prepared.components evaluated.samples.values)
     (group : ComponentSamples.SampledComponent (regular := regular) sample shared depth readingIndex request.localTarget
       request.budget.areaTarget floor)
-    (member : group ∈ grouped.groups) (readings : TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh) :
+    (member : group ∈ grouped.groups) (readings : TriangleReadings shared lifted.mesh) :
     SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation lifted.mesh readings.values)
       group.component.program.indexed = group.surface.total := by
   have indexed : group.values.map (fun entry => entry.entry.occurrence.placement.indexed) =
     group.component.program.indexed := by
     have equal := congrArg (List.map (fun occurrence => occurrence.placement.indexed)) group.occurrences_eq
-    simp only [Data.List.Map.map_map, Function.comp_def, -eq_self, -iff_self] at equal
+    simp only [Map.map_map, Function.comp_def, -eq_self, -iff_self] at equal
     exact equal.trans group.component.prepared.occurrences_eq
-  have valueEq (entry : AllSurfacePreparation.SampledEntry (regular := regular) sample shared depth readingIndex
+  have valueEq (entry : SampledEntry (regular := regular) sample shared depth readingIndex
     request.localTarget request.budget.areaTarget floor)
       (retained : entry ∈ group.values) :
       CanonicalEdgeValues.edgeValuation lifted.mesh readings.values entry.entry.occurrence.placement.indexed =
@@ -152,7 +152,7 @@ theorem
       request.indexed_eq ▸ Map.mem_map_of_mem inEntries
     have physical : entry.entry.occurrence.placement.indexed ∈ lifted.boundaryLoops.flatten := by
       change _ ∈ (lifted.exteriorBoundaries ++ _).flatten
-      rw [Data.List.Flatten.flatten_append]
+      rw [Flatten.flatten_append]
       exact Data.List.Membership.mem_append.mpr (Or.inl exterior)
     have canonical := CanonicalPhysicalBoundary.canonical_physical_source
       entry.entry.occurrence.placement.location.sourceEdge
@@ -162,31 +162,31 @@ theorem
   calc
     _ = SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation lifted.mesh readings.values)
         (group.values.map (fun entry => entry.entry.occurrence.placement.indexed)) := congrArg _ indexed.symm
-    _ = Data.Gaussian.Norm.Sum.Basic.gaussianSum ((group.values.map (fun entry =>
+    _ = Gaussian.Norm.Sum.Basic.gaussianSum ((group.values.map (fun entry =>
       entry.entry.occurrence.placement.indexed)).map
         (CanonicalEdgeValues.edgeValuation lifted.mesh readings.values)) := (RetracingWords.sum_map_eq_wordValue _
           _).symm
-    _ = Data.Gaussian.Norm.Sum.Basic.gaussianSum ((group.values.map SampledEntry.entry).map
+    _ = Gaussian.Norm.Sum.Basic.gaussianSum ((group.values.map SampledEntry.entry).map
         (fun entry => entry.occurrence.placement.location.sourceEdge.increment readings.values)) := by
-      simp only [Data.List.Map.map_map, Function.comp_def, -eq_self, -iff_self]
-      exact congrArg Data.Gaussian.Norm.Sum.Basic.gaussianSum (Map.map_congr_left valueEq)
+      simp only [Map.map_map, Function.comp_def, -eq_self, -iff_self]
+      exact congrArg Gaussian.Norm.Sum.Basic.gaussianSum (Map.map_congr_left valueEq)
     _ = group.surface.total := (group.triangle_integral readings).symm
 
 /-- The original even-degree exterior preparation bounds each retained canonical component word separately by the
 requested target. -/
 theorem
   canonical_component_small
-  (evaluated : AllSurfacePreparation.Request.Evaluation request sample shared depth readingIndex)
+  (evaluated : Evaluation request sample shared depth readingIndex)
     (degree : curve.polynomial.natDegree = 2 * genus + 2)
     (grouped : ComponentSamples sample shared depth readingIndex request.localTarget
       request.budget.areaTarget floor
       prepared.components evaluated.samples.values)
     (group : ComponentSamples.SampledComponent (regular := regular) sample shared depth readingIndex request.localTarget
       request.budget.areaTarget floor)
-    (member : group ∈ grouped.groups) (readings : TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh) :
-    Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation lifted.mesh
+    (member : group ∈ grouped.groups) (readings : TriangleReadings shared lifted.mesh) :
+    Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation lifted.mesh
       readings.values) group.component.program.indexed) < target :=
-  (congrArg Data.Gaussian.Norm.Basic.normSq (evaluated.canonical_component_integral grouped group member
+  (congrArg Gaussian.Norm.Basic.normSq (evaluated.canonical_component_integral grouped group member
     readings)).trans_lt
     (evaluated.component_integral_small degree grouped group member)
 
@@ -199,12 +199,12 @@ variable {loss : Coordinate}
 theorem
   canonical_components_small
   (control : RegularBoundaryControl prepared target loss floor)
-    (readings : TrianglePrimitiveReadings.TriangleReadings control.acquired.shared lifted.mesh) :
+    (readings : TriangleReadings control.acquired.shared lifted.mesh) :
     ∀ group ∈ control.components.groups,
-      Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation
+      Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation
         lifted.mesh readings.values) group.component.program.indexed) < target := by
   intro group member
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq
+  exact (congrArg Gaussian.Norm.Basic.normSq
     (control.acquired.evaluated.source.canonical_component_integral
     control.components group member readings)).trans_lt (control.component_integrals_small group member)
 
@@ -216,12 +216,12 @@ theorem
       target loss floor) :
     control.components.groups.map (fun group => group.component.program.indexed) = lifted.exteriorBoundaries := by
   have equal := congrArg (List.map (fun component => component.program.indexed)) control.components.components_eq
-  simp only [Data.List.Map.map_map, Function.comp_def, -eq_self, -iff_self] at equal
+  simp only [Map.map_map, Function.comp_def, -eq_self, -iff_self] at equal
   have canonical : (AllSurfacePreparation.build regular domains differential).components.map
       (fun component => component.program.indexed) = lifted.exteriorBoundaries := by
     change ((PeriodPrograms.exteriorPrograms lifted differential).map (SurfaceComponent.build regular domains)).map
       (fun component => component.program.indexed) = _
-    rw [Data.List.Map.map_map]
+    rw [Map.map_map]
     exact PeriodPrograms.exteriorPrograms_indexed lifted differential
   exact equal.trans canonical
 
@@ -230,15 +230,15 @@ theorem
   boundary_words_small
     (control : RegularBoundaryControl (AllSurfacePreparation.build regular domains differential)
       target loss floor)
-    (readings : TrianglePrimitiveReadings.TriangleReadings control.acquired.shared lifted.mesh) :
+    (readings : TriangleReadings control.acquired.shared lifted.mesh) :
     ∀ word ∈ lifted.exteriorBoundaries,
-      Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation
+      Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation
         lifted.mesh readings.values) word) < target := by
   intro word member
   have retained : word ∈ control.components.groups.map (fun group => group.component.program.indexed) :=
     control.component_words.symm ▸ member
   obtain ⟨group, present, equal⟩ := Map.mem_map.mp retained
-  exact (congrArg (fun boundary => Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue
+  exact (congrArg (fun boundary => Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue
     (CanonicalEdgeValues.edgeValuation lifted.mesh readings.values) boundary)) equal).symm.trans_lt
     (control.canonical_components_small readings group present)
 

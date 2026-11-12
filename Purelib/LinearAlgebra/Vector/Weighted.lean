@@ -81,6 +81,80 @@ theorem weighted_bump (weights : Fin n → K) (values : Vec K n) (index : Fin
       ring1
     _ = _ := by rw [sumFin_add, indicator_mul]; rfl
 
+/-- Remove the weighted component at an original bounded unit-weight pivot.
+
+The weighted value is computed once and added with its opposite sign at the
+selected coordinate. Every other coefficient retains its original value. -/
+def removePivot (weights : Fin n → K) (values : Vec K n) (pivot : Fin n) : Vec K n :=
+  let retained := weighted weights values
+  bump values pivot (-retained)
+
+/-- A unit-weight pivot correction has zero weighted value. -/
+theorem weighted_removePivot (weights : Fin n → K) (values : Vec K n) (pivot : Fin n)
+    (unit : weights pivot = 1) :
+    weighted weights (removePivot weights values pivot) = 0 := by
+  rewrite [removePivot, weighted_bump, unit, mul_one]
+  ring1
+
+/-- The pivot correction preserves each actual nonpivot entry. -/
+theorem removePivot_other (weights : Fin n → K) (values : Vec K n) (pivot position : Fin n)
+    (different : position ≠ pivot) :
+    removePivot weights values pivot position = values position := by
+  rewrite [removePivot, bump_apply, if_neg different]
+  exact add_zero _
+
+/-- The selected pivot loses exactly the original cached weighted value. -/
+theorem removePivot_same (weights : Fin n → K) (values : Vec K n) (pivot : Fin n) :
+    removePivot weights values pivot pivot = values pivot - weighted weights values := by
+  rewrite [removePivot, bump_apply, if_pos rfl]
+  ring1
+
+/-- A vector already in the weighted kernel is retained as the complete same vector. -/
+theorem removePivot_of_zero (weights : Fin n → K) (values : Vec K n) (pivot : Fin n)
+    (zero : weighted weights values = 0) : removePivot weights values pivot = values := by
+  apply Purelib.Data.Vector.Basic.vector_ext
+  intro position
+  rewrite [removePivot, zero, neg_zero, bump_apply]
+  by_cases same : position = pivot
+  · rewrite [if_pos same]
+    exact add_zero _
+  · rewrite [if_neg same]
+    exact add_zero _
+
+/-- Matching weighted values and all nonpivot entries identify the complete original vectors.
+
+The selected coordinate has weight one. Its difference is isolated by the
+original single-coordinate update; no function extensionality is needed. -/
+theorem eq_of_weighted_eq_of_other (weights : Fin n → K) (left right : Vec K n) (pivot : Fin n)
+    (unit : weights pivot = 1) (same : weighted weights left = weighted weights right)
+    (other : ∀ position, position ≠ pivot → left position = right position) : left = right := by
+  have rightUpdate : right = bump left pivot (right pivot - left pivot) := by
+    apply Purelib.Data.Vector.Basic.vector_ext
+    intro position
+    rewrite [bump_apply]
+    by_cases selected : position = pivot
+    · subst position
+      rewrite [if_pos rfl]
+      ring1
+    · rewrite [if_neg selected]
+      exact (other position selected).symm.trans (add_zero _).symm
+  have weightedUpdate := congrArg (weighted weights) rightUpdate
+  rewrite [weighted_bump, unit, mul_one] at weightedUpdate
+  have difference : right pivot - left pivot = 0 := by
+    calc
+      _ = (weighted weights left + (right pivot - left pivot)) - weighted weights left := by ring1
+      _ = weighted weights right - weighted weights left :=
+        congrArg (fun value => value - weighted weights left) weightedUpdate.symm
+      _ = 0 := by rewrite [same]; ring1
+  apply Purelib.Data.Vector.Basic.vector_ext
+  intro position
+  by_cases selected : position = pivot
+  · subst position
+    calc
+      _ = right pivot - (right pivot - left pivot) := by ring1
+      _ = _ := by rewrite [difference]; ring1
+  · exact other position selected
+
 end Purelib.LinearAlgebra.Vector.Weighted
 
 end

@@ -34,8 +34,8 @@ open Purelib.RootIsolation in
 
 Returns the exact dependent bank list produced by the adaptive bank procedure, or none if that attempt fails. -/
 @[expose] def tryBanks (depth : Nat) (diameter : Coordinate) (positive : 0 < diameter)
-    (tasks : List (SquareRoot.Preparation.Bank.Adaptive.Task polynomial)) : Option
-      (SquareRoot.Preparation.Bank.Adaptive.Banks depth diameter positive tasks) :=
+    (tasks : List (Task polynomial)) : Option
+      (Banks depth diameter positive tasks) :=
   SquareRoot.Preparation.Bank.Adaptive.tryBanks depth diameter positive tasks
 
 open Purelib.RootIsolation in
@@ -45,15 +45,15 @@ set_option genInjectivity false in
 Records successful task preparations and their exact outcome identities, or a deferred inconclusive result for the first
 failed task. -/
 inductive Trial (depth : Nat) (diameter : Coordinate) (positive : 0 < diameter) :
-    List (SquareRoot.Preparation.Bank.Adaptive.Task polynomial) → Type where
+    List (Task polynomial) → Type where
   /-- The empty task list has an empty successful trial. -/ | nil : Trial depth diameter positive []
   /-- Deferred inconclusive result for the first failed task. -/ | miss {task :
-    SquareRoot.Preparation.Bank.Adaptive.Task polynomial} {tasks : List (SquareRoot.Preparation.Bank.Adaptive.Task
+    Task polynomial} {tasks : List (Task
     polynomial)}
       (failure : Thunk (BoundedPreparedBanks.Inconclusive depth diameter positive task.path task.within task.owner)) :
       Trial depth diameter positive (task :: tasks)
   /-- Accepted current bank, its attempt identity and the remaining task trial. -/ | cons {task :
-    SquareRoot.Preparation.Bank.Adaptive.Task polynomial} {tasks : List (SquareRoot.Preparation.Bank.Adaptive.Task
+    Task polynomial} {tasks : List (Task
     polynomial)}
       (accepted : BoundedPreparedBanks.PathSuccess depth diameter positive task.path task.within task.owner)
       (found : BoundedPreparedBanks.attempt depth diameter positive task.path task.within task.owner = .ok accepted)
@@ -67,8 +67,8 @@ open Purelib.RootIsolation
 
 Uses the accepted banks already stored in the trial and returns none at a retained failure. -/
 @[expose] def Trial.value {depth : Nat} {diameter : Coordinate} {positive : 0 < diameter} {tasks : List
-  (SquareRoot.Preparation.Bank.Adaptive.Task polynomial)} :
-    Trial depth diameter positive tasks → Option (SquareRoot.Preparation.Bank.Adaptive.Banks depth diameter positive
+  (Task polynomial)} :
+    Trial depth diameter positive tasks → Option (Banks depth diameter positive
       tasks)
   | .nil => some .nil
   | .miss _ => none
@@ -81,7 +81,7 @@ Uses the accepted banks already stored in the trial and returns none at a retain
 Induction follows the stored success equations and the deferred failure's attempt certificate without choosing new task
 results. -/
 theorem Trial.equation {depth : Nat} {diameter : Coordinate} {positive : 0 < diameter}
-    {tasks : List (SquareRoot.Preparation.Bank.Adaptive.Task polynomial)} (trial : Trial depth diameter positive tasks)
+    {tasks : List (Task polynomial)} (trial : Trial depth diameter positive tasks)
       :
     tryBanks depth diameter positive tasks = trial.value := by
   induction trial with
@@ -97,7 +97,7 @@ theorem Trial.equation {depth : Nat} {diameter : Coordinate} {positive : 0 < dia
       rw [found]
       change (match tryBanks depth diameter positive tasks with
         | none => none
-        | some banks => some (SquareRoot.Preparation.Bank.Adaptive.Banks.cons accepted.bank banks)) = _
+        | some banks => some (Banks.cons accepted.bank banks)) = _
       rw [ih]
       rfl
 
@@ -107,25 +107,25 @@ open Purelib.RootIsolation
 /-- Run the original adaptive bank search over its retained finite depth interval.
 
 Keeps the exact upper-depth identity, minimum bound and remaining-step equality supplied to the executable search. -/
-@[expose] def search (tasks : List (SquareRoot.Preparation.Bank.Adaptive.Task polynomial)) (diameter : Coordinate)
+@[expose] def search (tasks : List (Task polynomial)) (diameter : Coordinate)
   (positive : 0 < diameter)
-    (minimum upper : Nat) (upperEq : upper = max (SquareRoot.Preparation.Bank.Adaptive.maximumDepth diameter tasks)
+    (minimum upper : Nat) (upperEq : upper = max (maximumDepth diameter tasks)
       minimum)
     (depth : Nat) (minimumLe : minimum ≤ depth) (remaining : Nat) (bound : upper = depth + remaining) :
-    SquareRoot.Preparation.Bank.Adaptive.Selected tasks diameter positive minimum :=
+    Selected tasks diameter positive minimum :=
   SquareRoot.Preparation.Bank.Adaptive.search tasks diameter positive minimum upper upperEq depth minimumLe remaining
     bound
 
 /-- The public adaptive selector starts the same bounded search.
 
 The initial depth is the requested minimum and the upper depth is its maximum with the tasks' certified depth bound. -/
-theorem selectFrom_eq (tasks : List (SquareRoot.Preparation.Bank.Adaptive.Task polynomial)) (diameter : Coordinate)
+theorem selectFrom_eq (tasks : List (Task polynomial)) (diameter : Coordinate)
   (positive : 0 < diameter)
     (minimum : Nat) :
     SquareRoot.Preparation.Bank.Adaptive.selectFrom tasks diameter positive minimum =
-      search tasks diameter positive minimum (max (SquareRoot.Preparation.Bank.Adaptive.maximumDepth diameter tasks)
+      search tasks diameter positive minimum (max (maximumDepth diameter tasks)
         minimum) rfl minimum
-        (Nat.le_refl minimum) (max (SquareRoot.Preparation.Bank.Adaptive.maximumDepth diameter tasks) minimum - minimum)
+        (Nat.le_refl minimum) (max (maximumDepth diameter tasks) minimum - minimum)
           (by
           apply Eq.symm
           apply Subtraction.add_sub_of_le
@@ -135,22 +135,22 @@ theorem selectFrom_eq (tasks : List (SquareRoot.Preparation.Bank.Adaptive.Task p
 /-- Package accepted banks with their original adaptive depth bounds.
 
 Retains the exact upper-depth equation, current depth and task-indexed banks at a successful nonterminal search step. -/
-@[expose] def selected (tasks : List (SquareRoot.Preparation.Bank.Adaptive.Task polynomial)) (diameter : Coordinate)
+@[expose] def selected (tasks : List (Task polynomial)) (diameter : Coordinate)
   (positive : 0 < diameter)
-    (minimum upper : Nat) (upperEq : upper = max (SquareRoot.Preparation.Bank.Adaptive.maximumDepth diameter tasks)
+    (minimum upper : Nat) (upperEq : upper = max (maximumDepth diameter tasks)
       minimum)
     (depth : Nat) (minimumLe : minimum ≤ depth) (remaining : Nat) (bound : upper = depth + (remaining + 1))
-    (banks : SquareRoot.Preparation.Bank.Adaptive.Banks depth diameter positive tasks) :
-      SquareRoot.Preparation.Bank.Adaptive.Selected tasks diameter positive minimum :=
+    (banks : Banks depth diameter positive tasks) :
+      Selected tasks diameter positive minimum :=
   { upperDepth := upper, upperDepth_eq := upperEq, depth := depth, minimum_le := minimumLe,
     depth_le := by clear upperEq; omega0, banks := banks }
 
 /-- A nonterminal search step tests the current depth and follows its exact outcome.
 
 Success packages the retained banks; a miss increments the current depth and decreases the remaining interval. -/
-private theorem search_step (tasks : List (SquareRoot.Preparation.Bank.Adaptive.Task polynomial)) (diameter :
+private theorem search_step (tasks : List (Task polynomial)) (diameter :
   Coordinate) (positive : 0 < diameter)
-    (minimum upper : Nat) (upperEq : upper = max (SquareRoot.Preparation.Bank.Adaptive.maximumDepth diameter tasks)
+    (minimum upper : Nat) (upperEq : upper = max (maximumDepth diameter tasks)
       minimum)
     (depth : Nat) (minimumLe : minimum ≤ depth) (remaining : Nat) (bound : upper = depth + (remaining + 1)) :
     search tasks diameter positive minimum upper upperEq depth minimumLe (remaining + 1) bound =
@@ -163,12 +163,12 @@ private theorem search_step (tasks : List (SquareRoot.Preparation.Bank.Adaptive.
 /-- A successful retained trial determines the adaptive search result.
 
 Reuses the trial's exact optional-bank equation to identify the selected banks at the current depth. -/
-theorem search_accept (tasks : List (SquareRoot.Preparation.Bank.Adaptive.Task polynomial)) (diameter : Coordinate)
+theorem search_accept (tasks : List (Task polynomial)) (diameter : Coordinate)
   (positive : 0 < diameter)
-    (minimum upper : Nat) (upperEq : upper = max (SquareRoot.Preparation.Bank.Adaptive.maximumDepth diameter tasks)
+    (minimum upper : Nat) (upperEq : upper = max (maximumDepth diameter tasks)
       minimum)
     (depth : Nat) (minimumLe : minimum ≤ depth) (remaining : Nat) (bound : upper = depth + (remaining + 1))
-    (trial : Trial depth diameter positive tasks) (banks : SquareRoot.Preparation.Bank.Adaptive.Banks depth diameter
+    (trial : Trial depth diameter positive tasks) (banks : Banks depth diameter
       positive tasks)
     (found : trial.value = some banks) :
     search tasks diameter positive minimum upper upperEq depth minimumLe (remaining + 1) bound =
@@ -178,9 +178,9 @@ theorem search_accept (tasks : List (SquareRoot.Preparation.Bank.Adaptive.Task p
 /-- A retained failed trial advances the adaptive search by one depth.
 
 Preserves the original tasks, upper bound and remaining-depth accounting after the failed fixed-depth attempt. -/
-theorem search_miss (tasks : List (SquareRoot.Preparation.Bank.Adaptive.Task polynomial)) (diameter : Coordinate)
+theorem search_miss (tasks : List (Task polynomial)) (diameter : Coordinate)
   (positive : 0 < diameter)
-    (minimum upper : Nat) (upperEq : upper = max (SquareRoot.Preparation.Bank.Adaptive.maximumDepth diameter tasks)
+    (minimum upper : Nat) (upperEq : upper = max (maximumDepth diameter tasks)
       minimum)
     (depth : Nat) (minimumLe : minimum ≤ depth) (remaining : Nat) (bound : upper = depth + (remaining + 1))
     (trial : Trial depth diameter positive tasks) (empty : trial.value = none) :

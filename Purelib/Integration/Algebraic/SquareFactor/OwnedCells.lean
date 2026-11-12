@@ -263,23 +263,101 @@ theorem source_components (edge : OwnedCells.Edge safe) (fraction : OwnedCells.C
   rw [numeratorPossible]
   rfl
 
-open Purelib.Data.Rat in
-open Purelib.Integration.Algebraic.SquareFactor in
-/-- Construct the cell model from a retained initial root reading and the original cached prepared enclosure.
+open Purelib.Riemann.RootContinuation in
+set_option genInjectivity false in
+/-- The original starting root certificate and its same cached rational witness on one retained continuation edge.
 
-The chosen witness belongs to the edge's original root name; its enclosure and residual certificates establish the
-cached coefficient allowance. -/
-@[expose] def model (edge : OwnedCells.Edge safe) : CellModels.Model data edge.span := by
-  let root := edge.root 0 (by decide)
+Both equations retain the exact source construction. Model assembly consumes
+these data and never reselects a sheet or asks the root process for a witness.
+-/
+structure StartReading (edge : OwnedCells.Edge safe) where
+  /-- The original transported square-root certificate at the edge start. -/ root :
+    CertifiedSquareRoot.Certificate (edge.target 0)
+  /-- The cache retains the exact root construction of this original edge. -/ rootEq : root = edge.root 0 (by decide)
+  /-- The actual witness at that same root name's retained initial state. -/ reading :
+    {value : Gaussian // root.value.name.process.Possible root.value.name.state value}
+  /-- The cached witness is the original executable witness output. -/ readingEq :
+    reading = root.value.name.process.witness root.value.name.state
+
+namespace StartReading
+
+open Purelib.Riemann.RootContinuation
+open Purelib.Data.Rat
+
+/-- Retain an already computed original root and its exact witness without invoking either construction again. -/
+@[expose] def ofWitness (edge : OwnedCells.Edge safe) (root : CertifiedSquareRoot.Certificate (edge.target 0))
+    (rootEq : root = edge.root 0 (by decide))
+    (reading : {value : Gaussian // root.value.name.process.Possible root.value.name.state value})
+    (readingEq : reading = root.value.name.process.witness root.value.name.state) : StartReading edge :=
+  ⟨root, rootEq, reading, readingEq⟩
+
+/-- Retain an already computed original root certificate and compute its same starting witness once. -/
+@[expose] def ofRoot (edge : OwnedCells.Edge safe) (root : CertifiedSquareRoot.Certificate (edge.target 0))
+    (rootEq : root = edge.root 0 (by decide)) : StartReading edge :=
   let reading := root.value.name.process.witness root.value.name.state
-  apply CellModels.make safe edge.span edge.cached.preparedOwner.track.initial.box
-    reading.val (edge.root_candidate_inside 0 (by decide) root.value.name.state reading.property)
-  have residual := edge.root_candidate_residual 0 (by decide) root.value.name.state reading.property
+  ofWitness edge root rootEq reading rfl
+
+/-- Compute and retain the original edge-start root and its actual witness once. -/
+@[expose] def ofEdge (edge : OwnedCells.Edge safe) : StartReading edge :=
+  let root := edge.root 0 (by decide)
+  ofRoot edge root rfl
+
+/-- The retained witness lies in this same edge's original prepared root enclosure. -/
+theorem inside {edge : OwnedCells.Edge safe} (cached : StartReading edge) :
+    edge.cached.preparedOwner.track.initial.box.Contains cached.reading.val := by
+  cases cached with
+  | mk root rootEq reading _ =>
+      cases rootEq
+      exact edge.root_candidate_inside 0 (by decide) _ reading.property
+
+/-- The retained starting witness pays the original lower-endpoint residual target. -/
+theorem residual {edge : OwnedCells.Edge safe} (cached : StartReading edge) :
+    Data.Gaussian.Norm.Basic.normSq (cached.reading.val * cached.reading.val -
+      prepared.reduction.radicand.eval (segment.point edge.span.interval.lower)) ≤
+    SquareRootSheets.residualTarget (prepared.reduction.radicand.eval (segment.point edge.span.interval.lower)) := by
+  have rootPossible : (edge.root 0 (by decide)).value.name.process.Possible
+      (edge.root 0 (by decide)).value.name.state cached.reading.val := by
+    cases cached with
+    | mk root rootEq reading _ =>
+        cases rootEq
+        exact reading.property
+  have bound := edge.root_candidate_residual 0 (by decide) _ rootPossible
   have pointEqual : edge.span.parameter 0 = edge.span.interval.lower := by
     unfold CellModels.Span.parameter
     rw [Fraction.Field.mul_zero_direct, add_zero]
-  rw [pointEqual] at residual
-  exact residual
+  rw [pointEqual] at bound
+  exact bound
+
+end StartReading
+
+/-- Assemble the original edge model from its retained root witness and exact coefficient cache.
+
+The original prepared box and variation payments are preserved. Assembly
+reads the supplied caches and computes no root or polynomial reading.
+-/
+@[expose] def modelWithReading (edge : OwnedCells.Edge safe) (cached : StartReading edge)
+    (center : Gaussian)
+    (centerEq : center = CoefficientBounds.coefficient data edge.span.interval.lower cached.reading.val) :
+    CellModels.Model data edge.span :=
+  CellModels.makeWithCenter safe edge.span edge.cached.preparedOwner.track.initial.box
+    cached.reading.val cached.inside cached.residual center centerEq
+
+/-- Construct the cell model from a retained starting root reading and the original cached prepared enclosure. -/
+@[expose] def model (edge : OwnedCells.Edge safe) : CellModels.Model data edge.span :=
+  let cached := StartReading.ofEdge edge
+  let center := CoefficientBounds.coefficient data edge.span.interval.lower cached.reading.val
+  edge.modelWithReading cached center rfl
+
+/-- Supplying the same retained root and coefficient caches gives exactly the original edge model. -/
+theorem modelWithReading_eq (edge : OwnedCells.Edge safe) (cached : StartReading edge) (center : Gaussian)
+    (centerEq : center = CoefficientBounds.coefficient data edge.span.interval.lower cached.reading.val) :
+    edge.modelWithReading cached center centerEq = edge.model := by
+  cases cached with
+  | mk root rootEq reading readingEq =>
+      cases rootEq
+      cases readingEq
+      cases centerEq
+      rfl
 
 open Purelib.Curves.Hyperelliptic.Differentials in
 open Purelib.Data.Gaussian in
@@ -310,9 +388,22 @@ structure Cell (safe : data.Safe) where
 constructive_injectivity Cell
 
 open Purelib.Integration.Algebraic.SquareFactor in
+/-- Retain an already computed exact model on its same original continuation edge. -/
+@[expose] def Cell.ofModel {safe : data.Safe} (edge : Edge safe) (model : CellModels.Model data edge.span)
+    (modelEq : model = edge.model) : Cell safe := ⟨edge, model, modelEq⟩
+
+open Purelib.Integration.Algebraic.SquareFactor in
 /-- Cache the exact model of the supplied retained continuation edge. -/
 @[expose] def compileEdge {safe : data.Safe} (edge : Edge safe) : Cell safe :=
-  ⟨edge, edge.model, rfl⟩
+  Cell.ofModel edge edge.model rfl
+
+open Purelib.Integration.Algebraic.SquareFactor in
+/-- Retaining a supplied original model gives the same compiled cell without computing its model again. -/
+theorem Cell.ofModel_eq_compileEdge {safe : data.Safe} (edge : Edge safe)
+    (model : CellModels.Model data edge.span) (modelEq : model = edge.model) :
+    Cell.ofModel edge model modelEq = compileEdge edge := by
+  cases modelEq
+  rfl
 
 namespace Cell
 
@@ -411,6 +502,35 @@ end Cell
 
 section
 open Purelib.Integration.Algebraic.SquareFactor
+/-- Read the original prepared continuation edges without requesting their root witnesses or coefficient models. -/
+@[expose] def edges {safe : data.Safe} {left : Endpoint}
+    {owner : Owner (data.radicand.parameterPolynomial.eval ((PathContinuation.clearSegment safe).pointAt
+      left.parameter))} :
+    PreparedSheetContinuation.Subdivision (PathContinuation.clearSegment safe) (PathContinuation.within safe) left owner
+      → List (Edge safe)
+  | .stop _ _ => []
+  | .next left owner step cached ordered small remaining =>
+      ⟨left, owner, step, cached, ordered, small⟩ :: edges remaining
+
+/-- Compile the original prepared edges in their retained order. -/
+@[expose] def compileEdges {safe : data.Safe} : List (Edge safe) → List (Cell safe)
+  | [] => []
+  | edge :: remaining => compileEdge edge :: compileEdges remaining
+
+/-- Original ordered edge compilation preserves the supplied finite list's exact length. -/
+theorem compileEdges_length {safe : data.Safe} (edges : List (Edge safe)) :
+    (compileEdges edges).length = edges.length := by
+  induction edges with
+  | nil => rfl
+  | cons edge remaining induction => exact congrArg Nat.succ induction
+
+/-- Compiling concatenated original edge lists preserves both compiled lists and their original order. -/
+theorem compileEdges_append {safe : data.Safe} (first second : List (Edge safe)) :
+    compileEdges (first ++ second) = compileEdges first ++ compileEdges second := by
+  induction first with
+  | nil => rfl
+  | cons edge remaining induction => exact congrArg (List.cons (compileEdge edge)) induction
+
 /-- Compile the original continuation run in order, preserving every step's endpoint, owner, request and cached source.
 -/
 @[expose] def compileSubdivision {safe : data.Safe} {left : Endpoint}
@@ -422,6 +542,17 @@ open Purelib.Integration.Algebraic.SquareFactor
   | .next left owner step cached ordered small remaining =>
       compileEdge ⟨left, owner, step, cached, ordered, small⟩ ::
         compileSubdivision remaining
+
+/-- Reading retained edges before model compilation preserves the exact original ordered compiled subdivision. -/
+theorem compileEdges_edges {safe : data.Safe} {left : Endpoint}
+    {owner : Owner (data.radicand.parameterPolynomial.eval ((PathContinuation.clearSegment safe).pointAt
+      left.parameter))}
+    (run : PreparedSheetContinuation.Subdivision (PathContinuation.clearSegment safe) (PathContinuation.within safe)
+      left owner) : compileEdges (edges run) = compileSubdivision run := by
+  induction run with
+  | stop _ _ => rfl
+  | next left owner step cached ordered small remaining induction =>
+      exact congrArg (List.cons (compileEdge ⟨left, owner, step, cached, ordered, small⟩)) induction
 
 /-- The compiled cell count equals the original subdivision step count. -/
 theorem compileSubdivision_length {safe : data.Safe} {left : Endpoint}
@@ -504,12 +635,35 @@ structure CompiledRun (safe : data.Safe) (sheet : Fin 2)
 constructive_injectivity CompiledRun
 
 open Purelib.Integration.Algebraic.SquareFactor in
+/-- Retain the original selected mesh and already compiled cells using their exact construction identities. -/
+@[expose] def CompiledRun.ofMeshCells {safe : data.Safe} {sheet : Fin 2} {rootDiameter : Coordinate}
+    {positive : 0 < rootDiameter} {minimumDepth : Nat}
+    (mesh : PathContinuation.SelectedMesh safe (PathContinuation.initialOwner safe sheet)
+      rootDiameter positive minimumDepth)
+    (meshEq : mesh = PathContinuation.selectMesh safe sheet rootDiameter positive minimumDepth)
+    (cells : List (Cell safe)) (cellsEq : cells = compileSubdivision mesh.run) :
+    CompiledRun safe sheet rootDiameter positive minimumDepth := ⟨mesh, meshEq, cells, cellsEq⟩
+
+open Purelib.Integration.Algebraic.SquareFactor in
 /-- Select the original mesh once and compile its retained run once, preserving both cache equations. -/
 @[expose] def compile {safe : data.Safe} (sheet : Fin 2) (rootDiameter : Coordinate) (positive : 0 <
   rootDiameter)
     (minimumDepth : Nat) : CompiledRun safe sheet rootDiameter positive minimumDepth :=
   let mesh := PathContinuation.selectMesh safe sheet rootDiameter positive minimumDepth
-  ⟨mesh, rfl, compileSubdivision mesh.run, rfl⟩
+  CompiledRun.ofMeshCells mesh rfl (compileSubdivision mesh.run) rfl
+
+open Purelib.Integration.Algebraic.SquareFactor in
+/-- Retaining the original mesh and cells gives exactly the original compiled run without rebuilding either cache. -/
+theorem CompiledRun.ofMeshCells_eq_compile {safe : data.Safe} {sheet : Fin 2} {rootDiameter : Coordinate}
+    {positive : 0 < rootDiameter} {minimumDepth : Nat}
+    (mesh : PathContinuation.SelectedMesh safe (PathContinuation.initialOwner safe sheet)
+      rootDiameter positive minimumDepth)
+    (meshEq : mesh = PathContinuation.selectMesh safe sheet rootDiameter positive minimumDepth)
+    (cells : List (Cell safe)) (cellsEq : cells = compileSubdivision mesh.run) :
+    CompiledRun.ofMeshCells mesh meshEq cells cellsEq = compile sheet rootDiameter positive minimumDepth := by
+  cases meshEq
+  cases cellsEq
+  rfl
 
 section
 open Purelib.Integration.Algebraic.SquareFactor

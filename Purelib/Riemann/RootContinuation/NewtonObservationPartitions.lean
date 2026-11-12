@@ -55,6 +55,10 @@ import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Polynomial.Geometry.Grid.Rectangle
+
+open Purelib.Topology.BranchedCover.Double
+
 open Purelib.Data
 
 public section
@@ -88,11 +92,11 @@ open Purelib.Curves.Hyperelliptic.Meshes.Newton.AllHoles.Excision (AllHoleExcisi
 open Purelib.Riemann.Topology.NewtonSewnExcision.AllHoleExcision (Sewn)
 open Purelib.Topology.Surface.Sewing.SewnPrimitiveSamples (CachedSample)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : NewtonPreparation original} {target radius : Purelib.Data.Rat.Fraction.Rational}
+  {preparation : NewtonPreparation original} {target radius : Rational}
 
 namespace ProtectedObservations
 
@@ -106,7 +110,7 @@ position. -/
 structure GridPartition (observations : ProtectedObservations original) (grid : NewtonGrid preparation target radius)
     (site : Fin genus) where
   /-- The original grid partition of this exact retained observation square. -/ cuts :
-    Geometry.Grid.Rectangle.Cuts.Partition grid.shrunk.prepared.grid (observations.energy.box site)
+    Cuts.Partition grid.shrunk.prepared.grid (observations.energy.box site)
   /-- The cached original regular-face position for every retained cut box. -/ positions : Data.Vector (Fin
     grid.faces.regulars.length) cuts.boxes.length
   /-- Each cut box refines the original regular cell at its exact cached position. -/ refines_face : ∀ index : Fin
@@ -129,20 +133,20 @@ corresponding original regular cell. -/
 @[expose] def build (observations : ProtectedObservations original) (grid : NewtonGrid preparation target radius) (site
   : Fin genus) :
     GridPartition observations grid site := by
-  let cuts := Geometry.Grid.Rectangle.Cuts.Partition.build grid.shrunk.prepared.grid
+  let cuts := Cuts.Partition.build grid.shrunk.prepared.grid
     (observations.energy.box site) (observations.energy.box_proper site)
   let locate (index : Fin cuts.boxes.length) := observations.locate grid site
-    (Geometry.Grid.Rectangle.Cuts.center cuts.boxes[index.val])
-    ((cuts.refines (List.getElem_mem _)).contains (Geometry.Grid.Rectangle.Cuts.center_inside (cuts.proper
+    (Cuts.center cuts.boxes[index.val])
+    ((cuts.refines (List.getElem_mem _)).contains (Cuts.center_inside (cuts.proper
       (List.getElem_mem _))))
-  refine ⟨cuts, Vector.Basic.vectorOfFn (fun index => (locate index).position), ?_⟩
+  refine ⟨cuts, vectorOfFn (fun index => (locate index).position), ?_⟩
   intro index
   apply Eq.mpr (congrArg (fun position : Fin grid.faces.regulars.length =>
     cuts.boxes[index.val].Refines grid.faces.regulars[position.val].cell.box)
-    (Vector.Basic.vectorOfFn_apply (fun index => (locate index).position) index))
-  exact Geometry.Grid.Rectangle.Cuts.Partition.refines_cell cuts (List.getElem_mem _)
+    (vectorOfFn_apply (fun index => (locate index).position) index))
+  exact Cuts.Partition.refines_cell cuts (List.getElem_mem _)
     grid.faces.regulars[(locate index).position.val].member
-    (Geometry.Grid.Rectangle.Cuts.center_strict (cuts.proper (List.getElem_mem _))) (locate index).contains
+    (Cuts.center_strict (cuts.proper (List.getElem_mem _))) (locate index).contains
 
 /-- Read one cut box by its original bounded index in the retained observation partition. -/
 @[expose] def box (partition : GridPartition observations grid site) (index : Fin partition.cuts.boxes.length) : Box :=
@@ -162,16 +166,16 @@ open Purelib.Geometry.Rational in
 open Purelib.Geometry.Rectangle.Partition in
 /-- The sum of the original partition-box areas equals the retained observation area. -/
 theorem area_eq (partition : GridPartition observations grid site) :
-    FiniteSum.Fin.sumFin (fun index => Box.Content.boxContent (partition.box index)) = observations.energy.area := by
-  change FiniteSum.Fin.sumFin (fun index : Fin partition.cuts.boxes.length =>
+    sumFin (fun index => Box.Content.boxContent (partition.box index)) = observations.energy.area := by
+  change sumFin (fun index : Fin partition.cuts.boxes.length =>
     Box.Content.boxContent partition.cuts.boxes[index.val]) = _
   rw [← PreparedBoxPartitions.sumCells_eq_sumFin, partition.cuts.area_eq, observations.energy.boxContent_eq_area]
 
 open Purelib.Polynomial in
 /-- Retain the original regular-face position containing the exact cut-box center. -/
 @[expose] def location (partition : GridPartition observations grid site) (index : Fin partition.cuts.boxes.length) :
-    RegularLocation grid (Geometry.Grid.Rectangle.Cuts.center (partition.box index)) :=
-  ⟨partition.positions index, (partition.refines_face index).contains (Geometry.Grid.Rectangle.Cuts.center_inside
+    RegularLocation grid (Cuts.center (partition.box index)) :=
+  ⟨partition.positions index, (partition.refines_face index).contains (Cuts.center_inside
     (partition.proper index))⟩
 
 open Purelib in
@@ -181,11 +185,11 @@ open Purelib.LinearAlgebra.Gaussian in
 open Purelib.Riemann.Topology in
 /-- Cache the original certified observation energy cells restricted to their retained cut boxes. -/
 @[expose] def surfaceCells (partition : GridPartition observations grid site)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (face :
-      Topology.BranchedCover.Double.Attachment.Face) :
+    (coefficients : Energy.GaussianVector genus) (face :
+      Attachment.Face) :
     Data.Vector (Energy.Prepared.PreparedEnergy.SurfaceCell curve coefficients) partition.cuts.boxes.length :=
   let original := observations.energy.surfaceCell coefficients face site
-  Vector.Basic.vectorOfFn fun index => PreparedSurfacePartitions.BoxPartition.restrictCell original
+  vectorOfFn fun index => PreparedSurfacePartitions.BoxPartition.restrictCell original
     (partition.box index) (partition.proper index) (partition.refines_observation index)
 
 section
@@ -194,21 +198,21 @@ open Purelib.Data
 open Purelib.LinearAlgebra.Gaussian
 /-- The cached restricted energy cell keeps its exact original cut box. -/
 theorem surfaceCells_box (partition : GridPartition observations grid site)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (face :
-      Topology.BranchedCover.Double.Attachment.Face) (index :
+    (coefficients : Energy.GaussianVector genus) (face :
+      Attachment.Face) (index :
       Fin partition.cuts.boxes.length) :
     (partition.surfaceCells coefficients face index).box = partition.box index := by
-  rw [surfaceCells, Vector.Basic.vectorOfFn_apply]; rfl
+  rw [surfaceCells, vectorOfFn_apply]; rfl
 
 /-- Partition restriction preserves the original observation site's certified density lower bound. -/
 theorem surfaceCells_density (partition : GridPartition observations grid site)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (face :
-      Topology.BranchedCover.Double.Attachment.Face) (index :
+    (coefficients : Energy.GaussianVector genus) (face :
+      Attachment.Face) (index :
       Fin partition.cuts.boxes.length) :
     (partition.surfaceCells coefficients face index).densityLower =
       observations.energy.original.boxes.numeratorLower coefficients site /
         observations.energy.original.boxes.denominatorScale := by
-  rw [surfaceCells, Vector.Basic.vectorOfFn_apply]; rfl
+  rw [surfaceCells, vectorOfFn_apply]; rfl
 
 end
 
@@ -219,35 +223,35 @@ open Purelib.Geometry.Rational in
 open Purelib.LinearAlgebra.Gaussian in
 /-- The cut-box energy equals the original observation area times its retained site density. -/
 theorem surfaceEnergy_eq (partition : GridPartition observations grid site)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (face :
-      Topology.BranchedCover.Double.Attachment.Face) :
+    (coefficients : Energy.GaussianVector genus) (face :
+      Attachment.Face) :
     Energy.Prepared.surfaceEnergy (fun index => partition.surfaceCells coefficients face index) =
       observations.energy.area *
         (observations.energy.original.boxes.numeratorLower coefficients site /
           observations.energy.original.boxes.denominatorScale) := by
-  change FiniteSum.Fin.sumFin (fun index => Box.Content.boxContent (partition.surfaceCells coefficients face index).box
+  change sumFin (fun index => Box.Content.boxContent (partition.surfaceCells coefficients face index).box
     *
     (partition.surfaceCells coefficients face index).densityLower) = _
   calc
-    _ = FiniteSum.Fin.sumFin (fun index => Box.Content.boxContent (partition.box index) *
+    _ = sumFin (fun index => Box.Content.boxContent (partition.box index) *
         (observations.energy.original.boxes.numeratorLower coefficients site /
           observations.energy.original.boxes.denominatorScale)) :=
-      FiniteSum.Fin.sumFin_congr (fun index => by rw [partition.surfaceCells_box, partition.surfaceCells_density])
-    _ = _ := by rw [FiniteSum.Fin.sumFin_mul_right, partition.area_eq]
+      sumFin_congr (fun index => by rw [partition.surfaceCells_box, partition.surfaceCells_density])
+    _ = _ := by rw [sumFin_mul_right, partition.area_eq]
 
 variable {lifted : LiftedPuncturedGrid grid.punctured}
-  {localValues : Fin lifted.mesh.triangles.length → Purelib.Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues 3}
-  {sample : Purelib.Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch localValues}
-  {excision : Purelib.Curves.Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted}
+  {localValues : Fin lifted.mesh.triangles.length → Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues 3}
+  {sample : CachedSample lifted.cutPolygon.patch localValues}
+  {excision : AllHoleExcision grid lifted}
 
 open Purelib.Polynomial in
 open Purelib.Riemann.Topology in
 /-- Recover the original surviving sewn triangle at the retained cut-box center and sheet. -/
 @[expose] def retainedTriangle (partition : GridPartition observations grid site)
-    (sewn : NewtonSewnExcision.AllHoleExcision.Sewn excision sample) (index : Fin partition.cuts.boxes.length)
+    (sewn : Sewn excision sample) (index : Fin partition.cuts.boxes.length)
     (sheet : Fin 2) (upper : Bool) : RetainedTriangle sewn (partition.location index) sheet upper :=
-  observations.retainedTriangle sewn site (Geometry.Grid.Rectangle.Cuts.center (partition.box index))
-    ((partition.refines_observation index).contains (Geometry.Grid.Rectangle.Cuts.center_inside (partition.proper
+  observations.retainedTriangle sewn site (Cuts.center (partition.box index))
+    ((partition.refines_observation index).contains (Cuts.center_inside (partition.proper
       index)))
     (partition.location index) sheet upper
 
@@ -289,13 +293,13 @@ open Purelib.Curves.Hyperelliptic.Integration in
 open Purelib.LinearAlgebra.Gaussian in
 /-- The sum of site-grouped partition energies equals the original observation-cell energy. -/
 theorem groupedEnergy_eq (partitions : GridPartitions observations grid)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (face :
-      Topology.BranchedCover.Double.Attachment.Face) :
-    FiniteSum.Fin.sumFin (fun site => Energy.Prepared.surfaceEnergy
+    (coefficients : Energy.GaussianVector genus) (face :
+      Attachment.Face) :
+    sumFin (fun site => Energy.Prepared.surfaceEnergy
       (fun index => (partitions.entries.get site).surfaceCells coefficients face index)) =
       Energy.Prepared.surfaceEnergy (fun site => observations.energy.surfaceCells coefficients face site) := by
   rw [observations.energy.surfaceEnergy_eq, ← FiniteSum.Fin.sumFin_mul_left]
-  exact FiniteSum.Fin.sumFin_congr (fun site => (partitions.entries.get site).surfaceEnergy_eq coefficients face)
+  exact sumFin_congr (fun site => (partitions.entries.get site).surfaceEnergy_eq coefficients face)
 
 open Purelib.Algebra.FiniteSum.Rational.Squares (coordinateSum)
 
@@ -303,17 +307,17 @@ open Purelib.Algebra in
 open Purelib.Data.Rat in
 /-- Summing retained flattened occurrences equals the original nested site and cut-box sums. -/
 theorem sum_indices (partitions : GridPartitions observations grid)
-    (value : (Sigma fun site => Fin (partitions.entries.get site).cuts.boxes.length) → Fraction.Rational) :
-    FiniteSum.Fin.sumFin (fun index : Fin partitions.indices.length => value partitions.indices[index.val]) =
-      FiniteSum.Fin.sumFin (fun site => FiniteSum.Fin.sumFin (fun index => value ⟨site, index⟩)) := by
+    (value : (Sigma fun site => Fin (partitions.entries.get site).cuts.boxes.length) → Rational) :
+    sumFin (fun index : Fin partitions.indices.length => value partitions.indices[index.val]) =
+      sumFin (fun site => sumFin (fun index => value ⟨site, index⟩)) := by
   calc
-    _ = FiniteSum.Rational.Squares.coordinateSum (partitions.indices.map value) :=
+    _ = coordinateSum (partitions.indices.map value) :=
       (FiniteSum.Rational.Squares.coordinateSum_map_eq_sumFin partitions.indices value).symm
-    _ = FiniteSum.Rational.Squares.coordinateSum (((List.ofFn fun site => List.ofFn fun index : Fin
+    _ = coordinateSum (((List.ofFn fun site => List.ofFn fun index : Fin
       (partitions.entries.get site).cuts.boxes.length =>
-        Sigma.mk site index).flatten).map value) := congrArg (fun items => FiniteSum.Rational.Squares.coordinateSum
+        Sigma.mk site index).flatten).map value) := congrArg (fun items => coordinateSum
           (items.map value)) partitions.indices_eq
-    _ = _ := (FiniteSum.Rational.Squares.coordinateSum_map_flatten_ofFn _ value).trans (FiniteSum.Fin.sumFin_congr (fun
+    _ = _ := (FiniteSum.Rational.Squares.coordinateSum_map_flatten_ofFn _ value).trans (sumFin_congr (fun
       site : Fin genus =>
       FiniteSum.Rational.Squares.coordinateSum_map_ofFn (fun index : Fin (partitions.entries.get site).cuts.boxes.length
         => Sigma.mk site index) value))
@@ -326,11 +330,11 @@ open Purelib.LinearAlgebra.Gaussian in
 
 The construction preserves each original site and cut-box index and reuses its bank entry in the flattened vector. -/
 @[expose] def surfaceCells (partitions : GridPartitions observations grid)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (face :
-      Topology.BranchedCover.Double.Attachment.Face) :
+    (coefficients : Energy.GaussianVector genus) (face :
+      Attachment.Face) :
     Data.Vector (Energy.Prepared.PreparedEnergy.SurfaceCell curve coefficients) partitions.indices.length :=
   let banks := Vector.DependentVector.ofFn fun site => (partitions.entries.get site).surfaceCells coefficients face
-  Vector.Basic.vectorOfFn fun index : Fin partitions.indices.length =>
+  vectorOfFn fun index : Fin partitions.indices.length =>
     let occurrence := partitions.indices[index.val]
     banks.get occurrence.1 occurrence.2
 
@@ -339,13 +343,13 @@ open Purelib.Data in
 open Purelib.LinearAlgebra.Gaussian in
 /-- Each flattened cached cell is the exact original site-local cached cell selected by its retained occurrence. -/
 theorem surfaceCells_eq (partitions : GridPartitions observations grid)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (face :
-      Topology.BranchedCover.Double.Attachment.Face) (index :
+    (coefficients : Energy.GaussianVector genus) (face :
+      Attachment.Face) (index :
       Fin partitions.indices.length) :
     partitions.surfaceCells coefficients face index =
       (partitions.entries.get partitions.indices[index.val].1).surfaceCells coefficients face
         partitions.indices[index.val].2 := by
-  rw [surfaceCells, Vector.Basic.vectorOfFn_apply]
+  rw [surfaceCells, vectorOfFn_apply]
   dsimp only
   rw [Vector.DependentVector.ofFn_get]
 
@@ -359,8 +363,8 @@ open Purelib in
 open Purelib.LinearAlgebra.Gaussian in
 /-- Every flattened cached energy cell refines the exact original regular cell at its retained position. -/
 theorem surfaceCells_refines_face (partitions : GridPartitions observations grid)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (face :
-      Topology.BranchedCover.Double.Attachment.Face) (index :
+    (coefficients : Energy.GaussianVector genus) (face :
+      Attachment.Face) (index :
       Fin partitions.indices.length) :
     (partitions.surfaceCells coefficients face index).box.Refines grid.faces.regulars[(partitions.position
       index).val].cell.box := by
@@ -374,20 +378,20 @@ open Purelib.Geometry.Rational in
 open Purelib.LinearAlgebra.Gaussian in
 /-- Flattening the exact retained site partitions preserves the original observation surface energy. -/
 theorem surfaceEnergy_eq (partitions : GridPartitions observations grid)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (face :
-      Topology.BranchedCover.Double.Attachment.Face) :
+    (coefficients : Energy.GaussianVector genus) (face :
+      Attachment.Face) :
     Energy.Prepared.surfaceEnergy (fun index => partitions.surfaceCells coefficients face index) =
       Energy.Prepared.surfaceEnergy (fun site => observations.energy.surfaceCells coefficients face site) := by
   rw [← partitions.groupedEnergy_eq coefficients face]
-  change FiniteSum.Fin.sumFin (fun index => Box.Content.boxContent (partitions.surfaceCells coefficients face index).box
+  change sumFin (fun index => Box.Content.boxContent (partitions.surfaceCells coefficients face index).box
     *
     (partitions.surfaceCells coefficients face index).densityLower) = _
   calc
-    _ = FiniteSum.Fin.sumFin (fun index : Fin partitions.indices.length =>
+    _ = sumFin (fun index : Fin partitions.indices.length =>
         let cell := (partitions.entries.get partitions.indices[index.val].1).surfaceCells coefficients face
           partitions.indices[index.val].2
         Box.Content.boxContent cell.box * cell.densityLower) :=
-      FiniteSum.Fin.sumFin_congr (fun index => by rw [partitions.surfaceCells_eq])
+      sumFin_congr (fun index => by rw [partitions.surfaceCells_eq])
     _ = _ := partitions.sum_indices (fun occurrence =>
       let cell := (partitions.entries.get occurrence.1).surfaceCells coefficients face occurrence.2
       Box.Content.boxContent cell.box * cell.densityLower)
@@ -397,8 +401,8 @@ open Purelib.Curves.Hyperelliptic.Integration in
 open Purelib.LinearAlgebra.Gaussian in
 /-- The flattened observation partition preserves the original uniform coefficient-norm energy lower bound. -/
 theorem uniform_lower (partitions : GridPartitions observations grid)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (face :
-      Topology.BranchedCover.Double.Attachment.Face) :
+    (coefficients : Energy.GaussianVector genus) (face :
+      Attachment.Face) :
     observations.energy.lower * coefficientNormSq coefficients ≤
       Energy.Prepared.surfaceEnergy (fun index => partitions.surfaceCells coefficients face index) := by
   rw [partitions.surfaceEnergy_eq]
@@ -410,9 +414,9 @@ open Purelib.Data.Rat in
 open Purelib.LinearAlgebra.Gaussian in
 /-- A nonzero original coefficient vector has positive energy on the retained partition cells. -/
 theorem positive_energy (partitions : GridPartitions observations grid)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (nonzero : Energy.NonzeroGaussianVector
+    (coefficients : Energy.GaussianVector genus) (nonzero : Energy.NonzeroGaussianVector
       coefficients)
-    (face : Topology.BranchedCover.Double.Attachment.Face) : 0 < Energy.Prepared.surfaceEnergy
+    (face : Attachment.Face) : 0 < Energy.Prepared.surfaceEnergy
       (fun index => partitions.surfaceCells coefficients face index) :=
   (Fraction.Order.Arithmetic.mul_pos_direct observations.energy.lower_positive (coefficientNormSq_positive
     nonzero)).trans_le

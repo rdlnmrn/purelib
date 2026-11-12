@@ -53,10 +53,10 @@ open Purelib.Data.Gaussian in
 /-- The exact rational Gaussian carrier. -/
 private abbrev Gaussian := Basic.Canonical
 /-- The original rational Gaussian box carrier. -/
-private abbrev Box := Purelib.Geometry.Rational.Box
+private abbrev Box := Geometry.Rational.Box
 open Purelib.Polynomial.Dense.Gaussian in
 /-- The dense Gaussian polynomial carrier. -/
-private abbrev GaussianPolynomial := Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+private abbrev GaussianPolynomial := Basic.CanonicalCoefficients.CoefficientPolynomial
 
 open Purelib.Riemann.Branches.PreparedSheetContinuation (Endpoint)
 open Purelib.Riemann.Paths.PreparedClearPathModels (zeroEndpoint oneEndpoint)
@@ -71,7 +71,7 @@ open Purelib.Riemann.Branches in
 
 The leaf variation is recomputed at the new depth; geometric antitonicity transfers the existing strict smallness
 certificate. -/
-@[expose] def atDepth {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+@[expose] def atDepth {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
   {ambient : Box} {start finish :
   Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish} {left right : Endpoint}
@@ -119,7 +119,7 @@ open Purelib.Polynomial.Dense.Gaussian in
 The safe mesh and trace retain an exact common depth. A separate preferred mesh carries the movement certificate used by
 the finite acquisition attempt. -/
 structure PrimitiveTraceBudget {polynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {start finish :
+  Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {start finish :
   Basic.Canonical}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) where
   /-- The uniform primitive bounds for the original cleared segment. -/ bounds : Bounds segment
@@ -146,7 +146,7 @@ open Purelib.Riemann.Paths in
 
 The safe depth is the maximum of the original two depths. The preferred mesh instead uses the geometric movement search,
 retaining each original bound and exact dyadic edge count. -/
-@[expose] def build {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient
+@[expose] def build {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient
   : Box} {start finish : Basic.Canonical}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) : PrimitiveTraceBudget segment :=
   let bounds := Bounds.build segment
@@ -161,9 +161,9 @@ retaining each original bound and exact dyadic edge count. -/
         edgeCount := 2 ^ depth
         edgeCount_eq := rfl
         small := (quarterRadius_antitone
-          (Basic.Canonical.normSq_nonneg (finish - start)) (Purelib.Data.Nat.Order.le_max_left _ _)).trans_lt mesh.small
+          (Basic.Canonical.normSq_nonneg (finish - start)) (Data.Nat.Order.le_max_left _ _)).trans_lt mesh.small
             }
-    trace := PreparedPathPrimitiveCover.PreparedTraceBudget.atDepth trace depth (Purelib.Data.Nat.Order.le_max_right _
+    trace := PreparedTraceBudget.atDepth trace depth (Data.Nat.Order.le_max_right _
       _)
     depth_eq := rfl
     preferred :=
@@ -171,13 +171,13 @@ retaining each original bound and exact dyadic edge count. -/
         edgeCount := 2 ^ preferredDepth
         edgeCount_eq := rfl
         small := (quarterRadius_antitone
-          (Basic.Canonical.normSq_nonneg (finish - start)) (Purelib.Data.Nat.Order.le_max_left _ _)).trans_lt mesh.small
+          (Basic.Canonical.normSq_nonneg (finish - start)) (Data.Nat.Order.le_max_left _ _)).trans_lt mesh.small
             }
     preferred_movement := by
       have nonnegative : 0 ≤ trace.variation := by
         rw [trace.variation_eq]
         exact ClearSheetContinuation.variationBound_nonneg segment _ _
-      exact ((quarterRadius_antitone nonnegative (Purelib.Data.Nat.Order.le_max_right
+      exact ((quarterRadius_antitone nonnegative (Data.Nat.Order.le_max_right
         mesh.depth movementDepth)).trans_lt
         (Geometric.Search.firstQuarterBelow_accurate trace.variation nonnegative 0 trace.movementBudget
           trace.movementBudget_positive)).le }
@@ -195,15 +195,15 @@ open Purelib.Polynomial.Dense.Gaussian in
 
 Every nonempty step retains its bounds, mesh and exact equation identifying the prepared subdivision edges, followed by
 the cover of the original tail. -/
-inductive PrimitiveCover {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+inductive PrimitiveCover {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
   {ambient : Box} :
-    {start finish : Basic.Canonical} → {path : Polynomial.Geometry.ClearPath polynomial ambient start finish} →
+    {start finish : Basic.Canonical} → {path : Geometry.ClearPath polynomial ambient start finish} →
       {owner : Owner (polynomial.eval start)} → PreparedPath path owner → Type
   /-- The empty cover retains the exact original point and root owner. -/ | nil (point : Basic.Canonical) (owner : Owner
     (polynomial.eval point)) : PrimitiveCover (.nil point owner)
   /-- Retain the original segment bounds, exact mesh-edge equation and covered tail. -/ | cons {start middle finish :
     Basic.Canonical} {head : Geometry.ClearPath.ClearSegment polynomial ambient start middle}
-      {tail : Polynomial.Geometry.ClearPath polynomial ambient middle finish} {owner : Owner (polynomial.eval start)}
+      {tail : Geometry.ClearPath polynomial ambient middle finish} {owner : Owner (polynomial.eval start)}
       {within : head.WithinAmbient} {first : CompleteSegment head within owner}
       {rest : PreparedPath tail first.finishOwner}
       (bounds : Bounds head) (mesh : Mesh bounds)
@@ -220,10 +220,10 @@ open Purelib.Polynomial in
 open Purelib.Polynomial.Dense.Gaussian in
 open Purelib.Riemann.Paths in
 /-- Transport a primitive cover along equality of its original starting owner. -/
-@[expose] def castOwner {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+@[expose] def castOwner {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
   {ambient : Box} {start finish :
   Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath polynomial ambient start finish} {first second : Owner (polynomial.eval
+    {path : Geometry.ClearPath polynomial ambient start finish} {first second : Owner (polynomial.eval
       start)}
     (equal : first = second) {prepared : PreparedPath path first} (cover : PrimitiveCover prepared) :
     PrimitiveCover (PreparedPathTrace.PreparedPath.castOwner equal prepared) := by
@@ -234,10 +234,27 @@ open Purelib.Data.Gaussian in
 open Purelib.Geometry.Rational in
 open Purelib.Polynomial in
 open Purelib.Polynomial.Dense.Gaussian in
+/-- Read the same head bounds, certified mesh and literal remaining cover from an original nonempty cover. -/
+def headTail {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {ambient : Box} {start middle finish : Basic.Canonical}
+    {head : Geometry.ClearPath.ClearSegment polynomial ambient start middle}
+    {tail : Geometry.ClearPath polynomial ambient middle finish}
+    {owner : Owner (polynomial.eval start)} {within : head.WithinAmbient}
+    {first : CompleteSegment head within owner} {rest : PreparedPath tail first.finishOwner}
+    (cover : PrimitiveCover (.cons head tail owner within first rest)) :
+    (bounds : Bounds head) ×
+      {mesh : Mesh bounds // first.subdivision.parameterEdges = mesh.edges} × PrimitiveCover rest :=
+  match cover with
+  | .cons bounds mesh meshEq remaining => ⟨bounds, ⟨mesh, meshEq⟩, remaining⟩
+
+open Purelib.Data.Gaussian in
+open Purelib.Geometry.Rational in
+open Purelib.Polynomial in
+open Purelib.Polynomial.Dense.Gaussian in
 /-- Every original prepared edge in a primitive-covered path has strictly ordered parameters. -/
-theorem proper {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
+theorem proper {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
   Box} :
-    ∀ {start finish : Basic.Canonical} {path : Polynomial.Geometry.ClearPath polynomial ambient start finish}
+    ∀ {start finish : Basic.Canonical} {path : Geometry.ClearPath polynomial ambient start finish}
       {owner : Owner (polynomial.eval start)} {prepared : PreparedPath path owner},
       PrimitiveCover prepared → AllEdgesProper prepared
   | _, _, _, _, _, .nil _ _ => trivial
@@ -258,9 +275,9 @@ open Purelib.Polynomial.Dense.Gaussian in
 /-- An original traced path together with primitive meshes covering its exact retained preparation.
 
 The cover is indexed by the stored prepared path, preserving all segment owners, subdivisions and ordered endpoints. -/
-structure CoveredTracedPath {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+structure CoveredTracedPath {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
   {ambient : Box}
-    {start finish : Basic.Canonical} (path : Polynomial.Geometry.ClearPath polynomial ambient start finish)
+    {start finish : Basic.Canonical} (path : Geometry.ClearPath polynomial ambient start finish)
     (owner : Owner (polynomial.eval start)) where
   /-- The original prepared path and its retained owner trace. -/ traced : TracedPath path owner
   /-- The primitive cover indexed by the exact stored preparation. -/ cover : PreparedPath.PrimitiveCover
@@ -270,57 +287,120 @@ constructive_injectivity CoveredTracedPath
 
 namespace CoveredTracedPath
 
-open Purelib.Data.Gaussian in
-open Purelib.Geometry.Rational in
-open Purelib.Polynomial in
-open Purelib.Polynomial.Dense.Gaussian in
-open Purelib.Riemann.Branches in
-open Purelib.RootIsolation in
+section
+
+open Purelib.Data.Gaussian
+open Purelib.Geometry.Rational
+open Purelib.Polynomial
+open Purelib.Polynomial.Dense.Gaussian
+open Purelib.Riemann.Branches
+open Purelib.RootIsolation
+
+/-- Prepare one original clear segment and retain the supplied tail at its exact cached finish owner.
+
+The original common budget selects one dyadic preparation. Its retained
+requests, owner and primitive mesh are consumed by the head trace, while
+the supplied continuation receives that identical finish owner once.
+-/
+@[expose] def cons {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    {start middle finish : Basic.Canonical} (head : Geometry.ClearPath.ClearSegment polynomial ambient start middle)
+    (tail : Geometry.ClearPath polynomial ambient middle finish)
+    (within : (Geometry.ClearPath.cons head tail).WithinAmbient) (owner : Owner (polynomial.eval start))
+    (tailAt : (inherited : Owner (polynomial.eval middle)) → CoveredTracedPath tail inherited) :
+    CoveredTracedPath (.cons head tail) owner := by
+  let budget := PrimitiveTraceBudget.build head
+  let acquired := AcquiredDyadic.acquire head within.head owner
+    budget.trace.rootDiameter budget.trace.rootDiameter_positive
+    budget.preferred.depth budget.trace.depth (budget.trace.meshSafe (ownerAtStart head owner) (by decide))
+  let first := acquired.val.prepared
+  have fits : budget.trace.RequestsFit zeroEndpoint first.subdivision.requests := by
+    rw [PreparedSheetContinuation.Subdivision.tryDyadic_requests head within.head
+      zeroEndpoint oneEndpoint (ownerAtStart head owner) acquired.val.depth budget.trace.rootDiameter
+      budget.trace.rootDiameter_positive acquired.val.success]
+    rcases acquired.property with preferred | safe
+    · rw [preferred]
+      exact budget.trace.dyadicRequests_fit_of_variation (by decide) _ _ _ le_rfl budget.preferred_movement
+    · rw [safe]
+      exact budget.trace.dyadicRequests_fit (by decide)
+  let mesh : Mesh budget.bounds :=
+    { depth := acquired.val.depth
+      edgeCount := 2 ^ acquired.val.depth
+      edgeCount_eq := rfl
+      small := by
+        rcases acquired.property with preferred | safe
+        · rw [preferred]
+          exact budget.preferred.small
+        · rw [safe, budget.depth_eq]
+          exact budget.mesh.small }
+  let firstTrace := TracedSegment.ofPrepared budget.trace first fits acquired.val.requests acquired.val.requests_eq
+    acquired.val.finishOwner acquired.val.finishOwner_eq
+  let rest := tailAt firstTrace.finishOwner
+  let traced := TracedPath.cons firstTrace rest.traced
+  have meshEq : first.subdivision.parameterEdges = mesh.edges := by
+    rw [PreparedSheetContinuation.Subdivision.tryDyadic_parameterEdges head within.head
+      zeroEndpoint oneEndpoint (ownerAtStart head owner) acquired.val.depth budget.trace.rootDiameter
+      budget.trace.rootDiameter_positive acquired.val.success]
+    rfl
+  exact ⟨traced, .cons budget.bounds mesh meshEq (rest.cover.castOwner firstTrace.finishOwner_eq)⟩
+
 /-- Acquire a traced path with primitive covers along its original cleared segments.
 
 Each step tries the preferred mesh with a certified safe fallback, reuses the acquired requests and finish owner, and
 transports the recursively retained tail cover along that exact owner equality. -/
-@[expose] def build {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient
-  : Box} :
-    ∀ {start finish : Basic.Canonical} (path : Polynomial.Geometry.ClearPath polynomial ambient start finish)
+@[expose] def build {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} :
+    ∀ {start finish : Basic.Canonical} (path : Geometry.ClearPath polynomial ambient start finish)
       (_within : path.WithinAmbient) (owner : Owner (polynomial.eval start)), CoveredTracedPath path owner
   | _, _, .nil point, _, owner =>
       ⟨TracedPath.build (.nil point) (.nil point) owner, .nil point owner⟩
-  | _, _, .cons head tail, within, owner => by
-      let budget := PrimitiveTraceBudget.build head
-      let acquired := SquareRoot.Preparation.Terminal.AcquiredDyadic.acquire head within.head owner
-        budget.trace.rootDiameter budget.trace.rootDiameter_positive
-        budget.preferred.depth budget.trace.depth (budget.trace.meshSafe (ownerAtStart head owner) (by decide))
-      let first := acquired.val.prepared
-      have fits : budget.trace.RequestsFit zeroEndpoint first.subdivision.requests := by
-        rw [PreparedSheetContinuation.Subdivision.tryDyadic_requests head within.head
-          zeroEndpoint oneEndpoint (ownerAtStart head owner) acquired.val.depth budget.trace.rootDiameter
-          budget.trace.rootDiameter_positive acquired.val.success]
-        rcases acquired.property with preferred | safe
-        · rw [preferred]
-          exact budget.trace.dyadicRequests_fit_of_variation (by decide) _ _ _ le_rfl budget.preferred_movement
-        · rw [safe]
-          exact budget.trace.dyadicRequests_fit (by decide)
-      let mesh : Mesh budget.bounds :=
-        { depth := acquired.val.depth
-          edgeCount := 2 ^ acquired.val.depth
-          edgeCount_eq := rfl
-          small := by
-            rcases acquired.property with preferred | safe
-            · rw [preferred]
-              exact budget.preferred.small
-            · rw [safe, budget.depth_eq]
-              exact budget.mesh.small }
-      let firstTrace := TracedSegment.ofPrepared budget.trace first fits acquired.val.requests acquired.val.requests_eq
-        acquired.val.finishOwner acquired.val.finishOwner_eq
-      let rest := build tail within.tail firstTrace.finishOwner
-      let traced := TracedPath.cons firstTrace rest.traced
-      have meshEq : first.subdivision.parameterEdges = mesh.edges := by
-        rw [PreparedSheetContinuation.Subdivision.tryDyadic_parameterEdges head within.head
-          zeroEndpoint oneEndpoint (ownerAtStart head owner) acquired.val.depth budget.trace.rootDiameter
-          budget.trace.rootDiameter_positive acquired.val.success]
-        rfl
-      exact ⟨traced, .cons budget.bounds mesh meshEq (rest.cover.castOwner firstTrace.finishOwner_eq)⟩
+  | _, _, .cons head tail, within, owner =>
+      cons head tail within owner (fun inherited => build tail within.tail inherited)
+
+/-- The original covered-segment constructor retains the supplied path-vertex enclosure in its actual trace.
+
+All actual prepared request endpoints and repeated handoffs remain in the
+same enclosure. The supplied continuation's statement concerns its exact
+retained tail at each possible original inherited owner.
+-/
+theorem cons_inBox {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    {start middle finish : Basic.Canonical} (head : Geometry.ClearPath.ClearSegment polynomial ambient start middle)
+    (tail : Geometry.ClearPath polynomial ambient middle finish)
+    (within : (Geometry.ClearPath.cons head tail).WithinAmbient) (owner : Owner (polynomial.eval start))
+    (tailAt : (inherited : Owner (polynomial.eval middle)) → CoveredTracedPath tail inherited)
+    (enclosure : Box) (inside : Geometry.ClearPath.InBox enclosure (.cons head tail))
+    (remaining : ∀ inherited, TracedPath.InBox enclosure (tailAt inherited).traced) :
+    TracedPath.InBox enclosure (cons head tail within owner tailAt).traced := by
+  let budget := PrimitiveTraceBudget.build head
+  let acquired := AcquiredDyadic.acquire head within.head owner
+    budget.trace.rootDiameter budget.trace.rootDiameter_positive
+    budget.preferred.depth budget.trace.depth (budget.trace.meshSafe (ownerAtStart head owner) (by decide))
+  delta cons
+  dsimp only
+  refine TracedPath.cons_inBox _ _ enclosure ?_ ?_
+  · intro value retained
+    exact TracedSegment.ofPrepared_inBox _ _ _ _ _ _ _ enclosure inside.1 inside.2.start value retained
+  · exact remaining acquired.val.finishOwner
+
+/-- Every vertex produced by the actual covered-path constructor stays in a box containing its original path vertices.
+
+The proof follows the retained prepared segments and their exact owner
+handoffs. It consumes the same computed requests and deferred trace inputs;
+no new preparation, owner, subdivision or primitive cover is constructed.
+-/
+theorem build_inBox {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    (enclosure : Box) :
+    ∀ {start finish : Basic.Canonical} (path : Geometry.ClearPath polynomial ambient start finish)
+      (within : path.WithinAmbient) (owner : Owner (polynomial.eval start)),
+      Geometry.ClearPath.InBox enclosure path → TracedPath.InBox enclosure (build path within owner).traced
+  | _, _, .nil _, _, _, _ => by
+      intro point member
+      change _ ∈ [] at member
+      cases member
+  | _, _, .cons head tail, within, owner, inside => by
+      unfold build
+      exact cons_inBox head tail within owner _ enclosure inside
+        (fun inherited => build_inBox enclosure tail within.tail inherited inside.2)
+
+end
 
 end CoveredTracedPath
 

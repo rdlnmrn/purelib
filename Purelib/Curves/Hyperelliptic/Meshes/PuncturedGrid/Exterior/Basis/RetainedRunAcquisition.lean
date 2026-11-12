@@ -101,35 +101,35 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChai
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSourceChains (ReverseSourceChain)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Riemann.Meshes.LiftedPuncturedGrid base} {differential other :
-    Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential other :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
   {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {count : Nat} {patch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {sourceData : Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
-    Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover sourceData}
-  {covers : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent} {minimum floor
+  {count : Nat} {patch : PreparedPatch parent}
+  {sourceData : Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
+    Cover sourceData}
+  {covers : BasisSourceCovers parent} {minimum floor
     index depth : Nat}
-  {common : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonCover cover covers minimum}
-  {areaAllowance sourceTarget coefficientTarget : Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest regular
+  {common : BasisCommonCover cover covers minimum}
+  {areaAllowance sourceTarget coefficientTarget : Coordinate}
+  {request : BasisPreparedCommonRequest regular
     common areaAllowance sourceTarget coefficientTarget floor}
   {box : Geometry.Rational.Box}
-  {polynomials : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index
+  {polynomials : RegularBasisPolynomials cap index
     box}
   {originals :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank covers
+    PrimitiveBank covers
     index}
-  {cells : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers
+  {cells : BasisSourceLocations.SampleBank covers
     index}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -139,7 +139,7 @@ open Purelib.Data.Gaussian.Norm.Basic (normSq_nonneg)
 open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 
 variable {acquired :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition request
+  BasisPreparedCommonRequest.Acquisition request
   polynomials originals cells coefficients depth}
 
 open Purelib.Riemann.Periods.CenteredBilinearPath (Sample)
@@ -151,7 +151,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentAr
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks (maximum maximum_nonnegative
   le_maximum)
 
-variable {faceIndex : Nat} {data : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
+variable {faceIndex : Nat} {data : RowData
   occurrence faceIndex}
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks (FragmentAreaBudget)
@@ -161,17 +161,17 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBl
   fragmentLocalTolerance_positive)
 
 namespace RunRequest
-variable {fragmentCount runMinimum : Nat} {target : Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  (selected : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedRuns.RunRequest occurrence covers
+variable {fragmentCount runMinimum : Nat} {target : Coordinate}
+  (selected : RunRequest occurrence covers
     fragmentCount target runMinimum)
   {vertices : Fin fragmentCount → Nat} (owners : selected.blocks.OwnerPreparation vertices)
-  {fragments : List (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment (originals :=
+  {fragments : List (OwnedFragment (originals :=
     originals) (coefficients := coefficients) data)}
   (retained : selected.blocks.RetainedFragments fragments)
   (countLe : fragments.length ≤ fragmentCount)
 
 section Forward
-variable (chain : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains.SourceChain fragments 0 1)
+variable (chain : SourceChain fragments 0 1)
   (sourcePaid : selected.blocks.queries.sourceMinimum ≤ index) (facePaid : owners.faceIndex ≤ faceIndex)
   (widths : ∀ fragment ∈ fragments, fragment.sourceWidth ≤ selected.refinement.width)
   (depthPaid : selected.refinement.depth ≤ common.depth + acquired.extraDepth)
@@ -180,7 +180,7 @@ variable (chain : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Sourc
 
 The original fragment count, complete chain, source and face stages, widths and refinement depth are transported through
 the cached readback. -/
-@[expose] def acquireRetained : RequestedRuns.CertifiedRun acquired data target :=
+@[expose] def acquireRetained : CertifiedRun acquired data target :=
   selected.acquire owners retained.entries (retained.length_eq.trans_le countLe)
     (by rw [retained.readback]; exact chain) sourcePaid facePaid
     (by
@@ -198,7 +198,7 @@ theorem acquireRetained_fragments :
 
 end Forward
 section Reverse
-variable (chain : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSourceChains.ReverseSourceChain
+variable (chain : ReverseSourceChain
   fragments 1 0)
   (sourcePaid : selected.blocks.queries.sourceMinimum ≤ index) (facePaid : owners.faceIndex ≤ faceIndex)
   (widths : ∀ fragment ∈ fragments, fragment.reverseSourceWidth ≤ selected.refinement.width)
@@ -209,7 +209,7 @@ evidence.
 
 The original fragment count, complete reverse chain, source and face stages, reversed widths and refinement depth are
 transported through the cached readback. -/
-@[expose] def acquireRetainedReverse : RequestedRuns.CertifiedReverseRun acquired data target :=
+@[expose] def acquireRetainedReverse : CertifiedReverseRun acquired data target :=
   selected.acquireReverse owners retained.entries (retained.length_eq.trans_le countLe)
     (by rw [retained.readback]; exact chain) sourcePaid facePaid
     (by

@@ -61,24 +61,24 @@ namespace Purelib.Geometry.CCL.Parser.Formula.Description
 @[expose] def pulledRadial
     (kind : Syntax.BlockKind) (exponent : Nat) (inner : GaussianMatrix)
     (innerNonzero : Matrix2.determinant inner ≠ 0) :
-    Formula.Descriptions inner
-      ((Formula.radialFormula kind exponent Coordinates2.Matrix.identityMatrix).pullback inner) := by
-  have identityPullback (form : Hermitian.HermitianForm) :
+    Descriptions inner
+      ((radialFormula kind exponent Coordinates2.Matrix.identityMatrix).pullback inner) := by
+  have identityPullback (form : HermitianForm) :
       Hermitian.pullbackForm Coordinates2.Matrix.identityMatrix form = form := by
     apply HermitianForm.ext <;>
       simp only [Hermitian.pullbackForm,
-        Coordinates2.Matrix.identityMatrix, Hermitian.HermitianForm.add, Hermitian.HermitianForm.scale,
-        Purelib.Geometry.Projective.Hermitian.affineNormForm, Purelib.Geometry.Projective.Hermitian.realCrossForm,
-          Purelib.Geometry.Projective.Hermitian.imagCrossForm, Data.Gaussian.Norm.Basic.normSq,
-        Purelib.Data.Gaussian.Basic.one_re,
-        Purelib.Data.Gaussian.Basic.one_im,
-        Purelib.Data.Gaussian.Basic.zero_re,
-        Purelib.Data.Gaussian.Basic.zero_im, -eq_self, -iff_self] <;>
+        Coordinates2.Matrix.identityMatrix, HermitianForm.add, HermitianForm.scale,
+        Hermitian.affineNormForm, Hermitian.realCrossForm,
+          Hermitian.imagCrossForm, Data.Gaussian.Norm.Basic.normSq,
+        Data.Gaussian.Basic.one_re,
+        Data.Gaussian.Basic.one_im,
+        Data.Gaussian.Basic.zero_re,
+        Data.Gaussian.Basic.zero_im, -eq_self, -iff_self] <;>
       ring1
-  let afterIdentityPullback (matrix : GaussianMatrix) (form : Hermitian.HermitianForm)
-      (description : Boundary.BoundaryDescription matrix
+  let afterIdentityPullback (matrix : GaussianMatrix) (form : HermitianForm)
+      (description : BoundaryDescription matrix
         (Hermitian.pullbackForm matrix form)) :
-      Boundary.BoundaryDescription matrix
+      BoundaryDescription matrix
         (Hermitian.pullbackForm matrix
           (Hermitian.pullbackForm Coordinates2.Matrix.identityMatrix form)) :=
     BoundaryDescription.cast
@@ -86,8 +86,8 @@ namespace Purelib.Geometry.CCL.Parser.Formula.Description
         (identityPullback form)).symm description
   cases kind with
   | initialHigh =>
-      simp only [Formula.radialFormula, BoundaryFormula.pullback,
-        Purelib.Geometry.Projective.Hermitian.Formula.pullbackAtom, -eq_self, -iff_self]
+      simp only [radialFormula, BoundaryFormula.pullback,
+        Formula.pullbackAtom, -eq_self, -iff_self]
       exact Descriptions.and
         (Descriptions.atom _
           (afterIdentityPullback inner _
@@ -98,8 +98,8 @@ namespace Purelib.Geometry.CCL.Parser.Formula.Description
             (Boundary.pulledAffineNormDyadic
               inner innerNonzero (exponent + 1))))
   | initialLow =>
-      simp only [Formula.radialFormula, BoundaryFormula.pullback,
-        Purelib.Geometry.Projective.Hermitian.Formula.pullbackAtom, -eq_self, -iff_self]
+      simp only [radialFormula, BoundaryFormula.pullback,
+        Formula.pullbackAtom, -eq_self, -iff_self]
       exact Descriptions.and
         (Descriptions.atom _
           (afterIdentityPullback inner _
@@ -110,8 +110,8 @@ namespace Purelib.Geometry.CCL.Parser.Formula.Description
             (Description.pulledScaledNormTwo
               inner innerNonzero exponent)))
   | loop =>
-      simp only [Formula.radialFormula, BoundaryFormula.pullback,
-        Purelib.Geometry.Projective.Hermitian.Formula.pullbackAtom, -eq_self, -iff_self]
+      simp only [radialFormula, BoundaryFormula.pullback,
+        Formula.pullbackAtom, -eq_self, -iff_self]
       exact Descriptions.and
         (Descriptions.atom _
           (afterIdentityPullback inner _

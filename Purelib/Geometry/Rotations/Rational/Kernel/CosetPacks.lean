@@ -67,7 +67,7 @@ abbrev SameUnitKernelCoset {K : Type*} [Algebra.Field.ExplicitField K] :=
 theorem sameUnitKernelCoset_iff_quadranceClass_equivalent
     {K : Type*} [Algebra.Field.ExplicitField K]
     (left right : Projective.Basic.NonNullProportion K) :
-    Geometry.Rotations.Rational.Kernel.CosetPacks.KernelCosetPacks.SameUnitKernelCoset left right ↔
+    SameUnitKernelCoset left right ↔
       (NonNullProportion.quadranceClass left).Equivalent (NonNullProportion.quadranceClass right) :=
   NonNullProportion.inSameUnitKernelCoset_iff_quadranceClass_equivalent
     left right
@@ -78,8 +78,8 @@ theorem sameUnitKernelCoset_respects_equivalent
     {left left' right right' : Projective.Basic.NonNullProportion K}
     (leftEquivalent : left.Equivalent left')
     (rightEquivalent : right.Equivalent right') :
-    Geometry.Rotations.Rational.Kernel.CosetPacks.KernelCosetPacks.SameUnitKernelCoset left right ↔
-      Geometry.Rotations.Rational.Kernel.CosetPacks.KernelCosetPacks.SameUnitKernelCoset left' right' := by
+    SameUnitKernelCoset left right ↔
+      SameUnitKernelCoset left' right' := by
   have leftClass :=
     NonNullProportion.quadranceClass_respects_equivalent leftEquivalent
   have rightClass :=
@@ -106,11 +106,11 @@ structure KernelCosetEntry where
   /-- The original positive square-class entry and its cached preimage. -/ squareClassEntry :
     SquareClassPacks.PositiveSquareClassEntry
   /-- The retained non-null projective proportion. -/ proportion : Projective.Basic.NonNullProportion
-    Geometry.Rotations.Rational.Kernel.CosetPacks.KernelCosetPacks.Scalar
+    Scalar
   /-- The proportion is exactly the original square-class entry's cached preimage. -/ proportion_eq : proportion =
     squareClassEntry.preimage
-  /-- The cached rotation of the retained proportion. -/ rotation : Rotations.Basic.Rotation
-    Geometry.Rotations.Rational.Kernel.CosetPacks.KernelCosetPacks.Scalar
+  /-- The cached rotation of the retained proportion. -/ rotation : Rotation
+    Scalar
   /-- The cached rotation is the projective rotation of the retained proportion. -/ rotation_eq : rotation =
     (NonNullProportion.rotation proportion)
   /-- The proportion's quadrance-class value equals the original target value. -/ quadranceClass_value :
@@ -122,7 +122,7 @@ constructive_injectivity KernelCosetEntry
 /-- Preserve the cached four-square preimage while exposing its rotation. -/
 def kernelCosetEntry
     (entry : SquareClassPacks.PositiveSquareClassEntry) :
-    Geometry.Rotations.Rational.Kernel.CosetPacks.KernelCosetPacks.KernelCosetEntry where
+    KernelCosetEntry where
   squareClassEntry := entry
   proportion := entry.preimage
   proportion_eq := rfl
@@ -136,13 +136,13 @@ theorem kernelCosetEntries_separated
     (inequivalent :
       ¬ left.target.representative.Equivalent
         right.target.representative) :
-    ¬ Geometry.Rotations.Rational.Kernel.CosetPacks.KernelCosetPacks.SameUnitKernelCoset
-      (Geometry.Rotations.Rational.Kernel.CosetPacks.KernelCosetPacks.kernelCosetEntry left).proportion
-      (Geometry.Rotations.Rational.Kernel.CosetPacks.KernelCosetPacks.kernelCosetEntry right).proportion := by
+    ¬ SameUnitKernelCoset
+      (kernelCosetEntry left).proportion
+      (kernelCosetEntry right).proportion := by
   intro sameCoset
   apply inequivalent
   have preimageEquivalent :=
-    (Geometry.Rotations.Rational.Kernel.CosetPacks.KernelCosetPacks.sameUnitKernelCoset_iff_quadranceClass_equivalent
+    (sameUnitKernelCoset_iff_quadranceClass_equivalent
       left.preimage right.preimage).mp sameCoset
   rcases preimageEquivalent with ⟨factor, factorNonzero, equation⟩
   refine ⟨factor, factorNonzero, ?_⟩
@@ -153,11 +153,11 @@ set_option genInjectivity false in
 /-- The complete finite response to one kernel-index request. -/
 structure SeparatedKernelCosetPack (count : Nat) where
   /-- The list of retained rotation representatives. -/ entries : List
-    Geometry.Rotations.Rational.Kernel.CosetPacks.KernelCosetPacks.KernelCosetEntry
+    KernelCosetEntry
   /-- The list has exactly the requested number of entries. -/ length_eq : entries.length = count
   /-- Every pair of entries occupies distinct unit-kernel cosets. -/ pairwiseSeparated : entries.Pairwise fun left right
     =>
-    ¬ Geometry.Rotations.Rational.Kernel.CosetPacks.KernelCosetPacks.SameUnitKernelCoset left.proportion
+    ¬ SameUnitKernelCoset left.proportion
       right.proportion
 
 constructive_injectivity SeparatedKernelCosetPack
@@ -165,26 +165,26 @@ constructive_injectivity SeparatedKernelCosetPack
 /-- Produce exactly `count` rotations in pairwise separated unit-kernel cosets, consuming the square-class pack and all
 of its cached preimages. -/
 def separatedKernelCosetPack (count : Nat) :
-    Geometry.Rotations.Rational.Kernel.CosetPacks.KernelCosetPacks.SeparatedKernelCosetPack count := by
+    SeparatedKernelCosetPack count := by
   let source :=
     SquareClassPacks.distinctPositiveSquareClassPack count
   refine
-    { entries := source.entries.map Geometry.Rotations.Rational.Kernel.CosetPacks.KernelCosetPacks.kernelCosetEntry
+    { entries := source.entries.map kernelCosetEntry
       length_eq := ?_
       pairwiseSeparated := ?_ }
   · exact (Map.length_map
-      Geometry.Rotations.Rational.Kernel.CosetPacks.KernelCosetPacks.kernelCosetEntry
+      kernelCosetEntry
       source.entries).trans source.length_eq
   · apply Pairwise.pairwise_map.mpr
     exact source.pairwiseInequivalent.imp (by
       intro left right inequivalent
-      exact Geometry.Rotations.Rational.Kernel.CosetPacks.KernelCosetPacks.kernelCosetEntries_separated left right
+      exact kernelCosetEntries_separated left right
         inequivalent)
 
 /-- Each retained pack entry realizes its original square-class representative. -/
 theorem separatedKernelCosetPack_entry_realizes
-    (count : Nat) (entry : Geometry.Rotations.Rational.Kernel.CosetPacks.KernelCosetPacks.KernelCosetEntry)
-    (_member : entry ∈ (Geometry.Rotations.Rational.Kernel.CosetPacks.KernelCosetPacks.separatedKernelCosetPack
+    (count : Nat) (entry : KernelCosetEntry)
+    (_member : entry ∈ (separatedKernelCosetPack
       count).entries) :
     (NonNullProportion.quadranceClass entry.proportion).value =
       entry.squareClassEntry.target.representative.value :=

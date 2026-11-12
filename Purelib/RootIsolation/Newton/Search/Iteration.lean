@@ -63,7 +63,7 @@ def search {p :
   | 0 => none
   | attempts + 1 =>
       let center := Grid.Box.roundedCenter current.box epsilon extraBits proposal
-      match Newton.Search.Center.Basic.checkCenter elimination current epsilon center clearances with
+      match Center.Basic.checkCenter elimination current epsilon center clearances with
       | some accepted => some accepted
       | none =>
           if Gaussian.Basic.value
@@ -75,7 +75,7 @@ termination_by structural attempts
 
 -- Equation proofs compare the shared checks, without executing their
 -- polynomial and winding implementations on symbolic arguments.
-attribute [local irreducible] Newton.Search.Center.Basic.checkCenter Grid.Box.roundedCenter
+attribute [local irreducible] Center.Basic.checkCenter Grid.Box.roundedCenter
   Gaussian.Basic.value Dense.Gaussian.Derivative.Evaluation.derivativeEval
   Dense.Gaussian.Newton.Basic.newtonCenter
 
@@ -99,7 +99,7 @@ theorem search_succ {p :
       AxisClearances elimination) :
     search elimination current epsilon (attempts + 1) extraBits proposal clearances =
       (let center := Grid.Box.roundedCenter current.box epsilon extraBits proposal
-       match Newton.Search.Center.Basic.checkCenter elimination current epsilon center clearances with
+       match Center.Basic.checkCenter elimination current epsilon center clearances with
        | some accepted => some accepted
        | none => if Gaussian.Basic.value
            (Dense.Gaussian.Derivative.Evaluation.derivativeEval p center) = 0 then none
@@ -128,22 +128,22 @@ theorem search_box_eq {p :
   | zero => rw [search_zero, search_zero]
   | succ attempts ih =>
       let center := Grid.Box.roundedCenter current.box epsilon extraBits proposal
-      have agree := Newton.Search.Center.Basic.checkCenter_box_eq elimination current epsilon center left right
+      have agree := Center.Basic.checkCenter_box_eq elimination current epsilon center left right
       rw [search_succ, search_succ]
-      change (match Newton.Search.Center.Basic.checkCenter elimination current epsilon center left with
+      change (match Center.Basic.checkCenter elimination current epsilon center left with
         | some accepted => some accepted
         | none => if Gaussian.Basic.value
             (Dense.Gaussian.Derivative.Evaluation.derivativeEval p center) = 0 then none
           else search elimination current epsilon attempts (extraBits + 2)
             (Gaussian.Basic.value (Dense.Gaussian.Newton.Basic.newtonCenter p center)) left).map _ =
-        (match Newton.Search.Center.Basic.checkCenter elimination current epsilon center right with
+        (match Center.Basic.checkCenter elimination current epsilon center right with
         | some accepted => some accepted
         | none => if Gaussian.Basic.value
             (Dense.Gaussian.Derivative.Evaluation.derivativeEval p center) = 0 then none
           else search elimination current epsilon attempts (extraBits + 2)
             (Gaussian.Basic.value (Dense.Gaussian.Newton.Basic.newtonCenter p center)) right).map _
-      cases leftResult : Newton.Search.Center.Basic.checkCenter elimination current epsilon center left <;>
-        cases rightResult : Newton.Search.Center.Basic.checkCenter elimination current epsilon center right
+      cases leftResult : Center.Basic.checkCenter elimination current epsilon center left <;>
+        cases rightResult : Center.Basic.checkCenter elimination current epsilon center right
       · dsimp only
         split
         · rfl

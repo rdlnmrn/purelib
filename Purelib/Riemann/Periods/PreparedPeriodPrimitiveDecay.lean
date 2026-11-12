@@ -28,6 +28,8 @@ import Purelib.Riemann.Topology.PreparedRootSafeCycleStates
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -64,7 +66,7 @@ open Purelib.Data.Rat in
 private abbrev Coordinate := Fraction.Rational
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
-  Differential genus} {target : Purelib.Data.Rat.Fraction.Rational}
+  Differential genus} {target : Data.Rat.Fraction.Rational}
 
 open Purelib.Data.Rat in
 set_option genInjectivity false in
@@ -94,7 +96,7 @@ constructive_injectivity DecayBudget
 namespace DecayBudget
 
 variable {parents : List (CenteredEdge curve differential)} {requests : RequestedParents count target parents} {base :
-  Purelib.Data.Rat.Fraction.Rational}
+  Data.Rat.Fraction.Rational}
 
 open Purelib.Data.Rat in
 /-- Construct the decay budget from a supplied exact original movement-mass cache. -/
@@ -133,14 +135,14 @@ open Purelib.Data.Rat
 /-- The retained coefficient-times-mass floor is nonnegative. -/
 theorem polynomialFloor_nonnegative (budget : DecayBudget requests base) : 0 ≤ budget.polynomialFloor := by
   rw [budget.polynomialFloor_eq]
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct budget.coefficient_nonnegative budget.mass_nonnegative
+  exact Arithmetic.mul_nonneg_direct budget.coefficient_nonnegative budget.mass_nonnegative
 
 /-- The retained spatial error scale is nonnegative when its original base is nonnegative. -/
 theorem spatialScale_nonnegative (budget : DecayBudget requests base) (baseNonnegative : 0 ≤ base) : 0 ≤
   budget.spatialScale := by
   rw [budget.spatialScale_eq]
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct
-    (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct budget.remainder_nonnegative budget.mass_nonnegative) (by
+  exact Arithmetic.mul_nonneg_direct
+    (add_nonneg (Arithmetic.mul_nonneg_direct budget.remainder_nonnegative budget.mass_nonnegative) (by
       decide)) baseNonnegative
 
 end
@@ -154,7 +156,7 @@ def spatialStage (budget : DecayBudget requests base) (tolerance : Fraction.Rati
 /-- The selected spatial stage reduces the original spatial error below the positive tolerance. -/
 theorem spatialStage_accurate (budget : DecayBudget requests base) (baseNonnegative : 0 ≤ base)
     {tolerance : Fraction.Rational} (positive : 0 < tolerance) :
-    Geometric.Basic.quarterRadius budget.spatialScale (budget.spatialStage tolerance) < tolerance :=
+    quarterRadius budget.spatialScale (budget.spatialStage tolerance) < tolerance :=
   (quarterRadius_antitone (budget.spatialScale_nonnegative baseNonnegative) (Nat.le_succ
     _)).trans_lt
     (Geometric.Search.firstQuarterBelow_accurate budget.spatialScale (budget.spatialScale_nonnegative baseNonnegative) 0
@@ -173,19 +175,19 @@ open Purelib.Riemann.Topology in
 
 The original initial parents and exact differential recasts determine the request family; retained movement-mass and
 allowance bounds pay the same flat model at the next stage. -/
-theorem period_error_le {source : Differentials.Basic.Differential genus} {root : Named}
-    (initial : RootClosedState curve source root) (targets : List (Differentials.Basic.Differential genus))
-    (differential : Differentials.Basic.Differential genus) (member : differential ∈ targets)
+theorem period_error_le {source : Differential genus} {root : Named}
+    (initial : RootClosedState curve source root) (targets : List (Differential genus))
+    (differential : Differential genus) (member : differential ∈ targets)
     (requests : RequestedParents count target (initial.state.parents.map (recastCenteredEdge differential)))
     (budget : DecayBudget requests (initial.state.scheduleBase targets)) (stage : Nat) :
-    normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum requests.increments - (flatModel initial targets differential
+    normSq (gaussianSum requests.increments - (flatModel initial targets differential
       (stage +
       1)).integralSample) ≤
-      budget.polynomialFloor + Geometric.Basic.quarterRadius budget.spatialScale (stage + 1) := by
+      budget.polynomialFloor + quarterRadius budget.spatialScale (stage + 1) := by
   let current := initial.states targets (stage + 1)
   let children := current.state.parents.map (recastCenteredEdge differential)
-  let radius := Geometric.Basic.quarterRadius (initial.state.scheduleBase targets) (stage + 1)
-  have radiusNonnegative : 0 ≤ radius := Geometric.Basic.quarterRadius_nonneg (initial.state.scheduleBase_positive
+  let radius := quarterRadius (initial.state.scheduleBase targets) (stage + 1)
+  have radiusNonnegative : 0 ≤ radius := quarterRadius_nonneg (initial.state.scheduleBase_positive
     targets).le _
   have movements : ∀ child ∈ children, child.edge.pointMovement ≤ radius := by
     intro child belongs
@@ -201,10 +203,10 @@ theorem period_error_le {source : Differentials.Basic.Differential genus} {root 
       differential (initial.statesSubedges targets (stage + 1))) movements
   rw [← budget.remainder_eq, ← budget.coefficient_eq] at bound
   have multiplierNonnegative := add_nonneg
-    (Fraction.Order.Arithmetic.mul_nonneg_direct budget.remainder_nonnegative radiusNonnegative)
+    (Arithmetic.mul_nonneg_direct budget.remainder_nonnegative radiusNonnegative)
       budget.coefficient_nonnegative
-  have paid := add_le_add (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct massBound multiplierNonnegative)
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct allowance (by decide : (0 : Fraction.Rational) ≤ 5 / 2))
+  have paid := add_le_add (Arithmetic.mul_le_mul_of_nonneg_left_direct massBound multiplierNonnegative)
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct allowance (by decide : (0 : Fraction.Rational) ≤ 5 / 2))
   exact (bound.trans paid).trans_eq (by
     rw [budget.polynomialFloor_eq, budget.spatialScale_eq]
     dsimp only [radius]
@@ -215,17 +217,17 @@ open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
 /-- At the selected stage, the original period error is below its polynomial floor plus positive tolerance. -/
-theorem period_error_lt_at_spatialStage {source : Differentials.Basic.Differential genus} {root : Named}
-    (initial : RootClosedState curve source root) (targets : List (Differentials.Basic.Differential genus))
-    (differential : Differentials.Basic.Differential genus) (member : differential ∈ targets)
+theorem period_error_lt_at_spatialStage {source : Differential genus} {root : Named}
+    (initial : RootClosedState curve source root) (targets : List (Differential genus))
+    (differential : Differential genus) (member : differential ∈ targets)
     (requests : RequestedParents count target (initial.state.parents.map (recastCenteredEdge differential)))
     (budget : DecayBudget requests (initial.state.scheduleBase targets))
     (tolerance : Fraction.Rational) (positive : 0 < tolerance) :
-    normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum requests.increments -
+    normSq (gaussianSum requests.increments -
       (flatModel initial targets differential (budget.spatialStage tolerance)).integralSample) <
         budget.polynomialFloor + tolerance :=
   (period_error_le initial targets differential member requests budget _).trans_lt
-    (Fraction.Order.Arithmetic.add_lt_add_left_direct
+    (Arithmetic.add_lt_add_left_direct
       (budget.spatialStage_accurate (initial.state.scheduleBase_positive targets).le positive) budget.polynomialFloor)
 
 end Purelib.Riemann.Periods.PreparedPeriodPrimitiveDecay

@@ -52,6 +52,8 @@ import Purelib.RootIsolation.Curve.Event.Profile.Basic
 import Purelib.RootIsolation.Curve.Event.Profile.Classification
 import Purelib.RootIsolation.Curve.Event.Profile.Complete.Basic
 
+open Purelib.RootIsolation.Curve.Event.Profile.Complete
+
 open Purelib.Polynomial.Dense.Gaussian.Squarefree.Basic (SquarefreeCertificate)
 open Purelib.Polynomial.Dense.Rational.Bezout.Basic (CoprimeCertificate)
 open Purelib.RootIsolation.Curve.Boundary.Winding.Budget (ClassifiedChild)
@@ -95,13 +97,13 @@ is outside it.  Neither alternative asserts that a factor zero exists.
 namespace Purelib.RootIsolation.Curve.Boundary.Winding.Resolution
 section Boundary
 
-variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
 variable {reference : LinearAlgebra.Coordinates2.Matrix.GaussianMatrix} {current :
   Box}
 variable {denominatorMargin : Fraction.Rational}
 variable {marginPositive : 0 < denominatorMargin}
 variable {atom : Geometry.Projective.Hermitian.Atom}
-variable {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+variable {boundary : Analysis.CurveBoundary p reference current denominatorMargin
   marginPositive atom}
 
 /-! ## Whole-event affine resolution before rational sample ownership -/
@@ -128,20 +130,20 @@ inductive BoundaryAffineResolution
           (Curve.Coordinates.denominatorNormSq
             child.entry.parent.parent.chart.parameterization.curve))
       (denominatorRelationEq :
-        (Curve.Event.Profile.Complete.Denominator.profileDenominatorRelation
+        (Denominator.profileDenominatorRelation
           child.entry.parent.event.1).relation =
             Dense.Rational.Factorization.ConditionRelation.apart
               denominatorCertificate)
       (denominatorLower : ∀ parameter : Fraction.Rational,
         child.entry.child.cell.interval.Contains parameter →
-        (Curve.Event.Profile.Complete.Denominator.profileDenominatorRelation
+        (Denominator.profileDenominatorRelation
           child.entry.parent.event.1).apartLower denominatorCertificate ≤
-          Data.Gaussian.Norm.Basic.normSq
+          Gaussian.Norm.Basic.normSq
             (child.entry.parent.parent.chart.parameterization.curve.denominatorAt
               parameter))
       (relationsNonnegative : ∀ relation ∈
         child.entry.parent.event.1.profile.relations,
-        Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf.ConditionNonnegative
+        Basic.CompleteRequestLeaf.ConditionNonnegative
           child.entry.child relation)
       (contains : ∀ parameter : Fraction.Rational,
         child.entry.child.cell.interval.Contains parameter →
@@ -179,7 +181,7 @@ def resolveAffineChildren
   | head :: tail =>
       match head.denominatorClassification with
       | .pole cofactor factorization relationEq =>
-          let headExcludes := Curve.Boundary.Winding.Pole.pole_child_excludes_current squarefree family
+          let headExcludes := Pole.pole_child_excludes_current squarefree family
             head cofactor factorization relationEq
           match resolveAffineChildren squarefree family tail
             with
@@ -225,10 +227,10 @@ def resolveWindingAffineFamily
     (squarefree : SquarefreeCertificate p)
     (family : WindingFamily p ambient) :
     BoundaryAffineResolution squarefree family
-      (Curve.Boundary.Winding.Budget.classifiedWindingRequestFamily (boundary := boundary) squarefree
+      (Budget.classifiedWindingRequestFamily (boundary := boundary) squarefree
         family) :=
   resolveAffineChildren squarefree family
-    (Curve.Boundary.Winding.Budget.classifiedWindingRequestFamily (boundary := boundary) squarefree family)
+    (Budget.classifiedWindingRequestFamily (boundary := boundary) squarefree family)
 
 /-! ## Explicit rational sample from the strong affine resolution -/
 
@@ -254,19 +256,19 @@ inductive BoundaryNearBoxResolution
           (Curve.Coordinates.denominatorNormSq
             child.entry.parent.parent.chart.parameterization.curve))
       (denominatorRelationEq :
-        (Curve.Event.Profile.Complete.Denominator.profileDenominatorRelation
+        (Denominator.profileDenominatorRelation
           child.entry.parent.event.1).relation =
             Dense.Rational.Factorization.ConditionRelation.apart
               denominatorCertificate)
       (relationsNonnegative : ∀ relation ∈
         child.entry.parent.event.1.profile.relations,
-        Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf.ConditionNonnegative
+        Basic.CompleteRequestLeaf.ConditionNonnegative
           child.entry.child relation)
       (sampleInside : outer.Contains
         (child.entry.parent.parent.chart.parameterization.curve.point
-          (Curve.Boundary.Complete.Sample.nearBoxDescendantSample
+          (Complete.Sample.nearBoxDescendantSample
             child.entry
-            (Curve.Event.Profile.Complete.Denominator.profileDenominatorRelation
+            (Denominator.profileDenominatorRelation
               child.entry.parent.event.1)
             denominatorCertificate
             (Box.Interior.strictBoxGap current
@@ -303,7 +305,7 @@ def BoundaryAffineResolution.toNearBox
   | inside child member denominatorCertificate denominatorRelationEq
       denominatorLower relationsNonnegative _contains =>
       let denominator :=
-        Curve.Event.Profile.Complete.Denominator.profileDenominatorRelation
+        Denominator.profileDenominatorRelation
           child.entry.parent.event.1
       let radius :=
         Box.Interior.strictBoxGap current outer
@@ -311,7 +313,7 @@ def BoundaryAffineResolution.toNearBox
         simpa only [radius] using
           Box.Interior.strictBoxGap_pos strict
       have near :=
-        Curve.Boundary.Complete.Sample.nearBoxDescendantSample_within_radius
+        Complete.Sample.nearBoxDescendantSample_within_radius
           child.entry denominator denominatorCertificate denominatorLower
             relationsNonnegative radiusPositive
       exact .inside child member denominatorCertificate denominatorRelationEq
@@ -330,7 +332,7 @@ def resolveWindingNearBoxFamily
     (family : WindingFamily p ambient)
     (outer : Box) (strict : current.StrictInterior outer) :
     BoundaryNearBoxResolution squarefree family outer strict
-      (Curve.Boundary.Winding.Budget.classifiedWindingRequestFamily (boundary := boundary) squarefree
+      (Budget.classifiedWindingRequestFamily (boundary := boundary) squarefree
         family) :=
   (resolveWindingAffineFamily (boundary := boundary) squarefree family).toNearBox
     squarefree family outer strict
@@ -340,10 +342,10 @@ Hermitian boundary because every parameter of its rational chart does. -/
 theorem nearBoxDescendantSample_onBoundary
     {epsilon : Fraction.Rational}
     (entry :
-      Curve.Boundary.Complete.Basic.BoundaryCompleteRequestEntry
+      Complete.Basic.BoundaryCompleteRequestEntry
         boundary epsilon)
     (denominator :
-      Curve.Event.Profile.Complete.Denominator.ProfileDenominatorRelation
+      Denominator.ProfileDenominatorRelation
         entry.parent.event.1)
     (apart : CoprimeCertificate
       entry.parent.event.1.profile.factor.polynomial
@@ -352,12 +354,12 @@ theorem nearBoxDescendantSample_onBoundary
     (radius : Fraction.Rational) :
     atom.form.eval
         (entry.parent.parent.chart.parameterization.curve.point
-          (Curve.Boundary.Complete.Sample.nearBoxDescendantSample
+          (Complete.Sample.nearBoxDescendantSample
             entry denominator apart radius).parameter) = 0 :=
   entry.parent.parent.chart.parameterization.onBoundary
-    (Curve.Boundary.Complete.Sample.nearBoxDescendantSample
+    (Complete.Sample.nearBoxDescendantSample
       entry denominator apart radius).parameter
-    (Curve.Boundary.Complete.Sample.nearBoxDescendantSample
+    (Complete.Sample.nearBoxDescendantSample
       entry denominator apart radius).denominatorNonzero
 end Boundary
 

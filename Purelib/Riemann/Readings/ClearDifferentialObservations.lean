@@ -27,6 +27,8 @@ public import Purelib.Curves.Hyperelliptic.Branches.BranchCutLifts
 public import Purelib.Riemann.Branches.ClearSheetContinuation
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic
+
 open Purelib.Integration.Polynomial.Gaussian
 
 @[expose] public section
@@ -58,17 +60,17 @@ end
 open Purelib.Polynomial in
 /-- Dense polynomials with Gaussian rational coefficients. -/
 abbrev GaussianPolynomial :=
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+  Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
 open Purelib.Geometry in
 /-- A rational rectangular box. -/
 abbrev Box := Rational.Box
 section
 open Purelib.Integration
 /-- A finite polynomial integration cell model. -/
-abbrev CellModel := Polynomial.Gaussian.Cell.Basic.CellModel
+abbrev CellModel := Cell.Basic.CellModel
 /-- A polynomial cell's local integrand observation and discrepancy certificate. -/
 abbrev LocalObservation :=
-  Polynomial.Gaussian.Cell.Basic.LocalObservation
+  Cell.Basic.LocalObservation
 end
 
 open Purelib.Riemann in
@@ -83,15 +85,15 @@ set_option genInjectivity false in
 The record identifies the exact endpoints and retains every algebraic observation certificate for the chosen
 differential and lifted cell. -/
 structure CertifiedCell {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (differential :
-      Hyperelliptic.Differentials.Basic.Differential genus)
+    (curve : Basic.HyperellipticCurve genus) (differential :
+      Differentials.Basic.Differential genus)
     {start finish : Path.Gaussian.Lifted.Basic.LiftedPoint 2} (liftedCell : Path.Gaussian.Lifted.Basic.LiftedCell start
       finish) where
   /-- The retained finite integration model. -/ model : CellModel
   /-- The model begins at the lifted edge's initial coordinate. -/ start_eq : model.start = start.coordinate
   /-- The model ends at the lifted edge's final coordinate. -/ finish_eq : model.finish = finish.coordinate
   /-- The algebraic certificates for the model's actual observation list. -/ observations :
-    Hyperelliptic.Integration.Algebraic.Observation.Basis.ObservationCertificates curve differential liftedCell model
+    Integration.Algebraic.Observation.Basis.ObservationCertificates curve differential liftedCell model
     model.observations
 
 constructive_injectivity CertifiedCell
@@ -117,19 +119,19 @@ open Purelib.Polynomial in
 
 At the displayed unit-interval parameter, construct the selected square-root sheet and retain an admitted Gaussian
 reading of the differential with zero local polynomial discrepancy. -/
-def clearSample {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus)
+def clearSample {genus : Nat} (curve : Basic.HyperellipticCurve genus)
+    (differential : Differentials.Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish)
     (sheet : Fin 2) (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1) :
     CertifiedCell curve differential
-      (Hyperelliptic.Branches.BranchCutLifts.ClearSegment.liftOnSheet sheet segment) := by
+      (ClearSegment.liftOnSheet sheet segment) := by
   let point := segment.pointAt parameter
   let radicandNonzero := segment.pointAt_eval_ne_zero parameter inside
-  let sheetValue := Hyperelliptic.Sheets.Basic.AlgebraicSheetValue.automatic curve point
+  let sheetValue := Sheets.Basic.AlgebraicSheetValue.automatic curve point
     radicandNonzero sheet
-  let coefficient := Hyperelliptic.Differentials.Value.differentialValue differential point sheetValue.value
+  let coefficient := Differentials.Value.differentialValue differential point sheetValue.value
     sheetValue.apart
   let state := coefficient.name.state
   let reading := initialReading coefficient
@@ -153,8 +155,8 @@ def clearSample {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve ge
       localAllowance := 0
       localAllowance_nonneg := le_rfl
       observations := [observation] }
-  let algebraic : Hyperelliptic.Integration.Algebraic.Observation.Basis.AlgebraicObservation curve differential
-      (Hyperelliptic.Branches.BranchCutLifts.ClearSegment.liftOnSheet sheet segment)
+  let algebraic : Integration.Algebraic.Observation.Basis.AlgebraicObservation curve differential
+      (ClearSegment.liftOnSheet sheet segment)
       model observation := by
     refine
       { point := point
@@ -181,8 +183,8 @@ open Purelib.Polynomial in
 
 Its endpoint equation identifies the radicand at the displayed segment parameter and preserves the chain's selected
 square-root sheet. -/
-def continuedSample {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus)
+def continuedSample {genus : Nat} (curve : Basic.HyperellipticCurve genus)
+    (differential : Differentials.Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish)
     (parameter : Coordinate)
@@ -193,13 +195,13 @@ def continuedSample {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurv
     (endpoint_eq : chain.endpoint.parameter =
       curve.polynomial.eval (segment.pointAt parameter)) :
     CertifiedCell curve differential
-      (Hyperelliptic.Branches.BranchCutLifts.ClearSegment.liftOnSheet
+      (ClearSegment.liftOnSheet
         chain.sheet segment) := by
   let point := segment.pointAt parameter
   let radicandNonzero := segment.pointAt_eval_ne_zero parameter inside
   let sheetValue := chain.algebraicSheetValue curve point source
     sourceNonzero endpoint_eq
-  let coefficient := Hyperelliptic.Differentials.Value.differentialValue differential point sheetValue.value
+  let coefficient := Differentials.Value.differentialValue differential point sheetValue.value
     sheetValue.apart
   let state := coefficient.name.state
   let reading := initialReading coefficient
@@ -223,8 +225,8 @@ def continuedSample {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurv
       localAllowance := 0
       localAllowance_nonneg := le_rfl
       observations := [observation] }
-  let algebraic : Hyperelliptic.Integration.Algebraic.Observation.Basis.AlgebraicObservation curve differential
-      (Hyperelliptic.Branches.BranchCutLifts.ClearSegment.liftOnSheet
+  let algebraic : Integration.Algebraic.Observation.Basis.AlgebraicObservation curve differential
+      (ClearSegment.liftOnSheet
         chain.sheet segment) model observation := by
     refine
       { point := point
@@ -250,8 +252,8 @@ open Purelib.Polynomial in
 
 Use the subdivision's retained seeded continuation chain and exact endpoint equation. -/
 def continuedEndpointSample {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus)
+    (curve : Basic.HyperellipticCurve genus)
+    (differential : Differentials.Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish)
     (within : segment.WithinAmbient)
@@ -263,7 +265,7 @@ def continuedEndpointSample {genus : Nat}
         (Topology.SquareRootContinuationChain.Owner.independent
           (segment.pointAt_eval_ne_zero left leftInside) sheet)) :
     CertifiedCell curve differential
-      (Hyperelliptic.Branches.BranchCutLifts.ClearSegment.liftOnSheet sheet segment) := by
+      (ClearSegment.liftOnSheet sheet segment) := by
   let chain := subdivision.seeded sheet
   have endpoint_eq : chain.endpoint.parameter =
       curve.polynomial.eval
@@ -283,17 +285,17 @@ open Purelib.Polynomial in
 The owner is indexed by the polynomial at the segment endpoint, preserving the transported root while constructing the
 constant local observation. -/
 def inheritedEndpointSample {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus)
+    (curve : Basic.HyperellipticCurve genus)
+    (differential : Differentials.Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish)
     (sheet : Fin 2)
     (owner : Owner (curve.polynomial.eval finish)) :
     CertifiedCell curve differential
-      (Hyperelliptic.Branches.BranchCutLifts.ClearSegment.liftOnSheet sheet segment) := by
+      (ClearSegment.liftOnSheet sheet segment) := by
   let radicandNonzero := segment.finish_eval_ne_zero
   let root := owner.certificate radicandNonzero
-  let sheetValue : Hyperelliptic.Sheets.Basic.AlgebraicSheetValue curve finish :=
+  let sheetValue : Sheets.Basic.AlgebraicSheetValue curve finish :=
     { value := root.value
       apart := root.apart
       sheet := sheet
@@ -302,7 +304,7 @@ def inheritedEndpointSample {genus : Nat}
           (Gaussian.Equivalence.NamedEquivalent.symm
             (Approximation.Gaussian.Evaluation.Horner.polynomialEval_exact
               curve.polynomial finish)) }
-  let coefficient := Hyperelliptic.Differentials.Value.differentialValue differential finish sheetValue.value
+  let coefficient := Differentials.Value.differentialValue differential finish sheetValue.value
     sheetValue.apart
   let state := coefficient.name.state
   let reading := initialReading coefficient
@@ -325,8 +327,8 @@ def inheritedEndpointSample {genus : Nat}
       localAllowance := 0
       localAllowance_nonneg := le_rfl
       observations := [observation] }
-  let algebraic : Hyperelliptic.Integration.Algebraic.Observation.Basis.AlgebraicObservation curve differential
-      (Hyperelliptic.Branches.BranchCutLifts.ClearSegment.liftOnSheet sheet segment)
+  let algebraic : Integration.Algebraic.Observation.Basis.AlgebraicObservation curve differential
+      (ClearSegment.liftOnSheet sheet segment)
       model observation := by
     refine
       { point := finish
@@ -337,7 +339,7 @@ def inheritedEndpointSample {genus : Nat}
         readingPossible := ?_ }
     · apply Gaussian.Basic.ext <;>
         simp only [Cell.Basic.CellModel.observationPoint, model,
-          Polynomial.Gaussian.Cell.Basic.CellModel.displacement,
+          Cell.Basic.CellModel.displacement,
           Gaussian.Scale.scale_re, Gaussian.Scale.scale_im, Gaussian.Basic.add_re, Gaussian.Basic.add_im,
           Gaussian.Basic.sub_re, Gaussian.Basic.sub_im] <;> ring1
     · change coefficient.name.process.Possible state reading
@@ -356,8 +358,8 @@ set_option genInjectivity false in
 
 The ordered cell list carries differential and sheet certificates for the exact lifted geometric path. -/
 structure CertifiedSubdivision {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus)
+    (curve : Basic.HyperellipticCurve genus)
+    (differential : Differentials.Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Coordinate}
@@ -368,8 +370,8 @@ structure CertifiedSubdivision {genus : Nat}
       segment within left leftInside owner) where
   /-- The ordered list of retained integration cell models. -/ cells : List CellModel
   /-- The cell certificates along the subdivision's actual lifted path. -/ certificates :
-    Hyperelliptic.Integration.Algebraic.Diagnostics.Basis.PathCertificates curve differential cells
-    (Hyperelliptic.Branches.BranchCutLifts.ClearPath.liftOnSheet sheet
+    Integration.Algebraic.Diagnostics.Basis.PathCertificates curve differential cells
+    (ClearPath.liftOnSheet sheet
       subdivision.toClearPath)
 
 constructive_injectivity CertifiedSubdivision
@@ -382,8 +384,8 @@ open Purelib.Polynomial
 
 Each step reuses its transported endpoint owner and recursively retains the same ordered tail. -/
 def certifySubdivision {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus)
+    (curve : Basic.HyperellipticCurve genus)
+    (differential : Differentials.Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Coordinate}
@@ -410,8 +412,8 @@ def certifySubdivision {genus : Nat}
 
 /-- The certified cell list has exactly one cell per subdivision step. -/
 @[simp] theorem certifySubdivision_cellCount {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus)
+    (curve : Basic.HyperellipticCurve genus)
+    (differential : Differentials.Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Coordinate}
@@ -436,11 +438,11 @@ open Purelib.Polynomial in
 /-- Certify the exact zero-displacement model for a sheet-switch edge.
 
 The model has equal endpoints and an empty observation list, so no quotient sample is required. -/
-def switch {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus) (coordinate : Gaussian)
+def switch {genus : Nat} (curve : Basic.HyperellipticCurve genus)
+    (differential : Differentials.Basic.Differential genus) (coordinate : Gaussian)
     (sheet : Fin 2) :
-    CertifiedCell curve differential (Hyperelliptic.Branches.BranchCutLifts.switchCell coordinate sheet) := by
-  let model : CellModel := Polynomial.Gaussian.Cell.Basic.CellModel.exact
+    CertifiedCell curve differential (switchCell coordinate sheet) := by
+  let model : CellModel := Cell.Basic.CellModel.exact
     coordinate coordinate Ascending.Gaussian.Basic.zero
   exact
     { model := model

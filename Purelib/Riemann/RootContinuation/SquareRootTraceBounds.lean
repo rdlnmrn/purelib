@@ -12,6 +12,8 @@ import Purelib.Data.Rat.Fraction.Order.Field
 public import Purelib.Geometry.Rational.Affine
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Quantitative chords for variable-radicand square-root traces
 
@@ -59,7 +61,7 @@ private theorem chord_movement (start finish : Basic.Canonical) {time : Fraction
     Basic.Canonical.normSq (Rational.Affine.line start (finish - start) time - start) ≤ Basic.Canonical.normSq (finish -
       start) := by
   have squareLe : time ^ 2 ≤ 1 := by
-    simpa only [one_pow] using Fraction.Order.Arithmetic.pow_le_pow_direct inside.1 inside.2 2
+    simpa only [one_pow] using Arithmetic.pow_le_pow_direct inside.1 inside.2 2
   have coordinateNorm : Basic.Canonical.normSq (Cast.Path.ofCoordinate time) = time ^ 2 := by
     simp only [Cast.Path.ofCoordinate, Basic.Canonical.normSq]
     ring1
@@ -68,7 +70,7 @@ private theorem chord_movement (start finish : Basic.Canonical) {time : Fraction
     rewrite [Rational.Affine.line]
     ring1
   rewrite [displacement, Basic.Canonical.normSq_mul, coordinateNorm]
-  exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct squareLe (Basic.Canonical.normSq_nonneg
+  exact (Arithmetic.mul_le_mul_of_nonneg_right_direct squareLe (Basic.Canonical.normSq_nonneg
     _)).trans_eq (by ring1)
 
 /-- A short chord retains between one quarter and four times the starting quadrance.
@@ -83,10 +85,10 @@ public theorem chord_norm_bounds {start finish : Basic.Canonical} {time : Fracti
   let point := Rational.Affine.line start (finish - start) time
   have movement := (chord_movement start finish inside).trans distance
   have quarter : Basic.Canonical.normSq (point - start) ≤ Basic.Canonical.normSq start / 4 := movement.trans
-    (Fraction.Order.Field.div_le_div_of_nonneg_left_direct (Basic.Canonical.normSq_nonneg start)
+    (Field.div_le_div_of_nonneg_left_direct (Basic.Canonical.normSq_nonneg start)
       (by decide : (0 : Fraction.Rational) < 4) (by decide +kernel : (4 : Fraction.Rational) ≤ 1024))
   have whole : Basic.Canonical.normSq (point - start) ≤ Basic.Canonical.normSq start := movement.trans
-    ((Fraction.Order.Field.div_le_div_of_nonneg_left_direct (Basic.Canonical.normSq_nonneg start)
+    ((Field.div_le_div_of_nonneg_left_direct (Basic.Canonical.normSq_nonneg start)
       (by decide : (0 : Fraction.Rational) < 1) (by decide +kernel : (1 : Fraction.Rational) ≤ 1024)).trans_eq (by
         simp only [Field.ExplicitField.div_eq_mul_inv,
           show (1 : Fraction.Rational)⁻¹ = 1 from by decide]
@@ -98,8 +100,8 @@ public theorem chord_norm_bounds {start finish : Basic.Canonical} {time : Fracti
         simpa only [Norm.Basic.normSq_eq_canonical] using
           trace_normSq_add_le_two _ _
       _ ≤ 2 * (Basic.Canonical.normSq start + Basic.Canonical.normSq start) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Fraction.Order.Arithmetic.add_le_add_direct (Fraction.Order.Basic.le_refl _) whole) (by
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.add_le_add_direct (Basic.le_refl _) whole) (by
               decide : (0 : Fraction.Rational) ≤ 2)
       _ = _ := by ring1
   have reverse : Basic.Canonical.normSq start ≤ 2 * (Basic.Canonical.normSq point + Basic.Canonical.normSq start / 4) :=
@@ -107,17 +109,17 @@ public theorem chord_norm_bounds {start finish : Basic.Canonical} {time : Fracti
     calc
       _ = Basic.Canonical.normSq (point - (point - start)) := by congr 1; ring1
       _ ≤ 2 * (Basic.Canonical.normSq point + Basic.Canonical.normSq (point - start)) := trace_normSq_sub_le_two _ _
-      _ ≤ _ := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.add_le_add_direct (Fraction.Order.Basic.le_refl _) quarter) (by
+      _ ≤ _ := Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.add_le_add_direct (Basic.le_refl _) quarter) (by
             decide : (0 : Fraction.Rational) ≤ 2)
   refine ⟨?_, upper⟩
-  apply (Fraction.Order.Field.div_le_iff_pos (by decide : (0 : Fraction.Rational) < 4)).mpr
-  have doubled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct reverse (by
+  apply (Field.div_le_iff_pos (by decide : (0 : Fraction.Rational) < 4)).mpr
+  have doubled := Arithmetic.mul_le_mul_of_nonneg_left_direct reverse (by
       decide : (0 : Fraction.Rational) ≤ 2)
   calc
     _ = 2 * Basic.Canonical.normSq start - Basic.Canonical.normSq start := by ring1
     _ ≤ 2 * (2 * (Basic.Canonical.normSq point + Basic.Canonical.normSq start / 4)) - Basic.Canonical.normSq start :=
-      Fraction.Order.Arithmetic.sub_le_sub_right_direct doubled _
+      Arithmetic.sub_le_sub_right_direct doubled _
     _ = 4 * Basic.Canonical.normSq point + (Basic.Canonical.normSq start / 4) * 4 - Basic.Canonical.normSq start := by
       ring1
     _ = _ := by
@@ -142,16 +144,16 @@ public theorem chord_square_variation {start finish : Basic.Canonical} {time : F
         simpa only [Norm.Basic.normSq_eq_canonical] using
           trace_normSq_add_le_two _ _
       _ ≤ 2 * (4 * Basic.Canonical.normSq start + Basic.Canonical.normSq start) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Fraction.Order.Arithmetic.add_le_add_right_direct bounds.2 (Basic.Canonical.normSq start)) (by
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.add_le_add_right_direct bounds.2 (Basic.Canonical.normSq start)) (by
               decide : (0 : Fraction.Rational) ≤ 2)
       _ = _ := by ring1
   have identity : point ^ 2 - start ^ 2 = (point - start) * (point + start) := by ring1
   rw [identity, Basic.Canonical.normSq_mul]
-  have product := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct movement (Basic.Canonical.normSq_nonneg
+  have product := (Arithmetic.mul_le_mul_of_nonneg_right_direct movement (Basic.Canonical.normSq_nonneg
     (point + start))).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct sumBound
-      (Fraction.Order.Field.div_nonneg_direct (Basic.Canonical.normSq_nonneg start) (by
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct sumBound
+      (Field.div_nonneg_direct (Basic.Canonical.normSq_nonneg start) (by
           decide +kernel : (0 : Fraction.Rational) ≤ 1024)))
   exact product.trans_eq (by ring1)
 
@@ -179,9 +181,9 @@ public theorem chord_square_residual {start finish parameterStart parameter : Ba
   have tail : Basic.Canonical.normSq ((start ^ 2 - parameterStart) + (parameterStart - parameter)) ≤
       2 * (Basic.Canonical.normSq start ^ 2 / 1024 + Basic.Canonical.normSq start ^ 2 / 1024) := by
     apply (trace_normSq_add_le_two _ _).trans
-    apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct _ (by decide : (0 : Fraction.Rational) ≤ 2)
+    apply Arithmetic.mul_le_mul_of_nonneg_left_direct _ (by decide : (0 : Fraction.Rational) ≤ 2)
     rw [opposite]
-    exact Fraction.Order.Arithmetic.add_le_add_direct residual parameterMovement
+    exact Arithmetic.add_le_add_direct residual parameterMovement
   calc
     _ = Basic.Canonical.normSq ((point ^ 2 - start ^ 2) + ((start ^ 2 - parameterStart) + (parameterStart - parameter)))
       := by congr 1; ring1
@@ -191,7 +193,7 @@ public theorem chord_square_residual {start finish parameterStart parameter : Ba
           trace_normSq_add_le_two _ _
     _ ≤ 2 * (10 * Basic.Canonical.normSq start * (Basic.Canonical.normSq start / 1024) +
         2 * (Basic.Canonical.normSq start ^ 2 / 1024 + Basic.Canonical.normSq start ^ 2 / 1024)) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct moved
+      Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct moved
         tail) (by decide : (0 : Fraction.Rational) ≤ 2)
     _ = (28 / 1024 : Fraction.Rational) * Basic.Canonical.normSq start ^ 2 := by
       simp only [Field.ExplicitField.div_eq_mul_inv]
@@ -199,9 +201,9 @@ public theorem chord_square_residual {start finish parameterStart parameter : Ba
     _ = (7 / 256 : Fraction.Rational) * Basic.Canonical.normSq start ^ 2 := by
       rw [show (28 / 1024 : Fraction.Rational) = 7 / 256 from by decide +kernel]
     _ ≤ (1 / 32 : Fraction.Rational) * Basic.Canonical.normSq start ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by
+      Arithmetic.mul_le_mul_of_nonneg_right_direct (by
           decide +kernel : (7 / 256 : Fraction.Rational) ≤ 1 / 32)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+        (Arithmetic.sq_nonneg_direct _)
     _ = _ := by simp only [Field.ExplicitField.div_eq_mul_inv]; ring1
 
 end Purelib.Riemann.RootContinuation.SquareRootTraceBounds

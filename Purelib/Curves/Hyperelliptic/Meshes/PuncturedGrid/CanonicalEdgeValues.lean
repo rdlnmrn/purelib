@@ -48,10 +48,10 @@ open Purelib.Topology.Polygon.Stokes
 
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
+  {frames : SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
       SquareRoot.Grid.LiftedVertices.VertexBank
     base.bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
   {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces}
@@ -60,16 +60,16 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
 
 Both orientations read the same two endpoints from the same retained primitive
 values; scalar subtraction establishes their opposite signs. -/
-private theorem reverseRoute_increment {edge : Topology.Polygon.Stokes.OrientedEdge vertices.count}
-    (route : Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute mesh edge.reverse) (values : Fin
+private theorem reverseRoute_increment {edge : OrientedEdge vertices.count}
+    (route : MeshPathWalks.EdgeRoute mesh edge.reverse) (values : Fin
       mesh.triangles.length → Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues 3) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.reverseRoute route).sourceEdge.increment values =
+    (Fragment.RouteWords.reverseRoute route).sourceEdge.increment values =
       -route.sourceEdge.increment values := by
   cases edge
   cases route with
   | forward location =>
-    simp only [Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.reverseRoute,
-      Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute.sourceEdge,
+    simp only [Fragment.RouteWords.reverseRoute,
+      MeshPathWalks.EdgeRoute.sourceEdge,
       Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge.increment]; ring1
   | backward location =>
     change (values location.sourceEdge.source location.sourceEdge.last - values location.sourceEdge.source
@@ -83,11 +83,11 @@ private theorem reverseRoute_increment {edge : Topology.Polygon.Stokes.OrientedE
 The order depends only on the two indexed vertices. Supported edges reuse the
 original route and its chart, independently of primitive values or accuracy. -/
 @[expose] def orderedRoute (mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces) (edge :
-  Topology.Polygon.Stokes.OrientedEdge vertices.count)
+  OrientedEdge vertices.count)
     (supported : edge ∈ Topology.Polygon.Stokes.triangleEdgeOccurrences mesh.triangulation.faces ∨
       edge.reverse ∈ Topology.Polygon.Stokes.triangleEdgeOccurrences mesh.triangulation.faces) :
-        Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute mesh edge :=
-  Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.directedRoute mesh edge supported (decide (edge.start.val <
+        MeshPathWalks.EdgeRoute mesh edge :=
+  Fragment.RouteWords.directedRoute mesh edge supported (decide (edge.start.val <
     edge.finish.val))
 
 /-- Read the retained forward increment of a supported edge.
@@ -96,10 +96,10 @@ The original chart route supplies the primitive reading. Unsupported edges
 return zero without constructing a route or choosing a second chart. -/
 @[expose] def forwardValue (mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces)
     (values : Fin mesh.triangles.length → Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues 3) (edge :
-      Topology.Polygon.Stokes.OrientedEdge vertices.count) : Gaussian :=
+      OrientedEdge vertices.count) : Gaussian :=
   if supported : edge ∈ Topology.Polygon.Stokes.triangleEdgeOccurrences mesh.triangulation.faces ∨
       edge.reverse ∈ Topology.Polygon.Stokes.triangleEdgeOccurrences mesh.triangulation.faces then
-    (Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute.build mesh edge supported).sourceEdge.increment values
+    (MeshPathWalks.EdgeRoute.build mesh edge supported).sourceEdge.increment values
   else 0
 
 /-- Assign the canonical signed increment to an indexed edge.
@@ -108,7 +108,7 @@ Unsupported edges and loops have value zero. Supported edges reuse one directed
 chart, so reversal never chooses a second primitive. -/
 @[expose] def edgeValuation (mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces)
     (values : Fin mesh.triangles.length → Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues 3) (edge :
-      Topology.Polygon.Stokes.OrientedEdge vertices.count) : Gaussian :=
+      OrientedEdge vertices.count) : Gaussian :=
   if edge.start.val < edge.finish.val then forwardValue mesh values edge
   else if edge.finish.val < edge.start.val then -forwardValue mesh values edge.reverse else 0
 
@@ -118,7 +118,7 @@ The two strict index orders are disjoint. Their scalar branches give opposite
 signs, while loops and unsupported edges keep their zero values. -/
 theorem edgeValuation_reverse (mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces)
     (values : Fin mesh.triangles.length → Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues 3) (edge :
-      Topology.Polygon.Stokes.OrientedEdge vertices.count) :
+      OrientedEdge vertices.count) :
     edgeValuation mesh values edge.reverse = -edgeValuation mesh values edge := by
   unfold edgeValuation
   change (if edge.finish.val < edge.start.val then forwardValue mesh values edge.reverse
@@ -140,21 +140,21 @@ theorem edgeValuation_reverse (mesh : Meshes.GridLiftedMesh.LiftedMesh vertices 
 A supported edge has distinct endpoints. Its index order selects the original
 forward route or the reversal of the same retained route, with the stated sign. -/
 theorem orderedRoute_value (mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces) (edge :
-  Topology.Polygon.Stokes.OrientedEdge vertices.count)
+  OrientedEdge vertices.count)
     (supported : edge ∈ Topology.Polygon.Stokes.triangleEdgeOccurrences mesh.triangulation.faces ∨
       edge.reverse ∈ Topology.Polygon.Stokes.triangleEdgeOccurrences mesh.triangulation.faces)
     (values : Fin mesh.triangles.length → Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues 3) :
     (orderedRoute mesh edge supported).sourceEdge.increment values = edgeValuation mesh values edge := by
   have nonloop : edge.start ≠ edge.finish := supported.elim
-    (Hyperelliptic.Meshes.PuncturedGrid.Cut.BoundaryPairs.ClearGrid.BranchCellBank.LiftedMesh.orientedEdges_nonloop mesh
+    (Cut.BoundaryPairs.ClearGrid.BranchCellBank.LiftedMesh.orientedEdges_nonloop mesh
       edge)
     (fun member equal =>
-      Hyperelliptic.Meshes.PuncturedGrid.Cut.BoundaryPairs.ClearGrid.BranchCellBank.LiftedMesh.orientedEdges_nonloop
+      Cut.BoundaryPairs.ClearGrid.BranchCellBank.LiftedMesh.orientedEdges_nonloop
       mesh edge.reverse member equal.symm)
   have different : edge.start.val ≠ edge.finish.val := fun equal => nonloop (Fin.ext equal)
   by_cases forward : edge.start.val < edge.finish.val
   · have selected : decide (edge.start.val < edge.finish.val) = true := decide_eq_true forward
-    unfold orderedRoute Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.directedRoute edgeValuation forwardValue
+    unfold orderedRoute Fragment.RouteWords.directedRoute edgeValuation forwardValue
     rewrite [selected, if_pos forward, dif_pos supported]
     exact Eq.refl _
   · have backward : edge.finish.val < edge.start.val := by omega
@@ -162,10 +162,10 @@ theorem orderedRoute_value (mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edg
     have reversed : edge.reverse ∈ Topology.Polygon.Stokes.triangleEdgeOccurrences mesh.triangulation.faces ∨
         edge.reverse.reverse ∈ Topology.Polygon.Stokes.triangleEdgeOccurrences mesh.triangulation.faces := by
       exact supported.symm
-    unfold orderedRoute Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.directedRoute edgeValuation
+    unfold orderedRoute Fragment.RouteWords.directedRoute edgeValuation
     rewrite [selected, if_neg forward, if_pos backward]
-    change (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.reverseRoute
-      (Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute.build mesh edge.reverse
+    change (Fragment.RouteWords.reverseRoute
+      (MeshPathWalks.EdgeRoute.build mesh edge.reverse
         reversed)).sourceEdge.increment values = _
     rewrite [reverseRoute_increment]
     unfold forwardValue

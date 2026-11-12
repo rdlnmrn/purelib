@@ -46,6 +46,21 @@ end Input.mk
 namespace Input
 
 open Purelib.RootIsolation
+
+/-- The same original polynomial determines this complete canonical squarefree input.
+
+The certificate retains the actual original Euclidean result, unit and scaled
+coefficient caches. Their same-input equality leaves only the degree proof.
+-/
+theorem eq_of_polynomial {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    (left right : Input p) : left = right := by
+  cases left with
+  | mk squarefree degree =>
+      cases right with
+      | mk otherSquarefree otherDegree =>
+          cases Dense.Gaussian.Coprime.Basic.CoprimeCertificate.eq_of_inputs squarefree otherSquarefree
+          rfl
+
 /-- The higher-degree isolation input has strictly positive degree. -/
 theorem degreePositive {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (input : Input
   p) :

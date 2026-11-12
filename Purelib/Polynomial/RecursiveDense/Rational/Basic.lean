@@ -50,10 +50,10 @@ preceding variables. -/
 The explicit list constructors make mutual structural recursion visible to the kernel. -/
   inductive Coefficients : Nat → Type
     /-- The empty coefficient sequence at the given arity. -/ | nil {arity : Nat} :
-      Purelib.Polynomial.RecursiveDense.Rational.Basic.Coefficients arity
+      Basic.Coefficients arity
     /-- Prepend a polynomial coefficient of the same arity to a finite sequence. -/ | cons {arity : Nat} :
-      Expression arity → Purelib.Polynomial.RecursiveDense.Rational.Basic.Coefficients arity →
-        Purelib.Polynomial.RecursiveDense.Rational.Basic.Coefficients arity
+      Expression arity → Basic.Coefficients arity →
+        Basic.Coefficients arity
 end
 
 constructive_injectivity Expression
@@ -78,7 +78,7 @@ namespace Coefficients
     List (Expression arity) → Coefficients arity
   | [] => .nil
   | coefficient :: remaining =>
-      .cons coefficient (Purelib.Polynomial.RecursiveDense.Rational.Basic.Coefficients.ofList remaining)
+      .cons coefficient (Coefficients.ofList remaining)
 
 end Coefficients
 
@@ -86,7 +86,7 @@ end Coefficients
 coordinates. -/
 @[expose] def Point : Nat → Type
   | 0 => Unit
-  | arity + 1 => Purelib.Polynomial.RecursiveDense.Rational.Basic.Point arity × Fraction.Rational
+  | arity + 1 => Basic.Point arity × Fraction.Rational
 
 /- Exact finite zero tests: every recursively displayed coefficient must
 vanish.  Representation-only leading zero coefficients do not affect them. -/

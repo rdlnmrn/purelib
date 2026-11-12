@@ -33,6 +33,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Mathlib.Data.Int.Cast.Defs
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! Geometry-first contact requests paying the complete bilinear sewing
@@ -75,32 +77,32 @@ open _root_.Purelib.Topology.Surface.Sewing.Bilinear renaming Samples -> Bilinea
 open Purelib.Topology.Surface.Sewing.SewnPrimitiveFaces (FaceBank)
 open Purelib.Topology.Surface.Sewing.SewnPrimitiveAccounting (trace_allowance_le)
 
-variable {vertexCount faceCount : Nat} {faces : Fin faceCount → Stokes.OrientedTriangle vertexCount}
-  {patch : SewingTree.SewnPatch faces}
+variable {vertexCount faceCount : Nat} {faces : Fin faceCount → OrientedTriangle vertexCount}
+  {patch : SewnPatch faces}
 
 set_option genInjectivity false in
 /-- Cached contact tolerance paying the complete bilinear sewing area error.
 
 The retained assembly profile determines amplification; the magnitude bound, full face count and positive target
 determine the weighted local error and contact tolerance. -/
-structure AreaRequest (patch : SewingTree.SewnPatch faces) (magnitude target : SewnPrimitiveFaces.Coordinate) where
+structure AreaRequest (patch : SewnPatch faces) (magnitude target : Coordinate) where
   /-- The requested total area-error target is strictly positive. -/ positive : 0 < target
   /-- The supplied primitive magnitude bound is nonnegative. -/ nonnegative : 0 ≤ magnitude
-  /-- Cached sewing depth and amplification profile of the original assembly. -/ profile : SewnPrimitiveAccounting.Shape
+  /-- Cached sewing depth and amplification profile of the original assembly. -/ profile : Shape
   /-- The retained profile is computed from the exact original assembly. -/ profile_eq : profile =
-    SewnPrimitiveAccounting.shape patch.assembly
+    shape patch.assembly
   /-- Cached conversion factor from contact tolerance to face allowance. -/ amplification :
-    SewnPrimitiveFaces.Coordinate
+    Coordinate
   /-- The amplification is the retained profile depth times its factor. -/ amplification_eq : amplification =
-    (profile.depth : SewnPrimitiveFaces.Coordinate) * profile.factor
+    (profile.depth : Coordinate) * profile.factor
   /-- Cached factor converting primitive increment error to bilinear area error. -/ weight :
-    SewnPrimitiveFaces.Coordinate
+    Coordinate
   /-- The area weight is thirty-two times the supplied magnitude plus one. -/ weight_eq : weight = 32 * (magnitude + 1)
-  /-- Cached local face-error allowance, capped at one. -/ error : SewnPrimitiveFaces.Coordinate
+  /-- Cached local face-error allowance, capped at one. -/ error : Coordinate
   /-- The local error pays the weighted total target over the complete retained face count. -/ error_eq : error = min 1
     (Aggregate.perTerm
     (Weighted.allowance target weight) patch.cut.triangles.length)
-  /-- Cached contact tolerance consumed by both original scalar samples. -/ tolerance : SewnPrimitiveFaces.Coordinate
+  /-- Cached contact tolerance consumed by both original scalar samples. -/ tolerance : Coordinate
   /-- The contact tolerance pays the retained local error under assembly amplification. -/ tolerance_eq : tolerance =
     Weighted.allowance error amplification
 
@@ -108,12 +110,12 @@ constructive_injectivity AreaRequest
 
 namespace AreaRequest
 
-variable {magnitude target : SewnPrimitiveFaces.Coordinate}
+variable {magnitude target : Coordinate}
 
 /-- Cache the original assembly profile and all weighted allowances for the supplied magnitude and target. -/
-@[expose] def build (patch : SewingTree.SewnPatch faces) (magnitude target : SewnPrimitiveFaces.Coordinate)
+@[expose] def build (patch : SewnPatch faces) (magnitude target : Coordinate)
     (nonnegative : 0 ≤ magnitude) (positive : 0 < target) : AreaRequest patch magnitude target :=
-  let profile := SewnPrimitiveAccounting.shape patch.assembly
+  let profile := shape patch.assembly
   let amplification := Aggregate.countCoordinate profile.depth *
     Aggregate.countCoordinate profile.factor
   let weight := 32 * (magnitude + 1)
@@ -128,18 +130,18 @@ variable {magnitude target : SewnPrimitiveFaces.Coordinate}
 theorem amplification_nonnegative (request : AreaRequest patch magnitude target) : 0 ≤ request.amplification :=
   by
   rw [request.amplification_eq]
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _))
+  exact Arithmetic.mul_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _))
     (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _))
 
 /-- A nonnegative input magnitude gives a nonnegative bilinear area weight. -/
 theorem weight_nonnegative (request : AreaRequest patch magnitude target) : 0 ≤ request.weight := by
   rw [request.weight_eq]
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) (add_nonneg request.nonnegative (by decide))
+  exact Arithmetic.mul_nonneg_direct (by decide +kernel) (add_nonneg request.nonnegative (by decide))
 
 /-- The retained per-face error allowance is positive. -/
 theorem error_positive (request : AreaRequest patch magnitude target) : 0 < request.error := by
   rw [request.error_eq]
-  exact Fraction.Order.Basic.lt_min (by decide) (Aggregate.perTerm_positive
+  exact Basic.lt_min (by decide) (Aggregate.perTerm_positive
     (Weighted.allowance_positive request.positive request.weight_nonnegative) _)
 
 /-- The retained contact tolerance is positive. -/
@@ -149,23 +151,23 @@ theorem tolerance_positive (request : AreaRequest patch magnitude target) : 0 < 
 
 open Purelib.Topology.Surface.Sewing.Bilinear.Requests.AreaRequest in
 /-- Contact accuracy at the retained tolerance pays each original cached face allowance. -/
-theorem trace_bound {localValues : Fin faceCount → PrimitiveSewing.PrimitiveValues 3}
-    (request : AreaRequest patch magnitude target) (surface : SewnPrimitiveSamples.CachedSample patch
+theorem trace_bound {localValues : Fin faceCount → PrimitiveValues 3}
+    (request : AreaRequest patch magnitude target) (surface : CachedSample patch
       localValues)
-    (accurate : SewnPrimitiveRequests.LocalAccuracy request.tolerance surface.sewn.readings)
-    (position : Fin patch.cut.triangles.length) : (Errors.traceAt surface position).allowance ≤ request.error := by
-  have member : Errors.traceAt surface position ∈ (FaceBank.build surface.sewn.readings).entries := by
+    (accurate : LocalAccuracy request.tolerance surface.sewn.readings)
+    (position : Fin patch.cut.triangles.length) : (traceAt surface position).allowance ≤ request.error := by
+  have member : traceAt surface position ∈ (FaceBank.build surface.sewn.readings).entries := by
     rw [← surface.faces_eq]
     exact List.getElem_mem _
-  have estimate := SewnPrimitiveAccounting.trace_allowance_le surface.sewn.readings (Errors.traceAt surface position)
+  have estimate := trace_allowance_le surface.sewn.readings (traceAt surface position)
     member
-  have charged := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (SewnPrimitiveRequests.totalCharge_le
+  have charged := Arithmetic.mul_le_mul_of_nonneg_left_direct (totalCharge_le
     accurate)
-    (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le (SewnPrimitiveAccounting.shape patch.assembly).depth))
+    (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le (shape patch.assembly).depth))
   have paid : request.amplification * request.tolerance ≤ request.error := by
     rw [request.tolerance_eq]
     exact Weighted.mul_allowance_le request.error_positive.le request.amplification_nonnegative
-  have equal : (SewnPrimitiveAccounting.shape patch.assembly).depth * ((SewnPrimitiveAccounting.shape
+  have equal : (shape patch.assembly).depth * ((shape
     patch.assembly).factor * request.tolerance) =
       request.amplification * request.tolerance := by
     rw [request.amplification_eq, request.profile_eq]
@@ -173,24 +175,24 @@ theorem trace_bound {localValues : Fin faceCount → PrimitiveSewing.PrimitiveVa
   exact (estimate.trans charged).trans (equal.le.trans paid)
 
 /-- The two original contact-accuracy certificates pay the complete requested bilinear boundary-area error. -/
-theorem accurate {leftLocal rightLocal : Fin faceCount → PrimitiveSewing.PrimitiveValues 3}
-    {left : SewnPrimitiveSamples.CachedSample patch leftLocal} {right : SewnPrimitiveSamples.CachedSample patch
+theorem accurate {leftLocal rightLocal : Fin faceCount → PrimitiveValues 3}
+    {left : CachedSample patch leftLocal} {right : CachedSample patch
       rightLocal}
     (request : AreaRequest patch magnitude target) (sample : Samples left right)
-    (leftAccurate : SewnPrimitiveRequests.LocalAccuracy request.tolerance left.sewn.readings)
-    (rightAccurate : SewnPrimitiveRequests.LocalAccuracy request.tolerance right.sewn.readings)
+    (leftAccurate : LocalAccuracy request.tolerance left.sewn.readings)
+    (rightAccurate : LocalAccuracy request.tolerance right.sewn.readings)
     (bounded : ∀ position (index : Fin 3),
-      (PrimitivePoint.Bounded (⟨leftLocal (Errors.traceAt left position).source index - leftLocal (Errors.traceAt left
+      (PrimitivePoint.Bounded (⟨leftLocal (traceAt left position).source index - leftLocal (traceAt left
         position).source 0,
-        rightLocal (Errors.traceAt left position).source index - rightLocal (Errors.traceAt left position).source 0⟩ :
-          Purelib.Topology.Polygon.Stokes.PrimitivePoint)) magnitude) :
-    Data.Gaussian.Norm.Basic.normSq (sample.boundaryArea - FiniteSum.Fin.sumFin (fun position =>
-      Stokes.triangleWedgeArea
-      ⟨leftLocal (Errors.traceAt left position).source 0, rightLocal (Errors.traceAt left position).source 0⟩
-      ⟨leftLocal (Errors.traceAt left position).source 1, rightLocal (Errors.traceAt left position).source 1⟩
-      ⟨leftLocal (Errors.traceAt left position).source 2, rightLocal (Errors.traceAt left position).source 2⟩)) < target
+        rightLocal (traceAt left position).source index - rightLocal (traceAt left position).source 0⟩ :
+          PrimitivePoint)) magnitude) :
+    normSq (sample.boundaryArea - sumFin (fun position =>
+      triangleWedgeArea
+      ⟨leftLocal (traceAt left position).source 0, rightLocal (traceAt left position).source 0⟩
+      ⟨leftLocal (traceAt left position).source 1, rightLocal (traceAt left position).source 1⟩
+      ⟨leftLocal (traceAt left position).source 2, rightLocal (traceAt left position).source 2⟩)) < target
         := by
-  have small : request.error ≤ 1 := by rw [request.error_eq]; exact Fraction.Order.Basic.min_le_left _ _
+  have small : request.error ≤ 1 := by rw [request.error_eq]; exact Basic.min_le_left _ _
   have estimate := Errors.boundary_area_error sample (fun _ => request.error) request.nonnegative
     (fun _ => request.error_positive.le) (fun _ => small)
     (request.trace_bound left leftAccurate) (request.trace_bound right rightAccurate) bounded
@@ -200,13 +202,13 @@ theorem accurate {leftLocal rightLocal : Fin faceCount → PrimitiveSewing.Primi
     have errorLe : request.error ≤ Aggregate.perTerm
         (Weighted.allowance target request.weight) patch.cut.triangles.length := by
       rw [request.error_eq]
-      exact Fraction.Order.Basic.min_le_right _ _
-    exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct errorLe
+      exact Basic.min_le_right _ _
+    exact (Arithmetic.mul_le_mul_of_nonneg_left_direct errorLe
       request.weight_nonnegative).trans
       (WeightedAggregateBudget.weighted_perTerm_le request.positive request.weight_nonnegative _)
   have countNonnegative := Fraction.Cast.Order.natCast_le_direct (Nat.zero_le patch.cut.triangles.length)
-  exact estimate.trans_lt ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct weighted countNonnegative)
+  exact estimate.trans_lt ((Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct weighted countNonnegative)
     countNonnegative).trans_lt (Aggregate.count_mul_perTerm_lt request.positive _))
 
 end AreaRequest

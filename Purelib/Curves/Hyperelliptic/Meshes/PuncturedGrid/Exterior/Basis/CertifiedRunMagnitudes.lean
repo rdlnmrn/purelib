@@ -120,20 +120,20 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSou
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {count : Nat} {patch : PreparedPatch parent}
-  {sourceData : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
+  {sourceData : Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
     Cover sourceData}
   {covers : BasisSourceCovers parent} {minimum
     floor index depth : Nat}
@@ -141,7 +141,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {areaAllowance sourceTarget coefficientTarget : Coordinate}
   {request : BasisPreparedCommonRequest
     regular common areaAllowance sourceTarget coefficientTarget floor}
-  {box : Purelib.Geometry.Rational.Box}
+  {box : Geometry.Rational.Box}
   {polynomials : RegularBasisPolynomials cap
     index box}
   {originals :
@@ -149,7 +149,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     covers index}
   {cells : BasisSourceLocations.SampleBank
     covers index}
-  {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
+  {coefficients : GaussianVector genus}
 
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_sub sumFin_congr sumFin_mul_right sumFin_zero)
 open Purelib.Data.Rat.Fraction.Compatibility
@@ -173,30 +173,30 @@ variable {faceIndex : Nat} {data :
   RowData occurrence faceIndex}
 
 /-- An error paid below one quarter of a unit-capped target is at most one. -/
-private theorem CertifiedRunMagnitudes.capped_error {error target : InverseRootPolynomial.Coordinate} (paid : error <
+private theorem CertifiedRunMagnitudes.capped_error {error target : Coordinate} (paid : error <
   target / 4) (capped :
   target ≤ 1) :
     error ≤ 1 := by
   have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct capped (by
-      decide : (0 : InverseRootPolynomial.Coordinate) ≤ 4⁻¹)
+      decide : (0 : Coordinate) ≤ 4⁻¹)
   rw [Fraction.Field.one_mul] at scaled
   rw [Fraction.Field.div_eq_mul_inv_direct] at paid
-  exact paid.le.trans (scaled.trans (by decide : (4 : InverseRootPolynomial.Coordinate)⁻¹ ≤ 1))
+  exact paid.le.trans (scaled.trans (by decide : (4 : Coordinate)⁻¹ ≤ 1))
 
 /-- A paid unit-capped error gives a coefficient-scaled magnitude bound independent of the requested accuracy. -/
-private theorem CertifiedRunMagnitudes.capped_magnitude {error target slope mass : InverseRootPolynomial.Coordinate}
+private theorem CertifiedRunMagnitudes.capped_magnitude {error target slope mass : Coordinate}
     (paid : error < target / 4) (capped : target ≤ 1) (massNN : 0 ≤ mass) :
     2 * (error + slope) * mass ≤ 2 * (1 + slope) * mass :=
   Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.CertifiedRunMagnitudes.capped_error paid capped) le_rfl)
+      (CertifiedRunMagnitudes.capped_error paid capped) le_rfl)
       (by decide)) massNN
 
 /-- The retained Gaussian coefficient mass is nonnegative. -/
-private theorem CertifiedRunMagnitudes.mass_nonnegative (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector
+private theorem CertifiedRunMagnitudes.mass_nonnegative (coefficients : GaussianVector
   genus) :
     0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients := FiniteSum.Fin.sumFin_zero.symm.trans_le
-      (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : InverseRootPolynomial.Coordinate)) _
+      (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Coordinate)) _
         (fun row => Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
 
 namespace RequestedRuns.CertifiedRun
@@ -205,7 +205,7 @@ variable {target : Coordinate}
 /-- This magnitude can be fixed before choosing the requested accuracy. -/
 theorem
   total_bounded_requested
-  (certified : RequestedRuns.CertifiedRun acquired data target) (capped : target ≤ 1)
+  (certified : CertifiedRun acquired data target) (capped : target ≤ 1)
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs) :
     PrimitivePoint.Bounded
       (PairedIncrementArea.total
@@ -214,9 +214,9 @@ theorem
           coefficients) := by
   have bounded := certified.run.owned_total_bounded weighted
   rw [← certified.totalError_eq] at bounded
-  have paid := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.CertifiedRunMagnitudes.capped_magnitude (slope
+  have paid := CertifiedRunMagnitudes.capped_magnitude (slope
     := (BasisSourceCovers.primitiveSlope covers)) certified.totalPaid capped
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.CertifiedRunMagnitudes.mass_nonnegative coefficients)
+    (CertifiedRunMagnitudes.mass_nonnegative coefficients)
   exact ⟨bounded.1.trans paid, bounded.2.trans paid⟩
 
 end RequestedRuns.CertifiedRun
@@ -227,7 +227,7 @@ variable {target : Coordinate}
 unit-capped target. -/
 theorem
   oriented_bounded_requested
-  (certified : RequestedRuns.CertifiedReverseRun acquired data target) (capped : target ≤ 1)
+  (certified : CertifiedReverseRun acquired data target) (capped : target ≤ 1)
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs) :
     PrimitivePoint.Bounded
       (PairedIncrementArea.total certified.run.orientedPhysical)
@@ -235,9 +235,9 @@ theorem
         coefficients) := by
   have bounded := certified.run.oriented_bounded weighted
   rw [← certified.totalError_eq] at bounded
-  have paid := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.CertifiedRunMagnitudes.capped_magnitude (slope
+  have paid := CertifiedRunMagnitudes.capped_magnitude (slope
     := (BasisSourceCovers.primitiveSlope covers)) certified.totalPaid capped
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.CertifiedRunMagnitudes.mass_nonnegative coefficients)
+    (CertifiedRunMagnitudes.mass_nonnegative coefficients)
   exact ⟨bounded.1.trans paid, bounded.2.trans paid⟩
 
 end RequestedRuns.CertifiedReverseRun

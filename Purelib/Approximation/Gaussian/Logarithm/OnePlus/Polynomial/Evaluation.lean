@@ -94,30 +94,30 @@ theorem mul_log1pRelTerm_eq_monomial (u :
     _ = Scale.scale (Coefficient.alternatingCoefficient index)
           (u ^ (index + 1)) := by
       rw [coefficientIdentity, pow_succ,
-        Data.Gaussian.Basic.mul_comm]
+        Basic.mul_comm]
 
 /-- The relative-logarithm program is exactly the evaluation of the finite polynomial used by the divided-difference
 calculus. -/
 theorem eval_log1pPolynomial (u :
   Canonical) : ∀ index,
-    GaussianEvaluation.eval (Polynomial.log1pPolynomial index) u = Sample.log1pSample u index
+    GaussianEvaluation.eval (log1pPolynomial index) u = Sample.log1pSample u index
   | 0 => by
-      rw [Polynomial.log1pPolynomial, GaussianEvaluation.eval_monomial, Sample.log1pSample, Sample.log1pRelSample,
+      rw [log1pPolynomial, GaussianEvaluation.eval_monomial, Sample.log1pSample, Sample.log1pRelSample,
         Prefix.sum_succ,
         Prefix.sum_zero,
-        Sample.log1pRelTerm_zero, Data.Gaussian.Basic.zero_add]
-      apply Data.Gaussian.Basic.ext <;>
-        simp only [Purelib.Data.Gaussian.Scale.scale_re,
-          Purelib.Data.Gaussian.Scale.scale_im, Basic.mul_re, Basic.mul_im, pow_one,
-          Purelib.Data.Gaussian.Basic.one_re, Purelib.Data.Gaussian.Basic.one_im] <;> ring1
+        Sample.log1pRelTerm_zero, Basic.zero_add]
+      apply Basic.ext <;>
+        simp only [Scale.scale_re,
+          Scale.scale_im, Basic.mul_re, Basic.mul_im, pow_one,
+          Basic.one_re, Basic.one_im] <;> ring1
   | index + 1 => by
       calc
-        GaussianEvaluation.eval (Polynomial.log1pPolynomial (index + 1)) u =
-            GaussianEvaluation.eval (Polynomial.log1pPolynomial index) u +
+        GaussianEvaluation.eval (log1pPolynomial (index + 1)) u =
+            GaussianEvaluation.eval (log1pPolynomial index) u +
               Scale.scale
                 (Coefficient.alternatingCoefficient (index + 1))
                 (u ^ (index + 2)) := by
-          rw [Polynomial.log1pPolynomial, GaussianEvaluation.eval_add, GaussianEvaluation.eval_monomial]
+          rw [log1pPolynomial, GaussianEvaluation.eval_add, GaussianEvaluation.eval_monomial]
         _ = Sample.log1pSample u index +
               u * Sample.log1pRelTerm u (index + 1) := by
           rw [eval_log1pPolynomial u index,
@@ -125,7 +125,7 @@ theorem eval_log1pPolynomial (u :
         _ = u *
             (Sample.log1pRelSample u index + Sample.log1pRelTerm u (index + 1)) := by
           rw [Sample.log1pSample]
-          apply Data.Gaussian.Basic.ext <;>
+          apply Basic.ext <;>
             simp only [Basic.add_re, Basic.add_im, Basic.mul_re, Basic.mul_im] <;> ring1
         _ = Sample.log1pSample u (index + 1) := by
           rw [Sample.log1pSample]
@@ -138,7 +138,7 @@ theorem eval_log1pPolynomial (u :
 /-- Gaussian evaluation of the finite logarithm derivative polynomial equals its geometric derivative sample. -/
 theorem eval_log1pGeometricPolynomial (u :
   Canonical) : ∀ index,
-    GaussianEvaluation.eval (Polynomial.log1pGeometricPolynomial index) u =
+    GaussianEvaluation.eval (log1pGeometricPolynomial index) u =
       Sample.log1pDerivativeSample u index
   | 0 => by
       change
@@ -147,19 +147,19 @@ theorem eval_log1pGeometricPolynomial (u :
             (fun termIndex => (-u) ^ termIndex) (0 + 1)
       rw [Prefix.sum_succ,
         Prefix.sum_zero, pow_zero]
-      apply Data.Gaussian.Basic.ext <;>
-        simp only [Purelib.Data.Gaussian.Scale.scale_re,
-          Purelib.Data.Gaussian.Scale.scale_im, Purelib.Data.Gaussian.Basic.add_re, Purelib.Data.Gaussian.Basic.add_im,
-            Purelib.Data.Gaussian.Basic.mul_re, Purelib.Data.Gaussian.Basic.mul_im,
-          Purelib.Data.Gaussian.Basic.zero_re, Purelib.Data.Gaussian.Basic.zero_im, Purelib.Data.Gaussian.Basic.one_re,
-            Purelib.Data.Gaussian.Basic.one_im] <;> ring1
+      apply Basic.ext <;>
+        simp only [Scale.scale_re,
+          Scale.scale_im, Basic.add_re, Basic.add_im,
+            Basic.mul_re, Basic.mul_im,
+          Basic.zero_re, Basic.zero_im, Basic.one_re,
+            Basic.one_im] <;> ring1
   | index + 1 => by
       calc
-        GaussianEvaluation.eval (Polynomial.log1pGeometricPolynomial (index + 1)) u =
-            GaussianEvaluation.eval (Polynomial.log1pGeometricPolynomial index) u +
+        GaussianEvaluation.eval (log1pGeometricPolynomial (index + 1)) u =
+            GaussianEvaluation.eval (log1pGeometricPolynomial index) u +
               Scale.scale
                 (Alternating.alternatingSign (index + 1)) (u ^ (index + 1)) := by
-          rw [Polynomial.log1pGeometricPolynomial, GaussianEvaluation.eval_add, GaussianEvaluation.eval_monomial]
+          rw [log1pGeometricPolynomial, GaussianEvaluation.eval_add, GaussianEvaluation.eval_monomial]
         _ = Sample.log1pDerivativeSample u index + (-u) ^ (index + 1) := by
           rw [eval_log1pGeometricPolynomial u
             index,

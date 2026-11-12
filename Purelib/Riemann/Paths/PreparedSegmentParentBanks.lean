@@ -39,23 +39,23 @@ open Purelib.Data in
 open Purelib.Polynomial in
 open Purelib.Geometry in
 /-- Transporting the prepared path's starting-owner equality preserves its centered parent list. -/
-private theorem parents_castOwner {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus) (sheet : Fin 2) {ambient :
+theorem parents_castOwner {genus : Nat} {curve : HyperellipticCurve genus}
+    (differential : Differential genus) (sheet : Fin 2) {ambient :
       Rational.Box} {start finish : Gaussian.Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish} {first second : Owner
+    {path : Geometry.ClearPath curve.polynomial ambient start finish} {first second : Owner
       (curve.polynomial.eval start)}
     (equal : first = second) (prepared : PreparedPath path first) :
     (CenteredPathChain.ofPreparedPath curve differential sheet
-      (Paths.PreparedPathTrace.PreparedPath.castOwner equal prepared)).parents =
+      (PreparedPathTrace.PreparedPath.castOwner equal prepared)).parents =
       (CenteredPathChain.ofPreparedPath curve differential sheet prepared).parents := by
   cases equal
   rfl
 
 namespace CoveredSegment
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {ambient :
-  Purelib.Geometry.Rational.Box} {start finish : Purelib.Data.Gaussian.Basic.Canonical}
-  {segment : Purelib.Polynomial.Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish} {owner : Owner
+variable {genus : Nat} {curve : HyperellipticCurve genus} {ambient :
+  Geometry.Rational.Box} {start finish : Data.Gaussian.Basic.Canonical}
+  {segment : Polynomial.Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish} {owner : Owner
     (curve.polynomial.eval start)}
 
 open Purelib.Riemann in
@@ -66,12 +66,12 @@ open Purelib.Data in
 The identity retains the centered segment data and its finishing-owner transport.
 Appending the empty continuation preserves every cached parent in order. -/
 theorem path_parents (piece : CoveredSegment segment owner) (differential :
-  Hyperelliptic.Differentials.Basic.Differential genus) (sheet : Fin 2) :
+  Differential genus) (sheet : Fin 2) :
     (CenteredPathChain.ofPreparedPath curve differential sheet piece.path.traced.prepared).parents =
       piece.traced.prepared.centeredEdges curve differential sheet := by
   change (CenteredPathChain.dataOfCompleteSegment curve differential sheet piece.traced.prepared).parents ++
     (CenteredPathChain.ofPreparedPath curve differential sheet
-      (Paths.PreparedPathTrace.PreparedPath.castOwner
+      (PreparedPathTrace.PreparedPath.castOwner
         piece.traced.finishOwner_eq (PreparedPath.nil finish piece.traced.finishOwner))).parents = _
   rw [parents_castOwner]
   change _ ++ [] = _
@@ -81,17 +81,17 @@ open Purelib.Riemann in
 open Purelib.Curves in
 /-- The covered segment's centered parent count equals its cached mesh edge count. -/
 theorem path_parentCount (piece : CoveredSegment segment owner) (differential :
-  Hyperelliptic.Differentials.Basic.Differential genus) (sheet : Fin 2) :
+  Differential genus) (sheet : Fin 2) :
     (CenteredPathChain.ofPreparedPath curve differential sheet piece.path.traced.prepared).parents.length =
       piece.mesh.edgeCount := by
   rw [CenteredPathChain.ofPreparedPath_parents_length]
   have castCount {first second : Owner (curve.polynomial.eval finish)} (equal : first = second) :
-      (Paths.PreparedPathTrace.PreparedPath.castOwner equal
+      (PreparedPathTrace.PreparedPath.castOwner equal
         (PreparedPath.nil (ambient := ambient) finish first)).stepCount = 0 := by
     cases equal
     rfl
   change piece.traced.prepared.subdivision.stepCount +
-    (Paths.PreparedPathTrace.PreparedPath.castOwner
+    (PreparedPathTrace.PreparedPath.castOwner
       piece.traced.finishOwner_eq (PreparedPath.nil finish piece.traced.finishOwner)).stepCount = _
   rw [castCount, Nat.add_zero,
     ← Branches.PreparedSheetContinuation.Subdivision.parameterEdges_length,
@@ -101,8 +101,8 @@ end CoveredSegment
 
 namespace PreparedPath.CoveredSegments
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {ambient :
-  Purelib.Geometry.Rational.Box}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {ambient :
+  Geometry.Rational.Box}
 
 open Purelib.Curves in
 open Purelib.Data in
@@ -110,8 +110,8 @@ open Purelib.Polynomial in
 /-- Concatenate the retained covered segments' centered parent lists in their original order.
 
 The fold preserves the specified differential and sheet while reading each existing traced preparation. -/
-@[expose] def parents (differential : Hyperelliptic.Differentials.Basic.Differential genus) (sheet : Fin 2) :
-    ∀ {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start
+@[expose] def parents (differential : Differential genus) (sheet : Fin 2) :
+    ∀ {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath curve.polynomial ambient start
       finish}
       {owner : Owner (curve.polynomial.eval start)} {prepared : PreparedPath path owner},
       CoveredSegments prepared → List (CenteredEdge curve differential)
@@ -127,15 +127,15 @@ open Purelib.Polynomial in
 /-- The concatenated piece parents equal the original prepared path's centered parents.
 
 The identity preserves repetitions, order, cached handoffs and the exact owner transports between segments. -/
-theorem parents_eq (differential : Hyperelliptic.Differentials.Basic.Differential genus) (sheet : Fin 2) :
-    ∀ {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start
+theorem parents_eq (differential : Differential genus) (sheet : Fin 2) :
+    ∀ {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath curve.polynomial ambient start
       finish}
       {owner : Owner (curve.polynomial.eval start)} {prepared : PreparedPath path owner} (pieces : CoveredSegments
         prepared),
       parents differential sheet pieces = (CenteredPathChain.ofPreparedPath curve differential sheet prepared).parents
   | _, _, _, _, _, .nil _ _ => rfl
   | _, _, _, _, _, .cons first tail => by
-      rw [parents, Paths.PreparedSegmentParentBanks.CoveredSegment.path_parents,
+      rw [parents, CoveredSegment.path_parents,
         parents_eq differential sheet tail]
       change _ = (CenteredPathChain.dataOfCompleteSegment curve differential sheet first.traced.prepared).parents ++ _
       rw [CenteredPathChain.dataOfCompleteSegment_parents, parents_castOwner]
@@ -143,7 +143,7 @@ theorem parents_eq (differential : Hyperelliptic.Differentials.Basic.Differentia
 open Purelib.Data in
 open Purelib.Polynomial in
 /-- Sum the retained pieces' cached mesh edge counts without traversing subdivision owners. -/
-@[expose] def parentCount : ∀ {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath
+@[expose] def parentCount : ∀ {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath
   curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)} {prepared : PreparedPath path owner}, CoveredSegments prepared → Nat
   | _, _, _, _, _, .nil _ _ => 0
@@ -157,8 +157,8 @@ open Purelib.Polynomial in
 
 Structural recursion follows the retained covered segments in their existing
 order. Each segment contributes exactly its cached mesh edge count. -/
-theorem parents_length (differential : Hyperelliptic.Differentials.Basic.Differential genus) (sheet : Fin 2) :
-    ∀ {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start
+theorem parents_length (differential : Differential genus) (sheet : Fin 2) :
+    ∀ {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath curve.polynomial ambient start
       finish}
       {owner : Owner (curve.polynomial.eval start)} {prepared : PreparedPath path owner} (pieces : CoveredSegments
         prepared),
@@ -166,7 +166,7 @@ theorem parents_length (differential : Hyperelliptic.Differentials.Basic.Differe
   | _, _, _, _, _, .nil _ _ => rfl
   | _, _, _, _, _, .cons first tail => by
       rw [parents, List.Append.length_append,
-        Paths.PreparedSegmentParentBanks.CoveredSegment.path_parentCount,
+        CoveredSegment.path_parentCount,
         parents_length]
       rfl
 

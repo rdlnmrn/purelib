@@ -56,23 +56,23 @@ theorem unitQuarterChain_raw_eq_one
     (quarter : Geometry.Gaussian.UnitCircle.Quarter.UnitCircuitQuarter) (degree : RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) :
     Winding.Polygon.Basic.chainRaw Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
-        (Power.Unit.Circuit.Vertex.unitCircuitVertex quarter degree degreeAtLeastTwo 0).value
-        (Power.Unit.Circuit.Chain.unitQuarterChain quarter degree degreeAtLeastTwo).vertices = 1 := by
+        (Vertex.unitCircuitVertex quarter degree degreeAtLeastTwo 0).value
+        (Chain.unitQuarterChain quarter degree degreeAtLeastTwo).vertices = 1 := by
   have identity :
       Winding.Polygon.Basic.chainRaw Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
-          (Power.Unit.Circuit.Vertex.unitCircuitVertex quarter degree degreeAtLeastTwo 0).value
-          (Power.Unit.Circuit.Chain.unitQuarterChain quarter degree degreeAtLeastTwo).vertices =
+          (Vertex.unitCircuitVertex quarter degree degreeAtLeastTwo 0).value
+          (Chain.unitQuarterChain quarter degree degreeAtLeastTwo).vertices =
         UnitChain.rotationEndpointCorrection quarter
-            (Power.Unit.Circuit.Vertex.unitCircuitVertex quarter degree degreeAtLeastTwo 0).value -
+            (Vertex.unitCircuitVertex quarter degree degreeAtLeastTwo 0).value -
           UnitChain.rotationEndpointCorrection quarter
-            (Power.Unit.Circuit.Vertex.unitCircuitVertex quarter degree degreeAtLeastTwo
-              (Power.Unit.Circuit.Subdivision.unitCircuitStepCount degree degreeAtLeastTwo)).value :=
-    Power.Unit.Chain.Rotation.UnitChain.RotationFormulas.coordinateRaw_eq_endpoint
-      (Power.Unit.Circuit.Chain.unitQuarterChain_rotationFormulas quarter degree degreeAtLeastTwo)
-  rw [Power.Unit.Circuit.Chain.unitCircuitVertex_zero_value,
-    Power.Unit.Circuit.Chain.unitCircuitVertex_last_value] at identity
+            (Vertex.unitCircuitVertex quarter degree degreeAtLeastTwo
+              (Subdivision.unitCircuitStepCount degree degreeAtLeastTwo)).value :=
+    Chain.Rotation.UnitChain.RotationFormulas.coordinateRaw_eq_endpoint
+      (Chain.unitQuarterChain_rotationFormulas quarter degree degreeAtLeastTwo)
+  rw [Chain.unitCircuitVertex_zero_value,
+    Chain.unitCircuitVertex_last_value] at identity
   rw [Winding.Polygon.UnitCircle.Rotation.unitQuarter_rotationCorrection_difference] at identity
-  rw [Power.Unit.Circuit.Chain.unitCircuitVertex_zero_value]
+  rw [Chain.unitCircuitVertex_zero_value]
   rw [identity]
 end Purelib.RootIsolation.Power.Unit.Circuit.Winding
 
@@ -105,7 +105,7 @@ theorem unitQuarterChain_parameterRaw_eq_one
     (quarter : Geometry.Gaussian.UnitCircle.Quarter.UnitCircuitQuarter) (degree : RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) :
     UnitChain.parameterRaw Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
-      (Power.Unit.Circuit.Chain.unitQuarterChain quarter degree degreeAtLeastTwo) = 1 :=
+      (Chain.unitQuarterChain quarter degree degreeAtLeastTwo) = 1 :=
   unitQuarterChain_raw_eq_one quarter degree degreeAtLeastTwo
 end Purelib.RootIsolation.Power.Unit.Circuit.Winding
 
@@ -137,12 +137,12 @@ open Purelib.Data.Gaussian
 theorem unitCircuitChain_parameterRaw_eq_four
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value) :
     UnitChain.parameterRaw Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
-      (Power.Unit.Circuit.Chain.unitCircuitChain degree degreeAtLeastTwo) = 4 := by
-  unfold Power.Unit.Circuit.Chain.unitCircuitChain
+      (Chain.unitCircuitChain degree degreeAtLeastTwo) = 4 := by
+  unfold Chain.unitCircuitChain
   simp only [UnitChain.parameterRaw_append,
     unitQuarterChain_parameterRaw_eq_one,
-    Power.Unit.Circuit.Chain.unitCircuitFirstSecondJoin, Power.Unit.Circuit.Chain.unitCircuitSecondThirdJoin,
-    Power.Unit.Circuit.Chain.unitCircuitThirdFourthJoin, Power.Unit.Circuit.Chain.unitCircuitFourthFirstJoin,
+    Chain.unitCircuitFirstSecondJoin, Chain.unitCircuitSecondThirdJoin,
+    Chain.unitCircuitThirdFourthJoin, Chain.unitCircuitFourthFirstJoin,
     UnitChain.parameterRaw_equalValue]
   decide
 end Purelib.RootIsolation.Power.Unit.Circuit.Winding
@@ -178,9 +178,9 @@ theorem repeatedUnitCircuitParameterPolygon_windingFour
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (circuits : Nat) :
     Winding.Polygon.Basic.closedRaw Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
-        (Power.Unit.Circuit.Vertex.unitCircuitVertex .first degree degreeAtLeastTwo 0).value
+        (Vertex.unitCircuitVertex .first degree degreeAtLeastTwo 0).value
         (UnitChain.liftParameterVertices
-          ((Power.Unit.Circuit.Chain.unitCircuitChain degree degreeAtLeastTwo).repeatClosed circuits)) =
+          ((Chain.unitCircuitChain degree degreeAtLeastTwo).repeatClosed circuits)) =
       (4 : Int) * circuits := by
   rw [UnitChain.closedLiftParameterRaw_eq_parameterRaw,
     UnitChain.parameterRaw_repeatClosed,

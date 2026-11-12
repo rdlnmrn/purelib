@@ -18,6 +18,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation.Rational
@@ -50,7 +52,7 @@ theorem half_pow_le_one (count : Nat) :
       rw [pow_succ]
       calc
         (1 / 2 : Fraction.Rational) ^ count * (1 / 2) ≤ 1 * (1 / 2) :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          Arithmetic.mul_le_mul_of_nonneg_right_direct
             inductionHypothesis (by decide)
         _ ≤ 1 := by decide
 
@@ -77,7 +79,7 @@ theorem requiredBlockCount_spread_lt
   let index := Search.firstQuarterBelow 1 0 target
   have requested := Search.firstQuarterBelow_accurate
     (scale := (1 : Fraction.Rational)) (by decide) 0 target positive
-  rw [Geometric.Basic.quarterRadius_eq_mul_pow] at requested
+  rw [Basic.quarterRadius_eq_mul_pow] at requested
   simp only [-eq_self, -iff_self, one_mul] at requested
   simpa only [-eq_self, -iff_self, requiredBlockCount, index,
     half_pow_two_mul] using requested
@@ -110,14 +112,14 @@ section PrefixFamilyProcess
 theorem centeredVarianceMeanTarget_positive
     {target : Fraction.Rational} (_positive : 0 < target) :
     0 < centeredVarianceMeanTarget target :=
-  Fraction.Order.Arithmetic.pow_pos_direct (by decide) _
+  Arithmetic.pow_pos_direct (by decide) _
 
 /-- For a positive variance request, the selected mean tolerance squared is below half the request. -/
 theorem centeredVarianceMeanTarget_sq_lt_half
     {target : Fraction.Rational} (positive : 0 < target) :
     centeredVarianceMeanTarget target ^ 2 < target / 2 := by
   have halfPositive : (0 : Fraction.Rational) < target / 2 :=
-    Fraction.Order.Field.div_pos_direct positive (by decide)
+    Field.div_pos_direct positive (by decide)
   have targetSmall : centeredVarianceMeanTarget target < target / 2 :=
     Dyadic.requiredBlockCount_spread_lt halfPositive
   have targetNonnegative : 0 ≤ centeredVarianceMeanTarget target :=
@@ -129,7 +131,7 @@ theorem centeredVarianceMeanTarget_sq_lt_half
         centeredVarianceMeanTarget target *
           centeredVarianceMeanTarget target := by ring1
     _ ≤ centeredVarianceMeanTarget target * 1 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         targetLeOne targetNonnegative
     _ = centeredVarianceMeanTarget target := by ring1
     _ < target / 2 := targetSmall
@@ -165,13 +167,13 @@ theorem half_pow_antitone {smaller larger : Nat}
   have equal : larger = smaller + extra := (Nat.Subtraction.add_sub_of_le order).symm
   rw [equal, pow_add]
   have extraLeOne : (1 / 2 : Fraction.Rational) ^ extra ≤ 1 := by
-    have powerBound := Fraction.Order.Arithmetic.pow_le_pow_direct
+    have powerBound := Arithmetic.pow_le_pow_direct
       (by decide : (0 : Fraction.Rational) ≤ 1 / 2)
       (by decide : (1 / 2 : Fraction.Rational) ≤ 1) extra
     simpa only [-eq_self, -iff_self, one_pow] using powerBound
   have prefixNonnegative : 0 ≤ (1 / 2 : Fraction.Rational) ^ smaller :=
-    Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) smaller
-  have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.pow_nonneg_direct (by decide) smaller
+  have scaled := Arithmetic.mul_le_mul_of_nonneg_left_direct
     extraLeOne prefixNonnegative
   simpa only [-eq_self, -iff_self, mul_one] using scaled
 

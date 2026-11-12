@@ -24,28 +24,28 @@ namespace Purelib.Integration.Polynomial.Rectangle.ClippedPerimeterEntries
 open Purelib.Riemann.Readings.RectangularObservationAssembly.ObservationMesh.ClippedAssembly (Perimeter)
 open Purelib.Integration.Polynomial.Rectangle.StitchedSideAreas (Entry)
 
-variable {columns rows : Nat} {geometry : Purelib.Riemann.Normalization.RectangularInverseModels.Geometry columns rows}
-  {cuts : Purelib.Riemann.Paths.RectangularSegmentSplitting.GridCuts geometry} {box :
-  Purelib.Riemann.Normalization.InverseRootPolynomial.Box}
-  {mesh : Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh cuts box}
-  {values : Fin (columns + 1) → Fin (rows + 1) → Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian →
-    Purelib.Topology.Polygon.Stokes.PrimitivePoint}
+variable {columns rows : Nat} {geometry : Riemann.Normalization.RectangularInverseModels.Geometry columns rows}
+  {cuts : Riemann.Paths.RectangularSegmentSplitting.GridCuts geometry} {box :
+  Riemann.Normalization.InverseRootPolynomial.Box}
+  {mesh : Riemann.Meshes.RectangularObservationMesh.ObservationMesh cuts box}
+  {values : Fin (columns + 1) → Fin (rows + 1) → Riemann.Normalization.InverseRootPolynomial.Gaussian →
+    Topology.Polygon.Stokes.PrimitivePoint}
 
 open Purelib.Algebra in
 open Purelib.Integration.Polynomial.Rectangle in
 open Purelib.Topology.Polygon in
 /-- Matching total area and both extreme endpoints identifies a concatenated entry with the supplied whole entry. -/
-private theorem concatenate_eq {count : Nat} (entries : Fin (count + 1) → StitchedSideAreas.Entry) (whole :
-  StitchedSideAreas.Entry)
+private theorem concatenate_eq {count : Nat} (entries : Fin (count + 1) → Entry) (whole :
+  Entry)
     (area : FiniteSum.Fin.sumFin (fun index => (entries index).area) +
       FiniteSum.Fin.sumFin (fun index : Fin count => Stokes.edgeArea (entries index.castSucc).finish (entries
         index.succ).start) = whole.area)
     (start : (entries 0).start = whole.start)
     (finish : (entries (Fin.last count)).finish = whole.finish) :
-    StitchedSideAreas.Entry.concatenate entries = whole :=
-  StitchedSideAreas.Entry.eq_of_fields ((StitchedSideAreas.Entry.concatenate_area entries).trans area)
-    ((StitchedSideAreas.Entry.concatenate_start entries).trans start)
-    ((StitchedSideAreas.Entry.concatenate_finish entries).trans finish)
+    Entry.concatenate entries = whole :=
+  Entry.eq_of_fields ((Entry.concatenate_area entries).trans area)
+    ((Entry.concatenate_start entries).trans start)
+    ((Entry.concatenate_finish entries).trans finish)
 
 section
 open Purelib.Riemann.Readings
@@ -57,7 +57,7 @@ def bottomCells (assembly : RectangularObservationAssembly.ObservationMesh.Clipp
 
 /-- Read the retained stitched bottom perimeter area and its original extreme endpoints. -/
 def Perimeter.bottomEntry {assembly : RectangularObservationAssembly.ObservationMesh.ClippedAssembly mesh values}
-  (perimeter : RectangularObservationAssembly.ObservationMesh.ClippedAssembly.Perimeter assembly) : Entry :=
+  (perimeter : Perimeter assembly) : Entry :=
   ⟨perimeter.bottom, (assembly.corners 0 0).lowerLeft,
     (assembly.corners (Fin.last mesh.boundaryColumns) 0).lowerRight⟩
 
@@ -67,9 +67,9 @@ open Purelib.Integration.Polynomial.Rectangle in
 open Purelib.Riemann.Readings in
 /-- The exact bottom cell entries concatenate to the retained stitched bottom perimeter entry. -/
 def BottomEntryEq {assembly : RectangularObservationAssembly.ObservationMesh.ClippedAssembly mesh values} (perimeter :
-  RectangularObservationAssembly.ObservationMesh.ClippedAssembly.Perimeter assembly) : Prop :=
-  StitchedSideAreas.Entry.concatenate (ClippedPerimeterEntries.bottomCells assembly) =
-    ClippedPerimeterEntries.Perimeter.bottomEntry perimeter
+  Perimeter assembly) : Prop :=
+  Entry.concatenate (bottomCells assembly) =
+    Perimeter.bottomEntry perimeter
 
 open Purelib.Algebra in
 open Purelib.Integration.Polynomial.Rectangle in
@@ -77,17 +77,17 @@ open Purelib.Riemann.Readings in
 open Purelib.Topology.Polygon in
 /-- The original bottom cell entries concatenate to the retained bottom perimeter entry. -/
 theorem Perimeter.bottomEntry_eq {assembly : RectangularObservationAssembly.ObservationMesh.ClippedAssembly mesh values}
-  (perimeter : RectangularObservationAssembly.ObservationMesh.ClippedAssembly.Perimeter assembly) :
-    ClippedPerimeterEntries.BottomEntryEq perimeter := by
-  dsimp only [ClippedPerimeterEntries.BottomEntryEq]
-  refine ClippedPerimeterEntries.concatenate_eq (ClippedPerimeterEntries.bottomCells assembly)
-    (ClippedPerimeterEntries.Perimeter.bottomEntry perimeter) ?_ ?_ ?_
-  · have sides : FiniteSum.Fin.sumFin (fun index => (ClippedPerimeterEntries.bottomCells assembly index).area) =
+  (perimeter : Perimeter assembly) :
+    BottomEntryEq perimeter := by
+  dsimp only [BottomEntryEq]
+  refine concatenate_eq (bottomCells assembly)
+    (Perimeter.bottomEntry perimeter) ?_ ?_ ?_
+  · have sides : FiniteSum.Fin.sumFin (fun index => (bottomCells assembly index).area) =
         FiniteSum.Fin.sumFin (fun column => (assembly.sides column 0).bottom) :=
       FiniteSum.Fin.sumFin_congr (fun _ => rfl)
     have joins : FiniteSum.Fin.sumFin (fun index : Fin mesh.boundaryColumns =>
-        Stokes.edgeArea (ClippedPerimeterEntries.bottomCells assembly index.castSucc).finish
-          (ClippedPerimeterEntries.bottomCells assembly index.succ).start) =
+        Stokes.edgeArea (bottomCells assembly index.castSucc).finish
+          (bottomCells assembly index.succ).start) =
         FiniteSum.Fin.sumFin (fun column : Fin mesh.boundaryColumns =>
           Stokes.edgeArea (assembly.corners column.castSucc 0).lowerRight
             (assembly.corners column.succ 0).lowerLeft) :=
@@ -107,7 +107,7 @@ def topCells (assembly : RectangularObservationAssembly.ObservationMesh.ClippedA
 
 /-- Read the retained stitched top perimeter area and its original extreme endpoints. -/
 def Perimeter.topEntry {assembly : RectangularObservationAssembly.ObservationMesh.ClippedAssembly mesh values}
-  (perimeter : RectangularObservationAssembly.ObservationMesh.ClippedAssembly.Perimeter assembly) : Entry :=
+  (perimeter : Perimeter assembly) : Entry :=
   ⟨perimeter.top, (assembly.corners 0 (Fin.last mesh.boundaryRows)).upperLeft,
     (assembly.corners (Fin.last mesh.boundaryColumns) (Fin.last mesh.boundaryRows)).upperRight⟩
 
@@ -119,17 +119,17 @@ open Purelib.Riemann.Readings in
 open Purelib.Topology.Polygon in
 /-- The original top cell entries concatenate to the retained top perimeter entry. -/
 theorem Perimeter.topEntry_eq {assembly : RectangularObservationAssembly.ObservationMesh.ClippedAssembly mesh values}
-  (perimeter : RectangularObservationAssembly.ObservationMesh.ClippedAssembly.Perimeter assembly) :
-    StitchedSideAreas.Entry.concatenate (ClippedPerimeterEntries.topCells assembly) =
-      ClippedPerimeterEntries.Perimeter.topEntry perimeter := by
-  refine ClippedPerimeterEntries.concatenate_eq (ClippedPerimeterEntries.topCells assembly)
-    (ClippedPerimeterEntries.Perimeter.topEntry perimeter) ?_ ?_ ?_
-  · have sides : FiniteSum.Fin.sumFin (fun index => (ClippedPerimeterEntries.topCells assembly index).area) =
+  (perimeter : Perimeter assembly) :
+    Entry.concatenate (topCells assembly) =
+      Perimeter.topEntry perimeter := by
+  refine concatenate_eq (topCells assembly)
+    (Perimeter.topEntry perimeter) ?_ ?_ ?_
+  · have sides : FiniteSum.Fin.sumFin (fun index => (topCells assembly index).area) =
         FiniteSum.Fin.sumFin (fun column => (assembly.sides column (Fin.last mesh.boundaryRows)).top) :=
       FiniteSum.Fin.sumFin_congr (fun _ => rfl)
     have joins : FiniteSum.Fin.sumFin (fun index : Fin mesh.boundaryColumns =>
-        Stokes.edgeArea (ClippedPerimeterEntries.topCells assembly index.castSucc).finish
-          (ClippedPerimeterEntries.topCells assembly index.succ).start) =
+        Stokes.edgeArea (topCells assembly index.castSucc).finish
+          (topCells assembly index.succ).start) =
         FiniteSum.Fin.sumFin (fun column : Fin mesh.boundaryColumns =>
           Stokes.edgeArea (assembly.corners column.castSucc (Fin.last mesh.boundaryRows)).upperRight
             (assembly.corners column.succ (Fin.last mesh.boundaryRows)).upperLeft) :=
@@ -148,7 +148,7 @@ def leftCells (assembly : RectangularObservationAssembly.ObservationMesh.Clipped
 
 /-- Read the retained stitched left perimeter area and its original extreme endpoints. -/
 def Perimeter.leftEntry {assembly : RectangularObservationAssembly.ObservationMesh.ClippedAssembly mesh values}
-  (perimeter : RectangularObservationAssembly.ObservationMesh.ClippedAssembly.Perimeter assembly) : Entry :=
+  (perimeter : Perimeter assembly) : Entry :=
   ⟨perimeter.left, (assembly.corners 0 0).lowerLeft,
     (assembly.corners 0 (Fin.last mesh.boundaryRows)).upperLeft⟩
 
@@ -160,17 +160,17 @@ open Purelib.Riemann.Readings in
 open Purelib.Topology.Polygon in
 /-- The original left cell entries concatenate to the retained left perimeter entry. -/
 theorem Perimeter.leftEntry_eq {assembly : RectangularObservationAssembly.ObservationMesh.ClippedAssembly mesh values}
-  (perimeter : RectangularObservationAssembly.ObservationMesh.ClippedAssembly.Perimeter assembly) :
-    StitchedSideAreas.Entry.concatenate (ClippedPerimeterEntries.leftCells assembly) =
-      ClippedPerimeterEntries.Perimeter.leftEntry perimeter := by
-  refine ClippedPerimeterEntries.concatenate_eq (ClippedPerimeterEntries.leftCells assembly)
-    (ClippedPerimeterEntries.Perimeter.leftEntry perimeter) ?_ ?_ ?_
-  · have sides : FiniteSum.Fin.sumFin (fun index => (ClippedPerimeterEntries.leftCells assembly index).area) =
+  (perimeter : Perimeter assembly) :
+    Entry.concatenate (leftCells assembly) =
+      Perimeter.leftEntry perimeter := by
+  refine concatenate_eq (leftCells assembly)
+    (Perimeter.leftEntry perimeter) ?_ ?_ ?_
+  · have sides : FiniteSum.Fin.sumFin (fun index => (leftCells assembly index).area) =
         FiniteSum.Fin.sumFin (fun row => (assembly.sides 0 row).left) :=
       FiniteSum.Fin.sumFin_congr (fun _ => rfl)
     have joins : FiniteSum.Fin.sumFin (fun index : Fin mesh.boundaryRows =>
-        Stokes.edgeArea (ClippedPerimeterEntries.leftCells assembly index.castSucc).finish
-          (ClippedPerimeterEntries.leftCells assembly index.succ).start) =
+        Stokes.edgeArea (leftCells assembly index.castSucc).finish
+          (leftCells assembly index.succ).start) =
         FiniteSum.Fin.sumFin (fun row : Fin mesh.boundaryRows =>
           Stokes.edgeArea (assembly.corners 0 row.castSucc).upperLeft
             (assembly.corners 0 row.succ).lowerLeft) :=
@@ -190,7 +190,7 @@ def rightCells (assembly : RectangularObservationAssembly.ObservationMesh.Clippe
 
 /-- Read the retained stitched right perimeter area and its original extreme endpoints. -/
 def Perimeter.rightEntry {assembly : RectangularObservationAssembly.ObservationMesh.ClippedAssembly mesh values}
-  (perimeter : RectangularObservationAssembly.ObservationMesh.ClippedAssembly.Perimeter assembly) : Entry :=
+  (perimeter : Perimeter assembly) : Entry :=
   ⟨perimeter.right, (assembly.corners (Fin.last mesh.boundaryColumns) 0).lowerRight,
     (assembly.corners (Fin.last mesh.boundaryColumns) (Fin.last mesh.boundaryRows)).upperRight⟩
 
@@ -202,17 +202,17 @@ open Purelib.Riemann.Readings in
 open Purelib.Topology.Polygon in
 /-- The original right cell entries concatenate to the retained right perimeter entry. -/
 theorem Perimeter.rightEntry_eq {assembly : RectangularObservationAssembly.ObservationMesh.ClippedAssembly mesh values}
-  (perimeter : RectangularObservationAssembly.ObservationMesh.ClippedAssembly.Perimeter assembly) :
-    StitchedSideAreas.Entry.concatenate (ClippedPerimeterEntries.rightCells assembly) =
-      ClippedPerimeterEntries.Perimeter.rightEntry perimeter := by
-  refine ClippedPerimeterEntries.concatenate_eq (ClippedPerimeterEntries.rightCells assembly)
-    (ClippedPerimeterEntries.Perimeter.rightEntry perimeter) ?_ ?_ ?_
-  · have sides : FiniteSum.Fin.sumFin (fun index => (ClippedPerimeterEntries.rightCells assembly index).area) =
+  (perimeter : Perimeter assembly) :
+    Entry.concatenate (rightCells assembly) =
+      Perimeter.rightEntry perimeter := by
+  refine concatenate_eq (rightCells assembly)
+    (Perimeter.rightEntry perimeter) ?_ ?_ ?_
+  · have sides : FiniteSum.Fin.sumFin (fun index => (rightCells assembly index).area) =
         FiniteSum.Fin.sumFin (fun row => (assembly.sides (Fin.last mesh.boundaryColumns) row).right) :=
       FiniteSum.Fin.sumFin_congr (fun _ => rfl)
     have joins : FiniteSum.Fin.sumFin (fun index : Fin mesh.boundaryRows =>
-        Stokes.edgeArea (ClippedPerimeterEntries.rightCells assembly index.castSucc).finish
-          (ClippedPerimeterEntries.rightCells assembly index.succ).start) =
+        Stokes.edgeArea (rightCells assembly index.castSucc).finish
+          (rightCells assembly index.succ).start) =
         FiniteSum.Fin.sumFin (fun row : Fin mesh.boundaryRows =>
           Stokes.edgeArea (assembly.corners (Fin.last mesh.boundaryColumns) row.castSucc).upperRight
             (assembly.corners (Fin.last mesh.boundaryColumns) row.succ).lowerRight) :=

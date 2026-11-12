@@ -62,6 +62,16 @@ The resulting second component supplies its same normalized derivative represent
 @[expose] def derivative (p : CoefficientPolynomial K) : CoefficientPolynomial K :=
   (derivativeState p.coeffs).2
 
+/-- The original derivative of the empty coefficient table is the same empty table. -/
+theorem derivative_zero : derivative (0 : CoefficientPolynomial K) = 0 := rfl
+
+/-- The original singleton coefficient table has zero finite derivative. -/
+theorem derivative_constant (coefficient : K) :
+    derivative (DensePolynomial.constant coefficient) = 0 := by
+  change DensePolynomial.shift 1 (0 : CoefficientPolynomial K) + 0 = 0
+  rewrite [DensePolynomial.shift_zero, DensePolynomial.add_zero_normalize, DensePolynomial.normalize_zero]
+  rfl
+
 /-- Dropping leading zero coefficients preserves both polynomials in the derivative state.
 
 A zero coefficient leaves the original zero starting pair unchanged.

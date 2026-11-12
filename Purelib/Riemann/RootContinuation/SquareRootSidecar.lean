@@ -221,6 +221,15 @@ structure WithSidecar where
 
 constructive_injectivity WithSidecar
 
+/-- Attach an existing square-root sidecar to its same original coherent numerical channel. -/
+def WithSidecar.ofSidecar {channel : CoherentNamed} (sidecar : Sidecar channel) :
+    WithSidecar := ⟨channel, some sidecar⟩
+
+/-- Acquire one isolated root occurrence and retain its original channel and sidecar together. -/
+def WithSidecar.isolate (parameter : Gaussian) (sheet : Fin 2) : WithSidecar :=
+  let root := isolated parameter sheet
+  WithSidecar.ofSidecar root.2
+
 /-- Discard optional algebraic provenance while retaining the exact original channel. -/
 def WithSidecar.forget (input : WithSidecar) : WithSidecar :=
   { channel := input.channel, sidecar := none }

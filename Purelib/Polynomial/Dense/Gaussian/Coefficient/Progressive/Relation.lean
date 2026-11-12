@@ -39,19 +39,19 @@ coefficient position. -/
   | [], _ => True
   | entry :: remaining, target =>
       entry.allowance < target ∧
-        Purelib.Polynomial.Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.AllowancesLt remaining target
+        CoefficientTable.AllowancesLt remaining target
 
 /-- Increase the common strict allowance target while preserving every coefficient bound.
 
 Each retained head allowance remains strictly below the larger target by
 scalar transitivity. Structural recursion retains every original tail state. -/
 public theorem AllowancesLt.mono : ∀ {entries : List Name.Coherent.State.CoefficientState}
-    {small large : Fraction.Rational}, CoefficientTable.AllowancesLt entries small → small ≤ large →
-      CoefficientTable.AllowancesLt entries large
+    {small large : Fraction.Rational}, AllowancesLt entries small → small ≤ large →
+      AllowancesLt entries large
   | [], _small, _large, _bounded, _order => trivial
   | _entry :: _remaining, _small, _large, bounded, order =>
       ⟨bounded.1.trans_le order,
-        Purelib.Polynomial.Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.AllowancesLt.mono bounded.2
+        AllowancesLt.mono bounded.2
         order⟩
 
 set_option backward.match.sparseCases false in
@@ -66,7 +66,7 @@ may differ; mismatched shapes fail. -/
   | [], [] => True
   | left :: leftTail, right :: rightTail =>
       left.channel = right.channel ∧
-        Purelib.Polynomial.Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.SameChannels leftTail rightTail
+        CoefficientTable.SameChannels leftTail rightTail
   | _, _ => False
 
 set_option backward.match.sparseCases false in
@@ -76,8 +76,8 @@ If both lists have allowances below the common target, each value difference has
 target. -/
 private theorem coefficientsClose_of_sameChannels :
     ∀ {left right : List Name.Coherent.State.CoefficientState} {target : Fraction.Rational},
-      CoefficientTable.SameChannels left right → CoefficientTable.AllowancesLt left target →
-        CoefficientTable.AllowancesLt right target →
+      SameChannels left right → AllowancesLt left target →
+        AllowancesLt right target →
           Gaussian.List.Proximity.CoefficientsClose
             (left.map Name.Coherent.State.CoefficientState.value)
             (right.map Name.Coherent.State.CoefficientState.value) (8 * target)
@@ -89,7 +89,7 @@ private theorem coefficientsClose_of_sameChannels :
   | ⟨leftChannel, leftState⟩ :: leftTail,
       ⟨rightChannel, rightState⟩ :: rightTail, target, same,
       leftSmall, rightSmall => by
-      simp only [CoefficientTable.SameChannels, CoefficientTable.AllowancesLt] at same leftSmall rightSmall
+      simp only [SameChannels, AllowancesLt] at same leftSmall rightSmall
       rcases same with ⟨channelEqual, tailSame⟩
       subst rightChannel
       dsimp only [List.map_cons, Gaussian.List.Proximity.CoefficientsClose]
@@ -98,7 +98,7 @@ private theorem coefficientsClose_of_sameChannels :
           (leftChannel.name.process.witness leftState).property
           (leftChannel.name.process.witness rightState).property
         exact (calc
-          Data.Gaussian.Norm.Basic.normSq
+          Gaussian.Norm.Basic.normSq
               ((leftChannel.name.process.witness leftState).val -
                 (leftChannel.name.process.witness rightState).val) ≤
               4 * (leftChannel.coherent.allowance leftState +
@@ -121,13 +121,13 @@ Both empty lists have zero length, and each paired head contributes one
 entry on either side. Mismatched shapes are excluded by the original
 channel certificate. -/
 public theorem sameChannels_length : ∀ {left right : List Name.Coherent.State.CoefficientState},
-    CoefficientTable.SameChannels left right → left.length = right.length
+    SameChannels left right → left.length = right.length
   | [], [], _same => rfl
   | [], _ :: _, same => by exact same.elim
   | _ :: _, [], same => by exact same.elim
   | _left :: leftTail, _right :: rightTail, same => by
       exact congrArg Nat.succ
-        (Purelib.Polynomial.Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.sameChannels_length same.2)
+        (CoefficientTable.sameChannels_length same.2)
 
 /-- Tables with the same ordered coefficient channels have equal degree.
 
@@ -136,19 +136,19 @@ The original ordered channel certificate therefore identifies the two
 displayed finite degree counts. -/
 public theorem degree_eq_of_sameChannels
     {left right : CoefficientTable}
-    (same : CoefficientTable.SameChannels left.entries right.entries) :
+    (same : SameChannels left.entries right.entries) :
     left.degree = right.degree :=
-  CoefficientTable.sameChannels_length same
+  sameChannels_length same
 
 /-- A coefficient-state list has the same channels as itself.
 
 Each retained head channel has its original reflexive equality.
 Structural recursion preserves the complete unchanged tail list. -/
 public theorem sameChannels_refl : ∀ entries : List Name.Coherent.State.CoefficientState,
-    CoefficientTable.SameChannels entries entries
+    SameChannels entries entries
   | [] => trivial
   | _ :: remaining => ⟨rfl,
-    Purelib.Polynomial.Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.sameChannels_refl remaining⟩
+    CoefficientTable.sameChannels_refl remaining⟩
 
 set_option backward.match.sparseCases false in
 /-- Equality of ordered coefficient channels is transitive.
@@ -157,8 +157,8 @@ At each retained position the two supplied channel equalities compose.
 Their common list shapes preserve the same paired tails; mismatched
 intermediate or final shapes contradict an original certificate. -/
 public theorem sameChannels_trans : ∀ {first second third :
-    List Name.Coherent.State.CoefficientState}, CoefficientTable.SameChannels first second →
-      CoefficientTable.SameChannels second third → CoefficientTable.SameChannels first third
+    List Name.Coherent.State.CoefficientState}, SameChannels first second →
+      SameChannels second third → SameChannels first third
   | [], [], [], _firstSecond, _secondThird => trivial
   | [], [], _ :: _, _firstSecond, secondThird => by
       exact secondThird.elim
@@ -171,7 +171,7 @@ public theorem sameChannels_trans : ∀ {first second third :
   | first :: firstTail, second :: secondTail, third :: thirdTail,
       firstSecond, secondThird =>
       ⟨firstSecond.1.trans secondThird.1,
-        Purelib.Polynomial.Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.sameChannels_trans
+        CoefficientTable.sameChannels_trans
           firstSecond.2 secondThird.2⟩
 
 /-- Accurate readings of the same ordered coefficient channels are close entrywise.
@@ -181,10 +181,10 @@ Their original shared channel coherence bounds each displayed value difference
 by eight times that target while preserving coefficient order. -/
 public theorem values_close_of_sameChannels
     {left right : CoefficientTable} {target : Fraction.Rational}
-    (same : CoefficientTable.SameChannels left.entries right.entries)
-    (leftSmall : CoefficientTable.AllowancesLt left.entries target)
-    (rightSmall : CoefficientTable.AllowancesLt right.entries target) :
+    (same : SameChannels left.entries right.entries)
+    (leftSmall : AllowancesLt left.entries target)
+    (rightSmall : AllowancesLt right.entries target) :
     Gaussian.List.Proximity.CoefficientsClose left.values right.values (8 * target) := by
-  exact CoefficientTable.coefficientsClose_of_sameChannels same leftSmall rightSmall
+  exact coefficientsClose_of_sameChannels same leftSmall rightSmall
 
 end Purelib.Polynomial.Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable

@@ -77,23 +77,23 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Rat.Fraction.Compatibility
 variable {genus : Nat} {curve : HyperellipticCurve genus} {differential other :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {parents : List
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {parents : List
     (CenteredEdge curve differential)}
   {target : Coordinate} {minimum stage fine : Nat} {box otherBox :
-    Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+    Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Cap.Primitives.Sample cap other stage otherBox}
   {request : Request regular other parents
     target minimum}
 
 /-- The original source summary's two total coordinates satisfy the retained parent slope bound. -/
-private theorem Entry.source_bound (entry : PairedParentRequest.Request.Entry request sample otherSample fine)
+private theorem Entry.source_bound (entry : Entry request sample otherSample fine)
     (bounded : entry.plan.SourceBound request.slope) :
     PrimitivePoint.Bounded
       entry.certified.compared.firstSummary.totalValue request.slope := by
-  have zeroDifference (value : Purelib.Data.Rat.Fraction.Rational) : value - 0 = value := by ring1
+  have zeroDifference (value : Fraction.Rational) : value - 0 = value := by ring1
   rw [entry.certified.compared.firstSummary.total_eq, (Certified.source_path entry.certified),
     DyadicPairedPrimitivePaths.increments_total]
   have left := entry.certified.source.increment_bound (first := 0) (last := 1) (by decide) (by decide)
@@ -103,17 +103,17 @@ private theorem Entry.source_bound (entry : PairedParentRequest.Request.Entry re
   exact ⟨left.trans bounded.1, right.trans bounded.2⟩
 
 /-- A unit-bounded total discrepancy transfers the original source norm bound to its cap total. -/
-private theorem cap_bound {a b : Data.Gaussian.Basic.Canonical} {slope : InverseRootPolynomial.Coordinate}
-    (source : Data.Gaussian.Norm.Basic.normSq a ≤ slope) (error : Data.Gaussian.Norm.Basic.normSq (a -
-      b) ≤ 1) : Data.Gaussian.Norm.Basic.normSq b ≤ 2 * (slope + 1) := by
+private theorem cap_bound {a b : Canonical} {slope : Coordinate}
+    (source : normSq a ≤ slope) (error : normSq (a -
+      b) ≤ 1) : normSq b ≤ 2 * (slope + 1) := by
   have identity : b = a - (a - b) := by ring1
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq identity).trans_le
+  exact (congrArg normSq identity).trans_le
     ((Data.Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct source
       error) (by decide)))
 
 /-- Both original source and cap totals satisfy the common retained enlarged slope bound. -/
-private theorem Entry.total_bounds (entry : PairedParentRequest.Request.Entry request sample otherSample fine)
+private theorem Entry.total_bounds (entry : Entry request sample otherSample fine)
     (bounded : entry.plan.SourceBound request.slope) :
     PrimitivePoint.Bounded
       entry.certified.compared.firstSummary.totalValue (2 * (request.slope + 1)) ∧
@@ -122,7 +122,7 @@ private theorem Entry.total_bounds (entry : PairedParentRequest.Request.Entry re
   have source := entry.source_bound bounded
   have larger : request.slope ≤ 2 * (request.slope + 1) :=
     (le_add_of_nonneg_right (add_nonneg request.slope_nonnegative (by
-        decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2))).trans_eq (by ring1)
+        decide : (0 : Coordinate) ≤ 2))).trans_eq (by ring1)
   have firstSource := source.1
   have secondSource := source.2
   rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at firstSource secondSource
@@ -134,7 +134,7 @@ private theorem Entry.total_bounds (entry : PairedParentRequest.Request.Entry re
   exact ⟨⟨source.1.trans larger, source.2.trans larger⟩, firstCap, secondCap⟩
 
 /-- The cached source totals are exactly the totals of the original retained source paths. -/
-private theorem source_totals (entries : List (PairedParentRequest.Request.Entry request sample otherSample fine)) :
+private theorem source_totals (entries : List (Entry request sample otherSample fine)) :
     entries.map (fun entry => entry.certified.compared.firstSummary.totalValue) =
       entries.map (fun entry => PairedIncrementArea.total entry.pair.1) := by
   induction entries with
@@ -142,8 +142,8 @@ private theorem source_totals (entries : List (PairedParentRequest.Request.Entry
   | cons head tail ih => exact congrArg₂ List.cons head.certified.compared.firstSummary.total_eq ih
 
 /-- The comparison uses cached totals, not totals recomputed from fine paths. -/
-@[expose] def Evaluation.totalPairs (evaluated : PairedParentRequest.Request.Evaluation request sample otherSample fine)
-  : List (Stokes.PrimitivePoint × Stokes.PrimitivePoint) :=
+@[expose] def Evaluation.totalPairs (evaluated : Evaluation request sample otherSample fine)
+  : List (PrimitivePoint × PrimitivePoint) :=
   evaluated.retained.map (fun entry => (entry.certified.compared.firstSummary.totalValue,
     entry.certified.compared.secondSummary.totalValue))
 
@@ -151,15 +151,15 @@ private theorem source_totals (entries : List (PairedParentRequest.Request.Entry
 
 The actual root chain supplies one common sign, and the estimate uses the same cached totals as the internal area
 comparison. -/
-theorem Evaluation.polygon_bound (evaluated : PairedParentRequest.Request.Evaluation request sample otherSample fine)
+theorem Evaluation.polygon_bound (evaluated : Evaluation request sample otherSample fine)
     {start finish : Lifted.Basic.LiftedPoint 2}
-    (chain : Nonempty (PreparedDirectDyadicRefinements.DirectPathChain parents (start := start) (finish := finish)))
-    {first last : Gaussian.Name.Basic.Named} (roots : PreparedRefinementRootChains.RootChain parents first last) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area ((evaluated.pairs.map Prod.fst).map
+    (chain : Nonempty (DirectPathChain parents (start := start) (finish := finish)))
+    {first last : Gaussian.Name.Basic.Named} (roots : RootChain parents first last) :
+    normSq (area ((evaluated.pairs.map Prod.fst).map
       PairedIncrementArea.total) -
-      PairedIncrementArea.area ((evaluated.pairs.map Prod.snd).map PairedIncrementArea.total)) ≤
-      16 * (parents.length : InverseRootPolynomial.Coordinate)^4 * request.allowance * (2 * (request.slope + 1)) := by
-  have bounds (entry : PairedParentRequest.Request.Entry request sample otherSample fine) (member : entry ∈
+      area ((evaluated.pairs.map Prod.snd).map PairedIncrementArea.total)) ≤
+      16 * (parents.length : Coordinate)^4 * request.allowance * (2 * (request.slope + 1)) := by
+  have bounds (entry : Entry request sample otherSample fine) (member : entry ∈
     evaluated.retained) :=
     entry.total_bounds (request.plan_bounds entry.plan (evaluated.plans_eq ▸ Map.mem_map_of_mem member))
   have estimate := PairedIncrementComparison.area_difference_bound evaluated.totalPairs request.positive.le
@@ -182,40 +182,40 @@ theorem Evaluation.polygon_bound (evaluated : PairedParentRequest.Request.Evalua
       exact (bounds entry retained).2)
   have count : evaluated.retained.length = parents.length := by
     have h := congrArg List.length ((congrArg (List.map Plan.parent) evaluated.plans_eq).trans request.parents_eq)
-    simpa only [Data.List.Map.length_map, -eq_self, -iff_self] using h
-  simp only [Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request.Evaluation.totalPairs,
-    Data.List.Map.map_map, Data.List.Map.length_map, count, -eq_self, -iff_self] at estimate
+    simpa only [Map.length_map, -eq_self, -iff_self] using h
+  simp only [Evaluation.totalPairs,
+    Map.map_map, Map.length_map, count, -eq_self, -iff_self] at estimate
   dsimp only [Function.comp_def] at estimate
   rw [evaluated.cap_polygon_unsigned chain roots,
     source_totals] at estimate
   rw [evaluated.pairs_eq] at estimate ⊢
   have compositionResult := estimate
-  simp only [Data.List.Map.map_map, -eq_self, -iff_self] at compositionResult ⊢
+  simp only [Map.map_map, -eq_self, -iff_self] at compositionResult ⊢
   dsimp only [Function.comp_def] at compositionResult ⊢
   exact compositionResult
 
 /-- The complete original flattened source and cap paired paths differ in area by less than the retained target. -/
-@[expose] def Evaluation.FullAreaError (evaluated : PairedParentRequest.Request.Evaluation request sample otherSample
+@[expose] def Evaluation.FullAreaError (evaluated : Evaluation request sample otherSample
   fine) : Prop :=
-  Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area (evaluated.pairs.map Prod.fst).flatten -
-    PairedIncrementArea.area (evaluated.pairs.map Prod.snd).flatten) < target
+  normSq (area (evaluated.pairs.map Prod.fst).flatten -
+    area (evaluated.pairs.map Prod.snd).flatten) < target
 
 /-- All intermediate increments and all parent-total cross terms are paid. There is no remaining polygon correction in
 this requested area bound. -/
-theorem Evaluation.full_area_error (evaluated : PairedParentRequest.Request.Evaluation request sample otherSample fine)
+theorem Evaluation.full_area_error (evaluated : Evaluation request sample otherSample fine)
     {start finish : Lifted.Basic.LiftedPoint 2}
-    (chain : Nonempty (PreparedDirectDyadicRefinements.DirectPathChain parents (start := start) (finish := finish)))
-    {first last : Gaussian.Name.Basic.Named} (roots : PreparedRefinementRootChains.RootChain parents first last) :
+    (chain : Nonempty (DirectPathChain parents (start := start) (finish := finish)))
+    {first last : Gaussian.Name.Basic.Named} (roots : RootChain parents first last) :
     evaluated.FullAreaError := by
-  unfold Request.Evaluation.FullAreaError
+  unfold Evaluation.FullAreaError
   rw [evaluated.area_decomposition]
   have bound := (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
     (Fraction.Order.Arithmetic.add_le_add_direct evaluated.local_bound (evaluated.polygon_bound chain roots)) (by
       decide))
-  have coefficient : 2 * ((parents.length : InverseRootPolynomial.Coordinate) * ((parents.length :
-    InverseRootPolynomial.Coordinate) * request.allowance) +
-      16 * (parents.length : InverseRootPolynomial.Coordinate)^4 * request.allowance * (2 * (request.slope + 1))) =
+  have coefficient : 2 * ((parents.length : Coordinate) * ((parents.length :
+    Coordinate) * request.allowance) +
+      16 * (parents.length : Coordinate)^4 * request.allowance * (2 * (request.slope + 1))) =
       request.coefficient * request.allowance := by rw [request.coefficient_eq]; ring1
   exact bound.trans_lt (coefficient.trans_lt request.full_paid)
 

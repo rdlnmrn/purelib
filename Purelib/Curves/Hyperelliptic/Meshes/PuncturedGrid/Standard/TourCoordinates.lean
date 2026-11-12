@@ -80,33 +80,33 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourRetraction.S
 open Purelib.Topology.Surface.Boundary.BoundaryCoordinates (WordCoordinates)
 open Purelib.Topology.Surface.Sewing.SewingRetraction (wordValue faceValue)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
-  {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve
-    (Purelib.Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {index : Fin genus}
+  {base : Riemann.Meshes.FramedPuncturedGrid curve
+    (Branches.BranchConfiguration.configurationOfData curve branches).branches higher}
+  {lifted : Riemann.Meshes.LiftedPuncturedGrid base} {index : Fin genus}
 
 set_option genInjectivity false in
 /-- The actual routed paths and the two materialized integer rows share the canonical cut alphabet. No new geometric or
 analytic witness is requested. -/
 structure BoundaryCoordinates (pair : StandardTours.Pair lifted index) where
   /-- The cached actual A and B boundary routes with their original signed face corrections. -/ routes :
-    Pair.BoundaryRoutes pair
+    BoundaryRoutes pair
   /-- The exact retained integer coordinates of the actual routed A word in the original cut alphabet. -/ a :
-    BoundaryCoordinates.WordCoordinates lifted.cutBoundaryWord.alphabet routes.a.path
+    WordCoordinates lifted.cutBoundaryWord.alphabet routes.a.path
   /-- The exact retained integer coordinates of the actual routed B word in the original cut alphabet. -/ b :
-    BoundaryCoordinates.WordCoordinates lifted.cutBoundaryWord.alphabet routes.b.path
+    WordCoordinates lifted.cutBoundaryWord.alphabet routes.b.path
 
 constructive_injectivity BoundaryCoordinates
 
 namespace BoundaryCoordinates
 
-variable {pair : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.Pair lifted index}
+variable {pair : StandardTours.Pair lifted index}
 
 /-- Materialize both actual integer coordinate rows using the supplied retained boundary routes. -/
-@[expose] def ofRoutes (routes : Pair.BoundaryRoutes pair) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourCoordinates.BoundaryCoordinates pair :=
+@[expose] def ofRoutes (routes : BoundaryRoutes pair) :
+  BoundaryCoordinates pair :=
   ⟨routes,
     WordCoordinates.build lifted.cutBoundaryWord.alphabet routes.a.path (by
       rw [lifted.cutPolygon.patch.cut.boundary_eq]
@@ -117,25 +117,25 @@ variable {pair : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.Tour
 
 /-- Cache the original boundary retraction routes and materialize their exact A and B coordinate rows. -/
 @[expose] def build (pair : StandardTours.Pair lifted index) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourCoordinates.BoundaryCoordinates pair :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourCoordinates.BoundaryCoordinates.ofRoutes (BoundaryRoutes.build
+  BoundaryCoordinates pair :=
+  BoundaryCoordinates.ofRoutes (BoundaryRoutes.build
   pair)
 
 /-- The actual retained A coordinate row has zero boundary at every lifted vertex. -/
 theorem a_boundary_zero (coordinates :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourCoordinates.BoundaryCoordinates pair) (vertex : Fin
+  BoundaryCoordinates pair) (vertex : Fin
   lifted.vertices.count) :
     coordinates.a.boundaryAt vertex = 0 := coordinates.a.boundary_zero coordinates.routes.a_closed vertex
 
 /-- The actual retained B coordinate row has zero boundary at every lifted vertex. -/
 theorem b_boundary_zero (coordinates :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourCoordinates.BoundaryCoordinates pair) (vertex : Fin
+  BoundaryCoordinates pair) (vertex : Fin
   lifted.vertices.count) :
     coordinates.b.boundaryAt vertex = 0 := coordinates.b.boundary_zero coordinates.routes.b_closed vertex
 
 /-- The original A tour value equals its retained cut-generator combination plus its actual signed face correction. -/
-theorem a_value (coordinates : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourCoordinates.BoundaryCoordinates
-  pair) (value : Stokes.OrientedEdge lifted.vertices.count → Data.Gaussian.Basic.Canonical)
+theorem a_value (coordinates : BoundaryCoordinates
+  pair) (value : Stokes.OrientedEdge lifted.vertices.count → Canonical)
     (anti : ∀ edge, value edge.reverse = -value edge) :
     SewingRetraction.wordValue value pair.aFaces.geometry.indexed =
       WordCoordinates.combine coordinates.a.totals
@@ -147,8 +147,8 @@ theorem a_value (coordinates : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standar
       (coordinates.a.value_eq value anti))
 
 /-- The original B tour value equals its retained cut-generator combination plus its actual signed face correction. -/
-theorem b_value (coordinates : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourCoordinates.BoundaryCoordinates
-  pair) (value : Stokes.OrientedEdge lifted.vertices.count → Data.Gaussian.Basic.Canonical)
+theorem b_value (coordinates : BoundaryCoordinates
+  pair) (value : Stokes.OrientedEdge lifted.vertices.count → Canonical)
     (anti : ∀ edge, value edge.reverse = -value edge) :
     SewingRetraction.wordValue value pair.bFaces.geometry.indexed =
       WordCoordinates.combine coordinates.b.totals

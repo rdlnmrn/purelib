@@ -52,6 +52,8 @@ import Purelib.Riemann.Meshes.PuncturedGridFaces
 import Purelib.Riemann.Meshes.ShrinkingPuncturedGrid
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! Pay the retained faces' internal joining defects before the comparison
@@ -94,25 +96,25 @@ open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest (energyAllowanceTarget
   energyAllowanceTarget_paid)
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve branches
     higher}
-  {preparation : Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius
-    : Data.Rat.Fraction.Rational} {grid : Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid
+  {preparation : NewtonPreparation original} {target radius
+    : Rational} {grid : NewtonGrid
     preparation target radius}
-  {observations : Riemann.RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
+  {observations : ProtectedObservations original} {frames :
     RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars}
+  {domains : FaceDomainBank frames grid.faces.regulars}
     {sheet : Fin 2}
-  {partitions : Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid}
-  {surfaceCuts : Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceCuts partitions domains} {depth :
+  {partitions : SurfacePartitions observations grid}
+  {surfaceCuts : SurfaceCuts partitions domains} {depth :
     Nat}
-  {lifted : Riemann.Meshes.LiftedPuncturedGrid grid.punctured}
-  {fixed : Riemann.RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet} {error :
-    Data.Rat.Fraction.Rational}
-  {energy : Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfaceRequest partitions
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts sheet
+  {lifted : LiftedPuncturedGrid grid.punctured}
+  {fixed : Preflights domains sheet} {error :
+    Rational}
+  {energy : SurfaceRequest partitions
+    (MeshCompatibility.surfaceMeshes partitions domains surfaceCuts sheet
     depth) fixed error}
   {position : Fin grid.faces.regulars.length}
 
@@ -122,13 +124,13 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Integration.Energy.Polygon (energyPrimitivePoint)
 open Purelib.Integration.Path.BoundaryRibbon (Ribbon)
 
-variable {pieceError : Data.Rat.Fraction.Rational} {minimum : Nat}
+variable {pieceError : Rational} {minimum : Nat}
 
-variable (excision : Curves.Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted)
-  {stage : Nat} {cache : Riemann.RootContinuation.NewtonObservationLocalEnergy.LocalMeshes.Numerics domains stage}
+variable (excision : AllHoles.Excision.AllHoleExcision grid lifted)
+  {stage : Nat} {cache : Numerics domains stage}
     {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
-  {assemblies : Surface.ExteriorRequest.Assemblies energy cache
-    coefficients} {perimeters : Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.Perimeters assemblies}
+  {assemblies : Assemblies energy cache
+    coefficients} {perimeters : Perimeters assemblies}
 
 /-- The sum of the actual retained face exteriors selected by the original excision mask. -/
 @[expose] def FaceAssemblies.remainingExterior (faces : FaceAssembly.FaceAssemblies perimeters) : Gaussian :=
@@ -142,19 +144,19 @@ variable (excision : Curves.Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHol
 
 /-- The retained unexcised piece exteriors split into their complete face exteriors and actual joining defects. -/
 theorem FaceAssemblies.remaining_decomposition (faces : FaceAssembly.FaceAssemblies perimeters) :
-    Curves.Hyperelliptic.Meshes.Newton.Complement.ExteriorEnergy.ExteriorRequest.remainingExterior excision assemblies =
-      Curves.Hyperelliptic.Meshes.Newton.Complement.FaceEnergy.FaceAssemblies.remainingExterior excision faces +
-        Curves.Hyperelliptic.Meshes.Newton.Complement.FaceEnergy.FaceAssemblies.remainingDefect excision faces := by
+    ExteriorRequest.remainingExterior excision assemblies =
+      FaceAssemblies.remainingExterior excision faces +
+        FaceAssemblies.remainingDefect excision faces := by
   unfold ExteriorRequest.remainingExterior
-    Curves.Hyperelliptic.Meshes.Newton.Complement.FaceEnergy.FaceAssemblies.remainingExterior
-    Curves.Hyperelliptic.Meshes.Newton.Complement.FaceEnergy.FaceAssemblies.remainingDefect
+    FaceAssemblies.remainingExterior
+    FaceAssemblies.remainingDefect
   rw [← FiniteSum.Fin.sumFin_add]
   apply FiniteSum.Fin.sumFin_congr
   intro position
   cases ObservationLower.remainingFaceMask excision position with
   | false =>
       change FiniteSum.Fin.sumFin (fun _ : Fin (partitions.get position).cuts.boxes.length => (0 :
-        Data.Gaussian.Basic.Canonical)) = 0 + 0
+        Gaussian)) = 0 + 0
       rw [FiniteSum.Fin.sumFin_zero, add_zero]
   | true =>
       change FiniteSum.Fin.sumFin (fun piece => ((assemblies.get position).get piece).exterior) =
@@ -164,18 +166,18 @@ theorem FaceAssemblies.remaining_decomposition (faces : FaceAssembly.FaceAssembl
 namespace DefectRequest
 
 variable {base : Surface.ExteriorRequest energy pieceError minimum}
-  {allowance : Data.Rat.Fraction.Rational}
+  {allowance : Rational}
 
 /-- At the paid common stage, the actual unexcised face defects obey the original homogeneous surface allowance. -/
 theorem remaining_error_bound (request : Surface.DefectRequest base allowance) (later : request.index ≤ stage)
     (faces : FaceAssembly.FaceAssemblies perimeters) :
     Data.Gaussian.Norm.Basic.normSq
-      (Curves.Hyperelliptic.Meshes.Newton.Complement.FaceEnergy.FaceAssemblies.remainingDefect excision faces) ≤ (genus
-      : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 * allowance := by
+      (FaceAssemblies.remainingDefect excision faces) ≤ (genus
+      : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 * allowance := by
   have bound := Indexed.normSq_sumFin_le
     (fun position => if ObservationLower.remainingFaceMask excision position then
       (faces.get position).seams + (faces.get position).cornerTotal else 0)
-    ((genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
+    ((genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
       request.perFace)
     (fun position => by
       cases ObservationLower.remainingFaceMask excision position with
@@ -187,23 +189,23 @@ theorem remaining_error_bound (request : Surface.DefectRequest base allowance) (
           have perFacePositive : 0 < request.perFace := by
             rw [request.perFace_eq]
             exact Aggregate.perTerm_positive request.positive _
-          exact Fraction.Order.Arithmetic.mul_nonneg_direct
-            (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-              (Fraction.Order.Arithmetic.sq_nonneg_direct _)) perFacePositive.le)
-  have payment : (grid.faces.regulars.length : Fraction.Rational) ^ 2 * request.perFace ≤ allowance := by
+          exact Arithmetic.mul_nonneg_direct
+            (Arithmetic.mul_nonneg_direct (Arithmetic.sq_nonneg_direct _)
+              (Arithmetic.sq_nonneg_direct _)) perFacePositive.le)
+  have payment : (grid.faces.regulars.length : Rational) ^ 2 * request.perFace ≤ allowance := by
     rw [request.perFace_eq]
     exact (le_of_eq (by ring1)).trans (Aggregate.count_mul_perTerm_lt request.positive _).le
   apply bound.trans
   calc
-    _ = ((genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2) *
-      ((grid.faces.regulars.length : Fraction.Rational) ^ 2 * request.perFace) := by ring1
-    _ ≤ _ := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct payment
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+    _ = ((genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2) *
+      ((grid.faces.regulars.length : Rational) ^ 2 * request.perFace) := by ring1
+    _ ≤ _ := Arithmetic.mul_le_mul_of_nonneg_left_direct payment
+      (Arithmetic.mul_nonneg_direct (Arithmetic.sq_nonneg_direct _)
+        (Arithmetic.sq_nonneg_direct _))
 
 /-- The retained regular-face exterior inherits the independent observation lower bound after all internal ownership,
 seam and corner losses are paid. -/
-theorem remaining_energy_lower {ownershipAllowance exteriorAllowance faceAllowance : Fraction.Rational}
+theorem remaining_energy_lower {ownershipAllowance exteriorAllowance faceAllowance : Rational}
     (ownership : Surface.ConjugateRequest energy (ConjugateRequest.energyAllowanceTarget genus
       ownershipAllowance))
     (base : Surface.ExteriorRequest energy (ConjugateRequest.energyAllowanceTarget genus exteriorAllowance)
@@ -215,12 +217,12 @@ theorem remaining_energy_lower {ownershipAllowance exteriorAllowance faceAllowan
     (NewtonObservationSurfaceLower.surfaceLowerConstant observations - error - ownershipAllowance - exteriorAllowance -
       faceAllowance) *
         PreparedObservationCoercivity.coefficientNormSq coefficients ≤
-          (Curves.Hyperelliptic.Meshes.Newton.Complement.FaceEnergy.FaceAssemblies.remainingExterior excision faces).im
+          (FaceAssemblies.remainingExterior excision faces).im
           / 4 := by
   have close := remaining_error_bound excision
     request later faces
   have normNonnegative : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients := by
-    have bound := Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Fraction.Rational)) _
+    have bound := Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Rational)) _
       (fun row => Data.Gaussian.Norm.Basic.normSq_nonneg (coefficients row))
     have same := FiniteSum.Fin.sumFin_congr
       (fun row : Fin genus => Data.Gaussian.Norm.Basic.normSq_eq_canonical (coefficients row))
@@ -228,32 +230,32 @@ theorem remaining_energy_lower {ownershipAllowance exteriorAllowance faceAllowan
     rw [← same]
     exact (FiniteSum.Fin.sumFin_zero).symm.trans_le bound
   have difference : ExteriorRequest.remainingExterior excision assemblies -
-    (Curves.Hyperelliptic.Meshes.Newton.Complement.FaceEnergy.FaceAssemblies.remainingExterior excision faces) =
-    (Curves.Hyperelliptic.Meshes.Newton.Complement.FaceEnergy.FaceAssemblies.remainingDefect excision faces) := by
-    rw [Curves.Hyperelliptic.Meshes.Newton.Complement.FaceEnergy.FaceAssemblies.remaining_decomposition excision faces]
+    (FaceAssemblies.remainingExterior excision faces) =
+    (FaceAssemblies.remainingDefect excision faces) := by
+    rw [FaceAssemblies.remaining_decomposition excision faces]
     ring1
   have squared : Data.Gaussian.Norm.Basic.normSq (ExteriorRequest.remainingExterior excision assemblies -
-    (Curves.Hyperelliptic.Meshes.Newton.Complement.FaceEnergy.FaceAssemblies.remainingExterior excision faces)) ≤
+    (FaceAssemblies.remainingExterior excision faces)) ≤
       (4 * (faceAllowance * PreparedObservationCoercivity.coefficientNormSq coefficients)) ^ 2 := by
     rw [difference]
     apply close.trans
     calc
-      _ = ((genus : Fraction.Rational) ^ 2 * ConjugateRequest.energyAllowanceTarget genus faceAllowance) *
+      _ = ((genus : Rational) ^ 2 * ConjugateRequest.energyAllowanceTarget genus faceAllowance) *
         PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 := by
         ring1
       _ ≤ (4 * faceAllowance) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-          (ConjugateRequest.energyAllowanceTarget_paid facePositive) (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
+          (ConjugateRequest.energyAllowanceTarget_paid facePositive) (Arithmetic.sq_nonneg_direct _)
       _ = _ := by ring1
   have comparison := PreparedSurfaceCoercivity.boundaryEnergy_sub_budget_le
     (ExteriorRequest.remainingExterior excision assemblies)
-      (Curves.Hyperelliptic.Meshes.Newton.Complement.FaceEnergy.FaceAssemblies.remainingExterior excision faces)
+      (FaceAssemblies.remainingExterior excision faces)
       (faceAllowance * PreparedObservationCoercivity.coefficientNormSq coefficients)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct facePositive.le normNonnegative) squared
+    (Arithmetic.mul_nonneg_direct facePositive.le normNonnegative) squared
   have lower := ExteriorRequest.remaining_energy_lower excision ownership base ownershipPositive exteriorPositive
     (request.base_le.trans later)
     samples coefficients face assemblies
-  have paid := (Fraction.Order.Arithmetic.sub_le_sub_direct lower
+  have paid := (Arithmetic.sub_le_sub_direct lower
     (le_rfl (a := faceAllowance * PreparedObservationCoercivity.coefficientNormSq coefficients))).trans comparison
   exact (le_of_eq (by ring1)).trans paid
 

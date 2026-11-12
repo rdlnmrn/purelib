@@ -19,7 +19,7 @@ from scripts.module_style import core as style
 from scripts.lean_module_data.paths import parse_name
 
 from scripts.paths import ROOT
-PROJECT_ROOTS = {"Purelib", "Test", "papers", "formalisations", "scripts"}
+PROJECT_ROOTS = {"Purelib", "TestPurelib", "papers", "formalisations", "scripts"}
 
 
 def components(name: str) -> tuple[str, ...]:

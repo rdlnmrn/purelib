@@ -29,9 +29,13 @@ import Purelib.Approximation.Gaussian.Name.Coherent
 import Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Riemann.Normalization.InverseRootPolynomial
+import Purelib.Riemann.Integration.UniformPrimitiveNeighborhoods
+import Purelib.Riemann.Meshes.UniformPrimitiveMesh
+import Purelib.Riemann.Branches.PreparedSheetContinuation
+import Purelib.Riemann.Paths.PreparedClearPathModels
 import Purelib.Riemann.Integration.PreparedSubdivisionModelCore
 import Mathlib.Order.Basic
-import Purelib.Riemann.Normalization.ContinuedInverseRootOverlap
+public import Purelib.Riemann.Normalization.ContinuedInverseRootOverlap
 
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_antitone)
 
@@ -54,6 +58,7 @@ open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate Gaussian Po
 open Purelib.Riemann.Normalization.InverseModelOverlapCocycle.InverseRootPolynomial (OverlapReady)
 open Purelib.Riemann.Normalization.InverseModelOverlap (OverlapSample)
 open Purelib.Riemann.Normalization.InverseModelEdgeTransition (EdgeTransition)
+open Purelib.Riemann.Normalization.InverseModelRootSamples (RootSamples)
 open Purelib.Riemann.Normalization.ContinuedInverseRoot (ContinuedNeighborhood)
 
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
@@ -86,8 +91,8 @@ namespace Purelib.Riemann.Branches.PreparedPolynomialSheetPropagation.InverseRoo
 -/
 private def unflippedSample {polynomial : Polynomial} {leftBox rightBox : Box}
     (left : Model polynomial leftBox) (right : Model polynomial rightBox) (point : Gaussian)
-    (nearest : Data.Gaussian.Norm.Basic.normSq (left.value.eval point - right.value.eval point) ≤
-      Data.Gaussian.Norm.Basic.normSq
+    (nearest : normSq (left.value.eval point - right.value.eval point) ≤
+      normSq
       (left.value.eval point + right.value.eval point)) :
     OverlapSample left right point :=
   ⟨left.value.eval point, rfl, right.value.eval point, rfl, ⟨false, right.value.eval point, rfl, by
@@ -100,7 +105,7 @@ original value equations transport the retained quadrance comparison directly. -
 private theorem nearest_of_unflipped {polynomial : Polynomial} {leftBox rightBox : Box}
     {left : Model polynomial leftBox} {right : Model polynomial rightBox} {point : Gaussian}
     (sample : OverlapSample left right point) (unflipped : sample.alignment.flip = false) :
-    Data.Gaussian.Norm.Basic.normSq (left.value.eval point - right.value.eval point) ≤ Data.Gaussian.Norm.Basic.normSq
+    normSq (left.value.eval point - right.value.eval point) ≤ normSq
       (left.value.eval point + right.value.eval point) := by
   have nearest := sample.alignment.nearest
   rw [sample.alignment.value_eq, unflipped] at nearest
@@ -126,12 +131,12 @@ theorem nearest_trans
     (last : OverlapReady polynomial lastBox) {point : Gaussian}
     (firstInside : firstBox.Contains point) (middleInside : middleBox.Contains point) (lastInside : lastBox.Contains
       point)
-    (firstMiddle : Data.Gaussian.Norm.Basic.normSq (first.model.value.eval point - middle.model.value.eval point) ≤
-      Data.Gaussian.Norm.Basic.normSq (first.model.value.eval point + middle.model.value.eval point))
-    (middleLast : Data.Gaussian.Norm.Basic.normSq (middle.model.value.eval point - last.model.value.eval point) ≤
-      Data.Gaussian.Norm.Basic.normSq (middle.model.value.eval point + last.model.value.eval point)) :
-    Data.Gaussian.Norm.Basic.normSq (first.model.value.eval point - last.model.value.eval point) ≤
-      Data.Gaussian.Norm.Basic.normSq (first.model.value.eval point + last.model.value.eval point) := by
+    (firstMiddle : normSq (first.model.value.eval point - middle.model.value.eval point) ≤
+      normSq (first.model.value.eval point + middle.model.value.eval point))
+    (middleLast : normSq (middle.model.value.eval point - last.model.value.eval point) ≤
+      normSq (middle.model.value.eval point + last.model.value.eval point)) :
+    normSq (first.model.value.eval point - last.model.value.eval point) ≤
+      normSq (first.model.value.eval point + last.model.value.eval point) := by
   let direct := OverlapSample.build first.model last.model point
   have cocycle := OverlapReady.cocycle first middle last firstInside middleInside lastInside
     (Branches.PreparedPolynomialSheetPropagation.InverseRootPolynomial.unflippedSample first.model middle.model point
@@ -152,15 +157,15 @@ theorem nearest_finish {polynomial : Polynomial} {leftBox rightBox : Box}
     (left : Model polynomial leftBox) (right : Model polynomial rightBox) {start finish : Gaussian}
     (leftStart : leftBox.Contains start) (leftFinish : leftBox.Contains finish)
     (rightStart : rightBox.Contains start) (rightFinish : rightBox.Contains finish)
-    (nearest : Data.Gaussian.Norm.Basic.normSq (left.value.eval start - right.value.eval start) ≤
-      Data.Gaussian.Norm.Basic.normSq
+    (nearest : normSq (left.value.eval start - right.value.eval start) ≤
+      normSq
       (left.value.eval start + right.value.eval start)) :
-    Data.Gaussian.Norm.Basic.normSq (left.value.eval finish - right.value.eval finish) ≤ Data.Gaussian.Norm.Basic.normSq
+    normSq (left.value.eval finish - right.value.eval finish) ≤ normSq
       (left.value.eval finish + right.value.eval finish) := by
   let edge : EdgeTransition left right start finish :=
     ⟨leftStart, leftFinish, rightStart, rightFinish,
-      PreparedPolynomialSheetPropagation.InverseRootPolynomial.unflippedSample left right start nearest⟩
-  exact PreparedPolynomialSheetPropagation.InverseRootPolynomial.nearest_of_unflipped (OverlapSample.build left right
+      unflippedSample left right start nearest⟩
+  exact nearest_of_unflipped (OverlapSample.build left right
     finish) edge.flip_eq_finish.symm
 
 end Purelib.Riemann.Branches.PreparedPolynomialSheetPropagation.InverseRootPolynomial.Model
@@ -180,9 +185,9 @@ def RootAligned {polynomial : Polynomial} {box : Box} (model : OverlapReady poly
     (point : Gaussian) (root : Name.Basic.Named) : Prop :=
   ∀ {count : Nat} (patch : ContinuedNeighborhood polynomial count) (_inside : patch.box.Contains point)
     (sample : ContinuedNeighborhood.Point patch point)
-    (_roots : Equivalence.NamedEquivalent root sample.certificate.value.name) (index : Nat),
-    Data.Gaussian.Norm.Basic.normSq (model.model.value.eval point - (patch.base.refine (index + 2)).value.eval point) ≤
-      Data.Gaussian.Norm.Basic.normSq (model.model.value.eval point + (patch.base.refine (index + 2)).value.eval point)
+    (_roots : NamedEquivalent root sample.certificate.value.name) (index : Nat),
+    normSq (model.model.value.eval point - (patch.base.refine (index + 2)).value.eval point) ≤
+      normSq (model.model.value.eval point + (patch.base.refine (index + 2)).value.eval point)
 
 end Purelib.Riemann.Branches.PreparedPolynomialSheetPropagation.InverseRootPolynomial
 
@@ -193,12 +198,257 @@ variable {polynomial : Polynomial} {box : Box} {model : OverlapReady polynomial 
 
 namespace Purelib.Riemann.Branches.PreparedPolynomialSheetPropagation.InverseRootPolynomial.RootAligned
 
+open Purelib.Riemann.Branches
+open Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.Bounds
+open Purelib.Riemann.Integration.UniformPrimitiveNeighborhoods (Bounds)
+open Purelib.Riemann.Meshes.UniformPrimitiveMesh (Mesh)
+open Purelib.Riemann.RootContinuation.SquareRootTrackEquivalence (ownerRootName)
+open Purelib.Riemann.RootContinuation
+open Purelib.Riemann.Paths.PreparedClearPathModels (CompleteSegment ownerAtStart zeroEndpoint)
+open Purelib.RootIsolation.SquareRoot.Clearance
+
 open Purelib.Approximation.Gaussian in
 /-- Transport retained model alignment along an operational equivalence of the original root names. -/
-theorem changeName (aligned : InverseRootPolynomial.RootAligned model point first) (equivalent :
-  Equivalence.NamedEquivalent first last) :
-    Purelib.Riemann.Branches.PreparedPolynomialSheetPropagation.InverseRootPolynomial.RootAligned model point last :=
+theorem changeName (aligned : RootAligned model point first) (equivalent :
+  NamedEquivalent first last) :
+    RootAligned model point last :=
   fun patch inside sample roots index => aligned patch inside sample (equivalent.trans roots) index
+
+/-- The actual retained model samples align every continued representative of their same operational root.
+
+The supplied comparison relates only the original numerical sample channel
+to the displayed root name. Each arbitrary continued representative is
+then compared through its original root-equivalence certificate. The
+result is the existing model alignment predicate, not an assumed later
+sheet relation or a newly acquired model.
+-/
+theorem ofSamples {source : Model polynomial box} (data : RootSamples source point)
+    (small : source.bound ≤ 1 / 256) (inside : box.Contains point)
+    (root : Approximation.Gaussian.Name.Basic.Named)
+    (same : Approximation.Gaussian.Equivalence.Equivalent (data.approximation small inside)
+      (Approximation.Gaussian.Name.Sampling.approximation root)) (index : Nat) :
+    RootAligned (Model.overlapRefine source index) point root := by
+  intro count patch patchInside sample roots refinement
+  have comparison : Approximation.Gaussian.Equivalence.Equivalent
+      (data.approximation small inside)
+      (Approximation.Gaussian.Name.Sampling.approximation sample.certificate.value.name) :=
+    same.trans roots
+  have nearest := ContinuedNeighborhood.Point.samples_nearest
+    (polynomial := polynomial) (right := patch) (point := point)
+    data small inside sample patchInside comparison index (refinement + 2)
+  change normSq ((source.refine (index + 2)).value.eval point -
+      (patch.base.refine (refinement + 2)).value.eval point) ≤
+    normSq ((source.refine (index + 2)).value.eval point +
+      (patch.base.refine (refinement + 2)).value.eval point)
+  simpa only [Purelib.Data.Gaussian.Norm.Basic.normSq_eq_canonical] using nearest
+
+/-- Alignment of the original model persists between two actual point owners of one continued neighborhood.
+
+Both endpoints lie in the retained model box and the supplied continued
+patch. The original two-model edge sign and three-model cocycle transfer
+the same aligned sheet to every continued representative at the finish.
+The two original point owners and all refinement indices remain inputs.
+-/
+theorem throughNeighborhood {count : Nat} {patch : ContinuedNeighborhood polynomial count}
+    {start finish : Gaussian} (firstSample : ContinuedNeighborhood.Point patch start)
+    (lastSample : ContinuedNeighborhood.Point patch finish)
+    (firstInside : box.Contains start) (lastInside : box.Contains finish)
+    (patchStart : patch.box.Contains start) (patchFinish : patch.box.Contains finish)
+    (aligned : RootAligned model start firstSample.certificate.value.name) :
+    RootAligned model finish lastSample.certificate.value.name := by
+  intro otherCount other otherInside sample roots index
+  have initial := aligned patch patchStart firstSample (NamedEquivalent.refl _) 0
+  have transported := (Model.nearest_finish model.model)
+    (patch.base.refine 2) firstInside lastInside
+    (patch.box_refines.contains patchStart) (patch.box_refines.contains patchFinish) initial
+  have next := lastSample.equivalent_nearest sample patchFinish otherInside roots 2 (index + 2)
+  apply model.nearest_trans (Model.overlapRefine patch.base.model 0)
+    (Model.overlapRefine other.base.model index)
+    lastInside (patch.box_refines.contains patchFinish) (other.box_refines.contains otherInside) transported
+  simpa only [Purelib.Data.Gaussian.Norm.Basic.normSq_eq_canonical,
+    Purelib.Riemann.Normalization.OwnerSeededInverseRoot.SeededNeighborhood.refine,
+    Model.overlapRefine] using next
+
+/-- A real primitive-mesh step propagates the same model alignment to its actual retained advanced owner.
+
+The original request, prepared-owner cache, ordered endpoint and strict
+variation budget determine the unchanged advancement. Uniform mesh
+membership supplies a common continued patch; its existing common-source
+comparison identifies both original readings. Reserve retention may
+recondition the terminal owner and is handled by its actual equivalence.
+-/
+theorem preparedStep {ambient : Box} {start finish : Gaussian}
+    (segment : Purelib.Polynomial.Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (within : segment.WithinAmbient)
+    (bounds : Bounds segment) (mesh : Mesh bounds)
+    (left : PreparedSheetContinuation.Endpoint)
+    (owner : Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+      (polynomial.eval (segment.pointAt left.parameter)))
+    (request : PreparedSheetContinuation.StepRequest)
+    (cached : PreparedSheetContinuation.CachedSource segment left owner request)
+    (ordered : left.parameter ≤ request.endpoint.parameter)
+    (small : ClearSheetContinuation.variationBound segment left.parameter request.endpoint.parameter <
+      (PreparedSheetContinuation.prepared segment left owner request).track.initial.clearance.bound)
+    (member : ({ left := left, right := request.endpoint } :
+      ClearSheetContinuation.Subdivision.ParameterEdge) ∈ mesh.edges)
+    (firstInside : box.Contains (segment.pointAt left.parameter))
+    (lastInside : box.Contains (segment.pointAt request.endpoint.parameter))
+    (aligned : RootAligned model (segment.pointAt left.parameter) (ownerRootName owner.parameterNonzero owner)) :
+    RootAligned model (segment.pointAt request.endpoint.parameter)
+      (ownerRootName (segment.pointAt_eval_ne_zero request.endpoint.parameter request.endpoint.inside)
+        (PreparedSheetContinuation.advance segment within left owner request small)) := by
+  let source := cached.preparedOwner
+  have cachedSmall : ClearSheetContinuation.variationBound segment left.parameter request.endpoint.parameter <
+      source.track.initial.clearance.bound := by
+    change ClearSheetContinuation.variationBound segment left.parameter request.endpoint.parameter <
+      cached.preparedOwner.track.initial.clearance.bound
+    rewrite [cached.preparedOwner_eq]
+    exact small
+  let seed := Bounds.PreparedSeed.acquire bounds left.parameter left.inside source
+  let patch := seed.neighborhood 0
+  have patchStart : patch.box.Contains (segment.pointAt left.parameter) :=
+    seed.neighborhood_center 0 ▸ patch.center_inside
+  have patchFinish : patch.box.Contains (segment.pointAt request.endpoint.parameter) :=
+    mesh.point_inside member seed 0 ⟨ordered, le_rfl⟩
+  let firstSample := ContinuedNeighborhood.Point.acquire patch (segment.pointAt left.parameter) patchStart
+  let lastSample := ContinuedNeighborhood.Point.acquire patch (segment.pointAt request.endpoint.parameter) patchFinish
+  have sourceSame : NamedEquivalent (ownerRootName owner.parameterNonzero owner)
+      (ownerRootName source.parameterNonzero source) := by
+    have actual := PreparedSheetContinuation.sourceRootEquivalent segment left owner request
+    rewrite [← cached.preparedOwner_eq] at actual
+    exact actual
+  have firstSame : NamedEquivalent (ownerRootName source.parameterNonzero source)
+      firstSample.certificate.value.name :=
+    PreparedSeed.pointEquivalent seed 0 patchStart source (Purelib.Geometry.Rational.Box.refines_refl _) (by
+      simpa only [Purelib.Data.Gaussian.Norm.Basic.normSq_eq_canonical,
+        Purelib.Data.Gaussian.Basic.sub_self, Purelib.Data.Gaussian.Basic.Canonical.normSq_zero]
+        using source.track.initial.clearance.positive) firstSample
+  have firstAligned : RootAligned model (segment.pointAt left.parameter) firstSample.certificate.value.name :=
+    aligned.changeName (sourceSame.trans firstSame)
+  have lastAligned : RootAligned model (segment.pointAt request.endpoint.parameter)
+      lastSample.certificate.value.name :=
+    firstAligned.throughNeighborhood firstSample lastSample firstInside lastInside patchStart patchFinish
+  have displacement : Purelib.Data.Gaussian.Norm.Basic.normSq
+      (polynomial.eval (segment.pointAt left.parameter) -
+        polynomial.eval (segment.pointAt request.endpoint.parameter)) < source.track.initial.clearance.bound :=
+    (ClearSheetContinuation.evaluation_variation_le segment within left.parameter request.endpoint.parameter
+      left.inside request.endpoint.inside).trans_lt cachedSmall
+  let moved := ExactQuadraticOwnerClearance.reservedTransport source
+    (segment.pointAt_eval_ne_zero request.endpoint.parameter request.endpoint.inside) displacement
+    (PreparedSheetContinuation.transportReserve segment left request)
+  have movedSame : NamedEquivalent (ownerRootName moved.parameterNonzero moved)
+      lastSample.certificate.value.name :=
+    PreparedSeed.pointEquivalent seed 0 patchFinish moved
+      (ExactQuadraticOwnerClearance.reservedTransport_initial_box_refines source _ displacement _)
+      (by simpa only [Purelib.Data.Gaussian.Norm.Basic.normSq_eq_canonical] using displacement) lastSample
+  have retainedSame : NamedEquivalent (ownerRootName moved.parameterNonzero moved)
+      (ownerRootName (segment.pointAt_eval_ne_zero request.endpoint.parameter request.endpoint.inside)
+        (PreparedSheetContinuation.advance segment within left owner request small)) := by
+    have keep : NamedEquivalent (ownerRootName moved.parameterNonzero moved)
+        (ownerRootName (segment.pointAt_eval_ne_zero request.endpoint.parameter request.endpoint.inside)
+          (PreparedSheetContinuation.advanceCached segment within left owner request cached cachedSmall)) :=
+      PreparedSheetContinuation.retainedAtReserveRootEquivalent moved
+        (PreparedSheetContinuation.preparedClearanceLower segment left request)
+    have same := PreparedSheetContinuation.advanceCached_eq_advance segment within left owner request cached
+      cachedSmall small
+    exact Approximation.Gaussian.Equivalence.NamedEquivalent.transport rfl
+      (congrArg (fun actual => ownerRootName actual.parameterNonzero actual) same) keep
+  apply RootAligned.changeName lastAligned
+  exact movedSame.symm.trans retainedSame
+
+/-- Alignment follows every original request in a primitive-covered subdivision and its exact terminal owner.
+
+The actual parameter-edge list belongs to the supplied primitive mesh.
+The same ambient box refines the model box, so every queried endpoint
+lies inside that model. Structural induction consumes the retained
+request, cache and advanced owner at each head, followed by its literal
+tail; no subdivision or endpoint owner is reacquired.
+-/
+theorem alongSubdivision {ambient : Box} {start finish : Gaussian}
+    (segment : Purelib.Polynomial.Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (within : segment.WithinAmbient) (enclosure : ambient.Refines box)
+    (bounds : Bounds segment) (mesh : Mesh bounds)
+    {left : PreparedSheetContinuation.Endpoint}
+    {owner : Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+      (polynomial.eval (segment.pointAt left.parameter))}
+    (subdivision : PreparedSheetContinuation.Subdivision segment within left owner)
+    (covered : ∀ edge, edge ∈ subdivision.parameterEdges → edge ∈ mesh.edges)
+    (aligned : RootAligned model (segment.pointAt left.parameter) (ownerRootName owner.parameterNonzero owner)) :
+    RootAligned model (segment.pointAt subdivision.endpoint.parameter)
+      (ownerRootName subdivision.terminalOwner.parameterNonzero subdivision.terminalOwner) := by
+  revert covered aligned
+  induction subdivision with
+  | stop left owner =>
+      intro _ aligned
+      exact aligned
+  | next left owner request cached ordered small remaining inductionHypothesis =>
+      intro covered aligned
+      have head : ({ left := left, right := request.endpoint } :
+          ClearSheetContinuation.Subdivision.ParameterEdge) ∈ mesh.edges :=
+        covered _ (by
+          rewrite [PreparedSheetContinuation.Subdivision.parameterEdges_next]
+          exact List.Mem.head _)
+      have tail : ∀ edge, edge ∈ remaining.parameterEdges → edge ∈ mesh.edges := by
+        intro edge member
+        apply covered edge
+        rewrite [PreparedSheetContinuation.Subdivision.parameterEdges_next]
+        exact List.Mem.tail _ member
+      have nextAligned : RootAligned model (segment.pointAt request.endpoint.parameter)
+          (ownerRootName (segment.pointAt_eval_ne_zero request.endpoint.parameter request.endpoint.inside)
+            (PreparedSheetContinuation.advance segment within left owner request small)) :=
+        aligned.preparedStep segment within bounds mesh left owner request cached ordered small head
+          (enclosure.contains (segment.pointAt_contains within left.parameter left.inside))
+          (enclosure.contains (segment.pointAt_contains within request.endpoint.parameter request.endpoint.inside))
+      apply inductionHypothesis tail
+      exact nextAligned
+
+/-- An original complete prepared segment preserves model alignment at its exact displayed finish owner.
+
+The complete segment retains the actual subdivision from its transported
+source owner. The supplied primitive mesh is identified with that same
+parameter-edge list. Original point and owner-name transport laws recover
+the displayed endpoint indices without rebuilding either owner.
+-/
+theorem completeSegment {ambient : Box} {start finish : Gaussian}
+    (segment : Purelib.Polynomial.Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (within : segment.WithinAmbient) (enclosure : ambient.Refines box)
+    {owner : Purelib.Riemann.Topology.SquareRootContinuationChain.Owner (polynomial.eval start)}
+    (prepared : CompleteSegment segment within owner) (bounds : Bounds segment) (mesh : Mesh bounds)
+    (meshEq : prepared.subdivision.parameterEdges = mesh.edges)
+    (aligned : RootAligned model start (ownerRootName owner.parameterNonzero owner)) :
+    RootAligned model finish (ownerRootName prepared.finishOwner.parameterNonzero prepared.finishOwner) := by
+  have sourceName : ownerRootName (ownerAtStart segment owner).parameterNonzero (ownerAtStart segment owner) =
+      ownerRootName owner.parameterNonzero owner := by
+    unfold ownerAtStart
+    exact SquareRootTrackEquivalence.ownerRootName_castOwnerParameter _ owner
+  have initial : RootAligned model (segment.pointAt zeroEndpoint.parameter)
+      (ownerRootName (ownerAtStart segment owner).parameterNonzero (ownerAtStart segment owner)) := by
+    rewrite [sourceName, prepared.start_eq]
+    exact aligned
+  have terminal : RootAligned model (segment.pointAt prepared.subdivision.endpoint.parameter)
+      (ownerRootName prepared.subdivision.terminalOwner.parameterNonzero prepared.subdivision.terminalOwner) := by
+    apply RootAligned.alongSubdivision segment within enclosure bounds mesh prepared.subdivision
+    · intro edge member
+      rewrite [meshEq] at member
+      exact member
+    · exact initial
+  have finishName : ownerRootName prepared.finishOwner.parameterNonzero prepared.finishOwner =
+      ownerRootName prepared.subdivision.terminalOwner.parameterNonzero prepared.subdivision.terminalOwner := by
+    unfold CompleteSegment.finishOwner CompleteSegment.terminalOwner
+    exact SquareRootTrackEquivalence.ownerRootName_castOwnerParameter _ _
+  have pointType : RootAligned model (segment.pointAt prepared.subdivision.endpoint.parameter)
+      (ownerRootName prepared.subdivision.terminalOwner.parameterNonzero prepared.subdivision.terminalOwner) =
+      RootAligned model finish
+        (ownerRootName prepared.subdivision.terminalOwner.parameterNonzero prepared.subdivision.terminalOwner) :=
+    congrArg (fun coordinate : Gaussian => RootAligned model coordinate
+      (ownerRootName prepared.subdivision.terminalOwner.parameterNonzero prepared.subdivision.terminalOwner))
+      prepared.finish_eq
+  have finalAligned : RootAligned model finish
+      (ownerRootName prepared.subdivision.terminalOwner.parameterNonzero prepared.subdivision.terminalOwner) := by
+    apply Eq.mp pointType
+    exact terminal
+  rewrite [finishName]
+  exact @finalAligned
 
 end Purelib.Riemann.Branches.PreparedPolynomialSheetPropagation.InverseRootPolynomial.RootAligned
 
@@ -239,23 +489,15 @@ theorem advance {parent : CenteredEdge curve differential} {count : Nat}
     (firstInside : box.Contains (parent.edge.point 0)) (lastInside : box.Contains (parent.edge.point 1))
     (aligned : RootAligned model (parent.edge.point 0) (parent.edge.rootName 0 parent.edge.baseInside)) :
     RootAligned model (parent.edge.point 1) (parent.edge.rootName 1 (by decide)) := by
-  intro otherCount other otherInside sample roots index
   let middle := patch.neighborhood count
   let first := ContinuedNeighborhood.Point.acquire middle (parent.edge.point 0) (patch.start_inside count)
   let last := ContinuedNeighborhood.Point.acquire middle (parent.edge.point 1) covered
-  have initial := aligned middle (patch.start_inside count) first
-    (patch.point_equivalent count 0 parent.edge.baseInside (patch.start_inside count) first) 0
-  have transported := (InverseRootPolynomial.Model.nearest_finish model.model)
-    (middle.base.refine 2) firstInside lastInside
-    (middle.box_refines.contains (patch.start_inside count)) (middle.box_refines.contains covered) initial
-  have next := last.equivalent_nearest sample covered otherInside
-    ((patch.point_equivalent count 1 (by decide) covered last).symm.trans roots) 2 (index + 2)
-  apply model.nearest_trans ((InverseRootPolynomial.Model.overlapRefine
-    middle.base.model) 0) ((InverseRootPolynomial.Model.overlapRefine
-    other.base.model) index)
-    lastInside (middle.box_refines.contains covered) (other.box_refines.contains otherInside) transported
-  simpa only [Norm.Basic.normSq_eq_canonical, OwnerSeededInverseRoot.SeededNeighborhood.refine,
-    InverseRootPolynomial.Model.overlapRefine] using next
+  have initial : RootAligned model (parent.edge.point 0) first.certificate.value.name :=
+    aligned.changeName (patch.point_equivalent count 0 parent.edge.baseInside (patch.start_inside count) first)
+  have advanced : RootAligned model (parent.edge.point 1) last.certificate.value.name :=
+    initial.throughNeighborhood first last firstInside lastInside (patch.start_inside count) covered
+  apply RootAligned.changeName advanced
+  exact (patch.point_equivalent count 1 (by decide) covered last).symm
 
 /-- Every original prepared edge in the ordered list has both endpoints in the specified retained box. -/
 def EndpointsIn (box : Box) : List (CenteredEdge curve differential) → Prop
@@ -270,7 +512,7 @@ equivalences transport alignment to the final retained endpoint and name. -/
 theorem alongChain : ∀ {parents : List (CenteredEdge curve differential)} {start finish : LiftedPoint}
     {first last : Named} {count : Nat},
     DirectPathChain parents (start := start) (finish := finish) → RootChain parents first last →
-    Observation.UniformPreparedMesh.CoveredParents count parents → EndpointsIn box parents →
+    CoveredParents count parents → EndpointsIn box parents →
     RootAligned model start.coordinate first → RootAligned model finish.coordinate last
   | [], _, _, _, _, _, .nil _, .nil equivalent, .nil, _, aligned => aligned.changeName equivalent
   | _ :: _, _, _, _, _, _, .cons parent chain, .cons _ entry roots, .cons patch covered remaining, inside, aligned => by

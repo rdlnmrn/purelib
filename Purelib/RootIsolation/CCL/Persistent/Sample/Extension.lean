@@ -15,6 +15,10 @@ import Purelib.Data.Gaussian.Basic
 import Purelib.Geometry.Projective.Hermitian.Formula.Basic
 import Purelib.Geometry.Projective.Homography.Basic
 
+open Purelib.Geometry.CCL.Parser
+
+open Purelib.Data.CCL.Encoding.Parser
+
 public section
 
 open Purelib
@@ -45,60 +49,60 @@ section CompatibleSample
 as the affine formula at its explicitly computed inverse tail. -/
 theorem inputAdvanceFormula_iff_nextTail
     {word : Data.List.BinaryPrefix.Basic.SourcePersistentStrictWordAlias} {box : Box}
-    (sample : CCL.Persistent.Sample.Basic.CompatibleSample word box)
+    (sample : Basic.CompatibleSample word box)
     (bit : Bool) :
-    (Geometry.CCL.Parser.Formula.inputAdvanceFormula
-        (Data.CCL.Encoding.Parser.State.parse word) bit).Holds sample.point ↔
-      (Geometry.CCL.Parser.Formula.advanceFormula
-        (Data.CCL.Encoding.Parser.State.parse word) bit).Holds sample.nextDecision.tail := by
+    (Formula.inputAdvanceFormula
+        (State.parse word) bit).Holds sample.point ↔
+      (Formula.advanceFormula
+        (State.parse word) bit).Holds sample.nextDecision.tail := by
   let next := sample.nextDecision
   exact
-    (Geometry.CCL.Parser.Formula.inputAdvanceFormula_canStep_iff
-      (Data.CCL.Encoding.Parser.State.parse word) sample.point next.tail (Data.CCL.Encoding.Parser.State.parse_det_ne
+    (Formula.inputAdvanceFormula_canStep_iff
+      (State.parse word) sample.point next.tail (State.parse_det_ne
         word)
       next.represents bit).trans
-    ((Data.CCL.Encoding.Parser.Next.canStep_iff_canAdvanceAt
-      (Data.CCL.Encoding.Parser.State.parse word) sample.point next.tail (Data.CCL.Encoding.Parser.State.parse_det_ne
+    ((Next.canStep_iff_canAdvanceAt
+      (State.parse word) sample.point next.tail (State.parse_det_ne
         word)
       next.represents bit).trans
-    (Geometry.CCL.Parser.Formula.advanceFormula_iff
-      (Data.CCL.Encoding.Parser.State.parse word) bit next.tail).symm)
+    (Formula.advanceFormula_iff
+      (State.parse word) bit next.tail).symm)
 
 /-- A full local child decision supplies the history-free input-coordinate
 obligation used by the persistent controller. -/
 theorem
   inputIncrementalAdvanceFormula_holds_of_advance
     {word : Data.List.BinaryPrefix.Basic.SourcePersistentStrictWordAlias} {box : Box}
-    (sample : CCL.Persistent.Sample.Basic.CompatibleSample word box)
+    (sample : Basic.CompatibleSample word box)
     (bit : Bool)
-    (advance : (Geometry.CCL.Parser.Formula.advanceFormula
-      (Data.CCL.Encoding.Parser.State.parse word) bit).Holds sample.nextDecision.tail) :
-    (Geometry.CCL.Parser.Formula.inputIncrementalAdvanceFormula
-      (Data.CCL.Encoding.Parser.State.parse word) bit).Holds sample.point := by
+    (advance : (Formula.advanceFormula
+      (State.parse word) bit).Holds sample.nextDecision.tail) :
+    (Formula.inputIncrementalAdvanceFormula
+      (State.parse word) bit).Holds sample.point := by
   let next := sample.nextDecision
-  apply (Geometry.CCL.Parser.Formula.inputIncrementalAdvanceFormula_canStep_iff
-    (Data.CCL.Encoding.Parser.State.parse word) sample.point next.tail
-    (Data.CCL.Encoding.Parser.State.parse_det_ne word) next.represents bit).mpr
-  apply (Data.CCL.Encoding.Parser.Next.canStep_iff_canAdvanceAt
-    (Data.CCL.Encoding.Parser.State.parse word) sample.point next.tail
-    (Data.CCL.Encoding.Parser.State.parse_det_ne word) next.represents bit).mpr
-  exact (Geometry.CCL.Parser.Formula.advanceFormula_iff
-    (Data.CCL.Encoding.Parser.State.parse word) bit next.tail).mp advance
+  apply (Formula.inputIncrementalAdvanceFormula_canStep_iff
+    (State.parse word) sample.point next.tail
+    (State.parse_det_ne word) next.represents bit).mpr
+  apply (Next.canStep_iff_canAdvanceAt
+    (State.parse word) sample.point next.tail
+    (State.parse_det_ne word) next.represents bit).mpr
+  exact (Formula.advanceFormula_iff
+    (State.parse word) bit next.tail).mp advance
 
 /-- Preserve the displayed rational input while appending a semantically
 admissible bit.  Only the propositional representation witness changes. -/
 @[expose] def extend
     {word : Data.List.BinaryPrefix.Basic.SourcePersistentStrictWordAlias} {box : Box}
-    (sample : CCL.Persistent.Sample.Basic.CompatibleSample word box)
+    (sample : Basic.CompatibleSample word box)
     (bit : Bool)
-    (holds : (Geometry.CCL.Parser.Formula.inputAdvanceFormula
-      (Data.CCL.Encoding.Parser.State.parse word) bit).Holds sample.point) :
-    CCL.Persistent.Sample.Basic.CompatibleSample (word ++ [bit]) box := by
+    (holds : (Formula.inputAdvanceFormula
+      (State.parse word) bit).Holds sample.point) :
+    Basic.CompatibleSample (word ++ [bit]) box := by
   let next := sample.nextDecision
-  have possible : Data.CCL.Encoding.Parser.Semantics.Prefix.CanStep (Data.CCL.Encoding.Parser.State.parse word)
+  have possible : Semantics.Prefix.CanStep (State.parse word)
     sample.point bit :=
-    (Geometry.CCL.Parser.Formula.inputAdvanceFormula_canStep_iff
-      (Data.CCL.Encoding.Parser.State.parse word) sample.point next.tail (Data.CCL.Encoding.Parser.State.parse_det_ne
+    (Formula.inputAdvanceFormula_canStep_iff
+      (State.parse word) sample.point next.tail (State.parse_det_ne
         word)
       next.represents bit).1 holds
   exact
@@ -108,24 +112,24 @@ admissible bit.  Only the propositional representation witness changes. -/
       represented := by
         rcases possible with ⟨tail, represented⟩
         exact ⟨tail, by
-          simpa only [Data.CCL.Encoding.Parser.State.parse_append_singleton, -eq_self, -iff_self] using represented⟩ }
+          simpa only [State.parse_append_singleton, -eq_self, -iff_self] using represented⟩ }
 
 /-- Append a bit from only its history-free formula.  Current representability
 supplies all retained constraints before the incremental predicate is folded
 back into the complete child formula. -/
 @[expose] def extendIncremental
     {word : Data.List.BinaryPrefix.Basic.SourcePersistentStrictWordAlias} {box : Box}
-    (sample : CCL.Persistent.Sample.Basic.CompatibleSample word box)
+    (sample : Basic.CompatibleSample word box)
     (bit : Bool)
-    (holds : (Geometry.CCL.Parser.Formula.inputIncrementalAdvanceFormula
-      (Data.CCL.Encoding.Parser.State.parse word) bit).Holds sample.point) :
-    CCL.Persistent.Sample.Basic.CompatibleSample (word ++ [bit]) box := by
+    (holds : (Formula.inputIncrementalAdvanceFormula
+      (State.parse word) bit).Holds sample.point) :
+    Basic.CompatibleSample (word ++ [bit]) box := by
   let next := sample.nextDecision
-  have possible : Data.CCL.Encoding.Parser.Semantics.Prefix.CanStep (Data.CCL.Encoding.Parser.State.parse word)
+  have possible : Semantics.Prefix.CanStep (State.parse word)
     sample.point bit :=
-    (Geometry.CCL.Parser.Formula.inputIncrementalAdvanceFormula_canStep_iff
-      (Data.CCL.Encoding.Parser.State.parse word) sample.point next.tail
-      (Data.CCL.Encoding.Parser.State.parse_det_ne word) next.represents bit).mp holds
+    (Formula.inputIncrementalAdvanceFormula_canStep_iff
+      (State.parse word) sample.point next.tail
+      (State.parse_det_ne word) next.represents bit).mp holds
   exact
     { point := sample.point
       inside := sample.inside
@@ -133,7 +137,7 @@ back into the complete child formula. -/
       represented := by
         rcases possible with ⟨tail, represented⟩
         exact ⟨tail, by
-          simpa only [Data.CCL.Encoding.Parser.State.parse_append_singleton, -eq_self, -iff_self] using represented⟩ }
+          simpa only [State.parse_append_singleton, -eq_self, -iff_self] using represented⟩ }
 
 end CompatibleSample
 

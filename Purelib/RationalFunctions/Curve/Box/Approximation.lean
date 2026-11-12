@@ -7,6 +7,8 @@ import Purelib.RationalFunctions.Curve.Basic
 public import Purelib.RationalFunctions.Curve.Box.Conditions
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 @[expose] public section
 
@@ -36,19 +38,19 @@ open Purelib.RationalFunctions in
 The denominator is nonzero, the radius is nonnegative, and the supplied lower bound is at most denominator quadrance.
 Each cleared condition is strictly greater than minus that lower bound times the radius. -/
 theorem point_within_radius_of_condition_lower
-    (curve : Curve.RationalCurve) (box : Rational.Box) (parameter radius lower : Rat.Fraction.Rational)
+    (curve : RationalCurve) (box : Rational.Box) (parameter radius lower : Rat.Fraction.Rational)
     (radiusNonnegative : 0 ≤ radius)
     (denominatorNonzero : curve.denominatorAt parameter ≠ 0)
     (lowerLeDenominator : lower ≤
       Gaussian.Norm.Basic.normSq (curve.denominatorAt parameter))
     (xLower : -(lower * radius) <
-      (Curve.Box.xLowerPolynomial curve box).eval parameter)
+      (xLowerPolynomial curve box).eval parameter)
     (xUpper : -(lower * radius) <
-      (Curve.Box.xUpperPolynomial curve box).eval parameter)
+      (xUpperPolynomial curve box).eval parameter)
     (yLower : -(lower * radius) <
-      (Curve.Box.yLowerPolynomial curve box).eval parameter)
+      (yLowerPolynomial curve box).eval parameter)
     (yUpper : -(lower * radius) <
-      (Curve.Box.yUpperPolynomial curve box).eval parameter) :
+      (yUpperPolynomial curve box).eval parameter) :
     box.xLower - radius < (curve.point parameter).re ∧
       (curve.point parameter).re < box.xUpper + radius ∧
       box.yLower - radius < (curve.point parameter).im ∧
@@ -57,60 +59,60 @@ theorem point_within_radius_of_condition_lower
   have denominatorPositive : 0 < denominatorNorm := by
     simpa only [denominatorNorm] using Gaussian.Norm.Basic.normSq_pos denominatorNonzero
   have scaledLower : lower * radius ≤ denominatorNorm * radius :=
-    Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    Arithmetic.mul_le_mul_of_nonneg_right_direct
       lowerLeDenominator radiusNonnegative
   have cancelLower {delta condition : Rat.Fraction.Rational}
       (conditionEq : condition = denominatorNorm * delta)
       (conditionLower : -(lower * radius) < condition) :
       -radius < delta := by
-    apply Rat.Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+    apply Arithmetic.lt_of_mul_lt_mul_right_direct
       (c := denominatorNorm) _ denominatorPositive
     calc
       -radius * denominatorNorm = -(denominatorNorm * radius) := by ring1
       _ ≤ -(lower * radius) :=
-        Rat.Fraction.Order.Arithmetic.neg_le_neg_direct scaledLower
+        Arithmetic.neg_le_neg_direct scaledLower
       _ < condition := conditionLower
       _ = delta * denominatorNorm := by rw [conditionEq]; ring1
   have leftDelta : -radius < (curve.point parameter).re - box.xLower :=
     cancelLower
-      (Curve.Box.eval_xLowerPolynomial curve box parameter denominatorNonzero) xLower
+      (eval_xLowerPolynomial curve box parameter denominatorNonzero) xLower
   have rightDelta : -radius < box.xUpper - (curve.point parameter).re :=
     cancelLower
-      (Curve.Box.eval_xUpperPolynomial curve box parameter denominatorNonzero) xUpper
+      (eval_xUpperPolynomial curve box parameter denominatorNonzero) xUpper
   have bottomDelta : -radius < (curve.point parameter).im - box.yLower :=
     cancelLower
-      (Curve.Box.eval_yLowerPolynomial curve box parameter denominatorNonzero) yLower
+      (eval_yLowerPolynomial curve box parameter denominatorNonzero) yLower
   have topDelta : -radius < box.yUpper - (curve.point parameter).im :=
     cancelLower
-      (Curve.Box.eval_yUpperPolynomial curve box parameter denominatorNonzero) yUpper
+      (eval_yUpperPolynomial curve box parameter denominatorNonzero) yUpper
   refine ⟨?_, ?_, ?_, ?_⟩
   · calc
       box.xLower - radius = -radius + box.xLower := by ring1
       _ < ((curve.point parameter).re - box.xLower) + box.xLower :=
-        Rat.Fraction.Order.Arithmetic.add_lt_add_right_direct leftDelta box.xLower
+        Arithmetic.add_lt_add_right_direct leftDelta box.xLower
       _ = (curve.point parameter).re := by ring1
-  · have shifted := Rat.Fraction.Order.Arithmetic.add_lt_add_right_direct
+  · have shifted := Arithmetic.add_lt_add_right_direct
       rightDelta (curve.point parameter).re
     calc
       (curve.point parameter).re =
           (-radius + (curve.point parameter).re) + radius := by ring1
       _ < (box.xUpper - (curve.point parameter).re +
           (curve.point parameter).re) + radius :=
-        Rat.Fraction.Order.Arithmetic.add_lt_add_right_direct shifted radius
+        Arithmetic.add_lt_add_right_direct shifted radius
       _ = box.xUpper + radius := by ring1
   · calc
       box.yLower - radius = -radius + box.yLower := by ring1
       _ < ((curve.point parameter).im - box.yLower) + box.yLower :=
-        Rat.Fraction.Order.Arithmetic.add_lt_add_right_direct bottomDelta box.yLower
+        Arithmetic.add_lt_add_right_direct bottomDelta box.yLower
       _ = (curve.point parameter).im := by ring1
-  · have shifted := Rat.Fraction.Order.Arithmetic.add_lt_add_right_direct
+  · have shifted := Arithmetic.add_lt_add_right_direct
       topDelta (curve.point parameter).im
     calc
       (curve.point parameter).im =
           (-radius + (curve.point parameter).im) + radius := by ring1
       _ < (box.yUpper - (curve.point parameter).im +
           (curve.point parameter).im) + radius :=
-        Rat.Fraction.Order.Arithmetic.add_lt_add_right_direct shifted radius
+        Arithmetic.add_lt_add_right_direct shifted radius
       _ = box.yUpper + radius := by ring1
 end Purelib.RationalFunctions.Curve.Box
 

@@ -33,6 +33,8 @@ import Purelib.Riemann.Branches.PreparedSheetContinuationCore
 import Purelib.Riemann.Branches.ClearSheetContinuation
 import Mathlib.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! Common paired refinements across a complete parent bank. Child depths may differ. -/
@@ -62,10 +64,10 @@ open Purelib.Integration.Polynomial.Gaussian.Path.Basic (PathModel)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {ambient : Purelib.Geometry.Rational.Box} {current : Purelib.RootIsolation.State.Raw.RawWindingState
+  {ambient : Geometry.Rational.Box} {current : RootIsolation.State.Raw.RawWindingState
     curve.polynomial ambient}
   {profile : Profile curve.squarefree current.box} {fixed : DifferentialProfile profile differential.exponent}
-  {target : Purelib.Data.Rat.Fraction.Rational}
+  {target : Fraction.Rational}
 
 open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
 
@@ -79,7 +81,7 @@ set_option genInjectivity false in
 
 Each retained head keeps both differential refinements of one original parent, while its tail retains the remaining
 original owners. -/
-inductive PairedBoundaryParents (request : PreparedBandRequest fixed target) (other : Differentials.Basic.Differential
+inductive PairedBoundaryParents (request : PreparedBandRequest fixed target) (other : Differential
   genus) :
     List (CenteredEdge curve differential) → Type 2
   /-- The empty paired bank for the exact empty original parent list. -/ | nil : PairedBoundaryParents request other []
@@ -99,7 +101,7 @@ open Purelib.Curves.Hyperelliptic in
 
 Each original parent must lie on the retained band boundary and have a strictly increasing parameter interval; the
 recursive construction keeps their order and properness witnesses. -/
-@[expose] def build (request : PreparedBandRequest fixed target) (other : Differentials.Basic.Differential genus) :
+@[expose] def build (request : PreparedBandRequest fixed target) (other : Differential genus) :
     ∀ (parents : List (CenteredEdge curve differential)),
       (∀ parent ∈ parents, ParentOnBoundary parent request.sample.output.box) →
       (∀ parent ∈ parents, parent.edge.left.parameter < parent.edge.request.endpoint.parameter) →
@@ -139,46 +141,46 @@ theorem block_bounds {parents : List (CenteredEdge curve differential)}
     (otherProfile : DifferentialProfile profile other.exponent) {movement : Fraction.Rational}
     (movements : ∀ parent ∈ parents, PreparedPrimitiveRequests.movement parent ≤ movement) :
     ∀ block ∈ bank.incrementBlocks,
-      Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area block) ≤
-          4 * ((PreparedNewtonBandSamples.Sample.preparedDensity request.sample fixed request.error +
-            PreparedNewtonBandSamples.Sample.preparedDensity request.sample otherProfile request.error) * movement)^2 ∧
-      PrimitiveAreaBounds.PrimitivePoint.Bounded
+      normSq (PairedIncrementArea.area block) ≤
+          4 * ((preparedDensity request.sample fixed request.error +
+            preparedDensity request.sample otherProfile request.error) * movement)^2 ∧
+      Bounded
         (PairedIncrementArea.total block)
-        ((PreparedNewtonBandSamples.Sample.preparedDensity request.sample fixed request.error +
-          PreparedNewtonBandSamples.Sample.preparedDensity request.sample otherProfile request.error) * movement) := by
+        ((preparedDensity request.sample fixed request.error +
+          preparedDensity request.sample otherProfile request.error) * movement) := by
   induction bank with
   | nil => intro block member; cases member
   | @cons parent rest head tail ih =>
     intro block member
     rcases Data.List.Membership.mem_cons.mp member with rfl | inTail
-    · have firstNonnegative := PreparedNewtonBandSamples.Sample.preparedDensity_nonnegative request.sample fixed
+    · have firstNonnegative := preparedDensity_nonnegative request.sample fixed
         request.errorPositive.le
-      have secondNonnegative := PreparedNewtonBandSamples.Sample.preparedDensity_nonnegative request.sample otherProfile
+      have secondNonnegative := preparedDensity_nonnegative request.sample otherProfile
         request.errorPositive.le
       have movementNonnegative := PreparedPrimitiveRequests.movement_nonnegative parent
       have movementLe := movements _ (List.mem_cons_self ..)
       have densityNonnegative := add_nonneg firstNonnegative secondNonnegative
-      have productLe := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct movementLe densityNonnegative
+      have productLe := Arithmetic.mul_le_mul_of_nonneg_left_direct movementLe densityNonnegative
       constructor
       · exact (PreparedNewtonPairedArea.PairedBoundaryParent.paired_area_density_bound head otherProfile).trans
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-            (Fraction.Order.Arithmetic.pow_le_pow_direct (Fraction.Order.Arithmetic.mul_nonneg_direct densityNonnegative
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct
+            (Arithmetic.pow_le_pow_direct (Arithmetic.mul_nonneg_direct densityNonnegative
               movementNonnegative) productLe 2)
             (by decide))
       · constructor
         · rw [← Norm.Basic.normSq_eq_canonical]
-          change Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+          change normSq (gaussianSum
             ((PreparedNewtonPairedIncrements.PairedBoundaryParent.increments head).map PrimitivePoint.left)) ≤ _
           rw [PreparedNewtonPairedIncrements.PairedBoundaryParent.total_left head]
           exact head.first_integral_density_bound.trans
-            ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+            ((Arithmetic.mul_le_mul_of_nonneg_right_direct
               (le_add_of_nonneg_right secondNonnegative) movementNonnegative).trans productLe)
         · rw [← Norm.Basic.normSq_eq_canonical]
-          change Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+          change normSq (gaussianSum
             ((PreparedNewtonPairedIncrements.PairedBoundaryParent.increments head).map PrimitivePoint.right)) ≤ _
           rw [PreparedNewtonPairedIncrements.PairedBoundaryParent.total_right head]
           exact (head.second_integral_density_bound otherProfile).trans
-            ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+            ((Arithmetic.mul_le_mul_of_nonneg_right_direct
               (le_add_of_nonneg_left firstNonnegative) movementNonnegative).trans productLe)
     · exact ih (fun parent member => movements parent (List.mem_cons_of_mem _ member)) block inTail
 
@@ -196,15 +198,15 @@ theorem area_density_bound {parents : List (CenteredEdge curve differential)}
     (bank : PairedBoundaryParents request other parents) (otherProfile : DifferentialProfile profile other.exponent)
     (movement : Fraction.Rational) (depth : Nat) (nonnegative : 0 ≤ movement) (count : parents.length = 2 ^ depth)
     (movements : ∀ parent ∈ parents,
-      PreparedPrimitiveRequests.movement parent ≤ Geometric.Basic.quarterRadius movement depth) :
-          Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area bank.incrementBlocks.flatten) ≤
-      16 * ((PreparedNewtonBandSamples.Sample.preparedDensity request.sample fixed request.error +
-        PreparedNewtonBandSamples.Sample.preparedDensity request.sample otherProfile request.error) * movement)^2 :=
-  PairedAreaBlocks.dyadic_blocks_area_bound bank.incrementBlocks depth
+      PreparedPrimitiveRequests.movement parent ≤ quarterRadius movement depth) :
+          normSq (PairedIncrementArea.area bank.incrementBlocks.flatten) ≤
+      16 * ((preparedDensity request.sample fixed request.error +
+        preparedDensity request.sample otherProfile request.error) * movement)^2 :=
+  dyadic_blocks_area_bound bank.incrementBlocks depth
     (bank.incrementBlocks_length.trans count)
-    (add_nonneg (PreparedNewtonBandSamples.Sample.preparedDensity_nonnegative request.sample fixed
+    (add_nonneg (preparedDensity_nonnegative request.sample fixed
       request.errorPositive.le)
-      (PreparedNewtonBandSamples.Sample.preparedDensity_nonnegative request.sample otherProfile
+      (preparedDensity_nonnegative request.sample otherProfile
         request.errorPositive.le)) nonnegative
     (fun block member => (bank.block_bounds otherProfile movements block member).1)
     (fun block member => (bank.block_bounds otherProfile movements block member).2)

@@ -39,16 +39,16 @@ namespace Purelib.Polynomial.Dense.Rational.CauchyIndex.EventPartition.Cut
 set_option genInjectivity false in
 /-- Proof-bearing safe split of one parameter cell. -/
 structure SafeSplit (numerator denominator :
-  CoordinatePolynomial) (cell : Data.Rat.Interval.Proper.Cell) where
+  CoordinatePolynomial) (cell : Interval.Proper.Cell) where
   /-- The retained rational cut coordinate. -/ cut : Fraction.Rational
   /-- The cut is strictly above the original lower endpoint. -/ lowerLt : cell.interval.lower < cut
   /-- The cut is strictly below the original upper endpoint. -/ upperLt : cut < cell.interval.upper
   /-- The reduced signed-chain product guard is nonzero at the retained cut. -/ guardNonzero :
-    (Dense.Rational.SignedRemainder.SafeCut.chainGuard numerator denominator).eval cut ≠ 0
+    (SignedRemainder.SafeCut.chainGuard numerator denominator).eval cut ≠ 0
   /-- The left child width is strictly less than two thirds of the original width. -/ leftContracts :
-    cut - cell.interval.lower < (2 / 3 : Fraction.Rational) * (Data.Rat.Interval.Bounds.width cell.interval)
+    cut - cell.interval.lower < (2 / 3 : Fraction.Rational) * (Interval.Bounds.width cell.interval)
   /-- The right child width is strictly less than two thirds of the original width. -/ rightContracts :
-    cell.interval.upper - cut < (2 / 3 : Fraction.Rational) * (Data.Rat.Interval.Bounds.width cell.interval)
+    cell.interval.upper - cut < (2 / 3 : Fraction.Rational) * (Interval.Bounds.width cell.interval)
 
 constructive_injectivity SafeSplit
 
@@ -56,16 +56,16 @@ namespace SafeSplit
 
 /-- The proper left child interval ending at the retained safe cut. -/
 def leftCell {numerator denominator :
-  CoordinatePolynomial} {cell : Data.Rat.Interval.Proper.Cell}
+  CoordinatePolynomial} {cell : Interval.Proper.Cell}
     (split : SafeSplit numerator denominator cell) :
-      Data.Rat.Interval.Proper.Cell :=
+      Interval.Proper.Cell :=
   cell.left split.cut split.lowerLt
 
 /-- The proper right child interval beginning at the retained safe cut. -/
 def rightCell {numerator denominator :
-  CoordinatePolynomial} {cell : Data.Rat.Interval.Proper.Cell}
+  CoordinatePolynomial} {cell : Interval.Proper.Cell}
     (split : SafeSplit numerator denominator cell) :
-      Data.Rat.Interval.Proper.Cell :=
+      Interval.Proper.Cell :=
   cell.right split.cut split.upperLt
 
 end SafeSplit
@@ -77,15 +77,15 @@ contraction bounds. -/
 def safeSplit
     (numerator denominator : CoordinatePolynomial)
     (denominatorNonzero : denominator.isZero = false)
-    (cell : Data.Rat.Interval.Proper.Cell) : SafeSplit numerator
+    (cell : Interval.Proper.Cell) : SafeSplit numerator
       denominator cell := by
-  let cut := Dense.Rational.SignedRemainder.SafeCut.safeCut numerator denominator
+  let cut := SignedRemainder.SafeCut.safeCut numerator denominator
     denominatorNonzero cell.interval cell.proper
   have specification :=
-    Dense.Rational.SignedRemainder.SafeCut.safeCut_spec numerator denominator
+    SignedRemainder.SafeCut.safeCut_spec numerator denominator
       denominatorNonzero cell.interval cell.proper
   have contraction :=
-    Dense.Rational.SignedRemainder.SafeCut.safeCut_contraction numerator denominator
+    SignedRemainder.SafeCut.safeCut_contraction numerator denominator
       denominatorNonzero cell.interval cell.proper
   exact
     { cut := cut

@@ -29,58 +29,58 @@ open Purelib.Data.CCL.Transducer
 /-- A finite request from the boxed name's exact initial machine extends its prefix and emits exactly the requested bit
 count. -/
 theorem output_productive (name :
-  Boxed.Process.ProgressiveName) (count : Nat) :
-    ((Boxed.Approximation.ProgressiveName.toNamed name).machine).emitted.IsPrefix
+  Process.ProgressiveName) (count : Nat) :
+    ((Approximation.ProgressiveName.toNamed name).machine).emitted.IsPrefix
         (Machine.Advance.advance
-          (Boxed.Approximation.ProgressiveName.toNamed name).machine count).emitted ∧
+          (Approximation.ProgressiveName.toNamed name).machine count).emitted ∧
       (Machine.Advance.advance
-          (Boxed.Approximation.ProgressiveName.toNamed name).machine count).emitted.length = count :=
-  (Boxed.Approximation.ProgressiveName.toNamed name).productive count
+          (Approximation.ProgressiveName.toNamed name).machine count).emitted.length = count :=
+  (Approximation.ProgressiveName.toNamed name).productive count
 
 /-- The sum of the two retained boxed-name approximations produces exactly the requested number of prefix-extending
 bits. -/
 theorem add_output_productive (left right :
-  Boxed.Process.ProgressiveName) (count : Nat) :
-    (Boxed.Arithmetic.ProgressiveName.addOutput left right).machine.emitted.IsPrefix
+  Process.ProgressiveName) (count : Nat) :
+    (Arithmetic.ProgressiveName.addOutput left right).machine.emitted.IsPrefix
         (Machine.Advance.advance
-          (Boxed.Arithmetic.ProgressiveName.addOutput left right).machine count).emitted ∧
+          (Arithmetic.ProgressiveName.addOutput left right).machine count).emitted ∧
       (Machine.Advance.advance
-          (Boxed.Arithmetic.ProgressiveName.addOutput left right).machine count).emitted.length = count :=
-  (Boxed.Arithmetic.ProgressiveName.addOutput left right).productive count
+          (Arithmetic.ProgressiveName.addOutput left right).machine count).emitted.length = count :=
+  (Arithmetic.ProgressiveName.addOutput left right).productive count
 
 /-- The difference of the two retained boxed-name approximations produces exactly the requested number of
 prefix-extending bits. -/
 theorem sub_output_productive (left right :
-  Boxed.Process.ProgressiveName) (count : Nat) :
-    (Boxed.Arithmetic.ProgressiveName.subOutput left right).machine.emitted.IsPrefix
+  Process.ProgressiveName) (count : Nat) :
+    (Arithmetic.ProgressiveName.subOutput left right).machine.emitted.IsPrefix
         (Machine.Advance.advance
-          (Boxed.Arithmetic.ProgressiveName.subOutput left right).machine count).emitted ∧
+          (Arithmetic.ProgressiveName.subOutput left right).machine count).emitted ∧
       (Machine.Advance.advance
-          (Boxed.Arithmetic.ProgressiveName.subOutput left right).machine count).emitted.length = count :=
-  (Boxed.Arithmetic.ProgressiveName.subOutput left right).productive count
+          (Arithmetic.ProgressiveName.subOutput left right).machine count).emitted.length = count :=
+  (Arithmetic.ProgressiveName.subOutput left right).productive count
 
 /-- The product of the two retained boxed-name approximations produces exactly the requested number of prefix-extending
 bits. -/
 theorem mul_output_productive (left right :
-  Boxed.Process.ProgressiveName) (count : Nat) :
-    (Boxed.Arithmetic.ProgressiveName.mulOutput left right).machine.emitted.IsPrefix
+  Process.ProgressiveName) (count : Nat) :
+    (Arithmetic.ProgressiveName.mulOutput left right).machine.emitted.IsPrefix
         (Machine.Advance.advance
-          (Boxed.Arithmetic.ProgressiveName.mulOutput left right).machine count).emitted ∧
+          (Arithmetic.ProgressiveName.mulOutput left right).machine count).emitted ∧
       (Machine.Advance.advance
-          (Boxed.Arithmetic.ProgressiveName.mulOutput left right).machine count).emitted.length = count :=
-  (Boxed.Arithmetic.ProgressiveName.mulOutput left right).productive count
+          (Arithmetic.ProgressiveName.mulOutput left right).machine count).emitted.length = count :=
+  (Arithmetic.ProgressiveName.mulOutput left right).productive count
 
 /-- Division using apartness of the same right boxed name produces exactly the requested number of prefix-extending
 bits. -/
 theorem div_output_productive (left right :
-  Boxed.Process.ProgressiveName)
-    (apart : Data.CCL.Name.Boxed.Apart right) (count : Nat) :
-    (Boxed.Arithmetic.ProgressiveName.divOutput left right apart).machine.emitted.IsPrefix
+  Process.ProgressiveName)
+    (apart : Apart right) (count : Nat) :
+    (Arithmetic.ProgressiveName.divOutput left right apart).machine.emitted.IsPrefix
         (Machine.Advance.advance
-          (Boxed.Arithmetic.ProgressiveName.divOutput left right apart).machine count).emitted ∧
+          (Arithmetic.ProgressiveName.divOutput left right apart).machine count).emitted ∧
       (Machine.Advance.advance
-          (Boxed.Arithmetic.ProgressiveName.divOutput left right apart).machine count).emitted.length = count :=
-  (Boxed.Arithmetic.ProgressiveName.divOutput left right apart).productive count
+          (Arithmetic.ProgressiveName.divOutput left right apart).machine count).emitted.length = count :=
+  (Arithmetic.ProgressiveName.divOutput left right apart).productive count
 
 end
 
@@ -90,41 +90,41 @@ open Purelib.Data.CCL.Name
 open Purelib.Data.CCL.Transducer
 /-- Every finite advance of the exact boxed-name sum preserves the committed-word parser grammar. -/
 theorem add_output_grammar (left right :
-  Boxed.Process.ProgressiveName) (count : Nat) :
-    Data.CCL.Transducer.Machine.Grammar.Invariant
+  Process.ProgressiveName) (count : Nat) :
+    Machine.Grammar.Invariant
       (Machine.Advance.advance
-        (Boxed.Arithmetic.ProgressiveName.addOutput left right).machine count) :=
+        (Arithmetic.ProgressiveName.addOutput left right).machine count) :=
   Name.CCL.Grammar.Named.machine_advance_invariant
-    (Boxed.Arithmetic.ProgressiveName.addOutput left right) count
+    (Arithmetic.ProgressiveName.addOutput left right) count
 
 /-- Every finite advance of the exact boxed-name difference preserves the committed-word parser grammar. -/
 theorem sub_output_grammar (left right :
-  Boxed.Process.ProgressiveName) (count : Nat) :
-    Data.CCL.Transducer.Machine.Grammar.Invariant
+  Process.ProgressiveName) (count : Nat) :
+    Machine.Grammar.Invariant
       (Machine.Advance.advance
-        (Boxed.Arithmetic.ProgressiveName.subOutput left right).machine count) :=
+        (Arithmetic.ProgressiveName.subOutput left right).machine count) :=
   Name.CCL.Grammar.Named.machine_advance_invariant
-    (Boxed.Arithmetic.ProgressiveName.subOutput left right) count
+    (Arithmetic.ProgressiveName.subOutput left right) count
 
 /-- Every finite advance of the exact boxed-name product preserves the committed-word parser grammar. -/
 theorem mul_output_grammar (left right :
-  Boxed.Process.ProgressiveName) (count : Nat) :
-    Data.CCL.Transducer.Machine.Grammar.Invariant
+  Process.ProgressiveName) (count : Nat) :
+    Machine.Grammar.Invariant
       (Machine.Advance.advance
-        (Boxed.Arithmetic.ProgressiveName.mulOutput left right).machine count) :=
+        (Arithmetic.ProgressiveName.mulOutput left right).machine count) :=
   Name.CCL.Grammar.Named.machine_advance_invariant
-    (Boxed.Arithmetic.ProgressiveName.mulOutput left right) count
+    (Arithmetic.ProgressiveName.mulOutput left right) count
 
 /-- Every finite advance of the exact boxed-name quotient with retained right apartness preserves the committed-word
 parser grammar. -/
 theorem div_output_grammar (left right :
-  Boxed.Process.ProgressiveName)
-    (apart : Data.CCL.Name.Boxed.Apart right) (count : Nat) :
-    Data.CCL.Transducer.Machine.Grammar.Invariant
+  Process.ProgressiveName)
+    (apart : Apart right) (count : Nat) :
+    Machine.Grammar.Invariant
       (Machine.Advance.advance
-        (Boxed.Arithmetic.ProgressiveName.divOutput left right apart).machine count) :=
+        (Arithmetic.ProgressiveName.divOutput left right apart).machine count) :=
   Name.CCL.Grammar.Named.machine_advance_invariant
-    (Boxed.Arithmetic.ProgressiveName.divOutput left right apart) count
+    (Arithmetic.ProgressiveName.divOutput left right apart) count
 
 end
 

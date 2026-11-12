@@ -20,6 +20,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -59,8 +61,8 @@ namespace Purelib.Geometry.Projective.Homography.Box
 /-- Computed squared-norm upper bound for the affine numerator `a t + b` on a rational tail box. -/
 def numeratorNormSqBound (matrix :
   GaussianMatrix) (tailBox : Rational.Box) : Fraction.Rational :=
-  2 * (Data.Gaussian.Norm.Basic.normSq matrix.a * tailBox.normSqBound +
-    Data.Gaussian.Norm.Basic.normSq matrix.b)
+  2 * (Basic.normSq matrix.a * tailBox.normSqBound +
+    Basic.normSq matrix.b)
 
 /-- The computed affine numerator squared-norm bound is nonnegative. -/
 theorem numeratorNormSqBound_nonneg (matrix :
@@ -69,31 +71,31 @@ theorem numeratorNormSqBound_nonneg (matrix :
   exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
     (add_nonneg
       (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Data.Gaussian.Norm.Basic.normSq_nonneg matrix.a) tailBox.normSqBound_nonneg)
-      (Data.Gaussian.Norm.Basic.normSq_nonneg matrix.b))
+        (Basic.normSq_nonneg matrix.a) tailBox.normSqBound_nonneg)
+      (Basic.normSq_nonneg matrix.b))
 
 /-- Every point in the tail box satisfies the computed affine numerator bound. -/
 theorem numerator_normSq_le
     (matrix : GaussianMatrix) {tailBox : Rational.Box} {tail :
       Data.Gaussian.Basic.Canonical}
     (inside : tailBox.Contains tail) :
-    Data.Gaussian.Norm.Basic.normSq (Homography.Basic.numerator matrix tail) ≤
+    Basic.normSq (Basic.numerator matrix tail) ≤
       numeratorNormSqBound matrix tailBox := by
   calc
-    Data.Gaussian.Norm.Basic.normSq (Homography.Basic.numerator matrix tail) =
-      Data.Gaussian.Norm.Basic.normSq (matrix.a * tail + matrix.b) := rfl
-    _ ≤ 2 * (Data.Gaussian.Norm.Basic.normSq (matrix.a * tail) + Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq (Basic.numerator matrix tail) =
+      Basic.normSq (matrix.a * tail + matrix.b) := rfl
+    _ ≤ 2 * (Basic.normSq (matrix.a * tail) + Basic.normSq
       matrix.b) :=
-      Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _
-    _ = 2 * (Data.Gaussian.Norm.Basic.normSq matrix.a * Data.Gaussian.Norm.Basic.normSq tail +
-      Data.Gaussian.Norm.Basic.normSq matrix.b) := by
-      rw [Data.Gaussian.Norm.Basic.normSq_mul]
-    _ ≤ 2 * (Data.Gaussian.Norm.Basic.normSq matrix.a * tailBox.normSqBound +
-      Data.Gaussian.Norm.Basic.normSq matrix.b) := by
+      Bounds.normSq_add_le_two _ _
+    _ = 2 * (Basic.normSq matrix.a * Basic.normSq tail +
+      Basic.normSq matrix.b) := by
+      rw [Basic.normSq_mul]
+    _ ≤ 2 * (Basic.normSq matrix.a * tailBox.normSqBound +
+      Basic.normSq matrix.b) := by
       apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
       · exact add_le_add_left
           (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-            (tailBox.normSq_le_normSqBound inside) (Data.Gaussian.Norm.Basic.normSq_nonneg matrix.a)) _
+            (tailBox.normSq_le_normSqBound inside) (Basic.normSq_nonneg matrix.a)) _
       · decide
     _ = numeratorNormSqBound matrix tailBox := rfl
 
@@ -144,36 +146,36 @@ theorem homographic_normSq_le
     {denominatorMargin : Fraction.Rational} (inside : tailBox.Contains tail)
     (marginPositive : 0 < denominatorMargin)
     (denominatorLower : denominatorMargin ≤
-      Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix tail)) :
-    Data.Gaussian.Norm.Basic.normSq (Homography.Basic.homographic matrix tail) ≤
+      Basic.normSq (Basic.denominator matrix tail)) :
+    Basic.normSq (Basic.homographic matrix tail) ≤
       homographicNormSqBound matrix tailBox denominatorMargin := by
-  have denominatorNormPositive : 0 < Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix tail)
+  have denominatorNormPositive : 0 < Basic.normSq (Basic.denominator matrix tail)
     :=
     marginPositive.trans_le denominatorLower
-  have denominatorNonzero : Homography.Basic.denominator matrix tail ≠ 0 := by
+  have denominatorNonzero : Basic.denominator matrix tail ≠ 0 := by
     intro zero
-    rw [zero, Data.Gaussian.Norm.Basic.normSq_zero] at denominatorNormPositive
+    rw [zero, Basic.normSq_zero] at denominatorNormPositive
     exact (lt_irrefl _ denominatorNormPositive).elim
   have numeratorBound := numerator_normSq_le matrix inside
-  have quotientIdentity : Data.Gaussian.Norm.Basic.normSq (Homography.Basic.homographic matrix tail) =
-      Data.Gaussian.Norm.Basic.normSq (Homography.Basic.numerator matrix tail) /
-        Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix tail) := by
-    rw [Homography.Basic.homographic, Data.Gaussian.Norm.Basic.normSq_mul, Data.Gaussian.Field.inv_eq,
+  have quotientIdentity : Basic.normSq (Basic.homographic matrix tail) =
+      Basic.normSq (Basic.numerator matrix tail) /
+        Basic.normSq (Basic.denominator matrix tail) := by
+    rw [Basic.homographic, Basic.normSq_mul, Data.Gaussian.Field.inv_eq,
       Data.Gaussian.Field.normSq_inv _ denominatorNonzero]
     rfl
   rw [quotientIdentity]
-  have first : Data.Gaussian.Norm.Basic.normSq (Homography.Basic.numerator matrix tail) /
-      Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix tail) ≤
+  have first : Basic.normSq (Basic.numerator matrix tail) /
+      Basic.normSq (Basic.denominator matrix tail) ≤
       numeratorNormSqBound matrix tailBox /
-        Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix tail) := by
+        Basic.normSq (Basic.denominator matrix tail) := by
     apply (Fraction.Order.Field.div_le_iff_pos
       denominatorNormPositive).2
     calc
-      Data.Gaussian.Norm.Basic.normSq (Homography.Basic.numerator matrix tail) ≤
+      Basic.normSq (Basic.numerator matrix tail) ≤
           numeratorNormSqBound matrix tailBox := numeratorBound
       _ = (numeratorNormSqBound matrix tailBox /
-          Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix tail)) *
-            Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix tail) :=
+          Basic.normSq (Basic.denominator matrix tail)) *
+            Basic.normSq (Basic.denominator matrix tail) :=
         (Fraction.Field.div_mul_cancel_of_ne _ _
           denominatorNormPositive.ne').symm
   exact first.trans
@@ -189,9 +191,9 @@ theorem homographicBox_contains
     {denominatorMargin : Fraction.Rational} (inside : tailBox.Contains tail)
     (marginPositive : 0 < denominatorMargin)
     (denominatorLower : denominatorMargin ≤
-      Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix tail)) :
+      Basic.normSq (Basic.denominator matrix tail)) :
     (homographicBox matrix tailBox denominatorMargin marginPositive).Contains
-      (Homography.Basic.homographic matrix tail) := by
+      (Basic.homographic matrix tail) := by
   let bound := homographicNormSqBound matrix tailBox denominatorMargin
   let radius := homographicRadius matrix tailBox denominatorMargin
   have boundNonnegative : 0 ≤ bound :=
@@ -213,8 +215,8 @@ theorem homographicBox_contains
   have normBound := homographic_normSq_le matrix inside marginPositive
     denominatorLower
   calc
-    Data.Gaussian.Norm.Basic.normSq (Homography.Basic.homographic matrix tail - 0) =
-        Data.Gaussian.Norm.Basic.normSq (Homography.Basic.homographic matrix tail) := by
+    Basic.normSq (Basic.homographic matrix tail - 0) =
+        Basic.normSq (Basic.homographic matrix tail) := by
       rw [Data.Gaussian.Basic.sub_zero]
     _ ≤ bound := normBound
     _ ≤ radius ^ 2 := boundLeRadiusSq

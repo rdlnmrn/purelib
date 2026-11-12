@@ -21,6 +21,8 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Geometry.Projective
+
 open Purelib.LinearAlgebra.Coordinates2.Matrix (GaussianMatrix)
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 open Purelib.RootIsolation.State.WindingOne.Basic (WindingOneState)
@@ -69,7 +71,7 @@ structure SeparationOutput
   /-- The retained denominator margin is strictly positive. -/ margin_pos : 0 < margin
   /-- The retained positive margin bounds the decoder denominator at every point of the returned box. -/ lower : ∀
     {value : Gaussian.Basic.Canonical}, state.box.Contains value →
-    margin ≤ Data.Gaussian.Norm.Basic.normSq (Geometry.Projective.Homography.Basic.denominator matrix value)
+    margin ≤ Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix value)
 
 constructive_injectivity SeparationOutput
 
@@ -80,10 +82,10 @@ namespace SeparationOutput
     {p : CoefficientPolynomial} {ambient : Box}
     {current : WindingOneState p ambient} {matrix :
       GaussianMatrix}
-    (output : Track.Exclusion.Homography.SeparationOutput p ambient current matrix)
+    (output : SeparationOutput p ambient current matrix)
     (later : WindingOneState p ambient)
     (laterRefines : later.box.Refines output.state.box) :
-    Track.Exclusion.Homography.SeparationOutput p ambient current matrix where
+    SeparationOutput p ambient current matrix where
   state := later
   refines := laterRefines.trans output.refines
   margin := output.margin
@@ -101,11 +103,11 @@ end SeparationOutput
     SeparationOutput p ambient current matrix where
   state := current
   refines := Box.refines_refl current.box
-  margin := Data.Gaussian.Norm.Basic.normSq matrix.d
+  margin := Gaussian.Norm.Basic.normSq matrix.d
   margin_pos := Gaussian.Norm.Basic.normSq_pos lowerRightNonzero
   lower := by
     intro value _inside
-    simp only [Geometry.Projective.Homography.Basic.denominator, lowerLeftZero,
+    simp only [Homography.Basic.denominator, lowerLeftZero,
       Gaussian.Basic.zero_mul,
       Gaussian.Basic.zero_add, -eq_self, -iff_self]
     exact le_rfl
@@ -117,19 +119,19 @@ margin, whether or not that pole is a different polynomial root. -/
     (current : WindingOneState p ambient) (matrix :
       GaussianMatrix)
     (lowerLeftNonzero : matrix.c ≠ 0)
-    (outside : ¬current.box.Contains (Geometry.Projective.Homography.decoderPole matrix)) :
+    (outside : ¬current.box.Contains (Homography.decoderPole matrix)) :
     SeparationOutput p ambient current matrix := by
   let side := Box.outsideSide outside
   refine
     { state := current
       refines := Box.refines_refl current.box
-      margin := Data.Gaussian.Norm.Basic.normSq matrix.c * side.margin
+      margin := Gaussian.Norm.Basic.normSq matrix.c * side.margin
       margin_pos := Fraction.Order.Arithmetic.mul_pos_direct
         (Gaussian.Norm.Basic.normSq_pos lowerLeftNonzero) side.margin_pos
       lower := ?_ }
   intro value inside
   have distance := side.margin_le_normSq_sub inside
-  rw [Geometry.Projective.Homography.denominator_eq_mul_sub_pole matrix lowerLeftNonzero value,
+  rw [Homography.denominator_eq_mul_sub_pole matrix lowerLeftNonzero value,
     Gaussian.Norm.Basic.normSq_mul]
   exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct distance
     (Gaussian.Norm.Basic.normSq_nonneg matrix.c)
@@ -139,31 +141,31 @@ positive uniform denominator margin. -/
 @[expose] def separateNonroot
     {p : CoefficientPolynomial} {ambient : Box}
     (degreePositive : 0 < p.natDegree)
-    (track : Track.Basic.WindingOneTrack p ambient)
+    (track : Basic.WindingOneTrack p ambient)
     (current : WindingOneState p ambient) (matrix :
       GaussianMatrix)
     (lowerLeftNonzero : matrix.c ≠ 0)
-    (nonroot : p.eval (Geometry.Projective.Homography.decoderPole matrix) ≠ 0) :
+    (nonroot : p.eval (Homography.decoderPole matrix) ≠ 0) :
     SeparationOutput p ambient current matrix := by
-  let state := Track.Exclusion.Point.refinePastPoint
-    track current (Geometry.Projective.Homography.decoderPole matrix) nonroot
+  let state := Point.refinePastPoint
+    track current (Homography.decoderPole matrix) nonroot
   have refines :=
-    Track.Exclusion.Point.refinePastPoint_refines
-      track current (Geometry.Projective.Homography.decoderPole matrix) nonroot
+    Point.refinePastPoint_refines
+      track current (Homography.decoderPole matrix) nonroot
   have outside :=
-    Track.Exclusion.Point.refinePastPoint_excludes
-      degreePositive track current (Geometry.Projective.Homography.decoderPole matrix) nonroot
+    Point.refinePastPoint_excludes
+      degreePositive track current (Homography.decoderPole matrix) nonroot
   let side := Box.outsideSide outside
   refine
     { state := state
       refines := refines
-      margin := Data.Gaussian.Norm.Basic.normSq matrix.c * side.margin
+      margin := Gaussian.Norm.Basic.normSq matrix.c * side.margin
       margin_pos := Fraction.Order.Arithmetic.mul_pos_direct
         (Gaussian.Norm.Basic.normSq_pos lowerLeftNonzero) side.margin_pos
       lower := ?_ }
   intro value inside
   have distance := side.margin_le_normSq_sub inside
-  rw [Geometry.Projective.Homography.denominator_eq_mul_sub_pole matrix lowerLeftNonzero value,
+  rw [Homography.denominator_eq_mul_sub_pole matrix lowerLeftNonzero value,
     Gaussian.Norm.Basic.normSq_mul]
   exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct distance
     (Gaussian.Norm.Basic.normSq_nonneg matrix.c)
@@ -179,7 +181,7 @@ inductive Decision
     Gaussian.Basic.Canonical) (root : p.eval point = 0)
       (inside : current.box.Contains point)
       (denominatorZero :
-        Geometry.Projective.Homography.Basic.denominator matrix point = 0)
+        Homography.Basic.denominator matrix point = 0)
   /-- The retained refinement and its positive uniform decoder-denominator margin. -/ | separated (output :
     SeparationOutput p ambient current matrix)
 
@@ -190,7 +192,7 @@ one exact polynomial evaluation. -/
 @[expose] def decide
     {p : CoefficientPolynomial} {ambient : Box}
     (degreePositive : 0 < p.natDegree)
-    (track : Track.Basic.WindingOneTrack p ambient)
+    (track : Basic.WindingOneTrack p ambient)
     (current : WindingOneState p ambient) (matrix :
       GaussianMatrix)
     (lowerRowNonzero : matrix.c ≠ 0 ∨ matrix.d ≠ 0) :
@@ -200,10 +202,10 @@ one exact polynomial evaluation. -/
       lowerRowNonzero.resolve_left (fun nonzero => nonzero lowerLeftZero)
     exact .separated
       (separateConstant current matrix lowerLeftZero lowerRightNonzero)
-  · by_cases root : p.eval (Geometry.Projective.Homography.decoderPole matrix) = 0
-    · by_cases inside : current.box.Contains (Geometry.Projective.Homography.decoderPole matrix)
-      · exact .exact (Geometry.Projective.Homography.decoderPole matrix) root inside
-          (Geometry.Projective.Homography.denominator_at_decoderPole matrix lowerLeftZero)
+  · by_cases root : p.eval (Homography.decoderPole matrix) = 0
+    · by_cases inside : current.box.Contains (Homography.decoderPole matrix)
+      · exact .exact (Homography.decoderPole matrix) root inside
+          (Homography.denominator_at_decoderPole matrix lowerLeftZero)
       · exact .separated
           (separateOutside current matrix lowerLeftZero inside)
     · exact .separated

@@ -32,6 +32,8 @@ import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 import Purelib.Data.Rat.Fraction.Cast
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.Rat
 
 @[expose] public section
@@ -59,7 +61,7 @@ open Purelib.Riemann.Readings.RectangularBoundaryAssembly (BoundaryAssembly)
 
 open Purelib.Data.Rat in
 /-- The original primitive boundary slope from numerator, inverse and ambient diameter bounds. -/
-def boundarySlope {polynomial numerator : Polynomial} {ambient : Purelib.Geometry.Rational.Box} {clearance :
+def boundarySlope {polynomial numerator : Polynomial} {ambient : Geometry.Rational.Box} {clearance :
   RegionClearance polynomial ambient}
     (bounds : PrimitiveOverlapBounds clearance numerator) : Fraction.Rational :=
   2 * (bounds.numeratorUpper * bounds.inverseUpper) * ambient.diagonalSq
@@ -88,7 +90,7 @@ open Purelib.Polynomial.Dense.Gaussian in
 
 The coefficient ceiling and segment-length bound give twice their product times the squared parameter increment on the
 unit interval. -/
-private theorem translated_increment_le {coefficient : Polynomial} {box : Purelib.Geometry.Rational.Box}
+private theorem translated_increment_le {coefficient : Polynomial} {box : Geometry.Rational.Box}
     (primitive : DensePrimitive coefficient box) (shift start finish : Basic.Canonical) (ceiling diameter : Coordinate)
     (ceilingNonnegative : 0 ≤ ceiling)
     (inside : ∀ parameter, 0 ≤ parameter ∧ parameter ≤ 1 → box.Contains (Affine.line start (finish - start) parameter))
@@ -104,23 +106,23 @@ private theorem translated_increment_le {coefficient : Polynomial} {box : Pureli
         primitive.value.eval (Affine.line start (finish - start) last) -
           primitive.value.eval (Affine.line start (finish - start) first) by ring1]
   have coefficientAdapter (parameter : Coordinate) (insideParameter : 0 ≤ parameter ∧ parameter ≤ 1) :
-      Data.Gaussian.Norm.Basic.normSq (coefficient.eval (Affine.line start (finish - start) parameter)) ≤ ceiling := by
+      Norm.Basic.normSq (coefficient.eval (Affine.line start (finish - start) parameter)) ≤ ceiling := by
     rw [Norm.Basic.normSq_eq_canonical]
     exact coefficientBound parameter insideParameter
   have lengthAdapter := lengthBound
   rw [← Norm.Basic.normSq_eq_canonical] at lengthAdapter
   have estimate := Primitive.Segment.Bounds.DensePrimitive.segment_increment_le primitive start (finish - start) (⟨0, 1,
-    by decide⟩ : Data.Rat.Interval.Bounds)
+    by decide⟩ : Interval.Bounds)
     inside ceiling coefficientAdapter lastInside firstInside
   rw [Norm.Basic.normSq_eq_canonical] at estimate
-  exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct lengthAdapter
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) ceilingNonnegative))
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+  exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct lengthAdapter
+      (Arithmetic.mul_nonneg_direct (by decide) ceilingNonnegative))
+        (Arithmetic.sq_nonneg_direct _))
 
 namespace GridPrimitiveAccuracy
 
-variable {polynomial numerator : Polynomial} {ambient : Purelib.Riemann.Normalization.InverseRootPolynomial.Box}
+variable {polynomial numerator : Polynomial} {ambient : Normalization.InverseRootPolynomial.Box}
   {clearance : RegionClearance polynomial ambient}
     {bounds : PrimitiveOverlapBounds clearance numerator} {columns rows : Nat} {target : Coordinate}
     {geometry : Geometry columns rows} {bank : Bank polynomial geometry}
@@ -146,7 +148,7 @@ theorem horizontal_dyadic_bound (request : GridPrimitiveAccuracy bounds columns 
     let start := geometry.vertex column.castSucc.succ row.castSucc
     let finish := geometry.vertex column.castSucc.succ row.succ
     let point := fun parameter => Affine.line start (finish - start) parameter
-    normSq (DyadicBoundaryRibbon.dyadicDifference (fun parameter => anchors.alignedValue offsets column.castSucc row
+    normSq (dyadicDifference (fun parameter => anchors.alignedValue offsets column.castSucc row
       (point parameter))
       (fun parameter => anchors.alignedValue offsets column.succ row (point parameter)) depth 0 1) ≤
       8 * request.globalBound * (4 * boundarySlope bounds + request.edgeBound) := by
@@ -166,7 +168,7 @@ theorem horizontal_dyadic_bound (request : GridPrimitiveAccuracy bounds columns 
         boundarySlope bounds * (last - first) ^ 2 := by
     apply translated_increment_le (primitives.dense column.succ row) (offsets.values column.succ row) start finish
       (bounds.numeratorUpper * bounds.inverseUpper) ambient.diagonalSq
-      (Fraction.Order.Arithmetic.mul_nonneg_direct bounds.numeratorUpper_nonnegative bounds.inverseUpper_positive.le)
+      (Arithmetic.mul_nonneg_direct bounds.numeratorUpper_nonnegative bounds.inverseUpper_positive.le)
       (fun _ inside => edge.right_contains_at inside) ?_ lengthBound firstInside lastInside
     intro parameter inside
     rw [primitives.coefficient_eq]
@@ -181,11 +183,11 @@ theorem horizontal_dyadic_bound (request : GridPrimitiveAccuracy bounds columns 
           request.edgeBound * (last - first) ^ 2 := by
     simp only [PrimitiveAnchors.alignedValue, translated_gap]
     have estimate := primitives.horizontal_gap_increment_le bounds refines column row firstInside lastInside
-    exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct
       (request.local_scale_bound (bank.refine_uniform_bound request.index column.castSucc row)
-        (bank.refine_uniform_bound request.index column.succ row) (Basic.Canonical.normSq_nonneg _) lengthBound)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _))
-  have estimate := DyadicBoundaryRibbon.dyadicDifference_bound
+        (bank.refine_uniform_bound request.index column.succ row) (normSq_nonneg _) lengthBound)
+      (Arithmetic.sq_nonneg_direct _))
+  have estimate := dyadicDifference_bound
     (fun parameter => anchors.alignedValue offsets column.castSucc row (point parameter))
     (fun parameter => anchors.alignedValue offsets column.succ row (point parameter))
     (request.edgeBound_nonnegative.trans request.edgeBound_le_globalBound)
@@ -218,7 +220,7 @@ theorem vertical_dyadic_bound (request : GridPrimitiveAccuracy bounds columns ta
     let start := geometry.vertex column.castSucc row.castSucc.succ
     let finish := geometry.vertex column.succ row.castSucc.succ
     let point := fun parameter => Affine.line start (finish - start) parameter
-    normSq (DyadicBoundaryRibbon.dyadicDifference (fun parameter => anchors.alignedValue offsets column row.succ (point
+    normSq (dyadicDifference (fun parameter => anchors.alignedValue offsets column row.succ (point
       parameter))
       (fun parameter => anchors.alignedValue offsets column row.castSucc (point parameter)) depth 0 1) ≤
       8 * request.globalBound * (4 * boundarySlope bounds + request.edgeBound) := by
@@ -239,7 +241,7 @@ theorem vertical_dyadic_bound (request : GridPrimitiveAccuracy bounds columns ta
     apply translated_increment_le (primitives.dense column row.castSucc) (offsets.values column row.castSucc) start
       finish
       (bounds.numeratorUpper * bounds.inverseUpper) ambient.diagonalSq
-      (Fraction.Order.Arithmetic.mul_nonneg_direct bounds.numeratorUpper_nonnegative bounds.inverseUpper_positive.le)
+      (Arithmetic.mul_nonneg_direct bounds.numeratorUpper_nonnegative bounds.inverseUpper_positive.le)
       (fun _ inside => edge.left_contains_at inside) ?_ lengthBound firstInside lastInside
     intro parameter inside
     rw [primitives.coefficient_eq]
@@ -261,11 +263,11 @@ theorem vertical_dyadic_bound (request : GridPrimitiveAccuracy bounds columns ta
     rw [reversed_gap]
     rw [← Norm.Basic.normSq_eq_canonical, Norm.Basic.normSq_neg, Norm.Basic.normSq_eq_canonical]
     have estimate := primitives.vertical_gap_increment_le bounds refines column row firstInside lastInside
-    exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct
       (request.local_scale_bound (bank.refine_uniform_bound request.index column row.castSucc)
-        (bank.refine_uniform_bound request.index column row.succ) (Basic.Canonical.normSq_nonneg _) lengthBound)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _))
-  have estimate := DyadicBoundaryRibbon.dyadicDifference_bound
+        (bank.refine_uniform_bound request.index column row.succ) (normSq_nonneg _) lengthBound)
+      (Arithmetic.sq_nonneg_direct _))
+  have estimate := dyadicDifference_bound
     (fun parameter => anchors.alignedValue offsets column row.succ (point parameter))
     (fun parameter => anchors.alignedValue offsets column row.castSucc (point parameter))
     (request.edgeBound_nonnegative.trans request.edgeBound_le_globalBound)
@@ -356,7 +358,7 @@ theorem seamTotal_bound (request : GridPrimitiveAccuracy bounds columns target)
         exact scalar))
   rw [← Norm.Basic.normSq_eq_canonical, assembly.seamTotal_eq_sum]
   exact (Norm.Bounds.normSq_add_le_two _ _).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add horizontal vertical) (by decide)).trans_eq
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add horizontal vertical) (by decide)).trans_eq
       (by
       rw [Fraction.Cast.natCast_add_direct, Fraction.Cast.natCast_add_direct, Nat.cast_one]
       dsimp only [allowance]
@@ -390,7 +392,7 @@ theorem boundaryDiscrepancy_bound (request : GridPrimitiveAccuracy bounds column
   rw [← Norm.Basic.normSq_eq_canonical] at cornerScalar
   rw [← Norm.Basic.normSq_eq_canonical, assembly.decomposition]
   exact (Norm.Bounds.normSq_add_le_two _ _).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct
       (add_le_add seamScalar cornerScalar) (by decide)).trans_eq (by ring1))
 
 end GridPrimitiveAccuracy

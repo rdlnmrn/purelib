@@ -29,6 +29,8 @@ import Purelib.Geometry.Rational.Box.Dimensions
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Constructive dyadic partitions of checked surface boxes
 
@@ -68,14 +70,29 @@ private theorem half_add_half (value : Coordinate) : value / 2 + value / 2 = val
 @[expose] public def midpoint (lower upper : Coordinate) : Coordinate
   := lower + (upper - lower) / 2
 
+/-- The retained width-based midpoint is the exact average of its two endpoints.
+
+No endpoint ordering is required. Multiplication by the nonzero rational two
+identifies the width-based and average formulas exactly. -/
+public theorem midpoint_eq_average (lower upper : Coordinate) :
+    midpoint lower upper = (lower + upper) / 2 := by
+  apply Eq.symm
+  unfold midpoint
+  apply Fraction.Field.mul_right_cancel_of_ne (c := 2) (by decide)
+  calc
+    _ = lower + upper := Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
+    _ = lower * 2 + ((upper - lower) / 2) * 2 := by
+      rw [Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)]; ring1
+    _ = _ := by ring1
+
 /-- The midpoint lies between ordered endpoints.
 
 The interval endpoints are weakly ordered. The nonnegative half-width places
 the retained midpoint inside those same endpoints. -/
 public theorem midpoint_between {lower upper : Coordinate} (ordered : lower <= upper) :
     lower <= midpoint lower upper ∧ midpoint lower upper <= upper := by
-  have halfNonnegative := Fraction.Order.Field.div_nonneg_direct
-    (Fraction.Order.Arithmetic.sub_nonneg_direct ordered) (by decide : (0 : Coordinate) <= 2)
+  have halfNonnegative := Field.div_nonneg_direct
+    (Arithmetic.sub_nonneg_direct ordered) (by decide : (0 : Coordinate) <= 2)
   refine ⟨le_add_of_nonneg_right halfNonnegative, ?_⟩
   calc
     midpoint lower upper <= midpoint lower upper + (upper - lower) / 2 :=
@@ -86,12 +103,12 @@ public theorem midpoint_between {lower upper : Coordinate} (ordered : lower <= u
 /-- The lower endpoint of the selected half interval. -/
 @[expose] public def halfLower (lower upper : Coordinate) (high :
   Bool) : Coordinate :=
-  if high then Geometry.Rectangle.Partition.PreparedBoxPartitions.midpoint lower upper else lower
+  if high then midpoint lower upper else lower
 
 /-- The upper endpoint of the selected half interval. -/
 @[expose] public def halfUpper (lower upper : Coordinate) (high :
   Bool) : Coordinate :=
-  if high then upper else Geometry.Rectangle.Partition.PreparedBoxPartitions.midpoint lower upper
+  if high then upper else midpoint lower upper
 
 /-- Each selected half has half the original interval width.
 
@@ -117,10 +134,10 @@ The original endpoint inequality makes the half-width nonnegative. Recovering
 endpoint order from that difference certifies the selected half. -/
 public theorem half_ordered {lower upper : Coordinate} (ordered : lower <= upper) (high : Bool) :
     halfLower lower upper high <= halfUpper lower upper high := by
-  apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  apply Arithmetic.le_of_sub_nonneg_direct
   rw [half_width]
-  exact Fraction.Order.Field.div_nonneg_direct
-    (Fraction.Order.Arithmetic.sub_nonneg_direct ordered) (by decide)
+  exact Field.div_nonneg_direct
+    (Arithmetic.sub_nonneg_direct ordered) (by decide)
 
 /-- Each half lies inside the original interval.
 
@@ -138,14 +155,14 @@ Strict endpoint order makes the half-width positive. Both selected halves
 consequently retain strict endpoint order. -/
 public theorem half_proper {lower upper : Coordinate} (ordered : lower < upper) (high : Bool) :
     halfLower lower upper high < halfUpper lower upper high := by
-  apply Fraction.Order.Arithmetic.lt_of_sub_pos_direct
+  apply Arithmetic.lt_of_sub_pos_direct
   rw [half_width]
-  exact Fraction.Order.Field.div_pos_direct
-    (Fraction.Order.Arithmetic.sub_pos_direct ordered) (by decide)
+  exact Field.div_pos_direct
+    (Arithmetic.sub_pos_direct ordered) (by decide)
 
 /-- Select a half by one rational comparison, including boundary points. -/
 @[expose] public def highHalf (lower upper point : Coordinate) : Bool
-  := decide (Geometry.Rectangle.Partition.PreparedBoxPartitions.midpoint lower upper < point)
+  := decide (midpoint lower upper < point)
 
 /-- The comparison-selected half contains the bounded query point.
 
@@ -172,10 +189,10 @@ The two Boolean selections retain the four half endpoints. Their order
 certificates come from the original box endpoints. -/
 @[expose] public def child (box : Box) (xHigh yHigh : Bool) :
   Box where
-  xLower := Geometry.Rectangle.Partition.PreparedBoxPartitions.halfLower box.xLower box.xUpper xHigh
-  xUpper := Geometry.Rectangle.Partition.PreparedBoxPartitions.halfUpper box.xLower box.xUpper xHigh
-  yLower := Geometry.Rectangle.Partition.PreparedBoxPartitions.halfLower box.yLower box.yUpper yHigh
-  yUpper := Geometry.Rectangle.Partition.PreparedBoxPartitions.halfUpper box.yLower box.yUpper yHigh
+  xLower := halfLower box.xLower box.xUpper xHigh
+  xUpper := halfUpper box.xLower box.xUpper xHigh
+  yLower := halfLower box.yLower box.yUpper yHigh
+  yUpper := halfUpper box.yLower box.yUpper yHigh
   x_valid := half_ordered box.x_valid xHigh
   y_valid := half_ordered box.y_valid yHigh
 
@@ -240,6 +257,7 @@ Each retained width is halved before squaring. Their squared sum is therefore
 one quarter of the original squared diagonal. -/
 public theorem child_diagonalSq (box : Box) (xHigh yHigh : Bool) :
     (child box xHigh yHigh).diagonalSq = box.diagonalSq / 4 := by
+  rewrite [diagonalSq_eq_original, diagonalSq_eq_original]
   change (child box xHigh yHigh).widthX ^ 2 + (child box xHigh yHigh).widthY ^ 2 = _
   rw [child_widthX, child_widthY]
   calc
@@ -272,14 +290,14 @@ traversal. -/
   Box
   | 0, box => [box]
   | depth + 1, box =>
-      Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions.cells depth
-        (Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions.child box false false) ++
-        Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions.cells depth
-        (Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions.child box true false) ++
-        Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions.cells depth
-          (Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions.child box false true) ++
-          Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions.cells depth
-          (Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions.child box true true)
+      PreparedBoxPartitions.cells depth
+        (child box false false) ++
+        PreparedBoxPartitions.cells depth
+        (child box true false) ++
+        PreparedBoxPartitions.cells depth
+          (child box false true) ++
+          PreparedBoxPartitions.cells depth
+          (child box true true)
 
 /-- Depth n produces exactly four to the power n leaf boxes.
 
@@ -345,10 +363,10 @@ public theorem cells_proper (depth : Nat) {box : Box} (proper : box.Proper)
 Each list has pairwise separated interiors, and every left-to-right cross pair
 is separated. These facts certify the same concatenated list. -/
 private theorem pairwise_append {left right : List Box}
-    (leftSeparated : left.Pairwise Rational.Box.InteriorSeparated)
-    (rightSeparated : right.Pairwise Rational.Box.InteriorSeparated)
+    (leftSeparated : left.Pairwise InteriorSeparated)
+    (rightSeparated : right.Pairwise InteriorSeparated)
     (cross : forall first, first ∈ left -> forall second, second ∈ right -> first.InteriorSeparated second) :
-    (left ++ right).Pairwise Rational.Box.InteriorSeparated := by
+    (left ++ right).Pairwise InteriorSeparated := by
   induction leftSeparated with
   | nil => exact rightSeparated
   | @cons first rest firstSeparated restSeparated inductionHypothesis =>
@@ -376,17 +394,17 @@ Horizontal and vertical midpoint cuts separate the original child interiors.
 Refinement and explicit cross-pair membership preserve that separation through
 the full list. -/
 public theorem cells_interiorSeparated (depth : Nat) (box : Box) :
-    (cells depth box).Pairwise Rational.Box.InteriorSeparated := by
+    (cells depth box).Pairwise InteriorSeparated := by
   induction depth generalizing box with
   | zero => exact .cons (fun _ member => (List.not_mem_nil member).elim) .nil
   | succ depth inductionHypothesis =>
       have bottom : (cells depth (child box false false) ++ cells depth (child box true false)).Pairwise
-          Rational.Box.InteriorSeparated :=
+          InteriorSeparated :=
         pairwise_append (inductionHypothesis _) (inductionHypothesis _)
           (fun _ firstMember _ secondMember =>
             separated_leaves (child_horizontal_separated box false false) depth firstMember secondMember)
       have top : (cells depth (child box false true) ++ cells depth (child box true true)).Pairwise
-          Rational.Box.InteriorSeparated :=
+          InteriorSeparated :=
         pairwise_append (inductionHypothesis _) (inductionHypothesis _)
           (fun _ firstMember _ secondMember =>
             separated_leaves (child_horizontal_separated box true true) depth firstMember secondMember)
@@ -408,10 +426,10 @@ recursion follows that child without constructing a different covering list. -/
   : Gaussian) : Box :=
   match depth with
   | 0 => box
-  | depth + 1 => Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions.locate depth
-      (Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions.child box
-        (Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions.highHalf box.xLower box.xUpper point.re)
-        (Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions.highHalf box.yLower box.yUpper point.im)) point
+  | depth + 1 => PreparedBoxPartitions.locate depth
+      (child box
+        (highHalf box.xLower box.xUpper point.re)
+        (highHalf box.yLower box.yUpper point.im)) point
 
 /-- The recursive locator returns a member of the leaf list.
 
@@ -471,7 +489,7 @@ Empty lists contribute zero. -/
   Box ->
   Coordinate
   | [] => 0
-  | box :: rest => value box + Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions.sumCells value rest
+  | box :: rest => value box + PreparedBoxPartitions.sumCells value rest
 
 /-- The finite cell sum is additive over list concatenation.
 
@@ -546,7 +564,7 @@ public theorem sumCells_mono (left right : Box -> Coordinate) (boxes : List Box)
   induction boxes with
   | nil => exact le_rfl
   | cons box rest inductionHypothesis =>
-      exact Fraction.Order.Arithmetic.add_le_add_direct (bound box List.mem_cons_self)
+      exact Arithmetic.add_le_add_direct (bound box List.mem_cons_self)
         (inductionHypothesis (fun box member => bound box (List.mem_cons_of_mem _ member)))
 
 /-- The structural cell sum equals the sum over the list's finite indices.
@@ -582,9 +600,10 @@ twice that product gives the square of the same width sum. -/
 public theorem diagonalSq_le_span_sq (box : Box) : box.diagonalSq <= span box ^ 2 := by
   calc
     box.diagonalSq <= box.diagonalSq + 2 * (box.widthX * box.widthY) :=
-      le_add_of_nonneg_right (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-        (Fraction.Order.Arithmetic.mul_nonneg_direct box.widthX_nonneg box.widthY_nonneg))
+      le_add_of_nonneg_right (Arithmetic.mul_nonneg_direct (by decide)
+        (Arithmetic.mul_nonneg_direct box.widthX_nonneg box.widthY_nonneg))
     _ = span box ^ 2 := by
+      rewrite [diagonalSq_eq_original]
       change (box.widthX ^ 2 + box.widthY ^ 2) + 2 * (box.widthX * box.widthY) = _
       unfold span
       ring1

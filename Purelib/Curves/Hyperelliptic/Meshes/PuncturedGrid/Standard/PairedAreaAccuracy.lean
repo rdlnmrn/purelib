@@ -97,6 +97,8 @@ import Purelib.Topology.Surface.Sewing.VertexSewing
 import Purelib.Topology.Surface.Word.NormalForm
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Approximation.Rational.Budget
@@ -169,56 +171,56 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Rat.Fraction.Compatibility
 
 /-- A common nonnegative bound for both differentials' actual A/B period samples on one standard cycle. -/
-def standardPairMagnitude {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    (data : PeriodMatrix.PeriodData curve) (first second cycle : Fin genus) : Fraction.Rational :=
+def standardPairMagnitude {genus : Nat} {curve : HyperellipticCurve genus}
+    (data : PeriodData curve) (first second cycle : Fin genus) : Rational :=
   max (max (data.aProgram first cycle).integral.centerBound (data.aProgram second cycle).integral.centerBound)
     (max (data.bProgram first cycle).integral.centerBound (data.bProgram second cycle).integral.centerBound)
 
 /-- Allocate the standard handle-area comparison budget using its actual four period magnitude bounds. -/
-def standardPairBudget {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    (data : PeriodMatrix.PeriodData curve) (first second cycle : Fin genus)
-    (target : Fraction.Rational) (positive : 0 < target) :
-    HandleAreaBudgets.HandleAreaBudget
+def standardPairBudget {genus : Nat} {curve : HyperellipticCurve genus}
+    (data : PeriodData curve) (first second cycle : Fin genus)
+    (target : Rational) (positive : 0 < target) :
+    HandleAreaBudget
       (standardPairMagnitude data first second
       cycle) 1 target :=
   HandleAreaBudget.build
-    (@max Fraction.Rational (@LinearOrder.toMax Fraction.Rational Fraction.Order.Basic.instLinearOrder)
-      (@max Fraction.Rational (@LinearOrder.toMax Fraction.Rational Fraction.Order.Basic.instLinearOrder) (data.aProgram
+    (@max Rational (@LinearOrder.toMax Rational Fraction.Order.Basic.instLinearOrder)
+      (@max Rational (@LinearOrder.toMax Rational Fraction.Order.Basic.instLinearOrder) (data.aProgram
         first cycle).integral.centerBound (data.aProgram second cycle).integral.centerBound)
       (max (data.bProgram first cycle).integral.centerBound (data.bProgram second cycle).integral.centerBound) :
-        Fraction.Rational)
+        Rational)
     ((data.aProgram first cycle).integral.centerBound_nonneg.trans
     ((Fraction.Order.Basic.le_max_left _ _).trans (Fraction.Order.Basic.le_max_left _ _))) 1 target positive
 
 /-- A quarter of a positive rational is at most the original value. -/
-private theorem quarter_le {value : Fraction.Rational} (positive : 0 < value) : value / 4 ≤ value := by
+private theorem quarter_le {value : Rational} (positive : 0 < value) : value / 4 ≤ value := by
   apply (Fraction.Order.Field.div_le_iff_pos (by decide)).mpr
   exact (show value = value * 1 by ring1).le.trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (by decide : (1 : Fraction.Rational) ≤ 4) positive.le)
+    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (by decide : (1 : Rational) ≤ 4) positive.le)
 
 /-- Transport a scalar approximation along an equality of its retained input owners. -/
-private theorem transfer_value {α : Sort _} (value : α → Data.Gaussian.Basic.Canonical) {before after : α}
-    (same : before = after) {sample : Data.Gaussian.Basic.Canonical} {error : Fraction.Rational}
-    (accurate : Data.Gaussian.Norm.Basic.normSq (value after - sample) < error) :
-      Data.Gaussian.Norm.Basic.normSq (value before - sample) < error :=
-  (congrArg (fun input => Data.Gaussian.Norm.Basic.normSq (value input - sample)) same).trans_lt accurate
+private theorem transfer_value {α : Sort _} (value : α → Canonical) {before after : α}
+    (same : before = after) {sample : Canonical} {error : Rational}
+    (accurate : Basic.normSq (value after - sample) < error) :
+      Basic.normSq (value before - sample) < error :=
+  (congrArg (fun input => Basic.normSq (value input - sample)) same).trans_lt accurate
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
   {base : FramedPuncturedGrid curve
-    (Purelib.Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).branches higher}
+    (Branches.BranchConfiguration.configurationOfData curve branches).branches higher}
   {lifted : LiftedPuncturedGrid base} {cycle first second : Fin genus}
-  (period : Purelib.Riemann.Periods.PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodRow curve)
+  (period : RootClosedPeriodRow curve)
   (periodEq : period =
-    (Purelib.Riemann.Periods.PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodBank.ofData curve
+    (RootClosedPeriodBank.ofData curve
     branches).rows cycle)
 
 /-- The actual standard cycle's intersection row in the lifted grid's canonical integral pairing. -/
-def standardPairRow (lifted : Meshes.LiftedPuncturedGrid base) (cycle : Fin genus)
-    (period : PreparedCycleModels.RootClosedPeriodRow curve)
+def standardPairRow (lifted : LiftedPuncturedGrid base) (cycle : Fin genus)
+    (period : RootClosedPeriodRow curve)
     (periodEq : period = (RootClosedPeriodBank.ofData curve branches).rows cycle) :
-    PairedAreaReadings.CanonicalIntersectionRow lifted cycle :=
+    CanonicalIntersectionRow lifted cycle :=
   IntersectionRow.ofPeriod lifted lifted.cutIntegralPairing (IntegralPairing.wordNormalForm
     lifted.cutIntegralPairing).normal cycle period periodEq
 
@@ -234,8 +236,8 @@ variable {source : Differential genus} {programs :
   {secondPeriods : ChordPeriods
     (standardPairRow lifted cycle period
     periodEq).span programs secondComponents}
-  {segments : Purelib.Data.Vector.DependentVector (fun entry =>
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank (programs.programs.programs
+  {segments : Data.Vector.DependentVector (fun entry =>
+    PeriodSegmentBanks.SegmentBank (programs.programs.programs
     entry).period)}
   {domains : FaceDomainBank lifted.frames
     base.faces.regulars}
@@ -250,7 +252,7 @@ variable {source : Differential genus} {programs :
 
 Both differentials retain their actual triangle bank and the original standard cycle's intersection row. -/
 def StandardAreaAccurate
-    (budget : HandleAreaBudgets.HandleAreaBudget
+    (budget : HandleAreaBudget
       (standardPairMagnitude
       (PreparedRefinementPrograms.rawPeriodDataOfData curve branches) first second cycle) 1 target)
     (readings : PairedAreaReadings firstPeriods secondPeriods segments domains minimum numericalFloor
@@ -265,21 +267,21 @@ def StandardAreaAccurate
       SewingRetraction.wordValue right row.pair.aFaces.geometry.indexed⟩
     let b : PrimitivePoint := ⟨wordValue left row.pair.bFaces.geometry.indexed,
       SewingRetraction.wordValue right row.pair.bFaces.geometry.indexed⟩
-    Data.Gaussian.Norm.Basic.normSq (Stokes.edgeArea a b -
+    Basic.normSq (Stokes.edgeArea a b -
       (((data.aProgram first cycle).integral.model periodStage).integralSample *
         ((data.bProgram second cycle).integral.model periodStage).integralSample -
        ((data.bProgram first cycle).integral.model periodStage).integralSample *
         ((data.aProgram second cycle).integral.model periodStage).integralSample)) < budget.handleTarget
 
 /-- The original A-period approximation holds on triangle values equal to the retained standard reader. -/
-private theorem shared_a_error {differential : Fin genus} {error : Fraction.Rational}
-    (standard : BoundaryReadings.StandardBoundaryReadings
+private theorem shared_a_error {differential : Fin genus} {error : Rational}
+    (standard : StandardBoundaryReadings
       (standardPairRow lifted cycle period
       periodEq) differential minimum error domains extraPoints)
     (values : Data.Vector (PrimitiveSewing.PrimitiveValues 3) lifted.mesh.triangles.length)
     (same : values = standard.triangles.values) (periodStage : Nat) (later : standard.original.comparison.stage ≤
       periodStage) :
-    Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation lifted.mesh
+    Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation lifted.mesh
       values) (standardPairRow lifted cycle period
       periodEq).pair.aFaces.geometry.indexed -
       (((PreparedRefinementPrograms.rawPeriodDataOfData curve branches).aProgram differential cycle).integral.model
@@ -294,14 +296,14 @@ private theorem shared_a_error {differential : Fin genus} {error : Fraction.Rati
     same bound
 
 /-- The original B-period approximation holds on triangle values equal to the retained standard reader. -/
-private theorem shared_b_error {differential : Fin genus} {error : Fraction.Rational}
-    (standard : BoundaryReadings.StandardBoundaryReadings
+private theorem shared_b_error {differential : Fin genus} {error : Rational}
+    (standard : StandardBoundaryReadings
       (standardPairRow lifted cycle period
       periodEq) differential minimum error domains extraPoints)
     (values : Data.Vector (PrimitiveSewing.PrimitiveValues 3) lifted.mesh.triangles.length)
     (same : values = standard.triangles.values) (periodStage : Nat) (later : standard.original.comparison.stage ≤
       periodStage) :
-    Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation lifted.mesh
+    Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation lifted.mesh
       values) (standardPairRow lifted cycle period
       periodEq).pair.bFaces.geometry.indexed -
       (((PreparedRefinementPrograms.rawPeriodDataOfData curve branches).bProgram differential cycle).integral.model
@@ -318,7 +320,7 @@ private theorem shared_b_error {differential : Fin genus} {error : Fraction.Rati
 /-- The original A/B determinant is approximated on the exact cut-area triangle bank. Both differentials use the same
 later period index. -/
 theorem PairedAreaReadings.standard_area_accurate
-    (budget : HandleAreaBudgets.HandleAreaBudget
+    (budget : HandleAreaBudget
       (standardPairMagnitude
       (PreparedRefinementPrograms.rawPeriodDataOfData curve branches) first second cycle) 1 target)
     (readings : PairedAreaReadings firstPeriods secondPeriods segments domains minimum numericalFloor
@@ -372,17 +374,17 @@ theorem PairedAreaReadings.standard_area_accurate
       SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation lifted.mesh readings.area.right.values)
         row.pair.aFaces.geometry.indexed⟩ : Stokes.PrimitivePoint).sub a) budget.rowTarget := by
     exact ⟨by simpa only [PrimitivePoint.sub,
-        Data.Gaussian.Norm.Basic.normSq_eq_canonical] using aLeft.le.trans errorPaid,
+        Basic.normSq_eq_canonical] using aLeft.le.trans errorPaid,
       by simpa only [PrimitivePoint.sub,
-        Data.Gaussian.Norm.Basic.normSq_eq_canonical] using aRight.le.trans errorPaid⟩
+        Basic.normSq_eq_canonical] using aRight.le.trans errorPaid⟩
   have bError : PrimitivePoint.Bounded ((⟨wordValue (CanonicalEdgeValues.edgeValuation lifted.mesh
     readings.area.left.values) row.pair.bFaces.geometry.indexed,
       SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation lifted.mesh readings.area.right.values)
         row.pair.bFaces.geometry.indexed⟩ : Stokes.PrimitivePoint).sub b) budget.rowTarget := by
     exact ⟨by simpa only [PrimitivePoint.sub,
-        Data.Gaussian.Norm.Basic.normSq_eq_canonical] using bLeft.le.trans errorPaid,
+        Basic.normSq_eq_canonical] using bLeft.le.trans errorPaid,
       by simpa only [PrimitivePoint.sub,
-        Data.Gaussian.Norm.Basic.normSq_eq_canonical] using bRight.le.trans errorPaid⟩
+        Basic.normSq_eq_canonical] using bRight.le.trans errorPaid⟩
   have estimate := PrimitivePoint.area_difference_bound budget.magnitude_nonnegative budget.row_positive.le
     budget.row_le_one aBound bBound aError bError
   have weightNonnegative : 0 ≤ 32 *

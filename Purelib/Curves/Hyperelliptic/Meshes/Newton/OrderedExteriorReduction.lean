@@ -90,6 +90,10 @@ import Purelib.Topology.Surface.Sewing.SewnPrimitiveFaces
 import Purelib.Topology.Surface.Sewing.SewnPrimitiveSamples
 import Purelib.Tactic.Ring
 
+open Purelib.Approximation.Rational.Budget
+
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Approximation
 
 open Purelib.Curves
@@ -113,14 +117,14 @@ open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
-    {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered} (prepared :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+    PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {ordered : PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
+    {paired : PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered} (prepared :
+    PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation base.bank.toBranchCellBank}
   {target radius : Fraction.Rational} {i j : Fin genus} {floor : Nat}
 
@@ -130,27 +134,27 @@ Its two physical contributions and actual exterior correction use the same retai
 -/
 @[expose] def exteriorPeriodResidual (newSheet : Fin 2)
     (boundary : RootContinuation.NewtonRequestedBoundary.BoundaryPreparation preparation i j target radius floor)
-    {stage : Nat} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+    {stage : Nat} {cache : PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
       boundary.domains stage}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings boundary.paid.cut
+    (readings : PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings boundary.paid.cut
       cache) : Gaussian :=
   let grid := boundary.fine.family.single.grid
   let current := boundary.lifted
-  let exterior := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun
+  let exterior := PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun
     coefficient =>
-    let value := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.left.values)
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.right.values)
+    let value := PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix
+      (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.left.values)
+      (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.right.values)
       coefficient
     current.edges.chainArea current.vertices value (grid.shrunk.included.resplit base.bank.exterior
-      (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet -
-      Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
+      (PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet -
+      PuncturedGrid.Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
         grid.shrunk.included current.edges current.vertices newSheet value)
-  let physical := exterior + Hyperelliptic.Meshes.Newton.LocalPairedPeriodComparison.resplitWordDeterminant
+  let physical := exterior + LocalPairedPeriodComparison.resplitWordDeterminant
     prepared (current := current) newSheet
-    (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.left.values)
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.right.values)
-  physical + physical + Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentCorrection.physicalComponentCorrection
+    (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.left.values)
+      (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.right.values)
+  physical + physical + PuncturedGrid.PhysicalComponentCorrection.physicalComponentCorrection
     readings.normalized readings.neighbors readings.left readings.right .exterior
 
 /-- Prepare a common stage bounding the original ordered exterior period residual by 180 times the target.
@@ -161,59 +165,59 @@ cut cache preserves the same geometry and corrected period readings. -/
     (boundary : RootContinuation.NewtonRequestedBoundary.BoundaryPreparation preparation i j target radius floor)
       (minimum : Nat) :
     {threshold : Nat // minimum ≤ threshold ∧
-      ∀ stage (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics boundary.domains
+      ∀ stage (cache : PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics boundary.domains
         stage)
-        (readings : Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings boundary.paid.cut
+        (readings : PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings boundary.paid.cut
           cache)
         (_cached : Branches.NewtonRequestedCutComparison.CutAnnularReadings boundary.comparison readings),
-        threshold ≤ stage → Data.Gaussian.Norm.Basic.normSq
-          (Hyperelliptic.Meshes.Newton.OrderedExteriorReduction.exteriorPeriodResidual prepared newSheet boundary
-          readings) < 180 * target} := open Purelib.Algebra in by
+        threshold ≤ stage → Gaussian.Norm.Basic.normSq
+          (OrderedExteriorReduction.exteriorPeriodResidual prepared newSheet boundary
+          readings) < 180 * target} := open Algebra in by
   let grid := boundary.fine.family.single.grid
   let current := boundary.lifted
   let domains := boundary.domains
-  have positive : 0 < target := (Fraction.Order.Arithmetic.mul_pos_direct boundary.fine.positive (by
+  have positive : 0 < target := (Arithmetic.mul_pos_direct boundary.fine.positive (by
       decide : (0 : Fraction.Rational) < 4)).trans_eq
     (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))
-  let first := Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank.build domains
+  let first := PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank.build domains
     (Periods.PeriodMatrix.standardDifferential i)
-  let second := Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank.build domains
+  let second := PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank.build domains
     (Periods.PeriodMatrix.standardDifferential j)
-  let reference := fun point member => (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
+  let reference := fun point member => (PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
     grid.punctured.bank.toBranchCellBank point member).toLoop
   let compiled :=
-    Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.compileResplit
+    PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.compileResplit
     grid.shrunk.included current.edges current.vertices
-    reference (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
+    reference (PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
       ordered.prepared.partition newSheet
-  have quarterPositive := Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Fraction.Rational) < 4)
-  let part := Rational.Budget.Aggregate.perTerm (target / 4 / 4) 2
-  have regionPositive := Fraction.Order.Field.div_pos_direct quarterPositive (by decide : (0 : Fraction.Rational) < 4)
-  have partPositive := Rational.Budget.Aggregate.perTerm_positive regionPositive 2
-  let regular := Hyperelliptic.Meshes.Newton.PairedRegularAggregate.PairedRegularRequests.build first second
-    (Rational.Budget.Aggregate.perTerm part compiled.regulars.length)
-    (Rational.Budget.Aggregate.perTerm_positive partPositive _) minimum compiled.regulars
-  let branch := Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.build bank
-    (Hyperelliptic.Meshes.Newton.OrderedBranchPolygons.branchSheet ordered newSheet) first second
-    (Rational.Budget.Aggregate.perTerm part boundary.excision.entries.length)
-      (Rational.Budget.Aggregate.perTerm_positive partPositive _) minimum boundary.excision.entries
-  let corrections := Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedCorrections.PolarizedCorrectionRequest.build
+  have quarterPositive := Field.div_pos_direct positive (by decide : (0 : Fraction.Rational) < 4)
+  let part := Aggregate.perTerm (target / 4 / 4) 2
+  have regionPositive := Field.div_pos_direct quarterPositive (by decide : (0 : Fraction.Rational) < 4)
+  have partPositive := Aggregate.perTerm_positive regionPositive 2
+  let regular := PairedRegularAggregate.PairedRegularRequests.build first second
+    (Aggregate.perTerm part compiled.regulars.length)
+    (Aggregate.perTerm_positive partPositive _) minimum compiled.regulars
+  let branch := PairedBranchAggregate.PairedBranchRequests.build bank
+    (OrderedBranchPolygons.branchSheet ordered newSheet) first second
+    (Aggregate.perTerm part boundary.excision.entries.length)
+      (Aggregate.perTerm_positive partPositive _) minimum boundary.excision.entries
+  let corrections := PuncturedGrid.Inclusion.PolarizedCorrections.PolarizedCorrectionRequest.build
     (paired := paired) grid.shrunk.included compiled first second
-    (target / 4 / 16) (Fraction.Order.Field.div_pos_direct quarterPositive (by decide : (0 : Fraction.Rational) < 16))
+    (target / 4 / 16) (Field.div_pos_direct quarterPositive (by decide : (0 : Fraction.Rational) < 16))
       minimum
   let contacts := Topology.Surface.Sewing.SewnPrimitiveContacts.ContactBank.build current.cutPolygon.patch.assembly
-  let sewingPreparation : Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation current.cutPolygon
+  let sewingPreparation : PuncturedGrid.SewnBilinearRequest.BilinearPreparation current.cutPolygon
     domains i j :=
-    ⟨first, second, contacts, Hyperelliptic.Meshes.PuncturedGrid.ContactBanks.ContactPreparations.ofAssembly contacts
+    ⟨first, second, contacts, PuncturedGrid.ContactBanks.ContactPreparations.ofAssembly contacts
       (Periods.PeriodMatrix.standardDifferential i) domains,
-      Hyperelliptic.Meshes.PuncturedGrid.ContactBanks.ContactPreparations.ofAssembly contacts
+      PuncturedGrid.ContactBanks.ContactPreparations.ofAssembly contacts
         (Periods.PeriodMatrix.standardDifferential j) domains⟩
-  let sewing := Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation.Request.build
+  let sewing := PuncturedGrid.SewnBilinearRequest.BilinearPreparation.Request.build
     sewingPreparation (target / 4) quarterPositive minimum
   let localThreshold := max (max (max regular.index branch.index) (corrections.index minimum)) sewing.index
-  let regularCorrection := Hyperelliptic.Meshes.Newton.Regular.CorrectionAggregate.correctionRequest
+  let regularCorrection := Regular.CorrectionAggregate.correctionRequest
     sewingPreparation regular target positive minimum
-  let branchHole := Hyperelliptic.Meshes.Newton.Branch.HoleCancellation.branchHoleRequest
+  let branchHole := Branch.HoleCancellation.branchHoleRequest
     (prepared := boundary) branch sewingPreparation minimum
   let threshold := max (max localThreshold boundary.index) (max regularCorrection.val branchHole.val)
   refine ⟨threshold, regularCorrection.property.1.trans ((Nat.Order.le_max_left _ _).trans (Nat.Order.le_max_right _
@@ -222,11 +226,11 @@ cut cache preserves the same geometry and corrected period readings. -/
   have originalLater := (Nat.Order.le_max_left _ _).trans ((Nat.Order.le_max_left _ _).trans later)
   have boundaryLater := (Nat.Order.le_max_right _ _).trans ((Nat.Order.le_max_left _ _).trans later)
   have correctionLater := (Nat.Order.le_max_right _ _).trans later
-  let regularSamples := Hyperelliptic.Meshes.Newton.PairedRegularAggregate.PairedRegularRequests.Samples.build
+  let regularSamples := PairedRegularAggregate.PairedRegularRequests.Samples.build
     readings.left readings.right readings.leftSurface readings.rightSurface regular
-  let branchSamples := Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.Samples.build
+  let branchSamples := PairedBranchAggregate.PairedBranchRequests.Samples.build
     readings.left readings.right readings.leftSurface readings.rightSurface branch
-  have localBound := (Hyperelliptic.Meshes.Newton.LocalPairedPeriodComparison.local_paired_period_accurate prepared
+  have localBound := (LocalPairedPeriodComparison.local_paired_period_accurate prepared
     newSheet boundary.excision first second target positive minimum).2
     stage cache readings.left readings.right readings.leftSurface readings.rightSurface originalLater
   have regularBound := regularCorrection.property.2 stage cache readings.left readings.right readings.leftSurface
@@ -234,54 +238,54 @@ cut cache preserves the same geometry and corrected period readings. -/
     regularSamples ((Nat.Order.le_max_left _ _).trans correctionLater)
   have branchBound := branchHole.property.2 stage cache readings cached branchSamples ((Nat.Order.le_max_right _
     _).trans correctionLater)
-  have boundaryBound := Hyperelliptic.Meshes.PuncturedGrid.SelectedLocalBoundary.local_boundary_bound
+  have boundaryBound := PuncturedGrid.SelectedLocalBoundary.local_boundary_bound
     readings ((Nat.Order.le_max_left _ _).trans boundaryLater)
-  rw [Hyperelliptic.Meshes.PuncturedGrid.SelectedLocalBoundary.all_side_remainder_eq_physical readings] at boundaryBound
-  have boundarySmall := boundaryBound.trans ((Fraction.Order.Field.divide_le_self boundary.paid.positive.le (by
+  rw [PuncturedGrid.SelectedLocalBoundary.all_side_remainder_eq_physical readings] at boundaryBound
+  have boundarySmall := boundaryBound.trans ((Field.divide_le_self boundary.paid.positive.le (by
       decide : (1 : Fraction.Rational) ≤ 4)).trans
-    (boundary.paid.cutTarget_le.trans (Fraction.Order.Field.divide_le_self positive.le (by
+    (boundary.paid.cutTarget_le.trans (Field.divide_le_self positive.le (by
         decide : (1 : Fraction.Rational) ≤ 4))))
   let triangles := FiniteSum.Fin.sumFin
-    (Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea readings.left readings.right)
-  let exterior := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun
+    (PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea readings.left readings.right)
+  let exterior := PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun
     coefficient =>
-    let value := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.left.values)
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.right.values)
+    let value := PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix
+      (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.left.values)
+      (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.right.values)
       coefficient
     current.edges.chainArea current.vertices value (grid.shrunk.included.resplit base.bank.exterior
-      (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet -
-      Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
+      (PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet -
+      PuncturedGrid.Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
         grid.shrunk.included current.edges current.vertices newSheet value)
-  let physical := exterior + Hyperelliptic.Meshes.Newton.LocalPairedPeriodComparison.resplitWordDeterminant prepared
+  let physical := exterior + LocalPairedPeriodComparison.resplitWordDeterminant prepared
     (current := current) newSheet
-    (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.left.values)
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.right.values)
-  change Data.Gaussian.Norm.Basic.normSq (triangles - (regularSamples.corrections + branchSamples.corrections) -
+    (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.left.values)
+      (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.right.values)
+  change Gaussian.Norm.Basic.normSq (triangles - (regularSamples.corrections + branchSamples.corrections) -
     (physical + physical)) < target at localBound
   have full := (Gaussian.Norm.Bounds.normSq_sub_le_two (triangles + readings.physical)
       (triangles - (regularSamples.corrections + branchSamples.corrections) - (physical + physical))).trans_lt
-    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2)
-      ((Fraction.Order.Arithmetic.add_le_add_direct boundarySmall (le_refl _)).trans_lt
-        (Fraction.Order.Arithmetic.add_lt_add_left_direct localBound target)))
+    (Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2)
+      ((Arithmetic.add_le_add_direct boundarySmall (le_refl _)).trans_lt
+        (Arithmetic.add_lt_add_left_direct localBound target)))
   have removed := (Gaussian.Norm.Bounds.normSq_add_le_two regularSamples.corrections
       (branchSamples.corrections + boundary.fullHoleRemainder readings)).trans_lt
-    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2)
-      (Fraction.Order.Arithmetic.add_lt_add_direct regularBound branchBound))
+    (Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2)
+      (Arithmetic.add_lt_add_direct regularBound branchBound))
   have estimate := (Gaussian.Norm.Bounds.normSq_sub_le_two
       ((triangles + readings.physical) - (triangles - (regularSamples.corrections + branchSamples.corrections) -
         (physical + physical)))
       (regularSamples.corrections + (branchSamples.corrections + boundary.fullHoleRemainder readings))).trans_lt
-    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2)
-      (Fraction.Order.Arithmetic.add_lt_add_direct full removed))
+    (Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2)
+      (Arithmetic.add_lt_add_direct full removed))
   have equal : (triangles + readings.physical) -
       (triangles - (regularSamples.corrections + branchSamples.corrections) - (physical + physical)) -
       (regularSamples.corrections + (branchSamples.corrections + boundary.fullHoleRemainder readings)) =
-      Hyperelliptic.Meshes.Newton.OrderedExteriorReduction.exteriorPeriodResidual prepared newSheet boundary readings :=
+      OrderedExteriorReduction.exteriorPeriodResidual prepared newSheet boundary readings :=
         by
     rw [boundary.fullHoleRemainder_eq_physical readings]
     change _ = physical + physical + _
     ring1
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq equal).symm.trans_lt (estimate.trans_eq (by ring1))
+  exact (congrArg Gaussian.Norm.Basic.normSq equal).symm.trans_lt (estimate.trans_eq (by ring1))
 
 end Purelib.Curves.Hyperelliptic.Meshes.Newton.OrderedExteriorReduction

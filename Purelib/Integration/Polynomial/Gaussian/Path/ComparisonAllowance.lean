@@ -8,6 +8,7 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction
+import Purelib.Tactic.Ring
 
 public section
 
@@ -48,11 +49,28 @@ theorem parentChildAllowance_nonneg (parent child :
   exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
     (add_nonneg parent.localAllowance_nonneg child.localAllowance_nonneg)
 
+/-- The comparison allowance pays the original parent's local allowance in full. -/
+theorem parentAllowance_le (parent child : Basic.CellModel) :
+    parent.localAllowance ≤ parentChildAllowance parent child := by
+  have sumNonnegative := (Fraction.Field.zero_add (0 : Fraction.Rational)).symm.trans_le
+    (Fraction.Order.Arithmetic.add_le_add_direct parent.localAllowance_nonneg child.localAllowance_nonneg)
+  calc
+    _ = parent.localAllowance + 0 := by ring1
+    _ ≤ parent.localAllowance + child.localAllowance :=
+      Fraction.Order.Arithmetic.add_le_add_direct (Fraction.Order.Basic.le_refl _) child.localAllowance_nonneg
+    _ = 1 * (parent.localAllowance + child.localAllowance) := (Fraction.Field.one_mul _).symm
+    _ ≤ _ := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel) sumNonnegative
+
 /-- Retain the child geometry and polynomial with the certified parent-child comparison allowance. -/
 @[expose] def comparisonCell (parent child :
   Basic.CellModel) : Basic.CellModel :=
   child.withAllowance (parentChildAllowance parent child)
     (parentChildAllowance_nonneg parent child)
+
+/-- The parent comparison retains the same actual child displacement. -/
+theorem comparisonCell_displacement (parent child : Basic.CellModel) :
+    (comparisonCell parent child).displacement = child.displacement :=
+  Basic.CellModel.withAllowance_displacement child _ _
 
 /-- Changing the comparison allowance preserves the child's exact integral sample. -/
 @[simp] theorem comparisonCell_integralSample

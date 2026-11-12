@@ -179,7 +179,7 @@ def reduced_respects
     Gaussian.Equivalence.NamedEquivalent (Coherent.reducedName left leftBranch).name
       (Coherent.reducedName right rightBranch).name := by
   simpa only [Coherent.reducedName, Coherent.numeratorName, Coherent.preparedDenominatorName,
-    Coherent.denominatorName, CoherentNamed.apartify,
+    Coherent.denominatorName, CoherentNamed.apartify, CoherentNamed.apartState,
     CoherentNamed.div,
     Reduction.reduced,
     Reduction.preparedDenominator,

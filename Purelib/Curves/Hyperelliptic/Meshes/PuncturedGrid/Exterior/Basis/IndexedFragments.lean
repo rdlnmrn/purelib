@@ -71,33 +71,33 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments (OwnedFragment)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries (RowData)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBanks (BlockSample)
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
+  {program : ExteriorProgram lifted
     differential} {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+    SurfacePreparation
     regular domains program}
 
 open Purelib.Topology.Polygon.Stokes (PrimitivePoint)
-variable (retained : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation
+variable (retained : CommonBasisPreparation
   prepared) {index : Nat} (inputs : retained.Inputs index)
   (outer : Fin prepared.occurrences.length) {faceIndex : Nat}
-  (data : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (data : RowData
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) faceIndex)
   (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
 
 /-- Fragments at this position share the exact original primitive bank. -/
 def ParentFragment
     (position : Fin (ParentIndices.occurrenceAt prepared.occurrences outer).compared.entered.cache.parents.length) :=
-  OwnedFragments.OwnedFragment (originals := (ParentInputs.parentInput retained inputs outer
+  OwnedFragment (originals := (ParentInputs.parentInput retained inputs outer
     position).numerical.originals)
     (coefficients := coefficients) data
 
@@ -107,7 +107,7 @@ structure IndexedFragment where
   /-- The fragment's original bounded parent position in the retained occurrence. -/ parent : Fin
     (ParentIndices.occurrenceAt prepared.occurrences outer).compared.entered.cache.parents.length
   /-- The cached owned fragment on exactly that original parent's primitive bank. -/ fragment :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.ParentFragment retained inputs outer data
+    ParentFragment retained inputs outer data
     coefficients parent
 
 constructive_injectivity IndexedFragment
@@ -120,18 +120,18 @@ namespace ParentFragment
 def castParent {first last : Fin (ParentIndices.occurrenceAt prepared.occurrences
   outer).compared.entered.cache.parents.length}
     (same : first = last) (fragment :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.ParentFragment retained inputs outer
+      ParentFragment retained inputs outer
       data coefficients first) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.ParentFragment retained inputs outer data
+    ParentFragment retained inputs outer data
       coefficients last :=
-  Eq.mp (congrArg (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.ParentFragment retained
+  Eq.mp (congrArg (ParentFragment retained
     inputs outer data coefficients) same) fragment
 
 /-- Transporting a fragment along an equality of retained parent positions preserves both cached increment lists. -/
 theorem castParent_pair {first last : Fin (ParentIndices.occurrenceAt prepared.occurrences
   outer).compared.entered.cache.parents.length}
     (same : first = last) (fragment :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.ParentFragment retained inputs outer
+      ParentFragment retained inputs outer
       data coefficients first) :
     (fragment.castParent same).pair = fragment.pair := by
   cases same
@@ -141,24 +141,24 @@ end ParentFragment
 namespace IndexedFragment
 
 /-- Read the original physical and source increment lists from the retained indexed fragment. -/
-def pair (item : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment retained
+def pair (item : IndexedFragment retained
   inputs outer data coefficients) :
-    List Stokes.PrimitivePoint × List PrimitivePoint := item.fragment.pair
+    List PrimitivePoint × List PrimitivePoint := item.fragment.pair
 
 /-- Physical builders enter the indexed representation without reacquisition. -/
 def ofBlockSample {vertical forward : Bool} {physical : PreparedAxisPartitions.Interval}
-    (block : ParentBlocks.ParentBlock (ParentIndices.occurrenceAt prepared.occurrences outer) vertical forward physical)
-    {vertices : Nat} {values : Fin (vertices + 1) → Stokes.PrimitivePoint}
-    (sample : PhysicalBanks.BlockSample retained inputs outer block data coefficients values) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment retained inputs outer data
+    (block : ParentBlock (ParentIndices.occurrenceAt prepared.occurrences outer) vertical forward physical)
+    {vertices : Nat} {values : Fin (vertices + 1) → PrimitivePoint}
+    (sample : BlockSample retained inputs outer block data coefficients values) :
+    IndexedFragment retained inputs outer data
       coefficients := ⟨block.index, sample.fragment⟩
 
 /-- Indexing an original block sample preserves its exact physical/source increment pair. -/
 theorem ofBlockSample_pair {vertical forward : Bool} {physical : PreparedAxisPartitions.Interval}
-    (block : ParentBlocks.ParentBlock (ParentIndices.occurrenceAt prepared.occurrences outer) vertical forward physical)
-    {vertices : Nat} {values : Fin (vertices + 1) → Stokes.PrimitivePoint}
-    (sample : PhysicalBanks.BlockSample retained inputs outer block data coefficients values) :
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment.ofBlockSample block
+    (block : ParentBlock (ParentIndices.occurrenceAt prepared.occurrences outer) vertical forward physical)
+    {vertices : Nat} {values : Fin (vertices + 1) → PrimitivePoint}
+    (sample : BlockSample retained inputs outer block data coefficients values) :
+    (IndexedFragment.ofBlockSample block
       sample).pair = sample.fragment.pair := rfl
 
 end IndexedFragment

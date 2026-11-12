@@ -48,6 +48,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Algebra
@@ -118,15 +120,15 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary (ch
 variable {genus count index depth readingIndex floor minimum : Nat} {curve :
   HyperellipticCurve genus}
   {differential : Differential genus} {collar :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {parent :
-    Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+    ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {parent :
+    Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {source :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap} {source :
     SourcePrimitive data index}
-  {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {box : Geometry.Rational.Box} {capSample :
+    Cap.Primitives.Sample cap differential index box}
   {target : Coordinate}
   {polynomials : RegularBasisPolynomials cap
     index box}
@@ -151,7 +153,7 @@ open Purelib.Integration.Path.IncrementRestoration (potential detour)
 
 variable {energies : BasisEnergyData
   (polynomials := polynomials) energyTarget energyFloor energyDepth plans cells evaluated}
-  {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
+  {coefficients : GaussianVector genus}
   {sample : BasisBoundarySample energies
     coefficients joinTarget}
   {endpointTarget joining : Coordinate}
@@ -170,32 +172,32 @@ variable {covers : BasisSourceCovers parent}
 /-- Read the extreme values of the complete acquired endpoint spine. The parent's root readbacks discharge both chart
 identities, including empty paths. -/
 @[expose] def EndpointRestoration.ofEndpoints
-    (ends : Samples.Extremes endpoints coefficients)
+    (ends : Extremes endpoints coefficients)
     (sourcePaid : 4 * sourceTarget ≤ joining) (chartPaid : 10 * sourceTarget ≤ 4 * endpointTarget) :
-    BasisBoundarySample.EndpointRestoration sample endpointTarget joining := by
-  have nonnegative : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients :=
+    EndpointRestoration sample endpointTarget joining := by
+  have nonnegative : 0 ≤ coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
-      (Order.Positivity.sumFin_mono (fun _ => (0 : InverseRootPolynomial.Coordinate)) _ (fun row =>
-        Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
-  have firstSource := ends.first_bounded.source_close.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (Order.Positivity.sumFin_mono (fun _ => (0 : Coordinate)) _ (fun row =>
+        normSq_nonneg (coefficients row)))
+  have firstSource := ends.first_bounded.source_close.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct
     sourcePaid nonnegative)
   have lastSource : Data.Gaussian.Norm.Basic.normSq (ends.last.2 - ends.last.1) ≤ joining *
-    PreparedObservationCoercivity.coefficientNormSq coefficients := by
+    coefficientNormSq coefficients := by
     rw [show ends.last.2 - ends.last.1 = -(ends.last.1 - ends.last.2) by ring1, Data.Gaussian.Norm.Basic.normSq_neg]
-    exact ends.last_bounded.source_close.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct sourcePaid
+    exact ends.last_bounded.source_close.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct sourcePaid
       nonnegative)
   have firstChart : Data.Gaussian.Norm.Basic.normSq (sample.firstValue - ends.first.1) ≤ 4 * endpointTarget *
-    PreparedObservationCoercivity.coefficientNormSq coefficients := by
+    coefficientNormSq coefficients := by
     rw [sample.first_value, sample.first_root,
-      show polynomials.value coefficients (ParentBasisBoundary.chartFirstRoot plans cells evaluated) - ends.first.1 =
-      -(ends.first.1 - polynomials.value coefficients (ParentBasisBoundary.chartFirstRoot plans cells evaluated)) by
+      show polynomials.value coefficients (chartFirstRoot plans cells evaluated) - ends.first.1 =
+      -(ends.first.1 - polynomials.value coefficients (chartFirstRoot plans cells evaluated)) by
         ring1, Data.Gaussian.Norm.Basic.normSq_neg]
-    exact ends.first_bounded.chart_close.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct chartPaid
+    exact ends.first_bounded.chart_close.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct chartPaid
       nonnegative)
   have lastChart : Data.Gaussian.Norm.Basic.normSq (ends.last.1 - sample.lastValue) ≤ 4 * endpointTarget *
-    PreparedObservationCoercivity.coefficientNormSq coefficients := by
+    coefficientNormSq coefficients := by
     rw [sample.last_value, sample.last_root]
-    exact ends.last_bounded.chart_close.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct chartPaid
+    exact ends.last_bounded.chart_close.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct chartPaid
       nonnegative)
   exact EndpointRestoration.build sample ends.first.1 ends.last.1 ends.first.2 ends.last.2
     firstSource lastSource firstChart lastChart
@@ -208,18 +210,18 @@ set_option genInjectivity false in
 /-- Retain the acquired direct-to-chart estimates with the restored path. Both ends are needed when this parent is
 joined to its neighbours. -/
 structure SourceRestoration
-    {energies : ParentBasisRequests.BasisEnergyData (polynomials := polynomials) energyTarget energyFloor energyDepth
+    {energies : BasisEnergyData (polynomials := polynomials) energyTarget energyFloor energyDepth
       plans cells evaluated}
-    {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
-    (sample : ParentBasisBoundarySample.BasisBoundarySample energies coefficients joinTarget) (endpointTarget
-      sourceTarget : InverseRootPolynomial.Coordinate) where
+    {coefficients : GaussianVector genus}
+    (sample : BasisBoundarySample energies coefficients joinTarget) (endpointTarget
+      sourceTarget : Coordinate) where
   /-- The actual endpoint-restored parent path using the same endpoint and joining target. -/ restored :
-    BasisBoundarySample.EndpointRestoration sample endpointTarget endpointTarget
+    EndpointRestoration sample endpointTarget endpointTarget
   /-- The retained first source/direct/chart endpoint estimate on that exact restoration. -/ first_estimate :
-    ParentBasisEndpointValues.EndpointEstimate coefficients sourceTarget
+    EndpointEstimate coefficients sourceTarget
     sample.firstValue (restored.firstSource, restored.firstValue)
   /-- The retained last source/direct/chart endpoint estimate on that exact restoration. -/ last_estimate :
-    ParentBasisEndpointValues.EndpointEstimate coefficients sourceTarget
+    EndpointEstimate coefficients sourceTarget
     sample.lastValue (restored.lastSource, restored.lastValue)
 
 constructive_injectivity SourceRestoration
@@ -231,22 +233,22 @@ namespace ParentBasisRestorationAllowance
 variable {allowance : Coordinate}
 
 /-- This also matches the endpoint target of the restored root-join request. -/
-@[expose] def sourceTarget (allocation : ParentBasisRestoration.ParentBasisRestorationAllowance edges.length allowance)
+@[expose] def sourceTarget (allocation : ParentBasisRestorationAllowance edges.length allowance)
   : Coordinate :=
   allocation.target / 16
 
 /-- The restoration's one-sixteenth source target is strictly positive. -/
-theorem sourceTarget_positive (allocation : ParentBasisRestoration.ParentBasisRestorationAllowance edges.length
+theorem sourceTarget_positive (allocation : ParentBasisRestorationAllowance edges.length
   allowance) :
     0 <
       (sourceTarget
-      allocation) := Fraction.Order.Field.div_pos_direct allocation.target_positive (by decide)
+      allocation) := Field.div_pos_direct allocation.target_positive (by decide)
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourceRestoration.ParentBasisRestorationAllowance
 /-- Multiplying the selected source target by any factor at most sixteen fits the retained endpoint target. -/
-private theorem scaled_sourceTarget_le (allocation : ParentBasisRestoration.ParentBasisRestorationAllowance edges.length
+private theorem scaled_sourceTarget_le (allocation : ParentBasisRestorationAllowance edges.length
   allowance)
-    {factor : InverseRootPolynomial.Coordinate} (small : factor ≤ 16) : factor *
+    {factor : Coordinate} (small : factor ≤ 16) : factor *
       (sourceTarget
       allocation) ≤ allocation.target := by
   have paid : 16 *
@@ -254,14 +256,14 @@ private theorem scaled_sourceTarget_le (allocation : ParentBasisRestoration.Pare
     allocation) = allocation.target := by
     rw [sourceTarget, Fraction.Field.mul_comm]
     exact Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
-  exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct small
+  exact (Arithmetic.mul_le_mul_of_nonneg_right_direct small
     (sourceTarget_positive
     allocation).le).trans_eq paid
 
 /-- Multiplying the selected source target by any factor at most sixteen fits the retained endpoint target. -/
-theorem scaled_sourceTarget_le_for_restore (allocation : ParentBasisRestoration.ParentBasisRestorationAllowance
+theorem scaled_sourceTarget_le_for_restore (allocation : ParentBasisRestorationAllowance
   edges.length allowance)
-    {factor : InverseRootPolynomial.Coordinate} (small : factor ≤ 16) : factor *
+    {factor : Coordinate} (small : factor ≤ 16) : factor *
       (sourceTarget
       allocation) ≤ allocation.target := by
   have paid : 16 *
@@ -269,54 +271,54 @@ theorem scaled_sourceTarget_le_for_restore (allocation : ParentBasisRestoration.
     allocation) = allocation.target := by
     rw [sourceTarget, Fraction.Field.mul_comm]
     exact Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
-  exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct small
+  exact (Arithmetic.mul_le_mul_of_nonneg_right_direct small
     (sourceTarget_positive
     allocation).le).trans_eq paid
 
 /-- No endpoint error estimate is supplied by the caller: the complete acquisition and the preselected source target pay
 both restoration bounds. -/
-@[expose] def restore (allocation : ParentBasisRestoration.ParentBasisRestorationAllowance edges.length allowance)
-    {requests : ParentChartRequests.ChartRequests allocation.target floor owners} {plans :
-      ParentChartRequests.ChartPlans capSample minimum requests}
-    {cells : ParentPaths.ComparedCells source capSample depth bank} {evaluated : ChartPlans.EvaluationData readingIndex
+@[expose] def restore (allocation : ParentBasisRestorationAllowance edges.length allowance)
+    {requests : ChartRequests allocation.target floor owners} {plans :
+      ChartPlans capSample minimum requests}
+    {cells : ComparedCells source capSample depth bank} {evaluated : EvaluationData readingIndex
       plans cells}
-    {energies : ParentBasisRequests.BasisEnergyData (polynomials := polynomials) energyTarget energyFloor energyDepth
+    {energies : BasisEnergyData (polynomials := polynomials) energyTarget energyFloor energyDepth
       plans cells evaluated}
-    {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus} {sample :
-      ParentBasisBoundarySample.BasisBoundarySample energies
+    {coefficients : GaussianVector genus} {sample :
+      BasisBoundarySample energies
       coefficients allocation.target}
-    {covers : SourceLocations.BasisSourceCovers parent} {sourceFloor : Nat} {sourceTarget :
-      InverseRootPolynomial.Coordinate}
+    {covers : BasisSourceCovers parent} {sourceFloor : Nat} {sourceTarget :
+      Coordinate}
     {numerical : BasisSourceLocations.SampleBank covers index}
-    {sources : ParentBasisEndpoints.BasisEndpointRequests covers sourceTarget sourceFloor requests}
-    {planned : ParentBasisEndpoints.BasisEndpointPlans polynomials plans sources}
-    {endpoints : BasisEndpointPlans.Samples numerical plans cells evaluated sources planned}
-    (ends : Samples.Extremes endpoints coefficients)
+    {sources : BasisEndpointRequests covers sourceTarget sourceFloor requests}
+    {planned : BasisEndpointPlans polynomials plans sources}
+    {endpoints : Samples numerical plans cells evaluated sources planned}
+    (ends : Extremes endpoints coefficients)
     (sourceLe : sourceTarget ≤
       (ParentBasisRestorationAllowance.sourceTarget allocation)) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourceRestoration.BasisBoundarySample.SourceRestoration
+    BasisBoundarySample.SourceRestoration
       sample allocation.target sourceTarget := by
-  let restored : BasisBoundarySample.EndpointRestoration sample allocation.target allocation.target :=
+  let restored : EndpointRestoration sample allocation.target allocation.target :=
 
       BasisBoundarySample.EndpointRestoration.ofEndpoints
       ends
-      ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct sourceLe (by
-          decide : (0 : InverseRootPolynomial.Coordinate) ≤ 4)).trans
+      ((Arithmetic.mul_le_mul_of_nonneg_left_direct sourceLe (by
+          decide : (0 : Coordinate) ≤ 4)).trans
 
           (scaled_sourceTarget_le_for_restore
           allocation (by decide)))
-      (((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct sourceLe (by
-          decide : (0 : InverseRootPolynomial.Coordinate) ≤ 10)).trans
+      (((Arithmetic.mul_le_mul_of_nonneg_left_direct sourceLe (by
+          decide : (0 : Coordinate) ≤ 10)).trans
 
           (scaled_sourceTarget_le_for_restore
-          allocation (by decide : (10 : InverseRootPolynomial.Coordinate) ≤ 16))).trans
+          allocation (by decide : (10 : Coordinate) ≤ 16))).trans
         ((show allocation.target = 1 * allocation.target by ring1).trans_le
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide) allocation.target_positive.le)))
+          (Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide) allocation.target_positive.le)))
   refine ⟨restored, ?_, ?_⟩
-  · change ParentBasisEndpointValues.EndpointEstimate coefficients sourceTarget sample.firstValue ends.first
+  · change EndpointEstimate coefficients sourceTarget sample.firstValue ends.first
     rw [sample.first_value, sample.first_root]
     exact ends.first_bounded
-  · change ParentBasisEndpointValues.EndpointEstimate coefficients sourceTarget sample.lastValue ends.last
+  · change EndpointEstimate coefficients sourceTarget sample.lastValue ends.last
     rw [sample.last_value, sample.last_root]
     exact ends.last_bounded
 

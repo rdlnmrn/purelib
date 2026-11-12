@@ -78,7 +78,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target radius : Rational}
@@ -87,12 +87,12 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {lifted : LiftedPuncturedGrid request.single.grid.punctured}
   {excision : AllHoleExcision request.single.grid lifted}
   {prepared :
-    Purelib.Curves.Hyperelliptic.Meshes.Newton.AllHoles.PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations
+    Curves.Hyperelliptic.Meshes.Newton.AllHoles.PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations
     excision} {first second : Fin genus}
   {domains : FaceDomainBank lifted.frames
     request.single.grid.faces.regulars}
   {comparison :
-    Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison
+    PairedComparison
     prepared first second domains}
   {cutTarget : Rational} {floor stage : Nat}
   {cut : CutPairingRequest lifted domains first
@@ -103,7 +103,7 @@ open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_add)
 open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Topology.Polygon.Stokes (OrientedTriangle edgeListArea)
 open Purelib.Data.Gaussian.Basic (Canonical)
-attribute [local congr] Purelib.Algebra.FiniteSum.Fin.sumFin_congr
+attribute [local congr] sumFin_congr
 
 namespace CutAnnularReadings
 variable {readings : CutPairingRequest.Readings
@@ -114,16 +114,16 @@ open Purelib.Curves.Hyperelliptic in
 open Purelib.Riemann.Topology in
 /-- The original selected triangle-source mask sum equals the exact retained fine-face area selection. -/
 private theorem selected_source_sum :
-    FiniteSum.Fin.sumFin (fun source => if excision.entries.any (fun entry =>
+    sumFin (fun source => if excision.entries.any (fun entry =>
       NewtonSewnExcision.AllHoleExcision.sourceMask entry source) then
       Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea readings.left readings.right source else 0)
         =
-      Meshes.PuncturedGrid.SelectedTrianglePartition.selectedFullTriangleArea readings.left readings.right (fineMask
+      selectedFullTriangleArea readings.left readings.right (fineMask
         excision) := by
   rw [Meshes.PuncturedGrid.TriangleSums.LiftedMesh.triangle_sum lifted.mesh]
-  apply FiniteSum.Fin.sumFin_congr
+  apply sumFin_congr
   intro position
-  apply FiniteSum.Fin.sumFin_congr
+  apply sumFin_congr
   intro sheet
   have mask (upper : Bool) :
       excision.entries.any (fun entry => NewtonSewnExcision.AllHoleExcision.sourceMask entry
@@ -144,24 +144,24 @@ open Purelib.Riemann.Topology in
 The full sewn area and its retained complement are compared separately before their exact partition identity isolates
 the original selected sources. -/
 theorem selected_source_accurate (cached : CutAnnularReadings comparison readings) (later : cut.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (cached.annuli.selectedArea -
-      Meshes.PuncturedGrid.SelectedTrianglePartition.selectedFullTriangleArea readings.left readings.right (fineMask
+    normSq (cached.annuli.selectedArea -
+      selectedFullTriangleArea readings.left readings.right (fineMask
         excision)) ≤ cutTarget / 4 := by
   have full := cut.sewing.accurate (cut.sewing_le.trans later) readings.left readings.right readings.surface
   have remaining := Meshes.PuncturedGrid.SelectedSewnBilinearRequest.BilinearPreparation.Request.selected_accurate
     cut.sewing (cut.sewing_le.trans later) readings.left readings.right
     readings.surface cached.remaining.retained.remaining
   have sumPartition :
-      FiniteSum.Fin.sumFin (Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea readings.left
+      sumFin (Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea readings.left
         readings.right) =
-      Meshes.PuncturedGrid.SelectedTrianglePartition.selectedFullTriangleArea readings.left readings.right (fineMask
+      selectedFullTriangleArea readings.left readings.right (fineMask
         excision) +
-      FiniteSum.Fin.sumFin (fun source => if !(excision.entries.any (fun entry =>
+      sumFin (fun source => if !(excision.entries.any (fun entry =>
         NewtonSewnExcision.AllHoleExcision.sourceMask entry source)) then
         Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea readings.left readings.right source else
           0) := by
-    rw [← selected_source_sum (readings := readings), ← FiniteSum.Fin.sumFin_add]
-    apply FiniteSum.Fin.sumFin_congr
+    rw [← selected_source_sum (readings := readings), ← sumFin_add]
+    apply sumFin_congr
     intro source
     cases excision.entries.any (fun entry => NewtonSewnExcision.AllHoleExcision.sourceMask entry source) <;>
       simp only [Bool.not, if_neg Bool.false_ne_true, if_pos (rfl : true = true), -eq_self, -iff_self] <;> ring1
@@ -172,11 +172,11 @@ theorem selected_source_accurate (cached : CutAnnularReadings comparison reading
   rw [← remainingEq] at remaining
   have partition := cached.remaining.partition
   rw [cached.remaining.boundary_eq_bilinear readings.surface] at partition
-  have equal : cached.annuli.selectedArea - Meshes.PuncturedGrid.SelectedTrianglePartition.selectedFullTriangleArea
+  have equal : cached.annuli.selectedArea - selectedFullTriangleArea
     readings.left readings.right (fineMask excision) =
-      (readings.surface.boundaryArea - FiniteSum.Fin.sumFin
+      (readings.surface.boundaryArea - sumFin
         (Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea readings.left readings.right)) -
-      (cached.remaining.remainingArea - FiniteSum.Fin.sumFin (fun source =>
+      (cached.remaining.remainingArea - sumFin (fun source =>
         if !(excision.entries.any (fun entry => NewtonSewnExcision.AllHoleExcision.sourceMask entry source)) then
           Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea readings.left readings.right source
             else 0)) := by
@@ -197,7 +197,7 @@ open Purelib.Data.Rat in
 The same retained source mask and normalized neighbor readings combine source-area accuracy with the original selected
 crossing correction. -/
 theorem selected_boundary_bound (cached : CutAnnularReadings comparison readings) (later : cut.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (cached.annuli.selectedArea +
+    normSq (cached.annuli.selectedArea +
       Meshes.PuncturedGrid.SelectedSideRemainders.LiftedPuncturedGrid.selectedSideRemainder readings.normalized
       readings.neighbors (fineMask excision)) ≤ cutTarget := by
   have source := cached.selected_source_accurate later
@@ -206,7 +206,7 @@ theorem selected_boundary_bound (cached : CutAnnularReadings comparison readings
   have equal : cached.annuli.selectedArea +
     Meshes.PuncturedGrid.SelectedSideRemainders.LiftedPuncturedGrid.selectedSideRemainder readings.normalized
     readings.neighbors (fineMask excision) =
-      (cached.annuli.selectedArea - Meshes.PuncturedGrid.SelectedTrianglePartition.selectedFullTriangleArea
+      (cached.annuli.selectedArea - selectedFullTriangleArea
         readings.left readings.right (fineMask excision)) +
       Meshes.PuncturedGrid.SelectedCutBoundary.Readings.selectedCorrection readings (fineMask excision) := by
     rw [Meshes.PuncturedGrid.SelectedTrianglePartition.CrossingBank.selected_triangle_partition cut.crossings

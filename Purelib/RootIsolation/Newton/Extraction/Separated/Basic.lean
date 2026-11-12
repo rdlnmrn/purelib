@@ -26,6 +26,8 @@ import Purelib.Geometry.Rational.Box.Square.Centered
 import Purelib.Polynomial.Dense.Gaussian.Bounds.Box.Taylor
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Polynomial.Dense.Gaussian.Newton.Box
+
 open Purelib.Data
 
 open Purelib.Data.Rat
@@ -57,7 +59,7 @@ The original raw source, separation and requested epsilon index the retained
 Newton center, selected radius, centered box, strictness, winding and clearance
 witnesses. Every readback identifies those exact cached fields. -/
 structure SeparatedOutput
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
     (current : State.Raw.RawWindingState p ambient)
     (separation : Dense.Gaussian.Derivative.Separation.Basic.Certificate p current.box)
     (epsilon : Fraction.Rational) where
@@ -65,22 +67,22 @@ structure SeparatedOutput
     current.box
   /-- The rational radius used by this Newton extraction. -/ radius : Fraction.Rational
   /-- The retained radius is the original separated-extraction budget for the current box, clearance and accuracy. -/
-    radius_eq : radius = Dense.Gaussian.Newton.Box.Budget.Separated.separatedExtractionRadius separation current.box
+    radius_eq : radius = Budget.Separated.separatedExtractionRadius separation current.box
     current.clearance epsilon
   /-- The retained extraction radius is strictly positive. -/ radiusPositive : 0 < radius
   /-- The Newton-center certificate for the same polynomial, current box and retained source box. -/ newton :
-    Dense.Gaussian.Newton.Box.Certificate.SeparatedNewtonCenterCertificate
+    Certificate.SeparatedNewtonCenterCertificate
     p current.box source.box separation
   /-- The squared Newton-center displacement from the source anchor is at most the squared radius. -/ displacementSmall
-    : Data.Gaussian.Norm.Basic.normSq
-    (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source.box - source.box.anchor) ≤ radius ^ 2
+    : Gaussian.Norm.Basic.normSq
+    (Anchor.anchorNewtonCenter p source.box - source.box.anchor) ≤ radius ^ 2
   /-- The radius-scaled Taylor remainder fits within the supplied derivative-separation margin. -/ taylorSmall :
     2 * (36 * Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * radius ^ 2) ≤
       separation.margin
   /-- The retained centered Newton square. -/ box : Box
   /-- The retained box is exactly the radius square centered at the original source's Newton point. -/ box_eq : box =
     Box.Square.Centered.Affine.centeredSquare
-    (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source.box) radius radiusPositive.le
+    (Anchor.anchorNewtonCenter p source.box) radius radiusPositive.le
   /-- The extracted box lies strictly inside the original current box. -/ strictCurrent : box.StrictInterior current.box
   /-- The extracted box refines the original fixed ambient box. -/ refinesAmbient : box.Refines ambient
   /-- The extracted box has strictly positive width and height. -/ proper : box.Proper
@@ -88,8 +90,8 @@ structure SeparatedOutput
     : Clearance.Box.Boundary.Basic.BoundaryClearance p box
   /-- The retained clearance has the exact squared dominance-margin quotient determined by the original linearization
     majorant. -/ clearance_bound : clearance.bound =
-    Dense.Gaussian.Newton.Box.Square.Separated.separatedNewtonDominanceMargin separation radius ^ 2 /
-      (4 * Dense.Gaussian.Newton.Box.Square.Bounds.separatedNewtonLinearizationMajorant
+    Square.Separated.separatedNewtonDominanceMargin separation radius ^ 2 /
+      (4 * Square.Bounds.separatedNewtonLinearizationMajorant
         p current.box radius)
   /-- The original polynomial has quadrupled winding four on the extracted box. -/ rawWindingFour :
     Winding.Box.Basic.quadrupledBoxWinding p box = 4

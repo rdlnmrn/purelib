@@ -46,25 +46,25 @@ When `1 - z` is nonzero, that remainder is `-2z^(degree + 1)/(1 - z)`. -/
 theorem geometricPrefix_sub_chart (z :
   Gaussian.Basic.Canonical) (degree : Nat)
     (denominatorNonzero : 1 - z ≠ 0) :
-    Ascending.Rational.GaussianEvaluation.eval (Ascending.Rational.Geometric.geometricPrefix degree) z - (1 + z) / (1 -
+    GaussianEvaluation.eval (geometricPrefix degree) z - (1 + z) / (1 -
       z) =
       Gaussian.Scale.scale (-2) (z ^ (degree + 1)) /
         (1 - z) := by
   apply Gaussian.Field.mul_right_cancel_of_ne
     denominatorNonzero
   calc
-    (Ascending.Rational.GaussianEvaluation.eval (Ascending.Rational.Geometric.geometricPrefix degree) z - (1 + z) / (1 -
+    (GaussianEvaluation.eval (geometricPrefix degree) z - (1 + z) / (1 -
       z)) * (1 - z) =
-        Ascending.Rational.GaussianEvaluation.eval (Ascending.Rational.Geometric.geometricPrefix degree) z * (1 - z) -
+        GaussianEvaluation.eval (geometricPrefix degree) z * (1 - z) -
           ((1 + z) / (1 - z)) * (1 - z) := by
       apply Gaussian.Basic.ext <;>
         simp only [Gaussian.Basic.sub_re, Gaussian.Basic.sub_im, Gaussian.Basic.mul_re, Gaussian.Basic.mul_im] <;> ring1
-    _ = Ascending.Rational.GaussianEvaluation.eval (Ascending.Rational.Geometric.geometricPrefix degree) z * (1 - z) -
+    _ = GaussianEvaluation.eval (geometricPrefix degree) z * (1 - z) -
       (1 + z) := by
       rw [Gaussian.Division.gaussian_div_mul_cancel _ _ denominatorNonzero]
     _ = Gaussian.Scale.scale (-2) (z ^ (degree + 1)) := by
       rw [Gaussian.Basic.mul_comm,
-        Ascending.Rational.Geometric.GaussianEvaluation.one_sub_mul_geometricPrefix]
+        GaussianEvaluation.one_sub_mul_geometricPrefix]
       apply Gaussian.Basic.ext <;>
         simp only [Gaussian.Basic.add_re, Gaussian.Basic.add_im, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im] <;> ring1
     _ = (Gaussian.Scale.scale (-2) (z ^ (degree + 1)) /
@@ -77,14 +77,14 @@ If the squared norm of `z` is at most `1/9`, the error squared is at most `9 * (
 denominator lower bound `4/9`. -/
 theorem geometricPrefix_chart_error {z :
   Gaussian.Basic.Canonical}
-    (bound : Data.Gaussian.Norm.Basic.normSq z ≤ 1 / 9) (degree : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (Ascending.Rational.GaussianEvaluation.eval
-      (Ascending.Rational.Geometric.geometricPrefix degree) z - (1 + z) / (1 - z)) ≤
+    (bound : Gaussian.Norm.Basic.normSq z ≤ 1 / 9) (degree : Nat) :
+    Gaussian.Norm.Basic.normSq (GaussianEvaluation.eval
+      (geometricPrefix degree) z - (1 + z) / (1 - z)) ≤
       9 * (1 / 9 : Fraction.Rational) ^ (degree + 1) := open Purelib in by
   let denominator := 1 - z
-  have denominatorLower : (4 / 9 : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq denominator :=
+  have denominatorLower : (4 / 9 : Fraction.Rational) ≤ Gaussian.Norm.Basic.normSq denominator :=
     Geometry.Projective.Homography.Cayley.Bounds.one_sub_normSq_lower bound
-  have denominatorPositive : 0 < Data.Gaussian.Norm.Basic.normSq denominator :=
+  have denominatorPositive : 0 < Gaussian.Norm.Basic.normSq denominator :=
     (by decide : (0 : Fraction.Rational) < 4 / 9).trans_le denominatorLower
   rw [geometricPrefix_sub_chart z degree
     (Geometry.Projective.Homography.Cayley.Bounds.one_sub_ne_zero bound),
@@ -97,7 +97,7 @@ theorem geometricPrefix_chart_error {z :
   have powerBound := Fraction.Order.Arithmetic.pow_le_pow_direct
     (Gaussian.Norm.Basic.normSq_nonneg z) bound (degree + 1)
   calc
-    4 * Data.Gaussian.Norm.Basic.normSq z ^ (degree + 1) ≤
+    4 * Gaussian.Norm.Basic.normSq z ^ (degree + 1) ≤
         4 * (1 / 9 : Fraction.Rational) ^ (degree + 1) :=
       Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct powerBound
         (by decide)
@@ -111,7 +111,7 @@ theorem geometricPrefix_chart_error {z :
         _ = (9 * (1 / 9 : Fraction.Rational) ^ (degree + 1)) * (4 / 9) := by
           ring1
     _ ≤ (9 * (1 / 9 : Fraction.Rational) ^ (degree + 1)) *
-          Data.Gaussian.Norm.Basic.normSq denominator :=
+          Gaussian.Norm.Basic.normSq denominator :=
       Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
         denominatorLower
         (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)

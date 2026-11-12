@@ -155,7 +155,7 @@ def build (cut : PeriodCoordinates.CutBank prepared) :
   Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.ReferenceIntersections.CutBank.ReferenceReduction cut :=
   ⟨DependentVector.ofFn fun index =>
     let pair := bank.pair index paired.split.ending.reference sheet
-    ⟨pair, CutCoordinates.ofRetraction pair cut.retraction cut.integral cut.normal.normal⟩⟩
+    ⟨pair, CutCoordinates.ofRetraction pair cut.geometry cut.retraction cut.integral cut.normal.normal⟩⟩
 
 variable (data :
   Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.ReferenceIntersections.CutBank.ReferenceReduction cut) {word

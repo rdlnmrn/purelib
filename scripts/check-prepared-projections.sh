@@ -30,17 +30,17 @@ scripts/run-lake.sh env leanc -DLEAN_EXPORTING -c \
 
 scripts/run-lake.sh env lean -DwarningAsError=true \
   -o "$projection_tmp/Projection.olean" -c "$projection_tmp/Projection.c" \
-  Test/Riemann/Prepared/SubdivisionProjections.lean
+  TestPurelib/Riemann/Prepared/SubdivisionProjections.lean
 
 # Each public consumer must select the exposed original stored-data
 # implementation, preserving its declaration identity.
 for projection in endpoint terminalOwner stepCount parameterEdges preparedBoxes requests toClearPath; do
-  if ! rg -q "_Subdivision_${projection}Stored___redArg\\(" "$projection_tmp/Projection.c"; then
+  if ! grep -Fq "_Subdivision_${projection}Stored___redArg(" "$projection_tmp/Projection.c"; then
     printf 'missing direct stored-data implementation for %s\n' "$projection" >&2
     exit 1
   fi
 done
-if rg -n '_PreparedSheetContinuation_(advance|advanceCached|prepared|recentered)___' \
+if grep -En '_PreparedSheetContinuation_(advance|advanceCached|prepared|recentered)___' \
     "$projection_tmp/Projection.c"; then
   printf 'a public projection consumer replays owner preparation\n' >&2
   exit 1
@@ -74,12 +74,12 @@ if [[ $check_models == 1 ]]; then
     -o "$projection_tmp/ModelOwner.o"
   scripts/run-lake.sh env lean -DwarningAsError=true \
     -o "$projection_tmp/Model.olean" -c "$projection_tmp/Model.c" \
-    Test/Riemann/Prepared/ModelProjections.lean
-  if ! rg -q '_CenteredPathChain_dataOfCanonicalSubdivisionStored___redArg\(' "$projection_tmp/Model.c"; then
+    TestPurelib/Riemann/Prepared/ModelProjections.lean
+  if ! grep -Fq '_CenteredPathChain_dataOfCanonicalSubdivisionStored___redArg(' "$projection_tmp/Model.c"; then
     printf 'canonical centered-data consumer did not select its stored-data implementation\n' >&2
     exit 1
   fi
-  if rg -n '_PreparedSheetContinuation_(advance|advanceCached|prepared|recentered)___' "$projection_tmp/Model.c"; then
+  if grep -En '_PreparedSheetContinuation_(advance|advanceCached|prepared|recentered)___' "$projection_tmp/Model.c"; then
     printf 'canonical centered-data consumer replays owner preparation\n' >&2
     exit 1
   fi

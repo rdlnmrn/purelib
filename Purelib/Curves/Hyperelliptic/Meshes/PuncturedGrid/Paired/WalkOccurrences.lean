@@ -58,7 +58,7 @@ open Purelib.Topology.Polygon.Stokes
 variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
   Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
+  {frames : SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
       SquareRoot.Grid.LiftedVertices.VertexBank
     base.bank.grid}
   {edges : SquareRoot.Grid.RootEdgeBank frames} {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges
@@ -79,7 +79,7 @@ variable {start finish : Gaussian.Basic.Canonical} {edge : Geometry.Grid.Walks.E
 theorem source_project (paired : EdgeOccurrences mesh edge) (sheet :
   Fin 2) :
     (paired.source sheet).project mesh.triangulation.faces = edges.indexedEdge vertices edge sheet := by
-  refine Purelib.Data.Fin.cases_induction paired.zero_project (Purelib.Data.Fin.cases_induction paired.one_project (fun
+  refine Fin.cases_induction paired.zero_project (Fin.cases_induction paired.one_project (fun
     empty => Fin.elim0 empty)) sheet
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.EdgeOccurrences
@@ -93,14 +93,14 @@ Successive source selection follows each actual edge's sheet permutation. -/
 inductive PairedWalk (mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces) :
     {start finish : Gaussian.Basic.Canonical} → Geometry.Grid.Walks.Walk base.bank.grid start finish → Type
   /-- The paired occurrence bank of the original empty walk at its retained point. -/ | nil (point :
-    Gaussian.Basic.Canonical) : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkOccurrences.PairedWalk mesh
+    Gaussian.Basic.Canonical) : PairedWalk mesh
     (.nil point)
   /-- Prepend the actual paired edge occurrences to the original retained tail walk. -/ | cons {start middle finish :
     Gaussian.Basic.Canonical} {edge : Geometry.Grid.Walks.Edge base.bank.grid start middle}
       {tail : Geometry.Grid.Walks.Walk base.bank.grid middle finish} (head :
         EdgeOccurrences mesh edge)
-      (remaining : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkOccurrences.PairedWalk mesh tail) :
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkOccurrences.PairedWalk mesh (.cons edge tail)
+      (remaining : PairedWalk mesh tail) :
+        PairedWalk mesh (.cons edge tail)
 
 constructive_injectivity PairedWalk
 
@@ -109,15 +109,15 @@ namespace PairedWalk
 /-- Prepare the original paired triangle occurrences recursively along the retained grid walk. -/
 @[expose] def build (mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces) :
     {start finish : Gaussian.Basic.Canonical} → (walk : Geometry.Grid.Walks.Walk base.bank.grid start finish) →
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkOccurrences.PairedWalk mesh walk
+      PairedWalk mesh walk
   | _, _, .nil point => .nil point
   | _, _, .cons edge tail => .cons (EdgeOccurrences.build mesh edge)
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkOccurrences.PairedWalk.build mesh tail)
+    (PairedWalk.build mesh tail)
 
 /-- Read the original ordered triangle sources while following each retained edge's actual sheet transport. -/
 @[expose] def sources : {start finish : Gaussian.Basic.Canonical} → {walk : Geometry.Grid.Walks.Walk base.bank.grid
   start finish} →
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkOccurrences.PairedWalk mesh walk → Fin 2 → List
+    PairedWalk mesh walk → Fin 2 → List
       (Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge mesh.triangles.length)
   | _, _, _, .nil _, _ => []
   | _, _, _, .cons (edge := edge) head tail, sheet =>
@@ -126,7 +126,7 @@ namespace PairedWalk
 /-- The retained source list projects to the exact original lifted walk on its starting sheet. -/
 theorem sources_project : ∀ {start finish : Gaussian.Basic.Canonical} {walk : Geometry.Grid.Walks.Walk base.bank.grid
   start finish}
-    (paired : Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkOccurrences.PairedWalk mesh walk) (sheet : Fin 2),
+    (paired : PairedWalk mesh walk) (sheet : Fin 2),
     (paired.sources sheet).map (fun source => source.project mesh.triangulation.faces) = edges.indexedEdges vertices
       walk sheet
   | _, _, _, .nil _, _ => rfl
@@ -136,15 +136,15 @@ theorem sources_project : ∀ {start finish : Gaussian.Basic.Canonical} {walk : 
 /-- Read the sum of both original sheet increments for every retained edge occurrence. -/
 @[expose] def sums (values : Fin mesh.triangles.length → Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues 3) :
     {start finish : Gaussian.Basic.Canonical} → {walk : Geometry.Grid.Walks.Walk base.bank.grid start finish} →
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkOccurrences.PairedWalk mesh walk → List Gaussian.Basic.Canonical
+      PairedWalk mesh walk → List Gaussian.Basic.Canonical
   | _, _, _, .nil _ => []
   | _, _, _, .cons head tail => (head.zeroSource.increment values + head.oneSource.increment values) ::
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkOccurrences.PairedWalk.sums values tail
+    PairedWalk.sums values tail
 
 /-- The retained list of paired increment sums has the original walk's exact edge count. -/
 theorem sums_length (values : Fin mesh.triangles.length → Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues 3) :
     ∀ {start finish : Gaussian.Basic.Canonical} {walk : Geometry.Grid.Walks.Walk base.bank.grid start finish} (paired :
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkOccurrences.PairedWalk mesh walk),
+      PairedWalk mesh walk),
     (paired.sums values).length = walk.edgeCount
   | _, _, _, .nil _ => rfl
   | _, _, _, .cons _ tail => congrArg Nat.succ (tail.sums_length values)
@@ -153,25 +153,25 @@ theorem sums_length (values : Fin mesh.triangles.length → Topology.Surface.Sew
 proved finite bijection is exactly what permits this regrouping. -/
 theorem sums_eq (values : Fin mesh.triangles.length → Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues 3) :
     ∀ {start finish : Gaussian.Basic.Canonical} {walk : Geometry.Grid.Walks.Walk base.bank.grid start finish} (paired :
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkOccurrences.PairedWalk mesh walk),
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum ((paired.sources 0).map fun source => source.increment values) +
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum ((paired.sources 1).map fun source => source.increment values) =
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (paired.sums values)
+      PairedWalk mesh walk),
+    Gaussian.Norm.Sum.Basic.gaussianSum ((paired.sources 0).map fun source => source.increment values) +
+      Gaussian.Norm.Sum.Basic.gaussianSum ((paired.sources 1).map fun source => source.increment values) =
+        Gaussian.Norm.Sum.Basic.gaussianSum (paired.sums values)
   | _, _, _, .nil _ => by change (0 : Gaussian.Basic.Canonical) + 0 = 0; ring1
   | _, _, _, .cons (edge := edge) head tail => by
-      have reindex := Data.Gaussian.Norm.Sum.Basic.sum_two_reindex (edges.edge edge).forward.target
-        ((edges.edge edge).bijection (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
+      have reindex := Gaussian.Norm.Sum.Basic.sum_two_reindex (edges.edge edge).forward.target
+        ((edges.edge edge).bijection (LoopMonodromy.BranchCellBank.referenceAt
           base.bank.toBranchCellBank _ edge.vertices.1).toLoop
-          (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt base.bank.toBranchCellBank _
+          (LoopMonodromy.BranchCellBank.referenceAt base.bank.toBranchCellBank _
             edge.vertices.2).toLoop).forward_injective
-        (fun sheet => Data.Gaussian.Norm.Sum.Basic.gaussianSum ((tail.sources sheet).map fun source => source.increment
+        (fun sheet => Gaussian.Norm.Sum.Basic.gaussianSum ((tail.sources sheet).map fun source => source.increment
           values))
-      change (head.zeroSource.increment values + Data.Gaussian.Norm.Sum.Basic.gaussianSum ((tail.sources ((edges.edge
+      change (head.zeroSource.increment values + Gaussian.Norm.Sum.Basic.gaussianSum ((tail.sources ((edges.edge
         edge).forward.target 0)).map _)) +
-        (head.oneSource.increment values + Data.Gaussian.Norm.Sum.Basic.gaussianSum ((tail.sources ((edges.edge
+        (head.oneSource.increment values + Gaussian.Norm.Sum.Basic.gaussianSum ((tail.sources ((edges.edge
           edge).forward.target 1)).map _)) =
           (head.zeroSource.increment values + head.oneSource.increment values) +
-            Data.Gaussian.Norm.Sum.Basic.gaussianSum (tail.sums values)
+            Gaussian.Norm.Sum.Basic.gaussianSum (tail.sums values)
       rw [← tail.sums_eq values, ← reindex]
       ring1
 

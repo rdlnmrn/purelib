@@ -1,6 +1,7 @@
 module
 meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Data.Int.Arithmetic
+import Purelib.Data.List.Membership
 import Purelib.Riemann.Paths.OwnerTracePath
 import Purelib.Riemann.Paths.PreparedClearPathModels
 import Purelib.Riemann.Paths.PreparedTraceBudget
@@ -53,7 +54,7 @@ open Purelib.Riemann.Paths.OwnerTracePath (OwnerPath)
 
 namespace CompleteSegment
 
-variable {polynomial : GaussianPolynomial} {ambient : Purelib.Geometry.Rational.Box} {start finish : Gaussian}
+variable {polynomial : GaussianPolynomial} {ambient : Geometry.Rational.Box} {start finish : Gaussian}
   {segment : ClearSegment polynomial ambient start finish} {within :
     segment.WithinAmbient}
   {owner : Owner (polynomial.eval start)}
@@ -88,6 +89,23 @@ theorem ownerPath_vertices (prepared : CompleteSegment segment within owner)
   rw [ownerPath, OwnerPath.castEndpoints_vertices,
     PreparedSubdivisionTrace.PreparedTraceBudget.ownerPath_vertices]
 
+open Purelib.Riemann.Paths in
+/-- Every vertex of the retained complete segment's actual owner trace lies in a box containing its endpoints.
+
+The exact request-derived trace list retains all source and target handoff
+repetitions. Containment uses those original endpoint certificates without
+constructing new subdivision or owner data.
+-/
+theorem ownerPath_inBox (prepared : CompleteSegment segment within owner)
+    (budget : PreparedTraceBudget segment zeroEndpoint oneEndpoint)
+    (fits : budget.RequestsFit zeroEndpoint prepared.subdivision.requests)
+    (enclosure : Geometry.Rational.Box) (first : enclosure.Contains start) (last : enclosure.Contains finish)
+    (point : Gaussian) (member : point ∈ (ownerPath prepared budget fits).vertices) :
+    enclosure.Contains point := by
+  rewrite [ownerPath_vertices prepared budget fits] at member
+  exact PreparedSubdivisionTrace.PreparedTraceBudget.traceVertices_inBox enclosure first last
+    zeroEndpoint prepared.subdivision.requests point member
+
 open Purelib.Polynomial in
 open Purelib.Riemann.Paths in
 /-- The retained complete segment trace has the same raw winding as its exact original moving endpoint list. -/
@@ -95,7 +113,7 @@ theorem ownerPath_chainRaw (prepared : CompleteSegment segment within owner)
     (budget : PreparedTraceBudget segment zeroEndpoint oneEndpoint)
     (fits : budget.RequestsFit zeroEndpoint prepared.subdivision.requests) :
     Winding.Polygon.Basic.chainRaw polynomial start (ownerPath prepared budget fits).vertices =
-      Winding.Polygon.Basic.chainRaw polynomial start (CompleteSegment.movingVertices prepared) := by
+      Winding.Polygon.Basic.chainRaw polynomial start (movingVertices prepared) := by
   rw [ownerPath_vertices prepared budget fits]
   have equality := PreparedSubdivisionTrace.PreparedTraceBudget.traceVertices_chainRaw
     segment zeroEndpoint prepared.subdivision.requests
@@ -108,7 +126,7 @@ open Purelib.Riemann.Paths in
 theorem movingVertices_terminal (prepared : CompleteSegment segment within owner)
     (budget : PreparedTraceBudget segment zeroEndpoint oneEndpoint)
     (fits : budget.RequestsFit zeroEndpoint prepared.subdivision.requests) :
-    Polygon.Chain.terminal start (CompleteSegment.movingVertices prepared) = finish := by
+    Polygon.Chain.terminal start (movingVertices prepared) = finish := by
   have equality := PreparedSubdivisionTrace.PreparedTraceBudget.traceVertices_terminal
     segment zeroEndpoint prepared.subdivision.requests
   rw [prepared.start_eq, ← ownerPath_vertices prepared budget fits] at equality
@@ -122,8 +140,8 @@ set_option genInjectivity false in
 
 The original request-fit certificate and moving-vertex equation preserve the executable subdivision. The deferred trace
 retains an exact raw winding equality with those original moving vertices. -/
-structure TracedSegment {polynomial : GaussianPolynomial} {ambient : Purelib.Geometry.Rational.Box}
-    {start finish : Gaussian} (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+structure TracedSegment {polynomial : GaussianPolynomial} {ambient : Geometry.Rational.Box}
+    {start finish : Gaussian} (segment : ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (owner : Owner (polynomial.eval start)) where
   /-- The retained trace budget for the exact original segment and unit endpoint interval. -/ budget :
     PreparedTraceBudget segment zeroEndpoint oneEndpoint
@@ -154,9 +172,9 @@ open Purelib.Riemann.Branches in
 
 The moving vertices consume the supplied cached requests, and the owner trace is deferred while retaining the original
 winding comparison and owner equality. -/
-@[expose] def ofPrepared {polynomial : GaussianPolynomial} {ambient : Purelib.Geometry.Rational.Box} {start finish :
+@[expose] def ofPrepared {polynomial : GaussianPolynomial} {ambient : Geometry.Rational.Box} {start finish :
   Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish} {within : segment.WithinAmbient}
+    {segment : ClearSegment polynomial ambient start finish} {within : segment.WithinAmbient}
     {owner : Owner (polynomial.eval start)} (budget : PreparedTraceBudget segment zeroEndpoint oneEndpoint)
     (prepared : CompleteSegment segment within owner)
     (fits : budget.RequestsFit zeroEndpoint prepared.subdivision.requests)
@@ -178,6 +196,33 @@ winding comparison and owner equality. -/
       rw [OwnerPath.reindexOwners_vertices]
       exact CompleteSegment.ownerPath_chainRaw prepared budget fits }
 
+open Purelib.Polynomial in
+open Purelib.Riemann.Branches in
+/-- The original completed-segment trace constructor retains containment of all actual request and handoff vertices.
+
+The supplied preparation, requests and finish-owner cache remain literal
+constructor inputs. Reindexing their owners preserves the exact original
+trace list and hence its endpoint-box containment.
+-/
+theorem ofPrepared_inBox {polynomial : GaussianPolynomial} {ambient : Geometry.Rational.Box}
+    {start finish : Gaussian} {segment : ClearSegment polynomial ambient start finish}
+    {within : segment.WithinAmbient} {owner : Owner (polynomial.eval start)}
+    (budget : PreparedTraceBudget segment zeroEndpoint oneEndpoint)
+    (prepared : CompleteSegment segment within owner)
+    (fits : budget.RequestsFit zeroEndpoint prepared.subdivision.requests)
+    (requests : List PreparedSheetContinuation.StepRequest)
+    (requests_eq : requests = prepared.subdivision.requests)
+    (finishOwner : Owner (polynomial.eval finish)) (finishOwner_eq : finishOwner = prepared.finishOwner)
+    (enclosure : Geometry.Rational.Box) (first : enclosure.Contains start) (last : enclosure.Contains finish)
+    (point : Gaussian)
+    (member : point ∈
+      (ofPrepared budget prepared fits requests requests_eq finishOwner finishOwner_eq).trace.get.vertices) :
+    enclosure.Contains point := by
+  change point ∈ ((CompleteSegment.ownerPath prepared budget fits).reindexOwners rfl finishOwner_eq.symm).vertices
+    at member
+  rewrite [OwnerPath.reindexOwners_vertices] at member
+  exact CompleteSegment.ownerPath_inBox prepared budget fits enclosure first last point member
+
 open Purelib.Approximation.Rational in
 open Purelib.Polynomial in
 open Purelib.Riemann.Branches in
@@ -186,13 +231,13 @@ open Purelib.RootIsolation in
 
 The selected dyadic result retains its exact request list and terminal owner, and the two possible chosen depths each
 establish the original request-fit certificate. -/
-@[expose] def build {polynomial : GaussianPolynomial} {ambient : Purelib.Geometry.Rational.Box} {start finish :
+@[expose] def build {polynomial : GaussianPolynomial} {ambient : Geometry.Rational.Box} {start finish :
   Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) (within : segment.WithinAmbient)
+    (segment : ClearSegment polynomial ambient start finish) (within : segment.WithinAmbient)
     (owner : Owner (polynomial.eval start)) : TracedSegment segment within owner :=
   let budget := PreparedTraceBudget.build segment zeroEndpoint oneEndpoint
   let depth := Geometric.Search.firstQuarterBelow budget.variation 0 budget.movementBudget
-  let acquired := SquareRoot.Preparation.Terminal.AcquiredDyadic.acquire segment within owner budget.rootDiameter
+  let acquired := AcquiredDyadic.acquire segment within owner budget.rootDiameter
     budget.rootDiameter_positive
     depth budget.depth (budget.meshSafe (ownerAtStart segment owner) (by decide))
   have fits : budget.RequestsFit zeroEndpoint acquired.val.prepared.subdivision.requests := by
@@ -219,16 +264,16 @@ namespace PreparedPath
 section
 open Purelib.Polynomial
 /-- Concatenate the exact original request endpoint vertices across the retained prepared path in segment order. -/
-@[expose] def movingVertices {polynomial : GaussianPolynomial} {ambient : Purelib.Geometry.Rational.Box} :
-    {start finish : Gaussian} → {path : Polynomial.Geometry.ClearPath polynomial ambient start finish} →
+@[expose] def movingVertices {polynomial : GaussianPolynomial} {ambient : Geometry.Rational.Box} :
+    {start finish : Gaussian} → {path : ClearPath polynomial ambient start finish} →
       {owner : Owner (polynomial.eval start)} → PreparedPath path owner → List Gaussian
   | _, _, _, _, .nil _ _ => []
   | _, _, _, _, .cons _ _ _ _ head tail => CompleteSegment.movingVertices head ++ movingVertices tail
 
 /-- Transport an original prepared path along exact equality of its starting owner. -/
-@[expose] def castOwner {polynomial : GaussianPolynomial} {ambient : Purelib.Geometry.Rational.Box} {start finish :
+@[expose] def castOwner {polynomial : GaussianPolynomial} {ambient : Geometry.Rational.Box} {start finish :
   Gaussian}
-    {path : Polynomial.Geometry.ClearPath polynomial ambient start finish} {first second : Owner (polynomial.eval
+    {path : ClearPath polynomial ambient start finish} {first second : Owner (polynomial.eval
       start)}
     (equal : first = second) (prepared : PreparedPath path first) : PreparedPath path second := by
   cases equal
@@ -239,9 +284,9 @@ end
 open Purelib.Polynomial in
 open Purelib.Riemann.Paths in
 /-- Transporting equal original starting owners preserves the retained prepared path's exact finish owner. -/
-theorem castOwner_finishOwner {polynomial : GaussianPolynomial} {ambient : Purelib.Geometry.Rational.Box} {start finish
+theorem castOwner_finishOwner {polynomial : GaussianPolynomial} {ambient : Geometry.Rational.Box} {start finish
   : Gaussian}
-    {path : Polynomial.Geometry.ClearPath polynomial ambient start finish} {first second : Owner (polynomial.eval
+    {path : ClearPath polynomial ambient start finish} {first second : Owner (polynomial.eval
       start)}
     (equal : first = second) (prepared : PreparedPath path first) :
     PreparedPathGluing.finishOwner (castOwner equal prepared) = PreparedPathGluing.finishOwner prepared := by
@@ -250,9 +295,9 @@ theorem castOwner_finishOwner {polynomial : GaussianPolynomial} {ambient : Purel
 
 open Purelib.Polynomial in
 /-- Transporting equal original starting owners preserves the exact moving vertex list. -/
-theorem castOwner_movingVertices {polynomial : GaussianPolynomial} {ambient : Purelib.Geometry.Rational.Box} {start
+theorem castOwner_movingVertices {polynomial : GaussianPolynomial} {ambient : Geometry.Rational.Box} {start
   finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath polynomial ambient start finish} {first second : Owner (polynomial.eval
+    {path : ClearPath polynomial ambient start finish} {first second : Owner (polynomial.eval
       start)}
     (equal : first = second) (prepared : PreparedPath path first) :
     movingVertices (castOwner equal prepared) = movingVertices prepared := by
@@ -265,21 +310,21 @@ set_option genInjectivity false in
 
 Each nonempty step keeps its original finish-owner equality and tail lineage, including the exact owner transport used
 to join the stored path. -/
-inductive TraceLineage {polynomial : GaussianPolynomial} {ambient : Purelib.Geometry.Rational.Box} :
-    {start finish : Gaussian} → {path : Polynomial.Geometry.ClearPath polynomial ambient start finish} →
+inductive TraceLineage {polynomial : GaussianPolynomial} {ambient : Geometry.Rational.Box} :
+    {start finish : Gaussian} → {path : ClearPath polynomial ambient start finish} →
       {owner : Owner (polynomial.eval start)} → PreparedPath path owner → Type
   /-- The empty lineage retains the exact original point and owner. -/ | nil (point : Gaussian) (owner : Owner
     (polynomial.eval point)) : TraceLineage (.nil point owner)
   /-- Retain the original segment budget, request-fit certificate, finish-owner equality and exact tail lineage. -/ |
-    cons {start middle finish : Gaussian} {head : Geometry.ClearPath.ClearSegment polynomial ambient start middle}
-      {tail : Polynomial.Geometry.ClearPath polynomial ambient middle finish} {owner : Owner (polynomial.eval start)}
+    cons {start middle finish : Gaussian} {head : ClearSegment polynomial ambient start middle}
+      {tail : ClearPath polynomial ambient middle finish} {owner : Owner (polynomial.eval start)}
       {within : head.WithinAmbient} {first : CompleteSegment head within owner}
       {finishOwner : Owner (polynomial.eval middle)} {rest : PreparedPath tail finishOwner}
       (budget : PreparedTraceBudget head zeroEndpoint oneEndpoint)
       (fits : budget.RequestsFit zeroEndpoint first.subdivision.requests)
       (finishOwner_eq : finishOwner = first.finishOwner)
       (remaining : TraceLineage rest) :
-        TraceLineage (.cons head tail owner within first (PreparedPath.castOwner finishOwner_eq rest))
+        TraceLineage (.cons head tail owner within first (castOwner finishOwner_eq rest))
 
 constructive_injectivity TraceLineage
 
@@ -294,8 +339,8 @@ trace.
 
 The exact original endpoint owners and ordered path remain indices. Winding equality and terminal geometry relate the
 deferred trace to the same retained moving vertices. -/
-structure TracedPath {polynomial : GaussianPolynomial} {ambient : Purelib.Geometry.Rational.Box}
-    {start finish : Gaussian} (path : Polynomial.Geometry.ClearPath polynomial ambient start finish)
+structure TracedPath {polynomial : GaussianPolynomial} {ambient : Geometry.Rational.Box}
+    {start finish : Gaussian} (path : ClearPath polynomial ambient start finish)
     (owner : Owner (polynomial.eval start)) where
   /-- The original prepared segment or path retained by this trace certificate. -/ prepared : PreparedPath path owner
   /-- The retained original segment budgets and owner transports belonging to the exact stored prepared path. -/ lineage
@@ -319,15 +364,29 @@ constructive_injectivity TracedPath
 
 namespace TracedPath
 
+
+open Purelib.Polynomial in
+/-- Every original deferred owner-trace vertex belongs to the supplied box.
+
+This named proposition keeps the complete retained trace and endpoint owner
+indices intact without unfolding its preparation or primitive-cover factory
+when elaborating a dependent construction.
+-/
+@[expose] def InBox {polynomial : GaussianPolynomial} {ambient : Geometry.Rational.Box}
+    (enclosure : Geometry.Rational.Box) {start finish : Gaussian}
+    {path : ClearPath polynomial ambient start finish} {owner : Owner (polynomial.eval start)}
+    (traced : TracedPath path owner) : Prop :=
+  ∀ point ∈ traced.trace.get.vertices, enclosure.Contains point
+
 open Purelib.Polynomial in
 /-- For a returning original traced path, its closed trace winding equals the raw winding of the exact retained moving
 vertices.
 
 The retained endpoint owner certifies the stationary closing segment. The
 original trace winding equation then identifies the exact cached moving list. -/
-theorem closedRaw_eq_moving {polynomial : GaussianPolynomial} {ambient : Purelib.Geometry.Rational.Box} {base :
+theorem closedRaw_eq_moving {polynomial : GaussianPolynomial} {ambient : Geometry.Rational.Box} {base :
   Gaussian}
-    {path : Polynomial.Geometry.ClearPath polynomial ambient base base} {owner : Owner (polynomial.eval base)}
+    {path : ClearPath polynomial ambient base base} {owner : Owner (polynomial.eval base)}
     (traced : TracedPath path owner) :
     Winding.Polygon.Basic.closedRaw polynomial base traced.trace.get.vertices =
       Winding.Polygon.Basic.chainRaw polynomial base (PreparedPath.movingVertices traced.prepared) := by
@@ -343,9 +402,9 @@ open Purelib.Riemann.Paths in
 
 The deferred owner trace has the same exact winding, and a putative return comparison would produce a closed square-root
 trace with even winding. -/
-theorem root_not_equivalent_of_odd {polynomial : GaussianPolynomial} {ambient : Purelib.Geometry.Rational.Box} {base :
+theorem root_not_equivalent_of_odd {polynomial : GaussianPolynomial} {ambient : Geometry.Rational.Box} {base :
   Gaussian}
-    {path : Polynomial.Geometry.ClearPath polynomial ambient base base} {owner : Owner (polynomial.eval base)}
+    {path : ClearPath polynomial ambient base base} {owner : Owner (polynomial.eval base)}
     (traced : TracedPath path owner) (turns : Int)
     (odd : Winding.Polygon.Basic.chainRaw polynomial base (PreparedPath.movingVertices traced.prepared) = 4 * (2 * turns
       + 1)) :
@@ -361,9 +420,9 @@ open Purelib.Polynomial in
 
 The constructor reuses both prepared paths and moving caches, retains the owner transport in its lineage, and defers
 concatenation of the original owner traces with exact winding and terminal certificates. -/
-@[expose] def cons {polynomial : GaussianPolynomial} {ambient : Purelib.Geometry.Rational.Box} {start middle finish :
+@[expose] def cons {polynomial : GaussianPolynomial} {ambient : Geometry.Rational.Box} {start middle finish :
   Gaussian}
-    {head : Geometry.ClearPath.ClearSegment polynomial ambient start middle} {tail : Polynomial.Geometry.ClearPath
+    {head : ClearSegment polynomial ambient start middle} {tail : ClearPath
       polynomial ambient middle finish}
     {within : head.WithinAmbient} {owner : Owner (polynomial.eval start)}
     (first : TracedSegment head within owner) (rest : TracedPath tail first.finishOwner) :
@@ -397,12 +456,34 @@ concatenation of the original owner traces with exact winding and terminal certi
             CompleteSegment.movingVertices_terminal first.prepared first.budget first.fits, rest.moving_terminal] }
 
 open Purelib.Polynomial in
+/-- Concatenation preserves containment of the two exact original deferred trace vertex lists.
+
+The head and tail keep their actual endpoint owners. Their original
+append operation concatenates precisely those lists, including every
+stationary handoff already retained in either input.
+-/
+theorem cons_inBox {polynomial : GaussianPolynomial} {ambient : Geometry.Rational.Box}
+    {start middle finish : Gaussian} {head : ClearSegment polynomial ambient start middle}
+    {tail : ClearPath polynomial ambient middle finish} {within : head.WithinAmbient}
+    {owner : Owner (polynomial.eval start)} (first : TracedSegment head within owner)
+    (rest : TracedPath tail first.finishOwner) (enclosure : Geometry.Rational.Box)
+    (headInside : ∀ point ∈ first.trace.get.vertices, enclosure.Contains point)
+    (tailInside : ∀ point ∈ rest.trace.get.vertices, enclosure.Contains point)
+    : InBox enclosure (cons first rest) := by
+  intro point member
+  change point ∈ (first.trace.get.append rest.trace.get).vertices at member
+  rewrite [OwnerPath.append_vertices] at member
+  cases List.Membership.mem_append.mp member with
+  | inl member => exact headInside point member
+  | inr member => exact tailInside point member
+
+open Purelib.Polynomial in
 /-- Construct a retained traced path recursively along the exact original cleared segments.
 
 The empty path keeps its original owner and empty caches. Each segment passes its cached finish owner into the original
 tail construction and retains the deferred trace through concatenation. -/
-@[expose] def build {polynomial : GaussianPolynomial} {ambient : Purelib.Geometry.Rational.Box} :
-    {start finish : Gaussian} → (path : Polynomial.Geometry.ClearPath polynomial ambient start finish) →
+@[expose] def build {polynomial : GaussianPolynomial} {ambient : Geometry.Rational.Box} :
+    {start finish : Gaussian} → (path : ClearPath polynomial ambient start finish) →
       path.WithinAmbient → (owner : Owner (polynomial.eval start)) → TracedPath path owner
   | _, _, .nil point, _within, owner =>
       { prepared := .nil point owner

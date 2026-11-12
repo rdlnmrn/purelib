@@ -36,6 +36,15 @@ chain. -/
       exact owner.at_index
     start_le := owner.start_le, point_lt_finish := owner.point_lt_finish }
 
+/-- Ordered points in the half-open unit interval have nondecreasing original owner indices. -/
+theorem pointOwner_index_mono (partition : Normalized) (first second : Fraction.Rational)
+    (firstLower : 0 ≤ first) (firstUpper : first < 1) (secondLower : 0 ≤ second) (secondUpper : second < 1)
+    (ordered : first ≤ second) :
+    (partition.pointOwner first firstLower firstUpper).index ≤
+      (partition.pointOwner second secondLower secondUpper).index :=
+  Ownership.pointOwnerBetween_index_mono 0 1 first second partition.cuts firstLower firstUpper
+    secondLower secondUpper ordered
+
 /-- Locate a fine interval's original coarse owner when every coarse cut occurs in the fine partition.
 
 The retained owner is found from the child's start, and cut inclusion certifies containment of the child's finish in
@@ -54,6 +63,19 @@ that same original parent. -/
     owner.at_index) with last | cut
   · exact (not_lt_of_ge bounds.2.2) (last ▸ below)
   · exact fine.no_cut_inside (included _ cut) member ⟨owner.point_lt_finish, below⟩
+
+/-- Finer intervals with ordered starts have nondecreasing indices in their original coarse partition. -/
+theorem intervalOwner_index_mono (coarse fine : Normalized)
+    (included : ∀ cut ∈ coarse.cuts, cut ∈ fine.cuts) (first second : Interval)
+    (firstMember : first ∈ fine.intervals) (secondMember : second ∈ fine.intervals)
+    (ordered : first.start ≤ second.start) :
+    (coarse.intervalOwner fine included first firstMember).index ≤
+      (coarse.intervalOwner fine included second secondMember).index := by
+  have firstValid := fine.valid first firstMember
+  have secondValid := fine.valid second secondMember
+  exact coarse.pointOwner_index_mono first.start second.start firstValid.1
+    (firstValid.2.1.trans_le firstValid.2.2) secondValid.1
+    (secondValid.2.1.trans_le secondValid.2.2) ordered
 
 end
 

@@ -35,6 +35,8 @@ import Mathlib.Data.Nat.Init
 import Purelib.Algebra.Field.ExplicitField
 import Purelib.Tactic.Ring
 
+open Purelib.Geometry.Quadratic.Ternary
+
 open Purelib.Algebra.Field (ExplicitField)
 
 open Purelib
@@ -85,7 +87,7 @@ theorem parabolicRaw_norm (oneNonzero : (1 :
     (EvenClifford.norm (parabolicRaw oneNonzero axis)) = 1
       := by
   unfold parabolicRaw EvenClifford.norm
-  unfold TernaryForm.IsNull at null
+  unfold IsNull at null
   rw [null]
   ring1
 end
@@ -135,7 +137,7 @@ structure ParabolicCertificate (oneNonzero :
   /-- The retained rotation is exactly the action of the scalar-one Clifford representative on the retained axis. -/
     rotation_spec :
     rotation = (NonNullEvenClifford.actionRotation
-      (Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicValue oneNonzero axis axisNull))
+      (parabolicValue oneNonzero axis axisNull))
   /-- The retained rotation fixes its original null axis. -/
   fixedAxis : (Isometry.act rotation.toIsometry) axis = axis
   /-- The retained parabolic matrix differs from the identity. -/ nonidentityMatrix : rotation.matrix ≠ Matrix3.identity
@@ -166,7 +168,7 @@ def parabolicAt (oneNonzero : (1 : K) ≠ 0)
     (null : (TernaryForm.minkowski oneNonzero).IsNull axis)
     (parameter : K) :
     (TernaryForm.minkowski oneNonzero).NonNullEvenClifford :=
-  Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicValue oneNonzero (Coordinates3.Vector.scale
+  parabolicValue oneNonzero (Coordinates3.Vector.scale
     parameter axis)
     ((TernaryForm.minkowski oneNonzero).isNull_scale parameter axis null)
 end
@@ -192,7 +194,7 @@ theorem parabolicAt_conjugate (oneNonzero :
   apply NonNullEvenClifford.ext
   · rfl
   · ext <;> unfold parabolicAt
-      Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicValue
+      parabolicValue
       parabolicRaw
       NonNullEvenClifford.conjugate
       EvenClifford.conjugate Coordinates3.Vector.neg Coordinates3.Vector.scale <;> ring1
@@ -445,7 +447,7 @@ theorem parabolic_action (oneNonzero : (1 :
   K) ≠ 0)
     (axis vector : Coordinates3.Vector K)
     (null : (TernaryForm.minkowski oneNonzero).IsNull axis) :
-    (NonNullEvenClifford.action (Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicValue oneNonzero
+    (NonNullEvenClifford.action (parabolicValue oneNonzero
       axis null)) vector =
       Coordinates3.Vector.add
         (Coordinates3.Vector.add vector
@@ -519,7 +521,7 @@ theorem parabolic_action_firstBasis
   (oneNonzero : (1 : K) ≠ 0)
     (axis : Coordinates3.Vector K)
     (null : (TernaryForm.minkowski oneNonzero).IsNull axis) :
-    (NonNullEvenClifford.action (Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicValue oneNonzero
+    (NonNullEvenClifford.action (parabolicValue oneNonzero
       axis null))
         (⟨1, 0, 0⟩ : Coordinates3.Vector K) =
       ⟨1 - 2 * axis.t ^ 2,
@@ -546,7 +548,7 @@ theorem parabolic_fixedAxis (oneNonzero : (1
   : K) ≠ 0)
     (axis : Coordinates3.Vector K)
     (null : (TernaryForm.minkowski oneNonzero).IsNull axis) :
-    (NonNullEvenClifford.action (Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicValue oneNonzero
+    (NonNullEvenClifford.action (parabolicValue oneNonzero
       axis null)) axis = axis := by
   rw [parabolic_action]
   have nullQuadrance :
@@ -577,7 +579,7 @@ theorem parabolic_handedness_zero
     (perpendicular :
       (TernaryForm.minkowski oneNonzero).Perpendicular transversal axis) :
     Handedness.handednessDet axis transversal
-      (NonNullEvenClifford.actionMatrix (Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicValue
+      (NonNullEvenClifford.actionMatrix (parabolicValue
         oneNonzero axis null)) = 0 := by
   let form := TernaryForm.minkowski oneNonzero
   have crossQuadrance := form.quadrance_cliffordCross transversal axis
@@ -611,9 +613,9 @@ theorem parabolic_handedness_zero
       _ = 0 := by ring1
   unfold Handedness.handednessDet
   rw [(NonNullEvenClifford.rowMul_actionMatrix
-    (Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicValue oneNonzero axis null)),
+    (parabolicValue oneNonzero axis null)),
     parabolic_action]
-  unfold TernaryForm.Perpendicular at perpendicular
+  unfold Perpendicular at perpendicular
   rw [perpendicular, mul_zero, Coordinates3.Vector.zero_scale,
     Coordinates3.Vector.add_zero, Coordinates3.Vector.determinant_add_third,
     Coordinates3.Vector.determinant_repeat_second,
@@ -653,7 +655,7 @@ theorem parabolicRotationAt_handedness_zero
     have scaledPerpendicular :=
       (TernaryForm.minkowski oneNonzero).perpendicular_scale_right
         parameter transversal axis perpendicular
-    have scaledZero := Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolic_handedness_zero oneNonzero
+    have scaledZero := parabolic_handedness_zero oneNonzero
       (Coordinates3.Vector.scale parameter axis) transversal scaledNull scaledPerpendicular
     have factor :
         Handedness.handednessDet (Coordinates3.Vector.scale parameter axis) transversal
@@ -688,23 +690,23 @@ theorem parabolic_nonidentity [DecidableEq
     (axis : Coordinates3.Vector K)
     (null : (TernaryForm.minkowski oneNonzero).IsNull axis)
     (axisNonzero : axis ≠ Coordinates3.Vector.zero) :
-    (NonNullEvenClifford.actionMatrix (Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicValue
+    (NonNullEvenClifford.actionMatrix (parabolicValue
       oneNonzero axis null)) ≠
       Matrix3.identity := by
   intro identityAction
   have firstBasisFixed :
-      (NonNullEvenClifford.action (Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicValue
+      (NonNullEvenClifford.action (parabolicValue
         oneNonzero axis null))
           (⟨1, 0, 0⟩ : Coordinates3.Vector K) =
         (⟨1, 0, 0⟩ : Coordinates3.Vector K) := by
     calc
-      (NonNullEvenClifford.action (Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicValue
+      (NonNullEvenClifford.action (parabolicValue
         oneNonzero axis null)) ⟨1, 0, 0⟩ =
           Matrix3.rowMul (⟨1, 0, 0⟩ : Coordinates3.Vector K)
             (NonNullEvenClifford.actionMatrix
-              (Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicValue oneNonzero axis null)) :=
+              (parabolicValue oneNonzero axis null)) :=
         ((NonNullEvenClifford.rowMul_actionMatrix
-          (Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicValue oneNonzero axis null))
+          (parabolicValue oneNonzero axis null))
           ⟨1, 0, 0⟩).symm
       _ = Matrix3.rowMul (⟨1, 0, 0⟩ : Coordinates3.Vector K)
           Matrix3.identity := by rw [identityAction]
@@ -726,9 +728,9 @@ theorem parabolic_nonidentity [DecidableEq
       (factor := factor) (value := value) factorNonzero productZero : value = 0))
     twoNonzero twiceTSquare
   have tZero := (fun {K : Type _} [ExplicitField K] [DecidableEq K] (value : K) (squareZero :
-    value ^ 2 = 0) => (Purelib.Algebra.Field.Squares.eq_zero_of_square_eq_zero (K := K) value squareZero : value = 0))
+    value ^ 2 = 0) => (Algebra.Field.Squares.eq_zero_of_square_eq_zero (K := K) value squareZero : value = 0))
     axis.t tSquareZero
-  letI : SubNegZeroMonoid K := Purelib.Algebra.Group.Negation.subNegZeroMonoid
+  letI : SubNegZeroMonoid K := Algebra.Group.Negation.subNegZeroMonoid
   have twiceS : 2 * axis.s = 0 := by
     calc
       2 * axis.s = -(-2 * axis.t * axis.r - 2 * axis.s) := by
@@ -780,7 +782,7 @@ theorem parabolicRotationAt_nonidentity
     (parabolicRotationAt oneNonzero axis null
       parameter).matrix ≠
       Matrix3.identity := by
-  apply Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolic_nonidentity oneNonzero twoNonzero
+  apply parabolic_nonidentity oneNonzero twoNonzero
     (Coordinates3.Vector.scale parameter axis)
     ((TernaryForm.minkowski oneNonzero).isNull_scale parameter axis null)
   intro scaledZero
@@ -885,7 +887,7 @@ theorem parabolic_trace (oneNonzero : (1 :
     (axis : Coordinates3.Vector K)
     (null : (TernaryForm.minkowski oneNonzero).IsNull axis) :
     Matrix3.trace (NonNullEvenClifford.actionMatrix
-      (Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicValue oneNonzero axis null)) = 3 := by
+      (parabolicValue oneNonzero axis null)) = 3 := by
   have oneInverse : (1 : K)⁻¹ = 1 := by
     have cancel := ExplicitField.mul_inv_cancel (1 : K) oneNonzero
     simpa only [one_mul] using cancel
@@ -929,13 +931,13 @@ theorem parabolic_characteristic (oneNonzero
     (axis : Coordinates3.Vector K)
     (null : (TernaryForm.minkowski oneNonzero).IsNull axis) (X : K) :
     Matrix3.characteristicValue
-        (NonNullEvenClifford.actionMatrix (Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicValue
+        (NonNullEvenClifford.actionMatrix (parabolicValue
           oneNonzero axis null)) X =
       (X - 1) ^ 3 := by
   let form := TernaryForm.minkowski oneNonzero
-  let value := Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicValue oneNonzero axis null
+  let value := parabolicValue oneNonzero axis null
   have negNull : form.IsNull (Coordinates3.Vector.neg axis) := by
-    unfold form TernaryForm.IsNull TernaryForm.quadrance
+    unfold form IsNull TernaryForm.quadrance
     rw [TernaryForm.bilinear_neg_left,
       TernaryForm.bilinear_neg_right]
     calc
@@ -945,7 +947,7 @@ theorem parabolic_characteristic (oneNonzero
       _ = 0 := null
   have conjugateEq :
       (NonNullEvenClifford.conjugate value) =
-        Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicValue oneNonzero (Coordinates3.Vector.neg
+        parabolicValue oneNonzero (Coordinates3.Vector.neg
         axis) negNull := by
     apply NonNullEvenClifford.ext
     · rfl
@@ -985,7 +987,7 @@ theorem parabolic_characteristic (oneNonzero
           Matrix3.trace (NonNullEvenClifford.actionMatrix (NonNullEvenClifford.conjugate value)) := by
         rw [inverseMatrixEq]
       _ = Matrix3.trace
-          (NonNullEvenClifford.actionMatrix (Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicValue
+          (NonNullEvenClifford.actionMatrix (parabolicValue
             oneNonzero (Coordinates3.Vector.neg axis) negNull)) := by
         rw [conjugateEq]
       _ = 3 := parabolic_trace oneNonzero
@@ -1020,18 +1022,18 @@ def parabolicCertificate [DecidableEq K]
   axisNull := null
   axisNonzero := nonzero
   rotation := (NonNullEvenClifford.actionRotation
-    (Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicValue oneNonzero axis null))
+    (parabolicValue oneNonzero axis null))
   rotation_spec := rfl
   fixedAxis := by
     rw [NonNullEvenClifford.actionRotation_act]
-    exact Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolic_fixedAxis oneNonzero axis null
+    exact parabolic_fixedAxis oneNonzero axis null
   nonidentityMatrix :=
-    Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolic_nonidentity oneNonzero twoNonzero axis null
+    parabolic_nonidentity oneNonzero twoNonzero axis null
       nonzero
   characteristicUnipotent :=
-    Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolic_characteristic oneNonzero axis null
+    parabolic_characteristic oneNonzero axis null
   handednessZero := fun transversal perpendicular =>
-    Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolic_handedness_zero oneNonzero axis transversal
+    parabolic_handedness_zero oneNonzero axis transversal
       null perpendicular
 end
 end Purelib.Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford
@@ -1054,7 +1056,7 @@ theorem parabolicRotationAt_characteristic
         (parabolicRotationAt oneNonzero axis null
           parameter).matrix X =
       (X - 1) ^ 3 :=
-  Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolic_characteristic oneNonzero
+  parabolic_characteristic oneNonzero
     (Coordinates3.Vector.scale parameter axis)
     ((TernaryForm.minkowski oneNonzero).isNull_scale parameter axis null) X
 end
@@ -1126,16 +1128,16 @@ The certificate keeps the original rotation, a nonzero null axis and a perpendic
 transversal. Their fixed-axis, characteristic-polynomial and zero-handedness
 equalities concern that same retained rotation matrix. -/
 public structure ParabolicCertificate
-    (rotation : (TernaryForm.SpecialOrthogonal
-      Quadratic.Ternary.RationalMinkowski.form)) where
+    (rotation : (SpecialOrthogonal
+      RationalMinkowski.form)) where
   /-- The retained nonzero null axis fixed by the rotation. -/ axis : Vector3 Fraction.Basic.Rational
   /-- The retained vector perpendicular to the fixed null axis. -/ transversal : Vector3 Fraction.Basic.Rational
-  /-- The retained axis has zero Minkowski quadrance. -/ axisNull : (TernaryForm.IsNull
-    Quadratic.Ternary.RationalMinkowski.form) axis
+  /-- The retained axis has zero Minkowski quadrance. -/ axisNull : (IsNull
+    RationalMinkowski.form) axis
   /-- The retained null axis is nonzero. -/ axisNonzero : axis ≠ Vector3.zero
   /-- The retained transversal is Minkowski-perpendicular to the retained axis. -/ transversalPerpendicular :
-    (TernaryForm.Perpendicular
-      Quadratic.Ternary.RationalMinkowski.form) transversal axis
+    (Perpendicular
+      RationalMinkowski.form) transversal axis
   /-- The actual rotation matrix fixes the retained axis. -/ axisFixed : Matrix3.rowMul axis rotation.matrix = axis
   /-- The actual rotation matrix is not identity. -/ nonidentityMatrix : rotation.matrix ≠ Matrix3.identity
   /-- The characteristic polynomial of the actual rotation matrix is (X-1) cubed. -/ characteristicUnipotent : ∀ X :
@@ -1156,10 +1158,10 @@ public theorem parabolicAxis_nonzero : parabolicAxis ≠ Vector3.zero := by deci
 
 The original rational Minkowski form evaluates the retained coordinates
 `(0, 1, -1)` to zero, without changing the form or the axis. -/
-public theorem parabolicAxis_null : (TernaryForm.IsNull
-  Quadratic.Ternary.RationalMinkowski.form) parabolicAxis := by
-  unfold TernaryForm.IsNull
-  rw [Quadratic.Ternary.RationalMinkowski.quadrance]
+public theorem parabolicAxis_null : (IsNull
+  RationalMinkowski.form) parabolicAxis := by
+  unfold IsNull
+  rw [RationalMinkowski.quadrance]
   unfold parabolicAxis
   ring1
 
@@ -1175,9 +1177,9 @@ public theorem parabolicAxis_null : (TernaryForm.IsNull
 The equality uses the original Minkowski bilinear form on the ordered vectors
 `(1, 0, 0)` and `(0, 1, -1)`. -/
 public theorem parabolicTransversal_perpendicular :
-    (TernaryForm.Perpendicular
-      Quadratic.Ternary.RationalMinkowski.form) parabolicTransversal parabolicAxis := by
-  unfold TernaryForm.Perpendicular TernaryForm.bilinear Quadratic.Ternary.RationalMinkowski.form
+    (Perpendicular
+      RationalMinkowski.form) parabolicTransversal parabolicAxis := by
+  unfold Perpendicular TernaryForm.bilinear RationalMinkowski.form
     TernaryForm.minkowski TernaryForm.ofMatrix Matrix3.rowMul Vector3.dot
     parabolicTransversal parabolicAxis
   ring1
@@ -1186,8 +1188,8 @@ public theorem parabolicTransversal_perpendicular :
 
 Its scalar coordinate is one and its axis is the retained vector `(0, 1, -1)`.
 The norm certificate below uses this exact representative. -/
-@[expose] public def parabolicValueRaw : (TernaryForm.EvenClifford
-  Quadratic.Ternary.RationalMinkowski.form) :=
+@[expose] public def parabolicValueRaw : (EvenClifford
+  RationalMinkowski.form) :=
   ⟨1, parabolicAxis⟩
 
 /-- The retained rational split Clifford representative has norm one.
@@ -1195,7 +1197,7 @@ The norm certificate below uses this exact representative. -/
 The Minkowski null-axis equality reduces its original Clifford norm to one.
 The representative and its coordinate order are unchanged. -/
 public theorem parabolicValueRaw_norm : (EvenClifford.norm parabolicValueRaw) = 1 := by
-  unfold parabolicValueRaw EvenClifford.norm Quadratic.Ternary.RationalMinkowski.form
+  unfold parabolicValueRaw EvenClifford.norm RationalMinkowski.form
   rw [TernaryForm.minkowski_determinant,
     TernaryForm.quadrance_minkowski]
   unfold parabolicAxis
@@ -1205,19 +1207,19 @@ public theorem parabolicValueRaw_norm : (EvenClifford.norm parabolicValueRaw) = 
 
 The retained norm-one equality proves the nonzero norm of the same scalar
 and axis coordinates. This is the original parent used by the action rotation. -/
-@[expose] public def parabolicValue : (TernaryForm.NonNullEvenClifford
-  Quadratic.Ternary.RationalMinkowski.form) where
+@[expose] public def parabolicValue : (NonNullEvenClifford
+  RationalMinkowski.form) where
   toEvenClifford := parabolicValueRaw
   normNonzero := by
     rw [parabolicValueRaw_norm]
-    exact Quadratic.Ternary.RationalMinkowski.oneNonzero
+    exact RationalMinkowski.oneNonzero
 
 /-- The retained rational Clifford representative reads back as the upper unipotent matrix.
 
 The split matrix map uses the original rational Minkowski form and its
 one-nonzero certificate. Its four entries are exactly `1, 2, 0, 1`. -/
 public theorem parabolicValue_matrix2 :
-    Matrix.MinkowskiClifford.toMatrix Quadratic.Ternary.RationalMinkowski.oneNonzero parabolicValueRaw =
+    Matrix.MinkowskiClifford.toMatrix RationalMinkowski.oneNonzero parabolicValueRaw =
       (⟨1, 2, 0, 1⟩ : Matrix2 Fraction.Basic.Rational) := by
   apply Matrix2.ext <;> decide
 

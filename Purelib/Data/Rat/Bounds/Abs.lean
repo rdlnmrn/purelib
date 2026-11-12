@@ -21,11 +21,20 @@ namespace Purelib.Data.Rat.Bounds.Abs
 open Purelib.Data.Rat
 open Purelib.Data.Rat.Fraction
 
+/-- Swapping two rational inputs preserves their absolute difference. -/
+public theorem abs_sub_comm_direct (left right : Fraction.Rational) :
+    Fraction.abs (left - right) = Fraction.abs (right - left) := by
+  change max (left - right) (-(left - right)) = max (right - left) (-(right - left))
+  have first : -(left - right) = right - left := by ring1
+  have second : -(right - left) = left - right := by ring1
+  rw [first, second]
+  exact Order.Basic.max_comm _ _
+
 /-- A nonnegative rational is its retained absolute value.
 
 Its negation is nonpositive. The original rational maximum therefore
 selects the same input, including the zero boundary. -/
-private theorem abs_of_nonnegative {value : Fraction.Rational}
+public theorem abs_of_nonnegative {value : Fraction.Rational}
     (nonnegative : 0 ≤ value) : Fraction.abs value = value := by
   change max value (-value) = value
   apply Order.Basic.max_eq_left
@@ -37,7 +46,7 @@ private theorem abs_of_nonnegative {value : Fraction.Rational}
 
 Its negation is nonnegative. The original rational maximum selects that
 same negated input, including the zero boundary. -/
-private theorem abs_of_nonpositive {value : Fraction.Rational}
+public theorem abs_of_nonpositive {value : Fraction.Rational}
     (nonpositive : value ≤ 0) : Fraction.abs value = -value := by
   change max value (-value) = -value
   apply Order.Basic.max_eq_right
@@ -102,5 +111,17 @@ public theorem abs_sq_direct (x : Fraction.Rational) : Fraction.abs x ^ 2 = x ^ 
     ring1
   · rw [abs_of_nonnegative (le_refl 0)]
   · rw [abs_of_nonnegative positive.le]
+
+/-- The absolute value of a finite rational sum is at most the sum of its absolute values. -/
+public theorem abs_add_le_direct (left right : Fraction.Rational) :
+    Fraction.abs (left + right) ≤ Fraction.abs left + Fraction.abs right := by
+  change max (left + right) (-(left + right)) ≤ max left (-left) + max right (-right)
+  apply Order.Basic.max_le
+  · exact Order.Arithmetic.add_le_add_direct (Order.Basic.le_max_left left (-left))
+      (Order.Basic.le_max_left right (-right))
+  · have negSum : -(left + right) = -left + -right := by ring1
+    rw [negSum]
+    exact Order.Arithmetic.add_le_add_direct (Order.Basic.le_max_right left (-left))
+      (Order.Basic.le_max_right right (-right))
 
 end Purelib.Data.Rat.Bounds.Abs

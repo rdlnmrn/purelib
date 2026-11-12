@@ -71,8 +71,8 @@ open Purelib.Riemann
 open Purelib.Data.Rat.Fraction.Compatibility
 variable {lc lr rc rr genus depth : Nat} {lg : Normalization.RectangularInverseModels.Geometry lc lr} {rg :
   Normalization.RectangularInverseModels.Geometry rc rr}
-  {piece : Paths.RectangularPairedSegments.PairedSegmentPiece lg rg} {curve : Hyperelliptic.Basic.HyperellipticCurve
-    genus} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
+  {piece : Paths.RectangularPairedSegments.PairedSegmentPiece lg rg} {curve : Basic.HyperellipticCurve
+    genus} {differential : Differentials.Basic.Differential genus}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential} {first last :
     Normalization.InverseRootPolynomial.Coordinate}
 
@@ -86,7 +86,7 @@ theorem dyadic_reverse_step_le {trace : Integration.RectangularPairedPointBanks.
     (lastNonnegative : 0 ≤ last) (firstLe : first ≤ 1) (edge : Fin (Paths.RectangularDyadicPairedTrace.dyadicCount
       depth)) :
     transport.parameters edge.castSucc - transport.parameters edge.succ ≤ (1 / 2 :
-      Normalization.InverseRootPolynomial.Coordinate)^depth := open Purelib.Data.Rat in by
+      Normalization.InverseRootPolynomial.Coordinate)^depth := open Data.Rat in by
   have step := Paths.RectangularParentTraceSteps.dyadic_step transport retained edge
   have reversed : transport.parameters edge.castSucc - transport.parameters edge.succ =
       (1 / 2 : Normalization.InverseRootPolynomial.Coordinate)^depth * (first - last) := by
@@ -109,26 +109,26 @@ open Purelib.Riemann
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-    regular domains differential} {target : Normalization.InverseRootPolynomial.Coordinate} {minimum stage fine : Nat}
+    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    regular domains differential} {target : InverseRootPolynomial.Coordinate} {minimum stage fine : Nat}
   {box otherBox : Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
-  {plan : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan occurrence other target
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {plan : PairedSourceReferences.PairedSourcePlan occurrence other target
     minimum}
-  {evaluated : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan
+  {evaluated : PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan
     sample otherSample fine}
-  {lc lr rc rr : Nat} {lg : Normalization.RectangularInverseModels.Geometry lc lr} {rg :
-    Normalization.RectangularInverseModels.Geometry rc rr}
+  {lc lr rc rr : Nat} {lg : RectangularInverseModels.Geometry lc lr} {rg :
+    RectangularInverseModels.Geometry rc rr}
   {leftCuts : Paths.RectangularSegmentSplitting.GridCuts lg} {rightCuts : Paths.RectangularSegmentSplitting.GridCuts rg}
     {leftBox rightBox : Rational.Box}
   {left : Meshes.RectangularObservationMesh.ObservationMesh leftCuts leftBox} {right :
@@ -137,55 +137,55 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
 
 section Horizontal
 variable {leftRow : Fin left.partition.y.intervals.length} {rightRow : Fin right.partition.y.intervals.length}
-  {height : Normalization.InverseRootPolynomial.Coordinate} {side :
+  {height : InverseRootPolynomial.Coordinate} {side :
     Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedHorizontalSide left right leftRow rightRow
     height}
 /-- A reversed horizontal matched trace retains its original source endpoints and dyadic reverse-step bounds. -/
 theorem horizontalParameters_reverse_bounds (trace : side.Trace depth) (column : Fin left.partition.x.intervals.length)
-    (block : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters evaluated false
+    (block : Exterior.SourceBlockParameters evaluated false
       false (left.partition.x.intervals[column.val]'column.isLt))
     (sourceFirst : occurrence.start.im = height) (sourceLast : occurrence.finish.im = height) :
     let transport :=
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.MatchedSourceFragments.SourceBlockParameters.horizontalParameters
+      MatchedSourceFragments.SourceBlockParameters.horizontalParameters
       trace column block sourceFirst sourceLast
     transport.parameters 0 =
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.firstParameter block) ∧
+      (SourceBlockParameters.firstParameter block) ∧
       transport.parameters (Fin.last (Paths.RectangularDyadicPairedTrace.dyadicCount depth)) =
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.lastParameter block) ∧
+        (SourceBlockParameters.lastParameter block) ∧
       ∀ edge : Fin (Paths.RectangularDyadicPairedTrace.dyadicCount depth),
         transport.parameters edge.castSucc - transport.parameters edge.succ ≤ (1 / 2 :
-          Normalization.InverseRootPolynomial.Coordinate)^depth := by
+          InverseRootPolynomial.Coordinate)^depth := by
   intro transport
   refine ⟨(Paths.RectangularParentTraceSteps.first_parameter transport), transport.last_parameter, ?_⟩
   intro edge
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.ReverseSourceWidths.ParentParameters.dyadic_reverse_step_le
+  exact ParentParameters.dyadic_reverse_step_le
     transport (trace.segments_eq column) block.parameters.within.1 block.parameters.within.2 edge
 end Horizontal
 
 section Vertical
 variable {leftColumn : Fin left.partition.x.intervals.length} {rightColumn : Fin right.partition.x.intervals.length}
-  {horizontal : Normalization.InverseRootPolynomial.Coordinate} {side :
+  {horizontal : InverseRootPolynomial.Coordinate} {side :
     Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedVerticalSide left right leftColumn rightColumn
     horizontal}
 /-- A reversed vertical matched trace retains its original source endpoints and dyadic reverse-step bounds. -/
 theorem verticalParameters_reverse_bounds (trace : side.Trace depth) (row : Fin left.partition.y.intervals.length)
-    (block : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters evaluated true
+    (block : Exterior.SourceBlockParameters evaluated true
       false (left.partition.y.intervals[row.val]'row.isLt))
     (sourceFirst : occurrence.start.re = horizontal) (sourceLast : occurrence.finish.re = horizontal) :
     let transport :=
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.MatchedSourceFragments.SourceBlockParameters.verticalParameters trace
+      MatchedSourceFragments.SourceBlockParameters.verticalParameters trace
       row block sourceFirst sourceLast
     transport.parameters 0 =
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.firstParameter block) ∧
+      (SourceBlockParameters.firstParameter block) ∧
       transport.parameters (Fin.last (Paths.RectangularDyadicPairedTrace.dyadicCount depth)) =
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.lastParameter block) ∧
+        (SourceBlockParameters.lastParameter block) ∧
       ∀ edge : Fin (Paths.RectangularDyadicPairedTrace.dyadicCount depth),
         transport.parameters edge.castSucc - transport.parameters edge.succ ≤ (1 / 2 :
-          Normalization.InverseRootPolynomial.Coordinate)^depth := by
+          InverseRootPolynomial.Coordinate)^depth := by
   intro transport
   refine ⟨(Paths.RectangularParentTraceSteps.first_parameter transport), transport.last_parameter, ?_⟩
   intro edge
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.ReverseSourceWidths.ParentParameters.dyadic_reverse_step_le
+  exact ParentParameters.dyadic_reverse_step_le
     transport (trace.segments_eq row) block.parameters.within.1 block.parameters.within.2 edge
 end Vertical
 

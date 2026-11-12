@@ -3,6 +3,7 @@ import Purelib.Data.Rat.Fraction
 public import Purelib.Data.Gaussian.Basic
 public import Purelib.Data.Nat.Positive
 import Purelib.Data.Rat.Fraction.Cast
+import Purelib.Data.Gaussian.Cast
 import Purelib.Data.Rat.Fraction.Field
 
 import Purelib.Tactic.QuotientFreeOmega
@@ -38,6 +39,12 @@ open Purelib.Data.Rat.Fraction.Cast
 /-- Embed a supplied natural as a real canonical Gaussian rational. -/
 @[expose] def naturalGaussian (value : Nat) : Canonical :=
   ⟨value, 0⟩
+
+/-- The original real natural embedding agrees with the canonical Gaussian natural cast. -/
+theorem naturalGaussian_eq_natCast (value : Nat) : Natural.naturalGaussian value = (value : Canonical) := by
+  apply Gaussian.Basic.ext
+  · exact (Gaussian.Cast.natCast_re value).symm
+  · exact (Gaussian.Cast.natCast_im value).symm
 
 /-- The Gaussian image of a retained positive natural degree is nonzero. -/
 theorem naturalGaussian_ne_zero (degree : RootDegree) :

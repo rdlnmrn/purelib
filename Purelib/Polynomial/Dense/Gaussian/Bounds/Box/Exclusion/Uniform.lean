@@ -13,6 +13,8 @@ import Mathlib.Algebra.Ring.Defs
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 
 open Purelib.Data.Rat
@@ -40,21 +42,21 @@ namespace Purelib.Polynomial.Dense.Gaussian.Bounds.Box.Exclusion.Uniform
 /-- Four times the ambient polynomial Lipschitz coefficient. -/
 @[expose] def exclusionCoefficient (p : CoefficientPolynomial) (ambient : Box) :
   Fraction.Rational :=
-  4 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient
+  4 * denseLipschitzBound p ambient
 
 /-- The fourfold box Lipschitz exclusion coefficient is positive. -/
 theorem exclusionCoefficient_pos
     (p : CoefficientPolynomial) (ambient : Box) :
     0 < exclusionCoefficient p ambient :=
-  Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-    (Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos p ambient)
+  Arithmetic.mul_pos_direct (by decide)
+    (denseLipschitzBound_pos p ambient)
 
 /-- Positive rational radius computed from any uniform lower bound for the
 polynomial residual.  The bound need not be attained by a displayed point. -/
 @[expose] def uniformExclusionRadius
     (p : CoefficientPolynomial) (ambient : Box) (lower : Fraction.Rational) :
     Fraction.Rational :=
-  min 1 (lower / (8 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient))
+  min 1 (lower / (8 * denseLipschitzBound p ambient))
 
 /-- A positive residual lower bound yields a positive computed uniform exclusion radius. -/
 theorem uniformExclusionRadius_pos
@@ -62,11 +64,11 @@ theorem uniformExclusionRadius_pos
     (positive : 0 < lower) :
     0 < uniformExclusionRadius p ambient lower := by
   have denominatorPositive :
-      0 < 8 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-      (Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos p ambient)
-  exact Fraction.Order.Basic.lt_min (by decide)
-    (Fraction.Order.Field.div_pos_direct positive denominatorPositive)
+      0 < 8 * denseLipschitzBound p ambient :=
+    Arithmetic.mul_pos_direct (by decide)
+      (denseLipschitzBound_pos p ambient)
+  exact Basic.lt_min (by decide)
+    (Field.div_pos_direct positive denominatorPositive)
 
 /-- The squared uniform radius leaves a strict positive residual margin.
 
@@ -77,41 +79,41 @@ theorem uniform_exclusion_margin
     (positive : 0 < lower) :
     exclusionCoefficient p ambient *
         uniformExclusionRadius p ambient lower ^ 2 < lower := by
-  let lipschitz := Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient
+  let lipschitz := denseLipschitzBound p ambient
   let radius := uniformExclusionRadius p ambient lower
   let quotient := lower / (8 * lipschitz)
   have lipschitzPositive : 0 < lipschitz :=
-    Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos p ambient
+    denseLipschitzBound_pos p ambient
   have denominatorPositive : 0 < 8 * lipschitz :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide) lipschitzPositive
+    Arithmetic.mul_pos_direct (by decide) lipschitzPositive
   have quotientPositive : 0 < quotient :=
-    Fraction.Order.Field.div_pos_direct positive denominatorPositive
+    Field.div_pos_direct positive denominatorPositive
   have radiusPositive : 0 < radius :=
     uniformExclusionRadius_pos p ambient positive
-  have radiusLeOne : radius ≤ 1 := Fraction.Order.Basic.min_le_left 1 quotient
-  have radiusLeQuotient : radius ≤ quotient := Fraction.Order.Basic.min_le_right 1 quotient
+  have radiusLeOne : radius ≤ 1 := Basic.min_le_left 1 quotient
+  have radiusLeQuotient : radius ≤ quotient := Basic.min_le_right 1 quotient
   have radiusSquareLe : radius ^ 2 ≤ radius := by
     rw [pow_two]
     have scaled :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         radiusLeOne radiusPositive.le
     exact scaled.trans_eq (_root_.one_mul radius)
   have coefficientPositive : 0 < 4 * lipschitz :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide) lipschitzPositive
+    Arithmetic.mul_pos_direct (by decide) lipschitzPositive
   have squareScaled :
       (4 * lipschitz) * radius ^ 2 ≤ (4 * lipschitz) * radius :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       radiusSquareLe coefficientPositive.le
   have radiusScaled :
       (4 * lipschitz) * radius ≤ (4 * lipschitz) * quotient :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       radiusLeQuotient coefficientPositive.le
   have fourLtEight : 4 * lipschitz < 8 * lipschitz :=
-    Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+    Arithmetic.mul_lt_mul_of_pos_right_direct
       (by decide) lipschitzPositive
   have quotientScaled :
       (4 * lipschitz) * quotient < (8 * lipschitz) * quotient :=
-    Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+    Arithmetic.mul_lt_mul_of_pos_right_direct
       fourLtEight quotientPositive
   have cancellation : (8 * lipschitz) * quotient = lower := by
     calc

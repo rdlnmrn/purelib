@@ -97,6 +97,14 @@ def identity (count : Nat) : Bijection count count where
   backward_forward := fun _ => rfl
   forward_backward := fun _ => rfl
 
+/-- The original identity bijection fixes each retained finite index.
+
+This reads the original map without exposing its complete constructor or
+replacing its inverse-law fields.
+-/
+theorem identity_forward (count : Nat) (index : Fin count) :
+    (Bijection.identity count).forward index = index := (rfl)
+
 /-- Transport finite indices across an explicit equality of their bounds.
 
 The supplied equality identifies the source and target counts; both maps reduce to
@@ -138,6 +146,16 @@ def comp {firstCount middleCount lastCount : Nat}
   forward_backward := by
     intro index
     rw [left.forward_backward, right.forward_backward]
+
+/-- The original composite forwards each index through the two supplied maps in order.
+
+Both original bijections remain the same cached values. The equality is
+pointwise and does not reconstruct or equate their complete map functions.
+-/
+theorem comp_forward {firstCount middleCount lastCount : Nat}
+    (right : Bijection middleCount lastCount) (left : Bijection firstCount middleCount)
+    (index : Fin firstCount) :
+    (Bijection.comp right left).forward index = right.forward (left.forward index) := (rfl)
 
 /-- Reverse a finite bijection by exchanging its two retained maps and inverse laws. -/
 def reverse {sourceCount targetCount : Nat}

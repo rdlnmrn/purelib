@@ -16,6 +16,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Polynomial.Dense.Evaluation
 
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients
+
 /-!
 # Eliminant-safe axis coordinates and retained rectangular bands
 
@@ -38,7 +40,7 @@ namespace Purelib.Polynomial.Elimination.Axis.Band
 
 The bounded candidate scan stays between two radii and one radius to the left of the center and uses the retained
 vertical eliminant degree bound. -/
-@[expose] public def leftCoordinate {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {degreeBound
+@[expose] public def leftCoordinate {p : CoefficientPolynomial} {degreeBound
   : Nat}
     (elimination : Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
     (center : Gaussian.Basic.Canonical) (r : Fraction.Rational) (positive : 0 < r) : Fraction.Rational :=
@@ -51,7 +53,7 @@ vertical eliminant degree bound. -/
 
 The bounded candidate scan stays between one radius and two radii to the right of the center and uses the retained
 vertical eliminant degree bound. -/
-@[expose] public def rightCoordinate {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+@[expose] public def rightCoordinate {p : CoefficientPolynomial}
   {degreeBound : Nat}
     (elimination : Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
     (center : Gaussian.Basic.Canonical) (r : Fraction.Rational) (positive : 0 < r) : Fraction.Rational :=
@@ -64,7 +66,7 @@ vertical eliminant degree bound. -/
 
 The bounded candidate scan stays between two radii and one radius below of the center and uses the retained horizontal
 eliminant degree bound. -/
-@[expose] public def bottomCoordinate {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+@[expose] public def bottomCoordinate {p : CoefficientPolynomial}
   {degreeBound : Nat}
     (elimination : Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
     (center : Gaussian.Basic.Canonical) (r : Fraction.Rational) (positive : 0 < r) : Fraction.Rational :=
@@ -78,7 +80,7 @@ eliminant degree bound. -/
 
 The bounded candidate scan stays between one radius and two radii above of the center and uses the retained horizontal
 eliminant degree bound. -/
-@[expose] public def topCoordinate {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {degreeBound
+@[expose] public def topCoordinate {p : CoefficientPolynomial} {degreeBound
   : Nat}
     (elimination : Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
     (center : Gaussian.Basic.Canonical) (r : Fraction.Rational) (positive : 0 < r) : Fraction.Rational :=
@@ -93,7 +95,7 @@ eliminant degree bound. -/
 The original bounded coordinate scan supplies both its nonzero
 eliminant evaluation and its strict position between the displayed
 radial endpoints about the same retained centre. -/
-public theorem leftCoordinate_spec {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {degreeBound
+public theorem leftCoordinate_spec {p : CoefficientPolynomial} {degreeBound
   : Nat}
     (elimination : Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
     (center : Gaussian.Basic.Canonical) {r : Fraction.Rational} (positive : 0 < r) :
@@ -111,7 +113,7 @@ public theorem leftCoordinate_spec {p : Dense.Gaussian.Basic.CanonicalCoefficien
 The original bounded coordinate scan supplies both its nonzero
 eliminant evaluation and its strict position between the displayed
 radial endpoints about the same retained centre. -/
-public theorem rightCoordinate_spec {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {degreeBound
+public theorem rightCoordinate_spec {p : CoefficientPolynomial} {degreeBound
   : Nat}
     (elimination : Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
     (center : Gaussian.Basic.Canonical) {r : Fraction.Rational} (positive : 0 < r) :
@@ -129,7 +131,7 @@ public theorem rightCoordinate_spec {p : Dense.Gaussian.Basic.CanonicalCoefficie
 The original bounded coordinate scan supplies both its nonzero
 eliminant evaluation and its strict position between the displayed
 radial endpoints about the same retained centre. -/
-public theorem bottomCoordinate_spec {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+public theorem bottomCoordinate_spec {p : CoefficientPolynomial}
   {degreeBound : Nat}
     (elimination : Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
     (center : Gaussian.Basic.Canonical) {r : Fraction.Rational} (positive : 0 < r) :
@@ -148,7 +150,7 @@ public theorem bottomCoordinate_spec {p : Dense.Gaussian.Basic.CanonicalCoeffici
 The original bounded coordinate scan supplies both its nonzero
 eliminant evaluation and its strict position between the displayed
 radial endpoints about the same retained centre. -/
-public theorem topCoordinate_spec {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {degreeBound :
+public theorem topCoordinate_spec {p : CoefficientPolynomial} {degreeBound :
   Nat}
     (elimination : Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
     (center : Gaussian.Basic.Canonical) {r : Fraction.Rational} (positive : 0 < r) :
@@ -167,7 +169,7 @@ public theorem topCoordinate_spec {p : Dense.Gaussian.Basic.CanonicalCoefficient
 The original four coordinate searches supply the same retained endpoint
 values and eliminant-avoidance certificates. Their scalar comparisons
 construct the original box and all eight radial side bounds. -/
-@[expose] public def selectedBand {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {degreeBound :
+@[expose] public def selectedBand {p : CoefficientPolynomial} {degreeBound :
   Nat}
     (elimination : Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
     (center : Gaussian.Basic.Canonical) (r : Fraction.Rational) (positive : 0 < r) :
@@ -203,7 +205,7 @@ The selected rectangle retains the corresponding original coordinate
 scan as its endpoint. The scan's pointwise certificate supplies nonzero
 evaluation of the same displayed eliminant there. -/
 public theorem selectedBand_left_nonzero
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {degreeBound : Nat}
+    {p : CoefficientPolynomial} {degreeBound : Nat}
     (elimination : Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
     (center : Gaussian.Basic.Canonical) {r : Fraction.Rational} (positive : 0 < r) :
     elimination.vertical.eval
@@ -217,7 +219,7 @@ The selected rectangle retains the corresponding original coordinate
 scan as its endpoint. The scan's pointwise certificate supplies nonzero
 evaluation of the same displayed eliminant there. -/
 public theorem selectedBand_right_nonzero
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {degreeBound : Nat}
+    {p : CoefficientPolynomial} {degreeBound : Nat}
     (elimination : Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
     (center : Gaussian.Basic.Canonical) {r : Fraction.Rational} (positive : 0 < r) :
     elimination.vertical.eval
@@ -231,7 +233,7 @@ The selected rectangle retains the corresponding original coordinate
 scan as its endpoint. The scan's pointwise certificate supplies nonzero
 evaluation of the same displayed eliminant there. -/
 public theorem selectedBand_bottom_nonzero
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {degreeBound : Nat}
+    {p : CoefficientPolynomial} {degreeBound : Nat}
     (elimination : Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
     (center : Gaussian.Basic.Canonical) {r : Fraction.Rational} (positive : 0 < r) :
     elimination.horizontal.eval
@@ -245,7 +247,7 @@ The selected rectangle retains the corresponding original coordinate
 scan as its endpoint. The scan's pointwise certificate supplies nonzero
 evaluation of the same displayed eliminant there. -/
 public theorem selectedBand_top_nonzero
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {degreeBound : Nat}
+    {p : CoefficientPolynomial} {degreeBound : Nat}
     (elimination : Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
     (center : Gaussian.Basic.Canonical) {r : Fraction.Rational} (positive : 0 < r) :
     elimination.horizontal.eval

@@ -58,8 +58,8 @@ polygonal sample lift.  Its power is compared, edge by edge, with the
 explicitly repeated parameter square. -/
 structure ReturnedLift (degree :
   Data.Nat.Positive.RootDegree) (additional : Nat) where
-  /-- The retained starting Gaussian coordinate of the finite lifted polygon. -/ liftBase : Gaussian.Basic.Canonical
-  /-- The retained ordered vertices of the finite lifted polygon. -/ liftVertices : List Gaussian.Basic.Canonical
+  /-- The retained starting Gaussian coordinate of the finite lifted polygon. -/ liftBase : Basic.Canonical
+  /-- The retained ordered vertices of the finite lifted polygon. -/ liftVertices : List Basic.Canonical
   /-- The natural winding count retained for the lifted polygon. -/ liftWinding : Nat
   /-- The lifted polygon's raw coordinate winding is exactly four times its retained natural winding. -/ liftNormalized
     :
@@ -74,9 +74,9 @@ structure ReturnedLift (degree :
     : Winding.Polygon.Comparison.ClosedHomotopyFormula
     (Dense.Gaussian.Power.Coordinate.coordinatePositivePower (degree.value - 1))
     Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
-    liftBase liftVertices Winding.Polygon.UnitSquare.parameterBase
+    liftBase liftVertices UnitSquare.parameterBase
     (Polygon.Chain.repeatClosedVertices
-      Winding.Polygon.UnitSquare.parameterBase Winding.Polygon.UnitSquare.parameterVertices additional)
+      UnitSquare.parameterBase UnitSquare.parameterVertices additional)
 
 constructive_injectivity ReturnedLift
 
@@ -124,10 +124,10 @@ def returnWindingCertificate
   have compared := Winding.Polygon.Comparison.closedRaw_eq_of_homotopy
     (Dense.Gaussian.Power.Coordinate.coordinatePositivePower (degree.value - 1))
     Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
-    lift.liftBase lift.liftVertices Winding.Polygon.UnitSquare.parameterBase
+    lift.liftBase lift.liftVertices UnitSquare.parameterBase
     (Polygon.Chain.repeatClosedVertices
-      Winding.Polygon.UnitSquare.parameterBase Winding.Polygon.UnitSquare.parameterVertices additional) lift.comparison
-  have parameterWinding := Winding.Polygon.UnitSquare.repeatedParameterPolygon_windingFour additional
+      UnitSquare.parameterBase UnitSquare.parameterVertices additional) lift.comparison
+  have parameterWinding := UnitSquare.repeatedParameterPolygon_windingFour additional
   have fourIdentity :
       (4 : Int) *
           ((degree.value : Int) * (lift.liftWinding : Int)) =
@@ -147,9 +147,9 @@ def returnWindingCertificate
             (degree.value - 1)) lift.liftBase lift.liftVertices :=
         powerWinding.symm
       _ = Winding.Polygon.Basic.closedRaw
-          Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial Winding.Polygon.UnitSquare.parameterBase
+          Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial UnitSquare.parameterBase
           (Polygon.Chain.repeatClosedVertices
-            Winding.Polygon.UnitSquare.parameterBase Winding.Polygon.UnitSquare.parameterVertices additional) :=
+            UnitSquare.parameterBase UnitSquare.parameterVertices additional) :=
               compared.symm
       _ = 4 * ((additional + 1 : Nat) : Int) := parameterWinding
   have intIdentity :

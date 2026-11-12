@@ -99,7 +99,7 @@ def execute(args: list[str], profile: bool, cold: bool) -> int:
         raise ValueError("--profile and --cold require this repository's build command")
     jobs = int(os.environ.get("CCL_PROFILE_JOBS", "4"))
     threads = int(os.environ.get("LEAN_NUM_THREADS", "8"))
-    threshold = float(os.environ.get("CCL_PROFILE_THRESHOLD", "5"))
+    threshold = float(os.environ.get("CCL_PROFILE_THRESHOLD", "30"))
     if not 1 <= jobs <= 4 or threads < 1 or not math.isfinite(threshold) or threshold < 0:
         raise ValueError("profiling requires 1..4 workers, positive threads and a nonnegative threshold")
     modules = inventory()
@@ -112,7 +112,10 @@ def execute(args: list[str], profile: bool, cold: bool) -> int:
     digest = Digests()
     configuration = [ROOT / p for p in ("lakefile.toml", "lake-manifest.json", "lean-toolchain",
                                         "scripts/toolchain/config.json", "scripts/run-lake.sh",
+                                        "scripts/toolchain/frontend-patches.json",
+                                        "scripts/toolchain/prepare_frontend.py",
                                         "scripts/profiling/build.py", "scripts/profiling/build_costs.py")]
+    configuration.extend(sorted((ROOT / "scripts/toolchain/frontend").rglob("*.patch")))
     configuration_hashes = {str(p): digest.sha(p) for p in configuration if p.is_file()}
     inputs = {"revision": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
               "modules": modules, "source_sha256": sources, "command": args,

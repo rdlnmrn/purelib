@@ -105,13 +105,13 @@ open Purelib.Topology.Surface.Word.NormalForm (WordNormalForm)
 open Purelib.Topology.Surface.Word.ZeroReduction (WordCancellation)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
 
 namespace Purelib.Riemann.Meshes.LiftedPuncturedGrid
 
 /-- Every retained physical-boundary vertex occurs in an actual lifted triangle. -/
-theorem physicalBoundaryVertex_active (lifted : Meshes.LiftedPuncturedGrid base) {vertex : Fin lifted.vertices.count}
+theorem physicalBoundaryVertex_active (lifted : LiftedPuncturedGrid base) {vertex : Fin lifted.vertices.count}
     (member : vertex ∈ lifted.boundaryComponents.cycles.flatten.map OrientedEdge.start) :
     vertex ∈ (LiftedMesh.activeVertices lifted.mesh).indices := by
   obtain ⟨edge, member, equal⟩ := Map.mem_map.mp member
@@ -140,7 +140,7 @@ end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BoundaryContraction
 namespace Purelib.Riemann.Meshes.LiftedPuncturedGrid
 
 /-- The retained cut-polygon anchor is an active vertex of the actual lifted mesh. -/
-theorem cut_anchor_active (lifted : Meshes.LiftedPuncturedGrid base) :
+theorem cut_anchor_active (lifted : LiftedPuncturedGrid base) :
     lifted.cutPolygon.patch.cut.vertexLabels lifted.cutPolygon.patch.cut.anchor ∈ (LiftedMesh.activeVertices
       lifted.mesh).indices := by
   apply ((LiftedMesh.activeVertices lifted.mesh).active_iff _).mpr
@@ -155,8 +155,8 @@ theorem cut_anchor_active (lifted : Meshes.LiftedPuncturedGrid base) :
 
 /-- Preparation and root transport are retained. Only the finite boundary contraction is computed, and its table is
 cached for every later consumer. -/
-@[expose] def boundaryContraction (lifted : Meshes.LiftedPuncturedGrid base) :
-    Topology.Surface.Boundary.BoundaryContraction lifted.boundaryComponents (LiftedMesh.activeVertices
+@[expose] def boundaryContraction (lifted : LiftedPuncturedGrid base) :
+    BoundaryContraction lifted.boundaryComponents (LiftedMesh.activeVertices
       lifted.mesh).indices :=
   BoundaryContraction.build lifted.boundaryComponents (LiftedMesh.activeVertices lifted.mesh).indices
     (lifted.cutPolygon.patch.cut.vertexLabels lifted.cutPolygon.patch.cut.anchor)
@@ -165,10 +165,10 @@ cached for every later consumer. -/
 
 /-- The original paired letters form a closed path in the dense contracted surface vertices. Each omitted physical edge
 is proved to become a loop. -/
-@[expose] def contractedCutWordWith (lifted : Meshes.LiftedPuncturedGrid base)
-    (contraction : Topology.Surface.Boundary.BoundaryContraction lifted.boundaryComponents (LiftedMesh.activeVertices
+@[expose] def contractedCutWordWith (lifted : LiftedPuncturedGrid base)
+    (contraction : BoundaryContraction lifted.boundaryComponents (LiftedMesh.activeVertices
       lifted.mesh).indices)
-    (indexed : (BoundaryContractionIndices.Indexed contraction)) :
+    (indexed : (Indexed contraction)) :
     Vertices.WordVertexRealization (CutBoundaryWord.pairedLetters lifted.cutBoundaryWord)
       contraction.representatives.length :=
   ProjectedEdgePairing.contractedWord lifted.cutBoundaryPairs indexed.projection
@@ -184,11 +184,11 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BoundaryContraction
 set_option genInjectivity false in
 /-- Retain the contraction, its dense indexing, and the realized actual paired word together. Subsequent comparisons
 consume these exact caches. -/
-structure ContractedCutWord (lifted : Meshes.LiftedPuncturedGrid base) where
+structure ContractedCutWord (lifted : LiftedPuncturedGrid base) where
   /-- The cached contraction of the actual physical boundary cycles on active vertices. -/ contraction :
     Topology.Surface.Boundary.BoundaryContraction lifted.boundaryComponents (LiftedMesh.activeVertices
       lifted.mesh).indices
-  /-- The retained dense indexing of this exact contraction. -/ indexed : (BoundaryContractionIndices.Indexed
+  /-- The retained dense indexing of this exact contraction. -/ indexed : (Indexed
     contraction)
   /-- The actual paired cut word realized in the contraction's representative vertices. -/ word :
     Vertices.WordVertexRealization (CutBoundaryWord.pairedLetters lifted.cutBoundaryWord)
@@ -203,7 +203,7 @@ end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BoundaryContraction
 namespace Purelib.Riemann.Meshes.LiftedPuncturedGrid
 
 /-- Cache the physical boundary contraction, its dense indexing and the realized paired cut word together. -/
-@[expose] def contractedCutWord (lifted : Meshes.LiftedPuncturedGrid base) :
+@[expose] def contractedCutWord (lifted : LiftedPuncturedGrid base) :
   Curves.Hyperelliptic.Meshes.PuncturedGrid.BoundaryContraction.ContractedCutWord lifted :=
   let contraction := lifted.boundaryContraction
   let indexed := Indexed.build contraction
@@ -214,10 +214,10 @@ namespace Purelib.Riemann.Meshes.LiftedPuncturedGrid
 
 /-- Every contracted vertex really occurs in the paired word, including vertices reached only after a run of deleted
 physical-boundary letters. -/
-theorem contractedCutWordWith_covered (lifted : Meshes.LiftedPuncturedGrid base)
-    (contraction : Topology.Surface.Boundary.BoundaryContraction lifted.boundaryComponents (LiftedMesh.activeVertices
+theorem contractedCutWordWith_covered (lifted : LiftedPuncturedGrid base)
+    (contraction : BoundaryContraction lifted.boundaryComponents (LiftedMesh.activeVertices
       lifted.mesh).indices)
-    (indexed : (BoundaryContractionIndices.Indexed contraction)) (index : Fin contraction.representatives.length) :
+    (indexed : (Indexed contraction)) (index : Fin contraction.representatives.length) :
     (lifted.contractedCutWordWith contraction indexed).Supported index := by
   have active := ((LiftedMesh.activeVertices lifted.mesh).active_iff _).mp
     (contraction.representative_active (List.getElem_mem index.isLt))
@@ -236,17 +236,17 @@ end Purelib.Riemann.Meshes.LiftedPuncturedGrid
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BoundaryContraction.ContractedCutWord
 
 /-- Every retained contracted vertex is supported by the cached paired word. -/
-theorem covered {lifted : Meshes.LiftedPuncturedGrid base} (cache :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.BoundaryContraction.ContractedCutWord lifted)
+theorem covered {lifted : LiftedPuncturedGrid base} (cache :
+  ContractedCutWord lifted)
     (index : Fin cache.contraction.representatives.length) : cache.word.Supported index := by
   rw [cache.word_eq]
   exact lifted.contractedCutWordWith_covered cache.contraction cache.indexed index
 
 /-- The universal normal-form vertices map onto the actual contracted surface vertices, preserving the anchor and every
 labelled cut edge. -/
-theorem factor_surjective {lifted : Meshes.LiftedPuncturedGrid base} (cache :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.BoundaryContraction.ContractedCutWord lifted)
-    {size : Nat} (model : Vertices.WordVertexModel (CutBoundaryWord.pairedLetters lifted.cutBoundaryWord) size) :
+theorem factor_surjective {lifted : LiftedPuncturedGrid base} (cache :
+  ContractedCutWord lifted)
+    {size : Nat} (model : WordVertexModel (CutBoundaryWord.pairedLetters lifted.cutBoundaryWord) size) :
     Function.Surjective (model.lift cache.word).vertices := Factor.surjective (model.lift cache.word) cache.covered
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BoundaryContraction.ContractedCutWord
@@ -254,23 +254,23 @@ end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BoundaryContraction.Contra
 namespace Purelib.Riemann.Meshes.LiftedPuncturedGrid
 
 /-- The contracted vertex count is the active count minus physical boundary edges plus boundary components. -/
-theorem contracted_vertex_count (lifted : Meshes.LiftedPuncturedGrid base)
-    (contraction : Topology.Surface.Boundary.BoundaryContraction lifted.boundaryComponents (LiftedMesh.activeVertices
+theorem contracted_vertex_count (lifted : LiftedPuncturedGrid base)
+    (contraction : BoundaryContraction lifted.boundaryComponents (LiftedMesh.activeVertices
       lifted.mesh).indices) :
     (contraction.representatives.length : Int) =
       ((LiftedMesh.activeVertices lifted.mesh).indices.length : Int) - lifted.boundaryComponents.cycles.flatten.length +
         lifted.boundaryComponents.cycles.length := by
   have size := congrArg (fun value : Nat => (value : Int)) contraction.count_eq
-  simp only [Purelib.Algebra.NatCast.add] at size
+  simp only [Algebra.NatCast.add] at size
   omega
 
 /-- The two independently constructed finite vertex counts now appear in one exact identity. Identifying their vertex
 models will imply `g` handles. -/
-theorem contracted_cutWord_genus_balance (lifted : Meshes.LiftedPuncturedGrid base)
-    (normal : NormalForm.WordNormalForm (CutBoundaryWord.pairedLetters lifted.cutBoundaryWord)
+theorem contracted_cutWord_genus_balance (lifted : LiftedPuncturedGrid base)
+    (normal : WordNormalForm (CutBoundaryWord.pairedLetters lifted.cutBoundaryWord)
       (IntegralPairing.wordSignature lifted.cutIntegralPairing))
-    (terminal : ZeroReduction.WordCancellation normal.trace.terminalWord)
-    (contraction : Topology.Surface.Boundary.BoundaryContraction lifted.boundaryComponents (LiftedMesh.activeVertices
+    (terminal : WordCancellation normal.trace.terminalWord)
+    (contraction : BoundaryContraction lifted.boundaryComponents (LiftedMesh.activeVertices
       lifted.mesh).indices) :
     2 * (normal.pivots.length : Int) + (terminal.pairs + 1 : Nat) =
       (contraction.representatives.length : Int) + 2 * genus := by

@@ -12,6 +12,9 @@ import Purelib.Algebra.Quadratic.Ternary.Minkowski
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Geometry.Rotations.Ternary.Split.Parabolic
 
+open Purelib.Algebra.Clifford.Ternary.Basic.TernaryForm
+open Purelib.Geometry.Quadratic.Ternary.SplitNullConic
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -44,10 +47,10 @@ open Purelib.Geometry.Rotations.Ternary.Split.RationalConjugacy.MinkowskiCliffor
 /-- This example forces the `first + second = 0` chart on the left and the
 ordinary nonzero-sum chart on the right. -/
 def chartSwitchData :
-  Geometry.Rotations.Ternary.Split.RationalConjugacy.MinkowskiClifford.ParabolicConjugacy.TransportMatrixData oneNonzero
+  TransportMatrixData oneNonzero
   twoNonzero
     1 (-1) 0 1 2 3 (by decide) (by decide) (by decide) (by decide) :=
-  Geometry.Rotations.Ternary.Split.RationalConjugacy.MinkowskiClifford.ParabolicConjugacy.transportMatrixData oneNonzero
+  ParabolicConjugacy.transportMatrixData oneNonzero
     twoNonzero 1 (-1) 0 1 2 3
     (by decide) (by decide) (by decide) (by decide)
 
@@ -68,19 +71,19 @@ The source uses the zero-sum null-conic chart with parameter two; the target use
 three. -/
 theorem chartSwitch_projective_conjugacy :
     let left := Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicAt oneNonzero
-      (Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford.nullParameter 1 (-1))
-      (Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford.nullParameter_isNull oneNonzero 1 (-1)) 2
+      (MinkowskiClifford.nullParameter 1 (-1))
+      (MinkowskiClifford.nullParameter_isNull oneNonzero 1 (-1)) 2
     let right := Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicAt oneNonzero
-      (Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford.nullParameter 0 1)
-      (Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford.nullParameter_isNull oneNonzero 0 1) 3
+      (MinkowskiClifford.nullParameter 0 1)
+      (MinkowskiClifford.nullParameter_isNull oneNonzero 0 1) 3
     let conjugator :=
-      Geometry.Rotations.Ternary.Split.RationalConjugacy.MinkowskiClifford.ParabolicConjugacy.nonNullFromMatrix
+      ParabolicConjugacy.nonNullFromMatrix
       oneNonzero twoNonzero
       chartSwitchData.matrix chartSwitchData.determinant_nonzero
-    (Algebra.Clifford.Ternary.Basic.TernaryForm.NonNullEvenClifford.Equivalent right)
-      (Algebra.Clifford.Ternary.Basic.TernaryForm.NonNullEvenClifford.mul
-        (Algebra.Clifford.Ternary.Basic.TernaryForm.NonNullEvenClifford.mul
-          (Algebra.Clifford.Ternary.Basic.TernaryForm.NonNullEvenClifford.conjugate conjugator) left)
+    (NonNullEvenClifford.Equivalent right)
+      (NonNullEvenClifford.mul
+        (NonNullEvenClifford.mul
+          (NonNullEvenClifford.conjugate conjugator) left)
         conjugator) := by
   exact
     ParabolicConjugacy.transported_parabolic_equivalent
@@ -90,10 +93,10 @@ theorem chartSwitch_projective_conjugacy :
 /-- A second example stays in the nonzero-sum chart but changes both the null
 axis and the sign and magnitude of the parabolic parameter. -/
 def genericData :
-  Geometry.Rotations.Ternary.Split.RationalConjugacy.MinkowskiClifford.ParabolicConjugacy.TransportMatrixData oneNonzero
+  TransportMatrixData oneNonzero
   twoNonzero
     2 1 1 2 (-2) 5 (by decide) (by decide) (by decide) (by decide) :=
-  Geometry.Rotations.Ternary.Split.RationalConjugacy.MinkowskiClifford.ParabolicConjugacy.transportMatrixData oneNonzero
+  ParabolicConjugacy.transportMatrixData oneNonzero
     twoNonzero 2 1 1 2 (-2) 5
     (by decide) (by decide) (by decide) (by decide)
 
@@ -112,19 +115,19 @@ theorem generic_determinant :
 Both axes use the nonzero-sum chart, with parabolic parameters minus two and five. -/
 theorem generic_projective_conjugacy :
     let left := Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicAt oneNonzero
-      (Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford.nullParameter 2 1)
-      (Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford.nullParameter_isNull oneNonzero 2 1) (-2)
+      (MinkowskiClifford.nullParameter 2 1)
+      (MinkowskiClifford.nullParameter_isNull oneNonzero 2 1) (-2)
     let right := Geometry.Rotations.Ternary.Split.Parabolic.MinkowskiClifford.parabolicAt oneNonzero
-      (Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford.nullParameter 1 2)
-      (Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford.nullParameter_isNull oneNonzero 1 2) 5
+      (MinkowskiClifford.nullParameter 1 2)
+      (MinkowskiClifford.nullParameter_isNull oneNonzero 1 2) 5
     let conjugator :=
-      Geometry.Rotations.Ternary.Split.RationalConjugacy.MinkowskiClifford.ParabolicConjugacy.nonNullFromMatrix
+      ParabolicConjugacy.nonNullFromMatrix
       oneNonzero twoNonzero
       genericData.matrix genericData.determinant_nonzero
-    (Algebra.Clifford.Ternary.Basic.TernaryForm.NonNullEvenClifford.Equivalent right)
-      (Algebra.Clifford.Ternary.Basic.TernaryForm.NonNullEvenClifford.mul
-        (Algebra.Clifford.Ternary.Basic.TernaryForm.NonNullEvenClifford.mul
-          (Algebra.Clifford.Ternary.Basic.TernaryForm.NonNullEvenClifford.conjugate conjugator) left)
+    (NonNullEvenClifford.Equivalent right)
+      (NonNullEvenClifford.mul
+        (NonNullEvenClifford.mul
+          (NonNullEvenClifford.conjugate conjugator) left)
         conjugator) := by
   exact
     ParabolicConjugacy.transported_parabolic_equivalent

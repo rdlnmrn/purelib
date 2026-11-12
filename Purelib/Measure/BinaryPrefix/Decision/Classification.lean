@@ -41,7 +41,7 @@ open Purelib.Data in
 
 Empty and full leaves decide outside and inside; an exhausted prefix at a branch is unresolved, while a further bit
 selects its original child. -/
-@[expose] def classify : List.BinaryPrefix.RawEvent →
+@[expose] def classify : RawEvent →
   CCLMeasureWord → Measure.Status
   | .empty, _ => .outside
   | .full, _ => .inside
@@ -52,7 +52,7 @@ selects its original child. -/
 
 open Purelib.Data in
 /-- Complementing a raw event exchanges inside and outside classification and retains unresolved classification. -/
-theorem classify_complement : ∀ (event : List.BinaryPrefix.RawEvent)
+theorem classify_complement : ∀ (event : RawEvent)
   (word : CCLMeasureWord),
     event.complement.classify word =
       match event.classify word with
@@ -73,7 +73,7 @@ open Purelib.Measure
 /-- Every extension of a prefix is inside that prefix's exact raw decision event. -/
 theorem ofPrefix_classify_append (stem suffix :
   CCLMeasureWord) :
-    (List.BinaryPrefix.RawEvent.ofPrefix stem).classify (stem ++ suffix) =
+    (ofPrefix stem).classify (stem ++ suffix) =
       Status.inside := by
   induction stem with
   | nil => rfl
@@ -83,7 +83,7 @@ theorem ofPrefix_classify_append (stem suffix :
 /-- A prefix is inside its own raw decision event. -/
 theorem ofPrefix_classify_self (stem : CCLMeasureWord)
   :
-    (List.BinaryPrefix.RawEvent.ofPrefix stem).classify stem = Status.inside := by
+    (ofPrefix stem).classify stem = Status.inside := by
   simpa only [-eq_self, -iff_self, Append.append_nil] using ofPrefix_classify_append stem []
 
 /-! ## Executing a finite decision tree as a classified prefix frontier -/
@@ -96,18 +96,18 @@ open Purelib.Data
 section
 open Purelib.Measure
 /-- Attach exact dyadic weights and raw-event classifications to the original ordered prefix frontier. -/
-@[expose] def classifyFrontier (event : List.BinaryPrefix.RawEvent)
+@[expose] def classifyFrontier (event : RawEvent)
   (frontier : List CCLMeasureWord) :
-    List (Measure.Classified CCLMeasureWord) :=
+    List (Classified CCLMeasureWord) :=
   frontier.map fun word => BinaryPrefix.rawClassified word (event.classify word)
 
 /-- Split an unresolved original prefix into its two exact immediate children with retained classifications and
 conserved weight. -/
-@[expose] def classifySplit (event : List.BinaryPrefix.RawEvent) (word :
+@[expose] def classifySplit (event : RawEvent) (word :
   CCLMeasureWord)
     (unresolved : event.classify word =
       Status.unresolved) :
-    Measure.Split (β := CCLMeasureWord)
+    Split (β := CCLMeasureWord)
       (BinaryPrefix.rawClassified word (event.classify word)) where
   children := BinaryPrefix.rawBinaryChildren word
     (event.classify (word ++ [false]))
@@ -116,7 +116,7 @@ conserved weight. -/
     simp only [-eq_self, -iff_self, BinaryPrefix.rawBinaryChildren, BinaryPrefix.rawClassified,
       BinaryPrefix.rawPrefixAtom,
       Measure.classifiedWeight, add_zero]; try rfl
-    exact List.BinaryPrefix.rawPrefixWeight_children_add word
+    exact rawPrefixWeight_children_add word
   statuses := by
     rw [unresolved]
     intro child member
@@ -125,11 +125,11 @@ conserved weight. -/
 /-- Replacing an unresolved prefix by its exact two children yields a certified refinement of the classified frontier.
 -/
 theorem classifyFrontier_split_refines (event :
-  List.BinaryPrefix.RawEvent)
+  RawEvent)
     (before after : List CCLMeasureWord) (word : CCLMeasureWord)
     (unresolved : event.classify word =
       Status.unresolved) :
-    Measure.FrontierRefines
+    FrontierRefines
       (classifyFrontier event (BinaryPrefix.splitRawFrontier before after word))
       (classifyFrontier event (before ++ [word] ++ after)) := by
   simpa only [-eq_self, -iff_self, classifyFrontier, BinaryPrefix.splitRawFrontier,
@@ -148,8 +148,8 @@ theorem classifyFrontier_split_refines (event :
 Branch expansion appends the false-child frontier before the true-child frontier, retaining each resulting prefix and
 its dyadic weight. -/
 @[expose] def terminalFrontierAt (stem :
-  CCLMeasureWord) : List.BinaryPrefix.RawEvent →
-    List (Measure.Classified CCLMeasureWord)
+  CCLMeasureWord) : RawEvent →
+    List (Classified CCLMeasureWord)
   | .empty => [BinaryPrefix.rawClassified stem Status.outside]
   | .full => [BinaryPrefix.rawClassified stem Status.inside]
   | .branch falseChild trueChild =>
@@ -158,9 +158,9 @@ its dyadic weight. -/
 
 /-- The terminal frontier below a prefix has exactly that prefix's original dyadic weight. -/
 theorem terminalFrontierAt_weight : ∀ (event :
-  List.BinaryPrefix.RawEvent) (stem : CCLMeasureWord),
+  RawEvent) (stem : CCLMeasureWord),
     Measure.classifiedWeight (terminalFrontierAt stem event) =
-      List.BinaryPrefix.rawPrefixWeight stem
+      rawPrefixWeight stem
   | .empty, stem => by
       simp only [-eq_self, -iff_self, terminalFrontierAt, Measure.classifiedWeight,
         BinaryPrefix.rawClassified, BinaryPrefix.rawPrefixAtom, add_zero]; try rfl
@@ -172,7 +172,7 @@ theorem terminalFrontierAt_weight : ∀ (event :
         Measure.classifiedWeight_append,
         terminalFrontierAt_weight falseChild,
         terminalFrontierAt_weight trueChild]
-      exact List.BinaryPrefix.rawPrefixWeight_children_add stem
+      exact rawPrefixWeight_children_add stem
 
 end
 
@@ -180,54 +180,54 @@ section
 open Purelib.Data.Rat
 open Purelib.Measure
 /-- The terminal frontier's lower weight equals the original prefix weight times the raw event's weight. -/
-theorem terminalFrontierAt_lower : ∀ (event : List.BinaryPrefix.RawEvent)
+theorem terminalFrontierAt_lower : ∀ (event : RawEvent)
   (stem : CCLMeasureWord),
     Measure.lowerWeight (terminalFrontierAt stem event) =
-      List.BinaryPrefix.rawPrefixWeight stem * event.weight
+      rawPrefixWeight stem * event.weight
   | .empty, stem => by
       simp only [-eq_self, -iff_self, terminalFrontierAt, Measure.lowerWeight,
-        BinaryPrefix.rawClassified, BinaryPrefix.rawPrefixAtom, List.BinaryPrefix.RawEvent.weight, mul_zero, add_zero];
+        BinaryPrefix.rawClassified, BinaryPrefix.rawPrefixAtom, weight, mul_zero, add_zero];
           try rfl
   | .full, stem => by
       simp only [-eq_self, -iff_self, terminalFrontierAt, Measure.lowerWeight,
-        BinaryPrefix.rawClassified, BinaryPrefix.rawPrefixAtom, List.BinaryPrefix.RawEvent.weight, mul_one, add_zero];
+        BinaryPrefix.rawClassified, BinaryPrefix.rawPrefixAtom, weight, mul_one, add_zero];
           try rfl
   | .branch falseChild trueChild, stem => by
       rw [terminalFrontierAt, Measure.lowerWeight_append,
         terminalFrontierAt_lower falseChild,
         terminalFrontierAt_lower trueChild,
-        List.BinaryPrefix.rawPrefixWeight_child, List.BinaryPrefix.rawPrefixWeight_child,
-          List.BinaryPrefix.RawEvent.weight]
+        rawPrefixWeight_child, rawPrefixWeight_child,
+          weight]
       let half : Fraction.Rational := 1 / 2
-      change List.BinaryPrefix.rawPrefixWeight stem * half * falseChild.weight +
-          List.BinaryPrefix.rawPrefixWeight stem * half * trueChild.weight =
-        List.BinaryPrefix.rawPrefixWeight stem *
+      change rawPrefixWeight stem * half * falseChild.weight +
+          rawPrefixWeight stem * half * trueChild.weight =
+        rawPrefixWeight stem *
           ((falseChild.weight + trueChild.weight) * half)
       ring1
 
 /-- The terminal frontier's upper weight equals the original prefix weight times the raw event's weight. -/
-theorem terminalFrontierAt_upper : ∀ (event : List.BinaryPrefix.RawEvent)
+theorem terminalFrontierAt_upper : ∀ (event : RawEvent)
   (stem : CCLMeasureWord),
     Measure.upperWeight (terminalFrontierAt stem event) =
-      List.BinaryPrefix.rawPrefixWeight stem * event.weight
+      rawPrefixWeight stem * event.weight
   | .empty, stem => by
       simp only [-eq_self, -iff_self, terminalFrontierAt, Measure.upperWeight,
-        BinaryPrefix.rawClassified, BinaryPrefix.rawPrefixAtom, List.BinaryPrefix.RawEvent.weight, mul_zero, add_zero];
+        BinaryPrefix.rawClassified, BinaryPrefix.rawPrefixAtom, weight, mul_zero, add_zero];
           try rfl
   | .full, stem => by
       simp only [-eq_self, -iff_self, terminalFrontierAt, Measure.upperWeight,
-        BinaryPrefix.rawClassified, BinaryPrefix.rawPrefixAtom, List.BinaryPrefix.RawEvent.weight, mul_one, add_zero];
+        BinaryPrefix.rawClassified, BinaryPrefix.rawPrefixAtom, weight, mul_one, add_zero];
           try rfl
   | .branch falseChild trueChild, stem => by
       rw [terminalFrontierAt, Measure.upperWeight_append,
         terminalFrontierAt_upper falseChild,
         terminalFrontierAt_upper trueChild,
-        List.BinaryPrefix.rawPrefixWeight_child, List.BinaryPrefix.rawPrefixWeight_child,
-          List.BinaryPrefix.RawEvent.weight]
+        rawPrefixWeight_child, rawPrefixWeight_child,
+          weight]
       let half : Fraction.Rational := 1 / 2
-      change List.BinaryPrefix.rawPrefixWeight stem * half * falseChild.weight +
-          List.BinaryPrefix.rawPrefixWeight stem * half * trueChild.weight =
-        List.BinaryPrefix.rawPrefixWeight stem *
+      change rawPrefixWeight stem * half * falseChild.weight +
+          rawPrefixWeight stem * half * trueChild.weight =
+        rawPrefixWeight stem *
           ((falseChild.weight + trueChild.weight) * half)
       ring1
 
@@ -236,7 +236,7 @@ end
 open Purelib.Measure in
 /-- The exact terminal frontier below any prefix has zero unresolved weight. -/
 theorem terminalFrontierAt_unresolved : ∀ (event :
-  List.BinaryPrefix.RawEvent) (stem : CCLMeasureWord),
+  RawEvent) (stem : CCLMeasureWord),
     Measure.unresolvedWeight (terminalFrontierAt stem event) = 0
   | .empty, stem => by
       simp only [-eq_self, -iff_self, terminalFrontierAt, Measure.unresolvedWeight,
@@ -250,36 +250,36 @@ theorem terminalFrontierAt_unresolved : ∀ (event :
         terminalFrontierAt_unresolved trueChild, add_zero]
 
 /-- Expand the raw decision tree from the empty prefix into its exact ordered terminal classified frontier. -/
-@[expose] def terminalFrontier (event : List.BinaryPrefix.RawEvent) :
+@[expose] def terminalFrontier (event : RawEvent) :
     List (Measure.Classified CCLMeasureWord) :=
   terminalFrontierAt [] event
 
 /-- The full terminal classified frontier has total weight one. -/
-theorem terminalFrontier_weight (event : List.BinaryPrefix.RawEvent) :
+theorem terminalFrontier_weight (event : RawEvent) :
     Measure.classifiedWeight event.terminalFrontier = 1 := by
   rw [terminalFrontier, terminalFrontierAt_weight,
-    List.BinaryPrefix.rawPrefixWeight_nil]
+    rawPrefixWeight_nil]
 
 section
 open Purelib.Data.Rat
 /-- The full terminal frontier's lower weight is the raw event's exact weight. -/
-theorem terminalFrontier_lower (event : List.BinaryPrefix.RawEvent) :
+theorem terminalFrontier_lower (event : RawEvent) :
     Measure.lowerWeight event.terminalFrontier = event.weight := by
   rw [terminalFrontier, terminalFrontierAt_lower,
-    List.BinaryPrefix.rawPrefixWeight_nil,
+    rawPrefixWeight_nil,
     Fraction.Field.one_mul]
 
 /-- The full terminal frontier's upper weight is the raw event's exact weight. -/
-theorem terminalFrontier_upper (event : List.BinaryPrefix.RawEvent) :
+theorem terminalFrontier_upper (event : RawEvent) :
     Measure.upperWeight event.terminalFrontier = event.weight := by
   rw [terminalFrontier, terminalFrontierAt_upper,
-    List.BinaryPrefix.rawPrefixWeight_nil,
+    rawPrefixWeight_nil,
     Fraction.Field.one_mul]
 
 end
 
 /-- The full terminal classified frontier has zero unresolved weight. -/
-theorem terminalFrontier_unresolved (event : List.BinaryPrefix.RawEvent)
+theorem terminalFrontier_unresolved (event : RawEvent)
   :
     Measure.unresolvedWeight event.terminalFrontier = 0 :=
   terminalFrontierAt_unresolved event []

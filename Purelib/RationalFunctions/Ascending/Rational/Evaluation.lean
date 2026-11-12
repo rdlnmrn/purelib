@@ -7,6 +7,8 @@ public import Purelib.RationalFunctions.Ascending.Rational.Basic
 
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Polynomial.Ascending.Rational
+
 open Purelib.Data.Gaussian.Basic (Canonical)
 
 section
@@ -32,24 +34,24 @@ open Purelib.RationalFunctions
 
 This uses the total field division operation; cancellation identities separately require denominator nonzeroness. -/
 def eval (expression :
-  Ascending.Rational.Basic.RationalPolynomial) (x : Canonical) : Canonical :=
-  Ascending.Rational.GaussianEvaluation.eval expression.numerator x /
-    Ascending.Rational.GaussianEvaluation.eval expression.denominator x
+  RationalPolynomial) (x : Canonical) : Canonical :=
+  GaussianEvaluation.eval expression.numerator x /
+    GaussianEvaluation.eval expression.denominator x
 
 /-- Compute the two-point rational secant kernel from the numerator and denominator polynomial kernels.
 
 The numerator combines the two polynomial divided differences by the quotient rule. Its denominator is the product of
 the denominator evaluations at the two supplied points. -/
 def kernel (expression :
-  Ascending.Rational.Basic.RationalPolynomial) (x y : Canonical) : Canonical :=
+  RationalPolynomial) (x y : Canonical) : Canonical :=
   let numeratorY :=
-    Ascending.Rational.GaussianEvaluation.eval expression.numerator y
+    GaussianEvaluation.eval expression.numerator y
   let denominatorX :=
-    Ascending.Rational.GaussianEvaluation.eval expression.denominator x
+    GaussianEvaluation.eval expression.denominator x
   let denominatorY :=
-    Ascending.Rational.GaussianEvaluation.eval expression.denominator y
-  (Ascending.Rational.Secant.polynomialKernel expression.numerator x y * denominatorY -
-      numeratorY * Ascending.Rational.Secant.polynomialKernel expression.denominator x y) /
+    GaussianEvaluation.eval expression.denominator y
+  (Secant.polynomialKernel expression.numerator x y * denominatorY -
+      numeratorY * Secant.polynomialKernel expression.denominator x y) /
     (denominatorX * denominatorY)
 
 /-- Evaluate the formal quotient-rule expression at one Gaussian point.
@@ -57,18 +59,18 @@ def kernel (expression :
 The numerator combines the evaluated formal derivatives, and the denominator is the square of the evaluated denominator.
 The expression uses total Gaussian division. -/
 def derivativeEval (expression :
-  Ascending.Rational.Basic.RationalPolynomial) (x : Canonical) :
+  RationalPolynomial) (x : Canonical) :
     Canonical :=
   let numerator :=
-    Ascending.Rational.GaussianEvaluation.eval expression.numerator x
+    GaussianEvaluation.eval expression.numerator x
   let denominator :=
-    Ascending.Rational.GaussianEvaluation.eval expression.denominator x
+    GaussianEvaluation.eval expression.denominator x
   let numeratorDerivative :=
-    Ascending.Rational.GaussianEvaluation.eval
-      (Ascending.Rational.Derivative.derivative expression.numerator) x
+    GaussianEvaluation.eval
+      (Derivative.derivative expression.numerator) x
   let denominatorDerivative :=
-    Ascending.Rational.GaussianEvaluation.eval
-      (Ascending.Rational.Derivative.derivative expression.denominator) x
+    GaussianEvaluation.eval
+      (Derivative.derivative expression.denominator) x
   (numeratorDerivative * denominator - numerator * denominatorDerivative) /
     (denominator * denominator)
 end RationalPolynomial

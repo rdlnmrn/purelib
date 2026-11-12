@@ -59,6 +59,8 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Riemann.Meshes.PuncturedGridFaces
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian
+
 open Purelib
 
 open Purelib.Algebra
@@ -121,20 +123,20 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSou
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {count : Nat} {patch : PreparedPatch parent}
-  {sourceData : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
+  {sourceData : Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
     Cover sourceData}
   {covers : BasisSourceCovers parent} {minimum
     floor index depth : Nat}
@@ -142,7 +144,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {areaAllowance sourceTarget coefficientTarget : Coordinate}
   {request : BasisPreparedCommonRequest
     regular common areaAllowance sourceTarget coefficientTarget floor}
-  {box : Purelib.Geometry.Rational.Box}
+  {box : Geometry.Rational.Box}
   {polynomials : RegularBasisPolynomials cap
     index box}
   {originals :
@@ -176,13 +178,13 @@ variable {faceIndex : Nat} {data :
 namespace ReverseSourceRun
 
 /-- Squared endpoint error of the complete physical run. -/
-@[expose] def totalError (run : ReverseSourceRuns.ReverseSourceRun acquired data) : Coordinate :=
-  (run.fragments.length : InverseRootPolynomial.Coordinate)^2 *
+@[expose] def totalError (run : ReverseSourceRun acquired data) : Coordinate :=
+  (run.fragments.length : Coordinate)^2 *
     PairedFragmentBlocks.maximum (OwnedFragment.totalError (acquired := acquired)) run.fragments
 
 /-- The endpoint comparison uses the same cached source summary as the area comparison, so it can pay the joining
 polygons between complete parent runs. -/
-theorem cached_source_total_bound (run : ReverseSourceRuns.ReverseSourceRun acquired data)
+theorem cached_source_total_bound (run : ReverseSourceRun acquired data)
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs) :
     PrimitivePoint.Bounded
       ((PairedIncrementArea.total
@@ -191,8 +193,8 @@ theorem cached_source_total_bound (run : ReverseSourceRuns.ReverseSourceRun acqu
           (run.totalError * PreparedObservationCoercivity.coefficientNormSq coefficients) := by
   have massNN : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
-    (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : InverseRootPolynomial.Coordinate)) _
-      (fun row => Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
+    (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Coordinate)) _
+      (fun row => Basic.Canonical.normSq_nonneg (coefficients row)))
   have bounded := PairedBlockTotals.blocks_total_difference_bound
     (run.fragments.map OwnedFragment.pair)
     (Fraction.Order.Arithmetic.mul_nonneg_direct
@@ -204,12 +206,12 @@ theorem cached_source_total_bound (run : ReverseSourceRuns.ReverseSourceRun acqu
       have upper := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
         (PairedFragmentBlocks.le_maximum (OwnedFragment.totalError (acquired := acquired)) present) massNN
       exact ⟨localBound.1.trans upper, localBound.2.trans upper⟩)
-  rw [run.source_total weighted, Data.List.Map.length_map] at bounded
-  have scalar : (run.fragments.length : InverseRootPolynomial.Coordinate)^2 *
+  rw [run.source_total weighted, Map.length_map] at bounded
+  have scalar : (run.fragments.length : Coordinate)^2 *
       (PairedFragmentBlocks.maximum (OwnedFragment.totalError (acquired := acquired)) run.fragments *
         PreparedObservationCoercivity.coefficientNormSq coefficients) = run.totalError *
           PreparedObservationCoercivity.coefficientNormSq coefficients := by
-    unfold ReverseSourceRuns.ReverseSourceRun.totalError
+    unfold ReverseSourceRun.totalError
     ring1
   rw [scalar] at bounded
   exact bounded
@@ -223,13 +225,13 @@ theorem cached_source_bounded {pairs : Acquisition.ChildPairs acquired} (weighte
   have bounded := SourceRun.cached_source_bounded weighted
   constructor
   · simpa only [PrimitivePoint.zero, PrimitivePoint.sub, zero_sub,
-      Data.Gaussian.Basic.Canonical.normSq_neg] using bounded.1
+      Basic.Canonical.normSq_neg] using bounded.1
   · simpa only [PrimitivePoint.zero, PrimitivePoint.sub, zero_sub,
-      Data.Gaussian.Basic.Canonical.normSq_neg] using bounded.2
+      Basic.Canonical.normSq_neg] using bounded.2
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSourceRuns.ReverseSourceRun in
 /-- Uniform whole-parent magnitude needed when bounding cross-parent wedges. -/
-theorem owned_total_bounded (run : ReverseSourceRuns.ReverseSourceRun acquired data)
+theorem owned_total_bounded (run : ReverseSourceRun acquired data)
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs) :
     PrimitivePoint.Bounded
       (PairedIncrementArea.total
@@ -241,28 +243,28 @@ theorem owned_total_bounded (run : ReverseSourceRuns.ReverseSourceRun acquired d
     cached_source_bounded
     weighted
   have scalar {a b : InverseRootPolynomial.Gaussian}
-      (error : Data.Gaussian.Norm.Basic.normSq (a - b) ≤ run.totalError *
+      (error : Norm.Basic.normSq (a - b) ≤ run.totalError *
         PreparedObservationCoercivity.coefficientNormSq coefficients)
-      (bounded : Data.Gaussian.Norm.Basic.normSq b ≤ BasisSourceCovers.primitiveSlope covers *
+      (bounded : Norm.Basic.normSq b ≤ BasisSourceCovers.primitiveSlope covers *
         PreparedObservationCoercivity.coefficientNormSq coefficients) :
-      Data.Gaussian.Norm.Basic.normSq a ≤ 2 * (run.totalError + BasisSourceCovers.primitiveSlope covers) *
+      Norm.Basic.normSq a ≤ 2 * (run.totalError + BasisSourceCovers.primitiveSlope covers) *
         PreparedObservationCoercivity.coefficientNormSq coefficients := by
-    have result := (Data.Gaussian.Norm.Bounds.normSq_add_le_two (a - b) b).trans
+    have result := (Norm.Bounds.normSq_add_le_two (a - b) b).trans
       (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct error
         bounded)
-        (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2))
+        (by decide : (0 : Coordinate) ≤ 2))
     rw [sub_add_cancel] at result
     exact result.trans_eq (by ring1)
-  have oldBound {value : Data.Gaussian.Basic.Canonical} {limit : InverseRootPolynomial.Coordinate}
-      (bound : Data.Gaussian.Basic.Canonical.normSq value ≤ limit) :
-      Data.Gaussian.Norm.Basic.normSq value ≤ limit := by
+  have oldBound {value : Basic.Canonical} {limit : Coordinate}
+      (bound : Basic.Canonical.normSq value ≤ limit) :
+      Norm.Basic.normSq value ≤ limit := by
     change Fraction.Order.Basic.LessEqual _ _ at bound ⊢
-    simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using bound
-  have canonicalBound {value : Data.Gaussian.Basic.Canonical} {limit : InverseRootPolynomial.Coordinate}
-      (bound : Data.Gaussian.Norm.Basic.normSq value ≤ limit) :
-      Data.Gaussian.Basic.Canonical.normSq value ≤ limit := by
+    simpa only [Norm.Basic.normSq_eq_canonical] using bound
+  have canonicalBound {value : Basic.Canonical} {limit : Coordinate}
+      (bound : Norm.Basic.normSq value ≤ limit) :
+      Basic.Canonical.normSq value ≤ limit := by
     change Fraction.Order.Basic.LessEqual _ _ at bound ⊢
-    simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using bound
+    simpa only [Norm.Basic.normSq_eq_canonical] using bound
   exact ⟨canonicalBound (scalar (oldBound errors.1) (oldBound source.1)),
     canonicalBound (scalar (oldBound errors.2) (oldBound source.2))⟩
 

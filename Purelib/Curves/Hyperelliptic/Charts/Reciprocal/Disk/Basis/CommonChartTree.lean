@@ -117,85 +117,85 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSa
   (PrimitiveBank)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples (Data Sample)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {model :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell}
-  {parameter target sourceTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor sourceFloor :
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : ParameterEdge} {cell :
+    Cell data edge}
+  {regular : RegularBounds.Data cap} {model :
+    RootModel cell}
+  {parameter target sourceTarget : Coordinate} {floor sourceFloor :
     Nat}
-  {covers : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
+  {covers : BasisSourceCovers parent}
 
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
 
-variable {cover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data}
+variable {cover : Cover data}
 
 namespace BasisTreeSources
 
 /-- Every midpoint keeps the interval's retained source cells. -/
-@[expose] def onInterval (interval : CommonCover.BasisCommonInterval cover covers) (sourceTarget :
-  InverseRootPolynomial.Coordinate)
+@[expose] def onInterval (interval : BasisCommonInterval cover covers) (sourceTarget :
+  Coordinate)
     (positive : 0 < sourceTarget) (sourceFloor : Nat) :
-    {depth : Nat} → {first last : InverseRootPolynomial.Coordinate} → (tree : VertexTree.Tree regular model target floor
+    {depth : Nat} → {first last : Coordinate} → (tree : Tree regular model target floor
       depth first last) →
     interval.edge.left.parameter ≤ first → last ≤ interval.edge.right.parameter → first ≤ last →
-    EndpointSchedule.BasisTreeSources covers sourceTarget sourceFloor tree
+    BasisTreeSources covers sourceTarget sourceFloor tree
   | _, _, _, .leaf _ _, _, _, _ => ⟨⟩
   | _, _, _, .node middle left right, lower, upper, ordered =>
-      let between := PreparedBoxPartitions.midpoint_between ordered
+      let between := midpoint_between ordered
       ⟨EndpointSources.onInterval middle interval ⟨lower.trans between.1, between.2.trans upper⟩ sourceTarget positive
         sourceFloor,
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartTree.BasisTreeSources.onInterval interval
+        BasisTreeSources.onInterval interval
           sourceTarget positive sourceFloor left lower (between.2.trans upper) between.1,
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartTree.BasisTreeSources.onInterval interval
+        BasisTreeSources.onInterval interval
           sourceTarget positive sourceFloor right (lower.trans between.1) upper between.2⟩
 
 namespace Plans
 
-variable {index readingStage minimum : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {polynomials : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+variable {index readingStage minimum : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {polynomials : RegularBasisPolynomials cap
     index box}
-  {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample comparison capSample}
+  {comparison : Data regular cell}
+  {sample : Sample comparison capSample}
 
 /-- Full path readback, including all interior excursions, for the existing chart-path acquisition with interval-owned
 source requests. -/
-theorem onInterval_path (interval : CommonCover.BasisCommonInterval cover covers)
+theorem onInterval_path (interval : BasisCommonInterval cover covers)
     (positive : 0 < sourceTarget) (bank : BasisSourceLocations.SampleBank covers index)
-    (originals : BasisSourceLocations.PrimitiveBank covers index) (coefficients :
-      LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    {depth : Nat} → {first last : InverseRootPolynomial.Coordinate} → (tree : VertexTree.Tree regular model target floor
+    (originals : PrimitiveBank covers index) (coefficients :
+      GaussianVector genus) :
+    {depth : Nat} → {first last : Coordinate} → (tree : Tree regular model target floor
       depth first last) →
     (lower : interval.edge.left.parameter ≤ first) → (upper : last ≤ interval.edge.right.parameter) → (ordered : first ≤
       last) →
-    (plans : BasisTreeSources.Plans polynomials minimum tree
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartTree.BasisTreeSources.onInterval interval
+    (plans : Plans polynomials minimum tree
+      (onInterval interval
       sourceTarget positive sourceFloor tree lower upper ordered)) →
-    (readings : VertexPaths.TreeReadings sample readingStage tree) →
-    (evaluated : Plans.Evaluation bank tree
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartTree.BasisTreeSources.onInterval interval
+    (readings : TreeReadings sample readingStage tree) →
+    (evaluated : Evaluation bank tree
+      (onInterval interval
       sourceTarget positive sourceFloor tree lower upper ordered) plans readings) →
-    (before : VertexRequests.Reading regular model sample first target floor readingStage) →
-    (after : VertexRequests.Reading regular model sample last target floor readingStage) →
-    (firstSource lastSource : InverseRootPolynomial.Gaussian) →
+    (before : Reading regular model sample first target floor readingStage) →
+    (after : Reading regular model sample last target floor readingStage) →
+    (firstSource lastSource : Gaussian) →
     (firstEq : firstSource = (BasisCommonInterval.primitiveSample interval regular polynomials originals
       bank).pullbackValue coefficients first) →
     (lastEq : lastSource = (BasisCommonInterval.primitiveSample interval regular polynomials originals
       bank).pullbackValue coefficients last) →
-    (firstClose : Data.Gaussian.Norm.Basic.normSq (firstSource - polynomials.value coefficients
+    (firstClose : Gaussian.Norm.Basic.normSq (firstSource - polynomials.value coefficients
       before.root.coordinate) ≤
       10 * sourceTarget * PreparedObservationCoercivity.coefficientNormSq coefficients) →
-    (lastClose : Data.Gaussian.Norm.Basic.normSq (lastSource - polynomials.value coefficients
+    (lastClose : Gaussian.Norm.Basic.normSq (lastSource - polynomials.value coefficients
       after.root.coordinate) ≤
       10 * sourceTarget * PreparedObservationCoercivity.coefficientNormSq coefficients) →
-    (Plans.pathValues bank coefficients tree _ plans readings evaluated before after ordered firstSource lastSource
+    (pathValues bank coefficients tree _ plans readings evaluated before after ordered firstSource lastSource
       firstClose lastClose).pairs.map Prod.fst =
       DyadicPrimitivePaths.dyadicIncrements ((BasisCommonInterval.primitiveSample interval regular polynomials originals
         bank).pullbackValue coefficients)
@@ -207,9 +207,9 @@ theorem onInterval_path (interval : CommonCover.BasisCommonInterval cover covers
       firstSource, lastSource, firstEq, lastEq, firstClose, lastClose => by
       have middleEq := EndpointSources.onInterval_value evaluated.1 originals coefficients
       have middleClose := evaluated.1.evaluated.accurate coefficients
-      have between := PreparedBoxPartitions.midpoint_between ordered
-      change List.map (Prod.fst : InverseRootPolynomial.Gaussian × InverseRootPolynomial.Gaussian →
-        InverseRootPolynomial.Gaussian) (_ ++ _) = _
+      have between := midpoint_between ordered
+      change List.map (Prod.fst : Gaussian × Gaussian →
+        Gaussian) (_ ++ _) = _
       rw [List.Map.map_append, DyadicPrimitivePaths.dyadicIncrements]
       exact congrArg₂ List.append
 

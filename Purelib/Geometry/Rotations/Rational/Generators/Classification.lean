@@ -95,36 +95,36 @@ namespace Classification.GeneratedSubgroups
 abbrev Scalar := RotationProfiles.Scalar
 
 /-- A finite signed word whose occurrences retain membership in the supplied rotation profile. -/
-abbrev Word {rotations : List (Rotations.Basic.Rotation
+abbrev Word {rotations : List (Rotation
   Scalar)}
     (profile : RotationProfiles.VisibleRotationProfile rotations) :=
   List (RotationProfiles.SignedLetter profile)
 
 /-- The fixed rational identity proportion is a left unit. -/
 @[simp] theorem identityProportion_mul
-    (proportion : Projective.Basic.NonNullProportion
+    (proportion : NonNullProportion
       Scalar) :
     NonNullProportion.mul RotationProfiles.identityProportion
       proportion = proportion := by
   rw
-    [Purelib.Geometry.Rotations.Rational.Generators.Profile.RotationProfiles.identityProportion_eq_identity
+    [Profile.RotationProfiles.identityProportion_eq_identity
     proportion,
     NonNullProportion.identity_mul]
 
 /-- The fixed rational identity proportion is a right unit. -/
 @[simp] theorem mul_identityProportion
-    (proportion : Projective.Basic.NonNullProportion
+    (proportion : NonNullProportion
       Scalar) :
     NonNullProportion.mul proportion
       RotationProfiles.identityProportion = proportion := by
   rw
-    [Purelib.Geometry.Rotations.Rational.Generators.Profile.RotationProfiles.identityProportion_eq_identity
+    [Profile.RotationProfiles.identityProportion_eq_identity
     proportion,
     NonNullProportion.mul_identity]
 
 /-- Concatenation is the finite-word multiplication operation. -/
 theorem signedWordProduct_append
-    {rotations : List (Rotations.Basic.Rotation
+    {rotations : List (Rotation
       Scalar)}
     (profile : RotationProfiles.VisibleRotationProfile rotations) :
     ∀ left right : Word profile,
@@ -155,7 +155,7 @@ theorem signedWordProduct_append
 
 /-- The finite `chi` evaluator sends word concatenation to vector XOR. -/
 theorem signedWordVector_append
-    {rotations : List (Rotations.Basic.Rotation
+    {rotations : List (Rotation
       Scalar)}
     (profile : RotationProfiles.VisibleRotationProfile rotations) :
     ∀ left right : Word profile,
@@ -186,7 +186,7 @@ theorem signedWordVector_append
       exact (Boolean.Basic.xor_assoc _ _ _).symm
 
 /-- Toggle one displayed generator occurrence between the forward and inverse directions. -/
-def inverseLetter {rotations : List (Rotations.Basic.Rotation
+def inverseLetter {rotations : List (Rotation
   Scalar)}
     {profile : RotationProfiles.VisibleRotationProfile rotations}
     (letter : RotationProfiles.SignedLetter profile) :
@@ -197,7 +197,7 @@ def inverseLetter {rotations : List (Rotations.Basic.Rotation
 
 /-- Toggling an occurrence's inversion flag conjugates its selected quaternion representative. -/
 theorem selectedProportion_inverseLetter
-    {rotations : List (Rotations.Basic.Rotation
+    {rotations : List (Rotation
       Scalar)}
     {profile : RotationProfiles.VisibleRotationProfile rotations}
     (letter : RotationProfiles.SignedLetter profile) :
@@ -214,9 +214,9 @@ theorem selectedProportion_inverseLetter
             generator.proportion).symm
 
 /-- Reverse a finite signed word and toggle every sign. -/
-def inverseWord {rotations : List (Basic.Rotation
+def inverseWord {rotations : List (Rotation
   Scalar)}
-    {profile : Purelib.Geometry.Rotations.Rational.Generators.Profile.RotationProfiles.VisibleRotationProfile rotations}
+    {profile : Profile.RotationProfiles.VisibleRotationProfile rotations}
       :
     Word profile →
       Word profile
@@ -226,7 +226,7 @@ def inverseWord {rotations : List (Basic.Rotation
 
 /-- The explicit inverse-word algorithm evaluates to quaternion conjugation. -/
 theorem signedWordProduct_inverseWord
-    {rotations : List (Rotations.Basic.Rotation
+    {rotations : List (Rotation
       Scalar)}
     (profile : RotationProfiles.VisibleRotationProfile rotations) :
     ∀ word : Word profile,
@@ -261,7 +261,7 @@ theorem signedWordProduct_inverseWord
 
 /-- Inversion fixes the `chi` vector because every rational square class has order at most two. -/
 theorem signedWordVector_inverseWord
-    {rotations : List (Rotations.Basic.Rotation
+    {rotations : List (Rotation
       Scalar)}
     (profile : RotationProfiles.VisibleRotationProfile rotations) :
     ∀ word : Word profile,
@@ -290,7 +290,7 @@ theorem signedWordVector_inverseWord
 /-- Every prime in the computed norm signature of a finite word already lies in the cached union of the generator
 supports. -/
 theorem signedWordTarget_primes_subset
-    {rotations : List (Rotations.Basic.Rotation
+    {rotations : List (Rotation
       Scalar)}
     (profile : RotationProfiles.VisibleRotationProfile rotations) :
     ∀ (word : Word profile) (prime : Nat),
@@ -336,7 +336,7 @@ theorem signatureVector_eq_iff_equivalent_of_subsets
   let rightSignature := compute right
   constructor
   · intro vectorEqual
-    have bitsEqual := congrArg Data.Vector.Boolean.bits vectorEqual
+    have bitsEqual := congrArg Boolean.bits vectorEqual
     change GeneratorProfiles.signatureBits finiteSupport
         leftSignature.primes =
       GeneratorProfiles.signatureBits finiteSupport
@@ -348,7 +348,7 @@ theorem signatureVector_eq_iff_equivalent_of_subsets
       · intro leftMember
         have supportMember := leftSubset prime leftMember
         have containsEqual :=
-          Purelib.NumberTheory.SquareClass.Rational.Span.GeneratorProfiles.natContains_eq_of_signatureBits_eq
+          GeneratorProfiles.natContains_eq_of_signatureBits_eq
           prime
           finiteSupport leftSignature.primes rightSignature.primes
           supportMember bitsEqual
@@ -360,7 +360,7 @@ theorem signatureVector_eq_iff_equivalent_of_subsets
       · intro rightMember
         have supportMember := rightSubset prime rightMember
         have containsEqual :=
-          Purelib.NumberTheory.SquareClass.Rational.Span.GeneratorProfiles.natContains_eq_of_signatureBits_eq
+          GeneratorProfiles.natContains_eq_of_signatureBits_eq
           prime
           finiteSupport leftSignature.primes rightSignature.primes
           supportMember bitsEqual
@@ -410,14 +410,14 @@ theorem signatureVector_eq_iff_equivalent_of_subsets
         displayedEquivalent
     apply Data.Vector.Boolean.ext
     exact
-      Purelib.NumberTheory.SquareClass.Rational.Span.GeneratorProfiles.signatureBits_eq_of_same_members
+      GeneratorProfiles.signatureBits_eq_of_same_members
       finiteSupport
       leftSignature.primes rightSignature.primes sameMembers
 
 set_option genInjectivity false in
 /-- Cached normalizer for one rational projective proportion. Scaling by this explicit inverse square factor changes its
 norm to the computed natural kernel, whether or not that kernel is one. -/
-structure KernelNormalization (proportion : Projective.Basic.NonNullProportion
+structure KernelNormalization (proportion : NonNullProportion
   Scalar) where
   /-- The cached finite prime signature of the proportion's positive norm target. -/ signature : Signature
     (RotationProfiles.proportionTarget proportion)
@@ -436,7 +436,7 @@ structure KernelNormalization (proportion : Projective.Basic.NonNullProportion
 constructive_injectivity KernelNormalization
 
 /-- Compute and retain the finite square-class normalizer. -/
-def kernelNormalization (proportion : Projective.Basic.NonNullProportion
+def kernelNormalization (proportion : NonNullProportion
   Scalar) :
     KernelNormalization proportion := by
   let signature := compute
@@ -471,12 +471,12 @@ def kernelNormalization (proportion : Projective.Basic.NonNullProportion
 
 /-- When the computed kernel is one, the cached normalizer becomes an executable norm-one representative certificate. -/
 def unitRepresentativeCertificateOfKernelEqOne
-    (proportion : Projective.Basic.NonNullProportion
+    (proportion : NonNullProportion
       Scalar)
     (kernelOne :
       (compute (RotationProfiles.proportionTarget proportion)).kernel =
         1) :
-    NonNullProportion.UnitRepresentativeCertificate proportion := by
+    UnitRepresentativeCertificate proportion := by
   let normalization := kernelNormalization
     proportion
   refine
@@ -495,7 +495,7 @@ def unitRepresentativeCertificateOfKernelEqOne
 /-- Over the rationals, kernel membership is decided exactly by the cached natural odd-prime kernel. The reverse
 implication returns the explicit normalizing scalar above. -/
 theorem hasUnitRepresentative_iff_kernel_eq_one
-    (proportion : Projective.Basic.NonNullProportion
+    (proportion : NonNullProportion
       Scalar) :
     (QuaternionObstruction.HasUnitRepresentative proportion) ↔
       (compute
@@ -506,7 +506,7 @@ theorem hasUnitRepresentative_iff_kernel_eq_one
       (NonNullProportion.hasUnitRepresentative_iff_quadranceClass_trivial
         proportion).mp unit
     have unitClassEq : (NonNullProportion.unitSquareClass proportion) =
-      Purelib.NumberTheory.SquareClass.Rational.Span.GeneratorProfiles.oneTarget.representative
+      GeneratorProfiles.oneTarget.representative
       := by
       apply SquareClassRepresentative.ext
       rfl
@@ -514,17 +514,17 @@ theorem hasUnitRepresentative_iff_kernel_eq_one
         SquareClassRepresentative.Equivalent
           (RotationProfiles.proportionTarget proportion).representative
 
-            Purelib.NumberTheory.SquareClass.Rational.Span.GeneratorProfiles.oneTarget.representative
+            GeneratorProfiles.oneTarget.representative
             := by
       rw [← unitClassEq]
       exact trivialClass
     have kernelsEqual := (equivalent_iff_kernel_eq
       (compute (RotationProfiles.proportionTarget proportion))
       (compute
-        Purelib.NumberTheory.SquareClass.Rational.Span.GeneratorProfiles.oneTarget)).mp
+        GeneratorProfiles.oneTarget)).mp
         equivalentOne
     exact kernelsEqual.trans
-      Purelib.NumberTheory.SquareClass.Rational.Span.GeneratorProfiles.oneTarget_kernel_eq_one
+      GeneratorProfiles.oneTarget_kernel_eq_one
   · intro kernelOne
     exact UnitRepresentativeCertificate.hasUnitRepresentative
 
@@ -534,7 +534,7 @@ theorem hasUnitRepresentative_iff_kernel_eq_one
 /-- A signed word lies in the restricted unit-quaternion kernel exactly when its complete finite XOR signature is zero.
 -/
 theorem signedWord_hasUnitRepresentative_iff_vector_zero
-    {rotations : List (Rotations.Basic.Rotation
+    {rotations : List (Rotation
       Scalar)}
     (profile : RotationProfiles.VisibleRotationProfile rotations)
     (word : Word profile) :
@@ -552,10 +552,10 @@ theorem signedWord_hasUnitRepresentative_iff_vector_zero
       (compute (RotationProfiles.signedWordTarget profile word)).kernel := by
     rw [RotationProfiles.signedWordProduct_target]
   have vectorCriterion :=
-    Purelib.NumberTheory.SquareClass.Rational.Span.GeneratorProfiles.signatureVector_eq_zero_iff_primes_empty_of_subset
+    GeneratorProfiles.signatureVector_eq_zero_iff_primes_empty_of_subset
     profile.targetProfile.finiteSupport
     (RotationProfiles.signedWordTarget profile word)
-    (Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.signedWordTarget_primes_subset profile
+    (signedWordTarget_primes_subset profile
       word)
   constructor
   · intro representative
@@ -580,11 +580,11 @@ theorem signedWord_hasUnitRepresentative_iff_vector_zero
 
 /-- Two finite words represent the same coset of the restricted kernel exactly when their finite `chi` vectors agree. -/
 theorem signedWords_sameKernelCoset_iff_vector_eq
-    {rotations : List (Rotations.Basic.Rotation
+    {rotations : List (Rotation
       Scalar)}
     (profile : RotationProfiles.VisibleRotationProfile rotations)
     (left right : Word profile) :
-    NonNullProportion.InSameUnitKernelCoset
+    InSameUnitKernelCoset
         (RotationProfiles.signedWordProduct profile left)
         (RotationProfiles.signedWordProduct profile right) ↔
       RotationProfiles.signedWordVector profile left =
@@ -597,9 +597,9 @@ theorem signedWords_sameKernelCoset_iff_vector_eq
     profile.targetProfile.finiteSupport
     (RotationProfiles.signedWordTarget profile left)
     (RotationProfiles.signedWordTarget profile right)
-    (Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.signedWordTarget_primes_subset profile
+    (signedWordTarget_primes_subset profile
       left)
-    (Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.signedWordTarget_primes_subset profile
+    (signedWordTarget_primes_subset profile
       right)
   constructor
   · intro coset
@@ -636,7 +636,7 @@ theorem signedWords_sameKernelCoset_iff_vector_eq
 
 /-- Exact finite comparison of two word evaluations as rotations. -/
 inductive ElementComparison
-    {rotations : List (Rotations.Basic.Rotation
+    {rotations : List (Rotation
       Scalar)}
     (profile : RotationProfiles.VisibleRotationProfile rotations)
     (left right : Word profile) : Type
@@ -649,7 +649,7 @@ inductive ElementComparison
 
 /-- Compare all nine rational matrix entries; no enumeration of other words is involved. -/
 def compareElements
-    {rotations : List (Rotations.Basic.Rotation
+    {rotations : List (Rotation
       Scalar)}
     (profile : RotationProfiles.VisibleRotationProfile rotations)
     (left right : Word profile) :
@@ -657,12 +657,12 @@ def compareElements
   if equal :
       (NonNullProportion.rotationMatrix (RotationProfiles.signedWordProduct profile left)) =
         (NonNullProportion.rotationMatrix (RotationProfiles.signedWordProduct profile right))
-  then Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.ElementComparison.same equal
-  else Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.ElementComparison.different equal
+  then ElementComparison.same equal
+  else ElementComparison.different equal
 
 /-- Exact matrix equality is also exactly projective equality of the two evaluated quaternion products. -/
 theorem signedWords_sameRotation_iff_equivalent
-    {rotations : List (Rotations.Basic.Rotation
+    {rotations : List (Rotation
       Scalar)}
     (profile : RotationProfiles.VisibleRotationProfile rotations)
     (left right : Word profile) :
@@ -677,11 +677,11 @@ theorem signedWords_sameRotation_iff_equivalent
 set_option genInjectivity false in
 /-- A retained member of the exact finite `chi` image locating one supplied word. -/
 structure LocatedClass
-    {rotations : List (Rotations.Basic.Rotation
+    {rotations : List (Rotation
       Scalar)}
     (profile : RotationProfiles.VisibleRotationProfile rotations)
     (word : Word profile) where
-  /-- The retained finite-image entry locating this word. -/ entry : Boolean.Basic.Entry profile.targetProfile.vectors
+  /-- The retained finite-image entry locating this word. -/ entry : Entry profile.targetProfile.vectors
   /-- The retained entry belongs to the original profile's exact finite image. -/ member : entry ∈
     profile.targetProfile.span.entries
   /-- The word's XOR signature is exactly the retained entry vector. -/ vector_eq : RotationProfiles.signedWordVector
@@ -693,7 +693,7 @@ constructive_injectivity LocatedClass
 /-- Executably locate the unique displayed image vector of one finite word. The search itself is finite; the impossible
 branch is discharged by the span completeness certificate. -/
 def locateClass
-    {rotations : List (Rotations.Basic.Rotation
+    {rotations : List (Rotation
       Scalar)}
     (profile : RotationProfiles.VisibleRotationProfile rotations)
     (word : Word profile) :
@@ -701,9 +701,9 @@ def locateClass
   let target := RotationProfiles.signedWordVector profile word
   match searchResult : Search.search target
       profile.targetProfile.span.entries with
-  | LinearAlgebra.Span.Boolean.Search.found entry member vectorEq =>
+  | Search.found entry member vectorEq =>
       exact ⟨entry, member, vectorEq.symm⟩
-  | LinearAlgebra.Span.Boolean.Search.absent notFound =>
+  | Search.absent notFound =>
       have impossible : False := by
         rcases RotationProfiles.classifySignedWord profile word with
           ⟨entry, member, vectorEq⟩
@@ -713,19 +713,19 @@ def locateClass
 set_option genInjectivity false in
 /-- Cached result of one arbitrary finite-word query. -/
 structure WordEvaluation
-    {rotations : List (Rotations.Basic.Rotation
+    {rotations : List (Rotation
       Scalar)}
     (profile : RotationProfiles.VisibleRotationProfile rotations)
     (word : Word profile) where
-  /-- The cached evaluated quaternion product of the supplied word. -/ proportion : Projective.Basic.NonNullProportion
+  /-- The cached evaluated quaternion product of the supplied word. -/ proportion : NonNullProportion
     Scalar
   /-- The cached proportion is exactly the finite signed-word product. -/ proportion_eq : proportion =
     RotationProfiles.signedWordProduct profile word
-  /-- The cached certified rotation represented by the cached proportion. -/ rotation : Rotations.Basic.Rotation
+  /-- The cached certified rotation represented by the cached proportion. -/ rotation : Rotation
     Scalar
   /-- The cached rotation is the displayed action of the cached proportion. -/ rotation_eq : rotation =
     (NonNullProportion.rotation proportion)
-  /-- The cached rational rotation matrix. -/ matrix : Coordinates3.Matrix3
+  /-- The cached rational rotation matrix. -/ matrix : Matrix3
     Scalar
   /-- The cached matrix is exactly the action matrix of the cached proportion. -/ matrix_eq : matrix =
     (NonNullProportion.rotationMatrix proportion)
@@ -735,7 +735,7 @@ structure WordEvaluation
   /-- The cached finite prime signature of the retained target. -/ signature : Signature target
   /-- The signature is exactly the canonical finite computation for the retained target. -/ signature_eq : signature =
     compute target
-  /-- The cached Boolean signature on the profile's original finite support. -/ vector : Data.Vector.Boolean
+  /-- The cached Boolean signature on the profile's original finite support. -/ vector : Boolean
     profile.targetProfile.finiteSupport.length
   /-- The cached vector is exactly the XOR evaluation of the supplied word. -/ vector_eq : vector =
     RotationProfiles.signedWordVector profile word
@@ -748,7 +748,7 @@ constructive_injectivity WordEvaluation
 
 /-- Evaluate and retain all expensive finite data for one word exactly once. -/
 def evaluate
-    {rotations : List (Rotations.Basic.Rotation
+    {rotations : List (Rotation
       Scalar)}
     (profile : RotationProfiles.VisibleRotationProfile rotations)
     (word : Word profile) :
@@ -778,8 +778,8 @@ set_option genInjectivity false in
 /-- The complete finite quotient statement for a supplied generator list. There are exactly `2^rank` visible kernel
 cosets; every finite word has one, every retained class has a realizing word, and kernel and coset equality are the
 exact zero/equality tests above. -/
-structure Classification (rotations : List (Rotations.Basic.Rotation
-  Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.Scalar)) where
+structure Classification (rotations : List (Rotation
+  Classification.GeneratedSubgroups.Scalar)) where
   /-- The retained finite rotation profile of the supplied generators. -/ profile :
     RotationProfiles.VisibleRotationProfile rotations
   /-- The retained profile is exactly the canonical profile computed from the supplied generator list. -/ profile_eq :
@@ -792,13 +792,13 @@ structure Classification (rotations : List (Rotations.Basic.Rotation
     profile.targetProfile.span.entries.length =
     2 ^ profile.targetProfile.span.rank
   /-- Compute a certified cached evaluation for each supplied finite signed word. -/ evaluate_word : ∀ word :
-    Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.Word profile,
-    Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.WordEvaluation profile word
+    Classification.GeneratedSubgroups.Word profile,
+    Classification.GeneratedSubgroups.WordEvaluation profile word
   /-- Decide exact rotation equality for each supplied pair of finite signed words. -/ compare_words : ∀ left right :
-    Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.Word profile,
-    Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.ElementComparison profile left right
+    Classification.GeneratedSubgroups.Word profile,
+    Classification.GeneratedSubgroups.ElementComparison profile left right
   /-- Equal word matrices are exactly projectively equivalent evaluated quaternion representatives. -/ equality_exact :
-    ∀ left right : Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.Word profile,
+    ∀ left right : Classification.GeneratedSubgroups.Word profile,
     (NonNullProportion.rotationMatrix (RotationProfiles.signedWordProduct profile left)) =
         (NonNullProportion.rotationMatrix (RotationProfiles.signedWordProduct profile right))
       ↔
@@ -806,30 +806,30 @@ structure Classification (rotations : List (Rotations.Basic.Rotation
       (RotationProfiles.signedWordProduct profile left)
       (RotationProfiles.signedWordProduct profile right)
   /-- Finite-word concatenation evaluates to quaternion multiplication. -/ product_exact : ∀ left right :
-    Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.Word profile,
+    Classification.GeneratedSubgroups.Word profile,
     RotationProfiles.signedWordProduct profile (left ++ right) =
       NonNullProportion.mul
         (RotationProfiles.signedWordProduct profile left)
         (RotationProfiles.signedWordProduct profile right)
   /-- Reversing and toggling a finite word evaluates to quaternion conjugation. -/ inverse_exact : ∀ word :
-    Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.Word profile,
+    Classification.GeneratedSubgroups.Word profile,
     RotationProfiles.signedWordProduct profile
-      (Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.inverseWord word) =
+      (Classification.GeneratedSubgroups.inverseWord word) =
       NonNullProportion.conjugate
         (RotationProfiles.signedWordProduct profile word)
   /-- Concatenation adds the retained parity signatures by XOR. -/ chi_product : ∀ left right :
-    Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.Word profile,
+    Classification.GeneratedSubgroups.Word profile,
     RotationProfiles.signedWordVector profile (left ++ right) =
       Boolean.Basic.xor
         (RotationProfiles.signedWordVector profile left)
         (RotationProfiles.signedWordVector profile right)
   /-- Word inversion preserves the retained parity signature. -/ chi_inverse : ∀ word :
-    Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.Word profile,
+    Classification.GeneratedSubgroups.Word profile,
     RotationProfiles.signedWordVector profile
-      (Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.inverseWord word) =
+      (Classification.GeneratedSubgroups.inverseWord word) =
       RotationProfiles.signedWordVector profile word
   /-- Every finite word has a representative in the retained exact finite image. -/ word_classification : ∀ word :
-    Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.Word profile,
+    Classification.GeneratedSubgroups.Word profile,
     ∃ entry ∈ profile.targetProfile.span.entries,
       RotationProfiles.signedWordVector profile word = entry.vector
   /-- Every retained image entry has the supplied finite selection word realizing its signature. -/ image_realization :
@@ -841,15 +841,15 @@ structure Classification (rotations : List (Rotations.Basic.Rotation
             (RotationProfiles.entrySignedWord profile entry))) =
       entry.vector
   /-- A finite word has a unit representative exactly when its complete parity signature is zero. -/ kernel_exact : ∀
-    word : Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.Word profile,
+    word : Classification.GeneratedSubgroups.Word profile,
     QuaternionObstruction.HasUnitRepresentative
         (RotationProfiles.signedWordProduct profile word) ↔
       RotationProfiles.signedWordVector profile word =
         Boolean.Basic.zero
           profile.targetProfile.finiteSupport.length
   /-- Two finite words lie in the same unit-kernel coset exactly when their complete parity signatures agree. -/
-    cosets_exact : ∀ left right : Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.Word profile,
-    NonNullProportion.InSameUnitKernelCoset
+    cosets_exact : ∀ left right : Classification.GeneratedSubgroups.Word profile,
+    InSameUnitKernelCoset
         (RotationProfiles.signedWordProduct profile left)
         (RotationProfiles.signedWordProduct profile right) ↔
       RotationProfiles.signedWordVector profile left =
@@ -861,7 +861,7 @@ namespace Classification.GeneratedSubgroups
 
 /-- Problem 70's finitely generated subgroup classification, interpreted entirely through arbitrary finite signed-word
 queries and the exact finite `chi` quotient. -/
-def classify (rotations : List (Rotations.Basic.Rotation
+def classify (rotations : List (Rotation
   Scalar)) :
   Classification rotations := by
   let profile := RotationProfiles.visibleRotationProfile rotations

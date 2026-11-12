@@ -1,6 +1,7 @@
 module
 meta import Purelib.Elab.ConstructiveInjectivity
 public import Purelib.Approximation.Gaussian.Division.Partial.Ready
+public import Purelib.Approximation.Gaussian.Division.Prepared.Quotient
 import Purelib.Approximation.Gaussian.Logarithm.Chart.Anchored.Output
 import Purelib.Approximation.Gaussian.Logarithm.Chart.Anchored
 public import Purelib.Approximation.Gaussian.Logarithm.Chart.Partial.Ready
@@ -91,6 +92,27 @@ structure Ready (client : Client) (output :
 -- Preserve the original constructor certificate names of this unchanged nominal datatype.
 
 constructive_injectivity Ready
+
+set_option genInjectivity false in
+/-- A ready quotient using an equivalent prepared presentation of its original denominator.
+
+The original logarithm state, anchor and readiness certificate are retained.
+The quotient consumes the supplied preparation directly, including its
+comparison with the original denominator. -/
+structure PreparedReady (client : Client) (output : Coherent.CoherentNamed) : Type 2 where
+  /-- The exact retained state of the logarithm child. -/
+  logState : LogarithmState.State client.argument
+  /-- The original prepared logarithm chart at that state. -/
+  logOutput : Anchored.AnchoredChart (LogarithmState.preparedTarget logState)
+  /-- The chart is ready for the original source anchor. -/
+  logValid : Purelib.Approximation.Gaussian.Logarithm.Chart.Partial.Ready
+    client.sourceInput client.argument client.source logState logOutput
+  /-- The retained equivalent preparation of the original denominator. -/
+  denominator : Gaussian.Division.Prepared client.denominator
+  /-- The output consumes that exact retained preparation and logarithm. -/
+  output_eq : output = denominator.quotient (AnchoredChart.output logOutput)
+
+constructive_injectivity PreparedReady
 
 end Purelib.Approximation.Gaussian.Logarithm.Quotient
 

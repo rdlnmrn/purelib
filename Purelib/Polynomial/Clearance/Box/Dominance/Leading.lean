@@ -21,6 +21,8 @@ import Purelib.Geometry.Rational.Box.Boundary
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
 
+open Purelib.Polynomial.Dense.Gaussian.Bounds
+
 open Purelib.Data
 open Purelib.Data.Rat
 open Purelib.Geometry.Rational
@@ -42,16 +44,16 @@ and the pointwise boundary quadrance estimates certify the original
 leading monomial and lower-tail polynomial on the same box. -/
 @[expose] public def largeSquare_boundaryNormDominance
     {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree) :
-    Clearance.Box.Dominance.Basic.BoundaryNormDominance
+    Basic.BoundaryNormDominance
       (Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p)
-        (Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p) (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox
+        (Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p) (RootRadius.Box.largeSquareBox
         p) where
-  margin := Dense.Gaussian.Bounds.LeadingDominance.largeSquareDominanceMargin p
-  positive := Dense.Gaussian.Bounds.LeadingDominance.largeSquareDominanceMargin_pos degreePositive
+  margin := LeadingDominance.largeSquareDominanceMargin p
+  positive := LeadingDominance.largeSquareDominanceMargin_pos degreePositive
   lower := by
     intro z boundary
-    have bounds := Dense.Gaussian.Bounds.RootRadius.Box.largeSquare_boundary_norm_bounds boundary
-    have estimate := Dense.Gaussian.Bounds.LeadingDominance.largeSquare_radial_dominance_margin degreePositive bounds.1
+    have bounds := RootRadius.Box.largeSquare_boundary_norm_bounds boundary
+    have estimate := LeadingDominance.largeSquare_radial_dominance_margin degreePositive bounds.1
       bounds.2
     simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using estimate
 
@@ -64,19 +66,19 @@ polynomials, together with the bound at every boundary point. -/
 @[expose] public def symmetric_boundaryNormDominance
     {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree)
     {radius : Fraction.Rational}
-    (radiusLe : Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ≤ radius) :
-    Clearance.Box.Dominance.Basic.BoundaryNormDominance
+    (radiusLe : RootRadius.denseLargeSquareRadius p ≤ radius) :
+    Basic.BoundaryNormDominance
       (Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p)
         (Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p)
       (Box.symmetric radius
-        ((Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe).le) where
-  margin := Dense.Gaussian.Bounds.LeadingDominance.symmetricDominanceMargin p radius
-  positive := Dense.Gaussian.Bounds.LeadingDominance.symmetricDominanceMargin_pos degreePositive radiusLe
+        ((RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe).le) where
+  margin := LeadingDominance.symmetricDominanceMargin p radius
+  positive := LeadingDominance.symmetricDominanceMargin_pos degreePositive radiusLe
   lower := by
     intro z boundary
-    have bounds := Purelib.Geometry.Rational.Box.Square.Symmetric.Norm.symmetric_boundary_norm_bounds
-      ((Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe).le boundary
-    have estimate := Dense.Gaussian.Bounds.LeadingDominance.symmetric_radial_dominance_margin degreePositive radiusLe
+    have bounds := Box.Square.Symmetric.Norm.symmetric_boundary_norm_bounds
+      ((RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe).le boundary
+    have estimate := LeadingDominance.symmetric_radial_dominance_margin degreePositive radiusLe
       bounds.1 bounds.2
     simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using estimate
 

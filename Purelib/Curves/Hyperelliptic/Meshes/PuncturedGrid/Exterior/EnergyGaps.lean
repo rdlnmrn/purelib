@@ -77,6 +77,8 @@ import Purelib.Riemann.RootContinuation.PreparedGridRootClosure
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
@@ -138,15 +140,15 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.JunctionRequests (Reque
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap}
   {parent : CenteredEdge curve differential} {patch :
     PreparedPatch parent}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
+  {data : UniformReciprocalModels.Data patch count} {cover :
     Cover data}
-  {index readingIndex energyDepth : Nat} {box : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {target
+  {index readingIndex energyDepth : Nat} {box : Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential index box} {target
     joining : Coordinate} {joinFloor : Nat}
 
 variable {prepared : Preparation regular cover}
@@ -154,16 +156,16 @@ variable {prepared : Preparation regular cover}
 variable {otherCount : Nat} {otherParent : CenteredEdge curve
   differential}
   {otherPatch : PreparedPatch otherParent}
-  {otherData : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
+  {otherData : UniformReciprocalModels.Data otherPatch otherCount}
     {otherCover : Cover otherData}
   {next : Preparation regular otherCover}
 
 /-- The original paid junction request bounds the actual primitive-value gap between two retained energy endpoints. -/
-theorem gap_bound (left : EnergyEndBank.EnergyEnds sample readingIndex energyDepth target prepared)
-    (right : EnergyEndBank.EnergyEnds sample readingIndex energyDepth target next)
-    {joined : ArcOwners.Join prepared.boundary.last.point next.boundary.first.point}
-    (request : JunctionRequests.Request prepared.boundary.last.bounds joined joining joinFloor)
-    (later : request.index ≤ readingIndex) : Data.Gaussian.Norm.Basic.normSq (right.firstValue -
+theorem gap_bound (left : EnergyEnds sample readingIndex energyDepth target prepared)
+    (right : EnergyEnds sample readingIndex energyDepth target next)
+    {joined : Join prepared.boundary.last.point next.boundary.first.point}
+    (request : Request prepared.boundary.last.bounds joined joining joinFloor)
+    (later : request.index ≤ readingIndex) : Basic.normSq (right.firstValue -
       left.lastValue) ≤ joining := by
   have gap := request.accurate left.last right.first later later
   rw [left.last_value, right.first_value] at gap
@@ -188,11 +190,11 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ClosingRequests (LastRe
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {index readingIndex energyDepth
-    : Nat} {box : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {target :
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {index readingIndex energyDepth
+    : Nat} {box : Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential index box} {target :
     Coordinate}
 
 variable {joining : Coordinate} {joinFloor : Nat}
@@ -200,30 +202,30 @@ variable {joining : Coordinate} {joinFloor : Nat}
 /-- The complete squared-norm gap bounds along an actual retained parent energy bank.
 
 The dependent chain includes the gap from the supplied previous point and the final gap to the supplied finish point. -/
-@[expose] def GapChain : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
-  UniformReciprocalCover.ParentCovers parents} →
+@[expose] def GapChain : {parents : List (CenteredEdge curve differential)} → {covers :
+  ParentCovers parents} →
     {prepared : ParentJoins.SideBank regular covers} → EnergyEndBank sample readingIndex energyDepth target
-      prepared → InverseRootPolynomial.Gaussian → InverseRootPolynomial.Gaussian → InverseRootPolynomial.Coordinate →
+      prepared → Gaussian → Gaussian → Coordinate →
       Prop
-  | _, _, _, .nil, previous, finish, error => Data.Gaussian.Norm.Basic.normSq (finish - previous) ≤ error
+  | _, _, _, .nil, previous, finish, error => Basic.normSq (finish - previous) ≤ error
   | _, _, _, .cons head tail, previous, finish, error =>
-      Data.Gaussian.Norm.Basic.normSq (head.firstValue - previous) ≤ error ∧
+      Basic.normSq (head.firstValue - previous) ≤ error ∧
         GapChain tail
         head.lastValue finish error
 
 /-- The original paid last-parent request controls the actual final gap back to the retained destination's first value.
 -/
-private theorem last_gap {count : Nat} {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential}
-    {patch : UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data : UniformReciprocalModels.Data patch count}
-    {cover : UniformReciprocalCover.Cover data} {destination : ParentComparison.Preparation regular cover}
-    (first : EnergyEndBank.EnergyEnds sample readingIndex energyDepth target destination) :
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
-      UniformReciprocalCover.ParentCovers parents} → {prepared : ParentJoins.SideBank regular covers} →
-    (ends : EnergyEndBank sample readingIndex energyDepth target prepared) → {joined : ClosingJoins.LastJoin
+private theorem last_gap {count : Nat} {parent : CenteredEdge curve differential}
+    {patch : PreparedPatch parent} {data : UniformReciprocalModels.Data patch count}
+    {cover : Cover data} {destination : ParentComparison.Preparation regular cover}
+    (first : EnergyEnds sample readingIndex energyDepth target destination) :
+    {parents : List (CenteredEdge curve differential)} → {covers :
+      ParentCovers parents} → {prepared : ParentJoins.SideBank regular covers} →
+    (ends : EnergyEndBank sample readingIndex energyDepth target prepared) → {joined : LastJoin
       destination prepared} →
-    (request : ClosingRequests.LastRequest destination joining joinFloor prepared joined) → request.maximum ≤
+    (request : LastRequest destination joining joinFloor prepared joined) → request.maximum ≤
       readingIndex → parents ≠ [] →
-    (previous : InverseRootPolynomial.Gaussian) → Data.Gaussian.Norm.Basic.normSq (first.firstValue -
+    (previous : Gaussian) → Basic.normSq (first.firstValue -
       ends.lastValue previous) ≤ joining
   | _, _, _, .nil, _, _, _, nonempty, _ => False.elim (nonempty rfl)
   | _, _, _, .cons head tail, _, request, later, _, previous => by
@@ -239,19 +241,19 @@ private theorem last_gap {count : Nat} {parent : PreparedSubdivisionModelCore.Ce
 /-- The paid original junction requests extend supplied first and final bounds to the complete retained parent gap
 chain. -/
 private theorem internal_gaps
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} {covers :
-      UniformReciprocalCover.ParentCovers parents} {prepared : ParentJoins.SideBank regular covers}
-    (ends : EnergyEndBank sample readingIndex energyDepth target prepared) {links : SideBank.Links prepared}
+    {parents : List (CenteredEdge curve differential)} {covers :
+      ParentCovers parents} {prepared : ParentJoins.SideBank regular covers}
+    (ends : EnergyEndBank sample readingIndex energyDepth target prepared) {links : Links prepared}
     (requests : SideConnections.JunctionRequests joining joinFloor prepared links) (later : requests.maximum ≤
       readingIndex)
-    (previous finish : InverseRootPolynomial.Gaussian) (first : Data.Gaussian.Norm.Basic.normSq
+    (previous finish : Gaussian) (first : Basic.normSq
       (ends.firstValue - previous) ≤ joining)
-    (closing : Data.Gaussian.Norm.Basic.normSq (finish - ends.lastValue previous) ≤ joining) : ends.GapChain
+    (closing : Basic.normSq (finish - ends.lastValue previous) ≤ joining) : ends.GapChain
       previous finish joining := by
   induction ends generalizing previous with
   | nil => exact closing
   | cons head tail ih =>
-      change Data.Gaussian.Norm.Basic.normSq (head.firstValue - previous) ≤ joining ∧ tail.GapChain
+      change Basic.normSq (head.firstValue - previous) ≤ joining ∧ tail.GapChain
         head.lastValue finish joining
       refine ⟨first, ?_⟩
       cases tail with
@@ -269,28 +271,28 @@ variable {parents : List (CenteredEdge curve differential)}
 /-- The original internal and closing requests bound every gap in the complete closed retained parent bank. -/
 theorem closed_gaps (ends : EnergyEndBank sample readingIndex energyDepth target prepared) (nonnegative : 0 ≤
   joining)
-    {links : SideBank.Links prepared} (requests : SideConnections.JunctionRequests joining joinFloor prepared links)
+    {links : Links prepared} (requests : SideConnections.JunctionRequests joining joinFloor prepared links)
       (later : requests.maximum ≤ readingIndex)
-    {joined : ClosingJoins.ClosingJoin prepared} (closing : ClosingRequests.ClosingRequest joining joinFloor prepared
+    {joined : ClosingJoin prepared} (closing : ClosingRequest joining joinFloor prepared
       joined) (closingLater : closing.maximum ≤ readingIndex) :
     ends.GapChain ends.firstValue ends.firstValue joining := by
-  have last : Data.Gaussian.Norm.Basic.normSq (ends.firstValue - ends.lastValue ends.firstValue) ≤ joining :=
+  have last : Basic.normSq (ends.firstValue - ends.lastValue ends.firstValue) ≤ joining :=
     by
     cases ends with
     | nil =>
       simpa only [EnergyEndBank.firstValue, EnergyEndBank.lastValue, Data.Gaussian.Basic.sub_self,
-        Data.Gaussian.Norm.Basic.normSq_zero] using nonnegative
+        Basic.normSq_zero] using nonnegative
     | cons head tail =>
       exact last_gap
         head (.cons head tail) closing closingLater (by intro same; cases same) head.firstValue
   exact internal_gaps ends requests
-    later _ _ (by rw [Data.Gaussian.Basic.sub_self, Data.Gaussian.Norm.Basic.normSq_zero]; exact nonnegative) last
+    later _ _ (by rw [Data.Gaussian.Basic.sub_self, Basic.normSq_zero]; exact nonnegative) last
 
 /-- A nonempty retained parent gap chain bounds its actual first primitive value from the supplied previous value. -/
 theorem first_gap (ends : EnergyEndBank sample readingIndex energyDepth target prepared)
-    (nonempty : parents ≠ []) {previous finish : InverseRootPolynomial.Gaussian} {error :
-      InverseRootPolynomial.Coordinate}
-    (gaps : ends.GapChain previous finish error) : Data.Gaussian.Norm.Basic.normSq (ends.firstValue - previous)
+    (nonempty : parents ≠ []) {previous finish : Gaussian} {error :
+      Coordinate}
+    (gaps : ends.GapChain previous finish error) : Basic.normSq (ends.firstValue - previous)
       ≤ error := by
   cases ends with
   | nil => exact False.elim (nonempty rfl)
@@ -298,11 +300,11 @@ theorem first_gap (ends : EnergyEndBank sample readingIndex energyDepth target p
 
 /-- Restricting a retained appended gap chain to its right bank preserves the actual left-bank last value as the new
 previous point. -/
-theorem append_gaps_tail {otherParents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-    {otherCovers : UniformReciprocalCover.ParentCovers otherParents} {other : ParentJoins.SideBank regular otherCovers}
+theorem append_gaps_tail {otherParents : List (CenteredEdge curve differential)}
+    {otherCovers : ParentCovers otherParents} {other : ParentJoins.SideBank regular otherCovers}
     (left : EnergyEndBank sample readingIndex energyDepth target prepared)
     (right : EnergyEndBank sample readingIndex energyDepth target other)
-    {previous finish : InverseRootPolynomial.Gaussian} {error : InverseRootPolynomial.Coordinate} (gaps : (left.append
+    {previous finish : Gaussian} {error : Coordinate} (gaps : (left.append
       right).GapChain previous finish error) :
     right.GapChain (left.lastValue previous) finish error := by
   induction left generalizing previous with
@@ -322,17 +324,17 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples (Ch
 open Purelib.Integration.Path.IncrementArea (Summary)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {localTarget localArea chartTarget : Coordinate} {floor index
-    depth readingIndex : Nat} {box : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
+    depth readingIndex : Nat} {box : Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential index box} {shared :
     FacePrimitiveBank differential index domains}
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison (CapRequest)
@@ -345,13 +347,13 @@ variable {energyTarget : Coordinate} {energyFloor energyDepth : Nat}
 /-- Grouping uses nonempty original occurrences, so every next endpoint is an actual retained endpoint, including after
 the last parent of a segment. -/
 theorem segments_gaps (branch : HyperellipticReciprocal.originOrder curve = 1)
-    (entries : List (ChartSamples.ChartedEntry (regular := regular) sample shared depth readingIndex localTarget
+    (entries : List (ChartedEntry (regular := regular) sample shared depth readingIndex localTarget
       localArea chartTarget floor))
-    (energies : ChartedEntry.EnergyData energyTarget energyFloor energyDepth entries)
+    (energies : EnergyData energyTarget energyFloor energyDepth entries)
     (nonempty : ∀ entry ∈ entries, entry.entry.occurrence.compared.entered.cache.parents ≠ [])
-    {previous finish : InverseRootPolynomial.Gaussian} {error : InverseRootPolynomial.Coordinate}
+    {previous finish : Gaussian} {error : Coordinate}
     (gaps : (energies.endBank branch entries).GapChain previous finish error) :
-    Data.Gaussian.Norm.Basic.normSq (SegmentGapArea.first (energies.segments branch entries) finish - previous)
+    Basic.normSq (SegmentGapArea.first (energies.segments branch entries) finish - previous)
       ≤ error ∧
       SegmentGapArea.GapsSmall (energies.segments branch entries) finish error := by
   induction entries generalizing previous with
@@ -391,36 +393,36 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms (
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (EnergyData)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {program : ExteriorProgram lifted
     differential} {prepared :
-    ExteriorProgram.SurfacePreparation
+    SurfacePreparation
     regular domains program}
 
 variable {target : Coordinate} {floor : Nat}
 
-variable {index depth readingIndex energyFloor energyDepth : Nat} {box : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
+variable {index depth readingIndex energyFloor energyDepth : Nat} {box : Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential index box} {shared :
     FacePrimitiveBank differential index domains}
   {localTarget localArea chartTarget energyTarget : Coordinate}
     {sourceFloor : Nat}
 
 /-- Transport along exact retained occurrence and spine equalities preserves the complete closed endpoint-gap
 proposition. -/
-theorem transportEnds_closedGaps {first last : List (ExteriorProgram.SurfaceOccurrence regular domains differential)}
+theorem transportEnds_closedGaps {first last : List (SurfaceOccurrence regular domains differential)}
   (same : first = last)
     {spine : SideBank.Retained regular (last.map (fun item => item.compared.entered.cache.parents)).flatten}
     (spineEq : spine = SurfaceOccurrence.capSpine last)
-    (ends : Charts.Reciprocal.Disk.EnergyEndBank sample readingIndex energyDepth chartTarget (SurfaceOccurrence.capSpine
+    (ends : EnergyEndBank sample readingIndex energyDepth chartTarget (SurfaceOccurrence.capSpine
         first).bank)
-      (error : InverseRootPolynomial.Coordinate) :
+      (error : Coordinate) :
     (EnergyRootRequest.transportEnds same spineEq ends).GapChain (EnergyRootRequest.transportEnds same spineEq
       ends).firstValue
       (EnergyRootRequest.transportEnds same spineEq ends).firstValue error ↔ ends.GapChain ends.firstValue
@@ -431,10 +433,10 @@ theorem transportEnds_closedGaps {first last : List (ExteriorProgram.SurfaceOccu
 
 /-- The paid original surface root request bounds every actual retained parent gap at the selected common reading stage.
 -/
-theorem retained_gaps (request : SurfacePreparation.EnergyRootRequest prepared target floor)
-    (entries : List (ChartSamples.ChartedEntry (regular := regular) sample shared depth readingIndex localTarget
+theorem retained_gaps (request : EnergyRootRequest prepared target floor)
+    (entries : List (ChartedEntry (regular := regular) sample shared depth readingIndex localTarget
       localArea chartTarget sourceFloor))
-    (energies : ChartedEntry.EnergyData energyTarget energyFloor energyDepth entries)
+    (energies : EnergyData energyTarget energyFloor energyDepth entries)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
     (occurrences : entries.map (fun entry => entry.entry.occurrence) = prepared.occurrences)
     (later : request.index ≤ readingIndex) :
@@ -462,17 +464,17 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples (Ch
 open Purelib.Integration.Path.IncrementArea (Summary)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {localTarget localArea chartTarget : Coordinate} {floor index
-    depth readingIndex : Nat} {box : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
+    depth readingIndex : Nat} {box : Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential index box} {shared :
     FacePrimitiveBank differential index domains}
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins (SideBank)
@@ -483,17 +485,17 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.OddRootEnergy.Re
   (RootEnergyAcquisition)
 
 variable {prepared :
-  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
   regular domains differential} {target areaTarget : Coordinate}
   {request : Request prepared target areaTarget floor} {charts : Request.ChartRequest request chartTarget}
 
 variable {component :
-  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceComponent
+  SurfaceComponent
   regular domains differential} {joining energyTarget : Coordinate}
   {depthFloor energyFloor : Nat}
 
 /-- The actual root-return requests discharge every segment gap. -/
-theorem segment_gaps (acquired : ChartRequest.RootEnergyAcquisition charts component joining energyTarget depthFloor
+theorem segment_gaps (acquired : RootEnergyAcquisition charts component joining energyTarget depthFloor
   energyFloor)
     (branch : HyperellipticReciprocal.originOrder curve = 1) :
     SegmentGapArea.GapsSmall (acquired.energy.data.segments branch acquired.evaluated.samples.values)
@@ -509,37 +511,37 @@ theorem segment_gaps (acquired : ChartRequest.RootEnergyAcquisition charts compo
 
 /-- This finite bound pays the original segment count, independently of all target-dependent parent-child refinement
 counts. -/
-@[expose] def correctionBound (acquired : ChartRequest.RootEnergyAcquisition charts component joining energyTarget
+@[expose] def correctionBound (acquired : RootEnergyAcquisition charts component joining energyTarget
   depthFloor energyFloor) : Coordinate :=
-  2 * (16 * (request.count : InverseRootPolynomial.Coordinate) ^ 4 * acquired.roots.allowance *
+  2 * (16 * (request.count : Coordinate) ^ 4 * acquired.roots.allowance *
     (2 * (2 * (request.slope + 1) + acquired.roots.allowance)) +
-      (request.count : InverseRootPolynomial.Coordinate) ^ 2 * (4 * (2 * (request.slope + 1)) *
+      (request.count : Coordinate) ^ 2 * (4 * (2 * (request.slope + 1)) *
         acquired.roots.allowance))
 
 /-- The acquired original segment gap requests bound the difference between the physical energy boundary and retained
 endpoint residual. -/
-theorem boundary_correction_bound (acquired : ChartRequest.RootEnergyAcquisition charts component joining energyTarget
+theorem boundary_correction_bound (acquired : RootEnergyAcquisition charts component joining energyTarget
   depthFloor energyFloor)
     (branch : HyperellipticReciprocal.originOrder curve = 1) :
-    Data.Gaussian.Norm.Basic.normSq (acquired.energy.boundary - acquired.ends.residual) ≤
+    Basic.normSq (acquired.energy.boundary - acquired.ends.residual) ≤
       acquired.correctionBound := by
   rw [acquired.ends_eq branch, acquired.roots.endBank_residual]
   have scalar := acquired.energy.boundary_residual_bound branch acquired.roots.positive.le (acquired.segment_gaps
     branch)
-  rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+  rw [← Basic.normSq_eq_canonical] at scalar
   exact scalar
 
 /-- The actual acquired physical energy boundary satisfies the computed original-parent-count and gap-correction bound.
 -/
-theorem boundary_bound (acquired : ChartRequest.RootEnergyAcquisition charts component joining energyTarget depthFloor
+theorem boundary_bound (acquired : RootEnergyAcquisition charts component joining energyTarget depthFloor
   energyFloor)
     (branch : HyperellipticReciprocal.originOrder curve = 1) :
-    Data.Gaussian.Norm.Basic.normSq acquired.energy.boundary ≤ 2 *
-      (2 * ((component.program.cache.parents.length : InverseRootPolynomial.Coordinate) *
-        ((component.program.cache.parents.length : InverseRootPolynomial.Coordinate) * (80 * charts.localChart + 2 *
+    Basic.normSq acquired.energy.boundary ≤ 2 *
+      (2 * ((component.program.cache.parents.length : Coordinate) *
+        ((component.program.cache.parents.length : Coordinate) * (80 * charts.localChart + 2 *
           acquired.roots.allowance)) +
           (80 * charts.localChart + 2 * acquired.roots.allowance)) + acquired.correctionBound) := by
-  have estimate := (Data.Gaussian.Norm.Bounds.normSq_add_le_two acquired.ends.residual (acquired.energy.boundary -
+  have estimate := (Bounds.normSq_add_le_two acquired.ends.residual (acquired.energy.boundary -
     acquired.ends.residual)).trans
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
       (Fraction.Order.Arithmetic.add_le_add_direct acquired.residual_bound (acquired.boundary_correction_bound branch))
@@ -550,22 +552,22 @@ theorem boundary_bound (acquired : ChartRequest.RootEnergyAcquisition charts com
 
 /-- The physical comparison now has a computed boundary allowance. The original internal-area correction is retained
 with its required sign. -/
-theorem surface_energy_bound (acquired : ChartRequest.RootEnergyAcquisition charts component joining energyTarget
+theorem surface_energy_bound (acquired : RootEnergyAcquisition charts component joining energyTarget
   depthFloor energyFloor)
     (branch : HyperellipticReciprocal.originOrder curve = 1) :
-    Data.Gaussian.Norm.Basic.normSq (acquired.energy.energy + (acquired.evaluated.original.surface.area +
+    Basic.normSq (acquired.energy.energy + (acquired.evaluated.original.surface.area +
       acquired.evaluated.original.internalArea)) <
       2 * (2 * (256 * (4 * chartTarget + target) + 2 * (areaTarget + chartTarget)) +
-        2 * (2 * ((component.program.cache.parents.length : InverseRootPolynomial.Coordinate) *
-          ((component.program.cache.parents.length : InverseRootPolynomial.Coordinate) * (80 * charts.localChart + 2 *
+        2 * (2 * ((component.program.cache.parents.length : Coordinate) *
+          ((component.program.cache.parents.length : Coordinate) * (80 * charts.localChart + 2 *
             acquired.roots.allowance)) +
             (80 * charts.localChart + 2 * acquired.roots.allowance)) + acquired.correctionBound)) := by
-  have estimate := Data.Gaussian.Norm.Bounds.normSq_add_le_two
+  have estimate := Bounds.normSq_add_le_two
     (acquired.energy.energy - (-(acquired.evaluated.original.surface.area + acquired.evaluated.original.internalArea) +
       acquired.energy.boundary))
     acquired.energy.boundary
   have paid := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by
-      decide : (0 : InverseRootPolynomial.Coordinate) < 2)
+      decide : (0 : Coordinate) < 2)
     ((Fraction.Order.Arithmetic.add_le_add_direct (le_refl _) (acquired.boundary_bound branch)).trans_lt
       (Fraction.Order.Arithmetic.add_lt_add_right_direct acquired.energy.surface_close _))
   have same : acquired.energy.energy - (-(acquired.evaluated.original.surface.area +

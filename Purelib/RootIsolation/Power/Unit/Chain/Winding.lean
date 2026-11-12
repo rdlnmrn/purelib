@@ -15,6 +15,8 @@ public import Purelib.RootIsolation.Power.Unit.Chain.Iteration
 public import Purelib.RootIsolation.Power.Unit.Chain.Vertices
 import Purelib.Tactic.Ring
 
+open Purelib.Geometry.Gaussian.UnitCircle
+
 open Purelib
 
 open Purelib.Polynomial
@@ -49,9 +51,9 @@ namespace UnitChain
 /-- Read the original polynomial's raw winding along the retained unit-chain parameter vertices. -/
 @[expose] def parameterRaw
     {degree : Data.Nat.Positive.RootDegree} {degreeAtLeastTwo : 2 ≤ degree.value}
-    {start finish : Geometry.Gaussian.UnitCircle.Basic.UnitVertex} (p :
-      Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
-    (chain : Power.Unit.Chain.Basic.UnitChain degree degreeAtLeastTwo start finish) : Int :=
+    {start finish : Basic.UnitVertex} (p :
+      Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+    (chain : UnitChain degree degreeAtLeastTwo start finish) : Int :=
   Winding.Polygon.Basic.chainRaw p start.value chain.vertices
 end UnitChain
 end Purelib.RootIsolation.Power.Unit.Chain.Basic
@@ -84,15 +86,15 @@ namespace UnitChain
 /-- Raw parameter winding adds under concatenation of the original unit chains. -/
 theorem parameterRaw_append
     {degree : Data.Nat.Positive.RootDegree} {degreeAtLeastTwo : 2 ≤ degree.value}
-    {start middle finish : Geometry.Gaussian.UnitCircle.Basic.UnitVertex} (p :
-      Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
-    (first : Power.Unit.Chain.Basic.UnitChain degree degreeAtLeastTwo start middle)
-    (second : Power.Unit.Chain.Basic.UnitChain degree degreeAtLeastTwo middle finish) :
-    Power.Unit.Chain.Basic.UnitChain.parameterRaw p (first.append second) =
-      Power.Unit.Chain.Basic.UnitChain.parameterRaw p first + Power.Unit.Chain.Basic.UnitChain.parameterRaw p second :=
+    {start middle finish : Basic.UnitVertex} (p :
+      Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+    (first : UnitChain degree degreeAtLeastTwo start middle)
+    (second : UnitChain degree degreeAtLeastTwo middle finish) :
+    parameterRaw p (first.append second) =
+      parameterRaw p first + parameterRaw p second :=
         by
-  unfold Power.Unit.Chain.Basic.UnitChain.parameterRaw
-  rw [Power.Unit.Chain.Basic.UnitChain.vertices_append, Winding.Polygon.Basic.chainRaw_append,
+  unfold parameterRaw
+  rw [vertices_append, Winding.Polygon.Basic.chainRaw_append,
     first.vertices_terminal]
 end UnitChain
 end Purelib.RootIsolation.Power.Unit.Chain.Basic
@@ -125,12 +127,12 @@ namespace UnitChain
 /-- Transporting the finish vertex along equality preserves raw parameter winding. -/
 theorem parameterRaw_castFinish
     {degree : Data.Nat.Positive.RootDegree} {degreeAtLeastTwo : 2 ≤ degree.value}
-    {start left right : Geometry.Gaussian.UnitCircle.Basic.UnitVertex} (p :
-      Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+    {start left right : Basic.UnitVertex} (p :
+      Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
     (same : left = right)
-    (chain : Power.Unit.Chain.Basic.UnitChain degree degreeAtLeastTwo start left) :
-    Power.Unit.Chain.Basic.UnitChain.parameterRaw p (Power.Unit.Chain.Basic.UnitChain.castFinish same chain) =
-      Power.Unit.Chain.Basic.UnitChain.parameterRaw p chain := by
+    (chain : UnitChain degree degreeAtLeastTwo start left) :
+    parameterRaw p (castFinish same chain) =
+      parameterRaw p chain := by
   subst right
   rfl
 end UnitChain
@@ -164,12 +166,12 @@ namespace UnitChain
 /-- The coordinate winding of a connector between equal displayed parameter values is zero. -/
 theorem parameterRaw_equalValue
     {degree : Data.Nat.Positive.RootDegree} {degreeAtLeastTwo : 2 ≤ degree.value}
-    {left right : Geometry.Gaussian.UnitCircle.Basic.UnitVertex} (same : left.value = right.value) :
-    Power.Unit.Chain.Basic.UnitChain.parameterRaw Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
-      (Power.Unit.Chain.Basic.UnitChain.equalValue
+    {left right : Basic.UnitVertex} (same : left.value = right.value) :
+    parameterRaw Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
+      (equalValue
         (degree := degree) (degreeAtLeastTwo := degreeAtLeastTwo) same) = 0 := by
-  unfold Power.Unit.Chain.Basic.UnitChain.parameterRaw Power.Unit.Chain.Basic.UnitChain.equalValue
-  simp only [-eq_self, -iff_self, Power.Unit.Chain.Basic.UnitChain.vertices, Winding.Polygon.Basic.chainRaw]
+  unfold parameterRaw equalValue
+  simp only [-eq_self, -iff_self, vertices, Winding.Polygon.Basic.chainRaw]
   rw [same]
   rw [Winding.Polygon.Coordinate.coordinate_segment_self_doubledWinding]
   exact Int.Arithmetic.zero_add 0
@@ -204,10 +206,10 @@ namespace UnitChain
 /-- The empty unit chain has zero raw parameter winding. -/
 @[simp] theorem parameterRaw_nil
     {degree : Data.Nat.Positive.RootDegree} {degreeAtLeastTwo : 2 ≤ degree.value}
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (vertex :
-      Geometry.Gaussian.UnitCircle.Basic.UnitVertex) :
-    Power.Unit.Chain.Basic.UnitChain.parameterRaw (degree := degree) (degreeAtLeastTwo := degreeAtLeastTwo)
-      p (Power.Unit.Chain.Basic.UnitChain.nil vertex) = 0 := rfl
+    (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (vertex :
+      Basic.UnitVertex) :
+    parameterRaw (degree := degree) (degreeAtLeastTwo := degreeAtLeastTwo)
+      p (nil vertex) = 0 := rfl
 end UnitChain
 end Purelib.RootIsolation.Power.Unit.Chain.Basic
 
@@ -239,19 +241,19 @@ namespace UnitChain
 /-- Repeating a closed chain multiplies its original raw parameter winding by the finite repetition count. -/
 theorem parameterRaw_repeatClosed
     {degree : Data.Nat.Positive.RootDegree} {degreeAtLeastTwo : 2 ≤ degree.value}
-    {vertex : Geometry.Gaussian.UnitCircle.Basic.UnitVertex} (p :
-      Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
-    (chain : Power.Unit.Chain.Basic.UnitChain degree degreeAtLeastTwo vertex vertex) :
+    {vertex : Basic.UnitVertex} (p :
+      Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+    (chain : UnitChain degree degreeAtLeastTwo vertex vertex) :
     ∀ circuits : Nat,
-      Power.Unit.Chain.Basic.UnitChain.parameterRaw p (chain.repeatClosed circuits) =
-        (circuits : Int) * Power.Unit.Chain.Basic.UnitChain.parameterRaw p chain
+      parameterRaw p (chain.repeatClosed circuits) =
+        (circuits : Int) * parameterRaw p chain
   | 0 => by
-      simp only [-eq_self, -iff_self, Power.Unit.Chain.Basic.UnitChain.repeatClosed,
-        Power.Unit.Chain.Basic.UnitChain.parameterRaw_nil]
+      simp only [-eq_self, -iff_self, repeatClosed,
+        parameterRaw_nil]
       ring1
   | circuits + 1 => by
-      rw [Power.Unit.Chain.Basic.UnitChain.repeatClosed, Power.Unit.Chain.Basic.UnitChain.parameterRaw_append,
-        Purelib.RootIsolation.Power.Unit.Chain.Basic.UnitChain.parameterRaw_repeatClosed p chain circuits]
+      rw [repeatClosed, parameterRaw_append,
+        UnitChain.parameterRaw_repeatClosed p chain circuits]
       simp only [-eq_self, -iff_self, Algebra.NatCast.add, Nat.cast_one]
       ring1
 end UnitChain

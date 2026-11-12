@@ -128,14 +128,14 @@ open Purelib.Integration.Path.HomogeneousTraceConnection (HomogeneousTrace)
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+    UniformReciprocalModels.Data patch count}
   {edge : ParameterEdge} {cell :
     Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {model :
+  {regular : RegularBounds.Data cap} {model :
     RootModel cell}
   {parameter target sourceTarget : Coordinate} {floor sourceFloor :
     Nat}
@@ -148,10 +148,10 @@ variable {cover : Cover data}
 namespace BasisIntervalChartRequest
 
 variable {interval : BasisCommonInterval cover
-  covers} {depth index minimum : Nat} {box : Purelib.Geometry.Rational.Box}
+  covers} {depth index minimum : Nat} {box : Geometry.Rational.Box}
   {request : BasisIntervalChartRequest
     interval regular depth target sourceTarget floor sourceFloor}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
   {polynomials : RegularBasisPolynomials cap
     index box}
 
@@ -160,8 +160,8 @@ namespace Plan.Evaluation
 variable {plan :
   Plan
   request capSample polynomials minimum}
-  {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular interval.anchor.cell}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample comparison capSample}
+  {comparison : ArcSamples.Data regular interval.anchor.cell}
+  {sample : ArcSamples.Sample comparison capSample}
   {bank : BasisSourceLocations.SampleBank
     covers index} {stage : Nat}
 
@@ -172,40 +172,40 @@ open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius)
 /-- The acquired common-interval chart path has the retained arc geometry when the origin is simple and the square and
 dyadic mesh bounds are paid. -/
 theorem basisArcGeometry (evaluated : Plan.Evaluation plan sample bank stage)
-    (bounds : CoordinatePolynomial.CoordinateBounds comparison)
+    (bounds : CoordinateBounds comparison)
     (coordinate : CoordinatePolynomial sample)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
     (padded : target ≤ regular.padded.squareTolerance)
-    (mesh : target ≤ Geometric.Basic.quarterRadius 1 depth) :
-    Path.BasisArcGeometry (Evaluation.path evaluated) bounds.slope := by
+    (mesh : target ≤ quarterRadius 1 depth) :
+    BasisArcGeometry (Evaluation.path evaluated) bounds.slope := by
   intro segment member
   refine ⟨Evaluation.square_inside branch padded segment.last, Evaluation.square_inside branch padded segment.first, ?_⟩
   have actual := (Evaluation.coordinate_step_bound evaluated bounds coordinate branch segment member).le
   have reading := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct mesh (by
-      decide : (0 : InverseRootPolynomial.Coordinate) ≤ 4)
+      decide : (0 : Coordinate) ≤ 4)
   exact actual.trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
     (Fraction.Order.Arithmetic.add_le_add_direct le_rfl reading) (by decide)).trans_eq
-    (by simp only [-eq_self, -iff_self, Geometric.Basic.quarterRadius, Fraction.Field.div_eq_mul_inv_direct]; ring1))
+    (by simp only [-eq_self, -iff_self, quarterRadius, Fraction.Field.div_eq_mul_inv_direct]; ring1))
 
 /-- The trace uses the cached chart polygon and the already sampled endpoint potentials, transported along the literal
 chart-path readback. -/
 @[expose] def PathData.trace (evaluated : Plan.Evaluation plan sample bank stage)
     {originals : BasisSourceLocations.PrimitiveBank covers index} {coefficients :
-      LinearAlgebra.Gaussian.Energy.GaussianVector genus}
+      GaussianVector genus}
     (pathData : Evaluation.PathData evaluated originals coefficients)
-    {energyTarget : InverseRootPolynomial.Coordinate} {energyFloor : Nat}
-    (energy : Evaluation.RequestedBasisEnergy (Evaluation.path evaluated).segments polynomials energyTarget energyFloor)
+    {energyTarget : Coordinate} {energyFloor : Nat}
+    (energy : RequestedBasisEnergy (Evaluation.path evaluated).segments polynomials energyTarget energyFloor)
     (sampled : energy.Sample coefficients evaluated.first.root.coordinate evaluated.last.root.coordinate)
-    {uniform : ReciprocalPaddedInverse.UniformBounds regular.padded}
-    (basis : ReciprocalPaddedBasisBounds.BasisBounds uniform)
-    (bounds : CoordinatePolynomial.CoordinateBounds comparison)
+    {uniform : UniformBounds regular.padded}
+    (basis : BasisBounds uniform)
+    (bounds : CoordinateBounds comparison)
     (coordinate : CoordinatePolynomial sample)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
-    (padded : target ≤ regular.padded.squareTolerance) (mesh : target ≤ Geometric.Basic.quarterRadius 1 depth)
-    (allowance : InverseRootPolynomial.Coordinate) (nonnegative : 0 ≤ allowance)
-    (paid : Geometric.Basic.quarterRadius (ChartBasisArcs.basisArcScale basis bounds.slope) depth ≤ (4 * allowance) ^ 2)
+    (padded : target ≤ regular.padded.squareTolerance) (mesh : target ≤ quarterRadius 1 depth)
+    (allowance : Coordinate) (nonnegative : 0 ≤ allowance)
+    (paid : quarterRadius (basisArcScale basis bounds.slope) depth ≤ (4 * allowance) ^ 2)
       :
-    HomogeneousTraceConnection.HomogeneousTrace coefficients (pathData.paired.pairs.map Prod.snd)
+    HomogeneousTrace coefficients (pathData.paired.pairs.map Prod.snd)
       (polynomials.value coefficients evaluated.first.root.coordinate)
       (polynomials.value coefficients evaluated.last.root.coordinate)
       sampled.firstPotential sampled.lastPotential (energy.error + allowance) := by

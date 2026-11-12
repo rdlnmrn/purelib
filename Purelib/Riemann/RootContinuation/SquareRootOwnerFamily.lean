@@ -74,8 +74,9 @@ open Purelib.Riemann.Topology
 theorem IndependentFamily.owner_eq_independent {parameter : Gaussian}
     (family : IndependentFamily parameter) (sheet : Fin 2) :
     family.owner sheet = SquareRootContinuationChain.Owner.independent family.parameterNonzero sheet := by
-  cases family with
-  | mk nonzero result same => cases same; rfl
+  unfold IndependentFamily.owner
+  rewrite [family.result_eq]
+  rfl
 
 /-- Building and selecting a family sheet recovers the exact original independent square-root owner. -/
 theorem independentFamily_owner {parameter : Gaussian} (nonzero : parameter ≠ 0) (sheet : Fin 2) :

@@ -64,19 +64,19 @@ end Basic
 
 /-- Compute the exact Gaussian-rational value from the retained integral numerator and
 denominator. -/
-@[expose] def value (fraction : Fraction) : Gaussian.Basic.Canonical :=
-  GaussianInt.toGaussian fraction.numerator * (GaussianInt.toGaussian fraction.denominator)⁻¹
+@[expose] def value (fraction : Fraction) : Canonical :=
+  toGaussian fraction.numerator * (toGaussian fraction.denominator)⁻¹
 
 /-- The embedded denominator of a retained Gaussian fraction is nonzero. -/
 theorem denominatorGaussianNonzero (fraction : Fraction) :
-    GaussianInt.toGaussian fraction.denominator ≠ 0 := by
+    toGaussian fraction.denominator ≠ 0 := by
   intro zero
   exact fraction.denominatorNonzero (toGaussian_eq_zero.mp zero)
 
 /-- Compute the natural quadrance of the displayed, potentially unreduced Gaussian
 denominator. -/
 @[expose] def height (fraction : Fraction) : Nat :=
-  GaussianInt.normNat fraction.denominator
+  normNat fraction.denominator
 
 /-- Multiplying a rational by its computed representative denominator recovers the cast
 representative numerator. -/
@@ -102,23 +102,23 @@ private theorem representative_mul_den (value : Rational) :
 /-- Multiplying the exact fraction value by its embedded denominator recovers its
 embedded numerator. -/
 theorem value_mul_denominator (fraction : Fraction) :
-    fraction.value * GaussianInt.toGaussian fraction.denominator =
-      GaussianInt.toGaussian fraction.numerator := by
+    fraction.value * toGaussian fraction.denominator =
+      toGaussian fraction.numerator := by
   dsimp only [value]
-  rw [Gaussian.Basic.mul_assoc,
-    Gaussian.Field.inv_eq,
-    Gaussian.Field.inv_mul _
+  rw [Basic.mul_assoc,
+    Field.inv_eq,
+    Field.inv_mul _
       fraction.denominatorGaussianNonzero,
     _root_.mul_one]
 
 /-- The squared norm of an exact Gaussian fraction is the quotient of its retained
 integral quadrances. -/
 theorem normSq_value (fraction : Fraction) :
-    Gaussian.Norm.Basic.normSq fraction.value =
-      (GaussianInt.normNat fraction.numerator : Rational) /
-        GaussianInt.normNat fraction.denominator := by
-  rw [value, Basic.normSq_mul, Gaussian.Field.inv_eq, Gaussian.Field.normSq_inv _ fraction.denominatorGaussianNonzero,
-    GaussianInt.normSq_toGaussian, GaussianInt.normSq_toGaussian]
+    Basic.normSq fraction.value =
+      (normNat fraction.numerator : Rational) /
+        normNat fraction.denominator := by
+  rw [value, Basic.normSq_mul, Field.inv_eq, Field.normSq_inv _ fraction.denominatorGaussianNonzero,
+    normSq_toGaussian, normSq_toGaussian]
   exact (ExplicitField.div_eq_mul_inv _ _).symm
 
 /-- Identify a Gaussian fraction's exact value from a displayed cross-multiplication
@@ -126,11 +126,11 @@ equality.
 
 The stored nonzero denominator permits cancellation, so the proposed value is
 certified without replacing the original presentation. -/
-theorem value_eq_of_mul_den (fraction : Fraction) (candidate : Gaussian.Basic.Canonical)
-    (identity : candidate * GaussianInt.toGaussian fraction.denominator =
-      GaussianInt.toGaussian fraction.numerator) :
+theorem value_eq_of_mul_den (fraction : Fraction) (candidate : Canonical)
+    (identity : candidate * toGaussian fraction.denominator =
+      toGaussian fraction.numerator) :
     fraction.value = candidate := by
-  apply Gaussian.Field.mul_right_cancel_of_ne
+  apply Field.mul_right_cancel_of_ne
     fraction.denominatorGaussianNonzero
   rw [fraction.value_mul_denominator]
   exact identity.symm
@@ -140,7 +140,7 @@ theorem value_eq_of_mul_den (fraction : Fraction) (candidate : Gaussian.Basic.Ca
 Use the two computed canonical coordinate representatives, multiply their positive
 denominators and cross-scale their integral numerators. The result retains the exact
 nonzero denominator evidence. -/
-@[expose] def ofGaussian (value : Gaussian.Basic.Canonical) : Fraction := by
+@[expose] def ofGaussian (value : Canonical) : Fraction := by
   let real := Basic.representative value.re
   let imaginary := Basic.representative value.im
   let denominatorNat := real.den * imaginary.den
@@ -152,27 +152,27 @@ nonzero denominator evidence. -/
   let denominator : GaussianInt := ⟨(denominatorNat : Int), 0⟩
   have denominatorNonzero : denominator ≠ 0 := by
     intro zero
-    have realZero := congrArg GaussianInt.re zero
+    have realZero := congrArg re zero
     dsimp only [denominator] at realZero
-    simp only [GaussianInt.zero_re] at realZero
+    simp only [zero_re] at realZero
     have denominatorNatZero : denominatorNat = 0 := Int.ofNat.inj realZero
     exact (Nat.ne_of_gt denominatorNatPositive) denominatorNatZero
   exact ⟨numerator, denominator, denominatorNonzero⟩
 
 /-- The computed integral fraction represents its supplied Gaussian-rational value
 exactly. -/
-theorem ofGaussian_value (source : Gaussian.Basic.Canonical) :
+theorem ofGaussian_value (source : Canonical) :
     (ofGaussian source).value = source := by
   let real := Basic.representative source.re
   let imaginary := Basic.representative source.im
   let denominatorNat := real.den * imaginary.den
-  have denominatorNonzero : GaussianInt.toGaussian (ofGaussian source).denominator ≠ 0 :=
+  have denominatorNonzero : toGaussian (ofGaussian source).denominator ≠ 0 :=
     (ofGaussian source).denominatorGaussianNonzero
-  apply Gaussian.Field.mul_right_cancel_of_ne
+  apply Field.mul_right_cancel_of_ne
     denominatorNonzero
   rw [(ofGaussian source).value_mul_denominator]
-  apply Gaussian.Basic.ext
-  · simp only [-eq_self, -iff_self, GaussianInt.toGaussian, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+  apply Basic.ext
+  · simp only [-eq_self, -iff_self, toGaussian, ← Cast.intCast_eq_fromInt]
     change
       ((real.num * (imaginary.den : Int) : Int) : Rational) =
         source.re * (denominatorNat : Rational) - source.im * 0
@@ -189,7 +189,7 @@ theorem ofGaussian_value (source : Gaussian.Basic.Canonical) :
       _ = source.re *
           ((real.den : Rational) * (imaginary.den : Rational)) -
             source.im * 0 := by ring1
-  · simp only [-eq_self, -iff_self, GaussianInt.toGaussian, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+  · simp only [-eq_self, -iff_self, toGaussian, ← Cast.intCast_eq_fromInt]
     change
       ((imaginary.num * (real.den : Int) : Int) : Rational) =
         source.re * 0 + source.im * (denominatorNat : Rational)
@@ -209,12 +209,12 @@ theorem ofGaussian_value (source : Gaussian.Basic.Canonical) :
 
 /-- A nonzero Gaussian-rational input gives a nonzero numerator in its computed integral
 fraction. -/
-theorem ofGaussian_numerator_ne_zero {source : Gaussian.Basic.Canonical} (nonzero : source ≠ 0) :
+theorem ofGaussian_numerator_ne_zero {source : Canonical} (nonzero : source ≠ 0) :
     (ofGaussian source).numerator ≠ 0 := by
   intro numeratorZero
   have valueZero : (ofGaussian source).value = 0 := by
     rw [value, numeratorZero, toGaussian_zero,
-      Gaussian.Basic.zero_mul]
+      Basic.zero_mul]
   exact nonzero ((ofGaussian_value source).symm.trans valueZero)
 
 /-- A retained fraction with nonzero numerator has nonzero exact Gaussian value. -/
@@ -222,9 +222,9 @@ theorem value_ne_zero (fraction : Fraction)
     (numeratorNonzero : fraction.numerator ≠ 0) : fraction.value ≠ 0 := by
   intro valueZero
   have productZero := congrArg
-    (fun value => value * GaussianInt.toGaussian fraction.denominator) valueZero
+    (fun value => value * toGaussian fraction.denominator) valueZero
   rw [fraction.value_mul_denominator,
-    Gaussian.Basic.zero_mul] at productZero
+    Basic.zero_mul] at productZero
   exact numeratorNonzero (toGaussian_eq_zero.mp productZero)
 
 namespace Basic
@@ -245,28 +245,28 @@ theorem crossProduct_of_value_eq
     (left right : Fraction) (valueEqual : left.value = right.value) :
     left.numerator * right.denominator =
       right.numerator * left.denominator := by
-  apply GaussianInt.toGaussian_injective
-  rw [GaussianInt.toGaussian_mul, GaussianInt.toGaussian_mul]
+  apply toGaussian_injective
+  rw [toGaussian_mul, toGaussian_mul]
   calc
-    GaussianInt.toGaussian left.numerator * GaussianInt.toGaussian right.denominator =
-        (left.value * GaussianInt.toGaussian left.denominator) *
-          GaussianInt.toGaussian right.denominator := by
+    toGaussian left.numerator * toGaussian right.denominator =
+        (left.value * toGaussian left.denominator) *
+          toGaussian right.denominator := by
       rw [left.value_mul_denominator]
     _ = left.value *
-          (GaussianInt.toGaussian left.denominator * GaussianInt.toGaussian right.denominator)
+          (toGaussian left.denominator * toGaussian right.denominator)
             := by
-      rw [Purelib.Data.Gaussian.Basic.mul_assoc]
+      rw [Basic.mul_assoc]
     _ = right.value *
-          (GaussianInt.toGaussian left.denominator * GaussianInt.toGaussian right.denominator)
+          (toGaussian left.denominator * toGaussian right.denominator)
             := by
       rw [valueEqual]
-    _ = (right.value * GaussianInt.toGaussian right.denominator) *
-          GaussianInt.toGaussian left.denominator := by
-      apply Purelib.Data.Gaussian.Basic.ext <;>
-        simp only [Purelib.Data.Gaussian.Basic.mul_re,
-          Purelib.Data.Gaussian.Basic.mul_im] <;>
+    _ = (right.value * toGaussian right.denominator) *
+          toGaussian left.denominator := by
+      apply Basic.ext <;>
+        simp only [Basic.mul_re,
+          Basic.mul_im] <;>
         ring1
-    _ = GaussianInt.toGaussian right.numerator * GaussianInt.toGaussian left.denominator := by
+    _ = toGaussian right.numerator * toGaussian left.denominator := by
       rw [right.value_mul_denominator]
 
 /-- Equal integral cross-products certify equal exact Gaussian fraction values.
@@ -280,36 +280,36 @@ theorem value_eq_of_crossProduct
         right.numerator * left.denominator) :
     left.value = right.value := by
   have denominatorProductNonzero :
-      GaussianInt.toGaussian left.denominator * GaussianInt.toGaussian right.denominator ≠ 0
+      toGaussian left.denominator * toGaussian right.denominator ≠ 0
         :=
-    Purelib.Data.Gaussian.Field.mul_ne_zero_direct
+    Field.mul_ne_zero_direct
       left.denominatorGaussianNonzero right.denominatorGaussianNonzero
-  apply Purelib.Data.Gaussian.Field.mul_right_cancel_of_ne
+  apply Field.mul_right_cancel_of_ne
     denominatorProductNonzero
   calc
     left.value *
-          (GaussianInt.toGaussian left.denominator * GaussianInt.toGaussian right.denominator)
+          (toGaussian left.denominator * toGaussian right.denominator)
             =
-        (left.value * GaussianInt.toGaussian left.denominator) *
-          GaussianInt.toGaussian right.denominator := by
-      rw [Purelib.Data.Gaussian.Basic.mul_assoc]
-    _ = GaussianInt.toGaussian left.numerator * GaussianInt.toGaussian right.denominator := by
+        (left.value * toGaussian left.denominator) *
+          toGaussian right.denominator := by
+      rw [Basic.mul_assoc]
+    _ = toGaussian left.numerator * toGaussian right.denominator := by
       rw [left.value_mul_denominator]
-    _ = GaussianInt.toGaussian (left.numerator * right.denominator) := by
-      rw [GaussianInt.toGaussian_mul]
-    _ = GaussianInt.toGaussian (right.numerator * left.denominator) := by
+    _ = toGaussian (left.numerator * right.denominator) := by
+      rw [toGaussian_mul]
+    _ = toGaussian (right.numerator * left.denominator) := by
       rw [crossProduct]
-    _ = GaussianInt.toGaussian right.numerator * GaussianInt.toGaussian left.denominator := by
-      rw [GaussianInt.toGaussian_mul]
-    _ = (right.value * GaussianInt.toGaussian right.denominator) *
-          GaussianInt.toGaussian left.denominator := by
+    _ = toGaussian right.numerator * toGaussian left.denominator := by
+      rw [toGaussian_mul]
+    _ = (right.value * toGaussian right.denominator) *
+          toGaussian left.denominator := by
       rw [right.value_mul_denominator]
     _ = right.value *
-          (GaussianInt.toGaussian left.denominator * GaussianInt.toGaussian right.denominator)
+          (toGaussian left.denominator * toGaussian right.denominator)
             := by
-      apply Purelib.Data.Gaussian.Basic.ext <;>
-        simp only [Purelib.Data.Gaussian.Basic.mul_re,
-          Purelib.Data.Gaussian.Basic.mul_im] <;>
+      apply Basic.ext <;>
+        simp only [Basic.mul_re,
+          Basic.mul_im] <;>
         ring1
 
 /-- The displayed Gaussian-integer fraction with its retained numerator and

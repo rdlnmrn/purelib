@@ -1,6 +1,10 @@
 module
 import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Data.Gaussian.Basic
+import Purelib.Data.Gaussian.Norm.Bounds
+public import Purelib.Polynomial.Dense.Gaussian.Bounds.RootRadius
+import Purelib.Polynomial.Dense.Gaussian.Coefficients.Tail
+import Purelib.Polynomial.Dense.Gaussian.Evaluation.Norm.Weighted
 public import Purelib.Curves.Legendre.Paths
 import Purelib.Polynomial.Dense.Arithmetic
 import Purelib.Polynomial.Dense.Basic
@@ -110,6 +114,57 @@ theorem perturbationAt_eval (source target point :
     Paths.polynomial_eval, Paths.polynomial_eval]
   simp only [Translated.translatedCoordinate_eval]
   ring1
+end Purelib.Curves.Legendre.Polynomial
+
+end
+
+public section
+
+namespace Purelib.Curves.Legendre.Polynomial
+
+open Purelib.Data.Rat
+open Purelib.Data.Gaussian.Basic (Canonical)
+open Purelib.Data.Gaussian.Norm.Basic (normSq normSq_nonneg normSq_zero normSq_one normSq_neg)
+open Purelib.Polynomial.Dense.Gaussian.Bounds
+
+/-- The original coefficient-computed support radius of every Legendre cubic is at least four.
+
+The unchanged normalized lower coefficient vector gives its exact finite
+weight. The difference of its two nonconstant lower coefficients is one,
+so the existing squared-difference bound supplies a uniform positive weight.
+No root frame, parameter restriction or isolated owner is replaced. -/
+theorem four_le_largeSquareRadius (parameter : Canonical) :
+    (4 : Fraction.Rational) ≤ RootRadius.denseLargeSquareRadius (Paths.polynomial parameter) := by
+  have difference : (1 + parameter) - parameter = (1 : Canonical) := by ring1
+  have pair := Data.Gaussian.Norm.Bounds.normSq_sub_le_two (1 + parameter) parameter
+  rewrite [difference, normSq_one] at pair
+  have extra : (0 : Fraction.Rational) ≤ 2 * normSq (1 + parameter) :=
+    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (normSq_nonneg _)
+  have weights : 2 * (normSq (1 + parameter) + normSq parameter) ≤
+      2 * normSq parameter + 4 * normSq (1 + parameter) := by
+    calc
+      _ = (2 * normSq parameter + 2 * normSq (1 + parameter)) + 0 := by ring1
+      _ ≤ (2 * normSq parameter + 2 * normSq (1 + parameter)) + 2 * normSq (1 + parameter) :=
+        Fraction.Order.Arithmetic.add_le_add_direct (Fraction.Order.Basic.le_refl _) extra
+      _ = _ := by ring1
+  have weightEq : RootRadius.denseLowerCoefficientWeight (Paths.polynomial parameter) =
+      3 * (2 * normSq parameter + 4 * normSq (1 + parameter)) := by
+    change (3 : Fraction.Rational) *
+      (normSq (0 : Canonical) * 1 + (normSq parameter * 2 + (normSq (-(1 + parameter)) * 4 + 0))) = _
+    rewrite [normSq_zero, normSq_neg]
+    ring1
+  have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (pair.trans weights) (by decide : (0 : Fraction.Rational) ≤ 3)
+  rewrite [Fraction.Field.mul_one_direct, ← weightEq] at scaled
+  have leading : (Paths.polynomial parameter).leadingCoeff = (1 : Canonical) := (rfl)
+  change (4 : Fraction.Rational) ≤ max 1
+    (RootRadius.denseLowerCoefficientWeight (Paths.polynomial parameter) /
+      normSq (Paths.polynomial parameter).leadingCoeff + 1)
+  rewrite [leading, normSq_one, Fraction.Field.div_eq_mul_inv_direct,
+    show (1 : Fraction.Rational)⁻¹ = 1 by decide, Fraction.Field.mul_one_direct]
+  exact (show (4 : Fraction.Rational) = 3 + 1 by decide).trans_le
+    ((Fraction.Order.Arithmetic.add_le_add_right_direct scaled 1).trans (Fraction.Order.Basic.le_max_right _ _))
+
 end Purelib.Curves.Legendre.Polynomial
 
 end

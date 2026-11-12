@@ -38,6 +38,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-!
@@ -70,7 +72,7 @@ open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
 open Purelib.Riemann.Integration.PreparedSubdivisionModelCore (CenteredEdge)
 open Purelib.Riemann.Readings.UniformPreparedRequests (PrimitiveSumRequest)
 open Purelib.Riemann.RootContinuation.PreparedNewtonBandSamples.Sample
-  (preparedDensity preparedDensity_nonnegative preparedDensity_movement_le)
+  (preparedDensity preparedDensity_nonnegative preparedDensity_movement_le prepared_integral_bound)
 open Purelib.Riemann.Readings.PreparedPrimitiveRequests (movement)
 open Purelib.Integration.Polynomial.Gaussian.Path.Basic (PathModel)
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius)
@@ -78,10 +80,10 @@ open Purelib.Integration.Path.IncrementArea (Summary pathArea)
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {ambient : Purelib.Geometry.Rational.Box} {current : Purelib.RootIsolation.State.Raw.RawWindingState
+  {ambient : Geometry.Rational.Box} {current : RootIsolation.State.Raw.RawWindingState
     curve.polynomial ambient}
   {profile : Profile curve.squarefree current.box} {fixed : DifferentialProfile profile differential.exponent}
-  {target accuracy : Purelib.Data.Rat.Fraction.Rational} {band : PreparedBandRequest fixed target}
+  {target accuracy : Data.Rat.Fraction.Rational} {band : PreparedBandRequest fixed target}
 
 open Purelib.Data.Gaussian in
 open Purelib.Riemann.RootContinuation in
@@ -92,7 +94,7 @@ factor. -/
 theorem RefinedBoundaryParents.child_density_bound {parents : List (CenteredEdge curve differential)}
     (bank : RefinedBoundaryParents band parents) :
     ∀ child ∈ bank.blocks.children,
-      Data.Gaussian.Norm.Basic.normSq child.model.integralSample ≤ PreparedNewtonBandSamples.Sample.preparedDensity
+      normSq child.model.integralSample ≤ preparedDensity
         band.sample fixed band.error * child.edge.pointMovement := by
   induction bank with
   | nil => intro _ member; exact False.elim (List.not_mem_nil member)
@@ -100,7 +102,7 @@ theorem RefinedBoundaryParents.child_density_bound {parents : List (CenteredEdge
       intro child member
       rcases Purelib.Data.List.Membership.mem_append.mp member with member | member
       · rw [Norm.Basic.normSq_eq_canonical]
-        exact PreparedNewtonBandSamples.Sample.prepared_integral_bound band.sample fixed child
+        exact prepared_integral_bound band.sample fixed child
           (head.boundary.child_starts head.refinement.block child member)
           (head.refinement.child_error member) band.error_accurate
       · exact ih child member
@@ -119,10 +121,10 @@ set_option genInjectivity false in
 Both summaries are indexed by the actual ordered increment lists, retaining the original primitive request sum and
 prepared integral sample. -/
 structure AreaSample (result : PrimitiveSample band primitive) where
-  /-- The cached summary of the original flattened primitive source increments. -/ source : IncrementArea.Summary
+  /-- The cached summary of the original flattened primitive source increments. -/ source : Summary
     ((PreparedPrimitiveSideArea.areaBlocks result.sample.requests).map Prod.fst).flatten
-  /-- The cached summary of the original prepared child-model increments. -/ prepared : IncrementArea.Summary
-    (PathArea.increments (Basic.PathModel.mk (result.sample.blocks.children.map CenteredEdge.model)))
+  /-- The cached summary of the original prepared child-model increments. -/ prepared : Summary
+    (PathArea.increments (PathModel.mk (result.sample.blocks.children.map CenteredEdge.model)))
   /-- The source summary total is exactly the retained original primitive sum. -/ source_total : source.total =
     primitive.primitiveSum
   /-- The prepared summary total is exactly the original integral sample. -/ prepared_total : prepared.total =
@@ -139,9 +141,9 @@ open Purelib.Riemann.Readings in
 The source uses the retained primitive area blocks, while the prepared summary uses the original child models in their
 stored order. -/
 @[expose] def areaSample (result : PrimitiveSample band primitive) : AreaSample result := by
-  let source := IncrementArea.Summary.build ((PreparedPrimitiveSideArea.areaBlocks result.sample.requests).map
+  let source := Summary.build ((PreparedPrimitiveSideArea.areaBlocks result.sample.requests).map
     Prod.fst).flatten
-  let prepared := PathArea.sample (Basic.PathModel.mk (result.sample.blocks.children.map CenteredEdge.model))
+  let prepared := PathArea.sample (PathModel.mk (result.sample.blocks.children.map CenteredEdge.model))
   refine ⟨source, prepared, ?_, ?_⟩
   · rw [source.total_eq, PreparedPrimitiveSideArea.areaBlocks_left_total result.sample.requests, ←
       result.sample.increments_eq,
@@ -163,13 +165,13 @@ The exact parent count and quarter-radius movement bounds give 128 times accurac
 plus accuracy. -/
 theorem area_comparison_bound (result : PrimitiveSample band primitive) (distance : Fraction.Rational) (depth : Nat)
     (distanceNonnegative : 0 ≤ distance) (countEq : parents.length = 2 ^ depth)
-    (movements : ∀ parent ∈ parents, PreparedPrimitiveRequests.movement parent ≤ Geometric.Basic.quarterRadius distance
+    (movements : ∀ parent ∈ parents, movement parent ≤ quarterRadius distance
       depth) :
-    Data.Gaussian.Norm.Basic.normSq (IncrementArea.pathArea ((PreparedPrimitiveSideArea.areaBlocks
+    normSq (pathArea ((PreparedPrimitiveSideArea.areaBlocks
       result.sample.requests).map Prod.fst).flatten -
-      IncrementArea.pathArea (PathArea.increments (Basic.PathModel.mk (result.sample.blocks.children.map
+      pathArea (PathArea.increments (PathModel.mk (result.sample.blocks.children.map
         CenteredEdge.model)))) ≤
-        128 * accuracy * (PreparedNewtonBandSamples.Sample.preparedDensity band.sample fixed band.error * distance +
+        128 * accuracy * (preparedDensity band.sample fixed band.error * distance +
           accuracy) := by
   rw [result.sample.blocks_eq]
   have targetLe : result.sample.localTarget ≤ accuracy := by
@@ -182,11 +184,11 @@ theorem area_comparison_bound (result : PrimitiveSample band primitive) (distanc
   rw [Norm.Basic.normSq_eq_canonical]
   apply PreparedPrimitiveSideArea.dyadic_area_error result.sample.requests result.sample.localTarget_positive
     result.sample.target_positive
-    (PreparedNewtonBandSamples.Sample.preparedDensity_nonnegative band.sample fixed band.errorPositive.le)
+    (preparedDensity_nonnegative band.sample fixed band.errorPositive.le)
       distanceNonnegative depth countEq targetLe countPaid movements
   intro child member
   rw [← Norm.Basic.normSq_eq_canonical]
-  apply PreparedNewtonPrimitiveArea.RefinedBoundaryParents.child_density_bound result.boundary child
+  apply RefinedBoundaryParents.child_density_bound result.boundary child
   rw [result.blocks_eq, result.sample.blocks_eq]
   exact member
 
@@ -197,32 +199,32 @@ target squared. -/
 theorem primitive_area_bound (result : PrimitiveSample band primitive) (distance : Fraction.Rational) (depth : Nat)
     (distanceNonnegative : 0 ≤ distance) (countEq : parents.length = 2 ^ depth)
     (movementLe : distance ≤ 32 * band.sample.output.radius ^ 2)
-    (movements : ∀ parent ∈ parents, PreparedPrimitiveRequests.movement parent ≤ Geometric.Basic.quarterRadius distance
+    (movements : ∀ parent ∈ parents, movement parent ≤ quarterRadius distance
       depth) :
-    Data.Gaussian.Norm.Basic.normSq (IncrementArea.pathArea ((PreparedPrimitiveSideArea.areaBlocks
+    normSq (pathArea ((PreparedPrimitiveSideArea.areaBlocks
       result.sample.requests).map Prod.fst).flatten) ≤
       256 * accuracy * (accuracy + target) + 32 * target ^ 2 := by
-  have densityNonnegative := PreparedNewtonBandSamples.Sample.preparedDensity_nonnegative band.sample fixed
+  have densityNonnegative := preparedDensity_nonnegative band.sample fixed
     band.errorPositive.le
-  have densityPaid := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct movementLe densityNonnegative).trans
-    ((PreparedNewtonBandSamples.Sample.preparedDensity_movement_le band.sample fixed band.error_le_one
+  have densityPaid := (Arithmetic.mul_le_mul_of_nonneg_left_direct movementLe densityNonnegative).trans
+    ((preparedDensity_movement_le band.sample fixed band.error_le_one
       band.radius_le_one).trans band.paid)
-  have comparison := (PreparedNewtonPrimitiveArea.PrimitiveSample.area_comparison_bound result distance depth
+  have comparison := (area_comparison_bound result distance depth
     distanceNonnegative countEq movements).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add densityPaid le_rfl)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) result.sample.target_positive.le))
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add densityPaid le_rfl)
+      (Arithmetic.mul_nonneg_direct (by decide +kernel) result.sample.target_positive.le))
   have prepared := (result.area_density_bound distance depth distanceNonnegative countEq movements).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.pow_le_pow_direct
-        (Fraction.Order.Arithmetic.mul_nonneg_direct densityNonnegative distanceNonnegative) densityPaid 2) (by decide))
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.pow_le_pow_direct
+        (Arithmetic.mul_nonneg_direct densityNonnegative distanceNonnegative) densityPaid 2) (by decide))
   have estimate := Norm.Bounds.normSq_add_le_two
-    (IncrementArea.pathArea ((PreparedPrimitiveSideArea.areaBlocks result.sample.requests).map Prod.fst).flatten -
-      IncrementArea.pathArea (PathArea.increments (Basic.PathModel.mk (result.sample.blocks.children.map
+    (pathArea ((PreparedPrimitiveSideArea.areaBlocks result.sample.requests).map Prod.fst).flatten -
+      pathArea (PathArea.increments (PathModel.mk (result.sample.blocks.children.map
         CenteredEdge.model))))
-    (IncrementArea.pathArea (PathArea.increments (Basic.PathModel.mk (result.sample.blocks.children.map
+    (pathArea (PathArea.increments (PathModel.mk (result.sample.blocks.children.map
       CenteredEdge.model))))
   rw [sub_add_cancel] at estimate
-  exact estimate.trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  exact estimate.trans ((Arithmetic.mul_le_mul_of_nonneg_left_direct
     (add_le_add comparison prepared) (by decide)).trans_eq (by ring1))
 
 end
@@ -237,11 +239,11 @@ theorem AreaSample.paid {result : PrimitiveSample band primitive} (sample : Area
   Fraction.Rational) (depth : Nat)
     (distanceNonnegative : 0 ≤ distance) (countEq : parents.length = 2 ^ depth)
     (movementLe : distance ≤ 32 * band.sample.output.radius ^ 2)
-    (movements : ∀ parent ∈ parents, PreparedPrimitiveRequests.movement parent ≤ Geometric.Basic.quarterRadius distance
+    (movements : ∀ parent ∈ parents, movement parent ≤ quarterRadius distance
       depth) :
-    Data.Gaussian.Norm.Basic.normSq sample.source.area ≤ 256 * accuracy * (accuracy + target) + 32 * target ^ 2 := by
+    normSq sample.source.area ≤ 256 * accuracy * (accuracy + target) + 32 * target ^ 2 := by
   rw [sample.source.area_eq]
-  exact PreparedNewtonPrimitiveArea.PrimitiveSample.primitive_area_bound result distance depth distanceNonnegative
+  exact primitive_area_bound result distance depth distanceNonnegative
     countEq movementLe movements
 
 open Purelib.Data.Gaussian in
@@ -269,19 +271,19 @@ theorem AreaSample.trace_bound {result : PrimitiveSample band primitive} (sample
     (distance : Fraction.Rational) (depth : Nat) (distanceNonnegative : 0 ≤ distance) (countEq : parents.length = 2 ^
       depth)
     (movementLe : distance ≤ 32 * band.sample.output.radius ^ 2)
-    (movements : ∀ parent ∈ parents, PreparedPrimitiveRequests.movement parent ≤ Geometric.Basic.quarterRadius distance
+    (movements : ∀ parent ∈ parents, movement parent ≤ quarterRadius distance
       depth) :
-    Data.Gaussian.Norm.Basic.normSq (sample.source.area + BoundaryRibbon.area anchor sample.source.total) ≤
-      512 * accuracy * (accuracy + target) + 64 * target ^ 2 + 16 * Data.Gaussian.Norm.Basic.normSq anchor * (accuracy +
+    normSq (sample.source.area + BoundaryRibbon.area anchor sample.source.total) ≤
+      512 * accuracy * (accuracy + target) + 64 * target ^ 2 + 16 * normSq anchor * (accuracy +
         target) := by
-  have totalBound : Data.Gaussian.Norm.Basic.normSq sample.source.total ≤ 2 * (accuracy + target) := by
+  have totalBound : normSq sample.source.total ≤ 2 * (accuracy + target) := by
     rw [sample.source_total]
     exact result.primitive_bound distance depth countEq movementLe movements
   have endpoint := (BoundaryRibbon.area_bound anchor sample.source.total).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct totalBound
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (Norm.Basic.normSq_nonneg anchor)))
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct totalBound
+      (Arithmetic.mul_nonneg_direct (by decide) (normSq_nonneg anchor)))
   exact (Norm.Bounds.normSq_add_le_two _ _).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct
       (add_le_add (sample.paid distance depth distanceNonnegative countEq movementLe movements) endpoint) (by
         decide)).trans_eq (by ring1))
 

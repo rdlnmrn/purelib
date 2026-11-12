@@ -36,6 +36,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Riemann.Meshes.PuncturedGridFaces
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Curves
 
 open Purelib.Geometry
@@ -55,36 +57,36 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootR
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
-variable {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
-  {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {target coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
+variable {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {retained : Preparation.CommonBasisPreparation prepared}
+  {basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {target coefficientTarget : InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
     energyFloor radialDepth : Nat}
-  {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+  {box : Rational.Box} {capSample : Charts.Reciprocal.Cap.Primitives.Sample cap
     differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 namespace CommonBasisRequest
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisRequest retained basis
+variable {request : Preparation.CommonBasisRequest retained basis
   target coefficientTarget coverFloor floor}
   {plans : request.Plans capSample polynomials minimum} {inputs : retained.Inputs index}
-  {readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
+  {readings : Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
     request.schedule.bank plans inputs stage}
 
-variable {fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.FanPreparation request
+variable {fans : Connection.CommonBasisRequest.FanPreparation request
   plans inputs readings energyFloor}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -99,41 +101,41 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Hierarchic
   (componentMagnitude_nonnegative occurrenceTarget_positive parentTarget)
 
 /-- The local fragment tolerance does not exceed its positive target when its magnitude bound is nonnegative. -/
-private theorem local_tolerance_le_target (count : Nat) {bound target : Normalization.InverseRootPolynomial.Coordinate}
+private theorem local_tolerance_le_target (count : Nat) {bound target : InverseRootPolynomial.Coordinate}
     (boundNN : 0 ≤ bound) (positive : 0 < target) :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.fragmentLocalTolerance count bound
-      target ≤ target := open Purelib.Data.Rat in by
-  let cost := 2 * ((count : Normalization.InverseRootPolynomial.Coordinate)^2 + 16 * (count :
-    Normalization.InverseRootPolynomial.Coordinate)^4 * bound)
-  have costNN : 0 ≤ cost := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      (Fraction.Order.Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count)) 4))
+    PairedFragmentBlocks.fragmentLocalTolerance count bound
+      target ≤ target := open Data.Rat in by
+  let cost := 2 * ((count : InverseRootPolynomial.Coordinate)^2 + 16 * (count :
+    InverseRootPolynomial.Coordinate)^4 * bound)
+  have costNN : 0 ≤ cost := Arithmetic.mul_nonneg_direct (by decide) (add_nonneg
+    (Arithmetic.sq_nonneg_direct _)
+    (Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count)) 4))
       boundNN))
   have tolerancePositive :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.fragmentLocalTolerance_positive count boundNN
+    PairedFragmentBlocks.fragmentLocalTolerance_positive count boundNN
     positive
-  have denominatorPositive : 0 < cost + 1 := Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct costNN (by
+  have denominatorPositive : 0 < cost + 1 := Arithmetic.add_pos_of_nonneg_of_pos_direct costNN (by
     decide)
-  have multiplied := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (show 1 ≤ cost + 1 from
-    (Fraction.zero_add (1 : Normalization.InverseRootPolynomial.Coordinate)).symm.trans_le
-      (Fraction.Order.Arithmetic.add_le_add_direct costNN (Fraction.Order.Basic.le_refl _))) tolerancePositive.le
+  have multiplied := Arithmetic.mul_le_mul_of_nonneg_left_direct (show 1 ≤ cost + 1 from
+    (Fraction.zero_add (1 : InverseRootPolynomial.Coordinate)).symm.trans_le
+      (Arithmetic.add_le_add_direct costNN (Basic.le_refl _))) tolerancePositive.le
   rw [Fraction.Field.mul_one_direct] at multiplied
   exact multiplied.trans_eq (Fraction.Field.div_mul_cancel_of_ne _ _ denominatorPositive.ne')
 
 /-- The unit cap does not prevent choosing arbitrarily small component errors. -/
-theorem aggregationTolerance_le_target (count : Nat) {bound target : Normalization.InverseRootPolynomial.Coordinate}
+theorem aggregationTolerance_le_target (count : Nat) {bound target : InverseRootPolynomial.Coordinate}
     (boundNN : 0 ≤ bound) (positive : 0 < target) :
     Budget.Path.Aggregation.aggregationTolerance count bound target ≤ target :=
-  (Fraction.Order.Basic.min_le_right ..).trans
+  (Basic.min_le_right ..).trans
     (local_tolerance_le_target
     count boundNN positive)
 
 /-- Both levels of the finite request hierarchy respect the original target. -/
 theorem parentTarget_le_requested (outer : Fin prepared.occurrences.length) {parentBound requested :
-  Normalization.InverseRootPolynomial.Coordinate}
+  InverseRootPolynomial.Coordinate}
     (boundNN : 0 ≤ parentBound) (positive : 0 < requested) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.HierarchicalRequest.CommonBasisRequest.Sampled.parentTarget
+    HierarchicalRequest.CommonBasisRequest.Sampled.parentTarget
       prepared outer parentBound requested ≤ requested :=
 
     (aggregationTolerance_le_target

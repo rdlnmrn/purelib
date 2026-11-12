@@ -65,38 +65,40 @@ public section
 The reading request is independent of the eventual coefficient vector. -/
 namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.ChartReadings
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.Gaussian.Basic.Canonical
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus index : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+variable {genus index : Nat} {curve : Basic.HyperellipticCurve genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
   {point : Normalization.InverseRootPolynomial.Gaussian} {owner : Topology.SquareRootContinuationChain.Owner
-    ((Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.polynomial curve).eval point)}
-  {overlap : Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap cap point owner} {box :
+    ((HyperellipticReciprocal.polynomial curve).eval point)}
+  {overlap : Coordinates.Overlap cap point owner} {box :
     Rational.Box}
 
 set_option genInjectivity false in
 /-- One original basis polynomial's endpoint and chart request on the exact retained root overlap.
 
 Both entries retain the same root overlap, original basis sample and positive chart-reading target. -/
-structure BasisChartEntry (overlap : Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap cap point owner)
-    (sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box) (target :
+structure BasisChartEntry (overlap : Coordinates.Overlap cap point owner)
+    (sample : Cap.Primitives.Sample cap differential index box) (target :
       Normalization.InverseRootPolynomial.Coordinate) (floor : Nat) where
   /-- The original basis endpoint on the same retained root overlap. -/ endpoint :
-    Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap.Endpoint overlap sample
+    Coordinates.Overlap.Endpoint overlap sample
   /-- The actual chart request for that exact retained endpoint. -/ request :
-    Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.ChartRequest endpoint target floor
+    ChartReadings.ChartRequest endpoint target floor
 
 constructive_injectivity BasisChartEntry
 
 /-- The actual retained chart requests for every original basis polynomial on one shared root overlap. -/
-@[expose] def BasisChartEntries (overlap : Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap cap point owner)
-    (polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box)
+@[expose] def BasisChartEntries (overlap : Coordinates.Overlap cap point owner)
+    (polynomials : Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box)
       (target : Normalization.InverseRootPolynomial.Coordinate) (floor : Nat) :=
   Data.Vector.DependentVector (fun row : Fin genus =>
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.ChartReadings.BasisChartEntry overlap (polynomials.get row) target floor)
+    BasisChartEntry overlap (polynomials.get row) target floor)
 
 set_option genInjectivity false in
 /-- A coefficient-independent chart comparison request retaining all original basis endpoints and one sufficient common
@@ -104,8 +106,8 @@ stage.
 
 The individual original endpoint requests share the retained per-term allowance and a common maximum stage above the
 supplied floor. -/
-structure BasisChartRequest (overlap : Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap cap point owner)
-    (polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box)
+structure BasisChartRequest (overlap : Coordinates.Overlap cap point owner)
+    (polynomials : Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box)
       (target : Normalization.InverseRootPolynomial.Coordinate) (floor : Nat) where
   /-- The original coefficient-independent target is positive. -/ positive : 0 < target
   /-- The retained local allowance for each original basis polynomial. -/ tolerance :
@@ -113,7 +115,7 @@ structure BasisChartRequest (overlap : Hyperelliptic.Charts.Reciprocal.Disk.Coor
   /-- The local tolerance is the original aggregate allocation over the genus. -/ tolerance_eq : tolerance =
     Rational.Budget.Aggregate.perTerm target genus
   /-- The actual chart requests on the same retained overlap and original basis polynomials. -/ entries :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.ChartReadings.BasisChartEntries overlap polynomials tolerance floor
+    BasisChartEntries overlap polynomials tolerance floor
   /-- The common sufficient endpoint-reading stage. -/ stage : Nat
   /-- The stage is the maximum of the supplied floor and original retained entry stages. -/ stage_eq : stage = max floor
     (entries.maximum fun _ entry => entry.request.stage)
@@ -122,27 +124,27 @@ constructive_injectivity BasisChartRequest
 
 namespace BasisChartRequest
 
-variable {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index
+variable {polynomials : Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index
   box} {target : Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
 
 /-- Prepare every original basis endpoint on the same root overlap and cache their maximum sufficient stage. -/
-@[expose] def build (overlap : Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap cap point owner) (polynomials :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box)
+@[expose] def build (overlap : Coordinates.Overlap cap point owner) (polynomials :
+  Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box)
     (target : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < target) (floor : Nat) :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.ChartReadings.BasisChartRequest overlap polynomials target floor :=
+      BasisChartRequest overlap polynomials target floor :=
   let tolerance := Rational.Budget.Aggregate.perTerm target genus
-  let entries : Hyperelliptic.Charts.Reciprocal.Disk.Basis.ChartReadings.BasisChartEntries overlap polynomials tolerance
+  let entries : BasisChartEntries overlap polynomials tolerance
     floor := Data.Vector.DependentVector.ofFn fun row =>
-    let endpoint := Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap.Endpoint.build overlap (polynomials.get
+    let endpoint := Coordinates.Overlap.Endpoint.build overlap (polynomials.get
       row)
-    ⟨endpoint, Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.ChartRequest.build endpoint tolerance
+    ⟨endpoint, ChartReadings.ChartRequest.build endpoint tolerance
       (Rational.Budget.Aggregate.perTerm_positive positive genus) floor⟩
   ⟨positive, tolerance, rfl, entries, max floor (entries.maximum fun _ entry => entry.request.stage), rfl⟩
 
 /-- The common retained chart-reading stage meets the supplied floor.
 
 The retained common stage is the original maximum of the supplied floor and the stages of its stored entry requests. -/
-theorem floor_le (request : Hyperelliptic.Charts.Reciprocal.Disk.Basis.ChartReadings.BasisChartRequest overlap
+theorem floor_le (request : BasisChartRequest overlap
   polynomials target floor) : floor ≤ request.stage := by
   rw [request.stage_eq]
   exact Data.Nat.Order.le_max_left _ _
@@ -153,7 +155,7 @@ root reading; their discrepancy budget is cached for all coefficient vectors.
 
 Direct values, chart values and their discrepancies are cached at the same retained coordinate and stage, with a
 coefficient-independent paid weighted budget. -/
-structure Evaluation (request : Hyperelliptic.Charts.Reciprocal.Disk.Basis.ChartReadings.BasisChartRequest overlap
+structure Evaluation (request : BasisChartRequest overlap
   polynomials target floor)
     (coordinate : Normalization.InverseRootPolynomial.Gaussian) (stage : Nat) where
   /-- The cached direct endpoint values on the shared original root coordinate. -/ direct : Data.Vector
@@ -179,24 +181,24 @@ No root is sampled a second time, and no equality of different owners is used.
 
 Every row consumes the supplied original coordinate once; the original endpoint and chart readings provide the same
 cached discrepancy budget. -/
-@[expose] def evaluate (request : Hyperelliptic.Charts.Reciprocal.Disk.Basis.ChartReadings.BasisChartRequest overlap
+@[expose] def evaluate (request : BasisChartRequest overlap
   polynomials target floor)
-    {differential : Hyperelliptic.Differentials.Basic.Differential genus} {sample :
-      Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-    {endpoint : Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap.Endpoint overlap sample} {stage : Nat} (reading
-      : Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.Endpoint.Reading endpoint stage)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) (later : request.stage ≤
+    {differential : Differentials.Basic.Differential genus} {sample :
+      Cap.Primitives.Sample cap differential index box}
+    {endpoint : Coordinates.Overlap.Endpoint overlap sample} {stage : Nat} (reading
+      : ChartReadings.Endpoint.Reading endpoint stage)
+    (branch : HyperellipticReciprocal.originOrder curve = 1) (later : request.stage ≤
       stage) :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.ChartReadings.BasisChartRequest.Evaluation request reading.coordinate
+    Evaluation request reading.coordinate
       stage := open Purelib.Data.Rat in by
   let rows := Data.Vector.DependentVector.ofFn fun row : Fin genus =>
     let entry := request.entries.get row
-    let root : Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.Endpoint.Reading entry.endpoint stage :=
+    let root : ChartReadings.Endpoint.Reading entry.endpoint stage :=
       ⟨reading.coordinate, reading.coordinate_eq, reading.coordinate * entry.endpoint.coefficient, rfl⟩
     let after := (request.entries.get_le_maximum (fun _ entry => entry.request.stage) row).trans
       ((Data.Nat.Order.le_max_right _ _).trans (request.stage_eq.symm.trans_le later))
     (⟨root, entry.request.evaluate root after⟩ : (root :
-      Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.Endpoint.Reading entry.endpoint stage) ×
+      ChartReadings.Endpoint.Reading entry.endpoint stage) ×
       entry.request.Evaluation root)
   let direct := Data.Vector.Basic.vectorOfFn fun row => (rows.get row).1.value
   let chart := Data.Vector.Basic.vectorOfFn fun row => (rows.get row).2.value
@@ -208,14 +210,14 @@ cached discrepancy budget. -/
   have chartEq (row : Fin genus) : chart row = (polynomials.get row).primitive.value.eval reading.coordinate := by
     rw [Data.Vector.Basic.vectorOfFn_apply, (rows.get row).2.value_eq, branch, if_neg (show (1 : Nat) ≠ 0 by decide)]
     rw [(rows.get row).1.coordinate_eq, reading.coordinate_eq]
-  have each (row : Fin genus) : Data.Gaussian.Norm.Basic.normSq (discrepancies row) ≤ request.tolerance := by
+  have each (row : Fin genus) : Gaussian.Norm.Basic.normSq (discrepancies row) ≤ request.tolerance := by
     rw [Data.Vector.Basic.vectorOfFn_apply]
     dsimp only [direct, chart]
     rw [Data.Vector.Basic.vectorOfFn_apply, Data.Vector.Basic.vectorOfFn_apply]
     exact (rows.get row).2.accurate.le
   have paid : budget.scale ≤ target := by
     rw [budget.scale_eq]
-    have bound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    have bound := Arithmetic.mul_le_mul_of_nonneg_left_direct
       (FiniteSum.Rational.Order.Positivity.sumFin_mono _ _ each)
       (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus))
     rw [FiniteSum.Fin.Rational.sum_constant, request.tolerance_eq] at bound
@@ -223,18 +225,18 @@ cached discrepancy budget. -/
   exact ⟨direct, directEq, chart, chartEq, discrepancies, Data.Vector.Basic.vectorOfFn_apply _, budget, paid⟩
 
 /-- Homogeneous endpoint comparison, including the zero coefficient vector. -/
-theorem Evaluation.accurate {request : Hyperelliptic.Charts.Reciprocal.Disk.Basis.ChartReadings.BasisChartRequest
+theorem Evaluation.accurate {request : BasisChartRequest
   overlap polynomials target floor}
     {coordinate : Normalization.InverseRootPolynomial.Gaussian} {stage : Nat} (evaluated :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.ChartReadings.BasisChartRequest.Evaluation request coordinate stage)
+      Evaluation request coordinate stage)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun row => coefficients row * evaluated.direct row) -
+    Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun row => coefficients row * evaluated.direct row) -
       polynomials.value coefficients coordinate) ≤ target * Readings.PreparedObservationCoercivity.coefficientNormSq
         coefficients := open Purelib.Data.Rat in by
   have readback : FiniteSum.Fin.sumFin (fun row => coefficients row * evaluated.direct row) -
       polynomials.value coefficients coordinate = FiniteSum.Fin.sumFin (fun row => coefficients row *
         evaluated.discrepancies row) := by
-    unfold Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials.value
+    unfold Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials.value
     rw [← FiniteSum.Fin.sumFin_sub]
     apply FiniteSum.Fin.sumFin_congr
     intro row
@@ -243,31 +245,31 @@ theorem Evaluation.accurate {request : Hyperelliptic.Charts.Reciprocal.Disk.Basi
   have nonnegative : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
     (FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ => (0 : Normalization.InverseRootPolynomial.Coordinate)) _
-      (fun row => Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
+      (fun row => normSq_nonneg (coefficients row)))
   rw [readback]
   exact (evaluated.budget.bound coefficients).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct evaluated.paid nonnegative).trans_eq (by ring1))
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct evaluated.paid nonnegative).trans_eq (by ring1))
 
 /-- Owner transport alone controls the retained direct endpoint values. -/
 theorem Evaluation.source_direct_accurate {request :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.ChartReadings.BasisChartRequest overlap polynomials target floor}
+  BasisChartRequest overlap polynomials target floor}
     {coordinate : Normalization.InverseRootPolynomial.Gaussian} {stage : Nat} (evaluated :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.ChartReadings.BasisChartRequest.Evaluation request coordinate stage)
+      Evaluation request coordinate stage)
     (source : Data.Vector Normalization.InverseRootPolynomial.Gaussian genus)
-    (bounded : ∀ row, Data.Gaussian.Norm.Basic.normSq (source row - evaluated.direct row) ≤ 4 * request.tolerance)
+    (bounded : ∀ row, Gaussian.Norm.Basic.normSq (source row - evaluated.direct row) ≤ 4 * request.tolerance)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun row => coefficients row * source row) -
+    Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun row => coefficients row * source row) -
       FiniteSum.Fin.sumFin (fun row => coefficients row * evaluated.direct row)) ≤ 4 * target *
         Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := open Purelib.Data.Rat in by
   let errors := fun row => source row - evaluated.direct row
   let budget := Readings.AffineBasisEnergy.WeightedNormBudget.build errors
   have scale : budget.scale ≤ 4 * target := by
     rw [budget.scale_eq]
-    have bound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    have bound := Arithmetic.mul_le_mul_of_nonneg_left_direct
       (FiniteSum.Rational.Order.Positivity.sumFin_mono _ _ bounded)
       (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus))
     rw [FiniteSum.Fin.Rational.sum_constant] at bound
-    have paid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    have paid := Arithmetic.mul_le_mul_of_nonneg_left_direct
       (Rational.Budget.Aggregate.count_mul_perTerm_lt request.positive genus).le (by
           decide : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤ 4)
     rw [← request.tolerance_eq] at paid
@@ -283,26 +285,26 @@ theorem Evaluation.source_direct_accurate {request :
   have nonnegative : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
     (FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ => (0 : Normalization.InverseRootPolynomial.Coordinate)) _
-      (fun row => Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
+      (fun row => normSq_nonneg (coefficients row)))
   rw [readback]
   exact (budget.bound coefficients).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct scale nonnegative).trans_eq (by ring1))
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct scale nonnegative).trans_eq (by ring1))
 
 /-- Combine owner-transport bounds for the actual source pullback values
 with the cached chart comparison. The tolerance is fixed before coefficients. -/
-theorem Evaluation.source_accurate {request : Hyperelliptic.Charts.Reciprocal.Disk.Basis.ChartReadings.BasisChartRequest
+theorem Evaluation.source_accurate {request : BasisChartRequest
   overlap polynomials target floor}
     {coordinate : Normalization.InverseRootPolynomial.Gaussian} {stage : Nat} (evaluated :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.ChartReadings.BasisChartRequest.Evaluation request coordinate stage)
+      Evaluation request coordinate stage)
     (source : Data.Vector Normalization.InverseRootPolynomial.Gaussian genus)
-    (bounded : ∀ row, Data.Gaussian.Norm.Basic.normSq (source row - evaluated.direct row) ≤ 4 * request.tolerance)
+    (bounded : ∀ row, Gaussian.Norm.Basic.normSq (source row - evaluated.direct row) ≤ 4 * request.tolerance)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun row => coefficients row * source row) -
+    Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun row => coefficients row * source row) -
       polynomials.value coefficients coordinate) ≤
       10 * target * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := open Purelib.Data.Rat in by
   have sourceClose := evaluated.source_direct_accurate source bounded coefficients
   exact (Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
       sourceClose (evaluated.accurate coefficients))
       (by decide : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤ 2)).trans_eq (by ring1))
 

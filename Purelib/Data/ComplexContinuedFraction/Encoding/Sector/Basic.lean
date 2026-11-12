@@ -12,6 +12,8 @@ import Mathlib.Order.Basic
 meta import Purelib.Elab.Deriving.Repr
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 section
 @[expose] public section
@@ -224,39 +226,39 @@ private theorem norm_lt_one_of_central (z :
     (yLower : -1 / 2 < z.im) (yUpper : z.im < 1 / 2) :
     Basic.Canonical.normSq z < 1 := by
   have xLeftPositive : 0 < z.re + 1 / 2 := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have shifted := Arithmetic.add_lt_add_right_direct
       xLower (1 / 2)
     calc
       0 = -1 / 2 + 1 / 2 := by decide
       _ < z.re + 1 / 2 := shifted
   have yLeftPositive : 0 < z.im + 1 / 2 := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have shifted := Arithmetic.add_lt_add_right_direct
       yLower (1 / 2)
     calc
       0 = -1 / 2 + 1 / 2 := by decide
       _ < z.im + 1 / 2 := shifted
   have xRightPositive : 0 < 1 / 2 - z.re :=
-    Fraction.Order.Arithmetic.sub_pos_direct xUpper
+    Arithmetic.sub_pos_direct xUpper
   have yRightPositive : 0 < 1 / 2 - z.im :=
-    Fraction.Order.Arithmetic.sub_pos_direct yUpper
+    Arithmetic.sub_pos_direct yUpper
   have xSquare : z.re ^ 2 < (1 / 2 : Fraction.Rational) ^ 2 := by
-    apply Fraction.Order.Arithmetic.lt_of_sub_pos_direct
+    apply Arithmetic.lt_of_sub_pos_direct
     calc
       0 < (z.re + 1 / 2) * (1 / 2 - z.re) :=
-        Fraction.Order.Arithmetic.mul_pos_direct xLeftPositive xRightPositive
+        Arithmetic.mul_pos_direct xLeftPositive xRightPositive
       _ = (1 / 2 : Fraction.Rational) ^ 2 - z.re ^ 2 := by ring1
   have ySquare : z.im ^ 2 < (1 / 2 : Fraction.Rational) ^ 2 := by
-    apply Fraction.Order.Arithmetic.lt_of_sub_pos_direct
+    apply Arithmetic.lt_of_sub_pos_direct
     calc
       0 < (z.im + 1 / 2) * (1 / 2 - z.im) :=
-        Fraction.Order.Arithmetic.mul_pos_direct yLeftPositive yRightPositive
+        Arithmetic.mul_pos_direct yLeftPositive yRightPositive
       _ = (1 / 2 : Fraction.Rational) ^ 2 - z.im ^ 2 := by ring1
   calc
     Basic.Canonical.normSq z = z.re ^ 2 + z.im ^ 2 := by
       unfold Basic.Canonical.normSq
       ring1
     _ < (1 / 2 : Fraction.Rational) ^ 2 + (1 / 2 : Fraction.Rational) ^ 2 :=
-      Fraction.Order.Arithmetic.add_lt_add_direct xSquare ySquare
+      Arithmetic.add_lt_add_direct xSquare ySquare
     _ = 1 / 2 := by decide
     _ < 1 := by decide
 end Sector
@@ -518,4 +520,23 @@ private theorem loop_band {value :
     Band value := ⟨loop.1.le, loop.2⟩
 end Purelib.Data.ComplexContinuedFraction.Encoding.Sector.Basic
 
+end
+
+section
+public section
+namespace Purelib.Data.ComplexContinuedFraction.Encoding.Sector
+
+/-- Every retained sector representative lies in its own original half-open angular sector. -/
+theorem rep_holds (sector : Sector) : sector.Holds sector.rep := by
+  cases sector <;> decide
+
+/-- Every retained sector representative lies in the original closed unit-to-two norm band. -/
+theorem rep_band (sector : Sector) : Band sector.rep := by
+  cases sector <;> decide
+
+/-- Original deterministic selection returns the same retained sector at its exact representative. -/
+theorem select_rep (sector : Sector) : select sector.rep = sector := select_eq_of_holds (rep_holds sector)
+
+end Purelib.Data.ComplexContinuedFraction.Encoding.Sector
+end
 end

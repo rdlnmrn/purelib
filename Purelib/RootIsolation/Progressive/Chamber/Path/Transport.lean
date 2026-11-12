@@ -1,5 +1,8 @@
 module
 import Purelib.Data.Fin.Bijection.Basic
+import Purelib.Data.List.Append
+import Purelib.Data.List.Reverse
+import Purelib.RootIsolation.Owner.Bridge.Basic
 import Purelib.RootIsolation.Progressive.Chamber.Frame
 import Purelib.RootIsolation.Progressive.Chamber.Overlap
 public import Purelib.RootIsolation.Progressive.Chamber.Path.Basic
@@ -35,7 +38,7 @@ namespace ChamberPath
 /-- Compose the original finite path's owner matchings into a bijection between its endpoint index sets. -/
 def transport : {start finish :
   ChamberFrame} →
-    Progressive.Chamber.Path.Basic.ChamberPath start finish → Data.Fin.Bijection start.degree
+    ChamberPath start finish → Data.Fin.Bijection start.degree
       finish.degree
   | _, _, .nil frame => Data.Fin.Bijection.identity frame.degree
   | _, _, .cons step remaining =>
@@ -44,27 +47,27 @@ def transport : {start finish :
 /-- Transport an original starting owner index to its retained finishing-frame index. -/
 def finalIndex {start finish :
   ChamberFrame}
-    (path : Progressive.Chamber.Path.Basic.ChamberPath start finish) (index : start.Index) : finish.Index :=
+    (path : ChamberPath start finish) (index : start.Index) : finish.Index :=
   path.transport.forward index
 
 /-- The empty chamber path preserves the original owner index. -/
 @[simp] theorem finalIndex_nil (frame :
   ChamberFrame) (index : frame.Index) :
-    (Progressive.Chamber.Path.Basic.ChamberPath.nil frame).finalIndex index = index := rfl
+    (nil frame).finalIndex index = index := rfl
 
 /-- A path step first applies its original overlap matching before the remaining transport. -/
 @[simp] theorem finalIndex_cons
     {start middle finish : ChamberFrame}
-    (step : Progressive.Chamber.Overlap.ChamberOverlap start middle)
-    (remaining : Progressive.Chamber.Path.Basic.ChamberPath middle finish) (index : start.Index) :
-    (Progressive.Chamber.Path.Basic.ChamberPath.cons step remaining).finalIndex index =
+    (step : Overlap.ChamberOverlap start middle)
+    (remaining : ChamberPath middle finish) (index : start.Index) :
+    (cons step remaining).finalIndex index =
       remaining.finalIndex (step.matching.forward index) := rfl
 
 /-- Transport along joined chamber paths composes their original forward owner maps. -/
 theorem transport_append
     {start middle finish : ChamberFrame}
-    (first : Progressive.Chamber.Path.Basic.ChamberPath start middle)
-    (second : Progressive.Chamber.Path.Basic.ChamberPath middle finish) (index : start.Index) :
+    (first : ChamberPath start middle)
+    (second : ChamberPath middle finish) (index : start.Index) :
     (first.append second).transport.forward index =
       second.transport.forward (first.transport.forward index) := by
   induction first with
@@ -75,8 +78,8 @@ theorem transport_append
 /-- The final index of a joined path is obtained by transporting through its original shared middle frame. -/
 theorem finalIndex_append
     {start middle finish : ChamberFrame}
-    (first : Progressive.Chamber.Path.Basic.ChamberPath start middle) (second :
-      Progressive.Chamber.Path.Basic.ChamberPath middle finish)
+    (first : ChamberPath start middle) (second :
+      ChamberPath middle finish)
     (index : start.Index) :
     (first.append second).finalIndex index =
       second.finalIndex (first.finalIndex index) :=
@@ -84,7 +87,7 @@ theorem finalIndex_append
 
 /-- The reversed path's forward owner map is the original path's backward map. -/
 theorem transport_reverse_forward
-    {start finish : ChamberFrame} (path : Progressive.Chamber.Path.Basic.ChamberPath start
+    {start finish : ChamberFrame} (path : ChamberPath start
       finish)
     (index : finish.Index) :
     path.reverse.transport.forward index = path.transport.backward index := by
@@ -102,21 +105,63 @@ theorem transport_reverse_forward
 
 /-- Reversing a chamber path gives the inverse of its original retained owner bijection. -/
 theorem transport_reverse
-    {start finish : ChamberFrame} (path : Progressive.Chamber.Path.Basic.ChamberPath start
+    {start finish : ChamberFrame} (path : ChamberPath start
       finish) :
     Data.Fin.Bijection.Same path.reverse.transport path.transport.reverse :=
   path.transport_reverse_forward
 
+/-- The reversed original path returns every selected endpoint to its original bounded occurrence. -/
+theorem finalIndex_reverse {start finish : ChamberFrame} (path : ChamberPath start finish)
+    (index : start.Index) : path.reverse.finalIndex (path.finalIndex index) = index := by
+  rewrite [finalIndex, path.transport_reverse_forward]
+  exact path.transport.backward_forward index
+
+/-- Joining paths concatenates their actual ordered selected bridge-box lists. -/
+theorem bridgeBoxes_append {start middle finish : ChamberFrame}
+    (first : ChamberPath start middle) (second : ChamberPath middle finish) (index : start.Index) :
+    (first.append second).bridgeBoxes index =
+      first.bridgeBoxes index ++ second.bridgeBoxes (first.finalIndex index) := by
+  induction first with
+  | nil => rfl
+  | cons step remaining previous =>
+    change (step.bridge index).box :: (remaining.append second).bridgeBoxes (step.matching.forward index) = _
+    rewrite [previous second (step.matching.forward index)]
+    rfl
+
+/-- Reversing the original selected path reverses exactly the same finite bridge boxes. -/
+theorem bridgeBoxes_reverse {start finish : ChamberFrame}
+    (path : ChamberPath start finish) (index : start.Index) :
+    path.reverse.bridgeBoxes (path.finalIndex index) = (path.bridgeBoxes index).reverse := by
+  induction path with
+  | nil => rfl
+  | cons step remaining previous =>
+    change (remaining.reverse.append (.cons step.reverse (.nil _))).bridgeBoxes
+      (remaining.finalIndex (step.matching.forward index)) = _
+    rewrite [bridgeBoxes_append, previous (step.matching.forward index)]
+    change (remaining.bridgeBoxes (step.matching.forward index)).reverse ++
+      [(step.bridge (step.matching.backward
+        (remaining.reverse.finalIndex (remaining.finalIndex (step.matching.forward index))))).reverse.box] = _
+    rewrite [remaining.finalIndex_reverse, step.matching.backward_forward]
+    change (remaining.bridgeBoxes (step.matching.forward index)).reverse ++ [(step.bridge index).box] =
+      ((step.bridge index).box :: remaining.bridgeBoxes (step.matching.forward index)).reverse
+    exact (Data.List.Reverse.reverse_cons _ _).symm
+
+/-- Reverse an exact retained selected-box list without rerunning the original path selectors. -/
+def reverseBridgeBoxes {start finish : ChamberFrame} (path : ChamberPath start finish) (index : start.Index)
+    (boxes : { value : List Geometry.Rational.Box // value = path.bridgeBoxes index }) :
+    { value : List Geometry.Rational.Box // value = path.reverse.bridgeBoxes (path.finalIndex index) } :=
+  ⟨boxes.val.reverse, (congrArg List.reverse boxes.property).trans (path.bridgeBoxes_reverse index).symm⟩
+
 /-- The monodromy of a displayed closed finite chamber path. -/
 def monodromy {frame :
-  ChamberFrame} (loop : Progressive.Chamber.Path.Basic.ChamberPath frame frame) :
+  ChamberFrame} (loop : ChamberPath frame frame) :
     Data.Fin.Bijection frame.degree frame.degree :=
   loop.transport
 
 /-- The monodromy of joined loops composes their original forward owner permutations. -/
 theorem monodromy_append {frame :
   ChamberFrame}
-    (first second : Progressive.Chamber.Path.Basic.ChamberPath frame frame) (index : frame.Index) :
+    (first second : ChamberPath frame frame) (index : frame.Index) :
     (first.append second).monodromy.forward index =
       second.monodromy.forward (first.monodromy.forward index) :=
   first.transport_append second index
@@ -124,7 +169,7 @@ theorem monodromy_append {frame :
 /-- The reversed loop has the inverse of its original owner monodromy. -/
 theorem monodromy_reverse {frame :
   ChamberFrame}
-    (loop : Progressive.Chamber.Path.Basic.ChamberPath frame frame) :
+    (loop : ChamberPath frame frame) :
     Data.Fin.Bijection.Same loop.reverse.monodromy loop.monodromy.reverse :=
   loop.transport_reverse
 

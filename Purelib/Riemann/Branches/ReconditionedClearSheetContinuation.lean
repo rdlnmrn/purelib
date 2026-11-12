@@ -32,6 +32,8 @@ same-occurrence bridge.  Consequently the next edge uses fresh endpoint
 clearance rather than a box nested forever inside the first owner.
 -/
 
+variable {mode : Purelib.Polynomial.Geometry.ClearPath.ClearSegment.Mode}
+
 namespace Purelib.Riemann.Branches.ReconditionedClearSheetContinuation
 
 open Purelib.Data.Rat in
@@ -56,7 +58,7 @@ open Purelib.Riemann.Branches in
 /-- Continue the exact original owner between the supplied cleared-segment parameters. -/
 def transported {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left right : Coordinate)
     (leftInside : (0 : Coordinate) ≤ left ∧ left ≤ 1)
     (rightInside : (0 : Coordinate) ≤ right ∧ right ≤ 1)
@@ -74,7 +76,7 @@ open Purelib.Riemann.RootContinuation
 /-- Retain the comparison bridge for the exact owner produced by this continuation step. -/
 def stepBridge {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left right : Coordinate)
     (leftInside : (0 : Coordinate) ≤ left ∧ left ≤ 1)
     (rightInside : (0 : Coordinate) ≤ right ∧ right ≤ 1)
@@ -95,7 +97,7 @@ The original segment, source owner and variation witness determine the transport
 selects the retained endpoint sheet. -/
 def advance {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (left right : Coordinate)
     (leftInside : (0 : Coordinate) ≤ left ∧ left ≤ 1)
     (rightInside : (0 : Coordinate) ≤ right ∧ right ≤ 1)
@@ -118,7 +120,7 @@ Each tail starts at the fresh owner assigned by the preceding certified continua
 and original segment. -/
 inductive Subdivision {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) :
     (left : Coordinate) →
       (leftInside : (0 : Coordinate) ≤ left ∧ left ≤ 1) →
@@ -148,7 +150,7 @@ open Purelib.Polynomial
 /-- Read the exact terminal parameter of the retained reconditioned subdivision. -/
 def endpoint {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode}
     {within : segment.WithinAmbient} {left : Coordinate}
     {leftInside : (0 : Coordinate) ≤ left ∧ left ≤ 1}
     {owner : Owner (polynomial.eval (segment.pointAt left))} :
@@ -159,7 +161,7 @@ def endpoint {polynomial : GaussianPolynomial} {ambient : Box}
 /-- Read the retained final owner indexed by the polynomial value at the exact terminal parameter. -/
 def terminalOwner {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode}
     {within : segment.WithinAmbient} {left : Coordinate}
     {leftInside : (0 : Coordinate) ≤ left ∧ left ≤ 1}
     {owner : Owner (polynomial.eval (segment.pointAt left))} :
@@ -172,7 +174,7 @@ def terminalOwner {polynomial : GaussianPolynomial} {ambient : Box}
 /-- Count the retained continuation-and-reconditioning steps. -/
 def stepCount {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode}
     {within : segment.WithinAmbient} {left : Coordinate}
     {leftInside : (0 : Coordinate) ≤ left ∧ left ≤ 1}
     {owner : Owner (polynomial.eval (segment.pointAt left))} :
@@ -187,7 +189,7 @@ Each successful comparison advances the exact current owner before checking the 
 sufficient variation bound did not pass. -/
 def trySamples {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient)
     (current : Endpoint)
     (owner : Owner
@@ -210,7 +212,7 @@ def trySamples {polynomial : GaussianPolynomial} {ambient : Box}
 /-- An empty target list returns the stopped subdivision at the original current owner. -/
 @[simp] theorem trySamples_nil {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (current : Endpoint)
     (owner : Owner
       (polynomial.eval (segment.pointAt current.parameter))) :
@@ -220,7 +222,7 @@ def trySamples {polynomial : GaussianPolynomial} {ambient : Box}
 /-- A successful sample-list attempt retains exactly one step per supplied sample. -/
 theorem trySamples_stepCount {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient) (current : Endpoint)
     (owner : Owner
       (polynomial.eval (segment.pointAt current.parameter)))
@@ -256,7 +258,7 @@ open Purelib.Riemann.Branches
 /-- Attempt reconditioned continuation along the original exact dyadic target list. -/
 def tryDyadic {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient)
     (left right : Endpoint)
     (owner : Owner
@@ -270,7 +272,7 @@ def tryDyadic {polynomial : GaussianPolynomial} {ambient : Box}
 /-- A successful depth-d dyadic attempt contains exactly two to the power d steps. -/
 theorem tryDyadic_stepCount {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (within : segment.WithinAmbient)
     (left right : Endpoint)
     (owner : Owner

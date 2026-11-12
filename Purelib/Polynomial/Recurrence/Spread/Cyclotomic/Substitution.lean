@@ -50,9 +50,9 @@ theorem
   ExerciseEightThirteen.IntegerPolynomial.eval_centeredSpreadSubstitution
   (value : K) :
     Ascending.Integer.Basic.eval
-      Recurrence.Spread.Cyclotomic.Substitution.ExerciseEightThirteen.IntegerPolynomial.centeredSpreadSubstitution value
+      ExerciseEightThirteen.IntegerPolynomial.centeredSpreadSubstitution value
       = 2 - 4 * value := by
-  unfold Recurrence.Spread.Cyclotomic.Substitution.ExerciseEightThirteen.IntegerPolynomial.centeredSpreadSubstitution
+  unfold ExerciseEightThirteen.IntegerPolynomial.centeredSpreadSubstitution
   have castTwo : ((2 : Int) : K) = (2 : K) :=
     AddGroupWithOne.intCast_ofNat 2
   have castFour : ((4 : Int) : K) = (4 : K) :=
@@ -68,7 +68,7 @@ def
   ExerciseEightThirteen.IntegerPolynomial.spreadRealFactorCoefficients
   (coefficients : List Int) : List Int :=
   Ascending.Integer.Composition.compose coefficients
-    Recurrence.Spread.Cyclotomic.Substitution.ExerciseEightThirteen.IntegerPolynomial.centeredSpreadSubstitution
+    ExerciseEightThirteen.IntegerPolynomial.centeredSpreadSubstitution
 
 /-- Evaluating the substituted factor equals evaluating the original integer table at two minus four times the spread.
 -/
@@ -76,19 +76,19 @@ theorem
   ExerciseEightThirteen.IntegerPolynomial.eval_spreadRealFactorCoefficients
     (coefficients : List Int) (value : K) :
     Ascending.Integer.Basic.eval
-      (Recurrence.Spread.Cyclotomic.Substitution.ExerciseEightThirteen.IntegerPolynomial.spreadRealFactorCoefficients
+      (ExerciseEightThirteen.IntegerPolynomial.spreadRealFactorCoefficients
       coefficients) value =
       Ascending.Integer.Basic.eval coefficients (2 - 4 * value) := by
-  rw [Recurrence.Spread.Cyclotomic.Substitution.ExerciseEightThirteen.IntegerPolynomial.spreadRealFactorCoefficients,
+  rw [ExerciseEightThirteen.IntegerPolynomial.spreadRealFactorCoefficients,
     Ascending.Integer.Composition.eval_compose,
-    Recurrence.Spread.Cyclotomic.Substitution.ExerciseEightThirteen.IntegerPolynomial.eval_centeredSpreadSubstitution]
+    ExerciseEightThirteen.IntegerPolynomial.eval_centeredSpreadSubstitution]
 
 /-- Square the integer coefficient table after substituting two minus four times the coordinate. -/
 def
   ExerciseEightThirteen.IntegerPolynomial.spreadCyclotomicCoefficients
   (coefficients : List Int) : List Int :=
   Ascending.Integer.Composition.power
-    (Recurrence.Spread.Cyclotomic.Substitution.ExerciseEightThirteen.IntegerPolynomial.spreadRealFactorCoefficients
+    (ExerciseEightThirteen.IntegerPolynomial.spreadRealFactorCoefficients
     coefficients) 2
 
 /-- The squared substituted factor evaluates to the square of the original table at the centered spread parameter. -/
@@ -96,12 +96,12 @@ theorem
   ExerciseEightThirteen.IntegerPolynomial.eval_spreadCyclotomicCoefficients
     (coefficients : List Int) (value : K) :
     Ascending.Integer.Basic.eval
-      (Recurrence.Spread.Cyclotomic.Substitution.ExerciseEightThirteen.IntegerPolynomial.spreadCyclotomicCoefficients
+      (ExerciseEightThirteen.IntegerPolynomial.spreadCyclotomicCoefficients
       coefficients) value =
       Ascending.Integer.Basic.eval coefficients (2 - 4 * value) ^ 2 := by
-  rw [Recurrence.Spread.Cyclotomic.Substitution.ExerciseEightThirteen.IntegerPolynomial.spreadCyclotomicCoefficients,
+  rw [ExerciseEightThirteen.IntegerPolynomial.spreadCyclotomicCoefficients,
     Ascending.Integer.Composition.eval_power,
-    Recurrence.Spread.Cyclotomic.Substitution.ExerciseEightThirteen.IntegerPolynomial.eval_spreadRealFactorCoefficients]
+    ExerciseEightThirteen.IntegerPolynomial.eval_spreadRealFactorCoefficients]
 
 end IntegerPolynomial
 end ExerciseEightThirteen

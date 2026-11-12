@@ -88,3 +88,99 @@ end CellModel
 end Purelib.Integration.Polynomial.Gaussian.Cell.Basic
 
 end
+
+public section
+
+namespace Purelib.Integration.Polynomial.Gaussian.Cell.Basic
+
+open Purelib.Data.Gaussian
+open Purelib.Data.Rat
+open Purelib.Polynomial.Ascending
+
+namespace LocalObservation
+
+/-- Retain the same actual observation while increasing its certified local error allowance. -/
+@[expose] def weakenAllowance {polynomial : Gaussian.CoefficientPolynomial} {first last : Fraction.Rational}
+    (observation : LocalObservation polynomial first) (order : first ≤ last) : LocalObservation polynomial last :=
+  ⟨observation.parameter, observation.integrandReading, observation.error, observation.decomposition,
+    observation.error_le.trans order⟩
+
+/-- Increasing an observation allowance preserves its actual parameter. -/
+theorem weakenAllowance_parameter {polynomial : Gaussian.CoefficientPolynomial} {first last : Fraction.Rational}
+    (observation : LocalObservation polynomial first) (order : first ≤ last) :
+    (observation.weakenAllowance order).parameter = observation.parameter := rfl
+
+/-- Increasing an observation allowance preserves its complete actual integrand reading. -/
+theorem weakenAllowance_reading {polynomial : Gaussian.CoefficientPolynomial} {first last : Fraction.Rational}
+    (observation : LocalObservation polynomial first) (order : first ≤ last) :
+    (observation.weakenAllowance order).integrandReading = observation.integrandReading := rfl
+
+/-- Increasing an observation allowance preserves its actual retained residual. -/
+theorem weakenAllowance_error {polynomial : Gaussian.CoefficientPolynomial} {first last : Fraction.Rational}
+    (observation : LocalObservation polynomial first) (order : first ≤ last) :
+    (observation.weakenAllowance order).error = observation.error := rfl
+
+/-- Retaining the original allowance preserves the complete original local observation. -/
+theorem weakenAllowance_self {polynomial : Gaussian.CoefficientPolynomial} {allowance : Fraction.Rational}
+    (observation : LocalObservation polynomial allowance) :
+    observation.weakenAllowance (Fraction.Order.Basic.le_refl allowance) = observation := by
+  cases observation
+  rfl
+
+end LocalObservation
+
+namespace CellModel
+
+/-- Increase the original cell allowance while retaining every original ordered observation and coefficient.
+
+Each original observation keeps its actual parameter, integrand reading,
+residual and polynomial decomposition. Its bound is transported along the
+same supplied allowance inequality; no observation is discarded or repaid.
+-/
+@[expose] def weakenAllowance (cell : CellModel) (allowance : Fraction.Rational)
+    (order : cell.localAllowance ≤ allowance) : CellModel where
+  start := cell.start
+  finish := cell.finish
+  polynomial := cell.polynomial
+  localAllowance := allowance
+  localAllowance_nonneg := cell.localAllowance_nonneg.trans order
+  observations := cell.observations.map (fun observation => observation.weakenAllowance order)
+
+/-- The weakened cell retains the actual transported observations in their original occurrence order. -/
+theorem weakenAllowance_observations (cell : CellModel) (allowance : Fraction.Rational)
+    (order : cell.localAllowance ≤ allowance) :
+    (cell.weakenAllowance allowance order).observations =
+      cell.observations.map (fun observation => observation.weakenAllowance order) := rfl
+
+/-- Increasing the retained allowance preserves the same complete original cell displacement. -/
+theorem weakenAllowance_displacement (cell : CellModel) (allowance : Fraction.Rational)
+    (order : cell.localAllowance ≤ allowance) :
+    (cell.weakenAllowance allowance order).displacement = cell.displacement := rfl
+
+/-- Increasing the retained allowance preserves the same actual original finite integral sample. -/
+theorem weakenAllowance_integralSample (cell : CellModel) (allowance : Fraction.Rational)
+    (order : cell.localAllowance ≤ allowance) :
+    (cell.weakenAllowance allowance order).integralSample = cell.integralSample := rfl
+
+/-- Retaining the original allowance preserves the whole original cell and every original observation. -/
+theorem weakenAllowance_self (cell : CellModel) :
+    cell.weakenAllowance cell.localAllowance (Fraction.Order.Basic.le_refl _) = cell := by
+  cases cell with
+  | mk start finish polynomial allowance nonnegative observations =>
+      have same : observations.map (fun observation =>
+          observation.weakenAllowance (Fraction.Order.Basic.le_refl allowance)) = observations := by
+        induction observations with
+        | nil => rfl
+        | cons head tail previous =>
+            change head.weakenAllowance (Fraction.Order.Basic.le_refl allowance) :: _ = head :: tail
+            rewrite [LocalObservation.weakenAllowance_self, previous]
+            rfl
+      change CellModel.mk start finish polynomial allowance _ _ =
+        CellModel.mk start finish polynomial allowance _ observations
+      exact congrArg (fun actual => CellModel.mk start finish polynomial allowance nonnegative actual) same
+
+end CellModel
+
+end Purelib.Integration.Polynomial.Gaussian.Cell.Basic
+
+end

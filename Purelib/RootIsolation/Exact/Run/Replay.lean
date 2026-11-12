@@ -1,4 +1,6 @@
 module
+
+import Purelib.Data.Rat.Fraction
 import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Polynomial.Dense.Gaussian.Squarefree.Basic
@@ -70,13 +72,14 @@ theorem join_eq (steps : Nat) (total : Winding.Box.Region.Sum.totalRaw
   state.regions = (4 : Int) * (steps + 1))
     (nonnegative : ∀ region ∈ state.regions, 0 ≤ Winding.Box.Basic.quadrupledBoxWinding p region.box)
     (positive : 0 < Winding.Box.Region.Sum.totalRaw state.regions)
+    (request : Option Data.Rat.Fraction.Rational)
     (first : Exact.Step.StepResult state)
-    (firstEq : first = Exact.Step.step degreeAtLeastTwo squarefree elimination state nonnegative positive)
+    (firstEq : first = Exact.Step.step degreeAtLeastTwo squarefree elimination state nonnegative positive request)
     (nextTotal : Winding.Box.Region.Sum.totalRaw first.next.regions = (4 : Int) * steps)
     (tail : RunResult first.next steps)
-    (tailEq : tail = Exact.Run.run degreeAtLeastTwo squarefree elimination steps first.next nextTotal) :
+    (tailEq : tail = Exact.Run.run degreeAtLeastTwo squarefree elimination steps first.next nextTotal request) :
     join first steps tail = Exact.Run.run degreeAtLeastTwo squarefree elimination (steps + 1) state
-      total := by
+      total request := by
   cases firstEq
   cases tailEq
   rfl

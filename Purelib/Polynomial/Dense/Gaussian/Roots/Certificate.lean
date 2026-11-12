@@ -27,7 +27,7 @@ the fraction-free separated Sylvester construction.
 namespace Purelib.Polynomial.Dense.Gaussian.Roots.Certificate
 
 set_option genInjectivity false in
-/-- The exact Gaussian-rational root returned for a degree-one polynomial. -/
+/-- An exact Gaussian-rational root of its original coefficient polynomial. -/
 structure ExactRoot (p :
   Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
   where

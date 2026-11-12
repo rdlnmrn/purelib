@@ -141,13 +141,13 @@ constructive_injectivity ReportPayload
 
 /-- The retained provider, dependent fold and single-matrix output for the same original input and braid word. -/
 def Report (tau : CoherentNamed) (word : Word) :=
-  ReportPayload (Preparation.Basic.Provider tau)
+  ReportPayload (Basic.Provider tau)
     (GuaranteedFold.Prepared tau (Periods.periodBraidMatrices word))
     (Automatic.Basic.Ready tau word)
 
 /-- Reuse an already acquired all-row provider, including after an earlier word. The combined preparation is not
 computed twice. -/
-def acquireWithProvider {tau : CoherentNamed} (provider : Preparation.Basic.Provider tau)
+def acquireWithProvider {tau : CoherentNamed} (provider : Basic.Provider tau)
   (word : Word) : Report tau word :=
   let folded := GuaranteedFold.prepare tau provider (Periods.periodBraidMatrices word)
     (GuaranteedFold.periodInverses word)
@@ -159,31 +159,31 @@ def acquireWithProvider {tau : CoherentNamed} (provider : Preparation.Basic.Prov
       { matrix := matrix
         matrix_eq := Periods.matrixProduct_periodBraidMatrices word
         preparation := preparation
-        output := LegendreModularMonodromy.fractionalLinear matrix tau preparation
+        output := fractionalLinear matrix tau preparation
         output_eq := rfl } }
 
 /-- All local and combined preparations are generated from one unsigned candidate gap. No sign or per-word denominator
 certificate is supplied. -/
 def acquire {tau : CoherentNamed} (separation :
-    Approximation.Gaussian.Process.Imaginary.Separation tau) (word :
+    Separation tau) (word :
   Word) : Report tau word :=
   acquireWithProvider (Separated.provider separation) word
 
 /-- Acquisition with an existing provider retains that exact provider. -/
 @[simp] theorem acquireWithProvider_reuses_provider {tau : CoherentNamed}
-    (provider : Preparation.Basic.Provider tau) (word : Word) :
+    (provider : Basic.Provider tau) (word : Word) :
       (acquireWithProvider provider word).provider = provider := rfl
 
 /-- The single-matrix output reuses the combined preparation from the retained dependent fold. -/
 @[simp] theorem acquireWithProvider_reuses_combined {tau : CoherentNamed}
-    (provider : Preparation.Basic.Provider tau) (word : Word) :
+    (provider : Basic.Provider tau) (word : Word) :
       (acquireWithProvider provider word).single.preparation =
       FoldPreparations.combined (Periods.periodBraidMatrices word) (acquireWithProvider
         provider word).folded.1 := rfl
 
 /-- Acquisition from separation reuses the retained fold combined denominator preparation. -/
 @[simp] theorem acquire_reuses_combined {tau : CoherentNamed} (separation :
-  Approximation.Gaussian.Process.Imaginary.Separation tau)
+  Separation tau)
     (word : Word) : (acquire separation
       word).single.preparation =
       FoldPreparations.combined (Periods.periodBraidMatrices word) (acquire separation
@@ -192,32 +192,32 @@ def acquire {tau : CoherentNamed} (separation :
 namespace Report
 
 /-- Read the productive output from the retained dependent fold preparations. -/
-def output {tau : Curves.Legendre.SeparatedWords.CoherentNamed} {word : Curves.Legendre.SeparatedWords.Word} (report :
-  Curves.Legendre.SeparatedWords.Report tau word) : CoherentNamed :=
-  Fold.Basic.foldAction tau (Periods.periodBraidMatrices word) report.folded.1
+def output {tau : CoherentNamed} {word : Word} (report :
+  Report tau word) : CoherentNamed :=
+  foldAction tau (Periods.periodBraidMatrices word) report.folded.1
 
 /-- The retained single-matrix and dependent-fold outputs are operationally equivalent. -/
-def equivalent_single {tau : Curves.Legendre.SeparatedWords.CoherentNamed} {word : Curves.Legendre.SeparatedWords.Word}
-  (report : Curves.Legendre.SeparatedWords.Report tau word) :
-    Curves.Legendre.SeparatedWords.NamedEquivalent report.single.output.name report.output.name :=
+def equivalent_single {tau : CoherentNamed} {word : Word}
+  (report : Report tau word) :
+    NamedEquivalent report.single.output.name report.output.name :=
   Ready.equivalent_fold report.single report.folded.1
 
 /-- Compatibility with existing positive, automatic, and manual routes. -/
-def respects_ready {tau : Curves.Legendre.SeparatedWords.CoherentNamed} {word : Curves.Legendre.SeparatedWords.Word}
-  (report : Curves.Legendre.SeparatedWords.Report tau word)
+def respects_ready {tau : CoherentNamed} {word : Word}
+  (report : Report tau word)
     (ready : Automatic.Basic.Ready tau word) :
-    Curves.Legendre.SeparatedWords.NamedEquivalent report.output.name ready.output.name :=
+    NamedEquivalent report.output.name ready.output.name :=
   NamedEquivalent.trans
     (NamedEquivalent.symm report.equivalent_single)
     (Ready.respects report.single ready)
 
 /-- Artin-equivalent original braid words produce operationally equivalent retained fold outputs. -/
-def respects_braid {tau : Curves.Legendre.SeparatedWords.CoherentNamed} {firstWord secondWord :
-  Curves.Legendre.SeparatedWords.Word}
-    (first : Curves.Legendre.SeparatedWords.Report tau firstWord) (second : Curves.Legendre.SeparatedWords.Report tau
+def respects_braid {tau : CoherentNamed} {firstWord secondWord :
+  Word}
+    (first : Report tau firstWord) (second : Report tau
       secondWord)
     (relation : Artin.Equivalent firstWord secondWord) :
-    Curves.Legendre.SeparatedWords.NamedEquivalent first.output.name second.output.name :=
+    NamedEquivalent first.output.name second.output.name :=
   NamedEquivalent.trans
     (NamedEquivalent.symm first.equivalent_single)
     (NamedEquivalent.trans
@@ -225,8 +225,8 @@ def respects_braid {tau : Curves.Legendre.SeparatedWords.CoherentNamed} {firstWo
 
 /-- Continue from the cached forward output/provider. The original forward word is not rerun while constructing the
 inverse leg. -/
-def prepareReversal {tau : Curves.Legendre.SeparatedWords.CoherentNamed} {word : Curves.Legendre.SeparatedWords.Word}
-  (report : Curves.Legendre.SeparatedWords.Report tau word) :
+def prepareReversal {tau : CoherentNamed} {word : Word}
+  (report : Report tau word) :
     Reversal.FoldReversalPreparations (Periods.periodBraidMatrices word) (Periods.periodBraidMatrices word.inverse) tau
       :=
   let first := Word.matrixProduct (Periods.periodBraidMatrices word)
@@ -249,20 +249,20 @@ def prepareReversal {tau : Curves.Legendre.SeparatedWords.CoherentNamed} {word :
 /-- The prepared inverse word returns an output operationally equivalent to the original input.
 
 The reverse leg uses the retained forward output and preparations, with the original forward word preserved. -/
-def reversal {tau : Curves.Legendre.SeparatedWords.CoherentNamed} {word : Curves.Legendre.SeparatedWords.Word} (report :
-  Curves.Legendre.SeparatedWords.Report tau word) :
-    Curves.Legendre.SeparatedWords.NamedEquivalent
-      (Fold.Basic.foldAction report.output (Periods.periodBraidMatrices word.inverse)
+def reversal {tau : CoherentNamed} {word : Word} (report :
+  Report tau word) :
+    NamedEquivalent
+      (foldAction report.output (Periods.periodBraidMatrices word.inverse)
         report.prepareReversal.reverse).name
       tau.name := Periods.periodBraidWord_foldReversal word tau report.prepareReversal
 
 /-- The arbitrary closed-path dual period equation needs separation, not an extra sign claim. All period data and path
 hypotheses remain unchanged. -/
-def transport {parameter : LegendreModularMonodromy.Gaussian}
+def transport {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     (data : PeriodMonodromy.NormalizedData frame)
-    (path : Paths.Path frame frame) (report : Curves.Legendre.SeparatedWords.Report data.ratio path.word) :
-    Curves.Legendre.SeparatedWords.NamedEquivalent
+    (path : Paths.Path frame frame) (report : Report data.ratio path.word) :
+    NamedEquivalent
       (CoherentNamed.mul (data.periods path 0) report.output).name
       (data.periods path 1).name := data.periodWord_productive_transport path report.folded.1
 
@@ -271,7 +271,7 @@ end Report
 /-- Both signed outcomes support word evaluation. Only near-boundary evidence is passed back without a preparation, and
 it remains inconclusive. -/
 def acquireSigned {tau : CoherentNamed}
-    {start : Approximation.Gaussian.Acquisition.State tau}
+    {start : State tau}
     {delta : Fraction.Rational} {positive : 0 < delta}
     (report : Requested.Report tau start delta positive) (word : Word) :
     Sum (Report tau word) (Certificate.Near tau report.retained delta) :=

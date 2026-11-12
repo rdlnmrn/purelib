@@ -24,6 +24,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib.Approximation.Rational.Geometric.Order (quarterRadius_succ_le)
 
 open Purelib
@@ -61,7 +63,7 @@ section Channel
 /-- Apply the finite exponential Horner program at depth `index + 1` to a geometrically coherent unit-disk channel. -/
 def expSample {source : Nat →
   Data.Gaussian.Basic.Canonical} (channel : Channel source)
-    (unit : ∀ index, Data.Gaussian.Norm.Basic.normSq (source index) ≤ 1) :
+    (unit : ∀ index, Basic.normSq (source index) ≤ 1) :
     Channel (fun index =>
       Sample.sample (source index) (index + 1)) where
   errorScale := 2 * (10 + 16 * channel.errorScale)
@@ -76,7 +78,7 @@ def expSample {source : Nat →
     have truncationRaw := Sample.sample_later_close
       (source later) (unit later) depthOrder
     have truncation :
-        Data.Gaussian.Norm.Basic.normSq
+        Basic.normSq
             (Sample.sample (source later) (later + 1) -
               Sample.sample (source later) (earlier + 1)) ≤
           Geometric.Basic.quarterRadius 10 earlier :=
@@ -85,7 +87,7 @@ def expSample {source : Nat →
       (source later) (source earlier) (unit later) (unit earlier)
         (earlier + 1)
     have inputEffect :
-        Data.Gaussian.Norm.Basic.normSq
+        Basic.normSq
             (Sample.sample (source later) (earlier + 1) -
               Sample.sample (source earlier) (earlier + 1)) ≤
           16 * Geometric.Basic.quarterRadius
@@ -94,17 +96,17 @@ def expSample {source : Nat →
         (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
           (channel.later_close order) (by decide))
     calc
-      Data.Gaussian.Norm.Basic.normSq
+      Basic.normSq
           (Sample.sample (source later) (later + 1) -
             Sample.sample (source earlier) (earlier + 1)) ≤
         2 *
-          (Data.Gaussian.Norm.Basic.normSq
+          (Basic.normSq
               (Sample.sample (source later) (later + 1) -
                 Sample.sample (source later) (earlier + 1)) +
-            Data.Gaussian.Norm.Basic.normSq
+            Basic.normSq
               (Sample.sample (source later) (earlier + 1) -
                 Sample.sample (source earlier)
-                  (earlier + 1))) := Data.Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _
+                  (earlier + 1))) := Bounds.normSq_sub_le_via _ _ _
       _ ≤ 2 * (Geometric.Basic.quarterRadius 10 earlier +
           16 * Geometric.Basic.quarterRadius
             channel.errorScale earlier) :=

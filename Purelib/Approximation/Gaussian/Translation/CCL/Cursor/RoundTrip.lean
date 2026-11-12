@@ -6,6 +6,9 @@ import Purelib.Approximation.Gaussian.Representation.Sequence
 import Purelib.Approximation.Gaussian.Sequence
 import Purelib.Approximation.Gaussian.Translation.CCL.Cursor.Basic
 public import Purelib.Approximation.Gaussian.Translation.CCL.Cursor.Realizer
+public import Purelib.Approximation.Gaussian.Name.Coherent.Arithmetic
+public import Purelib.Approximation.Gaussian.Name.Coherent.Arithmetic.Sum.Congruence
+public import Purelib.Approximation.Gaussian.Name.Coherent.Arithmetic.Product.Congruence
 import Purelib.Approximation.Gaussian.Translation.Observation
 import Purelib.Approximation.Gaussian.Translation.Realizer
 import Purelib.Approximation.Gaussian.Translation.Request
@@ -54,6 +57,9 @@ cross-representation comparison.
 -/
 
 namespace Purelib.Approximation.Gaussian.Translation.CCL.Cursor.RoundTrip
+
+open Purelib.Approximation.Gaussian.Name.Coherent (CoherentNamed)
+open Purelib.Approximation.Gaussian.Name.Coherent.Arithmetic
 
 /-- The name-level round trip is the repository's operational equivalence, not equality of the two finite sample
 programs. -/
@@ -116,6 +122,53 @@ def certifiedApproximationCursorRoundTrip
   operational := approximationCursorRoundTrip approximation
   request_certified := Realizer.approximationToCursorAt_certified approximation
   outputs_persistent := Realizer.approximationToCursorAt_persistent approximation
+
+namespace CertifiedApproximationCursorRoundTrip
+
+/-- Lift a supplied original-input comparison through both retained cursor round trips.
+
+Both certificates keep their own translation requests and persistent prefixes.
+The comparison composes their actual operational witnesses with the supplied
+input relation, retaining all independent starting indices and tolerances.
+-/
+def compare {first second : ApproximationData}
+    (left : CertifiedApproximationCursorRoundTrip first)
+    (right : CertifiedApproximationCursorRoundTrip second)
+    (equivalent : Equivalent first second) :
+    Equivalent (CursorObservation.approximation first.toNamed)
+      (CursorObservation.approximation second.toNamed) :=
+  left.operational.trans (equivalent.trans right.operational.symm)
+
+/-- Compare the original coherent input with the sampled output of its retained cursor round trip. -/
+def named {approximation : ApproximationData}
+    (certificate : CertifiedApproximationCursorRoundTrip approximation) :
+    NamedEquivalent (CoherentNamed.ofApproximation approximation).name
+      (CoherentNamed.ofApproximation (CursorObservation.approximation approximation.toNamed)).name :=
+  certificate.operational.symm.toNamed
+
+/-- Addition preserves both original channels through their retained approximation/cursor round trips. -/
+def add_equivalent {first second : ApproximationData}
+    (left : CertifiedApproximationCursorRoundTrip first)
+    (right : CertifiedApproximationCursorRoundTrip second) :
+    NamedEquivalent
+      (CoherentNamed.add (CoherentNamed.ofApproximation first) (CoherentNamed.ofApproximation second)).name
+      (CoherentNamed.add
+        (CoherentNamed.ofApproximation (CursorObservation.approximation first.toNamed))
+        (CoherentNamed.ofApproximation (CursorObservation.approximation second.toNamed))).name :=
+  Sum.Congruence.coherentAdd_respects _ _ _ _ left.named right.named
+
+/-- Multiplication preserves both original channels through their retained approximation/cursor round trips. -/
+def mul_equivalent {first second : ApproximationData}
+    (left : CertifiedApproximationCursorRoundTrip first)
+    (right : CertifiedApproximationCursorRoundTrip second) :
+    NamedEquivalent
+      (CoherentNamed.mul (CoherentNamed.ofApproximation first) (CoherentNamed.ofApproximation second)).name
+      (CoherentNamed.mul
+        (CoherentNamed.ofApproximation (CursorObservation.approximation first.toNamed))
+        (CoherentNamed.ofApproximation (CursorObservation.approximation second.toNamed))).name :=
+  Product.Congruence.coherentMul_respects _ _ _ _ left.named right.named
+
+end CertifiedApproximationCursorRoundTrip
 
 end Purelib.Approximation.Gaussian.Translation.CCL.Cursor.RoundTrip
 

@@ -74,6 +74,24 @@ end Purelib.LinearAlgebra
 
 end
 
+public section
+
+namespace Purelib.LinearAlgebra.Matrix
+
+open Purelib.LinearAlgebra renaming Matrix -> SquareMatrix
+
+/-- Add two original structural square matrices component by component. -/
+def add {K : Type*} [Add K] {n : Nat} (first second : SquareMatrix K n) : SquareMatrix K n :=
+  matrixOfFn fun row column => first row column + second row column
+
+/-- Each entry of the retained matrix sum is the sum of its original entries. -/
+theorem add_apply {K : Type*} [Add K] {n : Nat} (first second : SquareMatrix K n) (row column : Fin n) :
+    add first second row column = first row column + second row column := matrixOfFn_apply _ _ _
+
+end Purelib.LinearAlgebra.Matrix
+
+end
+
 section
 @[expose] public section
 

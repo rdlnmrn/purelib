@@ -52,6 +52,10 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Data.Vector.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Algebra
@@ -108,14 +112,14 @@ open Purelib.Riemann.Readings.AffineBasisEnergy (WeightedNormBudget)
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {covers :
+    UniformReciprocalModels.Data patch count}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {covers :
     BasisSourceCovers parent}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box}
+  {index : Nat} {box : Geometry.Rational.Box}
 
 open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Algebra.FiniteSum.Fin (sumFin_zero sumFin_mul_right)
@@ -157,110 +161,110 @@ variable {acquired :
   request polynomials originals cells coefficients depth}
 
 /-- The squared norm sum of the retained basis coefficient vector is nonnegative. -/
-private theorem norm_nonnegative : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients :=
+private theorem norm_nonnegative : 0 ≤ coefficientNormSq coefficients :=
   FiniteSum.Fin.sumFin_zero.symm.trans_le
-  (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : InverseRootPolynomial.Coordinate)) _ (fun row =>
-    Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
+  (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Coordinate)) _ (fun row =>
+    normSq_nonneg (coefficients row)))
 
 /-- A scaled quarter-radius is the scale times the unit quarter-radius. -/
-private theorem quarter_scale (scale : InverseRootPolynomial.Coordinate) (spatial : Nat) : Geometric.Basic.quarterRadius
-  scale spatial = scale * Geometric.Basic.quarterRadius 1 spatial := by
-  rw [Geometric.Basic.quarterRadius_eq_mul_pow, Geometric.Basic.quarterRadius_eq_mul_pow]
+private theorem quarter_scale (scale : Coordinate) (spatial : Nat) : quarterRadius
+  scale spatial = scale * quarterRadius 1 spatial := by
+  rw [quarterRadius_eq_mul_pow, quarterRadius_eq_mul_pow]
   ring1
 
 /-- The coefficient-weighted source and integral increments for one actual dyadic child. -/
-@[expose] def combination (pairs : Acquisition.ChildPairs acquired) (column : Fin (2 ^ (common.depth +
-  acquired.extraDepth))) : InverseRootPolynomial.Gaussian × Gaussian :=
-  (FiniteSum.Fin.sumFin (fun row => coefficients row * (pairs.read row column).1),
-    FiniteSum.Fin.sumFin (fun row => coefficients row * (pairs.read row column).2))
+@[expose] def combination (pairs : ChildPairs acquired) (column : Fin (2 ^ (common.depth +
+  acquired.extraDepth))) : Gaussian × Gaussian :=
+  (sumFin (fun row => coefficients row * (pairs.read row column).1),
+    sumFin (fun row => coefficients row * (pairs.read row column).2))
 
 /-- The combined child discrepancy is bounded by the source target, coefficient norm and actual dyadic scale. -/
-theorem combination_error (pairs : Acquisition.ChildPairs acquired) (column : Fin (2 ^ (common.depth +
+theorem combination_error (pairs : ChildPairs acquired) (column : Fin (2 ^ (common.depth +
   acquired.extraDepth))) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       ((combination
       pairs column).1 -
       (combination
       pairs column).2) ≤
-      sourceTarget * PreparedObservationCoercivity.coefficientNormSq coefficients * Geometric.Basic.quarterRadius 1
+      sourceTarget * coefficientNormSq coefficients * quarterRadius 1
         (common.depth + acquired.extraDepth) := by
   let errors := fun row => (pairs.read row column).1 - (pairs.read row column).2
   let budget := WeightedNormBudget.build errors
-  have qNonnegative := Geometric.Basic.quarterRadius_nonneg (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 1)
+  have qNonnegative := Basic.quarterRadius_nonneg (by decide : (0 : Coordinate) ≤ 1)
     (common.depth + acquired.extraDepth)
-  have each (row : Fin genus) : Data.Gaussian.Norm.Basic.normSq (errors row) ≤ request.sourceTolerance *
-    Geometric.Basic.quarterRadius 1 (common.depth + acquired.extraDepth) :=
+  have each (row : Fin genus) : Basic.normSq (errors row) ≤ request.sourceTolerance *
+    quarterRadius 1 (common.depth + acquired.extraDepth) :=
     (pairs.errors row _ (pairs.read_mem row column)).trans_eq
       (quarter_scale
       _ _)
-  have paid : budget.scale ≤ sourceTarget * Geometric.Basic.quarterRadius 1 (common.depth + acquired.extraDepth) := by
+  have paid : budget.scale ≤ sourceTarget * quarterRadius 1 (common.depth + acquired.extraDepth) := by
     rw [budget.scale_eq]
-    have bound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Order.Positivity.sumFin_mono _ _ each)
+    have bound := Arithmetic.mul_le_mul_of_nonneg_left_direct (Order.Positivity.sumFin_mono _ _ each)
       (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus))
-    rw [Purelib.Algebra.FiniteSum.Fin.Rational.sum_constant] at bound
+    rw [FiniteSum.Fin.Rational.sum_constant] at bound
     have allowance := Aggregate.count_mul_perTerm_lt request.source_positive genus
     rw [← request.sourceTolerance_eq] at allowance
-    exact bound.trans ((show (genus : InverseRootPolynomial.Coordinate) * ((genus : InverseRootPolynomial.Coordinate) *
-      (request.sourceTolerance * Geometric.Basic.quarterRadius 1 (common.depth + acquired.extraDepth))) =
-      ((genus : InverseRootPolynomial.Coordinate) * ((genus : InverseRootPolynomial.Coordinate) *
-        request.sourceTolerance)) * Geometric.Basic.quarterRadius 1 (common.depth + acquired.extraDepth) by
+    exact bound.trans ((show (genus : Coordinate) * ((genus : Coordinate) *
+      (request.sourceTolerance * quarterRadius 1 (common.depth + acquired.extraDepth))) =
+      ((genus : Coordinate) * ((genus : Coordinate) *
+        request.sourceTolerance)) * quarterRadius 1 (common.depth + acquired.extraDepth) by
         ring1).trans_le
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct allowance.le qNonnegative))
+      (Arithmetic.mul_le_mul_of_nonneg_right_direct allowance.le qNonnegative))
   have equal :
     (combination
     pairs column).1 -
     (combination
-    pairs column).2 = FiniteSum.Fin.sumFin (fun row => coefficients row * errors row) := by
-    change FiniteSum.Fin.sumFin _ - FiniteSum.Fin.sumFin _ = _
-    rw [← FiniteSum.Fin.sumFin_sub]
-    exact FiniteSum.Fin.sumFin_congr (fun row => by dsimp only [errors]; ring1)
+    pairs column).2 = sumFin (fun row => coefficients row * errors row) := by
+    change sumFin _ - sumFin _ = _
+    rw [← sumFin_sub]
+    exact sumFin_congr (fun row => by dsimp only [errors]; ring1)
   rw [equal]
-  exact (budget.bound coefficients).trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct paid
+  exact (budget.bound coefficients).trans ((Arithmetic.mul_le_mul_of_nonneg_left_direct paid
     norm_nonnegative).trans_eq
     (by ring1))
 
 /-- The combined source child satisfies the original common primitive-slope bound. -/
-theorem combination_source_bound (pairs : Acquisition.ChildPairs acquired) (column : Fin (2 ^ (common.depth +
+theorem combination_source_bound (pairs : ChildPairs acquired) (column : Fin (2 ^ (common.depth +
   acquired.extraDepth))) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       (combination
       pairs column).1 ≤
-      Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope
-        covers * PreparedObservationCoercivity.coefficientNormSq coefficients * Geometric.Basic.quarterRadius 1
+      BasisSourceCovers.primitiveSlope
+        covers * coefficientNormSq coefficients * quarterRadius 1
         (common.depth + acquired.extraDepth) := by
   let values := fun row => (pairs.read row column).1
   let budget := WeightedNormBudget.build values
-  have each (row : Fin genus) : Data.Gaussian.Norm.Basic.normSq (values row) ≤ (covers.get
-    row).data.sourceSlope * Geometric.Basic.quarterRadius 1 (common.depth + acquired.extraDepth) :=
+  have each (row : Fin genus) : Basic.normSq (values row) ≤ (covers.get
+    row).data.sourceSlope * quarterRadius 1 (common.depth + acquired.extraDepth) :=
     (pairs.source_bound row _ (pairs.read_mem row column)).trans_eq
       (quarter_scale
       _ _)
-  have paid : budget.scale ≤ BasisSourceCovers.primitiveSlope covers * Geometric.Basic.quarterRadius 1 (common.depth +
+  have paid : budget.scale ≤ BasisSourceCovers.primitiveSlope covers * quarterRadius 1 (common.depth +
     acquired.extraDepth) := by
     rw [budget.scale_eq]
-    have bound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Order.Positivity.sumFin_mono _ _ each)
+    have bound := Arithmetic.mul_le_mul_of_nonneg_left_direct (Order.Positivity.sumFin_mono _ _ each)
       (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus))
-    rw [FiniteSum.Fin.sumFin_mul_right] at bound
+    rw [sumFin_mul_right] at bound
     exact bound.trans_eq (by unfold BasisSourceCovers.primitiveSlope; ring1)
-  exact (budget.bound coefficients).trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct paid
+  exact (budget.bound coefficients).trans ((Arithmetic.mul_le_mul_of_nonneg_left_direct paid
     norm_nonnegative).trans_eq
     (by ring1))
 
 /-- Both combined child increments satisfy the same enlarged homogeneous bound. -/
-theorem combination_bounds (pairs : Acquisition.ChildPairs acquired) (column : Fin (2 ^ (common.depth +
+theorem combination_bounds (pairs : ChildPairs acquired) (column : Fin (2 ^ (common.depth +
   acquired.extraDepth))) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       (combination
       pairs column).1 ≤ 2 * (BasisSourceCovers.primitiveSlope covers + sourceTarget) *
-      PreparedObservationCoercivity.coefficientNormSq coefficients * Geometric.Basic.quarterRadius 1 (common.depth +
+      coefficientNormSq coefficients * quarterRadius 1 (common.depth +
         acquired.extraDepth) ∧
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       (combination
       pairs column).2 ≤ 2 * (BasisSourceCovers.primitiveSlope covers + sourceTarget) *
-      PreparedObservationCoercivity.coefficientNormSq coefficients * Geometric.Basic.quarterRadius 1 (common.depth +
+      coefficientNormSq coefficients * quarterRadius 1 (common.depth +
         acquired.extraDepth) := by
   have slope := BasisSourceCovers.primitiveSlope_nonnegative covers
-  have qNonnegative := Geometric.Basic.quarterRadius_nonneg (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 1)
+  have qNonnegative := Basic.quarterRadius_nonneg (by decide : (0 : Coordinate) ≤ 1)
     (common.depth + acquired.extraDepth)
   have source :=
     combination_source_bound
@@ -271,17 +275,17 @@ theorem combination_bounds (pairs : Acquisition.ChildPairs acquired) (column : F
   have enlarged : BasisSourceCovers.primitiveSlope covers ≤ 2 * (BasisSourceCovers.primitiveSlope covers + sourceTarget)
     :=
     (show BasisSourceCovers.primitiveSlope covers = BasisSourceCovers.primitiveSlope covers + 0 by ring1).trans_le
-      ((Fraction.Order.Arithmetic.add_le_add_direct le_rfl (add_nonneg slope
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
+      ((Arithmetic.add_le_add_direct le_rfl (add_nonneg slope
+        (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 2)
         request.source_positive.le))).trans_eq (by ring1))
-  have right := (Data.Gaussian.Norm.Bounds.normSq_sub_le_two
+  have right := (Bounds.normSq_sub_le_two
     (combination
     pairs column).1
     ((combination
     pairs column).1 -
     (combination
     pairs column).2)).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct source
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct source
       error) (by decide))
   rw [show
     (combination
@@ -292,17 +296,17 @@ theorem combination_bounds (pairs : Acquisition.ChildPairs acquired) (column : F
     pairs column).2) =
     (combination
     pairs column).2 by ring1] at right
-  exact ⟨source.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct enlarged
+  exact ⟨source.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct enlarged
     norm_nonnegative)
     qNonnegative),
     right.trans_eq (by ring1)⟩
 
 set_option genInjectivity false in
 /-- Retain the complete combined pair list and both one-pass summaries. -/
-structure Weighted (pairs : Acquisition.ChildPairs acquired) where
+structure Weighted (pairs : ChildPairs acquired) where
   /-- The retained complete list of coefficient-weighted source and integral increment pairs. -/ values : List
-    (InverseRootPolynomial.Gaussian × InverseRootPolynomial.Gaussian)
+    (Gaussian × Gaussian)
   /-- The retained pair list is exactly the finite enumeration of combined dyadic children. -/ values_eq : values =
     List.ofFn
     (combination
@@ -311,14 +315,14 @@ structure Weighted (pairs : Acquisition.ChildPairs acquired) where
   /-- The cached one-pass area summary of the integral increments. -/ integral : IncrementArea.Summary (values.map
     Prod.snd)
   /-- The cached signed difference between the two actual increment areas. -/ difference :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The cached difference is exactly the source area minus the integral area. -/ difference_eq : difference =
     source.area - integral.area
 
 constructive_injectivity Weighted
 
 /-- Cache the complete weighted child-pair list and its two one-pass area summaries. -/
-@[expose] def weighted (pairs : Acquisition.ChildPairs acquired) :
+@[expose] def weighted (pairs : ChildPairs acquired) :
   Weighted
   pairs :=
   let values := List.ofFn
@@ -335,22 +339,22 @@ open
 
 The retained child count and quarter-radius cancel exactly, leaving the source target, primitive slope and squared
 coefficient norm. -/
-theorem Weighted.area_error {pairs : Acquisition.ChildPairs acquired} (weighted :
+theorem Weighted.area_error {pairs : ChildPairs acquired} (weighted :
   Weighted
   pairs) :
-    Data.Gaussian.Norm.Basic.normSq weighted.difference ≤ 32 * sourceTarget * (BasisSourceCovers.primitiveSlope
-      covers + sourceTarget) * (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
-  have qNonnegative := Geometric.Basic.quarterRadius_nonneg (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 1)
+    Basic.normSq weighted.difference ≤ 32 * sourceTarget * (BasisSourceCovers.primitiveSlope
+      covers + sourceTarget) * (coefficientNormSq coefficients)^2 := by
+  have qNonnegative := Basic.quarterRadius_nonneg (by decide : (0 : Coordinate) ≤ 1)
     (common.depth + acquired.extraDepth)
-  have sourceNonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct request.source_positive.le
+  have sourceNonnegative := Arithmetic.mul_nonneg_direct request.source_positive.le
     (norm_nonnegative
     (coefficients := coefficients))
-  have commonNonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2) (add_nonneg
+  have commonNonnegative := Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 2) (add_nonneg
       (BasisSourceCovers.primitiveSlope_nonnegative covers) request.source_positive.le))
       (norm_nonnegative
       (coefficients := coefficients))
-  have every (pair : InverseRootPolynomial.Gaussian × InverseRootPolynomial.Gaussian) (member : pair ∈ weighted.values)
+  have every (pair : Gaussian × Gaussian) (member : pair ∈ weighted.values)
     : ∃ column, pair =
     combination
     pairs column := by
@@ -358,8 +362,8 @@ theorem Weighted.area_error {pairs : Acquisition.ChildPairs acquired} (weighted 
     obtain ⟨column, equal⟩ := Purelib.Data.List.OfFn.Basic.mem_ofFn.mp member
     exact ⟨column, equal.symm⟩
   have bound := IncrementAreaComparison.pathArea_difference_bound weighted.values
-    (Fraction.Order.Arithmetic.mul_nonneg_direct sourceNonnegative qNonnegative)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct commonNonnegative qNonnegative)
+    (Arithmetic.mul_nonneg_direct sourceNonnegative qNonnegative)
+      (Arithmetic.mul_nonneg_direct commonNonnegative qNonnegative)
     (by
         intro pair member;
         obtain ⟨column, equal⟩ := every pair member;
@@ -376,15 +380,15 @@ theorem Weighted.area_error {pairs : Acquisition.ChildPairs acquired} (weighted 
         rw [equal];
         exact (combination_bounds pairs column).2)
   have countEq : weighted.values.length = 2 ^ (common.depth + acquired.extraDepth) := by rw [weighted.values_eq,
-    Purelib.Data.List.OfFn.Basic.length_ofFn]
+    Data.List.OfFn.Basic.length_ofFn]
   rw [countEq, ← weighted.source.area_eq, ← weighted.integral.area_eq, ← weighted.difference_eq] at bound
   apply bound.trans_eq
   calc
     _ = 32 * sourceTarget * (BasisSourceCovers.primitiveSlope covers + sourceTarget) *
-      (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 *
-      ((((2 ^ (common.depth + acquired.extraDepth) : Nat) : InverseRootPolynomial.Coordinate) *
-        (((2 ^ (common.depth + acquired.extraDepth) : Nat) : InverseRootPolynomial.Coordinate) *
-          Geometric.Basic.quarterRadius 1 (common.depth + acquired.extraDepth)))^2) := by ring1
+      (coefficientNormSq coefficients)^2 *
+      ((((2 ^ (common.depth + acquired.extraDepth) : Nat) : Coordinate) *
+        (((2 ^ (common.depth + acquired.extraDepth) : Nat) : Coordinate) *
+          quarterRadius 1 (common.depth + acquired.extraDepth)))^2) := by ring1
     _ = _ := by rw [DyadicCount.dyadic_count_cancel]; ring1
 
 end ChildPairs

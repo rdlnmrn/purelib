@@ -157,7 +157,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces
 open Purelib.Riemann.Normalization.ContinuedInverseRoot (ContinuedNeighborhood)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid}
@@ -167,7 +167,7 @@ namespace SheetEntries.EdgePoint
 /-- Transport the retained grid-vertex reference along the same certified line. No ambient enlargement or new polynomial
 clearance is required. -/
 def reference {start finish point : Data.Gaussian.Basic.Canonical} {edge : Walks.Edge bank.grid start finish}
-    (location : RegularFaces.EdgePoint edge point) : OwnerLoopMonodromy.WindingOneLoop curve.polynomial point := by
+    (location : RegularFaces.EdgePoint edge point) : WindingOneLoop curve.polynomial point := by
   let raw := edge.segment.restrict edge.withinAmbient location.parameter 0 location.inside (by decide)
   let segment := (raw.castStart location.point_eq).castFinish edge.segment.pointAt_zero
   have within : segment.WithinAmbient :=
@@ -190,7 +190,7 @@ def reference {start finish point : Data.Gaussian.Basic.Canonical} {edge : Walks
 def entry {start finish point : Data.Gaussian.Basic.Canonical} {edge : Walks.Edge bank.grid start finish}
     (location : RegularFaces.EdgePoint edge point) {face : PuncturedGridFaces.RegularFace bank}
     (models : BranchCellBank.FaceModels frames face) (inside : face.cell.box.Contains point)
-    (owner : SquareRootContinuationChain.Owner (curve.polynomial.eval point)) : FaceModels.Entry models point owner :=
+    (owner : Owner (curve.polynomial.eval point)) : FaceModels.Entry models point owner :=
       by
   let route := Route.build face.clearance point face.cell.box.anchor inside face.cell.box.contains_anchor
   let returned := TracedPath.build route.path route.within owner
@@ -222,9 +222,12 @@ variable {base : FramedPuncturedGrid curve branches higher} {frames :
   {source : Differential genus} {axes :
     PrimitiveAxes base.bank.grid} {parent :
     CenteredEdge curve source}
-  {partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)}
-    {interval : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval}
   {count : Nat} {target : Rational}
+
+section Partitions
+
+variable {cuts : List Rational} {partition : Partition 0 1 cuts}
+variable {interval : PreparedAxisPartitions.Interval}
 
 namespace SheetEntries.RegularPrimitiveFragment
 
@@ -232,14 +235,34 @@ namespace SheetEntries.RegularPrimitiveFragment
 def domainCache (fragment : RegularFaces.RegularPrimitiveFragment axes parent partition interval)
     (domains : DomainBanks.FaceDomainBank frames base.faces.regulars) :
     DomainBanks.FaceDomains frames fragment.face.located.face :=
-  (domains.get fragment.face.located.index).castFace fragment.face.located.indexed
+  domains.atLocation fragment.face.located
+
+namespace SheetEntry
+
+/-- The actual comparison from an original parent query to its retained fragment-start sample.
+
+Both names keep their original parameter, interval bound and incoming
+Point owners. The value supplies their executable finite-tail comparisons.
+-/
+def OriginalComparison (fragment : RegularFaces.RegularPrimitiveFragment axes parent partition interval)
+    (request : LocalRequest parent count target)
+    (sample : ContinuedNeighborhood.Point request.neighborhood fragment.located.first)
+    (fractionInside : 0 ≤ interval.lower ∧ interval.lower ≤ 1) :=
+  Gaussian.Equivalence.NamedEquivalent
+    (parent.edge.rootName interval.lower fractionInside) sample.certificate.value.name
+
+end SheetEntry
+
+section
+
+attribute [local irreducible] SheetEntry.OriginalComparison
 
 set_option genInjectivity false in
 /-- The selected face occurrence names the original request root at the actual fragment start, including nonvertex and
 reversed-edge starts. -/
 structure SheetEntry (fragment : RegularFaces.RegularPrimitiveFragment axes parent partition interval)
     (domains : DomainBanks.FaceDomainBank frames base.faces.regulars)
-    (request : UniformPreparedRequests.LocalRequest parent count target) where
+    (request : LocalRequest parent count target) where
   /-- The cached continuation sample at the actual retained fragment start. -/ sample : ContinuedNeighborhood.Point
     request.neighborhood fragment.located.first
   /-- The selected face-sheet entry of that exact incoming sample owner. -/ entry : FaceModels.Entry
@@ -248,9 +271,11 @@ structure SheetEntry (fragment : RegularFaces.RegularPrimitiveFragment axes pare
       domains).models fragment.located.first sample.owner
   /-- The original fragment-start parameter lies in the unit parent interval. -/ fractionInside : 0 ≤ interval.lower ∧
     interval.lower ≤ 1
-  /-- The cached incoming sample is operationally equivalent to the original parent root channel at the retained
-    parameter. -/ original : Nonempty (Gaussian.Equivalence.NamedEquivalent
-    (parent.edge.rootName interval.lower fractionInside) sample.certificate.value.name)
+  /-- The actual signed comparison from the original parent query to this SAME incoming sample.
+
+  Its executable finite-tail comparison is retained as data. It does not
+  identify the parent and sample Owners or their independent requests. -/
+  original : SheetEntry.OriginalComparison fragment request sample fractionInside
   /-- The cached local analytic domain for the selected entry sheet. -/ domain : Periods.PeriodDomain
     (domainCache fragment
     domains).models entry.sheet
@@ -258,18 +283,24 @@ structure SheetEntry (fragment : RegularFaces.RegularPrimitiveFragment axes pare
     (domainCache fragment
     domains).domain entry.sheet
   /-- The cached rectangular split of the actual retained fragment endpoints. -/ split :
-    RectangularSegmentSplitting.SegmentSplit domain.cuts fragment.located.first fragment.located.last
+    SegmentSplit domain.cuts fragment.located.first fragment.located.last
 
 constructive_injectivity SheetEntry
 
+end
+
 namespace SheetEntry
 
-/-- Acquire the original request's fragment-start sample, classify its actual face sheet and cache the split in the
-exact shared domain. -/
+/-- Acquire the original fragment-start sample, classify its actual sheet and retain the signed comparison and split.
+
+The existing Point, Entry, selected domain and split operations keep their
+original arguments and order. The original patch comparison is now actual
+retained runtime work; its earlier proof-only wrapping was not a cache.
+-/
 def build (fragment : RegularFaces.RegularPrimitiveFragment axes parent partition interval)
     (domains : DomainBanks.FaceDomainBank frames base.faces.regulars)
-    (request : UniformPreparedRequests.LocalRequest parent count target) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SheetEntries.RegularPrimitiveFragment.SheetEntry fragment
+    (request : LocalRequest parent count target) :
+      SheetEntry fragment
       domains request := by
   have bounds := partition.interval_bounds fragment.located.member
   have fractionInside : 0 ≤ interval.lower ∧ interval.lower ≤ 1 :=
@@ -281,23 +312,29 @@ def build (fragment : RegularFaces.RegularPrimitiveFragment axes parent partitio
   have faceInside : fragment.face.located.face.cell.box.Contains fragment.located.first := by
     rw [fragment.face.located.cell_eq]
     exact fragment.first_inside
-  let entry := Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SheetEntries.EdgePoint.entry fragment.source.first
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SheetEntries.RegularPrimitiveFragment.domainCache fragment
+  let entry := EdgePoint.entry fragment.source.first
+    (RegularPrimitiveFragment.domainCache fragment
     domains).models faceInside sample.owner
-  let domain := (Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SheetEntries.RegularPrimitiveFragment.domainCache
+  let domain := (RegularPrimitiveFragment.domainCache
     fragment domains).domain entry.sheet
   have lastInside : fragment.face.located.face.cell.box.Contains fragment.located.last := by
     rw [fragment.face.located.cell_eq]
     exact fragment.last_inside
-  refine ⟨sample, entry, fractionInside, ?_, domain, rfl,
+  let original : Gaussian.Equivalence.NamedEquivalent
+      (parent.edge.rootName interval.lower fractionInside) sample.certificate.value.name := by
+    rcases request with ⟨patch, neighborhood, neighborhoodEq, requested, finishInside⟩
+    subst neighborhood
+    exact patch.point_equivalent_at count interval.lower fractionInside fragment.located.first_eq.symm inside sample
+  exact ⟨sample, entry, fractionInside, original, domain, rfl,
     SegmentSplit.build domain.cuts fragment.located.first fragment.located.last
       (domain.covers faceInside) (domain.covers lastInside)⟩
-  rcases request with ⟨patch, neighborhood, neighborhoodEq, requested, finishInside⟩
-  subst neighborhood
-  exact ⟨patch.point_equivalent_at count interval.lower fractionInside fragment.located.first_eq.symm inside sample⟩
 
 end SheetEntry
 end SheetEntries.RegularPrimitiveFragment
+
+end Partitions
+
+variable {partition : Partition 0 1 (axes.parameters parent)}
 
 section RegularPrimitiveFragments
 
@@ -305,17 +342,17 @@ set_option genInjectivity false in
 /-- Every interval of this original parent has an assigned cached face occurrence; the dependent spine cannot omit a
 difficult fragment. -/
 inductive FragmentSheets (domains : DomainBanks.FaceDomainBank frames base.faces.regulars)
-    (request : UniformPreparedRequests.LocalRequest parent count target) :
-    {intervals : List PreparedAxisPartitions.Interval} → RegularFaces.RegularPrimitiveFragments axes parent partition
+    (request : LocalRequest parent count target) :
+    {intervals : List PreparedAxisPartitions.Interval} → RegularPrimitiveFragments axes parent partition
       intervals → Type
   /-- The empty sheet-entry bank for an empty retained fragment or parent spine. -/ | nil :
     FragmentSheets
     domains request .nil
   /-- Retain the entry for the actual first fragment or parent and the exact dependent tail. -/ | cons {interval :
     PreparedAxisPartitions.Interval} {intervals : List PreparedAxisPartitions.Interval}
-      {head : RegularFaces.RegularPrimitiveFragment axes parent partition interval}
-      {tail : RegularFaces.RegularPrimitiveFragments axes parent partition intervals}
-      (first : Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SheetEntries.RegularPrimitiveFragment.SheetEntry head
+      {head : RegularPrimitiveFragment axes parent partition interval}
+      {tail : RegularPrimitiveFragments axes parent partition intervals}
+      (first : SheetEntries.RegularPrimitiveFragment.SheetEntry head
         domains request)
       (remaining :
         FragmentSheets
@@ -327,17 +364,55 @@ constructive_injectivity FragmentSheets
 
 namespace FragmentSheets
 
+/-- Read one actual original fragment and its whole stored SheetEntry at a bounded occurrence index.
+
+The structural reader follows only the given sheet-entry spine. It runs
+no fragment, sheet assignment, Point, Query, domain or split producer and
+retains both the original geometric fragment and its actual cached entry.
+-/
+def «at» {domains : DomainBanks.FaceDomainBank frames base.faces.regulars}
+    {request : LocalRequest parent count target} :
+    ∀ {intervals : List PreparedAxisPartitions.Interval}
+      {fragments : RegularPrimitiveFragments axes parent partition intervals},
+      FragmentSheets domains request fragments → (position : Fin intervals.length) →
+        Σ fragment : RegularPrimitiveFragment axes parent partition (intervals[position.val]'position.isLt),
+          SheetEntries.RegularPrimitiveFragment.SheetEntry fragment domains request
+  | _, _, .nil, position => Fin.elim0 position
+  | _, _, .cons (head := head) first _remaining, ⟨0, _bound⟩ => ⟨head, first⟩
+  | _, _, .cons _first remaining, ⟨position + 1, bound⟩ =>
+      «at» remaining ⟨position, Nat.lt_of_succ_lt_succ bound⟩
+
+/-- The zero index reads the complete actual head fragment and its original Entry unchanged. -/
+theorem at_zero {domains : DomainBanks.FaceDomainBank frames base.faces.regulars}
+    {request : LocalRequest parent count target} {interval : PreparedAxisPartitions.Interval}
+    {intervals : List PreparedAxisPartitions.Interval}
+    {head : RegularPrimitiveFragment axes parent partition interval}
+    {tail : RegularPrimitiveFragments axes parent partition intervals}
+    (first : SheetEntries.RegularPrimitiveFragment.SheetEntry head domains request)
+    (remaining : FragmentSheets domains request tail) :
+    «at» (.cons first remaining) ⟨0, Nat.zero_lt_succ intervals.length⟩ = ⟨head, first⟩ := by rfl
+
+/-- A successor index reads the same bounded original tail, without rebuilding its head or assignment. -/
+theorem at_succ {domains : DomainBanks.FaceDomainBank frames base.faces.regulars}
+    {request : LocalRequest parent count target} {interval : PreparedAxisPartitions.Interval}
+    {intervals : List PreparedAxisPartitions.Interval}
+    {head : RegularPrimitiveFragment axes parent partition interval}
+    {tail : RegularPrimitiveFragments axes parent partition intervals}
+    (first : SheetEntries.RegularPrimitiveFragment.SheetEntry head domains request)
+    (remaining : FragmentSheets domains request tail) (position : Fin intervals.length) :
+    «at» (.cons first remaining) position.succ = «at» remaining position := by rfl
+
 /-- Prepare complete sheet entries on the exact retained fragment and request spine using the supplied shared domain
 bank. -/
 def build (domains : DomainBanks.FaceDomainBank frames base.faces.regulars)
-    (request : UniformPreparedRequests.LocalRequest parent count target) :
-    ∀ {intervals : List PreparedAxisPartitions.Interval} (fragments : RegularFaces.RegularPrimitiveFragments axes parent
+    (request : LocalRequest parent count target) :
+    ∀ {intervals : List PreparedAxisPartitions.Interval} (fragments : RegularPrimitiveFragments axes parent
       partition intervals),
       FragmentSheets domains
         request fragments
   | _, .nil => .nil
   | _, .cons head tail => .cons
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SheetEntries.RegularPrimitiveFragment.SheetEntry.build head
+    (SheetEntries.RegularPrimitiveFragment.SheetEntry.build head
     domains request)
     (build
     domains request tail)
@@ -351,22 +426,22 @@ set_option genInjectivity false in
 /-- Complete sheet assignments for the exact original request and splitting spines. The shared domain bank is an input,
 so no per-fragment bank is rebuilt. -/
 inductive SplitSheets (domains : DomainBanks.FaceDomainBank frames base.faces.regulars) :
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)} → {splits :
-      PreparedPrimitiveSplits.PrimitiveSplits axes parents} →
-      (fragments : RegularFaces.RegularPrimitiveSplits (base := base) axes splits) →
-      UniformPreparedRequests.RequestedParents count target parents → Type 2
+    {parents : List (CenteredEdge curve source)} → {splits :
+      PrimitiveSplits axes parents} →
+      (fragments : RegularPrimitiveSplits (base := base) axes splits) →
+      RequestedParents count target parents → Type 2
   /-- The empty sheet-entry bank for an empty retained fragment or parent spine. -/ | nil :
     SplitSheets domains
     .nil .nil
   /-- Retain the entry for the actual first fragment or parent and the exact dependent tail. -/ | cons {parent :
-    PreparedSubdivisionModelCore.CenteredEdge curve source} {parents : List (PreparedSubdivisionModelCore.CenteredEdge
+    CenteredEdge curve source} {parents : List (CenteredEdge
     curve source)}
-      {partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)} {splits :
-        PreparedPrimitiveSplits.PrimitiveSplits axes parents}
-      {head : RegularFaces.RegularPrimitiveFragments axes parent partition partition.intervals}
-      {tail : RegularFaces.RegularPrimitiveSplits (base := base) axes splits}
-      {request : UniformPreparedRequests.LocalRequest parent count target}
-      {requests : UniformPreparedRequests.RequestedParents count target parents}
+      {partition : Partition 0 1 (axes.parameters parent)} {splits :
+        PrimitiveSplits axes parents}
+      {head : RegularPrimitiveFragments axes parent partition partition.intervals}
+      {tail : RegularPrimitiveSplits (base := base) axes splits}
+      {request : LocalRequest parent count target}
+      {requests : RequestedParents count target parents}
       (first : FragmentSheets
         domains request head)
       (remaining :
@@ -382,10 +457,10 @@ namespace SplitSheets
 /-- Prepare complete sheet entries on the exact retained fragment and request spine using the supplied shared domain
 bank. -/
 def build (domains : DomainBanks.FaceDomainBank frames base.faces.regulars) :
-    ∀ {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)} {splits :
-      PreparedPrimitiveSplits.PrimitiveSplits axes parents}
-      (fragments : RegularFaces.RegularPrimitiveSplits (base := base) axes splits)
-      (requests : UniformPreparedRequests.RequestedParents count target parents),
+    ∀ {parents : List (CenteredEdge curve source)} {splits :
+      PrimitiveSplits axes parents}
+      (fragments : RegularPrimitiveSplits (base := base) axes splits)
+      (requests : RequestedParents count target parents),
         SplitSheets domains
         fragments requests
   | _, _, .nil, .nil => .nil

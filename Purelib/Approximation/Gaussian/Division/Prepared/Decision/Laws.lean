@@ -9,6 +9,8 @@ import Init.Prelude
 import Purelib.Approximation.Gaussian.Division.Prepared.Basic
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Approximation.Gaussian.Division.Obstruction.Zero
+
 open Purelib.Approximation
 
 open Purelib.Approximation.Gaussian.Division
@@ -48,7 +50,7 @@ theorem zero_iff_unpreparable {channel :
     Zero.IsZero channel ↔ ¬ Equivalence.IsPrepared channel := by
   constructor
   · rintro ⟨zero⟩ ⟨prepared⟩
-    exact Obstruction.Zero.ZeroIdentity.incompatible_prepared zero prepared
+    exact ZeroIdentity.incompatible_prepared zero prepared
   · intro unavailable
     cases decision with
     | prepared prepared => exact False.elim (unavailable ⟨prepared⟩)
@@ -61,7 +63,7 @@ theorem prepared_iff_nonzero {channel :
     Equivalence.IsPrepared channel ↔ ¬ Zero.IsZero channel := by
   constructor
   · rintro ⟨prepared⟩ ⟨zero⟩
-    exact Obstruction.Zero.ZeroIdentity.incompatible_prepared zero prepared
+    exact ZeroIdentity.incompatible_prepared zero prepared
   · intro nonzero
     cases decision with
     | prepared prepared => exact ⟨prepared⟩
@@ -77,7 +79,7 @@ theorem isPrepared_eq_true_iff {channel :
       constructor
       · intro impossible; cases impossible
       · rintro ⟨prepared⟩
-        exact False.elim (Obstruction.Zero.ZeroIdentity.incompatible_prepared zero prepared)
+        exact False.elim (ZeroIdentity.incompatible_prepared zero prepared)
 
 /-- The decision flag is false exactly when the original denominator is operationally zero. -/
 theorem isPrepared_eq_false_iff {channel :
@@ -88,25 +90,25 @@ theorem isPrepared_eq_false_iff {channel :
       constructor
       · intro impossible; cases impossible
       · rintro ⟨zero⟩
-        exact False.elim (Obstruction.Zero.ZeroIdentity.incompatible_prepared zero prepared)
+        exact False.elim (ZeroIdentity.incompatible_prepared zero prepared)
   | excluded zero => exact ⟨fun _ => ⟨zero⟩, fun _ => rfl⟩
 
 /-- Independently derived exact verdicts cannot disagree on equivalent inputs. Returned certificate data need not be
 equal. This law deliberately does not cover the overlapping numerical small/apart classification. -/
 theorem respects {first second :
   Coherent.CoherentNamed} (left : Decision first) (right : Decision second)
-    (equivalent : Gaussian.Equivalence.NamedEquivalent first.name second.name) : left.isPrepared = right.isPrepared :=
+    (equivalent : NamedEquivalent first.name second.name) : left.isPrepared = right.isPrepared :=
       by
   cases left with
   | prepared prepared =>
       cases right with
       | prepared _ => rfl
       | excluded zero =>
-        exact False.elim (Obstruction.Zero.ZeroIdentity.incompatible_prepared zero (prepared.transport equivalent))
+        exact False.elim (ZeroIdentity.incompatible_prepared zero (prepared.transport equivalent))
   | excluded zero =>
       cases right with
       | prepared prepared =>
-        exact False.elim (Obstruction.Zero.ZeroIdentity.incompatible_prepared (zero.transport equivalent) prepared)
+        exact False.elim (ZeroIdentity.incompatible_prepared (zero.transport equivalent) prepared)
       | excluded _ => rfl
 
 end Decision

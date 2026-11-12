@@ -120,7 +120,7 @@ set_option genInjectivity false in
 /-- Finite algebraic evidence behind one sampled odd-power differential value. -/
 structure AlgebraicObservation {genus : Nat}
     (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
-    (differential : OddPower.Basic.OddPowerDifferential)
+    (differential : OddPower.Basic.OddPowerDifferential curve.polynomial)
     {start finish : Lifted.Basic.LiftedPoint 2} (liftedCell : Lifted.Basic.LiftedCell start finish)
     (cell : Cell.Basic.CellModel)
     (observation : Cell.Basic.LocalObservation cell.polynomial cell.localAllowance) where
@@ -132,12 +132,13 @@ structure AlgebraicObservation {genus : Nat}
     Sheets.Basic.AlgebraicSheetValue curve point
   /-- The algebraic sheet label is the original lifted cell starting-sheet label. -/ chosenSheet_eq : sheetValue.sheet =
     start.sheet
+  /-- The cached exact coefficient readback at this original point and selected sheet. -/
+  interpretation : Algebra.Quadratic.Pair.Polynomial.Expression.Denotation
+    differential.coefficient point sheetValue.value
   /-- The retained process state of the differential value built from this exact sheet certificate. -/ readingState :
-    (differential.value point sheetValue.value
-      sheetValue.apart).name.process.State
+    interpretation.channel.name.process.State
   /-- The observed integrand reading is possible at the retained differential process state. -/ readingPossible :
-    (differential.value point sheetValue.value
-      sheetValue.apart).name.process.Possible readingState
+    interpretation.channel.name.process.Possible readingState
         observation.integrandReading
 
 constructive_injectivity Purelib.Curves.Hyperelliptic.Integration.Algebraic.Observation.Jets.AlgebraicObservation

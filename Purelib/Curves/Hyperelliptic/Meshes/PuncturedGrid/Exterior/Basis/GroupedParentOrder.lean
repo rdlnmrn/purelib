@@ -64,26 +64,26 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQu
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBanks (BlockSample)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments (IndexedFragment ParentFragment)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping (IndexedRun IndexedGrouping)
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
+  {program : ExteriorProgram lifted
     differential} {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+    SurfacePreparation
     regular domains program}
 
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
-variable (retained : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation
+variable (retained : CommonBasisPreparation
   prepared) {index : Nat} (inputs : retained.Inputs index)
   (outer : Fin prepared.occurrences.length) {faceIndex : Nat}
-  (data : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (data : RowData
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) faceIndex)
   (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
 
@@ -96,14 +96,14 @@ namespace IndexedFragment
   coefficients) → Prop
   | [] => before + 1 = count
   | next :: rest => (next.parent.val = before ∨ next.parent.val = before + 1) ∧
-      Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.IndexedFragment.ParentAfter
+      ParentAfter
         next.parent.val count rest
 
 /-- The original indexed fragments traverse all retained parent positions from the first to the last. -/
 @[expose] def ParentWord : List (IndexedFragments.IndexedFragment retained inputs outer data coefficients) → Prop
   | [] => (ParentIndices.occurrenceAt prepared.occurrences outer).compared.entered.cache.parents.length = 0
   | first :: rest => first.parent.val = 0 ∧
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.IndexedFragment.ParentAfter
+    ParentAfter
     first.parent.val (ParentIndices.occurrenceAt prepared.occurrences outer).compared.entered.cache.parents.length rest
 
 end IndexedFragment
@@ -112,11 +112,11 @@ end IndexedFragment
 private def strictTail (before count : Nat) : List Nat → Prop
   | [] => before + 1 = count
   | next :: rest => next = before + 1 ∧
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.strictTail next count rest
+    GroupedParentOrder.strictTail next count rest
 
 /-- A strict parent-position chain is the exact consecutive natural range with its retained terminal count. -/
 private theorem strict_range (first count : Nat) (rest : List Nat)
-    (steps : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.strictTail first count rest) :
+    (steps : GroupedParentOrder.strictTail first count rest) :
     first :: rest = List.range' first (rest.length + 1) ∧ count = first + (rest.length + 1) := by
   induction rest generalizing first with
   | nil => exact ⟨rfl, steps.symm⟩
@@ -134,34 +134,34 @@ private theorem strict_range (first count : Nat) (rest : List Nat)
 private theorem skip_same (parent count : Nat)
     (before after : List (IndexedFragments.IndexedFragment retained inputs outer data coefficients))
     (same : ∀ item ∈ before, item.parent.val = parent)
-    (steps : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.IndexedFragment.ParentAfter
+    (steps : IndexedFragment.ParentAfter
       parent count (before ++ after)) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.IndexedFragment.ParentAfter parent count
+    IndexedFragment.ParentAfter parent count
       after := by
   induction before with
   | nil => exact steps
   | cons item rest ih =>
     have remaining := (congrArg (fun index =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.IndexedFragment.ParentAfter index
+      IndexedFragment.ParentAfter index
       count (rest ++ after))
       (same item List.mem_cons_self)).mp steps.2
     exact ih (fun found member => same found (List.mem_cons_of_mem _ member)) remaining
 
 /-- Maximal grouping removes stationary parent steps and retains strict successive original-parent positions. -/
-private theorem strict_parents (rest : List (FragmentGrouping.IndexedRun retained inputs outer data coefficients))
-    (run : FragmentGrouping.IndexedRun retained inputs outer data coefficients) (count : Nat)
+private theorem strict_parents (rest : List (IndexedRun retained inputs outer data coefficients))
+    (run : IndexedRun retained inputs outer data coefficients) (count : Nat)
     (apart : IndexedRun.separated (run :: rest))
-    (steps : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.IndexedFragment.ParentAfter
+    (steps : IndexedFragment.ParentAfter
       run.parent.val count (run.rest ++ (rest.map IndexedRun.items).flatten)) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.strictTail run.parent.val count
+    GroupedParentOrder.strictTail run.parent.val count
       (rest.map (fun run => run.parent.val)) := by
   induction rest generalizing run with
   | nil =>
-    exact Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.skip_same run.parent.val count
+    exact GroupedParentOrder.skip_same run.parent.val count
       run.rest []
       (fun item member => congrArg Fin.val (run.rest_parent item member)) steps
   | cons next rest ih =>
-    have boundary := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.skip_same
+    have boundary := GroupedParentOrder.skip_same
       run.parent.val count run.rest ((next :: rest).map IndexedRun.items).flatten
       (fun item member => congrArg Fin.val (run.rest_parent item member)) steps
     have nextEq := congrArg Fin.val next.first_parent
@@ -170,7 +170,7 @@ private theorem strict_parents (rest : List (FragmentGrouping.IndexedRun retaine
       exact apart.1 ((Fin.ext equal).symm.trans next.first_parent)
     have step : next.first.parent.val = run.parent.val + 1 := boundary.1.resolve_left different
     have remaining := (congrArg (fun index =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.IndexedFragment.ParentAfter index
+      IndexedFragment.ParentAfter index
       count
       (next.rest ++ (rest.map IndexedRun.items).flatten)) nextEq).mp boundary.2
     exact ⟨nextEq.symm.trans step, ih next apart.2 remaining⟩
@@ -215,12 +215,12 @@ private theorem ofFn_read {Item : Type u} (items : List Item) :
 
 namespace IndexedGrouping
 variable {items : List
-  (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment retained inputs
+  (IndexedFragments.IndexedFragment retained inputs
   outer data coefficients)}
 
 /-- The grouped run-parent values enumerate every original occurrence parent once in ascending order. -/
 theorem parent_values (grouped : FragmentGrouping.IndexedGrouping retained inputs outer data coefficients items)
-    (word : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.IndexedFragment.ParentWord
+    (word : IndexedFragment.ParentWord
       items) :
     grouped.runs.map (fun run => run.parent.val) = List.range' 0 (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length := by
@@ -237,13 +237,13 @@ theorem parent_values (grouped : FragmentGrouping.IndexedGrouping retained input
     rw [runsEq] at word
     have firstEq : run.parent.val = 0 := (congrArg Fin.val run.first_parent).symm.trans word.1
     have remaining := (congrArg (fun index =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.IndexedFragment.ParentAfter index
+      IndexedFragment.ParentAfter index
       (ParentIndices.occurrenceAt prepared.occurrences outer).compared.entered.cache.parents.length
       (run.rest ++ (rest.map IndexedRun.items).flatten)) (congrArg Fin.val run.first_parent)).mp word.2
-    have strict := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.strict_parents rest run
+    have strict := GroupedParentOrder.strict_parents rest run
       (ParentIndices.occurrenceAt prepared.occurrences outer).compared.entered.cache.parents.length
       ((congrArg IndexedRun.separated runsEq).mp grouped.separated) remaining
-    have ranged := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.strict_range
+    have ranged := GroupedParentOrder.strict_range
       run.parent.val (ParentIndices.occurrenceAt prepared.occurrences outer).compared.entered.cache.parents.length
       (rest.map (fun run => run.parent.val)) strict
     rw [firstEq, Nat.zero_add] at ranged
@@ -253,36 +253,36 @@ theorem parent_values (grouped : FragmentGrouping.IndexedGrouping retained input
 
 /-- Recover source positions themselves, even when parent payloads repeat. -/
 theorem parent_indices (grouped : FragmentGrouping.IndexedGrouping retained inputs outer data coefficients items)
-    (word : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.IndexedFragment.ParentWord
+    (word : IndexedFragment.ParentWord
       items) :
     grouped.runs.map IndexedRun.parent = List.ofFn (fun i : Fin (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length => i) := by
-  apply Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.fin_values_injective
-  rw [Data.List.Map.map_map, OfFn.Basic.map_ofFn]
-  have ranged := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.indices_range
+  apply GroupedParentOrder.fin_values_injective
+  rw [Map.map_map, OfFn.Basic.map_ofFn]
+  have ranged := GroupedParentOrder.indices_range
     (ParentIndices.occurrenceAt prepared.occurrences outer).compared.entered.cache.parents.length 0
   have equal : List.ofFn (fun i : Fin (ParentIndices.occurrenceAt prepared.occurrences
     outer).compared.entered.cache.parents.length => i.val) =
       List.ofFn (fun i : Fin (ParentIndices.occurrenceAt prepared.occurrences
         outer).compared.entered.cache.parents.length => 0 + i.val) :=
     OfFn.Basic.ofFn_congr (fun i => (Nat.zero_add i.val).symm)
-  exact (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.IndexedGrouping.parent_values
+  exact (IndexedGrouping.parent_values
     grouped word).trans (equal.trans ranged).symm
 
 /-- The actual retained entries, including their order and multiplicity, are recovered from the grouped parent indices
 without comparing payloads. -/
 theorem parent_entries (grouped : FragmentGrouping.IndexedGrouping retained inputs outer data coefficients items)
-    (word : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.IndexedFragment.ParentWord
+    (word : IndexedFragment.ParentWord
       items) :
     grouped.runs.map (fun run => ParentBlocks.cacheParent (ParentIndices.occurrenceAt prepared.occurrences outer)
       run.parent) = (ParentIndices.occurrenceAt prepared.occurrences outer).compared.entered.cache.parents := by
   have indices :=
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.IndexedGrouping.parent_indices grouped
+    IndexedGrouping.parent_indices grouped
     word
   have entries := congrArg (List.map (ParentBlocks.cacheParent (ParentIndices.occurrenceAt prepared.occurrences outer)))
     indices
-  rw [Data.List.Map.map_map, OfFn.Basic.map_ofFn] at entries
-  exact entries.trans (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.ofFn_read
+  rw [Map.map_map, OfFn.Basic.map_ofFn] at entries
+  exact entries.trans (GroupedParentOrder.ofFn_read
     (ParentIndices.occurrenceAt prepared.occurrences outer).compared.entered.cache.parents)
 
 end IndexedGrouping

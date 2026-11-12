@@ -70,24 +70,24 @@ open Purelib.Data.Rat
 open Purelib
 open Purelib.Riemann
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
-    {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered} {prepared :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired}
+    PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {ordered : PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
+    {paired : PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered} {prepared :
+    PuncturedGrid.Paired.PeriodPrograms.Prepared paired}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation base.bank.toBranchCellBank}
     {target radius : Fraction.Rational}
-  {family : Hyperelliptic.Meshes.Newton.AllHoles.PrimitiveComparison.NewtonPreparation.FamilyAreaRequest preparation
+  {family : AllHoles.PrimitiveComparison.NewtonPreparation.FamilyAreaRequest preparation
     target radius}
   {current : Meshes.LiftedPuncturedGrid family.single.grid.punctured}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames
     family.single.grid.faces.regulars} {newSheet : Fin 2}
-  {excision : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision family.single.grid current}
+  {excision : AllHoles.Excision.AllHoleExcision family.single.grid current}
   {magnitudes : Data.Vector.DependentVector (fun basis : Fin genus =>
-    Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
     (Periods.PeriodMatrix.standardDifferential basis))}
   {error : Fraction.Rational} {floor : Nat}
 
@@ -96,11 +96,11 @@ namespace Request
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {allowance : Fraction.Rational}
-  {request : Hyperelliptic.Meshes.Newton.HomogeneousPhysicalComparison.Request prepared newSheet excision magnitudes
-    (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance / 4) floor}
-  {stage : Nat} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  {request : HomogeneousPhysicalComparison.Request prepared newSheet excision magnitudes
+    (Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance / 4) floor}
+  {stage : Nat} {cache : PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
   {triangles : Data.Vector.DependentVector (fun basis : Fin genus =>
-    Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get basis) current.mesh)}
+    PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get basis) current.mesh)}
   {surfaces : Topology.Surface.Sewing.SewnEnergyCombination.EnergySurfaces current.cutPolygon.patch (fun basis =>
     (triangles.get basis).values)}
   {pairs : Topology.Surface.Sewing.SewnEnergyCombination.EnergyPairs surfaces}
@@ -109,14 +109,14 @@ variable {allowance : Fraction.Rational}
 
 The annular and period allowances are paid on the same late samples, retaining the original hole contributions, selected
 complement and coefficient norm. -/
-theorem Samples.remaining_raw_lower (samples : Hyperelliptic.Meshes.Newton.HomogeneousPhysicalComparison.Request.Samples
+theorem Samples.remaining_raw_lower (samples : HomogeneousPhysicalComparison.Request.Samples
   triangles surfaces pairs request)
-    {minimum : Nat} (cut : Hyperelliptic.Meshes.Newton.HomogeneousCutRequest.Request.CutRequest request
-      (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance / 4)
+    {minimum : Nat} (cut : HomogeneousCutRequest.Request.CutRequest request
+      (Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance / 4)
       minimum)
     (later : cut.index ≤ stage) (positive : 0 < allowance)
     {annularPrepared :
-      Hyperelliptic.Meshes.Newton.AllHoles.PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations excision}
+      AllHoles.PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations excision}
       {annularFloor : Nat}
     (annularRequest : RootContinuation.NewtonHomogeneousAnnularRequest.HomogeneousAnnularRequest.Request (domains :=
       domains) annularPrepared annularFloor)
@@ -126,12 +126,12 @@ theorem Samples.remaining_raw_lower (samples : Hyperelliptic.Meshes.Newton.Homog
     (selected : Topology.Surface.Sewing.SewnSelectedEnergy.SelectedEnergySamples surfaces pairs
       (fun source => !(excision.entries.any (fun entry => Topology.NewtonSewnExcision.AllHoleExcision.sourceMask entry
         source))))
-    (holes : Hyperelliptic.Meshes.Newton.HomogeneousBoundaryComparison.Request.HoleSamples triangles excision)
+    (holes : HomogeneousBoundaryComparison.Request.HoleSamples triangles excision)
       (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
     {annularAllowance : Fraction.Rational} (annularPositive : 0 < annularAllowance)
     (annularPaid : (82 / 4 : Fraction.Rational) * target ≤
-      Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus annularAllowance) :
-    let values := fun basis => Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh
+      Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus annularAllowance) :
+    let values := fun basis => PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh
       (triangles.get basis).values
     let aMatrix := Periods.NewtonCombinedPeriodArea.resplitPeriodMatrix prepared family.single.grid.shrunk.included
       current.edges current.vertices newSheet values false
@@ -145,7 +145,7 @@ theorem Samples.remaining_raw_lower (samples : Hyperelliptic.Meshes.Newton.Homog
     RootContinuation.NewtonHomogeneousRemainingComparison.HomogeneousAnnularRequest.Samples.remaining_sub_energy_lower
     annularSamples annularLater selected holes coefficients annularPositive
     annularPaid (2 * samples.exterior coefficients)
-  have period := Hyperelliptic.Meshes.Newton.HomogeneousRawComparison.Request.Samples.raw_lower samples cut later
+  have period := HomogeneousRawComparison.Request.Samples.raw_lower samples cut later
     positive holes coefficients
   have paid := (Fraction.Order.Arithmetic.sub_le_sub_direct annular (le_rfl (a := allowance *
     Readings.PreparedObservationCoercivity.coefficientNormSq coefficients))).trans period

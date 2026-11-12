@@ -66,21 +66,21 @@ def eval (polynomial :
 /-- Gaussian evaluation preserves padded addition of rational coefficient lists. -/
 theorem eval_addCoefficients (z :
   Gaussian.Basic.Canonical) : ∀ left right,
-    evalCoefficients z (Ascending.Rational.Basic.addCoefficients left right) =
+    evalCoefficients z (Basic.addCoefficients left right) =
       evalCoefficients z left +
         evalCoefficients z right
   | [], right => by
       apply Gaussian.Basic.ext <;>
-        simp only [Ascending.Rational.Basic.addCoefficients, evalCoefficients,
+        simp only [Basic.addCoefficients, evalCoefficients,
           Gaussian.Basic.add_re, Gaussian.Basic.add_im,
           Gaussian.Basic.zero_re, Gaussian.Basic.zero_im] <;> ring1
   | left, [] => by
-      rw [Ascending.Rational.Basic.addCoefficients_nil_right]
+      rw [Basic.addCoefficients_nil_right]
       apply Gaussian.Basic.ext <;>
         simp only [evalCoefficients, Gaussian.Basic.add_re, Gaussian.Basic.add_im,
           Gaussian.Basic.zero_re, Gaussian.Basic.zero_im] <;> ring1
   | left :: leftTail, right :: rightTail => by
-      rw [Ascending.Rational.Basic.addCoefficients, evalCoefficients,
+      rw [Basic.addCoefficients, evalCoefficients,
         evalCoefficients,
         evalCoefficients, Gaussian.Scale.scale_one_add,
         eval_addCoefficients z leftTail rightTail]
@@ -90,7 +90,7 @@ theorem eval_addCoefficients (z :
 /-- Gaussian evaluation preserves polynomial addition. -/
 @[simp] theorem eval_add (left right :
   CoefficientPolynomial) (z : Gaussian.Basic.Canonical) :
-    eval (Ascending.Rational.Basic.add left right) z =
+    eval (Basic.add left right) z =
       eval left z + eval right z :=
   eval_addCoefficients z left.coefficients right.coefficients
 
@@ -102,16 +102,16 @@ private theorem
   Gaussian.Basic.Canonical) :
     ∀ (right : List Fraction.Rational),
       (∀ degree,
-        Ascending.Rational.Basic.coefficientCoefficients [] degree =
-          Ascending.Rational.Basic.coefficientCoefficients right degree) →
+        Basic.coefficientCoefficients [] degree =
+          Basic.coefficientCoefficients right degree) →
       evalCoefficients z [] =
         evalCoefficients z right
   | [], _ => rfl
   | right :: rightTail, equal => by
       have headZero : right = 0 := (equal 0).symm
       have tailEqual : ∀ degree,
-          Ascending.Rational.Basic.coefficientCoefficients [] degree =
-            Ascending.Rational.Basic.coefficientCoefficients rightTail degree := by
+          Basic.coefficientCoefficients [] degree =
+            Basic.coefficientCoefficients rightTail degree := by
         intro degree
         exact equal (degree + 1)
       subst right
@@ -134,8 +134,8 @@ theorem evalCoefficients_eq_of_coefficients_eq (z :
   Gaussian.Basic.Canonical) :
     ∀ (left right : List Fraction.Rational),
       (∀ degree,
-        Ascending.Rational.Basic.coefficientCoefficients left degree =
-          Ascending.Rational.Basic.coefficientCoefficients right degree) →
+        Basic.coefficientCoefficients left degree =
+          Basic.coefficientCoefficients right degree) →
       evalCoefficients z left =
         evalCoefficients z right
   | [], right, equal =>
@@ -143,8 +143,8 @@ theorem evalCoefficients_eq_of_coefficients_eq (z :
   | left :: leftTail, [], equal => by
       have headZero : left = 0 := equal 0
       have tailEqual : ∀ degree,
-          Ascending.Rational.Basic.coefficientCoefficients leftTail degree =
-            Ascending.Rational.Basic.coefficientCoefficients [] degree := by
+          Basic.coefficientCoefficients leftTail degree =
+            Basic.coefficientCoefficients [] degree := by
         intro degree
         exact equal (degree + 1)
       subst left
@@ -162,8 +162,8 @@ theorem evalCoefficients_eq_of_coefficients_eq (z :
   | left :: leftTail, right :: rightTail, equal => by
       have headEqual : left = right := equal 0
       have tailEqual : ∀ degree,
-          Ascending.Rational.Basic.coefficientCoefficients leftTail degree =
-            Ascending.Rational.Basic.coefficientCoefficients rightTail degree := by
+          Basic.coefficientCoefficients leftTail degree =
+            Basic.coefficientCoefficients rightTail degree := by
         intro degree
         exact equal (degree + 1)
       rw [evalCoefficients,
@@ -174,7 +174,7 @@ theorem evalCoefficients_eq_of_coefficients_eq (z :
 /-- Coefficientwise equal rational polynomials have equal Gaussian evaluations. -/
 theorem eval_eq_of_coefficientwise {left right :
   CoefficientPolynomial}
-    (equal : Ascending.Rational.Coefficientwise.CoefficientwiseEqual left right) (z : Gaussian.Basic.Canonical) :
+    (equal : Coefficientwise.CoefficientwiseEqual left right) (z : Gaussian.Basic.Canonical) :
     eval left z = eval right z :=
   evalCoefficients_eq_of_coefficients_eq z left.coefficients
     right.coefficients equal
@@ -206,7 +206,7 @@ theorem evalCoefficients_map_scale (factor :
 @[simp] theorem eval_scale (factor : Fraction.Rational)
   (polynomial : CoefficientPolynomial)
     (z : Gaussian.Basic.Canonical) :
-    eval (Ascending.Rational.Basic.scale factor polynomial) z =
+    eval (Basic.scale factor polynomial) z =
       Gaussian.Scale.scale factor (eval polynomial z) :=
   evalCoefficients_map_scale factor z polynomial.coefficients
 
@@ -234,7 +234,7 @@ theorem evalCoefficients_replicate_zero_append (z :
 @[simp] theorem eval_shift (count : Nat) (polynomial :
   CoefficientPolynomial)
     (z : Gaussian.Basic.Canonical) :
-    eval (Ascending.Rational.Basic.shift count polynomial) z = z ^ count *
+    eval (Basic.shift count polynomial) z = z ^ count *
       eval polynomial z :=
   evalCoefficients_replicate_zero_append z count polynomial.coefficients
 
@@ -243,16 +243,16 @@ theorem evalCoefficients_replicate_zero_append (z :
 The finite recursion follows the scaled head contribution and shifted product of the tail. -/
 theorem eval_mulCoefficients (z :
   Gaussian.Basic.Canonical) : ∀ left right,
-    evalCoefficients z (Ascending.Rational.Basic.mulCoefficients left right) =
+    evalCoefficients z (Basic.mulCoefficients left right) =
       evalCoefficients z left *
         evalCoefficients z right
   | [], right => by
       apply Gaussian.Basic.ext <;>
-        simp only [Ascending.Rational.Basic.mulCoefficients, evalCoefficients,
+        simp only [Basic.mulCoefficients, evalCoefficients,
           Gaussian.Basic.mul_re, Gaussian.Basic.mul_im,
           Gaussian.Basic.zero_re, Gaussian.Basic.zero_im] <;> ring1
   | left :: leftTail, right => by
-      rw [Ascending.Rational.Basic.mulCoefficients, eval_addCoefficients,
+      rw [Basic.mulCoefficients, eval_addCoefficients,
         evalCoefficients_map_scale,
           evalCoefficients,
         evalCoefficients,
@@ -266,14 +266,14 @@ theorem eval_mulCoefficients (z :
 /-- Gaussian evaluation preserves polynomial multiplication. -/
 @[simp] theorem eval_mul (left right :
   CoefficientPolynomial) (z : Gaussian.Basic.Canonical) :
-    eval (Ascending.Rational.Basic.mul left right) z =
+    eval (Basic.mul left right) z =
       eval left z * eval right z :=
   eval_mulCoefficients z left.coefficients right.coefficients
 
 /-- Gaussian evaluation preserves natural powers of finite polynomials. -/
 @[simp] theorem eval_pow (polynomial :
   CoefficientPolynomial) (z : Gaussian.Basic.Canonical) :
-    ∀ exponent, eval (Ascending.Rational.Basic.pow polynomial exponent) z =
+    ∀ exponent, eval (Basic.pow polynomial exponent) z =
       eval polynomial z ^ exponent
   | 0 => by
       change Gaussian.Scale.scale 1 1 + z * 0 = _
@@ -284,16 +284,16 @@ theorem eval_mulCoefficients (z :
           Gaussian.Basic.zero_re, Gaussian.Basic.zero_im, Gaussian.Basic.one_re, Gaussian.Basic.one_im, pow_zero] <;>
             ring1
   | exponent + 1 => by
-      rw [Ascending.Rational.Basic.pow, eval_mul,
+      rw [Basic.pow, eval_mul,
         eval_pow polynomial z exponent, pow_succ]
 
 /-- A monomial evaluates to its rational coefficient scaling the Gaussian argument power. -/
 theorem eval_monomial (degree : Nat) (coefficient :
   Fraction.Rational)
     (z : Gaussian.Basic.Canonical) :
-    eval (Ascending.Rational.Monomial.monomial degree coefficient) z =
+    eval (Monomial.monomial degree coefficient) z =
       Gaussian.Scale.scale coefficient (z ^ degree) := by
-  rw [Ascending.Rational.Monomial.monomial, eval_shift]
+  rw [Monomial.monomial, eval_shift]
   change z ^ degree *
       (Gaussian.Scale.scale coefficient 1 + z * 0) = _
   apply Gaussian.Basic.ext <;>
@@ -308,10 +308,10 @@ theorem evalCoefficients_scalar (radius :
     evalCoefficients (Gaussian.RationalEmbedding.ComplexLog.scalar radius)
         coefficients =
       Gaussian.RationalEmbedding.ComplexLog.scalar
-        (Ascending.Rational.Evaluation.scalarEvalCoefficients radius coefficients)
+        (Evaluation.scalarEvalCoefficients radius coefficients)
   | [] => rfl
   | coefficient :: remaining => by
-      rw [evalCoefficients, Ascending.Rational.Evaluation.scalarEvalCoefficients,
+      rw [evalCoefficients, Evaluation.scalarEvalCoefficients,
         evalCoefficients_scalar radius remaining]
       apply Gaussian.Basic.ext <;>
         simp only [Gaussian.RationalEmbedding.ComplexLog.scalar,
@@ -323,20 +323,20 @@ theorem evalCoefficients_scalar (radius :
 theorem eval_scalar (radius : Fraction.Rational)
   (polynomial : CoefficientPolynomial) :
     eval polynomial (Gaussian.RationalEmbedding.ComplexLog.scalar radius) =
-      Gaussian.RationalEmbedding.ComplexLog.scalar (Ascending.Rational.Evaluation.scalarEval radius polynomial) :=
+      Gaussian.RationalEmbedding.ComplexLog.scalar (Evaluation.scalarEval radius polynomial) :=
   evalCoefficients_scalar radius polynomial.coefficients
 
 /-- A table with all zero-extended coefficients zero has Gaussian value zero. -/
 theorem evalCoefficients_zero_of_coefficients_zero (z :
   Gaussian.Basic.Canonical) :
     ∀ coefficients,
-      (∀ degree, Ascending.Rational.Basic.coefficientCoefficients coefficients degree = 0) →
+      (∀ degree, Basic.coefficientCoefficients coefficients degree = 0) →
         evalCoefficients z coefficients = 0
   | [], allZero => rfl
   | coefficient :: remaining, allZero => by
       have headZero : coefficient = 0 := allZero 0
       have tailZero :
-          ∀ degree, Ascending.Rational.Basic.coefficientCoefficients remaining degree = 0 := by
+          ∀ degree, Basic.coefficientCoefficients remaining degree = 0 := by
         intro degree
         exact allZero (degree + 1)
       subst coefficient

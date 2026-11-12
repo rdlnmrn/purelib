@@ -14,6 +14,8 @@ import Purelib.Data.Nat.Addition
 import Purelib.Algebra.Field.ExplicitField
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian.Coefficients.Constants
+
 /-!
 # Quarter-turn substitution of Gaussian polynomials
 
@@ -36,21 +38,21 @@ The state is scaled by the imaginary unit and shifted once, then the
 retained coefficient is added as a constant polynomial. -/
 @[expose] def quarterTurnStep (state : Basic.CanonicalCoefficients.CoefficientPolynomial) (coefficient :
   Gaussian.Basic.Canonical) :
-    (Dense.Basic.DensePolynomial Gaussian.Basic.Canonical) :=
-  Dense.Basic.DensePolynomial.shift 1 (Dense.Basic.DensePolynomial.scale Gaussian.Constants.imaginaryUnit state) +
-    Dense.Gaussian.Coefficients.Constants.SeparatedVariables.parameterConstant coefficient
+    (Basic.DensePolynomial Gaussian.Basic.Canonical) :=
+  Basic.DensePolynomial.shift 1 (Basic.DensePolynomial.scale Gaussian.Constants.imaginaryUnit state) +
+    SeparatedVariables.parameterConstant coefficient
 
 /-- Substitute the imaginary-unit multiple of the coordinate using a finite fold over normalized coefficients.
 
 The empty coefficient table remains zero; a nonempty table starts from its leading constant and applies the retained
 quarter-turn step. -/
-@[expose] def quarterTurn (p : Basic.CanonicalCoefficients.CoefficientPolynomial) : (Dense.Basic.DensePolynomial
+@[expose] def quarterTurn (p : Basic.CanonicalCoefficients.CoefficientPolynomial) : (Basic.DensePolynomial
   Gaussian.Basic.Canonical) :=
   match p.normalize.coeffs with
   | [] => 0
   | leading :: remaining =>
-      remaining.foldl Dense.Gaussian.Substitution.QuarterTurn.quarterTurnStep
-        (Dense.Gaussian.Coefficients.Constants.SeparatedVariables.parameterConstant leading)
+      remaining.foldl quarterTurnStep
+        (SeparatedVariables.parameterConstant leading)
 
 section
 /-- The quarter-turn coefficient fold evaluates as the scalar Horner fold at the rotated argument.
@@ -61,18 +63,18 @@ private theorem eval_foldl_quarterTurnStep (z : Gaussian.Basic.Canonical) :
     ∀ (coefficients : List Gaussian.Basic.Canonical) (state : Basic.CanonicalCoefficients.CoefficientPolynomial)
       (value : Gaussian.Basic.Canonical),
       state.eval z = value →
-      (coefficients.foldl Dense.Gaussian.Substitution.QuarterTurn.quarterTurnStep state).eval z =
+      (coefficients.foldl quarterTurnStep state).eval z =
         coefficients.foldl
           (fun accumulator coefficient =>
             accumulator * (z * Gaussian.Constants.imaginaryUnit) + coefficient) value
   | [], _, _, stateEvaluation => stateEvaluation
   | coefficient :: remaining, state, value, stateEvaluation => by
       simp only [List.foldl_cons]
-      apply Purelib.Polynomial.Dense.Gaussian.Substitution.QuarterTurn.eval_foldl_quarterTurnStep z
+      apply QuarterTurn.eval_foldl_quarterTurnStep z
         remaining
-      rw [Dense.Gaussian.Substitution.QuarterTurn.quarterTurnStep, Dense.Basic.DensePolynomial.eval_add,
-        Dense.Basic.DensePolynomial.eval_shift, Dense.Basic.DensePolynomial.eval_scale,
-        Dense.Gaussian.Coefficients.Constants.eval_parameterConstant, stateEvaluation]
+      rw [quarterTurnStep, Basic.DensePolynomial.eval_add,
+        Basic.DensePolynomial.eval_shift, Basic.DensePolynomial.eval_scale,
+        Coefficients.Constants.eval_parameterConstant, stateEvaluation]
       change Gaussian.Constants.imaginaryUnit * value * z ^ 1 + coefficient =
         value * (z * Gaussian.Constants.imaginaryUnit) + coefficient
       ring1
@@ -84,26 +86,26 @@ The normalized finite table is evaluated after the same imaginary-unit
 substitution, so its scalar readback uses the rotated argument. -/
 @[simp] theorem eval_quarterTurn (p : Basic.CanonicalCoefficients.CoefficientPolynomial) (z :
   Gaussian.Basic.Canonical) :
-    (Dense.Gaussian.Substitution.QuarterTurn.quarterTurn p).eval z = p.eval (z * Gaussian.Constants.imaginaryUnit) := by
-  rw [← Dense.Basic.DensePolynomial.eval_normalize p (z * Gaussian.Constants.imaginaryUnit)]
-  change (Dense.Gaussian.Substitution.QuarterTurn.quarterTurn p).eval z =
+    (quarterTurn p).eval z = p.eval (z * Gaussian.Constants.imaginaryUnit) := by
+  rw [← Basic.DensePolynomial.eval_normalize p (z * Gaussian.Constants.imaginaryUnit)]
+  change (quarterTurn p).eval z =
     p.normalize.coeffs.foldl
       (fun value coefficient =>
         value * (z * Gaussian.Constants.imaginaryUnit) + coefficient) 0
   cases coefficients : p.normalize.coeffs with
   | nil =>
-      rw [Dense.Gaussian.Substitution.QuarterTurn.quarterTurn, coefficients, Dense.Basic.DensePolynomial.eval_zero]
+      rw [quarterTurn, coefficients, Basic.DensePolynomial.eval_zero]
       change 0 = [].foldl
         (fun value coefficient =>
           value * (z * Gaussian.Constants.imaginaryUnit) + coefficient) 0
       rfl
   | cons leading remaining =>
-      rw [Dense.Gaussian.Substitution.QuarterTurn.quarterTurn, coefficients]
-      have initial : (Dense.Gaussian.Coefficients.Constants.SeparatedVariables.parameterConstant leading).eval z =
+      rw [quarterTurn, coefficients]
+      have initial : (SeparatedVariables.parameterConstant leading).eval z =
         leading :=
-        Dense.Gaussian.Coefficients.Constants.eval_parameterConstant leading z
-      rw [Purelib.Polynomial.Dense.Gaussian.Substitution.QuarterTurn.eval_foldl_quarterTurnStep z remaining
-        (Dense.Gaussian.Coefficients.Constants.SeparatedVariables.parameterConstant leading) leading initial]
+        Coefficients.Constants.eval_parameterConstant leading z
+      rw [eval_foldl_quarterTurnStep z remaining
+        (SeparatedVariables.parameterConstant leading) leading initial]
       simp only [List.foldl_cons]
       change remaining.foldl
           (fun value coefficient =>
@@ -128,35 +130,35 @@ computed leading coefficient. -/
 private theorem foldl_quarterTurnLeading :
     ∀ (coefficients : List Gaussian.Basic.Canonical) (state : Basic.CanonicalCoefficients.CoefficientPolynomial)
       (degree : Nat) (leading : Gaussian.Basic.Canonical),
-      Dense.Leading.LeadingTerm state degree leading →
-      Dense.Leading.LeadingTerm
-        (coefficients.foldl Dense.Gaussian.Substitution.QuarterTurn.quarterTurnStep state)
+      Leading.LeadingTerm state degree leading →
+      Leading.LeadingTerm
+        (coefficients.foldl quarterTurnStep state)
         (degree + coefficients.length)
-        (coefficients.foldl Dense.Gaussian.Substitution.QuarterTurn.quarterTurnLeadingStep leading)
+        (coefficients.foldl quarterTurnLeadingStep leading)
   | [], _, _, _, shape => shape
   | coefficient :: remaining, state, degree, leading, shape => by
       simp only [List.foldl_cons, List.length_cons]
       have imaginaryNonzero : Gaussian.Constants.imaginaryUnit ≠ 0 := by decide
-      have scaled := Dense.Leading.LeadingTerm.scale
+      have scaled := Leading.LeadingTerm.scale
         imaginaryNonzero shape
-      have shifted := Dense.Leading.LeadingTerm.shift 1 scaled
+      have shifted := Leading.LeadingTerm.shift 1 scaled
       have coefficientBelow :
-        Dense.Leading.DegreeBelow
-            (Dense.Gaussian.Coefficients.Constants.SeparatedVariables.parameterConstant coefficient) (degree + 1) :=
-        Dense.Leading.DegreeBelow.mono
-          (Dense.Gaussian.Coefficients.Constants.parameterConstant_atMost coefficient).toBelowSucc
+        Leading.DegreeBelow
+            (SeparatedVariables.parameterConstant coefficient) (degree + 1) :=
+        Leading.DegreeBelow.mono
+          (Coefficients.Constants.parameterConstant_atMost coefficient).toBelowSucc
           (Nat.succ_le_succ (Nat.zero_le degree))
-      have next : Dense.Leading.LeadingTerm
-          (Dense.Gaussian.Substitution.QuarterTurn.quarterTurnStep state coefficient) (degree + 1)
+      have next : Leading.LeadingTerm
+          (quarterTurnStep state coefficient) (degree + 1)
           (Gaussian.Constants.imaginaryUnit * leading) := by
-        unfold Dense.Gaussian.Substitution.QuarterTurn.quarterTurnStep
-        exact Dense.Leading.LeadingTerm.addBelow shifted
+        unfold quarterTurnStep
+        exact Leading.LeadingTerm.addBelow shifted
           coefficientBelow
-      have final := Purelib.Polynomial.Dense.Gaussian.Substitution.QuarterTurn.foldl_quarterTurnLeading
+      have final := QuarterTurn.foldl_quarterTurnLeading
         remaining
-        (Dense.Gaussian.Substitution.QuarterTurn.quarterTurnStep state coefficient) (degree + 1)
+        (quarterTurnStep state coefficient) (degree + 1)
         (Gaussian.Constants.imaginaryUnit * leading) next
-      exact Dense.Leading.LeadingTerm.of_equal
+      exact Leading.LeadingTerm.of_equal
         rfl
         (by
           calc
@@ -178,7 +180,7 @@ coefficient causes one multiplication by the same imaginary unit. -/
   match p.normalize.coeffs with
   | [] => 0
   | leading :: remaining =>
-      remaining.foldl Dense.Gaussian.Substitution.QuarterTurn.quarterTurnLeadingStep leading
+      remaining.foldl quarterTurnLeadingStep leading
 
 /-- A nonzero polynomial's quarter turn retains its degree and the computed rotated leading coefficient.
 
@@ -186,8 +188,8 @@ The nonzero normalized table has a retained leading coefficient. Its
 finite tail determines the same degree and the computed rotated leader. -/
 theorem quarterTurn_shape (p : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (nonzero : p.isZero = false) :
-    Dense.Leading.LeadingTerm (Dense.Gaussian.Substitution.QuarterTurn.quarterTurn p)
-      p.natDegree (Dense.Gaussian.Substitution.QuarterTurn.quarterTurnLeading p) := by
+    Leading.LeadingTerm (quarterTurn p)
+      p.natDegree (quarterTurnLeading p) := by
   cases coefficients : p.normalize.coeffs with
   | nil =>
       have contradiction := nonzero
@@ -196,29 +198,29 @@ theorem quarterTurn_shape (p : Basic.CanonicalCoefficients.CoefficientPolynomial
       exact Bool.noConfusion contradiction
   | cons leading remaining =>
       have leadingNonzero : leading ≠ 0 := by
-        have := Dense.Basic.DensePolynomial.leadingCoeff_ne_zero nonzero
+        have := Basic.DensePolynomial.leadingCoeff_ne_zero nonzero
         change p.normalize.coeffs.headD 0 ≠ 0 at this
         simpa only [coefficients, List.headD_cons] using this
-      have initial := Dense.Gaussian.Coefficients.Constants.parameterConstant_leading leadingNonzero
-      have folded := Purelib.Polynomial.Dense.Gaussian.Substitution.QuarterTurn.foldl_quarterTurnLeading remaining
-        (Dense.Gaussian.Coefficients.Constants.SeparatedVariables.parameterConstant leading) 0 leading initial
+      have initial := Coefficients.Constants.parameterConstant_leading leadingNonzero
+      have folded := foldl_quarterTurnLeading remaining
+        (SeparatedVariables.parameterConstant leading) 0 leading initial
       have degreeIdentity : p.natDegree = remaining.length := by
-        have count := Dense.Basic.DensePolynomial.natDegree_add_one_eq_degreeCount nonzero
-        rw [Dense.Basic.DensePolynomial.degreeCount, coefficients] at count
+        have count := Basic.DensePolynomial.natDegree_add_one_eq_degreeCount nonzero
+        rw [Basic.DensePolynomial.degreeCount, coefficients] at count
         simp only [List.length_cons] at count
         exact Addition.add_right_cancel count
-      exact Dense.Leading.LeadingTerm.of_equal
-        (by rw [Dense.Gaussian.Substitution.QuarterTurn.quarterTurn, coefficients])
+      exact Leading.LeadingTerm.of_equal
+        (by rw [quarterTurn, coefficients])
         (by rw [degreeIdentity, Nat.zero_add])
-        (by rw [Dense.Gaussian.Substitution.QuarterTurn.quarterTurnLeading, coefficients]) folded
+        (by rw [quarterTurnLeading, coefficients]) folded
 
 /-- Quarter-turn substitution preserves polynomial nonzeroness.
 
 The retained quarter-turn leading-term certificate supplies a nonzero
 leader for the same substituted polynomial. -/
 theorem quarterTurn_nonzero (p : Basic.CanonicalCoefficients.CoefficientPolynomial)
-    (nonzero : p.isZero = false) : (Dense.Gaussian.Substitution.QuarterTurn.quarterTurn p).isZero = false :=
-  (Dense.Gaussian.Substitution.QuarterTurn.quarterTurn_shape p nonzero).nonzero
+    (nonzero : p.isZero = false) : (quarterTurn p).isZero = false :=
+  (quarterTurn_shape p nonzero).nonzero
 
 /-- Quarter-turn substitution preserves the natural degree of every nonzero polynomial.
 
@@ -226,8 +228,8 @@ The retained leading-term certificate identifies the natural degree of
 the substituted polynomial with the supplied nonzero source degree. -/
 theorem quarterTurn_natDegree (p : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (nonzero : p.isZero = false) :
-    (Dense.Gaussian.Substitution.QuarterTurn.quarterTurn p).natDegree = p.natDegree :=
-  (Dense.Gaussian.Substitution.QuarterTurn.quarterTurn_shape p nonzero).degree_eq
+    (quarterTurn p).natDegree = p.natDegree :=
+  (quarterTurn_shape p nonzero).degree_eq
 
 end Purelib.Polynomial.Dense.Gaussian.Substitution.QuarterTurn
 

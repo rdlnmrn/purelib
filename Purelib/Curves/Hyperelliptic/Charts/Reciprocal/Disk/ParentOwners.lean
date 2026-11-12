@@ -91,14 +91,14 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBank (Bank)
 open Purelib.Riemann.Meshes.UniformPrimitiveMesh (firstEndpoint lastEndpoint)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners (Endpoints Join)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap}
 
 set_option genInjectivity false in
 /-- The endpoint root caches and their stage-independent numerical budgets are retained together, before any requested
@@ -107,17 +107,17 @@ accuracy is selected.
 The two endpoint owners retain the supplied cell, and the cached numerical
 bounds refer to these exact coordinate owners before any accuracy request. -/
 structure OwnedEndpoints (regular : RegularBounds.Data cap)
-    {edge : ClearSheetContinuation.Subdivision.ParameterEdge} (cell : UniformReciprocalCover.Cell data edge) extends
+    {edge : ParameterEdge} (cell : Cell data edge) extends
       Endpoints cap cell where
   /-- The cached numerical endpoint bounds tied to these exact original coordinate owners. -/ bounds :
-    EndpointPairs.PairData regular toEndpoints
+    PairData regular toEndpoints
 
 constructive_injectivity OwnedEndpoints
 
 /-- Acquire the original cell's two root endpoints once and cache their stage-independent pair bounds. -/
 @[expose] def OwnedEndpoints.build (regular : RegularBounds.Data cap)
-    {edge : ClearSheetContinuation.Subdivision.ParameterEdge} (cell : UniformReciprocalCover.Cell data edge) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.OwnedEndpoints regular cell :=
+    {edge : ParameterEdge} (cell : Cell data edge) :
+      OwnedEndpoints regular cell :=
   let endpoints := Endpoints.build cap cell
   ⟨endpoints, PairData.build regular endpoints⟩
 
@@ -126,45 +126,45 @@ set_option genInjectivity false in
 
 Each constructor follows the comparison bank's original cell and tail.
 The type index preserves that exact bank and its ordered parameter edges. -/
-inductive Owners : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → ParentBank.Bank regular data edges
+inductive Owners : {edges : List ParameterEdge} → Bank regular data edges
   → Type 1
   /-- The empty original comparison bank has no endpoint owners. -/ | nil :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners .nil
+    ParentOwners.Owners .nil
   /-- Prepend one original cell's endpoint owners to the retained tail bank. -/ | cons {edge :
-    ClearSheetContinuation.Subdivision.ParameterEdge} {remaining : List
-    ClearSheetContinuation.Subdivision.ParameterEdge} {cell : UniformReciprocalCover.Cell data edge}
-      {comparison : ArcSamples.Data regular cell} {bank : ParentBank.Bank regular data remaining}
-      (head : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.OwnedEndpoints regular cell) (tail :
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank) :
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners (.cons comparison bank)
+    ParameterEdge} {remaining : List
+    ParameterEdge} {cell : Cell data edge}
+      {comparison : ArcSamples.Data regular cell} {bank : Bank regular data remaining}
+      (head : OwnedEndpoints regular cell) (tail :
+        ParentOwners.Owners bank) :
+        ParentOwners.Owners (.cons comparison bank)
 
 constructive_injectivity Owners
 
 namespace Owners
 
 /-- Cache the original endpoint owners along the retained comparison bank without replacing its source cells. -/
-@[expose] def build : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → (bank : ParentBank.Bank regular
-  data edges) → Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank
+@[expose] def build : {edges : List ParameterEdge} → (bank : Bank regular
+  data edges) → Owners bank
   | _, .nil => .nil
-  | _, .cons _ tail => .cons (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.OwnedEndpoints.build regular _)
-    (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.build tail)
+  | _, .cons _ tail => .cons (OwnedEndpoints.build regular _)
+    (Owners.build tail)
 
 /-- The exact endpoint adjacency relation for an original parameter-edge chain. -/
-@[expose] def From (first : InverseRootPolynomial.Coordinate) : List ClearSheetContinuation.Subdivision.ParameterEdge →
-  InverseRootPolynomial.Coordinate → Prop
+@[expose] def From (first : Coordinate) : List ParameterEdge →
+  Coordinate → Prop
   | [], last => first = last
   | edge :: rest, last => first = edge.left.parameter ∧
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.From edge.right.parameter rest last
+    Owners.From edge.right.parameter rest last
 
 /-- Concatenate parameter chains through their shared endpoint.
 
 The endpoint relation retains the supplied edge order and the middle
 parameter while composing the two outer endpoints. -/
-theorem from_append {first middle last : InverseRootPolynomial.Coordinate} {left right : List
-  ClearSheetContinuation.Subdivision.ParameterEdge}
-    (before : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.From first left middle) (after :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.From middle right last) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.From first (left ++ right) last := by
+theorem from_append {first middle last : Coordinate} {left right : List
+  ParameterEdge}
+    (before : From first left middle) (after :
+      From middle right last) :
+      From first (left ++ right) last := by
   induction left generalizing first with
   | nil => exact before ▸ after
   | cons edge rest ih => exact ⟨before.1, ih before.2⟩
@@ -173,31 +173,31 @@ theorem from_append {first middle last : InverseRootPolynomial.Coordinate} {left
 
 Each recursive split joins the two retained sublists through their midpoint
 and preserves the original outer parameters. -/
-theorem dyadic_from (depth : Nat) (first last : ClearSheetContinuation.Subdivision.Endpoint) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.From first.parameter
-      (ClearSheetContinuation.Subdivision.dyadicEdges depth first last) last.parameter := by
+theorem dyadic_from (depth : Nat) (first last : Endpoint) :
+    From first.parameter
+      (dyadicEdges depth first last) last.parameter := by
   induction depth generalizing first last with
   | zero => exact ⟨rfl, rfl⟩
-  | succ depth ih => exact Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.from_append (ih _ _) (ih _ _)
+  | succ depth ih => exact from_append (ih _ _) (ih _ _)
 
 /-- Consecutive parameter edges share their joining parameter.
 
 The finite relation checks the head junction and follows the original
 remaining edge spine, with empty and singleton lists requiring no junction. -/
-@[expose] def Junctions : List ClearSheetContinuation.Subdivision.ParameterEdge → Prop
+@[expose] def Junctions : List ParameterEdge → Prop
   | [] => True
   | [_] => True
   | first :: next :: remaining => first.right.parameter = next.left.parameter ∧
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.Junctions (next :: remaining)
+    Owners.Junctions (next :: remaining)
 
 /-- The endpoint relation supplies every consecutive edge junction.
 
 The head endpoint identity supplies the next joining parameter, and the
 retained tail relation supplies the remaining finite junctions. -/
-theorem junctions_of_from {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} {first last :
-  InverseRootPolynomial.Coordinate}
-    (chain : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.From first edges last) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.Junctions edges := by
+theorem junctions_of_from {edges : List ParameterEdge} {first last :
+  Coordinate}
+    (chain : From first edges last) :
+      Junctions edges := by
   induction edges generalizing first with
   | nil => trivial
   | cons edge rest ih =>
@@ -209,13 +209,13 @@ theorem junctions_of_from {edges : List ClearSheetContinuation.Subdivision.Param
 
 The dependent product follows the supplied owner spine and retains both
 actual endpoint owners of every junction. -/
-@[expose] def LinkData : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank
-  regular data edges} → Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank → Type
+@[expose] def LinkData : {edges : List ParameterEdge} → {bank : Bank
+  regular data edges} → Owners bank → Type
   | _, _, .nil => PUnit
   | _, _, .cons _ .nil => PUnit
-  | _, _, .cons first (@Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.cons _ _ _ _ _ _ _ _ _ _ _ _ _
+  | _, _, .cons first (@cons _ _ _ _ _ _ _ _ _ _ _ _ _
     nextComparison _ next remaining) =>
-      Join first.last next.first × Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.LinkData
+      Join first.last next.first × Owners.LinkData
         (.cons (comparison := nextComparison) next remaining)
 
 set_option genInjectivity false in
@@ -223,25 +223,25 @@ set_option genInjectivity false in
 
 The cached dependent product contains the joins of adjacent supplied cell
 owners, allowing readback and primitive comparisons without rebuilding them. -/
-structure Links {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} {bank : ParentBank.Bank regular data
-  edges} (owners : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank) where
+structure Links {edges : List ParameterEdge} {bank : Bank regular data
+  edges} (owners : Owners bank) where
   /-- The cached operational joins for this exact original owner spine. -/ retained :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.LinkData owners
+    LinkData owners
 
 constructive_injectivity Links
 
 /-- Every consecutive pair names the same supplied cap primitive. -/
 @[expose] def PrimitiveLinks {index : Nat} {box : Rational.Box}
     (sample : Primitives.Sample cap differential index box) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank → Type
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      Owners bank → Type
   | _, _, .nil => PUnit
   | _, _, .cons _ .nil => PUnit
-  | _, _, .cons first (@Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.cons _ _ _ _ _ _ _ _ _ _ _ _ _
+  | _, _, .cons first (@cons _ _ _ _ _ _ _ _ _ _ _ _ _
     nextComparison _ next remaining) =>
       Gaussian.Equivalence.NamedEquivalent
         (first.last.coordinates.chartPrimitive sample).name (next.first.coordinates.chartPrimitive sample).name ×
-          Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.PrimitiveLinks sample (.cons
+          Owners.PrimitiveLinks sample (.cons
             (comparison := nextComparison) next remaining)
 
 namespace Links
@@ -250,49 +250,49 @@ namespace Links
 
 Each head join uses the two supplied endpoint owners; recursion retains the
 original tail spine and its remaining junction evidence. -/
-@[expose] def ofJunctions : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank
+@[expose] def ofJunctions : {edges : List ParameterEdge} → {bank : Bank
   regular data edges} →
-    (owners : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank) →
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.Junctions edges →
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.LinkData owners
+    (owners : Owners bank) →
+      Junctions edges →
+      LinkData owners
   | _, _, .nil, _ => ⟨⟩
   | _, _, .cons _ .nil, _ => ⟨⟩
-  | _, _, .cons first (@Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.cons _ _ _ _ _ _ _ _ _ _ _ _ _
+  | _, _, .cons first (@cons _ _ _ _ _ _ _ _ _ _ _ _ _
     nextComparison _ next remaining), junctions =>
       ⟨Join.ofSameParent first.last next.first junctions.1,
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.Links.ofJunctions (.cons (comparison :=
+        Links.ofJunctions (.cons (comparison :=
           nextComparison) next remaining) junctions.2⟩
 
 /-- Cache the original endpoint owners along the retained comparison bank without replacing its source cells. -/
-@[expose] def build (mesh : UniformReciprocalCover.Mesh data) {bank : ParentBank.Bank regular data mesh.edges}
-    (owners : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.Links owners :=
-  ⟨ofJunctions owners (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.junctions_of_from
-    (mesh.edges_eq.symm ▸ Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.dyadic_from mesh.depth
-    UniformPrimitiveMesh.firstEndpoint UniformPrimitiveMesh.lastEndpoint))⟩
+@[expose] def build (mesh : Mesh data) {bank : Bank regular data mesh.edges}
+    (owners : Owners bank) :
+      Links owners :=
+  ⟨ofJunctions owners (junctions_of_from
+    (mesh.edges_eq.symm ▸ dyadic_from mesh.depth
+    firstEndpoint lastEndpoint))⟩
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.Links in
 /-- Read the cached original first boundary join from the retained owner-link bank. -/
-@[expose] def head {edge nextEdge : ClearSheetContinuation.Subdivision.ParameterEdge} {remaining : List
-  ClearSheetContinuation.Subdivision.ParameterEdge}
-    {cell : UniformReciprocalCover.Cell data edge} {nextCell : UniformReciprocalCover.Cell data nextEdge}
+@[expose] def head {edge nextEdge : ParameterEdge} {remaining : List
+  ParameterEdge}
+    {cell : Cell data edge} {nextCell : Cell data nextEdge}
     {comparison : ArcSamples.Data regular cell} {nextComparison : ArcSamples.Data regular nextCell}
-    {bank : ParentBank.Bank regular data remaining} {first :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.OwnedEndpoints regular cell} {next :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.OwnedEndpoints regular nextCell} {tail :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank}
-    (links : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.Links (.cons (comparison := comparison)
+    {bank : Bank regular data remaining} {first :
+      OwnedEndpoints regular cell} {next :
+      OwnedEndpoints regular nextCell} {tail :
+      Owners bank}
+    (links : Links (.cons (comparison := comparison)
       first (.cons (comparison := nextComparison) next tail))) :
     Join first.last next.first := links.retained.1
 
 /-- Read the cached original tail joins without rebuilding any endpoint owner. -/
-@[expose] def tail {edge : ClearSheetContinuation.Subdivision.ParameterEdge} {remaining : List
-  ClearSheetContinuation.Subdivision.ParameterEdge} {cell : UniformReciprocalCover.Cell data edge}
-    {comparison : ArcSamples.Data regular cell} {bank : ParentBank.Bank regular data remaining}
-    {first : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.OwnedEndpoints regular cell} {rest :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank} (links :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.Links (.cons (comparison := comparison) first
-      rest)) : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.Links rest := by
+@[expose] def tail {edge : ParameterEdge} {remaining : List
+  ParameterEdge} {cell : Cell data edge}
+    {comparison : ArcSamples.Data regular cell} {bank : Bank regular data remaining}
+    {first : OwnedEndpoints regular cell} {rest :
+      Owners bank} (links :
+      Links (.cons (comparison := comparison) first
+      rest)) : Links rest := by
   cases rest with
   | nil => exact ⟨⟨⟩⟩
   | cons next remaining => exact ⟨links.retained.2⟩
@@ -300,16 +300,16 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.Lin
 /-- Reuse all cached joins; no root model or ownership comparison is rebuilt. -/
 @[expose] def primitives {index : Nat} {box : Rational.Box}
     (sample : Primitives.Sample cap differential index box) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      {owners : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank} →
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.Links owners →
-        Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.PrimitiveLinks sample owners
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      {owners : Owners bank} →
+      Links owners →
+        PrimitiveLinks sample owners
   | _, _, .nil, _ => ⟨⟩
   | _, _, .cons _ .nil, _ => ⟨⟩
-  | _, _, .cons _ (@Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.cons _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  | _, _, .cons _ (@cons _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     _), links =>
       ⟨links.head.primitiveEquivalent sample,
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.Links.primitives sample links.tail⟩
+        Links.primitives sample links.tail⟩
 
 end Links
 set_option genInjectivity false in
@@ -319,12 +319,12 @@ never acquires another root.
 The supplied cell and root model determine the retained point at the stated
 parameter; its cached numerical bounds travel with that same point. -/
 structure EndpointView (regular : RegularBounds.Data cap) (data : UniformReciprocalModels.Data patch count) (parameter :
-  InverseRootPolynomial.Coordinate) where
+  Coordinate) where
   /-- The original parameter edge containing the retained endpoint. -/ edge :
-    ClearSheetContinuation.Subdivision.ParameterEdge
-  /-- The original source cell on the retained parameter edge. -/ cell : UniformReciprocalCover.Cell data edge
+    ParameterEdge
+  /-- The original source cell on the retained parameter edge. -/ cell : Cell data edge
   /-- The retained root model owned by this exact original source cell. -/ model :
-    UniformReciprocalRootChannels.RootModel cell
+    RootModel cell
   /-- The original endpoint occurrence at the retained boundary parameter. -/ point : ArcOwners.Point cap model
     parameter
   /-- The cached numerical endpoint bounds tied to these exact original coordinate owners. -/ bounds :
@@ -333,12 +333,12 @@ structure EndpointView (regular : RegularBounds.Data cap) (data : UniformRecipro
 constructive_injectivity EndpointView
 
 /-- Transport a retained point and its cached numerical bounds together. -/
-@[expose] def EndpointView.ofPoint {edge : ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-  UniformReciprocalCover.Cell data edge}
-    {model : UniformReciprocalRootChannels.RootModel cell} {parameter target : InverseRootPolynomial.Coordinate}
+@[expose] def EndpointView.ofPoint {edge : ParameterEdge} {cell :
+  Cell data edge}
+    {model : RootModel cell} {parameter target : Coordinate}
     (point : ArcOwners.Point cap model parameter)
     (bounds : EndpointComparison.Data regular point) (equal : parameter = target) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.EndpointView regular data target := by
+    EndpointView regular data target := by
   cases equal
   exact ⟨edge, cell, model, point, bounds⟩
 
@@ -347,7 +347,7 @@ set_option genInjectivity false in
 
 The endpoint and its cached rational reading retain the supplied primitive
 sample and stage, so boundary transport does not sample the root again. -/
-structure EndpointView.RootReading (view : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.EndpointView
+structure EndpointView.RootReading (view : EndpointView
   regular data parameter)
     {index : Nat} {box : Rational.Box} (sample : Primitives.Sample cap differential index box) (stage :
       Nat) where
@@ -359,9 +359,9 @@ structure EndpointView.RootReading (view : Curves.Hyperelliptic.Charts.Reciproca
 constructive_injectivity EndpointView.RootReading
 
 /-- Transport the retained original endpoint reading into its exact boundary view. -/
-@[expose] def EndpointView.rootReading {edge : ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-  UniformReciprocalCover.Cell data edge}
-    {model : UniformReciprocalRootChannels.RootModel cell} {parameter target : InverseRootPolynomial.Coordinate}
+@[expose] def EndpointView.rootReading {edge : ParameterEdge} {cell :
+  Cell data edge}
+    {model : RootModel cell} {parameter target : Coordinate}
     {point : ArcOwners.Point cap model parameter}
     (bounds : EndpointComparison.Data regular point) (equal : parameter = target)
     {index stage : Nat} {box : Rational.Box} {sample : Primitives.Sample cap differential index box}
@@ -372,9 +372,9 @@ constructive_injectivity EndpointView.RootReading
   exact ⟨endpoint, reading⟩
 
 /-- Transport to the retained boundary view preserves the original sampled primitive value. -/
-theorem EndpointView.rootReading_value {edge : ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-  UniformReciprocalCover.Cell data edge}
-    {model : UniformReciprocalRootChannels.RootModel cell} {parameter target : InverseRootPolynomial.Coordinate}
+theorem EndpointView.rootReading_value {edge : ParameterEdge} {cell :
+  Cell data edge}
+    {model : RootModel cell} {parameter target : Coordinate}
     {point : ArcOwners.Point cap model parameter}
     (bounds : EndpointComparison.Data regular point) (equal : parameter = target)
     {index stage : Nat} {box : Rational.Box} {sample : Primitives.Sample cap differential index box}
@@ -385,9 +385,9 @@ theorem EndpointView.rootReading_value {edge : ClearSheetContinuation.Subdivisio
   rfl
 
 /-- Transport to the retained boundary view preserves the original sampled root coordinate. -/
-theorem EndpointView.rootReading_coordinate {edge : ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-  UniformReciprocalCover.Cell data edge}
-    {model : UniformReciprocalRootChannels.RootModel cell} {parameter target : InverseRootPolynomial.Coordinate}
+theorem EndpointView.rootReading_coordinate {edge : ParameterEdge} {cell :
+  Cell data edge}
+    {model : RootModel cell} {parameter target : Coordinate}
     {point : ArcOwners.Point cap model parameter}
     (bounds : EndpointComparison.Data regular point) (equal : parameter = target)
     {index stage : Nat} {box : Rational.Box} {sample : Primitives.Sample cap differential index box}
@@ -398,44 +398,44 @@ theorem EndpointView.rootReading_coordinate {edge : ClearSheetContinuation.Subdi
   rfl
 
 /-- Read the original first endpoint owner and bounds from a nonempty retained chain. -/
-@[expose] def firstView : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank
+@[expose] def firstView : {edges : List ParameterEdge} → {bank : Bank
   regular data edges} →
-    (owners : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank) → {first last :
-      InverseRootPolynomial.Coordinate} → Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.From first
-      edges last → edges ≠ [] → Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.EndpointView regular
+    (owners : Owners bank) → {first last :
+      Coordinate} → From first
+      edges last → edges ≠ [] → EndpointView regular
       data first
   | _, _, .nil, _, _, _, nonempty => False.elim (nonempty rfl)
   | _, _, .cons first _, _, _, chain, _ =>
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.EndpointView.ofPoint first.first
+      EndpointView.ofPoint first.first
         first.bounds.first chain.1.symm
 
 /-- Read the original last endpoint owner and bounds from a nonempty retained chain. -/
-@[expose] def lastView : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank
+@[expose] def lastView : {edges : List ParameterEdge} → {bank : Bank
   regular data edges} →
-    (owners : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank) → {first last :
-      InverseRootPolynomial.Coordinate} → Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.From first
-      edges last → edges ≠ [] → Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.EndpointView regular
+    (owners : Owners bank) → {first last :
+      Coordinate} → From first
+      edges last → edges ≠ [] → EndpointView regular
       data last
   | _, _, .nil, _, _, _, nonempty => False.elim (nonempty rfl)
   | _, _, .cons first .nil, _, _, chain, _ =>
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.EndpointView.ofPoint first.last first.bounds.last
+    EndpointView.ofPoint first.last first.bounds.last
     chain.2
-  | _, _, .cons _ (@Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.cons _ _ _ _ _ _ _ _ _ _ _ _ _
+  | _, _, .cons _ (@cons _ _ _ _ _ _ _ _ _ _ _ _ _
     nextComparison _ next remaining), _, _, chain, _ =>
-      Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.lastView (.cons (comparison :=
+      Owners.lastView (.cons (comparison :=
         nextComparison) next remaining) chain.2 (by intro equal; cases equal)
 
 /-- The original complete dyadic mesh contains at least one edge. -/
-theorem mesh_nonempty (mesh : UniformReciprocalCover.Mesh data) : mesh.edges ≠ [] := by
+theorem mesh_nonempty (mesh : Mesh data) : mesh.edges ≠ [] := by
   intro empty
   have zero : 2 ^ mesh.depth = 0 := by rw [← mesh.edgeCount_eq, ← mesh.edges_length, empty]; rfl
   exact (Nat.ne_of_gt (Nat.pow_pos (by decide : 0 < 2))) zero
 
 /-- The original complete retained mesh connects parameter zero to parameter one. -/
-theorem mesh_from (mesh : UniformReciprocalCover.Mesh data) :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.From 0 mesh.edges 1 :=
-  mesh.edges_eq.symm ▸ Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.dyadic_from mesh.depth
-    UniformPrimitiveMesh.firstEndpoint UniformPrimitiveMesh.lastEndpoint
+theorem mesh_from (mesh : Mesh data) :
+  From 0 mesh.edges 1 :=
+  mesh.edges_eq.symm ▸ dyadic_from mesh.depth
+    firstEndpoint lastEndpoint
 
 set_option genInjectivity false in
 /-- Both exposed points are certified views of this exact complete owner bank, including its retained endpoint models
@@ -444,32 +444,32 @@ and root occurrences.
 The first and last views retain the owner spine's endpoint models. Their
 readback equalities identify the same complete mesh's parameter-zero and
 parameter-one occurrences. -/
-structure Boundary (mesh : UniformReciprocalCover.Mesh data) {bank : ParentBank.Bank regular data mesh.edges} (owners :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank) where
+structure Boundary (mesh : Mesh data) {bank : Bank regular data mesh.edges} (owners :
+  Owners bank) where
   /-- The retained view of this exact original bank's parameter-zero endpoint. -/ first :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.EndpointView regular data 0
+    EndpointView regular data 0
   /-- The first boundary view is exactly the original owner spine's first endpoint. -/ first_eq : first =
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.firstView owners
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.mesh_from mesh)
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.mesh_nonempty mesh)
+    firstView owners
+    (mesh_from mesh)
+    (mesh_nonempty mesh)
   /-- The retained view of this exact original bank's parameter-one endpoint. -/ last :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.EndpointView regular data 1
+    EndpointView regular data 1
   /-- The last boundary view is exactly the original owner spine's last endpoint. -/ last_eq : last =
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.lastView owners
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.mesh_from mesh)
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.mesh_nonempty mesh)
+    lastView owners
+    (mesh_from mesh)
+    (mesh_nonempty mesh)
 
 constructive_injectivity Boundary
 
 /-- Expose the original complete owner bank's first and last endpoint views with exact readback identities. -/
-@[expose] def Boundary.build (mesh : UniformReciprocalCover.Mesh data) {bank : ParentBank.Bank regular data mesh.edges}
-  (owners : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank) :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.Boundary mesh owners :=
-  ⟨firstView owners (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.mesh_from mesh)
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.mesh_nonempty mesh), rfl,
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.lastView owners
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.mesh_from mesh)
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.mesh_nonempty mesh), rfl⟩
+@[expose] def Boundary.build (mesh : Mesh data) {bank : Bank regular data mesh.edges}
+  (owners : Owners bank) :
+  Boundary mesh owners :=
+  ⟨firstView owners (mesh_from mesh)
+    (mesh_nonempty mesh), rfl,
+    lastView owners
+    (mesh_from mesh)
+    (mesh_nonempty mesh), rfl⟩
 
 end Owners
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners

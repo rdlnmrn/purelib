@@ -50,6 +50,8 @@ import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Tactic.Ring
 
+open Purelib.Approximation.Rational.Budget
+
 open Purelib.Approximation
 
 open Purelib.Curves
@@ -69,17 +71,17 @@ shared cut surface, with a single requested aggregate error. -/
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.Newton.OriginalRegionsComparison
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+    PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation base.bank.toBranchCellBank}
     {target radius : Fraction.Rational}
   {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius} {current :
     Meshes.LiftedPuncturedGrid grid.punctured}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
-    {differential : Hyperelliptic.Differentials.Basic.Differential genus}
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
+    {differential : Differentials.Basic.Differential genus}
 
 open Purelib.Integration in
 /-- No original-cell area remains unexplained. Every canonical polygon
@@ -87,38 +89,38 @@ comes from the retained original compiler or original based branch bank;
 all physical inner boundaries, sewn jumps and offsets remain explicit in
 the cached corrections, rather than being silently declared negligible. -/
 theorem original_regions_accurate (ordered :
-  Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet) (newSheet
+  PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet) (newSheet
   : Fin 2)
-    (branchSheet : Hyperelliptic.Branches.BranchIsolation.Data.Index branches → Fin 2) (excision :
-      Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid current)
-    (fixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains differential) (error :
+    (branchSheet : Branches.BranchIsolation.Data.Index branches → Fin 2) (excision :
+      AllHoles.Excision.AllHoleExcision grid current)
+    (fixed : PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains differential) (error :
       Fraction.Rational) (positive : 0 < error) (floor : Nat) :
-    let reference := fun point member => (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
+    let reference := fun point member => (PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
       grid.punctured.bank.toBranchCellBank point member).toLoop
     let compiled :=
-      Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.compileResplit
+      PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.compileResplit
       grid.shrunk.included current.edges current.vertices
-      reference (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
+      reference (PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
         ordered.prepared.partition newSheet
-    let part := Rational.Budget.Aggregate.perTerm error 2
-    let partPositive := Rational.Budget.Aggregate.perTerm_positive positive 2
-    let regular := Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.build fixed
-      (Rational.Budget.Aggregate.perTerm part compiled.regulars.length)
-      (Rational.Budget.Aggregate.perTerm_positive partPositive _) floor compiled.regulars
-    let branch := Hyperelliptic.Meshes.Newton.Branch.RegionAggregate.BranchRegionRequests.build bank branchSheet fixed
-      (Rational.Budget.Aggregate.perTerm part excision.entries.length)
-      (Rational.Budget.Aggregate.perTerm_positive partPositive _) floor excision.entries
-    ∀ stage (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential stage
-      domains) (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared
+    let part := Aggregate.perTerm error 2
+    let partPositive := Aggregate.perTerm_positive positive 2
+    let regular := Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.build fixed
+      (Aggregate.perTerm part compiled.regulars.length)
+      (Aggregate.perTerm_positive partPositive _) floor compiled.regulars
+    let branch := Branch.RegionAggregate.BranchRegionRequests.build bank branchSheet fixed
+      (Aggregate.perTerm part excision.entries.length)
+      (Aggregate.perTerm_positive partPositive _) floor excision.entries
+    ∀ stage (shared : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential stage
+      domains) (readings : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared
       current.mesh)
       (surface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch readings.values),
         max regular.index branch.index ≤ stage →
       let regularSamples :=
-        Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples.build readings
+        Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples.build readings
         surface regular
-      let branchSamples := Hyperelliptic.Meshes.Newton.Branch.RegionAggregate.BranchRegionRequests.Samples.build
+      let branchSamples := Branch.RegionAggregate.BranchRegionRequests.Samples.build
         readings surface branch
-      Data.Gaussian.Norm.Basic.normSq (surface.boundaryArea - (regularSamples.corrections +
+      Gaussian.Norm.Basic.normSq (surface.boundaryArea - (regularSamples.corrections +
         branchSamples.corrections) -
         ((regularSamples.polygons + branchSamples.polygons) + (regularSamples.polygons + branchSamples.polygons))) <
           error := by
@@ -128,7 +130,7 @@ theorem original_regions_accurate (ordered :
     (RootContinuation.NewtonOriginalRegionPartition.NewtonGrid.originalCellMask current cell)
   have regularArea := regularSamples.areas_eq selected
   have branchArea := (branchSamples.areas_eq selected).trans
-    (Hyperelliptic.Meshes.Newton.Branch.RegionAggregate.Ordered.branch_entries_sum ordered excision (fun index =>
+    (Branch.RegionAggregate.Ordered.branch_entries_sum ordered excision (fun index =>
       (selected (base.bank.cell index)).area)).symm
   have partition : regularSamples.areas + branchSamples.areas = surface.boundaryArea :=
     (congrArg₂ (· + ·) regularArea branchArea).trans
@@ -137,10 +139,10 @@ theorem original_regions_accurate (ordered :
   let regularError := regularSamples.areas - regularSamples.corrections - (regularSamples.polygons +
     regularSamples.polygons)
   let branchError := branchSamples.areas - branchSamples.corrections - (branchSamples.polygons + branchSamples.polygons)
-  have regularBound : Data.Gaussian.Norm.Basic.normSq regularError ≤ part :=
-    (regularSamples.aggregate_accurate partPositive ((Data.Nat.Order.le_max_left _ _).trans later)).le
-  have branchBound : Data.Gaussian.Norm.Basic.normSq branchError ≤ part :=
-    (branchSamples.aggregate_accurate partPositive ((Data.Nat.Order.le_max_right _ _).trans later)).le
+  have regularBound : Gaussian.Norm.Basic.normSq regularError ≤ part :=
+    (regularSamples.aggregate_accurate partPositive ((Nat.Order.le_max_left _ _).trans later)).le
+  have branchBound : Gaussian.Norm.Basic.normSq branchError ≤ part :=
+    (branchSamples.aggregate_accurate partPositive ((Nat.Order.le_max_right _ _).trans later)).le
   have estimate := Gaussian.Budget.Aggregate.normSq_sum_lt [regularError, branchError] positive (by
     intro value member
     rcases Data.List.Membership.mem_cons.mp member with rfl | member
@@ -148,7 +150,7 @@ theorem original_regions_accurate (ordered :
     · rcases Data.List.Membership.mem_cons.mp member with rfl | member
       · exact branchBound
       · exact (List.not_mem_nil member).elim)
-  change Data.Gaussian.Norm.Basic.normSq (regularError + (branchError + 0)) < error at estimate
+  change Gaussian.Norm.Basic.normSq (regularError + (branchError + 0)) < error at estimate
   rw [add_zero] at estimate
   have equal : surface.boundaryArea - (regularSamples.corrections + branchSamples.corrections) -
       ((regularSamples.polygons + branchSamples.polygons) + (regularSamples.polygons + branchSamples.polygons)) =
@@ -156,52 +158,52 @@ theorem original_regions_accurate (ordered :
     rw [← partition]
     unfold regularError branchError
     ring1
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq equal).trans_lt estimate
+  exact (congrArg Gaussian.Norm.Basic.normSq equal).trans_lt estimate
 
 /-- Prepare the original magnitude bank and bound the complete retained regular and branch region residual.
 
 One common stage pays the actual occurrence counts; the signed expression retains every original cut correction and
 twice each original polygon area. -/
 theorem original_regions_accurate_automatic (ordered :
-  Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet) (newSheet
+  PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet) (newSheet
   : Fin 2)
-    (branchSheet : Hyperelliptic.Branches.BranchIsolation.Data.Index branches → Fin 2) (excision :
-      Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid current)
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus) (error : Fraction.Rational) (positive : 0 <
+    (branchSheet : Branches.BranchIsolation.Data.Index branches → Fin 2) (excision :
+      AllHoles.Excision.AllHoleExcision grid current)
+    (differential : Differentials.Basic.Differential genus) (error : Fraction.Rational) (positive : 0 <
       error) (floor : Nat) :
-    let fixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains differential :=
-      Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank.build domains differential
-    let reference := fun point member => (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
+    let fixed : PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains differential :=
+      PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank.build domains differential
+    let reference := fun point member => (PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
       grid.punctured.bank.toBranchCellBank point member).toLoop
     let compiled :=
-      Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.compileResplit
+      PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.compileResplit
       grid.shrunk.included current.edges current.vertices
-      reference (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
+      reference (PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
         ordered.prepared.partition newSheet
-    let part := Rational.Budget.Aggregate.perTerm error 2
-    let partPositive := Rational.Budget.Aggregate.perTerm_positive positive 2
-    let regular := Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.build fixed
-      (Rational.Budget.Aggregate.perTerm part compiled.regulars.length)
-      (Rational.Budget.Aggregate.perTerm_positive partPositive _) floor compiled.regulars
-    let branch := Hyperelliptic.Meshes.Newton.Branch.RegionAggregate.BranchRegionRequests.build bank branchSheet fixed
-      (Rational.Budget.Aggregate.perTerm part excision.entries.length)
-      (Rational.Budget.Aggregate.perTerm_positive partPositive _) floor excision.entries
-    ∀ stage (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential stage
-      domains) (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared
+    let part := Aggregate.perTerm error 2
+    let partPositive := Aggregate.perTerm_positive positive 2
+    let regular := Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.build fixed
+      (Aggregate.perTerm part compiled.regulars.length)
+      (Aggregate.perTerm_positive partPositive _) floor compiled.regulars
+    let branch := Branch.RegionAggregate.BranchRegionRequests.build bank branchSheet fixed
+      (Aggregate.perTerm part excision.entries.length)
+      (Aggregate.perTerm_positive partPositive _) floor excision.entries
+    ∀ stage (shared : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential stage
+      domains) (readings : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared
       current.mesh)
       (surface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch readings.values),
         max regular.index branch.index ≤ stage →
       let regularSamples :=
-        Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples.build readings
+        Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples.build readings
         surface regular
-      let branchSamples := Hyperelliptic.Meshes.Newton.Branch.RegionAggregate.BranchRegionRequests.Samples.build
+      let branchSamples := Branch.RegionAggregate.BranchRegionRequests.Samples.build
         readings surface branch
-      Data.Gaussian.Norm.Basic.normSq (surface.boundaryArea - (regularSamples.corrections +
+      Gaussian.Norm.Basic.normSq (surface.boundaryArea - (regularSamples.corrections +
         branchSamples.corrections) -
         ((regularSamples.polygons + branchSamples.polygons) + (regularSamples.polygons + branchSamples.polygons))) <
           error := by
   intro fixed reference compiled part partPositive regular branch stage shared readings surface later
-  exact Hyperelliptic.Meshes.Newton.OriginalRegionsComparison.original_regions_accurate ordered newSheet branchSheet
+  exact OriginalRegionsComparison.original_regions_accurate ordered newSheet branchSheet
     excision fixed error positive floor
     stage shared readings surface later
 

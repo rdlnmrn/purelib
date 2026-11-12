@@ -15,6 +15,8 @@ import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Gaussian.Components
+
 open Purelib.Data
 
 open Purelib
@@ -87,8 +89,10 @@ private theorem quarticGridReal (n : Fraction.Rational) :
   rw [Fraction.Compatibility.subSameDenominator
     ((n ^ 2 - 256) ^ 2 - 1024 * n ^ 2) 1048576
       1048576 oneMillionNe]
-  congr 1
-  ring1
+  exact congrArg
+    (fun numerator : Fraction.Rational => numerator / (1048576 : Fraction.Rational))
+    (show (n ^ 2 - 256) ^ 2 - 1024 * n ^ 2 - 1048576 =
+        n ^ 4 - 1536 * n ^ 2 - 983040 by ring1)
 
 /-- The quartic grid's imaginary component has its explicit rational numerator.
 
@@ -140,45 +144,45 @@ open Purelib.Polynomial
 the first prepared connector cell. -/
 theorem quarticGridEvaluation (n : Fraction.Rational) :
     Riemann.Periods.PeriodCurves.quarticPolynomial.eval
-        (Gaussian.Components.Basic.point (-(n / 32)) (-1 / 2)) =
-      Gaussian.Components.Basic.point ((n ^ 4 - 1536 * n ^ 2 - 983040) / 1048576)
+        (Basic.point (-(n / 32)) (-1 / 2)) =
+      Basic.point ((n ^ 4 - 1536 * n ^ 2 - 983040) / 1048576)
         ((n ^ 3 - 256 * n) / 16384) := open Purelib.Polynomial in by
   unfold Riemann.Periods.PeriodCurves.quarticPolynomial
-  rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_eval]
+  rw [Power.Gaussian.rootPolynomial_eval]
   unfold Riemann.Periods.PeriodCurves.degreeFour
   have halfSquare : (-1 / 2 : Fraction.Rational) ^ 2 = 1 / 4 := by
     with_unfolding_all decide
   have negHalfPlusNegHalf : (-1 / 2 : Fraction.Rational) + (-1 / 2) = -1 := by
     with_unfolding_all decide
-  have firstSquare : Gaussian.Components.Basic.point (-(n / 32)) (-1 / 2) ^ 2 =
-      Gaussian.Components.Basic.point ((n / 32) ^ 2 - 1 / 4) (n / 32) := by
+  have firstSquare : Basic.point (-(n / 32)) (-1 / 2) ^ 2 =
+      Basic.point ((n / 32) ^ 2 - 1 / 4) (n / 32) := by
     rw [pow_two]
     apply Gaussian.Basic.ext
     · simp only [Gaussian.Basic.mul_re,
-        Gaussian.Components.Basic.point]
+        Basic.point]
       calc
         (-(n / 32)) * (-(n / 32)) - (-1 / 2) * (-1 / 2) =
             (n / 32) ^ 2 - (-1 / 2) ^ 2 := by ring1
         _ = (n / 32) ^ 2 - 1 / 4 := by rw [halfSquare]
     · simp only [Gaussian.Basic.mul_im,
-        Gaussian.Components.Basic.point]
+        Basic.point]
       calc
         (-(n / 32)) * (-1 / 2) + (-1 / 2) * (-(n / 32)) =
             (-(n / 32)) * ((-1 / 2) + (-1 / 2)) := by ring1
         _ = (-(n / 32)) * (-1) := by rw [negHalfPlusNegHalf]
         _ = n / 32 := by ring1
-  rw [show Gaussian.Components.Basic.point (-(n / 32)) (-1 / 2) ^ 4 =
-    (Gaussian.Components.Basic.point (-(n / 32)) (-1 / 2) ^ 2) ^ 2 by ring1, firstSquare, pow_two]
+  rw [show Basic.point (-(n / 32)) (-1 / 2) ^ 4 =
+    (Basic.point (-(n / 32)) (-1 / 2) ^ 2) ^ 2 by ring1, firstSquare, pow_two]
   apply Gaussian.Basic.ext
   · simp only [Gaussian.Basic.mul_re,
       Gaussian.Basic.sub_re,
       Gaussian.Basic.one_re,
-      Gaussian.Components.Basic.point]
+      Basic.point]
     simpa only [pow_two] using quarticGridReal n
   · simp only [Gaussian.Basic.mul_im,
       Gaussian.Basic.sub_im,
       Gaussian.Basic.one_im,
-      Gaussian.Components.Basic.point]
+      Basic.point]
     calc
       ((n / 32) ^ 2 - 1 / 4) * (n / 32) +
           (n / 32) * ((n / 32) ^ 2 - 1 / 4) - 0 =
@@ -190,15 +194,15 @@ This form keeps grid parameters scaled uniformly for exact cell certificates. -/
 theorem quarticGridEvaluation_scaled (n :
   Fraction.Rational) :
     Riemann.Periods.PeriodCurves.quarticPolynomial.eval
-        (Gaussian.Components.Basic.point (-(n / 32)) (-1 / 2)) =
-      Gaussian.Components.Basic.point ((n ^ 4 - 1536 * n ^ 2 - 983040) * Data.Rat.Dyadic.Grid.fineUnit)
-        (64 * (n ^ 3 - 256 * n) * Data.Rat.Dyadic.Grid.fineUnit) := by
+        (Basic.point (-(n / 32)) (-1 / 2)) =
+      Basic.point ((n ^ 4 - 1536 * n ^ 2 - 983040) * Dyadic.Grid.fineUnit)
+        (64 * (n ^ 3 - 256 * n) * Dyadic.Grid.fineUnit) := by
   rw [quarticGridEvaluation]
   apply Gaussian.Basic.ext
-  · simp only [Gaussian.Components.Basic.point]
-    exact Data.Rat.Dyadic.Grid.scaledFine _ _ 1048576 (by omega) (by ring1)
-  · simp only [Gaussian.Components.Basic.point]
-    exact Data.Rat.Dyadic.Grid.scaledFine _ _ 16384 (by omega) (by ring1)
+  · simp only [Basic.point]
+    exact Dyadic.Grid.scaledFine _ _ 1048576 (by omega) (by ring1)
+  · simp only [Basic.point]
+    exact Dyadic.Grid.scaledFine _ _ 16384 (by omega) (by ring1)
 
 end Purelib.Polynomial.Special.QuarticMinusOne.DyadicGrid
 

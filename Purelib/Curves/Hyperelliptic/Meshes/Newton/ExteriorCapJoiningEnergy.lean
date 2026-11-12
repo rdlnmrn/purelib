@@ -64,6 +64,10 @@ import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalMeshRequest
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid
+
 public section
 
 /-! Homogeneous comparison of cached Newton exteriors with cap joining energy. -/
@@ -85,87 +89,87 @@ open Purelib.Data.Rat.Fraction.Compatibility
 
 attribute [local congr] FiniteSum.Fin.sumFin_congr
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
-    {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered} {prepared :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired}
+    BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {ordered : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
+    {paired : OrderedBranchPairs.Ordered.Paired ordered} {prepared :
+    Paired.PeriodPrograms.Prepared paired}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation base.bank.toBranchCellBank}
     {target radius : Fraction.Rational}
   {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius} {current :
     Meshes.LiftedPuncturedGrid grid.punctured}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
-  {newSheet : Fin 2} {excision : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid current}
-  {magnitudes : Data.Vector.DependentVector (fun basis : Fin genus =>
-    Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+  {domains : Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
+  {newSheet : Fin 2} {excision : AllHoles.Excision.AllHoleExcision grid current}
+  {magnitudes : Vector.DependentVector (fun basis : Fin genus =>
+    Face.MagnitudeBank.FaceMagnitudeBank domains
     (Periods.PeriodMatrix.standardDifferential basis))}
   {error : Fraction.Rational} {floor stage : Nat}
-  {cache : Data.Vector.DependentVector (fun basis : Fin genus =>
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank (Periods.PeriodMatrix.standardDifferential
+  {cache : Vector.DependentVector (fun basis : Fin genus =>
+    Face.PrimitiveData.FacePrimitiveBank (Periods.PeriodMatrix.standardDifferential
     basis) stage domains)}
-  {triangles : Data.Vector.DependentVector (fun basis : Fin genus =>
-    Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get basis) current.mesh)}
+  {triangles : Vector.DependentVector (fun basis : Fin genus =>
+    TrianglePrimitiveReadings.TriangleReadings (cache.get basis) current.mesh)}
   {surfaces : Topology.Surface.Sewing.SewnEnergyCombination.EnergySurfaces current.cutPolygon.patch (fun basis =>
     (triangles.get basis).values)}
   {pairs : Topology.Surface.Sewing.SewnEnergyCombination.EnergyPairs surfaces}
-  {request : Hyperelliptic.Meshes.Newton.HomogeneousPhysicalComparison.Request prepared newSheet excision magnitudes
+  {request : Request prepared newSheet excision magnitudes
     error floor}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {basisTarget : Fraction.Rational} {minimum
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {basisTarget : Fraction.Rational} {minimum
     depthFloor : Nat} {box : Rational.Box}
-  {basis : PuncturedGrid.Exterior.PhysicalBasisRequest regular domains
+  {basis : Exterior.PhysicalBasisRequest regular domains
     basisTarget minimum depthFloor}
 
 /-- Pairwise comparison budgets are independent of the coefficient vector.
 The contraction reads the cached period offsets and the actual cap attachments. -/
 theorem Samples.exterior_joining_bound (samples :
-  Hyperelliptic.Meshes.Newton.HomogeneousPhysicalComparison.Request.Samples triangles surfaces pairs request)
-    (attachments : Data.Vector.DependentVector (fun first =>
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment (basis.preparations.get
+  Samples triangles surfaces pairs request)
+    (attachments : Vector.DependentVector (fun first =>
+      Exterior.Caps.AllSurfacePreparation.CapAttachment (basis.preparations.get
       first)))
-    (polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box)
+    (polynomials : Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box)
       {pairBound : Fraction.Rational}
     (bounded : ∀ first second,
-      Data.Gaussian.Norm.Basic.normSq (2 *
+      Gaussian.Norm.Basic.normSq (2 *
         ConjugatePhysicalRequest.exterior (paired := paired)
         newSheet
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh (triangles.get first).values)
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh (triangles.get
+        (CanonicalEdgeValues.edgeValuation current.mesh (triangles.get first).values)
+        (CanonicalEdgeValues.edgeValuation current.mesh (triangles.get
           second).values) -
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateChordPolygons.CapAttachment.conjugateJoiningArea
+        Exterior.ConjugateChordPolygons.CapAttachment.conjugateJoiningArea
           (attachments.get first) (polynomials.get first) (polynomials.get second)) ≤ pairBound)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    Data.Gaussian.Norm.Basic.normSq (2 * samples.exterior coefficients -
-      PuncturedGrid.Exterior.PhysicalMeshRequest.Readings.capJoiningEnergy
+    Gaussian.Norm.Basic.normSq (2 * samples.exterior coefficients -
+      Readings.capJoiningEnergy
       attachments polynomials coefficients) ≤
       (genus : Fraction.Rational) ^ 2 * Readings.PreparedObservationCoercivity.coefficientNormSq
     coefficients ^ 2 *
         pairBound := by
   let residual := fun first second => 2 * ((samples.get first).get second).exterior -
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateChordPolygons.CapAttachment.conjugateJoiningArea
+    Exterior.ConjugateChordPolygons.CapAttachment.conjugateJoiningArea
       (attachments.get first) (polynomials.get first) (polynomials.get second)
-  have bounds (first second : Fin genus) : Data.Gaussian.Norm.Basic.normSq (residual first second) ≤ pairBound := by
+  have bounds (first second : Fin genus) : Gaussian.Norm.Basic.normSq (residual first second) ≤ pairBound := by
     dsimp only [residual]
     rw [((samples.get first).get second).exterior_eq]
     exact bounded first second
-  have estimate := Periods.BilinearCombination.combination_bound (fun basis => Data.Gaussian.Basic.conj
+  have estimate := Periods.BilinearCombination.combination_bound (fun basis => Gaussian.Basic.conj
     (coefficients basis)) coefficients residual bounds
   rw [FiniteSum.Fin.sumFin_congr (fun basis => Gaussian.Norm.Basic.normSq_conj (coefficients basis))] at estimate
-  have expanded : FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => Data.Gaussian.Basic.conj
+  have expanded : FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => Gaussian.Basic.conj
     (coefficients first) * coefficients second * residual first second)) =
       2 * samples.exterior coefficients -
-        PuncturedGrid.Exterior.PhysicalMeshRequest.Readings.capJoiningEnergy
+        Readings.capJoiningEnergy
         attachments polynomials coefficients := by
     calc
       _ = FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second =>
-        2 * (Data.Gaussian.Basic.conj (coefficients first) * coefficients second * ((samples.get first).get
+        2 * (Gaussian.Basic.conj (coefficients first) * coefficients second * ((samples.get first).get
           second).exterior) -
-          Data.Gaussian.Basic.conj (coefficients first) * coefficients second *
-            Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateChordPolygons.CapAttachment.conjugateJoiningArea
+          Gaussian.Basic.conj (coefficients first) * coefficients second *
+            Exterior.ConjugateChordPolygons.CapAttachment.conjugateJoiningArea
               (attachments.get first) (polynomials.get first) (polynomials.get second))) := by
         apply FiniteSum.Fin.sumFin_congr
         intro first
@@ -176,31 +180,31 @@ theorem Samples.exterior_joining_bound (samples :
       _ = _ := by simp only [FiniteSum.Fin.sumFin_sub, FiniteSum.Fin.sumFin_mul_left, -eq_self, -iff_self]; rfl
   rw [FiniteSum.Fin.sumFin_congr (fun basis => Gaussian.Norm.Basic.normSq_eq_canonical (coefficients basis))]
     at estimate
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq expanded.symm).trans_le (estimate.trans_eq (by
+  exact (congrArg Gaussian.Norm.Basic.normSq expanded.symm).trans_le (estimate.trans_eq (by
     unfold Readings.PreparedObservationCoercivity.coefficientNormSq; ring1))
 
 /-- A scalar budget on the basis pairs pays the energy comparison uniformly,
 including the zero coefficient vector. -/
 theorem Samples.exterior_joining_energy_upper (samples :
-  Hyperelliptic.Meshes.Newton.HomogeneousPhysicalComparison.Request.Samples triangles surfaces pairs request)
-    (attachments : Data.Vector.DependentVector (fun first =>
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment (basis.preparations.get
+  Samples triangles surfaces pairs request)
+    (attachments : Vector.DependentVector (fun first =>
+      Exterior.Caps.AllSurfacePreparation.CapAttachment (basis.preparations.get
       first)))
-    (polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box)
+    (polynomials : Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box)
       {pairBound allowance : Fraction.Rational}
     (bounded : ∀ first second,
-      Data.Gaussian.Norm.Basic.normSq (2 *
+      Gaussian.Norm.Basic.normSq (2 *
         ConjugatePhysicalRequest.exterior (paired := paired)
         newSheet
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh (triangles.get first).values)
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh (triangles.get
+        (CanonicalEdgeValues.edgeValuation current.mesh (triangles.get first).values)
+        (CanonicalEdgeValues.edgeValuation current.mesh (triangles.get
           second).values) -
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateChordPolygons.CapAttachment.conjugateJoiningArea
+        Exterior.ConjugateChordPolygons.CapAttachment.conjugateJoiningArea
           (attachments.get first) (polynomials.get first) (polynomials.get second)) ≤ pairBound)
     (nonnegative : 0 ≤ allowance) (paid : (genus : Fraction.Rational) ^ 2 * pairBound ≤ 16 * allowance ^ 2)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
     (2 * samples.exterior coefficients -
-      PuncturedGrid.Exterior.PhysicalMeshRequest.Readings.capJoiningEnergy
+      Readings.capJoiningEnergy
       attachments polynomials coefficients).im / 4 ≤
       allowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := by
   have close := samples.exterior_joining_bound attachments polynomials bounded coefficients
@@ -222,11 +226,11 @@ theorem Samples.exterior_joining_energy_upper (samples :
     rw [FiniteSum.Fin.sumFin_congr (fun row => Gaussian.Norm.Basic.normSq_eq_canonical (coefficients row))] at bound
     exact FiniteSum.Fin.sumFin_zero.symm.trans_le bound
   let residual := 2 * samples.exterior coefficients -
-    PuncturedGrid.Exterior.PhysicalMeshRequest.Readings.capJoiningEnergy
+    Readings.capJoiningEnergy
     attachments polynomials coefficients
-  have squared : Data.Gaussian.Norm.Basic.normSq (residual - 0) ≤ (4 * (allowance *
+  have squared : Gaussian.Norm.Basic.normSq (residual - 0) ≤ (4 * (allowance *
     Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)) ^ 2 := by
-    rw [Data.Gaussian.Basic.sub_zero]
+    rw [Gaussian.Basic.sub_zero]
     exact close.trans scaled
   have bound := Topology.PreparedSurfaceCoercivity.boundaryEnergy_sub_budget_le residual 0
     (allowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)
@@ -243,28 +247,28 @@ theorem Samples.exterior_joining_energy_upper (samples :
 /-- One retained basis-wide request supplies every pairwise premise. Its
 canonical squared target pays the requested homogeneous energy allowance. -/
 theorem Samples.regular_joining_energy_upper (samples :
-  Hyperelliptic.Meshes.Newton.HomogeneousPhysicalComparison.Request.Samples triangles surfaces pairs request)
+  Samples triangles surfaces pairs request)
     {allowance : Fraction.Rational} {joiningFloor depth readingIndex : Nat}
-    (joining : Hyperelliptic.Meshes.Newton.Regular.JoiningFamily.RegularJoiningFamily (paired := paired)
+    (joining : Regular.JoiningFamily.RegularJoiningFamily (paired := paired)
       basis.preparations magnitudes
-      (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance)
+      (Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance)
         joiningFloor)
-    {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box}
+    {polynomials : Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box}
     (evaluated : joining.Evaluations polynomials cache depth readingIndex)
-    (attachments : Data.Vector.DependentVector (fun first =>
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment (basis.preparations.get
+    (attachments : Vector.DependentVector (fun first =>
+      Exterior.Caps.AllSurfacePreparation.CapAttachment (basis.preparations.get
       first)))
     (later : joining.index ≤ stage) (positive : 0 < allowance)
     (degree : curve.polynomial.natDegree = 2 * genus + 2)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
     (2 * samples.exterior coefficients -
-      PuncturedGrid.Exterior.PhysicalMeshRequest.Readings.capJoiningEnergy
+      Readings.capJoiningEnergy
       attachments polynomials coefficients).im / 4 ≤
       allowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := by
   have paid : (genus : Fraction.Rational) ^ 2 *
-    Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance ≤
+    Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance ≤
       16 * allowance ^ 2 :=
-    (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget_paid positive).trans_eq (by
+    (Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget_paid positive).trans_eq (by
       ring1)
   exact samples.exterior_joining_energy_upper attachments polynomials
     (fun first second => (joining.accurate evaluated triangles attachments later newSheet degree first second).le)
@@ -273,22 +277,22 @@ theorem Samples.regular_joining_energy_upper (samples :
 /-- Transfer the paid remaining-surface cap bound to the actual cached Newton
 exterior. The supplied cap upper bound is furnished by the shared physical schedule. -/
 theorem Samples.remaining_exterior_energy_upper (samples :
-  Hyperelliptic.Meshes.Newton.HomogeneousPhysicalComparison.Request.Samples triangles surfaces pairs request)
+  Samples triangles surfaces pairs request)
     {allowance capAllowance : Fraction.Rational} {joiningFloor depth readingIndex : Nat}
-    (joining : Hyperelliptic.Meshes.Newton.Regular.JoiningFamily.RegularJoiningFamily (paired := paired)
+    (joining : Regular.JoiningFamily.RegularJoiningFamily (paired := paired)
       basis.preparations magnitudes
-      (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance)
+      (Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance)
         joiningFloor)
-    {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box}
+    {polynomials : Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box}
     (evaluated : joining.Evaluations polynomials cache depth readingIndex)
-    (attachments : Data.Vector.DependentVector (fun first =>
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment (basis.preparations.get
+    (attachments : Vector.DependentVector (fun first =>
+      Exterior.Caps.AllSurfacePreparation.CapAttachment (basis.preparations.get
       first)))
     (later : joining.index ≤ stage) (positive : 0 < allowance)
     (degree : curve.polynomial.natDegree = 2 * genus + 2)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (remaining : Gaussian.Basic.Canonical)
     (capUpper : (remaining +
-      PuncturedGrid.Exterior.PhysicalMeshRequest.Readings.capJoiningEnergy
+      Readings.capJoiningEnergy
       attachments polynomials coefficients).im / 4 ≤
       capAllowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) :
     (remaining + 2 * samples.exterior coefficients).im / 4 ≤
@@ -298,10 +302,10 @@ theorem Samples.remaining_exterior_energy_upper (samples :
   have bounds := Fraction.Order.Arithmetic.add_le_add_direct capUpper joiningBound
   have split : (remaining + 2 * samples.exterior coefficients).im / 4 =
       (remaining +
-        PuncturedGrid.Exterior.PhysicalMeshRequest.Readings.capJoiningEnergy
+        Readings.capJoiningEnergy
         attachments polynomials coefficients).im / 4 +
       (2 * samples.exterior coefficients -
-        PuncturedGrid.Exterior.PhysicalMeshRequest.Readings.capJoiningEnergy
+        Readings.capJoiningEnergy
         attachments polynomials coefficients).im / 4 := by
     simp only [Gaussian.Basic.add_im, Gaussian.Basic.sub_im,
       Fraction.Field.div_eq_mul_inv_direct, -eq_self, -iff_self]

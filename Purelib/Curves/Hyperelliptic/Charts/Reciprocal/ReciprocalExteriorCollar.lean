@@ -49,6 +49,8 @@ import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Riemann.Integration.PreparedConstantModels
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-!
@@ -122,32 +124,32 @@ open Purelib.Geometry.Rational.Box.Boundary (OnBoxBoundary)
 variable {genus : Nat} (curve : HyperellipticCurve genus)
 
 /-- The original coefficient-derived outer square radius of the curve polynomial. -/
-@[expose] def radius : Fraction.Rational := RootRadius.denseLargeSquareRadius curve.polynomial
+@[expose] def radius : Rational := RootRadius.denseLargeSquareRadius curve.polynomial
 
 section
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar
 /-- Cached by each `Data` consumer; this scalar is independent of the boundary point, subdivision depth and
 differential. -/
-@[expose] def squareScale : Fraction.Rational := (2 * radius curve ^ 2)⁻¹
+@[expose] def squareScale : Rational := (2 * radius curve ^ 2)⁻¹
 
 /-- The coefficient-derived outer radius is strictly positive. -/
 theorem radius_positive : 0 < radius curve := RootRadius.denseLargeSquareRadius_pos _
 
 /-- The original outer radius has strictly positive square. -/
 theorem radius_square_positive : 0 < radius curve ^ 2 :=
-  Fraction.Order.Arithmetic.pow_pos_direct
+  Arithmetic.pow_pos_direct
     (radius_positive curve) 2
 
 /-- Twice the original outer radius squared is strictly positive. -/
 theorem denominator_positive : 0 < 2 * radius curve ^ 2 :=
-  Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+  Arithmetic.mul_pos_direct (by decide)
     (radius_square_positive curve)
 
 end
 
 /-- The reciprocal square scale is strictly positive. -/
 theorem squareScale_positive : 0 < squareScale curve :=
-  Fraction.Order.Field.inv_pos_direct
+  Field.inv_pos_direct
     (denominator_positive curve)
 
 section
@@ -171,43 +173,43 @@ theorem radius_scale : radius curve ^ 2 * squareScale
 end
 
 /-- The original source squared norm multiplied by the curve-dependent reciprocal square scale. -/
-@[expose] def ratio (source : Data.Gaussian.Basic.Canonical) : Fraction.Rational :=
-  Data.Gaussian.Norm.Basic.normSq source *
+@[expose] def ratio (source : Basic.Canonical) : Rational :=
+  Norm.Basic.normSq source *
   squareScale curve
 
 /-- The affine interpolation weight from one to the source-dependent reciprocal ratio. -/
-@[expose] def weight (source : Data.Gaussian.Basic.Canonical) (stage : Fraction.Rational) : Fraction.Rational :=
+@[expose] def weight (source : Basic.Canonical) (stage : Rational) : Rational :=
   1 - stage + stage * ratio curve source
 
 /-- Scale the original source conjugate by the curve-dependent reciprocal square scale. -/
-@[expose] def chord (source : Data.Gaussian.Basic.Canonical) : Gaussian := Scale.scale
-  (squareScale curve) (Data.Gaussian.Basic.conj
+@[expose] def chord (source : Basic.Canonical) : Gaussian := scale
+  (squareScale curve) (Basic.conj
   source)
 
 /-- A rational homotopy, not an assertion that the inverted side is affine. -/
-@[expose] def deform (source : Data.Gaussian.Basic.Canonical) (stage : Fraction.Rational) : Gaussian :=
-  Scale.scale (weight curve source stage) source⁻¹
+@[expose] def deform (source : Basic.Canonical) (stage : Rational) : Gaussian :=
+  scale (weight curve source stage) source⁻¹
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar in
 /-- An original outer-boundary point has squared norm between one and two times the outer radius squared. -/
-theorem boundary_norm_bounds {source : Data.Gaussian.Basic.Canonical} (boundary : Boundary.OnBoxBoundary (Cuts.Ambient
+theorem boundary_norm_bounds {source : Basic.Canonical} (boundary : OnBoxBoundary (Ambient
   curve) source) :
-    radius curve ^ 2 ≤ Data.Gaussian.Norm.Basic.normSq source ∧ Data.Gaussian.Norm.Basic.normSq source
+    radius curve ^ 2 ≤ Norm.Basic.normSq source ∧ Norm.Basic.normSq source
       ≤ 2 * radius curve ^ 2 :=
   Symmetric.Norm.symmetric_boundary_norm_bounds
     (radius_positive curve).le boundary
 
 /-- The reciprocal ratio of an original outer-boundary point lies between one half and one. -/
-theorem ratio_bounds {source : Data.Gaussian.Basic.Canonical} (boundary : Boundary.OnBoxBoundary (Cuts.Ambient curve)
+theorem ratio_bounds {source : Basic.Canonical} (boundary : OnBoxBoundary (Ambient curve)
   source) :
     1 / 2 ≤ ratio curve source ∧
       ratio curve source ≤ 1 := by
   have bounds := boundary_norm_bounds curve boundary
   constructor
   · rw [← radius_scale curve]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct bounds.1
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct bounds.1
       (squareScale_positive curve).le
-  · exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct bounds.2
+  · exact (Arithmetic.mul_le_mul_of_nonneg_right_direct bounds.2
       (squareScale_positive curve).le).trans_eq
         (scale_cancel curve)
 
@@ -215,191 +217,191 @@ theorem ratio_bounds {source : Data.Gaussian.Basic.Canonical} (boundary : Bounda
 
 Both endpoints and the interpolation parameter retain their weak bounds.
 Direct rational translation and multiplication preserve the same two bounds. -/
-private theorem affine_weight_bounds {value stage : Fraction.Rational}
+private theorem affine_weight_bounds {value stage : Rational}
     (bounds : 1 / 2 ≤ value ∧ value ≤ 1) (inside : 0 ≤ stage ∧ stage ≤ 1) :
     1 / 2 ≤ 1 - stage + stage * value ∧ 1 - stage + stage * value ≤ 1 := by
-  have half : stage * (1 / 2 : Fraction.Rational) ≤ 1 / 2 :=
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct inside.2 (by decide)).trans_eq (by ring1)
+  have half : stage * (1 / 2 : Rational) ≤ 1 / 2 :=
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct inside.2 (by decide)).trans_eq (by ring1)
   constructor
   · calc
-      _ ≤ 1 - stage * (1 / 2 : Fraction.Rational) := by
-        have bound := Fraction.Order.Arithmetic.sub_le_sub_left_direct half (1 : Fraction.Rational)
-        exact (show (1 / 2 : Fraction.Rational) = 1 - 1 / 2 by decide).trans_le bound
-      _ = 1 - stage * ((1 / 2 : Fraction.Rational) + 1 / 2) + stage * (1 / 2 : Fraction.Rational) := by ring1
-      _ = 1 - stage + stage * (1 / 2 : Fraction.Rational) := by
-        rw [show (1 / 2 : Fraction.Rational) + 1 / 2 = 1 by decide];
+      _ ≤ 1 - stage * (1 / 2 : Rational) := by
+        have bound := Arithmetic.sub_le_sub_left_direct half (1 : Rational)
+        exact (show (1 / 2 : Rational) = 1 - 1 / 2 by decide).trans_le bound
+      _ = 1 - stage * ((1 / 2 : Rational) + 1 / 2) + stage * (1 / 2 : Rational) := by ring1
+      _ = 1 - stage + stage * (1 / 2 : Rational) := by
+        rw [show (1 / 2 : Rational) + 1 / 2 = 1 by decide];
         ring1
       _ ≤ _ := add_le_add (le_refl _)
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct bounds.1 inside.1)
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct bounds.1 inside.1)
   · calc
       _ ≤ 1 - stage + stage * 1 := add_le_add (le_refl _)
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct bounds.2 inside.1)
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct bounds.2 inside.1)
       _ = _ := by ring1
 
 /-- Every unit-interval deformation stage retains weight between one half and one. -/
-theorem weight_bounds {source : Data.Gaussian.Basic.Canonical} (boundary : Boundary.OnBoxBoundary (Cuts.Ambient curve)
+theorem weight_bounds {source : Basic.Canonical} (boundary : OnBoxBoundary (Ambient curve)
   source)
-    {stage : Fraction.Rational} (inside : 0 ≤ stage ∧ stage ≤ 1) :
+    {stage : Rational} (inside : 0 ≤ stage ∧ stage ≤ 1) :
     1 / 2 ≤ weight curve source stage ∧
       weight curve source stage ≤ 1 :=
   affine_weight_bounds
     (ratio_bounds curve boundary) inside
 
 /-- A nonzero Gaussian inverse scaled by the original squared norm equals its conjugate. -/
-private theorem scaled_inverse (source : Data.Gaussian.Basic.Canonical) (nonzero : source ≠ 0) :
-    Scale.scale (Data.Gaussian.Norm.Basic.normSq source) source⁻¹ = Data.Gaussian.Basic.conj source :=
+private theorem scaled_inverse (source : Basic.Canonical) (nonzero : source ≠ 0) :
+    scale (Norm.Basic.normSq source) source⁻¹ = Basic.conj source :=
       by
-  have positive := Data.Gaussian.Norm.Basic.normSq_pos nonzero
-  rw [Data.Gaussian.Field.inv_eq]
-  apply Data.Gaussian.Basic.ext
-  · change Data.Gaussian.Norm.Basic.normSq source * (source.re / Data.Gaussian.Norm.Basic.normSq
+  have positive := Norm.Basic.normSq_pos nonzero
+  rw [Field.inv_eq]
+  apply Basic.ext
+  · change Norm.Basic.normSq source * (source.re / Norm.Basic.normSq
       source) = source.re
     rw [_root_.mul_comm]
     exact Fraction.Field.div_mul_cancel_of_ne _ _ positive.ne'
-  · change Data.Gaussian.Norm.Basic.normSq source * (-source.im / Data.Gaussian.Norm.Basic.normSq
+  · change Norm.Basic.normSq source * (-source.im / Norm.Basic.normSq
       source) = -source.im
     rw [_root_.mul_comm]
     exact Fraction.Field.div_mul_cancel_of_ne _ _ positive.ne'
 
 /-- The straight reciprocal side point equals the inverse scaled by the original reciprocal ratio. -/
-theorem chord_eq_scaled_inverse {source : Data.Gaussian.Basic.Canonical} (nonzero : source ≠ 0) :
-    chord curve source = Scale.scale
+theorem chord_eq_scaled_inverse {source : Basic.Canonical} (nonzero : source ≠ 0) :
+    chord curve source = scale
       (ratio curve source) source⁻¹ := by
   rw [chord, ←
     scaled_inverse source nonzero]
-  apply Data.Gaussian.Basic.ext <;> simp only [Scale.scale_re, Scale.scale_im,
+  apply Basic.ext <;> simp only [Scale.scale_re, Scale.scale_im,
     ratio] <;> ring1
 
 /-- Stage zero retains the exact original inverse point. -/
-theorem deform_zero (source : Data.Gaussian.Basic.Canonical) :
+theorem deform_zero (source : Basic.Canonical) :
   deform curve source 0 = source⁻¹ := by
-  apply Data.Gaussian.Basic.ext <;> simp only [deform,
+  apply Basic.ext <;> simp only [deform,
     weight, Scale.scale_re, Scale.scale_im] <;> ring1
 
 /-- Stage one reaches the straight scaled-conjugate side point. -/
-theorem deform_one {source : Data.Gaussian.Basic.Canonical} (nonzero : source ≠ 0) :
+theorem deform_one {source : Basic.Canonical} (nonzero : source ≠ 0) :
   deform curve source 1 =
   chord curve source := by
   rw [chord_eq_scaled_inverse curve nonzero]
-  apply Data.Gaussian.Basic.ext <;> simp only [deform,
+  apply Basic.ext <;> simp only [deform,
     weight, Scale.scale_re, Scale.scale_im] <;> ring1
 
 /-- The displayed homotopy really interpolates between the inverse point and the scaled-conjugate side, with the
 original stage parameter. -/
-theorem deform_affine {source : Data.Gaussian.Basic.Canonical} (nonzero : source ≠ 0) (stage : Fraction.Rational) :
-    deform curve source stage = source⁻¹ + Scale.scale
+theorem deform_affine {source : Basic.Canonical} (nonzero : source ≠ 0) (stage : Rational) :
+    deform curve source stage = source⁻¹ + scale
       stage (chord curve source - source⁻¹) := by
   rw [chord_eq_scaled_inverse curve nonzero]
-  apply Data.Gaussian.Basic.ext <;>
+  apply Basic.ext <;>
     simp only [deform,
       weight, Scale.scale_re, Scale.scale_im,
       Basic.add_re, Basic.add_im, Basic.sub_re, Basic.sub_im] <;> ring1
 
 /-- Scaled conjugation preserves the original affine segment parameter. -/
-theorem chord_affine (first last : Data.Gaussian.Basic.Canonical) (parameter : Fraction.Rational) :
-    chord curve (first + Scale.scale parameter (last -
+theorem chord_affine (first last : Basic.Canonical) (parameter : Rational) :
+    chord curve (first + scale parameter (last -
       first)) =
-      chord curve first + Scale.scale parameter
+      chord curve first + scale parameter
         (chord curve last -
         chord curve first) := by
-  apply Data.Gaussian.Basic.ext <;>
-    simp only [chord, Data.Gaussian.Basic.conj,
+  apply Basic.ext <;>
+    simp only [chord, Basic.conj,
       Scale.scale_re, Scale.scale_im, Basic.add_re, Basic.add_im, Basic.sub_re, Basic.sub_im] <;> ring1
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar in
 /-- A corner-norm source remains fixed at its inverse throughout the deformation. -/
-theorem corner_fixed {source : Data.Gaussian.Basic.Canonical} (corner : Data.Gaussian.Norm.Basic.normSq source
-  = 2 * radius curve ^ 2) (stage : Fraction.Rational) :
+theorem corner_fixed {source : Basic.Canonical} (corner : Norm.Basic.normSq source
+  = 2 * radius curve ^ 2) (stage : Rational) :
     deform curve source stage = source⁻¹ := by
   have ratioOne : ratio curve source = 1 := by rw
     [ratio, corner,
     scale_cancel]
-  apply Data.Gaussian.Basic.ext <;> simp only [deform,
+  apply Basic.ext <;> simp only [deform,
     weight, ratioOne, Scale.scale_re, Scale.scale_im]
     <;> ring1
 
 /-- The squared norm of an outer-boundary inverse is the reciprocal of the original squared norm. -/
-theorem inverse_norm {source : Data.Gaussian.Basic.Canonical} (boundary : Boundary.OnBoxBoundary (Cuts.Ambient curve)
+theorem inverse_norm {source : Basic.Canonical} (boundary : OnBoxBoundary (Ambient curve)
   source) :
-    Data.Gaussian.Norm.Basic.normSq source⁻¹ = (Data.Gaussian.Norm.Basic.normSq source)⁻¹ := by
-  rw [Data.Gaussian.Field.inv_eq, Data.Gaussian.Field.normSq_inv source (PreparedExteriorReciprocal.boundary_nonzero
+    Norm.Basic.normSq source⁻¹ = (Norm.Basic.normSq source)⁻¹ := by
+  rw [Field.inv_eq, Field.normSq_inv source (PreparedExteriorReciprocal.boundary_nonzero
     boundary)]
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar in
 /-- The inverse of every original outer-boundary point lies in the coefficient-certified reciprocal disk. -/
-theorem inverse_inDisk {source : Data.Gaussian.Basic.Canonical} (boundary : Boundary.OnBoxBoundary (Cuts.Ambient curve)
+theorem inverse_inDisk {source : Basic.Canonical} (boundary : OnBoxBoundary (Ambient curve)
   source) :
     Reciprocal.Bounds.InDisk curve.polynomial source⁻¹ := by
   have nonzero := PreparedExteriorReciprocal.boundary_nonzero boundary
-  change radius curve ^ 2 * Data.Gaussian.Norm.Basic.normSq source⁻¹ ≤ 1
+  change radius curve ^ 2 * Norm.Basic.normSq source⁻¹ ≤ 1
   rw [inverse_norm curve boundary]
-  exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+  exact (Arithmetic.mul_le_mul_of_nonneg_right_direct
     (boundary_norm_bounds curve boundary).1
-      (Fraction.Order.Field.inv_pos_direct (Data.Gaussian.Norm.Basic.normSq_pos nonzero)).le).trans_eq
-      (Algebra.Field.ExplicitField.mul_inv_cancel _ (Data.Gaussian.Norm.Basic.normSq_pos nonzero).ne')
+      (Field.inv_pos_direct (Norm.Basic.normSq_pos nonzero)).le).trans_eq
+      (Algebra.Field.ExplicitField.mul_inv_cancel _ (Norm.Basic.normSq_pos nonzero).ne')
 
 /-- Every unit-interval deformation stage remains inside the original certified reciprocal disk. -/
-theorem deform_inDisk {source : Data.Gaussian.Basic.Canonical} (boundary : Boundary.OnBoxBoundary (Cuts.Ambient curve)
+theorem deform_inDisk {source : Basic.Canonical} (boundary : OnBoxBoundary (Ambient curve)
   source)
-    {stage : Fraction.Rational} (inside : 0 ≤ stage ∧ stage ≤ 1) :
+    {stage : Rational} (inside : 0 ≤ stage ∧ stage ≤ 1) :
     Reciprocal.Bounds.InDisk curve.polynomial (deform
       curve source stage) := by
   have weights := weight_bounds curve boundary inside
-  have square := Fraction.Order.Arithmetic.pow_le_pow_direct
-    ((by decide : (0 : Fraction.Rational) ≤ 1 / 2).trans weights.1) weights.2 2
+  have square := Arithmetic.pow_le_pow_direct
+    ((by decide : (0 : Rational) ≤ 1 / 2).trans weights.1) weights.2 2
   rw [one_pow] at square
-  have shrink : Data.Gaussian.Norm.Basic.normSq
+  have shrink : Norm.Basic.normSq
     (deform curve source stage) ≤
-    Data.Gaussian.Norm.Basic.normSq source⁻¹ := by
-    rw [deform, Scale.normSq_scale]
-    exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct square (Data.Gaussian.Norm.Basic.normSq_nonneg
+    Norm.Basic.normSq source⁻¹ := by
+    rw [deform, normSq_scale]
+    exact (Arithmetic.mul_le_mul_of_nonneg_right_direct square (Norm.Basic.normSq_nonneg
       _)).trans_eq (by ring1)
-  exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct shrink
+  exact (Arithmetic.mul_le_mul_of_nonneg_left_direct shrink
     (radius_square_positive curve).le).trans
       (inverse_inDisk curve boundary)
 
 /-- One quarter of the reciprocal square scale, retained as a uniform coordinate squared-norm floor. -/
-@[expose] def coordinateLower : Fraction.Rational := (1 / 4 : Fraction.Rational) *
+@[expose] def coordinateLower : Rational := (1 / 4 : Rational) *
   squareScale curve
 
 /-- The retained coordinate squared-norm floor is strictly positive. -/
 theorem coordinateLower_positive : 0 < coordinateLower
   curve :=
-  Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+  Arithmetic.mul_pos_direct (by decide)
     (squareScale_positive curve)
 
 /-- The original coordinate floor bounds every unit-interval deformation stage away from zero. -/
-theorem deform_norm_lower {source : Data.Gaussian.Basic.Canonical} (boundary : Boundary.OnBoxBoundary (Cuts.Ambient
+theorem deform_norm_lower {source : Basic.Canonical} (boundary : OnBoxBoundary (Ambient
   curve) source)
-    {stage : Fraction.Rational} (inside : 0 ≤ stage ∧ stage ≤ 1) :
+    {stage : Rational} (inside : 0 ≤ stage ∧ stage ≤ 1) :
     coordinateLower curve ≤
-      Data.Gaussian.Norm.Basic.normSq (deform
+      Norm.Basic.normSq (deform
       curve source stage) := by
   have lowerInverse : squareScale curve ≤
-    Data.Gaussian.Norm.Basic.normSq source⁻¹ := by
+    Norm.Basic.normSq source⁻¹ := by
     rw [inverse_norm curve boundary]
-    exact Fraction.Order.Field.inv_le_inv_of_pos_direct
-      (Data.Gaussian.Norm.Basic.normSq_pos (PreparedExteriorReciprocal.boundary_nonzero boundary))
+    exact Field.inv_le_inv_of_pos_direct
+      (Norm.Basic.normSq_pos (PreparedExteriorReciprocal.boundary_nonzero boundary))
         (boundary_norm_bounds curve boundary).2
-  have lowerSquare := Fraction.Order.Arithmetic.pow_le_pow_direct (by decide : (0 : Fraction.Rational) ≤ 1 / 2)
+  have lowerSquare := Arithmetic.pow_le_pow_direct (by decide : (0 : Rational) ≤ 1 / 2)
     (weight_bounds curve boundary inside).1 2
-  rw [show (1 / 2 : Fraction.Rational) ^ 2 = 1 / 4 by decide] at lowerSquare
-  rw [deform, Scale.normSq_scale]
-  exact Fraction.Order.Arithmetic.mul_le_mul_direct lowerSquare lowerInverse
+  rw [show (1 / 2 : Rational) ^ 2 = 1 / 4 by decide] at lowerSquare
+  rw [deform, normSq_scale]
+  exact Arithmetic.mul_le_mul_direct lowerSquare lowerInverse
     (squareScale_positive curve).le
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+      (Arithmetic.sq_nonneg_direct _)
 
 /-- Every unit-interval deformation of an original outer-boundary point is nonzero. -/
-theorem deform_nonzero {source : Data.Gaussian.Basic.Canonical} (boundary : Boundary.OnBoxBoundary (Cuts.Ambient curve)
+theorem deform_nonzero {source : Basic.Canonical} (boundary : OnBoxBoundary (Ambient curve)
   source)
-    {stage : Fraction.Rational} (inside : 0 ≤ stage ∧ stage ≤ 1) :
+    {stage : Rational} (inside : 0 ≤ stage ∧ stage ≤ 1) :
       deform curve source stage ≠ 0 := by
   intro zero
   have positive := (coordinateLower_positive
     curve).trans_le (deform_norm_lower curve boundary
     inside)
-  rw [zero, Data.Gaussian.Norm.Basic.normSq_zero] at positive
-  exact (lt_irrefl (0 : Fraction.Rational)) positive
+  rw [zero, Norm.Basic.normSq_zero] at positive
+  exact (lt_irrefl (0 : Rational)) positive
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar in
 /-- The retained coordinate floor is at most one. -/
@@ -411,54 +413,54 @@ theorem coordinateLower_le_one : coordinateLower curve ≤
       _ ≤ radius curve ^ 2 + radius curve ^ 2 := le_add_of_nonneg_right
         (radius_square_positive curve).le
       _ = _ := by ring1
-  have inverse := Fraction.Order.Field.inv_le_inv_of_pos_direct (by decide : (0 : Fraction.Rational) < 1) denominator
-  rw [show (1 : Fraction.Rational)⁻¹ = 1 by decide] at inverse
-  exact (Fraction.Order.Arithmetic.mul_le_mul_direct (by decide : (1 / 4 : Fraction.Rational) ≤ 1) inverse
+  have inverse := Field.inv_le_inv_of_pos_direct (by decide : (0 : Rational) < 1) denominator
+  rw [show (1 : Rational)⁻¹ = 1 by decide] at inverse
+  exact (Arithmetic.mul_le_mul_direct (by decide : (1 / 4 : Rational) ≤ 1) inverse
     (squareScale_positive curve).le (by
       decide)).trans_eq (by ring1)
 
 /-- The original leading-coefficient squared norm divided by four, times the retained coordinate floor. -/
-@[expose] def radicandLower : Fraction.Rational := (Data.Gaussian.Norm.Basic.normSq
+@[expose] def radicandLower : Rational := (Norm.Basic.normSq
   curve.polynomial.leadingCoeff / 4) * coordinateLower
   curve
 
 /-- The retained reciprocal radicand lower bound is strictly positive. -/
 theorem radicandLower_positive : 0 < radicandLower curve
   :=
-  Fraction.Order.Arithmetic.mul_pos_direct
-    (Fraction.Order.Field.div_pos_direct
-      (Data.Gaussian.Norm.Basic.normSq_pos (DensePolynomial.leadingCoeff_ne_zero curve.nonzero)) (by decide))
+  Arithmetic.mul_pos_direct
+    (Field.div_pos_direct
+      (Norm.Basic.normSq_pos (DensePolynomial.leadingCoeff_ne_zero curve.nonzero)) (by decide))
     (coordinateLower_positive curve)
 
 /-- Both degree parities use one positive bound. In the odd case the coordinate factor is retained, rather than hidden
 in a nonzero assumption. -/
-theorem radicand_lower {point : Data.Gaussian.Basic.Canonical}
+theorem radicand_lower {point : Basic.Canonical}
     (inside : Reciprocal.Bounds.InDisk curve.polynomial point)
     (coordinate : coordinateLower curve ≤
-      Data.Gaussian.Norm.Basic.normSq point) :
+      Norm.Basic.normSq point) :
     radicandLower curve ≤
-      Data.Gaussian.Norm.Basic.normSq ((HyperellipticReciprocal.polynomial curve).eval point) := by
+      Norm.Basic.normSq ((HyperellipticReciprocal.polynomial curve).eval point) := by
   have reversed := Reciprocal.Bounds.disk_lower curve.polynomial (BranchIsolation.degreePositive curve) point inside
-  have leadingNonnegative : 0 ≤ Data.Gaussian.Norm.Basic.normSq curve.polynomial.leadingCoeff / 4 :=
-    Fraction.Order.Field.div_nonneg_direct (Data.Gaussian.Norm.Basic.normSq_nonneg _) (by decide)
-  rw [HyperellipticReciprocal.polynomial_eval, Data.Gaussian.Norm.Basic.normSq_mul, Power.normSq_pow]
+  have leadingNonnegative : 0 ≤ Norm.Basic.normSq curve.polynomial.leadingCoeff / 4 :=
+    Field.div_nonneg_direct (Norm.Basic.normSq_nonneg _) (by decide)
+  rw [HyperellipticReciprocal.polynomial_eval, Norm.Basic.normSq_mul, Power.normSq_pow]
   rcases (HyperellipticReciprocal.origin_factor curve).2 with regular | branch
   · rw [regular, pow_zero]
-    exact Fraction.Order.Arithmetic.mul_le_mul_direct reversed
+    exact Arithmetic.mul_le_mul_direct reversed
       (coordinateLower_le_one curve)
       (coordinateLower_positive curve).le
-        (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+        (Norm.Basic.normSq_nonneg _)
   · rw [branch, pow_one]
-    exact Fraction.Order.Arithmetic.mul_le_mul_direct reversed coordinate
+    exact Arithmetic.mul_le_mul_direct reversed coordinate
       (coordinateLower_positive curve).le
         (leadingNonnegative.trans reversed)
 
 /-- The reciprocal radicand satisfies the retained uniform lower bound throughout the original boundary deformation. -/
-theorem deform_radicand_lower {source : Data.Gaussian.Basic.Canonical} (boundary : Boundary.OnBoxBoundary (Cuts.Ambient
+theorem deform_radicand_lower {source : Basic.Canonical} (boundary : OnBoxBoundary (Ambient
   curve) source)
-    {stage : Fraction.Rational} (inside : 0 ≤ stage ∧ stage ≤ 1) :
+    {stage : Rational} (inside : 0 ≤ stage ∧ stage ≤ 1) :
     radicandLower curve ≤
-      Data.Gaussian.Norm.Basic.normSq ((HyperellipticReciprocal.polynomial curve).eval
+      Norm.Basic.normSq ((HyperellipticReciprocal.polynomial curve).eval
       (deform curve source stage)) :=
   radicand_lower curve
     (deform_inDisk curve boundary inside)
@@ -466,24 +468,24 @@ theorem deform_radicand_lower {source : Data.Gaussian.Basic.Canonical} (boundary
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar in
 /-- The outer radius multiplied by the original reciprocal square scale. -/
-@[expose] def innerRadius : Fraction.Rational :=
+@[expose] def innerRadius : Rational :=
   squareScale curve * radius curve
 
 /-- The retained reciprocal inner radius is strictly positive. -/
 theorem innerRadius_positive : 0 < innerRadius curve :=
-  Fraction.Order.Arithmetic.mul_pos_direct
+  Arithmetic.mul_pos_direct
     (squareScale_positive curve)
     (radius_positive curve)
 
 /-- The symmetric rational square with the retained reciprocal inner radius. -/
-@[expose] def innerBox : Rational.Box := Rational.Box.symmetric
+@[expose] def innerBox : Rational.Box := symmetric
   (innerRadius curve)
   (innerRadius_positive curve).le
 
 section
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar
 /-- Scaled conjugation maps the original ambient square into the retained inner square. -/
-theorem chord_contains {source : Data.Gaussian.Basic.Canonical} (inside : (Cuts.Ambient curve).Contains source) :
+theorem chord_contains {source : Basic.Canonical} (inside : (Ambient curve).Contains source) :
     (innerBox curve).Contains
       (chord curve source) := by
   change -radius curve ≤ source.re ∧ source.re ≤ radius curve ∧
@@ -496,15 +498,15 @@ theorem chord_contains {source : Data.Gaussian.Basic.Canonical} (inside : (Cuts.
       squareScale curve * -source.im ∧
     squareScale curve * -source.im ≤
       squareScale curve * radius curve
-  have lowerRe := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct inside.1
+  have lowerRe := Arithmetic.mul_le_mul_of_nonneg_left_direct inside.1
     (squareScale_positive curve).le
-  have lowerIm := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.neg_le_neg_direct inside.2.2.2)
+  have lowerIm := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.neg_le_neg_direct inside.2.2.2)
       (squareScale_positive curve).le
-  have upperIm := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.neg_le_neg_direct inside.2.2.1)
+  have upperIm := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.neg_le_neg_direct inside.2.2.1)
       (squareScale_positive curve).le
-  refine ⟨?_, Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct inside.2.1
+  refine ⟨?_, Arithmetic.mul_le_mul_of_nonneg_left_direct inside.2.1
     (squareScale_positive curve).le, ?_, ?_⟩
   · exact (show -(squareScale curve * radius curve) =
       squareScale curve * -radius curve by ring1).trans_le
@@ -516,9 +518,9 @@ theorem chord_contains {source : Data.Gaussian.Basic.Canonical} (inside : (Cuts.
 
 /-- Conjugation preserves left/right and exchanges bottom/top. Together with affine parameter preservation this records
 the reversed orientation. -/
-theorem chord_boundary {source : Data.Gaussian.Basic.Canonical} (boundary : Boundary.OnBoxBoundary (Cuts.Ambient curve)
+theorem chord_boundary {source : Basic.Canonical} (boundary : OnBoxBoundary (Ambient curve)
   source) :
-    Boundary.OnBoxBoundary (innerBox curve)
+    OnBoxBoundary (innerBox curve)
       (chord curve source) := by
   refine ⟨chord_contains curve boundary.1, ?_⟩
   have side := boundary.2
@@ -541,14 +543,14 @@ theorem chord_boundary {source : Data.Gaussian.Basic.Canonical} (boundary : Boun
 end
 
 /-- Scaled conjugation reverses oriented area with the exact squared scale factor. -/
-theorem chord_orientation (first last : Data.Gaussian.Basic.Canonical) :
+theorem chord_orientation (first last : Basic.Canonical) :
     (chord curve first).re *
       (chord curve last).im -
       (chord curve first).im *
       (chord curve last).re =
       -(squareScale curve ^ 2) * (first.re * last.im -
         first.im * last.re) := by
-  simp only [chord, Data.Gaussian.Basic.conj,
+  simp only [chord, Basic.conj,
     Scale.scale_re, Scale.scale_im]
   ring1
 
@@ -567,26 +569,26 @@ theorem innerRadius_identity : radius curve ^ 2 *
 
 The supplied endpoint comparisons bound its square by the maximum of
 the two equal endpoint squares, which is that same radius square. -/
-private theorem symmetric_square_bound {radius value : Fraction.Rational} (bounds : -radius ≤ value ∧ value ≤ radius) :
+private theorem symmetric_square_bound {radius value : Rational} (bounds : -radius ≤ value ∧ value ≤ radius) :
     value ^ 2 ≤ radius ^ 2 := by
-  have estimate := Rational.Box.sq_le_endpoint_max bounds.1 bounds.2
-  simpa only [show (-radius) ^ 2 = radius ^ 2 by ring1, Fraction.Order.Basic.max_self] using estimate
+  have estimate := sq_le_endpoint_max bounds.1 bounds.2
+  simpa only [show (-radius) ^ 2 = radius ^ 2 by ring1, Basic.max_self] using estimate
 
 /-- The whole retained inner square lies in the original coefficient-certified reciprocal disk. -/
-theorem innerBox_inDisk {point : Data.Gaussian.Basic.Canonical} (inside :
+theorem innerBox_inDisk {point : Basic.Canonical} (inside :
   (innerBox curve).Contains point) :
     Reciprocal.Bounds.InDisk curve.polynomial point := by
   have realSquare := symmetric_square_bound ⟨inside.1,
     inside.2.1⟩
   have imaginarySquare := symmetric_square_bound
     ⟨inside.2.2.1, inside.2.2.2⟩
-  have normUpper : Data.Gaussian.Norm.Basic.normSq point ≤ 2 *
+  have normUpper : Norm.Basic.normSq point ≤ 2 *
     innerRadius curve ^ 2 :=
     (add_le_add realSquare imaginarySquare).trans_eq (by ring1)
   calc
     _ ≤ radius curve ^ 2 * (2 * innerRadius curve ^ 2)
       :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct normUpper
+      Arithmetic.mul_le_mul_of_nonneg_left_direct normUpper
         (radius_square_positive curve).le
     _ = 2 * (radius curve ^ 2 * innerRadius curve ^ 2)
       := by
@@ -594,14 +596,14 @@ theorem innerBox_inDisk {point : Data.Gaussian.Basic.Canonical} (inside :
     _ ≤ 1 := by rw [innerRadius_identity]; decide
 
 /-- The retained inner-square boundary satisfies the original positive coordinate floor. -/
-theorem innerBoundary_coordinate_lower {point : Data.Gaussian.Basic.Canonical} (boundary : Boundary.OnBoxBoundary
+theorem innerBoundary_coordinate_lower {point : Basic.Canonical} (boundary : OnBoxBoundary
   (innerBox curve) point) :
     coordinateLower curve ≤
-      Data.Gaussian.Norm.Basic.normSq point := by
+      Norm.Basic.normSq point := by
   have lower := (Symmetric.Norm.symmetric_boundary_norm_bounds
     (innerRadius_positive curve).le boundary).1
   have identity : innerRadius curve ^ 2 = (1 / 2 :
-    Fraction.Rational) * squareScale curve := by
+    Rational) * squareScale curve := by
     calc
       _ = (radius curve ^ 2 * squareScale curve) *
         squareScale curve := by
@@ -610,7 +612,7 @@ theorem innerBoundary_coordinate_lower {point : Data.Gaussian.Basic.Canonical} (
       _ = _ := by rw [radius_scale]
   apply le_trans _ lower
   rw [identity]
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide : (1 / 4 : Fraction.Rational) ≤ 1 / 2)
+  exact Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide : (1 / 4 : Rational) ≤ 1 / 2)
     (squareScale_positive curve).le
 
 end
@@ -627,7 +629,7 @@ search or caller bound is needed, including when the patch contains the odd-degr
     have scalar := radicand_lower curve
       (innerBox_inDisk curve boundary.1)
       (innerBoundary_coordinate_lower curve boundary)
-    rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+    rw [Norm.Basic.normSq_eq_canonical] at scalar
     exact scalar
 
 /-! The executable interface caches all coefficient-dependent arithmetic.
@@ -640,16 +642,16 @@ set_option genInjectivity false in
 Exact equations bind the stored scale, inner box and coordinate and radicand bounds to this curve; point queries reuse
 those stored values. -/
 structure Data where
-  /-- The cached curve-dependent reciprocal square scale. -/ coefficientScale : Fraction.Rational
+  /-- The cached curve-dependent reciprocal square scale. -/ coefficientScale : Rational
   /-- The cached scale equals the original coefficient-derived reciprocal square scale. -/ coefficientScale_eq :
     coefficientScale = squareScale curve
   /-- The cached reciprocal inner square. -/ box : Rational.Box
   /-- The cached square is exactly the original inner square. -/ box_eq : box =
     innerBox curve
-  /-- The cached uniform coordinate squared-norm lower bound. -/ coordinateBound : Fraction.Rational
+  /-- The cached uniform coordinate squared-norm lower bound. -/ coordinateBound : Rational
   /-- The cached coordinate bound is exactly the original collar coordinate floor. -/ coordinateBound_eq :
     coordinateBound = coordinateLower curve
-  /-- The cached uniform reciprocal-radicand squared-norm lower bound. -/ radicandBound : Fraction.Rational
+  /-- The cached uniform reciprocal-radicand squared-norm lower bound. -/ radicandBound : Rational
   /-- The cached radicand bound is exactly the original collar radicand floor. -/ radicandBound_eq : radicandBound =
     radicandLower curve
 
@@ -660,11 +662,11 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar in
 @[expose] def Data.build : Data curve :=
   let outerRadius := radius curve
   let coefficientScale := (2 * outerRadius ^ 2)⁻¹
-  let coordinateBound := (1 / 4 : Fraction.Rational) * coefficientScale
+  let coordinateBound := (1 / 4 : Rational) * coefficientScale
   ⟨coefficientScale, rfl,
-    Rational.Box.symmetric (coefficientScale * outerRadius)
+    symmetric (coefficientScale * outerRadius)
       (innerRadius_positive curve).le, rfl,
-    coordinateBound, rfl, (Data.Gaussian.Norm.Basic.normSq curve.polynomial.leadingCoeff / 4) *
+    coordinateBound, rfl, (Norm.Basic.normSq curve.polynomial.leadingCoeff / 4) *
       coordinateBound, rfl⟩
 
 namespace Data
@@ -672,59 +674,59 @@ namespace Data
 variable {curve}
 
 /-- Evaluate the collar deformation using the original cached coefficient scale. -/
-@[expose] def point (data : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve) (source :
-  Data.Gaussian.Basic.Canonical) (stage : Fraction.Rational) : Gaussian :=
-  Scale.scale (1 - stage + stage * (Data.Gaussian.Norm.Basic.normSq source * data.coefficientScale)) source⁻¹
+@[expose] def point (data : Data curve) (source :
+  Basic.Canonical) (stage : Rational) : Gaussian :=
+  scale (1 - stage + stage * (Norm.Basic.normSq source * data.coefficientScale)) source⁻¹
 
 /-- Evaluate the straight reciprocal side using the original cached coefficient scale. -/
-@[expose] def sidePoint (data : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve) (source :
-  Data.Gaussian.Basic.Canonical) : Gaussian := Scale.scale data.coefficientScale (Data.Gaussian.Basic.conj
+@[expose] def sidePoint (data : Data curve) (source :
+  Basic.Canonical) : Gaussian := scale data.coefficientScale (Basic.conj
   source)
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data in
 /-- The cached point evaluator equals the original collar deformation at the same source and stage. -/
-theorem point_eq (data : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve) (source :
-  Data.Gaussian.Basic.Canonical) (stage : Fraction.Rational) :
-    data.point source stage = Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.deform curve source stage
+theorem point_eq (data : Data curve) (source :
+  Basic.Canonical) (stage : Rational) :
+    data.point source stage = deform curve source stage
       := by
   unfold point
   rw [data.coefficientScale_eq]
   rfl
 
 /-- The cached side evaluator equals the original scaled-conjugate side point. -/
-theorem sidePoint_eq (data : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve) (source :
-  Data.Gaussian.Basic.Canonical) : data.sidePoint source =
-  Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.chord curve source := by
-  unfold ReciprocalExteriorCollar.Data.sidePoint
+theorem sidePoint_eq (data : Data curve) (source :
+  Basic.Canonical) : data.sidePoint source =
+  chord curve source := by
+  unfold sidePoint
   rw [data.coefficientScale_eq]
   rfl
 
 /-- The original cached coordinate floor is strictly positive. -/
-theorem coordinateBound_positive (data : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve) : 0
+theorem coordinateBound_positive (data : Data curve) : 0
   < data.coordinateBound := by
   rw [data.coordinateBound_eq]
-  exact Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.coordinateLower_positive curve
+  exact coordinateLower_positive curve
 
 /-- The original cached reciprocal radicand floor is strictly positive. -/
-theorem radicandBound_positive (data : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve) : 0 <
+theorem radicandBound_positive (data : Data curve) : 0 <
   data.radicandBound := by
   rw [data.radicandBound_eq]
-  exact Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.radicandLower_positive curve
+  exact radicandLower_positive curve
 
 /-- The original cached coordinate and radicand bounds hold at every retained boundary deformation stage. -/
-theorem point_clearance (data : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve) {source :
-  Data.Gaussian.Basic.Canonical} (boundary : Boundary.OnBoxBoundary (Cuts.Ambient curve) source)
-    {stage : Fraction.Rational} (inside : 0 ≤ stage ∧ stage ≤ 1) :
-    data.coordinateBound ≤ Data.Gaussian.Norm.Basic.normSq (data.point source stage) ∧
-    data.radicandBound ≤ Data.Gaussian.Norm.Basic.normSq ((HyperellipticReciprocal.polynomial curve).eval
+theorem point_clearance (data : Data curve) {source :
+  Basic.Canonical} (boundary : OnBoxBoundary (Ambient curve) source)
+    {stage : Rational} (inside : 0 ≤ stage ∧ stage ≤ 1) :
+    data.coordinateBound ≤ Norm.Basic.normSq (data.point source stage) ∧
+    data.radicandBound ≤ Norm.Basic.normSq ((HyperellipticReciprocal.polynomial curve).eval
       (data.point source stage)) := by
   rw [data.coordinateBound_eq, data.radicandBound_eq, data.point_eq]
   exact ⟨deform_norm_lower curve boundary inside,
-    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.deform_radicand_lower curve boundary inside⟩
+    deform_radicand_lower curve boundary inside⟩
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data in
 /-- Construct reciprocal polynomial boundary clearance on the same cached inner square. -/
-@[expose] def boundaryClearance (data : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve) :
+@[expose] def boundaryClearance (data : Data curve) :
   Boundary.Basic.BoundaryClearance
     (HyperellipticReciprocalCurve.reciprocalCurve curve).polynomial data.box where
   bound := data.radicandBound
@@ -733,72 +735,72 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Dat
     intro point boundary
     rw [data.box_eq] at boundary
     rw [data.radicandBound_eq]
-    exact (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.innerBoundaryClearance curve).lower point
+    exact (innerBoundaryClearance curve).lower point
       boundary
 
 /-- Stage zero is exactly the existing reciprocal sample's rational path, including for a retained parent that is a
 proper subsegment of a side. -/
-theorem parent_zero (data : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve) {differential :
-  Differentials.Basic.Differential genus}
-    (parent : PreparedSubdivisionModelCore.CenteredEdge curve differential) (parameter : Fraction.Rational) :
+theorem parent_zero (data : Data curve) {differential :
+  Differential genus}
+    (parent : PreparedSubdivisionModelCore.CenteredEdge curve differential) (parameter : Rational) :
     data.point (parent.edge.point parameter) 0 = ReciprocalPathSamples.point parent.model parameter := by
-  rw [data.point_eq, Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.deform_zero,
+  rw [data.point_eq, deform_zero,
     PreparedExteriorReciprocal.parentSample_point]
 
 /-- Stage one is affine along the original prepared parameter. Its endpoints are the scaled-conjugate endpoints, not
 generally the original inverses. -/
-theorem parent_one (data : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve) {differential :
-  Differentials.Basic.Differential genus}
+theorem parent_one (data : Data curve) {differential :
+  Differential genus}
     (parent : PreparedSubdivisionModelCore.CenteredEdge curve differential)
-    (boundary : PreparedBoundarySegments.ParentOnBoundary parent (Cuts.Ambient curve))
-    {parameter : Fraction.Rational} (inside : 0 ≤ parameter ∧ parameter ≤ 1) :
+    (boundary : ParentOnBoundary parent (Ambient curve))
+    {parameter : Rational} (inside : 0 ≤ parameter ∧ parameter ≤ 1) :
     data.point (parent.edge.point parameter) 1 =
-      data.sidePoint (parent.edge.point 0) + Scale.scale parameter
+      data.sidePoint (parent.edge.point 0) + scale parameter
         (data.sidePoint (parent.edge.point 1) - data.sidePoint (parent.edge.point 0)) := by
-  rw [data.point_eq, Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.deform_one curve
+  rw [data.point_eq, deform_one curve
     (PreparedExteriorReciprocal.parent_point_nonzero boundary inside),
     data.sidePoint_eq, data.sidePoint_eq]
-  have affine : parent.edge.point parameter = parent.edge.point 0 + Scale.scale parameter
+  have affine : parent.edge.point parameter = parent.edge.point 0 + scale parameter
       (parent.edge.point 1 - parent.edge.point 0) := by
-    change parent.edge.localSegment.pointAt parameter = parent.edge.localSegment.pointAt 0 + Scale.scale parameter
+    change parent.edge.localSegment.pointAt parameter = parent.edge.localSegment.pointAt 0 + scale parameter
       (parent.edge.localSegment.pointAt 1 - parent.edge.localSegment.pointAt 0)
     rw [ClearSegment.pointAt_zero, ClearSegment.pointAt_one]
     rfl
   rw [affine]
-  exact Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.chord_affine curve _ _ _
+  exact chord_affine curve _ _ _
 
 /-- The cached collar bounds hold for every unit-interval parameter and stage on the original prepared boundary parent.
 -/
-theorem parent_clearance (data : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve)
-  {differential : Differentials.Basic.Differential genus}
+theorem parent_clearance (data : Data curve)
+  {differential : Differential genus}
     (parent : PreparedSubdivisionModelCore.CenteredEdge curve differential)
-    (boundary : PreparedBoundarySegments.ParentOnBoundary parent (Cuts.Ambient curve))
-    {parameter stage : Fraction.Rational} (parameterInside : 0 ≤ parameter ∧ parameter ≤ 1)
+    (boundary : ParentOnBoundary parent (Ambient curve))
+    {parameter stage : Rational} (parameterInside : 0 ≤ parameter ∧ parameter ≤ 1)
     (stageInside : 0 ≤ stage ∧ stage ≤ 1) :
-    data.coordinateBound ≤ Data.Gaussian.Norm.Basic.normSq (data.point (parent.edge.point parameter) stage) ∧
-    data.radicandBound ≤ Data.Gaussian.Norm.Basic.normSq ((HyperellipticReciprocal.polynomial curve).eval
+    data.coordinateBound ≤ Norm.Basic.normSq (data.point (parent.edge.point parameter) stage) ∧
+    data.radicandBound ≤ Norm.Basic.normSq ((HyperellipticReciprocal.polynomial curve).eval
       (data.point (parent.edge.point parameter) stage)) :=
   data.point_clearance (boundary.point parameterInside) stageInside
 
 /-- All retained parents of an actual covered boundary segment consume the same cached collar. No new path, center,
 owner, or subdivision is prepared. -/
-theorem segment_clearance (data : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve)
-  {differential : Differentials.Basic.Differential genus}
-    {first last : Data.Gaussian.Basic.Canonical} {segment : ClearPath.ClearSegment curve.polynomial (Cuts.Ambient curve)
+theorem segment_clearance (data : Data curve)
+  {differential : Differential genus}
+    {first last : Basic.Canonical} {segment : ClearSegment curve.polynomial (Ambient curve)
       first last}
     {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval first)}
-    {piece : PreparedPathDecomposition.CoveredSegment segment owner} {sheet : Fin 2}
-    (cache : PreparedClearPathModels.ParentCache piece.path differential sheet)
-    (side : PreparedBoundarySegments.SameSide (Cuts.Ambient curve) first last)
+    {piece : CoveredSegment segment owner} {sheet : Fin 2}
+    (cache : ParentCache piece.path differential sheet)
+    (side : SameSide (Ambient curve) first last)
     {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential} (member : parent ∈ cache.parents)
-    {parameter stage : Fraction.Rational} (parameterInside : 0 ≤ parameter ∧ parameter ≤ 1)
+    {parameter stage : Rational} (parameterInside : 0 ≤ parameter ∧ parameter ≤ 1)
     (stageInside : 0 ≤ stage ∧ stage ≤ 1) :
-    data.coordinateBound ≤ Data.Gaussian.Norm.Basic.normSq (data.point (parent.edge.point parameter) stage) ∧
-    data.radicandBound ≤ Data.Gaussian.Norm.Basic.normSq ((HyperellipticReciprocal.polynomial curve).eval
+    data.coordinateBound ≤ Norm.Basic.normSq (data.point (parent.edge.point parameter) stage) ∧
+    data.radicandBound ≤ Norm.Basic.normSq ((HyperellipticReciprocal.polynomial curve).eval
       (data.point (parent.edge.point parameter) stage)) := by
-  have firstInside : (Cuts.Ambient curve).Contains first := by
+  have firstInside : (Ambient curve).Contains first := by
     simpa only [ClearSegment.pointAt_zero] using segment.pointAt_contains piece.within 0 (by decide)
-  have lastInside : (Cuts.Ambient curve).Contains last := by
+  have lastInside : (Ambient curve).Contains last := by
     simpa only [ClearSegment.pointAt_one] using segment.pointAt_contains piece.within 1 (by decide)
   exact data.parent_clearance parent
     (PreparedSegmentBoundaryGeometry.segment_parent_boundary

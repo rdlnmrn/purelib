@@ -75,7 +75,7 @@ def canonicalAssociate (denominator : GaussianInt) : GaussianInt :=
 
 /-- The selected normalizing Gaussian unit always has natural quadrance one. -/
 theorem canonicalizingUnit_normNat (denominator : GaussianInt) :
-    GaussianInt.normNat (canonicalizingUnit denominator) = 1 := by
+    normNat (canonicalizingUnit denominator) = 1 := by
   unfold canonicalizingUnit
   split
   · split <;> decide
@@ -92,10 +92,10 @@ theorem canonicalAssociate_isCanonical
     canonicalizingUnit]
   by_cases realPositive : 0 < denominator.re
   · by_cases imaginaryNonnegative : 0 ≤ denominator.im
-    · rw [if_pos realPositive, if_pos imaginaryNonnegative, GaussianInt.one_mul]
+    · rw [if_pos realPositive, if_pos imaginaryNonnegative, one_mul]
       exact ⟨realPositive, imaginaryNonnegative⟩
     · rw [if_pos realPositive, if_neg imaginaryNonnegative]
-      simp only [GaussianInt.mul_re, GaussianInt.mul_im, Units.imaginaryUnit,
+      simp only [mul_re, mul_im, Units.imaginaryUnit,
         Int.Arithmetic.zero_mul, Int.one_mul, Int.Arithmetic.zero_sub,
         Int.Arithmetic.zero_add, -eq_self, -iff_self]
       constructor
@@ -108,8 +108,8 @@ theorem canonicalAssociate_isCanonical
   · by_cases realNegative : denominator.re < 0
     · by_cases imaginaryPositive : 0 < denominator.im
       · rw [if_neg realPositive, if_pos realNegative, if_pos imaginaryPositive]
-        simp only [GaussianInt.mul_re, GaussianInt.mul_im, GaussianInt.neg_re,
-          GaussianInt.neg_im, Units.imaginaryUnit, Int.neg_zero,
+        simp only [mul_re, mul_im, neg_re,
+          neg_im, Units.imaginaryUnit, Int.neg_zero,
           Int.Arithmetic.neg_mul, Int.Arithmetic.zero_mul, Int.one_mul,
           Int.Arithmetic.zero_sub, Int.Arithmetic.zero_add, Int.neg_neg,
           -eq_self, -iff_self]
@@ -120,8 +120,8 @@ theorem canonicalAssociate_isCanonical
             at bound
           exact bound
       · rw [if_neg realPositive, if_pos realNegative, if_neg imaginaryPositive]
-        simp only [GaussianInt.mul_re, GaussianInt.mul_im, GaussianInt.neg_re,
-          GaussianInt.neg_im, GaussianInt.one_re, GaussianInt.one_im,
+        simp only [mul_re, mul_im, neg_re,
+          neg_im, one_re, one_im,
           Int.neg_zero, Int.Arithmetic.neg_mul, Int.one_mul,
           Int.Arithmetic.zero_mul, Int.Arithmetic.sub_zero, Int.add_zero,
           -eq_self, -iff_self]
@@ -140,8 +140,8 @@ theorem canonicalAssociate_isCanonical
           (Int.Order.le_of_not_lt realNegative)
       by_cases imaginaryPositive : 0 < denominator.im
       · rw [if_neg realPositive, if_neg realNegative, if_pos imaginaryPositive]
-        simp only [GaussianInt.mul_re, GaussianInt.mul_im, GaussianInt.neg_re,
-          GaussianInt.neg_im, Units.imaginaryUnit, Int.neg_zero,
+        simp only [mul_re, mul_im, neg_re,
+          neg_im, Units.imaginaryUnit, Int.neg_zero,
           Int.Arithmetic.neg_mul, Int.Arithmetic.zero_mul, Int.one_mul,
           Int.Arithmetic.zero_sub, Int.Arithmetic.zero_add, Int.neg_neg,
           -eq_self, -iff_self]
@@ -153,7 +153,7 @@ theorem canonicalAssociate_isCanonical
           intro imaginaryZero
           exact denominatorNonzero (GaussianInt.ext realZero imaginaryZero)
         rw [if_neg realPositive, if_neg realNegative, if_neg imaginaryPositive]
-        simp only [GaussianInt.mul_re, GaussianInt.mul_im, Units.imaginaryUnit,
+        simp only [mul_re, mul_im, Units.imaginaryUnit,
           Int.Arithmetic.zero_mul, Int.one_mul, Int.Arithmetic.zero_sub,
           Int.Arithmetic.zero_add, -eq_self, -iff_self]
         constructor
@@ -174,7 +174,7 @@ The original reduced-fraction parent retains numerator, denominator, nonzeroness
 explicit Bezout coefficients. The extra field certifies the selected denominator
 sector without replacing that parent. -/
 structure CanonicalFraction extends toFraction :
-  Data.GaussianInt.Fraction.Reduced where
+  Reduced where
   /-- The retained denominator has positive real coordinate and nonnegative imaginary coordinate. -/
     canonicalDenominator : IsCanonicalDenominator denominator
 
@@ -207,55 +207,55 @@ open Purelib.Data.GaussianInt.Fraction.Canonical in
 Scale numerator and denominator by the same unit, and transport the original Bezout
 coefficients by its conjugate. The result retains exact value, denominator quadrance,
 nonzeroness and the canonical sector proof. -/
-def canonicalize (fraction : Data.GaussianInt.Fraction.Reduced) :
+def canonicalize (fraction : Reduced) :
   CanonicalFraction :=
   by
   let unit := canonicalizingUnit fraction.denominator
-  have unitNorm : GaussianInt.normNat unit = 1 :=
+  have unitNorm : normNat unit = 1 :=
     canonicalizingUnit_normNat fraction.denominator
   have denominatorNonzero : unit * fraction.denominator ≠ 0 := by
     intro productZero
-    have normZero := congrArg GaussianInt.normNat productZero
-    rw [GaussianInt.normNat_mul, unitNorm, Nat.one_mul] at normZero
-    have zeroNorm : GaussianInt.normNat (0 : GaussianInt) = 0 := rfl
+    have normZero := congrArg normNat productZero
+    rw [normNat_mul, unitNorm, Nat.one_mul] at normZero
+    have zeroNorm : normNat (0 : GaussianInt) = 0 := rfl
     rw [zeroNorm] at normZero
-    exact (Nat.ne_of_gt (GaussianInt.normNat_pos fraction.denominatorNonzero)) normZero
-  have conjugateUnitProduct : GaussianInt.conj unit * unit = 1 := by
-    rw [GaussianInt.mul_comm,
-      GaussianInt.mul_conj, unitNorm]
+    exact (Nat.ne_of_gt (normNat_pos fraction.denominatorNonzero)) normZero
+  have conjugateUnitProduct : conj unit * unit = 1 := by
+    rw [mul_comm,
+      mul_conj, unitNorm]
     rfl
   have transportedBezout :
-      1 = (fraction.leftCoefficient * GaussianInt.conj unit) *
+      1 = (fraction.leftCoefficient * conj unit) *
             (unit * fraction.numerator) +
-          (fraction.rightCoefficient * GaussianInt.conj unit) *
+          (fraction.rightCoefficient * conj unit) *
             (unit * fraction.denominator) := by
     calc
       1 = fraction.leftCoefficient * fraction.numerator +
           fraction.rightCoefficient * fraction.denominator := fraction.bezout
-      _ = (fraction.leftCoefficient * GaussianInt.conj unit) *
+      _ = (fraction.leftCoefficient * conj unit) *
             (unit * fraction.numerator) +
-          (fraction.rightCoefficient * GaussianInt.conj unit) *
+          (fraction.rightCoefficient * conj unit) *
             (unit * fraction.denominator) := by
         calc
           fraction.leftCoefficient * fraction.numerator +
                 fraction.rightCoefficient * fraction.denominator =
-              (GaussianInt.conj unit * unit) *
+              (conj unit * unit) *
                 (fraction.leftCoefficient * fraction.numerator +
                   fraction.rightCoefficient * fraction.denominator) := by
-            rw [conjugateUnitProduct, GaussianInt.one_mul]
-          _ = (fraction.leftCoefficient * GaussianInt.conj unit) *
+            rw [conjugateUnitProduct, one_mul]
+          _ = (fraction.leftCoefficient * conj unit) *
                 (unit * fraction.numerator) +
-              (fraction.rightCoefficient * GaussianInt.conj unit) *
+              (fraction.rightCoefficient * conj unit) *
                 (unit * fraction.denominator) := by
             apply GaussianInt.ext <;>
-              simp only [GaussianInt.mul_re, GaussianInt.mul_im, GaussianInt.add_re, GaussianInt.add_im] <;>
+              simp only [mul_re, mul_im, add_re, add_im] <;>
               ring1
   exact
     { numerator := unit * fraction.numerator
       denominator := unit * fraction.denominator
       denominatorNonzero := denominatorNonzero
-      leftCoefficient := fraction.leftCoefficient * GaussianInt.conj unit
-      rightCoefficient := fraction.rightCoefficient * GaussianInt.conj unit
+      leftCoefficient := fraction.leftCoefficient * conj unit
+      rightCoefficient := fraction.rightCoefficient * conj unit
       bezout := transportedBezout
       canonicalDenominator := canonicalAssociate_isCanonical
         fraction.denominatorNonzero }
@@ -263,28 +263,28 @@ def canonicalize (fraction : Data.GaussianInt.Fraction.Reduced) :
 /-- Unit normalization preserves the exact Gaussian-rational value of the reduced
 fraction. -/
 theorem canonicalize_value (fraction :
-  Data.GaussianInt.Fraction.Reduced) :
+  Reduced) :
     (canonicalize fraction).value = fraction.value := by
-  apply Fraction.Basic.value_eq_of_crossProduct
+  apply Basic.value_eq_of_crossProduct
   change
     (canonicalize fraction).numerator * fraction.denominator =
       fraction.numerator * (canonicalize fraction).denominator
   dsimp only [canonicalize]
   apply GaussianInt.ext <;>
-    simp only [GaussianInt.mul_re, GaussianInt.mul_im] <;>
+    simp only [mul_re, mul_im] <;>
     ring1
 
 section
 open Purelib.Data.GaussianInt.Fraction.Canonical
 /-- Unit normalization preserves the natural denominator quadrance. -/
 theorem canonicalize_height (fraction :
-  Data.GaussianInt.Fraction.Reduced) :
+  Reduced) :
     (canonicalize fraction).height = fraction.height := by
-  unfold CanonicalFraction.height Data.GaussianInt.Fraction.Reduced.height
-  change GaussianInt.normNat
+  unfold CanonicalFraction.height Reduced.height
+  change normNat
       (canonicalizingUnit fraction.denominator * fraction.denominator) =
-    GaussianInt.normNat fraction.denominator
-  rw [GaussianInt.normNat_mul, canonicalizingUnit_normNat, Nat.one_mul]
+    normNat fraction.denominator
+  rw [normNat_mul, canonicalizingUnit_normNat, Nat.one_mul]
 
 /-- Reduce a displayed Gaussian fraction by the retained Euclidean procedure, then
 normalize its denominator sector.
@@ -322,30 +322,30 @@ theorem eq_of_canonical_unit_associate
     {left right unit : GaussianInt}
     (leftCanonical : IsCanonicalDenominator left)
     (rightCanonical : IsCanonicalDenominator right)
-    (unitNorm : GaussianInt.normNat unit = 1)
+    (unitNorm : normNat unit = 1)
     (associated : right = unit * left) : right = left := by
   change 0 < left.re ∧ 0 ≤ left.im at leftCanonical
   change 0 < right.re ∧ 0 ≤ right.im at rightCanonical
   rcases Units.normNat_eq_one_cases unitNorm with unitOne | unitNegOne |
       unitImaginary | unitNegImaginary
-  · rw [unitOne, GaussianInt.one_mul]
+  · rw [unitOne, one_mul]
     at associated
     exact associated
   · have realIdentity := congrArg
       (fun value : GaussianInt => value.re) associated
     rw [unitNegOne] at realIdentity
-    simp only [GaussianInt.mul_re, GaussianInt.neg_re, GaussianInt.neg_im, GaussianInt.one_re, GaussianInt.one_im]
+    simp only [mul_re, neg_re, neg_im, one_re, one_im]
       at realIdentity
     exact (False.elim (by omega : False))
   · have realIdentity := congrArg
       (fun value : GaussianInt => value.re) associated
     rw [unitImaginary] at realIdentity
-    dsimp only [Units.imaginaryUnit, GaussianInt.mul_re] at realIdentity
+    dsimp only [Units.imaginaryUnit, mul_re] at realIdentity
     exact (False.elim (by omega : False))
   · have imaginaryIdentity := congrArg
       (fun value : GaussianInt => value.im) associated
     rw [unitNegImaginary] at imaginaryIdentity
-    dsimp only [Units.imaginaryUnit, GaussianInt.mul_im, GaussianInt.neg_re, GaussianInt.neg_im] at imaginaryIdentity
+    dsimp only [Units.imaginaryUnit, mul_im, neg_re, neg_im] at imaginaryIdentity
     exact (False.elim (by omega : False))
 
 section
@@ -371,13 +371,13 @@ theorem canonical_numerator_eq_of_value_eq
     left.numerator = right.numerator := by
   have denominatorEqual :=
     canonical_denominator_eq_of_value_eq left right valueEqual
-  have crossProduct := Fraction.Basic.crossProduct_of_value_eq left.displayed right.displayed
+  have crossProduct := Basic.crossProduct_of_value_eq left.displayed right.displayed
     valueEqual
   change left.numerator * right.denominator =
     right.numerator * left.denominator at crossProduct
   rw [← denominatorEqual] at crossProduct
   apply Cancellation.mul_left_cancel_of_nonzero left.denominatorNonzero
-  simpa only [GaussianInt.mul_comm] using
+  simpa only [mul_comm] using
     crossProduct
 
 end
@@ -402,7 +402,7 @@ theorem reduceCanonical_height_eq_of_value_eq
     (reduceCanonical left).height = (reduceCanonical right).height := by
   have coordinates := reduceCanonical_coordinates_eq_of_value_eq left right
     valueEqual
-  unfold CanonicalFraction.height Data.GaussianInt.Fraction.Reduced.height
+  unfold CanonicalFraction.height Reduced.height
   rw [coordinates.2]
 
 end Purelib.Data.GaussianInt.Fraction.Canonical

@@ -8,6 +8,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 public import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Rational quadratic lower bounds
 
@@ -53,11 +55,11 @@ The square remainder is nonnegative. Multiplication by the positive factor
 four times the leading coefficient transfers that comparison to the polynomial value. -/
 public theorem floor_le_value (a b c parameter : Fraction.Rational) (positive : 0 < a) :
     floor a b c ≤ value a b c parameter := by
-  apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct (c := 4 * a) _ (Fraction.Order.Arithmetic.mul_pos_direct
+  apply Arithmetic.le_of_mul_le_mul_right_direct (c := 4 * a) _ (Arithmetic.mul_pos_direct
     (by decide) positive)
-  apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  apply Arithmetic.le_of_sub_nonneg_direct
   calc
-    0 ≤ (2 * a * parameter + b) ^ 2 := Fraction.Order.Arithmetic.sq_nonneg_direct _
+    0 ≤ (2 * a * parameter + b) ^ 2 := Arithmetic.sq_nonneg_direct _
     _ = value a b c parameter * (4 * a) - floor a b c * (4 * a) := by
       rw [← scaled_completion a b c parameter (ne_of_gt positive)]
       ring1
@@ -77,9 +79,9 @@ completed-square floor. The remaining branch retains zero itself. -/
 public theorem quadraticFloor_nonnegative (a b c : Fraction.Rational) : 0 ≤ quadraticFloor a b c := by
   unfold quadraticFloor
   split
-  · exact Fraction.Order.Basic.le_max_left _ _
+  · exact Basic.le_max_left _ _
   · split
-    · exact Fraction.Order.Basic.le_max_left _ _
+    · exact Basic.le_max_left _ _
     · exact le_rfl
 
 /-- The sign-selected floor bounds every rational quadratic magnitude below.
@@ -91,18 +93,18 @@ public theorem quadraticFloor_le_abs (a b c parameter : Fraction.Rational) :
   unfold quadraticFloor
   split
   · rename_i positive
-    exact Fraction.Order.Basic.max_le (Fraction.Order.Arithmetic.abs_nonneg_direct _) ((floor_le_value a b c parameter
-      positive).trans (Fraction.Order.Basic.le_max_left _ _))
+    exact Basic.max_le (Arithmetic.abs_nonneg_direct _) ((floor_le_value a b c parameter
+      positive).trans (Basic.le_max_left _ _))
   · split
     · rename_i negative
       have positive : 0 < -a := by
-        simpa only [neg_zero] using Fraction.Order.Arithmetic.neg_lt_neg_direct negative
+        simpa only [neg_zero] using Arithmetic.neg_lt_neg_direct negative
       have bound := floor_le_value (-a) (-b) (-c) parameter positive
       have opposite : value (-a) (-b) (-c) parameter = -value a b c parameter := by
         unfold value
         ring1
       rw [opposite] at bound
-      exact Fraction.Order.Basic.max_le (Fraction.Order.Arithmetic.abs_nonneg_direct _) (bound.trans
-        (Fraction.Order.Basic.le_max_right _ _))
-    · exact Fraction.Order.Arithmetic.abs_nonneg_direct _
+      exact Basic.max_le (Arithmetic.abs_nonneg_direct _) (bound.trans
+        (Basic.le_max_right _ _))
+    · exact Arithmetic.abs_nonneg_direct _
 end Purelib.Polynomial.Quadratic.RationalBounds

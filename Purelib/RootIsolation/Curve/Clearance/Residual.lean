@@ -59,23 +59,23 @@ set_option genInjectivity false in
 /-- A positive pointwise lower bound for the original polynomial residual on
 the non-pole part of one displayed rational curve interval. -/
 structure Certificate
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : Curve.RationalCurve)
-    (interval : Data.Rat.Interval.Bounds) where
+    (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : Curve.RationalCurve)
+    (interval : Interval.Bounds) where
   /-- The retained rational lower bound for squared polynomial residuals on the curve arc. -/ bound : Fraction.Rational
   /-- The retained residual lower bound is strictly positive. -/ positive : 0 < bound
   /-- Every interval parameter away from a curve pole satisfies the same residual lower bound. -/ lower : ∀ parameter :
     Fraction.Rational, interval.Contains parameter →
     curve.denominatorAt parameter ≠ 0 →
-      bound ≤ Data.Gaussian.Norm.Basic.normSq (p.eval (curve.point parameter))
+      bound ≤ Gaussian.Norm.Basic.normSq (p.eval (curve.point parameter))
 
 constructive_injectivity Certificate
 
 /-- Convert constant-gcd curve clearance into a lower bound for the original
 polynomial by an entirely finite denominator-power majorant. -/
 @[expose] def certificate
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {curve : Curve.RationalCurve}
-    (clear : Curve.Clearance.Global.GlobalClear p curve)
-    (interval : Data.Rat.Interval.Bounds) : Certificate p curve interval := by
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {curve : Curve.RationalCurve}
+    (clear : Global.GlobalClear p curve)
+    (interval : Interval.Bounds) : Certificate p curve interval := by
   let cleared := clear.clearance interval
   let majorant := Curve.Substitution.denominatorPowerNormMajorant p curve interval
   have majorantPositive : 0 < majorant :=
@@ -87,16 +87,16 @@ polynomial by an entirely finite denominator-power majorant. -/
       lower := by
         intro parameter inside denominatorNonzero
         have clearedLower : cleared.bound ≤
-            Data.Gaussian.Norm.Basic.normSq ((Curve.clearedEval p curve).eval
+            Gaussian.Norm.Basic.normSq ((Curve.clearedEval p curve).eval
               (Gaussian.Cast.Path.ofCoordinate parameter)) := by
           simpa only [cleared,
-            Curve.Clearance.Global.GlobalClear.clearance,
+            Global.GlobalClear.clearance,
             Curve.Substitution.realPolynomial,
             Curve.Substitution.imaginaryPolynomial,
             Curve.clearedReal,
             Curve.clearedImag,
             Dense.Gaussian.Components.eval_realPart,
-            Dense.Gaussian.Components.eval_imagPart, Data.Gaussian.Norm.Basic.normSq] using
+            Dense.Gaussian.Components.eval_imagPart, Gaussian.Norm.Basic.normSq] using
               (clear.clearance interval).lower parameter inside
         have semantics := Curve.eval_clearedEval
           p curve parameter denominatorNonzero
@@ -111,13 +111,13 @@ polynomial by an entirely finite denominator-power majorant. -/
         apply (Fraction.Order.Field.div_le_iff_pos majorantPositive).2
         calc
           cleared.bound ≤
-              Data.Gaussian.Norm.Basic.normSq
+              Gaussian.Norm.Basic.normSq
                   ((Curve.clearingState p curve).denominatorPower.eval
                     (Gaussian.Cast.Path.ofCoordinate parameter)) *
-                Data.Gaussian.Norm.Basic.normSq (p.eval (curve.point parameter)) := clearedLower
-          _ ≤ majorant * Data.Gaussian.Norm.Basic.normSq (p.eval (curve.point parameter)) :=
+                Gaussian.Norm.Basic.normSq (p.eval (curve.point parameter)) := clearedLower
+          _ ≤ majorant * Gaussian.Norm.Basic.normSq (p.eval (curve.point parameter)) :=
             scaledUpper
-          _ = Data.Gaussian.Norm.Basic.normSq (p.eval (curve.point parameter)) * majorant :=
+          _ = Gaussian.Norm.Basic.normSq (p.eval (curve.point parameter)) * majorant :=
             Fraction.Field.mul_comm _ _ }
 
 end Purelib.RootIsolation.Curve.Clearance.Residual

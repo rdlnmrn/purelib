@@ -3,6 +3,7 @@ import Purelib.Data.Nat.Order
 import Purelib.Data.Gaussian.Basic
 import Purelib.Curves.Hyperelliptic.Basic
 import Purelib.Curves.Hyperelliptic.Differentials.Basic
+import Purelib.Curves.Hyperelliptic.Differentials.OddPower.Basic
 import Purelib.Data.Rat.Fraction.Order.Field
 import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Polynomial.Geometry.ClearPath
@@ -13,6 +14,7 @@ public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBan
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments
 import Purelib.Data.Rat.Fraction.Compatibility
 import Purelib.Integration.Polynomial.Rectangle.Accuracy.Fragment
+import Purelib.Riemann.Comparison.PrimitiveEdgeComparison
 import Purelib.Riemann.Meshes.GridLiftedMesh
 import Purelib.Riemann.Meshes.PuncturedGridFaces
 import Purelib.Riemann.Normalization.InverseRootPolynomial
@@ -84,6 +86,7 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBudgets
 
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
+open Purelib.Curves.Hyperelliptic.Differentials.OddPower.Basic (OddPowerDifferential)
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 open _root_.Purelib.Polynomial.Geometry (ClearPath)
 open Purelib.Riemann.Paths.PreparedClearPathModels (PreparedPath)
@@ -96,6 +99,10 @@ open Purelib.Riemann.Meshes.PuncturedGridFaces (PuncturedFaces)
 open Purelib.Riemann.Meshes.GridLiftedMesh (LiftedMesh)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments (AssignedSegments)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments (Comparisons)
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh (SegmentComparison)
+open Purelib.Riemann.Comparison.PrimitiveEdgeComparison (PrimitiveOverlapBounds)
+open Purelib.Riemann.Readings.PreparedPrimitiveSamples (differentialNumerator)
+open Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh (SegmentFace)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
@@ -108,7 +115,32 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     LiftedMesh vertices edges faces} {ambient :
     Purelib.Geometry.Rational.Box}
 
-/-- Scalar fragment-accuracy budgets indexed by the exact retained cut-period comparison spine. -/
+/-- Retain a segment's basis bounds or compute bounds for its supplied odd-power numerator.
+
+The original basis case reads the comparison's exact saved bounds. An
+explicit differential keeps its numerator and scale on the same original
+face clearance; no path preparation or integration cache is reconstructed.
+-/
+@[expose] def segmentBounds {start finish : Gaussian}
+    {segment : ClearPath.ClearSegment curve.polynomial ambient start finish}
+    {owner : Owner (curve.polynomial.eval start)} {placement : SegmentFace mesh segment}
+    {piece : CoveredSegment segment owner} {differential : Differential genus} {parentSheet : Fin 2}
+    (compared : SegmentComparison placement piece differential parentSheet)
+    (form : Option (OddPowerDifferential curve.polynomial)) :
+    PrimitiveOverlapBounds placement.face.clearance
+      (match form with
+        | none => differentialNumerator differential
+        | some actual => actual.numerator.scale actual.scale) :=
+  match form with
+  | none => compared.entered.globalBounds
+  | some actual => PrimitiveOverlapBounds.build placement.face.clearance (actual.numerator.scale actual.scale)
+
+/-- Scalar fragment budgets on the retained comparison spine, optionally for one original odd-power differential.
+
+Every occurrence keeps its original face, split count and comparison cache.
+The default uses the saved basis bounds and one inverse factor; an explicit
+form supplies its scaled numerator and actual denominator pair count.
+-/
 @[expose] def Budgets (differential : Differentials.Basic.Differential genus) (parentSheet : Fin 2) (target :
   InverseRootPolynomial.Coordinate) :
     ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient
@@ -116,13 +148,14 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
       {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
         PreparedClearPathModels.PreparedPath path owner} {pieces : PreparedPath.CoveredSegments prepared}
       (assigned : PreparedFaceSegments.AssignedSegments mesh pieces), AssignedSegments.Comparisons differential
-        parentSheet assigned → Type
-  | _, _, _, _, _, _, .nil _ _, _ => PUnit
-  | _, _, _, _, _, _, .cons _ remaining, compared =>
-      Fragment.FragmentAccuracy compared.1.entered.globalBounds compared.1.entered.domain.steps
-        compared.1.entered.mesh.splits.pieceCount (target / 4) ×
+        parentSheet assigned → (form : optParam (Option (OddPowerDifferential curve.polynomial)) none) → Type
+  | _, _, _, _, _, _, .nil _ _, _, _ => PUnit
+  | _, _, _, _, _, _, .cons _ remaining, compared, form =>
+      FragmentAccuracy (segmentBounds compared.1 form) compared.1.entered.domain.steps
+        compared.1.entered.mesh.splits.pieceCount (target / 4)
+          (form.elim 0 (fun actual => actual.denominatorPairs)) ×
         Budgets differential parentSheet target
-          remaining compared.2
+          remaining compared.2 form
 
 namespace Budgets
 
@@ -135,20 +168,22 @@ namespace Budgets
       {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
         PreparedClearPathModels.PreparedPath path owner} {pieces : PreparedPath.CoveredSegments prepared}
       (assigned : PreparedFaceSegments.AssignedSegments mesh pieces) (compared : AssignedSegments.Comparisons
-        differential parentSheet assigned),
+        differential parentSheet assigned)
+      (form : optParam (Option (OddPowerDifferential curve.polynomial)) none),
       Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBudgets.Budgets differential parentSheet target assigned
-        compared
-  | _, _, _, _, _, _, .nil _ _, _ => ⟨⟩
-  | _, _, _, _, _, _, .cons _ remaining, compared =>
-      ⟨FragmentAccuracy.build compared.1.entered.globalBounds compared.1.entered.domain.steps
+        compared form
+  | _, _, _, _, _, _, .nil _ _, _, _ => ⟨⟩
+  | _, _, _, _, _, _, .cons _ remaining, compared, form =>
+      ⟨FragmentAccuracy.build (segmentBounds compared.1 form) compared.1.entered.domain.steps
         compared.1.entered.mesh.splits.pieceCount
-        (target / 4) (Fraction.Order.Field.div_pos_direct positive (by decide)),
+        (target / 4) (Fraction.Order.Field.div_pos_direct positive (by decide))
+          (form.elim 0 (fun actual => actual.denominatorPairs)),
         build differential parentSheet
-          target positive remaining compared.2⟩
+          target positive remaining compared.2 form⟩
 
 /-- Read the maximum requested grid index over the actual retained segment budgets. -/
 @[expose] def maximum (differential : Differentials.Basic.Differential genus) (parentSheet : Fin 2) {target :
-  InverseRootPolynomial.Coordinate} :
+  InverseRootPolynomial.Coordinate} {form : Option (OddPowerDifferential curve.polynomial)} :
     ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient
       start finish}
       {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
@@ -156,7 +191,7 @@ namespace Budgets
       (assigned : PreparedFaceSegments.AssignedSegments mesh pieces) (compared : AssignedSegments.Comparisons
         differential parentSheet assigned),
       Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBudgets.Budgets differential parentSheet target assigned
-        compared → Nat
+        compared form → Nat
   | _, _, _, _, _, _, .nil _ _, _, _ => 0
   | _, _, _, _, _, _, .cons _ remaining, compared, budgets =>
       max budgets.1.grid.index (maximum
@@ -164,7 +199,7 @@ namespace Budgets
 
 /-- Every retained segment budget fits the supplied shared grid index. -/
 @[expose] def IndicesBelow (differential : Differentials.Basic.Differential genus) (parentSheet : Fin 2) {target :
-  InverseRootPolynomial.Coordinate} (index : Nat) :
+  InverseRootPolynomial.Coordinate} {form : Option (OddPowerDifferential curve.polynomial)} (index : Nat) :
     ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient
       start finish}
       {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
@@ -172,7 +207,7 @@ namespace Budgets
       (assigned : PreparedFaceSegments.AssignedSegments mesh pieces) (compared : AssignedSegments.Comparisons
         differential parentSheet assigned),
       Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBudgets.Budgets differential parentSheet target assigned
-        compared → Prop
+        compared form → Prop
   | _, _, _, _, _, _, .nil _ _, _, _ => True
   | _, _, _, _, _, _, .cons _ remaining, compared, budgets =>
       budgets.1.grid.index ≤ index ∧
@@ -181,7 +216,7 @@ namespace Budgets
 
 /-- A bound on the actual retained budget maximum bounds every original segment's requested grid index. -/
 theorem indicesBelow_of_maximum_le (differential : Differentials.Basic.Differential genus) (parentSheet : Fin 2) {target
-  : InverseRootPolynomial.Coordinate} (index : Nat) :
+  : InverseRootPolynomial.Coordinate} {form : Option (OddPowerDifferential curve.polynomial)} (index : Nat) :
     ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient
       start finish}
       {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
@@ -189,7 +224,7 @@ theorem indicesBelow_of_maximum_le (differential : Differentials.Basic.Different
       (assigned : PreparedFaceSegments.AssignedSegments mesh pieces) (compared : AssignedSegments.Comparisons
         differential parentSheet assigned)
       (budgets : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBudgets.Budgets differential parentSheet target
-        assigned compared),
+        assigned compared form),
       maximum differential parentSheet assigned
         compared budgets ≤ index → IndicesBelow
         differential parentSheet index assigned compared budgets

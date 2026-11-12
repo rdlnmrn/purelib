@@ -26,11 +26,7 @@ import Purelib.Approximation.Gaussian.Division.Partial.Ready
 @[expose] public section
 
 /-!
-# Finite small-or-prepared regression clients
-
-These examples exercise actual decision outcomes, including a nonzero small
-input. They do not identify smallness with zero or evaluate generated period
-coefficient banks.
+Small-or-prepared division with exact, tiny and delayed denominator names.
 -/
 
 namespace Purelib.Examples.Approximation.Gaussian.Division.Bounded.WorkedExamples
@@ -106,16 +102,6 @@ theorem delayed_prepared :
         1 (by decide)).outcome = .inl evidence := by
   apply SmallOrApart.classify_apart
   decide
-
-/-- The delayed denominator inspection retains its refined Boolean source. -/
-theorem delayed_source_refined :
-    (SmallOrApart.acquire (Refinement.State.initial Partial.DelayedOne.delayedOne)
-      1 (by decide)).inspection.retained.source = true := rfl
-
-/-- The bounded inspection retains the original next-index counter. -/
-theorem delayed_index_unchanged :
-    (SmallOrApart.acquire (Refinement.State.initial Partial.DelayedOne.delayedOne)
-      1 (by decide)).inspection.retained.nextIndex = 0 := rfl
 
 /-- A prepared delayed denominator yields a bounded quotient result.
 

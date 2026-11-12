@@ -64,22 +64,22 @@ open Purelib.Riemann.Normalization
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
 
-variable {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {target coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor index minimum
+variable {basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {target coefficientTarget : InverseRootPolynomial.Coordinate} {coverFloor floor index minimum
     readingIndex : Nat}
-  {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+  {box : Rational.Box} {capSample : Charts.Reciprocal.Cap.Primitives.Sample cap
     differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 variable {energyFloor radialDepth : Nat}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
@@ -90,46 +90,46 @@ namespace Plans
 
 Each entry keeps its original plan, numerical inputs and acquired root readings at the shared energy floor. -/
 def FanPreparations (energyFloor : Nat) :
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRequest.Entry (domains := domains)
+    (entries : List (SurfaceRequest.Entry (domains := domains)
       (differential := differential) basis target coefficientTarget coverFloor floor)) →
-    (plans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans capSample polynomials minimum entries)
-      → Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans.Readings entries plans readingIndex → Type
+    (plans : SurfacePlans.Plans capSample polynomials minimum entries)
+      → SurfacePlans.Plans.Readings entries plans readingIndex → Type
       2
   | [], _, _ => PUnit
   | head :: tail, plans, readings =>
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.FanPreparation head.request
+      Connection.CommonBasisRequest.FanPreparation head.request
         plans.1.plans plans.1.inputs readings.1 energyFloor ×
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.FanPreparations
+        FanPreparations
           energyFloor tail plans.2 readings.2
 
 /-- Prepare all original component fans from their retained plans and already acquired readings. -/
 def prepareFans (energyFloor : Nat) :
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRequest.Entry (domains := domains)
+    (entries : List (SurfaceRequest.Entry (domains := domains)
       (differential := differential) basis target coefficientTarget coverFloor floor)) →
-    (plans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans capSample polynomials minimum entries)
-      → (readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans.Readings entries plans
+    (plans : SurfacePlans.Plans capSample polynomials minimum entries)
+      → (readings : SurfacePlans.Plans.Readings entries plans
       readingIndex) →
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.FanPreparations energyFloor entries plans
+    FanPreparations energyFloor entries plans
       readings
   | [], _, _ => PUnit.unit
   | head :: tail, plans, readings =>
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.prepareFans
+      (Connection.CommonBasisRequest.prepareFans
         head.request plans.1.plans plans.1.inputs readings.1 energyFloor,
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.prepareFans energyFloor
+        Plans.prepareFans energyFloor
           tail plans.2 readings.2)
 
 /-- Compute the shared radial depth paying every retained component fan and the supplied energy floor. -/
 def FanPreparations.depth :
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRequest.Entry (domains := domains)
+    (entries : List (SurfaceRequest.Entry (domains := domains)
       (differential := differential) basis target coefficientTarget coverFloor floor)) →
-    (plans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans capSample polynomials minimum entries)
-      → (readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans.Readings entries plans
+    (plans : SurfacePlans.Plans capSample polynomials minimum entries)
+      → (readings : SurfacePlans.Plans.Readings entries plans
       readingIndex) →
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.FanPreparations energyFloor entries plans
+    FanPreparations energyFloor entries plans
       readings → Nat
   | [], _, _, _ => energyFloor
   | head :: tail, plans, readings, fans =>
-      max (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.FanPreparations.depth
+      max (Charts.Reciprocal.Disk.Basis.CommonParentSamples.FanPreparations.depth
         head.retained.anchors head.retained.sources head.request.schedule.bank plans.1.plans plans.1.inputs readings.1
           fans.1)
         (depth tail plans.2 readings.2 fans.2)
@@ -138,17 +138,17 @@ def FanPreparations.depth :
 
 Every sample uses the same coefficient vector and radial depth while retaining its own original component. -/
 def Samples (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (radialDepth : Nat) :
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRequest.Entry (domains := domains)
+    (entries : List (SurfaceRequest.Entry (domains := domains)
       (differential := differential) basis target coefficientTarget coverFloor floor)) →
-    (plans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans capSample polynomials minimum entries)
-      → (readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans.Readings entries plans
+    (plans : SurfacePlans.Plans capSample polynomials minimum entries)
+      → (readings : SurfacePlans.Plans.Readings entries plans
       readingIndex) →
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.FanPreparations energyFloor entries plans
+    FanPreparations energyFloor entries plans
       readings → Type 2
   | [], _, _, _ => PUnit
   | _ :: tail, plans, readings, fans =>
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.Sampled fans.1 coefficients
-        radialDepth × Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.Samples
+      Connection.CommonBasisRequest.Sampled fans.1 coefficients
+        radialDepth × Samples
         coefficients radialDepth tail plans.2 readings.2 fans.2
 
 open Purelib.Data in
@@ -157,24 +157,24 @@ open Purelib.Data in
 The branch condition and paid reading and radial thresholds supply each original fan's sampling requirements. -/
 def sample (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (parameters :
   Path.Dyadic.RadialTriangles.Parameters radialDepth)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRequest.Entry (domains := domains)
+    (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
+    (entries : List (SurfaceRequest.Entry (domains := domains)
       (differential := differential) basis target coefficientTarget coverFloor floor)) →
-    (plans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans capSample polynomials minimum entries)
-      → (readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans.Readings entries plans
+    (plans : SurfacePlans.Plans capSample polynomials minimum entries)
+      → (readings : SurfacePlans.Plans.Readings entries plans
       readingIndex) →
-    (fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.FanPreparations energyFloor entries
+    (fans : FanPreparations energyFloor entries
       plans readings) →
     plans.stage entries ≤ readingIndex → fans.depth entries plans readings ≤ radialDepth →
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.Samples coefficients radialDepth entries
+    Samples coefficients radialDepth entries
       plans readings fans
   | [], _, _, _, _, _ => PUnit.unit
   | head :: tail, plans, readings, fans, readingLater, radialLater =>
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.sample head.request
+      (Connection.CommonBasisRequest.sample head.request
         plans.1.plans plans.1.inputs readings.1 fans.1 coefficients parameters branch
         (plans.1.stage_eq.symm.trans_le ((Nat.Order.le_max_left ..).trans readingLater)) ((Nat.Order.le_max_left
           ..).trans radialLater),
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.sample coefficients
+        Plans.sample coefficients
           parameters branch tail plans.2 readings.2 fans.2
           ((Nat.Order.le_max_right ..).trans readingLater) ((Nat.Order.le_max_right ..).trans radialLater))
 

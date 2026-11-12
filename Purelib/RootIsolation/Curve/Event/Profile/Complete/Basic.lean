@@ -75,10 +75,10 @@ In particular, nonzero count is never converted into a root-existence claim.
 namespace Purelib.RootIsolation.Curve.Event.Profile.Complete.Basic
 section Profile
 
-variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
   Geometry.Projective.Hermitian.HermitianForm}
 variable {chart : Geometry.Projective.Hermitian.Chart.BoundedChart form}
-variable {data : Curve.Event.Nontrivial p
+variable {data : Nontrivial p
   chart.parameterization.curve}
 variable {gcdDegreePositive : 0 <
   (Curve.Substitution.gcdPolynomial p
@@ -125,7 +125,7 @@ theorem completeRequestCell_refines_chart
     {cell : Cell}
     (member : cell ∈ (completeRequestSubdivision leaf epsilon).leaves) :
     cell.interval.Refines chart.cell.interval :=
-  Data.Rat.Interval.Refinement.intervalRefines_trans
+  Interval.Refinement.intervalRefines_trans
     (completeRequestCell_refines_leaf leaf epsilon member)
     leaf.cell_refines_chart
 
@@ -169,7 +169,7 @@ namespace CompleteRequestLeaf
 def state {leaf :
   SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
   Fraction.Rational}
-    (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) :
+    (entry : CompleteRequestLeaf leaf epsilon) :
     Sturm.Track.Basic.State
       analysis.profile.factor.polynomial :=
   { cell := entry.cell
@@ -178,23 +178,23 @@ def state {leaf :
 /-- The retained requested child refines its original profile leaf. -/
 theorem refines_leaf {leaf :
   SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis}
-    {epsilon : Fraction.Rational} (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) :
+    {epsilon : Fraction.Rational} (entry : CompleteRequestLeaf leaf epsilon) :
     entry.cell.interval.Refines leaf.cell.interval :=
-  Curve.Event.Profile.Complete.Basic.completeRequestCell_refines_leaf leaf epsilon entry.member
+  completeRequestCell_refines_leaf leaf epsilon entry.member
 
 /-- The retained requested child refines the original chart interval. -/
 theorem refines_chart {leaf :
   SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis}
-    {epsilon : Fraction.Rational} (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) :
+    {epsilon : Fraction.Rational} (entry : CompleteRequestLeaf leaf epsilon) :
     entry.cell.interval.Refines chart.cell.interval :=
-  Curve.Event.Profile.Complete.Basic.completeRequestCell_refines_chart leaf epsilon entry.member
+  completeRequestCell_refines_chart leaf epsilon entry.member
 
 /-- The retained requested child meets the original positive width request. -/
 theorem width_le {leaf :
   SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis}
-    {epsilon : Fraction.Rational} (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon)
+    {epsilon : Fraction.Rational} (entry : CompleteRequestLeaf leaf epsilon)
     (positive : 0 < epsilon) : (Bounds.width entry.cell.interval) ≤ epsilon :=
-  Curve.Event.Profile.Complete.Basic.completeRequestCell_width_le leaf epsilon positive entry.member
+  completeRequestCell_width_le leaf epsilon positive entry.member
 end CompleteRequestLeaf
 
 /-- Retain an original subdivision child exactly when its displayed Sturm count is nonzero. -/
@@ -327,7 +327,7 @@ def completeRequestResolution
       leaf.cell.interval) :=
       Fraction.Order.Arithmetic.sub_le_sub_direct childLeaf.2 childLeaf.1
     have leafWidthSmall : (Bounds.width leaf.cell.interval) <
-        Curve.Event.Partition.Squarefree.squarefreeLeafWidth
+        Partition.Squarefree.squarefreeLeafWidth
           analysis.profile.factor.polynomial
             analysis.profile.factor.squarefree
               chart.parameterization.curve box chart.cell := by
@@ -335,11 +335,11 @@ def completeRequestResolution
         leaf.classification.widthSmall
     exact childWidth.trans_lt
       (leafWidthSmall.trans_le
-        ((Curve.Event.Partition.Squarefree.squarefreeLeafWidth_le_common
+        ((Partition.Squarefree.squarefreeLeafWidth_le_common
           analysis.profile.factor.polynomial
             analysis.profile.factor.squarefree
               chart.parameterization.curve box chart.cell).trans
-          (Curve.Event.Partition.commonLeafWidth_le_event
+          (Partition.commonLeafWidth_le_event
             analysis.profile.factor.polynomial chart.parameterization.curve
               box chart.cell)))
 

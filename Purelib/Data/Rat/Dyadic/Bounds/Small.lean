@@ -13,6 +13,8 @@ public import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 @[expose] public section
 
@@ -34,13 +36,13 @@ theorem aBackwardTwoPositive : (0 : Fraction.Rational) < 2 :=
 
 /-- The canonical rational number one half is positive. -/
 theorem aBackwardOneHalfPositive : (0 : Fraction.Rational) < 1 / 2 :=
-  Fraction.Order.Field.div_pos_direct
+  Field.div_pos_direct
     (Fraction.Cast.Order.natCast_pos_direct (n := 1) (by omega))
       aBackwardTwoPositive
 
 /-- The canonical rational number one quarter is positive. -/
 theorem aBackwardOneFourthPositive : (0 : Fraction.Rational) < 1 / 4 :=
-  Fraction.Order.Field.div_pos_direct
+  Field.div_pos_direct
     (Fraction.Cast.Order.natCast_pos_direct (n := 1) (by omega))
       (Fraction.Cast.Order.natCast_pos_direct (n := 4) (by omega))
 end Purelib.Data.Rat.Dyadic.Bounds.Small
@@ -64,13 +66,13 @@ namespace Purelib.Data.Rat.Dyadic.Bounds.Small
 open Purelib.Data.Rat
 /-- The canonical rational number one quarter is positive. -/
 theorem bBackwardOneFourthPositive : (0 : Fraction.Rational) < 1 / 4 :=
-  Fraction.Order.Field.div_pos_direct
+  Field.div_pos_direct
     (Fraction.Cast.Order.natCast_pos_direct (n := 1) (by omega))
     (Fraction.Cast.Order.natCast_pos_direct (n := 4) (by omega))
 
 /-- The canonical rational number one sixteenth is positive. -/
 theorem bBackwardOneSixteenthPositive : (0 : Fraction.Rational) < 1 / 16 :=
-  Fraction.Order.Field.div_pos_direct
+  Field.div_pos_direct
     (Fraction.Cast.Order.natCast_pos_direct (n := 1) (by omega))
     (Fraction.Cast.Order.natCast_pos_direct (n := 16) (by omega))
 end Purelib.Data.Rat.Dyadic.Bounds.Small
@@ -87,13 +89,13 @@ namespace Purelib.Data.Rat.Dyadic.Bounds.Small
 open Purelib.Data.Rat
 /-- The canonical rational number one quarter is positive. -/
 theorem bForwardOneFourthPositive : (0 : Fraction.Rational) < 1 / 4 :=
-  Fraction.Order.Field.div_pos_direct
+  Field.div_pos_direct
     (Fraction.Cast.Order.natCast_pos_direct (n := 1) (by omega))
     (Fraction.Cast.Order.natCast_pos_direct (n := 4) (by omega))
 
 /-- The canonical rational number one sixteenth is positive. -/
 theorem bForwardOneSixteenthPositive : (0 : Fraction.Rational) < 1 / 16 :=
-  Fraction.Order.Field.div_pos_direct
+  Field.div_pos_direct
     (Fraction.Cast.Order.natCast_pos_direct (n := 1) (by omega))
     (Fraction.Cast.Order.natCast_pos_direct (n := 16) (by omega))
 end Purelib.Data.Rat.Dyadic.Bounds.Small
@@ -117,26 +119,26 @@ open Purelib.Data.Rat
 /-- The canonical rational number thirteen thirty-seconds is positive. -/
 theorem zero_lt_thirteenThirtySeconds :
     (0 : Fraction.Rational) < 13 / 32 :=
-  Fraction.Order.Field.div_pos_direct
-    (Fraction.Order.NatCast.natCast_pos_direct 13 (by omega))
-    (Fraction.Order.NatCast.natCast_pos_direct 32 (by omega))
+  Field.div_pos_direct
+    (NatCast.natCast_pos_direct 13 (by omega))
+    (NatCast.natCast_pos_direct 32 (by omega))
 
 /-- Thirteen thirty-seconds is at most thirty-one thirty-seconds. -/
 theorem thirteenThirtySeconds_le_thirtyOneThirtySeconds :
     (13 / 32 : Fraction.Rational) <= 31 / 32 := by
-  apply Fraction.Order.CrossMultiply.horizontalDivLeDivOfCrossMul
-    (Fraction.Order.NatCast.natCast_pos_direct 32 (by omega))
-    (Fraction.Order.NatCast.natCast_pos_direct 32 (by omega))
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+  apply CrossMultiply.horizontalDivLeDivOfCrossMul
+    (NatCast.natCast_pos_direct 32 (by omega))
+    (NatCast.natCast_pos_direct 32 (by omega))
+  exact Arithmetic.mul_le_mul_of_nonneg_right_direct
     (Fraction.Cast.Order.natCast_le_direct (by omega : 13 <= 31))
     ((fun n => Fraction.Cast.Order.natCast_le_direct (Nat.zero_le n)) 32)
 
 /-- Thirteen thirty-seconds is at most eleven sixteenths. -/
 theorem thirteenThirtySeconds_le_elevenSixteenths :
     (13 / 32 : Fraction.Rational) <= 11 / 16 := by
-  apply Fraction.Order.CrossMultiply.horizontalDivLeDivOfCrossMul
-    (Fraction.Order.NatCast.natCast_pos_direct 32 (by omega))
-    (Fraction.Order.NatCast.natCast_pos_direct 16 (by omega))
+  apply CrossMultiply.horizontalDivLeDivOfCrossMul
+    (NatCast.natCast_pos_direct 32 (by omega))
+    (NatCast.natCast_pos_direct 16 (by omega))
   calc
     (13 : Fraction.Rational) * 16 = 208 := by ring1
     _ <= 352 := Fraction.Cast.Order.natCast_le_direct
@@ -147,9 +149,9 @@ theorem thirteenThirtySeconds_le_elevenSixteenths :
 theorem oneEighth_le_thirteenThirtySeconds_sq :
     (1 / 8 : Fraction.Rational) <= (13 / 32) ^ 2 := by
   have quotient : (1 / 8 : Fraction.Rational) <= 169 / 1024 := by
-    apply Fraction.Order.CrossMultiply.horizontalDivLeDivOfCrossMul
-      (Fraction.Order.NatCast.natCast_pos_direct 8 (by omega))
-      (Fraction.Order.NatCast.natCast_pos_direct 1024 (by omega))
+    apply CrossMultiply.horizontalDivLeDivOfCrossMul
+      (NatCast.natCast_pos_direct 8 (by omega))
+      (NatCast.natCast_pos_direct 1024 (by omega))
     calc
       (1 : Fraction.Rational) * 1024 = 1024 := by ring1
       _ <= 1352 := Fraction.Cast.Order.natCast_le_direct
@@ -171,16 +173,16 @@ theorem fourTimesOneEighth_eq_oneHalf :
       ring1
     _ = 1 / 2 := by
       apply Fraction.Field.div_eq_div_of_cross_mul
-        (Fraction.Order.NatCast.natCast_pos_direct 8 (by omega)).ne'
-        (Fraction.Order.NatCast.natCast_pos_direct 2 (by omega)).ne'
+        (NatCast.natCast_pos_direct 8 (by omega)).ne'
+        (NatCast.natCast_pos_direct 2 (by omega)).ne'
       ring1
 
 /-- One over 1048576 is at most one over 2048. -/
 theorem horizontalFineResidual_le_coarse :
     (1 / 1048576 : Fraction.Rational) <= 1 / 2048 := by
-  apply Fraction.Order.CrossMultiply.horizontalDivLeDivOfCrossMul
-    (Fraction.Order.NatCast.natCast_pos_direct 1048576 (by omega))
-    (Fraction.Order.NatCast.natCast_pos_direct 2048 (by omega))
+  apply CrossMultiply.horizontalDivLeDivOfCrossMul
+    (NatCast.natCast_pos_direct 1048576 (by omega))
+    (NatCast.natCast_pos_direct 2048 (by omega))
   calc
     (1 : Fraction.Rational) * 2048 = 2048 := by ring1
     _ <= 1048576 := Fraction.Cast.Order.natCast_le_direct
@@ -189,16 +191,16 @@ theorem horizontalFineResidual_le_coarse :
 
 /-- The canonical rational number one half is positive. -/
 theorem horizontalHalfPositive : (0 : Fraction.Rational) < 1 / 2 :=
-  Fraction.Order.Field.div_pos_direct
-    (Fraction.Order.NatCast.natCast_pos_direct 1 (by omega))
-    (Fraction.Order.NatCast.natCast_pos_direct 2 (by omega))
+  Field.div_pos_direct
+    (NatCast.natCast_pos_direct 1 (by omega))
+    (NatCast.natCast_pos_direct 2 (by omega))
 
 /-- One eighth is at most one half in the canonical rational carrier. -/
 private theorem horizontalOneEighth_le_oneHalf :
     (1 / 8 : Fraction.Rational) <= 1 / 2 := by
-  apply Fraction.Order.CrossMultiply.horizontalDivLeDivOfCrossMul
-    (Fraction.Order.NatCast.natCast_pos_direct 8 (by omega))
-    (Fraction.Order.NatCast.natCast_pos_direct 2 (by omega))
+  apply CrossMultiply.horizontalDivLeDivOfCrossMul
+    (NatCast.natCast_pos_direct 8 (by omega))
+    (NatCast.natCast_pos_direct 2 (by omega))
   calc
     (1 : Fraction.Rational) * 2 = 2 := by ring1
     _ <= 8 := Fraction.Cast.Order.natCast_le_direct
@@ -208,13 +210,13 @@ private theorem horizontalOneEighth_le_oneHalf :
 /-- The product of one eighth and one half is positive. -/
 theorem horizontalLowerProductPositive :
     (0 : Fraction.Rational) < (1 / 8) * (1 / 2) :=
-  Fraction.Order.Arithmetic.mul_pos_direct
-    (Fraction.Order.Field.div_pos_direct
-      (Fraction.Order.NatCast.natCast_pos_direct 1 (by omega))
-      (Fraction.Order.NatCast.natCast_pos_direct 8 (by omega)))
-    (Fraction.Order.Field.div_pos_direct
-      (Fraction.Order.NatCast.natCast_pos_direct 1 (by omega))
-      (Fraction.Order.NatCast.natCast_pos_direct 2 (by omega)))
+  Arithmetic.mul_pos_direct
+    (Field.div_pos_direct
+      (NatCast.natCast_pos_direct 1 (by omega))
+      (NatCast.natCast_pos_direct 8 (by omega)))
+    (Field.div_pos_direct
+      (NatCast.natCast_pos_direct 1 (by omega))
+      (NatCast.natCast_pos_direct 2 (by omega)))
 
 end Purelib.Data.Rat.Dyadic.Bounds.Small
 
@@ -247,8 +249,8 @@ theorem firstConnectorOneOver1024_le_one : (1 / 1024 : Fraction.Rational) <=
     rfl
   calc
     (1 / 1024 : Fraction.Rational) <= 1 / 1 := by
-      apply Fraction.Compatibility.divLeDivOfCrossMul (Fraction.Order.NatCast.natCast_pos_direct 1024 (by omega))
-        (Fraction.Order.NatCast.natCast_pos_direct 1 (by omega))
+      apply Fraction.Compatibility.divLeDivOfCrossMul (NatCast.natCast_pos_direct 1024 (by omega))
+        (NatCast.natCast_pos_direct 1 (by omega))
       calc
         (1 : Fraction.Rational) * ((1 : Nat) : Fraction.Rational) = ((1 : Nat) : Fraction.Rational) := by ring1
         _ <= ((1024 : Nat) : Fraction.Rational) := Fraction.Cast.Order.natCast_le_direct
@@ -287,16 +289,16 @@ public theorem adjacentEighthParameters (value : Fraction.Rational) :
 public theorem oneOver128LeOne : (1 / (16 * 8) : Fraction.Rational) ≤ 1 :=
   by
   have denominatorPositive : (0 : Fraction.Rational) < 16 * 8 :=
-    Fraction.Order.Arithmetic.mul_pos_direct
-      (Fraction.Order.NatCast.natCast_pos_direct 16 (by omega)) (Fraction.Order.NatCast.natCast_pos_direct 8 (by omega))
-  apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+    Arithmetic.mul_pos_direct
+      (NatCast.natCast_pos_direct 16 (by omega)) (NatCast.natCast_pos_direct 8 (by omega))
+  apply Arithmetic.le_of_mul_le_mul_right_direct
     (c := (16 : Fraction.Rational) * 8) _ denominatorPositive
   rw [Fraction.Field.div_mul_cancel_of_ne _ _
     denominatorPositive.ne']
   calc
     (1 : Fraction.Rational) = 0 + 1 := by ring1
     _ ≤ 127 + 1 :=
-      Fraction.Order.Arithmetic.add_le_add_right_direct
+      Arithmetic.add_le_add_right_direct
         ((fun n => Fraction.Cast.Order.natCast_le_direct (Nat.zero_le n)) 127) 1
     _ = 1 * ((16 : Fraction.Rational) * 8) := by ring1
 
@@ -305,12 +307,12 @@ public theorem quarterSquare_le_nineSixteenths (bound : Fraction.Rational)
     (nonnegative : 0 ≤ bound) (upper : bound ≤ 3 / 2) :
     bound ^ 2 / 4 ≤ (9 / 16 : Fraction.Rational) := by
   have squareLe : bound ^ 2 ≤ (3 / 2 : Fraction.Rational) ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct nonnegative upper 2
+    Arithmetic.pow_le_pow_direct nonnegative upper 2
   calc
     bound ^ 2 / 4 ≤ (3 / 2 : Fraction.Rational) ^ 2 / 4 := by
       change bound ^ 2 * (4 : Fraction.Rational)⁻¹ ≤ (3 / 2 : Fraction.Rational) ^ 2 * (4 : Fraction.Rational)⁻¹
-      exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-        squareLe (Fraction.Order.Field.inv_pos_direct (by decide)).le
+      exact Arithmetic.mul_le_mul_of_nonneg_right_direct
+        squareLe (Field.inv_pos_direct (by decide)).le
     _ = (9 / 16 : Fraction.Rational) := by with_unfolding_all decide
 
 /-- A nonnegative rational at most thirteen eighths has one quarter of its square at most three halves. -/
@@ -318,21 +320,21 @@ public theorem quarterSquare_le_threeHalves_of_le_thirteenEighths
     (bound : Fraction.Rational) (nonnegative : 0 ≤ bound) (upper : bound ≤ 13 / 8) :
     bound ^ 2 / 4 ≤ (3 / 2 : Fraction.Rational) := by
   have squareLe : bound ^ 2 ≤ (13 / 8 : Fraction.Rational) ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct nonnegative upper 2
+    Arithmetic.pow_le_pow_direct nonnegative upper 2
   calc
     bound ^ 2 / 4 ≤ (13 / 8 : Fraction.Rational) ^ 2 / 4 := by
       change bound ^ 2 * (4 : Fraction.Rational)⁻¹ ≤ (13 / 8 : Fraction.Rational) ^ 2 * (4 : Fraction.Rational)⁻¹
-      exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-        squareLe (Fraction.Order.Field.inv_pos_direct (by decide)).le
+      exact Arithmetic.mul_le_mul_of_nonneg_right_direct
+        squareLe (Field.inv_pos_direct (by decide)).le
     _ ≤ (3 / 2 : Fraction.Rational) := by with_unfolding_all decide
 
 /-- Forty over 64 equals five eighths in the canonical rational carrier. -/
 public theorem fortyOver64EqFiveEighths : (40 / 64 : Fraction.Rational) = 5
   / 8 := by
   have sixtyFourNonzero : (64 : Fraction.Rational) ≠ 0 := by
-    simpa only [Nat.cast_ofNat] using (Fraction.Order.NatCast.natCast_pos_direct 64 (by omega)).ne'
+    simpa only [Nat.cast_ofNat] using (NatCast.natCast_pos_direct 64 (by omega)).ne'
   have eightNonzero : (8 : Fraction.Rational) ≠ 0 := by
-    simpa only [Nat.cast_ofNat] using (Fraction.Order.NatCast.natCast_pos_direct 8 (by omega)).ne'
+    simpa only [Nat.cast_ofNat] using (NatCast.natCast_pos_direct 8 (by omega)).ne'
   apply Fraction.Field.div_eq_div_of_cross_mul
     sixtyFourNonzero eightNonzero
   ring1
@@ -340,8 +342,8 @@ public theorem fortyOver64EqFiveEighths : (40 / 64 : Fraction.Rational) = 5
 /-- Nine sixteenths is at most thirty-nine over 64. -/
 public theorem nineSixteenthsLeThirtyNineSixtyFour :
     (9 / 16 : Fraction.Rational) ≤ 39 / 64 := by
-  apply Fraction.Compatibility.divLeDivOfCrossMul (Fraction.Order.NatCast.natCast_pos_direct 16 (by omega))
-    (Fraction.Order.NatCast.natCast_pos_direct 64 (by omega))
+  apply Fraction.Compatibility.divLeDivOfCrossMul (NatCast.natCast_pos_direct 16 (by omega))
+    (NatCast.natCast_pos_direct 64 (by omega))
   calc
     (9 : Fraction.Rational) * 64 = 576 := by ring1
     _ ≤ 624 := Fraction.Cast.Order.natCast_le_direct (by decide)
@@ -352,12 +354,12 @@ public theorem quarterSquare_le_threeHalves_of_le_two
     (bound : Fraction.Rational) (nonnegative : 0 ≤ bound) (upper : bound ≤ 2) :
     bound ^ 2 / 4 ≤ (3 / 2 : Fraction.Rational) := by
   have squareLe : bound ^ 2 ≤ (2 : Fraction.Rational) ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct nonnegative upper 2
+    Arithmetic.pow_le_pow_direct nonnegative upper 2
   calc
     bound ^ 2 / 4 ≤ (2 : Fraction.Rational) ^ 2 / 4 := by
       change bound ^ 2 * (4 : Fraction.Rational)⁻¹ ≤ (2 : Fraction.Rational) ^ 2 * (4 : Fraction.Rational)⁻¹
-      exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-        squareLe (Fraction.Order.Field.inv_pos_direct (by decide)).le
+      exact Arithmetic.mul_le_mul_of_nonneg_right_direct
+        squareLe (Field.inv_pos_direct (by decide)).le
     _ ≤ (3 / 2 : Fraction.Rational) := by with_unfolding_all decide
 
 end Purelib.Data.Rat.Dyadic.Bounds.Small

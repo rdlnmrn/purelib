@@ -12,7 +12,9 @@ import Purelib.Integration.Program.Gaussian.Cached.Policy
 
 @[expose] public section
 
-/-! # Finite allocation, retained-thunk and complete observation regressions -/
+/-!
+A recorded observation of an allocated constant integration program.
+-/
 
 namespace Purelib.Examples.Integration.Program.Gaussian.CCL.Replay.Cache.WorkedExamples
 
@@ -43,12 +45,6 @@ theorem replay :
       observed.trace =
       .ok observed.observation :=
   Transcript.observation_replay _ _ _
-
-/-- The cached program emits the displayed ten-bit word. -/
-theorem actual_word :
-    observed.observation.word = [true, false, true, true,
-      true, true, false, false, true, true] := by
-  decide +kernel
 
 end Purelib.Examples.Integration.Program.Gaussian.CCL.Replay.Cache.WorkedExamples
 

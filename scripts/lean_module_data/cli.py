@@ -38,6 +38,8 @@ def main():
     axiom_audit.add_argument('--assigned', type=Path, required=True)
     axiom_audit.add_argument('--canonical', choices=('true','false'), required=True)
     axiom_audit.add_argument('--result', type=Path, required=True)
+    axiom_audit.add_argument('--cores', type=int, default=1,
+                             help='CPU budget for queries sharing this import environment')
     axiom_audit.add_argument('--all-helpers', action='store_true',
                              help='select every retained kernel helper as an independent project root')
     axiom_audit.add_argument('--report-ir-only', action='store_true',
@@ -47,6 +49,8 @@ def main():
     for mode in (inputs, contracts, dependencies, trace, axiom_audit, audit_keys, kernel):
         mode.add_argument('--search-path', action='append', type=Path)
     args = parser.parse_args()
+    if args.mode == 'audit' and args.cores < 1:
+        parser.error('--cores must be positive')
     if args.mode == 'regression-root':
         from scripts.lean_module_data.audit import REGRESSION_MODULE
         print(REGRESSION_MODULE)
@@ -94,7 +98,7 @@ def main():
         try:
             print(audit(names(args.project), assigned, args.canonical=='true', args.result, search,
                         report_ir_only=args.report_ir_only, imports=names(args.imports) if args.imports else None,
-                        all_helpers=args.all_helpers))
+                        all_helpers=args.all_helpers, cores=args.cores))
         except ValueError as error:
             print('error: '+str(error))
             raise SystemExit(1)

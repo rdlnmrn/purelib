@@ -30,227 +30,227 @@ variable {K : Type*} [ExplicitField K]
 
 /-- The quadrance of row `t` of a symmetric idempotent equals its diagonal entry. -/
 private theorem rowT_quadrance_of_idempotent
-    (matrix : Coordinates3.Matrix3 K) (symmetric : matrix.IsSymmetric)
-    (idempotent : Coordinates3.Matrix3.mul matrix matrix = matrix) :
-    (Coordinates3.Matrix3.rowT matrix).quadrance = matrix.tt := by
-  have coordinate := congrArg Coordinates3.Matrix3.tt idempotent
-  unfold Coordinates3.Matrix3.mul at coordinate
-  rw [Purelib.LinearAlgebra.Coordinates3.Matrix3.symmetric_rt_eq_tr matrix symmetric,
-    Purelib.LinearAlgebra.Coordinates3.Matrix3.symmetric_st_eq_ts matrix symmetric] at coordinate
-  unfold Coordinates3.Matrix3.rowT Vector3.quadrance Vector3.dot
+    (matrix : Matrix3 K) (symmetric : matrix.IsSymmetric)
+    (idempotent : Matrix3.mul matrix matrix = matrix) :
+    (Matrix3.rowT matrix).quadrance = matrix.tt := by
+  have coordinate := congrArg Matrix3.tt idempotent
+  unfold Matrix3.mul at coordinate
+  rw [Matrix3.symmetric_rt_eq_tr matrix symmetric,
+    Matrix3.symmetric_st_eq_ts matrix symmetric] at coordinate
+  unfold Matrix3.rowT Vector3.quadrance Vector3.dot
   exact coordinate
 
 /-- The quadrance of row `r` of a symmetric idempotent equals its diagonal entry. -/
 private theorem rowR_quadrance_of_idempotent
-    (matrix : Coordinates3.Matrix3 K) (symmetric : matrix.IsSymmetric)
-    (idempotent : Coordinates3.Matrix3.mul matrix matrix = matrix) :
-    (Coordinates3.Matrix3.rowR matrix).quadrance = matrix.rr := by
-  have coordinate := congrArg Coordinates3.Matrix3.rr idempotent
-  unfold Coordinates3.Matrix3.mul at coordinate
-  rw [← Purelib.LinearAlgebra.Coordinates3.Matrix3.symmetric_rt_eq_tr matrix symmetric,
-    Purelib.LinearAlgebra.Coordinates3.Matrix3.symmetric_sr_eq_rs matrix symmetric] at coordinate
-  unfold Coordinates3.Matrix3.rowR Vector3.quadrance Vector3.dot
+    (matrix : Matrix3 K) (symmetric : matrix.IsSymmetric)
+    (idempotent : Matrix3.mul matrix matrix = matrix) :
+    (Matrix3.rowR matrix).quadrance = matrix.rr := by
+  have coordinate := congrArg Matrix3.rr idempotent
+  unfold Matrix3.mul at coordinate
+  rw [← Matrix3.symmetric_rt_eq_tr matrix symmetric,
+    Matrix3.symmetric_sr_eq_rs matrix symmetric] at coordinate
+  unfold Matrix3.rowR Vector3.quadrance Vector3.dot
   exact coordinate
 
 /-- The quadrance of row `s` of a symmetric idempotent equals its diagonal entry. -/
 private theorem rowS_quadrance_of_idempotent
-    (matrix : Coordinates3.Matrix3 K) (symmetric : matrix.IsSymmetric)
-    (idempotent : Coordinates3.Matrix3.mul matrix matrix = matrix) :
-    (Coordinates3.Matrix3.rowS matrix).quadrance = matrix.ss := by
-  have coordinate := congrArg Coordinates3.Matrix3.ss idempotent
-  unfold Coordinates3.Matrix3.mul at coordinate
-  rw [← Purelib.LinearAlgebra.Coordinates3.Matrix3.symmetric_st_eq_ts matrix symmetric,
-    ← Purelib.LinearAlgebra.Coordinates3.Matrix3.symmetric_sr_eq_rs matrix symmetric] at coordinate
-  unfold Coordinates3.Matrix3.rowS Vector3.quadrance Vector3.dot
+    (matrix : Matrix3 K) (symmetric : matrix.IsSymmetric)
+    (idempotent : Matrix3.mul matrix matrix = matrix) :
+    (Matrix3.rowS matrix).quadrance = matrix.ss := by
+  have coordinate := congrArg Matrix3.ss idempotent
+  unfold Matrix3.mul at coordinate
+  rw [← Matrix3.symmetric_st_eq_ts matrix symmetric,
+    ← Matrix3.symmetric_sr_eq_rs matrix symmetric] at coordinate
+  unfold Matrix3.rowS Vector3.quadrance Vector3.dot
   exact coordinate
 
 /-- Reconstruct a symmetric idempotent from row `t` and its nonzero diagonal entry.
 
 The vanishing adjugate supplies the required rank-one minor identities. -/
-private theorem reconstruct_from_rowT (matrix : Coordinates3.Matrix3 K)
+private theorem reconstruct_from_rowT (matrix : Matrix3 K)
     (symmetric : matrix.IsSymmetric)
-    (idempotent : Coordinates3.Matrix3.mul matrix matrix = matrix)
-    (adjugateZero : Coordinates3.Matrix3.adjugate matrix = Coordinates3.Matrix3.zero)
+    (idempotent : Matrix3.mul matrix matrix = matrix)
+    (adjugateZero : Matrix3.adjugate matrix = Matrix3.zero)
     (pivotNonzero : matrix.tt ≠ 0) :
-    matrix = Coordinates3.Matrix3.scale (1 / (Coordinates3.Matrix3.rowT matrix).quadrance)
-      (Coordinates3.Matrix3.outer (Coordinates3.Matrix3.rowT matrix) (Coordinates3.Matrix3.rowT matrix)) := by
-  have rtEq := Purelib.LinearAlgebra.Coordinates3.Matrix3.symmetric_rt_eq_tr matrix symmetric
-  have stEq := Purelib.LinearAlgebra.Coordinates3.Matrix3.symmetric_st_eq_ts matrix symmetric
-  have srEq := Purelib.LinearAlgebra.Coordinates3.Matrix3.symmetric_sr_eq_rs matrix symmetric
-  have rrMinor := congrArg Coordinates3.Matrix3.ss adjugateZero
-  unfold Coordinates3.Matrix3.adjugate at rrMinor
-  unfold Coordinates3.Matrix3.zero at rrMinor
+    matrix = Matrix3.scale (1 / (Matrix3.rowT matrix).quadrance)
+      (Matrix3.outer (Matrix3.rowT matrix) (Matrix3.rowT matrix)) := by
+  have rtEq := Matrix3.symmetric_rt_eq_tr matrix symmetric
+  have stEq := Matrix3.symmetric_st_eq_ts matrix symmetric
+  have srEq := Matrix3.symmetric_sr_eq_rs matrix symmetric
+  have rrMinor := congrArg Matrix3.ss adjugateZero
+  unfold Matrix3.adjugate at rrMinor
+  unfold Matrix3.zero at rrMinor
   rw [rtEq] at rrMinor
   have rrRelation : matrix.tt * matrix.rr = matrix.tr * matrix.tr :=
     Group.eq_of_sub_eq_zero rrMinor
-  have rsMinor := congrArg Coordinates3.Matrix3.sr adjugateZero
-  unfold Coordinates3.Matrix3.adjugate at rsMinor
-  unfold Coordinates3.Matrix3.zero at rsMinor
+  have rsMinor := congrArg Matrix3.sr adjugateZero
+  unfold Matrix3.adjugate at rsMinor
+  unfold Matrix3.zero at rsMinor
   rw [stEq, srEq] at rsMinor
   have rsRelation : matrix.tt * matrix.rs = matrix.tr * matrix.ts :=
     (Group.eq_of_sub_eq_zero rsMinor).symm
-  have ssMinor := congrArg Coordinates3.Matrix3.rr adjugateZero
-  unfold Coordinates3.Matrix3.adjugate at ssMinor
-  unfold Coordinates3.Matrix3.zero at ssMinor
+  have ssMinor := congrArg Matrix3.rr adjugateZero
+  unfold Matrix3.adjugate at ssMinor
+  unfold Matrix3.zero at ssMinor
   rw [stEq] at ssMinor
   have ssRelation : matrix.tt * matrix.ss = matrix.ts * matrix.ts :=
     Group.eq_of_sub_eq_zero ssMinor
-  rw [Purelib.LinearAlgebra.Coordinates3.Projector.rowT_quadrance_of_idempotent matrix symmetric idempotent]
+  rw [rowT_quadrance_of_idempotent matrix symmetric idempotent]
   apply Coordinates3.Matrix3.ext
   all_goals
-    unfold Coordinates3.Matrix3.scale
-    unfold Coordinates3.Matrix3.outer
-    unfold Coordinates3.Matrix3.rowT
-  · apply Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
+    unfold Matrix3.scale
+    unfold Matrix3.outer
+    unfold Matrix3.rowT
+  · apply Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
     ring1
-  · apply Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
+  · apply Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
     ring1
-  · apply Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
+  · apply Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
     ring1
-  · apply Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
+  · apply Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
     rw [rtEq]
     ring1
-  · exact Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero rrRelation
-  · exact Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero rsRelation
-  · apply Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
+  · exact Inverse.eq_one_div_mul_of_mul_eq pivotNonzero rrRelation
+  · exact Inverse.eq_one_div_mul_of_mul_eq pivotNonzero rsRelation
+  · apply Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
     rw [stEq]
     ring1
-  · apply Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
+  · apply Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
     rw [srEq]
     calc
       matrix.tt * matrix.rs = matrix.tr * matrix.ts := rsRelation
       _ = matrix.ts * matrix.tr := by ring1
-  · exact Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero ssRelation
+  · exact Inverse.eq_one_div_mul_of_mul_eq pivotNonzero ssRelation
 
 /-- Reconstruct a symmetric idempotent from row `r` and its nonzero diagonal entry.
 
 The vanishing adjugate supplies the required rank-one minor identities. -/
-private theorem reconstruct_from_rowR (matrix : Coordinates3.Matrix3 K)
+private theorem reconstruct_from_rowR (matrix : Matrix3 K)
     (symmetric : matrix.IsSymmetric)
-    (idempotent : Coordinates3.Matrix3.mul matrix matrix = matrix)
-    (adjugateZero : Coordinates3.Matrix3.adjugate matrix = Coordinates3.Matrix3.zero)
+    (idempotent : Matrix3.mul matrix matrix = matrix)
+    (adjugateZero : Matrix3.adjugate matrix = Matrix3.zero)
     (pivotNonzero : matrix.rr ≠ 0) :
-    matrix = Coordinates3.Matrix3.scale (1 / (Coordinates3.Matrix3.rowR matrix).quadrance)
-      (Coordinates3.Matrix3.outer (Coordinates3.Matrix3.rowR matrix) (Coordinates3.Matrix3.rowR matrix)) := by
-  have rtEq := Purelib.LinearAlgebra.Coordinates3.Matrix3.symmetric_rt_eq_tr matrix symmetric
-  have stEq := Purelib.LinearAlgebra.Coordinates3.Matrix3.symmetric_st_eq_ts matrix symmetric
-  have srEq := Purelib.LinearAlgebra.Coordinates3.Matrix3.symmetric_sr_eq_rs matrix symmetric
-  have ttMinor := congrArg Coordinates3.Matrix3.ss adjugateZero
-  unfold Coordinates3.Matrix3.adjugate at ttMinor
-  unfold Coordinates3.Matrix3.zero at ttMinor
+    matrix = Matrix3.scale (1 / (Matrix3.rowR matrix).quadrance)
+      (Matrix3.outer (Matrix3.rowR matrix) (Matrix3.rowR matrix)) := by
+  have rtEq := Matrix3.symmetric_rt_eq_tr matrix symmetric
+  have stEq := Matrix3.symmetric_st_eq_ts matrix symmetric
+  have srEq := Matrix3.symmetric_sr_eq_rs matrix symmetric
+  have ttMinor := congrArg Matrix3.ss adjugateZero
+  unfold Matrix3.adjugate at ttMinor
+  unfold Matrix3.zero at ttMinor
   rw [rtEq] at ttMinor
   have ttRelation : matrix.rr * matrix.tt = matrix.rt * matrix.rt := by
     calc
       matrix.rr * matrix.tt = matrix.tt * matrix.rr := by ring1
       _ = matrix.tr * matrix.tr := Group.eq_of_sub_eq_zero ttMinor
       _ = matrix.rt * matrix.rt := by rw [rtEq]
-  have tsMinor := congrArg Coordinates3.Matrix3.ts adjugateZero
-  unfold Coordinates3.Matrix3.adjugate at tsMinor
-  unfold Coordinates3.Matrix3.zero at tsMinor
+  have tsMinor := congrArg Matrix3.ts adjugateZero
+  unfold Matrix3.adjugate at tsMinor
+  unfold Matrix3.zero at tsMinor
   rw [rtEq] at tsMinor
   have tsRelation : matrix.rr * matrix.ts = matrix.rt * matrix.rs := by
     calc
       matrix.rr * matrix.ts = matrix.ts * matrix.rr := by ring1
       _ = matrix.tr * matrix.rs := (Group.eq_of_sub_eq_zero tsMinor).symm
       _ = matrix.rt * matrix.rs := by rw [rtEq]
-  have ssMinor := congrArg Coordinates3.Matrix3.tt adjugateZero
-  unfold Coordinates3.Matrix3.adjugate at ssMinor
-  unfold Coordinates3.Matrix3.zero at ssMinor
+  have ssMinor := congrArg Matrix3.tt adjugateZero
+  unfold Matrix3.adjugate at ssMinor
+  unfold Matrix3.zero at ssMinor
   rw [srEq] at ssMinor
   have ssRelation : matrix.rr * matrix.ss = matrix.rs * matrix.rs :=
     Group.eq_of_sub_eq_zero ssMinor
-  rw [Purelib.LinearAlgebra.Coordinates3.Projector.rowR_quadrance_of_idempotent matrix symmetric idempotent]
+  rw [rowR_quadrance_of_idempotent matrix symmetric idempotent]
   apply Coordinates3.Matrix3.ext
   all_goals
-    unfold Coordinates3.Matrix3.scale
-    unfold Coordinates3.Matrix3.outer
-    unfold Coordinates3.Matrix3.rowR
-  · exact Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero ttRelation
-  · apply Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
+    unfold Matrix3.scale
+    unfold Matrix3.outer
+    unfold Matrix3.rowR
+  · exact Inverse.eq_one_div_mul_of_mul_eq pivotNonzero ttRelation
+  · apply Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
     rw [rtEq]
     ring1
-  · exact Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero tsRelation
-  · apply Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
+  · exact Inverse.eq_one_div_mul_of_mul_eq pivotNonzero tsRelation
+  · apply Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
     ring1
-  · apply Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
+  · apply Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
     ring1
-  · apply Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
+  · apply Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
     ring1
-  · apply Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
+  · apply Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
     rw [stEq]
     calc
       matrix.rr * matrix.ts = matrix.rt * matrix.rs := tsRelation
       _ = matrix.rs * matrix.rt := by ring1
-  · apply Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
+  · apply Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
     rw [srEq]
     ring1
-  · exact Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero ssRelation
+  · exact Inverse.eq_one_div_mul_of_mul_eq pivotNonzero ssRelation
 
 /-- Reconstruct a symmetric idempotent from row `s` and its nonzero diagonal entry.
 
 The vanishing adjugate supplies the required rank-one minor identities. -/
-private theorem reconstruct_from_rowS (matrix : Coordinates3.Matrix3 K)
+private theorem reconstruct_from_rowS (matrix : Matrix3 K)
     (symmetric : matrix.IsSymmetric)
-    (idempotent : Coordinates3.Matrix3.mul matrix matrix = matrix)
-    (adjugateZero : Coordinates3.Matrix3.adjugate matrix = Coordinates3.Matrix3.zero)
+    (idempotent : Matrix3.mul matrix matrix = matrix)
+    (adjugateZero : Matrix3.adjugate matrix = Matrix3.zero)
     (pivotNonzero : matrix.ss ≠ 0) :
-    matrix = Coordinates3.Matrix3.scale (1 / (Coordinates3.Matrix3.rowS matrix).quadrance)
-      (Coordinates3.Matrix3.outer (Coordinates3.Matrix3.rowS matrix) (Coordinates3.Matrix3.rowS matrix)) := by
-  have rtEq := Purelib.LinearAlgebra.Coordinates3.Matrix3.symmetric_rt_eq_tr matrix symmetric
-  have stEq := Purelib.LinearAlgebra.Coordinates3.Matrix3.symmetric_st_eq_ts matrix symmetric
-  have srEq := Purelib.LinearAlgebra.Coordinates3.Matrix3.symmetric_sr_eq_rs matrix symmetric
-  have ttMinor := congrArg Coordinates3.Matrix3.rr adjugateZero
-  unfold Coordinates3.Matrix3.adjugate at ttMinor
-  unfold Coordinates3.Matrix3.zero at ttMinor
+    matrix = Matrix3.scale (1 / (Matrix3.rowS matrix).quadrance)
+      (Matrix3.outer (Matrix3.rowS matrix) (Matrix3.rowS matrix)) := by
+  have rtEq := Matrix3.symmetric_rt_eq_tr matrix symmetric
+  have stEq := Matrix3.symmetric_st_eq_ts matrix symmetric
+  have srEq := Matrix3.symmetric_sr_eq_rs matrix symmetric
+  have ttMinor := congrArg Matrix3.rr adjugateZero
+  unfold Matrix3.adjugate at ttMinor
+  unfold Matrix3.zero at ttMinor
   rw [stEq] at ttMinor
   have ttRelation : matrix.ss * matrix.tt = matrix.st * matrix.st := by
     calc
       matrix.ss * matrix.tt = matrix.tt * matrix.ss := by ring1
       _ = matrix.ts * matrix.ts := Group.eq_of_sub_eq_zero ttMinor
       _ = matrix.st * matrix.st := by rw [stEq]
-  have trMinor := congrArg Coordinates3.Matrix3.tr adjugateZero
-  unfold Coordinates3.Matrix3.adjugate at trMinor
-  unfold Coordinates3.Matrix3.zero at trMinor
+  have trMinor := congrArg Matrix3.tr adjugateZero
+  unfold Matrix3.adjugate at trMinor
+  unfold Matrix3.zero at trMinor
   rw [stEq] at trMinor
   have trRelation : matrix.ss * matrix.tr = matrix.st * matrix.sr := by
     calc
       matrix.ss * matrix.tr = matrix.tr * matrix.ss := by ring1
       _ = matrix.ts * matrix.sr := (Group.eq_of_sub_eq_zero trMinor).symm
       _ = matrix.st * matrix.sr := by rw [stEq]
-  have rrMinor := congrArg Coordinates3.Matrix3.tt adjugateZero
-  unfold Coordinates3.Matrix3.adjugate at rrMinor
-  unfold Coordinates3.Matrix3.zero at rrMinor
+  have rrMinor := congrArg Matrix3.tt adjugateZero
+  unfold Matrix3.adjugate at rrMinor
+  unfold Matrix3.zero at rrMinor
   rw [srEq] at rrMinor
   have rrRelation : matrix.ss * matrix.rr = matrix.sr * matrix.sr := by
     calc
       matrix.ss * matrix.rr = matrix.rr * matrix.ss := by ring1
       _ = matrix.rs * matrix.rs := Group.eq_of_sub_eq_zero rrMinor
       _ = matrix.sr * matrix.sr := by rw [srEq]
-  rw [Purelib.LinearAlgebra.Coordinates3.Projector.rowS_quadrance_of_idempotent matrix symmetric idempotent]
+  rw [rowS_quadrance_of_idempotent matrix symmetric idempotent]
   apply Coordinates3.Matrix3.ext
   all_goals
-    unfold Coordinates3.Matrix3.scale
-    unfold Coordinates3.Matrix3.outer
-    unfold Coordinates3.Matrix3.rowS
-  · exact Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero ttRelation
-  · exact Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero trRelation
-  · apply Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
+    unfold Matrix3.scale
+    unfold Matrix3.outer
+    unfold Matrix3.rowS
+  · exact Inverse.eq_one_div_mul_of_mul_eq pivotNonzero ttRelation
+  · exact Inverse.eq_one_div_mul_of_mul_eq pivotNonzero trRelation
+  · apply Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
     rw [stEq]
     ring1
-  · apply Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
+  · apply Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
     rw [rtEq]
     calc
       matrix.ss * matrix.tr = matrix.st * matrix.sr := trRelation
       _ = matrix.sr * matrix.st := by ring1
-  · exact Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero rrRelation
-  · apply Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
+  · exact Inverse.eq_one_div_mul_of_mul_eq pivotNonzero rrRelation
+  · apply Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
     rw [srEq]
     ring1
-  · apply Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
+  · apply Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
     ring1
-  · apply Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
+  · apply Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
     ring1
-  · apply Purelib.Algebra.Field.Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
+  · apply Inverse.eq_one_div_mul_of_mul_eq pivotNonzero
     ring1
 
 set_option genInjectivity false in
@@ -259,12 +259,12 @@ projector.
 
 The vector keeps its nonzero quadrance and the exact normalized self-outer-product equation for the supplied matrix.
 These proof fields retain the original matrix rather than constructing another projector. -/
-structure RankOneProjectorWitness (matrix : Coordinates3.Matrix3 K) where
+structure RankOneProjectorWitness (matrix : Matrix3 K) where
   /-- The retained vector generating the rank-one projector. -/ vector : Vector3 K
   /-- The retained generating vector has nonzero quadrance. -/ nonNull : vector.quadrance ≠ 0
   /-- The original matrix is the self outer product normalized by the retained vector quadrance. -/ reconstruction :
-    matrix = Coordinates3.Matrix3.scale (1 / vector.quadrance)
-      (Coordinates3.Matrix3.outer vector vector)
+    matrix = Matrix3.scale (1 / vector.quadrance)
+      (Matrix3.outer vector vector)
 
 constructive_injectivity RankOneProjectorWitness
 
@@ -273,51 +273,51 @@ constructive_injectivity RankOneProjectorWitness
 The diagonal tests inspect t before r, and choose s only when the first two diagonals vanish. The returned vector is the
 corresponding original matrix row. -/
 @[expose]
-def rankOneProjectorVector [DecidableEq K] (matrix : Coordinates3.Matrix3 K) : Vector3 K :=
+def rankOneProjectorVector [DecidableEq K] (matrix : Matrix3 K) : Vector3 K :=
   if matrix.tt = 0 then
-    if matrix.rr = 0 then Coordinates3.Matrix3.rowS matrix else Coordinates3.Matrix3.rowR matrix
-  else Coordinates3.Matrix3.rowT matrix
+    if matrix.rr = 0 then Matrix3.rowS matrix else Matrix3.rowR matrix
+  else Matrix3.rowT matrix
 
 /-- The selected row certifies the normalized outer-product formula for a rank-one projector.
 
 Symmetry, idempotence, trace one and vanishing adjugate yield a non-null vector when two is nonzero. -/
 theorem rankOneProjectorVector_certificates [DecidableEq K]
-    (matrix : Coordinates3.Matrix3 K)
+    (matrix : Matrix3 K)
     (symmetric : matrix.IsSymmetric)
-    (idempotent : Coordinates3.Matrix3.mul matrix matrix = matrix)
-    (traceOne : Coordinates3.Matrix3.trace matrix = 1)
-    (adjugateZero : Coordinates3.Matrix3.adjugate matrix = Coordinates3.Matrix3.zero)
+    (idempotent : Matrix3.mul matrix matrix = matrix)
+    (traceOne : Matrix3.trace matrix = 1)
+    (adjugateZero : Matrix3.adjugate matrix = Matrix3.zero)
     (twoNonzero : (2 : K) ≠ 0) :
-    (Coordinates3.Projector.rankOneProjectorVector matrix).quadrance ≠ 0 ∧
-      matrix = Coordinates3.Matrix3.scale (1 / (Coordinates3.Projector.rankOneProjectorVector matrix).quadrance)
-        (Coordinates3.Matrix3.outer (Coordinates3.Projector.rankOneProjectorVector matrix)
-          (Coordinates3.Projector.rankOneProjectorVector matrix)) := open Purelib in by
-  unfold Coordinates3.Projector.rankOneProjectorVector
+    (rankOneProjectorVector matrix).quadrance ≠ 0 ∧
+      matrix = Matrix3.scale (1 / (rankOneProjectorVector matrix).quadrance)
+        (Matrix3.outer (rankOneProjectorVector matrix)
+          (rankOneProjectorVector matrix)) := open Purelib in by
+  unfold rankOneProjectorVector
   split_ifs with ttZero rrZero
   · have ssNonzero : matrix.ss ≠ 0 := by
       intro ssZero
       have oneZero : (1 : K) = 0 := by
         calc
-          (1 : K) = Coordinates3.Matrix3.trace matrix := traceOne.symm
+          (1 : K) = Matrix3.trace matrix := traceOne.symm
           _ = 0 := by
-            unfold Coordinates3.Matrix3.trace
+            unfold Matrix3.trace
             rw [ttZero, rrZero, ssZero]
             ring1
-      exact (Algebra.Field.Characteristic.Nonzero.one_ne_zero_of_two_ne_zero twoNonzero) oneZero
+      exact (Characteristic.Nonzero.one_ne_zero_of_two_ne_zero twoNonzero) oneZero
     constructor
-    · rw [Purelib.LinearAlgebra.Coordinates3.Projector.rowS_quadrance_of_idempotent matrix symmetric idempotent]
+    · rw [rowS_quadrance_of_idempotent matrix symmetric idempotent]
       exact ssNonzero
-    · exact Purelib.LinearAlgebra.Coordinates3.Projector.reconstruct_from_rowS matrix symmetric idempotent
+    · exact reconstruct_from_rowS matrix symmetric idempotent
         adjugateZero ssNonzero
   · constructor
-    · rw [Purelib.LinearAlgebra.Coordinates3.Projector.rowR_quadrance_of_idempotent matrix symmetric idempotent]
+    · rw [rowR_quadrance_of_idempotent matrix symmetric idempotent]
       exact rrZero
-    · exact Purelib.LinearAlgebra.Coordinates3.Projector.reconstruct_from_rowR matrix symmetric idempotent
+    · exact reconstruct_from_rowR matrix symmetric idempotent
         adjugateZero rrZero
   · constructor
-    · rw [Purelib.LinearAlgebra.Coordinates3.Projector.rowT_quadrance_of_idempotent matrix symmetric idempotent]
+    · rw [rowT_quadrance_of_idempotent matrix symmetric idempotent]
       exact ttZero
-    · exact Purelib.LinearAlgebra.Coordinates3.Projector.reconstruct_from_rowT matrix symmetric idempotent
+    · exact reconstruct_from_rowT matrix symmetric idempotent
         adjugateZero ttZero
 
 /-- Select a non-null row of a symmetric rank-one projector by testing its
@@ -326,16 +326,16 @@ three diagonal entries in order.
 Symmetry, idempotence, trace one and zero adjugate certify that same selected row; the nonzero value of two rules out
 the degenerate field case. The resulting record retains the original matrix and normalized reconstruction. -/
 @[expose]
-def rankOneProjectorWitness [DecidableEq K] (matrix : Coordinates3.Matrix3 K)
+def rankOneProjectorWitness [DecidableEq K] (matrix : Matrix3 K)
     (symmetric : matrix.IsSymmetric)
-    (idempotent : Coordinates3.Matrix3.mul matrix matrix = matrix)
-    (traceOne : Coordinates3.Matrix3.trace matrix = 1)
-    (adjugateZero : Coordinates3.Matrix3.adjugate matrix = Coordinates3.Matrix3.zero)
-    (twoNonzero : (2 : K) ≠ 0) : Coordinates3.Projector.RankOneProjectorWitness matrix :=
-  { vector := Coordinates3.Projector.rankOneProjectorVector matrix
-    nonNull := (Coordinates3.Projector.rankOneProjectorVector_certificates matrix symmetric idempotent
+    (idempotent : Matrix3.mul matrix matrix = matrix)
+    (traceOne : Matrix3.trace matrix = 1)
+    (adjugateZero : Matrix3.adjugate matrix = Matrix3.zero)
+    (twoNonzero : (2 : K) ≠ 0) : RankOneProjectorWitness matrix :=
+  { vector := rankOneProjectorVector matrix
+    nonNull := (rankOneProjectorVector_certificates matrix symmetric idempotent
       traceOne adjugateZero twoNonzero).1
-    reconstruction := (Coordinates3.Projector.rankOneProjectorVector_certificates matrix symmetric idempotent
+    reconstruction := (rankOneProjectorVector_certificates matrix symmetric idempotent
       traceOne adjugateZero twoNonzero).2 }
 
 namespace RankOneProjectorWitness

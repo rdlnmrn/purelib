@@ -84,15 +84,15 @@ open Purelib.Approximation.Gaussian.Equivalence (Equivalent Comparison)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 variable {genus count otherCount index : Nat} {curve : HyperellipticCurve genus}
   {differential other : Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {otherParent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve other}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {otherPatch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch otherParent}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {otherData :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
-  {edge otherEdge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {otherParent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve other}
+  {patch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
+  {otherPatch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch otherParent}
+  {data : UniformReciprocalModels.Data patch count} {otherData :
+    UniformReciprocalModels.Data otherPatch otherCount}
+  {edge otherEdge : Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge}
   {cell : Cell data edge} {otherCell :
     Cell otherData otherEdge}
   {model : RootModel cell} {otherModel :
@@ -100,31 +100,31 @@ variable {genus count otherCount index : Nat} {curve : HyperellipticCurve genus}
     otherParameter : Coordinate}
   {leftPoint : Point cap model parameter} {rightPoint :
     Point cap otherModel otherParameter}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other index otherBox}
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Primitives.Sample cap differential index box}
+  {otherSample : Primitives.Sample cap other index otherBox}
 
 set_option genInjectivity false in
 /-- Paired differential chart readings on one retained cap coordinate.
 
 The original second owner remains separately cached with an operational transport budget; one shared reading stage pays
 both chart requests and the actual owner comparison. -/
-structure PairedChartRequest (joined : ArcOwners.Join leftPoint rightPoint)
+structure PairedChartRequest (joined : Join leftPoint rightPoint)
     (sample : Primitives.Sample cap differential index box)
-    (otherSample : Primitives.Sample cap other index otherBox) (target : InverseRootPolynomial.Coordinate) (floor : Nat)
+    (otherSample : Primitives.Sample cap other index otherBox) (target : Coordinate) (floor : Nat)
       where
   /-- The first differential endpoint or reading on the original shared coordinate. -/ first :
-    Coordinates.Overlap.Endpoint leftPoint.coordinates sample
+    Endpoint leftPoint.coordinates sample
   /-- The second differential endpoint or reading using that same retained coordinate. -/ other :
-    Coordinates.Overlap.Endpoint leftPoint.coordinates otherSample
+    Endpoint leftPoint.coordinates otherSample
   /-- The separately retained second endpoint or reading on its original coordinate owner. -/ originalOther :
-    Coordinates.Overlap.Endpoint rightPoint.coordinates otherSample
+    Endpoint rightPoint.coordinates otherSample
   /-- The first original differential's retained chart request or its certified evaluation. -/ firstChart :
-    ChartReadings.ChartRequest first target floor
+    ChartRequest first target floor
   /-- The second original differential's retained chart request or its certified evaluation. -/ otherChart :
-    ChartReadings.ChartRequest other target floor
+    ChartRequest other target floor
   /-- The requested operational comparison from the original second owner to the shared coordinate reading. -/ transport
-    : Gaussian.Equivalence.Comparison originalOther.approximation other.approximation floor floor target
+    : Comparison originalOther.approximation other.approximation floor floor target
   /-- The cached common stage paying both chart and owner-transport requests. -/ stage : Nat
   /-- The stage is the maximum of both original chart floors and both transport reading indices. -/ stage_eq : stage =
     max firstChart.stage (max otherChart.stage (max transport.leftIndex transport.rightIndex))
@@ -137,18 +137,18 @@ variable {joined : Join leftPoint rightPoint} {target :
 
 /-- Retain both original differential endpoints on the first coordinate, the separate second endpoint and the paid
 transport between them. -/
-@[expose] def build (joined : ArcOwners.Join leftPoint rightPoint)
+@[expose] def build (joined : Join leftPoint rightPoint)
     (sample : Primitives.Sample cap differential index box)
     (otherSample : Primitives.Sample cap other index otherBox)
-    (target : InverseRootPolynomial.Coordinate) (positive : 0 < target) (floor : Nat) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartReadings.PairedChartRequest joined sample otherSample
+    (target : Coordinate) (positive : 0 < target) (floor : Nat) :
+      PairedChartRequest joined sample otherSample
       target floor := by
-  let firstEndpoint := Coordinates.Overlap.Endpoint.build leftPoint.coordinates sample
-  let otherEndpoint := Coordinates.Overlap.Endpoint.build leftPoint.coordinates otherSample
-  let originalOther := Coordinates.Overlap.Endpoint.build rightPoint.coordinates otherSample
+  let firstEndpoint := Endpoint.build leftPoint.coordinates sample
+  let otherEndpoint := Endpoint.build leftPoint.coordinates otherSample
+  let originalOther := Endpoint.build rightPoint.coordinates otherSample
   let firstChart := ChartRequest.build firstEndpoint target positive floor
   let otherChart := ChartRequest.build otherEndpoint target positive floor
-  have agrees : Gaussian.Equivalence.Equivalent originalOther.approximation otherEndpoint.approximation :=
+  have agrees : Equivalent originalOther.approximation otherEndpoint.approximation :=
     originalOther.sampled_agreement.symm.trans
       (Equivalent.trans (joined.primitiveEquivalent otherSample).symm otherEndpoint.sampled_agreement)
   let transport := agrees.compare floor floor target positive
@@ -158,44 +158,44 @@ transport between them. -/
 set_option genInjectivity false in
 /-- Paired readings at one later retained stage with exact shared coordinate identity and paid original-owner transport.
 -/
-structure Evaluation (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartReadings.PairedChartRequest
+structure Evaluation (request : PairedChartRequest
   joined sample otherSample target floor) (stage : Nat) where
   /-- The first differential endpoint or reading on the original shared coordinate. -/ first :
-    ChartReadings.Endpoint.Reading request.first stage
+    Endpoint.Reading request.first stage
   /-- The second differential endpoint or reading using that same retained coordinate. -/ other :
-    ChartReadings.Endpoint.Reading request.other stage
+    Endpoint.Reading request.other stage
   /-- Both evaluated differential readings use exactly the same retained coordinate value. -/ coordinate_eq :
     first.coordinate = other.coordinate
   /-- The separately retained second endpoint or reading on its original coordinate owner. -/ originalOther :
-    ChartReadings.Endpoint.Reading request.originalOther stage
+    Endpoint.Reading request.originalOther stage
   /-- The first original differential's retained chart request or its certified evaluation. -/ firstChart :
     ChartRequest.Evaluation request.firstChart first
   /-- The second original differential's retained chart request or its certified evaluation. -/ otherChart :
     ChartRequest.Evaluation request.otherChart other
   /-- The original second-owner reading differs from the shared-coordinate reading by less than the original target. -/
-    transported : Data.Gaussian.Norm.Basic.normSq (originalOther.value - other.value) < target
+    transported : normSq (originalOther.value - other.value) < target
 
 constructive_injectivity Evaluation
 
 /-- Read the common coordinate once, evaluate both retained differential factors and certify transport from the original
 second owner. -/
-@[expose] def evaluate (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartReadings.PairedChartRequest
+@[expose] def evaluate (request : PairedChartRequest
   joined sample otherSample target floor) (stage : Nat)
     (later : request.stage ≤ stage) :
       Evaluation request stage := by
-  let firstReading := ChartReadings.Endpoint.Reading.build request.first stage
-  let otherReading : ChartReadings.Endpoint.Reading request.other stage :=
+  let firstReading := Endpoint.Reading.build request.first stage
+  let otherReading : Endpoint.Reading request.other stage :=
     ⟨firstReading.coordinate, firstReading.coordinate_eq, firstReading.coordinate * request.other.coefficient, rfl⟩
-  let originalOther := ChartReadings.Endpoint.Reading.build request.originalOther stage
+  let originalOther := Endpoint.Reading.build request.originalOther stage
   have after := request.stage_eq.symm.trans_le later
-  have firstLater := (Purelib.Data.Nat.Order.le_max_left _ _).trans after
-  have otherLater := (Purelib.Data.Nat.Order.le_max_left _ _).trans ((Purelib.Data.Nat.Order.le_max_right _ _).trans
+  have firstLater := (Data.Nat.Order.le_max_left _ _).trans after
+  have otherLater := (Data.Nat.Order.le_max_left _ _).trans ((Data.Nat.Order.le_max_right _ _).trans
     after)
-  have transportLater := (Purelib.Data.Nat.Order.le_max_right _ _).trans ((Purelib.Data.Nat.Order.le_max_right _
+  have transportLater := (Data.Nat.Order.le_max_right _ _).trans ((Data.Nat.Order.le_max_right _
     _).trans after)
-  have bounded := request.transport.close ((Purelib.Data.Nat.Order.le_max_left _ _).trans transportLater)
-    ((Purelib.Data.Nat.Order.le_max_right _ _).trans transportLater)
-  have transported : Data.Gaussian.Norm.Basic.normSq (originalOther.value - otherReading.value) < target := by
+  have bounded := request.transport.close ((Data.Nat.Order.le_max_left _ _).trans transportLater)
+    ((Data.Nat.Order.le_max_right _ _).trans transportLater)
+  have transported : normSq (originalOther.value - otherReading.value) < target := by
     rw [originalOther.sample_eq, otherReading.sample_eq]
     exact bounded
   exact ⟨firstReading, otherReading, rfl, originalOther,
@@ -203,7 +203,7 @@ second owner. -/
       transported⟩
 
 /-- Evaluate the paired original chart request at its retained common stage. -/
-@[expose] def acquire (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartReadings.PairedChartRequest
+@[expose] def acquire (request : PairedChartRequest
   joined sample otherSample target floor) :
   Evaluation request request.stage :=
   request.evaluate request.stage le_rfl

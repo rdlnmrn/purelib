@@ -9,6 +9,8 @@ import Purelib.LinearAlgebra.Coordinates3.Matrix
 import Purelib.LinearAlgebra.Coordinates3.Vector
 import Purelib.Tactic.Ring
 
+open Purelib.Geometry.Quadratic.Ternary
+
 /-!
 # Cayley caps in time-first Lorentz coordinates
 
@@ -37,9 +39,9 @@ variable {K : Type*} [ExplicitField K] (oneNonzero : (1 : K) ≠ 0)
 
 /-- Negating the Lorentz vector converts the generic cap denominator to the paper denominator. -/
 theorem cayleyDenominator_neg (vector : Vector3 K) :
-    Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator
+    Cayley.TernaryForm.cayleyDenominator
         (Form.lorentz oneNonzero) (Vector3.neg vector) = capDenominator oneNonzero vector := by
-  unfold Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator capDenominator
+  unfold Cayley.TernaryForm.cayleyDenominator capDenominator
   rw [Form.lorentz_determinant, Form.quadrance_neg, one_mul]
 
 /-- The original Lorentz cap domain excludes precisely quadrance minus one. -/
@@ -65,7 +67,7 @@ original Clifford cap, with no new rotation owner.
 -/
 @[expose] def capRotation (vector : Vector3 K) (defined : capDenominator oneNonzero vector ≠ 0) :
     (Form.lorentz oneNonzero).SpecialOrthogonal :=
-  Rotations.Ternary.Cayley.TernaryForm.capRotation (Form.lorentz oneNonzero) (Vector3.neg vector)
+  Cayley.TernaryForm.capRotation (Form.lorentz oneNonzero) (Vector3.neg vector)
     (by rw [cayleyDenominator_neg]; exact defined)
 
 /-- The Lorentz cap matrix is the retained matrix of its certified rotation. -/
@@ -82,7 +84,7 @@ theorem capRotation_congr_vector {left right : Vector3 K} (equal : left = right)
 
 /-- Identity minus a Lorentz anchor has determinant one plus its quadrance. -/
 theorem determinant_identity_sub_anchor (vector : Vector3 K) :
-    Matrix3.determinant (Matrix3.sub Matrix3.identity (Quadratic.Ternary.Lorentz.anchor oneNonzero vector)) =
+    Matrix3.determinant (Matrix3.sub Matrix3.identity (Lorentz.anchor oneNonzero vector)) =
       capDenominator oneNonzero vector := by
   change Matrix3.determinant
     (Matrix3.sub Matrix3.identity ((Form.lorentz oneNonzero).actionSkew (Vector3.neg vector))) = _
@@ -90,7 +92,7 @@ theorem determinant_identity_sub_anchor (vector : Vector3 K) :
 
 /-- Identity plus a Lorentz anchor has the same resolvent determinant. -/
 theorem determinant_identity_add_anchor (vector : Vector3 K) :
-    Matrix3.determinant (Matrix3.add Matrix3.identity (Quadratic.Ternary.Lorentz.anchor oneNonzero vector)) =
+    Matrix3.determinant (Matrix3.add Matrix3.identity (Lorentz.anchor oneNonzero vector)) =
       capDenominator oneNonzero vector := by
   change Matrix3.determinant
     (Matrix3.add Matrix3.identity ((Form.lorentz oneNonzero).actionSkew (Vector3.neg vector))) = _
@@ -107,9 +109,9 @@ theorem anchorResolventInverse_eq (vector : Vector3 K)
     (defined : capDenominator oneNonzero vector ≠ 0) :
     anchorResolventInverse oneNonzero vector defined =
       Matrix3.add Matrix3.identity (Matrix3.scale (1 / capDenominator oneNonzero vector)
-        (Matrix3.add (Quadratic.Ternary.Lorentz.anchor oneNonzero vector)
-          (Matrix3.mul (Quadratic.Ternary.Lorentz.anchor oneNonzero vector)
-            (Quadratic.Ternary.Lorentz.anchor oneNonzero vector)))) := by
+        (Matrix3.add (Lorentz.anchor oneNonzero vector)
+          (Matrix3.mul (Lorentz.anchor oneNonzero vector)
+            (Lorentz.anchor oneNonzero vector)))) := by
   unfold anchorResolventInverse
   rw [(Form.lorentz oneNonzero).actionSkewResolventInverse_eq, cayleyDenominator_neg]
   rfl
@@ -118,9 +120,9 @@ theorem anchorResolventInverse_eq (vector : Vector3 K)
 theorem cap_quadratic (vector : Vector3 K) (defined : capDenominator oneNonzero vector ≠ 0) :
     cap oneNonzero vector defined =
       Matrix3.add Matrix3.identity (Matrix3.scale (2 / capDenominator oneNonzero vector)
-        (Matrix3.add (Quadratic.Ternary.Lorentz.anchor oneNonzero vector)
-          (Matrix3.mul (Quadratic.Ternary.Lorentz.anchor oneNonzero vector)
-            (Quadratic.Ternary.Lorentz.anchor oneNonzero vector)))) := by
+        (Matrix3.add (Lorentz.anchor oneNonzero vector)
+          (Matrix3.mul (Lorentz.anchor oneNonzero vector)
+            (Lorentz.anchor oneNonzero vector)))) := by
   unfold cap capRotation
   rw [(Form.lorentz oneNonzero).capRotation_matrix_quadratic, cayleyDenominator_neg]
   rfl
@@ -128,7 +130,7 @@ theorem cap_quadratic (vector : Vector3 K) (defined : capDenominator oneNonzero 
 /-- The retained Lorentz cap is identity plus the anchor times the resolvent inverse. -/
 theorem cap_eq_cayley (vector : Vector3 K) (defined : capDenominator oneNonzero vector ≠ 0) :
     cap oneNonzero vector defined =
-      Matrix3.mul (Matrix3.add Matrix3.identity (Quadratic.Ternary.Lorentz.anchor oneNonzero vector))
+      Matrix3.mul (Matrix3.add Matrix3.identity (Lorentz.anchor oneNonzero vector))
         (anchorResolventInverse oneNonzero vector defined) :=
   (Form.lorentz oneNonzero).capRotation_matrix_eq_cayley (Vector3.neg vector) _
 
@@ -148,12 +150,12 @@ theorem cap_coordinates (vector : Vector3 K) (defined : capDenominator oneNonzer
         (Matrix3.scale (capDenominator oneNonzero vector * (capDenominator oneNonzero vector)⁻¹)
           Matrix3.identity)
         (Matrix3.scale (2 / capDenominator oneNonzero vector)
-          (Matrix3.add (Quadratic.Ternary.Lorentz.anchor oneNonzero vector)
-            (Matrix3.mul (Quadratic.Ternary.Lorentz.anchor oneNonzero vector)
-              (Quadratic.Ternary.Lorentz.anchor oneNonzero vector)))) := by
+          (Matrix3.add (Lorentz.anchor oneNonzero vector)
+            (Matrix3.mul (Lorentz.anchor oneNonzero vector)
+              (Lorentz.anchor oneNonzero vector)))) := by
       rw [cancel, Matrix3.one_scale]
     _ = _ := by
-      simp only [Quadratic.Ternary.Lorentz.anchor_coordinates,
+      simp only [Lorentz.anchor_coordinates,
         capDenominator, Form.quadrance_lorentz, ExplicitField.div_eq_mul_inv]
       ext <;> unfold Matrix3.add Matrix3.scale Matrix3.mul Matrix3.identity <;> ring1
 
@@ -173,14 +175,14 @@ theorem rowMul_self_cap (vector : Vector3 K) (defined : capDenominator oneNonzer
     Matrix3.rowMul vector (cap oneNonzero vector defined) = vector := by
   rw [cap_quadratic, Matrix3.rowMul_add, Matrix3.rowMul_identity,
     Matrix3.rowMul_scale, Matrix3.rowMul_add, ← Matrix3.rowMul_mul,
-    Quadratic.Ternary.Lorentz.rowMul_self_anchor]
+    Lorentz.rowMul_self_anchor]
   ext <;> unfold Matrix3.rowMul Vector3.add Vector3.scale Vector3.zero <;> ring1
 
 /-- A Lorentz cap fixes exactly the kernel of its original paper anchor. -/
 theorem rowMul_cap_eq_self_iff_anchor_kernel (axis vector : Vector3 K)
     (defined : capDenominator oneNonzero axis ≠ 0) (twoNonzero : (2 : K) ≠ 0) :
     Matrix3.rowMul vector (cap oneNonzero axis defined) = vector ↔
-      Matrix3.rowMul vector (Quadratic.Ternary.Lorentz.anchor oneNonzero axis) = Vector3.zero :=
+      Matrix3.rowMul vector (Lorentz.anchor oneNonzero axis) = Vector3.zero :=
   (Form.lorentz oneNonzero).rowMul_capRotation_eq_self_iff_skew_kernel (Vector3.neg axis) vector _ twoNonzero
 
 /-- The complete fixed space of a cap with non-null Lorentz anchor is its original axis line.
@@ -196,11 +198,11 @@ theorem rowMul_cap_eq_self_iff_projection (axis vector : Vector3 K)
   constructor
   · intro fixed
     have kernel := (rowMul_cap_eq_self_iff_anchor_kernel oneNonzero axis vector defined twoNonzero).mp fixed
-    have squared := congrArg (fun value => Matrix3.rowMul value (Quadratic.Ternary.Lorentz.anchor oneNonzero axis))
+    have squared := congrArg (fun value => Matrix3.rowMul value (Lorentz.anchor oneNonzero axis))
       kernel
-    rw [Matrix3.rowMul_mul, Quadratic.Ternary.Lorentz.anchor_square, Matrix3.rowMul_sub,
+    rw [Matrix3.rowMul_mul, Lorentz.anchor_square, Matrix3.rowMul_sub,
       Matrix3.rowMul_outer, Matrix3.rowMul_scale, Matrix3.rowMul_identity] at squared
-    have zeroAction : Matrix3.rowMul Vector3.zero (Quadratic.Ternary.Lorentz.anchor oneNonzero axis) =
+    have zeroAction : Matrix3.rowMul Vector3.zero (Lorentz.anchor oneNonzero axis) =
         Vector3.zero := by
       ext <;> unfold Matrix3.rowMul Vector3.zero <;> ring1
     rw [zeroAction, ← form.bilinear_eq_dot_dual] at squared
@@ -237,9 +239,9 @@ theorem cap_injective [DecidableEq K] (left right : Vector3 K)
     (leftDefined : capDenominator oneNonzero left ≠ 0)
     (rightDefined : capDenominator oneNonzero right ≠ 0) (twoNonzero : (2 : K) ≠ 0)
     (equal : cap oneNonzero left leftDefined = cap oneNonzero right rightDefined) : left = right := by
-  have rotationsEqual := Rotations.Ternary.Basic.TernaryForm.SpecialOrthogonal.eq_of_matrix_eq
+  have rotationsEqual := SpecialOrthogonal.eq_of_matrix_eq
     (capRotation oneNonzero left leftDefined) (capRotation oneNonzero right rightDefined) equal
-  have negativesEqual := Rotations.Ternary.Cayley.TernaryForm.capRotation_injective
+  have negativesEqual := Cayley.TernaryForm.capRotation_injective
     (Form.lorentz oneNonzero) (Vector3.neg left) (Vector3.neg right) _ _ twoNonzero rotationsEqual
   have vectorsEqual := congrArg Vector3.neg negativesEqual
   rw [Vector3.neg_neg, Vector3.neg_neg] at vectorsEqual
@@ -291,20 +293,20 @@ theorem rowMul_cap_eq_neg_implies_zero (axis : Vector3 K)
 /-- The half spread of a Lorentz cap is quadrance divided by one plus quadrance. -/
 theorem halfSpread_cap (vector : Vector3 K)
     (defined : capDenominator oneNonzero vector ≠ 0) (twoNonzero : (2 : K) ≠ 0) :
-    Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)
+    Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)
         (capRotation oneNonzero vector defined) =
       (Form.lorentz oneNonzero).quadrance vector / capDenominator oneNonzero vector := by
   unfold capRotation
-  rw [Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread_cap,
+  rw [Cayley.TernaryForm.rotationHalfSpread_cap,
     Form.lorentz_determinant, Form.quadrance_neg, cayleyDenominator_neg, one_mul]
   exact twoNonzero
 
 /-- The half spread of a defined Lorentz cap cannot be one. -/
 theorem halfSpread_cap_ne_one (vector : Vector3 K)
     (defined : capDenominator oneNonzero vector ≠ 0) (twoNonzero : (2 : K) ≠ 0) :
-    Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)
+    Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)
       (capRotation oneNonzero vector defined) ≠ 1 :=
-  Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread_cap_ne_one
+  Cayley.TernaryForm.rotationHalfSpread_cap_ne_one
     (Form.lorentz oneNonzero) (Vector3.neg vector) _ twoNonzero
 
 /-- No defined Lorentz cap is a half turn about a non-null line. -/
@@ -315,16 +317,16 @@ theorem capRotation_ne_halfTurn (vector axis : Vector3 K)
   intro equal
   apply halfSpread_cap_ne_one oneNonzero vector defined twoNonzero
   calc
-    _ = Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)
+    _ = Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)
         ((Form.lorentz oneNonzero).halfTurnRotation axis nonNull) :=
-      congrArg (Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)) equal
-    _ = 1 := Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread_halfTurn
+      congrArg (Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)) equal
+    _ = 1 := Cayley.TernaryForm.rotationHalfSpread_halfTurn
       (Form.lorentz oneNonzero) axis nonNull twoNonzero
 
 /-- One minus the Lorentz cap half spread is the inverse original denominator. -/
 theorem one_sub_halfSpread_cap (vector : Vector3 K)
     (defined : capDenominator oneNonzero vector ≠ 0) (twoNonzero : (2 : K) ≠ 0) :
-    1 - Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)
+    1 - Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)
         (capRotation oneNonzero vector defined) = 1 / capDenominator oneNonzero vector := by
   rw [halfSpread_cap]
   have cancel := ExplicitField.mul_inv_cancel (capDenominator oneNonzero vector) defined
@@ -340,7 +342,7 @@ theorem one_sub_halfSpread_cap (vector : Vector3 K)
 /-- One minus twice the Lorentz cap half spread has numerator one minus quadrance. -/
 theorem one_sub_two_halfSpread_cap (vector : Vector3 K)
     (defined : capDenominator oneNonzero vector ≠ 0) (twoNonzero : (2 : K) ≠ 0) :
-    1 - 2 * Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)
+    1 - 2 * Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)
         (capRotation oneNonzero vector defined) =
       (1 - (Form.lorentz oneNonzero).quadrance vector) / capDenominator oneNonzero vector := by
   rw [halfSpread_cap]
@@ -357,9 +359,9 @@ theorem one_sub_two_halfSpread_cap (vector : Vector3 K)
 /-- The Lorentz cap half spread times its complement has the squared original denominator. -/
 theorem halfSpread_mul_one_sub_cap (vector : Vector3 K)
     (defined : capDenominator oneNonzero vector ≠ 0) (twoNonzero : (2 : K) ≠ 0) :
-    Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)
+    Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)
         (capRotation oneNonzero vector defined) *
-      (1 - Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)
+      (1 - Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)
         (capRotation oneNonzero vector defined)) =
       (Form.lorentz oneNonzero).quadrance vector / capDenominator oneNonzero vector ^ 2 := by
   rw [one_sub_halfSpread_cap _ _ _ twoNonzero, halfSpread_cap _ _ _ twoNonzero]
@@ -371,9 +373,9 @@ theorem halfSpread_mul_one_sub_cap (vector : Vector3 K)
 theorem quadrance_eq_halfSpread_div_one_sub (vector : Vector3 K)
     (defined : capDenominator oneNonzero vector ≠ 0) (twoNonzero : (2 : K) ≠ 0) :
     (Form.lorentz oneNonzero).quadrance vector =
-      Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)
+      Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)
           (capRotation oneNonzero vector defined) /
-        (1 - Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)
+        (1 - Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)
           (capRotation oneNonzero vector defined)) := by
   rw [one_sub_halfSpread_cap _ _ _ twoNonzero, halfSpread_cap _ _ _ twoNonzero]
   have denominatorNonzero : 1 / capDenominator oneNonzero vector ≠ 0 := by
@@ -446,21 +448,21 @@ theorem spread_cap (axis vector : Vector3 K) (defined : capDenominator oneNonzer
     (Form.lorentz oneNonzero).spread vector
         (Form.Isometry.act (capRotation oneNonzero axis defined).toIsometry vector) nonNull
         ((capRotation oneNonzero axis defined).toIsometry.quadrance_act_ne_zero vector nonNull) =
-      Rotations.Ternary.Cayley.TernaryForm.rotationSpread (Form.lorentz oneNonzero)
+      Cayley.TernaryForm.rotationSpread (Form.lorentz oneNonzero)
         (capRotation oneNonzero axis defined) := by
   have perpendicularNeg : (Form.lorentz oneNonzero).Perpendicular vector (Vector3.neg axis) := by
     unfold Form.Perpendicular at perpendicular ⊢
     rw [Form.bilinear_neg_right, perpendicular, neg_zero]
-  exact Rotations.Ternary.Cayley.TernaryForm.spread_cap (Form.lorentz oneNonzero) (Vector3.neg axis) vector
+  exact Cayley.TernaryForm.spread_cap (Form.lorentz oneNonzero) (Vector3.neg axis) vector
     (by rw [cayleyDenominator_neg]; exact defined) nonNull perpendicularNeg twoNonzero
 
 /-- The canonical Lorentz cap spread is four times quadrance divided by the squared cap denominator. -/
 theorem rotationSpread_cap (axis : Vector3 K) (defined : capDenominator oneNonzero axis ≠ 0)
     (twoNonzero : (2 : K) ≠ 0) :
-    Rotations.Ternary.Cayley.TernaryForm.rotationSpread (Form.lorentz oneNonzero)
+    Cayley.TernaryForm.rotationSpread (Form.lorentz oneNonzero)
         (capRotation oneNonzero axis defined) =
       4 * (Form.lorentz oneNonzero).quadrance axis / capDenominator oneNonzero axis ^ 2 := by
-  unfold Rotations.Ternary.Cayley.TernaryForm.rotationSpread
+  unfold Cayley.TernaryForm.rotationSpread
   rw [mul_assoc, halfSpread_mul_one_sub_cap oneNonzero axis defined twoNonzero]
   simp only [ExplicitField.div_eq_mul_inv]
   ring1
@@ -473,7 +475,7 @@ theorem rotationSpread_cap (axis : Vector3 K) (defined : capDenominator oneNonze
       (Form.lorentz oneNonzero).spread witness.value
         (Form.Isometry.act (capRotation oneNonzero axis defined).toIsometry witness.value) witness.nonNull
         ((capRotation oneNonzero axis defined).toIsometry.quadrance_act_ne_zero witness.value witness.nonNull) =
-          Rotations.Ternary.Cayley.TernaryForm.rotationSpread (Form.lorentz oneNonzero)
+          Cayley.TernaryForm.rotationSpread (Form.lorentz oneNonzero)
             (capRotation oneNonzero axis defined) := by
   let witness := (Form.lorentz oneNonzero).perpendicularNonNullVectorWitness axis axisNonNull twoNonzero
   exact ⟨witness, spread_cap oneNonzero axis witness.value defined witness.nonNull witness.perpendicular twoNonzero⟩
@@ -486,9 +488,9 @@ half-spread value, without choosing roots or a new rotation owner.
 -/
 @[expose] def capHalfSpreadWitness (twoNonzero : (2 : K) ≠ 0) (value : K) (notOne : value ≠ 1) :
     Σ' vector : Vector3 K, Σ' defined : capDenominator oneNonzero vector ≠ 0,
-      Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)
+      Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero)
         (capRotation oneNonzero vector defined) = value := by
-  let witness := Quadratic.Ternary.Lorentz.quadranceWitness oneNonzero twoNonzero (value / (1 - value))
+  let witness := Lorentz.quadranceWitness oneNonzero twoNonzero (value / (1 - value))
   have complementNonzero : 1 - value ≠ 0 := by
     intro complementZero
     apply notOne
@@ -524,13 +526,13 @@ other value uses the retained cap witness, including null-axis caps at zero.
 -/
 @[expose] def halfSpreadWitness [DecidableEq K] (twoNonzero : (2 : K) ≠ 0) (value : K) :
     Σ' rotation : (Form.lorentz oneNonzero).SpecialOrthogonal,
-      Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero) rotation = value := by
+      Cayley.TernaryForm.rotationHalfSpread (Form.lorentz oneNonzero) rotation = value := by
   by_cases isOne : value = 1
-  · let axis := Quadratic.Ternary.Lorentz.quadranceWitness oneNonzero twoNonzero 1
+  · let axis := Lorentz.quadranceWitness oneNonzero twoNonzero 1
     have axisNonNull : (Form.lorentz oneNonzero).quadrance axis.1 ≠ 0 :=
       fun zero => oneNonzero (axis.2.symm.trans zero)
     refine ⟨(Form.lorentz oneNonzero).halfTurnRotation axis.1 axisNonNull, ?_⟩
-    exact (Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread_halfTurn
+    exact (Cayley.TernaryForm.rotationHalfSpread_halfTurn
       (Form.lorentz oneNonzero) axis.1 axisNonNull twoNonzero).trans isOne.symm
   · let witness := capHalfSpreadWitness oneNonzero twoNonzero value isOne
     exact ⟨capRotation oneNonzero witness.1 witness.2.1, witness.2.2⟩

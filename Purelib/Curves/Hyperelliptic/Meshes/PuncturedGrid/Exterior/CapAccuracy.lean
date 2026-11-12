@@ -107,11 +107,11 @@ theorem error_le
   Fraction.Rational}
     (request : Charts.Reciprocal.Cap.EnergyRequest bounds count target minimum) {parameters
       : Path.Dyadic.RadialTriangles.Parameters request.depth}
-    {refinement : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapRefinement.Refinement geometry coarse parameters}
-      (evaluated : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapEnergy.RegularPolynomialSample refinement sample
+    {refinement : CapRefinement.Refinement geometry coarse parameters}
+      (evaluated : RegularPolynomialSample refinement sample
       request.radius)
     (member : coarse ∈ attached.caps) :
-    evaluated.surface.errorBudget ≤ 128 * (2 * bounds.coefficient + 4) * request.epsilon := open Purelib.Algebra in by
+    evaluated.surface.errorBudget ≤ 128 * (2 * bounds.coefficient + 4) * request.epsilon := open Algebra in by
   let errors (face : Fin (Rectangle.Partition.PreparedBoxTriangulation.boxTriangles
     parameters.mesh.partition.leaves).length) :=
     computedAffineTriangleError (evaluated.coefficients face)
@@ -129,10 +129,10 @@ theorem error_le
     rw [← request.diameter_eq] at distance
     dsimp only [errors]
     rw [evaluated.coefficients_eq, evaluated.values_eq, evaluated.values_eq, evaluated.values_eq]
-    exact bounds.triangle_budget_le _ _ _ (Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.boundingBox_contains
+    exact bounds.triangle_budget_le _ _ _ (Charts.Reciprocal.Disk.RegularBounds.boundingBox_contains
       inside.1)
-      (Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.boundingBox_contains inside.2.1)
-      (Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.boundingBox_contains inside.2.2) request.epsilon
+      (Charts.Reciprocal.Disk.RegularBounds.boundingBox_contains inside.2.1)
+      (Charts.Reciprocal.Disk.RegularBounds.boundingBox_contains inside.2.2) request.epsilon
         request.diameter request.radius
       request.epsilon_positive request.epsilon_le_one request.diameter_positive evaluated.radius_positive
         request.radius_eq
@@ -159,9 +159,9 @@ private theorem entries_error_le (bounds : Charts.Reciprocal.Cap.EnergyBounds sa
   : Nat} {target : Fraction.Rational}
     (request : Charts.Reciprocal.Cap.EnergyRequest bounds count target minimum) {parameters
       : Path.Dyadic.RadialTriangles.Parameters request.depth}
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapEnergy.RegularFaceSample geometry parameters sample
+    (entries : List (CapEnergy.RegularFaceSample geometry parameters sample
       request.radius)) :
-    Purelib.Algebra.FiniteSum.Rational.Squares.coordinateSum (entries.map (fun entry =>
+    Squares.coordinateSum (entries.map (fun entry =>
       entry.evaluated.surface.errorBudget)) ≤
       (entries.length : Fraction.Rational) * (128 * (2 * bounds.coefficient + 4) * request.epsilon) := by
   induction entries with
@@ -181,9 +181,9 @@ theorem error_le (bounds :
   Charts.Reciprocal.Cap.EnergyBounds sample) {target : Fraction.Rational}
     (request : Charts.Reciprocal.Cap.EnergyRequest bounds attached.caps.length target
       minimum) {parameters : Path.Dyadic.RadialTriangles.Parameters request.depth}
-    (evaluated : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapEnergy.RegularEnergy geometry parameters sample
+    (evaluated : RegularEnergy geometry parameters sample
       request.radius) : evaluated.error ≤ request.total := by
-  have estimate := Exterior.CapAccuracy.entries_error_le bounds request evaluated.entries
+  have estimate := CapAccuracy.entries_error_le bounds request evaluated.entries
   have length := congrArg List.length evaluated.coarses_eq
   rw [Data.List.Map.length_map] at length
   rw [length] at estimate
@@ -200,8 +200,8 @@ set_option genInjectivity false in
 /-- A successful finite cap request retains the bounds, both selected
 depths, the actual mesh and sampled energies, and the proved requested total. -/
 structure RequestedRegularEnergy (geometry
-  : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry attached)
-    (sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box) (target :
+  : Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry attached)
+    (sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential index box) (target :
       Fraction.Rational) (minimum : Nat) where
   /-- The original reciprocal polynomial's retained finite energy bounds. -/ bounds :
     Charts.Reciprocal.Cap.EnergyBounds sample
@@ -210,7 +210,7 @@ structure RequestedRegularEnergy (geometry
   /-- The retained radial mesh at the request's selected depth. -/ parameters : Path.Dyadic.RadialTriangles.Parameters
     request.depth
   /-- The complete cached cap energy sample on that exact retained mesh. -/ evaluated :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapEnergy.RegularEnergy geometry parameters sample request.radius
+    CapEnergy.RegularEnergy geometry parameters sample request.radius
   /-- The actual computed error fits the request's retained paid total. -/ error_le : evaluated.error ≤ request.total
   /-- The actual computed error is strictly below the supplied target. -/ error_lt : evaluated.error < target
   /-- The actual total boundary energy exceeds the negative requested target. -/ lower : -target < evaluated.area.im / 4
@@ -226,16 +226,16 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapAccuracy
 /-- Choose the original sufficient cap depth, sample every actual even-degree cap triangle and retain the proved strict
 requested energy bound. -/
 @[expose] def build
-  (geometry : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
-  attached) (sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box)
+  (geometry : Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
+  attached) (sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential index box)
     (bounds : Charts.Reciprocal.Cap.EnergyBounds sample) (degree : curve.polynomial.natDegree
       = 2 * genus + 2)
     (target : Fraction.Rational) (positive : 0 < target) (minimum : Nat) :
-    CapAccuracy.RequestedRegularEnergy geometry sample target minimum := by
+    RequestedRegularEnergy geometry sample target minimum := by
   let request := Charts.Reciprocal.Cap.EnergyRequest.build bounds attached.caps.length
     target positive minimum
   let parameters := Path.Dyadic.RadialTriangles.Parameters.build request.depth
-  let evaluated := Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapEnergy.RegularEnergy.ofEvenDegree geometry parameters
+  let evaluated := CapEnergy.RegularEnergy.ofEvenDegree geometry parameters
     sample degree request.radius request.radius_positive
   have bounded := evaluated.error_le bounds request
   have accurate : evaluated.error < target := bounded.trans_lt request.accurate

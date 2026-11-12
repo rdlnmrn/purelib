@@ -15,6 +15,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.SignedFraction.Basic
 
+open Purelib.Geometry.Trigonometry.Spread.Triple.TripleSpread
+
 open Purelib.Algebra.Field
 open Purelib.Algebra
 
@@ -44,94 +46,94 @@ namespace ExerciseTenTwelve
 
 /-- The fixed Gaussian quadrance −3 in Exercise 10.12. -/
 def q₃ : Gaussian.Basic.Canonical :=
-  ⟨(Data.Rat.SignedFraction.Normalization.ofFraction
+  ⟨(SignedFraction.Normalization.ofFraction
     ⟨(-3), Int.ofNat 1,
-      Order.natCast_pos (by decide)⟩), (Data.Rat.SignedFraction.Normalization.ofFraction
+      Order.natCast_pos (by decide)⟩), (SignedFraction.Normalization.ofFraction
     ⟨0, Int.ofNat 1,
       Order.natCast_pos (by decide)⟩)⟩
 /-- The first fixed Gaussian spread, (4 + 2i)/15. -/
 def s₁ : Gaussian.Basic.Canonical :=
-  ⟨(Data.Rat.SignedFraction.Normalization.ofFraction
+  ⟨(SignedFraction.Normalization.ofFraction
     ⟨4, Int.ofNat 15,
-      Order.natCast_pos (by decide)⟩), (Data.Rat.SignedFraction.Normalization.ofFraction
+      Order.natCast_pos (by decide)⟩), (SignedFraction.Normalization.ofFraction
     ⟨2, Int.ofNat 15,
       Order.natCast_pos (by decide)⟩)⟩
 /-- The second fixed Gaussian spread, (1 + 7i)/24. -/
 def s₂ : Gaussian.Basic.Canonical :=
-  ⟨(Data.Rat.SignedFraction.Normalization.ofFraction
+  ⟨(SignedFraction.Normalization.ofFraction
     ⟨1, Int.ofNat 24,
-      Order.natCast_pos (by decide)⟩), (Data.Rat.SignedFraction.Normalization.ofFraction
+      Order.natCast_pos (by decide)⟩), (SignedFraction.Normalization.ofFraction
     ⟨7, Int.ofNat 24,
       Order.natCast_pos (by decide)⟩)⟩
 
 /-- The two roots of the Triple-spread equation, retained internally so that
 the two quadrance pairs can be recovered without selecting a square root. -/
 def firstThirdSpread : Gaussian.Basic.Canonical :=
-  ⟨(Data.Rat.SignedFraction.Normalization.ofFraction
+  ⟨(SignedFraction.Normalization.ofFraction
     ⟨(-1), Int.ofNat 40,
       Order.natCast_pos (by decide)⟩),
-    (Data.Rat.SignedFraction.Normalization.ofFraction
+    (SignedFraction.Normalization.ofFraction
     ⟨(-3), Int.ofNat 40,
       Order.natCast_pos (by decide)⟩)⟩
 
 /-- The second third-spread root, 271/360 + (71/120)i. -/
 def secondThirdSpread : Gaussian.Basic.Canonical :=
-  ⟨(Data.Rat.SignedFraction.Normalization.ofFraction
+  ⟨(SignedFraction.Normalization.ofFraction
     ⟨271, Int.ofNat 360,
       Order.natCast_pos (by decide)⟩),
-    (Data.Rat.SignedFraction.Normalization.ofFraction
+    (SignedFraction.Normalization.ofFraction
     ⟨71, Int.ofNat 120,
       Order.natCast_pos (by decide)⟩)⟩
 
 /-- The first quadrance in the first solution, 8 − 8i. -/
 def firstQ₁ : Gaussian.Basic.Canonical :=
-  ⟨(Data.Rat.SignedFraction.Normalization.ofFraction
+  ⟨(SignedFraction.Normalization.ofFraction
     ⟨8, Int.ofNat 1,
-      Order.natCast_pos (by decide)⟩), (Data.Rat.SignedFraction.Normalization.ofFraction
+      Order.natCast_pos (by decide)⟩), (SignedFraction.Normalization.ofFraction
     ⟨(-8), Int.ofNat 1,
       Order.natCast_pos (by decide)⟩)⟩
 /-- The second quadrance in the first solution, 11 + 2i. -/
 def firstQ₂ : Gaussian.Basic.Canonical :=
-  ⟨(Data.Rat.SignedFraction.Normalization.ofFraction
+  ⟨(SignedFraction.Normalization.ofFraction
     ⟨11, Int.ofNat 1,
-      Order.natCast_pos (by decide)⟩), (Data.Rat.SignedFraction.Normalization.ofFraction
+      Order.natCast_pos (by decide)⟩), (SignedFraction.Normalization.ofFraction
     ⟨2, Int.ofNat 1,
       Order.natCast_pos (by decide)⟩)⟩
 
 /-- The corrected first quadrance in the second solution, (−10872 + 2232i)/11881. -/
 def secondQ₁ : Gaussian.Basic.Canonical :=
-  ⟨(Data.Rat.SignedFraction.Normalization.ofFraction
+  ⟨(SignedFraction.Normalization.ofFraction
     ⟨(-10872), Int.ofNat 11881,
       Order.natCast_pos (by decide)⟩),
-    (Data.Rat.SignedFraction.Normalization.ofFraction
+    (SignedFraction.Normalization.ofFraction
     ⟨2232, Int.ofNat 11881,
       Order.natCast_pos (by decide)⟩)⟩
 
 /-- The corrected second quadrance in the second solution, (−7929 − 7578i)/11881. -/
 def secondQ₂ : Gaussian.Basic.Canonical :=
-  ⟨(Data.Rat.SignedFraction.Normalization.ofFraction
+  ⟨(SignedFraction.Normalization.ofFraction
     ⟨(-7929), Int.ofNat 11881,
       Order.natCast_pos (by decide)⟩),
-    (Data.Rat.SignedFraction.Normalization.ofFraction
+    (SignedFraction.Normalization.ofFraction
     ⟨(-7578), Int.ofNat 11881,
       Order.natCast_pos (by decide)⟩)⟩
 
 /-- The false second pair printed in the source, retained for the executable
 countercheck below. -/
 def printedSecondQ₁ : Gaussian.Basic.Canonical :=
-  ⟨(Data.Rat.SignedFraction.Normalization.ofFraction
+  ⟨(SignedFraction.Normalization.ofFraction
     ⟨10872, Int.ofNat 11881,
       Order.natCast_pos (by decide)⟩),
-    (Data.Rat.SignedFraction.Normalization.ofFraction
+    (SignedFraction.Normalization.ofFraction
     ⟨2232, Int.ofNat 11881,
       Order.natCast_pos (by decide)⟩)⟩
 
 /-- The source's uncorrected second quadrance, (7929 − 7578i)/11881. -/
 def printedSecondQ₂ : Gaussian.Basic.Canonical :=
-  ⟨(Data.Rat.SignedFraction.Normalization.ofFraction
+  ⟨(SignedFraction.Normalization.ofFraction
     ⟨7929, Int.ofNat 11881,
       Order.natCast_pos (by decide)⟩),
-    (Data.Rat.SignedFraction.Normalization.ofFraction
+    (SignedFraction.Normalization.ofFraction
     ⟨(-7578), Int.ofNat 11881,
       Order.natCast_pos (by decide)⟩)⟩
 
@@ -249,7 +251,7 @@ private theorem second_solution_products :
 /-- The Triple-spread equation is exactly a quadratic with the two displayed
 Gaussian-rational roots. -/
 theorem triple_spread_factorization (thirdSpread : Gaussian.Basic.Canonical) :
-    Geometry.Trigonometry.Spread.Triple.TripleSpread.SpreadTriple s₁ s₂ thirdSpread ↔
+    SpreadTriple s₁ s₂ thirdSpread ↔
       (thirdSpread - firstThirdSpread) *
         (thirdSpread - secondThirdSpread) = 0 := by
   have identity :
@@ -260,7 +262,7 @@ theorem triple_spread_factorization (thirdSpread : Gaussian.Basic.Canonical) :
       thirdSpread root_sum root_product
   constructor
   · intro spreadTriple
-    unfold Geometry.Trigonometry.Spread.Triple.TripleSpread.SpreadTriple at spreadTriple
+    unfold SpreadTriple at spreadTriple
     have negativeProductZero :
         -((thirdSpread - firstThirdSpread) *
           (thirdSpread - secondThirdSpread)) = 0 := by
@@ -271,7 +273,7 @@ theorem triple_spread_factorization (thirdSpread : Gaussian.Basic.Canonical) :
         _ = 0 := spreadTriple
     exact Group.eq_zero_of_neg_eq_zero negativeProductZero
   · intro productZero
-    unfold Geometry.Trigonometry.Spread.Triple.TripleSpread.SpreadTriple
+    unfold SpreadTriple
     calc
       Geometry.Trigonometry.Spread.Triple.TripleSpread.tripleSpreadFunction s₁ s₂ thirdSpread =
           -((thirdSpread - firstThirdSpread) *
@@ -281,7 +283,7 @@ theorem triple_spread_factorization (thirdSpread : Gaussian.Basic.Canonical) :
 /-- The two possible third spreads, obtained by direct finite factor
 elimination rather than a selected quadratic root. -/
 theorem third_spread_alternatives (thirdSpread : Gaussian.Basic.Canonical)
-    (spreadTriple : Geometry.Trigonometry.Spread.Triple.TripleSpread.SpreadTriple s₁ s₂ thirdSpread) :
+    (spreadTriple : SpreadTriple s₁ s₂ thirdSpread) :
     thirdSpread = firstThirdSpread ∨
       thirdSpread = secondThirdSpread := by
   have factored := (triple_spread_factorization thirdSpread).1 spreadTriple
@@ -299,7 +301,7 @@ relations with the printed `Q₃`, `s₁`, and `s₂`.  They force exactly the f
 quadrance pair in the source and the sign-corrected second pair. -/
 theorem exercise_10_12
     (q₁ q₂ thirdSpread : Gaussian.Basic.Canonical)
-    (spreadTriple : Geometry.Trigonometry.Spread.Triple.TripleSpread.SpreadTriple s₁ s₂ thirdSpread)
+    (spreadTriple : SpreadTriple s₁ s₂ thirdSpread)
     (firstSpreadLaw : s₁ * q₃ = thirdSpread * q₁)
     (secondSpreadLaw : s₂ * q₃ = thirdSpread * q₂) :
     (q₁ = firstQ₁ ∧ q₂ = firstQ₂) ∨
@@ -309,23 +311,23 @@ theorem exercise_10_12
   · rw [firstRoot] at firstSpreadLaw secondSpreadLaw
     apply Or.inl
     constructor
-    · apply Purelib.Data.Gaussian.Field.eq_of_mul_eq_mul_left firstThirdSpreadNonzero
+    · apply Gaussian.Field.eq_of_mul_eq_mul_left firstThirdSpreadNonzero
       calc
         firstThirdSpread * q₁ = s₁ * q₃ := firstSpreadLaw.symm
         _ = firstThirdSpread * firstQ₁ := first_solution_products.1.symm
-    · apply Purelib.Data.Gaussian.Field.eq_of_mul_eq_mul_left firstThirdSpreadNonzero
+    · apply Gaussian.Field.eq_of_mul_eq_mul_left firstThirdSpreadNonzero
       calc
         firstThirdSpread * q₂ = s₂ * q₃ := secondSpreadLaw.symm
         _ = firstThirdSpread * firstQ₂ := first_solution_products.2.symm
   · rw [secondRoot] at firstSpreadLaw secondSpreadLaw
     apply Or.inr
     constructor
-    · apply Purelib.Data.Gaussian.Field.eq_of_mul_eq_mul_left secondThirdSpreadNonzero
+    · apply Gaussian.Field.eq_of_mul_eq_mul_left secondThirdSpreadNonzero
       calc
         secondThirdSpread * q₁ = s₁ * q₃ := firstSpreadLaw.symm
         _ = secondThirdSpread * secondQ₁ :=
           second_solution_products.1.symm
-    · apply Purelib.Data.Gaussian.Field.eq_of_mul_eq_mul_left secondThirdSpreadNonzero
+    · apply Gaussian.Field.eq_of_mul_eq_mul_left secondThirdSpreadNonzero
       calc
         secondThirdSpread * q₂ = s₂ * q₃ := secondSpreadLaw.symm
         _ = secondThirdSpread * secondQ₂ :=
@@ -333,10 +335,10 @@ theorem exercise_10_12
 
 /-- Both corrected pairs really satisfy the Triple-spread and Spread-law data. -/
 theorem displayed_solutions :
-    (Geometry.Trigonometry.Spread.Triple.TripleSpread.SpreadTriple s₁ s₂ firstThirdSpread ∧
+    (SpreadTriple s₁ s₂ firstThirdSpread ∧
       s₁ * q₃ = firstThirdSpread * firstQ₁ ∧
       s₂ * q₃ = firstThirdSpread * firstQ₂) ∧
-    (Geometry.Trigonometry.Spread.Triple.TripleSpread.SpreadTriple s₁ s₂ secondThirdSpread ∧
+    (SpreadTriple s₁ s₂ secondThirdSpread ∧
       s₁ * q₃ = secondThirdSpread * secondQ₁ ∧
       s₂ * q₃ = secondThirdSpread * secondQ₂) := by
   constructor

@@ -45,6 +45,8 @@ path-wide root ambient.  Rejection leaves the total uniform construction
 available; Newton convergence is never an assumption.
 -/
 
+variable {mode : Purelib.Polynomial.Geometry.ClearPath.ClearSegment.Mode}
+
 namespace Purelib.Riemann.RootContinuation.CheckedSquareRootPreparation
 
 open Purelib.Riemann.RootContinuation
@@ -72,7 +74,7 @@ The returned owner keeps the same segment-parameter radicand. Its certificates r
 original uniform preparation request. -/
 structure Result {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate)
     (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     (rootDiameter : Coordinate) where
@@ -186,7 +188,7 @@ def epsilon (rootDiameter : Coordinate) : Coordinate :=
 /-- The exact seed after the original two rounded Newton proposal steps. -/
 def initialProposal {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate) (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     (rootDiameter : Coordinate) : Gaussian :=
   let box := owner.track.initial.box
@@ -195,7 +197,7 @@ def initialProposal {polynomial : GaussianPolynomial} {ambient : Box}
 
 /-- The actual original two-step initial proposal cache, before the six-search attempt. -/
 abbrev Warmup {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate) (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     (rootDiameter : Coordinate) :=
   ProposalTrace (SquareRootReconditioning.rootPolynomial (polynomial.eval (segment.pointAt parameter)))
@@ -206,7 +208,7 @@ abbrev Warmup {polynomial : GaussianPolynomial} {ambient : Box} {start finish : 
 /-- The retained original six-search execution, including its terminal reason and exact search equation. -/
 abbrev Search {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
     (parameter : Coordinate) (owner : Owner (polynomial.eval (segment.pointAt parameter)))
     (rootDiameter : Coordinate) :=
   Newton.Search.Trace.Retained (QuadraticAxisElimination.quadraticAxisElimination _)
@@ -216,7 +218,7 @@ abbrev Search {polynomial : GaussianPolynomial} {ambient : Box}
     (initialProposal segment parameter owner rootDiameter)
 
 variable {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
-  (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+  (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish mode)
   (parameter : Coordinate) (owner : Owner (polynomial.eval (segment.pointAt parameter)))
   (rootDiameter : Coordinate)
 
@@ -365,8 +367,8 @@ def complete (warmup : Warmup segment parameter owner rootDiameter)
         | mk finished steps executed =>
             cases finished with
             | accepted value inspected budget equation execution => cases found
-            | exhausted inspected budget equation execution => exact ⟨inspected, execution⟩
-            | zeroDerivative center derivative inspected budget derivativeEq zero equation execution =>
+            | exhausted inspected budget equation execution _ => exact ⟨inspected, execution⟩
+            | zeroDerivative center derivative inspected budget derivativeEq zero equation execution _ =>
                 exact ⟨inspected, execution⟩
       let failure : Failure segment parameter owner rootDiameter :=
         ⟨warmup, search.steps, equation.symm ▸ search.execution, .search (equation.trans found) execution⟩

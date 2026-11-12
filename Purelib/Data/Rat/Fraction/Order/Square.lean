@@ -32,14 +32,14 @@ namespace Purelib.Data.Rat.Fraction.Order.Square
 
 /-- Adding a nonnegative increment to a nonnegative rational cannot decrease its square. -/
 public theorem square_le_square_add_of_nonnegative
-    (base increment : Fraction.Rational) (baseNonnegative : 0 ≤ base)
+    (base increment : Rational) (baseNonnegative : 0 ≤ base)
     (incrementNonnegative : 0 ≤ increment) :
     base ^ 2 ≤ (base + increment) ^ 2 := by
   have twiceBaseNonnegative : 0 ≤ base + base :=
     add_nonneg baseNonnegative baseNonnegative
   have secondFactorNonnegative : 0 ≤ base + base + increment :=
     add_nonneg twiceBaseNonnegative incrementNonnegative
-  have productNonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct
+  have productNonnegative := Arithmetic.mul_nonneg_direct
     incrementNonnegative secondFactorNonnegative
   calc
     base ^ 2 ≤ base ^ 2 + increment * (base + base + increment) :=
@@ -49,18 +49,18 @@ public theorem square_le_square_add_of_nonnegative
 /-- On a nonpositive translated interval, replacing the unit increment by a smaller increment cannot decrease the
 square. -/
 public theorem negative_square_growth
-    (base increment : Fraction.Rational) (incrementAtMostOne : increment ≤ 1)
+    (base increment : Rational) (incrementAtMostOne : increment ≤ 1)
     (basePlusOneNonpositive : base + 1 ≤ 0) :
     (base + 1) ^ 2 ≤ (base + increment) ^ 2 := by
   have shiftedOrder : base + increment ≤ base + 1 := by
-    have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+    have shifted := Arithmetic.add_le_add_right_direct
       incrementAtMostOne base
     calc
       base + increment = increment + base := _root_.add_comm _ _
       _ ≤ 1 + base := shifted
       _ = base + 1 := _root_.add_comm _ _
   have firstNonnegative :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct shiftedOrder
+    Arithmetic.sub_nonneg_direct shiftedOrder
   have sumNonpositive : (base + 1) + (base + increment) ≤ 0 :=
     calc
       (base + 1) + (base + increment) ≤ 0 + 0 :=
@@ -69,13 +69,13 @@ public theorem negative_square_growth
       _ = 0 := add_zero 0
   have secondNonnegative :
       0 ≤ -((base + 1) + (base + increment)) := by
-    have difference := Fraction.Order.Arithmetic.sub_nonneg_direct
+    have difference := Arithmetic.sub_nonneg_direct
       sumNonpositive
-    rw [show (0 : Fraction.Rational) -
+    rw [show (0 : Rational) -
         ((base + 1) + (base + increment)) =
           -((base + 1) + (base + increment)) by ring1] at difference
     exact difference
-  have productNonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct
+  have productNonnegative := Arithmetic.mul_nonneg_direct
     firstNonnegative secondNonnegative
   calc
     (base + 1) ^ 2 ≤ (base + 1) ^ 2 +
@@ -101,13 +101,13 @@ explicit finite rational and Gaussian representations used by CCL-1.
 namespace Purelib.Data.Rat.Fraction.Order.Square
 
 /-- A canonical rational in the half-open interval from zero to one has square strictly below one. -/
-public theorem square_lt_one_of_unit {x : Fraction.Rational}
+public theorem square_lt_one_of_unit {x : Rational}
     (nonnegative : 0 ≤ x) (small : x < 1) : x ^ 2 < 1 := by
   by_cases zero : x = 0
   · subst x
     decide
   · have positive : 0 < x := lt_of_le_of_ne nonnegative (Ne.symm zero)
-    have first := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+    have first := Arithmetic.mul_lt_mul_of_pos_left_direct
       positive small
     calc
       x ^ 2 = x * x := pow_two x
@@ -247,30 +247,30 @@ open Purelib.Data.Rat
 
 The weak squared-norm bound gives the negative unit lower endpoint. Equality at that endpoint contradicts the retained
 strict square bound. -/
-public theorem neg_one_lt_of_square_lt_one {value : Fraction.Rational}
+public theorem neg_one_lt_of_square_lt_one {value : Rational}
     (small : value ^ 2 < 1) : -1 < value := by
-  have lower : (-1 : Fraction.Rational) ≤ value :=
-    Fraction.Order.Arithmetic.neg_le_of_sq_le_sq_direct
-      (show (0 : Fraction.Rational) ≤ 1 by decide) small.le
+  have lower : (-1 : Rational) ≤ value :=
+    Arithmetic.neg_le_of_sq_le_sq_direct
+      (show (0 : Rational) ≤ 1 by decide) small.le
   refine ⟨lower, ?_⟩
   intro reverse
   have equal : value = -1 := le_antisymm reverse lower
   rw [equal] at small
-  exact (not_lt_of_ge (show (1 : Fraction.Rational) ≤ 1 by decide) small)
+  exact (not_lt_of_ge (show (1 : Rational) ≤ 1 by decide) small)
 
 /-- Squaring preserves a strict rational inequality when its lower endpoint is nonnegative.
 
 The lower endpoint is nonnegative and the upper endpoint is positive. Weak and strict multiplication transport the
 original two inputs without changing their squares. -/
 public theorem square_lt_square_of_nonneg_of_lt
-    {left right : Fraction.Rational} (leftNonnegative : 0 ≤ left)
+    {left right : Rational} (leftNonnegative : 0 ≤ left)
     (strict : left < right) : left ^ 2 < right ^ 2 := by
   have rightPositive : 0 < right := leftNonnegative.trans_lt strict
   have first : left * left ≤ left * right :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       strict.le leftNonnegative
   have second : left * right < right * right :=
-    Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+    Arithmetic.mul_lt_mul_of_pos_right_direct
       strict rightPositive
   simpa only [pow_two] using first.trans_lt second
 

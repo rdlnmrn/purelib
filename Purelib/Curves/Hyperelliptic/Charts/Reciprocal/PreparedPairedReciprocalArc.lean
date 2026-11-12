@@ -62,7 +62,7 @@ private theorem paired_lists_eq : (first last : List Topology.Polygon.Stokes.Pri
         cases a; cases b
         exact congrArg₂ Topology.Polygon.Stokes.PrimitivePoint.mk l.1 r.1
       exact congrArg₂ List.cons head
-        (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.PreparedPairedReciprocalArc.paired_lists_eq first last l.2 r.2)
+        (PreparedPairedReciprocalArc.paired_lists_eq first last l.2 r.2)
 
 /-- Mapping a flattened block list agrees with flattening the individually mapped blocks. -/
 private theorem flatten_map {A B : Type} (f : A → B) (blocks : List (List A)) :
@@ -71,11 +71,11 @@ private theorem flatten_map {A B : Type} (f : A → B) (blocks : List (List A)) 
   | nil => rfl
   | cons head tail ih => rw [List.flatten_cons, Data.List.Map.map_append, List.map_cons, List.flatten_cons, ih]
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap}
   {ambient : Rational.Box} {start finish : Gaussian.Basic.Canonical} {segment :
     Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
   {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {piece :
@@ -85,20 +85,20 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {d
 list, including every intermediate vertex and the retained parent order. -/
 theorem pairedUniformPaths_segment (cache : Paths.PreparedPathParentCaches.PreparedClearPathModels.ParentCache
   piece.path differential sheet)
-    {covers : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers cache.parents} (bank :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers)
+    {covers : UniformReciprocalCover.ParentCovers cache.parents} (bank :
+      Disk.ParentJoins.SideBank regular covers)
     (left right : Normalization.InverseRootPolynomial.Polynomial) (fine : Nat) :
     (bank.pairedUniformPaths left right fine).flatten =
       Path.Dyadic.DyadicPairedPrimitivePaths.increments
         (fun parameter => (⟨left.eval ((segment.pointAt parameter)⁻¹), right.eval ((segment.pointAt parameter)⁻¹)⟩ :
           Topology.Polygon.Stokes.PrimitivePoint))
         (piece.mesh.depth + fine) 0 1 := by
-  apply Hyperelliptic.Charts.Reciprocal.PreparedPairedReciprocalArc.paired_lists_eq
-  · rw [Hyperelliptic.Charts.Reciprocal.PreparedPairedReciprocalArc.flatten_map, bank.pairedUniformPaths_left,
-      Hyperelliptic.Charts.Reciprocal.Disk.RegularUniform.SideBank.uniformPrimitivePaths_segment cache bank,
+  apply paired_lists_eq
+  · rw [flatten_map, bank.pairedUniformPaths_left,
+      Disk.RegularUniform.SideBank.uniformPrimitivePaths_segment cache bank,
       Path.Dyadic.DyadicPairedPrimitivePaths.increments_left]
-  · rw [Hyperelliptic.Charts.Reciprocal.PreparedPairedReciprocalArc.flatten_map, bank.pairedUniformPaths_right,
-      Hyperelliptic.Charts.Reciprocal.Disk.RegularUniform.SideBank.uniformPrimitivePaths_segment cache bank,
+  · rw [flatten_map, bank.pairedUniformPaths_right,
+      Disk.RegularUniform.SideBank.uniformPrimitivePaths_segment cache bank,
       Path.Dyadic.DyadicPairedPrimitivePaths.increments_right]
 
 /-- The complete retained paired parent area equals the reciprocal segment arc area minus its endpoint chord.
@@ -106,43 +106,43 @@ theorem pairedUniformPaths_segment (cache : Paths.PreparedPathParentCaches.Prepa
 The original prepared segment mesh and the supplied refinement depth determine the arc subdivision. -/
 theorem pairedUniformPaths_area_eq_arc (cache : Paths.PreparedPathParentCaches.PreparedClearPathModels.ParentCache
   piece.path differential sheet)
-    {covers : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers cache.parents} (bank :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers)
+    {covers : UniformReciprocalCover.ParentCovers cache.parents} (bank :
+      Disk.ParentJoins.SideBank regular covers)
     (left right : Normalization.InverseRootPolynomial.Polynomial) (fine : Nat) :
     Path.PairedIncrementArea.area (bank.pairedUniformPaths left right fine).flatten =
-      Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.Bilinear.arcArea (fun point => ⟨left.eval point,
+      ReciprocalRadialGeometry.Bilinear.arcArea (fun point => ⟨left.eval point,
         right.eval point⟩)
         (piece.mesh.depth + fine) start finish -
       Topology.Polygon.Stokes.edgeArea ⟨left.eval start⁻¹, right.eval start⁻¹⟩ ⟨left.eval finish⁻¹, right.eval finish⁻¹⟩
         := by
-  rw [Hyperelliptic.Charts.Reciprocal.PreparedPairedReciprocalArc.pairedUniformPaths_segment cache bank,
+  rw [pairedUniformPaths_segment cache bank,
     Path.Dyadic.DyadicPairedPrimitivePaths.increments_area,
     Geometry.ClearPath.ClearSegment.pointAt_zero, Geometry.ClearPath.ClearSegment.pointAt_one]
   rfl
 
 namespace PairedRefinementRequest
-variable {other : Hyperelliptic.Differentials.Basic.Differential genus} {index otherIndex : Nat} {box otherBox :
+variable {other : Differentials.Basic.Differential genus} {index otherIndex : Nat} {box otherBox :
   Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {otherSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other otherIndex otherBox}
+  {sample : Cap.Primitives.Sample cap differential index box}
+  {otherSample : Cap.Primitives.Sample cap other otherIndex otherBox}
   {cache : Paths.PreparedPathParentCaches.PreparedClearPathModels.ParentCache piece.path differential sheet} {covers :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers cache.parents}
-  {bank : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers} {target : Fraction.Rational}
+    UniformReciprocalCover.ParentCovers cache.parents}
+  {bank : Disk.ParentJoins.SideBank regular covers} {target : Fraction.Rational}
     {minimum : Nat}
 
 /-- The requested cache is now read as the actual inverse segment arc.
 The endpoint term is still explicit, and no new polynomial is sampled. -/
-theorem later_arc_error (request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedRefinement.PairedRefinementRequest
+theorem later_arc_error (request : Meshes.PuncturedGrid.Exterior.PairedRefinement.PairedRefinementRequest
   bank sample otherSample target minimum)
     (later : Nat) (after : request.depth ≤ later) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.Bilinear.arcArea (fun point =>
+    Gaussian.Norm.Basic.normSq
+      (ReciprocalRadialGeometry.Bilinear.arcArea (fun point =>
         ⟨sample.primitive.value.eval point, otherSample.primitive.value.eval point⟩)
         (piece.mesh.depth + later) start finish -
       Topology.Polygon.Stokes.edgeArea ⟨sample.primitive.value.eval start⁻¹, otherSample.primitive.value.eval start⁻¹⟩
         ⟨sample.primitive.value.eval finish⁻¹, otherSample.primitive.value.eval finish⁻¹⟩ - request.summary.areaValue) <
           target := by
-  rw [← Hyperelliptic.Charts.Reciprocal.PreparedPairedReciprocalArc.pairedUniformPaths_area_eq_arc cache bank]
+  rw [← pairedUniformPaths_area_eq_arc cache bank]
   exact request.later_error later after
 
 end PairedRefinementRequest

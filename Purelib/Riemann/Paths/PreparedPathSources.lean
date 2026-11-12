@@ -114,6 +114,31 @@ theorem ofPreparedPath (source : Basic.Differential genus) (sheet : Fin 2) :
       rw [CenteredPathChain.dataOfCompleteSegment_parents]
       exact subdivision_sources source head within sheet first.subdivision _
 
+/-- Both endpoints of each source-certified parent lie in any box containing the original path vertices.
+
+The original segment's two retained parameter locations and affine box
+containment supply the endpoint bounds. The source certificates may come
+from an original preparation or an actual directed refinement.
+-/
+theorem endpoints_inBox {sheet : Fin 2} {start finish : Gaussian.Basic.Canonical}
+    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {parents : List (CenteredEdge curve source)} (sources : PathSources sheet path parents)
+    {enclosure : Geometry.Rational.Box} (inside : ClearPath.InBox enclosure path) :
+    ∀ parent ∈ parents, enclosure.Contains (parent.edge.point 0) ∧ enclosure.Contains (parent.edge.point 1) := by
+  induction sources with
+  | nil => intro parent member; cases member
+  | @cons first middle last segment tail block parents chain locations remaining ih =>
+      intro parent member
+      cases List.Membership.mem_append.mp member with
+      | inl member =>
+          obtain ⟨left, right, nonnegative, ordered, bounded, leftEq, rightEq⟩ := locations parent member
+          rewrite [leftEq, rightEq]
+          exact ⟨segment.pointAt_contains_of_endpoints inside.1 inside.2.start left
+              ⟨nonnegative, ordered.trans bounded⟩,
+            segment.pointAt_contains_of_endpoints inside.1 inside.2.start right
+              ⟨nonnegative.trans ordered, bounded⟩⟩
+      | inr member => exact ih inside.2 parent member
+
 /-- Every retained dyadic path-bank construction preserves the original segment grouping. -/
 theorem ofDyadicBank (source : Basic.Differential genus) (sheet : Fin 2)
     {depth : Nat} {diameter : Rat.Fraction.Rational} {positive : 0 < diameter}

@@ -1,4 +1,5 @@
 module
+import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Rat.Fraction
 import Purelib.Approximation.Gaussian.Equivalence
@@ -135,6 +136,10 @@ open Purelib.Riemann.Paths.OwnerTraceReadings (ownerName)
 open Purelib.Approximation.Gaussian.Equivalence (NamedEquivalent)
 open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
+
+variable {numerator : CoefficientPolynomial}
+
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
@@ -149,9 +154,9 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     : Purelib.Polynomial.Geometry.Grid.Walks.Walk base.bank.grid first last}
   {owner : Owner (curve.polynomial.eval first)}
   {points : List Purelib.Data.Gaussian.Basic.Canonical} {tolerance : Rational} {index : Nat}
-  {budgets : FaceMeshBudgets source points tolerance
+  {budgets : FaceMeshBudgets source points tolerance (numerator := numerator)
     domains} {numerics : FacePrimitiveBank source
-    index domains}
+    index (numerator := numerator) domains}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.GroupedReadings.OwnerWalkFaces
 

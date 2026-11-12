@@ -23,6 +23,8 @@ import Mathlib.Data.Nat.Cast.Defs
 import Mathlib.Data.Nat.Init
 import Purelib.Tactic.Ring
 
+open Purelib.Algebra
+
 open Purelib.Algebra.Field (ExplicitField)
 
 open Purelib
@@ -63,7 +65,7 @@ open Purelib.Geometry.Rotations.Cayley.Cap
 variable {K : Type*} [ExplicitField K]
 
 /-- The homogeneous quadratic numerator of Definition 55. -/
-def proportionRotationNumerator (proportion : Projective.Basic.Proportion K) : Coordinates3.Matrix3 K :=
+def proportionRotationNumerator (proportion : Proportion K) : Matrix3 K :=
   ⟨proportion.scalar ^ 2 + proportion.vector.t ^ 2 -
       proportion.vector.r ^ 2 - proportion.vector.s ^ 2,
     2 * (proportion.scalar * proportion.vector.s +
@@ -85,47 +87,47 @@ def proportionRotationNumerator (proportion : Projective.Basic.Proportion K) : C
 
 /-- Scaling homogeneous coordinates scales the rotation numerator by the scalar square. -/
 theorem proportionRotationNumerator_scale (factor : K)
-    (proportion : Projective.Basic.Proportion K) :
-    Projective.Action.proportionRotationNumerator (Proportion.scale factor proportion) =
+    (proportion : Proportion K) :
+    proportionRotationNumerator (Proportion.scale factor proportion) =
       Matrix3.scale (factor ^ 2)
-        (Projective.Action.proportionRotationNumerator proportion) := by
-  apply Matrix3.ext <;> unfold Projective.Action.proportionRotationNumerator Proportion.scale
+        (proportionRotationNumerator proportion) := by
+  apply Matrix3.ext <;> unfold proportionRotationNumerator Proportion.scale
     Matrix3.scale Coordinates3.Vector.scale <;> ring1
 
 /-- The denominator-cleared multiplicativity identity behind Theorem 58. -/
-theorem proportionRotationNumerator_mul (left right : Projective.Basic.Proportion K) :
-    Matrix3.mul (Projective.Action.proportionRotationNumerator left)
-        (Projective.Action.proportionRotationNumerator right) =
-      Projective.Action.proportionRotationNumerator (Proportion.mul left right) := by
-  apply Matrix3.ext <;> unfold Projective.Action.proportionRotationNumerator Proportion.mul
+theorem proportionRotationNumerator_mul (left right : Proportion K) :
+    Matrix3.mul (proportionRotationNumerator left)
+        (proportionRotationNumerator right) =
+      proportionRotationNumerator (Proportion.mul left right) := by
+  apply Matrix3.ext <;> unfold proportionRotationNumerator Proportion.mul
     Matrix3.mul Coordinates3.Vector.dot Coordinates3.Vector.sub Coordinates3.Vector.add Coordinates3.Vector.scale
       Coordinates3.Vector.cross <;>
     ring1
 
 /-- The rotation numerator times its transpose is the norm square times the identity. -/
 theorem proportionRotationNumerator_mul_transpose
-    (proportion : Projective.Basic.Proportion K) :
-    Matrix3.mul (Projective.Action.proportionRotationNumerator proportion)
-        (Matrix3.transpose (Projective.Action.proportionRotationNumerator proportion)) =
+    (proportion : Proportion K) :
+    Matrix3.mul (proportionRotationNumerator proportion)
+        (Matrix3.transpose (proportionRotationNumerator proportion)) =
       Matrix3.scale (proportion.norm ^ 2) Matrix3.identity := by
-  apply Matrix3.ext <;> unfold Projective.Action.proportionRotationNumerator Proportion.norm
+  apply Matrix3.ext <;> unfold proportionRotationNumerator Proportion.norm
     Matrix3.mul Matrix3.transpose Matrix3.scale Matrix3.identity
     Coordinates3.Vector.quadrance Coordinates3.Vector.dot <;> ring1
 
 /-- The homogeneous rotation numerator has determinant equal to the proportion norm cubed. -/
 theorem determinant_proportionRotationNumerator
-    (proportion : Projective.Basic.Proportion K) :
-    Matrix3.determinant (Projective.Action.proportionRotationNumerator proportion) =
+    (proportion : Proportion K) :
+    Matrix3.determinant (proportionRotationNumerator proportion) =
       proportion.norm ^ 3 := by
-  unfold Projective.Action.proportionRotationNumerator Proportion.norm Matrix3.determinant
+  unfold proportionRotationNumerator Proportion.norm Matrix3.determinant
     Coordinates3.Vector.quadrance Coordinates3.Vector.dot
   ring1
 
 /-- The homogeneous rotation numerator has trace `3x² - Q(v)`. -/
-theorem trace_proportionRotationNumerator (proportion : Projective.Basic.Proportion K) :
-    Matrix3.trace (Projective.Action.proportionRotationNumerator proportion) =
+theorem trace_proportionRotationNumerator (proportion : Proportion K) :
+    Matrix3.trace (proportionRotationNumerator proportion) =
       3 * proportion.scalar ^ 2 - proportion.vector.quadrance := by
-  unfold Projective.Action.proportionRotationNumerator Matrix3.trace
+  unfold proportionRotationNumerator Matrix3.trace
     Coordinates3.Vector.quadrance Coordinates3.Vector.dot
   ring1
 
@@ -135,7 +137,7 @@ namespace NonNullProportion
 
 The scalar and vector coordinates enter the quadratic reciprocal-anchor formula, with the retained nonzero norm
 certifying its denominator (Definition 55). -/
-def rotationMatrix (proportion : Projective.Basic.NonNullProportion K) : Coordinates3.Matrix3 K :=
+def rotationMatrix (proportion : NonNullProportion K) : Matrix3 K :=
   Charts.reciprocalAnchorPath proportion.scalar proportion.vector
     proportion.normNonzero
 
@@ -144,10 +146,10 @@ def rotationMatrix (proportion : Projective.Basic.NonNullProportion K) : Coordin
 The non-null proportion supplies the nonzero norm, so scaling its quadratic rotation numerator by the inverse norm
 recovers the stored matrix (Definition 55). -/
 theorem rotationMatrix_eq_scaled_numerator
-    (proportion : Projective.Basic.NonNullProportion K) :
-    (Projective.Action.NonNullProportion.rotationMatrix proportion) =
+    (proportion : NonNullProportion K) :
+    (rotationMatrix proportion) =
       Matrix3.scale proportion.toProportion.norm⁻¹
-        (Geometry.Rotations.Projective.Action.proportionRotationNumerator proportion.toProportion) := by
+        (proportionRotationNumerator proportion.toProportion) := by
   have cancel := ExplicitField.mul_inv_cancel
     proportion.toProportion.norm proportion.normNonzero
   have expandedCancel :
@@ -160,8 +162,8 @@ theorem rotationMatrix_eq_scaled_numerator
             proportion.vector.r * proportion.vector.r +
             proportion.vector.s * proportion.vector.s))⁻¹ = 1 := by
     simpa only [Proportion.norm, Coordinates3.Vector.quadrance, Coordinates3.Vector.dot] using cancel
-  apply Matrix3.ext <;> unfold Projective.Action.NonNullProportion.rotationMatrix Charts.reciprocalAnchorPath
-    Charts.reciprocalAnchorPathDenominator Geometry.Rotations.Projective.Action.proportionRotationNumerator
+  apply Matrix3.ext <;> unfold rotationMatrix Charts.reciprocalAnchorPath
+    Charts.reciprocalAnchorPathDenominator proportionRotationNumerator
     Proportion.norm Matrix3.add Matrix3.scale Matrix3.identity Matrix3.mul
     Antisymmetric.anchor Coordinates3.Vector.quadrance Coordinates3.Vector.dot <;>
     simp only [ExplicitField.div_eq_mul_inv] <;>
@@ -173,8 +175,8 @@ The scalar coordinate is retained and the vector coordinate is negated. The
 original norm and normalized quadratic numerator give the same transpose,
 with no change of the retained projective representative.
 -/
-theorem rotationMatrix_conjugate (proportion : Projective.Basic.NonNullProportion K) :
-    rotationMatrix (Projective.Basic.NonNullProportion.conjugate proportion) =
+theorem rotationMatrix_conjugate (proportion : NonNullProportion K) :
+    rotationMatrix (NonNullProportion.conjugate proportion) =
       Matrix3.transpose (rotationMatrix proportion) := by
   rw [rotationMatrix_eq_scaled_numerator, rotationMatrix_eq_scaled_numerator, Matrix3.transpose_scale]
   change Matrix3.scale (Proportion.conjugate proportion.toProportion).norm⁻¹
@@ -191,7 +193,7 @@ Conjugate the retained quaternion on the left, multiply the pure input vector,
 then multiply the original quaternion on the right and divide by its norm.
 The resulting quaternion is pure and has the original rotation readback.
 -/
-theorem sandwich_formula (proportion : Projective.Basic.NonNullProportion K) (vector : Coordinates3.Vector K) :
+theorem sandwich_formula (proportion : NonNullProportion K) (vector : Coordinates3.Vector K) :
     Proportion.scale proportion.toProportion.norm⁻¹
       (Proportion.mul (Proportion.mul (Proportion.conjugate proportion.toProportion) ⟨0, vector⟩)
         proportion.toProportion) =
@@ -208,16 +210,16 @@ theorem sandwich_formula (proportion : Projective.Basic.NonNullProportion K) (ve
         Coordinates3.Vector.neg Coordinates3.Vector.cross Matrix3.rowMul <;> ring1
 
 /-- The original non-null unit quaternion represents the identity rotation matrix. -/
-theorem rotationMatrix_identity (witness : Projective.Basic.NonNullProportion K) :
-    rotationMatrix (Projective.Basic.NonNullProportion.identity witness) = Matrix3.identity := by
+theorem rotationMatrix_identity (witness : NonNullProportion K) :
+    rotationMatrix (NonNullProportion.identity witness) = Matrix3.identity := by
   apply Matrix3.ext <;>
-    unfold rotationMatrix Charts.reciprocalAnchorPath Projective.Basic.NonNullProportion.identity
+    unfold rotationMatrix Charts.reciprocalAnchorPath NonNullProportion.identity
       Proportion.identity Coordinates3.Vector.zero Antisymmetric.anchor Matrix3.add Matrix3.identity
       Matrix3.scale Matrix3.mul <;> ring1
 
 /-- The normalized projective rotation matrix is orthogonal. -/
-theorem rotationMatrix_isOrthogonal (proportion : Projective.Basic.NonNullProportion K) :
-    (Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix proportion).IsOrthogonal := by
+theorem rotationMatrix_isOrthogonal (proportion : NonNullProportion K) :
+    (rotationMatrix proportion).IsOrthogonal := by
   have cancel := ExplicitField.mul_inv_cancel
     proportion.toProportion.norm proportion.normNonzero
   have reverseCancel :
@@ -237,7 +239,7 @@ theorem rotationMatrix_isOrthogonal (proportion : Projective.Basic.NonNullPropor
           proportion.toProportion.norm) ^ 2 := by ring1
       _ = 1 := by rw [reverseCancel]; ring1
   unfold Matrix3.IsOrthogonal
-  rw [Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix_eq_scaled_numerator,
+  rw [rotationMatrix_eq_scaled_numerator,
     Matrix3.transpose_scale,
     Matrix3.mul_scale_left, Matrix3.mul_scale_right, Matrix3.scale_scale,
     proportionRotationNumerator_mul_transpose, Matrix3.scale_scale,
@@ -247,8 +249,8 @@ theorem rotationMatrix_isOrthogonal (proportion : Projective.Basic.NonNullPropor
     squareCancel, Matrix3.one_scale]
 
 /-- The normalized projective rotation matrix has determinant one. -/
-theorem determinant_rotationMatrix (proportion : Projective.Basic.NonNullProportion K) :
-    Matrix3.determinant (Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix proportion) = 1 := by
+theorem determinant_rotationMatrix (proportion : NonNullProportion K) :
+    Matrix3.determinant (rotationMatrix proportion) = 1 := by
   have cancel := ExplicitField.mul_inv_cancel
     proportion.toProportion.norm proportion.normNonzero
   have reverseCancel :
@@ -267,22 +269,22 @@ theorem determinant_rotationMatrix (proportion : Projective.Basic.NonNullProport
         (proportion.toProportion.norm⁻¹ *
           proportion.toProportion.norm) ^ 3 := by ring1
       _ = 1 := by rw [reverseCancel]; ring1
-  rw [Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix_eq_scaled_numerator,
+  rw [rotationMatrix_eq_scaled_numerator,
     Matrix3.determinant_scale,
     determinant_proportionRotationNumerator, cubeCancel]
 
 /-- Definition 55 bundled as an executable member of `SO(3)`. -/
-def rotation (proportion : Projective.Basic.NonNullProportion K) : Rotations.Basic.Rotation K where
-  matrix := (Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix proportion)
+def rotation (proportion : NonNullProportion K) : Basic.Rotation K where
+  matrix := (rotationMatrix proportion)
   orthogonal := (rotationMatrix_isOrthogonal proportion)
   determinantOne := (determinant_rotationMatrix proportion)
 
 /-- Definition 55 is invariant under nonzero homogeneous rescaling. -/
 theorem rotationMatrix_scale (factor : K) (factorNonzero : factor ≠ 0)
-    (proportion : Projective.Basic.NonNullProportion K) :
-    (Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix (NonNullProportion.scale factor factorNonzero
+    (proportion : NonNullProportion K) :
+    (rotationMatrix (NonNullProportion.scale factor factorNonzero
       proportion)) =
-      (Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix proportion) := by
+      (rotationMatrix proportion) := by
   have factorSquareNonzero : factor ^ 2 ≠ 0 := by
     simpa only [pow_two] using
       ExplicitField.mul_ne_zero factorNonzero factorNonzero
@@ -297,7 +299,7 @@ theorem rotationMatrix_scale (factor : K) (factorNonzero : factor ≠ 0)
       (factor ^ 2 * proportion.toProportion.norm)⁻¹ * factor ^ 2 =
         proportion.toProportion.norm⁻¹ := by
     rw [(fun {K : Type _} [ExplicitField K] {left right : K} (leftNonzero : left ≠ 0)
-      (rightNonzero : right ≠ 0) => (Purelib.Algebra.Field.Inverse.inverse_product (K := K) (left := left) (right :=
+      (rightNonzero : right ≠ 0) => (Field.Inverse.inverse_product (K := K) (left := left) (right :=
       right) leftNonzero rightNonzero : (left * right)⁻¹ = left⁻¹ * right⁻¹)) factorSquareNonzero
       proportion.normNonzero]
     calc
@@ -307,23 +309,23 @@ theorem rotationMatrix_scale (factor : K) (factorNonzero : factor ≠ 0)
           proportion.toProportion.norm⁻¹ := by ring1
       _ = proportion.toProportion.norm⁻¹ := by
         rw [reverseFactorSquareCancel, one_mul]
-  rw [Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix_eq_scaled_numerator,
-    Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix_eq_scaled_numerator]
+  rw [rotationMatrix_eq_scaled_numerator,
+    rotationMatrix_eq_scaled_numerator]
   change Matrix3.scale
       (Proportion.norm (Proportion.scale factor proportion.toProportion))⁻¹
-      (Geometry.Rotations.Projective.Action.proportionRotationNumerator
+      (proportionRotationNumerator
         (Proportion.scale factor proportion.toProportion)) =
     Matrix3.scale proportion.toProportion.norm⁻¹
-      (Geometry.Rotations.Projective.Action.proportionRotationNumerator proportion.toProportion)
+      (proportionRotationNumerator proportion.toProportion)
   rw [
     Proportion.norm_scale, proportionRotationNumerator_scale,
     Matrix3.scale_scale, coefficient]
 
 /-- Equivalent non-null homogeneous proportions give the same rotation matrix. -/
 theorem rotationMatrix_respects_equivalent
-    {left right : Projective.Basic.NonNullProportion K} (equivalent : left.Equivalent right) :
-    (Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix left) =
-      (Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix right) := by
+    {left right : NonNullProportion K} (equivalent : left.Equivalent right) :
+    (rotationMatrix left) =
+      (rotationMatrix right) := by
   rcases equivalent with ⟨factor, factorNonzero, rightValue⟩
   have rightScaled : right = NonNullProportion.scale factor factorNonzero left := by
     apply NonNullProportion.ext (K := K)
@@ -332,9 +334,9 @@ theorem rotationMatrix_respects_equivalent
   rw [rightScaled, rotationMatrix_scale]
 
 /-- On the affine chart, Definition 55 is the cap of the normalized anchor. -/
-theorem rotationMatrix_eq_cap (proportion : Projective.Basic.NonNullProportion K)
+theorem rotationMatrix_eq_cap (proportion : NonNullProportion K)
     (scalarNonzero : proportion.scalar ≠ 0) :
-    (Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix proportion) =
+    (rotationMatrix proportion) =
       Cap.cap (Coordinates3.Vector.scale proportion.scalar⁻¹ proportion.vector)
         (Charts.reciprocalAnchorCapDefined proportion.scalar proportion.vector
           scalarNonzero proportion.normNonzero) :=
@@ -343,7 +345,7 @@ theorem rotationMatrix_eq_cap (proportion : Projective.Basic.NonNullProportion K
 
 /-- A non-null proportion with zero scalar coordinate has non-null vector part. -/
 theorem vector_nonNull_of_scalar_eq_zero
-    (proportion : Projective.Basic.NonNullProportion K) (scalarZero : proportion.scalar = 0) :
+    (proportion : NonNullProportion K) (scalarZero : proportion.scalar = 0) :
     proportion.vector.quadrance ≠ 0 := by
   intro vectorNull
   apply proportion.normNonzero
@@ -352,29 +354,29 @@ theorem vector_nonNull_of_scalar_eq_zero
   ring1
 
 /-- At infinity, Definition 55 is exactly the half turn about the represented non-null line. -/
-theorem rotationMatrix_eq_halfTurn (proportion : Projective.Basic.NonNullProportion K)
+theorem rotationMatrix_eq_halfTurn (proportion : NonNullProportion K)
     (scalarZero : proportion.scalar = 0) :
-    (Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix proportion) =
+    (rotationMatrix proportion) =
       Reflection.halfTurn proportion.vector
         (vector_nonNull_of_scalar_eq_zero proportion scalarZero)
           := by
   let vectorNonNull := vector_nonNull_of_scalar_eq_zero
     proportion scalarZero
-  simpa only [Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix, scalarZero] using
+  simpa only [rotationMatrix, scalarZero] using
     Charts.reciprocalAnchorPath_zero proportion.vector vectorNonNull
 
 /-- The projective rotation trace is `(3x² - Q(v))/N(x,v)`. -/
-theorem trace_rotationMatrix (proportion : Projective.Basic.NonNullProportion K) :
-    Matrix3.trace (Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix proportion) =
+theorem trace_rotationMatrix (proportion : NonNullProportion K) :
+    Matrix3.trace (rotationMatrix proportion) =
       (3 * proportion.scalar ^ 2 - proportion.vector.quadrance) /
         proportion.toProportion.norm := by
-  rw [Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix_eq_scaled_numerator, Matrix3.trace_scale,
+  rw [rotationMatrix_eq_scaled_numerator, Matrix3.trace_scale,
     trace_proportionRotationNumerator]
   simp only [ExplicitField.div_eq_mul_inv]
   ring1
 
 /-- The half spread of a projective rotation is `Q(v)/N(x,v)`. -/
-theorem halfSpread_rotation (proportion : Projective.Basic.NonNullProportion K)
+theorem halfSpread_rotation (proportion : NonNullProportion K)
     (twoNonzero : (2 : K) ≠ 0) :
     Spread.halfSpread (rotation proportion) =
       proportion.vector.quadrance / proportion.toProportion.norm := by
@@ -382,7 +384,7 @@ theorem halfSpread_rotation (proportion : Projective.Basic.NonNullProportion K)
     proportion.toProportion.norm proportion.normNonzero
   have fourCancel := ExplicitField.mul_inv_cancel (4 : K)
     ((fun {K : Type _} [ExplicitField K] (twoNonzero : (2 : K) ≠ 0) =>
-      (Purelib.Algebra.Field.Characteristic.Nonzero.four_ne_zero (K := K) twoNonzero : (4 : K) ≠ 0)) twoNonzero)
+      (Field.Characteristic.Nonzero.four_ne_zero (K := K) twoNonzero : (4 : K) ≠ 0)) twoNonzero)
   unfold Spread.halfSpread rotation
   rw [trace_rotationMatrix]
   simp only [ExplicitField.div_eq_mul_inv]
@@ -407,7 +409,7 @@ theorem halfSpread_rotation (proportion : Projective.Basic.NonNullProportion K)
         proportion.toProportion.norm⁻¹ := by rw [fourCancel, mul_one]
 
 /-- The complementary half spread is the scalar coordinate square divided by the norm. -/
-theorem one_sub_halfSpread_rotation (proportion : Projective.Basic.NonNullProportion K)
+theorem one_sub_halfSpread_rotation (proportion : NonNullProportion K)
     (twoNonzero : (2 : K) ≠ 0) :
     1 - Spread.halfSpread (rotation proportion) =
       proportion.scalar ^ 2 / proportion.toProportion.norm := by
@@ -429,13 +431,13 @@ theorem one_sub_halfSpread_rotation (proportion : Projective.Basic.NonNullPropor
 The supplied imaginary unit belongs to the original field and squares to
 negative one. The original non-null proportion certifies the norm denominator.
 -/
-theorem one_sub_halfSpread_matrix_trace (proportion : Projective.Basic.NonNullProportion K)
+theorem one_sub_halfSpread_matrix_trace (proportion : NonNullProportion K)
     (twoNonzero : (2 : K) ≠ 0) (i : K) (iSquare : i ^ 2 = -1) :
     1 - Spread.halfSpread (rotation proportion) =
-      (Matrix2.trace (Algebra.Quaternion.Matrix.toMatrix i proportion.toProportion)) ^ 2 /
-        (4 * Matrix2.determinant (Algebra.Quaternion.Matrix.toMatrix i proportion.toProportion)) := by
+      (Matrix2.trace (Quaternion.Matrix.toMatrix i proportion.toProportion)) ^ 2 /
+        (4 * Matrix2.determinant (Quaternion.Matrix.toMatrix i proportion.toProportion)) := by
   rw [one_sub_halfSpread_rotation proportion twoNonzero]
-  exact (Algebra.Quaternion.Matrix.trace_square_ratio i iSquare twoNonzero
+  exact (Quaternion.Matrix.trace_square_ratio i iSquare twoNonzero
     proportion.toProportion proportion.normNonzero).symm
 
 /-- The embedded complementary half spread equals the squared extension-field matrix trace ratio.
@@ -444,21 +446,21 @@ Both field dictionaries and the embedding are supplied explicitly. The
 original rotation and non-null quaternion remain the input owners; their
 scalar ratio is transported through the same retained embedding as the matrix.
 -/
-theorem one_sub_halfSpread_embedded_matrix_trace {L : Type*} [Algebra.Field.ExplicitField L]
-    [DecidableEq K] [DecidableEq L] (embedding : Algebra.Field.Embedding K L)
-    (proportion : Projective.Basic.NonNullProportion K) (twoNonzero : (2 : K) ≠ 0)
+theorem one_sub_halfSpread_embedded_matrix_trace {L : Type*} [ExplicitField L]
+    [DecidableEq K] [DecidableEq L] (embedding : Field.Embedding K L)
+    (proportion : NonNullProportion K) (twoNonzero : (2 : K) ≠ 0)
     (targetTwoNonzero : (2 : L) ≠ 0) (i : L) (iSquare : i ^ 2 = -1) :
     embedding.toFun (1 - Spread.halfSpread (rotation proportion)) =
-      (Matrix2.trace (Algebra.Quaternion.Matrix.toEmbeddedMatrix embedding i proportion.toProportion)) ^ 2 /
+      (Matrix2.trace (Quaternion.Matrix.toEmbeddedMatrix embedding i proportion.toProportion)) ^ 2 /
         (4 * Matrix2.determinant
-          (Algebra.Quaternion.Matrix.toEmbeddedMatrix embedding i proportion.toProportion)) := by
+          (Quaternion.Matrix.toEmbeddedMatrix embedding i proportion.toProportion)) := by
   rw [one_sub_halfSpread_rotation proportion twoNonzero]
-  exact (Algebra.Quaternion.Matrix.embedded_trace_square_ratio embedding i iSquare targetTwoNonzero
+  exact (Quaternion.Matrix.embedded_trace_square_ratio embedding i iSquare targetTwoNonzero
     proportion.toProportion proportion.normNonzero).symm
 
 /-- The projective half-turn locus is exactly the hyperplane `x=0`. -/
 theorem halfSpread_rotation_eq_one_iff [DecidableEq K]
-    (proportion : Projective.Basic.NonNullProportion K) (twoNonzero : (2 : K) ≠ 0) :
+    (proportion : NonNullProportion K) (twoNonzero : (2 : K) ≠ 0) :
     Spread.halfSpread (rotation proportion) = 1 ↔
       proportion.scalar = 0 := by
   constructor
@@ -471,11 +473,11 @@ theorem halfSpread_rotation_eq_one_iff [DecidableEq K]
       have quotientNonzero := ExplicitField.div_ne_zero
         scalarSquareNonzero proportion.normNonzero
       apply (quotientNonzero ?_).elim
-      rw [← Geometry.Rotations.Projective.Action.NonNullProportion.one_sub_halfSpread_rotation proportion twoNonzero,
+      rw [← one_sub_halfSpread_rotation proportion twoNonzero,
         spreadOne]
       ring1
   · intro scalarZero
-    have complement := Geometry.Rotations.Projective.Action.NonNullProportion.one_sub_halfSpread_rotation proportion
+    have complement := one_sub_halfSpread_rotation proportion
       twoNonzero
     rw [scalarZero, show (0 : K) ^ 2 = 0 by ring1,
       ExplicitField.zero_div] at complement
@@ -489,16 +491,16 @@ theorem halfSpread_rotation_eq_one_iff [DecidableEq K]
 
 The rotation matrix of two multiplied non-null proportions is the left matrix multiplied by the right matrix over the
 same explicit field (Theorem 58). -/
-theorem rotationMatrix_mul (left right : Projective.Basic.NonNullProportion K) :
-    (Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix (NonNullProportion.mul left right)) =
-      Matrix3.mul (Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix left)
-        (Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix right) := by
-  rw [Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix_eq_scaled_numerator,
-    Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix_eq_scaled_numerator,
-    Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix_eq_scaled_numerator,
+theorem rotationMatrix_mul (left right : NonNullProportion K) :
+    (rotationMatrix (NonNullProportion.mul left right)) =
+      Matrix3.mul (rotationMatrix left)
+        (rotationMatrix right) := by
+  rw [rotationMatrix_eq_scaled_numerator,
+    rotationMatrix_eq_scaled_numerator,
+    rotationMatrix_eq_scaled_numerator,
     NonNullProportion.mul_norm,
       (fun {K : Type _} [ExplicitField K] {left right : K} (leftNonzero : left ≠ 0) (rightNonzero
-        : right ≠ 0) => (Purelib.Algebra.Field.Inverse.inverse_product (K := K) (left := left) (right := right)
+        : right ≠ 0) => (Field.Inverse.inverse_product (K := K) (left := left) (right := right)
         leftNonzero rightNonzero : (left * right)⁻¹ = left⁻¹ * right⁻¹)) left.normNonzero
       right.normNonzero,
     Matrix3.mul_scale_left, Matrix3.mul_scale_right, Matrix3.scale_scale,
@@ -542,10 +544,10 @@ section
 theorem halfTurnProportion_rotationMatrix (axis
   : Coordinates3.Vector K)
     (axisNonNull : axis.quadrance ≠ 0) :
-    (Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix (NonNullProportion.ofNonNullVector axis
+    (NonNullProportion.rotationMatrix (NonNullProportion.ofNonNullVector axis
       axisNonNull)) =
       Reflection.halfTurn axis axisNonNull := by
-  exact Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix_eq_halfTurn
+  exact NonNullProportion.rotationMatrix_eq_halfTurn
     (NonNullProportion.ofNonNullVector axis axisNonNull) rfl
 end
 end Purelib.Geometry.Rotations.Projective.Action.UnitQuaternionKernel

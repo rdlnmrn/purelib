@@ -52,10 +52,10 @@ public structure SafeSplit
   /-- The common guard does not vanish at the retained cut. -/ guardNonzero : (commonGuard event curve box).eval cut ≠ 0
   /-- The left child width is strictly less than two thirds of the original width. -/ leftContracts :
     cut - cell.interval.lower <
-      (2 / 3 : Fraction.Rational) * (Data.Rat.Interval.Bounds.width cell.interval)
+      (2 / 3 : Fraction.Rational) * (Interval.Bounds.width cell.interval)
   /-- The right child width is strictly less than two thirds of the original width. -/ rightContracts :
     cell.interval.upper - cut <
-      (2 / 3 : Fraction.Rational) * (Data.Rat.Interval.Bounds.width cell.interval)
+      (2 / 3 : Fraction.Rational) * (Interval.Bounds.width cell.interval)
 
 constructive_injectivity SafeSplit
 
@@ -148,7 +148,7 @@ public inductive Subdivision
     Interval.Proper.Cell)
   /-- An original cell with its checked safe cut and two retained child subdivisions. -/ | split (cell :
     Interval.Proper.Cell) (data : SafeSplit event curve box cell)
-      (left right : Purelib.RootIsolation.Curve.Event.Partition.Subdivision event curve box)
+      (left right : Partition.Subdivision event curve box)
 
 constructive_injectivity Subdivision
 
@@ -165,8 +165,8 @@ The natural depth fixes the number of rounds and the original event, curve and b
   | depth + 1, cell =>
       let data := safeSplit event eventNonzero curve box cell
       .split cell data
-        (Purelib.RootIsolation.Curve.Event.Partition.Subdivision.build event eventNonzero curve box depth data.leftCell)
-        (Purelib.RootIsolation.Curve.Event.Partition.Subdivision.build event eventNonzero curve box depth
+        (Subdivision.build event eventNonzero curve box depth data.leftCell)
+        (Subdivision.build event eventNonzero curve box depth
           data.rightCell)
 
 /-- Read the retained leaf cells in left-to-right order from the finite subdivision.
@@ -190,7 +190,7 @@ public theorem build_leaf_refines
     (curve : Curve.RationalCurve) (box : Box)
     (depth : Nat) (root : Interval.Proper.Cell) {leaf : Interval.Proper.Cell}
     (member : leaf ∈
-      (Subdivision.build event eventNonzero curve box depth root).leaves) :
+      (build event eventNonzero curve box depth root).leaves) :
     leaf.interval.Refines root.interval := by
   induction depth generalizing root with
   | zero =>
@@ -201,18 +201,18 @@ public theorem build_leaf_refines
   | succ depth inductionHypothesis =>
       let data := safeSplit event eventNonzero curve box root
       change leaf ∈
-        (Subdivision.build event eventNonzero curve box depth data.leftCell).leaves ++
-          (Subdivision.build event eventNonzero curve box depth data.rightCell).leaves
+        (build event eventNonzero curve box depth data.leftCell).leaves ++
+          (build event eventNonzero curve box depth data.rightCell).leaves
         at member
       have childMember := Data.List.Membership.mem_append.mp member
       rcases childMember with leftMember | rightMember
       · have leafChild := inductionHypothesis data.leftCell leftMember
-        have childRoot := Data.Rat.Interval.Bounds.leftChild_refines root.interval data.cut
+        have childRoot := Interval.Bounds.leftChild_refines root.interval data.cut
           data.lowerLt.le data.upperLt.le
         exact ⟨childRoot.1.trans leafChild.1,
           leafChild.2.trans childRoot.2⟩
       · have leafChild := inductionHypothesis data.rightCell rightMember
-        have childRoot := Data.Rat.Interval.Bounds.rightChild_refines root.interval data.cut
+        have childRoot := Interval.Bounds.rightChild_refines root.interval data.cut
           data.lowerLt.le data.upperLt.le
         exact ⟨childRoot.1.trans leafChild.1,
           leafChild.2.trans childRoot.2⟩
@@ -227,54 +227,54 @@ public theorem build_leaf_width_le
     (curve : Curve.RationalCurve) (box : Box)
     (depth : Nat) (root : Interval.Proper.Cell) {leaf : Interval.Proper.Cell}
     (member : leaf ∈
-      (Subdivision.build event eventNonzero curve box depth root).leaves) :
-    (Data.Rat.Interval.Bounds.width leaf.interval) ≤
-      (2 / 3 : Fraction.Rational) ^ depth * (Data.Rat.Interval.Bounds.width root.interval) := by
+      (build event eventNonzero curve box depth root).leaves) :
+    (Interval.Bounds.width leaf.interval) ≤
+      (2 / 3 : Fraction.Rational) ^ depth * (Interval.Bounds.width root.interval) := by
   induction depth generalizing root with
   | zero =>
       change leaf ∈ [root] at member
       have sameCell := Data.List.Membership.mem_singleton.mp member
       cases sameCell
-      change Data.Rat.Interval.Bounds.width leaf.interval ≤
-        (1 : Fraction.Rational) * Data.Rat.Interval.Bounds.width leaf.interval
-      have identity : (1 : Fraction.Rational) * Data.Rat.Interval.Bounds.width leaf.interval =
-          Data.Rat.Interval.Bounds.width leaf.interval := by
+      change Interval.Bounds.width leaf.interval ≤
+        (1 : Fraction.Rational) * Interval.Bounds.width leaf.interval
+      have identity : (1 : Fraction.Rational) * Interval.Bounds.width leaf.interval =
+          Interval.Bounds.width leaf.interval := by
         rw [Fraction.Field.mul_comm]
         exact Fraction.Field.mul_one_direct _
       exact le_of_eq identity.symm
   | succ depth inductionHypothesis =>
       let data := safeSplit event eventNonzero curve box root
       change leaf ∈
-        (Subdivision.build event eventNonzero curve box depth data.leftCell).leaves ++
-          (Subdivision.build event eventNonzero curve box depth data.rightCell).leaves
+        (build event eventNonzero curve box depth data.leftCell).leaves ++
+          (build event eventNonzero curve box depth data.rightCell).leaves
         at member
       have childMember := Data.List.Membership.mem_append.mp member
       have powerPositive : 0 < (2 / 3 : Fraction.Rational) ^ depth :=
         Fraction.Order.Arithmetic.pow_pos_direct (by decide) depth
       rcases childMember with leftMember | rightMember
       · exact (calc
-          (Data.Rat.Interval.Bounds.width leaf.interval) ≤
-              (2 / 3 : Fraction.Rational) ^ depth * (Data.Rat.Interval.Bounds.width data.leftCell.interval) :=
+          (Interval.Bounds.width leaf.interval) ≤
+              (2 / 3 : Fraction.Rational) ^ depth * (Interval.Bounds.width data.leftCell.interval) :=
             inductionHypothesis data.leftCell leftMember
           _ < (2 / 3 : Fraction.Rational) ^ depth *
-                ((2 / 3 : Fraction.Rational) * (Data.Rat.Interval.Bounds.width root.interval)) :=
+                ((2 / 3 : Fraction.Rational) * (Interval.Bounds.width root.interval)) :=
             Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
               powerPositive data.leftContracts
           _ = (2 / 3 : Fraction.Rational) ^ Nat.succ depth *
-                (Data.Rat.Interval.Bounds.width root.interval) := by
+                (Interval.Bounds.width root.interval) := by
             rw [pow_succ]
             ring1
         ).le
       · exact (calc
-          (Data.Rat.Interval.Bounds.width leaf.interval) ≤
-              (2 / 3 : Fraction.Rational) ^ depth * (Data.Rat.Interval.Bounds.width data.rightCell.interval) :=
+          (Interval.Bounds.width leaf.interval) ≤
+              (2 / 3 : Fraction.Rational) ^ depth * (Interval.Bounds.width data.rightCell.interval) :=
             inductionHypothesis data.rightCell rightMember
           _ < (2 / 3 : Fraction.Rational) ^ depth *
-                ((2 / 3 : Fraction.Rational) * (Data.Rat.Interval.Bounds.width root.interval)) :=
+                ((2 / 3 : Fraction.Rational) * (Interval.Bounds.width root.interval)) :=
             Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
               powerPositive data.rightContracts
           _ = (2 / 3 : Fraction.Rational) ^ Nat.succ depth *
-                (Data.Rat.Interval.Bounds.width root.interval) := by
+                (Interval.Bounds.width root.interval) := by
             rw [pow_succ]
             ring1
         ).le
@@ -289,7 +289,7 @@ public theorem build_cellEventCount_sum
     (curve : Curve.RationalCurve) (box : Box)
     (depth : Nat) (root : Interval.Proper.Cell) :
     Sturm.Count.Basic.cellCount2 event root =
-      ((Subdivision.build event eventNonzero curve box depth root).leaves.map
+      ((build event eventNonzero curve box depth root).leaves.map
         (Sturm.Count.Basic.cellCount2 event)).sum := by
   induction depth generalizing root with
   | zero =>
@@ -310,12 +310,12 @@ public theorem build_cellEventCount_sum
       rw [splitCount, inductionHypothesis data.leftCell,
         inductionHypothesis data.rightCell]
       change
-        ((Subdivision.build event eventNonzero curve box depth data.leftCell).leaves.map
+        ((build event eventNonzero curve box depth data.leftCell).leaves.map
           (Sturm.Count.Basic.cellCount2 event)).sum +
-          ((Subdivision.build event eventNonzero curve box depth data.rightCell).leaves.map
+          ((build event eventNonzero curve box depth data.rightCell).leaves.map
             (Sturm.Count.Basic.cellCount2 event)).sum =
-        (((Subdivision.build event eventNonzero curve box depth data.leftCell).leaves ++
-          (Subdivision.build event eventNonzero curve box depth data.rightCell).leaves).map
+        (((build event eventNonzero curve box depth data.leftCell).leaves ++
+          (build event eventNonzero curve box depth data.rightCell).leaves).map
             (Sturm.Count.Basic.cellCount2 event)).sum
       rw [Data.List.Map.map_append]
       exact (Data.List.Fold.sum_append Data.Int.Arithmetic.zero_add
@@ -332,7 +332,7 @@ public structure BuildLocation
     (curve : Curve.RationalCurve) (box : Box)
     (depth : Nat) (root : Interval.Proper.Cell) (parameter : Fraction.Rational) where
   /-- The actual leaf selected by the deterministic parameter locator. -/ leaf : Interval.Proper.Cell
-  /-- The selected leaf belongs to the exact constructed subdivision. -/ member : leaf ∈ (Subdivision.build event
+  /-- The selected leaf belongs to the exact constructed subdivision. -/ member : leaf ∈ (build event
     eventNonzero curve box depth root).leaves
   /-- The selected leaf contains the original requested parameter. -/ contains : leaf.interval.Contains parameter
 
@@ -348,7 +348,7 @@ evidence; the result stores its exact selected leaf and tree occurrence. -/
     (curve : Curve.RationalCurve) (box : Box)
     (depth : Nat) (root : Interval.Proper.Cell) (parameter : Fraction.Rational)
     (inside : root.interval.Contains parameter) :
-    Subdivision.BuildLocation event eventNonzero curve box depth root parameter := by
+    BuildLocation event eventNonzero curve box depth root parameter := by
   induction depth generalizing root with
   | zero =>
       exact ⟨root, List.Mem.head [], inside⟩
@@ -358,16 +358,16 @@ evidence; the result stores its exact selected leaf and tree occurrence. -/
       · let found := inductionHypothesis data.leftCell ⟨inside.1, left⟩
         exact ⟨found.leaf, by
           change found.leaf ∈
-            (Subdivision.build event eventNonzero curve box depth data.leftCell).leaves ++
-              (Subdivision.build event eventNonzero curve box depth data.rightCell).leaves
+            (build event eventNonzero curve box depth data.leftCell).leaves ++
+              (build event eventNonzero curve box depth data.rightCell).leaves
           exact List.mem_append_left _ found.member,
           found.contains⟩
       · have cutLower : data.cut ≤ parameter := (lt_of_not_ge left).le
         let found := inductionHypothesis data.rightCell ⟨cutLower, inside.2⟩
         exact ⟨found.leaf, by
           change found.leaf ∈
-            (Subdivision.build event eventNonzero curve box depth data.leftCell).leaves ++
-              (Subdivision.build event eventNonzero curve box depth data.rightCell).leaves
+            (build event eventNonzero curve box depth data.leftCell).leaves ++
+              (build event eventNonzero curve box depth data.rightCell).leaves
           exact List.mem_append_right _ found.member,
           found.contains⟩
 
@@ -382,9 +382,9 @@ public theorem build_covers
     (depth : Nat) (root : Interval.Proper.Cell) (parameter : Fraction.Rational)
     (inside : root.interval.Contains parameter) :
     ∃ leaf,
-      leaf ∈ (Subdivision.build event eventNonzero curve box depth root).leaves ∧
+      leaf ∈ (build event eventNonzero curve box depth root).leaves ∧
         leaf.interval.Contains parameter := by
-  let found := Subdivision.locateBuild event eventNonzero curve box depth root
+  let found := locateBuild event eventNonzero curve box depth root
     parameter inside
   exact ⟨found.leaf, found.member, found.contains⟩
 

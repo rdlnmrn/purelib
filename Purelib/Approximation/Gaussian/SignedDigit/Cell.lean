@@ -20,6 +20,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation.Rational
@@ -50,8 +52,8 @@ structure Cell where
   /-- The common rational scale of the two signed-digit coordinates. -/ scale : Fraction.Rational
   /-- The retained common scale is strictly positive. -/ scale_pos : 0 < scale
   /-- The retained shared digit depth. -/ depth : Nat
-  /-- The retained finite signed-digit word for the real coordinate. -/ realDigits : List Binary.Basic.Digit
-  /-- The retained finite signed-digit word for the imaginary coordinate. -/ imagDigits : List Binary.Basic.Digit
+  /-- The retained finite signed-digit word for the real coordinate. -/ realDigits : List Basic.Digit
+  /-- The retained finite signed-digit word for the imaginary coordinate. -/ imagDigits : List Basic.Digit
   /-- The real digit word has exactly the retained depth. -/ real_length : realDigits.length = depth
   /-- The imaginary digit word has exactly the retained depth. -/ imag_length : imagDigits.length = depth
 
@@ -68,13 +70,13 @@ namespace Cell
 
 /-- The remaining signed-digit coordinate radius is nonnegative. -/
 theorem tail_nonneg (cell : Cell) : 0 ≤ cell.tail :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct cell.scale_pos.le
-    (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) cell.depth)
+  Arithmetic.mul_nonneg_direct cell.scale_pos.le
+    (Arithmetic.pow_nonneg_direct (by decide) cell.depth)
 
 /-- Read the Gaussian rational centre from the two retained signed-digit prefixes and common scale. -/
 @[expose] def center (cell : Cell) : Data.Gaussian.Basic.Canonical :=
-  ⟨cell.scale * Binary.Basic.prefixValue cell.realDigits,
-    cell.scale * Binary.Basic.prefixValue cell.imagDigits⟩
+  ⟨cell.scale * Basic.prefixValue cell.realDigits,
+    cell.scale * Basic.prefixValue cell.imagDigits⟩
 
 /-- A reading lies in both closed coordinate intervals around the retained centre. -/
 @[expose] def Contains (cell : Cell) (value : Data.Gaussian.Basic.Canonical) :
@@ -86,9 +88,9 @@ theorem tail_nonneg (cell : Cell) : 0 ≤ cell.tail :=
 
 /-- Every signed-digit cell contains its own displayed centre. -/
 theorem contains_center (cell : Cell) : cell.Contains cell.center :=
-  ⟨(Fraction.Order.Arithmetic.sub_le_sub_left_direct cell.tail_nonneg _).trans_eq (by ring1),
+  ⟨(Arithmetic.sub_le_sub_left_direct cell.tail_nonneg _).trans_eq (by ring1),
     le_add_of_nonneg_right cell.tail_nonneg,
-    (Fraction.Order.Arithmetic.sub_le_sub_left_direct cell.tail_nonneg _).trans_eq (by ring1),
+    (Arithmetic.sub_le_sub_left_direct cell.tail_nonneg _).trans_eq (by ring1),
     le_add_of_nonneg_right cell.tail_nonneg⟩
 
 /-- Every reading admitted by the inner signed-digit cell is admitted by the outer cell. -/
@@ -112,8 +114,8 @@ theorem refines_trans {inner middle outer : Cell}
 /-- The signed-digit squared-precision allowance is nonnegative. -/
 theorem precisionSq_nonneg (cell : Cell) : 0 ≤ cell.precisionSq :=
   Geometric.Basic.quarterRadius_nonneg
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct cell.scale)) cell.depth
+    (Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.sq_nonneg_direct cell.scale)) cell.depth
 
 end Cell
 
@@ -125,10 +127,10 @@ namespace Cell
     (bounds : -scale ≤ value.re ∧ value.re ≤ scale ∧
       -scale ≤ value.im ∧ value.im ≤ scale)
     (depth : Nat) : Cell :=
-  let realEncoding := Binary.Encoding.encode (value.re / scale)
-    (Binary.Encoding.normalized_bounded scalePositive ⟨bounds.1, bounds.2.1⟩) depth
-  let imagEncoding := Binary.Encoding.encode (value.im / scale)
-    (Binary.Encoding.normalized_bounded scalePositive ⟨bounds.2.2.1, bounds.2.2.2⟩) depth
+  let realEncoding := Encoding.encode (value.re / scale)
+    (Encoding.normalized_bounded scalePositive ⟨bounds.1, bounds.2.1⟩) depth
+  let imagEncoding := Encoding.encode (value.im / scale)
+    (Encoding.normalized_bounded scalePositive ⟨bounds.2.2.1, bounds.2.2.2⟩) depth
   { scale := scale
     scale_pos := scalePositive
     depth := depth
@@ -144,51 +146,51 @@ theorem ofPoint_contains (value : Data.Gaussian.Basic.Canonical) (scale : Fracti
       -scale ≤ value.im ∧ value.im ≤ scale)
     (depth : Nat) :
     (ofPoint value scale scalePositive bounds depth).Contains value := by
-  let realEncoding := Binary.Encoding.encode (value.re / scale)
-    (Binary.Encoding.normalized_bounded scalePositive ⟨bounds.1, bounds.2.1⟩) depth
-  let imagEncoding := Binary.Encoding.encode (value.im / scale)
-    (Binary.Encoding.normalized_bounded scalePositive ⟨bounds.2.2.1, bounds.2.2.2⟩) depth
+  let realEncoding := Encoding.encode (value.re / scale)
+    (Encoding.normalized_bounded scalePositive ⟨bounds.1, bounds.2.1⟩) depth
+  let imagEncoding := Encoding.encode (value.im / scale)
+    (Encoding.normalized_bounded scalePositive ⟨bounds.2.2.1, bounds.2.2.2⟩) depth
   have realInside := realEncoding.contains_value
   have imagInside := imagEncoding.contains_value
   have realLower :=
-    (Fraction.Order.Field.le_div_iff_pos scalePositive).1 realInside.1
+    (Field.le_div_iff_pos scalePositive).1 realInside.1
   have realUpper :=
-    (Fraction.Order.Field.div_le_iff_pos scalePositive).1 realInside.2
+    (Field.div_le_iff_pos scalePositive).1 realInside.2
   have imagLower :=
-    (Fraction.Order.Field.le_div_iff_pos scalePositive).1 imagInside.1
+    (Field.le_div_iff_pos scalePositive).1 imagInside.1
   have imagUpper :=
-    (Fraction.Order.Field.div_le_iff_pos scalePositive).1 imagInside.2
+    (Field.div_le_iff_pos scalePositive).1 imagInside.2
   change
-    scale * Binary.Basic.prefixValue realEncoding.digits -
+    scale * Basic.prefixValue realEncoding.digits -
           scale * (1 / 2 : Fraction.Rational) ^ depth ≤ value.re ∧
-      value.re ≤ scale * Binary.Basic.prefixValue realEncoding.digits +
+      value.re ≤ scale * Basic.prefixValue realEncoding.digits +
           scale * (1 / 2 : Fraction.Rational) ^ depth ∧
-      scale * Binary.Basic.prefixValue imagEncoding.digits -
+      scale * Basic.prefixValue imagEncoding.digits -
           scale * (1 / 2 : Fraction.Rational) ^ depth ≤ value.im ∧
-      value.im ≤ scale * Binary.Basic.prefixValue imagEncoding.digits +
+      value.im ≤ scale * Basic.prefixValue imagEncoding.digits +
           scale * (1 / 2 : Fraction.Rational) ^ depth
   refine ⟨?_, ?_, ?_, ?_⟩
   · calc
-      scale * Binary.Basic.prefixValue realEncoding.digits -
+      scale * Basic.prefixValue realEncoding.digits -
           scale * (1 / 2 : Fraction.Rational) ^ depth =
-        (Binary.Basic.prefixValue realEncoding.digits -
+        (Basic.prefixValue realEncoding.digits -
           (1 / 2 : Fraction.Rational) ^ depth) * scale := by ring1
       _ ≤ value.re := realLower
   · calc
-      value.re ≤ (Binary.Basic.prefixValue realEncoding.digits +
+      value.re ≤ (Basic.prefixValue realEncoding.digits +
           (1 / 2 : Fraction.Rational) ^ depth) * scale := realUpper
-      _ = scale * Binary.Basic.prefixValue realEncoding.digits +
+      _ = scale * Basic.prefixValue realEncoding.digits +
           scale * (1 / 2 : Fraction.Rational) ^ depth := by ring1
   · calc
-      scale * Binary.Basic.prefixValue imagEncoding.digits -
+      scale * Basic.prefixValue imagEncoding.digits -
           scale * (1 / 2 : Fraction.Rational) ^ depth =
-        (Binary.Basic.prefixValue imagEncoding.digits -
+        (Basic.prefixValue imagEncoding.digits -
           (1 / 2 : Fraction.Rational) ^ depth) * scale := by ring1
       _ ≤ value.im := imagLower
   · calc
-      value.im ≤ (Binary.Basic.prefixValue imagEncoding.digits +
+      value.im ≤ (Basic.prefixValue imagEncoding.digits +
           (1 / 2 : Fraction.Rational) ^ depth) * scale := imagUpper
-      _ = scale * Binary.Basic.prefixValue imagEncoding.digits +
+      _ = scale * Basic.prefixValue imagEncoding.digits +
           scale * (1 / 2 : Fraction.Rational) ^ depth := by ring1
 
 end Cell

@@ -15,6 +15,10 @@ import Purelib.Computation.Query.Boundary
 public import Purelib.Riemann.Periods.PolynomialPeriodInput
 public import Purelib.Riemann.Periods.PeriodObservation
 
+open Purelib.Polynomial.Dense.Gaussian
+
+open Purelib.Integration.Program.Gaussian.CCL.Replay.Observation
+
 @[expose] public section
 
 /-!
@@ -50,14 +54,14 @@ open Purelib.Polynomial in
 
 The receipt and contract share the polynomial, raw selection, policy, request and finite prefix length, retaining the
 same prepared entry. -/
-structure Observation (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+structure Observation (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
   (selection : Selection)
     (policy : Policy) (request : Request) (count : Nat) where
   /-- The original computed reduced-curve standard-period entry. -/ prepared : PreparedEntry polynomial selection
   /-- The actual finite observation receipt for the retained entry and policy. -/ recorded :
-    Program.Gaussian.CCL.Replay.Observation.Record.Recorded (program prepared.entry policy) request count
+    Record.Recorded (program prepared.entry policy) request count
   /-- The numerical and ownership contract for this exact recorded receipt. -/ contract :
-    Periods.PeriodObservation.Contract prepared.entry policy request count recorded
+    PeriodObservation.Contract prepared.entry policy request count recorded
 
 constructive_injectivity Observation
 
@@ -67,24 +71,24 @@ open Purelib.Polynomial
 /-- Record a finite observation using the supplied prepared standard-period entry.
 
 The receipt is computed once and its contract is attached to that same entry, policy, request and prefix length. -/
-def observePrepared {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+def observePrepared {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
   {selection : Selection}
     (prepared : PreparedEntry polynomial selection) (policy : Policy) (request : Request) (count : Nat) :
     Observation polynomial selection policy request count :=
   let recorded := record prepared.entry policy request count
   { prepared := prepared
     recorded := recorded
-    contract := Periods.PeriodObservation.observation_contract prepared.entry policy request count recorded }
+    contract := PeriodObservation.observation_contract prepared.entry policy request count recorded }
 
 /-- Compute a certified finite standard-period observation directly from polynomial coefficients.
 
 The finite input and raw-index checks run before the canonical entry is forced. Success retains the actual prepared
 entry and receipt; failure retains the computed input or selection evidence. -/
-def observe (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (selection :
+def observe (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial) (selection :
   Selection)
     (policy : Policy) (request : Request) (count : Nat) :
     Except (Failure polynomial selection) (Observation polynomial selection policy request count) :=
-  match Periods.PolynomialPeriodInput.prepare polynomial selection with
+  match PolynomialPeriodInput.prepare polynomial selection with
   | .error failure => .error failure
   | .ok prepared => .ok (observePrepared prepared policy request count)
 
@@ -107,19 +111,19 @@ def preparedRequest {polynomial : GaussianPolynomial} {selection : Selection}
 open Purelib.Integration in
 open Purelib.Polynomial in
 /-- Replaying the retained query trace reconstructs the exact observed receipt. -/
-theorem replay {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {selection :
+theorem replay {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial} {selection :
   Selection}
     {policy : Policy} {request : Request} {count : Nat}
     (observed : Observation polynomial selection policy request count) :
-    Integration.Program.Gaussian.CCL.Replay.Observation.Transcript.replay
-        (Purelib.CCL.Progressive.IntegrationReplay.control (program observed.prepared.entry policy))
+    Transcript.replay
+        (CCL.Progressive.IntegrationReplay.control (program observed.prepared.entry policy))
         request count observed.recorded.trace = .ok observed.recorded.observation :=
   observed.contract.numerical.replay
 
 section
 open Purelib.Polynomial
 /-- The retained selected enclosure has squared radius strictly below the requested target. -/
-theorem accurate {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {selection
+theorem accurate {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial} {selection
   : Selection}
     {policy : Policy} {request : Request} {count : Nat}
     (observed : Observation polynomial selection policy request count) :
@@ -127,7 +131,7 @@ theorem accurate {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoeffici
   observed.contract.numerical.accurate
 
 /-- The retained observation word has exactly the requested finite length. -/
-theorem length {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {selection :
+theorem length {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial} {selection :
   Selection}
     {policy : Policy} {request : Request} {count : Nat}
     (observed : Observation polynomial selection policy request count) :
@@ -141,7 +145,7 @@ open Purelib.Polynomial in
 
 The existing preparation, selected enclosure and policy are reused, and only the newly consumed query log is appended.
 -/
-def resume {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {selection :
+def resume {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial} {selection :
   Selection}
     {policy : Policy} {request : Request} {count : Nat}
     (observed : Observation polynomial selection policy request count) (extra : Nat) :
@@ -149,13 +153,13 @@ def resume {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.C
   let recorded := (observed.recorded.resume extra).recorded
   { prepared := observed.prepared
     recorded := recorded
-    contract := Periods.PeriodObservation.observation_contract
+    contract := PeriodObservation.observation_contract
       observed.prepared.entry policy request (count + extra) recorded }
 
 section
 open Purelib.Polynomial
 /-- Resuming preserves the exact selected enclosure. -/
-theorem resume_selected {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+theorem resume_selected {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
   {selection : Selection}
     {policy : Policy} {request : Request} {count : Nat}
     (observed : Observation polynomial selection policy request count) (extra : Nat) :
@@ -163,7 +167,7 @@ theorem resume_selected {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalC
   (observed.recorded.resume extra).selected_eq
 
 /-- The original observation word is a prefix of the resumed word. -/
-theorem resume_prefix {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+theorem resume_prefix {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
   {selection : Selection}
     {policy : Policy} {request : Request} {count : Nat}
     (observed : Observation polynomial selection policy request count) (extra : Nat) :
@@ -179,18 +183,18 @@ open Purelib.Polynomial in
 
 Overlaying the retained observations onto any payload-dependent source suffices to reproduce the recorded computation.
 -/
-theorem payload_erasure {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+theorem payload_erasure {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
   {selection : Selection}
     {policy : Policy} {request : Request} {count : Nat}
     (observed : Observation polynomial selection policy request count)
     {Payload : Type u} (payload : Payload)
     (outside : Payload → Nat → Program.Gaussian.Cached.Basic.CachedModel) :
-    (Program.Gaussian.CCL.Replay.Observation.Basic.computation
-        (Purelib.CCL.Progressive.IntegrationReplay.control (program observed.prepared.entry policy)) request count).run
-      (Purelib.Computation.Query.Boundary.Trace.overlay observed.recorded.trace (outside payload)) =
+    (Basic.computation
+        (CCL.Progressive.IntegrationReplay.control (program observed.prepared.entry policy)) request count).run
+      (Computation.Query.Boundary.Trace.overlay observed.recorded.trace (outside payload)) =
         ⟨.ok observed.recorded.observation, observed.recorded.trace⟩ := by
   rw [observed.recorded.eq_record]
-  exact Program.Gaussian.CCL.Replay.Observation.Noninterference.payload_erasure _ request count payload outside
+  exact Noninterference.payload_erasure _ request count payload outside
 
 end Observation
 
@@ -203,21 +207,21 @@ open Purelib.Polynomial in
 
 Both actual receipts have source-aware contracts, and the output names have an all-later-pairs operational equivalence.
 -/
-structure Comparison (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+structure Comparison (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
   (selection : Selection)
     (left right : Policy) (request : Request) (count : Nat) where
   /-- The single prepared standard-period entry shared by both policies. -/ prepared : PreparedEntry polynomial
     selection
   /-- The actual finite receipt computed with the left policy. -/ leftRecorded :
-    Program.Gaussian.CCL.Replay.Observation.Record.Recorded (program prepared.entry left) request count
+    Record.Recorded (program prepared.entry left) request count
   /-- The actual finite receipt computed with the right policy. -/ rightRecorded :
-    Program.Gaussian.CCL.Replay.Observation.Record.Recorded (program prepared.entry right) request count
+    Record.Recorded (program prepared.entry right) request count
   /-- The operational equivalence of both policy output names on the shared entry. -/ outputs :
     Gaussian.Equivalence.NamedEquivalent
     (program prepared.entry left).output.name (program prepared.entry right).output.name
-  /-- The exact observation contract for the left receipt. -/ left_observation : Periods.PeriodObservation.Contract
+  /-- The exact observation contract for the left receipt. -/ left_observation : PeriodObservation.Contract
     prepared.entry left request count leftRecorded
-  /-- The exact observation contract for the right receipt. -/ right_observation : Periods.PeriodObservation.Contract
+  /-- The exact observation contract for the right receipt. -/ right_observation : PeriodObservation.Contract
     prepared.entry right request count rightRecorded
 
 constructive_injectivity Comparison
@@ -254,7 +258,7 @@ open Purelib.Polynomial
 /-- Compute both policy receipts and their contracts from one retained prepared entry.
 
 The output-name comparison uses the same entry as both actual observations, preserving their source ownership. -/
-def comparePrepared {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+def comparePrepared {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
   {selection : Selection}
     (prepared : PreparedEntry polynomial selection)
     (left right : Policy) (request : Request) (count : Nat) :
@@ -264,22 +268,22 @@ def comparePrepared {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoeff
   { prepared := prepared
     leftRecorded := leftRecorded
     rightRecorded := rightRecorded
-    outputs := Periods.PeriodPolicies.outputs_equivalent prepared.entry left right
+    outputs := PeriodPolicies.outputs_equivalent prepared.entry left right
     left_observation :=
-      Periods.PeriodObservation.observation_contract prepared.entry left request count leftRecorded
+      PeriodObservation.observation_contract prepared.entry left request count leftRecorded
     right_observation :=
-      Periods.PeriodObservation.observation_contract prepared.entry right request count rightRecorded }
+      PeriodObservation.observation_contract prepared.entry right request count rightRecorded }
 
 /-- Compute two certified policy observations and their comparison from raw polynomial input.
 
 Curve reduction and selection checks produce the retained entry internally; each failure retains the corresponding
 finite input or index evidence. -/
 def canonical_period_contract (polynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (selection :
+  Basic.CanonicalCoefficients.CoefficientPolynomial) (selection :
   Selection)
     (left right : Policy) (request : Request) (count : Nat) :
     Except (Failure polynomial selection) (Comparison polynomial selection left right request count) :=
-  match Periods.PolynomialPeriodInput.prepare polynomial selection with
+  match PolynomialPeriodInput.prepare polynomial selection with
   | .error failure => .error failure
   | .ok prepared => .ok (comparePrepared prepared left right request count)
 
@@ -287,22 +291,22 @@ def canonical_period_contract (polynomial :
 
 Every admissible input produces its receipt for the supplied policy, positive-target request and finite prefix length.
 -/
-theorem observe_success_iff (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+theorem observe_success_iff (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
   (selection :
   Selection)
     (policy : Policy) (request : Request) (count : Nat) :
     (∃ observed, observe polynomial selection policy request count = .ok observed) ↔
-      Periods.PolynomialPeriodInput.Admissible polynomial selection := by
+      PolynomialPeriodInput.Admissible polynomial selection := by
   constructor
   · rintro ⟨observed, success⟩
-    apply (Periods.PolynomialPeriodInput.prepare_success_iff polynomial selection).mp
-    cases input : Periods.PolynomialPeriodInput.prepare polynomial selection with
+    apply (PolynomialPeriodInput.prepare_success_iff polynomial selection).mp
+    cases input : PolynomialPeriodInput.prepare polynomial selection with
     | error failure =>
         rw [observe, input] at success
         nomatch success
     | ok entry => exact ⟨entry, rfl⟩
   · intro admissible
-    rcases (Periods.PolynomialPeriodInput.prepare_success_iff polynomial selection).mpr admissible with
+    rcases (PolynomialPeriodInput.prepare_success_iff polynomial selection).mpr admissible with
       ⟨entry, success⟩
     exact ⟨observePrepared entry policy request count, by rw [observe, success]⟩
 
@@ -310,21 +314,21 @@ theorem observe_success_iff (polynomial : Polynomial.Dense.Gaussian.Basic.Canoni
 
 The success boundary is independent of the chosen policies, positive-target request and finite prefix length. -/
 theorem canonical_period_contract_success_iff (polynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+  Basic.CanonicalCoefficients.CoefficientPolynomial)
   (selection : Selection)
     (left right : Policy) (request : Request) (count : Nat) :
     (∃ comparison, canonical_period_contract polynomial selection left right request count = .ok comparison) ↔
-      Periods.PolynomialPeriodInput.Admissible polynomial selection := by
+      PolynomialPeriodInput.Admissible polynomial selection := by
   constructor
   · rintro ⟨compared, success⟩
-    apply (Periods.PolynomialPeriodInput.prepare_success_iff polynomial selection).mp
-    cases input : Periods.PolynomialPeriodInput.prepare polynomial selection with
+    apply (PolynomialPeriodInput.prepare_success_iff polynomial selection).mp
+    cases input : PolynomialPeriodInput.prepare polynomial selection with
     | error failure =>
         rw [canonical_period_contract, input] at success
         nomatch success
     | ok entry => exact ⟨entry, rfl⟩
   · intro admissible
-    rcases (Periods.PolynomialPeriodInput.prepare_success_iff polynomial selection).mpr admissible with
+    rcases (PolynomialPeriodInput.prepare_success_iff polynomial selection).mpr admissible with
       ⟨entry, success⟩
     exact ⟨comparePrepared entry left right request count, by rw [canonical_period_contract, success]⟩
 

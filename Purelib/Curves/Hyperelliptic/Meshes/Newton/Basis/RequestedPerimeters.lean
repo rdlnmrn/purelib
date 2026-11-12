@@ -109,22 +109,22 @@ open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility (surfa
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.BasisArcRequest (BasisArcPreparations)
 open Purelib.Riemann.Branches.NewtonSharedExteriorCuts (SharedExteriorCuts)
 open Purelib.Riemann.Normalization
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve branches
     higher}
-  {preparation : Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius
-    : Data.Rat.Fraction.Rational} {grid : Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid
+  {preparation : NewtonPreparation original} {target radius
+    : Rational} {grid : NewtonGrid
     preparation target radius}
-  {observations : Riemann.RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {lifted :
-    Riemann.Meshes.LiftedPuncturedGrid grid.punctured}
-  {domains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+  {observations : ProtectedObservations original} {lifted :
+    LiftedPuncturedGrid grid.punctured}
+  {domains : FaceDomainBank lifted.frames
     grid.faces.regulars}
-  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {partitions : Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid} {preparations :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.BasisArcRequest.BasisArcPreparations regular domains}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {partitions : SurfacePartitions observations grid} {preparations :
+    BasisArcPreparations regular domains}
 
 open Purelib.Riemann.Readings.RectangularObservationAssembly.ObservationMesh (ClippedAssembly)
 open Purelib.Integration.Polynomial.Rectangle.StitchedSideAreas (Entry)
@@ -137,13 +137,13 @@ open _root_.Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly (Per
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces (FacePerimeterTraces)
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces (Centered)
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.SeamAreas (seamValues)
-variable {differential : Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+variable {differential : Differential genus}
   {occurrence :
     PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
     regular domains differential}
-  {initialDepth : Nat} {fixed : Riemann.RootContinuation.NewtonRequestedObservationEnergy.Preflights domains
-    occurrence.sideOccurrence.sheet} {error : Data.Rat.Fraction.Rational}
-  {stage : Nat} {cache : Riemann.RootContinuation.NewtonObservationLocalEnergy.LocalMeshes.Numerics domains stage}
+  {initialDepth : Nat} {fixed : Preflights domains
+    occurrence.sideOccurrence.sheet} {error : Rational}
+  {stage : Nat} {cache : Numerics domains stage}
     {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PerimeterReadback.SharedPerimeter (values)
@@ -152,15 +152,15 @@ open Purelib.Curves.Hyperelliptic.Meshes.Newton.Basis.PerimeterReadback.SharedPe
 open Purelib.Riemann.Paths.RectangularPerimeterTraces (PerimeterTraces)
 open Purelib.Riemann.Periods.CenteredBilinearPath (Sample)
 
-variable (shared : Riemann.Branches.NewtonSharedExteriorCuts.SharedExteriorCuts partitions preparations)
+variable (shared : SharedExteriorCuts partitions preparations)
   {wholeDepth : Nat} {wholeFixed : (sheet : Fin 2) →
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
-  {wholeTarget : Data.Rat.Fraction.Rational}
-  (wholeRequest : Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
-    (fun sheet => Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains
+    RegularMeshes.Preflights domains sheet}
+  {wholeTarget : Rational}
+  (wholeRequest : TwoSheetRequest
+    (fun sheet => RegularMeshes.build domains
       shared.source.cuts sheet wholeDepth) wholeFixed wholeTarget)
-  {request : Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfaceRequest partitions
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains shared.surface
+  {request : SurfaceRequest partitions
+    (Surface.MeshCompatibility.surfaceMeshes partitions domains shared.surface
       occurrence.sideOccurrence.sheet initialDepth) fixed error}
 
 /-- The requested source mesh and observation whole-face mesh agree at the synchronized depth. -/
@@ -174,19 +174,19 @@ theorem common_mesh_eq_build (sameDepth : wholeRequest.depth = request.depth) :
   rfl
 
 variable (sameDepth : wholeRequest.depth = request.depth)
-  {assemblies : Surface.ExteriorRequest.Assemblies request cache
-    coefficients} {perimeters : Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.Perimeters assemblies}
-  {observationTraces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces request
+  {assemblies : Assemblies request cache
+    coefficients} {perimeters : Perimeters assemblies}
+  {observationTraces : FacePerimeterTraces request
     occurrence.sideOccurrence.position}
-  (observed : Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.Centered
+  (observed : Centered
     observationTraces cache coefficients)
-  (face : Surface.FaceAssembly perimeters
+  (face : FaceAssembly perimeters
     occurrence.sideOccurrence.position)
-  (traces : Riemann.Paths.RectangularPerimeterTraces.PerimeterTraces
+  (traces : PerimeterTraces
     ((wholeRequest.entries.get occurrence.sideOccurrence.sheet).meshes.entries.get occurrence.sideOccurrence.position))
-  {wholeAssembly : Riemann.Readings.RectangularObservationAssembly.ObservationMesh.ClippedAssembly
+  {wholeAssembly : ClippedAssembly
     ((wholeRequest.entries.get occurrence.sideOccurrence.sheet).meshes.entries.get occurrence.sideOccurrence.position)
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.SeamAreas.seamValues (sheet := occurrence.sideOccurrence.sheet) cache
+    (Surface.SeamAreas.seamValues (sheet := occurrence.sideOccurrence.sheet) cache
       coefficients occurrence.sideOccurrence.position)}
   (wholePerimeter : wholeAssembly.Perimeter)
 
@@ -194,7 +194,7 @@ include sameDepth face wholePerimeter
 
 /-- The acquired bottom side reads the observation boundary on the shared source bank. -/
 theorem common_bottom_sample_eq
-    (sample : CenteredBilinearPath.Sample (SharedPerimeter.values (occurrence := occurrence) traces cache coefficients
+    (sample : Sample (SharedPerimeter.values (occurrence := occurrence) traces cache coefficients
       .bottom)) :
     sample.originalArea = observed.bottom.originalArea := by
   let equal := common_mesh_eq_build shared wholeRequest
@@ -207,7 +207,7 @@ theorem common_bottom_sample_eq
 
 /-- The acquired right side reads the observation boundary on the shared source bank. -/
 theorem common_right_sample_eq
-    (sample : CenteredBilinearPath.Sample (SharedPerimeter.values (occurrence := occurrence) traces cache coefficients
+    (sample : Sample (SharedPerimeter.values (occurrence := occurrence) traces cache coefficients
       .right)) :
     sample.originalArea = observed.right.originalArea := by
   let equal := common_mesh_eq_build shared wholeRequest
@@ -220,7 +220,7 @@ theorem common_right_sample_eq
 
 /-- The acquired top side reads the observation boundary on the shared source bank. -/
 theorem common_top_sample_eq
-    (sample : CenteredBilinearPath.Sample (SharedPerimeter.values (occurrence := occurrence) traces cache coefficients
+    (sample : Sample (SharedPerimeter.values (occurrence := occurrence) traces cache coefficients
       .top)) :
     sample.originalArea = observed.top.originalArea := by
   let equal := common_mesh_eq_build shared wholeRequest
@@ -233,7 +233,7 @@ theorem common_top_sample_eq
 
 /-- The acquired left side reads the observation boundary on the shared source bank. -/
 theorem common_left_sample_eq
-    (sample : CenteredBilinearPath.Sample (SharedPerimeter.values (occurrence := occurrence) traces cache coefficients
+    (sample : Sample (SharedPerimeter.values (occurrence := occurrence) traces cache coefficients
       .left)) :
     sample.originalArea = observed.left.originalArea := by
   let equal := common_mesh_eq_build shared wholeRequest

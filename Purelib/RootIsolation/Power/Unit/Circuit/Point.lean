@@ -1,7 +1,7 @@
 module
 
 import Purelib.Data.Gaussian.Basic
-import all Purelib.Data.Gaussian.Coordinates.Rotation
+import Purelib.Data.Gaussian.Coordinates.Rotation
 
 import Purelib.Data.Gaussian.Norm.Basic
 import Purelib.Data.Nat.Positive
@@ -16,6 +16,8 @@ import Mathlib.Algebra.Ring.Defs
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
+
+open Purelib.Geometry.Gaussian.UnitCircle
 
 open Purelib.Data.Nat.Positive (RootDegree)
 open Purelib.Geometry.Gaussian.UnitCircle.Quarter (UnitCircuitQuarter)
@@ -57,8 +59,8 @@ open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 def unitCircuitPoint (quarter :
   UnitCircuitQuarter) (degree : RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) (index : Nat) : Gaussian :=
-  Geometry.Gaussian.UnitCircle.Quarter.unitCircuitMultiplier quarter *
-    Geometry.Gaussian.UnitCircle.Stereographic.unitQuarterPoint (Power.Unit.Circuit.Subdivision.unitCircuitParameter
+  Quarter.unitCircuitMultiplier quarter *
+    Stereographic.unitQuarterPoint (Subdivision.unitCircuitParameter
       degree degreeAtLeastTwo index)
 end Purelib.RootIsolation.Power.Unit.Circuit.Point
 
@@ -93,14 +95,14 @@ private theorem unitCircuitPoint_difference
     (degreeAtLeastTwo : 2 ≤ degree.value) (index : Nat) :
     unitCircuitPoint quarter degree degreeAtLeastTwo index -
         unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) =
-      Geometry.Gaussian.UnitCircle.Quarter.unitCircuitMultiplier quarter *
-        (Geometry.Gaussian.UnitCircle.Stereographic.unitQuarterPoint
-            (Power.Unit.Circuit.Subdivision.unitCircuitParameter degree degreeAtLeastTwo index) -
-          Geometry.Gaussian.UnitCircle.Stereographic.unitQuarterPoint
-            (Power.Unit.Circuit.Subdivision.unitCircuitParameter degree degreeAtLeastTwo (index + 1))) := by
-  apply Gaussian.Basic.ext <;>
-    simp only [unitCircuitPoint, Gaussian.Basic.mul_re, Gaussian.Basic.mul_im,
-      Gaussian.Basic.sub_re, Gaussian.Basic.sub_im] <;> ring1
+      Quarter.unitCircuitMultiplier quarter *
+        (Stereographic.unitQuarterPoint
+            (Subdivision.unitCircuitParameter degree degreeAtLeastTwo index) -
+          Stereographic.unitQuarterPoint
+            (Subdivision.unitCircuitParameter degree degreeAtLeastTwo (index + 1))) := by
+  apply Basic.ext <;>
+    simp only [unitCircuitPoint, Basic.mul_re, Basic.mul_im,
+      Basic.sub_re, Basic.sub_im] <;> ring1
 end Purelib.RootIsolation.Power.Unit.Circuit.Point
 
 end
@@ -133,9 +135,9 @@ theorem unitCircuitPoint_unit (quarter :
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (index : Nat) :
     normSq (unitCircuitPoint quarter degree degreeAtLeastTwo index) = 1 := by
-  rw [unitCircuitPoint, Gaussian.Norm.Basic.normSq_mul,
-    Geometry.Gaussian.UnitCircle.Quarter.unitCircuitMultiplier_unit,
-    Geometry.Gaussian.UnitCircle.Stereographic.unitQuarterPoint_unit, Fraction.Field.one_mul]
+  rw [unitCircuitPoint, Norm.Basic.normSq_mul,
+    Quarter.unitCircuitMultiplier_unit,
+    Stereographic.unitQuarterPoint_unit, Fraction.Field.one_mul]
 end Purelib.RootIsolation.Power.Unit.Circuit.Point
 
 end
@@ -166,14 +168,14 @@ open Purelib.Data.Gaussian
 theorem unitCircuitRotation_mul_point
     (quarter : UnitCircuitQuarter) (degree : RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) (index : Nat) :
-    Geometry.Gaussian.UnitCircle.Quarter.unitCircuitRotation quarter *
+    Quarter.unitCircuitRotation quarter *
         unitCircuitPoint quarter degree degreeAtLeastTwo index =
       ⟨1, -1⟩ *
-        Geometry.Gaussian.UnitCircle.Stereographic.unitQuarterPoint
-          (Power.Unit.Circuit.Subdivision.unitCircuitParameter degree degreeAtLeastTwo index) := by
+        Stereographic.unitQuarterPoint
+          (Subdivision.unitCircuitParameter degree degreeAtLeastTwo index) := by
   unfold unitCircuitPoint
-  rw [← Gaussian.Basic.mul_assoc,
-    Geometry.Gaussian.UnitCircle.Quarter.unitCircuitRotation_mul_multiplier]
+  rw [← Basic.mul_assoc,
+    Quarter.unitCircuitRotation_mul_multiplier]
 end Purelib.RootIsolation.Power.Unit.Circuit.Point
 
 end
@@ -204,14 +206,14 @@ open Purelib.Data.Gaussian
 theorem unitCircuitRotatedPoint_real_ge_one
     (quarter : UnitCircuitQuarter) (degree : RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) {index : Nat}
-    (indexBound : index ≤ Power.Unit.Circuit.Subdivision.unitCircuitStepCount degree degreeAtLeastTwo) :
-    1 ≤ (Geometry.Gaussian.UnitCircle.Quarter.unitCircuitRotation quarter *
+    (indexBound : index ≤ Subdivision.unitCircuitStepCount degree degreeAtLeastTwo) :
+    1 ≤ (Quarter.unitCircuitRotation quarter *
       unitCircuitPoint quarter degree degreeAtLeastTwo index).re := by
   rw [unitCircuitRotation_mul_point]
   rw [Gaussian.Coordinates.Rotation.diagonalRotation_real]
-  exact Geometry.Gaussian.UnitCircle.Stereographic.unitQuarterPoint_re_add_im_ge_one
-    (Power.Unit.Circuit.Subdivision.unitCircuitParameter_nonnegative degree degreeAtLeastTwo index)
-    (Power.Unit.Circuit.Subdivision.unitCircuitParameter_le_one degree degreeAtLeastTwo indexBound)
+  exact Stereographic.unitQuarterPoint_re_add_im_ge_one
+    (Subdivision.unitCircuitParameter_nonnegative degree degreeAtLeastTwo index)
+    (Subdivision.unitCircuitParameter_le_one degree degreeAtLeastTwo indexBound)
 end Purelib.RootIsolation.Power.Unit.Circuit.Point
 
 end
@@ -245,9 +247,9 @@ theorem unitCircuitSubdivision_liftMargin
     normSq (unitCircuitPoint quarter degree degreeAtLeastTwo index -
         unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1)) <
       (1 / 128 : Fraction.Rational) := by
-  rw [unitCircuitPoint_difference, Gaussian.Norm.Basic.normSq_mul,
-    Geometry.Gaussian.UnitCircle.Quarter.unitCircuitMultiplier_unit, Fraction.Field.one_mul]
-  exact Power.Unit.Circuit.Subdivision.unitQuarterSubdivision_liftMargin degree degreeAtLeastTwo index
+  rw [unitCircuitPoint_difference, Norm.Basic.normSq_mul,
+    Quarter.unitCircuitMultiplier_unit, Fraction.Field.one_mul]
+  exact Subdivision.unitQuarterSubdivision_liftMargin degree degreeAtLeastTwo index
 end Purelib.RootIsolation.Power.Unit.Circuit.Point
 
 end
@@ -280,10 +282,10 @@ theorem unitCircuitSubdivision_small
     (degreeAtLeastTwo : 2 ≤ degree.value) (index : Nat) :
     normSq (unitCircuitPoint quarter degree degreeAtLeastTwo index -
         unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1)) <
-      Power.Unit.Clearance.uniformRobustClearance degree degreeAtLeastTwo := by
-  rw [unitCircuitPoint_difference, Gaussian.Norm.Basic.normSq_mul,
-    Geometry.Gaussian.UnitCircle.Quarter.unitCircuitMultiplier_unit, Fraction.Field.one_mul]
-  exact Power.Unit.Circuit.Subdivision.unitQuarterSubdivision_small degree degreeAtLeastTwo index
+      Clearance.uniformRobustClearance degree degreeAtLeastTwo := by
+  rw [unitCircuitPoint_difference, Norm.Basic.normSq_mul,
+    Quarter.unitCircuitMultiplier_unit, Fraction.Field.one_mul]
+  exact Subdivision.unitQuarterSubdivision_small degree degreeAtLeastTwo index
 end Purelib.RootIsolation.Power.Unit.Circuit.Point
 
 end

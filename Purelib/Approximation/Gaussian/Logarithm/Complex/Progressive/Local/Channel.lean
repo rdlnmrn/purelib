@@ -25,6 +25,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib.Approximation.Rational.Geometric.Order (quarterRadius_succ_le)
 
 open Purelib
@@ -63,7 +65,7 @@ section Channel
 displayed `1/9` disk. -/
 def reducedLogSample {source : Nat →
   Data.Gaussian.Basic.Canonical} (channel : Channel source)
-    (disk : ∀ index, Data.Gaussian.Norm.Basic.normSq (source index) ≤ 1 / 9) :
+    (disk : ∀ index, Basic.normSq (source index) ≤ 1 / 9) :
     Channel (fun index =>
       Sample.sample (source index) (index + 1)) where
   errorScale := 2 *
@@ -82,7 +84,7 @@ def reducedLogSample {source : Nat →
       Sample.sample_later_close
         (disk later) depthOrder
     have truncation :
-        Data.Gaussian.Norm.Basic.normSq
+        Basic.normSq
             (Sample.sample (source later)
                 (later + 1) -
               Sample.sample (source later)
@@ -99,7 +101,7 @@ def reducedLogSample {source : Nat →
       Sensitivity.sample_input_close
         (disk later) (disk earlier) (earlier + 1)
     have inputEffect :
-        Data.Gaussian.Norm.Basic.normSq
+        Basic.normSq
             (Sample.sample (source later)
                 (earlier + 1) -
               Sample.sample (source earlier)
@@ -112,22 +114,22 @@ def reducedLogSample {source : Nat →
           (channel.later_close order)
           Sensitivity.sampleInputScale_nonneg)
     calc
-      Data.Gaussian.Norm.Basic.normSq
+      Basic.normSq
           (Sample.sample (source later)
               (later + 1) -
             Sample.sample (source earlier)
               (earlier + 1)) ≤
         2 *
-          (Data.Gaussian.Norm.Basic.normSq
+          (Basic.normSq
               (Sample.sample (source later)
                   (later + 1) -
                 Sample.sample (source later)
                   (earlier + 1)) +
-            Data.Gaussian.Norm.Basic.normSq
+            Basic.normSq
               (Sample.sample (source later)
                   (earlier + 1) -
                 Sample.sample (source earlier)
-                  (earlier + 1))) := Data.Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _
+                  (earlier + 1))) := Bounds.normSq_sub_le_via _ _ _
       _ ≤ 2 *
           (Geometric.Basic.quarterRadius 5 earlier +
             Sensitivity.sampleInputScale *

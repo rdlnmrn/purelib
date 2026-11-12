@@ -5,6 +5,7 @@ import Purelib.Data.Gaussian.Norm.Basic
 import Purelib.Data.Rat.Fraction
 import Purelib.Approximation.Gaussian.Enclosure.Sector.Decision
 import Purelib.Approximation.Gaussian.Process.Basic
+import Purelib.Approximation.Gaussian.Process.Observation
 import Purelib.Data.CCL.Transducer.Emission.Basic
 import Purelib.Data.CCL.Transducer.Emission.Initial
 import Purelib.Data.CCL.Transducer.Emission.Initial.Preparation
@@ -36,6 +37,8 @@ states or an arbitrary-length prefix.
 
 namespace Purelib.Data.CCL.Transducer.Initial.Observation
 
+open Purelib.Data.CCL.Transducer.Emission.Initial
+
 open Purelib.Data.ComplexContinuedFraction.Encoding in
 set_option genInjectivity false in
 /-- Distinguish the initial low-entry, unary and selected-sector observations. -/
@@ -43,7 +46,7 @@ inductive Decision where
   /-- The initial center selects the low-normalization entry. -/ | low
   /-- The initial center selects the high unary step. -/ | unary
   /-- Retain the exact sector selected by the initial center. -/ | sector (sector :
-    Data.ComplexContinuedFraction.Encoding.Sector)
+    Sector)
 
 constructive_injectivity Decision
 
@@ -73,9 +76,9 @@ Below one selects low entry; the closed one-to-13/6 band selects the center's ex
 unary emission. -/
 def classify (center : Basic.Canonical) :
   Decision :=
-  if 1 ≤ Data.Gaussian.Norm.Basic.normSq center then
-    if Data.Gaussian.Norm.Basic.normSq center ≤ 13 / 6 then .sector
-      (Data.ComplexContinuedFraction.Encoding.Sector.select center)
+  if 1 ≤ Norm.Basic.normSq center then
+    if Norm.Basic.normSq center ≤ 13 / 6 then .sector
+      (Sector.select center)
     else .unary
   else .low
 
@@ -83,21 +86,24 @@ open Purelib.Approximation.Gaussian in
 open Purelib.Data.CCL.Transducer in
 open Purelib.Data.Gaussian in
 /-- Classifying the exact initial-refined center gives the same bits as the certified initial emission. -/
-theorem classify_bits (process : Approximation.Gaussian.Process)
+theorem classify_bits (process : Process)
     (state :
   process.State) :
-    (classify (process.ball (Emission.Initial.Preparation.initialRefinedState process
+    (classify (process.ball (Preparation.initialRefinedState process
       state)).center).bits =
       (Emission.Initial.initialStep ⟨process, state⟩).bits := by
-  unfold classify Emission.Initial.initialStep
-  by_cases normalized : 1 ≤ Data.Gaussian.Norm.Basic.normSq (process.ball
-    (Emission.Initial.Preparation.initialRefinedState
-    process state)).center
+  let base := Preparation.initialRefinedState process state
+  let observation := Process.Observation.build process base
+  have accurate := Preparation.initialRefined_accurate process state
+  have uniform := Preparation.initialRefined_uniform process state
+  change (classify observation.ball.center).bits =
+    (Selection.emission ⟨process, state⟩ base observation accurate
+      (Selection.decide observation.ball uniform)).bits
+  unfold classify Selection.decide
+  by_cases normalized : 1 ≤ Norm.Basic.normSq observation.ball.center
   · rw [if_pos normalized, dif_pos normalized]
     unfold Enclosure.Sector.Decision.decide
-    by_cases upper : Data.Gaussian.Norm.Basic.normSq (process.ball (Emission.Initial.Preparation.initialRefinedState
-      process
-      state)).center ≤ 13 / 6
+    by_cases upper : Norm.Basic.normSq observation.ball.center ≤ 13 / 6
     · rw [if_pos upper, dif_pos upper]
       rfl
     · rw [if_neg upper, dif_neg upper]
@@ -115,7 +121,7 @@ section
 open Purelib.Data.CCL.Transducer
 /-- The returned bit of a certified nonempty emission is exactly the first bit of its retained word. -/
 private theorem consume_first (emitted : List Bool) (emission :
-  Data.CCL.Transducer.Emission) :
+  Emission) :
     (Machine.Step.consumeEmission emitted emission).1 = first emission.bits := by
   cases emission with
   | mk bits nonempty next =>
@@ -133,11 +139,11 @@ end
 open Purelib.Approximation.Gaussian in
 open Purelib.Data.CCL.Transducer in
 /-- One initial machine advance emits exactly the first bit classified from the same retained refined center. -/
-theorem advance_one (process : Approximation.Gaussian.Process)
+theorem advance_one (process : Process)
     (state :
   process.State) :
-    (Machine.Advance.advance (Data.CCL.Transducer.Machine.initial process state) 1).emitted =
-      [(classify (process.ball (Emission.Initial.Preparation.initialRefinedState process
+    (Machine.Advance.advance (Machine.initial process state) 1).emitted =
+      [(classify (process.ball (Preparation.initialRefinedState process
         state)).center).firstBit] := by
   change (Machine.Step.consumeEmission [] (Emission.Initial.initialStep ⟨process, state⟩)).2.emitted = _
   rw [Machine.Step.consumeEmission_emitted, consume_first, ← classify_bits,
@@ -149,9 +155,9 @@ open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
 /-- A center with squared norm strictly above 13/6 is classified as unary. -/
 theorem classify_large {center : Basic.Canonical} (large : (13 /
-  6 : Fraction.Rational) < Data.Gaussian.Norm.Basic.normSq center) :
+  6 : Fraction.Rational) < Norm.Basic.normSq center) :
     classify center = .unary := by
-  have normalized : (1 : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq center :=
+  have normalized : (1 : Fraction.Rational) ≤ Norm.Basic.normSq center :=
     (show (1 : Fraction.Rational) ≤ 13 / 6 from by decide).trans large.le
   rw [classify, if_pos normalized, if_neg (not_le_of_gt large)]
 
@@ -161,11 +167,11 @@ open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
 /-- An initial-refined center above squared norm 13/6 makes one machine advance emit exactly true. -/
 theorem advance_one_large (process :
-    Approximation.Gaussian.Process)
+    Process)
   (state : process.State)
-    (large : (13 / 6 : Fraction.Rational) < Data.Gaussian.Norm.Basic.normSq
-      (process.ball (Emission.Initial.Preparation.initialRefinedState process state)).center) :
-    (Machine.Advance.advance (Data.CCL.Transducer.Machine.initial process state) 1).emitted = [true] := by
+    (large : (13 / 6 : Fraction.Rational) < Norm.Basic.normSq
+      (process.ball (Preparation.initialRefinedState process state)).center) :
+    (Machine.Advance.advance (Machine.initial process state) 1).emitted = [true] := by
   rw [advance_one, classify_large large]
   rfl
 

@@ -97,16 +97,16 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPu
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.PairedBranchRegion (PairedBranchRequest)
 open Purelib.Riemann.Periods.PeriodMatrix (standardDifferential)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
 
 /-- Equal original branch-hole indices give identical lifted positive boundary words on the same edge and vertex banks.
 -/
-private theorem positive_boundary_eq {bank : Branches.BranchCellBank curve branches higher}
-    {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} (edges : RootEdgeBank frames) (vertices :
+private theorem positive_boundary_eq {bank : BranchCellBank curve branches higher}
+    {frames : RootFrames bank.grid} (edges : RootEdgeBank frames) (vertices :
       LiftedVertices.VertexBank bank.grid)
-    {first last : PuncturedGridFaces.BranchHole bank} (same : first.index = last.index) (sheet : Fin 2) :
+    {first last : BranchHole bank} (same : first.index = last.index) (sheet : Fin 2) :
     edges.indexedEdges vertices first.boundary sheet = edges.indexedEdges vertices last.boundary sheet := by
   rcases first with ⟨index, cell, member, cellEq, state, boxEq⟩
   rcases last with ⟨other, otherCell, otherMember, otherEq, otherState, otherBoxEq⟩
@@ -118,84 +118,84 @@ private theorem positive_boundary_eq {bank : Branches.BranchCellBank curve branc
 
 namespace AnnularEntry
 
-variable {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches higher} {preparation :
-  Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original}
-  {target radius : Purelib.Data.Rat.Fraction.Rational} {grid :
-    Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-  {current : Purelib.Riemann.Meshes.LiftedPuncturedGrid grid.punctured}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames
+variable {original : BranchCellBank curve branches higher} {preparation :
+  NewtonPreparation original}
+  {target radius : Rational} {grid :
+    NewtonGrid preparation target radius}
+  {current : LiftedPuncturedGrid grid.punctured}
+  {domains : FaceDomainBank current.frames
     grid.faces.regulars} {i j : Fin genus}
-  {stage : Nat} {cache : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+  {stage : Nat} {cache : Numerics
     domains stage}
 
 /-- Positive boundary polygons on both sheets of the literal excision hole. -/
 def physicalHoleArea (entry : Excision.AnnularEntry grid current)
-    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) current.mesh) (right :
-      TrianglePrimitiveReadings.TriangleReadings (cache.get j) current.mesh) : Gaussian :=
+    (left : TriangleReadings (cache.get i) current.mesh) (right :
+      TriangleReadings (cache.get j) current.mesh) : Gaussian :=
   let value := fun edge => (⟨edgeValuation current.mesh left.values edge,
-    CanonicalEdgeValues.edgeValuation current.mesh right.values edge⟩ : Stokes.PrimitivePoint)
+    CanonicalEdgeValues.edgeValuation current.mesh right.values edge⟩ : PrimitivePoint)
   let polygon := fun sheet => PairedIncrementArea.area
     ((current.edges.indexedEdges current.vertices entry.hole.boundary sheet).map value)
   polygon 0 + polygon 1
 
 /-- The band compiler's two positive polygons equal the original excision entry's physical-hole area. -/
 theorem band_physicalHoleArea (entry : Excision.AnnularEntry grid current)
-    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) current.mesh) (right :
-      TrianglePrimitiveReadings.TriangleReadings (cache.get j) current.mesh) :
+    (left : TriangleReadings (cache.get i) current.mesh) (right :
+      TriangleReadings (cache.get j) current.mesh) :
     let value := fun edge => (⟨edgeValuation current.mesh left.values edge,
-      CanonicalEdgeValues.edgeValuation current.mesh right.values edge⟩ : Stokes.PrimitivePoint)
+      CanonicalEdgeValues.edgeValuation current.mesh right.values edge⟩ : PrimitivePoint)
     let polygon := fun sheet => PairedIncrementArea.area
       ((current.edges.indexedEdges current.vertices (NewtonBandWindowHole.fineHole entry.annulus (current :=
         current)).hole.boundary sheet).map value)
-    polygon 0 + polygon 1 = Curves.Hyperelliptic.Meshes.Newton.PhysicalHoleReadback.AnnularEntry.physicalHoleArea entry
+    polygon 0 + polygon 1 = AnnularEntry.physicalHoleArea entry
       left right := by
   intro value polygon
   apply congrArg₂ (· + ·)
   · exact congrArg (fun word => PairedIncrementArea.area (word.map value))
-      (Curves.Hyperelliptic.Meshes.Newton.PhysicalHoleReadback.positive_boundary_eq current.edges current.vertices
+      (PhysicalHoleReadback.positive_boundary_eq current.edges current.vertices
         (NewtonBandWindowHole.fineHole entry.annulus (current := current)).hole_index 0)
   · exact congrArg (fun word => PairedIncrementArea.area (word.map value))
-      (Curves.Hyperelliptic.Meshes.Newton.PhysicalHoleReadback.positive_boundary_eq current.edges current.vertices
+      (PhysicalHoleReadback.positive_boundary_eq current.edges current.vertices
         (NewtonBandWindowHole.fineHole entry.annulus (current := current)).hole_index 1)
 
 end AnnularEntry
 
 namespace PairedBranchRequest
 
-variable {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher} {lifted :
-  Purelib.Riemann.Meshes.LiftedPuncturedGrid base}
-  {bank : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted}
-    {preparation : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation
+variable {base : FramedPuncturedGrid curve branches higher} {lifted :
+  LiftedPuncturedGrid base}
+  {bank : BasedBranchBank lifted}
+    {preparation : NewtonPreparation
     base.bank.toBranchCellBank}
-  {target radius : Purelib.Data.Rat.Fraction.Rational} {grid :
-    Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-  {current : Purelib.Riemann.Meshes.LiftedPuncturedGrid grid.punctured}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames
+  {target radius : Rational} {grid :
+    NewtonGrid preparation target radius}
+  {current : LiftedPuncturedGrid grid.punctured}
+  {domains : FaceDomainBank current.frames
     grid.faces.regulars} {i j : Fin genus}
-  {entry : Purelib.Curves.Hyperelliptic.Meshes.Newton.AllHoles.Excision.AnnularEntry grid current} {sheet : Fin 2}
-  {leftFixed : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential i)}
-  {rightFixed : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential j)}
-  {error : Purelib.Data.Rat.Fraction.Rational} {floor stage : Nat} {cache :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  {entry : Excision.AnnularEntry grid current} {sheet : Fin 2}
+  {leftFixed : FaceMagnitudeBank domains
+    (Riemann.Periods.PeriodMatrix.standardDifferential i)}
+  {rightFixed : FaceMagnitudeBank domains
+    (Riemann.Periods.PeriodMatrix.standardDifferential j)}
+  {error : Rational} {floor stage : Nat} {cache :
+    Numerics domains stage}
 
 /-- The paired branch request reads exactly the original excision entry's physical-hole area on the supplied triangle
 readings. -/
 theorem physicalHoleArea_eq (request : PairedBranchRegion.PairedBranchRequest bank entry sheet leftFixed rightFixed
   error floor)
-    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) current.mesh) (right :
-      TrianglePrimitiveReadings.TriangleReadings (cache.get j) current.mesh) :
+    (left : TriangleReadings (cache.get i) current.mesh) (right :
+      TriangleReadings (cache.get j) current.mesh) :
     PhysicalCorrection.physicalHoleArea request left right =
-      Curves.Hyperelliptic.Meshes.Newton.PhysicalHoleReadback.AnnularEntry.physicalHoleArea entry left right := by
+      AnnularEntry.physicalHoleArea entry left right := by
   let value := fun edge => (⟨edgeValuation current.mesh left.values edge,
-    CanonicalEdgeValues.edgeValuation current.mesh right.values edge⟩ : Stokes.PrimitivePoint)
+    CanonicalEdgeValues.edgeValuation current.mesh right.values edge⟩ : PrimitivePoint)
   apply congrArg₂ (· + ·)
   · exact congrArg (fun word => PairedIncrementArea.area (word.map value))
-      (Curves.Hyperelliptic.Meshes.Newton.PhysicalHoleReadback.positive_boundary_eq current.edges current.vertices
+      (PhysicalHoleReadback.positive_boundary_eq current.edges current.vertices
         (WindowHole.fineHole request.outer (current := current)).hole_index 0)
   · exact congrArg (fun word => PairedIncrementArea.area (word.map value))
-      (Curves.Hyperelliptic.Meshes.Newton.PhysicalHoleReadback.positive_boundary_eq current.edges current.vertices
+      (PhysicalHoleReadback.positive_boundary_eq current.edges current.vertices
         (WindowHole.fineHole request.outer (current := current)).hole_index 1)
 
 end PairedBranchRequest

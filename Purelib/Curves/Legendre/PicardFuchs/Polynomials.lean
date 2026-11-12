@@ -46,40 +46,40 @@ namespace Purelib.Curves.Legendre.PicardFuchs.Polynomials
 
 /-- The parameter-independent factor `g(x) = x(x-1)`. -/
 def basePolynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial := ⟨[1,
+  Basic.CanonicalCoefficients.CoefficientPolynomial := ⟨[1,
   -1, 0]⟩
 
 /-- The numerator `x g(x)` of the parameter derivative of `x dx/y`. -/
 def weightedBasePolynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+  Basic.CanonicalCoefficients.CoefficientPolynomial
   := ⟨[1, -1, 0, 0]⟩
 
 /-- The explicit spatial derivative of the Legendre cubic. -/
 def spatialDerivativePolynomial (parameter :
   Data.Gaussian.Basic.Canonical) :
-    Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial :=
+    Basic.CanonicalCoefficients.CoefficientPolynomial :=
   ⟨[3, -2 * (1 + parameter), parameter]⟩
 
 /-- The exact primitive numerator used in the first connection row. -/
 def firstPrimitivePolynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial := ⟨[2, -2, 0]⟩
+  Basic.CanonicalCoefficients.CoefficientPolynomial := ⟨[2, -2, 0]⟩
 
 /-- The exact primitive numerator used in the second connection row. -/
 def secondPrimitivePolynomial (parameter :
   Data.Gaussian.Basic.Canonical) :
-    Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial :=
+    Basic.CanonicalCoefficients.CoefficientPolynomial :=
   ⟨[2 * parameter, -2 * parameter, 0]⟩
 
 /-- The exact primitive numerator for the second-order scalar equation. -/
 def picardFuchsPrimitivePolynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial :=
+  Basic.CanonicalCoefficients.CoefficientPolynomial :=
   ⟨[2, -4, 2, 0, 0]⟩
 
 /-- The base polynomial evaluates to x times x minus one. -/
 @[simp] theorem basePolynomial_eval (point :
   Data.Gaussian.Basic.Canonical) :
-    Curves.Legendre.PicardFuchs.Polynomials.basePolynomial.eval point = point * (point - 1) := by
-  unfold PicardFuchs.Polynomials.basePolynomial DensePolynomial.eval
+    basePolynomial.eval point = point * (point - 1) := by
+  unfold basePolynomial DensePolynomial.eval
     DensePolynomial.evalCoeffs
   simp only [List.foldl_cons, List.foldl_nil]
   ring1
@@ -87,9 +87,9 @@ def picardFuchsPrimitivePolynomial :
 /-- The weighted base polynomial evaluates to x times the base quadratic. -/
 @[simp] theorem weightedBasePolynomial_eval (point :
   Data.Gaussian.Basic.Canonical) :
-    Curves.Legendre.PicardFuchs.Polynomials.weightedBasePolynomial.eval point =
+    weightedBasePolynomial.eval point =
       point * (point * (point - 1)) := by
-  unfold PicardFuchs.Polynomials.weightedBasePolynomial
+  unfold weightedBasePolynomial
     DensePolynomial.eval
     DensePolynomial.evalCoeffs
   simp only [List.foldl_cons, List.foldl_nil]
@@ -112,7 +112,7 @@ extensionality. -/
 theorem spatialDerivativePolynomial_matches_automatic
     (parameter point : Data.Gaussian.Basic.Canonical) :
     (spatialDerivativePolynomial parameter).eval point =
-      (Purelib.Polynomial.Dense.Gaussian.GCD.derivative (Purelib.Curves.Legendre.Paths.polynomial parameter)).eval point
+      (GCD.derivative (Paths.polynomial parameter)).eval point
         := by
   rw [spatialDerivativePolynomial_eval]
   unfold GCD.derivative
@@ -125,8 +125,8 @@ theorem spatialDerivativePolynomial_matches_automatic
 /-- The first primitive numerator evaluates to twice the base quadratic. -/
 @[simp] theorem firstPrimitivePolynomial_eval (point :
   Data.Gaussian.Basic.Canonical) :
-    Curves.Legendre.PicardFuchs.Polynomials.firstPrimitivePolynomial.eval point = 2 * (point * (point - 1)) := by
-  unfold PicardFuchs.Polynomials.firstPrimitivePolynomial
+    firstPrimitivePolynomial.eval point = 2 * (point * (point - 1)) := by
+  unfold firstPrimitivePolynomial
     DensePolynomial.eval
     DensePolynomial.evalCoeffs
   simp only [List.foldl_cons, List.foldl_nil]
@@ -137,7 +137,7 @@ theorem spatialDerivativePolynomial_matches_automatic
     (parameter point : Data.Gaussian.Basic.Canonical) :
     (secondPrimitivePolynomial parameter).eval point =
       2 * parameter * (point * (point - 1)) := by
-  unfold PicardFuchs.Polynomials.secondPrimitivePolynomial
+  unfold secondPrimitivePolynomial
     DensePolynomial.eval
     DensePolynomial.evalCoeffs
   simp only [List.foldl_cons, List.foldl_nil]
@@ -146,9 +146,9 @@ theorem spatialDerivativePolynomial_matches_automatic
 /-- The scalar-equation primitive numerator evaluates to twice the square of the base quadratic. -/
 @[simp] theorem picardFuchsPrimitivePolynomial_eval (point :
   Data.Gaussian.Basic.Canonical) :
-    Curves.Legendre.PicardFuchs.Polynomials.picardFuchsPrimitivePolynomial.eval point =
+    picardFuchsPrimitivePolynomial.eval point =
       2 * (point * (point - 1)) ^ 2 := by
-  unfold PicardFuchs.Polynomials.picardFuchsPrimitivePolynomial
+  unfold picardFuchsPrimitivePolynomial
     DensePolynomial.eval
     DensePolynomial.evalCoeffs
   simp only [List.foldl_cons, List.foldl_nil]
@@ -157,12 +157,12 @@ theorem spatialDerivativePolynomial_matches_automatic
 /-- Automatic differentiation of the first exact primitive is the displayed linear polynomial. -/
 theorem firstPrimitiveDerivative_eval (point :
   Data.Gaussian.Basic.Canonical) :
-    (Purelib.Polynomial.Dense.Gaussian.GCD.derivative
+    (GCD.derivative
       firstPrimitivePolynomial).eval point =
       4 * point - 2 := by
   unfold GCD.derivative
   rw [Derivative.eval_derivative]
-  unfold PicardFuchs.Polynomials.firstPrimitivePolynomial
+  unfold firstPrimitivePolynomial
     Derivative.evalDerivativeCoeffs
     Derivative.evalDerivativeStep
   simp only [List.foldl_cons, List.foldl_nil]
@@ -171,12 +171,12 @@ theorem firstPrimitiveDerivative_eval (point :
 /-- Automatic differentiation of the second exact primitive retains its displayed parameter factor. -/
 theorem secondPrimitiveDerivative_eval (parameter point :
   Data.Gaussian.Basic.Canonical) :
-    (Purelib.Polynomial.Dense.Gaussian.GCD.derivative
+    (GCD.derivative
       (secondPrimitivePolynomial parameter)).eval point =
         parameter * (4 * point - 2) := by
   unfold GCD.derivative
   rw [Derivative.eval_derivative]
-  unfold PicardFuchs.Polynomials.secondPrimitivePolynomial
+  unfold secondPrimitivePolynomial
     Derivative.evalDerivativeCoeffs
     Derivative.evalDerivativeStep
   simp only [List.foldl_cons, List.foldl_nil]
@@ -185,12 +185,12 @@ theorem secondPrimitiveDerivative_eval (parameter point :
 /-- Automatic differentiation of the scalar-equation primitive numerator. -/
 theorem picardFuchsPrimitiveDerivative_eval (point :
   Data.Gaussian.Basic.Canonical) :
-    (Purelib.Polynomial.Dense.Gaussian.GCD.derivative
+    (GCD.derivative
       picardFuchsPrimitivePolynomial).eval point =
         4 * (point * (point - 1)) * (2 * point - 1) := by
   unfold GCD.derivative
   rw [Derivative.eval_derivative]
-  unfold PicardFuchs.Polynomials.picardFuchsPrimitivePolynomial
+  unfold picardFuchsPrimitivePolynomial
     Derivative.evalDerivativeCoeffs
     Derivative.evalDerivativeStep
   simp only [List.foldl_cons, List.foldl_nil]
@@ -236,19 +236,19 @@ namespace Purelib.Curves.Legendre.PicardFuchs.Polynomials
 
 /-- The dense polynomial square of x times x minus one. -/
 def squaredBasePolynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+  Basic.CanonicalCoefficients.CoefficientPolynomial
   := ⟨[1, -2, 1, 0, 0]⟩
 
 /-- The dense polynomial x times the square of x times x minus one. -/
 def weightedSquaredBasePolynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial :=
+  Basic.CanonicalCoefficients.CoefficientPolynomial :=
   ⟨[1, -2, 1, 0, 0, 0]⟩
 
 /-- The squared base polynomial evaluates to the square of the base quadratic. -/
 @[simp] theorem squaredBasePolynomial_eval (point :
   Data.Gaussian.Basic.Canonical) :
-    Curves.Legendre.PicardFuchs.Polynomials.squaredBasePolynomial.eval point = (point * (point - 1)) ^ 2 := by
-  unfold PicardFuchs.Polynomials.squaredBasePolynomial
+    squaredBasePolynomial.eval point = (point * (point - 1)) ^ 2 := by
+  unfold squaredBasePolynomial
     DensePolynomial.eval
     DensePolynomial.evalCoeffs
   simp only [List.foldl_cons, List.foldl_nil]
@@ -257,9 +257,9 @@ def weightedSquaredBasePolynomial :
 /-- The weighted squared base polynomial evaluates to x times the squared base quadratic. -/
 @[simp] theorem weightedSquaredBasePolynomial_eval (point :
   Data.Gaussian.Basic.Canonical) :
-    Curves.Legendre.PicardFuchs.Polynomials.weightedSquaredBasePolynomial.eval point =
+    weightedSquaredBasePolynomial.eval point =
       point * (point * (point - 1)) ^ 2 := by
-  unfold PicardFuchs.Polynomials.weightedSquaredBasePolynomial
+  unfold weightedSquaredBasePolynomial
     DensePolynomial.eval
     DensePolynomial.evalCoeffs
   simp only [List.foldl_cons, List.foldl_nil]

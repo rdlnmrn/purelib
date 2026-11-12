@@ -40,14 +40,14 @@ does not repeat those calculations or recover an inverse by choice.
 
 namespace Purelib.Algebra.Quadratic.Ternary.Basic.TernaryForm
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Field.ExplicitField K]
 section
 
 /-- Reflection in the form-perpendicular plane to a non-null vector. The first outer-product argument is the form-dual
 vector; for the Euclidean form this reduces to the paper's displayed reflection matrix. -/
-def reflection (form : Ternary.Basic.TernaryForm K) (vector :
+def reflection (form : TernaryForm K) (vector :
   Coordinates3.Vector K)
-    (_nonNull : form.quadrance vector ≠ 0) : Coordinates3.Matrix3 K :=
+    (_nonNull : form.quadrance vector ≠ 0) : Matrix3 K :=
   Matrix3.sub Matrix3.identity
     (Matrix3.scale (2 / form.quadrance vector)
       (Matrix3.outer (form.dual vector) vector))
@@ -55,7 +55,7 @@ def reflection (form : Ternary.Basic.TernaryForm K) (vector :
 /-- Reflection subtracts twice the bilinear projection onto its non-null normal.
 
 The row-action formula uses the form's quadrance as its explicitly nonzero denominator. -/
-theorem rowMul_reflection (form : Ternary.Basic.TernaryForm
+theorem rowMul_reflection (form : TernaryForm
   K) (vector : Coordinates3.Vector K)
     (nonNull : form.quadrance vector ≠ 0) (other : Coordinates3.Vector K) :
     Matrix3.rowMul other (form.reflection vector nonNull) =
@@ -63,17 +63,17 @@ theorem rowMul_reflection (form : Ternary.Basic.TernaryForm
         (Coordinates3.Vector.scale
           (2 * form.bilinear other vector / form.quadrance vector) vector) := by
   have bilinearDual := form.bilinear_eq_dot_dual other vector
-  ext <;> unfold Ternary.Basic.TernaryForm.reflection Matrix3.rowMul Matrix3.sub Matrix3.identity
+  ext <;> unfold reflection Matrix3.rowMul Matrix3.sub Matrix3.identity
     Matrix3.scale Matrix3.outer Coordinates3.Vector.sub Coordinates3.Vector.scale <;>
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv] <;>
-    unfold Ternary.Basic.TernaryForm.bilinear Ternary.Basic.TernaryForm.dual Matrix3.rowMul
+    simp only [Field.ExplicitField.div_eq_mul_inv] <;>
+    unfold bilinear dual Matrix3.rowMul
       Coordinates3.Vector.dot at bilinearDual ⊢ <;>
     rw [bilinearDual] <;> ring1
 
 /-- If two displayed vectors have the same quadrance and non-null difference, reflection in that difference maps the
 first vector to the second. This is the finite reduction step in the constructive Cartan--Dieudonne argument. -/
 theorem rowMul_reflection_difference (form :
-  Ternary.Basic.TernaryForm K)
+  TernaryForm K)
     (first second : Coordinates3.Vector K)
     (equalQuadrance : form.quadrance first = form.quadrance second)
     (differenceNonNull :
@@ -95,25 +95,25 @@ theorem rowMul_reflection_difference (form :
         ring1
       _ = form.quadrance (Coordinates3.Vector.sub first second) :=
         (form.quadrance_sub first second).symm
-  have cancel := Algebra.Field.ExplicitField.mul_inv_cancel
+  have cancel := Field.ExplicitField.mul_inv_cancel
     (form.quadrance (Coordinates3.Vector.sub first second)) differenceNonNull
   have coefficient :
       2 * form.bilinear first (Coordinates3.Vector.sub first second) /
           form.quadrance (Coordinates3.Vector.sub first second) = 1 := by
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    simp only [Field.ExplicitField.div_eq_mul_inv]
     rw [twiceBilinear, cancel]
   rw [form.rowMul_reflection, coefficient, Coordinates3.Vector.one_scale]
   ext <;> unfold Coordinates3.Vector.sub <;> ring1
 
 /-- The non-null reflection coefficient satisfies the scalar identity giving involutivity. -/
 private theorem reflection_coefficient (form :
-  Ternary.Basic.TernaryForm K)
+  TernaryForm K)
     (vector : Coordinates3.Vector K) (nonNull : form.quadrance vector ≠ 0) :
     (2 / form.quadrance vector) ^ 2 * form.quadrance vector =
       2 * (2 / form.quadrance vector) := by
   have cancel : form.quadrance vector * (form.quadrance vector)⁻¹ = (1 : K) :=
-    Algebra.Field.ExplicitField.mul_inv_cancel (form.quadrance vector) nonNull
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    Field.ExplicitField.mul_inv_cancel (form.quadrance vector) nonNull
+  simp only [Field.ExplicitField.div_eq_mul_inv]
   calc
     (2 * (form.quadrance vector)⁻¹) ^ 2 * form.quadrance vector =
         4 * (form.quadrance vector * (form.quadrance vector)⁻¹) *
@@ -123,7 +123,7 @@ private theorem reflection_coefficient (form :
       ring1
 
 /-- Reflection in a non-null normal squares to the identity matrix. -/
-theorem reflection_square (form : Ternary.Basic.TernaryForm
+theorem reflection_square (form : TernaryForm
   K) (vector : Coordinates3.Vector K)
     (nonNull : form.quadrance vector ≠ 0) :
     Matrix3.mul (form.reflection vector nonNull)
@@ -146,7 +146,7 @@ theorem reflection_square (form : Ternary.Basic.TernaryForm
               Coordinates3.Vector.dot vector (form.dual vector) -
             2 * (2 / form.quadrance vector))
           (Matrix3.outer (form.dual vector) vector)) := by
-      ext <;> unfold Ternary.Basic.TernaryForm.reflection Matrix3.mul Matrix3.sub Matrix3.add
+      ext <;> unfold reflection Matrix3.mul Matrix3.sub Matrix3.add
         Matrix3.identity Matrix3.scale Matrix3.outer Coordinates3.Vector.dot <;> ring1
     _ =
       Matrix3.add Matrix3.identity
@@ -162,16 +162,16 @@ theorem reflection_square (form : Ternary.Basic.TernaryForm
 
 /-- Reflection negates its non-null normal vector. -/
 theorem rowMul_self_reflection (form :
-  Ternary.Basic.TernaryForm K) (vector : Coordinates3.Vector K)
+  TernaryForm K) (vector : Coordinates3.Vector K)
     (nonNull : form.quadrance vector ≠ 0) :
     Matrix3.rowMul vector (form.reflection vector nonNull) =
       Coordinates3.Vector.neg vector := by
   have cancel : form.quadrance vector * (form.quadrance vector)⁻¹ = (1 : K) :=
-    Algebra.Field.ExplicitField.mul_inv_cancel (form.quadrance vector) nonNull
+    Field.ExplicitField.mul_inv_cancel (form.quadrance vector) nonNull
   have factor :
       2 * form.bilinear vector vector / form.quadrance vector = (2 : K) := by
     change 2 * form.quadrance vector / form.quadrance vector = (2 : K)
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    simp only [Field.ExplicitField.div_eq_mul_inv]
     calc
       2 * form.quadrance vector * (form.quadrance vector)⁻¹ =
           2 * (form.quadrance vector * (form.quadrance vector)⁻¹) := by
@@ -182,29 +182,29 @@ theorem rowMul_self_reflection (form :
 
 /-- Reflection fixes every vector perpendicular to its normal. -/
 theorem rowMul_reflection_of_perpendicular (form :
-  Ternary.Basic.TernaryForm K)
+  TernaryForm K)
     (vector : Coordinates3.Vector K) (nonNull : form.quadrance vector ≠ 0)
     (other : Coordinates3.Vector K) (perpendicular : form.Perpendicular other vector) :
     Matrix3.rowMul other (form.reflection vector nonNull) = other := by
-  unfold Ternary.Basic.TernaryForm.Perpendicular at perpendicular
+  unfold Perpendicular at perpendicular
   rw [form.rowMul_reflection vector nonNull, perpendicular, mul_zero,
-    Algebra.Field.ExplicitField.zero_div]
+    Field.ExplicitField.zero_div]
   ext <;> unfold Coordinates3.Vector.sub Coordinates3.Vector.scale <;> ring1
 
 /-- Reflection in a non-null normal has determinant minus one. -/
 theorem determinant_reflection (form :
-  Ternary.Basic.TernaryForm K)
+  TernaryForm K)
     (vector : Coordinates3.Vector K) (nonNull : form.quadrance vector ≠ 0) :
     Matrix3.determinant (form.reflection vector nonNull) = -1 := by
   have cancel : form.quadrance vector * (form.quadrance vector)⁻¹ = (1 : K) :=
-    Algebra.Field.ExplicitField.mul_inv_cancel (form.quadrance vector) nonNull
+    Field.ExplicitField.mul_inv_cancel (form.quadrance vector) nonNull
   have dualPair : Coordinates3.Vector.dot vector (form.dual vector) =
       form.quadrance vector := by
     rw [← form.bilinear_eq_dot_dual]
     rfl
-  unfold Matrix3.determinant Ternary.Basic.TernaryForm.reflection Matrix3.sub Matrix3.identity
+  unfold Matrix3.determinant reflection Matrix3.sub Matrix3.identity
     Matrix3.scale Matrix3.outer
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  simp only [Field.ExplicitField.div_eq_mul_inv]
   calc
     _ = 1 - 2 * (form.quadrance vector)⁻¹ *
         Coordinates3.Vector.dot vector (form.dual vector) := by
@@ -226,8 +226,8 @@ private theorem reflection_bilinear_scalar
       (2 * first / quadrance) * (2 * second / quadrance) * quadrance =
       base := by
   have cancel : quadrance * quadrance⁻¹ = (1 : K) :=
-    Algebra.Field.ExplicitField.mul_inv_cancel quadrance quadranceNonzero
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    Field.ExplicitField.mul_inv_cancel quadrance quadranceNonzero
+  simp only [Field.ExplicitField.div_eq_mul_inv]
   calc
     base - (2 * second * quadrance⁻¹) * first -
           (2 * first * quadrance⁻¹) * second +
@@ -239,7 +239,7 @@ private theorem reflection_bilinear_scalar
 
 /-- The reflection matrix preserves the displayed ternary form. -/
 theorem reflection_preservesMatrix (form :
-  Ternary.Basic.TernaryForm K)
+  TernaryForm K)
     (vector : Coordinates3.Vector K) (nonNull : form.quadrance vector ≠ 0) :
     Matrix3.mul
         (Matrix3.mul (form.reflection vector nonNull) form.matrix)
@@ -258,7 +258,7 @@ theorem reflection_preservesMatrix (form :
     (form.quadrance vector) nonNull
 
 /-- The reflection packaged as an executable form isometry. -/
-def reflectionIsometry (form : Ternary.Basic.TernaryForm K)
+def reflectionIsometry (form : TernaryForm K)
   (vector : Coordinates3.Vector K)
     (nonNull : form.quadrance vector ≠ 0) : form.Isometry where
   matrix := form.reflection vector nonNull
@@ -383,7 +383,7 @@ theorem trace_reflection_product (form : TernaryForm K) (first second : Vector3 
       3 - 4 * form.spread first second firstNonNull secondNonNull := by
   have firstCancel := ExplicitField.mul_inv_cancel (form.quadrance first) firstNonNull
   have secondCancel := ExplicitField.mul_inv_cancel (form.quadrance second) secondNonNull
-  have productInverse := Purelib.Algebra.Field.Inverse.inverse_product firstNonNull secondNonNull
+  have productInverse := Inverse.inverse_product firstNonNull secondNonNull
   calc
     _ = 3 - 2 * (form.quadrance first * (form.quadrance first)⁻¹) -
         2 * (form.quadrance second * (form.quadrance second)⁻¹) +

@@ -36,21 +36,21 @@ set_option genInjectivity false in
 
 Each original segment count pays its own energy contribution plus the common allowance; the indexed family keeps the
 exact input coefficients and concatenation chain. -/
-inductive BasisTraceFamily {genus : Nat} (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+inductive BasisTraceFamily {genus : Nat} (coefficients : Energy.GaussianVector genus)
     (energy allowance : IncrementArea.Coordinate) :
     List Nat → List (List IncrementArea.Gaussian) → IncrementArea.Gaussian → IncrementArea.Gaussian →
       IncrementArea.Gaussian → IncrementArea.Gaussian → Type where
   /-- The empty trace family at one retained endpoint and potential. -/ | nil (first potential : IncrementArea.Gaussian)
-    : Purelib.Integration.Path.Homogeneous.FamilyConnection.BasisTraceFamily coefficients energy allowance [] [] first
+    : FamilyConnection.BasisTraceFamily coefficients energy allowance [] [] first
     first potential potential
   /-- Prepend the exact head trace to its endpoint-compatible retained tail family. -/ | cons {count : Nat} {counts :
     List Nat} {path : List IncrementArea.Gaussian} {paths : List (List IncrementArea.Gaussian)}
       {first middle last firstPotential middlePotential lastPotential : IncrementArea.Gaussian}
       (head : HomogeneousTraceConnection.HomogeneousTrace coefficients path first middle firstPotential middlePotential
         ((count : IncrementArea.Coordinate) * energy + allowance))
-      (tail : Purelib.Integration.Path.Homogeneous.FamilyConnection.BasisTraceFamily coefficients energy allowance
+      (tail : FamilyConnection.BasisTraceFamily coefficients energy allowance
         counts paths middle last middlePotential lastPotential) :
-      Purelib.Integration.Path.Homogeneous.FamilyConnection.BasisTraceFamily coefficients energy allowance (count ::
+      FamilyConnection.BasisTraceFamily coefficients energy allowance (count ::
         counts) (path :: paths) first last firstPotential lastPotential
 
 constructive_injectivity BasisTraceFamily
@@ -58,19 +58,19 @@ constructive_injectivity BasisTraceFamily
 namespace BasisTraceFamily
 
 variable {genus : Nat} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
-  {energy allowance : Purelib.Integration.Path.IncrementArea.Coordinate} {counts : List Nat} {paths : List (List
-    Purelib.Integration.Path.IncrementArea.Gaussian)}
-  {first last firstPotential lastPotential : Purelib.Integration.Path.IncrementArea.Gaussian}
+  {energy allowance : IncrementArea.Coordinate} {counts : List Nat} {paths : List (List
+    IncrementArea.Gaussian)}
+  {first last firstPotential lastPotential : IncrementArea.Gaussian}
 
 open Purelib.Integration.Budget in
 open Purelib.Integration.Path in
 /-- Connect the original ordered trace family into a homogeneous trace with its certified family loss. -/
 @[expose] def connect : {counts : List Nat} → {paths : List (List IncrementArea.Gaussian)} →
     {first last firstPotential lastPotential : IncrementArea.Gaussian} →
-    Homogeneous.FamilyConnection.BasisTraceFamily coefficients energy allowance counts paths first last firstPotential
+    BasisTraceFamily coefficients energy allowance counts paths first last firstPotential
       lastPotential →
     HomogeneousTraceConnection.HomogeneousTrace coefficients paths.flatten first last firstPotential lastPotential
-      (Trace.Family.basisFamilyLoss counts energy allowance)
+      (basisFamilyLoss counts energy allowance)
   | _, _, _, _, _, _, .nil first potential => HomogeneousTraceConnection.HomogeneousTrace.empty coefficients first
     potential
   | _, _, _, _, _, _, .cons head tail => head.append tail.connect
@@ -80,9 +80,9 @@ end BasisTraceFamily
 namespace BasisFamilyAllowance
 
 variable {genus : Nat} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
-  {parentCount : Nat} {counts : List Nat} {target : Purelib.Integration.Path.IncrementArea.Coordinate} {paths : List
-    (List Purelib.Integration.Path.IncrementArea.Gaussian)}
-  {first last firstPotential lastPotential : Purelib.Integration.Path.IncrementArea.Gaussian}
+  {parentCount : Nat} {counts : List Nat} {target : IncrementArea.Coordinate} {paths : List
+    (List IncrementArea.Gaussian)}
+  {first last firstPotential lastPotential : IncrementArea.Gaussian}
 
 open Purelib.Algebra in
 open Purelib.Data.Gaussian in
@@ -94,8 +94,8 @@ open Purelib.Riemann.Readings in
 
 The exact family-length certificate pays the zero-energy common allowances against the target; the returned trace reuses
 the joined summary, trace and corrected value. -/
-@[expose] def connect (allocation : Trace.Family.BasisFamilyAllowance parentCount target)
-    (family : Homogeneous.FamilyConnection.BasisTraceFamily coefficients 0
+@[expose] def connect (allocation : BasisFamilyAllowance parentCount target)
+    (family : BasisTraceFamily coefficients 0
       (allocation.allowance + allocation.allowance + allocation.allowance + allocation.allowance)
       counts paths first last firstPotential lastPotential)
     (counted : counts.length = parentCount) :
@@ -106,9 +106,9 @@ the joined summary, trace and corrected value. -/
     FiniteSum.Fin.sumFin_zero.symm.trans_le
       (FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : IncrementArea.Coordinate)) _ (fun row
         => Basic.Canonical.normSq_nonneg (coefficients row)))
-  have paid : Trace.Family.basisFamilyLoss counts 0
+  have paid : basisFamilyLoss counts 0
       (allocation.allowance + allocation.allowance + allocation.allowance + allocation.allowance) ≤ target := by
-    rw [Trace.Family.basisFamilyLoss_common, counted, ← allocation.loss_eq]
+    rw [basisFamilyLoss_common, counted, ← allocation.loss_eq]
     exact allocation.paid
   have lower := (Fraction.Order.Arithmetic.neg_le_neg_direct
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct paid nonnegative)).trans joined.lower

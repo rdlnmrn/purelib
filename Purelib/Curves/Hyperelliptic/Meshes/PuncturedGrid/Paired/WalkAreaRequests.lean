@@ -112,16 +112,16 @@ open Purelib.Data.Gaussian.Basic.Canonical
 open Purelib.Data.Rat.Fraction.Order.Arithmetic (mul_nonneg_direct mul_le_mul_of_nonneg_left_direct add_le_add_direct)
 open Purelib.Integration.Path.IncrementArea (pathArea)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid}
-  {edges : Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames} {mesh : LiftedMesh vertices edges
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid}
+  {edges : RootIsolation.SquareRoot.Grid.RootEdgeBank frames} {mesh : LiftedMesh vertices edges
     base.faces}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
-    base.faces.regulars} {differential : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {start finish : Purelib.Data.Gaussian.Basic.Canonical} {walk : Purelib.Polynomial.Geometry.Grid.Walks.Walk
+  {domains : FaceDomainBank frames
+    base.faces.regulars} {differential : Differential genus}
+  {start finish : Gaussian.Basic.Canonical} {walk : Walks.Walk
     base.bank.grid start finish}
 
 set_option genInjectivity false in
@@ -129,18 +129,18 @@ set_option genInjectivity false in
 
 The actual magnitude reference, edge allowance, comparison requests and common stage are retained for the same source
 polygons. -/
-structure AreaRequest (fixed : MagnitudeBank.FaceMagnitudeBank domains differential) (paired :
+structure AreaRequest (fixed : FaceMagnitudeBank domains differential) (paired :
   WalkOccurrences.PairedWalk mesh walk)
-    (target : Fraction.Rational) where
+    (target : Rational) where
   /-- The original requested area tolerance is strictly positive. -/ positive : 0 < target
-  /-- The cached full walk-length and fixed-magnitude comparison weight. -/ weight : Fraction.Rational
+  /-- The cached full walk-length and fixed-magnitude comparison weight. -/ weight : Rational
   /-- The weight retains the exact fourth-power edge-count factor and original magnitude reference. -/ weight_eq :
-    weight = 64 * (walk.edgeCount : Fraction.Rational) ^ 4 * fixed.bound
-  /-- The cached positive tolerance allocated to each original paired edge. -/ perEdge : Fraction.Rational
+    weight = 64 * (walk.edgeCount : Rational) ^ 4 * fixed.bound
+  /-- The cached positive tolerance allocated to each original paired edge. -/ perEdge : Rational
   /-- The edge tolerance is exactly the weighted allowance of the original target and cached weight. -/ perEdge_eq :
     perEdge = Weighted.allowance target weight
   /-- The original opposite-sheet comparison requests at the cached per-edge tolerance. -/ requests :
-    PairedWalk.Requests domains differential perEdge paired
+    Requests domains differential perEdge paired
   /-- The cached common stage paying the magnitude reference and every original edge request. -/ index : Nat
   /-- The common stage is exactly the maximum of those original reference and request stages. -/ index_eq : index = max
     fixed.index requests.index
@@ -149,24 +149,24 @@ constructive_injectivity AreaRequest
 
 namespace AreaRequest
 
-variable {fixed : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
-  differential} {paired : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkOccurrences.PairedWalk mesh walk}
-  {target : Purelib.Data.Rat.Fraction.Rational}
+variable {fixed : FaceMagnitudeBank domains
+  differential} {paired : WalkOccurrences.PairedWalk mesh walk}
+  {target : Rational}
 
 /-- The original fourth-power walk-count and magnitude comparison weight is nonnegative. -/
-theorem weight_nonnegative (fixed : MagnitudeBank.FaceMagnitudeBank domains differential) (walk : Walks.Walk
+theorem weight_nonnegative (fixed : FaceMagnitudeBank domains differential) (walk : Walks.Walk
   base.bank.grid start finish) :
-    0 ≤ 64 * (walk.edgeCount : Fraction.Rational) ^ 4 * fixed.bound :=
+    0 ≤ 64 * (walk.edgeCount : Rational) ^ 4 * fixed.bound :=
   Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
     (Fraction.Order.Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 4))
       fixed.nonnegative
 
 /-- Cache the original complete walk weight and paid edge allowance, then retain the paired requests and their common
 magnitude stage. -/
-@[expose] def build (fixed : MagnitudeBank.FaceMagnitudeBank domains differential) (paired : WalkOccurrences.PairedWalk
+@[expose] def build (fixed : FaceMagnitudeBank domains differential) (paired : WalkOccurrences.PairedWalk
   mesh walk)
-    (target : Fraction.Rational) (positive : 0 < target) : AreaRequest fixed paired target :=
-  let weight := 64 * (walk.edgeCount : Fraction.Rational) ^ 4 * fixed.bound
+    (target : Rational) (positive : 0 < target) : AreaRequest fixed paired target :=
+  let weight := 64 * (walk.edgeCount : Rational) ^ 4 * fixed.bound
   let perEdge := Weighted.allowance target weight
   let requests := Requests.build domains differential perEdge
     (Weighted.allowance_positive positive (weight_nonnegative fixed walk)) paired
@@ -183,12 +183,12 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkAreaCancellati
 
 /-- The original triangle reading bank at its actual retained numerical stage. -/
 @[reducible, expose] def ReadingParent {index : Nat}
-    (numerics : PrimitiveData.FacePrimitiveBank differential index domains) :=
-  TrianglePrimitiveReadings.TriangleReadings numerics mesh
+    (numerics : FacePrimitiveBank differential index domains) :=
+  TriangleReadings numerics mesh
 
 /-- The original opposite-sheet source comparison with the retained per-edge tolerance and fixed magnitude bound. -/
 @[reducible, expose] def ComparisonData (request : AreaRequest fixed paired target)
-    {index : Nat} {numerics : PrimitiveData.FacePrimitiveBank differential index domains}
+    {index : Nat} {numerics : FacePrimitiveBank differential index domains}
     (readings : ReadingParent (mesh := mesh) numerics) (left right : Fin 2) :=
   ReadingComparison readings paired left right request.perEdge (4 * fixed.bound)
 
@@ -196,7 +196,7 @@ set_option genInjectivity false in
 /-- The actual single request, original reading parents and the shared opposite observations at the original sample
 stage. No mixed differential is constructed. -/
 structure Realization (request : AreaRequest fixed paired target)
-    {index : Nat} {numerics : PrimitiveData.FacePrimitiveBank differential index domains}
+    {index : Nat} {numerics : FacePrimitiveBank differential index domains}
     (readings : ReadingParent (mesh := mesh) numerics)
     (later : request.index ≤ index) (left right : Fin 2) (different : left ≠ right) where
   /-- The actual retained original area request. -/ selection : AreaRequest fixed paired target
@@ -222,7 +222,7 @@ constructive_injectivity Realization
 namespace Realization
 
 variable {request : AreaRequest fixed paired target}
-  {index : Nat} {numerics : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+  {index : Nat} {numerics : FacePrimitiveBank
     differential index domains}
   {readings : ReadingParent (mesh := mesh) numerics}
   {later : request.index ≤ index} {left right : Fin 2} {different : left ≠ right}
@@ -240,7 +240,7 @@ variable {request : AreaRequest fixed paired target}
   result.comparison.residual
 
 /-- The cached quantitative bound of the original opposite-sheet area comparison. -/
-@[expose] def areaBound (result : Realization request readings later left right different) : Fraction.Rational :=
+@[expose] def areaBound (result : Realization request readings later left right different) : Rational :=
   result.comparison.areaBound
 
 /-- The retained residual equals the difference of the two actual cached source summary areas. -/
@@ -268,8 +268,8 @@ end Realization
 /-- Acquire the same original reading's source pairs once, retaining their summaries for both single source/chart
 clients and paying the original budget. -/
 @[expose] def realize (request : AreaRequest fixed paired target) {index : Nat}
-    {numerics : PrimitiveData.FacePrimitiveBank differential index domains} (readings :
-      TrianglePrimitiveReadings.TriangleReadings numerics mesh)
+    {numerics : FacePrimitiveBank differential index domains} (readings :
+      TriangleReadings numerics mesh)
     (later : request.index ≤ index) (left right : Fin 2) (different : left ≠ right) :
     Realization request readings later left right different :=
   have referenceLater := (Nat.Order.le_max_left _ _).trans (request.index_eq ▸ later)
@@ -286,16 +286,16 @@ clients and paying the original budget. -/
     (fun source _ => by
       have h := magnitude.source_bounded source
       rw [magnitudeBound] at h
-      rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+      rw [← Gaussian.Norm.Basic.normSq_eq_canonical]
       exact h)
     (fun source _ => by
       have h := magnitude.source_bounded source
       rw [magnitudeBound] at h
-      rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+      rw [← Gaussian.Norm.Basic.normSq_eq_canonical]
       exact h)
   have paid : comparison.areaBound ≤ target := by
     calc
-      comparison.areaBound = 16 * (walk.edgeCount : Fraction.Rational) ^ 4 * request.perEdge * (4 * fixed.bound) :=
+      comparison.areaBound = 16 * (walk.edgeCount : Rational) ^ 4 * request.perEdge * (4 * fixed.bound) :=
         comparison.areaBound_eq
       _ = request.weight * request.perEdge := by rw [request.weight_eq]; ring1
       _ ≤ target := by
@@ -315,8 +315,8 @@ clients and paying the original budget. -/
 /-- No caller-supplied numerical magnitude or sheet-transport equality is needed. The cached request controls the full
 two source polygons at every later shared index, including a walk of length zero. -/
 theorem accurate (request : AreaRequest fixed paired target) {index : Nat}
-    {numerics : PrimitiveData.FacePrimitiveBank differential index domains} (readings :
-      TrianglePrimitiveReadings.TriangleReadings numerics mesh)
+    {numerics : FacePrimitiveBank differential index domains} (readings :
+      TriangleReadings numerics mesh)
     (later : request.index ≤ index) (left right : Fin 2) (different : left ≠ right) :
     normSq (IncrementArea.pathArea ((paired.sources left).map (fun source => source.increment readings.values)) -
       IncrementArea.pathArea ((paired.sources right).map (fun source => source.increment readings.values))) ≤ target :=

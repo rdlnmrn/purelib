@@ -28,6 +28,8 @@ import Purelib.Tactic.QuotientFreeOmega
 public import Mathlib.Algebra.Field.Defs
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Data.Nat
@@ -150,21 +152,21 @@ Its two integer bounds certify the cached rational endpoints and their width. -/
       value_lt_upper_square := ?_
       width_eq := ?_ }
   · unfold lower
-    exact Fraction.Order.Field.div_nonneg_direct
+    exact Field.div_nonneg_direct
       (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _))
       (Fraction.Cast.Order.natCast_le_direct
         denominatorPositive.le)
   · unfold upper
-    exact Fraction.Order.Field.div_pos_direct
+    exact Field.div_pos_direct
       (Fraction.Cast.Order.natCast_pos_direct (by omega0))
       (Fraction.Cast.Order.natCast_pos_direct denominatorPositive)
   · unfold lower
     rw [target.value_eq_div]
-    exact Fraction.Order.Field.nat_square_div_le_div denominatorPositive
+    exact Field.nat_square_div_le_div denominatorPositive
       target.denominator_positive lowerCleared
   · unfold upper
     rw [target.value_eq_div]
-    exact Fraction.Order.Field.nat_div_lt_square_div denominatorPositive
+    exact Field.nat_div_lt_square_div denominatorPositive
       target.denominator_positive upperCleared
   · unfold lower upper
     simp only [Algebra.NatCast.add, Nat.cast_one,
@@ -215,19 +217,19 @@ theorem sqrtBracket_square_error_le
       bracket.denominator_positive
   have widthPositive : 0 < bracket.upper - bracket.lower := by
     rw [bracket.width_eq]
-    exact Fraction.Order.Field.div_pos_direct (by decide)
+    exact Field.div_pos_direct (by decide)
       denominatorPositive
   have widthLeRefinement :
       bracket.upper - bracket.lower ≤ 1 / (refinement : Fraction.Rational) := by
     rw [bracket.width_eq]
-    exact Fraction.Order.Field.div_le_div_of_nonneg_left_direct
+    exact Field.div_le_div_of_nonneg_left_direct
       (by decide) refinementPositive denominatorAtLeastRefinement
   have widthLeOne : bracket.upper - bracket.lower ≤ 1 := by
     calc
       bracket.upper - bracket.lower ≤ 1 / (refinement : Fraction.Rational) :=
         widthLeRefinement
       _ ≤ 1 / (1 : Fraction.Rational) :=
-        Fraction.Order.Field.div_le_div_of_nonneg_left_direct
+        Field.div_le_div_of_nonneg_left_direct
           (by decide) (by decide) refinementAtLeastOne
       _ = 1 := by decide
   have valueLeSquareSuccessor : target.representative.value ≤
@@ -237,7 +239,7 @@ theorem sqrtBracket_square_error_le
           target.representative.value + 1 :=
       add_nonneg
         (add_nonneg
-          (Fraction.Order.Arithmetic.sq_nonneg_direct
+          (Arithmetic.sq_nonneg_direct
             target.representative.value)
           target.positive.le)
         (by decide)
@@ -249,17 +251,17 @@ theorem sqrtBracket_square_error_le
             target.representative.value + 1) :=
         (by
           simpa only [zero_add, add_comm] using
-            Fraction.Order.Arithmetic.add_le_add_right_direct
+            Arithmetic.add_le_add_right_direct
               extraNonnegative target.representative.value)
       _ = (target.representative.value + 1) ^ 2 := by ring1
   have lowerLeSuccessor : bracket.lower ≤
       target.representative.value + 1 := by
-    apply Fraction.Order.Arithmetic.le_of_sq_le_sq_direct
+    apply Arithmetic.le_of_sq_le_sq_direct
       (add_nonneg target.positive.le (by decide))
     exact bracket.lower_square_le.trans valueLeSquareSuccessor
   have twiceLowerLe : 2 * bracket.lower ≤
       2 * (target.representative.value + 1) :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       lowerLeSuccessor (by decide)
   have sumLe : bracket.upper + bracket.lower ≤
       2 * target.representative.value + 3 := by
@@ -267,24 +269,24 @@ theorem sqrtBracket_square_error_le
       bracket.upper + bracket.lower =
           2 * bracket.lower + (bracket.upper - bracket.lower) := by ring1
       _ ≤ 2 * (target.representative.value + 1) + 1 :=
-        Fraction.Order.Arithmetic.add_le_add_direct twiceLowerLe widthLeOne
+        Arithmetic.add_le_add_direct twiceLowerLe widthLeOne
       _ = 2 * target.representative.value + 3 := by ring1
   have sumNonnegative : 0 ≤ bracket.upper + bracket.lower :=
     add_nonneg bracket.upper_positive.le bracket.lower_nonnegative
   have reciprocalNonnegative :
       0 ≤ 1 / (refinement : Fraction.Rational) :=
-    (Fraction.Order.Field.div_pos_direct (by decide)
+    (Field.div_pos_direct (by decide)
       refinementPositive).le
   calc
     bracket.upper ^ 2 - target.representative.value ≤
         bracket.upper ^ 2 - bracket.lower ^ 2 :=
-      Fraction.Order.Arithmetic.sub_le_sub_left_direct
+      Arithmetic.sub_le_sub_left_direct
         bracket.lower_square_le (bracket.upper ^ 2)
     _ = (bracket.upper - bracket.lower) *
         (bracket.upper + bracket.lower) := by ring1
     _ ≤ (1 / (refinement : Fraction.Rational)) *
         (2 * target.representative.value + 3) :=
-      Fraction.Order.Arithmetic.mul_le_mul_direct widthLeRefinement sumLe
+      Arithmetic.mul_le_mul_direct widthLeRefinement sumLe
         sumNonnegative reciprocalNonnegative
     _ = (2 * target.representative.value + 3) /
         (scale + 1 : Nat) := by

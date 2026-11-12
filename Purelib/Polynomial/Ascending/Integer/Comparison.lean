@@ -44,26 +44,26 @@ def allZero :
 /-- Executable coefficientwise equality, ignoring only trailing zeros. -/
 def same? : CoefficientList →
   CoefficientList → Bool
-  | [], right => Ascending.Integer.Comparison.allZero right
-  | left :: leftTail, [] => decide (left = 0) && Ascending.Integer.Comparison.allZero leftTail
+  | [], right => allZero right
+  | left :: leftTail, [] => decide (left = 0) && allZero leftTail
   | left :: leftTail, right :: rightTail =>
       decide (left = right) && same? leftTail rightTail
 
 /-- The executable coefficientwise comparison returns true, allowing trailing zeros. -/
 def Same (left right :
   CoefficientList) : Prop
-  := Ascending.Integer.Comparison.same? left right = true
+  := same? left right = true
 
 /-- An integer coefficient table compares equal to itself. -/
 theorem same?_self (polynomial :
   CoefficientList) :
-    Ascending.Integer.Comparison.same? polynomial polynomial = true := by
+    same? polynomial polynomial = true := by
   induction polynomial with
   | nil =>
-      unfold Ascending.Integer.Comparison.same?
+      unfold same?
       rfl
   | cons head tail inductionHypothesis =>
-      rw [Ascending.Integer.Comparison.same?, decide_eq_true rfl, inductionHypothesis]
+      rw [same?, decide_eq_true rfl, inductionHypothesis]
       rfl
 
 /-- Coefficient-table comparison is reflexive. -/

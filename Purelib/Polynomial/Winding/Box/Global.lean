@@ -30,6 +30,8 @@ import Purelib.Data.Rat.Fraction.Order.Arithmetic
 import Purelib.Algebra.Group.Negation
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian
+
 open Purelib.Data.Rat
 open Purelib.Geometry.Rational
 open Purelib.Polynomial
@@ -50,32 +52,32 @@ Positive degree gives a normalized leading/lower split and a positive
 boundary margin on the computed square. The original finite winding
 transfer preserves the leading-monomial degree count. -/
 public theorem quadrupledBoxWinding_largeSquare_eq_degree
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree) :
-    Winding.Box.Basic.quadrupledBoxWinding p (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox p) =
+    {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree) :
+    Basic.quadrupledBoxWinding p (Bounds.RootRadius.Box.largeSquareBox p) =
       (4 : Int) * p.natDegree := by
   have transfer :=
-    Winding.Box.Rouche.quadrupledBoxWinding_add_of_boundaryNormDominance
-      (Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p)
-        (Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p) (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox
+    Rouche.quadrupledBoxWinding_add_of_boundaryNormDominance
+      (Coefficients.LeadingSplit.leadingMonomial p)
+        (Coefficients.Tail.lowerTermsPolynomial p) (Bounds.RootRadius.Box.largeSquareBox
         p)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox_proper p)
+      (Bounds.RootRadius.Box.largeSquareBox_proper p)
       (Clearance.Box.Boundary.Leading.leadingMonomial_largeSquare_boundaryClearance degreePositive)
       (Clearance.Box.Dominance.Leading.largeSquare_boundaryNormDominance degreePositive)
   have decomposition :=
-    Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial_add_lowerTerms_eq_normalize degreePositive
+    Coefficients.LeadingSplit.leadingMonomial_add_lowerTerms_eq_normalize degreePositive
   calc
-    Winding.Box.Basic.quadrupledBoxWinding p (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox p) =
-        Winding.Box.Basic.quadrupledBoxWinding p.normalize (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox p) :=
-      (Winding.Box.Basic.quadrupledBoxWinding_normalize p (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox p)).symm
-    _ = Winding.Box.Basic.quadrupledBoxWinding
-          (Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p +
-            Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p)
-          (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox p) := by rw [decomposition]
-    _ = Winding.Box.Basic.quadrupledBoxWinding (Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox p) :=
+    Basic.quadrupledBoxWinding p (Bounds.RootRadius.Box.largeSquareBox p) =
+        Basic.quadrupledBoxWinding p.normalize (Bounds.RootRadius.Box.largeSquareBox p) :=
+      (Basic.quadrupledBoxWinding_normalize p (Bounds.RootRadius.Box.largeSquareBox p)).symm
+    _ = Basic.quadrupledBoxWinding
+          (Coefficients.LeadingSplit.leadingMonomial p +
+            Coefficients.Tail.lowerTermsPolynomial p)
+          (Bounds.RootRadius.Box.largeSquareBox p) := by rw [decomposition]
+    _ = Basic.quadrupledBoxWinding (Coefficients.LeadingSplit.leadingMonomial p)
+      (Bounds.RootRadius.Box.largeSquareBox p) :=
       transfer
     _ = (4 : Int) * p.natDegree :=
-      Winding.Box.Leading.quadrupledBoxWinding_leadingMonomial degreePositive
+      Leading.quadrupledBoxWinding_leadingMonomial degreePositive
 
 /-- All three finite winding normalizations recover the positive dense
 degree on the computed constructive square.
@@ -84,17 +86,17 @@ The raw winding equality fixes one retained integer reading. Dividing
 that reading by two and four yields the doubled and ordinary winding
 conventions for the same positive degree. -/
 public theorem largeSquare_winding_eq_degree
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree) :
-    Winding.Box.Basic.quadrupledBoxWinding p (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox p) =
+    {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree) :
+    Basic.quadrupledBoxWinding p (Bounds.RootRadius.Box.largeSquareBox p) =
         (4 : Int) * p.natDegree ∧
-      Winding.Box.Basic.doubledBoxWinding p (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox p) =
+      Basic.doubledBoxWinding p (Bounds.RootRadius.Box.largeSquareBox p) =
         (2 : Int) * p.natDegree ∧
-      Winding.Box.Basic.boxWinding p (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox p) = p.natDegree := by
-  have raw := Winding.Box.Global.quadrupledBoxWinding_largeSquare_eq_degree degreePositive
+      Basic.boxWinding p (Bounds.RootRadius.Box.largeSquareBox p) = p.natDegree := by
+  have raw := quadrupledBoxWinding_largeSquare_eq_degree degreePositive
   refine ⟨raw, ?_, ?_⟩
-  · rw [Winding.Box.Basic.doubledBoxWinding, raw]
+  · rw [Basic.doubledBoxWinding, raw]
     omega
-  · rw [Winding.Box.Basic.boxWinding, raw]
+  · rw [Basic.boxWinding, raw]
     omega
 
 /-- A polynomial has raw winding four times its degree on every positive
@@ -104,14 +106,14 @@ The radius is at least the coefficient-computed positive radius.
 The leading/lower split has quantitative boundary dominance on this
 same symmetric square, preserving the finite degree count. -/
 public theorem quadrupledBoxWinding_symmetric_eq_degree
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree)
+    {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree)
     {radius : Fraction.Rational}
-    (radiusLe : Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ≤ radius) :
-    Winding.Box.Basic.quadrupledBoxWinding p
+    (radiusLe : Bounds.RootRadius.denseLargeSquareRadius p ≤ radius) :
+    Basic.quadrupledBoxWinding p
         (Box.symmetric radius
-          ((Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe).le) =
+          ((Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe).le) =
       (4 : Int) * p.natDegree := by
-  let radiusPositive := (Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe
+  let radiusPositive := (Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe
   let box := Box.symmetric radius radiusPositive.le
   have proper : box.Proper := by
     change -radius < radius ∧ -radius < radius
@@ -121,8 +123,8 @@ public theorem quadrupledBoxWinding_symmetric_eq_degree
     exact ⟨reflected.trans radiusPositive, reflected.trans radiusPositive⟩
   have leadingClearance :
       Clearance.Box.Boundary.Basic.BoundaryClearance
-        (Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p) box := by
-    have polynomialNonzero := Dense.Gaussian.Degree.Global.isZero_false_of_natDegree_pos degreePositive
+        (Coefficients.LeadingSplit.leadingMonomial p) box := by
+    have polynomialNonzero := Degree.Global.isZero_false_of_natDegree_pos degreePositive
     have leadingNonzero := Dense.Basic.DensePolynomial.leadingCoeff_ne_zero polynomialNonzero
     exact Clearance.Box.Boundary.Basic.BoundaryClearance.mul
       (Clearance.Box.Boundary.Constant.gaussianConstant_boundaryClearance leadingNonzero box)
@@ -131,23 +133,23 @@ public theorem quadrupledBoxWinding_symmetric_eq_degree
           Clearance.Box.Boundary.Coordinate.coordinatePositivePower_symmetric_boundaryClearance
             radiusPositive (p.natDegree - 1))
   have transfer :=
-    Winding.Box.Rouche.quadrupledBoxWinding_add_of_boundaryNormDominance
-      (Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p)
-        (Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p) box proper
+    Rouche.quadrupledBoxWinding_add_of_boundaryNormDominance
+      (Coefficients.LeadingSplit.leadingMonomial p)
+        (Coefficients.Tail.lowerTermsPolynomial p) box proper
       leadingClearance (Clearance.Box.Dominance.Leading.symmetric_boundaryNormDominance degreePositive radiusLe)
-  have decomposition := Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial_add_lowerTerms_eq_normalize
+  have decomposition := Coefficients.LeadingSplit.leadingMonomial_add_lowerTerms_eq_normalize
     degreePositive
   calc
-    Winding.Box.Basic.quadrupledBoxWinding p box = Winding.Box.Basic.quadrupledBoxWinding p.normalize box :=
-      (Winding.Box.Basic.quadrupledBoxWinding_normalize p box).symm
-    _ = Winding.Box.Basic.quadrupledBoxWinding
-          (Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p +
-            Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p) box := by
+    Basic.quadrupledBoxWinding p box = Basic.quadrupledBoxWinding p.normalize box :=
+      (Basic.quadrupledBoxWinding_normalize p box).symm
+    _ = Basic.quadrupledBoxWinding
+          (Coefficients.LeadingSplit.leadingMonomial p +
+            Coefficients.Tail.lowerTermsPolynomial p) box := by
       rw [decomposition]
-    _ = Winding.Box.Basic.quadrupledBoxWinding (Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p) box :=
+    _ = Basic.quadrupledBoxWinding (Coefficients.LeadingSplit.leadingMonomial p) box :=
       transfer
     _ = (4 : Int) * p.natDegree :=
-      Winding.Box.Leading.quadrupledBoxWinding_leadingMonomial_symmetric
+      Leading.quadrupledBoxWinding_leadingMonomial_symmetric
         degreePositive radiusPositive
 
 /-- On every sufficiently large positive symmetric square, the raw winding
@@ -158,33 +160,33 @@ The polynomial is nonzero and the radius exceeds its computed bound.
 Positive degree uses the leading/lower split; degree zero retains the
 nonzero constant and its zero winding. -/
 public theorem quadrupledBoxWinding_symmetric_eq_degree_of_nonzero
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (nonzero : p.isZero = false)
+    {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (nonzero : p.isZero = false)
     {radius : Fraction.Rational}
-    (radiusLe : Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ≤ radius) :
-    Winding.Box.Basic.quadrupledBoxWinding p
+    (radiusLe : Bounds.RootRadius.denseLargeSquareRadius p ≤ radius) :
+    Basic.quadrupledBoxWinding p
         (Box.symmetric radius
-          ((Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe).le) =
+          ((Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe).le) =
       (4 : Int) * p.natDegree := by
   by_cases degreeZero : p.natDegree = 0
   · have normalizedConstant :
-        p.normalize = Dense.Gaussian.Constants.gaussianConstant p.leadingCoeff :=
+        p.normalize = Constants.gaussianConstant p.leadingCoeff :=
       Dense.Basic.DensePolynomial.normalize_eq_constant_leadingCoeff_of_degree_zero nonzero degreeZero
     calc
-      Winding.Box.Basic.quadrupledBoxWinding p
+      Basic.quadrupledBoxWinding p
           (Box.symmetric radius
-            ((Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe).le) =
-          Winding.Box.Basic.quadrupledBoxWinding p.normalize
+            ((Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe).le) =
+          Basic.quadrupledBoxWinding p.normalize
             (Box.symmetric radius
-              ((Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe).le) :=
-        (Winding.Box.Basic.quadrupledBoxWinding_normalize p _).symm
-      _ = Winding.Box.Basic.quadrupledBoxWinding (Dense.Gaussian.Constants.gaussianConstant p.leadingCoeff)
+              ((Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe).le) :=
+        (Basic.quadrupledBoxWinding_normalize p _).symm
+      _ = Basic.quadrupledBoxWinding (Constants.gaussianConstant p.leadingCoeff)
             (Box.symmetric radius
-              ((Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe).le) := by
+              ((Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe).le) := by
         rw [normalizedConstant]
-      _ = 0 := Winding.Box.Constant.quadrupledBoxWinding_gaussianConstant
+      _ = 0 := Constant.quadrupledBoxWinding_gaussianConstant
         (Dense.Basic.DensePolynomial.leadingCoeff_ne_zero nonzero) _
       _ = (4 : Int) * p.natDegree := by rw [degreeZero]; rfl
-  · exact Winding.Box.Global.quadrupledBoxWinding_symmetric_eq_degree
+  · exact quadrupledBoxWinding_symmetric_eq_degree
       (Nat.pos_of_ne_zero degreeZero) radiusLe
 
 end Purelib.Polynomial.Winding.Box.Global

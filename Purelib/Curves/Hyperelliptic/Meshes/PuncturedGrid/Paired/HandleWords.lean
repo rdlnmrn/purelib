@@ -97,8 +97,8 @@ open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_swap sumFin_mul_l
 
 /-- Casting a complete finite integer sum to Gaussian rationals preserves all indexed summands. -/
 private theorem cast_sum {count : Nat} (values : Fin count → Int) :
-    ((sumFin values : Int) : Data.Gaussian.Basic.Canonical) = sumFin (fun index => (values index :
-      Data.Gaussian.Basic.Canonical)) := by
+    ((sumFin values : Int) : Gaussian) = sumFin (fun index => (values index :
+      Gaussian)) := by
   induction count with
   | zero => exact Ring.IntCast.cast_zero
   | succ count ih => rw [FiniteSum.Fin.sumFin_succ,
@@ -106,16 +106,16 @@ private theorem cast_sum {count : Nat} (values : Fin count → Int) :
 
 /-- Valuating a finite integer combination of rows equals the same combination of their original Gaussian valuations. -/
 private theorem combine_rows {count : Nat} (weights : Fin count → Int)
-    (rows : Fin count → Fin count → Int) (values : Fin count → Data.Gaussian.Basic.Canonical) :
+    (rows : Fin count → Fin count → Int) (values : Fin count → Gaussian) :
     WordCoordinates.combine (fun column => sumFin (fun index => weights index * rows index column)) values =
       WordCoordinates.combine weights (fun index => WordCoordinates.combine (rows index) values) := by
   calc
     _ = sumFin (fun column => sumFin (fun index =>
-        (weights index : Data.Gaussian.Basic.Canonical) * (rows index column : Data.Gaussian.Basic.Canonical) * values
+        (weights index : Gaussian) * (rows index column : Gaussian) * values
           column)) := by
       apply FiniteSum.Fin.sumFin_congr
       intro column
-      rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleWords.cast_sum, ← FiniteSum.Fin.sumFin_mul_right]
+      rw [HandleWords.cast_sum, ← FiniteSum.Fin.sumFin_mul_right]
       apply FiniteSum.Fin.sumFin_congr
       intro index
       rw [Ring.IntCast.intCast_mul]
@@ -125,16 +125,16 @@ private theorem combine_rows {count : Nat} (weights : Fin count → Int)
       intro index
       exact (FiniteSum.Fin.sumFin_congr (fun column => mul_assoc _ _ _)).trans (FiniteSum.Fin.sumFin_mul_left _ _)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {bank :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {bank :
+    BasedBranchBank lifted}
     {sheet : Fin 2}
   {ordered :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank
-    sheet} {paired : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered}
-    {prepared : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired}
+    Ordered bank
+    sheet} {paired : OrderedBranchPairs.Ordered.Paired ordered}
+    {prepared : Prepared paired}
 
 namespace CutBank
 
@@ -144,7 +144,7 @@ def CycleWeights (_cut : PeriodCoordinates.CutBank prepared) :=
 
 /-- Every retained matrix entry equals the corresponding original normal-form cycle-row entry. -/
 def CycleWeightsEq (cut : PeriodCoordinates.CutBank prepared) (weights :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleWords.CutBank.CycleWeights cut) : Prop :=
+  CycleWeights cut) : Prop :=
   ∀ row column, vget (vget weights row) column = cut.normal.normal.reduction.cycleRows row column
 
 set_option genInjectivity false in
@@ -152,44 +152,44 @@ set_option genInjectivity false in
 structure HandleChains (cut : PeriodCoordinates.CutBank prepared) where
   /-- The retained chord realization of the original complete cut bank. -/ chords : cut.OnChords
   /-- The cached full cycle-row matrix on that exact original cut alphabet. -/ weights :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleWords.CutBank.CycleWeights cut
+    CycleWeights cut
   /-- The matrix cache retains every original computed normal-form cycle-row entry. -/ weights_eq :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleWords.CutBank.CycleWeightsEq cut weights
+    CycleWeightsEq cut weights
 
 constructive_injectivity HandleChains
 
 namespace HandleChains
 
-variable {cut : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared} {index :
+variable {cut : PeriodCoordinates.CutBank prepared} {index :
   Fin genus}
 
 /-- Retain the original cut's chord bank and reuse its complete computed cycle-row matrix. -/
 def build (cut : PeriodCoordinates.CutBank prepared) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleWords.CutBank.HandleChains cut :=
+  HandleChains cut :=
   ⟨cut.onChords, cut.normal.normal.reduction.cycleRows, fun _ _ => rfl⟩
 
 /-- The values of the actual closed chord routes on this retained surface. -/
-def chordValues (chains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleWords.CutBank.HandleChains cut) (value
-  : Stokes.OrientedEdge lifted.vertices.count → Data.Gaussian.Basic.Canonical)
+def chordValues (chains : HandleChains cut) (value
+  : Stokes.OrientedEdge lifted.vertices.count → Gaussian)
     (column : Fin lifted.cutBoundaryWord.alphabet.count) : Gaussian :=
   SewingRetraction.wordValue value (chains.chords.chords.cycles column).path.surfaceEdges
 
 /-- Evaluate cached normal-form cycle rows, rather than recomputing their integer change of basis in each A/B
 evaluation. -/
-def cycleValues (chains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleWords.CutBank.HandleChains cut) (value
-  : Stokes.OrientedEdge lifted.vertices.count → Data.Gaussian.Basic.Canonical)
+def cycleValues (chains : HandleChains cut) (value
+  : Stokes.OrientedEdge lifted.vertices.count → Gaussian)
     (row : Fin lifted.cutBoundaryWord.alphabet.count) : Gaussian :=
   WordCoordinates.combine (vget (vget chains.weights row)) (chains.chordValues value)
 
 /-- The original A span coefficients are exactly the retained handle coordinates combined with the cached cycle rows. -/
-theorem a_coefficients (chains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleWords.CutBank.HandleChains cut)
-  (row : CutBank.HandleRow cut index)
+theorem a_coefficients (chains : HandleChains cut)
+  (row : HandleRow cut index)
     (column : Fin lifted.cutBoundaryWord.alphabet.count) :
     (cut.rows.get index).a.span.coefficients column =
       sumFin (fun position => vget row.a position * vget (vget chains.weights position) column) := by
   calc
     _ = cut.normal.normal.reduction.dualBackward row.a column :=
-      (congrArg (fun values : CutBank.HandleVector cut => vget values column) row.a_readback).symm
+      (congrArg (fun values : HandleVector cut => vget values column) row.a_readback).symm
     _ = sumFin (fun position => vget row.a position * cut.normal.normal.reduction.cycleRows position column) :=
       cut.normal.normal.reduction.dualBackward_eq_cycleRows _ column
     _ = _ := FiniteSum.Fin.sumFin_congr (fun position => congrArg (fun weight : Int => vget row.a position * weight)
@@ -197,23 +197,23 @@ theorem a_coefficients (chains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paire
 
 /-- The original B span coefficients are exactly the retained handle coordinates combined with those same cached cycle
 rows. -/
-theorem b_coefficients (chains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleWords.CutBank.HandleChains cut)
-  (row : CutBank.HandleRow cut index)
+theorem b_coefficients (chains : HandleChains cut)
+  (row : HandleRow cut index)
     (column : Fin lifted.cutBoundaryWord.alphabet.count) :
     (cut.rows.get index).b.span.coefficients column =
       sumFin (fun position => vget row.b position * vget (vget chains.weights position) column) := by
   calc
     _ = cut.normal.normal.reduction.dualBackward row.b column :=
-      (congrArg (fun values : CutBank.HandleVector cut => vget values column) row.b_readback).symm
+      (congrArg (fun values : HandleVector cut => vget values column) row.b_readback).symm
     _ = sumFin (fun position => vget row.b position * cut.normal.normal.reduction.cycleRows position column) :=
       cut.normal.normal.reduction.dualBackward_eq_cycleRows _ column
     _ = _ := FiniteSum.Fin.sumFin_congr (fun position => congrArg (fun weight : Int => vget row.b position * weight)
       (chains.weights_eq position column).symm)
 
 /-- The actual A chord-chain value equals the retained full handle-coordinate combination of cached cycle values. -/
-theorem a_chain_value (chains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleWords.CutBank.HandleChains cut)
-  (row : CutBank.HandleRow cut index)
-    (value : Stokes.OrientedEdge lifted.vertices.count → Data.Gaussian.Basic.Canonical) :
+theorem a_chain_value (chains : HandleChains cut)
+  (row : HandleRow cut index)
+    (value : Stokes.OrientedEdge lifted.vertices.count → Gaussian) :
     CutCycleChain.edgeValue (chains.chords.rows.get index).aPhysical.chain value =
       WordCoordinates.combine (vget row.a) (chains.cycleValues value) := by
   change WordCoordinates.combine (cut.rows.get index).a.span.coefficients (chains.chordValues value) = _
@@ -224,13 +224,13 @@ theorem a_chain_value (chains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired
       apply FiniteSum.Fin.sumFin_congr
       intro column
       rw [chains.a_coefficients row column]
-    _ = _ := Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleWords.combine_rows (vget row.a) (fun position =>
+    _ = _ := HandleWords.combine_rows (vget row.a) (fun position =>
       vget (vget chains.weights position)) (chains.chordValues value)
 
 /-- The actual B chord-chain value equals the retained full handle-coordinate combination of cached cycle values. -/
-theorem b_chain_value (chains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleWords.CutBank.HandleChains cut)
-  (row : CutBank.HandleRow cut index)
-    (value : Stokes.OrientedEdge lifted.vertices.count → Data.Gaussian.Basic.Canonical) :
+theorem b_chain_value (chains : HandleChains cut)
+  (row : HandleRow cut index)
+    (value : Stokes.OrientedEdge lifted.vertices.count → Gaussian) :
     CutCycleChain.edgeValue (chains.chords.rows.get index).bPhysical.chain value =
       WordCoordinates.combine (vget row.b) (chains.cycleValues value) := by
   change WordCoordinates.combine (cut.rows.get index).b.span.coefficients (chains.chordValues value) = _
@@ -241,14 +241,14 @@ theorem b_chain_value (chains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired
       apply FiniteSum.Fin.sumFin_congr
       intro column
       rw [chains.b_coefficients row column]
-    _ = _ := Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleWords.combine_rows (vget row.b) (fun position =>
+    _ = _ := HandleWords.combine_rows (vget row.b) (fun position =>
       vget (vget chains.weights position)) (chains.chordValues value)
 
 /-- The actual A word valuation is its full retained handle combination plus original physical-boundary and face
 corrections. -/
-theorem a_word_value (chains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleWords.CutBank.HandleChains cut)
-  (row : CutBank.HandleRow cut index)
-    (value : Stokes.OrientedEdge lifted.vertices.count → Data.Gaussian.Basic.Canonical) (anti : ∀ edge, value
+theorem a_word_value (chains : HandleChains cut)
+  (row : HandleRow cut index)
+    (value : Stokes.OrientedEdge lifted.vertices.count → Gaussian) (anti : ∀ edge, value
       edge.reverse = -value edge) :
     SewingRetraction.wordValue value (prepared.aWord index) =
       WordCoordinates.combine (vget row.a) (chains.cycleValues value) +
@@ -260,9 +260,9 @@ theorem a_word_value (chains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.
 
 /-- The actual B word valuation is its full retained handle combination plus original physical-boundary and face
 corrections. -/
-theorem b_word_value (chains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.HandleWords.CutBank.HandleChains cut)
-  (row : CutBank.HandleRow cut index)
-    (value : Stokes.OrientedEdge lifted.vertices.count → Data.Gaussian.Basic.Canonical) (anti : ∀ edge, value
+theorem b_word_value (chains : HandleChains cut)
+  (row : HandleRow cut index)
+    (value : Stokes.OrientedEdge lifted.vertices.count → Gaussian) (anti : ∀ edge, value
       edge.reverse = -value edge) :
     SewingRetraction.wordValue value (prepared.bWord index) =
       WordCoordinates.combine (vget row.b) (chains.cycleValues value) +

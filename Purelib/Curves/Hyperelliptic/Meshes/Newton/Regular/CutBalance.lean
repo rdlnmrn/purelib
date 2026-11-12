@@ -146,15 +146,15 @@ open Purelib.Riemann.RootContinuation.NewtonOriginalRegularFaces (OriginalRegula
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.AllHoles.Excision (AllHoleExcision)
 open Purelib.Polynomial.Geometry.Grid.CellBoundary (sumValues)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve
     branches higher}
-  {preparation : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target
-    radius : Purelib.Data.Rat.Fraction.Rational}
-  {grid : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-    {face : Purelib.Riemann.Meshes.PuncturedGridFaces.RegularFace original}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid grid.punctured}
+  {preparation : NewtonPreparation original} {target
+    radius : Rational}
+  {grid : NewtonGrid preparation target radius}
+    {face : RegularFace original}
+  {lifted : LiftedPuncturedGrid grid.punctured}
 
 namespace CutBalance
 
@@ -163,10 +163,10 @@ set_option genInjectivity false in
 
 Both words use the original paired placement of the resplit cell boundary,
 retaining its source occurrences separately on sheet zero and sheet one. -/
-structure BoundaryWords (face : PuncturedGridFaces.RegularFace original) (lifted : Meshes.LiftedPuncturedGrid
+structure BoundaryWords (face : RegularFace original) (lifted : LiftedPuncturedGrid
   grid.punctured) where
   /-- The actual paired source placement of the resplit original regular-cell boundary. -/ paired :
-    WalkOccurrences.PairedWalk lifted.mesh
+    PairedWalk lifted.mesh
     (grid.shrunk.included.resplit face.boundary (face.cell.anchor_mem face.member))
   /-- The retained sheet-zero cut source word. -/ zero : SewnPrimitiveFaces.CutSourceWord lifted.cutPolygon.patch.cut
     (paired.sources 0)
@@ -180,8 +180,8 @@ end CutBalance
 namespace CutBalance.BoundaryWords
 
 /-- Construct the actual paired boundary placement and its separate cut source words on both sheets. -/
-@[expose] def build (face : PuncturedGridFaces.RegularFace original) (lifted : Meshes.LiftedPuncturedGrid
-  grid.punctured) : Curves.Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords face lifted :=
+@[expose] def build (face : RegularFace original) (lifted : LiftedPuncturedGrid
+  grid.punctured) : BoundaryWords face lifted :=
   let paired := PairedWalk.build lifted.mesh
     (grid.shrunk.included.resplit face.boundary (face.cell.anchor_mem face.member))
   let word (sheet : Fin 2) := CutSourceWord.build lifted.cutPolygon.patch.cut (paired.sources sheet) (by
@@ -192,7 +192,7 @@ namespace CutBalance.BoundaryWords
   ⟨paired, word 0, word 1⟩
 
 /-- The ordered concatenation of the two retained sheet-boundary edge lists. -/
-@[expose] def edges (words : Curves.Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords face lifted) : List
+@[expose] def edges (words : BoundaryWords face lifted) : List
   (Stokes.OrientedEdge lifted.cutPolygon.patch.cut.count) :=
   words.zero.edges ++ words.one.edges
 
@@ -200,8 +200,8 @@ section
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords
 /-- The projected retained boundary words give exactly the two-sheet area of the original resplit regular-cell boundary.
 -/
-theorem projected_area (words : Curves.Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords face lifted)
-  (primitive : Fin lifted.vertices.count → Stokes.PrimitivePoint) :
+theorem projected_area (words : BoundaryWords face lifted)
+  (primitive : Fin lifted.vertices.count → PrimitivePoint) :
     Stokes.edgeListArea (fun vertex => primitive (lifted.cutPolygon.patch.cut.vertexLabels vertex)) words.edges =
       lifted.edges.twoSheetArea lifted.vertices primitive
         (grid.shrunk.included.resplit face.boundary (face.cell.anchor_mem face.member)) := by
@@ -230,34 +230,34 @@ private theorem word_nonloop {sources : List (SewnPrimitiveContacts.SourceEdge l
 end
 
 /-- Every edge in either retained boundary word has distinct projected endpoints. -/
-theorem nonloop (words : Curves.Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords face lifted) (edge :
+theorem nonloop (words : BoundaryWords face lifted) (edge :
   Stokes.OrientedEdge lifted.cutPolygon.patch.cut.count)
     (member : edge ∈ words.edges) :
     lifted.cutPolygon.patch.cut.vertexLabels edge.start ≠ lifted.cutPolygon.patch.cut.vertexLabels edge.finish := by
   rcases Membership.mem_append.mp member with first | last
-  · exact Curves.Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords.word_nonloop words.zero edge first
-  · exact Curves.Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords.word_nonloop words.one edge last
+  · exact BoundaryWords.word_nonloop words.zero edge first
+  · exact BoundaryWords.word_nonloop words.one edge last
 
 end CutBalance.BoundaryWords
 
 variable {localValues : Fin lifted.mesh.triangles.length →
-  Purelib.Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues 3}
+  PrimitiveValues 3}
 
 set_option genInjectivity false in
 /-- The original regular-cell region balance on the actual sewn cut surface.
 
 A complete projected pairing retains both sheet boundaries alongside the selected cut triangles. -/
-structure CutBalance (region : NewtonOriginalRegularFaces.OriginalRegularFaces grid face) (words :
-  Curves.Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords face lifted)
+structure CutBalance (region : OriginalRegularFaces grid face) (words :
+  CutBalance.BoundaryWords face lifted)
     (surface : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch localValues) where
   /-- The actual sewn triangles whose source faces refine the original regular cell. -/ selected :
-    CachedSample.FaceSelection surface (fun source => decide
+    FaceSelection surface (fun source => decide
     ((AllHoleExcision.sourceFace lifted source).cell.box.Refines face.cell.box))
   /-- The cached ordered edge list for the complete regular-cell region balance. -/ edges : List (Stokes.OrientedEdge
     lifted.cutPolygon.patch.cut.count)
   /-- The complete edge list retains all selected triangle boundaries and the reversed sheet-boundary words. -/ edges_eq
     : edges = selected.triangles.flatMap OrientedTriangle.boundary ++ words.edges.map OrientedEdge.reverse
-  /-- The complete projected pairing on the actual balance edge list. -/ complete : ProjectedEdgePairing.Complete
+  /-- The complete projected pairing on the actual balance edge list. -/ complete : Complete
     lifted.cutPolygon.patch.cut.vertexLabels edges
 
 constructive_injectivity CutBalance
@@ -266,11 +266,11 @@ namespace CutBalance
 
 /-- Select the retained regular-cell cut triangles and construct the complete projected pairing with both original
 boundary words. -/
-@[expose] def build (region : NewtonOriginalRegularFaces.OriginalRegularFaces grid face) (words :
-  Curves.Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords face lifted)
+@[expose] def build (region : OriginalRegularFaces grid face) (words :
+  BoundaryWords face lifted)
     (surface : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch localValues) :
       CutBalance region words surface := by
-  let keep := fun entry : PuncturedGridFaces.RegularFace grid.shrunk.prepared.toBranchCellBank => decide
+  let keep := fun entry : RegularFace grid.shrunk.prepared.toBranchCellBank => decide
     (entry.cell.box.Refines face.cell.box)
   let selected := FaceSelection.build surface (fun source => keep (AllHoleExcision.sourceFace lifted source))
   let edges := selected.triangles.flatMap OrientedTriangle.boundary ++ words.edges.map OrientedEdge.reverse
@@ -290,7 +290,7 @@ boundary words. -/
     · obtain ⟨original, present, same⟩ := Map.mem_map.mp member
       rw [← same]
       exact Ne.symm (words.nonloop original present)
-  have zero : ∀ primitive : Fin lifted.vertices.count → Stokes.PrimitivePoint,
+  have zero : ∀ primitive : Fin lifted.vertices.count → PrimitivePoint,
       Stokes.edgeListArea primitive (edges.map (OrientedEdge.map lifted.cutPolygon.patch.cut.vertexLabels)) = 0 := by
     intro primitive
     rw [← WitnessReadbacks.mapped_area]
@@ -311,8 +311,8 @@ boundary words. -/
 
 /-- The selected original regular-cell energy is the two boundary areas plus the actual sewn cut jumps and endpoint
 defects. -/
-theorem area_balance {region : NewtonOriginalRegularFaces.OriginalRegularFaces grid face} {words :
-  Curves.Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords face lifted}
+theorem area_balance {region : OriginalRegularFaces grid face} {words :
+  BoundaryWords face lifted}
     {surface : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch localValues} (balance :
       CutBalance region words surface)
     (sample : ProjectedEdgePairing.PrimitiveSample balance.complete.pairing surface.energyValues) :
@@ -321,7 +321,7 @@ theorem area_balance {region : NewtonOriginalRegularFaces.OriginalRegularFaces g
   have equal := (congrArg (Stokes.edgeListArea surface.energyValues) balance.edges_eq).symm.trans
     (balance.complete.area_eq_jumps_defects surface.energyValues sample)
   rw [Stokes.edgeListArea_append, WitnessReadbacks.reverse_area,
-    Curves.Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords.edges, Stokes.edgeListArea_append, ←
+    BoundaryWords.edges, Stokes.edgeListArea_append, ←
     balance.selected.area_eq] at equal
   calc
     _ = (balance.selected.area + -(Stokes.edgeListArea surface.energyValues words.zero.edges +
@@ -332,8 +332,8 @@ theorem area_balance {region : NewtonOriginalRegularFaces.OriginalRegularFaces g
 
 /-- Both sheet occurrences keep their own primitive-offset corrections. Coordinate projection does not identify their
 sewn primitive values. -/
-theorem corrected_area {region : NewtonOriginalRegularFaces.OriginalRegularFaces grid face} {words :
-  Curves.Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords face lifted}
+theorem corrected_area {region : OriginalRegularFaces grid face} {words :
+  BoundaryWords face lifted}
     {surface : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch localValues} (balance :
       CutBalance region words surface)
     (sample : ProjectedEdgePairing.PrimitiveSample balance.complete.pairing surface.energyValues)

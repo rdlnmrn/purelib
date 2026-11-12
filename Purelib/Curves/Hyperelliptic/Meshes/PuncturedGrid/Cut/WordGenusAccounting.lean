@@ -73,32 +73,32 @@ open Purelib.Riemann.Meshes (FramedPuncturedGrid LiftedPuncturedGrid)
 open Purelib.Topology.Surface.Word.NormalForm (WordNormalForm)
 open Purelib.Topology.Surface.Word.ZeroReduction (WordCancellation)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
 
 /-- The retained normal form of the actual cut boundary word. -/
-@[expose] def CutWordNormal (lifted : Meshes.LiftedPuncturedGrid base) : Type :=
-  NormalForm.WordNormalForm
+@[expose] def CutWordNormal (lifted : LiftedPuncturedGrid base) : Type :=
+  WordNormalForm
     (CutBoundaryWord.pairedLetters lifted.cutBoundaryWord)
     (IntegralPairing.wordSignature lifted.cutIntegralPairing)
 
 /-- The terminal cancellation certificate attached to that normal form. -/
-@[expose] def CutWordTerminal {lifted : Meshes.LiftedPuncturedGrid base} (normal :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordGenusAccounting.CutWordNormal lifted) : Type :=
+@[expose] def CutWordTerminal {lifted : LiftedPuncturedGrid base} (normal :
+  CutWordNormal lifted) : Type :=
   ZeroReduction.WordCancellation normal.trace.terminalWord
 
 /-- The exact original paired-cut count equals twice the retained handle count plus terminal cancellations. -/
-@[expose] def PairedCutsAccounting (lifted : Meshes.LiftedPuncturedGrid base)
-    (normal : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordGenusAccounting.CutWordNormal lifted) (terminal :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordGenusAccounting.CutWordTerminal normal) : Prop :=
+@[expose] def PairedCutsAccounting (lifted : LiftedPuncturedGrid base)
+    (normal : CutWordNormal lifted) (terminal :
+      CutWordTerminal normal) : Prop :=
   2 * normal.pivots.length + terminal.pairs = lifted.cutBoundaryPairs.pairs.length
 
 /-- The retained handles and terminal cancellations satisfy the original active-vertex and physical-boundary Euler
 balance. -/
-@[expose] def EulerAccounting (lifted : Meshes.LiftedPuncturedGrid base)
-    (normal : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordGenusAccounting.CutWordNormal lifted) (terminal :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordGenusAccounting.CutWordTerminal normal) : Prop :=
+@[expose] def EulerAccounting (lifted : LiftedPuncturedGrid base)
+    (normal : CutWordNormal lifted) (terminal :
+      CutWordTerminal normal) : Prop :=
   2 * (normal.pivots.length : Int) + terminal.pairs =
     ((LiftedMesh.activeVertices lifted.mesh).indices.length : Int) - lifted.boundaryComponents.cycles.flatten.length +
       lifted.boundaryComponents.cycles.length + 2 * genus - 1
@@ -111,10 +111,10 @@ private theorem cancel_twice (pivot terminal pairs : Nat)
 
 /-- Consume a retained normal form and its terminal cancellation tree; neither the word reduction nor the surface
 preparation is repeated. -/
-theorem cutWord_pairedCuts_accounting (lifted : Meshes.LiftedPuncturedGrid base)
-    (normal : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordGenusAccounting.CutWordNormal lifted)
-    (terminal : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordGenusAccounting.CutWordTerminal normal) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordGenusAccounting.PairedCutsAccounting lifted normal terminal :=
+theorem cutWord_pairedCuts_accounting (lifted : LiftedPuncturedGrid base)
+    (normal : CutWordNormal lifted)
+    (terminal : CutWordTerminal normal) :
+      PairedCutsAccounting lifted normal terminal :=
       by
   have letters :
       (CutBoundaryWord.pairedLetters lifted.cutBoundaryWord).length =
@@ -125,19 +125,19 @@ theorem cutWord_pairedCuts_accounting (lifted : Meshes.LiftedPuncturedGrid base)
   have scaled : 2 * lifted.cutBoundaryPairs.pairs.length =
       4 * normal.pivots.length + 2 * terminal.pairs := letters.symm.trans accounting
   change 2 * normal.pivots.length + terminal.pairs = lifted.cutBoundaryPairs.pairs.length
-  exact Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordGenusAccounting.cancel_twice _ _ _ scaled
+  exact WordGenusAccounting.cancel_twice _ _ _ scaled
 
 /-- The outstanding handle-count step is to identify terminal cancellations with `V - boundaryEdges + boundaryComponents
 - 1`. All quantities on the right below are the already certified actual surface counts. -/
-theorem cutWord_euler_accounting (lifted : Meshes.LiftedPuncturedGrid base)
-    (normal : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordGenusAccounting.CutWordNormal lifted)
-    (terminal : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordGenusAccounting.CutWordTerminal normal) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordGenusAccounting.EulerAccounting lifted normal terminal := by
+theorem cutWord_euler_accounting (lifted : LiftedPuncturedGrid base)
+    (normal : CutWordNormal lifted)
+    (terminal : CutWordTerminal normal) :
+      EulerAccounting lifted normal terminal := by
   change 2 * (normal.pivots.length : Int) + terminal.pairs = _
   have pairs := congrArg (fun value : Nat => (value : Int))
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordGenusAccounting.cutWord_pairedCuts_accounting lifted normal
+    (WordGenusAccounting.cutWord_pairedCuts_accounting lifted normal
     terminal)
-  simp only [-eq_self, -iff_self, Purelib.Algebra.NatCast.add, Purelib.Algebra.NatCast.mul, Nat.cast_ofNat] at pairs
+  simp only [-eq_self, -iff_self, Algebra.NatCast.add, Algebra.NatCast.mul, Nat.cast_ofNat] at pairs
   exact pairs.trans lifted.cut_pairs_euler_balance
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.WordGenusAccounting

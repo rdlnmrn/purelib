@@ -9,6 +9,8 @@ import Purelib.Approximation.Gaussian.Name.Coherent.Arithmetic
 public import Purelib.Approximation.Gaussian.Trigonometric.Name
 public import Purelib.Approximation.Gaussian.Logarithm.Chart.Anchored.Output
 
+open Purelib.Approximation.Gaussian.Name.Coherent
+
 section
 @[expose] public section
 
@@ -37,86 +39,86 @@ open Purelib.Data in
 Each constructor specifies both resulting channels from its operands. Reciprocal and logarithm rules retain evidence for
 the actual value channel; the relation records these finite construction rules without introducing a derivative
 function. -/
-inductive Program : Name.Coherent.CoherentNamed → Name.Coherent.CoherentNamed → Prop
+inductive Program : CoherentNamed → CoherentNamed → Prop
   /-- Relate an exact constant value channel to the exact zero slope channel. -/ | constant (value :
     Gaussian.Basic.Canonical) :
-      Purelib.Calculus.Jet.Progressive.First.Provenance.Program (Name.Coherent.CoherentNamed.Coherence.exact value)
-        (Name.Coherent.CoherentNamed.Coherence.exact 0)
+      Provenance.Program (CoherentNamed.Coherence.exact value)
+        (CoherentNamed.Coherence.exact 0)
   /-- Relate an arbitrary independent value channel to the exact unit slope. -/ | independent (value :
-    Name.Coherent.CoherentNamed) :
-      Purelib.Calculus.Jet.Progressive.First.Provenance.Program value (Name.Coherent.CoherentNamed.Coherence.exact 1)
+    CoherentNamed) :
+      Provenance.Program value (CoherentNamed.Coherence.exact 1)
   /-- Combine two derivations by adding their value channels and slope channels. -/ | add {leftValue leftSlope
-    rightValue rightSlope : Name.Coherent.CoherentNamed} :
-      Purelib.Calculus.Jet.Progressive.First.Provenance.Program leftValue leftSlope →
-        Purelib.Calculus.Jet.Progressive.First.Provenance.Program rightValue rightSlope →
-      Purelib.Calculus.Jet.Progressive.First.Provenance.Program (
-        Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.add leftValue
+    rightValue rightSlope : CoherentNamed} :
+      Provenance.Program leftValue leftSlope →
+        Provenance.Program rightValue rightSlope →
+      Provenance.Program (
+        CoherentNamed.add leftValue
         rightValue)
-        (Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.add leftSlope rightSlope)
-  /-- Negate both channels of a retained derivation. -/ | neg {value slope : Name.Coherent.CoherentNamed} :
-    Purelib.Calculus.Jet.Progressive.First.Provenance.Program value slope →
-      Purelib.Calculus.Jet.Progressive.First.Provenance.Program (
-        Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.neg value)
-        (Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.neg slope)
+        (CoherentNamed.add leftSlope rightSlope)
+  /-- Negate both channels of a retained derivation. -/ | neg {value slope : CoherentNamed} :
+    Provenance.Program value slope →
+      Provenance.Program (
+        CoherentNamed.neg value)
+        (CoherentNamed.neg slope)
   /-- Combine two derivations with the product value and product-rule slope channels. -/ | mul {leftValue leftSlope
-    rightValue rightSlope : Name.Coherent.CoherentNamed} :
-      Purelib.Calculus.Jet.Progressive.First.Provenance.Program leftValue leftSlope →
-        Purelib.Calculus.Jet.Progressive.First.Provenance.Program rightValue rightSlope →
-      Purelib.Calculus.Jet.Progressive.First.Provenance.Program (
-        Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.mul leftValue
+    rightValue rightSlope : CoherentNamed} :
+      Provenance.Program leftValue leftSlope →
+        Provenance.Program rightValue rightSlope →
+      Provenance.Program (
+        CoherentNamed.mul leftValue
         rightValue)
-        (Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.add
-          (Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.mul leftSlope
+        (CoherentNamed.add
+          (CoherentNamed.mul leftSlope
           rightValue)
-          (Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.mul leftValue rightSlope))
+          (CoherentNamed.mul leftValue rightSlope))
   /-- Construct reciprocal channels using apartness of the retained value name.
 
 The slope channel is the negative original slope multiplied by two copies of the reciprocal value channel. -/ |
-  reciprocal {value slope : Name.Coherent.CoherentNamed} (program :
-  Purelib.Calculus.Jet.Progressive.First.Provenance.Program value slope)
+  reciprocal {value slope : CoherentNamed} (program :
+  Provenance.Program value slope)
       (apart : Name.Basic.Named.Apart value.name) :
-      Purelib.Calculus.Jet.Progressive.First.Provenance.Program (Name.Coherent.Arithmetic.reciprocalChannel value apart)
-        (Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.neg
-          (Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.mul slope
-          (Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.mul (Name.Coherent.Arithmetic.reciprocalChannel
+      Provenance.Program (Arithmetic.reciprocalChannel value apart)
+        (CoherentNamed.neg
+          (CoherentNamed.mul slope
+          (CoherentNamed.mul (Arithmetic.reciprocalChannel
             value apart)
-            (Name.Coherent.Arithmetic.reciprocalChannel value apart))))
+            (Arithmetic.reciprocalChannel value apart))))
   /-- Retain an outer value channel and multiply the two supplied slope channels.
 
 Both operand pairs have derivations. This rule imposes no additional relation between the inner value and the supplied
-  outer pair. -/ | compose {outerValue outerSlope innerValue innerSlope : Name.Coherent.CoherentNamed} :
-      Purelib.Calculus.Jet.Progressive.First.Provenance.Program outerValue outerSlope →
-        Purelib.Calculus.Jet.Progressive.First.Provenance.Program innerValue innerSlope →
-      Purelib.Calculus.Jet.Progressive.First.Provenance.Program outerValue
-        (Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.mul innerSlope outerSlope)
+  outer pair. -/ | compose {outerValue outerSlope innerValue innerSlope : CoherentNamed} :
+      Provenance.Program outerValue outerSlope →
+        Provenance.Program innerValue innerSlope →
+      Provenance.Program outerValue
+        (CoherentNamed.mul innerSlope outerSlope)
   /-- Build the exponential value channel and multiply it by the original slope channel. -/ | exponential {value slope :
-    Name.Coherent.CoherentNamed} (program : Purelib.Calculus.Jet.Progressive.First.Provenance.Program value
+    CoherentNamed} (program : Provenance.Program value
     slope) :
-      Purelib.Calculus.Jet.Progressive.First.Provenance.Program (
+      Provenance.Program (
         Exponential.Progressive.Range.Coherent.exp value.name)
-        (Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.mul slope (
+        (CoherentNamed.mul slope (
           Exponential.Progressive.Range.Coherent.exp value.name))
   /-- Build logarithm channels in a retained anchored chart.
 
 The result uses that chart's output and multiplies the slope by the reciprocal value channel, with explicit apartness
-  evidence for the same value name. -/ | logarithm {value slope : Name.Coherent.CoherentNamed} (program :
-  Purelib.Calculus.Jet.Progressive.First.Provenance.Program value slope)
+  evidence for the same value name. -/ | logarithm {value slope : CoherentNamed} (program :
+  Provenance.Program value slope)
       (branch : Logarithm.Chart.Anchored.AnchoredChart value)
       (apart : Name.Basic.Named.Apart value.name) :
-      Purelib.Calculus.Jet.Progressive.First.Provenance.Program branch.output
-        (Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.mul slope
-          (Name.Coherent.Arithmetic.reciprocalChannel value apart))
+      Provenance.Program branch.output
+        (CoherentNamed.mul slope
+          (Arithmetic.reciprocalChannel value apart))
   /-- Build the sine value channel with original slope times cosine as its slope channel. -/ | sine {value slope :
-    Name.Coherent.CoherentNamed} (program : Purelib.Calculus.Jet.Progressive.First.Provenance.Program value
+    CoherentNamed} (program : Provenance.Program value
     slope) :
-      Purelib.Calculus.Jet.Progressive.First.Provenance.Program (Trigonometric.Name.sine value)
-        (Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.mul slope (Trigonometric.Name.cosine value))
+      Provenance.Program (Trigonometric.Name.sine value)
+        (CoherentNamed.mul slope (Trigonometric.Name.cosine value))
   /-- Build the cosine value channel with negative original slope times sine as its slope channel. -/ | cosine {value
-    slope : Name.Coherent.CoherentNamed} (program : Purelib.Calculus.Jet.Progressive.First.Provenance.Program
+    slope : CoherentNamed} (program : Provenance.Program
     value slope) :
-      Purelib.Calculus.Jet.Progressive.First.Provenance.Program (Trigonometric.Name.cosine value)
-        (Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.neg
-          (Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.mul slope
+      Provenance.Program (Trigonometric.Name.cosine value)
+        (CoherentNamed.neg
+          (CoherentNamed.mul slope
           (Trigonometric.Name.sine value)))
 
 open Purelib.Approximation.Gaussian in
@@ -127,8 +129,8 @@ set_option genInjectivity false in
 The indexed Program field relates the retained values through the available finite construction rules. It prevents
 replacing either field without corresponding evidence. -/
 structure JetData where
-  /-- The progressive value channel indexed by the retained derivation. -/ value : Name.Coherent.CoherentNamed
-  /-- The progressive slope channel indexed by the retained derivation. -/ slope : Name.Coherent.CoherentNamed
+  /-- The progressive value channel indexed by the retained derivation. -/ value : CoherentNamed
+  /-- The progressive slope channel indexed by the retained derivation. -/ slope : CoherentNamed
   /-- The finite derivation for this exact value and slope pair. -/ program : Program value slope
 
 constructive_injectivity JetData

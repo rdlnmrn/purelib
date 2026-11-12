@@ -18,6 +18,8 @@ import Mathlib.Data.Nat.Init
 import Mathlib.Logic.Nontrivial.Defs
 import Purelib.Tactic.Ring
 
+open Purelib.Algebra.Field
+
 section
 open Purelib
 open Purelib.Geometry
@@ -29,7 +31,7 @@ open Purelib.Geometry.Plane.Point
 open scoped Purelib.Data.Nat
 attribute [local instance 2000] Purelib.Data.Nat.successorNeZero
   Purelib.Data.Nat.successorAtLeastTwo
-  Purelib.Algebra.Group.Negation.subNegZeroMonoid
+  Algebra.Group.Negation.subNegZeroMonoid
 
 public section
 
@@ -45,34 +47,34 @@ choice of a line is used.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry
 
 /-- The centroid of three displayed points. -/
-@[expose] def centroidPoint (first second third : Plane.Point K) : Plane.Point K :=
+@[expose] def centroidPoint (first second third : Point K) : Point K :=
   ⟨(first.x + second.x + third.x) / 3,
     (first.y + second.y + third.y) / 3⟩
 
 /-- The first coordinate of the centroid is the average of the three first coordinates. -/
-@[simp] theorem centroidPoint_x (first second third : Plane.Point K) :
+@[simp] theorem centroidPoint_x (first second third : Point K) :
     (centroidPoint first second third).x =
       (first.x + second.x + third.x) / 3 := rfl
 
 /-- The second coordinate of the centroid is the average of the three second coordinates. -/
-@[simp] theorem centroidPoint_y (first second third : Plane.Point K) :
+@[simp] theorem centroidPoint_y (first second third : Point K) :
     (centroidPoint first second third).y =
       (first.y + second.y + third.y) / 3 := rfl
 
 /-- A line is a median at `vertex` when it contains that vertex and the midpoint of the displayed opposite side. -/
-@[expose] def IsMedianLine (line : Plane.Line K)
-    (vertex oppositeFirst oppositeSecond : Plane.Point K) : Prop :=
+@[expose] def IsMedianLine (line : Line K)
+    (vertex oppositeFirst oppositeSecond : Point K) : Prop :=
   line.Contains vertex ∧
     line.Contains (Affine.midpoint oppositeFirst oppositeSecond)
 
 /-- Cyclically moving the first vertex to the last preserves noncollinearity. -/
 private theorem not_collinear_cyclic_left
-    {first second third : Plane.Point K}
+    {first second third : Point K}
     (notCollinear : ¬ Incidence.Collinear first second third) :
     ¬ Incidence.Collinear second third first := by
   rintro ⟨line, containsSecond, containsThird, containsFirst⟩
@@ -80,7 +82,7 @@ private theorem not_collinear_cyclic_left
 
 /-- Cyclically moving the third vertex to the first preserves noncollinearity. -/
 private theorem not_collinear_cyclic_right
-    {first second third : Plane.Point K}
+    {first second third : Point K}
     (notCollinear : ¬ Incidence.Collinear first second third) :
     ¬ Incidence.Collinear third first second :=
   not_collinear_cyclic_left (not_collinear_cyclic_left notCollinear)
@@ -88,7 +90,7 @@ private theorem not_collinear_cyclic_right
 /-- A vertex of a noncollinear triangle cannot equal the opposite midpoint. -/
 theorem vertex_ne_opposite_midpoint
     [Nontrivial K] [DecidableEq K]
-    (vertex oppositeFirst oppositeSecond : Plane.Point K)
+    (vertex oppositeFirst oppositeSecond : Point K)
     (notCollinear : ¬ Incidence.Collinear vertex oppositeFirst oppositeSecond)
     (twoNonzero : (2 : K) ≠ 0) :
     vertex ≠ Affine.midpoint oppositeFirst oppositeSecond := by
@@ -96,10 +98,10 @@ theorem vertex_ne_opposite_midpoint
   apply notCollinear
   apply (Incidence.collinear_iff_pointDeterminant_eq_zero _ _ _).2
   have twoInverse : (2 : K) * (2 : K)⁻¹ = 1 :=
-    Algebra.Field.ExplicitField.mul_inv_cancel 2 twoNonzero
+    ExplicitField.mul_inv_cancel 2 twoNonzero
   rw [vertexIsMidpoint]
   unfold Incidence.pointDeterminant Affine.midpoint
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  simp only [ExplicitField.div_eq_mul_inv]
   calc
     (oppositeFirst.x + oppositeSecond.x) * (2 : K)⁻¹ *
           oppositeFirst.y -
@@ -119,15 +121,15 @@ theorem vertex_ne_opposite_midpoint
 
 /-- The executable median line through a vertex and the opposite midpoint. -/
 @[expose] def medianLine [DecidableEq K]
-    (vertex oppositeFirst oppositeSecond : Plane.Point K)
+    (vertex oppositeFirst oppositeSecond : Point K)
     (vertexNotMidpoint :
-      vertex ≠ Affine.midpoint oppositeFirst oppositeSecond) : Plane.Line K :=
+      vertex ≠ Affine.midpoint oppositeFirst oppositeSecond) : Line K :=
   Incidence.lineThrough vertex (Affine.midpoint oppositeFirst oppositeSecond)
     vertexNotMidpoint
 
 /-- The constructed median contains its vertex. -/
 theorem medianLine_contains_vertex [DecidableEq K]
-    (vertex oppositeFirst oppositeSecond : Plane.Point K)
+    (vertex oppositeFirst oppositeSecond : Point K)
     (vertexNotMidpoint :
       vertex ≠ Affine.midpoint oppositeFirst oppositeSecond) :
     (medianLine vertex oppositeFirst oppositeSecond vertexNotMidpoint).Contains
@@ -137,7 +139,7 @@ theorem medianLine_contains_vertex [DecidableEq K]
 
 /-- The constructed median contains the opposite midpoint. -/
 theorem medianLine_contains_midpoint [DecidableEq K]
-    (vertex oppositeFirst oppositeSecond : Plane.Point K)
+    (vertex oppositeFirst oppositeSecond : Point K)
     (vertexNotMidpoint :
       vertex ≠ Affine.midpoint oppositeFirst oppositeSecond) :
     (medianLine vertex oppositeFirst oppositeSecond vertexNotMidpoint).Contains
@@ -147,7 +149,7 @@ theorem medianLine_contains_midpoint [DecidableEq K]
 
 /-- The constructed line is a median in the source's incidence definition. -/
 theorem medianLine_isMedianLine [DecidableEq K]
-    (vertex oppositeFirst oppositeSecond : Plane.Point K)
+    (vertex oppositeFirst oppositeSecond : Point K)
     (vertexNotMidpoint :
       vertex ≠ Affine.midpoint oppositeFirst oppositeSecond) :
     IsMedianLine
@@ -159,33 +161,33 @@ theorem medianLine_isMedianLine [DecidableEq K]
       vertexNotMidpoint⟩
 
 /-- Cyclically rotating the three inputs does not change their centroid. -/
-theorem centroidPoint_cyclic_left (first second third : Plane.Point K) :
+theorem centroidPoint_cyclic_left (first second third : Point K) :
     centroidPoint second third first = centroidPoint first second third := by
   apply Plane.Point.ext <;>
     unfold centroidPoint <;>
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv] <;>
+    simp only [ExplicitField.div_eq_mul_inv] <;>
     ring1
 
 /-- The other cyclic rotation also preserves the centroid. -/
-theorem centroidPoint_cyclic_right (first second third : Plane.Point K) :
+theorem centroidPoint_cyclic_right (first second third : Point K) :
     centroidPoint third first second = centroidPoint first second third := by
   apply Plane.Point.ext <;>
     unfold centroidPoint <;>
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv] <;>
+    simp only [ExplicitField.div_eq_mul_inv] <;>
     ring1
 
 /-- The centroid is one third of the way from a vertex and two thirds of the way toward the opposite midpoint. -/
 theorem centroidPoint_eq_median_affineCombination
-    (vertex oppositeFirst oppositeSecond : Plane.Point K)
+    (vertex oppositeFirst oppositeSecond : Point K)
     (twoNonzero : (2 : K) ≠ 0) :
     centroidPoint vertex oppositeFirst oppositeSecond =
       Affine.affineCombination ((1 : K) / 3) vertex ((2 : K) / 3)
         (Affine.midpoint oppositeFirst oppositeSecond) := by
   have twoInverse : (2 : K) * (2 : K)⁻¹ = 1 :=
-    Algebra.Field.ExplicitField.mul_inv_cancel 2 twoNonzero
+    ExplicitField.mul_inv_cancel 2 twoNonzero
   apply Plane.Point.ext
   · unfold centroidPoint Affine.affineCombination Affine.midpoint
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    simp only [ExplicitField.div_eq_mul_inv]
     calc
       (vertex.x + oppositeFirst.x + oppositeSecond.x) * (3 : K)⁻¹ =
           (vertex.x +
@@ -198,7 +200,7 @@ theorem centroidPoint_eq_median_affineCombination
             ((oppositeFirst.x + oppositeSecond.x) * (2 : K)⁻¹) := by
               ring1
   · unfold centroidPoint Affine.affineCombination Affine.midpoint
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    simp only [ExplicitField.div_eq_mul_inv]
     calc
       (vertex.y + oppositeFirst.y + oppositeSecond.y) * (3 : K)⁻¹ =
           (vertex.y +
@@ -213,7 +215,7 @@ theorem centroidPoint_eq_median_affineCombination
 
 /-- Outside characteristic three, the displayed centroid lies on each constructed median line. -/
 theorem centroidPoint_on_medianLine [DecidableEq K]
-    (vertex oppositeFirst oppositeSecond : Plane.Point K)
+    (vertex oppositeFirst oppositeSecond : Point K)
     (vertexNotMidpoint :
       vertex ≠ Affine.midpoint oppositeFirst oppositeSecond)
     (twoNonzero : (2 : K) ≠ 0)
@@ -221,9 +223,9 @@ theorem centroidPoint_on_medianLine [DecidableEq K]
     (medianLine vertex oppositeFirst oppositeSecond vertexNotMidpoint).Contains
       (centroidPoint vertex oppositeFirst oppositeSecond) := by
   have threeInverse : (3 : K) * (3 : K)⁻¹ = 1 :=
-    Algebra.Field.ExplicitField.mul_inv_cancel 3 threeNonzero
+    ExplicitField.mul_inv_cancel 3 threeNonzero
   have weightsSum : (1 : K) / 3 + 2 / 3 = 1 := by
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    simp only [ExplicitField.div_eq_mul_inv]
     calc
       1 * (3 : K)⁻¹ + 2 * (3 : K)⁻¹ =
           3 * (3 : K)⁻¹ := by ring1
@@ -238,7 +240,7 @@ theorem centroidPoint_on_medianLine [DecidableEq K]
 /-- In characteristic three, two consecutive medians are parallel. The calculation is uniform in the vertices and uses
 only the source's visible characteristic-two exclusion for midpoint normalization. -/
 theorem consecutive_medianLines_parallel_of_three_eq_zero [DecidableEq K]
-    (first second third : Plane.Point K)
+    (first second third : Point K)
     (firstNotMidpoint : first ≠ Affine.midpoint second third)
     (secondNotMidpoint : second ≠ Affine.midpoint third first)
     (twoNonzero : (2 : K) ≠ 0)
@@ -246,7 +248,7 @@ theorem consecutive_medianLines_parallel_of_three_eq_zero [DecidableEq K]
     (medianLine first second third firstNotMidpoint).Parallel
       (medianLine second third first secondNotMidpoint) := by
   have twoInverse : (2 : K) * (2 : K)⁻¹ = 1 :=
-    Algebra.Field.ExplicitField.mul_inv_cancel 2 twoNonzero
+    ExplicitField.mul_inv_cancel 2 twoNonzero
   have twoEqualsNegativeOne : (2 : K) = -1 := by
     calc
       (2 : K) = 3 - 1 := by ring1
@@ -257,23 +259,23 @@ theorem consecutive_medianLines_parallel_of_three_eq_zero [DecidableEq K]
         rw [twoEqualsNegativeOne]
         ring1
       _ = -1 := by rw [twoInverse]
-  unfold medianLine Incidence.lineThrough Affine.midpoint Line.Parallel
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  unfold medianLine Incidence.lineThrough Affine.midpoint Parallel
+  simp only [ExplicitField.div_eq_mul_inv]
   rw [inverseTwoEqualsNegativeOne]
   ring1
 
 /-- A line containing an endpoint and the midpoint contains the other endpoint when two is nonzero. -/
 private theorem line_contains_other_endpoint_of_midpoint
-    (line : Plane.Line K) (first second : Plane.Point K)
+    (line : Line K) (first second : Point K)
     (twoNonzero : (2 : K) ≠ 0)
     (containsFirst : line.Contains first)
     (containsMidpoint : line.Contains (Affine.midpoint first second)) :
     line.Contains second := by
   have twoInverse : (2 : K) * (2 : K)⁻¹ = 1 :=
-    Algebra.Field.ExplicitField.mul_inv_cancel 2 twoNonzero
-  unfold Plane.Line.Contains at containsFirst containsMidpoint ⊢
+    ExplicitField.mul_inv_cancel 2 twoNonzero
+  unfold Contains at containsFirst containsMidpoint ⊢
   unfold Affine.midpoint at containsMidpoint
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv] at containsMidpoint
+  simp only [ExplicitField.div_eq_mul_inv] at containsMidpoint
   calc
     line.a * second.x + line.b * second.y + line.c =
         2 *
@@ -292,7 +294,7 @@ private theorem line_contains_other_endpoint_of_midpoint
 centroid would otherwise identify the two lines, forcing all three vertices onto the first median. -/
 theorem consecutive_medianLines_nonparallel_of_three_ne_zero
     [Nontrivial K] [DecidableEq K]
-    (first second third : Plane.Point K)
+    (first second third : Point K)
     (firstNotMidpoint : first ≠ Affine.midpoint second third)
     (secondNotMidpoint : second ≠ Affine.midpoint third first)
     (notCollinear : ¬ Incidence.Collinear first second third)
@@ -321,7 +323,7 @@ theorem consecutive_medianLines_nonparallel_of_three_ne_zero
     firstMedian secondMedian centroid parallel
     firstContainsCentroid secondContainsCentroid
   have firstContainsSecond : firstMedian.Contains second :=
-    Relations.line_contains_of_equivalent (Plane.Line.equivalent_symm equivalent) second
+    Relations.line_contains_of_equivalent (Line.equivalent_symm equivalent) second
       (by
         unfold secondMedian
         exact medianLine_contains_vertex second third first
@@ -343,10 +345,10 @@ theorem consecutive_medianLines_nonparallel_of_three_ne_zero
 /-- Exercise 3.16: the three explicitly constructed medians are pairwise parallel in characteristic three. Otherwise
 they are pairwise nonparallel and concurrent at the displayed centroid `[(x₁+x₂+x₃)/3,(y₁+y₂+y₃)/3]`. -/
 theorem exercise_3_16 [Nontrivial K] [DecidableEq K]
-    (first second third : Plane.Point K)
+    (first second third : Point K)
     (notCollinear : ¬ Incidence.Collinear first second third)
     (twoNonzero : (2 : K) ≠ 0) :
-    ∃ firstMedian secondMedian thirdMedian : Plane.Line K,
+    ∃ firstMedian secondMedian thirdMedian : Line K,
       IsMedianLine firstMedian first second third ∧
         IsMedianLine secondMedian second third first ∧
         IsMedianLine thirdMedian third first second ∧

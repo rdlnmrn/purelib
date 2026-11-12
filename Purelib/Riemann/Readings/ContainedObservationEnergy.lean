@@ -32,6 +32,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Topology.BranchedCover.Double
+
 @[expose] public section
 
 /-!
@@ -76,10 +78,10 @@ open Purelib.Geometry.Rational in
 private theorem pointMargin_positive {box : Box} {point : Basic.Canonical} (inside : box.StrictContains
   point) :
     0 < pointMargin box point :=
-  Order.Basic.lt_min (Fraction.Order.Arithmetic.sub_pos_direct inside.1)
-    (Order.Basic.lt_min (Fraction.Order.Arithmetic.sub_pos_direct inside.2.1)
-      (Order.Basic.lt_min (Fraction.Order.Arithmetic.sub_pos_direct inside.2.2.1)
-        (Fraction.Order.Arithmetic.sub_pos_direct inside.2.2.2)))
+  Order.Basic.lt_min (Order.Arithmetic.sub_pos_direct inside.1)
+    (Order.Basic.lt_min (Order.Arithmetic.sub_pos_direct inside.2.1)
+      (Order.Basic.lt_min (Order.Arithmetic.sub_pos_direct inside.2.2.1)
+        (Order.Arithmetic.sub_pos_direct inside.2.2.2)))
 
 open Purelib.Data.Rat in
 /-- A radius within both endpoint margins keeps the centered interval inside the original interval. -/
@@ -87,11 +89,11 @@ private theorem interval_refines {lower upper center radius : Coordinate}
     (first : radius ≤ center - lower) (last : radius ≤ upper - center) : lower ≤ center - radius ∧ center + radius ≤
       upper := by
   constructor
-  · apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
-    have nonnegative := Fraction.Order.Arithmetic.sub_nonneg_direct first
+  · apply Order.Arithmetic.le_of_sub_nonneg_direct
+    have nonnegative := Order.Arithmetic.sub_nonneg_direct first
     exact (show (center - lower) - radius = (center - radius) - lower from by ring1) ▸ nonnegative
   · exact (show center + radius = radius + center from by ring1).trans_le
-      ((Fraction.Order.Arithmetic.add_le_add_right_direct last center).trans_eq (by ring1))
+      ((Order.Arithmetic.add_le_add_right_direct last center).trans_eq (by ring1))
 
 open Purelib.Data.Gaussian in
 open Purelib.Geometry.Rational in
@@ -122,7 +124,7 @@ set_option genInjectivity false in
 The record preserves the exact observation bank, original energy owner and their identity, then caches a common
 margin-limited radius, square area and density-weighted lower coefficient. -/
 structure ContainedObservationEnergy (polynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (region : Box) (count : Nat)
+  Basic.CanonicalCoefficients.CoefficientPolynomial) (region : Box) (count : Nat)
   where
   /-- The original certified observation points strictly inside the retained region. -/ points : BoxObservationPoints
     polynomial region count
@@ -228,13 +230,13 @@ open Purelib.Data.Rat
 /-- The cached common area of the contained squares is positive. -/
 theorem area_positive (energy : ContainedObservationEnergy polynomial region count) : 0 < energy.area := by
   rw [energy.area_eq]
-  exact Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-    (Fraction.Order.Arithmetic.pow_pos_direct energy.radius_positive 2)
+  exact Order.Arithmetic.mul_pos_direct (by decide)
+    (Order.Arithmetic.pow_pos_direct energy.radius_positive 2)
 
 /-- The retained contained energy lower coefficient is positive. -/
 theorem lower_positive (energy : ContainedObservationEnergy polynomial region count) : 0 < energy.lower := by
   rw [energy.lower_eq]
-  exact Fraction.Order.Arithmetic.mul_pos_direct energy.area_positive energy.original.boxes.densityConstant_positive
+  exact Order.Arithmetic.mul_pos_direct energy.area_positive energy.original.boxes.densityConstant_positive
 
 end
 
@@ -247,7 +249,7 @@ theorem boxContent_eq_area (energy : ContainedObservationEnergy polynomial regio
     Box.Square.Centered.BoxTransport.centeredBox
   ring1
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
 
 open Purelib in
 open Purelib.Curves.Hyperelliptic.Integration in
@@ -255,8 +257,8 @@ open Purelib.LinearAlgebra.Gaussian in
 open Purelib.Riemann.Topology in
 /-- Restrict the original certified energy cell to its exact contained observation square. -/
 def surfaceCell (energy : ContainedObservationEnergy curve.polynomial region genus)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (face :
-      Topology.BranchedCover.Double.Attachment.Face) (index :
+    (coefficients : Energy.GaussianVector genus) (face :
+      Attachment.Face) (index :
       Fin genus) :
     Energy.Prepared.PreparedEnergy.SurfaceCell curve coefficients :=
   PreparedSurfacePartitions.BoxPartition.restrictCell (PreparedObservationSurface.ObservationBoxes.surfaceCell
@@ -269,10 +271,10 @@ open Purelib.Data in
 open Purelib.LinearAlgebra.Gaussian in
 /-- Cache the indexed restricted energy cells on the same original cover face. -/
 def surfaceCells (energy : ContainedObservationEnergy curve.polynomial region genus)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (face :
-      Topology.BranchedCover.Double.Attachment.Face) :
+    (coefficients : Energy.GaussianVector genus) (face :
+      Attachment.Face) :
     Data.Vector (Energy.Prepared.PreparedEnergy.SurfaceCell curve coefficients) genus :=
-  Vector.Basic.vectorOfFn (energy.surfaceCell coefficients face)
+  vectorOfFn (energy.surfaceCell coefficients face)
 
 section
 open Purelib
@@ -280,20 +282,20 @@ open Purelib.Data
 open Purelib.LinearAlgebra.Gaussian
 /-- The cached restricted cell retains the exact contained square at its original index. -/
 theorem surfaceCells_box (energy : ContainedObservationEnergy curve.polynomial region genus)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (face :
-      Topology.BranchedCover.Double.Attachment.Face) (index :
+    (coefficients : Energy.GaussianVector genus) (face :
+      Attachment.Face) (index :
       Fin genus) :
     (energy.surfaceCells coefficients face index).box = energy.box index := by
-  rw [surfaceCells, Vector.Basic.vectorOfFn_apply]; rfl
+  rw [surfaceCells, vectorOfFn_apply]; rfl
 
 /-- Restriction preserves the exact original numerator-to-denominator density lower bound. -/
 theorem surfaceCells_density (energy : ContainedObservationEnergy curve.polynomial region genus)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (face :
-      Topology.BranchedCover.Double.Attachment.Face) (index :
+    (coefficients : Energy.GaussianVector genus) (face :
+      Attachment.Face) (index :
       Fin genus) :
     (energy.surfaceCells coefficients face index).densityLower =
       energy.original.boxes.numeratorLower coefficients index / energy.original.boxes.denominatorScale := by
-  rw [surfaceCells, Vector.Basic.vectorOfFn_apply]; rfl
+  rw [surfaceCells, vectorOfFn_apply]; rfl
 
 end
 
@@ -304,19 +306,19 @@ open Purelib.Geometry.Rational in
 open Purelib.LinearAlgebra.Gaussian in
 /-- Contained cell energy equals their common area times the original retained density sum. -/
 theorem surfaceEnergy_eq (energy : ContainedObservationEnergy curve.polynomial region genus)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (face :
-      Topology.BranchedCover.Double.Attachment.Face) :
+    (coefficients : Energy.GaussianVector genus) (face :
+      Attachment.Face) :
     Energy.Prepared.surfaceEnergy (fun index => energy.surfaceCells coefficients face index) =
-      energy.area * FiniteSum.Fin.sumFin (fun index => energy.original.boxes.numeratorLower coefficients index /
+      energy.area * sumFin (fun index => energy.original.boxes.numeratorLower coefficients index /
         energy.original.boxes.denominatorScale) := by
-  change FiniteSum.Fin.sumFin (fun index => Box.Content.boxContent (energy.surfaceCells coefficients face index).box *
+  change sumFin (fun index => Box.Content.boxContent (energy.surfaceCells coefficients face index).box *
     (energy.surfaceCells coefficients face index).densityLower) = _
   calc
-    _ = FiniteSum.Fin.sumFin (fun index => energy.area *
+    _ = sumFin (fun index => energy.area *
         (energy.original.boxes.numeratorLower coefficients index / energy.original.boxes.denominatorScale)) :=
-      FiniteSum.Fin.sumFin_congr (fun index => by
+      sumFin_congr (fun index => by
           rw [energy.surfaceCells_box, energy.boxContent_eq_area, energy.surfaceCells_density])
-    _ = _ := FiniteSum.Fin.sumFin_mul_left _ _
+    _ = _ := sumFin_mul_left _ _
 
 open Purelib
 open Purelib.Curves.Hyperelliptic.Integration
@@ -324,23 +326,23 @@ open Purelib.Data.Rat
 open Purelib.LinearAlgebra.Gaussian
 /-- The retained contained lower coefficient controls energy for every original coefficient vector. -/
 theorem uniform_lower (energy : ContainedObservationEnergy curve.polynomial region genus)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (face :
-      Topology.BranchedCover.Double.Attachment.Face) :
+    (coefficients : Energy.GaussianVector genus) (face :
+      Attachment.Face) :
     energy.lower * coefficientNormSq coefficients ≤ Energy.Prepared.surfaceEnergy (fun index => energy.surfaceCells
       coefficients face index) := by
   rw [energy.surfaceEnergy_eq, energy.lower_eq]
   exact (show energy.area * energy.original.boxes.densityConstant * coefficientNormSq coefficients =
     energy.area * (energy.original.boxes.densityConstant * coefficientNormSq coefficients) from by ring1).trans_le
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (energy.original.densitySum_lower coefficients)
+      (Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (energy.original.densitySum_lower coefficients)
         energy.area_positive.le)
 
 /-- A nonzero coefficient vector has positive energy on the original contained cell family. -/
 theorem positive_energy (energy : ContainedObservationEnergy curve.polynomial region genus)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (nonzero : Energy.NonzeroGaussianVector
+    (coefficients : Energy.GaussianVector genus) (nonzero : NonzeroGaussianVector
       coefficients) (face :
-      Topology.BranchedCover.Double.Attachment.Face) :
+      Attachment.Face) :
     0 < Energy.Prepared.surfaceEnergy (fun index => energy.surfaceCells coefficients face index) :=
-  (Fraction.Order.Arithmetic.mul_pos_direct energy.lower_positive (coefficientNormSq_positive nonzero)).trans_le
+  (Order.Arithmetic.mul_pos_direct energy.lower_positive (coefficientNormSq_positive nonzero)).trans_le
     (energy.uniform_lower coefficients face)
 
 end ContainedObservationEnergy

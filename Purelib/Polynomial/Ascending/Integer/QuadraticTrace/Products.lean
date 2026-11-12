@@ -9,6 +9,8 @@ public import Purelib.Polynomial.Dense.Rational.FiniteProduct.Integer
 
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Polynomial.Dense.Rational.FiniteProduct
+
 open Purelib.Algebra.Field
 
 open Purelib.Polynomial
@@ -45,17 +47,17 @@ theorem
   ExerciseEightThirteen.IntegerPolynomial.eval_norm_coefficientProductFin
   : ∀ (count : Nat)
     (factor : Fin count → List Int) (trace : K),
-    Ascending.Integer.Basic.eval
-        (Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.normCoefficients
-          (Dense.Rational.FiniteProduct.Integer.coefficientProductFin count factor)) trace =
-      Ascending.Integer.Basic.eval
-        (Dense.Rational.FiniteProduct.Integer.coefficientProductFin count fun index =>
-          Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.normCoefficients
+    Basic.eval
+        (Reduction.IntegerPolynomial.normCoefficients
+          (Integer.coefficientProductFin count factor)) trace =
+      Basic.eval
+        (Integer.coefficientProductFin count fun index =>
+          Reduction.IntegerPolynomial.normCoefficients
             (factor index)) trace
   | 0, factor, trace => by
-      rw [Dense.Rational.FiniteProduct.Integer.coefficientProductFin_zero,
-        Dense.Rational.FiniteProduct.Integer.coefficientProductFin_zero,
-        Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.eval_normCoefficients]
+      rw [Integer.coefficientProductFin_zero,
+        Integer.coefficientProductFin_zero,
+        Reduction.IntegerPolynomial.eval_normCoefficients]
       have subZero (scalar : K) : scalar - 0 = scalar := by
         exact (@SubNegMonoid.sub_eq_add_neg K
           SubtractionMonoid.toSubNegMonoid scalar 0).trans
@@ -65,12 +67,12 @@ theorem
       simp only [-eq_self, -iff_self, subZero,Algebra.Quadratic.TracePair.eval,
         Algebra.Quadratic.TracePair.norm,
         Algebra.Quadratic.TracePair.zero,
-        Ascending.Integer.Basic.eval_cons, Ascending.Integer.Basic.eval_nil, Int.cast_one, mul_zero, mul_one, add_zero ]
+        Basic.eval_cons, Basic.eval_nil, Int.cast_one, mul_zero, mul_one, add_zero ]
       rfl
   | count + 1, factor, trace => by
-      rw [Dense.Rational.FiniteProduct.Integer.coefficientProductFin_succ,
-        Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.eval_normCoefficients_mul,
-        Dense.Rational.FiniteProduct.Integer.coefficientProductFin_succ, Ascending.Integer.Basic.eval_mul,
+      rw [Integer.coefficientProductFin_succ,
+        Reduction.IntegerPolynomial.eval_normCoefficients_mul,
+        Integer.coefficientProductFin_succ, Basic.eval_mul,
 
           ExerciseEightThirteen.IntegerPolynomial.eval_norm_coefficientProductFin
           count

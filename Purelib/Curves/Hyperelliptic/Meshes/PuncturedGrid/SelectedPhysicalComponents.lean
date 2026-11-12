@@ -50,18 +50,18 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SelectedBoundaryDecomposi
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_swap sumFin_sub sumFin_add)
-attribute [local congr] Purelib.Algebra.FiniteSum.Fin.sumFin_congr
+attribute [local congr] FiniteSum.Fin.sumFin_congr
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
-    higher} {faces : Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces bank}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
+    higher} {faces : PuncturedFaces bank}
 
 /-- The actual selected side values associated to one physical component. -/
 def componentEvaluation (neighbors : PuncturedFaces.NeighborBank faces)
-    (keep : Fin faces.regulars.length → Bool) (values : GridLiftedDualSteps.GridSide → Fin faces.regulars.length →
-      Data.Gaussian.Basic.Canonical)
-    (component : PhysicalComponentValues.PhysicalComponent faces) : Gaussian :=
+    (keep : Fin faces.regulars.length → Bool) (values : GridSide → Fin faces.regulars.length →
+      Gaussian)
+    (component : PhysicalComponent faces) : Gaussian :=
   FiniteSum.Fin.sumFin (fun p => SideNeighbor.componentValue (neighbors.entries.get p).right component
     (SelectedSides.value (keep p) (values .right p))) -
     FiniteSum.Fin.sumFin (fun p => SideNeighbor.componentValue (neighbors.entries.get p).left component
@@ -74,8 +74,8 @@ def componentEvaluation (neighbors : PuncturedFaces.NeighborBank faces)
 /-- The selected physical values for one side split into the original exterior component and retained hole components.
 -/
 private theorem side_components (neighbors : PuncturedFaces.NeighborBank faces)
-    (keep : Fin faces.regulars.length → Bool) (values : GridLiftedDualSteps.GridSide → Fin faces.regulars.length →
-      Data.Gaussian.Basic.Canonical) (side : GridLiftedDualSteps.GridSide) :
+    (keep : Fin faces.regulars.length → Bool) (values : GridSide → Fin faces.regulars.length →
+      Gaussian) (side : GridSide) :
     FiniteSum.Fin.sumFin (fun p => SideNeighbor.physicalValue (FaceNeighbors.at (neighbors.entries.get p) side)
       (SelectedSides.value (keep p) (values side p))) =
       FiniteSum.Fin.sumFin (fun p => SideNeighbor.componentValue (FaceNeighbors.at (neighbors.entries.get p) side)
@@ -93,26 +93,26 @@ indices.
 
 The equality preserves zero terms, repeated occurrences and the side-neighbor assignments of the retained bank. -/
 theorem physicalEvaluation_components (neighbors : PuncturedFaces.NeighborBank faces)
-    (keep : Fin faces.regulars.length → Bool) (values : GridLiftedDualSteps.GridSide → Fin faces.regulars.length →
-      Data.Gaussian.Basic.Canonical) :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SelectedBoundaryDecomposition.SelectedSides.physicalEvaluation
-      neighbors keep values = Curves.Hyperelliptic.Meshes.PuncturedGrid.SelectedPhysicalComponents.componentEvaluation
+    (keep : Fin faces.regulars.length → Bool) (values : GridSide → Fin faces.regulars.length →
+      Gaussian) :
+    SelectedSides.physicalEvaluation
+      neighbors keep values = SelectedPhysicalComponents.componentEvaluation
       neighbors keep values .exterior +
       FiniteSum.Fin.sumFin (fun hole =>
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.SelectedPhysicalComponents.componentEvaluation neighbors keep values
+        SelectedPhysicalComponents.componentEvaluation neighbors keep values
         (.hole hole)) := by
-  have bottom := Curves.Hyperelliptic.Meshes.PuncturedGrid.SelectedPhysicalComponents.side_components neighbors keep
+  have bottom := SelectedPhysicalComponents.side_components neighbors keep
     values .bottom
-  have right := Curves.Hyperelliptic.Meshes.PuncturedGrid.SelectedPhysicalComponents.side_components neighbors keep
+  have right := SelectedPhysicalComponents.side_components neighbors keep
     values .right
-  have top := Curves.Hyperelliptic.Meshes.PuncturedGrid.SelectedPhysicalComponents.side_components neighbors keep values
+  have top := SelectedPhysicalComponents.side_components neighbors keep values
     .top
-  have left := Curves.Hyperelliptic.Meshes.PuncturedGrid.SelectedPhysicalComponents.side_components neighbors keep
+  have left := SelectedPhysicalComponents.side_components neighbors keep
     values .left
   dsimp only [FaceNeighbors.at] at bottom right top left
   unfold SelectedSides.physicalEvaluation
   rw [right, left, top, bottom]
-  simp only [Curves.Hyperelliptic.Meshes.PuncturedGrid.SelectedPhysicalComponents.componentEvaluation,
+  simp only [SelectedPhysicalComponents.componentEvaluation,
     FiniteSum.Fin.sumFin_sub]
   ring1
 

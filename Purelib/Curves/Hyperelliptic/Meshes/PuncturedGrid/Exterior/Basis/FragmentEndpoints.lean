@@ -58,6 +58,10 @@ import Purelib.Riemann.Paths.PreparedPathDecomposition
 import Purelib.Riemann.Paths.PreparedPathParentCaches
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
+
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -77,38 +81,38 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Fragm
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
     regular domains differential}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {count : Nat} {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {sourceData : Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover sourceData}
-  {covers : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent} {minimum floor index
+  {sourceData : UniformReciprocalModels.Data patch count} {cover :
+    UniformReciprocalCover.Cover sourceData}
+  {covers : Disk.Basis.SourceLocations.BasisSourceCovers parent} {minimum floor index
     depth : Nat}
-  {common : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonCover cover covers minimum}
-  {areaAllowance sourceTarget coefficientTarget : Normalization.InverseRootPolynomial.Coordinate}
-  {request : Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest regular common
+  {common : Disk.Basis.CommonCover.BasisCommonCover cover covers minimum}
+  {areaAllowance sourceTarget coefficientTarget : InverseRootPolynomial.Coordinate}
+  {request : Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest regular common
     areaAllowance sourceTarget coefficientTarget floor}
   {box : Rational.Box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
-  {originals : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {originals : Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
     covers index}
-  {cells : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers index}
+  {cells : Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers index}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable (acquired :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition request
+  Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition request
   polynomials originals cells coefficients depth)
   (piece : Paths.RectangularSegmentSplitting.SegmentPiece occurrence.compared.entered.domain.geometry
     (parent.edge.point 0) (parent.edge.point 1))
@@ -117,17 +121,17 @@ variable (acquired :
 
 The paid positive owner tolerance and common stage retain the same coefficient vector and sample index. -/
 private theorem owner_at {faceIndex vertices : Nat} (data :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData occurrence faceIndex)
-    (parameters : Fin (vertices + 1) → Normalization.InverseRootPolynomial.Coordinate)
+  FragmentQueries.RowData occurrence faceIndex)
+    (parameters : Fin (vertices + 1) → InverseRootPolynomial.Coordinate)
     (inside : ∀ vertex, piece.interval.lower ≤ parameters vertex ∧ parameters vertex ≤ piece.interval.upper)
-    {tolerance : Normalization.InverseRootPolynomial.Coordinate} (owners :
+    {tolerance : InverseRootPolynomial.Coordinate} (owners :
       OwnerRequest occurrence tolerance) (positive : 0 <
       tolerance)
     (later : owners.index ≤ faceIndex)
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings data (fun vertex =>
+    (readings : OwnerRequest.OwnedReadings data (fun vertex =>
       parent.edge.point (parameters vertex))) (vertex : Fin (vertices + 1)) :
-    Data.Gaussian.Norm.Basic.normSq (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.ownedValue
-      readings coefficients vertex - Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.gridValue
+    Gaussian.Norm.Basic.normSq (OwnerRequest.ownedValue
+      readings coefficients vertex - FragmentQueries.gridValue
       (coefficients := coefficients) piece data (parameters vertex)) ≤
       (tolerance / 4) * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := by
   have contained : (occurrence.compared.entered.domain.geometry.box piece.column piece.row).Contains
@@ -135,61 +139,61 @@ private theorem owner_at {faceIndex vertices : Nat} (data :
     (congrArg (occurrence.compared.entered.domain.geometry.box piece.column piece.row).Contains
       (Integration.PreparedParentSplitting.prepared_point_eq parent (parameters vertex))).mpr
       (piece.contains_query (parameters vertex) (inside vertex))
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.owned_value_bound owners positive later data
+  exact OwnerRequest.owned_value_bound owners positive later data
     readings coefficients vertex piece.column piece.row contained
 
 /-- Endpoint error includes owner changes at both ends, even at identical
 coordinates. The same estimate pays the total of a retained fragment. -/
 theorem owned_increment_error (member : parent ∈ occurrence.compared.entered.cache.parents)
-    {faceIndex vertices : Nat} (data : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
+    {faceIndex vertices : Nat} (data : FragmentQueries.RowData
       occurrence faceIndex)
-    (parameters : Fin (vertices + 1) → Normalization.InverseRootPolynomial.Coordinate)
+    (parameters : Fin (vertices + 1) → InverseRootPolynomial.Coordinate)
     (inside : ∀ vertex, piece.interval.lower ≤ parameters vertex ∧ parameters vertex ≤ piece.interval.upper)
-    {tolerance : Normalization.InverseRootPolynomial.Coordinate} (owners :
+    {tolerance : InverseRootPolynomial.Coordinate} (owners :
       OwnerRequest occurrence tolerance) (positive : 0 <
       tolerance)
     (later : owners.index ≤ faceIndex)
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings data (fun vertex =>
+    (readings : OwnerRequest.OwnedReadings data (fun vertex =>
       parent.edge.point (parameters vertex)))
     (start finish : Fin (vertices + 1)) :
-    Data.Gaussian.Norm.Basic.normSq ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.ownedValue
-      readings coefficients finish - Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.ownedValue readings
+    Gaussian.Norm.Basic.normSq ((OwnerRequest.ownedValue
+      readings coefficients finish - OwnerRequest.ownedValue readings
       coefficients start) -
-      (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+      (PrimitiveBank.value
         originals coefficients (parameters finish) -
-        Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+        PrimitiveBank.value
         originals coefficients (parameters start))) ≤
-      2 * (tolerance + Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentArea.queryScale acquired piece
-        faceIndex * Data.Gaussian.Norm.Basic.normSq
+      2 * (tolerance + FragmentArea.queryScale acquired piece
+        faceIndex * Gaussian.Norm.Basic.normSq
         (parent.edge.point (parameters finish) - parent.edge.point (parameters start))) *
           Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := by
-  let owned := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.ownedValue readings coefficients finish -
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.ownedValue readings coefficients start
-  let fixed := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.gridValue (coefficients :=
+  let owned := OwnerRequest.ownedValue readings coefficients finish -
+    OwnerRequest.ownedValue readings coefficients start
+  let fixed := FragmentQueries.gridValue (coefficients :=
     coefficients) piece data (parameters finish) -
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.gridValue (coefficients := coefficients) piece
+    FragmentQueries.gridValue (coefficients := coefficients) piece
       data (parameters start)
   let source :=
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+    PrimitiveBank.value
     originals coefficients (parameters finish) -
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+    PrimitiveBank.value
     originals coefficients (parameters start)
-  have ownerError : Data.Gaussian.Norm.Basic.normSq (owned - fixed) ≤ tolerance *
+  have ownerError : Gaussian.Norm.Basic.normSq (owned - fixed) ≤ tolerance *
     Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := by
     have bounded := (Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
       (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
         (Fraction.Order.Arithmetic.add_le_add_direct
-          (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentEndpoints.owner_at (coefficients := coefficients)
+          (FragmentEndpoints.owner_at (coefficients := coefficients)
           piece data parameters inside owners positive later readings finish)
-          (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentEndpoints.owner_at (coefficients := coefficients)
+          (FragmentEndpoints.owner_at (coefficients := coefficients)
             piece data parameters inside owners positive later readings start)) (by
-                decide : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤ 2))
+                decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2))
     have identity : owned - fixed =
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.ownedValue readings coefficients finish -
-          Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.gridValue (coefficients := coefficients)
+        (OwnerRequest.ownedValue readings coefficients finish -
+          FragmentQueries.gridValue (coefficients := coefficients)
           piece data (parameters finish)) -
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.ownedValue readings coefficients start -
-          Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.gridValue (coefficients := coefficients)
+        (OwnerRequest.ownedValue readings coefficients start -
+          FragmentQueries.gridValue (coefficients := coefficients)
           piece data (parameters start)) := by
       dsimp only [owned, fixed]
       ring1
@@ -199,15 +203,15 @@ theorem owned_increment_error (member : parent ∈ occurrence.compared.entered.c
         / 4) * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) =
         ((tolerance / 4) * 4) * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients by ring1,
           Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)])
-  have sourceError := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.weighted_increment_error
+  have sourceError := FragmentQueries.weighted_increment_error
     acquired piece member data _ _ (inside start) (inside finish)
-  change Data.Gaussian.Norm.Basic.normSq (owned - source) ≤ _
+  change Gaussian.Norm.Basic.normSq (owned - source) ≤ _
   rw [show owned - source = (owned - fixed) + (fixed - source) by ring1]
   exact (Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
     ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct ownerError
       sourceError)
-      (by decide : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤ 2)).trans_eq (by
-          unfold Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentArea.queryScale;
+      (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)).trans_eq (by
+          unfold FragmentArea.queryScale;
           ring1))
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentEndpoints

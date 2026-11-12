@@ -43,13 +43,13 @@ open Purelib.Data
 def scaleAutomatic (scalar :
   Canonical) {increment : Nat → Canonical}
     (jet : FirstJet increment) : FirstJet increment :=
-  ⟨Trace.Automatic.Arithmetic.scaleAutomatic scalar jet.trace⟩
+  ⟨Arithmetic.scaleAutomatic scalar jet.trace⟩
 
 /-- Multiply first jets over the same increment sequence with automatically computed transport. -/
 def mulAutomatic {increment : Nat →
   Canonical}
     (left right : FirstJet increment) : FirstJet increment :=
-  ⟨Trace.Automatic.Arithmetic.mulAutomatic left.trace right.trace⟩
+  ⟨Arithmetic.mulAutomatic left.trace right.trace⟩
 
 /-- Invert a first jet using uniform positive base and output quadrance bounds.
 
@@ -65,7 +65,7 @@ def reciprocalAutomatic {increment : Nat →
     (outputApart : ∀ index,
       outputLower ≤ Canonical.normSq (jet.trace.certificate index).output) :
     FirstJet increment :=
-  ⟨Trace.Automatic.Reciprocal.reciprocalAutomatic jet.trace baseLower outputLower
+  ⟨Reciprocal.reciprocalAutomatic jet.trace baseLower outputLower
     baseLowerPositive outputLowerPositive (fun index => by
         simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
           using baseApart index)
@@ -88,7 +88,7 @@ def divAutomatic {increment : Nat →
     (outputApart : ∀ index,
       outputLower ≤ Canonical.normSq (denominator.trace.certificate index).output) :
     FirstJet increment :=
-  ⟨Trace.Automatic.Reciprocal.divAutomatic numerator.trace denominator.trace
+  ⟨Reciprocal.divAutomatic numerator.trace denominator.trace
     baseLower outputLower
     baseLowerPositive outputLowerPositive (fun index => by
         simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
@@ -108,7 +108,7 @@ def composeAutomatic {increment : Nat →
       (inner.trace.certificate index).output -
         (inner.trace.certificate index).base))
     (unit : ∀ index, Canonical.normSq (increment index) ≤ 1) : FirstJet increment :=
-  ⟨Trace.Automatic.Arithmetic.composeAutomatic inner.trace outer.trace unit⟩
+  ⟨Arithmetic.composeAutomatic inner.trace outer.trace unit⟩
 
 /-- Form the finite exponential of a first jet with automatically computed transport.
 
@@ -124,7 +124,7 @@ def exponentialAutomatic {increment : Nat →
         (inner.trace.certificate index).base) ≤ 1)
     (incrementUnit : ∀ index, Canonical.normSq (increment index) ≤ 1) :
     FirstJet increment :=
-  ⟨Trace.Automatic.Exponential.exponentialAutomatic inner.trace baseUnit
+  ⟨Exponential.exponentialAutomatic inner.trace baseUnit
     movementUnit (fun index => by
       simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
         using incrementUnit index)⟩
@@ -141,7 +141,7 @@ def reducedLogAutomatic {increment : Nat →
         (inner.trace.certificate index).base) ≤ 1 / 9)
     (incrementUnit : ∀ index, Canonical.normSq (increment index) ≤ 1) :
     FirstJet increment :=
-  ⟨Trace.Automatic.ReducedLog.reducedLogAutomatic inner.trace (fun index => by
+  ⟨ReducedLog.reducedLogAutomatic inner.trace (fun index => by
       simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
         using movementDisk index) (fun index => by
         simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
@@ -156,17 +156,17 @@ def sineAutomatic {increment : Nat →
     (inner : FirstJet increment)
     (rotatedBaseUnit : ∀ index,
       Canonical.normSq
-        ((Trace.Automatic.Trigonometric.rotateAutomatic inner.trace).certificate
+        ((Trigonometric.rotateAutomatic inner.trace).certificate
         index).base ≤ 1)
     (rotatedMovementUnit : ∀ index,
       Canonical.normSq
-        (((Trace.Automatic.Trigonometric.rotateAutomatic inner.trace).certificate
+        (((Trigonometric.rotateAutomatic inner.trace).certificate
         index).output -
-        ((Trace.Automatic.Trigonometric.rotateAutomatic inner.trace).certificate
+        ((Trigonometric.rotateAutomatic inner.trace).certificate
           index).base) ≤ 1)
     (incrementUnit : ∀ index, Canonical.normSq (increment index) ≤ 1) :
     FirstJet increment :=
-  ⟨Trace.Automatic.Trigonometric.sineAutomatic inner.trace rotatedBaseUnit
+  ⟨Trigonometric.sineAutomatic inner.trace rotatedBaseUnit
     rotatedMovementUnit
     incrementUnit⟩
 
@@ -179,17 +179,17 @@ def cosineAutomatic {increment : Nat →
     (inner : FirstJet increment)
     (rotatedBaseUnit : ∀ index,
       Canonical.normSq
-        ((Trace.Automatic.Trigonometric.rotateAutomatic inner.trace).certificate
+        ((Trigonometric.rotateAutomatic inner.trace).certificate
         index).base ≤ 1)
     (rotatedMovementUnit : ∀ index,
       Canonical.normSq
-        (((Trace.Automatic.Trigonometric.rotateAutomatic inner.trace).certificate
+        (((Trigonometric.rotateAutomatic inner.trace).certificate
         index).output -
-        ((Trace.Automatic.Trigonometric.rotateAutomatic inner.trace).certificate
+        ((Trigonometric.rotateAutomatic inner.trace).certificate
           index).base) ≤ 1)
     (incrementUnit : ∀ index, Canonical.normSq (increment index) ≤ 1) :
     FirstJet increment :=
-  ⟨Trace.Automatic.Trigonometric.cosineAutomatic inner.trace rotatedBaseUnit
+  ⟨Trigonometric.cosineAutomatic inner.trace rotatedBaseUnit
     rotatedMovementUnit
     incrementUnit⟩
 

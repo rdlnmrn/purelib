@@ -74,27 +74,27 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragm
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries (RowData)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBanks (BlockSample)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments (IndexedFragment ParentFragment)
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
+  {program : ExteriorProgram lifted
     differential} {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+    SurfacePreparation
     regular domains program}
 
-variable (retained : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation
+variable (retained : CommonBasisPreparation
   prepared) {index : Nat} (inputs : retained.Inputs index)
   (outer : Fin prepared.occurrences.length) {faceIndex : Nat}
-  (data : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (data : RowData
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) faceIndex)
-  (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+  (coefficients : GaussianVector genus)
 
 set_option genInjectivity false in
 /-- A nonempty consecutive fragment run retaining one original parent position and the exact indexed fragments belonging
@@ -105,9 +105,9 @@ their order and their source-indexed cached fragments. -/
 structure IndexedRun where
   /-- The run's original bounded parent position. -/ parent : Fin (ParentIndices.occurrenceAt prepared.occurrences
     outer).compared.entered.cache.parents.length
-  /-- The first original indexed fragment of the nonempty run. -/ first : IndexedFragments.IndexedFragment retained
+  /-- The first original indexed fragment of the nonempty run. -/ first : IndexedFragment retained
     inputs outer data coefficients
-  /-- The remaining original indexed fragments in their retained order. -/ rest : List (IndexedFragments.IndexedFragment
+  /-- The remaining original indexed fragments in their retained order. -/ rest : List (IndexedFragment
     retained inputs outer data coefficients)
   /-- The first fragment retains the run's original parent position. -/ first_parent : first.parent = parent
   /-- Every remaining original fragment retains that identical parent position. -/ rest_parent : ∀ item ∈ rest,
@@ -121,17 +121,17 @@ namespace IndexedRun
 /-- Read all original indexed fragments of the retained nonempty run.
 
 The first fragment precedes the retained tail without rebuilding any fragment or changing its parent certificate. -/
-@[expose] def items (run : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun retained
-  inputs outer data coefficients) : List (IndexedFragments.IndexedFragment retained inputs outer data coefficients) :=
+@[expose] def items (run : IndexedRun retained
+  inputs outer data coefficients) : List (IndexedFragment retained inputs outer data coefficients) :=
   run.first :: run.rest
 
 /-- Every indexed fragment in the run retains its certified original parent position.
 
 Membership is decomposed at the retained head or tail. The corresponding stored parent certificate supplies the
 identical bounded parent position. -/
-theorem parent_eq (run : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun retained
+theorem parent_eq (run : IndexedRun retained
   inputs outer data coefficients)
-    {item : IndexedFragments.IndexedFragment retained inputs outer data coefficients} (member : item ∈ run.items) :
+    {item : IndexedFragment retained inputs outer data coefficients} (member : item ∈ run.items) :
       item.parent = run.parent := by
   rcases Membership.mem_cons.mp member with rfl | member
   · exact run.first_parent
@@ -143,7 +143,7 @@ The empty list has no adjacent boundary; a nonempty list compares only its first
 position. -/
 @[expose] def startsApart (parent : Fin (ParentIndices.occurrenceAt prepared.occurrences
   outer).compared.entered.cache.parents.length) : List
-  (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun retained inputs outer data
+  (IndexedRun retained inputs outer data
   coefficients) → Prop
   | [] => True
   | run :: _ => parent ≠ run.parent
@@ -152,19 +152,19 @@ position. -/
 
 Each consecutive boundary carries the inequality of its two bounded parent positions. The remaining boundaries follow
 the retained list tail. -/
-@[expose] def separated : List (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun
+@[expose] def separated : List (IndexedRun
   retained inputs outer data coefficients) → Prop
   | [] => True
-  | run :: rest => Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.startsApart
+  | run :: rest => IndexedRun.startsApart
     run.parent rest ∧
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.separated rest
+    IndexedRun.separated rest
 
 /-- Form a singleton run retaining the original indexed fragment and parent position.
 
 The supplied fragment supplies both the retained parent and the first run member. The tail is empty and its parent
 condition is vacuous. -/
-@[expose] def single (item : IndexedFragments.IndexedFragment retained inputs outer data coefficients) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun retained inputs outer data
+@[expose] def single (item : IndexedFragment retained inputs outer data coefficients) :
+  IndexedRun retained inputs outer data
   coefficients :=
   ⟨item.parent, item, [], rfl, by intro _ member; cases member⟩
 
@@ -172,10 +172,10 @@ condition is vacuous. -/
 
 The supplied parent equality transports only the parent certificate. The previous run items remain the new retained tail
 in the same order. -/
-@[expose] def prepend (item : IndexedFragments.IndexedFragment retained inputs outer data coefficients)
-    (run : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun retained inputs outer
+@[expose] def prepend (item : IndexedFragment retained inputs outer data coefficients)
+    (run : IndexedRun retained inputs outer
       data coefficients) (same : item.parent = run.parent) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun retained inputs outer data
+    IndexedRun retained inputs outer data
       coefficients :=
   ⟨run.parent, item, run.items, same, fun _ member => run.parent_eq member⟩
 
@@ -183,91 +183,91 @@ in the same order. -/
 
 The first run is extended exactly when its bounded parent agrees with the supplied fragment. Otherwise a singleton run
 is placed before the unchanged run list. -/
-@[expose] def insert (item : IndexedFragments.IndexedFragment retained inputs outer data coefficients) :
-    List (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun retained inputs outer
-      data coefficients) → List (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun
+@[expose] def insert (item : IndexedFragment retained inputs outer data coefficients) :
+    List (IndexedRun retained inputs outer
+      data coefficients) → List (IndexedRun
       retained inputs outer data coefficients)
-  | [] => [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.single item]
+  | [] => [IndexedRun.single item]
   | run :: rest => if same : item.parent = run.parent then
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.prepend item run same :: rest
-      else Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.single item :: run ::
+    IndexedRun.prepend item run same :: rest
+      else IndexedRun.single item :: run ::
         rest
 
 /-- Group the original indexed fragments into maximal consecutive runs by executable parent-position equality.
 
 The retained suffix is grouped before inserting its head. The executable equality test keeps every fragment in its
 supplied order. -/
-@[expose] def group : List (IndexedFragments.IndexedFragment retained inputs outer data coefficients) → List
-  (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun retained inputs outer data
+@[expose] def group : List (IndexedFragment retained inputs outer data coefficients) → List
+  (IndexedRun retained inputs outer data
   coefficients)
   | [] => []
-  | item :: rest => Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.insert item
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.group rest)
+  | item :: rest => IndexedRun.insert item
+    (IndexedRun.group rest)
 
 /-- Inserting an indexed fragment preserves its exact position before the original flattened run list.
 
 Both results of the parent equality test retain the inserted head before the unchanged flattened suffix. -/
-private theorem insert_flatten (item : IndexedFragments.IndexedFragment retained inputs outer data coefficients)
-    (runs : List (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun retained inputs
+private theorem insert_flatten (item : IndexedFragment retained inputs outer data coefficients)
+    (runs : List (IndexedRun retained inputs
       outer data coefficients)) :
-    ((Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.insert item runs).map
+    ((IndexedRun.insert item runs).map
       items).flatten = item :: (runs.map items).flatten := by
   cases runs with
   | nil => rfl
   | cons run rest =>
     if same : item.parent = run.parent then
-      rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.insert, dif_pos same]
+      rw [IndexedRun.insert, dif_pos same]
       rfl
     else
-      rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.insert, dif_neg same]
+      rw [IndexedRun.insert, dif_neg same]
       rfl
 
 /-- Flattening the grouped runs returns every original indexed fragment in exact order.
 
 Structural induction follows the original fragment list. Each insertion preserves its head before the identical
 flattened tail. -/
-theorem group_flatten (items : List (IndexedFragments.IndexedFragment retained inputs outer data coefficients)) :
-    ((Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.group items).map
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.items).flatten = items := by
+theorem group_flatten (items : List (IndexedFragment retained inputs outer data coefficients)) :
+    ((IndexedRun.group items).map
+      IndexedRun.items).flatten = items := by
   induction items with
   | nil => rfl
   | cons item rest ih =>
-    exact (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.insert_flatten item
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.group rest)).trans (congrArg
+    exact (IndexedRun.insert_flatten item
+      (IndexedRun.group rest)).trans (congrArg
       (List.cons item) ih)
 
 /-- Inserting an original indexed fragment preserves distinct parent positions between adjacent runs.
 
 Extending an equal-parent run keeps its old boundary certificate. Creating a singleton run supplies the new parent
 inequality before the unchanged boundaries. -/
-private theorem insert_separated (item : IndexedFragments.IndexedFragment retained inputs outer data coefficients)
-    (runs : List (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun retained inputs
+private theorem insert_separated (item : IndexedFragment retained inputs outer data coefficients)
+    (runs : List (IndexedRun retained inputs
       outer data coefficients)) (apart :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.separated runs) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.separated
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.insert item runs) := by
+      IndexedRun.separated runs) :
+      IndexedRun.separated
+      (IndexedRun.insert item runs) := by
   cases runs with
   | nil => exact ⟨True.intro, True.intro⟩
   | cons run rest =>
     if same : item.parent = run.parent then
-      rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.insert, dif_pos same]
+      rw [IndexedRun.insert, dif_pos same]
       exact apart
     else
-      rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.insert, dif_neg same]
+      rw [IndexedRun.insert, dif_neg same]
       exact ⟨same, apart⟩
 
 /-- Adjacent grouped fragment runs have distinct retained parent positions.
 
 Each recursive insertion retains the separation certificates of the suffix and supplies any new adjacent boundary
 inequality. -/
-theorem group_separated (items : List (IndexedFragments.IndexedFragment retained inputs outer data coefficients)) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.separated
-  (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.group items) := by
+theorem group_separated (items : List (IndexedFragment retained inputs outer data coefficients)) :
+  IndexedRun.separated
+  (IndexedRun.group items) := by
   induction items with
   | nil => exact True.intro
   | cons item rest ih =>
-    exact Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.insert_separated item
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.group rest) ih
+    exact IndexedRun.insert_separated item
+      (IndexedRun.group rest) ih
 
 /-- Transport a list to its shared numerical owner, preserving all cached data.
 
@@ -275,12 +275,12 @@ The supplied parent equalities transport the retained fragments one at a time. T
 order are unchanged. -/
 @[expose] def fragmentsAt (parent : Fin (ParentIndices.occurrenceAt prepared.occurrences
   outer).compared.entered.cache.parents.length) :
-    (items : List (IndexedFragments.IndexedFragment retained inputs outer data coefficients)) →
-    (∀ item ∈ items, item.parent = parent) → List (IndexedFragments.ParentFragment retained inputs outer data
+    (items : List (IndexedFragment retained inputs outer data coefficients)) →
+    (∀ item ∈ items, item.parent = parent) → List (ParentFragment retained inputs outer data
       coefficients parent)
   | [], _ => []
   | item :: rest, same => item.fragment.castParent (same item List.mem_cons_self) ::
-      Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.fragmentsAt parent
+      IndexedRun.fragmentsAt parent
         rest (fun found member => same found (List.mem_cons_of_mem item member))
 
 /-- Transporting fragments to the identical retained parent preserves their exact physical/source increment pairs.
@@ -289,9 +289,9 @@ Parent transport retains each physical and source increment pair. Scalar head co
 transported tail. -/
 theorem fragmentsAt_pairs (parent : Fin (ParentIndices.occurrenceAt prepared.occurrences
   outer).compared.entered.cache.parents.length)
-    (items : List (IndexedFragments.IndexedFragment retained inputs outer data coefficients))
+    (items : List (IndexedFragment retained inputs outer data coefficients))
     (same : ∀ item ∈ items, item.parent = parent) :
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.fragmentsAt parent items
+    (IndexedRun.fragmentsAt parent items
       same).map OwnedFragment.pair = items.map IndexedFragment.pair := by
   induction items with
   | nil => rfl
@@ -302,26 +302,26 @@ theorem fragmentsAt_pairs (parent : Fin (ParentIndices.occurrenceAt prepared.occ
 
 The run's stored parent certificates transport its existing items to the one bounded parent position without recomputing
 their samples. -/
-@[expose] def fragments (run : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun
+@[expose] def fragments (run : IndexedRun
   retained inputs outer data coefficients) :
-    List (IndexedFragments.ParentFragment retained inputs outer data coefficients run.parent) :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.fragmentsAt run.parent run.items
+    List (ParentFragment retained inputs outer data coefficients run.parent) :=
+  IndexedRun.fragmentsAt run.parent run.items
     (fun _ member => run.parent_eq member)
 
 /-- The retained parent-transported run has exactly the original indexed increment pairs.
 
 Each transported fragment retains its physical and source increment pair at the identical parent position. -/
-theorem fragments_pairs (run : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun
+theorem fragments_pairs (run : IndexedRun
   retained inputs outer data coefficients) :
     run.fragments.map OwnedFragment.pair = run.items.map IndexedFragment.pair :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.fragmentsAt_pairs run.parent
+  IndexedRun.fragmentsAt_pairs run.parent
     run.items _
 
 /-- Flattening the transported run pairs preserves the complete original indexed pair list.
 
 Structural recursion preserves each run's increment pairs and concatenates the unchanged suffix in retained order. -/
 private theorem pairs_flatten (runs : List
-  (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun retained inputs outer data
+  (IndexedRun retained inputs outer data
   coefficients)) :
     (runs.map (fun run => run.fragments.map OwnedFragment.pair)).flatten =
       ((runs.map items).flatten).map IndexedFragment.pair := by
@@ -338,25 +338,25 @@ set_option genInjectivity false in
 
 Its cached nonempty runs flatten to the supplied indexed fragment list. Adjacent runs retain distinct parent positions,
 so grouping preserves multiplicity as well as order. -/
-structure IndexedGrouping (retained : Preparation.CommonBasisPreparation prepared) {index : Nat} (inputs :
+structure IndexedGrouping (retained : CommonBasisPreparation prepared) {index : Nat} (inputs :
   retained.Inputs index)
     (outer : Fin prepared.occurrences.length) {faceIndex : Nat}
-    (data : FragmentQueries.RowData (ParentIndices.occurrenceAt prepared.occurrences outer) faceIndex)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
-    (items : List (IndexedFragments.IndexedFragment retained inputs outer data coefficients)) where
+    (data : RowData (ParentIndices.occurrenceAt prepared.occurrences outer) faceIndex)
+    (coefficients : GaussianVector genus)
+    (items : List (IndexedFragment retained inputs outer data coefficients)) where
   /-- The cached maximal consecutive runs of the original indexed fragments. -/ runs : List
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun retained inputs outer data
+    (IndexedRun retained inputs outer data
     coefficients)
   /-- Flattening the cached runs returns the identical original indexed fragment list. -/ flattened : (runs.map
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.items).flatten = items
+    IndexedRun.items).flatten = items
   /-- The cached runs have distinct original parent positions at every adjacent boundary. -/ separated :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.separated runs
+    IndexedRun.separated runs
 
 constructive_injectivity IndexedGrouping
 
 namespace IndexedGrouping
 variable {items : List
-  (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment retained inputs
+  (IndexedFragment retained inputs
   outer data coefficients)}
 
 /-- Compute the maximal consecutive original-parent runs once and retain their exact flattening and adjacent-parent
@@ -364,22 +364,22 @@ separation certificates.
 
 The grouping algorithm is evaluated once. Its flattening and adjacent-parent certificates refer to those same cached
 runs. -/
-@[expose] def build (items : List (IndexedFragments.IndexedFragment retained inputs outer data coefficients)) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedGrouping retained inputs outer data
+@[expose] def build (items : List (IndexedFragment retained inputs outer data coefficients)) :
+    IndexedGrouping retained inputs outer data
       coefficients items :=
   ⟨IndexedRun.group items,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.group_flatten items,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.group_separated items⟩
+    IndexedRun.group_flatten items,
+    IndexedRun.group_separated items⟩
 
 /-- Both paths, including junction increments, survive transport and grouping.
 
 The cached flattening certificate identifies the supplied original fragment list. Parent transport preserves its
 physical and source increment pairs. -/
-theorem pairs_eq (grouped : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedGrouping
+theorem pairs_eq (grouped : IndexedGrouping
   retained inputs outer data coefficients items) :
     (grouped.runs.map (fun run => run.fragments.map OwnedFragment.pair)).flatten =
       items.map IndexedFragment.pair :=
-  (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun.pairs_flatten
+  (IndexedRun.pairs_flatten
     grouped.runs).trans (congrArg (List.map IndexedFragment.pair) grouped.flattened)
 
 end IndexedGrouping

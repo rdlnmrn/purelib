@@ -50,7 +50,7 @@ namespace Purelib.Approximation.Gaussian.Name.Coherent.Refinement.LogarithmState
 
 set_option genInjectivity false in
 /-- Retained automatic-search state for one fixed target name. -/
-structure State (target : Coherent.CoherentNamed) where
+structure State (target : CoherentNamed) where
   /-- The exact retained state of the original target process. -/ source : target.name.process.State
   /-- The index of the next canonical refinement request. -/ nextIndex : Nat
   /-- Every candidate at the retained source remains possible at the original target state. -/ persists : ∀ {value :
@@ -63,7 +63,7 @@ constructive_injectivity State
 namespace State
 
 /-- Start logarithm refinement at the original target process state with schedule index zero. -/
-def initial (target : Coherent.CoherentNamed) : Approximation.Gaussian.Name.Coherent.Refinement.LogarithmState.State
+def initial (target : CoherentNamed) : State
   target where
   source := target.name.state
   nextIndex := 0
@@ -72,49 +72,49 @@ def initial (target : Coherent.CoherentNamed) : Approximation.Gaussian.Name.Cohe
 /-- Refine the retained target state at its next scheduled precision and increment the schedule index.
 
 The resulting persistence certificate still refers to the original target state. -/
-def advance {target : Coherent.CoherentNamed} (state :
-  Approximation.Gaussian.Name.Coherent.Refinement.LogarithmState.State target) :
-  Approximation.Gaussian.Name.Coherent.Refinement.LogarithmState.State target where
+def advance {target : CoherentNamed} (state :
+  State target) :
+  State target where
   source := target.name.process.refine state.source
-    (Gaussian.Process.Sampling.refinementTarget state.nextIndex)
-    (Gaussian.Process.Sampling.refinementTarget_pos state.nextIndex)
+    (Process.Sampling.refinementTarget state.nextIndex)
+    (Process.Sampling.refinementTarget_pos state.nextIndex)
   nextIndex := state.nextIndex + 1
   persists := fun possible =>
     state.persists
       (target.name.process.refine_persists state.source
-        (Gaussian.Process.Sampling.refinementTarget state.nextIndex)
-        (Gaussian.Process.Sampling.refinementTarget_pos state.nextIndex)
+        (Process.Sampling.refinementTarget state.nextIndex)
+        (Process.Sampling.refinementTarget_pos state.nextIndex)
         possible)
 
 /-- Initial logarithm refinement retains the original target process state. -/
 @[simp] theorem initial_source
-  (target : Coherent.CoherentNamed) :
-    (Approximation.Gaussian.Name.Coherent.Refinement.LogarithmState.State.initial target).source = target.name.state :=
+  (target : CoherentNamed) :
+    (initial target).source = target.name.state :=
       rfl
 
 /-- Initial logarithm refinement starts at schedule index zero. -/
 @[simp] theorem initial_nextIndex
-  (target : Coherent.CoherentNamed) :
-    (Approximation.Gaussian.Name.Coherent.Refinement.LogarithmState.State.initial target).nextIndex = 0 := rfl
+  (target : CoherentNamed) :
+    (initial target).nextIndex = 0 := rfl
 
 /-- Advancing uses the scheduled refinement of the exact retained source state. -/
 @[simp] theorem advance_source
-  {target : Coherent.CoherentNamed} (state : Approximation.Gaussian.Name.Coherent.Refinement.LogarithmState.State
+  {target : CoherentNamed} (state : State
   target) :
     state.advance.source = target.name.process.refine state.source
-      (Gaussian.Process.Sampling.refinementTarget state.nextIndex)
-      (Gaussian.Process.Sampling.refinementTarget_pos state.nextIndex) := rfl
+      (Process.Sampling.refinementTarget state.nextIndex)
+      (Process.Sampling.refinementTarget_pos state.nextIndex) := rfl
 
 /-- Advancing logarithm refinement increments the schedule index by one. -/
 @[simp] theorem advance_nextIndex
-  {target : Coherent.CoherentNamed}
-    (state : Approximation.Gaussian.Name.Coherent.Refinement.LogarithmState.State target) :
+  {target : CoherentNamed}
+    (state : State target) :
     state.advance.nextIndex = state.nextIndex + 1 := rfl
 
 end State
 
 /-- One certified automatic refinement step. -/
-inductive Progress {target : Coherent.CoherentNamed} :
+inductive Progress {target : CoherentNamed} :
   State target →
   State target → Prop
   /-- Certify the canonical single refinement from a state to its advance. -/ | refined (state :
@@ -124,23 +124,23 @@ inductive Progress {target : Coherent.CoherentNamed} :
 namespace Progress
 
 /-- A certified refinement step preserves possible readings backwards to its original source. -/
-theorem possible_persists {target : Coherent.CoherentNamed}
-    {current next : Approximation.Gaussian.Name.Coherent.Refinement.LogarithmState.State target} (progress :
-      Approximation.Gaussian.Name.Coherent.Refinement.LogarithmState.Progress current next)
+theorem possible_persists {target : CoherentNamed}
+    {current next : State target} (progress :
+      Progress current next)
     {value : Canonical}
     (possible : target.name.process.Possible next.source value) :
     target.name.process.Possible current.source value := by
   cases progress
   exact target.name.process.refine_persists current.source
-    (Gaussian.Process.Sampling.refinementTarget current.nextIndex)
-    (Gaussian.Process.Sampling.refinementTarget_pos current.nextIndex)
+    (Process.Sampling.refinementTarget current.nextIndex)
+    (Process.Sampling.refinementTarget_pos current.nextIndex)
     possible
 
 /-- One certified refinement step increases the schedule index by exactly one. -/
 @[simp] theorem nextIndex_eq
-  {target : Coherent.CoherentNamed}
-    {current next : Approximation.Gaussian.Name.Coherent.Refinement.LogarithmState.State target} (progress :
-      Approximation.Gaussian.Name.Coherent.Refinement.LogarithmState.Progress current next) :
+  {target : CoherentNamed}
+    {current next : State target} (progress :
+      Progress current next) :
     next.nextIndex = current.nextIndex + 1 := by
   cases progress
   rfl
@@ -148,7 +148,7 @@ theorem possible_persists {target : Coherent.CoherentNamed}
 end Progress
 
 /-- Finite reachability generated only by genuine refinement progress. -/
-inductive Reachable {target : Coherent.CoherentNamed} :
+inductive Reachable {target : CoherentNamed} :
   State target →
   State target → Prop
   /-- Certify reachability without taking a refinement step. -/ | refl (state :
@@ -163,9 +163,9 @@ inductive Reachable {target : Coherent.CoherentNamed} :
 namespace Reachable
 
 /-- Finite certified refinement reachability preserves possible readings backwards to its starting source. -/
-theorem possible_persists {target : Coherent.CoherentNamed}
-    {start finish : Approximation.Gaussian.Name.Coherent.Refinement.LogarithmState.State target} (reachable :
-      Approximation.Gaussian.Name.Coherent.Refinement.LogarithmState.Reachable start finish)
+theorem possible_persists {target : CoherentNamed}
+    {start finish : State target} (reachable :
+      Reachable start finish)
     {value : Canonical}
     (possible : target.name.process.Possible finish.source value) :
     target.name.process.Possible start.source value := by
@@ -177,22 +177,22 @@ theorem possible_persists {target : Coherent.CoherentNamed}
 end Reachable
 
 /-- The coherent target restricted to the successful finite refinement future. -/
-def preparedTarget {target : Coherent.CoherentNamed} (state :
+def preparedTarget {target : CoherentNamed} (state :
   State target) :
-    Coherent.CoherentNamed :=
+    CoherentNamed :=
   CoherentNamed.based target state.source
 
 /-- Every prepared target retains the operational value of the original target name. -/
-def preparedTargetEquivalent {target : Coherent.CoherentNamed} (state :
+def preparedTargetEquivalent {target : CoherentNamed} (state :
   State target) :
-    Gaussian.Equivalence.NamedEquivalent target.name
+    NamedEquivalent target.name
       (preparedTarget state).name :=
   CoherentNamed.basedEquivalent target state.source
 
 /-- Prepared targets reached on two different finite schedules remain operationally equivalent. -/
-def preparedTargetsEquivalent {target : Coherent.CoherentNamed}
+def preparedTargetsEquivalent {target : CoherentNamed}
     (first second : State target) :
-    Gaussian.Equivalence.NamedEquivalent (preparedTarget
+    NamedEquivalent (preparedTarget
       first).name (preparedTarget second).name :=
   NamedEquivalent.trans
     (NamedEquivalent.symm

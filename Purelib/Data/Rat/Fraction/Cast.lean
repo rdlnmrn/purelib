@@ -34,13 +34,6 @@ namespace Purelib.Data.Rat.Fraction
 open Purelib.Data.Int
 open Purelib.Algebra.Ring
 
-/-- The canonical denominator-one record for an integer. -/
-def Cast.fromInt (value : Int) : Rational :=
-  ⟨value, 1, by decide,
-    ⟨⟨0, 1, by
-      change 0 * value.natAbs + 1 * (1 : Int) = 1
-      rw [Arithmetic.zero_mul, Int.one_mul, Arithmetic.zero_add]⟩⟩⟩
-
 /-- Integer denominator-one records preserve addition.
 
 Their plain sum has the original integer sum as numerator and denominator

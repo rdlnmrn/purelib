@@ -42,25 +42,25 @@ theorem prime_centered_chebyshev_sum_prime_zero
     (primeCastZero : (prime : K) = 0) (twoNonzero : (2 : K) ≠ 0) :
     Prime.ChebyshevSum.centeredChebyshevSum (K := K) prime prime = 0 := open Purelib in open Purelib.Algebra in open
       Purelib.Polynomial in by
-  have oneNonzero := Algebra.Field.Characteristic.Nonzero.one_ne_zero_of_two_ne_zero twoNonzero
+  have oneNonzero := Characteristic.Nonzero.one_ne_zero_of_two_ne_zero twoNonzero
   have primeNotTwo : prime ≠ 2 := by
     intro primeEqualsTwo
     apply twoNonzero
     simpa only [primeEqualsTwo, Nat.cast_ofNat] using primeCastZero
   have oneBelow : 1 < prime - 1 := by
-    have twoAtMost := NumberTheory.Prime.two_le primeIsPrime
+    have twoAtMost := Prime.two_le primeIsPrime
     omega0
   rw [Prime.ChebyshevSum.centeredChebyshevSum_eq_prefix]
   calc
     FiniteSum.Prefix.prefixSum prime (fun residue =>
-        Recurrence.Chebyshev.First.Basic.chebyshevFirst prime (1 - 2 * (residue : K))) =
+        Basic.chebyshevFirst prime (1 - 2 * (residue : K))) =
       FiniteSum.Prefix.prefixSum prime (fun residue =>
-        Recurrence.Chebyshev.First.Basic.chebyshevFirst 1 (1 - 2 * (residue : K))) := by
+        Basic.chebyshevFirst 1 (1 - 2 * (residue : K))) := by
           apply FiniteSum.Prefix.prefixSum_congr
           intro residue residueBelow
-          rw [Recurrence.Chebyshev.First.FiniteResidue.Frobenius.chebyshevFirst_prime_centered_residue prime residue
+          rw [Frobenius.chebyshevFirst_prime_centered_residue prime residue
             primeIsPrime primeCastZero twoNonzero,
-            Recurrence.Chebyshev.First.Basic.chebyshevFirst_one]
+            Basic.chebyshevFirst_one]
     _ = Prime.ChebyshevSum.centeredChebyshevSum (K := K) prime 1 :=
       (Prime.ChebyshevSum.centeredChebyshevSum_eq_prefix prime 1).symm
     _ = 0 := Prime.ChebyshevSum.prime_centered_chebyshev_sum_zero prime primeIsPrime
@@ -79,18 +79,18 @@ theorem prime_centered_chebyshev_sum_reflection
           by
   let center : Nat → K := fun residue => 1 - 2 * (residue : K)
   let upperProduct := FiniteSum.Prefix.prefixSum prime (fun residue =>
-    Recurrence.Chebyshev.First.Basic.chebyshevFirst step (center residue) *
-      Recurrence.Chebyshev.First.Basic.chebyshevFirst prime (center residue))
+    Basic.chebyshevFirst step (center residue) *
+      Basic.chebyshevFirst prime (center residue))
   let lowerProduct := FiniteSum.Prefix.prefixSum prime (fun residue =>
-    Recurrence.Chebyshev.First.Basic.chebyshevFirst 1 (center residue) *
-      Recurrence.Chebyshev.First.Basic.chebyshevFirst step (center residue))
+    Basic.chebyshevFirst 1 (center residue) *
+      Basic.chebyshevFirst step (center residue))
   have productsEqual : upperProduct = lowerProduct := by
     unfold upperProduct lowerProduct
     apply FiniteSum.Prefix.prefixSum_congr
     intro residue residueBelow
-    rw [Recurrence.Chebyshev.First.FiniteResidue.Frobenius.chebyshevFirst_prime_centered_residue prime residue
+    rw [Frobenius.chebyshevFirst_prime_centered_residue prime residue
       primeIsPrime
-      primeCastZero twoNonzero, Recurrence.Chebyshev.First.Basic.chebyshevFirst_one]
+      primeCastZero twoNonzero, Basic.chebyshevFirst_one]
     ring1
   have upper := Prime.ChebyshevSum.centeredChebyshev_product_sum
     (K := K) prime step prime stepAtMostPrime
@@ -119,8 +119,8 @@ theorem prime_centered_chebyshev_sum_high_zero
     (primeCastZero : (prime : K) = 0) (twoNonzero : (2 : K) ≠ 0)
     (twoAtMostStep : 2 ≤ step) (stepAtMost : step ≤ prime - 4) :
     Prime.ChebyshevSum.centeredChebyshevSum (K := K) prime (prime + step) = 0 := open Purelib in by
-  have oneNonzero := Algebra.Field.Characteristic.Nonzero.one_ne_zero_of_two_ne_zero twoNonzero
-  have reflection := Recurrence.Chebyshev.First.FiniteResidue.Sum.prime_centered_chebyshev_sum_reflection
+  have oneNonzero := Characteristic.Nonzero.one_ne_zero_of_two_ne_zero twoNonzero
+  have reflection := prime_centered_chebyshev_sum_reflection
     (K := K) prime step primeIsPrime primeCastZero twoNonzero
       (by omega0) (by omega0)
   rw [Prime.ChebyshevSum.prime_centered_chebyshev_sum_zero prime primeIsPrime primeCastZero
@@ -140,8 +140,8 @@ theorem
     (primeCastZero : (prime : K) = 0) (twoNonzero : (2 : K) ≠ 0)
     (fourBelowPrime : 4 < prime) :
     2 * Prime.ChebyshevSum.centeredChebyshevSum (K := K) prime (prime + 1) = 1 := open Purelib in by
-  have oneNonzero := Algebra.Field.Characteristic.Nonzero.one_ne_zero_of_two_ne_zero twoNonzero
-  have reflection := Recurrence.Chebyshev.First.FiniteResidue.Sum.prime_centered_chebyshev_sum_reflection
+  have oneNonzero := Characteristic.Nonzero.one_ne_zero_of_two_ne_zero twoNonzero
+  have reflection := prime_centered_chebyshev_sum_reflection
     (K := K) prime 1 primeIsPrime primeCastZero twoNonzero
       (by omega0) (by omega0)
   rw [show prime - 1 = prime - 1 by rfl,
@@ -170,14 +170,14 @@ theorem prime_centered_chebyshev_sum_regular_zero
     (notLowerBoundary : index ≠ prime - 1)
     (notUpperBoundary : index ≠ prime + 1) :
     Prime.ChebyshevSum.centeredChebyshevSum (K := K) prime index = 0 := open Purelib in by
-  have oneNonzero := Algebra.Field.Characteristic.Nonzero.one_ne_zero_of_two_ne_zero twoNonzero
+  have oneNonzero := Characteristic.Nonzero.one_ne_zero_of_two_ne_zero twoNonzero
   by_cases belowBoundary : index < prime - 1
   · exact Prime.ChebyshevSum.prime_centered_chebyshev_sum_zero prime primeIsPrime
       primeCastZero oneNonzero index belowBoundary
   · by_cases indexAtMostPrime : index ≤ prime
     · have indexEqualsPrime : index = prime := by omega0
       subst index
-      exact Recurrence.Chebyshev.First.FiniteResidue.Sum.prime_centered_chebyshev_sum_prime_zero prime primeIsPrime
+      exact prime_centered_chebyshev_sum_prime_zero prime primeIsPrime
         primeCastZero twoNonzero
     · let step := index - prime
       have indexEquation : index = prime + step := by
@@ -190,7 +190,7 @@ theorem prime_centered_chebyshev_sum_regular_zero
         unfold step
         omega0
       rw [indexEquation]
-      exact Recurrence.Chebyshev.First.FiniteResidue.Sum.prime_centered_chebyshev_sum_high_zero prime step primeIsPrime
+      exact prime_centered_chebyshev_sum_high_zero prime step primeIsPrime
         primeCastZero twoNonzero twoAtMostStep stepAtMost
 end ExerciseEightEleven
 

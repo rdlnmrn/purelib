@@ -44,10 +44,10 @@ public theorem translated_horizontal_real
     (Sides.horizontalEdge (Linear.Translated.translatedCoordinate c) y a b).realPart =
       Rational.Linear.Translated.affineVariable c.re := by
   change Components.realPart (Substitution.Affine.composeLine (Linear.Translated.translatedCoordinate c)
-      (Cast.Imaginary.horizontalBase y) Purelib.Data.Gaussian.Constants.horizontalDirection) =
+      (Cast.Imaginary.horizontalBase y) Constants.horizontalDirection) =
         Rational.Linear.Translated.affineVariable c.re
   rw [Substitution.Affine.Translated.composeLine_translatedCoordinate c
-    (Cast.Imaginary.horizontalBase y) Purelib.Data.Gaussian.Constants.horizontalDirection (by
+    (Cast.Imaginary.horizontalBase y) Constants.horizontalDirection (by
       intro equal
       have real := congrArg (fun z : Canonical => z.re) equal
       change (1 : Fraction.Rational) = 0 at real
@@ -66,10 +66,10 @@ public theorem translated_horizontal_imag
     (Sides.horizontalEdge (Linear.Translated.translatedCoordinate c) y a b).imagPart =
       Rational.Constants.RawLinear.rawConstant (y - c.im) := by
   change Components.imagPart (Substitution.Affine.composeLine (Linear.Translated.translatedCoordinate c)
-      (Cast.Imaginary.horizontalBase y) Purelib.Data.Gaussian.Constants.horizontalDirection) =
+      (Cast.Imaginary.horizontalBase y) Constants.horizontalDirection) =
         Rational.Constants.RawLinear.rawConstant (y - c.im)
   rw [Substitution.Affine.Translated.composeLine_translatedCoordinate c
-    (Cast.Imaginary.horizontalBase y) Purelib.Data.Gaussian.Constants.horizontalDirection (by
+    (Cast.Imaginary.horizontalBase y) Constants.horizontalDirection (by
       intro equal
       have real := congrArg (fun z : Canonical => z.re) equal
       change (1 : Fraction.Rational) = 0 at real
@@ -85,10 +85,10 @@ public theorem translated_vertical_real
     (Sides.verticalEdge (Linear.Translated.translatedCoordinate c) x a b).realPart =
       Rational.Constants.RawLinear.rawConstant (x - c.re) := by
   change Components.realPart (Substitution.Affine.composeLine (Linear.Translated.translatedCoordinate c)
-      (Cast.Winding.verticalBase x) Purelib.Data.Gaussian.Constants.imaginaryUnit) =
+      (Cast.Winding.verticalBase x) Constants.imaginaryUnit) =
         Rational.Constants.RawLinear.rawConstant (x - c.re)
   rw [Substitution.Affine.Translated.composeLine_translatedCoordinate c
-    (Cast.Winding.verticalBase x) Purelib.Data.Gaussian.Constants.imaginaryUnit (by
+    (Cast.Winding.verticalBase x) Constants.imaginaryUnit (by
       intro equal
       have imaginary := congrArg (fun z : Canonical => z.im) equal
       change (1 : Fraction.Rational) = 0 at imaginary
@@ -105,10 +105,10 @@ public theorem translated_vertical_imag
     (Sides.verticalEdge (Linear.Translated.translatedCoordinate c) x a b).imagPart =
       Rational.Linear.Translated.affineVariable c.im := by
   change Components.imagPart (Substitution.Affine.composeLine (Linear.Translated.translatedCoordinate c)
-      (Cast.Winding.verticalBase x) Purelib.Data.Gaussian.Constants.imaginaryUnit) =
+      (Cast.Winding.verticalBase x) Constants.imaginaryUnit) =
         Rational.Linear.Translated.affineVariable c.im
   rw [Substitution.Affine.Translated.composeLine_translatedCoordinate c
-    (Cast.Winding.verticalBase x) Purelib.Data.Gaussian.Constants.imaginaryUnit (by
+    (Cast.Winding.verticalBase x) Constants.imaginaryUnit (by
       intro equal
       have imaginary := congrArg (fun z : Canonical => z.im) equal
       change (1 : Fraction.Rational) = 0 at imaginary

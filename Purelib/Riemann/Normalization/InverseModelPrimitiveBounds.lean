@@ -24,6 +24,8 @@ import Purelib.Data.Gaussian.Field
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Mathlib.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -59,7 +61,7 @@ structure PrimitiveDerivativeBounds {polynomial : Polynomial} {box : Box}
     (root : DerivativeBounds clearance initial) (numerator : Polynomial) where
   /-- The retained derivative polynomial of the fixed original numerator. -/ numeratorDerivative : Polynomial
   /-- The retained polynomial agrees pointwise with the original numerator derivative. -/ numeratorDerivative_eq : ∀
-    point, numeratorDerivative.eval point = (Dense.Derivative.derivative numerator).eval point
+    point, numeratorDerivative.eval point = (derivative numerator).eval point
   /-- The cached squared-norm majorant of the original numerator on the box. -/ numeratorUpper : Coordinate
   /-- The numerator majorant equals the exact dense box evaluation bound. -/ numeratorUpper_eq : numeratorUpper =
     Bounds.Box.denseEvalNormBound numerator box
@@ -83,7 +85,7 @@ open Purelib.Polynomial.Dense.Gaussian in
 bounds. -/
 def build (root : DerivativeBounds clearance initial) (numerator : Polynomial) : PrimitiveDerivativeBounds root
   numerator :=
-  let numeratorDerivative := Dense.Derivative.derivative numerator
+  let numeratorDerivative := derivative numerator
   let numeratorUpper := Bounds.Box.denseEvalNormBound numerator box
   let derivativeUpper := Bounds.Box.denseEvalNormBound numeratorDerivative box
   ⟨numeratorDerivative, fun _ => rfl, numeratorUpper, rfl, derivativeUpper, rfl,
@@ -108,9 +110,9 @@ open Purelib.Data.Rat in
 /-- The retained product-rule derivative bound is nonnegative. -/
 theorem bound_nonnegative (bounds : PrimitiveDerivativeBounds root numerator) : 0 ≤ bounds.bound := by
   rw [bounds.bound_eq]
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg
-    (Fraction.Order.Arithmetic.mul_nonneg_direct bounds.derivativeUpper_nonnegative root.inverseUpper_positive.le)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct bounds.numeratorUpper_nonnegative root.bound_nonnegative))
+  exact Arithmetic.mul_nonneg_direct (by decide) (add_nonneg
+    (Arithmetic.mul_nonneg_direct bounds.derivativeUpper_nonnegative root.inverseUpper_positive.le)
+    (Arithmetic.mul_nonneg_direct bounds.numeratorUpper_nonnegative root.bound_nonnegative))
 
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
@@ -125,37 +127,37 @@ theorem coefficient_derivative_le (bounds : PrimitiveDerivativeBounds root numer
     (coefficient : Polynomial)
     (equal : ∀ point, coefficient.eval point = numerator.eval point * (initial.refine index).value.eval point)
     {point : Gaussian} (inside : box.Contains point) :
-    normSq ((Dense.Derivative.derivative coefficient).eval point) ≤ bounds.bound := by
+    normSq ((derivative coefficient).eval point) ≤ bounds.bound := by
   have same : (coefficient - numerator * (initial.refine index).value).isZero = true := by
     apply NonzeroEvaluation.difference_isZero_of_candidate_evals
     intro sample _
-    rw [equal, Dense.Basic.DensePolynomial.eval_mul]
+    rw [equal, eval_mul]
   rw [Dense.Derivative.eval_derivative_eq_of_sub_isZero same point, Dense.Derivative.eval_derivative_mul]
   have numeratorLe : normSq (numerator.eval point) ≤ bounds.numeratorUpper :=
     by simpa only [Norm.Basic.normSq_eq_canonical] using (Bounds.Box.normSq_eval_le_denseEvalNormBound numerator
       inside).trans_eq bounds.numeratorUpper_eq.symm
-  have derivativeLe : normSq ((Dense.Derivative.derivative numerator).eval point) ≤ bounds.derivativeUpper := by
+  have derivativeLe : normSq ((derivative numerator).eval point) ≤ bounds.derivativeUpper := by
     rw [← bounds.numeratorDerivative_eq]
     simpa only [Norm.Basic.normSq_eq_canonical] using (Bounds.Box.normSq_eval_le_denseEvalNormBound
       bounds.numeratorDerivative inside).trans_eq bounds.derivativeUpper_eq.symm
   rw [bounds.bound_eq]
-  exact (show Basic.Canonical.normSq (((Dense.Derivative.derivative numerator).eval point * (initial.refine
-    index).value.eval point) + (numerator.eval point * (Dense.Derivative.derivative (initial.refine index).value).eval
-    point)) ≤ 2 * (Basic.Canonical.normSq ((Dense.Derivative.derivative numerator).eval point * (initial.refine
-    index).value.eval point) + Basic.Canonical.normSq (numerator.eval point * (Dense.Derivative.derivative
+  exact (show normSq (((derivative numerator).eval point * (initial.refine
+    index).value.eval point) + (numerator.eval point * (derivative (initial.refine index).value).eval
+    point)) ≤ 2 * (normSq ((derivative numerator).eval point * (initial.refine
+    index).value.eval point) + normSq (numerator.eval point * (derivative
     (initial.refine index).value).eval point)) from by
     simpa only [Norm.Basic.normSq_eq_canonical] using
-      Norm.Bounds.normSq_add_le_two ((Dense.Derivative.derivative numerator).eval point * (initial.refine
-        index).value.eval point) (numerator.eval point * (Dense.Derivative.derivative (initial.refine index).value).eval
-        point)).trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add
+      Norm.Bounds.normSq_add_le_two ((derivative numerator).eval point * (initial.refine
+        index).value.eval point) (numerator.eval point * (derivative (initial.refine index).value).eval
+        point)).trans (Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add
     (by
-      rw [Basic.Canonical.normSq_mul]
-      exact Fraction.Order.Arithmetic.mul_le_mul_direct derivativeLe (root.value_le _ inside)
-        (Basic.Canonical.normSq_nonneg _) bounds.derivativeUpper_nonnegative)
+      rw [normSq_mul]
+      exact Arithmetic.mul_le_mul_direct derivativeLe (root.value_le _ inside)
+        (normSq_nonneg _) bounds.derivativeUpper_nonnegative)
     (by
-      rw [Basic.Canonical.normSq_mul]
-      exact Fraction.Order.Arithmetic.mul_le_mul_direct numeratorLe (root.refine_derivative_le index inside)
-        (Basic.Canonical.normSq_nonneg _) bounds.numeratorUpper_nonnegative)) (by decide))
+      rw [normSq_mul]
+      exact Arithmetic.mul_le_mul_direct numeratorLe (root.refine_derivative_le index inside)
+        (normSq_nonneg _) bounds.numeratorUpper_nonnegative)) (by decide))
 
 open Purelib.Data.Gaussian in
 open Purelib.Polynomial in
@@ -172,7 +174,7 @@ theorem primitive_increment_le (bounds : PrimitiveDerivativeBounds root numerato
       4 * bounds.bound * normSq (finish - start) ^ 2 :=
   by
   have bounded : ∀ point, box.Contains point →
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Derivative.derivative coefficient).eval point) ≤ bounds.bound := fun point
+      Norm.Basic.normSq ((derivative coefficient).eval point) ≤ bounds.bound := fun point
         inside => by
     rw [Norm.Basic.normSq_eq_canonical]
     exact bounds.coefficient_derivative_le index coefficient equal inside

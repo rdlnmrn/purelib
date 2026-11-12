@@ -67,10 +67,10 @@ open _root_.Purelib.Data.Gaussian.Basic (conj)
 
 /-- The paired total of an ordered list is the pair of component sums, with the first component conjugated. -/
 private theorem paired_total {A : Type u} (values : List A) (first last : A →
-  Normalization.InverseRootPolynomial.Gaussian) :
+  InverseRootPolynomial.Gaussian) :
     Path.PairedIncrementArea.total (values.map (fun value => (⟨conj (first value), last value⟩ :
       Topology.Polygon.Stokes.PrimitivePoint))) =
-      (⟨conj (Data.Gaussian.Norm.Sum.Basic.gaussianSum (values.map first)), Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      (⟨conj (Gaussian.Norm.Sum.Basic.gaussianSum (values.map first)), Gaussian.Norm.Sum.Basic.gaussianSum
         (values.map last)⟩ : Topology.Polygon.Stokes.PrimitivePoint) := by
   induction values with
   | nil => rfl
@@ -80,34 +80,34 @@ private theorem paired_total {A : Type u} (values : List A) (first last : A →
       rw [ih]
       exact congrArg₂ Topology.Polygon.Stokes.PrimitivePoint.mk (Gaussian.Basic.conj_add _ _).symm rfl
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
 
 /-- The automatic surface preparation retains exactly the lifted grid's original exterior boundary words. -/
-private theorem canonical_components (source : Hyperelliptic.Differentials.Basic.Differential genus) :
+private theorem canonical_components (source : Differentials.Basic.Differential genus) :
 
       (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.build
       regular domains source).components.map (fun component => component.program.indexed) =
       lifted.exteriorBoundaries := by
-  change ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.exteriorPrograms lifted source).map
+  change ((PeriodPrograms.exteriorPrograms lifted source).map
     (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceComponent.build
     regular domains)).map _ = _
-  rw [Data.List.Map.map_map]
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.exteriorPrograms_indexed lifted source
+  rw [List.Map.map_map]
+  exact PeriodPrograms.exteriorPrograms_indexed lifted source
 
 namespace PairedCapRequest
-variable {target : Normalization.InverseRootPolynomial.Coordinate} {floor stage depth otherDepth readingIndex : Nat}
+variable {target : InverseRootPolynomial.Coordinate} {floor stage depth otherDepth readingIndex : Nat}
   {box : Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage box}
-  {shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential stage domains}
-    {otherShared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank other stage domains}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage box}
+  {shared : Face.PrimitiveData.FacePrimitiveBank differential stage domains}
+    {otherShared : Face.PrimitiveData.FacePrimitiveBank other stage domains}
   {allocated : PairedCapRequest
     (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.build
     regular domains differential)
@@ -121,22 +121,22 @@ theorem Evaluation.built_component_totals_bounded
     (evaluated : PairedCapRequest.Evaluation allocated
       sample otherSample shared otherShared depth otherDepth readingIndex)
     (degree : curve.polynomial.natDegree = 2 * genus + 2)
-    (firstReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh)
-      (lastReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings otherShared
+    (firstReadings : TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh)
+      (lastReadings : TrianglePrimitiveReadings.TriangleReadings otherShared
       lifted.mesh) :
     ∀ word ∈ lifted.exteriorBoundaries,
       Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (Path.PairedIncrementArea.total (word.map (fun edge =>
-        (⟨conj (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh firstReadings.values
+        (⟨conj (CanonicalEdgeValues.edgeValuation lifted.mesh firstReadings.values
           edge),
-          Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh lastReadings.values edge⟩ :
+          CanonicalEdgeValues.edgeValuation lifted.mesh lastReadings.values edge⟩ :
             Topology.Polygon.Stokes.PrimitivePoint)))) allocated.allowance := by
   intro word member
-  rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.BuiltCapTotalBounds.paired_total]
+  rw [BuiltCapTotalBounds.paired_total]
   have first := evaluated.left.canonical_word_small
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.BuiltCapTotalBounds.canonical_components differential) degree
+    (BuiltCapTotalBounds.canonical_components differential) degree
     firstReadings word member
   have last := evaluated.right.canonical_word_small
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.BuiltCapTotalBounds.canonical_components other) degree lastReadings
+    (BuiltCapTotalBounds.canonical_components other) degree lastReadings
     word member
   constructor
   · have h := (Gaussian.Norm.Basic.normSq_conj _).trans_le first.le
@@ -155,21 +155,21 @@ theorem Evaluation.built_one_lap_small
     (evaluated : PairedCapRequest.Evaluation allocated
       sample otherSample shared otherShared depth otherDepth readingIndex)
     (degree : curve.polynomial.natDegree = 2 * genus + 2)
-    (firstReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh)
-      (lastReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings otherShared
+    (firstReadings : TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh)
+      (lastReadings : TrianglePrimitiveReadings.TriangleReadings otherShared
       lifted.mesh)
     (sheet : Fin 2) :
-    Data.Gaussian.Norm.Basic.normSq (lifted.edges.chainValue lifted.vertices
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh firstReadings.values)
+    Gaussian.Norm.Basic.normSq (lifted.edges.chainValue lifted.vertices
+      (CanonicalEdgeValues.edgeValuation lifted.mesh firstReadings.values)
       base.bank.exterior sheet) < allocated.allowance ∧
-    Data.Gaussian.Norm.Basic.normSq (lifted.edges.chainValue lifted.vertices
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh lastReadings.values)
+    Gaussian.Norm.Basic.normSq (lifted.edges.chainValue lifted.vertices
+      (CanonicalEdgeValues.edgeValuation lifted.mesh lastReadings.values)
       base.bank.exterior sheet) < allocated.allowance :=
   ⟨evaluated.left.canonical_one_lap_small
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.BuiltCapTotalBounds.canonical_components differential) degree
+    (BuiltCapTotalBounds.canonical_components differential) degree
     firstReadings sheet,
     evaluated.right.canonical_one_lap_small
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.BuiltCapTotalBounds.canonical_components other) degree lastReadings
+      (BuiltCapTotalBounds.canonical_components other) degree lastReadings
       sheet⟩
 
 /-- The complete regular source-to-attachment estimate has no external
@@ -177,20 +177,20 @@ component-total hypothesis or additional period acquisition. -/
 theorem Evaluation.conjugate_built_joining_paid
     (evaluated : PairedCapRequest.Evaluation allocated
       sample otherSample shared otherShared depth otherDepth readingIndex)
-    (attached : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment
+    (attached : Caps.AllSurfacePreparation.CapAttachment
       (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.build
       regular domains differential))
     (degree : curve.polynomial.natDegree = 2 * genus + 2)
-    (firstReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh)
-      (lastReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings otherShared
+    (firstReadings : TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh)
+      (lastReadings : TrianglePrimitiveReadings.TriangleReadings otherShared
       lifted.mesh) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (lifted.exteriorBoundaries.map (fun
+    Gaussian.Norm.Basic.normSq (Gaussian.Norm.Sum.Basic.gaussianSum (lifted.exteriorBoundaries.map (fun
       word => Path.PairedIncrementArea.area (word.map (fun edge =>
-      (⟨conj (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh firstReadings.values
+      (⟨conj (CanonicalEdgeValues.edgeValuation lifted.mesh firstReadings.values
         edge),
-        Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh lastReadings.values edge⟩ :
+        CanonicalEdgeValues.edgeValuation lifted.mesh lastReadings.values edge⟩ :
           Topology.Polygon.Stokes.PrimitivePoint))))) -
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateChordPolygons.CapAttachment.conjugateJoiningArea attached
+      ConjugateChordPolygons.CapAttachment.conjugateJoiningArea attached
         sample otherSample) < 2 * (target + 4 * allocated.allowance^2) :=
 
     BuiltCapJoining.PairedCapRequest.Evaluation.conjugate_built_joining_accurate

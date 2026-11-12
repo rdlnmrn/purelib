@@ -85,14 +85,14 @@ open Purelib.RootIsolation
 
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
     Fraction.Rational} {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
   {observations : RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
-    RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars} {sheet : Fin
+    SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars} {sheet : Fin
     2}
   {partitions : Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid} {coarse :
     Topology.NewtonRequestedSurfaceEnergy.SurfaceMeshes partitions domains sheet}
@@ -101,13 +101,13 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
     Fraction.Rational}
 
 /-- Canonical sum of the actual retained local-owner clipped sides. -/
-@[expose] def remainingLocalEnergyArea (excision : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid
+@[expose] def remainingLocalEnergyArea (excision : AllHoles.Excision.AllHoleExcision grid
   lifted) (energy : Topology.NewtonRequestedSurfaceEnergy.SurfaceRequest partitions coarse fixed energyTarget) {stage :
   Nat}
     (cache : RootContinuation.NewtonObservationLocalEnergy.LocalMeshes.Numerics domains stage) (coefficients :
       LinearAlgebra.Gaussian.Energy.GaussianVector genus) : Gaussian :=
   FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
-    if Hyperelliptic.Meshes.Newton.Complement.ObservationLower.remainingFaceMask excision position then
+    if ObservationLower.remainingFaceMask excision position then
     ((energy.meshes.get position).entries.get piece).pieces.localBoundary
       (fun column row point => Energy.Polygon.energyPrimitivePoint (FiniteSum.Fin.sumFin (fun rowIndex =>
         coefficients rowIndex * (cache.atDomain position sheet rowIndex).primitives.value column row point)))
@@ -121,56 +121,56 @@ variable {energy : Topology.NewtonRequestedSurfaceEnergy.SurfaceRequest partitio
 
 /-- Every later common sample pays the same coefficient-uniform allowance.
 The reference contains precisely the retained local-owner boundaries. -/
-theorem remaining_local_energy_lower (excision : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid
+theorem remaining_local_energy_lower (excision : AllHoles.Excision.AllHoleExcision grid
   lifted) (request : Surface.ConjugateRequest energy
-  (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance))
+  (Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance))
     (positive : 0 < allowance) (later : request.index ≤ stage) (samples : energy.Readings cache)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (face :
       Topology.BranchedCover.Double.Attachment.Face) :
     (Topology.NewtonObservationSurfaceLower.surfaceLowerConstant observations - energyTarget - allowance) *
       Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ≤
-      (Hyperelliptic.Meshes.Newton.Complement.LocalEnergy.remainingLocalEnergyArea excision energy cache
+      (LocalEnergy.remainingLocalEnergyArea excision energy cache
         coefficients).im / 4 := by
   let budget := energy.budget (request.energy_le.trans later) samples
   let actual := FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
-    if Hyperelliptic.Meshes.Newton.Complement.ObservationLower.remainingFaceMask excision position then
+    if ObservationLower.remainingFaceMask excision position then
       (((budget.entries.get position).get piece).sample coefficients).boundaryArea else 0))
-  have close := Hyperelliptic.Meshes.Newton.Complement.ConjugateComparison.remaining_boundary_error_bound excision
+  have close := ConjugateComparison.remaining_boundary_error_bound excision
     request later samples budget coefficients
   rw [FiniteSum.Fin.sumFin_congr (fun position => FiniteSum.Fin.sumFin_congr (fun piece => ((fun (keep : Bool) (first
     second : Gaussian.Basic.Canonical) =>
       show (if keep then first - second else 0) = (if keep then first else 0) - (if keep then second else 0) from by
         cases keep
-        · exact (Data.Gaussian.Basic.sub_zero 0).symm
-        · rfl) (Hyperelliptic.Meshes.Newton.Complement.ObservationLower.remainingFaceMask excision position) _ _))),
+        · exact (Gaussian.Basic.sub_zero 0).symm
+        · rfl) (ObservationLower.remainingFaceMask excision position) _ _))),
     FiniteSum.Fin.sumFin_congr (fun position => FiniteSum.Fin.sumFin_sub _ _),
     FiniteSum.Fin.sumFin_sub] at close
   have normNonnegative : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := by
     have bound := FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Fraction.Rational)) _
-      (fun row => Gaussian.Basic.Canonical.normSq_nonneg (coefficients row))
+      (fun row => Gaussian.normSq_nonneg (coefficients row))
     exact (FiniteSum.Fin.sumFin_zero).symm.trans_le bound
-  have squared : Data.Gaussian.Norm.Basic.normSq (actual -
-    Hyperelliptic.Meshes.Newton.Complement.LocalEnergy.remainingLocalEnergyArea excision energy cache coefficients) ≤
+  have squared : Gaussian.Norm.Basic.normSq (actual -
+    LocalEnergy.remainingLocalEnergyArea excision energy cache coefficients) ≤
       (4 * (allowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)) ^ 2 := by
     apply close.trans
     calc
       _ = ((genus : Fraction.Rational) ^ 2 *
-        Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance) *
+        Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance) *
         Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 := by
         ring1
       _ ≤ (4 * allowance) ^ 2 * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 :=
         Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-          (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget_paid positive)
+          (Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget_paid positive)
           (Fraction.Order.Arithmetic.sq_nonneg_direct _)
       _ = _ := by ring1
   have comparison := Topology.PreparedSurfaceCoercivity.boundaryEnergy_sub_budget_le actual
-    (Hyperelliptic.Meshes.Newton.Complement.LocalEnergy.remainingLocalEnergyArea excision energy cache coefficients)
+    (LocalEnergy.remainingLocalEnergyArea excision energy cache coefficients)
       (allowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)
     (Fraction.Order.Arithmetic.mul_nonneg_direct positive.le normNonnegative) squared
-  have lower := Hyperelliptic.Meshes.Newton.Complement.ObservationLower.SurfaceRequest.remaining_boundary_lower excision
+  have lower := ObservationLower.SurfaceRequest.remaining_boundary_lower excision
     energy (request.energy_le.trans later) samples coefficients face
   have actualEq : FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
-      if Hyperelliptic.Meshes.Newton.Complement.ObservationLower.remainingFaceMask excision position then
+      if ObservationLower.remainingFaceMask excision position then
         (((budget.entries.get position).get piece).sample coefficients).boundaryArea.im / 4 else 0)) = actual.im / 4 :=
           by
     rw [FiniteSum.Fin.sumFin_congr (fun position => FiniteSum.Fin.sumFin_congr (fun piece =>
@@ -180,23 +180,23 @@ theorem remaining_local_energy_lower (excision : Hyperelliptic.Meshes.Newton.All
           · change (0 : Fraction.Rational) = 0 / 4
             decide
           · rfl)
-        (Hyperelliptic.Meshes.Newton.Complement.ObservationLower.remainingFaceMask excision position)
+        (ObservationLower.remainingFaceMask excision position)
         (((budget.entries.get position).get piece).sample coefficients).boundaryArea)))]
     have inner (position : Fin grid.faces.regulars.length) :
-        FiniteSum.Fin.sumFin (fun piece => (if Hyperelliptic.Meshes.Newton.Complement.ObservationLower.remainingFaceMask
+        FiniteSum.Fin.sumFin (fun piece => (if ObservationLower.remainingFaceMask
           excision position then
           (((budget.entries.get position).get piece).sample coefficients).boundaryArea else 0).im / 4) =
-        (FiniteSum.Fin.sumFin (fun piece => if Hyperelliptic.Meshes.Newton.Complement.ObservationLower.remainingFaceMask
+        (FiniteSum.Fin.sumFin (fun piece => if ObservationLower.remainingFaceMask
           excision position then
           (((budget.entries.get position).get piece).sample coefficients).boundaryArea else 0)).im / 4 := by
       rw [LinearAlgebra.Gaussian.Energy.sumFin_im]
       exact FiniteSum.Fin.sumFin_mul_right _ _
     rw [FiniteSum.Fin.sumFin_congr inner]
     change FiniteSum.Fin.sumFin (fun position => (FiniteSum.Fin.sumFin (fun piece =>
-      if Hyperelliptic.Meshes.Newton.Complement.ObservationLower.remainingFaceMask excision position then
+      if ObservationLower.remainingFaceMask excision position then
         (((budget.entries.get position).get piece).sample coefficients).boundaryArea else 0)).im / 4) =
       (FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
-        if Hyperelliptic.Meshes.Newton.Complement.ObservationLower.remainingFaceMask excision position then
+        if ObservationLower.remainingFaceMask excision position then
           (((budget.entries.get position).get piece).sample coefficients).boundaryArea else 0))).im / 4
     rw [LinearAlgebra.Gaussian.Energy.sumFin_im]
     exact FiniteSum.Fin.sumFin_mul_right _ _

@@ -28,7 +28,7 @@ open Purelib.LinearAlgebra
 section
 @[expose] public section
 namespace Purelib.Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Algebra.Field.ExplicitField K]
 section
 
 /-- Homogeneous parametrization of the split null conic. -/
@@ -45,7 +45,7 @@ end
 section
 @[expose] public section
 namespace Purelib.Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Algebra.Field.ExplicitField K]
 section
 
 set_option genInjectivity false in
@@ -59,7 +59,7 @@ structure NullParameterWitness (vector :
   /-- At least one homogeneous parameter is nonzero. -/ parametersNonzero : first ≠ 0 ∨ second ≠ 0
   /-- The retained comparison scale is nonzero. -/ factorNonzero : factor ≠ 0
   /-- The homogeneous parameter vector is the retained nonzero multiple of the input. -/ parameter_spec :
-    Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford.nullParameter first second = Coordinates3.Vector.scale
+    nullParameter first second = Coordinates3.Vector.scale
       factor vector
 
 constructive_injectivity NullParameterWitness
@@ -72,7 +72,7 @@ end
 section
 @[expose] public section
 namespace Purelib.Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Algebra.Field.ExplicitField K]
 section
 
 set_option genInjectivity false in
@@ -83,10 +83,10 @@ structure NullConicParametrization
     (oneNonzero : (1 : K) ≠ 0) (twoNonzero : (2 : K) ≠ 0) where
   /-- Every homogeneous parameter vector is null for the Minkowski form. -/ parameterNull : ∀ first second : K,
     (TernaryForm.minkowski oneNonzero).IsNull
-      (Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford.nullParameter first second)
+      (nullParameter first second)
   /-- Nonzero homogeneous parameters produce a nonzero vector. -/ parameterNonzero : ∀ first second : K,
     first ≠ 0 ∨ second ≠ 0 →
-      Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford.nullParameter first second ≠ Coordinates3.Vector.zero
+      nullParameter first second ≠ Coordinates3.Vector.zero
   /-- Construct parameters and a nonzero comparison scale for each nonzero null vector. -/ covers : ∀ vector :
     Coordinates3.Vector K,
     (TernaryForm.minkowski oneNonzero).IsNull vector →
@@ -103,7 +103,7 @@ end
 section
 @[expose] public section
 namespace Purelib.Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Algebra.Field.ExplicitField K]
 section
 
 /-- The homogeneous formula `(u²-v², 2uv, u²+v²)` has zero Minkowski quadrance. -/
@@ -111,10 +111,10 @@ theorem nullParameter_isNull (oneNonzero : (1
   : K) ≠ 0)
     (first second : K) :
     (TernaryForm.minkowski oneNonzero).IsNull
-      (Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford.nullParameter first second) := by
+      (nullParameter first second) := by
   unfold TernaryForm.IsNull
   rw [TernaryForm.quadrance_minkowski]
-  unfold Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford.nullParameter
+  unfold nullParameter
   ring1
 end
 end Purelib.Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford
@@ -125,7 +125,7 @@ section
 @[expose] public section
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Algebra.Field.ExplicitField K]
 namespace MinkowskiClifford
 
 end MinkowskiClifford
@@ -137,7 +137,7 @@ section
 @[expose] public section
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Algebra.Field.ExplicitField K]
 namespace MinkowskiClifford
 
 end MinkowskiClifford
@@ -148,7 +148,7 @@ end
 section
 @[expose] public section
 namespace Purelib.Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Algebra.Field.ExplicitField K]
 section
 
 /-- The homogeneous null parametrization is nonzero on nonzero parameters.
@@ -157,7 +157,7 @@ The proof requires two to be nonzero and retains the supplied nonzero parameter 
 theorem nullParameter_nonzero [DecidableEq K]
     (twoNonzero : (2 : K) ≠ 0) (first second : K)
     (parametersNonzero : first ≠ 0 ∨ second ≠ 0) :
-    Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford.nullParameter first second ≠ Coordinates3.Vector.zero :=
+    nullParameter first second ≠ Coordinates3.Vector.zero :=
       by
   intro parameterZero
   have firstCoordinate := congrArg Coordinates3.Vector.t parameterZero
@@ -177,22 +177,22 @@ theorem nullParameter_nonzero [DecidableEq K]
             (first ^ 2 - second ^ 2) := by ring1
       _ = 0 := by rw [firstCoordinate, thirdCoordinate]; ring1
   have firstSquareZero :=
-    (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] {factor value : K} (factorNonzero : factor ≠ 0)
-      (productZero : factor * value = 0) => (Purelib.Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left (R := K)
+    (fun {K : Type _} [Algebra.Field.ExplicitField K] {factor value : K} (factorNonzero : factor ≠ 0)
+      (productZero : factor * value = 0) => (Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left (R := K)
       (factor := factor) (value := value) factorNonzero productZero : value = 0))
     twoNonzero twiceFirstSquare
   have secondSquareZero :=
-    (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] {factor value : K} (factorNonzero : factor ≠ 0)
-      (productZero : factor * value = 0) => (Purelib.Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left (R := K)
+    (fun {K : Type _} [Algebra.Field.ExplicitField K] {factor value : K} (factorNonzero : factor ≠ 0)
+      (productZero : factor * value = 0) => (Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left (R := K)
       (factor := factor) (value := value) factorNonzero productZero : value = 0))
     twoNonzero twiceSecondSquare
   have firstZero :=
-    (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] [DecidableEq K] (value : K) (squareZero : value ^ 2 = 0)
-      => (Purelib.Algebra.Field.Squares.eq_zero_of_square_eq_zero (K := K) value squareZero : value = 0)) first
+    (fun {K : Type _} [Algebra.Field.ExplicitField K] [DecidableEq K] (value : K) (squareZero : value ^ 2 = 0)
+      => (Algebra.Field.Squares.eq_zero_of_square_eq_zero (K := K) value squareZero : value = 0)) first
     firstSquareZero
   have secondZero :=
-    (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] [DecidableEq K] (value : K) (squareZero : value ^ 2 = 0)
-      => (Purelib.Algebra.Field.Squares.eq_zero_of_square_eq_zero (K := K) value squareZero : value = 0)) second
+    (fun {K : Type _} [Algebra.Field.ExplicitField K] [DecidableEq K] (value : K) (squareZero : value ^ 2 = 0)
+      => (Algebra.Field.Squares.eq_zero_of_square_eq_zero (K := K) value squareZero : value = 0)) second
     secondSquareZero
   rcases parametersNonzero with firstNonzero | secondNonzero
   · exact firstNonzero firstZero
@@ -205,15 +205,15 @@ end
 section
 @[expose] public section
 namespace Purelib.Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Algebra.Field.ExplicitField K]
 section
 
 /-- Read back scalar vanishing from its zero-square certificate. -/
 theorem square_eq_zero_readback [DecidableEq
   K] (value : K)
     (squareZero : value ^ 2 = 0) : value = 0 :=
-  (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] [DecidableEq K] (value : K) (squareZero : value ^ 2 = 0) =>
-    (Purelib.Algebra.Field.Squares.eq_zero_of_square_eq_zero (K := K) value squareZero : value = 0)) value
+  (fun {K : Type _} [Algebra.Field.ExplicitField K] [DecidableEq K] (value : K) (squareZero : value ^ 2 = 0) =>
+    (Algebra.Field.Squares.eq_zero_of_square_eq_zero (K := K) value squareZero : value = 0)) value
     squareZero
 end
 end Purelib.Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford
@@ -223,7 +223,7 @@ end
 section
 @[expose] public section
 namespace Purelib.Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Algebra.Field.ExplicitField K]
 section
 
 /-- Every nonzero null vector lies on the homogeneous parametrization, by one decidable two-chart split and without
@@ -236,7 +236,7 @@ def nullParameterWitness [DecidableEq K]
       NullParameterWitness vector := by
   have nullEquation :
       vector.t ^ 2 + vector.r ^ 2 - vector.s ^ 2 = 0 := by
-    unfold Purelib.Algebra.Quadratic.Ternary.Basic.TernaryForm.IsNull at null
+    unfold TernaryForm.IsNull at null
     rw [TernaryForm.quadrance_minkowski] at null
     exact null
   by_cases chartZero : vector.s + vector.t = 0
@@ -333,7 +333,7 @@ end
 section
 @[expose] public section
 namespace Purelib.Geometry.Quadratic.Ternary.SplitNullConic.MinkowskiClifford
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Algebra.Field.ExplicitField K]
 section
 
 /-- Package the executable two-chart parametrization of the Minkowski null conic.

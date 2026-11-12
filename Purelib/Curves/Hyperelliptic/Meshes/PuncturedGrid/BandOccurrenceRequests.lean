@@ -66,55 +66,55 @@ open Purelib.RootIsolation
 The later readings reuse the supplied trace geometry and normalized domains. -/
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {cuts : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
-    {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {cuts : RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
+    {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet}
   {target : Fraction.Rational} {i j : Fin genus} {stage : Nat} {cache :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
-  {request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+    RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  {request : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+    RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
     target}
 
 /-- The actual rectangle perimeter traces for every retained regular position and sheet.
 
 This geometry is fixed before acquiring the shared polynomial stage; later centered samples reuse these exact traces. -/
 @[expose] def PerimeterTraceBank
-    (request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+    (request : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+      RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
       target) :=
-  Data.Vector.DependentVector (fun position : Fin base.faces.regulars.length => Data.Vector.DependentVector (fun sheet :
+  Vector.DependentVector (fun position : Fin base.faces.regulars.length => Vector.DependentVector (fun sheet :
     Fin 2 =>
     Paths.RectangularPerimeterTraces.PerimeterTraces ((request.entries.get sheet).meshes.entries.get position)))
 
 namespace PerimeterTraceBank
 
 /-- Construct the original perimeter traces at every retained regular position and both sheets. -/
-@[expose] def build (request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+@[expose] def build (request : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+  RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
   target) :
-    Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request :=
-  Data.Vector.DependentVector.ofFn fun position => Data.Vector.DependentVector.ofFn fun sheet =>
+    PerimeterTraceBank request :=
+  Vector.DependentVector.ofFn fun position => Vector.DependentVector.ofFn fun sheet =>
     Paths.RectangularPerimeterTraces.PerimeterTraces.build ((request.entries.get sheet).meshes.entries.get position)
 
 /-- Reuse all retained traces when sampling the late bank; the only newly
 computed values are its centered primitive readings. -/
-@[expose] def samples (traces : Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request)
-  (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage) (i j : Fin
+@[expose] def samples (traces : PerimeterTraceBank request)
+  (cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage) (i j : Fin
   genus) :
-    Hyperelliptic.Meshes.PuncturedGrid.RequestedHoleCentering.CenteredPerimeters request cache i j :=
-  ⟨traces, Data.Vector.DependentVector.ofFn fun position => Data.Vector.DependentVector.ofFn fun sheet =>
+    RequestedHoleCentering.CenteredPerimeters request cache i j :=
+  ⟨traces, Vector.DependentVector.ofFn fun position => Vector.DependentVector.ofFn fun sheet =>
     Integration.RectangularCenteredPerimeter.Centered.build ((traces.get position).get sheet)
-      (Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.faceValues cache.normalize i j position sheet)⟩
+      (Matched.FacePerimeters.faceValues cache.normalize i j position sheet)⟩
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank in
 /-- Sampling the centered perimeters preserves the exact supplied trace bank. -/
-theorem samples_traces (traces : Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request)
-  (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage) (i j : Fin
+theorem samples_traces (traces : PerimeterTraceBank request)
+  (cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage) (i j : Fin
   genus) :
     (samples traces cache i j).traces = traces := rfl
 
@@ -130,58 +130,58 @@ variable {bandAmbient : Rational.Box} {current : State.Raw.RawWindingState curve
 Its domain, sheet and side come from that occurrence, while both differential indices share the same extracted Newton
 band. -/
 @[expose] def BandOccurrenceReference (traces :
-  Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request) (band :
+  PerimeterTraceBank request) (band :
   RootContinuation.PreparedNewtonBandFamilies.PreparedBandFamily family bandTarget radius)
-    (i j : Fin genus) (occurrence : Hyperelliptic.Meshes.PuncturedGrid.SegmentSideSources.LiftedMesh.SideOccurrence
+    (i j : Fin genus) (occurrence : SegmentSideSources.LiftedMesh.SideOccurrence
       lifted.mesh) :=
-  Hyperelliptic.Meshes.PuncturedGrid.BandSideReferences.BandSideReference ((domains.get occurrence.position).domain
+  BandSideReferences.BandSideReference ((domains.get occurrence.position).domain
     occurrence.sheet)
     ((traces.get occurrence.position).get occurrence.sheet) band i j occurrence.side
 
 namespace BandOccurrenceReference
-variable {traces : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request}
+variable {traces : PerimeterTraceBank request}
   {band : RootContinuation.PreparedNewtonBandFamilies.PreparedBandFamily family bandTarget radius}
-  {occurrence : Hyperelliptic.Meshes.PuncturedGrid.SegmentSideSources.LiftedMesh.SideOccurrence lifted.mesh}
+  {occurrence : SegmentSideSources.LiftedMesh.SideOccurrence lifted.mesh}
 
 /-- Prepare the selected occurrence's two-differential side request on its retained trace and Newton band. -/
-@[expose] def build (traces : Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request)
+@[expose] def build (traces : PerimeterTraceBank request)
   (band : RootContinuation.PreparedNewtonBandFamilies.PreparedBandFamily family bandTarget radius)
-    (i j : Fin genus) (occurrence : Hyperelliptic.Meshes.PuncturedGrid.SegmentSideSources.LiftedMesh.SideOccurrence
-      lifted.mesh) : Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.BandOccurrenceReference traces band i j
+    (i j : Fin genus) (occurrence : SegmentSideSources.LiftedMesh.SideOccurrence
+      lifted.mesh) : BandOccurrenceReference traces band i j
       occurrence :=
-  Hyperelliptic.Meshes.PuncturedGrid.BandSideReferences.BandSideReference.build ((traces.get occurrence.position).get
+  BandSideReferences.BandSideReference.build ((traces.get occurrence.position).get
     occurrence.sheet) band i j occurrence.side
 
 /-- The retained late-stage threshold of the original occurrence-side request. -/
-@[expose] def index (reference : Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.BandOccurrenceReference
+@[expose] def index (reference : BandOccurrenceReference
   traces band i j occurrence) : Nat :=
-  Hyperelliptic.Meshes.PuncturedGrid.BandSideReferences.BandSideReference.index occurrence.side reference
+  BandSideReferences.BandSideReference.index occurrence.side reference
 
 /-- Bound the oriented occurrence area by the common Newton coefficient times the squared selected radius.
 
 The original trace-length certificate and actual boundary membership supply the side geometry; both readings use the
 same sufficiently late numerical cache. -/
-theorem area_bound (samples : Hyperelliptic.Meshes.PuncturedGrid.RequestedHoleCentering.CenteredPerimeters request cache
-  i j) (lengths : Hyperelliptic.Meshes.PuncturedGrid.WeightedPerimeterAreas.CenteredPerimeters.Lengths samples)
-    (reference : Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.BandOccurrenceReference samples.traces band i
+theorem area_bound (samples : RequestedHoleCentering.CenteredPerimeters request cache
+  i j) (lengths : WeightedPerimeterAreas.CenteredPerimeters.Lengths samples)
+    (reference : BandOccurrenceReference samples.traces band i
       j occurrence)
-    (boundary : Hyperelliptic.Meshes.PuncturedGrid.PreparedSideOccurrences.SideOccurrence.OnBoundary occurrence
+    (boundary : PreparedSideOccurrences.SideOccurrence.OnBoundary occurrence
       band.selection.sample.output.box)
-    (later : Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.BandOccurrenceReference.index reference ≤ stage)
+    (later : BandOccurrenceReference.index reference ≤ stage)
       :
-    Data.Gaussian.Norm.Basic.normSq
-      (Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.CenteredPerimeters.occurrenceArea
+    Gaussian.Norm.Basic.normSq
+      (SideOccurrenceReadings.LiftedPuncturedGrid.CenteredPerimeters.occurrenceArea
       samples occurrence) ≤
       RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.areaCoefficient family *
         band.selection.sample.output.radius^2 := by
-  change Data.Gaussian.Norm.Basic.normSq
-    (Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence.oriented
+  change Gaussian.Norm.Basic.normSq
+    (SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence.oriented
     occurrence _) ≤ _
-  rw [Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence.normSq_oriented
+  rw [SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence.normSq_oriented
     occurrence]
-  exact Hyperelliptic.Meshes.PuncturedGrid.BandSideReferences.BandSideReference.area_bound reference ((lengths.get
+  exact BandSideReferences.BandSideReference.area_bound reference ((lengths.get
     occurrence.position).get occurrence.sheet)
-    (Hyperelliptic.Meshes.PuncturedGrid.SideBoundaryGeometry.BranchCellBank.LiftedMesh.SideOccurrence.boundary
+    (SideBoundaryGeometry.BranchCellBank.LiftedMesh.SideOccurrence.boundary
       occurrence boundary) later (cache.normalize.atDomain occurrence.position occurrence.sheet i)
     (cache.normalize.atDomain occurrence.position occurrence.sheet j)
     ((samples.samples.get occurrence.position).get occurrence.sheet)
@@ -191,58 +191,58 @@ end BandOccurrenceReference
 set_option genInjectivity false in
 /-- Materialized requests retain the exact occurrence list, with one cached
 maximum controlling both components of every later side reading. -/
-structure BandOccurrenceBank (traces : Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank
+structure BandOccurrenceBank (traces : PerimeterTraceBank
   request)
     (band : RootContinuation.PreparedNewtonBandFamilies.PreparedBandFamily family bandTarget radius) (i j : Fin genus)
-    (occurrences : List (Hyperelliptic.Meshes.PuncturedGrid.SegmentSideSources.LiftedMesh.SideOccurrence lifted.mesh))
+    (occurrences : List (SegmentSideSources.LiftedMesh.SideOccurrence lifted.mesh))
       where
   /-- The materialized original side request for each retained list position, including repetitions. -/ references :
-    Data.Vector.DependentVector (fun position : Fin occurrences.length =>
-    Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.BandOccurrenceReference traces band i j
+    Vector.DependentVector (fun position : Fin occurrences.length =>
+    BandOccurrenceReference traces band i j
       (occurrences[position.val]'position.isLt))
   /-- The cached common stage threshold for every retained occurrence request. -/ index : Nat
   /-- Every materialized occurrence threshold is bounded by the common cached index. -/ index_ge : ∀ position,
-    Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.BandOccurrenceReference.index (references.get position) ≤
+    BandOccurrenceReference.index (references.get position) ≤
     index
 
 constructive_injectivity BandOccurrenceBank
 
 namespace BandOccurrenceBank
-variable {traces : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request}
+variable {traces : PerimeterTraceBank request}
   {band : RootContinuation.PreparedNewtonBandFamilies.PreparedBandFamily family bandTarget radius}
-  {occurrences : List (Hyperelliptic.Meshes.PuncturedGrid.SegmentSideSources.LiftedMesh.SideOccurrence lifted.mesh)}
+  {occurrences : List (SegmentSideSources.LiftedMesh.SideOccurrence lifted.mesh)}
 
 /-- Materialize the original ordered occurrence requests and cache their maximum stage threshold. -/
-@[expose] def build (traces : Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request)
+@[expose] def build (traces : PerimeterTraceBank request)
   (band : RootContinuation.PreparedNewtonBandFamilies.PreparedBandFamily family bandTarget radius)
     (i j : Fin genus) (occurrences : List
-      (Hyperelliptic.Meshes.PuncturedGrid.SegmentSideSources.LiftedMesh.SideOccurrence lifted.mesh)) :
-    Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.BandOccurrenceBank traces band i j occurrences :=
-  let references := Data.Vector.DependentVector.ofFn fun position : Fin occurrences.length =>
-    Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.BandOccurrenceReference.build traces band i j
+      (SegmentSideSources.LiftedMesh.SideOccurrence lifted.mesh)) :
+    BandOccurrenceBank traces band i j occurrences :=
+  let references := Vector.DependentVector.ofFn fun position : Fin occurrences.length =>
+    BandOccurrenceReference.build traces band i j
       (occurrences[position.val]'position.isLt)
   ⟨references, references.maximum (fun _ reference =>
-    Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.BandOccurrenceReference.index reference),
+    BandOccurrenceReference.index reference),
     references.get_le_maximum (fun _ reference =>
-      Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.BandOccurrenceReference.index reference)⟩
+      BandOccurrenceReference.index reference)⟩
 
 /-- Every listed occurrence satisfies the Newton area bound once the cached common threshold is reached. -/
-theorem entry_bound (samples : Hyperelliptic.Meshes.PuncturedGrid.RequestedHoleCentering.CenteredPerimeters request
-  cache i j) (lengths : Hyperelliptic.Meshes.PuncturedGrid.WeightedPerimeterAreas.CenteredPerimeters.Lengths samples)
-    (bank : Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.BandOccurrenceBank samples.traces band i j
+theorem entry_bound (samples : RequestedHoleCentering.CenteredPerimeters request
+  cache i j) (lengths : WeightedPerimeterAreas.CenteredPerimeters.Lengths samples)
+    (bank : BandOccurrenceBank samples.traces band i j
       occurrences)
     (boundary : ∀ occurrence ∈ occurrences,
-      Hyperelliptic.Meshes.PuncturedGrid.PreparedSideOccurrences.SideOccurrence.OnBoundary occurrence
+      PreparedSideOccurrences.SideOccurrence.OnBoundary occurrence
       band.selection.sample.output.box)
     (later : bank.index ≤ stage) : ∀ occurrence ∈ occurrences,
-    Data.Gaussian.Norm.Basic.normSq
-      (Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.CenteredPerimeters.occurrenceArea
+    Gaussian.Norm.Basic.normSq
+      (SideOccurrenceReadings.LiftedPuncturedGrid.CenteredPerimeters.occurrenceArea
       samples occurrence) ≤
       RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.areaCoefficient family *
         band.selection.sample.output.radius^2 := by
   intro occurrence member
   obtain ⟨position, bound, equal⟩ := List.mem_iff_getElem.mp member
-  have estimate := Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.BandOccurrenceReference.area_bound samples
+  have estimate := BandOccurrenceReference.area_bound samples
     lengths (bank.references.get ⟨position, bound⟩)
     (boundary _ (List.getElem_mem bound)) ((bank.index_ge ⟨position, bound⟩).trans later)
   exact equal ▸ estimate
@@ -252,31 +252,31 @@ Newton area estimate.
 
 Every original occurrence must lie on the selected band boundary, and all area readings use the common cache after the
 retained request threshold. -/
-theorem sum_bound (samples : Hyperelliptic.Meshes.PuncturedGrid.RequestedHoleCentering.CenteredPerimeters request cache
-  i j) (lengths : Hyperelliptic.Meshes.PuncturedGrid.WeightedPerimeterAreas.CenteredPerimeters.Lengths samples)
-    (bank : Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.BandOccurrenceBank samples.traces band i j
+theorem sum_bound (samples : RequestedHoleCentering.CenteredPerimeters request cache
+  i j) (lengths : WeightedPerimeterAreas.CenteredPerimeters.Lengths samples)
+    (bank : BandOccurrenceBank samples.traces band i j
       occurrences)
     (boundary : ∀ occurrence ∈ occurrences,
-      Hyperelliptic.Meshes.PuncturedGrid.PreparedSideOccurrences.SideOccurrence.OnBoundary occurrence
+      PreparedSideOccurrences.SideOccurrence.OnBoundary occurrence
       band.selection.sample.output.box)
     (later : bank.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (occurrences.map
-      (Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.CenteredPerimeters.occurrenceArea
+    Gaussian.Norm.Basic.normSq (Gaussian.Norm.Sum.Basic.gaussianSum (occurrences.map
+      (SideOccurrenceReadings.LiftedPuncturedGrid.CenteredPerimeters.occurrenceArea
       samples))) ≤
       (occurrences.length : Fraction.Rational) * ((occurrences.length : Fraction.Rational) *
         (RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.areaCoefficient family *
           band.selection.sample.output.radius^2)) := by
   have bounded : ∀ value ∈ occurrences.map
-    (Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.CenteredPerimeters.occurrenceArea
-    samples), Data.Gaussian.Norm.Basic.normSq value ≤
+    (SideOccurrenceReadings.LiftedPuncturedGrid.CenteredPerimeters.occurrenceArea
+    samples), Gaussian.Norm.Basic.normSq value ≤
       RootContinuation.PreparedNewtonAreaRate.PreparedBandFamily.areaCoefficient family *
         band.selection.sample.output.radius^2 := by
     intro value member
     obtain ⟨occurrence, member, equal⟩ := Data.List.Map.mem_map.mp member
-    exact equal ▸ Hyperelliptic.Meshes.PuncturedGrid.BandOccurrenceRequests.BandOccurrenceBank.entry_bound samples
+    exact equal ▸ BandOccurrenceBank.entry_bound samples
       lengths bank boundary later occurrence member
   have estimate := Gaussian.Norm.Sum.Bounds.normSq_sum_le _ _ bounded
-  rw [Purelib.Data.List.Map.length_map] at estimate
+  rw [List.Map.length_map] at estimate
   exact estimate
 
 end BandOccurrenceBank

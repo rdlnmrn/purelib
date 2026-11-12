@@ -82,15 +82,15 @@ open Purelib.Riemann.RootContinuation.NewtonObservationPartitions.ProtectedObser
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks (FaceDomainBank)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData (FacePrimitiveBank DomainPrimitives)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : NewtonPreparation original} {target radius : Purelib.Data.Rat.Fraction.Rational} {grid : NewtonGrid
+  {preparation : NewtonPreparation original} {target radius : Rational} {grid : NewtonGrid
     preparation target radius}
   {observations : ProtectedObservations original} {frames : RootIsolation.SquareRoot.Grid.RootFrames
     grid.shrunk.prepared.grid}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
+  {domains : FaceDomainBank frames
     grid.faces.regulars}
 
 /-- Read the exact original observation cut box at a retained flattened occurrence. -/
@@ -111,7 +111,7 @@ open Purelib in
 open Purelib.LinearAlgebra.Gaussian in
 /-- The flattened retained energy cell has the exact original local cut box. -/
 theorem surfaceCells_box (partitions : GridPartitions observations grid)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (face :
+    (coefficients : Energy.GaussianVector genus) (face :
       Topology.BranchedCover.Double.Attachment.Face) (index :
       Fin partitions.indices.length) :
     (partitions.surfaceCells coefficients face index).box = (localBox partitions) index := by
@@ -125,7 +125,7 @@ set_option genInjectivity false in
 Each entry keeps the original flattened occurrence, its cached regular position and the chosen original sheet's domain
 cuts. -/
 structure LocalMeshes (partitions : GridPartitions observations grid)
-    (domains : Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars) (sheet : Fin 2) where
+    (domains : FaceDomainBank frames grid.faces.regulars) (sheet : Fin 2) where
   /-- The dependent observation meshes on the original local cut boxes and retained sheet domains. -/ entries :
     Vector.DependentVector (fun index : Fin partitions.indices.length =>
     ObservationMesh ((domains.get (partitions.position index)).domain sheet).cuts ((localBox partitions) index))
@@ -143,7 +143,7 @@ open Purelib.Data in
 Each mesh uses the exact source domain's cuts and rectangle points; containment transports through the original cut-box
 refinement without changing the regular-face index. -/
 def build (partitions : GridPartitions observations grid) (domains :
-  Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars) (sheet : Fin 2) (depth : Nat) :
+  FaceDomainBank frames grid.faces.regulars) (sheet : Fin 2) (depth : Nat) :
     LocalMeshes partitions domains sheet :=
   ⟨Vector.DependentVector.ofFn fun index => ObservationMesh.build
     ((domains.get (partitions.position index)).domain sheet).cuts ((localBox partitions) index) ((localBox_proper
@@ -160,15 +160,15 @@ open Purelib.Curves.Hyperelliptic
 open Purelib.Data
 open Purelib.Riemann.Periods
 /-- The dependent primitive-bank cache for every original standard differential on the same face domains and stage. -/
-abbrev Numerics (domains : Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars) (stage :
+abbrev Numerics (domains : FaceDomainBank frames grid.faces.regulars) (stage :
   Nat) :=
-  Vector.DependentVector (fun row : Fin genus => Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+  Vector.DependentVector (fun row : Fin genus => FacePrimitiveBank
     (PeriodMatrix.standardDifferential row) stage domains)
 
 /-- Cache the original standard-differential primitive banks at the specified stage. -/
-def numerics (domains : Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars) (stage : Nat) :
+def numerics (domains : FaceDomainBank frames grid.faces.regulars) (stage : Nat) :
   Numerics domains stage :=
-  Vector.DependentVector.ofFn fun row => Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank.build
+  Vector.DependentVector.ofFn fun row => FacePrimitiveBank.build
     (PeriodMatrix.standardDifferential row) stage domains
 
 end
@@ -177,7 +177,7 @@ open Purelib.Curves.Hyperelliptic in
 open Purelib.Riemann.Periods in
 /-- Read the exact original row, regular position and sheet from the retained numerical cache. -/
 def Numerics.atDomain (cache : Numerics domains stage) (position : Fin grid.faces.regulars.length) (sheet : Fin 2)
-    (row : Fin genus) : Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives ((domains.get position).domain sheet)
+    (row : Fin genus) : DomainPrimitives ((domains.get position).domain sheet)
       (PeriodMatrix.standardDifferential row) stage :=
   ((cache.get row).get position).atSheet sheet
 
@@ -220,11 +220,11 @@ Each budget is owned by the original retained basis-reading entry, preserving it
 triangle error certificates. -/
 structure Budget (samples : Samples meshes cache) where
   /-- The dependent affine-surface budgets owned by the exact original local basis-reading entries. -/ entries :
-    Vector.DependentVector (fun index => AffineBasisEnergy.AffineBasis.SurfaceBudget (samples.readings.get
+    Vector.DependentVector (fun index => AffineBasis.SurfaceBudget (samples.readings.get
     index).affine)
-  /-- The cached sum of the original local affine-surface budget totals. -/ total : Fraction.Rational
+  /-- The cached sum of the original local affine-surface budget totals. -/ total : Rational
   /-- The total is exactly the finite sum of the retained budget-bank entries. -/ total_eq : total =
-    FiniteSum.Fin.sumFin (fun index => (entries.get index).total)
+    sumFin (fun index => (entries.get index).total)
 
 constructive_injectivity Budget
 
@@ -239,24 +239,24 @@ open Purelib.LinearAlgebra.Gaussian in
 
 The estimate sums the original cell contributions and affine-surface budgets over the same retained flattened
 occurrences and coefficient vector. -/
-theorem Budget.energy_lower (budget : Budget samples) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector
+theorem Budget.energy_lower (budget : Budget samples) (coefficients : Energy.GaussianVector
   genus)
     (face : Topology.BranchedCover.Double.Attachment.Face) :
     observations.energy.lower * coefficientNormSq coefficients / 4 - coefficientNormSq coefficients * budget.total ≤
-      FiniteSum.Fin.sumFin (fun index => ((budget.entries.get index).sample coefficients).boundaryArea.im / 4) := by
+      sumFin (fun index => ((budget.entries.get index).sample coefficients).boundaryArea.im / 4) := by
   have localBound := FiniteSum.Rational.Order.Positivity.sumFin_mono _ _ (fun index : Fin partitions.indices.length =>
     (samples.readings.get index).contribution_sub_error_le_boundaryEnergy (budget.entries.get index)
       coefficients (partitions.surfaceCells coefficients face index) ((surfaceCells_box partitions) coefficients face
         index))
-  rw [FiniteSum.Fin.sumFin_sub, FiniteSum.Fin.sumFin_mul_left, ← budget.total_eq] at localBound
-  have contributions : FiniteSum.Fin.sumFin (fun index => (partitions.surfaceCells coefficients face
+  rw [sumFin_sub, sumFin_mul_left, ← budget.total_eq] at localBound
+  have contributions : sumFin (fun index => (partitions.surfaceCells coefficients face
     index).toEnergyCell.contribution / 4) =
       Energy.Prepared.surfaceEnergy (fun index => partitions.surfaceCells coefficients face index) / 4 := by
     simp only [Fraction.Field.div_eq_mul_inv_direct]
-    exact FiniteSum.Fin.sumFin_mul_right _ _
+    exact sumFin_mul_right _ _
   rw [contributions] at localBound
   have lower := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (partitions.uniform_lower coefficients face) (by decide : (0 : Fraction.Rational) ≤ (4 : Fraction.Rational)⁻¹)
+    (partitions.uniform_lower coefficients face) (by decide : (0 : Rational) ≤ (4 : Rational)⁻¹)
   have divided : observations.energy.lower * coefficientNormSq coefficients / 4 ≤
       Energy.Prepared.surfaceEnergy (fun index => partitions.surfaceCells coefficients face index) / 4 := by
     simpa only [Fraction.Field.div_eq_mul_inv_direct] using lower
@@ -273,22 +273,22 @@ set_option genInjectivity false in
 
 The entry equation binds every sample to its original budget and coefficient vector. The record separately retains the
 coercivity lower term, total certified error and signed boundary energy. -/
-structure Bound (budget : Budget samples) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) where
+structure Bound (budget : Budget samples) (coefficients : Energy.GaussianVector genus) where
   /-- The cached affine surface samples with each exact original local vertex and face index type. -/ entries :
     Vector.DependentVector (fun index : Fin partitions.indices.length =>
     AffineSurfaceSample (meshes.entries.get index).surface.mesh.vertices.length
       ((meshes.entries.get index).triangles.map RectangularOwnedTriangulation.ModelTriangle.triangle).length)
   /-- Each cached surface sample is the exact sample of its original local budget and coefficient vector. -/ entries_eq
     : ∀ index, entries.get index = (budget.entries.get index).sample coefficients
-  /-- The cached quarter-coercivity term for the original coefficient vector. -/ lower : Fraction.Rational
+  /-- The cached quarter-coercivity term for the original coefficient vector. -/ lower : Rational
   /-- The lower term is exactly one quarter of observation lower coefficient times coefficient squared norm. -/ lower_eq
     : lower = observations.energy.lower * coefficientNormSq coefficients / 4
-  /-- The cached total error of the original retained surface samples. -/ error : Fraction.Rational
+  /-- The cached total error of the original retained surface samples. -/ error : Rational
   /-- The error equals the finite sum of those exact cached samples' error budgets. -/ error_eq : error =
-    FiniteSum.Fin.sumFin (fun index => (entries.get index).errorBudget)
-  /-- The cached signed boundary energy of the original retained local samples. -/ boundaryEnergy : Fraction.Rational
+    sumFin (fun index => (entries.get index).errorBudget)
+  /-- The cached signed boundary energy of the original retained local samples. -/ boundaryEnergy : Rational
   /-- The boundary energy is the finite sum of each exact cached sample's imaginary boundary area divided by four. -/
-    boundaryEnergy_eq : boundaryEnergy = FiniteSum.Fin.sumFin (fun index => (entries.get index).boundaryArea.im / 4)
+    boundaryEnergy_eq : boundaryEnergy = sumFin (fun index => (entries.get index).boundaryArea.im / 4)
 
 constructive_injectivity Bound
 
@@ -299,7 +299,7 @@ open Purelib.LinearAlgebra.Gaussian in
 
 The dependent sample bank is built once. Its total error is the coefficient squared norm times the retained budget
 total, with proofs linking that formula and boundary energy to the same cached entries. -/
-def Budget.bound (budget : Budget samples) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) : Bound
+def Budget.bound (budget : Budget samples) (coefficients : Energy.GaussianVector genus) : Bound
   budget
   coefficients :=
   let entries := Vector.DependentVector.ofFn fun index => (budget.entries.get index).sample coefficients
@@ -309,31 +309,31 @@ def Budget.bound (budget : Budget samples) (coefficients : LinearAlgebra.Gaussia
     lower_eq := rfl
     error := coefficientNormSq coefficients * budget.total
     error_eq := by
-      rw [budget.total_eq, ← FiniteSum.Fin.sumFin_mul_left]
-      exact FiniteSum.Fin.sumFin_congr (fun index => by rw [Vector.DependentVector.ofFn_get]; rfl)
-    boundaryEnergy := FiniteSum.Fin.sumFin (fun index => (entries.get index).boundaryArea.im / 4)
+      rw [budget.total_eq, ← sumFin_mul_left]
+      exact sumFin_congr (fun index => by rw [Vector.DependentVector.ofFn_get]; rfl)
+    boundaryEnergy := sumFin (fun index => (entries.get index).boundaryArea.im / 4)
     boundaryEnergy_eq := rfl }
 
 open Purelib.Algebra in
 open Purelib.LinearAlgebra.Gaussian in
 /-- The retained aggregate error is coefficient squared norm times the exact original budget total. -/
-theorem Bound.error_homogeneous {budget : Budget samples} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector
+theorem Bound.error_homogeneous {budget : Budget samples} {coefficients : Energy.GaussianVector
   genus}
     (result : Bound budget coefficients) : result.error = coefficientNormSq coefficients * budget.total := by
-  rw [result.error_eq, FiniteSum.Fin.sumFin_congr (fun index => congrArg AffineSurfaceSample.errorBudget
+  rw [result.error_eq, sumFin_congr (fun index => congrArg AffineSurfaceSample.errorBudget
     (result.entries_eq index))]
-  change FiniteSum.Fin.sumFin (fun index => coefficientNormSq coefficients * (budget.entries.get index).total) = _
-  rw [FiniteSum.Fin.sumFin_mul_left, budget.total_eq]
+  change sumFin (fun index => coefficientNormSq coefficients * (budget.entries.get index).total) = _
+  rw [sumFin_mul_left, budget.total_eq]
 
 open Purelib in
 open Purelib.Algebra in
 open Purelib.LinearAlgebra.Gaussian in
 /-- The retained lower term minus its exact error is bounded by its cached signed boundary energy. -/
-theorem Bound.valid {budget : Budget samples} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
+theorem Bound.valid {budget : Budget samples} {coefficients : Energy.GaussianVector genus}
     (result : Bound budget coefficients) (face : Topology.BranchedCover.Double.Attachment.Face) :
     result.lower - result.error ≤ result.boundaryEnergy := by
   rw [result.lower_eq, result.error_homogeneous, result.boundaryEnergy_eq,
-    FiniteSum.Fin.sumFin_congr (fun index => congrArg (fun entry => entry.boundaryArea.im / 4) (result.entries_eq
+    sumFin_congr (fun index => congrArg (fun entry => entry.boundaryArea.im / 4) (result.entries_eq
       index))]
   exact budget.energy_lower coefficients face
 

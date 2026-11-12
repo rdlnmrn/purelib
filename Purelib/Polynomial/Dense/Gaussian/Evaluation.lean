@@ -25,7 +25,7 @@ This specialization retains the generic dense evaluator and its original
 coefficient order, with canonical Gaussian coordinates as the scalar carrier. -/
 @[expose] public def evalCoeffs (point : Gaussian.Basic.Canonical)
     (coefficients : List Gaussian.Basic.Canonical) : Gaussian.Basic.Canonical :=
-  Dense.Basic.DensePolynomial.evalCoeffs point coefficients
+  Basic.DensePolynomial.evalCoeffs point coefficients
 
 /-- High-to-low Horner evaluation of a dense Gaussian polynomial.
 
@@ -41,8 +41,8 @@ Normalization and evaluation use the same original polynomial coefficients,
 and the generic normalization certificate supplies the displayed equality. -/
 public theorem eval_normalize (polynomial : Basic.GaussianCanonical.CoefficientPolynomial)
     (point : Gaussian.Basic.Canonical) :
-    eval (Dense.Gaussian.Basic.normalize polynomial) point = eval polynomial point :=
-  Dense.Basic.DensePolynomial.eval_normalize polynomial point
+    eval (Basic.normalize polynomial) point = eval polynomial point :=
+  Basic.DensePolynomial.eval_normalize polynomial point
 
 /-- Appending one coefficient performs one Horner step after the original fold.
 
@@ -82,8 +82,8 @@ certificate for appending arbitrary lists. -/
 public theorem evalCoeffs_append_singleton
     (point : Gaussian.Basic.Canonical) (coefficients : List Gaussian.Basic.Canonical)
     (trailing : Gaussian.Basic.Canonical) :
-    Dense.Basic.DensePolynomial.evalCoeffs point (coefficients ++ [trailing]) =
-      Dense.Basic.DensePolynomial.evalCoeffs point coefficients * point + trailing :=
+    Basic.DensePolynomial.evalCoeffs point (coefficients ++ [trailing]) =
+      Basic.DensePolynomial.evalCoeffs point coefficients * point + trailing :=
   foldl_append_singleton point coefficients 0 trailing
 
 /-- The Gaussian coordinate polynomial evaluates to the input point.
@@ -91,9 +91,9 @@ public theorem evalCoeffs_append_singleton
 The stored coefficients are one and zero, so the two original Horner steps
 reduce to multiplication by one followed by addition of zero. -/
 @[simp] public theorem coordinatePolynomial_eval (point : Gaussian.Basic.Canonical) :
-    Dense.Gaussian.Basic.coordinatePolynomial.eval point = point := by
-  unfold Dense.Gaussian.Basic.coordinatePolynomial Dense.Basic.DensePolynomial.eval
-    Dense.Basic.DensePolynomial.evalCoeffs
+    Basic.coordinatePolynomial.eval point = point := by
+  unfold Basic.coordinatePolynomial Basic.DensePolynomial.eval
+    Basic.DensePolynomial.evalCoeffs
   simp only [List.foldl_cons, List.foldl_nil]
   ring1
 
@@ -102,9 +102,9 @@ reduce to multiplication by one followed by addition of zero. -/
 The original single coefficient is one. Starting the Horner accumulator at
 zero therefore leaves the constant coefficient independently of the point. -/
 @[simp] public theorem constantOnePolynomial_eval (point : Gaussian.Basic.Canonical) :
-    Dense.Gaussian.Basic.constantOnePolynomial.eval point = 1 := by
-  unfold Dense.Gaussian.Basic.constantOnePolynomial Dense.Basic.DensePolynomial.eval
-    Dense.Basic.DensePolynomial.evalCoeffs
+    Basic.constantOnePolynomial.eval point = 1 := by
+  unfold Basic.constantOnePolynomial Basic.DensePolynomial.eval
+    Basic.DensePolynomial.evalCoeffs
   simp only [List.foldl_cons, List.foldl_nil]
   ring1
 

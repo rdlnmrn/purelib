@@ -85,23 +85,23 @@ open Purelib.Topology.Surface in
 Exact trace projections, source coverage and the original finite permutation identify each selected triangle without
 replacing its source owner. -/
 private theorem selected_projected_sum {vertexCount faceCount : Nat}
-    {faces : Fin faceCount → OrientedTriangle vertexCount} {forest : Topology.Surface.Sewing.SewingForest faces}
+    {faces : Fin faceCount → OrientedTriangle vertexCount} {forest : SewingForest faces}
     (polygon : Sewing.SewingConnected.SewingForest.SinglePolygon forest) {localValues : Fin faceCount →
-      Sewing.PrimitiveSewing.PrimitiveValues 3}
-    (sample : Sewing.SewnPrimitiveSamples.CachedSample polygon.patch localValues) {keep : Fin faceCount → Bool}
-    (selected : Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection sample keep) (value :
-      OrientedTriangle vertexCount → Basic.Canonical) :
-    Geometry.Grid.CellBoundary.sumValues (fun triangle => value (Sewing.VertexSewing.OrientedTriangle.map
+      PrimitiveValues 3}
+    (sample : CachedSample polygon.patch localValues) {keep : Fin faceCount → Bool}
+    (selected : FaceSelection sample keep) (value :
+      OrientedTriangle vertexCount → Canonical) :
+    sumValues (fun triangle => value (Sewing.VertexSewing.OrientedTriangle.map
       polygon.patch.cut.vertexLabels triangle)) selected.triangles =
       sumFin (fun source => if keep source then value (faces source) else 0) := by
-  rw [selected.triangles_eq, Geometry.Grid.CellBoundary.sumValues_map]
-  have projected := Geometry.Grid.CellBoundary.sumValues_congr _ (fun trace => value (faces trace.source))
+  rw [selected.triangles_eq, sumValues_map]
+  have projected := sumValues_congr _ (fun trace => value (faces trace.source))
     selected.traces
     (fun trace member => congrArg value (selected.trace_projection trace member))
   rw [projected, selected.traces_eq, Geometry.Grid.CellBoundary.sumValues_filter]
-  have readback := (Geometry.Grid.CellBoundary.sumValues_map (fun source => if keep source then value (faces source)
+  have readback := (sumValues_map (fun source => if keep source then value (faces source)
     else 0)
-    Sewing.SewnPrimitiveFaces.FaceTrace.source sample.faces.entries).symm
+    FaceTrace.source sample.faces.entries).symm
   rw [readback, sample.faces.sources_eq]
   exact (Geometry.Grid.CellBoundary.sumValues_perm _ polygon.coverage).trans (Geometry.Grid.CellBoundary.sumValues_ofFn
     _)
@@ -145,7 +145,7 @@ private theorem faceMask_get {Face : Type} (keep : Face → Bool) : ∀ (faces :
 open Purelib.Data.Gaussian in
 /-- Equality of original ordered lists transports their exact position-dependent finite sums. -/
 private theorem indexed_sum_congr {Item : Type} {first last : List Item} (equal : first = last)
-    (value : Nat → Item → Basic.Canonical) :
+    (value : Nat → Item → Canonical) :
     sumFin (fun index : Fin first.length => value index.val first[index.val]) =
       sumFin (fun index : Fin last.length => value index.val last[index.val]) := by
   cases equal
@@ -156,12 +156,12 @@ namespace BranchCellBank.LiftedFaces
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
 
 open Purelib.Algebra in
 open Purelib.Data.Gaussian in
@@ -171,9 +171,9 @@ mask.
 
 Each original face contributes its exact four sheet triangles, with zeros at all rejected positions. -/
 private theorem select_weighted (keep : RegularFace bank → Bool) (value : OrientedTriangle vertices.count →
-  Basic.Canonical) :
+  Canonical) :
     ∀ {faces : List (RegularFace bank)} (lifts : LiftedFaces vertices edges faces),
-    Geometry.Grid.CellBoundary.sumValues value (select keep lifts).selected.triangles =
+    sumValues value (select keep lifts).selected.triangles =
       sumFin (fun index : Fin lifts.triangles.length => if faceMask keep faces index.val then value
         lifts.triangles[index.val] else 0)
   | _, .nil => rfl
@@ -183,16 +183,16 @@ private theorem select_weighted (keep : RegularFace bank → Bool) (value : Orie
           if faceMask keep (face :: faces) (index.val + 4) then value tail.triangles[index.val] else 0) =
           sumFin (fun index : Fin tail.triangles.length => if faceMask keep faces index.val then value
             tail.triangles[index.val] else 0) :=
-        FiniteSum.Fin.sumFin_congr (fun index => by rw [faceMask_four])
+        sumFin_congr (fun index => by rw [faceMask_four])
       by_cases kept : keep face = true
       · have selected := congrArg
-          (fun result : Selection vertices edges keep (face :: faces) => Geometry.Grid.CellBoundary.sumValues value
+          (fun result : Selection vertices edges keep (face :: faces) => sumValues value
             result.selected.triangles)
           (show select keep (.cons zero one tail) = _ from dif_pos kept)
         rw [selected]
         change _ = sumFin (fun index : Fin (tail.triangles.length + 4) =>
           if faceMask keep (face :: faces) index.val then value (triangles (.cons zero one tail))[index.val] else 0)
-        rw [FiniteSum.Fin.sumFin_succ, FiniteSum.Fin.sumFin_succ, FiniteSum.Fin.sumFin_succ, FiniteSum.Fin.sumFin_succ]
+        rw [sumFin_succ, sumFin_succ, sumFin_succ, sumFin_succ]
         change _ = (if keep face then value zero.quad.firstTriangle else 0) +
           ((if keep face then value zero.quad.secondTriangle else 0) +
           ((if keep face then value one.quad.firstTriangle else 0) +
@@ -201,13 +201,13 @@ private theorem select_weighted (keep : RegularFace bank → Bool) (value : Orie
         exact congrArg (fun remaining => value zero.quad.firstTriangle + (value zero.quad.secondTriangle +
           (value one.quad.firstTriangle + (value one.quad.secondTriangle + remaining)))) (rest.trans shifted.symm)
       · have selected := congrArg
-          (fun result : Selection vertices edges keep (face :: faces) => Geometry.Grid.CellBoundary.sumValues value
+          (fun result : Selection vertices edges keep (face :: faces) => sumValues value
             result.selected.triangles)
           (show select keep (.cons zero one tail) = _ from dif_neg kept)
         rw [selected]
         change _ = sumFin (fun index : Fin (tail.triangles.length + 4) =>
           if faceMask keep (face :: faces) index.val then value (triangles (.cons zero one tail))[index.val] else 0)
-        rw [FiniteSum.Fin.sumFin_succ, FiniteSum.Fin.sumFin_succ, FiniteSum.Fin.sumFin_succ, FiniteSum.Fin.sumFin_succ]
+        rw [sumFin_succ, sumFin_succ, sumFin_succ, sumFin_succ]
         change _ = (if keep face then value zero.quad.firstTriangle else 0) +
           ((if keep face then value zero.quad.secondTriangle else 0) +
           ((if keep face then value one.quad.firstTriangle else 0) +
@@ -223,10 +223,10 @@ namespace BranchCellBank.NewtonGrid.AllHoleExcision.SewnAnnulus
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : NewtonPreparation original} {target radius : Purelib.Data.Rat.Fraction.Rational}
+  {preparation : NewtonPreparation original} {target radius : Data.Rat.Fraction.Rational}
   {grid : NewtonGrid preparation target radius} {lifted : LiftedPuncturedGrid grid.punctured}
   {localValues : Fin lifted.mesh.triangles.length → PrimitiveValues 3}
   {sample : CachedSample lifted.cutPolygon.patch localValues}
@@ -242,12 +242,12 @@ open Purelib.Topology.Surface in
 The exact source-face mask and mesh face equation identify their bounded original indices and preserve the retained
 triangle-list cache. -/
 theorem selected_lifted_sum (keep : RegularFace grid.shrunk.prepared.toBranchCellBank → Bool)
-    (selected : Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection sample (fun source => keep
+    (selected : FaceSelection sample (fun source => keep
       (sourceFace lifted source)))
-    (value : OrientedTriangle lifted.vertices.count → Basic.Canonical) :
-    Geometry.Grid.CellBoundary.sumValues (fun triangle => value (Sewing.VertexSewing.OrientedTriangle.map
+    (value : OrientedTriangle lifted.vertices.count → Canonical) :
+    sumValues (fun triangle => value (Sewing.VertexSewing.OrientedTriangle.map
       lifted.cutPolygon.patch.cut.vertexLabels triangle)) selected.triangles =
-      Geometry.Grid.CellBoundary.sumValues value (GridLiftedFaceSelection.select keep
+      sumValues value (select keep
         lifted.mesh.lifts).selected.triangles := by
   rw [selected_projected_sum lifted.cutPolygon sample selected value]
   erw [LiftedFaces.select_weighted]
@@ -255,7 +255,7 @@ theorem selected_lifted_sum (keep : RegularFace grid.shrunk.prepared.toBranchCel
       if keep (sourceFace lifted index) then value (lifted.mesh.triangulation.faces index) else 0) =
       sumFin (fun index : Fin lifted.mesh.triangles.length =>
         if faceMask keep grid.faces.regulars index.val then value lifted.mesh.triangles[index.val] else 0) := by
-    apply FiniteSum.Fin.sumFin_congr
+    apply sumFin_congr
     intro index
     rw [lifted.mesh.faces_eq, faceMask_get]
     rfl
@@ -270,11 +270,11 @@ open Purelib.Topology.Surface in
 
 The source selection equation identifies the same lifted triangle occurrences.
 The projected sum preserves their order, multiplicity and retained mesh cache. -/
-theorem projected_sum (annulus : SewnAnnulus sample) (value : OrientedTriangle lifted.vertices.count → Basic.Canonical)
+theorem projected_sum (annulus : SewnAnnulus sample) (value : OrientedTriangle lifted.vertices.count → Canonical)
   :
-    Geometry.Grid.CellBoundary.sumValues (fun triangle => value (Sewing.VertexSewing.OrientedTriangle.map
+    sumValues (fun triangle => value (Sewing.VertexSewing.OrientedTriangle.map
       lifted.cutPolygon.patch.cut.vertexLabels triangle)) annulus.selected.triangles =
-      Geometry.Grid.CellBoundary.sumValues value annulus.source.region.triangles := by
+      sumValues value annulus.source.region.triangles := by
   rw [annulus.source.selection_eq]
   exact selected_lifted_sum annulus.source.keep annulus.selected value
 

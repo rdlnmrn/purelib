@@ -4,6 +4,7 @@ import Purelib.Data.List.Reverse
 import Purelib.Data.List.Append
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Rat.Fraction
+import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.CCL.Encoding.Block.Matrix
 import Purelib.Data.CCL.Encoding.Parser.Constraint
 import Purelib.Data.CCL.Encoding.Parser.Semantics.Basic
@@ -38,7 +39,7 @@ open Purelib.Data.List
 /-- Require an exact Gaussian tail representing the input after parsing the retained finite word. -/
 @[expose] def Represented (word :
   BinaryPrefix.Basic.SourceEncodingRawParserSemanticsWordAlias) (input : Basic.Canonical) : Prop :=
-  ∃ tail, Parser.Semantics.State.Represents (Parser.State.parse word) input tail
+  ∃ tail, State.Represents (State.parse word) input tail
 
 /-- Removing the last bit preserves representation of the original Gaussian input. -/
 theorem represented_drop_last
@@ -46,16 +47,44 @@ theorem represented_drop_last
     (represented : Represented (word ++ [bit]) input) :
     Represented word input := by
   rcases represented with ⟨tail, represented⟩
-  refine ⟨Parser.Semantics.Transition.previousTail (Parser.State.parse word) bit tail, ?_⟩
-  apply Parser.Semantics.Transition.step_represents_previous (Parser.State.parse word) bit input tail
-  simpa only [Parser.State.parse_append_singleton, -eq_self, -iff_self] using represented
+  refine ⟨Transition.previousTail (State.parse word) bit tail, ?_⟩
+  apply Transition.step_represents_previous (State.parse word) bit input tail
+  simpa only [State.parse_append_singleton, -eq_self, -iff_self] using represented
 
 end
 
 /-- The empty word represents every Gaussian input using that same value as its tail. -/
 theorem represented_nil (input : Basic.Canonical) :
   Represented [] input :=
-  ⟨input, Parser.Semantics.State.initialState_represents input⟩
+  ⟨input, State.initialState_represents input⟩
+
+/-- Every finite initial-low unary prefix represents the native affine zero.
+
+Its initial false bit is followed by the supplied finite number of true bits.
+The decoder remains the identity and its tail remains zero; this gives finite
+progress without a terminal nonzero-fraction encoding for zero.
+-/
+theorem represented_zero_low (count : Nat) :
+    Represented (false :: List.replicate count true) (0 : Basic.Canonical) := by
+  have parsed : State.parse (false :: List.replicate count true) =
+      ⟨.lowUnary count, LinearAlgebra.Coordinates2.Matrix.identityMatrix, []⟩ := by
+    change (List.replicate count true).foldl State.step
+      ⟨.lowUnary 0, LinearAlgebra.Coordinates2.Matrix.identityMatrix, []⟩ = _
+    exact (State.foldl_true_unary .initialLow count 0 _ []).trans
+      (congrArg (fun value => State.mk (.lowUnary value) _ []) (Nat.zero_add count))
+  refine ⟨0, ?_⟩
+  rewrite [parsed]
+  have initial := State.initialState_represents (0 : Basic.Canonical)
+  refine ⟨initial.1, initial.2.1, ?_, ?_⟩
+  · intro constraint member
+    nomatch member
+  · cases count with
+    | zero => decide
+    | succ count =>
+        change (2 : Rat.Fraction.Rational) ^ count * Basic.Canonical.normSq 0 < 1
+        change (2 : Rat.Fraction.Rational) ^ count * 0 < 1
+        rewrite [Rat.Fraction.Field.mul_zero_direct]
+        decide
 
 open Purelib.Data.List in
 /-- Every retained prefix of a represented word represents the same original Gaussian input. -/
@@ -71,7 +100,7 @@ theorem represented_of_prefix
     induction reversed with
     | nil =>
         intro retained
-        rewrite [List.reverse_nil, Purelib.Data.List.Append.append_nil]
+        rewrite [List.reverse_nil, Append.append_nil]
           at retained
         exact retained
     | cons bit remaining inductionHypothesis =>
@@ -79,15 +108,15 @@ theorem represented_of_prefix
         apply inductionHypothesis
         apply represented_drop_last
           (word := shorter ++ remaining.reverse) (bit := bit)
-        simpa only [Purelib.Data.List.Reverse.reverse_cons, Purelib.Data.List.Append.append_assoc, -eq_self, -iff_self]
+        simpa only [Reverse.reverse_cons, Append.append_assoc, -eq_self, -iff_self]
           using representedAll
   apply removeReversed suffix.reverse
-  simpa only [Purelib.Data.List.Reverse.reverse_reverse, -eq_self, -iff_self] using represented
+  simpa only [Reverse.reverse_reverse, -eq_self, -iff_self] using represented
 
 /-- Require an exact Gaussian tail representing the original input after the supplied next parser bit. -/
 @[expose] def CanStep (state : State) (input :
   Basic.Canonical) (bit : Bool) : Prop :=
-  ∃ tail, Parser.Semantics.State.Represents (Parser.State.step state bit) input tail
+  ∃ tail, State.Represents (State.step state bit) input tail
 
 end
 
@@ -105,16 +134,16 @@ theorem not_canStep_false_and_true
     ¬(CanStep state input false ∧ CanStep state input true) := by
   rintro ⟨⟨falseTail, falseRepresents⟩,
     ⟨trueTail, trueRepresents⟩⟩
-  have falsePrevious := Parser.Semantics.Transition.step_represents_previous state false input falseTail
+  have falsePrevious := Transition.step_represents_previous state false input falseTail
     falseRepresents
-  have truePrevious := Parser.Semantics.Transition.step_represents_previous state true input trueTail
+  have truePrevious := Transition.step_represents_previous state true input trueTail
     trueRepresents
-  have previousEqual := Parser.Semantics.State.Represents.tail_unique determinant falsePrevious
+  have previousEqual := State.Represents.tail_unique determinant falsePrevious
     truePrevious
   rcases state with ⟨phase, matrix, history⟩
   cases phase with
   | initial =>
-      simp only [Parser.Semantics.Transition.previousTail, -eq_self, -iff_self]
+      simp only [Transition.previousTail, -eq_self, -iff_self]
         at previousEqual
       subst trueTail
       have low := falseRepresents.2.2.2
@@ -124,21 +153,21 @@ theorem not_canStep_false_and_true
       rw [pow_one] at high
       exact (not_lt_of_ge high) low
   | highUnary count =>
-      simp only [Parser.Semantics.Transition.previousTail, -eq_self, -iff_self]
+      simp only [Transition.previousTail, -eq_self, -iff_self]
         at previousEqual
       subst trueTail
       have upper := falseRepresents.2.2.2.1.2
       have lower := trueRepresents.2.2.2
       exact (not_lt_of_ge lower) upper
   | lowUnary count =>
-      simp only [Parser.Semantics.Transition.previousTail, -eq_self, -iff_self]
+      simp only [Transition.previousTail, -eq_self, -iff_self]
         at previousEqual
       subst trueTail
       have lower := falseRepresents.2.2.2.1.1
       have upper := trueRepresents.2.2.2
       exact (not_lt_of_ge lower) upper
   | loopUnary count =>
-      simp only [Parser.Semantics.Transition.previousTail, -eq_self, -iff_self]
+      simp only [Transition.previousTail, -eq_self, -iff_self]
         at previousEqual
       subst trueTail
       have upper := falseRepresents.2.2.2.1.2
@@ -147,7 +176,7 @@ theorem not_canStep_false_and_true
   | sector kind exponent bits =>
       cases bits with
       | zero =>
-          simp only [Parser.Semantics.Transition.previousTail, -eq_self, -iff_self]
+          simp only [Transition.previousTail, -eq_self, -iff_self]
             at previousEqual
           subst trueTail
           rcases falseRepresents.2.2.2 with
@@ -155,15 +184,15 @@ theorem not_canStep_false_and_true
           rcases trueRepresents.2.2.2 with
             ⟨_, trueSector, trueMember, trueHolds⟩
           have sectorEqual :=
-            ComplexContinuedFraction.Encoding.Sector.holds_unique falseHolds trueHolds
+            Sector.holds_unique falseHolds trueHolds
           subst trueSector
           have falsePrefix : BinaryPrefix.Decision.isWordPrefix [false] falseSector.code = true :=
-            (Purelib.Data.List.Filter.mem_filter.mp falseMember).2
+            (Filter.mem_filter.mp falseMember).2
           have truePrefix : BinaryPrefix.Decision.isWordPrefix [true] falseSector.code = true :=
-            (Purelib.Data.List.Filter.mem_filter.mp trueMember).2
+            (Filter.mem_filter.mp trueMember).2
           cases falseSector <;> first | exact Bool.noConfusion falsePrefix | exact Bool.noConfusion truePrefix
       | one first =>
-          simp only [Parser.Semantics.Transition.previousTail, -eq_self, -iff_self]
+          simp only [Transition.previousTail, -eq_self, -iff_self]
             at previousEqual
           subst trueTail
           rcases falseRepresents.2.2.2 with
@@ -171,14 +200,14 @@ theorem not_canStep_false_and_true
           rcases trueRepresents.2.2.2 with
             ⟨_, trueSector, trueMember, trueHolds⟩
           have sectorEqual :=
-            ComplexContinuedFraction.Encoding.Sector.holds_unique falseHolds trueHolds
+            Sector.holds_unique falseHolds trueHolds
           subst trueSector
           have falsePrefix :
               BinaryPrefix.Decision.isWordPrefix [first, false] falseSector.code = true :=
-            (Purelib.Data.List.Filter.mem_filter.mp falseMember).2
+            (Filter.mem_filter.mp falseMember).2
           have truePrefix :
               BinaryPrefix.Decision.isWordPrefix [first, true] falseSector.code = true :=
-            (Purelib.Data.List.Filter.mem_filter.mp trueMember).2
+            (Filter.mem_filter.mp trueMember).2
           cases first <;> cases falseSector <;>
             first
             | exact Bool.noConfusion falsePrefix
@@ -205,18 +234,18 @@ theorem not_canStep_false_and_true
                 history.map (fun item => item.precompose trueBlock)
             exact List.mem_cons_self
           have falseHolds : falseSector.Holds
-              (Parser.Semantics.Basic.normalizedValue kind exponent
+              (Basic.normalizedValue kind exponent
                 (Homography.Basic.homographic falseBlock falseTail)) := falseNewest.2.2
           have trueHolds : trueSector.Holds
-              (Parser.Semantics.Basic.normalizedValue kind exponent
+              (Basic.normalizedValue kind exponent
                 (Homography.Basic.homographic trueBlock trueTail)) := trueNewest.2.2
           change Homography.Basic.homographic falseBlock falseTail =
             Homography.Basic.homographic trueBlock trueTail at previousEqual
           have normalizedEqual := congrArg
-            (Parser.Semantics.Basic.normalizedValue kind exponent) previousEqual
+            (Basic.normalizedValue kind exponent) previousEqual
           rw [normalizedEqual] at falseHolds
           have sectorEqual :=
-            ComplexContinuedFraction.Encoding.Sector.holds_unique falseHolds trueHolds
+            Sector.holds_unique falseHolds trueHolds
           cases first <;> cases second <;>
             exact ComplexContinuedFraction.Encoding.Sector.noConfusion sectorEqual
 
@@ -246,11 +275,63 @@ theorem represented_child_unique
     (leftRepresented : Represented (word ++ [left]) input)
     (rightRepresented : Represented (word ++ [right]) input) :
     left = right := by
-  apply canStep_unique (Parser.State.parse_det_ne word)
+  apply canStep_unique (State.parse_det_ne word)
   · rcases leftRepresented with ⟨tail, represented⟩
-    exact ⟨tail, by simpa only [Parser.State.parse_append_singleton, -eq_self, -iff_self] using represented⟩
+    exact ⟨tail, by simpa only [State.parse_append_singleton, -eq_self, -iff_self] using represented⟩
   · rcases rightRepresented with ⟨tail, represented⟩
-    exact ⟨tail, by simpa only [Parser.State.parse_append_singleton, -eq_self, -iff_self] using represented⟩
+    exact ⟨tail, by simpa only [State.parse_append_singleton, -eq_self, -iff_self] using represented⟩
+
+section PrefixChain
+
+open Purelib.Data.CCL.Encoding
+open Purelib.Data.Gaussian
+open Purelib.Data.List
+
+/-- Compare represented suffixes after the same original finite stem by their lengths. -/
+private theorem represented_suffix_prefix
+    (left : List Bool) : ∀ (stem right : List Bool) (input : Basic.Canonical),
+      left.length ≤ right.length → Represented (stem ++ left) input →
+      Represented (stem ++ right) input → left.IsPrefix right := by
+  induction left with
+  | nil =>
+      intro stem right input _ _ _
+      exact ⟨right, rfl⟩
+  | cons bit remaining induction =>
+      intro stem right input length leftRepresented rightRepresented
+      cases right with
+      | nil => exact (Nat.not_succ_le_zero remaining.length length).elim
+      | cons other tail =>
+          have leftChild : Represented (stem ++ [bit]) input :=
+            represented_of_prefix
+              ⟨remaining, Append.append_assoc stem [bit] remaining⟩ leftRepresented
+          have rightChild : Represented (stem ++ [other]) input :=
+            represented_of_prefix
+              ⟨tail, Append.append_assoc stem [other] tail⟩ rightRepresented
+          have same := represented_child_unique leftChild rightChild
+          cases same
+          have retainedLeft : Represented ((stem ++ [bit]) ++ remaining) input :=
+            (Append.append_assoc stem [bit] remaining).symm ▸ leftRepresented
+          have retainedRight : Represented ((stem ++ [bit]) ++ tail) input :=
+            (Append.append_assoc stem [bit] tail).symm ▸ rightRepresented
+          rcases induction (stem ++ [bit]) tail input
+            (Nat.le_of_succ_le_succ length) retainedLeft retainedRight with ⟨suffix, equal⟩
+          exact ⟨suffix, congrArg (List.cons bit) equal⟩
+
+/-- Two affine words representing the same rational input follow one ordered prefix chain.
+
+The shorter represented word is a literal prefix of the longer one. The
+proof compares the actual next bits after each shared stem; it retains the
+original half-open parser decisions and does not identify words merely from
+their projective decoder values.
+-/
+theorem represented_prefix_of_length_le
+    {left right : List Bool} {input : Basic.Canonical}
+    (length : left.length ≤ right.length)
+    (leftRepresented : Represented left input) (rightRepresented : Represented right input) :
+    left.IsPrefix right :=
+  represented_suffix_prefix left [] right input length leftRepresented rightRepresented
+
+end PrefixChain
 
 end Purelib.Data.CCL.Encoding.Parser.Semantics.Prefix
 

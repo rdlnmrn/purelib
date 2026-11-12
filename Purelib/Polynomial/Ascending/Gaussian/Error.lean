@@ -55,9 +55,9 @@ theorem evaluationErrorBudget_nonneg : ∀ count
       _inputNonnegative => le_rfl
   | count + 1, coefficientAllowance, inputNormSq,
       coefficientNonnegative, inputNonnegative =>
-      Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
         (add_nonneg coefficientNonnegative
-          (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct inputNonnegative
+          (Fraction.Order.Arithmetic.mul_nonneg_direct inputNonnegative
             (evaluationErrorBudget_nonneg count coefficientNonnegative
               inputNonnegative)))
 
@@ -66,13 +66,13 @@ difference. -/
 private theorem eval_difference_cons (actual displayed :
   Gaussian.Basic.Canonical)
     (actualTail displayedTail : List Gaussian.Basic.Canonical) (input : Gaussian.Basic.Canonical) :
-    Ascending.Gaussian.Evaluation.evalList (actual :: actualTail) input -
-        Ascending.Gaussian.Evaluation.evalList (displayed :: displayedTail) input =
+    Evaluation.evalList (actual :: actualTail) input -
+        Evaluation.evalList (displayed :: displayedTail) input =
       (actual - displayed) +
-        input * (Ascending.Gaussian.Evaluation.evalList actualTail input - Ascending.Gaussian.Evaluation.evalList
+        input * (Evaluation.evalList actualTail input - Evaluation.evalList
           displayedTail input) := by
   apply Gaussian.Basic.ext <;>
-    simp only [Ascending.Gaussian.Evaluation.evalList, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im,
+    simp only [Evaluation.evalList, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im,
       Gaussian.Basic.add_re, Gaussian.Basic.add_im, Gaussian.Basic.mul_re, Gaussian.Basic.mul_im] <;> ring1
 
 /-- Finite coefficient allowances compute a rational allowance for the
@@ -81,12 +81,12 @@ theorem eval_error_le : ∀ (actual displayed : List
   Gaussian.Basic.Canonical)
     (input : Gaussian.Basic.Canonical) (coefficientAllowance : Fraction.Rational),
     Gaussian.List.Proximity.EntriesClose actual displayed coefficientAllowance →
-      Data.Gaussian.Norm.Basic.normSq (Ascending.Gaussian.Evaluation.evalList actual input -
-        Ascending.Gaussian.Evaluation.evalList displayed input) ≤
+      Gaussian.Norm.Basic.normSq (Evaluation.evalList actual input -
+        Evaluation.evalList displayed input) ≤
         evaluationErrorBudget actual.length coefficientAllowance
-          (Data.Gaussian.Norm.Basic.normSq input)
+          (Gaussian.Norm.Basic.normSq input)
   | [], [], input, coefficientAllowance, _valid => by
-      change Data.Gaussian.Norm.Basic.normSq ((0 : Gaussian.Basic.Canonical) - 0) ≤ 0
+      change Gaussian.Norm.Basic.normSq ((0 : Gaussian.Basic.Canonical) - 0) ≤ 0
       rw [Gaussian.Basic.sub_self, Gaussian.Norm.Basic.normSq_zero]
   | [], _ :: _, input, coefficientAllowance, valid => by
       exact False.elim valid
@@ -97,24 +97,24 @@ theorem eval_error_le : ∀ (actual displayed : List
       rcases valid with ⟨headClose, tailValid⟩
       rw [eval_difference_cons]
       calc
-        Data.Gaussian.Norm.Basic.normSq
+        Gaussian.Norm.Basic.normSq
             ((actual - displayed) +
-              input * (Ascending.Gaussian.Evaluation.evalList actualTail input - Ascending.Gaussian.Evaluation.evalList
+              input * (Evaluation.evalList actualTail input - Evaluation.evalList
                 displayedTail input)) ≤
-          2 * (Data.Gaussian.Norm.Basic.normSq (actual - displayed) +
-            Data.Gaussian.Norm.Basic.normSq (input *
-              (Ascending.Gaussian.Evaluation.evalList actualTail input - Ascending.Gaussian.Evaluation.evalList
+          2 * (Gaussian.Norm.Basic.normSq (actual - displayed) +
+            Gaussian.Norm.Basic.normSq (input *
+              (Evaluation.evalList actualTail input - Evaluation.evalList
                 displayedTail input))) :=
           Gaussian.Norm.Bounds.normSq_add_le_two _ _
-        _ = 2 * (Data.Gaussian.Norm.Basic.normSq (actual - displayed) +
-            Data.Gaussian.Norm.Basic.normSq input *
-              Data.Gaussian.Norm.Basic.normSq (Ascending.Gaussian.Evaluation.evalList actualTail input -
-                Ascending.Gaussian.Evaluation.evalList displayedTail input)) := by
+        _ = 2 * (Gaussian.Norm.Basic.normSq (actual - displayed) +
+            Gaussian.Norm.Basic.normSq input *
+              Gaussian.Norm.Basic.normSq (Evaluation.evalList actualTail input -
+                Evaluation.evalList displayedTail input)) := by
           rw [Gaussian.Norm.Basic.normSq_mul]
         _ ≤ 2 * (coefficientAllowance +
-            Data.Gaussian.Norm.Basic.normSq input *
+            Gaussian.Norm.Basic.normSq input *
               evaluationErrorBudget actualTail.length coefficientAllowance
-                (Data.Gaussian.Norm.Basic.normSq input)) := by
+                (Gaussian.Norm.Basic.normSq input)) := by
           apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct _
             (by decide)
           exact add_le_add headClose
@@ -123,7 +123,7 @@ theorem eval_error_le : ∀ (actual displayed : List
                 coefficientAllowance tailValid)
               (Gaussian.Norm.Basic.normSq_nonneg input))
         _ = evaluationErrorBudget (actual :: actualTail).length
-            coefficientAllowance (Data.Gaussian.Norm.Basic.normSq input) := rfl
+            coefficientAllowance (Gaussian.Norm.Basic.normSq input) := rfl
 end Purelib.Polynomial.Ascending.Gaussian.Error
 
 end

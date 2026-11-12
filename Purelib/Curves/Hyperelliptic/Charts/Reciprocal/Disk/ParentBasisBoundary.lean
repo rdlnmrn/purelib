@@ -111,36 +111,36 @@ open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 variable {genus count index depth readingIndex floor minimum : Nat} {curve :
   HyperellipticCurve genus}
   {differential : Differential genus} {collar :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {parent :
-    Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+    ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {parent :
+    Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {source :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap} {source :
     SourcePrimitive data index}
-  {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {box : Geometry.Rational.Box} {capSample :
+    Cap.Primitives.Sample cap differential index box}
   {target : Coordinate}
   {polynomials : RegularBasisPolynomials cap
     index box}
 
 /-- The actual first acquired root coordinate of the original cell bank, with zero for an empty bank. -/
-def chartFirstRoot : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular
-  data edges} → {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+def chartFirstRoot : {edges : List ParameterEdge} → {bank : Bank regular
+  data edges} → {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → ChartPlans.EvaluationData readingIndex plans cells
-      → InverseRootPolynomial.Gaussian
+    (cells : ComparedCells source capSample depth bank) → EvaluationData readingIndex plans cells
+      → Gaussian
   | _, _, _, _, .nil, .nil, _ => 0
   | _, _, _, _, .cons _ _, .cons _ _, evaluated => evaluated.1.vertices.first.root.coordinate
 
 /-- The actual last acquired root coordinate of the original cell bank, with zero for an empty bank. -/
-def chartLastRoot : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular
-  data edges} → {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+def chartLastRoot : {edges : List ParameterEdge} → {bank : Bank regular
+  data edges} → {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → ChartPlans.EvaluationData readingIndex plans cells
-      → InverseRootPolynomial.Gaussian
+    (cells : ComparedCells source capSample depth bank) → EvaluationData readingIndex plans cells
+      → Gaussian
   | _, _, _, _, .nil, .nil, _ => 0
   | _, _, _, _, .cons _ .nil, .cons _ .nil, evaluated => evaluated.1.vertices.last.root.coordinate
   | _, _, _, _, .cons _ (.cons next tail), .cons _ (.cons nextCell cells), evaluated =>
@@ -148,14 +148,14 @@ def chartLastRoot : {edges : List ClearSheetContinuation.Subdivision.ParameterEd
         nextCell cells) evaluated.2
 
 /-- Signed trace including the edge between every pair of successive cells. -/
-def basisJoinedTrace (polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) : {edges : List
-      ClearSheetContinuation.Subdivision.ParameterEdge} →
-      {bank : ParentBank.Bank regular data edges} → {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+def basisJoinedTrace (polynomials : RegularBasisPolynomials cap index box)
+    (coefficients : GaussianVector genus) : {edges : List
+      ParameterEdge} →
+      {bank : Bank regular data edges} → {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → ChartPlans.EvaluationData readingIndex plans cells
-      → InverseRootPolynomial.Gaussian
+    (cells : ComparedCells source capSample depth bank) → EvaluationData readingIndex plans cells
+      → Gaussian
   | _, _, _, _, .nil, .nil, _ => 0
   | _, _, _, _, .cons _ .nil, .cons _ .nil, evaluated =>
       IncrementArea.traceArea (polynomials.value coefficients evaluated.1.vertices.first.root.coordinate)
@@ -178,15 +178,15 @@ variable {energyTarget : Coordinate} {energyFloor energyDepth : Nat}
 
 /-- The signed per-cell discrepancy between each retained homogeneous energy area and its actual chart trace with both
 radial endpoints. -/
-def cellErrors (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+def cellErrors (coefficients : GaussianVector genus) :
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → (evaluated : ChartPlans.EvaluationData
+    (cells : ComparedCells source capSample depth bank) → (evaluated : EvaluationData
       readingIndex plans cells) →
-    ParentBasisRequests.BasisEnergyData (polynomials := polynomials) energyTarget energyFloor energyDepth plans cells
-      evaluated → List InverseRootPolynomial.Gaussian
+    BasisEnergyData (polynomials := polynomials) energyTarget energyFloor energyDepth plans cells
+      evaluated → List Gaussian
   | _, _, _, _, .nil, .nil, _, _ => []
   | _, _, _, _, .cons _ tail, .cons _ cells, evaluated, energies =>
       (energies.1.val.area coefficients -
@@ -203,42 +203,42 @@ def cellErrors (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genu
 
 /-- All internal radial endpoints cancel with exactly the retained join defects. The two external radial terms remain,
 with their original signs. -/
-theorem boundary_identity (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} {bank : ParentBank.Bank regular data edges} {owners
-      : ParentOwners.Owners bank}
-    {requests : ParentChartRequests.ChartRequests target floor owners} (plans : ParentChartRequests.ChartPlans capSample
+theorem boundary_identity (coefficients : GaussianVector genus)
+    {edges : List ParameterEdge} {bank : Bank regular data edges} {owners
+      : Owners bank}
+    {requests : ChartRequests target floor owners} (plans : ChartPlans capSample
       minimum requests)
-    (cells : ParentPaths.ComparedCells source capSample depth bank) (evaluated : ChartPlans.EvaluationData readingIndex
+    (cells : ComparedCells source capSample depth bank) (evaluated : EvaluationData readingIndex
       plans cells)
-    (energies : ParentBasisRequests.BasisEnergyData (polynomials := polynomials) energyTarget energyFloor energyDepth
+    (energies : BasisEnergyData (polynomials := polynomials) energyTarget energyFloor energyDepth
       plans cells evaluated) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (BasisEnergyData.values coefficients plans cells evaluated energies) -
-      (-Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.basisJoinedTrace polynomials coefficients plans
+    gaussianSum (BasisEnergyData.values coefficients plans cells evaluated energies) -
+      (-basisJoinedTrace polynomials coefficients plans
         cells evaluated +
         RootRadialGeometry.radialArea (polynomials.value coefficients) energyDepth
-          (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.chartLastRoot plans cells evaluated) -
+          (chartLastRoot plans cells evaluated) -
         RootRadialGeometry.radialArea (polynomials.value coefficients) energyDepth
-          (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.chartFirstRoot plans cells evaluated)) =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum
+          (chartFirstRoot plans cells evaluated)) =
+    gaussianSum
       (cellErrors coefficients plans
       cells evaluated energies) -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (ParentBasisJoinErrors.basisJoinErrors polynomials coefficients
+      gaussianSum (ParentBasisJoinErrors.basisJoinErrors polynomials coefficients
         energyDepth plans cells evaluated) := by
   induction plans with
   | nil =>
       cases cells
       simp only [BasisEnergyData.values,
         cellErrors,
-        Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.basisJoinedTrace.eq_1,
-        Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.basisJoinedTrace.eq_2,
-        Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.basisJoinedTrace.eq_3,
-        Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.chartFirstRoot,
-        Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.chartLastRoot.eq_1,
-        Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.chartLastRoot.eq_2,
-        Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.chartLastRoot.eq_3,
+        basisJoinedTrace.eq_1,
+        basisJoinedTrace.eq_2,
+        basisJoinedTrace.eq_3,
+        chartFirstRoot,
+        chartLastRoot.eq_1,
+        chartLastRoot.eq_2,
+        chartLastRoot.eq_3,
         ParentBasisJoinErrors.basisJoinErrors.eq_1,
         ParentBasisJoinErrors.basisJoinErrors.eq_2,
-        ParentBasisJoinErrors.basisJoinErrors.eq_3, Data.Gaussian.Norm.Sum.Basic.gaussianSum]
+        ParentBasisJoinErrors.basisJoinErrors.eq_3, gaussianSum]
       ring1
   | cons head tail ih =>
       cases cells with
@@ -248,16 +248,16 @@ theorem boundary_identity (coefficients : LinearAlgebra.Gaussian.Energy.Gaussian
               cases cells
               simp only [BasisEnergyData.values,
                 cellErrors,
-                Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.basisJoinedTrace.eq_1,
-                Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.basisJoinedTrace.eq_2,
-                Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.basisJoinedTrace.eq_3,
-                Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.chartFirstRoot,
-                Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.chartLastRoot.eq_1,
-                Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.chartLastRoot.eq_2,
-                Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.chartLastRoot.eq_3,
+                basisJoinedTrace.eq_1,
+                basisJoinedTrace.eq_2,
+                basisJoinedTrace.eq_3,
+                chartFirstRoot,
+                chartLastRoot.eq_1,
+                chartLastRoot.eq_2,
+                chartLastRoot.eq_3,
                 ParentBasisJoinErrors.basisJoinErrors.eq_1,
                 ParentBasisJoinErrors.basisJoinErrors.eq_2,
-                ParentBasisJoinErrors.basisJoinErrors.eq_3, Data.Gaussian.Norm.Sum.Basic.gaussianSum]
+                ParentBasisJoinErrors.basisJoinErrors.eq_3, gaussianSum]
               ring1
           | cons next tail =>
               cases cells with
@@ -265,16 +265,16 @@ theorem boundary_identity (coefficients : LinearAlgebra.Gaussian.Energy.Gaussian
                   have rest := ih (.cons nextCell cells) evaluated.2 energies.2
                   simp only [BasisEnergyData.values,
                     cellErrors,
-                    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.basisJoinedTrace.eq_1,
-                    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.basisJoinedTrace.eq_2,
-                    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.basisJoinedTrace.eq_3,
-                    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.chartFirstRoot,
-                    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.chartLastRoot.eq_1,
-                    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.chartLastRoot.eq_2,
-                    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisBoundary.chartLastRoot.eq_3,
+                    basisJoinedTrace.eq_1,
+                    basisJoinedTrace.eq_2,
+                    basisJoinedTrace.eq_3,
+                    chartFirstRoot,
+                    chartLastRoot.eq_1,
+                    chartLastRoot.eq_2,
+                    chartLastRoot.eq_3,
                     ParentBasisJoinErrors.basisJoinErrors.eq_1,
                     ParentBasisJoinErrors.basisJoinErrors.eq_2,
-                    ParentBasisJoinErrors.basisJoinErrors.eq_3, Data.Gaussian.Norm.Sum.Basic.gaussianSum] at rest ⊢
+                    ParentBasisJoinErrors.basisJoinErrors.eq_3, gaussianSum] at rest ⊢
                   have recover {first last total : Data.Gaussian.Basic.Canonical}
                       (identity : first - last = total) : first = total + last := by
                     calc

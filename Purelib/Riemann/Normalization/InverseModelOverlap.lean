@@ -3,6 +3,7 @@ module
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Gaussian.Norm.Basic
 import Purelib.Data.Gaussian.Norm.Bounds
+public import Purelib.Data.Gaussian.Norm.Power
 import Purelib.Data.Gaussian.Power
 import Purelib.Data.Rat.Fraction.Order.Arithmetic
 
@@ -11,6 +12,8 @@ public import Purelib.Geometry.Rational.Box.Refinement
 import Purelib.Tactic.Ring
 public import Purelib.Riemann.Normalization.InverseRootPolynomial
 meta import Purelib.Elab.ConstructiveInjectivity
+
+open Purelib.Data.Rat.Fraction.Order
 
 @[expose] public section
 
@@ -42,14 +45,14 @@ theorem normalized_value_lower {parameter value : Gaussian}
   rw [identity, Gaussian.Norm.Basic.normSq_mul, Gaussian.Power.normSq_pow, Gaussian.Norm.Basic.normSq_one] at lower
   simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at lower
   exact (show (1 / 3 : Coordinate) ≤ 1 / 2 - 1 / 16 by decide +kernel).trans
-    ((Rat.Fraction.Order.Arithmetic.sub_le_sub_left_direct small _).trans lower)
+    ((Arithmetic.sub_le_sub_left_direct small _).trans lower)
 
 /-- A value with inverse-root residual quadrance at most 1/16 is nonzero. -/
 theorem inverse_value_ne_zero {parameter value : Gaussian}
     (small : normSq (1 - parameter * value ^ 2) ≤ 1 / 16) : value ≠ 0 := by
   intro zero
   have lower := normalized_value_lower small
-  have zeroNorm : normSq parameter * normSq value ^ 2 = 0 := by rw [zero, Gaussian.Basic.Canonical.normSq_zero]; ring1
+  have zeroNorm : normSq parameter * normSq value ^ 2 = 0 := by rw [zero, normSq_zero]; ring1
   rw [zeroNorm] at lower
   exact (not_lt_of_ge lower) (by decide : (0 : Coordinate) < 1 / 3)
 
@@ -103,17 +106,17 @@ theorem norm_eq (alignment : SignAlignment reference candidate) : normSq alignme
   rw [alignment.value_eq]
   cases alignment.flip with
   | false => exact Eq.refl _
-  | true => exact Gaussian.Basic.Canonical.normSq_neg candidate
+  | true => exact normSq_neg candidate
 
 /-- The opposite-sign sum has quadrance at least the reference quadrance. -/
 theorem sum_norm_lower (alignment : SignAlignment reference candidate) :
     normSq reference ≤ normSq (reference + alignment.value) := by
-  apply Rat.Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct (c := 2) ?_ (by decide)
+  apply Arithmetic.le_of_mul_le_mul_right_direct (c := 2) ?_ (by decide)
   calc
     _ ≤ 2 * (normSq reference + normSq alignment.value) := by
       exact (by ring1 : normSq reference * 2 = 2 * normSq reference).trans_le
-        (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (le_add_of_nonneg_right (Gaussian.Basic.Canonical.normSq_nonneg alignment.value)) (by decide))
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (le_add_of_nonneg_right (normSq_nonneg alignment.value)) (by decide))
     _ = normSq (reference - alignment.value) + normSq (reference + alignment.value) := by
       simp only [normSq, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im, Gaussian.Basic.add_re, Gaussian.Basic.add_im]
       ring1
@@ -135,18 +138,18 @@ theorem normalized_distance_le (alignment : SignAlignment reference candidate)
       (1 - parameter * alignment.value ^ 2) - (1 - parameter * reference ^ 2) := by ring1
   calc
     _ ≤ normSq parameter * normSq (reference + alignment.value) * normSq (reference - alignment.value) :=
-      Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-        (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct alignment.sum_norm_lower
-          (Gaussian.Basic.Canonical.normSq_nonneg _))
-        (Gaussian.Basic.Canonical.normSq_nonneg _)
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct alignment.sum_norm_lower
+          (normSq_nonneg _))
+        (normSq_nonneg _)
     _ = normSq (parameter * ((reference - alignment.value) * (reference + alignment.value))) := by
-      rw [Gaussian.Basic.Canonical.normSq_mul, Gaussian.Basic.Canonical.normSq_mul]
+      rw [normSq_mul, normSq_mul]
       ring1
     _ = normSq ((1 - parameter * alignment.value ^ 2) - (1 - parameter * reference ^ 2)) := congrArg normSq factor
     _ ≤ 2 * (normSq (1 - parameter * alignment.value ^ 2) + normSq (1 - parameter * reference ^ 2)) := by
       simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using
         Gaussian.Norm.Bounds.normSq_sub_le_two (1 - parameter * alignment.value ^ 2) (1 - parameter * reference ^ 2)
-    _ ≤ 2 * (rightError + leftError) := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    _ ≤ 2 * (rightError + leftError) := Arithmetic.mul_le_mul_of_nonneg_left_direct
       (add_le_add (by rw [alignment.square_eq]; exact rightResidual) leftResidual) (by decide)
     _ = _ := by ring1
 
@@ -163,18 +166,18 @@ theorem distance_le (alignment : SignAlignment reference candidate)
   have normalized : (1 : Coordinate) ≤ 3 * (normSq parameter * normSq reference ^ 2) := by
     calc
       _ = 3 * (1 / 3 : Coordinate) := by decide
-      _ ≤ _ := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct lower (by decide)
+      _ ≤ _ := Arithmetic.mul_le_mul_of_nonneg_left_direct lower (by decide)
   calc
     _ = normSq (reference - alignment.value) * 1 := by ring1
     _ ≤ normSq (reference - alignment.value) * (3 * (normSq parameter * normSq reference ^ 2)) :=
-      Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct normalized (Gaussian.Basic.Canonical.normSq_nonneg
+      Arithmetic.mul_le_mul_of_nonneg_left_direct normalized (normSq_nonneg
         _)
     _ = (3 * normSq reference) * (normSq parameter * normSq reference * normSq (reference - alignment.value)) := by
       ring1
     _ ≤ (3 * normSq reference) * (2 * (leftError + rightError)) :=
-      Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (alignment.normalized_distance_le leftResidual rightResidual)
-        (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (Gaussian.Basic.Canonical.normSq_nonneg _))
+        (Arithmetic.mul_nonneg_direct (by decide) (normSq_nonneg _))
     _ = _ := by ring1
 
 /-- Under both 1/16 residual bounds, the selected candidate sign is strictly closer. -/
@@ -186,14 +189,14 @@ theorem distance_lt_opposite (alignment : SignAlignment reference candidate)
     normSq (reference - alignment.value) < normSq (reference + alignment.value) := by
   have nonzero := inverse_value_ne_zero (leftResidual.trans leftSmall)
   have allowance : 6 * (leftError + rightError) ≤ (3 / 4 : Coordinate) :=
-    (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add leftSmall rightSmall)
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add leftSmall rightSmall)
       (by decide)).trans_eq (by decide +kernel : (6 : Coordinate) * (1 / 16 + 1 / 16) = 3 / 4)
   calc
     _ ≤ 6 * (leftError + rightError) * normSq reference := alignment.distance_le leftResidual rightResidual leftSmall
     _ ≤ (3 / 4 : Coordinate) * normSq reference :=
-      Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct allowance (Gaussian.Basic.Canonical.normSq_nonneg
+      Arithmetic.mul_le_mul_of_nonneg_right_direct allowance (normSq_nonneg
         _)
-    _ < 1 * normSq reference := Rat.Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+    _ < 1 * normSq reference := Arithmetic.mul_lt_mul_of_pos_right_direct
       (by decide) (by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using Gaussian.Norm.Basic.normSq_pos nonzero)
     _ = normSq reference := by ring1
     _ ≤ _ := alignment.sum_norm_lower
@@ -304,10 +307,89 @@ theorem coefficient_distance_le (sample : OverlapSample left right point)
       6 * (left.bound + right.bound) * normSq (numerator * sample.leftValue) := by
   have identity : numerator * sample.leftValue - numerator * sample.alignment.value =
       numerator * (sample.leftValue - sample.alignment.value) := by ring1
-  rw [identity, Gaussian.Basic.Canonical.normSq_mul, Gaussian.Basic.Canonical.normSq_mul]
-  exact (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (sample.distance_le leftInside rightInside) (Gaussian.Basic.Canonical.normSq_nonneg _)).trans_eq (by ring1)
+  rw [identity, normSq_mul, normSq_mul]
+  exact (Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (sample.distance_le leftInside rightInside) (normSq_nonneg _)).trans_eq (by ring1)
 
 end OverlapSample
 
 end Purelib.Riemann.Normalization.InverseModelOverlap
+
+end
+
+public section
+
+namespace Purelib.Riemann.Normalization.InverseModelOverlap.SignAlignment
+
+open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
+open Purelib.Data
+open Purelib.Data.Gaussian.Basic (Canonical)
+open Purelib.Data.Gaussian.Basic.Canonical
+open Purelib.Data.Rat
+
+/-- The same retained signed inverse-model values have a finite power discrepancy paid by their actual residuals.
+
+Both original residual budgets are at most one sixteenth. A supplied
+squared-magnitude ceiling for the reference derives four times that same
+ceiling for the retained aligned candidate. The original finite power
+sensitivity then bounds their actual powered discrepancy; no independent
+candidate bound, sign selection or root comparison is requested.
+-/
+theorem power_distance_le {reference candidate parameter : Canonical} {leftError rightError ceiling : Coordinate}
+    (alignment : SignAlignment reference candidate)
+    (leftResidual : normSq (1 - parameter * reference ^ 2) ≤ leftError)
+    (rightResidual : normSq (1 - parameter * candidate ^ 2) ≤ rightError)
+    (leftSmall : leftError ≤ 1 / 16) (rightSmall : rightError ≤ 1 / 16)
+    (referenceBound : normSq reference ≤ ceiling) (exponent : Nat) :
+    normSq (reference ^ exponent - alignment.value ^ exponent) ≤
+      6 * (leftError + rightError) *
+        (ceiling * Gaussian.Norm.Power.differenceFactor (4 * ceiling) exponent) := by
+  have ceilingNonnegative : 0 ≤ ceiling := (normSq_nonneg reference).trans referenceBound
+  have errorsNonnegative : 0 ≤ leftError + rightError := by
+    calc
+      0 = 0 + 0 := by decide +kernel
+      _ ≤ leftError + rightError := Arithmetic.add_le_add_direct
+        ((normSq_nonneg _).trans leftResidual) ((normSq_nonneg _).trans rightResidual)
+  have coefficientNonnegative : 0 ≤ 6 * (leftError + rightError) :=
+    Arithmetic.mul_nonneg_direct (by decide +kernel) errorsNonnegative
+  have coefficientSmall : 6 * (leftError + rightError) ≤ (3 / 4 : Coordinate) :=
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct leftSmall rightSmall) (by decide +kernel)).trans_eq
+      (by decide +kernel : (6 : Coordinate) * (1 / 16 + 1 / 16) = 3 / 4)
+  have distance : normSq (reference - alignment.value) ≤ 6 * (leftError + rightError) * ceiling :=
+    (alignment.distance_le (parameter := parameter) (leftError := leftError) (rightError := rightError)
+      leftResidual rightResidual leftSmall).trans
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct referenceBound coefficientNonnegative)
+  have smallDistance : normSq (reference - alignment.value) ≤ (3 / 4 : Coordinate) * ceiling :=
+    distance.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct coefficientSmall ceilingNonnegative)
+  have alignedIdentity : alignment.value = reference - (reference - alignment.value) := by ring1
+  have triangle := Gaussian.Norm.Bounds.normSq_sub_le_two reference (reference - alignment.value)
+  rewrite [Gaussian.Norm.Basic.normSq_eq_canonical, Gaussian.Norm.Basic.normSq_eq_canonical,
+    Gaussian.Norm.Basic.normSq_eq_canonical] at triangle
+  have alignedBound : normSq alignment.value ≤ 4 * ceiling := by
+    calc
+      _ = normSq (reference - (reference - alignment.value)) := congrArg normSq alignedIdentity
+      _ ≤ 2 * (normSq reference + normSq (reference - alignment.value)) := triangle
+      _ ≤ 2 * (ceiling + (3 / 4 : Coordinate) * ceiling) :=
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.add_le_add_direct referenceBound smallDistance) (by decide +kernel)
+      _ = (2 * (1 + (3 / 4 : Coordinate))) * ceiling := by ring1
+      _ = (7 / 2 : Coordinate) * ceiling := congrArg (fun value : Coordinate => value * ceiling)
+        (by decide +kernel : (2 : Coordinate) * (1 + 3 / 4) = 7 / 2)
+      _ ≤ 4 * ceiling := Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel) ceilingNonnegative
+  have referenceFour : normSq reference ≤ 4 * ceiling :=
+    referenceBound.trans ((Fraction.Field.one_mul ceiling).symm.trans_le
+      (Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel) ceilingNonnegative))
+  have factorNonnegative := Gaussian.Norm.Power.differenceFactor_nonnegative (bound := 4 * ceiling)
+    (Arithmetic.mul_nonneg_direct (show (0 : Coordinate) ≤ 4 by decide +kernel) ceilingNonnegative) exponent
+  have powers := Gaussian.Norm.Power.difference_normSq_le
+    (first := reference) (last := alignment.value) (bound := 4 * ceiling)
+    ((Gaussian.Norm.Basic.normSq_eq_canonical reference).trans_le referenceFour)
+    ((Gaussian.Norm.Basic.normSq_eq_canonical alignment.value).trans_le alignedBound) exponent
+  rewrite [Gaussian.Norm.Basic.normSq_eq_canonical, Gaussian.Norm.Basic.normSq_eq_canonical] at powers
+  exact powers.trans ((Arithmetic.mul_le_mul_of_nonneg_left_direct distance factorNonnegative).trans_eq
+    ((Fraction.Field.mul_comm _ _).trans (Fraction.Field.mul_assoc _ _ _)))
+
+end Purelib.Riemann.Normalization.InverseModelOverlap.SignAlignment
+
+end

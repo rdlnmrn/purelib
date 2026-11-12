@@ -8,6 +8,7 @@ import Purelib.Polynomial.Dense.Gaussian.Factorization.Identity
 import Purelib.Polynomial.Dense.Gaussian.GCD
 public import Purelib.Polynomial.Dense.Gaussian.Squarefree.Basic
 import Purelib.Polynomial.Dense.Multiplication
+import Purelib.Polynomial.Dense.Leading
 
 import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Data.Gaussian.Basic
@@ -55,9 +56,9 @@ def factorsCoprime
   apply Dense.Gaussian.Coprime.Evaluation.coprimeCertificateOfIdentity left right (Or.inl leftNonzero)
     leftCoefficient rightCoefficient
   intro point
-  have valueIdentity := Dense.Gaussian.Factorization.Identity.eval_factorization factorization point
+  have valueIdentity := Factorization.Identity.eval_factorization factorization point
   have derivativeIdentity :=
-    Dense.Gaussian.Factorization.Identity.eval_derivative_factorization factorization point
+    Factorization.Identity.eval_derivative_factorization factorization point
   have original := squarefree.identity point
   rw [valueIdentity, derivativeIdentity] at original
   simp only [Dense.Gaussian.GCD.derivative] at original
@@ -93,7 +94,7 @@ def coprimeLeftFactor
     leftCoefficient coprime.right
   intro point
   have original := coprime.identity point
-  rw [Dense.Gaussian.Factorization.Identity.eval_factorization factorization point] at original
+  rw [Factorization.Identity.eval_factorization factorization point] at original
   dsimp only [leftCoefficient]
   simp only [DensePolynomial.eval_mul]
   calc
@@ -113,7 +114,40 @@ def coprimeRightFactor
     (factorization : ProductIdentity p left right) :
     CoprimeCertificate right q :=
   coprimeLeftFactor coprime rightNonzero
-    (Dense.Gaussian.Factorization.Identity.factorization_swap factorization)
+    (Factorization.Identity.factorization_swap factorization)
+
+/-- A polynomial coprime to one of its displayed multiples has degree zero.
+
+Substituting the retained factorization in the original Bézout identity gives
+an exact polynomial inverse for the divisor. The existing finite product-degree
+certificate for the constant one then forces the divisor's degree to be zero.
+-/
+theorem natDegree_eq_zero_of_divides
+    {p q cofactor : CoefficientPolynomial}
+    (coprime : CoprimeCertificate p q) (nonzero : p.isZero = false)
+    (factorization : ProductIdentity q p cofactor) :
+    p.natDegree = 0 := by
+  let inverse := coprime.left + coprime.right * cofactor
+  have oneLeading := Dense.Leading.LeadingTerm.constant (K := Data.Gaussian.Basic.Canonical) one_ne_zero
+  have unitIdentity : ProductIdentity (DensePolynomial.constant 1) p inverse := by
+    apply Factorization.Identity.factorizationOfCandidateEvals
+    intro point _
+    have identity := coprime.identity point
+    rewrite [Factorization.Identity.eval_factorization factorization point] at identity
+    simp only [DensePolynomial.eval_constant]
+    change 1 = p.eval point * (coprime.left + coprime.right * cofactor).eval point
+    rewrite [DensePolynomial.eval_add, DensePolynomial.eval_mul]
+    calc
+      1 = coprime.left.eval point * p.eval point +
+          coprime.right.eval point * (p.eval point * cofactor.eval point) := identity
+      _ = _ := by ring1
+  have inverseNonzero := Factorization.Identity.right_isZero_false
+    oneLeading.nonzero oneLeading.normalized unitIdentity
+  have degrees := Factorization.Identity.factor_natDegree_add
+    oneLeading.nonzero oneLeading.normalized nonzero inverseNonzero unitIdentity
+  rewrite [oneLeading.degree_eq] at degrees
+  exact Nat.eq_zero_of_le_zero ((Nat.le_add_right p.natDegree inverse.natDegree).trans_eq degrees)
+
 end Purelib.Polynomial.Dense.Gaussian.Coprime.Factors
 
 end

@@ -8,6 +8,8 @@ import Purelib.Topology.Knot.Braid.Word.Basic
 import Purelib.Topology.Knot.Braid.Basic
 import Purelib.Topology.Knot.Braid.Word.Writhe
 
+open Purelib.Topology.Knot
+
 open Purelib.RootIsolation.Progressive.Braid.Loop.Basic (AdmissibleLoop)
 open Purelib.RootIsolation.Progressive.Braid.Projected.Frame (ProjectedFrame)
 open Purelib.Topology.Knot.Braid.Artin (Equivalent Rewrite)
@@ -46,7 +48,7 @@ structure LoopRefinement {strands : Nat}
     {base : ProjectedFrame strands}
     (coarse fine : AdmissibleLoop base) where
   /-- The actual event-preserving refinement between the original based projected paths. -/ pathRefinement :
-    RootIsolation.Progressive.Braid.Projected.Refinement coarse.path fine.path
+    Projected.Refinement coarse.path fine.path
 
 namespace LoopRefinement
 
@@ -54,7 +56,7 @@ namespace LoopRefinement
 theorem word_eq {strands : Nat}
     {base : ProjectedFrame strands} {coarse fine :
       AdmissibleLoop base}
-    (refinement : Progressive.Braid.Loop.Homotopy.LoopRefinement coarse fine) : coarse.word = fine.word := by
+    (refinement : LoopRefinement coarse fine) : coarse.word = fine.word := by
   exact refinement.pathRefinement.word_eq
 
 end LoopRefinement
@@ -72,7 +74,7 @@ inductive Homotopic {strands : Nat} {base :
         Homotopic coarse fine
   /-- A retained finite Artin equivalence relates the original projected loop words. -/ | artin {left right :
     AdmissibleLoop base}
-      (relation : Progressive.Braid.Projected.Artin.BraidClassSame left.path right.path) :
+      (relation : Projected.Artin.BraidClassSame left.path right.path) :
         Homotopic left right
   /-- A retained based loop is homotopic to itself. -/ | refl (loop : AdmissibleLoop base)
     : Homotopic loop loop
@@ -93,10 +95,10 @@ contracts by the finite sequence of adjacent cancellation moves. -/
 theorem append_reverse {strands : Nat} {base :
   ProjectedFrame strands}
     (loop : AdmissibleLoop base) :
-    Progressive.Braid.Loop.Homotopy.Homotopic (loop.append loop.reverse)
+    Homotopic (loop.append loop.reverse)
       (AdmissibleLoop.identity base) := by
-  apply Progressive.Braid.Loop.Homotopy.Homotopic.artin
-  unfold Progressive.Braid.Projected.Artin.BraidClassSame
+  apply artin
+  unfold Projected.Artin.BraidClassSame
   change Equivalent
     (loop.append loop.reverse).word (AdmissibleLoop.identity base).word
   rw [AdmissibleLoop.append_word, AdmissibleLoop.reverse_word,
@@ -108,7 +110,7 @@ theorem ofRewrite {strands : Nat} {base :
   ProjectedFrame strands}
     {left right : AdmissibleLoop base}
     (rewrite : Rewrite left.word right.word) :
-    Progressive.Braid.Loop.Homotopy.Homotopic left right :=
+    Homotopic left right :=
   .artin (.step rewrite)
 
 /-- A certified polynomial path followed by the oppositely signed crossing
@@ -116,11 +118,11 @@ admits the finite cancellation homotopy. -/
 theorem cancellation {strands : Nat} {base :
   ProjectedFrame strands}
     {left right : AdmissibleLoop base}
-    (before after : Word strands) (generator : Topology.Knot.Braid.Generator strands)
+    (before after : Word strands) (generator : Braid.Generator strands)
     (leftWord : left.word =
       before ++ [generator, generator.reverse] ++ after)
-    (rightWord : right.word = before ++ after) : Progressive.Braid.Loop.Homotopy.Homotopic left right := by
-  apply Progressive.Braid.Loop.Homotopy.Homotopic.ofRewrite
+    (rightWord : right.word = before ++ after) : Homotopic left right := by
+  apply ofRewrite
   rw [leftWord, rightWord]
   exact Rewrite.cancel before after generator
 
@@ -129,13 +131,13 @@ far-commutation homotopy. -/
 theorem farCommutation {strands : Nat} {base :
   ProjectedFrame strands}
     {left right : AdmissibleLoop base}
-    (before after : Word strands) (first second : Topology.Knot.Braid.Generator strands)
+    (before after : Word strands) (first second : Braid.Generator strands)
     (separated : first.index.val + 1 < second.index.val ∨
       second.index.val + 1 < first.index.val)
     (leftWord : left.word = before ++ [first, second] ++ after)
     (rightWord : right.word = before ++ [second, first] ++ after) :
-    Progressive.Braid.Loop.Homotopy.Homotopic left right := by
-  apply Progressive.Braid.Loop.Homotopy.Homotopic.ofRewrite
+    Homotopic left right := by
+  apply ofRewrite
   rw [leftWord, rightWord]
   exact Rewrite.far
     before after first second separated
@@ -147,19 +149,19 @@ theorem artinRelation {strands : Nat} {base :
   ProjectedFrame strands}
     {left right : AdmissibleLoop base}
     (before after : Word strands) (index : Fin (strands - 2))
-    (sign : Topology.Knot.Braid.CrossingSign)
+    (sign : Braid.CrossingSign)
     (leftWord : left.word =
       before ++
-        [Topology.Knot.Braid.Artin.Generator.lower index sign,
-          Topology.Knot.Braid.Artin.Generator.upper index sign,
-          Topology.Knot.Braid.Artin.Generator.lower index sign] ++ after)
+        [Braid.Artin.Generator.lower index sign,
+          Braid.Artin.Generator.upper index sign,
+          Braid.Artin.Generator.lower index sign] ++ after)
     (rightWord : right.word =
       before ++
-        [Topology.Knot.Braid.Artin.Generator.upper index sign,
-          Topology.Knot.Braid.Artin.Generator.lower index sign,
-          Topology.Knot.Braid.Artin.Generator.upper index sign] ++ after) :
-    Progressive.Braid.Loop.Homotopy.Homotopic left right := by
-  apply Progressive.Braid.Loop.Homotopy.Homotopic.ofRewrite
+        [Braid.Artin.Generator.upper index sign,
+          Braid.Artin.Generator.lower index sign,
+          Braid.Artin.Generator.upper index sign] ++ after) :
+    Homotopic left right := by
+  apply ofRewrite
   rw [leftWord, rightWord]
   exact Rewrite.artin before after index sign
 
@@ -167,7 +169,7 @@ theorem artinRelation {strands : Nat} {base :
 theorem braidClassSame {strands : Nat}
     {base : ProjectedFrame strands} {left right :
       AdmissibleLoop base}
-    (homotopy : Progressive.Braid.Loop.Homotopy.Homotopic left right) :
+    (homotopy : Homotopic left right) :
     Equivalent left.word right.word := by
   induction homotopy with
   | refinement certificate =>
@@ -183,7 +185,7 @@ theorem braidClassSame {strands : Nat}
 theorem writhe_eq {strands : Nat}
     {base : ProjectedFrame strands} {left right :
       AdmissibleLoop base}
-    (homotopy : Progressive.Braid.Loop.Homotopy.Homotopic left right) :
+    (homotopy : Homotopic left right) :
     left.word.writhe = right.word.writhe :=
   homotopy.braidClassSame.writhe_eq
 
@@ -191,8 +193,8 @@ theorem writhe_eq {strands : Nat}
 theorem append {strands : Nat}
     {base : ProjectedFrame strands}
     {firstLeft firstRight secondLeft secondRight : AdmissibleLoop base}
-    (first : Progressive.Braid.Loop.Homotopy.Homotopic firstLeft firstRight)
-    (second : Progressive.Braid.Loop.Homotopy.Homotopic secondLeft secondRight) :
+    (first : Homotopic firstLeft firstRight)
+    (second : Homotopic secondLeft secondRight) :
     Equivalent
       (firstLeft.append secondLeft).word
       (firstRight.append secondRight).word := by

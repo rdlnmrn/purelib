@@ -74,7 +74,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.Branch
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData (DomainPrimitives)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Corners.FaceCorners (point)
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
-open Purelib.Riemann.Readings.PreparedPrimitiveSamples (differentialNumerator)
+open Purelib.Riemann.Normalization.InverseRootPolynomial (Polynomial)
 open Purelib.Riemann.Integration.RectangularPrimitiveModels (Primitives)
 open Purelib.Riemann.Integration.RectangularPrimitiveGluing (PrimitiveAnchors)
 open Purelib.Riemann.Readings.RectangularPointReadings (PointReadings)
@@ -88,6 +88,8 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid}
 
+variable {numerator : Polynomial} {pairs : Nat}
+
 namespace DomainPrimitives
 variable {face : RegularFace bank} {models :
   FaceModels frames face} {sheet :
@@ -100,11 +102,10 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 /-- An actual point reading agrees with the retained fixed corner cache within four times the paid global primitive
 bound. -/
 theorem reading_corner_bound
-    {bounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds face.clearance
-      (PreparedPrimitiveSamples.differentialNumerator differential)}
+    {bounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds face.clearance numerator}
     {target : InverseRootPolynomial.Coordinate}
-    (request : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds domain.steps target)
-    (cached : PrimitiveData.DomainPrimitives domain differential request.index)
+    (request : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds domain.steps target pairs)
+    (cached : PrimitiveData.DomainPrimitives domain differential request.index numerator pairs)
     {count : Nat} {points : Fin count → Data.Gaussian.Basic.Canonical}
     (readings : RectangularPointReadings.PointReadings cached.anchors cached.offsets points)
     (vertex : Fin count) (corner : Fin 4)
@@ -124,11 +125,10 @@ theorem reading_corner_bound
 /-- An actual pair of endpoint readings agrees with its fixed cached corner increment within sixteen times the paid
 global bound. -/
 theorem reading_corner_increment_bound
-    {bounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds face.clearance
-      (PreparedPrimitiveSamples.differentialNumerator differential)}
+    {bounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds face.clearance numerator}
     {target : InverseRootPolynomial.Coordinate}
-    (request : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds domain.steps target)
-    (cached : PrimitiveData.DomainPrimitives domain differential request.index)
+    (request : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds domain.steps target pairs)
+    (cached : PrimitiveData.DomainPrimitives domain differential request.index numerator pairs)
     {count : Nat} {points : Fin count → Data.Gaussian.Basic.Canonical}
     (readings : RectangularPointReadings.PointReadings cached.anchors cached.offsets points)
     (first last : Fin count) (firstCorner lastCorner : Fin 4)

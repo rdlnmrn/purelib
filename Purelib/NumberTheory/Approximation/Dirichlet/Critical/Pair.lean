@@ -28,6 +28,9 @@ import Purelib.Data.GaussianInt.Embedding
 import Mathlib.Algebra.Group.Nat.Defs
 import Purelib.Tactic.Ring
 
+open Purelib.Data.GaussianInt.Pair
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 open Purelib.Data
@@ -54,7 +57,7 @@ namespace Purelib.NumberTheory.Approximation.Dirichlet.Critical.Pair
 
 /-- Lower coefficient pair for the stage-`k` critical window. -/
 @[expose] def criticalLowerPair (stage : Nat) :
-  GaussianInt.Pair.Basic.ConvergentPair :=
+  Basic.ConvergentPair :=
   { numerator :=
       ⟨-2 * (Pell.FiniteBranch.pellNumerator stage : Int), 0⟩
     denominator :=
@@ -63,7 +66,7 @@ namespace Purelib.NumberTheory.Approximation.Dirichlet.Critical.Pair
 
 /-- Upper coefficient pair for the stage-`k` critical window. -/
 @[expose] def criticalUpperPair (stage : Nat) :
-  GaussianInt.Pair.Basic.ConvergentPair :=
+  Basic.ConvergentPair :=
   { numerator :=
       ⟨-(Pell.FiniteBranch.pellNumerator stage : Int),
         -(Pell.FiniteBranch.pellDenominator stage : Int)⟩
@@ -74,14 +77,14 @@ namespace Purelib.NumberTheory.Approximation.Dirichlet.Critical.Pair
 
 The real determinant coordinate is the finite Pell equation; its imaginary coordinate vanishes by direct arithmetic. -/
 theorem criticalPair_determinant (stage : Nat) :
-    GaussianInt.Pair.LinearCombination.coefficientDeterminant (criticalLowerPair stage)
+    LinearCombination.coefficientDeterminant (criticalLowerPair stage)
       (criticalUpperPair stage) = 1 := by
   have castEquation := congrArg (fun value : Nat => (value : Int))
     (Pell.FiniteBranch.pellEquation stage)
   simp only [Algebra.NatCast.add, Algebra.NatCast.mul, Algebra.NatCast.pow, Nat.cast_ofNat, -eq_self, -iff_self]
     at castEquation
   apply GaussianInt.ext
-  · simp only [GaussianInt.Pair.LinearCombination.coefficientDeterminant, GaussianInt.Pair.Basis.determinant,
+  · simp only [LinearCombination.coefficientDeterminant, Basis.determinant,
       criticalLowerPair,
       criticalUpperPair,
       GaussianInt.sub_re,
@@ -99,7 +102,7 @@ theorem criticalPair_determinant (stage : Nat) :
             4 * (Pell.FiniteBranch.pellNumerator stage : Int) *
               (Pell.FiniteBranch.pellDenominator stage : Int) := by ring1
       _ = 1 := by rw [castEquation]; ring1
-  · simp only [GaussianInt.Pair.LinearCombination.coefficientDeterminant, GaussianInt.Pair.Basis.determinant,
+  · simp only [LinearCombination.coefficientDeterminant, Basis.determinant,
       criticalLowerPair,
       criticalUpperPair,
       GaussianInt.sub_im,
@@ -109,9 +112,9 @@ theorem criticalPair_determinant (stage : Nat) :
 
 /-- The critical pair basis has coefficient-index quadrance one at every finite stage. -/
 theorem criticalPair_indexOne (stage : Nat) :
-    GaussianInt.Pair.LinearCombination.coefficientIndexQuadrance (criticalLowerPair stage)
+    LinearCombination.coefficientIndexQuadrance (criticalLowerPair stage)
       (criticalUpperPair stage) = 1 := by
-  unfold GaussianInt.Pair.LinearCombination.coefficientIndexQuadrance
+  unfold LinearCombination.coefficientIndexQuadrance
   rw [criticalPair_determinant]
   rfl
 
@@ -253,7 +256,7 @@ theorem criticalUpper_denominatorGaussian_ne_zero
 /-- The prescribed critical denominator ratio times the upper denominator equals the lower denominator. -/
 private theorem criticalDenominatorRatio_mul_upper
   (stage : Nat) :
-    Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio (Dirichlet.Critical.Parameter.pellParameter stage) *
+    Cylinder.Basic.criticalDenominatorRatio (Parameter.pellParameter stage) *
         GaussianInt.toGaussian (criticalUpperPair stage).denominator =
       GaussianInt.toGaussian (criticalLowerPair stage).denominator := open Purelib.Algebra in by
   have castNeg := Ring.IntCast.sub (R := Fraction.Rational) (0 : Int)
@@ -263,88 +266,88 @@ private theorem criticalDenominatorRatio_mul_upper
       -(Pell.FiniteBranch.pellDenominator stage : Fraction.Rational) := by ring1
   rw [simplifyZero] at castNeg
   apply Gaussian.Basic.ext
-  · simp only [Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio, criticalUpperPair,
+  · simp only [Cylinder.Basic.criticalDenominatorRatio, criticalUpperPair,
       criticalLowerPair, GaussianInt.toGaussian,
       Gaussian.Basic.mul_re,
-      Ring.IntCast.intCast_mul, Int.cast_ofNat, Int.cast_natCast, Algebra.Ring.IntCast.cast_zero,
-      -eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+      Ring.IntCast.intCast_mul, Int.cast_ofNat, Int.cast_natCast, Ring.IntCast.cast_zero,
+      -eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
     calc
-      Dirichlet.Critical.Cylinder.Basic.half * Dirichlet.Critical.Parameter.pellParameter stage *
+      Cylinder.Basic.half * Parameter.pellParameter stage *
             (2 * (Pell.FiniteBranch.pellDenominator stage : Fraction.Rational)) -
-              -Dirichlet.Critical.Cylinder.Basic.half * 0 =
-          (2 * Dirichlet.Critical.Cylinder.Basic.half) *
-            (Dirichlet.Critical.Parameter.pellParameter stage * (Pell.FiniteBranch.pellDenominator stage :
+              -Cylinder.Basic.half * 0 =
+          (2 * Cylinder.Basic.half) *
+            (Parameter.pellParameter stage * (Pell.FiniteBranch.pellDenominator stage :
               Fraction.Rational)) := by
         ring1
       _ = (Pell.FiniteBranch.pellNumerator stage : Fraction.Rational) := by
-        rw [Dirichlet.Critical.Cylinder.Basic.two_mul_half, Dirichlet.Critical.Parameter.pellParameter_mul_denominator]
+        rw [Cylinder.Basic.two_mul_half, Parameter.pellParameter_mul_denominator]
         ring1
-  · simp only [Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio, criticalUpperPair,
+  · simp only [Cylinder.Basic.criticalDenominatorRatio, criticalUpperPair,
       criticalLowerPair, GaussianInt.toGaussian,
       Gaussian.Basic.mul_im, castNeg,
-      Ring.IntCast.intCast_mul, Int.cast_ofNat, Int.cast_natCast, Algebra.Ring.IntCast.cast_zero,
-      -eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+      Ring.IntCast.intCast_mul, Int.cast_ofNat, Int.cast_natCast, Ring.IntCast.cast_zero,
+      -eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
     calc
-      Dirichlet.Critical.Cylinder.Basic.half * Dirichlet.Critical.Parameter.pellParameter stage * 0 +
-            -Dirichlet.Critical.Cylinder.Basic.half * (2 * (Pell.FiniteBranch.pellDenominator stage :
+      Cylinder.Basic.half * Parameter.pellParameter stage * 0 +
+            -Cylinder.Basic.half * (2 * (Pell.FiniteBranch.pellDenominator stage :
               Fraction.Rational)) =
-          -(2 * Dirichlet.Critical.Cylinder.Basic.half) * (Pell.FiniteBranch.pellDenominator stage : Fraction.Rational)
+          -(2 * Cylinder.Basic.half) * (Pell.FiniteBranch.pellDenominator stage : Fraction.Rational)
             := by ring1
       _ = -(Pell.FiniteBranch.pellDenominator stage : Fraction.Rational) := by
-        rw [Dirichlet.Critical.Cylinder.Basic.two_mul_half]
+        rw [Cylinder.Basic.two_mul_half]
         ring1
 
 /-- The concrete pair denominators have exactly the prescribed normalized
 critical ratio. -/
 theorem criticalPair_denominatorRatio (stage : Nat) :
-    Dirichlet.Window.Basic.denominatorRatio
+    Window.Basic.denominatorRatio
         (criticalLowerPair stage) (criticalUpperPair stage) =
-      Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio (Dirichlet.Critical.Parameter.pellParameter stage) :=
+      Cylinder.Basic.criticalDenominatorRatio (Parameter.pellParameter stage) :=
         by
   apply Gaussian.Field.mul_right_cancel_of_ne
     (criticalUpper_denominatorGaussian_ne_zero stage)
   calc
-    Dirichlet.Window.Basic.denominatorRatio
+    Window.Basic.denominatorRatio
           (criticalLowerPair stage) (criticalUpperPair stage) *
         GaussianInt.toGaussian (criticalUpperPair stage).denominator =
       GaussianInt.toGaussian (criticalLowerPair stage).denominator := by
-        unfold Dirichlet.Window.Basic.denominatorRatio
+        unfold Window.Basic.denominatorRatio
         rw [Gaussian.Basic.mul_assoc,
           Gaussian.Field.inv_mul _
             (criticalUpper_denominatorGaussian_ne_zero stage),
           Gaussian.Basic.mul_one]
-    _ = Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio (Dirichlet.Critical.Parameter.pellParameter stage) *
+    _ = Cylinder.Basic.criticalDenominatorRatio (Parameter.pellParameter stage) *
         GaussianInt.toGaussian (criticalUpperPair stage).denominator :=
       (criticalDenominatorRatio_mul_upper stage).symm
 
 /-- The displayed normalized determinant factor. -/
 @[expose] def criticalGapVector (value :
   Fraction.Rational) : GaussianInt.Gaussian :=
-  1 - Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio value *
-    Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio value
+  1 - Cylinder.Basic.criticalDenominatorRatio value *
+    Cylinder.Basic.criticalErrorRatio value
 
 /-- The normalized critical determinant vector has quadrance equal to the retained critical gap. -/
 @[simp] theorem normSq_criticalGapVector (value :
   Fraction.Rational) :
-    Data.Gaussian.Norm.Basic.normSq (criticalGapVector value) =
-      Dirichlet.Critical.Cylinder.Basic.criticalGap value := rfl
+    Gaussian.Norm.Basic.normSq (criticalGapVector value) =
+      Cylinder.Basic.criticalGap value := rfl
 
 /-- The critical determinant vector is nonzero throughout the parameter chamber. -/
 theorem criticalGapVector_ne_zero
-    {value : Fraction.Rational} (certificate : Dirichlet.Critical.Cylinder.Basic.IsCriticalParameter value) :
+    {value : Fraction.Rational} (certificate : Cylinder.Basic.IsCriticalParameter value) :
     criticalGapVector value ≠ 0 := by
   intro zero
-  have normZero := congrArg Data.Gaussian.Norm.Basic.normSq zero
+  have normZero := congrArg Gaussian.Norm.Basic.normSq zero
   rw [normSq_criticalGapVector, Gaussian.Norm.Basic.normSq_zero] at normZero
-  exact (ne_of_gt (Dirichlet.Critical.Cylinder.Basic.criticalGap_pos certificate)) normZero
+  exact (ne_of_gt (Cylinder.Basic.criticalGap_pos certificate)) normZero
 
 /-- The lower error is chosen by one displayed inverse so that the basis
 determinant identity is exactly one. -/
 @[expose] def criticalLowerError (stage : Nat) :
   GaussianInt.Gaussian :=
-  -Data.Gaussian.Field.inv
+  -Gaussian.Field.inv
     (GaussianInt.toGaussian (criticalUpperPair stage).denominator *
-      criticalGapVector (Dirichlet.Critical.Parameter.pellParameter stage))
+      criticalGapVector (Parameter.pellParameter stage))
 
 /-- Exact Gaussian-rational source determined by the lower pair and its
 displayed nonzero error. -/
@@ -352,7 +355,7 @@ displayed nonzero error. -/
   GaussianInt.Gaussian :=
   (GaussianInt.toGaussian (criticalLowerPair stage).numerator +
       criticalLowerError stage) *
-    Data.Gaussian.Field.inv
+    Gaussian.Field.inv
       (GaussianInt.toGaussian (criticalLowerPair stage).denominator)
 
 /-- Executable common-denominator presentation of the critical source. -/
@@ -377,7 +380,7 @@ private theorem criticalLowerError_ne_zero (stage :
   apply Gaussian.Field.inv_ne_zero_direct
   exact Gaussian.Field.mul_ne_zero_direct
     (criticalUpper_denominatorGaussian_ne_zero stage)
-    (criticalGapVector_ne_zero (Dirichlet.Critical.Parameter.pellParameter_isCritical stage))
+    (criticalGapVector_ne_zero (Parameter.pellParameter_isCritical stage))
 
 /-- The constructed source has the chosen lower division-free error. -/
 theorem criticalSource_error_lower (stage : Nat) :
@@ -389,13 +392,13 @@ theorem criticalSource_error_lower (stage : Nat) :
   calc
     ((GaussianInt.toGaussian (criticalLowerPair stage).numerator +
           criticalLowerError stage) *
-        Data.Gaussian.Field.inv
+        Gaussian.Field.inv
           (GaussianInt.toGaussian (criticalLowerPair stage).denominator)) *
           GaussianInt.toGaussian (criticalLowerPair stage).denominator -
         GaussianInt.toGaussian (criticalLowerPair stage).numerator =
       (GaussianInt.toGaussian (criticalLowerPair stage).numerator +
           criticalLowerError stage) *
-        (Data.Gaussian.Field.inv
+        (Gaussian.Field.inv
             (GaussianInt.toGaussian (criticalLowerPair stage).denominator) *
           GaussianInt.toGaussian (criticalLowerPair stage).denominator) -
         GaussianInt.toGaussian (criticalLowerPair stage).numerator := by
@@ -424,24 +427,24 @@ private theorem criticalDesiredErrors_determinant
   (stage : Nat) :
     GaussianInt.toGaussian (criticalLowerPair stage).denominator *
           (criticalLowerError stage *
-            Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio (Dirichlet.Critical.Parameter.pellParameter stage)) -
+            Cylinder.Basic.criticalErrorRatio (Parameter.pellParameter stage)) -
         GaussianInt.toGaussian (criticalUpperPair stage).denominator *
           criticalLowerError stage = 1 := by
   have upperGapNonzero :
       GaussianInt.toGaussian (criticalUpperPair stage).denominator *
-          criticalGapVector (Dirichlet.Critical.Parameter.pellParameter stage) ≠ 0 :=
+          criticalGapVector (Parameter.pellParameter stage) ≠ 0 :=
     Gaussian.Field.mul_ne_zero_direct
       (criticalUpper_denominatorGaussian_ne_zero stage)
-      (criticalGapVector_ne_zero (Dirichlet.Critical.Parameter.pellParameter_isCritical stage))
+      (criticalGapVector_ne_zero (Parameter.pellParameter_isCritical stage))
   calc
     GaussianInt.toGaussian (criticalLowerPair stage).denominator *
           (criticalLowerError stage *
-            Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio (Dirichlet.Critical.Parameter.pellParameter stage)) -
+            Cylinder.Basic.criticalErrorRatio (Parameter.pellParameter stage)) -
         GaussianInt.toGaussian (criticalUpperPair stage).denominator *
           criticalLowerError stage =
       GaussianInt.toGaussian (criticalUpperPair stage).denominator *
-        (Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio (Dirichlet.Critical.Parameter.pellParameter stage) *
-            Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio (Dirichlet.Critical.Parameter.pellParameter stage) - 1)
+        (Cylinder.Basic.criticalDenominatorRatio (Parameter.pellParameter stage) *
+            Cylinder.Basic.criticalErrorRatio (Parameter.pellParameter stage) - 1)
               *
           criticalLowerError stage := by
       rw [← criticalDenominatorRatio_mul_upper]
@@ -455,10 +458,10 @@ private theorem criticalDesiredErrors_determinant
         ring1
     _ =
       (GaussianInt.toGaussian (criticalUpperPair stage).denominator *
-          criticalGapVector (Dirichlet.Critical.Parameter.pellParameter stage)) *
-        Data.Gaussian.Field.inv
+          criticalGapVector (Parameter.pellParameter stage)) *
+        Gaussian.Field.inv
           (GaussianInt.toGaussian (criticalUpperPair stage).denominator *
-            criticalGapVector (Dirichlet.Critical.Parameter.pellParameter stage)) := by
+            criticalGapVector (Parameter.pellParameter stage)) := by
       unfold criticalLowerError criticalGapVector
       apply Gaussian.Basic.ext <;>
         simp only [Gaussian.Basic.sub_re,
@@ -479,7 +482,7 @@ theorem criticalSource_error_upper (stage : Nat) :
     Best.Error.error (criticalSource stage).value (criticalUpperPair
       stage) =
       criticalLowerError stage *
-        Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio (Dirichlet.Critical.Parameter.pellParameter stage) := by
+        Cylinder.Basic.criticalErrorRatio (Parameter.pellParameter stage) := by
   have determinantIdentity :=
     Best.Error.toGaussian_coefficientDeterminant (criticalSource stage).value
       (criticalLowerPair stage) (criticalUpperPair stage)
@@ -492,7 +495,7 @@ theorem criticalSource_error_upper (stage : Nat) :
             (criticalUpperPair stage) =
         GaussianInt.toGaussian (criticalLowerPair stage).denominator *
           (criticalLowerError stage *
-            Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio (Dirichlet.Critical.Parameter.pellParameter stage)) :=
+            Cylinder.Basic.criticalErrorRatio (Parameter.pellParameter stage)) :=
               by
     calc
       GaussianInt.toGaussian (criticalLowerPair stage).denominator *
@@ -518,7 +521,7 @@ theorem criticalSource_error_upper (stage : Nat) :
       _ =
         (GaussianInt.toGaussian (criticalLowerPair stage).denominator *
               (criticalLowerError stage *
-                Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio (Dirichlet.Critical.Parameter.pellParameter stage))
+                Cylinder.Basic.criticalErrorRatio (Parameter.pellParameter stage))
                   -
             GaussianInt.toGaussian (criticalUpperPair stage).denominator *
               criticalLowerError stage) +
@@ -526,7 +529,7 @@ theorem criticalSource_error_upper (stage : Nat) :
             criticalLowerError stage := by rw [desiredIdentity]
       _ = GaussianInt.toGaussian (criticalLowerPair stage).denominator *
           (criticalLowerError stage *
-            Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio (Dirichlet.Critical.Parameter.pellParameter stage)) :=
+            Cylinder.Basic.criticalErrorRatio (Parameter.pellParameter stage)) :=
               by
         apply Gaussian.Basic.ext <;>
           simp only [Gaussian.Basic.sub_re,
@@ -548,10 +551,10 @@ theorem criticalSource_error_upper (stage : Nat) :
       rw [Gaussian.Basic.mul_comm]
     _ = GaussianInt.toGaussian (criticalLowerPair stage).denominator *
         (criticalLowerError stage *
-          Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio (Dirichlet.Critical.Parameter.pellParameter stage)) :=
+          Cylinder.Basic.criticalErrorRatio (Parameter.pellParameter stage)) :=
             scaledEquality
     _ = (criticalLowerError stage *
-          Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio (Dirichlet.Critical.Parameter.pellParameter stage)) *
+          Cylinder.Basic.criticalErrorRatio (Parameter.pellParameter stage)) *
         GaussianInt.toGaussian (criticalLowerPair stage).denominator := by
       rw [Gaussian.Basic.mul_comm]
 
@@ -560,26 +563,26 @@ theorem criticalSource_error_upper (stage : Nat) :
 The finite coefficient bound excludes two nonzero coefficients; the remaining unit multiple forces both quadrance
 equalities. -/
 private theorem criticalLower_normalized_boundary
-    {value : Fraction.Rational} (certificate : Dirichlet.Critical.Cylinder.Basic.IsCriticalParameter value)
+    {value : Fraction.Rational} (certificate : Cylinder.Basic.IsCriticalParameter value)
     (left right : GaussianInt) (coefficientNonzero : left ≠ 0 ∨ right ≠ 0)
     (errorBound :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
-        GaussianInt.toGaussian right * Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio value) ≤ 1)
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+        GaussianInt.toGaussian right * Cylinder.Basic.criticalErrorRatio value) ≤ 1)
     (denominatorBound :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
-        Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio value +
-        GaussianInt.toGaussian right) ≤ Dirichlet.Critical.Cylinder.Basic.criticalCoordinateNorm value) :
-    Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
-        GaussianInt.toGaussian right * Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio value) = 1 ∧
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
-        Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio value +
-        GaussianInt.toGaussian right) = Dirichlet.Critical.Cylinder.Basic.criticalCoordinateNorm value := by
-  have coordinateLtOne := Dirichlet.Critical.Cylinder.Basic.criticalCoordinateNorm_lt_one certificate
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+        Cylinder.Basic.criticalDenominatorRatio value +
+        GaussianInt.toGaussian right) ≤ Cylinder.Basic.criticalCoordinateNorm value) :
+    Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+        GaussianInt.toGaussian right * Cylinder.Basic.criticalErrorRatio value) = 1 ∧
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+        Cylinder.Basic.criticalDenominatorRatio value +
+        GaussianInt.toGaussian right) = Cylinder.Basic.criticalCoordinateNorm value := by
+  have coordinateLtOne := Cylinder.Basic.criticalCoordinateNorm_lt_one certificate
   have denominatorBoundOne :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
-        Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio value +
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+        Cylinder.Basic.criticalDenominatorRatio value +
         GaussianInt.toGaussian right) ≤ 1 := denominatorBound.trans coordinateLtOne.le
-  have small := Dirichlet.Critical.Cylinder.Basic.coefficient_normNat_lt_four_of_critical_inside
+  have small := Cylinder.Basic.coefficient_normNat_lt_four_of_critical_inside
     certificate left right errorBound denominatorBoundOne
   by_cases leftZero : left = 0
   · have rightNonzero : right ≠ 0 := by
@@ -590,8 +593,8 @@ private theorem criticalLower_normalized_boundary
       GaussianInt.normNat_pos rightNonzero
     have oneLeDenominator :
         (1 : Fraction.Rational) ≤
-          Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
-            Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio value +
+          Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+            Cylinder.Basic.criticalDenominatorRatio value +
             GaussianInt.toGaussian right) := by
       rw [leftZero, GaussianInt.toGaussian_zero,
         Gaussian.Basic.zero_mul,
@@ -606,7 +609,7 @@ private theorem criticalLower_normalized_boundary
         simpa only [rightZero, GaussianInt.toGaussian_zero,
           Gaussian.Basic.zero_mul,
           Gaussian.Basic.add_zero,
-          GaussianInt.normSq_toGaussian, -eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt] using errorBound
+          GaussianInt.normSq_toGaussian, -eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt] using errorBound
       have leftLeOne : GaussianInt.normNat left ≤ 1 :=
         (Fraction.Cast.Order.natCast_le_iff_direct).1 castLeftLeOne
       have leftNorm : GaussianInt.normNat left = 1 :=
@@ -618,9 +621,9 @@ private theorem criticalLower_normalized_boundary
           leftNorm, Nat.cast_one]
       · rw [rightZero, GaussianInt.toGaussian_zero,
           Gaussian.Basic.add_zero, Gaussian.Norm.Basic.normSq_mul,
-          GaussianInt.normSq_toGaussian, Dirichlet.Critical.Cylinder.Basic.normSq_criticalDenominatorRatio, leftNorm]
+          GaussianInt.normSq_toGaussian, Cylinder.Basic.normSq_criticalDenominatorRatio, leftNorm]
         ring1
-    · rcases Dirichlet.Critical.Cylinder.Basic.small_nonzero_coefficients_strictly_exterior
+    · rcases Cylinder.Basic.small_nonzero_coefficients_strictly_exterior
           certificate left right leftZero rightZero small.1 small.2 with
         errorExterior | denominatorExterior
       · exact (not_lt_of_ge errorBound errorExterior).elim
@@ -633,28 +636,28 @@ private theorem criticalLower_normalized_boundary
 The finite coefficient bound excludes two nonzero coefficients; the remaining unit multiple forces both quadrance
 equalities. -/
 private theorem criticalUpper_normalized_boundary
-    {value : Fraction.Rational} (certificate : Dirichlet.Critical.Cylinder.Basic.IsCriticalParameter value)
+    {value : Fraction.Rational} (certificate : Cylinder.Basic.IsCriticalParameter value)
     (left right : GaussianInt) (coefficientNonzero : left ≠ 0 ∨ right ≠ 0)
     (errorBound :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
-        GaussianInt.toGaussian right * Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio value) ≤
-          Dirichlet.Critical.Cylinder.Basic.criticalCoordinateNorm value)
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+        GaussianInt.toGaussian right * Cylinder.Basic.criticalErrorRatio value) ≤
+          Cylinder.Basic.criticalCoordinateNorm value)
     (denominatorBound :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
-        Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio value +
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+        Cylinder.Basic.criticalDenominatorRatio value +
         GaussianInt.toGaussian right) ≤ 1) :
-    Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
-        GaussianInt.toGaussian right * Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio value) =
-          Dirichlet.Critical.Cylinder.Basic.criticalCoordinateNorm value ∧
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
-        Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio value +
+    Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+        GaussianInt.toGaussian right * Cylinder.Basic.criticalErrorRatio value) =
+          Cylinder.Basic.criticalCoordinateNorm value ∧
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+        Cylinder.Basic.criticalDenominatorRatio value +
         GaussianInt.toGaussian right) = 1 := by
-  have coordinateLtOne := Dirichlet.Critical.Cylinder.Basic.criticalCoordinateNorm_lt_one certificate
+  have coordinateLtOne := Cylinder.Basic.criticalCoordinateNorm_lt_one certificate
   have errorBoundOne :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
-        GaussianInt.toGaussian right * Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio value) ≤ 1 :=
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+        GaussianInt.toGaussian right * Cylinder.Basic.criticalErrorRatio value) ≤ 1 :=
     errorBound.trans coordinateLtOne.le
-  have small := Dirichlet.Critical.Cylinder.Basic.coefficient_normNat_lt_four_of_critical_inside
+  have small := Cylinder.Basic.coefficient_normNat_lt_four_of_critical_inside
     certificate left right errorBoundOne denominatorBound
   by_cases rightZero : right = 0
   · have leftNonzero : left ≠ 0 := by
@@ -665,8 +668,8 @@ private theorem criticalUpper_normalized_boundary
       GaussianInt.normNat_pos leftNonzero
     have oneLeError :
         (1 : Fraction.Rational) ≤
-          Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
-            GaussianInt.toGaussian right * Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio value) := by
+          Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+            GaussianInt.toGaussian right * Cylinder.Basic.criticalErrorRatio value) := by
       rw [rightZero, GaussianInt.toGaussian_zero,
         Gaussian.Basic.zero_mul,
         Gaussian.Basic.add_zero, GaussianInt.normSq_toGaussian]
@@ -680,7 +683,7 @@ private theorem criticalUpper_normalized_boundary
         simpa only [leftZero, GaussianInt.toGaussian_zero,
           Gaussian.Basic.zero_mul,
           Gaussian.Basic.zero_add,
-          GaussianInt.normSq_toGaussian, -eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt] using
+          GaussianInt.normSq_toGaussian, -eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt] using
             denominatorBound
       have rightLeOne : GaussianInt.normNat right ≤ 1 :=
         (Fraction.Cast.Order.natCast_le_iff_direct).1 castRightLeOne
@@ -689,13 +692,13 @@ private theorem criticalUpper_normalized_boundary
       constructor
       · rw [leftZero, GaussianInt.toGaussian_zero,
           Gaussian.Basic.zero_add, Gaussian.Norm.Basic.normSq_mul,
-          GaussianInt.normSq_toGaussian, Dirichlet.Critical.Cylinder.Basic.normSq_criticalErrorRatio, rightNorm]
+          GaussianInt.normSq_toGaussian, Cylinder.Basic.normSq_criticalErrorRatio, rightNorm]
         ring1
       · rw [leftZero, GaussianInt.toGaussian_zero,
           Gaussian.Basic.zero_mul,
           Gaussian.Basic.zero_add, GaussianInt.normSq_toGaussian,
           rightNorm, Nat.cast_one]
-    · rcases Dirichlet.Critical.Cylinder.Basic.small_nonzero_coefficients_strictly_exterior
+    · rcases Cylinder.Basic.small_nonzero_coefficients_strictly_exterior
           certificate left right leftZero rightZero small.1 small.2 with
         errorExterior | denominatorExterior
       · exact (not_lt_of_ge
@@ -707,11 +710,11 @@ ratio. -/
 private theorem critical_error_linearCombination
     (stage : Nat) (left right : GaussianInt) :
     Best.Error.error (criticalSource stage).value
-        (GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair stage)
+        (LinearCombination.linearCombination (criticalLowerPair stage)
           (criticalUpperPair stage) left right) =
       criticalLowerError stage *
         (GaussianInt.toGaussian left + GaussianInt.toGaussian right *
-          Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio (Dirichlet.Critical.Parameter.pellParameter stage)) := by
+          Cylinder.Basic.criticalErrorRatio (Parameter.pellParameter stage)) := by
   rw [Best.Error.error_linearCombination, criticalSource_error_lower,
     criticalSource_error_upper]
   apply Gaussian.Basic.ext <;>
@@ -726,13 +729,13 @@ denominator ratio. -/
 private theorem critical_denominator_linearCombination
     (stage : Nat) (left right : GaussianInt) :
     GaussianInt.toGaussian
-        (GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair stage)
+        (LinearCombination.linearCombination (criticalLowerPair stage)
           (criticalUpperPair stage) left right).denominator =
       GaussianInt.toGaussian (criticalUpperPair stage).denominator *
-        (GaussianInt.toGaussian left * Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio
-          (Dirichlet.Critical.Parameter.pellParameter stage) +
+        (GaussianInt.toGaussian left * Cylinder.Basic.criticalDenominatorRatio
+          (Parameter.pellParameter stage) +
           GaussianInt.toGaussian right) := by
-  simp only [GaussianInt.Pair.LinearCombination.linearCombination, GaussianInt.toGaussian_add,
+  simp only [LinearCombination.linearCombination, GaussianInt.toGaussian_add,
     GaussianInt.toGaussian_mul, -eq_self, -iff_self]
   rw [← criticalDenominatorRatio_mul_upper]
   apply Gaussian.Basic.ext <;>
@@ -744,27 +747,27 @@ private theorem critical_denominator_linearCombination
 
 /-- A nonzero pair expanded in the critical basis has at least one nonzero coefficient. -/
 private theorem coefficientNonzero_of_expansion
-    (stage : Nat) (candidate : GaussianInt.Pair.Basic.ConvergentPair) (candidateNonzero :
-      GaussianInt.Pair.LinearCombination.PairNonzero candidate)
+    (stage : Nat) (candidate : Basic.ConvergentPair) (candidateNonzero :
+      LinearCombination.PairNonzero candidate)
     (left right : GaussianInt)
     (expansion :
-      GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair stage)
+      LinearCombination.linearCombination (criticalLowerPair stage)
         (criticalUpperPair stage) left right = candidate) :
     left ≠ 0 ∨ right ≠ 0 := by
   by_cases leftZero : left = 0
   · right
     intro rightZero
-    have candidateZero : candidate = GaussianInt.Pair.LinearCombination.zeroPair := by
+    have candidateZero : candidate = LinearCombination.zeroPair := by
       calc
-        candidate = GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair
+        candidate = LinearCombination.linearCombination (criticalLowerPair
           stage)
             (criticalUpperPair stage) left right := expansion.symm
         _ = GaussianInt.Pair.LinearCombination.zeroPair := by
           rw [leftZero, rightZero]
-          apply GaussianInt.Pair.LinearCombination.pair_ext <;>
+          apply LinearCombination.pair_ext <;>
             apply GaussianInt.ext <;>
-              simp only [GaussianInt.Pair.LinearCombination.linearCombination,
-                GaussianInt.Pair.LinearCombination.zeroPair,
+              simp only [LinearCombination.linearCombination,
+                LinearCombination.zeroPair,
                 GaussianInt.zero_re,
                 GaussianInt.zero_im,
                 GaussianInt.mul_re,
@@ -774,9 +777,9 @@ private theorem coefficientNonzero_of_expansion
               ring1
     rcases candidateNonzero with numeratorNonzero | denominatorNonzero
     · exact numeratorNonzero
-        (congrArg (fun pair : GaussianInt.Pair.Basic.ConvergentPair => pair.numerator) candidateZero)
+        (congrArg (fun pair : Basic.ConvergentPair => pair.numerator) candidateZero)
     · exact denominatorNonzero
-        (congrArg (fun pair : GaussianInt.Pair.Basic.ConvergentPair => pair.denominator) candidateZero)
+        (congrArg (fun pair : Basic.ConvergentPair => pair.denominator) candidateZero)
   · exact Or.inl leftZero
 
 /-- An integral critical basis combination inside the lower cylinder lies on its boundary.
@@ -788,69 +791,69 @@ private theorem
     (coefficientNonzero : left ≠ 0 ∨ right ≠ 0)
     (errorInside :
       Best.Error.errorQuadrance (criticalSource stage).value
-          (GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair stage)
+          (LinearCombination.linearCombination (criticalLowerPair stage)
             (criticalUpperPair stage) left right) ≤
         Best.Error.errorQuadrance (criticalSource stage).value
           (criticalLowerPair stage))
     (denominatorInside :
       Best.Error.denominatorQuadrance
-          (GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair stage)
+          (LinearCombination.linearCombination (criticalLowerPair stage)
             (criticalUpperPair stage) left right) ≤
         Best.Error.denominatorQuadrance (criticalLowerPair stage)) :
     Best.Basic.OnCylinderBoundary (criticalSource stage).value
       (criticalLowerPair stage)
-      (GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair stage)
+      (LinearCombination.linearCombination (criticalLowerPair stage)
         (criticalUpperPair stage) left right) := by
-  have lowerErrorPositive : 0 < Data.Gaussian.Norm.Basic.normSq (criticalLowerError stage)
+  have lowerErrorPositive : 0 < Gaussian.Norm.Basic.normSq (criticalLowerError stage)
     :=
     Gaussian.Norm.Basic.normSq_pos (criticalLowerError_ne_zero stage)
   have upperDenominatorPositive :
-      0 < Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
+      0 < Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
         stage).denominator) :=
     Gaussian.Norm.Basic.normSq_pos (criticalUpper_denominatorGaussian_ne_zero stage)
   have normalizedErrorBound :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
-        GaussianInt.toGaussian right * Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio
-          (Dirichlet.Critical.Parameter.pellParameter stage)) ≤ 1 := by
-    apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
-      (c := Data.Gaussian.Norm.Basic.normSq (criticalLowerError stage))
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+        GaussianInt.toGaussian right * Cylinder.Basic.criticalErrorRatio
+          (Parameter.pellParameter stage)) ≤ 1 := by
+    apply Arithmetic.le_of_mul_le_mul_right_direct
+      (c := Gaussian.Norm.Basic.normSq (criticalLowerError stage))
     · calc
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
-              GaussianInt.toGaussian right * Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio
-                (Dirichlet.Critical.Parameter.pellParameter stage)) *
-            Data.Gaussian.Norm.Basic.normSq (criticalLowerError stage) =
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+              GaussianInt.toGaussian right * Cylinder.Basic.criticalErrorRatio
+                (Parameter.pellParameter stage)) *
+            Gaussian.Norm.Basic.normSq (criticalLowerError stage) =
           Best.Error.errorQuadrance (criticalSource stage).value
-            (GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair stage)
+            (LinearCombination.linearCombination (criticalLowerPair stage)
               (criticalUpperPair stage) left right) := by
             unfold Best.Error.errorQuadrance
             rw [critical_error_linearCombination, Gaussian.Norm.Basic.normSq_mul]
             ring1
         _ ≤ Best.Error.errorQuadrance (criticalSource stage).value
             (criticalLowerPair stage) := errorInside
-        _ = (1 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq (criticalLowerError
+        _ = (1 : Fraction.Rational) * Gaussian.Norm.Basic.normSq (criticalLowerError
           stage) := by
           unfold Best.Error.errorQuadrance
           rw [criticalSource_error_lower]
           ring1
     · exact lowerErrorPositive
   have normalizedDenominatorBound :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
-          Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio (Dirichlet.Critical.Parameter.pellParameter stage)
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+          Cylinder.Basic.criticalDenominatorRatio (Parameter.pellParameter stage)
             + GaussianInt.toGaussian right) ≤
-        Dirichlet.Critical.Cylinder.Basic.criticalCoordinateNorm (Dirichlet.Critical.Parameter.pellParameter stage) :=
+        Cylinder.Basic.criticalCoordinateNorm (Parameter.pellParameter stage) :=
           by
-    apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
-      (c := Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
+    apply Arithmetic.le_of_mul_le_mul_right_direct
+      (c := Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
         stage).denominator))
     · calc
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
-              Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio (Dirichlet.Critical.Parameter.pellParameter
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+              Cylinder.Basic.criticalDenominatorRatio (Parameter.pellParameter
                 stage) +
             GaussianInt.toGaussian right) *
-            Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
+            Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
               stage).denominator) =
           (Best.Error.denominatorQuadrance
-            (GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair stage)
+            (LinearCombination.linearCombination (criticalLowerPair stage)
               (criticalUpperPair stage) left right) : Fraction.Rational) := by
             unfold Best.Error.denominatorQuadrance
             rw [← GaussianInt.normSq_toGaussian,
@@ -858,17 +861,17 @@ private theorem
             ring1
         _ ≤ (Best.Error.denominatorQuadrance (criticalLowerPair stage) : Fraction.Rational) :=
           Fraction.Cast.Order.natCast_le_direct denominatorInside
-        _ = Dirichlet.Critical.Cylinder.Basic.criticalCoordinateNorm (Dirichlet.Critical.Parameter.pellParameter stage)
+        _ = Cylinder.Basic.criticalCoordinateNorm (Parameter.pellParameter stage)
           *
-            Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
+            Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
               stage).denominator) := by
           unfold Best.Error.denominatorQuadrance
           rw [← GaussianInt.normSq_toGaussian,
             ← criticalDenominatorRatio_mul_upper, Gaussian.Norm.Basic.normSq_mul,
-            Dirichlet.Critical.Cylinder.Basic.normSq_criticalDenominatorRatio]
+            Cylinder.Basic.normSq_criticalDenominatorRatio]
     · exact upperDenominatorPositive
   have normalizedBoundary := criticalLower_normalized_boundary
-    (Dirichlet.Critical.Parameter.pellParameter_isCritical stage) left right coefficientNonzero
+    (Parameter.pellParameter_isCritical stage) left right coefficientNonzero
       normalizedErrorBound normalizedDenominatorBound
   constructor
   · unfold Best.Error.errorQuadrance
@@ -881,7 +884,7 @@ private theorem
       critical_denominator_linearCombination,
       ← criticalDenominatorRatio_mul_upper,
       Gaussian.Norm.Basic.normSq_mul, Gaussian.Norm.Basic.normSq_mul,
-        Dirichlet.Critical.Cylinder.Basic.normSq_criticalDenominatorRatio,
+        Cylinder.Basic.normSq_criticalDenominatorRatio,
       normalizedBoundary.2]
     ring1
 
@@ -894,72 +897,72 @@ private theorem
     (coefficientNonzero : left ≠ 0 ∨ right ≠ 0)
     (errorInside :
       Best.Error.errorQuadrance (criticalSource stage).value
-          (GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair stage)
+          (LinearCombination.linearCombination (criticalLowerPair stage)
             (criticalUpperPair stage) left right) ≤
         Best.Error.errorQuadrance (criticalSource stage).value
           (criticalUpperPair stage))
     (denominatorInside :
       Best.Error.denominatorQuadrance
-          (GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair stage)
+          (LinearCombination.linearCombination (criticalLowerPair stage)
             (criticalUpperPair stage) left right) ≤
         Best.Error.denominatorQuadrance (criticalUpperPair stage)) :
     Best.Basic.OnCylinderBoundary (criticalSource stage).value
       (criticalUpperPair stage)
-      (GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair stage)
+      (LinearCombination.linearCombination (criticalLowerPair stage)
         (criticalUpperPair stage) left right) := by
-  have lowerErrorPositive : 0 < Data.Gaussian.Norm.Basic.normSq (criticalLowerError stage)
+  have lowerErrorPositive : 0 < Gaussian.Norm.Basic.normSq (criticalLowerError stage)
     :=
     Gaussian.Norm.Basic.normSq_pos (criticalLowerError_ne_zero stage)
   have upperDenominatorPositive :
-      0 < Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
+      0 < Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
         stage).denominator) :=
     Gaussian.Norm.Basic.normSq_pos (criticalUpper_denominatorGaussian_ne_zero stage)
   have normalizedErrorBound :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
-        GaussianInt.toGaussian right * Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio
-          (Dirichlet.Critical.Parameter.pellParameter stage)) ≤
-          Dirichlet.Critical.Cylinder.Basic.criticalCoordinateNorm (Dirichlet.Critical.Parameter.pellParameter stage) :=
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+        GaussianInt.toGaussian right * Cylinder.Basic.criticalErrorRatio
+          (Parameter.pellParameter stage)) ≤
+          Cylinder.Basic.criticalCoordinateNorm (Parameter.pellParameter stage) :=
             by
-    apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
-      (c := Data.Gaussian.Norm.Basic.normSq (criticalLowerError stage))
+    apply Arithmetic.le_of_mul_le_mul_right_direct
+      (c := Gaussian.Norm.Basic.normSq (criticalLowerError stage))
     · calc
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
-              GaussianInt.toGaussian right * Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio
-                (Dirichlet.Critical.Parameter.pellParameter stage)) *
-            Data.Gaussian.Norm.Basic.normSq (criticalLowerError stage) =
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+              GaussianInt.toGaussian right * Cylinder.Basic.criticalErrorRatio
+                (Parameter.pellParameter stage)) *
+            Gaussian.Norm.Basic.normSq (criticalLowerError stage) =
           Best.Error.errorQuadrance (criticalSource stage).value
-            (GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair stage)
+            (LinearCombination.linearCombination (criticalLowerPair stage)
               (criticalUpperPair stage) left right) := by
             unfold Best.Error.errorQuadrance
             rw [critical_error_linearCombination, Gaussian.Norm.Basic.normSq_mul]
             ring1
         _ ≤ Best.Error.errorQuadrance (criticalSource stage).value
             (criticalUpperPair stage) := errorInside
-        _ = Dirichlet.Critical.Cylinder.Basic.criticalCoordinateNorm (Dirichlet.Critical.Parameter.pellParameter stage)
+        _ = Cylinder.Basic.criticalCoordinateNorm (Parameter.pellParameter stage)
           *
-            Data.Gaussian.Norm.Basic.normSq (criticalLowerError stage) := by
+            Gaussian.Norm.Basic.normSq (criticalLowerError stage) := by
           unfold Best.Error.errorQuadrance
           rw [criticalSource_error_upper, Gaussian.Norm.Basic.normSq_mul,
-            Dirichlet.Critical.Cylinder.Basic.normSq_criticalErrorRatio]
+            Cylinder.Basic.normSq_criticalErrorRatio]
           ring1
     · exact lowerErrorPositive
   have normalizedDenominatorBound :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
-          Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio (Dirichlet.Critical.Parameter.pellParameter stage)
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+          Cylinder.Basic.criticalDenominatorRatio (Parameter.pellParameter stage)
             + GaussianInt.toGaussian right) ≤
         1 := by
-    apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
-      (c := Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
+    apply Arithmetic.le_of_mul_le_mul_right_direct
+      (c := Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
         stage).denominator))
     · calc
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
-              Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio (Dirichlet.Critical.Parameter.pellParameter
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+              Cylinder.Basic.criticalDenominatorRatio (Parameter.pellParameter
                 stage) +
             GaussianInt.toGaussian right) *
-            Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
+            Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
               stage).denominator) =
           (Best.Error.denominatorQuadrance
-            (GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair stage)
+            (LinearCombination.linearCombination (criticalLowerPair stage)
               (criticalUpperPair stage) left right) : Fraction.Rational) := by
             unfold Best.Error.denominatorQuadrance
             rw [← GaussianInt.normSq_toGaussian,
@@ -968,20 +971,20 @@ private theorem
         _ ≤ (Best.Error.denominatorQuadrance (criticalUpperPair stage) : Fraction.Rational) :=
           Fraction.Cast.Order.natCast_le_direct denominatorInside
         _ = (1 : Fraction.Rational) *
-            Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
+            Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
               stage).denominator) := by
           unfold Best.Error.denominatorQuadrance
           rw [← GaussianInt.normSq_toGaussian]
           ring1
     · exact upperDenominatorPositive
   have normalizedBoundary := criticalUpper_normalized_boundary
-    (Dirichlet.Critical.Parameter.pellParameter_isCritical stage) left right coefficientNonzero
+    (Parameter.pellParameter_isCritical stage) left right coefficientNonzero
       normalizedErrorBound normalizedDenominatorBound
   constructor
   · unfold Best.Error.errorQuadrance
     rw [critical_error_linearCombination, criticalSource_error_upper,
       Gaussian.Norm.Basic.normSq_mul, Gaussian.Norm.Basic.normSq_mul,
-        Dirichlet.Critical.Cylinder.Basic.normSq_criticalErrorRatio,
+        Cylinder.Basic.normSq_criticalErrorRatio,
       normalizedBoundary.1]
   · apply Fraction.Cast.Compatibility.natCast_injective_direct
     unfold Best.Error.denominatorQuadrance
@@ -994,19 +997,19 @@ private theorem
 
 The witnesses are the explicit Cramer determinants multiplied by the conjugate basis determinant. -/
 private theorem exists_critical_coefficients (stage :
-  Nat) (candidate : GaussianInt.Pair.Basic.ConvergentPair) :
+  Nat) (candidate : Basic.ConvergentPair) :
     ∃ left right : GaussianInt,
-      GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair stage)
+      LinearCombination.linearCombination (criticalLowerPair stage)
         (criticalUpperPair stage) left right = candidate := by
-  let determinantValue := GaussianInt.Pair.LinearCombination.coefficientDeterminant
+  let determinantValue := LinearCombination.coefficientDeterminant
     (criticalLowerPair stage) (criticalUpperPair stage)
   refine ⟨GaussianInt.conj determinantValue *
-      GaussianInt.Pair.LinearCombination.coefficientDeterminant candidate (criticalUpperPair
+      LinearCombination.coefficientDeterminant candidate (criticalUpperPair
         stage),
     GaussianInt.conj determinantValue *
-      GaussianInt.Pair.LinearCombination.coefficientDeterminant (criticalLowerPair stage)
+      LinearCombination.coefficientDeterminant (criticalLowerPair stage)
         candidate, ?_⟩
-  exact GaussianInt.Pair.LinearCombination.linearCombination_cramer_of_index_one
+  exact LinearCombination.linearCombination_cramer_of_index_one
     (criticalLowerPair stage) (criticalUpperPair stage) candidate
       (criticalPair_indexOne stage)
 
@@ -1025,7 +1028,7 @@ theorem criticalLower_isBest (stage : Nat) :
     stage candidate candidateNonzero left right expansion
   have errorInside :
       Best.Error.errorQuadrance (criticalSource stage).value
-          (GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair stage)
+          (LinearCombination.linearCombination (criticalLowerPair stage)
             (criticalUpperPair stage) left right) ≤
         Best.Error.errorQuadrance (criticalSource stage).value
           (criticalLowerPair stage) := by
@@ -1033,7 +1036,7 @@ theorem criticalLower_isBest (stage : Nat) :
     exact inside.1
   have denominatorInside :
       Best.Error.denominatorQuadrance
-          (GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair stage)
+          (LinearCombination.linearCombination (criticalLowerPair stage)
             (criticalUpperPair stage) left right) ≤
         Best.Error.denominatorQuadrance (criticalLowerPair stage) := by
     rw [expansion]
@@ -1057,7 +1060,7 @@ theorem criticalUpper_isBest (stage : Nat) :
     stage candidate candidateNonzero left right expansion
   have errorInside :
       Best.Error.errorQuadrance (criticalSource stage).value
-          (GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair stage)
+          (LinearCombination.linearCombination (criticalLowerPair stage)
             (criticalUpperPair stage) left right) ≤
         Best.Error.errorQuadrance (criticalSource stage).value
           (criticalUpperPair stage) := by
@@ -1065,7 +1068,7 @@ theorem criticalUpper_isBest (stage : Nat) :
     exact inside.1
   have denominatorInside :
       Best.Error.denominatorQuadrance
-          (GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair stage)
+          (LinearCombination.linearCombination (criticalLowerPair stage)
             (criticalUpperPair stage) left right) ≤
         Best.Error.denominatorQuadrance (criticalUpperPair stage) := by
     rw [expansion]
@@ -1087,26 +1090,26 @@ private theorem critical_mixedCylinderEmpty (stage :
     ⟨left, right, expansion⟩
   have coefficientNonzero := coefficientNonzero_of_expansion
     stage candidate candidateNonzero left right expansion
-  have lowerErrorPositive : 0 < Data.Gaussian.Norm.Basic.normSq (criticalLowerError stage)
+  have lowerErrorPositive : 0 < Gaussian.Norm.Basic.normSq (criticalLowerError stage)
     :=
     Gaussian.Norm.Basic.normSq_pos (criticalLowerError_ne_zero stage)
   have upperDenominatorPositive :
-      0 < Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
+      0 < Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
         stage).denominator) :=
     Gaussian.Norm.Basic.normSq_pos (criticalUpper_denominatorGaussian_ne_zero stage)
   have normalizedErrorInside :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
-        GaussianInt.toGaussian right * Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio
-          (Dirichlet.Critical.Parameter.pellParameter stage)) < 1 := by
-    apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
-      (c := Data.Gaussian.Norm.Basic.normSq (criticalLowerError stage))
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+        GaussianInt.toGaussian right * Cylinder.Basic.criticalErrorRatio
+          (Parameter.pellParameter stage)) < 1 := by
+    apply Arithmetic.lt_of_mul_lt_mul_right_direct
+      (c := Gaussian.Norm.Basic.normSq (criticalLowerError stage))
     · calc
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
-              GaussianInt.toGaussian right * Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio
-                (Dirichlet.Critical.Parameter.pellParameter stage)) *
-            Data.Gaussian.Norm.Basic.normSq (criticalLowerError stage) =
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+              GaussianInt.toGaussian right * Cylinder.Basic.criticalErrorRatio
+                (Parameter.pellParameter stage)) *
+            Gaussian.Norm.Basic.normSq (criticalLowerError stage) =
           Best.Error.errorQuadrance (criticalSource stage).value
-            (GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair stage)
+            (LinearCombination.linearCombination (criticalLowerPair stage)
               (criticalUpperPair stage) left right) := by
             unfold Best.Error.errorQuadrance
             rw [critical_error_linearCombination, Gaussian.Norm.Basic.normSq_mul]
@@ -1115,29 +1118,29 @@ private theorem critical_mixedCylinderEmpty (stage :
           rw [expansion]
         _ < Best.Error.errorQuadrance (criticalSource stage).value
             (criticalLowerPair stage) := inside.1
-        _ = (1 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq (criticalLowerError
+        _ = (1 : Fraction.Rational) * Gaussian.Norm.Basic.normSq (criticalLowerError
           stage) := by
           unfold Best.Error.errorQuadrance
           rw [criticalSource_error_lower]
           ring1
     · exact lowerErrorPositive
   have normalizedDenominatorInside :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
-        Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio (Dirichlet.Critical.Parameter.pellParameter stage) +
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+        Cylinder.Basic.criticalDenominatorRatio (Parameter.pellParameter stage) +
           GaussianInt.toGaussian right) <
           1 := by
-    apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
-      (c := Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
+    apply Arithmetic.lt_of_mul_lt_mul_right_direct
+      (c := Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
         stage).denominator))
     · calc
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
-              Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio (Dirichlet.Critical.Parameter.pellParameter
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+              Cylinder.Basic.criticalDenominatorRatio (Parameter.pellParameter
                 stage) +
             GaussianInt.toGaussian right) *
-            Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
+            Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
               stage).denominator) =
           (Best.Error.denominatorQuadrance
-            (GaussianInt.Pair.LinearCombination.linearCombination (criticalLowerPair stage)
+            (LinearCombination.linearCombination (criticalLowerPair stage)
               (criticalUpperPair stage) left right) : Fraction.Rational) := by
             unfold Best.Error.denominatorQuadrance
             rw [← GaussianInt.normSq_toGaussian,
@@ -1147,14 +1150,14 @@ private theorem critical_mixedCylinderEmpty (stage :
         _ < (Best.Error.denominatorQuadrance (criticalUpperPair stage) : Fraction.Rational) :=
           Fraction.Cast.Order.natCast_lt_direct inside.2
         _ = (1 : Fraction.Rational) *
-            Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
+            Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (criticalUpperPair
               stage).denominator) := by
           unfold Best.Error.denominatorQuadrance
           rw [← GaussianInt.normSq_toGaussian]
           ring1
     · exact upperDenominatorPositive
-  rcases Dirichlet.Critical.Cylinder.Basic.criticalCylinderExterior
-    (Dirichlet.Critical.Parameter.pellParameter_isCritical stage)
+  rcases Cylinder.Basic.criticalCylinderExterior
+    (Parameter.pellParameter_isCritical stage)
       left right coefficientNonzero with errorExterior | denominatorExterior
   · exact (not_lt_of_ge errorExterior normalizedErrorInside)
   · exact (not_lt_of_ge denominatorExterior normalizedDenominatorInside)

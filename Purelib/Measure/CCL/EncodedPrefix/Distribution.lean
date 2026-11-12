@@ -31,6 +31,8 @@ import Purelib.Data.CCL.Encoding.Block.Basic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Approximation.CCL
+
 open Purelib.Data.GaussianInt.Fraction.Basic (SourceEncodingEncoderFracAlias)
 
 section
@@ -62,7 +64,7 @@ open Purelib.Measure
 Each original fraction has nonzero numerator, and the shared nonnegative sensitivity bound controls its retained
 projective-prefix probe interval. -/
 theorem encodedProjectivePrefixExpectationBound_contains_points {ι : Type}
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (fraction : ι → SourceEncodingEncoderFracAlias)
     (numeratorNonzero : ∀ item, (fraction item).numerator ≠ 0)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
@@ -70,29 +72,29 @@ theorem encodedProjectivePrefixExpectationBound_contains_points {ι : Type}
     (sensitive : ∀ left right,
       Distance.rationalSeparation (probe left) (probe right) ≤
         factor * Chordal.Basic.chordalSq left right) :
-    (CCL.Prefix.projectivePrefixFamilyProbeExpectationBound
-      (Approximation.CCL.EncodedPrefix.encodedProjectivePrefixDistribution distribution fraction
+    (Prefix.projectivePrefixFamilyProbeExpectationBound
+      (EncodedPrefix.encodedProjectivePrefixDistribution distribution fraction
         numeratorNonzero)
       probe factor factorNonnegative sensitive).Contains
         (distribution.expectation fun item =>
           probe (Encoder.Blocks.encodeBlocks
             (fraction item) (numeratorNonzero item)).point) := by
-  have inside := CCL.Prefix.projectivePrefixFamilyProbeExpectationBound_contains
-    (Approximation.CCL.EncodedPrefix.encodedProjectivePrefixDistribution distribution fraction
+  have inside := Prefix.projectivePrefixFamilyProbeExpectationBound_contains
+    (EncodedPrefix.encodedProjectivePrefixDistribution distribution fraction
       numeratorNonzero)
     probe factor factorNonnegative sensitive
     (fun certificate => certificate.witness)
     (by
       intro atom member
       exact atom.item.witnessRealizes)
-  rw [Approximation.CCL.EncodedPrefix.encodedProjectivePrefixDistribution, distribution.map_expectation]
+  rw [EncodedPrefix.encodedProjectivePrefixDistribution, distribution.map_expectation]
     at inside
   exact inside
 
 /-- The encoded-prefix family interval contains the original expected probe value at the affine values of the same
 fractions. -/
 theorem encodedProjectivePrefixExpectationBound_contains_values {ι : Type}
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (fraction : ι → SourceEncodingEncoderFracAlias)
     (numeratorNonzero : ∀ item, (fraction item).numerator ≠ 0)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
@@ -100,8 +102,8 @@ theorem encodedProjectivePrefixExpectationBound_contains_values {ι : Type}
     (sensitive : ∀ left right,
       Distance.rationalSeparation (probe left) (probe right) ≤
         factor * Chordal.Basic.chordalSq left right) :
-    (CCL.Prefix.projectivePrefixFamilyProbeExpectationBound
-      (Approximation.CCL.EncodedPrefix.encodedProjectivePrefixDistribution distribution fraction
+    (Prefix.projectivePrefixFamilyProbeExpectationBound
+      (EncodedPrefix.encodedProjectivePrefixDistribution distribution fraction
         numeratorNonzero)
       probe factor factorNonnegative sensitive).Contains
         (distribution.expectation fun item =>
@@ -134,7 +136,7 @@ open Purelib.Measure in
 /-- Sufficient block counts for every original atom's exact encoding make the probe-expectation interval narrower than
 the positive target. -/
 theorem encodedProjectivePrefixExpectationBound_width_lt_requested {ι : Type}
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (fraction : ι → SourceEncodingEncoderFracAlias)
     (numeratorNonzero : ∀ item, (fraction item).numerator ≠ 0)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
@@ -147,8 +149,8 @@ theorem encodedProjectivePrefixExpectationBound_width_lt_requested {ι : Type}
       Budget.requiredProbeBlockCount (target / 2) factor ≤
         (Encoder.Blocks.encodeBlocks (fraction atom.item)
           (numeratorNonzero atom.item)).blocks.length) :
-    (CCL.Prefix.projectivePrefixFamilyProbeExpectationBound
-      (Approximation.CCL.EncodedPrefix.encodedProjectivePrefixDistribution distribution fraction
+    (Prefix.projectivePrefixFamilyProbeExpectationBound
+      (EncodedPrefix.encodedProjectivePrefixDistribution distribution fraction
         numeratorNonzero)
       probe factor factorPositive.le sensitive).width < target := by
   have halfPositive : (0 : Fraction.Rational) < target / 2 :=
@@ -161,24 +163,24 @@ theorem encodedProjectivePrefixExpectationBound_width_lt_requested {ι : Type}
       _ < target * 2 :=
         Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
           targetPositive (by decide)
-  rw [CCL.Prefix.projectivePrefixFamilyProbeExpectationBound_width,
-    Approximation.CCL.EncodedPrefix.encodedProjectivePrefixDistribution, distribution.map_expectation]
+  rw [Prefix.projectivePrefixFamilyProbeExpectationBound_width,
+    EncodedPrefix.encodedProjectivePrefixDistribution, distribution.map_expectation]
   calc
     distribution.expectation (fun item =>
-          2 * (factor * Approximation.CCL.Cylinder.cylinderSpread
+          2 * (factor * Cylinder.cylinderSpread
             (Cylinder.encodedProjectivePrefixCertificate
               (fraction item) (numeratorNonzero item)).blocks)) ≤
         distribution.expectation (fun _ => target / 2) := by
       apply distribution.expectation_mono
       intro atom member
-      have widthSmall := Approximation.CCL.Prefix.completedProjectivePrefixProbeBound_width_lt_requested
+      have widthSmall := Prefix.completedProjectivePrefixProbeBound_width_lt_requested
         (Encoder.Blocks.encodeBlocks (fraction atom.item)
           (numeratorNonzero atom.item)).point
         (Encoder.Blocks.encodeBlocks_realizes (fraction atom.item)
           (numeratorNonzero atom.item))
         probe factor factorPositive sensitive (target / 2) halfPositive
         (enough atom member)
-      rw [Approximation.CCL.Prefix.completedProjectivePrefixProbeBound_width] at widthSmall
+      rw [Prefix.completedProjectivePrefixProbeBound_width] at widthSmall
       exact widthSmall.le
     _ = target / 2 := distribution.expectation_constant _
     _ < target := halfSmall

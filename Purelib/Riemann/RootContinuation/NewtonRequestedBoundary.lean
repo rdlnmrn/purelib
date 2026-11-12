@@ -96,7 +96,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedHoleCentering (C
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {first second : Fin genus} {target radius :
@@ -110,19 +110,19 @@ set_option genInjectivity false in
 The selected exterior cut points remain exact, and the perimeter traces and fine-side requests consume the same retained
 energy preparation and differential comparison. -/
 structure BoundaryPreparation (preparation : NewtonPreparation original)
-    (first second : Fin genus) (target radius : Fraction.Rational) (floor : Nat) where
+    (first second : Fin genus) (target radius : Rational) (floor : Nat) where
   /-- The retained original fine-area request for one quarter of the boundary target. -/ fine :
-    Meshes.Newton.AllHoles.FineAreaRequests.FamilyFineAreaRequest preparation (target / 4) radius
+    FamilyFineAreaRequest preparation (target / 4) radius
   /-- The exact retained lift of the original requested punctured grid. -/ lifted : LiftedPuncturedGrid
     fine.family.single.grid.punctured
   /-- The original face-domain bank on the retained lift and regular faces. -/ domains :
-    Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames fine.family.single.grid.faces.regulars
+    FaceDomainBank lifted.frames fine.family.single.grid.faces.regulars
   /-- The retained original all-hole excision on the exact fine grid and lift. -/ excision :
-    Meshes.Newton.AllHoles.Excision.AllHoleExcision fine.family.single.grid lifted
+    AllHoleExcision fine.family.single.grid lifted
   /-- The retained outer preparations indexed by that exact original excision. -/ outer :
     Meshes.Newton.AllHoles.PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations excision
   /-- The retained original paired-differential comparison on those outer preparations and domains. -/ comparison :
-    Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison outer first second
+    PairedComparison outer first second
     domains
   /-- The retained original source-cut preparation for the first differential. -/ exterior :
     Meshes.PuncturedGrid.Exterior.SourceCuts.SourcePreparation domains
@@ -132,7 +132,7 @@ structure BoundaryPreparation (preparation : NewtonPreparation original)
   /-- The paid cut's point list equals the exact selected original exterior cut-point list. -/ cut_points_eq :
     paid.cut.cuts.points = exterior.selected.cuts.points
   /-- The retained perimeter traces of the exact original paid-cut energy preparation. -/ traces :
-    Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank paid.cut.exterior.prepared.energy
+    PerimeterTraceBank paid.cut.exterior.prepared.energy
   /-- The original fine-side requests on the retained comparison and exact perimeter traces. -/ sides :
     fine.SideRequests comparison traces
 
@@ -147,24 +147,24 @@ open Purelib.Data.Rat in
 The exact selected exterior cut owner is passed into the paid request; its energy cache then drives the retained trace
 bank and fine-side payment. -/
 @[expose] def build (preparation : NewtonPreparation original) (first second : Fin genus)
-    (target radius : Fraction.Rational) (positive : 0 < target) (radiusPositive : 0 < radius) (floor : Nat) :
+    (target radius : Rational) (positive : 0 < target) (radiusPositive : 0 < radius) (floor : Nat) :
     BoundaryPreparation preparation first second target radius floor :=
-  let quarterPositive := Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Fraction.Rational) < 4)
-  let fine := Meshes.Newton.AllHoles.FineAreaRequests.FamilyFineAreaRequest.build preparation (target / 4) radius
+  let quarterPositive := Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Rational) < 4)
+  let fine := FamilyFineAreaRequest.build preparation (target / 4) radius
     quarterPositive radiusPositive
   let request := fine.family
   let lifted := LiftedPuncturedGrid.build request.single.grid.punctured
-  let domains := Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank.build lifted.frames
+  let domains := FaceDomainBank.build lifted.frames
     request.single.grid.faces.regulars
-  let excision := Meshes.Newton.AllHoles.Excision.AllHoleExcision.build request.single.grid lifted
+  let excision := AllHoleExcision.build request.single.grid lifted
   let outer := Meshes.Newton.AllHoles.PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations.build excision
-  let comparison := Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison.build
+  let comparison := PairedComparison.build
     outer first second domains
   let exterior := Meshes.PuncturedGrid.Exterior.SourceCuts.SourcePreparation.build domains
     (standardDifferential first)
   let paid := PaidCutRequest.build lifted domains exterior.selected.cuts first second (target / 4) quarterPositive floor
-  let traces := Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank.build paid.cut.exterior.prepared.energy
-  let sides := Meshes.Newton.AllHoles.FineAreaRequests.FamilyFineAreaRequest.SideRequests.build comparison traces
+  let traces := PerimeterTraceBank.build paid.cut.exterior.prepared.energy
+  let sides := FamilyFineAreaRequest.SideRequests.build comparison traces
   ⟨fine, lifted, domains, excision, outer, comparison, exterior, paid, rfl, traces, sides⟩
 
 /-- The common stage meeting both original paid-cut and fine-side requests. -/
@@ -179,12 +179,12 @@ open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Gaussian in
 /-- The ordered sum of original fine-side areas minus their retained source-chord sums. -/
 @[expose] def fineCorrection (prepared : BoundaryPreparation preparation first second target radius floor)
-    {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains stage}
-    (readings : Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings prepared.paid.cut cache) :
+    {stage : Nat} {cache : Numerics prepared.domains stage}
+    (readings : CutPairingRequest.Readings prepared.paid.cut cache) :
       Basic.Canonical :=
-  Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.comparison.entries.map (fun entry =>
+  Norm.Sum.Basic.gaussianSum (prepared.comparison.entries.map (fun entry =>
     Meshes.Newton.Annulus.FineSideAreas.fineSideArea entry.source.outer readings.normalized -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      Norm.Sum.Basic.gaussianSum
       (entry.source.outer.sources.map (Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord
         readings.left readings.right))))
 
@@ -194,16 +194,16 @@ open Purelib.Data.Rat in
 open Purelib.Riemann.RootContinuation in
 /-- Later retained boundary readings meet the original target for the exact annular perimeter sum. -/
 theorem annular_perimeters_bound (prepared : BoundaryPreparation preparation first second target radius floor)
-    {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains stage}
-    (readings : Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings prepared.paid.cut cache) (later :
+    {stage : Nat} {cache : Numerics prepared.domains stage}
+    (readings : CutPairingRequest.Readings prepared.paid.cut cache) (later :
       prepared.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (NewtonSelectedPerimeters.AllHoleExcision.annularPerimeters prepared.excision
+    normSq (NewtonSelectedPerimeters.AllHoleExcision.annularPerimeters prepared.excision
       readings.normalized) ≤ target := by
   have cutLater := (Data.Nat.Order.le_max_left _ _).trans later
   have estimate := NewtonSelectedPerimeters.AllHoleExcision.annularPerimeters_bound prepared.excision
     prepared.paid.cut.exterior readings.original readings.normalized
     (prepared.paid.cut.ownership_le.trans cutLater)
-  have quarterPositive {value : Fraction.Rational} (h : 0 < value) : 0 < value / 4 :=
+  have quarterPositive {value : Rational} (h : 0 < value) : 0 < value / 4 :=
     Fraction.Order.Field.div_pos_direct h (by decide)
   have positive := prepared.paid.positive
   have small := (Fraction.Order.Field.divide_le_self (denominator := 4)
@@ -215,7 +215,7 @@ theorem annular_perimeters_bound (prepared : BoundaryPreparation preparation fir
         (Fraction.Order.Field.divide_le_self (denominator := 4) positive.le (by decide))))
   have requested : target / 4 ≤ target := by
     have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (by decide : (1 : Fraction.Rational) ≤ 4) prepared.fine.positive.le
+      (by decide : (1 : Rational) ≤ 4) prepared.fine.positive.le
     rw [one_mul, mul_comm] at scaled
     exact scaled.trans_eq (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))
   exact estimate.trans (small.trans (prepared.paid.cutTarget_le.trans requested))
@@ -226,10 +226,10 @@ open Purelib.Data.Gaussian
 open Purelib.Riemann.RootContinuation
 /-- Later retained boundary readings meet a quarter target for the original selected boundary correction. -/
 theorem annular_selected_boundary_bound (prepared : BoundaryPreparation preparation first second target radius floor)
-    {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains stage}
-    (readings : Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings prepared.paid.cut cache) (later :
+    {stage : Nat} {cache : Numerics prepared.domains stage}
+    (readings : CutPairingRequest.Readings prepared.paid.cut cache) (later :
       prepared.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Meshes.PuncturedGrid.SelectedCutBoundary.Readings.selectedCorrection readings
+    normSq (Meshes.PuncturedGrid.SelectedCutBoundary.Readings.selectedCorrection readings
       (NewtonSelectedPerimeters.AllHoleExcision.fineMask prepared.excision)) ≤ target / 4 :=
   (Meshes.PuncturedGrid.SelectedCutBoundary.Readings.selected_corrected_bound readings
     (NewtonSelectedPerimeters.AllHoleExcision.fineMask prepared.excision) ((Data.Nat.Order.le_max_left _ _).trans
@@ -241,19 +241,19 @@ theorem annular_selected_boundary_bound (prepared : BoundaryPreparation preparat
 The bounds separately retain remaining area, fine correction, fine residual, annular perimeters, selected correction and
 selected boundary remainder on the same original preparation. -/
 @[expose] def Readings (prepared : BoundaryPreparation preparation first second target radius floor)
-    {stage : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains stage) :=
-  (readings : Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings prepared.paid.cut cache) ×
+    {stage : Nat} (cache : Numerics prepared.domains stage) :=
+  (readings : CutPairingRequest.Readings prepared.paid.cut cache) ×
     { cached : CutAnnularReadings prepared.comparison readings //
-      Data.Gaussian.Norm.Basic.normSq (cached.remaining.remainingArea + cached.correction) < target ∧
-        Data.Gaussian.Norm.Basic.normSq (prepared.fineCorrection readings) < target / 4 ∧
-        Data.Gaussian.Norm.Basic.normSq
+      normSq (cached.remaining.remainingArea + cached.correction) < target ∧
+        normSq (prepared.fineCorrection readings) < target / 4 ∧
+        normSq
           (Meshes.Newton.AllHoles.FineTransport.FamilyAreaRequest.PairedComparison.SewnSample.fineResidual
           cached.annuli) < target ∧
-        Data.Gaussian.Norm.Basic.normSq (NewtonSelectedPerimeters.AllHoleExcision.annularPerimeters prepared.excision
+        normSq (NewtonSelectedPerimeters.AllHoleExcision.annularPerimeters prepared.excision
           readings.normalized) ≤ target ∧
-        Data.Gaussian.Norm.Basic.normSq (Meshes.PuncturedGrid.SelectedCutBoundary.Readings.selectedCorrection readings
+        normSq (Meshes.PuncturedGrid.SelectedCutBoundary.Readings.selectedCorrection readings
           (NewtonSelectedPerimeters.AllHoleExcision.fineMask prepared.excision)) ≤ target / 4 ∧
-        Data.Gaussian.Norm.Basic.normSq (cached.annuli.selectedArea +
+        normSq (cached.annuli.selectedArea +
           Meshes.PuncturedGrid.SelectedSideRemainders.LiftedPuncturedGrid.selectedSideRemainder readings.normalized
           readings.neighbors (NewtonSelectedPerimeters.AllHoleExcision.fineMask prepared.excision)) ≤ target }
 
@@ -266,8 +266,8 @@ open Purelib.Data.Rat in
 The retained perimeter samples and lengths pay the original fine-side and cut budgets at the same sufficiently late
 stage; the input readings are returned unchanged. -/
 @[expose] def readWith (prepared : BoundaryPreparation preparation first second target radius floor)
-    {stage : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains stage)
-    (readings : Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings prepared.paid.cut cache) (later :
+    {stage : Nat} (cache : Numerics prepared.domains stage)
+    (readings : CutPairingRequest.Readings prepared.paid.cut cache) (later :
       prepared.index ≤ stage) :
     Readings prepared cache := by
   let cached := CutAnnularReadings.build prepared.comparison readings
@@ -282,7 +282,7 @@ stage; the input readings are returned unchanged. -/
     ((Data.Nat.Order.le_max_right _ _).trans later) ((Data.Nat.Order.le_max_left _ _).trans later)
   have transportPaid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
     (Fraction.Order.Arithmetic.add_le_add_direct prepared.paid.outer_paid (le_refl (target / 4)))
-    (by decide : (0 : Fraction.Rational) ≤ 2)
+    (by decide : (0 : Rational) ≤ 2)
   have totalEq : 2 * (target / 4 + target / 4) = target :=
     (show 2 * (target / 4 + target / 4) = target / 4 * 4 by ring1).trans
       (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))
@@ -290,7 +290,7 @@ stage; the input readings are returned unchanged. -/
     prepared.paid.cutTarget_le
   have selectedPaid : target / 4 ≤ target := by
     have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (by decide : (1 : Fraction.Rational) ≤ 4) prepared.fine.positive.le
+      (by decide : (1 : Rational) ≤ 4) prepared.fine.positive.le
     rw [one_mul, mul_comm] at scaled
     exact scaled.trans_eq (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))
   exact ⟨readings, cached, estimate.trans_eq totalEq, fine,
@@ -301,17 +301,17 @@ section
 open Purelib.Curves.Hyperelliptic
 /-- The retained boundary readback returns the exact original supplied cut readings. -/
 theorem readWith_cut (prepared : BoundaryPreparation preparation first second target radius floor)
-    {stage : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains stage)
-    (readings : Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings prepared.paid.cut cache) (later :
+    {stage : Nat} (cache : Numerics prepared.domains stage)
+    (readings : CutPairingRequest.Readings prepared.paid.cut cache) (later :
       prepared.index ≤ stage) :
     (prepared.readWith cache readings later).1 = readings := rfl
 
 /-- Build the original cut readings at a sufficient stage and retain their full paid boundary readback. -/
 @[expose] def readAt (prepared : BoundaryPreparation preparation first second target radius floor)
-    {stage : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains stage)
+    {stage : Nat} (cache : Numerics prepared.domains stage)
       (later : prepared.index ≤ stage) :
     Readings prepared cache :=
-  prepared.readWith cache (Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings.build prepared.paid.cut
+  prepared.readWith cache (CutPairingRequest.Readings.build prepared.paid.cut
     cache) later
 
 end
@@ -320,7 +320,7 @@ open Purelib.Curves.Hyperelliptic in
 open Purelib.Data in
 /-- Acquire the exact original differential-bank cache at the retained common stage and its paid boundary readings. -/
 @[expose] def acquire (prepared : BoundaryPreparation preparation first second target radius floor) :
-    (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains prepared.index) × Readings
+    (cache : Numerics prepared.domains prepared.index) × Readings
       prepared cache :=
   let cache := Vector.DependentVector.ofFn fun row =>
     Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank.build (standardDifferential row) prepared.index
@@ -331,7 +331,7 @@ open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Rat in
 /-- Sample primitives for the exact retained original paired comparison at the requested positive error. -/
 @[expose] def samplePrimitives (prepared : BoundaryPreparation preparation first second target radius floor)
-    (error : Fraction.Rational) (positive : 0 < error) :=
+    (error : Rational) (positive : 0 < error) :=
   Meshes.Newton.AllHoles.PrimitiveSamples.PairedComparison.samplePrimitives prepared.comparison error positive
 
 end BoundaryPreparation

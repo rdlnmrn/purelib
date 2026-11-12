@@ -75,6 +75,18 @@ constructive_injectivity RootChain
 
 namespace RootChain
 
+/-- Read the actual retained endpoint comparison from an empty root chain.
+
+This view preserves the original comparison value and both endpoint
+names. Consumers can read it without matching the indexed chain in their
+own dependent cache types.
+-/
+def emptyEquivalent {first last : Named}
+    (roots : RootChain (curve := curve) (differential := differential) [] first last) :
+    NamedEquivalent first last :=
+  match roots with
+  | .nil equivalent => equivalent
+
 open Purelib.Approximation.Gaussian in
 /-- Compose a retained incoming name equivalence with the first comparison of the original root chain. -/
 def changeStart : ∀ {children : List (CenteredEdge curve differential)} {first middle last : Named},
@@ -88,6 +100,60 @@ def append : ∀ {firstChildren secondChildren : List (CenteredEdge curve differ
       RootChain secondChildren middle last → RootChain (firstChildren ++ secondChildren) first last
   | [], _, _, _, _, .nil equivalent, second => second.changeStart equivalent
   | _ :: _, _, _, _, _, .cons child entry tail, second => .cons child entry (tail.append second)
+
+/-- Read the original incoming comparison at the first retained parent without rebuilding the root chain. -/
+def firstEquivalent {parent : CenteredEdge curve differential} {parents : List (CenteredEdge curve differential)}
+    {first last : Named} (roots : RootChain (parent :: parents) first last) :
+    NamedEquivalent first (parent.edge.rootName 0 parent.edge.baseInside) :=
+  match roots with
+  | .cons _ entry _ => entry
+
+/-- Read the unchanged original root-chain tail starting at the actual first parent's finish query. -/
+def remaining {parent : CenteredEdge curve differential} {parents : List (CenteredEdge curve differential)}
+    {first last : Named} (roots : RootChain (parent :: parents) first last) :
+    RootChain parents (parent.edge.rootName 1 (by decide)) last :=
+  match roots with
+  | .cons _ _ tail => tail
+
+/-- Read the actual adjacent finish-to-start comparison at the next retained original parent. -/
+def nextEquivalent {parent next : CenteredEdge curve differential}
+    {parents : List (CenteredEdge curve differential)} {first last : Named}
+    (roots : RootChain (parent :: next :: parents) first last) :
+    NamedEquivalent (parent.edge.rootName 1 (by decide)) (next.edge.rootName 0 next.edge.baseInside) :=
+  match roots with
+  | .cons _ _ (.cons _ entry _) => entry
+
+/-- Read the retained terminal comparison after the sole remaining original parent. -/
+def finishEquivalent {parent : CenteredEdge curve differential} {first last : Named}
+    (roots : RootChain [parent] first last) :
+    NamedEquivalent (parent.edge.rootName 1 (by decide)) last :=
+  match roots with
+  | .cons _ _ (.nil finish) => finish
+
+/-- Read the original final comparison through the unchanged actual prefix of a retained root chain.
+
+The last parent is a nominal index and before is its exact original list
+prefix. Recursion only reads RootChain.remaining; it constructs no parent,
+root query, approximation name or continuation. The singleton case returns
+the already retained finishEquivalent comparison unchanged.
+-/
+def lastEquivalent {parent : CenteredEdge curve differential} :
+    (before : List (CenteredEdge curve differential)) →
+    {first last : Named} → RootChain (before ++ [parent]) first last →
+      NamedEquivalent (parent.edge.rootName 1 (by decide)) last
+  | [], _, _, roots => roots.finishEquivalent
+  | _ :: before, _, _, roots => lastEquivalent before roots.remaining
+termination_by structural before => before
+
+/-- An empty prefix returns the entire original singleton finishing comparison unchanged. -/
+theorem lastEquivalent_nil {parent : CenteredEdge curve differential} {first last : Named}
+    (roots : RootChain [parent] first last) : lastEquivalent [] roots = roots.finishEquivalent := by rfl
+
+/-- Dropping one actual prefix constructor retains the identical original tail and its final comparison. -/
+theorem lastEquivalent_cons {parent head : CenteredEdge curve differential}
+    (before : List (CenteredEdge curve differential)) {first last : Named}
+    (roots : RootChain (head :: before ++ [parent]) first last) :
+    lastEquivalent (head :: before) roots = lastEquivalent before roots.remaining := by rfl
 
 end RootChain
 

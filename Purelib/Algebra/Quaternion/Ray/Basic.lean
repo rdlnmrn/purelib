@@ -9,6 +9,8 @@ import Purelib.LinearAlgebra.Coordinates3.Vector
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Algebra.Field.ExplicitOrder
+
 open Purelib.Algebra.Field
 
 open Purelib.Algebra.Field.ExplicitOrder.Basic
@@ -66,7 +68,7 @@ theorem proportion_norm_pos_of_isNonzero (proportion : Proportion F)
       · have rPositive : 0 < proportion.vector.r ^ 2 := by
           simpa only [pow_two] using
             OrderedExplicitField.mul_self_pos_direct rZero
-        have withS := Purelib.Algebra.Field.ExplicitOrder.Sign.RayOrderedExplicitField.add_square_pos (value :=
+        have withS := Sign.RayOrderedExplicitField.add_square_pos (value :=
           proportion.vector.s) rPositive
         unfold Proportion.norm Vector3.quadrance Vector3.dot
         rw [scalarZero, tZero]
@@ -75,9 +77,9 @@ theorem proportion_norm_pos_of_isNonzero (proportion : Proportion F)
     · have tPositive : 0 < proportion.vector.t ^ 2 := by
         simpa only [pow_two] using
           OrderedExplicitField.mul_self_pos_direct tZero
-      have withR := Purelib.Algebra.Field.ExplicitOrder.Sign.RayOrderedExplicitField.add_square_pos (value :=
+      have withR := Sign.RayOrderedExplicitField.add_square_pos (value :=
         proportion.vector.r) tPositive
-      have withS := Purelib.Algebra.Field.ExplicitOrder.Sign.RayOrderedExplicitField.add_square_pos (value :=
+      have withS := Sign.RayOrderedExplicitField.add_square_pos (value :=
         proportion.vector.s) withR
       unfold Proportion.norm Vector3.quadrance Vector3.dot
       rw [scalarZero]
@@ -86,11 +88,11 @@ theorem proportion_norm_pos_of_isNonzero (proportion : Proportion F)
   · have scalarPositive : 0 < proportion.scalar ^ 2 := by
       simpa only [pow_two] using
         OrderedExplicitField.mul_self_pos_direct scalarZero
-    have withT := Purelib.Algebra.Field.ExplicitOrder.Sign.RayOrderedExplicitField.add_square_pos (value :=
+    have withT := Sign.RayOrderedExplicitField.add_square_pos (value :=
       proportion.vector.t) scalarPositive
-    have withR := Purelib.Algebra.Field.ExplicitOrder.Sign.RayOrderedExplicitField.add_square_pos (value :=
+    have withR := Sign.RayOrderedExplicitField.add_square_pos (value :=
       proportion.vector.r) withT
-    have withS := Purelib.Algebra.Field.ExplicitOrder.Sign.RayOrderedExplicitField.add_square_pos (value :=
+    have withS := Sign.RayOrderedExplicitField.add_square_pos (value :=
       proportion.vector.s) withR
     unfold Proportion.norm Vector3.quadrance Vector3.dot
     simpa only [pow_two, add_assoc] using withS
@@ -103,7 +105,7 @@ The ordered positivity laws show its retained norm is positive and hence nonzero
     (nonzero : proportion.IsNonzero) : NonNullProportion F where
   toProportion := proportion
   normNonzero := RayOrderedExplicitField.positive_ne_zero_direct
-    (Ray.Basic.proportion_norm_pos_of_isNonzero proportion nonzero)
+    (proportion_norm_pos_of_isNonzero proportion nonzero)
 
 set_option genInjectivity false in
 /-- A displayed non-null quaternion representative with oriented ray equivalence.
@@ -126,7 +128,7 @@ The ordered positivity certificate makes its original norm nonzero. -/
 @[expose] def ofNonzero (proportion : Proportion F) (nonzero :
   proportion.IsNonzero) :
     RayProportion F :=
-  ⟨Ray.Basic.nonNullProportionOfNonzero proportion nonzero⟩
+  ⟨nonNullProportionOfNonzero proportion nonzero⟩
 
 section
 open Purelib.Algebra.Quaternion.Ray.Basic
@@ -202,7 +204,7 @@ Positivity provides the nonzero certificate required by the underlying projectiv
 theorem equivalent_scale (factor : F) (factorPositive : 0 <
   factor)
     (proportion : RayProportion F) :
-    proportion.Equivalent (RayProportion.scale factor factorPositive proportion) := by
+    proportion.Equivalent (scale factor factorPositive proportion) := by
   exact ⟨factor, factorPositive, rfl⟩
 
 /-- Construct the opposite ray by multiplying its coordinates by negative one. -/
@@ -214,7 +216,7 @@ theorem equivalent_scale (factor : F) (factorPositive : 0 <
 /-- The opposite ray retains the original proportion scaled by negative one. -/
 @[simp] theorem neg_toProportion (proportion : RayProportion
   F) :
-    (RayProportion.neg proportion).toNonNullProportion.toProportion =
+    (neg proportion).toNonNullProportion.toProportion =
       Proportion.scale (-1) proportion.toNonNullProportion.toProportion :=
   rfl
 
@@ -238,13 +240,13 @@ private theorem scale_factor_injective
           apply Proportion.ext
           · exact scalarZero
           · exact Vector3.ext tZero rZero sZero
-        · apply ExplicitOrder.Sign.RayOrderedExplicitField.eq_of_mul_right_eq sZero
+        · apply Sign.RayOrderedExplicitField.eq_of_mul_right_eq sZero
           exact congrArg (fun value => value.vector.s) equal
-      · apply ExplicitOrder.Sign.RayOrderedExplicitField.eq_of_mul_right_eq rZero
+      · apply Sign.RayOrderedExplicitField.eq_of_mul_right_eq rZero
         exact congrArg (fun value => value.vector.r) equal
-    · apply ExplicitOrder.Sign.RayOrderedExplicitField.eq_of_mul_right_eq tZero
+    · apply Sign.RayOrderedExplicitField.eq_of_mul_right_eq tZero
       exact congrArg (fun value => value.vector.t) equal
-  · apply ExplicitOrder.Sign.RayOrderedExplicitField.eq_of_mul_right_eq scalarZero
+  · apply Sign.RayOrderedExplicitField.eq_of_mul_right_eq scalarZero
     exact congrArg Proportion.scalar equal
 
 section
@@ -256,7 +258,7 @@ theorem not_equivalent_neg (proportion : RayProportion F) :
     ¬ proportion.Equivalent proportion.neg := open Purelib.Algebra.Quaternion.Ray.Basic in by
   rintro ⟨factor, factorPositive, negValue⟩
   have factorEqual : factor = -1 := by
-    apply RayProportion.scale_factor_injective proportion.toNonNullProportion.toProportion
+    apply scale_factor_injective proportion.toNonNullProportion.toProportion
       proportion.toNonNullProportion.isNonzero
     calc
       Proportion.scale factor proportion.toNonNullProportion.toProportion =
@@ -275,7 +277,7 @@ theorem not_equivalent_neg (proportion : RayProportion F) :
 
 /-- Multiplication of displayed ray representatives is associative. -/
 theorem mul_assoc (first second third : RayProportion F) :
-    RayProportion.mul (RayProportion.mul first second) third = RayProportion.mul first (RayProportion.mul second third)
+    mul (mul first second) third = mul first (mul second third)
       := by
   apply RayProportion.ext
   exact NonNullProportion.mul_assoc first.toNonNullProportion
@@ -288,7 +290,7 @@ theorem mul_respects_equivalent
     {left left' right right' : RayProportion F}
     (leftEquivalent : left.Equivalent left')
     (rightEquivalent : right.Equivalent right') :
-    (RayProportion.mul left right).Equivalent (RayProportion.mul left' right') := by
+    (mul left right).Equivalent (mul left' right') := by
   rcases leftEquivalent with ⟨leftFactor, leftPositive, leftValue⟩
   rcases rightEquivalent with ⟨rightFactor, rightPositive, rightValue⟩
   refine ⟨leftFactor * rightFactor,
@@ -308,13 +310,13 @@ The ordered unit positivity certifies its nonzero norm. -/
     { toProportion := Proportion.identity
       normNonzero := by
         unfold Proportion.norm Proportion.identity
-        rw [Purelib.LinearAlgebra.Coordinates3.Vector.quadrance_zero]
+        rw [LinearAlgebra.Coordinates3.Vector.quadrance_zero]
         simpa only [one_pow, add_zero] using
           RayOrderedExplicitField.one_ne_zero (F := F) }
 
 /-- The identity ray is an exact left identity for multiplication. -/
 @[simp] theorem identity_mul (proportion : RayProportion F) :
-    RayProportion.mul RayProportion.identity proportion = proportion := by
+    mul identity proportion = proportion := by
   apply RayProportion.ext
   apply NonNullProportion.ext (K := F)
   · exact congrArg Proportion.scalar
@@ -324,7 +326,7 @@ The ordered unit positivity certifies its nonzero norm. -/
 
 /-- The identity ray is an exact right identity for multiplication. -/
 @[simp] theorem mul_identity (proportion : RayProportion F) :
-    RayProportion.mul proportion RayProportion.identity = proportion := by
+    mul proportion identity = proportion := by
   apply RayProportion.ext
   apply NonNullProportion.ext (K := F)
   · exact congrArg Proportion.scalar
@@ -344,7 +346,7 @@ open Purelib.Algebra.Quaternion in
 /-- The original proportion retained by every ray has positive norm. -/
 theorem norm_positive (proportion : RayProportion F) :
     0 < proportion.toNonNullProportion.toProportion.norm :=
-  Ray.Basic.proportion_norm_pos_of_isNonzero _ proportion.toNonNullProportion.isNonzero
+  proportion_norm_pos_of_isNonzero _ proportion.toNonNullProportion.isNonzero
 
 open Purelib.Algebra.Quaternion.Ray.Basic
 /-- A ray times its conjugate is positively equivalent to the identity.
@@ -352,8 +354,8 @@ open Purelib.Algebra.Quaternion.Ray.Basic
 The original positive norm supplies the homogeneous factor. -/
 theorem mul_conjugate_equivalent_identity (proportion :
   RayProportion F) :
-    (RayProportion.mul proportion proportion.conjugate).Equivalent RayProportion.identity := by
-  apply RayProportion.equivalent_symm
+    (mul proportion proportion.conjugate).Equivalent identity := by
+  apply equivalent_symm
   refine ⟨proportion.toNonNullProportion.toProportion.norm,
     proportion.norm_positive, ?_⟩
   exact Proportion.mul_conjugate proportion.toNonNullProportion.toProportion
@@ -363,8 +365,8 @@ theorem mul_conjugate_equivalent_identity (proportion :
 The original positive norm supplies the homogeneous factor. -/
 theorem conjugate_mul_equivalent_identity (proportion :
   RayProportion F) :
-    (RayProportion.mul proportion.conjugate proportion).Equivalent RayProportion.identity := by
-  apply RayProportion.equivalent_symm
+    (mul proportion.conjugate proportion).Equivalent identity := by
+  apply equivalent_symm
   refine ⟨proportion.toNonNullProportion.toProportion.norm,
     proportion.norm_positive, ?_⟩
   exact Proportion.conjugate_mul proportion.toNonNullProportion.toProportion
@@ -461,17 +463,17 @@ theorem equivalent_or_neg_equivalent_of_projectivelyEquivalent
 
 /-- The opposite of the unit ray, represented by scalar negative one and zero vector. -/
 @[expose] def negativeIdentity : RayProportion F :=
-  RayProportion.neg RayProportion.identity
+  neg identity
 
 /-- The negative identity ray is not positively equivalent to the identity. -/
 theorem negativeIdentity_distinct :
-    ¬ (RayProportion.identity : RayProportion F).Equivalent RayProportion.negativeIdentity :=
-  RayProportion.not_equivalent_neg (RayProportion.identity : RayProportion F)
+    ¬ (identity : RayProportion F).Equivalent negativeIdentity :=
+  not_equivalent_neg (identity : RayProportion F)
 
 /-- The negative identity ray squares exactly to the identity representative. -/
 theorem negativeIdentity_square :
-    RayProportion.mul (RayProportion.negativeIdentity : RayProportion F) RayProportion.negativeIdentity =
-      RayProportion.identity := open Purelib.LinearAlgebra.Coordinates3 renaming Vector -> Vector3 in by
+    mul (negativeIdentity : RayProportion F) negativeIdentity =
+      identity := open Purelib.LinearAlgebra.Coordinates3 renaming Vector -> Vector3 in by
   have raw : Proportion.mul
       (Proportion.scale (-1) Proportion.identity)
       (Proportion.scale (-1) Proportion.identity) =
@@ -491,8 +493,8 @@ theorem negativeIdentity_square :
 /-- Multiplication by the negative identity negates every ray representative on either side. -/
 theorem negativeIdentity_central (proportion : RayProportion
   F) :
-    RayProportion.mul RayProportion.negativeIdentity proportion = proportion.neg ∧
-      RayProportion.mul proportion RayProportion.negativeIdentity = proportion.neg := open
+    mul negativeIdentity proportion = proportion.neg ∧
+      mul proportion negativeIdentity = proportion.neg := open
         Purelib.LinearAlgebra.Coordinates3 renaming Vector -> Vector3 in by
   have leftRaw :
       Proportion.mul (Proportion.scale (-1) Proportion.identity)
@@ -539,7 +541,7 @@ open Purelib.Algebra.Quaternion in
 The rational ray-order instance supplies the sign and positivity decisions without normalizing coordinates to unit norm.
 -/
 @[expose] def groupLaws : RayProportionGroupLaws
-  Fraction.Rational := Ray.Basic.rayProportionGroupLaws
+  Fraction.Rational := rayProportionGroupLaws
 
 end RationalRayModel
 

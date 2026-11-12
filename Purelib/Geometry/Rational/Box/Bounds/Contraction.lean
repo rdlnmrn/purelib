@@ -61,7 +61,7 @@ theorem diagonalSq_le_four_ninths {child parent :
   have scaleSquare : (2 / 3 : Fraction.Rational) ^ 2 = 4 / 9 := by
     decide
   calc
-    child.diagonalSq = child.widthX ^ 2 + child.widthY ^ 2 := rfl
+    child.diagonalSq = child.widthX ^ 2 + child.widthY ^ 2 := child.diagonalSq_eq_original
     _ ≤ ((2 / 3 : Fraction.Rational) * parent.widthX) ^ 2 +
           ((2 / 3 : Fraction.Rational) * parent.widthY) ^ 2 :=
       add_le_add squareX squareY
@@ -69,7 +69,7 @@ theorem diagonalSq_le_four_ninths {child parent :
           (parent.widthX ^ 2 + parent.widthY ^ 2) := by
       ring1
     _ = (4 / 9 : Fraction.Rational) * parent.diagonalSq := by
-      rw [scaleSquare]
+      rewrite [scaleSquare, diagonalSq_eq_original]
       rfl
 end Purelib.Geometry.Rational.Box.Bounds.Contraction
 

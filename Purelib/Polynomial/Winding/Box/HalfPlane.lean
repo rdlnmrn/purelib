@@ -21,6 +21,8 @@ import Purelib.Polynomial.Dense.Rational.CauchyIndex.Basic
 import Purelib.Polynomial.Dense.Rational.CauchyIndex.Path
 import Purelib.Polynomial.Dense.Rational.Pair.Path.Basic
 
+open Purelib.Polynomial.Dense.Gaussian.Path
+
 open Purelib.Data
 
 open Purelib.Geometry.Rational
@@ -52,12 +54,12 @@ theorem quadrupledBoxWinding_eq_zero_of_positive_real
     (realPositive : ∀ z : Gaussian.Basic.Canonical,
       Box.Boundary.OnBoxBoundary box z →
         0 < (p.eval z).re) :
-    Winding.Box.Basic.quadrupledBoxWinding p box = 0 := by
+    Basic.quadrupledBoxWinding p box = 0 := by
   have bottom := Dense.Rational.CauchyIndex.HalfPlane.formula_of_positive_real
     (Clearance.Box.Boundary.Lines.bottomOfBoundary
       clearance).toPathCertificate proper.1 (by
         intro x inside
-        rw [Dense.Gaussian.Path.Components.eval_pathReal, Affine.Axis.line_horizontal]
+        rw [Components.eval_pathReal, Affine.Axis.line_horizontal]
         exact realPositive (Gaussian.Basic.point x box.yLower)
           ⟨⟨inside.1, inside.2, le_rfl, box.y_valid⟩,
             Or.inr (Or.inr (Or.inl rfl))⟩)
@@ -65,7 +67,7 @@ theorem quadrupledBoxWinding_eq_zero_of_positive_real
     (Clearance.Box.Boundary.Lines.rightOfBoundary
       clearance).toPathCertificate proper.2 (by
         intro y inside
-        rw [Dense.Gaussian.Path.Components.eval_pathReal, Affine.Axis.line_vertical]
+        rw [Components.eval_pathReal, Affine.Axis.line_vertical]
         exact realPositive (Gaussian.Basic.point box.xUpper y)
           ⟨⟨box.x_valid, le_rfl, inside.1, inside.2⟩,
             Or.inr (Or.inl rfl)⟩)
@@ -73,7 +75,7 @@ theorem quadrupledBoxWinding_eq_zero_of_positive_real
     (Clearance.Box.Boundary.Lines.topOfBoundary
       clearance).toPathCertificate proper.1 (by
         intro x inside
-        rw [Dense.Gaussian.Path.Components.eval_pathReal, Affine.Axis.line_horizontal]
+        rw [Components.eval_pathReal, Affine.Axis.line_horizontal]
         exact realPositive (Gaussian.Basic.point x box.yUpper)
           ⟨⟨inside.1, inside.2, box.y_valid, le_rfl⟩,
             Or.inr (Or.inr (Or.inr rfl))⟩)
@@ -81,21 +83,22 @@ theorem quadrupledBoxWinding_eq_zero_of_positive_real
     (Clearance.Box.Boundary.Lines.leftOfBoundary
       clearance).toPathCertificate proper.2 (by
         intro y inside
-        rw [Dense.Gaussian.Path.Components.eval_pathReal, Affine.Axis.line_vertical]
+        rw [Components.eval_pathReal, Affine.Axis.line_vertical]
         exact realPositive (Gaussian.Basic.point box.xLower y)
           ⟨⟨le_rfl, box.x_valid, inside.1, inside.2⟩, Or.inl rfl⟩)
   have top := topIncreasing.reverse
   have left := leftIncreasing.reverse
   unfold Dense.Rational.CauchyIndex.HalfPlane.Formula at bottom right top left
-  simp only [Dense.Gaussian.Path.Components.eval_pathReal,
-    Dense.Gaussian.Path.Components.eval_pathImag,
+  simp only [Components.eval_pathReal,
+    Components.eval_pathImag,
     Affine.Axis.line_horizontal] at bottom top
-  simp only [Dense.Gaussian.Path.Components.eval_pathReal,
-    Dense.Gaussian.Path.Components.eval_pathImag,
+  simp only [Components.eval_pathReal,
+    Components.eval_pathImag,
     Affine.Axis.line_vertical] at right left
-  rw [Winding.Box.Basic.quadrupledBoxWinding_eq]
-  simp only [Dense.Gaussian.Path.Box.Sides.horizontalEdge, Dense.Gaussian.Path.Box.Sides.verticalEdge,
-    Dense.Rational.Pair.Path.Basic.PolynomialEdge.doubledWinding, Dense.Rational.Pair.Path.Basic.PolynomialEdge.ofLine]
+  rw [Basic.quadrupledBoxWinding_eq]
+  simp only [Box.Sides.horizontalEdge, Box.Sides.verticalEdge,
+    Dense.Rational.Pair.Path.Basic.PolynomialEdge.doubledWinding, Dense.Rational.Pair.Path.Basic.PolynomialEdge.ofLine,
+    Components.pathParts_eq]
   rw [bottom, right, top, left]
   ring1
 

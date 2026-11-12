@@ -185,7 +185,7 @@ sample's strict sign across the whole request. -/
       ProfileRelation analysis)
     (member : entry ∈ analysis.profile.relations)
     (epsilon : Fraction.Rational) (positive : 0 < epsilon)
-    (epsilonLe : epsilon ≤ Curve.Event.Profile.Sign.profileSignWidth analysis)
+    (epsilonLe : epsilon ≤ Sign.profileSignWidth analysis)
     (sample : Fraction.Rational)
     (sampleInside : (leaf.request epsilon).cell.interval.Contains sample) :
     RootConditionClassification leaf entry epsilon := by
@@ -201,13 +201,13 @@ sample's strict sign across the whole request. -/
       have apartWidthLe : epsilon ≤
           ProfileEventLeaf.apartSignWidth analysis condition apart :=
         epsilonLe.trans
-          (Curve.Event.Profile.Sign.profileSignWidth_le_apart analysis condition apart member)
+          (Sign.profileSignWidth_le_apart analysis condition apart member)
       have sampleStable := leaf.condition_eval_mul_pos_of_le condition apart
         epsilon positive apartWidthLe sampleInside sampleInside
       by_cases sampleNegative : condition.eval sample < 0
       · exact .negative (by
           intro parameter parameterInside
-          exact Purelib.Data.Rat.Fraction.Order.Arithmetic.negative_of_mul_pos_right_neg
+          exact Fraction.Order.Arithmetic.negative_of_mul_pos_right_neg
             (leaf.condition_eval_mul_pos_of_le condition apart epsilon positive
               apartWidthLe parameterInside sampleInside)
             sampleNegative)
@@ -222,7 +222,7 @@ sample's strict sign across the whole request. -/
           lt_of_le_of_ne sampleNonnegative (Ne.symm sampleNonzero)
         exact .nonnegative (by
           intro parameter parameterInside _factorZero
-          exact (Purelib.Data.Rat.Fraction.Order.Arithmetic.positive_of_mul_pos_right_pos
+          exact (Fraction.Order.Arithmetic.positive_of_mul_pos_right_pos
             (leaf.condition_eval_mul_pos_of_le condition apart epsilon positive
               apartWidthLe parameterInside sampleInside)
             samplePositive).le)
@@ -271,7 +271,7 @@ sublist whose entries come from the complete profile. -/
     {analysis : SourcePersistentConditionProfilesProfileAnalysisAlias factorAnalysis}
     (leaf : ProfileEventLeaf analysis)
     (epsilon : Fraction.Rational) (positive : 0 < epsilon)
-    (epsilonLe : epsilon ≤ Curve.Event.Profile.Sign.profileSignWidth analysis)
+    (epsilonLe : epsilon ≤ Sign.profileSignWidth analysis)
     (sample : Fraction.Rational)
     (sampleInside : (leaf.request epsilon).cell.interval.Contains sample) :
     ∀ (relations : List (ProfileRelation analysis)),
@@ -339,7 +339,7 @@ theorem relationsNonnegativeAt_iff_listedHolds
       Curve.Box.ListedHolds
         chart.parameterization.curve box parameter := by
   let predicate := fun condition :
-      Polynomial.Dense.BoundaryFactorization.CoefficientPolynomial =>
+      Dense.BoundaryFactorization.CoefficientPolynomial =>
         0 ≤ condition.eval parameter
   have mapped : RelationsNonnegativeAt analysis parameter ↔
       Data.List.Forall predicate (analysis.profile.relations.map Sigma.fst) := by
@@ -408,7 +408,7 @@ parameter in the profile-wide request. -/
     {analysis : SourcePersistentConditionProfilesProfileAnalysisAlias factorAnalysis}
     (leaf : ProfileEventLeaf analysis)
     (epsilon : Fraction.Rational) (positive : 0 < epsilon)
-    (epsilonLe : epsilon ≤ Curve.Event.Profile.Sign.profileSignWidth analysis)
+    (epsilonLe : epsilon ≤ Sign.profileSignWidth analysis)
     (sample : Fraction.Rational)
     (sampleInside : (leaf.request epsilon).cell.interval.Contains sample) :
     ProfileEventBoxClassification leaf epsilon := by
@@ -438,13 +438,13 @@ denominator choice is needed to determine the profile-root signs. -/
       gcdDegreePositive}
     {analysis : SourcePersistentConditionProfilesProfileAnalysisAlias factorAnalysis}
     (leaf : ProfileEventLeaf analysis) :
-    ProfileEventBoxClassification leaf (Curve.Event.Profile.Sign.profileSignWidth
+    ProfileEventBoxClassification leaf (Sign.profileSignWidth
       analysis) :=
-  classifyProfileEventBox leaf (Curve.Event.Profile.Sign.profileSignWidth analysis)
-    (Curve.Event.Profile.Sign.profileSignWidth_pos analysis) le_rfl
-    (leaf.request (Curve.Event.Profile.Sign.profileSignWidth analysis)).cell.interval.lower
+  classifyProfileEventBox leaf (Sign.profileSignWidth analysis)
+    (Sign.profileSignWidth_pos analysis) le_rfl
+    (leaf.request (Sign.profileSignWidth analysis)).cell.interval.lower
     ⟨le_rfl,
-      (leaf.request (Curve.Event.Profile.Sign.profileSignWidth analysis)).cell.proper.le⟩
+      (leaf.request (Sign.profileSignWidth analysis)).cell.proper.le⟩
 
 set_option genInjectivity false in
 /-- Affine meaning of the total profile classification.  The inside branch
@@ -497,7 +497,7 @@ root. -/
     {analysis : SourcePersistentConditionProfilesProfileAnalysisAlias factorAnalysis}
     (leaf : ProfileEventLeaf analysis)
     (epsilon : Fraction.Rational) (positive : 0 < epsilon)
-    (epsilonLe : epsilon ≤ Curve.Event.Profile.Sign.profileSignWidth analysis) :
+    (epsilonLe : epsilon ≤ Sign.profileSignWidth analysis) :
     ProfileEventAffineClassification leaf epsilon := by
   let sample := (leaf.request epsilon).cell.interval.lower
   have sampleInside : (leaf.request epsilon).cell.interval.Contains sample :=
@@ -555,11 +555,11 @@ root. -/
       gcdDegreePositive}
     {analysis : SourcePersistentConditionProfilesProfileAnalysisAlias factorAnalysis}
     (leaf : ProfileEventLeaf analysis) :
-    ProfileEventAffineClassification leaf (Curve.Event.Profile.Sign.profileSignWidth
+    ProfileEventAffineClassification leaf (Sign.profileSignWidth
       analysis) :=
-  classifyProfileEventAffine leaf (Curve.Event.Profile.Sign.profileSignWidth
+  classifyProfileEventAffine leaf (Sign.profileSignWidth
     analysis)
-    (Curve.Event.Profile.Sign.profileSignWidth_pos analysis) le_rfl
+    (Sign.profileSignWidth_pos analysis) le_rfl
 end Purelib.RootIsolation.Curve.Event.Profile.Classification
 
 end

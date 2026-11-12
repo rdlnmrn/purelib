@@ -30,6 +30,8 @@ import Purelib.RootIsolation.SquareRoot.Grid.RootFrames
 public import Purelib.Riemann.Topology.NewtonObservationSurfaceArea
 import Purelib.Tactic.Ring
 
+open Purelib.Algebra.FiniteSum.Rational.Order
+
 public section
 
 /-!
@@ -59,15 +61,15 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks (FaceDom
 open Purelib.Riemann.Topology.NewtonObservationSurfacePartition (SurfacePartition)
 open Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy (SurfacePartitions SurfaceMeshes SurfaceRequest)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : NewtonPreparation original} {target radius : Purelib.Data.Rat.Fraction.Rational} {grid : NewtonGrid
+  {preparation : NewtonPreparation original} {target radius : Rational} {grid : NewtonGrid
     preparation target radius}
   {observations : ProtectedObservations original} {frames : RootIsolation.SquareRoot.Grid.RootFrames
     grid.shrunk.prepared.grid}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
+  {domains : FaceDomainBank frames
     grid.faces.regulars} {sheet : Fin 2} {stage : Nat}
   {cache : Numerics domains stage}
 
@@ -75,14 +77,14 @@ open Purelib.Data in
 open Purelib.LinearAlgebra.Gaussian.Energy in
 /-- The original observation's numerator lower bound divided by its retained denominator scale. -/
 @[expose] def observationDensity (observations : ProtectedObservations original)
-    (coefficients : Energy.GaussianVector genus) (site : Fin genus) : Rat.Fraction.Rational :=
+    (coefficients : GaussianVector genus) (site : Fin genus) : Rational :=
   observations.energy.original.boxes.numeratorLower coefficients site /
     observations.energy.original.boxes.denominatorScale
 
 namespace SurfacePartition.LocalMeshes.Samples
 
 variable {position : Fin grid.faces.regulars.length} {partition : SurfacePartition observations grid position}
-  {meshes : Purelib.Riemann.Topology.NewtonObservationSurfaceEnergy.LocalMeshes partition domains sheet}
+  {meshes : NewtonObservationSurfaceEnergy.LocalMeshes partition domains sheet}
 
 open Purelib.Geometry.Rational.Box in
 open Purelib.LinearAlgebra.Gaussian.Energy in
@@ -97,7 +99,7 @@ Inside pieces use the retained observation cell; outside pieces have zero observ
 the same sampled affine basis. -/
 theorem observation_lower (samples : LocalMeshes.Samples meshes cache) (piece : Fin partition.cuts.boxes.length)
     (budget : AffineBasis.SurfaceBudget (samples.readings.get piece).affine)
-    (coefficients : Energy.GaussianVector genus) (face : Attachment.Face) (site : Fin genus) :
+    (coefficients : GaussianVector genus) (face : Attachment.Face) (site : Fin genus) :
     SurfacePartition.observationArea partition site piece * (observationDensity observations coefficients site / 4) ≤
       (budget.sample coefficients).affineEnergy := by
   generalize placementEq : (partition.placements.get piece).get site = placement
@@ -125,8 +127,8 @@ open Purelib.Data in
 /-- The positive observation margin divided by four and by the genus plus one.
 
 This coefficient-independent surface constant remains defined and positive for an empty basis. -/
-@[expose] def surfaceLowerConstant (observations : ProtectedObservations original) : Rat.Fraction.Rational :=
-  (observations.energy.lower / 4) / ((genus : Rat.Fraction.Rational) + 1)
+@[expose] def surfaceLowerConstant (observations : ProtectedObservations original) : Rational :=
+  (observations.energy.lower / 4) / ((genus : Rational) + 1)
 
 open Purelib.Data.Rat.Fraction.Cast in
 open Purelib.Data.Rat.Fraction.Order in
@@ -140,8 +142,8 @@ theorem surfaceLowerConstant_positive (observations : ProtectedObservations orig
 namespace SurfaceRequest
 
 variable {partitions : SurfacePartitions observations grid} {coarse : SurfaceMeshes partitions domains sheet}
-  {fixed : Purelib.Riemann.RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet} {error :
-    Purelib.Data.Rat.Fraction.Rational}
+  {fixed : RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet} {error :
+    Rational}
   {request : SurfaceRequest partitions coarse fixed error} {samples : request.Readings cache}
 
 open Purelib.Algebra in
@@ -158,44 +160,44 @@ open Purelib.Topology.BranchedCover.Double in
 
 Exact recovery of each observation area and its certified inside pieces pays the original homogeneous lower bound, with
 the finite genus factor from summing site inequalities. -/
-theorem Budget.observation_lower (budget : SurfaceRequest.Budget request samples) (coefficients : Energy.GaussianVector
+theorem Budget.observation_lower (budget : SurfaceRequest.Budget request samples) (coefficients : GaussianVector
   genus)
     (face : Attachment.Face) :
     observations.energy.lower * coefficientNormSq coefficients / 4 ≤
-      (genus : Rat.Fraction.Rational) * FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
+      (genus : Rational) * sumFin (fun position => sumFin (fun piece =>
         (((budget.entries.get position).get piece).sample coefficients).affineEnergy)) := by
   have siteBound (site : Fin genus) :
       observations.energy.area * (observationDensity observations coefficients site / 4) ≤
-        FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece => (((budget.entries.get position).get
+        sumFin (fun position => sumFin (fun piece => (((budget.entries.get position).get
           piece).sample coefficients).affineEnergy)) := by
-    have bound := FiniteSum.Rational.Order.Positivity.sumFin_mono _ _ (fun position =>
-      FiniteSum.Rational.Order.Positivity.sumFin_mono _ _
+    have bound := Positivity.sumFin_mono _ _ (fun position =>
+      Positivity.sumFin_mono _ _
       (fun piece => Samples.observation_lower (samples.get position) piece ((budget.entries.get position).get piece)
         coefficients face site))
-    have area : FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
+    have area : sumFin (fun position => sumFin (fun piece =>
       SurfacePartition.observationArea (partitions.get position) site piece *
         (observationDensity observations coefficients site / 4))) =
         observations.energy.area * (observationDensity observations coefficients site / 4) := by
-      rw [FiniteSum.Fin.sumFin_congr (fun position => FiniteSum.Fin.sumFin_mul_right (SurfacePartition.observationArea
+      rw [sumFin_congr (fun position => sumFin_mul_right (SurfacePartition.observationArea
         (partitions.get position) site) _),
-        FiniteSum.Fin.sumFin_mul_right, Topology.NewtonObservationSurfaceArea.surface_observation_area]
+        sumFin_mul_right, surface_observation_area]
     exact (le_of_eq area.symm).trans bound
-  have bound := FiniteSum.Rational.Order.Positivity.sumFin_mono _ _ siteBound
+  have bound := Positivity.sumFin_mono _ _ siteBound
   rw [FiniteSum.Fin.Rational.sum_constant] at bound
   have original := observations.uniform_lower coefficients face
   rw [observations.energy.surfaceEnergy_eq] at original
   have divided := Arithmetic.mul_le_mul_of_nonneg_right_direct original
-    (show (0 : Rat.Fraction.Rational) ≤ (4 : Rat.Fraction.Rational)⁻¹ by decide)
-  have equal : FiniteSum.Fin.sumFin (fun site => observations.energy.area * (observationDensity observations
+    (show (0 : Rational) ≤ (4 : Rational)⁻¹ by decide)
+  have equal : sumFin (fun site => observations.energy.area * (observationDensity observations
     coefficients site / 4)) =
-      (observations.energy.area * FiniteSum.Fin.sumFin (fun site => observationDensity observations coefficients site))
-        * (4 : Rat.Fraction.Rational)⁻¹ := by
-    rw [FiniteSum.Fin.sumFin_congr (fun site => show observations.energy.area * (observationDensity observations
+      (observations.energy.area * sumFin (fun site => observationDensity observations coefficients site))
+        * (4 : Rational)⁻¹ := by
+    rw [sumFin_congr (fun site => show observations.energy.area * (observationDensity observations
       coefficients site / 4) =
-      (observations.energy.area * observationDensity observations coefficients site) * (4 : Rat.Fraction.Rational)⁻¹
+      (observations.energy.area * observationDensity observations coefficients site) * (4 : Rational)⁻¹
         from by
-        rw [Fraction.Field.div_eq_mul_inv_direct]; ring1), FiniteSum.Fin.sumFin_mul_right,
-          FiniteSum.Fin.sumFin_mul_left]
+        rw [Fraction.Field.div_eq_mul_inv_direct]; ring1), sumFin_mul_right,
+          sumFin_mul_left]
   rw [equal] at bound
   exact divided.trans bound
 
@@ -211,36 +213,36 @@ open Purelib.Topology.BranchedCover.Double in
 
 Nonnegative piece energies and the genus-plus-one denominator transfer the observation estimate for every coefficient
 vector, including an empty basis. -/
-theorem Budget.affine_lower (budget : SurfaceRequest.Budget request samples) (coefficients : Energy.GaussianVector
+theorem Budget.affine_lower (budget : SurfaceRequest.Budget request samples) (coefficients : GaussianVector
   genus)
     (face : Attachment.Face) :
     surfaceLowerConstant observations * coefficientNormSq coefficients ≤
-      FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
+      sumFin (fun position => sumFin (fun piece =>
         (((budget.entries.get position).get piece).sample coefficients).affineEnergy)) := by
-  let energy := FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
+  let energy := sumFin (fun position => sumFin (fun piece =>
     (((budget.entries.get position).get piece).sample coefficients).affineEnergy))
   have nonnegative : 0 ≤ energy := by
-    have inner (position : Fin grid.faces.regulars.length) := FiniteSum.Rational.Order.Positivity.sumFin_mono
-      (fun _ => (0 : Rat.Fraction.Rational)) _ (fun piece =>
+    have inner (position : Fin grid.faces.regulars.length) := Positivity.sumFin_mono
+      (fun _ => (0 : Rational)) _ (fun piece =>
         (samples.get position).piece_affine_nonnegative piece ((budget.entries.get position).get piece) coefficients)
-    have nonnegativeInner (position : Fin grid.faces.regulars.length) : 0 ≤ FiniteSum.Fin.sumFin (fun piece =>
+    have nonnegativeInner (position : Fin grid.faces.regulars.length) : 0 ≤ sumFin (fun piece =>
         (((budget.entries.get position).get piece).sample coefficients).affineEnergy) :=
       (FiniteSum.Fin.sumFin_zero).symm.trans_le (inner position)
     exact (FiniteSum.Fin.sumFin_zero).symm.trans_le
-      (FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ => (0 : Rat.Fraction.Rational)) _ nonnegativeInner)
-  have factorPositive : 0 < (genus : Rat.Fraction.Rational) + 1 :=
+      (Positivity.sumFin_mono (fun _ => (0 : Rational)) _ nonnegativeInner)
+  have factorPositive : 0 < (genus : Rational) + 1 :=
     Arithmetic.add_pos_of_nonneg_of_pos_direct (Order.natCast_le_direct (Nat.zero_le genus)) (by decide)
-  apply Arithmetic.le_of_mul_le_mul_right_direct (c := (genus : Rat.Fraction.Rational) + 1) _ factorPositive
+  apply Arithmetic.le_of_mul_le_mul_right_direct (c := (genus : Rational) + 1) _ factorPositive
   calc
-    _ = (surfaceLowerConstant observations * ((genus : Rat.Fraction.Rational) + 1)) * coefficientNormSq coefficients :=
+    _ = (surfaceLowerConstant observations * ((genus : Rational) + 1)) * coefficientNormSq coefficients :=
       by
       ring1
     _ = (observations.energy.lower / 4) * coefficientNormSq coefficients := by
       rw [surfaceLowerConstant, Fraction.Field.div_mul_cancel_of_ne _ _ factorPositive.ne']
     _ = observations.energy.lower * coefficientNormSq coefficients / 4 := by
       rw [Fraction.Field.div_eq_mul_inv_direct, Fraction.Field.div_eq_mul_inv_direct]; ring1
-    _ ≤ (genus : Rat.Fraction.Rational) * energy := observation_lower budget coefficients face
-    _ ≤ ((genus : Rat.Fraction.Rational) + 1) * energy := Arithmetic.mul_le_mul_of_nonneg_right_direct
+    _ ≤ (genus : Rational) * energy := observation_lower budget coefficients face
+    _ ≤ ((genus : Rational) + 1) * energy := Arithmetic.mul_le_mul_of_nonneg_right_direct
       (le_add_of_nonneg_right (by decide)) nonnegative
     _ = _ := by ring1
 
@@ -256,26 +258,26 @@ open Purelib.Topology.BranchedCover.Double in
 All regular pieces use the same numerical cache, coefficient vector and request stage. The coefficient norm multiplies
 both the original positive margin and the actual aggregate error allowance. -/
 theorem boundary_lower (request : SurfaceRequest partitions coarse fixed error) (later : request.index ≤ stage)
-    (samples : request.Readings cache) (coefficients : Energy.GaussianVector genus) (face : Attachment.Face) :
+    (samples : request.Readings cache) (coefficients : GaussianVector genus) (face : Attachment.Face) :
     (surfaceLowerConstant observations - error) * coefficientNormSq coefficients ≤
-      FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
+      sumFin (fun position => sumFin (fun piece =>
         ((((request.budget later samples).entries.get position).get piece).sample coefficients).boundaryArea.im / 4)) :=
           by
   let budget := request.budget later samples
-  have boundary := FiniteSum.Rational.Order.Positivity.sumFin_mono _ _ (fun position =>
-    FiniteSum.Rational.Order.Positivity.sumFin_mono _ _
+  have boundary := Positivity.sumFin_mono _ _ (fun position =>
+    Positivity.sumFin_mono _ _
     (fun piece => ((budget.entries.get position).get piece).energy_lower coefficients))
-  have errorSum : FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
+  have errorSum : sumFin (fun position => sumFin (fun piece =>
       coefficientNormSq coefficients * ((budget.entries.get position).get piece).total)) =
       coefficientNormSq coefficients * budget.total := by
-    rw [FiniteSum.Fin.sumFin_congr (fun position => FiniteSum.Fin.sumFin_mul_left _ (fun piece => ((budget.entries.get
+    rw [sumFin_congr (fun position => sumFin_mul_left _ (fun piece => ((budget.entries.get
       position).get piece).total)),
-      FiniteSum.Fin.sumFin_mul_left, budget.total_eq]
-  rw [FiniteSum.Fin.sumFin_congr (fun position => FiniteSum.Fin.sumFin_sub _ _),
+      sumFin_mul_left, budget.total_eq]
+  rw [sumFin_congr (fun position => FiniteSum.Fin.sumFin_sub _ _),
     FiniteSum.Fin.sumFin_sub, errorSum] at boundary
   have positive := Budget.affine_lower budget coefficients face
   have normNonnegative : 0 ≤ coefficientNormSq coefficients := by
-    have bound := FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Rat.Fraction.Rational))
+    have bound := Positivity.sumFin_mono (fun _ : Fin genus => (0 : Rational))
       (fun row => Basic.Canonical.normSq (coefficients row))
       (fun row => Basic.Canonical.normSq_nonneg (coefficients row))
     exact (FiniteSum.Fin.sumFin_zero).symm.trans_le bound

@@ -44,11 +44,11 @@ theorem progressive_eval_error_le (channels :
     (positive : 0 < target)
     (possible : Table.Reading.SharedReadingsPossible channels channels readings target
       positive) :
-    Data.Gaussian.Norm.Basic.normSq (Ascending.Gaussian.Evaluation.evalList readings input -
-        Ascending.Gaussian.Evaluation.evalList (Table.Reading.sharedCenters channels channels target positive) input) ≤
-      Ascending.Gaussian.Error.evaluationErrorBudget readings.length target (Data.Gaussian.Norm.Basic.normSq input)
+    Gaussian.Norm.Basic.normSq (Evaluation.evalList readings input -
+        Evaluation.evalList (Table.Reading.sharedCenters channels channels target positive) input) ≤
+      Error.evaluationErrorBudget readings.length target (Gaussian.Norm.Basic.normSq input)
         :=
-  Ascending.Gaussian.Error.eval_error_le readings (Table.Reading.sharedCenters channels channels target positive)
+  Error.eval_error_le readings (Table.Reading.sharedCenters channels channels target positive)
     input target (Table.Reading.sharedReadings_close channels channels readings target
       positive possible)
 
@@ -59,16 +59,16 @@ theorem progressive_eval_error_le (channels :
 The squared discrepancy from its shared centers is bounded by the finite error budget for the retained reading length,
 target allowance and input quadrance. -/
 theorem TaylorJet.mul_evaluation_error
-    (left right : Ascending.Gaussian.Progressive.Basic.TaylorJet)
+    (left right : Basic.TaylorJet)
     (readings : List Gaussian.Basic.Canonical) (input : Gaussian.Basic.Canonical) (target : Fraction.Rational)
     (positive : 0 < target)
     (possible : Table.Reading.SharedReadingsPossible
       (left.mul right).coefficients (left.mul right).coefficients readings
       target positive) :
-    Data.Gaussian.Norm.Basic.normSq (Ascending.Gaussian.Evaluation.evalList readings input -
-        Ascending.Gaussian.Evaluation.evalList (Table.Reading.sharedCenters (left.mul right).coefficients
+    Gaussian.Norm.Basic.normSq (Evaluation.evalList readings input -
+        Evaluation.evalList (Table.Reading.sharedCenters (left.mul right).coefficients
           (left.mul right).coefficients target positive) input) ≤
-      Ascending.Gaussian.Error.evaluationErrorBudget readings.length target (Data.Gaussian.Norm.Basic.normSq input)
+      Error.evaluationErrorBudget readings.length target (Gaussian.Norm.Basic.normSq input)
         :=
   progressive_eval_error_le (left.mul right).coefficients readings input
     target
@@ -79,16 +79,16 @@ theorem TaylorJet.mul_evaluation_error
 The bound uses that exact composition table's shared centers and the finite evaluation budget at the supplied positive
 allowance. -/
 theorem TaylorJet.compose_evaluation_error
-    (outer inner : Ascending.Gaussian.Progressive.Basic.TaylorJet)
+    (outer inner : Basic.TaylorJet)
     (readings : List Gaussian.Basic.Canonical) (input : Gaussian.Basic.Canonical) (target : Fraction.Rational)
     (positive : 0 < target)
     (possible : Table.Reading.SharedReadingsPossible
       (outer.compose inner).coefficients (outer.compose inner).coefficients
       readings target positive) :
-    Data.Gaussian.Norm.Basic.normSq (Ascending.Gaussian.Evaluation.evalList readings input -
-        Ascending.Gaussian.Evaluation.evalList (Table.Reading.sharedCenters (outer.compose inner).coefficients
+    Gaussian.Norm.Basic.normSq (Evaluation.evalList readings input -
+        Evaluation.evalList (Table.Reading.sharedCenters (outer.compose inner).coefficients
           (outer.compose inner).coefficients target positive) input) ≤
-      Ascending.Gaussian.Error.evaluationErrorBudget readings.length target (Data.Gaussian.Norm.Basic.normSq input)
+      Error.evaluationErrorBudget readings.length target (Gaussian.Norm.Basic.normSq input)
         :=
   progressive_eval_error_le (outer.compose inner).coefficients readings
     input

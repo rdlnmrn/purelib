@@ -69,8 +69,8 @@ theorem prime_chebyshev_period_seeds
     (primeEquation : prime = half + half + 1)
     (center : K) (centerPower : center ^ prime = center) :
     let period := half * (prime + 1)
-    Recurrence.Chebyshev.First.Basic.chebyshevFirst period center = 1 ∧
-      Recurrence.Chebyshev.First.Basic.chebyshevFirst (period + 1) center = center := by
+    Basic.chebyshevFirst period center = 1 ∧
+      Basic.chebyshevFirst (period + 1) center = center := by
   dsimp only
   have primeOdd : Data.Nat.Parity.Odd prime :=
     ⟨half, primeEquation.trans (congrArg (fun index => index + 1) (Nat.two_mul half).symm)⟩
@@ -91,14 +91,14 @@ theorem prime_chebyshev_period_seeds
           omega0
         _ = half * (half + 1) + half * (half + 1) := by
           rw [Data.Nat.Multiplication.left_distrib]
-    have squareSeeds := Recurrence.Chebyshev.First.SquareOne.chebyshevFirst_square_one periodHalf center
+    have squareSeeds := SquareOne.chebyshevFirst_square_one periodHalf center
       centerSquare
     rw [show half * (prime + 1) = periodHalf + periodHalf from periodEven]
     exact squareSeeds
   · let euler := discriminant ^ half
     have discriminantPower : discriminant ^ prime = discriminant := by
       unfold discriminant
-      exact Algebra.Field.Prime.Frobenius.square_sub_one_prime_pow prime primeIsPrime primeCastZero
+      exact Prime.Frobenius.square_sub_one_prime_pow prime primeIsPrime primeCastZero
         oneNonzero primeOdd center centerPower
     have discriminantEulerSquare :
         discriminant * euler ^ 2 = discriminant ^ prime := by
@@ -124,7 +124,7 @@ theorem prime_chebyshev_period_seeds
           rw [discriminantEulerSquare]
         _ = 0 := by rw [discriminantPower, sub_self]
     let radialSquare := 1 - center ^ 2
-    let scalar := Algebra.Quadratic.Pair.scalar
+    let scalar := Pair.scalar
       (radialSquare := radialSquare)
     let generator := Pair.generator (K := K)
       (radialSquare := radialSquare)
@@ -176,56 +176,56 @@ theorem prime_chebyshev_period_seeds
     have conjugateProduct : positive * negative = 1 := by
       unfold positive negative scalar generator radialSquare
       apply Algebra.Quadratic.Pair.ext <;>
-        simp only [Algebra.Quadratic.Pair.mul_re,
-          Algebra.Quadratic.Pair.mul_im, Algebra.Quadratic.Pair.add_re,
-          Algebra.Quadratic.Pair.add_im, Algebra.Quadratic.Pair.sub_re,
-          Algebra.Quadratic.Pair.sub_im, Pair.scalar_re,
+        simp only [Pair.mul_re,
+          Pair.mul_im, Pair.add_re,
+          Pair.add_im, Pair.sub_re,
+          Pair.sub_im, Pair.scalar_re,
           Pair.scalar_im,
           Pair.generator_re,
           Pair.generator_im,
-          Algebra.Quadratic.Pair.one_re, Algebra.Quadratic.Pair.one_im] <;>
+          Pair.one_re, Pair.one_im] <;>
         ring1
     have seedsOfUnitPowers
         (positivePeriod : positive ^ period = 1)
         (negativePeriod : negative ^ period = 1) :
-        Recurrence.Chebyshev.First.Basic.chebyshevFirst period center = 1 ∧
-          Recurrence.Chebyshev.First.Basic.chebyshevFirst (period + 1) center = center := by
-      have periodTrace := Recurrence.Chebyshev.First.QuadraticPair.chebyshevFirst_quadraticPair_trace
+        Basic.chebyshevFirst period center = 1 ∧
+          Basic.chebyshevFirst (period + 1) center = center := by
+      have periodTrace := QuadraticPair.chebyshevFirst_quadraticPair_trace
         period center radialSquare rfl
       change positive ^ period + negative ^ period =
-        scalar (2 * Recurrence.Chebyshev.First.Basic.chebyshevFirst period center) at periodTrace
+        scalar (2 * Basic.chebyshevFirst period center) at periodTrace
       rw [positivePeriod, negativePeriod] at periodTrace
-      have doubledPeriod := congrArg Algebra.Quadratic.Pair.re periodTrace
+      have doubledPeriod := congrArg Pair.re periodTrace
       unfold scalar at doubledPeriod
-      simp only [Algebra.Quadratic.Pair.add_re, Algebra.Quadratic.Pair.one_re,
+      simp only [Pair.add_re, Pair.one_re,
         Pair.scalar_re] at doubledPeriod
       have doubledPeriodNormalized :
-          2 * Recurrence.Chebyshev.First.Basic.chebyshevFirst period center = 2 := by
+          2 * Basic.chebyshevFirst period center = 2 := by
         calc
-          2 * Recurrence.Chebyshev.First.Basic.chebyshevFirst period center = 1 + 1 :=
+          2 * Basic.chebyshevFirst period center = 1 + 1 :=
             doubledPeriod.symm
           _ = 2 := by ring1
-      have periodSeed : Recurrence.Chebyshev.First.Basic.chebyshevFirst period center = 1 := by
+      have periodSeed : Basic.chebyshevFirst period center = 1 := by
         apply ExplicitField.eq_of_mul_eq_mul_left twoNonzero
         simpa only [mul_one] using doubledPeriodNormalized
-      have nextTrace := Recurrence.Chebyshev.First.QuadraticPair.chebyshevFirst_quadraticPair_trace
+      have nextTrace := QuadraticPair.chebyshevFirst_quadraticPair_trace
         (period + 1) center radialSquare rfl
       change positive ^ (period + 1) + negative ^ (period + 1) =
-        scalar (2 * Recurrence.Chebyshev.First.Basic.chebyshevFirst (period + 1) center) at nextTrace
+        scalar (2 * Basic.chebyshevFirst (period + 1) center) at nextTrace
       rw [pow_succ, pow_succ, positivePeriod, negativePeriod,
         one_mul, one_mul] at nextTrace
-      have doubledNext := congrArg Algebra.Quadratic.Pair.re nextTrace
+      have doubledNext := congrArg Pair.re nextTrace
       unfold positive negative scalar at doubledNext
-      simp only [Algebra.Quadratic.Pair.add_re, Algebra.Quadratic.Pair.sub_re,
+      simp only [Pair.add_re, Pair.sub_re,
         Pair.scalar_re]
         at doubledNext
       have doubledNextNormalized :
-          2 * Recurrence.Chebyshev.First.Basic.chebyshevFirst (period + 1) center = 2 * center := by
+          2 * Basic.chebyshevFirst (period + 1) center = 2 * center := by
         calc
-          2 * Recurrence.Chebyshev.First.Basic.chebyshevFirst (period + 1) center =
+          2 * Basic.chebyshevFirst (period + 1) center =
               (center + 0) + (center - 0) := doubledNext.symm
           _ = 2 * center := by ring1
-      have nextSeed : Recurrence.Chebyshev.First.Basic.chebyshevFirst (period + 1) center = center := by
+      have nextSeed : Basic.chebyshevFirst (period + 1) center = center := by
         apply ExplicitField.eq_of_mul_eq_mul_left twoNonzero
         exact doubledNextNormalized
       exact ⟨periodSeed, nextSeed⟩

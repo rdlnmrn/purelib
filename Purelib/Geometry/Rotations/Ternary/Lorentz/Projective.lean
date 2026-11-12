@@ -14,6 +14,8 @@ import Purelib.LinearAlgebra.Coordinates3.Vector
 import Purelib.LinearAlgebra.Coordinates2.Invertible
 import Purelib.Tactic.Ring
 
+open Purelib.Geometry.Quadratic.Ternary
+
 /-!
 # Projective Lorentz rotations in source coordinates
 
@@ -60,9 +62,9 @@ theorem proportionRotation_matrix (scalar : K) (vector : Vector3 K)
     (proportionRotation oneNonzero scalar vector defined).matrix =
       Matrix3.add Matrix3.identity
         (Matrix3.scale (2 / (scalar ^ 2 + (Form.lorentz oneNonzero).quadrance vector))
-          (Matrix3.add (Matrix3.scale scalar (Quadratic.Ternary.Lorentz.anchor oneNonzero vector))
-            (Matrix3.mul (Quadratic.Ternary.Lorentz.anchor oneNonzero vector)
-              (Quadratic.Ternary.Lorentz.anchor oneNonzero vector)))) := by
+          (Matrix3.add (Matrix3.scale scalar (Lorentz.anchor oneNonzero vector))
+            (Matrix3.mul (Lorentz.anchor oneNonzero vector)
+              (Lorentz.anchor oneNonzero vector)))) := by
   let value := Matrix.nonNullCoordinates oneNonzero scalar vector defined
   change NonNullEvenClifford.actionMatrix value = _
   unfold NonNullEvenClifford.actionMatrix
@@ -72,9 +74,9 @@ theorem proportionRotation_matrix (scalar : K) (vector : Vector3 K)
   change Matrix3.scale (scalar ^ 2 + (Form.lorentz oneNonzero).quadrance vector)⁻¹
     (Matrix3.add (Matrix3.add
       (Matrix3.scale (scalar ^ 2 + (Form.lorentz oneNonzero).quadrance vector) Matrix3.identity)
-      (Matrix3.scale (2 * scalar) (Quadratic.Ternary.Lorentz.anchor oneNonzero vector)))
-      (Matrix3.scale 2 (Matrix3.mul (Quadratic.Ternary.Lorentz.anchor oneNonzero vector)
-        (Quadratic.Ternary.Lorentz.anchor oneNonzero vector)))) = _
+      (Matrix3.scale (2 * scalar) (Lorentz.anchor oneNonzero vector)))
+      (Matrix3.scale 2 (Matrix3.mul (Lorentz.anchor oneNonzero vector)
+        (Lorentz.anchor oneNonzero vector)))) = _
   have cancellation : (scalar ^ 2 + (Form.lorentz oneNonzero).quadrance vector)⁻¹ *
       (scalar ^ 2 + (Form.lorentz oneNonzero).quadrance vector) = 1 :=
     (mul_comm _ _).trans (ExplicitField.mul_inv_cancel _ defined)
@@ -160,7 +162,7 @@ theorem proportionProduct_norm (leftScalar rightScalar : K) (leftVector rightVec
     (leftScalar * rightScalar - (Form.lorentz oneNonzero).bilinear leftVector rightVector) ^ 2 +
       (Form.lorentz oneNonzero).quadrance
         (Vector3.sub (Vector3.add (Vector3.scale leftScalar rightVector) (Vector3.scale rightScalar leftVector))
-          (Quadratic.Ternary.Lorentz.cross oneNonzero leftVector rightVector)) =
+          (Lorentz.cross oneNonzero leftVector rightVector)) =
       (leftScalar ^ 2 + (Form.lorentz oneNonzero).quadrance leftVector) *
         (rightScalar ^ 2 + (Form.lorentz oneNonzero).quadrance rightVector) := by
   have productNorm := EvenClifford.norm_mul
@@ -177,7 +179,7 @@ theorem proportionProduct_nonzero (leftScalar rightScalar : K) (leftVector right
     (leftScalar * rightScalar - (Form.lorentz oneNonzero).bilinear leftVector rightVector) ^ 2 +
       (Form.lorentz oneNonzero).quadrance
         (Vector3.sub (Vector3.add (Vector3.scale leftScalar rightVector) (Vector3.scale rightScalar leftVector))
-          (Quadratic.Ternary.Lorentz.cross oneNonzero leftVector rightVector)) ≠ 0 := by
+          (Lorentz.cross oneNonzero leftVector rightVector)) ≠ 0 := by
   rw [proportionProduct_norm]
   exact ExplicitField.mul_ne_zero leftDefined rightDefined
 
@@ -193,7 +195,7 @@ theorem proportionRotation_mul (leftScalar rightScalar : K) (leftVector rightVec
     proportionRotation oneNonzero
         (leftScalar * rightScalar - (Form.lorentz oneNonzero).bilinear leftVector rightVector)
         (Vector3.sub (Vector3.add (Vector3.scale leftScalar rightVector) (Vector3.scale rightScalar leftVector))
-          (Quadratic.Ternary.Lorentz.cross oneNonzero leftVector rightVector))
+          (Lorentz.cross oneNonzero leftVector rightVector))
         (proportionProduct_nonzero oneNonzero leftScalar rightScalar leftVector rightVector leftDefined rightDefined) =
       Basic.TernaryForm.SpecialOrthogonal.mul
         (proportionRotation oneNonzero leftScalar leftVector leftDefined)
@@ -204,7 +206,7 @@ theorem proportionRotation_mul (leftScalar rightScalar : K) (leftVector rightVec
       (Matrix.nonNullCoordinates oneNonzero
         (leftScalar * rightScalar - (Form.lorentz oneNonzero).bilinear leftVector rightVector)
         (Vector3.sub (Vector3.add (Vector3.scale leftScalar rightVector) (Vector3.scale rightScalar leftVector))
-          (Quadratic.Ternary.Lorentz.cross oneNonzero leftVector rightVector))
+          (Lorentz.cross oneNonzero leftVector rightVector))
         (proportionProduct_nonzero oneNonzero leftScalar rightScalar leftVector rightVector
           leftDefined rightDefined)).toEvenClifford :=
     Matrix.coordinates_mul oneNonzero leftScalar rightScalar leftVector rightVector
@@ -212,7 +214,7 @@ theorem proportionRotation_mul (leftScalar rightScalar : K) (leftVector rightVec
       (Matrix.nonNullCoordinates oneNonzero
         (leftScalar * rightScalar - (Form.lorentz oneNonzero).bilinear leftVector rightVector)
         (Vector3.sub (Vector3.add (Vector3.scale leftScalar rightVector) (Vector3.scale rightScalar leftVector))
-          (Quadratic.Ternary.Lorentz.cross oneNonzero leftVector rightVector))
+          (Lorentz.cross oneNonzero leftVector rightVector))
         (proportionProduct_nonzero oneNonzero leftScalar rightScalar leftVector rightVector
           leftDefined rightDefined)) :=
     ⟨1, oneNonzero, by rw [EvenClifford.one_scale]; exact productValue.symm⟩
@@ -379,7 +381,7 @@ theorem proportionRotation_timeEntry (scalar : K) (vector : Vector3 K)
     (proportionRotation oneNonzero scalar vector defined).matrix.tt =
       (scalar ^ 2 + vector.t ^ 2 + vector.r ^ 2 + vector.s ^ 2) /
         (scalar ^ 2 + (Form.lorentz oneNonzero).quadrance vector) := by
-  rw [proportionRotation_matrix, Quadratic.Ternary.Lorentz.anchor_coordinates]
+  rw [proportionRotation_matrix, Lorentz.anchor_coordinates]
   dsimp only [Matrix3.add, Matrix3.scale, Matrix3.identity, Matrix3.mul]
   simp only [ExplicitField.div_eq_mul_inv]
   have cancellation := ExplicitField.mul_inv_cancel _ defined
@@ -399,7 +401,7 @@ is one plus the trace of the original rotation matrix.
 -/
 @[expose] def projectiveInverseVector (rotation : (Form.lorentz oneNonzero).SpecialOrthogonal)
     (twoNonzero : (2 : K) ≠ 0) : Vector3 K :=
-  Quadratic.Ternary.Lorentz.anchorVector (Matrix3.scale 2 (rotation.antisymmetricPart twoNonzero))
+  Lorentz.anchorVector (Matrix3.scale 2 (rotation.antisymmetricPart twoNonzero))
 
 /-- The homogeneous inverse vector is the computed affine anchor multiplied by one plus trace. -/
 theorem projectiveInverseVector_eq_scale_anchor (rotation : (Form.lorentz oneNonzero).SpecialOrthogonal)
@@ -408,7 +410,7 @@ theorem projectiveInverseVector_eq_scale_anchor (rotation : (Form.lorentz oneNon
       Vector3.scale rotation.anchorDenominator (rotationAnchorVector oneNonzero rotation defined) := by
   unfold projectiveInverseVector rotationAnchorVector
   rw [rotation.anchor_eq_antisymmetricPart defined twoNonzero,
-    Quadratic.Ternary.Lorentz.anchorVector_scale, Quadratic.Ternary.Lorentz.anchorVector_scale,
+    Lorentz.anchorVector_scale, Lorentz.anchorVector_scale,
     Vector3.scale_scale]
   have coefficient : rotation.anchorDenominator * (2 / rotation.anchorDenominator) = 2 := by
     rw [ExplicitField.div_eq_mul_inv]
@@ -424,10 +426,10 @@ Both matrix operations retain the original rotation and its cached inverse.
 -/
 theorem anchor_projectiveInverseVector (rotation : (Form.lorentz oneNonzero).SpecialOrthogonal)
     (defined : rotation.anchorDenominator ≠ 0) (twoNonzero : (2 : K) ≠ 0) :
-    Quadratic.Ternary.Lorentz.anchor oneNonzero (projectiveInverseVector oneNonzero rotation twoNonzero) =
+    Lorentz.anchor oneNonzero (projectiveInverseVector oneNonzero rotation twoNonzero) =
       Matrix3.scale 2 (rotation.antisymmetricPart twoNonzero) := by
   rw [projectiveInverseVector_eq_scale_anchor oneNonzero rotation defined twoNonzero,
-    Quadratic.Ternary.Lorentz.anchor_scale, anchor_rotationAnchorVector oneNonzero rotation defined twoNonzero,
+    Lorentz.anchor_scale, anchor_rotationAnchorVector oneNonzero rotation defined twoNonzero,
     rotation.anchor_eq_antisymmetricPart defined twoNonzero, Matrix3.scale_scale]
   have coefficient : rotation.anchorDenominator * (2 / rotation.anchorDenominator) = 2 := by
     rw [ExplicitField.div_eq_mul_inv]

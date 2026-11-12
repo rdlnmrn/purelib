@@ -80,28 +80,28 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.ComparisonBounds (Bounds
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.SegmentComparison (Segment)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {collar :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {point :
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {point :
     Gaussian}
-  {owner : Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
-    ((Purelib.Curves.Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.polynomial curve).eval point)} {count :
+  {owner : Riemann.Topology.SquareRootContinuationChain.Owner
+    ((HyperellipticReciprocal.polynomial curve).eval point)} {count :
     Nat}
 
 set_option genInjectivity false in
 /-- Cached cap comparison and local primitive bounds on the exact original terminal neighborhood. -/
-structure Data (terminal : TerminalModels.Terminal cap owner count) (differential : Differentials.Basic.Differential
+structure Data (terminal : Terminal cap owner count) (differential : Differential
   genus) where
-  /-- The retained common cap and local reciprocal derivative-error ceilings. -/ bounds : ComparisonBounds.Bounds
+  /-- The retained common cap and local reciprocal derivative-error ceilings. -/ bounds : Bounds
     terminal.preparation (SeededPrimitiveBounds.clearance terminal.neighborhood.patch.base) differential
   /-- The cached polynomial numerator with the original reciprocal orientation sign. -/ numerator :
-    InverseRootPolynomial.Polynomial
+    Polynomial
   /-- The cached numerator evaluates to minus the exact original reversed-differential coordinate power. -/ numerator_eq
     : ∀ point, numerator.eval point = -(point ^ (HyperellipticReciprocal.reversedDifferential differential).exponent)
   /-- The retained derivative bounds of the original terminal inverse-root base model. -/ rootBounds :
-    InverseModelDerivativeBounds.DerivativeBounds (SeededPrimitiveBounds.clearance terminal.neighborhood.patch.base)
+    DerivativeBounds (SeededPrimitiveBounds.clearance terminal.neighborhood.patch.base)
     terminal.neighborhood.patch.base.model
   /-- The retained primitive derivative bounds for the same original model and cached numerator. -/ primitiveBounds :
-    InverseModelPrimitiveBounds.PrimitiveDerivativeBounds rootBounds numerator
+    PrimitiveDerivativeBounds rootBounds numerator
 
 constructive_injectivity Data
 
@@ -109,16 +109,16 @@ namespace Data
 
 /-- Cache the original signed numerator, cap comparison bounds and terminal primitive derivative bounds before selecting
 a stage. -/
-@[expose] public def build (terminal : TerminalModels.Terminal cap owner count) (differential :
-  Differentials.Basic.Differential genus) : Curves.Hyperelliptic.Charts.Reciprocal.Cap.TerminalComparison.Data terminal
+@[expose] public def build (terminal : Terminal cap owner count) (differential :
+  Differential genus) : Data terminal
   differential :=
-  let bounds := ComparisonBounds.Bounds.build terminal.preparation (SeededPrimitiveBounds.clearance
+  let bounds := Bounds.build terminal.preparation (SeededPrimitiveBounds.clearance
     terminal.neighborhood.patch.base) differential
-  let numerator := -(DensePolynomial.shift (HyperellipticReciprocal.reversedDifferential differential).exponent
-    (DensePolynomial.constant 1))
+  let numerator := -(shift (HyperellipticReciprocal.reversedDifferential differential).exponent
+    (constant 1))
   let rootBounds := SeededPrimitiveBounds.derivativeBounds terminal.neighborhood.patch.base
-  ⟨bounds, numerator, (fun point => by rw [DensePolynomial.eval_neg, DensePolynomial.eval_shift,
-    DensePolynomial.eval_constant, Data.Gaussian.Basic.one_mul]),
+  ⟨bounds, numerator, (fun point => by rw [eval_neg, eval_shift,
+    eval_constant, Data.Gaussian.Basic.one_mul]),
     rootBounds, PrimitiveDerivativeBounds.build rootBounds numerator⟩
 
 end Data
@@ -132,7 +132,7 @@ retains both finer memberships. -/
 structure LocalSegment (data : Data terminal differential)
   where
   /-- The original endpoint and displacement comparison segment in the common base and cap domain. -/ comparison :
-    SegmentComparison.Segment data.bounds
+    Segment data.bounds
   /-- The original comparison segment start belongs to the retained terminal primitive neighborhood. -/ firstInside :
     terminal.neighborhood.patch.box.Contains comparison.first
   /-- The original comparison segment finish belongs to the retained terminal primitive neighborhood. -/ lastInside :
@@ -143,27 +143,27 @@ constructive_injectivity LocalSegment
 namespace LocalSegment
 
 /-- Retain the original segment endpoints in both the terminal primitive neighborhood and global cap box. -/
-@[expose] public def build (data : Curves.Hyperelliptic.Charts.Reciprocal.Cap.TerminalComparison.Data terminal
-  differential) (first last : InverseRootPolynomial.Gaussian)
+@[expose] public def build (data : Data terminal
+  differential) (first last : Gaussian)
     (firstInside : terminal.neighborhood.patch.box.Contains first) (lastInside :
       terminal.neighborhood.patch.box.Contains last)
     (firstCap : collar.box.Contains first) (lastCap : collar.box.Contains last) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.TerminalComparison.LocalSegment data :=
+      LocalSegment data :=
   ⟨Segment.build data.bounds first last
     (terminal.neighborhood.patch.box_refines.contains firstInside) (terminal.neighborhood.patch.box_refines.contains
       lastInside)
     firstCap lastCap, firstInside, lastInside⟩
 
 /-- Select a retained whole-segment cap comparison stage above the original floor for the positive target. -/
-@[expose] public def request {data : Curves.Hyperelliptic.Charts.Reciprocal.Cap.TerminalComparison.Data terminal
-  differential} (segment : Curves.Hyperelliptic.Charts.Reciprocal.Cap.TerminalComparison.LocalSegment data)
-    (target : InverseRootPolynomial.Coordinate) (positive : 0 < target) (floor : Nat) : Segment.Request
+@[expose] public def request {data : Data terminal
+  differential} (segment : LocalSegment data)
+    (target : Coordinate) (positive : 0 < target) (floor : Nat) : Request
       segment.comparison target floor :=
   Request.build segment.comparison target positive floor
 
 end LocalSegment
 
-variable {index : Nat} {box : Purelib.Geometry.Rational.Box} {data :
+variable {index : Nat} {box : Geometry.Rational.Box} {data :
   Data terminal differential}
 
 set_option genInjectivity false in
@@ -174,26 +174,26 @@ structure Sample (data : Data terminal differential)
   /-- The retained cap pullback sample sharing the original terminal reciprocal model. -/ comparison :
     PolynomialPullback.Sample terminal.preparation capSample
   /-- The cached original terminal primitive using the same retained reciprocal model stage. -/ primitive :
-    InverseRootPrimitive.PrimitiveModel terminal.neighborhood.patch index data.numerator
+    PrimitiveModel terminal.neighborhood.patch index data.numerator
 
 constructive_injectivity Sample
 
 namespace Sample
 
 /-- Construct the original cap comparison sample and local primitive from one shared cached reciprocal model stage. -/
-@[expose] public def build (data : Curves.Hyperelliptic.Charts.Reciprocal.Cap.TerminalComparison.Data terminal
+@[expose] public def build (data : Data terminal
   differential) (capSample : Primitives.Sample cap differential index box) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Cap.TerminalComparison.Sample data capSample :=
+    Sample data capSample :=
   let comparison := terminal.sample capSample
   let primitive := PrimitiveModel.ofBounds terminal.neighborhood.patch index data.numerator data.primitiveBounds
     comparison.reciprocal (by rw [comparison.reciprocal_eq]; rfl)
   ⟨comparison, primitive⟩
 
-variable {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+variable {capSample : Primitives.Sample cap differential index box}
 
 /-- The retained local primitive and cap comparison use the same exact original coefficient polynomial evaluation. -/
-theorem coefficient_eq (sample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.TerminalComparison.Sample data capSample)
-  (point : InverseRootPolynomial.Gaussian) :
+theorem coefficient_eq (sample : Sample data capSample)
+  (point : Gaussian) :
     sample.primitive.coefficient.eval point = sample.comparison.coefficient.eval point := by
   rw [sample.primitive.coefficient_eq, data.numerator_eq, sample.comparison.coefficient_eq,
     sample.comparison.reciprocal_eq]
@@ -203,10 +203,10 @@ theorem coefficient_eq (sample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.Term
 
 /-- The computed request controls the actual cached terminal primitive and the cap comparison polynomial at every later
 shared stage. -/
-theorem accurate (sample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.TerminalComparison.Sample data capSample) {segment
-  : Curves.Hyperelliptic.Charts.Reciprocal.Cap.TerminalComparison.LocalSegment data} {target :
-  InverseRootPolynomial.Coordinate} {floor : Nat}
-    (request : Segment.Request segment.comparison target floor) (later : request.index ≤ index) :
+theorem accurate (sample : Sample data capSample) {segment
+  : LocalSegment data} {target :
+  Coordinate} {floor : Nat}
+    (request : Request segment.comparison target floor) (later : request.index ≤ index) :
     Data.Gaussian.Norm.Basic.normSq ((sample.comparison.value.eval segment.comparison.last -
       sample.comparison.value.eval segment.comparison.first) -
       (sample.primitive.primitive.value.eval segment.comparison.last - sample.primitive.primitive.value.eval

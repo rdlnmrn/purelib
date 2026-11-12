@@ -12,6 +12,8 @@ public import Purelib.Data.Rat.Fraction.Field
 public import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.Rat
 
 open Purelib.Geometry.Trigonometry.Spread.Triple
@@ -47,11 +49,11 @@ theorem tripleSpread_nonnegative_iff (a
     · rw [aZero]
       decide
     · have squareNonnegative : (0 : Fraction.Rational) ≤ a ^ 2 :=
-        Fraction.Order.Arithmetic.sq_nonneg_direct a
+        Arithmetic.sq_nonneg_direct a
       have squareNonzero : a ^ 2 ≠ 0 := by
         intro squareZero
         exact aZero
-          ((Fraction.Order.Arithmetic.sq_eq_zero_direct a).1 squareZero)
+          ((Arithmetic.sq_eq_zero_direct a).1 squareZero)
       have squarePositive : (0 : Fraction.Rational) < a ^ 2 :=
         lt_of_le_of_ne squareNonnegative (Ne.symm squareNonzero)
       have factorNonnegative : (0 : Fraction.Rational) ≤ 3 - 4 * a := by
@@ -60,25 +62,25 @@ theorem tripleSpread_nonnegative_iff (a
         · have negative : 3 - 4 * a < (0 : Fraction.Rational) :=
             lt_of_not_ge nonnegative
           have productNegative :=
-            Fraction.Order.Arithmetic.mul_neg_of_pos_of_neg_direct
+            Arithmetic.mul_neg_of_pos_of_neg_direct
               squarePositive negative
           exact ((not_lt_of_ge productNonnegative) productNegative).elim
-      apply (Fraction.Order.Field.le_div_iff_pos fourPositive).2
+      apply (Field.le_div_iff_pos fourPositive).2
       have scaled : 4 * a ≤ (3 : Fraction.Rational) :=
-        Fraction.Order.Arithmetic.le_of_sub_nonneg_direct factorNonnegative
+        Arithmetic.le_of_sub_nonneg_direct factorNonnegative
       calc
         a * 4 = 4 * a := by ring1
         _ ≤ 3 := scaled
   · intro upperBound
     have scaled : a * 4 ≤ (3 : Fraction.Rational) :=
-      (Fraction.Order.Field.le_div_iff_pos fourPositive).1 upperBound
+      (Field.le_div_iff_pos fourPositive).1 upperBound
     have factorNonnegative : (0 : Fraction.Rational) ≤ 3 - 4 * a := by
-      have raw := Fraction.Order.Arithmetic.sub_nonneg_direct scaled
+      have raw := Arithmetic.sub_nonneg_direct scaled
       calc
         (0 : Fraction.Rational) ≤ 3 - a * 4 := raw
         _ = 3 - 4 * a := by ring1
-    exact Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.sq_nonneg_direct a) factorNonnegative
+    exact Arithmetic.mul_nonneg_direct
+      (Arithmetic.sq_nonneg_direct a) factorNonnegative
 
 end
 

@@ -74,22 +74,22 @@ open Purelib.Riemann.RootContinuation.NewtonProtectedObservations (ProtectedObse
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks (FaceDomainBank)
 open Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy (SurfacePartitions SurfaceMeshes SurfaceRequest)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target
-    radius : Purelib.Data.Rat.Fraction.Rational} {grid :
-    Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-  {observations : Purelib.Riemann.RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
+  {preparation : NewtonPreparation original} {target
+    radius : Rational} {grid :
+    NewtonGrid preparation target radius}
+  {observations : ProtectedObservations original} {frames :
     RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
+  {domains : FaceDomainBank frames
     grid.faces.regulars} {sheet : Fin 2}
 
 /-- Equal retained endpoints and cut lists produce equal finite axis-interval lists. -/
-private theorem axis_intervals_eq {firstLower firstUpper lastLower lastUpper : Fraction.Rational}
+private theorem axis_intervals_eq {firstLower firstUpper lastLower lastUpper : Rational}
     (firstProper : firstLower < firstUpper) (lastProper : lastLower < lastUpper)
-    {firstCuts lastCuts : List Fraction.Rational} (lowerEq : firstLower = lastLower) (upperEq : firstUpper = lastUpper)
+    {firstCuts lastCuts : List Rational} (lowerEq : firstLower = lastLower) (upperEq : firstUpper = lastUpper)
     (cutsEq : firstCuts = lastCuts) :
     (Geometry.Rectangle.AxisPartition.build firstLower firstUpper firstProper firstCuts).intervals =
       (Geometry.Rectangle.AxisPartition.build lastLower lastUpper lastProper lastCuts).intervals := by
@@ -100,10 +100,10 @@ private theorem axis_intervals_eq {firstLower firstUpper lastLower lastUpper : F
 
 set_option genInjectivity false in
 /-- One cached cut list includes every model boundary on every piece and sheet. -/
-structure SurfaceCuts (partitions : NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid)
-    (domains : DomainBanks.FaceDomainBank frames grid.faces.regulars) where
+structure SurfaceCuts (partitions : SurfacePartitions observations grid)
+    (domains : FaceDomainBank frames grid.faces.regulars) where
   /-- The cached list of all retained model-boundary points over faces, pieces and sheets. -/ points : List
-    Data.Gaussian.Basic.Canonical
+    Gaussian.Basic.Canonical
   /-- Every boundary point of every actual retained piece and sheet occurs in the shared cut list. -/ includes : ∀
     (position : Fin grid.faces.regulars.length)
     (piece : Fin (partitions.get position).cuts.boxes.length) (sheet : Fin 2) point,
@@ -113,9 +113,9 @@ structure SurfaceCuts (partitions : NewtonRequestedSurfaceEnergy.SurfacePartitio
 constructive_injectivity SurfaceCuts
 
 /-- Cache all actual model cuts in face, piece and sheet order. -/
-@[expose] def SurfaceCuts.build (partitions : NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid)
-    (domains : DomainBanks.FaceDomainBank frames grid.faces.regulars) :
-      Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceCuts partitions domains :=
+@[expose] def SurfaceCuts.build (partitions : SurfacePartitions observations grid)
+    (domains : FaceDomainBank frames grid.faces.regulars) :
+      SurfaceCuts partitions domains :=
   let points := (List.ofFn fun position : Fin grid.faces.regulars.length => position).flatMap fun position =>
     (List.ofFn fun piece : Fin (partitions.get position).cuts.boxes.length => piece).flatMap fun piece =>
       (List.ofFn fun sheet : Fin 2 => sheet).flatMap fun sheet =>
@@ -127,17 +127,17 @@ constructive_injectivity SurfaceCuts
         ⟨sheet, List.OfFn.Basic.mem_ofFn.mpr ⟨sheet, rfl⟩, member⟩⟩⟩⟩
 
 /-- Construct each retained sheet's piece meshes using the same cached complete-surface cut list. -/
-@[expose] def surfaceMeshes (partitions : NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid)
-    (domains : DomainBanks.FaceDomainBank frames grid.faces.regulars) (surfaceCuts :
-      Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceCuts partitions domains)
-    (sheet : Fin 2) (depth : Nat) : NewtonRequestedSurfaceEnergy.SurfaceMeshes partitions domains sheet :=
+@[expose] def surfaceMeshes (partitions : SurfacePartitions observations grid)
+    (domains : FaceDomainBank frames grid.faces.regulars) (surfaceCuts :
+      SurfaceCuts partitions domains)
+    (sheet : Fin 2) (depth : Nat) : SurfaceMeshes partitions domains sheet :=
   DependentVector.ofFn fun position => LocalMeshes.build (partitions.get position)
     domains sheet surfaceCuts.points (fun piece => surfaceCuts.includes position piece sheet) depth
 
 /-- Equal transverse extents have identical cuts, including across faces and sheets. -/
-theorem surfaceMeshes_x_compatible (partitions : NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid)
-    (domains : DomainBanks.FaceDomainBank frames grid.faces.regulars) (surfaceCuts :
-      Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceCuts partitions domains)
+theorem surfaceMeshes_x_compatible (partitions : SurfacePartitions observations grid)
+    (domains : FaceDomainBank frames grid.faces.regulars) (surfaceCuts :
+      SurfaceCuts partitions domains)
     (firstSheet lastSheet : Fin 2)
     (firstDepth lastDepth : Nat) (first last : Fin grid.faces.regulars.length)
     (firstPiece : Fin (partitions.get first).cuts.boxes.length)
@@ -146,20 +146,20 @@ theorem surfaceMeshes_x_compatible (partitions : NewtonRequestedSurfaceEnergy.Su
       ((partitions.get last).cuts.boxes[lastPiece.val]'lastPiece.isLt).xLower)
     (upperEq : ((partitions.get first).cuts.boxes[firstPiece.val]'firstPiece.isLt).xUpper =
       ((partitions.get last).cuts.boxes[lastPiece.val]'lastPiece.isLt).xUpper) :
-    (((Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
+    (((MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
       firstSheet firstDepth).get first).entries.get firstPiece).partition.x.intervals =
-      (((Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
+      (((MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
         lastSheet lastDepth).get last).entries.get lastPiece).partition.x.intervals := by
-  dsimp only [Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes]
+  dsimp only [MeshCompatibility.surfaceMeshes]
   rw [DependentVector.ofFn_get, DependentVector.ofFn_get]
   dsimp only [LocalMeshes.build]
   rw [DependentVector.ofFn_get, DependentVector.ofFn_get]
-  exact Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.axis_intervals_eq _ _ lowerEq upperEq rfl
+  exact MeshCompatibility.axis_intervals_eq _ _ lowerEq upperEq rfl
 
 /-- Equal transverse extents have identical cuts, including across faces and sheets. -/
-theorem surfaceMeshes_y_compatible (partitions : NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid)
-    (domains : DomainBanks.FaceDomainBank frames grid.faces.regulars) (surfaceCuts :
-      Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceCuts partitions domains)
+theorem surfaceMeshes_y_compatible (partitions : SurfacePartitions observations grid)
+    (domains : FaceDomainBank frames grid.faces.regulars) (surfaceCuts :
+      SurfaceCuts partitions domains)
     (firstSheet lastSheet : Fin 2)
     (firstDepth lastDepth : Nat) (first last : Fin grid.faces.regulars.length)
     (firstPiece : Fin (partitions.get first).cuts.boxes.length)
@@ -168,23 +168,23 @@ theorem surfaceMeshes_y_compatible (partitions : NewtonRequestedSurfaceEnergy.Su
       ((partitions.get last).cuts.boxes[lastPiece.val]'lastPiece.isLt).yLower)
     (upperEq : ((partitions.get first).cuts.boxes[firstPiece.val]'firstPiece.isLt).yUpper =
       ((partitions.get last).cuts.boxes[lastPiece.val]'lastPiece.isLt).yUpper) :
-    (((Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
+    (((MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
       firstSheet firstDepth).get first).entries.get firstPiece).partition.y.intervals =
-      (((Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
+      (((MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
         lastSheet lastDepth).get last).entries.get lastPiece).partition.y.intervals := by
-  dsimp only [Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes]
+  dsimp only [MeshCompatibility.surfaceMeshes]
   rw [DependentVector.ofFn_get, DependentVector.ofFn_get]
   dsimp only [LocalMeshes.build]
   rw [DependentVector.ofFn_get, DependentVector.ofFn_get]
-  exact Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.axis_intervals_eq _ _ lowerEq upperEq rfl
+  exact MeshCompatibility.axis_intervals_eq _ _ lowerEq upperEq rfl
 
 namespace SurfaceRequest
 
-variable {partitions : Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid}
-  {surfaceCuts : Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceCuts partitions domains}
-    {coarse : Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfaceMeshes partitions domains sheet}
-  {fixed : Purelib.Riemann.RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet} {error :
-    Purelib.Data.Rat.Fraction.Rational}
+variable {partitions : SurfacePartitions observations grid}
+  {surfaceCuts : SurfaceCuts partitions domains}
+    {coarse : SurfaceMeshes partitions domains sheet}
+  {fixed : Preflights domains sheet} {error :
+    Rational}
 
 /-- Refining the retained surface request preserves each piece's exact horizontal interval list. -/
 theorem mesh_x_intervals (request : NewtonRequestedSurfaceEnergy.SurfaceRequest partitions coarse fixed error)
@@ -205,7 +205,7 @@ theorem mesh_y_intervals (request : NewtonRequestedSurfaceEnergy.SurfaceRequest 
 /-- Pieces in one retained column share exactly the same horizontal intervals after request refinement. -/
 theorem mesh_x_compatible {depth : Nat}
     (request : NewtonRequestedSurfaceEnergy.SurfaceRequest partitions
-      (Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts sheet
+      (MeshCompatibility.surfaceMeshes partitions domains surfaceCuts sheet
       depth) fixed error)
     (position : Fin grid.faces.regulars.length)
     (column : Fin (PieceIndices.columns (partitions.get position) + 1)) (first last : Fin (PieceIndices.rows
@@ -214,13 +214,13 @@ theorem mesh_x_compatible {depth : Nat}
       first)).partition.x.intervals =
       ((request.meshes.get position).entries.get (PieceIndices.pieceIndex (partitions.get position) column
         last)).partition.x.intervals := by
-  rw [(Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceRequest.mesh_x_intervals request),
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceRequest.mesh_x_intervals request)]
-  dsimp only [Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes]
+  rw [(SurfaceRequest.mesh_x_intervals request),
+    (SurfaceRequest.mesh_x_intervals request)]
+  dsimp only [MeshCompatibility.surfaceMeshes]
   rw [DependentVector.ofFn_get]
   dsimp only [LocalMeshes.build]
   rw [DependentVector.ofFn_get, DependentVector.ofFn_get]
-  apply Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.axis_intervals_eq
+  apply MeshCompatibility.axis_intervals_eq
   · rw [PieceIndices.piece_box (partitions.get position), PieceIndices.piece_box (partitions.get position)]
     rfl
   · rw [PieceIndices.piece_box (partitions.get position), PieceIndices.piece_box (partitions.get position)]
@@ -230,7 +230,7 @@ theorem mesh_x_compatible {depth : Nat}
 /-- Pieces in one retained row share exactly the same vertical intervals after request refinement. -/
 theorem mesh_y_compatible {depth : Nat}
     (request : NewtonRequestedSurfaceEnergy.SurfaceRequest partitions
-      (Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts sheet
+      (MeshCompatibility.surfaceMeshes partitions domains surfaceCuts sheet
       depth) fixed error)
     (position : Fin grid.faces.regulars.length)
     (first last : Fin (PieceIndices.columns (partitions.get position) + 1)) (row : Fin (PieceIndices.rows
@@ -239,13 +239,13 @@ theorem mesh_y_compatible {depth : Nat}
       row)).partition.y.intervals =
       ((request.meshes.get position).entries.get (PieceIndices.pieceIndex (partitions.get position) last
         row)).partition.y.intervals := by
-  rw [(Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceRequest.mesh_y_intervals request),
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceRequest.mesh_y_intervals request)]
-  dsimp only [Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes]
+  rw [(SurfaceRequest.mesh_y_intervals request),
+    (SurfaceRequest.mesh_y_intervals request)]
+  dsimp only [MeshCompatibility.surfaceMeshes]
   rw [DependentVector.ofFn_get]
   dsimp only [LocalMeshes.build]
   rw [DependentVector.ofFn_get, DependentVector.ofFn_get]
-  apply Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.axis_intervals_eq
+  apply MeshCompatibility.axis_intervals_eq
   · rw [PieceIndices.piece_box (partitions.get position), PieceIndices.piece_box (partitions.get position)]
     rfl
   · rw [PieceIndices.piece_box (partitions.get position), PieceIndices.piece_box (partitions.get position)]

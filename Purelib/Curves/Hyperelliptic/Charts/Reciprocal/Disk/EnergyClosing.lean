@@ -31,6 +31,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -55,57 +57,57 @@ namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.EnergyClosing
 
 open Purelib.Data.Gaussian.Basic.Canonical
 
-variable {genus count : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+variable {genus count : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential} {patch :
     Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {data : Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data}
+  {data : UniformReciprocalModels.Data patch count} {cover :
+    UniformReciprocalCover.Cover data}
   {sourceTarget reciprocalTarget coefficientTarget totalTarget areaTarget target energyTarget joining :
     Normalization.InverseRootPolynomial.Coordinate}
   {minimum index depth readingIndex energyFloor energyDepth joinFloor : Nat} {box : Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {sample : Cap.Primitives.Sample cap differential index box}
 
 /-- The actual closing energy-potential difference is bounded by eighty times the chart target plus twice the retained
 root-return allowance.
 
 The estimate uses the same cached parent energy endpoints and closing join at a sufficiently late shared reading stage.
 -/
-theorem closing_bound (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+theorem closing_bound (branch : HyperellipticReciprocal.originOrder curve = 1)
     (targetNonnegative : 0 ≤ target) (joinNonnegative : 0 ≤ joining) (joinSmall : joining ≤ 1)
     {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} {covers :
-      Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents}
-    {prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers} {requests :
-      Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Requests sourceTarget reciprocalTarget
+      UniformReciprocalCover.ParentCovers parents}
+    {prepared : ParentJoins.SideBank regular covers} {requests :
+      SideRequests.SideBank.Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared}
-    (evaluated : Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Evaluations sample depth readingIndex
-      requests) (charts : Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartReplacements target evaluated)
-    (energies : Hyperelliptic.Charts.Reciprocal.Disk.SideEnergyRequests.EnergyData energyTarget energyFloor energyDepth
-      evaluated charts) {joined : Hyperelliptic.Charts.Reciprocal.Disk.ClosingJoins.ClosingJoin prepared}
-    (closing : Hyperelliptic.Charts.Reciprocal.Disk.ClosingRequests.ClosingRequest joining joinFloor prepared joined)
+    (evaluated : SideRequests.SideBank.Evaluations sample depth readingIndex
+      requests) (charts : SideChartRequests.ChartReplacements target evaluated)
+    (energies : SideEnergyRequests.EnergyData energyTarget energyFloor energyDepth
+      evaluated charts) {joined : ClosingJoins.ClosingJoin prepared}
+    (closing : ClosingRequests.ClosingRequest joining joinFloor prepared joined)
       (later : closing.maximum ≤ readingIndex) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.firstPotential evaluated
+    Gaussian.Norm.Basic.normSq
+      (EnergyData.firstPotential evaluated
       charts energies -
-      Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.lastPotential evaluated charts
-      energies (Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.firstPotential
+      EnergyData.lastPotential evaluated charts
+      energies (EnergyData.firstPotential
       evaluated charts energies) -
-      Path.BoundaryRibbon.area (Hyperelliptic.Charts.Reciprocal.Disk.SideConnections.Evaluations.lastValue evaluated
-        (Hyperelliptic.Charts.Reciprocal.Disk.SideConnections.Evaluations.firstValue evaluated))
-        (Hyperelliptic.Charts.Reciprocal.Disk.SideConnections.Evaluations.firstValue evaluated)) ≤ 80 * target + 2 *
+      Path.BoundaryRibbon.area (SideConnections.Evaluations.lastValue evaluated
+        (SideConnections.Evaluations.firstValue evaluated))
+        (SideConnections.Evaluations.firstValue evaluated)) ≤ 80 * target + 2 *
           joining := by
-  have bound := (Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.endBank branch
+  have bound := (EnergyData.endBank branch
     evaluated charts energies).closing_bound branch targetNonnegative joinNonnegative joinSmall closing later
-  rw [Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.endBank_firstPotential
+  rw [EnergyData.endBank_firstPotential
     evaluated charts energies branch,
-    Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.endBank_firstValue evaluated
+    EnergyData.endBank_firstValue evaluated
     charts energies branch,
-    Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.endBank_lastPotential evaluated
+    EnergyData.endBank_lastPotential evaluated
     charts energies branch,
-    Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.endBank_lastValue evaluated
+    EnergyData.endBank_lastValue evaluated
     charts energies branch] at bound
   exact bound
 

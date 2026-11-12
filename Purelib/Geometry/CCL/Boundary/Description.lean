@@ -70,13 +70,13 @@ private theorem scaledNormComparison_eq
     simp only [Hermitian.scaledNormComparisonForm,
       Hermitian.constantForm,
       Parser.normalizationMatrix,
-      Line.Matrix.scale, Hermitian.normComparisonForm, Hermitian.HermitianForm.sub,
-      Hermitian.HermitianForm.add, HermitianForm.neg, HermitianForm.scale,
+      Line.Matrix.scale, Hermitian.normComparisonForm, HermitianForm.sub,
+      HermitianForm.add, HermitianForm.neg, HermitianForm.scale,
       Hermitian.affineNormForm,
       Basic.one_re,
       Basic.one_im,
       Basic.zero_re,
-      Basic.zero_im, Data.Gaussian.Norm.Basic.normSq_one, Data.Gaussian.Norm.Basic.normSq_zero, -eq_self, -iff_self]
+      Basic.zero_im, Norm.Basic.normSq_one, Norm.Basic.normSq_zero, -eq_self, -iff_self]
   · rw [Power.normSq_natPow, Constants.normSq_gamma]
     ring1
   · ring1
@@ -85,7 +85,7 @@ private theorem scaledNormComparison_eq
 
 /-- Every radial normalization matrix has denominator row zero, one. -/
 private theorem normalizationMatrix_lowerRow
-    (kind : Syntax.BlockKind) (exponent : Nat) :
+    (kind : BlockKind) (exponent : Nat) :
     (Parser.normalizationMatrix kind exponent).c = 0 ∧
       (Parser.normalizationMatrix kind exponent).d = 1 := by
   cases kind <;> exact ⟨rfl, rfl⟩
@@ -95,16 +95,16 @@ private theorem normalizationMatrix_lowerRow
     (inner : GaussianMatrix)
     (innerNonzero : Matrix2.determinant inner ≠ 0)
     (exponent : Nat) :
-    Boundary.BoundaryDescription inner
+    BoundaryDescription inner
       (Hermitian.pullbackForm inner
         (Hermitian.scaledNormComparisonForm exponent 1)) := by
   let outer := Parser.normalizationMatrix
     BlockKind.initialLow exponent
-  have oneNorm : Data.Gaussian.Norm.Basic.normSq (1 : Data.Gaussian.Basic.Canonical) = 1 := by decide
+  have oneNorm : Norm.Basic.normSq (1 : Basic.Canonical) = 1 := by decide
   have sourceIdentity :
       Hermitian.scaledNormComparisonForm exponent 1 =
-        Hermitian.normComparisonForm outer (Data.Gaussian.Norm.Basic.normSq (1 :
-          Data.Gaussian.Basic.Canonical)) := by
+        Hermitian.normComparisonForm outer (Norm.Basic.normSq (1 :
+          Basic.Canonical)) := by
     have canonicalIdentity (threshold : Fraction.Rational) :
         Hermitian.scaledNormComparisonForm exponent threshold =
           Hermitian.normComparisonForm
@@ -115,14 +115,14 @@ private theorem normalizationMatrix_lowerRow
         simp only [Hermitian.scaledNormComparisonForm,
           Hermitian.constantForm,
           Parser.normalizationMatrix,
-          Purelib.Geometry.Projective.Line.Matrix.scale, Hermitian.normComparisonForm,
-          Hermitian.HermitianForm.sub, Hermitian.HermitianForm.add, HermitianForm.neg,
+          Line.Matrix.scale, Hermitian.normComparisonForm,
+          HermitianForm.sub, HermitianForm.add, HermitianForm.neg,
           HermitianForm.scale, Hermitian.affineNormForm,
-          Purelib.Data.Gaussian.Basic.one_re,
-          Purelib.Data.Gaussian.Basic.one_im,
-          Purelib.Data.Gaussian.Basic.zero_re,
-          Purelib.Data.Gaussian.Basic.zero_im, Data.Gaussian.Norm.Basic.normSq_one,
-            Data.Gaussian.Norm.Basic.normSq_zero, -eq_self, -iff_self]
+          Basic.one_re,
+          Basic.one_im,
+          Basic.zero_re,
+          Basic.zero_im, Norm.Basic.normSq_one,
+            Norm.Basic.normSq_zero, -eq_self, -iff_self]
       · rw [Power.normSq_natPow, Constants.normSq_gamma]
         ring1
       · ring1
@@ -142,15 +142,15 @@ private theorem normalizationMatrix_lowerRow
     (inner : GaussianMatrix)
     (innerNonzero : Matrix2.determinant inner ≠ 0)
     (exponent : Nat) :
-    Boundary.BoundaryDescription inner
+    BoundaryDescription inner
       (Hermitian.pullbackForm inner
         (Hermitian.scaledNormComparisonForm exponent 2)) := by
   let outer := Parser.normalizationMatrix
     BlockKind.initialLow exponent
   have sourceIdentity :
       Hermitian.scaledNormComparisonForm exponent 2 =
-        Hermitian.normComparisonForm outer (Data.Gaussian.Norm.Basic.normSq
-          Data.Gaussian.Basic.Canonical.gamma) := by
+        Hermitian.normComparisonForm outer (Norm.Basic.normSq
+          Basic.Canonical.gamma) := by
     have canonicalIdentity (threshold : Fraction.Rational) :
         Hermitian.scaledNormComparisonForm exponent threshold =
           Hermitian.normComparisonForm
@@ -161,14 +161,14 @@ private theorem normalizationMatrix_lowerRow
         simp only [Hermitian.scaledNormComparisonForm,
           Hermitian.constantForm,
           Parser.normalizationMatrix,
-          Purelib.Geometry.Projective.Line.Matrix.scale, Hermitian.normComparisonForm,
-          Hermitian.HermitianForm.sub, Hermitian.HermitianForm.add, HermitianForm.neg,
+          Line.Matrix.scale, Hermitian.normComparisonForm,
+          HermitianForm.sub, HermitianForm.add, HermitianForm.neg,
           HermitianForm.scale, Hermitian.affineNormForm,
-          Purelib.Data.Gaussian.Basic.one_re,
-          Purelib.Data.Gaussian.Basic.one_im,
-          Purelib.Data.Gaussian.Basic.zero_re,
-          Purelib.Data.Gaussian.Basic.zero_im, Data.Gaussian.Norm.Basic.normSq_one,
-            Data.Gaussian.Norm.Basic.normSq_zero, -eq_self, -iff_self]
+          Basic.one_re,
+          Basic.one_im,
+          Basic.zero_re,
+          Basic.zero_im, Norm.Basic.normSq_one,
+            Norm.Basic.normSq_zero, -eq_self, -iff_self]
       · rw [Power.normSq_natPow, Constants.normSq_gamma]
         ring1
       · ring1
@@ -181,7 +181,7 @@ private theorem normalizationMatrix_lowerRow
     (Boundary.pulledNormComparison outer inner
       (Parser.normalizationMatrix_det_ne
         .initialLow exponent) innerNonzero
-      ⟨rfl, rfl⟩ Data.Gaussian.Basic.Canonical.gamma)
+      ⟨rfl, rfl⟩ Basic.Canonical.gamma)
 
 end Purelib.Geometry.CCL.Boundary.Description
 

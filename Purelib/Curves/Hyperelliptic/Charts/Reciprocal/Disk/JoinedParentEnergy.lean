@@ -49,6 +49,8 @@ import Purelib.Riemann.Branches.ClearSheetContinuation
 import Purelib.Riemann.Integration.PreparedConstantModels
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
@@ -95,34 +97,34 @@ open Purelib.Integration.Energy.AffineTriangle (crossEnergy)
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {cover :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap} {cover :
+    UniformReciprocalCover.Cover data}
   {prepared : Preparation regular cover}
-    {totalTarget areaTarget : InverseRootPolynomial.Coordinate} {floor minimum depth
+    {totalTarget areaTarget : Coordinate} {floor minimum depth
     readingIndex : Nat}
   {request : JoinedChartRequest prepared
     totalTarget areaTarget floor}
   {originalTarget : Coordinate} {original :
     ReciprocalBoundaryArea.Cover.AreaRequest cover depth originalTarget}
-  {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential original.index box}
-  {plan : JoinedChartRequest.Plan request
+  {box : Geometry.Rational.Box} {capSample :
+    Cap.Primitives.Sample cap differential original.index box}
+  {plan : Plan request
     capSample minimum}
 
 /-- Construct the odd-origin cap-energy certificate from the existing joined-parent chart and endpoint evaluations.
 
 The original prepared requests, cached source cells, reading stage and actual junctions are reused at the retained
 energy depth. -/
-@[expose] def energy (evaluated : Plan.Evaluation original plan readingIndex)
+@[expose] def energy (evaluated : Evaluation original plan readingIndex)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
-    (oriented : 0 < AffineTriangle.crossEnergy (parent.edge.point 0) (parent.edge.point 1))
-    (energyTarget : InverseRootPolynomial.Coordinate) (positive : 0 < energyTarget) (energyFloor : Nat) :
-    RestoredParentEnergy.RequestedEnergy plan.charts evaluated.compared.polynomial.cells evaluated.vertices
+    (oriented : 0 < crossEnergy (parent.edge.point 0) (parent.edge.point 1))
+    (energyTarget : Coordinate) (positive : 0 < energyTarget) (energyFloor : Nat) :
+    RequestedEnergy plan.charts evaluated.compared.polynomial.cells evaluated.vertices
       request.joined.endpoints energyTarget energyFloor :=
   RequestedEnergy.build plan.charts evaluated.compared.polynomial.cells evaluated.vertices request.joined.endpoints
     evaluated.model_later evaluated.reading_later branch oriented request.replacement.localPositive.le
@@ -137,7 +139,7 @@ The original chart target is a quarter of the area target. Cancelling that
 fixed denominator expresses the retained replacement payment at the full
 joined-parent target. -/
 theorem energy_allowance :
-    ((2 * cover.mesh.edges.length : Nat) : InverseRootPolynomial.Coordinate) ^ 2 *
+    ((2 * cover.mesh.edges.length : Nat) : Coordinate) ^ 2 *
       (request.replacement.localTarget + request.joined.budget.tolerance / 4) < areaTarget + totalTarget / 4 := by
   have paid := ChartReplacementRequest.energy_allowance request.replacement request.joined
   have cancel : 4 * (areaTarget / 4) = areaTarget := by
@@ -151,30 +153,30 @@ variable {energyTarget : Coordinate} {energyFloor : Nat}
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.JoinedParentEnergy
 /-- The retained energy chain begins at the actual first reading already cached by the original joined-parent
 comparison. -/
-theorem energy_first (evaluated : Plan.Evaluation original plan readingIndex)
-    (energy : RestoredParentEnergy.RequestedEnergy plan.charts evaluated.compared.polynomial.cells evaluated.vertices
+theorem energy_first (evaluated : Evaluation original plan readingIndex)
+    (energy : RequestedEnergy plan.charts evaluated.compared.polynomial.cells evaluated.vertices
       request.joined.endpoints energyTarget energyFloor) : energy.firstValue = evaluated.compared.firstValue := by
   rw [energy.first_value, evaluated.compared.firstValue_eq, evaluated.readings_eq]
 
 /-- The complete restored energy-block paths equal the exact original joined-parent replacement paths. -/
-theorem energy_paths (evaluated : Plan.Evaluation original plan readingIndex)
-    (energy : RestoredParentEnergy.RequestedEnergy plan.charts evaluated.compared.polynomial.cells evaluated.vertices
+theorem energy_paths (evaluated : Evaluation original plan readingIndex)
+    (energy : RequestedEnergy plan.charts evaluated.compared.polynomial.cells evaluated.vertices
       request.joined.endpoints energyTarget energyFloor) :
     RestoredEnergyBlock.paths energy.blocks energy.firstValue = evaluated.replacement.paths := by
   rw [energy.paths_eq, evaluated.replacement.paths_eq, evaluated.readings_eq,
     energy_first evaluated energy]
 
 /-- The retained energy connection and original replacement summary have exactly the same full area. -/
-theorem energy_area (evaluated : Plan.Evaluation original plan readingIndex)
-    (energy : RestoredParentEnergy.RequestedEnergy plan.charts evaluated.compared.polynomial.cells evaluated.vertices
+theorem energy_area (evaluated : Evaluation original plan readingIndex)
+    (energy : RequestedEnergy plan.charts evaluated.compared.polynomial.cells evaluated.vertices
       request.joined.endpoints energyTarget energyFloor) : energy.connection.summary.area =
         evaluated.replacement.summary.area := by
   rw [energy.connection.summary.area_eq, energy_paths
     evaluated energy, ← evaluated.replacement.summary.area_eq]
 
 /-- The actual energy trace is the original replacement area plus its cached first-value and total endpoint term. -/
-theorem energy_trace (evaluated : Plan.Evaluation original plan readingIndex)
-    (energy : RestoredParentEnergy.RequestedEnergy plan.charts evaluated.compared.polynomial.cells evaluated.vertices
+theorem energy_trace (evaluated : Evaluation original plan readingIndex)
+    (energy : RequestedEnergy plan.charts evaluated.compared.polynomial.cells evaluated.vertices
       request.joined.endpoints energyTarget energyFloor) :
     energy.connection.trace = evaluated.replacement.summary.area +
       BoundaryRibbon.area evaluated.compared.firstValue evaluated.replacement.summary.total := by
@@ -188,25 +190,25 @@ exterior potentials remain.
 The paid replacement allowance bounds the original energy discrepancy.
 The retained path and trace identities preserve the same endpoint term and
 terminal potential on both sides of the comparison. -/
-theorem energy_boundary_close (evaluated : Plan.Evaluation original plan readingIndex)
-    (energy : RestoredParentEnergy.RequestedEnergy plan.charts evaluated.compared.polynomial.cells evaluated.vertices
+theorem energy_boundary_close (evaluated : Evaluation original plan readingIndex)
+    (energy : RequestedEnergy plan.charts evaluated.compared.polynomial.cells evaluated.vertices
       request.joined.endpoints energyTarget energyFloor) :
-    Data.Gaussian.Norm.Basic.normSq (energy.connection.energy - (-evaluated.replacement.summary.area -
+    Basic.normSq (energy.connection.energy - (-evaluated.replacement.summary.area -
       BoundaryRibbon.area evaluated.compared.firstValue evaluated.replacement.summary.total +
       RestoredEnergyBlock.terminalPotential energy.blocks energy.firstPotential - energy.firstPotential)) <
         256 * (areaTarget + totalTarget / 4) := by
   have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by
-      decide +kernel : (0 : InverseRootPolynomial.Coordinate) < 256)
+      decide +kernel : (0 : Coordinate) < 256)
     (energy_allowance (request := request))
-  have paid : (cover.mesh.edges.length : InverseRootPolynomial.Coordinate) ^ 2 * (1024 *
+  have paid : (cover.mesh.edges.length : Coordinate) ^ 2 * (1024 *
       (request.replacement.localTarget + request.joined.budget.tolerance / 4)) < 256 * (areaTarget + totalTarget / 4) :=
-    (show _ = 256 * (((2 * cover.mesh.edges.length : Nat) : InverseRootPolynomial.Coordinate) ^ 2 *
+    (show _ = 256 * (((2 * cover.mesh.edges.length : Nat) : Coordinate) ^ 2 *
       (request.replacement.localTarget + request.joined.budget.tolerance / 4)) by
           simp only [Algebra.NatCast.mul, Nat.cast_ofNat, -eq_self, -iff_self];
           ring1).trans_lt scaled
   have close := energy.boundary_error.trans_lt paid
   rw [energy_trace evaluated energy] at close
-  refine (congrArg Data.Gaussian.Norm.Basic.normSq ?_).trans_lt close
+  refine (congrArg Basic.normSq ?_).trans_lt close
   ring1
 
 /-- The signed energy now compares with the original source area of the same retained parent. The explicit exterior
@@ -215,30 +217,30 @@ terms are preserved for sewing.
 The retained replacement-area error is combined with the original energy
 bound. Both comparisons use the same parent, endpoint value and potential
 terms, so the resulting bound concerns their actual common source. -/
-theorem energy_source_boundary_close (evaluated : Plan.Evaluation original plan readingIndex)
-    (energy : RestoredParentEnergy.RequestedEnergy plan.charts evaluated.compared.polynomial.cells evaluated.vertices
+theorem energy_source_boundary_close (evaluated : Evaluation original plan readingIndex)
+    (energy : RequestedEnergy plan.charts evaluated.compared.polynomial.cells evaluated.vertices
       request.joined.endpoints energyTarget energyFloor) :
-    Data.Gaussian.Norm.Basic.normSq (energy.connection.energy - (-evaluated.compared.polynomial.left.area -
+    Basic.normSq (energy.connection.energy - (-evaluated.compared.polynomial.left.area -
       BoundaryRibbon.area evaluated.compared.firstValue evaluated.replacement.summary.total +
       RestoredEnergyBlock.terminalPotential energy.blocks energy.firstPotential - energy.firstPotential)) <
         2 * (256 * (areaTarget + totalTarget / 4) + areaTarget) := by
   let rest := -BoundaryRibbon.area evaluated.compared.firstValue evaluated.replacement.summary.total +
     RestoredEnergyBlock.terminalPotential energy.blocks energy.firstPotential - energy.firstPotential
-  have first : Data.Gaussian.Norm.Basic.normSq (energy.connection.energy - (-evaluated.replacement.summary.area
+  have first : Basic.normSq (energy.connection.energy - (-evaluated.replacement.summary.area
     + rest)) < 256 * (areaTarget + totalTarget / 4) := by
-    refine (congrArg Data.Gaussian.Norm.Basic.normSq ?_).trans_lt
+    refine (congrArg Basic.normSq ?_).trans_lt
       (energy_boundary_close evaluated energy)
     dsimp only [rest]; ring1
-  have second : Data.Gaussian.Norm.Basic.normSq ((-evaluated.replacement.summary.area + rest) -
+  have second : Basic.normSq ((-evaluated.replacement.summary.area + rest) -
     (-evaluated.compared.polynomial.left.area + rest)) < areaTarget :=
-    (congrArg Data.Gaussian.Norm.Basic.normSq (by ring1 : (-evaluated.replacement.summary.area + rest) -
+    (congrArg Basic.normSq (by ring1 : (-evaluated.replacement.summary.area + rest) -
       (-evaluated.compared.polynomial.left.area + rest) =
       evaluated.compared.polynomial.left.area - evaluated.replacement.summary.area)).trans_lt evaluated.area_close
-  have close := (Data.Gaussian.Norm.Bounds.normSq_sub_le_via energy.connection.energy
+  have close := (Bounds.normSq_sub_le_via energy.connection.energy
     (-evaluated.replacement.summary.area + rest) (-evaluated.compared.polynomial.left.area + rest)).trans_lt
-    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : InverseRootPolynomial.Coordinate) < 2)
+    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Coordinate) < 2)
       (Fraction.Order.Arithmetic.add_lt_add_direct first second))
-  refine (congrArg Data.Gaussian.Norm.Basic.normSq ?_).trans_lt close
+  refine (congrArg Basic.normSq ?_).trans_lt close
   dsimp only [rest]; ring1
 
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.JoinedParentEnergy

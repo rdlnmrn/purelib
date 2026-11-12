@@ -35,14 +35,14 @@ the supplied finite data and performs no fresh matrix inversion.
 
 namespace Purelib.Algebra.Quadratic.Ternary.Basic.TernaryForm
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Field.ExplicitField K]
 
 section TernaryForm
 
 /-- Applying a displayed matrix to all three rows scales their displayed determinant by the matrix determinant. -/
 theorem determinant_rowMul (first second third :
   Coordinates3.Vector K)
-    (matrix : Coordinates3.Matrix3 K) :
+    (matrix : Matrix3 K) :
     Coordinates3.Vector.determinant
         (Matrix3.rowMul first matrix)
         (Matrix3.rowMul second matrix)
@@ -55,7 +55,7 @@ theorem determinant_rowMul (first second third :
 /-- Explicit reconstruction in a displayed pairwise-orthogonal non-null frame. The proof builds the displayed frame
 matrix and its right inverse, then uses finite square-matrix cancellation to obtain the left inverse. -/
 theorem orthogonalFrame_reconstruct
-    (form : Ternary.Basic.TernaryForm K) (first second third : Coordinates3.Vector K)
+    (form : TernaryForm K) (first second third : Coordinates3.Vector K)
     (firstNonNull : form.quadrance first ≠ 0)
     (secondNonNull : form.quadrance second ≠ 0)
     (thirdNonNull : form.quadrance third ≠ 0)
@@ -72,11 +72,11 @@ theorem orthogonalFrame_reconstruct
         (Coordinates3.Vector.scale
           (form.bilinear vector third / form.quadrance third) third) =
       vector := by
-  let basisMatrix : Coordinates3.Matrix3 K :=
+  let basisMatrix : Matrix3 K :=
     ⟨first.t, first.r, first.s,
       second.t, second.r, second.s,
       third.t, third.r, third.s⟩
-  let inverseMatrix : Coordinates3.Matrix3 K :=
+  let inverseMatrix : Matrix3 K :=
     ⟨(form.dual first).t / form.quadrance first,
       (form.dual second).t / form.quadrance second,
       (form.dual third).t / form.quadrance third,
@@ -100,7 +100,7 @@ theorem orthogonalFrame_reconstruct
           form.bilinear input first / form.quadrance first
       rw [form.bilinear_eq_dot_dual]
       unfold Coordinates3.Vector.dot
-      simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+      simp only [Field.ExplicitField.div_eq_mul_inv]
       ring1
     · change
         input.t * ((form.dual second).t / form.quadrance second) +
@@ -109,7 +109,7 @@ theorem orthogonalFrame_reconstruct
           form.bilinear input second / form.quadrance second
       rw [form.bilinear_eq_dot_dual]
       unfold Coordinates3.Vector.dot
-      simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+      simp only [Field.ExplicitField.div_eq_mul_inv]
       ring1
     · change
         input.t * ((form.dual third).t / form.quadrance third) +
@@ -118,7 +118,7 @@ theorem orthogonalFrame_reconstruct
           form.bilinear input third / form.quadrance third
       rw [form.bilinear_eq_dot_dual]
       unfold Coordinates3.Vector.dot
-      simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+      simp only [Field.ExplicitField.div_eq_mul_inv]
       ring1
   have rowMulBasis (coordinates : Coordinates3.Vector K) :
       Matrix3.rowMul coordinates basisMatrix =
@@ -142,16 +142,16 @@ theorem orthogonalFrame_reconstruct
     rw [form.bilinear_comm]
     exact secondThirdZero
   have firstRatio : form.quadrance first / form.quadrance first = 1 := by
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
-    exact Algebra.Field.ExplicitField.mul_inv_cancel
+    simp only [Field.ExplicitField.div_eq_mul_inv]
+    exact Field.ExplicitField.mul_inv_cancel
       (form.quadrance first) firstNonNull
   have secondRatio : form.quadrance second / form.quadrance second = 1 := by
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
-    exact Algebra.Field.ExplicitField.mul_inv_cancel
+    simp only [Field.ExplicitField.div_eq_mul_inv]
+    exact Field.ExplicitField.mul_inv_cancel
       (form.quadrance second) secondNonNull
   have thirdRatio : form.quadrance third / form.quadrance third = 1 := by
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
-    exact Algebra.Field.ExplicitField.mul_inv_cancel
+    simp only [Field.ExplicitField.div_eq_mul_inv]
+    exact Field.ExplicitField.mul_inv_cancel
       (form.quadrance third) thirdNonNull
   have firstRow :
       Matrix3.rowMul first inverseMatrix = (⟨1, 0, 0⟩ : Coordinates3.Vector K) := by
@@ -160,27 +160,27 @@ theorem orthogonalFrame_reconstruct
     · change form.quadrance first / form.quadrance first = 1
       exact firstRatio
     · change form.bilinear first second / form.quadrance second = 0
-      rw [firstSecondZero, Algebra.Field.ExplicitField.zero_div]
+      rw [firstSecondZero, Field.ExplicitField.zero_div]
     · change form.bilinear first third / form.quadrance third = 0
-      rw [firstThirdZero, Algebra.Field.ExplicitField.zero_div]
+      rw [firstThirdZero, Field.ExplicitField.zero_div]
   have secondRow :
       Matrix3.rowMul second inverseMatrix = (⟨0, 1, 0⟩ : Coordinates3.Vector K) := by
     rw [rowMulInverse]
     apply Coordinates3.Vector.ext
     · change form.bilinear second first / form.quadrance first = 0
-      rw [secondFirstZero, Algebra.Field.ExplicitField.zero_div]
+      rw [secondFirstZero, Field.ExplicitField.zero_div]
     · change form.quadrance second / form.quadrance second = 1
       exact secondRatio
     · change form.bilinear second third / form.quadrance third = 0
-      rw [secondThirdZero, Algebra.Field.ExplicitField.zero_div]
+      rw [secondThirdZero, Field.ExplicitField.zero_div]
   have thirdRow :
       Matrix3.rowMul third inverseMatrix = (⟨0, 0, 1⟩ : Coordinates3.Vector K) := by
     rw [rowMulInverse]
     apply Coordinates3.Vector.ext
     · change form.bilinear third first / form.quadrance first = 0
-      rw [thirdFirstZero, Algebra.Field.ExplicitField.zero_div]
+      rw [thirdFirstZero, Field.ExplicitField.zero_div]
     · change form.bilinear third second / form.quadrance second = 0
-      rw [thirdSecondZero, Algebra.Field.ExplicitField.zero_div]
+      rw [thirdSecondZero, Field.ExplicitField.zero_div]
     · change form.quadrance third / form.quadrance third = 1
       exact thirdRatio
   have rightInverse :
@@ -237,7 +237,7 @@ theorem orthogonalFrame_reconstruct
 
 /-- The relative cross of two perpendicular non-null vectors is non-null. -/
 theorem cross_nonNull_of_perpendicular
-    (form : Ternary.Basic.TernaryForm K) (first second : Coordinates3.Vector K)
+    (form : TernaryForm K) (first second : Coordinates3.Vector K)
     (firstNonNull : form.quadrance first ≠ 0)
     (secondNonNull : form.quadrance second ≠ 0)
     (perpendicular : form.Perpendicular first second) :
@@ -247,7 +247,7 @@ theorem cross_nonNull_of_perpendicular
   have lagrange := form.lagrange first second
   rw [perpendicularZero, crossZero] at lagrange
   have productNonzero :=
-    Algebra.Field.ExplicitField.mul_ne_zero firstNonNull secondNonNull
+    Field.ExplicitField.mul_ne_zero firstNonNull secondNonNull
   apply productNonzero
   calc
     form.quadrance first * form.quadrance second =
@@ -260,13 +260,13 @@ namespace Isometry
 supplies the third non-null frame vector, and the determinant fixes its otherwise possible scalar action. -/
 theorem
   matrix_eq_identity_of_fixed_orthogonal_pair
-    (form : Ternary.Basic.TernaryForm K) (isometry : form.Isometry)
+    (form : TernaryForm K) (isometry : form.Isometry)
     (first second : Coordinates3.Vector K)
     (firstNonNull : form.quadrance first ≠ 0)
     (secondNonNull : form.quadrance second ≠ 0)
     (perpendicular : form.Perpendicular first second)
-    (firstFixed : (Isometry.act isometry) first = first)
-    (secondFixed : (Isometry.act isometry) second = second)
+    (firstFixed : (act isometry) first = first)
+    (secondFixed : (act isometry) second = second)
     (determinantOne : Matrix3.determinant isometry.matrix = 1) :
     isometry.matrix = Matrix3.identity := by
   let third := form.cross first second
@@ -280,47 +280,47 @@ theorem
     apply (form.perpendicular_comm second third).2
     exact form.cross_perpendicular_right first second
   have thirdActFirstZero :
-      form.bilinear ((Isometry.act isometry) third) first = 0 := by
+      form.bilinear ((act isometry) third) first = 0 := by
     calc
-      form.bilinear ((Isometry.act isometry) third) first =
-          form.bilinear ((Isometry.act isometry) third) ((Isometry.act isometry) first) := by
+      form.bilinear ((act isometry) third) first =
+          form.bilinear ((act isometry) third) ((act isometry) first) := by
         rw [firstFixed]
       _ = form.bilinear third first :=
-        (Isometry.bilinear_act isometry) third first
+        (bilinear_act isometry) third first
       _ = 0 := form.cross_perpendicular_left first second
   have thirdActSecondZero :
-      form.bilinear ((Isometry.act isometry) third) second = 0 := by
+      form.bilinear ((act isometry) third) second = 0 := by
     calc
-      form.bilinear ((Isometry.act isometry) third) second =
-          form.bilinear ((Isometry.act isometry) third) ((Isometry.act isometry) second) := by
+      form.bilinear ((act isometry) third) second =
+          form.bilinear ((act isometry) third) ((act isometry) second) := by
         rw [secondFixed]
       _ = form.bilinear third second :=
-        (Isometry.bilinear_act isometry) third second
+        (bilinear_act isometry) third second
       _ = 0 := form.cross_perpendicular_right first second
   let thirdCoefficient :=
-    form.bilinear ((Isometry.act isometry) third) third / form.quadrance third
+    form.bilinear ((act isometry) third) third / form.quadrance third
   have thirdActScale :
-      (Isometry.act isometry) third = Coordinates3.Vector.scale thirdCoefficient third := by
+      (act isometry) third = Coordinates3.Vector.scale thirdCoefficient third := by
     have reconstruction := form.orthogonalFrame_reconstruct
       first second third firstNonNull secondNonNull thirdNonNull
-      perpendicular firstThird secondThird ((Isometry.act isometry) third)
+      perpendicular firstThird secondThird ((act isometry) third)
     calc
-      (Isometry.act isometry) third =
+      (act isometry) third =
           Coordinates3.Vector.add
             (Coordinates3.Vector.add
               (Coordinates3.Vector.scale
-                (form.bilinear ((Isometry.act isometry) third) first /
+                (form.bilinear ((act isometry) third) first /
                   form.quadrance first) first)
               (Coordinates3.Vector.scale
-                (form.bilinear ((Isometry.act isometry) third) second /
+                (form.bilinear ((act isometry) third) second /
                   form.quadrance second) second))
             (Coordinates3.Vector.scale
-              (form.bilinear ((Isometry.act isometry) third) third /
+              (form.bilinear ((act isometry) third) third /
                 form.quadrance third) third) :=
         reconstruction.symm
       _ = Coordinates3.Vector.scale thirdCoefficient third := by
         rw [thirdActFirstZero, thirdActSecondZero,
-          Algebra.Field.ExplicitField.zero_div, Algebra.Field.ExplicitField.zero_div]
+          Field.ExplicitField.zero_div, Field.ExplicitField.zero_div]
         ext <;> unfold thirdCoefficient Coordinates3.Vector.add Coordinates3.Vector.scale <;> ring1
   have frameDeterminant :
       Coordinates3.Vector.determinant first second third = form.quadrance third := by
@@ -328,7 +328,7 @@ theorem
   have transformedDeterminant :=
     determinant_rowMul first second third isometry.matrix
   change Coordinates3.Vector.determinant
-      ((Isometry.act isometry) first) ((Isometry.act isometry) second) ((Isometry.act isometry) third) =
+      ((act isometry) first) ((act isometry) second) ((act isometry) third) =
     Coordinates3.Vector.determinant first second third *
       Matrix3.determinant isometry.matrix at transformedDeterminant
   rw [firstFixed, secondFixed, thirdActScale, determinantOne,
@@ -345,7 +345,7 @@ theorem
       _ = Coordinates3.Vector.determinant first second third :=
         transformedDeterminant
   have coefficientOne : thirdCoefficient = 1 := by
-    apply Algebra.Field.ExplicitField.eq_of_mul_eq_mul_left thirdNonNull
+    apply Field.ExplicitField.eq_of_mul_eq_mul_left thirdNonNull
     calc
       form.quadrance third * thirdCoefficient =
           thirdCoefficient * Coordinates3.Vector.determinant first second third := by
@@ -354,19 +354,19 @@ theorem
       _ = Coordinates3.Vector.determinant first second third := coefficientFrame
       _ = form.quadrance third * 1 := by
         rw [frameDeterminant, mul_one]
-  have thirdFixed : (Isometry.act isometry) third = third := by
+  have thirdFixed : (act isometry) third = third := by
     rw [thirdActScale, coefficientOne, Coordinates3.Vector.one_scale]
   apply Matrix3.eq_of_rowMul_eq
   intro vector
-  change (Isometry.act isometry) vector =
+  change (act isometry) vector =
     Matrix3.rowMul vector Matrix3.identity
   rw [Matrix3.rowMul_identity]
   have reconstruction := form.orthogonalFrame_reconstruct
     first second third firstNonNull secondNonNull thirdNonNull
     perpendicular firstThird secondThird vector
   calc
-    (Isometry.act isometry) vector =
-        (Isometry.act isometry)
+    (act isometry) vector =
+        (act isometry)
           (Coordinates3.Vector.add
             (Coordinates3.Vector.add
               (Coordinates3.Vector.scale
@@ -380,14 +380,14 @@ theorem
           (Coordinates3.Vector.add
             (Coordinates3.Vector.scale
               (form.bilinear vector first / form.quadrance first)
-              ((Isometry.act isometry) first))
+              ((act isometry) first))
             (Coordinates3.Vector.scale
               (form.bilinear vector second / form.quadrance second)
-              ((Isometry.act isometry) second)))
+              ((act isometry) second)))
           (Coordinates3.Vector.scale
             (form.bilinear vector third / form.quadrance third)
-            ((Isometry.act isometry) third)) := by
-      ext <;> unfold Isometry.act Matrix3.rowMul Coordinates3.Vector.add Coordinates3.Vector.scale <;>
+            ((act isometry) third)) := by
+      ext <;> unfold act Matrix3.rowMul Coordinates3.Vector.add Coordinates3.Vector.scale <;>
         ring1
     _ = Coordinates3.Vector.add
           (Coordinates3.Vector.add
@@ -415,7 +415,7 @@ namespace Purelib.Algebra.Quadratic.Ternary.Basic.TernaryForm
 open Purelib.Algebra.Field (ExplicitField)
 open Purelib.LinearAlgebra.Coordinates3 renaming Vector -> Vector3
 
-variable {K : Type*} [ExplicitField K] {form : Ternary.Basic.TernaryForm K}
+variable {K : Type*} [ExplicitField K] {form : TernaryForm K}
 
 /-- A perpendicular vector cannot be a nonzero multiple of an original non-null vector. -/
 theorem nonNull_perpendicular_not_same_line (first second : Vector3 K)

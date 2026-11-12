@@ -1,4 +1,6 @@
 module
+import Purelib.Riemann.Paths.PreparedPathTrace
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy
 import Purelib.Data.List.Membership
 import Purelib.Data.Gaussian.Norm.Basic
 import Purelib.Curves.Hyperelliptic.Basic
@@ -14,7 +16,7 @@ import Purelib.Riemann.Normalization.ContinuedInverseRoot
 import Purelib.Riemann.Normalization.InverseRootPolynomial
 import Purelib.Riemann.Normalization.RectangularInverseModels
 import Purelib.RootIsolation.SquareRoot.Grid.RootFrames
-import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.SheetGauge
+import Purelib.Riemann.Branches.ContainedPreparedPolynomialSheets
 public import Purelib.Riemann.Paths.RectangularSegmentSplitting
 import Purelib.Riemann.Branches.PreparedPolynomialSheetReadings
 import Purelib.Riemann.Meshes.PuncturedGridFaces
@@ -39,6 +41,8 @@ import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Riemann.Normalization.InverseModelBackwardSigns
 
+open Purelib.Data.Gaussian.Norm
+
 /-!
 # One request sign through all analytic cells of a face segment
 
@@ -50,6 +54,12 @@ preservation then reads the original requested index, including zero and one.
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.SplitSigns
 public section
+
+open Purelib.Riemann.Normalization.TransportedFaceInverseModels (TransportedCell)
+
+open Purelib.Riemann.Paths.PreparedPathTrace (TracedPath)
+open Purelib.Polynomial.Geometry (ClearPath)
+open Purelib.Curves.Hyperelliptic.Branches
 open Purelib
 open Purelib.Curves.Hyperelliptic
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face
@@ -80,7 +90,7 @@ open Purelib.Riemann.Normalization.ContinuedInverseRoot (ContinuedNeighborhood)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face :
@@ -90,11 +100,11 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     columns rows}
   {patch : RectangularPatch models.bounds (models.frame.owners sheet)
     geometry}
-  {first last : Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian} {count : Nat} {neighborhood :
+  {first last : InverseRootPolynomial.Gaussian} {count : Nat} {neighborhood :
     ContinuedNeighborhood curve.polynomial count}
 
 /-- Every emitted piece remains in the same original request neighborhood. -/
-theorem piece_neighborhood (piece : RectangularSegmentSplitting.SegmentPiece geometry first last)
+theorem piece_neighborhood (piece : SegmentPiece geometry first last)
     (firstInside : neighborhood.box.Contains first) (lastInside : neighborhood.box.Contains last) :
     neighborhood.box.Contains piece.firstPoint ∧ neighborhood.box.Contains piece.lastPoint := by
   rw [piece.first_eq, piece.last_eq, PreparedSegmentCuts.point_eq_line,
@@ -110,15 +120,15 @@ two-step cocycle floor.
 
 Every retained grid cell containing the point compares its refined inverse-root
 model with the supplied neighborhood at the two displayed reading stages. -/
-private def NearestAt (patch : RectangularFaceModels.RectangularPatch models.bounds (models.frame.owners sheet)
+private def NearestAt (patch : RectangularPatch models.bounds (models.frame.owners sheet)
   geometry)
-    (neighborhood : ContinuedInverseRoot.ContinuedNeighborhood curve.polynomial count) (leftIndex rightIndex : Nat)
+    (neighborhood : ContinuedNeighborhood curve.polynomial count) (leftIndex rightIndex : Nat)
       (point : InverseRootPolynomial.Gaussian) : Prop :=
   ∀ column row, (geometry.box column row).Contains point →
-    Data.Gaussian.Norm.Basic.normSq (((patch.transported.cell column row).model.refine (leftIndex +
+    Basic.normSq (((patch.transported.cell column row).model.refine (leftIndex +
       2)).value.eval point -
       (neighborhood.base.refine (rightIndex + 2)).value.eval point) ≤
-    Data.Gaussian.Norm.Basic.normSq (((patch.transported.cell column row).model.refine (leftIndex +
+    Basic.normSq (((patch.transported.cell column row).model.refine (leftIndex +
       2)).value.eval point +
       (neighborhood.base.refine (rightIndex + 2)).value.eval point)
 
@@ -126,23 +136,23 @@ private def NearestAt (patch : RectangularFaceModels.RectangularPatch models.bou
 
 The proof follows membership in the retained list through its original head, tail or concatenation, preserving the
 supplied occurrence witness. -/
-private theorem nearest_walk (patch : RectangularFaceModels.RectangularPatch models.bounds (models.frame.owners sheet)
+private theorem nearest_walk (patch : RectangularPatch models.bounds (models.frame.owners sheet)
   geometry)
-    (differential : Differentials.Basic.Differential genus) (neighborhood : ContinuedInverseRoot.ContinuedNeighborhood
+    (differential : Differential genus) (neighborhood : ContinuedNeighborhood
       curve.polynomial count)
     (firstInside : neighborhood.box.Contains first) (lastInside : neighborhood.box.Contains last)
     (leftIndex rightIndex : Nat) {available : List PreparedAxisPartitions.Interval} :
-    ∀ (pieces : List (RectangularSegmentSplitting.SegmentPiece geometry first last)) {lower upper :
+    ∀ (pieces : List (SegmentPiece geometry first last)) {lower upper :
       InverseRootPolynomial.Coordinate}
       (walk : AxisWalks.IncreasingWalk available lower upper)
       (_ordered : pieces.map SegmentPiece.interval = walk.edges)
       (_initial : NearestAt patch neighborhood leftIndex
         rightIndex (point first last lower)),
       ∀ piece ∈ pieces,
-        Data.Gaussian.Norm.Basic.normSq (((patch.transported.cell piece.column piece.row).model.refine
+        Basic.normSq (((patch.transported.cell piece.column piece.row).model.refine
           (leftIndex + 2)).value.eval piece.firstPoint -
           (neighborhood.base.refine (rightIndex + 2)).value.eval piece.firstPoint) ≤
-        Data.Gaussian.Norm.Basic.normSq (((patch.transported.cell piece.column piece.row).model.refine
+        Basic.normSq (((patch.transported.cell piece.column piece.row).model.refine
           (leftIndex + 2)).value.eval piece.firstPoint +
           (neighborhood.base.refine (rightIndex + 2)).value.eval piece.firstPoint)
   | [], _, _, _, _, _, _, member => (List.not_mem_nil member).elim
@@ -169,31 +179,36 @@ private theorem nearest_walk (patch : RectangularFaceModels.RectangularPatch mod
             ((Model.overlapRefine (patch.transported.cell head.column head.row).model) leftIndex)
             ((Model.overlapRefine neighborhood.base.model) rightIndex) inside head.last_inside
             (neighborhood.box_refines.contains contained.2)
-            (SheetGauge.cells_nearest _ _ differential inside head.last_inside leftIndex leftIndex) atLast
+            (TransportedCell.cells_nearest _ _ (entered := TracedPath.build
+      (ClearPath.nil (polynomial := curve.polynomial) (ambient := face.cell.box) face.cell.box.anchor)
+      (.nil face.cell.box.anchor) (models.frame.owners sheet))
+    face.cell.box.contains_anchor differential (BranchIsolation.degreePositive curve)
+    (LoopMonodromy.BranchCellBank.referenceAt bank _ (face.cell.anchor_mem face.member)).toLoop
+      inside head.last_inside leftIndex leftIndex) atLast
         exact nearest_walk patch differential
           neighborhood firstInside lastInside leftIndex rightIndex tail walk equations.2 next piece member
 
 /-- All containing cells of the retained split use the original sign. Only the initial endpoint alignment is required;
 no per-piece sign or root agreement is supplied. -/
-theorem split_nearest (patch : RectangularFaceModels.RectangularPatch models.bounds (models.frame.owners sheet)
+theorem split_nearest (patch : RectangularPatch models.bounds (models.frame.owners sheet)
   geometry)
-    (differential : Differentials.Basic.Differential genus) {cuts : RectangularSegmentSplitting.GridCuts geometry}
-      (split : RectangularSegmentSplitting.SegmentSplit cuts first last)
-    (neighborhood : ContinuedInverseRoot.ContinuedNeighborhood curve.polynomial count)
+    (differential : Differential genus) {cuts : GridCuts geometry}
+      (split : SegmentSplit cuts first last)
+    (neighborhood : ContinuedNeighborhood curve.polynomial count)
     (firstInside : neighborhood.box.Contains first) (lastInside : neighborhood.box.Contains last)
     (leftIndex rightIndex : Nat)
     (initial : ∀ column row, (geometry.box column row).Contains first →
-      Data.Gaussian.Norm.Basic.normSq (((patch.transported.cell column row).model.refine (leftIndex +
+      Basic.normSq (((patch.transported.cell column row).model.refine (leftIndex +
         2)).value.eval first -
         (neighborhood.base.refine (rightIndex + 2)).value.eval first) ≤
-      Data.Gaussian.Norm.Basic.normSq (((patch.transported.cell column row).model.refine (leftIndex +
+      Basic.normSq (((patch.transported.cell column row).model.refine (leftIndex +
         2)).value.eval first +
         (neighborhood.base.refine (rightIndex + 2)).value.eval first))
-    (piece : RectangularSegmentSplitting.SegmentPiece geometry first last) (member : piece ∈ split.pieces) :
-    Data.Gaussian.Norm.Basic.normSq (((patch.transported.cell piece.column piece.row).model.refine (leftIndex +
+    (piece : SegmentPiece geometry first last) (member : piece ∈ split.pieces) :
+    Basic.normSq (((patch.transported.cell piece.column piece.row).model.refine (leftIndex +
       2)).value.eval piece.firstPoint -
       (neighborhood.base.refine rightIndex).value.eval piece.firstPoint) ≤
-    Data.Gaussian.Norm.Basic.normSq (((patch.transported.cell piece.column piece.row).model.refine (leftIndex +
+    Basic.normSq (((patch.transported.cell piece.column piece.row).model.refine (leftIndex +
       2)).value.eval piece.firstPoint +
       (neighborhood.base.refine rightIndex).value.eval piece.firstPoint) := by
   have started : NearestAt patch neighborhood leftIndex
@@ -209,14 +224,14 @@ theorem split_nearest (patch : RectangularFaceModels.RectangularPatch models.bou
       Data.Gaussian.Basic.Canonical.normSq
       (((patch.transported.cell piece.column piece.row).model.refine (leftIndex + 2)).value.eval piece.firstPoint +
         (neighborhood.base.refine rightIndex).step.step.value.eval piece.firstPoint) := by
-    simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical, SeededNeighborhood.refine,
+    simpa only [Basic.normSq_eq_canonical, SeededNeighborhood.refine,
       Model.refine] using later
   have scalar := OverlapReady.nearest_before_two_steps
     ((Model.overlapRefine (patch.transported.cell piece.column piece.row).model) leftIndex)
     (neighborhood.base.refine rightIndex) piece.first_inside
     (neighborhood.box_refines.contains (piece_neighborhood
       piece firstInside lastInside).1) nearest
-  simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical, Model.overlapRefine] using scalar
+  simpa only [Basic.normSq_eq_canonical, Model.overlapRefine] using scalar
 
 end
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.SplitSigns

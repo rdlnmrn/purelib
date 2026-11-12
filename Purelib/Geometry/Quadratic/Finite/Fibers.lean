@@ -58,11 +58,11 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The carrier size minus one is the number of nonroots of zero. -/
 private theorem carrier_predecessor
-  (presentation : Presentation.FiniteOddFieldPresentation K) :
+  (presentation : FiniteOddFieldPresentation K) :
     presentation.carrier.length - 1 =
       presentation.squareNonrootCount 0 := by
   have partition := presentation.squareRootCount_add_squareNonrootCount 0
@@ -82,7 +82,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The `q` affine parameters followed by the exceptional parameter at infinity. `Option` keeps the two pieces disjoint
 without a quotient. -/
@@ -99,7 +99,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The affine circle parameters together with infinity have `q + 1` entries. -/
 theorem circleParameters_length :
@@ -117,14 +117,14 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The displayed circle parameters have no duplicates. -/
 theorem circleParameters_nodup :
   presentation.circleParameters.Nodup := by
   unfold circleParameters
   apply Nodup.nodup_append
-  · apply Data.List.Nodup.nodup_map_of_injective
+  · apply Nodup.nodup_map_of_injective
     · intro left right equal
       injection equal
     · exact presentation.carrierNodup
@@ -147,7 +147,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Filtering an explicitly nonzero list removes no entries. -/
 private theorem filter_nonzero_eq_self
@@ -174,7 +174,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Removing zero from a duplicate-free list containing zero decreases its length by one. -/
 private theorem
@@ -221,13 +221,13 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The first coordinate of a pair with nonzero coordinate product is nonzero. -/
 private theorem
   first_ne_zero_of_product_eq {value :
   K}
-    (valueNonzero : value ≠ 0) (pair : Algebra.Quadratic.Pair K (1 : K))
+    (valueNonzero : value ≠ 0) (pair : Pair K (1 : K))
     (product : pair.re * pair.im = value) : pair.re ≠ 0 := by
   intro firstZero
   apply valueNonzero
@@ -244,7 +244,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Interchange the first two summands in a right-associated natural sum. -/
 private theorem nat_add_swap_first
@@ -266,7 +266,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Move the first summand to the end of a right-associated natural sum. -/
 private theorem nat_add_rotate_first
@@ -287,7 +287,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Interchange the first two summands and reassociate to the left. -/
 private theorem nat_add_swap_first_flat
@@ -308,7 +308,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- An additive natural-number equation gives the corresponding truncated-subtraction equation. -/
 private theorem nat_eq_sub_of_add_eq
@@ -329,7 +329,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The displayed nonzero field carrier, computed by a direct finite filter. -/
 def nonzeroScalars : List K := by
@@ -345,7 +345,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- A retained nonzero scalar has its original carrier occurrence and nonvanishing.
 
@@ -373,7 +373,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The nonzero scalar carrier has `q - 1` entries. -/
 theorem nonzeroScalars_length :
@@ -398,7 +398,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The filtered nonzero scalar carrier has no duplicates. -/
 theorem nonzeroScalars_nodup :
@@ -416,7 +416,7 @@ section
 namespace Purelib.Rotations
 variable {K : Type*} [ExplicitField K]
 namespace FiniteOddFieldPresentation
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 end FiniteOddFieldPresentation
 end Purelib.Rotations
@@ -428,11 +428,11 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The pair computed by the cached two-square search. -/
 def representedPair (value : K) :
-  Algebra.Quadratic.Pair K (1 : K) :=
+  Pair K (1 : K) :=
   let representation := presentation.twoSquareRepresentation value
   ⟨representation.first, representation.second⟩
 end
@@ -445,7 +445,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The pair computed by the two-square search has the requested quadrance. -/
 theorem representedPair_quadrance (value
@@ -463,15 +463,15 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- A square root of minus one in the displayed odd field is nonzero. -/
 theorem root_ne_zero (presentation :
-  Presentation.FiniteOddFieldPresentation K)
+  FiniteOddFieldPresentation K)
     {root : K} (rootSquare : root ^ 2 = -1) :
     root ≠ 0 := by
   intro rootZero
-  apply Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.one_ne_zero presentation
+  apply one_ne_zero presentation
   have minusOneZero : (-1 : K) = 0 := by
     calc
       (-1 : K) = root ^ 2 := rootSquare.symm
@@ -489,11 +489,11 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The complete displayed affine pair carrier. -/
 def scalarPairs : List
-  (Algebra.Quadratic.Pair
+  (Pair
   K (1 : K)) :=
   presentation.carrier.flatMap fun first =>
     presentation.carrier.map fun second => ⟨first, second⟩
@@ -507,11 +507,11 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The factorized hyperbola fiber `uv = value`. -/
 def productFiber (value : K) : List
-  (Algebra.Quadratic.Pair K (1 : K)) := by
+  (Pair K (1 : K)) := by
   letI : DecidableEq K := presentation.eqDecidable
   exact presentation.scalarPairs.filter fun pair =>
     pair.re * pair.im = value
@@ -525,11 +525,11 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Every displayed pair occurs in the explicit pair carrier. -/
 theorem scalarPairs_complete (pair :
-  Algebra.Quadratic.Pair K (1 : K)) :
+  Pair K (1 : K)) :
     pair ∈ presentation.scalarPairs := by
   unfold scalarPairs
   apply Flatten.mem_flatMap.mpr
@@ -546,14 +546,14 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- A product-fiber occurrence has the requested coordinate product.
 
 The Boolean filter retains exactly those pairs satisfying the product equation.
 The complete displayed pair carrier supplies the source occurrence in reverse. -/
 theorem mem_productFiber_iff (value : K)
-  (pair : Algebra.Quadratic.Pair K (1 : K)) :
+  (pair : Pair K (1 : K)) :
     pair ∈ presentation.productFiber value ↔
       pair.re * pair.im = value := by
   letI : DecidableEq K := presentation.eqDecidable
@@ -574,14 +574,14 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- A nonzero product fiber is parametrized by its nonzero first coordinate. -/
 def nonzeroProductBijection (value : K)
   (valueNonzero : value ≠ 0) :
-    Bijection.ListBijection (presentation.productFiber value)
+    ListBijection (presentation.productFiber value)
       presentation.nonzeroScalars where
-  forward := Algebra.Quadratic.Pair.re
+  forward := Pair.re
   backward := fun first => ⟨first, value / first⟩
   forward_mem := by
     intro pair member
@@ -631,23 +631,23 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Enumerating second coordinates over a duplicate-free first-coordinate list yields no duplicate pairs. -/
 private theorem
   scalarPairs_nodup_flatMap
-    (presentation : Presentation.FiniteOddFieldPresentation K) :
+    (presentation : FiniteOddFieldPresentation K) :
     ∀ {values : List K}, values.Nodup →
       (values.flatMap fun first =>
         presentation.carrier.map fun second =>
-          (⟨first, second⟩ : Algebra.Quadratic.Pair K (1 : K))).Nodup
+          (⟨first, second⟩ : Pair K (1 : K))).Nodup
   | [], _ => List.Pairwise.nil
   | head :: tail, nodup => by
       rw [Flatten.flatMap_cons]
       apply Nodup.nodup_append
-      · apply Data.List.Nodup.nodup_map_of_injective
+      · apply Nodup.nodup_map_of_injective
         · intro left right equal
-          exact congrArg Algebra.Quadratic.Pair.im equal
+          exact congrArg Pair.im equal
         · exact presentation.carrierNodup
       · exact scalarPairs_nodup_flatMap
           presentation
@@ -661,10 +661,10 @@ private theorem
           ⟨rightSecond, _, rightEqual⟩
         apply (List.pairwise_cons.mp nodup).1 rightFirst rightFirstMember
         calc
-          head = left.re := congrArg Algebra.Quadratic.Pair.re leftEqual
-          _ = right.re := congrArg Algebra.Quadratic.Pair.re equal
+          head = left.re := congrArg Pair.re leftEqual
+          _ = right.re := congrArg Pair.re equal
           _ = rightFirst :=
-            (congrArg Algebra.Quadratic.Pair.re rightEqual).symm
+            (congrArg Pair.re rightEqual).symm
 end
 end Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 
@@ -675,7 +675,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The complete pair carrier has no duplicates. -/
 theorem scalarPairs_nodup :
@@ -693,7 +693,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Filtering by a coordinate product yields a duplicate-free fiber. -/
 theorem productFiber_nodup (value : K) :
@@ -711,7 +711,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- A nonzero product fiber has the same size as the nonzero scalar carrier. -/
 theorem productFiber_length_of_ne_zero
@@ -732,11 +732,11 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- One two-square affine quadric fiber. -/
 def twoSquareFiber (value : K) : List
-  (Algebra.Quadratic.Pair K (1 : K)) := by
+  (Pair K (1 : K)) := by
   letI : DecidableEq K := presentation.eqDecidable
   exact presentation.scalarPairs.filter fun pair => pair.quadrance = value
 end
@@ -749,7 +749,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Executable cardinality of one two-square fiber. -/
 def twoSquareCount (value : K) : Nat :=
@@ -764,7 +764,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The ternary quadrance count expressed as the finite sum of its binary slices `r²+s² = value-t²`. -/
 def ternaryQuadranceSlicedCount (value :
@@ -781,13 +781,13 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Partition a finite sum of two-square slice sizes by square roots of the requested value.
 
 The zero residual has the supplied zero-fiber size, and every nonzero residual has the supplied common size. -/
 private theorem ternarySlice_partition
-    (presentation : Presentation.FiniteOddFieldPresentation K) (eqDecidable : DecidableEq K)
+    (presentation : FiniteOddFieldPresentation K) (eqDecidable : DecidableEq K)
     (value : K) (zeroFiberSize nonzeroFiberSize : Nat)
     (zeroFiberCount : presentation.twoSquareCount 0 = zeroFiberSize)
     (nonzeroFiberCount : ∀ residual : K, residual ≠ 0 →
@@ -853,7 +853,7 @@ namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentati
 
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The ternary slice count is the square-root count times the zero-fiber size plus the nonroot count times the common
 nonzero-fiber size. -/
@@ -866,9 +866,9 @@ theorem
     presentation.ternaryQuadranceSlicedCount value =
       presentation.squareRootCount value * zeroFiberSize +
         presentation.squareNonrootCount value * nonzeroFiberSize := by
-  unfold ternaryQuadranceSlicedCount FiniteOddFieldPresentation.squareRootCount
-    FiniteOddFieldPresentation.squareNonrootCount
-    FiniteOddFieldPresentation.squareRootFiber FiniteOddFieldPresentation.squareNonrootFiber
+  unfold ternaryQuadranceSlicedCount squareRootCount
+    squareNonrootCount
+    squareRootFiber squareNonrootFiber
   exact ternarySlice_partition presentation
     presentation.eqDecidable value
     zeroFiberSize nonzeroFiberSize zeroFiberCount nonzeroFiberCount
@@ -883,14 +883,14 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- A two-square-fiber occurrence has the requested quadrance.
 
 The Boolean filter retains exactly those pairs satisfying the quadrance
 equation. The complete displayed pair carrier supplies each source occurrence. -/
 theorem mem_twoSquareFiber_iff (value :
-  K) (pair : Algebra.Quadratic.Pair K (1 : K)) :
+  K) (pair : Pair K (1 : K)) :
     pair ∈ presentation.twoSquareFiber value ↔ pair.quadrance = value := by
   letI : DecidableEq K := presentation.eqDecidable
   unfold twoSquareFiber
@@ -910,19 +910,19 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- In the nonsplit case, the zero conic contains only the origin. -/
 def nonsplitZeroFiberBijection
     (minusOneNoRoot : ∀ root : K, root ^ 2 ≠ -1) :
-    Bijection.ListBijection (presentation.twoSquareFiber 0)
-      [(⟨0, 0⟩ : Algebra.Quadratic.Pair K (1 : K))] where
+    ListBijection (presentation.twoSquareFiber 0)
+      [(⟨0, 0⟩ : Pair K (1 : K))] where
   forward := fun pair => pair
   backward := fun pair => pair
   forward_mem := by
     intro pair member
     have pairZero :=
-      Pair.Coordinates.eq_zero_of_quadrance_eq_zero_of_minus_one_nonsquare
+      Coordinates.eq_zero_of_quadrance_eq_zero_of_minus_one_nonsquare
         presentation.eqDecidable minusOneNoRoot pair
         ((presentation.mem_twoSquareFiber_iff 0 pair).1 member)
     rw [pairZero]
@@ -947,7 +947,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Each two-square fiber has no duplicates. -/
 theorem twoSquareFiber_nodup (value : K)
@@ -967,7 +967,7 @@ namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentati
 
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- If minus one is nonsquare, the zero two-square fiber contains exactly one point. -/
 theorem
@@ -978,7 +978,7 @@ theorem
   exact ListBijection.length_eq
     (presentation.nonsplitZeroFiberBijection minusOneNoRoot)
     (presentation.twoSquareFiber_nodup 0)
-    (Nodup.nodup_singleton (⟨0, 0⟩ : Quadratic.Pair K (1 : K)))
+    (Nodup.nodup_singleton (⟨0, 0⟩ : Pair K (1 : K)))
 end
 end Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 
@@ -989,27 +989,27 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- When `-1` has the displayed square root `root`, split coordinates give a constructive bijection from the two-square
 conic to the product hyperbola. -/
 def twoSquareProductBijection (value
   root : K) (rootSquare : root ^ 2 = -1) :
-    Bijection.ListBijection (presentation.twoSquareFiber value)
+    ListBijection (presentation.twoSquareFiber value)
       (presentation.productFiber value) where
-  forward := Pair.Coordinates.split root
-  backward := Pair.Coordinates.unsplit root
+  forward := Coordinates.split root
+  backward := Coordinates.unsplit root
   forward_mem := by
     intro pair member
     apply (presentation.mem_productFiber_iff value _).2
-    rw [Pair.Coordinates.product_split root rootSquare pair]
+    rw [Coordinates.product_split root rootSquare pair]
     exact (presentation.mem_twoSquareFiber_iff value pair).1 member
   backward_mem := by
     intro pair member
     apply (presentation.mem_twoSquareFiber_iff value _).2
-    have splitProduct := Pair.Coordinates.product_split root rootSquare
-      (Pair.Coordinates.unsplit root pair)
-    rw [Pair.Coordinates.split_unsplit root
+    have splitProduct := Coordinates.product_split root rootSquare
+      (Coordinates.unsplit root pair)
+    rw [Coordinates.split_unsplit root
       (root_ne_zero presentation rootSquare)
         presentation.twoNonzero pair]
       at splitProduct
@@ -1017,12 +1017,12 @@ def twoSquareProductBijection (value
       ((presentation.mem_productFiber_iff value pair).1 member)
   backward_forward := by
     intro pair _
-    exact Pair.Coordinates.unsplit_split root
+    exact Coordinates.unsplit_split root
       (root_ne_zero presentation rootSquare)
         presentation.twoNonzero pair
   forward_backward := by
     intro pair _
-    exact Pair.Coordinates.split_unsplit root
+    exact Coordinates.split_unsplit root
       (root_ne_zero presentation rootSquare)
         presentation.twoNonzero pair
 end
@@ -1035,7 +1035,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- A displayed square root of minus one identifies the two-square and product-fiber counts. -/
 theorem
@@ -1060,7 +1060,7 @@ namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentati
 
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- If minus one is square, each nonzero two-square fiber has `q - 1` points. -/
 theorem
@@ -1082,25 +1082,25 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- If `-1` is nonsquare, the rational circle parametrization plus its exceptional point is a complete constructive
 enumeration of `x²+y²=1`. -/
 def unitCircleParameterBijection
     (minusOneNoRoot : ∀ root : K, root ^ 2 ≠ -1) :
-    Bijection.ListBijection (presentation.twoSquareFiber 1)
+    ListBijection (presentation.twoSquareFiber 1)
       presentation.circleParameters := by
   letI : DecidableEq K := presentation.eqDecidable
   exact
     { forward := fun pair =>
-        if pair = Pair.Coordinates.circleInfinity then none
+        if pair = Coordinates.circleInfinity then none
         else some (pair.im / (pair.re + 1))
       backward := fun parameter => match parameter with
-        | some value => Pair.Coordinates.circleParameter value
-        | none => Pair.Coordinates.circleInfinity
+        | some value => Coordinates.circleParameter value
+        | none => Coordinates.circleInfinity
       forward_mem := by
         intro pair member
-        if infinity : pair = Pair.Coordinates.circleInfinity then
+        if infinity : pair = Coordinates.circleInfinity then
           rw [if_pos infinity]
           unfold circleParameters
           exact Membership.mem_append.mpr (Or.inr List.mem_cons_self)
@@ -1117,29 +1117,29 @@ def unitCircleParameterBijection
         cases parameter with
         | none =>
             exact (presentation.mem_twoSquareFiber_iff 1 _).2
-              Pair.Coordinates.circleInfinity_quadrance
+              Coordinates.circleInfinity_quadrance
         | some value =>
             exact (presentation.mem_twoSquareFiber_iff 1 _).2
-              (Pair.Coordinates.quadrance_circleParameter minusOneNoRoot value)
+              (Coordinates.quadrance_circleParameter minusOneNoRoot value)
       backward_forward := by
         intro pair member
         have quadranceOne :=
           (presentation.mem_twoSquareFiber_iff 1 pair).1 member
-        if infinity : pair = Pair.Coordinates.circleInfinity then
+        if infinity : pair = Coordinates.circleInfinity then
           rw [if_pos infinity]
           exact infinity.symm
         else
           rw [if_neg infinity]
-          exact Pair.Coordinates.circleParameter_complete
+          exact Coordinates.circleParameter_complete
             presentation.eqDecidable minusOneNoRoot pair quadranceOne infinity
       forward_backward := by
         intro parameter _
         cases parameter with
         | none => rw [if_pos rfl]
         | some value =>
-            rw [if_neg (Pair.Coordinates.circleParameter_ne_infinity
+            rw [if_neg (Coordinates.circleParameter_ne_infinity
               presentation.twoNonzero minusOneNoRoot value)]
-            rw [Pair.Coordinates.circleParameter_inverse presentation.twoNonzero
+            rw [Coordinates.circleParameter_inverse presentation.twoNonzero
               minusOneNoRoot value] }
 end
 end Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
@@ -1152,7 +1152,7 @@ namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentati
 
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- If minus one is nonsquare, the unit two-square fiber has `q + 1` points. -/
 theorem
@@ -1179,16 +1179,16 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Multiplication by a computed representation of a nonzero value transports the unit circle bijectively onto that
 value's two-square fiber. -/
 def unitCircleToNonzeroFiberBijection
   (value : K) (valueNonzero : value ≠ 0) :
-    Bijection.ListBijection (presentation.twoSquareFiber 1)
+    ListBijection (presentation.twoSquareFiber 1)
       (presentation.twoSquareFiber value) where
   forward := Pair.multiply (presentation.representedPair value)
-  backward := Pair.Coordinates.divideMul value (presentation.representedPair value)
+  backward := Coordinates.divideMul value (presentation.representedPair value)
   forward_mem := by
     intro pair member
     apply (presentation.mem_twoSquareFiber_iff value _).2
@@ -1197,18 +1197,18 @@ def unitCircleToNonzeroFiberBijection
   backward_mem := by
     intro pair member
     apply (presentation.mem_twoSquareFiber_iff 1 _).2
-    exact Pair.Coordinates.quadrance_divideMul value valueNonzero
+    exact Coordinates.quadrance_divideMul value valueNonzero
       (presentation.representedPair value) pair
       (presentation.representedPair_quadrance value)
       ((presentation.mem_twoSquareFiber_iff value pair).1 member)
   backward_forward := by
     intro pair _
-    exact Pair.Coordinates.divideMul_mul value valueNonzero
+    exact Coordinates.divideMul_mul value valueNonzero
       (presentation.representedPair value) pair
       (presentation.representedPair_quadrance value)
   forward_backward := by
     intro pair _
-    exact Pair.Coordinates.mul_divideMul value valueNonzero
+    exact Coordinates.mul_divideMul value valueNonzero
       (presentation.representedPair value) pair
       (presentation.representedPair_quadrance value)
 end
@@ -1221,7 +1221,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Every nonzero two-square fiber has the same count as the unit fiber. -/
 theorem twoSquareCount_eq_one_of_ne_zero
@@ -1243,7 +1243,7 @@ namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentati
 
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- If minus one is nonsquare, each nonzero two-square fiber has `q + 1` points. -/
 theorem
@@ -1264,7 +1264,7 @@ namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentati
 
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- A nonsquare value has `q² + q` ternary representations when minus one is nonsquare. -/
 theorem
@@ -1297,7 +1297,7 @@ namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentati
 
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- A nonzero square has `q² - q` ternary representations when minus one is nonsquare. -/
 theorem
@@ -1344,12 +1344,12 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The zero product fiber, with the origin included only on the vertical axis and the horizontal axis restricted to
 nonzero first coordinates. -/
 def zeroProductPoints : List
-  (Algebra.Quadratic.Pair K (1 : K)) :=
+  (Pair K (1 : K)) :=
   presentation.carrier.map (fun second => ⟨0, second⟩) ++
     presentation.nonzeroScalars.map (fun first => ⟨first, 0⟩)
 end
@@ -1362,11 +1362,11 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The disjoint two-axis display consists exactly of pairs with zero coordinate product. -/
 theorem mem_zeroProductPoints_iff (pair
-  : Algebra.Quadratic.Pair K (1 : K)) :
+  : Pair K (1 : K)) :
     pair ∈ presentation.zeroProductPoints ↔
       pair.re * pair.im = 0 := by
   constructor
@@ -1416,11 +1416,11 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The zero hyperbola fiber and its explicit two-axis display contain the same points. -/
 def zeroProductBijection :
-    Bijection.ListBijection (presentation.productFiber 0)
+    ListBijection (presentation.productFiber 0)
       presentation.zeroProductPoints where
   forward := fun pair => pair
   backward := fun pair => pair
@@ -1444,7 +1444,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The disjoint two-axis display has `q + (q - 1)` entries. -/
 theorem zeroProductPoints_length :
@@ -1463,20 +1463,20 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The disjoint two-axis display has no duplicates. -/
 theorem zeroProductPoints_nodup :
   presentation.zeroProductPoints.Nodup := by
   unfold zeroProductPoints
   apply Nodup.nodup_append
-  · apply Data.List.Nodup.nodup_map_of_injective
+  · apply Nodup.nodup_map_of_injective
     · intro left right equal
-      exact congrArg Algebra.Quadratic.Pair.im equal
+      exact congrArg Pair.im equal
     · exact presentation.carrierNodup
-  · apply Data.List.Nodup.nodup_map_of_injective
+  · apply Nodup.nodup_map_of_injective
     · intro left right equal
-      exact congrArg Algebra.Quadratic.Pair.re equal
+      exact congrArg Pair.re equal
     · exact presentation.nonzeroScalars_nodup
   · intro left leftMember right rightMember equal
     rcases Map.mem_map.mp leftMember with
@@ -1487,9 +1487,9 @@ theorem zeroProductPoints_nodup :
       (presentation.mem_nonzeroScalars_iff rightFirst).1 rightFirstMember |>.1
     apply rightNonzero
     calc
-      rightFirst = right.re := congrArg Algebra.Quadratic.Pair.re rightEqual
-      _ = left.re := (congrArg Algebra.Quadratic.Pair.re equal).symm
-      _ = 0 := (congrArg Algebra.Quadratic.Pair.re leftEqual).symm
+      rightFirst = right.re := congrArg Pair.re rightEqual
+      _ = left.re := (congrArg Pair.re equal).symm
+      _ = 0 := (congrArg Pair.re leftEqual).symm
 end
 end Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 
@@ -1500,7 +1500,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The zero product fiber has `q + (q - 1)` points. -/
 theorem productFiber_zero_length :
@@ -1526,7 +1526,7 @@ namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentati
 
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- If minus one is square, the zero two-square fiber has `q + (q - 1)` points. -/
 theorem
@@ -1547,7 +1547,7 @@ namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentati
 
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- A nonsquare value has `q² - q` ternary representations when minus one is square. -/
 theorem
@@ -1598,7 +1598,7 @@ namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentati
 
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- A nonzero square has `q² + q` ternary representations when minus one is square. -/
 theorem
@@ -1649,7 +1649,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The ternary null cone has exactly `q²` affine points in every displayed odd finite field, independently of the
 split/nonsplit binary regime. -/
@@ -1701,7 +1701,7 @@ namespace Purelib.Geometry.Quadratic.Finite.Fibers.FiniteOddFieldPresentation
 
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 set_option genInjectivity false in
 /-- Exhaustive constructive classification of the ternary affine fibers. The four nonzero cases expose exactly which two
@@ -1755,16 +1755,16 @@ open Purelib.Geometry.Quadratic.Finite.Fibers.FiniteOddFieldPresentation
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Compute the exact ternary-fiber regime from the displayed equality and square classifiers. -/
 def classifyTernaryQuadranceCount (value
   : K) :
-    (Geometry.Quadratic.Finite.Fibers.FiniteOddFieldPresentation.TernaryQuadranceCountClassification presentation) value
+    (TernaryQuadranceCountClassification presentation) value
       := by
   cases presentation.eqDecidable value 0 with
   | isTrue valueZero =>
-      exact Geometry.Quadratic.Finite.Fibers.FiniteOddFieldPresentation.TernaryQuadranceCountClassification.zero
+      exact TernaryQuadranceCountClassification.zero
         valueZero (by
         rw [valueZero]
         exact presentation.ternaryQuadranceSlicedCount_zero)
@@ -1810,7 +1810,7 @@ section
 namespace Purelib.Geometry.Quadratic.Finite.Fibers.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 set_option genInjectivity false in
 /-- Constructive exhaustive classification of every binary affine quadric fiber. This is the square-status form of the
@@ -1840,7 +1840,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Compute the binary-quadric count regime from the cached square table. -/
 def classifyTwoSquareCounts :

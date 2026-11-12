@@ -69,6 +69,8 @@ import Purelib.Topology.Surface.Sewing.SewnPathRequests
 import Purelib.Topology.Surface.Sewing.VertexSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation.Rational.Budget
@@ -148,13 +150,13 @@ open Purelib.Topology.Surface.Sewing.PolygonSewing.PolygonStokes (BoundarySplit)
 open Purelib.Riemann.Periods.PeriodMatrix (standardDifferential)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {source :
     Differential genus} {boundary :
     BoundaryProgram lifted
     source}
-  {segments : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank boundary.program.period}
+  {segments : PeriodSegmentBanks.SegmentBank boundary.program.period}
     {differential : Fin genus}
   {comparison : PrimitiveBank
     (FaceBank.ofSegments boundary.program segments)
@@ -168,34 +170,34 @@ anchor.
 
 The cached magnitude pays the original boundary length, diagonal detours and inherited sewing errors at all sufficient
 later stages. -/
-structure BoundaryReference (boundary : LiftedPuncturedGrid.BoundaryProgram lifted source)
+structure BoundaryReference (boundary : BoundaryProgram lifted source)
     {segments : PeriodSegmentBanks.SegmentBank boundary.program.period}
-    (comparison : PeriodPrimitiveComparison.PrimitiveBank (FaceBank.ofSegments boundary.program segments) differential)
-    (covered : ContactBanks.ContactPreparations contacts (PeriodMatrix.standardDifferential differential)
+    (comparison : PrimitiveBank (FaceBank.ofSegments boundary.program segments) differential)
+    (covered : ContactPreparations contacts (PeriodMatrix.standardDifferential differential)
       comparison.domains) where
   /-- The retained jump-reference request on the actual original segment and contact banks. -/ reference :
-    PrimitiveReferences.JumpReference comparison covered boundary.count
-  /-- The cached stage-independent anchored boundary magnitude ceiling. -/ bound : InverseRootPolynomial.Coordinate
+    JumpReference comparison covered boundary.count
+  /-- The cached stage-independent anchored boundary magnitude ceiling. -/ bound : Coordinate
   /-- The cached ceiling is exactly the original boundary-count and local-reference norm-sum formula. -/ bound_eq :
-    bound = 2 * (1 + 2 * (boundary.count : InverseRootPolynomial.Coordinate) * reference.locals.profile.total)
+    bound = 2 * (1 + 2 * (boundary.count : Coordinate) * reference.locals.profile.total)
 
 constructive_injectivity BoundaryReference
 
 namespace BoundaryReference
 
 variable {covered : ContactPreparations contacts
-  (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential differential) comparison.domains}
+  (PeriodMatrix.standardDifferential differential) comparison.domains}
 
 /-- Reuse the original local reference bank, actual contact coverage and retained sewing shape to cache the complete
 boundary magnitude ceiling. -/
-@[expose] def ofReferences (covered : ContactBanks.ContactPreparations contacts (PeriodMatrix.standardDifferential
+@[expose] def ofReferences (covered : ContactPreparations contacts (PeriodMatrix.standardDifferential
   differential) comparison.domains)
     (coverage : ∀ contact ∈ SewnPrimitiveContacts.sourceContacts lifted.cutPolygon.patch.assembly, contact ∈ contacts)
-    (locals : PathPrimitiveReferences.ReferenceBank (PeriodMatrix.standardDifferential differential) 0
+    (locals : ReferenceBank (PeriodMatrix.standardDifferential differential) 0
       (FaceBank.ofSegments boundary.program segments).assigned comparison.compared)
-    (profile : SewnPrimitiveAccounting.Shape) (profileEq : profile = SewnPrimitiveAccounting.shape
+    (profile : Shape) (profileEq : profile = SewnPrimitiveAccounting.shape
       lifted.cutPolygon.patch.assembly) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrimitiveReferences.BoundaryReference boundary comparison
+      BoundaryReference boundary comparison
       covered :=
   let reference := JumpReference.ofReferences covered coverage locals profile profileEq boundary.count
   ⟨reference, 2 * (1 + 2 * Aggregate.countCoordinate boundary.count * locals.profile.total),
@@ -204,11 +206,11 @@ boundary magnitude ceiling. -/
 /-- The actual retained boundary source increments have squared-norm sum at most twice the original local-reference
 total. -/
 theorem source_normSum_bounded (bounded :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrimitiveReferences.BoundaryReference boundary comparison covered)
+  BoundaryReference boundary comparison covered)
   {index : Nat}
     (later : bounded.reference.contactRequest.index ≤ index)
-    {shared : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index comparison.domains}
-    (triangles : TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh) :
+    {shared : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index comparison.domains}
+    (triangles : TriangleReadings shared lifted.mesh) :
     Data.Gaussian.Norm.Sum.Basic.gaussianNormSqSum (boundary.sources.sources.map (fun source => source.increment
       triangles.values)) ≤
       2 * bounded.reference.locals.profile.total := by
@@ -219,38 +221,38 @@ theorem source_normSum_bounded (bounded :
     (boundary.sources.sources_project.trans projected.symm)
   rw [← aligned, RouteSpine.source_increments, RouteSpine.triangle_values triangles boundary.program.routed.spine]
   exact (FaceBank.ofSegments_norm_sum boundary.program segments shared).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
       (bounded.reference.locals.normSum_bounded comparison.sharedDomains (bounded.reference.local_later later) shared)
         (by decide))
 
 /-- The cached original boundary magnitude ceiling is strictly positive. -/
 theorem bound_positive (bounded :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrimitiveReferences.BoundaryReference boundary comparison covered) :
+  BoundaryReference boundary comparison covered) :
   0 < bounded.bound := by
-  have nonnegative : (0 : InverseRootPolynomial.Coordinate) ≤ 2 * (boundary.count : InverseRootPolynomial.Coordinate) *
+  have nonnegative : (0 : Coordinate) ≤ 2 * (boundary.count : Coordinate) *
     bounded.reference.locals.profile.total :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)))
+    Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct (by decide) (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)))
       bounded.reference.locals.total_nonnegative
-  have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct (by
-      decide : (0 : InverseRootPolynomial.Coordinate) < 1)
-    (2 * (boundary.count : InverseRootPolynomial.Coordinate) * bounded.reference.locals.profile.total)
+  have shifted := Arithmetic.add_lt_add_right_direct (by
+      decide : (0 : Coordinate) < 1)
+    (2 * (boundary.count : Coordinate) * bounded.reference.locals.profile.total)
   rw [zero_add] at shifted
   rw [bounded.bound_eq]
-  exact Fraction.Order.Arithmetic.mul_pos_direct (by decide) (nonnegative.trans_lt shifted)
+  exact Arithmetic.mul_pos_direct (by decide) (nonnegative.trans_lt shifted)
 
 /-- Every actual cut-boundary prefix endpoint satisfies the fixed anchored magnitude ceiling at sufficiently late shared
 stages. -/
 theorem prefix_bounded (bounded :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrimitiveReferences.BoundaryReference boundary comparison covered)
+  BoundaryReference boundary comparison covered)
   {index : Nat}
     (later : bounded.reference.contactRequest.index ≤ index)
-    {shared : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index comparison.domains}
-    (triangles : TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh) (surface :
+    {shared : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index comparison.domains}
+    (triangles : TriangleReadings shared lifted.mesh) (surface :
       SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch triangles.values)
-    (first last : List (Stokes.OrientedEdge lifted.cutPolygon.patch.cut.count))
+    (first last : List (OrientedEdge lifted.cutPolygon.patch.cut.count))
     (equal : first ++ last = lifted.cutPolygon.patch.cut.boundary) {finish : Fin lifted.cutPolygon.patch.cut.count}
-    (path : PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish first lifted.cutPolygon.patch.cut.anchor
+    (path : PathEndpoints OrientedEdge.start OrientedEdge.finish first lifted.cutPolygon.patch.cut.anchor
       finish) :
     Data.Gaussian.Norm.Basic.normSq (surface.sewn.values finish - surface.sewn.values
       lifted.cutPolygon.patch.cut.anchor) ≤ bounded.bound := by
@@ -260,20 +262,20 @@ theorem prefix_bounded (bounded :
   have estimate := PathSources.Sample.prefix_magnitude_bound (CachedSample.pathSample surface boundary.sources) first
     last equal path
     (bounded.source_normSum_bounded later triangles)
-  have total := estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add paid.le le_rfl)
+  have total := estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add paid.le le_rfl)
     (by decide))
-  have countEq := congrArg (fun count : Nat => (count : InverseRootPolynomial.Coordinate)) boundary.count_eq
+  have countEq := congrArg (fun count : Nat => (count : Coordinate)) boundary.count_eq
   exact total.trans_eq (by rw [bounded.bound_eq, countEq]; ring1)
 
 /-- Both kinds of exposed endpoint are controlled relative to the retained cut anchor, not an assumed normalization of
 the original local primitives. -/
-theorem start_bounded (bounded : Curves.Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrimitiveReferences.BoundaryReference
+theorem start_bounded (bounded : BoundaryReference
   boundary comparison covered) {index : Nat}
     (later : bounded.reference.contactRequest.index ≤ index)
-    {shared : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index comparison.domains}
-    (triangles : TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh) (surface :
+    {shared : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index comparison.domains}
+    (triangles : TriangleReadings shared lifted.mesh) (surface :
       SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch triangles.values)
-    (edge : Stokes.OrientedEdge lifted.cutPolygon.patch.cut.count) (member : edge ∈
+    (edge : OrientedEdge lifted.cutPolygon.patch.cut.count) (member : edge ∈
       lifted.cutPolygon.patch.cut.boundary) :
     Data.Gaussian.Norm.Basic.normSq (surface.sewn.values edge.start - surface.sewn.values
       lifted.cutPolygon.patch.cut.anchor) ≤ bounded.bound := by
@@ -287,13 +289,13 @@ theorem start_bounded (bounded : Curves.Hyperelliptic.Meshes.PuncturedGrid.Bound
 /-- Every actual cut-boundary edge's final endpoint satisfies the fixed magnitude bound relative to the retained cut
 anchor. -/
 theorem finish_bounded (bounded :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrimitiveReferences.BoundaryReference boundary comparison covered)
+  BoundaryReference boundary comparison covered)
   {index : Nat}
     (later : bounded.reference.contactRequest.index ≤ index)
-    {shared : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index comparison.domains}
-    (triangles : TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh) (surface :
+    {shared : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index comparison.domains}
+    (triangles : TriangleReadings shared lifted.mesh) (surface :
       SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch triangles.values)
-    (edge : Stokes.OrientedEdge lifted.cutPolygon.patch.cut.count) (member : edge ∈
+    (edge : OrientedEdge lifted.cutPolygon.patch.cut.count) (member : edge ∈
       lifted.cutPolygon.patch.cut.boundary) :
     Data.Gaussian.Norm.Basic.normSq (surface.sewn.values edge.finish - surface.sewn.values
       lifted.cutPolygon.patch.cut.anchor) ≤ bounded.bound := by

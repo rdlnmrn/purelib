@@ -3,6 +3,7 @@ import Purelib.Algebra.Group.Negation
 import Purelib.Data.List.Membership
 import Purelib.Riemann.Normalization.InverseRootPrimitive
 import Purelib.Data.Gaussian.Norm.Basic
+import Purelib.Data.Gaussian.Norm.Sum.Basic
 import Purelib.Polynomial.Dense.Gaussian.Bounds.Box
 public import Purelib.Riemann.Integration.PreparedDirectDyadicRefinementsCore
 import Purelib.Riemann.Normalization.ContinuedInverseRoot
@@ -46,8 +47,36 @@ import Purelib.Data.Rat.Fraction.Field
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Algebra.Group in
 attribute [local instance high] Negation.subNegZeroMonoid
+
+public section
+
+namespace Purelib.Riemann.Paths.PreparedPrimitivePaths
+
+open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
+open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
+open Purelib.Riemann.Integration.PreparedSubdivisionModelCore (CenteredEdge)
+
+variable {genus : Nat} {curve : HyperellipticCurve genus} {differential : Differential genus}
+
+open Purelib.Data.Gaussian in
+open Purelib.Integration.Polynomial.Gaussian.Path in
+/-- Summing original mapped child increments equals the primitive increment sum of their exact models. -/
+theorem mapped_increment_sum (primitive : Basic.Canonical → Basic.Canonical) (children : List (CenteredEdge
+  curve differential)) :
+    Data.Gaussian.Norm.Sum.Basic.gaussianSum (children.map (fun child => primitive (child.edge.point 1) - primitive
+      (child.edge.point 0))) =
+      Primitive.incrementSum primitive (children.map CenteredEdge.model) := by
+  induction children with
+  | nil => rfl
+  | cons child rest ih => exact congrArg (_ + ·) ih
+
+end Purelib.Riemann.Paths.PreparedPrimitivePaths
+
+end
 
 @[expose] public section
 
@@ -80,8 +109,8 @@ open Purelib.Data.Gaussian in
 abbrev Gaussian := Basic.Canonical
 open Purelib.Integration.Polynomial.Gaussian.Path.Basic (PathModel)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+variable {genus count : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
+  Curves.Hyperelliptic.Differentials.Basic.Differential genus}
 
 open Purelib.Geometry.Path.Gaussian in
 open Purelib.Integration.Polynomial.Gaussian.Path in
@@ -92,14 +121,14 @@ theorem incrementSum_eq (primitive : Gaussian → Gaussian)
     {start finish : Lifted.Basic.LiftedPoint 2}
     (chain : DirectPathChain parents (start := start) (finish := finish)) :
     Primitive.incrementSum primitive
-        (parents.map PreparedSubdivisionModelCore.CenteredEdge.model) =
+        (parents.map CenteredEdge.model) =
       primitive finish.coordinate - primitive start.coordinate := by
   induction chain with
   | nil point => change (0 : Gaussian) = primitive point.coordinate - primitive point.coordinate; ring1
   | cons parent tail ih =>
       change primitive (parent.edge.point 1) - primitive (parent.edge.point 0) +
         Primitive.incrementSum primitive
-          (List.map PreparedSubdivisionModelCore.CenteredEdge.model _) = _
+          (List.map CenteredEdge.model _) = _
       rw [ih, parent.edge.point_one, parent.edge.point_zero]
       ring1
 
@@ -112,17 +141,17 @@ private theorem affine_between {lower upper left right fraction : Coordinate}
     (leftInside : lower ≤ left ∧ left ≤ upper) (rightInside : lower ≤ right ∧ right ≤ upper)
     (inside : 0 ≤ fraction ∧ fraction ≤ 1) :
     lower ≤ (1 - fraction) * left + fraction * right ∧ (1 - fraction) * left + fraction * right ≤ upper := by
-  have complementary : 0 ≤ 1 - fraction := Fraction.Order.Arithmetic.sub_nonneg_direct inside.2
+  have complementary : 0 ≤ 1 - fraction := Arithmetic.sub_nonneg_direct inside.2
   constructor
   · calc
       lower = (1 - fraction) * lower + fraction * lower := by ring1
-      _ ≤ _ := Fraction.Order.Arithmetic.add_le_add_direct
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct leftInside.1 complementary)
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct rightInside.1 inside.1)
+      _ ≤ _ := Arithmetic.add_le_add_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct leftInside.1 complementary)
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct rightInside.1 inside.1)
   · calc
-      _ ≤ (1 - fraction) * upper + fraction * upper := Fraction.Order.Arithmetic.add_le_add_direct
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct leftInside.2 complementary)
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct rightInside.2 inside.1)
+      _ ≤ (1 - fraction) * upper + fraction * upper := Arithmetic.add_le_add_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct leftInside.2 complementary)
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct rightInside.2 inside.1)
       _ = upper := by ring1
 
 open Purelib.Data.Gaussian in
@@ -200,7 +229,7 @@ theorem integral_error_le_uniform (primitive : Gaussian → Gaussian)
       normSq (primitive (parent.edge.point 1) - primitive (parent.edge.point 0) -
         parent.model.integralSample) ≤ budget) :
     normSq (primitive finish.coordinate - primitive start.coordinate -
-      (Basic.PathModel.mk (parents.map PreparedSubdivisionModelCore.CenteredEdge.model)).integralSample) ≤
+      (PathModel.mk (parents.map CenteredEdge.model)).integralSample) ≤
         (parents.length : Coordinate) * ((parents.length : Coordinate) * budget) := by
   have bound := Primitive.integral_error_le_uniform primitive _ (incrementSum_eq primitive chain) budget
     (by
@@ -233,7 +262,7 @@ theorem integral_error_le {patch : ContinuedNeighborhood curve.polynomial count}
       2 * (canonicalError model parent.edge + 4 * parent.edge.modelErrorAllowance * parent.edge.pointMovement) ≤ budget)
         :
     normSq (model.primitive.value.eval finish.coordinate - model.primitive.value.eval start.coordinate -
-      (Basic.PathModel.mk (parents.map PreparedSubdivisionModelCore.CenteredEdge.model)).integralSample) ≤
+      (PathModel.mk (parents.map CenteredEdge.model)).integralSample) ≤
         (parents.length : Coordinate) * ((parents.length : Coordinate) * budget) := by
   apply integral_error_le_uniform _ chain budget
   intro parent member
@@ -269,7 +298,7 @@ theorem dyadic_integral_error_le {patch : ContinuedNeighborhood curve.polynomial
     (movements : ∀ parent ∈ parents,
       parent.edge.pointMovement ≤ Geometric.Basic.quarterRadius movement depth) :
     normSq (model.primitive.value.eval finish.coordinate - model.primitive.value.eval start.coordinate -
-      (Basic.PathModel.mk (parents.map PreparedSubdivisionModelCore.CenteredEdge.model)).integralSample) ≤
+      (PathModel.mk (parents.map CenteredEdge.model)).integralSample) ≤
         4 * model.primitive.remainderBound * movement * Geometric.Basic.quarterRadius movement depth +
           PreparedPrimitiveSamples.coefficientError patch index numeratorBound error * movement := by
   apply Primitive.Dyadic.dyadic_integral_error_le _ _ (incrementSum_eq _ chain) depth
@@ -379,7 +408,7 @@ theorem block_integral_error_le {patch : ContinuedNeighborhood curve.polynomial 
     let movement := geometricMovement parent.edge.segment parent.edge.left.parameter
       parent.edge.request.endpoint.parameter
     normSq (model.primitive.value.eval (parent.edge.point 1) - model.primitive.value.eval (parent.edge.point 0) -
-      (Basic.PathModel.mk (block.children.map PreparedSubdivisionModelCore.CenteredEdge.model)).integralSample) ≤
+      (PathModel.mk (block.children.map CenteredEdge.model)).integralSample) ≤
         4 * model.primitive.remainderBound * movement * Geometric.Basic.quarterRadius movement block.depth +
           PreparedPrimitiveSamples.coefficientError patch index
             (Bounds.Box.denseEvalNormBound (differentialNumerator differential) patch.box)

@@ -80,7 +80,10 @@ def _run(manifest, cache, checker, config, sessions, *, exporters=3, checkers=3,
                           '--checker', checker, '--config', config, '--cache', cache / 'nanoda-checked'])
         if checked['result']['declarations'] != value['coverage']['declarations']:
             raise ValueError('checker receipt does not cover the exported declarations')
-        print(checked['result']['report'], end='', flush=True)
+        modules = checked['result']['modules']
+        slowest = max((row['seconds'] for row in modules.values()), default=0)
+        print(f'nanoda: checked {checked["result"]["declarations"]} declarations in '
+              f'{len(modules)} modules; slowest={slowest:.3f}s; retained={checked["retained"]}', flush=True)
         return checked
     outputs = schedule(groups, export, check, exporters=exporters, checkers=checkers,
                        cancel=sessions.cancel, pipeline=pipeline)

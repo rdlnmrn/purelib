@@ -32,6 +32,9 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.CCL.Encoding.Block.Basic
 import Mathlib.Order.Basic
 
+open Purelib.Data.GaussianInt.Fraction.Basic
+open Purelib.Approximation.CCL
+
 section
 public section
 
@@ -57,8 +60,8 @@ sensitivity-scaled cylinder spread.
 Each original atom retains its exact nonzero-numerator encoding and projective realization; the same squared-sensitivity
 certificate controls every pair. -/
 theorem encodedSquaredProbe_poweredL2Distance_values_le {index : Type}
-    (distribution : Measure.Distribution index)
-    (fraction : index → GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+    (distribution : Distribution index)
+    (fraction : index → SourceEncodingEncoderFracAlias)
     (numeratorNonzero : ∀ item, (fraction item).numerator ≠ 0)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
@@ -73,14 +76,14 @@ theorem encodedSquaredProbe_poweredL2Distance_values_le {index : Type}
         (fun item => probe (points item))
         (fun item => probe (Line.Proj.affine (fraction item).value)) ≤
       distribution.expectation fun item =>
-        factor * Approximation.CCL.Cylinder.cylinderSpread
+        factor * Cylinder.cylinderSpread
           (Encoder.Blocks.encodeBlocks (fraction item)
             (numeratorNonzero item)).blocks := by
   change distribution.expectation (fun item =>
       (probe (points item) -
         probe (Line.Proj.affine (fraction item).value)) ^ 2) ≤
     distribution.expectation fun item =>
-      factor * Approximation.CCL.Cylinder.cylinderSpread
+      factor * Cylinder.cylinderSpread
         (Encoder.Blocks.encodeBlocks (fraction item)
           (numeratorNonzero item)).blocks
   apply distribution.expectation_mono
@@ -89,10 +92,10 @@ theorem encodedSquaredProbe_poweredL2Distance_values_le {index : Type}
     (numeratorNonzero atom.item)
   have probeEqual : probe encoding.point =
       probe (Line.Proj.affine (fraction atom.item).value) :=
-    Approximation.CCL.EncodedPrefix.encodedSquaredSensitiveProbe_eq_value (fraction atom.item)
+    EncodedPrefix.encodedSquaredSensitiveProbe_eq_value (fraction atom.item)
       (numeratorNonzero atom.item) probe factor sensitive
   rw [← probeEqual, ← Distance.NaturalLp.rationalSeparation_sq]
-  exact Approximation.CCL.Prefix.projectiveRealized_probe_separation_sq_le
+  exact Prefix.projectiveRealized_probe_separation_sq_le
     (pointsRealize atom member) encoding.realizes probe factor
       factorNonnegative sensitive
 
@@ -105,8 +108,8 @@ open Purelib.Geometry.Projective in
 /-- The required block count makes the exact realized probe value at each retained atom lie within the positive
 tolerance of its original fraction value. -/
 theorem encodedSquaredProbe_separation_lt_requested_on_atom {index : Type}
-    (distribution : Measure.Distribution index)
-    (fraction : index → GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+    (distribution : Distribution index)
+    (fraction : index → SourceEncodingEncoderFracAlias)
     (numeratorNonzero : ∀ item, (fraction item).numerator ≠ 0)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)
@@ -122,7 +125,7 @@ theorem encodedSquaredProbe_separation_lt_requested_on_atom {index : Type}
         (Encoder.Blocks.encodeBlocks (fraction atom.item)
           (numeratorNonzero atom.item)).blocks
         (points atom.item))
-    (atom : Measure.Weighted index)
+    (atom : Weighted index)
     (member : atom ∈ distribution.atoms) :
     Distance.rationalSeparation
         (probe (points atom.item))
@@ -131,10 +134,10 @@ theorem encodedSquaredProbe_separation_lt_requested_on_atom {index : Type}
     (numeratorNonzero atom.item)
   have probeEqual : probe encoding.point =
       probe (Line.Proj.affine (fraction atom.item).value) :=
-    Approximation.CCL.EncodedPrefix.encodedSquaredSensitiveProbe_eq_value (fraction atom.item)
+    EncodedPrefix.encodedSquaredSensitiveProbe_eq_value (fraction atom.item)
       (numeratorNonzero atom.item) probe factor sensitive
   rw [← probeEqual]
-  exact Approximation.CCL.Prefix.projectiveRealizedSquaredProbe_separation_lt_of_requested
+  exact Prefix.projectiveRealizedSquaredProbe_separation_lt_of_requested
     (pointsRealize atom member) encoding.realizes probe factor factorPositive
     sensitive epsilon epsilonPositive (enough atom member)
 
@@ -148,8 +151,8 @@ open Purelib.Measure in
 /-- Sufficient original block counts make the probe-versus-fraction-value separation event have probability zero. -/
 theorem encodedSquaredProbe_separationProbability_eq_zero_of_requested
     {index : Type}
-    (distribution : Measure.Distribution index)
-    (fraction : index → GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+    (distribution : Distribution index)
+    (fraction : index → SourceEncodingEncoderFracAlias)
     (numeratorNonzero : ∀ item, (fraction item).numerator ≠ 0)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)
@@ -166,13 +169,13 @@ theorem encodedSquaredProbe_separationProbability_eq_zero_of_requested
           (numeratorNonzero atom.item)).blocks
         (points atom.item)) :
     distribution.probability
-      (Measure.separationAtLeast epsilon
+      (separationAtLeast epsilon
         (fun item => probe (points item))
         (fun item =>
           probe (Line.Proj.affine (fraction item).value))) = 0 := by
   calc
     distribution.probability
-        (Measure.separationAtLeast epsilon
+        (separationAtLeast epsilon
           (fun item => probe (points item))
           (fun item =>
             probe (Line.Proj.affine (fraction item).value))) =
@@ -180,10 +183,10 @@ theorem encodedSquaredProbe_separationProbability_eq_zero_of_requested
       apply distribution.probability_congr_off_zero
       intro atom member
       apply Or.inr
-      unfold Measure.separationAtLeast
+      unfold separationAtLeast
       apply decide_eq_false_iff_not.mpr
       exact not_le_of_gt
-        (CCL.EncodedPrefix.encodedSquaredProbe_separation_lt_requested_on_atom distribution
+        (encodedSquaredProbe_separation_lt_requested_on_atom distribution
           fraction numeratorNonzero probe factor factorPositive sensitive
           epsilon epsilonPositive enough points pointsRealize atom member)
     _ = 0 := distribution.probability_false
@@ -197,8 +200,8 @@ open Purelib.Measure in
 /-- Squared separation of the two original probe expectations is at most the expected sensitivity-scaled encoding
 spread. -/
 theorem encodedSquaredProbe_expectation_separation_sq_le {index : Type}
-    (distribution : Measure.Distribution index)
-    (fraction : index → GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+    (distribution : Distribution index)
+    (fraction : index → SourceEncodingEncoderFracAlias)
     (numeratorNonzero : ∀ item, (fraction item).numerator ≠ 0)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
@@ -214,13 +217,13 @@ theorem encodedSquaredProbe_expectation_separation_sq_le {index : Type}
         (distribution.expectation fun item =>
           probe (Line.Proj.affine (fraction item).value)) ^ 2 ≤
       distribution.expectation fun item =>
-        factor * Approximation.CCL.Cylinder.cylinderSpread
+        factor * Cylinder.cylinderSpread
           (Encoder.Blocks.encodeBlocks (fraction item)
             (numeratorNonzero item)).blocks := by
   exact (distribution.expectation_separation_sq_le_poweredL2Distance
     (fun item => probe (points item))
     (fun item => probe (Line.Proj.affine (fraction item).value))).trans
-      (CCL.EncodedPrefix.encodedSquaredProbe_poweredL2Distance_values_le distribution fraction
+      (encodedSquaredProbe_poweredL2Distance_values_le distribution fraction
         numeratorNonzero probe factor factorNonnegative sensitive points
         pointsRealize)
 
@@ -235,8 +238,8 @@ open Purelib.Measure in
 /-- Sufficient block counts at every original atom make realized and fraction-value probe expectations closer than the
 positive tolerance. -/
 theorem encodedSquaredProbe_expectation_separation_lt_requested {index : Type}
-    (distribution : Measure.Distribution index)
-    (fraction : index → GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+    (distribution : Distribution index)
+    (fraction : index → SourceEncodingEncoderFracAlias)
     (numeratorNonzero : ∀ item, (fraction item).numerator ≠ 0)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)
@@ -256,22 +259,22 @@ theorem encodedSquaredProbe_expectation_separation_lt_requested {index : Type}
         (distribution.expectation fun item => probe (points item))
         (distribution.expectation fun item =>
           probe (Line.Proj.affine (fraction item).value)) < epsilon := by
-  have poweredL2Le := CCL.EncodedPrefix.encodedSquaredProbe_poweredL2Distance_values_le
+  have poweredL2Le := encodedSquaredProbe_poweredL2Distance_values_le
     distribution fraction numeratorNonzero probe factor factorPositive.le
     sensitive points pointsRealize
   have budgetLe : distribution.expectation (fun item =>
-        factor * Approximation.CCL.Cylinder.cylinderSpread
+        factor * Cylinder.cylinderSpread
           (Encoder.Blocks.encodeBlocks (fraction item)
             (numeratorNonzero item)).blocks) ≤ epsilon ^ 2 / 2 := by
     calc
       distribution.expectation (fun item =>
-            factor * Approximation.CCL.Cylinder.cylinderSpread
+            factor * Cylinder.cylinderSpread
               (Encoder.Blocks.encodeBlocks (fraction item)
                 (numeratorNonzero item)).blocks) ≤
           distribution.expectation (fun _ => epsilon ^ 2 / 2) := by
         apply distribution.expectation_mono
         intro atom member
-        exact Approximation.CCL.Prefix.scaledCylinderSpread_le_half_sq_of_requested epsilon factor
+        exact Prefix.scaledCylinderSpread_le_half_sq_of_requested epsilon factor
           epsilonPositive factorPositive (enough atom member)
       _ = epsilon ^ 2 / 2 := distribution.expectation_constant _
   have poweredL2Small := poweredL2Le.trans_lt
@@ -292,8 +295,8 @@ open Purelib.Measure in
 count. -/
 theorem encodedChordalOmegaProbe_separationProbability_eq_zero_of_requested
     {index : Type}
-    (distribution : Measure.Distribution index)
-    (fraction : index → GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+    (distribution : Distribution index)
+    (fraction : index → SourceEncodingEncoderFracAlias)
     (numeratorNonzero : ∀ item, (fraction item).numerator ≠ 0)
     (epsilon : Fraction.Rational) (epsilonPositive : 0 < epsilon)
     (enough : ∀ atom, atom ∈ distribution.atoms →
@@ -307,11 +310,11 @@ theorem encodedChordalOmegaProbe_separationProbability_eq_zero_of_requested
           (numeratorNonzero atom.item)).blocks
         (points atom.item)) :
     distribution.probability
-      (Measure.separationAtLeast epsilon
+      (separationAtLeast epsilon
         (fun item => Chordal.Probe.chordalOmegaProbe (points item))
         (fun item => Chordal.Probe.chordalOmegaProbe
           (Line.Proj.affine (fraction item).value))) = 0 :=
-  CCL.EncodedPrefix.encodedSquaredProbe_separationProbability_eq_zero_of_requested distribution
+  encodedSquaredProbe_separationProbability_eq_zero_of_requested distribution
     fraction numeratorNonzero Chordal.Probe.chordalOmegaProbe 2 (by decide)
     Chordal.Probe.chordalOmegaProbe_squaredSensitive epsilon epsilonPositive enough points
     pointsRealize
@@ -325,8 +328,8 @@ open Purelib.Measure in
 /-- Squared separation of the original chordal omega expectations is at most the expectation of twice the exact encoding
 spread. -/
 theorem encodedChordalOmegaProbe_expectation_separation_sq_le {index : Type}
-    (distribution : Measure.Distribution index)
-    (fraction : index → GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+    (distribution : Distribution index)
+    (fraction : index → SourceEncodingEncoderFracAlias)
     (numeratorNonzero : ∀ item, (fraction item).numerator ≠ 0)
     (points : index → Line.GaussianLine)
     (pointsRealize : ∀ atom, atom ∈ distribution.atoms →
@@ -339,10 +342,10 @@ theorem encodedChordalOmegaProbe_expectation_separation_sq_le {index : Type}
         (distribution.expectation fun item =>
           Chordal.Probe.chordalOmegaProbe (Line.Proj.affine (fraction item).value)) ^ 2 ≤
       distribution.expectation fun item =>
-        2 * Approximation.CCL.Cylinder.cylinderSpread
+        2 * Cylinder.cylinderSpread
           (Encoder.Blocks.encodeBlocks (fraction item)
             (numeratorNonzero item)).blocks :=
-  CCL.EncodedPrefix.encodedSquaredProbe_expectation_separation_sq_le distribution fraction
+  encodedSquaredProbe_expectation_separation_sq_le distribution fraction
     numeratorNonzero Chordal.Probe.chordalOmegaProbe 2 (by decide)
     Chordal.Probe.chordalOmegaProbe_squaredSensitive points pointsRealize
 
@@ -356,8 +359,8 @@ open Purelib.Measure in
 /-- The requested original block counts make the two chordal omega expectations closer than the positive tolerance. -/
 theorem encodedChordalOmegaProbe_expectation_separation_lt_requested
     {index : Type}
-    (distribution : Measure.Distribution index)
-    (fraction : index → GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+    (distribution : Distribution index)
+    (fraction : index → SourceEncodingEncoderFracAlias)
     (numeratorNonzero : ∀ item, (fraction item).numerator ≠ 0)
     (epsilon : Fraction.Rational) (epsilonPositive : 0 < epsilon)
     (enough : ∀ atom, atom ∈ distribution.atoms →
@@ -374,7 +377,7 @@ theorem encodedChordalOmegaProbe_expectation_separation_lt_requested
         (distribution.expectation fun item => Chordal.Probe.chordalOmegaProbe (points item))
         (distribution.expectation fun item =>
           Chordal.Probe.chordalOmegaProbe (Line.Proj.affine (fraction item).value)) < epsilon :=
-  CCL.EncodedPrefix.encodedSquaredProbe_expectation_separation_lt_requested distribution
+  encodedSquaredProbe_expectation_separation_lt_requested distribution
     fraction numeratorNonzero Chordal.Probe.chordalOmegaProbe 2 (by decide)
     Chordal.Probe.chordalOmegaProbe_squaredSensitive epsilon epsilonPositive enough
     points pointsRealize

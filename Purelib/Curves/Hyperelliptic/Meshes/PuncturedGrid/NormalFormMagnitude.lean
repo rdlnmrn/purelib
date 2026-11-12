@@ -79,38 +79,38 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalFormMagnitude
 
 open Purelib.Topology.Polygon.Stokes
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {source : Hyperelliptic.Differentials.Basic.Differential genus} {boundary :
-    Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrograms.LiftedPuncturedGrid.BoundaryProgram lifted source}
-  {segments : Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank boundary.program.period} {differential :
+  {lifted : Meshes.LiftedPuncturedGrid base} {source : Differentials.Basic.Differential genus} {boundary :
+    BoundaryPrograms.LiftedPuncturedGrid.BoundaryProgram lifted source}
+  {segments : PeriodSegmentBanks.SegmentBank boundary.program.period} {differential :
     Fin genus}
-  {comparison : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank
-    (Hyperelliptic.Meshes.PuncturedGrid.Cut.FaceBanks.FaceBank.ofSegments boundary.program segments) differential}
+  {comparison : Cut.PeriodPrimitiveComparison.PrimitiveBank
+    (Cut.FaceBanks.FaceBank.ofSegments boundary.program segments) differential}
   {pairing : Topology.Surface.Word.ProjectedEdgePairs.ProjectedEdgePairing lifted.cutPolygon.patch.cut.vertexLabels
     lifted.cutPolygon.patch.cut.boundary}
   {count : Nat} {programs : Data.Vector
-    (Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgram lifted source) count}
+    (Cut.CyclePrograms.CutCycleProgram lifted source) count}
 
 namespace WordAreaBudget
 
-variable {family : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily programs comparison.domains
+variable {family : Cut.PeriodFamilies.PrimitiveFamily programs comparison.domains
   differential}
-  {prepared : Hyperelliptic.Meshes.PuncturedGrid.BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch
+  {prepared : BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch
     pairing (Periods.PeriodMatrix.standardDifferential differential) comparison.domains}
-  {reference : Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrimitiveReferences.BoundaryReference boundary comparison
+  {reference : BoundaryPrimitiveReferences.BoundaryReference boundary comparison
     prepared.prepared}
   {lengthBound : Nat} {pathTarget areaTarget : Normalization.InverseRootPolynomial.Coordinate}
   {targets : Data.Vector Normalization.InverseRootPolynomial.Coordinate count} {floor : Nat}
 
 /-- The actual centered generator readings are bounded by four times the retained original boundary reference. -/
-theorem word_values_bounded (budget : Hyperelliptic.Meshes.PuncturedGrid.Cut.WordAreaRequests.WordAreaBudget family
+theorem word_values_bounded (budget : Cut.WordAreaRequests.WordAreaBudget family
   prepared reference lengthBound pathTarget areaTarget targets floor)
     {minimumStages : Data.Vector Nat count} {requested :
-      Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily.Requested budget.word.request.periods
+      Cut.PeriodFamilies.PrimitiveFamily.Requested budget.word.request.periods
       minimumStages}
-    (sample : Hyperelliptic.Meshes.PuncturedGrid.Cut.FamilyTriangles.Requested.Sewn requested lifted.cutPolygon.patch)
+    (sample : Cut.FamilyTriangles.Requested.Sewn requested lifted.cutPolygon.patch)
       (centered : Topology.Surface.Sewing.CenteredSewnSamples.Centered sample.surface)
     {wordData : Topology.Surface.Cut.BoundaryWord.CutBoundaryWord lifted.cutPolygon.patch.cut.vertexLabels
       lifted.cutPolygon.patch.cut.boundary}
@@ -119,7 +119,7 @@ theorem word_values_bounded (budget : Hyperelliptic.Meshes.PuncturedGrid.Cut.Wor
     (word_eq : wordData = Topology.Surface.Cut.BoundaryWord.ProjectedEdgePairing.boundaryWord pairing) (index : Fin
       wordData.alphabet.count) :
     Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (wordSample.values index) (4 * reference.bound) := open
-      Purelib.Data in by
+      Data in by
   apply Topology.Surface.Cut.GeneratorBounds.CutBoundaryWord.AreaSample.values_bounded wordSample pairing word_eq ?_
     index
   intro edge member
@@ -135,12 +135,12 @@ theorem word_values_bounded (budget : Hyperelliptic.Meshes.PuncturedGrid.Cut.Wor
 
 /-- The actual transformed normal-form coordinates satisfy the original reference bound amplified by the cached dual
 profile. -/
-theorem normal_values_bounded (budget : Hyperelliptic.Meshes.PuncturedGrid.Cut.WordAreaRequests.WordAreaBudget family
+theorem normal_values_bounded (budget : Cut.WordAreaRequests.WordAreaBudget family
   prepared reference lengthBound pathTarget areaTarget targets floor)
     {minimumStages : Data.Vector Nat count} {requested :
-      Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily.Requested budget.word.request.periods
+      Cut.PeriodFamilies.PrimitiveFamily.Requested budget.word.request.periods
       minimumStages}
-    (sample : Hyperelliptic.Meshes.PuncturedGrid.Cut.FamilyTriangles.Requested.Sewn requested lifted.cutPolygon.patch)
+    (sample : Cut.FamilyTriangles.Requested.Sewn requested lifted.cutPolygon.patch)
       (centered : Topology.Surface.Sewing.CenteredSewnSamples.Centered sample.surface)
     {wordData : Topology.Surface.Cut.BoundaryWord.CutBoundaryWord lifted.cutPolygon.patch.cut.vertexLabels
       lifted.cutPolygon.patch.cut.boundary}
@@ -149,7 +149,7 @@ theorem normal_values_bounded (budget : Hyperelliptic.Meshes.PuncturedGrid.Cut.W
     (word_eq : wordData = Topology.Surface.Cut.BoundaryWord.ProjectedEdgePairing.boundaryWord pairing)
     {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord wordData} {raw : List
       (Handle.Basic.PivotIndices wordData.alphabet.count)}
-    {normal : LinearAlgebra.Alternating.NormalForm integral.paired raw} (profile :
+    {normal : NormalForm integral.paired raw} (profile :
       Topology.Surface.Boundary.DualCoordinateBounds.DualMagnitude normal.reduction)
     (evaluated : Topology.Surface.Boundary.NormalFormArea normal wordSample.values) (index : Fin
       wordData.alphabet.count) :

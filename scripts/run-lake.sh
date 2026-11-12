@@ -41,12 +41,24 @@ if [[ -f "$repo_root/scripts/toolchain/config.json" ]]; then
   fi
   core_key=$(python3 -m scripts.toolchain.prepare_prefix check \
     --config "$repo_root/scripts/toolchain/config.json" --prefix "$core_prefix")
+  frontend_selection_text=$(python3 -m scripts.toolchain.prepare_frontend \
+    --prefix "$core_prefix" --cache "$repo_root/.lake/frontend-toolchain" --selection)
+  mapfile -t frontend_selection <<< "$frontend_selection_text"
+  if [[ ${#frontend_selection[@]} != 2 || ! ${frontend_selection[1]} =~ ^[0-9a-f]{64}$ ]]; then
+    printf '%s\n' 'invalid checked frontend selection' >&2
+    exit 1
+  fi
+  core_prefix="${frontend_selection[0]}"
+  core_key="${frontend_selection[1]}"
   export LEAN_SYSROOT="$core_prefix" LAKE_OVERRIDE_LEAN=true LEAN_GITHASH="$core_key"
   export PATH="$core_prefix/bin:$PATH"
   patched_lake=$(python3 -m scripts.toolchain.prepare_lake \
     --prefix "$core_prefix" --cache "$repo_root/.lake/lake-toolchain")
-  export PATH="${patched_lake%/*}:$PATH"
-  run_lake "$patched_lake" "${lake_args[@]}"
+  guarded_prefix=$(python3 -m scripts.toolchain.module_guard \
+    --prefix "${patched_lake%/bin/lake}" --cache "$repo_root/.lake/module-toolchain")
+  export LEAN_SYSROOT="$guarded_prefix"
+  export PATH="$guarded_prefix/bin:$PATH"
+  run_lake "$guarded_prefix/bin/lake" "${lake_args[@]}"
 fi
 
 if [[ -n "${ELAN_HOME:-}" && -x "$ELAN_HOME/bin/lake" ]]; then

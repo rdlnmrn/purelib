@@ -22,6 +22,7 @@ public section
 namespace Purelib.Integration
 
 open Purelib.Data.Rat
+open Purelib.Data.Rat.Fraction.Order
 open Purelib
 
 set_option genInjectivity false in
@@ -40,6 +41,10 @@ structure IntegrationCell (α : Type) where
 constructive_injectivity IntegrationCell
 
 namespace IntegrationCell
+
+/-- View the original cell's lower and upper readings as their retained rational interval. -/
+@[expose] def range {α : Type} (cell : IntegrationCell α) : Data.Rat.Interval :=
+  ⟨cell.lower, cell.upper, cell.range_valid⟩
 
 /-- Construct a cell whose range enclosure is the supplied exact value and whose nonnegative weight is retained. -/
 @[expose] def exact {α : Type} (item : α) (weight value : Fraction.Rational)
@@ -61,7 +66,7 @@ The original range certificate orders the retained lower and upper readings. The
 nonnegative. -/
 theorem oscillation_nonneg {α : Type} (cell : Integration.IntegrationCell α) :
     0 ≤ cell.oscillation :=
-  Fraction.Order.Arithmetic.sub_nonneg_direct cell.range_valid
+  Arithmetic.sub_nonneg_direct cell.range_valid
 
 end IntegrationCell
 
@@ -88,6 +93,15 @@ end IntegrationCell
   | [] => 0
   | cell :: remaining =>
       cell.weight * cell.oscillation + Purelib.Integration.integralOscillation remaining
+
+/-- Weighted oscillation is the finite sum of the same retained cell products. -/
+theorem integralOscillation_eq_sum {α : Type} : ∀ cells : List (IntegrationCell α),
+    integralOscillation cells = (cells.map (fun cell => cell.weight * cell.oscillation)).sum
+  | [] => rfl
+  | cell :: remaining => by
+      change cell.weight * cell.oscillation + integralOscillation remaining =
+        cell.weight * cell.oscillation + (remaining.map (fun other => other.weight * other.oscillation)).sum
+      rw [integralOscillation_eq_sum remaining]
 
 /-- The empty frontier has zero total weight. -/
 @[simp] theorem integrationWeight_nil {α : Type} :
@@ -119,7 +133,7 @@ theorem integralOscillation_nonneg {α : Type} :
   | [] => le_rfl
   | cell :: remaining =>
       add_nonneg
-        (Fraction.Order.Arithmetic.mul_nonneg_direct
+        (Arithmetic.mul_nonneg_direct
           cell.weight_nonnegative cell.oscillation_nonneg)
         (Purelib.Integration.integralOscillation_nonneg remaining)
 
@@ -231,6 +245,76 @@ theorem integralBound_append {α : Type}
   | cell :: remaining =>
       cell.weight * value cell.item + Purelib.Integration.weightedEvaluation value remaining
 
+/-- Weighted evaluation is the finite sum of the same original cell products. -/
+theorem weightedEvaluation_eq_sum {α : Type} (value : α → Fraction.Rational) :
+    ∀ cells : List (IntegrationCell α),
+      weightedEvaluation value cells = (cells.map (fun cell => cell.weight * value cell.item)).sum
+  | [] => rfl
+  | cell :: remaining => by
+      change cell.weight * value cell.item + weightedEvaluation value remaining =
+        cell.weight * value cell.item + (remaining.map (fun other => other.weight * value other.item)).sum
+      rw [weightedEvaluation_eq_sum value remaining]
+
+/-- Pointwise directed discrepancies bound the difference of the original weighted evaluations. -/
+private theorem weighted_difference_le {α : Type} (first second cost : α → Fraction.Rational)
+    (pointwise : ∀ item, first item - second item ≤ cost item) : ∀ cells : List (IntegrationCell α),
+    weightedEvaluation first cells - weightedEvaluation second cells ≤ weightedEvaluation cost cells
+  | [] => by
+      change (0 : Fraction.Rational) - 0 ≤ 0
+      decide
+  | cell :: remaining => by
+      have head := Arithmetic.mul_le_mul_of_nonneg_left_direct (pointwise cell.item)
+        cell.weight_nonnegative
+      have tail := weighted_difference_le first second cost pointwise remaining
+      change (cell.weight * first cell.item + weightedEvaluation first remaining) -
+          (cell.weight * second cell.item + weightedEvaluation second remaining) ≤
+        cell.weight * cost cell.item + weightedEvaluation cost remaining
+      calc
+        _ = cell.weight * (first cell.item - second cell.item) +
+            (weightedEvaluation first remaining - weightedEvaluation second remaining) := by ring1
+        _ ≤ _ := Arithmetic.add_le_add_direct head tail
+
+/-- Weighted evaluations differ by at most the weighted absolute point discrepancies. -/
+theorem weightedEvaluation_abs_sub_le {α : Type} (first second : α → Fraction.Rational)
+    (cells : List (IntegrationCell α)) :
+    Fraction.abs (weightedEvaluation first cells - weightedEvaluation second cells) ≤
+      weightedEvaluation (fun item => Fraction.abs (first item - second item)) cells := by
+  have forward := weighted_difference_le first second (fun item => Fraction.abs (first item - second item))
+    (fun _ => Fraction.Order.Basic.le_max_left _ _) cells
+  have backward := weighted_difference_le second first (fun item => Fraction.abs (first item - second item))
+    (fun item => by
+      have reverse : second item - first item = -(first item - second item) := by ring1
+      rw [reverse]
+      exact Fraction.Order.Basic.le_max_right _ _) cells
+  change max (weightedEvaluation first cells - weightedEvaluation second cells)
+    (-(weightedEvaluation first cells - weightedEvaluation second cells)) ≤ _
+  apply Fraction.Order.Basic.max_le forward
+  have reverse : -(weightedEvaluation first cells - weightedEvaluation second cells) =
+      weightedEvaluation second cells - weightedEvaluation first cells := by ring1
+  rw [reverse]
+  exact backward
+
+/-- A pointwise observable bound scales by the exact total weight of the original cells. -/
+theorem weightedEvaluation_le_weight_mul {α : Type} (value : α → Fraction.Rational)
+    (bound : Fraction.Rational) : ∀ (cells : List (IntegrationCell α)),
+    (∀ cell ∈ cells, value cell.item ≤ bound) →
+      weightedEvaluation value cells ≤ integrationWeight cells * bound
+  | [], _ => by
+      change (0 : Fraction.Rational) ≤ 0 * bound
+      rw [Fraction.Field.zero_mul_direct]
+  | cell :: remaining, bounded => by
+      have first := Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (bounded cell List.mem_cons_self) cell.weight_nonnegative
+      have tail := weightedEvaluation_le_weight_mul value bound remaining
+        (fun other member => bounded other (List.mem_cons_of_mem cell member))
+      change cell.weight * value cell.item + weightedEvaluation value remaining ≤
+        (cell.weight + integrationWeight remaining) * bound
+      have sum := Arithmetic.add_le_add_direct first tail
+      have identity : cell.weight * bound + integrationWeight remaining * bound =
+          (cell.weight + integrationWeight remaining) * bound := by ring1
+      rw [identity] at sum
+      exact sum
+
 /-- The weighted evaluation lies in the integral enclosure when every retained payload value lies in its cell range. -/
 theorem weightedEvaluation_mem_integralBound
     {α : Type} (value : α → Fraction.Rational) :
@@ -251,12 +335,12 @@ theorem weightedEvaluation_mem_integralBound
       constructor
       · dsimp only [Integration.integralBound, Integration.lowerIntegral, Integration.weightedEvaluation]
         exact add_le_add
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct
             head.1 cell.weight_nonnegative)
           inductionHypothesis.1
       · dsimp only [Integration.integralBound, Integration.upperIntegral, Integration.weightedEvaluation]
         exact add_le_add
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct
             head.2 cell.weight_nonnegative)
           inductionHypothesis.2
 
@@ -276,7 +360,7 @@ theorem integralOscillation_le_weight_mul
         fun candidate member =>
           bounded candidate (List.mem_cons_of_mem cell member)
       have headScaled :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           head cell.weight_nonnegative
       have tailScaled :=
         Purelib.Integration.integralOscillation_le_weight_mul deltaNonnegative tail

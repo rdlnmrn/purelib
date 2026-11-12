@@ -104,6 +104,10 @@ import Purelib.Riemann.Readings.RectangularObservationAssembly
 import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 
+open Purelib.Data.Gaussian.Norm
+
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! Retain a complete certified fragment family and its computed source
@@ -180,21 +184,21 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.Regul
 open Purelib.Riemann.Periods.CenteredBilinearPath (Sample)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential} {target : Coordinate} {minimum
     stage fine index : Nat}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {box otherBox : Rational.Box}
+  {sample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
   {plan : PairedSourcePlan occurrence
     other target minimum}
   {evaluated :
@@ -208,51 +212,51 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies
 
 /-- A certified sampled fragment on one original retained physical trace piece. -/
-@[expose] def PieceFragmentType (values : Vertex → Stokes.PrimitivePoint) (traces : Fin (count + 1) →
-  JoinedTrace.VertexTrace Vertex)
+@[expose] def PieceFragmentType (values : Vertex → PrimitivePoint) (traces : Fin (count + 1) →
+  VertexTrace Vertex)
     (position : Fin (count + 1)) :=
-  JoinedFragmentComparison.SampledFragment (evaluated := evaluated) (data := data) (otherData := otherData)
+  SampledFragment (evaluated := evaluated) (data := data) (otherData := otherData)
     (fun vertex => values ((traces position).indexed vertex))
 
 /-- A certified sampled fragment on the actual owner junction between consecutive retained trace pieces. -/
-@[expose] def JunctionFragmentType (values : Vertex → Stokes.PrimitivePoint) (traces : Fin (count + 1) →
-  JoinedTrace.VertexTrace Vertex)
+@[expose] def JunctionFragmentType (values : Vertex → PrimitivePoint) (traces : Fin (count + 1) →
+  VertexTrace Vertex)
     (position : Fin count) :=
-  JoinedFragmentComparison.SampledFragment (evaluated := evaluated) (data := data) (otherData := otherData)
+  SampledFragment (evaluated := evaluated) (data := data) (otherData := otherData)
     (JoinedSampleBlocks.JunctionValues values (traces position.castSucc) (traces position.succ))
 
 /-- The complete dependent bank of sampled fragments on the original physical trace pieces. -/
-@[expose] def PieceFragmentBank (values : Vertex → Stokes.PrimitivePoint) (traces : Fin (count + 1) →
-  JoinedTrace.VertexTrace Vertex) :=
-  Data.Vector.DependentVector (PieceFragmentType
+@[expose] def PieceFragmentBank (values : Vertex → PrimitivePoint) (traces : Fin (count + 1) →
+  VertexTrace Vertex) :=
+  DependentVector (PieceFragmentType
     (evaluated := evaluated) (data := data) (otherData := otherData) values traces)
 
 /-- The complete dependent bank of sampled fragments on the original inter-piece owner junctions. -/
-@[expose] def JunctionFragmentBank (values : Vertex → Stokes.PrimitivePoint) (traces : Fin (count + 1) →
-  JoinedTrace.VertexTrace Vertex) :=
-  Data.Vector.DependentVector (JunctionFragmentType
+@[expose] def JunctionFragmentBank (values : Vertex → PrimitivePoint) (traces : Fin (count + 1) →
+  VertexTrace Vertex) :=
+  DependentVector (JunctionFragmentType
     (evaluated := evaluated) (data := data) (otherData := otherData) values traces)
 
 /-- Interleave the original cached piece and junction fragments in their physical traversal order. -/
-@[expose] def fragmentFamilyOrder {values : Vertex → Stokes.PrimitivePoint} {traces : Fin (count + 1) →
-  JoinedTrace.VertexTrace Vertex}
+@[expose] def fragmentFamilyOrder {values : Vertex → PrimitivePoint} {traces : Fin (count + 1) →
+  VertexTrace Vertex}
     (pieces : PieceFragmentBank (evaluated :=
       evaluated) (data := data) (otherData := otherData) values traces)
     (junctions : JunctionFragmentBank (evaluated :=
       evaluated) (data := data) (otherData := otherData) values traces) :
-    List (PairedFragmentBlocks.OwnedFragment evaluated data otherData) :=
+    List (OwnedFragment evaluated data otherData) :=
   JoinedFragmentComparison.interleaveFragments (fun position => (pieces.get position).fragment) (fun position =>
     (junctions.get position).fragment)
 
 /-- The exact concatenated source increment list of the retained fragment family. -/
-@[expose] def fragmentSourcePath (fragments : List (PairedFragmentBlocks.OwnedFragment evaluated data otherData)) : List
+@[expose] def fragmentSourcePath (fragments : List (OwnedFragment evaluated data otherData)) : List
   PrimitivePoint :=
   ((fragments.map OwnedFragment.pair).map Prod.snd).flatten
 
 set_option genInjectivity false in
 /-- A retained parent and its selected source piece, shared by a physical piece and the owner junction immediately
 following it. -/
-structure LocatedSourceBlock (evaluated : PairedSourcePlan.ParentEvaluation plan sample otherSample fine)
+structure LocatedSourceBlock (evaluated : ParentEvaluation plan sample otherSample fine)
     (vertical forward : Bool) (physical : PreparedAxisPartitions.Interval) where
   /-- The retained source parent and parameter block for this physical axis interval. -/ block :
     SourceBlockParameters evaluated vertical forward physical
@@ -263,11 +267,11 @@ structure LocatedSourceBlock (evaluated : PairedSourcePlan.ParentEvaluation plan
 constructive_injectivity LocatedSourceBlock
 
 /-- One retained and located source block for every original mesh interval on the selected oriented axis. -/
-@[expose] def AxisSourceBank (evaluated : PairedSourcePlan.ParentEvaluation plan sample otherSample fine)
+@[expose] def AxisSourceBank (evaluated : ParentEvaluation plan sample otherSample fine)
     {columns rows : Nat} {geometry : RectangularInverseModels.Geometry columns rows}
-    {cuts : RectangularSegmentSplitting.GridCuts geometry} {meshBox : Rational.Box}
+    {cuts : GridCuts geometry} {meshBox : Rational.Box}
     (mesh : RectangularObservationMesh.ObservationMesh cuts meshBox) (vertical forward : Bool) :=
-  Data.Vector.DependentVector (fun i : Fin (SourceIntervals.axisIntervals mesh vertical).length =>
+  DependentVector (fun i : Fin (SourceIntervals.axisIntervals mesh vertical).length =>
     LocatedSourceBlock evaluated vertical forward
       ((SourceIntervals.axisIntervals mesh vertical)[i.val]'i.isLt))
 
@@ -277,11 +281,11 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFam
 
 /-- Transport only the axis tag; the retained source data are unchanged. -/
 @[expose] def castAxis {columns rows : Nat} {geometry : RectangularInverseModels.Geometry columns rows}
-    {cuts : RectangularSegmentSplitting.GridCuts geometry} {meshBox : Rational.Box}
+    {cuts : GridCuts geometry} {meshBox : Rational.Box}
     {mesh : RectangularObservationMesh.ObservationMesh cuts meshBox} {first last forward : Bool}
-    (equal : first = last) (bank : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.AxisSourceBank
+    (equal : first = last) (bank : AxisSourceBank
       evaluated mesh first forward) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.AxisSourceBank evaluated mesh last forward :=
+    AxisSourceBank evaluated mesh last forward :=
       equal ▸ bank
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.AxisSourceBank
@@ -290,15 +294,15 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFam
 
 /-- Build both original dependent fragment banks once and cache their ordered source path, area and aggregate error. -/
 @[expose] def build
-    {prepared : ExteriorProgram.AllSurfacePreparation regular domains differential} {previous : RegularMeshes.CommonCuts
+    {prepared : AllSurfacePreparation regular domains differential} {previous : CommonCuts
       domains}
     (selected : SourceCuts prepared previous) (member : occurrence ∈ prepared.occurrences)
-    {coarseDepth : Nat} {fixed : (sheet : Fin 2) → RegularMeshes.Preflights domains sheet} {meshTarget :
-      InverseRootPolynomial.Coordinate}
+    {coarseDepth : Nat} {fixed : (sheet : Fin 2) → Preflights domains sheet} {meshTarget :
+      Coordinate}
     (request : TwoSheetBilinearRequest.TwoSheetRequest
       (fun sheet => RegularMeshes.build domains selected.cuts sheet coarseDepth) fixed meshTarget)
     (sheet : Fin 2) (position : Fin base.faces.regulars.length)
-    (evaluated : PairedSourcePlan.ParentEvaluation plan sample otherSample fine) (vertical forward : Bool)
+    (evaluated : ParentEvaluation plan sample otherSample fine) (vertical forward : Bool)
     (physical : PreparedAxisPartitions.Interval)
     (present : physical ∈ SourceIntervals.axisIntervals ((request.entries.get sheet).meshes.entries.get position)
       vertical)
@@ -306,7 +310,7 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFam
       forward physical)
     (upper : SourceBlockParameters.blockMidpoint forward physical < SourceBlockParameters.signedAxis vertical forward
       occurrence.finish) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.LocatedSourceBlock evaluated vertical forward
+    LocatedSourceBlock evaluated vertical forward
       physical :=
   let block := SourceBlockParameters.sourceBlockParameters selected member request sheet position evaluated vertical
     forward physical present lower upper
@@ -318,7 +322,7 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFam
 
 /-- The original mesh axis interval expressed in the retained traversal orientation. -/
 @[expose] def signedMeshSpan {columns rows : Nat} {geometry : RectangularInverseModels.Geometry columns rows}
-    {cuts : RectangularSegmentSplitting.GridCuts geometry} {meshBox : Rational.Box}
+    {cuts : GridCuts geometry} {meshBox : Rational.Box}
     (mesh : RectangularObservationMesh.ObservationMesh cuts meshBox) (vertical forward : Bool) :
     PreparedAxisPartitions.Interval :=
   SourceBlockParameters.signedInterval forward (if vertical then ⟨meshBox.yLower, meshBox.yUpper,
@@ -328,7 +332,7 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFam
 /-- The midpoint of every original physical axis interval lies strictly inside the signed mesh span. -/
 theorem blockMidpoint_mesh_bounds
     {columns rows : Nat} {geometry : RectangularInverseModels.Geometry columns rows}
-    {cuts : RectangularSegmentSplitting.GridCuts geometry} {meshBox : Rational.Box}
+    {cuts : GridCuts geometry} {meshBox : Rational.Box}
     (mesh : RectangularObservationMesh.ObservationMesh cuts meshBox) (vertical forward : Bool)
     {physical : PreparedAxisPartitions.Interval} (present : physical ∈ SourceIntervals.axisIntervals mesh vertical) :
     (signedMeshSpan mesh vertical forward).lower <
@@ -346,14 +350,14 @@ theorem blockMidpoint_mesh_bounds
       have bounds := mesh.partition.x.interval_bounds present
       cases forward with
       | true => exact bounds
-      | false => exact ⟨Fraction.Order.Arithmetic.neg_le_neg_direct bounds.2,
-          Fraction.Order.Arithmetic.neg_le_neg_direct bounds.1⟩
+      | false => exact ⟨Arithmetic.neg_le_neg_direct bounds.2,
+          Arithmetic.neg_le_neg_direct bounds.1⟩
     | true =>
       have bounds := mesh.partition.y.interval_bounds present
       cases forward with
       | true => exact bounds
-      | false => exact ⟨Fraction.Order.Arithmetic.neg_le_neg_direct bounds.2,
-          Fraction.Order.Arithmetic.neg_le_neg_direct bounds.1⟩
+      | false => exact ⟨Arithmetic.neg_le_neg_direct bounds.2,
+          Arithmetic.neg_le_neg_direct bounds.1⟩
   have middle := PreparedSegmentCuts.midpoint_bounds (SourceBlockParameters.signedInterval forward physical)
   exact ⟨inside.1.trans_lt middle.1, middle.2.trans_le inside.2⟩
 
@@ -364,28 +368,28 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFam
 /-- All intervals use one occurrence-span comparison. Each source search and source-piece selection is performed once,
 while constructing the bank. -/
 @[expose] def buildBank
-    {prepared : ExteriorProgram.AllSurfacePreparation regular domains differential} {previous : RegularMeshes.CommonCuts
+    {prepared : AllSurfacePreparation regular domains differential} {previous : CommonCuts
       domains}
     (selected : SourceCuts prepared previous) (member : occurrence ∈ prepared.occurrences)
-    {coarseDepth : Nat} {fixed : (sheet : Fin 2) → RegularMeshes.Preflights domains sheet} {meshTarget :
-      InverseRootPolynomial.Coordinate}
+    {coarseDepth : Nat} {fixed : (sheet : Fin 2) → Preflights domains sheet} {meshTarget :
+      Coordinate}
     (request : TwoSheetBilinearRequest.TwoSheetRequest
       (fun sheet => RegularMeshes.build domains selected.cuts sheet coarseDepth) fixed meshTarget)
     (sheet : Fin 2) (position : Fin base.faces.regulars.length)
-    (evaluated : PairedSourcePlan.ParentEvaluation plan sample otherSample fine) (vertical forward : Bool)
+    (evaluated : ParentEvaluation plan sample otherSample fine) (vertical forward : Bool)
     (lower : SourceBlockParameters.signedAxis vertical forward occurrence.start ≤
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.signedMeshSpan ((request.entries.get
+      (FragmentFamilies.signedMeshSpan ((request.entries.get
         sheet).meshes.entries.get position) vertical forward).lower)
-    (upper : (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.signedMeshSpan ((request.entries.get
+    (upper : (FragmentFamilies.signedMeshSpan ((request.entries.get
       sheet).meshes.entries.get position) vertical forward).upper ≤
       SourceBlockParameters.signedAxis vertical forward occurrence.finish) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.AxisSourceBank evaluated ((request.entries.get
+    AxisSourceBank evaluated ((request.entries.get
       sheet).meshes.entries.get position) vertical forward :=
   DependentVector.ofFn (fun i =>
     let mesh := (request.entries.get sheet).meshes.entries.get position
     let physical := (SourceIntervals.axisIntervals mesh vertical)[i.val]'i.isLt
     have present : physical ∈ SourceIntervals.axisIntervals mesh vertical := List.getElem_mem i.isLt
-    have bounds := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.blockMidpoint_mesh_bounds mesh
+    have bounds := FragmentFamilies.blockMidpoint_mesh_bounds mesh
       vertical forward present
     build selected member request
       sheet position evaluated vertical forward physical present
@@ -400,8 +404,8 @@ set_option genInjectivity false in
 aggregate error.
 
 Every cache has an equality to the exact retained construction, so subsequent comparisons reuse the original family. -/
-structure JoinedFragmentFamily (values : Vertex → Stokes.PrimitivePoint) (traces : Fin (count + 1) →
-  JoinedTrace.VertexTrace Vertex) where
+structure JoinedFragmentFamily (values : Vertex → PrimitivePoint) (traces : Fin (count + 1) →
+  VertexTrace Vertex) where
   /-- The cached sampled fragments on the original physical pieces. -/ pieces :
     PieceFragmentBank (evaluated := evaluated) (data
     := data) (otherData := otherData) values traces
@@ -409,17 +413,17 @@ structure JoinedFragmentFamily (values : Vertex → Stokes.PrimitivePoint) (trac
     JunctionFragmentBank (evaluated := evaluated)
     (data := data) (otherData := otherData) values traces
   /-- The complete retained fragment list in physical traversal order. -/ fragments : List
-    (PairedFragmentBlocks.OwnedFragment evaluated data otherData)
+    (OwnedFragment evaluated data otherData)
   /-- The cached fragments are exactly the interleaving of the retained piece and junction banks. -/ fragments_eq :
     fragments = fragmentFamilyOrder pieces junctions
   /-- The cached concatenation of the actual retained source increments. -/ sourceIncrements : List
-    Stokes.PrimitivePoint
+    PrimitivePoint
   /-- The source-increment cache equals the retained fragments' exact source path. -/ source_eq : sourceIncrements =
     fragmentSourcePath fragments
   /-- The cached polygon area of the original retained source increments. -/ sourceArea : InverseRootPolynomial.Gaussian
   /-- The area cache equals the exact source-increment polygon area. -/ sourceArea_eq : sourceArea =
     PairedIncrementArea.area sourceIncrements
-  /-- The cached aggregate error of the actual retained fragment family. -/ error : InverseRootPolynomial.Coordinate
+  /-- The cached aggregate error of the actual retained fragment family. -/ error : Coordinate
   /-- The error cache equals the full original fragment-block error. -/ error_eq : error =
     PairedFragmentBlocks.fragmentBlockError fragments
 
@@ -431,8 +435,8 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFam
 
 /-- Interleaving n junctions and n+1 pieces gives exactly 2n+1 retained fragments. -/
 private theorem interleave_length {n : Nat}
-    (pieces : Fin (n + 1) → PairedFragmentBlocks.OwnedFragment evaluated data otherData)
-    (junctions : Fin n → PairedFragmentBlocks.OwnedFragment evaluated data otherData) :
+    (pieces : Fin (n + 1) → OwnedFragment evaluated data otherData)
+    (junctions : Fin n → OwnedFragment evaluated data otherData) :
     (JoinedFragmentComparison.interleaveFragments pieces junctions).length = n + n + 1 := by
   induction n with
   | zero => rfl
@@ -444,18 +448,18 @@ private theorem interleave_length {n : Nat}
     rfl
 
 /-- The retained family contains exactly one fragment per original piece and owner junction. -/
-theorem fragments_length {values : Vertex → Stokes.PrimitivePoint} {traces : Fin (count + 1) → JoinedTrace.VertexTrace
+theorem fragments_length {values : Vertex → PrimitivePoint} {traces : Fin (count + 1) → VertexTrace
   Vertex}
-    (family : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.JoinedFragmentFamily (evaluated :=
+    (family : JoinedFragmentFamily (evaluated :=
       evaluated) (data := data) (otherData := otherData) values traces) :
     family.fragments.length = count + count + 1 :=
   (congrArg List.length family.fragments_eq).trans
     (interleave_length _ _)
 
 /-- A property of every original piece and junction holds for every fragment of their interleaving. -/
-private theorem interleave_property (property : PairedFragmentBlocks.OwnedFragment evaluated data otherData → Prop)
-    {n : Nat} (pieces : Fin (n + 1) → PairedFragmentBlocks.OwnedFragment evaluated data otherData)
-    (junctions : Fin n → PairedFragmentBlocks.OwnedFragment evaluated data otherData)
+private theorem interleave_property (property : OwnedFragment evaluated data otherData → Prop)
+    {n : Nat} (pieces : Fin (n + 1) → OwnedFragment evaluated data otherData)
+    (junctions : Fin n → OwnedFragment evaluated data otherData)
     (piece : ∀ i, property (pieces i)) (junction : ∀ i, property (junctions i)) :
     ∀ fragment ∈ JoinedFragmentComparison.interleaveFragments pieces junctions, property fragment := by
   induction n with
@@ -473,36 +477,36 @@ private theorem interleave_property (property : PairedFragmentBlocks.OwnedFragme
       (fun i => piece i.succ) (fun i => junction i.succ) fragment member
 
 /-- Build both original dependent fragment banks once and cache their ordered source path, area and aggregate error. -/
-@[expose] def build (values : Vertex → Stokes.PrimitivePoint) (traces : Fin (count + 1) → JoinedTrace.VertexTrace
+@[expose] def build (values : Vertex → PrimitivePoint) (traces : Fin (count + 1) → VertexTrace
   Vertex)
     (piece : (position : Fin (count + 1)) →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.PieceFragmentType (evaluated := evaluated)
+      PieceFragmentType (evaluated := evaluated)
       (data := data) (otherData := otherData) values traces position)
     (junction : (position : Fin count) →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.JunctionFragmentType (evaluated := evaluated)
+      JunctionFragmentType (evaluated := evaluated)
       (data := data) (otherData := otherData) values traces position) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.JoinedFragmentFamily (evaluated := evaluated)
+    JoinedFragmentFamily (evaluated := evaluated)
       (data := data) (otherData := otherData) values traces :=
   let pieces := DependentVector.ofFn piece
   let junctions := DependentVector.ofFn junction
-  let fragments := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.fragmentFamilyOrder pieces
+  let fragments := FragmentFamilies.fragmentFamilyOrder pieces
     junctions
-  let sourceIncrements := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.fragmentSourcePath
+  let sourceIncrements := FragmentFamilies.fragmentSourcePath
     fragments
   ⟨pieces, junctions, fragments, rfl, sourceIncrements, rfl,
     PairedIncrementArea.area sourceIncrements, rfl, PairedFragmentBlocks.fragmentBlockError fragments, rfl⟩
 
 /-- Transfer construction-time obligations to every retained piece and junction without asking callers to inspect the
 assembled fragment list. -/
-theorem build_property (values : Vertex → Stokes.PrimitivePoint) (traces : Fin (count + 1) → JoinedTrace.VertexTrace
+theorem build_property (values : Vertex → PrimitivePoint) (traces : Fin (count + 1) → VertexTrace
   Vertex)
     (piece : (position : Fin (count + 1)) →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.PieceFragmentType (evaluated := evaluated)
+      PieceFragmentType (evaluated := evaluated)
       (data := data) (otherData := otherData) values traces position)
     (junction : (position : Fin count) →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.JunctionFragmentType (evaluated := evaluated)
+      JunctionFragmentType (evaluated := evaluated)
       (data := data) (otherData := otherData) values traces position)
-    (property : PairedFragmentBlocks.OwnedFragment evaluated data otherData → Prop)
+    (property : OwnedFragment evaluated data otherData → Prop)
     (pieces : ∀ i, property (piece i).fragment) (junctions : ∀ i, property (junction i).fragment) :
     ∀ fragment ∈ (build values
       traces piece junction).fragments, property fragment := by
@@ -516,68 +520,68 @@ theorem build_property (values : Vertex → Stokes.PrimitivePoint) (traces : Fin
     exact junctions i
 
 /-- The original centered trace area approximates the retained source-area cache within the exact family error. -/
-theorem area_bound {values : Vertex → Stokes.PrimitivePoint} {traces : Fin (count + 1) → JoinedTrace.VertexTrace Vertex}
-    (family : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.JoinedFragmentFamily (evaluated :=
+theorem area_bound {values : Vertex → PrimitivePoint} {traces : Fin (count + 1) → VertexTrace Vertex}
+    (family : JoinedFragmentFamily (evaluated :=
       evaluated) (data := data) (otherData := otherData) values traces)
-    {whole : JoinedTrace.VertexTrace Vertex} (original : CenteredBilinearPath.Sample (fun vertex => values
+    {whole : VertexTrace Vertex} (original : Sample (fun vertex => values
       (whole.indexed vertex)))
     (traceEq : whole = VertexTrace.concatenate traces) :
-    Data.Gaussian.Norm.Basic.normSq (original.centeredArea - family.sourceArea) ≤ family.error := by
+    Basic.normSq (original.centeredArea - family.sourceArea) ≤ family.error := by
   have bound := JoinedFragmentComparison.joined_fragments_area_bound values traces (fun position => family.pieces.get
     position)
     (fun position => family.junctions.get position) original traceEq
-  change Data.Gaussian.Norm.Basic.normSq (original.centeredArea - PairedIncrementArea.area
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.fragmentSourcePath
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.fragmentFamilyOrder family.pieces
+  change Basic.normSq (original.centeredArea - PairedIncrementArea.area
+    (FragmentFamilies.fragmentSourcePath
+    (FragmentFamilies.fragmentFamilyOrder family.pieces
       family.junctions))) ≤ PairedFragmentBlocks.fragmentBlockError
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.fragmentFamilyOrder family.pieces
+      (FragmentFamilies.fragmentFamilyOrder family.pieces
       family.junctions) at bound
   rw [← family.fragments_eq, ← family.source_eq, ← family.sourceArea_eq] at bound
   exact bound.trans_eq family.error_eq.symm
 
 /-- Consume local bounds on the retained fragments, paying their full count-dependent polygon contribution before
 comparing the original sample. -/
-theorem area_lt {values : Vertex → Stokes.PrimitivePoint} {traces : Fin (count + 1) → JoinedTrace.VertexTrace Vertex}
-    (family : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.JoinedFragmentFamily (evaluated :=
+theorem area_lt {values : Vertex → PrimitivePoint} {traces : Fin (count + 1) → VertexTrace Vertex}
+    (family : JoinedFragmentFamily (evaluated :=
       evaluated) (data := data) (otherData := otherData) values traces)
-    {whole : JoinedTrace.VertexTrace Vertex} (original : CenteredBilinearPath.Sample (fun vertex => values
+    {whole : VertexTrace Vertex} (original : Sample (fun vertex => values
       (whole.indexed vertex)))
-    (traceEq : whole = VertexTrace.concatenate traces) {bound target : InverseRootPolynomial.Coordinate}
+    (traceEq : whole = VertexTrace.concatenate traces) {bound target : Coordinate}
     (nonnegative : 0 ≤ bound) (positive : 0 < target)
     (areas : ∀ fragment ∈ family.fragments,
       fragment.areaError ≤ PairedFragmentBlocks.fragmentLocalTolerance family.fragments.length bound target)
     (errors : ∀ fragment ∈ family.fragments,
       fragment.totalError ≤ PairedFragmentBlocks.fragmentLocalTolerance family.fragments.length bound target)
     (totals : ∀ fragment ∈ family.fragments, fragment.totalBound ≤ bound) :
-    Data.Gaussian.Norm.Basic.normSq (original.centeredArea - family.sourceArea) < target :=
+    Basic.normSq (original.centeredArea - family.sourceArea) < target :=
   (family.area_bound original traceEq).trans_lt
     (family.error_eq.trans_lt (PairedFragmentBlocks.fragmentBlockError_lt family.fragments nonnegative positive areas
       errors totals))
 
 /-- The count-weighted local fragment target clamped at one to retain a uniform magnitude bound. -/
-@[expose] def familyLocalTarget (count : Nat) (source target : InverseRootPolynomial.Coordinate) : Coordinate :=
+@[expose] def familyLocalTarget (count : Nat) (source target : Coordinate) : Coordinate :=
   min 1 (PairedFragmentBlocks.fragmentLocalTolerance count (2 * (1 + source)) target)
 
 /-- Prepare the original density-based area budget for the clamped local fragment target. -/
-@[expose] def familyAreaBudget (count : Nat) (source density target : InverseRootPolynomial.Coordinate)
+@[expose] def familyAreaBudget (count : Nat) (source density target : Coordinate)
     (sourceNonnegative : 0 ≤ source) (densityNonnegative : 0 ≤ density) (positive : 0 < target) :
-    PairedFragmentBlocks.FragmentAreaBudget density
+    FragmentAreaBudget density
       (familyLocalTarget count
       source target) :=
   FragmentAreaBudget.build density _ densityNonnegative
-    (Fraction.Order.Basic.lt_min (by decide) (PairedFragmentBlocks.fragmentLocalTolerance_positive count
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    (Basic.lt_min (by decide) (PairedFragmentBlocks.fragmentLocalTolerance_positive count
+      (Arithmetic.mul_nonneg_direct (by decide)
         (add_nonneg (by decide) sourceNonnegative)) positive))
 
 /-- Pay the cached full-family error itself, so the same retained budget can be consumed by either orientation of the
 conjugate cap comparison. -/
-theorem error_lt_of_cap {values : Vertex → Stokes.PrimitivePoint} {traces : Fin (count + 1) → JoinedTrace.VertexTrace
+theorem error_lt_of_cap {values : Vertex → PrimitivePoint} {traces : Fin (count + 1) → VertexTrace
   Vertex}
-    (family : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.JoinedFragmentFamily (evaluated :=
+    (family : JoinedFragmentFamily (evaluated :=
       evaluated) (data := data) (otherData := otherData) values traces)
-    {source density target : InverseRootPolynomial.Coordinate}
+    {source density target : Coordinate}
     (sourceNonnegative : 0 ≤ source) (positive : 0 < target)
-    {fragmentCount : Nat} (cap : PairedFragmentBlocks.FragmentAreaBudget density
+    {fragmentCount : Nat} (cap : FragmentAreaBudget density
       (familyLocalTarget
       fragmentCount source target))
     (count_eq : family.fragments.length = fragmentCount)
@@ -594,14 +598,14 @@ theorem error_lt_of_cap {values : Vertex → Stokes.PrimitivePoint} {traces : Fi
     familyLocalTarget
     family.fragments.length source target ≤
       PairedFragmentBlocks.fragmentLocalTolerance family.fragments.length (2 * (1 + source)) target :=
-        Fraction.Order.Basic.min_le_right ..
+        Basic.min_le_right ..
   have unitLe :
     familyLocalTarget
-    family.fragments.length source target ≤ 1 := Fraction.Order.Basic.min_le_left ..
+    family.fragments.length source target ≤ 1 := Basic.min_le_left ..
   apply family.error_eq.trans_lt
   apply PairedFragmentBlocks.fragmentBlockError_lt family.fragments
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
-      (add_nonneg (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 1) sourceNonnegative)) positive
+    (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 2)
+      (add_nonneg (by decide : (0 : Coordinate) ≤ 1) sourceNonnegative)) positive
   · intro fragment member
     exact (fragment.areaError_paid cap (allowances fragment member) (densities fragment member)
       (owners fragment member) (queries fragment member)).trans localLe
@@ -610,20 +614,20 @@ theorem error_lt_of_cap {values : Vertex → Stokes.PrimitivePoint} {traces : Fi
   · intro fragment member
     have totalLe := fragment.totalError_paid cap (owners fragment member) (queries fragment member)
     exact (fragment.totalBound_uniform totalLe).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.add_le_add_direct unitLe (sources fragment member)) (by decide))
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.add_le_add_direct unitLe (sources fragment member)) (by decide))
 
 /-- One computed cap pays both local area and total errors. Its unit clamp also supplies the common magnitude bound
 required by the cross-fragment terms. -/
-theorem area_lt_of_cap {values : Vertex → Stokes.PrimitivePoint} {traces : Fin (count + 1) → JoinedTrace.VertexTrace
+theorem area_lt_of_cap {values : Vertex → PrimitivePoint} {traces : Fin (count + 1) → VertexTrace
   Vertex}
-    (family : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.JoinedFragmentFamily (evaluated :=
+    (family : JoinedFragmentFamily (evaluated :=
       evaluated) (data := data) (otherData := otherData) values traces)
-    {whole : JoinedTrace.VertexTrace Vertex} (original : CenteredBilinearPath.Sample (fun vertex => values
+    {whole : VertexTrace Vertex} (original : Sample (fun vertex => values
       (whole.indexed vertex)))
-    (traceEq : whole = VertexTrace.concatenate traces) {source density target : InverseRootPolynomial.Coordinate}
+    (traceEq : whole = VertexTrace.concatenate traces) {source density target : Coordinate}
     (sourceNonnegative : 0 ≤ source) (positive : 0 < target)
-    {fragmentCount : Nat} (cap : PairedFragmentBlocks.FragmentAreaBudget density
+    {fragmentCount : Nat} (cap : FragmentAreaBudget density
       (familyLocalTarget
       fragmentCount source target))
     (count_eq : family.fragments.length = fragmentCount)
@@ -634,7 +638,7 @@ theorem area_lt_of_cap {values : Vertex → Stokes.PrimitivePoint} {traces : Fin
     (owners : ∀ fragment ∈ family.fragments, fragment.budget.tolerance ≤ cap.tolerance)
     (queries : ∀ fragment ∈ family.fragments, PairedFragmentArea.traceError fragment.entry fragment.piece index ≤
       cap.tolerance) :
-    Data.Gaussian.Norm.Basic.normSq (original.centeredArea - family.sourceArea) < target :=
+    Basic.normSq (original.centeredArea - family.sourceArea) < target :=
   (family.area_bound original traceEq).trans_lt
     (family.error_lt_of_cap sourceNonnegative positive cap count_eq allowances sources densities owners queries)
 
@@ -646,7 +650,7 @@ variable {lc lr rc rr depth : Nat} {lg : Geometry lc lr} {rg :
   Geometry rc rr}
   {leftCuts : GridCuts lg} {rightCuts :
     GridCuts rg} {leftBox rightBox :
-    Purelib.Geometry.Rational.Box}
+    Rational.Box}
   {left : ObservationMesh leftCuts leftBox} {right :
     ObservationMesh rightCuts rightBox}
 
@@ -660,26 +664,26 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFam
 Each physical piece and following junction reuse the same located source block, with their separately paid requests. -/
 @[expose] def buildHorizontal
     {leftRow : Fin left.partition.y.intervals.length} {rightRow : Fin right.partition.y.intervals.length}
-    {height : InverseRootPolynomial.Coordinate} {side : ObservationMesh.MatchedHorizontalSide left right leftRow
+    {height : Coordinate} {side : MatchedHorizontalSide left right leftRow
       rightRow height}
     (trace : side.Trace depth) {forward : Bool}
-    (sources : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.AxisSourceBank evaluated left false
+    (sources : AxisSourceBank evaluated left false
       forward)
     (sourceFirst : occurrence.start.im = height) (sourceLast : occurrence.finish.im = height)
-    {allowance junctionAllowance : InverseRootPolynomial.Coordinate}
-    (budget : NoisyPathArea.LengthErrorBudget (RectangularDyadicPairedTrace.dyadicCount depth) allowance)
-    (junctionBudget : NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
-    (owners : PairedOwnerRequest.OwnerRequest occurrence other budget.tolerance) (later : owners.index ≤ index)
-    (junctionOwners : PairedOwnerRequest.OwnerRequest occurrence other junctionBudget.tolerance) (junctionLater :
+    {allowance junctionAllowance : Coordinate}
+    (budget : LengthErrorBudget (RectangularDyadicPairedTrace.dyadicCount depth) allowance)
+    (junctionBudget : LengthErrorBudget 1 junctionAllowance)
+    (owners : OwnerRequest occurrence other budget.tolerance) (later : owners.index ≤ index)
+    (junctionOwners : OwnerRequest occurrence other junctionBudget.tolerance) (junctionLater :
       junctionOwners.index ≤ index)
-    (first : RectangularPointReadings.PointReadings data.anchors data.offsets (fun vertex => trace.point
+    (first : PointReadings data.anchors data.offsets (fun vertex => trace.point
       (trace.vertices.indexed vertex)))
-    (second : RectangularPointReadings.PointReadings otherData.anchors otherData.offsets (fun vertex => trace.point
+    (second : PointReadings otherData.anchors otherData.offsets (fun vertex => trace.point
       (trace.vertices.indexed vertex)))
     (leftValues rightValues : side.Vertex depth → InverseRootPolynomial.Gaussian)
     (leftEq : ∀ vertex, first.values vertex = leftValues (trace.vertices.indexed vertex))
     (rightEq : ∀ vertex, second.values vertex = rightValues (trace.vertices.indexed vertex)) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.JoinedFragmentFamily (evaluated := evaluated)
+    JoinedFragmentFamily (evaluated := evaluated)
       (data := data) (otherData := otherData)
       (fun vertex => ⟨leftValues vertex, rightValues vertex⟩) (side.pieceVertices depth) :=
   build _ _
@@ -699,26 +703,26 @@ Each physical piece and following junction reuse the same located source block, 
 Each physical piece and following junction reuse the same located source block, with their separately paid requests. -/
 @[expose] def buildVertical
     {leftColumn : Fin left.partition.x.intervals.length} {rightColumn : Fin right.partition.x.intervals.length}
-    {horizontal : InverseRootPolynomial.Coordinate} {side : ObservationMesh.MatchedVerticalSide left right leftColumn
+    {horizontal : Coordinate} {side : MatchedVerticalSide left right leftColumn
       rightColumn horizontal}
     (trace : side.Trace depth) {forward : Bool}
-    (sources : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.AxisSourceBank evaluated left true
+    (sources : AxisSourceBank evaluated left true
       forward)
     (sourceFirst : occurrence.start.re = horizontal) (sourceLast : occurrence.finish.re = horizontal)
-    {allowance junctionAllowance : InverseRootPolynomial.Coordinate}
-    (budget : NoisyPathArea.LengthErrorBudget (RectangularDyadicPairedTrace.dyadicCount depth) allowance)
-    (junctionBudget : NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
-    (owners : PairedOwnerRequest.OwnerRequest occurrence other budget.tolerance) (later : owners.index ≤ index)
-    (junctionOwners : PairedOwnerRequest.OwnerRequest occurrence other junctionBudget.tolerance) (junctionLater :
+    {allowance junctionAllowance : Coordinate}
+    (budget : LengthErrorBudget (RectangularDyadicPairedTrace.dyadicCount depth) allowance)
+    (junctionBudget : LengthErrorBudget 1 junctionAllowance)
+    (owners : OwnerRequest occurrence other budget.tolerance) (later : owners.index ≤ index)
+    (junctionOwners : OwnerRequest occurrence other junctionBudget.tolerance) (junctionLater :
       junctionOwners.index ≤ index)
-    (first : RectangularPointReadings.PointReadings data.anchors data.offsets (fun vertex => trace.point
+    (first : PointReadings data.anchors data.offsets (fun vertex => trace.point
       (trace.vertices.indexed vertex)))
-    (second : RectangularPointReadings.PointReadings otherData.anchors otherData.offsets (fun vertex => trace.point
+    (second : PointReadings otherData.anchors otherData.offsets (fun vertex => trace.point
       (trace.vertices.indexed vertex)))
     (leftValues rightValues : side.Vertex depth → InverseRootPolynomial.Gaussian)
     (leftEq : ∀ vertex, first.values vertex = leftValues (trace.vertices.indexed vertex))
     (rightEq : ∀ vertex, second.values vertex = rightValues (trace.vertices.indexed vertex)) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.JoinedFragmentFamily (evaluated := evaluated)
+    JoinedFragmentFamily (evaluated := evaluated)
       (data := data) (otherData := otherData)
       (fun vertex => ⟨leftValues vertex, rightValues vertex⟩) (side.pieceVertices depth) :=
   build _ _
@@ -736,29 +740,29 @@ Each physical piece and following junction reuse the same located source block, 
 /-- The actual horizontal centered trace area satisfies the cached family's source-area error bound. -/
 theorem horizontal_bound
     {leftRow : Fin left.partition.y.intervals.length} {rightRow : Fin right.partition.y.intervals.length}
-    {height : InverseRootPolynomial.Coordinate} {side : ObservationMesh.MatchedHorizontalSide left right leftRow
+    {height : Coordinate} {side : MatchedHorizontalSide left right leftRow
       rightRow height}
     (trace : side.Trace depth) (values : Fin (lc + 1) → Fin (lr + 1) → InverseRootPolynomial.Gaussian →
-      Stokes.PrimitivePoint)
-    (family : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.JoinedFragmentFamily (evaluated :=
+      PrimitivePoint)
+    (family : JoinedFragmentFamily (evaluated :=
       evaluated) (data := data) (otherData := otherData)
       (trace.leftValue values) (side.pieceVertices depth))
-    (original : CenteredBilinearPath.Sample (fun vertex => trace.leftValue values (trace.vertices.indexed vertex))) :
-    Data.Gaussian.Norm.Basic.normSq (original.centeredArea - family.sourceArea) ≤ family.error :=
+    (original : Sample (fun vertex => trace.leftValue values (trace.vertices.indexed vertex))) :
+    Basic.normSq (original.centeredArea - family.sourceArea) ≤ family.error :=
   family.area_bound original trace.vertices_eq
 
 /-- The actual vertical centered trace area satisfies the cached family's source-area error bound. -/
 theorem vertical_bound
     {leftColumn : Fin left.partition.x.intervals.length} {rightColumn : Fin right.partition.x.intervals.length}
-    {horizontal : InverseRootPolynomial.Coordinate} {side : ObservationMesh.MatchedVerticalSide left right leftColumn
+    {horizontal : Coordinate} {side : MatchedVerticalSide left right leftColumn
       rightColumn horizontal}
     (trace : side.Trace depth) (values : Fin (lc + 1) → Fin (lr + 1) → InverseRootPolynomial.Gaussian →
-      Stokes.PrimitivePoint)
-    (family : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.JoinedFragmentFamily (evaluated :=
+      PrimitivePoint)
+    (family : JoinedFragmentFamily (evaluated :=
       evaluated) (data := data) (otherData := otherData)
       (trace.leftValue values) (side.pieceVertices depth))
-    (original : CenteredBilinearPath.Sample (fun vertex => trace.leftValue values (trace.vertices.indexed vertex))) :
-    Data.Gaussian.Norm.Basic.normSq (original.centeredArea - family.sourceArea) ≤ family.error :=
+    (original : Sample (fun vertex => trace.leftValue values (trace.vertices.indexed vertex))) :
+    Basic.normSq (original.centeredArea - family.sourceArea) ≤ family.error :=
   family.area_bound original trace.vertices_eq
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.JoinedFragmentFamily

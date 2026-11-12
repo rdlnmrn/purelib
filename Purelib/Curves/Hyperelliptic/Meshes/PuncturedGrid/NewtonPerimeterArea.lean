@@ -54,6 +54,10 @@ import Purelib.Riemann.Periods.CenteredBilinearPath
 import Purelib.Riemann.Readings.RectangularObservationAssembly
 import Purelib.RootIsolation.Newton.Band.Basic
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation
+
+open Purelib.Riemann.RootContinuation
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -75,18 +79,18 @@ bank. The finite prefix and edge requests build both differential estimates;
 no caller primitive magnitude or increment certificate is required. -/
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonPerimeterArea
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {cuts : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
-    {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {cuts : RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
+    {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet}
   {target : Fraction.Rational} {i j : Fin genus} {stage : Nat} {cache :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
-  {request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+    RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  {request : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+    RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
     target}
 
 namespace CenteredPerimeters
@@ -95,28 +99,28 @@ namespace CenteredPerimeters
 
 The two retained differential bands supply side membership and density estimates; the actual rectangle side length and
 allocated junction allowance determine the squared length factor. -/
-theorem bottom_newton_area_bound (samples : Hyperelliptic.Meshes.PuncturedGrid.RequestedHoleCentering.CenteredPerimeters
+theorem bottom_newton_area_bound (samples : RequestedHoleCentering.CenteredPerimeters
   request cache i j)
-    (lengths : Hyperelliptic.Meshes.PuncturedGrid.WeightedPerimeterAreas.CenteredPerimeters.Lengths samples) (position :
+    (lengths : WeightedPerimeterAreas.CenteredPerimeters.Lengths samples) (position :
       Fin base.faces.regulars.length) (sheet : Fin 2)
     {allowance density : Fraction.Rational}
     (budget : Path.NoisyPathArea.LengthErrorBudget (((samples.traces.get position).get
       sheet).bottom.vertices.rest.length) allowance)
-    (references : Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.Request
-      (Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.bottom ((domains.get position).domain sheet)
+    (references : SideGeometry.Request
+      (SideGeometry.bottom ((domains.get position).domain sheet)
         ((samples.traces.get position).get sheet))
       ((domains.get position).domain sheet) (Periods.PeriodMatrix.standardDifferential i)
         (Periods.PeriodMatrix.standardDifferential j)
       budget.tolerance)
     {bandAmbient : Rational.Box} {current : State.Raw.RawWindingState curve.polynomial bandAmbient}
-    {profile : RootContinuation.NewtonBandBounds.Profile curve.squarefree current.box}
-    {leftProfile : RootContinuation.NewtonBandDifferentials.DifferentialProfile profile
+    {profile : NewtonBandBounds.Profile curve.squarefree current.box}
+    {leftProfile : NewtonBandDifferentials.DifferentialProfile profile
       (Periods.PeriodMatrix.standardDifferential i).exponent}
-    {rightProfile : RootContinuation.NewtonBandDifferentials.DifferentialProfile profile
+    {rightProfile : NewtonBandDifferentials.DifferentialProfile profile
       (Periods.PeriodMatrix.standardDifferential j).exponent}
     {leftTarget rightTarget : Fraction.Rational}
-    (leftBand : RootContinuation.PreparedNewtonBandSamples.PreparedBandRequest leftProfile leftTarget)
-    (rightBand : RootContinuation.PreparedNewtonBandSamples.PreparedBandRequest rightProfile rightTarget)
+    (leftBand : PreparedNewtonBandSamples.PreparedBandRequest leftProfile leftTarget)
+    (rightBand : PreparedNewtonBandSamples.PreparedBandRequest rightProfile rightTarget)
     (leftInside : ∀ vertex, leftBand.sample.output.box.Contains
       (((samples.traces.get position).get sheet).bottom.point vertex))
     (leftSide : ∀ first last, Paths.PreparedBoundarySegments.SameSide leftBand.sample.output.box
@@ -128,17 +132,17 @@ theorem bottom_newton_area_bound (samples : Hyperelliptic.Meshes.PuncturedGrid.R
       (((samples.traces.get position).get sheet).bottom.point first)
       (((samples.traces.get position).get sheet).bottom.point last))
     (densityNonnegative : 0 ≤ density)
-    (leftDensity : RootContinuation.PreparedNewtonBandSamples.Sample.preparedDensity leftBand.sample leftProfile
+    (leftDensity : PreparedNewtonBandSamples.Sample.preparedDensity leftBand.sample leftProfile
       leftBand.error ≤ density)
-    (rightDensity : RootContinuation.PreparedNewtonBandSamples.Sample.preparedDensity rightBand.sample rightProfile
+    (rightDensity : PreparedNewtonBandSamples.Sample.preparedDensity rightBand.sample rightProfile
       rightBand.error ≤ density)
     (later : references.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Hyperelliptic.Meshes.PuncturedGrid.SideCenteredRemainder.sideCenteredArea
+    Gaussian.Norm.Basic.normSq (SideCenteredRemainder.sideCenteredArea
       ((samples.samples.get position).get sheet) .bottom) ≤
       4 * (3 * budget.tolerance + 4 * density * leftBand.sample.output.box.diagonalSq) * (4 * density + 3) *
         ((base.faces.regulars[position.val]'position.isLt).cell.box.xUpper -
           (base.faces.regulars[position.val]'position.isLt).cell.box.xLower + allowance)^2 := by
-  exact Hyperelliptic.Meshes.PuncturedGrid.NewtonDomainPerimeterArea.SideGeometry.bottom_area_bound ((domains.get
+  exact NewtonDomainPerimeterArea.SideGeometry.bottom_area_bound ((domains.get
     position).domain sheet)
     ((samples.traces.get position).get sheet) ((lengths.get position).get sheet) budget references
     leftBand rightBand leftInside leftSide rightInside rightSide densityNonnegative leftDensity rightDensity later
@@ -149,28 +153,28 @@ theorem bottom_newton_area_bound (samples : Hyperelliptic.Meshes.PuncturedGrid.R
 
 The two retained differential bands supply side membership and density estimates; the actual rectangle side length and
 allocated junction allowance determine the squared length factor. -/
-theorem top_newton_area_bound (samples : Hyperelliptic.Meshes.PuncturedGrid.RequestedHoleCentering.CenteredPerimeters
+theorem top_newton_area_bound (samples : RequestedHoleCentering.CenteredPerimeters
   request cache i j)
-    (lengths : Hyperelliptic.Meshes.PuncturedGrid.WeightedPerimeterAreas.CenteredPerimeters.Lengths samples) (position :
+    (lengths : WeightedPerimeterAreas.CenteredPerimeters.Lengths samples) (position :
       Fin base.faces.regulars.length) (sheet : Fin 2)
     {allowance density : Fraction.Rational}
     (budget : Path.NoisyPathArea.LengthErrorBudget (((samples.traces.get position).get sheet).top.vertices.rest.length)
       allowance)
-    (references : Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.Request
-      (Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.top ((domains.get position).domain sheet)
+    (references : SideGeometry.Request
+      (SideGeometry.top ((domains.get position).domain sheet)
         ((samples.traces.get position).get sheet))
       ((domains.get position).domain sheet) (Periods.PeriodMatrix.standardDifferential i)
         (Periods.PeriodMatrix.standardDifferential j)
       budget.tolerance)
     {bandAmbient : Rational.Box} {current : State.Raw.RawWindingState curve.polynomial bandAmbient}
-    {profile : RootContinuation.NewtonBandBounds.Profile curve.squarefree current.box}
-    {leftProfile : RootContinuation.NewtonBandDifferentials.DifferentialProfile profile
+    {profile : NewtonBandBounds.Profile curve.squarefree current.box}
+    {leftProfile : NewtonBandDifferentials.DifferentialProfile profile
       (Periods.PeriodMatrix.standardDifferential i).exponent}
-    {rightProfile : RootContinuation.NewtonBandDifferentials.DifferentialProfile profile
+    {rightProfile : NewtonBandDifferentials.DifferentialProfile profile
       (Periods.PeriodMatrix.standardDifferential j).exponent}
     {leftTarget rightTarget : Fraction.Rational}
-    (leftBand : RootContinuation.PreparedNewtonBandSamples.PreparedBandRequest leftProfile leftTarget)
-    (rightBand : RootContinuation.PreparedNewtonBandSamples.PreparedBandRequest rightProfile rightTarget)
+    (leftBand : PreparedNewtonBandSamples.PreparedBandRequest leftProfile leftTarget)
+    (rightBand : PreparedNewtonBandSamples.PreparedBandRequest rightProfile rightTarget)
     (leftInside : ∀ vertex, leftBand.sample.output.box.Contains
       (((samples.traces.get position).get sheet).top.point vertex))
     (leftSide : ∀ first last, Paths.PreparedBoundarySegments.SameSide leftBand.sample.output.box
@@ -182,17 +186,17 @@ theorem top_newton_area_bound (samples : Hyperelliptic.Meshes.PuncturedGrid.Requ
       (((samples.traces.get position).get sheet).top.point first)
       (((samples.traces.get position).get sheet).top.point last))
     (densityNonnegative : 0 ≤ density)
-    (leftDensity : RootContinuation.PreparedNewtonBandSamples.Sample.preparedDensity leftBand.sample leftProfile
+    (leftDensity : PreparedNewtonBandSamples.Sample.preparedDensity leftBand.sample leftProfile
       leftBand.error ≤ density)
-    (rightDensity : RootContinuation.PreparedNewtonBandSamples.Sample.preparedDensity rightBand.sample rightProfile
+    (rightDensity : PreparedNewtonBandSamples.Sample.preparedDensity rightBand.sample rightProfile
       rightBand.error ≤ density)
     (later : references.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Hyperelliptic.Meshes.PuncturedGrid.SideCenteredRemainder.sideCenteredArea
+    Gaussian.Norm.Basic.normSq (SideCenteredRemainder.sideCenteredArea
       ((samples.samples.get position).get sheet) .top) ≤
       4 * (3 * budget.tolerance + 4 * density * leftBand.sample.output.box.diagonalSq) * (4 * density + 3) *
         ((base.faces.regulars[position.val]'position.isLt).cell.box.xUpper -
           (base.faces.regulars[position.val]'position.isLt).cell.box.xLower + allowance)^2 := by
-  exact Hyperelliptic.Meshes.PuncturedGrid.NewtonDomainPerimeterArea.SideGeometry.top_area_bound ((domains.get
+  exact NewtonDomainPerimeterArea.SideGeometry.top_area_bound ((domains.get
     position).domain sheet)
     ((samples.traces.get position).get sheet) ((lengths.get position).get sheet) budget references
     leftBand rightBand leftInside leftSide rightInside rightSide densityNonnegative leftDensity rightDensity later
@@ -203,28 +207,28 @@ theorem top_newton_area_bound (samples : Hyperelliptic.Meshes.PuncturedGrid.Requ
 
 The two retained differential bands supply side membership and density estimates; the actual rectangle side length and
 allocated junction allowance determine the squared length factor. -/
-theorem left_newton_area_bound (samples : Hyperelliptic.Meshes.PuncturedGrid.RequestedHoleCentering.CenteredPerimeters
+theorem left_newton_area_bound (samples : RequestedHoleCentering.CenteredPerimeters
   request cache i j)
-    (lengths : Hyperelliptic.Meshes.PuncturedGrid.WeightedPerimeterAreas.CenteredPerimeters.Lengths samples) (position :
+    (lengths : WeightedPerimeterAreas.CenteredPerimeters.Lengths samples) (position :
       Fin base.faces.regulars.length) (sheet : Fin 2)
     {allowance density : Fraction.Rational}
     (budget : Path.NoisyPathArea.LengthErrorBudget (((samples.traces.get position).get sheet).left.vertices.rest.length)
       allowance)
-    (references : Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.Request
-      (Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.left ((domains.get position).domain sheet)
+    (references : SideGeometry.Request
+      (SideGeometry.left ((domains.get position).domain sheet)
         ((samples.traces.get position).get sheet))
       ((domains.get position).domain sheet) (Periods.PeriodMatrix.standardDifferential i)
         (Periods.PeriodMatrix.standardDifferential j)
       budget.tolerance)
     {bandAmbient : Rational.Box} {current : State.Raw.RawWindingState curve.polynomial bandAmbient}
-    {profile : RootContinuation.NewtonBandBounds.Profile curve.squarefree current.box}
-    {leftProfile : RootContinuation.NewtonBandDifferentials.DifferentialProfile profile
+    {profile : NewtonBandBounds.Profile curve.squarefree current.box}
+    {leftProfile : NewtonBandDifferentials.DifferentialProfile profile
       (Periods.PeriodMatrix.standardDifferential i).exponent}
-    {rightProfile : RootContinuation.NewtonBandDifferentials.DifferentialProfile profile
+    {rightProfile : NewtonBandDifferentials.DifferentialProfile profile
       (Periods.PeriodMatrix.standardDifferential j).exponent}
     {leftTarget rightTarget : Fraction.Rational}
-    (leftBand : RootContinuation.PreparedNewtonBandSamples.PreparedBandRequest leftProfile leftTarget)
-    (rightBand : RootContinuation.PreparedNewtonBandSamples.PreparedBandRequest rightProfile rightTarget)
+    (leftBand : PreparedNewtonBandSamples.PreparedBandRequest leftProfile leftTarget)
+    (rightBand : PreparedNewtonBandSamples.PreparedBandRequest rightProfile rightTarget)
     (leftInside : ∀ vertex, leftBand.sample.output.box.Contains
       (((samples.traces.get position).get sheet).left.point vertex))
     (leftSide : ∀ first last, Paths.PreparedBoundarySegments.SameSide leftBand.sample.output.box
@@ -236,17 +240,17 @@ theorem left_newton_area_bound (samples : Hyperelliptic.Meshes.PuncturedGrid.Req
       (((samples.traces.get position).get sheet).left.point first)
       (((samples.traces.get position).get sheet).left.point last))
     (densityNonnegative : 0 ≤ density)
-    (leftDensity : RootContinuation.PreparedNewtonBandSamples.Sample.preparedDensity leftBand.sample leftProfile
+    (leftDensity : PreparedNewtonBandSamples.Sample.preparedDensity leftBand.sample leftProfile
       leftBand.error ≤ density)
-    (rightDensity : RootContinuation.PreparedNewtonBandSamples.Sample.preparedDensity rightBand.sample rightProfile
+    (rightDensity : PreparedNewtonBandSamples.Sample.preparedDensity rightBand.sample rightProfile
       rightBand.error ≤ density)
     (later : references.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Hyperelliptic.Meshes.PuncturedGrid.SideCenteredRemainder.sideCenteredArea
+    Gaussian.Norm.Basic.normSq (SideCenteredRemainder.sideCenteredArea
       ((samples.samples.get position).get sheet) .left) ≤
       4 * (3 * budget.tolerance + 4 * density * leftBand.sample.output.box.diagonalSq) * (4 * density + 3) *
         ((base.faces.regulars[position.val]'position.isLt).cell.box.yUpper -
           (base.faces.regulars[position.val]'position.isLt).cell.box.yLower + allowance)^2 := by
-  exact Hyperelliptic.Meshes.PuncturedGrid.NewtonDomainPerimeterArea.SideGeometry.left_area_bound ((domains.get
+  exact NewtonDomainPerimeterArea.SideGeometry.left_area_bound ((domains.get
     position).domain sheet)
     ((samples.traces.get position).get sheet) ((lengths.get position).get sheet) budget references
     leftBand rightBand leftInside leftSide rightInside rightSide densityNonnegative leftDensity rightDensity later
@@ -257,28 +261,28 @@ theorem left_newton_area_bound (samples : Hyperelliptic.Meshes.PuncturedGrid.Req
 
 The two retained differential bands supply side membership and density estimates; the actual rectangle side length and
 allocated junction allowance determine the squared length factor. -/
-theorem right_newton_area_bound (samples : Hyperelliptic.Meshes.PuncturedGrid.RequestedHoleCentering.CenteredPerimeters
+theorem right_newton_area_bound (samples : RequestedHoleCentering.CenteredPerimeters
   request cache i j)
-    (lengths : Hyperelliptic.Meshes.PuncturedGrid.WeightedPerimeterAreas.CenteredPerimeters.Lengths samples) (position :
+    (lengths : WeightedPerimeterAreas.CenteredPerimeters.Lengths samples) (position :
       Fin base.faces.regulars.length) (sheet : Fin 2)
     {allowance density : Fraction.Rational}
     (budget : Path.NoisyPathArea.LengthErrorBudget (((samples.traces.get position).get
       sheet).right.vertices.rest.length) allowance)
-    (references : Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.Request
-      (Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.right ((domains.get position).domain sheet)
+    (references : SideGeometry.Request
+      (SideGeometry.right ((domains.get position).domain sheet)
         ((samples.traces.get position).get sheet))
       ((domains.get position).domain sheet) (Periods.PeriodMatrix.standardDifferential i)
         (Periods.PeriodMatrix.standardDifferential j)
       budget.tolerance)
     {bandAmbient : Rational.Box} {current : State.Raw.RawWindingState curve.polynomial bandAmbient}
-    {profile : RootContinuation.NewtonBandBounds.Profile curve.squarefree current.box}
-    {leftProfile : RootContinuation.NewtonBandDifferentials.DifferentialProfile profile
+    {profile : NewtonBandBounds.Profile curve.squarefree current.box}
+    {leftProfile : NewtonBandDifferentials.DifferentialProfile profile
       (Periods.PeriodMatrix.standardDifferential i).exponent}
-    {rightProfile : RootContinuation.NewtonBandDifferentials.DifferentialProfile profile
+    {rightProfile : NewtonBandDifferentials.DifferentialProfile profile
       (Periods.PeriodMatrix.standardDifferential j).exponent}
     {leftTarget rightTarget : Fraction.Rational}
-    (leftBand : RootContinuation.PreparedNewtonBandSamples.PreparedBandRequest leftProfile leftTarget)
-    (rightBand : RootContinuation.PreparedNewtonBandSamples.PreparedBandRequest rightProfile rightTarget)
+    (leftBand : PreparedNewtonBandSamples.PreparedBandRequest leftProfile leftTarget)
+    (rightBand : PreparedNewtonBandSamples.PreparedBandRequest rightProfile rightTarget)
     (leftInside : ∀ vertex, leftBand.sample.output.box.Contains
       (((samples.traces.get position).get sheet).right.point vertex))
     (leftSide : ∀ first last, Paths.PreparedBoundarySegments.SameSide leftBand.sample.output.box
@@ -290,17 +294,17 @@ theorem right_newton_area_bound (samples : Hyperelliptic.Meshes.PuncturedGrid.Re
       (((samples.traces.get position).get sheet).right.point first)
       (((samples.traces.get position).get sheet).right.point last))
     (densityNonnegative : 0 ≤ density)
-    (leftDensity : RootContinuation.PreparedNewtonBandSamples.Sample.preparedDensity leftBand.sample leftProfile
+    (leftDensity : PreparedNewtonBandSamples.Sample.preparedDensity leftBand.sample leftProfile
       leftBand.error ≤ density)
-    (rightDensity : RootContinuation.PreparedNewtonBandSamples.Sample.preparedDensity rightBand.sample rightProfile
+    (rightDensity : PreparedNewtonBandSamples.Sample.preparedDensity rightBand.sample rightProfile
       rightBand.error ≤ density)
     (later : references.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Hyperelliptic.Meshes.PuncturedGrid.SideCenteredRemainder.sideCenteredArea
+    Gaussian.Norm.Basic.normSq (SideCenteredRemainder.sideCenteredArea
       ((samples.samples.get position).get sheet) .right) ≤
       4 * (3 * budget.tolerance + 4 * density * leftBand.sample.output.box.diagonalSq) * (4 * density + 3) *
         ((base.faces.regulars[position.val]'position.isLt).cell.box.yUpper -
           (base.faces.regulars[position.val]'position.isLt).cell.box.yLower + allowance)^2 := by
-  exact Hyperelliptic.Meshes.PuncturedGrid.NewtonDomainPerimeterArea.SideGeometry.right_area_bound ((domains.get
+  exact NewtonDomainPerimeterArea.SideGeometry.right_area_bound ((domains.get
     position).domain sheet)
     ((samples.traces.get position).get sheet) ((lengths.get position).get sheet) budget references
     leftBand rightBand leftInside leftSide rightInside rightSide densityNonnegative leftDensity rightDensity later

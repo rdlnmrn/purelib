@@ -77,6 +77,10 @@ import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Topology.Surface.Sewing.SewingTree
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-! Original branch-region requests reuse the retained Newton annuli.
@@ -134,7 +138,7 @@ open Purelib.Data.Gaussian.Norm.Basic (normSq_neg)
 open Purelib.Data.Rat.Fraction.Order.Arithmetic (mul_le_mul_of_nonneg_left_direct add_le_add_direct)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -149,16 +153,16 @@ set_option genInjectivity false in
 /-- The retained annulus, stem, hole and sewing requests for one original branch region.
 
 The inner comparisons share the supplied magnitude bank and allocate explicit fractions of the requested error. -/
-structure BranchRegionRequest (bank : LiftedPuncturedGrid.BasedBranchBank lifted) (entry : Excision.AnnularEntry grid
+structure BranchRegionRequest (bank : BasedBranchBank lifted) (entry : AnnularEntry grid
   current) (sheet : Fin 2)
-    (fixed : MagnitudeBank.FaceMagnitudeBank domains differential) (error : Fraction.Rational) (floor : Nat) where
+    (fixed : FaceMagnitudeBank domains differential) (error : Rational) (floor : Nat) where
   /-- The retained original annular faces around this branch cell. -/ outer :
-    NewtonOriginalAnnularFaces.OriginalAnnularFaces grid entry.hole.index
+    OriginalAnnularFaces grid entry.hole.index
   /-- The stem comparison request for the original branch and selected sheet. -/ stems :
-    StemRequests.IncludedStemRequest bank grid.shrunk.included fixed entry.hole.index sheet (error / 4 / 10)
-  /-- The doubled-hole comparison request on the retained included grid. -/ holes : HoleRequests.IncludedHoleRequest
+    IncludedStemRequest bank grid.shrunk.included fixed entry.hole.index sheet (error / 4 / 10)
+  /-- The doubled-hole comparison request on the retained included grid. -/ holes : IncludedHoleRequest
     bank grid.shrunk.included fixed entry.hole.index (error / 4 / 10)
-  /-- The actual included-hole sewing geometry. -/ geometry : HoleSewing.IncludedHoleSewing bank grid.shrunk.included
+  /-- The actual included-hole sewing geometry. -/ geometry : IncludedHoleSewing bank grid.shrunk.included
     entry.hole.index domains differential
   /-- The retained sewing comparison at the requested floor. -/ sewing : IncludedHoleSewing.Request geometry fixed
     (error / 4) floor
@@ -173,13 +177,13 @@ variable {entry : AnnularEntry grid current} {sheet : Fin
     {error : Rational} {floor : Nat}
 
 /-- Prepare the actual original annulus and all positive stem, hole and sewing budgets for one branch region. -/
-@[expose] def build (bank : LiftedPuncturedGrid.BasedBranchBank lifted) (entry : Excision.AnnularEntry grid current)
+@[expose] def build (bank : BasedBranchBank lifted) (entry : AnnularEntry grid current)
   (sheet : Fin 2)
-    (fixed : MagnitudeBank.FaceMagnitudeBank domains differential) (error : Fraction.Rational) (positive : 0 < error)
+    (fixed : FaceMagnitudeBank domains differential) (error : Rational) (positive : 0 < error)
       (floor : Nat) :
-    Curves.Hyperelliptic.Meshes.Newton.Branch.RegionSamples.BranchRegionRequest bank entry sheet fixed error floor :=
-  have quarter : 0 < error / 4 := Fraction.Order.Field.div_pos_direct positive (by decide)
-  have inner : 0 < error / 4 / 10 := Fraction.Order.Field.div_pos_direct quarter (by decide)
+    BranchRegionRequest bank entry sheet fixed error floor :=
+  have quarter : 0 < error / 4 := Field.div_pos_direct positive (by decide)
+  have inner : 0 < error / 4 / 10 := Field.div_pos_direct quarter (by decide)
   let geometry := IncludedHoleSewing.build bank grid.shrunk.included entry.hole.index domains differential
   ⟨OriginalAnnularFaces.build grid entry.hole.index,
     IncludedStemRequest.build bank grid.shrunk.included fixed entry.hole.index sheet _ inner,
@@ -187,7 +191,7 @@ variable {entry : AnnularEntry grid current} {sheet : Fin
     geometry, IncludedHoleSewing.Request.build geometry fixed _ quarter floor⟩
 
 /-- The common stage paying the retained stem, hole and sewing requests. -/
-@[expose] def index (prepared : Curves.Hyperelliptic.Meshes.Newton.Branch.RegionSamples.BranchRegionRequest bank entry
+@[expose] def index (prepared : BranchRegionRequest bank entry
   sheet fixed error floor) : Nat :=
   max (max prepared.stems.index prepared.holes.index) prepared.sewing.index
 
@@ -196,21 +200,21 @@ set_option genInjectivity false in
 
 Pairing, occurrence readback, inner boundary and canonical polygon are evaluated on the same supplied primitive readings
 and sewn surface. -/
-structure Sample (prepared : Curves.Hyperelliptic.Meshes.Newton.Branch.RegionSamples.BranchRegionRequest bank entry
+structure Sample (prepared : BranchRegionRequest bank entry
   sheet fixed error floor)
-    {stage : Nat} {shared : PrimitiveData.FacePrimitiveBank differential stage domains} (readings :
-      TrianglePrimitiveReadings.TriangleReadings shared current.mesh)
+    {stage : Nat} {shared : FacePrimitiveBank differential stage domains} (readings :
+      TriangleReadings shared current.mesh)
     (surface : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch readings.values) where
   /-- The original selected-region cut balance on the actual sewn surface. -/ balance :
     OriginalCutBalance prepared.outer entry.region prepared.geometry surface
-  /-- The retained primitive sample for every projected cut-edge pair. -/ pairing : ProjectedEdgePairing.PrimitiveSample
+  /-- The retained primitive sample for every projected cut-edge pair. -/ pairing : PrimitiveSample
     balance.complete.pairing surface.energyValues
-  /-- The actual cut-word occurrence-area readback. -/ readback : CutSourceWord.AreaReadback prepared.geometry.word
+  /-- The actual cut-word occurrence-area readback. -/ readback : AreaReadback prepared.geometry.word
     surface.sewn.values
-  /-- The cached signed inner-boundary area. -/ inner : Data.Gaussian.Basic.Canonical
+  /-- The cached signed inner-boundary area. -/ inner : Gaussian
   /-- The inner area is exactly the edge-list area of the retained inner word. -/ inner_eq : inner = Stokes.edgeListArea
     surface.energyValues balance.inner.word.edges
-  /-- The cached canonical polygon area of the original resplit based walk. -/ polygon : Data.Gaussian.Basic.Canonical
+  /-- The cached canonical polygon area of the original resplit based walk. -/ polygon : Gaussian
   /-- The polygon retains the original walk, sheet and canonical edge valuation. -/ polygon_eq : polygon =
     RetracingWords.wordArea (CanonicalEdgeValues.edgeValuation current.mesh readings.values)
     (current.edges.indexedEdges current.vertices
@@ -221,7 +225,7 @@ constructive_injectivity Sample
 
 namespace Sample
 
-variable {prepared : Purelib.Curves.Hyperelliptic.Meshes.Newton.Branch.RegionSamples.BranchRegionRequest bank entry
+variable {prepared : BranchRegionRequest bank entry
   sheet fixed error floor}
   {stage : Nat} {shared : FacePrimitiveBank
     differential stage domains} {readings :
@@ -230,9 +234,9 @@ variable {prepared : Purelib.Curves.Hyperelliptic.Meshes.Newton.Branch.RegionSam
 
 /-- Cache the original region balance, pairing and occurrence readbacks, inner boundary and canonical polygon on the
 supplied readings. -/
-@[expose] def build (prepared : Curves.Hyperelliptic.Meshes.Newton.Branch.RegionSamples.BranchRegionRequest bank entry
+@[expose] def build (prepared : BranchRegionRequest bank entry
   sheet fixed error floor)
-    (readings : TrianglePrimitiveReadings.TriangleReadings shared current.mesh) (surface :
+    (readings : TriangleReadings shared current.mesh) (surface :
       SewnPrimitiveSamples.CachedSample current.cutPolygon.patch readings.values) :
     prepared.Sample readings surface :=
   let balance := OriginalCutBalance.build prepared.outer entry.region prepared.geometry surface
@@ -264,7 +268,7 @@ theorem selected_area (sample : prepared.Sample readings surface)
 The estimate combines the retained stem, doubled-hole and sewing comparisons without discarding any inner-boundary or
 cut correction. -/
 theorem accurate (sample : prepared.Sample readings surface) (later : prepared.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq sample.residual ≤ error := by
+    Basic.normSq sample.residual ≤ error := by
   let value := CanonicalEdgeValues.edgeValuation current.mesh readings.values
   let walk := grid.shrunk.included.resplit (bank.rows.get entry.hole.index).boundary
     ((base.bank.cell entry.hole.index).anchor_mem (base.bank.cell_mem entry.hole.index))
@@ -275,54 +279,54 @@ theorem accurate (sample : prepared.Sample readings surface) (later : prepared.i
     current.edges.indexedEdges current.vertices walk 1)
   have stemBound := prepared.stems.loop_area_accurate readings
     ((Data.Nat.Order.le_max_left _ _).trans ((Data.Nat.Order.le_max_left _ _).trans later))
-  have oldBound {point : Data.Gaussian.Basic.Canonical} {limit : Fraction.Rational}
-      (h : Data.Gaussian.Basic.Canonical.normSq point ≤ limit) :
-      Data.Gaussian.Norm.Basic.normSq point ≤ limit := by
-    change Fraction.Order.Basic.LessEqual _ _ at h ⊢
-    rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+  have oldBound {point : Gaussian} {limit : Rational}
+      (h : Gaussian.normSq point ≤ limit) :
+      Basic.normSq point ≤ limit := by
+    change Basic.LessEqual _ _ at h ⊢
+    rw [Basic.normSq_eq_canonical]
     exact h
-  have stem : Data.Gaussian.Norm.Basic.normSq (sample.polygon - lap) ≤ error / 4 / 10 :=
-    (congrArg (fun polygon => Data.Gaussian.Norm.Basic.normSq (polygon - lap)) sample.polygon_eq).trans_le
+  have stem : Basic.normSq (sample.polygon - lap) ≤ error / 4 / 10 :=
+    (congrArg (fun polygon => Basic.normSq (polygon - lap)) sample.polygon_eq).trans_le
       (oldBound stemBound)
-  have hole : Data.Gaussian.Norm.Basic.normSq (lap + lap - double) ≤ error / 4 / 10 :=
+  have hole : Basic.normSq (lap + lap - double) ≤ error / 4 / 10 :=
     oldBound (prepared.holes.lap_accurate readings
       ((Data.Nat.Order.le_max_right _ _).trans ((Data.Nat.Order.le_max_left _ _).trans later)) arrival)
-  have twice : Data.Gaussian.Norm.Basic.normSq ((sample.polygon - lap) + (sample.polygon - lap)) ≤ 4 * (error /
+  have twice : Basic.normSq ((sample.polygon - lap) + (sample.polygon - lap)) ≤ 4 * (error /
     4 / 10) :=
-    ((Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct stem
+    ((Bounds.normSq_add_le_two _ _).trans
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct stem
         stem) (by decide))).trans_eq (by ring1)
-  have branch := (Data.Gaussian.Norm.Bounds.normSq_add_le_two
+  have branch := (Bounds.normSq_add_le_two
     ((sample.polygon - lap) + (sample.polygon - lap)) (lap + lap - double)).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct twice
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct twice
         hole) (by decide))
   have equal : (sample.polygon - lap) + (sample.polygon - lap) + (lap + lap - double) =
       sample.polygon + sample.polygon - double := by ring1
   rw [equal] at branch
-  have branchBound : Data.Gaussian.Norm.Basic.normSq (sample.polygon + sample.polygon - double) ≤ error / 4 :=
+  have branchBound : Basic.normSq (sample.polygon + sample.polygon - double) ≤ error / 4 :=
     branch.trans_eq ((by ring1 : 2 * (4 * (error / 4 / 10) + error / 4 / 10) = error / 4 / 10 * 10).trans
       (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)))
   have sewn := prepared.sewing.accurate readings surface sample.readback ((Data.Nat.Order.le_max_right _ _).trans later)
   erw [HoleRequests.resplit_hole_double_indexed bank grid.shrunk.included entry.hole.index] at sewn
-  have reversed : Data.Gaussian.Norm.Basic.normSq (double - (sample.polygon + sample.polygon)) ≤ error / 4 :=
+  have reversed : Basic.normSq (double - (sample.polygon + sample.polygon)) ≤ error / 4 :=
     by
     rw [show double - (sample.polygon + sample.polygon) = -(sample.polygon + sample.polygon - double) by ring1,
-      Data.Gaussian.Norm.Basic.normSq_neg]
+      Basic.normSq_neg]
     exact branchBound
-  have estimate := (Data.Gaussian.Norm.Bounds.normSq_sub_le_via (sample.readback.raw - sample.readback.correction)
+  have estimate := (Bounds.normSq_sub_le_via (sample.readback.raw - sample.readback.correction)
       double (sample.polygon + sample.polygon)).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct sewn
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct sewn
       reversed) (by decide))
   have corrected : sample.balance.selected.area - sample.correction = sample.readback.raw - sample.readback.correction
     := by
-    unfold Branch.RegionSamples.BranchRegionRequest.Sample.correction
+    unfold Sample.correction
     rw [sample.inner_eq]
     have balance := sample.balance.corrected_area sample.pairing sample.readback
     calc
       _ = sample.balance.selected.area - Stokes.edgeListArea surface.energyValues sample.balance.inner.word.edges -
           sample.pairing.jumpSum - sample.pairing.defectSum - sample.readback.correction := by ring1
       _ = _ := balance
-  unfold Branch.RegionSamples.BranchRegionRequest.Sample.residual
+  unfold Sample.residual
   rw [corrected]
   exact estimate.trans_eq ((by ring1 : 2 * (error / 4 + error / 4) = error / 4 * 4).trans
     (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)))

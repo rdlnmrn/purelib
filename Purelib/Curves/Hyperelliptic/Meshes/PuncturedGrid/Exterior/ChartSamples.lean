@@ -99,31 +99,31 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.Lifted
   ChartRequest)
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {localTarget localArea chartTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
+  {localTarget localArea chartTarget : Coordinate} {floor : Nat}
 
 namespace ChartSamples
 
 set_option genInjectivity false in
 /-- The ordered chart requests on the exact original exterior occurrence list. -/
-inductive ChartRequests (chartTarget : InverseRootPolynomial.Coordinate) : List (AllSurfacePreparation.Entry regular
+inductive ChartRequests (chartTarget : Coordinate) : List (Entry regular
   domains differential localTarget localArea floor) → Type 2
   /-- The empty chart request spine on the original empty occurrence list. -/ | nil :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartRequests chartTarget []
+    ChartRequests chartTarget []
   /-- Prepend the actual original occurrence's chart request to its retained request tail. -/ | cons {entry :
-    AllSurfacePreparation.Entry regular domains differential localTarget localArea floor} {remaining : List
-    (AllSurfacePreparation.Entry regular domains differential localTarget localArea floor)}
-      (head : SegmentComparison.ChartRequest entry.request chartTarget) (tail :
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartRequests chartTarget remaining) :
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartRequests chartTarget (entry ::
+    Entry regular domains differential localTarget localArea floor} {remaining : List
+    (Entry regular domains differential localTarget localArea floor)}
+      (head : ChartRequest entry.request chartTarget) (tail :
+        ChartRequests chartTarget remaining) :
+        ChartRequests chartTarget (entry ::
         remaining)
 
 constructive_injectivity ChartRequests
@@ -133,54 +133,54 @@ end ChartSamples
 namespace ChartSamples.ChartRequests
 
 /-- Prepare a positive chart request for every original occurrence in its retained order. -/
-@[expose] def build (chartTarget : InverseRootPolynomial.Coordinate) (positive : 0 < chartTarget) :
-    (entries : List (AllSurfacePreparation.Entry regular domains differential localTarget localArea floor)) →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartRequests chartTarget entries
+@[expose] def build (chartTarget : Coordinate) (positive : 0 < chartTarget) :
+    (entries : List (Entry regular domains differential localTarget localArea floor)) →
+      ChartRequests chartTarget entries
   | [] => .nil
   | entry :: remaining => .cons (ChartRequest.build entry.request chartTarget positive)
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartRequests.build chartTarget positive
+    (ChartRequests.build chartTarget positive
     remaining)
 
 variable {entries : List
-  (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Entry regular
+  (Entry regular
   domains differential localTarget localArea floor)}
 
 /-- The maximum original source stage, retaining the supplied floor for an empty request list. -/
-@[expose] def maximum : {entries : List (AllSurfacePreparation.Entry regular domains differential localTarget localArea
-  floor)} → Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartRequests chartTarget entries → Nat
+@[expose] def maximum : {entries : List (Entry regular domains differential localTarget localArea
+  floor)} → ChartRequests chartTarget entries → Nat
   | _, .nil => floor
   | _, .cons head tail => max head.index tail.maximum
 
 /-- The maximum subdivision depth of the original retained chart requests, with zero for an empty list. -/
-@[expose] def depthMaximum : {entries : List (AllSurfacePreparation.Entry regular domains differential localTarget
-  localArea floor)} → Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartRequests chartTarget entries
+@[expose] def depthMaximum : {entries : List (Entry regular domains differential localTarget
+  localArea floor)} → ChartRequests chartTarget entries
   → Nat
   | _, .nil => 0
   | _, .cons head tail => max head.depth tail.depthMaximum
 
 end ChartSamples.ChartRequests
 
-variable {index depth readingIndex : Nat} {box : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains}
+variable {index depth readingIndex : Nat} {box : Geometry.Rational.Box}
+  {sample : Primitives.Sample cap differential index box} {shared :
+    FacePrimitiveBank differential index domains}
 
 namespace ChartSamples
 
 set_option genInjectivity false in
 /-- The dependent chart plan spine using one exact original cap sample. -/
 inductive ChartPlans (sample : Primitives.Sample cap differential index box) :
-    {entries : List (AllSurfacePreparation.Entry regular domains differential localTarget localArea floor)} →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartRequests chartTarget entries → Type 2
+    {entries : List (Entry regular domains differential localTarget localArea floor)} →
+      ChartRequests chartTarget entries → Type 2
   /-- The empty chart plan spine on the original empty request list. -/ | nil :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartPlans sample .nil
+    ChartPlans sample .nil
   /-- Prepend the original occurrence's plan on the exact shared cap sample. -/ | cons {entry :
-    AllSurfacePreparation.Entry regular domains differential localTarget localArea floor} {remaining : List
-    (AllSurfacePreparation.Entry regular domains differential localTarget localArea floor)}
-      {head : SegmentComparison.ChartRequest entry.request chartTarget} {tail :
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartRequests chartTarget remaining}
-      (plan : ChartRequest.Plan head sample) (plans :
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartPlans sample tail) :
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartPlans sample (.cons head tail)
+    Entry regular domains differential localTarget localArea floor} {remaining : List
+    (Entry regular domains differential localTarget localArea floor)}
+      {head : ChartRequest entry.request chartTarget} {tail :
+        ChartRequests chartTarget remaining}
+      (plan : Plan head sample) (plans :
+        ChartPlans sample tail) :
+        ChartPlans sample (.cons head tail)
 
 constructive_injectivity ChartPlans
 
@@ -190,18 +190,18 @@ set_option genInjectivity false in
 The source sample is built from that exact chart acquisition's original evaluation, with the original face-stage proof.
 -/
 structure ChartedEntry (sample : Primitives.Sample cap differential index box)
-    (shared : PrimitiveData.FacePrimitiveBank differential index domains) (depth readingIndex : Nat)
-    (localTarget localArea chartTarget : InverseRootPolynomial.Coordinate) (floor : Nat) where
-  /-- The original retained exterior surface occurrence request. -/ entry : AllSurfacePreparation.Entry regular domains
+    (shared : FacePrimitiveBank differential index domains) (depth readingIndex : Nat)
+    (localTarget localArea chartTarget : Coordinate) (floor : Nat) where
+  /-- The original retained exterior surface occurrence request. -/ entry : Entry regular domains
     differential localTarget localArea floor
-  /-- The actual chart request bound to that exact original occurrence. -/ request : SegmentComparison.ChartRequest
+  /-- The actual chart request bound to that exact original occurrence. -/ request : ChartRequest
     entry.request chartTarget
-  /-- The retained chart plan on the original shared cap sample. -/ plan : ChartRequest.Plan request sample
+  /-- The retained chart plan on the original shared cap sample. -/ plan : Plan request sample
   /-- The actual chart evaluation at the common subdivision and reading stages. -/ chart : Plan.Evaluation plan depth
     readingIndex
   /-- The common source stage pays the original face reference request. -/ face_later : entry.request.budget.grid.index
     ≤ index
-  /-- The actual original surface sample on the shared face bank. -/ value : AllSurfacePreparation.SampledEntry sample
+  /-- The actual original surface sample on the shared face bank. -/ value : SampledEntry sample
     shared depth readingIndex localTarget localArea floor
   /-- The surface sample is exactly the one constructed from the retained chart's original evaluation. -/ value_eq :
     value = SampledEntry.ofEvaluation entry chart.original face_later
@@ -213,18 +213,18 @@ end ChartSamples
 namespace ChartSamples.ChartedEntry
 
 /-- Evaluate the original chart plan and reuse its source evaluation in the exact shared surface sample. -/
-@[expose] def build (entry : AllSurfacePreparation.Entry regular domains differential localTarget localArea floor)
-    (request : SegmentComparison.ChartRequest entry.request chartTarget) (plan : ChartRequest.Plan request sample)
+@[expose] def build (entry : Entry regular domains differential localTarget localArea floor)
+    (request : ChartRequest entry.request chartTarget) (plan : Plan request sample)
     (positive : 0 < chartTarget) (later : request.index ≤ index) (fineLater : request.depth ≤ depth) (readingLater :
       plan.stage ≤ readingIndex) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample shared
+    ChartedEntry (regular := regular) sample shared
       depth readingIndex localTarget localArea chartTarget floor :=
   let chart := plan.evaluate positive depth readingIndex later fineLater readingLater
   let faceLater := (Data.Nat.Order.le_max_right _ _).trans (request.source_le.trans later)
   let value := SampledEntry.ofEvaluation entry chart.original faceLater
   ⟨entry, request, plan, chart, faceLater, value, rfl⟩
 
-variable (entry : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular :=
+variable (entry : ChartedEntry (regular :=
   regular) sample shared depth readingIndex localTarget localArea chartTarget floor)
 
 /-- The retained surface sample refers to exactly the original charted occurrence. -/
@@ -245,39 +245,39 @@ end ChartSamples.ChartedEntry
 
 set_option genInjectivity false in
 /-- The complete ordered charted exterior sample bank with exact original occurrence readback. -/
-structure ChartSamples (entries : List (AllSurfacePreparation.Entry regular domains differential localTarget localArea
+structure ChartSamples (entries : List (Entry regular domains differential localTarget localArea
   floor))
     (sample : Primitives.Sample cap differential index box)
-    (shared : PrimitiveData.FacePrimitiveBank differential index domains) (depth readingIndex : Nat) (chartTarget :
-      InverseRootPolynomial.Coordinate) where
+    (shared : FacePrimitiveBank differential index domains) (depth readingIndex : Nat) (chartTarget :
+      Coordinate) where
   /-- The ordered charted entries sharing the original cap and face primitive banks. -/ values : List
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample shared
+    (ChartSamples.ChartedEntry (regular := regular) sample shared
     depth readingIndex localTarget localArea chartTarget floor)
   /-- The charted samples project to exactly the retained original exterior occurrence list. -/ entries_eq : values.map
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.entry = entries
+    ChartSamples.ChartedEntry.entry = entries
 
 constructive_injectivity ChartSamples
 
 namespace ChartSamples
 
 /-- The original surface samples preserve the exact ordered charted occurrence owners. -/
-theorem source_entries (values : List (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry
+theorem source_entries (values : List (ChartedEntry
   (regular := regular) sample shared depth readingIndex localTarget localArea chartTarget floor)) :
-    (values.map Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.value).map
+    (values.map ChartedEntry.value).map
       SampledEntry.entry = values.map ChartedEntry.entry := by
   induction values with
   | nil => rfl
   | cons head tail ih => exact congrArg₂ List.cons head.value_entry ih
 
 variable {entries : List
-  (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Entry regular
+  (Entry regular
   domains differential localTarget localArea floor)}
 
 /-- Read the original surface sample bank directly from the retained charted entries. -/
 @[expose] def original (samples : ChartSamples entries
-  sample shared depth readingIndex chartTarget) : AllSurfacePreparation.Samples entries sample shared depth readingIndex
+  sample shared depth readingIndex chartTarget) : Samples entries sample shared depth readingIndex
   :=
-  ⟨samples.values.map Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.value,
+  ⟨samples.values.map ChartedEntry.value,
     (source_entries samples.values).trans
     samples.entries_eq⟩
 
@@ -293,33 +293,33 @@ namespace ChartSamples.ChartPlans
 
 /-- Prepare each original request's chart plan on the exact same retained cap sample. -/
 @[expose] def build (sample : Primitives.Sample cap differential index box) :
-    {entries : List (AllSurfacePreparation.Entry regular domains differential localTarget localArea floor)} → (requests
-      : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartRequests chartTarget entries) →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartPlans sample requests
+    {entries : List (Entry regular domains differential localTarget localArea floor)} → (requests
+      : ChartRequests chartTarget entries) →
+      ChartPlans sample requests
   | _, .nil => .nil
   | _, .cons head tail => .cons (Plan.build head sample)
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartPlans.build sample tail)
+    (ChartPlans.build sample tail)
 
 /-- The maximum actual chart reading stage, retaining the supplied floor for an empty plan list. -/
-@[expose] def maximum : {entries : List (AllSurfacePreparation.Entry regular domains differential localTarget localArea
+@[expose] def maximum : {entries : List (Entry regular domains differential localTarget localArea
   floor)} →
-    {requests : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartRequests chartTarget entries} →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartPlans sample requests → Nat
+    {requests : ChartRequests chartTarget entries} →
+      ChartPlans sample requests → Nat
   | _, _, .nil => floor
   | _, _, .cons head tail => max head.stage tail.maximum
 
 /-- Evaluate every original chart plan at the paid common source, subdivision and reading stages, preserving occurrence
 order. -/
 @[expose] def evaluate (positive : 0 < chartTarget) :
-    {entries : List (AllSurfacePreparation.Entry regular domains differential localTarget localArea floor)} →
-    {requests : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartRequests chartTarget entries} →
-      (plans : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartPlans sample requests) →
+    {entries : List (Entry regular domains differential localTarget localArea floor)} →
+    {requests : ChartRequests chartTarget entries} →
+      (plans : ChartPlans sample requests) →
     requests.maximum ≤ index → requests.depthMaximum ≤ depth → plans.maximum ≤ readingIndex →
     ChartSamples entries sample shared depth
       readingIndex chartTarget
   | _, _, .nil, _, _, _ => ⟨[], rfl⟩
   | _, _, .cons (entry := entry) (head := request) head tail, later, fineLater, readingLater =>
-      let first := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.build entry request head
+      let first := ChartedEntry.build entry request head
         positive ((Data.Nat.Order.le_max_left _ _).trans later)
         ((Data.Nat.Order.le_max_left _ _).trans fineLater) ((Data.Nat.Order.le_max_left _ _).trans readingLater)
       let rest := tail.evaluate positive ((Data.Nat.Order.le_max_right _ _).trans later)

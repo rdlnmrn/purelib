@@ -57,9 +57,9 @@ set_option genInjectivity false in
 
 The projection equation retains its exact orientation relative to the supplied generator bank. -/
 structure CutWordEntry {count : Nat} (labels : Fin source → Fin target)
-    (generators : Data.Vector (Stokes.OrientedEdge source) count) where
-  /-- The original directed cut-edge occurrence. -/ edge : Stokes.OrientedEdge source
-  /-- Its signed index in the retained generator bank. -/ letter : SignedWord.SignedGenerator count
+    (generators : Data.Vector (OrientedEdge source) count) where
+  /-- The original directed cut-edge occurrence. -/ edge : OrientedEdge source
+  /-- Its signed index in the retained generator bank. -/ letter : SignedGenerator count
   /-- The original edge projects to the generator in exactly the retained orientation. -/ projected_eq :
     OrientedEdge.map labels edge =
     if letter.reversed then (OrientedEdge.map labels (generators letter.index)).reverse else OrientedEdge.map labels
@@ -69,42 +69,42 @@ constructive_injectivity CutWordEntry
 
 namespace CutWordEntry
 
-variable {count : Nat} {generators : Data.Vector (Stokes.OrientedEdge source) count}
+variable {count : Nat} {generators : Data.Vector (OrientedEdge source) count}
 
 open Purelib.Topology.Surface.Cut in
 /-- Shift an occurrence's generator index after prepending one generator, retaining its source edge. -/
-@[expose] def shift (head : Stokes.OrientedEdge source) (entry : BoundaryWord.CutWordEntry labels generators) :
-  BoundaryWord.CutWordEntry labels (.cons head generators) :=
+@[expose] def shift (head : OrientedEdge source) (entry : CutWordEntry labels generators) :
+  CutWordEntry labels (.cons head generators) :=
   ⟨entry.edge, entry.letter.shift, entry.projected_eq⟩
 
 section
 open Purelib.Topology.Surface.Cut
 open Purelib.Topology.Surface.Cut.BoundaryWord
 /-- Shifting generator indices leaves the list of original cut edges unchanged. -/
-theorem shift_edges (head : Stokes.OrientedEdge source) : (entries : List (BoundaryWord.CutWordEntry labels generators))
+theorem shift_edges (head : OrientedEdge source) : (entries : List (CutWordEntry labels generators))
   →
-    (entries.map (CutWordEntry.shift head)).map Purelib.Topology.Surface.Cut.BoundaryWord.CutWordEntry.edge =
-      entries.map Purelib.Topology.Surface.Cut.BoundaryWord.CutWordEntry.edge
+    (entries.map (shift head)).map CutWordEntry.edge =
+      entries.map CutWordEntry.edge
   | [] => rfl
   | entry :: entries => congrArg (List.cons entry.edge)
-    (Purelib.Topology.Surface.Cut.BoundaryWord.CutWordEntry.shift_edges head entries)
+    (CutWordEntry.shift_edges head entries)
 
 /-- Reading letters after shifting agrees with shifting the original signed-letter list. -/
-theorem shift_letters (head : Stokes.OrientedEdge source) : (entries : List (BoundaryWord.CutWordEntry labels
+theorem shift_letters (head : OrientedEdge source) : (entries : List (CutWordEntry labels
   generators)) →
-    (entries.map (CutWordEntry.shift head)).map Purelib.Topology.Surface.Cut.BoundaryWord.CutWordEntry.letter =
-      (entries.map Purelib.Topology.Surface.Cut.BoundaryWord.CutWordEntry.letter).map SignedGenerator.shift
+    (entries.map (shift head)).map CutWordEntry.letter =
+      (entries.map CutWordEntry.letter).map SignedGenerator.shift
   | [] => rfl
   | entry :: entries => congrArg (List.cons entry.letter.shift)
-    (Purelib.Topology.Surface.Cut.BoundaryWord.CutWordEntry.shift_letters head entries)
+    (CutWordEntry.shift_letters head entries)
 
 end
 
 open Purelib.Topology.Surface.Cut in
 /-- Exact cut-occurrence provenance, stronger than equality after projection. A reversed letter reads the second edge of
 an actual retained pair; its generator is that same pair's first edge. -/
-@[expose] def PairProvenance (pairs : List (ProjectedEdgePairs.ProjectedEdgePair labels)) (entry :
-  BoundaryWord.CutWordEntry labels generators) : Prop :=
+@[expose] def PairProvenance (pairs : List (ProjectedEdgePair labels)) (entry :
+  CutWordEntry labels generators) : Prop :=
   if entry.letter.reversed then
     ∃ pair ∈ pairs, generators entry.letter.index = pair.first ∧ entry.edge = pair.second
   else entry.edge = generators entry.letter.index
@@ -112,10 +112,10 @@ an actual retained pair; its generator is that same pair's first edge. -/
 open Purelib.Topology.Surface.Cut in
 open Purelib.Topology.Surface.Cut.BoundaryWord in
 /-- Exact pair provenance persists when the retained pair list is enlarged. -/
-theorem PairProvenance.mono {first last : List (ProjectedEdgePairs.ProjectedEdgePair labels)}
-    {entry : BoundaryWord.CutWordEntry labels generators} (provenance : entry.PairProvenance first)
+theorem PairProvenance.mono {first last : List (ProjectedEdgePair labels)}
+    {entry : CutWordEntry labels generators} (provenance : entry.PairProvenance first)
     (included : ∀ pair ∈ first, pair ∈ last) : entry.PairProvenance last := by
-  unfold CutWordEntry.PairProvenance at provenance ⊢
+  unfold PairProvenance at provenance ⊢
   split at provenance
   · rename_i reversed
     rw [if_pos reversed]
@@ -134,20 +134,20 @@ set_option genInjectivity false in
 The retained generators and orientation flags specify the original occurrence
 bank. Its edge readback and signed multiplicity certificates permit a bank
 before cyclic reordering without changing the indexed edge list. -/
-structure CutAlphabet (labels : Fin source → Fin target) (edges : List (Stokes.OrientedEdge source)) where
+structure CutAlphabet (labels : Fin source → Fin target) (edges : List (OrientedEdge source)) where
   /-- Number of retained physical and paired generators. -/ count : Nat
-  /-- Cached original cut edge for each generator index. -/ generators : Data.Vector (Stokes.OrientedEdge
+  /-- Cached original cut edge for each generator index. -/ generators : Data.Vector (OrientedEdge
     source) count
   /-- Flag identifying generators that occur only with positive physical-boundary orientation. -/ oneSided :
     Data.Vector Bool count
-  /-- Original cut-edge occurrences with their signed generator identities. -/ entries : List (BoundaryWord.CutWordEntry
+  /-- Original cut-edge occurrences with their signed generator identities. -/ entries : List (CutWordEntry
     labels generators)
   /-- Reading the retained source edges recovers the indexed edge list exactly. -/ edges_eq : entries.map
-    Purelib.Topology.Surface.Cut.BoundaryWord.CutWordEntry.edge = edges
+    CutWordEntry.edge = edges
   /-- Paired generators occur once in each orientation, while physical generators occur only positively. -/
     occurrences_eq : ∀ index reversed,
     SignedGenerator.occurrences ⟨index, reversed⟩ (entries.map
-      Purelib.Topology.Surface.Cut.BoundaryWord.CutWordEntry.letter) =
+      CutWordEntry.letter) =
       if reversed && oneSided index then 0 else 1
 
 constructive_injectivity CutAlphabet
@@ -160,11 +160,11 @@ open Purelib.Topology.Surface.Cut.BoundaryWord
 /-- Build a generator bank with both signed occurrences of each retained cut pair.
 
 Each pair's first edge is its generator, and the second edge uses the negative orientation of that same index. -/
-@[expose] def ofPairs : (pairs : List (ProjectedEdgePairs.ProjectedEdgePair labels)) → BoundaryWord.CutAlphabet labels
+@[expose] def ofPairs : (pairs : List (ProjectedEdgePair labels)) → CutAlphabet labels
   (ProjectedEdgePair.occurrences pairs)
   | [] => ⟨0, .nil, .nil, [], rfl, fun index => Fin.elim0 index⟩
   | pair :: pairs =>
-      let tail := Purelib.Topology.Surface.Cut.BoundaryWord.CutAlphabet.ofPairs pairs
+      let tail := CutAlphabet.ofPairs pairs
       { count := tail.count + 1
         generators := .cons pair.first tail.generators
         oneSided := .cons false tail.oneSided
@@ -204,7 +204,7 @@ Each pair's first edge is its generator, and the second edge uses the negative o
               SignedGenerator.occurrences,
               if_neg (fun same => Nat.noConfusion (congrArg (fun letter => letter.index.val) same).symm)]
             change 0 + (0 + SignedGenerator.occurrences (SignedGenerator.shift ⟨index, reversed⟩)
-              ((tail.entries.map Purelib.Topology.Surface.Cut.BoundaryWord.CutWordEntry.letter).map
+              ((tail.entries.map CutWordEntry.letter).map
                 SignedGenerator.shift)) = _
             rw [SignedGenerator.occurrences_shift, tail.occurrences_eq, Nat.zero_add, Nat.zero_add]
             rfl }
@@ -214,12 +214,12 @@ Each pair's first edge is its generator, and the second edge uses the negative o
 Each physical edge contributes only its positive occurrence. Each retained
 cut pair contributes both orientations of its single generator, while the
 original tail entries and generator bank remain cached. -/
-@[expose] def ofLists : (boundary : List (Stokes.OrientedEdge source)) → (pairs : List
-  (ProjectedEdgePairs.ProjectedEdgePair labels)) →
-    BoundaryWord.CutAlphabet labels (boundary ++ ProjectedEdgePair.occurrences pairs)
-  | [], pairs => CutAlphabet.ofPairs pairs
+@[expose] def ofLists : (boundary : List (OrientedEdge source)) → (pairs : List
+  (ProjectedEdgePair labels)) →
+    CutAlphabet labels (boundary ++ ProjectedEdgePair.occurrences pairs)
+  | [], pairs => ofPairs pairs
   | edge :: boundary, pairs =>
-      let tail := Purelib.Topology.Surface.Cut.BoundaryWord.CutAlphabet.ofLists boundary pairs
+      let tail := CutAlphabet.ofLists boundary pairs
       { count := tail.count + 1
         generators := .cons edge tail.generators
         oneSided := .cons true tail.oneSided
@@ -252,7 +252,7 @@ original tail entries and generator bank remain cached. -/
             rw [List.map_cons, CutWordEntry.shift_letters, SignedGenerator.occurrences,
               if_neg different]
             change 0 + SignedGenerator.occurrences (SignedGenerator.shift ⟨index, reversed⟩)
-              ((tail.entries.map Purelib.Topology.Surface.Cut.BoundaryWord.CutWordEntry.letter).map
+              ((tail.entries.map CutWordEntry.letter).map
                 SignedGenerator.shift) = _
             rw [SignedGenerator.occurrences_shift, tail.occurrences_eq, Nat.zero_add]
             rfl }
@@ -266,8 +266,8 @@ open Purelib.Topology.Surface.Cut.BoundaryWord
 Each new negative occurrence is certified by its displayed cut pair. Every
 shifted occurrence retains the pair and generator equation already present
 in the cached tail alphabet. -/
-private theorem ofPairs_provenance : (pairs : List (ProjectedEdgePairs.ProjectedEdgePair labels)) →
-    ∀ entry ∈ (CutAlphabet.ofPairs pairs).entries, entry.PairProvenance pairs
+private theorem ofPairs_provenance : (pairs : List (ProjectedEdgePair labels)) →
+    ∀ entry ∈ (ofPairs pairs).entries, entry.PairProvenance pairs
   | [], _, member => (List.not_mem_nil member).elim
   | pair :: pairs, entry, member => by
       rcases Membership.mem_cons.mp member with same | member
@@ -277,7 +277,7 @@ private theorem ofPairs_provenance : (pairs : List (ProjectedEdgePairs.Projected
           exact ⟨pair, List.mem_cons_self, rfl, rfl⟩
         · obtain ⟨original, originalMember, same⟩ := Map.mem_map.mp member
           cases same
-          exact (Purelib.Topology.Surface.Cut.BoundaryWord.CutAlphabet.ofPairs_provenance pairs original
+          exact (CutAlphabet.ofPairs_provenance pairs original
             originalMember).mono
             (fun _ present => List.mem_cons_of_mem pair present)
 
@@ -286,16 +286,16 @@ private theorem ofPairs_provenance : (pairs : List (ProjectedEdgePairs.Projected
 Each added physical edge has positive orientation and retains its own
 generator. Shifted negative occurrences keep the original cut-pair witness
 and projected orientation equation of the cached tail. -/
-theorem ofLists_provenance : (boundary : List (Stokes.OrientedEdge source)) → (pairs : List
-  (ProjectedEdgePairs.ProjectedEdgePair labels)) →
-    ∀ entry ∈ (CutAlphabet.ofLists boundary pairs).entries, entry.PairProvenance pairs
-  | [], pairs, entry, member => CutAlphabet.ofPairs_provenance pairs entry member
+theorem ofLists_provenance : (boundary : List (OrientedEdge source)) → (pairs : List
+  (ProjectedEdgePair labels)) →
+    ∀ entry ∈ (ofLists boundary pairs).entries, entry.PairProvenance pairs
+  | [], pairs, entry, member => ofPairs_provenance pairs entry member
   | edge :: boundary, pairs, entry, member => by
       rcases Membership.mem_cons.mp member with same | member
       · cases same; rfl
       · obtain ⟨original, originalMember, same⟩ := Map.mem_map.mp member
         cases same
-        exact Purelib.Topology.Surface.Cut.BoundaryWord.CutAlphabet.ofLists_provenance boundary pairs original
+        exact CutAlphabet.ofLists_provenance boundary pairs original
           originalMember
 
 end
@@ -315,11 +315,11 @@ set_option genInjectivity false in
 
 The exact source-edge equation and permutation identify which occurrence was removed, preserving multiplicity. -/
 structure Selected {count : Nat}
-    (generators : Data.Vector (Stokes.OrientedEdge source) count)
-    (bank : List (BoundaryWord.CutWordEntry labels generators)) (edge : Stokes.OrientedEdge source) where
-  /-- The selected original occurrence. -/ entry : BoundaryWord.CutWordEntry labels generators
+    (generators : Data.Vector (OrientedEdge source) count)
+    (bank : List (CutWordEntry labels generators)) (edge : OrientedEdge source) where
+  /-- The selected original occurrence. -/ entry : CutWordEntry labels generators
   /-- The selected occurrence has the requested cut edge. -/ edge_eq : entry.edge = edge
-  /-- Residual bank after removing the selected occurrence. -/ remaining : List (BoundaryWord.CutWordEntry labels
+  /-- Residual bank after removing the selected occurrence. -/ remaining : List (CutWordEntry labels
     generators)
   /-- Exact permutation moving the selected occurrence before the residual bank. -/ ordering : List.Perm bank (entry ::
     remaining)
@@ -331,15 +331,15 @@ open Purelib.Topology.Surface.Cut.BoundaryWord in
 /-- Select the first occurrence with the requested original edge and retain the residual bank.
 
 A membership witness makes the finite search total; no occurrence is duplicated or discarded silently. -/
-@[expose] def select {count : Nat} {generators : Data.Vector (Stokes.OrientedEdge source) count}
-    (edge : Stokes.OrientedEdge source) : (entries : List (BoundaryWord.CutWordEntry labels generators)) →
-    edge ∈ entries.map Purelib.Topology.Surface.Cut.BoundaryWord.CutWordEntry.edge → CutAlphabet.Selected generators
+@[expose] def select {count : Nat} {generators : Data.Vector (OrientedEdge source) count}
+    (edge : OrientedEdge source) : (entries : List (CutWordEntry labels generators)) →
+    edge ∈ entries.map CutWordEntry.edge → Selected generators
       entries edge
   | [], member => (List.not_mem_nil member).elim
   | first :: rest, member =>
-      if same : first.edge = edge then ⟨first, same, rest, List.Permutation.refl _⟩
+      if same : first.edge = edge then ⟨first, same, rest, Permutation.refl _⟩
       else
-        let tail := Purelib.Topology.Surface.Cut.BoundaryWord.CutAlphabet.select edge rest ((Membership.mem_cons.mp
+        let tail := CutAlphabet.select edge rest ((Membership.mem_cons.mp
           member).resolve_left (Ne.symm same))
         ⟨tail.entry, tail.edge_eq, first :: tail.remaining,
           (List.Perm.cons first tail.ordering).trans (.swap tail.entry first tail.remaining)⟩
@@ -350,11 +350,11 @@ set_option genInjectivity false in
 
 The edge readback and retained permutation preserve the complete original bank and its multiplicities. -/
 structure OrderedEntries {count : Nat}
-    (generators : Data.Vector (Stokes.OrientedEdge source) count)
-    (bank : List (BoundaryWord.CutWordEntry labels generators)) (edges : List (Stokes.OrientedEdge source)) where
-  /-- Retained entries in the requested edge order. -/ entries : List (BoundaryWord.CutWordEntry labels generators)
+    (generators : Data.Vector (OrientedEdge source) count)
+    (bank : List (CutWordEntry labels generators)) (edges : List (OrientedEdge source)) where
+  /-- Retained entries in the requested edge order. -/ entries : List (CutWordEntry labels generators)
   /-- Their source-edge readback is the exact requested edge list. -/ edges_eq : entries.map
-    Purelib.Topology.Surface.Cut.BoundaryWord.CutWordEntry.edge = edges
+    CutWordEntry.edge = edges
   /-- The reordered entries contain exactly the original bank with multiplicity. -/ ordering : List.Perm entries bank
 
 constructive_injectivity OrderedEntries
@@ -368,14 +368,14 @@ The supplied permutation proves each search succeeds and that no original
 entry remains unused. Each step retains the selected occurrence and its
 original remainder, cancelling only the displayed common edge in the
 permutation certificate. -/
-@[expose] def order {count : Nat} {generators : Data.Vector (Stokes.OrientedEdge source) count}
-    (bank : List (BoundaryWord.CutWordEntry labels generators)) : (edges : List (Stokes.OrientedEdge source)) →
-    List.Perm (bank.map Purelib.Topology.Surface.Cut.BoundaryWord.CutWordEntry.edge) edges → CutAlphabet.OrderedEntries
+@[expose] def order {count : Nat} {generators : Data.Vector (OrientedEdge source) count}
+    (bank : List (CutWordEntry labels generators)) : (edges : List (OrientedEdge source)) →
+    List.Perm (bank.map CutWordEntry.edge) edges → OrderedEntries
       generators bank edges
   | [], covered =>
       ⟨[], rfl, by
         have lengthZero : bank.length = 0 :=
-          (Map.length_map Purelib.Topology.Surface.Cut.BoundaryWord.CutWordEntry.edge bank).symm.trans
+          (Map.length_map CutWordEntry.edge bank).symm.trans
             (Permutation.length_eq covered)
         have empty : bank = [] := by
           cases bank with
@@ -383,52 +383,52 @@ permutation certificate. -/
           | cons head tail => exact Nat.noConfusion lengthZero
         rw [empty]⟩
   | edge :: rest, covered =>
-      let first := CutAlphabet.select edge bank ((List.Permutation.mem_iff covered edge).mpr List.mem_cons_self)
-      have remaining : List.Perm (first.remaining.map Purelib.Topology.Surface.Cut.BoundaryWord.CutWordEntry.edge) rest
+      let first := select edge bank ((Permutation.mem_iff covered edge).mpr List.mem_cons_self)
+      have remaining : List.Perm (first.remaining.map CutWordEntry.edge) rest
         := by
-        have all := (List.Permutation.symm (CutAlphabet.mapPermutation
-          Purelib.Topology.Surface.Cut.BoundaryWord.CutWordEntry.edge first.ordering)).trans covered
+        have all := (Permutation.symm (mapPermutation
+          CutWordEntry.edge first.ordering)).trans covered
         rw [List.map_cons, first.edge_eq] at all
         exact Permutation.cons_inv all
-      let tail := Purelib.Topology.Surface.Cut.BoundaryWord.CutAlphabet.order first.remaining rest remaining
+      let tail := CutAlphabet.order first.remaining rest remaining
       ⟨first.entry :: tail.entries, congrArg₂ List.cons first.edge_eq tail.edges_eq,
-        (List.Perm.cons first.entry tail.ordering).trans (List.Permutation.symm first.ordering)⟩
+        (List.Perm.cons first.entry tail.ordering).trans (Permutation.symm first.ordering)⟩
 
 /-- Restore the requested edge order of an original occurrence bank.
 
 The supplied edge permutation makes each original first-occurrence
 selection total. Removing that selected entry preserves multiplicity even
 when two cut edges are equal, and retains the original generator bank. -/
-@[expose] def reorder {sourceEdges : List (Stokes.OrientedEdge source)} (bank : BoundaryWord.CutAlphabet labels
+@[expose] def reorder {sourceEdges : List (OrientedEdge source)} (bank : CutAlphabet labels
   sourceEdges)
-    (edges : List (Stokes.OrientedEdge source)) (covered : List.Perm sourceEdges edges) : BoundaryWord.CutAlphabet
+    (edges : List (OrientedEdge source)) (covered : List.Perm sourceEdges edges) : CutAlphabet
       labels edges :=
-  let ordered := CutAlphabet.order bank.entries edges (by rw [bank.edges_eq]; exact covered)
+  let ordered := order bank.entries edges (by rw [bank.edges_eq]; exact covered)
   ⟨bank.count, bank.generators, bank.oneSided, ordered.entries, ordered.edges_eq, fun index reversed =>
-    (SignedGenerator.occurrences_perm ⟨index, reversed⟩ (CutAlphabet.mapPermutation
-      Purelib.Topology.Surface.Cut.BoundaryWord.CutWordEntry.letter ordered.ordering)).trans
+    (SignedGenerator.occurrences_perm ⟨index, reversed⟩ (mapPermutation
+      CutWordEntry.letter ordered.ordering)).trans
       (bank.occurrences_eq index reversed)⟩
 
 /-- Reordering preserves every literal occurrence, including its signed generator and the original cut edge. -/
-theorem reorder_entries_iff {sourceEdges : List (Stokes.OrientedEdge source)} (bank : BoundaryWord.CutAlphabet labels
+theorem reorder_entries_iff {sourceEdges : List (OrientedEdge source)} (bank : CutAlphabet labels
   sourceEdges)
-    (edges : List (Stokes.OrientedEdge source)) (covered : List.Perm sourceEdges edges)
-    (entry : BoundaryWord.CutWordEntry labels bank.generators) :
+    (edges : List (OrientedEdge source)) (covered : List.Perm sourceEdges edges)
+    (entry : CutWordEntry labels bank.generators) :
     entry ∈ (bank.reorder edges covered).entries ↔ entry ∈ bank.entries :=
-  List.Permutation.mem_iff
-    (CutAlphabet.order bank.entries edges (by rw [bank.edges_eq]; exact covered)).ordering entry
+  Permutation.mem_iff
+    (order bank.entries edges (by rw [bank.edges_eq]; exact covered)).ordering entry
 
 /-- Restoring cyclic boundary order preserves every retained entry's exact pair provenance. -/
-theorem reorder_provenance {sourceEdges : List (Stokes.OrientedEdge source)} (bank : BoundaryWord.CutAlphabet labels
+theorem reorder_provenance {sourceEdges : List (OrientedEdge source)} (bank : CutAlphabet labels
   sourceEdges)
-    (edges : List (Stokes.OrientedEdge source)) (covered : List.Perm sourceEdges edges)
-    (pairs : List (ProjectedEdgePairs.ProjectedEdgePair labels)) (provenance : ∀ entry ∈ bank.entries,
+    (edges : List (OrientedEdge source)) (covered : List.Perm sourceEdges edges)
+    (pairs : List (ProjectedEdgePair labels)) (provenance : ∀ entry ∈ bank.entries,
       entry.PairProvenance pairs) :
     ∀ entry ∈ (bank.reorder edges covered).entries, entry.PairProvenance pairs := by
   intro entry member
   apply provenance entry
-  exact (List.Permutation.mem_iff
-    (CutAlphabet.order bank.entries edges (by rw [bank.edges_eq]; exact covered)).ordering entry).mp member
+  exact (Permutation.mem_iff
+    (order bank.entries edges (by rw [bank.edges_eq]; exact covered)).ordering entry).mp member
 
 end
 
@@ -438,10 +438,10 @@ open Purelib.Topology.Surface.Cut in
 Its positive signed multiplicity supplies an original entry with that
 generator index and orientation. The entry's source-edge readback and
 projection certificate identify the retained projected boundary member. -/
-theorem generator_projected_mem (alphabet : BoundaryWord.CutAlphabet labels edges) (index : Fin alphabet.count) :
+theorem generator_projected_mem (alphabet : CutAlphabet labels edges) (index : Fin alphabet.count) :
     OrientedEdge.map labels (alphabet.generators index) ∈ edges.map (OrientedEdge.map labels) := by
   have count_eq : SignedGenerator.occurrences ⟨index, false⟩
-      (alphabet.entries.map BoundaryWord.CutWordEntry.letter) = 1 := by
+      (alphabet.entries.map CutWordEntry.letter) = 1 := by
     rw [alphabet.occurrences_eq]
     rfl
   obtain ⟨entry, entry_mem, letter_eq⟩ :=
@@ -465,34 +465,34 @@ set_option genInjectivity false in
 The retained alphabet determines the exact cached signed letters and their
 coefficient word. Its signature belongs to those same coefficients; no
 symplectic normal form is asserted. -/
-structure CutBoundaryWord (labels : Fin source → Fin target) (edges : List (Stokes.OrientedEdge source)) where
-  /-- Original generator and occurrence bank in cyclic edge order. -/ alphabet : BoundaryWord.CutAlphabet labels edges
-  /-- Cached signed generator word of the retained occurrences. -/ letters : List (SignedWord.SignedGenerator
+structure CutBoundaryWord (labels : Fin source → Fin target) (edges : List (OrientedEdge source)) where
+  /-- Original generator and occurrence bank in cyclic edge order. -/ alphabet : CutAlphabet labels edges
+  /-- Cached signed generator word of the retained occurrences. -/ letters : List (SignedGenerator
     alphabet.count)
   /-- The signed word reads the exact letters of the retained entries. -/ letters_eq : letters = alphabet.entries.map
-    Purelib.Topology.Surface.Cut.BoundaryWord.CutWordEntry.letter
-  /-- Cached integral coefficient vector for each signed occurrence. -/ coefficients : List (Pairing.Coefficients
+    CutWordEntry.letter
+  /-- Cached integral coefficient vector for each signed occurrence. -/ coefficients : List (Coefficients
     alphabet.count)
   /-- The coefficient word is the direct readback of the cached signed letters. -/ coefficients_eq : coefficients =
     letters.map SignedGenerator.coefficients
-  /-- Retained total vector and alternating area matrix of the exact coefficient word. -/ signature : Pairing.Signature
+  /-- Retained total vector and alternating area matrix of the exact coefficient word. -/ signature : Signature
     coefficients
 
 constructive_injectivity CutBoundaryWord
 
 namespace ProjectedEdgePairing
 
-variable {edges : List (Stokes.OrientedEdge source)}
+variable {edges : List (OrientedEdge source)}
 
 open Purelib.Topology.Surface.Cut in
 open Purelib.Topology.Surface.Cut.BoundaryWord in
 /-- Complete automatic extraction from the already checked occurrence pairing. The original cyclic edge order is
 restored before forming a matrix. -/
-@[expose] def boundaryWord (pairing : ProjectedEdgePairs.ProjectedEdgePairing labels edges) :
-  BoundaryWord.CutBoundaryWord labels edges :=
+@[expose] def boundaryWord (pairing : ProjectedEdgePairing labels edges) :
+  CutBoundaryWord labels edges :=
   let source := CutAlphabet.ofLists pairing.boundary pairing.pairs
-  let alphabet := source.reorder edges (List.Permutation.symm (EdgeReordering.toPerm pairing.incidence))
-  let letters := alphabet.entries.map Purelib.Topology.Surface.Cut.BoundaryWord.CutWordEntry.letter
+  let alphabet := source.reorder edges (Permutation.symm (EdgeReordering.toPerm pairing.incidence))
+  let letters := alphabet.entries.map CutWordEntry.letter
   let coefficients := letters.map SignedGenerator.coefficients
   { alphabet := alphabet
     letters := letters
@@ -504,10 +504,10 @@ restored before forming a matrix. -/
 open Purelib.Topology.Surface.Cut.BoundaryWord in
 /-- Restoring cyclic order retains literal pair provenance. This applies to any checked pairing cache, without equality
 to the canonical pairing scan. -/
-theorem boundaryWord_provenance (pairing : ProjectedEdgePairs.ProjectedEdgePairing labels edges) :
-    ∀ entry ∈ (ProjectedEdgePairing.boundaryWord pairing).alphabet.entries, entry.PairProvenance pairing.pairs :=
+theorem boundaryWord_provenance (pairing : ProjectedEdgePairing labels edges) :
+    ∀ entry ∈ (boundaryWord pairing).alphabet.entries, entry.PairProvenance pairing.pairs :=
   (CutAlphabet.ofLists pairing.boundary pairing.pairs).reorder_provenance edges
-    (List.Permutation.symm (EdgeReordering.toPerm pairing.incidence)) pairing.pairs
+    (Permutation.symm (EdgeReordering.toPerm pairing.incidence)) pairing.pairs
     (CutAlphabet.ofLists_provenance pairing.boundary pairing.pairs)
 
 end ProjectedEdgePairing

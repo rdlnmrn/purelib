@@ -1,16 +1,17 @@
 module
+public import Purelib.Polynomial.Dense.Rational.Bounds.Horner
 
 import Purelib.Data.Rat.Bounds.Square
 
 import Purelib.Data.Rat.Fraction
-public import Purelib.Data.Rat.Fraction.Order.Basic
+import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Data.Rat.Fraction.Order.Arithmetic
 public import Purelib.Polynomial.Bounds.Horner
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Tactic.Ring
 import Mathlib.Algebra.Ring.Defs
 import Purelib.Data.Rat.Fraction.Arithmetic
-public import Purelib.Data.Rat.Fraction.Field
+import Purelib.Data.Rat.Fraction.Field
 import Purelib.Algebra.Semiring.Normalization
 
 /-!
@@ -36,12 +37,12 @@ public abbrev Coordinate := Fraction.Rational
 
 /-- Advance simultaneous squared-value and squared-difference bounds by one Horner coefficient.
 
-The original paired step updates the value component with the coefficient
-square and the slope component with the previous value bound. Both
-components use the same retained squared radius. -/
+The original scalar Horner step updates the value component. The slope
+component retains the previous value bound and the same supplied squared
+radius; no second value-step implementation or bound is constructed. -/
 @[expose] public def step (radiusSq : Coordinate)
     (bounds : Bounds.Horner) (coefficient : Coordinate) : Bounds.Horner where
-  value := 2 * (bounds.value * radiusSq + coefficient ^ 2)
+  value := Horner.evalSqBoundStep radiusSq bounds.value coefficient
   slope := 2 * (bounds.slope * radiusSq + bounds.value)
 
 /-- Propagate simultaneous squared-value and squared-difference bounds through a finite Horner fold.
@@ -76,7 +77,9 @@ public theorem evalSqBoundsCoeffs_spec
   | cons coefficient coefficients inductionHypothesis =>
       simp only [List.foldl_cons]
       apply inductionHypothesis
-      · apply twice_nonneg
+      · change 0 ≤ Horner.evalSqBoundStep radiusSq bounds.value coefficient
+        rewrite [Horner.evalSqBoundStep_eq]
+        apply twice_nonneg
         exact add_nonneg
           (Order.Arithmetic.mul_nonneg_direct
             valueNonnegative radiusNonnegative)
@@ -86,7 +89,10 @@ public theorem evalSqBoundsCoeffs_spec
           (Order.Arithmetic.mul_nonneg_direct
             slopeNonnegative radiusNonnegative)
           valueNonnegative
-      · have productBound : (accumulatorX * x) ^ 2 ≤
+      · change (accumulatorX * x + coefficient) ^ 2 ≤
+          Horner.evalSqBoundStep radiusSq bounds.value coefficient
+        rewrite [Horner.evalSqBoundStep_eq]
+        have productBound : (accumulatorX * x) ^ 2 ≤
             bounds.value * radiusSq := by
           rw [Normalization.product_pow accumulatorX x 2]
           exact Order.Arithmetic.mul_le_mul_direct
@@ -96,7 +102,10 @@ public theorem evalSqBoundsCoeffs_spec
         exact (add_sq_le_two (accumulatorX * x) coefficient).trans
           (twice_le_twice
             (add_le_add productBound (le_refl (coefficient ^ 2))))
-      · have productBound : (accumulatorY * y) ^ 2 ≤
+      · change (accumulatorY * y + coefficient) ^ 2 ≤
+          Horner.evalSqBoundStep radiusSq bounds.value coefficient
+        rewrite [Horner.evalSqBoundStep_eq]
+        have productBound : (accumulatorY * y) ^ 2 ≤
             bounds.value * radiusSq := by
           rw [Normalization.product_pow accumulatorY y 2]
           exact Order.Arithmetic.mul_le_mul_direct
@@ -176,14 +185,19 @@ public theorem hornerSqBoundsCoeffs_monotone
           smallRadiusNonnegative largeSlopeNonnegative
       have nextValueLe :
           (step smallRadius smallBounds coefficient).value ≤
-            (step largeRadius largeBounds coefficient).value :=
-        twice_le_twice (add_le_add valueProductLe (le_refl _))
+            (step largeRadius largeBounds coefficient).value := by
+        change Horner.evalSqBoundStep smallRadius smallBounds.value coefficient ≤
+          Horner.evalSqBoundStep largeRadius largeBounds.value coefficient
+        rewrite [Horner.evalSqBoundStep_eq, Horner.evalSqBoundStep_eq]
+        exact twice_le_twice (add_le_add valueProductLe (le_refl _))
       have nextSlopeLe :
           (step smallRadius smallBounds coefficient).slope ≤
             (step largeRadius largeBounds coefficient).slope :=
         twice_le_twice (add_le_add slopeProductLe valueLe)
       apply inductionHypothesis
-      · apply twice_nonneg
+      · change 0 ≤ Horner.evalSqBoundStep smallRadius smallBounds.value coefficient
+        rewrite [Horner.evalSqBoundStep_eq]
+        apply twice_nonneg
         exact add_nonneg
           (Order.Arithmetic.mul_nonneg_direct
             smallValueNonnegative smallRadiusNonnegative)
@@ -193,7 +207,9 @@ public theorem hornerSqBoundsCoeffs_monotone
           (Order.Arithmetic.mul_nonneg_direct
             smallSlopeNonnegative smallRadiusNonnegative)
           smallValueNonnegative
-      · apply twice_nonneg
+      · change 0 ≤ Horner.evalSqBoundStep largeRadius largeBounds.value coefficient
+        rewrite [Horner.evalSqBoundStep_eq]
+        apply twice_nonneg
         exact add_nonneg
           (Order.Arithmetic.mul_nonneg_direct
             largeValueNonnegative largeRadiusNonnegative)

@@ -4,6 +4,7 @@ import Purelib.Approximation.Gaussian.Division.Prepared.Basic
 import Purelib.Approximation.Gaussian.Name.Coherent
 import Purelib.LinearAlgebra.Matrix.Basic
 public import Purelib.Riemann.Integration.LegendreModularMonodromy
+public import Purelib.Approximation.Gaussian.FractionalAction.Integral.Comparison
 import Init.Core
 import Init.Prelude
 import Purelib.Approximation.Gaussian.Division.Prepared.Denominator
@@ -38,6 +39,7 @@ namespace Purelib.Approximation.Gaussian.FractionalAction.Integral.Words.Step
 open Purelib.Riemann.Integration.LegendreGaussManin
 open Purelib.Riemann.Integration.LegendreModularMonodromy hiding IntegralMatrix
 open Purelib.Riemann.Integration.LegendreFractionalAction
+open Purelib.Approximation.Gaussian.Equivalence (NamedEquivalent)
 
 /-! ## Stepwise productive preparations and append -/
 
@@ -64,6 +66,48 @@ def stepAction (tau :
       stepAction (fractionalLinear matrix tau
         preparations.1)
         remaining preparations.2
+
+/-- Independent prepared schedules respect agreement of their two actual original starting channels. -/
+def stepAction_respects : (matrices : List IntegralMatrix) → (first second : CoherentNamed) →
+    NamedEquivalent first.name second.name →
+    (left : StepPreparations first matrices) → (right : StepPreparations second matrices) →
+    NamedEquivalent (stepAction first matrices left).name (stepAction second matrices right).name
+  | [], _, _, equivalent, _, _ => equivalent
+  | matrix :: remaining, first, second, equivalent, left, right =>
+      stepAction_respects remaining (fractionalLinear matrix first left.1)
+        (fractionalLinear matrix second right.1)
+        (Integral.Comparison.fractionalLinear_respects matrix first second equivalent left.1 right.1)
+        left.2 right.2
+
+/-- Different preparations of one original ordered word produce operationally agreeing actual outputs. -/
+def stepAction_preparation_independent (tau : CoherentNamed) (matrices : List IntegralMatrix)
+    (left right : StepPreparations tau matrices) :
+    NamedEquivalent (stepAction tau matrices left).name (stepAction tau matrices right).name :=
+  stepAction_respects matrices tau tau (NamedEquivalent.refl _) left right
+
+/-- Transport an existing ordered preparation schedule along an exact identity of its original starting channel. -/
+def transportPreparations {first second : CoherentNamed} (same : first = second)
+    (matrices : List IntegralMatrix) (preparations : StepPreparations first matrices) :
+    StepPreparations second matrices := same ▸ preparations
+
+/-- Transport of the starting channel retains the exact numerical output of the same ordered schedule. -/
+theorem stepAction_transport {first second : CoherentNamed} (same : first = second)
+    (matrices : List IntegralMatrix) (preparations : StepPreparations first matrices) :
+    stepAction second matrices (transportPreparations same matrices preparations) =
+      stepAction first matrices preparations := by
+  cases same
+  rfl
+
+/-- Read an existing preparation schedule at an exactly identified original ordered request. -/
+def transportRequest {tau : CoherentNamed} {first second : List IntegralMatrix} (same : first = second)
+    (preparations : StepPreparations tau first) : StepPreparations tau second := same ▸ preparations
+
+/-- Exact request transport preserves the numerical output of the same original preparation schedule. -/
+theorem stepAction_transport_request {tau : CoherentNamed} {first second : List IntegralMatrix}
+    (same : first = second) (preparations : StepPreparations tau first) :
+    stepAction tau second (transportRequest same preparations) = stepAction tau first preparations := by
+  cases same
+  rfl
 
 /-- An empty prepared word returns the original coherent input. -/
 @[simp] theorem stepAction_nil (tau :

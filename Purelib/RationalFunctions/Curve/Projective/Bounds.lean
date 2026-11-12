@@ -21,6 +21,10 @@ public import Purelib.RationalFunctions.Curve.Projective.Basic
 public import Purelib.RationalFunctions.Curve.Transform
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Rational.Bounds
+open Purelib.Data.Rat.Fraction.Order
+open Purelib.Polynomial.Dense.Gaussian
+
 open Purelib.Data.Rat.Fraction (Rational)
 open Purelib.Data.Rat.Interval (Bounds)
 
@@ -52,48 +56,48 @@ open Purelib.RationalFunctions
 /-- Compute an interval quadrance bound for the homogeneous numerator.
 
 Sum the squared Horner evaluation bounds for its real and imaginary coordinate polynomials. -/
-def numeratorValueBound (curve : Curve.RationalCurve) (interval :
+def numeratorValueBound (curve : RationalCurve) (interval :
   Bounds) :
     Rational :=
-  Dense.Rational.Bounds.Horner.evalSqBound
-      (Curve.Coordinates.numeratorReal curve) interval +
-    Dense.Rational.Bounds.Horner.evalSqBound
-      (Curve.Coordinates.numeratorImaginary curve) interval
+  Horner.evalSqBound
+      (Coordinates.numeratorReal curve) interval +
+    Horner.evalSqBound
+      (Coordinates.numeratorImaginary curve) interval
 
 /-- Compute an interval quadrance bound for the homogeneous denominator.
 
 Sum the squared Horner evaluation bounds for its real and imaginary coordinate polynomials. -/
-def denominatorValueBound (curve : Curve.RationalCurve) (interval :
+def denominatorValueBound (curve : RationalCurve) (interval :
   Bounds) :
     Rational :=
-  Dense.Rational.Bounds.Horner.evalSqBound
-      (Curve.Coordinates.denominatorReal curve) interval +
-    Dense.Rational.Bounds.Horner.evalSqBound
-      (Curve.Coordinates.denominatorImaginary curve) interval
+  Horner.evalSqBound
+      (Coordinates.denominatorReal curve) interval +
+    Horner.evalSqBound
+      (Coordinates.denominatorImaginary curve) interval
 
 /-- Compute a squared Lipschitz coefficient for the homogeneous numerator on an interval.
 
 Sum the real and imaginary coordinate bounds so that multiplication by squared parameter displacement bounds numerator
 quadrance variation. -/
-def numeratorLipschitzBound (curve : Curve.RationalCurve) (interval :
+def numeratorLipschitzBound (curve : RationalCurve) (interval :
   Bounds) :
     Rational :=
-  Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound
-      (Curve.Coordinates.numeratorReal curve) interval +
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound
-      (Curve.Coordinates.numeratorImaginary curve) interval
+  Lipschitz.denseEvalSqLipschitzBound
+      (Coordinates.numeratorReal curve) interval +
+    Lipschitz.denseEvalSqLipschitzBound
+      (Coordinates.numeratorImaginary curve) interval
 
 /-- Compute a squared Lipschitz coefficient for the homogeneous denominator on an interval.
 
 Sum the real and imaginary coordinate bounds so that multiplication by squared parameter displacement bounds denominator
 quadrance variation. -/
-def denominatorLipschitzBound (curve : Curve.RationalCurve) (interval
+def denominatorLipschitzBound (curve : RationalCurve) (interval
   : Bounds) :
     Rational :=
-  Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound
-      (Curve.Coordinates.denominatorReal curve) interval +
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound
-      (Curve.Coordinates.denominatorImaginary curve) interval
+  Lipschitz.denseEvalSqLipschitzBound
+      (Coordinates.denominatorReal curve) interval +
+    Lipschitz.denseEvalSqLipschitzBound
+      (Coordinates.denominatorImaginary curve) interval
 
 end
 
@@ -102,7 +106,7 @@ open Purelib.RationalFunctions in
 
 Twice the sum of the numerator Lipschitz coefficient times denominator value bound and the numerator value bound times
 denominator Lipschitz coefficient controls the cross-product quadrance. -/
-def crossVariationCoefficient (curve : Curve.RationalCurve) (interval
+def crossVariationCoefficient (curve : RationalCurve) (interval
   : Bounds) :
     Rational :=
   2 * (numeratorLipschitzBound curve interval *
@@ -115,49 +119,49 @@ open Purelib.Polynomial
 open Purelib.RationalFunctions
 /-- The numerator quadrance bound is nonnegative. -/
 theorem numeratorValueBound_nonneg
-    (curve : Curve.RationalCurve) (interval : Bounds) :
+    (curve : RationalCurve) (interval : Bounds) :
     0 ≤ numeratorValueBound curve interval :=
   add_nonneg
-    (Dense.Rational.Bounds.Horner.evalSqBound_nonneg _ _)
-    (Dense.Rational.Bounds.Horner.evalSqBound_nonneg _ _)
+    (Horner.evalSqBound_nonneg _ _)
+    (Horner.evalSqBound_nonneg _ _)
 
 /-- The denominator quadrance bound is nonnegative. -/
 theorem denominatorValueBound_nonneg
-    (curve : Curve.RationalCurve) (interval : Bounds) :
+    (curve : RationalCurve) (interval : Bounds) :
     0 ≤ denominatorValueBound curve interval :=
   add_nonneg
-    (Dense.Rational.Bounds.Horner.evalSqBound_nonneg _ _)
-    (Dense.Rational.Bounds.Horner.evalSqBound_nonneg _ _)
+    (Horner.evalSqBound_nonneg _ _)
+    (Horner.evalSqBound_nonneg _ _)
 
 /-- The numerator squared Lipschitz coefficient is nonnegative. -/
 theorem numeratorLipschitzBound_nonneg
-    (curve : Curve.RationalCurve) (interval : Bounds) :
+    (curve : RationalCurve) (interval : Bounds) :
     0 ≤ numeratorLipschitzBound curve interval :=
   add_nonneg
-    (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg _ _).2
-    (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg _ _).2
+    (Lipschitz.denseHornerSqBounds_nonneg _ _).2
+    (Lipschitz.denseHornerSqBounds_nonneg _ _).2
 
 /-- The denominator squared Lipschitz coefficient is nonnegative. -/
 theorem denominatorLipschitzBound_nonneg
-    (curve : Curve.RationalCurve) (interval : Bounds) :
+    (curve : RationalCurve) (interval : Bounds) :
     0 ≤ denominatorLipschitzBound curve interval :=
   add_nonneg
-    (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg _ _).2
-    (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg _ _).2
+    (Lipschitz.denseHornerSqBounds_nonneg _ _).2
+    (Lipschitz.denseHornerSqBounds_nonneg _ _).2
 
 end
 
 open Purelib.RationalFunctions in
 /-- The homogeneous cross-product variation coefficient is nonnegative. -/
 theorem crossVariationCoefficient_nonneg
-    (curve : Curve.RationalCurve) (interval : Bounds) :
+    (curve : RationalCurve) (interval : Bounds) :
     0 ≤ crossVariationCoefficient curve interval := by
-  apply Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  apply Arithmetic.mul_nonneg_direct (by decide)
   exact add_nonneg
-    (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct
       (numeratorLipschitzBound_nonneg curve interval)
       (denominatorValueBound_nonneg curve interval))
-    (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct
       (numeratorValueBound_nonneg curve interval)
       (denominatorLipschitzBound_nonneg curve interval))
 
@@ -168,83 +172,83 @@ open Purelib.RationalFunctions
 
 The parameter lies in the displayed interval; summing its two coordinate evaluation bounds gives the estimate. -/
 theorem normSq_numeratorAt_le
-    (curve : Curve.RationalCurve) (interval : Bounds) {parameter : Rational}
+    (curve : RationalCurve) (interval : Bounds) {parameter : Rational}
     (inside : interval.Contains parameter) :
-    Data.Gaussian.Norm.Basic.normSq (curve.numeratorAt parameter) ≤
+    Gaussian.Norm.Basic.normSq (curve.numeratorAt parameter) ≤
       numeratorValueBound curve interval := by
   have bounds := add_le_add
-    (Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound
-      (Curve.Coordinates.numeratorReal curve)
+    (Horner.eval_sq_le_evalSqBound
+      (Coordinates.numeratorReal curve)
       interval inside)
-    (Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound
-      (Curve.Coordinates.numeratorImaginary curve)
+    (Horner.eval_sq_le_evalSqBound
+      (Coordinates.numeratorImaginary curve)
       interval inside)
   simpa only [numeratorValueBound,
-    Curve.Coordinates.numeratorReal,
-    Curve.Coordinates.numeratorImaginary,
-    Dense.Gaussian.Components.eval_realPart,
-    Dense.Gaussian.Components.eval_imagPart,
-    Curve.RationalCurve.numeratorAt, Data.Gaussian.Norm.Basic.normSq] using
+    Coordinates.numeratorReal,
+    Coordinates.numeratorImaginary,
+    Components.eval_realPart,
+    Components.eval_imagPart,
+    RationalCurve.numeratorAt, Gaussian.Norm.Basic.normSq] using
       bounds
 
 /-- The homogeneous denominator quadrance is at most its interval value bound.
 
 The parameter lies in the displayed interval; summing its two coordinate evaluation bounds gives the estimate. -/
 theorem normSq_denominatorAt_le
-    (curve : Curve.RationalCurve) (interval : Bounds) {parameter : Rational}
+    (curve : RationalCurve) (interval : Bounds) {parameter : Rational}
     (inside : interval.Contains parameter) :
-    Data.Gaussian.Norm.Basic.normSq (curve.denominatorAt parameter) ≤
+    Gaussian.Norm.Basic.normSq (curve.denominatorAt parameter) ≤
       denominatorValueBound curve interval := by
   have bounds := add_le_add
-    (Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound
-      (Curve.Coordinates.denominatorReal curve)
+    (Horner.eval_sq_le_evalSqBound
+      (Coordinates.denominatorReal curve)
       interval inside)
-    (Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound
-      (Curve.Coordinates.denominatorImaginary curve)
+    (Horner.eval_sq_le_evalSqBound
+      (Coordinates.denominatorImaginary curve)
       interval inside)
   simpa only [denominatorValueBound,
-    Curve.Coordinates.denominatorReal,
-    Curve.Coordinates.denominatorImaginary,
-    Dense.Gaussian.Components.eval_realPart,
-    Dense.Gaussian.Components.eval_imagPart,
-    Curve.RationalCurve.denominatorAt, Data.Gaussian.Norm.Basic.normSq] using
+    Coordinates.denominatorReal,
+    Coordinates.denominatorImaginary,
+    Components.eval_realPart,
+    Components.eval_imagPart,
+    RationalCurve.denominatorAt, Gaussian.Norm.Basic.normSq] using
       bounds
 
 /-- Numerator variation is bounded by its squared Lipschitz coefficient times squared parameter displacement.
 
 Both parameters lie in the same interval. The estimate sums the real and imaginary coordinate Lipschitz bounds. -/
 theorem normSq_numeratorAt_sub_le
-    (curve : Curve.RationalCurve) (interval : Bounds) {left right : Rational}
+    (curve : RationalCurve) (interval : Bounds) {left right : Rational}
     (leftInside : interval.Contains left)
     (rightInside : interval.Contains right) :
-    Data.Gaussian.Norm.Basic.normSq (curve.numeratorAt left - curve.numeratorAt right) ≤
+    Gaussian.Norm.Basic.normSq (curve.numeratorAt left - curve.numeratorAt right) ≤
       numeratorLipschitzBound curve interval * (left - right) ^ 2 := by
   have bounds :
-      ((Curve.Coordinates.numeratorReal curve).eval left -
-          (Curve.Coordinates.numeratorReal curve).eval right) ^ 2 +
-        ((Curve.Coordinates.numeratorImaginary curve).eval left -
-          (Curve.Coordinates.numeratorImaginary curve).eval
+      ((Coordinates.numeratorReal curve).eval left -
+          (Coordinates.numeratorReal curve).eval right) ^ 2 +
+        ((Coordinates.numeratorImaginary curve).eval left -
+          (Coordinates.numeratorImaginary curve).eval
             right) ^ 2 ≤
         numeratorLipschitzBound curve interval * (left - right) ^ 2 := calc
-    _ ≤ Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound
-          (Curve.Coordinates.numeratorReal curve) interval *
+    _ ≤ Lipschitz.denseEvalSqLipschitzBound
+          (Coordinates.numeratorReal curve) interval *
             (left - right) ^ 2 +
-        Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound
-          (Curve.Coordinates.numeratorImaginary curve) interval *
+        Lipschitz.denseEvalSqLipschitzBound
+          (Coordinates.numeratorImaginary curve) interval *
             (left - right) ^ 2 :=
       add_le_add
-        (Dense.Rational.Bounds.Lipschitz.eval_sub_sq_le _ interval
+        (Lipschitz.eval_sub_sq_le _ interval
           leftInside rightInside)
-        (Dense.Rational.Bounds.Lipschitz.eval_sub_sq_le _ interval
+        (Lipschitz.eval_sub_sq_le _ interval
           leftInside rightInside)
     _ = numeratorLipschitzBound curve interval * (left - right) ^ 2 := by
       dsimp only [numeratorLipschitzBound]
       ring1
-  simpa only [Curve.Coordinates.numeratorReal,
-    Curve.Coordinates.numeratorImaginary,
-    Dense.Gaussian.Components.eval_realPart,
-    Dense.Gaussian.Components.eval_imagPart,
-    Curve.RationalCurve.numeratorAt, Data.Gaussian.Norm.Basic.normSq,
+  simpa only [Coordinates.numeratorReal,
+    Coordinates.numeratorImaginary,
+    Components.eval_realPart,
+    Components.eval_imagPart,
+    RationalCurve.numeratorAt, Gaussian.Norm.Basic.normSq,
     Gaussian.Basic.sub_re,
     Gaussian.Basic.sub_im] using bounds
 
@@ -252,37 +256,37 @@ theorem normSq_numeratorAt_sub_le
 
 Both parameters lie in the same interval. The estimate sums the real and imaginary coordinate Lipschitz bounds. -/
 theorem normSq_denominatorAt_sub_le
-    (curve : Curve.RationalCurve) (interval : Bounds) {left right : Rational}
+    (curve : RationalCurve) (interval : Bounds) {left right : Rational}
     (leftInside : interval.Contains left)
     (rightInside : interval.Contains right) :
-    Data.Gaussian.Norm.Basic.normSq (curve.denominatorAt left - curve.denominatorAt right) ≤
+    Gaussian.Norm.Basic.normSq (curve.denominatorAt left - curve.denominatorAt right) ≤
       denominatorLipschitzBound curve interval * (left - right) ^ 2 := by
   have bounds :
-      ((Curve.Coordinates.denominatorReal curve).eval left -
-          (Curve.Coordinates.denominatorReal curve).eval right) ^ 2 +
-        ((Curve.Coordinates.denominatorImaginary curve).eval left -
-          (Curve.Coordinates.denominatorImaginary curve).eval
+      ((Coordinates.denominatorReal curve).eval left -
+          (Coordinates.denominatorReal curve).eval right) ^ 2 +
+        ((Coordinates.denominatorImaginary curve).eval left -
+          (Coordinates.denominatorImaginary curve).eval
             right) ^ 2 ≤
         denominatorLipschitzBound curve interval * (left - right) ^ 2 := calc
-    _ ≤ Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound
-          (Curve.Coordinates.denominatorReal curve) interval *
+    _ ≤ Lipschitz.denseEvalSqLipschitzBound
+          (Coordinates.denominatorReal curve) interval *
             (left - right) ^ 2 +
-        Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound
-          (Curve.Coordinates.denominatorImaginary curve) interval *
+        Lipschitz.denseEvalSqLipschitzBound
+          (Coordinates.denominatorImaginary curve) interval *
             (left - right) ^ 2 :=
       add_le_add
-        (Dense.Rational.Bounds.Lipschitz.eval_sub_sq_le _ interval
+        (Lipschitz.eval_sub_sq_le _ interval
           leftInside rightInside)
-        (Dense.Rational.Bounds.Lipschitz.eval_sub_sq_le _ interval
+        (Lipschitz.eval_sub_sq_le _ interval
           leftInside rightInside)
     _ = denominatorLipschitzBound curve interval * (left - right) ^ 2 := by
       dsimp only [denominatorLipschitzBound]
       ring1
-  simpa only [Curve.Coordinates.denominatorReal,
-    Curve.Coordinates.denominatorImaginary,
-    Dense.Gaussian.Components.eval_realPart,
-    Dense.Gaussian.Components.eval_imagPart,
-    Curve.RationalCurve.denominatorAt, Data.Gaussian.Norm.Basic.normSq,
+  simpa only [Coordinates.denominatorReal,
+    Coordinates.denominatorImaginary,
+    Components.eval_realPart,
+    Components.eval_imagPart,
+    RationalCurve.denominatorAt, Gaussian.Norm.Basic.normSq,
     Gaussian.Basic.sub_re,
     Gaussian.Basic.sub_im] using bounds
 
@@ -296,11 +300,11 @@ displacement.
 Both parameters lie in the interval. Expanding the cross product into numerator and denominator differences combines
 their coordinate Lipschitz estimates with the corresponding value bounds. -/
 theorem normSq_cross_le
-    (curve : Curve.RationalCurve) (interval : Bounds) {left right : Rational}
+    (curve : RationalCurve) (interval : Bounds) {left right : Rational}
     (leftInside : interval.Contains left)
     (rightInside : interval.Contains right) :
-    Data.Gaussian.Norm.Basic.normSq (Projective.Line.Hermitian.Proj.cross
-      (Curve.Projective.projective curve left) (Curve.Projective.projective curve right)) ≤
+    Gaussian.Norm.Basic.normSq (Projective.Line.Hermitian.Proj.cross
+      (projective curve left) (projective curve right)) ≤
       crossVariationCoefficient curve interval * (left - right) ^ 2 := by
   let leftNumerator := curve.numeratorAt left
   let rightNumerator := curve.numeratorAt right
@@ -343,23 +347,23 @@ theorem normSq_cross_le
           rightNumerator * leftDenominator :=
         (Gaussian.Basic.sub_eq_add_neg _ _).symm
   have firstBound :
-      Data.Gaussian.Norm.Basic.normSq ((leftNumerator - rightNumerator) * rightDenominator) ≤
+      Gaussian.Norm.Basic.normSq ((leftNumerator - rightNumerator) * rightDenominator) ≤
         (numeratorLipschitzBound curve interval * (left - right) ^ 2) *
           denominatorValueBound curve interval := by
     rw [Gaussian.Norm.Basic.normSq_mul]
-    exact Rat.Fraction.Order.Arithmetic.mul_le_mul_direct
+    exact Arithmetic.mul_le_mul_direct
       (normSq_numeratorAt_sub_le curve interval leftInside rightInside)
       (normSq_denominatorAt_le curve interval rightInside)
       (Gaussian.Norm.Basic.normSq_nonneg rightDenominator)
-      (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct
         (numeratorLipschitzBound_nonneg curve interval)
-        (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct (left - right)))
+        (Arithmetic.sq_nonneg_direct (left - right)))
   have secondBound :
-      Data.Gaussian.Norm.Basic.normSq (rightNumerator * (rightDenominator - leftDenominator)) ≤
+      Gaussian.Norm.Basic.normSq (rightNumerator * (rightDenominator - leftDenominator)) ≤
         numeratorValueBound curve interval *
           (denominatorLipschitzBound curve interval * (left - right) ^ 2) := by
     rw [Gaussian.Norm.Basic.normSq_mul]
-    exact Rat.Fraction.Order.Arithmetic.mul_le_mul_direct
+    exact Arithmetic.mul_le_mul_direct
       (normSq_numeratorAt_le curve interval rightInside)
       (by
         have reversed := normSq_denominatorAt_sub_le curve interval
@@ -374,14 +378,14 @@ theorem normSq_cross_le
         exact reversed)
       (Gaussian.Norm.Basic.normSq_nonneg (rightDenominator - leftDenominator))
       (numeratorValueBound_nonneg curve interval)
-  change Data.Gaussian.Norm.Basic.normSq
+  change Gaussian.Norm.Basic.normSq
     (leftNumerator * rightDenominator - rightNumerator * leftDenominator) ≤ _
   rw [crossIdentity]
   calc
-    Data.Gaussian.Norm.Basic.normSq ((leftNumerator - rightNumerator) * rightDenominator +
+    Gaussian.Norm.Basic.normSq ((leftNumerator - rightNumerator) * rightDenominator +
         rightNumerator * (rightDenominator - leftDenominator)) ≤
-      2 * (Data.Gaussian.Norm.Basic.normSq ((leftNumerator - rightNumerator) * rightDenominator) +
-        Data.Gaussian.Norm.Basic.normSq (rightNumerator *
+      2 * (Gaussian.Norm.Basic.normSq ((leftNumerator - rightNumerator) * rightDenominator) +
+        Gaussian.Norm.Basic.normSq (rightNumerator *
           (rightDenominator - leftDenominator))) :=
       Gaussian.Norm.Bounds.normSq_add_le_two _ _
     _ ≤ 2 *
@@ -390,7 +394,7 @@ theorem normSq_cross_le
           numeratorValueBound curve interval *
             (denominatorLipschitzBound curve interval *
               (left - right) ^ 2)) :=
-      Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add firstBound secondBound) (by decide)
     _ = crossVariationCoefficient curve interval * (left - right) ^ 2 := by
       dsimp only [crossVariationCoefficient]
@@ -431,12 +435,12 @@ private theorem
     (matrix : Coordinates2.Matrix.GaussianMatrix) (source : Curve.RationalCurve)
     (sourceLower : Rational)
     (sourceLowerLe : ∀ parameter, sourceLower ≤
-      Projective.Line.Hermitian.Proj.weight
+      Line.Hermitian.Proj.weight
         ⟨source.numeratorAt parameter, source.denominatorAt parameter⟩)
     (parameter : Rational) :
-    (Data.Gaussian.Norm.Basic.normSq (Coordinates2.Matrix.BoundaryAdjugate.determinant matrix) * sourceLower /
-      Projective.Chordal.Matrix.Mat2.actionWeightCoefficient (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix)) ≤
-      Projective.Line.Hermitian.Proj.weight
+    (Gaussian.Norm.Basic.normSq (Coordinates2.Matrix.BoundaryAdjugate.determinant matrix) * sourceLower /
+      Chordal.Matrix.Mat2.actionWeightCoefficient (Coordinates2.Matrix.BoundaryAdjugate.adjugate matrix)) ≤
+      Line.Hermitian.Proj.weight
         ⟨(source.transform matrix).numeratorAt parameter,
           (source.transform matrix).denominatorAt parameter⟩ := by
   have bound := transformedPointWeightLower matrix sourceLower
@@ -445,7 +449,7 @@ private theorem
   simpa only [
     Curve.RationalCurve.numeratorAt_transform,
     Curve.RationalCurve.denominatorAt_transform,
-    Projective.Line.Matrix.act] using bound
+    Line.Matrix.act] using bound
 
 section
 open Purelib.RationalFunctions
@@ -455,25 +459,25 @@ private theorem circleSourceWeightLower
     (denominatorFormula : ∀ parameter,
       curve.denominatorAt parameter = ⟨parameter ^ 2 + 1, 0⟩)
     (parameter : Rational) :
-    (1 : Rational) ≤ Projective.Line.Hermitian.Proj.weight
+    (1 : Rational) ≤ Line.Hermitian.Proj.weight
       ⟨curve.numeratorAt parameter, curve.denominatorAt parameter⟩ := by
   have oneLe : (1 : Rational) ≤ parameter ^ 2 + 1 := by
-    have added := Rat.Fraction.Order.Arithmetic.add_le_add_right_direct
-      (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct parameter) 1
+    have added := Arithmetic.add_le_add_right_direct
+      (Arithmetic.sq_nonneg_direct parameter) 1
     simpa only [Rat.Fraction.Field.zero_add] using added
   have squareLe : (1 : Rational) ≤ (parameter ^ 2 + 1) ^ 2 := by
     simpa only [one_pow] using
-      Rat.Fraction.Order.Arithmetic.pow_le_pow_direct (by decide) oneLe 2
+      Arithmetic.pow_le_pow_direct (by decide) oneLe 2
   rw [denominatorFormula parameter]
-  change 1 ≤ Data.Gaussian.Norm.Basic.normSq (curve.numeratorAt parameter) +
+  change 1 ≤ Gaussian.Norm.Basic.normSq (curve.numeratorAt parameter) +
     ((parameter ^ 2 + 1) ^ 2 + 0 ^ 2)
   exact squareLe.trans (by
     calc
       (parameter ^ 2 + 1) ^ 2 ≤
-          Data.Gaussian.Norm.Basic.normSq (curve.numeratorAt parameter) +
+          Gaussian.Norm.Basic.normSq (curve.numeratorAt parameter) +
             (parameter ^ 2 + 1) ^ 2 :=
         le_add_of_nonneg_left (Gaussian.Norm.Basic.normSq_nonneg (curve.numeratorAt parameter))
-      _ = Data.Gaussian.Norm.Basic.normSq (curve.numeratorAt parameter) +
+      _ = Gaussian.Norm.Basic.normSq (curve.numeratorAt parameter) +
           ((parameter ^ 2 + 1) ^ 2 + 0 ^ 2) := by ring1)
 
 /-- An identically unit homogeneous denominator gives source projective weight at least one. -/
@@ -483,11 +487,11 @@ private theorem
     (denominatorFormula : ∀ parameter,
       curve.denominatorAt parameter = 1)
     (parameter : Rational) :
-    (1 : Rational) ≤ Projective.Line.Hermitian.Proj.weight
+    (1 : Rational) ≤ Line.Hermitian.Proj.weight
       ⟨curve.numeratorAt parameter, curve.denominatorAt parameter⟩ := by
   rw [denominatorFormula parameter]
-  simp only [Projective.Line.Hermitian.Proj.weight, Gaussian.Norm.Basic.normSq_one]
-  have added := Rat.Fraction.Order.Arithmetic.add_le_add_right_direct
+  simp only [Line.Hermitian.Proj.weight, Gaussian.Norm.Basic.normSq_one]
+  have added := Arithmetic.add_le_add_right_direct
     (Gaussian.Norm.Basic.normSq_nonneg (curve.numeratorAt parameter)) 1
   simpa only [Rat.Fraction.Field.zero_add] using added
 
@@ -505,17 +509,17 @@ public theorem transformedProjectiveValid
       Coordinates2.Matrix.BoundaryAdjugate.determinant matrix ≠ 0)
     (source : Curve.RationalCurve)
     (sourceValid : ∀ parameter,
-      Projective.Line.Gaussian.Proj.HasNonzeroCoordinate
+      Line.Gaussian.Proj.HasNonzeroCoordinate
         ⟨source.numeratorAt parameter, source.denominatorAt parameter⟩)
     (parameter : Rational) :
-    Projective.Line.Gaussian.Proj.HasNonzeroCoordinate
+    Line.Gaussian.Proj.HasNonzeroCoordinate
       ⟨(source.transform matrix).numeratorAt parameter,
         (source.transform matrix).denominatorAt parameter⟩ := by
-  have acted := Projective.Line.Matrix.Gaussian.Mat2.act_hasNonzeroCoordinate
+  have acted := Line.Matrix.Gaussian.Mat2.act_hasNonzeroCoordinate
     (matrix := matrix)
     (point := ⟨source.numeratorAt parameter, source.denominatorAt parameter⟩)
     determinantNonzero (sourceValid parameter)
-  simpa only [Projective.Line.Matrix.act,
+  simpa only [Line.Matrix.act,
     Curve.RationalCurve.numeratorAt_transform,
     Curve.RationalCurve.denominatorAt_transform]
     using acted
@@ -531,14 +535,14 @@ namespace RationalFunctions.Curve.Projective
 
 /-- A curve whose homogeneous denominator is identically one has projective weight at least one. -/
 theorem unitDenominatorWeightLower
-    (curve : Curve.RationalCurve)
+    (curve : RationalCurve)
     (denominatorFormula : ∀ parameter, curve.denominatorAt parameter = 1)
     (parameter : Rational) :
     (1 : Rational) ≤ Projective.Line.Hermitian.Proj.weight
       ⟨curve.numeratorAt parameter, curve.denominatorAt parameter⟩ := by
   rw [denominatorFormula parameter]
   simp only [Projective.Line.Hermitian.Proj.weight, Gaussian.Norm.Basic.normSq_one]
-  have added := Rat.Fraction.Order.Arithmetic.add_le_add_right_direct
+  have added := Arithmetic.add_le_add_right_direct
     (Gaussian.Norm.Basic.normSq_nonneg (curve.numeratorAt parameter)) 1
   simpa only [Rat.Fraction.Field.zero_add] using added
 
@@ -547,29 +551,29 @@ theorem unitDenominatorWeightLower
 The homogeneous denominator is the real Gaussian value parameter squared plus one, so its quadrance alone supplies the
 lower bound. -/
 theorem circleDenominatorWeightLower
-    (curve : Curve.RationalCurve)
+    (curve : RationalCurve)
     (denominatorFormula : ∀ parameter,
       curve.denominatorAt parameter = ⟨parameter ^ 2 + 1, 0⟩)
     (parameter : Rational) :
     (1 : Rational) ≤ Projective.Line.Hermitian.Proj.weight
       ⟨curve.numeratorAt parameter, curve.denominatorAt parameter⟩ := by
   have oneLe : (1 : Rational) ≤ parameter ^ 2 + 1 := by
-    have added := Rat.Fraction.Order.Arithmetic.add_le_add_right_direct
-      (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct parameter) 1
+    have added := Arithmetic.add_le_add_right_direct
+      (Arithmetic.sq_nonneg_direct parameter) 1
     simpa only [Rat.Fraction.Field.zero_add] using added
   have squareLe : (1 : Rational) ≤ (parameter ^ 2 + 1) ^ 2 := by
     simpa only [one_pow] using
-      Rat.Fraction.Order.Arithmetic.pow_le_pow_direct (by decide) oneLe 2
+      Arithmetic.pow_le_pow_direct (by decide) oneLe 2
   rw [denominatorFormula parameter]
-  change 1 ≤ Data.Gaussian.Norm.Basic.normSq (curve.numeratorAt parameter) +
+  change 1 ≤ Gaussian.Norm.Basic.normSq (curve.numeratorAt parameter) +
     ((parameter ^ 2 + 1) ^ 2 + 0 ^ 2)
   exact squareLe.trans (by
     calc
       (parameter ^ 2 + 1) ^ 2 ≤
-          Data.Gaussian.Norm.Basic.normSq (curve.numeratorAt parameter) +
+          Gaussian.Norm.Basic.normSq (curve.numeratorAt parameter) +
             (parameter ^ 2 + 1) ^ 2 :=
         le_add_of_nonneg_left (Gaussian.Norm.Basic.normSq_nonneg (curve.numeratorAt parameter))
-      _ = Data.Gaussian.Norm.Basic.normSq (curve.numeratorAt parameter) +
+      _ = Gaussian.Norm.Basic.normSq (curve.numeratorAt parameter) +
           ((parameter ^ 2 + 1) ^ 2 + 0 ^ 2) := by ring1)
 
 end RationalFunctions.Curve.Projective

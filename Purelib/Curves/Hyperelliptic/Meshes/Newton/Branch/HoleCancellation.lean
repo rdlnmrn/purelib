@@ -67,6 +67,8 @@ import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Topology.Surface.Sewing.SewnPrimitiveSamples
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -85,18 +87,18 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.Newton.Branch.HoleCancellation
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted}
+    PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation base.bank.toBranchCellBank}
   {first second : Fin genus} {target radius : Fraction.Rational} {floor : Nat}
   {prepared : RootContinuation.NewtonRequestedBoundary.BoundaryPreparation preparation first second target radius floor}
-  {sheet : Hyperelliptic.Branches.BranchIsolation.Data.Index branches → Fin 2}
-  {leftFixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank prepared.domains
+  {sheet : Branches.BranchIsolation.Data.Index branches → Fin 2}
+  {leftFixed : PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank prepared.domains
     (Periods.PeriodMatrix.standardDifferential first)}
-  {rightFixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank prepared.domains
+  {rightFixed : PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank prepared.domains
     (Periods.PeriodMatrix.standardDifferential second)}
   {error : Fraction.Rational} {branchFloor : Nat}
 
@@ -106,46 +108,46 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
 
 /-- For a nonnegative target the accumulated original branch-hole charge is at most forty-two times that target. -/
 theorem branchHoleCharge_le {target : Fraction.Rational} (nonnegative : 0 ≤ target) :
-    Hyperelliptic.Meshes.Newton.Branch.HoleCancellation.branchHoleCharge target ≤ 42 * target := by
-  have factor : (82 / 4 : Fraction.Rational) ≤ 24 := (Fraction.Order.Field.div_le_iff_pos (by decide)).mpr
+    HoleCancellation.branchHoleCharge target ≤ 42 * target := by
+  have factor : (82 / 4 : Fraction.Rational) ≤ 24 := (Field.div_le_iff_pos (by decide)).mpr
     ((Fraction.Cast.Order.natCast_le_direct (by decide : 82 ≤ 96)).trans_eq (by ring1))
-  have product := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct factor
-    (Fraction.Order.Field.div_nonneg_direct nonnegative (by decide : (0 : Fraction.Rational) ≤ 4))
+  have product := Arithmetic.mul_le_mul_of_nonneg_right_direct factor
+    (Field.div_nonneg_direct nonnegative (by decide : (0 : Fraction.Rational) ≤ 4))
   have paid : (24 : Fraction.Rational) * (target / 4) = 6 * target :=
     (show (24 : Fraction.Rational) * (target / 4) = 6 * (target / 4 * 4) by ring1).trans
       (congrArg ((6 : Fraction.Rational) * ·) (Fraction.Field.div_mul_cancel_of_ne target 4 (by decide)))
   have small := product.trans_eq paid
-  exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
+  exact (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
     (le_refl target)
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct small
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct small
       (le_refl (4 * target))) (by decide)))
       (by decide : (0 : Fraction.Rational) ≤ 2)).trans_eq (by ring1)
 
 /-- No caller bound on a hole or annular area is required. The construction
 retains the same branch requests and works for every later shared sample. -/
 @[expose] def branchHoleRequest
-    (requests : Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed rightFixed
+    (requests : PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed rightFixed
       error branchFloor prepared.excision.entries)
-    (sewing : Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation prepared.lifted.cutPolygon
+    (sewing : PuncturedGrid.SewnBilinearRequest.BilinearPreparation prepared.lifted.cutPolygon
       prepared.domains first second)
     (minimum : Nat) :
     {threshold : Nat // minimum ≤ threshold ∧
-      ∀ stage (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains
+      ∀ stage (cache : PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains
         stage)
-        (readings : Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings prepared.paid.cut
+        (readings : PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings prepared.paid.cut
           cache)
         (_cached : Branches.NewtonRequestedCutComparison.CutAnnularReadings prepared.comparison readings)
-        (samples : Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.Samples readings.left
+        (samples : PairedBranchAggregate.PairedBranchRequests.Samples readings.left
           readings.right readings.leftSurface readings.rightSurface requests),
         threshold ≤ stage →
-        Data.Gaussian.Norm.Basic.normSq (samples.corrections + prepared.fullHoleRemainder readings) < 42 * target}
+        Gaussian.Norm.Basic.normSq (samples.corrections + prepared.fullHoleRemainder readings) < 42 * target}
           := by
-  have positive : 0 < target := (Fraction.Order.Arithmetic.mul_pos_direct prepared.fine.positive (by
+  have positive : 0 < target := (Arithmetic.mul_pos_direct prepared.fine.positive (by
       decide : (0 : Fraction.Rational) < 4)).trans_eq
     (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))
-  let branch := Hyperelliptic.Meshes.Newton.Branch.PhysicalAggregate.physicalCorrectionRequest sewing requests target
+  let branch := PhysicalAggregate.physicalCorrectionRequest sewing requests target
     positive minimum
-  let annuli := Hyperelliptic.Meshes.Newton.AllHoles.SewnPhysicalAggregate.physicalRequest prepared.comparison sewing
+  let annuli := AllHoles.SewnPhysicalAggregate.physicalRequest prepared.comparison sewing
     minimum
   let interfaces := prepared.interfaceBank
   let omitted := prepared.omittedBank
@@ -164,24 +166,24 @@ retains the same branch requests and works for every later shared sample. -/
     ((Nat.Order.le_max_left _ _).trans ((Nat.Order.le_max_right _ _).trans geometry))
     ((Nat.Order.le_max_right _ _).trans ((Nat.Order.le_max_right _ _).trans geometry))
   let physical := Geometry.Grid.CellBoundary.sumValues (fun entry =>
-    Hyperelliptic.Meshes.Newton.PhysicalHoleReadback.AnnularEntry.physicalHoleArea entry readings.left readings.right)
+    PhysicalHoleReadback.AnnularEntry.physicalHoleArea entry readings.left readings.right)
     prepared.excision.entries
-  change Data.Gaussian.Norm.Basic.normSq (samples.corrections + physical) < target at branchBound
-  change Data.Gaussian.Norm.Basic.normSq (cached.annuli.selectedArea + physical) < (82 / 4 : Fraction.Rational) *
+  change Gaussian.Norm.Basic.normSq (samples.corrections + physical) < target at branchBound
+  change Gaussian.Norm.Basic.normSq (cached.annuli.selectedArea + physical) < (82 / 4 : Fraction.Rational) *
     (target / 4) at annularBound
   have difference := (Gaussian.Norm.Bounds.normSq_sub_le_two (cached.annuli.selectedArea + physical)
     (cached.annuli.selectedArea + prepared.fullHoleRemainder readings)).trans_lt
-      (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2)
-        (Fraction.Order.Arithmetic.add_lt_add_direct annularBound holeBound))
+      (Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2)
+        (Arithmetic.add_lt_add_direct annularBound holeBound))
   rw [show (cached.annuli.selectedArea + physical) -
     (cached.annuli.selectedArea + prepared.fullHoleRemainder readings) = physical - prepared.fullHoleRemainder readings
       by ring1] at difference
   have estimate := (Gaussian.Norm.Bounds.normSq_sub_le_two (samples.corrections + physical) (physical -
     prepared.fullHoleRemainder readings)).trans_lt
-    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2)
-      (Fraction.Order.Arithmetic.add_lt_add_direct branchBound difference))
+    (Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2)
+      (Arithmetic.add_lt_add_direct branchBound difference))
   rw [show (samples.corrections + physical) - (physical - prepared.fullHoleRemainder readings) =
     samples.corrections + prepared.fullHoleRemainder readings by ring1] at estimate
-  exact estimate.trans_le (Hyperelliptic.Meshes.Newton.Branch.HoleCancellation.branchHoleCharge_le positive.le)
+  exact estimate.trans_le (HoleCancellation.branchHoleCharge_le positive.le)
 
 end Purelib.Curves.Hyperelliptic.Meshes.Newton.Branch.HoleCancellation

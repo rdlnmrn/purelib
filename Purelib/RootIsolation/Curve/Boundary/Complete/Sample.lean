@@ -90,7 +90,7 @@ namespace Purelib.RootIsolation.Curve.Boundary.Complete.Sample
 
 section Boundary
 
-variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
   LinearAlgebra.Coordinates2.Matrix.GaussianMatrix} {current : Box}
 variable {denominatorMargin : Fraction.Rational}
 variable {marginPositive : 0 < denominatorMargin}
@@ -100,10 +100,10 @@ set_option genInjectivity false in
 /-- A denominator-safe rational parameter computed inside one complete
 retained child. -/
 structure NonpoleCompleteRequestSample
-    {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom}
     {epsilon : Fraction.Rational}
-    (entry : Curve.Boundary.Complete.Basic.BoundaryCompleteRequestEntry boundary epsilon) where
+    (entry : Basic.BoundaryCompleteRequestEntry boundary epsilon) where
   /-- The actual rational parameter selected by the bounded non-pole search. -/ parameter : Fraction.Rational
   /-- The retained parameter lies in the specified original child or descendant request interval. -/ parameterInside :
     entry.child.cell.interval.Contains parameter
@@ -116,17 +116,17 @@ constructive_injectivity NonpoleCompleteRequestSample
 /-- Bounded finite search for a non-pole rational parameter in any retained
 child. -/
 @[expose] def nonpoleCompleteRequestSample
-    {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom}
     {epsilon : Fraction.Rational}
-    (entry : Curve.Boundary.Complete.Basic.BoundaryCompleteRequestEntry boundary epsilon) :
-    Curve.Boundary.Complete.Sample.NonpoleCompleteRequestSample entry := by
+    (entry : Basic.BoundaryCompleteRequestEntry boundary epsilon) :
+    NonpoleCompleteRequestSample entry := by
   let curve := entry.parent.parent.chart.parameterization.curve
   let interval := entry.child.cell.interval
   let denominatorPolynomial :=
     Curve.Coordinates.denominatorNormSq curve
   have chartMember :=
-    Curve.Boundary.Event.Analysis.chart_mem_of_analysis_mem
+    Event.Analysis.chart_mem_of_analysis_mem
       boundary entry.parent.parent.analysisMember
   have nondegenerate :=
     Geometry.Projective.Hermitian.Chart.nondegenerate_of_mem_charts
@@ -149,7 +149,7 @@ child. -/
         apply specification.1
         change denominatorPolynomial.eval parameter = 0
         rw [show denominatorPolynomial.eval parameter =
-            Data.Gaussian.Norm.Basic.normSq
+            Gaussian.Norm.Basic.normSq
               (curve.denominatorAt parameter) by
               exact Curve.Coordinates.eval_denominatorNormSq
                 curve parameter,
@@ -160,10 +160,10 @@ set_option genInjectivity false in
 /-- A denominator-safe rational sample computed on a later deterministic
 descendant of one already retained complete child. -/
 structure NonpoleCompleteRequestDescendantSample
-    {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom}
     {epsilon : Fraction.Rational}
-    (entry : Curve.Boundary.Complete.Basic.BoundaryCompleteRequestEntry boundary epsilon)
+    (entry : Basic.BoundaryCompleteRequestEntry boundary epsilon)
     (target : Fraction.Rational) where
   /-- The actual rational parameter selected by the bounded non-pole search. -/ parameter : Fraction.Rational
   /-- The retained parameter lies in the specified original child or descendant request interval. -/ parameterInside :
@@ -176,18 +176,18 @@ constructive_injectivity NonpoleCompleteRequestDescendantSample
 
 /-- Bounded finite non-pole search on the selected descendant branch. -/
 @[expose] def nonpoleCompleteRequestDescendantSample
-    {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom}
     {epsilon : Fraction.Rational}
-    (entry : Curve.Boundary.Complete.Basic.BoundaryCompleteRequestEntry boundary epsilon)
+    (entry : Basic.BoundaryCompleteRequestEntry boundary epsilon)
     (target : Fraction.Rational) :
-    Curve.Boundary.Complete.Sample.NonpoleCompleteRequestDescendantSample entry target := by
+    NonpoleCompleteRequestDescendantSample entry target := by
   let curve := entry.parent.parent.chart.parameterization.curve
   let interval := (entry.child.request target).cell.interval
   let denominatorPolynomial :=
     Curve.Coordinates.denominatorNormSq curve
   have chartMember :=
-    Curve.Boundary.Event.Analysis.chart_mem_of_analysis_mem
+    Event.Analysis.chart_mem_of_analysis_mem
       boundary entry.parent.parent.analysisMember
   have nondegenerate :=
     Geometry.Projective.Hermitian.Chart.nondegenerate_of_mem_charts
@@ -210,7 +210,7 @@ constructive_injectivity NonpoleCompleteRequestDescendantSample
         apply specification.1
         change denominatorPolynomial.eval parameter = 0
         rw [show denominatorPolynomial.eval parameter =
-            Data.Gaussian.Norm.Basic.normSq
+            Gaussian.Norm.Basic.normSq
               (curve.denominatorAt parameter) by
               exact Curve.Coordinates.eval_denominatorNormSq
                 curve parameter,
@@ -220,33 +220,33 @@ constructive_injectivity NonpoleCompleteRequestDescendantSample
 /-- Deterministic descendant width making every equality-owned box condition
 smaller than the square of the denominator-lower-bound-scaled radius. -/
 @[expose] def nearBoxDescendantRequestWidth
-    {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom}
     {epsilon : Fraction.Rational}
-    (entry : Curve.Boundary.Complete.Basic.BoundaryCompleteRequestEntry boundary epsilon)
-    (denominator : Curve.Event.Profile.Complete.Denominator.ProfileDenominatorRelation entry.parent.event.1)
+    (entry : Basic.BoundaryCompleteRequestEntry boundary epsilon)
+    (denominator : Event.Profile.Complete.Denominator.ProfileDenominatorRelation entry.parent.event.1)
     (apart : Dense.Rational.Bezout.Basic.CoprimeCertificate
       entry.parent.event.1.profile.factor.polynomial
         (Curve.Coordinates.denominatorNormSq
           entry.parent.parent.chart.parameterization.curve))
     (radius : Fraction.Rational) : Fraction.Rational :=
-  Curve.Event.Profile.Complete.Condition.profileConditionRequestWidth entry.parent.event.1
+  Event.Profile.Complete.Condition.profileConditionRequestWidth entry.parent.event.1
     ((denominator.apartLower apart * radius) ^ 2)
 
 /-- A positive coordinate radius gives a positive condition-controlled descendant request width. -/
 theorem nearBoxDescendantRequestWidth_pos
-    {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom}
     {epsilon : Fraction.Rational}
-    (entry : Curve.Boundary.Complete.Basic.BoundaryCompleteRequestEntry boundary epsilon)
-    (denominator : Curve.Event.Profile.Complete.Denominator.ProfileDenominatorRelation entry.parent.event.1)
+    (entry : Basic.BoundaryCompleteRequestEntry boundary epsilon)
+    (denominator : Event.Profile.Complete.Denominator.ProfileDenominatorRelation entry.parent.event.1)
     (apart : Dense.Rational.Bezout.Basic.CoprimeCertificate
       entry.parent.event.1.profile.factor.polynomial
         (Curve.Coordinates.denominatorNormSq
           entry.parent.parent.chart.parameterization.curve))
     {radius : Fraction.Rational} (radiusPositive : 0 < radius) :
-    0 < Curve.Boundary.Complete.Sample.nearBoxDescendantRequestWidth entry denominator apart radius := by
-  apply Curve.Event.Profile.Complete.Condition.profileConditionRequestWidth_pos
+    0 < nearBoxDescendantRequestWidth entry denominator apart radius := by
+  apply Event.Profile.Complete.Condition.profileConditionRequestWidth_pos
   exact Fraction.Order.Arithmetic.pow_pos_direct
     (Fraction.Order.Arithmetic.mul_pos_direct
       (denominator.apartLower_pos apart)
@@ -254,31 +254,31 @@ theorem nearBoxDescendantRequestWidth_pos
 
 /-- Bounded non-pole sample on the condition-controlled descendant. -/
 @[expose] def nearBoxDescendantSample
-    {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom}
     {epsilon : Fraction.Rational}
-    (entry : Curve.Boundary.Complete.Basic.BoundaryCompleteRequestEntry boundary epsilon)
-    (denominator : Curve.Event.Profile.Complete.Denominator.ProfileDenominatorRelation entry.parent.event.1)
+    (entry : Basic.BoundaryCompleteRequestEntry boundary epsilon)
+    (denominator : Event.Profile.Complete.Denominator.ProfileDenominatorRelation entry.parent.event.1)
     (apart : Dense.Rational.Bezout.Basic.CoprimeCertificate
       entry.parent.event.1.profile.factor.polynomial
         (Curve.Coordinates.denominatorNormSq
           entry.parent.parent.chart.parameterization.curve))
     (radius : Fraction.Rational) :
-    Curve.Boundary.Complete.Sample.NonpoleCompleteRequestDescendantSample entry
-      (Curve.Boundary.Complete.Sample.nearBoxDescendantRequestWidth entry denominator apart radius) :=
-  Curve.Boundary.Complete.Sample.nonpoleCompleteRequestDescendantSample entry
-    (Curve.Boundary.Complete.Sample.nearBoxDescendantRequestWidth entry denominator apart radius)
+    NonpoleCompleteRequestDescendantSample entry
+      (nearBoxDescendantRequestWidth entry denominator apart radius) :=
+  nonpoleCompleteRequestDescendantSample entry
+    (nearBoxDescendantRequestWidth entry denominator apart radius)
 
 /-- If the retained inside-profile classification has an apart denominator,
 its computed descendant sample lies within the supplied rational coordinate
 radius of the profiled box.  The sample is produced by bounded search; no
 profile zero or completed root is asserted. -/
 theorem nearBoxDescendantSample_within_radius
-    {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom}
     {epsilon : Fraction.Rational}
-    (entry : Curve.Boundary.Complete.Basic.BoundaryCompleteRequestEntry boundary epsilon)
-    (denominator : Curve.Event.Profile.Complete.Denominator.ProfileDenominatorRelation entry.parent.event.1)
+    (entry : Basic.BoundaryCompleteRequestEntry boundary epsilon)
+    (denominator : Event.Profile.Complete.Denominator.ProfileDenominatorRelation entry.parent.event.1)
     (apart : Dense.Rational.Bezout.Basic.CoprimeCertificate
       entry.parent.event.1.profile.factor.polynomial
         (Curve.Coordinates.denominatorNormSq
@@ -286,14 +286,14 @@ theorem nearBoxDescendantSample_within_radius
     (denominatorLower : ∀ parameter : Fraction.Rational,
       entry.child.cell.interval.Contains parameter →
       denominator.apartLower apart ≤
-        Data.Gaussian.Norm.Basic.normSq
+        Gaussian.Norm.Basic.normSq
           (entry.parent.parent.chart.parameterization.curve.denominatorAt
             parameter))
     (allNonnegative : ∀ relation ∈
       entry.parent.event.1.profile.relations,
-      Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf.ConditionNonnegative entry.child relation)
+      Event.Profile.Complete.Basic.CompleteRequestLeaf.ConditionNonnegative entry.child relation)
     {radius : Fraction.Rational} (radiusPositive : 0 < radius) :
-    let sample := Curve.Boundary.Complete.Sample.nearBoxDescendantSample entry denominator apart radius
+    let sample := nearBoxDescendantSample entry denominator apart radius
     current.xLower - radius <
         (entry.parent.parent.chart.parameterization.curve.point
           sample.parameter).re ∧
@@ -306,27 +306,27 @@ theorem nearBoxDescendantSample_within_radius
         sample.parameter).im < current.yUpper + radius := by
   let lower := denominator.apartLower apart
   let cap := lower * radius
-  let target := Curve.Event.Profile.Complete.Condition.profileConditionRequestWidth entry.parent.event.1 (cap ^ 2)
-  let sample := Curve.Boundary.Complete.Sample.nearBoxDescendantSample entry denominator apart radius
+  let target := Event.Profile.Complete.Condition.profileConditionRequestWidth entry.parent.event.1 (cap ^ 2)
+  let sample := nearBoxDescendantSample entry denominator apart radius
   have capPositive : 0 < cap := by
     exact Fraction.Order.Arithmetic.mul_pos_direct
       (denominator.apartLower_pos apart) radiusPositive
   have sampleInside :
       (entry.child.request target).cell.interval.Contains sample.parameter := by
-    simpa only [-eq_self, -iff_self, sample, target, cap, Curve.Boundary.Complete.Sample.nearBoxDescendantSample,
-      Curve.Boundary.Complete.Sample.nearBoxDescendantRequestWidth] using sample.parameterInside
+    simpa only [-eq_self, -iff_self, sample, target, cap, nearBoxDescendantSample,
+      nearBoxDescendantRequestWidth] using sample.parameterInside
   have descendantRefines := entry.child.request_refines target
   have sampleInsideParent :
       entry.child.cell.interval.Contains sample.parameter :=
     ⟨descendantRefines.1.trans sampleInside.1,
       sampleInside.2.trans descendantRefines.2⟩
   have lowerLeDenominator : lower ≤
-      Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq
         (entry.parent.parent.chart.parameterization.curve.denominatorAt
           sample.parameter) := by
     simpa only [-eq_self, -iff_self, lower] using denominatorLower sample.parameter sampleInsideParent
   let conditionLowerPredicate := fun condition :
-      Polynomial.Dense.BoundaryFactorization.CoefficientPolynomial =>
+      Dense.BoundaryFactorization.CoefficientPolynomial =>
     -cap < condition.eval sample.parameter
   have relationsLower : Data.List.Forall (conditionLowerPredicate ∘ Sigma.fst)
       entry.parent.event.1.profile.relations :=
@@ -367,21 +367,21 @@ theorem nearBoxDescendantSample_within_radius
 affine point is supplied inside a target box. -/
 theorem
   NonpoleCompleteRequestDescendantSample.normSq_eval_point_le_of_inside
-    {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom}
     {epsilon : Fraction.Rational}
-    {entry : Curve.Boundary.Complete.Basic.BoundaryCompleteRequestEntry boundary epsilon}
+    {entry : Basic.BoundaryCompleteRequestEntry boundary epsilon}
     {target : Fraction.Rational} (targetPositive : 0 < target)
-    (sample : Curve.Boundary.Complete.Sample.NonpoleCompleteRequestDescendantSample entry target)
+    (sample : NonpoleCompleteRequestDescendantSample entry target)
     (targetBox : Box)
     (pointInside : targetBox.Contains
       (entry.parent.parent.chart.parameterization.curve.point
         sample.parameter)) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         (p.eval
           (entry.parent.parent.chart.parameterization.curve.point
             sample.parameter)) ≤
-      Curve.Event.Profile.Residual.Lift.affineProfileResidualCoefficient
+      Event.Profile.Residual.Lift.affineProfileResidualCoefficient
           (targetBox := targetBox) entry.parent.event.1 * target ^ 2 :=
   entry.child.request_normSq_eval_point_le_of_inside target targetPositive
     sample.parameter sample.parameterInside sample.denominatorNonzero
@@ -391,27 +391,27 @@ theorem
 residual smaller than a supplied target whenever the sample lies in
 `targetBox`. -/
 @[expose] def descendantResidualRequestWidth
-    {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom}
     {epsilon : Fraction.Rational}
-    (entry : Curve.Boundary.Complete.Basic.BoundaryCompleteRequestEntry boundary epsilon)
+    (entry : Basic.BoundaryCompleteRequestEntry boundary epsilon)
     (targetBox : Box) (residualTarget : Fraction.Rational) : Fraction.Rational :=
-  Data.Rat.SmallWidth.shrinkingWidth
-    (Curve.Event.Profile.Residual.Lift.affineProfileResidualCoefficient
+  SmallWidth.shrinkingWidth
+    (Event.Profile.Residual.Lift.affineProfileResidualCoefficient
       (targetBox := targetBox) entry.parent.event.1)
     residualTarget
 
 /-- A positive original-polynomial residual target gives a positive descendant request width. -/
 theorem descendantResidualRequestWidth_pos
-    {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom}
     {epsilon : Fraction.Rational}
-    (entry : Curve.Boundary.Complete.Basic.BoundaryCompleteRequestEntry boundary epsilon)
+    (entry : Basic.BoundaryCompleteRequestEntry boundary epsilon)
     (targetBox : Box) {residualTarget : Fraction.Rational}
     (targetPositive : 0 < residualTarget) :
-    0 < Curve.Boundary.Complete.Sample.descendantResidualRequestWidth entry targetBox residualTarget :=
-  Data.Rat.SmallWidth.shrinkingWidth_pos
-    (Curve.Event.Profile.Residual.Lift.affineProfileResidualCoefficient_nonneg
+    0 < descendantResidualRequestWidth entry targetBox residualTarget :=
+  SmallWidth.shrinkingWidth_pos
+    (Event.Profile.Residual.Lift.affineProfileResidualCoefficient_nonneg
       (targetBox := targetBox) entry.parent.event.1)
     targetPositive
 
@@ -419,27 +419,27 @@ theorem descendantResidualRequestWidth_pos
 requested original-polynomial residual target whenever its affine point is
 inside the displayed target box. -/
 theorem descendant_sample_residual_lt
-    {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom}
     {epsilon : Fraction.Rational}
-    (entry : Curve.Boundary.Complete.Basic.BoundaryCompleteRequestEntry boundary epsilon)
+    (entry : Basic.BoundaryCompleteRequestEntry boundary epsilon)
     (targetBox : Box) {residualTarget : Fraction.Rational}
     (targetPositive : 0 < residualTarget)
-    (sample : Curve.Boundary.Complete.Sample.NonpoleCompleteRequestDescendantSample entry
-      (Curve.Boundary.Complete.Sample.descendantResidualRequestWidth entry targetBox residualTarget))
+    (sample : NonpoleCompleteRequestDescendantSample entry
+      (descendantResidualRequestWidth entry targetBox residualTarget))
     (pointInside : targetBox.Contains
       (entry.parent.parent.chart.parameterization.curve.point
         sample.parameter)) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         (p.eval
           (entry.parent.parent.chart.parameterization.curve.point
             sample.parameter)) < residualTarget := by
   have upper := sample.normSq_eval_point_le_of_inside
-    (Curve.Boundary.Complete.Sample.descendantResidualRequestWidth_pos entry targetBox targetPositive)
+    (descendantResidualRequestWidth_pos entry targetBox targetPositive)
     targetBox pointInside
   exact upper.trans_lt
-    (Data.Rat.SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
-      (Curve.Event.Profile.Residual.Lift.affineProfileResidualCoefficient_nonneg
+    (SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
+      (Event.Profile.Residual.Lift.affineProfileResidualCoefficient_nonneg
         (targetBox := targetBox) entry.parent.event.1)
       targetPositive)
 

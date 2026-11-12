@@ -4,6 +4,7 @@ import Purelib.Polynomial.Dense.Gaussian.Basic
 public import Purelib.Polynomial.Dense.Gaussian.Bounds.RootRadius.Box
 import Purelib.RootIsolation.Exact.Basic
 public import Purelib.RootIsolation.Exact.Ownership.Basic
+public import Purelib.Polynomial.Elimination.Axis.Certificate
 import Purelib.RootIsolation.Track.Basic
 
 import Purelib.Tactic.QuotientFreeOmega
@@ -34,8 +35,15 @@ set_option genInjectivity false in
 
 The original isolation supplies the support and ordered owners. The owner
 selector and maximality certificate refer to those same tracks and polynomial,
-with their retained containment and separation conditions. -/
+with their retained containment and separation conditions. The axis certificate
+keeps its actual degree; canonical or alternate preparation equalities remain
+with the corresponding retained preparation. -/
 public structure BoxResult (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) where
+  /-- The actual retained axis certificate's numerical degree bound. -/
+  eliminationDegree : Nat
+  /-- The same original polynomial's retained axis certificate at its actual degree bound. -/
+  elimination : (positive : 0 < p.natDegree) →
+    Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p eliminationDegree
   /-- The exact degree-sized isolation in the polynomial's original large square. -/ isolation : Exact.Basic.Output p
     (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox p) p.natDegree
   /-- Every supported winding track is assigned to an original isolation owner with strict containment evidence. -/

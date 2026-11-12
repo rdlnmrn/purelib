@@ -105,6 +105,10 @@ section
 
 /-- Equality of the represented projective coordinates by cross multiplication. -/
 def Equivalent [Mul K] (x y : Proj K) : Prop := x.p * y.q = y.p * x.q
+
+/-- Decide projective cross-multiplication equivalence whenever coordinate equality is executable. -/
+instance [Mul K] [DecidableEq K] (x y : Proj K) : Decidable (Equivalent x y) :=
+  inferInstanceAs (Decidable (x.p * y.q = y.p * x.q))
 end
 end Purelib.Geometry.Projective.Line.Proj
 end

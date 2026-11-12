@@ -25,7 +25,7 @@ open Purelib.Geometry.Plane.Line
 open scoped Purelib.Data.Nat
 attribute [local instance 2000] Purelib.Data.Nat.successorNeZero
   Purelib.Data.Nat.successorAtLeastTwo
-  Purelib.Algebra.Group.Negation.subNegZeroMonoid
+  Algebra.Group.Negation.subNegZeroMonoid
 
 public section
 
@@ -42,37 +42,37 @@ section
 
 open Purelib.Algebra
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Field.ExplicitField K]
 
 namespace Purelib.Geometry.Triangles.Orthocenter.Basic
 
 /-- The altitude from `first` to the opposite side `second third`. -/
 @[expose] def triangleAltitudeFromFirst [DecidableEq K]
-    (first second third : Plane.Point K) (secondThirdDistinct : second ≠ third) :
-    Plane.Line K :=
+    (first second third : Point K) (secondThirdDistinct : second ≠ third) :
+    Line K :=
   Construction.altitudeThrough first (Incidence.lineThrough second third secondThirdDistinct)
 
 /-- The altitude from `second` to the opposite side `first third`. -/
 @[expose] def triangleAltitudeFromSecond [DecidableEq K]
-    (first second third : Plane.Point K) (firstThirdDistinct : first ≠ third) :
-    Plane.Line K :=
+    (first second third : Point K) (firstThirdDistinct : first ≠ third) :
+    Line K :=
   Construction.altitudeThrough second (Incidence.lineThrough first third firstThirdDistinct)
 
 /-- The altitude from `third` to the opposite side `first second`. -/
 @[expose] def triangleAltitudeFromThird [DecidableEq K]
-    (first second third : Plane.Point K) (firstSecondDistinct : first ≠ second) :
-    Plane.Line K :=
+    (first second third : Point K) (firstSecondDistinct : first ≠ second) :
+    Line K :=
   Construction.altitudeThrough third (Incidence.lineThrough first second firstSecondDistinct)
 
 /-- The first two triangle altitudes are nonparallel for a noncollinear triangle. -/
 theorem triangle_altitudes_not_parallel
     [Nontrivial K] [DecidableEq K]
-    (first second third : Plane.Point K)
+    (first second third : Point K)
     (firstThirdDistinct : first ≠ third)
     (secondThirdDistinct : second ≠ third)
     (notCollinear : ¬ Incidence.Collinear first second third) :
-    ¬ (Geometry.Triangles.Orthocenter.Basic.triangleAltitudeFromFirst first second third secondThirdDistinct).Parallel
-      (Geometry.Triangles.Orthocenter.Basic.triangleAltitudeFromSecond first second third firstThirdDistinct) := by
+    ¬ (triangleAltitudeFromFirst first second third secondThirdDistinct).Parallel
+      (triangleAltitudeFromSecond first second third firstThirdDistinct) := by
   intro parallel
   apply notCollinear
   apply (Incidence.collinear_iff_pointDeterminant_eq_zero first second third).2
@@ -101,30 +101,30 @@ theorem triangle_altitudes_not_parallel
 
 /-- The displayed orthocenter: the explicit intersection of the altitudes from the first two vertices. -/
 @[expose] def orthocenterPoint [Nontrivial K] [DecidableEq K]
-    (first second third : Plane.Point K)
+    (first second third : Point K)
     (firstThirdDistinct : first ≠ third)
     (secondThirdDistinct : second ≠ third)
-    (notCollinear : ¬ Incidence.Collinear first second third) : Plane.Point K :=
+    (notCollinear : ¬ Incidence.Collinear first second third) : Point K :=
   Intersection.lineIntersection
-    (Geometry.Triangles.Orthocenter.Basic.triangleAltitudeFromFirst first second third secondThirdDistinct)
-    (Geometry.Triangles.Orthocenter.Basic.triangleAltitudeFromSecond first second third firstThirdDistinct)
-    (Geometry.Triangles.Orthocenter.Basic.triangle_altitudes_not_parallel first second third firstThirdDistinct
+    (triangleAltitudeFromFirst first second third secondThirdDistinct)
+    (triangleAltitudeFromSecond first second third firstThirdDistinct)
+    (triangle_altitudes_not_parallel first second third firstThirdDistinct
       secondThirdDistinct notCollinear)
 
 /-- The coefficient determinant of the three triangle altitudes vanishes. -/
 theorem triangle_altitudes_determinant_zero [DecidableEq K]
-    (first second third : Plane.Point K)
+    (first second third : Point K)
     (firstSecondDistinct : first ≠ second)
     (firstThirdDistinct : first ≠ third)
     (secondThirdDistinct : second ≠ third) :
     Incidence.lineDeterminant
-        (Triangles.Orthocenter.Basic.triangleAltitudeFromFirst first second third secondThirdDistinct)
-        (Geometry.Triangles.Orthocenter.Basic.triangleAltitudeFromSecond first second third firstThirdDistinct)
-        (Geometry.Triangles.Orthocenter.Basic.triangleAltitudeFromThird first second third firstSecondDistinct) = 0 :=
+        (triangleAltitudeFromFirst first second third secondThirdDistinct)
+        (triangleAltitudeFromSecond first second third firstThirdDistinct)
+        (triangleAltitudeFromThird first second third firstSecondDistinct) = 0 :=
           by
-  unfold Incidence.lineDeterminant Triangles.Orthocenter.Basic.triangleAltitudeFromFirst
-    Geometry.Triangles.Orthocenter.Basic.triangleAltitudeFromSecond
-      Geometry.Triangles.Orthocenter.Basic.triangleAltitudeFromThird Construction.altitudeThrough
+  unfold Incidence.lineDeterminant triangleAltitudeFromFirst
+    triangleAltitudeFromSecond
+      triangleAltitudeFromThird Construction.altitudeThrough
     Incidence.lineThrough
   ring1
 
@@ -133,41 +133,41 @@ theorem triangle_altitudes_determinant_zero [DecidableEq K]
 Distinct vertices and noncollinearity certify the side constructions and the nonparallel altitude intersection. -/
 theorem orthocenter
     [Nontrivial K] [DecidableEq K]
-    (first second third : Plane.Point K)
+    (first second third : Point K)
     (firstSecondDistinct : first ≠ second)
     (firstThirdDistinct : first ≠ third)
     (secondThirdDistinct : second ≠ third)
     (notCollinear : ¬ Incidence.Collinear first second third) :
-    let center := Triangles.Orthocenter.Basic.orthocenterPoint first second third firstThirdDistinct
+    let center := orthocenterPoint first second third firstThirdDistinct
       secondThirdDistinct notCollinear
-    (Geometry.Triangles.Orthocenter.Basic.triangleAltitudeFromFirst first second third
+    (triangleAltitudeFromFirst first second third
         secondThirdDistinct).Contains center ∧
-      (Geometry.Triangles.Orthocenter.Basic.triangleAltitudeFromSecond first second third
+      (triangleAltitudeFromSecond first second third
         firstThirdDistinct).Contains center ∧
-      (Geometry.Triangles.Orthocenter.Basic.triangleAltitudeFromThird first second third
+      (triangleAltitudeFromThird first second third
         firstSecondDistinct).Contains center := by
   dsimp only
-  let nonparallel := Geometry.Triangles.Orthocenter.Basic.triangle_altitudes_not_parallel first second third
+  let nonparallel := triangle_altitudes_not_parallel first second third
     firstThirdDistinct secondThirdDistinct notCollinear
   constructor
-  · unfold Triangles.Orthocenter.Basic.orthocenterPoint
+  · unfold orthocenterPoint
     exact Intersection.lineIntersection_on_first
-      (Geometry.Triangles.Orthocenter.Basic.triangleAltitudeFromFirst first second third secondThirdDistinct)
-      (Geometry.Triangles.Orthocenter.Basic.triangleAltitudeFromSecond first second third firstThirdDistinct)
+      (triangleAltitudeFromFirst first second third secondThirdDistinct)
+      (triangleAltitudeFromSecond first second third firstThirdDistinct)
       nonparallel
   constructor
-  · unfold Triangles.Orthocenter.Basic.orthocenterPoint
+  · unfold orthocenterPoint
     exact Intersection.lineIntersection_on_second
-      (Geometry.Triangles.Orthocenter.Basic.triangleAltitudeFromFirst first second third secondThirdDistinct)
-      (Geometry.Triangles.Orthocenter.Basic.triangleAltitudeFromSecond first second third firstThirdDistinct)
+      (triangleAltitudeFromFirst first second third secondThirdDistinct)
+      (triangleAltitudeFromSecond first second third firstThirdDistinct)
       nonparallel
-  · unfold Triangles.Orthocenter.Basic.orthocenterPoint
+  · unfold orthocenterPoint
     exact Intersection.lineIntersection_on_third_of_determinant_eq_zero
-      (Geometry.Triangles.Orthocenter.Basic.triangleAltitudeFromFirst first second third secondThirdDistinct)
-      (Geometry.Triangles.Orthocenter.Basic.triangleAltitudeFromSecond first second third firstThirdDistinct)
-      (Geometry.Triangles.Orthocenter.Basic.triangleAltitudeFromThird first second third firstSecondDistinct)
+      (triangleAltitudeFromFirst first second third secondThirdDistinct)
+      (triangleAltitudeFromSecond first second third firstThirdDistinct)
+      (triangleAltitudeFromThird first second third firstSecondDistinct)
       nonparallel
-      (Geometry.Triangles.Orthocenter.Basic.triangle_altitudes_determinant_zero first second third
+      (triangle_altitudes_determinant_zero first second third
         firstSecondDistinct firstThirdDistinct secondThirdDistinct)
 
 end Purelib.Geometry.Triangles.Orthocenter.Basic

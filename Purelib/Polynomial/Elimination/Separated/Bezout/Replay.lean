@@ -96,7 +96,7 @@ theorem eliminant_eq (saved :
   Elimination.Separated.Scalar.scalarEliminant p := by
   unfold eliminant
   rw [saved.property]
-  rfl
+  exact (Elimination.Separated.Scalar.scalarEliminant_eq p).symm
 end Purelib.Polynomial.Elimination.Separated.Bezout.Replay
 
 end

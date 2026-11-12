@@ -8,6 +8,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 public import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.Rat
 
 open Purelib.LinearAlgebra
@@ -34,7 +36,7 @@ namespace KernelApproximation
 
 /-- Squared Frobenius error of two displayed rational matrices. -/
 def matrixDistanceSq (left right :
-  Coordinates3.Matrix3 Fraction.Rational) : Fraction.Rational :=
+  Matrix3 Fraction.Rational) : Fraction.Rational :=
   (left.tt - right.tt) ^ 2 +
   (left.tr - right.tr) ^ 2 +
   (left.ts - right.ts) ^ 2 +
@@ -47,26 +49,26 @@ def matrixDistanceSq (left right :
 
 /-- The coordinatewise squared distance between rational matrices is nonnegative. -/
 theorem matrixDistanceSq_nonnegative
-  (left right : Coordinates3.Matrix3 Fraction.Rational) :
+  (left right : Matrix3 Fraction.Rational) :
     0 ≤ matrixDistanceSq left right := by
   unfold matrixDistanceSq
-  have tt := Fraction.Order.Arithmetic.sq_nonneg_direct
+  have tt := Arithmetic.sq_nonneg_direct
     (left.tt - right.tt)
-  have tr := Fraction.Order.Arithmetic.sq_nonneg_direct
+  have tr := Arithmetic.sq_nonneg_direct
     (left.tr - right.tr)
-  have ts := Fraction.Order.Arithmetic.sq_nonneg_direct
+  have ts := Arithmetic.sq_nonneg_direct
     (left.ts - right.ts)
-  have rt := Fraction.Order.Arithmetic.sq_nonneg_direct
+  have rt := Arithmetic.sq_nonneg_direct
     (left.rt - right.rt)
-  have rr := Fraction.Order.Arithmetic.sq_nonneg_direct
+  have rr := Arithmetic.sq_nonneg_direct
     (left.rr - right.rr)
-  have rs := Fraction.Order.Arithmetic.sq_nonneg_direct
+  have rs := Arithmetic.sq_nonneg_direct
     (left.rs - right.rs)
-  have st := Fraction.Order.Arithmetic.sq_nonneg_direct
+  have st := Arithmetic.sq_nonneg_direct
     (left.st - right.st)
-  have sr := Fraction.Order.Arithmetic.sq_nonneg_direct
+  have sr := Arithmetic.sq_nonneg_direct
     (left.sr - right.sr)
-  have ss := Fraction.Order.Arithmetic.sq_nonneg_direct
+  have ss := Arithmetic.sq_nonneg_direct
     (left.ss - right.ss)
   exact add_nonneg
     (add_nonneg
@@ -78,7 +80,7 @@ theorem matrixDistanceSq_nonnegative
 
 /-- The coordinatewise squared distance from a rational matrix to itself is zero. -/
 theorem matrixDistanceSq_self (matrix :
-  Coordinates3.Matrix3 Fraction.Rational) :
+  Matrix3 Fraction.Rational) :
     matrixDistanceSq matrix matrix = 0 := by
   unfold matrixDistanceSq
   ring1

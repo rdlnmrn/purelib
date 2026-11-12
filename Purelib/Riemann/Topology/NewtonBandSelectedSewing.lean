@@ -48,7 +48,7 @@ open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target radius : Rational}
@@ -63,19 +63,19 @@ open Purelib.Algebra in
 open Purelib.Curves in
 /-- The original annular source mask selects exactly the complete two-sheet bilinear triangle sum inside the retained
 band. -/
-private theorem source_sum (entry : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AnnularEntry grid current) (left :
-  Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) current.mesh)
-    (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) current.mesh) :
-    FiniteSum.Fin.sumFin (fun source => if sourceMask entry source
+private theorem source_sum (entry : AnnularEntry grid current) (left :
+  TriangleReadings (cache.get i) current.mesh)
+    (right : TriangleReadings (cache.get j) current.mesh) :
+    sumFin (fun source => if sourceMask entry source
       then Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea
         left right source else 0) =
-      Hyperelliptic.Meshes.PuncturedGrid.SelectedTrianglePartition.selectedFullTriangleArea left right (fun position =>
+      selectedFullTriangleArea left right (fun position =>
         decide ((grid.faces.regulars[position.val]'position.isLt).cell.box.Refines (grid.bands.box entry.hole.index)))
           := by
   rw [Hyperelliptic.Meshes.PuncturedGrid.TriangleSums.LiftedMesh.triangle_sum]
-  apply FiniteSum.Fin.sumFin_congr
+  apply sumFin_congr
   intro position
-  apply FiniteSum.Fin.sumFin_congr
+  apply sumFin_congr
   intro sheet
   have mask (upper : Bool) :
       sourceMask entry (current.mesh.triangleIndex position sheet upper) =
@@ -93,29 +93,29 @@ open Purelib.Data in
 The two retained sewn value caches define the paired primitive on the same cut surface, and the request pays the area
 error with the physical hole excluded. -/
 theorem selected_accurate
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) current.mesh)
-      (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) current.mesh)
-    {leftSurface : Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch left.values}
-    {rightSurface : Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch right.values}
+    (left : TriangleReadings (cache.get i) current.mesh)
+      (right : TriangleReadings (cache.get j) current.mesh)
+    {leftSurface : CachedSample current.cutPolygon.patch left.values}
+    {rightSurface : CachedSample current.cutPolygon.patch right.values}
     (annulus : SewnAnnulus leftSurface)
-    {prepared : Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation current.cutPolygon domains i
-      j} {error : Rat.Fraction.Rational} {floor : Nat}
-    (request : Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation.Request prepared error floor)
+    {prepared : BilinearPreparation current.cutPolygon domains i
+      j} {error : Rational} {floor : Nat}
+    (request : BilinearPreparation.Request prepared error floor)
       (later : request.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (edgeListArea (fun vertex =>
+    normSq (edgeListArea (fun vertex =>
       (⟨leftSurface.sewn.values vertex, rightSurface.sewn.values vertex⟩ : PrimitivePoint))
         (annulus.selected.triangles.flatMap OrientedTriangle.boundary) -
-      Hyperelliptic.Meshes.PuncturedGrid.SelectedTrianglePartition.selectedFullTriangleArea left right (fun position =>
+      selectedFullTriangleArea left right (fun position =>
         decide ((grid.faces.regulars[position.val]'position.isLt).cell.box.Refines
           (grid.bands.box annulus.source.hole.index)))) < error := by
-  let bilinear := Topology.Surface.Sewing.Bilinear.Samples.build leftSurface rightSurface
+  let bilinear := Surface.Sewing.Bilinear.Samples.build leftSurface rightSurface
   have estimated :=
     Hyperelliptic.Meshes.PuncturedGrid.SelectedSewnBilinearRequest.BilinearPreparation.Request.selected_accurate
     request later left right bilinear annulus.selected
   have area := Periods.BilinearBoundaryReadback.triangles_eq_raw
     bilinear (annulus.selected.triangles)
   rw [area] at estimated
-  exact (congrArg (fun triangles => Data.Gaussian.Norm.Basic.normSq (edgeListArea (fun vertex =>
+  exact (congrArg (fun triangles => normSq (edgeListArea (fun vertex =>
     (⟨leftSurface.sewn.values vertex, rightSurface.sewn.values vertex⟩ : PrimitivePoint))
       (annulus.selected.triangles.flatMap OrientedTriangle.boundary) - triangles))
     (source_sum annulus.source left right)).symm.trans_lt estimated

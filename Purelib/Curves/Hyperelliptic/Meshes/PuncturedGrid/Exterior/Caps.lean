@@ -105,20 +105,20 @@ open Purelib.Riemann.Paths.PreparedPathWinding.ClearPath (rawWinding)
 open Purelib.Topology.Surface.Sewing.VertexSewing
 open Purelib.Topology.Surface.Sewing.SewingRetraction (wordValue)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {domains : FaceDomainBank lifted.frames
     base.faces.regulars}
 
 /-- The actual retained exterior program's indexed word closes on its original starting root sheet. -/
 theorem indexed_closed (program : PeriodPrograms.ExteriorProgram lifted differential) :
-    ∃ anchor, PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish program.indexed anchor anchor := by
+    ∃ anchor, PathEndpoints OrientedEdge.start OrientedEdge.finish program.indexed anchor anchor := by
   have winding : (ClearPath.rawWinding program.period.closed.walk.path) =
       8 * ((ClearPath.rawWinding program.period.closed.walk.path) / 8) := by
     rw [program.walk_eq]
@@ -133,33 +133,33 @@ theorem indexed_closed (program : PeriodPrograms.ExteriorProgram lifted differen
 namespace AllSurfacePreparation
 
 /-- Read the actual ordered indexed exterior word of every retained surface component. -/
-@[expose] def componentWords (components : List (ExteriorProgram.SurfaceComponent regular domains differential)) :
+@[expose] def componentWords (components : List (SurfaceComponent regular domains differential)) :
     List (List (Stokes.OrientedEdge lifted.vertices.count)) :=
   components.map (fun component => component.prepared.occurrences.map (fun item => item.placement.indexed))
 
 /-- Flattening the retained component words gives exactly the original ordered surface-occurrence edge list. -/
-private theorem componentWords_flatten (components : List (ExteriorProgram.SurfaceComponent regular domains
+private theorem componentWords_flatten (components : List (SurfaceComponent regular domains
   differential)) :
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.componentWords components).flatten =
+    (AllSurfacePreparation.componentWords components).flatten =
       (components.flatMap (fun component => component.prepared.occurrences)).map (fun item => item.placement.indexed) :=
         by
   induction components with
   | nil => rfl
   | cons head tail ih =>
-      simp only [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.componentWords,
+      simp only [AllSurfacePreparation.componentWords,
         List.map_cons, List.flatten_cons, Flatten.flatMap_cons, Map.map_append] at ih ⊢
       exact congrArg (List.append _) ih
 
 /-- Every actual retained component word is a closed original lifted exterior path. -/
-private theorem componentWords_closed (components : List (ExteriorProgram.SurfaceComponent regular domains
+private theorem componentWords_closed (components : List (SurfaceComponent regular domains
   differential)) :
-    ∀ word ∈ Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.componentWords components, ∃
+    ∀ word ∈ AllSurfacePreparation.componentWords components, ∃
       anchor,
-      PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish word anchor anchor := by
+      PathEndpoints OrientedEdge.start OrientedEdge.finish word anchor anchor := by
   intro word member
   obtain ⟨component, _, equal⟩ := Map.mem_map.mp member
   rw [← equal, component.prepared.occurrences_eq]
-  exact Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.indexed_closed component.program
+  exact Caps.indexed_closed component.program
 
 namespace CapAttachment
 
@@ -173,7 +173,7 @@ namespace CapAttachment
 
 /-- The inclusion of original retained surface vertices is injective. -/
 theorem vertex_injective {original components : Nat} : Function.Injective
-  (@Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.vertex original
+  (@CapAttachment.vertex original
   components) := by
   intro first last equal
   have values := congrArg Fin.val equal
@@ -181,7 +181,7 @@ theorem vertex_injective {original components : Nat} : Function.Injective
 
 /-- Distinct retained exterior component indices have distinct new apex vertices. -/
 theorem apex_injective {original components : Nat} : Function.Injective
-  (@Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.apex original
+  (@CapAttachment.apex original
   components) := by
   intro first last equal
   have values := congrArg Fin.val equal
@@ -191,9 +191,9 @@ theorem apex_injective {original components : Nat} : Function.Injective
 
 /-- Every original surface vertex is distinct from each newly attached cap apex. -/
 theorem vertex_ne_apex {original components : Nat} (first : Fin original) (last : Fin components) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.vertex (components :=
+    CapAttachment.vertex (components :=
       components) first ≠
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.apex (original :=
+      CapAttachment.apex (original :=
       original) last := by
   intro equal
   have values := congrArg Fin.val equal
@@ -209,25 +209,25 @@ structure CapAttachment (prepared : ExteriorProgram.AllSurfacePreparation regula
   /-- The cached actual original exterior component words. -/ words : List (List (Stokes.OrientedEdge
     lifted.vertices.count))
   /-- The cached words are exactly those read from the retained prepared surface components. -/ words_eq : words =
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.componentWords prepared.components
+    AllSurfacePreparation.componentWords prepared.components
   /-- The cached oppositely oriented fan triangles on the actual retained component words. -/ caps : List
     (Stokes.OrientedTriangle (lifted.vertices.count + words.length))
   /-- The cap triangles are exactly the original fan construction with one retained new apex per component. -/ caps_eq :
     caps = BoundaryCaps.fans
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.vertex words
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.apex
+    CapAttachment.vertex words
+    CapAttachment.apex
   /-- The cached original surface triangles followed by the actual attached fan triangles. -/ triangles : List
     (Stokes.OrientedTriangle (lifted.vertices.count + words.length))
   /-- The complete triangle cache is exactly the original face embedding followed by the retained caps. -/ triangles_eq
     : triangles = (List.ofFn lifted.mesh.triangulation.faces).map (OrientedTriangle.map
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.vertex) ++ caps
+    CapAttachment.vertex) ++ caps
   /-- The cached original physical branch-hole boundary edges in the extended vertex set. -/ holes : List
     (Stokes.OrientedEdge (lifted.vertices.count + words.length))
   /-- The hole cache is exactly the embedded flattening of the original retained branch-hole boundaries. -/ holes_eq :
     holes = ((base.faces.holes.map (fun hole => hole.liftedBoundary lifted.vertices lifted.edges)).flatten).map
     (OrientedEdge.map
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.vertex)
-  /-- The checked finite indexing of these exact retained surface and cap triangles. -/ indexed : BoundaryCaps.Indexed
+      CapAttachment.vertex)
+  /-- The checked finite indexing of these exact retained surface and cap triangles. -/ indexed : Indexed
     triangles
 
 constructive_injectivity CapAttachment
@@ -235,47 +235,47 @@ constructive_injectivity CapAttachment
 namespace CapAttachment
 
 variable {prepared :
-  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+  ExteriorProgram.AllSurfacePreparation
   regular domains differential}
 
 /-- Cache the actual exterior words, original faces, attached fans and retained hole boundaries with their finite
 triangle indexing. -/
 @[expose] def build (prepared : ExteriorProgram.AllSurfacePreparation regular domains differential) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared :=
-  let words := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.componentWords
+  CapAttachment prepared :=
+  let words := AllSurfacePreparation.componentWords
     prepared.components
   let caps := BoundaryCaps.fans
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.vertex words
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.apex (original :=
+    CapAttachment.vertex words
+    (CapAttachment.apex (original :=
     lifted.vertices.count))
   let triangles := (List.ofFn lifted.mesh.triangulation.faces).map (OrientedTriangle.map
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.vertex) ++ caps
+    CapAttachment.vertex) ++ caps
   let holes := ((base.faces.holes.map (fun hole => hole.liftedBoundary lifted.vertices lifted.edges)).flatten).map
     (OrientedEdge.map
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.vertex (components :=
+      (CapAttachment.vertex (components :=
       words.length)))
   ⟨words, rfl, caps, rfl, triangles, rfl, holes, rfl, Indexed.build triangles⟩
 
 /-- The cached component words flatten to exactly the original retained exterior boundary list. -/
 theorem words_flatten (attached :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared) :
+  CapAttachment prepared) :
   attached.words.flatten = lifted.exteriorBoundaries.flatten := by
   rw [attached.words_eq,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.componentWords_flatten, ←
+    AllSurfacePreparation.componentWords_flatten, ←
     prepared.occurrences_eq]
   exact prepared.indexed_eq
 
 /-- Every cached actual component word closes on an original surface vertex. -/
 theorem words_closed (attached :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared) : ∀ word ∈
+  CapAttachment prepared) : ∀ word ∈
   attached.words,
-    ∃ anchor, PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish word anchor anchor := by
+    ∃ anchor, PathEndpoints OrientedEdge.start OrientedEdge.finish word anchor anchor := by
   rw [attached.words_eq]
-  exact Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.componentWords_closed
+  exact AllSurfacePreparation.componentWords_closed
     prepared.components
 
 /-- The area of flattened retained words equals the sum of their actual individual edge-list areas. -/
-private theorem flatten_area (points : Fin count → Stokes.PrimitivePoint) (words : List (List (Stokes.OrientedEdge
+private theorem flatten_area (points : Fin count → PrimitivePoint) (words : List (List (Stokes.OrientedEdge
   count))) :
     Stokes.edgeListArea points words.flatten = CellBoundary.sumValues (Stokes.edgeListArea points) words := by
   induction words with
@@ -286,68 +286,68 @@ private theorem flatten_area (points : Fin count → Stokes.PrimitivePoint) (wor
 
 /-- The actual attached fan area is the negative original two-sheet exterior area. -/
 theorem caps_area (attached :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared)
-    (points : Fin (lifted.vertices.count + attached.words.length) → Stokes.PrimitivePoint) :
+  CapAttachment prepared)
+    (points : Fin (lifted.vertices.count + attached.words.length) → PrimitivePoint) :
     BoundaryCaps.area points attached.caps =
       -lifted.edges.twoSheetArea lifted.vertices (fun index => points
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.vertex index))
+        (CapAttachment.vertex index))
         base.bank.exterior := by
   rw [attached.caps_eq, BoundaryCaps.fans_area
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.vertex points
-    attached.words Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.apex
+    CapAttachment.vertex points
+    attached.words CapAttachment.apex
     attached.words_closed,
     attached.words_flatten,
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.flatten_area,
+      CapAttachment.flatten_area,
       lifted.exteriorBoundaries_area]
 
 /-- Cancellation of the fixed exterior in the actual surface face sum. The branch-hole contribution remains explicit. -/
 theorem area_eq_holes (attached :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared)
-    (points : Fin (lifted.vertices.count + attached.words.length) → Stokes.PrimitivePoint) :
+  CapAttachment prepared)
+    (points : Fin (lifted.vertices.count + attached.words.length) → PrimitivePoint) :
     BoundaryCaps.area points attached.triangles =
       CellBoundary.sumValues (fun hole => lifted.edges.twoSheetArea lifted.vertices (fun index => points
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.vertex index))
+        (CapAttachment.vertex index))
         hole.inwardBoundary)
         base.faces.holes := by
   rw [attached.triangles_eq, BoundaryCaps.area_append, BoundaryCaps.area_map, attached.caps_area]
   have surface := lifted.wedge_eq_exterior_and_holes (fun index => points
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.vertex index))
+    (CapAttachment.vertex index))
   rw [Stokes.triangleWedgeSum_eq_edgeListArea] at surface
   change BoundaryCaps.area (fun index => points
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.vertex index))
+    (CapAttachment.vertex index))
     (List.ofFn lifted.mesh.triangulation.faces) = _ at surface
   rw [surface]
   ring1
 
 /-- The boundary area of the actual attached triangulation equals the retained original branch-hole area. -/
 theorem boundary_eq_holes (attached :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared)
-    (points : Fin (lifted.vertices.count + attached.words.length) → Stokes.PrimitivePoint) :
+  CapAttachment prepared)
+    (points : Fin (lifted.vertices.count + attached.words.length) → PrimitivePoint) :
     Stokes.edgeListArea points attached.indexed.triangulation.boundary =
       CellBoundary.sumValues (fun hole => lifted.edges.twoSheetArea lifted.vertices (fun index => points
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.vertex index))
+        (CapAttachment.vertex index))
         hole.inwardBoundary)
         base.faces.holes :=
   (attached.indexed.boundary_area points).trans (attached.area_eq_holes points)
 
 /-- The cached embedded hole word reads exactly the original summed branch-hole area. -/
 theorem holes_area (attached :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared)
-    (points : Fin (lifted.vertices.count + attached.words.length) → Stokes.PrimitivePoint) :
+  CapAttachment prepared)
+    (points : Fin (lifted.vertices.count + attached.words.length) → PrimitivePoint) :
     Stokes.edgeListArea points attached.holes =
       CellBoundary.sumValues (fun hole => lifted.edges.twoSheetArea lifted.vertices (fun index => points
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.vertex index))
+        (CapAttachment.vertex index))
         hole.inwardBoundary)
         base.faces.holes := by
   rw [attached.holes_eq, BoundaryCaps.edgeArea_map,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.flatten_area,
+    CapAttachment.flatten_area,
     CellBoundary.sumValues_map]
   exact CellBoundary.sumValues_congr _ _ _ (fun hole _ => hole.liftedBoundary_area lifted.vertices lifted.edges _)
 
 /-- Every oriented edge has exactly the signed multiplicity of the retained hole tours. This also cancels all new radial
 edges, for arbitrary edge values. -/
 theorem boundary_coefficients (attached :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared)
+  CapAttachment prepared)
     (selected : Stokes.OrientedEdge (lifted.vertices.count + attached.words.length)) :
     AreaChainTests.coefficient selected attached.indexed.triangulation.boundary =
       AreaChainTests.coefficient selected attached.holes :=
@@ -357,8 +357,8 @@ theorem boundary_coefficients (attached :
 /-- Every antisymmetric valuation reads the same value on the actual attached boundary and retained original hole word.
 -/
 theorem boundary_chain (attached :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared)
-    (value : Stokes.OrientedEdge (lifted.vertices.count + attached.words.length) → Data.Gaussian.Basic.Canonical)
+  CapAttachment prepared)
+    (value : Stokes.OrientedEdge (lifted.vertices.count + attached.words.length) → Canonical)
     (anti : ∀ edge, value edge.reverse = -value edge) :
     SewingRetraction.wordValue value attached.indexed.triangulation.boundary = SewingRetraction.wordValue value
       attached.holes :=

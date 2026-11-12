@@ -9,6 +9,8 @@ import Purelib.LinearAlgebra.Coordinates3.Matrix
 import Purelib.LinearAlgebra.Coordinates3.Vector
 import Purelib.Tactic.Ring
 
+open Purelib.Geometry.Quadratic.Ternary
+
 /-!
 # Vector anchors of time-first Lorentz rotations
 
@@ -32,15 +34,15 @@ variable {K : Type*} [ExplicitField K] (oneNonzero : (1 : K) ≠ 0)
 
 /-- The Lorentz adjoint of a rotation is its original retained inverse matrix. -/
 theorem adjoint_rotation (rotation : (Form.lorentz oneNonzero).SpecialOrthogonal) :
-    Quadratic.Ternary.Lorentz.adjoint oneNonzero rotation.matrix = rotation.inverseMatrix := by
-  unfold Quadratic.Ternary.Lorentz.adjoint
+    Lorentz.adjoint oneNonzero rotation.matrix = rotation.inverseMatrix := by
+  unfold Lorentz.adjoint
   rw [rotation.inverseMatrix_eq_transpose_conjugate, Form.lorentz_inverse]
 
 /-- The shared antisymmetric part equals half the difference from the Lorentz adjoint. -/
 theorem antisymmetricPart_eq_adjointFormula (rotation : (Form.lorentz oneNonzero).SpecialOrthogonal)
     (twoNonzero : (2 : K) ≠ 0) :
     rotation.antisymmetricPart twoNonzero = Matrix3.scale (1 / 2)
-      (Matrix3.sub rotation.matrix (Quadratic.Ternary.Lorentz.adjoint oneNonzero rotation.matrix)) := by
+      (Matrix3.sub rotation.matrix (Lorentz.adjoint oneNonzero rotation.matrix)) := by
   unfold Form.SpecialOrthogonal.antisymmetricPart
   rw [adjoint_rotation, ExplicitField.div_eq_mul_inv, one_mul]
 
@@ -49,7 +51,7 @@ theorem rotationAnchor_eq_adjointFormula (rotation : (Form.lorentz oneNonzero).S
     (defined : rotation.anchorDenominator ≠ 0) (twoNonzero : (2 : K) ≠ 0) :
     rotation.anchor defined = Matrix3.scale (2 / (1 + Matrix3.trace rotation.matrix))
       (Matrix3.scale (1 / 2)
-        (Matrix3.sub rotation.matrix (Quadratic.Ternary.Lorentz.adjoint oneNonzero rotation.matrix))) := by
+        (Matrix3.sub rotation.matrix (Lorentz.adjoint oneNonzero rotation.matrix))) := by
   change rotation.anchor defined = Matrix3.scale (2 / rotation.anchorDenominator) _
   rw [rotation.anchor_eq_antisymmetricPart defined twoNonzero,
     antisymmetricPart_eq_adjointFormula oneNonzero rotation twoNonzero]
@@ -62,8 +64,8 @@ the identity matrix.
 -/
 theorem rotationAnchor_isAnchor (rotation : (Form.lorentz oneNonzero).SpecialOrthogonal)
     (defined : rotation.anchorDenominator ≠ 0) :
-    Quadratic.Ternary.Lorentz.IsAnchor oneNonzero (rotation.anchor defined) := by
-  unfold Quadratic.Ternary.Lorentz.IsAnchor Quadratic.Ternary.Lorentz.adjoint
+    Lorentz.IsAnchor oneNonzero (rotation.anchor defined) := by
+  unfold Lorentz.IsAnchor Lorentz.adjoint
   calc
     _ = Matrix3.mul (Matrix3.transpose
         (Matrix3.mul (rotation.anchor defined) (Form.lorentz oneNonzero).matrix))
@@ -81,23 +83,23 @@ theorem rotationAnchor_isAnchor (rotation : (Form.lorentz oneNonzero).SpecialOrt
 /-- Read the original time-first Lorentz vector from a rotation's computed matrix anchor. -/
 @[expose] def rotationAnchorVector (rotation : (Form.lorentz oneNonzero).SpecialOrthogonal)
     (defined : rotation.anchorDenominator ≠ 0) : Vector3 K :=
-  Quadratic.Ternary.Lorentz.anchorVector (rotation.anchor defined)
+  Lorentz.anchorVector (rotation.anchor defined)
 
 /-- The read-back vector reconstructs the computed Lorentz anchor matrix. -/
 theorem anchor_rotationAnchorVector (rotation : (Form.lorentz oneNonzero).SpecialOrthogonal)
     (defined : rotation.anchorDenominator ≠ 0) (twoNonzero : (2 : K) ≠ 0) :
-    Quadratic.Ternary.Lorentz.anchor oneNonzero (rotationAnchorVector oneNonzero rotation defined) =
+    Lorentz.anchor oneNonzero (rotationAnchorVector oneNonzero rotation defined) =
       rotation.anchor defined :=
-  Quadratic.Ternary.Lorentz.anchor_anchorVector oneNonzero (rotation.anchor defined) twoNonzero
+  Lorentz.anchor_anchorVector oneNonzero (rotation.anchor defined) twoNonzero
     (rotationAnchor_isAnchor oneNonzero rotation defined)
 
 /-- The original Lorentz vector readback uniquely determines a rotation's matrix anchor. -/
 theorem rotationAnchorVector_unique (rotation : (Form.lorentz oneNonzero).SpecialOrthogonal)
     (defined : rotation.anchorDenominator ≠ 0) (vector : Vector3 K)
-    (represents : Quadratic.Ternary.Lorentz.anchor oneNonzero vector = rotation.anchor defined) :
+    (represents : Lorentz.anchor oneNonzero vector = rotation.anchor defined) :
     vector = rotationAnchorVector oneNonzero rotation defined :=
-  (Quadratic.Ternary.Lorentz.anchorVector_anchor oneNonzero vector).symm.trans
-    (congrArg (Quadratic.Ternary.Lorentz.anchorVector (K := K)) represents)
+  (Lorentz.anchorVector_anchor oneNonzero vector).symm.trans
+    (congrArg (Lorentz.anchorVector (K := K)) represents)
 
 /-- The Lorentz vector anchor of a cap is its original supplied vector. -/
 theorem rotationAnchorVector_cap (axis : Vector3 K) (defined : capDenominator oneNonzero axis ≠ 0)
@@ -109,11 +111,11 @@ theorem rotationAnchorVector_cap (axis : Vector3 K) (defined : capDenominator on
   have recovered : (capRotation oneNonzero axis defined).anchor
         (((capRotation oneNonzero axis defined).anchorDenominator_ne_zero_iff twoNonzero).mpr
           (halfSpread_cap_ne_one oneNonzero axis defined twoNonzero)) =
-      Quadratic.Ternary.Lorentz.anchor oneNonzero axis :=
+      Lorentz.anchor oneNonzero axis :=
     Form.SpecialOrthogonal.anchor_capRotation (Vector3.neg axis)
       (by rw [cayleyDenominator_neg]; exact defined) twoNonzero
   rw [recovered]
-  exact Quadratic.Ternary.Lorentz.anchorVector_anchor oneNonzero axis
+  exact Lorentz.anchorVector_anchor oneNonzero axis
 
 /-- The computed Lorentz anchor vector is the negative of the cached generic cap normalization.
 
@@ -131,18 +133,18 @@ theorem rotationAnchorVector_eq_neg_normalization [DecidableEq K]
       Vector3.neg (witness.capNormalizationOfHalfSpreadNeOne twoNonzero notHalfTurn).anchor := by
   let normalization := witness.capNormalizationOfHalfSpreadNeOne twoNonzero notHalfTurn
   have convert : (Form.lorentz oneNonzero).actionSkew normalization.anchor =
-      Quadratic.Ternary.Lorentz.anchor oneNonzero (Vector3.neg normalization.anchor) := by
-    unfold Quadratic.Ternary.Lorentz.anchor
+      Lorentz.anchor oneNonzero (Vector3.neg normalization.anchor) := by
+    unfold Lorentz.anchor
     rw [Vector3.neg_neg]
   calc
-    _ = Quadratic.Ternary.Lorentz.anchorVector
+    _ = Lorentz.anchorVector
         ((Form.lorentz oneNonzero).actionSkew normalization.anchor) :=
-      congrArg (Quadratic.Ternary.Lorentz.anchorVector (K := K))
+      congrArg (Lorentz.anchorVector (K := K))
         (witness.anchor_recovery twoNonzero notHalfTurn)
-    _ = Quadratic.Ternary.Lorentz.anchorVector
-        (Quadratic.Ternary.Lorentz.anchor oneNonzero (Vector3.neg normalization.anchor)) :=
-      congrArg (Quadratic.Ternary.Lorentz.anchorVector (K := K)) convert
-    _ = _ := Quadratic.Ternary.Lorentz.anchorVector_anchor oneNonzero _
+    _ = Lorentz.anchorVector
+        (Lorentz.anchor oneNonzero (Vector3.neg normalization.anchor)) :=
+      congrArg (Lorentz.anchorVector (K := K)) convert
+    _ = _ := Lorentz.anchorVector_anchor oneNonzero _
 
 /-- The computed Lorentz vector lies in the cap domain and its cap recovers the original rotation.
 
@@ -217,7 +219,7 @@ and reflection-product equality reconstruct the original rotation.
     let axis := rotationAnchorVector oneNonzero rotation
       ((rotation.anchorDenominator_ne_zero_iff twoNonzero).mpr notHalfTurn)
     Σ' second : Vector3 K, Σ' secondNonNull : (Form.lorentz oneNonzero).quadrance second ≠ 0,
-      second = Vector3.add first (Quadratic.Ternary.Lorentz.cross oneNonzero axis first) ∧
+      second = Vector3.add first (Lorentz.cross oneNonzero axis first) ∧
         (Form.lorentz oneNonzero).reflectionProductRotation first second firstNonNull secondNonNull =
           rotation := by
   let form := Form.lorentz oneNonzero
@@ -232,7 +234,7 @@ and reflection-product equality reconstruct the original rotation.
     ring1
   refine ⟨form.capSecondMirror (Vector3.neg axis) first,
     form.capSecondMirror_nonNull (Vector3.neg axis) first defined firstNonNull genericPerpendicular, ?_, ?_⟩
-  · unfold Form.capSecondMirror Quadratic.Ternary.Lorentz.cross
+  · unfold Form.capSecondMirror Lorentz.cross
     rw [form.cliffordCross_neg_left]
   · exact (form.reflectionProduct_capSecondMirror
       (Vector3.neg axis) first defined firstNonNull genericPerpendicular).trans
@@ -284,16 +286,16 @@ theorem rotationAnchor_reflectionProduct (first second : Vector3 K)
     ((Form.lorentz oneNonzero).reflectionProductRotation first second firstNonNull secondNonNull).anchor
         ((Form.lorentz oneNonzero).reflectionProduct_anchorDefined
           first second firstNonNull secondNonNull pairingNonzero twoNonzero) =
-      Quadratic.Ternary.Lorentz.anchor oneNonzero
+      Lorentz.anchor oneNonzero
         (Vector3.scale ((Form.lorentz oneNonzero).bilinear first second)⁻¹
-          (Quadratic.Ternary.Lorentz.cross oneNonzero first second)) := by
+          (Lorentz.cross oneNonzero first second)) := by
   have conversion : Vector3.scale
         ((Form.lorentz oneNonzero).determinant * (Form.lorentz oneNonzero).bilinear first second)⁻¹
         ((Form.lorentz oneNonzero).cliffordCross first second) =
       Vector3.neg (Vector3.scale ((Form.lorentz oneNonzero).bilinear first second)⁻¹
-        (Quadratic.Ternary.Lorentz.cross oneNonzero first second)) := by
+        (Lorentz.cross oneNonzero first second)) := by
     rw [Form.lorentz_determinant, one_mul]
-    unfold Quadratic.Ternary.Lorentz.cross
+    unfold Lorentz.cross
     ext <;> unfold Vector3.scale Vector3.neg <;> ring1
   exact ((Form.lorentz oneNonzero).reflectionProduct_anchor
     first second firstNonNull secondNonNull pairingNonzero twoNonzero).trans
@@ -309,10 +311,10 @@ theorem rotationAnchorVector_reflectionProduct (first second : Vector3 K)
         ((Form.lorentz oneNonzero).reflectionProduct_anchorDefined
           first second firstNonNull secondNonNull pairingNonzero twoNonzero) =
       Vector3.scale ((Form.lorentz oneNonzero).bilinear first second)⁻¹
-        (Quadratic.Ternary.Lorentz.cross oneNonzero first second) := by
+        (Lorentz.cross oneNonzero first second) := by
   unfold rotationAnchorVector
   rw [rotationAnchor_reflectionProduct oneNonzero first second firstNonNull secondNonNull pairingNonzero twoNonzero]
-  exact Quadratic.Ternary.Lorentz.anchorVector_anchor oneNonzero _
+  exact Lorentz.anchorVector_anchor oneNonzero _
 
 /-- The anchor of two Lorentz reflections is the antisymmetric difference of their dual outer products over pairing. -/
 theorem rotationAnchor_reflectionProduct_outerFormula (first second : Vector3 K)
@@ -326,13 +328,13 @@ theorem rotationAnchor_reflectionProduct_outerFormula (first second : Vector3 K)
         (Matrix3.sub (Matrix3.outer ((Form.lorentz oneNonzero).dual first) second)
           (Matrix3.outer ((Form.lorentz oneNonzero).dual second) first)) := by
   rw [rotationAnchor_reflectionProduct oneNonzero first second firstNonNull secondNonNull pairingNonzero twoNonzero,
-    Quadratic.Ternary.Lorentz.anchor_scale]
-  have crossOuter : Quadratic.Ternary.Lorentz.anchor oneNonzero
-        (Quadratic.Ternary.Lorentz.cross oneNonzero first second) =
+    Lorentz.anchor_scale]
+  have crossOuter : Lorentz.anchor oneNonzero
+        (Lorentz.cross oneNonzero first second) =
       Matrix3.sub (Matrix3.outer ((Form.lorentz oneNonzero).dual first) second)
         (Matrix3.outer ((Form.lorentz oneNonzero).dual second) first) :=
-    (Quadratic.Ternary.Lorentz.anchor_commutator oneNonzero second first).symm.trans
-      (Quadratic.Ternary.Lorentz.anchor_commutator_outer oneNonzero second first)
+    (Lorentz.anchor_commutator oneNonzero second first).symm.trans
+      (Lorentz.anchor_commutator_outer oneNonzero second first)
   exact congrArg (Matrix3.scale ((Form.lorentz oneNonzero).bilinear first second)⁻¹) crossOuter
 
 /-- The quadrance of the normalized Lorentz reflection-product anchor is spread over its complement.
@@ -347,7 +349,7 @@ theorem quadrance_reflectionProductAnchor (first second : Vector3 K)
     (pairingNonzero : (Form.lorentz oneNonzero).bilinear first second ≠ 0) :
     (Form.lorentz oneNonzero).quadrance
         (Vector3.scale ((Form.lorentz oneNonzero).bilinear first second)⁻¹
-          (Quadratic.Ternary.Lorentz.cross oneNonzero first second)) =
+          (Lorentz.cross oneNonzero first second)) =
       (Form.lorentz oneNonzero).spread first second firstNonNull secondNonNull /
         (1 - (Form.lorentz oneNonzero).spread first second firstNonNull secondNonNull) := by
   have complement : 1 - (Form.lorentz oneNonzero).spread first second firstNonNull secondNonNull =
@@ -363,12 +365,12 @@ theorem quadrance_reflectionProductAnchor (first second : Vector3 K)
     exact ExplicitField.div_ne_zero pairingSquareNonzero (ExplicitField.mul_ne_zero firstNonNull secondNonNull)
   apply ExplicitField.eq_of_mul_eq_mul_right complementNonzero
   rw [ExplicitField.div_mul_cancel _ complementNonzero, Form.quadrance_scale, complement,
-    Quadratic.Ternary.Lorentz.spread_eq_cross_quadrance]
+    Lorentz.spread_eq_cross_quadrance]
   simp only [ExplicitField.div_eq_mul_inv]
   calc
     _ = (((Form.lorentz oneNonzero).bilinear first second) *
         ((Form.lorentz oneNonzero).bilinear first second)⁻¹) ^ 2 *
-        (Form.lorentz oneNonzero).quadrance (Quadratic.Ternary.Lorentz.cross oneNonzero first second) *
+        (Form.lorentz oneNonzero).quadrance (Lorentz.cross oneNonzero first second) *
         ((Form.lorentz oneNonzero).quadrance first * (Form.lorentz oneNonzero).quadrance second)⁻¹ := by ring1
     _ = _ := by rw [ExplicitField.mul_inv_cancel _ pairingNonzero]; ring1
 

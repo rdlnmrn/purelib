@@ -110,24 +110,24 @@ open Purelib.Data.Rat.Fraction (Rational)
 open Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh (MatchedHorizontalSide
   MatchedVerticalSide)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {faces : Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces bank} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
-  {cuts : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+    VertexBank bank.grid} {edges :
+    RootEdgeBank frames}
+  {faces : PuncturedFaces bank} {domains :
+    FaceDomainBank frames faces.regulars}
+  {cuts : CommonCuts domains}
     {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
-    {target : Purelib.Data.Rat.Fraction.Rational}
-  {mesh : Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
+    Preflights domains sheet}
+    {target : Rational}
+  {mesh : LiftedMesh vertices edges faces}
   {firstPosition : Fin faces.regulars.length} {firstSheet : Fin 2}
 
-variable {request : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet
-  => Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet
+variable {request : TwoSheetRequest (fun sheet
+  => RegularMeshes.build domains cuts sheet
   coarseDepth) fixed target}
 
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
@@ -152,11 +152,11 @@ retained endpoint correction.
 Both original face assemblies and centered samples are consumed at the same paid numerical stage. -/
 theorem AreaRequest.perimeter_accurate
     {joined : LiftedSides.HorizontalCrossing request first nextPosition firstUpper lastUpper}
-    {i j : Fin genus} {firstParent secondParent : Fin 2} {tolerance : Fraction.Rational} {floor : Nat}
+    {i j : Fin genus} {firstParent secondParent : Fin 2} {tolerance : Rational} {floor : Nat}
     (allocated : HorizontalCrossing.AreaRequest joined
       (PeriodMatrix.standardDifferential i) (PeriodMatrix.standardDifferential j)
       firstParent secondParent tolerance floor)
-    {stage : Nat} (cache : RegularMeshes.Numerics domains stage) (later : allocated.accuracy.index ≤ stage)
+    {stage : Nat} (cache : Numerics domains stage) (later : allocated.accuracy.index ≤ stage)
     (left : CenteredBilinearPath.Sample (fun vertex =>
       ⟨(allocated.trace.leftReadings (cache.atDomain firstPosition firstSheet i).anchors
           (cache.atDomain firstPosition firstSheet i).offsets).values vertex,
@@ -190,7 +190,7 @@ theorem AreaRequest.perimeter_accurate
     (cache.atDomain firstPosition firstSheet j) (cache.atDomain nextPosition joined.crossing.next.sheet j)
     left right (by rw [request.mesh_depth, request.mesh_depth])
     ((request.entries.get firstSheet).meshes.entries.get firstPosition).y_last.symm
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.LiftedPerimeters.HorizontalCrossing.adjacent joined |>.trans
+    (HorizontalCrossing.adjacent joined |>.trans
       ((request.entries.get joined.crossing.next.sheet).meshes.entries.get nextPosition).y_first.symm)
     leftAssembly rightAssembly leftPerimeter rightPerimeter
 
@@ -216,11 +216,11 @@ retained endpoint correction.
 Both original face assemblies and centered samples are consumed at the same paid numerical stage. -/
 theorem AreaRequest.perimeter_accurate
     {joined : LiftedSides.VerticalCrossing request first nextPosition firstUpper lastUpper}
-    {i j : Fin genus} {firstParent secondParent : Fin 2} {tolerance : Fraction.Rational} {floor : Nat}
+    {i j : Fin genus} {firstParent secondParent : Fin 2} {tolerance : Rational} {floor : Nat}
     (allocated : VerticalCrossing.AreaRequest joined
       (PeriodMatrix.standardDifferential i) (PeriodMatrix.standardDifferential j)
       firstParent secondParent tolerance floor)
-    {stage : Nat} (cache : RegularMeshes.Numerics domains stage) (later : allocated.accuracy.index ≤ stage)
+    {stage : Nat} (cache : Numerics domains stage) (later : allocated.accuracy.index ≤ stage)
     (left : CenteredBilinearPath.Sample (fun vertex =>
       ⟨(allocated.trace.leftReadings (cache.atDomain firstPosition firstSheet i).anchors
           (cache.atDomain firstPosition firstSheet i).offsets).values vertex,
@@ -254,7 +254,7 @@ theorem AreaRequest.perimeter_accurate
     (cache.atDomain firstPosition firstSheet j) (cache.atDomain nextPosition joined.crossing.next.sheet j)
     left right (by rw [request.mesh_depth, request.mesh_depth])
     ((request.entries.get firstSheet).meshes.entries.get firstPosition).x_last.symm
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.LiftedPerimeters.VerticalCrossing.adjacent joined |>.trans
+    (VerticalCrossing.adjacent joined |>.trans
       ((request.entries.get joined.crossing.next.sheet).meshes.entries.get nextPosition).x_first.symm)
     leftAssembly rightAssembly leftPerimeter rightPerimeter
 

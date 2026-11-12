@@ -18,6 +18,8 @@ import Purelib.Data.List.Map
 import Purelib.Data.List.Replicate
 import Purelib.Data.Nat.Subtraction
 
+open Purelib.Approximation.Gaussian.Name.Coherent.State
+
 open Purelib.Approximation.Gaussian
 open Purelib.Data
 open Purelib.Data.Rat
@@ -49,8 +51,8 @@ The table retains this mapped list in the same order, including every
 zero coefficient and its terminal parameter coefficient. -/
 @[expose] public def coefficientTable (parameter : Gaussian.Basic.Canonical) (degree : Data.Nat.Positive.RootDegree) :
     Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable where
-  entries := (Power.Gaussian.Progressive.Coefficients.coefficientValues parameter degree).map
-    Name.Coherent.State.Exact.exactCoefficientState
+  entries := (coefficientValues parameter degree).map
+    Exact.exactCoefficientState
 
 /-- Every exact coefficient state has allowance below the supplied positive target.
 
@@ -61,14 +63,14 @@ public theorem coefficientTable_allowances_lt
     (parameter : Gaussian.Basic.Canonical) (degree : Data.Nat.Positive.RootDegree)
     {target : Fraction.Rational} (positive : 0 < target) :
     Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.AllowancesLt
-      (Power.Gaussian.Progressive.Coefficients.coefficientTable parameter degree).entries target := by
-  simp only [Power.Gaussian.Progressive.Coefficients.coefficientTable]
-  induction Power.Gaussian.Progressive.Coefficients.coefficientValues parameter degree with
+      (coefficientTable parameter degree).entries target := by
+  simp only [coefficientTable]
+  induction coefficientValues parameter degree with
   | nil => trivial
   | cons value remaining inductionHypothesis =>
       simp only [List.map_cons,
         Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.AllowancesLt,
-        Name.Coherent.State.Exact.exactCoefficientState_allowance]
+        Exact.exactCoefficientState_allowance]
       exact ⟨positive, inductionHypothesis⟩
 
 /-- Reading the exact coefficient table recovers the original non-leading coefficient list.
@@ -78,17 +80,17 @@ Structural recursion preserves the entire ordered list without changing
 the table construction or its coefficient states. -/
 @[simp] public theorem coefficientTable_values
     (parameter : Gaussian.Basic.Canonical) (degree : Data.Nat.Positive.RootDegree) :
-    (Power.Gaussian.Progressive.Coefficients.coefficientTable parameter degree).values =
-      Power.Gaussian.Progressive.Coefficients.coefficientValues parameter degree := by
-  change List.map Name.Coherent.State.CoefficientState.value
-      (List.map Name.Coherent.State.Exact.exactCoefficientState
-        (Power.Gaussian.Progressive.Coefficients.coefficientValues parameter degree)) = _
-  induction Power.Gaussian.Progressive.Coefficients.coefficientValues parameter degree with
+    (coefficientTable parameter degree).values =
+      coefficientValues parameter degree := by
+  change List.map CoefficientState.value
+      (List.map Exact.exactCoefficientState
+        (coefficientValues parameter degree)) = _
+  induction coefficientValues parameter degree with
   | nil => exact Eq.refl _
   | cons value remaining inductionHypothesis =>
       change value ::
-          List.map Name.Coherent.State.CoefficientState.value
-            (List.map Name.Coherent.State.Exact.exactCoefficientState remaining) =
+          List.map CoefficientState.value
+            (List.map Exact.exactCoefficientState remaining) =
         value :: remaining
       exact congrArg (List.cons value) inductionHypothesis
 
@@ -99,13 +101,13 @@ The exact value list identifies that same high-to-low coefficient sequence
 with the supplied parameter and positive-degree power polynomial. -/
 @[simp] public theorem coefficientTable_polynomial
     (parameter : Gaussian.Basic.Canonical) (degree : Data.Nat.Positive.RootDegree) :
-    (Power.Gaussian.Progressive.Coefficients.coefficientTable parameter degree).polynomial =
-      Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree := by
+    (coefficientTable parameter degree).polynomial =
+      rootPolynomial parameter degree := by
   apply Dense.Basic.DensePolynomial.ext
-  change 1 :: (Power.Gaussian.Progressive.Coefficients.coefficientTable parameter degree).values =
-    1 :: Power.Gaussian.Progressive.Coefficients.coefficientValues parameter degree
+  change 1 :: (coefficientTable parameter degree).values =
+    1 :: coefficientValues parameter degree
   exact congrArg (List.cons (1 : Gaussian.Basic.Canonical))
-    (Power.Gaussian.Progressive.Coefficients.coefficientTable_values parameter degree)
+    (coefficientTable_values parameter degree)
 
 /-- The exact coefficient table retains the squarefree certificate at a nonzero parameter.
 
@@ -115,9 +117,9 @@ certificate to the same retained coefficient table. -/
 @[expose] public def coefficientTableSquarefree {parameter : Gaussian.Basic.Canonical}
     (parameterNonzero : parameter ≠ 0) (degree : Data.Nat.Positive.RootDegree) :
     Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate
-      (Power.Gaussian.Progressive.Coefficients.coefficientTable parameter degree).polynomial := by
-  rw [Power.Gaussian.Progressive.Coefficients.coefficientTable_polynomial]
-  exact Power.Gaussian.Squarefree.squarefree parameterNonzero degree
+      (coefficientTable parameter degree).polynomial := by
+  rw [coefficientTable_polynomial]
+  exact Squarefree.squarefree parameterNonzero degree
 
 /-- The non-leading coefficient list has exactly the displayed positive degree many entries.
 
@@ -126,7 +128,7 @@ terminal parameter coefficient adds one. Positivity of the degree
 prevents truncation when reconstructing this natural count. -/
 @[simp] public theorem coefficientValues_length
     (parameter : Gaussian.Basic.Canonical) (degree : Data.Nat.Positive.RootDegree) :
-    (Power.Gaussian.Progressive.Coefficients.coefficientValues parameter degree).length = degree.value := by
+    (coefficientValues parameter degree).length = degree.value := by
   change (List.replicate (degree.value - 1) (0 : Gaussian.Basic.Canonical) ++
     [-parameter]).length = degree.value
   rewrite [List.Append.length_append, List.Replicate.length_replicate]
@@ -141,11 +143,11 @@ list length. The original coefficient count is precisely the supplied
 positive root degree. -/
 @[simp] public theorem coefficientTable_degree
     (parameter : Gaussian.Basic.Canonical) (degree : Data.Nat.Positive.RootDegree) :
-    (Power.Gaussian.Progressive.Coefficients.coefficientTable parameter degree).degree = degree.value := by
-  change (List.map Name.Coherent.State.Exact.exactCoefficientState
-    (Power.Gaussian.Progressive.Coefficients.coefficientValues parameter degree)).length =
+    (coefficientTable parameter degree).degree = degree.value := by
+  change (List.map Exact.exactCoefficientState
+    (coefficientValues parameter degree)).length =
       degree.value
-  exact (List.Map.length_map Name.Coherent.State.Exact.exactCoefficientState _).trans
-    (Power.Gaussian.Progressive.Coefficients.coefficientValues_length parameter degree)
+  exact (List.Map.length_map Exact.exactCoefficientState _).trans
+    (coefficientValues_length parameter degree)
 
 end Purelib.Polynomial.Power.Gaussian.Progressive.Coefficients

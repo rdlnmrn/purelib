@@ -56,10 +56,10 @@ theorem factorizationOfEvals
     have allZero : ∀ point ∈ points, difference.eval point = 0 := by
       intro point _member
       dsimp only [difference]
-      rw [Dense.Basic.DensePolynomial.eval_sub, Dense.Basic.DensePolynomial.eval_mul, identity point]
+      rw [Basic.DensePolynomial.eval_sub, Basic.DensePolynomial.eval_mul, identity point]
       ring1
     have tooMany :=
-      Dense.Rational.Roots.FiniteBound.nodup_zeros_length_lt_degreeCount
+      Roots.FiniteBound.nodup_zeros_length_lt_degreeCount
         difference nonzero points
         (Approximation.Rational.Grid.Interior.interiorCandidates_nodup
           (show (0 : Fraction.Rational) < 1 by decide) difference.degreeCount)
@@ -79,8 +79,8 @@ theorem eval_factorization
     {p left right : BoundaryFactorization.CoefficientPolynomial}
     (factorization : Factorization p left right) (point : Fraction.Rational) :
     p.eval point = left.eval point * right.eval point := by
-  have differenceZero := Dense.Basic.DensePolynomial.eval_eq_zero_of_isZero factorization point
-  rw [Dense.Basic.DensePolynomial.eval_sub, Dense.Basic.DensePolynomial.eval_mul] at differenceZero
+  have differenceZero := Basic.DensePolynomial.eval_eq_zero_of_isZero factorization point
+  rw [Basic.DensePolynomial.eval_sub, Basic.DensePolynomial.eval_mul] at differenceZero
   calc
     p.eval point =
         (p.eval point - left.eval point * right.eval point) +
@@ -98,9 +98,9 @@ derivatives pointwise. -/
 theorem eval_derivative_factorization
     {p left right : BoundaryFactorization.CoefficientPolynomial}
     (factorization : Factorization p left right) (point : Fraction.Rational) :
-    (Dense.Derivative.derivative p).eval point =
-      (Dense.Derivative.derivative (left * right)).eval point :=
-  Dense.Derivative.eval_derivative_eq_of_sub_isZero
+    (Derivative.derivative p).eval point =
+      (Derivative.derivative (left * right)).eval point :=
+  Derivative.eval_derivative_eq_of_sub_isZero
     factorization point
 
 end Factorization
@@ -112,9 +112,9 @@ theorem factorization_swap
     {p left right : BoundaryFactorization.CoefficientPolynomial}
     (factorization : Factorization p left right) :
     Factorization p right left := by
-  apply Dense.Rational.Factorization.factorizationOfEvals
+  apply factorizationOfEvals
   intro point
-  rw [Dense.Rational.Factorization.eval_factorization factorization point]
+  rw [eval_factorization factorization point]
   exact Fraction.Field.mul_comm _ _
 
 end Factorization
@@ -129,13 +129,13 @@ theorem right_isZero_false
     right.isZero = false := by
   by_cases rightZero : right.isZero = true
   · have productZero : left * right = (0 : BoundaryFactorization.CoefficientPolynomial) :=
-      Dense.Basic.DensePolynomial.mul_eq_zero_of_isZero_right rightZero
+      Basic.DensePolynomial.mul_eq_zero_of_isZero_right rightZero
     change (p - left * right).isZero = true at factorization
     rw [productZero] at factorization
     have targetZero : p.isZero = true := by
       change (p + -(0 : BoundaryFactorization.CoefficientPolynomial)).isZero = true at factorization
       have negZero : -(0 : BoundaryFactorization.CoefficientPolynomial) = 0 := rfl
-      rw [negZero, Dense.Basic.DensePolynomial.add_zero_normalize, pNormalized] at factorization
+      rw [negZero, Basic.DensePolynomial.add_zero_normalize, pNormalized] at factorization
       exact factorization
     rw [pNonzero] at targetZero
     exact Bool.noConfusion targetZero
@@ -152,10 +152,10 @@ theorem factor_natDegree_add
     (leftNonzero : left.isZero = false) (rightNonzero : right.isZero = false)
     (factorization : Factorization p left right) :
     left.natDegree + right.natDegree = p.natDegree := by
-  have productNonzero := Dense.Basic.DensePolynomial.isZero_mul_eq_false leftNonzero rightNonzero
-  have degree := Dense.Leading.LeadingTerm.natDegree_eq_of_sub_isZero pNonzero
-    productNonzero pNormalized (Dense.Basic.DensePolynomial.normalize_mul left right) factorization
-  rw [Dense.Basic.DensePolynomial.natDegree_mul leftNonzero rightNonzero] at degree
+  have productNonzero := Basic.DensePolynomial.isZero_mul_eq_false leftNonzero rightNonzero
+  have degree := Leading.LeadingTerm.natDegree_eq_of_sub_isZero pNonzero
+    productNonzero pNormalized (Basic.DensePolynomial.normalize_mul left right) factorization
+  rw [Basic.DensePolynomial.natDegree_mul leftNonzero rightNonzero] at degree
   exact degree.symm
 
 end Factorization

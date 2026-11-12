@@ -87,10 +87,10 @@ public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedC
 public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RequestedEnergy
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceComparison
 public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.WeightedPeriodTrace
-public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContinuedComparison
+public import Purelib.Riemann.Branches.ContainedPreparedPolynomialSheets
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.EnteredPaths
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels
-import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveComparison
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveComparison
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveNegation
 public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.QueryNegation
 public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.RootComparison

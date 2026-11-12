@@ -91,29 +91,29 @@ open Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lift
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks (FaceDomainBank)
 open Purelib.Riemann.Periods.PeriodMatrix (standardDifferential)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target
-    radius : Purelib.Data.Rat.Fraction.Rational}
-  {grid : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-    {index : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
-  {annulus : Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index} {lifted :
-    Purelib.Riemann.Meshes.LiftedPuncturedGrid grid.punctured}
+  {preparation : NewtonPreparation original} {target
+    radius : Rational}
+  {grid : NewtonGrid preparation target radius}
+    {index : Branches.BranchIsolation.Data.Index branches}
+  {annulus : AnnularFaces grid index} {lifted :
+    LiftedPuncturedGrid grid.punctured}
 
 namespace Lifted.OuterPreparation.Comparison
 
-variable {region : Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted} {prepared :
-  Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation region}
+variable {region : LiftedBoundary.Lifted annulus lifted} {prepared :
+  PrimitiveComparison.Lifted.OuterPreparation region}
   {differential : Fin genus} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
-  {tolerance : Purelib.Data.Rat.Fraction.Rational}
+    FaceDomainBank lifted.frames grid.faces.regulars}
+  {tolerance : Rational}
 
 /-- Acquire both differential models on the exact parents already used by annular excision. Coverage, properness and
 boundary geometry are automatic. -/
-@[expose] def pairedPrimitiveRequest (comparison : OuterPreparation.Comparison prepared differential domains tolerance)
-    (other : Fin genus) (areaTarget : Fraction.Rational) (positive : 0 < areaTarget) :
+@[expose] def pairedPrimitiveRequest (comparison : Comparison prepared differential domains tolerance)
+    (other : Fin genus) (areaTarget : Rational) (positive : 0 < areaTarget) :
     RequestedNewtonPrimitiveSide.FullAreaRequest
       (OuterPreparation.band prepared differential) (PeriodMatrix.standardDifferential other) genus
       comparison.parents.parents areaTarget :=
@@ -128,22 +128,22 @@ boundary geometry are automatic. -/
 
 /-- The density charge uses only the original retained parent count and the selected band. Refining the children does
 not change this bound. -/
-@[expose] def pairedDensityCharge (comparison : OuterPreparation.Comparison prepared differential domains tolerance)
-    (other : Fin genus) : Fraction.Rational :=
+@[expose] def pairedDensityCharge (comparison : Comparison prepared differential domains tolerance)
+    (other : Fin genus) : Rational :=
   let band := OuterPreparation.band prepared differential
   let otherProfile := ((preparation.profiles.get index).differentials.profiles.get other)
   let magnitude := (PreparedNewtonBandSamples.Sample.preparedDensity band.sample ((preparation.profiles.get
     index).differentials.profiles.get differential) band.error +
     PreparedNewtonBandSamples.Sample.preparedDensity band.sample otherProfile band.error) * (grid.bands.box
       index).diagonalSq
-  let n : Fraction.Rational := comparison.parents.parents.length
+  let n : Rational := comparison.parents.parents.length
   2 * (n^2 * (4 * magnitude^2) + 4 * (n^2 * magnitude)^2)
 
 /-- Control the full numerical path, including the polygon joining parent endpoints. The bank may retain a different
 child depth for every parent. -/
 theorem paired_numerical_area_bound
-    (comparison : OuterPreparation.Comparison prepared differential domains tolerance) (other : Fin genus)
-    {areaTarget : Fraction.Rational}
+    (comparison : Comparison prepared differential domains tolerance) (other : Fin genus)
+    {areaTarget : Rational}
     (sample : RequestedNewtonPrimitiveSide.FullAreaRequest
       (OuterPreparation.band prepared differential) (PeriodMatrix.standardDifferential other) genus
       comparison.parents.parents areaTarget) :
@@ -171,8 +171,8 @@ theorem paired_numerical_area_bound
 /-- Transfer the numerical density estimate to the actual requested primitive path on these same parents, paying the
 complete area discrepancy. -/
 theorem paired_primitive_area_bound
-    (comparison : OuterPreparation.Comparison prepared differential domains tolerance) (other : Fin genus)
-    {areaTarget : Fraction.Rational}
+    (comparison : Comparison prepared differential domains tolerance) (other : Fin genus)
+    {areaTarget : Rational}
     (sample : RequestedNewtonPrimitiveSide.FullAreaRequest
       (OuterPreparation.band prepared differential) (PeriodMatrix.standardDifferential other) genus
       comparison.parents.parents areaTarget) :

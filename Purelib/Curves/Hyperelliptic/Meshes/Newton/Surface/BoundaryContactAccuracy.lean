@@ -109,38 +109,38 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.EndpointPolygonEnergy.End
 open _root_.Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.HorizontalBoundaryRequest
   (Traces Request)
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve branches
     higher}
-  {preparation : Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius
-    : Data.Rat.Fraction.Rational} {grid : Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid
+  {preparation : NewtonPreparation original} {target radius
+    : Rational} {grid : NewtonGrid
     preparation target radius}
-  {observations : Riemann.RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
+  {observations : ProtectedObservations original} {frames :
     RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars}
-    {partitions : Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid}
-  {surfaceCuts : Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceCuts partitions domains}
+  {domains : FaceDomainBank frames grid.faces.regulars}
+    {partitions : SurfacePartitions observations grid}
+  {surfaceCuts : SurfaceCuts partitions domains}
   {first last : Fin grid.faces.regulars.length}
-  {start : Data.Gaussian.Basic.Canonical} {owner : Riemann.Topology.SquareRootContinuationChain.Owner
+  {start : Gaussian} {owner : Riemann.Topology.SquareRootContinuationChain.Owner
     (curve.polynomial.eval start)}
-  (firstEntry : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry (domains.get first).models start
+  (firstEntry : Entry (domains.get first).models start
     owner)
-  (lastEntry : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry (domains.get last).models start
+  (lastEntry : Entry (domains.get last).models start
     owner)
-  {coarseDepth : Nat} {fixed : (sheet : Fin 2) → Riemann.RootContinuation.NewtonRequestedObservationEnergy.Preflights
-    domains sheet} {error : Data.Rat.Fraction.Rational}
+  {coarseDepth : Nat} {fixed : (sheet : Fin 2) → Preflights
+    domains sheet} {error : Rational}
 
-variable (requests : Riemann.Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests
-  (fun sheet => Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains
+variable (requests : SynchronizedSurfaceRequests
+  (fun sheet => MeshCompatibility.surfaceMeshes partitions domains
     surfaceCuts sheet coarseDepth) fixed error)
 
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces (FacePerimeterTraces)
 
 variable
-  (firstTraces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces (requests.entries.get
+  (firstTraces : PerimeterTraces.FacePerimeterTraces (requests.entries.get
     firstEntry.sheet) first)
-  (lastTraces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces (requests.entries.get
+  (lastTraces : PerimeterTraces.FacePerimeterTraces (requests.entries.get
     lastEntry.sheet) last)
 
 open Purelib.Riemann.RootContinuation.NewtonObservationLocalEnergy.LocalMeshes (Numerics)
@@ -148,7 +148,7 @@ open Purelib.Riemann.Periods.CenteredBilinearPath (Sample)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Algebra.FiniteSum.Fin (sumFin)
 
-variable {pieceAllowance polygonAllowance : Data.Rat.Fraction.Rational} {floor stage : Nat}
+variable {pieceAllowance polygonAllowance : Rational} {floor stage : Nat}
 
 /-- The paid horizontal contact request bounds the actual top-to-bottom centered-area discrepancy.
 
@@ -158,7 +158,7 @@ theorem horizontalBoundary_accurate
     (equal : (partitions.get first).cuts.x.intervals = (partitions.get last).cuts.x.intervals)
     (adjacent : (grid.faces.regulars[first.val]'first.isLt).cell.box.yUpper =
       (grid.faces.regulars[last.val]'last.isLt).cell.box.yLower)
-    (endpoints : PuncturedGrid.EndpointPolygonPreparation (leftEntry := firstEntry) (rightEntry :=
+    (endpoints : EndpointPolygonPreparation (leftEntry := firstEntry) (rightEntry :=
       lastEntry)
       (EndpointGeometry.horizontalPieces firstTraces.pieces lastTraces.pieces
         (HorizontalPieces.build _ _ equal adjacent)))
@@ -166,28 +166,28 @@ theorem horizontalBoundary_accurate
       adjacent))
     (request : HorizontalBoundaryRequest.Request firstEntry lastEntry requests firstTraces.pieces lastTraces.pieces
       (HorizontalPieces.build _ _ equal adjacent) endpoints traces pieceAllowance polygonAllowance floor)
-    (later : request.index ≤ stage) (cache : LocalMeshes.Numerics domains stage) (coefficients :
-      LinearAlgebra.Gaussian.Energy.GaussianVector
+    (later : request.index ≤ stage) (cache : Numerics domains stage) (coefficients :
+      GaussianVector
       genus)
     (firstSamples : FacePerimeterTraces.Centered firstTraces cache coefficients)
     (lastSamples : FacePerimeterTraces.Centered lastTraces cache coefficients) :
     Data.Gaussian.Norm.Basic.normSq (firstSamples.top.centeredArea - lastSamples.bottom.centeredArea) ≤
-      2 * (genus : Fraction.Rational)^2 * (FiniteSum.Fin.sumFin (fun i => Data.Gaussian.Norm.Basic.normSq
+      2 * (genus : Rational)^2 * (FiniteSum.Fin.sumFin (fun i => Data.Gaussian.Norm.Basic.normSq
         (coefficients i)))^2 *
-        ((((PieceIndices.columns (partitions.get first)) + 1 : Nat) : Fraction.Rational)^2 * pieceAllowance +
+        ((((PieceIndices.columns (partitions.get first)) + 1 : Nat) : Rational)^2 * pieceAllowance +
           polygonAllowance) := by
   let counts := (PieceIndices.columns_eq (partitions.get first)).trans ((congrArg List.length equal).trans
     (PieceIndices.columns_eq (partitions.get last)).symm)
-  let firstPieces := fun index => CenteredBilinearPath.Sample.build (fun vertex => FacePerimeterTraces.ownerValues cache
+  let firstPieces := fun index => Sample.build (fun vertex => FacePerimeterTraces.ownerValues cache
     coefficients first
     ((firstTraces.pieces.topPieces index).indexed vertex))
-  let lastPieces := fun index => CenteredBilinearPath.Sample.build (fun vertex => FacePerimeterTraces.ownerValues cache
+  let lastPieces := fun index => Sample.build (fun vertex => FacePerimeterTraces.ownerValues cache
     coefficients last
     ((lastTraces.pieces.bottomPieces (Fin.cast counts index)).indexed vertex))
-  let firstPolygon := CenteredBilinearPath.Sample.build (fun vertex => FacePerimeterTraces.ownerValues cache
+  let firstPolygon := Sample.build (fun vertex => FacePerimeterTraces.ownerValues cache
     coefficients first
     ((JoinedCenteredArea.endpointPolygon firstTraces.pieces.topPieces).indexed vertex))
-  let lastPolygon := CenteredBilinearPath.Sample.build (fun vertex => FacePerimeterTraces.ownerValues cache coefficients
+  let lastPolygon := Sample.build (fun vertex => FacePerimeterTraces.ownerValues cache coefficients
     last
     ((JoinedCenteredArea.endpointPolygon (fun index => lastTraces.pieces.bottomPieces (Fin.cast counts index))).indexed
       vertex))
@@ -207,35 +207,35 @@ theorem verticalBoundary_accurate
     (equal : (partitions.get first).cuts.y.intervals = (partitions.get last).cuts.y.intervals)
     (adjacent : (grid.faces.regulars[first.val]'first.isLt).cell.box.xUpper =
       (grid.faces.regulars[last.val]'last.isLt).cell.box.xLower)
-    (endpoints : PuncturedGrid.EndpointPolygonPreparation (leftEntry := firstEntry) (rightEntry :=
+    (endpoints : EndpointPolygonPreparation (leftEntry := firstEntry) (rightEntry :=
       lastEntry)
       (EndpointGeometry.verticalPieces firstTraces.pieces lastTraces.pieces
         (VerticalPieces.build _ _ equal adjacent)))
     (traces : VerticalBoundaryRequest.Traces firstEntry lastEntry requests (VerticalPieces.build _ _ equal adjacent))
     (request : VerticalBoundaryRequest.Request firstEntry lastEntry requests firstTraces.pieces lastTraces.pieces
       (VerticalPieces.build _ _ equal adjacent) endpoints traces pieceAllowance polygonAllowance floor)
-    (later : request.index ≤ stage) (cache : LocalMeshes.Numerics domains stage) (coefficients :
-      LinearAlgebra.Gaussian.Energy.GaussianVector
+    (later : request.index ≤ stage) (cache : Numerics domains stage) (coefficients :
+      GaussianVector
       genus)
     (firstSamples : FacePerimeterTraces.Centered firstTraces cache coefficients)
     (lastSamples : FacePerimeterTraces.Centered lastTraces cache coefficients) :
     Data.Gaussian.Norm.Basic.normSq (firstSamples.right.centeredArea - lastSamples.left.centeredArea) ≤
-      2 * (genus : Fraction.Rational)^2 * (FiniteSum.Fin.sumFin (fun i => Data.Gaussian.Norm.Basic.normSq
+      2 * (genus : Rational)^2 * (FiniteSum.Fin.sumFin (fun i => Data.Gaussian.Norm.Basic.normSq
         (coefficients i)))^2 *
-        ((((PieceIndices.rows (partitions.get first)) + 1 : Nat) : Fraction.Rational)^2 * pieceAllowance +
+        ((((PieceIndices.rows (partitions.get first)) + 1 : Nat) : Rational)^2 * pieceAllowance +
           polygonAllowance) := by
   let counts := (PieceIndices.rows_eq (partitions.get first)).trans ((congrArg List.length equal).trans
     (PieceIndices.rows_eq (partitions.get last)).symm)
-  let firstPieces := fun index => CenteredBilinearPath.Sample.build (fun vertex => FacePerimeterTraces.ownerValues cache
+  let firstPieces := fun index => Sample.build (fun vertex => FacePerimeterTraces.ownerValues cache
     coefficients first
     ((firstTraces.pieces.rightPieces index).indexed vertex))
-  let lastPieces := fun index => CenteredBilinearPath.Sample.build (fun vertex => FacePerimeterTraces.ownerValues cache
+  let lastPieces := fun index => Sample.build (fun vertex => FacePerimeterTraces.ownerValues cache
     coefficients last
     ((lastTraces.pieces.leftPieces (Fin.cast counts index)).indexed vertex))
-  let firstPolygon := CenteredBilinearPath.Sample.build (fun vertex => FacePerimeterTraces.ownerValues cache
+  let firstPolygon := Sample.build (fun vertex => FacePerimeterTraces.ownerValues cache
     coefficients first
     ((JoinedCenteredArea.endpointPolygon firstTraces.pieces.rightPieces).indexed vertex))
-  let lastPolygon := CenteredBilinearPath.Sample.build (fun vertex => FacePerimeterTraces.ownerValues cache coefficients
+  let lastPolygon := Sample.build (fun vertex => FacePerimeterTraces.ownerValues cache coefficients
     last
     ((JoinedCenteredArea.endpointPolygon (fun index => lastTraces.pieces.leftPieces (Fin.cast counts index))).indexed
       vertex))

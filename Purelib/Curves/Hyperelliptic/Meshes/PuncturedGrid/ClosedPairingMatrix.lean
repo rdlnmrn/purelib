@@ -54,8 +54,8 @@ open Purelib.Topology.Polygon.Stokes
 
 local notation "vget" => Data.Vector.get
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base}
   {values : Data.Vector Gaussian.Basic.Canonical lifted.cutBoundaryWord.alphabet.count}
@@ -67,7 +67,7 @@ namespace GeneratorValuation
 generator values. -/
 theorem cut_area_eq_matrix : Topology.Mesh.RetracingWords.wordArea data.value lifted.cutPolygon.patch.boundary =
     Topology.Surface.Word.Pairing.contract (fun row column => lifted.cutBoundaryWord.signature.matrix row column)
-      (fun index => Energy.Polygon.energyPrimitivePoint (vget values index)) := open Purelib.Algebra in by
+      (fun index => Energy.Polygon.energyPrimitivePoint (vget values index)) := open Algebra in by
   have area := Topology.Surface.Cut.ValuationMatrix.CutBoundaryWord.wordArea_eq_contract
     lifted.cutBoundaryWord data.value data.value_reverse
   have projected := lifted.cutPolygon.patch.cut.boundary_eq
@@ -87,7 +87,7 @@ theorem cut_area_eq_twice_integral (integral : Topology.Surface.Cut.IntegralPair
     Topology.Mesh.RetracingWords.wordArea data.value lifted.cutPolygon.patch.boundary =
       2 * Topology.Surface.Word.Pairing.contract (fun row column => integral.paired row column)
         (fun index => Energy.Polygon.energyPrimitivePoint (vget values index)) := by
-  apply (Hyperelliptic.Meshes.PuncturedGrid.ClosedPairingMatrix.GeneratorValuation.cut_area_eq_matrix data).trans
+  apply (GeneratorValuation.cut_area_eq_matrix data).trans
   apply Topology.Surface.Word.PhysicalMatrixContraction.contract_eq_twice_paired integral
   intro index physical
   rw [data.physical index physical]
@@ -97,11 +97,11 @@ end GeneratorValuation
 
 namespace PairedPrepared
 
-variable {bank : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet
-  : Fin 2} {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered
+variable {bank : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet
+  : Fin 2} {ordered : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered
   bank sheet}
-  {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered} (prepared :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+  {paired : OrderedBranchPairs.Ordered.Paired ordered} (prepared :
+    Paired.PeriodPrograms.Prepared paired)
 
 /-- This holds for every physical-zero generator vector on the actual program owner. -/
 theorem pairing_eq_integral (integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord
@@ -109,9 +109,9 @@ theorem pairing_eq_integral (integral : Topology.Surface.Cut.IntegralPairing.Cut
     prepared.pairing data.value =
       Topology.Surface.Word.Pairing.contract (fun row column => integral.paired row column)
         (fun index => Energy.Polygon.energyPrimitivePoint (vget values index)) := by
-  have doubled := (Hyperelliptic.Meshes.PuncturedGrid.ClosedOrderedPairingArea.Paired.Prepared.twice_pairing_eq_cut_area
+  have doubled := (ClosedOrderedPairingArea.Paired.Prepared.twice_pairing_eq_cut_area
     data paired prepared).trans
-      (Hyperelliptic.Meshes.PuncturedGrid.ClosedPairingMatrix.GeneratorValuation.cut_area_eq_twice_integral data
+      (GeneratorValuation.cut_area_eq_twice_integral data
       integral)
   have cancel (first last : Gaussian.Basic.Canonical) (equal : 2 * first = 2 * last) : first = last := by
     have half := congrArg (fun value : Gaussian.Basic.Canonical => (1 / 2) * value) equal

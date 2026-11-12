@@ -21,7 +21,9 @@ import Purelib.Approximation.Gaussian.Name.Coherent.Refinement.Small
 
 @[expose] public section
 
-/-! # Regression clients through the public finite-acquisition interface -/
+/-!
+Bounded and gap-directed division of exact, small and zero inputs.
+-/
 
 namespace Purelib.Examples.Approximation.Gaussian.Acquisition.WorkedExamples
 

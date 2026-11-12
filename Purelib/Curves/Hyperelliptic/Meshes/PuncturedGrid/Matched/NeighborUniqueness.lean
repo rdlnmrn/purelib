@@ -53,24 +53,24 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.Regul
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest (TwoSheetRequest)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.LiftedSides (HorizontalCrossing VerticalCrossing)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {faces : Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces bank} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
-  {cuts : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+    VertexBank bank.grid} {edges :
+    RootEdgeBank frames}
+  {faces : Riemann.Meshes.PuncturedGridFaces.PuncturedFaces bank} {domains :
+    FaceDomainBank frames faces.regulars}
+  {cuts : CommonCuts domains}
     {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
-    {target : Purelib.Data.Rat.Fraction.Rational}
-  {mesh : Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
+    Preflights domains sheet}
+    {target : Rational}
+  {mesh : LiftedMesh vertices edges faces}
   {firstPosition : Fin faces.regulars.length} {firstSheet : Fin 2}
 
-variable {request : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet
-  => Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet
+variable {request : TwoSheetRequest (fun sheet
+  => RegularMeshes.build domains cuts sheet
   coarseDepth) fixed target}
 
 namespace HorizontalCrossing
@@ -93,9 +93,9 @@ theorem next_position_unique {otherPosition : Fin faces.regulars.length}
     (left : LiftedSides.HorizontalCrossing request first nextPosition firstUpper lastUpper)
     (right : LiftedSides.HorizontalCrossing request first otherPosition firstUpper lastUpper) : nextPosition =
       otherPosition := by
-  have equal := Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.NeighborUniqueness.HorizontalCrossing.next_anchor left
+  have equal := HorizontalCrossing.next_anchor left
     |>.trans
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.NeighborUniqueness.HorizontalCrossing.next_anchor right).symm
+    (HorizontalCrossing.next_anchor right).symm
   exact PuncturedFaces.position_eq_of_lower
     faces nextPosition otherPosition
     (congrArg (fun point : Data.Gaussian.Basic.Canonical => point.re) equal)
@@ -107,9 +107,9 @@ theorem previous_position_unique {otherPosition : Fin faces.regulars.length} {ot
     (left : LiftedSides.HorizontalCrossing request first nextPosition firstUpper lastUpper)
     (right : LiftedSides.HorizontalCrossing request other nextPosition firstUpper lastUpper) : firstPosition =
       otherPosition := by
-  have equal := (Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.NeighborUniqueness.HorizontalCrossing.next_anchor
+  have equal := (HorizontalCrossing.next_anchor
     left).symm.trans
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.NeighborUniqueness.HorizontalCrossing.next_anchor right)
+    (HorizontalCrossing.next_anchor right)
   exact PuncturedFaces.position_eq_of_left_top
     faces firstPosition otherPosition
     (congrArg (fun point : Data.Gaussian.Basic.Canonical => point.re) equal)
@@ -137,9 +137,9 @@ theorem next_position_unique {otherPosition : Fin faces.regulars.length}
     (left : LiftedSides.VerticalCrossing request first nextPosition firstUpper lastUpper)
     (right : LiftedSides.VerticalCrossing request first otherPosition firstUpper lastUpper) : nextPosition =
       otherPosition := by
-  have equal := Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.NeighborUniqueness.VerticalCrossing.next_anchor left
+  have equal := VerticalCrossing.next_anchor left
     |>.trans
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.NeighborUniqueness.VerticalCrossing.next_anchor right).symm
+    (VerticalCrossing.next_anchor right).symm
   exact PuncturedFaces.position_eq_of_lower
     faces nextPosition otherPosition
     (congrArg (fun point : Data.Gaussian.Basic.Canonical => point.re) equal)
@@ -151,9 +151,9 @@ theorem previous_position_unique {otherPosition : Fin faces.regulars.length} {ot
     (left : LiftedSides.VerticalCrossing request first nextPosition firstUpper lastUpper)
     (right : LiftedSides.VerticalCrossing request other nextPosition firstUpper lastUpper) : firstPosition =
       otherPosition := by
-  have equal := (Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.NeighborUniqueness.VerticalCrossing.next_anchor
+  have equal := (VerticalCrossing.next_anchor
     left).symm.trans
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.NeighborUniqueness.VerticalCrossing.next_anchor right)
+    (VerticalCrossing.next_anchor right)
   exact PuncturedFaces.position_eq_of_right_bottom
     faces firstPosition otherPosition
     (congrArg (fun point : Data.Gaussian.Basic.Canonical => point.re) equal)

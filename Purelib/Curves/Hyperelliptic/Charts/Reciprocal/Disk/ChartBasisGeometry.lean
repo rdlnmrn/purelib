@@ -65,48 +65,48 @@ open Purelib.Data.Gaussian.Basic.Canonical
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartRefinementArea.AreaRequest.Evaluation (square_inside)
 
-variable {genus count : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+variable {genus count : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+    UniformReciprocalModels.Data patch count}
   {edge : Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {owners :
-    Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.OwnedEndpoints regular cell}
-  {comparison : Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell} {target :
+    UniformReciprocalCover.Cell data edge}
+  {regular : RegularBounds.Data cap} {owners :
+    ParentOwners.OwnedEndpoints regular cell}
+  {comparison : ArcSamples.Data regular cell} {target :
     Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
   {index depth stage minimum : Nat} {box : Rational.Box}
-  {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {source : Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
-  {request : Hyperelliptic.Charts.Reciprocal.Disk.ChartAreaRequest.AreaRequest comparison owners target floor}
-  {charts : Hyperelliptic.Charts.Reciprocal.Disk.VertexTree.ChartMesh request.mesh capSample minimum}
-  {original : Hyperelliptic.Charts.Reciprocal.Disk.ParentCells.ComparedCell comparison source capSample depth}
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {source : UniformReciprocalPrimitives.SourcePrimitive data index}
+  {request : ChartAreaRequest.AreaRequest comparison owners target floor}
+  {charts : VertexTree.ChartMesh request.mesh capSample minimum}
+  {original : ParentCells.ComparedCell comparison source capSample depth}
 
 namespace AreaRequest.Evaluation
 
-variable {evaluated : Hyperelliptic.Charts.Reciprocal.Disk.ChartAreaRequest.AreaRequest.Evaluation charts original
+variable {evaluated : ChartAreaRequest.AreaRequest.Evaluation charts original
   stage}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {polynomials : Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
     {energyTarget : Normalization.InverseRootPolynomial.Coordinate} {energyFloor : Nat}
 
 /-- The actual evaluated odd-degree root-chart path has bounded endpoints and nonnegative fan orientation inherited from
 its original parent. -/
-theorem basisFanGeometry (evaluated : Hyperelliptic.Charts.Reciprocal.Disk.ChartAreaRequest.AreaRequest.Evaluation
+theorem basisFanGeometry (evaluated : ChartAreaRequest.AreaRequest.Evaluation
   charts original stage)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+    (branch : HyperellipticReciprocal.originOrder curve = 1)
     (oriented : 0 < Energy.AffineTriangle.crossEnergy (parent.edge.point 0) (parent.edge.point 1)) :
-    Hyperelliptic.Charts.Reciprocal.Disk.ChartBasisEnergy.AreaRequest.Evaluation.BasisFanGeometry
+    ChartBasisEnergy.AreaRequest.Evaluation.BasisFanGeometry
       evaluated.vertices.path.segments := open Purelib.Data in open Purelib.Polynomial in by
   have bounded {parameter : Normalization.InverseRootPolynomial.Coordinate}
-      (reading : Hyperelliptic.Charts.Reciprocal.Disk.VertexRequests.Reading regular owners.model original.sample
+      (reading : VertexRequests.Reading regular owners.model original.sample
         parameter request.tolerance floor stage) : Data.Gaussian.Norm.Basic.normSq reading.root.coordinate ≤ 2 := by
     have square := reading.square
     rw [branch, pow_one] at square
     have unit := Dense.Gaussian.Reciprocal.Bounds.disk_unit_bound
-      (Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.inverse_inDisk curve
+      (ReciprocalExteriorCollar.inverse_inDisk curve
       (data.boundary.point ⟨edge.left.inside.1.trans reading.prepared.inside.1,
         reading.prepared.inside.2.trans edge.right.inside.2⟩))
     rw [Gaussian.Norm.Basic.normSq_eq_canonical] at unit square
@@ -119,14 +119,14 @@ theorem basisFanGeometry (evaluated : Hyperelliptic.Charts.Reciprocal.Disk.Chart
 
 /-- The actual evaluated odd-degree root-chart path retains padded-square containment and the original paid
 coordinate-step bound. -/
-theorem basisArcGeometry (evaluated : Hyperelliptic.Charts.Reciprocal.Disk.ChartAreaRequest.AreaRequest.Evaluation
+theorem basisArcGeometry (evaluated : ChartAreaRequest.AreaRequest.Evaluation
   charts original stage)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
-    Hyperelliptic.Charts.Reciprocal.Disk.ChartBasisArcs.Path.BasisArcGeometry
+    (branch : HyperellipticReciprocal.originOrder curve = 1) :
+    ChartBasisArcs.Path.BasisArcGeometry
       evaluated.vertices.path request.coordinateBounds.slope := open Purelib.Approximation in by
   intro segment member
   refine ⟨square_inside request branch segment.last,
-    Hyperelliptic.Charts.Reciprocal.Disk.ChartRefinementArea.AreaRequest.Evaluation.square_inside request branch
+    square_inside request branch
     segment.first, ?_⟩
   have actual := (evaluated.coordinate_step_bound branch segment member).le
   rw [request.coordinateStep_eq] at actual

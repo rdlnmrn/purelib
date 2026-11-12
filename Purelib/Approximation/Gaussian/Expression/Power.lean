@@ -67,25 +67,25 @@ CCL arithmetic and never complete an input, logarithm, or root stream.
 
 /-- One branch-selected `q`th-root CCL expression. This is deliberately not the public multi-valued root family `roots`.
 -/
-@[expose] def selectedRoot (input : Expression) (branch : Anchored.AnchoredChart input.output)
+@[expose] def selectedRoot (input : Expression) (branch : AnchoredChart input.output)
     (degree : Positive.RootDegree) : Expression :=
-  Expression.exponential
-    (Expression.mul
-      (Expression.exact
+  exponential
+    (mul
+      (exact
         (Inverse.inverseDegree degree))
       (Expression.logarithm input branch))
 
 /-- Raising the selected root to its displayed positive natural degree reconstructs the original input operationally. -/
 @[expose] def selectedRoot_power_reconstructs (input : Expression)
-    (branch : Anchored.AnchoredChart input.output) (degree : Positive.RootDegree) :
-    Gaussian.Equivalence.NamedEquivalent
-      (Power.natPower (Approximation.Gaussian.Expression.Power.selectedRoot input branch degree).output
+    (branch : AnchoredChart input.output) (degree : Positive.RootDegree) :
+    NamedEquivalent
+      (Power.natPower (selectedRoot input branch degree).output
         degree.value).name
       input.output.name := by
   let logarithm := (AnchoredChart.output branch)
   let scaled := Power.scale (Inverse.inverseDegree degree) logarithm
-  let rootOutput := Exponential.Progressive.Range.Coherent.exp scaled.name
-  have sumsToLogarithm : Gaussian.Equivalence.NamedEquivalent
+  let rootOutput := Progressive.Range.Coherent.exp scaled.name
+  have sumsToLogarithm : NamedEquivalent
       (Power.natSum scaled degree.value).name logarithm.name := by
     have collect := Power.natSum_scale (Inverse.inverseDegree degree) logarithm degree.value
     have coefficientOne :
@@ -95,20 +95,20 @@ CCL arithmetic and never complete an input, logarithm, or root stream.
       (by
         rw [coefficientOne]
         exact Mul.coherentMul_one_left logarithm)
-  have exponentialSums : Gaussian.Equivalence.NamedEquivalent
-      (Exponential.Progressive.Range.Name.named
+  have exponentialSums : NamedEquivalent
+      (Progressive.Range.Name.named
         (Power.natSum scaled degree.value).name)
-      (Exponential.Progressive.Range.Name.named logarithm.name) :=
-    Exponential.Progressive.Range.Congruence.automaticExp_respects (Power.natSum scaled degree.value) logarithm
+      (Progressive.Range.Name.named logarithm.name) :=
+    Progressive.Range.Congruence.automaticExp_respects (Power.natSum scaled degree.value) logarithm
       sumsToLogarithm
   exact NamedEquivalent.trans
     (by
-      simpa only [Approximation.Gaussian.Expression.Power.selectedRoot, rootOutput, scaled, logarithm,
+      simpa only [selectedRoot, rootOutput, scaled, logarithm,
         Power.scale,
-        Expression.exponential,
-        Expression.mul,
-        Expression.exact,
-        Expression.leaf,
+        exponential,
+        mul,
+        exact,
+        leaf,
         Expression.logarithm] using
         Laws.automaticExp_natSum scaled degree.value)
     (NamedEquivalent.trans
@@ -117,60 +117,60 @@ CCL arithmetic and never complete an input, logarithm, or root stream.
 /-- Natural-numerator rational power `(p/q)` using the same displayed branch and the explicitly repeated
 reciprocal-degree coefficient. -/
 @[expose] def naturalRationalPower (input : Expression)
-    (branch : Anchored.AnchoredChart input.output) (numerator : Nat)
+    (branch : AnchoredChart input.output) (numerator : Nat)
     (denominator : Positive.RootDegree) : Expression :=
-  Expression.exponential
-    (Expression.mul
-      (Expression.exact
+  exponential
+    (mul
+      (exact
         (Natural.repeatedCoefficient (Inverse.inverseDegree denominator) numerator))
       (Expression.logarithm input branch))
 
 /-- The `p/q` construction is operationally the `p`th finite power of the branch-selected `q`th root. -/
 @[expose] def selectedRoot_power_to_naturalRationalPower (input : Expression)
-    (branch : Anchored.AnchoredChart input.output) (numerator : Nat)
+    (branch : AnchoredChart input.output) (numerator : Nat)
     (denominator : Positive.RootDegree) :
-    Gaussian.Equivalence.NamedEquivalent
-      (Power.natPower (Approximation.Gaussian.Expression.Power.selectedRoot input branch denominator).output
+    NamedEquivalent
+      (Power.natPower (selectedRoot input branch denominator).output
         numerator).name
-      (Approximation.Gaussian.Expression.Power.naturalRationalPower input branch numerator denominator).output.name :=
+      (naturalRationalPower input branch numerator denominator).output.name :=
         by
   let logarithm := (AnchoredChart.output branch)
   let scaled := Power.scale (Inverse.inverseDegree denominator) logarithm
   let combined :=
     Power.scale (Natural.repeatedCoefficient (Inverse.inverseDegree denominator) numerator)
       logarithm
-  have sumToCombined : Gaussian.Equivalence.NamedEquivalent
+  have sumToCombined : NamedEquivalent
       (Power.natSum scaled numerator).name combined.name :=
     Power.natSum_scale (Inverse.inverseDegree denominator) logarithm numerator
   exact NamedEquivalent.trans
-    (middle := Exponential.Progressive.Range.Name.named (Power.natSum scaled numerator).name)
+    (middle := Progressive.Range.Name.named (Power.natSum scaled numerator).name)
     (by
-      simpa only [Approximation.Gaussian.Expression.Power.selectedRoot, scaled, logarithm, Power.scale,
-        Expression.exponential,
-        Expression.mul,
-        Expression.exact,
-        Expression.leaf,
+      simpa only [selectedRoot, scaled, logarithm, Power.scale,
+        exponential,
+        mul,
+        exact,
+        leaf,
         Expression.logarithm] using
         Laws.automaticExp_natSum scaled numerator)
     (by
-      simpa only [Approximation.Gaussian.Expression.Power.naturalRationalPower, combined, scaled, logarithm,
+      simpa only [naturalRationalPower, combined, scaled, logarithm,
         Power.scale,
-        Expression.exponential,
-        Expression.mul,
-        Expression.exact,
-        Expression.leaf,
+        exponential,
+        mul,
+        exact,
+        leaf,
         Expression.logarithm,
-        Exponential.Progressive.Range.Coherent.exp] using
-        Exponential.Progressive.Range.Congruence.automaticExp_respects (Power.natSum scaled numerator) combined
+        Progressive.Range.Coherent.exp] using
+        Progressive.Range.Congruence.automaticExp_respects (Power.natSum scaled numerator) combined
           sumToCombined)
 
 /-- Branch-certified rational power `exp((p/q) * log(y))` as an actual finite CCL expression. -/
-@[expose] def rationalPower (input : Expression) (branch : Anchored.AnchoredChart
+@[expose] def rationalPower (input : Expression) (branch : AnchoredChart
   input.output)
-    (exponent : Exponent.RationalExponent) : Expression :=
-  Expression.exponential
-    (Expression.mul
-      (Expression.exact
+    (exponent : RationalExponent) : Expression :=
+  exponential
+    (mul
+      (exact
         (RationalExponent.coefficient exponent))
       (Expression.logarithm input branch))
 

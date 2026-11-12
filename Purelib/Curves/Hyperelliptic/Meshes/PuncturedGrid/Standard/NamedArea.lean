@@ -104,6 +104,8 @@ import Purelib.Topology.Surface.Sewing.SewingTree
 import Purelib.Topology.Surface.Sewing.VertexSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Approximation
@@ -176,16 +178,16 @@ open Purelib.Data.Rat.Fraction.Compatibility
 /-- An operational comparison between a retained program's public named samples and its actual model samples. -/
 def PeriodSampleComparison (program : Program.Gaussian.Basic.RefinementProgram)
     (namedFloor modelFloor : Nat) (error : Fraction.Rational) :=
-  Gaussian.Equivalence.Comparison
+  Comparison
     (Sampling.approximation program.output.name) program.approximation namedFloor modelFloor error
 
 set_option genInjectivity false in
 /-- The four actual named/model comparisons for a standard A/B determinant.
 
 Both differential rows share the retained handle-area budget while preserving separate named and model floors. -/
-structure StandardNamedAreaRequest {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    (data : PeriodMatrix.PeriodData curve) (first second cycle : Fin genus)
-    {target : Fraction.Rational} (budget : HandleAreaBudgets.HandleAreaBudget (PairedAreaAccuracy.standardPairMagnitude
+structure StandardNamedAreaRequest {genus : Nat} {curve : HyperellipticCurve genus}
+    (data : PeriodData curve) (first second cycle : Fin genus)
+    {target : Fraction.Rational} (budget : HandleAreaBudget (PairedAreaAccuracy.standardPairMagnitude
       data first second cycle) 1 target)
     (namedFloor modelFloor : Nat) where
   /-- The actual named/model comparison for the first differential's A period. -/ aLeft :
@@ -208,16 +210,16 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {data :
   PeriodData curve}
   {first second cycle : Fin genus} {target : Rational}
   {budget : HandleAreaBudget
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.PairedAreaAccuracy.standardPairMagnitude data first
+    (PairedAreaAccuracy.standardPairMagnitude data first
     second cycle) 1 target}
   {namedFloor modelFloor : Nat}
 
 /-- Prepare all four original named/model comparisons using the retained row budget and separate stage floors. -/
-def build (data : PeriodMatrix.PeriodData curve) (first second cycle : Fin genus)
-    (budget : HandleAreaBudgets.HandleAreaBudget (PairedAreaAccuracy.standardPairMagnitude data first second cycle) 1
+def build (data : PeriodData curve) (first second cycle : Fin genus)
+    (budget : HandleAreaBudget (PairedAreaAccuracy.standardPairMagnitude data first second cycle) 1
       target)
     (namedFloor modelFloor : Nat) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.NamedArea.StandardNamedAreaRequest data first second cycle
+      StandardNamedAreaRequest data first second cycle
       budget namedFloor modelFloor :=
   ⟨(Equivalent.toNamed_sampling (data.aProgram first cycle).integral.approximation).compare
       namedFloor modelFloor budget.rowTarget budget.row_positive,
@@ -229,34 +231,34 @@ def build (data : PeriodMatrix.PeriodData curve) (first second cycle : Fin genus
       namedFloor modelFloor budget.rowTarget budget.row_positive⟩
 
 /-- The maximum named-sample stage requested by the four retained comparisons. -/
-def namedIndex (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.NamedArea.StandardNamedAreaRequest data
+def namedIndex (request : StandardNamedAreaRequest data
   first second cycle budget namedFloor modelFloor) : Nat :=
   max (max request.aLeft.leftIndex request.aRight.leftIndex) (max request.bLeft.leftIndex request.bRight.leftIndex)
 
 /-- The maximum model-sample stage requested by the four retained comparisons. -/
-def modelIndex (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.NamedArea.StandardNamedAreaRequest data
+def modelIndex (request : StandardNamedAreaRequest data
   first second cycle budget namedFloor modelFloor) : Nat :=
   max (max request.aLeft.rightIndex request.aRight.rightIndex) (max request.bLeft.rightIndex request.bRight.rightIndex)
 
 /-- The original model floor is paid by the retained common model index. -/
-theorem modelFloor_le (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.NamedArea.StandardNamedAreaRequest
+theorem modelFloor_le (request : StandardNamedAreaRequest
   data first second cycle budget namedFloor modelFloor) :
     modelFloor ≤ request.modelIndex :=
   request.aLeft.right_ge.trans ((Data.Nat.Order.le_max_left _ _).trans (Data.Nat.Order.le_max_left _ _))
 
 /-- The original named floor is paid by the retained common named index. -/
-theorem namedFloor_le (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.NamedArea.StandardNamedAreaRequest
+theorem namedFloor_le (request : StandardNamedAreaRequest
   data first second cycle budget namedFloor modelFloor) :
     namedFloor ≤ request.namedIndex :=
   request.aLeft.left_ge.trans ((Data.Nat.Order.le_max_left _ _).trans (Data.Nat.Order.le_max_left _ _))
 
 /-- The public named A/B determinant approximates the original model determinant at independently supplied stages. -/
-def AreaAccurate (budget : HandleAreaBudgets.HandleAreaBudget (PairedAreaAccuracy.standardPairMagnitude data first
+def AreaAccurate (budget : HandleAreaBudget (PairedAreaAccuracy.standardPairMagnitude data first
   second cycle) 1 target)
     (namedStage modelStage : Nat) : Prop :=
   let a := PeriodMatrix.sampledMatrix data.aMatrix namedStage
   let b := PeriodMatrix.sampledMatrix data.bMatrix namedStage
-  Data.Gaussian.Norm.Basic.normSq ((a first cycle * b second cycle - b first cycle * a second cycle) -
+  Basic.normSq ((a first cycle * b second cycle - b first cycle * a second cycle) -
     (((data.aProgram first cycle).integral.model modelStage).integralSample *
       ((data.bProgram second cycle).integral.model modelStage).integralSample -
      ((data.bProgram first cycle).integral.model modelStage).integralSample *
@@ -264,7 +266,7 @@ def AreaAccurate (budget : HandleAreaBudgets.HandleAreaBudget (PairedAreaAccurac
 
 /-- Each public sample is compared to a common later raw model through the retained operational comparison, not by
 identifying their indices. -/
-theorem area_accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.NamedArea.StandardNamedAreaRequest
+theorem area_accurate (request : StandardNamedAreaRequest
   data first second cycle budget namedFloor modelFloor)
     {namedStage modelStage : Nat} (namedLater : request.namedIndex ≤ namedStage) (modelLater : request.modelIndex ≤
       modelStage) :
@@ -297,14 +299,14 @@ theorem area_accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Stand
           (((Data.Nat.Order.le_max_left _ _).trans (Data.Nat.Order.le_max_left _ _)).trans modelLater)).le
       change Fraction.Order.Basic.LessEqual _ _ at h
       change Fraction.Order.Basic.LessEqual _ _
-      simp only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at h
+      simp only [Basic.normSq_eq_canonical] at h
       convert h using 1; rfl
     · have h := (request.aRight.close (((Data.Nat.Order.le_max_right _ _).trans (Data.Nat.Order.le_max_left _ _)).trans
         namedLater)
           (((Data.Nat.Order.le_max_right _ _).trans (Data.Nat.Order.le_max_left _ _)).trans modelLater)).le
       change Fraction.Order.Basic.LessEqual _ _ at h
       change Fraction.Order.Basic.LessEqual _ _
-      simp only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at h
+      simp only [Basic.normSq_eq_canonical] at h
       convert h using 1; rfl
   have bError : PrimitivePoint.Bounded (namedB.sub b) budget.rowTarget := by
     dsimp only [namedB, b, PrimitivePoint.sub, PrimitivePoint.Bounded]
@@ -315,14 +317,14 @@ theorem area_accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Stand
           (((Data.Nat.Order.le_max_left _ _).trans (Data.Nat.Order.le_max_right _ _)).trans modelLater)).le
       change Fraction.Order.Basic.LessEqual _ _ at h
       change Fraction.Order.Basic.LessEqual _ _
-      simp only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at h
+      simp only [Basic.normSq_eq_canonical] at h
       convert h using 1; rfl
     · have h := (request.bRight.close (((Data.Nat.Order.le_max_right _ _).trans (Data.Nat.Order.le_max_right _ _)).trans
         namedLater)
           (((Data.Nat.Order.le_max_right _ _).trans (Data.Nat.Order.le_max_right _ _)).trans modelLater)).le
       change Fraction.Order.Basic.LessEqual _ _ at h
       change Fraction.Order.Basic.LessEqual _ _
-      simp only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at h
+      simp only [Basic.normSq_eq_canonical] at h
       convert h using 1; rfl
   have estimate := PrimitivePoint.area_difference_bound budget.magnitude_nonnegative budget.row_positive.le
     budget.row_le_one aBound bBound aError bError
@@ -339,11 +341,11 @@ theorem area_accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Stand
 end StandardNamedAreaRequest
 
 /-- Two comparisons with the same actual model give the allocated surface-to-named area bound. -/
-private theorem combine_area {surface model named : Data.Gaussian.Basic.Canonical} {target : Fraction.Rational}
-    (surfaceError : Data.Gaussian.Norm.Basic.normSq (surface - model) < target / 16)
-    (namedError : Data.Gaussian.Norm.Basic.normSq (named - model) < target / 16) :
-      Data.Gaussian.Norm.Basic.normSq (surface - named) < target / 4 := by
-  have estimate := (Data.Gaussian.Norm.Bounds.normSq_sub_le_two (surface - model) (named - model)).trans_lt
+private theorem combine_area {surface model named : Canonical} {target : Fraction.Rational}
+    (surfaceError : Basic.normSq (surface - model) < target / 16)
+    (namedError : Basic.normSq (named - model) < target / 16) :
+      Basic.normSq (surface - named) < target / 4 := by
+  have estimate := (Bounds.normSq_sub_le_two (surface - model) (named - model)).trans_lt
     (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2)
       (Fraction.Order.Arithmetic.add_lt_add_direct surfaceError namedError))
   have paid : 2 * (target / 16 + target / 16) = target / 4 := by
@@ -352,34 +354,34 @@ private theorem combine_area {surface model named : Data.Gaussian.Basic.Canonica
       _ = (target / 16) * 16 := by ring1
       _ = target := Fraction.Field.div_mul_cancel_of_ne _ _ (by decide +kernel)
       _ = (target / 4) * 4 := (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)).symm
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq (by
+  exact (congrArg Basic.normSq (by
       ring1 : surface - named = (surface - model) - (named - model))).trans_lt
     (estimate.trans_eq paid)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
   {base : FramedPuncturedGrid curve
-    (Purelib.Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).branches higher}
+    (Branches.BranchConfiguration.configurationOfData curve branches).branches higher}
   {lifted : LiftedPuncturedGrid base} {cycle first second : Fin genus}
-  (period : Purelib.Riemann.Periods.PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodRow curve)
+  (period : PreparedCycleModels.RootClosedPeriodRow curve)
   (periodEq : period =
-    (Purelib.Riemann.Periods.PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodBank.ofData curve
+    (PreparedCycleModels.RootClosedPeriodBank.ofData curve
     branches).rows cycle)
-  {source : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} {programs :
+  {source : Differentials.Basic.Differential genus} {programs :
     CutChordPrograms lifted source}
   {firstComponents : ComponentSamples
     programs.programs first}
   {secondComponents : ComponentSamples
     programs.programs second}
   {firstPeriods : ChordPeriods
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.PairedAreaAccuracy.standardPairRow lifted cycle period
+    (PairedAreaAccuracy.standardPairRow lifted cycle period
     periodEq).span programs firstComponents}
   {secondPeriods : ChordPeriods
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.PairedAreaAccuracy.standardPairRow lifted cycle period
+    (PairedAreaAccuracy.standardPairRow lifted cycle period
     periodEq).span programs secondComponents}
-  {segments : Purelib.Data.Vector.DependentVector (fun entry =>
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank (programs.programs.programs
+  {segments : Data.Vector.DependentVector (fun entry =>
+    PeriodSegmentBanks.SegmentBank (programs.programs.programs
     entry).period)}
   {domains : FaceDomainBank lifted.frames
     base.faces.regulars}
@@ -395,7 +397,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 Both surface readings use the actual cut-area triangle bank, and the named entries keep their independently selected
 sample stage. -/
 def NamedStandardAreaAccurate
-    (budget : HandleAreaBudgets.HandleAreaBudget (PairedAreaAccuracy.standardPairMagnitude
+    (budget : HandleAreaBudget (PairedAreaAccuracy.standardPairMagnitude
       (PreparedRefinementPrograms.rawPeriodDataOfData curve branches) first second cycle) 1 target)
     (readings : PairedAreaReadings firstPeriods secondPeriods segments domains minimum numericalFloor
       budget.rowTarget budget.rowTarget extraPoints cut cache)
@@ -410,17 +412,17 @@ def NamedStandardAreaAccurate
     SewingRetraction.wordValue right row.pair.bFaces.geometry.indexed⟩
   let namedA := PeriodMatrix.sampledMatrix data.aMatrix namedStage
   let namedB := PeriodMatrix.sampledMatrix data.bMatrix namedStage
-  Data.Gaussian.Norm.Basic.normSq (Stokes.edgeArea a b - (namedA first cycle * namedB second cycle - namedB
+  Basic.normSq (Stokes.edgeArea a b - (namedA first cycle * namedB second cycle - namedB
     first cycle * namedA second cycle)) < target / 4
 
 /-- The actual named standard-matrix entries are controlled by the same cut-area triangle caches. Both sampling
 thresholds are constructed internally. -/
 theorem PairedAreaReadings.named_standard_area_accurate
-    (budget : HandleAreaBudgets.HandleAreaBudget (PairedAreaAccuracy.standardPairMagnitude
+    (budget : HandleAreaBudget (PairedAreaAccuracy.standardPairMagnitude
       (PreparedRefinementPrograms.rawPeriodDataOfData curve branches) first second cycle) 1 target)
     (readings : PairedAreaReadings firstPeriods secondPeriods segments domains minimum numericalFloor
       budget.rowTarget budget.rowTarget extraPoints cut cache) (namedFloor : Nat) :
-    let request := Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.NamedArea.StandardNamedAreaRequest.build
+    let request := StandardNamedAreaRequest.build
       (PreparedRefinementPrograms.rawPeriodDataOfData curve branches)
       first second cycle budget namedFloor
       (max readings.left.readings.standard.original.comparison.stage
@@ -432,7 +434,7 @@ theorem PairedAreaReadings.named_standard_area_accurate
   have model := PairedAreaReadings.standard_area_accurate period periodEq budget readings request.modelIndex
     request.modelFloor_le
   have named := request.area_accurate namedLater (le_refl request.modelIndex)
-  dsimp only [PairedAreaAccuracy.StandardAreaAccurate] at model
+  dsimp only [StandardAreaAccurate] at model
   dsimp only [StandardNamedAreaRequest.AreaAccurate] at named
   exact combine_area (model.trans_eq
     budget.handleTarget_eq) (named.trans_eq budget.handleTarget_eq)

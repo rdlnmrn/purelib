@@ -47,10 +47,10 @@ that the full discrete primitive area of the boundary vanishes.
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHoleCancellation
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
+  {frames : SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
       SquareRoot.Grid.LiftedVertices.VertexBank
     base.bank.grid}
   {edges : SquareRoot.Grid.RootEdgeBank frames} {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges
@@ -60,33 +60,33 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
 each of the four original sides, then pays their complete two-sheet sum. -/
 def cancellationRequest (hole : Meshes.PuncturedGridFaces.BranchHole base.bank.toBranchCellBank)
     (mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces) (domains :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames base.faces.regulars)
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus) (target :
+      Face.DomainBanks.FaceDomainBank frames base.faces.regulars)
+    (differential : Differentials.Basic.Differential genus) (target :
       Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < target) :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkCancellation.PairedWalkRequest (mesh := mesh) domains differential
+    Paired.WalkCancellation.PairedWalkRequest (mesh := mesh) domains differential
       hole.inwardBoundary target :=
-  Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkCancellation.PairedWalkRequest.build mesh domains differential
+  Paired.WalkCancellation.PairedWalkRequest.build mesh domains differential
     hole.inwardBoundary target positive
 
-variable {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames base.faces.regulars}
-  {differential : Hyperelliptic.Differentials.Basic.Differential genus} {target :
+variable {domains : Face.DomainBanks.FaceDomainBank frames base.faces.regulars}
+  {differential : Differentials.Basic.Differential genus} {target :
   Normalization.InverseRootPolynomial.Coordinate}
 
 /-- Literal projection to the retained root-closed two-lap tour. Equality
 of the planar coordinates alone would not establish this source identity. -/
 theorem cancellation_sources_project (hole : Meshes.PuncturedGridFaces.BranchHole base.bank.toBranchCellBank)
-    (request : Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkCancellation.PairedWalkRequest (mesh := mesh) domains
+    (request : Paired.WalkCancellation.PairedWalkRequest (mesh := mesh) domains
       differential hole.inwardBoundary target) :
     request.sources.map (fun source => source.project mesh.triangulation.faces) = hole.liftedBoundary vertices edges :=
   request.sources_project.trans (hole.liftedBoundary_eq vertices edges).symm
 
 /-- The retained original two-lap branch-hole cancellation has exactly eight source occurrences. -/
 theorem cancellation_sources_length (hole : Meshes.PuncturedGridFaces.BranchHole base.bank.toBranchCellBank)
-    (request : Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkCancellation.PairedWalkRequest (mesh := mesh) domains
+    (request : Paired.WalkCancellation.PairedWalkRequest (mesh := mesh) domains
       differential hole.inwardBoundary target) :
     request.sources.length = 8 := by
   have count := congrArg List.length
-    (Hyperelliptic.Meshes.PuncturedGrid.BranchHoleCancellation.cancellation_sources_project hole request)
+    (BranchHoleCancellation.cancellation_sources_project hole request)
   rw [Data.List.Map.length_map, hole.liftedBoundary_length] at count
   exact count
 

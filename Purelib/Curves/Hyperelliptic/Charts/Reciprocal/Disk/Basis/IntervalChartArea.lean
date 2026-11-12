@@ -56,6 +56,10 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Integration.Path.IncrementArea
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Algebra
@@ -113,14 +117,14 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover (Basi
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+    UniformReciprocalModels.Data patch count}
   {edge : ParameterEdge} {cell :
     Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {model :
+  {regular : RegularBounds.Data cap} {model :
     RootModel cell}
   {parameter target sourceTarget : Coordinate} {floor sourceFloor :
     Nat}
@@ -133,10 +137,10 @@ variable {cover : Cover data}
 namespace BasisIntervalChartRequest
 
 variable {interval : BasisCommonInterval cover
-  covers} {depth index minimum : Nat} {box : Purelib.Geometry.Rational.Box}
+  covers} {depth index minimum : Nat} {box : Geometry.Rational.Box}
   {request : BasisIntervalChartRequest
     interval regular depth target sourceTarget floor sourceFloor}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
   {polynomials : RegularBasisPolynomials cap
     index box}
 
@@ -145,8 +149,8 @@ namespace Plan.Evaluation
 variable {plan :
   Plan
   request capSample polynomials minimum}
-  {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular interval.anchor.cell}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample comparison capSample}
+  {comparison : ArcSamples.Data regular interval.anchor.cell}
+  {sample : ArcSamples.Sample comparison capSample}
   {bank : BasisSourceLocations.SampleBank
     covers index} {stage : Nat}
 
@@ -156,18 +160,18 @@ open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 open Purelib.Algebra.FiniteSum.Fin (sumFin_zero)
 
 variable {evaluated :
-  IntervalChartAcquisition.BasisIntervalChartRequest.Plan.Evaluation
+  Plan.Evaluation
   plan sample bank stage}
   {originals :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+    BasisSourceLocations.PrimitiveBank
     covers index} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
   {primitiveTarget : Coordinate} {primitiveFloor : Nat}
 
 /-- The squared coefficient norm of the retained finite Gaussian vector is nonnegative. -/
-private theorem norm_nonnegative : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients :=
+private theorem norm_nonnegative : 0 ≤ coefficientNormSq coefficients :=
   FiniteSum.Fin.sumFin_zero.symm.trans_le
-  (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : InverseRootPolynomial.Coordinate)) _ (fun row =>
-    Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
+  (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Coordinate)) _ (fun row =>
+    normSq_nonneg (coefficients row)))
 
 namespace PathData
 
@@ -175,30 +179,30 @@ namespace PathData
 theorem source_increment (path : Evaluation.PathData evaluated originals coefficients)
     (primitive : BasisCommonInterval.PrimitiveRequest interval regular primitiveTarget primitiveFloor) (later :
       primitive.index ≤ index)
-    (pair : InverseRootPolynomial.Gaussian × InverseRootPolynomial.Gaussian) (member : pair ∈ path.paired.pairs) :
-    Data.Gaussian.Norm.Basic.normSq pair.1 ≤ 2 * (BasisSourceCovers.primitiveSlope covers + primitiveTarget) *
-      PreparedObservationCoercivity.coefficientNormSq coefficients := by
+    (pair : Gaussian × Gaussian) (member : pair ∈ path.paired.pairs) :
+    Basic.normSq pair.1 ≤ 2 * (BasisSourceCovers.primitiveSlope covers + primitiveTarget) *
+      coefficientNormSq coefficients := by
   let pullback := BasisCommonInterval.primitiveSample interval regular polynomials originals bank
   have present : pair.1 ∈ path.paired.pairs.map Prod.fst := Map.mem_map.mpr ⟨pair, member, rfl⟩
   rw [path.source_path] at present
-  have slopeNonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
+  have slopeNonnegative := Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 2)
       (add_nonneg (BasisSourceCovers.primitiveSlope_nonnegative covers) primitive.positive.le))
 
       (norm_nonnegative
       (coefficients := coefficients))
   have bound := DyadicAreaRefinement.dyadicIncrements_bounded (pullback.pullbackValue coefficients)
     (slope := 2 * (BasisSourceCovers.primitiveSlope covers + primitiveTarget) *
-      PreparedObservationCoercivity.coefficientNormSq coefficients)
+      coefficientNormSq coefficients)
     (fun _ _ firstInside lastInside => (PrimitiveSample.pullback_increment_bound pullback primitive later coefficients
       firstInside lastInside).trans_eq (by ring1))
     depth ⟨le_rfl, interval.ordered⟩ ⟨interval.ordered, le_rfl⟩ interval.ordered pair.1 present
   have width : interval.edge.right.parameter - interval.edge.left.parameter ≤ 1 :=
-    (Fraction.Order.Arithmetic.sub_le_sub_direct interval.edge.right.inside.2 interval.edge.left.inside.1).trans_eq
-      ((show (1 : Purelib.Data.Rat.Fraction.Rational) - 0 = 1 by ring1))
-  have square := (Fraction.Order.Arithmetic.pow_le_pow_direct
-    (Purelib.Data.Rat.Fraction.Order.Arithmetic.sub_nonneg_direct interval.ordered) width 2).trans_eq (_root_.one_pow _)
-  have clipped := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct square
+    (Arithmetic.sub_le_sub_direct interval.edge.right.inside.2 interval.edge.left.inside.1).trans_eq
+      ((show (1 : Fraction.Rational) - 0 = 1 by ring1))
+  have square := (Arithmetic.pow_le_pow_direct
+    (Arithmetic.sub_nonneg_direct interval.ordered) width 2).trans_eq (_root_.one_pow _)
+  have clipped := Arithmetic.mul_le_mul_of_nonneg_left_direct square
     (Geometric.Basic.quarterRadius_nonneg slopeNonnegative depth)
   rw [Fraction.Field.mul_one_direct] at clipped
   exact bound.trans (clipped.trans (Geometric.Basic.quarterRadius_le_scale slopeNonnegative depth))
@@ -211,50 +215,50 @@ Both complete polygon summaries use the same acquired path and retain the homoge
 theorem area_bound (path : Evaluation.PathData evaluated originals coefficients)
     (primitive : BasisCommonInterval.PrimitiveRequest interval regular primitiveTarget primitiveFloor) (later :
       primitive.index ≤ index) :
-    Data.Gaussian.Norm.Basic.normSq (path.paired.source.area - path.chart.area) ≤
-      1280 * (((2 ^ depth : Nat) : InverseRootPolynomial.Coordinate)^4) * sourceTarget *
+    Basic.normSq (path.paired.source.area - path.chart.area) ≤
+      1280 * (((2 ^ depth : Nat) : Coordinate)^4) * sourceTarget *
         (40 * sourceTarget + 2 * (BasisSourceCovers.primitiveSlope covers + primitiveTarget)) *
-          (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
+          (coefficientNormSq coefficients)^2 := by
   let slope := 2 * (BasisSourceCovers.primitiveSlope covers + primitiveTarget)
   let error := 40 * sourceTarget
-  have slopeNonnegative : 0 ≤ slope := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  have slopeNonnegative : 0 ≤ slope := Arithmetic.mul_nonneg_direct (by decide)
     (add_nonneg (BasisSourceCovers.primitiveSlope_nonnegative covers) primitive.positive.le)
-  have errorNonnegative : 0 ≤ error := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
+  have errorNonnegative : 0 ≤ error := Arithmetic.mul_nonneg_direct (by decide +kernel)
     request.source_positive.le
-  have commonNonnegative : 0 ≤ 2 * (slope + error) := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  have commonNonnegative : 0 ≤ 2 * (slope + error) := Arithmetic.mul_nonneg_direct (by decide)
     (add_nonneg slopeNonnegative errorNonnegative)
   have slopeLe : slope ≤ 2 * (slope + error) :=
     (show slope = slope + 0 by ring1).trans_le
-      ((Fraction.Order.Arithmetic.add_le_add_direct le_rfl (add_nonneg slopeNonnegative
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
+      ((Arithmetic.add_le_add_direct le_rfl (add_nonneg slopeNonnegative
+        (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 2)
         errorNonnegative))).trans_eq (by ring1))
-  have sourceBound (pair : InverseRootPolynomial.Gaussian × InverseRootPolynomial.Gaussian) (member : pair ∈
+  have sourceBound (pair : Gaussian × Gaussian) (member : pair ∈
     path.paired.pairs) :
-      Data.Gaussian.Norm.Basic.normSq pair.1 ≤ 2 * (slope + error) *
-        PreparedObservationCoercivity.coefficientNormSq coefficients :=
+      Basic.normSq pair.1 ≤ 2 * (slope + error) *
+        coefficientNormSq coefficients :=
 
       (source_increment
-      path primitive later pair member).trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct slopeLe
+      path primitive later pair member).trans (Arithmetic.mul_le_mul_of_nonneg_right_direct slopeLe
       norm_nonnegative)
-  have chartBound (pair : InverseRootPolynomial.Gaussian × InverseRootPolynomial.Gaussian) (member : pair ∈
+  have chartBound (pair : Gaussian × Gaussian) (member : pair ∈
     path.paired.pairs) :
-      Data.Gaussian.Norm.Basic.normSq pair.2 ≤ 2 * (slope + error) *
-        PreparedObservationCoercivity.coefficientNormSq coefficients := by
-    have bound := (Data.Gaussian.Norm.Bounds.normSq_sub_le_two pair.1 (pair.1 - pair.2)).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
+      Basic.normSq pair.2 ≤ 2 * (slope + error) *
+        coefficientNormSq coefficients := by
+    have bound := (Bounds.normSq_sub_le_two pair.1 (pair.1 - pair.2)).trans
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
         (source_increment
         path primitive later pair member) (path.paired.errors pair member)) (by decide))
     rw [show pair.1 - (pair.1 - pair.2) = pair.2 by ring1] at bound
     exact bound.trans_eq (by dsimp only [slope, error]; ring1)
   have bound := IncrementAreaComparison.pathArea_difference_bound path.paired.pairs
-    (Fraction.Order.Arithmetic.mul_nonneg_direct errorNonnegative
+    (Arithmetic.mul_nonneg_direct errorNonnegative
       norm_nonnegative)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct commonNonnegative
+      (Arithmetic.mul_nonneg_direct commonNonnegative
       norm_nonnegative)
     path.paired.errors sourceBound chartBound
   have counted : path.paired.pairs.length = 2 ^ depth := by
     have equal := congrArg List.length path.source_path
-    rw [Purelib.Data.List.Map.length_map, DyadicPrimitivePaths.dyadicIncrements_length] at equal
+    rw [Map.length_map, DyadicPrimitivePaths.dyadicIncrements_length] at equal
     exact equal
   rw [counted, ← path.paired.source.area_eq, ← path.chart.area_eq] at bound
   exact bound.trans_eq (by dsimp only [slope, error]; ring1)
@@ -262,23 +266,23 @@ theorem area_bound (path : Evaluation.PathData evaluated originals coefficients)
 /-- The endpoint error uses the two retained extremes, so it has no segment count multiplier when these polygons are
 joined across intervals. -/
 theorem total_bound (path : Evaluation.PathData evaluated originals coefficients) :
-    Data.Gaussian.Norm.Basic.normSq (path.paired.source.total - path.chart.total) ≤ 40 * sourceTarget *
-      PreparedObservationCoercivity.coefficientNormSq coefficients := by
+    Basic.normSq (path.paired.source.total - path.chart.total) ≤ 40 * sourceTarget *
+      coefficientNormSq coefficients := by
   have first := evaluated.firstSources.evaluated.accurate coefficients
   have last := evaluated.lastSources.evaluated.accurate coefficients
-  change Data.Gaussian.Norm.Basic.normSq (Evaluation.firstValue evaluated coefficients - polynomials.value
+  change Basic.normSq (Evaluation.firstValue evaluated coefficients - polynomials.value
     coefficients evaluated.first.root.coordinate) ≤ _ at first
-  change Data.Gaussian.Norm.Basic.normSq (Evaluation.lastValue evaluated coefficients - polynomials.value
+  change Basic.normSq (Evaluation.lastValue evaluated coefficients - polynomials.value
     coefficients evaluated.last.root.coordinate) ≤ _ at last
   rw [← path.first_eq] at first
   rw [← path.last_eq] at last
   have chartTotal := Segment.value_total (polynomials.value coefficients) (Evaluation.path evaluated).segments
     (Evaluation.path evaluated).chain
   rw [path.paired.source_total, path.chart.total_eq, path.paired.chart_eq, chartTotal]
-  have bound := (Data.Gaussian.Norm.Bounds.normSq_sub_le_two
+  have bound := (Bounds.normSq_sub_le_two
     (path.lastSource - polynomials.value coefficients evaluated.last.root.coordinate)
     (path.firstSource - polynomials.value coefficients evaluated.first.root.coordinate)).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct last first)
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct last first)
       (by decide))
   rw [show (path.lastSource - polynomials.value coefficients evaluated.last.root.coordinate) -
     (path.firstSource - polynomials.value coefficients evaluated.first.root.coordinate) =

@@ -57,18 +57,18 @@ open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.PartitionCompatibility
   (piece_x_bounds piece_y_bounds build_x_compatible build_y_compatible)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-  {branches : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve} {higher : 1 <
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+  {branches : Branches.BranchIsolation.Data curve} {higher : 1 <
     curve.polynomial.natDegree}
-  {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches higher} {preparation :
-    Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original}
-  {target radius : Purelib.Data.Rat.Fraction.Rational} {grid :
-    Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-  {observations : Purelib.Riemann.RootContinuation.NewtonProtectedObservations.ProtectedObservations original}
+  {original : Branches.BranchCellBank curve branches higher} {preparation :
+    NewtonPreparation original}
+  {target radius : Rational} {grid :
+    NewtonGrid preparation target radius}
+  {observations : ProtectedObservations original}
   {firstPosition lastPosition : Fin grid.faces.regulars.length}
 
 /-- Transporting a finite sum along equality of the original index bounds preserves its exact value. -/
-private theorem sum_cast {first last : Nat} (equal : first = last) (value : Fin last → Data.Gaussian.Basic.Canonical) :
+private theorem sum_cast {first last : Nat} (equal : first = last) (value : Fin last → Gaussian) :
     FiniteSum.Fin.sumFin (fun index : Fin first => value (Fin.cast equal index)) = FiniteSum.Fin.sumFin value := by
   cases equal
   rfl
@@ -77,8 +77,8 @@ set_option genInjectivity false in
 /-- Retained boundary-piece indices on two vertically adjacent original faces.
 
 The selected pieces have equal horizontal extent and exactly matching upper and lower boundary coordinates. -/
-structure HorizontalPieces (first : NewtonObservationSurfacePartition.SurfacePartition observations grid firstPosition)
-    (last : NewtonObservationSurfacePartition.SurfacePartition observations grid lastPosition) where
+structure HorizontalPieces (first : SurfacePartition observations grid firstPosition)
+    (last : SurfacePartition observations grid lastPosition) where
   /-- The retained bounded piece index in the original first face partition. -/ firstPiece : Fin first.cuts.boxes.length
   /-- The retained bounded piece index in the original neighboring face partition. -/ lastPiece : Fin
     last.cuts.boxes.length
@@ -98,13 +98,13 @@ namespace HorizontalPieces
 
 /-- Match the original top row with the neighboring bottom row, retaining transported transverse indices and exact
 boundary equalities. -/
-@[expose] def build (first : NewtonObservationSurfacePartition.SurfacePartition observations grid firstPosition)
-    (last : NewtonObservationSurfacePartition.SurfacePartition observations grid lastPosition)
+@[expose] def build (first : SurfacePartition observations grid firstPosition)
+    (last : SurfacePartition observations grid lastPosition)
     (equal : first.cuts.x.intervals = last.cuts.x.intervals)
     (adjacent : (grid.faces.regulars[firstPosition.val]'firstPosition.isLt).cell.box.yUpper =
       (grid.faces.regulars[lastPosition.val]'lastPosition.isLt).cell.box.yLower)
     (column : Fin ((PieceIndices.columns first) + 1)) :
-      Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.HorizontalPieces first last := by
+      HorizontalPieces first last := by
   have counts : (PieceIndices.columns first) + 1 = (PieceIndices.columns last) + 1 :=
     (PieceIndices.columns_eq first).trans ((congrArg List.length equal).trans (PieceIndices.columns_eq last).symm)
   let next := Fin.cast counts column
@@ -120,65 +120,65 @@ boundary equalities. -/
     (adjacent.trans (last.cuts.y.first_lower (Fin.cast (PieceIndices.rows_eq last) 0).isLt).symm)
 
 /-- The constructed first index is exactly the original top row piece index. -/
-theorem build_firstPiece (first : NewtonObservationSurfacePartition.SurfacePartition observations grid firstPosition)
-    (last : NewtonObservationSurfacePartition.SurfacePartition observations grid lastPosition)
+theorem build_firstPiece (first : SurfacePartition observations grid firstPosition)
+    (last : SurfacePartition observations grid lastPosition)
     (equal : first.cuts.x.intervals = last.cuts.x.intervals)
     (adjacent : (grid.faces.regulars[firstPosition.val]'firstPosition.isLt).cell.box.yUpper =
       (grid.faces.regulars[lastPosition.val]'lastPosition.isLt).cell.box.yLower)
     (column : Fin ((PieceIndices.columns first) + 1)) :
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.HorizontalPieces.build first last equal adjacent
+    (HorizontalPieces.build first last equal adjacent
       column).firstPiece = (PieceIndices.pieceIndex first) column (Fin.last (PieceIndices.rows first)) := rfl
 
 /-- The constructed neighbor index is exactly its bottom row piece index with the retained transverse index transport.
 -/
-theorem build_lastPiece (first : NewtonObservationSurfacePartition.SurfacePartition observations grid firstPosition)
-    (last : NewtonObservationSurfacePartition.SurfacePartition observations grid lastPosition)
+theorem build_lastPiece (first : SurfacePartition observations grid firstPosition)
+    (last : SurfacePartition observations grid lastPosition)
     (equal : first.cuts.x.intervals = last.cuts.x.intervals)
     (adjacent : (grid.faces.regulars[firstPosition.val]'firstPosition.isLt).cell.box.yUpper =
       (grid.faces.regulars[lastPosition.val]'lastPosition.isLt).cell.box.yLower)
     (column : Fin ((PieceIndices.columns first) + 1)) :
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.HorizontalPieces.build first last equal adjacent
+    (HorizontalPieces.build first last equal adjacent
       column).lastPiece = (PieceIndices.pieceIndex last) (Fin.cast ((PieceIndices.columns_eq first).trans ((congrArg
       List.length equal).trans (PieceIndices.columns_eq last).symm)) column) 0 := rfl
 
 /-- The retained first-piece sum equals the original complete top row sum. -/
-theorem sum_firstPieces (first : NewtonObservationSurfacePartition.SurfacePartition observations grid firstPosition)
-    (last : NewtonObservationSurfacePartition.SurfacePartition observations grid lastPosition)
+theorem sum_firstPieces (first : SurfacePartition observations grid firstPosition)
+    (last : SurfacePartition observations grid lastPosition)
     (equal : first.cuts.x.intervals = last.cuts.x.intervals)
     (adjacent : (grid.faces.regulars[firstPosition.val]'firstPosition.isLt).cell.box.yUpper =
       (grid.faces.regulars[lastPosition.val]'lastPosition.isLt).cell.box.yLower)
-    (value : Fin first.cuts.boxes.length → Data.Gaussian.Basic.Canonical) :
+    (value : Fin first.cuts.boxes.length → Gaussian) :
     FiniteSum.Fin.sumFin (fun index => value
-      (Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.HorizontalPieces.build first last equal adjacent
+      (HorizontalPieces.build first last equal adjacent
       index).firstPiece) =
       FiniteSum.Fin.sumFin (fun index => value ((PieceIndices.pieceIndex first) index (Fin.last (PieceIndices.rows
         first)))) :=
   FiniteSum.Fin.sumFin_congr fun index => congrArg value
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.HorizontalPieces.build_firstPiece first last equal
+    (HorizontalPieces.build_firstPiece first last equal
     adjacent index)
 
 /-- The retained neighbor-piece sum equals the original complete bottom row sum. -/
-theorem sum_lastPieces (first : NewtonObservationSurfacePartition.SurfacePartition observations grid firstPosition)
-    (last : NewtonObservationSurfacePartition.SurfacePartition observations grid lastPosition)
+theorem sum_lastPieces (first : SurfacePartition observations grid firstPosition)
+    (last : SurfacePartition observations grid lastPosition)
     (equal : first.cuts.x.intervals = last.cuts.x.intervals)
     (adjacent : (grid.faces.regulars[firstPosition.val]'firstPosition.isLt).cell.box.yUpper =
       (grid.faces.regulars[lastPosition.val]'lastPosition.isLt).cell.box.yLower)
-    (value : Fin last.cuts.boxes.length → Data.Gaussian.Basic.Canonical) :
+    (value : Fin last.cuts.boxes.length → Gaussian) :
     FiniteSum.Fin.sumFin (fun index => value
-      (Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.HorizontalPieces.build first last equal adjacent
+      (HorizontalPieces.build first last equal adjacent
       index).lastPiece) =
       FiniteSum.Fin.sumFin (fun index => value ((PieceIndices.pieceIndex last) index 0)) := by
   have readback := FiniteSum.Fin.sumFin_congr fun index => congrArg value
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.HorizontalPieces.build_lastPiece first last equal
+    (HorizontalPieces.build_lastPiece first last equal
     adjacent index)
-  exact readback.trans (Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.sum_cast
+  exact readback.trans (BoundaryPieces.sum_cast
     ((PieceIndices.columns_eq first).trans ((congrArg List.length equal).trans (PieceIndices.columns_eq last).symm))
     (fun index => value ((PieceIndices.pieceIndex last) index 0)))
 
 /-- Construct the retained boundary-piece matching from the canonical observation partitions and original adjacent face
 extents. -/
-@[expose] def canonical (observations : NewtonProtectedObservations.ProtectedObservations original) (grid :
-  BranchCellBank.NewtonGrid preparation target radius)
+@[expose] def canonical (observations : ProtectedObservations original) (grid :
+  NewtonGrid preparation target radius)
     (first last : Fin grid.faces.regulars.length)
     (lowerEq : (grid.faces.regulars[first.val]'first.isLt).cell.box.xLower =
       (grid.faces.regulars[last.val]'last.isLt).cell.box.xLower)
@@ -188,9 +188,9 @@ extents. -/
       (grid.faces.regulars[last.val]'last.isLt).cell.box.yLower)
     (column : Fin (PieceIndices.columns
       (SurfacePartition.build observations grid first) + 1)) :
-    Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.HorizontalPieces (SurfacePartition.build observations grid
+    HorizontalPieces (SurfacePartition.build observations grid
       first) (SurfacePartition.build observations grid last) :=
-  Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.HorizontalPieces.build _ _
+  HorizontalPieces.build _ _
     (PartitionCompatibility.build_x_compatible observations grid first last lowerEq upperEq) adjacent column
 
 end HorizontalPieces
@@ -199,8 +199,8 @@ set_option genInjectivity false in
 /-- Retained boundary-piece indices on two horizontally adjacent original faces.
 
 The selected pieces have equal vertical extent and exactly matching right and left boundary coordinates. -/
-structure VerticalPieces (first : NewtonObservationSurfacePartition.SurfacePartition observations grid firstPosition)
-    (last : NewtonObservationSurfacePartition.SurfacePartition observations grid lastPosition) where
+structure VerticalPieces (first : SurfacePartition observations grid firstPosition)
+    (last : SurfacePartition observations grid lastPosition) where
   /-- The retained bounded piece index in the original first face partition. -/ firstPiece : Fin first.cuts.boxes.length
   /-- The retained bounded piece index in the original neighboring face partition. -/ lastPiece : Fin
     last.cuts.boxes.length
@@ -221,13 +221,13 @@ namespace VerticalPieces
 
 /-- Match the original rightmost column with the neighboring leftmost column, retaining transported transverse indices
 and exact boundary equalities. -/
-@[expose] def build (first : NewtonObservationSurfacePartition.SurfacePartition observations grid firstPosition)
-    (last : NewtonObservationSurfacePartition.SurfacePartition observations grid lastPosition)
+@[expose] def build (first : SurfacePartition observations grid firstPosition)
+    (last : SurfacePartition observations grid lastPosition)
     (equal : first.cuts.y.intervals = last.cuts.y.intervals)
     (adjacent : (grid.faces.regulars[firstPosition.val]'firstPosition.isLt).cell.box.xUpper =
       (grid.faces.regulars[lastPosition.val]'lastPosition.isLt).cell.box.xLower)
     (row : Fin ((PieceIndices.rows first) + 1)) :
-      Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.VerticalPieces first last := by
+      VerticalPieces first last := by
   have counts : (PieceIndices.rows first) + 1 = (PieceIndices.rows last) + 1 :=
     (PieceIndices.rows_eq first).trans ((congrArg List.length equal).trans (PieceIndices.rows_eq last).symm)
   let next := Fin.cast counts row
@@ -243,65 +243,65 @@ and exact boundary equalities. -/
     (adjacent.trans (last.cuts.x.first_lower (Fin.cast (PieceIndices.columns_eq last) 0).isLt).symm)
 
 /-- The constructed first index is exactly the original rightmost column piece index. -/
-theorem build_firstPiece (first : NewtonObservationSurfacePartition.SurfacePartition observations grid firstPosition)
-    (last : NewtonObservationSurfacePartition.SurfacePartition observations grid lastPosition)
+theorem build_firstPiece (first : SurfacePartition observations grid firstPosition)
+    (last : SurfacePartition observations grid lastPosition)
     (equal : first.cuts.y.intervals = last.cuts.y.intervals)
     (adjacent : (grid.faces.regulars[firstPosition.val]'firstPosition.isLt).cell.box.xUpper =
       (grid.faces.regulars[lastPosition.val]'lastPosition.isLt).cell.box.xLower)
     (row : Fin ((PieceIndices.rows first) + 1)) :
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.VerticalPieces.build first last equal adjacent
+    (VerticalPieces.build first last equal adjacent
       row).firstPiece = (PieceIndices.pieceIndex first) (Fin.last (PieceIndices.columns first)) row := rfl
 
 /-- The constructed neighbor index is exactly its leftmost column piece index with the retained transverse index
 transport. -/
-theorem build_lastPiece (first : NewtonObservationSurfacePartition.SurfacePartition observations grid firstPosition)
-    (last : NewtonObservationSurfacePartition.SurfacePartition observations grid lastPosition)
+theorem build_lastPiece (first : SurfacePartition observations grid firstPosition)
+    (last : SurfacePartition observations grid lastPosition)
     (equal : first.cuts.y.intervals = last.cuts.y.intervals)
     (adjacent : (grid.faces.regulars[firstPosition.val]'firstPosition.isLt).cell.box.xUpper =
       (grid.faces.regulars[lastPosition.val]'lastPosition.isLt).cell.box.xLower)
     (row : Fin ((PieceIndices.rows first) + 1)) :
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.VerticalPieces.build first last equal adjacent
+    (VerticalPieces.build first last equal adjacent
       row).lastPiece = (PieceIndices.pieceIndex last) 0 (Fin.cast ((PieceIndices.rows_eq first).trans ((congrArg
       List.length equal).trans (PieceIndices.rows_eq last).symm)) row) := rfl
 
 /-- The retained first-piece sum equals the original complete rightmost column sum. -/
-theorem sum_firstPieces (first : NewtonObservationSurfacePartition.SurfacePartition observations grid firstPosition)
-    (last : NewtonObservationSurfacePartition.SurfacePartition observations grid lastPosition)
+theorem sum_firstPieces (first : SurfacePartition observations grid firstPosition)
+    (last : SurfacePartition observations grid lastPosition)
     (equal : first.cuts.y.intervals = last.cuts.y.intervals)
     (adjacent : (grid.faces.regulars[firstPosition.val]'firstPosition.isLt).cell.box.xUpper =
       (grid.faces.regulars[lastPosition.val]'lastPosition.isLt).cell.box.xLower)
-    (value : Fin first.cuts.boxes.length → Data.Gaussian.Basic.Canonical) :
+    (value : Fin first.cuts.boxes.length → Gaussian) :
     FiniteSum.Fin.sumFin (fun index => value
-      (Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.VerticalPieces.build first last equal adjacent
+      (VerticalPieces.build first last equal adjacent
       index).firstPiece) =
       FiniteSum.Fin.sumFin (fun index => value ((PieceIndices.pieceIndex first) (Fin.last (PieceIndices.columns first))
         index)) :=
   FiniteSum.Fin.sumFin_congr fun index => congrArg value
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.VerticalPieces.build_firstPiece first last equal adjacent
+    (VerticalPieces.build_firstPiece first last equal adjacent
     index)
 
 /-- The retained neighbor-piece sum equals the original complete leftmost column sum. -/
-theorem sum_lastPieces (first : NewtonObservationSurfacePartition.SurfacePartition observations grid firstPosition)
-    (last : NewtonObservationSurfacePartition.SurfacePartition observations grid lastPosition)
+theorem sum_lastPieces (first : SurfacePartition observations grid firstPosition)
+    (last : SurfacePartition observations grid lastPosition)
     (equal : first.cuts.y.intervals = last.cuts.y.intervals)
     (adjacent : (grid.faces.regulars[firstPosition.val]'firstPosition.isLt).cell.box.xUpper =
       (grid.faces.regulars[lastPosition.val]'lastPosition.isLt).cell.box.xLower)
-    (value : Fin last.cuts.boxes.length → Data.Gaussian.Basic.Canonical) :
+    (value : Fin last.cuts.boxes.length → Gaussian) :
     FiniteSum.Fin.sumFin (fun index => value
-      (Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.VerticalPieces.build first last equal adjacent
+      (VerticalPieces.build first last equal adjacent
       index).lastPiece) =
       FiniteSum.Fin.sumFin (fun index => value ((PieceIndices.pieceIndex last) 0 index)) := by
   have readback := FiniteSum.Fin.sumFin_congr fun index => congrArg value
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.VerticalPieces.build_lastPiece first last equal adjacent
+    (VerticalPieces.build_lastPiece first last equal adjacent
     index)
-  exact readback.trans (Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.sum_cast
+  exact readback.trans (BoundaryPieces.sum_cast
     ((PieceIndices.rows_eq first).trans ((congrArg List.length equal).trans (PieceIndices.rows_eq last).symm))
     (fun index => value ((PieceIndices.pieceIndex last) 0 index)))
 
 /-- Construct the retained boundary-piece matching from the canonical observation partitions and original adjacent face
 extents. -/
-@[expose] def canonical (observations : NewtonProtectedObservations.ProtectedObservations original) (grid :
-  BranchCellBank.NewtonGrid preparation target radius)
+@[expose] def canonical (observations : ProtectedObservations original) (grid :
+  NewtonGrid preparation target radius)
     (first last : Fin grid.faces.regulars.length)
     (lowerEq : (grid.faces.regulars[first.val]'first.isLt).cell.box.yLower =
       (grid.faces.regulars[last.val]'last.isLt).cell.box.yLower)
@@ -311,9 +311,9 @@ extents. -/
       (grid.faces.regulars[last.val]'last.isLt).cell.box.xLower)
     (row : Fin (PieceIndices.rows
       (SurfacePartition.build observations grid first) + 1)) :
-    Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.VerticalPieces (SurfacePartition.build observations grid
+    VerticalPieces (SurfacePartition.build observations grid
       first) (SurfacePartition.build observations grid last) :=
-  Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.VerticalPieces.build _ _
+  VerticalPieces.build _ _
     (PartitionCompatibility.build_y_compatible observations grid first last lowerEq upperEq) adjacent row
 
 end VerticalPieces

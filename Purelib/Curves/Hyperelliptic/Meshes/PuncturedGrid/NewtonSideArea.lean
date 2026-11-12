@@ -50,6 +50,8 @@ import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.RootIsolation.Newton.Band.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Algebra
 
 open Purelib.Curves
@@ -77,22 +79,22 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonSideArea
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face : Meshes.PuncturedGridFaces.RegularFace bank}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {face : Meshes.PuncturedGridFaces.RegularFace bank}
       {models
-    : Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames face}
+    : Face.InverseModels.BranchCellBank.FaceModels frames face}
   {count : Nat} {points : Fin (count + 1) → Gaussian.Basic.Canonical} {geometry :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry models points}
-  {sheet : Fin 2} {domain : Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain models sheet} {left right :
-    Hyperelliptic.Differentials.Basic.Differential genus}
+    Face.SidePreparation.SideGeometry models points}
+  {sheet : Fin 2} {domain : Face.Periods.PeriodDomain models sheet} {left right :
+    Differentials.Basic.Differential genus}
   {allowance : Fraction.Rational}
 
 /-- All prefix and edge references are constructed before selecting the shared
 numerical bank. No caller primitive magnitude or increment estimate remains. -/
 theorem area_bound (budget : Path.NoisyPathArea.LengthErrorBudget count allowance)
-    (request : Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.Request geometry domain left right
+    (request : Face.SidePreparation.SideGeometry.Request geometry domain left right
       budget.tolerance)
     {bandAmbient : Rational.Box} {current : State.Raw.RawWindingState curve.polynomial bandAmbient}
     {profile : RootContinuation.NewtonBandBounds.Profile curve.squarefree current.box}
@@ -113,33 +115,33 @@ theorem area_bound (budget : Path.NoisyPathArea.LengthErrorBudget count allowanc
     (rightDensity : RootContinuation.PreparedNewtonBandSamples.Sample.preparedDensity rightBand.sample rightProfile
       rightBand.error ≤ density)
     {index : Nat} (later : request.index ≤ index)
-    (leftData : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives domain left index) (rightData :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives domain right index)
+    (leftData : Face.PrimitiveData.DomainPrimitives domain left index) (rightData :
+      Face.PrimitiveData.DomainPrimitives domain right index)
     (leftReadings : Readings.RectangularPointReadings.PointReadings leftData.anchors leftData.offsets points)
     (rightReadings : Readings.RectangularPointReadings.PointReadings rightData.anchors rightData.offsets points)
     {values : Fin (count + 1) → Topology.Polygon.Stokes.PrimitivePoint}
     (valuesEq : ∀ vertex, values vertex = ⟨leftReadings.values vertex, rightReadings.values vertex⟩)
     (sample : Periods.CenteredBilinearPath.Sample values) (lengths : Fin count → Fraction.Rational)
     (nonnegative : ∀ edge, 0 ≤ lengths edge)
-    (movement : ∀ edge : Fin count, Data.Gaussian.Norm.Basic.normSq (points edge.succ - points edge.castSucc) =
+    (movement : ∀ edge : Fin count, Gaussian.Norm.Basic.normSq (points edge.succ - points edge.castSucc) =
       (lengths edge)^2) :
-    Data.Gaussian.Norm.Basic.normSq sample.centeredArea ≤
+    Gaussian.Norm.Basic.normSq sample.centeredArea ≤
       4 * (3 * budget.tolerance + 4 * density * leftBand.sample.output.box.diagonalSq) *
         (4 * density + 3) * (FiniteSum.Fin.sumFin lengths + allowance)^2 := by
   have pairBound (first last : Fin (count + 1))
-      (pair : Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.PairRequest geometry domain left
+      (pair : Face.SidePreparation.SideGeometry.PairRequest geometry domain left
         right budget.tolerance first last)
       (pairLater : pair.reference.index ≤ index) :
       Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded ((values last).sub (values first))
-        (3 * budget.tolerance + 4 * density * Data.Gaussian.Norm.Basic.normSq (points last - points first)) := by
+        (3 * budget.tolerance + 4 * density * Gaussian.Norm.Basic.normSq (points last - points first)) := by
     rw [valuesEq last, valuesEq first]
     exact pair.reference.point_density_bound leftBand rightBand
       (leftInside first) (leftInside last) (leftSide first last)
       (rightInside first) (rightInside last) (rightSide first last) leftDensity rightDensity
       pairLater leftData rightData leftReadings rightReadings first last rfl rfl
   have magnitudeNonnegative : 0 ≤ 3 * budget.tolerance + 4 * density * leftBand.sample.output.box.diagonalSq :=
-    add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) budget.tolerance_positive.le)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    add_nonneg (Arithmetic.mul_nonneg_direct (by decide) budget.tolerance_positive.le)
+      (Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide)
         densityNonnegative)
         (leftBand.sample.output.box.normSq_sub_le_diagonalSq (leftInside 0) (leftInside 0) |>.trans' (by
           exact Gaussian.Norm.Basic.normSq_nonneg _)))
@@ -148,9 +150,9 @@ theorem area_bound (budget : Path.NoisyPathArea.LengthErrorBudget count allowanc
     rw [sample.centered_eq]
     have bound := pairBound 0 vertex (request.prefixes.get vertex) ((request.prefixes_later vertex).trans later)
     have movementBound := leftBand.sample.output.box.normSq_sub_le_diagonalSq (leftInside vertex) (leftInside 0)
-    have paid := Fraction.Order.Arithmetic.add_le_add_direct (le_refl (3 * budget.tolerance))
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct movementBound
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 4) densityNonnegative))
+    have paid := Arithmetic.add_le_add_direct (le_refl (3 * budget.tolerance))
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct movementBound
+        (Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 4) densityNonnegative))
     exact ⟨bound.1.trans paid, bound.2.trans paid⟩
   · intro edge
     have bound := pairBound edge.castSucc edge.succ (request.edges.get edge) ((request.edges_later edge).trans later)

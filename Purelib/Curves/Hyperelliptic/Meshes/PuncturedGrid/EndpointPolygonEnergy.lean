@@ -59,6 +59,8 @@ import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian
+
 public section
 
 /-! One coefficient-independent tail controls every energy combination on
@@ -91,7 +93,7 @@ open Purelib.Integration.Path.JoinedCenteredArea (endpointPolygon)
 
 open Purelib.Riemann.Readings.RectangularSeamBounds (boundarySlope)
 
-attribute [local congr] Algebra.FiniteSum.Fin.sumFin_congr
+attribute [local congr] FiniteSum.Fin.sumFin_congr
 
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
@@ -103,21 +105,21 @@ open Purelib.Riemann.Paths.PreparedPathParentCaches.PreparedClearPathModels (Par
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Curves.Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {firstFace lastFace :
-    Riemann.Meshes.PuncturedGridFaces.RegularFace bank}
-  {firstModels : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames
-    firstFace} {lastModels : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels
+    RegularFace bank}
+  {firstModels : FaceModels frames
+    firstFace} {lastModels : FaceModels
     frames lastFace}
-  {start : Data.Gaussian.Basic.Canonical} {owner : Riemann.Topology.SquareRootContinuationChain.Owner
+  {start : Gaussian} {owner : Owner
     (curve.polynomial.eval start)}
-  {leftEntry : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry firstModels start owner}
-    {rightEntry : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry lastModels start owner}
-  {leftDomain : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain firstModels leftEntry.sheet}
-    {rightDomain : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain lastModels rightEntry.sheet}
-  {firstDifferential secondDifferential : Curves.Hyperelliptic.Differentials.Basic.Differential genus} {firstSheet
+  {leftEntry : Entry firstModels start owner}
+    {rightEntry : Entry lastModels start owner}
+  {leftDomain : PeriodDomain firstModels leftEntry.sheet}
+    {rightDomain : PeriodDomain lastModels rightEntry.sheet}
+  {firstDifferential secondDifferential : Differential genus} {firstSheet
     secondSheet : Fin 2}
 
 open Purelib.Riemann.Periods.CenteredBilinearPath (Sample)
@@ -129,11 +131,11 @@ open Purelib.Riemann.Integration.RectangularOwnedTriangulation (OwnedVertex)
 open Purelib.Riemann.Readings.RectangularPairedEndpointReadings (PairedEndpointReadingsGeometry)
 
 variable {count : Nat}
-  {first : Fin (count + 1) → Purelib.Integration.Path.JoinedTrace.VertexTrace
-    (Riemann.Integration.RectangularOwnedTriangulation.OwnedVertex leftDomain.geometry)}
-  {last : Fin (count + 1) → Purelib.Integration.Path.JoinedTrace.VertexTrace
-    (Riemann.Integration.RectangularOwnedTriangulation.OwnedVertex rightDomain.geometry)}
-  {geometry : Riemann.Readings.RectangularPairedEndpointReadings.PairedEndpointReadingsGeometry first last}
+  {first : Fin (count + 1) → JoinedTrace.VertexTrace
+    (OwnedVertex leftDomain.geometry)}
+  {last : Fin (count + 1) → JoinedTrace.VertexTrace
+    (OwnedVertex rightDomain.geometry)}
+  {geometry : PairedEndpointReadingsGeometry first last}
 
 namespace EndpointPolygonPreparation
 
@@ -143,14 +145,14 @@ open Purelib.Data.Gaussian.Norm.Basic (normSq_conj)
 
 variable {preparation : EndpointPolygonPreparation
   (leftEntry := leftEntry) (rightEntry := rightEntry) geometry}
-  {target : Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
+  {target : Coordinate} {floor : Nat}
 
 /-- The original matrix of endpoint-polygon area requests for every standard basis pair. -/
 @[expose] def EnergyPairs (preparation : EndpointPolygonPreparation (leftEntry := leftEntry)
   (rightEntry := rightEntry) geometry)
-    (target : InverseRootPolynomial.Coordinate) (floor : Nat) :=
-  Data.Vector.DependentVector (fun i : Fin genus => Data.Vector.DependentVector (fun j : Fin genus =>
-    EndpointPolygonPreparation.AreaRequest preparation (PeriodMatrix.standardDifferential i)
+    (target : Coordinate) (floor : Nat) :=
+  DependentVector (fun i : Fin genus => DependentVector (fun j : Fin genus =>
+    AreaRequest preparation (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) 0 0 target floor))
 
 /-- The supplied common stage pays every retained original endpoint-polygon pair request. -/
@@ -166,7 +168,7 @@ The dependent request matrix retains the distinct original left and right endpoi
 stage. -/
 structure EnergyRequest (preparation : EndpointPolygonPreparation (leftEntry := leftEntry)
   (rightEntry := rightEntry) geometry)
-    (target : InverseRootPolynomial.Coordinate) (floor : Nat) where
+    (target : Coordinate) (floor : Nat) where
   /-- The retained original matrix of endpoint-polygon basis-pair requests. -/ entries :
     EnergyPairs preparation
     target floor
@@ -181,10 +183,10 @@ namespace EnergyRequest
 /-- Prepare all original endpoint-polygon basis pairs and cache their maximum stage above the supplied floor. -/
 @[expose] def build (preparation : EndpointPolygonPreparation (leftEntry := leftEntry)
   (rightEntry := rightEntry) geometry)
-    (target : InverseRootPolynomial.Coordinate) (positive : 0 < target) (floor : Nat) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.EndpointPolygonEnergy.EndpointPolygonPreparation.EnergyRequest
+    (target : Coordinate) (positive : 0 < target) (floor : Nat) :
+      EnergyRequest
       preparation target floor := by
-  let entries : Curves.Hyperelliptic.Meshes.PuncturedGrid.EndpointPolygonEnergy.EndpointPolygonPreparation.EnergyPairs
+  let entries : EnergyPairs
     preparation target floor := DependentVector.ofFn fun i => DependentVector.ofFn fun j =>
     AreaRequest.build preparation (PeriodMatrix.standardDifferential i) (PeriodMatrix.standardDifferential j) 0 0 target
       positive floor
@@ -198,56 +200,56 @@ namespace EnergyRequest
 /-- Every original coefficient combination of the retained matched endpoint readings satisfies the homogeneous energy
 discrepancy bound. -/
 theorem accurate (request :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.EndpointPolygonEnergy.EndpointPolygonPreparation.EnergyRequest preparation
+  EnergyRequest preparation
   target floor) {stage : Nat} (later : request.index ≤ stage)
-    (leftData : (i : Fin genus) → PrimitiveData.DomainPrimitives leftDomain (PeriodMatrix.standardDifferential i) stage)
-    (rightData : (i : Fin genus) → PrimitiveData.DomainPrimitives rightDomain (PeriodMatrix.standardDifferential i)
+    (leftData : (i : Fin genus) → DomainPrimitives leftDomain (PeriodMatrix.standardDifferential i) stage)
+    (rightData : (i : Fin genus) → DomainPrimitives rightDomain (PeriodMatrix.standardDifferential i)
       stage)
-    (coefficients : Fin genus → Data.Gaussian.Basic.Canonical)
-    (leftPairs : (i j : Fin genus) → CenteredBilinearPath.Sample (fun vertex =>
+    (coefficients : Fin genus → Gaussian)
+    (leftPairs : (i j : Fin genus) → Sample (fun vertex =>
       ⟨conj ((geometry.leftReadings (leftData i).anchors (leftData i).offsets).values vertex),
         (geometry.leftReadings (leftData j).anchors (leftData j).offsets).values vertex⟩))
-    (rightPairs : (i j : Fin genus) → CenteredBilinearPath.Sample (fun vertex =>
+    (rightPairs : (i j : Fin genus) → Sample (fun vertex =>
       ⟨conj ((geometry.rightReadings (rightData i).anchors (rightData i).offsets).values vertex),
         (geometry.rightReadings (rightData j).anchors (rightData j).offsets).values vertex⟩))
-    (left : CenteredBilinearPath.Sample (fun vertex =>
-      ⟨sumFin (fun i => Data.Gaussian.Basic.conj (coefficients i) * Data.Gaussian.Basic.conj
+    (left : Sample (fun vertex =>
+      ⟨sumFin (fun i => Basic.conj (coefficients i) * Basic.conj
         ((geometry.leftReadings (leftData i).anchors (leftData i).offsets).values vertex)),
         FiniteSum.Fin.sumFin (fun i => coefficients i * (geometry.leftReadings (leftData i).anchors (leftData
           i).offsets).values vertex)⟩))
-    (right : CenteredBilinearPath.Sample (fun vertex =>
-      ⟨sumFin (fun i => Data.Gaussian.Basic.conj (coefficients i) * Data.Gaussian.Basic.conj
+    (right : Sample (fun vertex =>
+      ⟨sumFin (fun i => Basic.conj (coefficients i) * Basic.conj
         ((geometry.rightReadings (rightData i).anchors (rightData i).offsets).values vertex)),
         FiniteSum.Fin.sumFin (fun i => coefficients i * (geometry.rightReadings (rightData i).anchors (rightData
           i).offsets).values vertex)⟩)) :
-    Data.Gaussian.Norm.Basic.normSq (left.centeredArea - right.centeredArea) ≤
-      (genus : InverseRootPolynomial.Coordinate)^2 * (FiniteSum.Fin.sumFin (fun i =>
-        Data.Gaussian.Norm.Basic.normSq (coefficients i)))^2 * target := by
-  have pairs (i j : Fin genus) : Data.Gaussian.Norm.Basic.normSq ((leftPairs i j).centeredArea - (rightPairs i
+    Norm.Basic.normSq (left.centeredArea - right.centeredArea) ≤
+      (genus : Coordinate)^2 * (FiniteSum.Fin.sumFin (fun i =>
+        Norm.Basic.normSq (coefficients i)))^2 * target := by
+  have pairs (i j : Fin genus) : Norm.Basic.normSq ((leftPairs i j).centeredArea - (rightPairs i
     j).centeredArea) ≤ target := by
     have bound := ((request.entries.get i).get j).conjugate_accurate ((request.index_ge i j).trans later)
       (leftData i) (rightData i) (leftData j) (rightData j) (leftPairs i j) (rightPairs i j)
     exact bound.le
-  have bound := CenteredAreaDifference.Sample.centeredArea_difference_bound (fun i => Data.Gaussian.Basic.conj
+  have bound := CenteredAreaDifference.Sample.centeredArea_difference_bound (fun i => Basic.conj
     (coefficients i)) coefficients
-    (fun i vertex => Data.Gaussian.Basic.conj ((geometry.leftReadings (leftData i).anchors (leftData
+    (fun i vertex => Basic.conj ((geometry.leftReadings (leftData i).anchors (leftData
       i).offsets).values vertex))
-    (fun i vertex => Data.Gaussian.Basic.conj ((geometry.rightReadings (rightData i).anchors (rightData
+    (fun i vertex => Basic.conj ((geometry.rightReadings (rightData i).anchors (rightData
       i).offsets).values vertex))
     (fun i vertex => (geometry.leftReadings (leftData i).anchors (leftData i).offsets).values vertex)
     (fun i vertex => (geometry.rightReadings (rightData i).anchors (rightData i).offsets).values vertex)
     left right leftPairs rightPairs pairs
-  have norms : FiniteSum.Fin.sumFin (fun i => Data.Gaussian.Norm.Basic.normSq
-    (Data.Gaussian.Basic.conj (coefficients i))) = FiniteSum.Fin.sumFin (fun i =>
-    Data.Gaussian.Norm.Basic.normSq (coefficients i)) :=
-    FiniteSum.Fin.sumFin_congr fun i => Data.Gaussian.Norm.Basic.normSq_conj (coefficients i)
+  have norms : FiniteSum.Fin.sumFin (fun i => Norm.Basic.normSq
+    (Basic.conj (coefficients i))) = FiniteSum.Fin.sumFin (fun i =>
+    Norm.Basic.normSq (coefficients i)) :=
+    FiniteSum.Fin.sumFin_congr fun i => Norm.Basic.normSq_conj (coefficients i)
   rw [norms] at bound
   exact bound.trans_eq (by ring1)
 
 /-- Read the primitive at the original owned endpoint's retained cell and coordinate. -/
-@[expose] def ownerValue {stage : Nat} {differential : Differentials.Basic.Differential genus}
-    (data : PrimitiveData.DomainPrimitives leftDomain differential stage) (owner :
-      RectangularOwnedTriangulation.OwnedVertex leftDomain.geometry) : Gaussian :=
+@[expose] def ownerValue {stage : Nat} {differential : Differential genus}
+    (data : DomainPrimitives leftDomain differential stage) (owner :
+      OwnedVertex leftDomain.geometry) : Gaussian :=
   data.anchors.alignedValue data.offsets owner.column owner.row owner.point
 
 /-- The two actual original endpoint polygons satisfy the homogeneous energy discrepancy estimate on the common
@@ -255,52 +257,52 @@ requested tail.
 
 Distinct vertex owners and independently retained pair samples are preserved throughout the comparison. -/
 theorem original_accurate (request :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.EndpointPolygonEnergy.EndpointPolygonPreparation.EnergyRequest preparation
+  EnergyRequest preparation
   target floor) {stage : Nat} (later : request.index ≤ stage)
-    (leftData : (i : Fin genus) → PrimitiveData.DomainPrimitives leftDomain (PeriodMatrix.standardDifferential i) stage)
-    (rightData : (i : Fin genus) → PrimitiveData.DomainPrimitives rightDomain (PeriodMatrix.standardDifferential i)
+    (leftData : (i : Fin genus) → DomainPrimitives leftDomain (PeriodMatrix.standardDifferential i) stage)
+    (rightData : (i : Fin genus) → DomainPrimitives rightDomain (PeriodMatrix.standardDifferential i)
       stage)
-    (coefficients : Fin genus → Data.Gaussian.Basic.Canonical)
-    (leftPairs : (i j : Fin genus) → CenteredBilinearPath.Sample (fun vertex =>
+    (coefficients : Fin genus → Gaussian)
+    (leftPairs : (i j : Fin genus) → Sample (fun vertex =>
       ⟨conj ((geometry.leftReadings (leftData i).anchors (leftData i).offsets).values vertex),
         (geometry.leftReadings (leftData j).anchors (leftData j).offsets).values vertex⟩))
-    (rightPairs : (i j : Fin genus) → CenteredBilinearPath.Sample (fun vertex =>
+    (rightPairs : (i j : Fin genus) → Sample (fun vertex =>
       ⟨conj ((geometry.rightReadings (rightData i).anchors (rightData i).offsets).values vertex),
         (geometry.rightReadings (rightData j).anchors (rightData j).offsets).values vertex⟩))
-    (leftPolygons : (i j : Fin genus) → CenteredBilinearPath.Sample (fun vertex => AreaRequest.energyValues (leftData i)
+    (leftPolygons : (i j : Fin genus) → Sample (fun vertex => AreaRequest.energyValues (leftData i)
       (leftData j)
       ((JoinedCenteredArea.endpointPolygon first).indexed vertex)))
-    (rightPolygons : (i j : Fin genus) → CenteredBilinearPath.Sample (fun vertex => AreaRequest.energyValues (rightData
+    (rightPolygons : (i j : Fin genus) → Sample (fun vertex => AreaRequest.energyValues (rightData
       i) (rightData j)
       ((JoinedCenteredArea.endpointPolygon last).indexed vertex)))
-    (left : CenteredBilinearPath.Sample (fun vertex =>
-      ⟨sumFin (fun i => Data.Gaussian.Basic.conj (coefficients i) * Data.Gaussian.Basic.conj
+    (left : Sample (fun vertex =>
+      ⟨sumFin (fun i => Basic.conj (coefficients i) * Basic.conj
         (ownerValue
         (leftData i) ((JoinedCenteredArea.endpointPolygon first).indexed vertex))),
         FiniteSum.Fin.sumFin (fun i => coefficients i *
           ownerValue
           (leftData i) ((JoinedCenteredArea.endpointPolygon first).indexed vertex))⟩))
-    (right : CenteredBilinearPath.Sample (fun vertex =>
-      ⟨sumFin (fun i => Data.Gaussian.Basic.conj (coefficients i) * Data.Gaussian.Basic.conj
+    (right : Sample (fun vertex =>
+      ⟨sumFin (fun i => Basic.conj (coefficients i) * Basic.conj
         (ownerValue
         (rightData i) ((JoinedCenteredArea.endpointPolygon last).indexed vertex))),
         FiniteSum.Fin.sumFin (fun i => coefficients i *
           ownerValue
           (rightData i) ((JoinedCenteredArea.endpointPolygon last).indexed vertex))⟩)) :
-    Data.Gaussian.Norm.Basic.normSq (left.centeredArea - right.centeredArea) ≤
-      (genus : InverseRootPolynomial.Coordinate)^2 * (FiniteSum.Fin.sumFin (fun i =>
-        Data.Gaussian.Norm.Basic.normSq (coefficients i)))^2 * target := by
-  have pairs (i j : Fin genus) : Data.Gaussian.Norm.Basic.normSq ((leftPolygons i j).centeredArea -
+    Norm.Basic.normSq (left.centeredArea - right.centeredArea) ≤
+      (genus : Coordinate)^2 * (FiniteSum.Fin.sumFin (fun i =>
+        Norm.Basic.normSq (coefficients i)))^2 * target := by
+  have pairs (i j : Fin genus) : Norm.Basic.normSq ((leftPolygons i j).centeredArea -
     (rightPolygons i j).centeredArea) ≤ target :=
     (((request.entries.get i).get j).original_polygons_accurate ((request.index_ge i j).trans later)
       (leftData i) (rightData i) (leftData j) (rightData j) (leftPairs i j) (rightPairs i j)
       (leftPolygons i j) (rightPolygons i j)).le
-  have bound := CenteredAreaDifference.Sample.centeredArea_difference_bound (fun i => Data.Gaussian.Basic.conj
+  have bound := CenteredAreaDifference.Sample.centeredArea_difference_bound (fun i => Basic.conj
     (coefficients i)) coefficients
-    (fun i vertex => Data.Gaussian.Basic.conj
+    (fun i vertex => Basic.conj
       (ownerValue
       (leftData i) ((JoinedCenteredArea.endpointPolygon first).indexed vertex)))
-    (fun i vertex => Data.Gaussian.Basic.conj
+    (fun i vertex => Basic.conj
       (ownerValue
       (rightData i) ((JoinedCenteredArea.endpointPolygon last).indexed vertex)))
     (fun i vertex =>
@@ -310,10 +312,10 @@ theorem original_accurate (request :
       ownerValue
       (rightData i) ((JoinedCenteredArea.endpointPolygon last).indexed vertex))
     left right leftPolygons rightPolygons pairs
-  have norms : FiniteSum.Fin.sumFin (fun i => Data.Gaussian.Norm.Basic.normSq
-    (Data.Gaussian.Basic.conj (coefficients i))) = FiniteSum.Fin.sumFin (fun i =>
-    Data.Gaussian.Norm.Basic.normSq (coefficients i)) :=
-    FiniteSum.Fin.sumFin_congr fun i => Data.Gaussian.Norm.Basic.normSq_conj (coefficients i)
+  have norms : FiniteSum.Fin.sumFin (fun i => Norm.Basic.normSq
+    (Basic.conj (coefficients i))) = FiniteSum.Fin.sumFin (fun i =>
+    Norm.Basic.normSq (coefficients i)) :=
+    FiniteSum.Fin.sumFin_congr fun i => Norm.Basic.normSq_conj (coefficients i)
   rw [norms] at bound
   exact bound.trans_eq (by ring1)
 

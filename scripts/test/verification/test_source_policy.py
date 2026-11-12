@@ -26,6 +26,29 @@ def name := `Classical.choice
             with self.subTest(source=source):
                 self.assertTrue(policy.violations(source))
 
+    def test_admit_declaration_names_are_checked_separately_from_bodies(self):
+        for head in sorted(policy.NAMED_DECLARATIONS):
+            source = (f"module\n@[expose] public {head} /- declaration name -/\n"
+                      "admit (value : Nat) : Nat := value\n")
+            with self.subTest(head=head):
+                self.assertEqual(policy.violations(source), [])
+                violations = policy.violations(source.replace(":= value", ":= by admit"))
+                self.assertEqual(violations, [(3, "forbidden constructive shortcut: admit")])
+
+    def test_admit_name_exception_does_not_hide_other_proof_shortcuts(self):
+        for shortcut in ("admit", "sorry", "native_decide", "classical; trivial"):
+            source = "def admit : True := by " + shortcut
+            with self.subTest(shortcut=shortcut):
+                self.assertEqual(len(policy.violations(source)), 1)
+        self.assertTrue(policy.violations("def value : Nat := admit"))
+        self.assertTrue(policy.violations("def (admit) : Nat := 0"))
+        self.assertEqual(policy.violations("noncomputable def admit : Nat := 0"),
+                         [(1, "forbidden constructive shortcut: noncomputable")])
+        self.assertEqual(policy.violations("def admit := Classical.choice witness"),
+                         [(1, "forbidden constructive shortcut: Classical.choice")])
+        self.assertEqual(policy.violations("example : True := by\n  let head := `def\n  admit"),
+                         [(3, "forbidden constructive shortcut: admit")])
+
     def test_current_import_modes_and_completed_route_rejection(self):
         text = 'module\npublic meta import Mathlib.Topology.Basic\nimport Alpha Beta\n'
         self.assertEqual(sources.imports(text), [('Mathlib.Topology.Basic', 'public meta'),

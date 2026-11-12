@@ -67,16 +67,16 @@ open Purelib.Topology.Surface.Sewing.SewingRetraction (Retraction WordRoute word
 open Purelib.Topology.Surface.Sewing.SewingTree (SewnPatch)
 open Purelib.Topology.Surface.Cut.JumpPaths.CutPath (supported_mono)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
 
 /-- Every actual lifted-triangle edge occurs among the original edges retained by the canonical cut patch.
 
 The cut forest covers the same lifted triangulation. Its original edge permutation transports the displayed occurrence
 into the retained cut patch. -/
 theorem originalEdge_on_cutPatch (lifted : Meshes.LiftedPuncturedGrid base)
-    {edge : Stokes.OrientedEdge lifted.vertices.count}
+    {edge : OrientedEdge lifted.vertices.count}
     (member : edge ∈ Stokes.triangleEdgeOccurrences lifted.mesh.triangulation.faces) :
     edge ∈ SewnPatch.originalEdges lifted.cutPolygon.patch := by
   have coverage := SewingForest.originalEdges_coverage lifted.cutForest
@@ -87,45 +87,45 @@ theorem originalEdge_on_cutPatch (lifted : Meshes.LiftedPuncturedGrid base)
 
 /-- Build the canonical boundary retraction from the actual retained sewing patch. -/
 @[expose] def boundaryRetraction (lifted : Meshes.LiftedPuncturedGrid base) :
-    SewingRetraction.Retraction lifted.mesh.triangulation.faces lifted.cutPolygon.patch.faceIndices
+    Retraction lifted.mesh.triangulation.faces lifted.cutPolygon.patch.faceIndices
       lifted.cutPolygon.patch.boundary :=
   Retraction.ofPatch lifted.cutPolygon.patch
 
 namespace StandardTours.Pair
 
-variable {branches : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve
-    (Purelib.Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {index : Fin genus}
+variable {branches : Branches.BranchIsolation.Data curve}
+  {base : Meshes.FramedPuncturedGrid curve
+    (Branches.BranchConfiguration.configurationOfData curve branches).branches higher}
+  {lifted : Meshes.LiftedPuncturedGrid base} {index : Fin genus}
 
 set_option genInjectivity false in
 /-- One retained retraction and both materialized tour images. No new path preparation, root selection, or analytic
 certificate is needed.
 
 The cached routes use the same triangulation and boundary retraction, with separate signed corrections. -/
-structure BoundaryRoutes (pair : StandardTours.Pair lifted index) where
+structure BoundaryRoutes (pair : TourFaces.StandardTours.Pair lifted index) where
   /-- The shared retained retraction of the actual triangulation to its cut boundary. -/ retraction :
-    SewingRetraction.Retraction lifted.mesh.triangulation.faces
+    Retraction lifted.mesh.triangulation.faces
     lifted.cutPolygon.patch.faceIndices lifted.cutPolygon.patch.boundary
-  /-- The cached boundary image and signed face correction of the original A word. -/ a : SewingRetraction.WordRoute
+  /-- The cached boundary image and signed face correction of the original A word. -/ a : WordRoute
     lifted.mesh.triangulation.faces lifted.cutPolygon.patch.boundary pair.aFaces.geometry.indexed
-  /-- The cached boundary image and signed face correction of the original B word. -/ b : SewingRetraction.WordRoute
+  /-- The cached boundary image and signed face correction of the original B word. -/ b : WordRoute
     lifted.mesh.triangulation.faces lifted.cutPolygon.patch.boundary pair.bFaces.geometry.indexed
 
 constructive_injectivity BoundaryRoutes
 
 namespace BoundaryRoutes
 
-variable {pair : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.Pair lifted index}
+variable {pair : TourFaces.StandardTours.Pair lifted index}
 
 /-- Route both original tour words using the same supplied retained boundary retraction.
 
 Both original signed tour words are routed through the supplied common retraction, retaining their own face corrections
 and starting vertices. -/
-@[expose] def ofRetraction (pair : StandardTours.Pair lifted index)
-    (retraction : SewingRetraction.Retraction lifted.mesh.triangulation.faces
+@[expose] def ofRetraction (pair : TourFaces.StandardTours.Pair lifted index)
+    (retraction : Retraction lifted.mesh.triangulation.faces
       lifted.cutPolygon.patch.faceIndices lifted.cutPolygon.patch.boundary) :
-        TourRetraction.StandardTours.Pair.BoundaryRoutes pair :=
+        BoundaryRoutes pair :=
   ⟨retraction,
     retraction.word pair.aFaces.geometry.indexed
       (CutPath.supported_mono pair.aFaces.supported (fun _ member => TourRetraction.originalEdge_on_cutPatch lifted
@@ -138,33 +138,33 @@ and starting vertices. -/
 
 The canonical cut patch determines the shared retraction, and both original tour routes cache their exact boundary
 images. -/
-@[expose] def build (pair : StandardTours.Pair lifted index) : TourRetraction.StandardTours.Pair.BoundaryRoutes pair :=
-  TourRetraction.StandardTours.Pair.BoundaryRoutes.ofRetraction pair (TourRetraction.boundaryRetraction lifted)
+@[expose] def build (pair : TourFaces.StandardTours.Pair lifted index) : BoundaryRoutes pair :=
+  BoundaryRoutes.ofRetraction pair (TourRetraction.boundaryRetraction lifted)
 
 /-- The retained A boundary image closes on the original selected lifted starting vertex. -/
-theorem a_closed (routes : TourRetraction.StandardTours.Pair.BoundaryRoutes pair) :
-    PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish routes.a.path
+theorem a_closed (routes : BoundaryRoutes pair) :
+    PathEndpoints OrientedEdge.start OrientedEdge.finish routes.a.path
       (lifted.vertices.index _ pair.aFaces.first pair.aFaces.sheet)
       (lifted.vertices.index _ pair.aFaces.first pair.aFaces.sheet) := routes.a.endpoints pair.a_closed
 
 /-- The retained B boundary image closes on the same actual lifted base vertex as A. -/
-theorem b_closed (routes : TourRetraction.StandardTours.Pair.BoundaryRoutes pair) :
-    PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish routes.b.path
+theorem b_closed (routes : BoundaryRoutes pair) :
+    PathEndpoints OrientedEdge.start OrientedEdge.finish routes.b.path
       (lifted.vertices.index _ pair.aFaces.first pair.aFaces.sheet)
       (lifted.vertices.index _ pair.aFaces.first pair.aFaces.sheet) :=
   (routes.b.endpoints pair.b_closed).castStart pair.common_base.symm |>.castFinish pair.common_base.symm
 
 /-- The original A word, its actual boundary image, and the signed face correction appear in the same exact identity. -/
-theorem a_value (routes : TourRetraction.StandardTours.Pair.BoundaryRoutes pair) (value : Stokes.OrientedEdge
-  lifted.vertices.count → Data.Gaussian.Basic.Canonical)
+theorem a_value (routes : BoundaryRoutes pair) (value : OrientedEdge
+  lifted.vertices.count → Canonical)
     (antisymmetric : ∀ edge, value edge.reverse = -value edge) :
     SewingRetraction.wordValue value pair.aFaces.geometry.indexed = SewingRetraction.wordValue value routes.a.path +
       SewingRetraction.faceValue lifted.mesh.triangulation.faces value routes.a.correction := routes.a.value_eq value
         antisymmetric
 
 /-- The original B word value equals its actual boundary-image value plus the retained signed face correction. -/
-theorem b_value (routes : TourRetraction.StandardTours.Pair.BoundaryRoutes pair) (value : Stokes.OrientedEdge
-  lifted.vertices.count → Data.Gaussian.Basic.Canonical)
+theorem b_value (routes : BoundaryRoutes pair) (value : OrientedEdge
+  lifted.vertices.count → Canonical)
     (antisymmetric : ∀ edge, value edge.reverse = -value edge) :
     SewingRetraction.wordValue value pair.bFaces.geometry.indexed = SewingRetraction.wordValue value routes.b.path +
       SewingRetraction.faceValue lifted.mesh.triangulation.faces value routes.b.correction := routes.b.value_eq value

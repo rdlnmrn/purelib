@@ -47,6 +47,8 @@ import Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes
+
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid
 
 public section
@@ -84,7 +86,7 @@ namespace AllSurfacePreparation
 
 /-- The ordered triangle-corner source edges of the retained original exterior occurrences. -/
 @[expose] def sources (prepared :
-  ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
     regular domains differential) : List (Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge
       lifted.mesh.triangles.length) :=
   prepared.occurrences.map (fun occurrence => occurrence.placement.location.sourceEdge)
@@ -101,12 +103,12 @@ open
   in
 /-- Projecting the retained source edges gives exactly the flattened original exterior boundary list. -/
 theorem sources_project (prepared :
-  ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
     regular domains differential) :
     prepared.sources.map (fun source => source.project lifted.mesh.triangulation.faces) =
       lifted.exteriorBoundaries.flatten := by
   rw [sources, Map.map_map]
-  exact (Data.List.Map.map_congr_left (fun occurrence _ => occurrence.placement.location.sourceEdge_project)).trans
+  exact (Map.map_congr_left (fun occurrence _ => occurrence.placement.location.sourceEdge_project)).trans
     prepared.indexed_eq
 
 end AllSurfacePreparation
@@ -124,25 +126,25 @@ private theorem exterior_positive (sources : List (Topology.Surface.Sewing.SewnP
   lifted.mesh.triangles.length))
     (projected : sources.map (fun source => source.project lifted.mesh.triangulation.faces) =
       lifted.exteriorBoundaries.flatten) :
-    ∀ source ∈ sources, Purelib.Topology.Mesh.TriangleSourceUniqueness.SourceEdge.Positive source
+    ∀ source ∈ sources, Topology.Mesh.TriangleSourceUniqueness.SourceEdge.Positive source
       lifted.mesh.triangulation.faces := by
   intro source member
-  apply Hyperelliptic.Meshes.PuncturedGrid.BranchHoleSourceComparison.physicalSource_positive lifted source
+  apply BranchHoleSourceComparison.physicalSource_positive lifted source
   change _ ∈ (lifted.exteriorBoundaries ++ _).flatten
   rw [Flatten.flatten_append]
-  exact Membership.mem_append.mpr (Or.inl (projected ▸ Data.List.Map.mem_map_of_mem member))
+  exact Membership.mem_append.mpr (Or.inl (projected ▸ Map.mem_map_of_mem member))
 
 /-- Physical source uniqueness preserves order, repetitions, sheets and
 triangle corners, even when the other list came from another differential. -/
 theorem sources_eq (prepared :
-  ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
     regular domains differential)
     (retained : List (Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge lifted.mesh.triangles.length))
     (projected : retained.map (fun source => source.project lifted.mesh.triangulation.faces) =
       lifted.exteriorBoundaries.flatten) :
     prepared.sources = retained :=
   Topology.Mesh.TriangleSourceUniqueness.SourceEdge.list_eq_of_project_eq lifted.mesh.orientedEdges_unique
-    (Hyperelliptic.Meshes.PuncturedGrid.TriangleSourceUniqueness.LiftedMesh.corners_injective lifted.mesh) _ _
+    (TriangleSourceUniqueness.LiftedMesh.corners_injective lifted.mesh) _ _
 
       (exterior_positive
       _ prepared.sources_project)
@@ -155,39 +157,39 @@ theorem sources_eq (prepared :
 Physical source uniqueness preserves all repetitions, sheets and corners; it does not identify the separately retained
 primitive paths. -/
 theorem differential_sources_eq (prepared :
-  ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
     regular domains differential)
     (next :
-      ExteriorProgram.AllSurfacePreparation
+      AllSurfacePreparation
       regular domains other) : prepared.sources = next.sources :=
   prepared.sources_eq next.sources next.sources_project
 
 /-- The actual requested cap entries, including a request for a different
 standard differential, read precisely the retained fine-side source list. -/
 theorem request_sources_eq (prepared :
-  ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
     regular domains differential)
     {next :
-      ExteriorProgram.AllSurfacePreparation
+      AllSurfacePreparation
       regular domains other} {target areaTarget : Fraction.Rational} {floor : Nat}
-    (requested : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request
+    (requested : SurfaceRequests.AllSurfacePreparation.Request
       next target areaTarget floor) :
     prepared.sources = requested.entries.map (fun entry => entry.occurrence.placement.location.sourceEdge) := by
   apply prepared.sources_eq
   rw [Map.map_map]
-  exact (Data.List.Map.map_congr_left (fun entry _ => entry.occurrence.placement.location.sourceEdge_project)).trans
+  exact (Map.map_congr_left (fun entry _ => entry.occurrence.placement.location.sourceEdge_project)).trans
     requested.indexed_eq
 
 end AllSurfacePreparation
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram
 
-variable {cuts : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth :
-  Nat} {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights
+variable {cuts : RegularMeshes.CommonCuts domains} {coarseDepth :
+  Nat} {fixed : (sheet : Fin 2) → RegularMeshes.Preflights
   domains sheet}
   {meshTarget : Fraction.Rational} {i j : Fin genus} {stage : Nat} {cache :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+    RegularMeshes.Numerics domains stage}
   {meshRequest : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+    RegularMeshes.build domains cuts sheet coarseDepth) fixed
     meshTarget}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid
@@ -200,26 +202,26 @@ open
 /-- Read the bilinear source chords on the actual cap request's entries.
 Only the source list is transported; all fine-side internal areas remain. -/
 theorem fineRemainder_request_chords (prepared :
-  ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
     regular domains differential)
     {next :
-      ExteriorProgram.AllSurfacePreparation
+      AllSurfacePreparation
       regular domains other} {target areaTarget : Fraction.Rational} {floor : Nat}
-    (requested : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request
+    (requested : SurfaceRequests.AllSurfacePreparation.Request
       next target areaTarget floor)
     (perimeters : Matched.FacePerimeters (request := meshRequest)
       cache.normalize i j)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh)
-      (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh)
+      (right : TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
       :
-    prepared.fineRemainder perimeters left right + Data.Gaussian.Norm.Sum.Basic.gaussianSum (requested.entries.map
-      (fun entry => Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left
+    prepared.fineRemainder perimeters left right + Gaussian.Norm.Sum.Basic.gaussianSum (requested.entries.map
+      (fun entry => HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left
         right entry.occurrence.placement.location.sourceEdge)) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.occurrences.map (fun occurrence =>
-        Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.occurrenceFineArea perimeters
+      Gaussian.Norm.Sum.Basic.gaussianSum (prepared.occurrences.map (fun occurrence =>
+        SideOccurrenceReadings.LiftedPuncturedGrid.occurrenceFineArea perimeters
         occurrence.sideOccurrence)) := by
-  have chords := congrArg (fun entries => Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map
-    (Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left right)))
+  have chords := congrArg (fun entries => Gaussian.Norm.Sum.Basic.gaussianSum (entries.map
+    (HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left right)))
     (prepared.request_sources_eq requested)
   dsimp only [sources] at chords
   simp only [Map.map_map, Function.comp_def, -eq_self, -iff_self] at chords
@@ -233,24 +235,24 @@ theorem fineRemainder_request_chords (prepared :
       change
         (SurfaceOccurrence.fineRemainder
         head perimeters left right + _) +
-        (Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left right
+        (HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left right
           head.placement.location.sourceEdge + _) =
-          Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.occurrenceFineArea perimeters
+          SideOccurrenceReadings.LiftedPuncturedGrid.occurrenceFineArea perimeters
           head.sideOccurrence + _
-      change ((Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.occurrenceFineArea
+      change ((SideOccurrenceReadings.LiftedPuncturedGrid.occurrenceFineArea
         perimeters head.sideOccurrence -
-        Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left right
+        HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left right
           head.placement.location.sourceEdge) + _) + _ = _
       calc
-        _ = Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.occurrenceFineArea perimeters
+        _ = SideOccurrenceReadings.LiftedPuncturedGrid.occurrenceFineArea perimeters
           head.sideOccurrence +
-            (Data.Gaussian.Norm.Sum.Basic.gaussianSum (tail.map (fun occurrence => occurrence.fineRemainder perimeters
+            (Gaussian.Norm.Sum.Basic.gaussianSum (tail.map (fun occurrence => occurrence.fineRemainder perimeters
               left right)) +
-             Data.Gaussian.Norm.Sum.Basic.gaussianSum (tail.map (fun occurrence =>
-               Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left
+             Gaussian.Norm.Sum.Basic.gaussianSum (tail.map (fun occurrence =>
+               HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left
                right occurrence.placement.location.sourceEdge))) := by ring1
         _ = _ := congrArg
-          (Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.occurrenceFineArea perimeters
+          (SideOccurrenceReadings.LiftedPuncturedGrid.occurrenceFineArea perimeters
           head.sideOccurrence + ·) ih
 
 end AllSurfacePreparation

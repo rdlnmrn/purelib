@@ -22,11 +22,10 @@ section
 @[expose] public section
 
 /-!
-Restore the original axis certificate from checked separated-Sylvester data.
-Both the scalar polynomials and the executable Bézout callbacks consume those
-data. The degree bound is read from the restored polynomials as well.
-These are the existing finite constructors, with their recursive inverse
-inputs supplied by exact replay; no alternate eliminant is introduced.
+Retain the original ordered isolation and its canonical refinement functions
+while supplying scalar eliminants from checked inverse data. The certificate
+readback includes its callbacks; transporting the certified degree index does
+not change any retained isolation value.
 -/
 
 namespace Purelib.RootIsolation.Exact.Replay.Elimination
@@ -35,6 +34,18 @@ open Purelib.Polynomial.Elimination.SylvesterBezout
 open Purelib.Polynomial.Dense.Basic.DensePolynomial
 
 variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+
+/-- Reindexing an axis certificate by an exact bound equality preserves its complete isolation output. -/
+private theorem isolate_castDegree
+    {leftBound rightBound : Nat} (same : leftBound = rightBound)
+    (higher : 2 ≤ p.natDegree)
+    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
+    (elimination : Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p leftBound) :
+    Exact.LargeSquare.isolateLargeSquare higher squarefree
+      (show Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p rightBound from same ▸ elimination) =
+      Exact.LargeSquare.isolateLargeSquare higher squarefree elimination := by
+  cases same
+  rfl
 
 /-- The cached degree and restored callbacks select the original ordered
 isolation, including all track constructors and residual regions. -/
@@ -48,11 +59,10 @@ theorem isolation_eq (first :
       positive) =
       Exact.LargeSquare.isolateLargeSquare higher squarefree
         (Elimination.Axis.Separated.separatedAxisEliminationCertificate p nonzero positive) := by
-  rcases first with ⟨first, firstEq⟩
-  rcases second with ⟨second, secondEq⟩
-  cases firstEq
-  cases secondEq
-  rfl
+  exact (isolate_castDegree (Elimination.Axis.Replay.degree_eq first second) higher squarefree
+    (Elimination.Axis.Replay.certificate first second nonzero positive)).symm.trans
+      (congrArg (fun elimination => Exact.LargeSquare.isolateLargeSquare higher squarefree elimination)
+        (Elimination.Axis.Replay.certificate_eq first second nonzero positive))
 
 end Purelib.RootIsolation.Exact.Replay.Elimination
 

@@ -43,6 +43,8 @@ import Purelib.Riemann.Normalization.ContinuedInverseRoot
 import Purelib.Riemann.Normalization.OwnerSeededInverseRoot
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 open Purelib
@@ -77,32 +79,32 @@ open Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision (ParameterEdge)
 open Purelib.Data.Gaussian.Basic.Canonical
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius quarterRadius_eq_mul_pow)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : ParameterEdge} {cell :
+    Cell data edge}
+  {regular : RegularBounds.Data cap}
 
 set_option genInjectivity false in
 /-- Cached derivative-comparison bounds for one original reciprocal boundary cell and shared regular cap.
 
 The source and disk error scales are retained before choosing a common polynomial stage. -/
-structure Data (regular : RegularBounds.Data cap) (cell : UniformReciprocalCover.Cell data edge) where
+structure Data (regular : RegularBounds.Data cap) (cell : Cell data edge) where
   /-- The retained derivative comparison between the original cell model and shared regular cap bounds. -/ disk :
     ComparisonBounds.Data regular cell.model
   /-- The cached original source-to-reciprocal coefficient discrepancy scale. -/ sourceScale :
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The source scale is the original common density times the source residual bound plus one sixteenth. -/
     sourceScale_eq : sourceScale = UniformReciprocalPrimitives.Data.density data * (data.source.bound + 1 / 16)
-  /-- The cached combined source-to-cap primitive comparison scale. -/ scale : InverseRootPolynomial.Coordinate
+  /-- The cached combined source-to-cap primitive comparison scale. -/ scale : Coordinate
   /-- The combined scale is four times the source and disk scales times the original parent displacement squared norm.
   -/
-  scale_eq : scale = 4 * (sourceScale + disk.scale) * Data.Gaussian.Norm.Basic.normSq
+  scale_eq : scale = 4 * (sourceScale + disk.scale) * Basic.normSq
     parent.model.displacement
 
 constructive_injectivity Data
@@ -110,15 +112,15 @@ constructive_injectivity Data
 namespace Data
 
 /-- Cache the original cell's disk comparison and combined source-to-cap derivative scale. -/
-@[expose] def build (regular : RegularBounds.Data cap) (cell : UniformReciprocalCover.Cell data edge) :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell :=
+@[expose] def build (regular : RegularBounds.Data cap) (cell : Cell data edge) :
+  Data regular cell :=
   let disk := ComparisonBounds.Data.build regular cell.model
   let sourceScale := UniformReciprocalPrimitives.Data.density data * (data.source.bound + 1 / 16)
-  ⟨disk, sourceScale, rfl, 4 * (sourceScale + disk.scale) * Data.Gaussian.Norm.Basic.normSq
+  ⟨disk, sourceScale, rfl, 4 * (sourceScale + disk.scale) * Basic.normSq
     parent.model.displacement, rfl⟩
 
 /-- The cached source coefficient discrepancy scale is nonnegative. -/
-theorem sourceScale_nonnegative (comparison : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell)
+theorem sourceScale_nonnegative (comparison : Data regular cell)
   : 0 ≤ comparison.sourceScale := by
   rw [comparison.sourceScale_eq]
   exact Fraction.Order.Arithmetic.mul_nonneg_direct
@@ -126,28 +128,28 @@ theorem sourceScale_nonnegative (comparison : Curves.Hyperelliptic.Charts.Recipr
     (add_nonneg data.source.bound_nonnegative (by decide))
 
 /-- The combined original arc derivative scale is nonnegative. -/
-theorem scale_nonnegative (comparison : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell) : 0 ≤
+theorem scale_nonnegative (comparison : Data regular cell) : 0 ≤
   comparison.scale := by
   rw [comparison.scale_eq]
   exact Fraction.Order.Arithmetic.mul_nonneg_direct
     (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
       (add_nonneg comparison.sourceScale_nonnegative comparison.disk.scale_nonnegative))
-        (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+        (Basic.normSq_nonneg _)
 
 end Data
 
-variable {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell} {index : Nat}
-  {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+variable {comparison : Data regular cell} {index : Nat}
+  {box : Geometry.Rational.Box}
+  {capSample : Primitives.Sample cap differential index box}
 
 set_option genInjectivity false in
 /-- The original reciprocal primitive paired with a shared cap pullback and cached inverse-endpoint values.
 
 Exact cell and inverse-model identities ensure the pullback consumes the retained polynomial cache. -/
-structure Sample (comparison : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell) (capSample :
+structure Sample (comparison : Data regular cell) (capSample :
   Primitives.Sample cap differential index box) where
   /-- The original reciprocal cell primitive cache at the shared polynomial stage. -/ retained :
-    UniformReciprocalPrimitives.CellPrimitive data index edge
+    CellPrimitive data index edge
   /-- The retained primitive belongs to exactly the specified original reciprocal cell. -/ cell_eq : retained.cell =
     cell
   /-- The cap pullback sample consuming that same retained reciprocal inverse model. -/ pullback :
@@ -155,14 +157,14 @@ structure Sample (comparison : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSa
   /-- The pullback reciprocal model is exactly the original primitive's cached inverse. -/ inverse_eq :
     pullback.reciprocal = retained.inverse
   /-- The cached pullback value at the original inverse starting endpoint. -/ firstValue :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The cached first value equals the pullback polynomial evaluated at the original inverse start. -/ firstValue_eq :
     firstValue = pullback.value.eval (parent.edge.point edge.left.parameter)⁻¹
   /-- The cached pullback value at the original inverse finishing endpoint. -/ lastValue :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The cached last value equals the pullback polynomial evaluated at the original inverse finish. -/ lastValue_eq :
     lastValue = pullback.value.eval (parent.edge.point edge.right.parameter)⁻¹
-  /-- The cached original pullback endpoint difference. -/ increment : InverseRootPolynomial.Gaussian
+  /-- The cached original pullback endpoint difference. -/ increment : Gaussian
   /-- The increment is exactly the retained last value minus the retained first value. -/ increment_eq : increment =
     lastValue - firstValue
 
@@ -172,10 +174,10 @@ namespace Sample
 
 /-- Share the actual reciprocal primitive's refined inverse, and evaluate the new cap comparison at its actual inverse
 endpoints only once. -/
-@[expose] def ofPrimitive (comparison : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell)
+@[expose] def ofPrimitive (comparison : Data regular cell)
   (capSample : Primitives.Sample cap differential index box)
-    (retained : UniformReciprocalPrimitives.CellPrimitive data index edge) (cell_eq : retained.cell = cell) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample comparison capSample :=
+    (retained : CellPrimitive data index edge) (cell_eq : retained.cell = cell) :
+      Sample comparison capSample :=
   let pullback := PolynomialPullback.Sample.ofModel comparison.disk.preparation capSample retained.inverse
     (by rw [retained.inverse_eq, cell_eq])
   let firstValue := pullback.value.eval (parent.edge.point edge.left.parameter)⁻¹
@@ -184,46 +186,46 @@ endpoints only once. -/
 
 /-- The sign in the cap derivative is the same reciprocal minus sign used by the retained cell's original primitive
 comparison. -/
-theorem coefficient_eq (sample : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample comparison capSample)
-  (point : InverseRootPolynomial.Gaussian) :
+theorem coefficient_eq (sample : Sample comparison capSample)
+  (point : Gaussian) :
     sample.pullback.coefficient.eval point = -sample.retained.coefficient.eval point := by
   rw [sample.pullback.coefficient_eq, sample.inverse_eq, sample.retained.inverse_eq, sample.retained.coefficient_eq,
     PreparedPrimitiveSamples.differentialNumerator_eval]
 
 /-- The original pullback derivative error satisfies its geometric disk bound along every contained point of the
 retained arc. -/
-theorem derivative_error (sample : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample comparison capSample)
-  (parameter : InverseRootPolynomial.Coordinate)
+theorem derivative_error (sample : Sample comparison capSample)
+  (parameter : Coordinate)
     (between : edge.left.parameter ≤ parameter ∧ parameter ≤ edge.right.parameter) :
-    Data.Gaussian.Norm.Basic.normSq ((Derivative.derivative sample.pullback.value).eval (parent.edge.point
+    Basic.normSq ((Derivative.derivative sample.pullback.value).eval (parent.edge.point
       parameter)⁻¹ -
-      sample.pullback.coefficient.eval (parent.edge.point parameter)⁻¹) ≤ Geometric.Basic.quarterRadius
+      sample.pullback.coefficient.eval (parent.edge.point parameter)⁻¹) ≤ quarterRadius
         comparison.disk.scale index := by
   have within : 0 ≤ parameter ∧ parameter ≤ 1 :=
     ⟨edge.left.inside.1.trans between.1, between.2.trans edge.right.inside.2⟩
   have boundary := data.boundary.point within
-  have lower := (collar.point_clearance boundary (show 0 ≤ (0 : InverseRootPolynomial.Coordinate) ∧ (0 :
-    InverseRootPolynomial.Coordinate) ≤ 1 from ⟨le_rfl, by decide⟩)).2
+  have lower := (collar.point_clearance boundary (show 0 ≤ (0 : Coordinate) ∧ (0 :
+    Coordinate) ≤ 1 from ⟨le_rfl, by decide⟩)).2
   rw [collar.point_eq, ReciprocalExteriorCollar.deform_zero] at lower
   exact comparison.disk.derivative_error_le sample.pullback (cell.contains parameter between)
     (ReciprocalExteriorCollar.inverse_inDisk curve boundary) lower
 
 /-- The original source and reciprocal coefficient discrepancy satisfies its retained geometric scale along the same
 arc. -/
-theorem source_error (sample : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample comparison capSample)
-  (source : UniformReciprocalPrimitives.SourcePrimitive data index) (parameter : InverseRootPolynomial.Coordinate)
+theorem source_error (sample : Sample comparison capSample)
+  (source : SourcePrimitive data index) (parameter : Coordinate)
     (between : edge.left.parameter ≤ parameter ∧ parameter ≤ edge.right.parameter) :
-    Data.Gaussian.Norm.Basic.normSq (source.coefficient.eval (parent.edge.point parameter) - (parent.edge.point
+    Basic.normSq (source.coefficient.eval (parent.edge.point parameter) - (parent.edge.point
       parameter)⁻¹ ^ 2 *
-      sample.retained.coefficient.eval (parent.edge.point parameter)⁻¹) ≤ Geometric.Basic.quarterRadius
+      sample.retained.coefficient.eval (parent.edge.point parameter)⁻¹) ≤ quarterRadius
         comparison.sourceScale index := by
   have estimate := sample.retained.coefficient_distance_le source parameter between
   rw [Model.refine_bound, Model.refine_bound,
     sample.cell_eq, cell.model_eq] at estimate
-  change Data.Gaussian.Norm.Basic.normSq _ ≤ UniformReciprocalPrimitives.Data.density data *
-    (Geometric.Basic.quarterRadius data.source.bound index + Geometric.Basic.quarterRadius (1 / 16) index) at estimate
+  change Basic.normSq _ ≤ UniformReciprocalPrimitives.Data.density data *
+    (quarterRadius data.source.bound index + quarterRadius (1 / 16) index) at estimate
   exact estimate.trans_eq (by
-      simp only [Geometric.Basic.quarterRadius_eq_mul_pow, comparison.sourceScale_eq, -eq_self, -iff_self];
+      simp only [quarterRadius_eq_mul_pow, comparison.sourceScale_eq, -eq_self, -iff_self];
       ring1)
 
 end Sample

@@ -102,7 +102,7 @@ theorem through_path (split : PolygonStokes.BoundarySplit boundary) {anchor : Fi
     (closed : PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish boundary anchor anchor) :
     PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish (split.before ++ [split.edge]) anchor
       split.edge.finish :=
-  PathEndpoints.append (BoundarySplit.before_path split closed) (.cons (.nil _))
+  PathBoundary.PathEndpoints.append (BoundarySplit.before_path split closed) (.cons (.nil _))
 
 /-- Every edge of the selected prefix belongs to the original boundary.
 
@@ -133,7 +133,7 @@ theorem reverse_endpoints {count : Nat} {edges : List (Stokes.OrientedEdge count
   | nil => exact .nil _
   | @cons edge rest finish tail ih =>
       simp only [CutPath.reverse, Reverse.reverse_cons, Map.map_append, List.map_cons, List.map_nil]
-      exact PathEndpoints.append ih (.cons (.nil _))
+      exact PathBoundary.PathEndpoints.append ih (.cons (.nil _))
 
 /-- Sum the primitive endpoint differences along an ordered cut-edge list. -/
 @[expose] def increment {count : Nat} (primitive : Fin count → Stokes.PrimitivePoint) : List (Stokes.OrientedEdge count)
@@ -304,18 +304,20 @@ specified cut endpoints. -/
     (BoundarySplit.before_path first.split closed).castFinish (congrArg OrientedEdge.start first.edge_eq)
   have firstThrough : PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish (first.split.before ++
     [pair.first]) anchor pair.first.finish :=
-    PathEndpoints.append firstBefore (.cons (.nil _))
+    PathBoundary.PathEndpoints.append firstBefore (.cons (.nil _))
   have secondBefore : PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish second.split.before anchor
     pair.second.start :=
     (BoundarySplit.before_path second.split closed).castFinish (congrArg OrientedEdge.start second.edge_eq)
   have secondThrough : PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish (second.split.before ++
     [pair.second]) anchor pair.second.finish :=
-    PathEndpoints.append secondBefore (.cons (.nil _))
+    PathBoundary.PathEndpoints.append secondBefore (.cons (.nil _))
   { first := first
     second := second
-    start := Projected.build labels _ (PathEndpoints.append (CutPath.reverse_endpoints firstBefore) secondThrough)
+    start := Projected.build labels _
+      (PathBoundary.PathEndpoints.append (CutPath.reverse_endpoints firstBefore) secondThrough)
     start_eq := Append.append_assoc _ _ _ |>.symm
-    finish := Projected.build labels _ (PathEndpoints.append (CutPath.reverse_endpoints firstThrough) secondBefore)
+    finish := Projected.build labels _
+      (PathBoundary.PathEndpoints.append (CutPath.reverse_endpoints firstThrough) secondBefore)
     finish_eq := rfl }
 
 section

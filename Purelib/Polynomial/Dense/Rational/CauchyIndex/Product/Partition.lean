@@ -22,6 +22,8 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Polynomial.Clearance.Pair.Basic (Certificate)
 open Purelib.Polynomial.Dense.Rational.Basic (CoordinatePolynomial)
 
@@ -46,7 +48,7 @@ width below the common threshold, and cannot meet both outer endpoints.
 The retained guard observations select an interior or one-sided endpoint
 formula using those same factor clearances and coordinate identities. -/
 public theorem auxiliaryProductFormula_of_guarded_leaf
-    {A B C D E H : CoordinatePolynomial} {root interval : Data.Rat.Interval.Bounds}
+    {A B C D E H : CoordinatePolynomial} {root interval : Interval.Bounds}
     (left : Certificate A B root)
     (right : Certificate C D root)
     (realIdentity : ∀ x : Fraction.Rational,
@@ -56,7 +58,7 @@ public theorem auxiliaryProductFormula_of_guarded_leaf
     (refines : interval.Refines root)
     (proper : interval.lower < interval.upper)
     (widthSmall : interval.upper - interval.lower <
-      Partition.Bounds.completeProductLeafWidth left right realIdentity imagIdentity)
+      Bounds.completeProductLeafWidth left right realIdentity imagIdentity)
     (lowerGuard : interval.lower = root.lower ∨
       (Guard.productEventGuard A B C D E H).eval interval.lower ≠ 0)
     (upperGuard : interval.upper = root.upper ∨
@@ -70,7 +72,7 @@ public theorem auxiliaryProductFormula_of_guarded_leaf
     Basic.AuxiliaryProductFormula A B C D E H
       interval.lower interval.upper := by
   have radius : Interval.Radius.sampleRadiusSq interval interval.lower <
-      Partition.Bounds.completeProductResolutionRadiusSq left right
+      Bounds.completeProductResolutionRadiusSq left right
         realIdentity imagIdentity :=
     Interval.Radius.Partition.radius_lt_of_width_lt proper widthSmall
   by_cases lowerAtRoot : interval.lower = root.lower
@@ -84,7 +86,7 @@ public theorem auxiliaryProductFormula_of_guarded_leaf
     apply Endpoint.Resolution.auxiliaryProductFormula_of_leftEndpoint_refined_radiusSq
       left right realIdentity imagIdentity refines
     · simpa only [lowerAtRoot] using
-        radius.trans_le ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _))
+        radius.trans_le ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _))
     · simpa only [lowerAtRoot] using leftRootStart
     · simpa only [lowerAtRoot] using rightRootStart
     · exact BUpper
@@ -98,7 +100,7 @@ public theorem auxiliaryProductFormula_of_guarded_leaf
     · apply Endpoint.Resolution.auxiliaryProductFormula_of_rightEndpoint_refined_radiusSq
         left right realIdentity imagIdentity refines
       · simpa only [upperAtRoot] using
-          radius.trans_le ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_right _ _))
+          radius.trans_le ((Basic.min_le_right _ _).trans (Basic.min_le_right _ _))
       · simpa only [upperAtRoot] using leftRootStop
       · simpa only [upperAtRoot] using rightRootStop
       · exact BLower
@@ -110,7 +112,7 @@ public theorem auxiliaryProductFormula_of_guarded_leaf
         ⟨AUpper, BUpper, CUpper, DUpper, EUpper, HUpper⟩
       apply Resolution.auxiliaryProductFormula_of_refined_radiusSq
         left right realIdentity imagIdentity refines
-      · exact radius.trans_le (Fraction.Order.Basic.min_le_left _ _)
+      · exact radius.trans_le (Basic.min_le_left _ _)
       · exact ALower
       · exact BLower
       · exact CLower
@@ -135,7 +137,7 @@ public theorem auxiliaryProductFormulaAtDepth
     (A_nonzero : A.isZero = false) (B_nonzero : B.isZero = false)
     (C_nonzero : C.isZero = false) (D_nonzero : D.isZero = false)
     (E_nonzero : E.isZero = false) (H_nonzero : H.isZero = false)
-    {root : Data.Rat.Interval.Bounds}
+    {root : Interval.Bounds}
     (left : Certificate A B root)
     (right : Certificate C D root)
     (realIdentity : ∀ x : Fraction.Rational,
@@ -146,7 +148,7 @@ public theorem auxiliaryProductFormulaAtDepth
     (rightRootStart : C.eval root.lower ≠ 0 ∨ D.eval root.lower ≠ 0)
     (leftRootStop : A.eval root.upper ≠ 0 ∨ B.eval root.upper ≠ 0)
     (rightRootStop : C.eval root.upper ≠ 0 ∨ D.eval root.upper ≠ 0)
-    (fuel : Nat) (interval : Data.Rat.Interval.Bounds)
+    (fuel : Nat) (interval : Interval.Bounds)
     (refines : interval.Refines root)
     (proper : interval.lower < interval.upper)
     (lowerGuard : interval.lower = root.lower ∨
@@ -157,7 +159,7 @@ public theorem auxiliaryProductFormulaAtDepth
       ¬(interval.lower = root.lower ∧ interval.upper = root.upper))
     (sufficient : (2 / 3 : Fraction.Rational) ^ fuel *
       (interval.upper - interval.lower) <
-        Partition.Bounds.completeProductLeafWidth left right realIdentity imagIdentity) :
+        Bounds.completeProductLeafWidth left right realIdentity imagIdentity) :
     Basic.AuxiliaryProductFormula A B C D E H
       interval.lower interval.upper := by
   induction fuel generalizing interval with
@@ -179,11 +181,11 @@ public theorem auxiliaryProductFormulaAtDepth
       have guardNonzero : guard.isZero = false :=
         Guard.productEventGuard_isZero_false A_nonzero B_nonzero
           C_nonzero D_nonzero E_nonzero H_nonzero
-      let cut := Dense.Rational.Nonzero.Search.Central.centralSearchValue guard guard.natDegree proper
+      let cut := Nonzero.Search.Central.centralSearchValue guard guard.natDegree proper
         guardNonzero le_rfl
       have cutSpec : guard.eval cut ≠ 0 ∧
           interval.lower < cut ∧ cut < interval.upper := by
-        simpa only [guard, cut] using Dense.Rational.Nonzero.Search.Central.centralSearchValue_spec
+        simpa only [guard, cut] using Nonzero.Search.Central.centralSearchValue_spec
           guard guard.natDegree proper guardNonzero le_rfl
       have contraction : cut - interval.lower <
             (2 / 3 : Fraction.Rational) *
@@ -191,13 +193,13 @@ public theorem auxiliaryProductFormulaAtDepth
           interval.upper - cut <
             (2 / 3 : Fraction.Rational) *
               (interval.upper - interval.lower) := by
-        simpa only [guard, cut] using Dense.Rational.Nonzero.Search.Central.centralSearchValue_contraction
+        simpa only [guard, cut] using Nonzero.Search.Central.centralSearchValue_contraction
           guard guard.natDegree proper guardNonzero le_rfl
-      let leftInterval : Data.Rat.Interval.Bounds :=
+      let leftInterval : Interval.Bounds :=
         { lower := interval.lower
           upper := cut
           valid := cutSpec.2.1.le }
-      let rightInterval : Data.Rat.Interval.Bounds :=
+      let rightInterval : Interval.Bounds :=
         { lower := cut
           upper := interval.upper
           valid := cutSpec.2.2.le }
@@ -226,42 +228,42 @@ public theorem auxiliaryProductFormulaAtDepth
           exact refines.1
         exact (not_lt_of_ge lowerBound) cutSpec.2.1
       have powerPositive : 0 < (2 / 3 : Fraction.Rational) ^ fuel :=
-        Fraction.Order.Arithmetic.pow_pos_direct (by decide) fuel
+        Arithmetic.pow_pos_direct (by decide) fuel
       have leftSufficient : (2 / 3 : Fraction.Rational) ^ fuel *
           (leftInterval.upper - leftInterval.lower) <
-            Partition.Bounds.completeProductLeafWidth left right realIdentity imagIdentity := by
+            Bounds.completeProductLeafWidth left right realIdentity imagIdentity := by
         calc
           (2 / 3 : Fraction.Rational) ^ fuel *
               (leftInterval.upper - leftInterval.lower) <
               (2 / 3 : Fraction.Rational) ^ fuel *
                 ((2 / 3 : Fraction.Rational) *
                   (interval.upper - interval.lower)) :=
-            Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+            Arithmetic.mul_lt_mul_of_pos_left_direct
               powerPositive
               (by simpa only [leftInterval] using contraction.1)
           _ = (2 / 3 : Fraction.Rational) ^ Nat.succ fuel *
               (interval.upper - interval.lower) := by
             rw [pow_succ]
             ring1
-          _ < Partition.Bounds.completeProductLeafWidth left right
+          _ < Bounds.completeProductLeafWidth left right
               realIdentity imagIdentity := sufficient
       have rightSufficient : (2 / 3 : Fraction.Rational) ^ fuel *
           (rightInterval.upper - rightInterval.lower) <
-            Partition.Bounds.completeProductLeafWidth left right realIdentity imagIdentity := by
+            Bounds.completeProductLeafWidth left right realIdentity imagIdentity := by
         calc
           (2 / 3 : Fraction.Rational) ^ fuel *
               (rightInterval.upper - rightInterval.lower) <
               (2 / 3 : Fraction.Rational) ^ fuel *
                 ((2 / 3 : Fraction.Rational) *
                   (interval.upper - interval.lower)) :=
-            Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+            Arithmetic.mul_lt_mul_of_pos_left_direct
               powerPositive
               (by simpa only [rightInterval] using contraction.2)
           _ = (2 / 3 : Fraction.Rational) ^ Nat.succ fuel *
               (interval.upper - interval.lower) := by
             rw [pow_succ]
             ring1
-          _ < Partition.Bounds.completeProductLeafWidth left right
+          _ < Bounds.completeProductLeafWidth left right
               realIdentity imagIdentity := sufficient
       have leftFormula := inductionHypothesis leftInterval leftRefines
         (by simpa only [leftInterval] using cutSpec.2.1)
@@ -286,7 +288,7 @@ public theorem auxiliaryProductFormula_of_nondegenerate_coordinates
     (A_nonzero : A.isZero = false) (B_nonzero : B.isZero = false)
     (C_nonzero : C.isZero = false) (D_nonzero : D.isZero = false)
     (E_nonzero : E.isZero = false) (H_nonzero : H.isZero = false)
-    {root : Data.Rat.Interval.Bounds} (proper : root.lower < root.upper)
+    {root : Interval.Bounds} (proper : root.lower < root.upper)
     (left : Certificate A B root)
     (right : Certificate C D root)
     (realIdentity : ∀ x : Fraction.Rational,
@@ -298,11 +300,11 @@ public theorem auxiliaryProductFormula_of_nondegenerate_coordinates
     (leftRootStop : A.eval root.upper ≠ 0 ∨ B.eval root.upper ≠ 0)
     (rightRootStop : C.eval root.upper ≠ 0 ∨ D.eval root.upper ≠ 0) :
     Basic.AuxiliaryProductFormula A B C D E H root.lower root.upper := open Purelib.Algebra.Field in by
-  let leafWidth := Partition.Bounds.completeProductLeafWidth
+  let leafWidth := Bounds.completeProductLeafWidth
     left right realIdentity imagIdentity
   have leafWidthPositive : 0 < leafWidth := by
     simpa only [leafWidth] using
-      Partition.Bounds.completeProductLeafWidth_pos left right realIdentity imagIdentity
+      Bounds.completeProductLeafWidth_pos left right realIdentity imagIdentity
   let depth := Approximation.Rational.Contraction.geometricDepth (root.upper - root.lower) (leafWidth / 2)
   have geometric : (2 / 3 : Fraction.Rational) ^ depth *
       (root.upper - root.lower) ≤ leafWidth / 2 := by
@@ -310,11 +312,11 @@ public theorem auxiliaryProductFormula_of_nondegenerate_coordinates
       (Approximation.Rational.Contraction.geometricDepth_sufficient
         (width := root.upper - root.lower) (epsilon := leafWidth / 2)
         (show 0 ≤ root.upper - root.lower from
-          (Fraction.Order.Arithmetic.sub_pos_direct proper).le)
-        (Fraction.Order.Field.div_pos_direct leafWidthPositive
+          (Arithmetic.sub_pos_direct proper).le)
+        (Field.div_pos_direct leafWidthPositive
           (show (0 : Fraction.Rational) < 2 by decide)))
   have halfBelow : leafWidth / 2 < leafWidth := by
-    have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+    have scaled := Arithmetic.mul_lt_mul_of_pos_right_direct
       (show (1 / 2 : Fraction.Rational) < 1 by decide) leafWidthPositive
     rw [ExplicitField.div_eq_mul_inv]
     have halfInverse : (2 : Fraction.Rational)⁻¹ = 1 / 2 := by
@@ -326,15 +328,15 @@ public theorem auxiliaryProductFormula_of_nondegenerate_coordinates
       (root.upper - root.lower) < leafWidth :=
     geometric.trans_lt halfBelow
   have widthNonnegative : 0 ≤ root.upper - root.lower :=
-    (Fraction.Order.Arithmetic.sub_pos_direct proper).le
+    (Arithmetic.sub_pos_direct proper).le
   have contractionLeOne : (2 / 3 : Fraction.Rational) ≤ 1 := by decide
   have contractionWidthLe : (2 / 3 : Fraction.Rational) *
       (root.upper - root.lower) ≤ root.upper - root.lower := by
-    have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    have scaled := Arithmetic.mul_le_mul_of_nonneg_right_direct
       contractionLeOne widthNonnegative
     simpa only [one_mul] using scaled
   have depthPowerNonnegative : 0 ≤ (2 / 3 : Fraction.Rational) ^ depth :=
-    Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) depth
+    Arithmetic.pow_nonneg_direct (by decide) depth
   have sufficient : (2 / 3 : Fraction.Rational) ^ Nat.succ depth *
       (root.upper - root.lower) < leafWidth := by
     calc
@@ -347,7 +349,7 @@ public theorem auxiliaryProductFormula_of_nondegenerate_coordinates
         ring1
       _ ≤ (2 / 3 : Fraction.Rational) ^ depth *
           (root.upper - root.lower) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           contractionWidthLe depthPowerNonnegative
       _ < leafWidth := baseSufficient
   exact auxiliaryProductFormulaAtDepth

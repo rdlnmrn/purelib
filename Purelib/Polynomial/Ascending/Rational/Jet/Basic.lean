@@ -36,7 +36,7 @@ set_option genInjectivity false in
 low-to-high rational coefficient list. -/
 structure TaylorJet where
   /-- The retained finite rational polynomial underlying this Taylor jet. -/ polynomial :
-    Ascending.Rational.Basic.CoefficientPolynomial
+    Basic.CoefficientPolynomial
 deriving DecidableEq
 
 constructive_injectivity TaylorJet
@@ -56,44 +56,44 @@ def coefficients (jet :
 /-- Read a jet coefficient, using zero beyond its retained table. -/
 def coefficient (jet :
   TaylorJet) (degree : Nat) : Fraction.Rational :=
-  Ascending.Rational.Basic.coefficient jet.polynomial degree
+  Basic.coefficient jet.polynomial degree
 
 /-- Evaluate the finite Taylor jet at a Gaussian increment. -/
 def evaluate (jet :
   TaylorJet) (increment : Gaussian.Basic.Canonical) : Gaussian.Basic.Canonical :=
-  Ascending.Rational.GaussianEvaluation.eval jet.polynomial increment
+  GaussianEvaluation.eval jet.polynomial increment
 
 /-- Retain only the jet coefficients below the requested count. -/
 def truncate (count : Nat) (jet :
   TaylorJet) : TaylorJet :=
-  ⟨Ascending.Rational.Basic.truncate count jet.polynomial⟩
+  ⟨Basic.truncate count jet.polynomial⟩
 
 /-- Add two finite jets by padded coefficient addition. -/
 def add (left right :
   TaylorJet) : TaylorJet :=
-  ⟨Ascending.Rational.Basic.add left.polynomial right.polynomial⟩
+  ⟨Basic.add left.polynomial right.polynomial⟩
 
 /-- Scale every retained Taylor coefficient by the rational factor. -/
 def scale (factor : Fraction.Rational) (jet :
   TaylorJet) : TaylorJet :=
-  ⟨Ascending.Rational.Basic.scale factor jet.polynomial⟩
+  ⟨Basic.scale factor jet.polynomial⟩
 
 /-- Truncated or untruncated multiplication is selected explicitly by the
 caller; this constructor retains the whole finite Cauchy product. -/
 def mul (left right :
   TaylorJet) : TaylorJet :=
-  ⟨Ascending.Rational.Basic.mul left.polynomial right.polynomial⟩
+  ⟨Basic.mul left.polynomial right.polynomial⟩
 
 /-- Compose the underlying finite Taylor polynomials by Horner substitution. -/
 def compose (outer inner :
   TaylorJet) : TaylorJet :=
-  ⟨Ascending.Rational.Composition.compose
+  ⟨Composition.compose
     outer.polynomial inner.polynomial⟩
 
 /-- Differentiate the finite Taylor coefficient table. -/
 def derivative (jet :
   TaylorJet) : TaylorJet :=
-  ⟨Ascending.Rational.Derivative.derivative jet.polynomial⟩
+  ⟨Derivative.derivative jet.polynomial⟩
 end TaylorJet
 
 end Purelib.Polynomial.Ascending.Rational.Jet.Basic

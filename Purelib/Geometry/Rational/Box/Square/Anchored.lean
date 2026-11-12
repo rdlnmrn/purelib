@@ -82,8 +82,8 @@ theorem anchoredSquare_proper
 @[simp] theorem anchoredSquare_diagonalSq
     (point : Data.Gaussian.Basic.Canonical) (radius : Fraction.Rational) (nonnegative : 0 ≤ radius) :
     (anchoredSquare point radius nonnegative).diagonalSq = 2 * radius ^ 2 := by
-  dsimp only [anchoredSquare, Rational.Box.diagonalSq,
-    Rational.Box.widthX, Rational.Box.widthY]
+  rewrite [Rational.Box.diagonalSq_eq_original]
+  dsimp only [anchoredSquare]
   ring1
 
 end Purelib.Geometry.Rational.Box.Square.Anchored

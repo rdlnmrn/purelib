@@ -53,6 +53,8 @@ import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-! Each corrected annular sample consumes its already retained paired
@@ -93,7 +95,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings
 open Purelib.Riemann.Periods.PeriodMatrix (standardDifferential)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target
@@ -116,9 +118,9 @@ open Purelib.Topology.Surface.Sewing.SewnPrimitiveSamples (CachedSample)
 
 variable {stage : Nat}
   {firstBank : FacePrimitiveBank
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential first) stage domains}
+    (Riemann.Periods.PeriodMatrix.standardDifferential first) stage domains}
   {secondBank : FacePrimitiveBank
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential second) stage domains}
+    (Riemann.Periods.PeriodMatrix.standardDifferential second) stage domains}
   {left : TriangleReadings firstBank
     lifted.mesh} {right : TriangleReadings
     secondBank lifted.mesh}
@@ -130,15 +132,15 @@ set_option genInjectivity false in
 /-- The original annular request evaluated on two retained sewn surfaces.
 
 The selected triangles are cached on the actual first surface and used by the corrected paired annular sample. -/
-structure AnnularTerm (left : TrianglePrimitiveReadings.TriangleReadings firstBank lifted.mesh) (right :
-  TrianglePrimitiveReadings.TriangleReadings secondBank lifted.mesh)
+structure AnnularTerm (left : TriangleReadings firstBank lifted.mesh) (right :
+  TriangleReadings secondBank lifted.mesh)
     (firstSurface : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch left.values)
     (secondSurface : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch right.values) where
-  /-- The original paired source term and its retained annular request. -/ source : PairedComparison.Term left right
+  /-- The original paired source term and its retained annular request. -/ source : Term left right
   /-- The cached actual first-surface triangles selected by the original annular source mask. -/ selected :
-    CachedSample.FaceSelection firstSurface (AllHoleExcision.sourceMask source.source.source.entry)
+    FaceSelection firstSurface (AllHoleExcision.sourceMask source.source.source.entry)
   /-- The corrected annular sample using that exact selection and the original second sewn surface. -/ data :
-    PairedCutRequests.AnnularSample ⟨source.source.source.entry, selected⟩
+    AnnularSample ⟨source.source.source.entry, selected⟩
     source.source.source.outer source.source.sewn secondSurface
 
 constructive_injectivity AnnularTerm
@@ -149,9 +151,9 @@ namespace AnnularTerm
 banks. -/
 @[expose] def build (firstSurface : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch left.values)
     (secondSurface : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch right.values) (source :
-      PairedComparison.Term left right) :
+      Term left right) :
 
-      PairedComparison.AnnularTerm
+      AnnularTerm
       left right firstSurface secondSurface :=
   let selected := FaceSelection.build firstSurface
     (AllHoleExcision.sourceMask source.source.source.entry)
@@ -160,21 +162,21 @@ banks. -/
 
 /-- The actual selected annular area minus its retained complete correction. -/
 @[expose] def difference (term :
-  PairedComparison.AnnularTerm
+  AnnularTerm
   left right firstSurface secondSurface) : Gaussian :=
   term.data.selectedArea - term.data.correction
 
 /-- At its paid sewing stage, the original corrected annular area satisfies the retained per-hole target. -/
 theorem accurate (term :
-  PairedComparison.AnnularTerm
+  AnnularTerm
   left right firstSurface secondSurface)
-    (later : term.source.source.sewn.sewing.stage ≤ stage) : Data.Gaussian.Norm.Basic.normSq term.difference <
+    (later : term.source.source.sewn.sewing.stage ≤ stage) : Basic.normSq term.difference <
       request.perHole :=
   term.data.accurate later
 
 end AnnularTerm
 variable {prepared :
-  (Purelib.Curves.Hyperelliptic.Meshes.Newton.AllHoles.PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations
+  (PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations
   excision)} {comparison :
   PairedComparison
   prepared first second domains}
@@ -183,7 +185,7 @@ set_option genInjectivity false in
 /-- The cached selected areas, corrections and differences for every original annular term.
 
 The ordered term readback binds the exact original source sample and both retained sewn surfaces. -/
-structure SewnSample (source : PairedComparison.Sample comparison left right)
+structure SewnSample (source : Sample comparison left right)
     (firstSurface : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch left.values)
     (secondSurface : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch right.values) where
   /-- The retained corrected annular terms on the two original sewn surface banks. -/ terms : List
@@ -194,13 +196,13 @@ structure SewnSample (source : PairedComparison.Sample comparison left right)
     = source.terms
   /-- The cached sum of the actual selected annular triangle areas. -/ selectedArea : Data.Gaussian.Basic.Canonical
   /-- The selected-area cache is the sum of the retained actual term selections. -/ selectedArea_eq : selectedArea =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (terms.map (fun term => term.data.selectedArea))
+    Sum.Basic.gaussianSum (terms.map (fun term => term.data.selectedArea))
   /-- The cached complete sum of original annular correction terms. -/ correction : Data.Gaussian.Basic.Canonical
   /-- The correction cache is exactly the sum of the retained annular corrections. -/ correction_eq : correction =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (terms.map (fun term => term.data.correction))
+    Sum.Basic.gaussianSum (terms.map (fun term => term.data.correction))
   /-- The cached sum of the original actual corrected annular differences. -/ difference : Data.Gaussian.Basic.Canonical
   /-- The cached difference is the sum of the actual retained corrected term differences. -/ difference_eq : difference
-    = Data.Gaussian.Norm.Sum.Basic.gaussianSum (terms.map
+    = Sum.Basic.gaussianSum (terms.map
     AnnularTerm.difference)
 
 constructive_injectivity SewnSample
@@ -208,15 +210,15 @@ constructive_injectivity SewnSample
 namespace SewnSample
 
 variable {source :
-  PairedComparison.Sample
+  Sample
   comparison left right}
 
 /-- Evaluate the exact original term list on the supplied sewn surfaces and cache all three complete area sums. -/
-@[expose] def build (source : PairedComparison.Sample comparison left right)
+@[expose] def build (source : Sample comparison left right)
     (firstSurface : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch left.values)
     (secondSurface : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch right.values) :
 
-      PairedComparison.SewnSample
+      SewnSample
       source firstSurface secondSurface :=
   let terms := source.terms.map
     (AnnularTerm.build
@@ -226,25 +228,25 @@ variable {source :
     induction source.terms with
     | nil => rfl
     | cons term tail ih => exact congrArg (List.cons term) ih,
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (terms.map (fun term => term.data.selectedArea)), rfl,
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (terms.map (fun term => term.data.correction)), rfl,
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (terms.map
+    Sum.Basic.gaussianSum (terms.map (fun term => term.data.selectedArea)), rfl,
+    Sum.Basic.gaussianSum (terms.map (fun term => term.data.correction)), rfl,
+    Sum.Basic.gaussianSum (terms.map
       AnnularTerm.difference),
       rfl⟩
 
 /-- The actual corrected annular term count is bounded by the original all-hole request count. -/
 theorem terms_count (sample :
-  PairedComparison.SewnSample
+  SewnSample
   source firstSurface secondSurface) :
     sample.terms.length ≤ request.count := by
   have first := congrArg List.length sample.terms_eq
   have second := congrArg List.length source.terms_eq
-  rw [Data.List.Map.length_map] at first second
+  rw [Map.length_map] at first second
   exact first.le.trans (second.le.trans comparison.entries_count)
 
 /-- Every actual annular term is ready above the original common comparison stage. -/
 theorem term_later (sample :
-  PairedComparison.SewnSample
+  SewnSample
   source firstSurface secondSurface) (later : comparison.index ≤ stage)
     (term :
       AnnularTerm
@@ -255,48 +257,48 @@ theorem term_later (sample :
 
 /-- The retained selected-area sum minus its complete correction equals the cached actual difference. -/
 theorem corrected_eq (sample :
-  PairedComparison.SewnSample
+  SewnSample
   source firstSurface secondSurface) :
     sample.selectedArea - sample.correction = sample.difference := by
   rw [sample.selectedArea_eq, sample.correction_eq, sample.difference_eq]
   induction sample.terms with
   | nil => change (0 : Data.Gaussian.Basic.Canonical) - 0 = 0; ring1
   | cons term tail ih =>
-    change (term.data.selectedArea + Data.Gaussian.Norm.Sum.Basic.gaussianSum _) - (term.data.correction +
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum _) =
-      term.data.selectedArea - term.data.correction + Data.Gaussian.Norm.Sum.Basic.gaussianSum _
+    change (term.data.selectedArea + Sum.Basic.gaussianSum _) - (term.data.correction +
+      Sum.Basic.gaussianSum _) =
+      term.data.selectedArea - term.data.correction + Sum.Basic.gaussianSum _
     rw [← ih]
     ring1
 
 /-- At the common paid stage, the complete retained corrected annular difference satisfies the original whole target. -/
 theorem accurate (sample :
-  PairedComparison.SewnSample
+  SewnSample
   source firstSurface secondSurface) (later : comparison.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq sample.difference < target := by
+    Basic.normSq sample.difference < target := by
   have bounded : ∀ value ∈ sample.terms.map
     AnnularTerm.difference,
-    Data.Gaussian.Norm.Basic.normSq value ≤ request.perHole := by
+    Basic.normSq value ≤ request.perHole := by
     intro value member
     obtain ⟨term, inTerms, rfl⟩ := Map.mem_map.mp member
     exact (term.accurate (sample.term_later later term inTerms)).le
   have count : (sample.terms.map
     AnnularTerm.difference).length
     ≤ request.count := by
-    rw [Data.List.Map.length_map]
+    rw [Map.length_map]
     exact sample.terms_count
   have estimate := IncrementArea.sum_bound_of_length request.perHole_positive.le bounded count
   rw [request.perHole_eq] at estimate
   rw [sample.difference_eq]
-  exact estimate.trans_lt ((show (request.count : Fraction.Rational)^2 * Aggregate.perTerm target request.count =
-    (request.count : Fraction.Rational) * ((request.count : Fraction.Rational) * Aggregate.perTerm target request.count)
+  exact estimate.trans_lt ((show (request.count : Rational)^2 * Aggregate.perTerm target request.count =
+    (request.count : Rational) * ((request.count : Rational) * Aggregate.perTerm target request.count)
       by ring1).trans_lt
       (Aggregate.count_mul_perTerm_lt request.positive request.count))
 
 /-- The actual total selected annular area minus all retained corrections satisfies the original whole target. -/
 theorem annular_accurate (sample :
-  PairedComparison.SewnSample
+  SewnSample
   source firstSurface secondSurface) (later : comparison.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (sample.selectedArea - sample.correction) < target := by
+    Basic.normSq (sample.selectedArea - sample.correction) < target := by
   rw [sample.corrected_eq]
   exact sample.accurate later
 

@@ -1,4 +1,5 @@
 module
+import Purelib.Geometry.Rational.Box.Rotation
 import Purelib.RootIsolation.Owner.Family.Basic
 import Purelib.Data.Fin.Cases
 import Purelib.Data.Fin
@@ -65,6 +66,10 @@ import Purelib.Topology.Knot.Braid.Basic
 import Purelib.Topology.Knot.Braid.Word.Basic
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
+
+open Purelib.Curves.Legendre.Polynomial
+open Purelib.Curves.Legendre.Coefficients
+open Purelib.Data.Rat.Fraction.Order
 
 open Purelib.LinearAlgebra renaming Matrix -> SquareMatrix
 
@@ -146,11 +151,11 @@ theorem movingBox_proper :
 
 /-- Certify the Legendre product on the broad zero box when the moving root lies strictly above it. -/
 @[expose] def broadZeroClearance (lambda :
-  Gaussian.Basic.Canonical)
+  Gaussian)
     (movingAbove : (Centered.realAxisSquareSixteenth 0).yUpper < lambda.im) :
     BoundaryClearance (Legendre.Polynomial.factorsAt lambda)
       (Centered.realAxisSquareSixteenth 0) :=
-  Legendre.Polynomial.Clearance.factorsClearance
+  Clearance.factorsClearance
     (ExplicitLegendreSegment.centeredClearance 0 (by decide) (by decide) (by decide)
       (by decide))
     (ExplicitLegendreSegment.aboveClearance lambda movingAbove)
@@ -158,13 +163,13 @@ theorem movingBox_proper :
 
 /-- Certify the Legendre product on the common moving box from four strict interior bounds on the moving root. -/
 @[expose] def broadMovingClearance (lambda :
-  Gaussian.Basic.Canonical)
+  Gaussian)
     (insideLeft : movingBox.xLower < lambda.re)
     (insideRight : lambda.re < movingBox.xUpper)
     (insideBelow : movingBox.yLower < lambda.im)
     (insideAbove : lambda.im < movingBox.yUpper) :
     BoundaryClearance (Legendre.Polynomial.factorsAt lambda) movingBox :=
-  Legendre.Polynomial.Clearance.factorsClearance
+  Clearance.factorsClearance
     (ExplicitLegendreSegment.belowClearance 0 (by decide))
     (ExplicitLegendreSegment.centeredClearance lambda insideLeft insideRight
       insideBelow insideAbove)
@@ -172,11 +177,11 @@ theorem movingBox_proper :
 
 /-- Certify the Legendre product on the broad one box when the moving root lies strictly above it. -/
 @[expose] def broadOneClearance (lambda :
-  Gaussian.Basic.Canonical)
+  Gaussian)
     (movingAbove : (Centered.realAxisSquareSixteenth 1).yUpper < lambda.im) :
     BoundaryClearance (Legendre.Polynomial.factorsAt lambda)
       (Centered.realAxisSquareSixteenth 1) :=
-  Legendre.Polynomial.Clearance.factorsClearance
+  Clearance.factorsClearance
     (ExplicitLegendreSegment.leftClearance 0 (by decide))
     (ExplicitLegendreSegment.aboveClearance lambda movingAbove)
     (ExplicitLegendreSegment.centeredClearance 1 (by decide) (by decide) (by decide)
@@ -184,11 +189,11 @@ theorem movingBox_proper :
 
 /-- Certify the Legendre product on the small zero sample box when the moving root lies above it. -/
 @[expose] def sampleZeroClearance (lambda :
-  Gaussian.Basic.Canonical)
+  Gaussian)
     (movingAbove : (Centered.sampleBox 0).yUpper < lambda.im) :
     BoundaryClearance (Legendre.Polynomial.factorsAt lambda)
       (Centered.sampleBox 0) :=
-  Legendre.Polynomial.Clearance.factorsClearance
+  Clearance.factorsClearance
     (ExplicitLegendreSegment.centeredClearance 0 (by decide) (by decide) (by decide)
       (by decide))
     (ExplicitLegendreSegment.aboveClearance lambda movingAbove)
@@ -196,18 +201,18 @@ theorem movingBox_proper :
 
 /-- Certify the Legendre product on the moving-root sample box when its imaginary part exceeds one sixteenth. -/
 @[expose] def sampleMovingClearance (lambda :
-  Gaussian.Basic.Canonical)
+  Gaussian)
     (imaginaryHigh : (1 / 16 : Fraction.Rational) < lambda.im) :
     BoundaryClearance (Legendre.Polynomial.factorsAt lambda)
       (Centered.sampleBox lambda) :=
-  Legendre.Polynomial.Clearance.factorsClearance
+  Clearance.factorsClearance
     (ExplicitLegendreSegment.belowClearance 0 (by
       change (0 : Fraction.Rational) < lambda.im - 1 / 16
-      exact Fraction.Order.Arithmetic.sub_pos_direct imaginaryHigh))
+      exact Arithmetic.sub_pos_direct imaginaryHigh))
     (ExplicitLegendreSegment.centeredClearance lambda
       (by
         change lambda.re - 1 / 16 < lambda.re
-        have translated := Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+        have translated := Arithmetic.sub_lt_sub_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 16) lambda.re
         have scalarZero : lambda.re - 0 = lambda.re := by
           rewrite [Fraction.Arithmetic.sub_eq_add_neg_direct,
@@ -217,7 +222,7 @@ theorem movingBox_proper :
         exact translated)
       (by
         change lambda.re < lambda.re + 1 / 16
-        have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct
+        have translated := Arithmetic.add_lt_add_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 16) lambda.re
         have scalarZero : lambda.re + 0 = lambda.re :=
           (Fraction.Field.add_comm lambda.re 0).trans (Fraction.Field.zero_add lambda.re)
@@ -225,7 +230,7 @@ theorem movingBox_proper :
         exact translated)
       (by
         change lambda.im - 1 / 16 < lambda.im
-        have translated := Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+        have translated := Arithmetic.sub_lt_sub_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 16) lambda.im
         have scalarZero : lambda.im - 0 = lambda.im := by
           rewrite [Fraction.Arithmetic.sub_eq_add_neg_direct,
@@ -235,7 +240,7 @@ theorem movingBox_proper :
         exact translated)
       (by
         change lambda.im < lambda.im + 1 / 16
-        have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct
+        have translated := Arithmetic.add_lt_add_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 16) lambda.im
         have scalarZero : lambda.im + 0 = lambda.im :=
           (Fraction.Field.add_comm lambda.im 0).trans (Fraction.Field.zero_add lambda.im)
@@ -243,15 +248,15 @@ theorem movingBox_proper :
         exact translated))
     (ExplicitLegendreSegment.belowClearance 1 (by
       change (0 : Fraction.Rational) < lambda.im - 1 / 16
-      exact Fraction.Order.Arithmetic.sub_pos_direct imaginaryHigh))
+      exact Arithmetic.sub_pos_direct imaginaryHigh))
 
 /-- Certify the Legendre product on the small one sample box when the moving root lies above it. -/
 @[expose] def sampleOneClearance (lambda :
-  Gaussian.Basic.Canonical)
+  Gaussian)
     (movingAbove : (Centered.sampleBox 1).yUpper < lambda.im) :
     BoundaryClearance (Legendre.Polynomial.factorsAt lambda)
       (Centered.sampleBox 1) :=
-  Legendre.Polynomial.Clearance.factorsClearance
+  Clearance.factorsClearance
     (ExplicitLegendreSegment.leftClearance 0 (by decide))
     (ExplicitLegendreSegment.aboveClearance lambda movingAbove)
     (ExplicitLegendreSegment.centeredClearance 1 (by decide) (by decide) (by decide)
@@ -280,7 +285,7 @@ theorem movingBox_proper :
   exact clearance
 
 /-- Construct a local root owner from the exact box, properness, boundary clearance and quadrupled winding four. -/
-@[expose] def ownerOf {lambda : Gaussian.Basic.Canonical}
+@[expose] def ownerOf {lambda : Gaussian}
   (box : Rational.Box) (proper : box.Proper)
     (clearance : BoundaryClearance (Legendre.Paths.polynomial lambda) box)
     (winding : Box.Basic.quadrupledBoxWinding
@@ -391,7 +396,7 @@ theorem sourceZeroWinding :
       (Legendre.Paths.polynomial sourceParameter)
         (Centered.realAxisSquareSixteenth 0) = 4 := by
   rw [source_polynomial_eq_factors]
-  apply Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.realAxisSquareSixteenth_proper
+  apply Winding.factors_winding_of_sum (Centered.realAxisSquareSixteenth_proper
     0)
     (ExplicitLegendreSegment.centeredClearance 0 (by decide) (by decide) (by decide)
       (by decide))
@@ -420,7 +425,7 @@ theorem sourceMovingWinding :
       (Legendre.Paths.polynomial sourceParameter)
         movingBox = 4 := by
   rw [source_polynomial_eq_factors]
-  apply Legendre.Polynomial.Winding.factors_winding_of_sum movingBox_proper
+  apply Winding.factors_winding_of_sum movingBox_proper
     (ExplicitLegendreSegment.belowClearance 0 (by decide))
     (ExplicitLegendreSegment.centeredClearance
       sourceParameter source_in_movingBox.1
@@ -452,7 +457,7 @@ theorem sourceOneWinding :
       (Legendre.Paths.polynomial sourceParameter)
         (Centered.realAxisSquareSixteenth 1) = 4 := by
   rw [source_polynomial_eq_factors]
-  apply Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.realAxisSquareSixteenth_proper
+  apply Winding.factors_winding_of_sum (Centered.realAxisSquareSixteenth_proper
     1)
     (ExplicitLegendreSegment.leftClearance 0 (by decide))
     (ExplicitLegendreSegment.aboveClearance
@@ -480,7 +485,7 @@ theorem targetZeroWinding :
       (Legendre.Paths.polynomial targetParameter)
         (Centered.realAxisSquareSixteenth 0) = 4 := by
   rw [target_polynomial_eq_factors]
-  apply Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.realAxisSquareSixteenth_proper
+  apply Winding.factors_winding_of_sum (Centered.realAxisSquareSixteenth_proper
     0)
     (ExplicitLegendreSegment.centeredClearance 0 (by decide) (by decide) (by decide)
       (by decide))
@@ -509,7 +514,7 @@ theorem targetMovingWinding :
       (Legendre.Paths.polynomial targetParameter)
         movingBox = 4 := by
   rw [target_polynomial_eq_factors]
-  apply Legendre.Polynomial.Winding.factors_winding_of_sum movingBox_proper
+  apply Winding.factors_winding_of_sum movingBox_proper
     (ExplicitLegendreSegment.belowClearance 0 (by decide))
     (ExplicitLegendreSegment.centeredClearance
       targetParameter target_in_movingBox.1
@@ -541,7 +546,7 @@ theorem targetOneWinding :
       (Legendre.Paths.polynomial targetParameter)
         (Centered.realAxisSquareSixteenth 1) = 4 := by
   rw [target_polynomial_eq_factors]
-  apply Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.realAxisSquareSixteenth_proper
+  apply Winding.factors_winding_of_sum (Centered.realAxisSquareSixteenth_proper
     1)
     (ExplicitLegendreSegment.leftClearance 0 (by decide))
     (ExplicitLegendreSegment.aboveClearance
@@ -569,7 +574,7 @@ theorem sourceSampleZeroWinding :
       (Legendre.Paths.polynomial sourceParameter)
         (Centered.sampleBox 0) = 4 := by
   rw [source_polynomial_eq_factors]
-  apply Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.sampleBox_proper 0)
+  apply Winding.factors_winding_of_sum (Centered.sampleBox_proper 0)
     (ExplicitLegendreSegment.centeredClearance 0 (by decide) (by decide) (by decide)
       (by decide))
     (ExplicitLegendreSegment.aboveClearance
@@ -596,7 +601,7 @@ theorem sourceSampleMovingWinding :
       (Legendre.Paths.polynomial sourceParameter)
         (Centered.sampleBox sourceParameter) = 4 := by
   rw [source_polynomial_eq_factors]
-  exact Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.sampleBox_proper
+  exact Winding.factors_winding_of_sum (Centered.sampleBox_proper
     sourceParameter)
     (ExplicitLegendreSegment.belowClearance 0 (by decide))
     (ExplicitLegendreSegment.centeredClearance
@@ -610,7 +615,7 @@ theorem sourceSampleOneWinding :
       (Legendre.Paths.polynomial sourceParameter)
         (Centered.sampleBox 1) = 4 := by
   rw [source_polynomial_eq_factors]
-  exact Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.sampleBox_proper 1)
+  exact Winding.factors_winding_of_sum (Centered.sampleBox_proper 1)
     (ExplicitLegendreSegment.leftClearance 0 (by decide))
     (ExplicitLegendreSegment.aboveClearance
       sourceParameter source_above_sampleOne)
@@ -624,7 +629,7 @@ theorem targetSampleZeroWinding :
       (Legendre.Paths.polynomial targetParameter)
         (Centered.sampleBox 0) = 4 := by
   rw [target_polynomial_eq_factors]
-  exact Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.sampleBox_proper 0)
+  exact Winding.factors_winding_of_sum (Centered.sampleBox_proper 0)
     (ExplicitLegendreSegment.centeredClearance 0 (by decide) (by decide) (by decide)
       (by decide))
     (ExplicitLegendreSegment.aboveClearance
@@ -637,7 +642,7 @@ theorem targetSampleMovingWinding :
       (Legendre.Paths.polynomial targetParameter)
         (Centered.sampleBox targetParameter) = 4 := by
   rw [target_polynomial_eq_factors]
-  exact Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.sampleBox_proper
+  exact Winding.factors_winding_of_sum (Centered.sampleBox_proper
     targetParameter)
     (ExplicitLegendreSegment.belowClearance 0 (by decide))
     (ExplicitLegendreSegment.centeredClearance
@@ -651,7 +656,7 @@ theorem targetSampleOneWinding :
       (Legendre.Paths.polynomial targetParameter)
         (Centered.sampleBox 1) = 4 := by
   rw [target_polynomial_eq_factors]
-  exact Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.sampleBox_proper 1)
+  exact Winding.factors_winding_of_sum (Centered.sampleBox_proper 1)
     (ExplicitLegendreSegment.leftClearance 0 (by decide))
     (ExplicitLegendreSegment.aboveClearance
       targetParameter target_above_sampleOne)
@@ -840,29 +845,29 @@ theorem targetOwner_pairwise : forall left right : Fin 3,
 /-- The explicit source cubic has a retained finite squarefreeness certificate. -/
 @[expose] def sourceSquarefree :
   Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate
-    (Legendre.Coefficients.Exact.coefficientTable sourceParameter).polynomial := by
-  rw [Legendre.Coefficients.Exact.coefficientTable_polynomial]
+    (Exact.coefficientTable sourceParameter).polynomial := by
+  rw [Exact.coefficientTable_polynomial]
   exact Legendre.Squarefree.squarefreeAt sourceParameter
     (by decide)
 
 /-- The explicit target cubic has a retained finite squarefreeness certificate. -/
 @[expose] def targetSquarefree :
   Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate
-    (Legendre.Coefficients.Exact.coefficientTable targetParameter).polynomial := by
-  rw [Legendre.Coefficients.Exact.coefficientTable_polynomial]
+    (Exact.coefficientTable targetParameter).polynomial := by
+  rw [Exact.coefficientTable_polynomial]
   exact Legendre.Squarefree.squarefreeAt targetParameter
     (by decide)
 
 /-- The exact source cubic with its squarefreeness and degree-at-least-two certificates. -/
 @[expose] def sourceIsolationInput :
-    RootIsolation.FTA.Squarefree.Input (Legendre.Coefficients.Exact.coefficientTable
+    FTA.Squarefree.Input (Exact.coefficientTable
       sourceParameter).polynomial where
   squarefree := sourceSquarefree
   degreeAtLeastTwo := by decide
 
 /-- The exact target cubic with its squarefreeness and degree-at-least-two certificates. -/
 @[expose] def targetIsolationInput :
-    RootIsolation.FTA.Squarefree.Input (Legendre.Coefficients.Exact.coefficientTable
+    FTA.Squarefree.Input (Exact.coefficientTable
       targetParameter).polynomial where
   squarefree := targetSquarefree
   degreeAtLeastTwo := by decide
@@ -872,18 +877,18 @@ theorem targetOwner_pairwise : forall left right : Fin 3,
 Coefficient allowances are zero, and finite root isolation supplies the degree-sharp maximality witness. -/
 @[expose] def sourceChamber :
   Progressive.Chamber.Frame.ChamberFrame where
-  reference := Legendre.Coefficients.Exact.coefficientTable sourceParameter
+  reference := Exact.coefficientTable sourceParameter
   chamber :=
     { degreeAtLeastTwo := by decide
       squarefree := sourceSquarefree
       owners := sourceOwnerFamily
-      referenceSmall := Legendre.Coefficients.Exact.coefficientTable_allowances_lt
+      referenceSmall := Exact.coefficientTable_allowances_lt
         sourceParameter
         (Progressive.Chamber.Target.simpleRootChamberTarget_pos
-          (Legendre.Coefficients.Exact.coefficientTable sourceParameter)
+          (Exact.coefficientTable sourceParameter)
             sourceSquarefree sourceOwnerFamily)
       referenceMaximality :=
-        (Purelib.RootIsolation.FTA.Squarefree.Build.Box.prove
+        (FTA.Squarefree.Build.Box.prove
           sourceIsolationInput).boxes.maximality }
 
 /-- The exact target coefficient chamber retaining the three displayed broad root owners.
@@ -891,18 +896,18 @@ Coefficient allowances are zero, and finite root isolation supplies the degree-s
 Coefficient allowances are zero, and finite root isolation supplies the degree-sharp maximality witness. -/
 @[expose] def targetChamber :
   Progressive.Chamber.Frame.ChamberFrame where
-  reference := Legendre.Coefficients.Exact.coefficientTable targetParameter
+  reference := Exact.coefficientTable targetParameter
   chamber :=
     { degreeAtLeastTwo := by decide
       squarefree := targetSquarefree
       owners := targetOwnerFamily
-      referenceSmall := Legendre.Coefficients.Exact.coefficientTable_allowances_lt
+      referenceSmall := Exact.coefficientTable_allowances_lt
         targetParameter
         (Progressive.Chamber.Target.simpleRootChamberTarget_pos
-          (Legendre.Coefficients.Exact.coefficientTable targetParameter)
+          (Exact.coefficientTable targetParameter)
             targetSquarefree targetOwnerFamily)
       referenceMaximality :=
-        (Purelib.RootIsolation.FTA.Squarefree.Build.Box.prove
+        (FTA.Squarefree.Build.Box.prove
           targetIsolationInput).boxes.maximality }
 
 /-- The source chamber reads back the original Legendre polynomial. -/
@@ -941,7 +946,7 @@ Coefficient allowances are zero, and finite root isolation supplies the degree-s
 
 /-- Exchange the zero and moving-root labels while fixing the label of one. -/
 @[expose] def targetProjectionOrder :
-  Data.Fin.Bijection 3 3 where
+  Bijection 3 3 where
   forward :=
     Data.Fin.cases (1)
       (fun rest => Data.Fin.cases (0) (fun _ => 2) rest)
@@ -962,12 +967,12 @@ Coefficient allowances are zero, and finite root isolation supplies the degree-s
   sourceParameter where
   chamber := sourceChamber
   polynomial_eq := rfl
-  labels := Data.Fin.Bijection.identity 3
+  labels := Bijection.identity 3
   owner_contains := by
     intro label
     rcases Cases.three label with labelZero | labelOne | labelTwo <;>
       subst label <;> decide
-  projectionOrder := Data.Fin.Bijection.identity 3
+  projectionOrder := Bijection.identity 3
   projectionOwner := fun position =>
     Owner.Local.Transport.castOwner sourceChamber_polynomial.symm
       (sourceProjectionOwner position)
@@ -988,7 +993,8 @@ Coefficient allowances are zero, and finite root isolation supplies the degree-s
       exact ⟨by decide, by decide, by decide, by decide⟩
   projection_xOrdered := by
     intro left right order
-    rcases Cases.three left with leftZero | leftOne | leftTwo <;>
+    rewrite [Rational.Box.Rotation.enclosure_zero, Rational.Box.Rotation.enclosure_zero]
+    rcases Purelib.Data.Fin.Cases.three left with leftZero | leftOne | leftTwo <;>
       subst left <;>
       rcases Cases.three right with rightZero | rightOne | rightTwo <;>
       subst right <;>
@@ -1007,7 +1013,7 @@ Coefficient allowances are zero, and finite root isolation supplies the degree-s
   targetParameter where
   chamber := targetChamber
   polynomial_eq := rfl
-  labels := Data.Fin.Bijection.identity 3
+  labels := Bijection.identity 3
   owner_contains := by
     intro label
     rcases Cases.three label with labelZero | labelOne | labelTwo <;>
@@ -1034,7 +1040,8 @@ Coefficient allowances are zero, and finite root isolation supplies the degree-s
       exact ⟨by decide, by decide, by decide, by decide⟩
   projection_xOrdered := by
     intro left right order
-    rcases Cases.three left with leftZero | leftOne | leftTwo <;>
+    rewrite [Rational.Box.Rotation.enclosure_zero, Rational.Box.Rotation.enclosure_zero]
+    rcases Purelib.Data.Fin.Cases.three left with leftZero | leftOne | leftTwo <;>
       subst left <;>
       rcases Cases.three right with rightZero | rightOne | rightTwo <;>
       subst right <;>
@@ -1053,6 +1060,16 @@ Coefficient allowances are zero, and finite root isolation supplies the degree-s
   3) :
     sourceFrame.projected.ownerIndex position = position := rfl
 
+/-- At the target, projected positions retain the original zero/moving-root label exchange. -/
+theorem targetFrame_projection_order (position : Fin 3) :
+    targetFrame.projected.ownerIndex position = targetProjectionOrder.forward position := rfl
+
+/-- The source frame retains its original horizontal projection chart. -/
+theorem sourceFrame_projected_slope : sourceFrame.projected.slope = 0 := rfl
+
+/-- The target frame retains its original horizontal projection chart. -/
+theorem targetFrame_projected_slope : targetFrame.projected.slope = 0 := rfl
+
 /-- The exact polynomial perturbation moving the source parameter to the target parameter. -/
 @[expose] def perturbation : GaussianPolynomial :=
   Legendre.Polynomial.perturbationAt sourceParameter
@@ -1066,7 +1083,7 @@ theorem target_eq_source_add_perturbation :
 
 /-- Evaluation of the source cubic equals the product of its three displayed linear factors. -/
 theorem sourcePolynomial_eval_factors (point :
-  Gaussian.Basic.Canonical) :
+  Gaussian) :
     (Legendre.Paths.polynomial sourceParameter).eval point =
       (Translated.translatedCoordinate 0).eval point *
         (Translated.translatedCoordinate
@@ -1075,7 +1092,7 @@ theorem sourcePolynomial_eval_factors (point :
   exact Legendre.Polynomial.polynomial_eval_factorsAt sourceParameter point
 
 /-- The perturbation evaluates to the zero and one factors times the parameter displacement. -/
-theorem perturbation_eval (point : Gaussian.Basic.Canonical)
+theorem perturbation_eval (point : Gaussian)
   :
     perturbation.eval point =
       (Translated.translatedCoordinate 0).eval point *
@@ -1099,7 +1116,7 @@ moving-factor clearance. -/
     (oneClearance : BoundaryClearance
       (Translated.translatedCoordinate 1) box)
     (displacementSmall :
-      Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq
           (sourceParameter - targetParameter) <
             movingClearance.bound) :
     BoundaryNormDominance
@@ -1200,7 +1217,7 @@ moving-factor clearance. -/
 @[expose] def chamberOverlap :
   Progressive.Chamber.Overlap.ChamberOverlap
     sourceChamber targetChamber where
-  matching := Data.Fin.Bijection.identity 3
+  matching := Bijection.identity 3
   bridge := bridgeAt
   bridge_refines_left := by
     intro index
@@ -1232,8 +1249,9 @@ chart. -/
   Progressive.Braid.Projected.Overlap.ProjectedOverlap
     sourceFrame.projected targetFrame.projected
       :=
-  .crossing chamberOverlap Legendre.Conventions.lowerPositive
-    crossingGeometry (by
+  .crossing Curves.Legendre.Crossings.UpperZero.chamberOverlap Legendre.Conventions.lowerPositive
+    Curves.Legendre.Crossings.UpperZero.crossingGeometry (by
+      refine ⟨rfl, ?_⟩
       intro position
       change position = targetProjectionOrder.forward
         (Legendre.Conventions.lowerPositive.permutation.forward position)
@@ -1257,11 +1275,11 @@ chart. -/
 /-- The common sheet bound is positive because every retained bridge clearance is positive. -/
 theorem sheetBound_positive : 0 < sheetBound := by
   unfold sheetBound
-  exact Fraction.Order.Basic.lt_min zeroBridge.leftClearance.positive
-    (Fraction.Order.Basic.lt_min zeroBridge.rightClearance.positive
-      (Fraction.Order.Basic.lt_min movingBridge.leftClearance.positive
-        (Fraction.Order.Basic.lt_min movingBridge.rightClearance.positive
-          (Fraction.Order.Basic.lt_min oneBridge.leftClearance.positive
+  exact Basic.lt_min zeroBridge.leftClearance.positive
+    (Basic.lt_min zeroBridge.rightClearance.positive
+      (Basic.lt_min movingBridge.leftClearance.positive
+        (Basic.lt_min movingBridge.rightClearance.positive
+          (Basic.lt_min oneBridge.leftClearance.positive
             oneBridge.rightClearance.positive))))
 
 /-- Retain one positive lower bound for both endpoints of every persistent root bridge. -/
@@ -1274,29 +1292,29 @@ theorem sheetBound_positive : 0 < sheetBound := by
     intro index
     rcases Cases.three index with indexZero | indexOne | indexTwo
     · subst index
-      exact Fraction.Order.Basic.min_le_left _ _
+      exact Basic.min_le_left _ _
     · subst index
-      exact (Fraction.Order.Basic.min_le_right _ _).trans
-        ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _))
+      exact (Basic.min_le_right _ _).trans
+        ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _))
     · subst index
-      exact (Fraction.Order.Basic.min_le_right _ _).trans
-        ((Fraction.Order.Basic.min_le_right _ _).trans
-          ((Fraction.Order.Basic.min_le_right _ _).trans
-            ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _))))
+      exact (Basic.min_le_right _ _).trans
+        ((Basic.min_le_right _ _).trans
+          ((Basic.min_le_right _ _).trans
+            ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _))))
   rightLower := by
     intro index
     rcases Cases.three index with indexZero | indexOne | indexTwo
     · subst index
-      exact (Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _)
+      exact (Basic.min_le_right _ _).trans (Basic.min_le_left _ _)
     · subst index
-      exact (Fraction.Order.Basic.min_le_right _ _).trans
-        ((Fraction.Order.Basic.min_le_right _ _).trans
-          ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _)))
+      exact (Basic.min_le_right _ _).trans
+        ((Basic.min_le_right _ _).trans
+          ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _)))
     · subst index
-      exact (Fraction.Order.Basic.min_le_right _ _).trans
-        ((Fraction.Order.Basic.min_le_right _ _).trans
-          ((Fraction.Order.Basic.min_le_right _ _).trans
-            ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_right _ _))))
+      exact (Basic.min_le_right _ _).trans
+        ((Basic.min_le_right _ _).trans
+          ((Basic.min_le_right _ _).trans
+            ((Basic.min_le_right _ _).trans (Basic.min_le_right _ _))))
 
 /-- The horizontal parameter segment from 1/4+2i to -1/4+2i. -/
 @[expose] def geometry : Legendre.Paths.AxisSegment
@@ -1307,13 +1325,9 @@ theorem sheetBound_positive : 0 < sheetBound := by
 @[expose] def geometrySafe : Legendre.Paths.AxisSegment.Safe
   geometry where
   avoidsZero :=
-    { bound := 1
-      positive := by decide
-      lower := by decide }
+    Legendre.Paths.AxisSegment.Clearance.ofFixedGap geometry 0 1 (by decide) (by decide)
   avoidsOne :=
-    { bound := 1
-      positive := by decide
-      lower := by decide }
+    Legendre.Paths.AxisSegment.Clearance.ofFixedGap geometry 1 1 (by decide) (by decide)
 
 /-- The complete concrete pilot segment, including singularity avoidance,
 the Rouché owner overlap, square-root clearance, and extracted crossing. -/

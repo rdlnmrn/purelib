@@ -83,24 +83,24 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.LiftedSides (Hori
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank (FaceModels)
 open Purelib.Data.Rat.Fraction (Rational)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {faces : Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces bank} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
-  {cuts : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+    VertexBank bank.grid} {edges :
+    RootEdgeBank frames}
+  {faces : PuncturedFaces bank} {domains :
+    FaceDomainBank frames faces.regulars}
+  {cuts : CommonCuts domains}
     {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
-    {target : Purelib.Data.Rat.Fraction.Rational}
-  {mesh : Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
+    Preflights domains sheet}
+    {target : Rational}
+  {mesh : LiftedMesh vertices edges faces}
   {firstPosition : Fin faces.regulars.length} {firstSheet : Fin 2}
 
-variable {request : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet
-  => Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet
+variable {request : TwoSheetRequest (fun sheet
+  => RegularMeshes.build domains cuts sheet
   coarseDepth) fixed target}
 
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
@@ -114,8 +114,8 @@ set_option genInjectivity false in
 
 Both original face sheets and the selected differential parents remain tied to the same trace. -/
 structure AreaRequest (joined : LiftedSides.HorizontalCrossing request first nextPosition firstUpper lastUpper)
-    (firstDifferential secondDifferential : Differentials.Basic.Differential genus) (firstParent secondParent : Fin 2)
-    (target : Fraction.Rational) (floor : Nat) where
+    (firstDifferential secondDifferential : Differential genus) (firstParent secondParent : Fin 2)
+    (target : Rational) (floor : Nat) where
   /-- The actual horizontal side trace at the original source mesh depth. -/ trace : joined.side.Trace
     ((request.entries.get firstSheet).meshes.entries.get firstPosition).depth
   /-- The two original face-sheet preparations sharing the retained lifted corner owner. -/ preparation :
@@ -132,9 +132,9 @@ constructive_injectivity AreaRequest
 request. -/
 @[expose] def AreaRequest.build (joined : LiftedSides.HorizontalCrossing request first nextPosition firstUpper
   lastUpper)
-    (firstDifferential secondDifferential : Differentials.Basic.Differential genus) (firstParent secondParent : Fin 2)
-    (target : Fraction.Rational) (positive : 0 < target) (floor : Nat) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.LiftedAreaRequest.HorizontalCrossing.AreaRequest joined
+    (firstDifferential secondDifferential : Differential genus) (firstParent secondParent : Fin 2)
+    (target : Rational) (positive : 0 < target) (floor : Nat) :
+    AreaRequest joined
       firstDifferential secondDifferential firstParent secondParent target floor := by
   let trace := Trace.build
     joined.side ((request.entries.get firstSheet).meshes.entries.get firstPosition).depth
@@ -153,8 +153,8 @@ set_option genInjectivity false in
 
 Both original face sheets and the selected differential parents remain tied to the same trace. -/
 structure AreaRequest (joined : LiftedSides.VerticalCrossing request first nextPosition firstUpper lastUpper)
-    (firstDifferential secondDifferential : Differentials.Basic.Differential genus) (firstParent secondParent : Fin 2)
-    (target : Fraction.Rational) (floor : Nat) where
+    (firstDifferential secondDifferential : Differential genus) (firstParent secondParent : Fin 2)
+    (target : Rational) (floor : Nat) where
   /-- The actual vertical side trace at the original source mesh depth. -/ trace : joined.side.Trace
     ((request.entries.get firstSheet).meshes.entries.get firstPosition).depth
   /-- The two original face-sheet preparations sharing the retained lifted corner owner. -/ preparation :
@@ -170,9 +170,9 @@ constructive_injectivity AreaRequest
 /-- Build the actual vertical crossing trace, prepare both original corner owners and retain their area comparison
 request. -/
 @[expose] def AreaRequest.build (joined : LiftedSides.VerticalCrossing request first nextPosition firstUpper lastUpper)
-    (firstDifferential secondDifferential : Differentials.Basic.Differential genus) (firstParent secondParent : Fin 2)
-    (target : Fraction.Rational) (positive : 0 < target) (floor : Nat) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.LiftedAreaRequest.VerticalCrossing.AreaRequest joined
+    (firstDifferential secondDifferential : Differential genus) (firstParent secondParent : Fin 2)
+    (target : Rational) (positive : 0 < target) (floor : Nat) :
+    AreaRequest joined
       firstDifferential secondDifferential firstParent secondParent target floor := by
   let trace := Trace.build
     joined.side ((request.entries.get firstSheet).meshes.entries.get firstPosition).depth

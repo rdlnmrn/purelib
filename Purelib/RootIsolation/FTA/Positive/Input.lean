@@ -2,6 +2,8 @@ module
 
 import Purelib.Polynomial.Dense.Gaussian.Basic
 public import Purelib.Polynomial.Dense.Gaussian.Squarefree.Basic
+public import Purelib.RootIsolation.FTA.Squarefree.Input
+import Purelib.Polynomial.Dense.Gaussian.Degree
 
 import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Data.Gaussian.Basic
@@ -40,6 +42,22 @@ structure PositiveInput (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficien
 
 constructive_injectivity PositiveInput
 
+/-- A positive-degree input has an original nonzero coefficient polynomial. -/
+theorem PositiveInput.nonzero {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    (input : PositiveInput p) : p.isZero = false :=
+  Dense.Gaussian.Degree.Global.isZero_false_of_natDegree_pos input.degreePositive
+
 end Purelib.RootIsolation.FTA.Positive.Input
+
+namespace Purelib.RootIsolation.FTA.Squarefree.Input
+
+open Purelib.Polynomial
+
+/-- Retain a nonlinear input as a positive-degree input with the same polynomial and squarefree certificate. -/
+abbrev toPositive {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (input : Input p) :
+    FTA.Positive.Input.PositiveInput p :=
+  ⟨input.squarefree, input.degreePositive⟩
+
+end Purelib.RootIsolation.FTA.Squarefree.Input
 
 end

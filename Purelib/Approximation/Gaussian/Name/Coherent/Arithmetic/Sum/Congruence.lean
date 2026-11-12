@@ -42,11 +42,9 @@ The component equivalences compare those sampled sums and compose the two bridge
         leftOne.name rightOne.name)
       (Named.add
         leftTwo.name rightTwo.name) :=
-  NamedEquivalent.trans
-    (Bridge.coherentAdd_toNamed leftOne rightOne)
-    (NamedEquivalent.trans
-      (Sequence.Name.Equivalence.approximationEquivalent_toNamed
-        (Sequence.Arithmetic.Sum.Congruence.sampledSumApproximation_respects leftEquivalent rightEquivalent))
-      (NamedEquivalent.symm
-        (Bridge.coherentAdd_toNamed leftTwo rightTwo)))
+  Equivalent.trans
+    (Bridge.coherentAdd_toSampled leftOne rightOne)
+    (Equivalent.trans
+      (Sequence.Arithmetic.Sum.Congruence.sampledSumApproximation_respects leftEquivalent rightEquivalent)
+      (Equivalent.symm (Bridge.coherentAdd_toSampled leftTwo rightTwo)))
 end Purelib.Approximation.Gaussian.Name.Coherent.Arithmetic.Sum.Congruence

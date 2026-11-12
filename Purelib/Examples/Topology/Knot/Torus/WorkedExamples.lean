@@ -18,6 +18,8 @@ import Purelib.Topology.Knot.Closure.Basic
 import Purelib.Topology.Knot.Closure.Linking.Scan
 import Purelib.Topology.Knot.Torus.Basic
 
+open Purelib.Polynomial.Ascending.Integer
+
 open Purelib
 
 open Purelib.Polynomial
@@ -68,7 +70,7 @@ def trefoilInvariants :
   gcdOne := by decide
   surface := Surface.canonicalSurfaceCertificate trefoil (by decide)
   alexander := Alexander.alexanderCertificate 2 3
-    (by decide) (by decide) (by decide) (Ascending.Integer.Comparison.same_refl _)
+    (by decide) (by decide) (by decide) (Comparison.same_refl _)
   alexanderDegree_eq_twiceGenus := by decide
 
 /-- The displayed (2, 3) closure has one component. -/
@@ -107,7 +109,7 @@ def cinquefoilInvariants :
   gcdOne := by decide
   surface := Surface.canonicalSurfaceCertificate cinquefoil (by decide)
   alexander := Alexander.alexanderCertificate 2 5
-    (by decide) (by decide) (by decide) (Ascending.Integer.Comparison.same_refl _)
+    (by decide) (by decide) (by decide) (Comparison.same_refl _)
   alexanderDegree_eq_twiceGenus := by decide
 
 /-- The displayed (2, 5) closure has one component. -/
@@ -146,7 +148,7 @@ def torusKnot34Invariants :
   gcdOne := by decide
   surface := Surface.canonicalSurfaceCertificate torusKnot34 (by decide)
   alexander := Alexander.alexanderCertificate 3 4
-    (by decide) (by decide) (by decide) (Ascending.Integer.Comparison.same_refl _)
+    (by decide) (by decide) (by decide) (Comparison.same_refl _)
   alexanderDegree_eq_twiceGenus := by decide
 
 /-- The displayed (3, 4) closure has one component. -/
@@ -186,7 +188,7 @@ def torusKnot35Invariants :
   gcdOne := by decide
   surface := Surface.canonicalSurfaceCertificate torusKnot35 (by decide)
   alexander := Alexander.alexanderCertificate 3 5
-    (by decide) (by decide) (by decide) (Ascending.Integer.Comparison.same_refl _)
+    (by decide) (by decide) (by decide) (Comparison.same_refl _)
   alexanderDegree_eq_twiceGenus := by decide
 
 /-- The displayed (3, 5) closure has one component. -/
@@ -226,7 +228,7 @@ def torusKnot45Invariants :
   gcdOne := by decide
   surface := Surface.canonicalSurfaceCertificate torusKnot45 (by decide)
   alexander := Alexander.alexanderCertificate 4 5
-    (by decide) (by decide) (by decide) (Ascending.Integer.Comparison.same_refl _)
+    (by decide) (by decide) (by decide) (Comparison.same_refl _)
   alexanderDegree_eq_twiceGenus := by decide
 
 /-- The displayed (4, 5) closure has one component. -/
@@ -412,7 +414,7 @@ def oneStrandUnknotInvariants :
   surface := Surface.canonicalSurfaceCertificate oneStrandUnknot (by
     decide)
   alexander := Alexander.alexanderCertificate 1 1
-    (by decide) (by decide) (by decide) (Ascending.Integer.Comparison.same_refl _)
+    (by decide) (by decide) (by decide) (Comparison.same_refl _)
   alexanderDegree_eq_twiceGenus := by decide
 
 /-- The positive braid for the one-strand unknot has 0 crossings. -/

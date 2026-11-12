@@ -61,9 +61,9 @@ set_option genInjectivity false in
 The original starting owner, traced subdivision, primitive coverage and two operational root names remain linked by the
 supplied return equivalence. -/
 structure RootClosedWalk {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient : Rational.Box}
-    (grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient) (base : Gaussian.Basic.Canonical) (owner : Owner
+    (grid : Geometry.Grid.ClearGrid polynomial ambient) (base : Gaussian.Basic.Canonical) (owner : Owner
       (polynomial.eval base)) : Type 2 where
-  /-- The actual closed grid walk based at the original starting point. -/ walk : Geometry.Grid.Walks.Walk grid base
+  /-- The actual closed grid walk based at the original starting point. -/ walk : Walk grid base
     base
   /-- The retained traced preparation beginning at the original owner. -/ traced : TracedPath walk.path owner
   /-- Primitive coverage on the exact traced preparation. -/ cover :
@@ -75,21 +75,21 @@ structure RootClosedWalk {polynomial : Geometry.ClearPath.GaussianPolynomial} {a
   /-- The cached last name is exactly the traced terminal owner's operational name. -/ lastRoot_eq : lastRoot =
     ownerName traced.finishOwner
   /-- The actual terminal root name is operationally equivalent to the original starting root name. -/ returned :
-    Gaussian.Equivalence.NamedEquivalent lastRoot firstRoot
+    NamedEquivalent lastRoot firstRoot
 
 constructive_injectivity RootClosedWalk
 
 namespace RootClosedWalk
 
-variable {polynomial : Purelib.Polynomial.Geometry.ClearPath.GaussianPolynomial} {ambient :
-  Purelib.Geometry.Rational.Box} {grid : Polynomial.Geometry.Grid.ClearGrid polynomial
+variable {polynomial : Polynomial.Geometry.ClearPath.GaussianPolynomial} {ambient :
+  Geometry.Rational.Box} {grid : Polynomial.Geometry.Grid.ClearGrid polynomial
   ambient}
 
 open Purelib.Riemann in
 open Purelib.Data in
 /-- Every actual prepared edge has a strict parameter width from the retained primitive cover. -/
 theorem proper {base : Gaussian.Basic.Canonical} {owner : Owner (polynomial.eval base)}
-    (closed : RootClosedWalk grid base owner) : Paths.PreparedClearPathModels.PreparedPath.AllEdgesProper
+    (closed : RootClosedWalk grid base owner) : PreparedPath.AllEdgesProper
       closed.traced.prepared :=
   Paths.PreparedPathPrimitiveCover.PreparedClearPathModels.PreparedPath.PrimitiveCover.proper closed.cover
 
@@ -98,7 +98,7 @@ open Purelib.Data in
 /-- Read the retained operational return at the original starting and terminal owner names. -/
 def rootReturn {base : Gaussian.Basic.Canonical} {owner : Owner (polynomial.eval base)}
     (closed : RootClosedWalk grid base owner) :
-    Gaussian.Equivalence.NamedEquivalent (ownerName closed.traced.finishOwner) (ownerName owner) := by
+    NamedEquivalent (ownerName closed.traced.finishOwner) (ownerName owner) := by
   rw [← closed.firstRoot_eq, ← closed.lastRoot_eq]
   exact closed.returned
 
@@ -112,7 +112,7 @@ The supplied winding equality with eight times an integer combines with retained
 preservation along the actual traced subdivision. -/
 def ofEven {referenceAmbient : Rational.Box}
     (reference : State.WindingOne.Basic.WindingOneState polynomial referenceAmbient)
-    (walk : Geometry.Grid.Walks.Walk grid reference.box.anchor reference.box.anchor)
+    (walk : Walk grid reference.box.anchor reference.box.anchor)
     (owner : Owner (polynomial.eval reference.box.anchor)) (turns : Int)
     (even : rawWinding walk.path = 8 * turns) : RootClosedWalk grid reference.box.anchor owner :=
   let prepared := Paths.PreparedPathPrimitiveCover.PreparedClearPathModels.CoveredTracedPath.build walk.path
@@ -129,7 +129,7 @@ open Purelib.Polynomial
 open Purelib.Geometry
 /-- Root-closed walks indexed by the exact starting point and owner of the original tour. -/
 abbrev ForTour {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {ambient : Rational.Box} (grid : Polynomial.Geometry.Grid.ClearGrid curve.polynomial ambient)
+    {ambient : Rational.Box} (grid : Geometry.Grid.ClearGrid curve.polynomial ambient)
     (tour : Readings.PreparedBoundaryClosure.ClosedBoundaryDoublePath curve) : Type 2 :=
   RootClosedWalk grid tour.joined.data.leftState.box.anchor tour.joined.data.forwardOwner
 
@@ -137,7 +137,7 @@ abbrev ForTour {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve gen
 
 The original tour's forward owner starts the traced path and remains the owner used by the return certificate. -/
 def ofTour {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {ambient : Rational.Box} (grid : Polynomial.Geometry.Grid.ClearGrid curve.polynomial ambient)
+    {ambient : Rational.Box} (grid : Geometry.Grid.ClearGrid curve.polynomial ambient)
     (tour : Readings.PreparedBoundaryClosure.ClosedBoundaryDoublePath curve)
     (onGrid : Hyperelliptic.Meshes.PuncturedGrid.BranchGrid.Grid.ContainsTourVertices grid tour) (turns : Int)
     (even : rawWinding (Hyperelliptic.Branches.BranchGridPaths.Grid.splitTour grid tour onGrid).path = 8 * turns) :
@@ -152,8 +152,8 @@ open Purelib.Data in
 /-- Compare the actual terminal owner with another returned owner through their shared original starting root. -/
 def finishEquivalent {base : Gaussian.Basic.Canonical} {owner other : Owner (polynomial.eval base)}
     (closed : RootClosedWalk grid base owner)
-    (returned : Gaussian.Equivalence.NamedEquivalent (ownerName other) (ownerName owner)) :
-    Gaussian.Equivalence.NamedEquivalent (ownerName closed.traced.finishOwner) (ownerName other) :=
+    (returned : NamedEquivalent (ownerName other) (ownerName owner)) :
+    NamedEquivalent (ownerName closed.traced.finishOwner) (ownerName other) :=
   (rootReturn closed).trans returned.symm
 
 end RootClosedWalk
@@ -173,44 +173,44 @@ open Purelib.Curves
 
 The original splitter supplies the winding certificate, while the actual traced preparation supplies primitive coverage
 and operational return. -/
-def aRootClosedWalkOfData {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
+def aRootClosedWalkOfData {genus : Nat} (curve : HyperellipticCurve genus)
     (branches : Hyperelliptic.Branches.BranchIsolation.Data curve) (higher : 1 < curve.polynomial.natDegree) (index :
       Fin genus) :
     Grid.RootClosedWalk.ForTour
-      (Hyperelliptic.Meshes.PuncturedGrid.BranchGrid.branchGrid curve
+      (branchGrid curve
         (Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).branches higher 0)
       (OwnerClosedCyclePair.ofData curve branches index).aTour :=
-  Grid.RootClosedWalk.ofTour _ _ (Hyperelliptic.Meshes.PuncturedGrid.BranchGrid.branchGrid_aTour curve branches higher
+  Grid.RootClosedWalk.ofTour _ _ (branchGrid_aTour curve branches higher
     index) 1
-    (Hyperelliptic.Branches.BranchGridPaths.aTourWalkOfData_winding curve branches higher index)
+    (aTourWalkOfData_winding curve branches higher index)
 
 /-- Construct the canonical B-tour root-closed preparation on the retained branch grid.
 
 The original splitter supplies the winding certificate, while the actual traced preparation supplies primitive coverage
 and operational return. -/
-def bRootClosedWalkOfData {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
+def bRootClosedWalkOfData {genus : Nat} (curve : HyperellipticCurve genus)
     (branches : Hyperelliptic.Branches.BranchIsolation.Data curve) (higher : 1 < curve.polynomial.natDegree) (index :
       Fin genus) :
     Grid.RootClosedWalk.ForTour
-      (Hyperelliptic.Meshes.PuncturedGrid.BranchGrid.branchGrid curve
+      (branchGrid curve
         (Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).branches higher 0)
       (OwnerClosedCyclePair.ofData curve branches index).bTour :=
-  Grid.RootClosedWalk.ofTour _ _ (Hyperelliptic.Meshes.PuncturedGrid.BranchGrid.branchGrid_bTour curve branches higher
+  Grid.RootClosedWalk.ofTour _ _ (branchGrid_bTour curve branches higher
     index) 1
-    (Hyperelliptic.Branches.BranchGridPaths.bTourWalkOfData_winding curve branches higher index)
+    (bTourWalkOfData_winding curve branches higher index)
 
 /-- The retained A preparation has exactly the original canonical A-tour grid walk. -/
-theorem aRootClosedWalkOfData_walk {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
+theorem aRootClosedWalkOfData_walk {genus : Nat} (curve : HyperellipticCurve genus)
     (branches : Hyperelliptic.Branches.BranchIsolation.Data curve) (higher : 1 < curve.polynomial.natDegree) (index :
       Fin genus) :
-    (aRootClosedWalkOfData curve branches higher index).walk = Hyperelliptic.Branches.BranchGridPaths.aTourWalkOfData
+    (aRootClosedWalkOfData curve branches higher index).walk = aTourWalkOfData
       curve branches higher index := rfl
 
 /-- The retained B preparation has exactly the original canonical B-tour grid walk. -/
-theorem bRootClosedWalkOfData_walk {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
+theorem bRootClosedWalkOfData_walk {genus : Nat} (curve : HyperellipticCurve genus)
     (branches : Hyperelliptic.Branches.BranchIsolation.Data curve) (higher : 1 < curve.polynomial.natDegree) (index :
       Fin genus) :
-    (bRootClosedWalkOfData curve branches higher index).walk = Hyperelliptic.Branches.BranchGridPaths.bTourWalkOfData
+    (bRootClosedWalkOfData curve branches higher index).walk = bTourWalkOfData
       curve branches higher index := rfl
 
 end Purelib.Riemann.RootContinuation.PreparedGridRootClosure.ClearGrid

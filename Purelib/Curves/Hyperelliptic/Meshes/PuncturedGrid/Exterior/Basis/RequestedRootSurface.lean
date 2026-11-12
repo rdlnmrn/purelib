@@ -56,22 +56,22 @@ open Purelib.Riemann.Normalization
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
 
-variable {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {target coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor index minimum
+variable {basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {target coefficientTarget : InverseRootPolynomial.Coordinate} {coverFloor floor index minimum
     readingIndex : Nat}
-  {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+  {box : Rational.Box} {capSample : Charts.Reciprocal.Cap.Primitives.Sample cap
     differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 variable {energyFloor radialDepth : Nat}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
@@ -81,16 +81,16 @@ open Purelib.Data.Gaussian.Basic.Canonical
 namespace ScheduledRequest
 variable {prepared :
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
-  regular domains differential} {errorTarget : Normalization.InverseRootPolynomial.Coordinate}
-  (scheduled : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceTraceRequest.ScheduledRequest prepared basis
+  regular domains differential} {errorTarget : InverseRootPolynomial.Coordinate}
+  (scheduled : SurfaceTraceRequest.ScheduledRequest prepared basis
     target errorTarget floor)
-  (acquired : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceEnergy.Request.Acquisition scheduled.request
+  (acquired : SurfaceEnergy.Request.Acquisition scheduled.request
     capSample polynomials minimum energyFloor)
   (evaluation : acquired.Evaluation coefficients)
-  {physicalAllowance rootAllowance : Normalization.InverseRootPolynomial.Coordinate}
-  (requested : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootSurfaceRequest.Plans.Samples.RootRequest
+  {physicalAllowance rootAllowance : InverseRootPolynomial.Coordinate}
+  (requested : RootSurfaceRequest.Plans.Samples.RootRequest
     physicalAllowance rootAllowance scheduled.request.entries acquired.plans)
-  (physical : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalSurfaceEnergy.Plans.Samples.PhysicalCertificates
+  (physical : PhysicalSurfaceEnergy.Plans.Samples.PhysicalCertificates
     requested.requested scheduled.request.entries acquired.plans acquired.readings
     acquired.fans evaluation.samples evaluation.comparisons)
 
@@ -98,15 +98,15 @@ variable {prepared :
 payment; only the independently established source-restoration payment was
 needed when constructing it. -/
 theorem requested_root_boundary_upper (physicalNN : 0 ≤ physicalAllowance) (rootNN : 0 ≤ rootAllowance)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
-    (Data.Gaussian.Norm.Sum.Basic.gaussianSum
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootSurfaceEnergy.Plans.Samples.rootBoundaryValues
+    (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
+    (Gaussian.Norm.Sum.Basic.gaussianSum
+      (RootSurfaceEnergy.Plans.Samples.rootBoundaryValues
       scheduled.request.entries acquired.plans acquired.readings acquired.fans
       evaluation.samples evaluation.comparisons physical)).im / 4 ≤
-      (5 / 4 * target + (scheduled.request.entries.length : Normalization.InverseRootPolynomial.Coordinate) *
+      (5 / 4 * target + (scheduled.request.entries.length : InverseRootPolynomial.Coordinate) *
         (physicalAllowance + rootAllowance)) *
         Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootSurfaceEnergy.ScheduledRequest.root_boundary_energy_upper
+  RootSurfaceEnergy.ScheduledRequest.root_boundary_energy_upper
     scheduled acquired evaluation physical requested.positive physicalNN requested.physical_paid
     rootNN requested.root_paid branch
 

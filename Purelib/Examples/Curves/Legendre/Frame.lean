@@ -1,4 +1,5 @@
 module
+import Purelib.Geometry.Rational.Box.Rotation
 import Purelib.Polynomial.Dense.Gaussian.Coefficient.Progressive.Relation
 import Purelib.Data.Fin.Cases
 import Purelib.Data.Fin
@@ -40,6 +41,8 @@ import Purelib.RootIsolation.Progressive.Chamber.Basic
 import Purelib.RootIsolation.State.WindingOne.Basic
 import Purelib.RootIsolation.Track.Basic
 import Purelib.Tactic.QuotientFreeOmega
+
+open Purelib.Data.Rat.Fraction.Order
 
 section
 public section
@@ -99,7 +102,7 @@ theorem polynomial_eq_factors : Legendre.Paths.polynomial
       apply le_of_lt
       calc
         x - 1 / 4 < x := by
-          have translated := Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+          have translated := Arithmetic.sub_lt_sub_left_direct
             (by decide : (0 : Fraction.Rational) < 1 / 4) x
           have scalarZero : x - 0 = x := by
             rewrite [Fraction.Arithmetic.sub_eq_add_neg_direct,
@@ -108,7 +111,7 @@ theorem polynomial_eq_factors : Legendre.Paths.polynomial
           rewrite [scalarZero] at translated
           exact translated
         _ < x + 1 / 4 := by
-          have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct
+          have translated := Arithmetic.add_lt_add_left_direct
             (by decide : (0 : Fraction.Rational) < 1 / 4) x
           have scalarZero : x + 0 = x :=
             (Fraction.Field.add_comm x 0).trans (Fraction.Field.zero_add x)
@@ -124,7 +127,7 @@ theorem rootBox_proper (x : Fraction.Rational) :
   · change x - 1 / 4 < x + 1 / 4
     calc
       x - 1 / 4 < x := by
-        have translated := Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+        have translated := Arithmetic.sub_lt_sub_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 4) x
         have scalarZero : x - 0 = x := by
           rewrite [Fraction.Arithmetic.sub_eq_add_neg_direct,
@@ -133,7 +136,7 @@ theorem rootBox_proper (x : Fraction.Rational) :
         rewrite [scalarZero] at translated
         exact translated
       _ < x + 1 / 4 := by
-        have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct
+        have translated := Arithmetic.add_lt_add_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 4) x
         have scalarZero : x + 0 = x :=
           (Fraction.Field.add_comm x 0).trans (Fraction.Field.zero_add x)
@@ -151,7 +154,7 @@ theorem rootBox_proper (x : Fraction.Rational) :
     (Legendre.Paths.gaussian x 0)
     (by
       unfold rootBox Legendre.Paths.gaussian
-      have translated := Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+      have translated := Arithmetic.sub_lt_sub_left_direct
         (by decide : (0 : Fraction.Rational) < 1 / 4) x
       have scalarZero : x - 0 = x := by
         rewrite [Fraction.Arithmetic.sub_eq_add_neg_direct,
@@ -161,7 +164,7 @@ theorem rootBox_proper (x : Fraction.Rational) :
       exact translated)
     (by
       unfold rootBox Legendre.Paths.gaussian
-      have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct
+      have translated := Arithmetic.add_lt_add_left_direct
         (by decide : (0 : Fraction.Rational) < 1 / 4) x
       have scalarZero : x + 0 = x :=
         (Fraction.Field.add_comm x 0).trans (Fraction.Field.zero_add x)
@@ -342,7 +345,7 @@ theorem coefficientTable_allowances_lt {target : Fraction.Rational}
   exact Legendre.Squarefree.squarefreeAt parameter (by decide)
 
 /-- The displayed cubic with its retained squarefreeness and degree bound for finite root isolation. -/
-@[expose] def isolationInput : RootIsolation.FTA.Squarefree.Input
+@[expose] def isolationInput : FTA.Squarefree.Input
   coefficientTable.polynomial where
   squarefree := squarefree
   degreeAtLeastTwo := by decide
@@ -371,7 +374,7 @@ the independent finite RFAP supplies only the degree-sharp maximality law. -/
 
 /-- Projection positions `0,1,2` correspond to the real root order
 `0,1,lambda`; logical labels remain `0,lambda,1`. -/
-@[expose] def projectionOrder : Data.Fin.Bijection 3 3
+@[expose] def projectionOrder : Bijection 3 3
   where
   forward :=
     Data.Fin.cases (0)
@@ -408,7 +411,7 @@ the independent finite RFAP supplies only the degree-sharp maximality law. -/
   where
   chamber := chamberFrame
   polynomial_eq := rfl
-  labels := Data.Fin.Bijection.identity 3
+  labels := Bijection.identity 3
   owner_contains := by
     intro label
     rcases Cases.three label with labelZero | labelOne | labelTwo <;>
@@ -427,7 +430,8 @@ the independent finite RFAP supplies only the degree-sharp maximality law. -/
       (owner (projectionOrder.forward position)).box
   projection_xOrdered := by
     intro left right order
-    rcases Cases.three left with leftZero | leftOne | leftTwo <;>
+    rewrite [Rational.Box.Rotation.enclosure_zero, Rational.Box.Rotation.enclosure_zero]
+    rcases Purelib.Data.Fin.Cases.three left with leftZero | leftOne | leftTwo <;>
       subst left <;>
       rcases Cases.three right with rightZero | rightOne | rightTwo <;>
       subst right <;>

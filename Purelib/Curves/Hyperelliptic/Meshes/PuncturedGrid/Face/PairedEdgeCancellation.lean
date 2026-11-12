@@ -1,4 +1,5 @@
 module
+import Purelib.Polynomial.Dense.Gaussian.Basic
 
 import Purelib.Data.Gaussian.Norm.Basic
 import Purelib.Approximation.Gaussian.Budget.Aggregate
@@ -56,6 +57,10 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 import Purelib.Riemann.Integration.RectangularPrimitiveOverlap
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-!
@@ -89,6 +94,7 @@ open Purelib.Riemann.Readings
 
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 open Purelib.Curves.Hyperelliptic.Branches (BranchCellBank)
 open Purelib.Riemann.Meshes.PuncturedGridFaces (RegularFace)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank (FaceModels)
@@ -107,31 +113,31 @@ open Purelib.Data.Gaussian.Basic.Canonical
 open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face :
-    RegularFace bank}
+    RegularFace bank} {numerator : CoefficientPolynomial}
 
 /-- The two retained one-in-256 ownership allowances, scaled by thirty-two, pay one quarter of the original amount. -/
-private theorem scale_256 (amount : InverseRootPolynomial.Coordinate) : 32 * (amount / 256 + amount / 256) = amount / 4
+private theorem scale_256 (amount : Coordinate) : 32 * (amount / 256 + amount / 256) = amount / 4
   := by
-  apply Fraction.Field.mul_right_cancel_of_ne (by decide : (4 : InverseRootPolynomial.Coordinate) ≠ 0)
+  apply Fraction.Field.mul_right_cancel_of_ne (by decide : (4 : Coordinate) ≠ 0)
   rw [Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)]
   calc
     _ = (amount / 256) * 256 := by ring1
     _ = amount := Fraction.Field.div_mul_cancel_of_ne _ _ (by decide +kernel)
 
 /-- Two quarter allowances, scaled by two, recover exactly the original rational amount. -/
-private theorem quarters (amount : InverseRootPolynomial.Coordinate) : 2 * (amount / 4 + amount / 4) = amount := by
+private theorem quarters (amount : Coordinate) : 2 * (amount / 4 + amount / 4) = amount := by
   rw [show 2 * (amount / 4 + amount / 4) = (amount / 4) * 4 by ring1]
   exact Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
 
 /-- Read the retained aligned primitive at its located face cell, returning zero outside the original face. -/
-private def value {models : BranchCellBank.FaceModels frames face} {sheet : Fin 2} {domain : Periods.PeriodDomain models
+private def value {models : FaceModels frames face} {sheet : Fin 2} {domain : Periods.PeriodDomain models
   sheet}
-    {differential : Differentials.Basic.Differential genus} {index : Nat} (data : PrimitiveData.DomainPrimitives domain
-      differential index) (point : InverseRootPolynomial.Gaussian) : Gaussian :=
+    {differential : Differential genus} {index : Nat} (data : DomainPrimitives domain
+      differential index (numerator := numerator)) (point : InverseRootPolynomial.Gaussian) : Gaussian :=
   if inside : face.cell.box.Contains point then
     let located := PeriodDomain.locate domain point inside
     data.anchors.alignedValue data.offsets located.column located.row point
@@ -139,16 +145,16 @@ private def value {models : BranchCellBank.FaceModels frames face} {sheet : Fin 
 
 /-- The actual point reading differs from any retained containing-cell reading by at most four times the grid overlap
 bound. -/
-private theorem value_bound {models : BranchCellBank.FaceModels frames face} {sheet : Fin 2} {domain :
+private theorem value_bound {models : FaceModels frames face} {sheet : Fin 2} {domain :
   Periods.PeriodDomain models sheet}
-    {differential : Differentials.Basic.Differential genus}
-    {bounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds face.clearance
-      (PreparedPrimitiveSamples.differentialNumerator differential)} {target : InverseRootPolynomial.Coordinate}
+    {differential : Differential genus}
+    {bounds : PrimitiveOverlapBounds face.clearance
+      numerator} {target : Coordinate}
     (request : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds domain.steps target) (data :
-      PrimitiveData.DomainPrimitives domain differential request.index)
+      DomainPrimitives domain differential request.index (numerator := numerator))
     (column row : Fin (domain.steps + 1)) (point : InverseRootPolynomial.Gaussian) (inside : (domain.geometry.box column
       row).Contains point) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       (value data point -
       data.anchors.alignedValue data.offsets column row point) ≤ 4 * request.globalBound := by
   have contained := (domain.patch.cell_refines column row).contains inside
@@ -157,21 +163,21 @@ private theorem value_bound {models : BranchCellBank.FaceModels frames face} {sh
     (PeriodDomain.locate domain point contained).column column
     (PeriodDomain.locate domain point contained).row row
     (PeriodDomain.locate domain point contained).inside inside
-  simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using scalar
+  simpa only [Basic.normSq_eq_canonical] using scalar
 
 /-- The actual endpoint increment differs from the retained cell primitive increment by at most sixteen times the grid
 overlap bound. -/
-private theorem increment_bound {models : BranchCellBank.FaceModels frames face} {sheet : Fin 2} {domain :
+private theorem increment_bound {models : FaceModels frames face} {sheet : Fin 2} {domain :
   Periods.PeriodDomain models sheet}
-    {differential : Differentials.Basic.Differential genus}
-    {bounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds face.clearance
-      (PreparedPrimitiveSamples.differentialNumerator differential)} {target : InverseRootPolynomial.Coordinate}
+    {differential : Differential genus}
+    {bounds : PrimitiveOverlapBounds face.clearance
+      numerator} {target : Coordinate}
     (request : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds domain.steps target) (data :
-      PrimitiveData.DomainPrimitives domain differential request.index)
+      DomainPrimitives domain differential request.index (numerator := numerator))
     (column row : Fin (domain.steps + 1)) (first last : InverseRootPolynomial.Gaussian)
     (firstInside : (domain.geometry.box column row).Contains first) (lastInside : (domain.geometry.box column
       row).Contains last) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       ((value data last -
       value data first) -
       (data.primitives.value column row last - data.primitives.value column row first)) ≤ 16 * request.globalBound := by
@@ -189,26 +195,26 @@ private theorem increment_bound {models : BranchCellBank.FaceModels frames face}
     simp only [PrimitiveAnchors.alignedValue]
     ring1
   rw [identity]
-  exact (Data.Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct lastBound firstBound) (by decide)).trans_eq (by ring1))
+  exact (Bounds.normSq_sub_le_two _ _).trans
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct lastBound firstBound) (by decide)).trans_eq (by ring1))
 
 /-- The original cached corner increment differs from the located point-reading increment by the paid grid-owner
 allowance. -/
-private theorem corners_bound {models : BranchCellBank.FaceModels frames face} {sheet : Fin 2} {domain :
+private theorem corners_bound {models : FaceModels frames face} {sheet : Fin 2} {domain :
   Periods.PeriodDomain models sheet}
-    {differential : Differentials.Basic.Differential genus}
-    {bounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds face.clearance
-      (PreparedPrimitiveSamples.differentialNumerator differential)} {target : InverseRootPolynomial.Coordinate}
+    {differential : Differential genus}
+    {bounds : PrimitiveOverlapBounds face.clearance
+      numerator} {target : Coordinate}
     (request : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds domain.steps target) (data :
-      PrimitiveData.DomainPrimitives domain differential request.index)
+      DomainPrimitives domain differential request.index (numerator := numerator))
     (first last : Fin 4) :
-    Data.Gaussian.Norm.Basic.normSq ((data.corners.values last - data.corners.values first) -
+    Basic.normSq ((data.corners.values last - data.corners.values first) -
       (value data (FaceCorners.point face.cell.box
         last) - value data (FaceCorners.point
         face.cell.box first))) ≤
         16 * request.globalBound := by
-  have corner (which : Fin 4) : Data.Gaussian.Norm.Basic.normSq
+  have corner (which : Fin 4) : Basic.normSq
     (value data (FaceCorners.point face.cell.box
     which) - data.corners.values which) ≤
       4 * request.globalBound := by
@@ -224,24 +230,24 @@ private theorem corners_bound {models : BranchCellBank.FaceModels frames face} {
         (value data (FaceCorners.point
           face.cell.box last) - data.corners.values last) := by ring1
   rw [identity]
-  exact (Data.Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct (corner first) (corner last)) (by decide)).trans_eq (by ring1))
+  exact (Bounds.normSq_sub_le_two _ _).trans
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct (corner first) (corner last)) (by decide)).trans_eq (by ring1))
 
 variable {domains : FaceDomains frames face}
   {differential : Differential genus} {start finish :
-  Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian} {target :
-  Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+  InverseRootPolynomial.Gaussian} {target :
+  Coordinate}
 
 /-- The sum of actual opposite-sheet increments on one retained split piece satisfies its paid local target. -/
-private theorem piece_accurate (request : PairedEdgeRequests.PairedEdgeRequest domains differential start finish target)
+private theorem piece_accurate (request : PairedEdgeRequest domains differential start finish target numerator)
     {leftIndex rightIndex : Nat}
-    (first : PrimitiveData.DomainPrimitives (domains.domain 0) differential leftIndex)
-    (second : PrimitiveData.DomainPrimitives (domains.domain 1) differential rightIndex)
+    (first : DomainPrimitives (domains.domain 0) differential leftIndex (numerator := numerator))
+    (second : DomainPrimitives (domains.domain 1) differential rightIndex (numerator := numerator))
     (leftLater : request.index ≤ leftIndex) (rightLater : request.index ≤ rightIndex)
-    (piece : RectangularPairedSegments.PairedSegmentPiece (domains.domain 0).geometry (domains.domain 1).geometry)
+    (piece : PairedSegmentPiece (domains.domain 0).geometry (domains.domain 1).geometry)
     (member : piece ∈ request.split.pieces) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       ((value first piece.last -
       value first piece.first) +
       (value second piece.last -
@@ -259,24 +265,24 @@ private theorem piece_accurate (request : PairedEdgeRequests.PairedEdgeRequest d
     value first piece.first) - leftIncrement
   let rightError := (value second piece.last -
     value second piece.first) - rightIncrement
-  have leftOwnership : Data.Gaussian.Norm.Basic.normSq leftError ≤ 16 * leftGrid.globalBound :=
+  have leftOwnership : Basic.normSq leftError ≤ 16 * leftGrid.globalBound :=
     increment_bound leftGrid first _ _ _ _
       piece.leftFirst piece.leftLast
-  have rightOwnership : Data.Gaussian.Norm.Basic.normSq rightError ≤ 16 * rightGrid.globalBound :=
+  have rightOwnership : Basic.normSq rightError ≤ 16 * rightGrid.globalBound :=
     increment_bound rightGrid second _ _ _ _
       piece.rightFirst piece.rightLast
-  have ownership : Data.Gaussian.Norm.Basic.normSq (leftError + rightError) ≤ 32 * (leftGrid.globalBound +
+  have ownership : Basic.normSq (leftError + rightError) ≤ 32 * (leftGrid.globalBound +
     rightGrid.globalBound) :=
-    (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-      ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.add_le_add_direct leftOwnership rightOwnership) (by decide)).trans_eq (by ring1))
-  have analytic : Data.Gaussian.Norm.Basic.normSq (leftIncrement + rightIncrement) < request.perPiece / 4 :=
+    (Bounds.normSq_add_le_two _ _).trans
+      ((Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.add_le_add_direct leftOwnership rightOwnership) (by decide)).trans_eq (by ring1))
+  have analytic : Basic.normSq (leftIncrement + rightIncrement) < request.perPiece / 4 :=
     request.locals.accurate first second (request.locals_later.trans leftLater)
       (request.locals_later.trans rightLater) piece member
   have ownershipSmall : 32 * (leftGrid.globalBound + rightGrid.globalBound) < request.perPiece / 4 := by
-    have bound := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by
-        decide +kernel : (0 : InverseRootPolynomial.Coordinate) < 32)
-      (Fraction.Order.Arithmetic.add_lt_add_direct leftGrid.accurate rightGrid.accurate)
+    have bound := Arithmetic.mul_lt_mul_of_pos_left_direct (by
+        decide +kernel : (0 : Coordinate) < 32)
+      (Arithmetic.add_lt_add_direct leftGrid.accurate rightGrid.accurate)
     exact bound.trans_eq (scale_256 _)
   have identity : (value first piece.last -
     value first piece.first) +
@@ -286,9 +292,9 @@ private theorem piece_accurate (request : PairedEdgeRequests.PairedEdgeRequest d
     dsimp only [leftError, rightError]
     ring1
   rw [identity]
-  exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans_lt
-    ((Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide)
-      (Fraction.Order.Arithmetic.add_lt_add_direct (ownership.trans_lt ownershipSmall) analytic)).trans_eq
+  exact (Bounds.normSq_add_le_two _ _).trans_lt
+    ((Arithmetic.mul_lt_mul_of_pos_left_direct (by decide)
+      (Arithmetic.add_lt_add_direct (ownership.trans_lt ownershipSmall) analytic)).trans_eq
         (quarters _))
 
 /-- The actual opposite-sheet whole-edge increments cancel within one quarter of the original target after summing every
@@ -296,13 +302,13 @@ retained piece.
 
 The original split supplies the retained entries and count. The finite sum uses those same increments, so its bound
 depends on the stored list length. -/
-private theorem values_accurate (request : PairedEdgeRequests.PairedEdgeRequest domains differential start finish
-  target)
+private theorem values_accurate (request : PairedEdgeRequest domains differential start finish
+  target numerator)
     {leftIndex rightIndex : Nat}
-    (first : PrimitiveData.DomainPrimitives (domains.domain 0) differential leftIndex)
-    (second : PrimitiveData.DomainPrimitives (domains.domain 1) differential rightIndex)
+    (first : DomainPrimitives (domains.domain 0) differential leftIndex (numerator := numerator))
+    (second : DomainPrimitives (domains.domain 1) differential rightIndex (numerator := numerator))
     (leftLater : request.index ≤ leftIndex) (rightLater : request.index ≤ rightIndex) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       ((value first finish -
       value first start) +
       (value second finish -
@@ -312,7 +318,7 @@ private theorem values_accurate (request : PairedEdgeRequests.PairedEdgeRequest 
       value first piece.first) +
       (value second piece.last -
       value second piece.first)
-  have telescope : Data.Gaussian.Norm.Sum.Basic.gaussianSum values =
+  have telescope : Sum.Basic.gaussianSum values =
     (value first finish -
     value first start) +
     (value second finish -
@@ -325,7 +331,7 @@ private theorem values_accurate (request : PairedEdgeRequests.PairedEdgeRequest 
           value second piece.last) -
           (value first piece.first +
           value second piece.first)) := by
-      have mapped (pieces : List (RectangularPairedSegments.PairedSegmentPiece (domains.domain 0).geometry
+      have mapped (pieces : List (PairedSegmentPiece (domains.domain 0).geometry
         (domains.domain 1).geometry)) :
           (pieces.map fun piece => (value first
             piece.last - value first piece.first)
@@ -345,7 +351,7 @@ private theorem values_accurate (request : PairedEdgeRequests.PairedEdgeRequest 
     rw [mapped, same]
     ring1
   rw [← telescope]
-  apply Gaussian.Budget.Aggregate.normSq_sum_lt _ (Fraction.Order.Field.div_pos_direct request.positive (by decide))
+  apply Gaussian.Budget.Aggregate.normSq_sum_lt _ (Field.div_pos_direct request.positive (by decide))
   intro element member
   obtain ⟨piece, present, equal⟩ := Map.mem_map.mp member
   rw [← equal]
@@ -358,15 +364,15 @@ private theorem values_accurate (request : PairedEdgeRequests.PairedEdgeRequest 
 /-- Whole-edge cancellation for the original corner banks used by lifted triangles and cut-period comparisons.
 
 No fragment, sign, transport, or analytic certificate is supplied beyond the automatically built request. -/
-theorem corners_accurate (request : PairedEdgeRequests.PairedEdgeRequest domains differential start finish target)
+theorem corners_accurate (request : PairedEdgeRequest domains differential start finish target numerator)
     {leftIndex rightIndex : Nat}
-    (first : PrimitiveData.DomainPrimitives (domains.domain 0) differential leftIndex)
-    (second : PrimitiveData.DomainPrimitives (domains.domain 1) differential rightIndex)
+    (first : DomainPrimitives (domains.domain 0) differential leftIndex (numerator := numerator))
+    (second : DomainPrimitives (domains.domain 1) differential rightIndex (numerator := numerator))
     (leftLater : request.index ≤ leftIndex) (rightLater : request.index ≤ rightIndex)
     (firstCorner lastCorner : Fin 4)
     (firstEq : FaceCorners.point face.cell.box firstCorner = start)
     (lastEq : FaceCorners.point face.cell.box lastCorner = finish) :
-    Data.Gaussian.Norm.Basic.normSq ((first.corners.values lastCorner - first.corners.values firstCorner) +
+    Basic.normSq ((first.corners.values lastCorner - first.corners.values firstCorner) +
       (second.corners.values lastCorner - second.corners.values firstCorner)) < target := by
   let leftGrid := GridPrimitiveAccuracy.atIndex
     request.leftGrid leftIndex (request.left_later.trans leftLater)
@@ -378,30 +384,30 @@ theorem corners_accurate (request : PairedEdgeRequests.PairedEdgeRequest domains
   let rightError := (second.corners.values lastCorner - second.corners.values firstCorner) -
     (value second finish -
     value second start)
-  have leftBound : Data.Gaussian.Norm.Basic.normSq leftError ≤ 16 * leftGrid.globalBound := by
+  have leftBound : Basic.normSq leftError ≤ 16 * leftGrid.globalBound := by
     have bound := corners_bound leftGrid first
       firstCorner lastCorner
     rw [firstEq, lastEq] at bound
     exact bound
-  have rightBound : Data.Gaussian.Norm.Basic.normSq rightError ≤ 16 * rightGrid.globalBound := by
+  have rightBound : Basic.normSq rightError ≤ 16 * rightGrid.globalBound := by
     have bound := corners_bound rightGrid second
       firstCorner lastCorner
     rw [firstEq, lastEq] at bound
     exact bound
-  have ownership : Data.Gaussian.Norm.Basic.normSq (leftError + rightError) ≤ 32 * (leftGrid.globalBound +
+  have ownership : Basic.normSq (leftError + rightError) ≤ 32 * (leftGrid.globalBound +
     rightGrid.globalBound) :=
-    (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-      ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.add_le_add_direct leftBound rightBound) (by decide)).trans_eq (by ring1))
+    (Bounds.normSq_add_le_two _ _).trans
+      ((Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.add_le_add_direct leftBound rightBound) (by decide)).trans_eq (by ring1))
   have small : 32 * (leftGrid.globalBound + rightGrid.globalBound) < target / 4 := by
-    have bound := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by
-        decide +kernel : (0 : InverseRootPolynomial.Coordinate) < 32)
-      (Fraction.Order.Arithmetic.add_lt_add_direct leftGrid.accurate rightGrid.accurate)
+    have bound := Arithmetic.mul_lt_mul_of_pos_left_direct (by
+        decide +kernel : (0 : Coordinate) < 32)
+      (Arithmetic.add_lt_add_direct leftGrid.accurate rightGrid.accurate)
     apply (bound.trans_eq (scale_256 _)).trans_le
-    apply (Fraction.Order.Field.divide_le_self request.perPiece_positive.le (by decide)).trans
+    apply (Field.divide_le_self request.perPiece_positive.le (by decide)).trans
     rw [request.perPiece_eq]
     exact Aggregate.perTerm_le
-      (Fraction.Order.Field.div_pos_direct request.positive (by decide)).le _
+      (Field.div_pos_direct request.positive (by decide)).le _
   have analytic := values_accurate request first
     second leftLater rightLater
   have identity : (first.corners.values lastCorner - first.corners.values firstCorner) +
@@ -413,9 +419,9 @@ theorem corners_accurate (request : PairedEdgeRequests.PairedEdgeRequest domains
     dsimp only [leftError, rightError]
     ring1
   rw [identity]
-  exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans_lt
-    ((Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide)
-      (Fraction.Order.Arithmetic.add_lt_add_direct (ownership.trans_lt small) analytic)).trans_eq
+  exact (Bounds.normSq_add_le_two _ _).trans_lt
+    ((Arithmetic.mul_lt_mul_of_pos_left_direct (by decide)
+      (Arithmetic.add_lt_add_direct (ownership.trans_lt small) analytic)).trans_eq
         (quarters _))
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedEdgeCancellation

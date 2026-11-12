@@ -1,4 +1,5 @@
 module
+import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Data.List.Map
 meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Data.Gaussian.Basic
@@ -46,6 +47,8 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Geometry.Grid.ClearGrid
 import Purelib.Riemann.Meshes.PuncturedGridFaces
 
+open Purelib.Geometry.Rectangle.Partition
+
 /-!
 # Rooted words of the actual original period fragments
 
@@ -90,15 +93,19 @@ open
 
 open Purelib.Approximation.Gaussian.Equivalence (NamedEquivalent)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
+
+variable {numerator : CoefficientPolynomial}
+
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
+  {frames : SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
       SquareRoot.Grid.LiftedVertices.VertexBank
     base.bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
-  {source : Hyperelliptic.Differentials.Basic.Differential genus} {axes :
-    Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveAxes base.bank.grid}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames base.faces.regulars} {mesh :
+  {source : Differentials.Basic.Differential genus} {axes :
+    PreparedPrimitiveSplits.PrimitiveAxes base.bank.grid}
+  {domains : Face.DomainBanks.FaceDomainBank frames base.faces.regulars} {mesh :
     Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces}
   {count : Nat} {target : Fraction.Rational}
 
@@ -107,56 +114,56 @@ set_option genInjectivity false in
 
 Its request, interval and cached face assignment refer to that same original parent and mesh. The retained
 containing-edge occurrence preserves the fragment's actual location and sheet ownership. -/
-structure LiftedFragment (axes : Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveAxes
+structure LiftedFragment (axes : PreparedPrimitiveSplits.PrimitiveAxes
   base.bank.grid)
-    (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames base.faces.regulars) (mesh :
+    (domains : Face.DomainBanks.FaceDomainBank frames base.faces.regulars) (mesh :
       Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces)
-    (source : Hyperelliptic.Differentials.Basic.Differential genus) (count : Nat) (target : Fraction.Rational) : Type 2
+    (source : Differentials.Basic.Differential genus) (count : Nat) (target : Fraction.Rational) : Type 2
       where
   /-- The original centered parent edge. -/ parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve source
-  /-- The original axis partition of this parent. -/ partition : Geometry.Rectangle.AxisPartition 0
-    1 (axes.parameters parent)
-  /-- The actual retained parameter interval. -/ interval : Rectangle.Partition.PreparedAxisPartitions.Interval
+  /-- The retained actual cut list for this parent occurrence. -/ cuts : List Fraction.Rational
+  /-- The actual axis partition of this same parent occurrence. -/ partition : Rectangle.AxisPartition 0 1 cuts
+  /-- The actual retained parameter interval. -/ interval : PreparedAxisPartitions.Interval
   /-- The original located fragment on that interval. -/ fragment :
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.RegularPrimitiveFragment axes parent partition interval
+    RegularFaces.RegularPrimitiveFragment axes parent partition interval
   /-- The original parent's local accuracy request. -/ request : Readings.UniformPreparedRequests.LocalRequest parent
     count target
   /-- The retained sheet-aware face assignment. -/ assigned :
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.SheetEntries.RegularPrimitiveFragment.SheetEntry fragment domains
+    SheetEntries.RegularPrimitiveFragment.SheetEntry fragment domains
     request
   /-- The actual lifted containing-edge occurrence. -/ occurrence :
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.LiftedEdges.SheetEntry.LiftedSource assigned mesh
+    LiftedEdges.SheetEntry.LiftedSource assigned mesh
 
 constructive_injectivity LiftedFragment
 
 namespace LiftedFragment
 
 /-- Read the original fragment's initial coordinate. -/
-@[expose] def first (piece : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh
+@[expose] def first (piece : LiftedFragment axes domains mesh
   source count target) : Gaussian := piece.fragment.located.first
 
 /-- Read the original fragment's terminal coordinate. -/
-@[expose] def last (piece : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh
+@[expose] def last (piece : LiftedFragment axes domains mesh
   source count target) : Gaussian := piece.fragment.located.last
 
 /-- These query names occur only in proof contracts; flattening a word does
 not run either endpoint query. -/
-@[expose] def firstName (piece : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains
+@[expose] def firstName (piece : LiftedFragment axes domains
   mesh source count target) : Gaussian.Name.Basic.Named :=
   piece.parent.edge.rootName piece.interval.lower piece.assigned.fractionInside
 
 /-- The original parent's root query name at the retained fragment's terminal parameter. -/
-@[expose] def lastName (piece : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh
+@[expose] def lastName (piece : LiftedFragment axes domains mesh
   source count target) : Gaussian.Name.Basic.Named :=
   piece.parent.edge.rootName piece.interval.upper piece.occurrence.finishInside
 
 /-- Read the retained lifted source on the supplied shared face meshes. -/
-@[expose] def value (piece : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh
+@[expose] def value (piece : LiftedFragment axes domains mesh
   source count target)
     {points : List Gaussian.Basic.Canonical} {tolerance : Fraction.Rational} {index : Nat}
-    {budgets : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceMeshBudgets source points tolerance domains}
-      {numerics : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank source index domains}
-    (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) : Gaussian :=
+    {budgets : Face.CommonMeshes.FaceMeshBudgets source points tolerance (numerator := numerator) domains}
+      {numerics : Face.PrimitiveData.FacePrimitiveBank source index (numerator := numerator) domains}
+    (shared : Face.CommonMeshes.FaceSharedMeshes budgets numerics) : Gaussian :=
 
     LiftedReadings.ClearGrid.RegularPrimitiveFragment.SheetEntry.LiftedSource.value
     piece.occurrence shared
@@ -164,21 +171,21 @@ not run either endpoint query. -/
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment in
 /-- The displayed fragment word retains both coordinate and actual root
 agreement at every junction. Numerical primitive offsets are separate. -/
-inductive RootedWord : List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh
+inductive RootedWord : List (LiftedFragment axes domains mesh
   source count target) →
     Gaussian.Basic.Canonical → Gaussian.Name.Basic.Named → Gaussian.Basic.Canonical → Gaussian.Name.Basic.Named → Prop
   /-- An empty fragment word retaining coordinate equality and actual root equivalence. -/ | nil {first last :
     Gaussian.Basic.Canonical} {firstName lastName : Gaussian.Name.Basic.Named}
-      (coordinate : first = last) (root : Nonempty (Gaussian.Equivalence.NamedEquivalent firstName lastName)) :
+      (coordinate : first = last) (root : Nonempty (NamedEquivalent firstName lastName)) :
       RootedWord [] first
         firstName last lastName
   /-- One original fragment with its initial coordinate and root junction, followed by the exact rooted tail. -/ | cons
-    (piece : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh source count
+    (piece : LiftedFragment axes domains mesh source count
     target)
-      {pieces : List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh source
+      {pieces : List (LiftedFragment axes domains mesh source
         count target)}
       {first last : Gaussian.Basic.Canonical} {firstName lastName : Gaussian.Name.Basic.Named}
-      (coordinate : first = piece.first) (root : Nonempty (Gaussian.Equivalence.NamedEquivalent firstName
+      (coordinate : first = piece.first) (root : Nonempty (NamedEquivalent firstName
         piece.firstName))
       (tail : RootedWord pieces
         piece.last piece.lastName last lastName) :
@@ -189,13 +196,13 @@ namespace RootedWord
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment
 /-- Transport the original rooted word along the supplied initial coordinate equality and actual root equivalence. -/
-theorem changeStart {pieces : List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains
+theorem changeStart {pieces : List (LiftedFragment axes domains
   mesh source count target)}
     {first middle last : Gaussian.Basic.Canonical} {firstName middleName lastName : Gaussian.Name.Basic.Named}
-    (word : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.RootedWord pieces middle middleName
+    (word : RootedWord pieces middle middleName
       last lastName) (coordinate : first = middle)
-    (root : Nonempty (Gaussian.Equivalence.NamedEquivalent firstName middleName)) :
-      Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.RootedWord pieces first firstName last
+    (root : Nonempty (NamedEquivalent firstName middleName)) :
+      RootedWord pieces first firstName last
       lastName := by
   obtain ⟨root⟩ := root
   cases word with
@@ -207,23 +214,23 @@ theorem changeStart {pieces : List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.
       exact .cons piece (coordinate.trans equal) ⟨root.trans equivalent⟩ tail
 
 /-- Transport only the retained terminal coordinate, preserving its original root name. -/
-theorem castFinish {pieces : List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains
+theorem castFinish {pieces : List (LiftedFragment axes domains
   mesh source count target)}
     {first last next : Gaussian.Basic.Canonical} {firstName lastName : Gaussian.Name.Basic.Named}
-    (word : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.RootedWord pieces first firstName
+    (word : RootedWord pieces first firstName
       last lastName) (coordinate : last = next) :
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.RootedWord pieces first firstName next
+    RootedWord pieces first firstName next
       lastName := coordinate ▸ word
 
 /-- Concatenate two actual rooted words sharing the same intermediate coordinate and root name. -/
-theorem append {firstPieces lastPieces : List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment
+theorem append {firstPieces lastPieces : List (LiftedFragment
   axes domains mesh source count target)}
     {first middle last : Gaussian.Basic.Canonical} {firstName middleName lastName : Gaussian.Name.Basic.Named}
-    (left : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.RootedWord firstPieces first
+    (left : RootedWord firstPieces first
       firstName middle middleName)
-    (right : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.RootedWord lastPieces middle
+    (right : RootedWord lastPieces middle
       middleName last lastName) :
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.RootedWord (firstPieces ++ lastPieces) first
+    RootedWord (firstPieces ++ lastPieces) first
       firstName last lastName := by
   induction left with
   | nil coordinate root => exact right.changeStart coordinate root
@@ -235,22 +242,58 @@ end LiftedFragment
 namespace RegularPrimitiveFragments.SheetEntries.LiftedSources
 
 variable {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve source} {partition :
-  Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)}
+  Rectangle.AxisPartition 0 1 (axes.parameters parent)}
   {request : Readings.UniformPreparedRequests.LocalRequest parent count target}
 
 open
   SheetEntries.LiftedSources
   in
-/-- Flatten the original one-parent source spine into retained lifted fragments without preparing new owners. -/
-@[expose] def pieces : ∀ {intervals : List Rectangle.Partition.PreparedAxisPartitions.Interval}
-    {fragments : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.RegularPrimitiveFragments axes parent
+/-- Flatten the original one-parent source spine without preparing new owners.
+
+The actual cut list is materialized once for this parent and shared by all
+retained occurrences. Every partition, fragment, request, sheet entry and
+lifted source remains the supplied original cache in its original order. -/
+@[expose] def pieces : ∀ {intervals : List PreparedAxisPartitions.Interval}
+    {fragments : RegularFaces.RegularPrimitiveFragments axes parent
       partition intervals}
     {entries : SheetEntries domains request fragments}, LiftedSources mesh entries →
-      List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh source count
-        target)
-  | _, _, _, .nil => []
-  | _, _, _, .cons (interval := interval) (head := fragment) (entry := assigned) first rest =>
-      ⟨parent, partition, interval, fragment, request, assigned, first⟩ :: pieces rest
+      List (LiftedFragment axes domains mesh source count
+        target) :=
+  let Payload (storedCuts : List Fraction.Rational) (interval : PreparedAxisPartitions.Interval) :=
+    Σ retainedPartition : Rectangle.AxisPartition 0 1 storedCuts,
+    Σ retainedFragment : RegularFaces.RegularPrimitiveFragment axes parent retainedPartition interval,
+    Σ retainedEntry : SheetEntries.RegularPrimitiveFragment.SheetEntry retainedFragment domains request,
+    LiftedEdges.SheetEntry.LiftedSource retainedEntry mesh
+  let rec collect (cachedCuts : List Fraction.Rational) (same : axes.parameters parent = cachedCuts) :
+      ∀ {intervals : List PreparedAxisPartitions.Interval}
+        {fragments : RegularFaces.RegularPrimitiveFragments axes parent partition intervals}
+        {entries : SheetEntries domains request fragments}, LiftedSources mesh entries →
+          List (LiftedFragment axes domains mesh source count target)
+    | _, _, _, .nil => []
+    | _, _, _, .cons (interval := interval) (head := fragment) (entry := assigned) first rest =>
+        let original : Payload (axes.parameters parent) interval := ⟨partition, fragment, assigned, first⟩
+        let retained : Payload cachedCuts interval :=
+          Eq.mp (congrArg (fun storedCuts => Payload storedCuts interval) same) original
+        ⟨parent, cachedCuts, retained.1, interval, retained.2.1, request, retained.2.2.1, retained.2.2.2⟩ ::
+          collect cachedCuts same rest
+  let cachedCuts := axes.parameters parent
+  collect cachedCuts rfl
+
+/-- The original flattened head is its complete supplied parent, partition, request, entry and lifted occurrence.
+
+Only the original pointwise application is reduced. The shared cut cache
+and unchanged source tail are the same expressions as in the producer.
+-/
+theorem pieces_cons {interval : PreparedAxisPartitions.Interval} {intervals : List PreparedAxisPartitions.Interval}
+    {head : RegularFaces.RegularPrimitiveFragment axes parent partition interval}
+    {tail : RegularFaces.RegularPrimitiveFragments axes parent partition intervals}
+    {entry : SheetEntries.RegularPrimitiveFragment.SheetEntry head domains request}
+    {entries : SheetEntries domains request tail}
+    (first : LiftedEdges.SheetEntry.LiftedSource entry mesh)
+    (remaining : LiftedReadings.ClearGrid.RegularPrimitiveFragments.SheetEntries.LiftedSources mesh entries) :
+    pieces (.cons first remaining) =
+      (⟨parent, axes.parameters parent, partition, interval, head, request, entry, first⟩ :
+        LiftedFragment axes domains mesh source count target) :: pieces remaining := rfl
 
 /-- Equal retained parameters give equal original parent root query names. -/
 private theorem name_eq {a b : Fraction.Rational} (aInside : 0 ≤ a ∧ a ≤ 1) (bInside : 0 ≤ b ∧ b ≤ 1) (equal : a = b) :
@@ -262,14 +305,14 @@ open
   SheetEntries.LiftedSources
   in
 /-- The original increasing interval walk certifies all coordinate and root junctions of its retained fragments. -/
-theorem rooted_of_walk {intervals : List Rectangle.Partition.PreparedAxisPartitions.Interval}
-    {fragments : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.RegularPrimitiveFragments axes parent
+theorem rooted_of_walk {intervals : List PreparedAxisPartitions.Interval}
+    {fragments : RegularFaces.RegularPrimitiveFragments axes parent
       partition intervals}
     {entries : SheetEntries domains request fragments} (sources : LiftedSources mesh entries)
-    {available : List Rectangle.Partition.PreparedAxisPartitions.Interval} {lower upper : Fraction.Rational}
+    {available : List PreparedAxisPartitions.Interval} {lower upper : Fraction.Rational}
     (walk : Geometry.Grid.AxisWalks.IncreasingWalk available lower upper) (ordered : intervals = walk.edges)
     (lowerInside : 0 ≤ lower ∧ lower ≤ 1) (upperInside : 0 ≤ upper ∧ upper ≤ 1) :
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.RootedWord (pieces sources)
+    LiftedFragment.RootedWord (pieces sources)
       (parent.edge.point lower) (parent.edge.rootName lower lowerInside)
       (parent.edge.point upper) (parent.edge.rootName upper upperInside) := by
   induction sources generalizing lower upper with
@@ -282,9 +325,9 @@ theorem rooted_of_walk {intervals : List Rectangle.Partition.PreparedAxisPartiti
       | nil => cases ordered
       | cons head member walk =>
           have equations := List.cons.inj ordered
-          have lowerEq := congrArg (fun interval : Rectangle.Partition.PreparedAxisPartitions.Interval =>
+          have lowerEq := congrArg (fun interval : PreparedAxisPartitions.Interval =>
             interval.lower) equations.1
-          have upperEq := congrArg (fun interval : Rectangle.Partition.PreparedAxisPartitions.Interval =>
+          have upperEq := congrArg (fun interval : PreparedAxisPartitions.Interval =>
             interval.upper) equations.1
           have nextInside : 0 ≤ head.upper ∧ head.upper ≤ 1 := upperEq ▸ first.finishInside
           have tail := ih walk equations.2 nextInside upperInside
@@ -295,22 +338,22 @@ theorem rooted_of_walk {intervals : List Rectangle.Partition.PreparedAxisPartiti
             name_eq
             (parent := parent) first.finishInside nextInside upperEq
           refine .cons _ (fragment.located.first_eq.trans (congrArg parent.edge.point lowerEq)).symm
-            ⟨firstNameEq.symm ▸ Gaussian.Equivalence.NamedEquivalent.refl _⟩ ?_
+            ⟨firstNameEq.symm ▸ NamedEquivalent.refl _⟩ ?_
           exact tail.changeStart (fragment.located.last_eq.trans (congrArg parent.edge.point upperEq))
-            ⟨lastNameEq ▸ Gaussian.Equivalence.NamedEquivalent.refl _⟩
+            ⟨lastNameEq ▸ NamedEquivalent.refl _⟩
 
 open
   SheetEntries.LiftedSources
   in
 /-- The original one-parent source readings equal the readings of its exact flattened fragments. -/
-theorem values_eq_pieces {intervals : List Rectangle.Partition.PreparedAxisPartitions.Interval}
-    {fragments : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.RegularPrimitiveFragments axes parent
+theorem values_eq_pieces {intervals : List PreparedAxisPartitions.Interval}
+    {fragments : RegularFaces.RegularPrimitiveFragments axes parent
       partition intervals}
     {entries : SheetEntries domains request fragments} (sources : LiftedSources mesh entries)
     {points : List Gaussian.Basic.Canonical} {tolerance : Fraction.Rational} {index : Nat}
-    {budgets : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceMeshBudgets source points tolerance domains}
-      {numerics : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank source index domains}
-    (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) : sources.values
+    {budgets : Face.CommonMeshes.FaceMeshBudgets source points tolerance (numerator := numerator) domains}
+      {numerics : Face.PrimitiveData.FacePrimitiveBank source index (numerator := numerator) domains}
+    (shared : Face.CommonMeshes.FaceSharedMeshes budgets numerics) : sources.values
       shared = (pieces sources).map (fun piece => piece.value shared) := by
   induction sources with
   | nil => rfl
@@ -341,25 +384,25 @@ namespace ParentCoordinates
 theorem ofSwitched : ∀ {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve source)} {first last
   : Path.Gaussian.Lifted.Basic.LiftedPoint 2},
     Integration.PreparedSwitchedRefinements.SwitchedPathChain parents (start := first) (finish := last) →
-      Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.ParentCoordinates parents first.coordinate last.coordinate
+      ParentCoordinates parents first.coordinate last.coordinate
   | _, _, _, .nil _ => .nil _
   | _, _, _, .edge parent tail => by
       have remaining :=
         ofSwitched tail
-      have word := Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.ParentCoordinates.cons parent (last := _) (by
+      have word := ParentCoordinates.cons parent (last := _) (by
         rw [Integration.PreparedConstantModels.PreparedEdge.point_one]
         exact remaining)
       rw [Integration.PreparedConstantModels.PreparedEdge.point_zero] at word
       exact word
   | _, _, _, .stationary coordinate sheet tail =>
       ofSwitched (first := {
-        coordinate := coordinate, sheet := Hyperelliptic.Branches.BranchCutLifts.otherSheet sheet }) tail
+        coordinate := coordinate, sheet := Branches.BranchCutLifts.otherSheet sheet }) tail
 
 /-- Recasting the differential preserves the original parent-coordinate chain. -/
-theorem recast (differential : Hyperelliptic.Differentials.Basic.Differential genus) {parents : List
+theorem recast (differential : Differentials.Basic.Differential genus) {parents : List
   (Integration.PreparedSubdivisionModelCore.CenteredEdge curve source)} {first last : Gaussian.Basic.Canonical}
-    (coordinates : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.ParentCoordinates parents first last) :
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.ParentCoordinates (parents.map
+    (coordinates : ParentCoordinates parents first last) :
+    ParentCoordinates (parents.map
       (Integration.PreparedEdgeRecasting.recastCenteredEdge differential)) first last := by
   induction coordinates with
   | nil => exact .nil _
@@ -374,11 +417,11 @@ open
   in
 /-- Flatten all original parent fragment spines in their retained order. -/
 @[expose] def pieces : ∀ {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve source)} {splits :
-  Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveSplits axes parents}
-    {fragments : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.RegularPrimitiveSplits (base := base) axes
+  PreparedPrimitiveSplits.PrimitiveSplits axes parents}
+    {fragments : RegularFaces.RegularPrimitiveSplits (base := base) axes
       splits} {requests : Readings.UniformPreparedRequests.RequestedParents count target parents}
     {entries : SheetEntries domains fragments requests}, LiftedSources mesh entries →
-      List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh source count
+      List (LiftedFragment axes domains mesh source count
         target)
   | _, _, _, _, _, .nil => []
   | _, _, _, _, _, .cons first rest =>
@@ -392,14 +435,14 @@ open
 /-- The original coordinate and root chains supply every cross-parent
 junction. No fragment or stationary handoff is dropped by a root test. -/
 theorem rooted {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve source)} {splits :
-  Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveSplits axes parents}
-    {fragments : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.RegularPrimitiveSplits (base := base) axes
+  PreparedPrimitiveSplits.PrimitiveSplits axes parents}
+    {fragments : RegularFaces.RegularPrimitiveSplits (base := base) axes
       splits} {requests : Readings.UniformPreparedRequests.RequestedParents count target parents}
     {entries : SheetEntries domains fragments requests} (sources : LiftedSources mesh entries)
     {first last : Gaussian.Basic.Canonical} {firstName lastName : Gaussian.Name.Basic.Named}
-    (coordinates : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.ParentCoordinates parents first last) (roots
+    (coordinates : ParentCoordinates parents first last) (roots
       : Topology.PreparedRefinementRootChains.RootChain parents firstName lastName) :
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.RootedWord (pieces sources) first firstName
+    LiftedFragment.RootedWord (pieces sources) first firstName
       last lastName := by
   induction sources generalizing first last firstName lastName with
   | nil =>
@@ -426,14 +469,14 @@ open
 Each head source bank retains its original readings and flattened occurrences. Ordered concatenation combines the same
 head and tail lists before mapping their retained values. -/
 theorem values_eq_pieces {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve source)} {splits :
-  Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveSplits axes parents}
-    {fragments : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.RegularPrimitiveSplits (base := base) axes
+  PreparedPrimitiveSplits.PrimitiveSplits axes parents}
+    {fragments : RegularFaces.RegularPrimitiveSplits (base := base) axes
       splits} {requests : Readings.UniformPreparedRequests.RequestedParents count target parents}
     {entries : SheetEntries domains fragments requests} (sources : LiftedSources mesh entries)
     {points : List Gaussian.Basic.Canonical} {tolerance : Fraction.Rational} {index : Nat}
-    {budgets : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceMeshBudgets source points tolerance domains}
-      {numerics : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank source index domains}
-    (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) : sources.values
+    {budgets : Face.CommonMeshes.FaceMeshBudgets source points tolerance (numerator := numerator) domains}
+      {numerics : Face.PrimitiveData.FacePrimitiveBank source index (numerator := numerator) domains}
+    (shared : Face.CommonMeshes.FaceSharedMeshes budgets numerics) : sources.values
       shared = (pieces sources).map (fun piece => piece.value shared) := by
   induction sources with
   | nil => rfl
@@ -451,8 +494,8 @@ open
 The exact original source spine determines the retained ordered piece list. Its coordinate and root certificate joins
 the supplied first and last names through those same cached occurrences. -/
 structure Rooted {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve source)} {splits :
-  Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveSplits axes parents}
-    {fragments : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.RegularPrimitiveSplits (base := base) axes
+  PreparedPrimitiveSplits.PrimitiveSplits axes parents}
+    {fragments : RegularFaces.RegularPrimitiveSplits (base := base) axes
       splits} {requests : Readings.UniformPreparedRequests.RequestedParents count target parents}
     (entries : SheetEntries domains fragments requests) (mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges
       base.faces)
@@ -460,12 +503,12 @@ structure Rooted {parents : List (Integration.PreparedSubdivisionModelCore.Cente
     (last : Gaussian.Basic.Canonical) (lastName : Gaussian.Name.Basic.Named) : Type 2 where
   /-- The original lifted source spine. -/ sources : LiftedSources mesh entries
   /-- The cached original flattened fragments. -/ pieces : List
-    (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh source count target)
+    (LiftedFragment axes domains mesh source count target)
   /-- The cached list equals the exact original source-spine flattening. -/ pieces_eq : pieces =
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.RegularPrimitiveSplits.SheetEntries.LiftedSources.pieces
+    LiftedSources.pieces
     sources
   /-- The actual coordinate and root junction certificate for that retained list. -/ rooted :
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.RootedWord pieces first firstName last
+    LiftedFragment.RootedWord pieces first firstName last
     lastName
 
 constructive_injectivity Rooted
@@ -473,8 +516,8 @@ constructive_injectivity Rooted
 namespace Rooted
 
 variable {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve source)} {splits :
-  Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveSplits axes parents}
-  {fragments : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.RegularPrimitiveSplits (base := base) axes
+  PreparedPrimitiveSplits.PrimitiveSplits axes parents}
+  {fragments : RegularFaces.RegularPrimitiveSplits (base := base) axes
     splits} {requests : Readings.UniformPreparedRequests.RequestedParents count target parents}
   {entries : SheetEntries domains fragments requests}
   {first last : Gaussian.Basic.Canonical} {firstName lastName : Gaussian.Name.Basic.Named}
@@ -482,33 +525,33 @@ variable {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge 
 /-- Cache the original flattened fragments once and certify their junctions from the retained parent coordinate and root
 chains. -/
 @[expose] def build (sources : LiftedSources mesh entries) (coordinates :
-  Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.ParentCoordinates parents first last)
+  ParentCoordinates parents first last)
     (roots : Topology.PreparedRefinementRootChains.RootChain parents firstName lastName) :
-      Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.RegularPrimitiveSplits.SheetEntries.LiftedSources.Rooted
+      Rooted
       entries mesh first firstName last lastName :=
   ⟨sources,
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.RegularPrimitiveSplits.SheetEntries.LiftedSources.pieces
+    LiftedSources.pieces
     sources,
     rfl,
-      Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.RegularPrimitiveSplits.SheetEntries.LiftedSources.rooted
+      LiftedSources.rooted
       sources coordinates roots⟩
 
 variable {points : List Gaussian.Basic.Canonical} {tolerance : Fraction.Rational} {index : Nat}
-  {budgets : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceMeshBudgets source points tolerance domains}
-    {numerics : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank source index domains}
+  {budgets : Face.CommonMeshes.FaceMeshBudgets source points tolerance (numerator := numerator) domains}
+    {numerics : Face.PrimitiveData.FacePrimitiveBank source index (numerator := numerator) domains}
 
 /-- Read the exact cached fragment word on the supplied shared meshes. -/
 @[expose] def values (word :
-  Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.RegularPrimitiveSplits.SheetEntries.LiftedSources.Rooted
+  Rooted
   entries mesh first firstName last lastName) (shared :
-  Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) : List Gaussian :=
+  Face.CommonMeshes.FaceSharedMeshes budgets numerics) : List Gaussian :=
   word.pieces.map (fun piece => piece.value shared)
 
 /-- The cached rooted word has exactly the original source-spine readings. -/
 theorem values_eq (word :
-  Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.RegularPrimitiveSplits.SheetEntries.LiftedSources.Rooted
+  Rooted
   entries mesh first firstName last lastName) (shared :
-  Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) :
+  Face.CommonMeshes.FaceSharedMeshes budgets numerics) :
     word.values shared = word.sources.values shared := by
   rw
     [values,
@@ -517,12 +560,13 @@ theorem values_eq (word :
     word.sources shared]
 
 /-- The rooted word's actual Gaussian sum equals the retained original shared summary. -/
-theorem sum_eq (word :
-  Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.RegularPrimitiveSplits.SheetEntries.LiftedSources.Rooted
+theorem sum_eq {budgets : Face.CommonMeshes.FaceMeshBudgets source points tolerance domains}
+    {numerics : Face.PrimitiveData.FacePrimitiveBank source index domains} (word :
+  Rooted
   entries mesh first firstName last lastName) {shared :
-  Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics}
-    (summary : Hyperelliptic.Meshes.PuncturedGrid.Fragment.SharedSums.RegularPrimitiveSplits.SheetEntries.SharedSum
-      shared entries) : Data.Gaussian.Norm.Sum.Basic.gaussianSum (word.values shared) = summary.value := by
+  Face.CommonMeshes.FaceSharedMeshes budgets numerics}
+    (summary : SharedSums.RegularPrimitiveSplits.SheetEntries.SharedSum
+      shared entries) : Gaussian.Norm.Sum.Basic.gaussianSum (word.values shared) = summary.value := by
   rw [word.values_eq, word.sources.sum_eq summary]
 
 end Rooted

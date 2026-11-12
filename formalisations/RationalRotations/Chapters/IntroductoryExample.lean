@@ -13,6 +13,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.Tactic.Ring
 
+open Purelib.Geometry.Rotations.Projective.Action
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -55,9 +57,9 @@ def proportion : Algebra.Quaternion.Projective.Basic.NonNullProportion Fraction.
 
 /-- The displayed proportion (2:1:2:3) has norm eighteen. -/
 theorem proportion_norm : proportion.toProportion.norm = 18 := by
-  unfold formalisations.RationalRotations.Chapters.IntroductoryExample.proportion
+  unfold proportion
     Algebra.Quaternion.Projective.Basic.Proportion.norm
-  rw [formalisations.RationalRotations.Chapters.IntroductoryExample.axis_quadrance]
+  rw [axis_quadrance]
   ring1
 
 /-- The exact rational rotation matrix of the proportion (2:1:2:3).
@@ -69,58 +71,58 @@ def displayed : Matrix3 Fraction.Rational :=
     7 / 9, 4 / 9, 4 / 9⟩
 
 /-- The projective quaternion action yields exactly the displayed rational matrix. -/
-theorem rotation_matrix : (Rotations.Projective.Action.NonNullProportion.rotationMatrix
-  formalisations.RationalRotations.Chapters.IntroductoryExample.proportion) =
-  formalisations.RationalRotations.Chapters.IntroductoryExample.displayed := by
+theorem rotation_matrix : (NonNullProportion.rotationMatrix
+  proportion) =
+  displayed := by
   decide
 
 /-- The displayed rational matrix is orthogonal. -/
 theorem displayed_isOrthogonal : displayed.IsOrthogonal := by
-  rw [← formalisations.RationalRotations.Chapters.IntroductoryExample.rotation_matrix]
-  exact (Rotations.Projective.Action.NonNullProportion.rotation
-    formalisations.RationalRotations.Chapters.IntroductoryExample.proportion).orthogonal
+  rw [← rotation_matrix]
+  exact (NonNullProportion.rotation
+    proportion).orthogonal
 
 /-- The displayed rational matrix has determinant one. -/
 theorem displayed_determinant : displayed.determinant = 1 := by
-  rw [← formalisations.RationalRotations.Chapters.IntroductoryExample.rotation_matrix]
-  exact (Rotations.Projective.Action.NonNullProportion.rotation
-    formalisations.RationalRotations.Chapters.IntroductoryExample.proportion).determinantOne
+  rw [← rotation_matrix]
+  exact (NonNullProportion.rotation
+    proportion).determinantOne
 
 /-- The displayed matrix fixes its axis (1, 2, 3) under row multiplication. -/
-theorem axis_fixed : Matrix3.rowMul axis formalisations.RationalRotations.Chapters.IntroductoryExample.displayed = axis
+theorem axis_fixed : Matrix3.rowMul axis displayed = axis
   := by
   decide
 
 /-- The displayed rotation has half-spread 7/9. -/
 theorem halfSpread_value :
-    Rotations.Spread.halfSpread (Rotations.Projective.Action.NonNullProportion.rotation
-      formalisations.RationalRotations.Chapters.IntroductoryExample.proportion) = (7 : Fraction.Rational) / 9 := by
-  rw [Rotations.Projective.Action.NonNullProportion.halfSpread_rotation
-    formalisations.RationalRotations.Chapters.IntroductoryExample.proportion (by decide)]
+    Rotations.Spread.halfSpread (NonNullProportion.rotation
+      proportion) = (7 : Fraction.Rational) / 9 := by
+  rw [NonNullProportion.halfSpread_rotation
+    proportion (by decide)]
   change axis.quadrance / proportion.toProportion.norm = (7 : Fraction.Rational) / 9
-  rw [formalisations.RationalRotations.Chapters.IntroductoryExample.axis_quadrance,
-    formalisations.RationalRotations.Chapters.IntroductoryExample.proportion_norm]
+  rw [axis_quadrance,
+    proportion_norm]
   decide
 
 /-- The displayed rotation matrix has trace −1/9. -/
-theorem trace_value : Matrix3.trace formalisations.RationalRotations.Chapters.IntroductoryExample.displayed = (-1 :
+theorem trace_value : Matrix3.trace displayed = (-1 :
   Fraction.Rational) / 9 := by
   decide
 
 /-- The trace formula recovers the displayed half-spread 7/9. -/
 theorem halfSpread_from_trace :
-    (3 - Matrix3.trace formalisations.RationalRotations.Chapters.IntroductoryExample.displayed) / 4 = (7 :
+    (3 - Matrix3.trace displayed) / 4 = (7 :
       Fraction.Rational) / 9 := by
-  rw [formalisations.RationalRotations.Chapters.IntroductoryExample.trace_value]
+  rw [trace_value]
   decide
 
 /-- Negating the vector part of the proportion gives the transpose inverse
 matrix exactly. -/
 theorem conjugate_matrix :
-    Rotations.Projective.Action.NonNullProportion.rotationMatrix
+    NonNullProportion.rotationMatrix
       (Algebra.Quaternion.Projective.Basic.NonNullProportion.conjugate
-        formalisations.RationalRotations.Chapters.IntroductoryExample.proportion) =
-      Matrix3.transpose formalisations.RationalRotations.Chapters.IntroductoryExample.displayed := by
+        proportion) =
+      Matrix3.transpose displayed := by
   decide
 
 end formalisations.RationalRotations.Chapters.IntroductoryExample

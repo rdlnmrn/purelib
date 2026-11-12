@@ -29,6 +29,9 @@ import Purelib.Polynomial.Clearance.Box.Dominance.Basic
 import Purelib.Polynomial.Dense.Arithmetic
 import Purelib.Polynomial.Dense.Basic
 
+open Purelib.Polynomial.Dense.Gaussian.Newton.Box
+open Purelib.Geometry.Rational.Box.Square.Centered
+
 open Purelib.Data
 
 open Purelib.Data.Rat
@@ -60,15 +63,15 @@ def
     {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient source : Box}
     {separation : Dense.Gaussian.Derivative.Separation.Basic.Certificate p ambient}
     (degreeAtLeastTwo : 2 ≤ p.natDegree)
-    (newton : Dense.Gaussian.Newton.Box.Certificate.SeparatedNewtonCenterCertificate
+    (newton : Certificate.SeparatedNewtonCenterCertificate
       p ambient source separation)
     (sourceRefines : source.Refines ambient)
     {r : Fraction.Rational} (positive : 0 < r)
     (targetRefines :
-      (Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) r
+      (Affine.centeredSquare (Anchor.anchorNewtonCenter p source) r
         positive.le).Refines ambient)
     (displacementSmall :
-      Data.Gaussian.Norm.Basic.normSq (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source - source.anchor)
+      Gaussian.Norm.Basic.normSq (Anchor.anchorNewtonCenter p source - source.anchor)
         ≤ r ^ 2)
     (taylorSmall :
       2 * (36 * Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p ambient * r ^ 2) ≤
@@ -77,45 +80,45 @@ def
     (linearizationMajorantPositive : 0 < linearizationMajorant)
     (linearizationUpper : ∀ z : Gaussian.Basic.Canonical,
       Box.Boundary.OnBoxBoundary
-        (Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) r
+        (Affine.centeredSquare (Anchor.anchorNewtonCenter p source) r
           positive.le) z →
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Newton.Box.Linearization.newtonLinearization p source).eval
+      Gaussian.Norm.Basic.normSq ((Linearization.newtonLinearization p source).eval
         z) ≤
         linearizationMajorant) :
-    Clearance.Box.Boundary.Basic.BoundaryClearance p
-      (Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) r
+    Basic.BoundaryClearance p
+      (Affine.centeredSquare (Anchor.anchorNewtonCenter p source) r
         positive.le) := by
-  let target := Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source)
+  let target := Affine.centeredSquare (Anchor.anchorNewtonCenter p source)
     r positive.le
-  let dominance := Clearance.Box.Dominance.Newton.Square.Separated.separatedNewtonBoundaryNormDominance newton
+  let dominance := Dominance.Newton.Square.Separated.separatedNewtonBoundaryNormDominance newton
     sourceRefines
     positive targetRefines displacementSmall taylorSmall
   have canonicalUpper : ∀ z : Gaussian.Basic.Canonical,
       Box.Boundary.OnBoxBoundary target z →
       Gaussian.Basic.Canonical.normSq
-        ((Dense.Gaussian.Newton.Box.Linearization.newtonLinearization p source).eval z) ≤ linearizationMajorant := by
+        ((Linearization.newtonLinearization p source).eval z) ≤ linearizationMajorant := by
     intro z boundary
     simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using linearizationUpper z boundary
-  let sumClearance : Clearance.Box.Boundary.Basic.BoundaryClearance
-      (Dense.Gaussian.Newton.Box.Linearization.newtonLinearization p source +
-        Dense.Gaussian.Newton.Box.Linearization.newtonError p source) target :=
-          Clearance.Box.Dominance.Majorant.boundaryClearance_add_of_dominance_with_majorant
-    (Dense.Gaussian.Newton.Box.Linearization.newtonLinearization p source)
-      (Dense.Gaussian.Newton.Box.Linearization.newtonError p source) target dominance
+  let sumClearance : Basic.BoundaryClearance
+      (Linearization.newtonLinearization p source +
+        Linearization.newtonError p source) target :=
+          Dominance.Majorant.boundaryClearance_add_of_dominance_with_majorant
+    (Linearization.newtonLinearization p source)
+      (Linearization.newtonError p source) target dominance
     linearizationMajorant linearizationMajorantPositive canonicalUpper
-  have sumIdentity := Dense.Gaussian.Newton.Box.Linearization.newtonLinearization_add_error_eq_normalize
+  have sumIdentity := Linearization.newtonLinearization_add_error_eq_normalize
     degreeAtLeastTwo source newton.derivativeNonzero
   have sumBound : sumClearance.bound =
-      Dense.Gaussian.Newton.Box.Square.Separated.separatedNewtonDominanceMargin separation r ^ 2 /
+      Square.Separated.separatedNewtonDominanceMargin separation r ^ 2 /
         (4 * linearizationMajorant) := by
     change sumClearance.bound = dominance.margin ^ 2 /
       (4 * linearizationMajorant)
-    exact Clearance.Box.Dominance.Majorant.boundaryClearance_add_of_dominance_with_majorant_bound
-      (Dense.Gaussian.Newton.Box.Linearization.newtonLinearization p source)
-        (Dense.Gaussian.Newton.Box.Linearization.newtonError p source) target dominance
+    exact Dominance.Majorant.boundaryClearance_add_of_dominance_with_majorant_bound
+      (Linearization.newtonLinearization p source)
+        (Linearization.newtonError p source) target dominance
       linearizationMajorant linearizationMajorantPositive canonicalUpper
   exact
-    { bound := Dense.Gaussian.Newton.Box.Square.Separated.separatedNewtonDominanceMargin separation r ^ 2 /
+    { bound := Square.Separated.separatedNewtonDominanceMargin separation r ^ 2 /
         (4 * linearizationMajorant)
       positive := by
         rw [← sumBound]
@@ -126,12 +129,12 @@ def
         rw [← Gaussian.Norm.Basic.normSq_eq_canonical]
         calc
           sumClearance.bound ≤
-              Data.Gaussian.Norm.Basic.normSq
-                ((Dense.Gaussian.Newton.Box.Linearization.newtonLinearization p source +
-                  Dense.Gaussian.Newton.Box.Linearization.newtonError p source).eval z) :=
+              Gaussian.Norm.Basic.normSq
+                ((Linearization.newtonLinearization p source +
+                  Linearization.newtonError p source).eval z) :=
             by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using
               sumClearance.lower z boundary
-          _ = Data.Gaussian.Norm.Basic.normSq (p.eval z) := by
+          _ = Gaussian.Norm.Basic.normSq (p.eval z) := by
             rw [sumIdentity,
               Dense.Basic.DensePolynomial.eval_normalize] }
 
@@ -142,15 +145,15 @@ theorem
     {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient source : Box}
     {separation : Dense.Gaussian.Derivative.Separation.Basic.Certificate p ambient}
     (degreeAtLeastTwo : 2 ≤ p.natDegree)
-    (newton : Dense.Gaussian.Newton.Box.Certificate.SeparatedNewtonCenterCertificate
+    (newton : Certificate.SeparatedNewtonCenterCertificate
       p ambient source separation)
     (sourceRefines : source.Refines ambient)
     {r : Fraction.Rational} (positive : 0 < r)
     (targetRefines :
-      (Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) r
+      (Affine.centeredSquare (Anchor.anchorNewtonCenter p source) r
         positive.le).Refines ambient)
     (displacementSmall :
-      Data.Gaussian.Norm.Basic.normSq (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source - source.anchor)
+      Gaussian.Norm.Basic.normSq (Anchor.anchorNewtonCenter p source - source.anchor)
         ≤ r ^ 2)
     (taylorSmall :
       2 * (36 * Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p ambient * r ^ 2) ≤
@@ -159,18 +162,18 @@ theorem
     (linearizationMajorantPositive : 0 < linearizationMajorant)
     (linearizationUpper : ∀ z : Gaussian.Basic.Canonical,
       Box.Boundary.OnBoxBoundary
-        (Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) r
+        (Affine.centeredSquare (Anchor.anchorNewtonCenter p source) r
           positive.le) z →
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Newton.Box.Linearization.newtonLinearization p source).eval
+      Gaussian.Norm.Basic.normSq ((Linearization.newtonLinearization p source).eval
         z) ≤
         linearizationMajorant) :
-    (Clearance.Box.Boundary.Newton.Square.Separated.separatedNewtonSquareBoundaryClearanceWithMajorant degreeAtLeastTwo
+    (separatedNewtonSquareBoundaryClearanceWithMajorant degreeAtLeastTwo
       newton sourceRefines positive targetRefines displacementSmall
       taylorSmall linearizationMajorant linearizationMajorantPositive
       linearizationUpper).bound =
-        Dense.Gaussian.Newton.Box.Square.Separated.separatedNewtonDominanceMargin separation r ^ 2 /
+        Square.Separated.separatedNewtonDominanceMargin separation r ^ 2 /
           (4 * linearizationMajorant) := by
-  unfold Clearance.Box.Boundary.Newton.Square.Separated.separatedNewtonSquareBoundaryClearanceWithMajorant
+  unfold separatedNewtonSquareBoundaryClearanceWithMajorant
   rfl
 
 /-- Coefficient-computed specialization using the ordinary dense derivative
@@ -179,28 +182,28 @@ def separatedNewtonSquareBoundaryClearance
     {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient source : Box}
     {separation : Dense.Gaussian.Derivative.Separation.Basic.Certificate p ambient}
     (degreeAtLeastTwo : 2 ≤ p.natDegree)
-    (newton : Dense.Gaussian.Newton.Box.Certificate.SeparatedNewtonCenterCertificate
+    (newton : Certificate.SeparatedNewtonCenterCertificate
       p ambient source separation)
     (sourceRefines : source.Refines ambient)
     {r : Fraction.Rational} (positive : 0 < r)
     (targetRefines :
-      (Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) r
+      (Affine.centeredSquare (Anchor.anchorNewtonCenter p source) r
         positive.le).Refines ambient)
     (displacementSmall :
-      Data.Gaussian.Norm.Basic.normSq (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source - source.anchor)
+      Gaussian.Norm.Basic.normSq (Anchor.anchorNewtonCenter p source - source.anchor)
         ≤ r ^ 2)
     (taylorSmall :
       2 * (36 * Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p ambient * r ^ 2) ≤
         separation.margin) :
-    Clearance.Box.Boundary.Basic.BoundaryClearance p
-      (Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) r
+    Basic.BoundaryClearance p
+      (Affine.centeredSquare (Anchor.anchorNewtonCenter p source) r
         positive.le) :=
-  Clearance.Box.Boundary.Newton.Square.Separated.separatedNewtonSquareBoundaryClearanceWithMajorant degreeAtLeastTwo
+  separatedNewtonSquareBoundaryClearanceWithMajorant degreeAtLeastTwo
     newton
     sourceRefines positive targetRefines displacementSmall taylorSmall
-    (Dense.Gaussian.Newton.Box.Square.Bounds.separatedNewtonLinearizationMajorant p ambient r)
-    (Dense.Gaussian.Newton.Box.Square.Bounds.separatedNewtonLinearizationMajorant_pos p ambient positive)
-    (fun _z boundary => Dense.Gaussian.Newton.Box.Square.Bounds.newtonLinearization_boundary_le_majorant
+    (Square.Bounds.separatedNewtonLinearizationMajorant p ambient r)
+    (Square.Bounds.separatedNewtonLinearizationMajorant_pos p ambient positive)
+    (fun _z boundary => Square.Bounds.newtonLinearization_boundary_le_majorant
       sourceRefines positive boundary)
 
 end Purelib.Polynomial.Clearance.Box.Boundary.Newton.Square.Separated

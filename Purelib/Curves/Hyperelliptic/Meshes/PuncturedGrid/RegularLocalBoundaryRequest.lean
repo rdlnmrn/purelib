@@ -33,6 +33,10 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Approximation.Rational.Budget
+
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! One requested homogeneous error selects spatial energy meshes and then
@@ -48,73 +52,73 @@ open Purelib
 open Purelib.Riemann
 open Purelib.RootIsolation
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {faces : List (Meshes.PuncturedGridFaces.RegularFace
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {faces : List (Meshes.PuncturedGridFaces.RegularFace
       bank)}
-    {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces}
+    {domains : Face.DomainBanks.FaceDomainBank frames faces}
 
 set_option genInjectivity false in
 /-- A shared request retaining the energy and clipping-ownership allowances for the original regular local boundary
 comparison. -/
 structure LocalBoundaryRequest (coarse : (sheet : Fin 2) →
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains sheet)
-    (fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+  RegularDomainMeshes.RegularMeshes domains sheet)
+    (fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
       sheet) (target : Fraction.Rational) where
   /-- The positive energy allowance on the original local boundary data. -/ energyTarget : Fraction.Rational
   /-- The energy allowance is the retained minimum of one and the prescribed half-target allocation. -/ energyTarget_eq
-    : energyTarget = min 1 (Rational.Budget.Weighted.allowance (target / 2) 128)
+    : energyTarget = min 1 (Weighted.allowance (target / 2) 128)
   /-- The allowance for the actual clipped ownership comparison. -/ ownershipTarget : Fraction.Rational
   /-- The ownership allowance is the prescribed half-target allocation with the original genus factor. -/
-    ownershipTarget_eq : ownershipTarget = Rational.Budget.Weighted.allowance (target / 2) (2 * (genus :
+    ownershipTarget_eq : ownershipTarget = Weighted.allowance (target / 2) (2 * (genus :
     Fraction.Rational) ^ 2)
   /-- The original energy and ownership contributions together fit the supplied target. -/ paid : 128 * energyTarget ^ 2
     + 2 * (genus : Fraction.Rational) ^ 2 * ownershipTarget ≤ target
   /-- The actual two-sheet energy request at the retained energy allowance. -/ energy :
-    Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest coarse fixed energyTarget
+    TwoSheetBilinearRequest.TwoSheetRequest coarse fixed energyTarget
   /-- The original clipped ownership request at the retained ownership allowance. -/ ownership :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularClippedRequest.ClippedRequest energy ownershipTarget
+    RegularClippedRequest.ClippedRequest energy ownershipTarget
 
 constructive_injectivity LocalBoundaryRequest
 
 namespace LocalBoundaryRequest
 
-variable {coarse : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains sheet}
-  {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+variable {coarse : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes domains sheet}
+  {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet} {target : Fraction.Rational}
 
 /-- Allocate the original target between energy and ownership, then retain both actual requests and their paid bound. -/
-@[expose] def build (coarse : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes
+@[expose] def build (coarse : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes
   domains sheet)
-    (fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+    (fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
       sheet) (target : Fraction.Rational) (positive : 0 < target) :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularLocalBoundaryRequest.LocalBoundaryRequest coarse fixed target := by
+    LocalBoundaryRequest coarse fixed target := by
   let half := target / 2
-  have halfPositive : 0 < half := Fraction.Order.Field.div_pos_direct positive (by decide)
-  let energyTarget := min 1 (Rational.Budget.Weighted.allowance half 128)
-  have energyPositive : 0 < energyTarget := Fraction.Order.Basic.lt_min (by decide)
-    (Rational.Budget.Weighted.allowance_positive halfPositive (by decide +kernel))
+  have halfPositive : 0 < half := Field.div_pos_direct positive (by decide)
+  let energyTarget := min 1 (Weighted.allowance half 128)
+  have energyPositive : 0 < energyTarget := Basic.lt_min (by decide)
+    (Weighted.allowance_positive halfPositive (by decide +kernel))
   have square : energyTarget ^ 2 ≤ energyTarget := by
-    have bound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (show energyTarget ≤ 1 from Fraction.Order.Basic.min_le_left _ _) energyPositive.le
+    have bound := Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (show energyTarget ≤ 1 from Basic.min_le_left _ _) energyPositive.le
     exact (show energyTarget ^ 2 = energyTarget * energyTarget by ring1).le.trans
       (bound.trans_eq (by ring1))
   have energyPaid : 128 * energyTarget ^ 2 ≤ half :=
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct square (by decide +kernel)).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Basic.min_le_right _ _)
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct square (by decide +kernel)).trans
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Basic.min_le_right _ _)
         (by decide +kernel))).trans
-      (Rational.Budget.Weighted.mul_allowance_le halfPositive.le (by decide +kernel))
-  let weight := 2 * (Rational.Budget.Aggregate.countCoordinate genus) ^ 2
+      (Weighted.mul_allowance_le halfPositive.le (by decide +kernel))
+  let weight := 2 * (Aggregate.countCoordinate genus) ^ 2
   have weightEq : weight = 2 * (genus : Fraction.Rational) ^ 2 := by
     dsimp only [weight, -eq_self, -iff_self]
-    rw [Rational.Budget.Aggregate.countCoordinate_eq]
-  have weightNonnegative : 0 ≤ weight := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-  let ownershipTarget := Rational.Budget.Weighted.allowance half weight
-  have ownershipPositive : 0 < ownershipTarget := Rational.Budget.Weighted.allowance_positive halfPositive
+    rw [Aggregate.countCoordinate_eq]
+  have weightNonnegative : 0 ≤ weight := Arithmetic.mul_nonneg_direct (by decide)
+    (Arithmetic.sq_nonneg_direct _)
+  let ownershipTarget := Weighted.allowance half weight
+  have ownershipPositive : 0 < ownershipTarget := Weighted.allowance_positive halfPositive
     weightNonnegative
-  have ownershipPaid : weight * ownershipTarget ≤ half := Rational.Budget.Weighted.mul_allowance_le halfPositive.le
+  have ownershipPaid : weight * ownershipTarget ≤ half := Weighted.mul_allowance_le halfPositive.le
     weightNonnegative
   have paid : 128 * energyTarget ^ 2 + 2 * (genus : Fraction.Rational) ^ 2 * ownershipTarget ≤ target := by
     rw [← weightEq]
@@ -123,22 +127,22 @@ variable {coarse : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.Regula
       calc
         _ = target / 2 * 2 := by ring1
         _ = target := Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))
-  let energy := Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest.build
+  let energy := TwoSheetBilinearRequest.TwoSheetRequest.build
     coarse fixed energyTarget energyPositive
   exact ⟨energyTarget, rfl, ownershipTarget, by dsimp only [ownershipTarget, half, -eq_self, -iff_self]; rw [weightEq],
-    paid, energy, Hyperelliptic.Meshes.PuncturedGrid.RegularClippedRequest.ClippedRequest.build energy ownershipTarget
+    paid, energy, RegularClippedRequest.ClippedRequest.build energy ownershipTarget
       ownershipPositive⟩
 
 /-- The original local boundary comparison is bounded by the product of coefficient norms and the requested target. -/
-theorem bound (request : Hyperelliptic.Meshes.PuncturedGrid.RegularLocalBoundaryRequest.LocalBoundaryRequest coarse
-  fixed target) {stage : Nat} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+theorem bound (request : LocalBoundaryRequest coarse
+  fixed target) {stage : Nat} {cache : RegularDomainMeshes.RegularMeshes.Numerics
   domains stage}
     (later : request.ownership.index ≤ stage)
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest.Samples request.energy cache)
+    (samples : TwoSheetBilinearRequest.TwoSheetRequest.Samples request.energy cache)
     (left right : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun sheet : Fin 2 => FiniteSum.Fin.sumFin (fun position :
+    Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun sheet : Fin 2 => FiniteSum.Fin.sumFin (fun position :
       Fin faces.length =>
-      Hyperelliptic.Meshes.PuncturedGrid.RegularLocalBoundaryBound.localBoundary (energy := request.energy) cache left
+      RegularLocalBoundaryBound.localBoundary (energy := request.energy) cache left
         right sheet position))) ≤
       Readings.PreparedObservationCoercivity.coefficientNormSq left *
         Readings.PreparedObservationCoercivity.coefficientNormSq right * target := by
@@ -149,10 +153,10 @@ theorem bound (request : Hyperelliptic.Meshes.PuncturedGrid.RegularLocalBoundary
         (coefficients row))
     simpa only [FiniteSum.Fin.sumFin_zero, Readings.PreparedObservationCoercivity.coefficientNormSq, -eq_self,
       -iff_self] using estimate
-  exact (Hyperelliptic.Meshes.PuncturedGrid.RegularLocalBoundaryBound.localBoundary_bound
+  exact (RegularLocalBoundaryBound.localBoundary_bound
     request.ownership later samples left right).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct request.paid
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (nonnegative left) (nonnegative right)))
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct request.paid
+      (Arithmetic.mul_nonneg_direct (nonnegative left) (nonnegative right)))
 
 end LocalBoundaryRequest
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularLocalBoundaryRequest

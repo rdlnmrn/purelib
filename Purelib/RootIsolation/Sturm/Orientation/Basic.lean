@@ -23,6 +23,10 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Polynomial.Dense.Rational.Bounds
+
 open Purelib.Data.Rat.Interval (Bounds)
 open Purelib.Polynomial.Dense.Rational.Basic (CoordinatePolynomial)
 open Purelib.Polynomial.Dense.Rational.Bezout.Basic (CoprimeCertificate)
@@ -70,16 +74,16 @@ This sum bounds the two errors used to retain the orientation of a displayed squ
 @[expose] def orientationCoefficient
     (p : CoordinatePolynomial) (root : Bounds) :
       Fraction.Rational :=
-  Dense.Rational.Bounds.Taylor.taylorRemainderBound p root +
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound
+  Taylor.taylorRemainderBound p root +
+    Lipschitz.denseEvalSqLipschitzBound
       (Dense.Derivative.derivative p) root
 
 /-- The combined Taylor and derivative-displacement coefficient is nonnegative. -/
 theorem orientationCoefficient_nonneg
     (p : CoordinatePolynomial) (root : Bounds) :
     0 ≤ orientationCoefficient p root :=
-  add_nonneg (Dense.Rational.Bounds.Taylor.taylorRemainderBound_pos p root).le
-    (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg
+  add_nonneg (Taylor.taylorRemainderBound_pos p root).le
+    (Lipschitz.denseHornerSqBounds_nonneg
       (Dense.Derivative.derivative p) root).2
 
 /-- A positive coefficient-computed width at which both the Taylor error and
@@ -104,8 +108,8 @@ theorem rootOrientationWidth_pos
       (Dense.Derivative.derivative p))
     (root : Bounds) :
     0 < rootOrientationWidth p squarefree root := by
-  apply Fraction.Order.Basic.lt_min (by decide)
-  exact Fraction.Order.Field.div_pos_direct
+  apply Basic.lt_min (by decide)
+  exact Field.div_pos_direct
     (orientationClearance p squarefree root).positive
     (by
       calc
@@ -127,10 +131,10 @@ theorem orientation_scaled_width_sq_lt
     (proper : interval.lower < interval.upper)
     (widthSmall : interval.upper - interval.lower <
       rootOrientationWidth p squarefree root) :
-    Dense.Rational.Bounds.Taylor.taylorRemainderBound p root *
+    Taylor.taylorRemainderBound p root *
           (interval.upper - interval.lower) ^ 2 <
         (orientationClearance p squarefree root).bound ∧
-      Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound
+      Lipschitz.denseEvalSqLipschitzBound
           (Dense.Derivative.derivative p) root *
             (interval.upper - interval.lower) ^ 2 <
         (orientationClearance p squarefree root).bound := by
@@ -138,43 +142,43 @@ theorem orientation_scaled_width_sq_lt
   let coefficient := orientationCoefficient p root
   let bound := (orientationClearance p squarefree root).bound
   have widthPositive : 0 < width :=
-    Fraction.Order.Arithmetic.sub_pos_direct proper
+    Arithmetic.sub_pos_direct proper
   have widthBelowOne : width < 1 :=
-    widthSmall.trans_le (Fraction.Order.Basic.min_le_left _ _)
+    widthSmall.trans_le (Basic.min_le_left _ _)
   have widthBelowRatio : width < bound / (coefficient + 1) :=
-    widthSmall.trans_le (Fraction.Order.Basic.min_le_right _ _)
+    widthSmall.trans_le (Basic.min_le_right _ _)
   have widthSqBelowWidth : width ^ 2 < width := by
     have multiplied :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+      Arithmetic.mul_lt_mul_of_pos_right_direct
         widthBelowOne widthPositive
     rw [pow_two]
     exact multiplied.trans_eq (Fraction.Field.one_mul width)
   have coefficientNonnegative : 0 ≤ coefficient := by
     simpa only [coefficient] using orientationCoefficient_nonneg p root
   have coefficientWidthBelow : coefficient * width < bound :=
-    Data.Rat.Bounds.Scale.coefficient_mul_lt_of_radius_lt_div_add_one
+    Bounds.Scale.coefficient_mul_lt_of_radius_lt_div_add_one
         coefficientNonnegative widthPositive.le widthBelowRatio
   have coefficientWidthSqBelow : coefficient * width ^ 2 < bound :=
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
       widthSqBelowWidth.le coefficientNonnegative).trans_lt
         coefficientWidthBelow
-  have taylorNonnegative : 0 ≤ Dense.Rational.Bounds.Taylor.taylorRemainderBound p root :=
-    (Dense.Rational.Bounds.Taylor.taylorRemainderBound_pos p root).le
+  have taylorNonnegative : 0 ≤ Taylor.taylorRemainderBound p root :=
+    (Taylor.taylorRemainderBound_pos p root).le
   have derivativeCoefficientNonnegative :
-      0 ≤ Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound
+      0 ≤ Lipschitz.denseEvalSqLipschitzBound
         (Dense.Derivative.derivative p) root :=
-    (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg
+    (Lipschitz.denseHornerSqBounds_nonneg
       (Dense.Derivative.derivative p) root).2
   have widthSqNonnegative : 0 ≤ width ^ 2 :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct width
+    Arithmetic.sq_nonneg_direct width
   constructor
-  · exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (show Dense.Rational.Bounds.Taylor.taylorRemainderBound p root ≤ coefficient by
+  · exact (Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (show Taylor.taylorRemainderBound p root ≤ coefficient by
         dsimp only [coefficient, orientationCoefficient]
         exact le_add_of_nonneg_right derivativeCoefficientNonnegative)
       widthSqNonnegative).trans_lt coefficientWidthSqBelow
-  · exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (show Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound
+  · exact (Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (show Lipschitz.denseEvalSqLipschitzBound
           (Dense.Derivative.derivative p) root ≤ coefficient by
         dsimp only [coefficient, orientationCoefficient]
         exact le_add_of_nonneg_left taylorNonnegative)
@@ -207,7 +211,7 @@ theorem eval_mul_root_linear_pos
   let distance := point - parameter
   let width := interval.upper - interval.lower
   let clearance := orientationClearance p squarefree root
-  let taylor := Dense.Rational.Bounds.Taylor.taylorRemainderBound p root
+  let taylor := Taylor.taylorRemainderBound p root
   let error := p.eval point - p.eval parameter - derivativeValue * distance
   have parameterRoot : root.Contains parameter :=
     ⟨refines.1.trans parameterInside.1,
@@ -229,7 +233,7 @@ theorem eval_mul_root_linear_pos
       point = (point - parameter) + parameter := by ring1
       _ = parameter := by rw [distanceZero]; ring1
   have distanceSqPositive : 0 < distance ^ 2 := by
-    exact Fraction.Order.Arithmetic.exact_rational_sq_pos distanceNonzero
+    exact Arithmetic.exact_rational_sq_pos distanceNonzero
   have distanceSqLeWidthSq : distance ^ 2 ≤ width ^ 2 := by
     simpa only [distance, width] using
       Box.Interval.point_sub_center_sq_le_width_sq pointInside parameterInside
@@ -239,24 +243,24 @@ theorem eval_mul_root_linear_pos
       taylor * distance ^ 2 < derivativeValue ^ 2 := by
     calc
       taylor * distance ^ 2 ≤ taylor * width ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          distanceSqLeWidthSq (Dense.Rational.Bounds.Taylor.taylorRemainderBound_pos p root).le
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
+          distanceSqLeWidthSq (Taylor.taylorRemainderBound_pos p root).le
       _ < clearance.bound := by
         simpa only [taylor, width, clearance] using scaledBounds.1
       _ ≤ derivativeValue ^ 2 := derivativeLower
   have errorBound : error ^ 2 ≤ taylor * distance ^ 4 := by
     simpa only [error, taylor, derivativeValue, distance] using
-      Dense.Rational.Bounds.Taylor.taylor_error_sq_le p pointRoot parameterRoot
+      Taylor.taylor_error_sq_le p pointRoot parameterRoot
   have errorStrict : error ^ 2 < (derivativeValue * distance) ^ 2 := by
     calc
       error ^ 2 ≤ taylor * distance ^ 4 := errorBound
       _ = (taylor * distance ^ 2) * distance ^ 2 := by ring1
       _ < derivativeValue ^ 2 * distance ^ 2 :=
-        Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+        Arithmetic.mul_lt_mul_of_pos_right_direct
           taylorDistanceBelowDerivative distanceSqPositive
       _ = (derivativeValue * distance) ^ 2 := by ring1
   have perturbation :=
-    Data.Rat.Sign.Products.sub_mul_neg_of_sq_lt_sq
+    Sign.Products.sub_mul_neg_of_sq_lt_sq
       (a := error) (b := -(derivativeValue * distance)) (by
         have negativeSquare : (-(derivativeValue * distance)) ^ 2 =
             (derivativeValue * distance) ^ 2 := by ring1
@@ -270,7 +274,7 @@ theorem eval_mul_root_linear_pos
   have positiveNegation :
       0 < -(p.eval point * -(derivativeValue * distance)) :=
     by
-      have reversed := Fraction.Order.Arithmetic.neg_lt_neg_direct perturbation
+      have reversed := Arithmetic.neg_lt_neg_direct perturbation
       have zeroNegation : -(0 : Fraction.Rational) = 0 := by ring1
       rw [zeroNegation] at reversed
       exact reversed
@@ -300,7 +304,7 @@ theorem derivative_eval_mul_root_derivative_pos
   let width := interval.upper - interval.lower
   let clearance := orientationClearance p squarefree root
   let lipschitz :=
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound derivative root
+    Lipschitz.denseEvalSqLipschitzBound derivative root
   have parameterRoot : root.Contains parameter :=
     ⟨refines.1.trans parameterInside.1,
       parameterInside.2.trans refines.2⟩
@@ -319,7 +323,7 @@ theorem derivative_eval_mul_root_derivative_pos
       Box.Interval.point_sub_center_sq_le_width_sq pointInside parameterInside
   have scaledBounds := orientation_scaled_width_sq_lt p squarefree
     root interval proper widthSmall
-  have displacement := Dense.Rational.Bounds.Lipschitz.eval_sub_sq_le
+  have displacement := Lipschitz.eval_sub_sq_le
     derivative root pointRoot parameterRoot
   have displacementStrict :
       (derivative.eval point - derivativeValue) ^ 2 <
@@ -329,16 +333,16 @@ theorem derivative_eval_mul_root_derivative_pos
           lipschitz * (point - parameter) ^ 2 := by
         simpa only [derivativeValue, lipschitz] using displacement
       _ ≤ lipschitz * width ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           distanceSqLeWidthSq
-          (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg
+          (Lipschitz.denseHornerSqBounds_nonneg
             derivative root).2
       _ < clearance.bound := by
         simpa only [derivative, lipschitz, width, clearance] using
           scaledBounds.2
       _ ≤ derivativeValue ^ 2 := derivativeLower
   simpa only [derivative, derivativeValue] using
-    Data.Rat.Sign.Products.mul_pos_of_sub_sq_lt_sq
+    Sign.Products.mul_pos_of_sub_sq_lt_sq
       displacementStrict
 
 /-- Endpoint orientation supplied by one displayed squarefree root.  A root
@@ -392,7 +396,7 @@ theorem rootEndpointOrientation
       have lowerLt : interval.lower < parameter :=
         lt_of_le_of_ne parameterInside.1 lowerRoot
       have differenceNegative : interval.lower - parameter < 0 :=
-        Fraction.Order.Arithmetic.sub_neg_direct lowerLt
+        Arithmetic.sub_neg_direct lowerLt
       have factored : 0 <
           (p.eval interval.lower * derivativeValue) *
             (interval.lower - parameter) := by
@@ -409,10 +413,10 @@ theorem rootEndpointOrientation
         · rw [productZero, Fraction.Field.zero_mul_direct] at factored
           exact (lt_irrefl 0 factored).elim
         · have productNegative :=
-            Fraction.Order.Arithmetic.mul_neg_of_pos_of_neg_direct
+            Arithmetic.mul_neg_of_pos_of_neg_direct
               productPositive differenceNegative
           exact (lt_asymm factored productNegative).elim
-      exact Purelib.Data.Rat.Sign.Products.product_neg_of_opposite_and_same lowerOpposite lowerSame
+      exact Sign.Products.product_neg_of_opposite_and_same lowerOpposite lowerSame
   have upper : interval.upper = parameter ∨
       0 < p.eval interval.upper *
         (Dense.Derivative.derivative p).eval interval.upper := by
@@ -428,7 +432,7 @@ theorem rootEndpointOrientation
       have parameterLt : parameter < interval.upper :=
         lt_of_le_of_ne parameterInside.2 (Ne.symm upperRoot)
       have differencePositive : 0 < interval.upper - parameter :=
-        Fraction.Order.Arithmetic.sub_pos_direct parameterLt
+        Arithmetic.sub_pos_direct parameterLt
       have factored : 0 <
           (p.eval interval.upper * derivativeValue) *
             (interval.upper - parameter) := by
@@ -438,11 +442,11 @@ theorem rootEndpointOrientation
           _ = (p.eval interval.upper * derivativeValue) *
               (interval.upper - parameter) := by ring1)
       have upperAligned : 0 < p.eval interval.upper * derivativeValue := by
-        exact Fraction.Order.Arithmetic.pos_of_mul_pos_right_direct
+        exact Arithmetic.pos_of_mul_pos_right_direct
           (left := interval.upper - parameter)
           (by simpa only [Fraction.Field.mul_comm] using factored)
           differencePositive.le
-      exact Purelib.Data.Rat.Sign.Products.product_pos_of_two_same upperAligned upperSame
+      exact Sign.Products.product_pos_of_two_same upperAligned upperSame
   exact ⟨lower, upper⟩
 end Purelib.RootIsolation.Sturm.Orientation.Basic
 

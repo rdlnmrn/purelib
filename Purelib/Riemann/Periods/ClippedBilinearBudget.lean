@@ -15,6 +15,8 @@ import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! A cached finite allowance paying the full clipped-mesh ownership error.
@@ -68,8 +70,8 @@ The count square is nonnegative, and the retained magnitude makes its thirty-two
 product is the exact cached weight. -/
 theorem weight_nonnegative (budget : ClippedBilinearBudget count magnitude target) : 0 ≤ budget.weight := by
   rw [budget.weight_eq]
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) (add_nonneg budget.magnitude_nonnegative (by
+  exact Arithmetic.mul_nonneg_direct (Arithmetic.sq_nonneg_direct _)
+    (Arithmetic.mul_nonneg_direct (by decide +kernel) (add_nonneg budget.magnitude_nonnegative (by
       decide)))
 
 open Purelib.Approximation.Rational in
@@ -79,8 +81,8 @@ Both the unit cap and the weighted half-target allowance are strictly positive. 
 error allowance. -/
 theorem error_positive (budget : ClippedBilinearBudget count magnitude target) : 0 < budget.error := by
   rw [budget.error_eq]
-  exact Fraction.Order.Basic.lt_min (by decide) (Budget.Weighted.allowance_positive
-    (Fraction.Order.Field.div_pos_direct budget.target_positive (by decide)) budget.weight_nonnegative)
+  exact Basic.lt_min (by decide) (Budget.Weighted.allowance_positive
+    (Field.div_pos_direct budget.target_positive (by decide)) budget.weight_nonnegative)
 
 /-- The retained one-sixteenth reading target is strictly positive.
 
@@ -88,12 +90,12 @@ The retained error is strictly positive and the divisor sixteen is positive. Its
 target. -/
 theorem readingTarget_positive (budget : ClippedBilinearBudget count magnitude target) : 0 < budget.readingTarget := by
   rw [budget.readingTarget_eq]
-  exact Fraction.Order.Field.div_pos_direct budget.error_positive (by decide +kernel)
+  exact Field.div_pos_direct budget.error_positive (by decide +kernel)
 
 /-- The retained error allowance is at most one. -/
 theorem error_le_one (budget : ClippedBilinearBudget count magnitude target) : budget.error ≤ 1 := by
   rw [budget.error_eq]
-  exact Fraction.Order.Basic.min_le_left _ _
+  exact Basic.min_le_left _ _
 
 open Purelib.Approximation.Rational in
 /-- The retained weight times error allowance is strictly below the original target.
@@ -103,14 +105,14 @@ strictly positive target. -/
 theorem error_paid (budget : ClippedBilinearBudget count magnitude target) : budget.weight * budget.error < target := by
   have allowanceBound : budget.error ≤ Budget.Weighted.allowance (target / 2) budget.weight := by
     rw [budget.error_eq]
-    exact Fraction.Order.Basic.min_le_right _ _
-  have halfPositive : 0 < target / 2 := Fraction.Order.Field.div_pos_direct budget.target_positive (by decide)
+    exact Basic.min_le_right _ _
+  have halfPositive : 0 < target / 2 := Field.div_pos_direct budget.target_positive (by decide)
   have halfLess : target / 2 < target := by
     have doubled : target / 2 * 2 = target := Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
-    have strict := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+    have strict := Arithmetic.mul_lt_mul_of_pos_left_direct
       halfPositive (show (1 : Coordinate) < 2 by decide)
     simpa only [Fraction.Field.mul_one_direct, doubled] using strict
-  exact ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct allowanceBound budget.weight_nonnegative).trans
+  exact ((Arithmetic.mul_le_mul_of_nonneg_left_direct allowanceBound budget.weight_nonnegative).trans
     (Budget.Weighted.mul_allowance_le halfPositive.le budget.weight_nonnegative)).trans_lt halfLess
 
 /-- Sixteen times either requested reading error is bounded by the retained error allowance.
@@ -120,7 +122,7 @@ retained error allowance. -/
 theorem scaled_error_le (budget : ClippedBilinearBudget count magnitude target)
     {left right : Coordinate} (leftLe : left ≤ budget.readingTarget) (rightLe : right ≤ budget.readingTarget) :
     16 * max left right ≤ budget.error := by
-  have bound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Basic.max_le leftLe rightLe)
+  have bound := Arithmetic.mul_le_mul_of_nonneg_left_direct (Basic.max_le leftLe rightLe)
     (show (0 : Coordinate) ≤ 16 by decide +kernel)
   rw [budget.readingTarget_eq] at bound
   exact bound.trans_eq (by
@@ -141,7 +143,7 @@ Both reading errors must lie below the cached reading target; the exact magnitud
 theorem paid (budget : ClippedBilinearBudget count magnitude target)
     {left right : Coordinate} (leftLe : left ≤ budget.readingTarget) (rightLe : right ≤ budget.readingTarget) :
     (count : Coordinate) ^ 2 * (32 * (magnitude + 1) * (16 * max left right)) < target := by
-  have bound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  have bound := Arithmetic.mul_le_mul_of_nonneg_left_direct
     (budget.scaled_error_le leftLe rightLe) budget.weight_nonnegative
   rw [budget.weight_eq] at bound
   exact (show (count : Coordinate) ^ 2 * (32 * (magnitude + 1) * (16 * max left right)) ≤

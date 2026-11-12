@@ -1,5 +1,6 @@
 module
 meta import Purelib.Elab.ConstructiveInjectivity
+import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Data.Nat.Order
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Gaussian.Norm.Basic
@@ -119,10 +120,13 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.EnteredPaths (Entere
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData (DomainPrimitives)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Corners.FaceCorners (point)
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
+open Purelib.Riemann.Readings.PreparedPrimitiveSamples (differentialNumerator)
+open Purelib.Riemann.Comparison.PrimitiveEdgeComparison (PrimitiveOverlapBounds)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {firstFace lastFace :
@@ -130,10 +134,10 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {firstModels : FaceModels frames
     firstFace} {lastModels :
     FaceModels frames lastFace}
-  {start finish : Purelib.Data.Gaussian.Basic.Canonical} {owner :
+  {start finish : Gaussian} {owner :
     Owner (curve.polynomial.eval start)} {ambient :
-    Purelib.Geometry.Rational.Box}
-  {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish} {prepared :
+    Geometry.Rational.Box}
+  {path : ClearPath curve.polynomial ambient start finish} {prepared :
     CoveredTracedPath path owner}
   {differential : Differential genus} {parentSheet : Fin 2}
   (first : EnteredPath firstModels prepared
@@ -146,16 +150,19 @@ set_option genInjectivity false in
 
 The two face budgets retain separate prepared-request floors. Their maxima
 select the shared parent floor and face-model index before numerical construction. -/
-structure ContactBudget (target : InverseRootPolynomial.Coordinate) where
+structure ContactBudget (target : Coordinate)
+    (bounds : (numerator : CoefficientPolynomial) ×
+      PrimitiveOverlapBounds firstFace.clearance numerator × PrimitiveOverlapBounds lastFace.clearance numerator :=
+      ⟨differentialNumerator differential, first.globalBounds, last.globalBounds⟩) where
   /-- The cached common local tolerance shared by both retained face comparisons. -/ tolerance :
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The common local tolerance is exactly one quarter of the original contact target. -/ tolerance_eq : tolerance =
     target / 4
   /-- The retained common local tolerance is positive. -/ tolerance_positive : 0 < tolerance
   /-- The first face's retained scalar accuracy budget or actual requested fragment bank. -/ left :
-    Fragment.FragmentAccuracy first.globalBounds first.domain.steps first.mesh.splits.pieceCount (tolerance / 4)
+    Fragment.FragmentAccuracy bounds.2.1 first.domain.steps first.mesh.splits.pieceCount (tolerance / 4)
   /-- The second face's retained scalar accuracy budget or actual requested fragment bank. -/ right :
-    Fragment.FragmentAccuracy last.globalBounds last.domain.steps last.mesh.splits.pieceCount (tolerance / 4)
+    Fragment.FragmentAccuracy bounds.2.2 last.domain.steps last.mesh.splits.pieceCount (tolerance / 4)
   /-- The cached common floor for the actual prepared-parent request. -/ minimum : Nat
   /-- The parent floor is the maximum of both original face-budget floors. -/ minimum_eq : minimum = max
     left.minimumIndex right.minimumIndex
@@ -168,16 +175,19 @@ constructive_injectivity ContactBudget
 namespace ContactBudget
 
 /-- Allocate the original contact target between the two retained face budgets and cache both common lower indices. -/
-@[expose] def build (target : InverseRootPolynomial.Coordinate) (positive : 0 < target) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContactRequests.ContactBudget first last target :=
+@[expose] def build (target : Coordinate) (positive : 0 < target)
+    (bounds : (numerator : CoefficientPolynomial) ×
+      PrimitiveOverlapBounds firstFace.clearance numerator × PrimitiveOverlapBounds lastFace.clearance numerator :=
+      ⟨differentialNumerator differential, first.globalBounds, last.globalBounds⟩) :
+    ContactBudget first last target (bounds := bounds) :=
   let tolerance := target / 4
   have tolerancePositive := Fraction.Order.Field.div_pos_direct positive (by
-      decide : (0 : InverseRootPolynomial.Coordinate) < 4)
+      decide : (0 : Coordinate) < 4)
   have quarterPositive := Fraction.Order.Field.div_pos_direct tolerancePositive (by
-      decide : (0 : InverseRootPolynomial.Coordinate) < 4)
-  let left := FragmentAccuracy.build first.globalBounds first.domain.steps first.mesh.splits.pieceCount (tolerance / 4)
+      decide : (0 : Coordinate) < 4)
+  let left := FragmentAccuracy.build bounds.2.1 first.domain.steps first.mesh.splits.pieceCount (tolerance / 4)
     quarterPositive
-  let right := FragmentAccuracy.build last.globalBounds last.domain.steps last.mesh.splits.pieceCount (tolerance / 4)
+  let right := FragmentAccuracy.build bounds.2.2 last.domain.steps last.mesh.splits.pieceCount (tolerance / 4)
     quarterPositive
   ⟨tolerance, rfl, tolerancePositive, left, right, max left.minimumIndex right.minimumIndex, rfl,
     max left.grid.index right.grid.index, rfl⟩
@@ -185,15 +195,19 @@ namespace ContactBudget
 variable {first last} {target : Coordinate}
 
 /-- Any index above the retained common face index is sufficient for the first face's grid request. -/
-theorem left_later (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContactRequests.ContactBudget first last
-  target) {index : Nat} (later : budget.index ≤ index) :
+theorem left_later
+    {bounds : (numerator : CoefficientPolynomial) ×
+      PrimitiveOverlapBounds firstFace.clearance numerator × PrimitiveOverlapBounds lastFace.clearance numerator}
+    (budget : ContactBudget first last target (bounds := bounds)) {index : Nat} (later : budget.index ≤ index) :
     budget.left.grid.index ≤ index := by
   rw [budget.index_eq] at later
   exact (Data.Nat.Order.le_max_left _ _).trans later
 
 /-- Any index above the retained common face index is sufficient for the second face's grid request. -/
-theorem right_later (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContactRequests.ContactBudget first last
-  target) {index : Nat} (later : budget.index ≤ index) :
+theorem right_later
+    {bounds : (numerator : CoefficientPolynomial) ×
+      PrimitiveOverlapBounds firstFace.clearance numerator × PrimitiveOverlapBounds lastFace.clearance numerator}
+    (budget : ContactBudget first last target (bounds := bounds)) {index : Nat} (later : budget.index ≤ index) :
     budget.right.grid.index ≤ index := by
   rw [budget.index_eq] at later
   exact (Data.Nat.Order.le_max_right _ _).trans later
@@ -203,10 +217,10 @@ set_option genInjectivity false in
 
 Each comparison keeps its supplied primitive data and actual request. The
 retained sum equality identifies the exact cached sums used on both faces. -/
-structure Comparison (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContactRequests.ContactBudget first last
+structure Comparison (budget : ContactBudget first last
   target) {index : Nat}
-    (leftData : PrimitiveData.DomainPrimitives first.domain differential index) (rightData :
-      PrimitiveData.DomainPrimitives last.domain differential index) where
+    (leftData : DomainPrimitives first.domain differential index) (rightData :
+      DomainPrimitives last.domain differential index) where
   /-- The first face's retained scalar accuracy budget or actual requested fragment bank. -/ left :
     RequestedFragments first.mesh first.bounds first.globalBounds genus budget.tolerance
   /-- The second face's retained scalar accuracy budget or actual requested fragment bank. -/ right :
@@ -222,10 +236,10 @@ constructive_injectivity Comparison
 
 /-- A generated checked parent request is reused literally on both faces. Changing the parent-list index is erased
 transport, not another preparation. -/
-@[expose] def compareWith (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContactRequests.ContactBudget first
+@[expose] def compareWith (budget : ContactBudget first
   last target) {index : Nat} (later : budget.index ≤ index)
-    (leftData : PrimitiveData.DomainPrimitives first.domain differential index) (rightData :
-      PrimitiveData.DomainPrimitives last.domain differential index)
+    (leftData : DomainPrimitives first.domain differential index) (rightData :
+      DomainPrimitives last.domain differential index)
     (request : PreparedControlledPrimitiveRequests.ControlledSumRequest first.cache.parents genus (budget.tolerance /
       4)) (minimum : budget.minimum ≤ request.minimumIndex) :
     Comparison budget leftData rightData :=
@@ -245,29 +259,29 @@ transport, not another preparation. -/
     (ControlledSumRequest.castParents_primitiveSum request equal).symm⟩
 
 /-- Acquire one common prepared-parent request and reuse it on both supplied retained face caches. -/
-@[expose] def compare (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContactRequests.ContactBudget first last
+@[expose] def compare (budget : ContactBudget first last
   target) {index : Nat} (later : budget.index ≤ index)
-    (leftData : PrimitiveData.DomainPrimitives first.domain differential index) (rightData :
-      PrimitiveData.DomainPrimitives last.domain differential index) :
+    (leftData : DomainPrimitives first.domain differential index) (rightData :
+      DomainPrimitives last.domain differential index) :
     Comparison budget leftData rightData :=
   let request := ControlledSumRequest.acquire first.cache.covered first.cache.proper (budget.tolerance / 4)
     budget.left.target_positive budget.minimum
   budget.compareWith later leftData rightData request (ControlledSumRequest.acquire_minimumIndex ..).symm.le
 
 /-- The first face comparison retains the supplied prepared-parent request exactly. -/
-theorem compareWith_left_request (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContactRequests.ContactBudget
+theorem compareWith_left_request (budget : ContactBudget
   first last target) {index : Nat} (later : budget.index ≤ index)
-    (leftData : PrimitiveData.DomainPrimitives first.domain differential index) (rightData :
-      PrimitiveData.DomainPrimitives last.domain differential index)
+    (leftData : DomainPrimitives first.domain differential index) (rightData :
+      DomainPrimitives last.domain differential index)
     (request : PreparedControlledPrimitiveRequests.ControlledSumRequest first.cache.parents genus (budget.tolerance /
       4)) (minimum : budget.minimum ≤ request.minimumIndex) :
     (budget.compareWith later leftData rightData request minimum).left.request = request := rfl
 
 /-- The second face comparison retains the supplied prepared-parent request up to erased parent-list transport. -/
-theorem compareWith_right_request (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContactRequests.ContactBudget
+theorem compareWith_right_request (budget : ContactBudget
   first last target) {index : Nat} (later : budget.index ≤ index)
-    (leftData : PrimitiveData.DomainPrimitives first.domain differential index) (rightData :
-      PrimitiveData.DomainPrimitives last.domain differential index)
+    (leftData : DomainPrimitives first.domain differential index) (rightData :
+      DomainPrimitives last.domain differential index)
     (request : PreparedControlledPrimitiveRequests.ControlledSumRequest first.cache.parents genus (budget.tolerance /
       4)) (minimum : budget.minimum ≤ request.minimumIndex) :
     HEq (budget.compareWith later leftData rightData request minimum).right.request request :=
@@ -275,7 +289,7 @@ theorem compareWith_right_request (budget : Curves.Hyperelliptic.Meshes.Puncture
 
 namespace Comparison
 
-variable {budget : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContactRequests.ContactBudget first last
+variable {budget : ContactBudget first last
   target} {index : Nat}
   {leftData : DomainPrimitives first.domain
     differential index} {rightData :
@@ -284,7 +298,7 @@ variable {budget : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Contac
 
 /-- Sheet agreement comes from the common actual incoming owner retained by the two entries. Reversal of the second
 face's boundary is explicit in the difference of the two forward increments. -/
-theorem accurate (comparison : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContactRequests.ContactBudget.Comparison
+theorem accurate (comparison : Comparison
   budget leftData rightData)
     (leftStart leftFinish rightStart rightFinish : Fin 4)
     (leftStart_eq : FaceCorners.point firstFace.cell.box leftStart = start)
@@ -307,7 +321,7 @@ theorem accurate (comparison : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Co
   rw [equal]
   apply (Data.Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans_lt
   have paid := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by
-      decide : (0 : InverseRootPolynomial.Coordinate) < 2)
+      decide : (0 : Coordinate) < 2)
     (Fraction.Order.Arithmetic.add_lt_add_direct left right)
   apply paid.trans_eq
   rw [budget.tolerance_eq, show 2 * (target / 4 + target / 4) = (target / 4) * 4 by ring1]
@@ -317,10 +331,10 @@ end Comparison
 
 /-- Only the corner data survive execution of a contact bound: the common prepared request used to prove the estimate is
 proof-local and is erased. -/
-theorem accurate (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContactRequests.ContactBudget first last
+theorem accurate (budget : ContactBudget first last
   target) {index : Nat} (later : budget.index ≤ index)
-    (leftData : PrimitiveData.DomainPrimitives first.domain differential index) (rightData :
-      PrimitiveData.DomainPrimitives last.domain differential index)
+    (leftData : DomainPrimitives first.domain differential index) (rightData :
+      DomainPrimitives last.domain differential index)
     (leftStart leftFinish rightStart rightFinish : Fin 4)
     (leftStart_eq : FaceCorners.point firstFace.cell.box leftStart = start)
     (leftFinish_eq : FaceCorners.point firstFace.cell.box leftFinish = finish)

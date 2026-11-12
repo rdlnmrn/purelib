@@ -9,18 +9,23 @@ import time
 from scripts.lean_module_data.paths import search_path
 from .artifact_inputs import digest
 from .check_stream import check
-from .export_cache import export_group, reload_group
+from .export_cache import export_group, prepare_native, prepare_roots, reload_group
+from .module_owners import prepare as prepare_owners
 
 
 def main():
     """Emit small structured results; complete streams and receipts remain in the cache."""
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest='mode', required=True)
-    producer = commands.add_parser('export')
-    producer.add_argument('--inputs', type=Path, required=True)
-    producer.add_argument('--binary', type=Path, required=True)
-    producer.add_argument('--cache', type=Path, required=True)
-    producer.add_argument('--policy', required=True)
+    preparation = commands.add_parser('roots')
+    preparation.add_argument('--inputs', type=Path, required=True)
+    preparation.add_argument('--cache', type=Path, required=True)
+    for mode in ('native', 'export'):
+        producer = commands.add_parser(mode)
+        producer.add_argument('--inputs', type=Path, required=True)
+        producer.add_argument('--binary', type=Path, required=True)
+        producer.add_argument('--cache', type=Path, required=True)
+        producer.add_argument('--policy', required=True)
     consumer = commands.add_parser('check')
     consumer.add_argument('--group', type=Path, required=True)
     consumer.add_argument('--receipt-sha256', required=True)
@@ -29,7 +34,20 @@ def main():
     consumer.add_argument('--cache', type=Path, required=True)
     args = parser.parse_args()
     started = time.monotonic()
-    if args.mode == 'export':
+    if args.mode == 'roots':
+        context = json.loads(args.inputs.read_text())
+        folder, expected, hit = prepare_roots(context['selected_modules'], context,
+                                              args.cache, search_path())
+        result = {'inventory': str((folder / 'roots.json').resolve()),
+                  'receipt_sha256': digest(folder / 'complete.json'),
+                  'retained': hit, 'roots': len(expected['roots'])}
+    elif args.mode == 'native':
+        context = json.loads(args.inputs.read_text())
+        folder, receipt, _, hit = prepare_native(context['selected_modules'], context, args.binary,
+                                                 args.cache, search_path(), args.policy)
+        result = {'native': str(folder.resolve()), 'receipt_sha256': digest(folder / 'complete.json'),
+                  'retained': hit, 'stream_bytes': receipt['files']['stream.ndjson']['bytes']}
+    elif args.mode == 'export':
         context = json.loads(args.inputs.read_text())
         folder, receipt, hit = export_group(context['selected_modules'], context, args.binary,
                                             args.cache, search_path(), args.policy)
@@ -41,8 +59,9 @@ def main():
             raise ValueError('export receipt changed before checking')
         receipt = json.loads(marker.read_text())
         reload_group(args.group, receipt['binding'])
+        owners = prepare_owners(receipt['binding']['compiled_inputs'], args.cache, search_path())
         checked, hit = check(args.group / 'stream.ndjson', args.checker, args.config, args.cache,
-                             receipt['coverage']['declarations'])
+                             receipt['coverage']['declarations'], owners=owners)
         if digest(marker) != args.receipt_sha256:
             raise ValueError('export receipt changed during checking')
         result = {'group': str(args.group.resolve()), 'retained': hit, 'result': checked}

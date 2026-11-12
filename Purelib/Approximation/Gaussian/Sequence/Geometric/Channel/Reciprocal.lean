@@ -17,6 +17,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Approximation.Gaussian.Sequence.Geometric
@@ -49,7 +51,7 @@ section Channel
 def reciprocal {source : Nat →
   Data.Gaussian.Basic.Canonical} (channel : Channel source)
     (lower : Fraction.Rational) (lowerPositive : 0 < lower)
-    (lowerBound : ∀ index, lower ≤ Data.Gaussian.Norm.Basic.normSq (source index)) :
+    (lowerBound : ∀ index, lower ≤ Basic.normSq (source index)) :
     Channel (fun index => Data.Gaussian.Field.inv (source index)) where
   errorScale := channel.errorScale * (lower⁻¹ * lower⁻¹)
   errorScale_nonneg :=
@@ -62,74 +64,74 @@ def reciprocal {source : Nat →
     have laterNonzero : source later ≠ 0 := by
       intro zero
       have bound := lowerBound later
-      rw [zero, Data.Gaussian.Norm.Basic.normSq_zero] at bound
+      rw [zero, Basic.normSq_zero] at bound
       exact (not_le_of_gt lowerPositive) bound
     have earlierNonzero : source earlier ≠ 0 := by
       intro zero
       have bound := lowerBound earlier
-      rw [zero, Data.Gaussian.Norm.Basic.normSq_zero] at bound
+      rw [zero, Basic.normSq_zero] at bound
       exact (not_le_of_gt lowerPositive) bound
-    have laterInverseBound : Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Field.inv (source later))
+    have laterInverseBound : Basic.normSq (Data.Gaussian.Field.inv (source later))
       ≤ lower⁻¹ := by
       rw [Data.Gaussian.Field.normSq_inv _ laterNonzero]
       exact Fraction.Order.Field.inv_le_inv_of_pos_direct lowerPositive
         (lowerBound later)
-    have earlierInverseBound : Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Field.inv (source
+    have earlierInverseBound : Basic.normSq (Data.Gaussian.Field.inv (source
       earlier)) ≤ lower⁻¹ := by
       rw [Data.Gaussian.Field.normSq_inv _ earlierNonzero]
       exact Fraction.Order.Field.inv_le_inv_of_pos_direct lowerPositive
         (lowerBound earlier)
     have reverseDistance :
-        Data.Gaussian.Norm.Basic.normSq (source earlier - source later) =
-          Data.Gaussian.Norm.Basic.normSq (source later - source earlier) := by
+        Basic.normSq (source earlier - source later) =
+          Basic.normSq (source later - source earlier) := by
       have identity : source earlier - source later =
           -(source later - source earlier) := by
         apply Data.Gaussian.Basic.ext <;>
-          simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-            Purelib.Data.Gaussian.Basic.neg_re, Purelib.Data.Gaussian.Basic.neg_im] <;> ring1
-      rw [identity, Data.Gaussian.Norm.Basic.normSq_neg]
-    change Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Field.inv (source later) -
+          simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+            Data.Gaussian.Basic.neg_re, Data.Gaussian.Basic.neg_im] <;> ring1
+      rw [identity, Basic.normSq_neg]
+    change Basic.normSq (Data.Gaussian.Field.inv (source later) -
       Data.Gaussian.Field.inv (source earlier)) ≤ _
     rw [Data.Gaussian.Field.inverse_sub_inverse_direct
-      laterNonzero earlierNonzero, Data.Gaussian.Norm.Basic.normSq_mul, Data.Gaussian.Norm.Basic.normSq_mul,
+      laterNonzero earlierNonzero, Basic.normSq_mul, Basic.normSq_mul,
       Data.Gaussian.Field.normSq_inv _ laterNonzero, Data.Gaussian.Field.normSq_inv _ earlierNonzero,
       reverseDistance]
     have inverseProductBound :
-        Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Field.inv (source later)) *
-          Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Field.inv (source earlier)) ≤
+        Basic.normSq (Data.Gaussian.Field.inv (source later)) *
+          Basic.normSq (Data.Gaussian.Field.inv (source earlier)) ≤
           lower⁻¹ * lower⁻¹ :=
       Fraction.Order.Arithmetic.mul_le_mul_direct laterInverseBound
-        earlierInverseBound (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+        earlierInverseBound (Basic.normSq_nonneg _)
         (Fraction.Order.Field.inv_pos_direct lowerPositive).le
     calc
-      (Data.Gaussian.Norm.Basic.normSq (source later))⁻¹ *
-          Data.Gaussian.Norm.Basic.normSq (source later - source earlier) *
-            (Data.Gaussian.Norm.Basic.normSq (source earlier))⁻¹ =
-        Data.Gaussian.Norm.Basic.normSq (source later - source earlier) *
-          (Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Field.inv (source later)) *
-            Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Field.inv (source earlier))) := by
+      (Basic.normSq (source later))⁻¹ *
+          Basic.normSq (source later - source earlier) *
+            (Basic.normSq (source earlier))⁻¹ =
+        Basic.normSq (source later - source earlier) *
+          (Basic.normSq (Data.Gaussian.Field.inv (source later)) *
+            Basic.normSq (Data.Gaussian.Field.inv (source earlier))) := by
             rw [Data.Gaussian.Field.normSq_inv _ laterNonzero, Data.Gaussian.Field.normSq_inv _ earlierNonzero]
             calc
-              ((Data.Gaussian.Norm.Basic.normSq (source later))⁻¹ *
-                    Data.Gaussian.Norm.Basic.normSq (source later - source earlier)) *
-                  (Data.Gaussian.Norm.Basic.normSq (source earlier))⁻¹ =
-                (Data.Gaussian.Norm.Basic.normSq (source later - source earlier) *
-                    (Data.Gaussian.Norm.Basic.normSq (source later))⁻¹) *
-                  (Data.Gaussian.Norm.Basic.normSq (source earlier))⁻¹ := by
+              ((Basic.normSq (source later))⁻¹ *
+                    Basic.normSq (source later - source earlier)) *
+                  (Basic.normSq (source earlier))⁻¹ =
+                (Basic.normSq (source later - source earlier) *
+                    (Basic.normSq (source later))⁻¹) *
+                  (Basic.normSq (source earlier))⁻¹ := by
                     rw [Fraction.Field.mul_comm
-                      (Data.Gaussian.Norm.Basic.normSq (source later))⁻¹
-                      (Data.Gaussian.Norm.Basic.normSq (source later - source earlier))]
-              _ = Data.Gaussian.Norm.Basic.normSq (source later - source earlier) *
-                  ((Data.Gaussian.Norm.Basic.normSq (source later))⁻¹ *
-                    (Data.Gaussian.Norm.Basic.normSq (source earlier))⁻¹) :=
+                      (Basic.normSq (source later))⁻¹
+                      (Basic.normSq (source later - source earlier))]
+              _ = Basic.normSq (source later - source earlier) *
+                  ((Basic.normSq (source later))⁻¹ *
+                    (Basic.normSq (source earlier))⁻¹) :=
                 Fraction.Field.mul_assoc _ _ _
       _ ≤
         Geometric.Basic.quarterRadius
             channel.errorScale earlier * (lower⁻¹ * lower⁻¹) :=
           Fraction.Order.Arithmetic.mul_le_mul_direct
             (channel.later_close order) inverseProductBound
-            (Fraction.Order.Arithmetic.mul_nonneg_direct (Data.Gaussian.Norm.Basic.normSq_nonneg _)
-              (Data.Gaussian.Norm.Basic.normSq_nonneg _))
+            (Fraction.Order.Arithmetic.mul_nonneg_direct (Basic.normSq_nonneg _)
+              (Basic.normSq_nonneg _))
             (Geometric.Basic.quarterRadius_nonneg
               channel.errorScale_nonneg earlier)
       _ = Geometric.Basic.quarterRadius
@@ -159,9 +161,9 @@ def reciprocal {source : Nat →
     have nonzero : source index ≠ 0 := by
       intro zero
       have bound := lowerBound index
-      rw [zero, Data.Gaussian.Norm.Basic.normSq_zero] at bound
+      rw [zero, Basic.normSq_zero] at bound
       exact (not_le_of_gt lowerPositive) bound
-    change Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Field.inv (source index)) ≤ lower⁻¹
+    change Basic.normSq (Data.Gaussian.Field.inv (source index)) ≤ lower⁻¹
     rw [Data.Gaussian.Field.normSq_inv _ nonzero]
     exact Fraction.Order.Field.inv_le_inv_of_pos_direct lowerPositive
       (lowerBound index)

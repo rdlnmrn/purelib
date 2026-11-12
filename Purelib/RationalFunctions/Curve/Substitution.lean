@@ -15,6 +15,9 @@ public import Purelib.RationalFunctions.Curve.Basic
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Polynomial.Dense.Gaussian
+open Purelib.Polynomial.Dense.Basic
+
 section
 public section
 
@@ -40,9 +43,9 @@ The value accumulator represents the cleared partial substitution, and the denom
 factor used to clear it. Both are finite dense Gaussian polynomials. -/
 structure ClearingState where
   /-- The accumulated denominator-cleared polynomial value. -/ value :
-    Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+    Basic.CanonicalCoefficients.CoefficientPolynomial
   /-- The accumulated power of the displayed denominator polynomial. -/ denominatorPower :
-    Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+    Basic.CanonicalCoefficients.CoefficientPolynomial
 
 constructive_injectivity ClearingState
 
@@ -51,17 +54,17 @@ constructive_injectivity ClearingState
 Both accumulators retain the original constant dense polynomials. This is
 the initial state of the finite coefficient fold. -/
 @[expose] def ClearingState.initial : ClearingState :=
-  ⟨0, Dense.Basic.DensePolynomial.constant 1⟩
+  ⟨0, DensePolynomial.constant 1⟩
 
 /-- Advance denominator-cleared Horner evaluation by one Gaussian coefficient.
 
 Multiply the retained denominator power by the denominator polynomial. The next value is the old value times the
 numerator plus the coefficient times that next denominator power. -/
 @[expose] def ClearingState.step
-    (numerator denominator : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+    (numerator denominator : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (state : ClearingState) (coefficient : Gaussian.Basic.Canonical) : ClearingState :=
   let nextPower := state.denominatorPower * denominator
-  { value := state.value * numerator + Dense.Basic.DensePolynomial.scale coefficient nextPower
+  { value := state.value * numerator + DensePolynomial.scale coefficient nextPower
     denominatorPower := nextPower }
 
 /-- Fold the cleared Horner step over the polynomial's retained coefficient list.
@@ -69,7 +72,7 @@ numerator plus the coefficient times that next denominator power. -/
 The fold uses the curve's exact numerator and denominator polynomials, starting with zero value and unit denominator
 power. -/
 @[expose] def clearingState
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve) :
+    (p : Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve) :
       ClearingState :=
   p.coeffs.foldl
     (ClearingState.step curve.numerator curve.denominator)
@@ -77,8 +80,8 @@ power. -/
 
 /-- Read the polynomial value from denominator-cleared Horner substitution. -/
 @[expose] def clearedEval
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve) :
-      (Dense.Basic.DensePolynomial
+    (p : Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve) :
+      (DensePolynomial
       Gaussian.Basic.Canonical) :=
   (clearingState p curve).value
 
@@ -87,7 +90,7 @@ power. -/
 Assume the numerator evaluation equals the displayed affine value times the denominator evaluation. An initial
 cleared-value identity then transports through the coefficient list to the corresponding scalar Horner fold. -/
 private theorem fold_clearing_spec
-    (numerator denominator : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+    (numerator denominator : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (parameterValue parameter : Gaussian.Basic.Canonical)
     (numeratorIdentity : numerator.eval parameter =
       parameterValue * denominator.eval parameter) :
@@ -109,8 +112,8 @@ private theorem fold_clearing_spec
         numeratorIdentity coefficients
         (ClearingState.step numerator denominator state coefficient)
         (accumulator * parameterValue + coefficient)
-      simp only [ClearingState.step, Dense.Basic.DensePolynomial.eval_add, Dense.Basic.DensePolynomial.eval_mul,
-        Dense.Basic.DensePolynomial.eval_scale]
+      simp only [ClearingState.step, DensePolynomial.eval_add, DensePolynomial.eval_mul,
+        DensePolynomial.eval_scale]
       rw [invariant, numeratorIdentity]
       ring1
 
@@ -120,7 +123,7 @@ evaluation.
 Both polynomial accumulators are evaluated at the Gaussian embedding of the same rational parameter. The scalar
 polynomial is evaluated at the curve's affine point. -/
 theorem eval_clearedEval
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve)
+    (p : Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve)
     (parameter : Rat.Fraction.Rational)
     (denominatorNonzero : curve.denominatorAt parameter ≠ 0) :
     (clearedEval p curve).eval
@@ -151,7 +154,7 @@ theorem eval_clearedEval
   have initialInvariant :
       ClearingState.initial.value.eval parameterGaussian =
         ClearingState.initial.denominatorPower.eval parameterGaussian * 0 := by
-    rw [ClearingState.initial, Dense.Basic.DensePolynomial.eval_zero, Dense.Basic.DensePolynomial.eval_constant,
+    rw [ClearingState.initial, DensePolynomial.eval_zero, DensePolynomial.eval_constant,
       Gaussian.Basic.mul_zero]
   exact fold_clearing_spec curve.numerator curve.denominator
     (curve.point parameter) parameterGaussian numeratorIdentity p.coeffs
@@ -162,7 +165,7 @@ theorem eval_clearedEval
 The exponent is the exact length of the retained coefficient list; numerator values and coefficient values do not affect
 this accumulator. -/
 private theorem fold_denominatorPower_eval
-    (numerator denominator : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (parameter :
+    (numerator denominator : Basic.CanonicalCoefficients.CoefficientPolynomial) (parameter :
       Gaussian.Basic.Canonical) :
     ∀ (coefficients : List Gaussian.Basic.Canonical) (state : ClearingState),
       (coefficients.foldl
@@ -178,12 +181,12 @@ private theorem fold_denominatorPower_eval
       rw [fold_denominatorPower_eval numerator denominator parameter
         coefficients
           (ClearingState.step numerator denominator state _coefficient)]
-      simp only [ClearingState.step, Dense.Basic.DensePolynomial.eval_mul, pow_succ]
+      simp only [ClearingState.step, DensePolynomial.eval_mul, pow_succ]
       ring1
 
 /-- The final denominator accumulator evaluates to the denominator value raised to the coefficient-list length. -/
 theorem eval_denominatorPower
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve)
+    (p : Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve)
     (parameter : Rat.Fraction.Rational) :
     (clearingState p curve).denominatorPower.eval
         (Gaussian.Cast.Path.ofCoordinate parameter) =
@@ -194,7 +197,7 @@ theorem eval_denominatorPower
           ClearingState.initial).denominatorPower.eval
           (Gaussian.Cast.Path.ofCoordinate parameter) = _
   rw [fold_denominatorPower_eval]
-  simp only [ClearingState.initial, Dense.Basic.DensePolynomial.eval_constant,
+  simp only [ClearingState.initial, DensePolynomial.eval_constant,
     Gaussian.Basic.one_mul]
   rfl
 
@@ -203,7 +206,7 @@ theorem eval_denominatorPower
 The denominator evaluation is assumed nonzero at the fixed Gaussian parameter. Every step multiplies the accumulator by
 that same nonzero value. -/
 private theorem fold_denominatorPower_ne
-    (numerator denominator : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (parameter :
+    (numerator denominator : Basic.CanonicalCoefficients.CoefficientPolynomial) (parameter :
       Gaussian.Basic.Canonical)
     (denominatorNonzero : denominator.eval parameter ≠ 0) :
     ∀ (coefficients : List Gaussian.Basic.Canonical) (state : ClearingState),
@@ -217,13 +220,13 @@ private theorem fold_denominatorPower_ne
       apply fold_denominatorPower_ne numerator denominator parameter
         denominatorNonzero coefficients
         (ClearingState.step numerator denominator state _coefficient)
-      simp only [ClearingState.step, Dense.Basic.DensePolynomial.eval_mul]
+      simp only [ClearingState.step, DensePolynomial.eval_mul]
       exact Gaussian.Field.mul_ne_zero_direct
         stateNonzero denominatorNonzero
 
 /-- At a nonzero curve denominator, the final denominator-power evaluation is nonzero. -/
 theorem denominatorPower_eval_ne
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve)
+    (p : Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve)
     (parameter : Rat.Fraction.Rational)
     (denominatorNonzero : curve.denominatorAt parameter ≠ 0) :
     (clearingState p curve).denominatorPower.eval
@@ -231,24 +234,24 @@ theorem denominatorPower_eval_ne
   apply fold_denominatorPower_ne curve.numerator curve.denominator
     (Gaussian.Cast.Path.ofCoordinate parameter)
     denominatorNonzero p.coeffs ClearingState.initial
-  simp only [ClearingState.initial, Dense.Basic.DensePolynomial.eval_constant]
+  simp only [ClearingState.initial, DensePolynomial.eval_constant]
   intro oneZero
   have realOneZero := congrArg Gaussian.Basic.re oneZero
   exact Rat.Fraction.Field.zero_ne_one realOneZero.symm
 
 /-- Extract the real coordinate polynomial of the cleared substitution. -/
 @[expose] def clearedReal
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve) :
-      (Dense.Basic.DensePolynomial
+    (p : Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve) :
+      (DensePolynomial
       Rat.Fraction.Rational) :=
-  Dense.Gaussian.Components.realPart (clearedEval p curve)
+  Components.realPart (clearedEval p curve)
 
 /-- Extract the imaginary coordinate polynomial of the cleared substitution. -/
 @[expose] def clearedImag
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve) :
-      (Dense.Basic.DensePolynomial
+    (p : Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve) :
+      (DensePolynomial
       Rat.Fraction.Rational) :=
-  Dense.Gaussian.Components.imagPart (clearedEval p curve)
+  Components.imagPart (clearedEval p curve)
 
 /-- At a nonzero denominator, both cleared coordinates vanish exactly when the original polynomial vanishes on the
 curve.
@@ -256,7 +259,7 @@ curve.
 The nonzero denominator-power evaluation can be cancelled from the exact cleared-substitution identity. The two
 coordinate equalities express vanishing of the Gaussian cleared value. -/
 theorem cleared_pair_zero_iff
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve)
+    (p : Basic.CanonicalCoefficients.CoefficientPolynomial) (curve : RationalCurve)
     (parameter : Rat.Fraction.Rational)
     (denominatorNonzero : curve.denominatorAt parameter ≠ 0) :
     (clearedReal p curve).eval parameter = 0 ∧
@@ -274,12 +277,12 @@ theorem cleared_pair_zero_iff
           (Gaussian.Cast.Path.ofCoordinate parameter)).re =
           (0 : Rat.Fraction.Rational)
         simpa only [clearedReal,
-          Dense.Gaussian.Components.eval_realPart] using realZero
+          Components.eval_realPart] using realZero
       · change ((clearedEval p curve).eval
           (Gaussian.Cast.Path.ofCoordinate parameter)).im =
           (0 : Rat.Fraction.Rational)
         simpa only [clearedImag,
-          Dense.Gaussian.Components.eval_imagPart] using imaginaryZero
+          Components.eval_imagPart] using imaginaryZero
     rw [clearedZero] at semantics
     by_cases root : p.eval (curve.point parameter) = 0
     · exact root
@@ -294,9 +297,9 @@ theorem cleared_pair_zero_iff
         Gaussian.Basic.mul_zero]
     constructor
     · rw [clearedReal,
-        Dense.Gaussian.Components.eval_realPart, clearedZero, Gaussian.Basic.zero_re]
+        Components.eval_realPart, clearedZero, Gaussian.Basic.zero_re]
     · rw [clearedImag,
-        Dense.Gaussian.Components.eval_imagPart, clearedZero, Gaussian.Basic.zero_im]
+        Components.eval_imagPart, clearedZero, Gaussian.Basic.zero_im]
 
 end Purelib.RationalFunctions.Curve
 

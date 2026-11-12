@@ -2,8 +2,9 @@ module
 
 import Purelib.Algebra.FiniteSum.Fin
 import Purelib.Data.Vector.Basic
-public import Purelib.LinearAlgebra.Matrix.Basic
-public import Purelib.LinearAlgebra.Vector.Dot
+import Purelib.LinearAlgebra.Matrix.Basic
+public import Purelib.LinearAlgebra.Matrix.Rectangular
+import Purelib.LinearAlgebra.Vector.Dot
 import Mathlib.Tactic.Linter.Lint
 import Mathlib.Tactic.TypeStar
 import Purelib.Tactic.Ring
@@ -44,8 +45,7 @@ Both matrices have the same dimension over a commutative ring. Each result entry
 row and column products. -/
 def mul {n : Nat} (left right : Mat K n) : Mat K
   n :=
-  matrixOfFn fun row column =>
-    dot (left row) (vectorOfFn fun middle => right middle column)
+  Mat.Rectangular.mul left right
 
 /-- Construct a square matrix with one on the diagonal and zero elsewhere. -/
 def identity {n : Nat} : Mat K n :=
@@ -66,9 +66,7 @@ theorem mul_apply {n : Nat} (left right : Mat K
     (row column : Fin n) :
     mul left right row column =
       sumFin (fun middle => left row middle * right middle column) := by
-  unfold mul dot
-  rw [matrixOfFn_apply]
-  exact sumFin_congr (fun middle => by rw [vectorOfFn_apply])
+  exact Mat.Rectangular.mul_at left right row column
 
 open Purelib.LinearAlgebra.Matrix.Multiplication (mul mul_apply) in
 /-- Multiplication of square structural matrices is associative.
@@ -128,13 +126,10 @@ theorem mul_scaleIdentity {n : Nat} (matrix : Mat
       fun row column => matrix row column * a := by
   apply matrix_ext
   intro row column
-  unfold mul
-  rw [matrixOfFn_apply, matrixOfFn_apply]
-  unfold dot
+  rw [mul_apply, matrixOfFn_apply (fun row column => matrix row column * a) row column]
   rw [sumFin_congr
       (right := fun middle => matrix row middle *
         (if middle = column then a else 0)) (fun middle => by
-    rw [vectorOfFn_apply]
     unfold scaleIdentity
     rw [matrixOfFn_apply])]
   rw [sumFin_congr
@@ -156,14 +151,11 @@ theorem scaleIdentity_mul {n : Nat} (a : K)
       fun row column => a * matrix row column := by
   apply matrix_ext
   intro row column
-  unfold mul
-  rw [matrixOfFn_apply, matrixOfFn_apply]
-  unfold dot
+  rw [mul_apply, matrixOfFn_apply (fun row column => a * matrix row column) row column]
   rw [sumFin_congr
       (right := fun middle =>
         (if row = middle then a else 0) * matrix middle column)
       (fun middle => by
-    rw [vectorOfFn_apply]
     unfold scaleIdentity
     rw [matrixOfFn_apply])]
   rw [sumFin_congr
@@ -605,6 +597,31 @@ theorem identity_mul_int {dimension : Nat}
       · rw [if_neg equal, if_neg (Ne.symm equal)]
         ring1)]
   exact sumFin_ite_eq row (fun middle => matrix middle column)
+end Purelib.LinearAlgebra.Matrix.Multiplication
+
+end
+
+public section
+
+namespace Purelib.LinearAlgebra.Matrix.Multiplication
+
+variable {K : Type*} [CommRing K] {n : Nat}
+
+/-- The original matrix sum acts by the sum of both original matrix-vector actions. -/
+theorem matrixVector_add (first second : Mat K n) (vector : Vec K n) (row : Fin n) :
+    matrixVector (Matrix.add first second) vector row =
+      matrixVector first vector row + matrixVector second vector row := by
+  rewrite [matrixVector_apply]
+  calc
+    _ = sumFin (fun column => first row column * vector column + second row column * vector column) := by
+      apply sumFin_congr
+      intro column
+      rewrite [Matrix.add_apply, add_mul]
+      rfl
+    _ = _ := by
+      rewrite [Purelib.Algebra.FiniteSum.Fin.sumFin_add, matrixVector_apply, matrixVector_apply]
+      rfl
+
 end Purelib.LinearAlgebra.Matrix.Multiplication
 
 end

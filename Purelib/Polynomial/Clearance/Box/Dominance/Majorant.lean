@@ -19,6 +19,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.Gaussian.Basic (Canonical)
 
 open Purelib.Data
@@ -49,17 +51,17 @@ displayed bound.  `majorant` is any positive upper bound for the dominant
 summand on the boundary; retaining it in the result makes later coefficient
 precision requests predictable before the next polynomial is read. -/
 def boundaryClearance_add_of_dominance_with_majorant
-    (base error : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (box : Box)
-    (dominance : Clearance.Box.Dominance.Basic.BoundaryNormDominance base error box)
+    (base error : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (box : Box)
+    (dominance : Basic.BoundaryNormDominance base error box)
     (majorant : Fraction.Rational) (majorantPositive : 0 < majorant)
-    (baseUpper : ∀ z : Gaussian.Basic.Canonical,
+    (baseUpper : ∀ z : Canonical,
       Box.Boundary.OnBoxBoundary box z →
         Canonical.normSq (base.eval z) ≤ majorant) :
-    Clearance.Box.Boundary.Basic.BoundaryClearance (base + error) box where
+    Boundary.Basic.BoundaryClearance (base + error) box where
   bound := dominance.margin ^ 2 / (4 * majorant)
-  positive := Purelib.Data.Rat.Fraction.Order.Field.div_pos_direct
-    (Purelib.Data.Rat.Fraction.Order.Arithmetic.pow_pos_direct dominance.positive 2)
-    (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_pos_direct (by decide) majorantPositive)
+  positive := Field.div_pos_direct
+    (Arithmetic.pow_pos_direct dominance.positive 2)
+    (Arithmetic.mul_pos_direct (by decide) majorantPositive)
   lower := by
     intro z boundary
     let left := base.eval z
@@ -82,26 +84,26 @@ def boundaryClearance_add_of_dominance_with_majorant
       exact (dominance.lower z boundary).trans
         (le_add_of_nonneg_right sumNonnegative)
     have squaredMargin : dominance.margin ^ 2 ≤ (2 * dot) ^ 2 :=
-      Purelib.Data.Rat.Fraction.Order.Arithmetic.pow_le_pow_direct dominance.positive.le
+      Arithmetic.pow_le_pow_direct dominance.positive.le
         marginLeDoubledDot 2
     have dotCauchy : dot ^ 2 ≤ Canonical.normSq left * Canonical.normSq sum := by
       dsimp only [dot]
       simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using
-        Purelib.Data.Gaussian.Norm.Bounds.gaussian_dot_sq_le_product_normSq left sum
+        Gaussian.Norm.Bounds.gaussian_dot_sq_le_product_normSq left sum
     have scaledCauchy : (2 * dot) ^ 2 ≤
         (4 * majorant) * Canonical.normSq sum := by
       calc
         (2 * dot) ^ 2 = 4 * dot ^ 2 := by ring1
         _ ≤ 4 * (Canonical.normSq left * Canonical.normSq sum) :=
-          Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          Arithmetic.mul_le_mul_of_nonneg_left_direct
             dotCauchy (by decide)
         _ ≤ 4 * (majorant * Canonical.normSq sum) :=
-          Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-            (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          Arithmetic.mul_le_mul_of_nonneg_left_direct
+            (Arithmetic.mul_le_mul_of_nonneg_right_direct
               (baseUpper z boundary) sumNonnegative) (by decide)
         _ = (4 * majorant) * Canonical.normSq sum := by ring1
-    apply (Purelib.Data.Rat.Fraction.Order.Field.div_le_iff_pos
-      (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_pos_direct
+    apply (Field.div_le_iff_pos
+      (Arithmetic.mul_pos_direct
         (by decide) majorantPositive)).2
     rw [Fraction.Field.mul_comm (Canonical.normSq sum)]
     exact squaredMargin.trans scaledCauchy
@@ -110,10 +112,10 @@ def boundaryClearance_add_of_dominance_with_majorant
 majorant. -/
 @[simp] theorem
   boundaryClearance_add_of_dominance_with_majorant_bound
-    (base error : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (box : Box)
-    (dominance : Clearance.Box.Dominance.Basic.BoundaryNormDominance base error box)
+    (base error : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (box : Box)
+    (dominance : Basic.BoundaryNormDominance base error box)
     (majorant : Fraction.Rational) (majorantPositive : 0 < majorant)
-    (baseUpper : ∀ z : Gaussian.Basic.Canonical,
+    (baseUpper : ∀ z : Canonical,
       Box.Boundary.OnBoxBoundary box z →
         Canonical.normSq (base.eval z) ≤ majorant) :
     (boundaryClearance_add_of_dominance_with_majorant base error box

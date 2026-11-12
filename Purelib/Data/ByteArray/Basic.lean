@@ -124,9 +124,10 @@ private def bytesDecEq : (left right : List UInt8) → Decidable (left = right)
 
 /-- Decide equality of the original byte arrays through their retained list data.
 
-Both readbacks are compared structurally, without an array extensionality
-proposition equality. The positive result transports the original record layers. -/
-public def decEq (left right : _root_.ByteArray) : Decidable (left = right) :=
+Kernel computation compares both readbacks structurally and transports the
+original record layers. Native execution borrows both inputs for the original
+packed-byte runtime comparator on that same carrier and decision result. -/
+@[extern "lean_sarray_dec_eq"] public def decEq (left right : @& _root_.ByteArray) : Decidable (left = right) :=
   match bytesDecEq left.data.toList right.data.toList with
   | .isTrue same => .isTrue (eq_of_readback_eq same)
   | .isFalse different =>

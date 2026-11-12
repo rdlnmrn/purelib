@@ -137,16 +137,16 @@ order and every occurrence in the tail. -/
 
 open Purelib.Data.Gaussian in
 /-- The finite Gaussian sum of concatenated lists is the sum of their original finite sums. -/
-private theorem sum_append (first last : List Gaussian) : Data.Gaussian.Norm.Sum.Basic.gaussianSum (first ++ last) =
-  Data.Gaussian.Norm.Sum.Basic.gaussianSum first + Data.Gaussian.Norm.Sum.Basic.gaussianSum last := by
+private theorem sum_append (first last : List Gaussian) : gaussianSum (first ++ last) =
+  gaussianSum first + gaussianSum last := by
   induction first with
   | nil =>
-      change Data.Gaussian.Norm.Sum.Basic.gaussianSum last = 0 + Data.Gaussian.Norm.Sum.Basic.gaussianSum last;
+      change gaussianSum last = 0 + gaussianSum last;
       ring1
   | cons head rest ih =>
-      change head + Data.Gaussian.Norm.Sum.Basic.gaussianSum (rest ++ last) = (head +
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum rest) +
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum last
+      change head + gaussianSum (rest ++ last) = (head +
+        gaussianSum rest) +
+        gaussianSum last
       rw [ih]
       ring1
 
@@ -169,8 +169,8 @@ The arbitrary endpoint reading is evaluated on the original directed pieces. Row
 recover the same left-piece increments. -/
 theorem telescope (value : Gaussian → Gaussian) {source : List (SegmentPiece leftGeometry first last)}
     (rows : PairedSegmentRows rightCuts source) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (rows.pieces.map fun piece => value piece.last - value piece.first) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (source.map fun piece => value piece.lastPoint - value piece.firstPoint)
+    gaussianSum (rows.pieces.map fun piece => value piece.last - value piece.first) =
+      gaussianSum (source.map fun piece => value piece.lastPoint - value piece.firstPoint)
         := by
   induction rows with
   | nil => rfl
@@ -241,7 +241,7 @@ open Purelib.Data.Gaussian in
 The cached piece equation identifies the original paired rows. Their telescope and the retained left split recover the
 same directed endpoint difference for any supplied reading. -/
 theorem telescope (split : PairedSegmentSplit leftCuts rightCuts first last) (value : Gaussian → Gaussian) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (split.pieces.map fun piece => value piece.last - value piece.first) =
+    gaussianSum (split.pieces.map fun piece => value piece.last - value piece.first) =
       value last -
       value first := by
   rw [split.pieces_eq, split.rows.telescope]

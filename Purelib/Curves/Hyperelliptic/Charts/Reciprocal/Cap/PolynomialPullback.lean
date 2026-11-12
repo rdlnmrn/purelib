@@ -78,42 +78,42 @@ open Purelib.Polynomial.Dense.Derivative (derivative)
 open Purelib.Data.Gaussian.Basic.Canonical
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {collar :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {localBox :
-    Purelib.Geometry.Rational.Box}
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {localBox :
+    Geometry.Rational.Box}
 
 set_option genInjectivity false in
 /-- The initial derivative residual polynomials and their finite ceilings are prepared once and shared by all later
 comparison stages. -/
 structure Preparation (cap : ReciprocalInnerInverse.Data curve collar)
-    (initial : InverseRootPolynomial.Model (HyperellipticReciprocal.polynomial curve) localBox) where
+    (initial : Model (HyperellipticReciprocal.polynomial curve) localBox) where
   /-- The retained derivative-residual bounds of the original reciprocal inverse model. -/ reciprocal :
-    InverseModelDifferentialResidual.DifferentialResidualBounds initial
+    DifferentialResidualBounds initial
   /-- The retained derivative-residual bounds of the original regular cap model. -/ regular :
-    InverseModelDifferentialResidual.DifferentialResidualBounds cap.model
+    DifferentialResidualBounds cap.model
 
 constructive_injectivity Preparation
 
 /-- Cache the derivative-residual bounds of the two original inverse models once. -/
 def Preparation.build (cap : ReciprocalInnerInverse.Data curve collar)
-    (initial : InverseRootPolynomial.Model (HyperellipticReciprocal.polynomial curve) localBox) :
+    (initial : Model (HyperellipticReciprocal.polynomial curve) localBox) :
       Preparation cap initial :=
   ⟨DifferentialResidualBounds.build initial, DifferentialResidualBounds.build cap.model⟩
 
 /-- Shifting a dense Gaussian polynomial by zero preserves its derivative evaluation. -/
-public theorem derivative_shift_zero (polynomial : InverseRootPolynomial.Polynomial) (point :
-  InverseRootPolynomial.Gaussian) :
-    (Derivative.derivative (DensePolynomial.shift 0 polynomial)).eval point = (Derivative.derivative polynomial).eval
+public theorem derivative_shift_zero (polynomial : Polynomial) (point :
+  Gaussian) :
+    (derivative (shift 0 polynomial)).eval point = (derivative polynomial).eval
       point := by
   apply Derivative.eval_derivative_eq_of_sub_isZero
   apply NonzeroEvaluation.difference_isZero_of_candidate_evals
   intro sample _
-  rw [DensePolynomial.eval_shift, pow_zero, Data.Gaussian.Basic.mul_one]
+  rw [eval_shift, pow_zero, Data.Gaussian.Basic.mul_one]
 
 variable {initial : Model
-  (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.polynomial curve) localBox}
+  (HyperellipticReciprocal.polynomial curve) localBox}
   {differential : Differential genus} {index : Nat} {box :
-    Purelib.Geometry.Rational.Box}
+    Geometry.Rational.Box}
 
 set_option genInjectivity false in
 /-- A cached polynomial cap comparison at one retained reciprocal refinement.
@@ -123,30 +123,30 @@ derivative-error identity. -/
 structure Sample (preparation : Preparation cap initial)
     (capSample : Primitives.Sample cap differential index box) where
   /-- The cached original reciprocal inverse-root model at the retained refinement index. -/ reciprocal :
-    InverseRootPolynomial.Model (HyperellipticReciprocal.polynomial curve) localBox
+    Model (HyperellipticReciprocal.polynomial curve) localBox
   /-- The cached reciprocal model is exactly the original model refined at the cap sample index. -/ reciprocal_eq :
     reciprocal = initial.refine index
   /-- The cached finite polynomial candidate for the cap primitive comparison. -/ value :
-    InverseRootPolynomial.Polynomial
+    Polynomial
   /-- The cached candidate evaluates to the original radicand, reciprocal inverse, cap inverse, coordinate factor and
     primitive factor product. -/ value_eq : ∀ point, value.eval point =
     (HyperellipticReciprocal.polynomial curve).eval point * reciprocal.value.eval point *
       capSample.inverse.value.eval point * point ^ (1 - HyperellipticReciprocal.originOrder curve) *
         capSample.factor.eval point
   /-- The cached negative reciprocal differential coefficient polynomial. -/ coefficient :
-    InverseRootPolynomial.Polynomial
+    Polynomial
   /-- The cached coefficient is the negative reversed-differential monomial times the same retained reciprocal inverse.
   -/
   coefficient_eq : ∀ point, coefficient.eval point =
     -(point ^ (HyperellipticReciprocal.reversedDifferential differential).exponent * reciprocal.value.eval point)
   /-- The exact derivative discrepancy splits into the original regular-root residual and the two retained differential
-    residual terms. -/ derivative_error : ∀ point, (Derivative.derivative value).eval point - coefficient.eval point =
+    residual terms. -/ derivative_error : ∀ point, (derivative value).eval point - coefficient.eval point =
     point ^ (HyperellipticReciprocal.reversedDifferential differential).exponent * reciprocal.value.eval point *
-      capSample.inverse.residual.eval point + InverseRootPolynomial.half * capSample.factor.eval point *
+      capSample.inverse.residual.eval point + half * capSample.factor.eval point *
         (point ^ (1 - HyperellipticReciprocal.originOrder curve) * capSample.inverse.value.eval point *
-          InverseModelDifferentialResidual.differentialResidual (HyperellipticReciprocal.polynomial curve)
+          differentialResidual (HyperellipticReciprocal.polynomial curve)
             reciprocal.value point +
-          point * reciprocal.value.eval point * InverseModelDifferentialResidual.differentialResidual cap.polynomial
+          point * reciprocal.value.eval point * differentialResidual cap.polynomial
             capSample.inverse.value point)
 
 constructive_injectivity Sample
@@ -154,126 +154,126 @@ constructive_injectivity Sample
 namespace Sample
 
 /-- Consume a retained reciprocal refinement when another boundary consumer has already materialized it. -/
-def ofModel (preparation : Curves.Hyperelliptic.Charts.Reciprocal.Cap.PolynomialPullback.Preparation cap initial)
+def ofModel (preparation : Preparation cap initial)
     (capSample : Primitives.Sample cap differential index box)
-    (reciprocal : InverseRootPolynomial.Model (HyperellipticReciprocal.polynomial curve) localBox)
+    (reciprocal : Model (HyperellipticReciprocal.polynomial curve) localBox)
     (reciprocal_eq : reciprocal = initial.refine index) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.PolynomialPullback.Sample preparation capSample := by
+      Sample preparation capSample := by
   let ratio := HyperellipticReciprocal.polynomial curve * reciprocal.value * capSample.inverse.value
-  let factor := DensePolynomial.shift (1 - HyperellipticReciprocal.originOrder curve) capSample.factor
+  let factor := shift (1 - HyperellipticReciprocal.originOrder curve) capSample.factor
   let value := ratio * factor
-  let coefficient := -(DensePolynomial.shift (HyperellipticReciprocal.reversedDifferential differential).exponent
+  let coefficient := -(shift (HyperellipticReciprocal.reversedDifferential differential).exponent
     reciprocal.value)
   refine ⟨reciprocal, reciprocal_eq, value, ?_, coefficient, ?_, ?_⟩
   · intro point
-    simp only [value, ratio, factor, DensePolynomial.eval_mul, DensePolynomial.eval_shift]
+    simp only [value, ratio, factor, eval_mul, eval_shift]
     ring1
   · intro point
-    simp only [coefficient, DensePolynomial.eval_neg, DensePolynomial.eval_shift]
+    simp only [coefficient, eval_neg, eval_shift]
     ring1
   · intro point
-    have derivative_value : (Derivative.derivative value).eval point =
-        (Derivative.derivative ratio).eval point * factor.eval point + ratio.eval point * (Derivative.derivative
+    have derivative_value : (derivative value).eval point =
+        (derivative ratio).eval point * factor.eval point + ratio.eval point * (derivative
           factor).eval point :=
       Derivative.eval_derivative_mul ratio factor point
-    have twiceHalf : (2 : InverseRootPolynomial.Gaussian) * InverseRootPolynomial.half = 1 := by decide
-    apply Data.Gaussian.Field.mul_right_cancel_of_ne (show (2 : InverseRootPolynomial.Gaussian) ≠ 0 by decide)
-    rw [Data.Gaussian.Basic.mul_comm _ (2 : InverseRootPolynomial.Gaussian),
-      Data.Gaussian.Basic.mul_comm _ (2 : InverseRootPolynomial.Gaussian)]
+    have twiceHalf : (2 : Gaussian) * half = 1 := by decide
+    apply Data.Gaussian.Field.mul_right_cancel_of_ne (show (2 : Gaussian) ≠ 0 by decide)
+    rw [Data.Gaussian.Basic.mul_comm _ (2 : Gaussian),
+      Data.Gaussian.Basic.mul_comm _ (2 : Gaussian)]
     rw [derivative_value]
     have normalizedError :
         2 * (point ^ (HyperellipticReciprocal.reversedDifferential differential).exponent * reciprocal.value.eval point
           *
-          capSample.inverse.residual.eval point + InverseRootPolynomial.half * capSample.factor.eval point *
+          capSample.inverse.residual.eval point + half * capSample.factor.eval point *
             (point ^ (1 - HyperellipticReciprocal.originOrder curve) * capSample.inverse.value.eval point *
-              InverseModelDifferentialResidual.differentialResidual (HyperellipticReciprocal.polynomial curve)
+              differentialResidual (HyperellipticReciprocal.polynomial curve)
                 reciprocal.value point +
-              point * reciprocal.value.eval point * InverseModelDifferentialResidual.differentialResidual cap.polynomial
+              point * reciprocal.value.eval point * differentialResidual cap.polynomial
                 capSample.inverse.value point)) =
         2 * point ^ (HyperellipticReciprocal.reversedDifferential differential).exponent * reciprocal.value.eval point *
           capSample.inverse.residual.eval point + capSample.factor.eval point *
             (point ^ (1 - HyperellipticReciprocal.originOrder curve) * capSample.inverse.value.eval point *
-              InverseModelDifferentialResidual.differentialResidual (HyperellipticReciprocal.polynomial curve)
+              differentialResidual (HyperellipticReciprocal.polynomial curve)
                 reciprocal.value point +
-              point * reciprocal.value.eval point * InverseModelDifferentialResidual.differentialResidual cap.polynomial
+              point * reciprocal.value.eval point * differentialResidual cap.polynomial
                 capSample.inverse.value point) := by
       calc
         _ = 2 * point ^ (HyperellipticReciprocal.reversedDifferential differential).exponent * reciprocal.value.eval
           point *
-            capSample.inverse.residual.eval point + (2 * InverseRootPolynomial.half) * capSample.factor.eval point *
+            capSample.inverse.residual.eval point + (2 * half) * capSample.factor.eval point *
               (point ^ (1 - HyperellipticReciprocal.originOrder curve) * capSample.inverse.value.eval point *
-                InverseModelDifferentialResidual.differentialResidual (HyperellipticReciprocal.polynomial curve)
+                differentialResidual (HyperellipticReciprocal.polynomial curve)
                   reciprocal.value point +
-                point * reciprocal.value.eval point * InverseModelDifferentialResidual.differentialResidual
+                point * reciprocal.value.eval point * differentialResidual
                   cap.polynomial capSample.inverse.value point) := by ring1
         _ = _ := by rw [twiceHalf, Data.Gaussian.Basic.one_mul]
     rw [normalizedError]
     have capFactor := capSample.factor_derivative point
-    change capSample.factor.eval point + (Primitives.degree curve : InverseRootPolynomial.Gaussian) * point *
-      (Derivative.derivative capSample.factor).eval point = _ at capFactor
+    change capSample.factor.eval point + (Primitives.degree curve : Gaussian) * point *
+      (derivative capSample.factor).eval point = _ at capFactor
     rcases (HyperellipticReciprocal.origin_factor curve).2 with regular | branch
     · have qValue : (HyperellipticReciprocal.polynomial curve).eval point = cap.polynomial.eval point := by
         rw [HyperellipticReciprocal.polynomial_eval, regular, pow_zero, Data.Gaussian.Basic.mul_one, cap.polynomial_eq]
-      have qDerivative : (Derivative.derivative (HyperellipticReciprocal.polynomial curve)).eval point =
-          (Derivative.derivative cap.polynomial).eval point := by
+      have qDerivative : (derivative (HyperellipticReciprocal.polynomial curve)).eval point =
+          (derivative cap.polynomial).eval point := by
         rw [HyperellipticReciprocal.polynomial, regular,
-          Curves.Hyperelliptic.Charts.Reciprocal.Cap.PolynomialPullback.derivative_shift_zero, cap.polynomial_eq]
-      have factorDerivative : (Derivative.derivative factor).eval point =
+          derivative_shift_zero, cap.polynomial_eq]
+      have factorDerivative : (derivative factor).eval point =
           -(point ^ (HyperellipticReciprocal.reversedDifferential differential).exponent * capSample.inverse.value.eval
             point) := by
-        change (Derivative.derivative (DensePolynomial.shift (1 - HyperellipticReciprocal.originOrder curve)
+        change (derivative (shift (1 - HyperellipticReciprocal.originOrder curve)
           capSample.factor)).eval point = _
         rw [regular, Nat.sub_zero, Derivative.eval_derivative_shift_one]
-        have plain : capSample.factor.eval point + point * (Derivative.derivative capSample.factor).eval point =
+        have plain : capSample.factor.eval point + point * (derivative capSample.factor).eval point =
             -(point ^ (HyperellipticReciprocal.reversedDifferential differential).exponent *
               capSample.inverse.value.eval point) := by
           simpa only [Primitives.degree, regular, Nat.zero_add, Nat.cast_one,
             Data.Gaussian.Basic.one_mul, neg_one_mul, neg_mul] using capFactor
-        exact (by ring1 : (Derivative.derivative capSample.factor).eval point * point + capSample.factor.eval point =
-          capSample.factor.eval point + point * (Derivative.derivative capSample.factor).eval point).trans plain
+        exact (by ring1 : (derivative capSample.factor).eval point * point + capSample.factor.eval point =
+          capSample.factor.eval point + point * (derivative capSample.factor).eval point).trans plain
       rw [factorDerivative]
-      simp only [ratio, factor, coefficient, Derivative.eval_derivative_mul, DensePolynomial.eval_mul,
-        DensePolynomial.eval_shift, DensePolynomial.eval_neg,
-        regular, Nat.sub_zero, pow_one, qValue, qDerivative, InverseModelDifferentialResidual.differentialResidual,
+      simp only [ratio, factor, coefficient, Derivative.eval_derivative_mul, eval_mul,
+        eval_shift, eval_neg,
+        regular, Nat.sub_zero, pow_one, qValue, qDerivative, differentialResidual,
           capSample.inverse.residual_eq]
       ring1
     · have qValue : (HyperellipticReciprocal.polynomial curve).eval point = cap.polynomial.eval point * point := by
         rw [HyperellipticReciprocal.polynomial_eval, branch, pow_one, cap.polynomial_eq]
-      have qDerivative : (Derivative.derivative (HyperellipticReciprocal.polynomial curve)).eval point =
-          (Derivative.derivative cap.polynomial).eval point * point + cap.polynomial.eval point := by
+      have qDerivative : (derivative (HyperellipticReciprocal.polynomial curve)).eval point =
+          (derivative cap.polynomial).eval point * point + cap.polynomial.eval point := by
         rw [HyperellipticReciprocal.polynomial, branch, Derivative.eval_derivative_shift_one, cap.polynomial_eq]
-      have twiceFactor : capSample.factor.eval point + 2 * point * (Derivative.derivative capSample.factor).eval point =
+      have twiceFactor : capSample.factor.eval point + 2 * point * (derivative capSample.factor).eval point =
           -2 * point ^ (HyperellipticReciprocal.reversedDifferential differential).exponent *
             capSample.inverse.value.eval point := by
-        simpa only [Primitives.degree, branch, show ((1 + 1 : Nat) : InverseRootPolynomial.Gaussian) = 2 by rfl] using
+        simpa only [Primitives.degree, branch, show ((1 + 1 : Nat) : Gaussian) = 2 by rfl] using
           capFactor
       have correction :
           cap.polynomial.eval point * reciprocal.value.eval point * capSample.inverse.value.eval point *
-            (capSample.factor.eval point + 2 * point * (Derivative.derivative capSample.factor).eval point) =
+            (capSample.factor.eval point + 2 * point * (derivative capSample.factor).eval point) =
           cap.polynomial.eval point * reciprocal.value.eval point * capSample.inverse.value.eval point *
             (-2 * point ^ (HyperellipticReciprocal.reversedDifferential differential).exponent *
               capSample.inverse.value.eval point) :=
         congrArg (fun x => cap.polynomial.eval point * reciprocal.value.eval point * capSample.inverse.value.eval point
           * x) twiceFactor
-      simp only [ratio, factor, coefficient, Derivative.eval_derivative_mul, DensePolynomial.eval_mul,
-        DensePolynomial.eval_shift, DensePolynomial.eval_neg,
+      simp only [ratio, factor, coefficient, Derivative.eval_derivative_mul, eval_mul,
+        eval_shift, eval_neg,
         branch, Nat.sub_self, pow_zero, Data.Gaussian.Basic.mul_one,
-        Curves.Hyperelliptic.Charts.Reciprocal.Cap.PolynomialPullback.derivative_shift_zero, qValue, qDerivative,
-          InverseModelDifferentialResidual.differentialResidual,
+        derivative_shift_zero, qValue, qDerivative,
+          differentialResidual,
         capSample.inverse.residual_eq]
       calc
         _ = (2 * point ^ (HyperellipticReciprocal.reversedDifferential differential).exponent * reciprocal.value.eval
           point *
             (1 - cap.polynomial.eval point * capSample.inverse.value.eval point ^ 2) + capSample.factor.eval point *
             (capSample.inverse.value.eval point *
-              (2 * (cap.polynomial.eval point * point) * (Derivative.derivative reciprocal.value).eval point +
-                ((Derivative.derivative cap.polynomial).eval point * point + cap.polynomial.eval point) *
+              (2 * (cap.polynomial.eval point * point) * (derivative reciprocal.value).eval point +
+                ((derivative cap.polynomial).eval point * point + cap.polynomial.eval point) *
                   reciprocal.value.eval point) +
               point * reciprocal.value.eval point *
-                (2 * cap.polynomial.eval point * (Derivative.derivative capSample.inverse.value).eval point +
-                  (Derivative.derivative cap.polynomial).eval point * capSample.inverse.value.eval point))) +
+                (2 * cap.polynomial.eval point * (derivative capSample.inverse.value).eval point +
+                  (derivative cap.polynomial).eval point * capSample.inverse.value.eval point))) +
             cap.polynomial.eval point * reciprocal.value.eval point * capSample.inverse.value.eval point *
-              (capSample.factor.eval point + 2 * point * (Derivative.derivative capSample.factor).eval point) -
+              (capSample.factor.eval point + 2 * point * (derivative capSample.factor).eval point) -
             cap.polynomial.eval point * reciprocal.value.eval point * capSample.inverse.value.eval point *
               (-2 * point ^ (HyperellipticReciprocal.reversedDifferential differential).exponent *
                 capSample.inverse.value.eval point) := by ring1
@@ -281,21 +281,21 @@ def ofModel (preparation : Curves.Hyperelliptic.Charts.Reciprocal.Cap.Polynomial
 
 /-- Construct the original polynomial pullback sample on the retained reciprocal model with its exact coordinate and
 derivative identities. -/
-def build (preparation : Curves.Hyperelliptic.Charts.Reciprocal.Cap.PolynomialPullback.Preparation cap initial)
+def build (preparation : Preparation cap initial)
     (capSample : Primitives.Sample cap differential index box) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.PolynomialPullback.Sample preparation capSample :=
+      Sample preparation capSample :=
   ofModel preparation capSample (initial.refine
     index) rfl
 
-variable {preparation : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PolynomialPullback.Preparation cap initial}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+variable {preparation : Preparation cap initial}
+  {capSample : Primitives.Sample cap differential index box}
 
 /-- The retained reciprocal model differential residual satisfies its original geometric bound on the reciprocal model
 box. -/
-theorem reciprocal_differential_bound (sample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.PolynomialPullback.Sample
-  preparation capSample) {point : InverseRootPolynomial.Gaussian}
+theorem reciprocal_differential_bound (sample : Sample
+  preparation capSample) {point : Gaussian}
     (inside : localBox.Contains point) :
-    Data.Gaussian.Norm.Basic.normSq (InverseModelDifferentialResidual.differentialResidual
+    Data.Gaussian.Norm.Basic.normSq (differentialResidual
       (HyperellipticReciprocal.polynomial curve) sample.reciprocal.value point) ≤
       Geometric.Basic.quarterRadius preparation.reciprocal.bound index := by
   rw [sample.reciprocal_eq]
@@ -304,10 +304,10 @@ theorem reciprocal_differential_bound (sample : Curves.Hyperelliptic.Charts.Reci
   exact scalar
 
 /-- The retained regular cap model differential residual satisfies its original geometric bound on the cap box. -/
-theorem regular_differential_bound (_sample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.PolynomialPullback.Sample
-  preparation capSample) {point : InverseRootPolynomial.Gaussian}
+theorem regular_differential_bound (_sample : Sample
+  preparation capSample) {point : Gaussian}
     (inside : collar.box.Contains point) :
-    Data.Gaussian.Norm.Basic.normSq (InverseModelDifferentialResidual.differentialResidual cap.polynomial
+    Data.Gaussian.Norm.Basic.normSq (differentialResidual cap.polynomial
       capSample.inverse.value point) ≤
       Geometric.Basic.quarterRadius preparation.regular.bound index := by
   rw [capSample.inverse_eq]

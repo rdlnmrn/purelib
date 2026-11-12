@@ -56,6 +56,16 @@ import Purelib.Riemann.Normalization.InverseRootPolynomial
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Topology.Mesh.RetracingWords
+
+open Purelib.Approximation.Rational.Budget
+
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity
+
 open Purelib.Approximation
 
 open Purelib.Curves
@@ -87,78 +97,78 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.B
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
   {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {included : Geometry.Grid.Extension.CoordinateInclusion bank.grid base.bank.grid}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
+  {frames : SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
       SquareRoot.Grid.LiftedVertices.VertexBank
     base.bank.grid}
   {edges : SquareRoot.Grid.RootEdgeBank frames} {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges
     base.faces}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames base.faces.regulars}
-  {start : Gaussian.Basic.Canonical} {member : Polynomial.Geometry.Grid.FromStates.ContainsVertex bank.grid start}
+  {domains : Face.DomainBanks.FaceDomainBank frames base.faces.regulars}
+  {start : Gaussian.Basic.Canonical} {member : Geometry.Grid.FromStates.ContainsVertex bank.grid start}
   {tree : Geometry.Grid.RowCircuitOrder.CellCircuits bank.grid start} {partition :
-    Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition faces tree} {sheet : Fin 2}
+    CircuitPartition faces tree} {sheet : Fin 2}
   {firstIndex secondIndex : Fin genus}
 
 namespace PolarizedConnectorRequest
 
 /-- A unit-coefficient mixed Gaussian value is bounded by twice the sum of its retained component bounds. -/
 private theorem mixed_bound (a b coefficient : Gaussian.Basic.Canonical) {left right : Fraction.Rational}
-    (unit : Data.Gaussian.Norm.Basic.normSq coefficient = 1) (leftBound : Data.Gaussian.Norm.Basic.normSq a ≤
-      left) (rightBound : Data.Gaussian.Norm.Basic.normSq b ≤ right) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Basic.conj a + coefficient * b) ≤ 2 * (left + right) := by
-  have estimate := Gaussian.Norm.Bounds.normSq_add_le_two (Data.Gaussian.Basic.conj a) (coefficient * b)
+    (unit : Gaussian.Norm.Basic.normSq coefficient = 1) (leftBound : Gaussian.Norm.Basic.normSq a ≤
+      left) (rightBound : Gaussian.Norm.Basic.normSq b ≤ right) :
+    Gaussian.Norm.Basic.normSq (Gaussian.Basic.conj a + coefficient * b) ≤ 2 * (left + right) := by
+  have estimate := Gaussian.Norm.Bounds.normSq_add_le_two (Gaussian.Basic.conj a) (coefficient * b)
   rw [Gaussian.Norm.Basic.normSq_conj, Gaussian.Norm.Basic.normSq_mul, unit, _root_.one_mul] at estimate
-  exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.add_le_add_direct leftBound rightBound) (by decide))
+  exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_direct leftBound rightBound) (by decide))
 
 /-- The supplied canonical edge reading meets the original magnitude bank's fourfold bound. -/
 private theorem edge_bounded {differential : Fin genus}
-    (fixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
-      (Periods.PeriodMatrix.standardDifferential differential))
+    (fixed : Face.MagnitudeBank.FaceMagnitudeBank domains
+      (PeriodMatrix.standardDifferential differential))
     {stage : Nat} (later : fixed.index ≤ stage)
-    {shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
-      (Periods.PeriodMatrix.standardDifferential differential) stage domains}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared mesh) (edge :
+    {shared : Face.PrimitiveData.FacePrimitiveBank
+      (PeriodMatrix.standardDifferential differential) stage domains}
+    (readings : TrianglePrimitiveReadings.TriangleReadings shared mesh) (edge :
       Topology.Polygon.Stokes.OrientedEdge vertices.count) :
-    Data.Gaussian.Norm.Basic.normSq (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh
+    Gaussian.Norm.Basic.normSq (CanonicalEdgeValues.edgeValuation mesh
       readings.values edge) ≤ 4 * fixed.bound := by
   let retainedMagnitude := Readings.EdgeMagnitude.ofBank
-    (owner := Hyperelliptic.Meshes.PuncturedGrid.Readings.SourceChartComparison.ownerFromMesh mesh) fixed later readings
-  exact Hyperelliptic.Meshes.PuncturedGrid.Readings.WordObservations.edge_bounded retainedMagnitude edge
+    (owner := Readings.SourceChartComparison.ownerFromMesh mesh) fixed later readings
+  exact Readings.WordObservations.edge_bounded retainedMagnitude edge
 /-- The retained common bound for the mixed canonical edge readings. -/
-@[expose] def edgeBound (first : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
-  (Periods.PeriodMatrix.standardDifferential firstIndex))
-    (second : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
-      (Periods.PeriodMatrix.standardDifferential secondIndex)) : Fraction.Rational :=
+@[expose] def edgeBound (first : Face.MagnitudeBank.FaceMagnitudeBank domains
+  (PeriodMatrix.standardDifferential firstIndex))
+    (second : Face.MagnitudeBank.FaceMagnitudeBank domains
+      (PeriodMatrix.standardDifferential secondIndex)) : Fraction.Rational :=
   2 * (4 * first.bound + 4 * second.bound)
 
 /-- The retained mixed-edge bound is nonnegative. -/
 private theorem edgeBound_nonnegative
-    (first : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
-      (Periods.PeriodMatrix.standardDifferential firstIndex))
-    (second : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
-      (Periods.PeriodMatrix.standardDifferential secondIndex)) : 0 ≤
-      Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedConnectors.PolarizedConnectorRequest.edgeBound first second
+    (first : Face.MagnitudeBank.FaceMagnitudeBank domains
+      (PeriodMatrix.standardDifferential firstIndex))
+    (second : Face.MagnitudeBank.FaceMagnitudeBank domains
+      (PeriodMatrix.standardDifferential secondIndex)) : 0 ≤
+      PolarizedConnectorRequest.edgeBound first second
       :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-    (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) first.nonnegative)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) second.nonnegative))
+  Arithmetic.mul_nonneg_direct (by decide)
+    (add_nonneg (Arithmetic.mul_nonneg_direct (by decide) first.nonnegative)
+      (Arithmetic.mul_nonneg_direct (by decide) second.nonnegative))
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedConnectors.PolarizedConnectorRequest in
 /-- A sufficient stage and exact smallness certificate for the original regular loops at the weighted polarized
 connector allowance. -/
 @[expose] def RegularRequest (compiled :
-  Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitCompiled included
+  CircuitPartition.ResplitCompiled included
   edges vertices member partition sheet)
     (differential : Fin genus) (error weight : Fraction.Rational) :=
   { index : Nat //
-    Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.RegularsSmallAt mesh
+    CircuitPartition.RegularsSmallAt mesh
     domains differential
-      (Rational.Budget.Weighted.allowance (Rational.Budget.Aggregate.perTerm (error / 16)
+      (Weighted.allowance (Aggregate.perTerm (error / 16)
         compiled.connectorTerms.length) weight / 4) compiled.regulars index }
 
 end PolarizedConnectorRequest
@@ -169,21 +179,21 @@ set_option genInjectivity false in
 It retains both differential magnitude banks, the actual connector weight and two original regular-loop thresholds;
 regular polygon areas remain explicit. -/
 structure PolarizedConnectorRequest (compiled :
-  Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitCompiled included
+  CircuitPartition.ResplitCompiled included
   edges vertices member partition sheet)
-    (first : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
-      (Periods.PeriodMatrix.standardDifferential firstIndex))
-    (second : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
-      (Periods.PeriodMatrix.standardDifferential secondIndex)) (error : Fraction.Rational) where
+    (first : Face.MagnitudeBank.FaceMagnitudeBank domains
+      (PeriodMatrix.standardDifferential firstIndex))
+    (second : Face.MagnitudeBank.FaceMagnitudeBank domains
+      (PeriodMatrix.standardDifferential secondIndex)) (error : Fraction.Rational) where
   /-- The requested whole polarized connector error is positive. -/ positive : 0 < error
   /-- The cached original resplit compiler's connector weight. -/ weight : Fraction.Rational
   /-- The weight uses exactly the retained mixed-edge magnitude bound. -/ weight_eq : weight = compiled.connectorWeight
-    (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedConnectors.PolarizedConnectorRequest.edgeBound first second)
+    (PolarizedConnectorRequest.edgeBound first second)
   /-- The original first-differential regular-loop threshold and certificate. -/ left :
-    Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedConnectors.PolarizedConnectorRequest.RegularRequest (mesh :=
+    PolarizedConnectorRequest.RegularRequest (mesh :=
     mesh) (domains := domains) compiled firstIndex error weight
   /-- The original second-differential regular-loop threshold and certificate. -/ right :
-    Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedConnectors.PolarizedConnectorRequest.RegularRequest (mesh :=
+    PolarizedConnectorRequest.RegularRequest (mesh :=
     mesh) (domains := domains) compiled secondIndex error weight
 
 constructive_injectivity PolarizedConnectorRequest
@@ -191,99 +201,99 @@ constructive_injectivity PolarizedConnectorRequest
 namespace PolarizedConnectorRequest
 
 variable {compiled :
-  Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitCompiled included
+  CircuitPartition.ResplitCompiled included
   edges vertices member partition sheet}
-  {first : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
-    (Periods.PeriodMatrix.standardDifferential firstIndex)}
-  {second : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
-    (Periods.PeriodMatrix.standardDifferential secondIndex)} {error : Fraction.Rational}
+  {first : Face.MagnitudeBank.FaceMagnitudeBank domains
+    (PeriodMatrix.standardDifferential firstIndex)}
+  {second : Face.MagnitudeBank.FaceMagnitudeBank domains
+    (PeriodMatrix.standardDifferential secondIndex)} {error : Fraction.Rational}
 
 /-- Prepare both original regular-loop thresholds using one retained connector weight and the supplied stage floor. -/
 @[expose] def build (compiled :
-  Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitCompiled included
+  CircuitPartition.ResplitCompiled included
   edges vertices member partition sheet)
     (mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces)
-    (first : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
-      (Periods.PeriodMatrix.standardDifferential firstIndex))
-    (second : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
-      (Periods.PeriodMatrix.standardDifferential secondIndex))
+    (first : Face.MagnitudeBank.FaceMagnitudeBank domains
+      (PeriodMatrix.standardDifferential firstIndex))
+    (second : Face.MagnitudeBank.FaceMagnitudeBank domains
+      (PeriodMatrix.standardDifferential secondIndex))
     (error : Fraction.Rational) (positive : 0 < error) (minimum : Nat) :
-    Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedConnectors.PolarizedConnectorRequest (mesh := mesh) compiled
+    PolarizedConnectorRequest (mesh := mesh) compiled
       first second error :=
   let weight := compiled.connectorWeight
-    (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedConnectors.PolarizedConnectorRequest.edgeBound first second)
-  let tolerance := Rational.Budget.Weighted.allowance (Rational.Budget.Aggregate.perTerm (error / 16)
+    (PolarizedConnectorRequest.edgeBound first second)
+  let tolerance := Weighted.allowance (Aggregate.perTerm (error / 16)
     compiled.connectorTerms.length) weight / 4
-  have tolerancePositive : 0 < tolerance := Fraction.Order.Field.div_pos_direct
-    (Rational.Budget.Weighted.allowance_positive (Rational.Budget.Aggregate.perTerm_positive
-      (Fraction.Order.Field.div_pos_direct positive (by decide)) _)
+  have tolerancePositive : 0 < tolerance := Field.div_pos_direct
+    (Weighted.allowance_positive (Aggregate.perTerm_positive
+      (Field.div_pos_direct positive (by decide)) _)
       (compiled.connectorWeight_nonnegative _)) (by decide)
   ⟨positive, weight, rfl,
-    Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.regularZeroRequests mesh
-      domains (Periods.PeriodMatrix.standardDifferential firstIndex) firstIndex tolerance tolerancePositive minimum
+    CircuitPartition.regularZeroRequests mesh
+      domains (PeriodMatrix.standardDifferential firstIndex) firstIndex tolerance tolerancePositive minimum
       compiled.regulars,
-    Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.regularZeroRequests mesh
-      domains (Periods.PeriodMatrix.standardDifferential secondIndex) secondIndex tolerance tolerancePositive minimum
+    CircuitPartition.regularZeroRequests mesh
+      domains (PeriodMatrix.standardDifferential secondIndex) secondIndex tolerance tolerancePositive minimum
       compiled.regulars⟩
 
 /-- The common sufficient stage for both original magnitude banks and both regular-loop requests. -/
 @[expose] def index (request :
-  Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedConnectors.PolarizedConnectorRequest (mesh := mesh) compiled
+  PolarizedConnectorRequest (mesh := mesh) compiled
   first second error) : Nat :=
   max (max first.index second.index) (max request.left.val request.right.val)
 
 /-- Every unit polarization direction meets its paid sixteenth-target connector bound on the same retained numerical
 readings. -/
 private theorem direction_accurate (request :
-  Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedConnectors.PolarizedConnectorRequest (mesh := mesh) compiled
+  PolarizedConnectorRequest (mesh := mesh) compiled
   first second error)
-    (coefficient : Gaussian.Basic.Canonical) (unit : Data.Gaussian.Norm.Basic.normSq coefficient = 1)
-    {stage : Nat} {leftShared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
-      (Periods.PeriodMatrix.standardDifferential firstIndex) stage domains}
-    {rightShared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
-      (Periods.PeriodMatrix.standardDifferential secondIndex) stage domains}
-    (leftReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings leftShared mesh)
-      (rightReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings rightShared mesh)
+    (coefficient : Gaussian.Basic.Canonical) (unit : Gaussian.Norm.Basic.normSq coefficient = 1)
+    {stage : Nat} {leftShared : Face.PrimitiveData.FacePrimitiveBank
+      (PeriodMatrix.standardDifferential firstIndex) stage domains}
+    {rightShared : Face.PrimitiveData.FacePrimitiveBank
+      (PeriodMatrix.standardDifferential secondIndex) stage domains}
+    (leftReadings : TrianglePrimitiveReadings.TriangleReadings leftShared mesh)
+      (rightReadings : TrianglePrimitiveReadings.TriangleReadings rightShared mesh)
     (later : request.index ≤ stage) :
-    let value := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh leftReadings.values)
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh rightReadings.values) coefficient
-    Data.Gaussian.Norm.Basic.normSq (Topology.Mesh.RetracingWords.AreaTerm.total value compiled.areaTerms -
+    let value := BilinearPolarization.mix
+      (CanonicalEdgeValues.edgeValuation mesh leftReadings.values)
+      (CanonicalEdgeValues.edgeValuation mesh rightReadings.values) coefficient
+    Gaussian.Norm.Basic.normSq (AreaTerm.total value compiled.areaTerms -
       Geometry.Grid.CellBoundary.sumValues (fun occurrence => Topology.Mesh.RetracingWords.wordArea value
         occurrence.word) compiled.regulars) < error / 16 := by
   intro value
   have fixedLater := (Nat.Order.le_max_left _ _).trans later
   have requestsLater := (Nat.Order.le_max_right _ _).trans later
   apply compiled.connector_small value
-    (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedConnectors.PolarizedConnectorRequest.edgeBound_nonnegative
+    (PolarizedConnectorRequest.edgeBound_nonnegative
     first second) ?_
-    (Fraction.Order.Field.div_pos_direct request.positive (by decide)) ?_
+    (Field.div_pos_direct request.positive (by decide)) ?_
   · intro edge
-    exact Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedConnectors.PolarizedConnectorRequest.mixed_bound _ _
+    exact PolarizedConnectorRequest.mixed_bound _ _
       coefficient unit
-      (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedConnectors.PolarizedConnectorRequest.edge_bounded first
+      (PolarizedConnectorRequest.edge_bounded first
         ((Nat.Order.le_max_left _ _).trans fixedLater) leftReadings edge)
-      (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedConnectors.PolarizedConnectorRequest.edge_bounded second
+      (PolarizedConnectorRequest.edge_bounded second
         ((Nat.Order.le_max_right _ _).trans fixedLater) rightReadings edge)
   · intro occurrence present
     have leftSmall := (request.left.property stage leftShared leftReadings
       ((Nat.Order.le_max_left _ _).trans requestsLater) occurrence present).le
     have rightSmall := (request.right.property stage rightShared rightReadings
       ((Nat.Order.le_max_right _ _).trans requestsLater) occurrence present).le
-    change Data.Gaussian.Norm.Basic.normSq (Topology.Surface.Sewing.SewingRetraction.wordValue
-      (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix _ _ coefficient)
+    change Gaussian.Norm.Basic.normSq (Topology.Surface.Sewing.SewingRetraction.wordValue
+      (BilinearPolarization.mix _ _ coefficient)
       occurrence.word) ≤ _
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.word_mix]
+    rw [BilinearPolarization.word_mix]
     have estimate :=
-      Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedConnectors.PolarizedConnectorRequest.mixed_bound _ _
+      PolarizedConnectorRequest.mixed_bound _ _
       coefficient unit leftSmall rightSmall
     refine estimate.trans_eq ?_
     rw [← request.weight_eq]
-    exact (by ring1 : 2 * (Rational.Budget.Weighted.allowance (Rational.Budget.Aggregate.perTerm (error / 16)
+    exact (by ring1 : 2 * (Weighted.allowance (Aggregate.perTerm (error / 16)
       compiled.connectorTerms.length) request.weight / 4 +
-      Rational.Budget.Weighted.allowance (Rational.Budget.Aggregate.perTerm (error / 16) compiled.connectorTerms.length)
+      Weighted.allowance (Aggregate.perTerm (error / 16) compiled.connectorTerms.length)
         request.weight / 4) =
-      (Rational.Budget.Weighted.allowance (Rational.Budget.Aggregate.perTerm (error / 16)
+      (Weighted.allowance (Aggregate.perTerm (error / 16)
         compiled.connectorTerms.length) request.weight / 4) * 4).trans
       (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))
 
@@ -291,59 +301,59 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.B
 /-- One cached weight and two regular-loop thresholds pay all four connector
 directions on the same sample. The bound concerns only the signed connector
 residual, retaining all regular polygon areas in the expression. -/
-theorem accurate (request : Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedConnectors.PolarizedConnectorRequest
+theorem accurate (request : PolarizedConnectorRequest
   (mesh := mesh) compiled first second error)
-    {stage : Nat} {leftShared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
-      (Periods.PeriodMatrix.standardDifferential firstIndex) stage domains}
-    {rightShared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
-      (Periods.PeriodMatrix.standardDifferential secondIndex) stage domains}
-    (leftReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings leftShared mesh)
-      (rightReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings rightShared mesh)
+    {stage : Nat} {leftShared : Face.PrimitiveData.FacePrimitiveBank
+      (PeriodMatrix.standardDifferential firstIndex) stage domains}
+    {rightShared : Face.PrimitiveData.FacePrimitiveBank
+      (PeriodMatrix.standardDifferential secondIndex) stage domains}
+    (leftReadings : TrianglePrimitiveReadings.TriangleReadings leftShared mesh)
+      (rightReadings : TrianglePrimitiveReadings.TriangleReadings rightShared mesh)
     (later : request.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-      let value := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh leftReadings.values)
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh rightReadings.values) coefficient
-      Topology.Mesh.RetracingWords.AreaTerm.total value compiled.areaTerms -
+    Gaussian.Norm.Basic.normSq
+      (BilinearPolarization.extract (fun coefficient =>
+      let value := BilinearPolarization.mix
+        (CanonicalEdgeValues.edgeValuation mesh leftReadings.values)
+        (CanonicalEdgeValues.edgeValuation mesh rightReadings.values) coefficient
+      AreaTerm.total value compiled.areaTerms -
         Geometry.Grid.CellBoundary.sumValues (fun occurrence => Topology.Mesh.RetracingWords.wordArea value
           occurrence.word) compiled.regulars)) ≤ error := by
   let residual := fun coefficient =>
-    let value := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh leftReadings.values)
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh rightReadings.values) coefficient
-    Topology.Mesh.RetracingWords.AreaTerm.total value compiled.areaTerms - Geometry.Grid.CellBoundary.sumValues (fun
+    let value := BilinearPolarization.mix
+      (CanonicalEdgeValues.edgeValuation mesh leftReadings.values)
+      (CanonicalEdgeValues.edgeValuation mesh rightReadings.values) coefficient
+    AreaTerm.total value compiled.areaTerms - Geometry.Grid.CellBoundary.sumValues (fun
       occurrence => Topology.Mesh.RetracingWords.wordArea value occurrence.word) compiled.regulars
-  have one : Data.Gaussian.Norm.Basic.normSq (residual 1) ≤ error / 16 :=
+  have one : Gaussian.Norm.Basic.normSq (residual 1) ≤ error / 16 :=
     (request.direction_accurate 1 (by decide) leftReadings rightReadings later).le
-  have negOne : Data.Gaussian.Norm.Basic.normSq (residual (-1)) ≤ error / 16 :=
+  have negOne : Gaussian.Norm.Basic.normSq (residual (-1)) ≤ error / 16 :=
     (request.direction_accurate (-1) (by decide) leftReadings rightReadings later).le
-  have imaginary : Data.Gaussian.Norm.Basic.normSq (residual
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.imaginary) ≤ error / 16 :=
+  have imaginary : Gaussian.Norm.Basic.normSq (residual
+    BilinearPolarization.imaginary) ≤ error / 16 :=
     (request.direction_accurate _ (by decide) leftReadings rightReadings later).le
-  have negImaginary : Data.Gaussian.Norm.Basic.normSq (residual
-    (-Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.imaginary)) ≤ error / 16 :=
+  have negImaginary : Gaussian.Norm.Basic.normSq (residual
+    (-BilinearPolarization.imaginary)) ≤ error / 16 :=
     (request.direction_accurate _ (by decide) leftReadings rightReadings later).le
   have canonicalBound {value : Gaussian.Basic.Canonical} {limit : Fraction.Rational}
-      (bound : Data.Gaussian.Norm.Basic.normSq value ≤ limit) :
+      (bound : Gaussian.Norm.Basic.normSq value ≤ limit) :
       Gaussian.Basic.Canonical.normSq value ≤ limit := by
-    change Fraction.Order.Basic.LessEqual _ _ at bound ⊢
+    change Basic.LessEqual _ _ at bound ⊢
     simpa only [-eq_self, -iff_self, Gaussian.Norm.Basic.normSq_eq_canonical] using bound
   have oldBound {value : Gaussian.Basic.Canonical} {limit : Fraction.Rational}
       (bound : Gaussian.Basic.Canonical.normSq value ≤ limit) :
-      Data.Gaussian.Norm.Basic.normSq value ≤ limit := by
-    change Fraction.Order.Basic.LessEqual _ _ at bound ⊢
+      Gaussian.Norm.Basic.normSq value ≤ limit := by
+    change Basic.LessEqual _ _ at bound ⊢
     simpa only [-eq_self, -iff_self, Gaussian.Norm.Basic.normSq_eq_canonical] using bound
-  have estimate := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract_normSq_le
+  have estimate := BilinearPolarization.extract_normSq_le
     (value := residual)
     (residual 1) (residual (-1)) (residual
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.imaginary) (residual
-      (-Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.imaginary))
+      BilinearPolarization.imaginary) (residual
+      (-BilinearPolarization.imaginary))
     rfl rfl rfl rfl
   apply oldBound
-  refine estimate.trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.add_le_add_direct (Fraction.Order.Arithmetic.add_le_add_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct (canonicalBound one) (canonicalBound negOne)) (canonicalBound
+  refine estimate.trans ((Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_direct (Arithmetic.add_le_add_direct
+      (Arithmetic.add_le_add_direct (canonicalBound one) (canonicalBound negOne)) (canonicalBound
       imaginary)) (canonicalBound negImaginary))
     (by decide : (0 : Fraction.Rational) ≤ 4)).trans_eq ?_)
   exact (by ring1 : 4 * (error / 16 + error / 16 + error / 16 + error / 16) = error / 16 * 16).trans

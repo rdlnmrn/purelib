@@ -72,6 +72,8 @@ import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Approximation.Rational.Budget
@@ -152,7 +154,7 @@ open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Approximation.Rational.Budget.Aggregate (perTerm perTerm_positive)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -170,15 +172,15 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 
 /-- The shared threshold is above the caller floor. Terminal and connector errors are paid without assuming any
 smallness of the physical exterior. -/
-theorem conjugate_physical_period_accurate (newSheet : Fin 2) (excision : Excision.AllHoleExcision grid current)
-    (first : MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential firstIndex))
-    (second : MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential secondIndex))
-    (error : Fraction.Rational) (positive : 0 < error) (floor : Nat) :
+theorem conjugate_physical_period_accurate (newSheet : Fin 2) (excision : AllHoleExcision grid current)
+    (first : FaceMagnitudeBank domains (PeriodMatrix.standardDifferential firstIndex))
+    (second : FaceMagnitudeBank domains (PeriodMatrix.standardDifferential secondIndex))
+    (error : Rational) (positive : 0 < error) (floor : Nat) :
     let reference := fun point member => (BranchCellBank.referenceAt grid.punctured.bank.toBranchCellBank point
       member).toLoop
     let compiled := CircuitPartition.compileResplit grid.shrunk.included current.edges current.vertices
       reference (FramedBranchCellBank.baseMember base.bank) ordered.prepared.partition newSheet
-    let quarterPositive := Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Fraction.Rational) < 4)
+    let quarterPositive := Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Rational) < 4)
     let part := Aggregate.perTerm (error / 4) 2
     let partPositive := Aggregate.perTerm_positive quarterPositive 2
     let regular := PairedRegularRequests.build first second (Aggregate.perTerm part compiled.regulars.length)
@@ -187,16 +189,16 @@ theorem conjugate_physical_period_accurate (newSheet : Fin 2) (excision : Excisi
       (Aggregate.perTerm part excision.entries.length)
       (Aggregate.perTerm_positive partPositive _) floor excision.entries
     let corrections := PolarizedCorrectionRequest.build (paired := paired) grid.shrunk.included compiled first second
-      (error / 16) (Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Fraction.Rational) < 16)) floor
+      (error / 16) (Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Rational) < 16)) floor
     let threshold := max (max regular.index branch.index) (corrections.index floor)
     floor ≤ threshold ∧
-    ∀ stage (leftBank : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential firstIndex) stage domains)
-      (rightBank : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential secondIndex) stage domains)
-      (leftReadings : TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh) (rightReadings :
-        TrianglePrimitiveReadings.TriangleReadings rightBank current.mesh)
-      (leftSurface : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch leftReadings.values) (rightSurface :
-        SewnPrimitiveSamples.CachedSample current.cutPolygon.patch rightReadings.values)
-      (pair : SewnConjugateSamples.ConjugatePair leftSurface rightSurface),
+    ∀ stage (leftBank : FacePrimitiveBank (PeriodMatrix.standardDifferential firstIndex) stage domains)
+      (rightBank : FacePrimitiveBank (PeriodMatrix.standardDifferential secondIndex) stage domains)
+      (leftReadings : TriangleReadings leftBank current.mesh) (rightReadings :
+        TriangleReadings rightBank current.mesh)
+      (leftSurface : CachedSample current.cutPolygon.patch leftReadings.values) (rightSurface :
+        CachedSample current.cutPolygon.patch rightReadings.values)
+      (pair : ConjugatePair leftSurface rightSurface),
       threshold ≤ stage →
       let regularSamples := ConjugateSamples.build leftReadings rightReadings leftSurface rightSurface pair regular
       let branchSamples := ConjugateSamples.build leftReadings rightReadings leftSurface rightSurface pair branch
@@ -210,7 +212,7 @@ theorem conjugate_physical_period_accurate (newSheet : Fin 2) (excision : Excisi
             value -
           ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired) grid.shrunk.included current.edges
             current.vertices newSheet value)
-      Data.Gaussian.Norm.Basic.normSq (pair.boundaryArea -
+      Basic.normSq (pair.boundaryArea -
         (regularSamples.corrections + branchSamples.corrections) - (physical + physical)) < error := by
   intro reference compiled quarterPositive part partPositive regular branch corrections threshold
   constructor
@@ -236,7 +238,7 @@ theorem conjugate_physical_period_accurate (newSheet : Fin 2) (excision : Excisi
       AreaTerm.total (values coefficient) compiled.connectorTerms -
       ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired) grid.shrunk.included current.edges
         current.vertices newSheet (values coefficient))
-  have regionBound : Data.Gaussian.Norm.Basic.normSq (geometric - (uncorrected + uncorrected)) < error / 4 :=
+  have regionBound : Basic.normSq (geometric - (uncorrected + uncorrected)) < error / 4 :=
     by
     have estimate := OriginalConjugateRegionsComparison.original_conjugate_regions_accurate ordered newSheet
       (OrderedBranchPolygons.branchSheet ordered newSheet)
@@ -245,21 +247,21 @@ theorem conjugate_physical_period_accurate (newSheet : Fin 2) (excision : Excisi
     have read : regularSamples.polygons + branchSamples.polygons = uncorrected :=
       ConjugatePeriodArea.original_conjugate_polygons_period_area prepared newSheet excision leftReadings rightReadings
         leftSurface rightSurface pair regularSamples branchSamples
-    exact (congrArg (fun polygon => Data.Gaussian.Norm.Basic.normSq (geometric - (polygon + polygon)))
+    exact (congrArg (fun polygon => Basic.normSq (geometric - (polygon + polygon)))
       read.symm).trans_lt estimate
-  have correctionBound : Data.Gaussian.Norm.Basic.normSq delta < error / 16 :=
+  have correctionBound : Basic.normSq delta < error / 16 :=
     PolarizedCorrectionRequest.conjugate_accurate corrections reference floor leftReadings rightReadings
       ((Data.Nat.Order.le_max_right _ _).trans later)
-  have twice : Data.Gaussian.Norm.Basic.normSq (delta + delta) < 4 * (error / 16) :=
-    ((Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans_lt
-      (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2)
+  have twice : Basic.normSq (delta + delta) < 4 * (error / 16) :=
+    ((Bounds.normSq_add_le_two _ _).trans_lt
+      (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Rational) < 2)
         (Fraction.Order.Arithmetic.add_lt_add_direct correctionBound correctionBound))).trans_eq (by ring1)
-  have estimate := (Data.Gaussian.Norm.Bounds.normSq_sub_le_two (geometric - (uncorrected + uncorrected)) (delta +
+  have estimate := (Bounds.normSq_sub_le_two (geometric - (uncorrected + uncorrected)) (delta +
     delta)).trans_lt
-    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2)
+    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Rational) < 2)
       (Fraction.Order.Arithmetic.add_lt_add_direct regionBound twice))
   have paid : 2 * (error / 4 + 4 * (error / 16)) = error := by
-    apply Fraction.Field.mul_right_cancel_of_ne (by decide : (2 : Fraction.Rational) ≠ 0)
+    apply Fraction.Field.mul_right_cancel_of_ne (by decide : (2 : Rational) ≠ 0)
     calc
       _ = error / 4 * 4 + error / 16 * 16 := by ring1
       _ = error + error := by rw [Fraction.Field.div_mul_cancel_of_ne _ 4 (by decide),
@@ -271,6 +273,6 @@ theorem conjugate_physical_period_accurate (newSheet : Fin 2) (excision : Excisi
   have read : geometric - (physical + physical) = (geometric - (uncorrected + uncorrected)) - (delta + delta) := by
     rw [← identity]
     ring1
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq read).trans_lt (estimate.trans_eq paid)
+  exact (congrArg Basic.normSq read).trans_lt (estimate.trans_eq paid)
 
 end Purelib.Curves.Hyperelliptic.Meshes.Newton.ConjugatePhysicalPeriodComparison

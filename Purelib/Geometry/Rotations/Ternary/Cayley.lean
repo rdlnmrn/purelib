@@ -29,6 +29,8 @@ import Purelib.Geometry.Quadratic.Ternary.Isometry
 import Purelib.Geometry.Quadratic.Ternary.Reflection
 import Purelib.Tactic.Ring
 
+open Purelib.Algebra.Field
+
 open Purelib
 
 open Purelib.Algebra.Clifford.Ternary.Basic.TernaryForm
@@ -74,13 +76,13 @@ open Purelib.Geometry.Rotations.Ternary.Cayley
 open Purelib.LinearAlgebra.Coordinates3.Antisymmetric
 open Purelib.Geometry.Rotations.Reflection
 open Purelib.Geometry.Rotations.Cayley.Cap
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 /-- The first factorization axis is perpendicular to the vector coordinate of the resulting Clifford representative. -/
 public theorem
   firstAxis_perpendicular_cliffordPreimage
-    {form : Ternary.Basic.TernaryForm K} {rotation : form.SpecialOrthogonal}
-    (factorization : TernaryForm.TwoHalfTurnFactorization form rotation) :
+    {form : TernaryForm K} {rotation : form.SpecialOrthogonal}
+    (factorization : TwoHalfTurnFactorization form rotation) :
     form.Perpendicular factorization.firstAxis
       (TwoHalfTurnFactorization.cliffordPreimage factorization).toEvenClifford.vector := by
   have crossPerpendicular :
@@ -100,7 +102,7 @@ public theorem
         (Coordinates3.Vector.scale 0 factorization.firstAxis))
       (form.cliffordCross factorization.firstAxis
         factorization.secondAxis))
-  unfold TernaryForm.Perpendicular
+  unfold Perpendicular
   rw [form.bilinear_sub_right, form.bilinear_add_right,
     form.bilinear_scale_right, form.bilinear_scale_right]
   rw [crossPerpendicular]
@@ -117,64 +119,64 @@ open Purelib.Geometry.Rotations.Cayley.Cap
 
 open Purelib.LinearAlgebra.Coordinates3
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 section TernaryForm
 
 /-- The form-relative cap denominator. The determinant factor is forced by the reduced norm convention for the displayed
 even Clifford algebra. -/
-def TernaryForm.cayleyDenominator (form : Ternary.Basic.TernaryForm K) (anchor : Coordinates3.Vector K) : K :=
+def TernaryForm.cayleyDenominator (form : TernaryForm K) (anchor : Coordinates3.Vector K) : K :=
   1 + form.determinant * form.quadrance anchor
 
 /-- The unnormalized affine Clifford representative `(1, anchor)`. -/
-def TernaryForm.capRepresentative (form : Ternary.Basic.TernaryForm K) (anchor : Coordinates3.Vector K) :
+def TernaryForm.capRepresentative (form : TernaryForm K) (anchor : Coordinates3.Vector K) :
     form.EvenClifford :=
   ⟨1, anchor⟩
 
 /-- The scalar-one Clifford representative has norm equal to the cap denominator. -/
-theorem TernaryForm.norm_capRepresentative (form : Ternary.Basic.TernaryForm K)
+theorem TernaryForm.norm_capRepresentative (form : TernaryForm K)
     (anchor : Coordinates3.Vector K) :
-    (EvenClifford.norm ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative form) anchor)) =
-      (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) anchor := by
-  unfold Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative EvenClifford.norm
-    Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator
+    (EvenClifford.norm ((TernaryForm.capRepresentative form) anchor)) =
+      (TernaryForm.cayleyDenominator form) anchor := by
+  unfold TernaryForm.capRepresentative EvenClifford.norm
+    TernaryForm.cayleyDenominator
   ring1
 
 /-- A defined form-relative Cayley cap, retaining its nonzero denominator as executable data. -/
-def TernaryForm.capValue (form : Ternary.Basic.TernaryForm K) (anchor : Coordinates3.Vector K)
-    (defined : (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) anchor ≠ 0) :
+def TernaryForm.capValue (form : TernaryForm K) (anchor : Coordinates3.Vector K)
+    (defined : (TernaryForm.cayleyDenominator form) anchor ≠ 0) :
     form.NonNullEvenClifford where
-  toEvenClifford := (Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative form) anchor
+  toEvenClifford := (TernaryForm.capRepresentative form) anchor
   normNonzero := by
-    rw [(Geometry.Rotations.Ternary.Cayley.TernaryForm.norm_capRepresentative form)]
+    rw [(TernaryForm.norm_capRepresentative form)]
     exact defined
 
 /-- The form-relative Cayley cap as a displayed special-orthogonal transformation. -/
-def TernaryForm.capRotation (form : Ternary.Basic.TernaryForm K) (anchor : Coordinates3.Vector K)
-    (defined : (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) anchor ≠ 0) :
+def TernaryForm.capRotation (form : TernaryForm K) (anchor : Coordinates3.Vector K)
+    (defined : (TernaryForm.cayleyDenominator form) anchor ≠ 0) :
     form.SpecialOrthogonal :=
-  (NonNullEvenClifford.actionRotation ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capValue form) anchor defined))
+  (NonNullEvenClifford.actionRotation ((TernaryForm.capValue form) anchor defined))
 
 /-- Equal anchor vectors give equal original cap rotations with their respective domain certificates. -/
-theorem TernaryForm.capRotation_eq_of_anchor_eq (form : Ternary.Basic.TernaryForm K)
+theorem TernaryForm.capRotation_eq_of_anchor_eq (form : TernaryForm K)
     (left right : Coordinates3.Vector K)
-    (leftDefined : (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) left ≠ 0)
-    (rightDefined : (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) right ≠ 0)
+    (leftDefined : (TernaryForm.cayleyDenominator form) left ≠ 0)
+    (rightDefined : (TernaryForm.cayleyDenominator form) right ≠ 0)
     (equal : left = right) :
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.capRotation form) left leftDefined =
-      (Geometry.Rotations.Ternary.Cayley.TernaryForm.capRotation form) right rightDefined := by
+    (TernaryForm.capRotation form) left leftDefined =
+      (TernaryForm.capRotation form) right rightDefined := by
   cases equal
   rfl
 
 /-- Expand the form-relative cap action into its scalar, bilinear projection, and Clifford cross terms.
 
 The cap denominator is nonzero; the formula uses its retained inverse. -/
-theorem TernaryForm.capRotation_act (form : Ternary.Basic.TernaryForm K) (anchor : Coordinates3.Vector K)
-    (defined : (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) anchor ≠ 0) (vector :
+theorem TernaryForm.capRotation_act (form : TernaryForm K) (anchor : Coordinates3.Vector K)
+    (defined : (TernaryForm.cayleyDenominator form) anchor ≠ 0) (vector :
       Coordinates3.Vector K) :
-    (Algebra.Quadratic.Ternary.Basic.TernaryForm.Isometry.act
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capRotation form) anchor defined).toIsometry) vector =
-      Coordinates3.Vector.scale ((Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) anchor)⁻¹
+    (Isometry.act
+        ((TernaryForm.capRotation form) anchor defined).toIsometry) vector =
+      Coordinates3.Vector.scale ((TernaryForm.cayleyDenominator form) anchor)⁻¹
         (Coordinates3.Vector.add
           (Coordinates3.Vector.add
             (Coordinates3.Vector.scale
@@ -182,18 +184,18 @@ theorem TernaryForm.capRotation_act (form : Ternary.Basic.TernaryForm K) (anchor
             (Coordinates3.Vector.scale
               (2 * form.determinant * form.bilinear vector anchor) anchor))
           (Coordinates3.Vector.scale (-2) (form.cliffordCross vector anchor))) := by
-  unfold Geometry.Rotations.Ternary.Cayley.TernaryForm.capRotation
+  unfold TernaryForm.capRotation
   rw [NonNullEvenClifford.actionRotation_act]
   unfold NonNullEvenClifford.action
-  unfold Geometry.Rotations.Ternary.Cayley.TernaryForm.capValue
-  rw [(Geometry.Rotations.Ternary.Cayley.TernaryForm.norm_capRepresentative form)]
-  unfold Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative EvenClifford.actionNumerator
-    Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator
+  unfold TernaryForm.capValue
+  rw [(TernaryForm.norm_capRepresentative form)]
+  unfold TernaryForm.capRepresentative EvenClifford.actionNumerator
+    TernaryForm.cayleyDenominator
   ext <;> unfold Coordinates3.Vector.add Coordinates3.Vector.scale <;> ring1
 
 /-- Trace of a normalized Clifford action, in the determinant-scaled vector convention. -/
 theorem TernaryForm.NonNullEvenClifford.trace_actionMatrix
-    {form : Ternary.Basic.TernaryForm K} (value : form.NonNullEvenClifford) :
+    {form : TernaryForm K} (value : form.NonNullEvenClifford) :
     Matrix3.trace (NonNullEvenClifford.actionMatrix value) =
       (EvenClifford.norm value.toEvenClifford)⁻¹ *
         (3 * value.toEvenClifford.scalar ^ 2 -
@@ -214,32 +216,32 @@ theorem TernaryForm.NonNullEvenClifford.trace_actionMatrix
   ring1
 
 /-- The trace-defined half spread for a displayed ternary rotation. -/
-def TernaryForm.rotationHalfSpread (form : Ternary.Basic.TernaryForm K)
+def TernaryForm.rotationHalfSpread (form : TernaryForm K)
     (rotation : form.SpecialOrthogonal) : K :=
   (3 - Matrix3.trace rotation.matrix) / 4
 
 /-- The canonical spread polynomial attached to the trace-defined half spread. -/
-def TernaryForm.rotationSpread (form : Ternary.Basic.TernaryForm K)
+def TernaryForm.rotationSpread (form : TernaryForm K)
     (rotation : form.SpecialOrthogonal) : K :=
-  4 * (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread form) rotation *
-    (1 - (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread form) rotation)
+  4 * (TernaryForm.rotationHalfSpread form) rotation *
+    (1 - (TernaryForm.rotationHalfSpread form) rotation)
 
 /-- The half spread of a Clifford action is its determinant-weighted vector quadrance divided by the reduced norm. -/
 theorem TernaryForm.NonNullEvenClifford.rotationHalfSpread_actionRotation
-    {form : Ternary.Basic.TernaryForm K} (value : form.NonNullEvenClifford)
+    {form : TernaryForm K} (value : form.NonNullEvenClifford)
     (twoNonzero : (2 : K) ≠ 0) :
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread form) (NonNullEvenClifford.actionRotation value) =
+    (TernaryForm.rotationHalfSpread form) (NonNullEvenClifford.actionRotation value) =
       form.determinant * form.quadrance value.toEvenClifford.vector /
         (EvenClifford.norm value.toEvenClifford) := by
-  have normCancel := Algebra.Field.ExplicitField.mul_inv_cancel
+  have normCancel := ExplicitField.mul_inv_cancel
     (EvenClifford.norm value.toEvenClifford) value.normNonzero
-  have fourCancel := Algebra.Field.ExplicitField.mul_inv_cancel 4
-    ((fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] (twoNonzero : (2 : K) ≠ 0) =>
-      (Purelib.Algebra.Field.Characteristic.Nonzero.four_ne_zero (K := K) twoNonzero : (4 : K) ≠ 0)) twoNonzero)
-  unfold Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread
+  have fourCancel := ExplicitField.mul_inv_cancel 4
+    ((fun {K : Type _} [ExplicitField K] (twoNonzero : (2 : K) ≠ 0) =>
+      (Characteristic.Nonzero.four_ne_zero (K := K) twoNonzero : (4 : K) ≠ 0)) twoNonzero)
+  unfold TernaryForm.rotationHalfSpread
   change (3 - Matrix3.trace (NonNullEvenClifford.actionMatrix value)) / 4 = _
-  rw [(Geometry.Rotations.Ternary.Cayley.TernaryForm.NonNullEvenClifford.trace_actionMatrix value)]
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  rw [(TernaryForm.NonNullEvenClifford.trace_actionMatrix value)]
+  simp only [ExplicitField.div_eq_mul_inv]
   calc
     (3 - (EvenClifford.norm value.toEvenClifford)⁻¹ *
         (3 * value.toEvenClifford.scalar ^ 2 -
@@ -269,36 +271,36 @@ theorem TernaryForm.NonNullEvenClifford.rotationHalfSpread_actionRotation
         fourCancel, mul_one]
 
 /-- The cap half spread is its determinant-weighted anchor quadrance divided by the cap denominator. -/
-theorem TernaryForm.rotationHalfSpread_cap (form : Ternary.Basic.TernaryForm K)
-    (anchor : Coordinates3.Vector K) (defined : (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form)
+theorem TernaryForm.rotationHalfSpread_cap (form : TernaryForm K)
+    (anchor : Coordinates3.Vector K) (defined : (TernaryForm.cayleyDenominator form)
       anchor ≠ 0)
     (twoNonzero : (2 : K) ≠ 0) :
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread form)
-      ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capRotation form) anchor defined) =
+    (TernaryForm.rotationHalfSpread form)
+      ((TernaryForm.capRotation form) anchor defined) =
       form.determinant * form.quadrance anchor /
-        (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) anchor := by
-  unfold Geometry.Rotations.Ternary.Cayley.TernaryForm.capRotation
-  simpa only [Geometry.Rotations.Ternary.Cayley.TernaryForm.capValue,
-    Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative,
-    Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator,
+        (TernaryForm.cayleyDenominator form) anchor := by
+  unfold TernaryForm.capRotation
+  simpa only [TernaryForm.capValue,
+    TernaryForm.capRepresentative,
+    TernaryForm.cayleyDenominator,
     EvenClifford.norm, one_pow] using
-      (Geometry.Rotations.Ternary.Cayley.TernaryForm.NonNullEvenClifford.rotationHalfSpread_actionRotation
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capValue form) anchor defined))
+      (TernaryForm.NonNullEvenClifford.rotationHalfSpread_actionRotation
+        ((TernaryForm.capValue form) anchor defined))
         twoNonzero
 
 /-! ## Geometric spread on the canonical axis -/
 
 /-- Rotation spread evaluated on a displayed non-null test vector. Since a form rotation preserves quadrance, this is
 the ordinary projective spread of the test vector and its image with the equal quadrances already cancelled. -/
-def TernaryForm.rotationSpreadAt (form : Ternary.Basic.TernaryForm K)
+def TernaryForm.rotationSpreadAt (form : TernaryForm K)
     (rotation : form.SpecialOrthogonal) (vector : Coordinates3.Vector K)
     (_nonNull : form.quadrance vector ≠ 0) : K :=
-  1 - (form.bilinear vector ((Algebra.Quadratic.Ternary.Basic.TernaryForm.Isometry.act rotation.toIsometry) vector) /
+  1 - (form.bilinear vector ((Isometry.act rotation.toIsometry) vector) /
     form.quadrance vector) ^ 2
 
 /-- Compute the bilinear pairing of a non-null vector with its Clifford image when it is perpendicular to the axis. -/
 theorem TernaryForm.NonNullEvenClifford.bilinear_self_action_of_perpendicular
-    {form : Ternary.Basic.TernaryForm K} (value : form.NonNullEvenClifford)
+    {form : TernaryForm K} (value : form.NonNullEvenClifford)
     (vector : Coordinates3.Vector K)
     (perpendicular : form.Perpendicular vector value.toEvenClifford.vector) :
     form.bilinear vector ((NonNullEvenClifford.action value) vector) =
@@ -326,10 +328,10 @@ theorem TernaryForm.NonNullEvenClifford.bilinear_self_action_of_perpendicular
 /-- A non-null perpendicular vector has spread `4h(1-h)`, with `h` the determinant-weighted axis quadrance over the
 Clifford norm. -/
 theorem TernaryForm.NonNullEvenClifford.rotationSpreadAt_of_perpendicular
-    {form : Ternary.Basic.TernaryForm K} (value : form.NonNullEvenClifford)
+    {form : TernaryForm K} (value : form.NonNullEvenClifford)
     (vector : Coordinates3.Vector K) (nonNull : form.quadrance vector ≠ 0)
     (perpendicular : form.Perpendicular vector value.toEvenClifford.vector) :
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationSpreadAt form) (NonNullEvenClifford.actionRotation value)
+    (TernaryForm.rotationSpreadAt form) (NonNullEvenClifford.actionRotation value)
       vector nonNull =
       4 *
         (form.determinant * form.quadrance value.toEvenClifford.vector /
@@ -337,9 +339,9 @@ theorem TernaryForm.NonNullEvenClifford.rotationSpreadAt_of_perpendicular
         (1 - form.determinant *
           form.quadrance value.toEvenClifford.vector /
             (EvenClifford.norm value.toEvenClifford)) := by
-  have quadranceCancel := Algebra.Field.ExplicitField.mul_inv_cancel
+  have quadranceCancel := ExplicitField.mul_inv_cancel
     (form.quadrance vector) nonNull
-  have normCancel := Algebra.Field.ExplicitField.mul_inv_cancel
+  have normCancel := ExplicitField.mul_inv_cancel
     (EvenClifford.norm value.toEvenClifford) value.normNonzero
   have split :
       value.toEvenClifford.scalar ^ 2 *
@@ -365,11 +367,11 @@ theorem TernaryForm.NonNullEvenClifford.rotationSpreadAt_of_perpendicular
           (EvenClifford.norm value.toEvenClifford)⁻¹ := by
     rw [← split]
     ring1
-  unfold Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationSpreadAt
+  unfold TernaryForm.rotationSpreadAt
   rw [NonNullEvenClifford.actionRotation_act,
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.NonNullEvenClifford.bilinear_self_action_of_perpendicular value)
+    (TernaryForm.NonNullEvenClifford.bilinear_self_action_of_perpendicular value)
       vector perpendicular]
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  simp only [ExplicitField.div_eq_mul_inv]
   have quotient :
       ((EvenClifford.norm value.toEvenClifford)⁻¹ *
           (value.toEvenClifford.scalar ^ 2 -
@@ -453,111 +455,111 @@ theorem TernaryForm.NonNullEvenClifford.rotationSpreadAt_of_perpendicular
 
 /-- Every non-null vector perpendicular to the Clifford axis realizes the rotation spread when two is nonzero. -/
 theorem TernaryForm.NonNullEvenClifford.rotationSpreadAt_eq_rotationSpread
-    {form : Ternary.Basic.TernaryForm K} (value : form.NonNullEvenClifford)
+    {form : TernaryForm K} (value : form.NonNullEvenClifford)
     (vector : Coordinates3.Vector K) (nonNull : form.quadrance vector ≠ 0)
     (perpendicular : form.Perpendicular vector value.toEvenClifford.vector)
     (twoNonzero : (2 : K) ≠ 0) :
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationSpreadAt form) (NonNullEvenClifford.actionRotation value)
+    (TernaryForm.rotationSpreadAt form) (NonNullEvenClifford.actionRotation value)
       vector nonNull =
-      (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationSpread form) (NonNullEvenClifford.actionRotation value) :=
+      (TernaryForm.rotationSpread form) (NonNullEvenClifford.actionRotation value) :=
         by
-  rw [(Geometry.Rotations.Ternary.Cayley.TernaryForm.NonNullEvenClifford.rotationSpreadAt_of_perpendicular value) vector
+  rw [(TernaryForm.NonNullEvenClifford.rotationSpreadAt_of_perpendicular value) vector
     nonNull perpendicular]
-  unfold Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationSpread
-  rw [(Geometry.Rotations.Ternary.Cayley.TernaryForm.NonNullEvenClifford.rotationHalfSpread_actionRotation value)
+  unfold TernaryForm.rotationSpread
+  rw [(TernaryForm.NonNullEvenClifford.rotationHalfSpread_actionRotation value)
     twoNonzero]
 
 /-- Every non-null vector perpendicular to a cap anchor realizes the cap rotation spread when two is nonzero. -/
-theorem TernaryForm.rotationSpreadAt_cap (form : Ternary.Basic.TernaryForm K)
+theorem TernaryForm.rotationSpreadAt_cap (form : TernaryForm K)
     (anchor vector : Coordinates3.Vector K)
-    (defined : (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) anchor ≠ 0)
+    (defined : (TernaryForm.cayleyDenominator form) anchor ≠ 0)
     (nonNull : form.quadrance vector ≠ 0)
     (perpendicular : form.Perpendicular vector anchor)
     (twoNonzero : (2 : K) ≠ 0) :
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationSpreadAt form)
-      ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capRotation form) anchor defined) vector nonNull =
-      (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationSpread form)
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capRotation form) anchor defined) := by
-  exact (Geometry.Rotations.Ternary.Cayley.TernaryForm.NonNullEvenClifford.rotationSpreadAt_eq_rotationSpread
-    ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capValue form) anchor defined))
+    (TernaryForm.rotationSpreadAt form)
+      ((TernaryForm.capRotation form) anchor defined) vector nonNull =
+      (TernaryForm.rotationSpread form)
+        ((TernaryForm.capRotation form) anchor defined) := by
+  exact (TernaryForm.NonNullEvenClifford.rotationSpreadAt_eq_rotationSpread
+    ((TernaryForm.capValue form) anchor defined))
     vector nonNull perpendicular twoNonzero
 
 /-! ## Homogeneous and affine anchor products -/
 
 /-- The total homogeneous anchor product. This is the even Clifford product under its geometric name; it remains defined
 when an affine normalization is not. -/
-def TernaryForm.homogeneousAnchorProduct (form : Ternary.Basic.TernaryForm K)
+def TernaryForm.homogeneousAnchorProduct (form : TernaryForm K)
     (left right : form.EvenClifford) : form.EvenClifford :=
   EvenClifford.mul left right
 
 /-- Scalar denominator for the affine product of two anchors. -/
-def TernaryForm.anchorProductDenominator (form : Ternary.Basic.TernaryForm K)
+def TernaryForm.anchorProductDenominator (form : TernaryForm K)
     (left right : Coordinates3.Vector K) : K :=
   1 - form.determinant * form.bilinear left right
 
 /-- Numerator vector for the affine product of two anchors. -/
-def TernaryForm.anchorProductNumerator (form : Ternary.Basic.TernaryForm K)
+def TernaryForm.anchorProductNumerator (form : TernaryForm K)
     (left right : Coordinates3.Vector K) : Coordinates3.Vector K :=
   Coordinates3.Vector.sub (Coordinates3.Vector.add left right) (form.cliffordCross left right)
 
 /-- The normalized form-relative anchor product. -/
-def TernaryForm.anchorProduct (form : Ternary.Basic.TernaryForm K) (left right : Coordinates3.Vector K)
-    (_defined : (Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right ≠ 0) :
+def TernaryForm.anchorProduct (form : TernaryForm K) (left right : Coordinates3.Vector K)
+    (_defined : (TernaryForm.anchorProductDenominator form) left right ≠ 0) :
       Coordinates3.Vector K :=
-  Coordinates3.Vector.scale ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right)⁻¹
-    ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductNumerator form) left right)
+  Coordinates3.Vector.scale ((TernaryForm.anchorProductDenominator form) left right)⁻¹
+    ((TernaryForm.anchorProductNumerator form) left right)
 
 /-- Multiplying scalar-one representatives gives the anchor-product denominator and numerator. -/
-theorem TernaryForm.mul_capRepresentative (form : Ternary.Basic.TernaryForm K)
+theorem TernaryForm.mul_capRepresentative (form : TernaryForm K)
     (left right : Coordinates3.Vector K) :
-    EvenClifford.mul ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative form) left)
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative form) right) =
-      ⟨(Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right,
-        (Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductNumerator form) left right⟩ := by
+    EvenClifford.mul ((TernaryForm.capRepresentative form) left)
+        ((TernaryForm.capRepresentative form) right) =
+      ⟨(TernaryForm.anchorProductDenominator form) left right,
+        (TernaryForm.anchorProductNumerator form) left right⟩ := by
   apply EvenClifford.ext
-  · unfold EvenClifford.mul EvenClifford.productScalar Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative
-      Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator
+  · unfold EvenClifford.mul EvenClifford.productScalar TernaryForm.capRepresentative
+      TernaryForm.anchorProductDenominator
     ring1
   · ext <;> unfold EvenClifford.mul EvenClifford.productVector
-      Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative
-        Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductNumerator Coordinates3.Vector.add
+      TernaryForm.capRepresentative
+        TernaryForm.anchorProductNumerator Coordinates3.Vector.add
         Coordinates3.Vector.sub
       Coordinates3.Vector.scale <;> ring1
 
 /-- The exact denominator identity for the affine anchor product. -/
-theorem TernaryForm.cayleyDenominator_anchorProduct (form : Ternary.Basic.TernaryForm K)
+theorem TernaryForm.cayleyDenominator_anchorProduct (form : TernaryForm K)
     (left right : Coordinates3.Vector K)
-    (productDefined : (Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right ≠ 0) :
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form)
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProduct form) left right productDefined) =
-      (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) left *
-        (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) right /
-        (Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right ^ 2 := by
-  have denominatorCancel := Algebra.Field.ExplicitField.mul_inv_cancel
-    ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right) productDefined
+    (productDefined : (TernaryForm.anchorProductDenominator form) left right ≠ 0) :
+    (TernaryForm.cayleyDenominator form)
+        ((TernaryForm.anchorProduct form) left right productDefined) =
+      (TernaryForm.cayleyDenominator form) left *
+        (TernaryForm.cayleyDenominator form) right /
+        (TernaryForm.anchorProductDenominator form) left right ^ 2 := by
+  have denominatorCancel := ExplicitField.mul_inv_cancel
+    ((TernaryForm.anchorProductDenominator form) left right) productDefined
   have denominatorSquareCancel :
-      (Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right ^ 2 *
-          ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right)⁻¹ ^ 2 = 1 := by
+      (TernaryForm.anchorProductDenominator form) left right ^ 2 *
+          ((TernaryForm.anchorProductDenominator form) left right)⁻¹ ^ 2 = 1 := by
     calc
-      (Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right ^ 2 *
-          ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right)⁻¹ ^ 2 =
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right *
-          ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right)⁻¹) ^ 2 := by ring1
+      (TernaryForm.anchorProductDenominator form) left right ^ 2 *
+          ((TernaryForm.anchorProductDenominator form) left right)⁻¹ ^ 2 =
+        ((TernaryForm.anchorProductDenominator form) left right *
+          ((TernaryForm.anchorProductDenominator form) left right)⁻¹) ^ 2 := by ring1
       _ = 1 := by rw [denominatorCancel]; ring1
   have numeratorQuadrance := EvenClifford.quadrance_productVector form
     1 1 left right
   have productVectorEq :
       EvenClifford.productVector form 1 1 left right =
-        (Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductNumerator form) left right := by
-    ext <;> unfold EvenClifford.productVector Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductNumerator
+        (TernaryForm.anchorProductNumerator form) left right := by
+    ext <;> unfold EvenClifford.productVector TernaryForm.anchorProductNumerator
       Coordinates3.Vector.add Coordinates3.Vector.sub Coordinates3.Vector.scale <;> ring1
   rw [productVectorEq] at numeratorQuadrance
-  unfold Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator
-    Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProduct
+  unfold TernaryForm.cayleyDenominator
+    TernaryForm.anchorProduct
   rw [form.quadrance_scale]
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  simp only [ExplicitField.div_eq_mul_inv]
   rw [numeratorQuadrance]
-  unfold Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator
+  unfold TernaryForm.anchorProductDenominator
   change
       (1 - form.determinant * form.bilinear left right) ^ 2 *
         (1 - form.determinant * form.bilinear left right)⁻¹ ^ 2 = 1
@@ -591,8 +593,8 @@ theorem TernaryForm.cayleyDenominator_anchorProduct (form : Ternary.Basic.Ternar
     _ = ((1 + form.determinant * form.quadrance left) *
           (1 + form.determinant * form.quadrance right)) *
         ((1 - form.determinant * form.bilinear left right) ^ 2)⁻¹ := by
-      have inverseSquare := (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] {value : K} (valueNonzero : value
-        ≠ 0) => (Purelib.Algebra.Field.Inverse.inverse_square (K := K) (value := value) valueNonzero : (value ^ 2)⁻¹ =
+      have inverseSquare := (fun {K : Type _} [ExplicitField K] {value : K} (valueNonzero : value
+        ≠ 0) => (Inverse.inverse_square (K := K) (value := value) valueNonzero : (value ^ 2)⁻¹ =
         value⁻¹ ^ 2))
         productDefined
       change
@@ -602,163 +604,163 @@ theorem TernaryForm.cayleyDenominator_anchorProduct (form : Ternary.Basic.Ternar
       rw [inverseSquare]
 
 /-- Defined input caps and a nonzero affine product denominator constructively certify the output cap denominator. -/
-theorem TernaryForm.cayleyDenominator_anchorProduct_ne_zero (form : Ternary.Basic.TernaryForm K)
+theorem TernaryForm.cayleyDenominator_anchorProduct_ne_zero (form : TernaryForm K)
     (left right : Coordinates3.Vector K)
-    (leftDefined : (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) left ≠ 0)
-    (rightDefined : (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) right ≠ 0)
-    (productDefined : (Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right ≠ 0) :
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form)
-      ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProduct form) left right productDefined) ≠ 0 := by
-  rw [(Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator_anchorProduct form) left right productDefined]
-  exact Algebra.Field.ExplicitField.div_ne_zero
-    (Algebra.Field.ExplicitField.mul_ne_zero leftDefined rightDefined)
-    ((fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] {value : K} (valueNonzero : value ≠ 0) =>
-      (Purelib.Algebra.Field.ExplicitField.square_nonzero_of_nonzero (K := K) (value := value) valueNonzero : value ^ 2
+    (leftDefined : (TernaryForm.cayleyDenominator form) left ≠ 0)
+    (rightDefined : (TernaryForm.cayleyDenominator form) right ≠ 0)
+    (productDefined : (TernaryForm.anchorProductDenominator form) left right ≠ 0) :
+    (TernaryForm.cayleyDenominator form)
+      ((TernaryForm.anchorProduct form) left right productDefined) ≠ 0 := by
+  rw [(TernaryForm.cayleyDenominator_anchorProduct form) left right productDefined]
+  exact ExplicitField.div_ne_zero
+    (ExplicitField.mul_ne_zero leftDefined rightDefined)
+    ((fun {K : Type _} [ExplicitField K] {value : K} (valueNonzero : value ≠ 0) =>
+      (ExplicitField.square_nonzero_of_nonzero (K := K) (value := value) valueNonzero : value ^ 2
       ≠ 0)) productDefined)
 
 /-- The product of scalar-one representatives is the normalized anchor representative scaled by the product denominator.
 -/
-theorem TernaryForm.capRepresentative_anchorProduct_scale (form : Ternary.Basic.TernaryForm K)
+theorem TernaryForm.capRepresentative_anchorProduct_scale (form : TernaryForm K)
     (left right : Coordinates3.Vector K)
-    (productDefined : (Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right ≠ 0) :
-    EvenClifford.mul ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative form) left)
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative form) right) =
-      EvenClifford.scale ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right)
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative form)
-          ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProduct form) left right productDefined)) := by
-  rw [(Geometry.Rotations.Ternary.Cayley.TernaryForm.mul_capRepresentative form)]
+    (productDefined : (TernaryForm.anchorProductDenominator form) left right ≠ 0) :
+    EvenClifford.mul ((TernaryForm.capRepresentative form) left)
+        ((TernaryForm.capRepresentative form) right) =
+      EvenClifford.scale ((TernaryForm.anchorProductDenominator form) left right)
+        ((TernaryForm.capRepresentative form)
+          ((TernaryForm.anchorProduct form) left right productDefined)) := by
+  rw [(TernaryForm.mul_capRepresentative form)]
   apply EvenClifford.ext
-  · unfold EvenClifford.scale Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative
+  · unfold EvenClifford.scale TernaryForm.capRepresentative
     ring1
-  · have cancel := Algebra.Field.ExplicitField.mul_inv_cancel
-      ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right) productDefined
+  · have cancel := ExplicitField.mul_inv_cancel
+      ((TernaryForm.anchorProductDenominator form) left right) productDefined
     apply Coordinates3.Vector.ext
-    · change ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductNumerator form) left right).t =
-        (Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right *
-          (((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right)⁻¹ *
-            ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductNumerator form) left right).t)
+    · change ((TernaryForm.anchorProductNumerator form) left right).t =
+        (TernaryForm.anchorProductDenominator form) left right *
+          (((TernaryForm.anchorProductDenominator form) left right)⁻¹ *
+            ((TernaryForm.anchorProductNumerator form) left right).t)
       calc
-        _ = 1 * ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductNumerator form) left right).t := by
+        _ = 1 * ((TernaryForm.anchorProductNumerator form) left right).t := by
           rw [one_mul]
-        _ = ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right *
-              ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right)⁻¹) *
-            ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductNumerator form) left right).t := by rw [cancel]
+        _ = ((TernaryForm.anchorProductDenominator form) left right *
+              ((TernaryForm.anchorProductDenominator form) left right)⁻¹) *
+            ((TernaryForm.anchorProductNumerator form) left right).t := by rw [cancel]
         _ = _ := by ring1
-    · change ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductNumerator form) left right).r =
-        (Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right *
-          (((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right)⁻¹ *
-            ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductNumerator form) left right).r)
+    · change ((TernaryForm.anchorProductNumerator form) left right).r =
+        (TernaryForm.anchorProductDenominator form) left right *
+          (((TernaryForm.anchorProductDenominator form) left right)⁻¹ *
+            ((TernaryForm.anchorProductNumerator form) left right).r)
       calc
-        _ = 1 * ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductNumerator form) left right).r := by
+        _ = 1 * ((TernaryForm.anchorProductNumerator form) left right).r := by
           rw [one_mul]
-        _ = ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right *
-              ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right)⁻¹) *
-            ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductNumerator form) left right).r := by rw [cancel]
+        _ = ((TernaryForm.anchorProductDenominator form) left right *
+              ((TernaryForm.anchorProductDenominator form) left right)⁻¹) *
+            ((TernaryForm.anchorProductNumerator form) left right).r := by rw [cancel]
         _ = _ := by ring1
-    · change ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductNumerator form) left right).s =
-        (Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right *
-          (((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right)⁻¹ *
-            ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductNumerator form) left right).s)
+    · change ((TernaryForm.anchorProductNumerator form) left right).s =
+        (TernaryForm.anchorProductDenominator form) left right *
+          (((TernaryForm.anchorProductDenominator form) left right)⁻¹ *
+            ((TernaryForm.anchorProductNumerator form) left right).s)
       calc
-        _ = 1 * ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductNumerator form) left right).s := by
+        _ = 1 * ((TernaryForm.anchorProductNumerator form) left right).s := by
           rw [one_mul]
-        _ = ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right *
-              ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right)⁻¹) *
-            ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductNumerator form) left right).s := by rw [cancel]
+        _ = ((TernaryForm.anchorProductDenominator form) left right *
+              ((TernaryForm.anchorProductDenominator form) left right)⁻¹) *
+            ((TernaryForm.anchorProductNumerator form) left right).s := by rw [cancel]
         _ = _ := by ring1
 
 /-- Form-relative Theorem 46: whenever all displayed affine denominators are nonzero, multiplication of caps is the cap
 of the determinant-corrected anchor product. -/
-theorem TernaryForm.capRotation_mul (form : Ternary.Basic.TernaryForm K)
+theorem TernaryForm.capRotation_mul (form : TernaryForm K)
     (left right : Coordinates3.Vector K)
-    (leftDefined : (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) left ≠ 0)
-    (rightDefined : (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) right ≠ 0)
-    (productDefined : (Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right ≠ 0) :
+    (leftDefined : (TernaryForm.cayleyDenominator form) left ≠ 0)
+    (rightDefined : (TernaryForm.cayleyDenominator form) right ≠ 0)
+    (productDefined : (TernaryForm.anchorProductDenominator form) left right ≠ 0) :
     SpecialOrthogonal.mul
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capRotation form) left leftDefined)
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capRotation form) right rightDefined) =
-      (Geometry.Rotations.Ternary.Cayley.TernaryForm.capRotation form)
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProduct form) left right productDefined)
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator_anchorProduct_ne_zero form) left right
+        ((TernaryForm.capRotation form) left leftDefined)
+        ((TernaryForm.capRotation form) right rightDefined) =
+      (TernaryForm.capRotation form)
+        ((TernaryForm.anchorProduct form) left right productDefined)
+        ((TernaryForm.cayleyDenominator_anchorProduct_ne_zero form) left right
           leftDefined rightDefined productDefined) := by
-  let outputDefined := (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator_anchorProduct_ne_zero form)
+  let outputDefined := (TernaryForm.cayleyDenominator_anchorProduct_ne_zero form)
     left right leftDefined rightDefined productDefined
   have equivalent :
       (NonNullEvenClifford.Equivalent (NonNullEvenClifford.mul
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capValue form) left leftDefined)
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capValue form) right rightDefined)))
-          ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capValue form)
-            ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProduct form) left right productDefined)
+        ((TernaryForm.capValue form) left leftDefined)
+        ((TernaryForm.capValue form) right rightDefined)))
+          ((TernaryForm.capValue form)
+            ((TernaryForm.anchorProduct form) left right productDefined)
             outputDefined) := by
-    refine ⟨((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right)⁻¹,
-      Algebra.Field.ExplicitField.inv_ne_zero productDefined, ?_⟩
-    change (Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative form)
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProduct form) left right productDefined) =
-      EvenClifford.scale ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right)⁻¹
-        (EvenClifford.mul ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative form) left)
-          ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative form) right))
-    rw [(Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative_anchorProduct_scale form)]
+    refine ⟨((TernaryForm.anchorProductDenominator form) left right)⁻¹,
+      ExplicitField.inv_ne_zero productDefined, ?_⟩
+    change (TernaryForm.capRepresentative form)
+        ((TernaryForm.anchorProduct form) left right productDefined) =
+      EvenClifford.scale ((TernaryForm.anchorProductDenominator form) left right)⁻¹
+        (EvenClifford.mul ((TernaryForm.capRepresentative form) left)
+          ((TernaryForm.capRepresentative form) right))
+    rw [(TernaryForm.capRepresentative_anchorProduct_scale form)]
     rw [EvenClifford.scale_scale]
-    have cancel := Algebra.Field.ExplicitField.mul_inv_cancel
-      ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right) productDefined
+    have cancel := ExplicitField.mul_inv_cancel
+      ((TernaryForm.anchorProductDenominator form) left right) productDefined
     have reverseCancel :
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right)⁻¹ *
-          (Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right = 1 := by
+        ((TernaryForm.anchorProductDenominator form) left right)⁻¹ *
+          (TernaryForm.anchorProductDenominator form) left right = 1 := by
       calc
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right)⁻¹ *
-            (Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right =
-          (Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right *
-            ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProductDenominator form) left right)⁻¹ := by ring1
+        ((TernaryForm.anchorProductDenominator form) left right)⁻¹ *
+            (TernaryForm.anchorProductDenominator form) left right =
+          (TernaryForm.anchorProductDenominator form) left right *
+            ((TernaryForm.anchorProductDenominator form) left right)⁻¹ := by ring1
         _ = 1 := cancel
     rw [reverseCancel, EvenClifford.one_scale]
   calc
     SpecialOrthogonal.mul
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capRotation form) left leftDefined)
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capRotation form) right rightDefined) =
+        ((TernaryForm.capRotation form) left leftDefined)
+        ((TernaryForm.capRotation form) right rightDefined) =
       (NonNullEvenClifford.actionRotation (NonNullEvenClifford.mul
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capValue form) left leftDefined)
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capValue form) right rightDefined))) :=
+        ((TernaryForm.capValue form) left leftDefined)
+        ((TernaryForm.capValue form) right rightDefined))) :=
           (NonNullEvenClifford.actionRotation_mul _ _).symm
-    _ = (NonNullEvenClifford.actionRotation ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capValue form)
-      ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProduct form) left right productDefined)
+    _ = (NonNullEvenClifford.actionRotation ((TernaryForm.capValue form)
+      ((TernaryForm.anchorProduct form) left right productDefined)
           outputDefined)) :=
       NonNullEvenClifford.actionRotation_respects_equivalent equivalent
-    _ = (Geometry.Rotations.Ternary.Cayley.TernaryForm.capRotation form)
-      ((Geometry.Rotations.Ternary.Cayley.TernaryForm.anchorProduct form) left right productDefined)
+    _ = (TernaryForm.capRotation form)
+      ((TernaryForm.anchorProduct form) left right productDefined)
         outputDefined := rfl
 
 /-! ## Affine normalization and the projective chart boundary -/
 
 set_option genInjectivity false in
 /-- Cached normalization of a non-null Clifford representative whose scalar coordinate is nonzero. -/
-structure TernaryForm.CapNormalization (form : Ternary.Basic.TernaryForm K)
+structure TernaryForm.CapNormalization (form : TernaryForm K)
     (value : form.NonNullEvenClifford) where
   /-- The cached scalar-normalized affine anchor. -/ anchor : Coordinates3.Vector K
   /-- The cached anchor has nonzero cap denominator. -/ defined :
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) anchor ≠ 0
+    (TernaryForm.cayleyDenominator form) anchor ≠ 0
   /-- The cached cap representative is projectively equivalent to the original Clifford value. -/ equivalent :
-    (NonNullEvenClifford.Equivalent ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capValue form) anchor defined))
+    (NonNullEvenClifford.Equivalent ((TernaryForm.capValue form) anchor defined))
     value
 
 constructive_injectivity TernaryForm.CapNormalization
 
 /-- Normalize a displayed Clifford representative into the affine cap chart. The scalar coordinate, anchor, denominator
 certificate, and projective scale are all computed explicitly. -/
-def TernaryForm.capNormalization (form : Ternary.Basic.TernaryForm K)
+def TernaryForm.capNormalization (form : TernaryForm K)
     (value : form.NonNullEvenClifford)
     (scalarNonzero : value.toEvenClifford.scalar ≠ 0) :
-    Geometry.Rotations.Ternary.Cayley.TernaryForm.CapNormalization form value := by
+    TernaryForm.CapNormalization form value := by
   let anchor := Coordinates3.Vector.scale value.toEvenClifford.scalar⁻¹
     value.toEvenClifford.vector
-  have scalarCancel := Algebra.Field.ExplicitField.mul_inv_cancel
+  have scalarCancel := ExplicitField.mul_inv_cancel
     value.toEvenClifford.scalar scalarNonzero
   have scaledRepresentative :
       value.toEvenClifford =
-        Purelib.Algebra.Clifford.Ternary.Basic.TernaryForm.EvenClifford.scale value.toEvenClifford.scalar
-          ((Purelib.Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative form) anchor) := by
+        EvenClifford.scale value.toEvenClifford.scalar
+          ((TernaryForm.capRepresentative form) anchor) := by
     apply EvenClifford.ext
-    · unfold Purelib.Algebra.Clifford.Ternary.Basic.TernaryForm.EvenClifford.scale
-        Purelib.Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative
+    · unfold EvenClifford.scale
+        TernaryForm.capRepresentative
       ring1
     · apply Coordinates3.Vector.ext
       · change value.toEvenClifford.vector.t =
@@ -791,20 +793,20 @@ def TernaryForm.capNormalization (form : Ternary.Basic.TernaryForm K)
                 value.toEvenClifford.scalar⁻¹) *
               value.toEvenClifford.vector.s := by rw [scalarCancel]
           _ = _ := by ring1
-  have defined : (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) anchor ≠ 0 := by
+  have defined : (TernaryForm.cayleyDenominator form) anchor ≠ 0 := by
     intro denominatorZero
     apply value.normNonzero
     calc
       (EvenClifford.norm value.toEvenClifford) =
-          (EvenClifford.norm (Purelib.Algebra.Clifford.Ternary.Basic.TernaryForm.EvenClifford.scale
+          (EvenClifford.norm (EvenClifford.scale
             value.toEvenClifford.scalar
-            ((Purelib.Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative form) anchor))) := by
+            ((TernaryForm.capRepresentative form) anchor))) := by
               rw [← scaledRepresentative]
       _ = value.toEvenClifford.scalar ^ 2 *
-          (EvenClifford.norm ((Purelib.Geometry.Rotations.Ternary.Cayley.TernaryForm.capRepresentative form) anchor)) :=
+          (EvenClifford.norm ((TernaryForm.capRepresentative form) anchor)) :=
         EvenClifford.norm_scale _ _
       _ = 0 := by
-        rw [(Geometry.Rotations.Ternary.Cayley.TernaryForm.norm_capRepresentative form), denominatorZero, mul_zero]
+        rw [(TernaryForm.norm_capRepresentative form), denominatorZero, mul_zero]
   exact
     { anchor := anchor
       defined := defined
@@ -814,16 +816,16 @@ def TernaryForm.capNormalization (form : Ternary.Basic.TernaryForm K)
 
 /-- The normalized cap and its original Clifford representative define the same rotation. -/
 theorem TernaryForm.CapNormalization.actionRotation_eq
-    {form : Ternary.Basic.TernaryForm K} {value : form.NonNullEvenClifford}
-    (normalization : Geometry.Rotations.Ternary.Cayley.TernaryForm.CapNormalization form value) :
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.capRotation form) normalization.anchor normalization.defined =
+    {form : TernaryForm K} {value : form.NonNullEvenClifford}
+    (normalization : TernaryForm.CapNormalization form value) :
+    (TernaryForm.capRotation form) normalization.anchor normalization.defined =
       (NonNullEvenClifford.actionRotation value) := by
   exact NonNullEvenClifford.actionRotation_respects_equivalent
     normalization.equivalent
 
 /-- A scalar-zero non-null representative has a non-null vector coordinate. -/
 theorem TernaryForm.NonNullEvenClifford.vectorNonNull_of_scalar_eq_zero
-    {form : Ternary.Basic.TernaryForm K} (value : form.NonNullEvenClifford)
+    {form : TernaryForm K} (value : form.NonNullEvenClifford)
     (scalarZero : value.toEvenClifford.scalar = 0) :
     form.quadrance value.toEvenClifford.vector ≠ 0 := by
   intro vectorNull
@@ -835,13 +837,13 @@ theorem TernaryForm.NonNullEvenClifford.vectorNonNull_of_scalar_eq_zero
 /-- A non-null Clifford representative with scalar coordinate zero acts by the half turn around its vector coordinate.
 -/
 theorem TernaryForm.NonNullEvenClifford.actionRotation_eq_halfTurn_of_scalar_eq_zero
-    {form : Ternary.Basic.TernaryForm K} (value : form.NonNullEvenClifford)
+    {form : TernaryForm K} (value : form.NonNullEvenClifford)
     (scalarZero : value.toEvenClifford.scalar = 0) :
     (NonNullEvenClifford.actionRotation value) =
       form.halfTurnRotation value.toEvenClifford.vector
-        ((Geometry.Rotations.Ternary.Cayley.TernaryForm.NonNullEvenClifford.vectorNonNull_of_scalar_eq_zero value)
+        ((TernaryForm.NonNullEvenClifford.vectorNonNull_of_scalar_eq_zero value)
           scalarZero) := by
-  let nonNull := (Geometry.Rotations.Ternary.Cayley.TernaryForm.NonNullEvenClifford.vectorNonNull_of_scalar_eq_zero
+  let nonNull := (TernaryForm.NonNullEvenClifford.vectorNonNull_of_scalar_eq_zero
     value) scalarZero
   have valueEq :
       value = NonNullEvenClifford.halfTurnValue form
@@ -860,10 +862,10 @@ theorem TernaryForm.NonNullEvenClifford.actionRotation_eq_halfTurn_of_scalar_eq_
 
 set_option genInjectivity false in
 /-- The two constructive charts of a non-null Clifford representative. -/
-inductive TernaryForm.CliffordChart (form : Ternary.Basic.TernaryForm K)
+inductive TernaryForm.CliffordChart (form : TernaryForm K)
     (value : form.NonNullEvenClifford) where
   /-- A scalar-nonzero representative is retained through its certified affine normalization. -/ | affine (normalization
-    : Geometry.Rotations.Ternary.Cayley.TernaryForm.CapNormalization form value)
+    : TernaryForm.CapNormalization form value)
   /-- A scalar-zero representative retains its non-null axis and equality with the corresponding half turn. -/ |
     atInfinity
       (scalarZero : value.toEvenClifford.scalar = 0)
@@ -875,66 +877,66 @@ constructive_injectivity TernaryForm.CliffordChart
 
 /-- Execute the affine/half-turn chart decision once and cache all resulting denominators and representation
 certificates. -/
-def TernaryForm.cliffordChart [DecidableEq K] (form : Ternary.Basic.TernaryForm K)
-    (value : form.NonNullEvenClifford) : Geometry.Rotations.Ternary.Cayley.TernaryForm.CliffordChart form value := by
+def TernaryForm.cliffordChart [DecidableEq K] (form : TernaryForm K)
+    (value : form.NonNullEvenClifford) : TernaryForm.CliffordChart form value := by
   by_cases scalarZero : value.toEvenClifford.scalar = 0
   · exact Geometry.Rotations.Ternary.Cayley.TernaryForm.CliffordChart.atInfinity scalarZero
-      ((Geometry.Rotations.Ternary.Cayley.TernaryForm.NonNullEvenClifford.vectorNonNull_of_scalar_eq_zero value)
+      ((TernaryForm.NonNullEvenClifford.vectorNonNull_of_scalar_eq_zero value)
         scalarZero)
-      ((Geometry.Rotations.Ternary.Cayley.TernaryForm.NonNullEvenClifford.actionRotation_eq_halfTurn_of_scalar_eq_zero
+      ((TernaryForm.NonNullEvenClifford.actionRotation_eq_halfTurn_of_scalar_eq_zero
         value) scalarZero)
-  · exact Geometry.Rotations.Ternary.Cayley.TernaryForm.CliffordChart.affine
-      ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capNormalization form) value scalarZero)
+  · exact TernaryForm.CliffordChart.affine
+      ((TernaryForm.capNormalization form) value scalarZero)
 
 /-- A half turn around a non-null axis has half spread one when two is nonzero. -/
-theorem TernaryForm.rotationHalfSpread_halfTurn (form : Ternary.Basic.TernaryForm K)
+theorem TernaryForm.rotationHalfSpread_halfTurn (form : TernaryForm K)
     (axis : Coordinates3.Vector K) (nonNull : form.quadrance axis ≠ 0)
     (twoNonzero : (2 : K) ≠ 0) :
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread form) (form.halfTurnRotation axis nonNull) = 1 :=
+    (TernaryForm.rotationHalfSpread form) (form.halfTurnRotation axis nonNull) = 1 :=
       by
   rw [← NonNullEvenClifford.halfTurnValue_actionRotation]
-  rw [Geometry.Rotations.Ternary.Cayley.TernaryForm.NonNullEvenClifford.rotationHalfSpread_actionRotation _ twoNonzero]
+  rw [TernaryForm.NonNullEvenClifford.rotationHalfSpread_actionRotation _ twoNonzero]
   rw [NonNullEvenClifford.halfTurnValue_norm]
-  have productNonzero := Algebra.Field.ExplicitField.mul_ne_zero
+  have productNonzero := ExplicitField.mul_ne_zero
     form.determinantNonzero nonNull
   change form.determinant * form.quadrance axis /
       (form.determinant * form.quadrance axis) = 1
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
-  exact Algebra.Field.ExplicitField.mul_inv_cancel _ productNonzero
+  simp only [ExplicitField.div_eq_mul_inv]
+  exact ExplicitField.mul_inv_cancel _ productNonzero
 
 /-- A defined affine cap cannot have half spread one when two is nonzero. -/
-theorem TernaryForm.rotationHalfSpread_cap_ne_one (form : Ternary.Basic.TernaryForm K)
-    (anchor : Coordinates3.Vector K) (defined : (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form)
+theorem TernaryForm.rotationHalfSpread_cap_ne_one (form : TernaryForm K)
+    (anchor : Coordinates3.Vector K) (defined : (TernaryForm.cayleyDenominator form)
       anchor ≠ 0)
     (twoNonzero : (2 : K) ≠ 0) :
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread form)
-      ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capRotation form) anchor defined) ≠ 1 := by
+    (TernaryForm.rotationHalfSpread form)
+      ((TernaryForm.capRotation form) anchor defined) ≠ 1 := by
   intro spreadOne
-  have formula := (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread_cap form) anchor defined twoNonzero
+  have formula := (TernaryForm.rotationHalfSpread_cap form) anchor defined twoNonzero
   rw [spreadOne] at formula
-  have denominatorCancel := Algebra.Field.ExplicitField.mul_inv_cancel
-    ((Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) anchor) defined
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv] at formula
+  have denominatorCancel := ExplicitField.mul_inv_cancel
+    ((TernaryForm.cayleyDenominator form) anchor) defined
+  simp only [ExplicitField.div_eq_mul_inv] at formula
   have weightedQuadranceEq :
       form.determinant * form.quadrance anchor =
-        (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) anchor := by
+        (TernaryForm.cayleyDenominator form) anchor := by
     calc
       form.determinant * form.quadrance anchor =
           form.determinant * form.quadrance anchor * 1 := by rw [mul_one]
       _ = form.determinant * form.quadrance anchor *
-          ((Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) anchor *
-            ((Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) anchor)⁻¹) := by rw
+          ((TernaryForm.cayleyDenominator form) anchor *
+            ((TernaryForm.cayleyDenominator form) anchor)⁻¹) := by rw
               [denominatorCancel]
-      _ = (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) anchor *
+      _ = (TernaryForm.cayleyDenominator form) anchor *
           (form.determinant * form.quadrance anchor *
-            ((Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) anchor)⁻¹) := by ring1
-      _ = (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) anchor * 1 := by rw [← formula]
-      _ = (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) anchor := by rw [mul_one]
+            ((TernaryForm.cayleyDenominator form) anchor)⁻¹) := by ring1
+      _ = (TernaryForm.cayleyDenominator form) anchor * 1 := by rw [← formula]
+      _ = (TernaryForm.cayleyDenominator form) anchor := by rw [mul_one]
   have impossible : (1 : K) = 0 := by
     calc
-      (1 : K) = (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) anchor -
+      (1 : K) = (TernaryForm.cayleyDenominator form) anchor -
           form.determinant * form.quadrance anchor := by
-        unfold Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator
+        unfold TernaryForm.cayleyDenominator
         ring1
       _ = 0 := by rw [← weightedQuadranceEq]; ring1
   exact form.one_ne_zero impossible
@@ -942,17 +944,17 @@ theorem TernaryForm.rotationHalfSpread_cap_ne_one (form : Ternary.Basic.TernaryF
 /-- Form-relative cap injectivity. Projective faithfulness supplies a scale, and the two scalar coordinates equal to one
 force that scale to be one. -/
 theorem TernaryForm.capRotation_injective [DecidableEq K]
-    (form : Ternary.Basic.TernaryForm K) (left right : Coordinates3.Vector K)
-    (leftDefined : (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) left ≠ 0)
-    (rightDefined : (Geometry.Rotations.Ternary.Cayley.TernaryForm.cayleyDenominator form) right ≠ 0)
+    (form : TernaryForm K) (left right : Coordinates3.Vector K)
+    (leftDefined : (TernaryForm.cayleyDenominator form) left ≠ 0)
+    (rightDefined : (TernaryForm.cayleyDenominator form) right ≠ 0)
     (twoNonzero : (2 : K) ≠ 0)
-    (equal : (Geometry.Rotations.Ternary.Cayley.TernaryForm.capRotation form) left leftDefined =
-      (Geometry.Rotations.Ternary.Cayley.TernaryForm.capRotation form) right rightDefined) :
+    (equal : (TernaryForm.capRotation form) left leftDefined =
+      (TernaryForm.capRotation form) right rightDefined) :
     left = right := by
   have equivalent :=
     (NonNullEvenClifford.actionRotation_eq_iff_equivalent
-      ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capValue form) left leftDefined)
-      ((Geometry.Rotations.Ternary.Cayley.TernaryForm.capValue form) right rightDefined) twoNonzero).1 equal
+      ((TernaryForm.capValue form) left leftDefined)
+      ((TernaryForm.capValue form) right rightDefined) twoNonzero).1 equal
   rcases equivalent with ⟨factor, factorNonzero, representativeEq⟩
   have scalarEq := congrArg EvenClifford.scalar representativeEq
   have factorOne : factor = 1 := by
@@ -969,10 +971,10 @@ set_option genInjectivity false in
 /-- Cached representative, chart, factorization, axis, and geometric spread data for an arbitrary displayed form
 rotation. The first half-turn axis from the constructive factorization is automatically a non-null perpendicular test
 direction for the product representative's vector coordinate. -/
-structure TernaryForm.RotationAxisSpreadWitness (form : Ternary.Basic.TernaryForm K)
+structure TernaryForm.RotationAxisSpreadWitness (form : TernaryForm K)
     (rotation : form.SpecialOrthogonal) where
   /-- The cached two-half-turn factorization of the input rotation. -/ factorization :
-    TernaryForm.TwoHalfTurnFactorization form rotation
+    TwoHalfTurnFactorization form rotation
   /-- The cached non-null Clifford representative. -/ representative : form.NonNullEvenClifford
   /-- The representative is exactly the preimage computed from the cached factorization. -/ representative_eq :
     representative = (TwoHalfTurnFactorization.cliffordPreimage factorization)
@@ -986,23 +988,23 @@ structure TernaryForm.RotationAxisSpreadWitness (form : Ternary.Basic.TernaryFor
   /-- The retained test direction is perpendicular to the cached axis. -/ perpendicularToAxis : form.Perpendicular
     perpendicular axis
   /-- The retained affine normalization or half-turn boundary classification. -/ chart :
-    Geometry.Rotations.Ternary.Cayley.TernaryForm.CliffordChart form representative
+    TernaryForm.CliffordChart form representative
   /-- The rotation half spread equals the determinant-weighted cached axis quadrance divided by the representative norm.
   -/ halfSpread_eq :
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread form) rotation =
+    (TernaryForm.rotationHalfSpread form) rotation =
       form.determinant * form.quadrance axis /
         (EvenClifford.norm representative.toEvenClifford)
   /-- The retained perpendicular test direction realizes the rotation spread. -/ spread_eq :
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationSpreadAt form) rotation perpendicular perpendicularNonNull =
-      (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationSpread form) rotation
+    (TernaryForm.rotationSpreadAt form) rotation perpendicular perpendicularNonNull =
+      (TernaryForm.rotationSpread form) rotation
 
 constructive_injectivity TernaryForm.RotationAxisSpreadWitness
 
 /-- The cached two-half-turn data are simultaneously the paper's two-reflection factorization: negating both reflection
 matrices leaves their product unchanged. -/
 theorem TernaryForm.TwoHalfTurnFactorization.reflectionProductMatrix
-    {form : Ternary.Basic.TernaryForm K} {rotation : form.SpecialOrthogonal}
-    (factorization : TernaryForm.TwoHalfTurnFactorization form rotation) :
+    {form : TernaryForm K} {rotation : form.SpecialOrthogonal}
+    (factorization : TwoHalfTurnFactorization form rotation) :
     Matrix3.mul
         (form.reflection factorization.firstAxis factorization.firstNonNull)
         (form.reflection factorization.secondAxis factorization.secondNonNull) =
@@ -1021,9 +1023,9 @@ theorem TernaryForm.TwoHalfTurnFactorization.reflectionProductMatrix
 /-- Construct the uniform form-relative axis/spread interface from the same cached two-half-turn data used by the
 projective Clifford correspondence. -/
 def TernaryForm.rotationAxisSpreadWitness [DecidableEq K]
-    (form : Ternary.Basic.TernaryForm K) (rotation : form.SpecialOrthogonal)
+    (form : TernaryForm K) (rotation : form.SpecialOrthogonal)
     (twoNonzero : (2 : K) ≠ 0) :
-    Geometry.Rotations.Ternary.Cayley.TernaryForm.RotationAxisSpreadWitness form rotation := by
+    TernaryForm.RotationAxisSpreadWitness form rotation := by
   let factorization := form.twoHalfTurnFactorization rotation twoNonzero
   let representative := (TwoHalfTurnFactorization.cliffordPreimage factorization)
   have represents : (NonNullEvenClifford.actionRotation representative) = rotation :=
@@ -1035,10 +1037,10 @@ def TernaryForm.rotationAxisSpreadWitness [DecidableEq K]
       (TernaryForm.TwoHalfTurnFactorization.firstAxis_perpendicular_cliffordPreimage
       factorization)
   have halfSpreadFormula :=
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.NonNullEvenClifford.rotationHalfSpread_actionRotation representative)
+    (TernaryForm.NonNullEvenClifford.rotationHalfSpread_actionRotation representative)
       twoNonzero
   have spreadFormula :=
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.NonNullEvenClifford.rotationSpreadAt_eq_rotationSpread
+    (TernaryForm.NonNullEvenClifford.rotationSpreadAt_eq_rotationSpread
       representative)
       factorization.firstAxis factorization.firstNonNull
       perpendicularToAxis twoNonzero
@@ -1053,25 +1055,25 @@ def TernaryForm.rotationAxisSpreadWitness [DecidableEq K]
       perpendicular := factorization.firstAxis
       perpendicularNonNull := factorization.firstNonNull
       perpendicularToAxis := perpendicularToAxis
-      chart := (Geometry.Rotations.Ternary.Cayley.TernaryForm.cliffordChart form) representative
+      chart := (TernaryForm.cliffordChart form) representative
       halfSpread_eq := halfSpreadFormula
       spread_eq := spreadFormula }
 
 /-- Uniform geometric-spread theorem for any other non-null direction perpendicular to the cached canonical axis. -/
 theorem TernaryForm.RotationAxisSpreadWitness.spread_independent
-    {form : Ternary.Basic.TernaryForm K} {rotation : form.SpecialOrthogonal}
-    (witness : Geometry.Rotations.Ternary.Cayley.TernaryForm.RotationAxisSpreadWitness form rotation)
+    {form : TernaryForm K} {rotation : form.SpecialOrthogonal}
+    (witness : TernaryForm.RotationAxisSpreadWitness form rotation)
     (vector : Coordinates3.Vector K) (nonNull : form.quadrance vector ≠ 0)
     (perpendicular : form.Perpendicular vector witness.axis)
     (twoNonzero : (2 : K) ≠ 0) :
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationSpreadAt form) rotation vector nonNull =
-      (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationSpread form) rotation := by
+    (TernaryForm.rotationSpreadAt form) rotation vector nonNull =
+      (TernaryForm.rotationSpread form) rotation := by
   have representativePerpendicular :
       form.Perpendicular vector witness.representative.toEvenClifford.vector := by
     rw [← witness.axis_eq]
     exact perpendicular
   have formula :=
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.NonNullEvenClifford.rotationSpreadAt_eq_rotationSpread
+    (TernaryForm.NonNullEvenClifford.rotationSpreadAt_eq_rotationSpread
       witness.representative)
       vector nonNull representativePerpendicular twoNonzero
   rw [witness.represents] at formula
@@ -1080,49 +1082,49 @@ theorem TernaryForm.RotationAxisSpreadWitness.spread_independent
 /-- Any rotation whose half spread is not one is recovered as the cap of an explicit normalized anchor computed from its
 cached representative. -/
 def TernaryForm.RotationAxisSpreadWitness.capNormalizationOfHalfSpreadNeOne
-    [DecidableEq K] {form : Ternary.Basic.TernaryForm K}
+    [DecidableEq K] {form : TernaryForm K}
     {rotation : form.SpecialOrthogonal}
-    (witness : Geometry.Rotations.Ternary.Cayley.TernaryForm.RotationAxisSpreadWitness form rotation)
+    (witness : TernaryForm.RotationAxisSpreadWitness form rotation)
     (twoNonzero : (2 : K) ≠ 0)
-    (notHalfTurn : (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread form) rotation ≠ 1) :
-    Geometry.Rotations.Ternary.Cayley.TernaryForm.CapNormalization form witness.representative := by
+    (notHalfTurn : (TernaryForm.rotationHalfSpread form) rotation ≠ 1) :
+    TernaryForm.CapNormalization form witness.representative := by
   have scalarNonzero :
       witness.representative.toEvenClifford.scalar ≠ 0 := by
     intro scalarZero
     apply notHalfTurn
     have vectorNonNull :=
-      (Geometry.Rotations.Ternary.Cayley.TernaryForm.NonNullEvenClifford.vectorNonNull_of_scalar_eq_zero
+      (TernaryForm.NonNullEvenClifford.vectorNonNull_of_scalar_eq_zero
         witness.representative) scalarZero
     calc
-      (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread form) rotation =
-          (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread form) (NonNullEvenClifford.actionRotation
+      (TernaryForm.rotationHalfSpread form) rotation =
+          (TernaryForm.rotationHalfSpread form) (NonNullEvenClifford.actionRotation
             witness.representative) := by
         rw [witness.represents]
-      _ = (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread form)
+      _ = (TernaryForm.rotationHalfSpread form)
           (form.halfTurnRotation
             witness.representative.toEvenClifford.vector vectorNonNull) := by
         rw
           [(NonNullEvenClifford.actionRotation_eq_halfTurn_of_scalar_eq_zero
           witness.representative)
           scalarZero]
-      _ = 1 := (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread_halfTurn form) _ vectorNonNull
+      _ = 1 := (TernaryForm.rotationHalfSpread_halfTurn form) _ vectorNonNull
         twoNonzero
-  exact (Geometry.Rotations.Ternary.Cayley.TernaryForm.capNormalization form) witness.representative scalarNonzero
+  exact (TernaryForm.capNormalization form) witness.representative scalarNonzero
 
 /-- Normalizing the cached representative recovers the original rotation whenever its half spread differs from one. -/
 theorem TernaryForm.RotationAxisSpreadWitness.cap_recovery
-    [DecidableEq K] {form : Ternary.Basic.TernaryForm K}
+    [DecidableEq K] {form : TernaryForm K}
     {rotation : form.SpecialOrthogonal}
-    (witness : Geometry.Rotations.Ternary.Cayley.TernaryForm.RotationAxisSpreadWitness form rotation)
+    (witness : TernaryForm.RotationAxisSpreadWitness form rotation)
     (twoNonzero : (2 : K) ≠ 0)
-    (notHalfTurn : (Geometry.Rotations.Ternary.Cayley.TernaryForm.rotationHalfSpread form) rotation ≠ 1) :
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.capRotation form)
+    (notHalfTurn : (TernaryForm.rotationHalfSpread form) rotation ≠ 1) :
+    (TernaryForm.capRotation form)
         (witness.capNormalizationOfHalfSpreadNeOne twoNonzero
           notHalfTurn).anchor
         (witness.capNormalizationOfHalfSpreadNeOne twoNonzero
           notHalfTurn).defined = rotation := by
   calc
-    (Geometry.Rotations.Ternary.Cayley.TernaryForm.capRotation form)
+    (TernaryForm.capRotation form)
         (witness.capNormalizationOfHalfSpreadNeOne twoNonzero
           notHalfTurn).anchor
         (witness.capNormalizationOfHalfSpreadNeOne twoNonzero

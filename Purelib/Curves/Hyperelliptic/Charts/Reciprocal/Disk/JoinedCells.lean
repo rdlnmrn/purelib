@@ -71,6 +71,10 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Data.Gaussian.Norm
+
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 open Purelib
@@ -112,40 +116,40 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CorrectedCells (Correct
 variable {genus count index depth readingIndex floor : Nat} {curve :
   HyperellipticCurve genus}
   {differential : Differential genus} {collar :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {parent :
-    Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {source :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
-  {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+    ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {parent :
+    Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap} {source :
+    UniformReciprocalPrimitives.SourcePrimitive data index}
+  {box : Geometry.Rational.Box} {capSample :
+    Cap.Primitives.Sample cap differential index box}
 
 namespace JoinedCells.ComparedCell
 
 /-- The original retained cap-cell total satisfies the parent's stage-independent slope and comparison ceiling. -/
-theorem cap_uniform_bound {edge : ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
+theorem cap_uniform_bound {edge : ParameterEdge} {cell :
   UniformReciprocalCover.Cell data edge}
-    {comparison : ArcSamples.Data regular cell} (compared : ParentCells.ComparedCell comparison source capSample depth)
-    (budget : ParentBank.Budget data) (bounded : comparison.scale ≤ budget.scale) :
-    Data.Gaussian.Norm.Basic.normSq compared.capSummary.total ≤ 2 * (budget.slope + budget.scale) := by
-  have widthNonnegative := Fraction.Order.Arithmetic.sub_nonneg_direct cell.ordered.le
+    {comparison : ArcSamples.Data regular cell} (compared : ComparedCell comparison source capSample depth)
+    (budget : Budget data) (bounded : comparison.scale ≤ budget.scale) :
+    Basic.normSq compared.capSummary.total ≤ 2 * (budget.slope + budget.scale) := by
+  have widthNonnegative := Arithmetic.sub_nonneg_direct cell.ordered.le
   have widthLe : edge.right.parameter - edge.left.parameter ≤ 1 := by
-    simpa only [(show (1 : InverseRootPolynomial.Coordinate) - 0 = 1 from by decide), -eq_self, -iff_self] using
-      Fraction.Order.Arithmetic.sub_le_sub_direct edge.right.inside.2 edge.left.inside.1
+    simpa only [(show (1 : Coordinate) - 0 = 1 from by decide), -eq_self, -iff_self] using
+      Arithmetic.sub_le_sub_direct edge.right.inside.2 edge.left.inside.1
   have squareLe : (edge.right.parameter - edge.left.parameter) ^ 2 ≤ 1 := by
     simpa only [pow_two, Fraction.Field.mul_one_direct, -eq_self, -iff_self] using
-      Fraction.Order.Arithmetic.mul_le_mul_direct widthLe widthLe widthNonnegative (by
-          decide : (0 : InverseRootPolynomial.Coordinate) ≤ 1)
+      Arithmetic.mul_le_mul_direct widthLe widthLe widthNonnegative (by
+          decide : (0 : Coordinate) ≤ 1)
   have scaleLe := Geometric.Basic.quarterRadius_le_scale budget.nonnegative index
   calc
     _ ≤ 2 * (budget.slope + Geometric.Basic.quarterRadius budget.scale index) *
         (edge.right.parameter - edge.left.parameter) ^ 2 := ComparedCell.cap_bound compared budget bounded
-    _ ≤ 2 * (budget.slope + budget.scale) * 1 := Fraction.Order.Arithmetic.mul_le_mul_direct
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add le_rfl scaleLe) (by decide))
-      squareLe (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg budget.slope_nonnegative budget.nonnegative))
+    _ ≤ 2 * (budget.slope + budget.scale) * 1 := Arithmetic.mul_le_mul_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add le_rfl scaleLe) (by decide))
+      squareLe (Arithmetic.sq_nonneg_direct _)
+      (Arithmetic.mul_nonneg_direct (by decide) (add_nonneg budget.slope_nonnegative budget.nonnegative))
     _ = _ := Fraction.Field.mul_one_direct _
 
 end JoinedCells.ComparedCell
@@ -156,12 +160,12 @@ variable {tolerance : Coordinate}
 
 -- Preserve the original JoinedCells.JoinedCells nominal path.
 /-- Read the original full cap paths with their actual endpoint and incoming-junction corrections attached. -/
-@[expose] def correctedPairs : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank
-  regular data edges} → {owners : ParentOwners.Owners bank} →
-    (requests : ParentEndpoints.EndpointRequests (tolerance / 4) floor owners) → (cells : ParentPaths.ComparedCells
+@[expose] def correctedPairs : {edges : List ParameterEdge} → {bank : Bank
+  regular data edges} → {owners : Owners bank} →
+    (requests : EndpointRequests (tolerance / 4) floor owners) → (cells : ComparedCells
       source capSample depth bank) →
-    EndpointRequests.EvaluationData (readingIndex := readingIndex) requests cells → InverseRootPolynomial.Gaussian →
-      List (List InverseRootPolynomial.Gaussian × List InverseRootPolynomial.Gaussian)
+    EndpointRequests.EvaluationData (readingIndex := readingIndex) requests cells → Gaussian →
+      List (List Gaussian × List Gaussian)
   | _, _, _, .nil, .nil, _, _ => []
   | _, _, _, .cons _ rest, .cons cell cells, readings, previous =>
       ((cell.sample.firstValue - readings.1.firstValue + (readings.1.firstValue - previous)) ::
@@ -177,35 +181,35 @@ set_option genInjectivity false in
 
 Every corrected block keeps its full fine path; the summary includes all internal and cross terms and telescopes to the
 actual final reading minus the supplied initial value. -/
-structure JoinedCells {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} {bank : ParentBank.Bank regular
-  data edges} {owners : ParentOwners.Owners bank}
-    {tolerance : InverseRootPolynomial.Coordinate} (requests : ParentEndpoints.EndpointRequests (tolerance / 4) floor
+structure JoinedCells {edges : List ParameterEdge} {bank : Bank regular
+  data edges} {owners : Owners bank}
+    {tolerance : Coordinate} (requests : EndpointRequests (tolerance / 4) floor
       owners)
-    (cells : ParentPaths.ComparedCells source capSample depth bank)
+    (cells : ComparedCells source capSample depth bank)
     (readings : EndpointRequests.EvaluationData (readingIndex := readingIndex) requests cells)
-    (previous : InverseRootPolynomial.Gaussian) (bound : InverseRootPolynomial.Coordinate) where
+    (previous : Gaussian) (bound : Coordinate) where
   /-- The cached corrected and original cap-path pairs in retained cell order. -/ pairs : List (List
-    InverseRootPolynomial.Gaussian × List InverseRootPolynomial.Gaussian)
+    Gaussian × List Gaussian)
   /-- The pairs are exactly the original paths with their actual retained endpoint corrections. -/ pairs_eq : pairs =
     JoinedCells.correctedPairs requests cells readings previous
   /-- The cached pair count equals the original covered-edge count. -/ length_eq : pairs.length = edges.length
   /-- The uncorrected projection preserves exactly the original complete cap path. -/ original_paths : (pairs.map
     Prod.snd).flatten = (cells.pairs.map Prod.snd).flatten
   /-- The cached corrected path summary including original internal excursions and block cross terms. -/ summary :
-    IncrementArea.Summary (pairs.map Prod.fst).flatten
-  /-- The cached actual final endpoint reading of the original cell bank. -/ lastValue : InverseRootPolynomial.Gaussian
+    Summary (pairs.map Prod.fst).flatten
+  /-- The cached actual final endpoint reading of the original cell bank. -/ lastValue : Gaussian
   /-- The final value is exactly the readback of the original retained endpoint evaluations. -/ lastValue_eq : lastValue
     = EndpointRequests.lastValue requests cells readings previous
   /-- The corrected path total is the actual original final reading minus the supplied incoming value. -/ total_eq :
     summary.total = lastValue - previous
   /-- Each actual corrected block retains paid area and total discrepancies and both original magnitude bounds. -/
     estimates : ∀ pair ∈ pairs,
-    Data.Gaussian.Norm.Basic.normSq (IncrementArea.pathArea pair.1 - IncrementArea.pathArea pair.2) ≤ 24 *
+    Basic.normSq (pathArea pair.1 - pathArea pair.2) ≤ 24 *
       tolerance * bound + 16 * tolerance ^ 2 ∧
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.1 -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2) ≤ tolerance ∧
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.1) ≤ 2 * (bound +
-      tolerance) ∧ Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2) ≤ 2 *
+    Basic.normSq (gaussianSum pair.1 -
+      gaussianSum pair.2) ≤ tolerance ∧
+    Basic.normSq (gaussianSum pair.1) ≤ 2 * (bound +
+      tolerance) ∧ Basic.normSq (gaussianSum pair.2) ≤ 2 *
       (bound + tolerance)
 
 constructive_injectivity JoinedCells
@@ -217,35 +221,35 @@ variable {tolerance : Coordinate}
 -- Preserve the original JoinedCells.JoinedCells nominal path.
 /-- Reuse the original compared cells and endpoint readings, then cache each corrected block and its aggregate path
 summary. -/
-@[expose] def build (budget : ParentBank.Budget data) (nonnegative : 0 ≤ tolerance) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      {owners : ParentOwners.Owners bank} →
-    (requests : ParentEndpoints.EndpointRequests (tolerance / 4) floor owners) → (cells : ParentPaths.ComparedCells
+@[expose] def build (budget : Budget data) (nonnegative : 0 ≤ tolerance) :
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      {owners : Owners bank} →
+    (requests : EndpointRequests (tolerance / 4) floor owners) → (cells : ComparedCells
       source capSample depth bank) →
     (readings : EndpointRequests.EvaluationData (readingIndex := readingIndex) requests cells) → (previous :
-      InverseRootPolynomial.Gaussian) →
+      Gaussian) →
     bank.Bounded budget.scale → EndpointRequests.GapsSmall requests cells readings previous (tolerance / 4) →
     JoinedCells requests cells readings previous (2 *
       (budget.slope + budget.scale))
   | _, _, _, .nil, .nil, _, previous, _, _ =>
-      ⟨[], rfl, rfl, rfl, IncrementArea.Summary.build [], previous, rfl, (Data.Gaussian.Basic.sub_self previous).symm,
+      ⟨[], rfl, rfl, rfl, Summary.build [], previous, rfl, (Data.Gaussian.Basic.sub_self previous).symm,
         fun _ member => False.elim (List.not_mem_nil member)⟩
   | _, _, _, .cons request rest, .cons cell cells, readings, previous, bounded, small => by
       let corrected := CorrectedCell.build cell readings.1 (readings.1.firstValue - previous)
       let tail := build budget nonnegative
         rest cells readings.2 readings.1.lastValue bounded.2 small.2
       let path := corrected.first :: (cell.capPath ++ [corrected.last])
-      have headBound := Curves.Hyperelliptic.Charts.Reciprocal.Disk.JoinedCells.ComparedCell.cap_uniform_bound cell
+      have headBound := ComparedCell.cap_uniform_bound cell
         budget bounded.1
-      have originalBound : Data.Gaussian.Norm.Basic.normSq cell.capSummary.total ≤ 2 * (2 * (budget.slope +
+      have originalBound : Basic.normSq cell.capSummary.total ≤ 2 * (2 * (budget.slope +
         budget.scale) + tolerance) := by
-        have boundNonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct (by
-            decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
+        have boundNonnegative := Arithmetic.mul_nonneg_direct (by
+            decide : (0 : Coordinate) ≤ 2)
           (add_nonneg budget.slope_nonnegative budget.nonnegative)
         exact headBound.trans ((le_add_of_nonneg_right nonnegative).trans (by
           simpa only [_root_.one_mul, -eq_self, -iff_self] using
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by
-                decide : (1 : InverseRootPolynomial.Coordinate) ≤ 2)
+            Arithmetic.mul_le_mul_of_nonneg_right_direct (by
+                decide : (1 : Coordinate) ≤ 2)
               (add_nonneg boundNonnegative nonnegative)))
       refine ⟨(path, cell.capPath) :: tail.pairs, ?_, congrArg Nat.succ tail.length_eq, ?_,
         corrected.summary.append tail.summary, tail.lastValue, tail.lastValue_eq, ?_, ?_⟩

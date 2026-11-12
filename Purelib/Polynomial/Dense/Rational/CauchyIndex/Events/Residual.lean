@@ -37,9 +37,9 @@ have opposite signs, or to vanish, at the two rational endpoints.  This is
 the finite sign-crossing fact needed for quantitative event approximation;
 it does not introduce a zero of the denominator between the endpoints. -/
 theorem denominator_endpoint_mul_nonpos_of_index_ne_zero
-    {R S : Dense.Rational.Basic.CoordinatePolynomial} {interval : Data.Rat.Interval.Bounds}
-    (resolution : Dense.Rational.CauchyIndex.Events.Resolution.Basic.CauchyEventResolution R S interval)
-    (indexNonzero : Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 R S
+    {R S : Basic.CoordinatePolynomial} {interval : Interval.Bounds}
+    (resolution : CauchyEventResolution R S interval)
+    (indexNonzero : Basic.Sturm.cauchyIndex2 R S
       interval.lower interval.upper ≠ 0) :
     S.eval interval.lower * S.eval interval.upper ≤ 0 := by
   cases resolution with
@@ -51,15 +51,15 @@ theorem denominator_endpoint_mul_nonpos_of_index_ne_zero
           0 < S.eval interval.lower * S.eval interval.upper :=
         lt_of_not_ge productNotNonpositive
       have denominatorSigns :
-          Data.Rat.Sign.Basic.sign (S.eval interval.lower) = Data.Rat.Sign.Basic.sign (S.eval interval.upper) :=
-        Data.Rat.Sign.Basic.sign_eq_of_mul_pos productPositive
+          Sign.Basic.sign (S.eval interval.lower) = Sign.Basic.sign (S.eval interval.upper) :=
+        Sign.Basic.sign_eq_of_mul_pos productPositive
       have numeratorSigns :
-          Data.Rat.Sign.Basic.sign (R.eval interval.lower) = Data.Rat.Sign.Basic.sign (R.eval interval.upper) :=
-        Data.Rat.Sign.Basic.sign_eq_of_mul_pos certificate.endpoint_stable
+          Sign.Basic.sign (R.eval interval.lower) = Sign.Basic.sign (R.eval interval.upper) :=
+        Sign.Basic.sign_eq_of_mul_pos certificate.endpoint_stable
       apply indexNonzero
-      rw [Dense.Rational.CauchyIndex.Events.Signs.Neutral.cauchyIndex2_eq_firstJumps_of_neutralTail
+      rw [Signs.Neutral.cauchyIndex2_eq_firstJumps_of_neutralTail
         certificate.polynomial_nonzero tail]
-      unfold Data.Rat.Sign.Jump.signJump
+      unfold Sign.Jump.signJump
       rw [denominatorSigns, numeratorSigns]
       ring1
 
@@ -70,27 +70,27 @@ by the existing finite Horner scan.
 The scalar transport retains the original factor, box and boundary witness. Its winding identity uses the same retained
 nonzero constant and factor values. -/
 theorem denominator_lower_eval_sq_le
-    {R S : Dense.Rational.Basic.CoordinatePolynomial} {interval : Data.Rat.Interval.Bounds}
-    (resolution : Dense.Rational.CauchyIndex.Events.Resolution.Basic.CauchyEventResolution R S interval)
-    (indexNonzero : Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 R S
+    {R S : Basic.CoordinatePolynomial} {interval : Interval.Bounds}
+    (resolution : CauchyEventResolution R S interval)
+    (indexNonzero : Basic.Sturm.cauchyIndex2 R S
       interval.lower interval.upper ≠ 0) :
     S.eval interval.lower ^ 2 ≤
-      Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound S interval *
+      Bounds.Lipschitz.denseEvalSqLipschitzBound S interval *
         (interval.upper - interval.lower) ^ 2 := by
   have product :=
     resolution.denominator_endpoint_mul_nonpos_of_index_ne_zero indexNonzero
   have endpoint :=
-    Purelib.Data.Rat.Bounds.Square.left_sq_le_sub_sq_of_mul_nonpos
+    Bounds.Square.left_sq_le_sub_sq_of_mul_nonpos
     product
-  have difference := Dense.Rational.Bounds.Lipschitz.eval_sub_sq_le S interval
+  have difference := Bounds.Lipschitz.eval_sub_sq_le S interval
     (⟨le_rfl, interval.valid⟩ : interval.Contains interval.lower)
     (⟨interval.valid, le_rfl⟩ : interval.Contains interval.upper)
   calc
     S.eval interval.lower ^ 2 ≤
         (S.eval interval.lower - S.eval interval.upper) ^ 2 := endpoint
-    _ ≤ Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound S interval *
+    _ ≤ Bounds.Lipschitz.denseEvalSqLipschitzBound S interval *
         (interval.lower - interval.upper) ^ 2 := difference
-    _ = Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound S interval *
+    _ = Bounds.Lipschitz.denseEvalSqLipschitzBound S interval *
         (interval.upper - interval.lower) ^ 2 := by
       ring1
 
@@ -102,41 +102,41 @@ select or complete a root.
 The scalar transport retains the original factor, box and boundary witness. Its winding identity uses the same retained
 nonzero constant and factor values. -/
 theorem denominator_eval_sq_le
-    {R S : Dense.Rational.Basic.CoordinatePolynomial} {interval : Data.Rat.Interval.Bounds}
-    (resolution : Dense.Rational.CauchyIndex.Events.Resolution.Basic.CauchyEventResolution R S interval)
-    (indexNonzero : Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 R S
+    {R S : Basic.CoordinatePolynomial} {interval : Interval.Bounds}
+    (resolution : CauchyEventResolution R S interval)
+    (indexNonzero : Basic.Sturm.cauchyIndex2 R S
       interval.lower interval.upper ≠ 0)
     (parameter : Fraction.Rational) (inside : interval.Contains parameter) :
     S.eval parameter ^ 2 ≤
-      4 * Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound S interval *
+      4 * Bounds.Lipschitz.denseEvalSqLipschitzBound S interval *
         (interval.upper - interval.lower) ^ 2 := by
   let lipschitz :=
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound S interval
+    Bounds.Lipschitz.denseEvalSqLipschitzBound S interval
   let widthSq := (interval.upper - interval.lower) ^ 2
   let scale := lipschitz * widthSq
   change S.eval parameter ^ 2 ≤ 4 * lipschitz * widthSq
   have lowerBound : S.eval interval.lower ^ 2 ≤ scale := by
     simpa only [lipschitz, widthSq, scale] using
       resolution.denominator_lower_eval_sq_le indexNonzero
-  have difference := Dense.Rational.Bounds.Lipschitz.eval_sub_sq_le S interval
+  have difference := Bounds.Lipschitz.eval_sub_sq_le S interval
     inside (⟨le_rfl, interval.valid⟩ : interval.Contains interval.lower)
   have distance : (parameter - interval.lower) ^ 2 ≤
-      Data.Rat.Interval.Radius.sampleRadiusSq interval interval.lower :=
-    Data.Rat.Interval.Radius.sub_sq_le_sampleRadiusSq
+      Interval.Radius.sampleRadiusSq interval interval.lower :=
+    Interval.Radius.sub_sq_le_sampleRadiusSq
       (sample := interval.lower) interval inside
   have lipschitzNonnegative : 0 ≤ lipschitz := by
     simpa only [lipschitz] using
-      (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg S interval).2
+      (Bounds.Lipschitz.denseHornerSqBounds_nonneg S interval).2
   have scaledDistance :
       lipschitz * (parameter - interval.lower) ^ 2 ≤ scale := by
     calc
       lipschitz * (parameter - interval.lower) ^ 2 ≤
           lipschitz *
-            Data.Rat.Interval.Radius.sampleRadiusSq interval interval.lower :=
+            Interval.Radius.sampleRadiusSq interval interval.lower :=
         Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct distance
           lipschitzNonnegative
       _ = scale := by
-        rw [Data.Rat.Interval.Radius.sampleRadiusSq_lower_eq_widthSq]
+        rw [Interval.Radius.sampleRadiusSq_lower_eq_widthSq]
   have differenceBound :
       (S.eval parameter - S.eval interval.lower) ^ 2 ≤ scale :=
     difference.trans scaledDistance
@@ -154,7 +154,7 @@ theorem denominator_eval_sq_le
           (S.eval parameter - S.eval interval.lower)) ^ 2 := by ring1
     _ ≤ 2 * (S.eval interval.lower ^ 2 +
           (S.eval parameter - S.eval interval.lower) ^ 2) :=
-      Purelib.Data.Rat.Bounds.Square.add_sq_le_two _ _
+      Bounds.Square.add_sq_le_two _ _
     _ ≤ 2 * (scale + scale) := doubled
     _ = 4 * lipschitz * widthSq := by
       dsimp only [scale]

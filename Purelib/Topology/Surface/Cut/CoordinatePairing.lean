@@ -11,6 +11,8 @@ public import Purelib.Topology.Surface.Boundary.BoundaryCoordinates
 import Purelib.Tactic.Ring
 import Purelib.Data.Gaussian.Cast
 
+open Purelib.Integration.Energy
+
 public section
 
 /-!
@@ -37,11 +39,11 @@ open Purelib.Data.Gaussian.Basic.Canonical
 open Purelib.Topology.Surface.Boundary.BoundaryCoordinates (WordCoordinates)
 
 /-- The conjugate/value energy pair turns the Gaussian area form into the ordered primitive edge determinant. -/
-theorem edgeArea_energyPrimitivePoint (first last : Data.Gaussian.Basic.Canonical) :
-    Topology.Polygon.Stokes.edgeArea (Integration.Energy.Polygon.energyPrimitivePoint first)
-      (Integration.Energy.Polygon.energyPrimitivePoint last) =
+theorem edgeArea_energyPrimitivePoint (first last : Canonical) :
+    edgeArea (Polygon.energyPrimitivePoint first)
+      (Polygon.energyPrimitivePoint last) =
       Integration.Path.BoundaryRibbon.area first last := by
-  unfold Topology.Polygon.Stokes.edgeArea Integration.Energy.Polygon.energyPrimitivePoint
+  unfold edgeArea Polygon.energyPrimitivePoint
     Integration.Path.BoundaryRibbon.area
   ring1
 
@@ -49,38 +51,38 @@ open Purelib
 /-- An integer linear combination of energy points is the energy point of the integer combination of the underlying
 Gaussian values. -/
 theorem linear_energyPrimitivePoint {count : Nat} (coefficients : Fin count → Int)
-    (values : Fin count → Data.Gaussian.Basic.Canonical) :
-    Topology.Surface.Word.Pairing.linear coefficients
-        (fun index => Integration.Energy.Polygon.energyPrimitivePoint (values index)) =
-      Integration.Energy.Polygon.energyPrimitivePoint
-        (Topology.Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine coefficients values) := by
-  change Topology.Polygon.Stokes.PrimitivePoint.mk
-      (Algebra.FiniteSum.Fin.sumFin (fun index => (coefficients index : Data.Gaussian.Basic.Canonical) *
+    (values : Fin count → Canonical) :
+    Word.Pairing.linear coefficients
+        (fun index => Polygon.energyPrimitivePoint (values index)) =
+      Polygon.energyPrimitivePoint
+        (WordCoordinates.combine coefficients values) := by
+  change PrimitivePoint.mk
+      (sumFin (fun index => (coefficients index : Canonical) *
         Data.Gaussian.Basic.conj (values index)))
-      (Algebra.FiniteSum.Fin.sumFin (fun index => (coefficients index : Data.Gaussian.Basic.Canonical) * values index))
+      (sumFin (fun index => (coefficients index : Canonical) * values index))
         =
-    Topology.Polygon.Stokes.PrimitivePoint.mk
-      (Data.Gaussian.Basic.conj (Algebra.FiniteSum.Fin.sumFin (fun index => (coefficients index :
-        Data.Gaussian.Basic.Canonical) * values index)))
-      (Algebra.FiniteSum.Fin.sumFin (fun index => (coefficients index : Data.Gaussian.Basic.Canonical) * values index))
+    PrimitivePoint.mk
+      (Data.Gaussian.Basic.conj (sumFin (fun index => (coefficients index :
+        Canonical) * values index)))
+      (sumFin (fun index => (coefficients index : Canonical) * values index))
   rw [Algebra.FiniteSum.Gaussian.conj_sumFin]
   congr 1
-  apply Algebra.FiniteSum.Fin.sumFin_congr
+  apply sumFin_congr
   intro index
   rw [Data.Gaussian.Basic.conj_mul, Data.Gaussian.Cast.conj_intCast]
 
 /-- The area-level Stokes identification: the Gaussian area pairing of two integer combinations of one generator-value
 family equals the integer wedge contraction with the energy primitives. -/
 theorem area_combine_eq_contract {count : Nat} (first last : Fin count → Int)
-    (values : Fin count → Data.Gaussian.Basic.Canonical) :
-    Integration.Path.BoundaryRibbon.area (Topology.Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine first
+    (values : Fin count → Canonical) :
+    Integration.Path.BoundaryRibbon.area (WordCoordinates.combine first
       values)
-        (Topology.Surface.Boundary.BoundaryCoordinates.WordCoordinates.combine last values) =
-      Topology.Surface.Word.Pairing.contract (fun row column => first row * last column - last row * first column)
-        (fun index => Integration.Energy.Polygon.energyPrimitivePoint (values index)) := by
-  rw [← Topology.Surface.Cut.CoordinatePairing.edgeArea_energyPrimitivePoint, ←
-    Topology.Surface.Cut.CoordinatePairing.linear_energyPrimitivePoint first,
-    ← Topology.Surface.Cut.CoordinatePairing.linear_energyPrimitivePoint last, ←
-      Topology.Surface.Word.Pairing.contract_wedge]
+        (WordCoordinates.combine last values) =
+      Word.Pairing.contract (fun row column => first row * last column - last row * first column)
+        (fun index => Polygon.energyPrimitivePoint (values index)) := by
+  rw [← edgeArea_energyPrimitivePoint, ←
+    linear_energyPrimitivePoint first,
+    ← linear_energyPrimitivePoint last, ←
+      Word.Pairing.contract_wedge]
 
 end Purelib.Topology.Surface.Cut.CoordinatePairing

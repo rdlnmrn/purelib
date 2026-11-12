@@ -92,19 +92,19 @@ open Purelib.Riemann.Meshes.PuncturedGridFaces (PuncturedFaces)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence
   (oriented)
 open Purelib.Algebra.FiniteSum.Fin (sumFin)
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve branches
     higher}
-  {preparation : Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius
-    : Data.Rat.Fraction.Rational} {grid : Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid
+  {preparation : NewtonPreparation original} {target radius
+    : Rational} {grid : NewtonGrid
     preparation target radius}
-  {lifted : Riemann.Meshes.LiftedPuncturedGrid grid.punctured}
-  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
-  {stage : Nat} {cache : Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains
+  {lifted : LiftedPuncturedGrid grid.punctured}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames grid.faces.regulars}
+  {stage : Nat} {cache : Numerics domains
     stage}
 
 open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
@@ -115,22 +115,22 @@ open Purelib.Riemann.Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceReq
 open Purelib.Riemann.RootContinuation.NewtonRequestedObservationEnergy (Preflights)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SelectedPerimeterIdentity.SelectedSides (value)
 
-variable {observations : Riemann.RootContinuation.NewtonProtectedObservations.ProtectedObservations original}
-  {partitions : Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid}
-  {coarse : (sheet : Fin 2) → Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfaceMeshes partitions domains sheet}
-  {fixed : (sheet : Fin 2) → Riemann.RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet} {error
-    : Data.Rat.Fraction.Rational}
-  {requests : Riemann.Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests coarse fixed error} {traces
-    : Riemann.Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.PerimeterTraces requests}
+variable {observations : ProtectedObservations original}
+  {partitions : SurfacePartitions observations grid}
+  {coarse : (sheet : Fin 2) → SurfaceMeshes partitions domains sheet}
+  {fixed : (sheet : Fin 2) → Preflights domains sheet} {error
+    : Rational}
+  {requests : SynchronizedSurfaceRequests coarse fixed error} {traces
+    : PerimeterTraces requests}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
   (samples : Riemann.Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.PerimeterSamples requests traces
     cache coefficients)
-  {differential : Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+  {differential : Differentials.Basic.Differential genus}
 
 /-- The complete observed side area at one face and sheet, before orientation. -/
 @[expose] def Newton.Basis.ObservationComponents.observationSide (position : Fin grid.faces.regulars.length) (sheet :
-  Fin 2) : GridLiftedDualSteps.GridSide
-  → Data.Gaussian.Basic.Canonical
+  Fin 2) : GridSide
+  → Gaussian
   | .bottom => ((samples.get sheet).get position).bottom.originalArea
   | .right => ((samples.get sheet).get position).right.originalArea
   | .top => ((samples.get sheet).get position).top.originalArea
@@ -140,30 +140,30 @@ variable {observations : Riemann.RootContinuation.NewtonProtectedObservations.Pr
 @[expose] def
   PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation.observedSides
   {program : PeriodPrograms.ExteriorProgram lifted differential}
-    (prepared : ExteriorProgram.SurfacePreparation regular domains program) : Gaussian :=
+    (prepared : SurfacePreparation regular domains program) : Gaussian :=
   Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.occurrences.map fun occurrence => SideOccurrence.oriented
     occurrence.sideOccurrence
-    (Curves.Hyperelliptic.Meshes.Newton.Basis.ObservationComponents.observationSide samples
+    (Newton.Basis.ObservationComponents.observationSide samples
       occurrence.sideOccurrence.position occurrence.sideOccurrence.sheet occurrence.sideOccurrence.side))
 
 /-- Reindex all component side areas onto the actual Newton exterior component. -/
 theorem
   PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.observedSides_sum
-  (prepared : ExteriorProgram.AllSurfacePreparation regular domains differential)
+  (prepared : AllSurfacePreparation regular domains differential)
     (neighbors : PuncturedFaces.NeighborBank grid.faces) :
     Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.components.map (fun component =>
       component.prepared.observedSides samples)) =
       PerimeterSamples.componentBoundary samples neighbors .exterior := by
   have indexed := prepared.oriented_sum_eq_component neighbors
-    (Curves.Hyperelliptic.Meshes.Newton.Basis.ObservationComponents.observationSide samples)
+    (Newton.Basis.ObservationComponents.observationSide samples)
   have mapped := Data.Gaussian.Norm.Sum.Indexed.sumFin_map prepared.occurrences (fun occurrence =>
     SideOccurrence.oriented occurrence.sideOccurrence
-    (Curves.Hyperelliptic.Meshes.Newton.Basis.ObservationComponents.observationSide samples
+    (Newton.Basis.ObservationComponents.observationSide samples
       occurrence.sideOccurrence.position occurrence.sideOccurrence.sheet occurrence.sideOccurrence.side))
   have all := (Data.Gaussian.Norm.Sum.Basic.gaussianSum_map_flatMap prepared.components
     (fun component => component.prepared.occurrences) (fun occurrence => SideOccurrence.oriented
       occurrence.sideOccurrence
-      (Curves.Hyperelliptic.Meshes.Newton.Basis.ObservationComponents.observationSide samples
+      (Newton.Basis.ObservationComponents.observationSide samples
         occurrence.sideOccurrence.position
         occurrence.sideOccurrence.sheet occurrence.sideOccurrence.side))).symm
   rw [← prepared.occurrences_eq] at all

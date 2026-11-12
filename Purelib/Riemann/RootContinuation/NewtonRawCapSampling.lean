@@ -83,26 +83,26 @@ open Purelib.Integration.Path.Dyadic.RadialTriangles (Parameters)
 open Purelib.Riemann.RootContinuation.NewtonRawEnergyBudget (rawEnergyAllowance rawEnergyAllowance_positive)
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {observations : ProtectedObservations original} {preparation : NewtonPreparation original} {radius :
-    Purelib.Data.Rat.Fraction.Rational}
+    Rational}
   (gridData : RawEnergyGrid observations preparation radius)
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  (regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap)
+  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  (regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap)
 
-variable {physicalMinimum physicalFloor stage : Nat} {box : Purelib.Geometry.Rational.Box}
+variable {physicalMinimum physicalFloor stage : Nat} {box : Geometry.Rational.Box}
   (surfaceData : SurfaceSchedule gridData regular physicalMinimum physicalFloor)
-  {differential : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+  {differential : Curves.Hyperelliptic.Differentials.Basic.Differential genus}
   {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+    AllSurfacePreparation
     regular gridData.domains differential}
-  (attached : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment
+  (attached : CapAttachment
     prepared)
-  (polynomials : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+  (polynomials : RegularBasisPolynomials cap
     stage box)
 
 open Purelib.Curves.Hyperelliptic in
@@ -114,17 +114,17 @@ Keeps the actual polynomial bounds, allowance request, attached reciprocal geome
 caps and physical-basis evaluations at the same requested depth. -/
 structure CapSampling where
   /-- Actual bounds for the retained regular basis polynomials. -/ bounds :
-    Meshes.PuncturedGrid.Exterior.CapBasisBounds.RegularBasisBounds polynomials
+    RegularBasisBounds polynomials
   /-- Cap request at the raw-energy allowance and retained basis depth floor. -/ request :
-    Meshes.PuncturedGrid.Exterior.CapBasisRequest.RegularBasisRequest bounds attached.caps.length (rawEnergyAllowance
+    RegularBasisRequest bounds attached.caps.length (rawEnergyAllowance
     observations) surfaceData.schedule.basis.depth
   /-- Reciprocal geometry of the original cap attachment. -/ geometry :
-    Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry attached
-  /-- Radial triangle parameters at the exact requested depth. -/ parameters : RadialTriangles.Parameters request.depth
+    ReciprocalGeometry attached
+  /-- Radial triangle parameters at the exact requested depth. -/ parameters : Parameters request.depth
   /-- Actual regular basis caps over those geometry and parameter owners. -/ caps :
-    Meshes.PuncturedGrid.Exterior.CapBasisAggregate.RegularBasisCap geometry parameters polynomials
+    RegularBasisCap geometry parameters polynomials
   /-- Physical basis evaluations at the retained cap request depth. -/ evaluated :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalBasisRequest.Evaluations surfaceData.schedule.basis
+    PhysicalBasisRequest.Evaluations surfaceData.schedule.basis
     polynomials request.depth
 
 constructive_injectivity CapSampling
@@ -140,17 +140,17 @@ depth for radial parameters, caps and basis evaluations. -/
 @[expose] def build (chart : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 0)
     (later : surfaceData.schedule.basis.index ≤ stage) : CapSampling gridData regular surfaceData attached polynomials
       :=
-  let bounds := Meshes.PuncturedGrid.Exterior.CapBasisBounds.RegularBasisBounds.build polynomials
-  let request := Meshes.PuncturedGrid.Exterior.CapBasisRequest.RegularBasisRequest.build bounds attached.caps.length
+  let bounds := RegularBasisBounds.build polynomials
+  let request := RegularBasisRequest.build bounds attached.caps.length
     (rawEnergyAllowance observations)
     (rawEnergyAllowance_positive observations) surfaceData.schedule.basis.depth
-  let geometry := Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry.build
+  let geometry := ReciprocalGeometry.build
     attached
-  let parameters := RadialTriangles.Parameters.build request.depth
-  let caps := Meshes.PuncturedGrid.Exterior.CapBasisAggregate.RegularBasisCap.build geometry parameters polynomials
+  let parameters := Parameters.build request.depth
+  let caps := RegularBasisCap.build geometry parameters polynomials
     chart
     (rawEnergyAllowance observations) (rawEnergyAllowance_positive observations)
-  let evaluated := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalBasisRequest.evaluate
+  let evaluated := PhysicalBasisRequest.evaluate
     surfaceData.schedule.basis polynomials chart later (depth := request.depth)
   ⟨bounds, request, geometry, parameters, caps, evaluated⟩
 

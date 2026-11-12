@@ -25,7 +25,7 @@ these displayed parameters.
 namespace Purelib.Data.Rat.Fraction.Constants
 
 /-- The canonical reduced zero record with denominator one and explicit Bézout coefficients. -/
-@[expose] def zeroReduced : Fraction.Basic.ReducedFraction :=
+@[expose] def zeroReduced : Basic.ReducedFraction :=
   { num := 0
     den := 1
     den_pos := by decide
@@ -33,8 +33,8 @@ namespace Purelib.Data.Rat.Fraction.Constants
 
 /-- The retained representative of canonical zero is the displayed zero-over-one reduced record. -/
 theorem representative_zero :
-    Fraction.Basic.representative (0 : Fraction.Rational) = zeroReduced := by
-  change Fraction.Basic.representative
+    Basic.representative (0 : Rational) = zeroReduced := by
+  change Basic.representative
     (SignedFraction.Normalization.ofFraction (SignedFraction.Normalization.toFraction zeroReduced)) = zeroReduced
   exact SignedFraction.Normalization.representative_of_reduced _
 
@@ -47,58 +47,58 @@ section
 namespace Purelib.Data.Rat.Fraction.Constants
 /-- The rational product eighteen times four equals seventy-two. -/
 public theorem eighteen_mul_four : (18 :
-  Purelib.Data.Rat.Fraction.Rational) * 4 = 72 := by ring1
+  Rational) * 4 = 72 := by ring1
 
 /-- The rational product thirty-two times four equals one hundred twenty-eight. -/
 public theorem thirtyTwo_mul_four : (32 :
-  Purelib.Data.Rat.Fraction.Rational) * 4 = 128 := by ring1
+  Rational) * 4 = 128 := by ring1
 
 /-! ## Sharper dyadic residual-linear converse -/
 
 /-- Two rational halves sum to one. -/
 public theorem half_add_half :
-    (1 / 2 : Purelib.Data.Rat.Fraction.Rational) + (1 / 2 : Purelib.Data.Rat.Fraction.Rational) = 1 := by decide
+    (1 / 2 : Rational) + (1 / 2 : Rational) = 1 := by decide
 
 /-- Taking half of a doubled rational returns the original value. -/
 public theorem half_double (value :
-  Purelib.Data.Rat.Fraction.Rational) :
-    (1 / 2 : Purelib.Data.Rat.Fraction.Rational) * (value + value) = value := by
+  Rational) :
+    (1 / 2 : Rational) * (value + value) = value := by
   calc
-    (1 / 2 : Purelib.Data.Rat.Fraction.Rational) * (value + value) =
-        ((1 / 2 : Purelib.Data.Rat.Fraction.Rational) + (1 / 2 : Purelib.Data.Rat.Fraction.Rational)) * value := by
+    (1 / 2 : Rational) * (value + value) =
+        ((1 / 2 : Rational) + (1 / 2 : Rational)) * value := by
           ring1
     _ = 1 * value := by rw [half_add_half]
     _ = value := _root_.one_mul value
 
 /-- The rational unary threshold coefficient times two equals thirty-two fifteenths. -/
 public theorem scaledTwo :
-  (16 / 15 : Purelib.Data.Rat.Fraction.Rational) * 2 = 32 / 15 := by
-  have twoDivOne : (2 / 1 : Purelib.Data.Rat.Fraction.Rational) = 2 := by
+  (16 / 15 : Rational) * 2 = 32 / 15 := by
+  have twoDivOne : (2 / 1 : Rational) = 2 := by
     calc
-      (2 / 1 : Purelib.Data.Rat.Fraction.Rational) = (2 / 1) * 1 :=
-        (Purelib.Data.Rat.Fraction.Field.mul_one_direct _).symm
+      (2 / 1 : Rational) = (2 / 1) * 1 :=
+        (Field.mul_one_direct _).symm
       _ = 2 :=
-        Purelib.Data.Rat.Fraction.Field.div_mul_cancel_of_ne 2 1 (by decide)
+        Field.div_mul_cancel_of_ne 2 1 (by decide)
   calc
-    (16 / 15 : Purelib.Data.Rat.Fraction.Rational) * 2 = (16 / 15) * (2 / 1) := by rw [twoDivOne]
+    (16 / 15 : Rational) * 2 = (16 / 15) * (2 / 1) := by rw [twoDivOne]
     _ = (16 * 2) / (15 * 1) :=
-      Purelib.Data.Rat.Fraction.Field.div_mul_div_direct 16 15 2 1
+      Field.div_mul_div_direct 16 15 2 1
     _ = 32 / 15 := by
-      rw [show (16 : Purelib.Data.Rat.Fraction.Rational) * 2 = 32 by decide,
-        Purelib.Data.Rat.Fraction.Field.mul_one_direct]
+      rw [show (16 : Rational) * 2 = 32 by decide,
+        Field.mul_one_direct]
 
 /-- The rational sector coefficient times seven sixteenths equals seven fifteenths. -/
 public theorem
   scaledSectorBound :
-    (16 / 15 : Purelib.Data.Rat.Fraction.Rational) * (7 / 16) = 7 / 15 := by
+    (16 / 15 : Rational) * (7 / 16) = 7 / 15 := by
   calc
-    (16 / 15 : Purelib.Data.Rat.Fraction.Rational) * (7 / 16) =
+    (16 / 15 : Rational) * (7 / 16) =
         (16 * 7) / (15 * 16) :=
-      Purelib.Data.Rat.Fraction.Field.div_mul_div_direct 16 15 7 16
+      Field.div_mul_div_direct 16 15 7 16
     _ = (16 * 7) / (16 * 15) := by
-      rw [Purelib.Data.Rat.Fraction.Field.mul_comm 15 16]
+      rw [Field.mul_comm 15 16]
     _ = 7 / 15 :=
-      Purelib.Data.Rat.Fraction.Field.mul_div_mul_left_direct
+      Field.mul_div_mul_left_direct
         16 7 15 (by decide)
 end Purelib.Data.Rat.Fraction.Constants
 end

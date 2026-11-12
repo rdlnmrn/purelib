@@ -21,6 +21,9 @@ import Purelib.Data.Gaussian.Field
 import Purelib.Data.Vector.Basic
 import Purelib.Polynomial.Dense.Basic
 
+open Purelib.Polynomial.Dense.Bivariate.Gaussian
+open Purelib.Polynomial.Dense.Bivariate.Gaussian.Reflection.Basic
+
 open Purelib.Algebra
 
 open Purelib
@@ -57,43 +60,43 @@ theorem separatedLeftColumnPowerSum (p : Dense.Gaussian.Basic.CanonicalCoefficie
     FiniteSum.Fin.sumFin
       (fun row : Fin (p.natDegree + p.natDegree) =>
         (PolynomialMatrix.Evaluation.evalMatrix parameter
-          (Elimination.Separated.Sylvester.separatedSylvester p) row
+          (separatedSylvester p) row
           (Fin.castAdd p.natDegree column)) * outer ^ (row : Nat)) =
       outer ^ (column : Nat) *
-        Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected p) outer
+        Dense.Bivariate.Basic.eval (SeparatedVariables.reflected p) outer
           parameter := by
   let suffix := p.natDegree - ((column : Nat) + 1)
-  have coefficientsLength := Dense.Bivariate.Gaussian.Reflection.Shape.reflectedCoefficients_shape p nonzero
+  have coefficientsLength := Reflection.Shape.reflectedCoefficients_shape p nonzero
   have totalIdentity :
-      (column : Nat) + (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflectedCoefficients p).length +
+      (column : Nat) + (SeparatedVariables.reflectedCoefficients p).length +
         suffix =
         p.natDegree + p.natDegree := by
     dsimp only [suffix]
     rw [coefficientsLength.length_eq]
     have columnBound := column.isLt
     omega
-  have shifted := Dense.Bivariate.Gaussian.Ascending.sumShifted_evalLow outer parameter (column : Nat)
-    (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflectedCoefficients p) suffix
+  have shifted := Ascending.sumShifted_evalLow outer parameter (column : Nat)
+    (SeparatedVariables.reflectedCoefficients p) suffix
   rw [totalIdentity] at shifted
   have summandsEqual :
       FiniteSum.Fin.sumFin
         (fun row : Fin (p.natDegree + p.natDegree) =>
         (PolynomialMatrix.Evaluation.evalMatrix parameter
-          (Elimination.Separated.Sylvester.separatedSylvester p) row
+          (separatedSylvester p) row
           (Fin.castAdd p.natDegree column)) * outer ^ (row : Nat)) =
       FiniteSum.Fin.sumFin
         (fun row : Fin (p.natDegree + p.natDegree) =>
         if (column : Nat) ≤ (row : Nat) ∧
             (row : Nat) <
-              (column : Nat) + (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflectedCoefficients
+              (column : Nat) + (SeparatedVariables.reflectedCoefficients
                 p).length then
-          (Data.List.getD (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflectedCoefficients p)
+          (Data.List.getD (SeparatedVariables.reflectedCoefficients p)
             ((row : Nat) - (column : Nat)) 0).eval parameter *
               outer ^ (row : Nat)
         else 0) := by
           apply FiniteSum.Fin.sumFin_congr
           intro row
-          simp only [Elimination.Separated.Sylvester.separatedSylvester,
+          simp only [separatedSylvester,
             Dense.Bivariate.Resultant.sylvester,
             PolynomialMatrix.Evaluation.evalMatrix_apply,
             SquareMatrix.matrixOfFn_apply,
@@ -101,7 +104,7 @@ theorem separatedLeftColumnPowerSum (p : Dense.Gaussian.Basic.CanonicalCoefficie
           have upperIdentity :
               (row : Nat) ≤ (column : Nat) + p.natDegree ↔
                 (row : Nat) <
-                  (column : Nat) + (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflectedCoefficients
+                  (column : Nat) + (SeparatedVariables.reflectedCoefficients
                     p).length := by
             rw [coefficientsLength.length_eq]
             rw [← Nat.add_assoc]
@@ -110,19 +113,19 @@ theorem separatedLeftColumnPowerSum (p : Dense.Gaussian.Basic.CanonicalCoefficie
               (column : Nat) ≤ (row : Nat) ∧
                 (row : Nat) ≤ (column : Nat) + p.natDegree
           · rw [if_pos inside, if_pos ⟨inside.1, upperIdentity.mp inside.2⟩,
-              Dense.Bivariate.Gaussian.Reflection.Shape.outerCoeff_reflected]
+              Reflection.Shape.outerCoeff_reflected]
           · have outside :
                 ¬((column : Nat) ≤ (row : Nat) ∧
                   (row : Nat) <
-                    (column : Nat) + (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflectedCoefficients
+                    (column : Nat) + (SeparatedVariables.reflectedCoefficients
                       p).length) := by
               intro candidate
               exact inside ⟨candidate.1, upperIdentity.mpr candidate.2⟩
             rw [if_neg inside, if_neg outside, Dense.Basic.DensePolynomial.eval_zero, zero_mul]
   rw [summandsEqual]
   change _ = outer ^ (column : Nat) *
-    Dense.Bivariate.Gaussian.Ascending.evalLow
-      (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflectedCoefficients p) outer parameter
+    Ascending.evalLow
+      (SeparatedVariables.reflectedCoefficients p) outer parameter
   exact shifted
 
 /-- The power-weighted sum of a right Sylvester column evaluates the lifted polynomial.
@@ -137,40 +140,40 @@ theorem separatedRightColumnPowerSum (p : Dense.Gaussian.Basic.CanonicalCoeffici
     FiniteSum.Fin.sumFin
       (fun row : Fin (p.natDegree + p.natDegree) =>
         (PolynomialMatrix.Evaluation.evalMatrix parameter
-          (Elimination.Separated.Sylvester.separatedSylvester p) row
+          (separatedSylvester p) row
           (Fin.natAdd p.natDegree column)) * outer ^ (row : Nat)) =
       outer ^ (column : Nat) *
-        Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.lifted p) outer parameter := by
+        Dense.Bivariate.Basic.eval (Lift.SeparatedVariables.lifted p) outer parameter := by
   let suffix := p.natDegree - ((column : Nat) + 1)
-  have coefficientsLength := Dense.Bivariate.Gaussian.Lift.liftedCoefficients_length p nonzero
+  have coefficientsLength := Lift.liftedCoefficients_length p nonzero
   have totalIdentity :
-      (column : Nat) + (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.liftedCoefficients p).length + suffix =
+      (column : Nat) + (Lift.SeparatedVariables.liftedCoefficients p).length + suffix =
         p.natDegree + p.natDegree := by
     dsimp only [suffix]
     rw [coefficientsLength]
     have columnBound := column.isLt
     omega
-  have shifted := Dense.Bivariate.Gaussian.Ascending.sumShifted_evalLow outer parameter (column : Nat)
-    (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.liftedCoefficients p) suffix
+  have shifted := Ascending.sumShifted_evalLow outer parameter (column : Nat)
+    (Lift.SeparatedVariables.liftedCoefficients p) suffix
   rw [totalIdentity] at shifted
   have summandsEqual :
       FiniteSum.Fin.sumFin
         (fun row : Fin (p.natDegree + p.natDegree) =>
         (PolynomialMatrix.Evaluation.evalMatrix parameter
-          (Elimination.Separated.Sylvester.separatedSylvester p) row
+          (separatedSylvester p) row
           (Fin.natAdd p.natDegree column)) * outer ^ (row : Nat)) =
       FiniteSum.Fin.sumFin
         (fun row : Fin (p.natDegree + p.natDegree) =>
         if (column : Nat) ≤ (row : Nat) ∧
-            (row : Nat) < (column : Nat) + (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.liftedCoefficients
+            (row : Nat) < (column : Nat) + (Lift.SeparatedVariables.liftedCoefficients
               p).length then
-          (Data.List.getD (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.liftedCoefficients p)
+          (Data.List.getD (Lift.SeparatedVariables.liftedCoefficients p)
             ((row : Nat) - (column : Nat)) 0).eval parameter *
               outer ^ (row : Nat)
         else 0) := by
           apply FiniteSum.Fin.sumFin_congr
           intro row
-          simp only [Elimination.Separated.Sylvester.separatedSylvester,
+          simp only [separatedSylvester,
             Dense.Bivariate.Resultant.sylvester,
             PolynomialMatrix.Evaluation.evalMatrix_apply,
             SquareMatrix.matrixOfFn_apply,
@@ -178,7 +181,7 @@ theorem separatedRightColumnPowerSum (p : Dense.Gaussian.Basic.CanonicalCoeffici
           have upperIdentity :
               (row : Nat) ≤ (column : Nat) + p.natDegree ↔
                 (row : Nat) <
-                  (column : Nat) + (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.liftedCoefficients p).length := by
+                  (column : Nat) + (Lift.SeparatedVariables.liftedCoefficients p).length := by
             rw [coefficientsLength]
             rw [← Nat.add_assoc]
             exact Nat.lt_add_one_iff.symm
@@ -186,18 +189,18 @@ theorem separatedRightColumnPowerSum (p : Dense.Gaussian.Basic.CanonicalCoeffici
               (column : Nat) ≤ (row : Nat) ∧
                 (row : Nat) ≤ (column : Nat) + p.natDegree
           · rw [if_pos inside, if_pos ⟨inside.1, upperIdentity.mp inside.2⟩,
-              Dense.Bivariate.Gaussian.Lift.outerCoeff_lifted]
+              Lift.outerCoeff_lifted]
           · have outside :
                 ¬((column : Nat) ≤ (row : Nat) ∧
                   (row : Nat) <
-                    (column : Nat) + (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.liftedCoefficients p).length) :=
+                    (column : Nat) + (Lift.SeparatedVariables.liftedCoefficients p).length) :=
                       by
               intro candidate
               exact inside ⟨candidate.1, upperIdentity.mpr candidate.2⟩
             rw [if_neg inside, if_neg outside, Dense.Basic.DensePolynomial.eval_zero, zero_mul]
   rw [summandsEqual]
   change _ = outer ^ (column : Nat) *
-    Dense.Bivariate.Gaussian.Ascending.evalLow (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.liftedCoefficients p)
+    Ascending.evalLow (Lift.SeparatedVariables.liftedCoefficients p)
       outer parameter
   exact shifted
 end Purelib.Polynomial.Elimination.Separated.Sylvester.Evaluation

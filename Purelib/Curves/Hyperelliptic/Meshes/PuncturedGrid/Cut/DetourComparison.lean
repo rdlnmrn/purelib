@@ -74,39 +74,39 @@ with cut-boundary owners and bounding sewing errors remain separate steps.
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.DetourComparison
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {source : Hyperelliptic.Differentials.Basic.Differential genus} {prepared :
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgram lifted source}
-  {segments : Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank prepared.period} {differential : Fin
+  {lifted : Meshes.LiftedPuncturedGrid base} {source : Differentials.Basic.Differential genus} {prepared :
+    CyclePrograms.CutCycleProgram lifted source}
+  {segments : PeriodSegmentBanks.SegmentBank prepared.period} {differential : Fin
     genus}
-  {comparison : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank
-    (Hyperelliptic.Meshes.PuncturedGrid.Cut.FaceBanks.FaceBank.ofSegments prepared segments) differential}
+  {comparison : PeriodPrimitiveComparison.PrimitiveBank
+    (FaceBanks.FaceBank.ofSegments prepared segments) differential}
   {target : Readings.PreparedPrimitiveChargeBounds.Coordinate} {minimumStage : Nat}
 
 /-- The original requested-period value equals the sum of its exact retained pre-detour route increments. -/
 theorem value_eq_original_routes (result :
-  Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison target
+  PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison target
   minimumStage) :
-    result.value = Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.routed.spine.values (fun _ route =>
+    result.value = Gaussian.Norm.Sum.Basic.gaussianSum (prepared.routed.spine.values (fun _ route =>
       result.locals.numerics.edgeIncrement route)) :=
   result.value_eq_corners.trans
-    (Hyperelliptic.Meshes.PuncturedGrid.RetainedDetourValues.FaceBank.ofSegments_corner_sum prepared segments
+    (RetainedDetourValues.FaceBank.ofSegments_corner_sum prepared segments
       result.locals.numerics)
 
 /-- This compares with the original mesh word, before diagonal detours,
 using one shared triangle bank and the actual original period program. -/
 theorem original_triangles_accurate (result :
-  Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison target
+  PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison target
   minimumStage)
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings result.locals.numerics
+    (readings : TrianglePrimitiveReadings.TriangleReadings result.locals.numerics
       lifted.mesh) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.routed.spine.values (fun _
+    Gaussian.Norm.Basic.normSq (Gaussian.Norm.Sum.Basic.gaussianSum (prepared.routed.spine.values (fun _
       route => route.sourceEdge.increment readings.values)) -
       ((prepared.program differential).integral.model result.sample.stage).integralSample) < target := by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.RetainedDetourValues.BranchCellBank.LiftedMesh.RouteSpine.triangle_values
-    readings prepared.routed.spine, ← Hyperelliptic.Meshes.PuncturedGrid.Cut.DetourComparison.value_eq_original_routes
+  rw [RetainedDetourValues.BranchCellBank.LiftedMesh.RouteSpine.triangle_values
+    readings prepared.routed.spine, ← DetourComparison.value_eq_original_routes
       result]
   exact result.program_accurate
 

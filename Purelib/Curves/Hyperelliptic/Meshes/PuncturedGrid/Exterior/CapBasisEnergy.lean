@@ -80,33 +80,33 @@ open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
     regular domains differential} {attached :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared}
-  {geometry : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
-    attached} {coarse : Topology.Polygon.Stokes.OrientedTriangle (lifted.vertices.count + attached.words.length)}
+    Caps.AllSurfacePreparation.CapAttachment prepared}
+  {geometry : Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
+    attached} {coarse : OrientedTriangle (lifted.vertices.count + attached.words.length)}
   {depth : Nat} {parameters : Path.Dyadic.RadialTriangles.Parameters depth}
   {index : Nat} {box : Rational.Box}
 
 /-- All basis polynomials use the same reciprocal sample stage and box. -/
-def RegularBasisPolynomials (cap : Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar) (index :
+def RegularBasisPolynomials (cap : Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar) (index :
   Nat) (box : Rational.Box) :=
-  Data.Vector.DependentVector (fun row : Fin genus => Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+  Vector.DependentVector (fun row : Fin genus => Charts.Reciprocal.Cap.Primitives.Sample cap
     (Periods.PeriodMatrix.standardDifferential row) index box)
 
 namespace RegularBasisPolynomials
 
 /-- The homogeneous combination of the original retained basis primitive polynomials at the supplied coordinate. -/
-def value (polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index
+def value (polynomials : RegularBasisPolynomials cap index
   box)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (point : Gaussian.Basic.Canonical) :
       Gaussian :=
@@ -115,21 +115,21 @@ def value (polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEne
 end RegularBasisPolynomials
 
 /-- An affine basis on the exact retained radial cap triangulation and coordinates. -/
-def RegularCapBasis (refinement : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapRefinement.Refinement geometry coarse
+def RegularCapBasis (refinement : CapRefinement.Refinement geometry coarse
   parameters) :=
   Readings.AffineBasisEnergy.AffineBasis parameters.mesh.mesh.triangulation refinement.coordinates genus
 
 set_option genInjectivity false in
 /-- Retain the actual basis values, derivatives and coefficient-independent
 error budget on one original reciprocal cap triangle. -/
-structure RegularBasisSample (refinement : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapRefinement.Refinement geometry
+structure RegularBasisSample (refinement : CapRefinement.Refinement geometry
   coarse parameters)
-    (polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box)
+    (polynomials : RegularBasisPolynomials cap index box)
       where
   /-- The reciprocal chart has origin order zero. -/ regular_chart :
-    Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 0
+    Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 0
   /-- The actual cached affine basis on the retained cap refinement. -/ basis :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularCapBasis refinement
+    RegularCapBasis refinement
   /-- Every cached basis value is the original primitive polynomial evaluation. -/ values_eq : ∀ row vertex,
     basis.values row vertex = (polynomials.get row).primitive.value.eval (refinement.coordinates vertex)
   /-- Every cached basis coefficient is the original coefficient evaluation at the retained face's first vertex. -/
@@ -142,34 +142,34 @@ constructive_injectivity RegularBasisSample
 
 namespace RegularBasisSample
 
-variable {refinement : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapRefinement.Refinement geometry coarse parameters}
-  {polynomials : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+variable {refinement : CapRefinement.Refinement geometry coarse parameters}
+  {polynomials : RegularBasisPolynomials cap
   index box}
 
 /-- Cache every original basis polynomial and coefficient on the same fine vertices and faces, then retain their
 coefficient-independent surface budget. -/
-def build (refinement : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapRefinement.Refinement geometry coarse parameters)
-  (polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box)
-    (regularChart : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 0)
+def build (refinement : CapRefinement.Refinement geometry coarse parameters)
+  (polynomials : RegularBasisPolynomials cap index box)
+    (regularChart : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 0)
     (radius : Fraction.Rational) (positive : 0 < radius) :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisSample refinement polynomials := by
-  let values := Data.Vector.Basic.vectorOfFn (fun row : Fin genus => Data.Vector.Basic.vectorOfFn (fun vertex =>
+      RegularBasisSample refinement polynomials := by
+  let values := Vector.Basic.vectorOfFn (fun row : Fin genus => Vector.Basic.vectorOfFn (fun vertex =>
     (polynomials.get row).primitive.value.eval (refinement.coordinates vertex)))
-  let coefficients := Data.Vector.Basic.vectorOfFn (fun row : Fin genus => Data.Vector.Basic.vectorOfFn (fun face =>
+  let coefficients := Vector.Basic.vectorOfFn (fun row : Fin genus => Vector.Basic.vectorOfFn (fun face =>
     (polynomials.get row).coefficient.eval (refinement.coordinates (parameters.mesh.mesh.triangulation.faces
       face).first)))
-  let basis : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularCapBasis refinement := ⟨values,
+  let basis : RegularCapBasis refinement := ⟨values,
     coefficients⟩
   refine ⟨regularChart, basis, ?_, ?_, Readings.AffineBasisEnergy.AffineBasis.SurfaceBudget.build basis radius positive⟩
   · intro row vertex
     change (values row) vertex = _
-    rw [Data.Vector.Basic.vectorOfFn_apply, Data.Vector.Basic.vectorOfFn_apply]
+    rw [Vector.Basic.vectorOfFn_apply, Vector.Basic.vectorOfFn_apply]
   · intro row face
     change (coefficients row) face = _
-    rw [Data.Vector.Basic.vectorOfFn_apply, Data.Vector.Basic.vectorOfFn_apply]
+    rw [Vector.Basic.vectorOfFn_apply, Vector.Basic.vectorOfFn_apply]
 
 /-- The actual affine-basis sample reads the original homogeneous polynomial combination at each retained vertex. -/
-theorem value_readback (sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisSample
+theorem value_readback (sample : RegularBasisSample
   refinement polynomials)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (vertex : Fin
       parameters.mesh.mesh.vertices.length) :
@@ -177,13 +177,13 @@ theorem value_readback (sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Cap
       polynomials.value coefficients (refinement.coordinates vertex) := by
   rw [sample.budget.sample_value]
   unfold Readings.AffineBasisEnergy.AffineBasis.value
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials.value
+    RegularBasisPolynomials.value
   exact FiniteSum.Fin.sumFin_congr fun row => congrArg (fun value => coefficients row * value) (sample.values_eq row
     vertex)
 
 /-- Nonnegative coordinate areas control the full coefficient combination,
 with a homogeneous error even at the zero vector. -/
-theorem lower (sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisSample refinement
+theorem lower (sample : RegularBasisSample refinement
   polynomials)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
     -(Readings.PreparedObservationCoercivity.coefficientNormSq coefficients * sample.budget.total) ≤

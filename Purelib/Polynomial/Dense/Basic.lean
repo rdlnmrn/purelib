@@ -48,11 +48,11 @@ section DensePolynomial
 
 open Purelib.Data.List
 
-variable {K : Type*} [ExplicitField K] [DecidableEq K]
+variable {K : Type*} [Zero K] [DecidableEq K]
 
 namespace Polynomial.Dense.Basic.DensePolynomial
 
-omit [ExplicitField K] [DecidableEq K] in
+omit [Zero K] [DecidableEq K] in
 /-- Equality of retained coefficient lists determines equality of dense polynomials. -/
 @[ext] theorem ext {p q : DensePolynomial K} (h :
   p.coeffs = q.coeffs) : p = q := by
@@ -76,7 +76,7 @@ end Algebra.Polynomial.DensePolynomial
 
 namespace Polynomial.Dense.Basic.DensePolynomial
 
-omit [ExplicitField K] [DecidableEq K] in
+omit [Zero K] [DecidableEq K] in
 open Purelib.Polynomial in
 /-- The dense zero representation has an empty coefficient list. -/
 @[simp] theorem zero_coeffs : (0 : DensePolynomial
@@ -94,7 +94,7 @@ end Polynomial.Dense.Basic.DensePolynomial
 
 namespace Polynomial.Dense.Basic.DensePolynomial
 
-omit [ExplicitField K] [DecidableEq K] in
+omit [Zero K] [DecidableEq K] in
 open Purelib.Polynomial in
 /-- The dense constant representation has the singleton coefficient list. -/
 @[simp] theorem constant_coeffs (a : K) :
@@ -118,7 +118,7 @@ namespace Polynomial.Dense.Basic.DensePolynomial
 @[simp] theorem normalize_normalize (p :
   DensePolynomial K) :
     p.normalize.normalize = p.normalize := by
-  apply Dense.Basic.DensePolynomial.ext
+  apply ext
   change (p.coeffs.dropWhile (· = 0)).dropWhile (· = 0) =
     p.coeffs.dropWhile (· = 0)
   exact DropWhile.idempotent _ p.coeffs
@@ -130,7 +130,7 @@ namespace Polynomial.Dense.Basic.DensePolynomial
 open Purelib.Polynomial in
 /-- The empty zero polynomial is already normalized. -/
 @[simp] theorem normalize_zero :
-  Dense.Basic.DensePolynomial.normalize (0 : DensePolynomial K) = 0 := rfl
+  normalize (0 : DensePolynomial K) = 0 := rfl
 
 end Polynomial.Dense.Basic.DensePolynomial
 
@@ -138,9 +138,9 @@ namespace Polynomial.Dense.Basic.DensePolynomial
 
 /-- A nonzero constant already has a normalized coefficient list. -/
 theorem normalize_constant_of_ne {a : K} (ha : a ≠ 0) :
-    Dense.Basic.DensePolynomial.normalize (constant a) =
+    normalize (constant a) =
       constant a := by
-  apply Dense.Basic.DensePolynomial.ext
+  apply ext
   exact DropWhile.cons_of_false (fun value => decide (value = 0)) a []
     (decide_eq_false ha)
 
@@ -150,8 +150,8 @@ namespace Polynomial.Dense.Basic.DensePolynomial
 
 /-- Normalizing the zero constant removes its single zero coefficient. -/
 @[simp] theorem normalize_constant_zero :
-    Dense.Basic.DensePolynomial.normalize (constant (0 : K)) = 0 := by
-  apply Dense.Basic.DensePolynomial.ext
+    normalize (constant (0 : K)) = 0 := by
+  apply ext
   exact DropWhile.cons_of_true (fun value : K => decide (value = 0)) 0 []
     (decide_eq_true rfl)
 
@@ -162,8 +162,8 @@ namespace Polynomial.Dense.Basic.DensePolynomial
 /-- A displayed linear polynomial with a nonzero leading coefficient is normalized. -/
 theorem normalize_linear_of_leading_ne_zero {leading trailing : K}
     (leadingNonzero : leading ≠ 0) :
-    Dense.Basic.DensePolynomial.normalize ⟨[leading, trailing]⟩ = ⟨[leading, trailing]⟩ := by
-  apply Dense.Basic.DensePolynomial.ext
+    normalize ⟨[leading, trailing]⟩ = ⟨[leading, trailing]⟩ := by
+  apply ext
   exact DropWhile.cons_of_false (fun value => decide (value = 0)) leading [trailing]
     (decide_eq_false leadingNonzero)
 
@@ -191,7 +191,7 @@ end Polynomial.Dense.Basic.DensePolynomial
 namespace Polynomial.Dense.Basic.DensePolynomial
 
 /-- The empty dense zero polynomial passes the zero test. -/
-@[simp] theorem isZero_zero : Dense.Basic.DensePolynomial.isZero
+@[simp] theorem isZero_zero : isZero
   (0 : DensePolynomial K) = true := rfl
 
 end Polynomial.Dense.Basic.DensePolynomial
@@ -260,7 +260,7 @@ namespace Polynomial.Dense.Basic.DensePolynomial
 theorem normalize_eq_zero_of_isZero {p :
   DensePolynomial K}
     (hp : p.isZero = true) : p.normalize = 0 := by
-  apply Dense.Basic.DensePolynomial.ext
+  apply ext
   change p.normalize.coeffs = []
   change p.normalize.coeffs.isEmpty = true at hp
   cases coefficients : p.normalize.coeffs with
@@ -427,7 +427,7 @@ theorem normalize_eq_constant_leadingCoeff_of_degree_zero
   | cons leading tail =>
       cases tail with
       | nil =>
-          apply Dense.Basic.DensePolynomial.ext
+          apply ext
           change p.normalize.coeffs = [p.leadingCoeff]
           rw [coefficients]
           unfold leadingCoeff
@@ -559,7 +559,7 @@ from finite coefficient candidates, never from evaluation over a carrier.
 namespace Purelib.Polynomial.Dense.BoundaryFactorization
 open Purelib.Polynomial in
 /-- The existing dense polynomial representation with constructive rational coefficients. -/
-abbrev CoefficientPolynomial := Dense.Basic.DensePolynomial Fraction.Rational
+abbrev CoefficientPolynomial := Basic.DensePolynomial Fraction.Rational
 end Purelib.Polynomial.Dense.BoundaryFactorization
 
 end
@@ -655,16 +655,16 @@ open Purelib.Data.List
 
 universe u_1
 
-variable {K : Type u_1} [field : ExplicitField K]
+variable {K : Type u_1} [zero : Zero K]
 
 /-- Normalization retains the same finite coefficient suffix under either supplied equality procedure.
 
-Each procedure decides the same scalar equality to the retained field's zero.
+Each procedure decides the same scalar equality to the retained coefficient zero.
 The proof follows those original Boolean branches on the finite coefficient list.
 -/
 public theorem normalize_eq_of_decidableEq (first second : DecidableEq K)
     (p : DensePolynomial K) :
-    @normalize K field first p = @normalize K field second p := by
+    @normalize K zero first p = @normalize K zero second p := by
   apply ext
   change p.coeffs.dropWhile (fun value => @decide (value = 0) (first value 0)) =
     p.coeffs.dropWhile (fun value => @decide (value = 0) (second value 0))
@@ -692,7 +692,7 @@ public theorem normalize_eq_of_decidableEq (first second : DecidableEq K)
 /-- Equal polynomial inputs have the same normalized zero test under the supplied procedures. -/
 private theorem isZero_agreement {first : DecidableEq K} [second : DecidableEq K]
     (p p' : DensePolynomial K) (same : p = p') :
-    @isZero K field first p = @isZero K field second p' := by
+    @isZero K zero first p = @isZero K zero second p' := by
   cases same
   exact congrArg (fun value : DensePolynomial K => value.coeffs.isEmpty)
     (normalize_eq_of_decidableEq first second p)
@@ -700,7 +700,7 @@ private theorem isZero_agreement {first : DecidableEq K} [second : DecidableEq K
 /-- Equal polynomial inputs have the same normalized degree count under the supplied procedures. -/
 private theorem degreeCount_agreement {first : DecidableEq K} [second : DecidableEq K]
     (p p' : DensePolynomial K) (same : p = p') :
-    @degreeCount K field first p = @degreeCount K field second p' := by
+    @degreeCount K zero first p = @degreeCount K zero second p' := by
   cases same
   exact congrArg (fun value : DensePolynomial K => value.coeffs.length)
     (normalize_eq_of_decidableEq first second p)
@@ -708,9 +708,9 @@ private theorem degreeCount_agreement {first : DecidableEq K} [second : Decidabl
 /-- Equal polynomial inputs have the same natural degree under the supplied procedures. -/
 private theorem natDegree_agreement {first : DecidableEq K} [second : DecidableEq K]
     (p p' : DensePolynomial K) (same : p = p') :
-    @natDegree K field first p = @natDegree K field second p' := by
+    @natDegree K zero first p = @natDegree K zero second p' := by
   exact congrArg (fun count : Nat => count - 1)
-    (@degreeCount_agreement K field first second p p' same)
+    (@degreeCount_agreement K zero first second p p' same)
 
 open Lean Elab Command in
 run_elab do
@@ -724,7 +724,7 @@ run_elab do
     let .forallE carrier _ operationType _ := operationInfo.type
       | throwError "normalization readback has no carrier binder"
     let .forallE field _ operationType _ := operationType
-      | throwError "normalization readback has no retained field binder"
+      | throwError "normalization readback has no retained zero binder"
     let .forallE procedure _ operationType _ := operationType
       | throwError "normalization readback has no equality procedure"
     let .forallE polynomial _ _ _ := operationType

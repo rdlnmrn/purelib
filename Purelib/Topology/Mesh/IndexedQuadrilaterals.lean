@@ -3,6 +3,8 @@ module
 meta import Purelib.Elab.ConstructiveInjectivity
 
 public import Purelib.Topology.Polygon.Stokes
+public import Purelib.Topology.Mesh.TriangleSourceUniqueness
+import Purelib.Data.List.Membership
 import Purelib.Topology.Mesh.EdgeCancellation
 import Purelib.Data.Gaussian.Basic
 import Purelib.Tactic.Ring
@@ -43,6 +45,12 @@ structure IndexedQuadrilateral (count : Nat) where
 constructive_injectivity IndexedQuadrilateral
 
 namespace IndexedQuadrilateral
+
+open Purelib.Topology.Surface.Sewing
+
+open Purelib.Data.List
+open Purelib.Topology.Mesh
+open Purelib.Topology.Surface.Sewing.SewnPrimitiveContacts (SourceEdge)
 
 variable {count : Nat}
 
@@ -91,6 +99,144 @@ theorem wedge_eq_boundary (quad : IndexedQuadrilateral count) (primitive : Fin c
   simp only [Stokes.triangleBoundaryArea, boundary, Stokes.edgeListArea]
   rw [Stokes.edgeArea_reverse (primitive quad.third) (primitive quad.first)]
   ring1
+
+/-- Read one of the four SAME signed vertex occurrences in boundary order. -/
+def corner (quad : IndexedQuadrilateral count) : Fin 4 → Fin count :=
+  Fin.cases quad.first (Fin.cases quad.second (Fin.cases quad.third (Fin.cases quad.fourth Fin.elim0)))
+
+/-- Corner zero is the original first signed vertex. -/
+theorem corner_zero (quad : IndexedQuadrilateral count) : quad.corner 0 = quad.first := by rfl
+
+/-- Corner one is the original second signed vertex. -/
+theorem corner_one (quad : IndexedQuadrilateral count) : quad.corner 1 = quad.second := by rfl
+
+/-- Corner two is the original third signed vertex. -/
+theorem corner_two (quad : IndexedQuadrilateral count) : quad.corner 2 = quad.third := by rfl
+
+/-- Corner three is the original fourth signed vertex. -/
+theorem corner_three (quad : IndexedQuadrilateral count) : quad.corner 3 = quad.fourth := by rfl
+
+/-- The two original triangle occurrences indexed in their retained order. -/
+def faces (quad : IndexedQuadrilateral count) (index : Fin 2) : Stokes.OrientedTriangle count :=
+  if index.val = 0 then quad.firstTriangle else quad.secondTriangle
+
+/-- The first indexed face is the original lower-diagonal triangle. -/
+theorem faces_zero (quad : IndexedQuadrilateral count) : quad.faces 0 = quad.firstTriangle := by rfl
+
+/-- The second indexed face is the original upper-diagonal triangle. -/
+theorem faces_one (quad : IndexedQuadrilateral count) : quad.faces 1 = quad.secondTriangle := by rfl
+
+/-- Four original source occurrences in bottom, right, top and left order.
+
+The first two belong to the first triangle. The final two belong to the
+second triangle, preserving its third-to-first closing orientation.
+-/
+def boundarySources : List (SourceEdge 2) :=
+  [⟨0, 0, 1⟩, ⟨0, 1, 2⟩, ⟨1, 1, 2⟩, ⟨1, 2, 0⟩]
+
+/-- Each retained source is a positive oriented occurrence of its actual triangle. -/
+theorem boundarySources_positive (quad : IndexedQuadrilateral count) :
+    ∀ source ∈ boundarySources,
+      TriangleSourceUniqueness.SourceEdge.Positive source quad.faces := by
+  intro source member
+  rcases Membership.mem_cons.mp member with same | member
+  · subst source
+    exact List.mem_cons_self
+  · rcases Membership.mem_cons.mp member with same | member
+    · subst source
+      exact List.mem_cons_of_mem _ List.mem_cons_self
+    · rcases Membership.mem_cons.mp member with same | member
+      · subst source
+        exact List.mem_cons_of_mem _ List.mem_cons_self
+      · rcases Membership.mem_cons.mp member with same | member
+        · subst source
+          exact List.mem_cons_of_mem _ (List.mem_cons_of_mem _ List.mem_cons_self)
+        · exact (List.not_mem_nil member).elim
+
+/-- Projecting those SAME source occurrences gives the exact original quadrilateral boundary. -/
+theorem boundarySources_project (quad : IndexedQuadrilateral count) :
+    boundarySources.map (fun source => source.project quad.faces) = quad.boundary := by
+  rfl
+
+/-- Read one actual exterior side occurrence in the original cyclic order. -/
+def boundaryEdge (quad : IndexedQuadrilateral count) : Fin 4 → Stokes.OrientedEdge count :=
+  Fin.cases ⟨quad.first, quad.second⟩ (Fin.cases ⟨quad.second, quad.third⟩
+    (Fin.cases ⟨quad.third, quad.fourth⟩ (Fin.cases ⟨quad.fourth, quad.first⟩ Fin.elim0)))
+
+/-- Every selected exterior side is an actual original ordered boundary occurrence. -/
+theorem boundaryEdge_mem (quad : IndexedQuadrilateral count) :
+    ∀ side, quad.boundaryEdge side ∈ quad.boundary := by
+  refine Fin.cases ?_ (Fin.cases ?_ (Fin.cases ?_ (Fin.cases ?_ (fun impossible => nomatch impossible))))
+  · exact List.mem_cons_self
+  · exact List.mem_cons_of_mem _ List.mem_cons_self
+  · exact List.mem_cons_of_mem _ (List.mem_cons_of_mem _ List.mem_cons_self)
+  · exact List.mem_cons_of_mem _ (List.mem_cons_of_mem _ (List.mem_cons_of_mem _ List.mem_cons_self))
+
+/-- Preserve whether an indexed source is an exterior side, shared diagonal, or stationary corner.
+
+The direction flag reverses the SAME original edge. The alternatives are
+selected from source face/corner positions, so repeated signed vertex
+indices are not collapsed by equality or coordinate lookup.
+-/
+abbrev EdgeOccurrence (quad : IndexedQuadrilateral count) (source : SourceEdge 2) :=
+  (Σ side : Fin 4, {reverse : Bool // source.project quad.faces =
+    if reverse then (quad.boundaryEdge side).reverse else quad.boundaryEdge side}) ⊕
+  ({reverse : Bool // source.project quad.faces = if reverse then quad.diagonal.reverse else quad.diagonal} ⊕
+    {position : Fin 4 // source.project quad.faces = ⟨quad.corner position, quad.corner position⟩})
+
+/-- Classify each literal original source occurrence without comparing vertex labels or coordinates.
+
+All eighteen face/corner cases retain their real direction. Stationary
+formal corners and repeated indices remain separate occurrences; no root,
+Point, query, row, join or observation is acquired.
+-/
+def edgeOccurrence (quad : IndexedQuadrilateral count) (source : SourceEdge 2) : quad.EdgeOccurrence source := by
+  rcases source with ⟨face, first, last⟩
+  refine Fin.cases ?_ (Fin.cases ?_ (fun impossible => nomatch impossible)) face
+  · refine Fin.cases ?_ (Fin.cases ?_ (Fin.cases ?_ (fun impossible => nomatch impossible))) first
+    · refine Fin.cases ?_ (Fin.cases ?_ (Fin.cases ?_ (fun impossible => nomatch impossible))) last
+      · exact .inr (.inr ⟨0, by rfl⟩)
+      · exact .inl ⟨0, false, by rfl⟩
+      · exact .inr (.inl ⟨true, by rfl⟩)
+    · refine Fin.cases ?_ (Fin.cases ?_ (Fin.cases ?_ (fun impossible => nomatch impossible))) last
+      · exact .inl ⟨0, true, by rfl⟩
+      · exact .inr (.inr ⟨1, by rfl⟩)
+      · exact .inl ⟨1, false, by rfl⟩
+    · refine Fin.cases ?_ (Fin.cases ?_ (Fin.cases ?_ (fun impossible => nomatch impossible))) last
+      · exact .inr (.inl ⟨false, by rfl⟩)
+      · exact .inl ⟨1, true, by rfl⟩
+      · exact .inr (.inr ⟨2, by rfl⟩)
+  · refine Fin.cases ?_ (Fin.cases ?_ (Fin.cases ?_ (fun impossible => nomatch impossible))) first
+    · refine Fin.cases ?_ (Fin.cases ?_ (Fin.cases ?_ (fun impossible => nomatch impossible))) last
+      · exact .inr (.inr ⟨0, by rfl⟩)
+      · exact .inr (.inl ⟨true, by rfl⟩)
+      · exact .inl ⟨3, true, by rfl⟩
+    · refine Fin.cases ?_ (Fin.cases ?_ (Fin.cases ?_ (fun impossible => nomatch impossible))) last
+      · exact .inr (.inl ⟨false, by rfl⟩)
+      · exact .inr (.inr ⟨2, by rfl⟩)
+      · exact .inl ⟨2, false, by rfl⟩
+    · refine Fin.cases ?_ (Fin.cases ?_ (Fin.cases ?_ (fun impossible => nomatch impossible))) last
+      · exact .inl ⟨3, false, by rfl⟩
+      · exact .inl ⟨2, true, by rfl⟩
+      · exact .inr (.inr ⟨3, by rfl⟩)
+
+/-- Read the original quadrilateral corner of one literal source-face corner. -/
+def faceCorner : Fin 2 → Fin 3 → Fin 4 :=
+  Fin.cases (Fin.cases 0 (Fin.cases 1 (Fin.cases 2 Fin.elim0)))
+    (Fin.cases (Fin.cases 0 (Fin.cases 2 (Fin.cases 3 Fin.elim0))) Fin.elim0)
+
+/-- Original source-face corner lookup retains its exact quadrilateral occurrence.
+
+The equation is about bounded indices. Coincident coordinate or root
+labels do not identify any of these six original corner occurrences.
+-/
+theorem faceCorner_eq (quad : IndexedQuadrilateral count) : ∀ face corner,
+    quad.corner (faceCorner face corner) = SewnPrimitiveFaces.corner (quad.faces face) corner := by
+  refine Fin.cases ?_ (Fin.cases ?_ (fun impossible => nomatch impossible))
+  · refine Fin.cases ?_ (Fin.cases ?_ (Fin.cases ?_ (fun impossible => nomatch impossible))) <;>
+      rfl
+  · refine Fin.cases ?_ (Fin.cases ?_ (Fin.cases ?_ (fun impossible => nomatch impossible))) <;>
+      rfl
 
 end IndexedQuadrilateral
 

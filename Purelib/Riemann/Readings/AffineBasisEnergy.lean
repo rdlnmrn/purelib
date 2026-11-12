@@ -51,7 +51,7 @@ open Purelib.Data.Rat in
 /-- A finite sum of nonnegative rational entries is nonnegative. -/
 public theorem sum_nonnegative {count : Nat} (values : Fin count → Fraction.Rational) (nonnegative : ∀ index, 0 ≤
   values index) :
-    0 ≤ FiniteSum.Fin.sumFin values := by
+    0 ≤ sumFin values := by
   have bound := FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ => 0) values nonnegative
   simpa only [FiniteSum.Fin.sumFin_zero] using bound
 
@@ -59,20 +59,20 @@ open Purelib.Algebra in
 open Purelib.Data.Gaussian in
 open Purelib.LinearAlgebra.Gaussian in
 /-- Every original coefficient squared norm is bounded by the same vector's total squared norm. -/
-private theorem coefficient_entry_le {count : Nat} (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector count)
+private theorem coefficient_entry_le {count : Nat} (coefficients : Energy.GaussianVector count)
   (row : Fin count)
   :
-    Data.Gaussian.Norm.Basic.normSq (coefficients row) ≤ coefficientNormSq coefficients := by
-  have norms : FiniteSum.Fin.sumFin (fun index => Data.Gaussian.Norm.Basic.normSq (coefficients index)) =
+    normSq (coefficients row) ≤ coefficientNormSq coefficients := by
+  have norms : sumFin (fun index => normSq (coefficients index)) =
       coefficientNormSq coefficients := by
     unfold coefficientNormSq
-    exact FiniteSum.Fin.sumFin_congr (fun index => Norm.Basic.normSq_eq_canonical (coefficients index))
+    exact sumFin_congr (fun index => Norm.Basic.normSq_eq_canonical (coefficients index))
   rw [← norms]
-  rw [← FiniteSum.Fin.sumFin_ite_eq row (fun index => Data.Gaussian.Norm.Basic.normSq (coefficients index))]
+  rw [← FiniteSum.Fin.sumFin_ite_eq row (fun index => normSq (coefficients index))]
   apply FiniteSum.Rational.Order.Positivity.sumFin_mono
   intro index
   if equal : index = row then rw [if_pos equal]
-  else rw [if_neg equal]; exact Norm.Basic.normSq_nonneg _
+  else rw [if_neg equal]; exact normSq_nonneg _
 
 open Purelib.Algebra in
 open Purelib.Data.Gaussian in
@@ -85,20 +85,20 @@ coefficients on that same index type. -/
 structure WeightedNormBudget {count : Nat} (values : Fin count → Basic.Canonical) where
   /-- The cached common scale for coefficient-weighted readings of the original entries. -/ scale : Fraction.Rational
   /-- The scale is the original count times the finite sum of entry squared norms. -/ scale_eq : scale = (count :
-    Fraction.Rational) * FiniteSum.Fin.sumFin (fun index => Data.Gaussian.Norm.Basic.normSq (values index))
+    Fraction.Rational) * sumFin (fun index => normSq (values index))
 
 constructive_injectivity WeightedNormBudget
 
 namespace WeightedNormBudget
 
-variable {count : Nat} {values : Fin count → Purelib.Data.Gaussian.Basic.Canonical}
+variable {count : Nat} {values : Fin count → Data.Gaussian.Basic.Canonical}
 
 open Purelib.Algebra in
 open Purelib.Approximation.Rational in
 open Purelib.Data.Gaussian in
 /-- Cache the exact original count-weighted sum of squared Gaussian norms. -/
 def build (values : Fin count → Basic.Canonical) : WeightedNormBudget values :=
-  ⟨Budget.Aggregate.countCoordinate count * FiniteSum.Fin.sumFin (fun index => Data.Gaussian.Norm.Basic.normSq (values
+  ⟨Budget.Aggregate.countCoordinate count * sumFin (fun index => normSq (values
     index)), by
     rw [Budget.Aggregate.countCoordinate_eq]⟩
 
@@ -108,22 +108,22 @@ open Purelib.Data.Rat in
 theorem nonnegative (budget : WeightedNormBudget values) : 0 ≤ budget.scale := by
   rw [budget.scale_eq]
   exact Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count))
-    (sum_nonnegative _ (fun _ => Norm.Basic.normSq_nonneg _))
+    (sum_nonnegative _ (fun _ => normSq_nonneg _))
 
 open Purelib.Algebra in
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
 open Purelib.LinearAlgebra.Gaussian in
 /-- The original weighted Gaussian sum is bounded by coefficient squared norm times its retained scale. -/
-theorem bound (budget : WeightedNormBudget values) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector count) :
-    Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun index => coefficients index * values index)) ≤
+theorem bound (budget : WeightedNormBudget values) (coefficients : Energy.GaussianVector count) :
+    normSq (sumFin (fun index => coefficients index * values index)) ≤
       coefficientNormSq coefficients * budget.scale := by
   have estimate := Norm.Sum.Indexed.normSq_sumFin_le_count_mul_sumFin (fun index => coefficients index * values index)
-    (fun index => coefficientNormSq coefficients * Data.Gaussian.Norm.Basic.normSq (values index)) (fun index => by
-      rw [Norm.Basic.normSq_mul]
+    (fun index => coefficientNormSq coefficients * normSq (values index)) (fun index => by
+      rw [normSq_mul]
       exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (coefficient_entry_le coefficients index)
-        (Norm.Basic.normSq_nonneg _))
-  rw [FiniteSum.Fin.sumFin_mul_left] at estimate
+        (normSq_nonneg _))
+  rw [sumFin_mul_left] at estimate
   exact estimate.trans_eq (by rw [budget.scale_eq]; ring1)
 
 end WeightedNormBudget
@@ -148,9 +148,9 @@ constructive_injectivity AffineBasis
 
 namespace AffineBasis
 
-variable {vertexCount faceCount count : Nat} {triangulation : Purelib.Topology.Polygon.Stokes.Triangulation vertexCount
+variable {vertexCount faceCount count : Nat} {triangulation : Topology.Polygon.Stokes.Triangulation vertexCount
   faceCount}
-  {coordinate : Fin vertexCount → Purelib.Data.Gaussian.Basic.Canonical}
+  {coordinate : Fin vertexCount → Data.Gaussian.Basic.Canonical}
 
 section
 open Purelib.Algebra
@@ -158,15 +158,15 @@ open Purelib.Data.Gaussian
 open Purelib.LinearAlgebra.Gaussian
 /-- The finite coefficient-weighted sum of original basis values at one retained vertex. -/
 def value (basis : AffineBasis triangulation coordinate count) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector count)
+  Energy.GaussianVector count)
   (vertex : Fin vertexCount) : Basic.Canonical :=
-  FiniteSum.Fin.sumFin (fun row => coefficients row * basis.values row vertex)
+  sumFin (fun row => coefficients row * basis.values row vertex)
 
 /-- The finite coefficient-weighted sum of original affine coefficients at one retained face. -/
 def coefficient (basis : AffineBasis triangulation coordinate count) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector count)
+  Energy.GaussianVector count)
   (face : Fin faceCount) : Basic.Canonical :=
-  FiniteSum.Fin.sumFin (fun row => coefficients row * basis.coefficients row face)
+  sumFin (fun row => coefficients row * basis.coefficients row face)
 
 end
 
@@ -176,29 +176,29 @@ open Purelib.Integration.Energy
 open Purelib.LinearAlgebra.Gaussian
 /-- The weighted basis's affine increment equals the same weighted sum of original basis increments. -/
 theorem affine_increment (basis : AffineBasis triangulation coordinate count) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector count)
+  Energy.GaussianVector count)
     (face : Fin faceCount) (first last : Fin vertexCount) :
     AffineTriangle.affinePrimitiveIncrement (basis.coefficient coefficients face) (coordinate first) (coordinate last) =
-      FiniteSum.Fin.sumFin (fun row => coefficients row * AffineTriangle.affinePrimitiveIncrement (basis.coefficients
+      sumFin (fun row => coefficients row * AffineTriangle.affinePrimitiveIncrement (basis.coefficients
         row face) (coordinate first) (coordinate last)) := by
   unfold AffineTriangle.affinePrimitiveIncrement coefficient
-  rw [← FiniteSum.Fin.sumFin_mul_right, ← FiniteSum.Fin.sumFin_mul_right, ← FiniteSum.Fin.sumFin_sub]
-  exact FiniteSum.Fin.sumFin_congr (fun row => by ring1)
+  rw [← sumFin_mul_right, ← sumFin_mul_right, ← sumFin_sub]
+  exact sumFin_congr (fun row => by ring1)
 
 /-- The weighted basis's increment error equals the same weighted sum of original basis errors. -/
 theorem affine_error (basis : AffineBasis triangulation coordinate count) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector
+  Energy.GaussianVector
   count)
     (face : Fin faceCount) (first last : Fin vertexCount) :
     AffineTriangle.affinePrimitiveIncrementError (basis.coefficient coefficients face) (coordinate first) (coordinate
       last)
       (basis.value coefficients first) (basis.value coefficients last) =
-      FiniteSum.Fin.sumFin (fun row => coefficients row * AffineTriangle.affinePrimitiveIncrementError
+      sumFin (fun row => coefficients row * AffineTriangle.affinePrimitiveIncrementError
         (basis.coefficients row face)
         (coordinate first) (coordinate last) (basis.values row first) (basis.values row last)) := by
   unfold AffineTriangle.affinePrimitiveIncrementError value
-  rw [basis.affine_increment, ← FiniteSum.Fin.sumFin_sub, ← FiniteSum.Fin.sumFin_sub]
-  exact FiniteSum.Fin.sumFin_congr (fun row => by ring1)
+  rw [basis.affine_increment, ← sumFin_sub, ← sumFin_sub]
+  exact sumFin_congr (fun row => by ring1)
 
 end
 
@@ -269,7 +269,7 @@ open Purelib.LinearAlgebra.Gaussian in
 
 The coefficient vector scales every original product budget by the same squared norm, preserving the exact face's
 vertices, coefficients and primitive values. -/
-def certificate (budget : TriangleBudget basis face) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector
+def certificate (budget : TriangleBudget basis face) (coefficients : Energy.GaussianVector
   count) :
     AffineTriangle.AffineTriangleErrorCertificate (basis.coefficient coefficients face)
       (coordinate (triangulation.faces face).first) (coordinate (triangulation.faces face).second) (coordinate
@@ -296,7 +296,7 @@ def certificate (budget : TriangleBudget basis face) (coefficients : LinearAlgeb
 open Purelib.LinearAlgebra.Gaussian in
 /-- The original triangle certificate total is coefficient squared norm times its retained budget total. -/
 theorem certificate_total (budget : TriangleBudget basis face) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector count) :
+  Energy.GaussianVector count) :
     (budget.certificate coefficients).totalBudget = coefficientNormSq coefficients * budget.total := by
   change coefficientNormSq coefficients * budget.products.first + coefficientNormSq coefficients *
     budget.products.second +
@@ -318,7 +318,7 @@ structure SurfaceBudget (basis : AffineBasis triangulation coordinate count) whe
     face => TriangleBudget basis face)
   /-- The cached total of the exact retained budget entries. -/ total : Fraction.Rational
   /-- The surface total is exactly the finite sum of the original indexed triangle totals. -/ total_eq : total =
-    FiniteSum.Fin.sumFin (fun face => (triangles.get face).total)
+    sumFin (fun face => (triangles.get face).total)
 
 constructive_injectivity SurfaceBudget
 
@@ -333,7 +333,7 @@ open Purelib.Data.Rat in
 def build (basis : AffineBasis triangulation coordinate count) (radius : Fraction.Rational) (positive : 0 < radius) :
   SurfaceBudget basis :=
   let triangles := Vector.DependentVector.ofFn (fun face => TriangleBudget.build basis face radius positive)
-  ⟨triangles, FiniteSum.Fin.sumFin (fun face => (triangles.get face).total), rfl⟩
+  ⟨triangles, sumFin (fun face => (triangles.get face).total), rfl⟩
 
 open Purelib.Data in
 open Purelib.Data.Gaussian in
@@ -344,7 +344,7 @@ open Purelib.LinearAlgebra.Gaussian in
 The supplied pointwise and scalar equalities preserve the retained budgets and all original proof fields while allowing
 the sample to consume its existing caches. -/
 public def cachedCertificate (budget : TriangleBudget basis face) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector count)
+  Energy.GaussianVector count)
     (values : Data.Vector Basic.Canonical vertexCount) (valueEq : ∀ vertex, values vertex = basis.value
       coefficients vertex)
     (coefficient : Basic.Canonical) (coefficientEq : coefficient = basis.coefficient coefficients face) :
@@ -374,28 +374,28 @@ open Purelib.Topology.Polygon in
 
 The sample retains the original triangulation, uses those exact caches in every face certificate and boundary readback,
 and stores the homogeneous total error without recomputing its entries. -/
-def sample (budget : SurfaceBudget basis) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector count) :
+def sample (budget : SurfaceBudget basis) (coefficients : Energy.GaussianVector count) :
   AffineSurfaceSample
   vertexCount faceCount :=
-  let values := Vector.Basic.vectorOfFn (basis.value coefficients)
-  let faceCoefficients := Vector.Basic.vectorOfFn (basis.coefficient coefficients)
+  let values := vectorOfFn (basis.value coefficients)
+  let faceCoefficients := vectorOfFn (basis.coefficient coefficients)
   let errors := fun face => cachedCertificate (budget.triangles.get face) coefficients values
-    (Vector.Basic.vectorOfFn_apply _)
-    (faceCoefficients face) (Vector.Basic.vectorOfFn_apply _ face)
+    (vectorOfFn_apply _)
+    (faceCoefficients face) (vectorOfFn_apply _ face)
   { triangulation := triangulation
     coordinate := coordinate
     primitiveValue := fun vertex => values vertex
     faceCoefficient := fun face => faceCoefficients face
     faceError := errors
-    affineEnergy := FiniteSum.Fin.sumFin (fun face => AffineTriangle.coordinateTriangleArea
+    affineEnergy := sumFin (fun face => AffineTriangle.coordinateTriangleArea
       (coordinate (triangulation.faces face).first) (coordinate (triangulation.faces face).second) (coordinate
         (triangulation.faces face).third) *
-      Data.Gaussian.Norm.Basic.normSq (faceCoefficients face))
+      normSq (faceCoefficients face))
     affineEnergy_eq := rfl
     errorBudget := coefficientNormSq coefficients * budget.total
     errorBudget_eq := by
-      rw [budget.total_eq, ← FiniteSum.Fin.sumFin_mul_left]
-      exact FiniteSum.Fin.sumFin_congr (fun face => ((budget.triangles.get face).certificate_total coefficients).symm)
+      rw [budget.total_eq, ← sumFin_mul_left]
+      exact sumFin_congr (fun face => ((budget.triangles.get face).certificate_total coefficients).symm)
     boundaryArea := Stokes.edgeListArea (fun vertex => Polygon.energyPrimitivePoint (values vertex))
       triangulation.boundary
     boundaryArea_eq := rfl }
@@ -404,29 +404,29 @@ section
 open Purelib.Data
 open Purelib.LinearAlgebra.Gaussian
 /-- The cached surface primitive value equals the exact original weighted basis readback. -/
-theorem sample_value (budget : SurfaceBudget basis) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector count)
+theorem sample_value (budget : SurfaceBudget basis) (coefficients : Energy.GaussianVector count)
   (vertex : Fin
   vertexCount) :
     (budget.sample coefficients).primitiveValue vertex = basis.value coefficients vertex :=
-      Vector.Basic.vectorOfFn_apply _ vertex
+      vectorOfFn_apply _ vertex
 
 /-- The cached surface face coefficient equals the exact original weighted coefficient readback. -/
-theorem sample_coefficient (budget : SurfaceBudget basis) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector
+theorem sample_coefficient (budget : SurfaceBudget basis) (coefficients : Energy.GaussianVector
   count) (face :
   Fin faceCount) :
     (budget.sample coefficients).faceCoefficient face = basis.coefficient coefficients face :=
-      Vector.Basic.vectorOfFn_apply _ face
+      vectorOfFn_apply _ face
 
 end
 
 open Purelib.LinearAlgebra.Gaussian
 /-- The sampled total error is the coefficient squared norm times the original retained surface budget. -/
-theorem sample_error (budget : SurfaceBudget basis) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector count)
+theorem sample_error (budget : SurfaceBudget basis) (coefficients : Energy.GaussianVector count)
   :
     (budget.sample coefficients).errorBudget = coefficientNormSq coefficients * budget.total := rfl
 
 /-- The original sampled affine energy minus its homogeneous error is bounded by its signed boundary energy. -/
-theorem energy_lower (budget : SurfaceBudget basis) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector count)
+theorem energy_lower (budget : SurfaceBudget basis) (coefficients : Energy.GaussianVector count)
   :
     (budget.sample coefficients).affineEnergy - coefficientNormSq coefficients * budget.total ≤
       (budget.sample coefficients).boundaryArea.im / 4 :=

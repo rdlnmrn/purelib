@@ -69,24 +69,24 @@ open Purelib
 
 open Purelib.Topology.Polygon.Stokes
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
     Fraction.Rational}
-  {request : Hyperelliptic.Meshes.Newton.AllHoles.PrimitiveComparison.NewtonPreparation.FamilyAreaRequest preparation
+  {request : PrimitiveComparison.NewtonPreparation.FamilyAreaRequest preparation
     target radius}
   {lifted : Meshes.LiftedPuncturedGrid request.single.grid.punctured}
-  {excision : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision request.single.grid lifted}
-  {first second : Fin genus} {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+  {excision : Excision.AllHoleExcision request.single.grid lifted}
+  {first second : Fin genus} {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
     request.single.grid.faces.regulars}
-  {prepared : Hyperelliptic.Meshes.Newton.AllHoles.PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations
+  {prepared : PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations
     excision} {comparison :
     PairedComparison prepared
     first second domains}
-  {stage : Nat} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
-  (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get first) lifted.mesh)
-    (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get second)
+  {stage : Nat} {cache : PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  (left : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get first) lifted.mesh)
+    (right : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get second)
     lifted.mesh)
   (leftSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch left.values)
   (rightSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch right.values)
@@ -95,7 +95,7 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
 variable {left right leftSurface rightSurface pair}
 
 /-- The exact sewn annulus selected by the original conjugate term. -/
-@[expose] def ConjugateTerm.annulus (term : Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateTerm left
+@[expose] def ConjugateTerm.annulus (term : ConjugateSamples.ConjugateTerm left
   right leftSurface rightSurface pair) :
     Topology.NewtonSewnExcision.AllHoleExcision.SewnAnnulus leftSurface := ⟨term.entry.source.entry, term.selected⟩
 
@@ -106,33 +106,33 @@ set_option genInjectivity false in
 
 Its annulus list is exactly the sampled original terms, and the cached remaining area reads their literal complementary
 cut triangles. -/
-structure Excision (sample : Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateSample left right
+structure Excision (sample : ConjugateSamples.ConjugateSample left right
   leftSurface rightSurface pair comparison) where
   /-- The original sewn excision on the same cut surface. -/ retained : Topology.NewtonSewnExcision.AllHoleExcision.Sewn
     excision leftSurface
   /-- The retained annuli are exactly those selected by the original conjugate sample terms. -/ annuli_eq :
-    retained.annuli = sample.terms.map Hyperelliptic.Meshes.Newton.AllHoles.ConjugateRemaining.ConjugateTerm.annulus
+    retained.annuli = sample.terms.map ConjugateTerm.annulus
   /-- The cached conjugate area of the retained complementary triangles. -/ remainingArea : Gaussian.Basic.Canonical
   /-- The remaining area is evaluated on the original conjugate pair and actual complementary triangle boundaries. -/
     remainingArea_eq : remainingArea = Topology.Polygon.Stokes.edgeListArea pair.values
-    (retained.remaining.triangles.flatMap Topology.Polygon.Stokes.OrientedTriangle.boundary)
+    (retained.remaining.triangles.flatMap OrientedTriangle.boundary)
 
 constructive_injectivity Excision
 
 namespace Excision
 
-variable {sample : Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateSample left right leftSurface
+variable {sample : ConjugateSamples.ConjugateSample left right leftSurface
   rightSurface pair comparison}
 
 /-- Retain the original sampled annuli and cache their exact complementary conjugate area. -/
-@[expose] def build (sample : Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateSample left right
+@[expose] def build (sample : ConjugateSamples.ConjugateSample left right
   leftSurface rightSurface pair comparison) :
-  Hyperelliptic.Meshes.Newton.AllHoles.ConjugateRemaining.ConjugateSample.Excision sample := by
-  let annuli := sample.terms.map Hyperelliptic.Meshes.Newton.AllHoles.ConjugateRemaining.ConjugateTerm.annulus
+  Excision sample := by
+  let annuli := sample.terms.map ConjugateTerm.annulus
   have sources_eq : annuli.map Topology.NewtonSewnExcision.AllHoleExcision.SewnAnnulus.source = excision.entries := by
     dsimp only [annuli]
-    rw [Data.List.Map.map_map]
-    exact Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateSample.entries_eq sample
+    rw [List.Map.map_map]
+    exact ConjugateSamples.ConjugateSample.entries_eq sample
   let retained : Topology.NewtonSewnExcision.AllHoleExcision.Sewn excision leftSurface :=
     { annuli := annuli
       sources_eq := sources_eq
@@ -142,19 +142,19 @@ variable {sample : Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.Conjuga
       annularArea := Geometry.Grid.CellBoundary.sumValues (fun annulus => annulus.selected.area) annuli
       annularArea_eq := rfl }
   exact ⟨retained, rfl, Topology.Polygon.Stokes.edgeListArea pair.values (retained.remaining.triangles.flatMap
-    Topology.Polygon.Stokes.OrientedTriangle.boundary), rfl⟩
+    OrientedTriangle.boundary), rfl⟩
 
 /-- Every original cut triangle is accounted for once by the cached annuli
 or the retained complement, evaluated on the actual conjugate pair. -/
-theorem partition (cached : Hyperelliptic.Meshes.Newton.AllHoles.ConjugateRemaining.ConjugateSample.Excision sample) :
+theorem partition (cached : Excision sample) :
   sample.area + cached.remainingArea = pair.boundaryArea := by
   have equal := Topology.NewtonPairedSewnExcision.AllHoleExcision.Sewn.paired_partition cached.retained pair.values
   rw [cached.annuli_eq] at equal
   have areas : Geometry.Grid.CellBoundary.sumValues (fun annulus => Topology.Polygon.Stokes.edgeListArea pair.values
-      (annulus.selected.triangles.flatMap Topology.Polygon.Stokes.OrientedTriangle.boundary)) (sample.terms.map
-        Hyperelliptic.Meshes.Newton.AllHoles.ConjugateRemaining.ConjugateTerm.annulus) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (sample.terms.map
-        Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateTerm.area) := by
+      (annulus.selected.triangles.flatMap OrientedTriangle.boundary)) (sample.terms.map
+        ConjugateTerm.annulus) =
+      Gaussian.Norm.Sum.Basic.gaussianSum (sample.terms.map
+        ConjugateSamples.ConjugateTerm.area) := by
     induction sample.terms with
     | nil => rfl
     | cons term rest ih => exact congrArg₂ (· + ·) term.area_eq.symm ih
@@ -164,7 +164,7 @@ theorem partition (cached : Hyperelliptic.Meshes.Newton.AllHoles.ConjugateRemain
 
 /-- Replacing the complete surface plus positive hole polygons by the retained complement leaves the negative
 annular-plus-hole total. -/
-theorem remaining_difference (cached : Hyperelliptic.Meshes.Newton.AllHoles.ConjugateRemaining.ConjugateSample.Excision
+theorem remaining_difference (cached : Excision
   sample) :
     cached.remainingArea - (pair.boundaryArea + sample.holes) = -(sample.area + sample.holes) := by
   rw [← cached.partition]
@@ -178,23 +178,23 @@ polygons on every later common sample. No annular area is dropped. -/
 @[expose] def conjugateRemainingRequest (comparison :
   PairedComparison prepared
   first second domains)
-    (sewing : Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation lifted.cutPolygon domains first
+    (sewing : PuncturedGrid.SewnBilinearRequest.BilinearPreparation lifted.cutPolygon domains first
       second) (floor : Nat) :
     {threshold : Nat // floor ≤ threshold ∧
-      ∀ stage (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage)
-        (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get first)
-          lifted.mesh) (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get
+      ∀ stage (cache : PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage)
+        (left : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get first)
+          lifted.mesh) (right : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get
           second) lifted.mesh)
         (leftSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch left.values)
         (rightSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch right.values)
         (pair : Topology.Surface.Sewing.SewnConjugateSamples.ConjugatePair leftSurface rightSurface)
-        (sample : Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateSample left right leftSurface
+        (sample : ConjugateSamples.ConjugateSample left right leftSurface
           rightSurface pair comparison)
-        (cached : Hyperelliptic.Meshes.Newton.AllHoles.ConjugateRemaining.ConjugateSample.Excision sample), threshold ≤
+        (cached : ConjugateSample.Excision sample), threshold ≤
           stage →
-        Data.Gaussian.Norm.Basic.normSq
+        Gaussian.Norm.Basic.normSq
           (cached.remainingArea - (pair.boundaryArea + sample.holes)) < (82 / 4 : Fraction.Rational) * target} := by
-  let acquired := Hyperelliptic.Meshes.Newton.AllHoles.ConjugatePhysicalAggregate.conjugatePhysicalRequest comparison
+  let acquired := ConjugatePhysicalAggregate.conjugatePhysicalRequest comparison
     sewing floor
   refine ⟨acquired.val, acquired.property.1, ?_⟩
   intro stage cache left right leftSurface rightSurface pair sample cached later

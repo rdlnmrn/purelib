@@ -47,6 +47,8 @@ import Purelib.RootIsolation.Curve.Event.Basic
 import Purelib.RootIsolation.Curve.Event.Profile.Basic
 import Purelib.RootIsolation.Sturm.Track.Basic
 
+open Purelib.Geometry.Projective
+
 open Purelib.Geometry.Projective.Hermitian (Atom)
 open Purelib.Geometry.Projective.Line (Proj)
 open Purelib.LinearAlgebra.Coordinates2.Matrix (GaussianMatrix)
@@ -95,9 +97,9 @@ separated boxes. -/
     (entry : BoundaryProfileEventEntry boundary)
     {leftBox rightBox : Box} (separated : leftBox.Separated rightBox) :
     Fraction.Rational :=
-  Data.Rat.SmallWidth.shrinkingWidth
+  SmallWidth.shrinkingWidth
     entry.parent.chart.uniformChordalVariationCoefficient
-    (Geometry.Projective.Chordal.Box.Separation.separatedChordalGap
+    (Chordal.Box.Separation.separatedChordalGap
       separated)
 
 /-- The chordal-gap request width for two separated boxes is positive. -/
@@ -111,9 +113,9 @@ theorem separatedProfileRequestWidth_pos
     (entry : BoundaryProfileEventEntry boundary)
     {leftBox rightBox : Box} (separated : leftBox.Separated rightBox) :
     0 < separatedProfileRequestWidth entry separated :=
-  Data.Rat.SmallWidth.shrinkingWidth_pos
+  SmallWidth.shrinkingWidth_pos
     entry.parent.chart.uniformChordalVariationCoefficient_nonneg
-    (Geometry.Projective.Chordal.Box.Separation.separatedChordalGap_pos
+    (Chordal.Box.Separation.separatedChordalGap_pos
       separated)
 
 /-- Quantitative profile-event keep-apart theorem at an arbitrary displayed
@@ -129,7 +131,7 @@ theorem requestedProfileEvent_not_spanning_with_gap
     {leftBox rightBox : Box} (gap epsilon : Fraction.Rational)
     (gapLower : ∀ {leftPoint rightPoint : Gaussian.Basic.Canonical},
       leftBox.Contains leftPoint → rightBox.Contains rightPoint →
-        gap ≤ Geometry.Projective.Chordal.Basic.chordalSq
+        gap ≤ Chordal.Basic.chordalSq
           (Proj.affine leftPoint) (Proj.affine rightPoint))
     (epsilonPositive : 0 < epsilon)
     (diameterSmall :
@@ -157,14 +159,14 @@ theorem requestedProfileEvent_not_spanning_with_gap
   have eventUpper := entry.chordalSq_requestAt_le epsilon epsilonPositive
     leftParameterInside rightParameterInside
   have leftTransport :
-      Geometry.Projective.Chordal.Basic.chordalSq
+      Chordal.Basic.chordalSq
           (entry.parent.chart.projective leftParameter)
           (entry.parent.chart.projective rightParameter) =
-        Geometry.Projective.Chordal.Basic.chordalSq
+        Chordal.Basic.chordalSq
           (Proj.affine leftPoint)
           (entry.parent.chart.projective rightParameter) := by
     simpa only [-eq_self, -iff_self, curve, leftPoint,
-      Geometry.Projective.Hermitian.Chart.BoundedChart.projective] using
+      Hermitian.Chart.BoundedChart.projective] using
       Curve.Projective.chordalSq_projective_eq_affine
         curve leftParameter leftDenominatorNonzero
           (entry.parent.chart.projective rightParameter)
@@ -172,28 +174,28 @@ theorem requestedProfileEvent_not_spanning_with_gap
       (entry.parent.chart.projective rightParameter).Equivalent
         (Proj.affine rightPoint) := by
     simpa only [-eq_self, -iff_self, curve, rightPoint,
-      Geometry.Projective.Hermitian.Chart.BoundedChart.projective] using
+      Hermitian.Chart.BoundedChart.projective] using
       Curve.Projective.projective_equivalent_affine
         curve rightParameter rightDenominatorNonzero
   have rightTransport :
-      Geometry.Projective.Chordal.Basic.chordalSq
+      Chordal.Basic.chordalSq
           (Proj.affine leftPoint)
           (entry.parent.chart.projective rightParameter) =
-        Geometry.Projective.Chordal.Basic.chordalSq
+        Chordal.Basic.chordalSq
           (Proj.affine leftPoint) (Proj.affine rightPoint) :=
-    Geometry.Projective.Chordal.Equivalence.chordalSq_eq_of_equivalent_right
+    Chordal.Equivalence.chordalSq_eq_of_equivalent_right
       (entry.parent.chart.projective_valid rightParameter)
-      (Geometry.Projective.Line.Gaussian.Proj.affine_hasNonzeroCoordinate rightPoint)
+      (Line.Gaussian.Proj.affine_hasNonzeroCoordinate rightPoint)
       rightEquivalent (Proj.affine leftPoint)
   have affineUpper :
-      Geometry.Projective.Chordal.Basic.chordalSq
+      Chordal.Basic.chordalSq
           (Proj.affine leftPoint) (Proj.affine rightPoint) ≤
         entry.parent.chart.uniformChordalVariationCoefficient * epsilon ^ 2 :=
     by
       rw [← rightTransport, ← leftTransport]
       exact eventUpper
   have affineLower : gap ≤
-      Geometry.Projective.Chordal.Basic.chordalSq
+      Chordal.Basic.chordalSq
         (Proj.affine leftPoint) (Proj.affine rightPoint) :=
     gapLower leftPointInside rightPointInside
   exact (not_lt_of_ge affineLower) (affineUpper.trans_lt diameterSmall)
@@ -228,18 +230,18 @@ theorem separatedProfileRequest_not_spanning
   intro leftParameter rightParameter leftInside rightInside leftDenominator
     rightDenominator leftPointInside rightPointInside
   apply requestedProfileEvent_not_spanning_with_gap entry
-    (Geometry.Projective.Chordal.Box.Separation.separatedChordalGap
+    (Chordal.Box.Separation.separatedChordalGap
       separated)
     (separatedProfileRequestWidth entry separated)
-    (Geometry.Projective.Chordal.Box.Separation.separatedChordalGap_le_affine
+    (Chordal.Box.Separation.separatedChordalGap_le_affine
       separated)
     (separatedProfileRequestWidth_pos entry separated)
     ?_ leftInside rightInside leftDenominator rightDenominator
       leftPointInside rightPointInside
   simpa only [-eq_self, -iff_self, separatedProfileRequestWidth] using
-    Data.Rat.SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
+    SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
       entry.parent.chart.uniformChordalVariationCoefficient_nonneg
-      (Geometry.Projective.Chordal.Box.Separation.separatedChordalGap_pos
+      (Chordal.Box.Separation.separatedChordalGap_pos
         separated)
 
 /-- Every ordered distinct pair of a finite separated box family contributes
@@ -371,7 +373,7 @@ for every profile sign and every pairwise separated winding region. -/
     (pairwise : boxes.Pairwise fun left right => left.Separated right) :
     Fraction.Rational :=
   min
-    (Curve.Event.Profile.Sign.profileSignWidth
+    (Event.Profile.Sign.profileSignWidth
       entry.event.1)
     (profileFamilyRequestWidth entry boxes pairwise)
 
@@ -387,7 +389,7 @@ theorem combinedProfileRequestWidth_pos
     (pairwise : boxes.Pairwise fun left right => left.Separated right) :
     0 < combinedProfileRequestWidth entry boxes pairwise := by
   exact Fraction.Order.Basic.lt_min
-    (Curve.Event.Profile.Sign.profileSignWidth_pos
+    (Event.Profile.Sign.profileSignWidth_pos
       entry.event.1)
     (profileFamilyRequestWidth_pos entry boxes pairwise)
 
@@ -402,7 +404,7 @@ theorem combinedProfileRequestWidth_le_sign
     (entry : BoundaryProfileEventEntry boundary) (boxes : List Box)
     (pairwise : boxes.Pairwise fun left right => left.Separated right) :
     combinedProfileRequestWidth entry boxes pairwise ≤
-      Curve.Event.Profile.Sign.profileSignWidth
+      Event.Profile.Sign.profileSignWidth
         entry.event.1 :=
   Fraction.Order.Basic.min_le_left _ _
 
@@ -432,9 +434,9 @@ rational evaluations; no root existence is inferred from an event count. -/
       marginPositive atom}
     (entry : BoundaryProfileEventEntry boundary) (boxes : List Box)
     (pairwise : boxes.Pairwise fun left right => left.Separated right) :
-    Curve.Event.Profile.Classification.ProfileEventAffineClassification
+    Event.Profile.Classification.ProfileEventAffineClassification
       entry.event.2 (combinedProfileRequestWidth entry boxes pairwise) :=
-  Curve.Event.Profile.Classification.classifyProfileEventAffine
+  Event.Profile.Classification.classifyProfileEventAffine
     entry.event.2 (combinedProfileRequestWidth entry boxes pairwise)
       (combinedProfileRequestWidth_pos entry boxes pairwise)
       (combinedProfileRequestWidth_le_sign entry boxes pairwise)
@@ -489,18 +491,18 @@ theorem profileRequest_not_spanning_of_le_family
       coefficientNonnegative
   have pairDiameterSmall :
       entry.parent.chart.uniformChordalVariationCoefficient * pairWidth ^ 2 <
-        Geometry.Projective.Chordal.Box.Separation.separatedChordalGap
+        Chordal.Box.Separation.separatedChordalGap
           separated := by
     simpa only [-eq_self, -iff_self, pairWidth, separatedProfileRequestWidth] using
-      Data.Rat.SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
+      SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
         coefficientNonnegative
-        (Geometry.Projective.Chordal.Box.Separation.separatedChordalGap_pos
+        (Chordal.Box.Separation.separatedChordalGap_pos
           separated)
   exact requestedProfileEvent_not_spanning_with_gap entry
-    (Geometry.Projective.Chordal.Box.Separation.separatedChordalGap
+    (Chordal.Box.Separation.separatedChordalGap
       separated)
     epsilon
-    (Geometry.Projective.Chordal.Box.Separation.separatedChordalGap_le_affine
+    (Chordal.Box.Separation.separatedChordalGap_le_affine
       separated)
     epsilonPositive (requestDiameterLe.trans_lt pairDiameterSmall)
     leftInside rightInside leftDenominator rightDenominator leftPointInside

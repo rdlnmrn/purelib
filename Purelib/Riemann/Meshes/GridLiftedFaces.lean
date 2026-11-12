@@ -22,6 +22,7 @@ import Purelib.Polynomial.Geometry.Grid.CellBoundary
 import Purelib.Polynomial.Geometry.Grid.ClearGrid
 import Purelib.Polynomial.Geometry.Grid.Walks
 import Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
+import Purelib.RootIsolation.SquareRoot.Grid.Walk
 import Purelib.RootIsolation.SquareRoot.Grid.RootFrames
 public import Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices
 public import Purelib.Topology.Mesh.IndexedQuadrilaterals
@@ -55,8 +56,8 @@ namespace Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
 
 open Purelib.Topology.Polygon.Stokes (OrientedEdge)
 
-variable {polynomial : Purelib.Polynomial.Geometry.ClearPath.GaussianPolynomial} {ambient :
-  Purelib.Geometry.Rational.Box} {grid : Polynomial.Geometry.Grid.ClearGrid polynomial
+variable {polynomial : Polynomial.Geometry.ClearPath.GaussianPolynomial} {ambient :
+  Geometry.Rational.Box} {grid : Polynomial.Geometry.Grid.ClearGrid polynomial
   ambient} {frames : RootFrames grid}
 
 open Purelib.Data.Gaussian in
@@ -66,29 +67,48 @@ open Purelib.RootIsolation in
 
 The source index retains the supplied original sheet. The target index uses the same cached root-edge transport and the
 original endpoint membership witnesses. -/
-@[expose] def indexedEdge (edges : Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames) (vertices :
-  SquareRoot.Grid.LiftedVertices.VertexBank grid) {start finish : Basic.Canonical}
+@[expose] def indexedEdge (edges : RootEdgeBank frames) (vertices :
+  LiftedVertices.VertexBank grid) {start finish : Basic.Canonical}
     (edge : Geometry.Grid.Walks.Edge grid start finish) (sheet : Fin 2) : OrientedEdge vertices.count :=
   ⟨vertices.index start edge.vertices.1 sheet,
     vertices.index finish edge.vertices.2 ((edges.edge edge).forward.target sheet)⟩
 
-open Purelib.Data.Gaussian in
-open Purelib.Polynomial in
-open Purelib.Riemann.Paths in
-open Purelib.RootIsolation in
+section
+
+open Purelib.Data.Gaussian
+open Purelib.Polynomial
+open Purelib.Riemann.Paths
+open Purelib.RootIsolation
 /-- Reversing the original grid edge reverses its indexed lifted edge after transporting the source sheet.
 
-The retained edge bijection carries both endpoint owners. Its backward-forward equation identifies the starting sheet
-after the original reversed transport. -/
-theorem indexedEdge_reverse (edges : Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames) (vertices :
-  SquareRoot.Grid.LiftedVertices.VertexBank grid) {start finish : Basic.Canonical}
-    (edge : Geometry.Grid.Walks.Edge grid start finish) (first : OwnerLoopMonodromy.WindingOneLoop polynomial start)
-    (last : OwnerLoopMonodromy.WindingOneLoop polynomial finish) (sheet : Fin 2) :
+One old anchor reference derives the inverse equation of the SAME retained
+edge maps. That scalar equation identifies the starting sheet after the
+original reversed transport, without a new-vertex reference loop. -/
+theorem indexedEdge_reverse_anchored (edges : RootEdgeBank frames) (vertices :
+  LiftedVertices.VertexBank grid) {anchor start finish : Basic.Canonical}
+    (reference : OwnerLoopMonodromy.WindingOneLoop polynomial anchor)
+    (member : Geometry.Grid.FromStates.ContainsVertex grid anchor)
+    (edge : Geometry.Grid.Walks.Edge grid start finish) (sheet : Fin 2) :
     edges.indexedEdge vertices (.reverse edge) ((edges.edge edge).forward.target sheet) =
       (edges.indexedEdge vertices edge sheet).reverse :=
   congrArg (fun finalSheet => (⟨vertices.index finish edge.vertices.2 ((edges.edge edge).forward.target sheet),
       vertices.index start edge.vertices.1 finalSheet⟩ : OrientedEdge vertices.count))
-    (((edges.edge edge).bijection first last).backward_forward sheet)
+    ((EdgeBank.RootEdgeBank.edgeBijectionAnchored edges reference member edge).backward_forward sheet)
+
+/-- Reversing the original grid edge reverses its indexed lifted edge after transporting the source sheet.
+
+The retained edge bijection carries both endpoint owners. Its backward-forward equation identifies the starting sheet
+after the original reversed transport. -/
+theorem indexedEdge_reverse (edges : RootEdgeBank frames) (vertices :
+  LiftedVertices.VertexBank grid) {start finish : Basic.Canonical}
+    (edge : Geometry.Grid.Walks.Edge grid start finish) (first : OwnerLoopMonodromy.WindingOneLoop polynomial start)
+    (last : OwnerLoopMonodromy.WindingOneLoop polynomial finish) (sheet : Fin 2) :
+    edges.indexedEdge vertices (.reverse edge) ((edges.edge edge).forward.target sheet) =
+      (edges.indexedEdge vertices edge sheet).reverse :=
+  let _ := last
+  edges.indexedEdge_reverse_anchored vertices first edge.vertices.1 edge sheet
+
+end
 
 open Purelib.Data.Gaussian
 open Purelib.Polynomial
@@ -97,8 +117,8 @@ open Purelib.RootIsolation
 
 Each original walk edge contributes its exact indexed lift, and its transported sheet is passed to the same retained
 tail. The original edge order and endpoint witnesses remain unchanged. -/
-@[expose] def indexedEdges (edges : Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames) (vertices :
-  SquareRoot.Grid.LiftedVertices.VertexBank grid) :
+@[expose] def indexedEdges (edges : RootEdgeBank frames) (vertices :
+  LiftedVertices.VertexBank grid) :
     {start finish : Basic.Canonical} → Geometry.Grid.Walks.Walk grid start finish → Fin 2 → List (OrientedEdge
       vertices.count)
   | _, _, .nil _, _ => []
@@ -109,8 +129,8 @@ tail. The original edge order and endpoint witnesses remain unchanged. -/
 
 The empty walk contributes no indices. Each retained head edge contributes one original indexed lift and preserves the
 exact tail edge count. -/
-theorem indexedEdges_length (edges : Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames) (vertices :
-  SquareRoot.Grid.LiftedVertices.VertexBank grid) :
+theorem indexedEdges_length (edges : RootEdgeBank frames) (vertices :
+  LiftedVertices.VertexBank grid) :
     {start finish : Basic.Canonical} → (walk : Geometry.Grid.Walks.Walk grid start finish) → (sheet : Fin 2) →
       (edges.indexedEdges vertices walk sheet).length = walk.edgeCount
   | _, _, .nil _, _ => rfl
@@ -119,70 +139,6 @@ theorem indexedEdges_length (edges : Purelib.RootIsolation.SquareRoot.Grid.RootE
 
 end Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
 
-namespace Purelib.Polynomial.Geometry.Grid.ClearGrid.Cell
-
-variable {polynomial : Purelib.Polynomial.Geometry.ClearPath.GaussianPolynomial} {ambient :
-  Purelib.Geometry.Rational.Box} {grid : ClearGrid polynomial
-  ambient}
-
-section
-open Purelib.Data.Gaussian
-open Purelib.Polynomial
-/-- The original cell's bottom grid edge, directed from lower left to lower right.
-
-The retained horizontal interval and lower vertical endpoint determine this directed edge. Their original
-grid-membership witnesses certify both original lower corners. -/
-@[expose] def bottomSide (cell : Geometry.Grid.ClearGrid.Cell polynomial ambient) (member : cell ∈ grid.cells) :
-    Geometry.Grid.Walks.Edge grid cell.box.anchor (Components.Basic.point cell.box.xUpper cell.box.yLower) :=
-  let intervals := Geometry.Grid.CellBoundary.Cell.intervals_mem cell member
-  .horizontal cell.horizontal intervals.1 cell.vertical.lower (Geometry.Grid.ClearGrid.Interval.endpoints_mem _
-    grid.horizontal_ordered intervals.2).1
-
-/-- The original cell's right grid edge, directed from lower right to upper right.
-
-The retained vertical interval and upper horizontal endpoint determine this directed edge. Their original
-grid-membership witnesses certify the original right-hand corners. -/
-@[expose] def rightSide (cell : Geometry.Grid.ClearGrid.Cell polynomial ambient) (member : cell ∈ grid.cells) :
-    Geometry.Grid.Walks.Edge grid (Components.Basic.point cell.box.xUpper cell.box.yLower) (Components.Basic.point
-      cell.box.xUpper cell.box.yUpper) :=
-  let intervals := Geometry.Grid.CellBoundary.Cell.intervals_mem cell member
-  .vertical cell.vertical intervals.2 cell.horizontal.upper (Geometry.Grid.ClearGrid.Interval.endpoints_mem _
-    grid.vertical_ordered intervals.1).2
-
-/-- The original cell's top grid edge, directed from upper right to upper left.
-
-The original horizontal edge at the upper vertical endpoint is reversed. Its retained interval and endpoint witnesses
-preserve the two upper corners and their orientation. -/
-@[expose] def topSide (cell : Geometry.Grid.ClearGrid.Cell polynomial ambient) (member : cell ∈ grid.cells) :
-    Geometry.Grid.Walks.Edge grid (Components.Basic.point cell.box.xUpper cell.box.yUpper) (Components.Basic.point
-      cell.box.xLower cell.box.yUpper) :=
-  let intervals := Geometry.Grid.CellBoundary.Cell.intervals_mem cell member
-  .reverse (.horizontal cell.horizontal intervals.1 cell.vertical.upper (Geometry.Grid.ClearGrid.Interval.endpoints_mem
-    _ grid.horizontal_ordered intervals.2).2)
-
-/-- The original cell's left grid edge, directed from upper left to lower left.
-
-The original vertical edge at the lower horizontal endpoint is reversed. Its retained interval and endpoint witnesses
-preserve the two left-hand corners and their orientation. -/
-@[expose] def leftSide (cell : Geometry.Grid.ClearGrid.Cell polynomial ambient) (member : cell ∈ grid.cells) :
-    Geometry.Grid.Walks.Edge grid (Components.Basic.point cell.box.xLower cell.box.yUpper) cell.box.anchor :=
-  let intervals := Geometry.Grid.CellBoundary.Cell.intervals_mem cell member
-  .reverse (.vertical cell.vertical intervals.2 cell.horizontal.lower (Geometry.Grid.ClearGrid.Interval.endpoints_mem _
-    grid.vertical_ordered intervals.1).1)
-
-end
-
-open Purelib.Polynomial in
-/-- The original cell boundary walk is exactly its bottom, right, top and left sides in order.
-
-The same retained cell supplies all four directed sides. Their original endpoint witnesses compose in
-bottom-right-top-left order and return to its exact anchor. -/
-theorem boundaryWalk_sides (cell : Geometry.Grid.ClearGrid.Cell polynomial ambient) (member : cell ∈ grid.cells) :
-    Geometry.Grid.CellBoundary.Cell.boundaryWalk cell member = .cons (cell.bottomSide member) (.cons (cell.rightSide
-      member)
-      (.cons (cell.topSide member) (.cons (cell.leftSide member) (.nil cell.box.anchor)))) := rfl
-
-end Purelib.Polynomial.Geometry.Grid.ClearGrid.Cell
 
 namespace Purelib.Riemann.Meshes.GridLiftedFaces
 
@@ -203,10 +159,10 @@ namespace BranchCellBank
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid}
+  {frames : RootFrames bank.grid}
 
 open Purelib in
 open Purelib.Data.Gaussian in
@@ -217,7 +173,7 @@ set_option genInjectivity false in
 
 The four corners use the original vertex bank. Three transported corner sheets and the closing equation retain the
 original root-edge bank's complete boundary transport. -/
-structure LiftedFace (vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid) (edges :
+structure LiftedFace (vertices : VertexBank bank.grid) (edges :
   RootEdgeBank frames)
     (face : RegularFace bank) (sheet : Fin 2) where
   /-- The retained transported sheet at the original lower-right corner. -/ lowerRight : Fin 2
@@ -232,9 +188,9 @@ structure LiftedFace (vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.
   /-- Original left-side transport returns to the exact starting sheet. -/ closed : (edges.edge (face.cell.leftSide
     face.member)).forward.target upperLeft = sheet
   /-- The retained quadrilateral over the original vertex-bank indices. -/ quad :
-    Topology.Mesh.IndexedQuadrilaterals.IndexedQuadrilateral vertices.count
+    IndexedQuadrilateral vertices.count
   /-- The first corner is the exact original anchor index on the starting sheet. -/ first_eq : quad.first =
-    vertices.index face.cell.box.anchor (Geometry.Grid.ClearGrid.Cell.anchor_mem face.cell face.member) sheet
+    vertices.index face.cell.box.anchor (Cell.anchor_mem face.cell face.member) sheet
   /-- The second corner is the original lower-right index on its retained sheet. -/ second_eq : quad.second =
     vertices.index (Components.Basic.point face.cell.box.xUpper face.cell.box.yLower)
     (face.cell.bottomSide face.member).vertices.2 lowerRight
@@ -260,7 +216,7 @@ open Purelib.RootIsolation in
 private theorem edge_injective {start finish : Basic.Canonical} (edges :
   RootEdgeBank
   frames)
-    (edge : Geometry.Grid.Walks.Edge bank.grid start finish) : Function.Injective (edges.edge edge).forward.target :=
+    (edge : Edge bank.grid start finish) : Function.Injective (edges.edge edge).forward.target :=
   ((edges.edge edge).bijection (Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt bank start
     edge.vertices.1).toLoop
     (Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt bank finish
@@ -273,7 +229,7 @@ open Purelib.RootIsolation in
 
 The corner sheets are computed successively along the original sides; regular-face transport closes the boundary, and
 the quadrilateral retains the exact vertex-bank indices. -/
-@[expose] def build (vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid) (edges :
+@[expose] def build (vertices : VertexBank bank.grid) (edges :
   RootEdgeBank frames) (face : RegularFace bank) (sheet : Fin 2) :
     LiftedFace vertices edges face sheet :=
   let lowerRight := (edges.edge (face.cell.bottomSide face.member)).forward.target sheet
@@ -288,7 +244,7 @@ the quadrilateral retains the exact vertex-bank indices. -/
     closed :=
       RootContinuation.GridRootWalks.BranchCellBank.RegularFace.sharedTransport_identity
       face edges sheet
-    quad := ⟨vertices.index face.cell.box.anchor (Geometry.Grid.ClearGrid.Cell.anchor_mem face.cell face.member) sheet,
+    quad := ⟨vertices.index face.cell.box.anchor (Cell.anchor_mem face.cell face.member) sheet,
       vertices.index _ (face.cell.bottomSide face.member).vertices.2 lowerRight,
       vertices.index _ (face.cell.rightSide face.member).vertices.2 upperRight,
       vertices.index _ (face.cell.topSide face.member).vertices.2 upperLeft⟩
@@ -393,11 +349,11 @@ theorem boundary_eq (lifted : LiftedFace vertices edges face sheet) :
     lifted.quad.boundary = edges.indexedEdges vertices face.boundary sheet := by
   have closed := lifted.closed
   rw [lifted.top_eq, lifted.right_eq, lifted.bottom_eq] at closed
-  simp only [Topology.Mesh.IndexedQuadrilaterals.IndexedQuadrilateral.boundary, lifted.first_eq, lifted.second_eq,
+  simp only [IndexedQuadrilateral.boundary, lifted.first_eq, lifted.second_eq,
     lifted.third_eq, lifted.fourth_eq,
     lifted.top_eq, lifted.right_eq, lifted.bottom_eq, RegularFace.boundary,
-      Geometry.Grid.ClearGrid.Cell.boundaryWalk_sides,
-    SquareRoot.Grid.RootEdgeBank.indexedEdges, SquareRoot.Grid.RootEdgeBank.indexedEdge]
+      Cell.boundaryWalk_sides,
+    RootEdgeBank.indexedEdges, RootEdgeBank.indexedEdge]
   rw [closed]
 
 open Purelib.Topology.Polygon in

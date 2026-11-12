@@ -24,6 +24,10 @@ import Purelib.Geometry.Rational.Box.Separation
 public import Purelib.Geometry.Rational.Box.Subdivision
 import Purelib.Polynomial.Dense.Basic
 
+open Purelib.Polynomial.Winding.Box.Nonnegative
+
+open Purelib.Polynomial.Clearance.Box.Boundary
+
 open Purelib.Geometry.Rational
 
 open Purelib.Polynomial
@@ -44,7 +48,7 @@ namespace Purelib.RootIsolation.State.WindingOne.Count
 The squarefree polynomial has degree at least two and retains its axis-elimination certificate; the surrounding finite
 grid cells have nonnegative winding. -/
 public theorem region_rawWinding_ge_four_of_strictInterior
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
     (degreeAtLeastTwo : 2 ≤ p.natDegree)
     (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
     {degreeBound : Nat}
@@ -59,42 +63,42 @@ public theorem region_rawWinding_ge_four_of_strictInterior
     (state.ambientBottomClearance.restrict region.refinesAmbient)
     (state.ambientTopClearance.restrict region.refinesAmbient)
   have southwestNonnegative :=
-    Winding.Box.Nonnegative.Squarefree.quadrupledBoxWinding_nonnegative
+    Squarefree.quadrupledBoxWinding_nonnegative
       degreeAtLeastTwo squarefree elimination
       (grid.southwest.refines.trans region.refinesAmbient)
       grid.southwest.proper grid.southwest.clearance
   have westNonnegative :=
-    Winding.Box.Nonnegative.Squarefree.quadrupledBoxWinding_nonnegative
+    Squarefree.quadrupledBoxWinding_nonnegative
       degreeAtLeastTwo squarefree elimination
       (grid.west.refines.trans region.refinesAmbient)
       grid.west.proper grid.west.clearance
   have northwestNonnegative :=
-    Winding.Box.Nonnegative.Squarefree.quadrupledBoxWinding_nonnegative
+    Squarefree.quadrupledBoxWinding_nonnegative
       degreeAtLeastTwo squarefree elimination
       (grid.northwest.refines.trans region.refinesAmbient)
       grid.northwest.proper grid.northwest.clearance
   have southNonnegative :=
-    Winding.Box.Nonnegative.Squarefree.quadrupledBoxWinding_nonnegative
+    Squarefree.quadrupledBoxWinding_nonnegative
       degreeAtLeastTwo squarefree elimination
       (grid.south.refines.trans region.refinesAmbient)
       grid.south.proper grid.south.clearance
   have northNonnegative :=
-    Winding.Box.Nonnegative.Squarefree.quadrupledBoxWinding_nonnegative
+    Squarefree.quadrupledBoxWinding_nonnegative
       degreeAtLeastTwo squarefree elimination
       (grid.north.refines.trans region.refinesAmbient)
       grid.north.proper grid.north.clearance
   have southeastNonnegative :=
-    Winding.Box.Nonnegative.Squarefree.quadrupledBoxWinding_nonnegative
+    Squarefree.quadrupledBoxWinding_nonnegative
       degreeAtLeastTwo squarefree elimination
       (grid.southeast.refines.trans region.refinesAmbient)
       grid.southeast.proper grid.southeast.clearance
   have eastNonnegative :=
-    Winding.Box.Nonnegative.Squarefree.quadrupledBoxWinding_nonnegative
+    Squarefree.quadrupledBoxWinding_nonnegative
       degreeAtLeastTwo squarefree elimination
       (grid.east.refines.trans region.refinesAmbient)
       grid.east.proper grid.east.clearance
   have northeastNonnegative :=
-    Winding.Box.Nonnegative.Squarefree.quadrupledBoxWinding_nonnegative
+    Squarefree.quadrupledBoxWinding_nonnegative
       degreeAtLeastTwo squarefree elimination
       (grid.northeast.refines.trans region.refinesAmbient)
       grid.northeast.proper grid.northeast.clearance
@@ -107,7 +111,7 @@ eight.
 
 An eliminant-safe vertical cut separates the two states while retaining their original polynomial and ambient box. -/
 public theorem region_rawWinding_ge_eight_of_x_ordered
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
     (degreeAtLeastTwo : 2 ≤ p.natDegree)
     (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
     {degreeBound : Nat}
@@ -132,18 +136,18 @@ public theorem region_rawWinding_ge_eight_of_x_ordered
   have rightRefines : rightBox.Refines region.box :=
     region.box.verticalRight_refines cut cutInside
   let cutClearance := Clearance.Box.Line.Elimination.Gap.verticalGapClearance elimination gap region.box
-  let leftClearance : Clearance.Box.Boundary.Basic.BoundaryClearance p leftBox :=
-    Clearance.Box.Boundary.Lines.boundaryOfLines
-    ((Clearance.Box.Boundary.Lines.leftOfBoundary region.clearance).restrict leftRefines)
+  let leftClearance : Basic.BoundaryClearance p leftBox :=
+    Lines.boundaryOfLines
+    ((Lines.leftOfBoundary region.clearance).restrict leftRefines)
     (cutClearance.restrict leftRefines)
-    ((Clearance.Box.Boundary.Lines.bottomOfBoundary region.clearance).restrict leftRefines)
-    ((Clearance.Box.Boundary.Lines.topOfBoundary region.clearance).restrict leftRefines)
-  let rightClearance : Clearance.Box.Boundary.Basic.BoundaryClearance p rightBox :=
-    Clearance.Box.Boundary.Lines.boundaryOfLines
+    ((Lines.bottomOfBoundary region.clearance).restrict leftRefines)
+    ((Lines.topOfBoundary region.clearance).restrict leftRefines)
+  let rightClearance : Basic.BoundaryClearance p rightBox :=
+    Lines.boundaryOfLines
     (cutClearance.restrict rightRefines)
-    ((Clearance.Box.Boundary.Lines.rightOfBoundary region.clearance).restrict rightRefines)
-    ((Clearance.Box.Boundary.Lines.bottomOfBoundary region.clearance).restrict rightRefines)
-    ((Clearance.Box.Boundary.Lines.topOfBoundary region.clearance).restrict rightRefines)
+    ((Lines.rightOfBoundary region.clearance).restrict rightRefines)
+    ((Lines.bottomOfBoundary region.clearance).restrict rightRefines)
+    ((Lines.topOfBoundary region.clearance).restrict rightRefines)
   let leftRegion : Clearance.Box.Region.ClearRegion p ambient :=
     { box := leftBox
       refinesAmbient := leftRefines.trans region.refinesAmbient
@@ -169,9 +173,9 @@ public theorem region_rawWinding_ge_eight_of_x_ordered
       right := rightInside.right
       bottom := rightInside.bottom
       top := rightInside.top }
-  have leftFour := State.WindingOne.Count.region_rawWinding_ge_four_of_strictInterior
+  have leftFour := region_rawWinding_ge_four_of_strictInterior
     degreeAtLeastTwo squarefree elimination left leftRegion leftStrict
-  have rightFour := State.WindingOne.Count.region_rawWinding_ge_four_of_strictInterior
+  have rightFour := region_rawWinding_ge_four_of_strictInterior
     degreeAtLeastTwo squarefree elimination right rightRegion rightStrict
   have additive := Winding.Box.Subdivision.quadrupledBoxWinding_vertical_split
     p region.box cut cutInside
@@ -185,7 +189,7 @@ eight.
 
 An eliminant-safe horizontal cut separates the two states while retaining their original polynomial and ambient box. -/
 public theorem region_rawWinding_ge_eight_of_y_ordered
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
     (degreeAtLeastTwo : 2 ≤ p.natDegree)
     (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
     {degreeBound : Nat}
@@ -210,18 +214,18 @@ public theorem region_rawWinding_ge_eight_of_y_ordered
   have upperRefines : upperBox.Refines region.box :=
     region.box.horizontalUpper_refines cut cutInside
   let cutClearance := Clearance.Box.Line.Elimination.Gap.horizontalGapClearance elimination gap region.box
-  let lowerClearance : Clearance.Box.Boundary.Basic.BoundaryClearance p lowerBox :=
-    Clearance.Box.Boundary.Lines.boundaryOfLines
-    ((Clearance.Box.Boundary.Lines.leftOfBoundary region.clearance).restrict lowerRefines)
-    ((Clearance.Box.Boundary.Lines.rightOfBoundary region.clearance).restrict lowerRefines)
-    ((Clearance.Box.Boundary.Lines.bottomOfBoundary region.clearance).restrict lowerRefines)
+  let lowerClearance : Basic.BoundaryClearance p lowerBox :=
+    Lines.boundaryOfLines
+    ((Lines.leftOfBoundary region.clearance).restrict lowerRefines)
+    ((Lines.rightOfBoundary region.clearance).restrict lowerRefines)
+    ((Lines.bottomOfBoundary region.clearance).restrict lowerRefines)
     (cutClearance.restrict lowerRefines)
-  let upperClearance : Clearance.Box.Boundary.Basic.BoundaryClearance p upperBox :=
-    Clearance.Box.Boundary.Lines.boundaryOfLines
-    ((Clearance.Box.Boundary.Lines.leftOfBoundary region.clearance).restrict upperRefines)
-    ((Clearance.Box.Boundary.Lines.rightOfBoundary region.clearance).restrict upperRefines)
+  let upperClearance : Basic.BoundaryClearance p upperBox :=
+    Lines.boundaryOfLines
+    ((Lines.leftOfBoundary region.clearance).restrict upperRefines)
+    ((Lines.rightOfBoundary region.clearance).restrict upperRefines)
     (cutClearance.restrict upperRefines)
-    ((Clearance.Box.Boundary.Lines.topOfBoundary region.clearance).restrict upperRefines)
+    ((Lines.topOfBoundary region.clearance).restrict upperRefines)
   let lowerRegion : Clearance.Box.Region.ClearRegion p ambient :=
     { box := lowerBox
       refinesAmbient := lowerRefines.trans region.refinesAmbient
@@ -246,9 +250,9 @@ public theorem region_rawWinding_ge_eight_of_y_ordered
       right := topInside.right
       bottom := cutSpec.2.2
       top := topInside.top }
-  have lowerFour := State.WindingOne.Count.region_rawWinding_ge_four_of_strictInterior
+  have lowerFour := region_rawWinding_ge_four_of_strictInterior
     degreeAtLeastTwo squarefree elimination bottom lowerRegion bottomStrict
-  have upperFour := State.WindingOne.Count.region_rawWinding_ge_four_of_strictInterior
+  have upperFour := region_rawWinding_ge_four_of_strictInterior
     degreeAtLeastTwo squarefree elimination top upperRegion topStrict
   have additive := Winding.Box.Subdivision.quadrupledBoxWinding_horizontal_split
     p region.box cut cutInside
@@ -262,7 +266,7 @@ public theorem region_rawWinding_ge_eight_of_y_ordered
 The certificate retains the squarefree polynomial of degree at least two, axis elimination and the two original states.
 -/
 public theorem region_rawWinding_ge_eight_of_separated
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
     (degreeAtLeastTwo : 2 ≤ p.natDegree)
     (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
     {degreeBound : Nat}
@@ -274,13 +278,13 @@ public theorem region_rawWinding_ge_eight_of_separated
     (separated : left.box.Separated right.box) :
     8 ≤ Winding.Box.Basic.quadrupledBoxWinding p region.box := by
   rcases separated with leftOf | rightOf | below | above
-  · exact State.WindingOne.Count.region_rawWinding_ge_eight_of_x_ordered degreeAtLeastTwo
+  · exact region_rawWinding_ge_eight_of_x_ordered degreeAtLeastTwo
       squarefree elimination region left right leftInside rightInside leftOf
-  · exact State.WindingOne.Count.region_rawWinding_ge_eight_of_x_ordered degreeAtLeastTwo
+  · exact region_rawWinding_ge_eight_of_x_ordered degreeAtLeastTwo
       squarefree elimination region right left rightInside leftInside rightOf
-  · exact State.WindingOne.Count.region_rawWinding_ge_eight_of_y_ordered degreeAtLeastTwo
+  · exact region_rawWinding_ge_eight_of_y_ordered degreeAtLeastTwo
       squarefree elimination region left right leftInside rightInside below
-  · exact State.WindingOne.Count.region_rawWinding_ge_eight_of_y_ordered degreeAtLeastTwo
+  · exact region_rawWinding_ge_eight_of_y_ordered degreeAtLeastTwo
       squarefree elimination region right left rightInside leftInside above
 
 end Purelib.RootIsolation.State.WindingOne.Count

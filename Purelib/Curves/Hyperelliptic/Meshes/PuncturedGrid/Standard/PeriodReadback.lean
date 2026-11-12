@@ -104,16 +104,16 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.PeriodReadb
 theorem ofPeriods_period (lifted : Meshes.LiftedPuncturedGrid base)
     (integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord)
     {raw : List (Handle.Basic.PivotIndices lifted.cutBoundaryWord.alphabet.count)}
-    (normal : LinearAlgebra.Alternating.NormalForm integral.paired raw)
+    (normal : NormalForm integral.paired raw)
     (periods : Periods.PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodBank curve)
     (canonical : ∀ index, periods.rows index =
       (Periods.PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodBank.ofData curve branches).rows index)
     (index : Fin genus) :
-    ((Hyperelliptic.Meshes.PuncturedGrid.Standard.TourIntersection.IntersectionBank.ofPeriods lifted integral normal
+    ((TourIntersection.IntersectionBank.ofPeriods lifted integral normal
       periods canonical).rows.get index).period = periods.rows index := by
-  simp only [Hyperelliptic.Meshes.PuncturedGrid.Standard.TourIntersection.IntersectionBank.ofPeriods,
-    Hyperelliptic.Meshes.PuncturedGrid.Standard.TourIntersection.IntersectionBank.ofRows,
-    Data.Vector.DependentVector.ofFn_get, -eq_self, -iff_self]
+  simp only [TourIntersection.IntersectionBank.ofPeriods,
+    TourIntersection.IntersectionBank.ofRows,
+    Vector.DependentVector.ofFn_get, -eq_self, -iff_self]
   rfl
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.PeriodReadback.IntersectionBank
@@ -160,7 +160,7 @@ theorem b_model (differential : Fin genus) (stage : Nat) :
   rfl
 
 /-- With canonical branch isolation, the retained A output is the original automatic raw-period matrix entry. -/
-theorem a_output_automatic (canonical : branches = Hyperelliptic.Branches.BranchIsolation.data curve) (differential :
+theorem a_output_automatic (canonical : branches = Branches.BranchIsolation.data curve) (differential :
   Fin genus) :
     (row.period.aProgram differential).output = (Integration.PreparedRefinementPrograms.automaticRawPeriodData
       curve).aMatrix differential index := by
@@ -168,10 +168,10 @@ theorem a_output_automatic (canonical : branches = Hyperelliptic.Branches.Branch
   cases genus with
   | zero => exact Fin.elim0 index
   | succ genus =>
-    exact Hyperelliptic.Meshes.PuncturedGrid.Standard.PeriodReadback.IntersectionRow.a_output row differential
+    exact IntersectionRow.a_output row differential
 
 /-- With canonical branch isolation, the retained B output is the original automatic raw-period matrix entry. -/
-theorem b_output_automatic (canonical : branches = Hyperelliptic.Branches.BranchIsolation.data curve) (differential :
+theorem b_output_automatic (canonical : branches = Branches.BranchIsolation.data curve) (differential :
   Fin genus) :
     (row.period.bProgram differential).output = (Integration.PreparedRefinementPrograms.automaticRawPeriodData
       curve).bMatrix differential index := by
@@ -179,7 +179,7 @@ theorem b_output_automatic (canonical : branches = Hyperelliptic.Branches.Branch
   cases genus with
   | zero => exact Fin.elim0 index
   | succ genus =>
-    exact Hyperelliptic.Meshes.PuncturedGrid.Standard.PeriodReadback.IntersectionRow.b_output row differential
+    exact IntersectionRow.b_output row differential
 
 set_option genInjectivity false in
 /-- Both original standard programs receive automatic primitive comparisons.
@@ -209,10 +209,10 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.PeriodReadb
 
 /-- Coverage, root agreement and both error budgets are acquired internally
 on the same original A/B programs retained by the intersection bank. -/
-@[expose] def acquire (row : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourIntersection.IntersectionRow lifted
+@[expose] def acquire (row : TourIntersection.IntersectionRow lifted
   integral index) (differential : Fin genus)
     (minimum : Nat) (target : Fraction.Rational) (positive : 0 < target) :
-    Hyperelliptic.Meshes.PuncturedGrid.Standard.PeriodReadback.IntersectionRow.PrimitiveComparison row differential
+    PrimitiveComparison row differential
       minimum target :=
   let a := Periods.PreparedCoveredPeriodComparison.PreparedPrimitiveChargeBounds.CoveredPeriodRequest.acquire
     row.period.aInitial (Integration.PreparedRefinementProgramCore.standardDifferentials genus)
@@ -224,38 +224,38 @@ on the same original A/B programs retained by the intersection bank. -/
 
 /-- The retained common period-comparison stage meets the original requested floor. -/
 theorem stage_ge (comparison :
-  Hyperelliptic.Meshes.PuncturedGrid.Standard.PeriodReadback.IntersectionRow.PrimitiveComparison row differential
+  PrimitiveComparison row differential
   minimum target) : minimum ≤ comparison.stage := by
   rw [comparison.stage_eq]
-  exact comparison.a.stage_ge.trans (Data.Nat.Order.le_max_left _ _)
+  exact comparison.a.stage_ge.trans (Nat.Order.le_max_left _ _)
 
 /-- Every sufficiently late original A-program sample is within the target of its retained original primitive sum. -/
 theorem a_accurate (comparison :
-  Hyperelliptic.Meshes.PuncturedGrid.Standard.PeriodReadback.IntersectionRow.PrimitiveComparison row differential
+  PrimitiveComparison row differential
   minimum target)
     (stage : Nat) (later : comparison.stage ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (comparison.a.request.primitiveSum -
+    Gaussian.Norm.Basic.normSq (comparison.a.request.primitiveSum -
       (((Integration.PreparedRefinementPrograms.rawPeriodDataOfData curve branches).aProgram differential
         index).integral.model stage).integralSample) < target := by
-  rw [← Hyperelliptic.Meshes.PuncturedGrid.Standard.PeriodReadback.IntersectionRow.a_model row differential stage,
+  rw [← IntersectionRow.a_model row differential stage,
     row.period.aProgram_model]
   exact comparison.a.accurate (Integration.PreparedRefinementProgramCore.standardDifferential_mem_standardDifferentials
     differential) stage
-    ((Data.Nat.Order.le_max_left _ _).trans (comparison.stage_eq ▸ later))
+    ((Nat.Order.le_max_left _ _).trans (comparison.stage_eq ▸ later))
 
 /-- Every sufficiently late original B-program sample is within the target of its retained original primitive sum. -/
 theorem b_accurate (comparison :
-  Hyperelliptic.Meshes.PuncturedGrid.Standard.PeriodReadback.IntersectionRow.PrimitiveComparison row differential
+  PrimitiveComparison row differential
   minimum target)
     (stage : Nat) (later : comparison.stage ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (comparison.b.request.primitiveSum -
+    Gaussian.Norm.Basic.normSq (comparison.b.request.primitiveSum -
       (((Integration.PreparedRefinementPrograms.rawPeriodDataOfData curve branches).bProgram differential
         index).integral.model stage).integralSample) < target := by
-  rw [← Hyperelliptic.Meshes.PuncturedGrid.Standard.PeriodReadback.IntersectionRow.b_model row differential stage,
+  rw [← IntersectionRow.b_model row differential stage,
     row.period.bProgram_model]
   exact comparison.b.accurate (Integration.PreparedRefinementProgramCore.standardDifferential_mem_standardDifferentials
     differential) stage
-    ((Data.Nat.Order.le_max_right _ _).trans (comparison.stage_eq ▸ later))
+    ((Nat.Order.le_max_right _ _).trans (comparison.stage_eq ▸ later))
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.PeriodReadback.IntersectionRow.PrimitiveComparison
 

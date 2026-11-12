@@ -15,6 +15,8 @@ import Purelib.Integration.Program.Gaussian.CCL.Replay.Observation.Noninterferen
 public import Purelib.Computation.Query.Boundary
 public import Purelib.Riemann.Periods.PeriodPolicies
 
+open Purelib.Integration.Program.Gaussian.CCL.Replay.Observation
+
 @[expose] public section
 
 /-!
@@ -53,7 +55,7 @@ open Purelib.Riemann.Periods.PeriodPolicies
 
 universe u
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
 
 open Purelib.Curves in
 open Purelib.Integration in
@@ -63,9 +65,9 @@ set_option genInjectivity false in
 The record links the selected source sample and every consumed reply to the fixed entry's differential and lifted cycle.
 -/
 structure Contract (entry : Entry curve) (policy : Policy) (request : Request) (count : Nat)
-    (recorded : Program.Gaussian.CCL.Replay.Observation.Record.Recorded (program entry policy) request count) where
+    (recorded : Record.Recorded (program entry policy) request count) where
   /-- The numerical replay contract for this exact recorded observation. -/ numerical :
-    Integration.Program.Gaussian.CCL.Replay.Observation.Contract
+    Program.Gaussian.CCL.Replay.Observation.Contract
     (program entry policy) request count recorded
   /-- The selected sample is the retained model of the entry's actual integral source. -/ source_sample :
     recorded.observation.selected.sample =
@@ -84,11 +86,11 @@ open Purelib.Integration in
 
 The numerical contract, source-sample identity and trace certificates all concern the same prepared entry and policy. -/
 def observation_contract (entry : Entry curve) (policy : Policy) (request : Request) (count : Nat)
-    (recorded : Program.Gaussian.CCL.Replay.Observation.Record.Recorded (program entry policy) request count :=
+    (recorded : Record.Recorded (program entry policy) request count :=
       record entry policy request count) :
     Contract entry policy request count recorded := by
   rw [recorded.eq_record]
-  exact ⟨Periods.PeriodPolicies.observation_contract entry policy request count,
+  exact ⟨PeriodPolicies.observation_contract entry policy request count,
     recorded_sample entry policy request count, traceCertificates entry policy request count⟩
 
 open Purelib.Integration in
@@ -96,8 +98,8 @@ open Purelib.Integration in
 
 The saved receipt's record equation retains its connection to the prepared period, including after an earlier resume. -/
 theorem resumed_sample (entry : Entry curve) (policy : Policy) (request : Request) (count extra : Nat)
-    {saved : Program.Gaussian.CCL.Replay.Observation.Record.Recorded (program entry policy) request count}
-    (resumed : Program.Gaussian.CCL.Replay.Observation.Resume.IntegrationReplay.Resumed saved extra) :
+    {saved : Record.Recorded (program entry policy) request count}
+    (resumed : Resume.IntegrationReplay.Resumed saved extra) :
     resumed.observation.selected.sample =
       (entry.program.integral.model (sourceIndex entry policy request)).integralSample := by
   rw [resumed.selected_eq, saved.eq_record]
@@ -110,9 +112,9 @@ open Purelib.Integration in
 The retained reply equation identifies the original prepared differential and lifted cycle without evaluating a new
 certificate bank. -/
 def resumed_traceCertificates (entry : Entry curve) (policy : Policy) (request : Request) (count extra : Nat)
-    {saved : Program.Gaussian.CCL.Replay.Observation.Record.Recorded (program entry policy) request count}
-    (resumed : Program.Gaussian.CCL.Replay.Observation.Resume.IntegrationReplay.Resumed saved extra)
-    (exchange : Purelib.Computation.Query.Basic.Exchange Nat Program.Gaussian.Cached.Basic.CachedModel)
+    {saved : Record.Recorded (program entry policy) request count}
+    (resumed : Resume.IntegrationReplay.Resumed saved extra)
+    (exchange : Computation.Query.Basic.Exchange Nat Program.Gaussian.Cached.Basic.CachedModel)
     (member : exchange ∈ resumed.trace) :
     Hyperelliptic.Integration.Algebraic.Path.Basis.UniformPathCertificates curve entry.differential
       exchange.reply.model.cells
@@ -149,11 +151,11 @@ resulting observation. -/
 theorem payload_erasure {Payload : Type u} (entry : Entry curve) (policy : Policy)
     (request : Request) (count : Nat) (payload : Payload)
     (outside : Payload → Nat → Program.Gaussian.Cached.Basic.CachedModel) :
-    (Program.Gaussian.CCL.Replay.Observation.Basic.computation (Purelib.CCL.Progressive.IntegrationReplay.control
+    (Basic.computation (CCL.Progressive.IntegrationReplay.control
       (program entry policy)) request count).run
-        (Purelib.Computation.Query.Boundary.Trace.overlay (record entry policy request count).trace (outside payload)) =
+        (Computation.Query.Boundary.Trace.overlay (record entry policy request count).trace (outside payload)) =
       ⟨.ok (record entry policy request count).observation, (record entry policy request count).trace⟩ :=
-  Program.Gaussian.CCL.Replay.Observation.Noninterference.payload_erasure (program entry policy) request count payload
+  Noninterference.payload_erasure (program entry policy) request count payload
     outside
 
 end Purelib.Riemann.Periods.PeriodObservation

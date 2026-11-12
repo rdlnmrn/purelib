@@ -34,6 +34,8 @@ import Purelib.Riemann.Meshes.PuncturedGridFaces
 import Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm.Sum
+
 public section
 
 /-! The restored cap chords form the full joining polygon on each retained
@@ -69,15 +71,15 @@ open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 
 /-- The complete paired increment total along a retained endpoint path equals its last primitive point minus its first.
 -/
-private theorem path_total {count : Nat} (values : Fin count → Stokes.PrimitivePoint)
-    {edges : List (Stokes.OrientedEdge count)} {first last : Fin count}
-    (path : PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish edges first last) :
+private theorem path_total {count : Nat} (values : Fin count → PrimitivePoint)
+    {edges : List (OrientedEdge count)} {first last : Fin count}
+    (path : PathEndpoints OrientedEdge.start OrientedEdge.finish edges first last) :
     PairedIncrementArea.total (edges.map (fun edge => (values edge.finish).sub (values edge.start))) =
       (values last).sub (values first) := by
   induction path with
   | nil =>
       apply congrArg₂ PrimitivePoint.mk <;>
-        simp only [List.map_nil, Data.Gaussian.Norm.Sum.Basic.gaussianSum, PrimitivePoint.sub, sub_self, -eq_self,
+        simp only [List.map_nil, Basic.gaussianSum, PrimitivePoint.sub, sub_self, -eq_self,
           -iff_self] <;> rfl
   | @cons edge tail last path ih =>
       change ((values edge.finish).sub (values edge.start)).add
@@ -86,9 +88,9 @@ private theorem path_total {count : Nat} (values : Fin count → Stokes.Primitiv
       apply congrArg₂ PrimitivePoint.mk <;> dsimp [PrimitivePoint.add, PrimitivePoint.sub] <;> ring1
 
 /-- The trace area of an actual retained endpoint path is exactly its original polygon edge area. -/
-private theorem path_trace {count : Nat} (values : Fin count → Stokes.PrimitivePoint)
-    {edges : List (Stokes.OrientedEdge count)} {first last : Fin count}
-    (path : PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish edges first last) :
+private theorem path_trace {count : Nat} (values : Fin count → PrimitivePoint)
+    {edges : List (OrientedEdge count)} {first last : Fin count}
+    (path : PathEndpoints OrientedEdge.start OrientedEdge.finish edges first last) :
     PairedIncrementArea.traceArea (values first) (edges.map (fun edge => (values edge.finish).sub (values edge.start)))
       =
       Stokes.edgeListArea values edges := by
@@ -104,9 +106,9 @@ private theorem path_trace {count : Nat} (values : Fin count → Stokes.Primitiv
       rfl
 
 /-- A retained closed polygon's edge area equals the area of its actual paired increment list. -/
-private theorem closed_polygon {count : Nat} (values : Fin count → Stokes.PrimitivePoint)
-    {edges : List (Stokes.OrientedEdge count)} {anchor : Fin count}
-    (closed : PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish edges anchor anchor) :
+private theorem closed_polygon {count : Nat} (values : Fin count → PrimitivePoint)
+    {edges : List (OrientedEdge count)} {anchor : Fin count}
+    (closed : PathEndpoints OrientedEdge.start OrientedEdge.finish edges anchor anchor) :
     Stokes.edgeListArea values edges =
       PairedIncrementArea.area (edges.map (fun edge => (values edge.finish).sub (values edge.start))) := by
   have result := (path_trace values
@@ -116,19 +118,19 @@ private theorem closed_polygon {count : Nat} (values : Fin count → Stokes.Prim
   simpa only [PrimitivePoint.sub, sub_self, Stokes.edgeArea, mul_zero, zero_mul, add_zero, -eq_self, -iff_self] using
     result
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Riemann.Meshes.LiftedPuncturedGrid base} {differential other :
-    Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential other :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
   {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
     regular domains differential} {stage : Nat}
-  {box otherBox : Purelib.Geometry.Rational.Box}
+  {box otherBox : Geometry.Rational.Box}
 
 namespace CapAttachment
 
@@ -148,13 +150,13 @@ Every increment uses the original cap primitive samples and the physical vertice
   let values :=
     conjugateCapValues (lifted
     := lifted) sample otherSample
-  Data.Gaussian.Norm.Sum.Basic.gaussianSum (attached.words.map (fun word =>
+  Basic.gaussianSum (attached.words.map (fun word =>
     PairedIncrementArea.area (word.map (fun edge => (values edge.finish).sub (values edge.start)))))
 
 /-- The polygon area of a flattened retained word family equals the sum of its individual word areas. -/
-private theorem flattened_area {count : Nat} (values : Fin count → Stokes.PrimitivePoint)
-    (words : List (List (Stokes.OrientedEdge count))) :
-    Stokes.edgeListArea values words.flatten = Data.Gaussian.Norm.Sum.Basic.gaussianSum (words.map
+private theorem flattened_area {count : Nat} (values : Fin count → PrimitivePoint)
+    (words : List (List (OrientedEdge count))) :
+    Stokes.edgeListArea values words.flatten = Basic.gaussianSum (words.map
       (Stokes.edgeListArea values)) := by
   induction words with
   | nil => rfl
@@ -166,15 +168,15 @@ private theorem flattened_area {count : Nat} (values : Fin count → Stokes.Prim
 theorem conjugate_chords_eq_joining (attached : AllSurfacePreparation.CapAttachment prepared)
     (sample : Primitives.Sample cap differential stage box)
     (otherSample : Primitives.Sample cap other stage otherBox) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.occurrences.map (fun occurrence =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateArcFamily.PairedArcRequest.conjugateChordValue
+    Basic.gaussianSum (prepared.occurrences.map (fun occurrence =>
+      PairedArcRequest.conjugateChordValue
         occurrence sample otherSample)) =
         conjugateJoiningArea
           attached sample otherSample := by
   let values :=
     conjugateCapValues (lifted
     := lifted) sample otherSample
-  have chords : Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.occurrences.map (fun occurrence =>
+  have chords : Basic.gaussianSum (prepared.occurrences.map (fun occurrence =>
       PairedArcRequest.conjugateChordValue occurrence sample otherSample)) =
       Stokes.edgeListArea values (prepared.occurrences.map (fun occurrence => occurrence.placement.indexed)) := by
     induction prepared.occurrences with
@@ -188,11 +190,11 @@ theorem conjugate_chords_eq_joining (attached : AllSurfacePreparation.CapAttachm
         rw [occurrence.placement.start_eq, occurrence.placement.finish_eq]
   rw [chords, prepared.indexed_eq, ← attached.words_flatten,
     flattened_area]
-  apply congrArg Data.Gaussian.Norm.Sum.Basic.gaussianSum
+  apply congrArg Basic.gaussianSum
   apply Map.map_congr_left
   intro word member
   obtain ⟨anchor, closed⟩ := attached.words_closed word member
-  exact Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateChordPolygons.closed_polygon values closed
+  exact ConjugateChordPolygons.closed_polygon values closed
 
 end CapAttachment
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateChordPolygons

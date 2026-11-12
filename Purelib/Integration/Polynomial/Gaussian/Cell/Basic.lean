@@ -77,20 +77,20 @@ open Purelib
 open Purelib.Data.Gaussian
 /-- The exact Gaussian difference from the retained start to finish. -/
 def displacement (cell :
-  Integration.Polynomial.Gaussian.Cell.Basic.CellModel) : Basic.Canonical := cell.finish - cell.start
+  CellModel) : Basic.Canonical := cell.finish - cell.start
 
 section
 open Purelib.Polynomial.Ascending
 /-- Multiply the exact endpoint displacement by the polynomial's unit-parameter integral. -/
 def integralSample (cell :
-  Integration.Polynomial.Gaussian.Cell.Basic.CellModel) : Basic.Canonical :=
+  CellModel) : Basic.Canonical :=
   cell.displacement *
     Gaussian.Integral.definiteIntegral cell.polynomial 0 1
 
 /-- Construct a polynomial cell with zero local allowance and an empty observation list. -/
 def exact (start finish : Basic.Canonical)
   (polynomial : CoefficientPolynomial) :
-    Integration.Polynomial.Gaussian.Cell.Basic.CellModel :=
+    CellModel :=
   { start := start
     finish := finish
     polynomial := polynomial
@@ -102,7 +102,7 @@ def exact (start finish : Basic.Canonical)
 theorem exact_integralSample (start finish :
   Basic.Canonical)
     (polynomial : CoefficientPolynomial) :
-    (Integration.Polynomial.Gaussian.Cell.Basic.CellModel.exact start finish polynomial).integralSample =
+    (exact start finish polynomial).integralSample =
       (finish - start) *
         Gaussian.Integral.definiteIntegral polynomial 0 1 := rfl
 
@@ -110,10 +110,10 @@ end
 
 /-- A Gaussian polynomial cell with identical endpoints has zero integral sample. -/
 theorem integralSample_eq_zero_of_start_eq_finish
-  (cell : Integration.Polynomial.Gaussian.Cell.Basic.CellModel)
+  (cell : CellModel)
     (equal : cell.start = cell.finish) : cell.integralSample = 0 := by
-  unfold Integration.Polynomial.Gaussian.Cell.Basic.CellModel.integralSample
-    Integration.Polynomial.Gaussian.Cell.Basic.CellModel.displacement
+  unfold integralSample
+    displacement
   rw [equal, Basic.sub_self,
     Basic.zero_mul]
 end
@@ -123,8 +123,8 @@ open Purelib.Data.Gaussian in
 open Purelib.Integration.Polynomial.Gaussian.Cell in
 /-- Read the retained observation's point on the original cell segment. -/
 def observationPoint
-    (cell : Basic.CellModel)
-    (observation : Basic.LocalObservation cell.polynomial cell.localAllowance) : Basic.Canonical :=
+    (cell : CellModel)
+    (observation : LocalObservation cell.polynomial cell.localAllowance) : Basic.Canonical :=
   cell.start + Scale.scale observation.parameter cell.displacement
 
 end CellModel

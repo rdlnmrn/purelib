@@ -85,12 +85,12 @@ namespace Purelib.RootIsolation.Curve.Boundary.Profile.Control
 
 section Boundary
 
-variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
   LinearAlgebra.Coordinates2.Matrix.GaussianMatrix} {current : Box}
 variable {denominatorMargin : Fraction.Rational}
 variable {marginPositive : 0 < denominatorMargin}
 variable {atom : Geometry.Projective.Hermitian.Atom}
-variable {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+variable {boundary : Analysis.CurveBoundary p reference current denominatorMargin
   marginPositive atom}
 
 /-! ## One request below a supplied residual target in every possible owner -/
@@ -102,8 +102,8 @@ one displayed box smaller than `target`. -/
         boundary)
       (targetBox : Box)
     (target : Fraction.Rational) : Fraction.Rational :=
-  Data.Rat.SmallWidth.shrinkingWidth
-    (Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient entry targetBox)
+  SmallWidth.shrinkingWidth
+    (Residual.BoundaryProfileEventEntry.affineResidualCoefficient entry targetBox)
     target
 
 /-- The residual request for a positive target and a retained box has positive width. -/
@@ -113,8 +113,8 @@ theorem boxResidualRequestWidth_pos
       (targetBox : Box)
     {target : Fraction.Rational} (targetPositive : 0 < target) :
     0 < boxResidualRequestWidth entry targetBox target :=
-  Data.Rat.SmallWidth.shrinkingWidth_pos
-    (Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient_nonneg entry
+  SmallWidth.shrinkingWidth_pos
+    (Residual.BoundaryProfileEventEntry.affineResidualCoefficient_nonneg entry
       targetBox) targetPositive
 
 /-- Every possible owner box contributes one executable residual width. -/
@@ -188,7 +188,7 @@ and the residual target in every possible owner box. -/
     (pairwise : boxes.Pairwise fun left right => left.Separated right)
     (target : Fraction.Rational) : Fraction.Rational :=
   min
-    (Curve.Boundary.Profile.Separation.combinedProfileRequestWidth
+    (Separation.combinedProfileRequestWidth
       entry boxes pairwise)
     (profileResidualFamilyRequestWidth entry boxes target)
 
@@ -201,7 +201,7 @@ theorem controlledProfileRequestWidth_pos
     {target : Fraction.Rational} (targetPositive : 0 < target) :
     0 < controlledProfileRequestWidth entry boxes pairwise target :=
   Fraction.Order.Basic.lt_min
-    (Curve.Boundary.Profile.Separation.combinedProfileRequestWidth_pos
+    (Separation.combinedProfileRequestWidth_pos
       entry boxes pairwise)
     (profileResidualFamilyRequestWidth_pos entry boxes targetPositive)
 
@@ -213,7 +213,7 @@ theorem controlledProfileRequestWidth_le_combined
     (pairwise : boxes.Pairwise fun left right => left.Separated right)
     (target : Fraction.Rational) :
     controlledProfileRequestWidth entry boxes pairwise target ≤
-      Curve.Boundary.Profile.Separation.combinedProfileRequestWidth
+      Separation.combinedProfileRequestWidth
         entry boxes pairwise :=
   Fraction.Order.Basic.min_le_left _ _
 
@@ -225,10 +225,10 @@ theorem controlledProfileRequestWidth_le_sign
     (pairwise : boxes.Pairwise fun left right => left.Separated right)
     (target : Fraction.Rational) :
     controlledProfileRequestWidth entry boxes pairwise target ≤
-      Curve.Event.Profile.Sign.profileSignWidth
+      Event.Profile.Sign.profileSignWidth
         entry.event.1 :=
   (controlledProfileRequestWidth_le_combined entry boxes pairwise target).trans
-    (Curve.Boundary.Profile.Separation.combinedProfileRequestWidth_le_sign
+    (Separation.combinedProfileRequestWidth_le_sign
       entry boxes pairwise)
 
 /-- The controlled profile width satisfies the retained family-separation request. -/
@@ -239,10 +239,10 @@ theorem controlledProfileRequestWidth_le_family
     (pairwise : boxes.Pairwise fun left right => left.Separated right)
     (target : Fraction.Rational) :
     controlledProfileRequestWidth entry boxes pairwise target ≤
-      Curve.Boundary.Profile.Separation.profileFamilyRequestWidth
+      Separation.profileFamilyRequestWidth
         entry boxes pairwise :=
   (controlledProfileRequestWidth_le_combined entry boxes pairwise target).trans
-    (Curve.Boundary.Profile.Separation.combinedProfileRequestWidth_le_family
+    (Separation.combinedProfileRequestWidth_le_family
       entry boxes pairwise)
 
 /-- At the controlled width, the affine residual budget is strictly below
@@ -254,14 +254,14 @@ theorem controlledProfileResidual_lt
     (pairwise : boxes.Pairwise fun left right => left.Separated right)
     {target : Fraction.Rational} (targetPositive : 0 < target)
     (index : Fin boxes.length) :
-    Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient entry
+    Residual.BoundaryProfileEventEntry.affineResidualCoefficient entry
         (boxes.get index) *
       controlledProfileRequestWidth entry boxes pairwise target ^ 2 <
         target := by
   let controlled := controlledProfileRequestWidth entry boxes pairwise target
   let familyWidth := profileResidualFamilyRequestWidth entry boxes target
   let boxWidth := boxResidualRequestWidth entry (boxes.get index) target
-  let coefficient := Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient
+  let coefficient := Residual.BoundaryProfileEventEntry.affineResidualCoefficient
     entry (boxes.get index)
   have controlledPositive : 0 < controlled := by
     simpa only [-eq_self, -iff_self, controlled] using
@@ -276,7 +276,7 @@ theorem controlledProfileResidual_lt
       (controlledLeFamily.trans familyLeBox) 2
   have coefficientNonnegative : 0 ≤ coefficient := by
     simpa only [-eq_self, -iff_self, coefficient] using
-      Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient_nonneg entry
+      Residual.BoundaryProfileEventEntry.affineResidualCoefficient_nonneg entry
         (boxes.get index)
   have scaled : coefficient * controlled ^ 2 ≤
       coefficient * boxWidth ^ 2 :=
@@ -285,7 +285,7 @@ theorem controlledProfileResidual_lt
   exact scaled.trans_lt (by
     simpa only [-eq_self, -iff_self, coefficient, boxWidth, boxResidualRequestWidth]
       using
-      Data.Rat.SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
+      SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
         coefficientNonnegative targetPositive)
 
 /-- Exact affine profile classification at the controlled request width. -/
@@ -295,10 +295,10 @@ theorem controlledProfileResidual_lt
       (boxes : List Box)
     (pairwise : boxes.Pairwise fun left right => left.Separated right)
     {target : Fraction.Rational} (targetPositive : 0 < target) :
-    Curve.Event.Profile.Classification.ProfileEventAffineClassification
+    Event.Profile.Classification.ProfileEventAffineClassification
       entry.event.2
         (controlledProfileRequestWidth entry boxes pairwise target) :=
-  Curve.Event.Profile.Classification.classifyProfileEventAffine
+  Event.Profile.Classification.classifyProfileEventAffine
     entry.event.2 (controlledProfileRequestWidth entry boxes pairwise target)
       (controlledProfileRequestWidth_pos entry boxes pairwise targetPositive)
       (controlledProfileRequestWidth_le_sign entry boxes pairwise target)
@@ -330,7 +330,7 @@ theorem controlledProfileRequest_not_spanning
       (boxes.get right).Contains
         (entry.parent.chart.parameterization.curve.point rightParameter) →
       False :=
-  Curve.Boundary.Profile.Separation.profileRequest_not_spanning_of_le_family
+  Separation.profileRequest_not_spanning_of_le_family
     entry boxes pairwise
       (controlledProfileRequestWidth entry boxes pairwise target)
       (controlledProfileRequestWidth_pos entry boxes pairwise targetPositive)
@@ -368,12 +368,12 @@ theorem index_unique
       {boxes : List Box}
     {pairwise : boxes.Pairwise fun left right => left.Separated right}
     {target : Fraction.Rational} (targetPositive : 0 < target)
-    (left right : Curve.Boundary.Profile.Control.ControlledProfileRequestMeeting entry boxes pairwise
+    (left right : ControlledProfileRequestMeeting entry boxes pairwise
       target) :
     left.index = right.index := by
   by_cases same : left.index = right.index
   · exact same
-  · exact (Curve.Boundary.Profile.Control.controlledProfileRequest_not_spanning entry boxes pairwise
+  · exact (controlledProfileRequest_not_spanning entry boxes pairwise
       targetPositive left.index right.index same left.parameterInside
       right.parameterInside left.denominatorNonzero right.denominatorNonzero
       left.pointInside right.pointInside).elim
@@ -386,19 +386,19 @@ theorem residual_lt
       {boxes : List Box}
     {pairwise : boxes.Pairwise fun left right => left.Separated right}
     {target : Fraction.Rational} (targetPositive : 0 < target)
-    (meeting : Curve.Boundary.Profile.Control.ControlledProfileRequestMeeting entry boxes pairwise target) :
-    Data.Gaussian.Norm.Basic.normSq
+    (meeting : ControlledProfileRequestMeeting entry boxes pairwise target) :
+    Gaussian.Norm.Basic.normSq
         (p.eval (entry.parent.chart.parameterization.curve.point
           meeting.parameter)) < target := by
   have upper :=
-    Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.normSq_eval_point_requestAt_le_of_inside
+    Residual.BoundaryProfileEventEntry.normSq_eval_point_requestAt_le_of_inside
       entry (boxes.get meeting.index)
-      (Curve.Boundary.Profile.Control.controlledProfileRequestWidth entry boxes pairwise target)
-      (Curve.Boundary.Profile.Control.controlledProfileRequestWidth_pos entry boxes pairwise targetPositive)
+      (controlledProfileRequestWidth entry boxes pairwise target)
+      (controlledProfileRequestWidth_pos entry boxes pairwise targetPositive)
       meeting.parameter meeting.parameterInside meeting.denominatorNonzero
       meeting.pointInside
   exact upper.trans_lt
-    (Curve.Boundary.Profile.Control.controlledProfileResidual_lt entry boxes pairwise targetPositive
+    (controlledProfileResidual_lt entry boxes pairwise targetPositive
       meeting.index)
 
 /-- At the squarefree derivative threshold, every owned event sample has a
@@ -413,7 +413,7 @@ theorem derivative_ne_zero
     {pairwise : boxes.Pairwise fun left right => left.Separated right}
     (boxesRefine : ∀ index : Fin boxes.length,
       (boxes.get index).Refines ambient)
-    (meeting : Curve.Boundary.Profile.Control.ControlledProfileRequestMeeting entry boxes pairwise
+    (meeting : ControlledProfileRequestMeeting entry boxes pairwise
       (Dense.Gaussian.Derivative.Separation.Squarefree.derivativeThreshold squarefree
         ambient)) :
     (Dense.Gaussian.GCD.derivative p).eval
@@ -424,7 +424,7 @@ theorem derivative_ne_zero
   have pointInsideAmbient : ambient.Contains point :=
     (boxesRefine meeting.index).contains meeting.pointInside
   have residualSmall :
-      Data.Gaussian.Norm.Basic.normSq (p.eval point) ≤
+      Gaussian.Norm.Basic.normSq (p.eval point) ≤
         Dense.Gaussian.Derivative.Separation.Squarefree.derivativeThreshold squarefree
           ambient :=
     (meeting.residual_lt
@@ -512,7 +512,7 @@ constructive_injectivity RequestedControlledProfileSample
     (pairwise : boxes.Pairwise fun left right => left.Separated right)
     (target : Fraction.Rational) :
     RequestedControlledProfileSample entry boxes pairwise target :=
-  let sample := Curve.Boundary.Profile.Sample.nonpoleProfileRequestSample entry
+  let sample := Sample.nonpoleProfileRequestSample entry
     (controlledProfileRequestWidth entry boxes pairwise target)
   { sample := sample
     classification := classifyControlledProfileSample entry boxes pairwise

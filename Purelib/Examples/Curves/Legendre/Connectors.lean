@@ -1,4 +1,5 @@
 module
+import Purelib.Geometry.Rational.Box.Rotation
 import Purelib.RootIsolation.Owner.Family.Basic
 import Purelib.Data.Fin.Cases
 import Purelib.Data.Fin
@@ -67,6 +68,10 @@ import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 meta import Purelib.Elab.Deriving.Repr
 
+open Purelib.Data.Rat.Fraction.Order
+open Purelib.Polynomial.Clearance.Box.Boundary
+open Purelib.Curves.Legendre.Coefficients
+
 section
 public section
 
@@ -81,6 +86,8 @@ stationary cells join the two crossings on each side.
 -/
 
 namespace Purelib.Examples.Curves.Legendre.Connectors
+
+open Purelib.Curves.Legendre.Paths (AxisSegment)
 
 open Purelib.Polynomial.Clearance.Box.Boundary.Translated
 open Purelib.Polynomial.Winding
@@ -127,7 +134,7 @@ derive_exposed_repr Side
 
 /-- The Legendre parameter on the selected vertical line at the supplied rational height. -/
 @[expose] def connectorParameter (side :
-  Side) (height : Fraction.Rational) : Gaussian.Basic.Canonical :=
+  Side) (height : Fraction.Rational) : Basic.Canonical :=
   Legendre.Paths.gaussian (sideReal side) height
 
 /-- The connector parameter has the selected side's real coordinate. -/
@@ -151,7 +158,7 @@ derive_exposed_repr Side
     apply le_of_lt
     calc
       sideReal side - 1 / 10 < sideReal side := by
-        have translated := Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+        have translated := Arithmetic.sub_lt_sub_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 10) (sideReal side)
         have scalarZero : (sideReal side) - 0 = (sideReal side) :=
           by
@@ -162,7 +169,7 @@ derive_exposed_repr Side
         rewrite [scalarZero] at translated
         exact translated
       _ < sideReal side + 1 / 10 := by
-        have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct
+        have translated := Arithmetic.add_lt_add_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 10) (sideReal side)
         have scalarZero : (sideReal side) + 0 = (sideReal side) :=
           (Fraction.Field.add_comm (sideReal side) 0).trans (Fraction.Field.zero_add
@@ -173,7 +180,7 @@ derive_exposed_repr Side
     apply le_of_lt
     calc
       height - 1 / 2 < height := by
-        have translated := Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+        have translated := Arithmetic.sub_lt_sub_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 2) height
         have scalarZero : height - 0 = height := by
           rewrite [Fraction.Arithmetic.sub_eq_add_neg_direct,
@@ -182,7 +189,7 @@ derive_exposed_repr Side
         rewrite [scalarZero] at translated
         exact translated
       _ < height + 1 / 2 := by
-        have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct
+        have translated := Arithmetic.add_lt_add_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 2) height
         have scalarZero : height + 0 = height :=
           (Fraction.Field.add_comm height 0).trans (Fraction.Field.zero_add height)
@@ -197,7 +204,7 @@ theorem connectorMovingBox_proper (side :
   · change sideReal side - 1 / 10 < sideReal side + 1 / 10
     calc
       sideReal side - 1 / 10 < sideReal side := by
-        have translated := Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+        have translated := Arithmetic.sub_lt_sub_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 10) (sideReal side)
         have scalarZero : (sideReal side) - 0 = (sideReal side) :=
           by
@@ -208,7 +215,7 @@ theorem connectorMovingBox_proper (side :
         rewrite [scalarZero] at translated
         exact translated
       _ < sideReal side + 1 / 10 := by
-        have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct
+        have translated := Arithmetic.add_lt_add_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 10) (sideReal side)
         have scalarZero : (sideReal side) + 0 = (sideReal side) :=
           (Fraction.Field.add_comm (sideReal side) 0).trans (Fraction.Field.zero_add
@@ -218,7 +225,7 @@ theorem connectorMovingBox_proper (side :
   · change height - 1 / 2 < height + 1 / 2
     calc
       height - 1 / 2 < height := by
-        have translated := Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+        have translated := Arithmetic.sub_lt_sub_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 2) height
         have scalarZero : height - 0 = height := by
           rewrite [Fraction.Arithmetic.sub_eq_add_neg_direct,
@@ -227,7 +234,7 @@ theorem connectorMovingBox_proper (side :
         rewrite [scalarZero] at translated
         exact translated
       _ < height + 1 / 2 := by
-        have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct
+        have translated := Arithmetic.add_lt_add_left_direct
           (by decide : (0 : Fraction.Rational) < 1 / 2) height
         have scalarZero : height + 0 = height :=
           (Fraction.Field.add_comm height 0).trans (Fraction.Field.zero_add height)
@@ -242,7 +249,7 @@ theorem connectorMovingBox_contains (side :
   constructor
   · change sideReal side - 1 / 10 <= sideReal side
     exact (by
-      have translated := Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+      have translated := Arithmetic.sub_lt_sub_left_direct
         (by decide : (0 : Fraction.Rational) < 1 / 10) (sideReal side)
       have scalarZero : (sideReal side) - 0 = (sideReal side) :=
         by
@@ -256,7 +263,7 @@ theorem connectorMovingBox_contains (side :
   constructor
   · change sideReal side <= sideReal side + 1 / 10
     exact (by
-      have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct
+      have translated := Arithmetic.add_lt_add_left_direct
         (by decide : (0 : Fraction.Rational) < 1 / 10) (sideReal side)
       have scalarZero : (sideReal side) + 0 = (sideReal side) :=
         (Fraction.Field.add_comm (sideReal side) 0).trans (Fraction.Field.zero_add
@@ -267,7 +274,7 @@ theorem connectorMovingBox_contains (side :
   constructor
   · change height - 1 / 2 <= height
     exact (by
-      have translated := Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+      have translated := Arithmetic.sub_lt_sub_left_direct
         (by decide : (0 : Fraction.Rational) < 1 / 2) height
       have scalarZero : height - 0 = height := by
         rewrite [Fraction.Arithmetic.sub_eq_add_neg_direct,
@@ -278,7 +285,7 @@ theorem connectorMovingBox_contains (side :
       height - 1 / 2 < height).le
   · change height <= height + 1 / 2
     exact (by
-      have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct
+      have translated := Arithmetic.add_lt_add_left_direct
         (by decide : (0 : Fraction.Rational) < 1 / 2) height
       have scalarZero : height + 0 = height :=
         (Fraction.Field.add_comm height 0).trans (Fraction.Field.zero_add height)
@@ -291,7 +298,7 @@ theorem connectorMovingBox_left (side :
   Side) (height : Fraction.Rational) :
     (connectorMovingBox side height).xLower < sideReal side := by
   change sideReal side - 1 / 10 < sideReal side
-  have translated := Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+  have translated := Arithmetic.sub_lt_sub_left_direct
     (by decide : (0 : Fraction.Rational) < 1 / 10) (sideReal side)
   have scalarZero : (sideReal side) - 0 = (sideReal side) := by
     rewrite [Fraction.Arithmetic.sub_eq_add_neg_direct,
@@ -306,7 +313,7 @@ theorem connectorMovingBox_right (side :
   Side) (height : Fraction.Rational) :
     sideReal side < (connectorMovingBox side height).xUpper := by
   change sideReal side < sideReal side + 1 / 10
-  have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct
+  have translated := Arithmetic.add_lt_add_left_direct
     (by decide : (0 : Fraction.Rational) < 1 / 10) (sideReal side)
   have scalarZero : (sideReal side) + 0 = (sideReal side) :=
     (Fraction.Field.add_comm (sideReal side) 0).trans (Fraction.Field.zero_add
@@ -319,7 +326,7 @@ theorem connectorMovingBox_below (side :
   Side) (height : Fraction.Rational) :
     (connectorMovingBox side height).yLower < height := by
   change height - 1 / 2 < height
-  have translated := Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+  have translated := Arithmetic.sub_lt_sub_left_direct
     (by decide : (0 : Fraction.Rational) < 1 / 2) height
   have scalarZero : height - 0 = height := by
     rewrite [Fraction.Arithmetic.sub_eq_add_neg_direct,
@@ -333,7 +340,7 @@ theorem connectorMovingBox_above (side :
   Side) (height : Fraction.Rational) :
     height < (connectorMovingBox side height).yUpper := by
   change height < height + 1 / 2
-  have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct
+  have translated := Arithmetic.add_lt_add_left_direct
     (by decide : (0 : Fraction.Rational) < 1 / 2) height
   have scalarZero : height + 0 = height :=
     (Fraction.Field.add_comm height 0).trans (Fraction.Field.zero_add height)
@@ -356,31 +363,31 @@ theorem zero_left_rightParameter (height : Fraction.Rational) :
 
 /-- The left moving-root box lies strictly left of zero. -/
 theorem leftMoving_before_zero (height : Fraction.Rational) :
-    (connectorMovingBox .left height).xUpper < (0 : Gaussian.Basic.Canonical).re := by
+    (connectorMovingBox .left height).xUpper < (0 : Basic.Canonical).re := by
   change (-(1 / 4 : Fraction.Rational)) + 1 / 10 < 0
   decide
 
 /-- The right moving-root box lies strictly right of zero. -/
 theorem zero_before_rightMoving (height : Fraction.Rational) :
-    (0 : Gaussian.Basic.Canonical).re < (connectorMovingBox .right height).xLower := by
+    (0 : Basic.Canonical).re < (connectorMovingBox .right height).xLower := by
   change (0 : Fraction.Rational) < 1 / 4 - 1 / 10
   decide
 
 /-- The left moving-root box lies strictly left of one. -/
 theorem leftMoving_before_one (height : Fraction.Rational) :
-    (connectorMovingBox .left height).xUpper < (1 : Gaussian.Basic.Canonical).re := by
+    (connectorMovingBox .left height).xUpper < (1 : Basic.Canonical).re := by
   change (-(1 / 4 : Fraction.Rational)) + 1 / 10 < 1
   decide
 
 /-- The right moving-root box lies strictly left of one. -/
 theorem rightMoving_before_one (height : Fraction.Rational) :
-    (connectorMovingBox .right height).xUpper < (1 : Gaussian.Basic.Canonical).re := by
+    (connectorMovingBox .right height).xUpper < (1 : Basic.Canonical).re := by
   change (1 / 4 : Fraction.Rational) + 1 / 10 < 1
   decide
 
 /-- The moving-root box left of one lies strictly left of one. -/
 theorem oneLeftMoving_before_one (height : Fraction.Rational) :
-    (connectorMovingBox .oneLeft height).xUpper < (1 : Gaussian.Basic.Canonical).re := by
+    (connectorMovingBox .oneLeft height).xUpper < (1 : Basic.Canonical).re := by
   change (3 / 4 : Fraction.Rational) + 1 / 10 < 1
   decide
 
@@ -407,13 +414,13 @@ theorem zeroFixed_before_oneFixed :
 
 /-- The fixed zero-root box lies strictly left of one. -/
 theorem zeroFixed_before_oneRoot :
-    (Centered.connectorFixedBox 0).xUpper < (1 : Gaussian.Basic.Canonical).re := by
+    (Centered.connectorFixedBox 0).xUpper < (1 : Basic.Canonical).re := by
   change (1 / 16 : Fraction.Rational) < 1
   decide
 
 /-- The fixed one-root box lies strictly right of zero. -/
 theorem zeroRoot_before_oneFixed :
-    (0 : Gaussian.Basic.Canonical).re < (Centered.connectorFixedBox 1).xLower := by
+    (0 : Basic.Canonical).re < (Centered.connectorFixedBox 1).xLower := by
   change (0 : Fraction.Rational) < 1 - 1 / 16
   decide
 
@@ -621,7 +628,7 @@ theorem moving_one_separated (side : Side)
       (connectorParameter side height))
       (Centered.connectorFixedBox 0) := by
   exact Legendre.Polynomial.Clearance.factorsClearance
-    (Clearance.Box.Boundary.Translated.centeredSquareSixteenthClearance 0)
+    (Translated.centeredSquareSixteenthClearance 0)
     (fixedZeroMovingClearance side height)
     (ExplicitLegendreSegment.rightClearance 1
       zeroFixed_before_oneRoot)
@@ -646,7 +653,7 @@ theorem moving_one_separated (side : Side)
     (ExplicitLegendreSegment.leftClearance 0
     zeroRoot_before_oneFixed)
     (fixedOneMovingClearance side height)
-      (Clearance.Box.Boundary.Translated.centeredSquareSixteenthClearance 1)
+      (Translated.centeredSquareSixteenthClearance 1)
 
 /-- The Legendre polynomial has quadrupled winding four around the fixed zero-root box. -/
 theorem zeroWinding (side : Side) (height
@@ -656,7 +663,7 @@ theorem zeroWinding (side : Side) (height
       (Centered.connectorFixedBox 0) = 4 := by
   rw [Legendre.Polynomial.polynomial_eq_factorsAt]
   apply Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.connectorFixedBox_proper 0)
-    (Clearance.Box.Boundary.Translated.centeredSquareSixteenthClearance 0)
+    (Translated.centeredSquareSixteenthClearance 0)
     (fixedZeroMovingClearance side height)
     (ExplicitLegendreSegment.rightClearance 1
       zeroFixed_before_oneRoot)
@@ -672,25 +679,25 @@ theorem zeroWinding (side : Side) (height
           = 0 := by
     cases side with
     | left =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_left _
+        exact Affine.HalfPlane.factor_winding_zero_of_left _
           (Centered.connectorFixedBox_proper 0)
           (ExplicitLegendreSegment.leftClearance _
             (leftParameter_left_zero height))
           (leftParameter_left_zero height)
     | right =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_right _
+        exact Affine.HalfPlane.factor_winding_zero_of_right _
           (Centered.connectorFixedBox_proper 0)
           (ExplicitLegendreSegment.rightClearance _
             (zero_left_rightParameter height))
           (zero_left_rightParameter height)
     | oneLeft =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_right _
+        exact Affine.HalfPlane.factor_winding_zero_of_right _
           (Centered.connectorFixedBox_proper 0)
           (fixedZeroMovingClearance .oneLeft height)
           ((zeroFixed_before_oneLeftMoving height).trans
             (connectorMovingBox_left .oneLeft height))
     | oneRight =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_right _
+        exact Affine.HalfPlane.factor_winding_zero_of_right _
           (Centered.connectorFixedBox_proper 0)
           (fixedZeroMovingClearance .oneRight height)
           ((zeroFixed_before_oneRightMoving height).trans
@@ -698,7 +705,7 @@ theorem zeroWinding (side : Side) (height
   have one : Box.Basic.quadrupledBoxWinding
       (Translated.translatedCoordinate 1)
       (Centered.connectorFixedBox 0) = 0 :=
-    Winding.Affine.HalfPlane.factor_winding_zero_of_right 1 (Centered.connectorFixedBox_proper 0)
+    Affine.HalfPlane.factor_winding_zero_of_right 1 (Centered.connectorFixedBox_proper 0)
       (ExplicitLegendreSegment.rightClearance 1
         zeroFixed_before_oneRoot)
       zeroFixed_before_oneRoot
@@ -722,25 +729,25 @@ theorem movingWinding (side : Side)
       (connectorMovingBox side height) = 0 := by
     cases side with
     | left =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_right 0
+        exact Affine.HalfPlane.factor_winding_zero_of_right 0
           (connectorMovingBox_proper .left height)
           (ExplicitLegendreSegment.rightClearance 0
             (leftMoving_before_zero height))
           (leftMoving_before_zero height)
     | right =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_left 0
+        exact Affine.HalfPlane.factor_winding_zero_of_left 0
           (connectorMovingBox_proper .right height)
           (ExplicitLegendreSegment.leftClearance 0
             (zero_before_rightMoving height))
           (zero_before_rightMoving height)
     | oneLeft =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_left 0
+        exact Affine.HalfPlane.factor_winding_zero_of_left 0
           (connectorMovingBox_proper .oneLeft height)
           (movingZeroClearance .oneLeft height)
           ((Centered.connectorFixedBox_right 0).trans
             (zeroFixed_before_oneLeftMoving height))
     | oneRight =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_left 0
+        exact Affine.HalfPlane.factor_winding_zero_of_left 0
           (connectorMovingBox_proper .oneRight height)
           (movingZeroClearance .oneRight height)
           ((Centered.connectorFixedBox_right 0).trans
@@ -760,22 +767,22 @@ theorem movingWinding (side : Side)
       (connectorMovingBox side height) = 0 := by
     cases side with
     | left =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_right 1
+        exact Affine.HalfPlane.factor_winding_zero_of_right 1
           (connectorMovingBox_proper .left height)
           (movingOneClearance .left height) (leftMoving_before_one
             height)
     | right =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_right 1
+        exact Affine.HalfPlane.factor_winding_zero_of_right 1
           (connectorMovingBox_proper .right height)
           (movingOneClearance .right height)
             (rightMoving_before_one height)
     | oneLeft =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_right 1
+        exact Affine.HalfPlane.factor_winding_zero_of_right 1
           (connectorMovingBox_proper .oneLeft height)
           (movingOneClearance .oneLeft height)
           (oneLeftMoving_before_one height)
     | oneRight =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_left 1
+        exact Affine.HalfPlane.factor_winding_zero_of_left 1
           (connectorMovingBox_proper .oneRight height)
           (movingOneClearance .oneRight height)
           ((Centered.connectorFixedBox_right 1).trans
@@ -794,11 +801,11 @@ theorem oneWinding (side : Side) (height :
     (ExplicitLegendreSegment.leftClearance 0
       zeroRoot_before_oneFixed)
     (fixedOneMovingClearance side height)
-    (Clearance.Box.Boundary.Translated.centeredSquareSixteenthClearance 1)
+    (Translated.centeredSquareSixteenthClearance 1)
   have zero : Box.Basic.quadrupledBoxWinding
       (Translated.translatedCoordinate 0)
       (Centered.connectorFixedBox 1) = 0 :=
-    Winding.Affine.HalfPlane.factor_winding_zero_of_left 0 (Centered.connectorFixedBox_proper 1)
+    Affine.HalfPlane.factor_winding_zero_of_left 0 (Centered.connectorFixedBox_proper 1)
       (ExplicitLegendreSegment.leftClearance 0
         zeroRoot_before_oneFixed)
       zeroRoot_before_oneFixed
@@ -808,22 +815,22 @@ theorem oneWinding (side : Side) (height :
           = 0 := by
     cases side with
     | left =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_left _
+        exact Affine.HalfPlane.factor_winding_zero_of_left _
           (Centered.connectorFixedBox_proper 1)
           (fixedOneMovingClearance .left height)
           (leftParameter_before_one height)
     | right =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_left _
+        exact Affine.HalfPlane.factor_winding_zero_of_left _
           (Centered.connectorFixedBox_proper 1)
           (fixedOneMovingClearance .right height)
           (rightParameter_before_one height)
     | oneLeft =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_left _
+        exact Affine.HalfPlane.factor_winding_zero_of_left _
           (Centered.connectorFixedBox_proper 1)
           (fixedOneMovingClearance .oneLeft height)
           (oneLeftParameter_before_one height)
     | oneRight =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_right _
+        exact Affine.HalfPlane.factor_winding_zero_of_right _
           (Centered.connectorFixedBox_proper 1)
           (fixedOneMovingClearance .oneRight height)
           (one_before_oneRightParameter height)
@@ -911,7 +918,7 @@ theorem connectorParameter_ne_zero (side :
   Side) (height : Fraction.Rational) :
     connectorParameter side height ≠ 0 := by
   intro equal
-  have real := congrArg (fun value : Gaussian.Basic.Canonical => value.re) equal
+  have real := congrArg (fun value : Basic.Canonical => value.re) equal
   cases side
   · change (-(1 / 4 : Fraction.Rational)) = 0 at real
     exact (show (-(1 / 4 : Fraction.Rational)) ≠ 0 by decide) real
@@ -927,7 +934,7 @@ theorem connectorParameter_sub_one_ne_zero
     (side : Side) (height : Fraction.Rational) :
     connectorParameter side height - 1 ≠ 0 := by
   intro equal
-  have real := congrArg (fun value : Gaussian.Basic.Canonical => value.re) equal
+  have real := congrArg (fun value : Basic.Canonical => value.re) equal
   cases side
   · change (-(1 / 4 : Fraction.Rational)) - 1 = 0 at real
     exact (show (-(1 / 4 : Fraction.Rational)) - 1 ≠ 0 by decide) real
@@ -942,23 +949,23 @@ theorem connectorParameter_sub_one_ne_zero
 @[expose] def connectorSquarefree (side :
   Side) (height : Fraction.Rational) :
     Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate
-      (Legendre.Coefficients.Exact.coefficientTable (connectorParameter side
+      (Exact.coefficientTable (connectorParameter side
         height)).polynomial := by
-  rw [Legendre.Coefficients.Exact.coefficientTable_polynomial]
+  rw [Exact.coefficientTable_polynomial]
   apply Legendre.Squarefree.squarefreeAt
-  exact Gaussian.Field.mul_ne_zero_direct
-    (Gaussian.Power.pow_ne_zero_direct
+  exact Field.mul_ne_zero_direct
+    (Power.pow_ne_zero_direct
       (connectorParameter side height)
       (connectorParameter_ne_zero side height) 2)
-    (Gaussian.Power.pow_ne_zero_direct
+    (Power.pow_ne_zero_direct
       (connectorParameter side height - 1)
       (connectorParameter_sub_one_ne_zero side height) 2)
 
 /-- The squarefree cubic isolation request for the displayed connector parameter. -/
 @[expose] def connectorIsolationInput (side :
   Side) (height : Fraction.Rational) :
-    RootIsolation.FTA.Squarefree.Input
-      (Legendre.Coefficients.Exact.coefficientTable (connectorParameter side
+    FTA.Squarefree.Input
+      (Exact.coefficientTable (connectorParameter side
         height)).polynomial where
   squarefree := connectorSquarefree side height
   degreeAtLeastTwo := by
@@ -971,16 +978,16 @@ Its retained reference maximality comes from the squarefree isolation constructi
 @[expose] def connectorChamber (side :
   Side) (height : Fraction.Rational) :
     Progressive.Chamber.Frame.ChamberFrame where
-  reference := Legendre.Coefficients.Exact.coefficientTable (connectorParameter side height)
+  reference := Exact.coefficientTable (connectorParameter side height)
   chamber :=
     { degreeAtLeastTwo := by
         change 2 <= 3
         decide
       squarefree := connectorSquarefree side height
       owners := connectorOwnerFamily side height
-      referenceSmall := Legendre.Coefficients.Exact.coefficientTable_allowances_lt _
+      referenceSmall := Exact.coefficientTable_allowances_lt _
         (Progressive.Chamber.Target.simpleRootChamberTarget_pos
-          (Legendre.Coefficients.Exact.coefficientTable (connectorParameter side height))
+          (Exact.coefficientTable (connectorParameter side height))
           (connectorSquarefree side height)
           (connectorOwnerFamily side height))
       referenceMaximality :=
@@ -995,7 +1002,7 @@ Its retained reference maximality comes from the squarefree isolation constructi
 
 /-- The permutation interchanging the moving and one roots on the line to the right of one. -/
 @[expose] def oneRightProjectionOrder :
-  Data.Fin.Bijection 3 3 where
+  Bijection 3 3 where
   forward :=
     Data.Fin.cases (0)
       (fun rest => Data.Fin.cases (2) (fun _ => 1) rest)
@@ -1014,10 +1021,10 @@ Its retained reference maximality comes from the squarefree isolation constructi
 /-- The side-dependent permutation placing the three connector roots in increasing real order. -/
 @[expose] def connectorProjectionOrder :
   Side ->
-    Data.Fin.Bijection 3 3
+    Bijection 3 3
   | .left => UpperZero.targetProjectionOrder
-  | .right => Data.Fin.Bijection.identity 3
-  | .oneLeft => Data.Fin.Bijection.identity 3
+  | .right => Bijection.identity 3
+  | .oneLeft => Bijection.identity 3
   | .oneRight => oneRightProjectionOrder
 
 /-- The original connector owner read through the side's projection permutation. -/
@@ -1100,7 +1107,7 @@ theorem connectorProjection_xOrdered (side :
     Legendre.Paths.Frame (connectorParameter side height) where
   chamber := connectorChamber side height
   polynomial_eq := rfl
-  labels := Data.Fin.Bijection.identity 3
+  labels := Bijection.identity 3
   owner_contains := by
     intro label
     rcases Cases.three label with labelZero | labelOne | labelTwo
@@ -1123,7 +1130,22 @@ theorem connectorProjection_xOrdered (side :
       (connectorOwner side height
         ((connectorProjectionOrder side).forward position)).box
     exact Rational.Box.refines_refl _
-  projection_xOrdered := connectorProjection_xOrdered side height
+  projection_xOrdered := by
+    intro left right ordered
+    rewrite [Rational.Box.Rotation.enclosure_zero, Rational.Box.Rotation.enclosure_zero]
+    exact connectorProjection_xOrdered side height left right ordered
+
+/-- The connector frame's projection retains the original side-dependent owner permutation.
+
+The law reads the generic frame before specializing its parameter or cached
+root geometry, preserving its original chamber-owner index at each position. -/
+theorem connectorFrame_projection_order (side : Side) (height : Fraction.Rational) (position : Fin 3) :
+    (connectorFrame side height).projected.ownerIndex position =
+      (connectorProjectionOrder side).forward position := rfl
+
+/-- The connector frame's original projection uses the zero-slope rational chart. -/
+theorem connectorFrame_projected_slope (side : Side) (height : Fraction.Rational) :
+    (connectorFrame side height).projected.slope = 0 := rfl
 
 /-! ## One uniform descending stationary cell -/
 
@@ -1138,7 +1160,7 @@ theorem connectorProjection_xOrdered (side :
 theorem nextHeight_lt (height : Fraction.Rational) :
   nextHeight height < height := by
   unfold nextHeight stepSize
-  have translated := Fraction.Order.Arithmetic.sub_lt_sub_left_direct
+  have translated := Arithmetic.sub_lt_sub_left_direct
     (by decide : (0 : Fraction.Rational) < 1 / 12) height
   have scalarZero : height - 0 = height := by
     rewrite [Fraction.Arithmetic.sub_eq_add_neg_direct,
@@ -1160,7 +1182,7 @@ It retains the horizontal bounds and intersects the two vertical intervals. -/
     exact (connectorMovingBox_proper side height).1.le
   y_valid := by
     apply le_of_lt
-    apply Fraction.Order.Arithmetic.lt_of_sub_pos_direct
+    apply Arithmetic.lt_of_sub_pos_direct
     rw [show nextHeight height + 1 / 2 - (height - 1 / 2) =
         1 / 2 + 1 / 2 - stepSize by
       unfold nextHeight
@@ -1174,7 +1196,7 @@ theorem connectorMovingBridgeBox_proper
     (connectorMovingBridgeBox side height).Proper := by
   constructor
   · exact (connectorMovingBox_proper side height).1
-  · apply Fraction.Order.Arithmetic.lt_of_sub_pos_direct
+  · apply Arithmetic.lt_of_sub_pos_direct
     change 0 < nextHeight height + 1 / 2 - (height - 1 / 2)
     rw [show nextHeight height + 1 / 2 - (height - 1 / 2) =
         1 / 2 + 1 / 2 - stepSize by
@@ -1207,7 +1229,7 @@ theorem connectorMovingBridgeBox_below
 theorem connectorMovingBridgeBox_above
     (side : Side) (height : Fraction.Rational) :
     height < (connectorMovingBridgeBox side height).yUpper := by
-  apply Fraction.Order.Arithmetic.lt_of_sub_pos_direct
+  apply Arithmetic.lt_of_sub_pos_direct
   change 0 < nextHeight height + 1 / 2 - height
   rw [show nextHeight height + 1 / 2 - height =
       1 / 2 - stepSize by
@@ -1227,7 +1249,7 @@ theorem connectorMovingBridgeBox_refines_source
   · exact le_rfl
   constructor
   · exact le_rfl
-  · exact Fraction.Order.Arithmetic.add_le_add_right_direct
+  · exact Arithmetic.add_le_add_right_direct
       (nextHeight_lt height).le (1 / 2)
 
 /-- The moving-root bridge rectangle lies inside the target moving-root rectangle. -/
@@ -1240,7 +1262,7 @@ theorem connectorMovingBridgeBox_refines_target
   constructor
   · exact le_rfl
   constructor
-  · exact Fraction.Order.Arithmetic.sub_le_sub_right_direct
+  · exact Arithmetic.sub_le_sub_right_direct
       (nextHeight_lt height).le (1 / 2)
   · exact le_rfl
 
@@ -1324,7 +1346,7 @@ theorem bridgeMovingWinding (side : Side)
       (connectorMovingBridgeBox side height) = 0 := by
     cases side with
     | left =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_right 0
+        exact Affine.HalfPlane.factor_winding_zero_of_right 0
           (connectorMovingBridgeBox_proper .left height)
           (ExplicitLegendreSegment.rightClearance 0 (by
             change (-(1 / 4 : Fraction.Rational)) + 1 / 10 < 0
@@ -1333,7 +1355,7 @@ theorem bridgeMovingWinding (side : Side)
             change (-(1 / 4 : Fraction.Rational)) + 1 / 10 < 0
             decide)
     | right =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_left 0
+        exact Affine.HalfPlane.factor_winding_zero_of_left 0
           (connectorMovingBridgeBox_proper .right height)
           (ExplicitLegendreSegment.leftClearance 0 (by
             change (0 : Fraction.Rational) < 1 / 4 - 1 / 10
@@ -1342,14 +1364,14 @@ theorem bridgeMovingWinding (side : Side)
             change (0 : Fraction.Rational) < 1 / 4 - 1 / 10
             decide)
     | oneLeft =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_left 0
+        exact Affine.HalfPlane.factor_winding_zero_of_left 0
           (connectorMovingBridgeBox_proper .oneLeft height)
           (bridgeMovingZeroClearance .oneLeft height)
           (by
             change (0 : Fraction.Rational) < 3 / 4 - 1 / 10
             decide)
     | oneRight =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_left 0
+        exact Affine.HalfPlane.factor_winding_zero_of_left 0
           (connectorMovingBridgeBox_proper .oneRight height)
           (bridgeMovingZeroClearance .oneRight height)
           (by
@@ -1370,25 +1392,25 @@ theorem bridgeMovingWinding (side : Side)
       (connectorMovingBridgeBox side height) = 0 := by
     cases side with
     | left =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_right 1
+        exact Affine.HalfPlane.factor_winding_zero_of_right 1
           (connectorMovingBridgeBox_proper .left height)
           (bridgeMovingOneClearance .left height) (by
             change (-(1 / 4 : Fraction.Rational)) + 1 / 10 < 1
             decide)
     | right =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_right 1
+        exact Affine.HalfPlane.factor_winding_zero_of_right 1
           (connectorMovingBridgeBox_proper .right height)
           (bridgeMovingOneClearance .right height) (by
             change (1 / 4 : Fraction.Rational) + 1 / 10 < 1
             decide)
     | oneLeft =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_right 1
+        exact Affine.HalfPlane.factor_winding_zero_of_right 1
           (connectorMovingBridgeBox_proper .oneLeft height)
           (bridgeMovingOneClearance .oneLeft height) (by
             change (3 / 4 : Fraction.Rational) + 1 / 10 < 1
             decide)
     | oneRight =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_left 1
+        exact Affine.HalfPlane.factor_winding_zero_of_left 1
           (connectorMovingBridgeBox_proper .oneRight height)
           (bridgeMovingOneClearance .oneRight height) (by
             change (1 : Fraction.Rational) < 5 / 4 - 1 / 10
@@ -1419,8 +1441,8 @@ theorem connectorStep_displacement (side :
     simp only [connectorParameter, sideReal,
       Legendre.Paths.gaussian, nextHeight, stepSize,
       Norm.Basic.normSq,
-      Gaussian.Basic.sub_re,
-      Gaussian.Basic.sub_im] <;>
+      Basic.sub_re,
+      Basic.sub_im] <;>
     ring1
 
 /-- The moving-factor clearance retained on the fixed zero-root box for one connector step. -/
@@ -1518,7 +1540,7 @@ theorem one_displacementSmall (side :
 /-- The exact polynomial perturbation produced by lowering the connector parameter one step. -/
 @[expose] def connectorPerturbation (side :
   Side) (height : Fraction.Rational) :
-    Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial :=
+    Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial :=
   Legendre.Polynomial.perturbationAt (connectorParameter side height)
     (connectorParameter side (nextHeight height))
 
@@ -1547,7 +1569,7 @@ theorem one_displacementSmall (side :
       (connectorPerturbation side height)
       (connectorZeroOwner side height).box :=
   Legendre.Rouche.factorMoveDominanceAt _ _
-    (Clearance.Box.Boundary.Translated.centeredSquareSixteenthClearance 0)
+    (Translated.centeredSquareSixteenthClearance 0)
     (zeroMovingFactorClearance side height)
     (ExplicitLegendreSegment.rightClearance 1
       zeroFixed_before_oneRoot)
@@ -1577,7 +1599,7 @@ theorem one_displacementSmall (side :
     (ExplicitLegendreSegment.leftClearance 0
       zeroRoot_before_oneFixed)
     (oneMovingFactorClearance side height)
-    (Clearance.Box.Boundary.Translated.centeredSquareSixteenthClearance 1)
+    (Translated.centeredSquareSixteenthClearance 1)
     (one_displacementSmall side height)
 
 /-- The forward Rouché bridge retaining the fixed zero-root owner across one descent step. -/
@@ -1638,7 +1660,7 @@ Each retained bridge refines its original source and target boxes. -/
     Progressive.Chamber.Overlap.ChamberOverlap
       (connectorChamber side height)
       (connectorChamber side (nextHeight height)) where
-  matching := Data.Fin.Bijection.identity 3
+  matching := Bijection.identity 3
   bridge := connectorBridgeAt side height
   bridge_refines_left := by
     intro index
@@ -1660,12 +1682,13 @@ Each retained bridge refines its original source and target boxes. -/
       exact Rational.Box.refines_refl _
 
 /-- The stationary projected overlap for one connector step, preserving the original root order. -/
-@[expose] def connectorProjectedOverlap (side :
+@[expose] def _root_.Purelib.Examples.Curves.Legendre.Connectors.connectorProjectedOverlap (side :
   Side) (height : Fraction.Rational) :
-    ProjectedOverlap
+    Progressive.Braid.Projected.Overlap.ProjectedOverlap
       (connectorFrame side height).projected
       (connectorFrame side (nextHeight height)).projected :=
   .stationary (connectorChamberOverlap side height) (by
+    refine ⟨rfl, ?_⟩
     intro position
     change (connectorProjectionOrder side).forward position =
       (connectorProjectionOrder side).forward position
@@ -1691,12 +1714,12 @@ theorem connectorSheetBound_positive (side :
   Side) (height : Fraction.Rational) :
     0 < connectorSheetBound side height := by
   unfold connectorSheetBound
-  exact Fraction.Order.Basic.lt_min (connectorZeroBridge side height).leftClearance.positive
-    (Fraction.Order.Basic.lt_min (connectorZeroBridge side height).rightClearance.positive
-      (Fraction.Order.Basic.lt_min (connectorMovingBridge side height).leftClearance.positive
-        (Fraction.Order.Basic.lt_min (connectorMovingBridge side
+  exact Basic.lt_min (connectorZeroBridge side height).leftClearance.positive
+    (Basic.lt_min (connectorZeroBridge side height).rightClearance.positive
+      (Basic.lt_min (connectorMovingBridge side height).leftClearance.positive
+        (Basic.lt_min (connectorMovingBridge side
           height).rightClearance.positive
-          (Fraction.Order.Basic.lt_min (connectorOneBridge side
+          (Basic.lt_min (connectorOneBridge side
             height).leftClearance.positive
             (connectorOneBridge side height).rightClearance.positive))))
 
@@ -1712,45 +1735,44 @@ theorem connectorSheetBound_positive (side :
     intro index
     rcases Cases.three index with indexZero | indexOne | indexTwo
     · subst index
-      exact Fraction.Order.Basic.min_le_left _ _
+      exact Basic.min_le_left _ _
     · subst index
-      exact (Fraction.Order.Basic.min_le_right _ _).trans
-        ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _))
+      exact (Basic.min_le_right _ _).trans
+        ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _))
     · subst index
-      exact (Fraction.Order.Basic.min_le_right _ _).trans
-        ((Fraction.Order.Basic.min_le_right _ _).trans
-          ((Fraction.Order.Basic.min_le_right _ _).trans
-            ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _))))
+      exact (Basic.min_le_right _ _).trans
+        ((Basic.min_le_right _ _).trans
+          ((Basic.min_le_right _ _).trans
+            ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _))))
   rightLower := by
     intro index
     rcases Cases.three index with indexZero | indexOne | indexTwo
     · subst index
-      exact (Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _)
+      exact (Basic.min_le_right _ _).trans (Basic.min_le_left _ _)
     · subst index
-      exact (Fraction.Order.Basic.min_le_right _ _).trans
-        ((Fraction.Order.Basic.min_le_right _ _).trans
-          ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _)))
+      exact (Basic.min_le_right _ _).trans
+        ((Basic.min_le_right _ _).trans
+          ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _)))
     · subst index
-      exact (Fraction.Order.Basic.min_le_right _ _).trans
-        ((Fraction.Order.Basic.min_le_right _ _).trans
-          ((Fraction.Order.Basic.min_le_right _ _).trans
-            ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_right _ _))))
+      exact (Basic.min_le_right _ _).trans
+        ((Basic.min_le_right _ _).trans
+          ((Basic.min_le_right _ _).trans
+            ((Basic.min_le_right _ _).trans (Basic.min_le_right _ _))))
 
 /-- The vertical parameter segment from the original height to the next descent height. -/
 @[expose] def connectorGeometry (side :
   Side) (height : Fraction.Rational) :
-    Legendre.Paths.AxisSegment (connectorParameter side height)
+    AxisSegment (connectorParameter side height)
       (connectorParameter side (nextHeight height)) :=
   .vertical (sideReal side) height (nextHeight height)
 
 /-- The vertical connector segment avoids zero and one with squared-distance lower bound 1/16. -/
 @[expose] def connectorGeometrySafe (side :
   Side) (height : Fraction.Rational) :
-    Legendre.Paths.AxisSegment.Safe (connectorGeometry side height) where
+    AxisSegment.Safe (connectorGeometry side height) where
   avoidsZero :=
-    { bound := 1 / 16
-      positive := by decide
-      lower := by
+    AxisSegment.Clearance.ofFixedGap (connectorGeometry side height)
+      0 (1 / 16) (by decide) (by
         cases side
         · change (1 / 16 : Fraction.Rational) <= (-(1 / 4) - 0) ^ 2
           decide
@@ -1759,11 +1781,10 @@ theorem connectorSheetBound_positive (side :
         · change (1 / 16 : Fraction.Rational) <= (3 / 4 - 0) ^ 2
           decide
         · change (1 / 16 : Fraction.Rational) <= (5 / 4 - 0) ^ 2
-          decide }
+          decide)
   avoidsOne :=
-    { bound := 1 / 16
-      positive := by decide
-      lower := by
+    AxisSegment.Clearance.ofFixedGap (connectorGeometry side height)
+      1 (1 / 16) (by decide) (by
         cases side
         · change (1 / 16 : Fraction.Rational) <= (-(1 / 4) - 1) ^ 2
           decide
@@ -1772,7 +1793,7 @@ theorem connectorSheetBound_positive (side :
         · change (1 / 16 : Fraction.Rational) <= (3 / 4 - 1) ^ 2
           decide
         · change (1 / 16 : Fraction.Rational) <= (5 / 4 - 1) ^ 2
-          decide }
+          decide)
 
 /-- One certified vertical descent by the rational height 1/12.
 
@@ -1919,7 +1940,7 @@ Each bridge retains the original connector box and its refinement into the cross
 @[expose] def topLeftOverlap :
   Progressive.Chamber.Overlap.ChamberOverlap
     UpperZero.targetChamber (connectorChamber .left 2) where
-  matching := Data.Fin.Bijection.identity 3
+  matching := Bijection.identity 3
   bridge := topLeftBridge
   bridge_refines_left := by
     intro index
@@ -1944,7 +1965,7 @@ Each bridge retains the original connector box and its refinement into the cross
 @[expose] def bottomLeftOverlap :
   Progressive.Chamber.Overlap.ChamberOverlap
     (connectorChamber .left (-2)) LowerZero.lowerLeftChamber where
-  matching := Data.Fin.Bijection.identity 3
+  matching := Bijection.identity 3
   bridge := bottomLeftBridge
   bridge_refines_left := by
     intro index
@@ -1970,7 +1991,7 @@ Each bridge retains the original connector box and its refinement into the cross
   Progressive.Chamber.Overlap.ChamberOverlap
     LowerZero.lowerRightChamber (connectorChamber .right (-2))
       where
-  matching := Data.Fin.Bijection.identity 3
+  matching := Bijection.identity 3
   bridge := bottomRightBridge
   bridge_refines_left := by
     intro index
@@ -1995,7 +2016,7 @@ Each bridge retains the original connector box and its refinement into the cross
 @[expose] def topRightOverlap :
   Progressive.Chamber.Overlap.ChamberOverlap
     (connectorChamber .right 2) UpperZero.sourceChamber where
-  matching := Data.Fin.Bijection.identity 3
+  matching := Bijection.identity 3
   bridge := topRightBridge
   bridge_refines_left := by
     intro index
@@ -2030,6 +2051,22 @@ Each bridge retains the original connector box and its refinement into the cross
 /-- The upper right overlap selects the original transition bridge at every index. -/
 @[simp] theorem topRightOverlap_bridge (index : Fin 3) :
     topRightOverlap.bridge index = topRightBridge index := rfl
+
+/-- The original upper left overlap retains its identity owner matching. -/
+private theorem topLeftOverlap_matching (index : Fin 3) :
+    topLeftOverlap.matching.forward index = index := rfl
+
+/-- The original lower left overlap retains its identity owner matching. -/
+private theorem bottomLeftOverlap_matching (index : Fin 3) :
+    bottomLeftOverlap.matching.forward index = index := rfl
+
+/-- The original lower right overlap retains its identity owner matching. -/
+private theorem bottomRightOverlap_matching (index : Fin 3) :
+    bottomRightOverlap.matching.forward index = index := rfl
+
+/-- The original upper right overlap retains its identity owner matching. -/
+private theorem topRightOverlap_matching (index : Fin 3) :
+    topRightOverlap.matching.forward index = index := rfl
 
 /-- The left clearance bound of the upper left bridge equals the original connector-owner bound. -/
 @[simp] theorem topLeftBridge_leftClearance_bound (index : Fin 3) :
@@ -2135,22 +2172,24 @@ order. -/
     UpperZero.targetFrame.projected (connectorFrame .left
       2).projected :=
   .stationary topLeftOverlap (by
+    refine ⟨(UpperZero.targetFrame_projected_slope).trans
+      (connectorFrame_projected_slope .left 2).symm, ?_⟩
     intro position
-    change (connectorProjectionOrder .left).forward position =
-      (connectorProjectionOrder .left).forward position
-    rfl)
+    rewrite [UpperZero.targetFrame_projection_order, connectorFrame_projection_order]
+    exact topLeftOverlap_matching (UpperZero.targetProjectionOrder.forward position))
 
 /-- The stationary projected overlap from the connector frame to the lower crossing frame, preserving the real-axis root
 order. -/
-@[expose] def bottomLeftProjectedOverlap :
-    ProjectedOverlap
+@[expose] def _root_.Purelib.Examples.Curves.Legendre.Connectors.bottomLeftProjectedOverlap :
+    Progressive.Braid.Projected.Overlap.ProjectedOverlap
       (connectorFrame .left (-2)).projected
-        LowerZero.lowerLeftFrame.projected :=
+        Curves.Legendre.Crossings.LowerZero.lowerLeftFrame.projected :=
   .stationary bottomLeftOverlap (by
+    refine ⟨(connectorFrame_projected_slope .left (-2)).trans
+      LowerZero.lowerLeftFrame_projected_slope.symm, ?_⟩
     intro position
-    change (connectorProjectionOrder .left).forward position =
-      (connectorProjectionOrder .left).forward position
-    rfl)
+    rewrite [connectorFrame_projection_order, LowerZero.lowerLeftFrame_projection_order]
+    exact bottomLeftOverlap_matching ((connectorProjectionOrder .left).forward position))
 
 /-- The stationary projected overlap from the lower crossing frame to the connector frame, preserving the real-axis root
 order. -/
@@ -2159,22 +2198,24 @@ order. -/
       LowerZero.lowerRightFrame.projected (connectorFrame .right
         (-2)).projected :=
   .stationary bottomRightOverlap (by
+    refine ⟨LowerZero.lowerRightFrame_projected_slope.trans
+      (connectorFrame_projected_slope .right (-2)).symm, ?_⟩
     intro position
-    change (connectorProjectionOrder .right).forward position =
-      (connectorProjectionOrder .right).forward position
-    rfl)
+    rewrite [LowerZero.lowerRightFrame_projection_order, connectorFrame_projection_order]
+    exact bottomRightOverlap_matching position)
 
 /-- The stationary projected overlap from the connector frame to the upper crossing frame, preserving the real-axis root
 order. -/
-@[expose] def topRightProjectedOverlap :
-  ProjectedOverlap
+@[expose] def _root_.Purelib.Examples.Curves.Legendre.Connectors.topRightProjectedOverlap :
+  Progressive.Braid.Projected.Overlap.ProjectedOverlap
     (connectorFrame .right 2).projected
-      UpperZero.sourceFrame.projected :=
+      Curves.Legendre.Crossings.UpperZero.sourceFrame.projected :=
   .stationary topRightOverlap (by
+    refine ⟨(connectorFrame_projected_slope .right 2).trans
+      UpperZero.sourceFrame_projected_slope.symm, ?_⟩
     intro position
-    change (connectorProjectionOrder .right).forward position =
-      (connectorProjectionOrder .right).forward position
-    rfl)
+    rewrite [connectorFrame_projection_order, UpperZero.sourceFrame_projection_order]
+    exact topRightOverlap_matching position)
 
 /-- The minimum of the three original connector-owner clearance bounds. -/
 @[expose] def transitionSheetBound (side :
@@ -2188,8 +2229,8 @@ theorem transitionSheetBound_positive (side :
   Side) (height : Fraction.Rational) :
     0 < transitionSheetBound side height := by
   unfold transitionSheetBound
-  exact Fraction.Order.Basic.lt_min (connectorZeroOwner side height).clearance.positive
-    (Fraction.Order.Basic.lt_min (connectorMovingOwner side height).clearance.positive
+  exact Basic.lt_min (connectorZeroOwner side height).clearance.positive
+    (Basic.lt_min (connectorMovingOwner side height).clearance.positive
       (connectorOneOwner side height).clearance.positive)
 
 /-- The common stationary-transition bound is below each original connector-owner clearance. -/
@@ -2200,11 +2241,11 @@ theorem transitionSheetBound_le (side :
       (connectorOwner side height index).clearance.bound := by
   rcases Cases.three index with indexZero | indexOne | indexTwo
   · subst index
-    exact Fraction.Order.Basic.min_le_left _ _
+    exact Basic.min_le_left _ _
   · subst index
-    exact (Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _)
+    exact (Basic.min_le_right _ _).trans (Basic.min_le_left _ _)
   · subst index
-    exact (Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_right _ _)
+    exact (Basic.min_le_right _ _).trans (Basic.min_le_right _ _)
 
 /-- The positive sheet clearance from the upper crossing frame to the connector frame, bounded by each retained
 local-owner clearance. -/
@@ -2277,18 +2318,17 @@ local-owner clearance. -/
 /-- The constant vertical parameter segment at the selected side and height. -/
 @[expose] def stationaryGeometry (side :
   Side) (height : Fraction.Rational) :
-    Legendre.Paths.AxisSegment (connectorParameter side height)
+    AxisSegment (connectorParameter side height)
       (connectorParameter side height) :=
   .vertical (sideReal side) height height
 
 /-- The constant connector segment avoids both critical parameters with bound 1/16. -/
 @[expose] def stationaryGeometrySafe (side :
   Side) (height : Fraction.Rational) :
-    Legendre.Paths.AxisSegment.Safe (stationaryGeometry side height) where
+    AxisSegment.Safe (stationaryGeometry side height) where
   avoidsZero :=
-    { bound := 1 / 16
-      positive := by decide
-      lower := by
+    AxisSegment.Clearance.ofFixedGap (stationaryGeometry side height)
+      0 (1 / 16) (by decide) (by
         cases side
         · change (1 / 16 : Fraction.Rational) <= (-(1 / 4) - 0) ^ 2
           decide
@@ -2297,11 +2337,10 @@ local-owner clearance. -/
         · change (1 / 16 : Fraction.Rational) <= (3 / 4 - 0) ^ 2
           decide
         · change (1 / 16 : Fraction.Rational) <= (5 / 4 - 0) ^ 2
-          decide }
+          decide)
   avoidsOne :=
-    { bound := 1 / 16
-      positive := by decide
-      lower := by
+    AxisSegment.Clearance.ofFixedGap (stationaryGeometry side height)
+      1 (1 / 16) (by decide) (by
         cases side
         · change (1 / 16 : Fraction.Rational) <= (-(1 / 4) - 1) ^ 2
           decide
@@ -2310,7 +2349,7 @@ local-owner clearance. -/
         · change (1 / 16 : Fraction.Rational) <= (3 / 4 - 1) ^ 2
           decide
         · change (1 / 16 : Fraction.Rational) <= (5 / 4 - 1) ^ 2
-          decide }
+          decide)
 
 /-- The stationary frame-change segment from the upper crossing frame to the connector frame.
 
@@ -2447,7 +2486,7 @@ theorem descendHeight_fortyEight :
 
 /-- Transport a connector path along equality of its final heights, retaining its initial frame and path data. -/
 @[expose] def castConnectorPathFinish {start :
-  Gaussian.Basic.Canonical} {left : Legendre.Paths.Frame start}
+  Basic.Canonical} {left : Legendre.Paths.Frame start}
     {side : Side} {source target : Fraction.Rational}
     (same : source = target)
     (path : Legendre.Paths.Path left (connectorFrame side source)) :
@@ -2457,7 +2496,7 @@ theorem descendHeight_fortyEight :
 
 /-- Transport of the final connector height preserves the step count. -/
 @[simp] theorem castConnectorPathFinish_stepCount
-    {start : Gaussian.Basic.Canonical} {left : Legendre.Paths.Frame start}
+    {start : Basic.Canonical} {left : Legendre.Paths.Frame start}
     {side : Side} {source target : Fraction.Rational}
     (same : source = target)
     (path : Legendre.Paths.Path left (connectorFrame side source)) :
@@ -2467,7 +2506,7 @@ theorem descendHeight_fortyEight :
 
 /-- Transport of the final connector height preserves the braid word. -/
 @[simp] theorem castConnectorPathFinish_word
-    {start : Gaussian.Basic.Canonical} {left : Legendre.Paths.Frame start}
+    {start : Basic.Canonical} {left : Legendre.Paths.Frame start}
     {side : Side} {source target : Fraction.Rational}
     (same : source = target)
     (path : Legendre.Paths.Path left (connectorFrame side source)) :

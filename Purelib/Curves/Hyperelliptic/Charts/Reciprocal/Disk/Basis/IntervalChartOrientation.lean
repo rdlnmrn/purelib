@@ -54,6 +54,8 @@ import Purelib.Riemann.RootContinuation.CertifiedSquareRoot
 import Purelib.Riemann.RootContinuation.SquareRootChannelOwnership
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
@@ -97,43 +99,43 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy (
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover (BasisCommonInterval)
 open Purelib.Integration.Energy.AffineTriangle (crossEnergy)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {model :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell}
-  {parameter target sourceTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor sourceFloor :
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : ParameterEdge} {cell :
+    UniformReciprocalCover.Cell data edge}
+  {regular : RegularBounds.Data cap} {model :
+    RootModel cell}
+  {parameter target sourceTarget : Coordinate} {floor sourceFloor :
     Nat}
-  {covers : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
+  {covers : BasisSourceCovers parent}
 
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
 
-variable {cover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data}
+variable {cover : Cover data}
 
 namespace BasisIntervalChartRequest
 
-variable {interval : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover
-  covers} {depth index minimum : Nat} {box : Purelib.Geometry.Rational.Box}
-  {request : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartRequest.BasisIntervalChartRequest
+variable {interval : BasisCommonInterval cover
+  covers} {depth index minimum : Nat} {box : Geometry.Rational.Box}
+  {request : BasisIntervalChartRequest
     interval regular depth target sourceTarget floor sourceFloor}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {polynomials : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {polynomials : RegularBasisPolynomials cap
     index box}
 
 namespace Plan.Evaluation
 
 variable {plan :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartAcquisition.BasisIntervalChartRequest.Plan
+  Plan
   request capSample polynomials minimum}
-  {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular interval.anchor.cell}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample comparison capSample}
-  {bank : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank
+  {comparison : ArcSamples.Data regular interval.anchor.cell}
+  {sample : ArcSamples.Sample comparison capSample}
+  {bank : BasisSourceLocations.SampleBank
     covers index} {stage : Nat}
 
 open Purelib.Data.Gaussian.Basic.Canonical
@@ -142,16 +144,16 @@ open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius)
 
 /-- A unit-bounded reading at a simple reciprocal origin has squared coordinate norm at most two. -/
 theorem root_norm_upper (branch : HyperellipticReciprocal.originOrder curve = 1)
-    (small : target ≤ 1) {parameter : InverseRootPolynomial.Coordinate}
-    (reading : VertexRequests.Reading regular (BasisIntervalChartRequest.Model interval) sample parameter target floor
+    (small : target ≤ 1) {parameter : Coordinate}
+    (reading : Reading regular (Model interval) sample parameter target floor
       stage) :
-    Data.Gaussian.Norm.Basic.normSq reading.root.coordinate ≤ 2 := by
+    Basic.normSq reading.root.coordinate ≤ 2 := by
   have square := reading.square
-  rw [branch, pow_one, Data.Gaussian.Norm.Basic.normSq_eq_canonical] at square
+  rw [branch, pow_one, Basic.normSq_eq_canonical] at square
   have unit := Reciprocal.Bounds.disk_unit_bound (ReciprocalExteriorCollar.inverse_inDisk curve
     (data.boundary.point ⟨interval.anchor.owner.left.inside.1.trans reading.prepared.inside.1,
       reading.prepared.inside.2.trans interval.anchor.owner.right.inside.2⟩))
-  rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at unit ⊢
+  rw [Basic.normSq_eq_canonical] at unit ⊢
   exact ReciprocalDiskCoordinateOrientation.coordinate_norm_upper
     (root := reading.root.coordinate) (point := (parent.edge.point parameter)⁻¹)
     (tolerance := target) unit small square
@@ -164,25 +166,25 @@ theorem coordinate_area_positive (evaluated : Plan.Evaluation plan sample bank s
     (angular : AngularRequest comparison depth interval.edge.left.parameter
       interval.edge.right.parameter)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
-    (oriented : 0 < AffineTriangle.crossEnergy (parent.edge.point 0) (parent.edge.point 1))
+    (oriented : 0 < crossEnergy (parent.edge.point 0) (parent.edge.point 1))
     (small : target ≤ 1) (paid : 16 * target ≤ angular.margin ^ 2)
-    (segment : VertexPaths.Segment regular (BasisIntervalChartRequest.Model interval) sample target floor stage)
+    (segment : Segment regular (Model interval) sample target floor stage)
     (member : segment ∈ (Evaluation.path evaluated).segments)
     (dot : 0 < segment.first.root.coordinate.re * segment.last.root.coordinate.re +
       segment.first.root.coordinate.im * segment.last.root.coordinate.im) :
-    0 < AffineTriangle.crossEnergy segment.last.root.coordinate segment.first.root.coordinate := by
-  have unit (parameter : InverseRootPolynomial.Coordinate)
+    0 < crossEnergy segment.last.root.coordinate segment.first.root.coordinate := by
+  have unit (parameter : Coordinate)
       (inside : interval.anchor.owner.left.parameter ≤ parameter ∧ parameter ≤ interval.anchor.owner.right.parameter) :
-      Data.Gaussian.Norm.Basic.normSq (parent.edge.point parameter)⁻¹ ≤ 1 :=
+      Basic.normSq (parent.edge.point parameter)⁻¹ ≤ 1 :=
     Reciprocal.Bounds.disk_unit_bound (ReciprocalExteriorCollar.inverse_inDisk curve
       (data.boundary.point ⟨interval.anchor.owner.left.inside.1.trans inside.1,
         inside.2.trans interval.anchor.owner.right.inside.2⟩))
   have firstSquare := segment.first.square
   have lastSquare := segment.last.square
-  rw [branch, pow_one, Data.Gaussian.Norm.Basic.normSq_eq_canonical] at firstSquare lastSquare
+  rw [branch, pow_one, Basic.normSq_eq_canonical] at firstSquare lastSquare
   have firstUnit := unit segment.firstParameter segment.first.prepared.inside
   have lastUnit := unit segment.lastParameter segment.last.prepared.inside
-  rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at firstUnit lastUnit
+  rw [Basic.normSq_eq_canonical] at firstUnit lastUnit
   exact ReciprocalDiskCoordinateOrientation.coordinate_area_positive
     (first := segment.first.root.coordinate) (last := segment.last.root.coordinate)
     (firstPoint := (parent.edge.point segment.firstParameter)⁻¹)

@@ -64,25 +64,25 @@ open Purelib.LinearAlgebra.Gaussian.QuadraticForm (GaussianMatrix)
 open Purelib.Riemann.Periods.WeightedPeriods (Coordinate Coefficients)
 
 /-- A finite sum of pointwise nonnegative rational coordinates is nonnegative. -/
-private theorem sum_nonnegative {count : Nat} (values : Fin count → WeightedPeriods.Coordinate)
-    (nonnegative : ∀ index, 0 ≤ values index) : 0 ≤ FiniteSum.Fin.sumFin values := by
+private theorem sum_nonnegative {count : Nat} (values : Fin count → Coordinate)
+    (nonnegative : ∀ index, 0 ≤ values index) : 0 ≤ sumFin values := by
   have estimate := Order.Positivity.sumFin_mono (fun _ => 0) values nonnegative
-  simpa only [FiniteSum.Fin.sumFin_zero] using estimate
+  simpa only [sumFin_zero] using estimate
 
 /-- Every entry of a nonnegative finite rational family is at most its sum. -/
-private theorem term_le_sum {count : Nat} (values : Fin count → WeightedPeriods.Coordinate)
-    (nonnegative : ∀ index, 0 ≤ values index) (index : Fin count) : values index ≤ FiniteSum.Fin.sumFin values := by
+private theorem term_le_sum {count : Nat} (values : Fin count → Coordinate)
+    (nonnegative : ∀ index, 0 ≤ values index) (index : Fin count) : values index ≤ sumFin values := by
   have estimate := Order.Positivity.sumFin_mono (fun next => if next = index then values next else 0) values (by
     intro next
     by_cases same : next = index
     · rw [if_pos same]
     · rw [if_neg same]; exact nonnegative next)
-  simpa only [FiniteSum.Fin.sumFin_ite_eq] using estimate
+  simpa only [sumFin_ite_eq] using estimate
 
 /-- A retained coefficient row scales a uniform primitive-point bound by its cached coefficient mass. -/
 theorem Coefficients.point_bounded {count : Nat} {weights : Data.Vector Int count} (coefficients :
-  WeightedPeriods.Coefficients weights)
-    (values : Fin count → Stokes.PrimitivePoint) {bound : WeightedPeriods.Coordinate} (bounded : ∀ index,
+  Coefficients weights)
+    (values : Fin count → PrimitivePoint) {bound : Coordinate} (bounded : ∀ index,
       PrimitivePoint.Bounded (values index) bound) :
     PrimitivePoint.Bounded (Pairing.linear weights values) (coefficients.mass * bound) := by
   constructor
@@ -103,13 +103,13 @@ exact coefficient records. -/
 structure CoefficientRows {count rows : Nat} (weights : Data.Vector (Data.Vector Int count)
   rows) where
   /-- The original dependent coefficient records for each retained weight row. -/ coefficients :
-    Data.Vector.DependentVector (fun row => WeightedPeriods.Coefficients (weights row))
-  /-- The cached rational mass of every coefficient row. -/ masses : Data.Vector WeightedPeriods.Coordinate
+    DependentVector (fun row => Coefficients (weights row))
+  /-- The cached rational mass of every coefficient row. -/ masses : Data.Vector Coordinate
     rows
   /-- Each cached row mass equals the mass of its original coefficient record. -/ masses_eq : ∀ row, masses row =
     (coefficients.get row).mass
-  /-- The cached total mass of all coefficient rows. -/ total : WeightedPeriods.Coordinate
-  /-- The cached total equals the finite sum of the retained row masses. -/ total_eq : total = FiniteSum.Fin.sumFin
+  /-- The cached total mass of all coefficient rows. -/ total : Coordinate
+  /-- The cached total equals the finite sum of the retained row masses. -/ total_eq : total = sumFin
     masses
 
 constructive_injectivity CoefficientRows
@@ -122,69 +122,69 @@ variable {count rows : Nat} {weights : Data.Vector (Data.Vector Int count)
 /-- Cache the masses and finite total of an existing dependent bank of coefficient records.
 
 The constructor retains those exact records and computes each row mass once. -/
-def ofCoefficients (coefficients : Data.Vector.DependentVector (fun row => WeightedPeriods.Coefficients (weights row)))
-  : Approximation.Budget.WeightedRowBudgets.CoefficientRows weights :=
-  let masses := Data.Vector.Basic.vectorOfFn fun row => (coefficients.get row).mass
-  ⟨coefficients, masses, Data.Vector.Basic.vectorOfFn_apply _, FiniteSum.Fin.sumFin masses, rfl⟩
+def ofCoefficients (coefficients : DependentVector (fun row => Coefficients (weights row)))
+  : CoefficientRows weights :=
+  let masses := vectorOfFn fun row => (coefficients.get row).mass
+  ⟨coefficients, masses, vectorOfFn_apply _, sumFin masses, rfl⟩
 
 /-- Build coefficient records for the supplied finite weight rows and cache their total mass. -/
 def build (weights : Data.Vector (Data.Vector Int count) rows) :
-  Approximation.Budget.WeightedRowBudgets.CoefficientRows weights :=
-  Approximation.Budget.WeightedRowBudgets.CoefficientRows.ofCoefficients (DependentVector.ofFn fun row =>
+  CoefficientRows weights :=
+  ofCoefficients (DependentVector.ofFn fun row =>
     Coefficients.build (weights row))
 
 /-- The retained total coefficient mass is nonnegative. -/
-theorem total_nonnegative (bank : Approximation.Budget.WeightedRowBudgets.CoefficientRows weights) : 0 ≤ bank.total :=
+theorem total_nonnegative (bank : CoefficientRows weights) : 0 ≤ bank.total :=
   by
   rw [bank.total_eq]
-  exact Approximation.Budget.WeightedRowBudgets.sum_nonnegative _ (fun row => by
+  exact sum_nonnegative _ (fun row => by
       rw [bank.masses_eq];
       exact (bank.coefficients.get row).mass_nonnegative)
 
 /-- Each original row's mass is at most the retained total coefficient mass. -/
-theorem mass_le_total (bank : Approximation.Budget.WeightedRowBudgets.CoefficientRows weights) (row : Fin rows) :
+theorem mass_le_total (bank : CoefficientRows weights) (row : Fin rows) :
   (bank.coefficients.get row).mass ≤ bank.total := by
   rw [bank.total_eq, ← bank.masses_eq]
-  exact Approximation.Budget.WeightedRowBudgets.term_le_sum _ (fun row => by
+  exact term_le_sum _ (fun row => by
       rw [bank.masses_eq];
       exact (bank.coefficients.get row).mass_nonnegative) row
 
 /-- Allocate one common component tolerance using the retained total row mass.
 
 The incremented denominator also covers empty banks and rows with zero amplification. -/
-def perComponent (bank : Approximation.Budget.WeightedRowBudgets.CoefficientRows weights) (target :
-  WeightedPeriods.Coordinate) : Fraction.Rational :=
+def perComponent (bank : CoefficientRows weights) (target :
+  Coordinate) : Fraction.Rational :=
   Weighted.allowance target bank.total
 
 /-- A positive target gives a positive common component tolerance. -/
-theorem perComponent_positive (bank : Approximation.Budget.WeightedRowBudgets.CoefficientRows weights) {target :
-  WeightedPeriods.Coordinate} (positive : 0 < target) :
+theorem perComponent_positive (bank : CoefficientRows weights) {target :
+  Coordinate} (positive : 0 < target) :
     0 < bank.perComponent target := Weighted.allowance_positive positive bank.total_nonnegative
 
 /-- The total coefficient amplification times the allocated tolerance is strictly below the positive target. -/
-theorem total_mul_perComponent_lt (bank : Approximation.Budget.WeightedRowBudgets.CoefficientRows weights) {target :
-  WeightedPeriods.Coordinate} (positive : 0 < target) :
+theorem total_mul_perComponent_lt (bank : CoefficientRows weights) {target :
+  Coordinate} (positive : 0 < target) :
     bank.total * bank.perComponent target < target := by
-  have extra := Fraction.Order.Arithmetic.add_lt_add_right_direct (by decide : (0 : WeightedPeriods.Coordinate) < 1)
+  have extra := Fraction.Order.Arithmetic.add_lt_add_right_direct (by decide : (0 : Coordinate) < 1)
     bank.total
   rw [zero_add, add_comm 1] at extra
   have denominatorPositive := bank.total_nonnegative.trans_lt extra
   have paid : (bank.total + 1) * bank.perComponent target = target := by
-    rw [Approximation.Budget.WeightedRowBudgets.CoefficientRows.perComponent, Weighted.allowance,
+    rw [perComponent, Weighted.allowance,
       Fraction.Field.mul_comm]
     exact Fraction.Field.div_mul_cancel_of_ne _ _ denominatorPositive.ne'
   exact (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct extra
     (bank.perComponent_positive positive)).trans_eq paid
 
 /-- The common component tolerance pays both primitive components of every retained coefficient row. -/
-theorem point_accurate (bank : Approximation.Budget.WeightedRowBudgets.CoefficientRows weights) (values : Fin count →
-  Stokes.PrimitivePoint)
-    {target : WeightedPeriods.Coordinate} (positive : 0 < target) (bounded : ∀ index, PrimitivePoint.Bounded (values
+theorem point_accurate (bank : CoefficientRows weights) (values : Fin count →
+  PrimitivePoint)
+    {target : Coordinate} (positive : 0 < target) (bounded : ∀ index, PrimitivePoint.Bounded (values
       index) (bank.perComponent target))
     (row : Fin rows) :
-    Data.Gaussian.Norm.Basic.normSq (Pairing.linear (weights row) values).left < target ∧
-      Data.Gaussian.Norm.Basic.normSq (Pairing.linear (weights row) values).right < target := by
-  have estimate := Approximation.Budget.WeightedRowBudgets.Coefficients.point_bounded (bank.coefficients.get row) values
+    normSq (Pairing.linear (weights row) values).left < target ∧
+      normSq (Pairing.linear (weights row) values).right < target := by
+  have estimate := Coefficients.point_bounded (bank.coefficients.get row) values
     bounded
   have paid := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (bank.mass_le_total row)
     (bank.perComponent_positive positive).le).trans_lt (bank.total_mul_perComponent_lt positive)

@@ -71,6 +71,10 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Algebra
@@ -160,51 +164,51 @@ variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
     BasisSourceCovers parent} {index : Nat}
 
 /-- The finite squared coefficient norm is nonnegative. -/
-private theorem coefficient_nonnegative (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients := FiniteSum.Fin.sumFin_zero.symm.trans_le
-  (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : InverseRootPolynomial.Coordinate)) _ (fun row =>
-    Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
+private theorem coefficient_nonnegative (coefficients : GaussianVector genus) :
+    0 ≤ coefficientNormSq coefficients := FiniteSum.Fin.sumFin_zero.symm.trans_le
+  (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Coordinate)) _ (fun row =>
+    normSq_nonneg (coefficients row)))
 
 /-- The exact cached bank supplies its own homogeneous increment slope. -/
 theorem increment_bound (originals : BasisSourceLocations.PrimitiveBank covers index)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) {first last : InverseRootPolynomial.Coordinate}
+    (coefficients : GaussianVector genus) {first last : Coordinate}
     (firstInside : 0 ≤ first ∧ first ≤ 1) (lastInside : 0 ≤ last ∧ last ≤ 1) :
-    Data.Gaussian.Norm.Basic.normSq
-      (CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+    Basic.normSq
+      (PrimitiveBank.value
       originals coefficients last -
-      CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+      PrimitiveBank.value
       originals coefficients first) ≤
-      Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope
-        covers * PreparedObservationCoercivity.coefficientNormSq coefficients * (last - first)^2 := by
+      BasisSourceCovers.primitiveSlope
+        covers * coefficientNormSq coefficients * (last - first)^2 := by
   let values := fun row => (originals.get row).primitive.value.eval (parent.edge.point last) -
     (originals.get row).primitive.value.eval (parent.edge.point first)
   let budget := WeightedNormBudget.build values
-  have each (row : Fin genus) : Data.Gaussian.Norm.Basic.normSq (values row) ≤ (covers.get
+  have each (row : Fin genus) : Basic.normSq (values row) ≤ (covers.get
     row).data.sourceSlope * (last - first)^2 :=
     (originals.get row).increment_bound firstInside lastInside
   have paid : budget.scale ≤ BasisSourceCovers.primitiveSlope covers * (last - first)^2 := by
     rw [budget.scale_eq]
-    have bound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Order.Positivity.sumFin_mono _ _ each)
+    have bound := Arithmetic.mul_le_mul_of_nonneg_left_direct (Order.Positivity.sumFin_mono _ _ each)
       (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus))
-    rw [FiniteSum.Fin.sumFin_mul_right] at bound
+    rw [sumFin_mul_right] at bound
     exact bound.trans_eq (by unfold BasisSourceCovers.primitiveSlope; ring1)
   have equal : PrimitiveBank.value originals coefficients last - PrimitiveBank.value originals coefficients first =
-      FiniteSum.Fin.sumFin (fun row => coefficients row * values row) := by
+      sumFin (fun row => coefficients row * values row) := by
     unfold PrimitiveBank.value
-    rw [← FiniteSum.Fin.sumFin_sub]
-    exact FiniteSum.Fin.sumFin_congr (fun row => by dsimp only [values]; ring1)
+    rw [← sumFin_sub]
+    exact sumFin_congr (fun row => by dsimp only [values]; ring1)
   rw [equal]
   exact (budget.bound coefficients).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct paid
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct paid
       (coefficient_nonnegative
       coefficients)).trans_eq (by ring1))
 
 /-- Changing the dyadic depth changes increment-path area by exactly the same amount as dyadic boundary area. -/
-private theorem path_difference (value : InverseRootPolynomial.Coordinate → InverseRootPolynomial.Gaussian) (first
+private theorem path_difference (value : Coordinate → Gaussian) (first
   second : Nat) :
-    IncrementArea.pathArea (DyadicPrimitivePaths.dyadicIncrements value first 0 1) - IncrementArea.pathArea
-      (DyadicPrimitivePaths.dyadicIncrements value second 0 1) =
-      DyadicBoundaryRibbon.dyadicArea value first 0 1 - DyadicBoundaryRibbon.dyadicArea value second 0 1 := by
+    pathArea (dyadicIncrements value first 0 1) - pathArea
+      (dyadicIncrements value second 0 1) =
+      dyadicArea value first 0 1 - dyadicArea value second 0 1 := by
   have left := DyadicPrimitivePaths.traceArea_dyadicIncrements value first 0 1
   have right := DyadicPrimitivePaths.traceArea_dyadicIncrements value second 0 1
   rw [IncrementArea.traceArea_eq, DyadicPrimitivePaths.dyadicIncrements_sum] at left right
@@ -214,23 +218,23 @@ private theorem path_difference (value : InverseRootPolynomial.Coordinate → In
 variable {patch : PreparedPatch parent} {data :
   Data patch count} {cover :
   Cover data}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {minimum floor depth : Nat}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {minimum floor depth : Nat}
   {common : BasisCommonCover cover covers minimum}
     {areaAllowance sourceTarget coefficientTarget : Coordinate}
   {request : BasisPreparedCommonRequest
     regular common areaAllowance sourceTarget coefficientTarget floor}
-  {box : Purelib.Geometry.Rational.Box} {polynomials :
+  {box : Geometry.Rational.Box} {polynomials :
     RegularBasisPolynomials cap index box}
   {originals :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+    BasisSourceLocations.PrimitiveBank
     covers index} {cells :
     BasisSourceLocations.SampleBank covers
     index}
-  {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
+  {coefficients : GaussianVector genus}
   {acquired :
-    PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition
+    Acquisition
     request polynomials originals cells coefficients depth}
 
 /-- Every finer source polygon is compared to the actual cached prepared source summary. No integral model or primitive
@@ -238,13 +242,13 @@ origin is replaced. -/
 theorem BasisPreparedCommonRequest.Acquisition.ChildPairs.Weighted.source_resampling_bound
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs) {scheduled : Nat}
     (later : common.depth + acquired.extraDepth ≤ scheduled) :
-    Data.Gaussian.Norm.Basic.normSq (IncrementArea.pathArea (DyadicPrimitivePaths.dyadicIncrements
+    Basic.normSq (pathArea (dyadicIncrements
       (PrimitiveBank.value originals coefficients) scheduled 0 1) - weighted.source.area) ≤
-      Geometric.Basic.quarterRadius (4 * (BasisSourceCovers.primitiveSlope covers)^2) (common.depth +
+      quarterRadius (4 * (BasisSourceCovers.primitiveSlope covers)^2) (common.depth +
         acquired.extraDepth) *
-        (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
+        (coefficientNormSq coefficients)^2 := by
   have bounded := DyadicAreaRefinement.dyadicArea_refinement_bound (PrimitiveBank.value originals coefficients)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (BasisSourceCovers.primitiveSlope_nonnegative covers)
+    (Arithmetic.mul_nonneg_direct (BasisSourceCovers.primitiveSlope_nonnegative covers)
       (coefficient_nonnegative
       coefficients))
     (fun _ _ firstInside lastInside =>
@@ -252,12 +256,12 @@ theorem BasisPreparedCommonRequest.Acquisition.ChildPairs.Weighted.source_resamp
       originals coefficients firstInside lastInside)
     (common.depth + acquired.extraDepth) (scheduled - (common.depth + acquired.extraDepth))
     (first := 0) (last := 1) ⟨le_rfl, by decide⟩ ⟨by decide, le_rfl⟩ (by decide)
-  rw [Purelib.Data.Nat.Subtraction.add_sub_of_le later, (show (1 : Purelib.Data.Rat.Fraction.Rational) - 0 = 1 by
+  rw [Data.Nat.Subtraction.add_sub_of_le later, (show (1 : Fraction.Rational) - 0 = 1 by
     ring1), one_pow, Fraction.Field.mul_one_direct] at bounded
   rw [weighted.source.area_eq, Weighted.source_path weighted,
     path_difference]
   exact bounded.trans_eq (by
-    rw [Geometric.Basic.quarterRadius_eq_mul_pow, Geometric.Basic.quarterRadius_eq_mul_pow]; ring1)
+    rw [quarterRadius_eq_mul_pow, quarterRadius_eq_mul_pow]; ring1)
 
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.WeightedResampling.ReciprocalDiskArcOwners
 
@@ -282,25 +286,25 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy (
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {bounds :
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {bounds :
     UniformBounds regular.padded}
   {parent : CenteredEdge curve differential} {patch :
     PreparedPatch parent}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+  {data : UniformReciprocalModels.Data patch count}
   {basis : BasisBounds bounds}
   {allowance coefficientTarget : Coordinate} {coverFloor floor :
     Nat}
-  {index minimum readingIndex : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {index minimum readingIndex : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
   {polynomials : RegularBasisPolynomials cap
     index box}
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEnergyPreparation (EnergyPreparation)
 
 variable {stage energyFloor radialDepth : Nat} {coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector genus}
+  GaussianVector genus}
 
 open Purelib.Data.Gaussian.Basic.Canonical
 open Purelib.Data.Rat.Fraction.Compatibility
@@ -312,10 +316,10 @@ open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius)
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Gaussian)
 
 /-- A coefficient-independent slope is selected from the retained covers. -/
-@[expose] def weightedSourceSlopeMaximum : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve
+@[expose] def weightedSourceSlopeMaximum : {parents : List (CenteredEdge curve
   differential)} →
-    UniformReciprocalCover.ParentCovers parents → SourceLocations.BasisParentSourceCovers parents →
-      InverseRootPolynomial.Coordinate
+    ParentCovers parents → SourceLocations.BasisParentSourceCovers parents →
+      Coordinate
   | _, .nil, _ => 0
   | _, .cons _ _ _ tail, sources => max (BasisSourceCovers.primitiveSlope sources.head)
 
@@ -323,9 +327,9 @@ open Purelib.Riemann.Normalization.InverseRootPolynomial (Gaussian)
         tail sources.tail)
 
 /-- The maximum retained weighted source slope is nonnegative, including an empty parent bank. -/
-theorem weightedSourceSlopeMaximum_nonnegative {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve
+theorem weightedSourceSlopeMaximum_nonnegative {parents : List (CenteredEdge curve
   differential)}
-    (anchors : UniformReciprocalCover.ParentCovers parents) (sources : SourceLocations.BasisParentSourceCovers parents)
+    (anchors : ParentCovers parents) (sources : SourceLocations.BasisParentSourceCovers parents)
       :
     0 ≤
       weightedSourceSlopeMaximum
@@ -334,20 +338,20 @@ theorem weightedSourceSlopeMaximum_nonnegative {parents : List (PreparedSubdivis
   | nil => exact le_rfl
   | cons =>
     exact (BasisSourceCovers.primitiveSlope_nonnegative sources.head).trans
-      (Purelib.Data.Rat.Fraction.Order.Basic.le_max_left _ _)
+      (Basic.le_max_left _ _)
 
 /-- Maximum actual combined depth, also defined for an empty basis. -/
-@[expose] def sourceDepthMaximum : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-    (anchors : UniformReciprocalCover.ParentCovers parents) → (sources : SourceLocations.BasisParentSourceCovers
+@[expose] def sourceDepthMaximum : {parents : List (CenteredEdge curve differential)} →
+    (anchors : ParentCovers parents) → (sources : SourceLocations.BasisParentSourceCovers
       parents) →
-    (bank : CommonParentBank.BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor) →
-    (plans : CommonParentPlans.Plans capSample polynomials minimum anchors sources bank) → (inputs :
-      CommonParentPlans.NumericalBank index anchors sources) →
-    (readings : CommonParentPlans.Readings anchors sources bank plans inputs stage) →
-    (prepared : CommonParentSamples.FanPreparations energyFloor anchors sources bank plans inputs readings) →
-    (samples : CommonParentSamples.Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
+    (bank : BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor) →
+    (plans : Plans capSample polynomials minimum anchors sources bank) → (inputs :
+      NumericalBank index anchors sources) →
+    (readings : Readings anchors sources bank plans inputs stage) →
+    (prepared : FanPreparations energyFloor anchors sources bank plans inputs readings) →
+    (samples : Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
       →
-    Samples.PreparedComparisons anchors sources bank plans inputs readings prepared samples → Nat
+    PreparedComparisons anchors sources bank plans inputs readings prepared samples → Nat
   | _, .nil, _, _, _, _, _, _, _, _ => 0
   | _, .cons _ _ _ tail, sources, bank, plans, inputs, readings, prepared, samples, comparisons =>
       max (bank.1.common.depth + comparisons.1.integrals.extraDepth)
@@ -356,22 +360,22 @@ theorem weightedSourceSlopeMaximum_nonnegative {parents : List (PreparedSubdivis
           tail sources.tail bank.2 plans.2 inputs.2 readings.2 prepared.2 samples.2 comparisons.2)
 
 /-- Pair scheduled source polygons with the actual cached weighted source polygons in their original parent order. -/
-@[expose] def sourceResamplingPairs (scheduled : Nat) : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve
+@[expose] def sourceResamplingPairs (scheduled : Nat) : {parents : List (CenteredEdge curve
   differential)} →
-    (anchors : UniformReciprocalCover.ParentCovers parents) → (sources : SourceLocations.BasisParentSourceCovers
+    (anchors : ParentCovers parents) → (sources : SourceLocations.BasisParentSourceCovers
       parents) →
-    (bank : CommonParentBank.BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor) →
-    (plans : CommonParentPlans.Plans capSample polynomials minimum anchors sources bank) → (inputs :
-      CommonParentPlans.NumericalBank index anchors sources) →
-    (readings : CommonParentPlans.Readings anchors sources bank plans inputs stage) →
-    (prepared : CommonParentSamples.FanPreparations energyFloor anchors sources bank plans inputs readings) →
-    (samples : CommonParentSamples.Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
+    (bank : BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor) →
+    (plans : Plans capSample polynomials minimum anchors sources bank) → (inputs :
+      NumericalBank index anchors sources) →
+    (readings : Readings anchors sources bank plans inputs stage) →
+    (prepared : FanPreparations energyFloor anchors sources bank plans inputs readings) →
+    (samples : Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
       →
-    Samples.PreparedComparisons anchors sources bank plans inputs readings prepared samples → List (List
-      InverseRootPolynomial.Gaussian × List InverseRootPolynomial.Gaussian)
+    PreparedComparisons anchors sources bank plans inputs readings prepared samples → List (List
+      Gaussian × List Gaussian)
   | _, .nil, _, _, _, _, _, _, _, _ => []
   | _, .cons _ _ _ tail, sources, bank, plans, inputs, readings, prepared, samples, comparisons =>
-      (DyadicPrimitivePaths.dyadicIncrements (PrimitiveBank.value inputs.1.originals coefficients) scheduled 0 1,
+      (dyadicIncrements (PrimitiveBank.value inputs.1.originals coefficients) scheduled 0 1,
         comparisons.1.weighted.values.map Prod.fst) ::
 
           sourceResamplingPairs
@@ -379,15 +383,15 @@ theorem weightedSourceSlopeMaximum_nonnegative {parents : List (PreparedSubdivis
 
 /-- There is exactly one retained resampling pair per original parent. -/
 private theorem sourceResamplingPairs_length (scheduled : Nat) : ∀ {parents : List
-  (PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-    (anchors : UniformReciprocalCover.ParentCovers parents) (sources : SourceLocations.BasisParentSourceCovers parents)
-    (bank : CommonParentBank.BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor)
-    (plans : CommonParentPlans.Plans capSample polynomials minimum anchors sources bank) (inputs :
-      CommonParentPlans.NumericalBank index anchors sources)
-    (readings : CommonParentPlans.Readings anchors sources bank plans inputs stage)
-    (prepared : CommonParentSamples.FanPreparations energyFloor anchors sources bank plans inputs readings)
-    (samples : CommonParentSamples.Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
-    (comparisons : Samples.PreparedComparisons anchors sources bank plans inputs readings prepared samples),
+  (CenteredEdge curve differential)}
+    (anchors : ParentCovers parents) (sources : SourceLocations.BasisParentSourceCovers parents)
+    (bank : BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor)
+    (plans : Plans capSample polynomials minimum anchors sources bank) (inputs :
+      NumericalBank index anchors sources)
+    (readings : Readings anchors sources bank plans inputs stage)
+    (prepared : FanPreparations energyFloor anchors sources bank plans inputs readings)
+    (samples : Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
+    (comparisons : PreparedComparisons anchors sources bank plans inputs readings prepared samples),
 
       (sourceResamplingPairs
       scheduled anchors sources bank plans inputs readings prepared samples comparisons).length = parents.length
@@ -398,19 +402,19 @@ private theorem sourceResamplingPairs_length (scheduled : Nat) : ∀ {parents : 
 
 /-- Each scheduled source polygon has exactly the same total displacement as its retained cached source polygon. -/
 private theorem sourceResamplingPairs_totals (scheduled : Nat) : ∀ {parents : List
-  (PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-    (anchors : UniformReciprocalCover.ParentCovers parents) (sources : SourceLocations.BasisParentSourceCovers parents)
-    (bank : CommonParentBank.BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor)
-    (plans : CommonParentPlans.Plans capSample polynomials minimum anchors sources bank) (inputs :
-      CommonParentPlans.NumericalBank index anchors sources)
-    (readings : CommonParentPlans.Readings anchors sources bank plans inputs stage)
-    (prepared : CommonParentSamples.FanPreparations energyFloor anchors sources bank plans inputs readings)
-    (samples : CommonParentSamples.Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
-    (comparisons : Samples.PreparedComparisons anchors sources bank plans inputs readings prepared samples),
+  (CenteredEdge curve differential)}
+    (anchors : ParentCovers parents) (sources : SourceLocations.BasisParentSourceCovers parents)
+    (bank : BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor)
+    (plans : Plans capSample polynomials minimum anchors sources bank) (inputs :
+      NumericalBank index anchors sources)
+    (readings : Readings anchors sources bank plans inputs stage)
+    (prepared : FanPreparations energyFloor anchors sources bank plans inputs readings)
+    (samples : Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
+    (comparisons : PreparedComparisons anchors sources bank plans inputs readings prepared samples),
     ∀ pair ∈
       sourceResamplingPairs
       scheduled anchors sources bank plans inputs readings prepared samples comparisons,
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.1 = Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2
+      gaussianSum pair.1 = gaussianSum pair.2
   | _, .nil, _, _, _, _, _, _, _, _, _, member => by cases member
   | _, .cons _ _ _ tail, sources, bank, plans, inputs, readings, prepared, samples, comparisons, pair, member => by
       rcases Purelib.Data.List.Membership.mem_cons.mp member with equal | member
@@ -423,16 +427,16 @@ private theorem sourceResamplingPairs_totals (scheduled : Nat) : ∀ {parents : 
 
 /-- Every retained resampling pair satisfies the shared homogeneous area bound once its actual source depth is paid. -/
 private theorem sourceResamplingPairs_bounds (scheduled : Nat) : ∀ {parents : List
-  (PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-    (anchors : UniformReciprocalCover.ParentCovers parents) (sources : SourceLocations.BasisParentSourceCovers parents)
-    (bank : CommonParentBank.BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor)
-    (plans : CommonParentPlans.Plans capSample polynomials minimum anchors sources bank) (inputs :
-      CommonParentPlans.NumericalBank index anchors sources)
-    (readings : CommonParentPlans.Readings anchors sources bank plans inputs stage)
-    (prepared : CommonParentSamples.FanPreparations energyFloor anchors sources bank plans inputs readings)
-    (samples : CommonParentSamples.Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
-    (comparisons : Samples.PreparedComparisons anchors sources bank plans inputs readings prepared samples)
-    {slope : InverseRootPolynomial.Coordinate},
+  (CenteredEdge curve differential)}
+    (anchors : ParentCovers parents) (sources : SourceLocations.BasisParentSourceCovers parents)
+    (bank : BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor)
+    (plans : Plans capSample polynomials minimum anchors sources bank) (inputs :
+      NumericalBank index anchors sources)
+    (readings : Readings anchors sources bank plans inputs stage)
+    (prepared : FanPreparations energyFloor anchors sources bank plans inputs readings)
+    (samples : Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
+    (comparisons : PreparedComparisons anchors sources bank plans inputs readings prepared samples)
+    {slope : Coordinate},
       weightedSourceSlopeMaximum
       anchors sources ≤ slope →
 
@@ -441,8 +445,8 @@ private theorem sourceResamplingPairs_bounds (scheduled : Nat) : ∀ {parents : 
     ∀ pair ∈
       sourceResamplingPairs
       scheduled anchors sources bank plans inputs readings prepared samples comparisons,
-      Data.Gaussian.Norm.Basic.normSq (IncrementArea.pathArea pair.1 - IncrementArea.pathArea pair.2) ≤
-        Geometric.Basic.quarterRadius (4 * slope^2) coverFloor * (PreparedObservationCoercivity.coefficientNormSq
+      Basic.normSq (pathArea pair.1 - pathArea pair.2) ≤
+        quarterRadius (4 * slope^2) coverFloor * (coefficientNormSq
           coefficients)^2
   | _, .nil, _, _, _, _, _, _, _, _, _, _, _, _, member => by cases member
   | _, .cons _ _ _ tail, sources, bank, plans, inputs, readings, prepared, samples, comparisons, slope, slopeUpper,
@@ -450,102 +454,102 @@ private theorem sourceResamplingPairs_bounds (scheduled : Nat) : ∀ {parents : 
     by
       rcases Purelib.Data.List.Membership.mem_cons.mp member with equal | member
       · subst pair
-        have later := (Purelib.Data.Nat.Order.le_max_left _ _).trans depthUpper
+        have later := (Data.Nat.Order.le_max_left _ _).trans depthUpper
         have bound :=
           ReciprocalDiskArcOwners.BasisPreparedCommonRequest.Acquisition.ChildPairs.Weighted.source_resampling_bound
           comparisons.1.weighted later
         have floorLe : coverFloor ≤ bank.1.common.depth + comparisons.1.integrals.extraDepth :=
-          ((Purelib.Data.Nat.Order.le_max_left _ _).trans_eq bank.1.common.depth_eq.symm).trans (Nat.le_add_right _ _)
+          ((Data.Nat.Order.le_max_left _ _).trans_eq bank.1.common.depth_eq.symm).trans (Nat.le_add_right _ _)
         have localNonnegative := BasisSourceCovers.primitiveSlope_nonnegative sources.head
-        have scale := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Fraction.Order.Arithmetic.pow_le_pow_direct localNonnegative
-            ((Purelib.Data.Rat.Fraction.Order.Basic.le_max_left _ _).trans slopeUpper) 2) (by
-                decide : (0 : InverseRootPolynomial.Coordinate) ≤ 4)
+        have scale := Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.pow_le_pow_direct localNonnegative
+            ((Basic.le_max_left _ _).trans slopeUpper) 2) (by
+                decide : (0 : Coordinate) ≤ 4)
         have decay := quarterRadius_antitone
-          (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 4)
-            (Fraction.Order.Arithmetic.sq_nonneg_direct (BasisSourceCovers.primitiveSlope sources.head))) floorLe
-        have scaled : Geometric.Basic.quarterRadius (4 * (BasisSourceCovers.primitiveSlope sources.head)^2) coverFloor ≤
-            Geometric.Basic.quarterRadius (4 * slope^2) coverFloor := by
-          rw [Geometric.Basic.quarterRadius_eq_mul_pow, Geometric.Basic.quarterRadius_eq_mul_pow]
-          exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct scale
-            (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 1 / 4) _)
+          (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 4)
+            (Arithmetic.sq_nonneg_direct (BasisSourceCovers.primitiveSlope sources.head))) floorLe
+        have scaled : quarterRadius (4 * (BasisSourceCovers.primitiveSlope sources.head)^2) coverFloor ≤
+            quarterRadius (4 * slope^2) coverFloor := by
+          rw [quarterRadius_eq_mul_pow, quarterRadius_eq_mul_pow]
+          exact Arithmetic.mul_le_mul_of_nonneg_right_direct scale
+            (Arithmetic.pow_nonneg_direct (by decide : (0 : Coordinate) ≤ 1 / 4) _)
         rw [comparisons.1.weighted.source.area_eq] at bound
-        exact bound.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (decay.trans scaled)
-          (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+        exact bound.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct (decay.trans scaled)
+          (Arithmetic.sq_nonneg_direct _))
       · exact
           sourceResamplingPairs_bounds
           scheduled tail sources.tail bank.2 plans.2 inputs.2 readings.2 prepared.2 samples.2 comparisons.2
-          ((Purelib.Data.Rat.Fraction.Order.Basic.le_max_right _ _).trans slopeUpper)
-            ((Purelib.Data.Nat.Order.le_max_right _ _).trans depthUpper) pair member
+          ((Basic.le_max_right _ _).trans slopeUpper)
+            ((Data.Nat.Order.le_max_right _ _).trans depthUpper) pair member
 
 /-- Equal per-pair displacements turn the complete trace-area difference into the sum of the original per-pair area
 errors.
 
 The bound pays the square of the actual pair count and retains the same starting value for both concatenated traces. -/
-private theorem equalTotals_trace_bound (pairs : List (List InverseRootPolynomial.Gaussian × List
-  InverseRootPolynomial.Gaussian)) (start : InverseRootPolynomial.Gaussian)
-    {areaError : InverseRootPolynomial.Coordinate} (areas : ∀ pair ∈ pairs, Data.Gaussian.Norm.Basic.normSq
-      (IncrementArea.pathArea pair.1 - IncrementArea.pathArea pair.2) ≤ areaError)
-    (totals : ∀ pair ∈ pairs, Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.1 =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2) :
-    Data.Gaussian.Norm.Basic.normSq (IncrementArea.traceArea start (pairs.map Prod.fst).flatten -
-      IncrementArea.traceArea start (pairs.map Prod.snd).flatten) ≤
-      (pairs.length : InverseRootPolynomial.Coordinate)^2 * areaError := by
-  have difference : ∀ start : InverseRootPolynomial.Gaussian,
-      IncrementArea.traceArea start (pairs.map Prod.fst).flatten - IncrementArea.traceArea start (pairs.map
+private theorem equalTotals_trace_bound (pairs : List (List Gaussian × List
+  Gaussian)) (start : Gaussian)
+    {areaError : Coordinate} (areas : ∀ pair ∈ pairs, Basic.normSq
+      (pathArea pair.1 - pathArea pair.2) ≤ areaError)
+    (totals : ∀ pair ∈ pairs, gaussianSum pair.1 =
+      gaussianSum pair.2) :
+    Basic.normSq (traceArea start (pairs.map Prod.fst).flatten -
+      traceArea start (pairs.map Prod.snd).flatten) ≤
+      (pairs.length : Coordinate)^2 * areaError := by
+  have difference : ∀ start : Gaussian,
+      traceArea start (pairs.map Prod.fst).flatten - traceArea start (pairs.map
         Prod.snd).flatten =
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (pairs.map (fun pair => IncrementArea.pathArea pair.1 -
-          IncrementArea.pathArea pair.2)) := by
+        gaussianSum (pairs.map (fun pair => pathArea pair.1 -
+          pathArea pair.2)) := by
     clear areas start
     induction pairs with
-    | nil => intro start; change (0 : InverseRootPolynomial.Gaussian) - 0 = 0; ring1
+    | nil => intro start; change (0 : Gaussian) - 0 = 0; ring1
     | cons pair pairs ih =>
         intro start
         have head := totals pair (List.mem_cons_self ..)
         have remaining := ih (fun value member => totals value (List.mem_cons_of_mem _ member)) (start +
-          Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2)
-        change IncrementArea.traceArea start (pair.1 ++ _) - IncrementArea.traceArea start (pair.2 ++ _) = _
+          gaussianSum pair.2)
+        change traceArea start (pair.1 ++ _) - traceArea start (pair.2 ++ _) = _
         rw [IncrementArea.traceArea_append, IncrementArea.traceArea_append, head]
-        rw [show ∀ a b c d : InverseRootPolynomial.Gaussian, a + b - (c + d) = (a - c) + (b - d) from fun _ _ _ _ => by
+        rw [show ∀ a b c d : Gaussian, a + b - (c + d) = (a - c) + (b - d) from fun _ _ _ _ => by
           ring1, remaining]
         rw [IncrementArea.traceArea_eq, IncrementArea.traceArea_eq, head]
-        change _ = (IncrementArea.pathArea pair.1 - IncrementArea.pathArea pair.2) +
-          Data.Gaussian.Norm.Sum.Basic.gaussianSum (pairs.map (fun pair => IncrementArea.pathArea pair.1 -
-          IncrementArea.pathArea pair.2))
+        change _ = (pathArea pair.1 - pathArea pair.2) +
+          gaussianSum (pairs.map (fun pair => pathArea pair.1 -
+          pathArea pair.2))
         ring1
   rw [difference start]
-  have bound := Data.Gaussian.Norm.Sum.Bounds.normSq_sum_le (pairs.map (fun pair => IncrementArea.pathArea pair.1 -
-    IncrementArea.pathArea pair.2)) areaError (by
+  have bound := Sum.Bounds.normSq_sum_le (pairs.map (fun pair => pathArea pair.1 -
+    pathArea pair.2)) areaError (by
     intro value member
     obtain ⟨pair, inPairs, rfl⟩ := Map.mem_map.mp member
     exact areas pair inPairs)
-  rw [Purelib.Data.List.Map.length_map] at bound
+  rw [Map.length_map] at bound
   exact bound.trans_eq (by ring1)
 
 /-- Full weighted source traces share one homogeneous resampling bound. Cross-parent ribbons and the initial value
 cancel only through the proved per-parent total equalities, without assuming any polygon has zero area. -/
-theorem source_trace_resampling_bound {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-    (anchors : UniformReciprocalCover.ParentCovers parents) (sources : SourceLocations.BasisParentSourceCovers parents)
-    (bank : CommonParentBank.BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor)
-    (plans : CommonParentPlans.Plans capSample polynomials minimum anchors sources bank) (inputs :
-      CommonParentPlans.NumericalBank index anchors sources)
-    (readings : CommonParentPlans.Readings anchors sources bank plans inputs stage)
-    (prepared : CommonParentSamples.FanPreparations energyFloor anchors sources bank plans inputs readings)
-    (samples : CommonParentSamples.Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
-    (comparisons : Samples.PreparedComparisons anchors sources bank plans inputs readings prepared samples)
+theorem source_trace_resampling_bound {parents : List (CenteredEdge curve differential)}
+    (anchors : ParentCovers parents) (sources : SourceLocations.BasisParentSourceCovers parents)
+    (bank : BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor)
+    (plans : Plans capSample polynomials minimum anchors sources bank) (inputs :
+      NumericalBank index anchors sources)
+    (readings : Readings anchors sources bank plans inputs stage)
+    (prepared : FanPreparations energyFloor anchors sources bank plans inputs readings)
+    (samples : Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
+    (comparisons : PreparedComparisons anchors sources bank plans inputs readings prepared samples)
     (scheduled : Nat) (later :
       sourceDepthMaximum
       anchors sources bank plans inputs readings prepared samples comparisons ≤ scheduled)
-    (start : InverseRootPolynomial.Gaussian) :
+    (start : Gaussian) :
     let pairs :=
       sourceResamplingPairs
       scheduled anchors sources bank plans inputs readings prepared samples comparisons
-    Data.Gaussian.Norm.Basic.normSq (IncrementArea.traceArea start (pairs.map Prod.fst).flatten -
-      IncrementArea.traceArea start (pairs.map Prod.snd).flatten) ≤
-      (parents.length : InverseRootPolynomial.Coordinate)^2 * Geometric.Basic.quarterRadius (4 *
+    Basic.normSq (traceArea start (pairs.map Prod.fst).flatten -
+      traceArea start (pairs.map Prod.snd).flatten) ≤
+      (parents.length : Coordinate)^2 * quarterRadius (4 *
         (weightedSourceSlopeMaximum
         anchors sources)^2) coverFloor *
-        (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
+        (coefficientNormSq coefficients)^2 := by
   have bound :=
     equalTotals_trace_bound
 

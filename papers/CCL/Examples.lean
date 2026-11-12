@@ -1,4 +1,5 @@
 module
+public import Purelib.Examples.RootIsolation.SquareRoot.Decision
 public import Purelib.Algebra.Polynomial.Dense.SmallCoefficients
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Rat.Fraction
@@ -18,7 +19,6 @@ public import Purelib.Examples.Approximation.Gaussian.Process.OneSided.FirstArri
 public import Purelib.Examples.Approximation.Gaussian.Process.OneSided.LiouvilleDigits
 public import Purelib.Examples.Approximation.Gaussian.Process.OneSided.SquareThree
 public import Purelib.Examples.Approximation.Gaussian.Process.OneSided.SquareTwoProbability
-public import Purelib.Examples.Approximation.Gaussian.Provenance.Rational.CCL.Forget
 import Purelib.Examples.Approximation.Gaussian.Provenance.Rational.Cancellation
 public import Purelib.Examples.Approximation.Queries.Noninterference.WorkedExamples
 public import Purelib.Examples.Curves.Legendre.Acquisition.Words.AutomationExamples
@@ -35,9 +35,6 @@ import Purelib.Examples.Integration.Program.Gaussian.Schedule.WorkedExamples
 public import Purelib.Examples.Topology.Knot.Polynomial.Realization.WorkedExamples
 import Purelib.Examples.Topology.Knot.Torus.WorkedExamples
 public import Purelib.RootIsolation.SquareRoot.Provenance.PartialDivision
-public import Test.Curves.Hyperelliptic.Integration.SourceCache
-import Test.Curves.Legendre.Separated
-import Test.RootIsolation.SquareRoot.Sidecar
 
 public import Purelib.Examples.Integration.Exponential.Partition.WorkedExamples
 public import Purelib.Examples.Approximation.Relation.WorkedExamples
@@ -45,7 +42,6 @@ public import Purelib.Examples.Approximation.Gaussian.Logarithm.Relation.WorkedE
 public import Purelib.Examples.Integration.Program.Gaussian.Query.Chart.WorkedExamples
 public import Purelib.Examples.Curves.Hyperelliptic.Periods.FirstBilinear
 public import Purelib.Examples.Curves.Hyperelliptic.Periods.OrderedDeterminant
-public import Test.RootIsolation.SquareRoot.ExactDecision
 public import Purelib.Examples.Curves.Legendre.Branches
 public import Purelib.Examples.Curves.Legendre.CycleRealizations
 import Purelib.Examples.Riemann.ExplicitLegendreNormalizedAcquisition
@@ -54,12 +50,8 @@ public import Purelib.Examples.Curves.Hyperelliptic.Quartic.Branches
 public import Purelib.Examples.Curves.Hyperelliptic.Periods.Worked
 import Purelib.Data.List.PositionTrace.Basic
 public import Purelib.Data.List.PositionTrace.Laws
-import Test.Curves.Legendre.PositivityAcquisition
 public import Purelib.Examples.Curves.Legendre.Replay
-import Test.Curves.Legendre.SignedAcquisition
-import Test.Curves.Legendre.SignedGap
 import Purelib.Examples.Riemann.PreparedEightStepSameBox
-public import Test.RootIsolation.SquareRoot.LineClearance
 
 @[expose] public section
 

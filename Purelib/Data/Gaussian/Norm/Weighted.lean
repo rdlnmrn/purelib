@@ -12,6 +12,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-! Finite Gaussian squared-norm bounds with retained rational weights.
 Scalar square identities bound two original values and their finite indexed sums,
 including nonnegative zero-weight cases and explicit strict threshold budgets. -/
@@ -60,16 +62,16 @@ theorem normSq_add_le_weighted (u v : Basic.Canonical) :
   have scaledNonnegative : 0 ≤ 15 * difference := by
     rw [scaledIdentity]
     exact add_nonneg
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+      (Arithmetic.sq_nonneg_direct _)
+      (Arithmetic.sq_nonneg_direct _)
   have differenceNonnegative : 0 ≤ difference := by
-    apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+    apply Arithmetic.le_of_mul_le_mul_right_direct
       (c := (15 : Fraction.Rational)) _ (by decide)
     calc
       0 * 15 = 0 := by ring1
       _ ≤ 15 * difference := scaledNonnegative
       _ = difference * 15 := Fraction.Field.mul_comm _ _
-  apply Fraction.Order.Arithmetic.le_of_add_le_add_right_direct
+  apply Arithmetic.le_of_add_le_add_right_direct
     (c := -Basic.normSq (u + v))
   calc
     Basic.normSq (u + v) + -Basic.normSq (u + v) = 0 := by ring1
@@ -119,16 +121,16 @@ theorem normSq_add_le_parameter (weight : Fraction.Rational)
         ring1
   have scaledNonnegative : 0 ≤ weight * difference := by
     rw [scaledIdentity]
-    exact Norm.Basic.normSq_nonneg _
+    exact Basic.normSq_nonneg _
   have differenceNonnegative : 0 ≤ difference := by
-    apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+    apply Arithmetic.le_of_mul_le_mul_right_direct
       (c := weight) _ weightPositive
     calc
       0 * weight = 0 := by ring1
       _ ≤ weight * difference := scaledNonnegative
       _ = difference * weight :=
         Fraction.Field.mul_comm _ _
-  apply Fraction.Order.Arithmetic.le_of_add_le_add_right_direct
+  apply Arithmetic.le_of_add_le_add_right_direct
     (c := -Basic.normSq (u + v))
   calc
     Basic.normSq (u + v) + -Basic.normSq (u + v) = 0 := by ring1
@@ -150,18 +152,18 @@ theorem normSq_add_weighted {x y : Basic.Canonical} {density a b : Fraction.Rati
   by_cases az : a = 0
   · subst a
     have hx0 : Basic.normSq x ≤ 0 := hx.trans_eq (by ring1)
-    have xz : x = 0 := Norm.Basic.normSq_eq_zero.mp (hx0.antisymm (Norm.Basic.normSq_nonneg x))
+    have xz : x = 0 := Basic.normSq_eq_zero.mp (hx0.antisymm (Basic.normSq_nonneg x))
     rw [xz, _root_.zero_add, _root_.zero_add]
     exact hy
   by_cases bz : b = 0
   · subst b
     have hy0 : Basic.normSq y ≤ 0 := hy.trans_eq (by ring1)
-    have yz : y = 0 := Norm.Basic.normSq_eq_zero.mp (hy0.antisymm (Norm.Basic.normSq_nonneg y))
+    have yz : y = 0 := Basic.normSq_eq_zero.mp (hy0.antisymm (Basic.normSq_nonneg y))
     rw [yz, _root_.add_zero]
     exact hx.trans_eq (by ring1)
   have ap : 0 < a := lt_of_le_of_ne ha (Ne.symm az)
   have bp : 0 < b := lt_of_le_of_ne hb (Ne.symm bz)
-  have square := Norm.Basic.normSq_nonneg (⟨b * x.re - a * y.re, b * x.im - a * y.im⟩ : Basic.Canonical)
+  have square := Basic.normSq_nonneg (⟨b * x.re - a * y.re, b * x.im - a * y.im⟩ : Basic.Canonical)
   have identity : Basic.normSq (⟨b * x.re - a * y.re, b * x.im - a * y.im⟩ : Basic.Canonical) =
       (a + b) * (b * Basic.normSq x + a * Basic.normSq y) - Basic.normSq (x +
         y) * (a * b) := by
@@ -170,11 +172,11 @@ theorem normSq_add_weighted {x y : Basic.Canonical} {density a b : Fraction.Rati
   rw [identity] at square
   have estimate : Basic.normSq (x + y) * (a * b) ≤ (a + b) * (b * Basic.normSq x + a *
     Basic.normSq y) :=
-    Fraction.Order.Arithmetic.le_of_sub_nonneg_direct square
-  have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.add_le_add_direct (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct hx hb)
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct hy ha)) (add_nonneg ha hb)
-  apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct (c := a * b) _ (Fraction.Order.Arithmetic.mul_pos_direct
+    Arithmetic.le_of_sub_nonneg_direct square
+  have scaled := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_direct (Arithmetic.mul_le_mul_of_nonneg_left_direct hx hb)
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct hy ha)) (add_nonneg ha hb)
+  apply Arithmetic.le_of_mul_le_mul_right_direct (c := a * b) _ (Arithmetic.mul_pos_direct
     ap bp)
   exact (estimate.trans scaled).trans_eq (by ring1)
 
@@ -191,7 +193,7 @@ theorem normSq_sumFin_weighted {count : Nat} (values : Fin count → Basic.Canon
   induction count with
   | zero =>
     change Basic.normSq (0 : Basic.Canonical) ≤ density * (0 : Fraction.Rational)^2
-    rw [Norm.Basic.normSq_zero]
+    rw [Basic.normSq_zero]
     exact le_of_eq (by ring1)
   | succ count ih =>
     have tailNonnegative : 0 ≤ FiniteSum.Fin.sumFin (fun index : Fin count => weights index.succ) := by
@@ -215,14 +217,14 @@ theorem weighted_normSq_add_le (left right : Basic.Canonical)
     leftWeight * rightWeight * Basic.normSq (left + right) ≤
       leftWeight * (leftWeight + rightWeight) * Basic.normSq left +
         rightWeight * (leftWeight + rightWeight) * Basic.normSq right := by
-  apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  apply Arithmetic.le_of_sub_nonneg_direct
   have squareSumNonnegative :
       0 ≤
         (leftWeight * left.re - rightWeight * right.re) ^ 2 +
           (leftWeight * left.im - rightWeight * right.im) ^ 2 :=
     add_nonneg
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+      (Arithmetic.sq_nonneg_direct _)
+      (Arithmetic.sq_nonneg_direct _)
   calc
     0 ≤ (leftWeight * left.re - rightWeight * right.re) ^ 2 +
         (leftWeight * left.im - rightWeight * right.im) ^ 2 :=
@@ -253,23 +255,23 @@ public theorem weighted_sum_lt_one
     (rightSmall : Basic.normSq right < (1 / 2 : Fraction.Rational)) :
     Basic.normSq (left + right) < 1 := by
   have sumPositive : 0 < leftWeight + rightWeight := by
-    have added := Fraction.Order.Arithmetic.add_lt_add_direct
+    have added := Arithmetic.add_lt_add_direct
       leftWeightPositive rightWeightPositive
     simpa only [_root_.zero_add] using added
   have leftCoefficientPositive :
       0 < leftWeight * (leftWeight + rightWeight) :=
-    Fraction.Order.Arithmetic.mul_pos_direct leftWeightPositive sumPositive
+    Arithmetic.mul_pos_direct leftWeightPositive sumPositive
   have rightCoefficientPositive :
       0 < rightWeight * (leftWeight + rightWeight) :=
-    Fraction.Order.Arithmetic.mul_pos_direct rightWeightPositive sumPositive
+    Arithmetic.mul_pos_direct rightWeightPositive sumPositive
   have productPositive : 0 < leftWeight * rightWeight :=
-    Fraction.Order.Arithmetic.mul_pos_direct leftWeightPositive
+    Arithmetic.mul_pos_direct leftWeightPositive
       rightWeightPositive
   have leftScaled :=
-    Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+    Arithmetic.mul_lt_mul_of_pos_left_direct
       leftCoefficientPositive leftSmall
   have rightScaled :=
-    Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+    Arithmetic.mul_lt_mul_of_pos_left_direct
       rightCoefficientPositive rightSmall
   have scaledBound :
       leftWeight * rightWeight * Basic.normSq (left + right) <
@@ -281,9 +283,9 @@ public theorem weighted_sum_lt_one
         weighted_normSq_add_le left right leftWeight rightWeight
       _ < leftWeight * (leftWeight + rightWeight) * threshold +
           rightWeight * (leftWeight + rightWeight) * (1 / 2 : Fraction.Rational) :=
-        Fraction.Order.Arithmetic.add_lt_add_direct leftScaled rightScaled
+        Arithmetic.add_lt_add_direct leftScaled rightScaled
       _ = leftWeight * rightWeight := budget
-  apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+  apply Arithmetic.lt_of_mul_lt_mul_right_direct
     (c := leftWeight * rightWeight)
   · calc
       Basic.normSq (left + right) * (leftWeight * rightWeight) =
@@ -301,14 +303,14 @@ public theorem normSq_mul_lt_half_of_left_lt_one_of_right_le_half
     (leftInside : Basic.normSq left < 1)
     (rightBound : Basic.normSq right ≤ (1 / 2 : Fraction.Rational)) :
     Basic.normSq (left * right) < 1 / 2 := by
-  rw [Norm.Basic.normSq_mul]
+  rw [Basic.normSq_mul]
   calc
     Basic.normSq left * Basic.normSq right ≤
         Basic.normSq left * (1 / 2 : Fraction.Rational) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct rightBound
-        (Norm.Basic.normSq_nonneg left)
+      Arithmetic.mul_le_mul_of_nonneg_left_direct rightBound
+        (Basic.normSq_nonneg left)
     _ < (1 : Fraction.Rational) * (1 / 2 : Fraction.Rational) :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct leftInside
+      Arithmetic.mul_lt_mul_of_pos_right_direct leftInside
         (by decide)
     _ = 1 / 2 := by ring1
 

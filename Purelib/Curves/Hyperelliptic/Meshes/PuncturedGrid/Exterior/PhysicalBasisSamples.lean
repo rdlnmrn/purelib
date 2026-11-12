@@ -47,6 +47,8 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Riemann.Meshes.PuncturedGridFaces
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian
+
 open Purelib
 
 open Purelib.Algebra
@@ -95,13 +97,13 @@ open Purelib.Riemann.Periods.PeriodMatrix (standardDifferential)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
 
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_sub)
@@ -109,12 +111,12 @@ open _root_.Purelib.Data.Gaussian.Basic (conj)
 open Purelib.Data.Gaussian.Norm.Basic (normSq_conj)
 open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 
-variable {index depth minimum : Nat} {box : Purelib.Geometry.Rational.Box} {target :
+variable {index depth minimum : Nat} {box : Geometry.Rational.Box} {target :
   Rational}
   {polynomials : RegularBasisPolynomials cap
     index box}
   {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+    AllSurfacePreparation
     regular domains differential} (attached :
     CapAttachment prepared)
 
@@ -123,25 +125,25 @@ open Purelib.Riemann.Periods.CenteredBilinearPath (Sample)
 open Purelib.Integration.Path.ConjugateIncrementComparison (conjugateFirst)
 
 /-- Actual retained physical samples, with their finite vertex counts. -/
-@[expose] def PhysicalOccurrenceValues (prepared : ExteriorProgram.AllSurfacePreparation regular domains differential)
+@[expose] def PhysicalOccurrenceValues (prepared : AllSurfacePreparation regular domains differential)
     (counts : Fin prepared.occurrences.length → Nat) :=
-  (i : Fin prepared.occurrences.length) → Fin (counts i + 1) → Stokes.PrimitivePoint
+  (i : Fin prepared.occurrences.length) → Fin (counts i + 1) → PrimitivePoint
 
 /-- The complete dependent bank of conjugate centered samples on the original retained physical occurrence values. -/
-@[expose] def PhysicalOccurrenceSamples {prepared : ExteriorProgram.AllSurfacePreparation regular domains differential}
+@[expose] def PhysicalOccurrenceSamples {prepared : AllSurfacePreparation regular domains differential}
     {counts : Fin prepared.occurrences.length → Nat} (values :
       PhysicalOccurrenceValues prepared counts)
       :=
   Data.Vector.DependentVector (fun i : Fin prepared.occurrences.length =>
-    CenteredBilinearPath.Sample (fun vertex => ConjugateIncrementComparison.conjugateFirst (values i vertex)))
+    Sample (fun vertex => ConjugateIncrementComparison.conjugateFirst (values i vertex)))
 
 set_option genInjectivity false in
 /-- A basis pair retains the actual physical samples and synchronized source owners. Its orientation- and
 chord-corrected area is computed once. -/
-structure PhysicalBasisArcSample (polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box)
-    (first second : Fin genus) (target : Fraction.Rational) (minimum floor depth : Nat) where
+structure PhysicalBasisArcSample (polynomials : RegularBasisPolynomials cap index box)
+    (first second : Fin genus) (target : Rational) (minimum floor depth : Nat) where
   /-- The original complete exterior preparation for the first basis differential. -/ prepared :
-    ExteriorProgram.AllSurfacePreparation regular domains (PeriodMatrix.standardDifferential first)
+    AllSurfacePreparation regular domains (PeriodMatrix.standardDifferential first)
   /-- The original paired physical-source request for this basis pair and target. -/ request :
     PhysicalSourceRequest prepared (PeriodMatrix.standardDifferential second) target minimum floor
   /-- The actual physical piece count of each retained occurrence. -/ pieceCounts : Fin prepared.occurrences.length →
@@ -149,7 +151,7 @@ structure PhysicalBasisArcSample (polynomials : CapBasisEnergy.RegularBasisPolyn
   /-- The retained common physical, source and owner schedule for those original counts. -/ schedule :
     PhysicalOccurrenceSchedule request pieceCounts
   /-- The actual evaluations of the retained query-refined source plans using the original polynomial bank. -/ evaluated
-    : PhysicalOccurrenceSchedule.Evaluations schedule (depth := depth) (polynomials.get first) (polynomials.get second)
+    : Evaluations schedule (depth := depth) (polynomials.get first) (polynomials.get second)
   /-- The common cap depth pays every retained occurrence source schedule. -/ spatial : schedule.depth ≤ depth
   /-- The actual finite edge counts of the retained physical samples. -/ counts : Fin prepared.occurrences.length → Nat
   /-- The original retained physical occurrence values at those exact counts. -/ values :
@@ -157,11 +159,11 @@ structure PhysicalBasisArcSample (polynomials : CapBasisEnergy.RegularBasisPolyn
   /-- The cached conjugate centered samples on the exact original values. -/ samples :
     PhysicalOccurrenceSamples values
   /-- Every original physical occurrence sample meets its retained paired arc-error allowance. -/ accurate : ∀ i,
-    Data.Gaussian.Norm.Basic.normSq (PhysicalArcAggregation.physicalArcError
+    Norm.Basic.normSq (PhysicalArcAggregation.physicalArcError
     (prepared.occurrences[i.val]'i.isLt)
     (polynomials.get first) (polynomials.get second) depth (samples.get i).centeredArea) < request.allowance
   /-- The cached physical area with each original occurrence sign and endpoint chord restored. -/ correctedArea :
-    Data.Gaussian.Basic.Canonical
+    Gaussian
   /-- The area cache equals the exact sum of corrected original occurrence samples. -/ correctedArea_eq : correctedArea
     = FiniteSum.Fin.sumFin (fun i => PhysicalArcAggregation.physicalArcValue (prepared.occurrences[i.val]'i.isLt)
     (polynomials.get first) (polynomials.get second) (samples.get i).centeredArea)
@@ -174,21 +176,21 @@ variable {first second : Fin genus} {floor : Nat}
 /-- Retain the supplied basis-pair schedule, exact physical samples and accuracy certificates, and cache their corrected
 total area. -/
 @[expose] def ofSamples
-    (basis : ExteriorProgram.AllSurfacePreparation regular domains (PeriodMatrix.standardDifferential first))
+    (basis : AllSurfacePreparation regular domains (PeriodMatrix.standardDifferential first))
     (request : PhysicalSourceRequest basis (PeriodMatrix.standardDifferential second) target
       minimum floor)
     (pieceCounts : Fin basis.occurrences.length → Nat)
     (schedule : PhysicalOccurrenceSchedule request pieceCounts)
-    (evaluated : PhysicalOccurrenceSchedule.Evaluations schedule (depth := depth) (polynomials.get first)
+    (evaluated : Evaluations schedule (depth := depth) (polynomials.get first)
       (polynomials.get second))
     (spatial : schedule.depth ≤ depth)
     (counts : Fin basis.occurrences.length → Nat) (values :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalBasisSamples.PhysicalOccurrenceValues basis counts)
-    (samples : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalBasisSamples.PhysicalOccurrenceSamples values)
-    (accurate : ∀ i, Data.Gaussian.Norm.Basic.normSq (PhysicalArcAggregation.physicalArcError
+      PhysicalOccurrenceValues basis counts)
+    (samples : PhysicalOccurrenceSamples values)
+    (accurate : ∀ i, Norm.Basic.normSq (PhysicalArcAggregation.physicalArcError
       (basis.occurrences[i.val]'i.isLt)
       (polynomials.get first) (polynomials.get second) depth (samples.get i).centeredArea) < request.allowance) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalBasisSamples.PhysicalBasisArcSample (regular := regular)
+    PhysicalBasisArcSample (regular := regular)
       (domains := domains) polynomials first second target minimum floor depth :=
   ⟨basis, request, pieceCounts, schedule, evaluated, spatial, counts, values, samples, accurate,
     FiniteSum.Fin.sumFin (fun i => PhysicalArcAggregation.physicalArcValue (basis.occurrences[i.val]'i.isLt)
@@ -197,9 +199,9 @@ total area. -/
 /-- The cached corrected physical area meets the requested error against the original cap attachment's forward basis
 boundary. -/
 theorem boundary_accurate
-    (sample : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalBasisSamples.PhysicalBasisArcSample (regular :=
+    (sample : PhysicalBasisArcSample (regular :=
       regular) (domains := domains) polynomials first second target minimum floor depth) :
-    Data.Gaussian.Norm.Basic.normSq (sample.correctedArea - RegularBasisPolynomials.forwardBoundary polynomials
+    Norm.Basic.normSq (sample.correctedArea - RegularBasisPolynomials.forwardBoundary polynomials
       attached depth first second) < target := by
   have bound := PhysicalSourceRequest.physical_arc_error sample.request (polynomials.get first) (polynomials.get second)
     (fun i => (sample.samples.get i).centeredArea) sample.accurate
@@ -210,8 +212,8 @@ theorem boundary_accurate
 end PhysicalBasisArcSample
 
 /-- Every basis pair shares the supplied reciprocal polynomial bank and cap depth. -/
-@[expose] def PhysicalBasisArcSamples (polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box)
-    (target : Fraction.Rational) (minimum floor depth : Nat) :=
+@[expose] def PhysicalBasisArcSamples (polynomials : RegularBasisPolynomials cap index box)
+    (target : Rational) (minimum floor depth : Nat) :=
   Data.Vector.DependentVector (fun first : Fin genus => Data.Vector.DependentVector (fun second : Fin genus =>
     PhysicalBasisArcSample (regular := regular)
       (domains := domains) polynomials first second target minimum floor depth))
@@ -221,33 +223,33 @@ variable {floor : Nat}
 
 /-- Combine the cached corrected physical basis-pair areas with their conjugate coefficient factors. -/
 @[expose] def energy (samples :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalBasisSamples.PhysicalBasisArcSamples (regular := regular)
+  PhysicalBasisArcSamples (regular := regular)
   (domains := domains) polynomials target minimum floor depth)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) : Gaussian :=
-  FiniteSum.Fin.sumFin fun first => FiniteSum.Fin.sumFin fun second => Data.Gaussian.Basic.conj (coefficients
+    (coefficients : GaussianVector genus) : Gaussian :=
+  FiniteSum.Fin.sumFin fun first => FiniteSum.Fin.sumFin fun second => Basic.conj (coefficients
     first) * coefficients second *
     ((samples.get first).get second).correctedArea
 
 /-- The retained physical basis samples give the homogeneous coefficient-mass error bound against the original forward
 cap boundary combination. -/
 theorem accurate (samples :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalBasisSamples.PhysicalBasisArcSamples (regular := regular)
+  PhysicalBasisArcSamples (regular := regular)
   (domains := domains) polynomials target minimum floor depth)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    Data.Gaussian.Norm.Basic.normSq (samples.energy coefficients -
-      FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => Data.Gaussian.Basic.conj
+    (coefficients : GaussianVector genus) :
+    Norm.Basic.normSq (samples.energy coefficients -
+      FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => Basic.conj
         (coefficients first) * coefficients second *
         RegularBasisPolynomials.forwardBoundary polynomials attached depth first second))) ≤
-      (genus : Fraction.Rational)^2 * (Purelib.Riemann.Readings.PreparedObservationCoercivity.coefficientNormSq
+      (genus : Rational)^2 * (PreparedObservationCoercivity.coefficientNormSq
         coefficients)^2 * target := by
-  unfold PhysicalBasisSamples.PhysicalBasisArcSamples.energy
+  unfold PhysicalBasisArcSamples.energy
   rw [← FiniteSum.Fin.sumFin_sub]
   have scalar := FiniteSum.Fin.sumFin_congr fun first => show
-      FiniteSum.Fin.sumFin (fun second => Data.Gaussian.Basic.conj (coefficients first) * coefficients second *
+      FiniteSum.Fin.sumFin (fun second => Basic.conj (coefficients first) * coefficients second *
         ((samples.get first).get second).correctedArea) -
-        FiniteSum.Fin.sumFin (fun second => Data.Gaussian.Basic.conj (coefficients first) * coefficients second
+        FiniteSum.Fin.sumFin (fun second => Basic.conj (coefficients first) * coefficients second
           * RegularBasisPolynomials.forwardBoundary polynomials attached depth first second) =
-      FiniteSum.Fin.sumFin (fun second => Data.Gaussian.Basic.conj (coefficients first) * coefficients second *
+      FiniteSum.Fin.sumFin (fun second => Basic.conj (coefficients first) * coefficients second *
         (((samples.get first).get second).correctedArea - RegularBasisPolynomials.forwardBoundary polynomials attached
           depth first second)) by
     rw [← FiniteSum.Fin.sumFin_sub]
@@ -255,17 +257,17 @@ theorem accurate (samples :
     intro second
     ring1
   rw [scalar]
-  have estimate := BilinearCombination.combination_bound (fun basis => Data.Gaussian.Basic.conj (coefficients
+  have estimate := BilinearCombination.combination_bound (fun basis => Basic.conj (coefficients
     basis)) coefficients _
     (fun first second => (((samples.get first).get second).boundary_accurate attached).le)
-  rw [FiniteSum.Fin.sumFin_congr (fun basis => Data.Gaussian.Norm.Basic.normSq_conj (coefficients basis))] at estimate
+  rw [FiniteSum.Fin.sumFin_congr (fun basis => Norm.Basic.normSq_conj (coefficients basis))] at estimate
   have coefficientIdentity :
       FiniteSum.Fin.sumFin
-          (fun basis : Fin genus => Data.Gaussian.Norm.Basic.normSq (coefficients basis)) =
+          (fun basis : Fin genus => Norm.Basic.normSq (coefficients basis)) =
         PreparedObservationCoercivity.coefficientNormSq coefficients := by
     unfold PreparedObservationCoercivity.coefficientNormSq
     exact FiniteSum.Fin.sumFin_congr
-      (fun basis => Data.Gaussian.Norm.Basic.normSq_eq_canonical (coefficients basis))
+      (fun basis => Norm.Basic.normSq_eq_canonical (coefficients basis))
   exact estimate.trans_eq (by rw [coefficientIdentity]; ring1)
 
 end PhysicalBasisArcSamples

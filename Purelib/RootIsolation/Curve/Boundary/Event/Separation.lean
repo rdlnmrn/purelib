@@ -33,6 +33,8 @@ import Purelib.RootIsolation.Curve.Chart.Analysis
 import Purelib.RootIsolation.Curve.Event.Basic
 import Purelib.RootIsolation.Sturm.Track.Basic
 
+open Purelib.Geometry.Projective
+
 open Purelib.Geometry.Projective.Hermitian (Atom)
 open Purelib.Geometry.Projective.Line (Proj)
 open Purelib.LinearAlgebra.Coordinates2.Matrix (GaussianMatrix)
@@ -83,8 +85,8 @@ event inside at most one of two separated winding regions. -/
       BoundaryEventEntry boundary)
     {leftBox rightBox : Box} (separated : leftBox.Separated rightBox) :
     Fraction.Rational :=
-  Data.Rat.SmallWidth.shrinkingWidth entry.chart.uniformChordalVariationCoefficient
-    (Geometry.Projective.Chordal.Box.Separation.separatedChordalGap separated)
+  SmallWidth.shrinkingWidth entry.chart.uniformChordalVariationCoefficient
+    (Chordal.Box.Separation.separatedChordalGap separated)
 
 /-- The coefficient-computed request width for the two separated boxes is positive. -/
 theorem separatedEventRequestWidth_pos
@@ -98,9 +100,9 @@ theorem separatedEventRequestWidth_pos
       BoundaryEventEntry boundary)
     {leftBox rightBox : Box} (separated : leftBox.Separated rightBox) :
     0 < separatedEventRequestWidth entry separated :=
-  Data.Rat.SmallWidth.shrinkingWidth_pos
+  SmallWidth.shrinkingWidth_pos
     entry.chart.uniformChordalVariationCoefficient_nonneg
-    (Geometry.Projective.Chordal.Box.Separation.separatedChordalGap_pos separated)
+    (Chordal.Box.Separation.separatedChordalGap_pos separated)
 
 /-- After requesting an event cylinder whose certified diameter is below the
 positive gap between two separated boxes, that one event cannot contain
@@ -119,7 +121,7 @@ theorem requested_event_not_spanning_with_gap
     {leftBox rightBox : Box} (gap : Fraction.Rational)
     (gapLower : ∀ {leftPoint rightPoint : Gaussian.Basic.Canonical},
       leftBox.Contains leftPoint → rightBox.Contains rightPoint →
-        gap ≤ Geometry.Projective.Chordal.Basic.chordalSq
+        gap ≤ Chordal.Basic.chordalSq
           (Proj.affine leftPoint) (Proj.affine rightPoint))
     (epsilon : Fraction.Rational) (epsilonPositive : 0 < epsilon)
     (diameterSmall :
@@ -143,14 +145,14 @@ theorem requested_event_not_spanning_with_gap
   have eventUpper := entry.chordalSq_request_le epsilon epsilonPositive
     leftParameterInside rightParameterInside
   have leftTransport :
-      Geometry.Projective.Chordal.Basic.chordalSq
+      Chordal.Basic.chordalSq
           (entry.chart.projective leftParameter)
           (entry.chart.projective rightParameter) =
-        Geometry.Projective.Chordal.Basic.chordalSq
+        Chordal.Basic.chordalSq
           (Proj.affine leftPoint)
           (entry.chart.projective rightParameter) := by
     simpa only [curve, leftPoint,
-      Geometry.Projective.Hermitian.Chart.BoundedChart.projective] using
+      Hermitian.Chart.BoundedChart.projective] using
       Curve.Projective.chordalSq_projective_eq_affine
         curve leftParameter leftDenominatorNonzero
           (entry.chart.projective rightParameter)
@@ -158,27 +160,27 @@ theorem requested_event_not_spanning_with_gap
       (entry.chart.projective rightParameter).Equivalent
         (Proj.affine rightPoint) := by
     simpa only [curve, rightPoint,
-      Geometry.Projective.Hermitian.Chart.BoundedChart.projective] using
+      Hermitian.Chart.BoundedChart.projective] using
       Curve.Projective.projective_equivalent_affine
         curve rightParameter rightDenominatorNonzero
   have rightTransport :
-      Geometry.Projective.Chordal.Basic.chordalSq
+      Chordal.Basic.chordalSq
           (Proj.affine leftPoint)
           (entry.chart.projective rightParameter) =
-        Geometry.Projective.Chordal.Basic.chordalSq
+        Chordal.Basic.chordalSq
           (Proj.affine leftPoint) (Proj.affine rightPoint) :=
-    Geometry.Projective.Chordal.Equivalence.chordalSq_eq_of_equivalent_right
+    Chordal.Equivalence.chordalSq_eq_of_equivalent_right
       (entry.chart.projective_valid rightParameter)
-      (Geometry.Projective.Line.Gaussian.Proj.affine_hasNonzeroCoordinate rightPoint)
+      (Line.Gaussian.Proj.affine_hasNonzeroCoordinate rightPoint)
       rightEquivalent (Proj.affine leftPoint)
   have affineUpper :
-      Geometry.Projective.Chordal.Basic.chordalSq
+      Chordal.Basic.chordalSq
           (Proj.affine leftPoint) (Proj.affine rightPoint) ≤
         entry.chart.uniformChordalVariationCoefficient * epsilon ^ 2 := by
     rw [← rightTransport, ← leftTransport]
     exact eventUpper
   have affineLower : gap ≤
-      Geometry.Projective.Chordal.Basic.chordalSq
+      Chordal.Basic.chordalSq
         (Proj.affine leftPoint) (Proj.affine rightPoint) :=
     gapLower leftPointInside rightPointInside
   exact (not_lt_of_ge affineLower) (affineUpper.trans_lt diameterSmall)
@@ -213,16 +215,16 @@ theorem separatedEventRequest_not_spanning
     leftDenominatorNonzero rightDenominatorNonzero leftPointInside
     rightPointInside
   apply requested_event_not_spanning_with_gap entry
-    (Geometry.Projective.Chordal.Box.Separation.separatedChordalGap separated)
-    (Geometry.Projective.Chordal.Box.Separation.separatedChordalGap_le_affine separated)
+    (Chordal.Box.Separation.separatedChordalGap separated)
+    (Chordal.Box.Separation.separatedChordalGap_le_affine separated)
     (separatedEventRequestWidth entry separated)
     (separatedEventRequestWidth_pos entry separated)
     ?_ leftParameterInside rightParameterInside leftDenominatorNonzero
       rightDenominatorNonzero leftPointInside rightPointInside
   simpa only [separatedEventRequestWidth] using
-    Data.Rat.SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
+    SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
       entry.chart.uniformChordalVariationCoefficient_nonneg
-      (Geometry.Projective.Chordal.Box.Separation.separatedChordalGap_pos separated)
+      (Chordal.Box.Separation.separatedChordalGap_pos separated)
 
 set_option genInjectivity false in
 /-- Explicit finite evidence that one displayed parameter of a requested
@@ -325,7 +327,7 @@ abbrev SourcePersistentRegionOwnershipRequestMeetingAlias
     {atom : Atom}
     {boundary : CurveBoundary p reference current denominatorMargin
       marginPositive atom}
-    (entry : Curve.Boundary.Event.Basic.SourcePersistentRegionOwnershipBoundaryEventEntryAlias boundary) (epsilon :
+    (entry : Basic.SourcePersistentRegionOwnershipBoundaryEventEntryAlias boundary) (epsilon :
       Fraction.Rational) (box : Box) :=
   RequestMeeting
     entry epsilon box

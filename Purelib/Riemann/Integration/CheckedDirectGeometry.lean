@@ -67,8 +67,8 @@ open Purelib.Curves.Hyperelliptic.Differentials in
 
 The parent-position equation identifies the affine query parameter with the original endpoint, preserving the query
 fraction and its bounds. -/
-@[expose, irreducible] def queryOwnerAt {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Basic.Differential genus} (parent : PreparedEdge curve differential)
+@[expose, irreducible] def queryOwnerAt {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} (parent : PreparedEdge curve differential)
     (current : Endpoint) (position : ParentPosition parent current) :
     Owner (curve.polynomial.eval (parent.segment.pointAt current.parameter)) := by
   rw [← position.parameter_eq]
@@ -81,8 +81,8 @@ open Purelib.Curves.Hyperelliptic.Differentials in
 
 The record keeps the exact parent position and owner equation, positive diameter target, ordered endpoints and
 bounded-preparation success certificate. -/
-structure Leaf {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Basic.Differential genus} (parent : PreparedEdge curve differential)
+structure Leaf {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} (parent : PreparedEdge curve differential)
     (left right : Endpoint) (diameter : Coordinate) where
   /-- The exact parent query fraction representing the original left endpoint. -/ position : ParentPosition parent left
   /-- The actual parent query owner at the original left endpoint's radicand. -/ owner : Owner (curve.polynomial.eval
@@ -103,8 +103,8 @@ open Purelib.Curves.Hyperelliptic.Differentials in
 
 The parent's segment and sheet are retained, and the accepted cache equality transports the existing clearance bound to
 canonical preparation. -/
-@[expose] def Leaf.edge {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Basic.Differential genus} {parent : PreparedEdge curve differential}
+@[expose] def Leaf.edge {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} {parent : PreparedEdge curve differential}
     {left right : Endpoint} {diameter : Coordinate}
     (leaf : Leaf parent left right diameter) : PreparedEdge curve differential where
   ambient := parent.ambient
@@ -127,8 +127,8 @@ open Purelib in
 open Purelib.Curves.Hyperelliptic.Differentials in
 open Purelib.Riemann.Integration in
 /-- Equip the leaf's exact prepared child edge with its canonical center state. -/
-@[expose] def Leaf.centered {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Basic.Differential genus} {parent : PreparedEdge curve differential}
+@[expose] def Leaf.centered {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} {parent : PreparedEdge curve differential}
     {left right : Endpoint} {diameter : Coordinate}
     (leaf : Leaf parent left right diameter) : CenteredEdge curve differential :=
   { edge := leaf.edge
@@ -138,8 +138,8 @@ open Purelib in
 open Purelib.Curves.Hyperelliptic.Differentials in
 open Purelib.Riemann.RootContinuation in
 /-- The transported query owner's root name is exactly the original parent's name at the retained fraction. -/
-theorem queryOwnerAt_rootName {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Basic.Differential genus} (parent : PreparedEdge curve differential)
+theorem queryOwnerAt_rootName {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} (parent : PreparedEdge curve differential)
     (current : Endpoint) (position : ParentPosition parent current) :
     SquareRootTrackEquivalence.ownerRootName
       (parent.segment.pointAt_eval_ne_zero current.parameter current.inside)
@@ -162,8 +162,8 @@ open Purelib.Riemann.Integration in
 
 The original parent-position equation identifies the coordinates; the exact query-owner equation and the child's
 base-root comparison preserve root identity. -/
-@[expose] def Leaf.rootChildAt {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Basic.Differential genus} (parent : CenteredEdge curve differential)
+@[expose] def Leaf.rootChildAt {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} (parent : CenteredEdge curve differential)
     {left right : Endpoint} {diameter : Coordinate}
     (leaf : Leaf parent.edge left right diameter) :
     PreparedSubdivisionModelCore.RootChildAt parent leaf.centered := by
@@ -233,8 +233,8 @@ open Purelib.Curves.Hyperelliptic.Differentials in
 
 Each split retains its actual left and right midpoint submeshes; each leaf retains a successful bounded preparation and
 strict endpoint order. -/
-inductive Mesh {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Basic.Differential genus} (parent : PreparedEdge curve differential)
+inductive Mesh {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} (parent : PreparedEdge curve differential)
     (diameter : Coordinate) : Nat → Endpoint → Endpoint → Type
   /-- Retain a certified direct leaf and its strict endpoint ordering at depth zero. -/ | leaf {left right : Endpoint}
     (data : Leaf parent left right diameter)
@@ -255,8 +255,8 @@ open Purelib.Curves.Hyperelliptic.Differentials in
 
 A leaf retains its actual query owner and inconclusive preparation report. A right-branch failure also retains the
 already accepted left submesh. -/
-inductive MeshFailure {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Basic.Differential genus} (parent : PreparedEdge curve differential)
+inductive MeshFailure {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} (parent : PreparedEdge curve differential)
     (diameter : Coordinate) (positive : 0 < diameter) : Nat → Endpoint → Endpoint → Type
   /-- Retain the actual leaf query position and owner together with its inconclusive bounded-preparation report. -/ |
     unresolved {left right : Endpoint}
@@ -284,8 +284,8 @@ open Purelib.Curves.Hyperelliptic.Differentials
 
 The recursion preserves the original endpoints and parent query owners. An unresolved branch returns its actual
 preparation report and any accepted left submesh. -/
-private def checkMeshRaw {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Basic.Differential genus} (parent : PreparedEdge curve differential)
+private def checkMeshRaw {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} (parent : PreparedEdge curve differential)
     (proper : parent.left.parameter < parent.request.endpoint.parameter)
     (diameter : Coordinate) (positive : 0 < diameter) :
     (depth : Nat) → (left right : Endpoint) →
@@ -324,8 +324,8 @@ private def checkMeshRaw {genus : Nat} {curve : Curves.Hyperelliptic.Basic.Hyper
 
 Every leaf uses its original parent position and query owner; a second-branch miss retains the successful first submesh
 along with the unresolved branch. -/
-@[expose] def checkMeshRawExact {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Basic.Differential genus} (parent : PreparedEdge curve differential)
+@[expose] def checkMeshRawExact {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} (parent : PreparedEdge curve differential)
     (proper : parent.left.parameter < parent.request.endpoint.parameter)
     (diameter : Coordinate) (positive : 0 < diameter) :
     (depth : Nat) → (left right : Endpoint) →
@@ -369,8 +369,8 @@ open Purelib.Curves.Hyperelliptic.Differentials in
 
 The retained failure includes partial successes, and the observed equation identifies it with the actual raw checker
 result. -/
-structure MeshInconclusive {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Basic.Differential genus} (parent : PreparedEdge curve differential)
+structure MeshInconclusive {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} (parent : PreparedEdge curve differential)
     (proper : parent.left.parameter < parent.request.endpoint.parameter)
     (diameter : Coordinate) (positive : 0 < diameter) (depth : Nat)
     (left right : Endpoint) (lower : parent.left.parameter ≤ left.parameter)
@@ -399,8 +399,8 @@ open Purelib.Curves.Hyperelliptic.Differentials
 
 The report records the attempted depth, diameter and endpoints together with the actual error equation and partial mesh
 results. -/
-@[expose] def attemptMesh {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Basic.Differential genus} (parent : PreparedEdge curve differential)
+@[expose] def attemptMesh {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} (parent : PreparedEdge curve differential)
     (proper : parent.left.parameter < parent.request.endpoint.parameter)
     (diameter : Coordinate) (positive : 0 < diameter) (depth : Nat)
     (left right : Endpoint) (lower : parent.left.parameter ≤ left.parameter)
@@ -419,7 +419,7 @@ results. -/
 
 /-- The retained inconclusive report is exactly the result returned by the original mesh attempt. -/
 theorem MeshInconclusive.attempt_error
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential : Basic.Differential
+    {genus : Nat} {curve : HyperellipticCurve genus} {differential : Differential
       genus}
     {parent : PreparedEdge curve differential}
     {proper : parent.left.parameter < parent.request.endpoint.parameter}
@@ -446,16 +446,16 @@ theorem MeshInconclusive.attempt_error
         rfl
 
 /-- Read the original prepared leaf edges in left-to-right mesh order. -/
-@[expose] def Mesh.edges {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Basic.Differential genus} {parent : PreparedEdge curve differential}
+@[expose] def Mesh.edges {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} {parent : PreparedEdge curve differential}
     {diameter : Coordinate} : {depth : Nat} → {left right : Endpoint} →
     Mesh parent diameter depth left right → List (PreparedEdge curve differential)
   | _, _, _, .leaf data _ => [data.edge]
   | _, _, _, .split first second => first.edges ++ second.edges
 
 /-- Read the canonical centered leaf edges in left-to-right mesh order. -/
-@[expose] def Mesh.children {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Basic.Differential genus} {parent : PreparedEdge curve differential}
+@[expose] def Mesh.children {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} {parent : PreparedEdge curve differential}
     {diameter : Coordinate} : {depth : Nat} → {left right : Endpoint} →
     Mesh parent diameter depth left right → List (CenteredEdge curve differential)
   | _, _, _, .leaf data _ => [data.centered]
@@ -465,8 +465,8 @@ theorem MeshInconclusive.attempt_error
 
 Each split concatenates the children of its two preceding-depth submeshes.
 The two counts add to the next dyadic power, with each leaf contributing one. -/
-theorem Mesh.childCount {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Basic.Differential genus} {parent : PreparedEdge curve differential}
+theorem Mesh.childCount {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} {parent : PreparedEdge curve differential}
     {diameter : Coordinate} {depth : Nat} {left right : Endpoint}
     (mesh : Mesh parent diameter depth left right) : mesh.children.length = 2 ^ depth := by
   induction mesh with
@@ -479,8 +479,8 @@ theorem Mesh.childCount {genus : Nat} {curve : Curves.Hyperelliptic.Basic.Hypere
 
 A centered leaf contains its original prepared edge. Mapping the edge
 projection distributes over the retained left-to-right split concatenation. -/
-theorem Mesh.children_edges {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Basic.Differential genus} {parent : PreparedEdge curve differential}
+theorem Mesh.children_edges {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} {parent : PreparedEdge curve differential}
     {diameter : Coordinate} {depth : Nat} {left right : Endpoint}
     (mesh : Mesh parent diameter depth left right) :
     mesh.children.map (·.edge) = mesh.edges := by
@@ -493,8 +493,8 @@ open Purelib.Data.Rat in
 /-- Sum each original leaf's point-movement weight times sixteen model-error allowances.
 
 The sum uses the actual ordered prepared leaf edges without changing their cached owners or geometry. -/
-@[expose] def Mesh.weightedAllowance {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Basic.Differential genus} {parent : PreparedEdge curve differential}
+@[expose] def Mesh.weightedAllowance {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} {parent : PreparedEdge curve differential}
     {diameter : Coordinate} {depth : Nat} {left right : Endpoint}
     (mesh : Mesh parent diameter depth left right) : Fraction.Rational :=
   mesh.edges.foldr (fun edge total =>
@@ -505,13 +505,13 @@ open Purelib.Integration.Polynomial.Gaussian.Cell in
 open Purelib.Integration.Polynomial.Gaussian.Path in
 open Purelib.Riemann.Integration in
 /-- The direct leaf allowance sum equals the centered child path's total weighted allowance. -/
-theorem Mesh.weightedAllowance_eq {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Basic.Differential genus} {parent : PreparedEdge curve differential}
+theorem Mesh.weightedAllowance_eq {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} {parent : PreparedEdge curve differential}
     {diameter : Coordinate} {depth : Nat} {left right : Endpoint}
     (mesh : Mesh parent diameter depth left right) :
     mesh.weightedAllowance =
       (Basic.PathModel.mk
-        (mesh.children.map PreparedSubdivisionModelCore.CenteredEdge.model)).totalWeightedAllowance := by
+        (mesh.children.map CenteredEdge.model)).totalWeightedAllowance := by
   rw [weightedAllowance, ← mesh.children_edges]
   generalize mesh.children = children
   induction children with
@@ -519,7 +519,7 @@ theorem Mesh.weightedAllowance_eq {genus : Nat} {curve : Curves.Hyperelliptic.Ba
   | cons child rest ih =>
       have head : child.model.weightedAllowance =
           child.edge.pointMovement * (16 * child.edge.modelErrorAllowance) := by
-        unfold PreparedSubdivisionModelCore.CenteredEdge.model
+        unfold CenteredEdge.model
           Basic.CellModel.weightedAllowance
           Basic.CellModel.displacement
           PreparedConstantModels.PreparedEdge.centeredModel
@@ -537,10 +537,10 @@ preparation.
 
 The owner equality is transported along the unchanged parent geometry; diameter, endpoint order and cached preparation
 remain the original data. -/
-@[expose] def Leaf.recast {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {source : Basic.Differential genus} {parent : PreparedEdge curve source}
+@[expose] def Leaf.recast {genus : Nat} {curve : HyperellipticCurve genus}
+    {source : Differential genus} {parent : PreparedEdge curve source}
     {left right : Endpoint} {diameter : Coordinate}
-    (target : Basic.Differential genus) (leaf : Leaf parent left right diameter) :
+    (target : Differential genus) (leaf : Leaf parent left right diameter) :
     Leaf (PreparedEdgeRecasting.recastPreparedEdge target parent)
       left right diameter where
   position :=
@@ -557,10 +557,10 @@ remain the original data. -/
   prepared := leaf.prepared
 
 /-- Reading a recast leaf edge is exactly recasting its original prepared edge. -/
-theorem Leaf.recast_edge {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {source : Basic.Differential genus} {parent : PreparedEdge curve source}
+theorem Leaf.recast_edge {genus : Nat} {curve : HyperellipticCurve genus}
+    {source : Differential genus} {parent : PreparedEdge curve source}
     {left right : Endpoint} {diameter : Coordinate}
-    (target : Basic.Differential genus) (leaf : Leaf parent left right diameter) :
+    (target : Differential genus) (leaf : Leaf parent left right diameter) :
     (leaf.recast target).edge =
       PreparedEdgeRecasting.recastPreparedEdge target leaf.edge := rfl
 
@@ -571,9 +571,9 @@ open Purelib.Riemann.Integration
 /-- Recast every retained leaf to the target differential while preserving the exact dyadic tree and endpoint indices.
 
 The recursion retains both original midpoint submeshes and each original leaf preparation certificate. -/
-@[expose] def Mesh.recast {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {source : Basic.Differential genus} {parent : PreparedEdge curve source}
-    {diameter : Coordinate} (target : Basic.Differential genus) :
+@[expose] def Mesh.recast {genus : Nat} {curve : HyperellipticCurve genus}
+    {source : Differential genus} {parent : PreparedEdge curve source}
+    {diameter : Coordinate} (target : Differential genus) :
     {depth : Nat} → {left right : Endpoint} → Mesh parent diameter depth left right →
       Mesh (PreparedEdgeRecasting.recastPreparedEdge target parent)
         diameter depth left right
@@ -584,10 +584,10 @@ The recursion retains both original midpoint submeshes and each original leaf pr
 
 Recasting retains the original split tree. Mapping the recast operation over
 each concatenated child list gives the same left-to-right centered leaves. -/
-theorem Mesh.recast_children {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {source : Basic.Differential genus} {parent : PreparedEdge curve source}
+theorem Mesh.recast_children {genus : Nat} {curve : HyperellipticCurve genus}
+    {source : Differential genus} {parent : PreparedEdge curve source}
     {diameter : Coordinate} {depth : Nat} {left right : Endpoint}
-    (target : Basic.Differential genus) (mesh : Mesh parent diameter depth left right) :
+    (target : Differential genus) (mesh : Mesh parent diameter depth left right) :
     (mesh.recast target).children = mesh.children.map
       (PreparedEdgeRecasting.recastCenteredEdge target) := by
   induction mesh with
@@ -601,24 +601,24 @@ end
 
 open Purelib.Data.Rat in
 /-- The actual weighted allowance of the mesh recast to the target differential. -/
-@[expose] def Mesh.weightedAllowanceFor {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {source : Basic.Differential genus} {parent : PreparedEdge curve source}
+@[expose] def Mesh.weightedAllowanceFor {genus : Nat} {curve : HyperellipticCurve genus}
+    {source : Differential genus} {parent : PreparedEdge curve source}
     {diameter : Coordinate} {depth : Nat} {left right : Endpoint}
-    (target : Basic.Differential genus) (mesh : Mesh parent diameter depth left right) : Fraction.Rational :=
+    (target : Differential genus) (mesh : Mesh parent diameter depth left right) : Fraction.Rational :=
   (mesh.recast target).weightedAllowance
 
 open Purelib.Integration.Polynomial.Gaussian.Path in
 open Purelib.Riemann.Integration in
 /-- The target allowance equals the total weighted allowance of the exact recast centered child models. -/
-theorem Mesh.weightedAllowanceFor_eq {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-    {source : Basic.Differential genus} {parent : PreparedEdge curve source}
+theorem Mesh.weightedAllowanceFor_eq {genus : Nat} {curve : HyperellipticCurve genus}
+    {source : Differential genus} {parent : PreparedEdge curve source}
     {diameter : Coordinate} {depth : Nat} {left right : Endpoint}
-    (target : Basic.Differential genus) (mesh : Mesh parent diameter depth left right) :
+    (target : Differential genus) (mesh : Mesh parent diameter depth left right) :
     mesh.weightedAllowanceFor target =
       (Basic.PathModel.mk
         ((mesh.children.map
           (PreparedEdgeRecasting.recastCenteredEdge target)).map
-            PreparedSubdivisionModelCore.CenteredEdge.model)).totalWeightedAllowance := by
+            CenteredEdge.model)).totalWeightedAllowance := by
   rw [weightedAllowanceFor, (mesh.recast target).weightedAllowance_eq,
     mesh.recast_children target]
 

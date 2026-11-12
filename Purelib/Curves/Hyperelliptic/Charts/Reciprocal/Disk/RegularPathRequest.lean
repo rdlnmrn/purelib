@@ -65,21 +65,21 @@ namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularPathRequest
 
 open Purelib.Data.Gaussian.Basic.Canonical
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap}
   {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
 
 set_option genInjectivity false in
 /-- A shared-stage regular-cap comparison request retaining the original controlled exterior-path integrator. -/
-structure RegularRequest (prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.Path.Preparation regular parents)
+structure RegularRequest (prepared : ParentJoins.Path.Preparation regular parents)
   (totalTarget areaTarget : Normalization.InverseRootPolynomial.Coordinate) (minimum : Nat) where
   /-- The original total-and-area comparison request for the retained parent path. -/ original :
-    Hyperelliptic.Charts.Reciprocal.Disk.SideComparison.Request prepared totalTarget areaTarget minimum
+    SideComparison.Request prepared totalTarget areaTarget minimum
   /-- The retained regular-cap plans for the original per-parent requests. -/ plans :
-    Hyperelliptic.Charts.Reciprocal.Disk.RegularSides.Plans original.requests
+    RegularSides.Plans original.requests
   /-- The shared sufficient cap-polynomial sample stage. -/ index : Nat
   /-- The shared stage is exactly the maximum of the original path request and regular-plan stages. -/ index_eq : index
     = max original.index plans.maximum
@@ -89,99 +89,99 @@ constructive_injectivity RegularRequest
 namespace RegularRequest
 
 /-- Prepare the original path request and all regular-cap parent plans at one sufficient shared stage. -/
-@[expose] def build (prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.Path.Preparation regular parents)
-  (regularChart : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 0)
+@[expose] def build (prepared : ParentJoins.Path.Preparation regular parents)
+  (regularChart : HyperellipticReciprocal.originOrder curve = 0)
     (totalTarget areaTarget : Normalization.InverseRootPolynomial.Coordinate) (totalPositive : 0 < totalTarget)
       (areaPositive : 0 < areaTarget)
-    (minimum : Nat) : Hyperelliptic.Charts.Reciprocal.Disk.RegularPathRequest.RegularRequest prepared totalTarget
+    (minimum : Nat) : RegularRequest prepared totalTarget
       areaTarget minimum :=
-  let original := Hyperelliptic.Charts.Reciprocal.Disk.SideComparison.Request.build prepared totalTarget areaTarget
+  let original := SideComparison.Request.build prepared totalTarget areaTarget
     totalPositive areaPositive minimum
-  let plans := Hyperelliptic.Charts.Reciprocal.Disk.RegularSides.Plans.build regularChart original.parent_positive
+  let plans := RegularSides.Plans.build regularChart original.parent_positive
     original.budget.area_positive original.requests
   ⟨original, plans, max original.index plans.maximum, rfl⟩
 
 /-- Prepare the retained regular-cap path comparison using the original even-degree identity to establish origin order
 zero. -/
-@[expose] def ofEvenDegree (prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.Path.Preparation regular
+@[expose] def ofEvenDegree (prepared : ParentJoins.Path.Preparation regular
   parents) (degree : curve.polynomial.natDegree = 2 * genus + 2)
     (totalTarget areaTarget : Normalization.InverseRootPolynomial.Coordinate) (totalPositive : 0 < totalTarget)
       (areaPositive : 0 < areaTarget)
-    (minimum : Nat) : Hyperelliptic.Charts.Reciprocal.Disk.RegularPathRequest.RegularRequest prepared totalTarget
+    (minimum : Nat) : RegularRequest prepared totalTarget
       areaTarget minimum := by
-  have balance := Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.degree_balance curve
+  have balance := HyperellipticReciprocal.degree_balance curve
   rw [degree] at balance
-  have chart : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 0 :=
+  have chart : HyperellipticReciprocal.originOrder curve = 0 :=
     Data.Nat.Addition.add_left_cancel (balance :
-    (2 * genus + 2) + Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = (2 * genus + 2) + 0)
-  exact Hyperelliptic.Charts.Reciprocal.Disk.RegularPathRequest.RegularRequest.build prepared chart totalTarget
+    (2 * genus + 2) + HyperellipticReciprocal.originOrder curve = (2 * genus + 2) + 0)
+  exact build prepared chart totalTarget
     areaTarget totalPositive areaPositive minimum
 
-variable {prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.Path.Preparation regular parents} {totalTarget
+variable {prepared : ParentJoins.Path.Preparation regular parents} {totalTarget
   areaTarget : Normalization.InverseRootPolynomial.Coordinate} {minimum index depth readingIndex : Nat}
-  {box : Rational.Box} {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential
+  {box : Rational.Box} {sample : Cap.Primitives.Sample cap differential
     index box}
 
 set_option genInjectivity false in
 /-- The original controlled source evaluation and complete regular-cap path with retained total, area and integral
 bounds. -/
-structure Evaluation (request : Hyperelliptic.Charts.Reciprocal.Disk.RegularPathRequest.RegularRequest prepared
+structure Evaluation (request : RegularRequest prepared
   totalTarget areaTarget minimum)
-    (sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box) (depth readingIndex :
+    (sample : Cap.Primitives.Sample cap differential index box) (depth readingIndex :
       Nat) where
   /-- The actual retained evaluation of the original source path comparison request. -/ original :
-    Hyperelliptic.Charts.Reciprocal.Disk.SideComparison.Request.Evaluation request.original sample depth readingIndex
+    SideComparison.Request.Evaluation request.original sample depth readingIndex
   /-- The actual regular-cap parent results for those exact original evaluated parents. -/ parents :
-    Hyperelliptic.Charts.Reciprocal.Disk.RegularSides.Results request.plans original.parents
+    RegularSides.Results request.plans original.parents
   /-- The finite summary of the complete retained regular-cap paths. -/ cap : Path.IncrementArea.Summary
     (parents.pairs.map Prod.snd).flatten
   /-- The retained cap area equals the unsigned area of the original regular primitive paths. -/ cap_area_unsigned :
     cap.area =
     Path.IncrementArea.pathArea
-      (Hyperelliptic.Charts.Reciprocal.Disk.RegularSidePrimitive.SideBank.regularPrimitivePaths sample.primitive.value
+      (RegularSidePrimitive.SideBank.regularPrimitivePaths sample.primitive.value
       depth prepared.bank).flatten
   /-- The original path and retained cap totals differ by less than one quarter of the total target. -/ total_close :
-    Data.Gaussian.Norm.Basic.normSq (original.left.total - cap.total) < totalTarget / 4
+    Gaussian.Norm.Basic.normSq (original.left.total - cap.total) < totalTarget / 4
   /-- The original path and retained cap areas differ by less than the area target. -/ area_close :
-    Data.Gaussian.Norm.Basic.normSq (original.left.area - cap.area) < areaTarget
+    Gaussian.Norm.Basic.normSq (original.left.area - cap.area) < areaTarget
   /-- The retained original controlled integral sample and cap total differ by less than the total target. -/
-    integral_close : Data.Gaussian.Norm.Basic.normSq (original.compared.source.integralSample - cap.total) <
+    integral_close : Gaussian.Norm.Basic.normSq (original.compared.source.integralSample - cap.total) <
     totalTarget
 
 constructive_injectivity Evaluation
 
 /-- Evaluate the original source and all regular-cap parents at the supplied sufficient model and reading stages. -/
-@[expose] def evaluate (request : Hyperelliptic.Charts.Reciprocal.Disk.RegularPathRequest.RegularRequest prepared
+@[expose] def evaluate (request : RegularRequest prepared
   totalTarget areaTarget minimum)
-    (sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box) (depth readingIndex :
+    (sample : Cap.Primitives.Sample cap differential index box) (depth readingIndex :
       Nat)
     (later : request.index ≤ index) (readingLater : request.original.readingIndex ≤ readingIndex) :
-    Hyperelliptic.Charts.Reciprocal.Disk.RegularPathRequest.RegularRequest.Evaluation request sample depth readingIndex
+    Evaluation request sample depth readingIndex
       := by
   have indices := request.index_eq ▸ later
   let original := request.original.evaluate sample depth readingIndex ((Data.Nat.Order.le_max_left _ _).trans indices)
     readingLater
-  let parents := Hyperelliptic.Charts.Reciprocal.Disk.RegularSides.Plans.evaluate request.plans original.parents
+  let parents := RegularSides.Plans.evaluate request.plans original.parents
     ((Data.Nat.Order.le_max_right _ _).trans indices)
   have totalEq : original.left.total = parents.leftSummary.total := by
-    rw [Hyperelliptic.Charts.Reciprocal.Disk.RegularSideEstimates.source_total_eq parents, original.left.total_eq,
+    rw [RegularSideEstimates.source_total_eq parents, original.left.total_eq,
       original.parents.leftSummary.total_eq]
   have areaEq : original.left.area = parents.leftSummary.area := by
-    rw [Hyperelliptic.Charts.Reciprocal.Disk.RegularSideEstimates.source_area_eq parents, original.left.area_eq,
+    rw [RegularSideEstimates.source_area_eq parents, original.left.area_eq,
       original.parents.leftSummary.area_eq]
-  have totalClose : Data.Gaussian.Norm.Basic.normSq (original.left.total - parents.capSummary.total) < totalTarget /
+  have totalClose : Gaussian.Norm.Basic.normSq (original.left.total - parents.capSummary.total) < totalTarget /
     4 := by
     rw [totalEq]
-    exact (Hyperelliptic.Charts.Reciprocal.Disk.RegularSideEstimates.total_error parents
+    exact (RegularSideEstimates.total_error parents
       request.original.parent_le_one).trans_lt request.original.total_paid
-  have areaClose : Data.Gaussian.Norm.Basic.normSq (original.left.area - parents.capSummary.area) < areaTarget := by
+  have areaClose : Gaussian.Norm.Basic.normSq (original.left.area - parents.capSummary.area) < areaTarget := by
     rw [areaEq]
-    exact (Hyperelliptic.Charts.Reciprocal.Disk.RegularSideEstimates.area_error parents request.original.parent_le_one
+    exact (RegularSideEstimates.area_error parents request.original.parent_le_one
       request.original.parent_positive.le).trans_lt request.original.area_paid
   refine ⟨original, parents, parents.capSummary,
-    Hyperelliptic.Charts.Reciprocal.Disk.RegularSidePrimitive.SideBank.Regular.Results.cap_area_unsigned parents
+    RegularSidePrimitive.SideBank.Regular.Results.cap_area_unsigned parents
     prepared.links, totalClose, areaClose, ?_⟩
-  have sourceClose : Data.Gaussian.Norm.Basic.normSq (original.compared.source.integralSample - original.left.total)
+  have sourceClose : Gaussian.Norm.Basic.normSq (original.compared.source.integralSample - original.left.total)
     < totalTarget / 4 := by
     rw [original.source_total, show original.compared.source.integralSample - original.compared.source.primitiveSum =
       -(original.compared.source.primitiveSum - original.compared.source.integralSample) by ring1,
@@ -199,21 +199,21 @@ constructive_injectivity Evaluation
 
 set_option genInjectivity false in
 /-- The exact shared cap-polynomial sample and original path comparison evaluated at its retained stages. -/
-structure Acquisition (request : Hyperelliptic.Charts.Reciprocal.Disk.RegularPathRequest.RegularRequest prepared
+structure Acquisition (request : RegularRequest prepared
   totalTarget areaTarget minimum) (depth : Nat) where
   /-- The original cap-polynomial sample acquired at the request's shared stage on the retained collar box. -/ sample :
-    Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential request.index collar.box
+    Cap.Primitives.Sample cap differential request.index collar.box
   /-- The original evaluation using that exact cap sample and retained reading index. -/ evaluated :
-    Hyperelliptic.Charts.Reciprocal.Disk.RegularPathRequest.RegularRequest.Evaluation request sample depth
+    Evaluation request sample depth
     request.original.readingIndex
 
 constructive_injectivity Acquisition
 
 /-- Acquire the original cap sample once at the retained shared stage and evaluate the complete prepared path. -/
-@[expose] def acquire (request : Hyperelliptic.Charts.Reciprocal.Disk.RegularPathRequest.RegularRequest prepared
+@[expose] def acquire (request : RegularRequest prepared
   totalTarget areaTarget minimum) (depth : Nat) :
-  Hyperelliptic.Charts.Reciprocal.Disk.RegularPathRequest.RegularRequest.Acquisition request depth :=
-  let sample := Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample.build cap differential request.index collar.box
+  Acquisition request depth :=
+  let sample := Cap.Primitives.Sample.build cap differential request.index collar.box
   ⟨sample, request.evaluate sample depth request.original.readingIndex le_rfl le_rfl⟩
 
 end RegularRequest

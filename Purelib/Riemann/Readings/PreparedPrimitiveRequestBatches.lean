@@ -58,8 +58,8 @@ set_option genInjectivity false in
 
 Each part keeps its own parent list and target, with evidence fitting common local and coefficient tolerances and a
 squared-error bound against its cached primitive sum. -/
-structure RequestPart (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (differential :
-  Hyperelliptic.Differentials.Basic.Differential genus) (count : Nat)
+structure RequestPart (curve : HyperellipticCurve genus) (differential :
+  Differential genus) (count : Nat)
     (localTarget coefficientTarget errorBound : Coordinate) where
   /-- The original parent list for this request part. -/ parents : List (CenteredEdge curve differential)
   /-- The original target of the retained numerical request. -/ target : Coordinate
@@ -70,7 +70,7 @@ structure RequestPart (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (di
   /-- The original coefficient-error maximum is strictly below the common coefficient target. -/ coefficient_lt :
     coefficientMaximum request.requests < coefficientTarget
   /-- The independent value and retained primitive sum satisfy the common squared-error bound. -/ accurate :
-    Data.Gaussian.Norm.Basic.normSq (value - request.primitiveSum) ≤ errorBound
+    normSq (value - request.primitiveSum) ≤ errorBound
 
 constructive_injectivity RequestPart
 
@@ -142,27 +142,27 @@ theorem increments_eq : increments parts = (requests parts).increments := by
 
 open Purelib.Data in
 /-- The sum of cached primitive sums equals the sum of the concatenated increment cache. -/
-theorem primitiveSum_eq : primitiveSum parts = Data.Gaussian.Norm.Sum.Basic.gaussianSum (increments parts) := by
+theorem primitiveSum_eq : primitiveSum parts = gaussianSum (increments parts) := by
   induction parts with
   | nil => rfl
   | cons part parts ih =>
-      simp only [primitiveSum, increments, Data.Gaussian.Norm.Sum.Basic.gaussianSum_append]
+      simp only [primitiveSum, increments, Gaussian.Norm.Sum.Basic.gaussianSum_append]
       rw [part.request.primitiveSum_eq, ih]
 
 open Purelib.Integration in
 /-- The sum of cached integral samples reads back to the assembled requests' actual child models. -/
 theorem integralSample_eq : integralSample parts =
-    (Polynomial.Gaussian.Path.Basic.PathModel.mk ((requests parts).blocks.children.map
+    (PathModel.mk ((requests parts).blocks.children.map
       CenteredEdge.model)).integralSample := by
   induction parts with
   | nil => rfl
   | cons part parts ih =>
       change part.request.integralSample + integralSample parts =
-        (Polynomial.Gaussian.Path.Basic.PathModel.mk (((part.request.requests.weaken part.local_le).append (requests
+        (PathModel.mk (((part.request.requests.weaken part.local_le).append (requests
           parts)).blocks.children.map
           CenteredEdge.model)).integralSample
       simp only [RequestedParents.children_append, RequestedParents.weaken_blocks,
-        Map.map_append, Polynomial.Gaussian.Path.Basic.PathModel.integralSample_mk_append]
+        Map.map_append, PathModel.integralSample_mk_append]
       rw [part.request.integralSample_eq, part.request.blocks_eq, ih]
 
 /-- A positive common coefficient target bounds the assembled coefficient-error maximum strictly. -/
@@ -199,14 +199,14 @@ theorem values_length : (values parts).length = parts.length := by
 section
 open Purelib.Data
 /-- The sum of retained errors equals the difference of the independent-value sum and cached primitive sum. -/
-theorem errors_sum : Data.Gaussian.Norm.Sum.Basic.gaussianSum (errors parts) = Data.Gaussian.Norm.Sum.Basic.gaussianSum
+theorem errors_sum : gaussianSum (errors parts) = gaussianSum
   (values parts) - primitiveSum parts := by
   induction parts with
   | nil => change (0 : BatchGaussian) = 0 - 0; ring1
-  | cons part parts ih => simp only [errors, values, primitiveSum, Data.Gaussian.Norm.Sum.Basic.gaussianSum, ih]; ring1
+  | cons part parts ih => simp only [errors, values, primitiveSum, gaussianSum, ih]; ring1
 
 /-- Every retained per-part error satisfies the common squared-error bound. -/
-theorem errors_bounded : ∀ error ∈ errors parts, Data.Gaussian.Norm.Basic.normSq error ≤ errorBound := by
+theorem errors_bounded : ∀ error ∈ errors parts, normSq error ≤ errorBound := by
   induction parts with
   | nil => intro error member; cases member
   | cons part parts ih =>
@@ -216,7 +216,7 @@ theorem errors_bounded : ∀ error ∈ errors parts, Data.Gaussian.Norm.Basic.no
       | tail _ member => exact ih error member
 
 /-- The complete comparison pays both factors of the actual request-part count. -/
-theorem error_le : Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (values parts) -
+theorem error_le : normSq (gaussianSum (values parts) -
   primitiveSum parts) ≤
     (parts.length : Coordinate) * ((parts.length : Coordinate) * errorBound) := by
   rw [← errors_sum parts]

@@ -99,10 +99,10 @@ open Purelib.Riemann.Readings.PrimitiveAreaBounds.PrimitivePoint (Bounded)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {differential other :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {parents : List (Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap}
+  {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)}
   {target requested : Coordinate} {minimum depth : Nat}
   {original : Request regular other parents
     target minimum}
@@ -118,32 +118,32 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {differential other :
 @[expose] def Evaluation.atReadingFloor (evaluated : request.Evaluation) (floor : Nat) : request.Evaluation := by
   let firstCap := evaluated.firstCap
   let otherCap := evaluated.otherCap
-  let entries := Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentReadings.Evaluation.rereadEntries
+  let entries := Evaluation.rereadEntries
     evaluated floor
   have shared : request.SharedCaps entries firstCap otherCap := by
     intro i
     dsimp only [entries,
-      Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentReadings.Evaluation.rereadEntries, -eq_self,
+      Evaluation.rereadEntries, -eq_self,
       -iff_self]
     rw [DependentVector.ofFn_get, ChartRequest.evaluate_samples]
     exact evaluated.shared i
-  let sourceArea := FiniteSum.Fin.sumFin (fun i => (entries.get i).sourceArea)
-  let chartArea := FiniteSum.Fin.sumFin (fun i => (entries.get i).chartArea)
-  let correction := FiniteSum.Fin.sumFin (fun i => (entries.get i).correction)
+  let sourceArea := sumFin (fun i => (entries.get i).sourceArea)
+  let chartArea := sumFin (fun i => (entries.get i).chartArea)
+  let correction := sumFin (fun i => (entries.get i).correction)
   have estimate := Indexed.normSq_sumFin_le
     (fun i => (entries.get i).sourceArea - (entries.get i).chartArea - (entries.get i).correction)
     request.allowance (fun i => (entries.get i).bounded.le)
-  rw [FiniteSum.Fin.sumFin_sub, FiniteSum.Fin.sumFin_sub] at estimate
-  have paid : (original.plans.length : InverseRootPolynomial.Coordinate)^2 * request.allowance < requested :=
-    (by ring1 : (original.plans.length : InverseRootPolynomial.Coordinate)^2 * request.allowance =
-      (original.plans.length : InverseRootPolynomial.Coordinate) * ((original.plans.length :
-        InverseRootPolynomial.Coordinate) * request.allowance)).trans_lt request.paid
-  let sourceCenteredArea := FiniteSum.Fin.sumFin (fun i => (entries.get i).sourceCenteredArea)
-  let chartCenteredArea := FiniteSum.Fin.sumFin (fun i => (entries.get i).chartCenteredArea)
+  rw [sumFin_sub, sumFin_sub] at estimate
+  have paid : (original.plans.length : Coordinate)^2 * request.allowance < requested :=
+    (by ring1 : (original.plans.length : Coordinate)^2 * request.allowance =
+      (original.plans.length : Coordinate) * ((original.plans.length :
+        Coordinate) * request.allowance)).trans_lt request.paid
+  let sourceCenteredArea := sumFin (fun i => (entries.get i).sourceCenteredArea)
+  let chartCenteredArea := sumFin (fun i => (entries.get i).chartCenteredArea)
   have centered := Indexed.normSq_sumFin_le
     (fun i => (entries.get i).sourceCenteredArea - (entries.get i).chartCenteredArea)
     request.allowance (fun i => (entries.get i).centered_bounded.le)
-  rw [FiniteSum.Fin.sumFin_sub] at centered
+  rw [sumFin_sub] at centered
   exact ⟨firstCap, otherCap, entries, shared,
     sourceArea, rfl, chartArea, rfl, correction, rfl, estimate.trans_lt paid,
     sourceCenteredArea, rfl, chartCenteredArea, rfl, centered.trans_lt paid⟩
@@ -151,12 +151,12 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {differential other :
 /-- Every actual first endpoint stage in the reread bank is above the requested reading floor. -/
 theorem Evaluation.atReadingFloor_firstStage (evaluated : request.Evaluation) (floor : Nat)
     (i : Fin original.plans.length) : floor ≤ Evaluation.firstStage
-      (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentReadings.Evaluation.atReadingFloor evaluated floor)
+      (Evaluation.atReadingFloor evaluated floor)
       i := by
-  change floor ≤ (((Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentReadings.Evaluation.rereadEntries
+  change floor ≤ (((Evaluation.rereadEntries
     evaluated floor).get i).entries.get
-    (PairedParentCharts.ChartParent original i).common.firstIndex).evaluated.chart.retained.area.refined.stage
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentReadings.Evaluation.rereadEntries,
+    (ChartParent original i).common.firstIndex).evaluated.chart.retained.area.refined.stage
+  rw [Evaluation.rereadEntries,
     DependentVector.ofFn_get]
   exact ((request.plans.get i).evaluate (evaluated.entries.get i).samples
     (evaluated.entries.get i).later floor).readingsLater _
@@ -164,12 +164,12 @@ theorem Evaluation.atReadingFloor_firstStage (evaluated : request.Evaluation) (f
 /-- Every actual last endpoint stage in the reread bank is above the requested reading floor. -/
 theorem Evaluation.atReadingFloor_lastStage (evaluated : request.Evaluation) (floor : Nat)
     (i : Fin original.plans.length) : floor ≤ Evaluation.lastStage
-      (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentReadings.Evaluation.atReadingFloor evaluated floor)
+      (Evaluation.atReadingFloor evaluated floor)
       i := by
-  change floor ≤ (((Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentReadings.Evaluation.rereadEntries
+  change floor ≤ (((Evaluation.rereadEntries
     evaluated floor).get i).entries.get
-    (PairedParentCharts.ChartParent original i).common.lastIndex).evaluated.chart.retained.area.refined.stage
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentReadings.Evaluation.rereadEntries,
+    (ChartParent original i).common.lastIndex).evaluated.chart.retained.area.refined.stage
+  rw [Evaluation.rereadEntries,
     DependentVector.ofFn_get]
   exact ((request.plans.get i).evaluate (evaluated.entries.get i).samples
     (evaluated.entries.get i).later floor).readingsLater _
@@ -177,18 +177,18 @@ theorem Evaluation.atReadingFloor_lastStage (evaluated : request.Evaluation) (fl
 /-- Raising the chart-reading floor preserves the literal raw source path, including its dyadic depth and parent order.
 -/
 theorem Evaluation.atReadingFloor_sourcePaths (evaluated : request.Evaluation) (floor : Nat) :
-    (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentReadings.Evaluation.atReadingFloor evaluated
+    (Evaluation.atReadingFloor evaluated
       floor).sourcePaths = evaluated.sourcePaths := by
   apply OfFn.Basic.ofFn_congr
   intro i
   change DyadicPairedPrimitivePaths.increments
     (CommonRibbonRequest.sourceValues
-      ((Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentReadings.Evaluation.rereadEntries evaluated
+      ((Evaluation.rereadEntries evaluated
       floor).get i).samples.source
-      ((Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentReadings.Evaluation.rereadEntries evaluated
+      ((Evaluation.rereadEntries evaluated
         floor).get i).samples.otherSource)
     (original.depth + depth) 0 1 = _
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentReadings.Evaluation.rereadEntries,
+  rw [Evaluation.rereadEntries,
     DependentVector.ofFn_get,
     ChartRequest.evaluate_samples]
 
@@ -196,11 +196,11 @@ theorem Evaluation.atReadingFloor_sourcePaths (evaluated : request.Evaluation) (
 boundary certificate. -/
 theorem Evaluation.parent_source_total_bound (evaluated : request.Evaluation)
     (i : Fin original.plans.length) (small : request.allowance ≤ 1) :
-    PrimitivePoint.Bounded ((PairedIncrementArea.total (DyadicPairedPrimitivePaths.increments
+    Bounded ((PairedIncrementArea.total (DyadicPairedPrimitivePaths.increments
       (CommonRibbonRequest.sourceValues (evaluated.entries.get i).samples.source
         (evaluated.entries.get i).samples.otherSource)
       (original.depth + depth) 0 1)).sub
-      (PairedIncrementArea.total (VertexTrace.increments (Evaluation.chartTrace (evaluated.entries.get i)) id)))
+      (PairedIncrementArea.total (VertexTrace.increments (chartTrace (evaluated.entries.get i)) id)))
         (16 * request.allowance) := by
   let entry := evaluated.entries.get i
   have bounded := BlockBank.joined_total_accurate entry (CommonChartBlockComparison.blockBank entry) small
@@ -212,13 +212,13 @@ theorem Evaluation.parent_source_total_bound (evaluated : request.Evaluation)
 scale. -/
 theorem Evaluation.parent_source_area_bound (evaluated : request.Evaluation)
     (i : Fin original.plans.length) (small : request.allowance ≤ 1) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area (DyadicPairedPrimitivePaths.increments
+    normSq (PairedIncrementArea.area (DyadicPairedPrimitivePaths.increments
       (CommonRibbonRequest.sourceValues (evaluated.entries.get i).samples.source
         (evaluated.entries.get i).samples.otherSource)
       (original.depth + depth) 0 1) -
-      PairedIncrementArea.area (VertexTrace.increments (Evaluation.chartTrace (evaluated.entries.get i)) id)) ≤
+      PairedIncrementArea.area (VertexTrace.increments (chartTrace (evaluated.entries.get i)) id)) ≤
         CommonRequestedBoundary.joinedBlockScale
-          (PairedParentCharts.ChartParent original i).common * request.allowance := by
+          (ChartParent original i).common * request.allowance := by
   let entry := evaluated.entries.get i
   have bounded := BlockBank.joined_source_bound entry (CommonChartBlockComparison.blockBank entry) small
   rw [(CommonChartBlockComparison.blockBank entry).source.area_eq, entry.sourceBlocks_full,
@@ -229,27 +229,27 @@ theorem Evaluation.parent_source_area_bound (evaluated : request.Evaluation)
 included in this estimate. -/
 theorem Evaluation.source_parent_totals_bound (evaluated : request.Evaluation)
     (small : request.allowance ≤ 1) :
-    PrimitivePoint.Bounded ((PairedIncrementArea.total evaluated.sourcePaths.flatten).sub
+    Bounded ((PairedIncrementArea.total evaluated.sourcePaths.flatten).sub
       (PairedIncrementArea.total (List.ofFn (fun i : Fin original.plans.length =>
-        VertexTrace.increments (Evaluation.chartTrace (evaluated.entries.get i)) id)).flatten))
-      ((original.plans.length : InverseRootPolynomial.Coordinate)^2 * (16 * request.allowance)) := by
+        VertexTrace.increments (chartTrace (evaluated.entries.get i)) id)).flatten))
+      ((original.plans.length : Coordinate)^2 * (16 * request.allowance)) := by
   let pairs := List.ofFn (fun i : Fin original.plans.length =>
     (PairedIncrementArea.total (DyadicPairedPrimitivePaths.increments
       (CommonRibbonRequest.sourceValues (evaluated.entries.get i).samples.source
         (evaluated.entries.get i).samples.otherSource) (original.depth + depth) 0 1),
-      PairedIncrementArea.total (VertexTrace.increments (Evaluation.chartTrace (evaluated.entries.get i)) id)))
+      PairedIncrementArea.total (VertexTrace.increments (chartTrace (evaluated.entries.get i)) id)))
   have errors : ∀ point ∈ pairs.map (fun pair => pair.1.sub pair.2),
-      PrimitivePoint.Bounded point (16 * request.allowance) := by
+      Bounded point (16 * request.allowance) := by
     intro point member
     obtain ⟨pair, inPairs, rfl⟩ := Map.mem_map.mp member
     obtain ⟨i, rfl⟩ := Data.List.OfFn.Basic.mem_ofFn.mp inPairs
-    exact Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentReadings.Evaluation.parent_source_total_bound
+    exact Evaluation.parent_source_total_bound
       evaluated i small
   have bound := PairedIncrementArea.total_bound
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 16)
+    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 16)
       request.positive.le) errors
     (count := original.plans.length) (by
-      rw [Data.List.Map.length_map, Data.List.OfFn.Basic.length_ofFn])
+      rw [Map.length_map, OfFn.Basic.length_ofFn])
   rw [PairedIncrementComparison.total_differences] at bound
   rw [PairedAreaBlocks.total_flatten, PairedAreaBlocks.total_flatten]
   simp only [pairs, Evaluation.sourcePaths, OfFn.Basic.map_ofFn, -eq_self, -iff_self] at bound ⊢
@@ -259,38 +259,38 @@ theorem Evaluation.source_parent_totals_bound (evaluated : request.Evaluation)
 /-- A shared reading floor can satisfy several endpoint requests while preserving all their cap-polynomial values and
 comparison indices. -/
 theorem RegularEndpointRequest.atReadingFloor_bound (evaluated : request.Evaluation)
-    (i j : Fin original.plans.length) (joined : ReciprocalRegularParentTrace.EndpointJoin request i j)
-    (error : InverseRootPolynomial.Coordinate) (positive : 0 < error) (floor : Nat)
+    (i j : Fin original.plans.length) (joined : EndpointJoin request i j)
+    (error : Coordinate) (positive : 0 < error) (floor : Nat)
     (stage : Nat)
     (later : (RegularEndpointRequest.build evaluated i j joined error positive floor).index ≤ stage)
     (unramified : HyperellipticReciprocal.originOrder curve = 0) :
-    let retained := Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentReadings.Evaluation.atReadingFloor
+    let retained := Evaluation.atReadingFloor
       evaluated stage
-    PrimitivePoint.Bounded ((Evaluation.chartTrace (retained.entries.get j)).first.sub (Evaluation.chartTrace
+    Bounded ((chartTrace (retained.entries.get j)).first.sub (chartTrace
       (retained.entries.get i)).last) error := by
   intro retained
   let next := RegularEndpointRequest.build retained i j joined error positive floor
   have same : next.index = (RegularEndpointRequest.build evaluated i j joined error positive floor).index := rfl
   exact RegularEndpointRequest.accurate next unramified
     (same.trans_le (later.trans
-      (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentReadings.Evaluation.atReadingFloor_lastStage
+      (Evaluation.atReadingFloor_lastStage
       evaluated stage i)))
     (same.trans_le (later.trans
-      (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentReadings.Evaluation.atReadingFloor_firstStage
+      (Evaluation.atReadingFloor_firstStage
       evaluated stage j)))
 
 /-- Compute the needed reading floor and apply the endpoint bound on the reread bank. No caller later-stage inequalities
 remain. -/
 theorem RegularEndpointRequest.acquire_bound (evaluated : request.Evaluation)
-    (i j : Fin original.plans.length) (joined : ReciprocalRegularParentTrace.EndpointJoin request i j)
-    (error : InverseRootPolynomial.Coordinate) (positive : 0 < error) (floor : Nat)
+    (i j : Fin original.plans.length) (joined : EndpointJoin request i j)
+    (error : Coordinate) (positive : 0 < error) (floor : Nat)
     (unramified : HyperellipticReciprocal.originOrder curve = 0) :
     let planned := RegularEndpointRequest.build evaluated i j joined error positive floor
-    let retained := Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentReadings.Evaluation.atReadingFloor
+    let retained := Evaluation.atReadingFloor
       evaluated planned.index
-    PrimitivePoint.Bounded ((Evaluation.chartTrace (retained.entries.get j)).first.sub (Evaluation.chartTrace
+    Bounded ((chartTrace (retained.entries.get j)).first.sub (chartTrace
       (retained.entries.get i)).last) error :=
-  Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentReadings.RegularEndpointRequest.atReadingFloor_bound
+  RegularEndpointRequest.atReadingFloor_bound
     evaluated i j joined error positive floor _ le_rfl unramified
 
 /-- Root closure chooses the final endpoint request. Its internally raised reading floor makes the total of the unclosed
@@ -303,23 +303,23 @@ theorem Evaluation.regularTrace_total_requested (evaluated : request.Evaluation)
     (roots : PreparedRefinementRootChains.RootChain parents first last)
     (closed : start.coordinate = finish.coordinate)
     (returned : Gaussian.Equivalence.NamedEquivalent last first)
-    (error : InverseRootPolynomial.Coordinate) (positive : 0 < error) (floor : Nat)
+    (error : Coordinate) (positive : 0 < error) (floor : Nat)
     (unramified : HyperellipticReciprocal.originOrder curve = 0) :
-    let joined := ReciprocalRegularParentTrace.closingJoin request present chain roots closed returned
+    let joined := closingJoin request present chain roots closed returned
     let planned := RegularEndpointRequest.build evaluated _ _ joined error positive floor
-    let retained := Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentReadings.Evaluation.atReadingFloor
+    let retained := Evaluation.atReadingFloor
       evaluated planned.index
-    PrimitivePoint.Bounded (PairedIncrementArea.total (VertexTrace.increments (Evaluation.regularTrace retained) id))
+    Bounded (PairedIncrementArea.total (VertexTrace.increments (Evaluation.regularTrace retained) id))
       error := by
   intro joined planned retained
   have bounded :=
-    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentReadings.RegularEndpointRequest.acquire_bound
+    RegularEndpointRequest.acquire_bound
     evaluated _ _ joined error positive floor unramified
-  change PrimitivePoint.Bounded ((Evaluation.chartTrace (retained.entries.get ⟨0, present⟩)).first.sub
-    (Evaluation.chartTrace (retained.entries.get ⟨original.plans.length - 1, by omega0⟩)).last) error at bounded
+  change Bounded ((chartTrace (retained.entries.get ⟨0, present⟩)).first.sub
+    (chartTrace (retained.entries.get ⟨original.plans.length - 1, by omega0⟩)).last) error at bounded
   rw [Evaluation.regularTrace_increment_total retained, Evaluation.regularTrace_last retained present,
     Evaluation.regularTrace_first retained present]
-  have reverse (a b : InverseRootPolynomial.Gaussian) :
+  have reverse (a b : Gaussian) :
       Data.Gaussian.Basic.Canonical.normSq (a - b) = Data.Gaussian.Basic.Canonical.normSq (b - a) := by
     rw [show a - b = -(b - a) by ring1, Data.Gaussian.Basic.Canonical.normSq_neg]
   exact ⟨(reverse _ _).trans_le bounded.1, (reverse _ _).trans_le bounded.2⟩

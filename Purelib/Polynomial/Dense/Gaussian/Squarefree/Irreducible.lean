@@ -62,7 +62,7 @@ def squarefreeOfIrreducible
   have gcdConstant := irreducible.properDivisorConstant result.gcd
     result.pFactor factorization gcdNonzero gcdProper
   exact Dense.Gaussian.Coprime.Decision.certificateOfConstantGCD p derivative
-    gcdNonzero gcdConstant
+    result rfl gcdNonzero gcdConstant
 
 end Purelib.Polynomial.Dense.Gaussian.Squarefree.Irreducible
 

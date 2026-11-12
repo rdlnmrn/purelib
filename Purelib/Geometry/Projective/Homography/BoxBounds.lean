@@ -16,6 +16,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -51,7 +53,7 @@ def decodedNormMajorant
       Fraction.Rational) :
     Fraction.Rational :=
   Dense.Gaussian.Bounds.Box.denseEvalNormMajorant
-      (Homography.affineNumeratorPolynomial matrix) box /
+      (affineNumeratorPolynomial matrix) box /
     denominatorMargin
 
 /-- A positive denominator margin gives a positive decoded norm majorant. -/
@@ -62,7 +64,7 @@ theorem decodedNormMajorant_pos
     0 < decodedNormMajorant matrix box denominatorMargin :=
   Fraction.Order.Field.div_pos_direct
     (Dense.Gaussian.Bounds.Box.denseEvalNormMajorant_pos
-      (Homography.affineNumeratorPolynomial matrix) box)
+      (affineNumeratorPolynomial matrix) box)
     marginPositive
 
 /-- The rational homographic value is uniformly norm-bounded on the box once its denominator has the supplied positive
@@ -73,29 +75,29 @@ theorem normSq_homographic_le_decodedNormMajorant
     (marginPositive : 0 < denominatorMargin) {value : Data.Gaussian.Basic.Canonical}
     (inside : box.Contains value)
     (denominatorLower : denominatorMargin ≤
-      Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix value)) :
-    Data.Gaussian.Norm.Basic.normSq (Homography.Basic.homographic matrix value) ≤
+      Basic.normSq (Basic.denominator matrix value)) :
+    Basic.normSq (Basic.homographic matrix value) ≤
       decodedNormMajorant matrix box denominatorMargin := by
   let denominatorNorm :=
-    Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix value)
+    Basic.normSq (Basic.denominator matrix value)
   let numeratorNorm :=
-    Data.Gaussian.Norm.Basic.normSq (Homography.Basic.numerator matrix value)
+    Basic.normSq (Basic.numerator matrix value)
   let majorant :=
     Dense.Gaussian.Bounds.Box.denseEvalNormMajorant
-      (Homography.affineNumeratorPolynomial matrix) box
+      (affineNumeratorPolynomial matrix) box
   have denominatorPositive : 0 < denominatorNorm :=
     marginPositive.trans_le denominatorLower
   have denominatorNonzero :
-      Homography.Basic.denominator matrix value ≠ 0 := by
+      Basic.denominator matrix value ≠ 0 := by
     intro zero
-    change 0 < Data.Gaussian.Norm.Basic.normSq
-      (Homography.Basic.denominator matrix value) at denominatorPositive
-    rw [zero, Data.Gaussian.Norm.Basic.normSq_zero] at denominatorPositive
+    change 0 < Basic.normSq
+      (Basic.denominator matrix value) at denominatorPositive
+    rw [zero, Basic.normSq_zero] at denominatorPositive
     exact (lt_irrefl 0 denominatorPositive).elim
   have numeratorBound : numeratorNorm ≤ majorant := by
-    simpa only [numeratorNorm, Homography.eval_affineNumeratorPolynomial] using
+    simpa only [numeratorNorm, eval_affineNumeratorPolynomial] using
       Dense.Gaussian.Bounds.Box.normSq_eval_le_denseEvalNormMajorant
-        (Homography.affineNumeratorPolynomial matrix) inside
+        (affineNumeratorPolynomial matrix) inside
   have sameDenominator : numeratorNorm / denominatorNorm ≤
       majorant / denominatorNorm := by
     apply (Fraction.Order.Field.div_le_iff_pos denominatorPositive).2
@@ -106,12 +108,12 @@ theorem normSq_homographic_le_decodedNormMajorant
           denominatorNorm denominatorPositive.ne').symm
   have majorantNonnegative : 0 ≤ majorant :=
     (Dense.Gaussian.Bounds.Box.denseEvalNormMajorant_pos
-      (Homography.affineNumeratorPolynomial matrix) box).le
+      (affineNumeratorPolynomial matrix) box).le
   have largerDenominator : majorant / denominatorNorm ≤
       majorant / denominatorMargin :=
     Fraction.Order.Field.div_le_div_of_nonneg_left_direct
       majorantNonnegative marginPositive denominatorLower
-  rw [Homography.normSq_homographic matrix value
+  rw [normSq_homographic matrix value
     denominatorNonzero]
   change numeratorNorm * denominatorNorm⁻¹ ≤ _
   simpa only [Algebra.Field.ExplicitField.div_eq_mul_inv, decodedNormMajorant,

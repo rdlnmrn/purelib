@@ -90,49 +90,49 @@ open Purelib.Data.Gaussian.Norm.Basic (normSq_mul normSq_nonneg)
 open Purelib.Data.Rat.Fraction.Compatibility
 
 /-- Scaling the two original paired vertices multiplies their bilinear edge area by the product of the scalars. -/
-private theorem scaled_edge (s t : InverseRootPolynomial.Gaussian) (a b : Stokes.PrimitivePoint) :
-    Purelib.Topology.Polygon.Stokes.edgeArea ⟨s * a.left, s * a.right⟩ ⟨t * b.left, t * b.right⟩ = s * t *
-      Purelib.Topology.Polygon.Stokes.edgeArea a b := by
-  unfold Stokes.edgeArea
+private theorem scaled_edge (s t : Gaussian) (a b : PrimitivePoint) :
+    edgeArea ⟨s * a.left, s * a.right⟩ ⟨t * b.left, t * b.right⟩ = s * t *
+      edgeArea a b := by
+  unfold edgeArea
   ring1
 
 /-- The sheet-product defect is controlled without identifying finite readings with exact signs or assuming that
 adjacent signs agree. -/
-theorem regular_edge_error (s t : InverseRootPolynomial.Gaussian) (a b : Stokes.PrimitivePoint)
-    {squareError : InverseRootPolynomial.Coordinate} (square : Data.Gaussian.Norm.Basic.normSq (s * s - 1) ≤
+theorem regular_edge_error (s t : Gaussian) (a b : PrimitivePoint)
+    {squareError : Coordinate} (square : normSq (s * s - 1) ≤
       squareError) :
-    Data.Gaussian.Norm.Basic.normSq (Stokes.edgeArea ⟨s * a.left, s * a.right⟩ ⟨t * b.left, t * b.right⟩ -
-      Stokes.edgeArea a b) ≤
-      (2 * (Data.Gaussian.Norm.Basic.normSq s * Data.Gaussian.Norm.Basic.normSq (t - s) +
-        squareError)) * Data.Gaussian.Norm.Basic.normSq (Stokes.edgeArea a b) := by
+    normSq (edgeArea ⟨s * a.left, s * a.right⟩ ⟨t * b.left, t * b.right⟩ -
+      edgeArea a b) ≤
+      (2 * (normSq s * normSq (t - s) +
+        squareError)) * normSq (edgeArea a b) := by
   have product : s * t - 1 = s * (t - s) + (s * s - 1) := by ring1
   have bound := (Data.Gaussian.Norm.Bounds.normSq_add_le_two (s * (t - s)) (s * s - 1)).trans
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct (le_refl _)
       square) (by decide))
-  rw [Data.Gaussian.Norm.Basic.normSq_mul, ← product] at bound
-  rw [scaled_edge, show s * t * Stokes.edgeArea a b -
-    Stokes.edgeArea a b = (s * t - 1) * Stokes.edgeArea a b by ring1,
-    Data.Gaussian.Norm.Basic.normSq_mul]
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct bound (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+  rw [normSq_mul, ← product] at bound
+  rw [scaled_edge, show s * t * edgeArea a b -
+    edgeArea a b = (s * t - 1) * edgeArea a b by ring1,
+    normSq_mul]
+  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct bound (normSq_nonneg _)
 
 variable {genus count otherCount index : Nat} {curve : HyperellipticCurve genus}
   {differential other : Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {otherParent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve other}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {otherParent : PreparedSubdivisionModelCore.CenteredEdge curve other}
   {patch : PreparedPatch parent}
   {otherPatch : PreparedPatch otherParent}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {otherData :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
+  {data : UniformReciprocalModels.Data patch count} {otherData :
+    UniformReciprocalModels.Data otherPatch otherCount}
   {edge otherEdge : ParameterEdge}
   {cell : Cell data edge} {otherCell :
     Cell otherData otherEdge}
   {model : RootModel cell} {otherModel :
     RootModel otherCell}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other index otherBox}
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Primitives.Sample cap differential index box}
+  {otherSample : Primitives.Sample cap other index otherBox}
   {parameter otherParameter target : Coordinate} {floor stage : Nat}
   {leftPoint : Point cap model parameter} {rightPoint :
     Point cap otherModel otherParameter}
@@ -141,7 +141,7 @@ variable {genus count otherCount index : Nat} {curve : HyperellipticCurve genus}
     target floor}
 
 /-- Both components use the already cached first sheet reading. -/
-theorem Evaluation.regular_chartPoint (readings : PairedChartRequest.Evaluation request stage)
+theorem Evaluation.regular_chartPoint (readings : Evaluation request stage)
     (regular : HyperellipticReciprocal.originOrder curve = 0) :
     readings.chartPoint =
       ⟨readings.first.coordinate * sample.primitive.value.eval (parent.edge.point parameter)⁻¹,
@@ -153,20 +153,20 @@ theorem Evaluation.regular_chartPoint (readings : PairedChartRequest.Evaluation 
         readings.coordinate_eq.symm)
 
 /-- The actual request, not an exact-sign assumption, supplies this budget. -/
-theorem Evaluation.regular_square (readings : PairedChartRequest.Evaluation request stage)
+theorem Evaluation.regular_square (readings : Evaluation request stage)
     (regular : HyperellipticReciprocal.originOrder curve = 0) :
-    Data.Gaussian.Norm.Basic.normSq (readings.first.coordinate * readings.first.coordinate - 1) < target := by
+    normSq (readings.first.coordinate * readings.first.coordinate - 1) < target := by
   have bound := readings.firstChart.square_accurate
   simpa only [regular, pow_zero] using bound
 
 /-- Apply the defect estimate to two retained readings of one common-cover interval. The remaining sign-step error is
 explicit, not a supplied equality between their independently read coordinates. -/
-theorem Evaluation.regular_edge_bound (readings : PairedChartRequest.Evaluation request stage)
-    {nextParameter nextOtherParameter nextTarget : InverseRootPolynomial.Coordinate} {nextFloor nextStage : Nat}
-    {nextLeft : ArcOwners.Point cap model nextParameter} {nextRight : ArcOwners.Point cap otherModel nextOtherParameter}
-    {nextJoin : ArcOwners.Join nextLeft nextRight}
-    {nextRequest : PairedChartReadings.PairedChartRequest nextJoin sample otherSample nextTarget nextFloor}
-    (next : PairedChartRequest.Evaluation nextRequest nextStage)
+theorem Evaluation.regular_edge_bound (readings : Evaluation request stage)
+    {nextParameter nextOtherParameter nextTarget : Coordinate} {nextFloor nextStage : Nat}
+    {nextLeft : Point cap model nextParameter} {nextRight : Point cap otherModel nextOtherParameter}
+    {nextJoin : Join nextLeft nextRight}
+    {nextRequest : PairedChartRequest nextJoin sample otherSample nextTarget nextFloor}
+    (next : Evaluation nextRequest nextStage)
     (regular : HyperellipticReciprocal.originOrder curve = 0) :
     let firstPolynomial : PrimitivePoint :=
       ⟨sample.primitive.value.eval (parent.edge.point parameter)⁻¹,
@@ -174,50 +174,50 @@ theorem Evaluation.regular_edge_bound (readings : PairedChartRequest.Evaluation 
     let lastPolynomial : PrimitivePoint :=
       ⟨sample.primitive.value.eval (parent.edge.point nextParameter)⁻¹,
        otherSample.primitive.value.eval (parent.edge.point nextParameter)⁻¹⟩
-    Data.Gaussian.Norm.Basic.normSq (Stokes.edgeArea readings.chartPoint next.chartPoint - Stokes.edgeArea
+    normSq (edgeArea readings.chartPoint next.chartPoint - edgeArea
       firstPolynomial lastPolynomial) ≤
-      (2 * (Data.Gaussian.Norm.Basic.normSq readings.first.coordinate *
-        Data.Gaussian.Norm.Basic.normSq (next.first.coordinate - readings.first.coordinate) + target)) *
-        Data.Gaussian.Norm.Basic.normSq (Stokes.edgeArea firstPolynomial lastPolynomial) := by
+      (2 * (normSq readings.first.coordinate *
+        normSq (next.first.coordinate - readings.first.coordinate) + target)) *
+        normSq (edgeArea firstPolynomial lastPolynomial) := by
   intro firstPolynomial lastPolynomial
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularChartEdges.Evaluation.regular_chartPoint readings regular,
-    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularChartEdges.Evaluation.regular_chartPoint next regular]
+  rw [Evaluation.regular_chartPoint readings regular,
+    Evaluation.regular_chartPoint next regular]
   exact regular_edge_error _ _ firstPolynomial
-    lastPolynomial (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularChartEdges.Evaluation.regular_square
+    lastPolynomial (Evaluation.regular_square
     readings regular).le
 
 /-- At an owned common endpoint the two regular-chart pairs are collinear, even if their cached sheet readings differ.
 Thus the joining edge has exactly zero bilinear area. This is not equality of the readings or their increments. -/
-theorem Evaluation.regular_join_area (readings : PairedChartRequest.Evaluation request stage)
+theorem Evaluation.regular_join_area (readings : Evaluation request stage)
     {nextCount nextOtherCount : Nat}
     {nextParent : PreparedSubdivisionModelCore.CenteredEdge curve differential}
     {nextOtherParent : PreparedSubdivisionModelCore.CenteredEdge curve other}
-    {nextPatch : UniformPrimitiveSheetCompatibility.PreparedPatch nextParent}
-    {nextOtherPatch : UniformPrimitiveSheetCompatibility.PreparedPatch nextOtherParent}
+    {nextPatch : PreparedPatch nextParent}
+    {nextOtherPatch : PreparedPatch nextOtherParent}
     {nextData : UniformReciprocalModels.Data nextPatch nextCount}
     {nextOtherData : UniformReciprocalModels.Data nextOtherPatch nextOtherCount}
-    {nextEdge nextOtherEdge : ClearSheetContinuation.Subdivision.ParameterEdge}
-    {nextCell : UniformReciprocalCover.Cell nextData nextEdge} {nextOtherCell : UniformReciprocalCover.Cell
+    {nextEdge nextOtherEdge : ParameterEdge}
+    {nextCell : Cell nextData nextEdge} {nextOtherCell : Cell
       nextOtherData nextOtherEdge}
-    {nextModel : UniformReciprocalRootChannels.RootModel nextCell} {nextOtherModel :
-      UniformReciprocalRootChannels.RootModel nextOtherCell}
-    {nextParameter nextOtherParameter nextTarget : InverseRootPolynomial.Coordinate} {nextFloor nextStage : Nat}
-    {nextLeft : ArcOwners.Point cap nextModel nextParameter} {nextRight : ArcOwners.Point cap nextOtherModel
+    {nextModel : RootModel nextCell} {nextOtherModel :
+      RootModel nextOtherCell}
+    {nextParameter nextOtherParameter nextTarget : Coordinate} {nextFloor nextStage : Nat}
+    {nextLeft : Point cap nextModel nextParameter} {nextRight : Point cap nextOtherModel
       nextOtherParameter}
-    {nextJoin : ArcOwners.Join nextLeft nextRight}
+    {nextJoin : Join nextLeft nextRight}
     {nextSample : Primitives.Sample cap differential index box}
     {nextOtherSample : Primitives.Sample cap other index otherBox}
-    {nextRequest : PairedChartReadings.PairedChartRequest nextJoin nextSample nextOtherSample nextTarget nextFloor}
-    (next : PairedChartRequest.Evaluation nextRequest nextStage) (owners : ArcOwners.Join leftPoint nextLeft)
+    {nextRequest : PairedChartRequest nextJoin nextSample nextOtherSample nextTarget nextFloor}
+    (next : Evaluation nextRequest nextStage) (owners : Join leftPoint nextLeft)
     (firstSample : nextSample = sample) (secondSample : nextOtherSample = otherSample)
     (regular : HyperellipticReciprocal.originOrder curve = 0) :
-    Purelib.Topology.Polygon.Stokes.edgeArea readings.chartPoint next.chartPoint = 0 := by
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularChartEdges.Evaluation.regular_chartPoint readings regular,
-    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularChartEdges.Evaluation.regular_chartPoint next regular]
-  have scalar (s t a b c d : InverseRootPolynomial.Gaussian) (first : a = c) (second : b = d) :
-      Stokes.edgeArea ⟨s * a, s * b⟩ ⟨t * c, t * d⟩ = 0 := by
+    edgeArea readings.chartPoint next.chartPoint = 0 := by
+  rw [Evaluation.regular_chartPoint readings regular,
+    Evaluation.regular_chartPoint next regular]
+  have scalar (s t a b c d : Gaussian) (first : a = c) (second : b = d) :
+      edgeArea ⟨s * a, s * b⟩ ⟨t * c, t * d⟩ = 0 := by
     rw [first, second]
-    unfold Stokes.edgeArea
+    unfold edgeArea
     ring1
   exact scalar _ _ _ _ _ _
     ((congrArg (fun point => sample.primitive.value.eval point⁻¹) owners.point_eq).trans

@@ -40,7 +40,7 @@ defined.
 
 namespace Purelib.Geometry.Triangles.FiniteField.Five.Classification
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Algebra.Field.ExplicitField K]
 
 section
 
@@ -102,7 +102,7 @@ private theorem triangle_area_values (triangle :
         triangle.quadrances.r triangle.quadrances.s = 1 ∨
       QuadTriple.Basic.archimedesFunction triangle.quadrances.t
         triangle.quadrances.r triangle.quadrances.s = 4 := by
-  exact Geometry.Triangles.FiniteField.Five.Classification.quadrea_values triangle.first triangle.second triangle.third
+  exact quadrea_values triangle.first triangle.second triangle.third
     triangle.notCollinear
 
 /-- The spreads of a non-null triangle over the field with five elements are a permutation of three, three, one. -/
@@ -110,11 +110,11 @@ theorem spread_pattern (triangle :
   NonNull.Basic.NonNullTriangle Five.Element) :
     Permutation.RepeatedEntryPattern (3 : Five.Element) 1 triangle.spreads := by
   have products := triangle.quadrea_spread_products
-  exact Geometry.Triangles.FiniteField.Five.Classification.scalar_spread_pattern triangle.quadrances.t
+  exact scalar_spread_pattern triangle.quadrances.t
     triangle.quadrances.r triangle.quadrances.s
     triangle.spreads.t triangle.spreads.r triangle.spreads.s
     triangle.firstQuadranceNonzero triangle.secondQuadranceNonzero
-    triangle.thirdQuadranceNonzero (Geometry.Triangles.FiniteField.Five.Classification.triangle_area_values triangle)
+    triangle.thirdQuadranceNonzero (triangle_area_values triangle)
     products.1 products.2.1 products.2.2
 
 /-- Exercise 10.11: every non-null triangle over `F₅` is isosceles. -/
@@ -123,17 +123,17 @@ theorem exercise_10_11_isosceles (triangle :
     triangle.quadrances.t = triangle.quadrances.r ∨
       triangle.quadrances.t = triangle.quadrances.s ∨
       triangle.quadrances.r = triangle.quadrances.s :=
-  Geometry.Triangles.FiniteField.Five.Classification.scalar_isosceles triangle.quadrances.t triangle.quadrances.r
+  scalar_isosceles triangle.quadrances.t triangle.quadrances.r
     triangle.quadrances.s triangle.firstQuadranceNonzero
     triangle.secondQuadranceNonzero triangle.thirdQuadranceNonzero
-    (Geometry.Triangles.FiniteField.Five.Classification.triangle_area_values triangle)
+    (triangle_area_values triangle)
 
 /-- Exercise 10.11: any two non-null triangles over `F₅` have the same unordered spread triple `{3,3,1}`. -/
 theorem exercise_10_11_similar
     (left right : NonNull.Basic.NonNullTriangle Five.Element) : left.Similar right :=
-  Permutation.sameEntries_of_repeatedEntryPattern (Geometry.Triangles.FiniteField.Five.Classification.spread_pattern
+  Permutation.sameEntries_of_repeatedEntryPattern (spread_pattern
     left)
-    (Geometry.Triangles.FiniteField.Five.Classification.spread_pattern right)
+    (spread_pattern right)
 end
 
 end Purelib.Geometry.Triangles.FiniteField.Five.Classification

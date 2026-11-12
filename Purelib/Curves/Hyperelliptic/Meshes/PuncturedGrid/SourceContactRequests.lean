@@ -1,4 +1,7 @@
 module
+import Purelib.Curves.Hyperelliptic.Differentials.OddPower.Ordinary
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContactRequests.Polynomial
+import Purelib.Polynomial.Dense.Gaussian.Basic
 meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Data.Gaussian.Norm.Basic
 import Purelib.Approximation.Gaussian.Equivalence
@@ -79,6 +82,7 @@ open Purelib.Topology.Surface.Sewing.SewnPrimitiveContacts
 
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
+open Purelib.Curves.Hyperelliptic.Differentials.OddPower.Basic.OddPowerDifferential (Ordinary)
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 open Purelib.Polynomial.Geometry.ClearPath (ClearSegment)
 open Purelib.Riemann.Paths.PreparedPathDecomposition (CoveredSegment)
@@ -211,6 +215,35 @@ theorem mismatch_accurate (located : Curves.Hyperelliptic.Meshes.PuncturedGrid.S
     unfold EdgeRoute.sourceEdge SourceEdge.increment
     ring1
   rw [reversed, located.left_eq, located.right_eq] at bounded
+  have scalar : contact.left.increment readings.values - -contact.right.increment readings.values =
+      contact.left.increment readings.values + contact.right.increment readings.values := by ring1
+  rewrite [scalar] at bounded
+  exact bounded
+
+/-- The SAME genuine polynomial common bank controls the original oriented sewing mismatch. -/
+theorem mismatch_polynomial_accurate (located : LocatedContact contact)
+    {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval (vertices.coordinate (contact.left.project
+      mesh.triangulation.faces).start))}
+    {piece : CoveredSegment segment owner} {differential : Differential genus} {parentSheet : Fin 2}
+    {domains : FaceDomainBank frames faces.regulars}
+    (prepared : SegmentContact (located.firstPlacement segment) (located.lastPlacement segment)
+      piece differential parentSheet domains)
+    {ordinary : Ordinary curve.polynomial} {target : Coordinate} {positive : 0 < target}
+    (retained : ContactRequests.ContactBudget.PolynomialPreparation prepared.left.entered prepared.right.entered
+      ordinary.val target positive)
+    {index : Nat} (later : retained.budget.index ≤ index)
+    {shared : FacePrimitiveBank differential index domains (numerator := ordinary.numerator)}
+    (compared : prepared.PolynomialComparison retained shared) (readings : TriangleReadings shared mesh) :
+    contact.mismatch readings.values < target := by
+  have bounded := prepared.polynomial_accurate (ordinary := ordinary) retained later compared readings
+  change Data.Gaussian.Norm.Basic.normSq
+    (located.left.sourceEdge.increment readings.values - (EdgeRoute.backward located.right).sourceEdge.increment
+      readings.values) < target at bounded
+  have reversed : (EdgeRoute.backward located.right).sourceEdge.increment readings.values =
+      -located.right.sourceEdge.increment readings.values := by
+    unfold EdgeRoute.sourceEdge SourceEdge.increment
+    ring1
+  rewrite [reversed, located.left_eq, located.right_eq] at bounded
   have scalar : contact.left.increment readings.values - -contact.right.increment readings.values =
       contact.left.increment readings.values + contact.right.increment readings.values := by ring1
   rewrite [scalar] at bounded

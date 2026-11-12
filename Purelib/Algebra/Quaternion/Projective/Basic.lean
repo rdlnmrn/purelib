@@ -12,6 +12,8 @@ public import Purelib.Data.Rat.Fraction.Field
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Displayed projective quaternion proportions
 
@@ -77,14 +79,14 @@ The scalar square is added to the retained vector quadrance. -/
 
 The existential retains the scale, its nonzero certificate, and the exact equality of the scaled coordinates. -/
 @[expose] def Equivalent (left right : Proportion K) : Prop :=
-  ∃ factor : K, factor ≠ 0 ∧ right = Proportion.scale factor left
+  ∃ factor : K, factor ≠ 0 ∧ right = scale factor left
 
 /-- Scaling a proportion by one preserves its coordinates.
 
 Left-unit multiplication preserves the scalar coordinate, and vector scaling
 by one preserves the retained three-coordinate vector. -/
 @[simp] theorem one_scale (proportion : Proportion K) :
-    Proportion.scale 1 proportion = proportion := by
+    scale 1 proportion = proportion := by
   apply Proportion.ext
   · exact one_mul proportion.scalar
   · exact Vector3.one_scale proportion.vector
@@ -94,17 +96,17 @@ by one preserves the retained three-coordinate vector. -/
 Scalar associativity identifies the scalar coordinate, and the same factor identity applies to each retained vector
 coordinate. -/
 theorem scale_scale (first second : K) (proportion : Proportion K) :
-    Proportion.scale first (Proportion.scale second proportion) =
-      Proportion.scale (first * second) proportion := by
+    scale first (scale second proportion) =
+      scale (first * second) proportion := by
   apply Proportion.ext
-  · unfold Proportion.scale
+  · unfold scale
     ring1
-  · unfold Proportion.scale
+  · unfold scale
     rw [Vector3.scale_scale]
 
 /-- The zero quaternion proportion has zero norm. -/
-theorem norm_zero : Proportion.norm (zero : Proportion K) = 0 := by
-  unfold Proportion.norm zero
+theorem norm_zero : norm (zero : Proportion K) = 0 := by
+  unfold norm zero
   rw [Vector3.quadrance_zero]
   ring1
 
@@ -113,8 +115,8 @@ theorem norm_zero : Proportion.norm (zero : Proportion K) = 0 := by
 The scalar square and the three vector coordinate squares share the same scale factor. Their sum is multiplied by its
 square. -/
 theorem norm_scale (factor : K) (proportion : Proportion K) :
-    Proportion.norm (Proportion.scale factor proportion) = factor ^ 2 * Proportion.norm proportion := by
-  unfold Proportion.norm Proportion.scale
+    norm (scale factor proportion) = factor ^ 2 * norm proportion := by
+  unfold norm scale
   rw [Vector3.quadrance_scale]
   ring1
 
@@ -134,8 +136,8 @@ left-right cross product. -/
 
 The equality is the four-square product identity in the eight input coordinates. -/
 theorem norm_mul (left right : Proportion K) :
-    Proportion.norm (Proportion.mul left right) = Proportion.norm left * Proportion.norm right := by
-  unfold Proportion.norm Proportion.mul Vector3.quadrance Vector3.dot Vector3.sub Vector3.add
+    norm (mul left right) = norm left * norm right := by
+  unfold norm mul Vector3.quadrance Vector3.dot Vector3.sub Vector3.add
     Vector3.scale Vector3.cross
   ring1
 
@@ -144,13 +146,13 @@ theorem norm_mul (left right : Proportion K) :
 The left and right homogeneous scales are independent. -/
 theorem mul_scale_both (leftFactor rightFactor : K)
     (left right : Proportion K) :
-    Proportion.mul (Proportion.scale leftFactor left) (Proportion.scale rightFactor right) =
-      Proportion.scale (leftFactor * rightFactor) (Proportion.mul left right) := by
+    mul (scale leftFactor left) (scale rightFactor right) =
+      scale (leftFactor * rightFactor) (mul left right) := by
   apply Proportion.ext
-  · unfold Proportion.mul Proportion.scale
+  · unfold mul scale
     simp only [Vector3.dot_scale_left, Vector3.dot_scale_right]
     ring1
-  · apply Vector3.ext <;> unfold Proportion.mul Proportion.scale Vector3.scale Vector3.sub Vector3.add
+  · apply Vector3.ext <;> unfold mul scale Vector3.scale Vector3.sub Vector3.add
       Vector3.cross <;> ring1
 
 /-- Multiplication of displayed quaternion proportions is associative.
@@ -158,11 +160,11 @@ theorem mul_scale_both (leftFactor rightFactor : K)
 The scalar-vector multiplication law gives the same four coordinates for both associations, using the finite dot and
 cross product identities. -/
 theorem mul_assoc (first second third : Proportion K) :
-    Proportion.mul (Proportion.mul first second) third = Proportion.mul first (Proportion.mul second third) := by
+    mul (mul first second) third = mul first (mul second third) := by
   apply Proportion.ext
-  · unfold Proportion.mul Vector3.dot Vector3.sub Vector3.add Vector3.scale Vector3.cross
+  · unfold mul Vector3.dot Vector3.sub Vector3.add Vector3.scale Vector3.cross
     ring1
-  · apply Vector3.ext <;> unfold Proportion.mul Vector3.dot Vector3.sub Vector3.add
+  · apply Vector3.ext <;> unfold mul Vector3.dot Vector3.sub Vector3.add
       Vector3.scale Vector3.cross <;> ring1
 
 /-- The unit quaternion proportion has scalar one and zero vector. -/
@@ -170,22 +172,22 @@ theorem mul_assoc (first second third : Proportion K) :
 
 /-- The unit proportion is a left identity for quaternion multiplication. -/
 @[simp] theorem identity_mul (proportion : Proportion K) :
-    Proportion.mul Proportion.identity proportion = proportion := by
+    mul Proportion.identity proportion = proportion := by
   apply Proportion.ext
-  · unfold Proportion.mul Proportion.identity
+  · unfold mul Proportion.identity
     rw [Vector3.dot_zero_left]
     ring1
-  · apply Vector3.ext <;> unfold Proportion.mul Proportion.identity Vector3.zero Vector3.sub
+  · apply Vector3.ext <;> unfold mul Proportion.identity Vector3.zero Vector3.sub
       Vector3.add Vector3.scale Vector3.cross <;> ring1
 
 /-- The unit proportion is a right identity for quaternion multiplication. -/
 @[simp] theorem mul_identity (proportion : Proportion K) :
-    Proportion.mul proportion Proportion.identity = proportion := by
+    mul proportion Proportion.identity = proportion := by
   apply Proportion.ext
-  · unfold Proportion.mul Proportion.identity
+  · unfold mul Proportion.identity
     rw [Vector3.dot_zero_right]
     ring1
-  · apply Vector3.ext <;> unfold Proportion.mul Proportion.identity Vector3.zero Vector3.sub
+  · apply Vector3.ext <;> unfold mul Proportion.identity Vector3.zero Vector3.sub
       Vector3.add Vector3.scale Vector3.cross <;> ring1
 
 /-- Conjugate a quaternion proportion by negating its vector coordinate. -/
@@ -194,23 +196,23 @@ theorem mul_assoc (first second third : Proportion K) :
 
 /-- Conjugating a quaternion proportion twice returns the original coordinates. -/
 @[simp] theorem conjugate_conjugate (proportion : Proportion K) :
-    Proportion.conjugate (Proportion.conjugate proportion) = proportion := by
+    conjugate (conjugate proportion) = proportion := by
   apply Proportion.ext
   · rfl
-  · apply Vector3.ext <;> unfold Proportion.conjugate Vector3.neg <;> ring1
+  · apply Vector3.ext <;> unfold conjugate Vector3.neg <;> ring1
 
 /-- Quaternion conjugation reverses the order of multiplication.
 
 Negating the vector coordinate changes the sign of the cross product. The scalar coordinate is preserved, giving the
 displayed reversed product. -/
 theorem conjugate_mul_reverse (left right : Proportion K) :
-    Proportion.conjugate (Proportion.mul left right) = Proportion.mul (Proportion.conjugate right) (Proportion.conjugate
+    conjugate (mul left right) = mul (conjugate right) (conjugate
       left) := by
   apply Proportion.ext
-  · unfold Proportion.conjugate Proportion.mul Vector3.dot Vector3.neg
+  · unfold conjugate mul Vector3.dot Vector3.neg
     ring1
   · apply Vector3.ext <;>
-      unfold Proportion.conjugate Proportion.mul Vector3.dot Vector3.neg Vector3.sub Vector3.add
+      unfold conjugate mul Vector3.dot Vector3.neg Vector3.sub Vector3.add
         Vector3.scale Vector3.cross <;> ring1
 
 /-- Quaternion conjugation preserves the norm.
@@ -218,23 +220,23 @@ theorem conjugate_mul_reverse (left right : Proportion K) :
 The scalar coordinate is unchanged and each vector coordinate is negated. Their four squares therefore have the same
 sum. -/
 theorem norm_conjugate (proportion : Proportion K) :
-    Proportion.norm (Proportion.conjugate proportion) = Proportion.norm proportion := by
-  unfold Proportion.norm Proportion.conjugate
+    norm (conjugate proportion) = norm proportion := by
+  unfold norm conjugate
   rw [Vector3.quadrance_neg]
 
 /-- A proportion times its conjugate is its norm times the unit proportion.
 
 The product has the sum of the four coordinate squares as scalar coordinate and zero vector coordinate. -/
 theorem mul_conjugate (proportion : Proportion K) :
-    Proportion.mul proportion (Proportion.conjugate proportion) =
-      Proportion.scale (Proportion.norm proportion) identity := by
+    mul proportion (conjugate proportion) =
+      scale (norm proportion) identity := by
   apply Proportion.ext
-  · unfold Proportion.mul Proportion.conjugate Proportion.scale Proportion.identity Proportion.norm Vector3.quadrance
+  · unfold mul conjugate scale Proportion.identity norm Vector3.quadrance
       Vector3.dot
       Vector3.neg
     ring1
-  · apply Vector3.ext <;> unfold Proportion.mul Proportion.conjugate Proportion.scale Proportion.identity
-      Proportion.norm
+  · apply Vector3.ext <;> unfold mul conjugate scale Proportion.identity
+      norm
       Vector3.quadrance Vector3.dot Vector3.zero Vector3.neg Vector3.sub Vector3.add
       Vector3.scale Vector3.cross <;> ring1
 
@@ -243,15 +245,15 @@ theorem mul_conjugate (proportion : Proportion K) :
 The reversed conjugate product has the same scalar norm and zero vector coordinate, with no division or normalization.
 -/
 theorem conjugate_mul (proportion : Proportion K) :
-    Proportion.mul (Proportion.conjugate proportion) proportion =
-      Proportion.scale (Proportion.norm proportion) identity := by
+    mul (conjugate proportion) proportion =
+      scale (norm proportion) identity := by
   apply Proportion.ext
-  · unfold Proportion.mul Proportion.conjugate Proportion.scale Proportion.identity Proportion.norm Vector3.quadrance
+  · unfold mul conjugate scale Proportion.identity norm Vector3.quadrance
       Vector3.dot
       Vector3.neg
     ring1
-  · apply Vector3.ext <;> unfold Proportion.mul Proportion.conjugate Proportion.scale Proportion.identity
-      Proportion.norm
+  · apply Vector3.ext <;> unfold mul conjugate scale Proportion.identity
+      norm
       Vector3.quadrance Vector3.dot Vector3.zero Vector3.neg Vector3.sub Vector3.add
       Vector3.scale Vector3.cross <;> ring1
 
@@ -507,7 +509,7 @@ theorem proportion_norm_ne_zero_of_isNonzero
     (certificate : SumFourSquaresSeparate K) (proportion : Proportion K)
     (nonzero : proportion.IsNonzero) : proportion.norm ≠ 0 := by
   intro null
-  exact nonzero (Projective.Basic.proportion_eq_zero_of_norm_eq_zero certificate proportion null)
+  exact nonzero (proportion_eq_zero_of_norm_eq_zero certificate proportion null)
 
 /-- A sum of four ordered-field squares is nonzero when its first root is nonzero.
 
@@ -572,10 +574,10 @@ theorem rationalSumFourSquaresSeparate :
   separate := by
     intro scalar t r s sumZero
     have scalarNonnegative :=
-      Fraction.Order.Arithmetic.sq_nonneg_direct scalar
-    have tNonnegative := Fraction.Order.Arithmetic.sq_nonneg_direct t
-    have rNonnegative := Fraction.Order.Arithmetic.sq_nonneg_direct r
-    have sNonnegative := Fraction.Order.Arithmetic.sq_nonneg_direct s
+      Arithmetic.sq_nonneg_direct scalar
+    have tNonnegative := Arithmetic.sq_nonneg_direct t
+    have rNonnegative := Arithmetic.sq_nonneg_direct r
+    have sNonnegative := Arithmetic.sq_nonneg_direct s
     have scalarUpper : scalar ^ 2 ≤ 0 := by
       have remainingNonnegative : 0 ≤ t ^ 2 + r ^ 2 + s ^ 2 :=
         add_nonneg (add_nonneg tNonnegative rNonnegative) sNonnegative
@@ -614,13 +616,13 @@ theorem rationalSumFourSquaresSeparate :
         _ = scalar ^ 2 + t ^ 2 + r ^ 2 + s ^ 2 := by ring1
         _ = 0 := sumZero
     exact
-      ⟨(Fraction.Order.Arithmetic.sq_eq_zero_direct scalar).mp
+      ⟨(Arithmetic.sq_eq_zero_direct scalar).mp
           (le_antisymm scalarUpper scalarNonnegative),
-        (Fraction.Order.Arithmetic.sq_eq_zero_direct t).mp
+        (Arithmetic.sq_eq_zero_direct t).mp
           (le_antisymm tUpper tNonnegative),
-        (Fraction.Order.Arithmetic.sq_eq_zero_direct r).mp
+        (Arithmetic.sq_eq_zero_direct r).mp
           (le_antisymm rUpper rNonnegative),
-        (Fraction.Order.Arithmetic.sq_eq_zero_direct s).mp
+        (Arithmetic.sq_eq_zero_direct s).mp
           (le_antisymm sUpper sNonnegative)⟩
 
 /-- Every nonzero rational proportion has nonzero norm.
@@ -629,7 +631,7 @@ The rational four-square separation certificate excludes nonzero null quadruples
 theorem rational_proportion_norm_ne_zero (proportion :
     Proportion Fraction.Rational)
     (nonzero : proportion.IsNonzero) : proportion.norm ≠ 0 :=
-  Projective.Basic.proportion_norm_ne_zero_of_isNonzero Projective.Basic.rationalSumFourSquaresSeparate
+  proportion_norm_ne_zero_of_isNonzero rationalSumFourSquaresSeparate
     proportion nonzero
 
 @[expose] public section
@@ -754,7 +756,7 @@ The supplied factor and its nonzero certificate witness the homogeneous relation
 -/
 theorem equivalent_scale (factor : K) (factorNonzero : factor ≠ 0)
     (proportion : NonNullProportion K) :
-    proportion.Equivalent (NonNullProportion.scale factor factorNonzero proportion) := by
+    proportion.Equivalent (scale factor factorNonzero proportion) := by
   exact ⟨factor, factorNonzero, rfl⟩
 
 /-- Multiply non-null quaternion proportions with their nonzero norm certificate.
@@ -771,7 +773,7 @@ The product retains the original coordinate multiplication and certifies its nor
 The scalar-vector product identity applies to the underlying coordinates of both non-null proportions. Their norm
 certificates remain attached to the inputs. -/
 theorem mul_norm (left right : NonNullProportion K) :
-    (NonNullProportion.mul left right).toProportion.norm =
+    (mul left right).toProportion.norm =
       left.toProportion.norm * right.toProportion.norm :=
   Proportion.norm_mul _ _
 
@@ -780,8 +782,8 @@ theorem mul_norm (left right : NonNullProportion K) :
 Associativity of the underlying displayed product identifies the retained coordinates. Proof irrelevance identifies the
 corresponding nonzero norm certificates. -/
 theorem mul_assoc (first second third : NonNullProportion K) :
-    NonNullProportion.mul (NonNullProportion.mul first second) third = NonNullProportion.mul first
-      (NonNullProportion.mul second third) := by
+    mul (mul first second) third = mul first
+      (mul second third) := by
   have raw := Proportion.mul_assoc
     first.toProportion second.toProportion third.toProportion
   apply NonNullProportion.ext (K := K)
@@ -795,7 +797,7 @@ theorem mul_respects_equivalent
     {left left' right right' : NonNullProportion K}
     (leftEquivalent : left.Equivalent left')
     (rightEquivalent : right.Equivalent right') :
-    (NonNullProportion.mul left right).Equivalent (NonNullProportion.mul left' right') := by
+    (mul left right).Equivalent (mul left' right') := by
   rcases leftEquivalent with ⟨leftFactor, leftFactorNonzero, leftValue⟩
   rcases rightEquivalent with ⟨rightFactor, rightFactorNonzero, rightValue⟩
   refine ⟨leftFactor * rightFactor,
@@ -817,7 +819,7 @@ The witness certifies that one is nonzero; the returned coordinates are scalar o
 
 /-- The certified unit proportion is a left multiplicative identity. -/
 @[simp] theorem identity_mul (witness proportion : NonNullProportion K) :
-    NonNullProportion.mul (NonNullProportion.identity witness) proportion = proportion := by
+    mul (NonNullProportion.identity witness) proportion = proportion := by
   have raw := Proportion.identity_mul proportion.toProportion
   apply NonNullProportion.ext (K := K)
   · exact congrArg Proportion.scalar raw
@@ -825,7 +827,7 @@ The witness certifies that one is nonzero; the returned coordinates are scalar o
 
 /-- The certified unit proportion is a right multiplicative identity. -/
 @[simp] theorem mul_identity (proportion witness : NonNullProportion K) :
-    NonNullProportion.mul proportion (NonNullProportion.identity witness) = proportion := by
+    mul proportion (NonNullProportion.identity witness) = proportion := by
   have raw := Proportion.mul_identity proportion.toProportion
   apply NonNullProportion.ext (K := K)
   · exact congrArg Proportion.scalar raw
@@ -845,7 +847,7 @@ non-nullness witness. -/
 
 Double negation recovers the retained coordinates, and the nonzero norm proof does not add executable data. -/
 @[simp] theorem conjugate_conjugate (proportion : NonNullProportion K) :
-    NonNullProportion.conjugate (NonNullProportion.conjugate proportion) = proportion := by
+    conjugate (conjugate proportion) = proportion := by
   apply NonNullProportion.ext (K := K)
   · exact congrArg Proportion.scalar
       (Proportion.conjugate_conjugate proportion.toProportion)
@@ -857,8 +859,8 @@ Double negation recovers the retained coordinates, and the nonzero norm proof do
 The equality retains the same two input proportions and their reversed displayed product. The nonzero norm certificates
 agree by proof irrelevance. -/
 theorem conjugate_mul_reverse (left right : NonNullProportion K) :
-    NonNullProportion.conjugate (NonNullProportion.mul left right) = NonNullProportion.mul (NonNullProportion.conjugate
-      right) (NonNullProportion.conjugate left) := by
+    conjugate (mul left right) = mul (conjugate
+      right) (conjugate left) := by
   have raw := Proportion.conjugate_mul_reverse left.toProportion
     right.toProportion
   apply NonNullProportion.ext (K := K)
@@ -869,9 +871,9 @@ theorem conjugate_mul_reverse (left right : NonNullProportion K) :
 
 The retained nonzero norm supplies the homogeneous equivalence factor. -/
 theorem mul_conjugate_equivalent_identity (proportion : NonNullProportion K) :
-    (NonNullProportion.mul proportion (NonNullProportion.conjugate proportion)).Equivalent
+    (mul proportion (conjugate proportion)).Equivalent
       (NonNullProportion.identity proportion) := by
-  apply NonNullProportion.equivalent_symm
+  apply equivalent_symm
   refine ⟨proportion.toProportion.norm, proportion.normNonzero, ?_⟩
   exact Proportion.mul_conjugate proportion.toProportion
 
@@ -879,9 +881,9 @@ theorem mul_conjugate_equivalent_identity (proportion : NonNullProportion K) :
 
 The retained nonzero norm supplies the homogeneous equivalence factor. -/
 theorem conjugate_mul_equivalent_identity (proportion : NonNullProportion K) :
-    (NonNullProportion.mul (NonNullProportion.conjugate proportion) proportion).Equivalent
+    (mul (conjugate proportion) proportion).Equivalent
       (NonNullProportion.identity proportion) := by
-  apply NonNullProportion.equivalent_symm
+  apply equivalent_symm
   refine ⟨proportion.toProportion.norm, proportion.normNonzero, ?_⟩
   exact Proportion.conjugate_mul proportion.toProportion
 

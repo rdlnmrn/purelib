@@ -62,6 +62,8 @@ import Purelib.Riemann.RootContinuation.SquareRootDegree
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.RootIsolation.SquareRoot.Clearance.ExactQuadraticOwnerClearance
 
+open Purelib.Data.Vector (DependentVector)
+
 open Purelib.Curves
 
 open Purelib
@@ -80,45 +82,45 @@ open Purelib.Riemann.Normalization
 
 open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
 
-variable {genus count : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+variable {genus count : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+    UniformReciprocalModels.Data patch count}
   {edge : Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {model : Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell} {parameter :
-    Normalization.InverseRootPolynomial.Coordinate} {anchor : Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap
+    UniformReciprocalCover.Cell data edge}
+  {model : UniformReciprocalRootChannels.RootModel cell} {parameter :
+    InverseRootPolynomial.Coordinate} {anchor : ArcOwners.Point cap
     model parameter}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {regular : RegularBounds.Data cap}
 
 set_option genInjectivity false in
 /-- The existing source cover of one recast basis parent. -/
 structure BasisSourceCover (parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential) (row :
   Fin genus) where
   /-- The retained primitive patch of the original parent recast to this standard differential. -/ patch :
-    Branches.UniformPrimitiveSheetCompatibility.PreparedPatch (Integration.PreparedEdgeRecasting.recastCenteredEdge
+    Branches.UniformPrimitiveSheetCompatibility.PreparedPatch (recastCenteredEdge
     (Periods.PeriodMatrix.standardDifferential row) parent)
   /-- The original source model count. -/ count : Nat
-  /-- The retained reciprocal source model data. -/ data : Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data
+  /-- The retained reciprocal source model data. -/ data : UniformReciprocalModels.Data
     patch count
   /-- The actual reciprocal cover on that same original model data. -/ cover :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data
+    UniformReciprocalCover.Cover data
 
 constructive_injectivity BasisSourceCover
 
 /-- The retained reciprocal source cover for each recast basis row of one original physical parent. -/
 def BasisSourceCovers (parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential) :=
-  Data.Vector.DependentVector (Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCover parent)
+  DependentVector (BasisSourceCover parent)
 
 /-- The basis rows retain covers of the same physical parent spine. -/
 def BasisParentSourceCovers (parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential))
   :=
-  Data.Vector.DependentVector (fun row : Fin genus =>
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers
-    (parents.map (Integration.PreparedEdgeRecasting.recastCenteredEdge (Periods.PeriodMatrix.standardDifferential
+  DependentVector (fun row : Fin genus =>
+    UniformReciprocalCover.ParentCovers
+    (parents.map (recastCenteredEdge (Periods.PeriodMatrix.standardDifferential
       row))))
 
 namespace BasisParentSourceCovers
@@ -127,16 +129,16 @@ variable {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge 
 
 /-- Extract the actual first parent covers, retaining every prepared patch,
 uniform model and mesh from the original per-basis banks. -/
-def head (covers : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisParentSourceCovers (parent ::
-  parents)) : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent :=
-  Data.Vector.DependentVector.ofFn fun row =>
+def head (covers : BasisParentSourceCovers (parent ::
+  parents)) : BasisSourceCovers parent :=
+  DependentVector.ofFn fun row =>
     match covers.get row with
     | .cons patch data cover _ => ⟨patch, genus, data, cover⟩
 
 /-- Reuse each basis row's original remaining parent covers after dropping the same head parent. -/
-def tail (covers : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisParentSourceCovers (parent ::
-  parents)) : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisParentSourceCovers parents :=
-  Data.Vector.DependentVector.ofFn fun row =>
+def tail (covers : BasisParentSourceCovers (parent ::
+  parents)) : BasisParentSourceCovers parents :=
+  DependentVector.ofFn fun row =>
     match covers.get row with
     | .cons _ _ _ rest => rest
 
@@ -145,109 +147,109 @@ end BasisParentSourceCovers
 set_option genInjectivity false in
 /-- One basis source located in its original cover with the actual root model, anchor joining and cached comparison
 bounds. -/
-structure BasisSourceLocation (regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap)
-    (anchor : Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap model parameter) {row : Fin genus} (source :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCover parent row) where
+structure BasisSourceLocation (regular : RegularBounds.Data cap)
+    (anchor : ArcOwners.Point cap model parameter) {row : Fin genus} (source :
+      BasisSourceCover parent row) where
   /-- The actual retained cell containing the requested source parameter. -/ located :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cells.Located source.data source.cover.mesh.edges parameter
+    UniformReciprocalCover.Cells.Located source.data source.cover.mesh.edges parameter
   /-- The original root model prepared on that exact located cell. -/ model :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel located.cell
+    UniformReciprocalRootChannels.RootModel located.cell
   /-- The retained source point on that model at the requested parameter. -/ point :
-    Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap model parameter
+    ArcOwners.Point cap model parameter
   /-- The actual root-owner join from the original anchor to this source point. -/ joined :
-    Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Join anchor point
+    ArcOwners.Join anchor point
   /-- The cached source arc comparison on the located cell. -/ comparison :
-    Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular located.cell
+    ArcSamples.Data regular located.cell
   /-- The cached endpoint comparison bounds on the same point. -/ bounds :
-    Hyperelliptic.Charts.Reciprocal.Disk.EndpointComparison.Data regular point
+    EndpointComparison.Data regular point
 
 constructive_injectivity BasisSourceLocation
 
 namespace BasisSourceLocation
 
 variable {row : Fin genus} {source :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCover parent row}
+  BasisSourceCover parent row}
 
 /-- Locate the parameter in the original cover and retain its actual root model, recast-owner joining and comparison
 caches. -/
-def build (regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap) (anchor :
-  Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap model parameter)
-    (source : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCover parent row) :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocation regular anchor source :=
+def build (regular : RegularBounds.Data cap) (anchor :
+  ArcOwners.Point cap model parameter)
+    (source : BasisSourceCover parent row) :
+      BasisSourceLocation regular anchor source :=
   let inside := ⟨edge.left.inside.1.trans anchor.root.between.1, anchor.root.between.2.trans edge.right.inside.2⟩
   let located := source.cover.locate parameter inside
-  let model := Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel.build located.cell
-  let point := Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point.build cap model parameter located.between
-  ⟨located, model, point, Hyperelliptic.Charts.Reciprocal.Disk.RecastJoins.ReciprocalDiskArcOwners.Join.ofRecast anchor
-    point, Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data.build regular located.cell,
-    Hyperelliptic.Charts.Reciprocal.Disk.EndpointComparison.Data.build regular point⟩
+  let model := UniformReciprocalRootChannels.RootModel.build located.cell
+  let point := ArcOwners.Point.build cap model parameter located.between
+  ⟨located, model, point, RecastJoins.ReciprocalDiskArcOwners.Join.ofRecast anchor
+    point, ArcSamples.Data.build regular located.cell,
+    EndpointComparison.Data.build regular point⟩
 
 /-- Package cached ownership and bounds; no root or model is prepared again. -/
-def owner (location : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocation regular anchor
-  source) : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRequests.BasisSourceOwner regular anchor row :=
+def owner (location : BasisSourceLocation regular anchor
+  source) : SourceRequests.BasisSourceOwner regular anchor row :=
   ⟨recastCenteredEdge (Periods.PeriodMatrix.standardDifferential row) parent, source.patch, source.count, source.data,
     location.located.edge, location.located.cell, location.model, parameter, location.point, location.joined,
     location.comparison, location.bounds⟩
 
 /-- Read the original sampled cell and reuse its inverse when forming the
 cap pullback. The locator's membership certificate guarantees success. -/
-def sample (location : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocation regular anchor
+def sample (location : BasisSourceLocation regular anchor
   source) {index : Nat} {box : Rational.Box}
-    (cells : Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.PrimitiveCells source.data index
+    (cells : UniformReciprocalPrimitives.PrimitiveCells source.data index
       source.cover.mesh.edges)
-    (polynomial : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap (Periods.PeriodMatrix.standardDifferential
+    (polynomial : Cap.Primitives.Sample cap (Periods.PeriodMatrix.standardDifferential
       row) index box) :
-    Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample location.owner.comparison polynomial :=
+    ArcSamples.Sample location.owner.comparison polynomial :=
   let retained := cells.readCell location.located.cell location.located.member
-  Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample.ofPrimitive location.comparison polynomial retained.primitive
+  ArcSamples.Sample.ofPrimitive location.comparison polynomial retained.primitive
     retained.cell_eq
 
 end BasisSourceLocation
 
 /-- The dependent vector of actual source locations in the original per-basis covers. -/
-def BasisSourceLocations (regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap) (anchor :
-  Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap model parameter)
-    (covers : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent) :=
-  Data.Vector.DependentVector (fun row => Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocation
+def BasisSourceLocations (regular : RegularBounds.Data cap) (anchor :
+  ArcOwners.Point cap model parameter)
+    (covers : BasisSourceCovers parent) :=
+  DependentVector (fun row => BasisSourceLocation
     regular anchor (covers.get row))
 
 namespace BasisSourceLocations
 
-variable {covers : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
+variable {covers : BasisSourceCovers parent}
 
 /-- Locate each original basis source at the same anchor parameter while retaining its own source cover and model. -/
-def build (regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap) (anchor :
-  Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap model parameter)
-    (covers : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent) :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations regular anchor covers :=
-  Data.Vector.DependentVector.ofFn fun row =>
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocation.build regular anchor (covers.get row)
+def build (regular : RegularBounds.Data cap) (anchor :
+  ArcOwners.Point cap model parameter)
+    (covers : BasisSourceCovers parent) :
+      BasisSourceLocations regular anchor covers :=
+  DependentVector.ofFn fun row =>
+    BasisSourceLocation.build regular anchor (covers.get row)
 
 /-- Package the already retained locations as the original per-row source owners. -/
-def owners (locations : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations regular anchor
-  covers) : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRequests.BasisSourceOwners regular anchor :=
-  Data.Vector.DependentVector.ofFn fun row => (locations.get row).owner
+def owners (locations : BasisSourceLocations regular anchor
+  covers) : SourceRequests.BasisSourceOwners regular anchor :=
+  DependentVector.ofFn fun row => (locations.get row).owner
 
 /-- Reading one packaged source owner returns exactly that retained location's owner. -/
-theorem owners_get (locations : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations regular
+theorem owners_get (locations : BasisSourceLocations regular
   anchor covers) (row : Fin genus) :
-    locations.owners.get row = (locations.get row).owner := Data.Vector.DependentVector.ofFn_get _ row
+    locations.owners.get row = (locations.get row).owner := DependentVector.ofFn_get _ row
 
 /-- The numerical bank is shared across all located vertices of this parent. -/
-def SampleBank (covers : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent) (index :
+def SampleBank (covers : BasisSourceCovers parent) (index :
   Nat) :=
-  Data.Vector.DependentVector (fun row => Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.PrimitiveCells
+  DependentVector (fun row => UniformReciprocalPrimitives.PrimitiveCells
     (covers.get row).data index (covers.get row).cover.mesh.edges)
 
 /-- Read each original located cell from the shared sampled bank and retain its cap pullback sample without rebuilding
 the cell. -/
-def samples (locations : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations regular anchor
+def samples (locations : BasisSourceLocations regular anchor
   covers) {index : Nat} {box : Rational.Box}
-    (bank : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers index)
-      (polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box) :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRequests.BasisSourceRequest.Samples locations.owners polynomials :=
+    (bank : SampleBank covers index)
+      (polynomials : Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box) :
+    SourceRequests.BasisSourceRequest.Samples locations.owners polynomials :=
       by
-  refine Data.Vector.DependentVector.ofFn ?_
+  refine DependentVector.ofFn ?_
   intro row
   rw [locations.owners_get]
   exact (locations.get row).sample (bank.get row) (polynomials.get row)

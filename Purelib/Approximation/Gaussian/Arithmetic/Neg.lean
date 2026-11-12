@@ -48,7 +48,7 @@ small supported rule set, not general algebraic-number normalization.
 -/
 
 /-- Negating the exact Gaussian channel is operationally equivalent to the exact channel of its negated value. -/
-@[expose] def exactNeg (value : Data.Gaussian.Basic.Canonical) : Gaussian.Equivalence.NamedEquivalent
+@[expose] def exactNeg (value : Data.Gaussian.Basic.Canonical) : NamedEquivalent
     (CoherentNamed.neg (Coherence.exact value)).name
     (Coherence.exact (-value)).name :=
   Equivalent.of_constant_samples _ _ (-value) (fun _ => rfl) (fun _ => rfl)
@@ -70,14 +70,14 @@ section
 private theorem negStateAt
     (process : Process)
     (start : process.State) (index : Nat) :
-    Gaussian.Process.Sampling.stateAt
+    Process.Sampling.stateAt
         (Process.neg process) start index =
-      Gaussian.Process.Sampling.stateAt process start index := by
+      Process.Sampling.stateAt process start index := by
   induction index with
   | zero => rfl
   | succ index induction =>
-      rw [Gaussian.Process.Sampling.stateAt_succ,
-        Gaussian.Process.Sampling.stateAt_succ, induction]
+      rw [Process.Sampling.stateAt_succ,
+        Process.Sampling.stateAt_succ, induction]
       change process.refine _ _ _ = process.refine _ _ _
       rfl
 /-- The canonical sample of the negated coherent name is the negative of the original sample at the same index. -/
@@ -88,19 +88,19 @@ private theorem negSampling_sample (input :
       -(Sampling.approximation input.name).sample
         index := by
   change
-    Gaussian.Process.Sampling.witnessAt
+    Process.Sampling.witnessAt
         (Process.neg input.name.process)
         input.name.state index =
-      -Gaussian.Process.Sampling.witnessAt
+      -Process.Sampling.witnessAt
         input.name.process input.name.state index
-  unfold Gaussian.Process.Sampling.witnessAt
-  rw [Purelib.Approximation.Gaussian.Arithmetic.Neg.negStateAt]
+  unfold Process.Sampling.witnessAt
+  rw [negStateAt]
   rfl
 end
 
 /-- A coherent CCL name plus its actual stateful negation is operationally the terminating exact zero name. -/
 @[expose] def coherentAdd_neg_right (input : CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
+    NamedEquivalent
       (Named.add input.name
         (Named.neg input.name))
       (Named.exact 0) := by
@@ -108,16 +108,16 @@ end
   let zeroApproximation :=
     Sampling.approximation
       (Named.exact 0)
-  have pointwise : Gaussian.Equivalence.NamedEquivalent
-      (Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation input.name negative.name).toNamed
+  have pointwise : NamedEquivalent
+      (Arithmetic.Sum.sampledSumApproximation input.name negative.name).toNamed
       zeroApproximation.toNamed :=
     Equivalence.approximationEquivalent_toNamed
       (Equivalence.approximationEquivalentOfSamplesEq
-        (Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation input.name negative.name)
+        (Arithmetic.Sum.sampledSumApproximation input.name negative.name)
         zeroApproximation
         (by
           intro index
-          rw [Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation_sample,
+          rw [Arithmetic.Sum.sampledSumApproximation_sample,
             show
               (Sampling.approximation
                 negative.name).sample index =
@@ -125,16 +125,16 @@ end
                     input.name).sample index by
               simpa only [negative,
                 CoherentNamed.neg] using
-                Purelib.Approximation.Gaussian.Arithmetic.Neg.negSampling_sample input index]
+                negSampling_sample input index]
           change
             (Sampling.approximation input.name).sample
                   index +
                 -(Sampling.approximation
                     input.name).sample index = 0
           apply Data.Gaussian.Basic.ext <;>
-            simp only [Purelib.Data.Gaussian.Basic.add_re, Purelib.Data.Gaussian.Basic.add_im,
-              Purelib.Data.Gaussian.Basic.neg_re, Purelib.Data.Gaussian.Basic.neg_im,
-              Purelib.Data.Gaussian.Basic.zero_re, Purelib.Data.Gaussian.Basic.zero_im] <;>
+            simp only [Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im,
+              Data.Gaussian.Basic.neg_re, Data.Gaussian.Basic.neg_im,
+              Data.Gaussian.Basic.zero_re, Data.Gaussian.Basic.zero_im] <;>
             ring1))
   exact NamedEquivalent.trans
     (by
@@ -148,14 +148,14 @@ end
 
 /-- Negation on the left gives the same operational zero law. -/
 @[expose] def coherentAdd_neg_left (input : CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
+    NamedEquivalent
       (Named.add
         (Named.neg input.name) input.name)
       (Named.exact 0) :=
   NamedEquivalent.trans
     (Add.coherentAdd_comm
       (CoherentNamed.neg input) input)
-    (Approximation.Gaussian.Arithmetic.Neg.coherentAdd_neg_right input)
+    (coherentAdd_neg_right input)
 
 end
 

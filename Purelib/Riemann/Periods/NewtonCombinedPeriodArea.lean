@@ -34,6 +34,8 @@ public import Purelib.Curves.Hyperelliptic.Meshes.Newton.OriginalPeriodArea
 import Purelib.Tactic.Ring
 public import Purelib.Topology.Surface.Sewing.SewnFaceAreaComparison
 
+open Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices
+
 public section
 
 /-! Exact homogeneous period readback on the retained corrected resplit walks. -/
@@ -69,7 +71,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Approximation.Rational.Budget.Aggregate (perTerm perTerm_positive)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -79,11 +81,11 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     sheet} {paired : Paired ordered}
     (prepared : Prepared paired)
   {fine : Polynomial.Geometry.Grid.ClearGrid curve.polynomial
-    (Purelib.Curves.Hyperelliptic.Branches.Cuts.Ambient curve)}
-  (included : Purelib.Polynomial.Geometry.Grid.Extension.CoordinateInclusion base.bank.grid fine)
+    (Curves.Hyperelliptic.Branches.Cuts.Ambient curve)}
+  (included : Polynomial.Geometry.Grid.Extension.CoordinateInclusion base.bank.grid fine)
   {frames : RootIsolation.SquareRoot.Grid.RootFrames fine} (edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames) (vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank fine)
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames) (vertices :
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank fine)
 
 open Purelib.Algebra in
 open Purelib.Data in
@@ -91,37 +93,37 @@ open Purelib.LinearAlgebra in
 /-- Combine retained basis edge readings with a coefficient vector.
 
 The finite sum uses the original oriented edge for every basis reading before evaluating any word. -/
-@[expose] def combinedEdgeValue (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+@[expose] def combinedEdgeValue (coefficients : Gaussian.Energy.GaussianVector genus)
     (values : Fin genus → OrientedEdge vertices.count → Gaussian.Basic.Canonical) (edge : OrientedEdge vertices.count) :
       Gaussian :=
-  FiniteSum.Fin.sumFin fun basis => coefficients basis * values basis edge
+  sumFin fun basis => coefficients basis * values basis edge
 
 open Purelib.Algebra in
 open Purelib.Topology in
 open Purelib.Data in
 open Purelib.LinearAlgebra in
 /-- Word evaluation commutes with the finite coefficient combination of edge readings. -/
-private theorem combined_word (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+private theorem combined_word (coefficients : Gaussian.Energy.GaussianVector genus)
     (values : Fin genus → OrientedEdge vertices.count → Gaussian.Basic.Canonical) (word : List (OrientedEdge
       vertices.count)) :
-    Surface.Sewing.SewingRetraction.wordValue (combinedEdgeValue vertices coefficients values) word =
-      FiniteSum.Fin.sumFin (fun basis => coefficients basis * Surface.Sewing.SewingRetraction.wordValue (values basis)
+    wordValue (combinedEdgeValue vertices coefficients values) word =
+      sumFin (fun basis => coefficients basis * wordValue (values basis)
         word) := by
   induction word with
   | nil =>
       exact (FiniteSum.Fin.sumFin_congr (fun basis =>
-        show coefficients basis * Surface.Sewing.SewingRetraction.wordValue (values basis) [] = 0 from mul_zero
+        show coefficients basis * wordValue (values basis) [] = 0 from mul_zero
           _)).trans
           FiniteSum.Fin.sumFin_zero |>.symm
   | cons edge rest ih =>
       change combinedEdgeValue vertices coefficients values edge +
-        Surface.Sewing.SewingRetraction.wordValue (combinedEdgeValue vertices coefficients values) rest = _
+        wordValue (combinedEdgeValue vertices coefficients values) rest = _
       rw [ih, combinedEdgeValue, ← FiniteSum.Fin.sumFin_add]
       apply FiniteSum.Fin.sumFin_congr
       intro basis
-      change coefficients basis * values basis edge + coefficients basis * Surface.Sewing.SewingRetraction.wordValue
+      change coefficients basis * values basis edge + coefficients basis * wordValue
         (values basis) rest =
-        coefficients basis * (values basis edge + Surface.Sewing.SewingRetraction.wordValue (values basis) rest)
+        coefficients basis * (values basis edge + wordValue (values basis) rest)
       ring1
 
 open Purelib.Topology in
@@ -133,13 +135,13 @@ open Purelib.LinearAlgebra in
 Each entry evaluates the original ordered bank's retained walk, including the A prefix in each B walk. -/
 @[expose] def resplitPeriodMatrix (newSheet : Fin 2)
     (values : Fin genus → OrientedEdge vertices.count → Gaussian.Basic.Canonical) (bSide : Bool) :
-      Gaussian.Energy.GaussianMatrix genus :=
+      GaussianMatrix genus :=
   Matrix.matrixOfFn fun basis cycle =>
-    if bSide then Surface.Sewing.SewingRetraction.wordValue (values basis) (edges.indexedEdges vertices
-      (included.resplit (prepared.bWalk cycle).closed.walk (SquareRoot.Grid.LiftedVertices.VertexBank.coordinate_onGrid
+    if bSide then wordValue (values basis) (edges.indexedEdges vertices
+      (included.resplit (prepared.bWalk cycle).closed.walk (VertexBank.coordinate_onGrid
         lifted.vertices _)) newSheet)
-    else Surface.Sewing.SewingRetraction.wordValue (values basis) (edges.indexedEdges vertices
-      (included.resplit (prepared.aWalk cycle).closed.walk (SquareRoot.Grid.LiftedVertices.VertexBank.coordinate_onGrid
+    else wordValue (values basis) (edges.indexedEdges vertices
+      (included.resplit (prepared.aWalk cycle).closed.walk (VertexBank.coordinate_onGrid
         lifted.vertices _)) newSheet)
 
 open Purelib.Algebra in
@@ -149,37 +151,37 @@ open Purelib.RootIsolation in
 open Purelib.LinearAlgebra in
 /-- Read a matrix period combination as the combined edge value on its actual corrected walk. -/
 theorem resplit_combination_readback (newSheet : Fin 2)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (coefficients : Gaussian.Energy.GaussianVector genus)
     (values : Fin genus → OrientedEdge vertices.count → Gaussian.Basic.Canonical) (bSide : Bool) (cycle : Fin genus) :
-    Gaussian.Energy.periodCombination coefficients
+    periodCombination coefficients
       (resplitPeriodMatrix prepared included edges vertices newSheet values bSide) cycle =
-      if bSide then Surface.Sewing.SewingRetraction.wordValue (combinedEdgeValue vertices coefficients values)
+      if bSide then wordValue (combinedEdgeValue vertices coefficients values)
         (edges.indexedEdges vertices
         (included.resplit (prepared.bWalk cycle).closed.walk
-          (SquareRoot.Grid.LiftedVertices.VertexBank.coordinate_onGrid lifted.vertices _)) newSheet)
-      else Surface.Sewing.SewingRetraction.wordValue (combinedEdgeValue vertices coefficients values)
+          (VertexBank.coordinate_onGrid lifted.vertices _)) newSheet)
+      else wordValue (combinedEdgeValue vertices coefficients values)
         (edges.indexedEdges vertices
         (included.resplit (prepared.aWalk cycle).closed.walk
-          (SquareRoot.Grid.LiftedVertices.VertexBank.coordinate_onGrid lifted.vertices _)) newSheet) := by
+          (VertexBank.coordinate_onGrid lifted.vertices _)) newSheet) := by
   let aWord := edges.indexedEdges vertices
-    (included.resplit (prepared.aWalk cycle).closed.walk (SquareRoot.Grid.LiftedVertices.VertexBank.coordinate_onGrid
+    (included.resplit (prepared.aWalk cycle).closed.walk (VertexBank.coordinate_onGrid
       lifted.vertices _)) newSheet
   let bWord := edges.indexedEdges vertices
-    (included.resplit (prepared.bWalk cycle).closed.walk (SquareRoot.Grid.LiftedVertices.VertexBank.coordinate_onGrid
+    (included.resplit (prepared.bWalk cycle).closed.walk (VertexBank.coordinate_onGrid
       lifted.vertices _)) newSheet
   have scalar (basis : Fin genus) :
       resplitPeriodMatrix prepared included edges vertices newSheet values bSide basis cycle =
-        Surface.Sewing.SewingRetraction.wordValue (values basis) (if bSide then bWord else aWord) := by
+        wordValue (values basis) (if bSide then bWord else aWord) := by
     unfold resplitPeriodMatrix
     rw [Matrix.matrixOfFn_apply]
     cases bSide <;> rfl
-  unfold Gaussian.Energy.periodCombination
+  unfold periodCombination
   rw [Matrix.Multiplication.vectorMatrix_apply]
   calc
-    _ = FiniteSum.Fin.sumFin (fun basis => coefficients basis * Surface.Sewing.SewingRetraction.wordValue (values basis)
+    _ = sumFin (fun basis => coefficients basis * wordValue (values basis)
       (if bSide then bWord else aWord)) :=
       FiniteSum.Fin.sumFin_congr fun basis => congrArg (coefficients basis * ·) (scalar basis)
-    _ = Surface.Sewing.SewingRetraction.wordValue (combinedEdgeValue vertices coefficients values) (if bSide then bWord
+    _ = wordValue (combinedEdgeValue vertices coefficients values) (if bSide then bWord
       else aWord) :=
       (combined_word vertices coefficients values _).symm
     _ = _ := by cases bSide <;> rfl
@@ -194,22 +196,22 @@ open Purelib.LinearAlgebra in
 
 The identity uses the same corrected A and B words for every coefficient vector. -/
 theorem combined_energy_resplit (newSheet : Fin 2)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (coefficients : Gaussian.Energy.GaussianVector genus)
     (values : Fin genus → OrientedEdge vertices.count → Gaussian.Basic.Canonical) :
     Energy.Polygon.energyBoundaryArea
-      (Gaussian.Energy.periodCombination coefficients (resplitPeriodMatrix prepared included edges vertices newSheet
+      (periodCombination coefficients (resplitPeriodMatrix prepared included edges vertices newSheet
         values false))
-      (Gaussian.Energy.periodCombination coefficients (resplitPeriodMatrix prepared included edges vertices newSheet
+      (periodCombination coefficients (resplitPeriodMatrix prepared included edges vertices newSheet
         values true)) =
-      2 * Hyperelliptic.Meshes.Newton.OriginalPeriodArea.resplitPeriodArea prepared included edges vertices newSheet
+      2 * resplitPeriodArea prepared included edges vertices newSheet
         (combinedEdgeValue vertices coefficients values) := by
-  unfold Energy.Polygon.energyBoundaryArea Hyperelliptic.Meshes.Newton.OriginalPeriodArea.resplitPeriodArea
+  unfold Energy.Polygon.energyBoundaryArea resplitPeriodArea
   rw [← FiniteSum.Fin.sumFin_mul_left]
   apply FiniteSum.Fin.sumFin_congr
   intro cycle
   rw [resplit_combination_readback prepared, resplit_combination_readback prepared]
   rw [Polygon.Stokes.commutatorBoundaryArea_eq]
-  simp only [-eq_self, -iff_self, Energy.Polygon.energyPrimitivePoint, Path.BoundaryRibbon.area]
+  simp only [-eq_self, -iff_self, Energy.Polygon.energyPrimitivePoint, area]
   rfl
 
 open Purelib.Curves in
@@ -218,14 +220,14 @@ open Purelib.Data in
 open Purelib.LinearAlgebra in
 /-- Read the unnormalized energy form as one quarter of the imaginary doubled period area. -/
 theorem combined_raw_energy (newSheet : Fin 2)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (coefficients : Gaussian.Energy.GaussianVector genus)
     (values : Fin genus → OrientedEdge vertices.count → Gaussian.Basic.Canonical) :
-    Gaussian.Energy.unnormalizedEnergyForm coefficients
+    unnormalizedEnergyForm coefficients
       (resplitPeriodMatrix prepared included edges vertices newSheet values false)
       (resplitPeriodMatrix prepared included edges vertices newSheet values true) =
-      (2 * Hyperelliptic.Meshes.Newton.OriginalPeriodArea.resplitPeriodArea prepared included edges vertices newSheet
+      (2 * resplitPeriodArea prepared included edges vertices newSheet
         (combinedEdgeValue vertices coefficients values)).im / 4 := by
-  unfold Gaussian.Energy.unnormalizedEnergyForm
+  unfold unnormalizedEnergyForm
   rw [Energy.Polygon.periodPairingEnergy_eq_boundaryArea_im_div_four, combined_energy_resplit prepared]
 
 open Purelib.Algebra in
@@ -241,44 +243,44 @@ open Purelib.LinearAlgebra in
 The equality retains the actual exterior, regular-region, paired and ending words, their cross area, and both reference
 and joining connector contributions. -/
 theorem combined_ordered_area
-    (reference : ∀ point, Polynomial.Geometry.Grid.FromStates.ContainsVertex fine point →
+    (reference : ∀ point, Geometry.Grid.FromStates.ContainsVertex fine point →
       Paths.OwnerLoopMonodromy.WindingOneLoop curve.polynomial point)
     (newSheet : Fin 2)
-    (compiled : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitCompiled
-      included edges vertices (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember
+    (compiled : CircuitPartition.ResplitCompiled
+      included edges vertices (baseMember
       base.bank)
       ordered.prepared.partition newSheet)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (coefficients : Gaussian.Energy.GaussianVector genus)
     (values : Fin genus → OrientedEdge vertices.count → Gaussian.Basic.Canonical)
     (anti : ∀ basis edge, values basis edge.reverse = -values basis edge) :
     let value := combinedEdgeValue vertices coefficients values
     let ending := edges.indexedEdges vertices
       (included.resplit (bank.loopProduct paired.split.ending.labels)
-        (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet
+        (baseMember base.bank)) newSheet
     2 * edges.chainArea vertices value (included.resplit base.bank.exterior
-      (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet +
+      (baseMember base.bank)) newSheet +
       Energy.Polygon.energyBoundaryArea
-        (Gaussian.Energy.periodCombination coefficients (resplitPeriodMatrix prepared included edges vertices newSheet
+        (periodCombination coefficients (resplitPeriodMatrix prepared included edges vertices newSheet
           values false))
-        (Gaussian.Energy.periodCombination coefficients (resplitPeriodMatrix prepared included edges vertices newSheet
+        (periodCombination coefficients (resplitPeriodMatrix prepared included edges vertices newSheet
           values true)) =
-      2 * (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PairedArea.resplitInternalArea included edges vertices bank
-        newSheet value paired.split.pairs + Mesh.RetracingWords.wordArea value ending +
-        Path.BoundaryRibbon.area (Path.Paired.Increments.total
-          (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PairedArea.resplitReadings included edges vertices bank newSheet
+      2 * (resplitInternalArea included edges vertices bank
+        newSheet value paired.split.pairs + wordArea value ending +
+        area (Path.Paired.Increments.total
+          (resplitReadings included edges vertices bank newSheet
           value paired.split.pairs))
-          (Surface.Sewing.SewingRetraction.wordValue value ending + Surface.Sewing.SewingRetraction.wordValue value
+          (wordValue value ending + wordValue value
             (edges.indexedEdges vertices
             (included.resplit (bank.rows.get paired.split.ending.reference).reference.walk
-              (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank))
+              (baseMember base.bank))
             (Hyperelliptic.Branches.BranchCutLifts.otherSheet newSheet))) +
-        (Geometry.Grid.CellBoundary.sumValues (fun occurrence => Mesh.RetracingWords.wordArea value occurrence.word)
+        (sumValues (fun occurrence => wordArea value occurrence.word)
           compiled.regulars +
-          Mesh.RetracingWords.AreaTerm.total value compiled.connectorTerms)) := by
+          AreaTerm.total value compiled.connectorTerms)) := by
   intro value ending
   have reverse (edge : OrientedEdge vertices.count) : value edge.reverse = -value edge := by
-    change FiniteSum.Fin.sumFin (fun basis => coefficients basis * values basis edge.reverse) =
-      -FiniteSum.Fin.sumFin (fun basis => coefficients basis * values basis edge)
+    change sumFin (fun basis => coefficients basis * values basis edge.reverse) =
+      -sumFin (fun basis => coefficients basis * values basis edge)
     rw [← FiniteSum.Fin.sumFin_neg]
     apply FiniteSum.Fin.sumFin_congr
     intro basis
@@ -290,12 +292,12 @@ theorem combined_ordered_area
   rw [combined_energy_resplit prepared]
   have doubled := congrArg (fun term : Gaussian.Basic.Canonical => 2 * term) identity
   exact (show 2 * edges.chainArea vertices value (included.resplit base.bank.exterior
-    (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet +
-      2 * Hyperelliptic.Meshes.Newton.OriginalPeriodArea.resplitPeriodArea prepared included edges vertices newSheet
+    (baseMember base.bank)) newSheet +
+      2 * resplitPeriodArea prepared included edges vertices newSheet
         value =
       2 * (edges.chainArea vertices value (included.resplit base.bank.exterior
-        (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet +
-        Hyperelliptic.Meshes.Newton.OriginalPeriodArea.resplitPeriodArea prepared included edges vertices newSheet
+        (baseMember base.bank)) newSheet +
+        resplitPeriodArea prepared included edges vertices newSheet
           value) by ring1).trans doubled
 
 end Purelib.Riemann.Periods.NewtonCombinedPeriodArea

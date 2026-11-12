@@ -11,6 +11,8 @@ import Purelib.Approximation.Gaussian.Process.Basic
 import Purelib.Data.Rat.Fraction
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Data.Gaussian.Norm.Basic
+
 /-!
 # Apartness of exact Gaussian names
 
@@ -45,7 +47,7 @@ so the same floor bounds every observation state. -/
           le_antisymm inside
             (Data.Gaussian.Norm.Basic.normSq_nonneg _)
         have differenceZero :=
-          Data.Gaussian.Norm.Basic.normSq_eq_zero.mp normZero
+          normSq_eq_zero.mp normZero
         have equal : candidate = value := Data.Gaussian.Basic.gaussian_eq_of_sub_eq_zero differenceZero
         rw [equal] }
 

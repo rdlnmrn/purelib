@@ -110,29 +110,29 @@ open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
 open _root_.Purelib.Data.Gaussian.Basic (conj)
 open Purelib.Riemann.Readings.RectangularObservationAssembly.ObservationMesh (ClippedAssembly)
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve branches
     higher}
-  {preparation : NewtonPreparation original} {target radius : Data.Rat.Fraction.Rational} {grid : NewtonGrid preparation
+  {preparation : NewtonPreparation original} {target radius : Rational} {grid : NewtonGrid preparation
     target radius}
   {lifted : LiftedPuncturedGrid grid.punctured} {domains :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
+    FaceDomainBank lifted.frames grid.faces.regulars}
   {stage : Nat} {cache : Numerics domains stage}
   {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
     Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
   {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {fixed : (sheet : Fin 2) → Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights
-    domains sheet} {surfaceTarget physicalTarget : Data.Rat.Fraction.Rational}
+  {fixed : (sheet : Fin 2) → Preflights
+    domains sheet} {surfaceTarget physicalTarget : Rational}
   {minimum floor coarseDepth : Nat}
-  {basis : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalBasisRequest regular domains
+  {basis : PhysicalBasisRequest regular domains
     physicalTarget minimum floor}
-  {previous : Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains} {selected
-    : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.BasisSourceCuts basis.preparations previous}
-  {initial : Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
+  {previous : CommonCuts domains} {selected
+    : BasisSourceCuts basis.preparations previous}
+  {initial : TwoSheetRequest (fun sheet =>
+    RegularMeshes.build domains selected.cuts sheet
     coarseDepth) fixed surfaceTarget}
-  {request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalMeshRequest basis initial}
+  {request : PhysicalMeshRequest basis initial}
 
 namespace SynchronizedSurfaceRequests.PerimeterSamples
 
@@ -142,24 +142,24 @@ open Purelib.LinearAlgebra.Gaussian in
 
 The mesh comes from the retained physical request and the seam values from the exact numerical cache, face and sheet. -/
 @[expose] def WholeFaceEnergyAssembly
-    {coarse : (sheet : Fin 2) → Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains sheet}
-    {initial : Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest coarse fixed surfaceTarget} (request :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalMeshRequest basis initial) (cache : Numerics domains
+    {coarse : (sheet : Fin 2) → RegularMeshes domains sheet}
+    {initial : TwoSheetRequest coarse fixed surfaceTarget} (request :
+      PhysicalMeshRequest basis initial) (cache : Numerics domains
       stage)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (position : Fin grid.faces.regulars.length)
+    (coefficients : Energy.GaussianVector genus) (position : Fin grid.faces.regulars.length)
       (sheet : Fin 2) :=
   ClippedAssembly ((request.surface.entries.get sheet).meshes.entries.get position)
-    (Meshes.Newton.Surface.SeamAreas.seamValues (sheet := sheet) cache coefficients position)
+    (seamValues (sheet := sheet) cache coefficients position)
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Gaussian in
 open Purelib.LinearAlgebra.Gaussian in
 /-- Read the selected side area of a retained whole-face perimeter. -/
 @[expose] def wholePerimeterSide
-    {coarse : (sheet : Fin 2) → Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains sheet}
-    {initial : Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest coarse fixed surfaceTarget} {request :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalMeshRequest basis initial}
-    {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
+    {coarse : (sheet : Fin 2) → RegularMeshes domains sheet}
+    {initial : TwoSheetRequest coarse fixed surfaceTarget} {request :
+      PhysicalMeshRequest basis initial}
+    {coefficients : Energy.GaussianVector genus}
     {position : Fin grid.faces.regulars.length} {sheet : Fin 2}
     {assembly : WholeFaceEnergyAssembly request cache coefficients position sheet}
     (perimeter : assembly.Perimeter) : GridSide → Basic.Canonical
@@ -178,16 +178,16 @@ open Purelib.LinearAlgebra.Gaussian in
 Uses the exact clipped-perimeter combination on the retained cache anchors and offsets, keeping the same face and sheet.
 -/
 theorem wholePerimeterSide_combination (faces : request.FacePerimeterBank cache)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (coefficients : Energy.GaussianVector genus)
     (position : Fin grid.faces.regulars.length) (sheet : Fin 2)
     {assembly : WholeFaceEnergyAssembly request cache coefficients position sheet}
     (perimeter : assembly.Perimeter) (side : GridSide) :
     wholePerimeterSide perimeter side =
-      FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => Data.Gaussian.Basic.conj (coefficients
+      sumFin (fun first => sumFin (fun second => conj (coefficients
         first) *
         coefficients second *
         ((faces.get first).get second).area position sheet side)) := by
-  let first := fun i column row point => Data.Gaussian.Basic.conj ((cache.atDomain position sheet
+  let first := fun i column row point => conj ((cache.atDomain position sheet
     i).anchors.alignedValue
     (cache.atDomain position sheet i).offsets column row point)
   let second := fun i column row point => (cache.atDomain position sheet i).anchors.alignedValue
@@ -195,27 +195,27 @@ theorem wholePerimeterSide_combination (faces : request.FacePerimeterBank cache)
   let pairs := fun i j => (((faces.get i).get j).perimeters.get position).get sheet
   cases side with
   | bottom =>
-      simpa only [wholePerimeterSide, Curves.Hyperelliptic.Meshes.PuncturedGrid.ConjugateFacePerimeters.area,
+      simpa only [wholePerimeterSide, Meshes.PuncturedGrid.ConjugateFacePerimeters.area,
         -eq_self, -iff_self]
         using ClippedPerimeterCombination.bottom_combination
-          (fun i => Data.Gaussian.Basic.conj (coefficients i)) coefficients first second perimeter pairs
+          (fun i => conj (coefficients i)) coefficients first second perimeter pairs
   | right =>
-      simpa only [wholePerimeterSide, Curves.Hyperelliptic.Meshes.PuncturedGrid.ConjugateFacePerimeters.area,
+      simpa only [wholePerimeterSide, Meshes.PuncturedGrid.ConjugateFacePerimeters.area,
         -eq_self, -iff_self]
         using ClippedPerimeterCombination.right_combination
-          (fun i => Data.Gaussian.Basic.conj (coefficients i)) coefficients first second perimeter pairs
+          (fun i => conj (coefficients i)) coefficients first second perimeter pairs
   | top =>
-      simpa only [wholePerimeterSide, Curves.Hyperelliptic.Meshes.PuncturedGrid.ConjugateFacePerimeters.area,
+      simpa only [wholePerimeterSide, Meshes.PuncturedGrid.ConjugateFacePerimeters.area,
         -eq_self, -iff_self]
         using ClippedPerimeterCombination.top_combination
-          (fun i => Data.Gaussian.Basic.conj (coefficients i)) coefficients first second perimeter pairs
+          (fun i => conj (coefficients i)) coefficients first second perimeter pairs
   | left =>
-      simpa only [wholePerimeterSide, Curves.Hyperelliptic.Meshes.PuncturedGrid.ConjugateFacePerimeters.area,
+      simpa only [wholePerimeterSide, Meshes.PuncturedGrid.ConjugateFacePerimeters.area,
         -eq_self, -iff_self]
         using ClippedPerimeterCombination.left_combination
-          (fun i => Data.Gaussian.Basic.conj (coefficients i)) coefficients first second perimeter pairs
+          (fun i => conj (coefficients i)) coefficients first second perimeter pairs
 
-attribute [local congr] Algebra.FiniteSum.Fin.sumFin_congr
+attribute [local congr] sumFin_congr
 
 open Purelib.Algebra in
 open Purelib.Data.Gaussian in
@@ -225,31 +225,31 @@ open Purelib.Riemann.Periods in
 
 Commutes the finite sheet and basis-pair sums and retains the original neighbor classification and side orientations. -/
 theorem physicalPerimeterEnergy_eq_combined (faces : request.FacePerimeterBank cache)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (coefficients : Energy.GaussianVector genus)
     (assemblies : (position : Fin grid.faces.regulars.length) → (sheet : Fin 2) →
       WholeFaceEnergyAssembly request cache coefficients position sheet)
     (perimeters : (position : Fin grid.faces.regulars.length) → (sheet : Fin 2) → (assemblies position sheet).Perimeter)
     (neighbors : PuncturedFaces.NeighborBank grid.faces) :
     faces.componentEnergy neighbors coefficients =
       componentSum neighbors .exterior (fun side position =>
-        FiniteSum.Fin.sumFin (fun sheet => wholePerimeterSide (perimeters position sheet) side)) := by
+        sumFin (fun sheet => wholePerimeterSide (perimeters position sheet) side)) := by
   have sideSum (side : GridSide) (position : Fin grid.faces.regulars.length) :
-      FiniteSum.Fin.sumFin (fun sheet => wholePerimeterSide (perimeters position sheet) side) =
-      FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => Data.Gaussian.Basic.conj (coefficients
+      sumFin (fun sheet => wholePerimeterSide (perimeters position sheet) side) =
+      sumFin (fun first => sumFin (fun second => conj (coefficients
         first) *
         coefficients second *
-        FiniteSum.Fin.sumFin (fun sheet => ((faces.get first).get second).area position sheet side))) := by
-    rw [FiniteSum.Fin.sumFin_congr (fun sheet => wholePerimeterSide_combination faces coefficients position sheet
+        sumFin (fun sheet => ((faces.get first).get second).area position sheet side))) := by
+    rw [sumFin_congr (fun sheet => wholePerimeterSide_combination faces coefficients position sheet
       (perimeters position sheet) side)]
-    exact BilinearCombination.sumFin_combination (fun first => Data.Gaussian.Basic.conj (coefficients first))
+    exact BilinearCombination.sumFin_combination (fun first => conj (coefficients first))
       coefficients _
   have expanded : componentSum neighbors .exterior (fun side position =>
-      FiniteSum.Fin.sumFin (fun sheet => wholePerimeterSide (perimeters position sheet) side)) =
+      sumFin (fun sheet => wholePerimeterSide (perimeters position sheet) side)) =
       componentSum neighbors .exterior (fun side position =>
-        FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => Data.Gaussian.Basic.conj (coefficients
+        sumFin (fun first => sumFin (fun second => conj (coefficients
           first)
           * coefficients second *
-          FiniteSum.Fin.sumFin (fun sheet => ((faces.get first).get second).area position sheet side)))) := by
+          sumFin (fun sheet => ((faces.get first).get second).area position sheet side)))) := by
     simp only [componentSum, sideSum, -eq_self, -iff_self]
     rfl
   exact (component_combination neighbors coefficients _).symm.trans expanded.symm
@@ -257,19 +257,19 @@ theorem physicalPerimeterEnergy_eq_combined (faces : request.FacePerimeterBank c
 variable (selected)
   {differential : Curves.Hyperelliptic.Differentials.Basic.Differential genus}
   {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+    AllSurfacePreparation
     regular domains differential}
-  (attached : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared)
-  {box : Purelib.Geometry.Rational.Box} {polynomials :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box}
-  {bounds : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisBounds.RegularBasisBounds polynomials} {capTarget
-    : Data.Rat.Fraction.Rational} {capMinimum : Nat}
-  (capRequest : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisRequest.RegularBasisRequest bounds
+  (attached : CapAttachment prepared)
+  {box : Geometry.Rational.Box} {polynomials :
+    RegularBasisPolynomials cap stage box}
+  {bounds : RegularBasisBounds polynomials} {capTarget
+    : Rational} {capMinimum : Nat}
+  (capRequest : RegularBasisRequest bounds
     attached.caps.length capTarget capMinimum)
   {geometry :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
+    CapAttachment.ReciprocalGeometry
     attached}
-  {parameters : Purelib.Integration.Path.Dyadic.RadialTriangles.Parameters capRequest.depth}
+  {parameters : Integration.Path.Dyadic.RadialTriangles.Parameters capRequest.depth}
 
 open Purelib.Algebra in
 open Purelib.Curves.Hyperelliptic in
@@ -283,22 +283,22 @@ Transports the physical exterior-cap estimate through the exact perimeter readba
 payment and retained samples. -/
 theorem combined_exterior_cap_energy_upper (entries : request.Readings cache) (faces : request.FacePerimeterBank cache)
     (attachments : Vector.DependentVector (fun first =>
-      Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment (basis.preparations.get first)))
+      CapAttachment (basis.preparations.get first)))
     (neighbors : PuncturedFaces.NeighborBank grid.faces)
     (evaluated : basis.Evaluations polynomials capRequest.depth)
     (later : request.index ≤ stage) (spatial : basis.depth ≤ capRequest.depth)
-    (caps : Meshes.PuncturedGrid.Exterior.CapBasisAggregate.RegularBasisCap geometry parameters polynomials)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (caps : RegularBasisCap geometry parameters polynomials)
+    (coefficients : Energy.GaussianVector genus)
     (assemblies : (position : Fin grid.faces.regulars.length) → (sheet : Fin 2) →
       WholeFaceEnergyAssembly request cache coefficients position sheet)
     (perimeters : (position : Fin grid.faces.regulars.length) → (sheet : Fin 2) → (assemblies position sheet).Perimeter)
     (capSample : (capRequest.certify caps).Evaluation coefficients)
-    (allowance : Fraction.Rational) (nonnegative : 0 ≤ allowance)
-    (paid : (genus : Fraction.Rational) ^ 2 * physicalTarget ≤ 16 * allowance ^ 2) :
+    (allowance : Rational) (nonnegative : 0 ≤ allowance)
+    (paid : (genus : Rational) ^ 2 * physicalTarget ≤ 16 * allowance ^ 2) :
     (componentSum neighbors .exterior (fun side position =>
-        FiniteSum.Fin.sumFin (fun sheet => wholePerimeterSide (perimeters position sheet) side)) -
+        sumFin (fun sheet => wholePerimeterSide (perimeters position sheet) side)) -
       componentSum neighbors .exterior (cachedEndpointSideSum cache coefficients) +
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalMeshRequest.Readings.capJoiningEnergy attachments
+      PhysicalMeshRequest.Readings.capJoiningEnergy attachments
         polynomials coefficients).im / 4 ≤
         (capTarget + allowance) * PreparedObservationCoercivity.coefficientNormSq coefficients := by
   have bound := exterior_cap_energy_upper selected attached capRequest entries faces attachments neighbors

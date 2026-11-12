@@ -25,6 +25,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Polynomial.Dense.Basic
 import Mathlib.Data.List.Basic
 
+open Purelib.Polynomial.Dense.Rational.AscendingInteger
+
 open Purelib.Algebra.Field
 open Purelib.Data
 
@@ -76,15 +78,15 @@ theorem
   ExerciseEightThirteen.IntegerPolynomial.eval_spreadDegreeCertificateCoefficients
     (number : Nat) (value : K) :
     Ascending.Integer.Basic.eval
-      (Coefficients.Degree.ExerciseEightThirteen.IntegerPolynomial.spreadDegreeCertificateCoefficients
+      (ExerciseEightThirteen.IntegerPolynomial.spreadDegreeCertificateCoefficients
       number) value =
       Basic.spreadPolynomial number value := open Purelib.Algebra in by
-  rw [Coefficients.Formula.exercise_8_9_integer_coefficients]
+  rw [Formula.exercise_8_9_integer_coefficients]
   unfold
-    Coefficients.Degree.ExerciseEightThirteen.IntegerPolynomial.spreadDegreeCertificateCoefficients
-    Coefficients.Formula.spreadCoefficientExpansion
+    ExerciseEightThirteen.IntegerPolynomial.spreadDegreeCertificateCoefficients
+    Formula.spreadCoefficientExpansion
   rw [Ascending.Integer.Basic.eval_cons,
-    Purelib.Polynomial.Ascending.Integer.Evaluation.eval_map_range]
+    Ascending.Integer.Evaluation.eval_map_range]
   rw [Ring.IntCast.cast_zero, zero_add]
   calc
     value * FiniteSum.Prefix.prefixSum number (fun index =>
@@ -124,10 +126,10 @@ theorem
 theorem
   ExerciseEightThirteen.IntegerPolynomial.spreadDegreeCertificateCoefficients_length
   (number : Nat) :
-    (Coefficients.Degree.ExerciseEightThirteen.IntegerPolynomial.spreadDegreeCertificateCoefficients
+    (ExerciseEightThirteen.IntegerPolynomial.spreadDegreeCertificateCoefficients
       number).length = number + 1 := by
   unfold
-    Coefficients.Degree.ExerciseEightThirteen.IntegerPolynomial.spreadDegreeCertificateCoefficients
+    ExerciseEightThirteen.IntegerPolynomial.spreadDegreeCertificateCoefficients
   simp only [List.length_cons, List.Map.length_map, List.Range.Basic.length_range,
     -eq_self, -iff_self]
   rfl
@@ -136,16 +138,16 @@ theorem
 theorem
   ExerciseEightThirteen.IntegerPolynomial.spreadDegreeCertificateCoefficients_getLast
   (index : Nat) :
-    (Coefficients.Degree.ExerciseEightThirteen.IntegerPolynomial.spreadDegreeCertificateCoefficients
+    (ExerciseEightThirteen.IntegerPolynomial.spreadDegreeCertificateCoefficients
       (index + 1)).getLast? =
       some ((-4) ^ index) := by
   unfold
-    Coefficients.Degree.ExerciseEightThirteen.IntegerPolynomial.spreadDegreeCertificateCoefficients
+    ExerciseEightThirteen.IntegerPolynomial.spreadDegreeCertificateCoefficients
   rw [List.Range.Basic.range_succ, List.Map.map_append, List.map_singleton]
   simp only
-    [Purelib.Polynomial.Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient_succ_self,
+    [Coefficients.Array.spreadArrayCoefficient_succ_self,
     Int.ofNat_eq_natCast,
-    Int.natCast_one, Purelib.Algebra.Monoid.Int.monoid.one_mul]
+    Int.natCast_one, Algebra.Monoid.Int.monoid.one_mul]
   let earlierCoefficients := (List.range index).map fun index_1 =>
     Int.ofNat (Coefficients.Array.spreadArrayCoefficient (index + 1) (index_1 + 1)) *
       (-4) ^ index_1
@@ -162,19 +164,19 @@ the same canonical rational polynomial. -/
 theorem
   ExerciseEightThirteen.IntegerPolynomial.ofAscending_spreadPolynomialCoefficients_eq_degreeCertificate
     (number : Nat) :
-    Dense.Rational.AscendingInteger.Basic.ofAscending
+    Basic.ofAscending
         (ExerciseEightThirteen.IntegerPolynomial.spreadPolynomialCoefficients
           number) =
-      Dense.Rational.AscendingInteger.Basic.ofAscending
+      Basic.ofAscending
 
           (ExerciseEightThirteen.IntegerPolynomial.spreadDegreeCertificateCoefficients
           number) := by
   apply Dense.Rational.Extensionality.rational_normalized_eq_of_eval_eq
-    (Dense.Rational.AscendingInteger.Basic.ofAscending_normalized _)
-    (Dense.Rational.AscendingInteger.Basic.ofAscending_normalized _)
+    (Basic.ofAscending_normalized _)
+    (Basic.ofAscending_normalized _)
   intro value
-  rw [Dense.Rational.AscendingInteger.Basic.eval_ofAscending,
-    Dense.Rational.AscendingInteger.Basic.eval_ofAscending,
+  rw [Basic.eval_ofAscending,
+    Basic.eval_ofAscending,
     ExerciseEightThirteen.IntegerPolynomial.eval_spreadPolynomialCoefficients,
 
       ExerciseEightThirteen.IntegerPolynomial.eval_spreadDegreeCertificateCoefficients]
@@ -183,7 +185,7 @@ theorem
 theorem
   ExerciseEightThirteen.IntegerPolynomial.spreadPolynomialCoefficients_natDegree
     (number : Nat) (positive : 0 < number) :
-    (Dense.Rational.AscendingInteger.Basic.ofAscending
+    (Basic.ofAscending
       (ExerciseEightThirteen.IntegerPolynomial.spreadPolynomialCoefficients
         number)).natDegree = number := by
   cases number with
@@ -191,7 +193,7 @@ theorem
   | succ index =>
       rw
         [ExerciseEightThirteen.IntegerPolynomial.ofAscending_spreadPolynomialCoefficients_eq_degreeCertificate]
-      exact Dense.Rational.AscendingInteger.Certificate.ofAscending_natDegree_of_getLast
+      exact Certificate.ofAscending_natDegree_of_getLast
 
           (ExerciseEightThirteen.IntegerPolynomial.spreadDegreeCertificateCoefficients_length
           (index + 1))
@@ -199,7 +201,7 @@ theorem
           (ExerciseEightThirteen.IntegerPolynomial.spreadDegreeCertificateCoefficients_getLast
           index)
 
-          (Purelib.Algebra.Monoid.Int.negative_four_pow_ne_zero
+          (Algebra.Monoid.Int.negative_four_pow_ne_zero
           index)
 
 /-- Positive spread polynomials are nonzero in the constructive rational
@@ -207,7 +209,7 @@ coefficient model. -/
 theorem
   ExerciseEightThirteen.IntegerPolynomial.spreadPolynomialCoefficients_nonzero
     (number : Nat) (positive : 0 < number) :
-    (Dense.Rational.AscendingInteger.Basic.ofAscending
+    (Basic.ofAscending
       (ExerciseEightThirteen.IntegerPolynomial.spreadPolynomialCoefficients
         number)).isZero = false := by
   cases number with
@@ -215,12 +217,12 @@ theorem
   | succ index =>
       rw
         [ExerciseEightThirteen.IntegerPolynomial.ofAscending_spreadPolynomialCoefficients_eq_degreeCertificate]
-      exact Dense.Rational.AscendingInteger.Certificate.ofAscending_isZero_false_of_getLast
+      exact Certificate.ofAscending_isZero_false_of_getLast
 
           (ExerciseEightThirteen.IntegerPolynomial.spreadDegreeCertificateCoefficients_getLast
           index)
 
-          (Purelib.Algebra.Monoid.Int.negative_four_pow_ne_zero
+          (Algebra.Monoid.Int.negative_four_pow_ne_zero
           index)
 end IntegerPolynomial
 end ExerciseEightThirteen

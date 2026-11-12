@@ -12,6 +12,9 @@ import Purelib.Algebra.Field.ExplicitField
 import Purelib.LinearAlgebra.Coordinates3.Vector
 import Purelib.Tactic.Ring
 
+open Purelib.Geometry.Rotations.Ternary.Basic.TernaryForm
+open Purelib.Geometry.Quadratic.Ternary
+
 /-!
 # Composition of time-first Lorentz anchors
 
@@ -41,7 +44,7 @@ variable {K : Type*} [ExplicitField K] (oneNonzero : (1 : K) ≠ 0)
 
 /-- The Lorentz product numerator subtracts the paper's signed cross product. -/
 @[expose] def anchorProductNumerator (left right : Vector3 K) : Vector3 K :=
-  Vector3.sub (Vector3.add left right) (Quadratic.Ternary.Lorentz.cross oneNonzero left right)
+  Vector3.sub (Vector3.add left right) (Lorentz.cross oneNonzero left right)
 
 /-- The affine Lorentz anchor product retains its supplied nonzero denominator. -/
 @[expose] def anchorProduct (left right : Vector3 K)
@@ -58,9 +61,9 @@ theorem anchorProductDenominator_comm (left right : Vector3 K) :
 /-- Reversing the source anchor order adds the original signed cross product to the numerator. -/
 theorem anchorProductNumerator_reverse (left right : Vector3 K) :
     anchorProductNumerator oneNonzero right left =
-      Vector3.add (Vector3.add left right) (Quadratic.Ternary.Lorentz.cross oneNonzero left right) := by
+      Vector3.add (Vector3.add left right) (Lorentz.cross oneNonzero left right) := by
   unfold anchorProductNumerator
-  rw [Quadratic.Ternary.Lorentz.cross_anticomm]
+  rw [Lorentz.cross_anticomm]
   ext <;> unfold Vector3.add Vector3.sub Vector3.neg <;> ring1
 
 /-- The opposite Lorentz anchor product uses the same denominator and the positive signed cross term. -/
@@ -68,7 +71,7 @@ theorem anchorProduct_reverse (left right : Vector3 K)
     (defined : anchorProductDenominator oneNonzero left right ≠ 0) :
     anchorProduct oneNonzero right left (by rw [anchorProductDenominator_comm]; exact defined) =
       Vector3.scale (anchorProductDenominator oneNonzero left right)⁻¹
-        (Vector3.add (Vector3.add left right) (Quadratic.Ternary.Lorentz.cross oneNonzero left right)) := by
+        (Vector3.add (Vector3.add left right) (Lorentz.cross oneNonzero left right)) := by
   unfold anchorProduct
   rw [anchorProductDenominator_comm, anchorProductNumerator_reverse]
 
@@ -103,7 +106,7 @@ theorem anchorProductNumerator_neg (left right : Vector3 K) :
       Vector3.neg (anchorProductNumerator oneNonzero left right) := by
   unfold Cayley.TernaryForm.anchorProductNumerator
   rw [Form.cliffordCross_neg_left, Form.cliffordCross_neg_right, Vector3.neg_neg]
-  unfold anchorProductNumerator Quadratic.Ternary.Lorentz.cross
+  unfold anchorProductNumerator Lorentz.cross
   ext <;> unfold Vector3.sub Vector3.add Vector3.neg <;> ring1
 
 /-- The source anchor product converts to the original generic product by a single vector negation. -/
@@ -127,7 +130,7 @@ theorem quadrance_anchorProductNumerator (left right : Vector3 K) :
         capDenominator oneNonzero left * capDenominator oneNonzero right := by
   unfold anchorProductDenominator anchorProductNumerator capDenominator
   rw [Form.quadrance_lorentz, Form.bilinear_lorentz, Form.quadrance_lorentz,
-    Form.quadrance_lorentz, Quadratic.Ternary.Lorentz.cross_coordinates]
+    Form.quadrance_lorentz, Lorentz.cross_coordinates]
   unfold Vector3.sub Vector3.add
   ring1
 
@@ -163,7 +166,7 @@ theorem capRotation_mul (left right : Vector3 K)
     (leftDefined : capDenominator oneNonzero left ≠ 0)
     (rightDefined : capDenominator oneNonzero right ≠ 0)
     (productDefined : anchorProductDenominator oneNonzero left right ≠ 0) :
-    Basic.TernaryForm.SpecialOrthogonal.mul (capRotation oneNonzero left leftDefined)
+    SpecialOrthogonal.mul (capRotation oneNonzero left leftDefined)
         (capRotation oneNonzero right rightDefined) =
       capRotation oneNonzero (anchorProduct oneNonzero left right productDefined)
         (capDenominator_anchorProduct_ne_zero oneNonzero left right leftDefined rightDefined productDefined) := by
@@ -215,7 +218,7 @@ theorem capRotation_mul_of_pairing_one (left right : Vector3 K)
     (leftDefined : capDenominator oneNonzero left ≠ 0)
     (rightDefined : capDenominator oneNonzero right ≠ 0)
     (pairingOne : (Form.lorentz oneNonzero).bilinear left right = 1) :
-    Basic.TernaryForm.SpecialOrthogonal.mul (capRotation oneNonzero left leftDefined)
+    SpecialOrthogonal.mul (capRotation oneNonzero left leftDefined)
         (capRotation oneNonzero right rightDefined) =
       (Form.lorentz oneNonzero).halfTurnRotation (anchorProductNumerator oneNonzero left right)
         (anchorProductNumerator_nonNull_of_pairing_one oneNonzero left right leftDefined rightDefined pairingOne) := by
@@ -259,7 +262,7 @@ theorem capRotation_mul_isHalfTurn_iff [DecidableEq K] (left right : Vector3 K)
     (leftDefined : capDenominator oneNonzero left ≠ 0)
     (rightDefined : capDenominator oneNonzero right ≠ 0) (twoNonzero : (2 : K) ≠ 0) :
     (∃ axis : Vector3 K, ∃ nonNull : (Form.lorentz oneNonzero).quadrance axis ≠ 0,
-      Basic.TernaryForm.SpecialOrthogonal.mul (capRotation oneNonzero left leftDefined)
+      SpecialOrthogonal.mul (capRotation oneNonzero left leftDefined)
         (capRotation oneNonzero right rightDefined) = (Form.lorentz oneNonzero).halfTurnRotation axis nonNull) ↔
       (Form.lorentz oneNonzero).bilinear left right = 1 := by
   constructor
@@ -291,7 +294,7 @@ theorem anchorProductNumerator_collinear (axis : Vector3 K) (left right : K) :
     anchorProductNumerator oneNonzero (Vector3.scale left axis) (Vector3.scale right axis) =
       Vector3.scale (left + right) axis := by
   unfold anchorProductNumerator
-  rw [Quadratic.Ternary.Lorentz.cross_coordinates]
+  rw [Lorentz.cross_coordinates]
   ext <;> unfold Vector3.sub Vector3.add Vector3.scale <;> ring1
 
 /-- The partial Lorentz anchor product on one axis obeys the rational tangent addition law. -/
@@ -320,7 +323,7 @@ theorem capRotation_collinear_mul (axis : Vector3 K) (left right : K)
     (leftDefined : capDenominator oneNonzero (Vector3.scale left axis) ≠ 0)
     (rightDefined : capDenominator oneNonzero (Vector3.scale right axis) ≠ 0)
     (productDefined : anchorProductDenominator oneNonzero (Vector3.scale left axis) (Vector3.scale right axis) ≠ 0) :
-    Basic.TernaryForm.SpecialOrthogonal.mul
+    SpecialOrthogonal.mul
         (capRotation oneNonzero (Vector3.scale left axis) leftDefined)
         (capRotation oneNonzero (Vector3.scale right axis) rightDefined) =
       capRotation oneNonzero
@@ -471,21 +474,21 @@ theorem anchorProduct_associative [DecidableEq K] (first second third : Vector3 
       (anchorProduct oneNonzero firstSecond third leftDefined) leftCap =
       capRotation oneNonzero (anchorProduct oneNonzero first secondThird rightDefined) rightCap := by
     calc
-      _ = Basic.TernaryForm.SpecialOrthogonal.mul
+      _ = SpecialOrthogonal.mul
           (capRotation oneNonzero firstSecond firstSecondCap) (capRotation oneNonzero third thirdDefined) :=
         (capRotation_mul oneNonzero firstSecond third firstSecondCap thirdDefined leftDefined).symm
-      _ = Basic.TernaryForm.SpecialOrthogonal.mul
-          (Basic.TernaryForm.SpecialOrthogonal.mul (capRotation oneNonzero first firstDefined)
+      _ = SpecialOrthogonal.mul
+          (SpecialOrthogonal.mul (capRotation oneNonzero first firstDefined)
             (capRotation oneNonzero second secondDefined)) (capRotation oneNonzero third thirdDefined) :=
-        congrArg (fun rotation => Basic.TernaryForm.SpecialOrthogonal.mul rotation
+        congrArg (fun rotation => SpecialOrthogonal.mul rotation
           (capRotation oneNonzero third thirdDefined))
           (capRotation_mul oneNonzero first second firstDefined secondDefined firstSecondDefined).symm
-      _ = Basic.TernaryForm.SpecialOrthogonal.mul (capRotation oneNonzero first firstDefined)
-          (Basic.TernaryForm.SpecialOrthogonal.mul (capRotation oneNonzero second secondDefined)
-            (capRotation oneNonzero third thirdDefined)) := Basic.TernaryForm.SpecialOrthogonal.mul_assoc _ _ _
-      _ = Basic.TernaryForm.SpecialOrthogonal.mul (capRotation oneNonzero first firstDefined)
+      _ = SpecialOrthogonal.mul (capRotation oneNonzero first firstDefined)
+          (SpecialOrthogonal.mul (capRotation oneNonzero second secondDefined)
+            (capRotation oneNonzero third thirdDefined)) := SpecialOrthogonal.mul_assoc _ _ _
+      _ = SpecialOrthogonal.mul (capRotation oneNonzero first firstDefined)
           (capRotation oneNonzero secondThird secondThirdCap) :=
-        congrArg (Basic.TernaryForm.SpecialOrthogonal.mul (capRotation oneNonzero first firstDefined))
+        congrArg (SpecialOrthogonal.mul (capRotation oneNonzero first firstDefined))
           (capRotation_mul oneNonzero second third secondDefined thirdDefined secondThirdDefined)
       _ = _ := capRotation_mul oneNonzero first secondThird firstDefined secondThirdCap rightDefined
   exact cap_injective oneNonzero _ _ leftCap rightCap twoNonzero

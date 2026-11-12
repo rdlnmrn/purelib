@@ -40,21 +40,21 @@ namespace Purelib.Data.Sign.ComplexProduct.Center.Basic.ProductCenterSigns
 
 The finite sign relation is evaluated at both endpoints of the retained rational interval. -/
 def Admissible
-    (centers : Data.Sign.ComplexProduct.Center.Basic.ProductCenterSigns)
+    (centers : ProductCenterSigns)
     (A B C D E H : CoordinatePolynomial) (interval : Data.Rat.Interval.Bounds) : Prop :=
   centers.AdmissibleSigns
-    (Data.Sign.ofCoordinate (A.eval interval.lower))
-    (Data.Sign.ofCoordinate (B.eval interval.lower))
-    (Data.Sign.ofCoordinate (C.eval interval.lower))
-    (Data.Sign.ofCoordinate (D.eval interval.lower))
-    (Data.Sign.ofCoordinate (E.eval interval.lower))
-    (Data.Sign.ofCoordinate (H.eval interval.lower))
-    (Data.Sign.ofCoordinate (A.eval interval.upper))
-    (Data.Sign.ofCoordinate (B.eval interval.upper))
-    (Data.Sign.ofCoordinate (C.eval interval.upper))
-    (Data.Sign.ofCoordinate (D.eval interval.upper))
-    (Data.Sign.ofCoordinate (E.eval interval.upper))
-    (Data.Sign.ofCoordinate (H.eval interval.upper))
+    (ofCoordinate (A.eval interval.lower))
+    (ofCoordinate (B.eval interval.lower))
+    (ofCoordinate (C.eval interval.lower))
+    (ofCoordinate (D.eval interval.lower))
+    (ofCoordinate (E.eval interval.lower))
+    (ofCoordinate (H.eval interval.lower))
+    (ofCoordinate (A.eval interval.upper))
+    (ofCoordinate (B.eval interval.upper))
+    (ofCoordinate (C.eval interval.upper))
+    (ofCoordinate (D.eval interval.upper))
+    (ofCoordinate (E.eval interval.upper))
+    (ofCoordinate (H.eval interval.upper))
 
 end Purelib.Data.Sign.ComplexProduct.Center.Basic.ProductCenterSigns
 
@@ -64,7 +64,7 @@ namespace Purelib.RootIsolation.Cauchy.ProductCells.ProductCenterSigns
 instance (centers : Data.Sign.ComplexProduct.Center.Basic.ProductCenterSigns)
     (A B C D E H : CoordinatePolynomial) (interval : Data.Rat.Interval.Bounds) :
     Decidable (centers.Admissible A B C D E H interval) := by
-  unfold Purelib.Data.Sign.ComplexProduct.Center.Basic.ProductCenterSigns.Admissible
+  unfold Data.Sign.ComplexProduct.Center.Basic.ProductCenterSigns.Admissible
   infer_instance
 
 end Purelib.RootIsolation.Cauchy.ProductCells.ProductCenterSigns
@@ -76,28 +76,28 @@ namespace Purelib.Data.Sign.ComplexProduct.Center.Basic.ProductCenterSigns
 Return the first admissible center record, or no record when the finite search finds none. -/
 def search?
     (A B C D E H : CoordinatePolynomial) (interval : Data.Rat.Interval.Bounds) :
-    Option Data.Sign.ComplexProduct.Center.Basic.ProductCenterSigns :=
-  Data.Sign.ComplexProduct.Center.Basic.ProductCenterSigns.signSearch?
-    (Data.Sign.ofCoordinate (A.eval interval.lower))
-    (Data.Sign.ofCoordinate (B.eval interval.lower))
-    (Data.Sign.ofCoordinate (C.eval interval.lower))
-    (Data.Sign.ofCoordinate (D.eval interval.lower))
-    (Data.Sign.ofCoordinate (E.eval interval.lower))
-    (Data.Sign.ofCoordinate (H.eval interval.lower))
-    (Data.Sign.ofCoordinate (A.eval interval.upper))
-    (Data.Sign.ofCoordinate (B.eval interval.upper))
-    (Data.Sign.ofCoordinate (C.eval interval.upper))
-    (Data.Sign.ofCoordinate (D.eval interval.upper))
-    (Data.Sign.ofCoordinate (E.eval interval.upper))
-    (Data.Sign.ofCoordinate (H.eval interval.upper))
+    Option ProductCenterSigns :=
+  signSearch?
+    (ofCoordinate (A.eval interval.lower))
+    (ofCoordinate (B.eval interval.lower))
+    (ofCoordinate (C.eval interval.lower))
+    (ofCoordinate (D.eval interval.lower))
+    (ofCoordinate (E.eval interval.lower))
+    (ofCoordinate (H.eval interval.lower))
+    (ofCoordinate (A.eval interval.upper))
+    (ofCoordinate (B.eval interval.upper))
+    (ofCoordinate (C.eval interval.upper))
+    (ofCoordinate (D.eval interval.upper))
+    (ofCoordinate (E.eval interval.upper))
+    (ofCoordinate (H.eval interval.upper))
 
 /-- A returned center-sign record is admissible for the actual polynomial endpoints. -/
 theorem search?_some_admissible
     {A B C D E H : CoordinatePolynomial} {interval : Data.Rat.Interval.Bounds}
-    {centers : Data.Sign.ComplexProduct.Center.Basic.ProductCenterSigns}
+    {centers : ProductCenterSigns}
     (found : search? A B C D E H interval = some centers) :
     centers.Admissible A B C D E H interval := by
-  exact Data.Sign.ComplexProduct.Center.Basic.ProductCenterSigns.signSearch?_some_admissible found
+  exact signSearch?_some_admissible found
 
 /-- The finite center-sign search succeeds for two narrow endpoint turns.
 
@@ -139,7 +139,7 @@ theorem search?_isSome_of_narrowTurns
   unfold search?
   rw [productRealLowerEq, productImagLowerEq,
     productRealUpperEq, productImagUpperEq]
-  exact Data.Sign.ComplexProduct.Center.Basic.ProductCenterSigns.signSearch?_isSome_of_narrowTurns
+  exact signSearch?_isSome_of_narrowTurns
     AₗNonzero BₗNonzero CₗNonzero DₗNonzero
     (by simpa only [← productRealLowerEq] using EₗNonzero)
     (by simpa only [← productImagLowerEq] using HₗNonzero)

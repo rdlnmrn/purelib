@@ -72,24 +72,24 @@ public section
 on the same reading bank used by its primitive paths and physical connectors. -/
 namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartOrientation
 
-variable {genus count : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+variable {genus count : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {cover : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {covers :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {bounds :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+    UniformReciprocalModels.Data patch count}
+  {cover : UniformReciprocalCover.Cover data} {covers :
+    SourceLocations.BasisSourceCovers parent}
+  {regular : RegularBounds.Data cap} {bounds :
+    ReciprocalPaddedInverse.UniformBounds regular.padded}
   {depth floor sourceFloor : Nat} {target sourceTarget : Normalization.InverseRootPolynomial.Coordinate}
   {index minimum stage : Nat} {box : Rational.Box}
-  {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
-  {anchorBank : Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.PrimitiveCells data index cover.mesh.edges}
-  {bank : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers index}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {polynomials : Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {anchorBank : UniformReciprocalPrimitives.PrimitiveCells data index cover.mesh.edges}
+  {bank : SourceLocations.BasisSourceLocations.SampleBank covers index}
+  {basis : ReciprocalPaddedBasisBounds.BasisBounds bounds}
   {joinTarget : Normalization.InverseRootPolynomial.Coordinate} {joinFloor : Nat}
 
 open Purelib.Data.Rat.Fraction.Compatibility
@@ -99,22 +99,22 @@ open Purelib.Data.Gaussian.Basic.Canonical
 
 The predicate follows the actual acquired interval paths in their original order. -/
 @[expose] def Orientation : {intervals : List
-  (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers)} →
-    (requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+  (CommonCover.BasisCommonInterval cover covers)} →
+    (requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target sourceTarget floor sourceFloor intervals) →
-    (plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    (plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests) →
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
       bank stage requests plans → Prop
   | _, .nil, _, _ => True
   | _, .cons _ tail, plans, readings =>
       (∀ segment ∈
-        (Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartPath.BasisIntervalChartRequest.Plan.Evaluation.path
+        (IntervalChartPath.BasisIntervalChartRequest.Plan.Evaluation.path
         readings.1.evaluated).segments,
-        Data.Gaussian.Norm.Basic.normSq segment.last.root.coordinate ≤ 2 ∧ Data.Gaussian.Norm.Basic.normSq
+        Gaussian.Norm.Basic.normSq segment.last.root.coordinate ≤ 2 ∧ Gaussian.Norm.Basic.normSq
           segment.first.root.coordinate ≤ 2 ∧
         0 < Energy.AffineTriangle.crossEnergy segment.last.root.coordinate segment.first.root.coordinate) ∧
-      Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartOrientation.Orientation tail plans.2
+      CommonChartOrientation.Orientation tail plans.2
         readings.2
 
 /-- The original common reading geometry and paid angular requests certify all interval root bounds and signed
@@ -122,23 +122,23 @@ orientations.
 
 The same acquired roots are used, with the odd-degree branch condition, positive parent orientation and common tolerance
 at most one. -/
-theorem orientation (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+theorem orientation (branch : HyperellipticReciprocal.originOrder curve = 1)
     (oriented : 0 < Energy.AffineTriangle.crossEnergy (parent.edge.point 0) (parent.edge.point 1))
     (small : target ≤ 1) :
-    {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers)} →
-    (requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+    {intervals : List (CommonCover.BasisCommonInterval cover covers)} →
+    (requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target sourceTarget floor sourceFloor intervals) →
-    (plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    (plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests) →
-    (readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings
-      anchorBank bank stage requests plans) → Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartGeometry.Geometry
+    (readings : CommonChartReadings.BasisCommonChartRequests.Plans.Readings
+      anchorBank bank stage requests plans) → CommonChartGeometry.Geometry
       requests plans readings →
-    (angular : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonAngularRequests.BasisCommonAngularRequests regular depth
+    (angular : CommonAngularRequests.BasisCommonAngularRequests regular depth
       intervals) → angular.Fits target →
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartOrientation.Orientation requests plans readings
+    Orientation requests plans readings
   | _, .nil, _, _, _, .nil, _ => True.intro
   | _, .cons _ tail, plans, readings, certified, .cons head remaining, paid => by
-      refine ⟨?_, Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartOrientation.orientation branch
+      refine ⟨?_, CommonChartOrientation.orientation branch
         oriented small tail plans.2 readings.2 certified.2.2.2 remaining paid.2⟩
       intro segment member
       exact
@@ -155,27 +155,27 @@ theorem orientation (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticRecip
 /-- Selecting the minimum of the two positive request tolerances supplies
 both conclusions. Angular requests are made at the eventual spatial depth. -/
 theorem geometry_and_orientation {intervals : List
-  (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers)} {spatialFloor : Nat}
-    (coordinate : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCoordinateRequest.BasisCommonCoordinateRequest
+  (CommonCover.BasisCommonInterval cover covers)} {spatialFloor : Nat}
+    (coordinate : CommonCoordinateRequest.BasisCommonCoordinateRequest
       regular intervals spatialFloor)
-    (angular : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonAngularRequests.BasisCommonAngularRequests regular depth
+    (angular : CommonAngularRequests.BasisCommonAngularRequests regular depth
       intervals)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+    (branch : HyperellipticReciprocal.originOrder curve = 1)
     (oriented : 0 < Energy.AffineTriangle.crossEnergy (parent.edge.point 0) (parent.edge.point 1))
     (later : coordinate.depth ≤ depth) (smaller : target ≤ min coordinate.tolerance angular.tolerance)
-    (requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+    (requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target sourceTarget floor sourceFloor intervals)
-    (plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    (plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests) (readings :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
       bank stage requests plans) :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartGeometry.Geometry requests plans readings ∧
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartOrientation.Orientation requests plans readings := by
-  have coordinateLe := smaller.trans (Purelib.Data.Rat.Fraction.Order.Basic.min_le_left _ _)
-  have angularLe := smaller.trans (Purelib.Data.Rat.Fraction.Order.Basic.min_le_right _ _)
-  have geometric := Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartGeometry.geometry_of_request coordinate branch
+    CommonChartGeometry.Geometry requests plans readings ∧
+      Orientation requests plans readings := by
+  have coordinateLe := smaller.trans (Data.Rat.Fraction.Order.Basic.min_le_left _ _)
+  have angularLe := smaller.trans (Data.Rat.Fraction.Order.Basic.min_le_right _ _)
+  have geometric := CommonChartGeometry.geometry_of_request coordinate branch
     later coordinateLe requests plans readings
-  exact ⟨geometric, Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartOrientation.orientation branch oriented
+  exact ⟨geometric, orientation branch oriented
     (coordinateLe.trans coordinate.small) requests plans readings
     geometric angular (angular.fits_of_le angularLe)⟩
 

@@ -78,27 +78,27 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSelectionPartition (f
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters (sideSum)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentCorrection.FacePerimeters (componentPerimeter)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_sub sumFin_add sumFin_neg sumFin_swap sumFin_zero)
-attribute [local congr] Purelib.Algebra.FiniteSum.Fin.sumFin_congr
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {cuts : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+attribute [local congr] FiniteSum.Fin.sumFin_congr
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
+  {cuts : CommonCuts domains}
     {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
-  {target : Purelib.Data.Rat.Fraction.Rational} {i j : Fin genus} {stage : Nat} {cache :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
-  {request : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet
+    Preflights domains sheet}
+  {target : Rational} {i j : Fin genus} {stage : Nat} {cache :
+    RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  {request : TwoSheetRequest (fun sheet =>
+    RegularMeshes.build domains cuts sheet
     coarseDepth) fixed target}
 
 /-- The original physical-component projection preserves subtraction. -/
-private theorem component_sub {face : PuncturedGridFaces.RegularFace base.bank.toBranchCellBank} {side :
-  GridLiftedDualSteps.GridSide}
-    (neighbor : PuncturedFaces.SideNeighbor base.faces face side) (component : PhysicalComponentValues.PhysicalComponent
+private theorem component_sub {face : RegularFace base.bank.toBranchCellBank} {side :
+  GridSide}
+    (neighbor : PuncturedFaces.SideNeighbor base.faces face side) (component : PhysicalComponent
       base.faces)
-    (a b : Data.Gaussian.Basic.Canonical) : SideNeighbor.componentValue neighbor component (a - b) =
+    (a b : Gaussian) : SideNeighbor.componentValue neighbor component (a - b) =
       SideNeighbor.componentValue neighbor component a - SideNeighbor.componentValue neighbor component b := by
   cases neighbor with
   | exterior _ => cases component <;> first | rfl | exact (Data.Gaussian.Basic.sub_self _).symm
@@ -116,11 +116,11 @@ private theorem component_sub {face : PuncturedGridFaces.RegularFace base.bank.t
         · simp only [if_neg same, -eq_self, -iff_self]; rfl
 
 /-- The original physical-component projection preserves the sum over both retained sheets. -/
-private theorem component_sum {face : PuncturedGridFaces.RegularFace base.bank.toBranchCellBank} {side :
-  GridLiftedDualSteps.GridSide}
-    (neighbor : PuncturedFaces.SideNeighbor base.faces face side) (component : PhysicalComponentValues.PhysicalComponent
+private theorem component_sum {face : RegularFace base.bank.toBranchCellBank} {side :
+  GridSide}
+    (neighbor : PuncturedFaces.SideNeighbor base.faces face side) (component : PhysicalComponent
       base.faces)
-    (values : Fin 2 → Data.Gaussian.Basic.Canonical) : SideNeighbor.componentValue neighbor component
+    (values : Fin 2 → Gaussian) : SideNeighbor.componentValue neighbor component
       (FiniteSum.Fin.sumFin values) = FiniteSum.Fin.sumFin (fun sheet => SideNeighbor.componentValue neighbor component
       (values sheet)) := by
   cases neighbor with
@@ -142,11 +142,11 @@ private theorem component_sum {face : PuncturedGridFaces.RegularFace base.bank.t
             FiniteSum.Fin.sumFin_zero |>.symm
 
 /-- The original physical-component projection sends zero to zero. -/
-private theorem component_zero {face : PuncturedGridFaces.RegularFace base.bank.toBranchCellBank} {side :
-  GridLiftedDualSteps.GridSide}
-    (neighbor : PuncturedFaces.SideNeighbor base.faces face side) (component : PhysicalComponentValues.PhysicalComponent
+private theorem component_zero {face : RegularFace base.bank.toBranchCellBank} {side :
+  GridSide}
+    (neighbor : PuncturedFaces.SideNeighbor base.faces face side) (component : PhysicalComponent
       base.faces) :
-    SideNeighbor.componentValue neighbor component (0 : Data.Gaussian.Basic.Canonical) = 0 := by
+    SideNeighbor.componentValue neighbor component (0 : Gaussian) = 0 := by
   cases neighbor with
   | exterior _ => cases component <;> rfl
   | neighbor _ _ _ location =>
@@ -157,13 +157,13 @@ private theorem component_zero {face : PuncturedGridFaces.RegularFace base.bank.
       | hole _ => exact ite_self _
 
 /-- The original physical-component projection preserves negation. -/
-private theorem component_neg {face : PuncturedGridFaces.RegularFace base.bank.toBranchCellBank} {side :
-  GridLiftedDualSteps.GridSide}
-    (neighbor : PuncturedFaces.SideNeighbor base.faces face side) (component : PhysicalComponentValues.PhysicalComponent
-      base.faces) (v : Data.Gaussian.Basic.Canonical) :
+private theorem component_neg {face : RegularFace base.bank.toBranchCellBank} {side :
+  GridSide}
+    (neighbor : PuncturedFaces.SideNeighbor base.faces face side) (component : PhysicalComponent
+      base.faces) (v : Gaussian) :
     SideNeighbor.componentValue neighbor component (-v) = -SideNeighbor.componentValue neighbor component v := by
-  have equal := Curves.Hyperelliptic.Meshes.PuncturedGrid.FullHoleRemainder.component_sub neighbor component 0 v
-  simpa only [zero_sub, Curves.Hyperelliptic.Meshes.PuncturedGrid.FullHoleRemainder.component_zero, -eq_self, -iff_self]
+  have equal := FullHoleRemainder.component_sub neighbor component 0 v
+  simpa only [zero_sub, FullHoleRemainder.component_zero, -eq_self, -iff_self]
     using equal
 
 /-- The complete two-sheet side remainder of one physical component equals its original perimeter-minus-triangle
@@ -172,20 +172,20 @@ theorem component_remainder (perimeters : Matched.FacePerimeters (request := req
     (neighbors : PuncturedFaces.NeighborBank base.faces)
     (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh) (right :
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
-    (component : PhysicalComponentValues.PhysicalComponent base.faces) :
+    (component : PhysicalComponent base.faces) :
     SelectedPhysicalComponents.componentEvaluation neighbors (fun _ => true)
       (fun side p => FiniteSum.Fin.sumFin (fun sheet => HoleAreaRemainder.sideAreaRemainder perimeters p sheet side))
         component =
       PhysicalComponentCorrection.physicalComponentCorrection perimeters neighbors left right component := by
   simp only [SelectedPhysicalComponents.componentEvaluation, SelectedSides.value, if_pos (rfl : true = true),
     HoleAreaRemainder.sideAreaRemainder,
-    FiniteSum.Fin.sumFin_sub, Curves.Hyperelliptic.Meshes.PuncturedGrid.FullHoleRemainder.component_sub,
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.FullHoleRemainder.component_sum,
+    FiniteSum.Fin.sumFin_sub, FullHoleRemainder.component_sub,
+      FullHoleRemainder.component_sum,
     Numerics.normalized_bottom_chord cache,
     Numerics.normalized_left_chord cache,
     TriangleReadings.normalized_right_chord left right,
     TriangleReadings.normalized_top_chord left right,
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.FullHoleRemainder.component_neg,
+      FullHoleRemainder.component_neg,
     FiniteSum.Fin.sumFin_neg, Data.Gaussian.Basic.sub_zero,
     PhysicalComponentCorrection.physicalComponentCorrection, FacePerimeters.componentPerimeter, FacePerimeters.sideSum,
       PhysicalComponentCorrection.componentTriangleArea,
@@ -212,7 +212,7 @@ theorem fullHoleEvaluation_eq_correction (perimeters : Matched.FacePerimeters (r
   simp only [HoleSelectionPartition.omittedHoleEvaluation, if_neg (by decide : true ≠ false), FiniteSum.Fin.sumFin_zero,
     sub_self, add_zero, -eq_self, -iff_self]
   exact FiniteSum.Fin.sumFin_congr (fun hole =>
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.FullHoleRemainder.component_remainder perimeters neighbors left right
+    FullHoleRemainder.component_remainder perimeters neighbors left right
     (.hole hole))
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.FullHoleRemainder

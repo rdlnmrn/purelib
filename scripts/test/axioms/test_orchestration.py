@@ -141,14 +141,14 @@ class AuditScriptTests(unittest.TestCase):
         runner.chmod(0o755)
         (self.root / "scripts/project-module-data.py").write_text(
             "import sys\nif sys.argv[1:] == ['audit-support']: print('Purelib.Support')\n"
-            "elif sys.argv[1:] == ['regression-root']: print('Test.Data.Rat.Fraction.RegressionMain')\n")
+            "elif sys.argv[1:] == ['regression-root']: print('TestPurelib.Data.Rat.Fraction.RegressionMain')\n")
         (self.root / "scripts/lean_module_data").mkdir()
         (self.root / "scripts/lean_module_data/__init__.py").write_text("# Fixture parser identity.\n")
         (self.root / "scripts/lean_module_data/audit.py").write_text("# Original empty axiom policy fixture.\n")
         (self.root / "scripts/lean_module_data/audit_metadata.py").write_text("# Root metadata fixture.\n")
         (self.root / "lean-toolchain").write_text("fixture\n")
         (self.root / "lakefile.toml").write_text("")
-        for module in ["Purelib.Target", "Purelib.Other", "Purelib.Empty", "Purelib.Support", "Test.Data.Rat.Fraction.RegressionMain"]:
+        for module in ["Purelib.Target", "Purelib.Other", "Purelib.Empty", "Purelib.Support", "TestPurelib.Data.Rat.Fraction.RegressionMain"]:
             source = self.root / (module.replace(".", "/") + ".lean")
             source.parent.mkdir(parents=True, exist_ok=True)
             source.write_text("-- Orchestration fixture, no declarations.\n")
@@ -171,9 +171,9 @@ class AuditScriptTests(unittest.TestCase):
     def run_audit(self, *args, success=True, **env):
         # The fixed regression executable is present in every production Lake config.
         config = self.root / 'lakefile.toml'
-        if 'root="Test.Data.Rat.Fraction.RegressionMain"' not in config.read_text():
+        if 'root="TestPurelib.Data.Rat.Fraction.RegressionMain"' not in config.read_text():
             config.write_text(config.read_text() + '\n[[lean_exe]]\nname="fraction_regression"\n'
-                              'root="Test.Data.Rat.Fraction.RegressionMain"\n')
+                              'root="TestPurelib.Data.Rat.Fraction.RegressionMain"\n')
         result = subprocess.run(["bash", "scripts/check-axioms.sh", *args],
                                 cwd=self.root, env={**self.env, **env},
                                 text=True, capture_output=True)
@@ -192,7 +192,7 @@ class AuditScriptTests(unittest.TestCase):
                        str(self.root / "Purelib/Target.lean"))
         builds = [c for c in self.calls() if "build" in c]
         self.assertEqual(builds, [["--quiet", "--wfail", "--no-build", "build", "Purelib.Target",
-                                  "Test.Data.Rat.Fraction.RegressionMain", "Purelib.Support",
+                                  "TestPurelib.Data.Rat.Fraction.RegressionMain", "Purelib.Support",
                                   "fraction_regression"]])
 
     def test_full_and_scoped_cache_preservation(self):
@@ -257,6 +257,19 @@ class AuditScriptTests(unittest.TestCase):
         self.run_audit("Purelib.Target", success=False, BAD_RESULTS="1")
         self.assertEqual(cache.read_bytes(), before)
 
+    def test_single_core_budget_reaches_shared_environment_queries(self):
+        self.run_audit('Purelib.Target', CCL_CHECK_CORES='5', AXIOM_AUDIT_JOBS='1')
+        calls = [args for args in self.calls() if 'audit' in args]
+        self.assertTrue(calls)
+        self.assertTrue(all(args[args.index('--cores') + 1] == '5' for args in calls))
+
+    def test_core_budget_is_divided_between_independent_environments(self):
+        self.run_audit('--full', CCL_CHECK_CORES='4', AXIOM_AUDIT_JOBS='2')
+        calls = [args for args in self.calls() if 'audit' in args]
+        self.assertTrue(calls)
+        self.assertTrue(all(args[args.index('--cores') + 1] == '2' for args in calls))
+        self.run_audit('Purelib.Target', success=False, CCL_CHECK_CORES='0')
+
     def test_configured_script_scope_is_explicit_and_rejects_unregistered_scripts(self):
         source = self.root / "scripts/Harness.lean"
         source.write_text("-- Configured mathematical script fixture.\n")
@@ -290,14 +303,14 @@ class AuditScriptTests(unittest.TestCase):
 
     def test_standalone_same_name_roots_and_transitive_importer_are_separate(self):
         scripts = ["scripts.FirstHarness", "scripts.SecondHarness"]
-        for module in scripts + ["Test.Data.Json"]:
+        for module in scripts + ["TestPurelib.Data.Json"]:
             self.add_fixture_module(module, ["main"])
         importer = "Purelib.ImportingHarness"
         self.add_fixture_module(importer)
         (self.root / "input-imports.json").write_text(json.dumps({importer: [scripts[0]]}))
         (self.root / "lakefile.toml").write_text("".join(
             f'[[lean_exe]]\nname = "harness{index}"\nroot = "{module}"\n'
-            for index, module in enumerate([*scripts, "Test.Data.Json"])))
+            for index, module in enumerate([*scripts, "TestPurelib.Data.Json"])))
         reports = self.root / "standalone-reports"
         result = self.run_audit("--configured-scripts", "--full",
                                 AXIOM_AUDIT_JOBS="2", AXIOM_AUDIT_REPORT_DIR=str(reports))
@@ -313,13 +326,13 @@ class AuditScriptTests(unittest.TestCase):
                 self.assertNotIn(["canonical", "@canonical"], rows)
         expected = {("project", module) for module in
                     ["Purelib.Target", "Purelib.Other", "Purelib.Empty", "Purelib.Support",
-                     *scripts, "Test.Data.Json", importer, "Test.Data.Rat.Fraction.RegressionMain"]} | {("canonical", "@canonical")}
+                     *scripts, "TestPurelib.Data.Json", importer, "TestPurelib.Data.Rat.Fraction.RegressionMain"]} | {("canonical", "@canonical")}
         self.assertEqual(set(assigned), expected)
         self.assertEqual(len(assigned), len(expected))
         roots = [json.loads(line) for file in run.glob("closures.*.jsonl")
                  for line in file.read_text().splitlines()]
         self.assertEqual({(row["owner"], row["name"]) for row in roots if row["name"] == "main"},
-                         {(module, "main") for module in scripts + ["Test.Data.Json"]})
+                         {(module, "main") for module in scripts + ["TestPurelib.Data.Json"]})
         activity = json.loads((self.root / "worker-activity.json").read_text())
         self.assertEqual(activity["active"], 0)
         self.assertGreaterEqual(activity["maximum"], 1)
@@ -363,7 +376,7 @@ class AuditScriptTests(unittest.TestCase):
                 for line in file.read_text().splitlines()]
         self.assertEqual(sorted(rows, key=lambda row: row['scanned_module']), [
             {"scanned_module": module, "name": module + ".irFixture", "kernel_ConstantInfo": False}
-            for module in ("Purelib.Target", "Test.Data.Rat.Fraction.RegressionMain")])
+            for module in ("Purelib.Target", "TestPurelib.Data.Rat.Fraction.RegressionMain")])
         worker = json.loads((run / "worker.0.json").read_text())
         self.assertEqual(worker["report_ir_only"], "true")
         self.assertEqual(worker["all_helpers"], "false")

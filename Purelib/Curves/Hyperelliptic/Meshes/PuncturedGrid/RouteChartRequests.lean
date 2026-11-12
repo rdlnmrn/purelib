@@ -1,4 +1,6 @@
 module
+import Purelib.Curves.Hyperelliptic.Differentials.OddPower.Ordinary
+import Purelib.Riemann.Readings.PreparedPrimitiveSamples.Numerator
 import Purelib.Data.Nat.Order
 meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Data.Rat.Fraction
@@ -52,6 +54,8 @@ primitive bank. The finite charge includes both occurrence-count factors. -/
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid
 
+open Purelib.Topology.Surface
+open Purelib.Approximation.Rational
 open Purelib.Approximation
 open Purelib.Curves
 open Purelib.Data
@@ -59,35 +63,36 @@ open Purelib.Data.Rat
 open Purelib.Riemann
 open Purelib.RootIsolation
 open Purelib
-
 open Purelib.Topology.Polygon.Stokes
+open Purelib.Curves.Hyperelliptic.Differentials.OddPower.Basic.OddPowerDifferential (Ordinary)
+open Purelib.Riemann.Readings
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
+  {frames : SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
       SquareRoot.Grid.LiftedVertices.VertexBank
     base.bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
   {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames base.faces.regulars}
-    {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {word : List (Topology.Polygon.Stokes.OrientedEdge vertices.count)}
+  {domains : Face.DomainBanks.FaceDomainBank frames base.faces.regulars}
+    {differential : Differentials.Basic.Differential genus}
+  {word : List (OrientedEdge vertices.count)}
 
 namespace RouteChartRequests
 
 /-- An actual retained edge route supplies support for its original edge or reversal in the triangulation. -/
-theorem route_supported {edge : Topology.Polygon.Stokes.OrientedEdge vertices.count} (route :
-  Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute mesh edge) :
+theorem route_supported {edge : OrientedEdge vertices.count} (route :
+  MeshPathWalks.EdgeRoute mesh edge) :
     edge ∈ Topology.Polygon.Stokes.triangleEdgeOccurrences mesh.triangulation.faces ∨ edge.reverse ∈
       Topology.Polygon.Stokes.triangleEdgeOccurrences mesh.triangulation.faces := by
   cases route with
   | forward location =>
     exact Or.inl (location.sourceEdge_project ▸ Topology.Mesh.TriangleSourceUniqueness.SourceEdge.member
-      (Hyperelliptic.Meshes.PuncturedGrid.TriangleSourceUniqueness.LiftedFaces.EdgeLocation.sourceEdge_positive
+      (TriangleSourceUniqueness.LiftedFaces.EdgeLocation.sourceEdge_positive
         location))
   | backward location =>
     exact Or.inr (location.sourceEdge_project ▸ Topology.Mesh.TriangleSourceUniqueness.SourceEdge.member
-      (Hyperelliptic.Meshes.PuncturedGrid.TriangleSourceUniqueness.LiftedFaces.EdgeLocation.sourceEdge_positive
+      (TriangleSourceUniqueness.LiftedFaces.EdgeLocation.sourceEdge_positive
         location))
 
 -- Retain the original nominal RouteChartRequests.RouteChartRequests identity.
@@ -99,26 +104,29 @@ set_option genInjectivity false in
 
 The empty constructor retains the original empty word. Each nonempty constructor
 keeps its original route comparison and the unchanged dependent request tail. -/
-inductive RouteChartRequests (differential : Hyperelliptic.Differentials.Basic.Differential genus) (domains :
-  Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames base.faces.regulars)
+inductive RouteChartRequests (differential : Differentials.Basic.Differential genus) (domains :
+  Face.DomainBanks.FaceDomainBank frames base.faces.regulars)
     (allowance : Fraction.Rational) :
-    {word : List (Topology.Polygon.Stokes.OrientedEdge vertices.count)} →
-      Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh word → Type 2 where
-  /-- The empty original route word requires no chart changes. -/ | nil :
+    {word : List (OrientedEdge vertices.count)} →
+      MeshPathWalks.RouteSpine mesh word →
+      (polynomial : optParam (Option (Ordinary curve.polynomial)) none) → Type 2 where
+  /-- The empty original route word requires no chart changes. -/ | nil
+      {polynomial : Option (Ordinary curve.polynomial)} :
     RouteChartRequests differential domains
-    allowance .nil
+    allowance .nil polynomial
   /-- Retain the original head route's canonical chart comparison together with the exact tail requests. -/ | cons {edge
-    : Topology.Polygon.Stokes.OrientedEdge vertices.count} {word : List (Topology.Polygon.Stokes.OrientedEdge
+    : OrientedEdge vertices.count} {word : List (OrientedEdge
     vertices.count)}
-      (first : Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute mesh edge) (rest :
-        Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh word)
-      (request : Hyperelliptic.Meshes.PuncturedGrid.RouteChartContacts.ChartRequest first
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.orderedRoute mesh edge
-        (Hyperelliptic.Meshes.PuncturedGrid.RouteChartRequests.route_supported first)) differential domains allowance)
+      {polynomial : Option (Ordinary curve.polynomial)}
+      (first : MeshPathWalks.EdgeRoute mesh edge) (rest :
+        MeshPathWalks.RouteSpine mesh word)
+      (request : RouteChartContacts.ChartRequest first
+        (CanonicalEdgeValues.orderedRoute mesh edge
+        (RouteChartRequests.route_supported first)) differential domains allowance polynomial)
       (remaining : RouteChartRequests differential
-        domains allowance rest) :
+        domains allowance rest polynomial) :
       RouteChartRequests differential domains
-        allowance (.cons first rest)
+        allowance (.cons first rest) polynomial
 
 -- Retain the original constructor certificate names for this nominal owner.
 
@@ -126,41 +134,119 @@ constructive_injectivity RouteChartRequests
 
 namespace RouteChartRequests
 
-variable {allowance : Fraction.Rational} {assigned : Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh
+variable {allowance : Fraction.Rational} {assigned : MeshPathWalks.RouteSpine mesh
   word}
 
 -- Retain the original operation name on RouteChartRequests.RouteChartRequests.
 /-- Prepare each original route's canonical chart comparison at the shared positive local allowance. -/
-@[expose] def build (differential : Hyperelliptic.Differentials.Basic.Differential genus) (domains :
-  Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames base.faces.regulars)
+@[expose] def build (differential : Differentials.Basic.Differential genus) (domains :
+  Face.DomainBanks.FaceDomainBank frames base.faces.regulars)
     (allowance : Fraction.Rational) (positive : 0 < allowance) :
-    {word : List (Topology.Polygon.Stokes.OrientedEdge vertices.count)} → (assigned :
-      Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh word) →
+    {word : List (OrientedEdge vertices.count)} → (assigned :
+      MeshPathWalks.RouteSpine mesh word) →
       RouteChartRequests differential domains allowance assigned
   | _, .nil => .nil
   | _, .cons first rest => .cons first rest
-    (Hyperelliptic.Meshes.PuncturedGrid.RouteChartContacts.ChartRequest.build first
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.orderedRoute mesh _
-      (Hyperelliptic.Meshes.PuncturedGrid.RouteChartRequests.route_supported first)) differential domains allowance
+    (RouteChartContacts.ChartRequest.build first
+      (CanonicalEdgeValues.orderedRoute mesh _
+      (RouteChartRequests.route_supported first)) differential domains allowance
       positive)
     (build differential domains
       allowance positive rest)
 
 -- Retain the original operation name on RouteChartRequests.RouteChartRequests.
 /-- The maximum sufficient chart-change stage over the original route word. -/
-@[expose] def index : {word : List (Topology.Polygon.Stokes.OrientedEdge vertices.count)} → {assigned :
-  Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh word} →
-    RouteChartRequests differential domains allowance assigned →
+@[expose] def index {polynomial : Option (Ordinary curve.polynomial)} :
+    {word : List (OrientedEdge vertices.count)} → {assigned :
+  MeshPathWalks.RouteSpine mesh word} →
+    RouteChartRequests differential domains allowance assigned polynomial →
       Nat
   | _, _, .nil => 0
   | _, _, .cons _ _ request rest => max request.index rest.index
 
+/-- Reallocate numerical budgets on the SAME ordered route/contact preparations.
+
+Every actual route, source identity and prepared contact is forwarded.
+Only the supplied positive allowance and polynomial budgets are selected;
+no source classification, contact geometry or observation is repeated.
+-/
+def rebudget {previous : Fraction.Rational} {previousPolynomial : Option (Ordinary curve.polynomial)}
+    (allowance : Fraction.Rational) (positive : 0 < allowance)
+    (polynomial : Option (Ordinary curve.polynomial) := none) :
+    {word : List (OrientedEdge vertices.count)} → {assigned : MeshPathWalks.RouteSpine mesh word} →
+      RouteChartRequests differential domains previous assigned previousPolynomial →
+      RouteChartRequests differential domains allowance assigned polynomial
+  | _, _, .nil => .nil
+  | _, _, .cons first rest request remaining =>
+      let head := request.rebudget allowance positive polynomial
+      let tail := rebudget allowance positive polynomial remaining
+      .cons first rest head tail
+
+/-- The original ordered post-bank contact caches on the literal supplied primitive bank.
+
+Exact chart agreements keep their trivial cache. Contact occurrences keep
+the actual full-numerator common-model comparisons, with independent
+source/face floors, anchors and offsets, in their original signed order.
+-/
+@[expose] def Comparisons {polynomial : Option (Ordinary curve.polynomial)}
+    {word : List (OrientedEdge vertices.count)} {assigned : MeshPathWalks.RouteSpine mesh word}
+    (requests : RouteChartRequests differential domains allowance assigned polynomial) {stage : Nat}
+    (shared : Face.PrimitiveData.FacePrimitiveBank differential stage domains
+      (numerator := PreparedPrimitiveSamples.numerator curve.polynomial differential polynomial)) : Type 2 :=
+  match requests with
+  | .nil => PUnit
+  | .cons _ _ request remaining => request.Comparison shared × remaining.Comparisons shared
+
+/-- Execute each retained contact comparison once on the GIVEN primitive bank, preserving its exact request tail. -/
+def compare {polynomial : Option (Ordinary curve.polynomial)}
+    {word : List (OrientedEdge vertices.count)} {assigned : MeshPathWalks.RouteSpine mesh word}
+    (requests : RouteChartRequests differential domains allowance assigned polynomial) {stage : Nat}
+    (shared : Face.PrimitiveData.FacePrimitiveBank differential stage domains
+      (numerator := PreparedPrimitiveSamples.numerator curve.polynomial differential polynomial)) :
+    requests.Comparisons shared :=
+  match requests with
+  | .nil => ⟨⟩
+  | .cons _ _ request remaining =>
+      let head := request.compare shared
+      let tail := remaining.compare shared
+      ⟨head, tail⟩
+
+/-- Actual cached comparisons pay every retained chart discrepancy at a sufficient common stage.
+
+The finite sum keeps one term per original route occurrence, including
+repeated and reversed occurrences. The numerator comes from the literal
+supplied polynomial specification and is independent of sheet orientation.
+-/
+theorem comparison_errors_bound {polynomial : Option (Ordinary curve.polynomial)}
+    (requests : RouteChartRequests differential domains allowance assigned polynomial)
+    {stage : Nat} (later : requests.index ≤ stage)
+    {shared : Face.PrimitiveData.FacePrimitiveBank differential stage domains
+      (numerator := PreparedPrimitiveSamples.numerator curve.polynomial differential polynomial)}
+    (compared : requests.Comparisons shared)
+    (readings : TrianglePrimitiveReadings.TriangleReadings shared mesh) :
+    Gaussian.Norm.Sum.Basic.gaussianNormSqSum (assigned.values fun edge route => route.sourceEdge.increment
+      readings.values - CanonicalEdgeValues.edgeValuation mesh readings.values edge) ≤
+      (word.length : Fraction.Rational) * allowance := by
+  induction requests with
+  | nil =>
+      change (0 : Fraction.Rational) ≤ 0 * allowance
+      rewrite [Fraction.Field.zero_mul_direct allowance]
+      exact Fraction.Order.Basic.le_refl 0
+  | cons first rest request remaining ih =>
+      have head := request.comparison_accurate ((Nat.Order.le_max_left _ _).trans later) compared.1 readings
+      rw [CanonicalEdgeValues.orderedRoute_value, Gaussian.Norm.Basic.normSq_eq_canonical] at head
+      have tail := ih ((Nat.Order.le_max_right _ _).trans later) compared.2 readings
+      change Gaussian.Basic.Canonical.normSq (_ - _) + Gaussian.Norm.Sum.Basic.gaussianNormSqSum _ ≤ _
+      exact (Fraction.Order.Arithmetic.add_le_add_direct head.le tail).trans_eq (by
+        simp only [List.length_cons, Nat.cast_succ]
+        ring1)
+
 -- Retain the original operation name on RouteChartRequests.RouteChartRequests.
 /-- There is exactly one retained chart-change discrepancy per original word occurrence. -/
 theorem errors_length (values : Fin mesh.triangles.length → Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues 3)
-  (assigned : Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh word) :
+  (assigned : MeshPathWalks.RouteSpine mesh word) :
     (assigned.values fun edge route => route.sourceEdge.increment values -
-      Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh values edge).length =
+      CanonicalEdgeValues.edgeValuation mesh values edge).length =
       word.length := by
   induction assigned with
   | nil => rfl
@@ -172,23 +258,13 @@ count times its allowance. -/
 theorem errors_bound (requests : RouteChartRequests differential
   domains allowance assigned)
     {stage : Nat} (later : requests.index ≤ stage) {shared :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential stage domains}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared mesh) :
+      Face.PrimitiveData.FacePrimitiveBank differential stage domains}
+    (readings : TrianglePrimitiveReadings.TriangleReadings shared mesh) :
     Gaussian.Norm.Sum.Basic.gaussianNormSqSum (assigned.values fun edge route => route.sourceEdge.increment
-      readings.values - Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh readings.values edge)
+      readings.values - CanonicalEdgeValues.edgeValuation mesh readings.values edge)
       ≤
       (word.length : Fraction.Rational) * allowance := by
-  induction requests with
-  | nil => change (0 : Fraction.Rational) ≤ 0 * allowance; rw [zero_mul]
-  | cons first rest request remaining ih =>
-    have head := request.accurate ((Data.Nat.Order.le_max_left _ _).trans later) readings
-    rw [Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.orderedRoute_value] at head
-    rw [Gaussian.Norm.Basic.normSq_eq_canonical] at head
-    have tail := ih ((Data.Nat.Order.le_max_right _ _).trans later)
-    change Gaussian.Basic.Canonical.normSq (_ - _) + Gaussian.Norm.Sum.Basic.gaussianNormSqSum _ ≤ _
-    exact (add_le_add head.le tail).trans_eq (by
-      simp only [List.length_cons, Nat.cast_succ]
-      ring1)
+  exact requests.comparison_errors_bound (polynomial := none) later (requests.compare shared) readings
 
 end RouteChartRequests
 
@@ -199,16 +275,16 @@ set_option genInjectivity false in
 
 The original per-term allowance pays every signed occurrence. The cached common
 stage equals the maximum of the retained requests and remains independent of the final primitive-polynomial index. -/
-structure RouteChartRequest (assigned : Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh word)
-  (differential : Hyperelliptic.Differentials.Basic.Differential genus)
-    (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames base.faces.regulars) (target :
-      Fraction.Rational) where
+structure RouteChartRequest (assigned : MeshPathWalks.RouteSpine mesh word)
+  (differential : Differentials.Basic.Differential genus)
+    (domains : Face.DomainBanks.FaceDomainBank frames base.faces.regulars) (target :
+      Fraction.Rational) (polynomial : Option (Ordinary curve.polynomial) := none) where
   /-- The requested whole-word chart error is positive. -/ positive : 0 < target
   /-- The retained local chart-change allowance. -/ allowance : Fraction.Rational
   /-- The allowance is the original count-paid whole-word allocation. -/ allowance_eq : allowance =
-    Rational.Budget.Aggregate.perTerm target word.length
+    Budget.Aggregate.perTerm target word.length
   /-- The actual retained route-by-route chart comparisons. -/ requests :
-    RouteChartRequests differential domains allowance assigned
+    RouteChartRequests differential domains allowance assigned polynomial
   /-- The cached common sufficient chart-change stage. -/ index : Nat
   /-- The stage is exactly the maximum of the original retained requests. -/ index_eq : index = requests.index
 
@@ -218,28 +294,28 @@ end RouteChartRequests
 
 namespace RouteChartRequests.RouteChartRequest
 
-variable {assigned : Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh word} {target : Fraction.Rational}
+variable {assigned : MeshPathWalks.RouteSpine mesh word} {target : Fraction.Rational}
 
 /-- Allocate the original word target and cache each route comparison with one sufficient shared stage. -/
-@[expose] def build (assigned : Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh word) (differential :
-  Hyperelliptic.Differentials.Basic.Differential genus)
-    (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames base.faces.regulars) (target :
+@[expose] def build (assigned : MeshPathWalks.RouteSpine mesh word) (differential :
+  Differentials.Basic.Differential genus)
+    (domains : Face.DomainBanks.FaceDomainBank frames base.faces.regulars) (target :
       Fraction.Rational) (positive : 0 < target) :
-    Hyperelliptic.Meshes.PuncturedGrid.RouteChartRequests.RouteChartRequest assigned differential domains target :=
-  let allowance := Rational.Budget.Aggregate.perTerm target word.length
+    RouteChartRequest assigned differential domains target :=
+  let allowance := Budget.Aggregate.perTerm target word.length
   let requests := RouteChartRequests.build differential domains
     allowance
-    (Rational.Budget.Aggregate.perTerm_positive positive _) assigned
+    (Budget.Aggregate.perTerm_positive positive _) assigned
   ⟨positive, allowance, rfl, requests, requests.index, rfl⟩
 
 /-- The full original count-weighted sum of actual chart errors is strictly below the requested target. -/
-theorem charge_lt (request : Hyperelliptic.Meshes.PuncturedGrid.RouteChartRequests.RouteChartRequest assigned
+theorem charge_lt (request : RouteChartRequest assigned
   differential domains target)
     {stage : Nat} (later : request.index ≤ stage) {shared :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential stage domains}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared mesh) :
+      Face.PrimitiveData.FacePrimitiveBank differential stage domains}
+    (readings : TrianglePrimitiveReadings.TriangleReadings shared mesh) :
     let changes := assigned.values fun edge route => route.sourceEdge.increment readings.values -
-      Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh readings.values edge
+      CanonicalEdgeValues.edgeValuation mesh readings.values edge
     (changes.length : Fraction.Rational) * Gaussian.Norm.Sum.Basic.gaussianNormSqSum changes < target := by
   dsimp only
   rw [errors_length]
@@ -248,16 +324,16 @@ theorem charge_lt (request : Hyperelliptic.Meshes.PuncturedGrid.RouteChartReques
     (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le word.length))
   apply paid.trans_lt
   rw [request.allowance_eq]
-  exact Rational.Budget.Aggregate.count_mul_perTerm_lt request.positive _
+  exact Budget.Aggregate.count_mul_perTerm_lt request.positive _
 
 /-- The retained discrepancy sum equals the original assigned-route sum minus the canonical word valuation. -/
-private theorem errors_sum (assigned : Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh word)
+private theorem errors_sum (assigned : MeshPathWalks.RouteSpine mesh word)
     (values : Fin mesh.triangles.length → Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues 3) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (assigned.values fun edge route => route.sourceEdge.increment values -
-      Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh values edge) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (assigned.values fun _ route => route.sourceEdge.increment values) -
-        Topology.Surface.Sewing.SewingRetraction.wordValue
-          (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh values) word := by
+    Gaussian.Norm.Sum.Basic.gaussianSum (assigned.values fun edge route => route.sourceEdge.increment values -
+      CanonicalEdgeValues.edgeValuation mesh values edge) =
+      Gaussian.Norm.Sum.Basic.gaussianSum (assigned.values fun _ route => route.sourceEdge.increment values) -
+        Sewing.SewingRetraction.wordValue
+          (CanonicalEdgeValues.edgeValuation mesh values) word := by
   induction assigned with
   | nil => change (0 : Gaussian.Basic.Canonical) = 0 - 0; ring1
   | cons first rest ih =>
@@ -267,28 +343,175 @@ private theorem errors_sum (assigned : Hyperelliptic.Meshes.PuncturedGrid.MeshPa
 
 /-- The canonical original word valuation approximates its assigned-route readings within the retained whole-word
 target. -/
-theorem accurate (request : Hyperelliptic.Meshes.PuncturedGrid.RouteChartRequests.RouteChartRequest assigned
+theorem accurate (request : RouteChartRequest assigned
   differential domains target)
     {stage : Nat} (later : request.index ≤ stage) {shared :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential stage domains}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared mesh) :
-    Data.Gaussian.Norm.Basic.normSq (Topology.Surface.Sewing.SewingRetraction.wordValue
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh readings.values) word -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (assigned.values fun _ route => route.sourceEdge.increment
+      Face.PrimitiveData.FacePrimitiveBank differential stage domains}
+    (readings : TrianglePrimitiveReadings.TriangleReadings shared mesh) :
+    Gaussian.Norm.Basic.normSq (Sewing.SewingRetraction.wordValue
+      (CanonicalEdgeValues.edgeValuation mesh readings.values) word -
+      Gaussian.Norm.Sum.Basic.gaussianSum (assigned.values fun _ route => route.sourceEdge.increment
         readings.values)) < target := by
   have bounded := (Gaussian.Norm.Sum.Basic.normSq_gaussianSum_le _).trans_lt (request.charge_lt later readings)
-  rw [Hyperelliptic.Meshes.PuncturedGrid.RouteChartRequests.RouteChartRequest.errors_sum] at bounded
-  rw [show Topology.Surface.Sewing.SewingRetraction.wordValue
-    (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh readings.values) word -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (assigned.values fun _ route => route.sourceEdge.increment
+  rw [RouteChartRequest.errors_sum] at bounded
+  rw [show Sewing.SewingRetraction.wordValue
+    (CanonicalEdgeValues.edgeValuation mesh readings.values) word -
+      Gaussian.Norm.Sum.Basic.gaussianSum (assigned.values fun _ route => route.sourceEdge.increment
         readings.values) =
-    -(Data.Gaussian.Norm.Sum.Basic.gaussianSum (assigned.values fun _ route => route.sourceEdge.increment
+    -(Gaussian.Norm.Sum.Basic.gaussianSum (assigned.values fun _ route => route.sourceEdge.increment
       readings.values) -
-      Topology.Surface.Sewing.SewingRetraction.wordValue
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh readings.values) word) by ring1,
+      Sewing.SewingRetraction.wordValue
+        (CanonicalEdgeValues.edgeValuation mesh readings.values) word) by ring1,
     Gaussian.Norm.Basic.normSq_neg]
   rw [Gaussian.Norm.Basic.normSq_eq_canonical]
   exact bounded
+
+/-- Select a new count-paid target on the GIVEN route/contact spine before observing its primitive bank.
+
+The retained request supplies every original route and contact preparation.
+Their genuine numerical budgets are reselected for the new allowance and
+literal polynomial; the geometry and root caches are forwarded unchanged.
+-/
+@[expose] def rebudget {previous : Fraction.Rational} {previousPolynomial : Option (Ordinary curve.polynomial)}
+    (request : RouteChartRequest assigned differential domains previous previousPolynomial)
+    (target : Fraction.Rational) (positive : 0 < target)
+    (polynomial : Option (Ordinary curve.polynomial) := none) :
+    RouteChartRequest assigned differential domains target polynomial :=
+  let allowance := Budget.Aggregate.perTerm target word.length
+  let requests := request.requests.rebudget allowance
+    (Budget.Aggregate.perTerm_positive positive word.length) polynomial
+  ⟨positive, allowance, rfl, requests, requests.index, rfl⟩
+
+/-- The retargeted chart requests are the actual rebudgeting of the original ordered spine. -/
+theorem rebudget_requests {previous : Fraction.Rational}
+    {previousPolynomial : Option (Ordinary curve.polynomial)}
+    (request : RouteChartRequest assigned differential domains previous previousPolynomial)
+    (target : Fraction.Rational) (positive : 0 < target)
+    (polynomial : Option (Ordinary curve.polynomial) := none) :
+    (request.rebudget target positive polynomial).requests = request.requests.rebudget
+      (Budget.Aggregate.perTerm target word.length)
+      (Budget.Aggregate.perTerm_positive positive word.length) polynomial := by
+  unfold rebudget
+  rfl
+
+/-- The actual post-bank contact products together with their once-read ordered discrepancies and sum.
+
+The numerical list retains the literal signed chart changes on the SAME
+triangle bank. The supplied primitive bank, its independent offsets and
+stages, the whole request and triangle readings remain actual input data.
+-/
+@[expose] def Comparisons {polynomial : Option (Ordinary curve.polynomial)}
+    (request : RouteChartRequest assigned differential domains target polynomial) {stage : Nat}
+    (shared : Face.PrimitiveData.FacePrimitiveBank differential stage domains
+      (numerator := PreparedPrimitiveSamples.numerator curve.polynomial differential polynomial))
+    (readings : TrianglePrimitiveReadings.TriangleReadings shared mesh) : Type _ :=
+  {value : RouteChartRequest assigned differential domains target polynomial ×
+      Face.PrimitiveData.FacePrimitiveBank differential stage domains
+        (numerator := PreparedPrimitiveSamples.numerator curve.polynomial differential polynomial) ×
+      TrianglePrimitiveReadings.TriangleReadings shared mesh // value = (request, shared, readings)} ×
+  (Σ _cached : {value : request.requests.Comparisons shared // value = request.requests.compare shared},
+  Σ errors : {value : List Gaussian.Basic.Canonical // value = assigned.values
+      (fun edge route => route.sourceEdge.increment readings.values -
+        CanonicalEdgeValues.edgeValuation mesh readings.values edge)},
+  {value : Gaussian.Basic.Canonical // value = Gaussian.Norm.Sum.Basic.gaussianSum errors.val})
+
+/-- Compare each retained chart contact once, then cache its actual ordered discrepancies and signed sum. -/
+def compare {polynomial : Option (Ordinary curve.polynomial)}
+    (request : RouteChartRequest assigned differential domains target polynomial) {stage : Nat}
+    (shared : Face.PrimitiveData.FacePrimitiveBank differential stage domains
+      (numerator := PreparedPrimitiveSamples.numerator curve.polynomial differential polynomial))
+    (readings : TrianglePrimitiveReadings.TriangleReadings shared mesh) : request.Comparisons shared readings :=
+  let cached : {value : request.requests.Comparisons shared // value = request.requests.compare shared} :=
+    ⟨request.requests.compare shared, rfl⟩
+  let errors : {value : List Gaussian.Basic.Canonical // value = assigned.values
+      (fun edge route => route.sourceEdge.increment readings.values -
+        CanonicalEdgeValues.edgeValuation mesh readings.values edge)} :=
+    ⟨assigned.values (fun edge route => route.sourceEdge.increment readings.values -
+      CanonicalEdgeValues.edgeValuation mesh readings.values edge), rfl⟩
+  let total : {value : Gaussian.Basic.Canonical // value = Gaussian.Norm.Sum.Basic.gaussianSum errors.val} :=
+    ⟨Gaussian.Norm.Sum.Basic.gaussianSum errors.val, rfl⟩
+  ⟨⟨(request, shared, readings), rfl⟩, cached, errors, total⟩
+
+namespace Comparisons
+
+variable {polynomial : Option (Ordinary curve.polynomial)}
+    {request : RouteChartRequest assigned differential domains target polynomial} {stage : Nat}
+    {shared : Face.PrimitiveData.FacePrimitiveBank differential stage domains
+      (numerator := PreparedPrimitiveSamples.numerator curve.polynomial differential polynomial)}
+    {readings : TrianglePrimitiveReadings.TriangleReadings shared mesh}
+    (kept : request.Comparisons shared readings)
+
+/-- Read the SAME original request, primitive bank and complete triangle readings. -/
+@[expose] def inputs := kept.1.val
+
+/-- The complete original numerical input owners remain the literal supplied caches. -/
+theorem inputs_eq : kept.inputs = (request, shared, readings) := kept.1.property
+
+/-- Read the once-executed original ordered contact comparison products. -/
+@[expose] def cached : request.requests.Comparisons shared := kept.2.1.val
+
+/-- The retained ordered cache has its one original post-bank factory. -/
+theorem cached_eq : kept.cached = request.requests.compare shared := kept.2.1.property
+
+/-- Read the actual ordered signed chart discrepancies without evaluating them again. -/
+@[expose] def errors : List Gaussian.Basic.Canonical := kept.2.2.1.val
+
+/-- The discrepancy list reads the original assigned routes and the SAME canonical triangle bank. -/
+theorem errors_eq : kept.errors = assigned.values
+    (fun edge route => route.sourceEdge.increment readings.values -
+      CanonicalEdgeValues.edgeValuation mesh readings.values edge) := kept.2.2.1.property
+
+/-- Read the cached signed discrepancy sum without another numerical fold. -/
+@[expose] def sum : Gaussian.Basic.Canonical := kept.2.2.2.val
+
+/-- The cached chart residual is the literal sum of its retained ordered changes. -/
+theorem sum_eq : kept.sum = Gaussian.Norm.Sum.Basic.gaussianSum kept.errors := kept.2.2.2.property
+
+/-- Every original route occurrence contributes one retained signed chart discrepancy. -/
+theorem errors_length : kept.errors.length = word.length :=
+  (congrArg List.length kept.errors_eq).trans (RouteChartRequests.errors_length readings.values assigned)
+
+end Comparisons
+
+/-- Actual retained common-model comparisons pay the whole canonical chart-change target.
+
+Both occurrence-count factors are paid by the original positive per-term
+allocation. The signed residual is the retained discrepancy list on the
+same primitive/triangle bank, with no zero-gap or common-offset assumption.
+-/
+theorem comparison_accurate {polynomial : Option (Ordinary curve.polynomial)}
+    (request : RouteChartRequest assigned differential domains target polynomial)
+    {stage : Nat} (later : request.index ≤ stage)
+    {shared : Face.PrimitiveData.FacePrimitiveBank differential stage domains
+      (numerator := PreparedPrimitiveSamples.numerator curve.polynomial differential polynomial)}
+    {readings : TrianglePrimitiveReadings.TriangleReadings shared mesh}
+    (kept : request.Comparisons shared readings) :
+    Gaussian.Norm.Basic.normSq (Sewing.SewingRetraction.wordValue
+      (CanonicalEdgeValues.edgeValuation mesh readings.values) word -
+      Gaussian.Norm.Sum.Basic.gaussianSum (assigned.values fun _ route => route.sourceEdge.increment
+        readings.values)) < target := by
+  have bound := request.requests.comparison_errors_bound (request.index_eq ▸ later) kept.cached readings
+  have paid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct bound
+    (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le word.length))
+  have strict : (word.length : Fraction.Rational) *
+      Gaussian.Norm.Sum.Basic.gaussianNormSqSum kept.errors < target := by
+    rewrite [kept.errors_eq]
+    apply paid.trans_lt
+    rewrite [request.allowance_eq]
+    exact Budget.Aggregate.count_mul_perTerm_lt request.positive _
+  have total := (Gaussian.Norm.Sum.Basic.normSq_gaussianSum_le kept.errors).trans_lt (by
+    rewrite [kept.errors_length]
+    exact strict)
+  rewrite [kept.errors_eq, RouteChartRequest.errors_sum] at total
+  rewrite [show Sewing.SewingRetraction.wordValue
+      (CanonicalEdgeValues.edgeValuation mesh readings.values) word -
+      Gaussian.Norm.Sum.Basic.gaussianSum (assigned.values fun _ route => route.sourceEdge.increment
+        readings.values) =
+      -(Gaussian.Norm.Sum.Basic.gaussianSum (assigned.values fun _ route => route.sourceEdge.increment
+        readings.values) - Sewing.SewingRetraction.wordValue
+          (CanonicalEdgeValues.edgeValuation mesh readings.values) word) by ring1,
+    Gaussian.Norm.Basic.normSq_neg, Gaussian.Norm.Basic.normSq_eq_canonical]
+  exact total
 
 end RouteChartRequests.RouteChartRequest
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid

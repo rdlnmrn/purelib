@@ -87,36 +87,36 @@ open Purelib.Data.Rat
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
-variable {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
-  {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {target coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
+variable {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {retained : Preparation.CommonBasisPreparation prepared}
+  {basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {target coefficientTarget : InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
     energyFloor radialDepth : Nat}
-  {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+  {box : Rational.Box} {capSample : Charts.Reciprocal.Cap.Primitives.Sample cap
     differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 namespace CommonBasisRequest
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisRequest retained basis
+variable {request : Preparation.CommonBasisRequest retained basis
   target coefficientTarget coverFloor floor}
   {plans : request.Plans capSample polynomials minimum} {inputs : retained.Inputs index}
-  {readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
+  {readings : Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
     request.schedule.bank plans inputs stage}
 
-variable {fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.FanPreparation request
+variable {fans : Connection.CommonBasisRequest.FanPreparation request
   plans inputs readings energyFloor}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -126,36 +126,36 @@ open Purelib.Topology.Polygon.Stokes (PrimitivePoint)
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable (sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.Sampled fans
+variable (sample : Connection.CommonBasisRequest.Sampled fans
   coefficients radialDepth) (comparisons :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
+  CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
   sample)
   {faceIndex : Nat} (banks : PhysicalRunEntries
     retained inputs coefficients faceIndex)
 
 /-- Source-oriented paths are read directly from the retained occurrence banks. -/
 @[expose] def physicalPaths (outer : Fin prepared.occurrences.length)
-    (position : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (position : Fin (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length) : List PrimitivePoint :=
   (banks.get outer).bank.physical position
 
 /-- Every certificate retains the exact prepared source and physical path of
 its occurrence and parent, at the computed homogeneous parent target. -/
-@[expose] def PreparedPhysicalRows (magnitude requested : Normalization.InverseRootPolynomial.Coordinate) :=
-  Data.Vector.DependentVector (fun outer : Fin prepared.occurrences.length =>
-    Data.Vector.DependentVector (fun position : Fin
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+@[expose] def PreparedPhysicalRows (magnitude requested : InverseRootPolynomial.Coordinate) :=
+  Vector.DependentVector (fun outer : Fin prepared.occurrences.length =>
+    Vector.DependentVector (fun position : Fin
+      (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length =>
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PreparedPhysicalRuns.PhysicalRunBank.PreparedRun (banks.get
+      PreparedPhysicalRuns.PhysicalRunBank.PreparedRun (banks.get
         outer).bank position
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentPrepared.CommonBasisRequest.Sampled.parentPrepared
+        (ParentPrepared.CommonBasisRequest.Sampled.parentPrepared
         sample comparisons outer position)
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.HierarchicalRequest.CommonBasisRequest.Sampled.parentTarget
+        (HierarchicalRequest.CommonBasisRequest.Sampled.parentTarget
           prepared outer magnitude requested)))
 
-variable {magnitude requested : Normalization.InverseRootPolynomial.Coordinate}
+variable {magnitude requested : InverseRootPolynomial.Coordinate}
   (magnitudeEq : magnitude =
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceMagnitude.CommonBasisRequest.Sampled.parentMagnitude
+    SourceMagnitude.CommonBasisRequest.Sampled.parentMagnitude
     retained inputs)
   (positive : 0 < requested) (runs :
     PreparedPhysicalRows
@@ -166,20 +166,20 @@ include magnitudeEq positive runs
 /-- The retained parent certificates pay both levels of joining terms in the
 same component source-area expression consumed by the surface lower bound. -/
 theorem physical_area_requested (periodStage : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area
+    Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area
       (List.ofFn (fun outer => (List.ofFn
         (physicalPaths
         banks outer)).flatten)).flatten -
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonSourceArea.CommonBasisRequest.Sampled.sourceAreaAt sample
+      CommonSourceArea.CommonBasisRequest.Sampled.sourceAreaAt sample
         comparisons periodStage) ≤ requested * (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)^2
-        := open Algebra in open Data.Rat in by
+        := open Algebra in open Rat in by
   have magnitudeNN : 0 ≤ magnitude :=
     (SourceMagnitude.CommonBasisRequest.Sampled.parentMagnitude_nonnegative
     retained inputs).trans_eq magnitudeEq.symm
   have massNN : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
     (FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 :
-      Normalization.InverseRootPolynomial.Coordinate)) _
+      InverseRootPolynomial.Coordinate)) _
       (fun row => Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
   apply
     HierarchicalRequest.CommonBasisRequest.Sampled.hierarchical_area_requested
@@ -203,14 +203,14 @@ theorem physical_area_requested (periodStage : Nat) :
       (HierarchicalRequest.CommonBasisRequest.Sampled.parentTarget_le_one
       outer magnitude requested)
     have paid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceMagnitude.CommonBasisRequest.Sampled.runMagnitude_le
+      ((SourceMagnitude.CommonBasisRequest.Sampled.runMagnitude_le
         retained inputs outer position).trans_eq magnitudeEq.symm) massNN
     exact ⟨bounded.1.trans paid, bounded.2.trans paid⟩
   · intro outer position
     have bounded :=
       SourceMagnitude.CommonBasisRequest.Sampled.source_uniform_bounded
       sample comparisons outer position
-    have equal := congrArg (fun value : Normalization.InverseRootPolynomial.Coordinate => value *
+    have equal := congrArg (fun value : InverseRootPolynomial.Coordinate => value *
       Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) magnitudeEq.symm
     exact ⟨bounded.1.trans_eq equal, bounded.2.trans_eq equal⟩
 

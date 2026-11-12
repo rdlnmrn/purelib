@@ -30,16 +30,16 @@ The nonzero constant and monic translated coordinate select the original degree-
 constant and the normalized negated divisor for recursion. -/
 private theorem signedChain_rawConstant_affineVariable_cons
     {center value : Fraction.Rational} (nonzero : value ≠ 0) :
-    Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChain (Dense.Rational.Constants.RawLinear.rawConstant
-      value) (Dense.Rational.Linear.Translated.affineVariable center) =
-      Dense.Rational.Constants.RawLinear.rawConstant value ::
-        Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChain (Dense.Rational.Linear.Translated.affineVariable
+    Basic.Sturm.signedRemainderChain (Constants.RawLinear.rawConstant
+      value) (Linear.Translated.affineVariable center) =
+      Constants.RawLinear.rawConstant value ::
+        Basic.Sturm.signedRemainderChain (Linear.Translated.affineVariable
         center)
-        (-((Dense.Rational.Constants.RawLinear.rawConstant value).normalize)) :=
-  Dense.Rational.SignedRemainder.Basic.signedRemainderChain_eq_cons_of_degree_lt
-    (Dense.Rational.Constants.RawLinear.rawConstant_isZero_false nonzero)
-    (Dense.Rational.Linear.Translated.affineVariable_isZero_false center)
-    (Dense.Rational.Linear.Translated.rawConstant_natDegree_lt_affineVariable nonzero)
+        (-((Constants.RawLinear.rawConstant value).normalize)) :=
+  Basic.signedRemainderChain_eq_cons_of_degree_lt
+    (Constants.RawLinear.rawConstant_isZero_false nonzero)
+    (Linear.Translated.affineVariable_isZero_false center)
+    (Linear.Translated.rawConstant_natDegree_lt_affineVariable nonzero)
 
 /-- The signed remainder chain of a translated monic variable and nonzero constant is exactly their two-entry list.
 
@@ -47,12 +47,12 @@ The original monic coordinate and nonzero constant form the complete two-entry c
 normalized degree slot, so the algorithm stops after these two entries. -/
 public theorem signedChain_affineVariable_rawConstant
     {center value : Fraction.Rational} (nonzero : value ≠ 0) :
-    Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChain (Dense.Rational.Linear.Translated.affineVariable
-      center) (Dense.Rational.Constants.RawLinear.rawConstant value) =
-      [Dense.Rational.Linear.Translated.affineVariable center, Dense.Rational.Constants.RawLinear.rawConstant value] :=
-  Dense.Rational.SignedRemainder.Basic.signedRemainderChain_eq_pair_of_second_degreeCount_one
-    (Dense.Rational.Constants.RawLinear.rawConstant_isZero_false nonzero)
-    (Dense.Rational.Constants.RawLinear.rawConstant_degreeCount nonzero)
+    Basic.Sturm.signedRemainderChain (Linear.Translated.affineVariable
+      center) (Constants.RawLinear.rawConstant value) =
+      [Linear.Translated.affineVariable center, Constants.RawLinear.rawConstant value] :=
+  Basic.signedRemainderChain_eq_pair_of_second_degreeCount_one
+    (Constants.RawLinear.rawConstant_isZero_false nonzero)
+    (Constants.RawLinear.rawConstant_degreeCount nonzero)
 
 /-- The signed remainder chain of a nonzero constant and translated variable has three entries, ending in the negated
 normalized constant.
@@ -61,13 +61,13 @@ The original nonzero constant is emitted before the monic coordinate. The final 
 normalization of that same constant table. -/
 public theorem signedChain_rawConstant_affineVariable
     {center value : Fraction.Rational} (nonzero : value ≠ 0) :
-    Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChain (Dense.Rational.Constants.RawLinear.rawConstant
-      value) (Dense.Rational.Linear.Translated.affineVariable center) =
-      [Dense.Rational.Constants.RawLinear.rawConstant value, Dense.Rational.Linear.Translated.affineVariable center,
-        -((Dense.Rational.Constants.RawLinear.rawConstant value).normalize)] := by
-  rw [Dense.Rational.SignedRemainder.Linear.Translated.signedChain_rawConstant_affineVariable_cons nonzero]
-  rw [Dense.Rational.SignedRemainder.Basic.signedRemainderChain_eq_pair_of_second_degreeCount_one
-    (Dense.Rational.Constants.RawLinear.negNormalizedRawConstant_isZero_false nonzero)
-    (Dense.Rational.Constants.RawLinear.negNormalizedRawConstant_degreeCount nonzero)]
+    Basic.Sturm.signedRemainderChain (Constants.RawLinear.rawConstant
+      value) (Linear.Translated.affineVariable center) =
+      [Constants.RawLinear.rawConstant value, Linear.Translated.affineVariable center,
+        -((Constants.RawLinear.rawConstant value).normalize)] := by
+  rw [signedChain_rawConstant_affineVariable_cons nonzero]
+  rw [Basic.signedRemainderChain_eq_pair_of_second_degreeCount_one
+    (Constants.RawLinear.negNormalizedRawConstant_isZero_false nonzero)
+    (Constants.RawLinear.negNormalizedRawConstant_degreeCount nonzero)]
 
 end Purelib.Polynomial.Dense.Rational.SignedRemainder.Linear.Translated

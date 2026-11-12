@@ -32,24 +32,27 @@ namespace Purelib.LinearAlgebra.Matrix.Schur
 universe u
 variable {K : Type*} [CommRing K]
 
-/-- Compute the fraction-free Schur complement at the leading matrix entry.
+/-- Compute the fraction-free Schur rectangle at its leading entry.
 
-Each tail entry is multiplied by that pivot and corrected by the corresponding column-row product. -/
-def schur (matrix : SquareMatrix K (n + 1)) : SquareMatrix
-  K n :=
-  SquareMatrix.matrixOfFn fun row column =>
+The two independently bounded tail dimensions retain the original coefficient
+entries. Every tail entry is scaled by the same leading pivot and corrected by
+the original column-row product.
+-/
+def schur {rows columns : Nat}
+    (matrix : SquareMatrix.Rectangular K (rows + 1) (columns + 1)) :
+    SquareMatrix.Rectangular K rows columns :=
+  SquareMatrix.Rectangular.ofFn fun row column =>
     SquareMatrix.Blocks.head matrix * SquareMatrix.Blocks.tail matrix row column -
       SquareMatrix.Blocks.leftColumn matrix row * SquareMatrix.Blocks.topRow matrix column
 
-/-- The Schur matrix evaluated at one displayed entry. -/
-theorem schur_apply {n : Nat} (matrix : SquareMatrix K (n
-  + 1))
-    (row column : Fin n) :
-    SquareMatrix.Schur.schur matrix row column =
+/-- Read the original scaled tail entry and column-row correction of the Schur rectangle. -/
+theorem schur_apply {rows columns : Nat}
+    (matrix : SquareMatrix.Rectangular K (rows + 1) (columns + 1))
+    (row : Fin rows) (column : Fin columns) :
+    schur matrix row column =
       SquareMatrix.Blocks.head matrix * SquareMatrix.Blocks.tail matrix row column -
         SquareMatrix.Blocks.leftColumn matrix row * SquareMatrix.Blocks.topRow matrix column := by
-  unfold SquareMatrix.Schur.schur
-  rw [SquareMatrix.matrixOfFn_apply]
+  exact SquareMatrix.Rectangular.ofFn_apply _ _ _
 
 /-- Express the Schur complement action as a scaled tail action minus the column correction. -/
 theorem matrixVector_schur {n : Nat} (matrix :
@@ -122,8 +125,7 @@ theorem vectorMatrix_schur {n : Nat} (vector :
         SquareMatrix.Blocks.leftColumn matrix i * SquareMatrix.Blocks.topRow matrix column))
     (fun i => by
       rw [Data.Vector.Basic.vectorOfFn_apply]
-      unfold SquareMatrix.Schur.schur
-      rw [SquareMatrix.matrixOfFn_apply])]
+      rw [SquareMatrix.Schur.schur_apply])]
   calc
     FiniteSum.Fin.sumFin (fun i => vector i *
         (SquareMatrix.Blocks.head matrix * SquareMatrix.Blocks.tail matrix i column -

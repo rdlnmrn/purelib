@@ -61,6 +61,8 @@ import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Algebra
@@ -118,10 +120,10 @@ open Purelib.Data.Gaussian.Norm.Basic (normSq_conj)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_sub sumFin_mul_left)
 open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
-attribute [local congr] Purelib.Algebra.FiniteSum.Fin.sumFin_congr
+attribute [local congr] FiniteSum.Fin.sumFin_congr
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -138,61 +140,61 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     grid.faces.regulars}
   {newSheet : Fin 2} {excision : AllHoleExcision grid
     current}
-  {magnitudes : Purelib.Data.Vector.DependentVector (fun basis : Fin genus =>
+  {magnitudes : Data.Vector.DependentVector (fun basis : Fin genus =>
     FaceMagnitudeBank domains
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential basis))}
+    (PeriodMatrix.standardDifferential basis))}
   {error : Rational} {floor stage : Nat}
-  {cache : Purelib.Data.Vector.DependentVector (fun basis : Fin genus =>
+  {cache : Data.Vector.DependentVector (fun basis : Fin genus =>
     FacePrimitiveBank
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential basis) stage domains)}
-  {triangles : Purelib.Data.Vector.DependentVector (fun basis : Fin genus =>
+    (PeriodMatrix.standardDifferential basis) stage domains)}
+  {triangles : Data.Vector.DependentVector (fun basis : Fin genus =>
     TriangleReadings (cache.get basis)
     current.mesh)}
   {surfaces : EnergySurfaces current.cutPolygon.patch (fun basis
     => (triangles.get basis).values)}
   {pairs : EnergyPairs surfaces}
-  {request : Purelib.Curves.Hyperelliptic.Meshes.Newton.HomogeneousPhysicalComparison.Request prepared newSheet excision
+  {request : HomogeneousPhysicalComparison.Request prepared newSheet excision
     magnitudes error floor}
 
 /-- Pairwise comparison budgets are independent of the coefficient vector. The contraction retains all canonical
 component polygons and terminal-product errors. -/
 theorem Samples.exterior_components_bound (samples : HomogeneousPhysicalComparison.Request.Samples triangles surfaces
   pairs request)
-    {pairBound : Fraction.Rational}
+    {pairBound : Rational}
     (bounded : ∀ first second,
-      Data.Gaussian.Norm.Basic.normSq (2 * ConjugatePhysicalRequest.exterior (paired := paired) newSheet
+      Basic.normSq (2 * ConjugatePhysicalRequest.exterior (paired := paired) newSheet
         (CanonicalEdgeValues.edgeValuation current.mesh (triangles.get first).values)
         (CanonicalEdgeValues.edgeValuation current.mesh (triangles.get second).values) -
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (current.exteriorBoundaries.map (fun word =>
+        Sum.Basic.gaussianSum (current.exteriorBoundaries.map (fun word =>
           PairedIncrementArea.area (word.map (fun edge =>
             (⟨conj (CanonicalEdgeValues.edgeValuation current.mesh (triangles.get first).values edge),
               CanonicalEdgeValues.edgeValuation current.mesh (triangles.get second).values edge⟩ :
                 Stokes.PrimitivePoint)))))) ≤ pairBound)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    Data.Gaussian.Norm.Basic.normSq (2 * samples.exterior coefficients -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (current.exteriorBoundaries.map (fun word =>
+    (coefficients : GaussianVector genus) :
+    Basic.normSq (2 * samples.exterior coefficients -
+      Sum.Basic.gaussianSum (current.exteriorBoundaries.map (fun word =>
       PairedIncrementArea.area (word.map (fun edge => ConjugatePathReadback.conjugateDiagonal
         (FiniteSum.Fin.sumFin fun row => coefficients row * CanonicalEdgeValues.edgeValuation current.mesh
           (triangles.get row).values edge)))))) ≤
-      (genus : Fraction.Rational) ^ 2 * Purelib.Riemann.Readings.PreparedObservationCoercivity.coefficientNormSq
+      (genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq
         coefficients ^ 2 * pairBound := by
   let residual := fun first second => 2 * ((samples.get first).get second).exterior -
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (current.exteriorBoundaries.map (fun word =>
+    Sum.Basic.gaussianSum (current.exteriorBoundaries.map (fun word =>
           PairedIncrementArea.area (word.map (fun edge =>
             (⟨conj (CanonicalEdgeValues.edgeValuation current.mesh (triangles.get first).values edge),
               CanonicalEdgeValues.edgeValuation current.mesh (triangles.get second).values edge⟩ :
                 Stokes.PrimitivePoint)))))
-  have bounds (first second : Fin genus) : Data.Gaussian.Norm.Basic.normSq (residual first second) ≤ pairBound
+  have bounds (first second : Fin genus) : Basic.normSq (residual first second) ≤ pairBound
     := by
     dsimp only [residual]
     rw [((samples.get first).get second).exterior_eq]
     exact bounded first second
   have estimate := BilinearCombination.combination_bound (fun basis => Data.Gaussian.Basic.conj (coefficients
     basis)) coefficients residual bounds
-  rw [FiniteSum.Fin.sumFin_congr (fun basis => Data.Gaussian.Norm.Basic.normSq_conj (coefficients basis))] at estimate
+  rw [FiniteSum.Fin.sumFin_congr (fun basis => Basic.normSq_conj (coefficients basis))] at estimate
   have expanded : FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second =>
     Data.Gaussian.Basic.conj (coefficients first) * coefficients second * residual first second)) =
-      2 * samples.exterior coefficients - Data.Gaussian.Norm.Sum.Basic.gaussianSum (current.exteriorBoundaries.map
+      2 * samples.exterior coefficients - Sum.Basic.gaussianSum (current.exteriorBoundaries.map
         (fun word =>
       PairedIncrementArea.area (word.map (fun edge => ConjugatePathReadback.conjugateDiagonal
         (FiniteSum.Fin.sumFin fun row => coefficients row * CanonicalEdgeValues.edgeValuation current.mesh
@@ -202,7 +204,7 @@ theorem Samples.exterior_components_bound (samples : HomogeneousPhysicalComparis
         2 * (Data.Gaussian.Basic.conj (coefficients first) * coefficients second * ((samples.get first).get
           second).exterior) -
           Data.Gaussian.Basic.conj (coefficients first) * coefficients second *
-            Data.Gaussian.Norm.Sum.Basic.gaussianSum (current.exteriorBoundaries.map (fun word =>
+            Sum.Basic.gaussianSum (current.exteriorBoundaries.map (fun word =>
           PairedIncrementArea.area (word.map (fun edge =>
             (⟨conj (CanonicalEdgeValues.edgeValuation current.mesh (triangles.get first).values edge),
               CanonicalEdgeValues.edgeValuation current.mesh (triangles.get second).values edge⟩ :
@@ -219,57 +221,57 @@ theorem Samples.exterior_components_bound (samples : HomogeneousPhysicalComparis
           (PairedEnergyCombination.component_areas_energy_combination coefficients
             (fun row edge => CanonicalEdgeValues.edgeValuation current.mesh (triangles.get row).values edge)
             current.exteriorBoundaries).symm
-  rw [FiniteSum.Fin.sumFin_congr (fun basis => Data.Gaussian.Norm.Basic.normSq_eq_canonical (coefficients basis))]
+  rw [FiniteSum.Fin.sumFin_congr (fun basis => Basic.normSq_eq_canonical (coefficients basis))]
     at estimate
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq expanded.symm).trans_le (estimate.trans_eq (by
+  exact (congrArg Basic.normSq expanded.symm).trans_le (estimate.trans_eq (by
     unfold PreparedObservationCoercivity.coefficientNormSq; ring1))
 
 /-- A scalar budget on the basis pairs pays the energy comparison uniformly, including the zero coefficient vector. -/
 theorem Samples.exterior_components_energy_upper (samples : HomogeneousPhysicalComparison.Request.Samples triangles
   surfaces pairs request)
-    {pairBound allowance : Fraction.Rational}
+    {pairBound allowance : Rational}
     (bounded : ∀ first second,
-      Data.Gaussian.Norm.Basic.normSq (2 * ConjugatePhysicalRequest.exterior (paired := paired) newSheet
+      Basic.normSq (2 * ConjugatePhysicalRequest.exterior (paired := paired) newSheet
         (CanonicalEdgeValues.edgeValuation current.mesh (triangles.get first).values)
         (CanonicalEdgeValues.edgeValuation current.mesh (triangles.get second).values) -
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (current.exteriorBoundaries.map (fun word =>
+        Sum.Basic.gaussianSum (current.exteriorBoundaries.map (fun word =>
           PairedIncrementArea.area (word.map (fun edge =>
             (⟨conj (CanonicalEdgeValues.edgeValuation current.mesh (triangles.get first).values edge),
               CanonicalEdgeValues.edgeValuation current.mesh (triangles.get second).values edge⟩ :
                 Stokes.PrimitivePoint)))))) ≤ pairBound)
-    (nonnegative : 0 ≤ allowance) (paid : (genus : Fraction.Rational) ^ 2 * pairBound ≤ 16 * allowance ^ 2)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    (2 * samples.exterior coefficients - Data.Gaussian.Norm.Sum.Basic.gaussianSum (current.exteriorBoundaries.map
+    (nonnegative : 0 ≤ allowance) (paid : (genus : Rational) ^ 2 * pairBound ≤ 16 * allowance ^ 2)
+    (coefficients : GaussianVector genus) :
+    (2 * samples.exterior coefficients - Sum.Basic.gaussianSum (current.exteriorBoundaries.map
       (fun word =>
       PairedIncrementArea.area (word.map (fun edge => ConjugatePathReadback.conjugateDiagonal
         (FiniteSum.Fin.sumFin fun row => coefficients row * CanonicalEdgeValues.edgeValuation current.mesh
           (triangles.get row).values edge)))))).im / 4 ≤
       allowance * PreparedObservationCoercivity.coefficientNormSq coefficients := by
-  have close := Curves.Hyperelliptic.Meshes.Newton.CanonicalExteriorEnergy.Samples.exterior_components_bound samples
+  have close := Samples.exterior_components_bound samples
     bounded coefficients
   have payment := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct paid
     (Fraction.Order.Arithmetic.sq_nonneg_direct (PreparedObservationCoercivity.coefficientNormSq coefficients))
-  have scaled : (genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
+  have scaled : (genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
     pairBound ≤
       (4 * (allowance * PreparedObservationCoercivity.coefficientNormSq coefficients)) ^ 2 := by
     calc
-      _ = ((genus : Fraction.Rational) ^ 2 * pairBound) * PreparedObservationCoercivity.coefficientNormSq coefficients ^
+      _ = ((genus : Rational) ^ 2 * pairBound) * PreparedObservationCoercivity.coefficientNormSq coefficients ^
         2 := by
         ring1
       _ ≤ (16 * allowance ^ 2) * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 := payment
       _ = _ := by ring1
   have normNonnegative : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients := by
-    have bound := Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Fraction.Rational)) _
-      (fun row => Data.Gaussian.Norm.Basic.normSq_nonneg (coefficients row))
-    rw [FiniteSum.Fin.sumFin_congr (fun row => Data.Gaussian.Norm.Basic.normSq_eq_canonical (coefficients row))]
+    have bound := Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Rational)) _
+      (fun row => Basic.normSq_nonneg (coefficients row))
+    rw [FiniteSum.Fin.sumFin_congr (fun row => Basic.normSq_eq_canonical (coefficients row))]
       at bound
     exact FiniteSum.Fin.sumFin_zero.symm.trans_le bound
-  let residual := 2 * samples.exterior coefficients - Data.Gaussian.Norm.Sum.Basic.gaussianSum
+  let residual := 2 * samples.exterior coefficients - Sum.Basic.gaussianSum
     (current.exteriorBoundaries.map (fun word =>
       PairedIncrementArea.area (word.map (fun edge => ConjugatePathReadback.conjugateDiagonal
         (FiniteSum.Fin.sumFin fun row => coefficients row * CanonicalEdgeValues.edgeValuation current.mesh
           (triangles.get row).values edge)))))
-  have squared : Data.Gaussian.Norm.Basic.normSq (residual - 0) ≤ (4 * (allowance *
+  have squared : Basic.normSq (residual - 0) ≤ (4 * (allowance *
     PreparedObservationCoercivity.coefficientNormSq coefficients)) ^ 2 := by
     rewrite [Data.Gaussian.Basic.sub_zero]
     exact close.trans scaled
@@ -282,7 +284,7 @@ theorem Samples.exterior_components_energy_upper (samples : HomogeneousPhysicalC
     PreparedObservationCoercivity.coefficientNormSq coefficients = residual.im / 4 := by ring1
   rw [left] at shifted
   exact shifted.trans_eq (by
-    change (0 : Fraction.Rational) / 4 + _ = _
-    rw [show (0 : Fraction.Rational) / 4 = 0 by decide, Fraction.Field.zero_add])
+    change (0 : Rational) / 4 + _ = _
+    rw [show (0 : Rational) / 4 = 0 by decide, Fraction.Field.zero_add])
 
 end Purelib.Curves.Hyperelliptic.Meshes.Newton.CanonicalExteriorEnergy

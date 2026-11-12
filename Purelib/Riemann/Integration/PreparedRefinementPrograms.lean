@@ -23,6 +23,10 @@ import Purelib.Riemann.Readings.PreparedBoundaryGluing
 import Purelib.Integration.Polynomial.Gaussian.Path.Basic
 import Purelib.Riemann.Readings.PreparedBoundaryClosure
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired
+
+open Purelib.Riemann.Periods.PreparedRootClosedPeriodBank.PreparedCycleModels
+
 public section
 
 /-!
@@ -48,9 +52,9 @@ set_option genInjectivity false in
 The ordered case keeps its original bank and geometric-basis certificate; its cycle readback is tied to that same
 retained bank. -/
 inductive PeriodCycleBasis {genus : Nat} (curve : Basic.HyperellipticCurve genus) : Type 4 where
-  /-- The supplied original raw symplectic cycle basis. -/ | raw (basis : BranchCutLifts.SymplecticBasis curve)
+  /-- The supplied original raw symplectic cycle basis. -/ | raw (basis : SymplecticBasis curve)
   /-- The retained ordered paired period bank with its own geometric-basis certificate. -/ | ordered (bank :
-    Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve) (geometry : bank.GeometricBasis)
+    PeriodBank.PairedPeriodBank curve) (geometry : bank.GeometricBasis)
 
 constructive_injectivity PeriodCycleBasis
 
@@ -59,7 +63,7 @@ namespace PeriodCycleBasis
 open Purelib.Curves.Hyperelliptic in
 /-- Retain the supplied ordered period bank with its own geometric-basis certificate. -/
 @[expose] def ofOrdered {genus : Nat} {curve : Basic.HyperellipticCurve genus}
-    (bank : Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve) : PeriodCycleBasis curve :=
+    (bank : PeriodBank.PairedPeriodBank curve) : PeriodCycleBasis curve :=
   .ordered bank bank.geometricBasis
 
 open Purelib.Curves.Hyperelliptic in
@@ -74,9 +78,9 @@ open Purelib.Curves.Hyperelliptic in
 open Purelib.Curves.Hyperelliptic.Branches in
 /-- Read the underlying raw symplectic model, using the curve's canonical model for an ordered bank. -/
 @[expose] def model {genus : Nat} {curve : Basic.HyperellipticCurve genus} :
-    PeriodCycleBasis curve → BranchCutLifts.SymplecticBasis curve
+    PeriodCycleBasis curve → SymplecticBasis curve
   | .raw basis => basis
-  | .ordered _ _ => BranchCutLifts.symplecticBasis curve
+  | .ordered _ _ => symplecticBasis curve
 
 end PeriodCycleBasis
 
@@ -102,7 +106,7 @@ inductive SymplecticCycleRealization {genus : Nat} (curve : Basic.HyperellipticC
     Lifted.Family.PairedCycleRefinements 2 genus) :
       SymplecticCycleRealization curve computed raw
   /-- The retained ordered paired period bank with its own geometric-basis certificate. -/ | ordered (bank :
-    Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve) (geometry : bank.GeometricBasis) :
+    PeriodBank.PairedPeriodBank curve) (geometry : bank.GeometricBasis) :
       SymplecticCycleRealization curve bank.periodData.cycles
         (PeriodCycleBasis.ordered bank geometry).cycles
 
@@ -114,16 +118,16 @@ open Purelib.Riemann.Integration in
 open Purelib.Riemann.Periods in
 /-- The root-closed bank from the supplied branch data realizes the corresponding raw symplectic basis. -/
 theorem ofData {genus : Nat} (curve : Basic.HyperellipticCurve genus) (branches : BranchIsolation.Data curve) :
-    SymplecticCycleRealization curve (PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodBank.ofData curve
+    SymplecticCycleRealization curve (RootClosedPeriodBank.ofData curve
       branches).cycles
-      (BranchCutLifts.symplecticBasisOfData curve branches).cycles := by
-  apply rootClosed (PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodBank.ofData curve branches)
+      (symplecticBasisOfData curve branches).cycles := by
+  apply rootClosed (RootClosedPeriodBank.ofData curve branches)
   · intro index
-    rw [PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodBank.ofData_aTour]
+    rw [RootClosedPeriodBank.ofData_aTour]
     exact PreparedOwnerClosedSchedules.PreparedRefinementPrograms.ownerClosedAScheduleOfData_realizesRaw_zero curve
       branches index
   · intro index
-    exact PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodBank.ofData_bTour_realizesRaw curve branches
+    exact RootClosedPeriodBank.ofData_bTour_realizesRaw curve branches
       index
 
 open Purelib.Curves.Hyperelliptic in
@@ -131,9 +135,9 @@ open Purelib.Curves.Hyperelliptic.Branches in
 open Purelib.Riemann.Periods in
 /-- The canonical root-closed bank realizes the curve's original raw symplectic basis. -/
 theorem standard {genus : Nat} (curve : Basic.HyperellipticCurve genus) :
-    SymplecticCycleRealization curve (PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodBank.ofCurve
+    SymplecticCycleRealization curve (RootClosedPeriodBank.ofCurve
       curve).cycles
-      (BranchCutLifts.symplecticBasis curve).cycles := by
+      (symplecticBasis curve).cycles := by
   cases genus with
   | zero => exact .empty rfl _ _
   | succ genus => exact ofData curve (BranchIsolation.data curve)
@@ -147,14 +151,14 @@ open Purelib.Riemann.Periods in
 /-- Read raw cycle period data from the retained root-closed bank for the supplied branch isolation. -/
 @[expose] def rawPeriodDataOfData {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (branches : BranchIsolation.Data curve) : PeriodMatrix.PeriodData curve :=
-  (PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodBank.ofData curve branches).periodData
+  (RootClosedPeriodBank.ofData curve branches).periodData
 
 open Purelib.Curves.Hyperelliptic.Branches in
 /-- The raw period data realizes the same original branch-data symplectic basis. -/
 theorem rawPeriodDataOfData_realization {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (branches : BranchIsolation.Data curve) :
     SymplecticCycleRealization curve (rawPeriodDataOfData curve branches).cycles
-      (BranchCutLifts.symplecticBasisOfData curve branches).cycles :=
+      (symplecticBasisOfData curve branches).cycles :=
   SymplecticCycleRealization.ofData curve branches
 
 section
@@ -162,20 +166,20 @@ open Purelib.Riemann.Periods
 /-- Read raw period data from the curve's canonical root-closed bank. -/
 @[expose] def automaticRawPeriodData {genus : Nat} (curve : Basic.HyperellipticCurve genus) : PeriodMatrix.PeriodData
   curve :=
-  (PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodBank.ofCurve curve).periodData
+  (RootClosedPeriodBank.ofCurve curve).periodData
 
 /-- Every canonical raw A-period model has a nonempty cell list. -/
 theorem automaticRawPeriodData_aProgram_model_cells_positive {genus : Nat}
     (curve : Basic.HyperellipticCurve genus) (differential cycle : Fin genus) (index : Nat) :
     0 < (((automaticRawPeriodData curve).aProgram differential cycle).integral.model index).cells.length :=
-  ((PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodBank.ofCurve curve).rows
+  ((RootClosedPeriodBank.ofCurve curve).rows
     cycle).aProgram_cells_positive differential index
 
 /-- Every canonical raw B-period model has a nonempty cell list. -/
 theorem automaticRawPeriodData_bProgram_model_cells_positive {genus : Nat}
     (curve : Basic.HyperellipticCurve genus) (differential cycle : Fin genus) (index : Nat) :
     0 < (((automaticRawPeriodData curve).bProgram differential cycle).integral.model index).cells.length :=
-  ((PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodBank.ofCurve curve).rows
+  ((RootClosedPeriodBank.ofCurve curve).rows
     cycle).bProgram_cells_positive differential index
 
 end
@@ -184,7 +188,7 @@ open Purelib.Curves.Hyperelliptic.Branches in
 /-- The canonical raw period data realizes the original curve's symplectic basis. -/
 theorem automaticRawPeriodData_realization {genus : Nat} (curve : Basic.HyperellipticCurve genus) :
     SymplecticCycleRealization curve (automaticRawPeriodData curve).cycles
-      (BranchCutLifts.symplecticBasis curve).cycles :=
+      (symplecticBasis curve).cycles :=
   SymplecticCycleRealization.standard curve
 
 open Purelib.Curves.Hyperelliptic.Branches in
@@ -192,48 +196,48 @@ open Purelib.Riemann.Periods in
 /-- Read standard period data from the ordered paired bank for the supplied branch isolation. -/
 @[expose] def standardPeriodDataOfData {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (branches : BranchIsolation.Data curve) : PeriodMatrix.PeriodData curve :=
-  (Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank.ofData curve branches).periodData
+  (PeriodBank.PairedPeriodBank.ofData curve branches).periodData
 
 open Purelib.Curves.Hyperelliptic.Branches in
 /-- The standard period data realizes the geometric basis of that same retained ordered bank. -/
 theorem standardPeriodDataOfData_realization {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (branches : BranchIsolation.Data curve) :
     SymplecticCycleRealization curve (standardPeriodDataOfData curve branches).cycles
-      (PeriodCycleBasis.ofOrdered (Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank.ofData curve
+      (PeriodCycleBasis.ofOrdered (PeriodBank.PairedPeriodBank.ofData curve
         branches)).cycles :=
-  .ordered _ (Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank.ofData curve branches).geometricBasis
+  .ordered _ (PeriodBank.PairedPeriodBank.ofData curve branches).geometricBasis
 
 open Purelib.Riemann.Periods in
 /-- Read standard period data from the curve's canonical ordered paired bank. -/
 @[expose] def automaticStandardPeriodData {genus : Nat} (curve : Basic.HyperellipticCurve genus) :
   PeriodMatrix.PeriodData curve :=
-  (Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank.ofCurve curve).periodData
+  (PeriodBank.PairedPeriodBank.ofCurve curve).periodData
 
 /-- Every canonical ordered A-period model has a nonempty cell list. -/
 theorem automaticStandardPeriodData_aProgram_model_cells_positive {genus : Nat}
     (curve : Basic.HyperellipticCurve genus) (differential cycle : Fin genus) (index : Nat) :
     0 < (((automaticStandardPeriodData curve).aProgram differential cycle).integral.model index).cells.length :=
-  Meshes.PuncturedGrid.Paired.PeriodNonempty.PairedPeriodBank.aProgram_cells_positive
-    (Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank.ofCurve curve) differential cycle index
+  PeriodNonempty.PairedPeriodBank.aProgram_cells_positive
+    (PeriodBank.PairedPeriodBank.ofCurve curve) differential cycle index
 
 /-- Every canonical ordered B-period model has a nonempty cell list. -/
 theorem automaticStandardPeriodData_bProgram_model_cells_positive {genus : Nat}
     (curve : Basic.HyperellipticCurve genus) (differential cycle : Fin genus) (index : Nat) :
     0 < (((automaticStandardPeriodData curve).bProgram differential cycle).integral.model index).cells.length :=
-  Meshes.PuncturedGrid.Paired.PeriodNonempty.PairedPeriodBank.bProgram_cells_positive
-    (Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank.ofCurve curve) differential cycle index
+  PeriodNonempty.PairedPeriodBank.bProgram_cells_positive
+    (PeriodBank.PairedPeriodBank.ofCurve curve) differential cycle index
 
 /-- A retained ordered bank's period cycles realize its own exact geometric basis. -/
 theorem retainedBank_realization {genus : Nat} {curve : Basic.HyperellipticCurve genus}
-    (bank : Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve) :
+    (bank : PeriodBank.PairedPeriodBank curve) :
     SymplecticCycleRealization curve bank.periodData.cycles (PeriodCycleBasis.ofOrdered bank).cycles :=
   .ordered bank bank.geometricBasis
 
 /-- The canonical standard period data realizes the same original ordered bank's geometric basis. -/
 theorem automaticStandardPeriodData_realization {genus : Nat} (curve : Basic.HyperellipticCurve genus) :
     SymplecticCycleRealization curve (automaticStandardPeriodData curve).cycles
-      (PeriodCycleBasis.ofOrdered (Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank.ofCurve curve)).cycles :=
-  retainedBank_realization (Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank.ofCurve curve)
+      (PeriodCycleBasis.ofOrdered (PeriodBank.PairedPeriodBank.ofCurve curve)).cycles :=
+  retainedBank_realization (PeriodBank.PairedPeriodBank.ofCurve curve)
 
 end
 

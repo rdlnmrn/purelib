@@ -5,6 +5,7 @@ import Purelib.Data.Rat.Fraction
 import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Polynomial.Clearance.Box.Boundary.Basic
 import Purelib.RootIsolation.Owner.Local.Basic
+public import Purelib.RootIsolation.Owner.Local.Transport
 
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 open Purelib.RootIsolation.Owner.Family.Basic (OwnerFamily)
@@ -42,6 +43,18 @@ def castOwnerFamily {left right :
   rw [← same]
   exact family
 
+/-- Polynomial reindexing retains the complete original indexed local owner.
+
+Reading the cast family equals casting that same original local owner, including
+its box, clearance and winding certificate at the unchanged finite index.
+-/
+theorem castOwnerFamily_owner {left right : CoefficientPolynomial} {count : Nat}
+    (same : left = right) (family : OwnerFamily left count) (index : Fin count) :
+    (castOwnerFamily same family).owner index =
+      Owner.Local.Transport.castOwner same (family.owner index) := by
+  cases same
+  rfl
+
 /-- Polynomial reindexing preserves the box at each original owner index. -/
 @[simp] theorem castOwnerFamily_owner_box
     {left right : CoefficientPolynomial} {count : Nat}
@@ -62,6 +75,18 @@ def castOwnerFamilyFull
   subst right
   subst rightCount
   exact family
+
+/-- A target index retains the complete original owner at its inverse-transported source occurrence. -/
+theorem castOwnerFamilyFull_owner_target
+    {left right : CoefficientPolynomial} {leftCount rightCount : Nat}
+    (polynomialSame : left = right) (countSame : leftCount = rightCount)
+    (family : OwnerFamily left leftCount) (index : Fin rightCount) :
+    (castOwnerFamilyFull polynomialSame countSame family).owner index =
+      Owner.Local.Transport.castOwner polynomialSame
+        (family.owner (Fin.cast countSame.symm index)) := by
+  cases polynomialSame
+  cases countSame
+  rfl
 
 /-- Polynomial and count reindexing preserve the box at the corresponding transported original index. -/
 @[simp] theorem castOwnerFamilyFull_owner_box

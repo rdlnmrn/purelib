@@ -43,20 +43,20 @@ initial time and value. -/
 def polynomialIVPSolution (forcing :
   CoefficientPolynomial)
     (initialTime initialValue : Fraction.Rational) : CoefficientPolynomial :=
-  let primitive := Ascending.Rational.Antiderivative.antiderivative 0 forcing
-  Ascending.Rational.Basic.add
-    (Ascending.Rational.Basic.constant (initialValue - Ascending.Rational.Evaluation.scalarEval initialTime primitive))
+  let primitive := Antiderivative.antiderivative 0 forcing
+  Basic.add
+    (Basic.constant (initialValue - Evaluation.scalarEval initialTime primitive))
     primitive
 
 /-- The polynomial forcing solution takes the prescribed value at its rational initial time. -/
 theorem polynomialIVPSolution_initial (forcing :
   CoefficientPolynomial)
     (initialTime initialValue : Fraction.Rational) :
-    Ascending.Rational.Evaluation.scalarEval initialTime
+    Evaluation.scalarEval initialTime
       (polynomialIVPSolution forcing initialTime initialValue) =
         initialValue := by
-  simp only [polynomialIVPSolution, Ascending.Rational.Evaluation.scalarEval_add,
-    Ascending.Rational.Evaluation.scalarEval_constant]
+  simp only [polynomialIVPSolution, Evaluation.scalarEval_add,
+    Evaluation.scalarEval_constant]
   ring1
 
 /-- The returned finite table satisfies its polynomial forcing equation
@@ -64,21 +64,21 @@ coefficient by coefficient. -/
 theorem polynomialIVPSolution_derivative (forcing :
   CoefficientPolynomial)
     (initialTime initialValue : Fraction.Rational) :
-    Ascending.Rational.Coefficientwise.CoefficientwiseEqual
-      (Ascending.Rational.Derivative.derivative
+    Coefficientwise.CoefficientwiseEqual
+      (Derivative.derivative
         (polynomialIVPSolution forcing initialTime initialValue))
       forcing := by
-  let primitive := Ascending.Rational.Antiderivative.antiderivative 0 forcing
-  let offset := initialValue - Ascending.Rational.Evaluation.scalarEval initialTime primitive
-  exact Ascending.Rational.Coefficientwise.coefficientwise_trans
-    (Ascending.Rational.Derivative.derivative_add (Ascending.Rational.Basic.constant offset) primitive)
-    (Ascending.Rational.Coefficientwise.coefficientwise_trans
-      (Ascending.Rational.Coefficientwise.coefficientwise_add (Ascending.Rational.Derivative.derivative_constant offset)
+  let primitive := Antiderivative.antiderivative 0 forcing
+  let offset := initialValue - Evaluation.scalarEval initialTime primitive
+  exact Coefficientwise.coefficientwise_trans
+    (Derivative.derivative_add (Basic.constant offset) primitive)
+    (Coefficientwise.coefficientwise_trans
+      (Coefficientwise.coefficientwise_add (Derivative.derivative_constant offset)
         (by
-          rw [show Ascending.Rational.Derivative.derivative primitive = forcing by
-            exact Ascending.Rational.Antiderivative.derivative_antiderivative 0 forcing]
-          exact Ascending.Rational.Coefficientwise.coefficientwise_refl forcing))
-      (Ascending.Rational.Coefficientwise.coefficientwise_zero_add forcing))
+          rw [show Derivative.derivative primitive = forcing by
+            exact Antiderivative.derivative_antiderivative 0 forcing]
+          exact Coefficientwise.coefficientwise_refl forcing))
+      (Coefficientwise.coefficientwise_zero_add forcing))
 end Purelib.Polynomial.Ascending.Rational.ODE.Forcing
 
 end

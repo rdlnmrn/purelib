@@ -6,6 +6,8 @@ public import Purelib.Approximation.Rational.Geometric.Basic
 public import Purelib.Calculus.Jet.Quadratic.Basic
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Gaussian.Basic
+
 section
 @[expose] public section
 
@@ -36,44 +38,44 @@ set_option genInjectivity false in
 At each natural index, the certificate uses the indexed increment. The increment and four certificate fields share one
 nonnegative error scale and center bound, with explicit estimates between every pair of ordered indices. -/
 structure Trace (increment : Nat →
-  Gaussian.Basic.Canonical) where
+  Canonical) where
   /-- The exact quadratic certificate for each indexed increment. -/ certificate : (index : Nat) → Certificate
     (increment index)
   /-- The common rational scale of the geometric closeness allowance. -/ errorScale : Rat.Fraction.Rational
   /-- The common geometric error scale is nonnegative. -/ errorScale_nonneg : 0 ≤ errorScale
   /-- The increment samples at any two ordered indices differ by quadrance at most the earlier geometric allowance. -/
     increment_later_close : ∀ {earlier later : Nat}, earlier ≤ later →
-    Gaussian.Basic.Canonical.normSq (increment later - increment earlier) ≤
+    Canonical.normSq (increment later - increment earlier) ≤
       Rational.Geometric.Basic.quarterRadius errorScale earlier
   /-- The base samples at any two ordered indices differ by quadrance at most the earlier geometric allowance. -/
     base_later_close : ∀ {earlier later : Nat}, earlier ≤ later →
-    Gaussian.Basic.Canonical.normSq ((certificate later).base - (certificate earlier).base) ≤
+    Canonical.normSq ((certificate later).base - (certificate earlier).base) ≤
       Rational.Geometric.Basic.quarterRadius errorScale earlier
   /-- The output samples at any two ordered indices differ by quadrance at most the earlier geometric allowance. -/
     output_later_close : ∀ {earlier later : Nat}, earlier ≤ later →
-    Gaussian.Basic.Canonical.normSq ((certificate later).output - (certificate earlier).output) ≤
+    Canonical.normSq ((certificate later).output - (certificate earlier).output) ≤
       Rational.Geometric.Basic.quarterRadius errorScale earlier
   /-- The slope samples at any two ordered indices differ by quadrance at most the earlier geometric allowance. -/
     slope_later_close : ∀ {earlier later : Nat}, earlier ≤ later →
-    Gaussian.Basic.Canonical.normSq ((certificate later).slope - (certificate earlier).slope) ≤
+    Canonical.normSq ((certificate later).slope - (certificate earlier).slope) ≤
       Rational.Geometric.Basic.quarterRadius errorScale earlier
   /-- The remainder samples at any two ordered indices differ by quadrance at most the earlier geometric allowance. -/
     remainder_later_close : ∀ {earlier later : Nat}, earlier ≤ later →
-    Gaussian.Basic.Canonical.normSq ((certificate later).remainder -
+    Canonical.normSq ((certificate later).remainder -
       (certificate earlier).remainder) ≤
         Rational.Geometric.Basic.quarterRadius errorScale earlier
   /-- The common rational upper bound for the five displayed quadrances. -/ centerBound : Rat.Fraction.Rational
   /-- The common quadrance bound is nonnegative. -/ centerBound_nonneg : 0 ≤ centerBound
   /-- Every displayed increment sample has quadrance at most the common center bound. -/ increment_bounded : ∀ index,
-    Gaussian.Basic.Canonical.normSq (increment index) ≤ centerBound
+    Canonical.normSq (increment index) ≤ centerBound
   /-- Every displayed base sample has quadrance at most the common center bound. -/ base_bounded : ∀ index,
-    Gaussian.Basic.Canonical.normSq (certificate index).base ≤ centerBound
+    Canonical.normSq (certificate index).base ≤ centerBound
   /-- Every displayed output sample has quadrance at most the common center bound. -/ output_bounded : ∀ index,
-    Gaussian.Basic.Canonical.normSq (certificate index).output ≤ centerBound
+    Canonical.normSq (certificate index).output ≤ centerBound
   /-- Every displayed slope sample has quadrance at most the common center bound. -/ slope_bounded : ∀ index,
-    Gaussian.Basic.Canonical.normSq (certificate index).slope ≤ centerBound
+    Canonical.normSq (certificate index).slope ≤ centerBound
   /-- Every displayed remainder sample has quadrance at most the common center bound. -/ remainder_bounded : ∀ index,
-    Gaussian.Basic.Canonical.normSq (certificate index).remainder ≤ centerBound
+    Canonical.normSq (certificate index).remainder ≤ centerBound
 
 constructive_injectivity Trace
 

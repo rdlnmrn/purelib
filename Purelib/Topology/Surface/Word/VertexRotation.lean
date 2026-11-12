@@ -1,4 +1,5 @@
 module
+import Purelib.Topology.Chain.PathBoundary
 
 public import Purelib.Topology.Surface.Sewing.PolygonSewing
 public import Purelib.Topology.Surface.Word.Selection
@@ -18,6 +19,8 @@ public section
 /-! Changing the cyclic start preserves the exact finite vertex presentation. -/
 
 namespace Purelib.Topology.Surface.Word.VertexRotation
+
+open Purelib.Topology.Chain
 
 open Purelib.Data.List
 
@@ -67,7 +70,7 @@ agreement. -/
   closed := by
     have path := WordVertexPath.castWord rotation.source_eq model.closed
     obtain ⟨initial, final⟩ := WordVertexPath.split rotation.first rotation.last path
-    exact WordVertexPath.castWord rotation.target_eq.symm (PathEndpoints.append final initial)
+    exact WordVertexPath.castWord rotation.target_eq.symm (PathBoundary.PathEndpoints.append final initial)
 
 /-- Traversing the remaining segment from the rotated anchor returns to the original anchor. -/
 theorem rotate_return (model : Vertices.WordVertexRealization source size) (rotation : Selection.WordRotation source

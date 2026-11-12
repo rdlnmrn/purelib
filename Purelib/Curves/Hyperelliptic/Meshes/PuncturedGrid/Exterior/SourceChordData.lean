@@ -62,6 +62,8 @@ import Purelib.Riemann.RootContinuation.PreparedGridRootClosure
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior
@@ -115,17 +117,17 @@ open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
 open Purelib.Geometry.Rectangle.SourceIntervals (axisCoordinate)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {program : ExteriorProgram lifted
     differential} {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+    SurfacePreparation
     regular domains program}
   {requested : Coordinate} {minimum : Nat}
 
@@ -192,7 +194,7 @@ structure SourceChordData (comparison : prepared.ClosedBoundaryComparison other 
     range.upper ≤ 1
   /-- The cached paired primitive endpoint chord of this original source fragment. -/ value : Stokes.PrimitivePoint
   /-- The cached chord is the exact displacement of the retained source owner at its selected endpoints. -/ value_eq :
-    value = Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordData.chordValue comparison index forward range
+    value = SourceChordData.chordValue comparison index forward range
   /-- The original parent is strictly increasing in the retained signed axis. -/ ordered :
     SourceBlockParameters.signedAxis vertical forward ((comparison.Parent index).edge.point 0) <
     SourceBlockParameters.signedAxis vertical forward ((comparison.Parent index).edge.point 1)
@@ -204,7 +206,7 @@ structure SourceChordData (comparison : prepared.ClosedBoundaryComparison other 
     ((comparison.Parent index).edge.point (BoundaryTraceParameters.lastParameter forward range)) = physical.upper
   /-- The retained dyadic sampling depth of this exact source fragment. -/ depth : Nat
   /-- The cached centered sample on the original parent and retained parameter interval. -/ sample :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordData.SourceSample comparison index forward range depth
+    SourceChordData.SourceSample comparison index forward range depth
 
 constructive_injectivity SourceChordData
 
@@ -217,7 +219,7 @@ sample. -/
 @[expose] def build (comparison : prepared.ClosedBoundaryComparison other requested minimum)
     (index : Fin comparison.original.plans.length) (forward vertical : Bool) (physical :
       PreparedAxisPartitions.Interval)
-    (range : BoundaryAxisInterval.ParentInterval (comparison.Parent index) vertical physical)
+    (range : ParentInterval (comparison.Parent index) vertical physical)
     (ordered : SourceBlockParameters.signedAxis vertical forward ((comparison.Parent index).edge.point 0) <
       SourceBlockParameters.signedAxis vertical forward ((comparison.Parent index).edge.point 1))
     (depth : Nat) : SourceChordData comparison
@@ -317,9 +319,9 @@ theorem cross_parent_endpoints {comparison : prepared.ClosedBoundaryComparison o
   | false =>
     simp only [beforeForward, afterForward, SourceBlockParameters.signedAxis, if_neg (show (false : Bool) ≠ true from
       Bool.noConfusion), -eq_self, -iff_self] at left right separated
-    have leftOrder := (Fraction.Order.Arithmetic.neg_le_neg_iff_direct _ _).mp left.1
-    have gapOrder := (Fraction.Order.Arithmetic.neg_le_neg_iff_direct _ _).mp separated
-    have rightOrder := (Fraction.Order.Arithmetic.neg_le_neg_iff_direct _ _).mp right.2
+    have leftOrder := (Arithmetic.neg_le_neg_iff_direct _ _).mp left.1
+    have gapOrder := (Arithmetic.neg_le_neg_iff_direct _ _).mp separated
+    have rightOrder := (Arithmetic.neg_le_neg_iff_direct _ _).mp right.2
     have endpoints := And.intro
       (le_antisymm leftOrder ((gapOrder.trans rightOrder).trans_eq joint))
       (le_antisymm (joint.trans_le (leftOrder.trans gapOrder)) rightOrder)
@@ -356,7 +358,7 @@ theorem side_endpoints {comparison : prepared.ClosedBoundaryComparison other req
       firstPhysical) (last : SourceChordData
       comparison vertical lastPhysical)
     (forward : Bool) (firstForward : first.forward = forward) (lastForward : last.forward = forward)
-    {start finish : InverseRootPolynomial.Coordinate}
+    {start finish : Coordinate}
     (firstBounds : start ≤ SourceBlockParameters.signedAxis vertical forward ((comparison.Parent first.index).edge.point
       0) ∧
       SourceBlockParameters.signedAxis vertical forward ((comparison.Parent first.index).edge.point 1) ≤ finish)
@@ -410,7 +412,7 @@ theorem side_positions {comparison : prepared.ClosedBoundaryComparison other req
     (first : SourceChordData comparison vertical
       firstPhysical) (last : SourceChordData
       comparison vertical lastPhysical)
-    (forward : Bool) {start finish : InverseRootPolynomial.Coordinate} {offset count : Nat}
+    (forward : Bool) {start finish : Coordinate} {offset count : Nat}
     (endpoints : if forward then BoundaryTraceParameters.firstParameter first.forward first.range = 0 ∧
       BoundaryTraceParameters.lastParameter last.forward last.range = 1
       else BoundaryTraceParameters.lastParameter last.forward last.range = 0 ∧ BoundaryTraceParameters.firstParameter
@@ -448,7 +450,7 @@ namespace SurfacePreparation.ClosedBoundaryComparison
 
 /-- The maximum original source density over every retained closed-bank parent position. -/
 @[expose] def sourceMagnitude (comparison : prepared.ClosedBoundaryComparison other requested minimum) :
-    InverseRootPolynomial.Coordinate :=
+    Coordinate :=
   PairedFragmentBlocks.maximum (comparison.sourceDensity)
     (List.ofFn (fun i : Fin comparison.original.plans.length => i))
 
@@ -477,7 +479,7 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChord
 theorem bounded {comparison : prepared.ClosedBoundaryComparison other requested minimum}
     {vertical : Bool} {physical : PreparedAxisPartitions.Interval}
     (chord : SourceChordData comparison vertical
-      physical) : PrimitivePoint.Bounded chord.value comparison.sourceMagnitude := by
+      physical) : Bounded chord.value comparison.sourceMagnitude := by
   have lower : 0 ≤ chord.range.lower ∧ chord.range.lower ≤ 1 :=
     ⟨chord.within.1, chord.range.ordered.le.trans chord.within.2⟩
   have upper : 0 ≤ chord.range.upper ∧ chord.range.upper ≤ 1 :=
@@ -489,10 +491,10 @@ theorem bounded {comparison : prepared.ClosedBoundaryComparison other requested 
       BoundaryTraceParameters.lastParameter chord.forward chord.range ≤ 1 := by
     cases chord.forward <;> assumption
   have width : chord.range.upper - chord.range.lower ≤ 1 :=
-    (Fraction.Order.Arithmetic.sub_le_sub_direct chord.within.2 chord.within.1).trans_eq (by ring1)
+    (Arithmetic.sub_le_sub_direct chord.within.2 chord.within.1).trans_eq (by ring1)
   have square : (BoundaryTraceParameters.lastParameter chord.forward chord.range -
     BoundaryTraceParameters.firstParameter chord.forward chord.range)^2 ≤ 1 := by
-    have bound := Fraction.Order.Arithmetic.pow_le_pow_direct (Fraction.Order.Boundary.sub_nonnegative_iff.mpr
+    have bound := Arithmetic.pow_le_pow_direct (Fraction.Order.Boundary.sub_nonnegative_iff.mpr
       chord.range.ordered.le) width 2
     have eq : (BoundaryTraceParameters.lastParameter chord.forward chord.range - BoundaryTraceParameters.firstParameter
       chord.forward chord.range)^2 =
@@ -506,21 +508,21 @@ theorem bounded {comparison : prepared.ClosedBoundaryComparison other requested 
     PairedFragmentBlocks.le_maximum _ (Data.List.OfFn.Basic.mem_ofFn.mpr ⟨chord.index, rfl⟩)
   have left := (comparison.entries.get chord.index).source.increment_bound first last
   have right := (comparison.entries.get chord.index).otherSource.increment_bound first last
-  have factor := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct square
+  have factor := (Arithmetic.mul_le_mul_of_nonneg_left_direct square
     (comparison.sourceDensity_nonnegative chord.index)).trans_eq
     (mul_one (comparison.sourceDensity chord.index))
   rw [chord.value_eq]
-  have leftBound := left.trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (Fraction.Order.Basic.le_max_left _ _) (Fraction.Order.Arithmetic.sq_nonneg_direct _)).trans (factor.trans density))
-  have rightBound := right.trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (Fraction.Order.Basic.le_max_right _ _) (Fraction.Order.Arithmetic.sq_nonneg_direct _)).trans (factor.trans
+  have leftBound := left.trans ((Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Basic.le_max_left _ _) (Arithmetic.sq_nonneg_direct _)).trans (factor.trans density))
+  have rightBound := right.trans ((Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Basic.le_max_right _ _) (Arithmetic.sq_nonneg_direct _)).trans (factor.trans
     density))
   constructor
-  · change Fraction.Order.Basic.LessEqual _ _ at leftBound ⊢
+  · change Basic.LessEqual _ _ at leftBound ⊢
     simp only [Data.Gaussian.Norm.Basic.normSq_eq_canonical, -eq_self, -iff_self] at leftBound
     convert leftBound using 1
     rfl
-  · change Fraction.Order.Basic.LessEqual _ _ at rightBound ⊢
+  · change Basic.LessEqual _ _ at rightBound ⊢
     simp only [Data.Gaussian.Norm.Basic.normSq_eq_canonical, -eq_self, -iff_self] at rightBound
     convert rightBound using 1
     rfl

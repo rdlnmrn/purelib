@@ -74,9 +74,9 @@ The reversal is essential: transposition reverses the homology matrix product. -
 /-- The finite fold of the reversed transposed generators is exactly the dual matrix acting on the period column. -/
 theorem matrixProduct_periodBraidMatrices
     (word : Braid.Word 3) :
-    Word.matrixProduct (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices word) =
+    Word.matrixProduct (periodBraidMatrices word) =
       Dual.periodMatrix word := by
-  rw [Curves.Legendre.FractionalWords.Periods.periodBraidMatrices, Word.matrixProduct_dualMatrices,
+  rw [periodBraidMatrices, Word.matrixProduct_dualMatrices,
     Braid.matrixProduct_braidMatrices]
   rfl
 
@@ -88,54 +88,54 @@ transposed generator list. -/
       (Action.matrixAction
         (Dual.periodMatrix word)
         (fractionalVector tau))
-      (Word.blockAction (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices word) (fractionalVector tau)) := by
-  rw [← Curves.Legendre.FractionalWords.Periods.matrixProduct_periodBraidMatrices word]
-  exact Homogeneous.fractionalRows_word (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices word) tau
+      (Word.blockAction (periodBraidMatrices word) (fractionalVector tau)) := by
+  rw [← matrixProduct_periodBraidMatrices word]
+  exact Homogeneous.fractionalRows_word (periodBraidMatrices word) tau
 
 /-- The preparations needed to execute the dual action of every generator and compare it with the one exact folded
 period matrix. -/
 @[expose] def PeriodFoldPreparations (word : Braid.Word 3)
     (tau : CoherentNamed) : Type 1 :=
-  Fold.Basic.FoldPreparations tau (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices word)
+  FoldPreparations tau (periodBraidMatrices word)
 
 /-- Reindex the retained combined preparation by the proved equality between the finite dual fold and `periodMatrix`. -/
 @[expose] def PeriodFoldPreparations.periodPreparation
     (word : Braid.Word 3) (tau : CoherentNamed)
-    (preparations : Curves.Legendre.FractionalWords.Periods.PeriodFoldPreparations word tau) :
-    Gaussian.Division.Prepared.DenominatorPreparation
+    (preparations : PeriodFoldPreparations word tau) :
+    Prepared.DenominatorPreparation
       (fractionalDenominator
         (Dual.periodMatrix word) tau) := by
-  rw [← Curves.Legendre.FractionalWords.Periods.matrixProduct_periodBraidMatrices word]
-  exact FoldPreparations.combined (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices word) preparations
+  rw [← matrixProduct_periodBraidMatrices word]
+  exact FoldPreparations.combined (periodBraidMatrices word) preparations
 
 /-- One productive quotient by the exact dual period matrix agrees with the actual stepwise execution of all reversed
 transposed generators. -/
 @[expose] def periodOutput_equivalent_foldAction
     (word : Braid.Word 3) (tau : CoherentNamed)
-    (preparations : Curves.Legendre.FractionalWords.Periods.PeriodFoldPreparations word tau) :
-    Gaussian.Equivalence.NamedEquivalent
+    (preparations : PeriodFoldPreparations word tau) :
+    NamedEquivalent
       (fractionalLinear
         (Dual.periodMatrix word) tau
         (preparations.periodPreparation word tau)).name
-      (Fold.Basic.foldAction tau (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices word) preparations).name
+      (foldAction tau (periodBraidMatrices word) preparations).name
         :=
   NamedEquivalent.trans
     (Comparison.fractionalLinear_of_matrix_eq
-      (Curves.Legendre.FractionalWords.Periods.matrixProduct_periodBraidMatrices word).symm tau
+      (matrixProduct_periodBraidMatrices word).symm tau
       (preparations.periodPreparation word tau)
-      (FoldPreparations.combined (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices word) preparations))
+      (FoldPreparations.combined (periodBraidMatrices word) preparations))
     (Comparison.productOutput_equivalent_foldAction
-      (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices word) tau preparations)
+      (periodBraidMatrices word) tau preparations)
 
 /-- The stepwise productive dual word satisfies the fraction-free quotient equation for the exact period matrix. -/
 @[expose] def periodFold_denominator_mul
     (word : Braid.Word 3) (tau : CoherentNamed)
-    (preparations : Curves.Legendre.FractionalWords.Periods.PeriodFoldPreparations word tau) :
-    Gaussian.Equivalence.NamedEquivalent
+    (preparations : PeriodFoldPreparations word tau) :
+    NamedEquivalent
       (CoherentNamed.mul
         (fractionalDenominator
           (Dual.periodMatrix word) tau)
-        (Fold.Basic.foldAction tau (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices word)
+        (foldAction tau (periodBraidMatrices word)
           preparations)).name
       (fractionalNumerator
         (Dual.periodMatrix word) tau).name := by
@@ -143,12 +143,12 @@ transposed generators. -/
   let denominator := fractionalDenominator matrix tau
   let direct := fractionalLinear matrix tau
     (preparations.periodPreparation word tau)
-  let folded := Fold.Basic.foldAction tau (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices word)
+  let folded := foldAction tau (periodBraidMatrices word)
     preparations
-  have directToFold : Gaussian.Equivalence.NamedEquivalent direct.name folded.name := by
+  have directToFold : NamedEquivalent direct.name folded.name := by
     simpa only [matrix, direct, folded] using
-      Curves.Legendre.FractionalWords.Periods.periodOutput_equivalent_foldAction word tau preparations
-  have replaceFold : Gaussian.Equivalence.NamedEquivalent
+      periodOutput_equivalent_foldAction word tau preparations
+  have replaceFold : NamedEquivalent
       (CoherentNamed.mul denominator folded).name
       (CoherentNamed.mul denominator direct).name :=
     Congruence.coherentMul_respects
@@ -165,11 +165,11 @@ transposed generators. -/
 theorem periodBraidMatrices_inverse_left
     (word : Braid.Word 3) :
     Multiplication.mul
-        (Word.matrixProduct (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices word.inverse))
-        (Word.matrixProduct (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices word)) =
+        (Word.matrixProduct (periodBraidMatrices word.inverse))
+        (Word.matrixProduct (periodBraidMatrices word)) =
       Multiplication.identity := by
-  rw [Curves.Legendre.FractionalWords.Periods.matrixProduct_periodBraidMatrices,
-    Curves.Legendre.FractionalWords.Periods.matrixProduct_periodBraidMatrices]
+  rw [matrixProduct_periodBraidMatrices,
+    matrixProduct_periodBraidMatrices]
   exact
     (Dual.periodMatrix_inverse_identities
       word).2
@@ -178,11 +178,11 @@ theorem periodBraidMatrices_inverse_left
 theorem periodBraidMatrices_inverse_right
     (word : Braid.Word 3) :
     Multiplication.mul
-        (Word.matrixProduct (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices word))
-        (Word.matrixProduct (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices word.inverse)) =
+        (Word.matrixProduct (periodBraidMatrices word))
+        (Word.matrixProduct (periodBraidMatrices word.inverse)) =
       Multiplication.identity := by
-  rw [Curves.Legendre.FractionalWords.Periods.matrixProduct_periodBraidMatrices,
-    Curves.Legendre.FractionalWords.Periods.matrixProduct_periodBraidMatrices]
+  rw [matrixProduct_periodBraidMatrices,
+    matrixProduct_periodBraidMatrices]
   exact
     (Dual.periodMatrix_inverse_identities
       word).1
@@ -192,17 +192,17 @@ word returns the original normalized period ratio operationally. -/
 @[expose] def periodBraidWord_foldReversal (word : Braid.Word 3)
     (tau : CoherentNamed)
     (preparations : Reversal.FoldReversalPreparations
-      (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices word)
-        (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices word.inverse) tau) :
-    Gaussian.Equivalence.NamedEquivalent
-      (Fold.Basic.foldAction
-        (Fold.Basic.foldAction tau (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices word)
+      (periodBraidMatrices word)
+        (periodBraidMatrices word.inverse) tau) :
+    NamedEquivalent
+      (foldAction
+        (foldAction tau (periodBraidMatrices word)
           preparations.forward)
-        (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices word.inverse) preparations.reverse).name
+        (periodBraidMatrices word.inverse) preparations.reverse).name
       tau.name :=
-  Reversal.foldAction_reversal (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices word)
-    (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices word.inverse) tau preparations
-    (Curves.Legendre.FractionalWords.Periods.periodBraidMatrices_inverse_left word)
+  Reversal.foldAction_reversal (periodBraidMatrices word)
+    (periodBraidMatrices word.inverse) tau preparations
+    (periodBraidMatrices_inverse_left word)
 
 end
 

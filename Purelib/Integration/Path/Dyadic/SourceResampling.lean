@@ -23,6 +23,8 @@ import Purelib.Data.Rat.Fraction.Field
 public import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! Finite common refinements of two samplings of the same source primitive.
@@ -55,22 +57,22 @@ namespace Chain
 
 open Purelib.Integration.Path
 /-- An empty retained parameter chain has identical first and last endpoints. -/
-theorem nil_eq {first last : Dyadic.SourceResampling.Coordinate} (chain : Dyadic.SourceResampling.Chain first [] last) :
+theorem nil_eq {first last : Coordinate} (chain : Chain first [] last) :
   first = last := by
   cases chain
   rfl
 
 /-- A nonempty retained chain gives its first ordering witness and the exact tail chain. -/
-theorem cons_parts {first next last : Dyadic.SourceResampling.Coordinate} {tail : List
-  Dyadic.SourceResampling.Coordinate}
-    (chain : Dyadic.SourceResampling.Chain first (next :: tail) last) : first ≤ next ∧ Dyadic.SourceResampling.Chain
+theorem cons_parts {first next last : Coordinate} {tail : List
+  Coordinate}
+    (chain : Chain first (next :: tail) last) : first ≤ next ∧ Chain
       next tail last := by
   cases chain with
   | cons ordered rest => exact ⟨ordered, rest⟩
 
 /-- The original first endpoint of an ordered chain is at most its last endpoint. -/
-theorem endpoints {first last : Dyadic.SourceResampling.Coordinate} {tail : List Dyadic.SourceResampling.Coordinate}
-    (chain : Dyadic.SourceResampling.Chain first tail last) : first ≤ last := by
+theorem endpoints {first last : Coordinate} {tail : List Coordinate}
+    (chain : Chain first tail last) : first ≤ last := by
   induction chain with
   | nil => exact le_rfl
   | cons ordered _ ih => exact ordered.trans ih
@@ -105,9 +107,9 @@ namespace Refinement
 
 open Purelib.Integration.Path
 /-- A retained refinement certifies the exact original coarse list as an ordered chain. -/
-theorem coarse_chain {first last : Dyadic.SourceResampling.Coordinate} {coarse fine : List
-  Dyadic.SourceResampling.Coordinate}
-    (refinement : Dyadic.SourceResampling.Refinement first coarse fine last) : Dyadic.SourceResampling.Chain first
+theorem coarse_chain {first last : Coordinate} {coarse fine : List
+  Coordinate}
+    (refinement : Refinement first coarse fine last) : Chain first
       coarse last := by
   induction refinement with
   | nil => exact .nil _
@@ -118,9 +120,9 @@ theorem coarse_chain {first last : Dyadic.SourceResampling.Coordinate} {coarse f
   | duplicate _ ih => exact ih
 
 /-- A retained refinement certifies its exact fine list as an ordered chain. -/
-theorem fine_chain {first last : Dyadic.SourceResampling.Coordinate} {coarse fine : List
-  Dyadic.SourceResampling.Coordinate}
-    (refinement : Dyadic.SourceResampling.Refinement first coarse fine last) : Dyadic.SourceResampling.Chain first fine
+theorem fine_chain {first last : Coordinate} {coarse fine : List
+  Coordinate}
+    (refinement : Refinement first coarse fine last) : Chain first fine
       last := by
   induction refinement with
   | nil => exact .nil _
@@ -129,8 +131,8 @@ theorem fine_chain {first last : Dyadic.SourceResampling.Coordinate} {coarse fin
   | duplicate _ ih => exact .cons le_rfl ih
 
 /-- Every retained ordered chain refines itself with the exact same point list. -/
-theorem refl {first last : Dyadic.SourceResampling.Coordinate} {points : List Dyadic.SourceResampling.Coordinate}
-    (chain : Dyadic.SourceResampling.Chain first points last) : Dyadic.SourceResampling.Refinement first points points
+theorem refl {first last : Coordinate} {points : List Coordinate}
+    (chain : Chain first points last) : Refinement first points points
       last := by
   induction chain with
   | nil => exact .nil _
@@ -140,8 +142,8 @@ theorem refl {first last : Dyadic.SourceResampling.Coordinate} {points : List Dy
 
 Every retained step has the same endpoint value by antisymmetry. The
 refinement keeps all ordered occurrences as exact endpoint duplications. -/
-theorem terminal {first : Dyadic.SourceResampling.Coordinate} {points : List Dyadic.SourceResampling.Coordinate}
-    (chain : Dyadic.SourceResampling.Chain first points first) : Dyadic.SourceResampling.Refinement first [] points
+theorem terminal {first : Coordinate} {points : List Coordinate}
+    (chain : Chain first points first) : Refinement first [] points
       first := by
   induction points with
   | nil => exact .nil _
@@ -258,35 +260,35 @@ theorem refinement_bound (values : Coordinate → Stokes.PrimitivePoint) {densit
     {first last : Coordinate} {coarse fine : List Coordinate}
     (refinement : Refinement first coarse fine last)
     (lower : 0 ≤ first) (upper : last ≤ 1) (steps : widths first coarse width) :
-    Data.Gaussian.Norm.Basic.normSq (rawArea values first fine - rawArea
+    Norm.Basic.normSq (rawArea values first fine - rawArea
       values first coarse) ≤
       (4 * density ^ 2 * width ^ 2) * (last - first) ^ 2 := by
   induction refinement with
   | nil =>
-    change Data.Gaussian.Norm.Basic.normSq ((0 : Gaussian) - 0) ≤ _
+    change Norm.Basic.normSq ((0 : Gaussian) - 0) ≤ _
     rw [sub_self, Norm.Basic.normSq_zero]
     exact le_of_eq (by ring1)
   | @keep first next last coarse fine ordered rest ih =>
     have tail := ih (lower.trans ordered) upper steps.2
-    change Data.Gaussian.Norm.Basic.normSq ((Stokes.edgeArea (values first) (values next) +
+    change Norm.Basic.normSq ((Stokes.edgeArea (values first) (values next) +
       rawArea
       values next fine) -
       (Stokes.edgeArea (values first) (values next) + rawArea values next coarse)) ≤ _
     rw [show (Stokes.edgeArea (values first) (values next) + rawArea values next fine) -
         (Stokes.edgeArea (values first) (values next) + rawArea values next coarse) =
         rawArea values next fine - rawArea values next coarse by ring1]
-    exact tail.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.pow_le_pow_direct (Fraction.Order.Arithmetic.sub_nonneg_direct
+    exact tail.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.pow_le_pow_direct (Arithmetic.sub_nonneg_direct
         rest.coarse_chain.endpoints)
-        (Fraction.Order.Arithmetic.sub_le_sub_direct le_rfl ordered) 2)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _)) (Fraction.Order.Arithmetic.sq_nonneg_direct _)))
+        (Arithmetic.sub_le_sub_direct le_rfl ordered) 2)
+      (Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide)
+        (Arithmetic.sq_nonneg_direct _)) (Arithmetic.sq_nonneg_direct _)))
   | @insert first middle next last coarse fine lowerStep upperStep rest ih =>
     have chain := rest.coarse_chain
     have nextLast : next ≤ last := by cases chain with | cons _ tail => exact tail.endpoints
     have middleLast := upperStep.trans nextLast
     have tailSteps : widths middle (next :: coarse) width :=
-      ⟨(Fraction.Order.Arithmetic.sub_le_sub_direct le_rfl lowerStep).trans steps.1, steps.2⟩
+      ⟨(Arithmetic.sub_le_sub_direct le_rfl lowerStep).trans steps.1, steps.2⟩
     have tail := ih (lower.trans lowerStep) upper tailSteps
     have firstBound := increment first middle lower (lowerStep.trans (middleLast.trans upper))
       (lower.trans lowerStep) (middleLast.trans upper)
@@ -294,20 +296,20 @@ theorem refinement_bound (values : Coordinate → Stokes.PrimitivePoint) {densit
       (lower.trans (lowerStep.trans upperStep)) (nextLast.trans upper)
     have triangle := PrimitiveAreaBounds.PrimitivePoint.area_bound firstBound lastBound
     rw [← Norm.Basic.normSq_eq_canonical] at triangle
-    have widthLe := Fraction.Order.Arithmetic.pow_le_pow_direct (Fraction.Order.Arithmetic.sub_nonneg_direct upperStep)
+    have widthLe := Arithmetic.pow_le_pow_direct (Arithmetic.sub_nonneg_direct upperStep)
       tailSteps.1 2
-    have triangleBound : Data.Gaussian.Norm.Basic.normSq (Stokes.edgeArea ((Stokes.PrimitivePoint.sub (values middle))
+    have triangleBound : Norm.Basic.normSq (Stokes.edgeArea ((Stokes.PrimitivePoint.sub (values middle))
       (values first)) ((Stokes.PrimitivePoint.sub (values next)) (values middle))) ≤
         (4 * density ^ 2 * width ^ 2) * (middle - first) ^ 2 := by
       have normalized := triangle.trans_eq
         (show 4 * (density * (middle - first) ^ 2) * (density * (next - middle) ^ 2) =
           (4 * density ^ 2 * (middle - first) ^ 2) * (next - middle) ^ 2 by ring1)
-      exact normalized.trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct widthLe
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-          (Fraction.Order.Arithmetic.sq_nonneg_direct density))
-          (Fraction.Order.Arithmetic.sq_nonneg_direct (middle - first)))).trans_eq (by ring1))
+      exact normalized.trans ((Arithmetic.mul_le_mul_of_nonneg_left_direct widthLe
+        (Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide)
+          (Arithmetic.sq_nonneg_direct density))
+          (Arithmetic.sq_nonneg_direct (middle - first)))).trans_eq (by ring1))
     have joined := Norm.Weighted.normSq_add_weighted
-      (Fraction.Order.Arithmetic.sub_nonneg_direct lowerStep) (Fraction.Order.Arithmetic.sub_nonneg_direct middleLast)
+      (Arithmetic.sub_nonneg_direct lowerStep) (Arithmetic.sub_nonneg_direct middleLast)
         triangleBound tail
     have identity : rawArea values first (middle :: fine) - rawArea
       values first (next :: coarse) =
@@ -318,9 +320,9 @@ theorem refinement_bound (values : Coordinate → Stokes.PrimitivePoint) {densit
       rw [← triangle_identity]
       dsimp only [rawArea]
       ring1
-    exact (congrArg Data.Gaussian.Norm.Basic.normSq identity).trans_le (joined.trans_eq (by ring1))
+    exact (congrArg Norm.Basic.normSq identity).trans_le (joined.trans_eq (by ring1))
   | @duplicate first last coarse fine rest ih =>
-    change Data.Gaussian.Norm.Basic.normSq ((Stokes.edgeArea (values first) (values first) +
+    change Norm.Basic.normSq ((Stokes.edgeArea (values first) (values first) +
       rawArea
       values first fine) - rawArea values first coarse) ≤ _
     rw [edge_self, _root_.zero_add]
@@ -341,7 +343,7 @@ theorem resampling_bound (values : Coordinate → Stokes.PrimitivePoint) {densit
     (lower : 0 ≤ first) (upper : last ≤ 1)
     (leftSteps : widths first left width) (rightSteps : widths first
       right width) :
-    Data.Gaussian.Norm.Basic.normSq (rawArea values first left - rawArea
+    Norm.Basic.normSq (rawArea values first left - rawArea
       values first right) ≤
       16 * density ^ 2 * width ^ 2 * (last - first) ^ 2 := by
   let shared := common first last left right leftChain rightChain
@@ -351,14 +353,14 @@ theorem resampling_bound (values : Coordinate → Stokes.PrimitivePoint) {densit
     (rawArea values first shared.points - rawArea values first right)
     (rawArea values first shared.points - rawArea values first
       left)).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct b a) (by
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct b a) (by
         decide))
   have equal : (rawArea values first shared.points - rawArea values
     first right) -
       (rawArea values first shared.points - rawArea values first left) =
         rawArea values first left - rawArea values first right := by
           ring1
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq equal).symm.trans_le (estimate.trans_eq (by ring1))
+  exact (congrArg Norm.Basic.normSq equal).symm.trans_le (estimate.trans_eq (by ring1))
 
 end
 
@@ -398,7 +400,7 @@ open Purelib.Topology.Polygon in
 theorem rawArea_ofFn (values : Coordinate → Stokes.PrimitivePoint) {count : Nat}
     (parameters : Fin (count + 1) → Coordinate) :
     rawArea values (parameters 0) (List.ofFn (fun edge : Fin count => parameters edge.succ)) =
-      CenteredBilinearPath.area (fun vertex => values (parameters vertex)) := by
+      area (fun vertex => values (parameters vertex)) := by
   induction count with
   | zero => rfl
   | succ count ih =>

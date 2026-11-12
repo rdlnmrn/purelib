@@ -56,26 +56,26 @@ def TripleSpread.tripleSpreadFunction (a b c : K) : K :=
 
 /-- Three displayed scalars form a spread triple when the triple-spread polynomial vanishes. -/
 def TripleSpread.SpreadTriple (a b c : K) : Prop :=
-  Geometry.Trigonometry.Spread.Triple.TripleSpread.tripleSpreadFunction a b c = 0
+  TripleSpread.tripleSpreadFunction a b c = 0
 
 /-- Compute how complementing the third argument changes the triple-spread polynomial.
 
 The complemented value and original value sum to `2(a+b+c) - 2(a²+b²+c²) - 1` over the supplied explicit field (Exercise
 12.6). -/
 theorem exercise_12_6_identity (a b c : K) :
-    Spread.Triple.TripleSpread.tripleSpreadFunction a b (1 - c) =
+    TripleSpread.tripleSpreadFunction a b (1 - c) =
       2 * (a + b + c) - 2 * (a ^ 2 + b ^ 2 + c ^ 2) - 1 -
-        Spread.Triple.TripleSpread.tripleSpreadFunction a b c := by
-  unfold Spread.Triple.TripleSpread.tripleSpreadFunction
+        TripleSpread.tripleSpreadFunction a b c := by
+  unfold TripleSpread.tripleSpreadFunction
   ring1
 
 /-- Exercise 12.6, the three complementary triple-spread values agree. -/
 theorem exercise_12_6 (a b c : K) :
-    Spread.Triple.TripleSpread.tripleSpreadFunction a b (1 - c) =
-        Spread.Triple.TripleSpread.tripleSpreadFunction a (1 - b) c ∧
-      Spread.Triple.TripleSpread.tripleSpreadFunction a (1 - b) c =
-        Spread.Triple.TripleSpread.tripleSpreadFunction (1 - a) b c := by
-  constructor <;> unfold Spread.Triple.TripleSpread.tripleSpreadFunction <;> ring1
+    TripleSpread.tripleSpreadFunction a b (1 - c) =
+        TripleSpread.tripleSpreadFunction a (1 - b) c ∧
+      TripleSpread.tripleSpreadFunction a (1 - b) c =
+        TripleSpread.tripleSpreadFunction (1 - a) b c := by
+  constructor <;> unfold TripleSpread.tripleSpreadFunction <;> ring1
 
 end Purelib.Geometry.Trigonometry.Spread.Triple
 
@@ -176,8 +176,8 @@ public theorem
   spreadTriple_recursive_alternatives
   [DecidableEq K]
     (previous current step next candidate : K)
-    (previousTriple : Spread.Triple.TripleSpread.SpreadTriple previous step current)
-    (candidateTriple : Spread.Triple.TripleSpread.SpreadTriple current step candidate)
+    (previousTriple : TripleSpread.SpreadTriple previous step current)
+    (candidateTriple : TripleSpread.SpreadTriple current step candidate)
     (sumEquation :
       previous + next = 2 * (current + step - 2 * current * step)) :
     candidate = previous ∨ candidate = next := by
@@ -193,12 +193,12 @@ public theorem
       (candidate - previous) *
           (candidate -
             (2 * (current + step - 2 * current * step) - previous)) =
-        -Spread.Triple.TripleSpread.tripleSpreadFunction current step candidate +
-          Spread.Triple.TripleSpread.tripleSpreadFunction previous step current := by
-            unfold Spread.Triple.TripleSpread.tripleSpreadFunction
+        -TripleSpread.tripleSpreadFunction current step candidate +
+          TripleSpread.tripleSpreadFunction previous step current := by
+            unfold TripleSpread.tripleSpreadFunction
             ring1
       _ = 0 := by
-        unfold Spread.Triple.TripleSpread.SpreadTriple at previousTriple candidateTriple
+        unfold TripleSpread.SpreadTriple at previousTriple candidateTriple
         rw [previousTriple, candidateTriple]
         ring1
   by_cases firstFactorZero : candidate - previous = 0
@@ -240,8 +240,8 @@ variable {K : Type*} [ExplicitField K]
 /-- Move the last entry of a spread triple to the first position. -/
 public theorem spreadTriple_reorder {a
   b c : K}
-    (triple : Spread.Triple.TripleSpread.SpreadTriple a b c) : Spread.Triple.TripleSpread.SpreadTriple c a b := by
-  unfold Spread.Triple.TripleSpread.SpreadTriple Spread.Triple.TripleSpread.tripleSpreadFunction at triple ⊢
+    (triple : TripleSpread.SpreadTriple a b c) : TripleSpread.SpreadTriple c a b := by
+  unfold TripleSpread.SpreadTriple TripleSpread.tripleSpreadFunction at triple ⊢
   calc
     (c + a + b) ^ 2 - 2 * (c ^ 2 + a ^ 2 + b ^ 2) - 4 * c * a * b =
         (a + b + c) ^ 2 - 2 * (a ^ 2 + b ^ 2 + c ^ 2) - 4 * a * b * c := by
@@ -251,8 +251,8 @@ public theorem spreadTriple_reorder {a
 /-- Swapping the last two entries preserves the spread-triple relation. -/
 public theorem spreadTriple_swap_last
   {a b c : K}
-    (triple : Spread.Triple.TripleSpread.SpreadTriple a b c) : Spread.Triple.TripleSpread.SpreadTriple a c b := by
-  unfold Spread.Triple.TripleSpread.SpreadTriple Spread.Triple.TripleSpread.tripleSpreadFunction at triple ⊢
+    (triple : TripleSpread.SpreadTriple a b c) : TripleSpread.SpreadTriple a c b := by
+  unfold TripleSpread.SpreadTriple TripleSpread.tripleSpreadFunction at triple ⊢
   calc
     (a + c + b) ^ 2 - 2 * (a ^ 2 + c ^ 2 + b ^ 2) - 4 * a * c * b =
         (a + b + c) ^ 2 - 2 * (a ^ 2 + b ^ 2 + c ^ 2) - 4 * a * b * c := by
@@ -280,8 +280,8 @@ variable {K : Type*} [ExplicitField K]
 
 /-- The spread-triple relation is invariant under swapping its outer entries. -/
 theorem spreadTriple_swap_first_third {a b c : K}
-    (triple : Spread.Triple.TripleSpread.SpreadTriple a b c) : Spread.Triple.TripleSpread.SpreadTriple c b a := by
-  unfold Spread.Triple.TripleSpread.SpreadTriple Spread.Triple.TripleSpread.tripleSpreadFunction at triple ⊢
+    (triple : TripleSpread.SpreadTriple a b c) : TripleSpread.SpreadTriple c b a := by
+  unfold TripleSpread.SpreadTriple TripleSpread.tripleSpreadFunction at triple ⊢
   calc
     (c + b + a) ^ 2 - 2 * (c ^ 2 + b ^ 2 + a ^ 2) - 4 * c * b * a =
         (a + b + c) ^ 2 - 2 * (a ^ 2 + b ^ 2 + c ^ 2) - 4 * a * b * c := by
@@ -290,8 +290,8 @@ theorem spreadTriple_swap_first_third {a b c : K}
 
 /-- The spread-triple relation is invariant under a cyclic rotation. -/
 theorem spreadTriple_rotate {a b c : K}
-    (triple : Spread.Triple.TripleSpread.SpreadTriple a b c) : Spread.Triple.TripleSpread.SpreadTriple b c a := by
-  unfold Spread.Triple.TripleSpread.SpreadTriple Spread.Triple.TripleSpread.tripleSpreadFunction at triple ⊢
+    (triple : TripleSpread.SpreadTriple a b c) : TripleSpread.SpreadTriple b c a := by
+  unfold TripleSpread.SpreadTriple TripleSpread.tripleSpreadFunction at triple ⊢
   calc
     (b + c + a) ^ 2 - 2 * (b ^ 2 + c ^ 2 + a ^ 2) - 4 * b * c * a =
         (a + b + c) ^ 2 - 2 * (a ^ 2 + b ^ 2 + c ^ 2) - 4 * a * b * c := by
@@ -309,19 +309,19 @@ def tripleSpreadDeterminant (a b c : K) : K :=
 
 /-- Exercise 7.1: the main polynomial, Archimedes, complement, and determinant forms of the triple-spread function. -/
 theorem exercise_7_1 (a b c : K) :
-    Spread.Triple.TripleSpread.tripleSpreadFunction a b c =
+    TripleSpread.tripleSpreadFunction a b c =
         QuadTriple.Basic.archimedesFunction a b c - 4 * a * b * c ∧
-      Spread.Triple.TripleSpread.tripleSpreadFunction a b c =
+      TripleSpread.tripleSpreadFunction a b c =
         2 * (a * c + b * c + a * b) -
           (a ^ 2 + b ^ 2 + c ^ 2) - 4 * a * b * c ∧
-      Spread.Triple.TripleSpread.tripleSpreadFunction a b c =
+      TripleSpread.tripleSpreadFunction a b c =
         4 * (a * b + b * c + c * a) - (a + b + c) ^ 2 -
           4 * a * b * c ∧
-      Spread.Triple.TripleSpread.tripleSpreadFunction a b c =
+      TripleSpread.tripleSpreadFunction a b c =
         4 * (1 - a) * (1 - b) * (1 - c) -
           (a + b + c - 2) ^ 2 ∧
-      Spread.Triple.TripleSpread.tripleSpreadFunction a b c = -tripleSpreadDeterminant a b c := by
-  unfold Spread.Triple.TripleSpread.tripleSpreadFunction QuadTriple.Basic.archimedesFunction
+      TripleSpread.tripleSpreadFunction a b c = -tripleSpreadDeterminant a b c := by
+  unfold TripleSpread.tripleSpreadFunction QuadTriple.Basic.archimedesFunction
     tripleSpreadDeterminant
   exact ⟨by ring1, by ring1, by ring1, by ring1, by ring1⟩
 
@@ -330,10 +330,10 @@ theorem exercise_7_1 (a b c : K) :
 The identity separates the factor `1-c` and the correction term `c(c-a-b)(1-a-b)`, with no nonzero hypotheses (Exercise
 7.2). -/
 theorem exercise_7_2 (a b c : K) :
-    Spread.Triple.TripleSpread.tripleSpreadFunction a b c =
+    TripleSpread.tripleSpreadFunction a b c =
       ((a + b - c) * c + (c - a + b) * (c - b + a)) * (1 - c) -
         c * (c - (a + b)) * (1 - (a + b)) := by
-  unfold Spread.Triple.TripleSpread.tripleSpreadFunction
+  unfold TripleSpread.tripleSpreadFunction
   ring1
 
 /-- A spread triple with third entry zero has equal first and second entries.
@@ -341,24 +341,24 @@ theorem exercise_7_2 (a b c : K) :
 The equivalence includes the converse: every pair of equal field elements completes a spread triple with zero (Exercise
 7.3). -/
 theorem spreadTriple_zero_iff [DecidableEq K] (a b : K) :
-    Spread.Triple.TripleSpread.SpreadTriple a b 0 ↔ a = b := by
+    TripleSpread.SpreadTriple a b 0 ↔ a = b := by
   constructor
   · intro triple
     have differenceZero : a - b = 0 := by
       apply ((fun {K : Type _} [ExplicitField K] [DecidableEq K] (value : K) =>
-        (Purelib.Algebra.Field.Squares.square_eq_zero_iff (K := K) value : value ^ 2 = 0 ↔ value = 0)) (K := K) (a -
+        (Squares.square_eq_zero_iff (K := K) value : value ^ 2 = 0 ↔ value = 0)) (K := K) (a -
         b)).1
-      unfold Spread.Triple.TripleSpread.SpreadTriple at triple
+      unfold TripleSpread.SpreadTriple at triple
       calc
-        (a - b) ^ 2 = -Spread.Triple.TripleSpread.tripleSpreadFunction a b 0 := by
-          unfold Spread.Triple.TripleSpread.tripleSpreadFunction
+        (a - b) ^ 2 = -TripleSpread.tripleSpreadFunction a b 0 := by
+          unfold TripleSpread.tripleSpreadFunction
           ring1
         _ = 0 := by rw [triple]; ring1
     calc
       a = (a - b) + b := by ring1
       _ = b := by rw [differenceZero]; ring1
   · intro equal
-    unfold Spread.Triple.TripleSpread.SpreadTriple Spread.Triple.TripleSpread.tripleSpreadFunction
+    unfold TripleSpread.SpreadTriple TripleSpread.tripleSpreadFunction
     rw [equal]
     ring1
 
@@ -367,24 +367,24 @@ theorem spreadTriple_zero_iff [DecidableEq K] (a b : K) :
 The equivalence includes the converse: two field elements complete a spread triple with one exactly when their sum is
 one (Exercise 7.3). -/
 theorem spreadTriple_one_iff [DecidableEq K] (a b : K) :
-    Spread.Triple.TripleSpread.SpreadTriple a b 1 ↔ a + b = 1 := by
+    TripleSpread.SpreadTriple a b 1 ↔ a + b = 1 := by
   constructor
   · intro triple
     have differenceZero : a + b - 1 = 0 := by
       apply ((fun {K : Type _} [ExplicitField K] [DecidableEq K] (value : K) =>
-        (Purelib.Algebra.Field.Squares.square_eq_zero_iff (K := K) value : value ^ 2 = 0 ↔ value = 0)) (K := K) (a + b -
+        (Squares.square_eq_zero_iff (K := K) value : value ^ 2 = 0 ↔ value = 0)) (K := K) (a + b -
         1)).1
-      unfold Spread.Triple.TripleSpread.SpreadTriple at triple
+      unfold TripleSpread.SpreadTriple at triple
       calc
-        (a + b - 1) ^ 2 = -Spread.Triple.TripleSpread.tripleSpreadFunction a b 1 := by
-          unfold Spread.Triple.TripleSpread.tripleSpreadFunction
+        (a + b - 1) ^ 2 = -TripleSpread.tripleSpreadFunction a b 1 := by
+          unfold TripleSpread.tripleSpreadFunction
           ring1
         _ = 0 := by rw [triple]; ring1
     calc
       a + b = (a + b - 1) + 1 := by ring1
       _ = 1 := by rw [differenceZero]; ring1
   · intro sumOne
-    unfold Spread.Triple.TripleSpread.SpreadTriple Spread.Triple.TripleSpread.tripleSpreadFunction
+    unfold TripleSpread.SpreadTriple TripleSpread.tripleSpreadFunction
     calc
       (a + b + 1) ^ 2 - 2 * (a ^ 2 + b ^ 2 + 1 ^ 2) -
           4 * a * b * 1 = -(a + b - 1) ^ 2 := by ring1
@@ -396,14 +396,14 @@ The square of the coordinate sum minus two equals four times the product of
 the three complements. The supplied triple-spread equation vanishes exactly
 in the scalar difference between these two displayed expressions. -/
 theorem spreadTriple_complement_form {a b c : K}
-    (triple : Geometry.Trigonometry.Spread.Triple.TripleSpread.SpreadTriple a b c) :
+    (triple : TripleSpread.SpreadTriple a b c) :
     (a + b + c - 2) ^ 2 = 4 * (1 - a) * (1 - b) * (1 - c) := by
   have differenceZero :
       4 * (1 - a) * (1 - b) * (1 - c) -
           (a + b + c - 2) ^ 2 = 0 := by
     calc
       4 * (1 - a) * (1 - b) * (1 - c) -
-          (a + b + c - 2) ^ 2 = Geometry.Trigonometry.Spread.Triple.TripleSpread.tripleSpreadFunction a b c := by
+          (a + b + c - 2) ^ 2 = TripleSpread.tripleSpreadFunction a b c := by
             exact (exercise_7_1 a b c).2.2.2.1.symm
       _ = 0 := triple
   calc
@@ -419,19 +419,19 @@ The supplied spread triple determines the normalized quadratic in its third
 entry, three translated-coordinate square identities and the square identity
 centered at `a+b-2ab`, over the same explicit field. -/
 theorem exercise_7_6 {a b c : K} (triple :
-  Spread.Triple.TripleSpread.SpreadTriple a b c) :
+  TripleSpread.SpreadTriple a b c) :
     c ^ 2 - 2 * c * (a + b - 2 * a * b) + (a - b) ^ 2 = 0 ∧
       (c - a + b) ^ 2 = 4 * (1 - a) * b * c ∧
       (c - b + a) ^ 2 = 4 * a * (1 - b) * c ∧
       (c - a - b) ^ 2 = 4 * a * b * (1 - c) ∧
       (c - (a + b - 2 * a * b)) ^ 2 =
         4 * a * b * (1 - a) * (1 - b) := by
-  unfold Spread.Triple.TripleSpread.SpreadTriple at triple
+  unfold TripleSpread.SpreadTriple at triple
   constructor
   · calc
       c ^ 2 - 2 * c * (a + b - 2 * a * b) + (a - b) ^ 2 =
-          -Spread.Triple.TripleSpread.tripleSpreadFunction a b c := by
-            unfold Spread.Triple.TripleSpread.tripleSpreadFunction
+          -TripleSpread.tripleSpreadFunction a b c := by
+            unfold TripleSpread.tripleSpreadFunction
             ring1
       _ = 0 := by rw [triple]; ring1
   constructor
@@ -439,8 +439,8 @@ theorem exercise_7_6 {a b c : K} (triple :
         (c - a + b) ^ 2 - 4 * (1 - a) * b * c = 0 := by
       calc
       (c - a + b) ^ 2 - 4 * (1 - a) * b * c =
-          -Spread.Triple.TripleSpread.tripleSpreadFunction a b c := by
-            unfold Spread.Triple.TripleSpread.tripleSpreadFunction
+          -TripleSpread.tripleSpreadFunction a b c := by
+            unfold TripleSpread.tripleSpreadFunction
             ring1
       _ = 0 := by rw [triple]; ring1
     calc
@@ -453,8 +453,8 @@ theorem exercise_7_6 {a b c : K} (triple :
         (c - b + a) ^ 2 - 4 * a * (1 - b) * c = 0 := by
       calc
       (c - b + a) ^ 2 - 4 * a * (1 - b) * c =
-          -Spread.Triple.TripleSpread.tripleSpreadFunction a b c := by
-            unfold Spread.Triple.TripleSpread.tripleSpreadFunction
+          -TripleSpread.tripleSpreadFunction a b c := by
+            unfold TripleSpread.tripleSpreadFunction
             ring1
       _ = 0 := by rw [triple]; ring1
     calc
@@ -467,8 +467,8 @@ theorem exercise_7_6 {a b c : K} (triple :
         (c - a - b) ^ 2 - 4 * a * b * (1 - c) = 0 := by
       calc
       (c - a - b) ^ 2 - 4 * a * b * (1 - c) =
-          -Spread.Triple.TripleSpread.tripleSpreadFunction a b c := by
-            unfold Spread.Triple.TripleSpread.tripleSpreadFunction
+          -TripleSpread.tripleSpreadFunction a b c := by
+            unfold TripleSpread.tripleSpreadFunction
             ring1
       _ = 0 := by rw [triple]; ring1
     calc
@@ -482,8 +482,8 @@ theorem exercise_7_6 {a b c : K} (triple :
       calc
       (c - (a + b - 2 * a * b)) ^ 2 -
           4 * a * b * (1 - a) * (1 - b) =
-        -Spread.Triple.TripleSpread.tripleSpreadFunction a b c := by
-          unfold Spread.Triple.TripleSpread.tripleSpreadFunction
+        -TripleSpread.tripleSpreadFunction a b c := by
+          unfold TripleSpread.tripleSpreadFunction
           ring1
       _ = 0 := by rw [triple]; ring1
     calc
@@ -579,11 +579,11 @@ section
 
 /-- Swapping the last two entries preserves the spread-triple relation. -/
 private theorem spreadTriple_swap_last {a b c : K}
-    (triple : Geometry.Trigonometry.Spread.Triple.TripleSpread.SpreadTriple a b c) :
-      Geometry.Trigonometry.Spread.Triple.TripleSpread.SpreadTriple a c b := by
-  exact Geometry.Trigonometry.Spread.Triple.spreadTriple_rotate
-    (Geometry.Trigonometry.Spread.Triple.spreadTriple_rotate
-      (Geometry.Trigonometry.Spread.Triple.spreadTriple_swap_first_third triple))
+    (triple : Spread.Triple.TripleSpread.SpreadTriple a b c) :
+      Spread.Triple.TripleSpread.SpreadTriple a c b := by
+  exact Spread.Triple.spreadTriple_rotate
+    (Spread.Triple.spreadTriple_rotate
+      (Spread.Triple.spreadTriple_swap_first_third triple))
 end
 
 end Purelib.Geometry.Quadrilaterals.Basic.Quadrilateral

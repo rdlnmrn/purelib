@@ -145,16 +145,16 @@ increments; the squared estimate is four times magnitude times the density facto
 and allowance. -/
 theorem bottom_geometric_area_bound (samples : Centered traces values) (lengths : Lengths traces)
     {allowance magnitude density : Coordinate}
-    (budget : NoisyPathArea.LengthErrorBudget traces.bottom.vertices.rest.length allowance)
+    (budget : LengthErrorBudget traces.bottom.vertices.rest.length allowance)
     (magnitudeNonnegative : 0 ≤ magnitude) (densityNonnegative : 0 ≤ density)
     (bounded : ∀ vertex, Bounded (samples.bottom.centered vertex) magnitude)
     (increments : ∀ edge : Fin traces.bottom.vertices.rest.length,
       Bounded ((traces.bottom.leftValue values (traces.bottom.vertices.indexed edge.succ)).sub
         (traces.bottom.leftValue values (traces.bottom.vertices.indexed edge.castSucc)))
-        (3 * budget.tolerance + 4 * density * Data.Gaussian.Norm.Basic.normSq
+        (3 * budget.tolerance + 4 * density * normSq
           (traces.bottom.point (traces.bottom.vertices.indexed edge.succ) -
             traces.bottom.point (traces.bottom.vertices.indexed edge.castSucc)))) :
-    Data.Gaussian.Norm.Basic.normSq samples.bottom.centeredArea ≤
+    normSq samples.bottom.centeredArea ≤
       4 * magnitude * (4 * density + 3) * (box.xUpper - box.xLower + allowance)^2 := by
   have estimate := budget.centered_area_bound samples.bottom lengths.bottom.values
     magnitudeNonnegative densityNonnegative lengths.bottom.nonnegative bounded (fun edge => by
@@ -173,16 +173,16 @@ increments; the squared estimate is four times magnitude times the density facto
 and allowance. -/
 theorem top_geometric_area_bound (samples : Centered traces values) (lengths : Lengths traces)
     {allowance magnitude density : Coordinate}
-    (budget : NoisyPathArea.LengthErrorBudget traces.top.vertices.rest.length allowance)
+    (budget : LengthErrorBudget traces.top.vertices.rest.length allowance)
     (magnitudeNonnegative : 0 ≤ magnitude) (densityNonnegative : 0 ≤ density)
     (bounded : ∀ vertex, Bounded (samples.top.centered vertex) magnitude)
     (increments : ∀ edge : Fin traces.top.vertices.rest.length,
       Bounded ((traces.top.leftValue values (traces.top.vertices.indexed edge.succ)).sub
         (traces.top.leftValue values (traces.top.vertices.indexed edge.castSucc)))
-        (3 * budget.tolerance + 4 * density * Data.Gaussian.Norm.Basic.normSq
+        (3 * budget.tolerance + 4 * density * normSq
           (traces.top.point (traces.top.vertices.indexed edge.succ) -
             traces.top.point (traces.top.vertices.indexed edge.castSucc)))) :
-    Data.Gaussian.Norm.Basic.normSq samples.top.centeredArea ≤
+    normSq samples.top.centeredArea ≤
       4 * magnitude * (4 * density + 3) * (box.xUpper - box.xLower + allowance)^2 := by
   have estimate := budget.centered_area_bound samples.top lengths.top.values
     magnitudeNonnegative densityNonnegative lengths.top.nonnegative bounded (fun edge => by
@@ -201,16 +201,16 @@ increments; the squared estimate is four times magnitude times the density facto
 and allowance. -/
 theorem left_geometric_area_bound (samples : Centered traces values) (lengths : Lengths traces)
     {allowance magnitude density : Coordinate}
-    (budget : NoisyPathArea.LengthErrorBudget traces.left.vertices.rest.length allowance)
+    (budget : LengthErrorBudget traces.left.vertices.rest.length allowance)
     (magnitudeNonnegative : 0 ≤ magnitude) (densityNonnegative : 0 ≤ density)
     (bounded : ∀ vertex, Bounded (samples.left.centered vertex) magnitude)
     (increments : ∀ edge : Fin traces.left.vertices.rest.length,
       Bounded ((traces.left.leftValue values (traces.left.vertices.indexed edge.succ)).sub
         (traces.left.leftValue values (traces.left.vertices.indexed edge.castSucc)))
-        (3 * budget.tolerance + 4 * density * Data.Gaussian.Norm.Basic.normSq
+        (3 * budget.tolerance + 4 * density * normSq
           (traces.left.point (traces.left.vertices.indexed edge.succ) -
             traces.left.point (traces.left.vertices.indexed edge.castSucc)))) :
-    Data.Gaussian.Norm.Basic.normSq samples.left.centeredArea ≤
+    normSq samples.left.centeredArea ≤
       4 * magnitude * (4 * density + 3) * (box.yUpper - box.yLower + allowance)^2 := by
   have estimate := budget.centered_area_bound samples.left lengths.left.values
     magnitudeNonnegative densityNonnegative lengths.left.nonnegative bounded (fun edge => by
@@ -229,16 +229,16 @@ increments; the squared estimate is four times magnitude times the density facto
 and allowance. -/
 theorem right_geometric_area_bound (samples : Centered traces values) (lengths : Lengths traces)
     {allowance magnitude density : Coordinate}
-    (budget : NoisyPathArea.LengthErrorBudget traces.right.vertices.rest.length allowance)
+    (budget : LengthErrorBudget traces.right.vertices.rest.length allowance)
     (magnitudeNonnegative : 0 ≤ magnitude) (densityNonnegative : 0 ≤ density)
     (bounded : ∀ vertex, Bounded (samples.right.centered vertex) magnitude)
     (increments : ∀ edge : Fin traces.right.vertices.rest.length,
       Bounded ((traces.right.leftValue values (traces.right.vertices.indexed edge.succ)).sub
         (traces.right.leftValue values (traces.right.vertices.indexed edge.castSucc)))
-        (3 * budget.tolerance + 4 * density * Data.Gaussian.Norm.Basic.normSq
+        (3 * budget.tolerance + 4 * density * normSq
           (traces.right.point (traces.right.vertices.indexed edge.succ) -
             traces.right.point (traces.right.vertices.indexed edge.castSucc)))) :
-    Data.Gaussian.Norm.Basic.normSq samples.right.centeredArea ≤
+    normSq samples.right.centeredArea ≤
       4 * magnitude * (4 * density + 3) * (box.yUpper - box.yLower + allowance)^2 := by
   have estimate := budget.centered_area_bound samples.right lengths.right.values
     magnitudeNonnegative densityNonnegative lengths.right.nonnegative bounded (fun edge => by

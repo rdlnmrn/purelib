@@ -85,8 +85,8 @@ open Purelib.Riemann.Integration.PreparedDyadicRefinements (AllParentsProper)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover (Parent Bank)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {collar :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {differential :
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {differential :
     Differential genus} {count : Nat}
 
 namespace Bank
@@ -94,9 +94,9 @@ namespace Bank
 /-- Local primitive requests retained on the original cap path bank.
 
 The dependent product follows the original parent order and keeps each parent's exact target and floor. -/
-@[expose] public def Requests : {parents : List (PathCover.Parent curve differential)} → PathCover.Bank cap differential
+@[expose] public def Requests : {parents : List (Parent curve differential)} → Bank cap differential
   count parents →
-    InverseRootPolynomial.Coordinate → Nat → Type 3
+    Coordinate → Nat → Type 3
   | _, .nil, _, _ => PUnit
   | _, .cons data remaining, target, floor =>
       PreparedPrimitives.Request data target floor ×
@@ -105,11 +105,11 @@ The dependent product follows the original parent order and keeps each parent's 
 namespace Requests
 
 /-- Request each original parent once at the common target and floor, retaining its original properness witness. -/
-@[expose] public def build : {parents : List (PathCover.Parent curve differential)} → (bank : PathCover.Bank cap
+@[expose] public def build : {parents : List (Parent curve differential)} → (bank : Bank cap
   differential count parents) →
-    (target : InverseRootPolynomial.Coordinate) → 0 < target → (floor : Nat) →
-      PreparedDyadicRefinements.AllParentsProper parents →
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathRequests.Bank.Requests bank target floor
+    (target : Coordinate) → 0 < target → (floor : Nat) →
+      AllParentsProper parents →
+      Requests bank target floor
   | _, .nil, _, _, _, _ => ⟨⟩
   | _, .cons data remaining, target, positive, floor, proper =>
       ⟨PreparedPrimitives.Request.build data target positive floor proper.1,
@@ -118,29 +118,29 @@ namespace Requests
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathRequests.Bank.Requests
 /-- The common model stage is the maximum of all retained local request stages and the original floor. -/
-@[expose] public def index : {parents : List (PathCover.Parent curve differential)} → {bank : PathCover.Bank cap
+@[expose] public def index : {parents : List (Parent curve differential)} → {bank : Bank cap
   differential count parents} →
-    {target : InverseRootPolynomial.Coordinate} → {floor : Nat} →
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathRequests.Bank.Requests bank target floor → Nat
+    {target : Coordinate} → {floor : Nat} →
+      Requests bank target floor → Nat
   | _, .nil, _, floor, _ => floor
   | _, .cons _ _, _, _, requests => max requests.1.index (index requests.2)
 
 /-- The retained common model stage is at least the original request floor. -/
-theorem floor_le : {parents : List (PathCover.Parent curve differential)} → {bank : PathCover.Bank cap differential
+theorem floor_le : {parents : List (Parent curve differential)} → {bank : Bank cap differential
   count parents} →
-    {target : InverseRootPolynomial.Coordinate} → {floor : Nat} → (requests :
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathRequests.Bank.Requests bank target floor) → floor ≤ index requests
+    {target : Coordinate} → {floor : Nat} → (requests :
+      Requests bank target floor) → floor ≤ index requests
   | _, .nil, _, _, _ => Nat.le_refl _
-  | _, .cons _ _, _, _, requests => requests.1.floor_le.trans (Purelib.Data.Nat.Order.le_max_left _ _)
+  | _, .cons _ _, _, _, requests => requests.1.floor_le.trans (Data.Nat.Order.le_max_left _ _)
 
 end Requests
 
 /-- Evaluated local requests on one shared cap sample.
 
 Each factor retains its original integration block and belongs to the corresponding original parent request. -/
-@[expose] public def Samples {index : Nat} {box : Rational.Box} : {parents : List (PathCover.Parent
+@[expose] public def Samples {index : Nat} {box : Rational.Box} : {parents : List (Parent
   curve differential)} →
-    {bank : PathCover.Bank cap differential count parents} → {target : InverseRootPolynomial.Coordinate} → {floor : Nat}
+    {bank : Bank cap differential count parents} → {target : Coordinate} → {floor : Nat}
       →
     Requests bank target floor → Primitives.Sample cap
       differential index box → Type 3
@@ -152,28 +152,28 @@ Each factor retains its original integration block and belongs to the correspond
 namespace Samples
 
 /-- Evaluate all retained parent requests on the same later cap sample without rebuilding their integration blocks. -/
-@[expose] public def build {index : Nat} {box : Rational.Box} : {parents : List (PathCover.Parent curve
+@[expose] public def build {index : Nat} {box : Rational.Box} : {parents : List (Parent curve
   differential)} →
-    {bank : PathCover.Bank cap differential count parents} → {target : InverseRootPolynomial.Coordinate} → {floor : Nat}
+    {bank : Bank cap differential count parents} → {target : Coordinate} → {floor : Nat}
       →
-    (requests : Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathRequests.Bank.Requests bank target floor) → (capSample :
+    (requests : Requests bank target floor) → (capSample :
       Primitives.Sample cap differential index box) →
-    Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathRequests.Bank.Requests.index requests ≤ index →
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathRequests.Bank.Samples requests capSample
+    Requests.index requests ≤ index →
+      Samples requests capSample
   | _, .nil, _, _, _, _, _ => ⟨⟩
   | _, .cons _ _, _, _, requests, capSample, later =>
-      ⟨PreparedPrimitives.Sample.build requests.1 capSample ((Purelib.Data.Nat.Order.le_max_left _ _).trans later),
+      ⟨PreparedPrimitives.Sample.build requests.1 capSample ((Data.Nat.Order.le_max_left _ _).trans later),
         build requests.2 capSample
-          ((Purelib.Data.Nat.Order.le_max_right _ _).trans later)⟩
+          ((Data.Nat.Order.le_max_right _ _).trans later)⟩
 
 /-- Extract the actual retained blocks without running their preparation again. -/
 @[expose] public def blocks {index : Nat} {box : Rational.Box} {capSample : Primitives.Sample cap
   differential index box} :
-    {parents : List (PathCover.Parent curve differential)} → {bank : PathCover.Bank cap differential count parents} →
-    {target : InverseRootPolynomial.Coordinate} → {floor : Nat} → {requests :
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathRequests.Bank.Requests bank target floor} →
-    Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathRequests.Bank.Samples requests capSample →
-      PreparedDirectDyadicRefinements.DirectBlockRefinement parents
+    {parents : List (Parent curve differential)} → {bank : Bank cap differential count parents} →
+    {target : Coordinate} → {floor : Nat} → {requests :
+      Requests bank target floor} →
+    Samples requests capSample →
+      DirectBlockRefinement parents
   | _, .nil, _, _, _, _ => .nil
   | _, .cons _ _, _, _, _, samples => .cons samples.1.integration.block
     (blocks samples.2)
@@ -183,43 +183,43 @@ end Samples
 end Bank
 
 /-- The sum of paired row differences is the difference of their original component sums. -/
-private theorem row_error_sum (rows : List (InverseRootPolynomial.Gaussian × InverseRootPolynomial.Gaussian)) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (rows.map (fun row => row.1 - row.2)) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (rows.map Prod.fst) - Data.Gaussian.Norm.Sum.Basic.gaussianSum
+private theorem row_error_sum (rows : List (Gaussian × Gaussian)) :
+    gaussianSum (rows.map (fun row => row.1 - row.2)) =
+      gaussianSum (rows.map Prod.fst) - gaussianSum
       (rows.map Prod.snd) := by
   induction rows with
-  | nil => change (0 : InverseRootPolynomial.Gaussian) = 0 - 0; ring1
+  | nil => change (0 : Gaussian) = 0 - 0; ring1
   | cons row rows previous =>
-      simp only [List.map_cons, Data.Gaussian.Norm.Sum.Basic.gaussianSum, previous]
+      simp only [List.map_cons, gaussianSum, previous]
       ring1
 
 /-- A common row-error ceiling bounds the sum of squared row errors by the exact finite row count. -/
-private theorem row_norm_sum_le (rows : List (InverseRootPolynomial.Gaussian × InverseRootPolynomial.Gaussian)) (bound :
-  InverseRootPolynomial.Coordinate)
+private theorem row_norm_sum_le (rows : List (Gaussian × Gaussian)) (bound :
+  Coordinate)
     (bounded : ∀ row ∈ rows, Data.Gaussian.Norm.Basic.normSq (row.1 - row.2) ≤ bound) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianNormSqSum (rows.map (fun row => row.1 - row.2)) ≤ (rows.length :
-      InverseRootPolynomial.Coordinate) * bound := by
+    gaussianNormSqSum (rows.map (fun row => row.1 - row.2)) ≤ (rows.length :
+      Coordinate) * bound := by
   induction rows with
-  | nil => change (0 : InverseRootPolynomial.Coordinate) ≤ 0 * bound; exact le_of_eq (by ring1)
+  | nil => change (0 : Coordinate) ≤ 0 * bound; exact le_of_eq (by ring1)
   | cons row rows previous =>
       have tail := previous (fun other member => bounded other (List.mem_cons_of_mem _ member))
       have scalar := bounded row (List.mem_cons_self ..)
       rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
-      change Data.Gaussian.Basic.Canonical.normSq (row.1 - row.2) + Data.Gaussian.Norm.Sum.Basic.gaussianNormSqSum
+      change normSq (row.1 - row.2) + gaussianNormSqSum
         (rows.map (fun row => row.1 - row.2)) ≤ _
       apply (Fraction.Order.Arithmetic.add_le_add_direct scalar tail).trans_eq
-      simp only [List.length_cons, Purelib.Algebra.NatCast.add, Nat.cast_one]
+      simp only [List.length_cons, Algebra.NatCast.add, Nat.cast_one]
       ring1
 
 /-- A common row-error ceiling bounds the squared difference of component sums by the squared finite row count. -/
-theorem row_error_le (rows : List (InverseRootPolynomial.Gaussian × InverseRootPolynomial.Gaussian)) (bound :
-  InverseRootPolynomial.Coordinate)
+theorem row_error_le (rows : List (Gaussian × Gaussian)) (bound :
+  Coordinate)
     (bounded : ∀ row ∈ rows, Data.Gaussian.Norm.Basic.normSq (row.1 - row.2) ≤ bound) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (rows.map Prod.fst) -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (rows.map Prod.snd)) ≤ (rows.length :
-      InverseRootPolynomial.Coordinate) ^ 2 * bound := by
+    Data.Gaussian.Norm.Basic.normSq (gaussianSum (rows.map Prod.fst) -
+      gaussianSum (rows.map Prod.snd)) ≤ (rows.length :
+      Coordinate) ^ 2 * bound := by
   have sum := Data.Gaussian.Norm.Sum.Basic.normSq_gaussianSum_le (rows.map (fun row => row.1 - row.2))
-  rw [row_error_sum, Purelib.Data.List.Map.length_map] at sum
+  rw [row_error_sum, Data.List.Map.length_map] at sum
   rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
   apply (sum.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
     (row_norm_sum_le rows bound bounded)

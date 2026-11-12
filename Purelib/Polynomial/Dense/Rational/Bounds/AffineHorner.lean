@@ -38,7 +38,7 @@ open Purelib.Geometry.Rational
 The retained interval bounds are transported through multiplication by the
 same slope and addition of the same intercept. A negative slope reverses
 the two endpoint comparisons while retaining their maximum. -/
-private theorem affine_sq_le (a b : Fraction.Rational) (interval : Data.Rat.Interval.Bounds)
+private theorem affine_sq_le (a b : Fraction.Rational) (interval : Interval.Bounds)
     {x : Fraction.Rational} (inside : interval.Contains x) :
     (a * x + b) ^ 2 ≤ max ((a * interval.lower + b) ^ 2) ((a * interval.upper + b) ^ 2) := by
   by_cases nonnegative : 0 ≤ a
@@ -70,20 +70,20 @@ set_option backward.match.sparseCases false in
 Empty and constant tables use their exact values, two coefficients use the
 maximum of the original affine endpoint squares, and longer tables retain
 the original finite Horner majorant. -/
-@[expose] public def coefficientSqBound (p : Dense.Rational.Basic.CoordinatePolynomial)
-    (interval : Data.Rat.Interval.Bounds) : Fraction.Rational :=
+@[expose] public def coefficientSqBound (p : Basic.CoordinatePolynomial)
+    (interval : Interval.Bounds) : Fraction.Rational :=
   match p.coeffs with
   | [] => 0
   | [b] => b ^ 2
   | [a, b] => max ((a * interval.lower + b) ^ 2) ((a * interval.upper + b) ^ 2)
-  | _ => Dense.Rational.Bounds.Horner.evalSqBound p interval
+  | _ => Horner.evalSqBound p interval
 
 /-- The dispatched bound encloses every squared polynomial value on its interval.
 
 The original empty, constant and affine tables reduce to their scalar
 values; longer coefficient tables use the same finite Horner certificate. -/
-public theorem eval_sq_le_coefficientSqBound (p : Dense.Rational.Basic.CoordinatePolynomial)
-    (interval : Data.Rat.Interval.Bounds) {x : Fraction.Rational} (inside : interval.Contains x) :
+public theorem eval_sq_le_coefficientSqBound (p : Basic.CoordinatePolynomial)
+    (interval : Interval.Bounds) {x : Fraction.Rational} (inside : interval.Contains x) :
     p.eval x ^ 2 ≤ coefficientSqBound p interval := by
   cases p with
   | mk coefficients =>
@@ -110,7 +110,7 @@ public theorem eval_sq_le_coefficientSqBound (p : Dense.Rational.Basic.Coordinat
                 rw [Fraction.Field.zero_mul_direct, Fraction.Field.zero_add]
               _ ≤ _ := affine_sq_le a b interval inside
         | cons c tail =>
-          exact Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound
+          exact Horner.eval_sq_le_evalSqBound
             ⟨a :: b :: c :: tail⟩ interval inside
 
 /-- The dispatched bound never exceeds the original finite Horner bound.
@@ -118,18 +118,18 @@ public theorem eval_sq_le_coefficientSqBound (p : Dense.Rational.Basic.Coordinat
 Both affine endpoint squares are enclosed by the original Horner
 certificate on that same interval. Higher-degree tables keep that bound
 unchanged, and the empty table retains the Horner nonnegativity bound. -/
-public theorem coefficientSqBound_le_previous (p : Dense.Rational.Basic.CoordinatePolynomial)
-    (interval : Data.Rat.Interval.Bounds) :
-    coefficientSqBound p interval ≤ Dense.Rational.Bounds.Horner.evalSqBound p interval := by
+public theorem coefficientSqBound_le_previous (p : Basic.CoordinatePolynomial)
+    (interval : Interval.Bounds) :
+    coefficientSqBound p interval ≤ Horner.evalSqBound p interval := by
   cases p with
   | mk coefficients =>
     cases coefficients with
-    | nil => exact Dense.Rational.Bounds.Horner.evalSqBound_nonneg ⟨[]⟩ interval
+    | nil => exact Horner.evalSqBound_nonneg ⟨[]⟩ interval
     | cons a tail =>
       cases tail with
       | nil =>
-          have bound := Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound
-            (⟨[a]⟩ : Dense.Rational.Basic.CoordinatePolynomial) interval ⟨le_rfl, interval.valid⟩
+          have bound := Horner.eval_sq_le_evalSqBound
+            (⟨[a]⟩ : Basic.CoordinatePolynomial) interval ⟨le_rfl, interval.valid⟩
           change ((0 : Fraction.Rational) * interval.lower + a) ^ 2 ≤ _ at bound
           rw [Fraction.Field.zero_mul_direct, Fraction.Field.zero_add] at bound
           exact bound
@@ -137,13 +137,13 @@ public theorem coefficientSqBound_le_previous (p : Dense.Rational.Basic.Coordina
         cases tail with
         | nil =>
           apply Basic.max_le
-          · have bound := Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound
-              (⟨[a, b]⟩ : Dense.Rational.Basic.CoordinatePolynomial) interval ⟨le_rfl, interval.valid⟩
+          · have bound := Horner.eval_sq_le_evalSqBound
+              (⟨[a, b]⟩ : Basic.CoordinatePolynomial) interval ⟨le_rfl, interval.valid⟩
             change (((0 : Fraction.Rational) * interval.lower + a) * interval.lower + b) ^ 2 ≤ _ at bound
             rw [Fraction.Field.zero_mul_direct, Fraction.Field.zero_add] at bound
             exact bound
-          · have bound := Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound
-              (⟨[a, b]⟩ : Dense.Rational.Basic.CoordinatePolynomial) interval ⟨interval.valid, le_rfl⟩
+          · have bound := Horner.eval_sq_le_evalSqBound
+              (⟨[a, b]⟩ : Basic.CoordinatePolynomial) interval ⟨interval.valid, le_rfl⟩
             change (((0 : Fraction.Rational) * interval.upper + a) * interval.upper + b) ^ 2 ≤ _ at bound
             rw [Fraction.Field.zero_mul_direct, Fraction.Field.zero_add] at bound
             exact bound

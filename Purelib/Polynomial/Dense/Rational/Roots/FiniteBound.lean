@@ -6,7 +6,7 @@ public import Purelib.Data.Rat.Fraction.Field
 import Purelib.Polynomial.Dense.Basic
 public import Purelib.Polynomial.Dense.Evaluation
 public import Purelib.Polynomial.Dense.Rational.Basic
-import Purelib.Polynomial.Dense.Rational.Division.Synthetic
+import Purelib.Polynomial.Dense.Division.Synthetic
 
 import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Data.Rat.Fraction.Arithmetic
@@ -24,6 +24,7 @@ open Purelib
 open Purelib.Data.List
 open Purelib.Data.Rat
 open Purelib.Polynomial
+open Purelib.Polynomial.Dense.Division
 
 open Purelib.Algebra.Group in
 attribute [local instance high] Negation.subNegZeroMonoid
@@ -35,7 +36,7 @@ namespace Purelib.Polynomial.Dense.Rational.Roots.FiniteBound
 The original duplicate-free root list and its pointwise zero evaluations
 are retained. Synthetic division at its head keeps the same quotient,
 remainder and factor identity while strictly decreasing coefficient count. -/
-public theorem nodup_zeros_length_lt_degreeCount (p : Dense.Rational.Basic.CoordinatePolynomial)
+public theorem nodup_zeros_length_lt_degreeCount (p : Basic.CoordinatePolynomial)
     (nonzero : p.isZero = false) (points : List Fraction.Rational)
     (nodup : points.Nodup)
     (zeros : ∀ x ∈ points, p.eval x = 0) :
@@ -43,7 +44,7 @@ public theorem nodup_zeros_length_lt_degreeCount (p : Dense.Rational.Basic.Coord
   generalize degreeEquation : p.degreeCount = degree
   induction degree using Nat.strong_induction_on generalizing p points with
   | h degree inductionHypothesis =>
-      have degreePositive := Dense.Basic.DensePolynomial.degreeCount_pos_of_isZero_false nonzero
+      have degreePositive := Basic.DensePolynomial.degreeCount_pos_of_isZero_false nonzero
       rw [degreeEquation] at degreePositive
       cases points with
       | nil =>
@@ -65,7 +66,7 @@ public theorem nodup_zeros_length_lt_degreeCount (p : Dense.Rational.Basic.Coord
           | nil => exact (normalizedNonempty coefficientsEquation).elim
           | cons leading remaining =>
               have leadingNonzero : leading ≠ 0 := by
-                have headNonzero := Dense.Basic.DensePolynomial.leadingCoeff_ne_zero nonzero
+                have headNonzero := Basic.DensePolynomial.leadingCoeff_ne_zero nonzero
                 change p.normalize.coeffs.headD 0 ≠ 0 at headNonzero
                 rw [coefficientsEquation] at headNonzero
                 exact headNonzero
@@ -73,22 +74,19 @@ public theorem nodup_zeros_length_lt_degreeCount (p : Dense.Rational.Basic.Coord
               | nil =>
                   have rootZero := zeros root (List.Mem.head otherPoints)
                   have normalizedRootZero : p.normalize.eval root = 0 := by
-                    rw [Dense.Basic.DensePolynomial.eval_normalize]
+                    rw [Basic.DensePolynomial.eval_normalize]
                     exact rootZero
-                  change Dense.Basic.DensePolynomial.evalCoeffs root p.normalize.coeffs = 0 at normalizedRootZero
+                  change Basic.DensePolynomial.evalCoeffs root p.normalize.coeffs = 0 at normalizedRootZero
                   rw [coefficientsEquation] at normalizedRootZero
-                  rw [Dense.Basic.DensePolynomial.evalCoeffs_cons] at normalizedRootZero
+                  rw [Basic.DensePolynomial.evalCoeffs_cons] at normalizedRootZero
                   exact (leadingNonzero normalizedRootZero).elim
               | cons coefficient remaining =>
-                  let division := Dense.Rational.Division.Synthetic.syntheticAux root leading
-                    (coefficient :: remaining)
-                  let quotient : (Dense.Basic.DensePolynomial Fraction.Rational) := ⟨division.1⟩
-                  have divisionSpec := Dense.Rational.Division.Synthetic.syntheticAux_spec root leading
-                    (coefficient :: remaining)
+                  let division := Synthetic.divide ⟨leading :: coefficient :: remaining⟩ root
+                  let quotient := division.quotient
                   have quotientCoefficients : quotient.coeffs =
                       leading ::
-                        (Dense.Rational.Division.Synthetic.syntheticAux root
-                          (leading * root + coefficient) remaining).1 := rfl
+                        (Synthetic.divide ⟨(leading * root + coefficient) :: remaining⟩ root).quotient.coeffs :=
+                    Synthetic.divide_cons_cons root leading coefficient remaining
                   have leadingRetained : decide (leading = 0) = false := by
                     cases selected : decide (leading = 0) with
                     | false => rfl
@@ -96,12 +94,12 @@ public theorem nodup_zeros_length_lt_degreeCount (p : Dense.Rational.Basic.Coord
                         exact (leadingNonzero (of_decide_eq_true selected)).elim
                   have quotientNormalizedCoefficients :
                       quotient.normalize.coeffs = quotient.coeffs := by
-                    rw [Dense.Basic.DensePolynomial.normalize_coeffs,
+                    rw [Basic.DensePolynomial.normalize_coeffs,
                       quotientCoefficients]
                     exact DropWhile.cons_of_false
                       (fun value : Fraction.Rational => decide (value = 0)) leading
-                      (Dense.Rational.Division.Synthetic.syntheticAux root
-                        (leading * root + coefficient) remaining).1 leadingRetained
+                      (Synthetic.divide ⟨(leading * root + coefficient) :: remaining⟩ root).quotient.coeffs
+                      leadingRetained
                   have quotientNonzero : quotient.isZero = false := by
                     calc
                       quotient.isZero = quotient.normalize.coeffs.isEmpty := rfl
@@ -117,29 +115,29 @@ public theorem nodup_zeros_length_lt_degreeCount (p : Dense.Rational.Basic.Coord
                         rfl
                       _ = quotient.coeffs.length :=
                         congrArg List.length quotientNormalizedCoefficients
-                      _ = division.1.length := rfl
-                      _ = (coefficient :: remaining).length := divisionSpec.1
+                      _ = (coefficient :: remaining).length := division.quotient_length
                   have originalDegree : p.degreeCount =
                       (leading :: coefficient :: remaining).length := by
                     exact congrArg List.length coefficientsEquation
                   have quotientSmaller : quotient.degreeCount < degree := by
                     rw [quotientDegree, ← degreeEquation, originalDegree]
                     exact Nat.lt_succ_self _
-                  have remainderZero : division.2 = 0 := by
-                    rw [divisionSpec.2.1]
+                  have remainderZero : division.remainder = 0 := by
+                    rw [division.remainder_eval]
+                    change Basic.DensePolynomial.evalCoeffs root (leading :: coefficient :: remaining) = 0
                     rw [← coefficientsEquation]
                     change p.normalize.eval root = 0
-                    rw [Dense.Basic.DensePolynomial.eval_normalize]
+                    rw [Basic.DensePolynomial.eval_normalize]
                     exact zeros root (List.Mem.head otherPoints)
                   have otherZeros : ∀ x ∈ otherPoints,
                       quotient.eval x = 0 := by
                     intro x member
                     have originalZero := zeros x (List.Mem.tail root member)
-                    have factor := divisionSpec.2.2 x
-                    rw [← coefficientsEquation] at factor
-                    change p.normalize.eval x =
-                      (x - root) * quotient.eval x + division.2 at factor
-                    rw [Dense.Basic.DensePolynomial.eval_normalize, originalZero, remainderZero] at factor
+                    have factor : p.normalize.eval x =
+                        (x - root) * quotient.eval x + division.remainder :=
+                      (congrArg (Basic.DensePolynomial.evalCoeffs x) coefficientsEquation).trans
+                        (division.eval_eq x)
+                    rw [Basic.DensePolynomial.eval_normalize, originalZero, remainderZero] at factor
                     have productZero : (x - root) * quotient.eval x = 0 := by
                       calc
                         (x - root) * quotient.eval x =

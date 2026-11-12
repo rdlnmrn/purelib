@@ -102,18 +102,18 @@ namespace Purelib.Curves.Hyperelliptic.Branches.BranchIsolation
 open Purelib.Riemann.Curves.AlgebraicDifferentials
 
 /-- A productive finite Gaussian name with exact process semantics. -/
-abbrev Named := Gaussian.Name.Basic.Named
+abbrev Named := Basic.Named
 /-- A productive Gaussian name carrying finite coherence evidence. -/
 abbrev CoherentNamed := Coherent.CoherentNamed
 /-- Exact Gaussian rational branch coordinates. -/
 abbrev Gaussian := Data.Gaussian.Basic.Canonical
 /-- The retained finite isolation result for a positive-degree Gaussian polynomial. -/
-abbrev PositiveResult (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) :=
+abbrev PositiveResult (polynomial : CanonicalCoefficients.CoefficientPolynomial) :=
   CCL.Basic.PositiveResult polynomial
 
 /-- Both admitted hyperelliptic degree shapes have positive degree. -/
 theorem degreePositive {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) :
+    (curve : Basic.HyperellipticCurve genus) :
     0 < curve.polynomial.natDegree := by
   cases curve.degreeShape with
   | odd degreeEqual =>
@@ -125,15 +125,15 @@ theorem degreePositive {genus : Nat}
 
 /-- Automatically run finite squarefree branch isolation on the defining polynomial. -/
 def branchIsolation {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) :
-    Curves.Hyperelliptic.Branches.BranchIsolation.PositiveResult curve.polynomial :=
+    (curve : Basic.HyperellipticCurve genus) :
+    PositiveResult curve.polynomial :=
   Build.provePositive
     { squarefree := curve.squarefree
-      degreePositive := Curves.Hyperelliptic.Branches.BranchIsolation.degreePositive curve }
+      degreePositive := degreePositive curve }
 
 /-- Number of displayed finite branch sites in a unified positive-degree isolation result. -/
-def siteCount {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    (result : Curves.Hyperelliptic.Branches.BranchIsolation.PositiveResult polynomial) : Nat :=
+def siteCount {polynomial : CanonicalCoefficients.CoefficientPolynomial}
+    (result : PositiveResult polynomial) : Nat :=
   match result with
   | .terminal _ _ => 1
   | .higher _ _ => polynomial.natDegree
@@ -142,8 +142,8 @@ section
 open Purelib.Curves.Hyperelliptic.Branches.BranchIsolation
 /-- The displayed branch-site count equals the degree of the original polynomial. -/
 theorem siteCount_eq_natDegree {polynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    (result : Curves.Hyperelliptic.Branches.BranchIsolation.PositiveResult polynomial) :
+  CanonicalCoefficients.CoefficientPolynomial}
+    (result : PositiveResult polynomial) :
     siteCount result = polynomial.natDegree := by
   cases result with
   | terminal terminal degree =>
@@ -152,16 +152,16 @@ theorem siteCount_eq_natDegree {polynomial :
       rfl
 
 /-- A finite index into the sites of the retained isolation result. -/
-abbrev SiteIndex {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    (result : Curves.Hyperelliptic.Branches.BranchIsolation.PositiveResult polynomial) := Fin (siteCount result)
+abbrev SiteIndex {polynomial : CanonicalCoefficients.CoefficientPolynomial}
+    (result : PositiveResult polynomial) := Fin (siteCount result)
 
 end
 
 /-- Uniform persistent arithmetic name of a finite branch site. A linear terminal is named by its exact rational point;
 a higher-degree site uses the corresponding shrinking winding-one track. -/
-def siteName {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    (result : Curves.Hyperelliptic.Branches.BranchIsolation.PositiveResult polynomial) :
-      Curves.Hyperelliptic.Branches.BranchIsolation.SiteIndex result -> Named :=
+def siteName {polynomial : CanonicalCoefficients.CoefficientPolynomial}
+    (result : PositiveResult polynomial) :
+      SiteIndex result -> Named :=
   match result with
   | .terminal terminal _ => fun _ =>
       Named.exact terminal.point
@@ -169,9 +169,9 @@ def siteName {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients
 
 /-- Coherent arithmetic name of the same finite branch site. Higher-degree sites use one deterministic nested anchor
 sequence; the linear terminal is the exact rational name. -/
-def siteCoherentName {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    (result : Curves.Hyperelliptic.Branches.BranchIsolation.PositiveResult polynomial) :
-      Curves.Hyperelliptic.Branches.BranchIsolation.SiteIndex result -> CoherentNamed :=
+def siteCoherentName {polynomial : CanonicalCoefficients.CoefficientPolynomial}
+    (result : PositiveResult polynomial) :
+      SiteIndex result -> CoherentNamed :=
   match result with
   | .terminal terminal _ => fun _ =>
       Coherence.exact terminal.point
@@ -180,43 +180,43 @@ def siteCoherentName {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoef
 
 /-- A displayed rational anchor for each finite site. In higher degree it is the anchor of the site's initial isolated
 box; the persistent name refines that same box rather than replacing the site. -/
-def siteAnchor {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    (result : Curves.Hyperelliptic.Branches.BranchIsolation.PositiveResult polynomial) :
-      Curves.Hyperelliptic.Branches.BranchIsolation.SiteIndex result -> Gaussian :=
+def siteAnchor {polynomial : CanonicalCoefficients.CoefficientPolynomial}
+    (result : PositiveResult polynomial) :
+      SiteIndex result -> Gaussian :=
   match result with
   | .terminal terminal _ => fun _ => terminal.point
   | .higher boxes _ => fun index => (boxes.trackAt index).initial.box.anchor
 
 /-- Every branch site produces exactly every requested finite prefix. -/
-theorem siteName_productive {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    (result : Curves.Hyperelliptic.Branches.BranchIsolation.PositiveResult polynomial) (index :
-      Curves.Hyperelliptic.Branches.BranchIsolation.SiteIndex result)
+theorem siteName_productive {polynomial : CanonicalCoefficients.CoefficientPolynomial}
+    (result : PositiveResult polynomial) (index :
+      SiteIndex result)
     (count : Nat) :
-    (Curves.Hyperelliptic.Branches.BranchIsolation.siteName result index).machine.emitted.IsPrefix
+    (siteName result index).machine.emitted.IsPrefix
         (Advance.advance
-          (Curves.Hyperelliptic.Branches.BranchIsolation.siteName result index).machine count).emitted /\
+          (siteName result index).machine count).emitted /\
       (Advance.advance
-        (Curves.Hyperelliptic.Branches.BranchIsolation.siteName result index).machine count).emitted.length = count :=
-  (Curves.Hyperelliptic.Branches.BranchIsolation.siteName result index).productive count
+        (siteName result index).machine count).emitted.length = count :=
+  (siteName result index).productive count
 
 /-- Every emitted branch prefix retains exact finite parser semantics for the same initial terminal or root box. -/
-theorem siteName_exact {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    (result : Curves.Hyperelliptic.Branches.BranchIsolation.PositiveResult polynomial) (index :
-      Curves.Hyperelliptic.Branches.BranchIsolation.SiteIndex result)
+theorem siteName_exact {polynomial : CanonicalCoefficients.CoefficientPolynomial}
+    (result : PositiveResult polynomial) (index :
+      SiteIndex result)
     (count : Nat) :
     Semantics.Basic.ExactCursor
-      (Curves.Hyperelliptic.Branches.BranchIsolation.siteName result index).process
-        (Curves.Hyperelliptic.Branches.BranchIsolation.siteName result index).state
+      (siteName result index).process
+        (siteName result index).state
       (Advance.advance
-        (Curves.Hyperelliptic.Branches.BranchIsolation.siteName result index).machine count) :=
+        (siteName result index).machine count) :=
   CCL.Semantics.Named.advance_exact
-    (Curves.Hyperelliptic.Branches.BranchIsolation.siteName result index) count
+    (siteName result index) count
 
 /-- Pairwise separation evidence. The degree-one branch is empty because `Fin 1` has no distinct pair; the higher branch
 returns the actual separated initial root boxes. -/
-def Separation {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    (result : Curves.Hyperelliptic.Branches.BranchIsolation.PositiveResult polynomial)
-    (left right : Curves.Hyperelliptic.Branches.BranchIsolation.SiteIndex result) : Prop :=
+def Separation {polynomial : CanonicalCoefficients.CoefficientPolynomial}
+    (result : PositiveResult polynomial)
+    (left right : SiteIndex result) : Prop :=
   match result with
   | .terminal _ _ => False
   | .higher boxes _ =>
@@ -224,10 +224,10 @@ def Separation {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficien
         (boxes.trackAt right).initial.box
 
 /-- Distinct displayed branch sites have separated original isolation boxes. -/
-theorem pairwiseSeparated {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    (result : Curves.Hyperelliptic.Branches.BranchIsolation.PositiveResult polynomial)
-    (left right : Curves.Hyperelliptic.Branches.BranchIsolation.SiteIndex result) (different : left ≠ right) :
-    Curves.Hyperelliptic.Branches.BranchIsolation.Separation result left right := by
+theorem pairwiseSeparated {polynomial : CanonicalCoefficients.CoefficientPolynomial}
+    (result : PositiveResult polynomial)
+    (left right : SiteIndex result) (different : left ≠ right) :
+    Separation result left right := by
   cases result with
   | terminal terminal degree =>
       have equal : left = right := by
@@ -242,11 +242,11 @@ theorem pairwiseSeparated {polynomial : Polynomial.Dense.Gaussian.Basic.Canonica
       exact boxes.trackAt_pairwiseSeparated left right different
 
 /-- Distinct displayed sites have different retained Gaussian anchors. -/
-theorem siteAnchor_ne {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    (result : Curves.Hyperelliptic.Branches.BranchIsolation.PositiveResult polynomial)
-    (left right : Curves.Hyperelliptic.Branches.BranchIsolation.SiteIndex result) (different : left ≠ right) :
-    Curves.Hyperelliptic.Branches.BranchIsolation.siteAnchor result left ≠
-      Curves.Hyperelliptic.Branches.BranchIsolation.siteAnchor result right := by
+theorem siteAnchor_ne {polynomial : CanonicalCoefficients.CoefficientPolynomial}
+    (result : PositiveResult polynomial)
+    (left right : SiteIndex result) (different : left ≠ right) :
+    siteAnchor result left ≠
+      siteAnchor result right := by
   cases result with
   | terminal terminal degree =>
       have equal : left = right := by
@@ -268,16 +268,16 @@ set_option genInjectivity false in
 
 Persistent arithmetic and coherent names share the exact retained anchors. Higher-degree tracks keep their original
 ambient square and pairwise separation, with the site count identified with the defining polynomial degree. -/
-structure Data {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus) where
+structure Data {genus : Nat} (curve : Basic.HyperellipticCurve genus) where
   /-- The finite number of retained branch sites. -/ siteCount : Nat
   /-- The retained site count equals the defining polynomial degree. -/ count_eq : siteCount =
     curve.polynomial.natDegree
   /-- The persistent arithmetic name at each retained branch site. -/ nameAt : Fin siteCount ->
-    Curves.Hyperelliptic.Branches.BranchIsolation.Named
+    Named
   /-- The coherent arithmetic name at each retained branch site. -/ coherentNameAt : Fin siteCount ->
-    Curves.Hyperelliptic.Branches.BranchIsolation.CoherentNamed
+    CoherentNamed
   /-- The retained exact Gaussian anchor at each site. -/ anchorAt : Fin siteCount ->
-    Curves.Hyperelliptic.Branches.BranchIsolation.Gaussian
+    Gaussian
   /-- The shrinking winding-one track for each site when the defining degree exceeds one. -/ trackAt : (degreeGtOne : 1
     < curve.polynomial.natDegree) ->
     Fin siteCount ->
@@ -296,9 +296,9 @@ constructive_injectivity Data
 
 /-- Convert the project-owned global finite isolator into the smaller branch interface actually used by the Riemann
 modules. -/
-def data {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus) :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve := by
-  let result := Curves.Hyperelliptic.Branches.BranchIsolation.branchIsolation curve
+def data {genus : Nat} (curve : Basic.HyperellipticCurve genus) :
+  Data curve := by
+  let result := branchIsolation curve
   cases resultEq : result with
   | terminal terminal degree =>
       exact
@@ -339,14 +339,14 @@ def data {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus) :
 
 /-- Build branch data directly from a displayed degree-indexed family of pairwise-separated shrinking winding-one
 tracks. This is the finite input form used by small worked examples and externally audited isolations. -/
-def Data.ofTracks {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
+def Data.ofTracks {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (_degreeGtOne : 1 < curve.polynomial.natDegree)
     (tracks : Fin curve.polynomial.natDegree ->
       Track.Basic.WindingOneTrack curve.polynomial
         (RootRadius.Box.largeSquareBox curve.polynomial))
     (pairwise : forall left right, left ≠ right ->
       (tracks left).initial.box.Separated (tracks right).initial.box) :
-    Curves.Hyperelliptic.Branches.BranchIsolation.Data curve where
+    Data curve where
   siteCount := curve.polynomial.natDegree
   count_eq := rfl
   nameAt := fun index =>
@@ -361,7 +361,7 @@ def Data.ofTracks {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve 
 /-- Extend one fully displayed winding-one state to a total shrinking track. Unlike `trackOfRaw`, this constructor
 performs no preliminary extraction; the caller has already supplied the four ambient-line clearances needed by
 branch-cut construction. -/
-def trackOfState {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
+def trackOfState {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (degreeGtOne : 1 < curve.polynomial.natDegree)
     (initial : WindingOne.Basic.WindingOneState curve.polynomial
       (RootRadius.Box.largeSquareBox curve.polynomial)) :
@@ -373,48 +373,48 @@ def trackOfState {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve g
       refine := fun current epsilon positive =>
         Refinement.refineState degreeAtLeastTwo curve.squarefree
           (Separated.separatedAxisEliminationCertificate
-            curve.polynomial curve.nonzero (Curves.Hyperelliptic.Branches.BranchIsolation.degreePositive curve))
+            curve.polynomial curve.nonzero (degreePositive curve))
           current epsilon positive
       nested := by
         intro current epsilon positive
         exact Refinement.refineState_refines degreeAtLeastTwo
           curve.squarefree
           (Separated.separatedAxisEliminationCertificate
-            curve.polynomial curve.nonzero (Curves.Hyperelliptic.Branches.BranchIsolation.degreePositive curve))
+            curve.polynomial curve.nonzero (degreePositive curve))
           current epsilon positive
       strict := by
         intro current epsilon positive
         exact Refinement.refineState_strict degreeAtLeastTwo
           curve.squarefree
           (Separated.separatedAxisEliminationCertificate
-            curve.polynomial curve.nonzero (Curves.Hyperelliptic.Branches.BranchIsolation.degreePositive curve))
+            curve.polynomial curve.nonzero (degreePositive curve))
           current epsilon positive
       accurate := by
         intro current epsilon positive
         exact Refinement.refineState_accurate degreeAtLeastTwo
           curve.squarefree
           (Separated.separatedAxisEliminationCertificate
-            curve.polynomial curve.nonzero (Curves.Hyperelliptic.Branches.BranchIsolation.degreePositive curve))
+            curve.polynomial curve.nonzero (degreePositive curve))
           current epsilon positive }
 
 /-- Assemble explicit branch data from pairwise-separated winding-one states. The original states become refinement zero
 literally. -/
-def Data.ofStates {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
+def Data.ofStates {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (degreeGtOne : 1 < curve.polynomial.natDegree)
     (states : Fin curve.polynomial.natDegree ->
       WindingOne.Basic.WindingOneState curve.polynomial
         (RootRadius.Box.largeSquareBox curve.polynomial))
     (pairwise : forall left right, left ≠ right ->
       (states left).box.Separated (states right).box) :
-    Curves.Hyperelliptic.Branches.BranchIsolation.Data curve :=
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data.ofTracks curve degreeGtOne
-    (fun index => Curves.Hyperelliptic.Branches.BranchIsolation.trackOfState curve degreeGtOne (states index))
+    Data curve :=
+  Data.ofTracks curve degreeGtOne
+    (fun index => trackOfState curve degreeGtOne (states index))
     pairwise
 
 /-- Turn one explicit nonzero-winding raw box into a total shrinking winding-one track. The Newton extraction supplies
 the four ambient-line clearances required by branch-cut construction; all later refinements reuse the curve's finite
 squarefree and axis-elimination certificates. -/
-def trackOfRaw {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
+def trackOfRaw {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (degreeGtOne : 1 < curve.polynomial.natDegree)
     (raw : Raw.RawWindingState curve.polynomial
       (RootRadius.Box.largeSquareBox curve.polynomial)) :
@@ -423,7 +423,7 @@ def trackOfRaw {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve gen
   have degreeAtLeastTwo : 2 ≤ curve.polynomial.natDegree := by omega0
   let elimination :=
     Separated.separatedAxisEliminationCertificate curve.polynomial
-      curve.nonzero (Curves.Hyperelliptic.Branches.BranchIsolation.degreePositive curve)
+      curve.nonzero (degreePositive curve)
   let output := Build.extract degreeAtLeastTwo curve.squarefree
     elimination raw (by
         decide : (0 : Fraction.Rational) < 1)
@@ -443,120 +443,120 @@ def trackOfRaw {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve gen
 
 /-- The extracted initial winding-one box lies strictly inside the raw box from which its track was constructed. -/
 theorem trackOfRaw_initial_strict {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (degreeGtOne : 1 < curve.polynomial.natDegree)
     (raw : Raw.RawWindingState curve.polynomial
       (RootRadius.Box.largeSquareBox curve.polynomial)) :
-    (Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.trackOfRaw curve degreeGtOne raw).initial.box.StrictInterior
+    (trackOfRaw curve degreeGtOne raw).initial.box.StrictInterior
       raw.box := by
-  unfold Curves.Hyperelliptic.Branches.BranchIsolation.trackOfRaw
+  unfold trackOfRaw
   exact (Build.extract _ curve.squarefree _ raw _).strictCurrent
 
 /-- Build branch data from a degree-indexed family of raw winding boxes whose interiors are pairwise disjoint. Strict
 Newton extraction turns those weak interior separations into the positive closed-box gaps required downstream. -/
-def Data.ofRawStates {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
+def Data.ofRawStates {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (degreeGtOne : 1 < curve.polynomial.natDegree)
     (raw : Fin curve.polynomial.natDegree ->
       Raw.RawWindingState curve.polynomial
         (RootRadius.Box.largeSquareBox curve.polynomial))
     (pairwise : forall left right, left ≠ right ->
       (raw left).box.InteriorSeparated (raw right).box) :
-    Curves.Hyperelliptic.Branches.BranchIsolation.Data curve :=
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data.ofTracks curve degreeGtOne
-    (fun index => Curves.Hyperelliptic.Branches.BranchIsolation.trackOfRaw curve degreeGtOne (raw index))
+    Data curve :=
+  Data.ofTracks curve degreeGtOne
+    (fun index => trackOfRaw curve degreeGtOne (raw index))
     (by
       intro left right different
       exact (pairwise left right different).strict_refinements
-        (Curves.Hyperelliptic.Branches.BranchIsolation.trackOfRaw_initial_strict curve degreeGtOne (raw left))
-        (Curves.Hyperelliptic.Branches.BranchIsolation.trackOfRaw_initial_strict curve degreeGtOne (raw right)))
+        (trackOfRaw_initial_strict curve degreeGtOne (raw left))
+        (trackOfRaw_initial_strict curve degreeGtOne (raw right)))
 
 namespace Data
 
 section
 open Purelib.Curves.Hyperelliptic.Branches.BranchIsolation
 /-- A finite index into the sites of the retained branch data. -/
-abbrev Index {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    (data : Curves.Hyperelliptic.Branches.BranchIsolation.Data curve) := Fin data.siteCount
+abbrev Index {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    (data : Data curve) := Fin data.siteCount
 
 /-- Read the persistent arithmetic name of a retained branch site. -/
-def name {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    (data : Curves.Hyperelliptic.Branches.BranchIsolation.Data curve) (index :
-      Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index data) : Named :=
+def name {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    (data : Data curve) (index :
+      Index data) : Named :=
   data.nameAt index
 
 /-- Read the coherent arithmetic name of a retained branch site. -/
-def coherentName {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    (data : Curves.Hyperelliptic.Branches.BranchIsolation.Data curve) (index :
-      Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index data) : CoherentNamed :=
+def coherentName {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    (data : Data curve) (index :
+      Index data) : CoherentNamed :=
   data.coherentNameAt index
 
 /-- Read the retained exact Gaussian anchor of a branch site. -/
-def anchor {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    (data : Curves.Hyperelliptic.Branches.BranchIsolation.Data curve) (index :
-      Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index data) : Gaussian :=
+def anchor {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    (data : Data curve) (index :
+      Index data) : Gaussian :=
   data.anchorAt index
 
 /-- Reindex a displayed branch site by the polynomial degree. This is a definitionally finite cast justified by the
 exact root count returned by the isolator. -/
-def degreeIndex {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    (data : Curves.Hyperelliptic.Branches.BranchIsolation.Data curve) (index :
-      Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index data) :
+def degreeIndex {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    (data : Data curve) (index :
+      Index data) :
     Fin curve.polynomial.natDegree :=
   Fin.cast data.count_eq index
 
 /-- The actual shrinking track of a displayed finite branch site, available whenever the curve has higher degree. -/
-def track {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    (data : Curves.Hyperelliptic.Branches.BranchIsolation.Data curve) (degreeGtOne : 1 < curve.polynomial.natDegree)
-    (index : Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index data) :
+def track {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    (data : Data curve) (degreeGtOne : 1 < curve.polynomial.natDegree)
+    (index : Index data) :
     Track.Basic.WindingOneTrack curve.polynomial
       (RootRadius.Box.largeSquareBox curve.polynomial) :=
   data.trackAt degreeGtOne index
 
 /-- The initial box of a retained branch track has exactly its displayed anchor. -/
 theorem track_initial_anchor {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus} (data : Curves.Hyperelliptic.Branches.BranchIsolation.Data
+    {curve : Basic.HyperellipticCurve genus} (data : Data
       curve)
-    (degreeGtOne : 1 < curve.polynomial.natDegree) (index : Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index
+    (degreeGtOne : 1 < curve.polynomial.natDegree) (index : Index
       data) :
     (data.track degreeGtOne index).initial.box.anchor = data.anchor index := by
   exact data.track_anchor_eq degreeGtOne index
 
 /-- Every retained branch-site name emits the requested finite prefix while preserving the existing prefix. -/
-theorem name_productive {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    (data : Curves.Hyperelliptic.Branches.BranchIsolation.Data curve) (index :
-      Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index data) (count : Nat) :
-    (Curves.Hyperelliptic.Branches.BranchIsolation.Data.name data index).machine.emitted.IsPrefix
+theorem name_productive {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    (data : Data curve) (index :
+      Index data) (count : Nat) :
+    (name data index).machine.emitted.IsPrefix
         (Advance.advance
-          (Curves.Hyperelliptic.Branches.BranchIsolation.Data.name data index).machine count).emitted /\
+          (name data index).machine count).emitted /\
       (Advance.advance
-        (Curves.Hyperelliptic.Branches.BranchIsolation.Data.name data index).machine count).emitted.length = count :=
-  (Curves.Hyperelliptic.Branches.BranchIsolation.Data.name data index).productive count
+        (name data index).machine count).emitted.length = count :=
+  (name data index).productive count
 
 /-- Each requested finite branch-name prefix retains exact parser semantics for its original process and state. -/
-theorem name_exact {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    (data : Curves.Hyperelliptic.Branches.BranchIsolation.Data curve) (index :
-      Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index data) (count : Nat) :
+theorem name_exact {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    (data : Data curve) (index :
+      Index data) (count : Nat) :
     Semantics.Basic.ExactCursor
-      (Curves.Hyperelliptic.Branches.BranchIsolation.Data.name data index).process
-        (Curves.Hyperelliptic.Branches.BranchIsolation.Data.name data index).state
+      (name data index).process
+        (name data index).state
       (Advance.advance
-        (Curves.Hyperelliptic.Branches.BranchIsolation.Data.name data index).machine count) :=
-  CCL.Semantics.Named.advance_exact (Curves.Hyperelliptic.Branches.BranchIsolation.Data.name data index) count
+        (name data index).machine count) :=
+  CCL.Semantics.Named.advance_exact (name data index) count
 
 /-- Distinct retained higher-degree branch tracks have separated initial boxes. -/
-theorem separated {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    (data : Curves.Hyperelliptic.Branches.BranchIsolation.Data curve) (degreeGtOne : 1 < curve.polynomial.natDegree)
-    (left right : Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index data) (different : left ≠ right) :
+theorem separated {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    (data : Data curve) (degreeGtOne : 1 < curve.polynomial.natDegree)
+    (left right : Index data) (different : left ≠ right) :
     (data.track degreeGtOne left).initial.box.Separated
       (data.track degreeGtOne right).initial.box :=
   data.trackAt_pairwiseSeparated degreeGtOne left right different
 
 /-- Distinct retained branch sites have unequal Gaussian anchors. -/
-theorem anchor_ne {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    (data : Curves.Hyperelliptic.Branches.BranchIsolation.Data curve) (left right :
-      Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index data) (different : left ≠ right) :
-    Curves.Hyperelliptic.Branches.BranchIsolation.Data.anchor data left ≠
-      Curves.Hyperelliptic.Branches.BranchIsolation.Data.anchor data right :=
+theorem anchor_ne {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    (data : Data curve) (left right :
+      Index data) (different : left ≠ right) :
+    anchor data left ≠
+      anchor data right :=
   by
     have degreeGtOne : 1 < curve.polynomial.natDegree := by
       rw [← data.count_eq]

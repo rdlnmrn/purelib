@@ -61,122 +61,122 @@ open Purelib.Riemann.Normalization
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments (OwnedFragment)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
-variable (retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared)
+variable (retained : Preparation.CommonBasisPreparation prepared)
   {index : Nat} (inputs : retained.Inputs index)
   (outer : Fin prepared.occurrences.length) {faceIndex : Nat}
-  (data : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) faceIndex)
+  (data : FragmentQueries.RowData
+    (ParentIndices.occurrenceAt prepared.occurrences outer) faceIndex)
   (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
 
 variable {retained inputs outer data coefficients}
 
 namespace ParentFragment
-variable {first last : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+variable {first last : Fin (ParentIndices.occurrenceAt
   prepared.occurrences outer).compared.entered.cache.parents.length}
   (same : first = last) (fragments : List
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.ParentFragment retained inputs outer data
+    (IndexedFragments.ParentFragment retained inputs outer data
     coefficients first))
 
 /-- Reindex the complete cached list by equality; no fragment is reconstructed. -/
-def castList : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.ParentFragment retained inputs
+def castList : List (IndexedFragments.ParentFragment retained inputs
   outer data coefficients last) :=
   Eq.mp (congrArg (fun position => List
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.ParentFragment retained inputs outer data
+    (IndexedFragments.ParentFragment retained inputs outer data
     coefficients position)) same) fragments
 
 /-- Transport along equality of parent indices preserves every retained physical/source pair. -/
-theorem castList_pairs : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentFragment.castList
-  same fragments).map Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.pair =
+theorem castList_pairs : (ParentFragment.castList
+  same fragments).map OwnedFragment.pair =
   fragments.map OwnedFragment.pair := by
   cases same
   rfl
 
 /-- Transporting the retained fragment list to an equal parent index preserves its length. -/
-theorem castList_length : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentFragment.castList
+theorem castList_length : (ParentFragment.castList
   same fragments).length = fragments.length := by
   cases same
   rfl
 
 /-- Transport along equality of parent indices preserves the complete forward source-chain certificate. -/
-theorem castList_chain {start finish : Normalization.InverseRootPolynomial.Coordinate} (chain :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains.SourceChain fragments start finish) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains.SourceChain
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentFragment.castList same fragments) start
+theorem castList_chain {start finish : InverseRootPolynomial.Coordinate} (chain :
+  SourceChains.SourceChain fragments start finish) :
+    SourceChains.SourceChain
+      (ParentFragment.castList same fragments) start
       finish := by
   cases same
   exact chain
 
 /-- Transport along equality of parent indices preserves the complete reverse source-chain certificate. -/
-theorem castList_reverse_chain {start finish : Normalization.InverseRootPolynomial.Coordinate} (chain :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSourceChains.ReverseSourceChain fragments start finish) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSourceChains.ReverseSourceChain
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentFragment.castList same fragments) start
+theorem castList_reverse_chain {start finish : InverseRootPolynomial.Coordinate} (chain :
+  ReverseSourceChains.ReverseSourceChain fragments start finish) :
+    ReverseSourceChains.ReverseSourceChain
+      (ParentFragment.castList same fragments) start
       finish := by
   cases same
   exact chain
 
 /-- Transporting the retained fragment list to an equal parent index preserves its pointwise forward-width bound. -/
-theorem castList_width {width : Normalization.InverseRootPolynomial.Coordinate}
+theorem castList_width {width : InverseRootPolynomial.Coordinate}
     (bounded : ∀ fragment ∈ fragments, fragment.sourceWidth ≤ width) :
-    ∀ fragment ∈ Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentFragment.castList same
+    ∀ fragment ∈ ParentFragment.castList same
       fragments, fragment.sourceWidth ≤ width := by
   cases same
   exact bounded
 
 /-- Transporting the retained fragment list to an equal parent index preserves its pointwise reverse-width bound. -/
-theorem castList_reverse_width {width : Normalization.InverseRootPolynomial.Coordinate}
+theorem castList_reverse_width {width : InverseRootPolynomial.Coordinate}
     (bounded : ∀ fragment ∈ fragments, fragment.reverseSourceWidth ≤ width) :
-    ∀ fragment ∈ Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentFragment.castList same
+    ∀ fragment ∈ ParentFragment.castList same
       fragments, fragment.reverseSourceWidth ≤ width := by
   cases same
   exact bounded
 
 /-- Transporting the retained fragment list to an equal parent index preserves every allowance and tolerance bound. -/
-theorem castList_budget {allowance tolerance : Normalization.InverseRootPolynomial.Coordinate}
+theorem castList_budget {allowance tolerance : InverseRootPolynomial.Coordinate}
     (bounded : ∀ fragment ∈ fragments, fragment.allowance ≤ allowance ∧ fragment.budget.tolerance ≤ tolerance) :
-    ∀ fragment ∈ Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentFragment.castList same
+    ∀ fragment ∈ ParentFragment.castList same
       fragments, fragment.allowance ≤ allowance ∧ fragment.budget.tolerance ≤ tolerance := by
   cases same
   exact bounded
 
 end ParentFragment
 namespace ParentOrderedRuns
-variable (ordered : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentOrderedRuns retained
+variable (ordered : ParentOrderedRuns retained
   inputs outer data coefficients)
-  (position : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (position : Fin (ParentIndices.occurrenceAt prepared.occurrences
     outer).compared.entered.cache.parents.length)
 
 /-- The retained parent-index certificate fixes the dependent numerical owner. -/
-def fragments : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.ParentFragment retained inputs
+def fragments : List (IndexedFragments.ParentFragment retained inputs
   outer data coefficients position) :=
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentFragment.castList (ordered.runAt_parent
+  ParentFragment.castList (ordered.runAt_parent
     position) (ordered.runAt position).fragments
 
 /-- The source-indexed fragment list reads exactly the pairs of its selected original run. -/
 theorem fragments_pairs : (ordered.fragments position).map
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.pair =
+  OwnedFragment.pair =
     (ordered.runAt position).fragments.map OwnedFragment.pair :=
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentFragment.castList_pairs _ _
+  ParentFragment.castList_pairs _ _
 
 /-- The source-indexed fragment list has exactly the length of its selected original run. -/
 theorem fragments_length : (ordered.fragments position).length = (ordered.runAt position).fragments.length :=
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentFragment.castList_length _ _
+  ParentFragment.castList_length _ _
 
 /-- Read the full physical path, not merely the sum of its increments. -/
 theorem fragments_physical : (((ordered.fragments position).map
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.pair).map Prod.fst).flatten =
+  OwnedFragment.pair).map Prod.fst).flatten =
     ordered.physical position :=
   congrArg (fun pairs : List (List Topology.Polygon.Stokes.PrimitivePoint × List Topology.Polygon.Stokes.PrimitivePoint)
     => (pairs.map Prod.fst).flatten)

@@ -30,7 +30,7 @@ open Purelib.Riemann.RootContinuation.RootRadialGeometry (point domain point_ins
 open Purelib.Data.Vector.Basic (vectorOfFn vectorOfFn_apply)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
-variable {first last : Purelib.Data.Gaussian.Basic.Canonical} {depth : Nat}
+variable {first last : Data.Gaussian.Basic.Canonical} {depth : Nat}
 
 open Purelib.Integration in
 open Purelib.Approximation in
@@ -40,7 +40,7 @@ set_option genInjectivity false in
 
 The coordinate bank reads the exact retained parameter mesh. Every face stays in the same containing box, and both edges
 from its first vertex obey the depth-indexed quarter-radius bound. -/
-structure BoundedRefinement (first last : Gaussian.Basic.Canonical) (parameters : Path.Dyadic.RadialTriangles.Parameters
+structure BoundedRefinement (first last : Gaussian.Basic.Canonical) (parameters : Parameters
   depth) where
   /-- The materialized Gaussian coordinates of all retained parameter vertices. -/ coordinates : Data.Vector
     Gaussian.Basic.Canonical parameters.mesh.mesh.vertices.length
@@ -52,10 +52,10 @@ structure BoundedRefinement (first last : Gaussian.Basic.Canonical) (parameters 
     domain.Contains (coordinates (parameters.mesh.mesh.triangulation.faces face).third)
   /-- Both face edges from the first vertex have quadrance bounded by quarterRadius 64 at the retained depth. -/
     distances : ∀ face,
-    Data.Gaussian.Norm.Basic.normSq (coordinates (parameters.mesh.mesh.triangulation.faces face).second -
+    normSq (coordinates (parameters.mesh.mesh.triangulation.faces face).second -
       coordinates (parameters.mesh.mesh.triangulation.faces face).first) ≤ Rational.Geometric.Basic.quarterRadius 64
         depth ∧
-    Data.Gaussian.Norm.Basic.normSq (coordinates (parameters.mesh.mesh.triangulation.faces face).third -
+    normSq (coordinates (parameters.mesh.mesh.triangulation.faces face).third -
       coordinates (parameters.mesh.mesh.triangulation.faces face).first) ≤ Rational.Geometric.Basic.quarterRadius 64
         depth
 
@@ -71,20 +71,20 @@ open Purelib.Geometry in
 
 Both edge endpoints have quadrance at most two; the radial distance estimate and cached leaf diagonal give the finite
 geometric bounds. -/
-@[expose] def build (firstBound : Data.Gaussian.Norm.Basic.normSq first ≤ 2) (lastBound :
-  Data.Gaussian.Norm.Basic.normSq last ≤ 2)
-    (parameters : Path.Dyadic.RadialTriangles.Parameters depth) : BoundedRefinement first last parameters := by
+@[expose] def build (firstBound : normSq first ≤ 2) (lastBound :
+  normSq last ≤ 2)
+    (parameters : Parameters depth) : BoundedRefinement first last parameters := by
   have firstCanonical := firstBound
   have lastCanonical := lastBound
   rw [Gaussian.Norm.Basic.normSq_eq_canonical] at firstCanonical lastCanonical
-  let coordinates := Vector.Basic.vectorOfFn (fun vertex => point first last (parameters.mesh.mesh.coordinate vertex))
+  let coordinates := vectorOfFn (fun vertex => point first last (parameters.mesh.mesh.coordinate vertex))
   have coordinatesEq (vertex : Fin parameters.mesh.mesh.vertices.length) :
-      coordinates vertex = point first last (parameters.mesh.mesh.coordinate vertex) := Vector.Basic.vectorOfFn_apply _
+      coordinates vertex = point first last (parameters.mesh.mesh.coordinate vertex) := vectorOfFn_apply _
         vertex
   refine ⟨coordinates, coordinatesEq, ?_, ?_⟩
   · intro face
     have originals := parameters.mesh.mesh.face_coordinates face
-    have contained := Path.Dyadic.RadialTriangles.triangles_inside parameters.mesh.partition.leaves
+    have contained := triangles_inside parameters.mesh.partition.leaves
       parameters.leaves_inside
       _ (List.getElem_mem (l := Rectangle.Partition.PreparedBoxTriangulation.boxTriangles
         parameters.mesh.partition.leaves) face.isLt)
@@ -98,15 +98,15 @@ geometric bounds. -/
     have estimate (left right : Fin parameters.mesh.mesh.vertices.length)
         (leftInside : Path.Dyadic.RadialTriangles.unitBox.Contains (parameters.mesh.mesh.coordinate left))
         (rightInside : Path.Dyadic.RadialTriangles.unitBox.Contains (parameters.mesh.mesh.coordinate right)) :
-        Data.Gaussian.Norm.Basic.normSq (coordinates left - coordinates right) ≤ 32 *
-          Data.Gaussian.Norm.Basic.normSq (parameters.mesh.mesh.coordinate left - parameters.mesh.mesh.coordinate
+        normSq (coordinates left - coordinates right) ≤ 32 *
+          normSq (parameters.mesh.mesh.coordinate left - parameters.mesh.mesh.coordinate
           right) := by
       rw [coordinatesEq, coordinatesEq]
       have scalar := point_distance firstCanonical lastCanonical _ _ leftInside rightInside
       simp only [← Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
       exact scalar.trans
         (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by
-            decide +kernel : (16 : Rat.Fraction.Rational) ≤ 32)
+            decide +kernel : (16 : Rational) ≤ 32)
           (Gaussian.Norm.Basic.normSq_nonneg _))
     have diameter : 32 * parameters.mesh.partition.leafDiagonalSq = Rational.Geometric.Basic.quarterRadius 64 depth :=
       by
@@ -130,10 +130,10 @@ set_option genInjectivity false in
 
 It retains the same materialized coordinates and geometry, adding the orientation certificate required by the area
 claim. -/
-structure Refinement (first last : Gaussian.Basic.Canonical) (parameters : Path.Dyadic.RadialTriangles.Parameters depth)
+structure Refinement (first last : Gaussian.Basic.Canonical) (parameters : Parameters depth)
     extends BoundedRefinement first last parameters where
   /-- Each actual retained face has nonnegative coordinate triangle area. -/ nonnegative : ∀ face, 0 ≤
-    Energy.AffineTriangle.coordinateTriangleArea
+    coordinateTriangleArea
     (coordinates (parameters.mesh.mesh.triangulation.faces face).first)
     (coordinates (parameters.mesh.mesh.triangulation.faces face).second)
     (coordinates (parameters.mesh.mesh.triangulation.faces face).third)
@@ -146,10 +146,10 @@ open Purelib.Geometry in
 /-- Add face-area positivity to the cached bounded radial fan.
 
 The supplied endpoint cross energy is nonnegative, and the same parameter leaves retain their unit-box containment. -/
-@[expose] def Refinement.build (firstBound : Data.Gaussian.Norm.Basic.normSq first ≤ 2) (lastBound :
-  Data.Gaussian.Norm.Basic.normSq last ≤ 2)
+@[expose] def Refinement.build (firstBound : normSq first ≤ 2) (lastBound :
+  normSq last ≤ 2)
     (oriented : 0 ≤ Energy.AffineTriangle.crossEnergy first last)
-    (parameters : Path.Dyadic.RadialTriangles.Parameters depth) : Refinement first last parameters := by
+    (parameters : Parameters depth) : Refinement first last parameters := by
   let geometry := BoundedRefinement.build firstBound lastBound parameters
   refine ⟨geometry, ?_⟩
   intro face

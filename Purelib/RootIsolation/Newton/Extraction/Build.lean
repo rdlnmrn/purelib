@@ -42,6 +42,14 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Gaussian.Newton.Box.Squarefree
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian.Derivative.Separation
+
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Polynomial.Dense.Gaussian.Newton.Box.Budget
+
+open Purelib.Polynomial.Dense.Gaussian
+
 open Purelib.Data
 
 open Purelib.Data.Rat
@@ -70,129 +78,129 @@ namespace Purelib.RootIsolation.Newton.Extraction.Build
 safe-cut iteration in `selectSource`; the Newton center and target square are
 then exact constructive-rational expressions. -/
 def extract
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {degreeBound :
+    {p : Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {degreeBound :
       Nat}
     (degreeAtLeastTwo : 2 ≤ p.natDegree)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
+    (squarefree : Squarefree.Basic.SquarefreeCertificate p)
     (elimination : Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
     (current : State.Raw.RawWindingState p ambient) {epsilon : Fraction.Rational}
-    (epsilonPositive : 0 < epsilon) : Newton.Extraction.Basic.Output squarefree current epsilon := by
-  let sourceData := Newton.Extraction.Source.selectSource squarefree elimination current epsilonPositive
+    (epsilonPositive : 0 < epsilon) : Basic.Output squarefree current epsilon := by
+  let sourceData := Source.selectSource squarefree elimination current epsilonPositive
   let source := sourceData.source
-  let r := Dense.Gaussian.Newton.Box.Budget.Squarefree.extractionRadius squarefree current.box current.clearance epsilon
+  let r := Squarefree.extractionRadius squarefree current.box current.clearance epsilon
   let rho := Clearance.Box.ProtectedRadius.protectedBoundaryRadius p current.box current.clearance
-  let lipschitz := Dense.Gaussian.Bounds.Box.denseLipschitzBound p current.box
-  let eta := Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin squarefree current.box
+  let lipschitz := Bounds.Box.denseLipschitzBound p current.box
+  let eta := Squarefree.derivativeMargin squarefree current.box
   have degreePositive : 0 < p.natDegree :=
     (show (0 : Nat) < 2 by decide).trans_le degreeAtLeastTwo
   have radiusPositive : 0 < r :=
-    Dense.Gaussian.Newton.Box.Budget.Squarefree.extractionRadius_pos squarefree current.clearance current.proper
+    Squarefree.extractionRadius_pos squarefree current.clearance current.proper
       epsilonPositive
   have rhoPositive : 0 < rho :=
     Clearance.Box.ProtectedRadius.protectedBoundaryRadius_pos p current.clearance current.proper
   have lipschitzPositive : 0 < lipschitz :=
-    Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos p current.box
-  have etaPositive : 0 < eta := Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin_pos squarefree
+    Bounds.Box.denseLipschitzBound_pos p current.box
+  have etaPositive : 0 < eta := Squarefree.derivativeMargin_pos squarefree
     current.box
   have sourceDiagonal := sourceData.diagonalSq_le
   have sourceProtected : source.box.diagonalSq ≤ rho ^ 2 :=
     sourceDiagonal.trans
-      (Dense.Gaussian.Newton.Box.Budget.Squarefree.sourceDiagonalThreshold_le_protected squarefree current.box
+      (Squarefree.sourceDiagonalThreshold_le_protected squarefree current.box
         current.clearance epsilon)
-  have sourceDerivative : Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound p current.box source.box ≤
-      Dense.Gaussian.Derivative.Separation.Squarefree.derivativeThreshold squarefree current.box := by
-    have thresholdBound := Dense.Gaussian.Newton.Box.Budget.Squarefree.sourceDiagonalThreshold_le_derivative squarefree
+  have sourceDerivative : Bounds.Box.Residual.anchorResidualBound p current.box source.box ≤
+      Squarefree.derivativeThreshold squarefree current.box := by
+    have thresholdBound := Squarefree.sourceDiagonalThreshold_le_derivative squarefree
       current.box current.clearance epsilon
     have scaledThreshold :
-        Dense.Gaussian.Newton.Box.Budget.Squarefree.sourceDiagonalThreshold squarefree current.box current.clearance
+        Squarefree.sourceDiagonalThreshold squarefree current.box current.clearance
           epsilon *
-            lipschitz ≤ Dense.Gaussian.Derivative.Separation.Squarefree.derivativeThreshold squarefree current.box :=
-      (Fraction.Order.Field.le_div_iff_pos lipschitzPositive).mp
+            lipschitz ≤ Squarefree.derivativeThreshold squarefree current.box :=
+      (Field.le_div_iff_pos lipschitzPositive).mp
         thresholdBound
     calc
-      Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound p current.box source.box =
+      Bounds.Box.Residual.anchorResidualBound p current.box source.box =
           lipschitz * source.box.diagonalSq := rfl
       _ ≤ lipschitz *
-          Dense.Gaussian.Newton.Box.Budget.Squarefree.sourceDiagonalThreshold squarefree current.box current.clearance
+          Squarefree.sourceDiagonalThreshold squarefree current.box current.clearance
             epsilon :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           sourceDiagonal lipschitzPositive.le
-      _ = Dense.Gaussian.Newton.Box.Budget.Squarefree.sourceDiagonalThreshold squarefree current.box current.clearance
+      _ = Squarefree.sourceDiagonalThreshold squarefree current.box current.clearance
             epsilon * lipschitz := by ring1
-      _ ≤ Dense.Gaussian.Derivative.Separation.Squarefree.derivativeThreshold squarefree current.box := scaledThreshold
+      _ ≤ Squarefree.derivativeThreshold squarefree current.box := scaledThreshold
   let newton := Winding.Box.Newton.Prepare.Squarefree.computeNewtonCenterOfRawWinding p degreePositive squarefree
     source.refinesAmbient source.proper source.rawWinding_ne sourceDerivative
-  have residualDisplacement : Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound p current.box source.box ≤
+  have residualDisplacement : Bounds.Box.Residual.anchorResidualBound p current.box source.box ≤
       eta * r ^ 2 := by
-    have thresholdBound := Dense.Gaussian.Newton.Box.Budget.Squarefree.sourceDiagonalThreshold_le_displacement
+    have thresholdBound := Squarefree.sourceDiagonalThreshold_le_displacement
       squarefree
       current.box current.clearance epsilon
     have scaledThreshold :
-        Dense.Gaussian.Newton.Box.Budget.Squarefree.sourceDiagonalThreshold squarefree current.box current.clearance
+        Squarefree.sourceDiagonalThreshold squarefree current.box current.clearance
           epsilon *
             lipschitz ≤ eta * r ^ 2 :=
-      (Fraction.Order.Field.le_div_iff_pos lipschitzPositive).mp
+      (Field.le_div_iff_pos lipschitzPositive).mp
         thresholdBound
     calc
-      Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound p current.box source.box =
+      Bounds.Box.Residual.anchorResidualBound p current.box source.box =
           lipschitz * source.box.diagonalSq := rfl
       _ ≤ lipschitz *
-          Dense.Gaussian.Newton.Box.Budget.Squarefree.sourceDiagonalThreshold squarefree current.box current.clearance
+          Squarefree.sourceDiagonalThreshold squarefree current.box current.clearance
             epsilon :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           sourceDiagonal lipschitzPositive.le
-      _ = Dense.Gaussian.Newton.Box.Budget.Squarefree.sourceDiagonalThreshold squarefree current.box current.clearance
+      _ = Squarefree.sourceDiagonalThreshold squarefree current.box current.clearance
             epsilon * lipschitz := by ring1
       _ ≤ eta * r ^ 2 := scaledThreshold
   have displacementSmall :
-      Data.Gaussian.Norm.Basic.normSq (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source.box -
+      Gaussian.Norm.Basic.normSq (Newton.Box.Anchor.anchorNewtonCenter p source.box -
         source.box.anchor) ≤ r ^ 2 := by
     calc
-      Data.Gaussian.Norm.Basic.normSq (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source.box -
+      Gaussian.Norm.Basic.normSq (Newton.Box.Anchor.anchorNewtonCenter p source.box -
         source.box.anchor) ≤
-          Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound p current.box source.box / eta :=
+          Bounds.Box.Residual.anchorResidualBound p current.box source.box / eta :=
         newton.displacementMargin
       _ ≤ r ^ 2 :=
-        (Fraction.Order.Field.div_le_iff_pos etaPositive).mpr (by
+        (Field.div_le_iff_pos etaPositive).mpr (by
           calc
-            Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound p current.box source.box ≤ eta * r ^ 2 :=
+            Bounds.Box.Residual.anchorResidualBound p current.box source.box ≤ eta * r ^ 2 :=
               residualDisplacement
             _ = r ^ 2 * eta := by ring1)
   have stripBounds := Winding.Box.ProtectedBoundary.strictly_inside_protectedBoundary
     (p := p) degreePositive current.clearance current.proper source.proper
       source.refinesAmbient source.rawWinding_ne sourceProtected
   have radiusLeRho : r ≤ rho :=
-    Dense.Gaussian.Newton.Box.Budget.Squarefree.extractionRadius_le_protected squarefree current.box current.clearance
+    Squarefree.extractionRadius_le_protected squarefree current.box current.clearance
       epsilon
-  let target := Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p
+  let target := Box.Square.Centered.Affine.centeredSquare (Newton.Box.Anchor.anchorNewtonCenter p
     source.box) r
     radiusPositive.le
   have targetStrict : target.StrictInterior current.box :=
     Box.Square.Centered.Interior.centeredSquare_strictInterior radiusPositive radiusLeRho stripBounds
       displacementSmall
   have targetRefinesCurrent : target.Refines current.box :=
-    Geometry.Rational.Box.Refinement.StrictInterior.refines targetStrict
+    Box.Refinement.StrictInterior.refines targetStrict
   have targetRefinesAmbient : target.Refines ambient :=
     targetRefinesCurrent.trans current.refinesAmbient
   have bandTaylorSmall :
-      2 * (Dense.Gaussian.Newton.Box.Band.Parameters.extractionBandTaylorCoefficient *
-        Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2) ≤
-        Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin squarefree current.box :=
-    Dense.Gaussian.Newton.Box.Budget.Squarefree.extractionRadius_taylor squarefree current.clearance current.proper
+      2 * (Newton.Box.Band.Parameters.extractionBandTaylorCoefficient *
+        Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2) ≤
+        Squarefree.derivativeMargin squarefree current.box :=
+    Squarefree.extractionRadius_taylor squarefree current.clearance current.proper
       epsilonPositive
   have taylorSmall :
-      2 * (36 * Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2) ≤
-        Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin squarefree current.box := by
+      2 * (36 * Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2) ≤
+        Squarefree.derivativeMargin squarefree current.box := by
     have remainderNonnegative :
-        0 ≤ Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2 :=
-      Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound_pos p current.box).le
-        (Fraction.Order.Arithmetic.sq_nonneg_direct r)
+        0 ≤ Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2 :=
+      Arithmetic.mul_nonneg_direct
+        (Bounds.Box.Taylor.denseTaylorRemainderBound_pos p current.box).le
+        (Arithmetic.sq_nonneg_direct r)
     have smallBlockNonnegative :
         0 ≤ ((4 : Fraction.Rational) * 9) *
-          (Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2) :=
-      Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Fraction.Order.Arithmetic.mul_pos_direct
+          (Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2) :=
+      Arithmetic.mul_nonneg_direct
+        (Arithmetic.mul_pos_direct
           (Fraction.Cast.Order.natCast_pos_direct
             (n := 4) (by decide))
           (Fraction.Cast.Order.natCast_pos_direct
@@ -200,35 +208,35 @@ def extract
         remainderNonnegative
     have smallBlockLe :
         ((4 : Fraction.Rational) * 9) *
-            (Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2) ≤
+            (Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2) ≤
           9 * (((4 : Fraction.Rational) * 9) *
-            (Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2)) := by
+            (Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2)) := by
       calc
         ((4 : Fraction.Rational) * 9) *
-            (Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2) =
+            (Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2) =
             1 * (((4 : Fraction.Rational) * 9) *
-              (Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2)) := by ring1
+              (Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2)) := by ring1
         _ ≤ 9 * (((4 : Fraction.Rational) * 9) *
-              (Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2)) :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+              (Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2)) :=
+          Arithmetic.mul_le_mul_of_nonneg_right_direct
             (Fraction.Cast.Order.natCast_le_direct
               (m := 1) (n := 9) (by decide)) smallBlockNonnegative
     have twoNonnegative : (0 : Fraction.Rational) ≤ 2 :=
       (Fraction.Cast.Order.natCast_pos_direct
         (n := 2) (by decide)).le
     calc
-      2 * (36 * Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2) =
+      2 * (36 * Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2) =
           2 * (((4 : Fraction.Rational) * 9) *
-            (Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2)) := by ring1
+            (Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2)) := by ring1
       _ ≤ 2 * (9 * (((4 : Fraction.Rational) * 9) *
-            (Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2))) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+            (Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2))) :=
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           smallBlockLe twoNonnegative
-      _ = 2 * (Dense.Gaussian.Newton.Box.Band.Parameters.extractionBandTaylorCoefficient *
-            Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2) := by
-        unfold Dense.Gaussian.Newton.Box.Band.Parameters.extractionBandTaylorCoefficient
+      _ = 2 * (Newton.Box.Band.Parameters.extractionBandTaylorCoefficient *
+            Bounds.Box.Taylor.denseTaylorRemainderBound p current.box * r ^ 2) := by
+        unfold Newton.Box.Band.Parameters.extractionBandTaylorCoefficient
         ring1
-      _ ≤ Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin squarefree current.box := bandTaylorSmall
+      _ ≤ Squarefree.derivativeMargin squarefree current.box := bandTaylorSmall
   have windingFour : Winding.Box.Basic.quadrupledBoxWinding p target = 4 :=
     Winding.Box.Newton.Square.Squarefree.quadrupledBoxWinding_eq_four_of_newtonSquare degreeAtLeastTwo newton
       source.refinesAmbient radiusPositive targetRefinesCurrent
@@ -238,16 +246,16 @@ def extract
       source.refinesAmbient radiusPositive targetRefinesCurrent
       displacementSmall taylorSmall
   have radiusEighth : r ≤ (1 / 8 : Fraction.Rational) * epsilon :=
-    Dense.Gaussian.Newton.Box.Budget.Squarefree.extractionRadius_le_eighth squarefree current.box current.clearance
+    Squarefree.extractionRadius_le_eighth squarefree current.box current.clearance
       epsilon
   have squareBound : r ^ 2 ≤ ((1 / 8 : Fraction.Rational) * epsilon) ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct radiusPositive.le radiusEighth 2
+    Arithmetic.pow_le_pow_direct radiusPositive.le radiusEighth 2
   have epsilonSquareNonnegative :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct epsilon
+    Arithmetic.sq_nonneg_direct epsilon
   have eighthSquare : (1 / 8 : Fraction.Rational) * epsilon ^ 2 ≤ epsilon ^ 2 := by
     calc
       (1 / 8 : Fraction.Rational) * epsilon ^ 2 ≤ 1 * epsilon ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           (by decide) epsilonSquareNonnegative
       _ = epsilon ^ 2 := by ring1
   have targetDiagonal : target.diagonalSq ≤ epsilon ^ 2 := by
@@ -255,11 +263,11 @@ def extract
         (8 : Fraction.Rational) * (1 / 8) ^ 2 = 1 / 8 := by decide
     calc
       target.diagonalSq = 8 * r ^ 2 :=
-        Box.Square.Centered.Affine.centeredSquare_diagonalSq (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p
+        Box.Square.Centered.Affine.centeredSquare_diagonalSq (Newton.Box.Anchor.anchorNewtonCenter p
           source.box)
           radiusPositive.le
       _ ≤ 8 * ((1 / 8 : Fraction.Rational) * epsilon) ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct squareBound
+        Arithmetic.mul_le_mul_of_nonneg_left_direct squareBound
           (Fraction.Cast.Order.natCast_pos_direct
             (n := 8) (by decide)).le
       _ = (8 * (1 / 8 : Fraction.Rational) ^ 2) * epsilon ^ 2 := by ring1
@@ -278,7 +286,7 @@ def extract
       box_eq := rfl
       strictCurrent := targetStrict
       refinesAmbient := targetRefinesAmbient
-      proper := Box.Square.Centered.centeredSquare_proper (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p
+      proper := Box.Square.Centered.centeredSquare_proper (Newton.Box.Anchor.anchorNewtonCenter p
         source.box)
         radiusPositive
       clearance := targetClearance

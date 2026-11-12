@@ -9,6 +9,7 @@ import Purelib.Data.Rat.Fraction.Order.Arithmetic
 import Purelib.Polynomial.Dense.Gaussian.Primitive.Certificate
 public import Purelib.Polynomial.Dense.Gaussian.Primitive.DerivativeBound
 import Purelib.Polynomial.Dense.Multiplication
+import Purelib.Polynomial.Dense.Power
 
 public import Purelib.Riemann.Normalization.ContinuedInverseRoot
 public import Purelib.Riemann.Readings.SeededPrimitiveBounds
@@ -55,20 +56,30 @@ open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate Gaussian Po
   residualStep correction_residual residualStep_contracts Model)
 
 open Purelib.Data.Gaussian.Basic.Canonical
+open Purelib.Polynomial.Dense.Gaussian.Primitive.Certificate (DensePrimitive)
 
 open Purelib.Polynomial.Dense.Gaussian in
 set_option genInjectivity false in
-/-- A retained polynomial primitive for a numerator times an indexed original inverse-root model.
+/-- A retained polynomial primitive for a numerator times an indexed original odd inverse-root power.
 
-The coefficient equation keeps the original continued neighborhood, numerator and refinement index; the primitive
-certificate is carried on that neighborhood's exact box. -/
+The original continued neighborhood, numerator, refinement index and pair
+count determine the coefficient equation. The zero-pair default retains the
+literal original numerator-times-inverse expression. Every primitive stays
+certified on that same actual continued box.
+-/
 structure PrimitiveModel {polynomial : Polynomial} {count : Nat}
-    (patch : ContinuedNeighborhood polynomial count) (index : Nat) (numerator : Polynomial) where
+    (patch : ContinuedNeighborhood polynomial count) (index : Nat) (numerator : Polynomial)
+    (pairs : optParam Nat 0) where
   /-- The retained product coefficient polynomial for this numerator and indexed inverse-root model. -/ coefficient :
     Polynomial
-  /-- The coefficient evaluates to the original numerator times the exact indexed neighborhood refinement at every
-    point. -/ coefficient_eq : forall point, coefficient.eval point =
-    numerator.eval point * (patch.base.refine index).value.eval point
+  /-- The coefficient reads the numerator and original indexed inverse power at every point.
+
+  The default branch is the exact original zero-pair equation; higher
+  branches keep their full odd denominator exponent.
+  -/
+  coefficient_eq : ∀ point, coefficient.eval point = match pairs with
+    | 0 => numerator.eval point * (patch.base.refine index).value.eval point
+    | remaining + 1 => numerator.eval point * (patch.base.refine index).value.eval point ^ (2 * (remaining + 1) + 1)
   /-- The original dense primitive certificate for the retained coefficient on the continued neighborhood's exact box.
   -/
   primitive : Primitive.Certificate.DensePrimitive coefficient patch.box
@@ -79,6 +90,23 @@ namespace PrimitiveModel
 
 variable {polynomial : Polynomial} {count : Nat} {patch : ContinuedNeighborhood polynomial count}
   {index : Nat} {numerator : Polynomial}
+
+/-- Retain an actual compiled odd-power coefficient with its original dense polynomial primitive.
+
+The exact supplied coefficient and pointwise compilation equation belong
+to the same original neighborhood and model index. The existing polynomial
+primitive constructor computes one antiderivative on that actual box; no
+inverse model, odd power or source channel is rebuilt here.
+-/
+def ofCoefficient (patch : ContinuedNeighborhood polynomial count) (index : Nat) (numerator : Polynomial)
+    (pairs : Nat) (coefficient : Polynomial)
+    (compiled : ∀ point, coefficient.eval point = match pairs with
+      | 0 => numerator.eval point * (patch.base.refine index).value.eval point
+      | remaining + 1 => numerator.eval point *
+          (patch.base.refine index).value.eval point ^ (2 * (remaining + 1) + 1)) :
+    PrimitiveModel patch index numerator pairs :=
+  ⟨coefficient, compiled,
+    DensePrimitive.ofPolynomial coefficient patch.box⟩
 
 open Purelib.Data.Gaussian in
 open Purelib.Polynomial in
@@ -180,3 +208,45 @@ theorem operational_increment_bound (model : PrimitiveModel patch index numerato
 end PrimitiveModel
 
 end Purelib.Riemann.Normalization.InverseRootPrimitive
+
+end
+
+public section
+
+namespace Purelib.Riemann.Normalization.InverseRootPrimitive.PrimitiveModel
+
+open Purelib.Riemann.Normalization.ContinuedInverseRoot (ContinuedNeighborhood)
+open Purelib.Riemann.Normalization.InverseRootPolynomial (Model Polynomial)
+open Purelib.Polynomial.Dense.Basic
+open Purelib.Polynomial.Dense.Power (OddPowers)
+
+variable {polynomial : Polynomial} {count : Nat}
+
+/-- Construct an indexed odd-power primitive from the actual retained inverse model and its original power cache.
+
+The zero-pair branch is the complete original derivative-bound ofModel
+construction. Higher pairs retain their actual cached coefficient and use
+the original ofCoefficient primitive constructor on the same continued box.
+-/
+@[expose] def ofPowers (patch : ContinuedNeighborhood polynomial count) (index : Nat) (numerator : Polynomial)
+    (model : Model polynomial patch.base.box) (same : model.value = (patch.base.refine index).value)
+    (powers : OddPowers model.value) (pairs : optParam Nat 0) :
+    PrimitiveModel patch index numerator pairs :=
+  match pairs with
+  | 0 => ofModel patch index numerator model same
+  | remaining + 1 => ofCoefficient patch index numerator (remaining + 1)
+      (numerator * powers.odd (remaining + 1)) (fun point => by
+        rewrite [DensePolynomial.eval_mul, powers.odd_eval]
+        have actual := congrArg (fun value : Polynomial => value.eval point) same
+        rewrite [actual]
+        rfl)
+
+/-- The zero-pair power-aware constructor is the complete original derivative-bound primitive factory. -/
+theorem ofPowers_zero (patch : ContinuedNeighborhood polynomial count) (index : Nat) (numerator : Polynomial)
+    (model : Model polynomial patch.base.box) (same : model.value = (patch.base.refine index).value)
+    (powers : OddPowers model.value) :
+    ofPowers patch index numerator model same powers = ofModel patch index numerator model same := (rfl)
+
+end Purelib.Riemann.Normalization.InverseRootPrimitive.PrimitiveModel
+
+end

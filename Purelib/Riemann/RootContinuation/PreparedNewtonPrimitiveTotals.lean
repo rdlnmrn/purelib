@@ -68,10 +68,10 @@ open Purelib.Riemann.Integration.PreparedSubdivisionModelCore (CenteredEdge)
 open Purelib.Integration.Polynomial.Gaussian.Path.Basic (PathModel)
 variable {genus count index : Nat} {curve : HyperellipticCurve genus} {differential
   other : Differential genus}
-  {ambient : Purelib.Geometry.Rational.Box} {current : Purelib.RootIsolation.State.Raw.RawWindingState
+  {ambient : Geometry.Rational.Box} {current : RootIsolation.State.Raw.RawWindingState
     curve.polynomial ambient}
   {profile : Profile curve.squarefree current.box} {fixed : DifferentialProfile profile differential.exponent}
-  {target : Purelib.Data.Rat.Fraction.Rational} {request : PreparedBandRequest fixed target}
+  {target : Fraction.Rational} {request : PreparedBandRequest fixed target}
 
 open Purelib.Data.Gaussian in
 /-- Read the stored first primitive increments in original parent order. -/
@@ -90,7 +90,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
   | _, _, .nil => []
   | _, .cons head _, .cons first _ rest =>
       (first.2.2.increment -
-        (Basic.PathModel.mk (head.refinement.first.block.children.map CenteredEdge.model)).integralSample) ::
+        (PathModel.mk (head.refinement.first.block.children.map CenteredEdge.model)).integralSample) ::
           rest.firstErrors
 
 open Purelib.Data.Rat in
@@ -112,7 +112,7 @@ open Purelib.Data.Gaussian in
 /-- Every original first-row error satisfies the retained maximum bound. -/
 theorem firstErrors_bounded {parents : List (CenteredEdge curve differential)}
     {bank : PairedBoundaryParents request other parents} (values : PairedParentPrimitives count bank) :
-    ∀ error ∈ values.firstErrors, Data.Gaussian.Norm.Basic.normSq error ≤ values.firstBound := by
+    ∀ error ∈ values.firstErrors, normSq error ≤ values.firstBound := by
   induction values with
   | nil => intro error member; cases member
   | cons first second rest ih =>
@@ -129,19 +129,19 @@ open Purelib.Riemann.RootContinuation in
 /-- The original first-error sum is the primitive reading sum minus the exact first child-sample sum. -/
 theorem firstErrors_sum {parents : List (CenteredEdge curve differential)}
     {bank : PairedBoundaryParents request other parents} (values : PairedParentPrimitives count bank) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum values.firstErrors = Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    gaussianSum values.firstErrors = gaussianSum
       values.firstReadings -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum ((PreparedNewtonPairedRootBank.PairedBoundaryParents.firstChildren
+      gaussianSum ((PreparedNewtonPairedRootBank.PairedBoundaryParents.firstChildren
         bank).map (fun
         child => child.model.integralSample)) := by
   induction values with
   | nil => change (0 : Basic.Canonical) = 0 - 0; ring1
   | @cons parent parents head tail index first second rest ih =>
     simp only [firstErrors, firstReadings, PreparedNewtonPairedRootBank.PairedBoundaryParents.firstChildren,
-      Data.List.Map.map_append, IncrementArea.sum_append, Data.Gaussian.Norm.Sum.Basic.gaussianSum, -eq_self, -iff_self]
+      Data.List.Map.map_append, IncrementArea.sum_append, gaussianSum, -eq_self, -iff_self]
     rw [ih]
     have sample := PathArea.increments_sum
-      (Basic.PathModel.mk (head.refinement.first.block.children.map CenteredEdge.model))
+      (PathModel.mk (head.refinement.first.block.children.map CenteredEdge.model))
     simp only [PathArea.increments, Data.List.Map.map_map, Function.comp_def, -eq_self, -iff_self] at sample
     rw [sample]
     ring1
@@ -152,8 +152,8 @@ open Purelib.Riemann.RootContinuation in
 /-- Bound the original first total discrepancy by parent count squared times its retained maximum error. -/
 theorem first_total_error_le {parents : List (CenteredEdge curve differential)}
     {bank : PairedBoundaryParents request other parents} (values : PairedParentPrimitives count bank) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum values.firstReadings -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum ((PreparedNewtonPairedRootBank.PairedBoundaryParents.firstChildren
+    normSq (gaussianSum values.firstReadings -
+      gaussianSum ((PreparedNewtonPairedRootBank.PairedBoundaryParents.firstChildren
         bank).map (fun
         child => child.model.integralSample))) ≤
         (parents.length : Fraction.Rational) * ((parents.length : Fraction.Rational) * values.firstBound) := by
@@ -178,7 +178,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
   | _, _, .nil => []
   | _, .cons head _, .cons _ second rest =>
       (second.2.2.increment -
-        (Basic.PathModel.mk (head.refinement.second.block.children.map CenteredEdge.model)).integralSample) ::
+        (PathModel.mk (head.refinement.second.block.children.map CenteredEdge.model)).integralSample) ::
           rest.secondErrors
 
 open Purelib.Data.Rat in
@@ -200,7 +200,7 @@ open Purelib.Data.Gaussian in
 /-- Every original second-row error satisfies the retained maximum bound. -/
 theorem secondErrors_bounded {parents : List (CenteredEdge curve differential)}
     {bank : PairedBoundaryParents request other parents} (values : PairedParentPrimitives count bank) :
-    ∀ error ∈ values.secondErrors, Data.Gaussian.Norm.Basic.normSq error ≤ values.secondBound := by
+    ∀ error ∈ values.secondErrors, normSq error ≤ values.secondBound := by
   induction values with
   | nil => intro error member; cases member
   | cons first second rest ih =>
@@ -217,19 +217,19 @@ open Purelib.Riemann.RootContinuation in
 /-- The original second-error sum is the primitive reading sum minus the exact second child-sample sum. -/
 theorem secondErrors_sum {parents : List (CenteredEdge curve differential)}
     {bank : PairedBoundaryParents request other parents} (values : PairedParentPrimitives count bank) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum values.secondErrors = Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    gaussianSum values.secondErrors = gaussianSum
       values.secondReadings -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum ((PreparedNewtonPairedRootBank.PairedBoundaryParents.secondChildren
+      gaussianSum ((PreparedNewtonPairedRootBank.PairedBoundaryParents.secondChildren
         bank).map (fun
         child => child.model.integralSample)) := by
   induction values with
   | nil => change (0 : Basic.Canonical) = 0 - 0; ring1
   | @cons parent parents head tail index first second rest ih =>
     simp only [secondErrors, secondReadings, PreparedNewtonPairedRootBank.PairedBoundaryParents.secondChildren,
-      Data.List.Map.map_append, IncrementArea.sum_append, Data.Gaussian.Norm.Sum.Basic.gaussianSum, -eq_self, -iff_self]
+      Data.List.Map.map_append, IncrementArea.sum_append, gaussianSum, -eq_self, -iff_self]
     rw [ih]
     have sample := PathArea.increments_sum
-      (Basic.PathModel.mk (head.refinement.second.block.children.map CenteredEdge.model))
+      (PathModel.mk (head.refinement.second.block.children.map CenteredEdge.model))
     simp only [PathArea.increments, Data.List.Map.map_map, Function.comp_def, -eq_self, -iff_self] at sample
     rw [sample]
     ring1
@@ -240,8 +240,8 @@ open Purelib.Riemann.RootContinuation in
 /-- Bound the original second total discrepancy by parent count squared times its retained maximum error. -/
 theorem second_total_error_le {parents : List (CenteredEdge curve differential)}
     {bank : PairedBoundaryParents request other parents} (values : PairedParentPrimitives count bank) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum values.secondReadings -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum ((PreparedNewtonPairedRootBank.PairedBoundaryParents.secondChildren
+    normSq (gaussianSum values.secondReadings -
+      gaussianSum ((PreparedNewtonPairedRootBank.PairedBoundaryParents.secondChildren
         bank).map (fun
         child => child.model.integralSample))) ≤
         (parents.length : Fraction.Rational) * ((parents.length : Fraction.Rational) * values.secondBound) := by
@@ -257,11 +257,11 @@ open Purelib.Topology.Polygon
 /-- The original first primitive reading sum is close to the left coordinate of the retained paired total. -/
 theorem first_sample_error_le {parents : List (CenteredEdge curve differential)}
     {bank : PairedBoundaryParents request other parents} (values : PairedParentPrimitives count bank) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum values.firstReadings -
+    normSq (gaussianSum values.firstReadings -
       (PairedIncrementArea.total bank.incrementBlocks.flatten).left) ≤
         (parents.length : Fraction.Rational) * ((parents.length : Fraction.Rational) * values.firstBound) := by
-  change Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum values.firstReadings -
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum
+  change normSq (gaussianSum values.firstReadings -
+    gaussianSum
     (bank.incrementBlocks.flatten.map Stokes.PrimitivePoint.left)) ≤ _
   rw [PreparedNewtonPairedRootBank.PairedBoundaryParents.increments_left bank]
   exact values.first_total_error_le
@@ -269,11 +269,11 @@ theorem first_sample_error_le {parents : List (CenteredEdge curve differential)}
 /-- The original second primitive reading sum is close to the right coordinate of the retained paired total. -/
 theorem second_sample_error_le {parents : List (CenteredEdge curve differential)}
     {bank : PairedBoundaryParents request other parents} (values : PairedParentPrimitives count bank) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum values.secondReadings -
+    normSq (gaussianSum values.secondReadings -
       (PairedIncrementArea.total bank.incrementBlocks.flatten).right) ≤
         (parents.length : Fraction.Rational) * ((parents.length : Fraction.Rational) * values.secondBound) := by
-  change Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum values.secondReadings -
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum
+  change normSq (gaussianSum values.secondReadings -
+    gaussianSum
     (bank.incrementBlocks.flatten.map Stokes.PrimitivePoint.right)) ≤ _
   rw [PreparedNewtonPairedRootBank.PairedBoundaryParents.increments_right bank]
   exact values.second_total_error_le

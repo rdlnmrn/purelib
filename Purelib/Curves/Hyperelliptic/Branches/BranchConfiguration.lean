@@ -44,8 +44,8 @@ set_option genInjectivity false in
 
 Finite sites retain their original branch-family index. The infinity constructor is a separate semantic endpoint, used
 only by the curve degree shape. -/
-inductive Site {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
-    (branches : BranchIsolation.Data curve) : Type
+inductive Site {genus : Nat} (curve : Basic.HyperellipticCurve genus)
+    (branches : Data curve) : Type
   /-- A finite root occurrence indexed by the original retained branch family. -/ | finite (index : Data.Index branches)
   /-- The ramified point at infinity used by the odd-degree shape. -/ | infinity
 
@@ -57,36 +57,36 @@ section
 open Purelib.Curves.Hyperelliptic.Branches.BranchConfiguration.Site
 /-- Numerical code used to prove that the shape-dependent enumeration is injective without deciding equality of semantic
 root data. -/
-def code {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {branches : BranchIsolation.Data curve} : Curves.Hyperelliptic.Branches.BranchConfiguration.Site curve branches ->
+def code {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    {branches : Data curve} : Site curve branches ->
       Nat
   | .finite index => index.val
   | .infinity => branches.siteCount
 
 /-- Read the retained finite root name, returning none at infinity. -/
-def name? {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {branches : BranchIsolation.Data curve} : Curves.Hyperelliptic.Branches.BranchConfiguration.Site curve branches ->
-      Option BranchIsolation.Named
+def name? {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    {branches : Data curve} : Site curve branches ->
+      Option Named
   | .finite index => some (Data.name branches index)
   | .infinity => none
 
 /-- Read the retained coherent finite root name, returning none at infinity. -/
-def coherentName? {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {branches : BranchIsolation.Data curve} : Curves.Hyperelliptic.Branches.BranchConfiguration.Site curve branches ->
+def coherentName? {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    {branches : Data curve} : Site curve branches ->
       Option Coherent.CoherentNamed
   | .finite index => some (Data.coherentName branches index)
   | .infinity => none
 
 /-- Read the exact finite root-track anchor, returning none at infinity. -/
-def anchor? {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {branches : BranchIsolation.Data curve} : Curves.Hyperelliptic.Branches.BranchConfiguration.Site curve branches ->
+def anchor? {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    {branches : Data curve} : Site curve branches ->
       Option Data.Gaussian.Basic.Canonical
   | .finite index => some (Data.anchor branches index)
   | .infinity => none
 
 /-- Extract the finite root index from a site proved not to be infinity. -/
-def index {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {branches : BranchIsolation.Data curve} (site : Curves.Hyperelliptic.Branches.BranchConfiguration.Site curve
+def index {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    {branches : Data curve} (site : Site curve
       branches)
     (notInfinity : site ≠ .infinity) : Data.Index branches :=
   match site with
@@ -97,8 +97,8 @@ end
 
 /-- A site proved finite is exactly the finite constructor on its extracted original root index. -/
 theorem index_spec {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches : BranchIsolation.Data curve}
-    (site : Curves.Hyperelliptic.Branches.BranchConfiguration.Site curve branches) (notInfinity : site ≠ .infinity) :
+    {curve : Basic.HyperellipticCurve genus} {branches : Data curve}
+    (site : Site curve branches) (notInfinity : site ≠ .infinity) :
     site = .finite (site.index notInfinity) := by
   cases site with
   | finite => rfl
@@ -107,73 +107,73 @@ theorem index_spec {genus : Nat}
 end Site
 
 /-- Odd-degree enumeration: all finite roots followed by infinity. -/
-def oddAt {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    (branches : BranchIsolation.Data curve)
+def oddAt {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    (branches : Data curve)
     (count_eq : branches.siteCount = 2 * genus + 1) :
-    Fin (2 * genus + 2) -> Curves.Hyperelliptic.Branches.BranchConfiguration.Site curve branches :=
+    Fin (2 * genus + 2) -> Site curve branches :=
   Data.Fin.lastCases .infinity fun index =>
     .finite (Fin.cast count_eq.symm index)
 
 /-- The odd-degree enumeration retains each numerical position as its site code. -/
 @[simp] theorem oddAt_code {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus} (branches : BranchIsolation.Data curve)
+    {curve : Basic.HyperellipticCurve genus} (branches : Data curve)
     (count_eq : branches.siteCount = 2 * genus + 1)
     (position : Fin (2 * genus + 2)) :
-    (Purelib.Curves.Hyperelliptic.Branches.BranchConfiguration.oddAt branches count_eq position).code = position.val :=
+    (oddAt branches count_eq position).code = position.val :=
       by
   rcases Data.Fin.lastCases_split position with equal | ⟨index, equal⟩
   · subst position
-    unfold Curves.Hyperelliptic.Branches.BranchConfiguration.oddAt
+    unfold oddAt
     rw [Data.Fin.lastCases_last]
-    unfold Curves.Hyperelliptic.Branches.BranchConfiguration.Site.code
+    unfold Site.code
     rw [Fin.val_last]
     exact count_eq
   · subst position
-    unfold Curves.Hyperelliptic.Branches.BranchConfiguration.oddAt
+    unfold oddAt
     rw [Data.Fin.lastCases_castSucc]
-    unfold Curves.Hyperelliptic.Branches.BranchConfiguration.Site.code
+    unfold Site.code
     rfl
 
 /-- Distinct positions select distinct sites in the odd-degree enumeration. -/
 theorem oddAt_injective {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus} (branches : BranchIsolation.Data curve)
+    {curve : Basic.HyperellipticCurve genus} (branches : Data curve)
     (count_eq : branches.siteCount = 2 * genus + 1) :
-    Function.Injective (Curves.Hyperelliptic.Branches.BranchConfiguration.oddAt branches count_eq) := by
+    Function.Injective (oddAt branches count_eq) := by
   intro left right equal
   apply Fin.ext
-  have codes := congrArg Curves.Hyperelliptic.Branches.BranchConfiguration.Site.code equal
-  rw [Curves.Hyperelliptic.Branches.BranchConfiguration.oddAt_code,
-    Curves.Hyperelliptic.Branches.BranchConfiguration.oddAt_code] at codes
+  have codes := congrArg Site.code equal
+  rw [oddAt_code,
+    oddAt_code] at codes
   exact codes
 
 /-- Even-degree enumeration: every ramification site is a finite root. -/
-def evenAt {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    (branches : BranchIsolation.Data curve)
+def evenAt {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    (branches : Data curve)
     (count_eq : branches.siteCount = 2 * genus + 2) :
-    Fin (2 * genus + 2) -> Curves.Hyperelliptic.Branches.BranchConfiguration.Site curve branches :=
+    Fin (2 * genus + 2) -> Site curve branches :=
   fun position => .finite (Fin.cast count_eq.symm position)
 
 /-- The even-degree enumeration retains each numerical position as its site code. -/
 @[simp] theorem evenAt_code {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus} (branches : BranchIsolation.Data curve)
+    {curve : Basic.HyperellipticCurve genus} (branches : Data curve)
     (count_eq : branches.siteCount = 2 * genus + 2)
     (position : Fin (2 * genus + 2)) :
-    (Purelib.Curves.Hyperelliptic.Branches.BranchConfiguration.evenAt branches count_eq position).code = position.val :=
+    (evenAt branches count_eq position).code = position.val :=
       by
-  unfold Curves.Hyperelliptic.Branches.BranchConfiguration.evenAt
-    Curves.Hyperelliptic.Branches.BranchConfiguration.Site.code
+  unfold evenAt
+    Site.code
   rfl
 
 /-- Distinct positions select distinct finite sites in the even-degree enumeration. -/
 theorem evenAt_injective {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus} (branches : BranchIsolation.Data curve)
+    {curve : Basic.HyperellipticCurve genus} (branches : Data curve)
     (count_eq : branches.siteCount = 2 * genus + 2) :
-    Function.Injective (Curves.Hyperelliptic.Branches.BranchConfiguration.evenAt branches count_eq) := by
+    Function.Injective (evenAt branches count_eq) := by
   intro left right equal
   apply Fin.ext
-  have codes := congrArg Curves.Hyperelliptic.Branches.BranchConfiguration.Site.code equal
-  rw [Curves.Hyperelliptic.Branches.BranchConfiguration.evenAt_code,
-    Curves.Hyperelliptic.Branches.BranchConfiguration.evenAt_code] at codes
+  have codes := congrArg Site.code equal
+  rw [evenAt_code,
+    evenAt_code] at codes
   exact codes
 
 set_option genInjectivity false in
@@ -181,10 +181,10 @@ set_option genInjectivity false in
 
 The retained finite branch family supplies every indexed ramification site. The ordered site map keeps its original
 source labels and its explicit injectivity witness. -/
-structure Configuration {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus) where
-  /-- The original degree-complete retained finite root family. -/ branches : BranchIsolation.Data curve
+structure Configuration {genus : Nat} (curve : Basic.HyperellipticCurve genus) where
+  /-- The original degree-complete retained finite root family. -/ branches : Data curve
   /-- The ordered ramification-site family, including infinity only for odd degree. -/ siteAt : Fin (2 * genus + 2) ->
-    Curves.Hyperelliptic.Branches.BranchConfiguration.Site curve branches
+    Site curve branches
   /-- Different positions in the retained configuration select different sites. -/ siteAt_injective : Function.Injective
     siteAt
 
@@ -194,8 +194,8 @@ constructive_injectivity Configuration
 
 Odd degree appends the ramified infinity site; even degree uses only finite sites. Both cases preserve the original
 branch data and certify injectivity. -/
-def configurationOfData {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
-    (branches : BranchIsolation.Data curve) : Curves.Hyperelliptic.Branches.BranchConfiguration.Configuration curve :=
+def configurationOfData {genus : Nat} (curve : Basic.HyperellipticCurve genus)
+    (branches : Data curve) : Configuration curve :=
       by
   cases curve.degreeShape with
   | odd degreeEqual =>
@@ -203,44 +203,44 @@ def configurationOfData {genus : Nat} (curve : Hyperelliptic.Basic.Hyperelliptic
         branches.count_eq.trans degreeEqual
       exact
         { branches := branches
-          siteAt := Curves.Hyperelliptic.Branches.BranchConfiguration.oddAt branches countEqual
-          siteAt_injective := Curves.Hyperelliptic.Branches.BranchConfiguration.oddAt_injective branches countEqual }
+          siteAt := oddAt branches countEqual
+          siteAt_injective := oddAt_injective branches countEqual }
   | even degreeEqual =>
       have countEqual : branches.siteCount = 2 * genus + 2 :=
         branches.count_eq.trans degreeEqual
       exact
         { branches := branches
-          siteAt := Curves.Hyperelliptic.Branches.BranchConfiguration.evenAt branches countEqual
-          siteAt_injective := Curves.Hyperelliptic.Branches.BranchConfiguration.evenAt_injective branches countEqual }
+          siteAt := evenAt branches countEqual
+          siteAt_injective := evenAt_injective branches countEqual }
 
 /-- Automatically isolated canonical branch configuration. -/
-def configuration {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus) :
-    Curves.Hyperelliptic.Branches.BranchConfiguration.Configuration curve :=
-  Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve (BranchIsolation.data curve)
+def configuration {genus : Nat} (curve : Basic.HyperellipticCurve genus) :
+    Configuration curve :=
+  configurationOfData curve (data curve)
 
 /-- The shape-selected enumeration retains the original numerical site position. -/
 @[simp] theorem configurationOfData_siteAt_code {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (branches : BranchIsolation.Data curve)
+    (curve : Basic.HyperellipticCurve genus) (branches : Data curve)
     (position : Fin (2 * genus + 2)) :
-    ((Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).siteAt position).code =
+    ((configurationOfData curve branches).siteAt position).code =
       position.val := by
   cases curve with
   | mk polynomial nonzero squarefree degreeShape =>
       cases degreeShape with
       | odd degreeEqual =>
-          exact Curves.Hyperelliptic.Branches.BranchConfiguration.oddAt_code branches
+          exact oddAt_code branches
             (branches.count_eq.trans degreeEqual) position
       | even degreeEqual =>
-          exact Curves.Hyperelliptic.Branches.BranchConfiguration.evenAt_code branches
+          exact evenAt_code branches
             (branches.count_eq.trans degreeEqual) position
 
 open Purelib.Curves.Hyperelliptic.Branches.BranchConfiguration in
 /-- The canonical branch configuration preserves the numerical position as the site code, independently of the odd/even
 degree shape. -/
 @[simp] theorem configuration_siteAt_code {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (position : Fin (2 * genus + 2)) :
+    (curve : Basic.HyperellipticCurve genus) (position : Fin (2 * genus + 2)) :
     ((configuration curve).siteAt position).code = position.val :=
-  Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData_siteAt_code curve (BranchIsolation.data curve)
+  configurationOfData_siteAt_code curve (data curve)
     position
 
 /-! ## Standard finite pairing into branch cuts -/
@@ -258,7 +258,7 @@ structure Pair (genus : Nat) where
 constructive_injectivity Pair
 
 /-- Pair each even numerical ramification position with its immediate odd successor. -/
-def standardPair {genus : Nat} (index : Fin (genus + 1)) : Curves.Hyperelliptic.Branches.BranchConfiguration.Pair genus
+def standardPair {genus : Nat} (index : Fin (genus + 1)) : Pair genus
   where
   left := ⟨2 * index.val, by
     have bound := index.isLt
@@ -275,111 +275,111 @@ def standardPair {genus : Nat} (index : Fin (genus + 1)) : Curves.Hyperelliptic.
 /-- Both endpoints of each of the first `g` standard pairs occur strictly before the polynomial degree. In odd degree
 this excludes the final ramification site at infinity. -/
 theorem basisPair_left_lt_degree {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (index : Fin genus) :
-    (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair (Fin.castSucc index)).left.val <
+    (curve : Basic.HyperellipticCurve genus) (index : Fin genus) :
+    (standardPair (Fin.castSucc index)).left.val <
       curve.polynomial.natDegree := by
   have bound := index.isLt
   cases curve.degreeShape with
   | odd degreeEqual =>
       rw [degreeEqual]
-      simp only [Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair, Fin.val_castSucc]
+      simp only [standardPair, Fin.val_castSucc]
       omega0
   | even degreeEqual =>
       rw [degreeEqual]
-      simp only [Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair, Fin.val_castSucc]
+      simp only [standardPair, Fin.val_castSucc]
       omega0
 
 /-- The second endpoint of each basis cut lies strictly below the defining polynomial degree. -/
 theorem basisPair_right_lt_degree {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (index : Fin genus) :
-    (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair (Fin.castSucc index)).right.val <
+    (curve : Basic.HyperellipticCurve genus) (index : Fin genus) :
+    (standardPair (Fin.castSucc index)).right.val <
       curve.polynomial.natDegree := by
   have bound := index.isLt
   cases curve.degreeShape with
   | odd degreeEqual =>
       rw [degreeEqual]
-      simp only [Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair, Fin.val_castSucc]
+      simp only [standardPair, Fin.val_castSucc]
       omega0
   | even degreeEqual =>
       rw [degreeEqual]
-      simp only [Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair, Fin.val_castSucc]
+      simp only [standardPair, Fin.val_castSucc]
       omega0
 
 /-- The first endpoint of any basis cut is a finite root occurrence for any explicit degree-complete branch family. -/
 theorem basisPair_left_ne_infinity_ofData {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (branches : BranchIsolation.Data curve)
+    (curve : Basic.HyperellipticCurve genus) (branches : Data curve)
     (index : Fin genus) :
-    (Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).siteAt
-        (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair (Fin.castSucc index)).left ≠
+    (configurationOfData curve branches).siteAt
+        (standardPair (Fin.castSucc index)).left ≠
       .infinity := by
   intro equal
-  have codes := congrArg Curves.Hyperelliptic.Branches.BranchConfiguration.Site.code equal
-  rw [Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData_siteAt_code] at codes
-  change (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair (Fin.castSucc index)).left.val =
-    (Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).branches.siteCount at codes
-  rw [(Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).branches.count_eq] at codes
-  exact (Nat.ne_of_lt (Curves.Hyperelliptic.Branches.BranchConfiguration.basisPair_left_lt_degree curve index)) codes
+  have codes := congrArg Site.code equal
+  rw [configurationOfData_siteAt_code] at codes
+  change (standardPair (Fin.castSucc index)).left.val =
+    (configurationOfData curve branches).branches.siteCount at codes
+  rw [(configurationOfData curve branches).branches.count_eq] at codes
+  exact (Nat.ne_of_lt (basisPair_left_lt_degree curve index)) codes
 
 /-- The second endpoint of any basis cut is a finite root occurrence for any explicit degree-complete branch family. -/
 theorem basisPair_right_ne_infinity_ofData {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (branches : BranchIsolation.Data curve)
+    (curve : Basic.HyperellipticCurve genus) (branches : Data curve)
     (index : Fin genus) :
-    (Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).siteAt
-        (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair (Fin.castSucc index)).right ≠
+    (configurationOfData curve branches).siteAt
+        (standardPair (Fin.castSucc index)).right ≠
       .infinity := by
   intro equal
-  have codes := congrArg Curves.Hyperelliptic.Branches.BranchConfiguration.Site.code equal
-  rw [Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData_siteAt_code] at codes
-  change (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair (Fin.castSucc index)).right.val =
-    (Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).branches.siteCount at codes
-  rw [(Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).branches.count_eq] at codes
-  exact (Nat.ne_of_lt (Curves.Hyperelliptic.Branches.BranchConfiguration.basisPair_right_lt_degree curve index)) codes
+  have codes := congrArg Site.code equal
+  rw [configurationOfData_siteAt_code] at codes
+  change (standardPair (Fin.castSucc index)).right.val =
+    (configurationOfData curve branches).branches.siteCount at codes
+  rw [(configurationOfData curve branches).branches.count_eq] at codes
+  exact (Nat.ne_of_lt (basisPair_right_lt_degree curve index)) codes
 
 /-- Root index of the first endpoint of a standard basis cut in explicit branch data. -/
 def basisPairLeftIndexOfData {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (branches : BranchIsolation.Data curve)
+    (curve : Basic.HyperellipticCurve genus) (branches : Data curve)
     (index : Fin genus) :
-    Data.Index (Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).branches :=
-  Curves.Hyperelliptic.Branches.BranchConfiguration.Site.index
-    ((Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).siteAt
-      (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair (Fin.castSucc index)).left)
-    (Curves.Hyperelliptic.Branches.BranchConfiguration.basisPair_left_ne_infinity_ofData curve branches index)
+    Data.Index (configurationOfData curve branches).branches :=
+  Site.index
+    ((configurationOfData curve branches).siteAt
+      (standardPair (Fin.castSucc index)).left)
+    (basisPair_left_ne_infinity_ofData curve branches index)
 
 /-- Root index of the second endpoint of a standard basis cut in explicit branch data. -/
 def basisPairRightIndexOfData {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (branches : BranchIsolation.Data curve)
+    (curve : Basic.HyperellipticCurve genus) (branches : Data curve)
     (index : Fin genus) :
-    Data.Index (Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).branches :=
-  Curves.Hyperelliptic.Branches.BranchConfiguration.Site.index
-    ((Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).siteAt
-      (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair (Fin.castSucc index)).right)
-    (Curves.Hyperelliptic.Branches.BranchConfiguration.basisPair_right_ne_infinity_ofData curve branches index)
+    Data.Index (configurationOfData curve branches).branches :=
+  Site.index
+    ((configurationOfData curve branches).siteAt
+      (standardPair (Fin.castSucc index)).right)
+    (basisPair_right_ne_infinity_ofData curve branches index)
 
 /-- The first endpoint of a retained-data basis cut is its exact extracted finite root occurrence. -/
 @[simp] theorem configurationOfData_siteAt_basisPair_left {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (branches : BranchIsolation.Data curve)
+    (curve : Basic.HyperellipticCurve genus) (branches : Data curve)
     (index : Fin genus) :
-    (Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).siteAt
-        (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair (Fin.castSucc index)).left =
-      .finite (Purelib.Curves.Hyperelliptic.Branches.BranchConfiguration.basisPairLeftIndexOfData curve branches index)
+    (configurationOfData curve branches).siteAt
+        (standardPair (Fin.castSucc index)).left =
+      .finite (basisPairLeftIndexOfData curve branches index)
         :=
   by
-    unfold Curves.Hyperelliptic.Branches.BranchConfiguration.basisPairLeftIndexOfData
-    exact Curves.Hyperelliptic.Branches.BranchConfiguration.Site.index_spec _
-      (Curves.Hyperelliptic.Branches.BranchConfiguration.basisPair_left_ne_infinity_ofData curve branches index)
+    unfold basisPairLeftIndexOfData
+    exact Site.index_spec _
+      (basisPair_left_ne_infinity_ofData curve branches index)
 
 /-- The second endpoint of a retained-data basis cut is its exact extracted finite root occurrence. -/
 @[simp] theorem configurationOfData_siteAt_basisPair_right {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (branches : BranchIsolation.Data curve)
+    (curve : Basic.HyperellipticCurve genus) (branches : Data curve)
     (index : Fin genus) :
-    (Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).siteAt
-        (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair (Fin.castSucc index)).right =
-      .finite (Purelib.Curves.Hyperelliptic.Branches.BranchConfiguration.basisPairRightIndexOfData curve branches index)
+    (configurationOfData curve branches).siteAt
+        (standardPair (Fin.castSucc index)).right =
+      .finite (basisPairRightIndexOfData curve branches index)
         :=
   by
-    unfold Curves.Hyperelliptic.Branches.BranchConfiguration.basisPairRightIndexOfData
-    exact Curves.Hyperelliptic.Branches.BranchConfiguration.Site.index_spec _
-      (Curves.Hyperelliptic.Branches.BranchConfiguration.basisPair_right_ne_infinity_ofData curve branches index)
+    unfold basisPairRightIndexOfData
+    exact Site.index_spec _
+      (basisPair_right_ne_infinity_ofData curve branches index)
 
 /-! The automatic names below retain the original public interface. -/
 
@@ -387,49 +387,49 @@ section
 open Purelib.Curves.Hyperelliptic.Branches.BranchConfiguration
 /-- The first endpoint of each canonical basis cut is finite. -/
 theorem basisPair_left_ne_infinity {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (index : Fin genus) :
-    (configuration curve).siteAt (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair (Fin.castSucc
+    (curve : Basic.HyperellipticCurve genus) (index : Fin genus) :
+    (configuration curve).siteAt (standardPair (Fin.castSucc
       index)).left ≠
       .infinity :=
-  Curves.Hyperelliptic.Branches.BranchConfiguration.basisPair_left_ne_infinity_ofData curve (BranchIsolation.data curve)
+  basisPair_left_ne_infinity_ofData curve (data curve)
     index
 
 /-- The second endpoint of each canonical basis cut is finite. -/
 theorem basisPair_right_ne_infinity {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (index : Fin genus) :
-    (configuration curve).siteAt (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair (Fin.castSucc
+    (curve : Basic.HyperellipticCurve genus) (index : Fin genus) :
+    (configuration curve).siteAt (standardPair (Fin.castSucc
       index)).right ≠
       .infinity :=
-  Curves.Hyperelliptic.Branches.BranchConfiguration.basisPair_right_ne_infinity_ofData curve (BranchIsolation.data
+  basisPair_right_ne_infinity_ofData curve (data
     curve) index
 
 /-- Extract the original finite root index of the first canonical basis-cut endpoint. -/
-def basisPairLeftIndex {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
+def basisPairLeftIndex {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (index : Fin genus) : Data.Index (configuration curve).branches :=
-  Curves.Hyperelliptic.Branches.BranchConfiguration.basisPairLeftIndexOfData curve (BranchIsolation.data curve) index
+  basisPairLeftIndexOfData curve (data curve) index
 
 /-- Extract the original finite root index of the second canonical basis-cut endpoint. -/
-def basisPairRightIndex {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
+def basisPairRightIndex {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (index : Fin genus) : Data.Index (configuration curve).branches :=
-  Curves.Hyperelliptic.Branches.BranchConfiguration.basisPairRightIndexOfData curve (BranchIsolation.data curve) index
+  basisPairRightIndexOfData curve (data curve) index
 
 /-- The first canonical basis-cut site is its exact extracted finite root occurrence. -/
 @[simp] theorem configuration_siteAt_basisPair_left {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (index : Fin genus) :
-    (configuration curve).siteAt (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair (Fin.castSucc
+    (curve : Basic.HyperellipticCurve genus) (index : Fin genus) :
+    (configuration curve).siteAt (standardPair (Fin.castSucc
       index)).left =
-      .finite (Curves.Hyperelliptic.Branches.BranchConfiguration.basisPairLeftIndex curve index) :=
-  Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData_siteAt_basisPair_left curve
-    (BranchIsolation.data curve) index
+      .finite (basisPairLeftIndex curve index) :=
+  configurationOfData_siteAt_basisPair_left curve
+    (data curve) index
 
 /-- The second canonical basis-cut site is its exact extracted finite root occurrence. -/
 @[simp] theorem configuration_siteAt_basisPair_right {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (index : Fin genus) :
-    (configuration curve).siteAt (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair (Fin.castSucc
+    (curve : Basic.HyperellipticCurve genus) (index : Fin genus) :
+    (configuration curve).siteAt (standardPair (Fin.castSucc
       index)).right =
-      .finite (Curves.Hyperelliptic.Branches.BranchConfiguration.basisPairRightIndex curve index) :=
-  Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData_siteAt_basisPair_right curve
-    (BranchIsolation.data curve) index
+      .finite (basisPairRightIndex curve index) :=
+  configurationOfData_siteAt_basisPair_right curve
+    (data curve) index
 
 end
 
@@ -447,55 +447,55 @@ Division by two retains the original pair index. The exact quotient-remainder eq
 its pair's even endpoint or its immediate odd successor. -/
 theorem standardPair_covers {genus : Nat}
     (position : Fin (2 * genus + 2)) :
-    position = (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair
-      (Curves.Hyperelliptic.Branches.BranchConfiguration.pairOf position)).left \/
-      position = (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair
-        (Curves.Hyperelliptic.Branches.BranchConfiguration.pairOf position)).right := by
+    position = (standardPair
+      (pairOf position)).left \/
+      position = (standardPair
+        (pairOf position)).right := by
   have remainderBound : position.val % 2 < 2 :=
     Nat.mod_lt _ (by decide)
   have division := Division.mod_add_div position.val 2
   by_cases even : position.val % 2 = 0
   · left
     apply Fin.ext
-    dsimp [Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair,
-      Curves.Hyperelliptic.Branches.BranchConfiguration.pairOf]
+    dsimp [standardPair,
+      pairOf]
     omega0
   · have odd : position.val % 2 = 1 := by omega0
     right
     apply Fin.ext
-    dsimp [Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair,
-      Curves.Hyperelliptic.Branches.BranchConfiguration.pairOf]
+    dsimp [standardPair,
+      pairOf]
     omega0
 
 open Purelib.Curves.Hyperelliptic.Branches.BranchConfiguration
 /-- The two semantic endpoints of one standard cut are distinct because the global branch enumeration is injective. -/
 theorem cutEndpoints_different {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus} (configuration :
-      Curves.Hyperelliptic.Branches.BranchConfiguration.Configuration curve)
+    {curve : Basic.HyperellipticCurve genus} (configuration :
+      Configuration curve)
     (index : Fin (genus + 1)) :
-    configuration.siteAt (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair index).left ≠
-      configuration.siteAt (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair index).right := by
+    configuration.siteAt (standardPair index).left ≠
+      configuration.siteAt (standardPair index).right := by
   intro equal
-  exact (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair index).different
+  exact (standardPair index).different
     (configuration.siteAt_injective equal)
 
 /-- Every finite endpoint of a standard cut retains its persistent root name; the odd-degree infinity endpoint is
 represented by `none`. -/
 def cutEndpointNames {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus} (configuration :
-      Curves.Hyperelliptic.Branches.BranchConfiguration.Configuration curve)
-    (index : Fin (genus + 1)) : Option BranchIsolation.Named × Option Named :=
-  ((configuration.siteAt (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair index).left).name?,
-    (configuration.siteAt (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair index).right).name?)
+    {curve : Basic.HyperellipticCurve genus} (configuration :
+      Configuration curve)
+    (index : Fin (genus + 1)) : Option Named × Option Named :=
+  ((configuration.siteAt (standardPair index).left).name?,
+    (configuration.siteAt (standardPair index).right).name?)
 
 /-- Coherent versions of the same finite endpoint names, ready for arithmetic composition with the analytic layer. -/
 def cutEndpointCoherentNames {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus} (configuration :
-      Curves.Hyperelliptic.Branches.BranchConfiguration.Configuration curve)
+    {curve : Basic.HyperellipticCurve genus} (configuration :
+      Configuration curve)
     (index : Fin (genus + 1)) :
     Option Coherent.CoherentNamed ×
       Option Coherent.CoherentNamed :=
-  ((configuration.siteAt (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair index).left).coherentName?,
-    (configuration.siteAt (Curves.Hyperelliptic.Branches.BranchConfiguration.standardPair index).right).coherentName?)
+  ((configuration.siteAt (standardPair index).left).coherentName?,
+    (configuration.siteAt (standardPair index).right).coherentName?)
 
 end Purelib.Curves.Hyperelliptic.Branches.BranchConfiguration

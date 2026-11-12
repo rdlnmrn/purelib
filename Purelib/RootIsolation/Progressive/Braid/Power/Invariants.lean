@@ -43,10 +43,10 @@ def componentCertificate (degree :
     (degreeAtLeastTwo : 2 ≤ degree.value)
     (q : Nat) (qPositive : 0 < q) :
     Closure.Components.UniformComponentCertificate
-      (Progressive.Braid.Power.Torus.repeatedBraid degree degreeAtLeastTwo q).closure := by
-  rw [Progressive.Braid.Power.Torus.closure_eq_torus degree degreeAtLeastTwo q qPositive]
-  exact Topology.Knot.Torus.Basic.PowerSingularity.componentCertificate
-    (Progressive.Braid.Power.Torus.singularity degree degreeAtLeastTwo q qPositive)
+      (Torus.repeatedBraid degree degreeAtLeastTwo q).closure := by
+  rw [Torus.closure_eq_torus degree degreeAtLeastTwo q qPositive]
+  exact Torus.Basic.PowerSingularity.componentCertificate
+    (Torus.singularity degree degreeAtLeastTwo q qPositive)
 
 /-- The repeated rational power-circuit closure is a knot when the computed degree–repetition gcd is one. -/
 theorem closure_isKnot_of_gcdOne (degree :
@@ -55,12 +55,12 @@ theorem closure_isKnot_of_gcdOne (degree :
     (q : Nat) (qPositive : 0 < q)
     (gcdOne :
       (Data.Nat.GCD.Extended.compute degree.value q).gcd = 1) :
-    (Progressive.Braid.Power.Torus.repeatedBraid degree degreeAtLeastTwo q).closure.IsKnot := by
-  rw [Progressive.Braid.Power.Torus.closure_eq_torus degree degreeAtLeastTwo q qPositive]
+    (Torus.repeatedBraid degree degreeAtLeastTwo q).closure.IsKnot := by
+  rw [Torus.closure_eq_torus degree degreeAtLeastTwo q qPositive]
   apply Torus.PowerSingularity.closure_isKnot_of_gcdOne
   change (Data.Nat.GCD.Extended.compute
-    (Progressive.Braid.Power.Torus.frame degree degreeAtLeastTwo).degree q).gcd = 1
-  rw [Progressive.Braid.Power.Torus.frame_degree]
+    (Torus.frame degree degreeAtLeastTwo).degree q).gcd = 1
+  rw [Torus.frame_degree]
   exact gcdOne
 
 end Purelib.RootIsolation.Progressive.Braid.Power.Invariants

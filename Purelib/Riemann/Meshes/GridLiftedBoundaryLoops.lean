@@ -30,6 +30,10 @@ import Purelib.Data.List.Membership
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.RootIsolation.SquareRoot.Grid
+
+open Purelib.RootIsolation.SquareRoot
+
 public section
 
 /-!
@@ -73,13 +77,13 @@ open Purelib.Data in
 open Purelib.Polynomial in
 open Purelib.RootIsolation in
 /-- The indexed lift of appended walks concatenates their edge lists at the transported middle sheet. -/
-theorem indexedEdges_append (edges : SquareRoot.Grid.RootEdgeBank frames) (vertices :
-  SquareRoot.Grid.LiftedVertices.VertexBank grid) :
-    {start middle finish : Gaussian.Basic.Canonical} → (left : Geometry.Grid.Walks.Walk grid start middle) → (right :
-      Geometry.Grid.Walks.Walk grid middle finish) → (sheet : Fin 2) →
+theorem indexedEdges_append (edges : RootEdgeBank frames) (vertices :
+  VertexBank grid) :
+    {start middle finish : Canonical} → (left : Walk grid start middle) → (right :
+      Walk grid middle finish) → (sheet : Fin 2) →
       edges.indexedEdges vertices (left.append right) sheet =
         edges.indexedEdges vertices left sheet ++ edges.indexedEdges vertices right
-          (SquareRoot.Grid.EdgeBank.RootEdgeBank.target edges left sheet)
+          (EdgeBank.RootEdgeBank.target edges left sheet)
   | _, _, _, .nil _, _, _ => rfl
   | _, _, _, .cons edge tail, right, sheet =>
       congrArg (List.cons (edges.indexedEdge vertices edge sheet))
@@ -90,26 +94,26 @@ open Purelib.Data
 open Purelib.Polynomial
 open Purelib.RootIsolation
 /-- The indexed lifted walk has exactly the retained start and transported finish vertices. -/
-theorem indexedEdges_endpoints (edges : SquareRoot.Grid.RootEdgeBank frames) (vertices :
-  SquareRoot.Grid.LiftedVertices.VertexBank grid) :
-    {start finish : Gaussian.Basic.Canonical} → (walk : Geometry.Grid.Walks.Walk grid start finish) →
-    (first : Polynomial.Geometry.Grid.FromStates.ContainsVertex grid start) → (last :
-      Polynomial.Geometry.Grid.FromStates.ContainsVertex grid finish) → (sheet : Fin 2) →
-      Chain.PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish (edges.indexedEdges vertices walk sheet)
-        (vertices.index start first sheet) (vertices.index finish last (SquareRoot.Grid.EdgeBank.RootEdgeBank.target
+theorem indexedEdges_endpoints (edges : RootEdgeBank frames) (vertices :
+  VertexBank grid) :
+    {start finish : Canonical} → (walk : Walk grid start finish) →
+    (first : Geometry.Grid.FromStates.ContainsVertex grid start) → (last :
+      Geometry.Grid.FromStates.ContainsVertex grid finish) → (sheet : Fin 2) →
+      PathEndpoints OrientedEdge.start OrientedEdge.finish (edges.indexedEdges vertices walk sheet)
+        (vertices.index start first sheet) (vertices.index finish last (EdgeBank.RootEdgeBank.target
           edges walk sheet))
   | _, _, .nil _, _, _, _ => .nil _
   | _, _, .cons edge tail, _, last, sheet =>
       .cons (edges.indexedEdges_endpoints vertices tail edge.vertices.2 last ((edges.edge edge).forward.target sheet))
 
 /-- A walk whose sheet transport returns has a closed indexed lift. -/
-theorem indexedEdges_closed (edges : SquareRoot.Grid.RootEdgeBank frames) (vertices :
-  SquareRoot.Grid.LiftedVertices.VertexBank grid) {base : Gaussian.Basic.Canonical}
-    (walk : Geometry.Grid.Walks.Walk grid base base) (member : Polynomial.Geometry.Grid.FromStates.ContainsVertex grid
+theorem indexedEdges_closed (edges : RootEdgeBank frames) (vertices :
+  VertexBank grid) {base : Canonical}
+    (walk : Walk grid base base) (member : Geometry.Grid.FromStates.ContainsVertex grid
       base)
       (sheet : Fin 2)
-    (returned : SquareRoot.Grid.EdgeBank.RootEdgeBank.target edges walk sheet = sheet) :
-    Chain.PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish (edges.indexedEdges vertices walk sheet)
+    (returned : EdgeBank.RootEdgeBank.target edges walk sheet = sheet) :
+    PathEndpoints OrientedEdge.start OrientedEdge.finish (edges.indexedEdges vertices walk sheet)
       (vertices.index base member sheet) (vertices.index base member sheet) :=
   (edges.indexedEdges_endpoints vertices walk member member sheet).castFinish
     (congrArg (vertices.index base member) returned)
@@ -123,14 +127,14 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 namespace Purelib.Riemann.Meshes.PuncturedGridFaces.BranchHole
 
 variable {bank : BranchCellBank curve branches higher} {frames :
-  RootIsolation.SquareRoot.Grid.RootFrames bank.grid}
+  RootFrames bank.grid}
 
 open Purelib.Polynomial in
 /-- Traverse the retained inward branch-hole boundary twice.
 
 Both laps use the same original inward walk, retaining its anchor, ordered
 edges and endpoint witnesses. -/
-@[expose] def doubleBoundary (hole : BranchHole bank) : Geometry.Grid.Walks.Walk bank.grid hole.cell.box.anchor
+@[expose] def doubleBoundary (hole : BranchHole bank) : Walk bank.grid hole.cell.box.anchor
   hole.cell.box.anchor :=
   hole.inwardBoundary.append hole.inwardBoundary
 
@@ -138,10 +142,10 @@ open Purelib.Riemann in
 open Purelib.Curves in
 open Purelib.RootIsolation in
 /-- Two inward branch-hole laps return each original sheet to itself. -/
-theorem doubleBoundary_return (hole : BranchHole bank) (edges : SquareRoot.Grid.RootEdgeBank frames) (sheet
+theorem doubleBoundary_return (hole : BranchHole bank) (edges : RootEdgeBank frames) (sheet
   : Fin 2) :
-    SquareRoot.Grid.EdgeBank.RootEdgeBank.target edges hole.doubleBoundary sheet = sheet := by
-  rw [Meshes.PuncturedGridFaces.BranchHole.doubleBoundary, SquareRoot.Grid.EdgeBank.RootEdgeBank.target_append edges,
+    EdgeBank.RootEdgeBank.target edges hole.doubleBoundary sheet = sheet := by
+  rw [doubleBoundary, EdgeBank.RootEdgeBank.target_append edges,
     RootContinuation.GridRootWalks.BranchCellBank.BranchHole.sharedTransport_swap
     hole edges,
     RootContinuation.GridRootWalks.BranchCellBank.BranchHole.sharedTransport_swap
@@ -153,19 +157,19 @@ open Purelib.RootIsolation in
 
 The original root-edge bank transports the sheet along both retained laps.
 The vertex bank supplies each original indexed endpoint. -/
-@[expose] def liftedBoundary (hole : BranchHole bank) (vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid)
-  (edges : SquareRoot.Grid.RootEdgeBank frames) :
+@[expose] def liftedBoundary (hole : BranchHole bank) (vertices : VertexBank bank.grid)
+  (edges : RootEdgeBank frames) :
     List (OrientedEdge vertices.count) := edges.indexedEdges vertices hole.doubleBoundary 0
 
 open Purelib.Riemann in
 open Purelib.Curves in
 open Purelib.RootIsolation in
 /-- The lifted hole boundary concatenates one inward lap on each original sheet. -/
-theorem liftedBoundary_eq (hole : BranchHole bank) (vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid)
-  (edges : SquareRoot.Grid.RootEdgeBank frames) :
+theorem liftedBoundary_eq (hole : BranchHole bank) (vertices : VertexBank bank.grid)
+  (edges : RootEdgeBank frames) :
     hole.liftedBoundary vertices edges =
       edges.indexedEdges vertices hole.inwardBoundary 0 ++ edges.indexedEdges vertices hole.inwardBoundary 1 := by
-  rw [Meshes.PuncturedGridFaces.BranchHole.liftedBoundary, Meshes.PuncturedGridFaces.BranchHole.doubleBoundary,
+  rw [liftedBoundary, doubleBoundary,
     edges.indexedEdges_append,
     RootContinuation.GridRootWalks.BranchCellBank.BranchHole.sharedTransport_swap
     hole edges]
@@ -175,9 +179,9 @@ open Purelib.Topology in
 open Purelib.Polynomial in
 open Purelib.RootIsolation in
 /-- The actual two-lap lifted hole tour is closed at its retained anchor vertex. -/
-theorem liftedBoundary_closed (hole : BranchHole bank) (vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid)
-  (edges : SquareRoot.Grid.RootEdgeBank frames) :
-    Chain.PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish (hole.liftedBoundary vertices edges)
+theorem liftedBoundary_closed (hole : BranchHole bank) (vertices : VertexBank bank.grid)
+  (edges : RootEdgeBank frames) :
+    PathEndpoints OrientedEdge.start OrientedEdge.finish (hole.liftedBoundary vertices edges)
       (vertices.index hole.cell.box.anchor (Geometry.Grid.ClearGrid.Cell.anchor_mem hole.cell hole.member) 0)
       (vertices.index hole.cell.box.anchor (Geometry.Grid.ClearGrid.Cell.anchor_mem hole.cell hole.member) 0) :=
   edges.indexedEdges_closed vertices hole.doubleBoundary (Geometry.Grid.ClearGrid.Cell.anchor_mem hole.cell hole.member)
@@ -188,15 +192,15 @@ open Purelib.RootIsolation
 
 Each original inward lap contributes four edges. Concatenation retains both
 ordered laps on their original sheets. -/
-theorem liftedBoundary_length (hole : BranchHole bank) (vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid)
-  (edges : SquareRoot.Grid.RootEdgeBank frames) :
+theorem liftedBoundary_length (hole : BranchHole bank) (vertices : VertexBank bank.grid)
+  (edges : RootEdgeBank frames) :
     (hole.liftedBoundary vertices edges).length = 8 := by
   rw [hole.liftedBoundary_eq, Append.length_append, edges.indexedEdges_length, edges.indexedEdges_length]
   rfl
 
 /-- The lifted hole tour area equals the actual two-sheet inward boundary area. -/
-theorem liftedBoundary_area (hole : BranchHole bank) (vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid)
-  (edges : SquareRoot.Grid.RootEdgeBank frames)
+theorem liftedBoundary_area (hole : BranchHole bank) (vertices : VertexBank bank.grid)
+  (edges : RootEdgeBank frames)
     (primitive : Fin vertices.count → PrimitivePoint) :
     edgeListArea primitive (hole.liftedBoundary vertices edges) = edges.twoSheetArea vertices primitive
       hole.inwardBoundary := by
@@ -214,8 +218,8 @@ open Purelib.Curves
 open Purelib.RootIsolation
 /-- An even-degree exterior lap returns its original sheet. -/
 theorem exterior_return_even (lifted : LiftedPuncturedGrid base) (degree : curve.polynomial.natDegree = 2 * genus + 2)
-    (sheet : Fin 2) : SquareRoot.Grid.EdgeBank.RootEdgeBank.target lifted.edges base.bank.exterior sheet = sheet :=
-  SquareRoot.Grid.EdgeBank.RootEdgeBank.target_even lifted.edges
+    (sheet : Fin 2) : EdgeBank.RootEdgeBank.target lifted.edges base.bank.exterior sheet = sheet :=
+  EdgeBank.RootEdgeBank.target_even lifted.edges
     (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt base.bank.toBranchCellBank _
     ⟨base.bank.frame.xLower, base.bank.frame.yLower⟩).toLoop
     base.bank.exterior ⟨base.bank.frame.xLower, base.bank.frame.yLower⟩ (genus + 1)
@@ -223,18 +227,18 @@ theorem exterior_return_even (lifted : LiftedPuncturedGrid base) (degree : curve
 
 /-- An odd-degree exterior lap swaps the two retained sheets. -/
 theorem exterior_swap_odd (lifted : LiftedPuncturedGrid base) (degree : curve.polynomial.natDegree = 2 * genus + 1)
-    (sheet : Fin 2) : SquareRoot.Grid.EdgeBank.RootEdgeBank.target lifted.edges base.bank.exterior sheet =
+    (sheet : Fin 2) : EdgeBank.RootEdgeBank.target lifted.edges base.bank.exterior sheet =
       Hyperelliptic.Branches.BranchCutLifts.otherSheet sheet :=
-  SquareRoot.Grid.EdgeBank.RootEdgeBank.target_odd lifted.edges base.bank.exterior ⟨base.bank.frame.xLower,
+  EdgeBank.RootEdgeBank.target_odd lifted.edges base.bank.exterior ⟨base.bank.frame.xLower,
     base.bank.frame.yLower⟩ genus
     (by have winding := base.bank.exterior_winding; omega) sheet
 
 /-- Two odd-degree exterior laps return the original sheet. -/
 theorem exterior_double_return_odd (lifted : LiftedPuncturedGrid base) (degree : curve.polynomial.natDegree = 2 * genus
   + 1)
-    (sheet : Fin 2) : SquareRoot.Grid.EdgeBank.RootEdgeBank.target lifted.edges (base.bank.exterior.append
+    (sheet : Fin 2) : EdgeBank.RootEdgeBank.target lifted.edges (base.bank.exterior.append
       base.bank.exterior) sheet = sheet := by
-  rw [SquareRoot.Grid.EdgeBank.RootEdgeBank.target_append lifted.edges, lifted.exterior_swap_odd degree,
+  rw [EdgeBank.RootEdgeBank.target_append lifted.edges, lifted.exterior_swap_odd degree,
     lifted.exterior_swap_odd degree,
     Hyperelliptic.Branches.BranchCutLifts.otherSheet_other]
 
@@ -251,6 +255,15 @@ vertices. -/
   | .even _ => [lifted.edges.indexedEdges lifted.vertices base.bank.exterior 0,
       lifted.edges.indexedEdges lifted.vertices base.bank.exterior 1]
 
+/-- The actual odd-degree exterior is precisely its retained two-lap word, with its original root-edge bank. -/
+theorem exteriorBoundaries_odd (lifted : LiftedPuncturedGrid base)
+    (degree : curve.polynomial.natDegree = 2 * genus + 1) :
+    lifted.exteriorBoundaries = [lifted.edges.indexedEdges lifted.vertices
+      (base.bank.exterior.append base.bank.exterior) 0] := by
+  cases shape : curve.degreeShape with
+  | odd _ => rewrite [exteriorBoundaries, shape]; rfl
+  | even even => omega0
+
 open Purelib.Riemann in
 open Purelib.Topology in
 /-- Every retained exterior tour closes at an actual indexed vertex.
@@ -258,17 +271,17 @@ open Purelib.Topology in
 Odd degree retains one two-lap tour; even degree retains one tour on each
 sheet. Their original transport return certificates identify the anchors. -/
 theorem exteriorBoundaries_closed (lifted : LiftedPuncturedGrid base) : ∀ boundary ∈ lifted.exteriorBoundaries,
-    ∃ anchor, Chain.PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish boundary anchor anchor := by
+    ∃ anchor, PathEndpoints OrientedEdge.start OrientedEdge.finish boundary anchor anchor := by
   intro boundary member
   cases shape : curve.degreeShape with
   | odd degree =>
-      rw [Meshes.LiftedPuncturedGrid.exteriorBoundaries, shape] at member
+      rw [exteriorBoundaries, shape] at member
       have equal := Membership.mem_singleton.mp member
       cases equal
       exact ⟨_, lifted.edges.indexedEdges_closed lifted.vertices _ ⟨base.bank.frame.xLower, base.bank.frame.yLower⟩ 0
         (lifted.exterior_double_return_odd degree 0)⟩
   | even degree =>
-      rw [Meshes.LiftedPuncturedGrid.exteriorBoundaries, shape] at member
+      rw [exteriorBoundaries, shape] at member
       rcases Membership.mem_cons.mp member with equal | member
       · cases equal
         exact ⟨_, lifted.edges.indexedEdges_closed lifted.vertices _ ⟨base.bank.frame.xLower, base.bank.frame.yLower⟩ 0
@@ -285,18 +298,18 @@ open Purelib.RootIsolation in
 /-- The retained exterior tours sum to the actual two-sheet exterior area. -/
 theorem exteriorBoundaries_area (lifted : LiftedPuncturedGrid base) (primitive : Fin lifted.vertices.count →
   PrimitivePoint) :
-    Geometry.Grid.CellBoundary.sumValues (edgeListArea primitive) lifted.exteriorBoundaries =
+    sumValues (edgeListArea primitive) lifted.exteriorBoundaries =
       lifted.edges.twoSheetArea lifted.vertices primitive base.bank.exterior := by
   cases shape : curve.degreeShape with
   | odd degree =>
-      simp only [Meshes.LiftedPuncturedGrid.exteriorBoundaries, shape, Geometry.Grid.CellBoundary.sumValues]
+      simp only [exteriorBoundaries, shape, sumValues]
       rw [lifted.edges.indexedEdges_append, lifted.exterior_swap_odd degree,
         Hyperelliptic.Branches.BranchCutLifts.otherSheet_zero, edgeListArea_append]
       change _ + _ + 0 = _ + _
       ring1
   | even _ =>
-      simp only [Meshes.LiftedPuncturedGrid.exteriorBoundaries, shape, Geometry.Grid.CellBoundary.sumValues,
-        SquareRoot.Grid.RootEdgeBank.twoSheetArea]
+      simp only [exteriorBoundaries, shape, sumValues,
+        RootEdgeBank.twoSheetArea]
       ring1
 
 /-- The retained exterior tours followed by the original ordered branch-hole tours.
@@ -314,8 +327,8 @@ contributes one or two tours according to its original degree-shape branch. -/
 theorem boundaryLoops_length (lifted : LiftedPuncturedGrid base) :
     lifted.boundaryLoops.length = base.faces.holes.length +
       (match curve.degreeShape with | .odd _ => 1 | .even _ => 2) := by
-  rw [Meshes.LiftedPuncturedGrid.boundaryLoops, Append.length_append, Map.length_map]
-  cases shape : curve.degreeShape <;> simp only [Meshes.LiftedPuncturedGrid.exteriorBoundaries, shape, List.length_cons,
+  rw [boundaryLoops, Append.length_append, Map.length_map]
+  cases shape : curve.degreeShape <;> simp only [exteriorBoundaries, shape, List.length_cons,
     List.length_nil] <;> omega
 
 open Purelib.Topology in
@@ -325,7 +338,7 @@ open Purelib.Data in
 The original ordered list first contains the exterior tours and then one
 lifted tour per retained branch hole. Each occurrence uses its original closure. -/
 theorem boundaryLoops_closed (lifted : LiftedPuncturedGrid base) : ∀ boundary ∈ lifted.boundaryLoops,
-    ∃ anchor, Chain.PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish boundary anchor anchor := by
+    ∃ anchor, PathEndpoints OrientedEdge.start OrientedEdge.finish boundary anchor anchor := by
   intro boundary member
   rcases Membership.mem_append.mp member with exterior | holeMember
   · exact lifted.exteriorBoundaries_closed boundary exterior
@@ -340,13 +353,13 @@ open Purelib.Polynomial in
 The equality preserves the exterior and hole occurrences with their original orientation and root transport. -/
 theorem boundary_eq_closedLoops (lifted : LiftedPuncturedGrid base) (primitive : Fin lifted.vertices.count →
   PrimitivePoint) :
-    edgeListArea primitive lifted.mesh.triangulation.boundary = Geometry.Grid.CellBoundary.sumValues (edgeListArea
+    edgeListArea primitive lifted.mesh.triangulation.boundary = sumValues (edgeListArea
       primitive) lifted.boundaryLoops := by
-  rw [lifted.boundary_eq_exterior_and_holes, Meshes.LiftedPuncturedGrid.boundaryLoops,
-    Geometry.Grid.CellBoundary.sumValues_append, lifted.exteriorBoundaries_area,
-    Geometry.Grid.CellBoundary.sumValues_map]
+  rw [lifted.boundary_eq_exterior_and_holes, boundaryLoops,
+    sumValues_append, lifted.exteriorBoundaries_area,
+    sumValues_map]
   exact congrArg (fun holes => lifted.edges.twoSheetArea lifted.vertices primitive base.bank.exterior + holes)
-    (Geometry.Grid.CellBoundary.sumValues_congr _ _ _ (fun hole _ => (hole.liftedBoundary_area lifted.vertices
+    (sumValues_congr _ _ _ (fun hole _ => (hole.liftedBoundary_area lifted.vertices
       lifted.edges primitive).symm))
 
 end Purelib.Riemann.Meshes.LiftedPuncturedGrid

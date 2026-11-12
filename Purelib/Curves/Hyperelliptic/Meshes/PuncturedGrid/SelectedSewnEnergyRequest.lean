@@ -59,44 +59,44 @@ open Purelib.Topology.Polygon.Stokes
 
 open Purelib.Topology.Surface.Sewing.SewnPrimitiveFaces
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
     bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
   {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
   {forest : Topology.Surface.Sewing.SewingForest mesh.triangulation.faces} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
+    Face.DomainBanks.FaceDomainBank frames faces.regulars}
 
 namespace EnergyPreparation.Request
 
 variable {polygon : Topology.Surface.Sewing.SewingConnected.SewingForest.SinglePolygon forest} {prepared :
-  Hyperelliptic.Meshes.PuncturedGrid.SewnEnergyRequest.EnergyPreparation polygon domains}
-  {target : Topology.Surface.Sewing.SewnPrimitiveFaces.Coordinate} {floor : Nat}
+  SewnEnergyRequest.EnergyPreparation polygon domains}
+  {target : Coordinate} {floor : Nat}
 
 /-- At every sufficient common stage, the cached selected sewn energy approximates the actual selected local energy
 within the original homogeneous coefficient bound. -/
-theorem selected_accurate (request : Hyperelliptic.Meshes.PuncturedGrid.SewnEnergyRequest.EnergyPreparation.Request
+theorem selected_accurate (request : SewnEnergyRequest.EnergyPreparation.Request
   prepared target floor) {stage : Nat} (later : request.index ≤ stage)
-    {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
-    (triangles : Data.Vector.DependentVector (fun basis : Fin genus =>
-      Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get basis) mesh))
+    {cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+    (triangles : Vector.DependentVector (fun basis : Fin genus =>
+      TrianglePrimitiveReadings.TriangleReadings (cache.get basis) mesh))
     {surfaces : Topology.Surface.Sewing.SewnEnergyCombination.EnergySurfaces polygon.patch (fun basis => (triangles.get
       basis).values)}
     {pairs : Topology.Surface.Sewing.SewnEnergyCombination.EnergyPairs surfaces} {keep : Fin mesh.triangles.length →
       Bool}
     (samples : Topology.Surface.Sewing.SewnSelectedEnergy.SelectedEnergySamples surfaces pairs keep) (coefficients : Fin
       genus → Gaussian.Basic.Canonical) :
-    Data.Gaussian.Norm.Basic.normSq (Topology.Surface.Sewing.SewnSelectedEnergy.SelectedEnergySamples.energy samples
+    Gaussian.Norm.Basic.normSq (Topology.Surface.Sewing.SewnSelectedEnergy.SelectedEnergySamples.energy samples
       coefficients - FiniteSum.Fin.sumFin (fun source => if keep source then
       Topology.Surface.Sewing.SewnEnergyCombination.localEnergy (fun basis => (triangles.get basis).values) coefficients
         source else 0)) ≤
-        (genus : Topology.Surface.Sewing.SewnPrimitiveFaces.Coordinate)^2 * (FiniteSum.Fin.sumFin (fun basis =>
-          Data.Gaussian.Norm.Basic.normSq (coefficients basis)))^2 * target := by
+        (genus : Coordinate)^2 * (FiniteSum.Fin.sumFin (fun basis =>
+          Gaussian.Norm.Basic.normSq (coefficients basis)))^2 * target := by
   apply Topology.Surface.Sewing.SewnSelectedEnergy.SelectedEnergySamples.error_bound samples coefficients
   intro first second
   rw [samples.areas_eq]
-  exact (Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation.Request.selected_conjugate_accurate
+  exact (SewnBilinearRequest.BilinearPreparation.Request.selected_conjugate_accurate
     ((request.entries.get first).get second)
     ((request.index_ge first second).trans later) (triangles.get first) (triangles.get second)
     ((pairs.get first).get second) (samples.selections.get first)).le

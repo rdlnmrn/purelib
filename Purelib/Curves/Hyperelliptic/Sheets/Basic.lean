@@ -7,6 +7,7 @@ import Purelib.Approximation.Gaussian.Name.Coherent
 import Purelib.Approximation.Gaussian.Name.Coherent.Arithmetic
 public import Purelib.Curves.Hyperelliptic.Basic
 public import Purelib.Polynomial.Approximation.Gaussian.Evaluation.Horner
+public import Purelib.Approximation.Gaussian.Provenance.Power
 import Init.Prelude
 
 open Purelib
@@ -55,6 +56,18 @@ structure AlgebraicSheetValue {genus : Nat}
       (Coherence.exact point)).name
 
 constructive_injectivity Purelib.Curves.Hyperelliptic.Sheets.Basic.AlgebraicSheetValue
+
+namespace AlgebraicSheetValue
+
+/-- Read the original sheet equation at its retained exact base coordinate. -/
+def squareIdentity {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+    {point : Data.Gaussian.Basic.Canonical} (sheet : AlgebraicSheetValue curve point) :
+    Gaussian.Provenance.Power.PowerIdentity sheet.value 2 (curve.polynomial.eval point) :=
+  Gaussian.Provenance.Power.PowerIdentity.ofSquare
+    (Gaussian.Equivalence.NamedEquivalent.trans sheet.curveEquation
+      (Horner.polynomialEval_exact curve.polynomial point))
+
+end AlgebraicSheetValue
 
 end Purelib.Curves.Hyperelliptic.Sheets.Basic
 

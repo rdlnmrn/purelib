@@ -44,6 +44,12 @@ import Purelib.RootIsolation.Curve.Chart.Analysis
 import Purelib.RootIsolation.Sturm.Track.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense
+
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Polynomial.Dense.Rational.Bounds
+
 open Purelib.Data.Rat.Interval (Bounds)
 open Purelib.Geometry.Projective.Hermitian.Chart (BoundedChart)
 open Purelib.Geometry.Projective.Hermitian (HermitianForm)
@@ -99,9 +105,9 @@ def reducedEventResidualCoefficient
         chart.parameterization.curve).natDegree}
     (factorAnalysis : SourcePersistentCurveEventsSquarefreeFactorAnalysisAlias p box chart data
       gcdDegreePositive) : Fraction.Rational :=
-  4 * Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound
-    (Dense.Rational.Pair.Reduction.reducedDenominator
-      (Dense.Derivative.derivative factorAnalysis.factor.polynomial)
+  4 * Lipschitz.denseEvalSqLipschitzBound
+    (Rational.Pair.Reduction.reducedDenominator
+      (Derivative.derivative factorAnalysis.factor.polynomial)
       factorAnalysis.factor.polynomial) chart.cell.interval
 
 /-- The original chart-wide reduced event residual coefficient is nonnegative. -/
@@ -117,10 +123,10 @@ theorem reducedEventResidualCoefficient_nonneg
     (factorAnalysis : SourcePersistentCurveEventsSquarefreeFactorAnalysisAlias p box chart data
       gcdDegreePositive) :
     0 ≤ reducedEventResidualCoefficient factorAnalysis :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-    (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg
-      (Dense.Rational.Pair.Reduction.reducedDenominator
-        (Dense.Derivative.derivative factorAnalysis.factor.polynomial)
+  Arithmetic.mul_nonneg_direct (by decide)
+    (Lipschitz.denseHornerSqBounds_nonneg
+      (Rational.Pair.Reduction.reducedDenominator
+        (Derivative.derivative factorAnalysis.factor.polynomial)
         factorAnalysis.factor.polynomial) chart.cell.interval).2
 
 /-- Every rational parameter in a requested nonzero event has uniformly
@@ -137,22 +143,22 @@ theorem reduced_eval_sq_request_le
         chart.parameterization.curve).natDegree}
     {factorAnalysis : SourcePersistentCurveEventsSquarefreeFactorAnalysisAlias p box chart data
       gcdDegreePositive}
-    (leaf : Curve.Event.Basic.EventLeaf factorAnalysis) (epsilon : Fraction.Rational)
+    (leaf : EventLeaf factorAnalysis) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (parameter : Fraction.Rational)
     (inside : (leaf.request epsilon).cell.interval.Contains parameter) :
-    (Dense.Rational.Pair.Reduction.reducedDenominator
-        (Dense.Derivative.derivative factorAnalysis.factor.polynomial)
+    (Rational.Pair.Reduction.reducedDenominator
+        (Derivative.derivative factorAnalysis.factor.polynomial)
         factorAnalysis.factor.polynomial).eval parameter ^ 2 ≤
       reducedEventResidualCoefficient factorAnalysis * epsilon ^ 2 := by
   let event := factorAnalysis.factor.polynomial
-  let reduced := Dense.Rational.Pair.Reduction.reducedDenominator
-    (Dense.Derivative.derivative event) event
+  let reduced := Rational.Pair.Reduction.reducedDenominator
+    (Derivative.derivative event) event
   let requested := leaf.request epsilon
   let localLipschitz :=
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound reduced
+    Lipschitz.denseEvalSqLipschitzBound reduced
       requested.cell.interval
   let chartLipschitz :=
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound reduced
+    Lipschitz.denseEvalSqLipschitzBound reduced
       chart.cell.interval
   have localBound :=
     (leaf.requestResolution epsilon).denominator_eval_sq_le
@@ -160,27 +166,27 @@ theorem reduced_eval_sq_request_le
   have refinesChart := leaf.request_refines_chart epsilon
   have lipschitzLe : localLipschitz ≤ chartLipschitz := by
     simpa only [localLipschitz, chartLipschitz, requested, reduced] using
-      Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound_le_of_refines
+      Lipschitz.denseEvalSqLipschitzBound_le_of_refines
         reduced refinesChart
   have chartNonnegative : 0 ≤ chartLipschitz := by
     simpa only [chartLipschitz] using
-      (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg reduced
+      (Lipschitz.denseHornerSqBounds_nonneg reduced
         chart.cell.interval).2
   have coefficientLe : 4 * localLipschitz ≤ 4 * chartLipschitz :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct lipschitzLe
+    Arithmetic.mul_le_mul_of_nonneg_left_direct lipschitzLe
       (show (0 : Fraction.Rational) ≤ 4 by decide)
   have widthLe := leaf.request_width_le epsilon positive
   have widthSqLe : (Bounds.width requested.cell.interval) ^ 2 ≤ epsilon ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
+    Arithmetic.pow_le_pow_direct
       (Bounds.width_nonneg requested.cell.interval) widthLe 2
   have widthSqNonnegative : 0 ≤ (Bounds.width requested.cell.interval) ^ 2 :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct (Bounds.width requested.cell.interval)
+    Arithmetic.sq_nonneg_direct (Bounds.width requested.cell.interval)
   have chartCoefficientNonnegative : 0 ≤ 4 * chartLipschitz :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) chartNonnegative
+    Arithmetic.mul_nonneg_direct (by decide) chartNonnegative
   change reduced.eval parameter ^ 2 ≤
     (4 * chartLipschitz) * epsilon ^ 2
   exact localBound.trans
-    (Fraction.Order.Arithmetic.mul_le_mul_direct coefficientLe widthSqLe
+    (Arithmetic.mul_le_mul_direct coefficientLe widthSqLe
       widthSqNonnegative chartCoefficientNonnegative)
 
 /-- Fixed coefficient for the residual of the selected squarefree factor,
@@ -197,9 +203,9 @@ def factorEventResidualCoefficient
         chart.parameterization.curve).natDegree}
     (factorAnalysis : SourcePersistentCurveEventsSquarefreeFactorAnalysisAlias p box chart data
       gcdDegreePositive) : Fraction.Rational :=
-  Dense.Rational.Bounds.Horner.evalSqBound
-      (Dense.GCD.gcd
-        (Dense.Derivative.derivative factorAnalysis.factor.polynomial)
+  Horner.evalSqBound
+      (GCD.gcd
+        (Derivative.derivative factorAnalysis.factor.polynomial)
         factorAnalysis.factor.polynomial) chart.cell.interval *
     reducedEventResidualCoefficient factorAnalysis
 
@@ -216,10 +222,10 @@ theorem factorEventResidualCoefficient_nonneg
     (factorAnalysis : SourcePersistentCurveEventsSquarefreeFactorAnalysisAlias p box chart data
       gcdDegreePositive) :
     0 ≤ factorEventResidualCoefficient factorAnalysis :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Dense.Rational.Bounds.Horner.evalSqBound_nonneg
-      (Dense.GCD.gcd
-        (Dense.Derivative.derivative factorAnalysis.factor.polynomial)
+  Arithmetic.mul_nonneg_direct
+    (Horner.evalSqBound_nonneg
+      (GCD.gcd
+        (Derivative.derivative factorAnalysis.factor.polynomial)
         factorAnalysis.factor.polynomial) chart.cell.interval)
     (reducedEventResidualCoefficient_nonneg factorAnalysis)
 
@@ -237,23 +243,23 @@ theorem factor_eval_sq_request_le
         chart.parameterization.curve).natDegree}
     {factorAnalysis : SourcePersistentCurveEventsSquarefreeFactorAnalysisAlias p box chart data
       gcdDegreePositive}
-    (leaf : Curve.Event.Basic.EventLeaf factorAnalysis) (epsilon : Fraction.Rational)
+    (leaf : EventLeaf factorAnalysis) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (parameter : Fraction.Rational)
     (inside : (leaf.request epsilon).cell.interval.Contains parameter) :
     factorAnalysis.factor.polynomial.eval parameter ^ 2 ≤
       factorEventResidualCoefficient factorAnalysis * epsilon ^ 2 := by
   let event := factorAnalysis.factor.polynomial
-  let common := Dense.GCD.gcd
-    (Dense.Derivative.derivative event) event
-  let reduced := Dense.Rational.Pair.Reduction.reducedDenominator
-    (Dense.Derivative.derivative event) event
-  let commonBound := Dense.Rational.Bounds.Horner.evalSqBound common
+  let common := GCD.gcd
+    (Derivative.derivative event) event
+  let reduced := Rational.Pair.Reduction.reducedDenominator
+    (Derivative.derivative event) event
+  let commonBound := Horner.evalSqBound common
     chart.cell.interval
   have refinesChart := leaf.request_refines_chart epsilon
   have parameterInsideChart : chart.cell.interval.Contains parameter :=
     ⟨refinesChart.1.trans inside.1, inside.2.trans refinesChart.2⟩
   have commonEvalBound : common.eval parameter ^ 2 ≤ commonBound := by
-    exact Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound common
+    exact Horner.eval_sq_le_evalSqBound common
       chart.cell.interval parameterInsideChart
   have reducedEvalBound : reduced.eval parameter ^ 2 ≤
       reducedEventResidualCoefficient factorAnalysis * epsilon ^ 2 := by
@@ -263,17 +269,17 @@ theorem factor_eval_sq_request_le
       common.eval parameter ^ 2 * reduced.eval parameter ^ 2 ≤
         commonBound *
           (reducedEventResidualCoefficient factorAnalysis * epsilon ^ 2) :=
-    Fraction.Order.Arithmetic.mul_le_mul_direct commonEvalBound
+    Arithmetic.mul_le_mul_direct commonEvalBound
       reducedEvalBound
-      (Fraction.Order.Arithmetic.sq_nonneg_direct (reduced.eval parameter))
-      (Dense.Rational.Bounds.Horner.evalSqBound_nonneg common
+      (Arithmetic.sq_nonneg_direct (reduced.eval parameter))
+      (Horner.evalSqBound_nonneg common
         chart.cell.interval)
   have identity : event.eval parameter =
       common.eval parameter * reduced.eval parameter := by
     simpa only [event, common, reduced,
-      Dense.Rational.Pair.Reduction.reducedDenominator] using
-      Dense.GCD.rightFactor_eval_identity
-        (Dense.Derivative.derivative event) event parameter
+      Rational.Pair.Reduction.reducedDenominator] using
+      GCD.rightFactor_eval_identity
+        (Derivative.derivative event) event parameter
   rw [identity, Fraction.Field.mul_pow_direct]
   change common.eval parameter ^ 2 * reduced.eval parameter ^ 2 ≤
     (commonBound * reducedEventResidualCoefficient factorAnalysis) *
@@ -292,10 +298,10 @@ def curveGCDCofactor
       (Curve.Substitution.gcdPolynomial p
         chart.parameterization.curve).natDegree}
     (factorAnalysis : SourcePersistentCurveEventsSquarefreeFactorAnalysisAlias p box chart data
-      gcdDegreePositive) : Polynomial.Dense.BoundaryFactorization.CoefficientPolynomial :=
-  Dense.Rational.Squarefree.factorCofactor
+      gcdDegreePositive) : BoundaryFactorization.CoefficientPolynomial :=
+  Rational.Squarefree.factorCofactor
     factorAnalysis.factor.polynomial
-    (Curve.Event.eventDecomposition data
+    (eventDecomposition data
       gcdDegreePositive).factors
 
 /-- Fixed coefficient for the complete curve-gcd residual on a requested
@@ -312,7 +318,7 @@ def gcdEventResidualCoefficient
     (factorAnalysis : SourcePersistentCurveEventsSquarefreeFactorAnalysisAlias p box chart data
       gcdDegreePositive) : Fraction.Rational :=
   factorEventResidualCoefficient factorAnalysis *
-    Dense.Rational.Bounds.Horner.evalSqBound
+    Horner.evalSqBound
       (curveGCDCofactor factorAnalysis) chart.cell.interval
 
 /-- The original full curve-gcd residual coefficient, including the retained cofactor, is nonnegative. -/
@@ -328,9 +334,9 @@ theorem gcdEventResidualCoefficient_nonneg
     (factorAnalysis : SourcePersistentCurveEventsSquarefreeFactorAnalysisAlias p box chart data
       gcdDegreePositive) :
     0 ≤ gcdEventResidualCoefficient factorAnalysis :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct
+  Arithmetic.mul_nonneg_direct
     (factorEventResidualCoefficient_nonneg factorAnalysis)
-    (Dense.Rational.Bounds.Horner.evalSqBound_nonneg
+    (Horner.evalSqBound_nonneg
       (curveGCDCofactor factorAnalysis) chart.cell.interval)
 
 /-- Every parameter in a requested nonzero squarefree event makes the full
@@ -347,16 +353,16 @@ theorem gcd_eval_sq_request_le
         chart.parameterization.curve).natDegree}
     {factorAnalysis : SourcePersistentCurveEventsSquarefreeFactorAnalysisAlias p box chart data
       gcdDegreePositive}
-    (leaf : Curve.Event.Basic.EventLeaf factorAnalysis) (epsilon : Fraction.Rational)
+    (leaf : EventLeaf factorAnalysis) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (parameter : Fraction.Rational)
     (inside : (leaf.request epsilon).cell.interval.Contains parameter) :
     (Curve.Substitution.gcdPolynomial p
         chart.parameterization.curve).eval parameter ^ 2 ≤
       gcdEventResidualCoefficient factorAnalysis * epsilon ^ 2 := by
-  let decomposition := Curve.Event.eventDecomposition data
+  let decomposition := eventDecomposition data
     gcdDegreePositive
   let cofactor := curveGCDCofactor factorAnalysis
-  let cofactorBound := Dense.Rational.Bounds.Horner.evalSqBound cofactor
+  let cofactorBound := Horner.evalSqBound cofactor
     chart.cell.interval
   have refinesChart := leaf.request_refines_chart epsilon
   have parameterInsideChart : chart.cell.interval.Contains parameter :=
@@ -364,19 +370,19 @@ theorem gcd_eval_sq_request_le
   have factorBound :=
     leaf.factor_eval_sq_request_le epsilon positive parameter inside
   have cofactorEvalBound : cofactor.eval parameter ^ 2 ≤ cofactorBound :=
-    Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound cofactor
+    Horner.eval_sq_le_evalSqBound cofactor
       chart.cell.interval parameterInsideChart
   have productBound :
       factorAnalysis.factor.polynomial.eval parameter ^ 2 *
           cofactor.eval parameter ^ 2 ≤
         (factorEventResidualCoefficient factorAnalysis * epsilon ^ 2) *
           cofactorBound :=
-    Fraction.Order.Arithmetic.mul_le_mul_direct factorBound
+    Arithmetic.mul_le_mul_direct factorBound
       cofactorEvalBound
-      (Fraction.Order.Arithmetic.sq_nonneg_direct (cofactor.eval parameter))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
+      (Arithmetic.sq_nonneg_direct (cofactor.eval parameter))
+      (Arithmetic.mul_nonneg_direct
         (factorEventResidualCoefficient_nonneg factorAnalysis)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct epsilon))
+        (Arithmetic.sq_nonneg_direct epsilon))
   have identity :
       (Curve.Substitution.gcdPolynomial p
           chart.parameterization.curve).eval parameter =
@@ -385,14 +391,14 @@ theorem gcd_eval_sq_request_le
     calc
       (Curve.Substitution.gcdPolynomial p
           chart.parameterization.curve).eval parameter =
-          (Dense.Rational.Squarefree.factorProduct
+          (Rational.Squarefree.factorProduct
             decomposition.factors).eval parameter :=
         decomposition.evalIdentity parameter
       _ = factorAnalysis.factor.polynomial.eval parameter *
-          (Dense.Rational.Squarefree.factorCofactor
+          (Rational.Squarefree.factorCofactor
             factorAnalysis.factor.polynomial decomposition.factors).eval
               parameter :=
-        Dense.Rational.Squarefree.factorProduct_eval_eq_factor_mul_cofactor
+        Rational.Squarefree.factorProduct_eval_eq_factor_mul_cofactor
           factorAnalysis.factor decomposition.factors factorAnalysis.member
             parameter
       _ = factorAnalysis.factor.polynomial.eval parameter *
@@ -411,14 +417,14 @@ def curveGCDLiftCoefficient
     (p : CoefficientPolynomial) {form :
       HermitianForm}
     (chart : BoundedChart form) : Fraction.Rational :=
-  Dense.Rational.Bounds.Horner.evalSqBound
-      (Dense.GCD.leftFactor
+  Horner.evalSqBound
+      (GCD.leftFactor
         (Curve.Substitution.realPolynomial p
           chart.parameterization.curve)
         (Curve.Substitution.imaginaryPolynomial p
           chart.parameterization.curve)) chart.cell.interval +
-    Dense.Rational.Bounds.Horner.evalSqBound
-      (Dense.GCD.rightFactor
+    Horner.evalSqBound
+      (GCD.rightFactor
         (Curve.Substitution.realPolynomial p
           chart.parameterization.curve)
         (Curve.Substitution.imaginaryPolynomial p
@@ -431,8 +437,8 @@ theorem curveGCDLiftCoefficient_nonneg
     (chart : BoundedChart form) : 0 ≤
       curveGCDLiftCoefficient p chart :=
   add_nonneg
-    (Dense.Rational.Bounds.Horner.evalSqBound_nonneg _ _)
-    (Dense.Rational.Bounds.Horner.evalSqBound_nonneg _ _)
+    (Horner.evalSqBound_nonneg _ _)
+    (Horner.evalSqBound_nonneg _ _)
 
 /-- Fixed coefficient for the homogeneous denominator-cleared polynomial
 residual on a requested nonzero event. -/
@@ -463,7 +469,7 @@ theorem clearedEventResidualCoefficient_nonneg
     (factorAnalysis : SourcePersistentCurveEventsSquarefreeFactorAnalysisAlias p box chart data
       gcdDegreePositive) :
     0 ≤ clearedEventResidualCoefficient factorAnalysis :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct
+  Arithmetic.mul_nonneg_direct
     (gcdEventResidualCoefficient_nonneg factorAnalysis)
     (curveGCDLiftCoefficient_nonneg p chart)
 
@@ -482,7 +488,7 @@ theorem cleared_coordinate_norm_sq_request_le
         chart.parameterization.curve).natDegree}
     {factorAnalysis : SourcePersistentCurveEventsSquarefreeFactorAnalysisAlias p box chart data
       gcdDegreePositive}
-    (leaf : Curve.Event.Basic.EventLeaf factorAnalysis) (epsilon : Fraction.Rational)
+    (leaf : EventLeaf factorAnalysis) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (parameter : Fraction.Rational)
     (inside : (leaf.request epsilon).cell.interval.Contains parameter) :
     (Curve.Substitution.realPolynomial p
@@ -496,8 +502,8 @@ theorem cleared_coordinate_norm_sq_request_le
     chart.parameterization.curve
   let common := Curve.Substitution.gcdPolynomial p
     chart.parameterization.curve
-  let left := Dense.GCD.leftFactor real imaginary
-  let right := Dense.GCD.rightFactor real imaginary
+  let left := GCD.leftFactor real imaginary
+  let right := GCD.rightFactor real imaginary
   let liftBound := curveGCDLiftCoefficient p chart
   have refinesChart := leaf.request_refines_chart epsilon
   have parameterInsideChart : chart.cell.interval.Contains parameter :=
@@ -507,12 +513,12 @@ theorem cleared_coordinate_norm_sq_request_le
     simpa only [common] using
       leaf.gcd_eval_sq_request_le epsilon positive parameter inside
   have leftEvalBound : left.eval parameter ^ 2 ≤
-      Dense.Rational.Bounds.Horner.evalSqBound left chart.cell.interval :=
-    Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound left
+      Horner.evalSqBound left chart.cell.interval :=
+    Horner.eval_sq_le_evalSqBound left
       chart.cell.interval parameterInsideChart
   have rightEvalBound : right.eval parameter ^ 2 ≤
-      Dense.Rational.Bounds.Horner.evalSqBound right chart.cell.interval :=
-    Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound right
+      Horner.evalSqBound right chart.cell.interval :=
+    Horner.eval_sq_le_evalSqBound right
       chart.cell.interval parameterInsideChart
   have cofactorSumBound :
       left.eval parameter ^ 2 + right.eval parameter ^ 2 ≤ liftBound := by
@@ -523,24 +529,24 @@ theorem cleared_coordinate_norm_sq_request_le
           (left.eval parameter ^ 2 + right.eval parameter ^ 2) ≤
         (gcdEventResidualCoefficient factorAnalysis * epsilon ^ 2) *
           liftBound :=
-    Fraction.Order.Arithmetic.mul_le_mul_direct commonEvalBound
+    Arithmetic.mul_le_mul_direct commonEvalBound
       cofactorSumBound
       (add_nonneg
-        (Fraction.Order.Arithmetic.sq_nonneg_direct (left.eval parameter))
-        (Fraction.Order.Arithmetic.sq_nonneg_direct (right.eval parameter)))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
+        (Arithmetic.sq_nonneg_direct (left.eval parameter))
+        (Arithmetic.sq_nonneg_direct (right.eval parameter)))
+      (Arithmetic.mul_nonneg_direct
         (gcdEventResidualCoefficient_nonneg factorAnalysis)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct epsilon))
+        (Arithmetic.sq_nonneg_direct epsilon))
   have realIdentity : real.eval parameter =
       common.eval parameter * left.eval parameter := by
     simpa only [real, imaginary, common, left,
       Curve.Substitution.gcdPolynomial] using
-      Dense.GCD.leftFactor_eval_identity real imaginary parameter
+      GCD.leftFactor_eval_identity real imaginary parameter
   have imaginaryIdentity : imaginary.eval parameter =
       common.eval parameter * right.eval parameter := by
     simpa only [real, imaginary, common, right,
       Curve.Substitution.gcdPolynomial] using
-      Dense.GCD.rightFactor_eval_identity real imaginary parameter
+      GCD.rightFactor_eval_identity real imaginary parameter
   change real.eval parameter ^ 2 + imaginary.eval parameter ^ 2 ≤
     (gcdEventResidualCoefficient factorAnalysis * liftBound) * epsilon ^ 2
   rw [realIdentity, imaginaryIdentity, Fraction.Field.mul_pow_direct, Fraction.Field.mul_pow_direct]
@@ -566,10 +572,10 @@ theorem normSq_clearedEval_request_le
         chart.parameterization.curve).natDegree}
     {factorAnalysis : SourcePersistentCurveEventsSquarefreeFactorAnalysisAlias p box chart data
       gcdDegreePositive}
-    (leaf : Curve.Event.Basic.EventLeaf factorAnalysis) (epsilon : Fraction.Rational)
+    (leaf : EventLeaf factorAnalysis) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (parameter : Fraction.Rational)
     (inside : (leaf.request epsilon).cell.interval.Contains parameter) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         ((Curve.clearedEval p
           chart.parameterization.curve).eval
             (Gaussian.Cast.Path.ofCoordinate parameter)) ≤
@@ -578,9 +584,9 @@ theorem normSq_clearedEval_request_le
     Curve.Substitution.imaginaryPolynomial,
     Curve.clearedReal,
     Curve.clearedImag,
-    Dense.Gaussian.Components.eval_realPart,
-    Dense.Gaussian.Components.eval_imagPart,
-    Data.Gaussian.Norm.Basic.normSq] using
+    Gaussian.Components.eval_realPart,
+    Gaussian.Components.eval_imagPart,
+    Gaussian.Norm.Basic.normSq] using
       leaf.cleared_coordinate_norm_sq_request_le epsilon positive parameter
         inside
 
@@ -615,7 +621,7 @@ theorem affineEventResidualCoefficient_nonneg
       gcdDegreePositive) :
     0 ≤ affineEventResidualCoefficient
       (targetBox := targetBox) factorAnalysis :=
-  Fraction.Order.Field.div_nonneg_direct
+  Field.div_nonneg_direct
     (clearedEventResidualCoefficient_nonneg factorAnalysis)
     (chart.affineDenominatorPowerNormSqLower_pos p targetBox).le
 
@@ -633,7 +639,7 @@ theorem normSq_eval_point_request_le_of_inside
         chart.parameterization.curve).natDegree}
     {factorAnalysis : SourcePersistentCurveEventsSquarefreeFactorAnalysisAlias p box chart data
       gcdDegreePositive}
-    (leaf : Curve.Event.Basic.EventLeaf factorAnalysis) (epsilon : Fraction.Rational)
+    (leaf : EventLeaf factorAnalysis) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (parameter : Fraction.Rational)
     (parameterInside :
       (leaf.request epsilon).cell.interval.Contains parameter)
@@ -641,7 +647,7 @@ theorem normSq_eval_point_request_le_of_inside
       chart.parameterization.curve.denominatorAt parameter ≠ 0)
     (pointInside : targetBox.Contains
       (chart.parameterization.curve.point parameter)) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         (p.eval (chart.parameterization.curve.point parameter)) ≤
       affineEventResidualCoefficient (targetBox := targetBox)
         factorAnalysis * epsilon ^ 2 := open Purelib.Algebra.Field in by
@@ -650,13 +656,13 @@ theorem normSq_eval_point_request_le_of_inside
     (Curve.clearingState p curve).denominatorPower.eval
       (Gaussian.Cast.Path.ofCoordinate parameter)
   let lower := chart.affineDenominatorPowerNormSqLower p targetBox
-  let residual := Data.Gaussian.Norm.Basic.normSq
+  let residual := Gaussian.Norm.Basic.normSq
     (p.eval (curve.point parameter))
   have lowerPositive : 0 < lower := by
     simpa only [lower, curve] using
       chart.affineDenominatorPowerNormSqLower_pos p targetBox
   have powerLower : lower ≤
-      Data.Gaussian.Norm.Basic.normSq power := by
+      Gaussian.Norm.Basic.normSq power := by
     simpa only [lower, power, curve] using
       chart.affineDenominatorPowerNormSqLower_le p targetBox parameter
         denominatorNonzero pointInside
@@ -666,13 +672,13 @@ theorem normSq_eval_point_request_le_of_inside
   have semantics := Curve.eval_clearedEval p curve
     parameter denominatorNonzero
   have clearedProductBound :
-      Data.Gaussian.Norm.Basic.normSq power * residual ≤
+      Gaussian.Norm.Basic.normSq power * residual ≤
         clearedEventResidualCoefficient factorAnalysis * epsilon ^ 2 := by
     simpa only [curve, power, residual, semantics,
       Gaussian.Norm.Basic.normSq_mul] using clearedBound
   have lowerProductBound : lower * residual ≤
-      Data.Gaussian.Norm.Basic.normSq power * residual :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct powerLower
+      Gaussian.Norm.Basic.normSq power * residual :=
+    Arithmetic.mul_le_mul_of_nonneg_right_direct powerLower
       (Gaussian.Norm.Basic.normSq_nonneg _)
   change residual ≤
     (clearedEventResidualCoefficient factorAnalysis / lower) * epsilon ^ 2
@@ -680,11 +686,11 @@ theorem normSq_eval_point_request_le_of_inside
     residual ≤
         (clearedEventResidualCoefficient factorAnalysis * epsilon ^ 2) /
           lower := by
-      apply (Fraction.Order.Field.le_div_iff_pos lowerPositive).2
+      apply (Field.le_div_iff_pos lowerPositive).2
       calc
         residual * lower = lower * residual :=
           Fraction.Field.mul_comm _ _
-        _ ≤ Data.Gaussian.Norm.Basic.normSq power * residual :=
+        _ ≤ Gaussian.Norm.Basic.normSq power * residual :=
           lowerProductBound
         _ ≤ clearedEventResidualCoefficient factorAnalysis * epsilon ^ 2 :=
           clearedProductBound

@@ -73,6 +73,8 @@ import Purelib.Topology.Surface.Sewing.SewnPrimitiveContacts
 import Purelib.Topology.Surface.Sewing.VertexSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm.Sum
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic
@@ -146,12 +148,12 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks (RouteSpine EdgeRoute)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
   {faces : PuncturedFaces bank} {mesh :
     LiftedMesh vertices edges faces}
   {domains : FaceDomainBank frames faces.regulars}
@@ -160,9 +162,9 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 namespace LiftedFaces.EdgeLocation
 
 /-- The actual retained forward face-side increment is the difference of its original cached endpoint corner values. -/
-private theorem forward_increment (cached : PrimitiveData.FacePrimitiveBank differential index domains)
-    {edge : Stokes.OrientedEdge vertices.count} (location : LiftedFaces.EdgeLocation mesh.lifts edge) (kind :
-      RectangleEdge.Kind) :
+private theorem forward_increment (cached : FacePrimitiveBank differential index domains)
+    {edge : OrientedEdge vertices.count} (location : EdgeLocation mesh.lifts edge) (kind :
+      Kind) :
     cached.edgeIncrement (.forward (location.atKind kind)) =
       ((cached.get location.position).atSheet location.sheet).corners.values
           (FaceCorners.quad.edge kind).finish -
@@ -172,9 +174,9 @@ private theorem forward_increment (cached : PrimitiveData.FacePrimitiveBank diff
 
 /-- The actual retained reverse face-side increment is the reversed difference of its original cached endpoint corner
 values. -/
-private theorem backward_increment (cached : PrimitiveData.FacePrimitiveBank differential index domains)
-    {edge : Stokes.OrientedEdge vertices.count} (location : LiftedFaces.EdgeLocation mesh.lifts edge) (kind :
-      RectangleEdge.Kind) :
+private theorem backward_increment (cached : FacePrimitiveBank differential index domains)
+    {edge : OrientedEdge vertices.count} (location : EdgeLocation mesh.lifts edge) (kind :
+      Kind) :
     cached.edgeIncrement (.backward (mesh := mesh) (edge := (location.lifted.quad.edge kind).reverse) (location.atKind
       kind)) =
         ((cached.get location.position).atSheet location.sheet).corners.values
@@ -185,18 +187,18 @@ private theorem backward_increment (cached : PrimitiveData.FacePrimitiveBank dif
     kind))
 
 /-- The actual retained side detour telescopes exactly to the original endpoint-corner increment. -/
-theorem detour_sum (cached : PrimitiveData.FacePrimitiveBank differential index domains)
-    {edge : Stokes.OrientedEdge vertices.count} (location : LiftedFaces.EdgeLocation mesh.lifts edge) (kind :
-      RectangleEdge.Kind) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum
+theorem detour_sum (cached : FacePrimitiveBank differential index domains)
+    {edge : OrientedEdge vertices.count} (location : EdgeLocation mesh.lifts edge) (kind :
+      Kind) :
+    Basic.gaussianSum
       ((EdgeLocation.detourRoutes location kind).values (fun _
       route => cached.edgeIncrement route)) =
       ((cached.get location.position).atSheet location.sheet).corners.values
           (FaceCorners.quad.edge kind).finish -
         ((cached.get location.position).atSheet location.sheet).corners.values
           (FaceCorners.quad.edge kind).start := by
-  cases kind <;> simp only [LiftedFaces.EdgeLocation.detourRoutes,
-    RouteSpine.values, Data.Gaussian.Norm.Sum.Basic.gaussianSum]
+  cases kind <;> simp only [EdgeLocation.detourRoutes,
+    RouteSpine.values, Basic.gaussianSum]
   all_goals simp only
     [forward_increment
     cached location,
@@ -206,10 +208,10 @@ theorem detour_sum (cached : PrimitiveData.FacePrimitiveBank differential index 
     IndexedQuadrilateral.edge]; ring1
 
 /-- The reversed actual side detour telescopes exactly to the original reversed endpoint-corner increment. -/
-theorem reverse_detour_sum (cached : PrimitiveData.FacePrimitiveBank differential index domains)
-    {edge : Stokes.OrientedEdge vertices.count} (location : LiftedFaces.EdgeLocation mesh.lifts edge) (kind :
-      RectangleEdge.Kind) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum
+theorem reverse_detour_sum (cached : FacePrimitiveBank differential index domains)
+    {edge : OrientedEdge vertices.count} (location : EdgeLocation mesh.lifts edge) (kind :
+      Kind) :
+    Basic.gaussianSum
       ((EdgeLocation.reverseDetourRoutes location kind).values
       (fun _ route => cached.edgeIncrement route)) =
       ((cached.get location.position).atSheet location.sheet).corners.values
@@ -220,8 +222,8 @@ theorem reverse_detour_sum (cached : PrimitiveData.FacePrimitiveBank differentia
     | exact
       detour_sum
         cached location .upDiagonal
-    | (simp only [LiftedFaces.EdgeLocation.reverseDetourRoutes,
-       RouteSpine.values, Data.Gaussian.Norm.Sum.Basic.gaussianSum,
+    | (simp only [EdgeLocation.reverseDetourRoutes,
+       RouteSpine.values, Basic.gaussianSum,
          backward_increment
          cached location]
        dsimp only [FaceCorners.quad,
@@ -233,42 +235,42 @@ end LiftedFaces.EdgeLocation
 namespace LiftedMesh
 
 /-- The actual retained side detour telescopes exactly to the original endpoint-corner increment. -/
-theorem EdgeRoute.detour_sum (cached : PrimitiveData.FacePrimitiveBank differential index domains)
-    {edge : Stokes.OrientedEdge vertices.count} (route : MeshPathWalks.EdgeRoute mesh edge) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (route.detourRoutes.values (fun _ next => cached.edgeIncrement next))
+theorem EdgeRoute.detour_sum (cached : FacePrimitiveBank differential index domains)
+    {edge : OrientedEdge vertices.count} (route : MeshPathWalks.EdgeRoute mesh edge) :
+    Basic.gaussianSum (route.detourRoutes.values (fun _ next => cached.edgeIncrement next))
       = cached.edgeIncrement route := by
   cases route with
   | forward location =>
     exact
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.RetainedDetourValues.BranchCellBank.LiftedFaces.EdgeLocation.detour_sum
+      (LiftedFaces.EdgeLocation.detour_sum
       cached location location.kind).trans (cached.edgeIncrement_eq (.forward location)).symm
   | backward location => exact
     (LiftedFaces.EdgeLocation.reverse_detour_sum
       cached location location.kind).trans (cached.edgeIncrement_eq (.backward location)).symm
 
 /-- The Gaussian sum of concatenated actual increment lists is the sum of their original totals. -/
-private theorem sum_append (first second : List Data.Gaussian.Basic.Canonical) :
-  Data.Gaussian.Norm.Sum.Basic.gaussianSum (first ++ second) = Data.Gaussian.Norm.Sum.Basic.gaussianSum first
-  + Data.Gaussian.Norm.Sum.Basic.gaussianSum second := by
+private theorem sum_append (first second : List Canonical) :
+  Basic.gaussianSum (first ++ second) = Basic.gaussianSum first
+  + Basic.gaussianSum second := by
   induction first with
   | nil =>
-    change Data.Gaussian.Norm.Sum.Basic.gaussianSum second = 0 + Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    change Basic.gaussianSum second = 0 + Basic.gaussianSum
       second; ring1
-  | cons head tail ih => simp only [List.cons_append, Data.Gaussian.Norm.Sum.Basic.gaussianSum, ih]; ring1
+  | cons head tail ih => simp only [List.cons_append, Basic.gaussianSum, ih]; ring1
 
 /-- Replacing each actual retained mesh route by its original side detour preserves the complete cached increment sum.
 -/
-theorem RouteSpine.detoured_sum (cached : PrimitiveData.FacePrimitiveBank differential index domains) :
-    ∀ {word : List (Stokes.OrientedEdge vertices.count)} (spine : MeshPathWalks.RouteSpine mesh word),
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (spine.detoured.values (fun _ route => cached.edgeIncrement route))
+theorem RouteSpine.detoured_sum (cached : FacePrimitiveBank differential index domains) :
+    ∀ {word : List (OrientedEdge vertices.count)} (spine : MeshPathWalks.RouteSpine mesh word),
+      Basic.gaussianSum (spine.detoured.values (fun _ route => cached.edgeIncrement route))
         =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (spine.values (fun _ route => cached.edgeIncrement route))
+      Basic.gaussianSum (spine.values (fun _ route => cached.edgeIncrement route))
   | _, .nil => rfl
   | _, .cons head tail => by
       dsimp only [RouteSpine.detoured, RouteSpine.detour]
       rw [RouteSpine.values_append,
         sum_append,
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.RetainedDetourValues.BranchCellBank.LiftedMesh.EdgeRoute.detour_sum
+        EdgeRoute.detour_sum
           cached head,
 
           RouteSpine.detoured_sum
@@ -277,9 +279,9 @@ theorem RouteSpine.detoured_sum (cached : PrimitiveData.FacePrimitiveBank differ
 
 /-- The actual triangle source-edge readings equal the same route spine's retained cached corner increments entry by
 entry. -/
-theorem RouteSpine.triangle_values {cached : PrimitiveData.FacePrimitiveBank differential index domains}
-    (readings : TrianglePrimitiveReadings.TriangleReadings cached mesh) :
-    ∀ {word : List (Stokes.OrientedEdge vertices.count)} (spine : MeshPathWalks.RouteSpine mesh word),
+theorem RouteSpine.triangle_values {cached : FacePrimitiveBank differential index domains}
+    (readings : TriangleReadings cached mesh) :
+    ∀ {word : List (OrientedEdge vertices.count)} (spine : MeshPathWalks.RouteSpine mesh word),
       spine.values (fun _ route => route.sourceEdge.increment readings.values) =
         spine.values (fun _ route => cached.edgeIncrement route)
   | _, .nil => rfl
@@ -295,13 +297,13 @@ open Purelib.Riemann.Topology.SquareRootContinuationChain (Owner)
 
 /-- Assigning the actual original covered segment spine to its retained geometry reads exactly the original ordered
 cached route increments. -/
-theorem AssignedSegments.build_cornerIncrements (cached : PrimitiveData.FacePrimitiveBank differential index domains)
+theorem AssignedSegments.build_cornerIncrements (cached : FacePrimitiveBank differential index domains)
   {ambient : Rational.Box} :
-    ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient
+    ∀ {start finish : Canonical} {path : ClearPath curve.polynomial ambient
       start finish}
-      {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
+      {owner : Owner (curve.polynomial.eval start)} {prepared :
         PreparedClearPathModels.PreparedPath path owner}
-      (pieces : PreparedPath.CoveredSegments prepared) (geometry : LiftedMesh.PathFaces mesh path),
+      (pieces : CoveredSegments prepared) (geometry : PathFaces mesh path),
       AssignedSegments.cornerIncrements cached
         (AssignedSegments.build pieces geometry) =
           geometry.values (fun _ route => cached.edgeIncrement route)
@@ -324,9 +326,9 @@ open Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh.PathFaces
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks (RouteSpine EdgeRoute)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {source :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : Riemann.Meshes.FramedPuncturedGrid curve branches higher}
+  {lifted : Riemann.Meshes.LiftedPuncturedGrid base} {source :
     Differential genus}
 
 /-- An already checked generated segment bank is allowed. Detour alignment is constructed from the retained geometry,
@@ -334,19 +336,19 @@ not supplied by the caller. -/
 theorem ofSegments_corner_sum (prepared : CyclePrograms.CutCycleProgram lifted source)
     (segments : PeriodSegmentBanks.SegmentBank prepared.period)
     {domains : DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-    {differential : Differentials.Basic.Differential genus} {index : Nat}
+    {differential : Differential genus} {index : Nat}
     (cached : PrimitiveData.FacePrimitiveBank differential index domains) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (AssignedSegments.cornerIncrements cached
+    Basic.gaussianSum (AssignedSegments.cornerIncrements cached
       (FaceBank.ofSegments prepared segments).assigned) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.routed.spine.values (fun _ route => cached.edgeIncrement
+      Basic.gaussianSum (prepared.routed.spine.values (fun _ route => cached.edgeIncrement
         route)) := by
-  change Data.Gaussian.Norm.Sum.Basic.gaussianSum (AssignedSegments.cornerIncrements cached
+  change Basic.gaussianSum (AssignedSegments.cornerIncrements cached
     (AssignedSegments.build segments.pieces prepared.pathFaces)) = _
-  rw [RetainedDetourValues.BranchCellBank.LiftedMesh.AssignedSegments.build_cornerIncrements]
+  rw [BranchCellBank.LiftedMesh.AssignedSegments.build_cornerIncrements]
   rw [prepared.pathFaces_eq]
   simp only [PathFaces.ofRoutes_values,
     RouteSpine.values_castWord]
-  exact Curves.Hyperelliptic.Meshes.PuncturedGrid.RetainedDetourValues.BranchCellBank.LiftedMesh.RouteSpine.detoured_sum
+  exact BranchCellBank.LiftedMesh.RouteSpine.detoured_sum
     cached prepared.routed.spine
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RetainedDetourValues.FaceBank

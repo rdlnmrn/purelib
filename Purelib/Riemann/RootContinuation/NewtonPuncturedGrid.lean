@@ -46,6 +46,8 @@ import Purelib.RootIsolation.State.WindingOne.Raw
 import Purelib.Polynomial.Dense.Gaussian.Newton.Box.Anchor
 import Purelib.Curves.Hyperelliptic.Branches.FramedBranchCellBank
 
+open Purelib.Geometry.Rational.Box.Refinement
+
 public section
 
 /-!
@@ -69,7 +71,7 @@ open Purelib.Geometry.Rational in
 open Purelib.Polynomial.Dense.Gaussian in
 open Purelib.RootIsolation in
 /-- Retain the original extracted band as a winding-one branch state with its exact boundary clearances. -/
-@[expose] def Sample.branchState {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+@[expose] def Sample.branchState {p : Basic.CanonicalCoefficients.CoefficientPolynomial}
   {ambient : Box} {squarefree :
   Squarefree.Basic.SquarefreeCertificate p}
     {current : State.Raw.RawWindingState p ambient} {profile : Profile squarefree current.box} {epsilon :
@@ -91,7 +93,7 @@ set_option genInjectivity false in
 /-- An original Newton profile together with its exact indexed family of differential bounds.
 
 The retained squarefree polynomial, current box and family size remain indices of both stored components. -/
-structure BranchProfile {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (squarefree :
+structure BranchProfile {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (squarefree :
   Squarefree.Basic.SquarefreeCertificate p)
   (box : Box) (count : Nat) where
   /-- The original Newton-band profile on the retained branch-state box. -/ profile : Profile squarefree box
@@ -103,7 +105,7 @@ constructive_injectivity BranchProfile
 open Purelib.Geometry.Rational in
 open Purelib.Polynomial.Dense.Gaussian in
 /-- Build the original Newton profile and its exact finite differential family on the retained branch-state box. -/
-@[expose] def BranchProfile.build {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+@[expose] def BranchProfile.build {p : Basic.CanonicalCoefficients.CoefficientPolynomial}
   (squarefree :
   Squarefree.Basic.SquarefreeCertificate p) (box : Box) (count : Nat) :
     BranchProfile squarefree box count :=
@@ -136,7 +138,7 @@ open Purelib.Riemann.Meshes.PuncturedGridFaces (PuncturedFaces BranchHole)
 open Purelib.Riemann.Meshes (FramedPuncturedGrid)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
 
 open Purelib in
@@ -148,7 +150,7 @@ set_option genInjectivity false in
 
 Every profile retains its original branch index and state box, while the elimination certificate keeps its exact degree
 bound. -/
-structure NewtonPreparation (original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches higher) where
+structure NewtonPreparation (original : BranchCellBank curve branches higher) where
   /-- The original cached ambient boundary clearance for grid shrinking. -/ shrinking : ShrinkingPreparation original
   /-- The retained degree bound of the original axis-elimination certificate. -/ degreeBound : Nat
   /-- The original executable axis-elimination certificate with its exact degree bound. -/ elimination :
@@ -156,7 +158,7 @@ structure NewtonPreparation (original : Curves.Hyperelliptic.Branches.BranchCell
   /-- The retained original branch profiles indexed by their exact branch-state boxes. -/ profiles :
     Vector.DependentVector (fun index : BranchIsolation.Data.Index branches =>
     BranchProfile
-      curve.squarefree (BranchCellWinding.state original index).box genus)
+      curve.squarefree (state original index).box genus)
 
 constructive_injectivity NewtonPreparation
 
@@ -174,15 +176,15 @@ profiles.
 
 The original branch states determine every profile box, and the exact axis-elimination witness is cached once for
 subsequent band requests. -/
-@[expose] def build (original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches higher) : NewtonPreparation
+@[expose] def build (original : BranchCellBank curve branches higher) : NewtonPreparation
   original :=
-  { shrinking := ShrinkingPuncturedGrid.BranchCellBank.prepareShrinking original
+  { shrinking := prepareShrinking original
     degreeBound := Elimination.Axis.Separated.separatedEliminationDegree curve.polynomial
     elimination := Elimination.Axis.Separated.separatedAxisEliminationCertificate curve.polynomial curve.nonzero
       (BranchIsolation.degreePositive curve)
     profiles := Vector.DependentVector.ofFn fun index =>
     BranchProfile.build
-        curve.squarefree (BranchCellWinding.state original index).box genus }
+        curve.squarefree (state original index).box genus }
 
 open Purelib.Curves.Hyperelliptic.Branches in
 open Purelib.Data in
@@ -196,14 +198,14 @@ extracted sample exactly. -/
 structure Bands (preparation : NewtonPreparation original) (target radius : Coordinate) where
   /-- The original prepared band families indexed by the retained branches. -/ entries : Vector.DependentVector (fun
     index : BranchIsolation.Data.Index branches =>
-    PreparedBandFamily (current := (BranchCellWinding.state original index).raw) (preparation.profiles.get
+    PreparedBandFamily (current := (state original index).raw) (preparation.profiles.get
       index).differentials target radius)
   /-- The retained original winding-state neighborhoods of the same band samples. -/ neighborhoods :
-    SquareRoot.Grid.Branch.Neighborhoods.BranchNeighborhoods (fun index => BranchCellWinding.state original index)
+    BranchNeighborhoods (fun index => state original index)
     radius
   /-- Each neighborhood state equals the exact original extracted band state. -/ states_eq : ∀ index,
     neighborhoods.states index =
-    NewtonPuncturedGrid.NewtonBandBounds.Sample.branchState (entries.get index).selection.sample
+    NewtonBandBounds.Sample.branchState (entries.get index).selection.sample
 
 constructive_injectivity Bands
 
@@ -219,23 +221,23 @@ open Purelib.Riemann.RootContinuation in
 
 The state vector reads those exact entries, preserving their refinements, radius bounds and indexed state equations. -/
 @[expose] def ofEntries (entries : Vector.DependentVector (fun index : BranchIsolation.Data.Index branches =>
-    PreparedBandFamily (current := (BranchCellWinding.state original index).raw) (preparation.profiles.get
+    PreparedBandFamily (current := (state original index).raw) (preparation.profiles.get
       index).differentials target radius))
     (radiusPositive : 0 < radius) : Bands preparation target radius :=
-  let states := Vector.Basic.vectorOfFn fun index =>
-    NewtonPuncturedGrid.NewtonBandBounds.Sample.branchState
+  let states := vectorOfFn fun index =>
+    NewtonBandBounds.Sample.branchState
       (entries.get index).selection.sample
   { entries := entries
     neighborhoods :=
       { positive := radiusPositive
         states := states
-        refines := fun index => by rw [Vector.Basic.vectorOfFn_apply]; exact
-            (Geometry.Rational.Box.Refinement.StrictInterior.refines
+        refines := fun index => by rw [vectorOfFn_apply]; exact
+            (StrictInterior.refines
           (entries.get index).selection.sample.output.strictCurrent)
-        diagonal := fun index => by rw [Vector.Basic.vectorOfFn_apply]; exact (entries.get index).diagonal
+        diagonal := fun index => by rw [vectorOfFn_apply]; exact (entries.get index).diagonal
         listed := List.ofFn states
         listed_eq := rfl }
-    states_eq := Vector.Basic.vectorOfFn_apply _ }
+    states_eq := vectorOfFn_apply _ }
 
 open Purelib.Curves.Hyperelliptic.Branches in
 open Purelib.Data in
@@ -245,7 +247,7 @@ The stored branch profiles and elimination certificate are reused for the same p
 with their exact neighborhood readbacks. -/
 @[expose] def build (preparation : NewtonPreparation original) {target radius : Coordinate}
     (positive : 0 < target) (radiusPositive : 0 < radius) : Bands preparation target radius :=
-  ofEntries (Vector.DependentVector.ofFn fun index => PreparedBandFamily.build (current := (BranchCellWinding.state
+  ofEntries (Vector.DependentVector.ofFn fun index => PreparedBandFamily.build (current := (state
     original index).raw)
     (preparation.profiles.get index).differentials higher preparation.elimination positive radiusPositive)
       radiusPositive
@@ -267,16 +269,16 @@ open Purelib.Geometry.Rational
 /-- Every original extracted band lies strictly inside its corresponding original branch cell. -/
 theorem strict_original (bands : Bands preparation target radius) (index : BranchIsolation.Data.Index branches) :
     (bands.box index).StrictInterior (original.cell index).box :=
-  Geometry.Rational.Box.Refinement.StrictInterior.of_refines
-    (BranchCellWinding.state_strict_cell original index)
-    (Geometry.Rational.Box.Refinement.StrictInterior.refines (bands.entries.get
+  StrictInterior.of_refines
+    (state_strict_cell original index)
+    (StrictInterior.refines (bands.entries.get
         index).selection.sample.output.strictCurrent)
 
 /-- Original extracted bands at distinct retained branch indices have separated boxes. -/
 theorem separated (bands : Bands preparation target radius) (first second : BranchIsolation.Data.Index branches)
     (different : first ≠ second) : (bands.box first).Separated (bands.box second) :=
-  (original.cells_separated first second different).of_refines (Geometry.Rational.Box.Refinement.StrictInterior.refines
-    (bands.strict_original first)) (Geometry.Rational.Box.Refinement.StrictInterior.refines (bands.strict_original
+  (original.cells_separated first second different).of_refines (StrictInterior.refines
+    (bands.strict_original first)) (StrictInterior.refines (bands.strict_original
         second))
 
 end Bands
@@ -291,15 +293,15 @@ set_option genInjectivity false in
 
 The original framed extension, neighborhood locations and shrunk bank remain stored with exact grid and cell equations,
 alongside the same punctured-face partition. -/
-structure NewtonGrid {original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches higher} (preparation :
+structure NewtonGrid {original : BranchCellBank curve branches higher} (preparation :
   NewtonPreparation original)
     (target radius : Coordinate) where
   /-- The retained original indexed Newton-band families and neighborhood readbacks. -/ bands : preparation.Bands target
     radius
   /-- The original framed grid extension containing those exact listed neighborhoods. -/ extension :
-    Polynomial.Geometry.Grid.FramedClearGrid.FramedExtension original.grid bands.neighborhoods.listed
+    FramedExtension original.grid bands.neighborhoods.listed
   /-- The retained original neighborhood locations in the exact framed extension. -/ locations :
-    SquareRoot.Grid.Branch.Neighborhoods.BranchNeighborhoods.Locations bands.neighborhoods extension
+    Locations bands.neighborhoods extension
   /-- The retained original shrunk branch-cell bank at the requested radius. -/ shrunk : Shrunk original radius
   /-- The shrunk bank grid equals the exact original framed extension grid. -/ grid_eq : shrunk.prepared.grid =
     extension.grid
@@ -322,9 +324,9 @@ open Purelib.RootIsolation in
 The shrunk bank consumes those same locations, and its exact grid/cell equations connect the retained punctured faces to
 the original band data. -/
 @[expose] def ofLocations (bands : preparation.Bands target radius)
-    (extension : Polynomial.Geometry.Grid.FramedClearGrid.FramedExtension original.grid bands.neighborhoods.listed)
+    (extension : FramedExtension original.grid bands.neighborhoods.listed)
       (locations
-      : SquareRoot.Grid.Branch.Neighborhoods.BranchNeighborhoods.Locations bands.neighborhoods extension) :
+      : Locations bands.neighborhoods extension) :
     NewtonGrid preparation target radius :=
   let shrunk := Shrunk.ofLocations bands.neighborhoods extension locations
   { bands := bands
@@ -345,10 +347,10 @@ locations form the shrunk bank and punctured faces. -/
 @[expose] def build (preparation : NewtonPreparation original) {target radius : Coordinate}
     (positive : 0 < target) (radiusPositive : 0 < radius) : NewtonGrid preparation target radius :=
   let bands := NewtonPreparation.Bands.build preparation positive radiusPositive
-  let extension := Polynomial.Geometry.Grid.FramedClearGrid.FramedExtension.build original.grid
+  let extension := FramedExtension.build original.grid
     preparation.shrinking.clearance bands.neighborhoods.listed
-  let locations := SquareRoot.Grid.Branch.Neighborhoods.BranchNeighborhoods.Locations.build bands.neighborhoods
-    extension (SquareRoot.Grid.Branch.Location.BranchBudget.ofGrid extension.grid)
+  let locations := Locations.build bands.neighborhoods
+    extension (BranchBudget.ofGrid extension.grid)
     (BranchIsolation.degreePositive curve) (fun index => branches.track higher index)
   ofLocations bands extension locations
 
@@ -379,8 +381,8 @@ theorem other_hole_separated (grid : NewtonGrid preparation target radius) (hole
       (grid.bands.box index) := by
   rw [hole.cell_eq]
   exact (original.cells_separated hole.index index different).of_refines
-    (Geometry.Rational.Box.Refinement.StrictInterior.refines (grid.shrunk.cell_strict hole.index))
-      (Geometry.Rational.Box.Refinement.StrictInterior.refines (grid.bands.strict_original index))
+    (StrictInterior.refines (grid.shrunk.cell_strict hole.index))
+      (StrictInterior.refines (grid.bands.strict_original index))
 
 open Purelib.Curves.Hyperelliptic.Branches in
 /-- Refinement of a retained Newton band identifies the original hole's exact branch index. -/
@@ -399,24 +401,24 @@ open Purelib.Polynomial
 /-- Both original Newton-band real boundary coordinates occur in the retained grid's vertical lines. -/
 theorem band_x_lines (grid : NewtonGrid preparation target radius) (index : BranchIsolation.Data.Index branches) :
     (grid.bands.box index).xLower ∈ grid.punctured.bank.grid.vertical.map
-      Geometry.Grid.ClearGrid.VerticalLine.coordinate ∧
+      VerticalLine.coordinate ∧
       (grid.bands.box index).xUpper ∈ grid.punctured.bank.grid.vertical.map VerticalLine.coordinate := by
-  change _ ∈ grid.shrunk.prepared.grid.vertical.map Geometry.Grid.ClearGrid.VerticalLine.coordinate ∧ _ ∈
-    grid.shrunk.prepared.grid.vertical.map Geometry.Grid.ClearGrid.VerticalLine.coordinate
+  change _ ∈ grid.shrunk.prepared.grid.vertical.map VerticalLine.coordinate ∧ _ ∈
+    grid.shrunk.prepared.grid.vertical.map VerticalLine.coordinate
   rw [grid.grid_eq, ← grid.bands.state_box]
-  have members := Polynomial.Geometry.Grid.FromStates.ofStates_x_bounds grid.bands.neighborhoods.listed
+  have members := ofStates_x_bounds grid.bands.neighborhoods.listed
     (grid.bands.neighborhoods.state_mem index)
   exact ⟨grid.extension.statesIncluded.vertical _ members.1, grid.extension.statesIncluded.vertical _ members.2⟩
 
 /-- Both original Newton-band imaginary boundary coordinates occur in the retained grid's horizontal lines. -/
 theorem band_y_lines (grid : NewtonGrid preparation target radius) (index : BranchIsolation.Data.Index branches) :
     (grid.bands.box index).yLower ∈ grid.punctured.bank.grid.horizontal.map
-      Geometry.Grid.ClearGrid.HorizontalLine.coordinate ∧
+      HorizontalLine.coordinate ∧
       (grid.bands.box index).yUpper ∈ grid.punctured.bank.grid.horizontal.map HorizontalLine.coordinate := by
-  change _ ∈ grid.shrunk.prepared.grid.horizontal.map Geometry.Grid.ClearGrid.HorizontalLine.coordinate ∧ _ ∈
-    grid.shrunk.prepared.grid.horizontal.map Geometry.Grid.ClearGrid.HorizontalLine.coordinate
+  change _ ∈ grid.shrunk.prepared.grid.horizontal.map HorizontalLine.coordinate ∧ _ ∈
+    grid.shrunk.prepared.grid.horizontal.map HorizontalLine.coordinate
   rw [grid.grid_eq, ← grid.bands.state_box]
-  have members := Polynomial.Geometry.Grid.FromStates.ofStates_y_bounds grid.bands.neighborhoods.listed
+  have members := ofStates_y_bounds grid.bands.neighborhoods.listed
     (grid.bands.neighborhoods.state_mem index)
   exact ⟨grid.extension.statesIncluded.horizontal _ members.1, grid.extension.statesIncluded.horizontal _ members.2⟩
 
@@ -429,8 +431,8 @@ open Purelib.Curves.Hyperelliptic.Branches in
     (differential : Fin genus) (sheet : Fin 2) :
     RequestedPreparedBoundary
       (curve := curve)
-      (differential := (⟨differential⟩ : Differentials.Basic.Differential genus))
-      (current := (BranchCellWinding.state original index).raw)
+      (differential := (⟨differential⟩ : Differential genus))
+      (current := (state original index).raw)
       (profile := (preparation.profiles.get index).profile)
       (fixed := (preparation.profiles.get index).differentials.profiles.get differential)
       target sheet :=

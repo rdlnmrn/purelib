@@ -11,6 +11,8 @@ import Purelib.Data.Rat.Fraction
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -84,8 +86,8 @@ def rightScale (matrix : GaussianMatrix) (scale
 /-- The affine denominator weight `D_M(t)` from the manuscript. -/
 def denominatorWeight (matrix : GaussianMatrix)
   (tail : Data.Gaussian.Basic.Canonical) : Fraction.Rational :=
-  Data.Gaussian.Norm.Basic.normSq (matrix.a * tail + matrix.b) +
-    Data.Gaussian.Norm.Basic.normSq (matrix.c * tail + matrix.d)
+  Basic.normSq (matrix.a * tail + matrix.b) +
+    Basic.normSq (matrix.c * tail + matrix.d)
 
 /-- Right scaling multiplies the upper-left matrix entry by the scale.
 
@@ -165,22 +167,22 @@ theorem det_rightScale (matrix :
 /-- Determinant norm acquires precisely the norm of the folded scale. -/
 theorem normSq_det_rightScale (matrix :
   GaussianMatrix) (scale : Data.Gaussian.Basic.Canonical) :
-    Data.Gaussian.Norm.Basic.normSq (Matrix2.determinant (rightScale
+    Basic.normSq (Matrix2.determinant (rightScale
       matrix scale)) =
-      Data.Gaussian.Norm.Basic.normSq scale * Data.Gaussian.Norm.Basic.normSq (Matrix2.determinant
+      Basic.normSq scale * Basic.normSq (Matrix2.determinant
         matrix) := by
-  rw [det_rightScale, Data.Gaussian.Norm.Basic.normSq_mul]
+  rw [det_rightScale, Basic.normSq_mul]
   ring1
 
 /-- The first-column weight acquires the same scale norm. -/
 theorem firstColumnWeight_rightScale (matrix :
   GaussianMatrix) (scale : Data.Gaussian.Basic.Canonical) :
-    Data.Gaussian.Norm.Basic.normSq (rightScale matrix scale).a +
-        Data.Gaussian.Norm.Basic.normSq (rightScale matrix scale).c =
-      Data.Gaussian.Norm.Basic.normSq scale * (Data.Gaussian.Norm.Basic.normSq matrix.a +
-        Data.Gaussian.Norm.Basic.normSq matrix.c) := by
+    Basic.normSq (rightScale matrix scale).a +
+        Basic.normSq (rightScale matrix scale).c =
+      Basic.normSq scale * (Basic.normSq matrix.a +
+        Basic.normSq matrix.c) := by
   simp only [rightScale_a, rightScale_c,
-    Data.Gaussian.Norm.Basic.normSq_mul]
+    Basic.normSq_mul]
   ring1
 
 /-- Moving the scale between matrix and tail preserves `D_M` exactly. -/
@@ -192,7 +194,13 @@ theorem denominatorWeight_rightScale (matrix :
   simp only [denominatorWeight, rightScale_a,
     rightScale_b,
     rightScale_c, rightScale_d]
-  congr 1 <;> congr 1 <;> ring1
+  exact congrArg₂ (fun left right : Fraction.Rational => left + right)
+    (congrArg (fun value : Data.Gaussian.Basic.Canonical =>
+      Basic.normSq (value + matrix.b))
+      (Data.Gaussian.Basic.mul_assoc matrix.a scale tail))
+    (congrArg (fun value : Data.Gaussian.Basic.Canonical =>
+      Basic.normSq (value + matrix.d))
+      (Data.Gaussian.Basic.mul_assoc matrix.c scale tail))
 end Purelib.Geometry.Projective.Homography.Scale
 
 end

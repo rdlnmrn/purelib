@@ -50,12 +50,12 @@ Starting at a strictly positive natural degree ensures every rational denominato
 list equals the original list literally. -/
 theorem derivativeFrom_integrateCoefficients :
     ∀ (degree : Nat) (_positive : 0 < degree) coefficients,
-      Ascending.Rational.Derivative.derivativeFrom degree (integrateCoefficients
+      Derivative.derivativeFrom degree (integrateCoefficients
         degree coefficients) =
         coefficients
   | degree, positive, [] => rfl
   | degree, positive, coefficient :: remaining => by
-      rw [integrateCoefficients, Ascending.Rational.Derivative.derivativeFrom,
+      rw [integrateCoefficients, Derivative.derivativeFrom,
         derivativeFrom_integrateCoefficients (degree + 1) (by
           omega)
           remaining]
@@ -77,17 +77,17 @@ def antiderivative (constant : Fraction.Rational)
 /-- Integration of coefficient lists preserves their padded addition at each starting degree. -/
 theorem integrateCoefficients_add : ∀ (degree : Nat)
     (left right : List Fraction.Rational),
-    integrateCoefficients degree (Ascending.Rational.Basic.addCoefficients left right)
+    integrateCoefficients degree (Basic.addCoefficients left right)
       =
-      Ascending.Rational.Basic.addCoefficients (integrateCoefficients degree left)
+      Basic.addCoefficients (integrateCoefficients degree left)
         (integrateCoefficients degree right)
   | degree, [], right => rfl
   | degree, left, [] => by
-      rw [Ascending.Rational.Basic.addCoefficients_nil_right, integrateCoefficients]
-      exact (Ascending.Rational.Basic.addCoefficients_nil_right
+      rw [Basic.addCoefficients_nil_right, integrateCoefficients]
+      exact (Basic.addCoefficients_nil_right
         (integrateCoefficients degree left)).symm
   | degree, left :: leftTail, right :: rightTail => by
-      simp only [Ascending.Rational.Basic.addCoefficients, integrateCoefficients]
+      simp only [Basic.addCoefficients, integrateCoefficients]
       rw [integrateCoefficients_add (degree + 1) leftTail
         rightTail]
       congr 1
@@ -131,8 +131,8 @@ theorem integrateCoefficients_scale (factor :
 coefficient. -/
 theorem antiderivative_add (left right :
   CoefficientPolynomial) :
-    antiderivative 0 (Ascending.Rational.Basic.add left right) =
-      Ascending.Rational.Basic.add (antiderivative 0 left)
+    antiderivative 0 (Basic.add left right) =
+      Basic.add (antiderivative 0 left)
         (antiderivative 0 right) := by
   cases left with
   | mk leftCoefficients =>
@@ -140,9 +140,9 @@ theorem antiderivative_add (left right :
       | mk rightCoefficients =>
           change
             (⟨0 :: integrateCoefficients 1
-                (Ascending.Rational.Basic.addCoefficients leftCoefficients rightCoefficients)⟩ :
+                (Basic.addCoefficients leftCoefficients rightCoefficients)⟩ :
               CoefficientPolynomial) =
-              (⟨0 :: Ascending.Rational.Basic.addCoefficients
+              (⟨0 :: Basic.addCoefficients
                 (integrateCoefficients 1 leftCoefficients)
                 (integrateCoefficients 1 rightCoefficients)⟩ :
                   CoefficientPolynomial)
@@ -152,8 +152,8 @@ theorem antiderivative_add (left right :
 scaling. -/
 theorem antiderivative_scale (factor : Fraction.Rational)
   (polynomial : CoefficientPolynomial) :
-    antiderivative 0 (Ascending.Rational.Basic.scale factor polynomial) =
-      Ascending.Rational.Basic.scale factor (antiderivative 0 polynomial) := by
+    antiderivative 0 (Basic.scale factor polynomial) =
+      Basic.scale factor (antiderivative 0 polynomial) := by
   cases polynomial with
   | mk coefficients =>
       change
@@ -170,12 +170,12 @@ finite polynomial literally, not merely by evaluation at many points. -/
 theorem derivative_antiderivative (constant :
   Fraction.Rational)
     (polynomial : CoefficientPolynomial) :
-    Ascending.Rational.Derivative.derivative (antiderivative constant polynomial) =
+    Derivative.derivative (antiderivative constant polynomial) =
       polynomial := by
   cases polynomial with
   | mk coefficients =>
       change
-        (⟨Ascending.Rational.Derivative.derivativeFrom 1 (integrateCoefficients 1
+        (⟨Derivative.derivativeFrom 1 (integrateCoefficients 1
           coefficients)⟩ :
           CoefficientPolynomial) =
         ⟨coefficients⟩

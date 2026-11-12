@@ -65,23 +65,23 @@ The tail is the table after `count` entries and is multiplied by the argument to
 counts beyond the table length. -/
 theorem evalCoefficients_split (z :
   Gaussian.Basic.Canonical) : ∀ coefficients count,
-    Ascending.Rational.GaussianEvaluation.evalCoefficients z coefficients =
+    evalCoefficients z coefficients =
       prefixEvalCoefficients z coefficients count +
-        z ^ count * Ascending.Rational.GaussianEvaluation.evalCoefficients z (coefficients.drop count)
+        z ^ count * evalCoefficients z (coefficients.drop count)
   | coefficients, 0 => by
       rw [prefixEvalCoefficients, pow_zero, List.drop_zero]
       apply Gaussian.Basic.ext <;>
         simp only [Gaussian.Basic.add_re, Gaussian.Basic.add_im, Gaussian.Basic.mul_re, Gaussian.Basic.mul_im,
           Gaussian.Basic.zero_re, Gaussian.Basic.zero_im, Gaussian.Basic.one_re, Gaussian.Basic.one_im] <;> ring1
   | [], count + 1 => by
-      rw [Ascending.Rational.GaussianEvaluation.evalCoefficients,
+      rw [evalCoefficients,
         prefixEvalCoefficients, List.drop_nil,
-        Ascending.Rational.GaussianEvaluation.evalCoefficients]
+        evalCoefficients]
       apply Gaussian.Basic.ext <;>
         simp only [Gaussian.Basic.add_re, Gaussian.Basic.add_im, Gaussian.Basic.mul_re, Gaussian.Basic.mul_im,
           Gaussian.Basic.zero_re, Gaussian.Basic.zero_im] <;> ring1
   | coefficient :: remaining, count + 1 => by
-      rw [Ascending.Rational.GaussianEvaluation.evalCoefficients,
+      rw [evalCoefficients,
         prefixEvalCoefficients, List.drop_succ_cons,
         evalCoefficients_split z remaining count,
           pow_succ]
@@ -91,9 +91,9 @@ theorem evalCoefficients_split (z :
 /-- Split a polynomial value into its prefix value plus the argument power times its dropped-tail value. -/
 theorem eval_split (z :
   Gaussian.Basic.Canonical) (polynomial : CoefficientPolynomial) (count : Nat) :
-    Ascending.Rational.GaussianEvaluation.eval polynomial z =
+    eval polynomial z =
       prefixEval z polynomial count +
-        z ^ count * Ascending.Rational.GaussianEvaluation.eval ⟨polynomial.coefficients.drop count⟩ z :=
+        z ^ count * eval ⟨polynomial.coefficients.drop count⟩ z :=
   evalCoefficients_split z polynomial.coefficients count
 
 /-- Matching coefficients below the count give equal Gaussian prefix values.
@@ -103,8 +103,8 @@ theorem prefixEvalCoefficients_congr (z :
   Gaussian.Basic.Canonical) :
     ∀ {left right : List Fraction.Rational} count,
       (∀ degree, degree < count →
-        Ascending.Rational.Basic.coefficientCoefficients left degree =
-          Ascending.Rational.Basic.coefficientCoefficients right degree) →
+        Basic.coefficientCoefficients left degree =
+          Basic.coefficientCoefficients right degree) →
       prefixEvalCoefficients z left count =
         prefixEvalCoefficients z right count
   | left, right, 0, equal => by
@@ -116,8 +116,8 @@ theorem prefixEvalCoefficients_congr (z :
         change 0 = right at atZero
         exact atZero.symm
       have tailEqual : ∀ degree, degree < count →
-          Ascending.Rational.Basic.coefficientCoefficients [] degree =
-            Ascending.Rational.Basic.coefficientCoefficients rightTail degree := by
+          Basic.coefficientCoefficients [] degree =
+            Basic.coefficientCoefficients rightTail degree := by
         intro degree below
         exact equal (degree + 1) (by omega)
       subst right
@@ -134,8 +134,8 @@ theorem prefixEvalCoefficients_congr (z :
   | left :: leftTail, [], count + 1, equal => by
       have headZero : left = 0 := equal 0 (by omega)
       have tailEqual : ∀ degree, degree < count →
-          Ascending.Rational.Basic.coefficientCoefficients leftTail degree =
-            Ascending.Rational.Basic.coefficientCoefficients [] degree := by
+          Basic.coefficientCoefficients leftTail degree =
+            Basic.coefficientCoefficients [] degree := by
         intro degree below
         exact equal (degree + 1) (by omega)
       subst left
@@ -152,8 +152,8 @@ theorem prefixEvalCoefficients_congr (z :
   | left :: leftTail, right :: rightTail, count + 1, equal => by
       have headEqual : left = right := equal 0 (by omega)
       have tailEqual : ∀ degree, degree < count →
-          Ascending.Rational.Basic.coefficientCoefficients leftTail degree =
-            Ascending.Rational.Basic.coefficientCoefficients rightTail degree := by
+          Basic.coefficientCoefficients leftTail degree =
+            Basic.coefficientCoefficients rightTail degree := by
         intro degree below
         exact equal (degree + 1) (by omega)
       rw [prefixEvalCoefficients,
@@ -164,7 +164,7 @@ theorem prefixEvalCoefficients_congr (z :
 /-- Polynomials equal below a degree bound have equal prefix evaluations at that bound. -/
 theorem prefixEval_congr {count : Nat} {left
   right : CoefficientPolynomial}
-    (equal : Ascending.Rational.Truncation.EqualBelow count left right) (z : Gaussian.Basic.Canonical) :
+    (equal : Truncation.EqualBelow count left right) (z : Gaussian.Basic.Canonical) :
     prefixEval z left count =
       prefixEval z right count :=
   prefixEvalCoefficients_congr z count equal

@@ -35,8 +35,7 @@ objects are finite coefficient tables, rational boxes, finite winding
 certificates, and functions between displayed finite index types.
 -/
 
-namespace Purelib.RootIsolation.Owner.Bridge.Basic
-namespace OwnerBridge
+namespace Purelib.RootIsolation.Owner.Bridge.Basic.OwnerBridge
 
 /-- Construct the target side of a bridge from one dominant endpoint and an
 explicit finite boundary comparison. -/
@@ -63,6 +62,20 @@ def ofForward {left right :
           certificate.dominance).trans owner.rawWindingFour
   connection := .forward certificate
 
+/-- A forward Rouché bridge retains its original source owner's exact box. -/
+theorem ofForward_box
+    {left right : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    (owner : Owner.Local.Basic.LocalOwner left)
+    (certificate : Winding.Box.Rouche.Connection.OrientedRouche left right owner.box) :
+    (Owner.Bridge.Basic.OwnerBridge.ofForward owner certificate).box = owner.box := rfl
+
+/-- A forward Rouché bridge retains the same original source clearance bound. -/
+theorem ofForward_leftClearance_bound
+    {left right : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    (owner : Owner.Local.Basic.LocalOwner left)
+    (certificate : Winding.Box.Rouche.Connection.OrientedRouche left right owner.box) :
+    (Owner.Bridge.Basic.OwnerBridge.ofForward owner certificate).leftClearance.bound = owner.clearance.bound := rfl
+
 /-- The target-side clearance stored by a forward owner bridge is exactly
 the finite boundary-dominance clearance used to construct it. -/
 @[simp] theorem ofForward_rightClearance_bound
@@ -76,8 +89,6 @@ the finite boundary-dominance clearance used to construct it. -/
   obtain ⟨perturbation, targetEq, dominance⟩ := certificate
   subst right
   rfl
-end OwnerBridge
-
-end Purelib.RootIsolation.Owner.Bridge.Basic
+end Purelib.RootIsolation.Owner.Bridge.Basic.OwnerBridge
 
 end

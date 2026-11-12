@@ -30,25 +30,25 @@ variable {K : Type*} [ExplicitField K]
 invariant.  They are proved together by finite induction. -/
 theorem chebyshevFirst_secondPrevious_transitions
     (index : Nat) (value : K) :
-    Recurrence.Chebyshev.First.Basic.chebyshevFirst (index + 1) value =
-        value * Recurrence.Chebyshev.First.Basic.chebyshevFirst index value -
-          (1 - value ^ 2) * Recurrence.Chebyshev.SecondPrevious.Basic.chebyshevSecondPrevious index value ∧
-      Recurrence.Chebyshev.SecondPrevious.Basic.chebyshevSecondPrevious (index + 1) value =
-        Recurrence.Chebyshev.First.Basic.chebyshevFirst index value +
-          value * Recurrence.Chebyshev.SecondPrevious.Basic.chebyshevSecondPrevious index value := by
+    First.Basic.chebyshevFirst (index + 1) value =
+        value * First.Basic.chebyshevFirst index value -
+          (1 - value ^ 2) * SecondPrevious.Basic.chebyshevSecondPrevious index value ∧
+      SecondPrevious.Basic.chebyshevSecondPrevious (index + 1) value =
+        First.Basic.chebyshevFirst index value +
+          value * SecondPrevious.Basic.chebyshevSecondPrevious index value := by
   induction index with
   | zero =>
       constructor <;>
-        unfold Recurrence.Chebyshev.First.Basic.chebyshevFirst
-          Recurrence.Chebyshev.SecondPrevious.Basic.chebyshevSecondPrevious <;> ring1
+        unfold First.Basic.chebyshevFirst
+          SecondPrevious.Basic.chebyshevSecondPrevious <;> ring1
   | succ index inductionHypothesis =>
       rcases inductionHypothesis with ⟨firstTransition, secondTransition⟩
       constructor
       · rw [show Nat.succ index + 1 = index + 2 by omega0]
-        rw [Recurrence.Chebyshev.First.Basic.chebyshevFirst_succ_succ, firstTransition, secondTransition]
+        rw [First.Basic.chebyshevFirst_succ_succ, firstTransition, secondTransition]
         ring1
       · rw [show Nat.succ index + 1 = index + 2 by omega0]
-        rw [Recurrence.Chebyshev.SecondPrevious.Basic.chebyshevSecondPrevious_succ_succ, firstTransition,
+        rw [SecondPrevious.Basic.chebyshevSecondPrevious_succ_succ, firstTransition,
           secondTransition]
         ring1
 
@@ -56,27 +56,27 @@ theorem chebyshevFirst_secondPrevious_transitions
 `T_n(x)^2 + (1-x^2) U_(n-1)(x)^2 = 1`. -/
 theorem chebyshevFirst_square_invariant (index : Nat) (value
   : K) :
-    Recurrence.Chebyshev.First.Basic.chebyshevFirst index value ^ 2 +
-        (1 - value ^ 2) * Recurrence.Chebyshev.SecondPrevious.Basic.chebyshevSecondPrevious index value ^ 2 = 1 := by
+    First.Basic.chebyshevFirst index value ^ 2 +
+        (1 - value ^ 2) * SecondPrevious.Basic.chebyshevSecondPrevious index value ^ 2 = 1 := by
   induction index with
   | zero =>
-      unfold Recurrence.Chebyshev.First.Basic.chebyshevFirst
-        Recurrence.Chebyshev.SecondPrevious.Basic.chebyshevSecondPrevious
+      unfold First.Basic.chebyshevFirst
+        SecondPrevious.Basic.chebyshevSecondPrevious
       ring1
   | succ index inductionHypothesis =>
       rcases chebyshevFirst_secondPrevious_transitions index value with
         ⟨firstTransition, secondTransition⟩
       rw [firstTransition, secondTransition]
       calc
-        (value * Recurrence.Chebyshev.First.Basic.chebyshevFirst index value -
+        (value * First.Basic.chebyshevFirst index value -
               (1 - value ^ 2) *
-                Recurrence.Chebyshev.SecondPrevious.Basic.chebyshevSecondPrevious index value) ^ 2 +
+                SecondPrevious.Basic.chebyshevSecondPrevious index value) ^ 2 +
             (1 - value ^ 2) *
-              (Recurrence.Chebyshev.First.Basic.chebyshevFirst index value +
-                value * Recurrence.Chebyshev.SecondPrevious.Basic.chebyshevSecondPrevious index value) ^ 2 =
-          Recurrence.Chebyshev.First.Basic.chebyshevFirst index value ^ 2 +
+              (First.Basic.chebyshevFirst index value +
+                value * SecondPrevious.Basic.chebyshevSecondPrevious index value) ^ 2 =
+          First.Basic.chebyshevFirst index value ^ 2 +
             (1 - value ^ 2) *
-              Recurrence.Chebyshev.SecondPrevious.Basic.chebyshevSecondPrevious index value ^ 2 := by ring1
+              SecondPrevious.Basic.chebyshevSecondPrevious index value ^ 2 := by ring1
         _ = 1 := inductionHypothesis
 
 end Purelib.Polynomial.Recurrence.Chebyshev.Transitions

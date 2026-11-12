@@ -15,6 +15,8 @@ import Mathlib.Algebra.Ring.Defs
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Paired automatic-Horner perturbation bounds
 
@@ -54,9 +56,9 @@ without replacing the automatic-Horner scan. -/
     Bounds.Horner → Bounds.Horner
   | 0, _, _, bounds => bounds
   | count + 1, coefficientBound, inputNormSq, bounds =>
-      Purelib.Polynomial.Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsFrom count coefficientBound
+      Derivative.perturbationBoundsFrom count coefficientBound
         inputNormSq
-        (Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsStep inputNormSq coefficientBound bounds)
+        (perturbationBoundsStep inputNormSq coefficientBound bounds)
 
 /-- Compute simultaneous value and derivative perturbation bounds by a fixed-length automatic-Horner recurrence starting
 at zero.
@@ -66,7 +68,7 @@ coefficient-count recurrence. The displayed coefficient and input bounds
 are retained at every step. -/
 @[expose] public def coefficientPerturbationBounds (count : Nat)
     (coefficientBound inputNormSq : Fraction.Rational) : Bounds.Horner :=
-  Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsFrom count coefficientBound inputNormSq ⟨0, 0⟩
+  perturbationBoundsFrom count coefficientBound inputNormSq ⟨0, 0⟩
 
 /-- The perturbation recurrence preserves nonnegative value and derivative bounds when coefficient and input bounds are
 nonnegative.
@@ -79,9 +81,9 @@ private theorem perturbationBoundsFrom_nonneg : ∀ count
     (bounds : Bounds.Horner),
     0 ≤ coefficientBound → 0 ≤ inputNormSq →
       0 ≤ bounds.value → 0 ≤ bounds.slope →
-      0 ≤ (Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsFrom count coefficientBound
+      0 ≤ (perturbationBoundsFrom count coefficientBound
         inputNormSq bounds).value ∧
-      0 ≤ (Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsFrom count coefficientBound
+      0 ≤ (perturbationBoundsFrom count coefficientBound
         inputNormSq bounds).slope
   | 0, _coefficientBound, _inputNormSq, bounds,
       _coefficientNonnegative, _inputNonnegative,
@@ -90,17 +92,17 @@ private theorem perturbationBoundsFrom_nonneg : ∀ count
   | count + 1, coefficientBound, inputNormSq, bounds,
       coefficientNonnegative, inputNonnegative,
       valueNonnegative, slopeNonnegative => by
-      apply Purelib.Polynomial.Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsFrom_nonneg count
-        (Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsStep inputNormSq coefficientBound bounds)
+      apply Derivative.perturbationBoundsFrom_nonneg count
+        (perturbationBoundsStep inputNormSq coefficientBound bounds)
         coefficientNonnegative inputNonnegative
-      · exact Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      · exact Arithmetic.mul_nonneg_direct (by decide)
           (add_nonneg
-            (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
+            (Arithmetic.mul_nonneg_direct
               valueNonnegative inputNonnegative)
             coefficientNonnegative)
-      · exact Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      · exact Arithmetic.mul_nonneg_direct (by decide)
           (add_nonneg
-            (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
+            (Arithmetic.mul_nonneg_direct
               slopeNonnegative inputNonnegative)
             valueNonnegative)
 
@@ -113,11 +115,11 @@ public theorem coefficientPerturbationBounds_nonneg
     (count : Nat) {coefficientBound inputNormSq : Fraction.Rational}
     (coefficientNonnegative : 0 ≤ coefficientBound)
     (inputNonnegative : 0 ≤ inputNormSq) :
-    0 ≤ (Dense.Gaussian.Bounds.Perturbation.Derivative.coefficientPerturbationBounds count coefficientBound
+    0 ≤ (coefficientPerturbationBounds count coefficientBound
       inputNormSq).value ∧
-    0 ≤ (Dense.Gaussian.Bounds.Perturbation.Derivative.coefficientPerturbationBounds count coefficientBound
+    0 ≤ (coefficientPerturbationBounds count coefficientBound
       inputNormSq).slope :=
-  Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsFrom_nonneg count ⟨0, 0⟩ coefficientNonnegative
+  perturbationBoundsFrom_nonneg count ⟨0, 0⟩ coefficientNonnegative
     inputNonnegative le_rfl le_rfl
 
 set_option backward.match.sparseCases false in
@@ -126,26 +128,26 @@ set_option backward.match.sparseCases false in
 The coefficient lists satisfy the retained pointwise squared-distance bound, the input quadrance is bounded, and the
 initial value and derivative differences satisfy their supplied invariants. -/
 private theorem evalDerivativeCoeffs_sub_bounds :
-    ∀ (left right : List Gaussian.Basic.Canonical) (input : Gaussian.Basic.Canonical)
+    ∀ (left right : List Basic.Canonical) (input : Basic.Canonical)
       (coefficientBound inputNormSq : Fraction.Rational)
-      (leftValue leftDerivative rightValue rightDerivative : Gaussian.Basic.Canonical)
+      (leftValue leftDerivative rightValue rightDerivative : Basic.Canonical)
       (bounds : Bounds.Horner),
       Gaussian.List.Proximity.CoefficientsClose left right coefficientBound →
-      Data.Gaussian.Norm.Basic.normSq input ≤ inputNormSq →
+      Norm.Basic.normSq input ≤ inputNormSq →
       0 ≤ coefficientBound → 0 ≤ inputNormSq →
       0 ≤ bounds.value → 0 ≤ bounds.slope →
-      Data.Gaussian.Norm.Basic.normSq (leftValue - rightValue) ≤ bounds.value →
-      Data.Gaussian.Norm.Basic.normSq (leftDerivative - rightDerivative) ≤ bounds.slope →
+      Norm.Basic.normSq (leftValue - rightValue) ≤ bounds.value →
+      Norm.Basic.normSq (leftDerivative - rightDerivative) ≤ bounds.slope →
       let leftResult := left.foldl
-        (Dense.Derivative.evalDerivativeStep input)
+        (Derivative.evalDerivativeStep input)
         (leftValue, leftDerivative)
       let rightResult := right.foldl
-        (Dense.Derivative.evalDerivativeStep input)
+        (Derivative.evalDerivativeStep input)
         (rightValue, rightDerivative)
-      let finalBounds := Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsFrom left.length
+      let finalBounds := perturbationBoundsFrom left.length
         coefficientBound inputNormSq bounds
-      Data.Gaussian.Norm.Basic.normSq (leftResult.1 - rightResult.1) ≤ finalBounds.value ∧
-        Data.Gaussian.Norm.Basic.normSq (leftResult.2 - rightResult.2) ≤ finalBounds.slope
+      Norm.Basic.normSq (leftResult.1 - rightResult.1) ≤ finalBounds.value ∧
+        Norm.Basic.normSq (leftResult.2 - rightResult.2) ≤ finalBounds.slope
   | [], [], input, coefficientBound, inputNormSq,
       leftValue, leftDerivative, rightValue, rightDerivative, bounds,
       _close, _inputBound, _coefficientNonnegative, _inputNonnegative,
@@ -170,70 +172,70 @@ private theorem evalDerivativeCoeffs_sub_bounds :
       let nextRightValue := rightValue * input + right
       let nextLeftDerivative := leftDerivative * input + leftValue
       let nextRightDerivative := rightDerivative * input + rightValue
-      let nextBounds := Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsStep inputNormSq
+      let nextBounds := perturbationBoundsStep inputNormSq
         coefficientBound bounds
       have nextValueIdentity : nextLeftValue - nextRightValue =
           (leftValue - rightValue) * input + (left - right) := by
-        apply Gaussian.Basic.ext <;>
-          simp only [nextLeftValue, nextRightValue, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im, Gaussian.Basic.add_re,
-            Gaussian.Basic.add_im, Gaussian.Basic.mul_re, Gaussian.Basic.mul_im] <;> ring1
+        apply Basic.ext <;>
+          simp only [nextLeftValue, nextRightValue, Basic.sub_re, Basic.sub_im, Basic.add_re,
+            Basic.add_im, Basic.mul_re, Basic.mul_im] <;> ring1
       have nextDerivativeIdentity :
           nextLeftDerivative - nextRightDerivative =
             (leftDerivative - rightDerivative) * input +
               (leftValue - rightValue) := by
-        apply Gaussian.Basic.ext <;>
-          simp only [nextLeftDerivative, nextRightDerivative, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im,
-            Gaussian.Basic.add_re, Gaussian.Basic.add_im, Gaussian.Basic.mul_re, Gaussian.Basic.mul_im] <;> ring1
+        apply Basic.ext <;>
+          simp only [nextLeftDerivative, nextRightDerivative, Basic.sub_re, Basic.sub_im,
+            Basic.add_re, Basic.add_im, Basic.mul_re, Basic.mul_im] <;> ring1
       have valueProduct :
-          Data.Gaussian.Norm.Basic.normSq (leftValue - rightValue) * Data.Gaussian.Norm.Basic.normSq input ≤
+          Norm.Basic.normSq (leftValue - rightValue) * Norm.Basic.normSq input ≤
             bounds.value * inputNormSq :=
-        Fraction.Order.Arithmetic.mul_le_mul_direct valueBound inputBound
-          (Gaussian.Norm.Basic.normSq_nonneg input) valueNonnegative
+        Arithmetic.mul_le_mul_direct valueBound inputBound
+          (Norm.Basic.normSq_nonneg input) valueNonnegative
       have derivativeProduct :
-          Data.Gaussian.Norm.Basic.normSq (leftDerivative - rightDerivative) * Data.Gaussian.Norm.Basic.normSq
+          Norm.Basic.normSq (leftDerivative - rightDerivative) * Norm.Basic.normSq
             input ≤
             bounds.slope * inputNormSq :=
-        Fraction.Order.Arithmetic.mul_le_mul_direct derivativeBound inputBound
-          (Gaussian.Norm.Basic.normSq_nonneg input) slopeNonnegative
+        Arithmetic.mul_le_mul_direct derivativeBound inputBound
+          (Norm.Basic.normSq_nonneg input) slopeNonnegative
       have nextValueBound :
-          Data.Gaussian.Norm.Basic.normSq (nextLeftValue - nextRightValue) ≤ nextBounds.value := by
+          Norm.Basic.normSq (nextLeftValue - nextRightValue) ≤ nextBounds.value := by
         rw [nextValueIdentity]
         calc
-          Data.Gaussian.Norm.Basic.normSq ((leftValue - rightValue) * input + (left - right)) ≤
-              2 * (Data.Gaussian.Norm.Basic.normSq ((leftValue - rightValue) * input) +
-                Data.Gaussian.Norm.Basic.normSq (left - right)) := Gaussian.Norm.Bounds.normSq_add_le_two _ _
-          _ = 2 * (Data.Gaussian.Norm.Basic.normSq (leftValue - rightValue) * Data.Gaussian.Norm.Basic.normSq
+          Norm.Basic.normSq ((leftValue - rightValue) * input + (left - right)) ≤
+              2 * (Norm.Basic.normSq ((leftValue - rightValue) * input) +
+                Norm.Basic.normSq (left - right)) := Norm.Bounds.normSq_add_le_two _ _
+          _ = 2 * (Norm.Basic.normSq (leftValue - rightValue) * Norm.Basic.normSq
             input +
-                Data.Gaussian.Norm.Basic.normSq (left - right)) := by rw [Gaussian.Norm.Basic.normSq_mul]
+                Norm.Basic.normSq (left - right)) := by rw [Norm.Basic.normSq_mul]
           _ ≤ 2 * (bounds.value * inputNormSq + coefficientBound) :=
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+            Arithmetic.mul_le_mul_of_nonneg_left_direct
               (add_le_add valueProduct headClose) (by decide)
           _ = nextBounds.value := rfl
       have nextDerivativeBound :
-          Data.Gaussian.Norm.Basic.normSq (nextLeftDerivative - nextRightDerivative) ≤
+          Norm.Basic.normSq (nextLeftDerivative - nextRightDerivative) ≤
             nextBounds.slope := by
         rw [nextDerivativeIdentity]
         calc
-          Data.Gaussian.Norm.Basic.normSq ((leftDerivative - rightDerivative) * input +
+          Norm.Basic.normSq ((leftDerivative - rightDerivative) * input +
               (leftValue - rightValue)) ≤
-              2 * (Data.Gaussian.Norm.Basic.normSq ((leftDerivative - rightDerivative) * input) +
-                Data.Gaussian.Norm.Basic.normSq (leftValue - rightValue)) := Gaussian.Norm.Bounds.normSq_add_le_two
+              2 * (Norm.Basic.normSq ((leftDerivative - rightDerivative) * input) +
+                Norm.Basic.normSq (leftValue - rightValue)) := Norm.Bounds.normSq_add_le_two
                   _ _
-          _ = 2 * (Data.Gaussian.Norm.Basic.normSq (leftDerivative - rightDerivative) *
-            Data.Gaussian.Norm.Basic.normSq input +
-                Data.Gaussian.Norm.Basic.normSq (leftValue - rightValue)) := by rw [Gaussian.Norm.Basic.normSq_mul]
+          _ = 2 * (Norm.Basic.normSq (leftDerivative - rightDerivative) *
+            Norm.Basic.normSq input +
+                Norm.Basic.normSq (leftValue - rightValue)) := by rw [Norm.Basic.normSq_mul]
           _ ≤ 2 * (bounds.slope * inputNormSq + bounds.value) :=
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+            Arithmetic.mul_le_mul_of_nonneg_left_direct
               (add_le_add derivativeProduct valueBound) (by decide)
           _ = nextBounds.slope := rfl
-      have nextNonnegative := Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsFrom_nonneg 1 bounds
+      have nextNonnegative := perturbationBoundsFrom_nonneg 1 bounds
         coefficientNonnegative inputNonnegative valueNonnegative
         slopeNonnegative
       simpa only [List.foldl_cons, List.length_cons,
-        Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsFrom, Dense.Derivative.evalDerivativeStep,
+        perturbationBoundsFrom, Derivative.evalDerivativeStep,
         nextLeftValue, nextRightValue, nextLeftDerivative,
         nextRightDerivative, nextBounds] using
-        Purelib.Polynomial.Dense.Gaussian.Bounds.Perturbation.Derivative.evalDerivativeCoeffs_sub_bounds leftTail
+        Derivative.evalDerivativeCoeffs_sub_bounds leftTail
           rightTail input
           coefficientBound inputNormSq nextLeftValue nextLeftDerivative
           nextRightValue nextRightDerivative nextBounds tailClose inputBound
@@ -247,25 +249,25 @@ The ordered coefficient lists satisfy their retained entrywise quadrance
 bound, and the same input has bounded quadrance. The original paired
 automatic-Horner scans begin at zero and share the computed finite budgets. -/
 public theorem normSq_evalDerivative_sub_le
-    (left right : List Gaussian.Basic.Canonical) (input : Gaussian.Basic.Canonical)
+    (left right : List Basic.Canonical) (input : Basic.Canonical)
     (coefficientBound inputNormSq : Fraction.Rational)
     (close : Gaussian.List.Proximity.CoefficientsClose left right coefficientBound)
-    (inputBound : Data.Gaussian.Norm.Basic.normSq input ≤ inputNormSq)
+    (inputBound : Norm.Basic.normSq input ≤ inputNormSq)
     (coefficientNonnegative : 0 ≤ coefficientBound)
     (inputNonnegative : 0 ≤ inputNormSq) :
-    let leftResult := Dense.Derivative.evalDerivativeCoeffs input left
-    let rightResult := Dense.Derivative.evalDerivativeCoeffs input right
-    let bounds := Dense.Gaussian.Bounds.Perturbation.Derivative.coefficientPerturbationBounds left.length
+    let leftResult := Derivative.evalDerivativeCoeffs input left
+    let rightResult := Derivative.evalDerivativeCoeffs input right
+    let bounds := coefficientPerturbationBounds left.length
       coefficientBound
       inputNormSq
-    Data.Gaussian.Norm.Basic.normSq (leftResult.1 - rightResult.1) ≤ bounds.value ∧
-      Data.Gaussian.Norm.Basic.normSq (leftResult.2 - rightResult.2) ≤ bounds.slope := by
-  simpa only [Dense.Derivative.evalDerivativeCoeffs,
-    Dense.Gaussian.Bounds.Perturbation.Derivative.coefficientPerturbationBounds] using
-    Dense.Gaussian.Bounds.Perturbation.Derivative.evalDerivativeCoeffs_sub_bounds left right input coefficientBound
+    Norm.Basic.normSq (leftResult.1 - rightResult.1) ≤ bounds.value ∧
+      Norm.Basic.normSq (leftResult.2 - rightResult.2) ≤ bounds.slope := by
+  simpa only [Derivative.evalDerivativeCoeffs,
+    coefficientPerturbationBounds] using
+    evalDerivativeCoeffs_sub_bounds left right input coefficientBound
       inputNormSq 0 0 0 0 ⟨0, 0⟩ close inputBound coefficientNonnegative
-      inputNonnegative le_rfl le_rfl (by rw [sub_self, Gaussian.Norm.Basic.normSq_zero])
-      (by rw [sub_self, Gaussian.Norm.Basic.normSq_zero])
+      inputNonnegative le_rfl le_rfl (by rw [sub_self, Norm.Basic.normSq_zero])
+      (by rw [sub_self, Norm.Basic.normSq_zero])
 
 /-- Scaling the coefficient bound and both initial components scales both outputs of the finite perturbation recurrence.
 
@@ -275,31 +277,31 @@ step of the original finite recurrence. -/
 private theorem perturbationBoundsFrom_scale : ∀ count
     (factor coefficientBound inputNormSq : Fraction.Rational)
     (bounds : Bounds.Horner),
-    Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsFrom count (factor * coefficientBound) inputNormSq
+    perturbationBoundsFrom count (factor * coefficientBound) inputNormSq
         ⟨factor * bounds.value, factor * bounds.slope⟩ =
-      let output := Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsFrom count coefficientBound
+      let output := perturbationBoundsFrom count coefficientBound
         inputNormSq bounds
       ⟨factor * output.value, factor * output.slope⟩
   | 0, factor, coefficientBound, inputNormSq, bounds => rfl
   | count + 1, factor, coefficientBound, inputNormSq, bounds => by
-      change Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsFrom count (factor * coefficientBound)
+      change perturbationBoundsFrom count (factor * coefficientBound)
           inputNormSq
-          (Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsStep inputNormSq (factor * coefficientBound)
+          (perturbationBoundsStep inputNormSq (factor * coefficientBound)
             ⟨factor * bounds.value, factor * bounds.slope⟩) = _
       have stepIdentity :
-          Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsStep inputNormSq (factor * coefficientBound)
+          perturbationBoundsStep inputNormSq (factor * coefficientBound)
               ⟨factor * bounds.value, factor * bounds.slope⟩ =
-            let next := Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsStep inputNormSq
+            let next := perturbationBoundsStep inputNormSq
               coefficientBound
               bounds
             ⟨factor * next.value, factor * next.slope⟩ := by
         rcases bounds with ⟨value, slope⟩
-        simp only [Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsStep]
+        simp only [perturbationBoundsStep]
         congr 1 <;> ring1
       rw [stepIdentity]
-      exact Purelib.Polynomial.Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsFrom_scale count factor
+      exact Derivative.perturbationBoundsFrom_scale count factor
         coefficientBound
-        inputNormSq (Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsStep inputNormSq coefficientBound
+        inputNormSq (perturbationBoundsStep inputNormSq coefficientBound
           bounds)
 
 /-- Scaling the common coefficient perturbation bound scales both computed value and derivative bounds.
@@ -309,14 +311,14 @@ original recurrence therefore scales both displayed output bounds without
 changing the coefficient count or input quadrance. -/
 public theorem coefficientPerturbationBounds_scale
     (count : Nat) (factor coefficientBound inputNormSq : Fraction.Rational) :
-    Dense.Gaussian.Bounds.Perturbation.Derivative.coefficientPerturbationBounds count (factor * coefficientBound)
+    coefficientPerturbationBounds count (factor * coefficientBound)
         inputNormSq =
-      let output := Dense.Gaussian.Bounds.Perturbation.Derivative.coefficientPerturbationBounds count coefficientBound
+      let output := coefficientPerturbationBounds count coefficientBound
         inputNormSq
       ⟨factor * output.value, factor * output.slope⟩ := by
-  simpa only [Dense.Gaussian.Bounds.Perturbation.Derivative.coefficientPerturbationBounds,
+  simpa only [coefficientPerturbationBounds,
     Fraction.Field.mul_zero_direct] using
-      Dense.Gaussian.Bounds.Perturbation.Derivative.perturbationBoundsFrom_scale count factor coefficientBound
+      perturbationBoundsFrom_scale count factor coefficientBound
         inputNormSq ⟨0, 0⟩
 
 end Purelib.Polynomial.Dense.Gaussian.Bounds.Perturbation.Derivative

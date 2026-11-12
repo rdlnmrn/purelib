@@ -33,6 +33,30 @@ def s := "import Fiction"
                                  'def text := r#"import Fiction"#\nimport Late\n'),
                          [('Actual', 'ordinary')])
 
+    def test_split_imports_preserve_modes_and_continue_the_header(self):
+        source = '''module
+public import
+  Alpha.First
+  Alpha.Second -- another module in the same import
+public meta import all
+  /- an intervening header comment -/
+  Beta.First Beta.Second
+private import Gamma
+namespace Example
+  import Hidden.Body
+end Example
+'''
+        self.assertEqual(imports(source), [
+            ('Alpha.First', 'public'), ('Alpha.Second', 'public'),
+            ('Beta.First', 'public meta all'), ('Beta.Second', 'public meta all'),
+            ('Gamma', 'private'),
+        ])
+
+    def test_indented_body_commands_do_not_continue_an_import(self):
+        self.assertEqual(imports('module\nimport Actual\n  open Hidden\nimport Late\n'),
+                         [('Actual', 'ordinary')])
+        self.assertEqual(imports('module\npublic import\nnamespace Hidden\n'), [])
+
     def test_attributed_section_keeps_actual_namespace(self):
         source = '''public section
 namespace Example

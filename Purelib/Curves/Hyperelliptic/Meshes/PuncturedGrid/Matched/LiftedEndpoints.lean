@@ -92,24 +92,24 @@ open Purelib.Data.Rat.Fraction (Rational)
 open Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh (MatchedHorizontalSide
   MatchedVerticalSide)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {faces : Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces bank} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
-  {cuts : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+    VertexBank bank.grid} {edges :
+    RootEdgeBank frames}
+  {faces : PuncturedFaces bank} {domains :
+    FaceDomainBank frames faces.regulars}
+  {cuts : CommonCuts domains}
     {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
-    {target : Purelib.Data.Rat.Fraction.Rational}
-  {mesh : Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
+    Preflights domains sheet}
+    {target : Rational}
+  {mesh : LiftedMesh vertices edges faces}
   {firstPosition : Fin faces.regulars.length} {firstSheet : Fin 2}
 
-variable {request : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet
-  => Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet
+variable {request : TwoSheetRequest (fun sheet
+  => RegularMeshes.build domains cuts sheet
   coarseDepth) fixed target}
 
 namespace HorizontalCrossing
@@ -118,14 +118,14 @@ variable {first : mesh.LocatedFace firstPosition firstSheet} {nextPosition : Fin
 
 /-- The original source-sheet primitive entry at the actual retained upper-right terminal corner. -/
 def leftTerminalEntry (_joined : LiftedSides.HorizontalCrossing request first nextPosition firstUpper lastUpper) :
-    FaceModels.Entry (domains.get firstPosition).models (vertices.coordinate first.lifted.quad.third)
+    Entry (domains.get firstPosition).models (vertices.coordinate first.lifted.quad.third)
       (vertices.owner frames first.lifted.quad.third) :=
   ⟨firstSheet, (first.lifted.edge_endpoints_reached (domains.get firstPosition).models .top).1⟩
 
 /-- The original destination-sheet primitive entry at that same retained terminal corner, transported through the exact
 reversed crossing edge. -/
 def rightTerminalEntry (joined : LiftedSides.HorizontalCrossing request first nextPosition firstUpper lastUpper) :
-    FaceModels.Entry (domains.get nextPosition).models (vertices.coordinate first.lifted.quad.third)
+    Entry (domains.get nextPosition).models (vertices.coordinate first.lifted.quad.third)
       (vertices.owner frames first.lifted.quad.third) := by
   refine ⟨joined.crossing.next.sheet, ?_⟩
   have reached := (joined.crossing.next.located.lifted.edge_endpoints_reached
@@ -184,8 +184,8 @@ theorem leftChord_eq_corners (joined : LiftedSides.HorizontalCrossing request fi
             (Fin.last ((request.entries.get firstSheet).meshes.entries.get firstPosition).boundaryColumns))).leftRow
           (vertices.coordinate first.lifted.quad.third)) := by
   rw [MatchedHorizontalSide.leftChord,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.LiftedEndpoints.HorizontalCrossing.first_piece_eq joined,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.LiftedEndpoints.HorizontalCrossing.last_piece_eq joined]
+    HorizontalCrossing.first_piece_eq joined,
+    HorizontalCrossing.last_piece_eq joined]
 
 /-- The actual right-owner horizontal chord reads the same original lifted initial and terminal corners. -/
 theorem rightChord_eq_corners (joined : LiftedSides.HorizontalCrossing request first nextPosition firstUpper lastUpper)
@@ -205,8 +205,8 @@ theorem rightChord_eq_corners (joined : LiftedSides.HorizontalCrossing request f
             (Fin.last ((request.entries.get firstSheet).meshes.entries.get firstPosition).boundaryColumns))).rightRow
           (vertices.coordinate first.lifted.quad.third)) := by
   rw [MatchedHorizontalSide.rightChord,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.LiftedEndpoints.HorizontalCrossing.first_piece_eq joined,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.LiftedEndpoints.HorizontalCrossing.last_piece_eq joined]
+    HorizontalCrossing.first_piece_eq joined,
+    HorizontalCrossing.last_piece_eq joined]
 
 end HorizontalCrossing
 
@@ -216,14 +216,14 @@ variable {first : mesh.LocatedFace firstPosition firstSheet} {nextPosition : Fin
 
 /-- The original source-sheet primitive entry at the actual retained upper-right terminal corner. -/
 def leftTerminalEntry (_joined : LiftedSides.VerticalCrossing request first nextPosition firstUpper lastUpper) :
-    FaceModels.Entry (domains.get firstPosition).models (vertices.coordinate first.lifted.quad.third)
+    Entry (domains.get firstPosition).models (vertices.coordinate first.lifted.quad.third)
       (vertices.owner frames first.lifted.quad.third) :=
   ⟨firstSheet, (first.lifted.edge_endpoints_reached (domains.get firstPosition).models .right).2⟩
 
 /-- The original destination-sheet primitive entry at that same retained terminal corner, transported through the exact
 reversed crossing edge. -/
 def rightTerminalEntry (joined : LiftedSides.VerticalCrossing request first nextPosition firstUpper lastUpper) :
-    FaceModels.Entry (domains.get nextPosition).models (vertices.coordinate first.lifted.quad.third)
+    Entry (domains.get nextPosition).models (vertices.coordinate first.lifted.quad.third)
       (vertices.owner frames first.lifted.quad.third) := by
   refine ⟨joined.crossing.next.sheet, ?_⟩
   have reached := (joined.crossing.next.located.lifted.edge_endpoints_reached
@@ -282,8 +282,8 @@ theorem leftChord_eq_corners (joined : LiftedSides.VerticalCrossing request firs
             (Fin.last ((request.entries.get firstSheet).meshes.entries.get firstPosition).boundaryRows))).leftRow
           (vertices.coordinate first.lifted.quad.third)) := by
   rw [MatchedVerticalSide.leftChord,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.LiftedEndpoints.VerticalCrossing.first_piece_eq joined,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.LiftedEndpoints.VerticalCrossing.last_piece_eq joined]
+    VerticalCrossing.first_piece_eq joined,
+    VerticalCrossing.last_piece_eq joined]
 
 /-- The actual right-owner vertical chord reads the same original lifted initial and terminal corners. -/
 theorem rightChord_eq_corners (joined : LiftedSides.VerticalCrossing request first nextPosition firstUpper lastUpper)
@@ -303,8 +303,8 @@ theorem rightChord_eq_corners (joined : LiftedSides.VerticalCrossing request fir
             (Fin.last ((request.entries.get firstSheet).meshes.entries.get firstPosition).boundaryRows))).rightRow
           (vertices.coordinate first.lifted.quad.third)) := by
   rw [MatchedVerticalSide.rightChord,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.LiftedEndpoints.VerticalCrossing.first_piece_eq joined,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.LiftedEndpoints.VerticalCrossing.last_piece_eq joined]
+    VerticalCrossing.first_piece_eq joined,
+    VerticalCrossing.last_piece_eq joined]
 
 end VerticalCrossing
 

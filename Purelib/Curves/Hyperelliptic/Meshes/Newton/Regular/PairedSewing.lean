@@ -108,21 +108,21 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues (edge
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : NewtonPreparation original} {target radius : Rational}
   {grid : NewtonGrid preparation target radius} {face : RegularFace original}
   {lifted : LiftedPuncturedGrid grid.punctured}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
-  {leftDifferential rightDifferential : Hyperelliptic.Differentials.Basic.Differential genus}
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
+  {leftDifferential rightDifferential : Differentials.Basic.Differential genus}
 
 set_option genInjectivity false in
 /-- A paired sewing and chart request for one original regular-cell cut word.
 
 Both differential contact banks and the original source occurrences are retained with a common magnitude bound and paid
 local target. -/
-structure PairedSheetRequest (words : Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords face lifted) (sheet :
+structure PairedSheetRequest (words : CutBalance.BoundaryWords face lifted) (sheet :
   Fin 2)
     (word : CutSourceWord lifted.cutPolygon.patch.cut (words.paired.sources sheet))
     (leftFixed : FaceMagnitudeBank domains leftDifferential) (rightFixed : FaceMagnitudeBank domains rightDifferential)
@@ -137,10 +137,10 @@ structure PairedSheetRequest (words : Hyperelliptic.Meshes.Newton.Regular.CutBal
   /-- The paid original sewn-path area request. -/ budget : Topology.Surface.Sewing.SewnPathAreaRequests.PathAreaRequest
     lifted.cutPolygon.patch.assembly count magnitude (error / 4)
   /-- The original left contact request above both magnitude stages and the supplied floor. -/ leftContact :
-    Hyperelliptic.Meshes.PuncturedGrid.ContactBanks.ContactPreparations.Request leftSewing.covered budget.path.tolerance
+    PuncturedGrid.ContactBanks.ContactPreparations.Request leftSewing.covered budget.path.tolerance
     (max floor (max leftFixed.index rightFixed.index))
   /-- The original right contact request above both magnitude stages and the supplied floor. -/ rightContact :
-    Hyperelliptic.Meshes.PuncturedGrid.ContactBanks.ContactPreparations.Request rightSewing.covered
+    PuncturedGrid.ContactBanks.ContactPreparations.Request rightSewing.covered
     budget.path.tolerance
     (max floor (max leftFixed.index rightFixed.index))
   /-- The retained paired chart comparison on the original signed source occurrences. -/ chart : PairedChartAreaRequest
@@ -150,13 +150,13 @@ constructive_injectivity PairedSheetRequest
 
 namespace PairedSheetRequest
 
-variable {words : Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords face lifted} {sheet : Fin 2}
+variable {words : CutBalance.BoundaryWords face lifted} {sheet : Fin 2}
   {word : CutSourceWord lifted.cutPolygon.patch.cut (words.paired.sources sheet)}
   {leftFixed : FaceMagnitudeBank domains leftDifferential} {rightFixed : FaceMagnitudeBank domains rightDifferential}
   {error : Rational} {floor : Nat}
 
 /-- Prepare both original sewing contact banks and their paired chart comparison at the paid common target. -/
-@[expose] def build (words : Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords face lifted) (sheet : Fin 2)
+@[expose] def build (words : CutBalance.BoundaryWords face lifted) (sheet : Fin 2)
     (word : CutSourceWord lifted.cutPolygon.patch.cut (words.paired.sources sheet))
     (leftFixed : FaceMagnitudeBank domains leftDifferential) (rightFixed : FaceMagnitudeBank domains rightDifferential)
     (error : Rational) (positive : 0 < error) (floor : Nat) :
@@ -170,15 +170,15 @@ variable {words : Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords f
   let budget := Topology.Surface.Sewing.SewnPathAreaRequests.PathAreaRequest.ofProfile leftSewing.profile
     leftSewing.profile_eq word.edges.length magnitude
     (error / 4) nonnegative partPositive
-  let leftContact := Hyperelliptic.Meshes.PuncturedGrid.ContactBanks.ContactPreparations.Request.build
+  let leftContact := PuncturedGrid.ContactBanks.ContactPreparations.Request.build
     leftSewing.covered budget.path.tolerance budget.path.tolerance_positive
     (max floor (max leftFixed.index rightFixed.index))
-  let rightContact := Hyperelliptic.Meshes.PuncturedGrid.ContactBanks.ContactPreparations.Request.build
+  let rightContact := PuncturedGrid.ContactBanks.ContactPreparations.Request.build
     rightSewing.covered budget.path.tolerance budget.path.tolerance_positive
     (max floor (max leftFixed.index rightFixed.index))
   ⟨leftSewing, rightSewing, word.edges.length, rfl, magnitude, rfl, budget, leftContact, rightContact,
     PairedChartAreaRequest.build leftFixed rightFixed (words.paired.sources sheet)
-      (Hyperelliptic.Meshes.PuncturedGrid.SignedSourceChartRequests.paired_sources_nonloop words.paired sheet) (error /
+      (PuncturedGrid.SignedSourceChartRequests.paired_sources_nonloop words.paired sheet) (error /
         4) partPositive⟩
 
 /-- The maximum sufficient stage of the two retained contact requests and chart comparison. -/
@@ -228,15 +228,15 @@ theorem accurate (request : PairedSheetRequest words sheet word leftFixed rightF
       readings.leftReadings.values)
     (rightSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch
       readings.rightReadings.values) (later : request.index ≤ readings.stage) :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area (word.edges.map (fun edge =>
+    Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area (word.edges.map (fun edge =>
       (⟨leftSurface.sewn.values edge.finish - leftSurface.sewn.values edge.start,
         rightSurface.sewn.values edge.finish - rightSurface.sewn.values edge.start⟩ : PrimitivePoint))) -
       Path.PairedIncrementArea.area ((lifted.edges.indexedEdges lifted.vertices
         (grid.shrunk.included.resplit face.boundary (face.cell.anchor_mem face.member)) sheet).map (fun edge =>
           (⟨edgeValuation lifted.mesh readings.leftReadings.values edge,
-            Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
+            PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
               readings.rightReadings.values edge⟩
-              : PrimitivePoint)))) ≤ error := open Purelib.Riemann in by
+              : PrimitivePoint)))) ≤ error := open Riemann in by
   have leftLater := request.left_contact_le.trans later
   have rightLater := request.right_contact_le.trans later
   let retainedLeftMagnitude := readings.leftMagnitude leftFixed (request.left_magnitude_le.trans later)
@@ -274,24 +274,24 @@ theorem accurate (request : PairedSheetRequest words sheet word leftFixed rightF
   rw [chartsComparison.residual_readback] at charts
   have mapRead : (words.paired.sources sheet).map (fun source =>
       (⟨edgeValuation lifted.mesh readings.leftReadings.values (source.project lifted.mesh.triangulation.faces),
-        Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh readings.rightReadings.values
+        PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh readings.rightReadings.values
           (source.project lifted.mesh.triangulation.faces)⟩ : PrimitivePoint)) =
       (lifted.edges.indexedEdges lifted.vertices
         (grid.shrunk.included.resplit face.boundary (face.cell.anchor_mem face.member)) sheet).map (fun edge =>
           (⟨edgeValuation lifted.mesh readings.leftReadings.values edge,
-            Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
+            PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
               readings.rightReadings.values edge⟩
               : PrimitivePoint)) := by
     rw [← words.paired.sources_project sheet, List.Map.map_map]
     rfl
-  change Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area
+  change Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area
     ((words.paired.sources sheet).map (fun source =>
       (⟨source.increment readings.leftReadings.values, source.increment readings.rightReadings.values⟩ :
         PrimitivePoint))) -
     Path.PairedIncrementArea.area
       ((words.paired.sources sheet).map (fun source =>
         (⟨edgeValuation lifted.mesh readings.leftReadings.values (source.project lifted.mesh.triangulation.faces),
-          Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh readings.rightReadings.values
+          PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh readings.rightReadings.values
             (source.project lifted.mesh.triangulation.faces)⟩ : PrimitivePoint)))) ≤ error / 4 at charts
   rw [mapRead] at charts
   have estimate := (Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _).trans
@@ -310,13 +310,13 @@ theorem corrected_accurate (request : PairedSheetRequest words sheet word leftFi
       readings.leftReadings.values)
     (rightSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch
       readings.rightReadings.values) (later : request.index ≤ readings.stage)
-    (sample : Integration.Path.PairedOccurrenceArea (fun vertex =>
+    (sample : Path.PairedOccurrenceArea (fun vertex =>
       (⟨leftSurface.sewn.values vertex, rightSurface.sewn.values vertex⟩ : PrimitivePoint)) word.edges) :
-    Data.Gaussian.Norm.Basic.normSq ((sample.raw - sample.correction) - Path.PairedIncrementArea.area
+    Gaussian.Norm.Basic.normSq ((sample.raw - sample.correction) - Path.PairedIncrementArea.area
       ((lifted.edges.indexedEdges lifted.vertices
       (grid.shrunk.included.resplit face.boundary (face.cell.anchor_mem face.member)) sheet).map (fun edge =>
         (⟨edgeValuation lifted.mesh readings.leftReadings.values edge,
-          Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
+          PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
             readings.rightReadings.values edge⟩ :
             PrimitivePoint)))) ≤ error := by
   rw [sample.corrected]

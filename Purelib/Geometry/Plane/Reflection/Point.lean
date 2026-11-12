@@ -43,7 +43,7 @@ open Purelib.Geometry.Plane.Transformation
 open scoped Purelib.Data.Nat
 attribute [local instance 2000] Purelib.Data.Nat.successorNeZero
   Purelib.Data.Nat.successorAtLeastTwo
-  Purelib.Algebra.Group.Negation.subNegZeroMonoid
+  Algebra.Group.Negation.subNegZeroMonoid
 
 section
 section
@@ -60,7 +60,7 @@ algebra.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry.Plane.Reflection.Point
 
@@ -76,20 +76,20 @@ Its denominator is the line's direction norm; equality with geometric reflection
   K :=
   ⟨(((line.b ^ 2 - line.a ^ 2) * point.x -
       2 * line.a * line.b * point.y - 2 * line.a * line.c) /
-      Line.Basic.lineNorm line),
+      Basic.lineNorm line),
     ((-2 * line.a * line.b * point.x +
       (line.a ^ 2 - line.b ^ 2) * point.y - 2 * line.b * line.c) /
-      Line.Basic.lineNorm line)⟩
+      Basic.lineNorm line)⟩
 
 /-- Theorem 13 (Reflection of a point in a line): derivation of the printed coordinate formula from the altitude-foot
 definition. -/
 theorem reflectPoint_formula (line : Line K) (nonNull : ¬ line.IsNull)
     (point : Point K) :
-    Geometry.Plane.Reflection.Point.reflectPoint line nonNull point = Geometry.Plane.Reflection.Point.reflectionFormula
+    reflectPoint line nonNull point = reflectionFormula
       line point := by
   have normNonzero : Basic.lineNorm line ≠ 0 := nonNull
   have normCancel : Basic.lineNorm line * (Basic.lineNorm line)⁻¹ = (1 : K) :=
-    Algebra.Field.ExplicitField.mul_inv_cancel _ normNonzero
+    ExplicitField.mul_inv_cancel _ normNonzero
   apply Point.ext
   · change
       2 * ((line.b ^ 2 * point.x - line.a * line.b * point.y -
@@ -97,7 +97,7 @@ theorem reflectPoint_formula (line : Line K) (nonNull : ¬ line.IsNull)
         ((line.b ^ 2 - line.a ^ 2) * point.x -
           2 * line.a * line.b * point.y - 2 * line.a * line.c) /
           Basic.lineNorm line
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    simp only [ExplicitField.div_eq_mul_inv]
     calc
       2 *
             ((line.b ^ 2 * point.x - line.a * line.b * point.y -
@@ -119,7 +119,7 @@ theorem reflectPoint_formula (line : Line K) (nonNull : ¬ line.IsNull)
         (-2 * line.a * line.b * point.x +
           (line.a ^ 2 - line.b ^ 2) * point.y - 2 * line.b * line.c) /
           Basic.lineNorm line
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    simp only [ExplicitField.div_eq_mul_inv]
     calc
       2 *
             ((-line.a * line.b * point.x + line.a ^ 2 * point.y -
@@ -138,29 +138,29 @@ theorem reflectPoint_formula (line : Line K) (nonNull : ¬ line.IsNull)
 
 /-- Exercise 4.3, affine half: reflection in a non-null line is affine. -/
 theorem reflectPoint_affine (line : Line K) (nonNull : ¬ line.IsNull) :
-    Affine.IsAffine (Geometry.Plane.Reflection.Point.reflectPoint line nonNull) := by
+    Affine.IsAffine (reflectPoint line nonNull) := by
   intro first second leftWeight rightWeight weights
   have rightFormula : rightWeight = 1 - leftWeight := by
     calc
       rightWeight = (leftWeight + rightWeight) - leftWeight := by ring1
       _ = 1 - leftWeight := by rw [weights]
   rw [rightFormula]
-  rw [Geometry.Plane.Reflection.Point.reflectPoint_formula, Geometry.Plane.Reflection.Point.reflectPoint_formula,
-    Geometry.Plane.Reflection.Point.reflectPoint_formula]
+  rw [reflectPoint_formula, reflectPoint_formula,
+    reflectPoint_formula]
   apply Point.ext <;>
-    unfold Reflection.Point.reflectionFormula Affine.affineCombination <;>
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv] <;>
+    unfold reflectionFormula Affine.affineCombination <;>
+    simp only [ExplicitField.div_eq_mul_inv] <;>
     ring1
 
 /-- Exercise 4.3, inverse half: reflection in a non-null line is its own inverse. -/
 theorem reflectPoint_involutive (line : Line K) (nonNull : ¬ line.IsNull)
     (point : Point K) :
-    Geometry.Plane.Reflection.Point.reflectPoint line nonNull (Geometry.Plane.Reflection.Point.reflectPoint line nonNull
+    reflectPoint line nonNull (reflectPoint line nonNull
       point) = point := by
   have normNonzero : Basic.lineNorm line ≠ 0 := nonNull
   have normCancel : Basic.lineNorm line * (Basic.lineNorm line)⁻¹ = (1 : K) :=
-    Algebra.Field.ExplicitField.mul_inv_cancel _ normNonzero
-  rw [Geometry.Plane.Reflection.Point.reflectPoint_formula, Geometry.Plane.Reflection.Point.reflectPoint_formula]
+    ExplicitField.mul_inv_cancel _ normNonzero
+  rw [reflectPoint_formula, reflectPoint_formula]
   apply Point.ext
   · change
       (((line.b ^ 2 - line.a ^ 2) *
@@ -172,7 +172,7 @@ theorem reflectPoint_involutive (line : Line K) (nonNull : ¬ line.IsNull)
               (line.a ^ 2 - line.b ^ 2) * point.y -
               2 * line.b * line.c) / Basic.lineNorm line) -
           2 * line.a * line.c) / Basic.lineNorm line) = point.x
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    simp only [ExplicitField.div_eq_mul_inv]
     calc
       ((line.b ^ 2 - line.a ^ 2) *
               (((line.b ^ 2 - line.a ^ 2) * point.x -
@@ -199,7 +199,7 @@ theorem reflectPoint_involutive (line : Line K) (nonNull : ¬ line.IsNull)
               (line.a ^ 2 - line.b ^ 2) * point.y -
               2 * line.b * line.c) / Basic.lineNorm line) -
           2 * line.b * line.c) / Basic.lineNorm line) = point.y
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    simp only [ExplicitField.div_eq_mul_inv]
     calc
       (-2 * line.a * line.b *
               (((line.b ^ 2 - line.a ^ 2) * point.x -
@@ -241,7 +241,7 @@ any roots or completed geometric object.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry.Plane.Reflection.Point.Axis
 
@@ -249,11 +249,11 @@ namespace Purelib.Geometry.Plane.Reflection.Point.Axis
 theorem reflectPoint_fixed_of_contains (line : Line K)
     (nonNull : ¬ line.IsNull) (point : Point K)
     (contains : line.Contains point) :
-    Reflection.Point.reflectPoint line nonNull point = point := by
+    reflectPoint line nonNull point = point := by
   have pointIsFoot : point = Altitude.altitudeFoot point line nonNull :=
     Altitude.altitudeFoot_unique point line nonNull point contains
       (Construction.altitudeThrough_contains point line)
-  unfold Reflection.Point.reflectPoint
+  unfold reflectPoint
   rw [← pointIsFoot]
   apply Point.ext <;> unfold HalfTurn.Basic.rotateInPoint <;> ring1
 
@@ -280,34 +280,34 @@ section
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry.Plane.Reflection.Point
 
 /-- Reflection transports a half-turn by reflecting both its center and its argument. -/
 public theorem reflectPoint_rotateInPoint (axis : Line K)
     (axisNonNull : ¬ axis.IsNull) (center point : Point K) :
-    Geometry.Plane.Reflection.Point.reflectPoint axis axisNonNull (HalfTurn.Basic.rotateInPoint center point) =
-      HalfTurn.Basic.rotateInPoint (Geometry.Plane.Reflection.Point.reflectPoint axis axisNonNull center)
-        (Geometry.Plane.Reflection.Point.reflectPoint axis axisNonNull point) := by
-  have affine := Geometry.Plane.Reflection.Point.reflectPoint_affine axis axisNonNull center point
+    reflectPoint axis axisNonNull (HalfTurn.Basic.rotateInPoint center point) =
+      HalfTurn.Basic.rotateInPoint (reflectPoint axis axisNonNull center)
+        (reflectPoint axis axisNonNull point) := by
+  have affine := reflectPoint_affine axis axisNonNull center point
     (2 : K) (-1 : K) (by ring1)
   calc
-    Geometry.Plane.Reflection.Point.reflectPoint axis axisNonNull (HalfTurn.Basic.rotateInPoint center point) =
-      Geometry.Plane.Reflection.Point.reflectPoint axis axisNonNull
+    reflectPoint axis axisNonNull (HalfTurn.Basic.rotateInPoint center point) =
+      reflectPoint axis axisNonNull
         (Affine.affineCombination 2 center (-1) point) := by
           congr 1
           apply Point.ext <;> unfold HalfTurn.Basic.rotateInPoint Affine.affineCombination <;> ring1
-    _ = Affine.affineCombination 2 (Geometry.Plane.Reflection.Point.reflectPoint axis axisNonNull center)
-        (-1) (Geometry.Plane.Reflection.Point.reflectPoint axis axisNonNull point) := affine
-    _ = HalfTurn.Basic.rotateInPoint (Geometry.Plane.Reflection.Point.reflectPoint axis axisNonNull center)
-        (Geometry.Plane.Reflection.Point.reflectPoint axis axisNonNull point) := by
+    _ = Affine.affineCombination 2 (reflectPoint axis axisNonNull center)
+        (-1) (reflectPoint axis axisNonNull point) := affine
+    _ = HalfTurn.Basic.rotateInPoint (reflectPoint axis axisNonNull center)
+        (reflectPoint axis axisNonNull point) := by
           apply Point.ext <;> unfold HalfTurn.Basic.rotateInPoint Affine.affineCombination <;> ring1
 
 /-- A fixed point of reflection lies on its non-null mirror when two is nonzero. -/
 public theorem contains_of_reflectPoint_fixed (axis : Line K)
     (axisNonNull : ¬ axis.IsNull) (twoNonzero : (2 : K) ≠ 0)
-    (point : Point K) (fixed : Geometry.Plane.Reflection.Point.reflectPoint axis axisNonNull point =
+    (point : Point K) (fixed : reflectPoint axis axisNonNull point =
       point) :
     axis.Contains point := by
   have xFixed := congrArg (Point.x (K := K)) fixed
@@ -332,13 +332,13 @@ public theorem contains_of_reflectPoint_fixed (axis : Line K)
       _ = 0 := by rw [yFixed]; ring1
   have footEqualsPoint : Altitude.altitudeFoot point axis axisNonNull = point := by
     apply Point.ext
-    · have differenceZero := Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left twoNonzero twiceXZero
+    · have differenceZero := ExplicitField.eq_zero_of_mul_eq_zero_left twoNonzero twiceXZero
       calc
         (Altitude.altitudeFoot point axis axisNonNull).x =
             ((Altitude.altitudeFoot point axis axisNonNull).x - point.x) + point.x := by
               ring1
         _ = point.x := by rw [differenceZero]; ring1
-    · have differenceZero := Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left twoNonzero twiceYZero
+    · have differenceZero := ExplicitField.eq_zero_of_mul_eq_zero_left twoNonzero twiceYZero
       calc
         (Altitude.altitudeFoot point axis axisNonNull).y =
             ((Altitude.altitudeFoot point axis axisNonNull).y - point.y) + point.y := by
@@ -369,7 +369,7 @@ central non-null mirror, unique up to the project's quotient-free
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry.Plane.Reflection.Point
 
@@ -377,7 +377,7 @@ namespace Purelib.Geometry.Plane.Reflection.Point
 theorem reflectPoint_fixed_iff_contains (line : Line K)
     (nonNull : ¬ line.IsNull) (twoNonzero : (2 : K) ≠ 0)
     (point : Point K) :
-    Reflection.Point.reflectPoint line nonNull point = point ↔ line.Contains point := by
+    reflectPoint line nonNull point = point ↔ line.Contains point := by
   constructor
   · intro fixed
     have xFixed := congrArg (Point.x (K := K)) fixed
@@ -404,9 +404,9 @@ theorem reflectPoint_fixed_iff_contains (line : Line K)
         _ = 0 := by rw [yFixed]; ring1
     have footEqualsPoint : Altitude.altitudeFoot point line nonNull = point := by
       apply Point.ext
-      · have differenceZero := (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] (value : K) (twoNonzero : (2 :
+      · have differenceZero := (fun {K : Type _} [ExplicitField K] (value : K) (twoNonzero : (2 :
         K) ≠ 0) (twiceZero : (2 : K) * value = 0) =>
-        (Purelib.Algebra.Field.Characteristic.Nonzero.eq_zero_of_two_mul_eq_zero (K := K) twoNonzero value twiceZero :
+        (Characteristic.Nonzero.eq_zero_of_two_mul_eq_zero (K := K) twoNonzero value twiceZero :
         value = 0))
           ((Altitude.altitudeFoot point line nonNull).x - point.x)
           twoNonzero twiceXZero
@@ -415,9 +415,9 @@ theorem reflectPoint_fixed_iff_contains (line : Line K)
               ((Altitude.altitudeFoot point line nonNull).x - point.x) + point.x := by
                 ring1
           _ = point.x := by rw [differenceZero]; ring1
-      · have differenceZero := (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] (value : K) (twoNonzero : (2 :
+      · have differenceZero := (fun {K : Type _} [ExplicitField K] (value : K) (twoNonzero : (2 :
         K) ≠ 0) (twiceZero : (2 : K) * value = 0) =>
-        (Purelib.Algebra.Field.Characteristic.Nonzero.eq_zero_of_two_mul_eq_zero (K := K) twoNonzero value twiceZero :
+        (Characteristic.Nonzero.eq_zero_of_two_mul_eq_zero (K := K) twoNonzero value twiceZero :
         value = 0))
           ((Altitude.altitudeFoot point line nonNull).y - point.y)
           twoNonzero twiceYZero
@@ -431,7 +431,7 @@ theorem reflectPoint_fixed_iff_contains (line : Line K)
   · intro contains
     have pointEqualsFoot := Altitude.altitudeFoot_unique point line nonNull point
       contains (Construction.altitudeThrough_contains point line)
-    unfold Reflection.Point.reflectPoint
+    unfold reflectPoint
     rw [← pointEqualsFoot]
     apply Point.ext <;>
       unfold HalfTurn.Basic.rotateInPoint <;>
@@ -456,21 +456,21 @@ public section
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry.Plane.Reflection.Point
 
 /-- The finite polynomial calculation that reflection in a non-null line preserves quadrance. -/
 theorem reflectPoint_preserves_quadrance
     (line : Line K) (nonNull : ¬ line.IsNull) (first second : Point K) :
-    Quadrance.quadrance (Geometry.Plane.Reflection.Point.reflectPoint line nonNull first)
-        (Geometry.Plane.Reflection.Point.reflectPoint line nonNull second) =
+    Quadrance.quadrance (reflectPoint line nonNull first)
+        (reflectPoint line nonNull second) =
       Quadrance.quadrance first second := by
   have normCancel : Basic.lineNorm line * (Basic.lineNorm line)⁻¹ = (1 : K) :=
-    Algebra.Field.ExplicitField.mul_inv_cancel _ nonNull
-  rw [Geometry.Plane.Reflection.Point.reflectPoint_formula, Geometry.Plane.Reflection.Point.reflectPoint_formula]
-  unfold Quadrance.quadrance Reflection.Point.reflectionFormula
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    ExplicitField.mul_inv_cancel _ nonNull
+  rw [reflectPoint_formula, reflectPoint_formula]
+  unfold Quadrance.quadrance reflectionFormula
+  simp only [ExplicitField.div_eq_mul_inv]
   calc
     ((((line.b ^ 2 - line.a ^ 2) * second.x -
               2 * line.a * line.b * second.y - 2 * line.a * line.c) *
@@ -514,16 +514,16 @@ introduced.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry.Plane.Reflection.Point
 
 /-- A reflection chord has four times the point-to-mirror quadrance. -/
 theorem reflectPoint_chord_quadrance
     (mirror : Line K) (mirrorNonNull : ¬ mirror.IsNull) (point : Point K) :
-    Quadrance.quadrance point (Reflection.Point.reflectPoint mirror mirrorNonNull point) =
+    Quadrance.quadrance point (reflectPoint mirror mirrorNonNull point) =
       4 * Quadrance.pointLineQuadrance point mirror mirrorNonNull := by
-  unfold Reflection.Point.reflectPoint Quadrance.pointLineQuadrance HalfTurn.Basic.rotateInPoint Quadrance.quadrance
+  unfold reflectPoint Quadrance.pointLineQuadrance HalfTurn.Basic.rotateInPoint Quadrance.quadrance
   ring1
 
 /-- The quadrance of a reflection chord is four times the radial quadrance and its spread with the mirror.
@@ -534,10 +534,10 @@ theorem reflectPoint_chord_quadrance_eq_spread [DecidableEq K]
     (radialNonNull : ¬ (Incidence.lineThrough center point distinct).IsNull)
     (mirror : Line K) (mirrorNonNull : ¬ mirror.IsNull)
     (centerOnMirror : mirror.Contains center) :
-    Quadrance.quadrance point (Geometry.Plane.Reflection.Point.reflectPoint mirror mirrorNonNull point) =
+    Quadrance.quadrance point (reflectPoint mirror mirrorNonNull point) =
       4 * Spread.spread (Incidence.lineThrough center point distinct) mirror
         radialNonNull mirrorNonNull * Quadrance.quadrance center point := by
-  rw [Geometry.Plane.Reflection.Point.reflectPoint_chord_quadrance mirror mirrorNonNull point,
+  rw [reflectPoint_chord_quadrance mirror mirrorNonNull point,
     Spread.pointLineQuadrance_eq_spread_mul_quadrance center point distinct
       radialNonNull mirror mirrorNonNull centerOnMirror]
   ring1
@@ -566,7 +566,7 @@ the intervening mirrors `l₂ₖ₊₁`.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry.Plane.Reflection.Point
 
@@ -575,8 +575,8 @@ theorem reflectPoint_eq_of_equivalent [DecidableEq K]
     (first second : Line K)
     (firstNonNull : ¬ first.IsNull) (secondNonNull : ¬ second.IsNull)
     (equivalent : first.Equivalent second) (point : Point K) :
-    Geometry.Plane.Reflection.Point.reflectPoint first firstNonNull point =
-      Geometry.Plane.Reflection.Point.reflectPoint second secondNonNull point := by
+    reflectPoint first firstNonNull point =
+      reflectPoint second secondNonNull point := by
   rcases Relations.line_coefficient_scale_of_equivalent first second equivalent with
     ⟨scale, secondA, secondB, secondC⟩
   have scaleNonzero : scale ≠ 0 := by
@@ -588,7 +588,7 @@ theorem reflectPoint_eq_of_equivalent [DecidableEq K]
       (fun nonzero => nonzero secondBZero)
   have scaleSquareNonzero : scale ^ 2 ≠ 0 := by
     simpa [pow_two] using
-      Algebra.Field.ExplicitField.mul_ne_zero scaleNonzero scaleNonzero
+      ExplicitField.mul_ne_zero scaleNonzero scaleNonzero
   have secondNorm : Basic.lineNorm second = scale ^ 2 * Basic.lineNorm first := by
     unfold Basic.lineNorm
     rw [secondA, secondB]
@@ -614,7 +614,7 @@ theorem reflectPoint_eq_of_equivalent [DecidableEq K]
     unfold firstYNumerator
     rw [secondA, secondB, secondC]
     ring1
-  rw [Geometry.Plane.Reflection.Point.reflectPoint_formula, Geometry.Plane.Reflection.Point.reflectPoint_formula]
+  rw [reflectPoint_formula, reflectPoint_formula]
   apply Point.ext
   · change
       firstXNumerator / Basic.lineNorm first =
@@ -622,8 +622,8 @@ theorem reflectPoint_eq_of_equivalent [DecidableEq K]
           2 * second.a * second.b * point.y - 2 * second.a * second.c) /
             Basic.lineNorm second
     have secondNormNonzero : Basic.lineNorm second ≠ 0 := secondNonNull
-    apply Algebra.Field.ExplicitField.eq_of_mul_eq_mul_right secondNormNonzero
-    rw [Algebra.Field.ExplicitField.div_mul_cancel
+    apply ExplicitField.eq_of_mul_eq_mul_right secondNormNonzero
+    rw [ExplicitField.div_mul_cancel
         (b := Basic.lineNorm second) _ secondNormNonzero,
       secondXNumerator, secondNorm]
     calc
@@ -632,7 +632,7 @@ theorem reflectPoint_eq_of_equivalent [DecidableEq K]
         scale ^ 2 *
           ((firstXNumerator / Basic.lineNorm first) * Basic.lineNorm first) := by ring1
       _ = scale ^ 2 * firstXNumerator := by
-        rw [Algebra.Field.ExplicitField.div_mul_cancel
+        rw [ExplicitField.div_mul_cancel
           (b := Basic.lineNorm first) _ firstNonNull]
   · change
       firstYNumerator / Basic.lineNorm first =
@@ -640,8 +640,8 @@ theorem reflectPoint_eq_of_equivalent [DecidableEq K]
           (second.a ^ 2 - second.b ^ 2) * point.y -
             2 * second.b * second.c) / Basic.lineNorm second
     have secondNormNonzero : Basic.lineNorm second ≠ 0 := secondNonNull
-    apply Algebra.Field.ExplicitField.eq_of_mul_eq_mul_right secondNormNonzero
-    rw [Algebra.Field.ExplicitField.div_mul_cancel
+    apply ExplicitField.eq_of_mul_eq_mul_right secondNormNonzero
+    rw [ExplicitField.div_mul_cancel
         (b := Basic.lineNorm second) _ secondNormNonzero,
       secondYNumerator, secondNorm]
     calc
@@ -650,7 +650,7 @@ theorem reflectPoint_eq_of_equivalent [DecidableEq K]
         scale ^ 2 *
           ((firstYNumerator / Basic.lineNorm first) * Basic.lineNorm first) := by ring1
       _ = scale ^ 2 * firstYNumerator := by
-        rw [Algebra.Field.ExplicitField.div_mul_cancel
+        rw [ExplicitField.div_mul_cancel
           (b := Basic.lineNorm first) _ firstNonNull]
 
 end Purelib.Geometry.Plane.Reflection.Point
@@ -662,10 +662,10 @@ to be excluded. -/
 theorem reflectPoint_fixed_of_contains_direct
     (line : Line K) (lineNonNull : ¬ line.IsNull)
     (point : Point K) (contains : line.Contains point) :
-    Reflection.Point.reflectPoint line lineNonNull point = point := by
+    reflectPoint line lineNonNull point = point := by
   have pointEqualsFoot := Altitude.altitudeFoot_unique point line lineNonNull point
     contains (Construction.altitudeThrough_contains point line)
-  unfold Reflection.Point.reflectPoint
+  unfold reflectPoint
   rw [← pointEqualsFoot]
   apply Point.ext <;>
     unfold HalfTurn.Basic.rotateInPoint <;>

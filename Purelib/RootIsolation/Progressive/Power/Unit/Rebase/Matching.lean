@@ -32,6 +32,8 @@ import Purelib.Polynomial.Dense.Gaussian.Coefficient.Progressive.Table
 import Purelib.RootIsolation.Owner.Local.Basic
 import Purelib.RootIsolation.State.WindingOne.Basic
 
+open Purelib.Polynomial.Power.Gaussian.Progressive
+
 open Purelib.Data.Gaussian.Basic (Canonical)
 open Purelib.Data.Nat.Positive (RootDegree)
 open Purelib.RootIsolation.Power.Unit.Move.Budget (UnitMoveSmall)
@@ -72,18 +74,18 @@ open Purelib.Data.Gaussian
 theorem unitTargetTrackCountEq
     {target : Canonical} (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value) :
-    (Power.Isolation.isolationResult (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
+    (Power.Isolation.isolationResult (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
         degreeAtLeastTwo).boxes.isolation.tracks.length =
-      (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree := by
+      (Coefficients.coefficientTable target degree).degree := by
   calc
-    (Power.Isolation.isolationResult (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
+    (Power.Isolation.isolationResult (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
         degreeAtLeastTwo).boxes.isolation.tracks.length =
-        (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree).natDegree :=
-      (Power.Isolation.isolationResult (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
+        (Power.Gaussian.rootPolynomial target degree).natDegree :=
+      (Power.Isolation.isolationResult (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
         degreeAtLeastTwo).boxes.isolation.tracks_length
-    _ = degree.value := Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree target degree
-    _ = (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree :=
-      (Power.Gaussian.Progressive.Coefficients.coefficientTable_degree target degree).symm
+    _ = degree.value := Power.Gaussian.rootPolynomial_degree target degree
+    _ = (Coefficients.coefficientTable target degree).degree :=
+      (Coefficients.coefficientTable_degree target degree).symm
 end Purelib.RootIsolation.Progressive.Power.Unit.Rebase.Matching
 
 end
@@ -115,15 +117,15 @@ open Purelib.Data.Gaussian
     {target : Canonical} (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (index : Fin
-      (Power.Isolation.isolationResult (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
+      (Power.Isolation.isolationResult (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
         degreeAtLeastTwo).boxes.isolation.tracks.length) :
-    ((Power.Isolation.isolationResult (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
+    ((Power.Isolation.isolationResult (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
         degreeAtLeastTwo).boxes.isolation.tracks.get index).initial.box =
-      ((Progressive.Power.Frame.Basic.chamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
+      ((Frame.Basic.chamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
         degreeAtLeastTwo).owner
         (Fin.cast (unitTargetTrackCountEq targetUnit degree degreeAtLeastTwo)
           index)).box := by
-  simp [-eq_self, -iff_self, Progressive.Power.Frame.Basic.chamberFrame, Progressive.Chamber.Frame.ChamberFrame.owner,
+  simp [-eq_self, -iff_self, Frame.Basic.chamberFrame, Frame.Basic.fromResult, Chamber.Frame.ChamberFrame.owner,
     Owner.Family.Basic.OwnerFamily.ofResult,
     FTA.Squarefree.AdapterResult.trackAt, Exact.Basic.Output.trackAt,
     Exact.Basic.Output.trackIndex]
@@ -160,17 +162,17 @@ open Purelib.Data.Gaussian
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
-    (index : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree) :
+    (index : Fin (Coefficients.coefficientTable target degree).degree) :
     Exact.Ownership.Basic.OwnerSelection
-      (Power.Isolation.isolationResult (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
+      (Power.Isolation.isolationResult (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
         degreeAtLeastTwo).boxes.isolation
-      (Progressive.Power.Unit.Move.Track.unitTransportedFrameTrack sourceUnit targetUnit degree degreeAtLeastTwo
+      (Move.Track.unitTransportedFrameTrack sourceUnit targetUnit degree degreeAtLeastTwo
         small index) :=
-  (Power.Isolation.isolationResult (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
+  (Power.Isolation.isolationResult (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
     degreeAtLeastTwo).boxes.ownership
-      (Progressive.Power.Unit.Move.Track.unitTransportedFrameTrack sourceUnit targetUnit degree degreeAtLeastTwo
+      (Move.Track.unitTransportedFrameTrack sourceUnit targetUnit degree degreeAtLeastTwo
         small index)
-      (Progressive.Power.Unit.Move.Track.unitTransportedFrameTrack_supported sourceUnit targetUnit degree
+      (Move.Track.unitTransportedFrameTrack_supported sourceUnit targetUnit degree
         degreeAtLeastTwo small index)
 end Purelib.RootIsolation.Progressive.Power.Unit.Rebase.Matching
 
@@ -204,8 +206,8 @@ open Purelib.Data.Gaussian
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo) :
-    Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree →
-      Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree := fun index =>
+    Fin (Coefficients.coefficientTable target degree).degree →
+      Fin (Coefficients.coefficientTable target degree).degree := fun index =>
   Fin.cast (unitTargetTrackCountEq targetUnit degree degreeAtLeastTwo)
     (unitTransportedOwnerSelection sourceUnit targetUnit degree degreeAtLeastTwo
       small index).owner
@@ -244,34 +246,34 @@ theorem unitRebaseMap_injective
     Function.Injective
       (unitRebaseMap sourceUnit targetUnit degree degreeAtLeastTwo small) := by
   let output :=
-    (Power.Isolation.isolationResult (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
+    (Power.Isolation.isolationResult (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
       degreeAtLeastTwo).boxes.isolation
-  let family : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree →
-      Track.Basic.WindingOneTrack (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree)
-        (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Purelib.Polynomial.Power.Gaussian.rootPolynomial target
+  let family : Fin (Coefficients.coefficientTable target degree).degree →
+      Track.Basic.WindingOneTrack (Power.Gaussian.rootPolynomial target degree)
+        (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Power.Gaussian.rootPolynomial target
           degree))
           :=
-    fun index => Progressive.Power.Unit.Move.Track.unitTransportedFrameTrack sourceUnit targetUnit degree
+    fun index => Move.Track.unitTransportedFrameTrack sourceUnit targetUnit degree
       degreeAtLeastTwo small index
   have rawInjective : Function.Injective (fun index =>
       (unitTransportedOwnerSelection sourceUnit targetUnit degree
         degreeAtLeastTwo small index).owner) := by
     change Function.Injective (fun index =>
       (Exact.Ownership.Prepare.selectOutputOwner
-        (by rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]; exact degreeAtLeastTwo)
-        (Power.Gaussian.Squarefree.squarefree (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree)
-        (Power.Isolation.isolationInput (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
+        (by rw [Power.Gaussian.rootPolynomial_degree]; exact degreeAtLeastTwo)
+        (Power.Gaussian.Squarefree.squarefree (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree)
+        (Power.Isolation.isolationInput (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
           degreeAtLeastTwo).elimination output (family index)
-        (Progressive.Power.Unit.Move.Track.unitTransportedFrameTrack_supported sourceUnit targetUnit degree
+        (Move.Track.unitTransportedFrameTrack_supported sourceUnit targetUnit degree
           degreeAtLeastTwo small index)).owner)
     exact Exact.Ownership.Injective.selectedOwner_injective
-      (by rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]; exact degreeAtLeastTwo)
-      (Power.Gaussian.Squarefree.squarefree (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree)
-      (Power.Isolation.isolationInput (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
+      (by rw [Power.Gaussian.rootPolynomial_degree]; exact degreeAtLeastTwo)
+      (Power.Gaussian.Squarefree.squarefree (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree)
+      (Power.Isolation.isolationInput (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) degree
         degreeAtLeastTwo).elimination output family
-      (Progressive.Power.Unit.Move.Track.unitTransportedFrameTrack_supported sourceUnit targetUnit degree
+      (Move.Track.unitTransportedFrameTrack_supported sourceUnit targetUnit degree
         degreeAtLeastTwo small)
-      (Progressive.Power.Unit.Move.Track.unitTransportedFrameTracks_pairwise sourceUnit targetUnit degree
+      (Move.Track.unitTransportedFrameTracks_pairwise sourceUnit targetUnit degree
         degreeAtLeastTwo small)
   intro left right equal
   apply rawInjective
@@ -311,8 +313,8 @@ open Purelib.Data.Gaussian
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo) :
     Data.Fin.Bijection
-      (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree
-      (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree :=
+      (Coefficients.coefficientTable target degree).degree
+      (Coefficients.coefficientTable target degree).degree :=
   Data.Fin.Bijection.ofInjectiveEndomap
     (unitRebaseMap sourceUnit targetUnit degree degreeAtLeastTwo small)
     (unitRebaseMap_injective sourceUnit targetUnit degree degreeAtLeastTwo small)
@@ -348,7 +350,7 @@ open Purelib.Data.Gaussian
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
-    (index : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree) :
+    (index : Fin (Coefficients.coefficientTable target degree).degree) :
     (unitRebaseMatching sourceUnit targetUnit degree degreeAtLeastTwo
       small).forward
         index =

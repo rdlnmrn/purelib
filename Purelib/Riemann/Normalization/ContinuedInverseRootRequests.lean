@@ -22,6 +22,8 @@ import Purelib.Data.Rat.Fraction.Order.Field
 public import Purelib.Riemann.Normalization.ContinuedInverseRoot
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-!
@@ -62,30 +64,30 @@ private theorem inverse_difference {left right : Gaussian} {leftLower rightLower
     normSq (inv left - inv right) < target := by
   have leftNonzero : left ≠ 0 := by
     intro zero
-    exact (leftPositive.trans_le leftBound).ne' (zero ▸ Gaussian.Basic.Canonical.normSq_zero)
+    exact (leftPositive.trans_le leftBound).ne' (zero ▸ normSq_zero)
   have rightNonzero : right ≠ 0 := by
     intro zero
-    exact (rightPositive.trans_le rightBound).ne' (zero ▸ Gaussian.Basic.Canonical.normSq_zero)
+    exact (rightPositive.trans_le rightBound).ne' (zero ▸ normSq_zero)
   have identity : (inv left - inv right) * (left * right) = right - left := by
     calc
       _ = (inv left * left) * right - (inv right * right) * left := by ring1
       _ = _ := by
         have leftCancel : inv left * left = 1 := by
-          with_unfolding_all exact Gaussian.Basic.Canonical.inv_mul_cancel left leftNonzero
+          with_unfolding_all exact inv_mul_cancel left leftNonzero
         have rightCancel : inv right * right = 1 := by
-          with_unfolding_all exact Gaussian.Basic.Canonical.inv_mul_cancel right rightNonzero
+          with_unfolding_all exact inv_mul_cancel right rightNonzero
         rw [leftCancel, rightCancel, Gaussian.Basic.one_mul, Gaussian.Basic.one_mul]
-  apply Rat.Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+  apply Arithmetic.lt_of_mul_lt_mul_right_direct
     (c := leftLower * rightLower) _
-    (Rat.Fraction.Order.Arithmetic.mul_pos_direct leftPositive rightPositive)
+    (Arithmetic.mul_pos_direct leftPositive rightPositive)
   calc
     _ ≤ normSq (inv left - inv right) * (normSq left * normSq right) :=
-      Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Rat.Fraction.Order.Arithmetic.mul_le_mul_direct leftBound rightBound rightPositive.le
-          (Gaussian.Basic.Canonical.normSq_nonneg _))
-        (Gaussian.Basic.Canonical.normSq_nonneg _)
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.mul_le_mul_direct leftBound rightBound rightPositive.le
+          (normSq_nonneg _))
+        (normSq_nonneg _)
     _ = normSq (right - left) := by
-      rw [← Gaussian.Basic.Canonical.normSq_mul, ← Gaussian.Basic.Canonical.normSq_mul, identity]
+      rw [← normSq_mul, ← normSq_mul, identity]
     _ < _ := close
 
 set_option genInjectivity false in
@@ -98,7 +100,7 @@ structure RebasedReading (value : Gaussian.Name.Coherent.CoherentNamed)
     (state : value.name.process.State) (other : Gaussian.Name.Basic.Named)
     (target : Coordinate) (floor : Nat) where
   /-- The retained comparison of the other owner and the rebased process at the requested floors. -/ comparison :
-    Gaussian.Equivalence.Comparison (Gaussian.Name.Sampling.approximation other)
+    Comparison (Gaussian.Name.Sampling.approximation other)
     (Gaussian.Name.Sampling.approximation { process := value.name.process, state := state })
     floor floor target
   /-- The cached witness in the retained process state. -/ reading : Gaussian
@@ -115,7 +117,7 @@ open Purelib.Approximation in
 
 The target is positive and both comparison indices respect the same supplied floor. -/
 @[expose] def build (value : Gaussian.Name.Coherent.CoherentNamed) (state : value.name.process.State)
-    (other : Gaussian.Name.Basic.Named) (equivalent : Gaussian.Equivalence.NamedEquivalent other value.name)
+    (other : Gaussian.Name.Basic.Named) (equivalent : NamedEquivalent other value.name)
     (target : Coordinate) (positive : 0 < target) (floor : Nat) : RebasedReading value state other target floor :=
   let comparison := (equivalent.trans (value.rebaseEquivalent state)).compare floor floor target positive
   ⟨comparison, Gaussian.Process.Sampling.witnessAt value.name.process state comparison.rightIndex, rfl,
@@ -165,7 +167,7 @@ structure InverseRequestData (value : Gaussian.Name.Coherent.CoherentNamed)
     (budget * (rootLower * owner.apart.certificate.lowerSq)) floor
   /-- The retained polynomial-refinement floor. -/ index : Nat
   /-- The index is the first geometric-quarter search result at or beyond the requested floor. -/ index_eq : index =
-    Rational.Geometric.Search.firstQuarterBelow (1 / 256) floor numeratorTarget
+    firstQuarterBelow (1 / 256) floor numeratorTarget
 
 constructive_injectivity InverseRequestData
 
@@ -188,25 +190,25 @@ The point lies inside the continuation patch and the supplied root owner is oper
 geometric search use the same positive target and requested floor. -/
 @[expose] def build (sample : Point patch point) (inside : patch.box.Contains point)
     (owner : RootContinuation.CertifiedSquareRoot.Certificate (polynomial.eval point))
-    (equivalent : Gaussian.Equivalence.NamedEquivalent owner.value.name sample.certificate.value.name)
+    (equivalent : NamedEquivalent owner.value.name sample.certificate.value.name)
     (target : Coordinate) (positive : 0 < target) (floor : Nat) : InverseRequest sample owner target floor :=
   let budget := target / 4
-  have budgetPositive : 0 < budget := Rat.Fraction.Order.Field.div_pos_direct positive (by decide)
+  have budgetPositive : 0 < budget := Field.div_pos_direct positive (by decide)
   let numeratorTarget := budget * patch.rootLower / 2
-  have numeratorPositive : 0 < numeratorTarget := Rat.Fraction.Order.Field.div_pos_direct
-    (Rat.Fraction.Order.Arithmetic.mul_pos_direct budgetPositive patch.rootLower_positive) (by decide)
+  have numeratorPositive : 0 < numeratorTarget := Field.div_pos_direct
+    (Arithmetic.mul_pos_direct budgetPositive patch.rootLower_positive) (by decide)
   let error := min (1 / 4096) (numeratorTarget / 16)
-  have errorPositive : 0 < error := Fraction.Order.Basic.lt_min (by decide +kernel)
-    (Rat.Fraction.Order.Field.div_pos_direct numeratorPositive (by decide))
+  have errorPositive : 0 < error := Basic.lt_min (by decide +kernel)
+    (Field.div_pos_direct numeratorPositive (by decide))
   let state := sample.residualState error errorPositive
   let observation := RebasedReading.build sample.certificate.value state owner.value.name equivalent
     (budget * (patch.rootLower * owner.apart.certificate.lowerSq))
-    (Rat.Fraction.Order.Arithmetic.mul_pos_direct budgetPositive
-      (Rat.Fraction.Order.Arithmetic.mul_pos_direct patch.rootLower_positive owner.apart.certificate.positive)) floor
+    (Arithmetic.mul_pos_direct budgetPositive
+      (Arithmetic.mul_pos_direct patch.rootLower_positive owner.apart.certificate.positive)) floor
   ⟨positive, inside, budget, rfl, numeratorTarget, rfl, error, rfl, errorPositive, state, rfl,
-    observation, Rational.Geometric.Search.firstQuarterBelow (1 / 256) floor numeratorTarget, rfl⟩
+    observation, firstQuarterBelow (1 / 256) floor numeratorTarget, rfl⟩
 
-variable {sample : Point patch point} {owner : Purelib.Riemann.RootContinuation.CertifiedSquareRoot.Certificate
+variable {sample : Point patch point} {owner : RootContinuation.CertifiedSquareRoot.Certificate
   (polynomial.eval point)}
   {target : Coordinate} {floor : Nat}
 
@@ -221,14 +223,14 @@ open Purelib.Data
 /-- The cached inverse-comparison budget is positive. -/
 theorem budget_positive (request : InverseRequest sample owner target floor) : 0 < request.budget := by
   rw [request.budget_eq]
-  exact Rat.Fraction.Order.Field.div_pos_direct request.positive (by decide)
+  exact Field.div_pos_direct request.positive (by decide)
 
 /-- The cached numerator-error target is positive. -/
 theorem numeratorTarget_positive (request : InverseRequest sample owner target floor) : 0 < request.numeratorTarget :=
   by
   rw [request.numeratorTarget_eq]
-  exact Rat.Fraction.Order.Field.div_pos_direct
-    (Rat.Fraction.Order.Arithmetic.mul_pos_direct request.budget_positive patch.rootLower_positive) (by decide)
+  exact Field.div_pos_direct
+    (Arithmetic.mul_pos_direct request.budget_positive patch.rootLower_positive) (by decide)
 
 end
 
@@ -242,10 +244,10 @@ theorem reading_accurate (request : InverseRequest sample owner target floor) {i
     normSq ((patch.base.refine index).value.eval point - inv request.observation.reading) < request.budget := by
   have possible := (congrArg (fun state => sample.certificate.value.name.process.Possible
     state request.observation.reading) request.state_eq).mp request.observation.possible
-  have small : request.error ≤ 1 / 4096 := by rw [request.error_eq]; exact Fraction.Order.Basic.min_le_left _ _
+  have small : request.error ≤ 1 / 4096 := by rw [request.error_eq]; exact Basic.min_le_left _ _
   have comparison := sample.polynomial_inverse_error request.inside request.error request.error_positive small possible
     index
-  have residual : Rational.Geometric.Basic.quarterRadius (1 / 256) index < request.numeratorTarget := by
+  have residual : quarterRadius (1 / 256) index < request.numeratorTarget := by
     rw [request.index_eq] at later
     exact (quarterRadius_antitone (by decide +kernel) later).trans_lt
       (Rational.Geometric.Search.firstQuarterBelow_accurate _ (by decide +kernel) floor _
@@ -253,21 +255,21 @@ theorem reading_accurate (request : InverseRequest sample owner target floor) {i
   have allowance : 16 * request.error ≤ request.numeratorTarget := by
     have bound : request.error ≤ request.numeratorTarget / 16 := by
       rw [request.error_eq]; exact
-        Fraction.Order.Basic.min_le_right _ _
-    apply (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct bound (by
+        Basic.min_le_right _ _
+    apply (Arithmetic.mul_le_mul_of_nonneg_left_direct bound (by
         decide : (0 : Coordinate) ≤ 16)).trans_eq
-    rw [Rat.Fraction.Field.mul_comm]
-    exact Rat.Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
+    rw [Fraction.Field.mul_comm]
+    exact Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
   apply comparison.trans_lt
-  apply (Rat.Fraction.Order.Field.div_lt_iff_pos patch.rootLower_positive).mpr
+  apply (Field.div_lt_iff_pos patch.rootLower_positive).mpr
   calc
     _ < request.numeratorTarget + request.numeratorTarget :=
-      (Rat.Fraction.Order.Arithmetic.add_lt_add_right_direct residual _).trans_le
+      (Arithmetic.add_lt_add_right_direct residual _).trans_le
         (add_le_add le_rfl allowance)
     _ = request.budget * patch.rootLower := by
       rw [show request.numeratorTarget + request.numeratorTarget = request.numeratorTarget * 2 by ring1,
         request.numeratorTarget_eq]
-      exact Rat.Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
+      exact Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
 
 /-- Independently later model and owner readings satisfy the requested inverse-error target.
 
@@ -292,10 +294,10 @@ theorem accurate (request : InverseRequest sample owner target floor) {index roo
     (inv request.observation.reading - inv root)
   simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at triangle
   apply triangle.trans_lt
-  apply (Rat.Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Coordinate) < 2)
-    (Rat.Fraction.Order.Arithmetic.add_lt_add_direct (request.reading_accurate later) inverseClose)).trans_eq
+  apply (Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Coordinate) < 2)
+    (Arithmetic.add_lt_add_direct (request.reading_accurate later) inverseClose)).trans_eq
   rw [show 2 * (request.budget + request.budget) = request.budget * 4 by ring1, request.budget_eq]
-  exact Rat.Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
+  exact Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
 
 end InverseRequest
 end Purelib.Riemann.Normalization.ContinuedInverseRootRequests

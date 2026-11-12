@@ -14,6 +14,8 @@ import Purelib.Polynomial.Dense.Gaussian.Primitive.Segment.Bounds
 import Purelib.Data.Gaussian.Norm.Bounds
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -91,12 +93,12 @@ open Purelib.Data in
 theorem drift_nonnegative (control : PrimitiveEdgeControl bounds edge leftPrimitive rightPrimitive anchor) : 0 ≤
   control.drift := by
   rw [control.drift_eq]
-  exact Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg left.bound_nonnegative
+  exact Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct (by decide) (add_nonneg left.bound_nonnegative
         right.bound_nonnegative))
-      (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct bounds.numeratorUpper_nonnegative
-        bounds.inverseUpper_positive.le)) (Gaussian.Basic.Canonical.normSq_nonneg _)
+      (Arithmetic.mul_nonneg_direct bounds.numeratorUpper_nonnegative
+        bounds.inverseUpper_positive.le)) (normSq_nonneg _)
 
 open Purelib.Riemann in
 open Purelib.Data in
@@ -107,21 +109,22 @@ theorem error_bound (control : PrimitiveEdgeControl bounds edge leftPrimitive ri
     normSq (anchor.alignedValue (Rational.Affine.line start (finish - start) parameter) -
       leftPrimitive.value.eval (Rational.Affine.line start (finish - start) parameter)) ≤ control.drift := by
   have swap (first last : Gaussian) : normSq (first - last) = normSq (last - first) := by
-    rw [show first - last = -(last - first) by ring1, Gaussian.Basic.Canonical.normSq_neg]
+    rw [show first - last = -(last - first) by ring1, normSq_neg]
   rw [swap]
-  have estimate := anchor.drift_le bounds leftPrimitive rightPrimitive control.leftCoefficient_eq
-    control.rightCoefficient_eq inside
+  have estimate := anchor.drift_le bounds leftPrimitive rightPrimitive (pairs := 0)
+    control.leftCoefficient_eq control.rightCoefficient_eq inside
+  rw [PrimitiveOverlapBounds.weight_zero] at estimate
   have distance := Rational.Affine.normSq_line_sub start (finish - start) parameter 0
   rw [Normalization.InverseModelEdgeTransition.line_zero, Gaussian.Norm.Basic.normSq_eq_canonical,
     Gaussian.Norm.Basic.normSq_eq_canonical] at distance
   rw [distance] at estimate
   have square : (parameter - 0) ^ 2 ≤ (1 : Rat.Fraction.Rational) := by
     have scalarZero : parameter - 0 = parameter := by ring1
-    simpa only [scalarZero, one_pow] using Rat.Fraction.Order.Arithmetic.pow_le_pow_direct inside.1 inside.2 2
+    simpa only [scalarZero, one_pow] using Arithmetic.pow_le_pow_direct inside.1 inside.2 2
   calc
     _ ≤ _ := estimate
     _ = control.drift * (parameter - 0) ^ 2 := by rw [control.drift_eq]; ring1
-    _ ≤ control.drift * 1 := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct square
+    _ ≤ control.drift * 1 := Arithmetic.mul_le_mul_of_nonneg_left_direct square
       control.drift_nonnegative
     _ = control.drift := Rat.Fraction.Field.mul_one_direct _
 
@@ -167,9 +170,11 @@ theorem drift_increment_bound (control : PrimitiveEdgeControl bounds edge leftPr
           edge.sign * (rightPrimitive.value.eval lastPoint - rightPrimitive.value.eval firstPoint)) := by
     unfold PrimitiveEdgeAnchor.alignedValue
     ring1
-  rw [identity, Gaussian.Basic.Canonical.normSq_neg, control.drift_eq]
-  exact Comparison.PrimitiveEdgeComparison.EdgeTransition.primitive_increment_le edge bounds leftPrimitive
+  rw [identity, normSq_neg, control.drift_eq]
+  have estimate := EdgeTransition.primitive_increment_le (pairs := 0) edge bounds leftPrimitive
     rightPrimitive control.leftCoefficient_eq control.rightCoefficient_eq lastInside firstInside
+  rewrite [PrimitiveOverlapBounds.weight_zero] at estimate
+  exact estimate
 
 end PrimitiveEdgeControl
 

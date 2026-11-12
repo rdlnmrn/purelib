@@ -40,7 +40,7 @@ theorem widths_le_of_diagonal
     box.widthX ≤ side ∧ box.widthY ≤ side := by
   let dimensions : Data.Gaussian.Basic.Canonical := ⟨box.widthX, box.widthY⟩
   have dimensionsNorm : Data.Gaussian.Norm.Basic.normSq dimensions =
-      box.diagonalSq := rfl
+      box.diagonalSq := box.diagonalSq_eq_original.symm
   have bounds := Data.Gaussian.Norm.Bounds.coordinate_bounds_of_normSq_le
     (z := dimensions) sideNonnegative (by
       rw [dimensionsNorm]

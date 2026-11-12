@@ -119,8 +119,10 @@ theorem sewn_charge_le (control : Riemann.Integration.PrimitiveEdgeControl bound
         rightPrimitive.value.eval (Affine.line start (finish - start) lastParameter))) :
     joined.charge ≤ 16 * (left.trace.allowance + right.trace.allowance) +
       2 * control.drift * (lastParameter - firstParameter) ^ 2 := by
-  have mismatch := EdgeTransition.primitive_increment_le edge bounds leftPrimitive rightPrimitive
+  have mismatch := EdgeTransition.primitive_increment_le (pairs := 0)
+    edge bounds leftPrimitive rightPrimitive
     control.leftCoefficient_eq control.rightCoefficient_eq lastInside firstInside
+  rewrite [PrimitiveOverlapBounds.weight_zero] at mismatch
   rw [← control.drift_eq] at mismatch
   have same : left.localIncrement + right.localIncrement =
       (leftPrimitive.value.eval (Affine.line start (finish - start) lastParameter) -

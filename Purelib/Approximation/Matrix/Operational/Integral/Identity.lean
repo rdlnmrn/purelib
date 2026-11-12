@@ -64,42 +64,42 @@ entries are exact zero readings. -/
 public def integralNamedMatrix_identity_scaleIdentity
   :
     PeriodMatrix.MatrixEquivalent
-      (Integral.Basic.integralNamedMatrix Purelib.LinearAlgebra.Matrix.Multiplication.identity)
+      (Basic.integralNamedMatrix Multiplication.identity)
       (PeriodMatrix.scaleIdentity
         (Coherence.exact 1)) := by
   intro row column
-  rw [Integral.Basic.integralNamedMatrix_apply,
+  rw [Basic.integralNamedMatrix_apply,
     PeriodMatrix.scaleIdentity_apply]
   by_cases equal : row = column
   · subst column
     rw [if_pos rfl]
-    change Gaussian.Equivalence.NamedEquivalent
+    change NamedEquivalent
       (PeriodMatrix.geometricNamed
         (GeometricApproximation.exact
           (Cast.integralGaussian
-            (Purelib.LinearAlgebra.Matrix.Multiplication.identity row row)))).name
+            (Multiplication.identity row row)))).name
       (Coherence.exact 1).name
     have diagonal :
-        (Purelib.LinearAlgebra.Matrix.Multiplication.identity :
-          LinearAlgebra.Matrix.Basic.IntegralMatrix) row row =
+        (Multiplication.identity :
+          Basic.IntegralMatrix) row row =
           (1 : Int) := by
-      unfold Purelib.LinearAlgebra.Matrix.Multiplication.identity
+      unfold Multiplication.identity
       rw [LinearAlgebra.Matrix.matrixOfFn_apply, if_pos rfl]
     rw [diagonal]
-    have oneEqual : Cast.integralGaussian 1 = (1 : Data.Gaussian.Basic.Canonical) := by
-      apply Data.Gaussian.Basic.ext <;>
+    have oneEqual : Cast.integralGaussian 1 = (1 : Basic.Canonical) := by
+      apply Basic.ext <;>
         simp only [Cast.integralGaussian, Int.cast_one,
-          Purelib.Data.Gaussian.Basic.one_re,
-          Purelib.Data.Gaussian.Basic.one_im, -eq_self, -iff_self] <;> rfl
+          Basic.one_re,
+          Basic.one_im, -eq_self, -iff_self] <;> rfl
     rw [oneEqual]
     exact Comparison.geometricExact_equivalent_exact
-      (1 : Data.Gaussian.Basic.Canonical)
+      (1 : Basic.Canonical)
   · rw [if_neg equal]
     have offDiagonal :
-        (Purelib.LinearAlgebra.Matrix.Multiplication.identity :
-          LinearAlgebra.Matrix.Basic.IntegralMatrix) row column =
+        (Multiplication.identity :
+          Basic.IntegralMatrix) row column =
           (0 : Int) := by
-      unfold Purelib.LinearAlgebra.Matrix.Multiplication.identity
+      unfold Multiplication.identity
       rw [LinearAlgebra.Matrix.matrixOfFn_apply, if_neg equal]
     rw [offDiagonal]
     exact NamedEquivalent.refl _

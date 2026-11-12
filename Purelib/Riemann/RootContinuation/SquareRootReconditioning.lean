@@ -39,6 +39,8 @@ import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Finite square-root owner reconditioning
 
@@ -69,13 +71,13 @@ public abbrev Gaussian := Basic.Canonical
 open Purelib.Polynomial.Dense.Gaussian in
 /-- Dense Gaussian polynomials over exact rational coordinates. -/
 public abbrev GaussianPolynomial :=
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+  Basic.CanonicalCoefficients.CoefficientPolynomial
 /-- The original rational box type with retained coordinate bounds. -/
-public abbrev Box := Purelib.Geometry.Rational.Box
+public abbrev Box := Geometry.Rational.Box
 /-- The original square-root owner indexed by its nonzero radicand. -/
-public abbrev Owner := Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+public abbrev Owner := Topology.SquareRootContinuationChain.Owner
 /-- The original winding-one track indexed by its polynomial and ambient box. -/
-public abbrev WindingOneTrack := Purelib.RootIsolation.Track.Basic.WindingOneTrack
+public abbrev WindingOneTrack := RootIsolation.Track.Basic.WindingOneTrack
 
 open Purelib.Data.Gaussian.Basic.Canonical
 
@@ -86,7 +88,7 @@ open Purelib.Riemann.RootContinuation in
 The retained degree-two power polynomial uses the same Gaussian radicand and
 coefficient ordering as the original finite squarefree isolation. -/
 @[expose] public def rootPolynomial (parameter : Gaussian) : GaussianPolynomial :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+  Gaussian.rootPolynomial parameter
     SquareRootDegree.degreeTwo
 
 open Purelib.Riemann.RootContinuation in
@@ -96,7 +98,7 @@ open Purelib.RootIsolation in
 Nonzero radicand and the retained degree-two bound provide the original
 polynomial, elimination certificates and complete finite isolation input. -/
 @[expose] public def isolationInput {parameter : Gaussian} (parameterNonzero : parameter ≠ 0) :
-    RootIsolation.FTA.Squarefree.Input (rootPolynomial parameter) := by
+    FTA.Squarefree.Input (rootPolynomial parameter) := by
   exact Power.Isolation.isolationInput parameterNonzero
     SquareRootDegree.degreeTwo
     SquareRootDegree.degreeTwo_atLeastTwo
@@ -115,7 +117,7 @@ The original clearance supplies a positive interior radius, and division
 by the displayed positive constant preserves that strict bound. -/
 public theorem requestedRadius_positive {parameter : Gaussian}
     (owner : Owner parameter) : 0 < requestedRadius owner := by
-  exact Fraction.Order.Field.div_pos_direct
+  exact Field.div_pos_direct
     owner.track.initial.clearance.residualInteriorRadius_pos (by decide)
 
 open Purelib.RootIsolation.Residual in
@@ -141,15 +143,15 @@ and one quarter of the original boundary-clearance allowance. -/
 public theorem residualTarget_positive {parameter : Gaussian}
     (parameterNonzero : parameter ≠ 0) (owner : Owner parameter) :
     0 < residualTarget parameterNonzero owner := by
-  apply Fraction.Order.Basic.lt_min
+  apply Basic.lt_min
   · apply Global.Bounds.outsideResidualThreshold_pos
     unfold rootPolynomial
-    rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]
+    rw [Gaussian.rootPolynomial_degree]
     exact SquareRootDegree.degreeTwo.positive
-  · apply Fraction.Order.Basic.lt_min
+  · apply Basic.lt_min
     · exact Global.Assignment.insideResidualTarget_pos
         (isolationInput parameterNonzero) (requestedRadius_positive owner)
-    · exact Fraction.Order.Field.div_pos_direct
+    · exact Field.div_pos_direct
         owner.track.initial.clearance.positive (by decide)
 
 open Purelib.Approximation.Rational in
@@ -190,7 +192,7 @@ public theorem sample_residual_lt {parameter : Gaussian}
         residualTarget parameterNonzero owner := by
   rw [← Norm.Basic.normSq_eq_canonical]
   exact (CoherentRoot.sample_residual_le owner.track (by
-    rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]
+    rw [Gaussian.rootPolynomial_degree]
     exact SquareRootDegree.degreeTwo.positive)
       (sampleIndex parameterNonzero owner)).trans_lt
     (Geometric.Search.firstQuarterBelow_accurate
@@ -232,7 +234,7 @@ public theorem sample_inside_largeSquare {parameter : Gaussian}
   · have outsideLower := Global.Bounds.outsideResidualThreshold_le
       (p := rootPolynomial parameter) (by
         unfold rootPolynomial
-        rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]
+        rw [Gaussian.rootPolynomial_degree]
         exact SquareRootDegree.degreeTwo_atLeastTwo)
       (sample parameterNonzero owner) inside
     rw [Norm.Basic.normSq_eq_canonical] at outsideLower
@@ -242,7 +244,7 @@ public theorem sample_inside_largeSquare {parameter : Gaussian}
           Global.Bounds.outsideResidualThreshold
             (rootPolynomial parameter) :=
       (sample_residual_lt parameterNonzero owner).trans_le
-        (Fraction.Order.Basic.min_le_left _ _)
+        (Basic.min_le_left _ _)
     exact ((not_lt_of_ge outsideLower) residualBelowOutside).elim
 
 open Purelib.RootIsolation.Residual in
@@ -257,7 +259,7 @@ public theorem sample_residual_lt_insideTarget {parameter : Gaussian}
       Global.Assignment.insideResidualTarget
         (isolationInput parameterNonzero) (requestedRadius owner) :=
   (sample_residual_lt parameterNonzero owner).trans_le
-    ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _))
+    ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _))
 
 /-- The selected sample's residual is below one quarter of the original boundary-clearance bound.
 
@@ -269,7 +271,7 @@ public theorem sample_residual_lt_ownerQuarter {parameter : Gaussian}
       (sample parameterNonzero owner)) <
       owner.track.initial.clearance.bound / 4 :=
   (sample_residual_lt parameterNonzero owner).trans_le
-    ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_right _ _))
+    ((Basic.min_le_right _ _).trans (Basic.min_le_right _ _))
 
 open Purelib.Data.Gaussian in
 open Purelib.RootIsolation.Residual in
@@ -298,14 +300,14 @@ private theorem signed_coordinate_bounds_of_normSq_lt_sq
     (distance : normSq delta < radius ^ 2) :
     -radius < delta.re ∧ delta.re < radius ∧
       -radius < delta.im ∧ delta.im < radius := by
-  simp only [Basic.Canonical.normSq, ← pow_two] at distance
+  simp only [normSq, ← pow_two] at distance
   have realSquare : delta.re ^ 2 < radius ^ 2 :=
     (show delta.re ^ 2 ≤ delta.re ^ 2 + delta.im ^ 2 from
-      le_add_of_nonneg_right (Fraction.Order.Arithmetic.sq_nonneg_direct _)).trans_lt
+      le_add_of_nonneg_right (Arithmetic.sq_nonneg_direct _)).trans_lt
       distance
   have imaginarySquare : delta.im ^ 2 < radius ^ 2 :=
     (show delta.im ^ 2 ≤ delta.re ^ 2 + delta.im ^ 2 from
-      le_add_of_nonneg_left (Fraction.Order.Arithmetic.sq_nonneg_direct _)).trans_lt
+      le_add_of_nonneg_left (Arithmetic.sq_nonneg_direct _)).trans_lt
       distance
   have realUpper := Bounds.Square.lt_of_sq_lt_sq_of_nonneg
     radiusPositive.le realSquare
@@ -324,12 +326,12 @@ private theorem signed_coordinate_bounds_of_normSq_lt_sq
           _ < radius ^ 2 := imaginarySquare)
   exact
     ⟨by
-      have negated := Fraction.Order.Arithmetic.neg_lt_neg_direct
+      have negated := Arithmetic.neg_lt_neg_direct
         realNegativeUpper
       simpa only [neg_neg] using negated,
       realUpper,
       by
-        have negated := Fraction.Order.Arithmetic.neg_lt_neg_direct
+        have negated := Arithmetic.neg_lt_neg_direct
           imaginaryNegativeUpper
         simpa only [neg_neg] using negated,
       imaginaryUpper⟩
@@ -352,16 +354,16 @@ private theorem assigned_band_distance_lt {parameter : Gaussian}
     simpa only [radius] using
       owner.track.initial.clearance.residualInteriorRadius_pos
   have radiusSquarePositive : 0 < radius ^ 2 :=
-    Fraction.Order.Arithmetic.pow_pos_direct radiusPositive 2
+    Arithmetic.pow_pos_direct radiusPositive 2
   have assignedRadiusSquareLe :
       (assignment parameterNonzero owner).radius ^ 2 ≤ epsilon ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
+    Arithmetic.pow_le_pow_direct
       (assignment parameterNonzero owner).radiusPositive.le
       (assignment parameterNonzero owner).radiusLeRequested 2
   have bandLe :
       18 * (assignment parameterNonzero owner).radius ^ 2 ≤
         18 * epsilon ^ 2 :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       assignedRadiusSquareLe (by decide)
   have epsilon_eq : epsilon = (1 / 8 : Coordinate) * radius := by
     dsimp only [epsilon, requestedRadius, radius]
@@ -375,7 +377,7 @@ private theorem assigned_band_distance_lt {parameter : Gaussian}
           (18 * (1 / 8 : Coordinate) ^ 2) * radius ^ 2 := by
         ring1
       _ < 1 * radius ^ 2 :=
-        Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+        Arithmetic.mul_lt_mul_of_pos_right_direct
           (show (18 : Coordinate) * (1 / 8) ^ 2 < 1 by decide)
           radiusSquarePositive
       _ = radius ^ 2 := by ring1
@@ -423,13 +425,13 @@ public theorem assignment_state_strict_owner {parameter : Gaussian}
           source.xLower < anchor.re - radius := by
             have := margins.1
             dsimp only [source, anchor, radius] at this ⊢
-            have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct this (-radius)
+            have shifted := Arithmetic.add_lt_add_right_direct this (-radius)
             dsimp only [source, anchor, radius] at shifted ⊢
             convert shifted using 1 <;> ring1
           _ < localBox.xLower := by
             have := lowerBounds.1
             dsimp only [lower, anchor] at this
-            have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct this anchor.re
+            have shifted := Arithmetic.add_lt_add_right_direct this anchor.re
             simp only [Basic.sub_re] at shifted
             dsimp only [anchor] at shifted ⊢
             convert shifted using 1 <;> ring1
@@ -438,7 +440,7 @@ public theorem assignment_state_strict_owner {parameter : Gaussian}
           localBox.xUpper < anchor.re + radius := by
             have := upperBounds.2.1
             dsimp only [upper, anchor] at this
-            have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct this anchor.re
+            have shifted := Arithmetic.add_lt_add_right_direct this anchor.re
             simp only [Basic.sub_re] at shifted
             dsimp only [anchor] at shifted ⊢
             convert shifted using 1 <;> ring1
@@ -449,13 +451,13 @@ public theorem assignment_state_strict_owner {parameter : Gaussian}
           source.yLower < anchor.im - radius := by
             have := margins.2.2.1
             dsimp only [source, anchor, radius] at this ⊢
-            have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct this (-radius)
+            have shifted := Arithmetic.add_lt_add_right_direct this (-radius)
             dsimp only [source, anchor, radius] at shifted ⊢
             convert shifted using 1 <;> ring1
           _ < localBox.yLower := by
             have := lowerBounds.2.2.1
             dsimp only [lower, anchor] at this
-            have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct this anchor.im
+            have shifted := Arithmetic.add_lt_add_right_direct this anchor.im
             simp only [Basic.sub_im] at shifted
             dsimp only [anchor] at shifted ⊢
             convert shifted using 1 <;> ring1
@@ -464,7 +466,7 @@ public theorem assignment_state_strict_owner {parameter : Gaussian}
           localBox.yUpper < anchor.im + radius := by
             have := upperBounds.2.2.2
             dsimp only [upper, anchor] at this
-            have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct this anchor.im
+            have shifted := Arithmetic.add_lt_add_right_direct this anchor.im
             simp only [Basic.sub_im] at shifted
             dsimp only [anchor] at shifted ⊢
             convert shifted using 1 <;> ring1

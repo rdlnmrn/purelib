@@ -62,14 +62,14 @@ attribute [local irreducible] Purelib.Approximation.Gaussian.Logarithm.Local.Hor
 /-- The displayed Gaussian witness after the indexed canonical refinement of the original name. -/
 def ComplexLog.inputSample (input : Named)
   (index : Nat) : Canonical :=
-  Gaussian.Process.Sampling.witnessAt
+  Process.Sampling.witnessAt
     input.process input.state index
 
 /-- The indexed Gaussian sample remains possible at the original named state. -/
 theorem ComplexLog.inputSample_possible_start (input :
   Named) (index : Nat) :
     input.process.Possible input.state (ComplexLog.inputSample input index) :=
-  Gaussian.Process.Sampling.witnessAt_possible_start
+  Process.Sampling.witnessAt_possible_start
     input.process input.state index
 
 /-- Later named samples lie within the earlier index's scale-four quarter-radius allowance. -/
@@ -77,8 +77,8 @@ theorem inputSample_later_close (input : Named)
     {oldIndex newIndex : Nat} (order : oldIndex ≤ newIndex) :
     Data.Gaussian.Norm.Basic.normSq (ComplexLog.inputSample input newIndex
       - ComplexLog.inputSample input oldIndex) ≤
-      Geometric.Basic.quarterRadius 4 oldIndex :=
-  Gaussian.Process.Sampling.witnessAt_later_close
+      Basic.quarterRadius 4 oldIndex :=
+  Process.Sampling.witnessAt_later_close
     input.process input.state order
 end Purelib.Approximation.Gaussian.Name.Sampling
 
@@ -105,14 +105,14 @@ namespace Purelib.Approximation.Gaussian.Name.Sampling.Exp
 /-- The displayed Gaussian witness after the indexed canonical refinement of the original name. -/
 def inputSample (input : Named) (index :
   Nat) : Canonical :=
-  Gaussian.Process.Sampling.witnessAt
+  Process.Sampling.witnessAt
     input.process input.state index
 
 /-- The indexed Gaussian sample remains possible at the original named state. -/
 theorem inputSample_possible_start (input :
   Named) (index : Nat) :
     input.process.Possible input.state (inputSample input index) :=
-  Gaussian.Process.Sampling.witnessAt_possible_start
+  Process.Sampling.witnessAt_possible_start
     input.process input.state index
 end Purelib.Approximation.Gaussian.Name.Sampling.Exp
 
@@ -138,14 +138,14 @@ namespace Purelib.Approximation.Gaussian.Name.Sampling.Log
 /-- The displayed Gaussian witness after the indexed canonical refinement of the original name. -/
 def inputWitness (input : Named) (index :
   Nat) : Canonical :=
-  Gaussian.Process.Sampling.witnessAt
+  Process.Sampling.witnessAt
     input.process input.state index
 
 /-- The indexed Gaussian witness remains possible at the original named state. -/
 theorem inputWitness_possible_start (input :
   Named) (index : Nat) :
     input.process.Possible input.state (inputWitness input index) :=
-  Gaussian.Process.Sampling.witnessAt_possible_start
+  Process.Sampling.witnessAt_possible_start
     input.process input.state index
 end Purelib.Approximation.Gaussian.Name.Sampling.Log
 
@@ -169,11 +169,11 @@ open Purelib.Approximation.Gaussian.Sequence (ApproximationData)
 allowances. -/
 def approximation (name : Named) :
   ApproximationData where
-  sample := Gaussian.Process.Sampling.witnessAt name.process name.state
-  radiusSq := Geometric.Basic.quarterRadius 4
+  sample := Process.Sampling.witnessAt name.process name.state
+  radiusSq := Basic.quarterRadius 4
   radiusSq_nonneg :=
-    Geometric.Basic.quarterRadius_nonneg (by decide)
-  later_close := Gaussian.Process.Sampling.witnessAt_later_close name.process name.state
+    Basic.quarterRadius_nonneg (by decide)
+  later_close := Process.Sampling.witnessAt_later_close name.process name.state
   refineIndex current target _ :=
     Search.firstQuarterBelow 4 current target
   refineIndex_ge current target _ :=
@@ -184,7 +184,7 @@ def approximation (name : Named) :
   centerBound_nonneg :=
     Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
       (add_nonneg (by decide) name.process.centerBound_nonneg)
-  sample_bounded := Gaussian.Process.Sampling.witnessAt_bounded name.process name.state
+  sample_bounded := Process.Sampling.witnessAt_bounded name.process name.state
 
 end Purelib.Approximation.Gaussian.Name.Sampling
 

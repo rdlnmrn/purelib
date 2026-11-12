@@ -16,6 +16,9 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation
@@ -39,44 +42,44 @@ namespace Purelib.Approximation.Gaussian.Sequence.Equivalence.Centers
 /-- The ordinary two-error squared triangle bound, with no extra slack for operational comparison and no assumption that
 either allowance is positive. -/
 theorem separation_le {left right :
-  Gaussian.Sequence.ApproximationData}
-    (equivalent : Gaussian.Equivalence.Equivalent left right)
+  ApproximationData}
+    (equivalent : Equivalence.Equivalent left right)
     (leftCenter rightCenter : Data.Gaussian.Basic.Canonical) (leftAllowance rightAllowance : Fraction.Rational)
-    (leftBound : ∀ index, Data.Gaussian.Norm.Basic.normSq (left.sample index - leftCenter) ≤ leftAllowance)
-    (rightBound : ∀ index, Data.Gaussian.Norm.Basic.normSq (right.sample index - rightCenter) ≤ rightAllowance)
+    (leftBound : ∀ index, Basic.normSq (left.sample index - leftCenter) ≤ leftAllowance)
+    (rightBound : ∀ index, Basic.normSq (right.sample index - rightCenter) ≤ rightAllowance)
       :
-    Data.Gaussian.Norm.Basic.normSq (leftCenter - rightCenter) ≤ 2 * (leftAllowance + rightAllowance) := by
-  by_cases bounded : Data.Gaussian.Norm.Basic.normSq (leftCenter - rightCenter) ≤ 2 * (leftAllowance +
+    Basic.normSq (leftCenter - rightCenter) ≤ 2 * (leftAllowance + rightAllowance) := by
+  by_cases bounded : Basic.normSq (leftCenter - rightCenter) ≤ 2 * (leftAllowance +
     rightAllowance)
   · exact bounded
-  · have strict := Fraction.Order.Arithmetic.lt_of_not_ge_direct bounded
-    let margin := Data.Gaussian.Norm.Basic.normSq (leftCenter - rightCenter) - 2 * (leftAllowance +
+  · have strict := Arithmetic.lt_of_not_ge_direct bounded
+    let margin := Basic.normSq (leftCenter - rightCenter) - 2 * (leftAllowance +
       rightAllowance)
-    have marginPositive : 0 < margin := Fraction.Order.Arithmetic.sub_pos_direct strict
+    have marginPositive : 0 < margin := Arithmetic.sub_pos_direct strict
     have allowanceNonnegative : 0 ≤ 2 * (leftAllowance + rightAllowance) :=
-      Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-        (add_nonneg ((Data.Gaussian.Norm.Basic.normSq_nonneg _).trans (leftBound 0))
-          ((Data.Gaussian.Norm.Basic.normSq_nonneg _).trans (rightBound 0)))
-    have centerPositive : 0 < Data.Gaussian.Norm.Basic.normSq (leftCenter - rightCenter) :=
+      Arithmetic.mul_nonneg_direct (by decide)
+        (add_nonneg ((Basic.normSq_nonneg _).trans (leftBound 0))
+          ((Basic.normSq_nonneg _).trans (rightBound 0)))
+    have centerPositive : 0 < Basic.normSq (leftCenter - rightCenter) :=
       allowanceNonnegative.trans_lt strict
-    let target := margin ^ 2 / (4 * Data.Gaussian.Norm.Basic.normSq (leftCenter - rightCenter))
+    let target := margin ^ 2 / (4 * Basic.normSq (leftCenter - rightCenter))
     have targetPositive : 0 < target :=
-      Fraction.Order.Field.div_pos_direct
-        (Fraction.Order.Arithmetic.pow_pos_direct marginPositive 2)
-        (Fraction.Order.Arithmetic.mul_pos_direct (by decide) centerPositive)
+      Field.div_pos_direct
+        (Arithmetic.pow_pos_direct marginPositive 2)
+        (Arithmetic.mul_pos_direct (by decide) centerPositive)
     let comparison := equivalent.compare 0 0 target targetPositive
     let leftReading := left.sample comparison.leftIndex
     let rightReading := right.sample comparison.rightIndex
-    have errorBound : Data.Gaussian.Norm.Basic.normSq ((leftReading - leftCenter) - (rightReading -
+    have errorBound : Basic.normSq ((leftReading - leftCenter) - (rightReading -
       rightCenter)) ≤
         2 * (leftAllowance + rightAllowance) :=
-      (Data.Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Bounds.normSq_sub_le_two _ _).trans
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add (leftBound _) (rightBound _)) (by decide))
-    have gap : margin ≤ Data.Gaussian.Norm.Basic.normSq (leftCenter - rightCenter) -
-        Data.Gaussian.Norm.Basic.normSq ((leftReading - leftCenter) - (rightReading - rightCenter)) :=
-      Fraction.Order.Arithmetic.sub_le_sub_left_direct errorBound _
-    have lower := Data.Gaussian.Norm.Bounds.normSq_add_lower_of_gap marginPositive gap
+    have gap : margin ≤ Basic.normSq (leftCenter - rightCenter) -
+        Basic.normSq ((leftReading - leftCenter) - (rightReading - rightCenter)) :=
+      Arithmetic.sub_le_sub_left_direct errorBound _
+    have lower := Bounds.normSq_add_lower_of_gap marginPositive gap
     have recombine : (leftCenter - rightCenter) +
         ((leftReading - leftCenter) - (rightReading - rightCenter)) =
           leftReading - rightReading := by

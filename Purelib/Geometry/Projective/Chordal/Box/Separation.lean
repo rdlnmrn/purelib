@@ -19,6 +19,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Geometry.Rational.Box.Separation
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -66,10 +68,10 @@ theorem affine_weight_le
     {box : Rational.Box} {point : Data.Gaussian.Basic.Canonical} (inside : box.Contains point) :
     Proj.weight (Proj.affine point) ≤
       affineWeightUpper box := by
-  simp only [Proj.weight, Proj.affine, Data.Gaussian.Norm.Basic.normSq_one,
+  simp only [Proj.weight, Proj.affine, Basic.normSq_one,
     affineWeightUpper]
   calc
-    Data.Gaussian.Norm.Basic.normSq point + 1 = 1 + Data.Gaussian.Norm.Basic.normSq point := by ring1
+    Basic.normSq point + 1 = 1 + Basic.normSq point := by ring1
     _ ≤ 1 + box.normSqBound :=
       add_le_add_right (box.normSq_le_normSqBound inside) 1
 
@@ -100,56 +102,56 @@ theorem chordalGap_le_affine
     (leftInside : left.Contains leftPoint)
     (rightInside : right.Contains rightPoint)
     (distanceLower : coordinateGap ^ 2 ≤
-      Data.Gaussian.Norm.Basic.normSq (leftPoint - rightPoint)) :
+      Basic.normSq (leftPoint - rightPoint)) :
     chordalGap left right coordinateGap ≤
-      Chordal.Basic.chordalSq
+      Basic.chordalSq
         (Proj.affine leftPoint) (Proj.affine rightPoint) := by
   let actualDenominator :=
-    (1 + Data.Gaussian.Norm.Basic.normSq leftPoint) * (1 + Data.Gaussian.Norm.Basic.normSq rightPoint)
+    (1 + Basic.normSq leftPoint) * (1 + Basic.normSq rightPoint)
   let upperDenominator := affineWeightUpper left *
     affineWeightUpper right
   have actualPositive : 0 < actualDenominator :=
     Fraction.Order.Arithmetic.mul_pos_direct
       ((show (0 : Fraction.Rational) < 1 by decide).trans_le
-        (le_add_of_nonneg_right (Data.Gaussian.Norm.Basic.normSq_nonneg leftPoint)))
+        (le_add_of_nonneg_right (Basic.normSq_nonneg leftPoint)))
       ((show (0 : Fraction.Rational) < 1 by decide).trans_le
-        (le_add_of_nonneg_right (Data.Gaussian.Norm.Basic.normSq_nonneg rightPoint)))
+        (le_add_of_nonneg_right (Basic.normSq_nonneg rightPoint)))
   have upperPositive : 0 < upperDenominator :=
     Fraction.Order.Arithmetic.mul_pos_direct
       (affineWeightUpper_pos left)
         (affineWeightUpper_pos right)
   have actualUpper : actualDenominator ≤ upperDenominator := by
     dsimp only [actualDenominator, upperDenominator]
-    have leftWeight : 1 + Data.Gaussian.Norm.Basic.normSq leftPoint ≤
+    have leftWeight : 1 + Basic.normSq leftPoint ≤
       affineWeightUpper left := by
       simpa only [Proj.weight, Proj.affine,
-        Data.Gaussian.Norm.Basic.normSq_one, Fraction.Field.add_comm] using
+        Basic.normSq_one, Fraction.Field.add_comm] using
           affine_weight_le leftInside
-    have rightWeight : 1 + Data.Gaussian.Norm.Basic.normSq rightPoint ≤
+    have rightWeight : 1 + Basic.normSq rightPoint ≤
       affineWeightUpper right := by
       simpa only [Proj.weight, Proj.affine,
-        Data.Gaussian.Norm.Basic.normSq_one, Fraction.Field.add_comm] using
+        Basic.normSq_one, Fraction.Field.add_comm] using
           affine_weight_le rightInside
     exact Fraction.Order.Arithmetic.mul_le_mul_direct leftWeight rightWeight
-      (add_nonneg (by decide) (Data.Gaussian.Norm.Basic.normSq_nonneg rightPoint))
+      (add_nonneg (by decide) (Basic.normSq_nonneg rightPoint))
       (affineWeightUpper_pos left).le
-  have numeratorNonnegative : 0 ≤ Data.Gaussian.Norm.Basic.normSq (leftPoint - rightPoint) :=
-    Data.Gaussian.Norm.Basic.normSq_nonneg _
+  have numeratorNonnegative : 0 ≤ Basic.normSq (leftPoint - rightPoint) :=
+    Basic.normSq_nonneg _
   calc
     chordalGap left right coordinateGap =
         coordinateGap ^ 2 / upperDenominator := rfl
-    _ ≤ Data.Gaussian.Norm.Basic.normSq (leftPoint - rightPoint) / upperDenominator := by
+    _ ≤ Basic.normSq (leftPoint - rightPoint) / upperDenominator := by
       apply (Fraction.Order.Field.div_le_iff_pos upperPositive).2
-      have cancel : Data.Gaussian.Norm.Basic.normSq (leftPoint - rightPoint) / upperDenominator *
-          upperDenominator = Data.Gaussian.Norm.Basic.normSq (leftPoint - rightPoint) :=
+      have cancel : Basic.normSq (leftPoint - rightPoint) / upperDenominator *
+          upperDenominator = Basic.normSq (leftPoint - rightPoint) :=
         Fraction.Field.div_mul_cancel_of_ne
-          (Data.Gaussian.Norm.Basic.normSq (leftPoint - rightPoint)) upperDenominator upperPositive.ne'
+          (Basic.normSq (leftPoint - rightPoint)) upperDenominator upperPositive.ne'
       rw [cancel]
       exact distanceLower
-    _ ≤ Data.Gaussian.Norm.Basic.normSq (leftPoint - rightPoint) / actualDenominator :=
+    _ ≤ Basic.normSq (leftPoint - rightPoint) / actualDenominator :=
       Fraction.Order.Field.div_le_div_of_nonneg_left_direct
         numeratorNonnegative actualPositive actualUpper
-    _ = Chordal.Basic.chordalSq
+    _ = Basic.chordalSq
         (Proj.affine leftPoint) (Proj.affine rightPoint) := by
       rw [Affine.chordalSq_affine]
 
@@ -174,7 +176,7 @@ theorem separatedChordalGap_le_affine
     (leftInside : left.Contains leftPoint)
     (rightInside : right.Contains rightPoint) :
     separatedChordalGap separated ≤
-      Chordal.Basic.chordalSq
+      Basic.chordalSq
         (Proj.affine leftPoint) (Proj.affine rightPoint) :=
   chordalGap_le_affine leftInside rightInside
     ((Rational.Box.separationCertificate separated).lower
@@ -187,7 +189,7 @@ theorem separated_chordalGap
     ∃ gap : Fraction.Rational, 0 < gap ∧
       ∀ {leftPoint rightPoint : Data.Gaussian.Basic.Canonical},
         left.Contains leftPoint → right.Contains rightPoint →
-          gap ≤ Chordal.Basic.chordalSq
+          gap ≤ Basic.chordalSq
             (Proj.affine leftPoint) (Proj.affine rightPoint) :=
   ⟨separatedChordalGap separated,
     separatedChordalGap_pos separated,

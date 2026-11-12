@@ -4,6 +4,7 @@ public import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Rat.Fraction
 import Purelib.Tactic.QuotientFreeOmega
 public import Purelib.Data.Rat.Fraction.Order.Basic
+public import Purelib.Data.Rat.Fraction.Order.Arithmetic
 meta import Mathlib.Tactic.Linter.Lint
 import Mathlib.Order.Basic
 meta import Purelib.Elab.ConstructiveInjectivity
@@ -319,3 +320,38 @@ end Purelib.CCL.Translation
 end
 
 end
+
+namespace Purelib.Geometry.Rational.Box
+
+open Purelib.Data.Rat.Fraction.Order
+
+/-- Reflect the original rational box across the real axis, retaining its same real endpoints. -/
+@[expose] public def conj (box : Box) : Box :=
+  ⟨box.xLower, box.xUpper, -box.yUpper, -box.yLower, box.x_valid,
+    Arithmetic.neg_le_neg_direct box.y_valid⟩
+
+/-- Conjugating twice restores the complete original rational box. -/
+public theorem conj_conj (box : Box) : box.conj.conj = box := by
+  apply ext
+  · rfl
+  · rfl
+  · exact neg_neg box.yLower
+  · exact neg_neg box.yUpper
+
+/-- Conjugation preserves positive widths of both original coordinate intervals. -/
+public theorem Proper.conj {box : Box} (proper : box.Proper) : box.conj.Proper :=
+  ⟨proper.1, Arithmetic.neg_lt_neg_direct proper.2⟩
+
+/-- The conjugate of an actual original point lies in the reflected original box. -/
+public theorem Contains.conj {box : Box} {point : Data.Gaussian.Basic.Canonical}
+    (inside : box.Contains point) : box.conj.Contains (Data.Gaussian.Basic.conj point) :=
+  ⟨inside.1, inside.2.1, Arithmetic.neg_le_neg_direct inside.2.2.2,
+    Arithmetic.neg_le_neg_direct inside.2.2.1⟩
+
+/-- Strict point membership is preserved by reflection of the same original box. -/
+public theorem StrictContains.conj {box : Box} {point : Data.Gaussian.Basic.Canonical}
+    (inside : box.StrictContains point) : box.conj.StrictContains (Data.Gaussian.Basic.conj point) :=
+  ⟨inside.1, inside.2.1, Arithmetic.neg_lt_neg_direct inside.2.2.2,
+    Arithmetic.neg_lt_neg_direct inside.2.2.1⟩
+
+end Purelib.Geometry.Rational.Box

@@ -70,6 +70,10 @@ import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid
+
 open Purelib.Algebra
 
 open Purelib.Approximation
@@ -91,32 +95,32 @@ open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate Gaussian)
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    ExteriorProgram.SurfaceOccurrence
     regular domains differential}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {count : Nat} {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {sourceData : Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover sourceData}
-  {covers : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent} {minimum floor index
+  {sourceData : UniformReciprocalModels.Data patch count} {cover :
+    UniformReciprocalCover.Cover sourceData}
+  {covers : Disk.Basis.SourceLocations.BasisSourceCovers parent} {minimum floor index
     depth : Nat}
-  {common : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonCover cover covers minimum}
-  {areaAllowance sourceTarget coefficientTarget : Normalization.InverseRootPolynomial.Coordinate}
-  {request : Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest regular common
+  {common : Disk.Basis.CommonCover.BasisCommonCover cover covers minimum}
+  {areaAllowance sourceTarget coefficientTarget : Coordinate}
+  {request : Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest regular common
     areaAllowance sourceTarget coefficientTarget floor}
   {box : Rational.Box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
-  {originals : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {originals : Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
     covers index}
-  {cells : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers index}
+  {cells : Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers index}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 open Purelib.Data.Rat.Fraction.Compatibility
@@ -125,11 +129,11 @@ namespace QuerySchedule
 
 /-- The coefficient-independent uniform query scale for all basis rows in one original domain cell. -/
 def cellQueryScale (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  ExteriorProgram.SurfaceOccurrence
   regular domains differential)
     (column height : Fin (occurrence.compared.entered.domain.steps + 1)) : Coordinate :=
-  (genus : Normalization.InverseRootPolynomial.Coordinate) * FiniteSum.Fin.sumFin (fun row =>
-    Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentQueries.uniformQueryDensity
+  (genus : Coordinate) * FiniteSum.Fin.sumFin (fun row =>
+    Face.FragmentQueries.uniformQueryDensity
       (occurrence.recastComparison (Periods.PeriodMatrix.standardDifferential row)).entered.bounds column height)
 
 set_option genInjectivity false in
@@ -138,18 +142,18 @@ set_option genInjectivity false in
 The allocated radius, every basis-row refinement threshold and their finite maximum are chosen before acquiring
 primitive values. -/
 structure CellQuery (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  ExteriorProgram.SurfaceOccurrence
   regular domains differential)
     (column height : Fin (occurrence.compared.entered.domain.steps + 1)) (target :
-      Normalization.InverseRootPolynomial.Coordinate) where
+      Coordinate) where
   /-- The allocated common source and face radius for this cell. -/ radius :
-    Normalization.InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The radius is the weighted allowance for the original uniform cell-query scale. -/ radius_eq : radius =
     Rational.Budget.Weighted.allowance target (32 *
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.QuerySchedule.cellQueryScale occurrence column height)
+    QuerySchedule.cellQueryScale occurrence column height)
   /-- The cached uniform source-model threshold. -/ sourceMinimum : Nat
   /-- The source threshold is exactly the uniform minimum for the retained radius. -/ source_eq : sourceMinimum =
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.sourceQueryMinimum radius
+    PairedFragmentValues.sourceQueryMinimum radius
   /-- The retained face-refinement threshold of every original basis row. -/ rowIndices : Data.Vector.DependentVector
     (fun _ : Fin genus => Nat)
   /-- Each row threshold is the geometric search on its exact transported cell model. -/ row_eq : ∀ row, rowIndices.get
@@ -168,57 +172,57 @@ namespace QuerySchedule.CellQuery
 
 /-- Cache the weighted radius and all source and basis-row face thresholds for the specified original cell. -/
 def build (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  ExteriorProgram.SurfaceOccurrence
   regular domains differential)
     (column height : Fin (occurrence.compared.entered.domain.steps + 1)) (target :
-      Normalization.InverseRootPolynomial.Coordinate) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.QuerySchedule.CellQuery occurrence column height target :=
+      Coordinate) :
+    CellQuery occurrence column height target :=
   let radius := Rational.Budget.Weighted.allowance target (32 *
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.QuerySchedule.cellQueryScale occurrence column height)
+    QuerySchedule.cellQueryScale occurrence column height)
   let rows := Data.Vector.DependentVector.ofFn (fun row : Fin genus => Rational.Geometric.Search.firstQuarterBelow
     ((occurrence.recastComparison (Periods.PeriodMatrix.standardDifferential row)).entered.domain.patch.transported.cell
       column height).model.bound 0 radius)
-  ⟨radius, rfl, Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.sourceQueryMinimum radius, rfl, rows,
+  ⟨radius, rfl, PairedFragmentValues.sourceQueryMinimum radius, rfl, rows,
     fun row => Data.Vector.DependentVector.ofFn_get _ row, rows.maximum (fun _ value => value), rfl⟩
 
 /-- A positive cell target bounds the acquired common-basis query scale once both cached thresholds are paid.
 
 The original source-model radius and every basis-row face refinement remain linked to their own retained cell. -/
 theorem accurate
-    (acquired : Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition
+    (acquired : Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition
       request polynomials originals cells coefficients depth)
     (piece : Paths.RectangularSegmentSplitting.SegmentPiece occurrence.compared.entered.domain.geometry
       (parent.edge.point 0) (parent.edge.point 1))
-    {target : Normalization.InverseRootPolynomial.Coordinate} (query :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.QuerySchedule.CellQuery occurrence piece.column piece.row
+    {target : Coordinate} (query :
+      CellQuery occurrence piece.column piece.row
       target)
     (positive : 0 < target) (sourcePaid : query.sourceMinimum ≤ index)
     {faceIndex : Nat} (facePaid : query.faceIndex ≤ faceIndex) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentArea.queryScale acquired piece faceIndex ≤ target := open
-      Purelib.Data.Rat in by
-  have scaleNonnegative : 0 ≤ Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.QuerySchedule.cellQueryScale occurrence
+    FragmentArea.queryScale acquired piece faceIndex ≤ target := open
+      Data.Rat in by
+  have scaleNonnegative : 0 ≤ QuerySchedule.cellQueryScale occurrence
     piece.column piece.row :=
     Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus))
       (FiniteSum.Fin.sumFin_zero.symm.trans_le (FiniteSum.Rational.Order.Positivity.sumFin_mono _ _ (fun row =>
-        (Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentQueries.queryDensity_nonnegative
+        (Face.FragmentQueries.queryDensity_nonnegative
           (occurrence.recastComparison (Periods.PeriodMatrix.standardDifferential row)).entered.bounds
           piece.column piece.row (acquired.prepared.get row).localRequest 0).trans
-        (Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentQueries.queryDensity_uniform_le
+        (Face.FragmentQueries.queryDensity_uniform_le
           (occurrence.recastComparison (Periods.PeriodMatrix.standardDifferential row)).entered.bounds
           piece.column piece.row (acquired.prepared.get row).localRequest 0))))
-  have weightNonnegative : 0 ≤ 32 * Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.QuerySchedule.cellQueryScale
+  have weightNonnegative : 0 ≤ 32 * QuerySchedule.cellQueryScale
     occurrence piece.column piece.row :=
     Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) scaleNonnegative
   have radiusPositive : 0 < query.radius := by
     rw [query.radius_eq]
     exact Rational.Budget.Weighted.allowance_positive positive weightNonnegative
-  have each (row : Fin genus) : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.rowDensity acquired
+  have each (row : Fin genus) : FragmentQueries.rowDensity acquired
     piece row faceIndex ≤
       32 * query.radius *
-        Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentQueries.uniformQueryDensity
+        Face.FragmentQueries.uniformQueryDensity
           (occurrence.recastComparison (Periods.PeriodMatrix.standardDifferential row)).entered.bounds piece.column
             piece.row := by
-    let tail := Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentQueries.queryTail
+    let tail := Face.FragmentQueries.queryTail
       (occurrence.recastComparison (Periods.PeriodMatrix.standardDifferential row)).entered.bounds
       piece.column piece.row (acquired.prepared.get row).localRequest query.radius radiusPositive
     have faceLater : tail.index ≤ faceIndex :=
@@ -226,7 +230,7 @@ theorem accurate
         (((query.rowIndices.get_le_maximum (fun _ value => value) row).trans_eq query.face_eq.symm).trans facePaid)
     have sourceSmall : tail.sourceRadius ≤ query.radius := by
       rw [tail.source_eq, acquired.index_eq row]
-      exact (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.source_radius_lt
+      exact (PairedFragmentValues.source_radius_lt
         (acquired.prepared.get row).localRequest.neighborhood.base.model.bound_small radiusPositive
         ((query.source_eq.symm.trans_le sourcePaid).trans (Nat.le_add_left index 2))).le
     exact (tail.accurate faceIndex faceLater).trans (tail.ceiling_le_uniform radiusPositive.le sourceSmall)
@@ -234,10 +238,10 @@ theorem accurate
     (FiniteSum.Rational.Order.Positivity.sumFin_mono _ _ each) (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le
       genus))
   rw [FiniteSum.Fin.sumFin_mul_left] at summed
-  have bounded : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentArea.queryScale acquired piece faceIndex ≤
-      (32 * Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.QuerySchedule.cellQueryScale occurrence piece.column
+  have bounded : FragmentArea.queryScale acquired piece faceIndex ≤
+      (32 * QuerySchedule.cellQueryScale occurrence piece.column
         piece.row) * query.radius :=
-    summed.trans_eq (by unfold Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.QuerySchedule.cellQueryScale; ring1)
+    summed.trans_eq (by unfold QuerySchedule.cellQueryScale; ring1)
   rw [query.radius_eq] at bounded
   exact bounded.trans (Rational.Budget.Weighted.mul_allowance_le positive.le weightNonnegative)
 
@@ -247,11 +251,11 @@ namespace QuerySchedule
 
 /-- The dependent row of cell-query schedules at one original column. -/
 def QueryRow (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  ExteriorProgram.SurfaceOccurrence
   regular domains differential)
     (column : Fin (occurrence.compared.entered.domain.steps + 1)) (target :
-      Normalization.InverseRootPolynomial.Coordinate) :=
-  Data.Vector.DependentVector (fun height => Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.QuerySchedule.CellQuery
+      Coordinate) :=
+  Data.Vector.DependentVector (fun height => CellQuery
     occurrence column height target)
 
 end QuerySchedule
@@ -260,14 +264,14 @@ namespace QuerySchedule.QueryRow
 
 /-- The maximum retained source threshold along this original column. -/
 def sourceIndex {column : Fin (occurrence.compared.entered.domain.steps + 1)} {target :
-  Normalization.InverseRootPolynomial.Coordinate}
-    (row : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.QuerySchedule.QueryRow occurrence column target) : Nat :=
+  Coordinate}
+    (row : QueryRow occurrence column target) : Nat :=
       row.maximum (fun _ query => query.sourceMinimum)
 
 /-- The maximum retained face-refinement threshold along this original column. -/
 def faceIndex {column : Fin (occurrence.compared.entered.domain.steps + 1)} {target :
-  Normalization.InverseRootPolynomial.Coordinate}
-    (row : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.QuerySchedule.QueryRow occurrence column target) : Nat :=
+  Coordinate}
+    (row : QueryRow occurrence column target) : Nat :=
       row.maximum (fun _ query => query.faceIndex)
 
 end QuerySchedule.QueryRow
@@ -276,16 +280,16 @@ set_option genInjectivity false in
 /-- Retain all cell thresholds once, before selecting any source or face
 polynomial. The same schedule serves every coefficient vector and parent. -/
 structure QuerySchedule (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-  regular domains differential) (target : Normalization.InverseRootPolynomial.Coordinate) where
+  ExteriorProgram.SurfaceOccurrence
+  regular domains differential) (target : Coordinate) where
   /-- The complete retained cell-query grid in original column and height order. -/ rows : Data.Vector.DependentVector
-    (fun column => Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.QuerySchedule.QueryRow occurrence column target)
+    (fun column => QuerySchedule.QueryRow occurrence column target)
   /-- The cached maximum source-model threshold over all original cells. -/ sourceMinimum : Nat
   /-- The source threshold equals the maximum of the retained column source thresholds. -/ source_eq : sourceMinimum =
-    rows.maximum (fun _ row => Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.QuerySchedule.QueryRow.sourceIndex row)
+    rows.maximum (fun _ row => QuerySchedule.QueryRow.sourceIndex row)
   /-- The cached maximum face-refinement threshold over all original cells. -/ faceIndex : Nat
   /-- The face threshold equals the maximum of the retained column face thresholds. -/ face_eq : faceIndex =
-    rows.maximum (fun _ row => Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.QuerySchedule.QueryRow.faceIndex row)
+    rows.maximum (fun _ row => QuerySchedule.QueryRow.faceIndex row)
 
 constructive_injectivity QuerySchedule
 
@@ -293,37 +297,37 @@ namespace QuerySchedule
 
 /-- Prepare every original cell query and cache their common source and face maxima. -/
 def build (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-  regular domains differential) (target : Normalization.InverseRootPolynomial.Coordinate) :
+  ExteriorProgram.SurfaceOccurrence
+  regular domains differential) (target : Coordinate) :
     QuerySchedule occurrence target :=
   let rows := Data.Vector.DependentVector.ofFn (fun column => Data.Vector.DependentVector.ofFn
-    (fun height => Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.QuerySchedule.CellQuery.build occurrence column
+    (fun height => CellQuery.build occurrence column
       height target))
-  ⟨rows, rows.maximum (fun _ row => Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.QuerySchedule.QueryRow.sourceIndex
+  ⟨rows, rows.maximum (fun _ row => QueryRow.sourceIndex
     row), rfl, rows.maximum (fun _ row =>
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.QuerySchedule.QueryRow.faceIndex row), rfl⟩
+    QueryRow.faceIndex row), rfl⟩
 
 /-- The complete cached schedule pays the basis-query target on any retained original fragment.
 
 Both source and face stages must reach their separate retained maxima. -/
 theorem accurate
-    (acquired : Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition
+    (acquired : Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition
       request polynomials originals cells coefficients depth)
     (piece : Paths.RectangularSegmentSplitting.SegmentPiece occurrence.compared.entered.domain.geometry
       (parent.edge.point 0) (parent.edge.point 1))
-    {target : Normalization.InverseRootPolynomial.Coordinate} (schedule :
+    {target : Coordinate} (schedule :
       QuerySchedule occurrence target)
     (positive : 0 < target) (sourcePaid : schedule.sourceMinimum ≤ index)
     {faceIndex : Nat} (facePaid : schedule.faceIndex ≤ faceIndex) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentArea.queryScale acquired piece faceIndex ≤ target := by
+    FragmentArea.queryScale acquired piece faceIndex ≤ target := by
   have sourceLe := ((schedule.rows.get piece.column).get_le_maximum (fun _ query => query.sourceMinimum)
     piece.row).trans
     (((schedule.rows.get_le_maximum (fun _ row =>
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.QuerySchedule.QueryRow.sourceIndex row) piece.column).trans_eq
+      QueryRow.sourceIndex row) piece.column).trans_eq
       schedule.source_eq.symm).trans sourcePaid)
   have faceLe := ((schedule.rows.get piece.column).get_le_maximum (fun _ query => query.faceIndex) piece.row).trans
     (((schedule.rows.get_le_maximum (fun _ row =>
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.QuerySchedule.QueryRow.faceIndex row) piece.column).trans_eq
+      QueryRow.faceIndex row) piece.column).trans_eq
       schedule.face_eq.symm).trans facePaid)
   exact ((schedule.rows.get piece.column).get piece.row).accurate acquired piece positive sourceLe faceLe
 

@@ -26,6 +26,8 @@ import Purelib.Data.Rat.Fraction.Order.Arithmetic
 import Purelib.Algebra.Group.Negation
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian
+
 open Purelib.Data.Rat
 open Purelib.Geometry.Rational
 open Purelib.Polynomial
@@ -47,18 +49,18 @@ Positive degree supplies leading-term clearance and a quantitative
 boundary dominance margin on the computed square. Their retained
 certificate gives clearance for the exact normalized leading/lower sum. -/
 @[expose] public def largeSquare_boundaryClearance
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree) :
-    Clearance.Box.Boundary.Basic.BoundaryClearance p (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox p) := by
+    {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree) :
+    Basic.BoundaryClearance p (Bounds.RootRadius.Box.largeSquareBox p) := by
   have sumClearance :=
-    Clearance.Box.Dominance.Sum.boundaryClearance_add_of_boundaryNormDominance
-      (Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p)
-        (Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p) (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox
+    Dominance.Sum.boundaryClearance_add_of_boundaryNormDominance
+      (Coefficients.LeadingSplit.leadingMonomial p)
+        (Coefficients.Tail.lowerTermsPolynomial p) (Bounds.RootRadius.Box.largeSquareBox
         p)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox_proper p)
-      (Clearance.Box.Dominance.Leading.largeSquare_boundaryNormDominance degreePositive)
+      (Bounds.RootRadius.Box.largeSquareBox_proper p)
+      (Dominance.Leading.largeSquare_boundaryNormDominance degreePositive)
   have decomposition :=
-    Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial_add_lowerTerms_eq_normalize degreePositive
-  apply Clearance.Box.Boundary.Basic.BoundaryClearance.ofNormalize
+    Coefficients.LeadingSplit.leadingMonomial_add_lowerTerms_eq_normalize degreePositive
+  apply Basic.BoundaryClearance.ofNormalize
   simpa only [decomposition] using sumClearance
 
 /-- A polynomial has a coefficient-computed positive clearance on every
@@ -70,13 +72,13 @@ The positive-degree polynomial and sufficiently large symmetric radius
 retain leading-term clearance and a quantitative margin on that same
 boundary. Normalization transfers the certificate to the original polynomial. -/
 @[expose] public def symmetric_boundaryClearance
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree)
+    {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (degreePositive : 0 < p.natDegree)
     {radius : Fraction.Rational}
-    (radiusLe : Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ≤ radius) :
-    Clearance.Box.Boundary.Basic.BoundaryClearance p
+    (radiusLe : Bounds.RootRadius.denseLargeSquareRadius p ≤ radius) :
+    Basic.BoundaryClearance p
       (Box.symmetric radius
-        ((Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe).le) := by
-  let radiusPositive := (Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe
+        ((Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe).le) := by
+  let radiusPositive := (Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe
   let box := Box.symmetric radius radiusPositive.le
   have proper : box.Proper := by
     change -radius < radius ∧ -radius < radius
@@ -86,13 +88,13 @@ boundary. Normalization transfers the certificate to the original polynomial. -/
     rewrite [zeroNegation] at reflected
     exact ⟨reflected.trans radiusPositive, reflected.trans radiusPositive⟩
   have sumClearance :=
-    Clearance.Box.Dominance.Sum.boundaryClearance_add_of_boundaryNormDominance
-      (Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p)
-        (Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p) box proper
-      (Clearance.Box.Dominance.Leading.symmetric_boundaryNormDominance degreePositive radiusLe)
-  have decomposition := Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial_add_lowerTerms_eq_normalize
+    Dominance.Sum.boundaryClearance_add_of_boundaryNormDominance
+      (Coefficients.LeadingSplit.leadingMonomial p)
+        (Coefficients.Tail.lowerTermsPolynomial p) box proper
+      (Dominance.Leading.symmetric_boundaryNormDominance degreePositive radiusLe)
+  have decomposition := Coefficients.LeadingSplit.leadingMonomial_add_lowerTerms_eq_normalize
     degreePositive
-  apply Clearance.Box.Boundary.Basic.BoundaryClearance.ofNormalize
+  apply Basic.BoundaryClearance.ofNormalize
   simpa only [box, decomposition] using sumClearance
 
 /-- Every displayed nonzero polynomial has positive boundary clearance on a
@@ -104,21 +106,21 @@ The nonzero polynomial may have zero or positive degree. The constant
 case retains its nonzero coefficient; the positive-degree case uses
 leading-term dominance at the supplied sufficiently large radius. -/
 @[expose] public def symmetric_boundaryClearance_of_nonzero
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (nonzero : p.isZero = false)
+    {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (nonzero : p.isZero = false)
     {radius : Fraction.Rational}
-    (radiusLe : Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ≤ radius) :
-    Clearance.Box.Boundary.Basic.BoundaryClearance p
+    (radiusLe : Bounds.RootRadius.denseLargeSquareRadius p ≤ radius) :
+    Basic.BoundaryClearance p
       (Box.symmetric radius
-        ((Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe).le) := by
+        ((Bounds.RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe).le) := by
   by_cases degreeZero : p.natDegree = 0
-  · apply Clearance.Box.Boundary.Basic.BoundaryClearance.ofNormalize
+  · apply Basic.BoundaryClearance.ofNormalize
     have normalizedConstant :
-        p.normalize = Dense.Gaussian.Constants.gaussianConstant p.leadingCoeff :=
+        p.normalize = Constants.gaussianConstant p.leadingCoeff :=
       Dense.Basic.DensePolynomial.normalize_eq_constant_leadingCoeff_of_degree_zero nonzero degreeZero
     rw [normalizedConstant]
-    exact Clearance.Box.Boundary.Constant.gaussianConstant_boundaryClearance
+    exact Constant.gaussianConstant_boundaryClearance
       (Dense.Basic.DensePolynomial.leadingCoeff_ne_zero nonzero) _
-  · exact Clearance.Box.Boundary.RootRadius.symmetric_boundaryClearance (Nat.pos_of_ne_zero degreeZero)
+  · exact symmetric_boundaryClearance (Nat.pos_of_ne_zero degreeZero)
       radiusLe
 
 end Purelib.Polynomial.Clearance.Box.Boundary.RootRadius

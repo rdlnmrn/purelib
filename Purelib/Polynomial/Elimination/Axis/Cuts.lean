@@ -13,6 +13,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Polynomial.Dense.Evaluation
 
+open Purelib.Polynomial.Dense.Rational.Nonzero.Search
+
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 open Purelib.Polynomial.Elimination.Axis.Certificate.AxisSafeCuts (AxisEliminationCertificate)
 
@@ -46,7 +48,7 @@ def verticalSafeCoordinate {p :
     (elimination : AxisEliminationCertificate p degreeBound) (box :
       Box)
     (proper : box.Proper) : Fraction.Rational :=
-  Dense.Rational.Nonzero.Search.Central.centralSearchValue elimination.vertical degreeBound proper.1
+  Central.centralSearchValue elimination.vertical degreeBound proper.1
     elimination.vertical_nonzero elimination.vertical_degree
 
 /-- Find a clear horizontal cut inside a proper box.
@@ -58,7 +60,7 @@ def horizontalSafeCoordinate {p :
     (elimination : AxisEliminationCertificate p degreeBound) (box :
       Box)
     (proper : box.Proper) : Fraction.Rational :=
-  Dense.Rational.Nonzero.Search.Central.centralSearchValue elimination.horizontal degreeBound proper.2
+  Central.centralSearchValue elimination.horizontal degreeBound proper.2
     elimination.horizontal_nonzero elimination.horizontal_degree
 
 /-- The vertical cut is strictly internal and its eliminant value is nonzero. -/
@@ -71,7 +73,7 @@ theorem verticalSafeCoordinate_spec
         (verticalSafeCoordinate elimination box proper) ≠ 0 ∧
       box.xLower < verticalSafeCoordinate elimination box proper ∧
       verticalSafeCoordinate elimination box proper < box.xUpper :=
-  Dense.Rational.Nonzero.Search.Central.centralSearchValue_spec elimination.vertical degreeBound proper.1
+  Central.centralSearchValue_spec elimination.vertical degreeBound proper.1
     elimination.vertical_nonzero elimination.vertical_degree
 
 /-- The horizontal cut is strictly internal and its eliminant value is nonzero. -/
@@ -84,7 +86,7 @@ theorem horizontalSafeCoordinate_spec
         (horizontalSafeCoordinate elimination box proper) ≠ 0 ∧
       box.yLower < horizontalSafeCoordinate elimination box proper ∧
       horizontalSafeCoordinate elimination box proper < box.yUpper :=
-  Dense.Rational.Nonzero.Search.Central.centralSearchValue_spec elimination.horizontal degreeBound proper.2
+  Central.centralSearchValue_spec elimination.horizontal degreeBound proper.2
     elimination.horizontal_nonzero elimination.horizontal_degree
 
 /-- Both horizontal widths after the vertical cut are less than two thirds of the original width. -/
@@ -98,7 +100,7 @@ theorem verticalSafeCoordinate_contraction
       box.xUpper - verticalSafeCoordinate elimination box proper <
         (2 / 3 : Fraction.Rational) * box.widthX := by
   simpa only [verticalSafeCoordinate, Box.widthX] using
-    Dense.Rational.Nonzero.Search.Central.centralSearchValue_contraction elimination.vertical degreeBound proper.1
+    Central.centralSearchValue_contraction elimination.vertical degreeBound proper.1
     elimination.vertical_nonzero elimination.vertical_degree
 
 /-- Both vertical widths after the horizontal cut are less than two thirds of the original width. -/
@@ -112,7 +114,7 @@ theorem horizontalSafeCoordinate_contraction
       box.yUpper - horizontalSafeCoordinate elimination box proper <
         (2 / 3 : Fraction.Rational) * box.widthY := by
   simpa only [horizontalSafeCoordinate, Box.widthY] using
-    Dense.Rational.Nonzero.Search.Central.centralSearchValue_contraction elimination.horizontal degreeBound proper.2
+    Central.centralSearchValue_contraction elimination.horizontal degreeBound proper.2
     elimination.horizontal_nonzero elimination.horizontal_degree
 end Purelib.Polynomial.Elimination.Axis.Cuts
 

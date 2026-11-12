@@ -8,13 +8,10 @@ import Purelib.Computation.Query.Computation
 @[expose] public section
 
 /-!
-# Generated public contracts and noninterference regressions
+Unqueried replies and the complete adaptive computation.
 
-The adaptive protocol genuinely changes its source outside the recorded
-keys, while its complete result and repeated-query trace remain unchanged.
-The same theorem is then instantiated for the real polynomial and
-exponential integration controllers, including zero and nonzero bit counts.
-No equality or decidability assumption on payloads is introduced.
+A transcript overlay changes replies away from the queried indices while
+preserving the adaptive result and ordered trace, including repeated queries.
 -/
 
 namespace Purelib.Examples.Approximation.Queries.Noninterference.WorkedExamples

@@ -80,7 +80,7 @@ owners without preparing new banks. -/
   IO.FS.createDirAll directory
   IntegrationCheckpoint.profile directory "BEGIN exact independent square-root family restoration"
   let result ← InitialExtractionCheckpoint.isolateLargeSquare source.elimination
-    (.separated ⟨control.savedOnly, pure ()⟩ _ source.nonzero source.degreePositive)
+    (.separated ⟨control.savedOnly, pure (), false⟩ _ source.nonzero source.degreePositive)
     source.degreeAtLeastTwo source.squarefree
     control ((Purelib.System.FilePath.join directory (System.FilePath.mk ("isolation"))))
   let family := SquareRootOwnerReplay.family nonzero result.val result.property
@@ -98,7 +98,7 @@ frame's executable classifier. -/
   let source := SquareRootReconditioning.isolationInput nonzero
   IO.FS.createDirAll directory
   let result ← InitialExtractionCheckpoint.isolateLargeSquare source.elimination
-    (.separated ⟨control.savedOnly, pure ()⟩ _ source.nonzero source.degreePositive)
+    (.separated ⟨control.savedOnly, pure (), false⟩ _ source.nonzero source.degreePositive)
     source.degreeAtLeastTwo source.squarefree
     control ((Purelib.System.FilePath.join directory (System.FilePath.mk ("isolation"))))
   let saved : OwnerFrameReplay.Saved nonzero := result

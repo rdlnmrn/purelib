@@ -13,6 +13,8 @@ import Purelib.Data.Rat.Rounding.Floor
 import Purelib.LinearAlgebra.Coordinates2.Matrix
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Unimodular homographies centred at reduced fractions
 
@@ -51,41 +53,41 @@ theorem homography_determinant (fraction : Reduced) (translation : GaussianInt) 
         fraction.leftCoefficient * fraction.numerator + fraction.rightCoefficient * fraction.denominator := by
       unfold homography Matrix.determinant
       apply GaussianInt.ext <;>
-        simp only [GaussianInt.add_re, GaussianInt.add_im, GaussianInt.sub_re, GaussianInt.sub_im,
-          GaussianInt.mul_re, GaussianInt.mul_im] <;> ring1
+        simp only [add_re, add_im, sub_re, sub_im,
+          mul_re, mul_im] <;> ring1
     _ = 1 := fraction.bezout.symm
 
 /-- The affine denominator retains the original denominator, translation, tail and Bézout coefficient. -/
 theorem homography_denominator (fraction : Reduced) (translation : GaussianInt)
     (tail : Gaussian.Basic.Canonical) :
-    Homography.Basic.denominator (Matrix.map GaussianInt.toGaussian (fraction.homography translation)) tail =
-      GaussianInt.toGaussian fraction.denominator * (tail + GaussianInt.toGaussian translation) +
-        GaussianInt.toGaussian fraction.leftCoefficient := by
+    Homography.Basic.denominator (Matrix.map toGaussian (fraction.homography translation)) tail =
+      toGaussian fraction.denominator * (tail + toGaussian translation) +
+        toGaussian fraction.leftCoefficient := by
   unfold Homography.Basic.denominator Matrix.map homography
-  rewrite [GaussianInt.toGaussian_add, GaussianInt.toGaussian_mul]
+  rewrite [toGaussian_add, toGaussian_mul]
   apply Gaussian.Basic.ext <;>
     simp only [Gaussian.Basic.add_re, Gaussian.Basic.add_im, Gaussian.Basic.mul_re, Gaussian.Basic.mul_im] <;> ring1
 
 /-- The exact affine offset before the retained integral translation. -/
 @[expose] def homographyOffset (fraction : Reduced) (tail : Gaussian.Basic.Canonical) :
     Gaussian.Basic.Canonical :=
-  tail + GaussianInt.toGaussian fraction.leftCoefficient *
-    Gaussian.Field.inv (GaussianInt.toGaussian fraction.denominator)
+  tail + toGaussian fraction.leftCoefficient *
+    Gaussian.Field.inv (toGaussian fraction.denominator)
 
 /-- The homographic denominator factors through the original denominator and the translated affine offset. -/
 theorem homography_denominator_factor (fraction : Reduced) (translation : GaussianInt)
     (tail : Gaussian.Basic.Canonical) :
-    Homography.Basic.denominator (Matrix.map GaussianInt.toGaussian (fraction.homography translation)) tail =
-      GaussianInt.toGaussian fraction.denominator *
-        (GaussianInt.toGaussian translation + fraction.homographyOffset tail) := by
-  have coefficientPaid : GaussianInt.toGaussian fraction.denominator *
-      (GaussianInt.toGaussian fraction.leftCoefficient *
-        Gaussian.Field.inv (GaussianInt.toGaussian fraction.denominator)) =
-      GaussianInt.toGaussian fraction.leftCoefficient := by
+    Homography.Basic.denominator (Matrix.map toGaussian (fraction.homography translation)) tail =
+      toGaussian fraction.denominator *
+        (toGaussian translation + fraction.homographyOffset tail) := by
+  have coefficientPaid : toGaussian fraction.denominator *
+      (toGaussian fraction.leftCoefficient *
+        Gaussian.Field.inv (toGaussian fraction.denominator)) =
+      toGaussian fraction.leftCoefficient := by
     calc
-      _ = (GaussianInt.toGaussian fraction.denominator *
-            Gaussian.Field.inv (GaussianInt.toGaussian fraction.denominator)) *
-          GaussianInt.toGaussian fraction.leftCoefficient := by
+      _ = (toGaussian fraction.denominator *
+            Gaussian.Field.inv (toGaussian fraction.denominator)) *
+          toGaussian fraction.leftCoefficient := by
         apply Gaussian.Basic.ext <;>
           simp only [Gaussian.Basic.mul_re, Gaussian.Basic.mul_im] <;> ring1
       _ = _ := by
@@ -94,12 +96,12 @@ theorem homography_denominator_factor (fraction : Reduced) (translation : Gaussi
   rewrite [fraction.homography_denominator]
   unfold homographyOffset
   calc
-    GaussianInt.toGaussian fraction.denominator * (tail + GaussianInt.toGaussian translation) +
-        GaussianInt.toGaussian fraction.leftCoefficient =
-      GaussianInt.toGaussian fraction.denominator * (tail + GaussianInt.toGaussian translation) +
-        GaussianInt.toGaussian fraction.denominator *
-          (GaussianInt.toGaussian fraction.leftCoefficient *
-            Gaussian.Field.inv (GaussianInt.toGaussian fraction.denominator)) := by
+    toGaussian fraction.denominator * (tail + toGaussian translation) +
+        toGaussian fraction.leftCoefficient =
+      toGaussian fraction.denominator * (tail + toGaussian translation) +
+        toGaussian fraction.denominator *
+          (toGaussian fraction.leftCoefficient *
+            Gaussian.Field.inv (toGaussian fraction.denominator)) := by
       rewrite [coefficientPaid]
       rfl
     _ = _ := by
@@ -111,12 +113,12 @@ theorem homography_denominator_factor (fraction : Reduced) (translation : Gaussi
 theorem homographic_difference_mul_denominators (fraction : Reduced) (translation : GaussianInt)
     (tail : Gaussian.Basic.Canonical)
     (poleExcluded : Homography.Basic.denominator
-      (Matrix.map GaussianInt.toGaussian (fraction.homography translation)) tail ≠ 0) :
-    (Homography.Basic.homographic (Matrix.map GaussianInt.toGaussian (fraction.homography translation)) tail -
+      (Matrix.map toGaussian (fraction.homography translation)) tail ≠ 0) :
+    (Homography.Basic.homographic (Matrix.map toGaussian (fraction.homography translation)) tail -
         fraction.value) *
-        (GaussianInt.toGaussian fraction.denominator * Homography.Basic.denominator
-          (Matrix.map GaussianInt.toGaussian (fraction.homography translation)) tail) = -1 := by
-  let matrix := Matrix.map GaussianInt.toGaussian (fraction.homography translation)
+        (toGaussian fraction.denominator * Homography.Basic.denominator
+          (Matrix.map toGaussian (fraction.homography translation)) tail) = -1 := by
+  let matrix := Matrix.map toGaussian (fraction.homography translation)
   let denominator := Homography.Basic.denominator matrix tail
   let output := Homography.Basic.homographic matrix tail
   have outputPaid : output * denominator = Homography.Basic.numerator matrix tail := by
@@ -124,25 +126,25 @@ theorem homographic_difference_mul_denominators (fraction : Reduced) (translatio
     rewrite [Gaussian.Basic.mul_assoc, Gaussian.Field.inv_eq,
       Gaussian.Field.inv_mul _ poleExcluded, Gaussian.Basic.mul_one]
     rfl
-  have embeddedDeterminant := congrArg GaussianInt.toGaussian (fraction.homography_determinant translation)
+  have embeddedDeterminant := congrArg toGaussian (fraction.homography_determinant translation)
   unfold Matrix.determinant at embeddedDeterminant
-  rewrite [GaussianInt.toGaussian_sub, GaussianInt.toGaussian_mul, GaussianInt.toGaussian_mul,
-    GaussianInt.toGaussian_one] at embeddedDeterminant
+  rewrite [toGaussian_sub, toGaussian_mul, toGaussian_mul,
+    toGaussian_one] at embeddedDeterminant
   calc
-    (output - fraction.value) * (GaussianInt.toGaussian fraction.denominator * denominator) =
-        (output * denominator) * GaussianInt.toGaussian fraction.denominator -
-          (fraction.value * GaussianInt.toGaussian fraction.denominator) * denominator := by
+    (output - fraction.value) * (toGaussian fraction.denominator * denominator) =
+        (output * denominator) * toGaussian fraction.denominator -
+          (fraction.value * toGaussian fraction.denominator) * denominator := by
       apply Gaussian.Basic.ext <;>
         simp only [Gaussian.Basic.sub_re, Gaussian.Basic.sub_im,
           Gaussian.Basic.mul_re, Gaussian.Basic.mul_im] <;> ring1
-    _ = Homography.Basic.numerator matrix tail * GaussianInt.toGaussian fraction.denominator -
-        GaussianInt.toGaussian fraction.numerator * denominator := by
+    _ = Homography.Basic.numerator matrix tail * toGaussian fraction.denominator -
+        toGaussian fraction.numerator * denominator := by
       rewrite [outputPaid, fraction.value_mul_denominator]
       rfl
-    _ = -(GaussianInt.toGaussian (fraction.homography translation).a *
-        GaussianInt.toGaussian (fraction.homography translation).d -
-        GaussianInt.toGaussian (fraction.homography translation).b *
-          GaussianInt.toGaussian (fraction.homography translation).c) := by
+    _ = -(toGaussian (fraction.homography translation).a *
+        toGaussian (fraction.homography translation).d -
+        toGaussian (fraction.homography translation).b *
+          toGaussian (fraction.homography translation).c) := by
       dsimp only [matrix, Homography.Basic.numerator, denominator, Homography.Basic.denominator,
         Matrix.map, homography]
       apply Gaussian.Basic.ext <;>
@@ -156,13 +158,13 @@ theorem homographic_difference_mul_denominators (fraction : Reduced) (translatio
 theorem homographic_distance_mul_denominator_normSq (fraction : Reduced) (translation : GaussianInt)
     (tail : Gaussian.Basic.Canonical)
     (poleExcluded : Homography.Basic.denominator
-      (Matrix.map GaussianInt.toGaussian (fraction.homography translation)) tail ≠ 0) :
+      (Matrix.map toGaussian (fraction.homography translation)) tail ≠ 0) :
     Gaussian.Norm.Basic.normSq
-        (Homography.Basic.homographic (Matrix.map GaussianInt.toGaussian (fraction.homography translation)) tail -
+        (Homography.Basic.homographic (Matrix.map toGaussian (fraction.homography translation)) tail -
           fraction.value) *
-        (Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian fraction.denominator) *
+        (Gaussian.Norm.Basic.normSq (toGaussian fraction.denominator) *
           Gaussian.Norm.Basic.normSq (Homography.Basic.denominator
-            (Matrix.map GaussianInt.toGaussian (fraction.homography translation)) tail)) = 1 := by
+            (Matrix.map toGaussian (fraction.homography translation)) tail)) = 1 := by
   have paid := congrArg Gaussian.Norm.Basic.normSq
     (fraction.homographic_difference_mul_denominators translation tail poleExcluded)
   rewrite [Gaussian.Norm.Basic.normSq_mul, Gaussian.Norm.Basic.normSq_mul,
@@ -177,44 +179,44 @@ shift; no search or repeated fraction reduction is used.
 -/
 def homographyTranslation (fraction : Reduced) (tail : Gaussian.Basic.Canonical)
     (denominatorBound : Fraction.Rational) : GaussianInt :=
-  let target := 1 + denominatorBound / Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian fraction.denominator)
-  GaussianInt.ofNat (Rounding.Floor.ceilNat (max 0 (target - (fraction.homographyOffset tail).re)) + 1)
+  let target := 1 + denominatorBound / Gaussian.Norm.Basic.normSq (toGaussian fraction.denominator)
+  ofNat (Rounding.Floor.ceilNat (max 0 (target - (fraction.homographyOffset tail).re)) + 1)
 
 /-- The computed translation puts the real affine coordinate strictly above its requested target. -/
 private theorem homographyTranslation_re_gt (fraction : Reduced) (tail : Gaussian.Basic.Canonical)
     (denominatorBound : Fraction.Rational) :
-    1 + denominatorBound / Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian fraction.denominator) <
-      (GaussianInt.toGaussian (fraction.homographyTranslation tail denominatorBound) +
+    1 + denominatorBound / Gaussian.Norm.Basic.normSq (toGaussian fraction.denominator) <
+      (toGaussian (fraction.homographyTranslation tail denominatorBound) +
         fraction.homographyOffset tail).re := by
-  let target := 1 + denominatorBound / Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian fraction.denominator)
+  let target := 1 + denominatorBound / Gaussian.Norm.Basic.normSq (toGaussian fraction.denominator)
   let shift := max 0 (target - (fraction.homographyOffset tail).re)
   let integer := Rounding.Floor.ceilNat shift
-  have shiftNonnegative : 0 ≤ shift := Fraction.Order.Basic.le_max_left _ _
+  have shiftNonnegative : 0 ≤ shift := Basic.le_max_left _ _
   have ceilingBound : target - (fraction.homographyOffset tail).re ≤ (integer : Fraction.Rational) :=
-    (Fraction.Order.Basic.le_max_right _ _).trans (Rounding.Floor.le_natCast_ceilNat_of_nonneg shiftNonnegative)
+    (Basic.le_max_right _ _).trans (Rounding.Floor.le_natCast_ceilNat_of_nonneg shiftNonnegative)
   have successorStrict : (integer : Fraction.Rational) < ((integer + 1 : Nat) : Fraction.Rational) :=
     Fraction.Cast.Order.natCast_lt_direct (Nat.lt_add_one_iff.mpr (Nat.le_refl _))
   unfold homographyTranslation
-  rewrite [GaussianInt.toGaussian_ofNat]
+  rewrite [toGaussian_ofNat]
   change target < ((integer + 1 : Nat) : Fraction.Rational) + (fraction.homographyOffset tail).re
   calc
     target = (target - (fraction.homographyOffset tail).re) + (fraction.homographyOffset tail).re := by ring1
     _ < ((integer + 1 : Nat) : Fraction.Rational) + (fraction.homographyOffset tail).re :=
-      Fraction.Order.Arithmetic.add_lt_add_right_direct (ceilingBound.trans_lt successorStrict) _
+      Arithmetic.add_lt_add_right_direct (ceilingBound.trans_lt successorStrict) _
 
 /-- The computed finite translation exceeds every supplied nonnegative denominator-quadrance bound. -/
 theorem homographyTranslation_denominator_normSq_gt (fraction : Reduced) (tail : Gaussian.Basic.Canonical)
     {denominatorBound : Fraction.Rational} (nonnegative : 0 ≤ denominatorBound) :
     denominatorBound < Gaussian.Norm.Basic.normSq (Homography.Basic.denominator
-      (Matrix.map GaussianInt.toGaussian (fraction.homography (fraction.homographyTranslation tail denominatorBound)))
+      (Matrix.map toGaussian (fraction.homography (fraction.homographyTranslation tail denominatorBound)))
         tail) := by
   let translation := fraction.homographyTranslation tail denominatorBound
-  let translated := GaussianInt.toGaussian translation + fraction.homographyOffset tail
-  let denominatorNorm := Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian fraction.denominator)
+  let translated := toGaussian translation + fraction.homographyOffset tail
+  let denominatorNorm := Gaussian.Norm.Basic.normSq (toGaussian fraction.denominator)
   have denominatorPositive : 0 < denominatorNorm :=
     Gaussian.Norm.Basic.normSq_pos fraction.denominatorGaussianNonzero
   have quotientNonnegative : 0 ≤ denominatorBound / denominatorNorm :=
-    Fraction.Order.Field.div_nonneg_direct nonnegative denominatorPositive.le
+    Field.div_nonneg_direct nonnegative denominatorPositive.le
   have oneLeTarget : (1 : Fraction.Rational) ≤ 1 + denominatorBound / denominatorNorm :=
     le_add_of_nonneg_right quotientNonnegative
   have coordinateStrict : 1 + denominatorBound / denominatorNorm < translated.re :=
@@ -225,20 +227,20 @@ theorem homographyTranslation_denominator_normSq_gt (fraction : Reduced) (tail :
     calc
       translated.re = translated.re * 1 := by ring1
       _ ≤ translated.re * translated.re :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (oneLeTarget.trans coordinateStrict.le) coordinatePositive.le
       _ = translated.re ^ 2 := by ring1
   have squareLeNorm : translated.re ^ 2 ≤ Gaussian.Norm.Basic.normSq translated :=
-    le_add_of_nonneg_right (Fraction.Order.Arithmetic.sq_nonneg_direct translated.im)
+    le_add_of_nonneg_right (Arithmetic.sq_nonneg_direct translated.im)
   have quotientStrict : denominatorBound / denominatorNorm < translated.re := by
     calc
       denominatorBound / denominatorNorm < 1 + denominatorBound / denominatorNorm := by
-        have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+        have shifted := Arithmetic.add_lt_add_right_direct
           (by decide : (0 : Fraction.Rational) < 1) (denominatorBound / denominatorNorm)
         simpa only [Fraction.zero_add] using shifted
       _ < translated.re := coordinateStrict
   have factorNorm : Gaussian.Norm.Basic.normSq (Homography.Basic.denominator
-      (Matrix.map GaussianInt.toGaussian (fraction.homography translation)) tail) =
+      (Matrix.map toGaussian (fraction.homography translation)) tail) =
       denominatorNorm * Gaussian.Norm.Basic.normSq translated := by
     rewrite [fraction.homography_denominator_factor, Gaussian.Norm.Basic.normSq_mul]
     rfl
@@ -247,9 +249,9 @@ theorem homographyTranslation_denominator_normSq_gt (fraction : Reduced) (tail :
       rewrite [Fraction.Field.mul_comm, Fraction.Field.div_mul_cancel_of_ne _ _ denominatorPositive.ne']
       rfl
     _ < denominatorNorm * translated.re :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct denominatorPositive quotientStrict
+      Arithmetic.mul_lt_mul_of_pos_left_direct denominatorPositive quotientStrict
     _ ≤ denominatorNorm * Gaussian.Norm.Basic.normSq translated :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (coordinateLeSquare.trans squareLeNorm) denominatorPositive.le
     _ = _ := factorNorm.symm
 
@@ -257,17 +259,17 @@ theorem homographyTranslation_denominator_normSq_gt (fraction : Reduced) (tail :
 theorem homographyTranslation_poleExcluded (fraction : Reduced) (tail : Gaussian.Basic.Canonical)
     {denominatorBound : Fraction.Rational} (nonnegative : 0 ≤ denominatorBound) :
     Homography.Basic.denominator
-      (Matrix.map GaussianInt.toGaussian (fraction.homography (fraction.homographyTranslation tail denominatorBound)))
+      (Matrix.map toGaussian (fraction.homography (fraction.homographyTranslation tail denominatorBound)))
         tail ≠ 0 := by
   have positive := nonnegative.trans_lt (fraction.homographyTranslation_denominator_normSq_gt tail nonnegative)
   intro zero
   rewrite [zero, Gaussian.Norm.Basic.normSq_zero] at positive
-  exact not_lt_of_ge (Fraction.Order.Basic.le_refl 0) positive
+  exact not_lt_of_ge (Basic.le_refl 0) positive
 
 /-- Compute the denominator payment for a spatial distance request and an additional quadrance floor. -/
 @[expose] def placementDenominatorBound (fraction : Reduced)
     (distanceSq denominatorFloor : Fraction.Rational) : Fraction.Rational :=
-  1 + 1 / (Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian fraction.denominator) * distanceSq) + denominatorFloor
+  1 + 1 / (Gaussian.Norm.Basic.normSq (toGaussian fraction.denominator) * distanceSq) + denominatorFloor
 
 /-- Construct one retained integral homography paying the spatial request and denominator floor. -/
 @[expose] def placementHomography (fraction : Reduced) (tail : Gaussian.Basic.Canonical)
@@ -280,9 +282,9 @@ private theorem placementDenominatorBound_pos (fraction : Reduced)
     {distanceSq denominatorFloor : Fraction.Rational}
     (positive : 0 < distanceSq) (floorNonnegative : 0 ≤ denominatorFloor) :
     0 < fraction.placementDenominatorBound distanceSq denominatorFloor := by
-  have denominatorPositive := Fraction.Order.Arithmetic.mul_pos_direct
+  have denominatorPositive := Arithmetic.mul_pos_direct
     (Gaussian.Norm.Basic.normSq_pos fraction.denominatorGaussianNonzero) positive
-  have reciprocalPositive := Fraction.Order.Field.div_pos_direct
+  have reciprocalPositive := Field.div_pos_direct
     (by decide : (0 : Fraction.Rational) < 1) denominatorPositive
   exact ((by decide : (0 : Fraction.Rational) < 1).trans_le
     (le_add_of_nonneg_right reciprocalPositive.le)).trans_le
@@ -292,12 +294,12 @@ private theorem placementDenominatorBound_pos (fraction : Reduced)
 private theorem placementDenominatorBound_gt_distance (fraction : Reduced)
     (distanceSq : Fraction.Rational) {denominatorFloor : Fraction.Rational}
     (floorNonnegative : 0 ≤ denominatorFloor) :
-    1 / (Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian fraction.denominator) * distanceSq) <
+    1 / (Gaussian.Norm.Basic.normSq (toGaussian fraction.denominator) * distanceSq) <
       fraction.placementDenominatorBound distanceSq denominatorFloor := by
-  let cost := 1 / (Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian fraction.denominator) * distanceSq)
+  let cost := 1 / (Gaussian.Norm.Basic.normSq (toGaussian fraction.denominator) * distanceSq)
   calc
     cost = 0 + cost := (Fraction.zero_add _).symm
-    _ < 1 + cost := Fraction.Order.Arithmetic.add_lt_add_right_direct (by decide) _
+    _ < 1 + cost := Arithmetic.add_lt_add_right_direct (by decide) _
     _ ≤ 1 + cost + denominatorFloor := le_add_of_nonneg_right floorNonnegative
 
 /-- The constructed placement homography retains determinant one. -/
@@ -311,7 +313,7 @@ theorem placementHomography_poleExcluded (fraction : Reduced) (tail : Gaussian.B
     {distanceSq denominatorFloor : Fraction.Rational}
     (positive : 0 < distanceSq) (floorNonnegative : 0 ≤ denominatorFloor) :
     Homography.Basic.denominator
-      (Matrix.map GaussianInt.toGaussian (fraction.placementHomography tail distanceSq denominatorFloor)) tail ≠ 0 :=
+      (Matrix.map toGaussian (fraction.placementHomography tail distanceSq denominatorFloor)) tail ≠ 0 :=
   fraction.homographyTranslation_poleExcluded tail
     (fraction.placementDenominatorBound_pos positive floorNonnegative).le
 
@@ -320,18 +322,18 @@ theorem placementHomography_denominator_normSq_gt (fraction : Reduced) (tail : G
     {distanceSq denominatorFloor : Fraction.Rational}
     (positive : 0 < distanceSq) (floorNonnegative : 0 ≤ denominatorFloor) :
     denominatorFloor < Gaussian.Norm.Basic.normSq (Homography.Basic.denominator
-      (Matrix.map GaussianInt.toGaussian (fraction.placementHomography tail distanceSq denominatorFloor)) tail) := by
+      (Matrix.map toGaussian (fraction.placementHomography tail distanceSq denominatorFloor)) tail) := by
   have boundPositive := fraction.placementDenominatorBound_pos positive floorNonnegative
   have denominatorStrict := fraction.homographyTranslation_denominator_normSq_gt tail boundPositive.le
-  have reciprocalPositive := Fraction.Order.Field.div_pos_direct
+  have reciprocalPositive := Field.div_pos_direct
     (by decide : (0 : Fraction.Rational) < 1)
-    (Fraction.Order.Arithmetic.mul_pos_direct
+    (Arithmetic.mul_pos_direct
       (Gaussian.Norm.Basic.normSq_pos fraction.denominatorGaussianNonzero) positive)
   calc
     denominatorFloor = 0 + denominatorFloor := (Fraction.zero_add _).symm
-    _ < (1 + 1 / (Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian fraction.denominator) * distanceSq)) +
+    _ < (1 + 1 / (Gaussian.Norm.Basic.normSq (toGaussian fraction.denominator) * distanceSq)) +
         denominatorFloor :=
-      Fraction.Order.Arithmetic.add_lt_add_right_direct
+      Arithmetic.add_lt_add_right_direct
         ((by decide : (0 : Fraction.Rational) < 1).trans_le
           (le_add_of_nonneg_right reciprocalPositive.le)) _
     _ < _ := denominatorStrict
@@ -346,13 +348,13 @@ theorem placementHomography_distance_lt (fraction : Reduced) (tail : Gaussian.Ba
     (positive : 0 < distanceSq) (floorNonnegative : 0 ≤ denominatorFloor) :
     Gaussian.Norm.Basic.normSq
       (Homography.Basic.homographic
-        (Matrix.map GaussianInt.toGaussian (fraction.placementHomography tail distanceSq denominatorFloor)) tail -
+        (Matrix.map toGaussian (fraction.placementHomography tail distanceSq denominatorFloor)) tail -
           fraction.value) < distanceSq := by
   let denominator := Homography.Basic.denominator
-    (Matrix.map GaussianInt.toGaussian (fraction.placementHomography tail distanceSq denominatorFloor)) tail
-  let denominatorNorm := Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian fraction.denominator)
+    (Matrix.map toGaussian (fraction.placementHomography tail distanceSq denominatorFloor)) tail
+  let denominatorNorm := Gaussian.Norm.Basic.normSq (toGaussian fraction.denominator)
   let displacement := Homography.Basic.homographic
-    (Matrix.map GaussianInt.toGaussian (fraction.placementHomography tail distanceSq denominatorFloor)) tail -
+    (Matrix.map toGaussian (fraction.placementHomography tail distanceSq denominatorFloor)) tail -
       fraction.value
   have poleExcluded := fraction.placementHomography_poleExcluded tail positive floorNonnegative
   have denominatorPositive : 0 < denominatorNorm :=
@@ -360,18 +362,18 @@ theorem placementHomography_distance_lt (fraction : Reduced) (tail : Gaussian.Ba
   have sourceDenominatorPositive : 0 < Gaussian.Norm.Basic.normSq denominator :=
     Gaussian.Norm.Basic.normSq_pos poleExcluded
   have distanceFactorPositive : 0 < denominatorNorm * distanceSq :=
-    Fraction.Order.Arithmetic.mul_pos_direct denominatorPositive positive
+    Arithmetic.mul_pos_direct denominatorPositive positive
   have denominatorStrict : 1 / (denominatorNorm * distanceSq) < Gaussian.Norm.Basic.normSq denominator :=
     (fraction.placementDenominatorBound_gt_distance distanceSq floorNonnegative).trans
       (fraction.homographyTranslation_denominator_normSq_gt tail
         (fraction.placementDenominatorBound_pos positive floorNonnegative).le)
-  have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct denominatorStrict distanceFactorPositive
+  have scaled := Arithmetic.mul_lt_mul_of_pos_right_direct denominatorStrict distanceFactorPositive
   have paid := fraction.homographic_distance_mul_denominator_normSq
     (fraction.homographyTranslation tail (fraction.placementDenominatorBound distanceSq denominatorFloor))
       tail poleExcluded
-  apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+  apply Arithmetic.lt_of_mul_lt_mul_right_direct
     (c := denominatorNorm * Gaussian.Norm.Basic.normSq denominator) _
-    (Fraction.Order.Arithmetic.mul_pos_direct denominatorPositive sourceDenominatorPositive)
+    (Arithmetic.mul_pos_direct denominatorPositive sourceDenominatorPositive)
   calc
     Gaussian.Norm.Basic.normSq displacement * (denominatorNorm * Gaussian.Norm.Basic.normSq denominator) = 1 := paid
     _ = (1 / (denominatorNorm * distanceSq)) * (denominatorNorm * distanceSq) :=

@@ -80,21 +80,21 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Gaussian.Norm.Basic (normSq_nonneg)
 open Purelib.Data.Rat.Fraction.Compatibility
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential} {target : Coordinate} {minimum
     stage fine index : Nat}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
   {plan : PairedSourcePlan occurrence
     other target minimum}
 
@@ -108,15 +108,15 @@ open Purelib.Riemann.Meshes.RectangularObservationMesh (ObservationMesh)
 open Purelib.Integration.Path.ConjugateIncrementComparison (conjugateFirst)
 variable {cuts : GridCuts ((domains.get
   occurrence.sideOccurrence.position).domain occurrence.sideOccurrence.sheet).geometry} {meshBox :
-  Purelib.Geometry.Rational.Box}
+  Geometry.Rational.Box}
   {mesh : ObservationMesh cuts meshBox} {depth : Nat}
 
 section SharedPhysicalPerimeterReadings
 variable (traces : PerimeterTraces mesh)
 
 /-- Keep the side-specific owner readings, including their duplicate junctions. -/
-def Entries (firstBank : PrimitiveData.FacePrimitiveBank differential index domains) (secondBank :
-  PrimitiveData.FacePrimitiveBank other index domains) : GridLiftedDualSteps.GridSide → Type
+def Entries (firstBank : FacePrimitiveBank differential index domains) (secondBank :
+  FacePrimitiveBank other index domains) : GridSide → Type
   | .bottom => SharedPhysicalHorizontalReadings.Data traces.bottom firstBank secondBank
   | .top => SharedPhysicalHorizontalReadings.Data traces.top firstBank secondBank
   | .left => SharedPhysicalVerticalReadings.Data traces.left firstBank secondBank
@@ -124,9 +124,9 @@ def Entries (firstBank : PrimitiveData.FacePrimitiveBank differential index doma
 
 /-- Read both original shared face banks on the selected retained rectangle side, preserving its actual owner junctions.
 -/
-def build (firstBank : PrimitiveData.FacePrimitiveBank differential index domains) (secondBank :
-  PrimitiveData.FacePrimitiveBank other index domains) :
-    (side : GridLiftedDualSteps.GridSide) →
+def build (firstBank : FacePrimitiveBank differential index domains) (secondBank :
+  FacePrimitiveBank other index domains) :
+    (side : GridSide) →
       Entries
       traces firstBank secondBank side
   | .bottom => SharedPhysicalHorizontalReadings.build traces.bottom firstBank secondBank
@@ -135,18 +135,18 @@ def build (firstBank : PrimitiveData.FacePrimitiveBank differential index domain
   | .right => SharedPhysicalVerticalReadings.build traces.right firstBank secondBank
 
 /-- The actual number of steps in the selected retained perimeter trace. -/
-def count : GridLiftedDualSteps.GridSide → Nat
+def count : GridSide → Nat
   | .bottom => traces.bottom.vertices.rest.length
   | .top => traces.top.vertices.rest.length
   | .left => traces.left.vertices.rest.length
   | .right => traces.right.vertices.rest.length
 
 /-- Read the paired original face-bank values at the selected side's retained indexed vertex. -/
-def values (firstBank : PrimitiveData.FacePrimitiveBank differential index domains) (secondBank :
-  PrimitiveData.FacePrimitiveBank other index domains) :
-    (side : GridLiftedDualSteps.GridSide) → Fin
+def values (firstBank : FacePrimitiveBank differential index domains) (secondBank :
+  FacePrimitiveBank other index domains) :
+    (side : GridSide) → Fin
       (count
-      traces side + 1) → Stokes.PrimitivePoint
+      traces side + 1) → PrimitivePoint
   | .bottom, vertex => ⟨SharedPhysicalHorizontalReadings.firstValue traces.bottom firstBank
     (traces.bottom.vertices.indexed vertex),
       SharedPhysicalHorizontalReadings.secondValue traces.bottom secondBank (traces.bottom.vertices.indexed vertex)⟩
@@ -161,10 +161,10 @@ def values (firstBank : PrimitiveData.FacePrimitiveBank differential index domai
       SharedPhysicalVerticalReadings.secondValue traces.right secondBank (traces.right.vertices.indexed vertex)⟩
 
 /-- Reuse the selected side's cached area; this adapter does not sample again. -/
-def original {side : GridLiftedDualSteps.GridSide} (readings :
+def original {side : GridSide} (readings :
   Entries
   traces firstBank secondBank side) :
-    CenteredBilinearPath.Sample (fun vertex => ConjugateIncrementComparison.conjugateFirst
+    Sample (fun vertex => ConjugateIncrementComparison.conjugateFirst
       (values
       traces firstBank secondBank side vertex)) := by
   cases side with
@@ -174,7 +174,7 @@ def original {side : GridLiftedDualSteps.GridSide} (readings :
   | right => exact readings.original
 
 /-- The number of original internal owner junctions on the selected horizontal or vertical mesh side. -/
-def pieceCount (mesh : RectangularObservationMesh.ObservationMesh cuts meshBox) : GridLiftedDualSteps.GridSide → Nat
+def pieceCount (mesh : ObservationMesh cuts meshBox) : GridSide → Nat
   | .bottom | .top => mesh.boundaryColumns
   | .left | .right => mesh.boundaryRows
 

@@ -5,6 +5,7 @@ No original-source baseline reruns; no installed or project artifact writes.
 from pathlib import Path
 import argparse,json,hashlib,os,subprocess,time,concurrent.futures,fcntl,threading,signal
 EXT=['.olean','.olean.server','.olean.private','.ir'];SIX=EXT+['.ilean','.c']
+MODULE_TIMEOUT=120.0;TERMINATION_GRACE=15.0
 HASH_CACHE={}
 def sha(p):
  p=Path(p);st=p.stat();key=(st.st_dev,st.st_ino,st.st_size,st.st_mtime_ns,st.st_ctime_ns)
@@ -26,6 +27,13 @@ def owned(pg):
    if os.getpgid(int(p.name))==pg:total+=next((int(x.split()[1]) for x in (p/'status').read_text().splitlines() if x.startswith('VmRSS:')),0)
   except (FileNotFoundError,ProcessLookupError,PermissionError):pass
  return total
+def group_live(pg):
+ for p in Path('/proc').iterdir():
+  if not p.name.isdigit():continue
+  try:
+   if os.getpgid(int(p.name))==pg and (p/'stat').read_text().rsplit(')',1)[1].split()[0] not in {'Z','X'}:return True
+  except (FileNotFoundError,ProcessLookupError,PermissionError):pass
+ return False
 ap=argparse.ArgumentParser();ap.add_argument('--request',required=True);ap.add_argument('--out',required=True);ap.add_argument('--jobs',type=int,default=4);args=ap.parse_args();assert 1<=args.jobs<=4;request=read(args.request);assert request['root_private_compilation_authorized'] is True
 out=Path(args.out).resolve();assert '/.lake/' in str(out);out.mkdir(parents=True,exist_ok=True);pins=[bind(__file__),bind(args.request),request['host'],request['recovery'],request['contexts'],request['full_import_graph']]+request.get('inputs',[])
 for v in pins:check(v)
@@ -76,16 +84,25 @@ def closure(m):
 def emit(m):
  if stop_event.is_set():raise RuntimeError('Supervisor interrupted; no further jobs launched')
  deps=closure(m);ps={n:dict(ledger[n]) for n in deps};inputs=[{'module':n,'part':e,**ps[n][e]} for n in sorted(ps) for e in EXT];s=source[m];check(s);c=ctx[m];setup={'name':m,'package':c['package'],'isModule':c['isModule'],'imports':None,'importArts':{n:[ps[n][e]['path'] for e in ['.olean','.ir','.olean.server','.olean.private']] for n in sorted(ps)},'options':{},'dynlibs':[],'plugins':[]};key={'source':s,'module':m,'host':request['host'],'setup':setup,'all_import_parts':inputs,'context':c};job=out/'jobs'/Path(m.replace('.','/'))/digest(key);rp=job/'COMPILE.json'
- if (job/'STATE.json').exists():
-  previous=read(job/'STATE.json')
-  if previous.get('worker'):check_previous_group(previous['worker'],job)
+ previous=read(job/'STATE.json') if (job/'STATE.json').exists() else None
  if rp.exists():
   r=read(rp);assert r['key']==key
   if r['exit_code']==0:
+   # A complete terminal receipt is historical evidence, not a live handle.
+   # Preserve its original namespace and validate every input/output before reuse.
+   assert previous is not None and previous['key']==key
+   assert previous['status']=='TERMINAL' and previous['exit_code']==0
+   assert r['status']=='PASS_PRIVATE_COMPLETE_EMISSION_PENDING_DOWNSTREAM_KERNEL_AUDIT'
+   assert r['live_handles']==[] and set(r['parts'])==set(SIX)
+   for v in inputs:check(v)
+   assert sha(check(r['source']))==s['sha256']
+   assert read(check(r['setup']))==setup
    for v in r['parts'].values():check(v)
    print('REUSE',m,flush=True);return m,bind(rp),r
-  if not (job/'STATE.json').exists() or read(job/'STATE.json')['status']!='STOPPED':
-   raise RuntimeError('Preserved prior semantic failure; revise inputs before retry: '+str(rp))
+ if previous is not None and previous.get('worker'):
+  check_previous_group(previous['worker'],job)
+ if rp.exists() and (previous is None or previous['status']!='STOPPED'):
+  raise RuntimeError('Preserved prior semantic failure; revise inputs before retry: '+str(rp))
  state=job/'STATE.json'
  if job.exists():
   if not state.exists():raise RuntimeError('Unrecorded pending directory requires owned-process review: '+str(job))
@@ -106,21 +123,30 @@ def emit(m):
   identity=process_identity(proc.pid);assert identity and identity['pgid']==proc.pid
   put(state,{'key':key,'status':'RUNNING','supervisor':process_identity(os.getpid()),'worker':identity})
   with pgid_lock:active_pgids.add(proc.pid)
-  stopped=False
-  while proc.poll() is None:
+  stopped=False;timed_out=False;kill_deadline=None
+  while True:
+   raw_code=proc.poll()
+   if raw_code is not None and (not stopped or not group_live(proc.pid)):break
    peak=max(peak,owned(proc.pid))
-   if stop_event.is_set() and not stopped:
+   now=time.monotonic()
+   if not stopped and (stop_event.is_set() or now-begin>=MODULE_TIMEOUT):
+    timed_out=now-begin>=MODULE_TIMEOUT
+    if timed_out:print(f'Module {m} exceeded {MODULE_TIMEOUT:g}s; terminating; investigate before retrying',flush=True)
     live=process_identity(proc.pid)
-    if live and live['start_ticks']==identity['start_ticks'] and live['pgid']==proc.pid:os.killpg(proc.pid,signal.SIGTERM)
-    stopped=True
+    if live and live['start_ticks']==identity['start_ticks'] and live['pgid']==proc.pid:
+     try:os.killpg(proc.pid,signal.SIGTERM)
+     except ProcessLookupError:pass
+    stopped=True;kill_deadline=now+TERMINATION_GRACE
+   elif stopped and now>=kill_deadline:
+    try:os.killpg(proc.pid,signal.SIGKILL)
+    except ProcessLookupError:pass
    time.sleep(.15)
   with pgid_lock:active_pgids.discard(proc.pid)
-  code=proc.wait()
- put(state,{'key':key,'status':'STOPPED' if stop_event.is_set() else 'TERMINAL','supervisor':process_identity(os.getpid()),'worker':identity,'exit_code':code})
+  code=124 if timed_out else raw_code
+ put(state,{'key':key,'status':'STOPPED' if stopped else 'TERMINAL','supervisor':process_identity(os.getpid()),'worker':identity,'exit_code':code,'raw_exit_code':raw_code,'timed_out':timed_out})
  for v in inputs:check(v)
- r={'status':'PASS_PRIVATE_COMPLETE_EMISSION_PENDING_DOWNSTREAM_KERNEL_AUDIT' if code==0 else 'FAIL_PRIVATE_EMISSION','key':key,'source':bind(src),'setup':bind(sp),'parts':{e:bind(Path(str(base)+e)) for e in SIX} if code==0 else {},'command':cmd,'exit_code':code,'seconds':time.monotonic()-begin,'whole_owned_PGID_peak_rss_kib':peak,'log':bind(log),'time':bind(job/'compile.time'),'live_handles':[]};put(rp,r);print('EMITTED',m,code,round(r['seconds'],2),peak,flush=True)
+ r={'status':'PASS_PRIVATE_COMPLETE_EMISSION_PENDING_DOWNSTREAM_KERNEL_AUDIT' if code==0 else 'FAIL_PRIVATE_EMISSION','key':key,'source':bind(src),'setup':bind(sp),'parts':{e:bind(Path(str(base)+e)) for e in SIX} if code==0 else {},'command':cmd,'exit_code':code,'raw_exit_code':raw_code,'timed_out':timed_out,'seconds':time.monotonic()-begin,'whole_owned_PGID_peak_rss_kib':peak,'log':bind(log),'time':bind(job/'compile.time'),'live_handles':[]};put(rp,r);print('EMITTED',m,code,round(r['seconds'],2),peak,flush=True)
  if code:raise RuntimeError(str(rp))
- if r['seconds']>60:raise RuntimeError('Diagnose completed >60s module before scheduling more: '+str(rp))
  return m,bind(rp),r
 try:
  with concurrent.futures.ThreadPoolExecutor(max_workers=args.jobs) as pool:

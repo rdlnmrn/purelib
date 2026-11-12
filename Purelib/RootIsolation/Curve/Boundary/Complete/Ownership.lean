@@ -79,7 +79,7 @@ namespace Purelib.RootIsolation.Curve.Boundary.Complete.Ownership
 
 section Boundary
 
-variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
   LinearAlgebra.Coordinates2.Matrix.GaussianMatrix} {current : Box}
 variable {denominatorMargin : Fraction.Rational}
 variable {marginPositive : 0 < denominatorMargin}
@@ -95,7 +95,7 @@ structure ControlledCompleteRequestMeeting
     (pairwise : boxes.Pairwise fun left right => left.Separated right)
     (target : Fraction.Rational)
     (entry : BoundaryCompleteRequestEntry boundary
-      (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target)) where
+      (Control.boundaryControlledRequestWidth boundary boxes pairwise target)) where
   /-- The index of the met box in the original retained family. -/ index : Fin boxes.length
   /-- The exact rational parameter witnessing the controlled child's meeting. -/ parameter : Fraction.Rational
   /-- The witness lies in the original requested child interval. -/ parameterInside : entry.child.cell.interval.Contains
@@ -117,13 +117,13 @@ variable {boxes : List Box}
 variable {pairwise : boxes.Pairwise fun left right => left.Separated right}
 variable {target : Fraction.Rational}
 variable {entry : BoundaryCompleteRequestEntry boundary
-  (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target)}
+  (Control.boundaryControlledRequestWidth boundary boxes pairwise target)}
 
 /-- Any two displayed rational owner meetings of the same retained child
 have the same finite box index. -/
 theorem index_unique
   (targetPositive : 0 < target)
-    (left right : Curve.Boundary.Complete.Ownership.ControlledCompleteRequestMeeting boxes pairwise target
+    (left right : ControlledCompleteRequestMeeting boxes pairwise target
       entry) : left.index = right.index := by
   by_cases same : left.index = right.index
   · exact same
@@ -136,9 +136,9 @@ theorem index_unique
 global target. -/
 theorem residual_lt
   (targetPositive : 0 < target)
-    (meeting : Curve.Boundary.Complete.Ownership.ControlledCompleteRequestMeeting boxes pairwise target
+    (meeting : ControlledCompleteRequestMeeting boxes pairwise target
       entry) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         (p.eval (entry.parent.parent.chart.parameterization.curve.point
           meeting.parameter)) < target :=
   entry.residual_lt_of_inside targetPositive meeting.index meeting.parameter
@@ -155,7 +155,7 @@ theorem
     (targetPositive : 0 < target)
     (targetLe : target ≤
       Dense.Gaussian.Derivative.Separation.Squarefree.derivativeThreshold squarefree ambient)
-    (meeting : Curve.Boundary.Complete.Ownership.ControlledCompleteRequestMeeting boxes pairwise
+    (meeting : ControlledCompleteRequestMeeting boxes pairwise
       target entry) :
     (Dense.Gaussian.GCD.derivative p).eval
         (entry.parent.parent.chart.parameterization.curve.point
@@ -164,7 +164,7 @@ theorem
     meeting.parameter
   have pointInsideAmbient : ambient.Contains point :=
     (boxesRefine meeting.index).contains meeting.pointInside
-  have residualSmall : Data.Gaussian.Norm.Basic.normSq
+  have residualSmall : Gaussian.Norm.Basic.normSq
       (p.eval point) ≤
       Dense.Gaussian.Derivative.Separation.Squarefree.derivativeThreshold squarefree ambient :=
     (meeting.residual_lt targetPositive).le.trans targetLe
@@ -183,7 +183,7 @@ inductive CompleteRequestSampleClassification
     (pairwise : boxes.Pairwise fun left right => left.Separated right)
     (target : Fraction.Rational)
     (entry : BoundaryCompleteRequestEntry boundary
-      (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target))
+      (Control.boundaryControlledRequestWidth boundary boxes pairwise target))
     (sample : NonpoleCompleteRequestSample entry) where
   /-- The actual complete-child sample meets a retained box. -/ | meeting
       (owner : ControlledCompleteRequestMeeting boxes pairwise target entry)
@@ -204,7 +204,7 @@ sample. -/
     (pairwise : boxes.Pairwise fun left right => left.Separated right)
     (target : Fraction.Rational)
     (entry : BoundaryCompleteRequestEntry boundary
-      (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target))
+      (Control.boundaryControlledRequestWidth boundary boxes pairwise target))
     (sample : NonpoleCompleteRequestSample entry) :
     CompleteRequestSampleClassification boxes pairwise target entry sample := by
   let point := entry.parent.parent.chart.parameterization.curve.point
@@ -237,14 +237,14 @@ structure ClassifiedControlledBoundaryChild
     (target : Fraction.Rational) (targetPositive : 0 < target) where
   /-- The original complete boundary child at the common controlled request. -/ entry :
     BoundaryCompleteRequestEntry boundary
-    (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target)
+    (Control.boundaryControlledRequestWidth boundary boxes pairwise target)
   /-- The child belongs to the original complete requested boundary family. -/ member : entry ∈
-    Curve.Boundary.Complete.Control.controlledBoundaryCompleteRequestFamily boundary boxes pairwise target
+    Control.controlledBoundaryCompleteRequestFamily boundary boxes pairwise target
   /-- The original child's box-interaction classification. -/ boxClassification :
-    Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf.BoxClassification entry.child
+    Event.Profile.Complete.Basic.CompleteRequestLeaf.BoxClassification entry.child
   /-- The original child's denominator classification for the retained relation. -/ denominatorClassification :
-    Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf.DenominatorClassification entry.child
-      (Curve.Event.Profile.Complete.Denominator.profileDenominatorRelation entry.parent.event.1)
+    Event.Profile.Complete.Basic.CompleteRequestLeaf.DenominatorClassification entry.child
+      (Event.Profile.Complete.Denominator.profileDenominatorRelation entry.parent.event.1)
   /-- The computed nonpole sample retained for this exact child. -/ sample :
     NonpoleCompleteRequestSample entry
   /-- The classification of this exact retained sample against the original boxes. -/ sampleClassification :
@@ -264,10 +264,10 @@ classification. -/
     {boxes : List Box}
     {pairwise : boxes.Pairwise fun left right => left.Separated right}
     {target : Fraction.Rational} {targetPositive : 0 < target}
-    (child : Curve.Boundary.Complete.Ownership.ClassifiedControlledBoundaryChild boundary boxes pairwise target
+    (child : ClassifiedControlledBoundaryChild boundary boxes pairwise target
       targetPositive) :
-    Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf.AffineClassification child.entry.child :=
-  Curve.Event.Profile.Complete.Classification.CompleteRequestLeaf.BoxClassification.toAffine child.boxClassification
+    Event.Profile.Complete.Basic.CompleteRequestLeaf.AffineClassification child.entry.child :=
+  Event.Profile.Complete.Classification.CompleteRequestLeaf.BoxClassification.toAffine child.boxClassification
 
 end ClassifiedControlledBoundaryChild
 
@@ -281,9 +281,9 @@ child in the complete boundary family. -/
     (target : Fraction.Rational) (targetPositive : 0 < target) :
     List (ClassifiedControlledBoundaryChild boundary boxes pairwise target
       targetPositive) :=
-  (Curve.Boundary.Complete.Control.controlledBoundaryCompleteRequestFamily boundary boxes pairwise target).attach.map
+  (Control.controlledBoundaryCompleteRequestFamily boundary boxes pairwise target).attach.map
     fun attached =>
-      let sample := Curve.Boundary.Complete.Sample.nonpoleCompleteRequestSample attached.1
+      let sample := Sample.nonpoleCompleteRequestSample attached.1
       { entry := attached.1
         member := attached.2
         boxClassification := attached.1.boxClassification targetPositive

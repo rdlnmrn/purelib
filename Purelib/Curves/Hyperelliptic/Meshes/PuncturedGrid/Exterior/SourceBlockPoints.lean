@@ -108,7 +108,7 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
     Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
     Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-    regular domains differential} {target : Normalization.InverseRootPolynomial.Coordinate} {minimum stage fine : Nat}
+    regular domains differential} {target : Coordinate} {minimum stage fine : Nat}
   {box otherBox : Rational.Box}
   {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
   {otherSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
@@ -118,57 +118,57 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockPoints
 
 /-- Axis projection commutes with the original scalar affine interpolation. -/
-private theorem axis_affine (vertical : Bool) (first last : Normalization.InverseRootPolynomial.Gaussian) (parameter :
-  Normalization.InverseRootPolynomial.Coordinate) :
-    Rectangle.SourceIntervals.axisCoordinate vertical (Purelib.Geometry.Rectangle.Partition.PreparedSegmentCuts.point
+private theorem axis_affine (vertical : Bool) (first last : InverseRootPolynomial.Gaussian) (parameter :
+  Coordinate) :
+    Rectangle.SourceIntervals.axisCoordinate vertical (Rectangle.Partition.PreparedSegmentCuts.point
       first last parameter) =
       Rectangle.SourceIntervals.axisCoordinate vertical first + parameter * (Rectangle.SourceIntervals.axisCoordinate
         vertical last - Rectangle.SourceIntervals.axisCoordinate vertical first) := by
   cases vertical <;> rfl
 
 /-- An affine segment whose endpoints share an axis coordinate keeps that coordinate at every parameter. -/
-private theorem axis_constant (vertical : Bool) (first last : Normalization.InverseRootPolynomial.Gaussian) (parameter
-  coordinate : Normalization.InverseRootPolynomial.Coordinate)
+private theorem axis_constant (vertical : Bool) (first last : InverseRootPolynomial.Gaussian) (parameter
+  coordinate : Coordinate)
     (firstEq : Rectangle.SourceIntervals.axisCoordinate vertical first = coordinate) (lastEq :
       Rectangle.SourceIntervals.axisCoordinate vertical last = coordinate) :
-    Rectangle.SourceIntervals.axisCoordinate vertical (Purelib.Geometry.Rectangle.Partition.PreparedSegmentCuts.point
+    Rectangle.SourceIntervals.axisCoordinate vertical (Rectangle.Partition.PreparedSegmentCuts.point
       first last parameter) = coordinate := by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockPoints.axis_affine, firstEq, lastEq]
+  rw [SourceBlockPoints.axis_affine, firstEq, lastEq]
   ring1
 
 /-- Every indexed original parent keeps the containing segment's fixed axis coordinate.
 
 The retained parent membership supplies both original endpoints on that same segment. -/
 theorem indexed_parent_axis_constant (evaluated :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan sample
+  PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan sample
   otherSample fine)
     (index : Fin evaluated.retained.length) (vertical : Bool) (coordinate :
-      Normalization.InverseRootPolynomial.Coordinate)
+      Coordinate)
     (firstEq : Rectangle.SourceIntervals.axisCoordinate vertical occurrence.start = coordinate)
     (lastEq : Rectangle.SourceIntervals.axisCoordinate vertical occurrence.finish = coordinate) (parameter :
-      Normalization.InverseRootPolynomial.Coordinate) :
+      Coordinate) :
     Rectangle.SourceIntervals.axisCoordinate vertical
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+      ((IndexedSourceSplits.indexedEntry evaluated
       index).plan.parent.edge.point parameter) = coordinate := by
-  have member : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+  have member : (IndexedSourceSplits.indexedEntry evaluated
     index).plan.parent ∈ occurrence.compared.entered.cache.parents := by
-    have mapped : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+    have mapped : (IndexedSourceSplits.indexedEntry evaluated
       index).plan.parent ∈ evaluated.retained.map (fun entry => entry.plan.parent) :=
-      Data.List.Map.mem_map.mpr ⟨_, Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry_member
+      Data.List.Map.mem_map.mpr ⟨_, IndexedSourceSplits.indexedEntry_member
         evaluated index, rfl⟩
-    exact Eq.mp (congrArg (fun parents => (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry
+    exact Eq.mp (congrArg (fun parents => (IndexedSourceSplits.indexedEntry
       evaluated index).plan.parent ∈ parents)
-      (Hyperelliptic.Charts.Reciprocal.Disk.PairedSourceRequests.Evaluation.source_parents evaluated)) mapped
+      (Charts.Reciprocal.Disk.PairedSourceRequests.Evaluation.source_parents evaluated)) mapped
   have endpoints := Paths.PreparedSegmentBoundaryGeometry.segment_parent_endpoints occurrence.compared.entered.cache
     member
-  have atSegment (fraction : Normalization.InverseRootPolynomial.Coordinate) : Rectangle.SourceIntervals.axisCoordinate
+  have atSegment (fraction : Coordinate) : Rectangle.SourceIntervals.axisCoordinate
     vertical (occurrence.segment.pointAt fraction) = coordinate := by
     change Rectangle.SourceIntervals.axisCoordinate vertical (Rectangle.Partition.PreparedSegmentCuts.point
       occurrence.start occurrence.finish fraction) = coordinate
-    exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockPoints.axis_constant vertical _ _ fraction coordinate
+    exact SourceBlockPoints.axis_constant vertical _ _ fraction coordinate
       firstEq lastEq
   rw [Integration.PreparedParentSplitting.prepared_point_eq,
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockPoints.axis_affine, endpoints.1, endpoints.2,
+    SourceBlockPoints.axis_affine, endpoints.1, endpoints.2,
     atSegment, atSegment]
   ring1
 
@@ -177,7 +177,7 @@ end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockPoints
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters
 variable {evaluated :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan sample
+  PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan sample
   otherSample fine} {vertical forward : Bool}
   {physical : Rectangle.Partition.PreparedAxisPartitions.Interval}
 
@@ -199,34 +199,34 @@ variable {evaluated :
 theorem first_axis (block : SourceBlockParameters
   evaluated vertical forward physical) :
     Rectangle.SourceIntervals.axisCoordinate vertical
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+      ((IndexedSourceSplits.indexedEntry evaluated
       block.index).plan.parent.edge.point
       (firstParameter block)) =
       physical.lower := by
   rw [Integration.PreparedParentSplitting.prepared_point_eq,
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockPoints.axis_affine]
+    SourceBlockPoints.axis_affine]
   cases forward with
   | true => exact block.parameters.first_eq
   | false =>
     have equal := congrArg Neg.neg block.parameters.last_eq
     change -(-Rectangle.SourceIntervals.axisCoordinate vertical
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+      ((IndexedSourceSplits.indexedEntry evaluated
       block.index).plan.parent.edge.point 0) +
       block.parameters.range.upper * (-Rectangle.SourceIntervals.axisCoordinate vertical
-        ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+        ((IndexedSourceSplits.indexedEntry evaluated
         block.index).plan.parent.edge.point 1) -
         -Rectangle.SourceIntervals.axisCoordinate vertical
-          ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+          ((IndexedSourceSplits.indexedEntry evaluated
           block.index).plan.parent.edge.point 0))) = -(-physical.lower) at equal
     rw [neg_neg] at equal
     exact (show _ = -(-Rectangle.SourceIntervals.axisCoordinate vertical
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+      ((IndexedSourceSplits.indexedEntry evaluated
       block.index).plan.parent.edge.point 0) +
       block.parameters.range.upper * (-Rectangle.SourceIntervals.axisCoordinate vertical
-        ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+        ((IndexedSourceSplits.indexedEntry evaluated
         block.index).plan.parent.edge.point 1) -
         -Rectangle.SourceIntervals.axisCoordinate vertical
-          ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+          ((IndexedSourceSplits.indexedEntry evaluated
           block.index).plan.parent.edge.point 0))) by
       dsimp only
         [firstParameter]; rw
@@ -236,34 +236,34 @@ theorem first_axis (block : SourceBlockParameters
 theorem last_axis (block : SourceBlockParameters
   evaluated vertical forward physical) :
     Rectangle.SourceIntervals.axisCoordinate vertical
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+      ((IndexedSourceSplits.indexedEntry evaluated
       block.index).plan.parent.edge.point
       (lastParameter block)) =
       physical.upper := by
   rw [Integration.PreparedParentSplitting.prepared_point_eq,
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockPoints.axis_affine]
+    SourceBlockPoints.axis_affine]
   cases forward with
   | true => exact block.parameters.last_eq
   | false =>
     have equal := congrArg Neg.neg block.parameters.first_eq
     change -(-Rectangle.SourceIntervals.axisCoordinate vertical
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+      ((IndexedSourceSplits.indexedEntry evaluated
       block.index).plan.parent.edge.point 0) +
       block.parameters.range.lower * (-Rectangle.SourceIntervals.axisCoordinate vertical
-        ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+        ((IndexedSourceSplits.indexedEntry evaluated
         block.index).plan.parent.edge.point 1) -
         -Rectangle.SourceIntervals.axisCoordinate vertical
-          ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+          ((IndexedSourceSplits.indexedEntry evaluated
           block.index).plan.parent.edge.point 0))) = -(-physical.upper) at equal
     rw [neg_neg] at equal
     exact (show _ = -(-Rectangle.SourceIntervals.axisCoordinate vertical
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+      ((IndexedSourceSplits.indexedEntry evaluated
       block.index).plan.parent.edge.point 0) +
       block.parameters.range.lower * (-Rectangle.SourceIntervals.axisCoordinate vertical
-        ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+        ((IndexedSourceSplits.indexedEntry evaluated
         block.index).plan.parent.edge.point 1) -
         -Rectangle.SourceIntervals.axisCoordinate vertical
-          ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+          ((IndexedSourceSplits.indexedEntry evaluated
           block.index).plan.parent.edge.point 0))) by
       dsimp only
         [lastParameter]; rw
@@ -275,11 +275,11 @@ produces descending parameters, without reversing or resampling readings. -/
 @[expose] def traceParameters (block :
   SourceBlockParameters evaluated vertical forward
   physical)
-    (coordinate : Normalization.InverseRootPolynomial.Coordinate)
+    (coordinate : Coordinate)
     (sourceFirst : Rectangle.SourceIntervals.axisCoordinate (!vertical) occurrence.start = coordinate)
     (sourceLast : Rectangle.SourceIntervals.axisCoordinate (!vertical) occurrence.finish = coordinate)
     {lc lr rc rr count : Nat}
-    {lg : Normalization.RectangularInverseModels.Geometry lc lr} {rg : Normalization.RectangularInverseModels.Geometry
+    {lg : RectangularInverseModels.Geometry lc lr} {rg : RectangularInverseModels.Geometry
       rc rr}
     {piece : Paths.RectangularPairedSegments.PairedSegmentPiece lg rg} (trace :
       Integration.RectangularPairedPointBanks.Trace piece count)
@@ -288,17 +288,17 @@ produces descending parameters, without reversing or resampling readings. -/
     (firstAcross : Rectangle.SourceIntervals.axisCoordinate (!vertical) piece.first = coordinate)
     (lastAcross : Rectangle.SourceIntervals.axisCoordinate (!vertical) piece.last = coordinate) :
     Paths.RectangularTraceParameterReadings.ParentParameters trace
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated block.index).plan.parent
+      (IndexedSourceSplits.indexedEntry evaluated block.index).plan.parent
       (firstParameter block)
       (lastParameter block) :=
   Paths.RectangularTraceParameterReadings.ParentParameters.build trace _ _ _
     (Rectangle.SourceIntervals.point_from_axes vertical (firstAlong.trans
       (first_axis block).symm)
-      (firstAcross.trans (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockPoints.indexed_parent_axis_constant
+      (firstAcross.trans (SourceBlockPoints.indexed_parent_axis_constant
         evaluated block.index (!vertical) coordinate sourceFirst sourceLast _).symm))
     (Rectangle.SourceIntervals.point_from_axes vertical (lastAlong.trans
       (last_axis block).symm)
-      (lastAcross.trans (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockPoints.indexed_parent_axis_constant
+      (lastAcross.trans (SourceBlockPoints.indexed_parent_axis_constant
         evaluated block.index (!vertical) coordinate sourceFirst sourceLast _).symm))
 
 /-- A physical block in either orientation consumes its indexed source location
@@ -308,13 +308,13 @@ the owner-aware area comparison are discharged by the retained data. -/
   SourceBlockParameters evaluated vertical forward
   physical)
     (located : Paths.RectangularSegmentRefinement.Subinterval
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.sourceSplit evaluated block.index).split
+      (IndexedSourceSplits.sourceSplit evaluated block.index).split
         block.parameters.range)
-    (coordinate : Normalization.InverseRootPolynomial.Coordinate)
+    (coordinate : Coordinate)
     (sourceFirst : Rectangle.SourceIntervals.axisCoordinate (!vertical) occurrence.start = coordinate)
     (sourceLast : Rectangle.SourceIntervals.axisCoordinate (!vertical) occurrence.finish = coordinate)
     {lc lr rc rr count index : Nat}
-    {lg : Normalization.RectangularInverseModels.Geometry lc lr} {rg : Normalization.RectangularInverseModels.Geometry
+    {lg : RectangularInverseModels.Geometry lc lr} {rg : RectangularInverseModels.Geometry
       rc rr}
     {piece : Paths.RectangularPairedSegments.PairedSegmentPiece lg rg} (trace :
       Integration.RectangularPairedPointBanks.Trace piece count)
@@ -323,12 +323,12 @@ the owner-aware area comparison are discharged by the retained data. -/
     (firstAcross : Rectangle.SourceIntervals.axisCoordinate (!vertical) piece.first = coordinate)
     (lastAcross : Rectangle.SourceIntervals.axisCoordinate (!vertical) piece.last = coordinate)
     (increasing : ∀ edge : Fin count, trace.parameters edge.castSucc ≤ trace.parameters edge.succ)
-    {allowance : Normalization.InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget count
+    {allowance : Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget count
       allowance)
-    (owners : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest occurrence other
+    (owners : PairedOwnerRequest.OwnerRequest occurrence other
       budget.tolerance) (later : owners.index ≤ index)
-    {data : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.FirstData occurrence index} {otherData :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.SecondData occurrence other index}
+    {data : PairedFragmentValues.FirstData occurrence index} {otherData :
+      PairedFragmentValues.SecondData occurrence other index}
     (first : Readings.RectangularPointReadings.PointReadings data.anchors data.offsets (fun vertex => trace.points
       vertex))
     (second : Readings.RectangularPointReadings.PointReadings otherData.anchors otherData.offsets (fun vertex =>
@@ -336,14 +336,14 @@ the owner-aware area comparison are discharged by the retained data. -/
     (owned : Periods.CenteredBilinearPath.Sample
       (fun vertex => (⟨first.values vertex, second.values vertex⟩ : Topology.Polygon.Stokes.PrimitivePoint)))
     (source : Periods.CenteredBilinearPath.Sample (fun vertex =>
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.sourceValues
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated block.index)
+      PairedFragmentValues.sourceValues
+      (IndexedSourceSplits.indexedEntry evaluated block.index)
       ((traceParameters block
         coordinate sourceFirst sourceLast trace firstAlong lastAlong firstAcross lastAcross).parameters vertex))) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.OwnedFragment evaluated data otherData :=
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.OwnedFragment.ofTrace
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated block.index)
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry_member evaluated block.index) located
+    PairedFragmentBlocks.OwnedFragment evaluated data otherData :=
+  PairedFragmentBlocks.OwnedFragment.ofTrace
+    (IndexedSourceSplits.indexedEntry evaluated block.index)
+    (IndexedSourceSplits.indexedEntry_member evaluated block.index) located
     forward
     (traceParameters block
       coordinate sourceFirst sourceLast trace firstAlong lastAlong firstAcross lastAcross)

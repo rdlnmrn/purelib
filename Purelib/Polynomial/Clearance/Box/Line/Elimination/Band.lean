@@ -17,6 +17,8 @@ import Purelib.Geometry.Rational.Box.Band.Basic
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Gaussian.Path.Components
 
+open Purelib.Polynomial.Dense.Gaussian.Path
+
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 open Purelib.Polynomial.Elimination.Axis.Certificate.AxisSafeCuts (AxisEliminationCertificate)
 
@@ -50,10 +52,10 @@ def selectedBandLeftClearance
     {p : CoefficientPolynomial} {degreeBound : Nat}
     (elimination : AxisEliminationCertificate p degreeBound)
     (ambient : Box) (center : Gaussian.Basic.Canonical) {r : Fraction.Rational}
-    (positive : 0 < r) : Clearance.Box.Line.Basic.VerticalLineClearance p ambient
+    (positive : 0 < r) : Basic.VerticalLineClearance p ambient
       (Elimination.Axis.Band.selectedBand elimination center r positive).box.xLower := by
-  apply Clearance.Box.Line.Bezout.verticalOfCoprime p ambient
-  simpa only [Dense.Gaussian.Path.Axis.verticalPathReal, Dense.Gaussian.Path.Axis.verticalPathImag] using
+  apply Bezout.verticalOfCoprime p ambient
+  simpa only [Axis.verticalPathReal, Axis.verticalPathImag] using
     elimination.vertical_coprime _
       (Elimination.Axis.Band.selectedBand_left_nonzero elimination center positive)
 
@@ -65,10 +67,10 @@ def selectedBandRightClearance
     {p : CoefficientPolynomial} {degreeBound : Nat}
     (elimination : AxisEliminationCertificate p degreeBound)
     (ambient : Box) (center : Gaussian.Basic.Canonical) {r : Fraction.Rational}
-    (positive : 0 < r) : Clearance.Box.Line.Basic.VerticalLineClearance p ambient
+    (positive : 0 < r) : Basic.VerticalLineClearance p ambient
       (Elimination.Axis.Band.selectedBand elimination center r positive).box.xUpper := by
-  apply Clearance.Box.Line.Bezout.verticalOfCoprime p ambient
-  simpa only [Dense.Gaussian.Path.Axis.verticalPathReal, Dense.Gaussian.Path.Axis.verticalPathImag] using
+  apply Bezout.verticalOfCoprime p ambient
+  simpa only [Axis.verticalPathReal, Axis.verticalPathImag] using
     elimination.vertical_coprime _
       (Elimination.Axis.Band.selectedBand_right_nonzero elimination center positive)
 
@@ -80,10 +82,10 @@ def selectedBandBottomClearance
     {p : CoefficientPolynomial} {degreeBound : Nat}
     (elimination : AxisEliminationCertificate p degreeBound)
     (ambient : Box) (center : Gaussian.Basic.Canonical) {r : Fraction.Rational}
-    (positive : 0 < r) : Clearance.Box.Line.Basic.HorizontalLineClearance p ambient
+    (positive : 0 < r) : Basic.HorizontalLineClearance p ambient
       (Elimination.Axis.Band.selectedBand elimination center r positive).box.yLower := by
-  apply Clearance.Box.Line.Bezout.horizontalOfCoprime p ambient
-  simpa only [Dense.Gaussian.Path.Axis.horizontalPathReal, Dense.Gaussian.Path.Axis.horizontalPathImag] using
+  apply Bezout.horizontalOfCoprime p ambient
+  simpa only [Axis.horizontalPathReal, Axis.horizontalPathImag] using
     elimination.horizontal_coprime _
       (Elimination.Axis.Band.selectedBand_bottom_nonzero elimination center positive)
 
@@ -95,10 +97,10 @@ def selectedBandTopClearance
     {p : CoefficientPolynomial} {degreeBound : Nat}
     (elimination : AxisEliminationCertificate p degreeBound)
     (ambient : Box) (center : Gaussian.Basic.Canonical) {r : Fraction.Rational}
-    (positive : 0 < r) : Clearance.Box.Line.Basic.HorizontalLineClearance p ambient
+    (positive : 0 < r) : Basic.HorizontalLineClearance p ambient
       (Elimination.Axis.Band.selectedBand elimination center r positive).box.yUpper := by
-  apply Clearance.Box.Line.Bezout.horizontalOfCoprime p ambient
-  simpa only [Dense.Gaussian.Path.Axis.horizontalPathReal, Dense.Gaussian.Path.Axis.horizontalPathImag] using
+  apply Bezout.horizontalOfCoprime p ambient
+  simpa only [Axis.horizontalPathReal, Axis.horizontalPathImag] using
     elimination.horizontal_coprime _
       (Elimination.Axis.Band.selectedBand_top_nonzero elimination center positive)
 end Purelib.Polynomial.Clearance.Box.Line.Elimination.Band

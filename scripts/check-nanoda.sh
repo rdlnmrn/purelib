@@ -20,9 +20,9 @@ for retired in LEAN4EXPORT_BIN NANODA_EXPORT_MODE NANODA_SHARDS NANODA_CHUNK_ROO
   fi
 done
 nanoda_bin=${NANODA_BIN:-}
-if [[ -z "$nanoda_bin" ]]; then
-  nanoda_bin="$repo_root/.external/nanoda/target/release/nanoda_bin"
-  if [[ ! -x "$nanoda_bin" ]]; then nanoda_bin=$(command -v nanoda_bin || true); fi
+stock_checker="$repo_root/.external/nanoda/target/release/nanoda_bin"
+if [[ -z "$nanoda_bin" ]] || { [[ -f "$stock_checker" ]] && cmp -s -- "$nanoda_bin" "$stock_checker"; }; then
+  nanoda_bin=$(bash "$repo_root/scripts/build-nanoda-module-checker.sh")
 fi
 if [[ -z "$nanoda_bin" || ! -x "$nanoda_bin" ]]; then
   printf '%s\n' 'missing nanoda: set NANODA_BIN or build the pinned source under .external/nanoda' >&2

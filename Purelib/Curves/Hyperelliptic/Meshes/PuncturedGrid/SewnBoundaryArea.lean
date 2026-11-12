@@ -128,13 +128,13 @@ open Purelib.Riemann.Periods.PeriodMatrix (standardDifferential)
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {source :
     Differential genus} {boundary :
     BoundaryProgram lifted
     source}
-  {segments : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank boundary.program.period}
+  {segments : PeriodSegmentBanks.SegmentBank boundary.program.period}
     {differential : Fin genus}
   {comparison : PrimitiveBank
     (FaceBank.ofSegments boundary.program segments)
@@ -142,17 +142,17 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {contacts : List (SourceContact
     lifted.mesh.triangulation.faces)}
   {covered : ContactPreparations contacts
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential differential) comparison.domains}
+    (PeriodMatrix.standardDifferential differential) comparison.domains}
 
 set_option genInjectivity false in
 /-- A paid complete boundary-area comparison on the original shared primitive bank.
 
 The original coarse reference supplies the magnitude and assembly profile, while one retained contact request pays all
 cumulative sewing offsets. -/
-structure BoundaryAreaRequest (reference : BoundaryPrimitiveReferences.BoundaryReference boundary comparison covered)
-  (target : InverseRootPolynomial.Coordinate) (floor : Nat) where
+structure BoundaryAreaRequest (reference : BoundaryReference boundary comparison covered)
+  (target : Coordinate) (floor : Nat) where
   /-- The retained full-path area budget on the original assembly, boundary count and coarse magnitude. -/ budget :
-    SewnPathAreaRequests.PathAreaRequest lifted.cutPolygon.patch.assembly boundary.count
+    PathAreaRequest lifted.cutPolygon.patch.assembly boundary.count
     (2 * reference.reference.locals.profile.total) target
   /-- The covered contact request above both the caller floor and original boundary-reference stage. -/ contactRequest :
     ContactPreparations.Request covered budget.path.tolerance
@@ -167,9 +167,9 @@ variable {reference : BoundaryReference
 
 /-- Reuse the original boundary reference and assembly profile to prepare the requested full cumulative area comparison.
 -/
-def build (reference : BoundaryPrimitiveReferences.BoundaryReference boundary comparison covered) (target :
-  InverseRootPolynomial.Coordinate) (positive : 0 < target)
-    (floor : Nat) : Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnBoundaryArea.BoundaryAreaRequest reference target
+def build (reference : BoundaryReference boundary comparison covered) (target :
+  Coordinate) (positive : 0 < target)
+    (floor : Nat) : BoundaryAreaRequest reference target
       floor :=
   let budget := PathAreaRequest.ofProfile reference.reference.path.profile reference.reference.path.profile_eq
     boundary.count (2 * reference.reference.locals.profile.total) target
@@ -178,25 +178,25 @@ def build (reference : BoundaryPrimitiveReferences.BoundaryReference boundary co
     (max floor reference.reference.contactRequest.index)⟩
 
 /-- The retained boundary-area contact request meets the original caller floor. -/
-theorem floor_le (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnBoundaryArea.BoundaryAreaRequest reference
+theorem floor_le (request : BoundaryAreaRequest reference
   target floor) : floor ≤ request.contactRequest.index :=
   (Nat.Order.le_max_left _ _).trans request.contactRequest.floor_le
 
 /-- Any stage paying the retained area request also pays the original boundary reference. -/
-theorem reference_later (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnBoundaryArea.BoundaryAreaRequest
+theorem reference_later (request : BoundaryAreaRequest
   reference target floor) {index : Nat}
     (later : request.contactRequest.index ≤ index) : reference.reference.contactRequest.index ≤ index :=
   (Nat.Order.le_max_right _ _).trans (request.contactRequest.floor_le.trans later)
 
 /-- The actual cached sewn and source path areas satisfy the original target at every paid contact stage. -/
-theorem accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnBoundaryArea.BoundaryAreaRequest reference
+theorem accurate (request : BoundaryAreaRequest reference
   target floor) {index : Nat}
     (later : request.contactRequest.index ≤ index)
-    {shared : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index comparison.domains}
-    (triangles : TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh) (surface :
+    {shared : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index comparison.domains}
+    (triangles : TriangleReadings shared lifted.mesh) (surface :
       SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch triangles.values)
-    (area : PathSources.Sample.AreaSample
-      (CachedSample.pathSample surface boundary.sources)) : Data.Gaussian.Norm.Basic.normSq (area.sewn.area -
+    (area : AreaSample
+      (CachedSample.pathSample surface boundary.sources)) : Gaussian.Norm.Basic.normSq (area.sewn.area -
         area.source.area) < target := by
   have locallyAccurate := request.contactRequest.localAccuracy_of_coverage reference.reference.coverage le_rfl
     later triangles surface.sewn.readings
@@ -206,14 +206,14 @@ theorem accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnBounda
 
 /-- This is the cached area consumed by the cut-word and period formula, compared to the full polygon of the very same
 shared source increments. -/
-theorem boundary_accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnBoundaryArea.BoundaryAreaRequest
+theorem boundary_accurate (request : BoundaryAreaRequest
   reference target floor) {index : Nat}
     (later : request.contactRequest.index ≤ index)
-    {shared : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index comparison.domains}
-    (triangles : TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh) (surface :
+    {shared : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index comparison.domains}
+    (triangles : TriangleReadings shared lifted.mesh) (surface :
       SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch triangles.values)
-    (area : PathSources.Sample.AreaSample
-      (CachedSample.pathSample surface boundary.sources)) : Data.Gaussian.Norm.Basic.normSq
+    (area : AreaSample
+      (CachedSample.pathSample surface boundary.sources)) : Gaussian.Norm.Basic.normSq
         (surface.boundaryArea - area.source.area) < target := by
   rw [← CachedSample.boundary_pathArea surface boundary.sources area]
   exact request.accurate later triangles surface area
@@ -221,12 +221,12 @@ theorem boundary_accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.S
 /-- The actual sewn boundary area agrees with the full polygon of its original shared source increments within the
 retained target. -/
 theorem source_polygon_accurate (request :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnBoundaryArea.BoundaryAreaRequest reference target floor) {index : Nat}
+  BoundaryAreaRequest reference target floor) {index : Nat}
     (later : request.contactRequest.index ≤ index)
-    {shared : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index comparison.domains}
-    (triangles : TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh) (surface :
+    {shared : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index comparison.domains}
+    (triangles : TriangleReadings shared lifted.mesh) (surface :
       SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch triangles.values) :
-    Data.Gaussian.Norm.Basic.normSq (surface.boundaryArea - IncrementArea.pathArea
+    Gaussian.Norm.Basic.normSq (surface.boundaryArea - IncrementArea.pathArea
       (boundary.sources.sources.map (fun source => source.increment triangles.values))) < target := by
   let area := AreaSample.build
     (CachedSample.pathSample surface boundary.sources)

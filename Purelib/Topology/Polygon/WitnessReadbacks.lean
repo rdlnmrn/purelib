@@ -7,6 +7,8 @@ public import Purelib.Topology.Surface.Sewing.VertexSewing
 public import Purelib.Polynomial.Geometry.Grid.CellBoundary
 import Purelib.Tactic.Ring
 
+open Purelib.Topology.Surface.Sewing.VertexSewing
+
 open Purelib
 
 public section
@@ -26,7 +28,7 @@ open Purelib.Polynomial.Geometry.Grid.CellBoundary (sumValues)
 theorem mapped_area {source target : Nat} (labels : Fin source → Fin target)
     (primitive : Fin target → PrimitivePoint) (edges : List (OrientedEdge source)) :
     edgeListArea (fun vertex => primitive (labels vertex)) edges = edgeListArea primitive (edges.map
-      (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map labels)) := by
+      (OrientedEdge.map labels)) := by
   induction edges with
   | nil => rfl
   | cons edge tail ih => exact congrArg (_ + ·) ih
@@ -35,7 +37,7 @@ theorem mapped_area {source target : Nat} (labels : Fin source → Fin target)
 theorem reverse_area {count : Nat} (primitive : Fin count → PrimitivePoint) (edges : List (OrientedEdge count)) :
     edgeListArea primitive (edges.map OrientedEdge.reverse) = -edgeListArea primitive edges := by
   induction edges with
-  | nil => exact (neg_zero : -(0 : Data.Gaussian.Basic.Canonical) = 0).symm
+  | nil => exact (neg_zero : -(0 : Canonical) = 0).symm
   | cons edge tail ih =>
       change edgeArea (primitive edge.finish) (primitive edge.start) + _ = -(edgeArea _ _ + _)
       rw [edgeArea_reverse, ih]
@@ -48,7 +50,7 @@ Flattening preserves each original face boundary in order, and the area readback
 theorem triangles_area {count : Nat} (primitive : Fin count → PrimitivePoint) (triangles : List (OrientedTriangle
   count)) :
     edgeListArea primitive (triangles.flatMap OrientedTriangle.boundary) =
-      Polynomial.Geometry.Grid.CellBoundary.sumValues (fun triangle => edgeListArea primitive triangle.boundary)
+      sumValues (fun triangle => edgeListArea primitive triangle.boundary)
         triangles := by
   induction triangles with
   | nil => rfl
@@ -60,21 +62,21 @@ The original vertex relabeling acts on the same ordered face boundaries; the sum
 theorem projected_triangles {source target : Nat} (labels : Fin source → Fin target)
     (primitive : Fin target → PrimitivePoint) (triangles : List (OrientedTriangle source)) :
     edgeListArea (fun vertex => primitive (labels vertex)) (triangles.flatMap OrientedTriangle.boundary) =
-      Polynomial.Geometry.Grid.CellBoundary.sumValues (fun triangle => edgeListArea primitive
-        (Topology.Surface.Sewing.VertexSewing.OrientedTriangle.map labels triangle).boundary) triangles := by
+      sumValues (fun triangle => edgeListArea primitive
+        (OrientedTriangle.map labels triangle).boundary) triangles := by
   induction triangles with
   | nil => rfl
   | cons triangle tail ih =>
-      rw [Data.List.Flatten.flatMap_cons, edgeListArea_append, Polynomial.Geometry.Grid.CellBoundary.sumValues, ih,
-        mapped_area, Topology.Surface.Sewing.VertexSewing.OrientedTriangle.boundary_map]
+      rw [Data.List.Flatten.flatMap_cons, edgeListArea_append, sumValues, ih,
+        mapped_area, OrientedTriangle.boundary_map]
 
 /-- Vertex labels act on the supplied occurrence witness, preserving its signs. -/
 theorem mapped_incidence_area {source target : Nat} (labels : Fin source → Fin target)
     (primitive : Fin target → PrimitivePoint) {left right : List (OrientedEdge source)}
     (incidence : EdgeReordering left right) :
-    edgeListArea primitive (left.map (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map labels)) =
-      edgeListArea primitive (right.map (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map labels)) :=
-  edgeListArea_reordering primitive (Topology.Surface.Sewing.VertexSewing.EdgeReordering.map labels incidence)
+    edgeListArea primitive (left.map (OrientedEdge.map labels)) =
+      edgeListArea primitive (right.map (OrientedEdge.map labels)) :=
+  edgeListArea_reordering primitive (EdgeReordering.map labels incidence)
 
 namespace Triangulation
 
@@ -90,17 +92,17 @@ theorem incidence_readback {vertexCount faceCount : Nat}
 theorem mapped_incidence_readback {vertexCount faceCount target : Nat}
     (triangulation : Triangulation vertexCount faceCount) (labels : Fin vertexCount → Fin target) :
     EdgeReordering
-      ((triangleEdgeOccurrences triangulation.faces).map (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map labels))
+      ((triangleEdgeOccurrences triangulation.faces).map (OrientedEdge.map labels))
       ((triangulation.boundary ++ pairedEdgeOccurrences triangulation.internalEdges).map
-        (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map labels)) :=
-  Topology.Surface.Sewing.VertexSewing.EdgeReordering.map labels triangulation.incidence
+        (OrientedEdge.map labels)) :=
+  EdgeReordering.map labels triangulation.incidence
 
 /-- Displayed internal occurrences still cancel after relabeling. -/
 theorem mapped_internal_readback {vertexCount faceCount target : Nat}
     (triangulation : Triangulation vertexCount faceCount) (labels : Fin vertexCount → Fin target)
     (primitive : Fin target → PrimitivePoint) :
     edgeListArea primitive ((pairedEdgeOccurrences triangulation.internalEdges).map
-      (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map labels)) = 0 := by
+      (OrientedEdge.map labels)) = 0 := by
   rw [← mapped_area]
   exact pairedEdgeOccurrences_area_zero _ triangulation.internalEdges
 
@@ -110,8 +112,8 @@ theorem mapped_boundary_readback {vertexCount faceCount target : Nat}
     (primitive : Fin target → PrimitivePoint) :
     triangleWedgeSum (fun vertex => primitive (labels vertex)) triangulation.faces =
       edgeListArea primitive (triangulation.boundary.map
-        (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map labels)) :=
-  (Topology.Polygon.Stokes.Triangulation.wedgeSum_eq_boundaryArea triangulation
+        (OrientedEdge.map labels)) :=
+  (Triangulation.wedgeSum_eq_boundaryArea triangulation
     (fun vertex => primitive (labels vertex))).trans (mapped_area labels primitive triangulation.boundary)
 
 end Triangulation

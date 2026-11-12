@@ -1,4 +1,6 @@
 module
+
+import Purelib.Data.Rat.Fraction
 import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Polynomial.Dense.Gaussian.Squarefree.Basic
@@ -53,12 +55,21 @@ section Runs
 variable {state : Exact.State.IsolationState p ambient}
 end Runs
 
+/-- Symmetric-square isolation is the complete original run on its same named clear region. -/
+theorem symmetric_eq {radius : Data.Rat.Fraction.Rational}
+    (radiusLe : Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ≤ radius)
+    (request : Option Data.Rat.Fraction.Rational := none) :
+    LargeSquare.isolateSymmetric degreeAtLeastTwo squarefree elimination radiusLe request =
+      Build.isolateFromRegion degreeAtLeastTwo squarefree elimination
+        (Region.symmetricRegion degreeAtLeastTwo radiusLe) p.natDegree
+        (Region.symmetricRegion_winding degreeAtLeastTwo radiusLe) request := (rfl)
+
 /-- The original large-square isolation is exactly isolation from its named coefficient-computed clear region. -/
-theorem largeSquare_eq :
-    Exact.LargeSquare.isolateLargeSquare degreeAtLeastTwo squarefree elimination =
+theorem largeSquare_eq (request : Option Data.Rat.Fraction.Rational := none) :
+    Exact.LargeSquare.isolateLargeSquare degreeAtLeastTwo squarefree elimination request =
       Exact.Build.isolateFromRegion degreeAtLeastTwo squarefree elimination
         (Exact.LargeSquare.Region.largeSquareRegion degreeAtLeastTwo) p.natDegree
-          (Exact.LargeSquare.Region.largeSquareRegion_winding degreeAtLeastTwo) := rfl
+          (Exact.LargeSquare.Region.largeSquareRegion_winding degreeAtLeastTwo) request := rfl
 
 end Purelib.RootIsolation.Exact.LargeSquare.Replay
 

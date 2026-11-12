@@ -17,6 +17,8 @@ import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms
 import Purelib.Curves.Hyperelliptic.Meshes.Newton.Regular.OriginalRawLower
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
+
 public section
 
 /-! Construct every auxiliary owner for regular raw coercivity from the
@@ -42,14 +44,14 @@ open Purelib.LinearAlgebra.Gaussian.Energy (unnormalizedEnergyForm)
 open Purelib.Riemann.Periods.PeriodMatrix (sampledMatrix)
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin
+    BasedBranchBank lifted} {sheet : Fin
     2}
-  {ordered : Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank
-    sheet} {paired : Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered}
+  {ordered : Ordered bank
+    sheet} {paired : Paired ordered}
 
 open Purelib.Curves in
 open Purelib.Data in
@@ -58,7 +60,7 @@ set_option genInjectivity false in
 
 The record keeps the original corrected period preparation, observation and Newton owners, reciprocal geometry, request
 and exact positive lower constant. -/
-structure AutomaticRegularRaw (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+structure AutomaticRegularRaw (prepared : Prepared paired)
   (floor : Nat) where
   /-- The curve has the intrinsic even degree for the given genus. -/ degree : curve.polynomial.natDegree = 2 * genus +
     2
@@ -66,15 +68,15 @@ structure AutomaticRegularRaw (prepared : Hyperelliptic.Meshes.PuncturedGrid.Pai
     base.bank.toBranchCellBank
   /-- The retained Newton preparation of that same bank. -/ preparation : NewtonPreparation base.bank.toBranchCellBank
   /-- The reciprocal exterior collar for the original curve. -/ collar :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve
+    ReciprocalExteriorCollar.Data curve
   /-- The retained reciprocal inner inverse on that collar. -/ cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar
+    ReciprocalInnerInverse.Data curve collar
   /-- The regularity bounds for the retained reciprocal cap. -/ regular :
-    Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap
+    Disk.RegularBounds.Data cap
   /-- The regular raw request using these exact retained owners and floor. -/ request :
-    Hyperelliptic.Meshes.Newton.Regular.OriginalRawRequest.RegularOriginalRawRequest prepared observations preparation 1
+    RegularOriginalRawRequest prepared observations preparation 1
     regular floor
-  /-- The retained raw-energy lower constant. -/ lower : Rat.Fraction.Rational
+  /-- The retained raw-energy lower constant. -/ lower : Rational
   /-- The lower constant is half the original observation surface constant. -/ lower_eq : lower = surfaceLowerConstant
     observations / 2
   /-- The retained raw-energy lower constant is strictly positive. -/ lower_positive : 0 < lower
@@ -89,20 +91,20 @@ open Purelib.Data in
 
 Use the original corrected period preparation and even-degree equation, retaining the generated observation, Newton and
 reciprocal data and their positive lower constant. -/
-@[expose] def build (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired) (degree :
+@[expose] def build (prepared : Prepared paired) (degree :
   curve.polynomial.natDegree = 2 * genus + 2) (floor : Nat) :
     AutomaticRegularRaw prepared floor :=
   let observations := ProtectedObservations.build base.bank.toBranchCellBank
   let preparation := NewtonPreparation.build base.bank.toBranchCellBank
-  let collar := Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data.build curve
-  let cap := Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data.build curve collar 0
-  let regular := Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data.build cap
-  let request := Hyperelliptic.Meshes.Newton.Regular.OriginalRawRequest.RegularOriginalRawRequest.build prepared
+  let collar := ReciprocalExteriorCollar.Data.build curve
+  let cap := ReciprocalInnerInverse.Data.build curve collar 0
+  let regular := Disk.RegularBounds.Data.build cap
+  let request := RegularOriginalRawRequest.build prepared
     observations preparation 1 regular (by decide) floor
   ⟨degree, observations, preparation, collar, cap, regular, request, surfaceLowerConstant observations / 2, rfl,
-    Rat.Fraction.Order.Field.div_pos_direct (surfaceLowerConstant_positive observations) (by decide)⟩
+    Fraction.Order.Field.div_pos_direct (surfaceLowerConstant_positive observations) (by decide)⟩
 
-variable {prepared : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired} {floor : Nat}
+variable {prepared : Prepared paired} {floor : Nat}
 
 open Purelib.Riemann in
 open Purelib.LinearAlgebra in
@@ -110,9 +112,9 @@ open Purelib.LinearAlgebra in
 
 The bound uses the exact retained positive lower constant and the original prepared A and B period matrices. -/
 theorem accurate (data : AutomaticRegularRaw prepared floor) (first : Fin genus) (stage : Nat)
-    (later : data.request.index ≤ stage) (coefficients : Purelib.LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
+    (later : data.request.index ≤ stage) (coefficients : Gaussian.Energy.GaussianVector genus) :
     data.lower * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ≤
-      Gaussian.Energy.unnormalizedEnergyForm coefficients
+      unnormalizedEnergyForm coefficients
         (sampledMatrix prepared.periodData.aMatrix stage) (sampledMatrix prepared.periodData.bMatrix stage) := by
   rw [data.lower_eq]
   exact data.request.lower stage first data.degree later coefficients

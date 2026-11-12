@@ -111,68 +111,68 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartRefinementArea.Are
 open Purelib.Riemann.RootContinuation
 open Purelib.Integration.Path.BoundaryRibbon (area)
 
-variable {genus count otherCount : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-  {differential : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {parent otherParent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {otherPatch :
-    Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch otherParent}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {otherData :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
-  {edge otherEdge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge}
-  {cell : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge} {otherCell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell otherData otherEdge}
-  {owners : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.OwnedEndpoints regular cell}
-  {otherOwners : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.OwnedEndpoints regular otherCell}
-  {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell} {otherComparison :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular otherCell}
-  {target otherTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor otherFloor joinFloor :
+variable {genus count otherCount : Nat} {curve : HyperellipticCurve genus}
+  {differential : Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap}
+  {parent otherParent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {otherPatch :
+    PreparedPatch otherParent}
+  {data : UniformReciprocalModels.Data patch count} {otherData :
+    UniformReciprocalModels.Data otherPatch otherCount}
+  {edge otherEdge : ParameterEdge}
+  {cell : Cell data edge} {otherCell :
+    Cell otherData otherEdge}
+  {owners : OwnedEndpoints regular cell}
+  {otherOwners : OwnedEndpoints regular otherCell}
+  {comparison : Data regular cell} {otherComparison :
+    Data regular otherCell}
+  {target otherTarget : Coordinate} {floor otherFloor joinFloor :
     Nat}
   {index depth otherDepth stage otherStage minimum otherMinimum : Nat} {box :
-    Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {source : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
-    {otherSource : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive otherData
+    Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {source : SourcePrimitive data index}
+    {otherSource : SourcePrimitive otherData
     index}
-  {request : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartAreaRequest.AreaRequest comparison owners target
-    floor} {otherRequest : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartAreaRequest.AreaRequest
+  {request : AreaRequest comparison owners target
+    floor} {otherRequest : AreaRequest
     otherComparison otherOwners otherTarget otherFloor}
-  {charts : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexTree.ChartMesh request.mesh capSample minimum}
-    {otherCharts : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexTree.ChartMesh otherRequest.mesh capSample
+  {charts : ChartMesh request.mesh capSample minimum}
+    {otherCharts : ChartMesh otherRequest.mesh capSample
     otherMinimum}
-  {original : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentCells.ComparedCell comparison source capSample
+  {original : ComparedCell comparison source capSample
     depth}
-  {otherOriginal : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentCells.ComparedCell otherComparison
+  {otherOriginal : ComparedCell otherComparison
     otherSource capSample otherDepth}
-  {joined : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Join owners.last otherOwners.first}
+  {joined : Join owners.last otherOwners.first}
 
 namespace AreaRequest.Evaluation
 
 /-- Use the original endpoint owners to pay the homogeneous connector. The joining edge remains present even when the
 larger path closes. -/
-theorem join_basis_radial_close (first : AreaRequest.Evaluation charts original stage) (last : AreaRequest.Evaluation
+theorem join_basis_radial_close (first : Evaluation charts original stage) (last : Evaluation
   otherCharts otherOriginal otherStage)
-    {joinTarget : InverseRootPolynomial.Coordinate} {bounds : ReciprocalPaddedInverse.UniformBounds regular.padded}
-    {basis : ReciprocalPaddedBasisBounds.BasisBounds bounds}
-    (joinRequest : JunctionRequests.BasisRequest basis joined joinTarget joinFloor)
-    (polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box) (coefficients :
-      LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    {joinTarget : Coordinate} {bounds : UniformBounds regular.padded}
+    {basis : BasisBounds bounds}
+    (joinRequest : BasisRequest basis joined joinTarget joinFloor)
+    (polynomials : RegularBasisPolynomials cap index box) (coefficients :
+      GaussianVector genus)
     (branch : HyperellipticReciprocal.originOrder curve = 1) (later : joinRequest.index ≤ stage)
     (otherLater : joinRequest.index ≤ otherStage) (energyDepth : Nat) :
     Data.Gaussian.Norm.Basic.normSq (RootRadialGeometry.radialArea (polynomials.value coefficients) energyDepth
       last.vertices.first.root.coordinate -
       RootRadialGeometry.radialArea (polynomials.value coefficients) energyDepth first.vertices.last.root.coordinate -
-      BoundaryRibbon.area (polynomials.value coefficients first.vertices.last.root.coordinate)
+      area (polynomials.value coefficients first.vertices.last.root.coordinate)
         (polynomials.value coefficients last.vertices.first.root.coordinate)) ≤ joinTarget *
-          (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
+          (coefficientNormSq coefficients)^2 := by
   let left := ReadingView.ofEqual first.last_owner first.vertices.last.root
   let right := ReadingView.ofEqual last.first_owner last.vertices.first.root
   have leftEq : left.reading.coordinate = first.vertices.last.root.coordinate := ReadingView.coordinate_eq _ _
   have rightEq : right.reading.coordinate = last.vertices.first.root.coordinate := ReadingView.coordinate_eq _ _
-  have leftInside := Evaluation.square_inside request branch first.vertices.last
-  have rightInside := Evaluation.square_inside otherRequest branch last.vertices.first
+  have leftInside := square_inside request branch first.vertices.last
+  have rightInside := square_inside otherRequest branch last.vertices.first
   rw [← leftEq] at leftInside
   rw [← rightEq] at rightInside
   have close := joinRequest.radial_accurate polynomials coefficients left.reading right.reading branch

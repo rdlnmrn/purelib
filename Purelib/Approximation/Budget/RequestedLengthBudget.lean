@@ -44,9 +44,9 @@ set_option genInjectivity false in
 /-- A finite length-error budget whose tolerance is at most the displayed request target.
 
 The original trace count and total length allowance remain indices of the retained budget. -/
-structure Requested (count : Nat) (allowance target : CenteredBilinearPath.Coordinate) where
+structure Requested (count : Nat) (allowance target : Coordinate) where
   /-- The retained length-error budget with the original trace count and allowance. -/ budget :
-    NoisyPathArea.LengthErrorBudget count allowance
+    LengthErrorBudget count allowance
   /-- The retained budget's tolerance does not exceed the displayed request target. -/ tolerance_le : budget.tolerance ≤
     target
 
@@ -56,22 +56,22 @@ constructive_injectivity Requested
 
 The padding is reduced by the original allowance, one, and the positive target, while preserving the original trace
 count and total payment bound. -/
-@[expose] def requested (count : Nat) (allowance target : CenteredBilinearPath.Coordinate)
+@[expose] def requested (count : Nat) (allowance target : Coordinate)
     (allowancePositive : 0 < allowance) (targetPositive : 0 < target) :
-      Approximation.Budget.RequestedLengthBudget.Requested count allowance target := by
-  let original := LengthErrorBudget.build count allowance allowancePositive
+      Requested count allowance target := by
+  let original := build count allowance allowancePositive
   let padding := min original.padding (min 1 target)
-  have paddingPositive : 0 < padding := Purelib.Data.Rat.Fraction.Order.Basic.lt_min original.padding_positive
-    (Purelib.Data.Rat.Fraction.Order.Basic.lt_min (by decide) targetPositive)
-  have originalBound : padding ≤ original.padding := Purelib.Data.Rat.Fraction.Order.Basic.min_le_left ..
-  have unitBound : padding ≤ 1 := (Purelib.Data.Rat.Fraction.Order.Basic.min_le_right ..).trans
-    (Purelib.Data.Rat.Fraction.Order.Basic.min_le_left ..)
-  have targetBound : padding ≤ target := (Purelib.Data.Rat.Fraction.Order.Basic.min_le_right ..).trans
-    (Purelib.Data.Rat.Fraction.Order.Basic.min_le_right ..)
+  have paddingPositive : 0 < padding := Fraction.Order.Basic.lt_min original.padding_positive
+    (Fraction.Order.Basic.lt_min (by decide) targetPositive)
+  have originalBound : padding ≤ original.padding := Fraction.Order.Basic.min_le_left ..
+  have unitBound : padding ≤ 1 := (Fraction.Order.Basic.min_le_right ..).trans
+    (Fraction.Order.Basic.min_le_left ..)
+  have targetBound : padding ≤ target := (Fraction.Order.Basic.min_le_right ..).trans
+    (Fraction.Order.Basic.min_le_right ..)
   have squareBound : padding^2 ≤ padding := by
     have bounded := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct unitBound paddingPositive.le
     simpa only [-eq_self, -iff_self, pow_two, mul_one] using bounded
-  let budget : NoisyPathArea.LengthErrorBudget count allowance :=
+  let budget : LengthErrorBudget count allowance :=
     ⟨padding, paddingPositive,
       (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct originalBound (Fraction.Cast.Order.natCast_le_direct
         (Nat.zero_le count))).trans original.paid,

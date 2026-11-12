@@ -130,32 +130,32 @@ open Purelib.Riemann.Normalization
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
 open Purelib.Integration.Polynomial.Rectangle.StitchedSideAreas (Entry)
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve branches
     higher}
-  {preparation : NewtonPreparation original} {target radius : Data.Rat.Fraction.Rational} {grid : NewtonGrid preparation
+  {preparation : NewtonPreparation original} {target radius : Rational} {grid : NewtonGrid preparation
     target radius}
   {lifted : LiftedPuncturedGrid grid.punctured} {domains :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
+    FaceDomainBank lifted.frames grid.faces.regulars}
   {stage : Nat} {cache : Numerics domains stage}
   {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
     Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
   {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {fixed : (sheet : Fin 2) → Preflights domains sheet} {surfaceTarget physicalTarget : Data.Rat.Fraction.Rational}
+  {fixed : (sheet : Fin 2) → Preflights domains sheet} {surfaceTarget physicalTarget : Rational}
   {minimum floor coarseDepth : Nat}
-  {basis : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalBasisRequest regular domains
+  {basis : PhysicalBasisRequest regular domains
     physicalTarget minimum floor}
   {observations : ProtectedObservations original} {partitions : SurfacePartitions observations grid}
   (shared : SharedExteriorCuts partitions basis.preparations)
-  {initial : Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains shared.source.cuts sheet
+  {initial : TwoSheetRequest (fun sheet =>
+    RegularMeshes.build domains shared.source.cuts sheet
     coarseDepth) fixed surfaceTarget}
-  {physical : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalMeshRequest basis initial}
+  {physical : PhysicalMeshRequest basis initial}
   {surfaceFixed : (sheet : Fin 2) → Preflights domains sheet}
-  {pieceDepth : Nat} {error : Data.Rat.Fraction.Rational}
+  {pieceDepth : Nat} {error : Rational}
   {requests : SynchronizedSurfaceRequests
-    (fun sheet => Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains
+    (fun sheet => surfaceMeshes partitions domains
       shared.surface sheet pieceDepth) surfaceFixed error}
 
 namespace SynchronizedSurfaceRequests.PerimeterSamples
@@ -170,12 +170,12 @@ owners. -/
 private theorem physical_mesh_eq_build (sameDepth : physical.surface.depth = requests.depth)
     (position : Fin grid.faces.regulars.length) (sheet : Fin 2) :
     ((physical.surface.entries.get sheet).meshes.entries.get position) =
-      ((Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains shared.source.cuts sheet
+      ((RegularMeshes.build domains shared.source.cuts sheet
         (requests.entries.get sheet).depth).entries.get position) := by
-  rw [Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request.mesh_eq,
+  rw [RegularMeshes.Request.mesh_eq,
     Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest.mesh_eq, physical.surface.depth_eq,
     sameDepth, ← requests.depth_eq sheet]
-  simp only [Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build, Vector.DependentVector.ofFn_get, -eq_self,
+  simp only [RegularMeshes.build, Vector.DependentVector.ofFn_get, -eq_self,
     -iff_self]
   apply Eq.trans (congrArg
     (fun mesh : RectangularObservationMesh.ObservationMesh ((domains.get position).domain sheet).cuts
@@ -203,29 +203,29 @@ At equal physical and surface depth, transports each sheet perimeter along its e
 selected side area. -/
 theorem sideSum_eq_physical (sameDepth : physical.surface.depth = requests.depth)
     (side : GridSide) (position : Fin grid.faces.regulars.length) :
-    samples.sideSum side position = FiniteSum.Fin.sumFin (fun sheet => wholePerimeterSide (wholePerimeters position
+    samples.sideSum side position = sumFin (fun sheet => wholePerimeterSide (wholePerimeters position
       sheet) side) := by
   unfold sideSum
-  apply FiniteSum.Fin.sumFin_congr
+  apply sumFin_congr
   intro sheet
   let equal := physical_mesh_eq_build shared sameDepth position sheet
-  let retained := ClippedPerimeterTransport.cast equal (wholePerimeters position sheet)
-  have readback := ClippedPerimeterTransport.cast_entries equal (wholePerimeters position sheet)
+  let retained := cast equal (wholePerimeters position sheet)
+  have readback := cast_entries equal (wholePerimeters position sheet)
   cases side with
   | bottom =>
     exact (NewtonSharedRequestedPerimeters.bottom_sample_eq_whole (shared := shared) ((samples.get sheet).get position)
-      ((faces.get sheet).get position) retained).trans (congrArg StitchedSideAreas.Entry.area readback.1)
+      ((faces.get sheet).get position) retained).trans (congrArg Entry.area readback.1)
   | right =>
     exact (NewtonSharedRequestedPerimeters.right_sample_eq_whole (shared := shared) ((samples.get sheet).get position)
-      ((faces.get sheet).get position) retained).trans (congrArg StitchedSideAreas.Entry.area readback.2.1)
+      ((faces.get sheet).get position) retained).trans (congrArg Entry.area readback.2.1)
   | top =>
     exact (NewtonSharedRequestedPerimeters.top_sample_eq_whole (shared := shared) ((samples.get sheet).get position)
-      ((faces.get sheet).get position) retained).trans (congrArg StitchedSideAreas.Entry.area readback.2.2.1)
+      ((faces.get sheet).get position) retained).trans (congrArg Entry.area readback.2.2.1)
   | left =>
     exact (NewtonSharedRequestedPerimeters.left_sample_eq_whole (shared := shared) ((samples.get sheet).get position)
-      ((faces.get sheet).get position) retained).trans (congrArg StitchedSideAreas.Entry.area readback.2.2.2)
+      ((faces.get sheet).get position) retained).trans (congrArg Entry.area readback.2.2.2)
 
-attribute [local congr] Algebra.FiniteSum.Fin.sumFin_congr
+attribute [local congr] sumFin_congr
 
 open Purelib.Algebra in
 open Purelib.Curves.Hyperelliptic in
@@ -235,10 +235,10 @@ Preserves the original neighbor bank and selected exterior or hole component und
 identities. -/
 theorem componentBoundary_eq_physical (sameDepth : physical.surface.depth = requests.depth)
     (neighbors : PuncturedFaces.NeighborBank grid.faces) (component :
-      Meshes.PuncturedGrid.PhysicalComponentValues.PhysicalComponent grid.faces) :
+      PhysicalComponent grid.faces) :
     componentBoundary samples neighbors component =
       componentSum neighbors component (fun side position =>
-        FiniteSum.Fin.sumFin (fun sheet => wholePerimeterSide (wholePerimeters position sheet) side)) := by
+        sumFin (fun sheet => wholePerimeterSide (wholePerimeters position sheet) side)) := by
   simp only [componentBoundary, componentSum, sideSum_eq_physical shared samples faces whole wholePerimeters sameDepth,
     -eq_self, -iff_self]
   rfl
@@ -254,19 +254,19 @@ theorem physicalEnergy_eq_componentBoundary (sameDepth : physical.surface.depth 
 
 variable {differential : Curves.Hyperelliptic.Differentials.Basic.Differential genus}
   {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+    AllSurfacePreparation
     regular domains differential}
-  (attached : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared)
-  {box : Purelib.Geometry.Rational.Box} {polynomials :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box}
-  {bounds : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisBounds.RegularBasisBounds polynomials} {capTarget
-    : Data.Rat.Fraction.Rational} {capMinimum : Nat}
-  (capRequest : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisRequest.RegularBasisRequest bounds
+  (attached : CapAttachment prepared)
+  {box : Geometry.Rational.Box} {polynomials :
+    RegularBasisPolynomials cap stage box}
+  {bounds : RegularBasisBounds polynomials} {capTarget
+    : Rational} {capMinimum : Nat}
+  (capRequest : RegularBasisRequest bounds
     attached.caps.length capTarget capMinimum)
   {geometry :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
+    CapAttachment.ReciprocalGeometry
     attached}
-  {parameters : Purelib.Integration.Path.Dyadic.RadialTriangles.Parameters capRequest.depth}
+  {parameters : Integration.Path.Dyadic.RadialTriangles.Parameters capRequest.depth}
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data in
@@ -280,17 +280,17 @@ theorem newton_exterior_cap_energy_upper
     (sameDepth : physical.surface.depth = requests.depth)
     (entries : physical.Readings cache) (physicalFaces : physical.FacePerimeterBank cache)
     (attachments : Vector.DependentVector (fun first =>
-      Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment (basis.preparations.get first)))
+      CapAttachment (basis.preparations.get first)))
     (neighbors : PuncturedFaces.NeighborBank grid.faces)
     (evaluated : basis.Evaluations polynomials capRequest.depth)
     (later : physical.index ≤ stage) (spatial : basis.depth ≤ capRequest.depth)
-    (caps : Meshes.PuncturedGrid.Exterior.CapBasisAggregate.RegularBasisCap geometry parameters polynomials)
+    (caps : RegularBasisCap geometry parameters polynomials)
     (capSample : (capRequest.certify caps).Evaluation coefficients)
-    (allowance : Fraction.Rational) (nonnegative : 0 ≤ allowance)
-    (paid : (genus : Fraction.Rational) ^ 2 * physicalTarget ≤ 16 * allowance ^ 2) :
+    (allowance : Rational) (nonnegative : 0 ≤ allowance)
+    (paid : (genus : Rational) ^ 2 * physicalTarget ≤ 16 * allowance ^ 2) :
     (componentBoundary samples neighbors .exterior -
       componentSum neighbors .exterior (cachedEndpointSideSum cache coefficients) +
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalMeshRequest.Readings.capJoiningEnergy attachments
+      PhysicalMeshRequest.Readings.capJoiningEnergy attachments
         polynomials coefficients).im / 4 ≤
         (capTarget + allowance) * PreparedObservationCoercivity.coefficientNormSq coefficients := by
   have bound := exterior_cap_energy_upper shared.source attached capRequest entries physicalFaces attachments neighbors

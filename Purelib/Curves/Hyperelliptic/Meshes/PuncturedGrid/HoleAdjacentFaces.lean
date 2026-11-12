@@ -27,6 +27,8 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Geometry.Grid.AxisNeighbors
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Polynomial.Geometry.Grid
+
 open Purelib.Curves
 
 open Purelib.Geometry
@@ -112,8 +114,8 @@ theorem matching_not_self_for_face {side : Meshes.GridLiftedDualSteps.GridSide} 
 end HoleAdjacentFaces
 
 section FramedPuncturedGrid
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
 
 namespace HoleAdjacentFaces.FramedPuncturedGrid
@@ -124,21 +126,21 @@ set_option genInjectivity false in
 Its membership and side match refer to the original grid and hole box. -/
 structure AdjacentCell (hole : Meshes.PuncturedGridFaces.BranchHole base.bank.toBranchCellBank) (side :
   Meshes.GridLiftedDualSteps.GridSide) where
-  /-- The adjacent original grid cell. -/ cell : Geometry.Grid.ClearGrid.Cell curve.polynomial
-    (Hyperelliptic.Branches.Cuts.Ambient curve)
+  /-- The adjacent original grid cell. -/ cell : ClearGrid.Cell curve.polynomial
+    (Branches.Cuts.Ambient curve)
   /-- The adjacent cell belongs to the original grid cell list. -/ member : cell ∈ base.bank.grid.cells
   /-- The specified side of the hole matches the retained cell. -/ matching : side.Matches hole.cell.box cell.box
 
 constructive_injectivity AdjacentCell
 
 /-- A pair of original axis intervals determines a member of the original grid cell list. -/
-private theorem cell_member (horizontal : Geometry.Grid.ClearGrid.Interval
-  (Geometry.Grid.ClearGrid.VerticalLine.coordinate (polynomial := curve.polynomial) (ambient :=
-  Hyperelliptic.Branches.Cuts.Ambient curve)))
-    (vertical : Geometry.Grid.ClearGrid.Interval (Geometry.Grid.ClearGrid.HorizontalLine.coordinate (polynomial :=
-      curve.polynomial) (ambient := Hyperelliptic.Branches.Cuts.Ambient curve)))
+private theorem cell_member (horizontal : ClearGrid.Interval
+  (ClearGrid.VerticalLine.coordinate (polynomial := curve.polynomial) (ambient :=
+  Branches.Cuts.Ambient curve)))
+    (vertical : ClearGrid.Interval (ClearGrid.HorizontalLine.coordinate (polynomial :=
+      curve.polynomial) (ambient := Branches.Cuts.Ambient curve)))
     (hMember : horizontal ∈ base.bank.grid.xIntervals) (vMember : vertical ∈ base.bank.grid.yIntervals) :
-    (⟨horizontal, vertical⟩ : Geometry.Grid.ClearGrid.Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve))
+    (⟨horizontal, vertical⟩ : ClearGrid.Cell curve.polynomial (Branches.Cuts.Ambient curve))
       ∈ base.bank.grid.cells :=
 
   open Purelib in Data.List.Flatten.mem_flatMap.mpr ⟨horizontal, hMember, Data.List.Map.mem_map.mpr ⟨vertical, vMember,
@@ -149,13 +151,13 @@ end HoleAdjacentFaces.FramedPuncturedGrid
 namespace HoleAdjacentFaces.FramedPuncturedGrid
 
 /-- The retained horizontal and vertical interval memberships certify their grid cell. -/
-theorem cell_member_for_adjacent (horizontal : Geometry.Grid.ClearGrid.Interval
-  (Geometry.Grid.ClearGrid.VerticalLine.coordinate (polynomial := curve.polynomial) (ambient :=
-  Hyperelliptic.Branches.Cuts.Ambient curve)))
-    (vertical : Geometry.Grid.ClearGrid.Interval (Geometry.Grid.ClearGrid.HorizontalLine.coordinate (polynomial :=
-      curve.polynomial) (ambient := Hyperelliptic.Branches.Cuts.Ambient curve)))
+theorem cell_member_for_adjacent (horizontal : ClearGrid.Interval
+  (ClearGrid.VerticalLine.coordinate (polynomial := curve.polynomial) (ambient :=
+  Branches.Cuts.Ambient curve)))
+    (vertical : ClearGrid.Interval (ClearGrid.HorizontalLine.coordinate (polynomial :=
+      curve.polynomial) (ambient := Branches.Cuts.Ambient curve)))
     (hMember : horizontal ∈ base.bank.grid.xIntervals) (vMember : vertical ∈ base.bank.grid.yIntervals) :
-    (⟨horizontal, vertical⟩ : Geometry.Grid.ClearGrid.Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve))
+    (⟨horizontal, vertical⟩ : ClearGrid.Cell curve.polynomial (Branches.Cuts.Ambient curve))
       ∈ base.bank.grid.cells :=
 
   open Purelib in Data.List.Flatten.mem_flatMap.mpr ⟨horizontal, hMember, Data.List.Map.mem_map.mpr ⟨vertical, vMember,
@@ -171,48 +173,48 @@ Hole interiority excludes the outer-frame fallback and preserves the original ax
 private def adjacentCell (base : Meshes.FramedPuncturedGrid curve branches higher)
     (hole : Meshes.PuncturedGridFaces.BranchHole base.bank.toBranchCellBank) : (side :
       Meshes.GridLiftedDualSteps.GridSide) →
-      Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.AdjacentCell hole side
+      AdjacentCell hole side
   | .bottom =>
-      match Geometry.Grid.FramedAxisNeighbors.Predecessor.build hole.cell.vertical
-        (Purelib.Polynomial.Geometry.Grid.CellBoundary.Cell.intervals_mem hole.cell hole.member).2
-        (Hyperelliptic.Branches.Cuts.Ambient curve).yLower base.bank.frame.yLower (fun line _ => line.inside.1) with
+      match FramedAxisNeighbors.Predecessor.build hole.cell.vertical
+        (CellBoundary.Cell.intervals_mem hole.cell hole.member).2
+        (Branches.Cuts.Ambient curve).yLower base.bank.frame.yLower (fun line _ => line.inside.1) with
       | .previous found =>
           ⟨⟨hole.cell.horizontal, found.interval⟩,
-            Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.cell_member hole.cell.horizontal
-              found.interval (Purelib.Polynomial.Geometry.Grid.CellBoundary.Cell.intervals_mem hole.cell hole.member).1
+            FramedPuncturedGrid.cell_member hole.cell.horizontal
+              found.interval (CellBoundary.Cell.intervals_mem hole.cell hole.member).1
               found.member,
             ⟨rfl, rfl, found.endpoint_eq.symm⟩⟩
       | .exterior equal => False.elim ((ne_of_lt (base.hole_interior hole).bottom) equal.symm)
   | .top =>
-      match Geometry.Grid.FramedAxisNeighbors.Successor.build hole.cell.vertical
-        (Purelib.Polynomial.Geometry.Grid.CellBoundary.Cell.intervals_mem hole.cell hole.member).2
-        (Hyperelliptic.Branches.Cuts.Ambient curve).yUpper base.bank.frame.yUpper (fun line _ => line.inside.2) with
+      match FramedAxisNeighbors.Successor.build hole.cell.vertical
+        (CellBoundary.Cell.intervals_mem hole.cell hole.member).2
+        (Branches.Cuts.Ambient curve).yUpper base.bank.frame.yUpper (fun line _ => line.inside.2) with
       | .next found =>
           ⟨⟨hole.cell.horizontal, found.interval⟩,
-            Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.cell_member hole.cell.horizontal
-              found.interval (Purelib.Polynomial.Geometry.Grid.CellBoundary.Cell.intervals_mem hole.cell hole.member).1
+            FramedPuncturedGrid.cell_member hole.cell.horizontal
+              found.interval (CellBoundary.Cell.intervals_mem hole.cell hole.member).1
               found.member,
             ⟨rfl, rfl, found.endpoint_eq.symm⟩⟩
       | .exterior equal => False.elim ((ne_of_lt (base.hole_interior hole).top) equal)
   | .left =>
-      match Geometry.Grid.FramedAxisNeighbors.Predecessor.build hole.cell.horizontal
-        (Purelib.Polynomial.Geometry.Grid.CellBoundary.Cell.intervals_mem hole.cell hole.member).1
-        (Hyperelliptic.Branches.Cuts.Ambient curve).xLower base.bank.frame.xLower (fun line _ => line.inside.1) with
+      match FramedAxisNeighbors.Predecessor.build hole.cell.horizontal
+        (CellBoundary.Cell.intervals_mem hole.cell hole.member).1
+        (Branches.Cuts.Ambient curve).xLower base.bank.frame.xLower (fun line _ => line.inside.1) with
       | .previous found =>
           ⟨⟨found.interval, hole.cell.vertical⟩,
-            Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.cell_member found.interval
-              hole.cell.vertical found.member (Purelib.Polynomial.Geometry.Grid.CellBoundary.Cell.intervals_mem
+            FramedPuncturedGrid.cell_member found.interval
+              hole.cell.vertical found.member (CellBoundary.Cell.intervals_mem
               hole.cell hole.member).2,
             ⟨rfl, rfl, found.endpoint_eq.symm⟩⟩
       | .exterior equal => False.elim ((ne_of_lt (base.hole_interior hole).left) equal.symm)
   | .right =>
-      match Geometry.Grid.FramedAxisNeighbors.Successor.build hole.cell.horizontal
-        (Purelib.Polynomial.Geometry.Grid.CellBoundary.Cell.intervals_mem hole.cell hole.member).1
-        (Hyperelliptic.Branches.Cuts.Ambient curve).xUpper base.bank.frame.xUpper (fun line _ => line.inside.2) with
+      match FramedAxisNeighbors.Successor.build hole.cell.horizontal
+        (CellBoundary.Cell.intervals_mem hole.cell hole.member).1
+        (Branches.Cuts.Ambient curve).xUpper base.bank.frame.xUpper (fun line _ => line.inside.2) with
       | .next found =>
           ⟨⟨found.interval, hole.cell.vertical⟩,
-            Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.cell_member found.interval
-              hole.cell.vertical found.member (Purelib.Polynomial.Geometry.Grid.CellBoundary.Cell.intervals_mem
+            FramedPuncturedGrid.cell_member found.interval
+              hole.cell.vertical found.member (CellBoundary.Cell.intervals_mem
               hole.cell hole.member).2,
             ⟨rfl, rfl, found.endpoint_eq.symm⟩⟩
       | .exterior equal => False.elim ((ne_of_lt (base.hole_interior hole).right) equal)
@@ -223,49 +225,49 @@ The retained axis intervals and endpoint equalities certify original grid member
 @[expose] def adjacentCell_for_hole (base : Meshes.FramedPuncturedGrid curve branches higher)
     (hole : Meshes.PuncturedGridFaces.BranchHole base.bank.toBranchCellBank) : (side :
       Meshes.GridLiftedDualSteps.GridSide) →
-      Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.AdjacentCell hole side
+      AdjacentCell hole side
   | .bottom =>
-      match Geometry.Grid.FramedAxisNeighbors.Predecessor.build hole.cell.vertical
-        (Purelib.Polynomial.Geometry.Grid.CellBoundary.Cell.intervals_mem hole.cell hole.member).2
-        (Hyperelliptic.Branches.Cuts.Ambient curve).yLower base.bank.frame.yLower (fun line _ => line.inside.1) with
+      match FramedAxisNeighbors.Predecessor.build hole.cell.vertical
+        (CellBoundary.Cell.intervals_mem hole.cell hole.member).2
+        (Branches.Cuts.Ambient curve).yLower base.bank.frame.yLower (fun line _ => line.inside.1) with
       | .previous found =>
           ⟨⟨hole.cell.horizontal, found.interval⟩,
-            Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.cell_member_for_adjacent
-              hole.cell.horizontal found.interval (Purelib.Polynomial.Geometry.Grid.CellBoundary.Cell.intervals_mem
+            FramedPuncturedGrid.cell_member_for_adjacent
+              hole.cell.horizontal found.interval (CellBoundary.Cell.intervals_mem
               hole.cell hole.member).1 found.member,
             ⟨rfl, rfl, found.endpoint_eq.symm⟩⟩
       | .exterior equal => False.elim ((ne_of_lt (base.hole_interior hole).bottom) equal.symm)
   | .top =>
-      match Geometry.Grid.FramedAxisNeighbors.Successor.build hole.cell.vertical
-        (Purelib.Polynomial.Geometry.Grid.CellBoundary.Cell.intervals_mem hole.cell hole.member).2
-        (Hyperelliptic.Branches.Cuts.Ambient curve).yUpper base.bank.frame.yUpper (fun line _ => line.inside.2) with
+      match FramedAxisNeighbors.Successor.build hole.cell.vertical
+        (CellBoundary.Cell.intervals_mem hole.cell hole.member).2
+        (Branches.Cuts.Ambient curve).yUpper base.bank.frame.yUpper (fun line _ => line.inside.2) with
       | .next found =>
           ⟨⟨hole.cell.horizontal, found.interval⟩,
-            Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.cell_member_for_adjacent
-              hole.cell.horizontal found.interval (Purelib.Polynomial.Geometry.Grid.CellBoundary.Cell.intervals_mem
+            FramedPuncturedGrid.cell_member_for_adjacent
+              hole.cell.horizontal found.interval (CellBoundary.Cell.intervals_mem
               hole.cell hole.member).1 found.member,
             ⟨rfl, rfl, found.endpoint_eq.symm⟩⟩
       | .exterior equal => False.elim ((ne_of_lt (base.hole_interior hole).top) equal)
   | .left =>
-      match Geometry.Grid.FramedAxisNeighbors.Predecessor.build hole.cell.horizontal
-        (Purelib.Polynomial.Geometry.Grid.CellBoundary.Cell.intervals_mem hole.cell hole.member).1
-        (Hyperelliptic.Branches.Cuts.Ambient curve).xLower base.bank.frame.xLower (fun line _ => line.inside.1) with
+      match FramedAxisNeighbors.Predecessor.build hole.cell.horizontal
+        (CellBoundary.Cell.intervals_mem hole.cell hole.member).1
+        (Branches.Cuts.Ambient curve).xLower base.bank.frame.xLower (fun line _ => line.inside.1) with
       | .previous found =>
           ⟨⟨found.interval, hole.cell.vertical⟩,
-            Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.cell_member_for_adjacent
+            FramedPuncturedGrid.cell_member_for_adjacent
               found.interval hole.cell.vertical found.member
-              (Purelib.Polynomial.Geometry.Grid.CellBoundary.Cell.intervals_mem hole.cell hole.member).2,
+              (CellBoundary.Cell.intervals_mem hole.cell hole.member).2,
             ⟨rfl, rfl, found.endpoint_eq.symm⟩⟩
       | .exterior equal => False.elim ((ne_of_lt (base.hole_interior hole).left) equal.symm)
   | .right =>
-      match Geometry.Grid.FramedAxisNeighbors.Successor.build hole.cell.horizontal
-        (Purelib.Polynomial.Geometry.Grid.CellBoundary.Cell.intervals_mem hole.cell hole.member).1
-        (Hyperelliptic.Branches.Cuts.Ambient curve).xUpper base.bank.frame.xUpper (fun line _ => line.inside.2) with
+      match FramedAxisNeighbors.Successor.build hole.cell.horizontal
+        (CellBoundary.Cell.intervals_mem hole.cell hole.member).1
+        (Branches.Cuts.Ambient curve).xUpper base.bank.frame.xUpper (fun line _ => line.inside.2) with
       | .next found =>
           ⟨⟨found.interval, hole.cell.vertical⟩,
-            Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.cell_member_for_adjacent
+            FramedPuncturedGrid.cell_member_for_adjacent
               found.interval hole.cell.vertical found.member
-              (Purelib.Polynomial.Geometry.Grid.CellBoundary.Cell.intervals_mem hole.cell hole.member).2,
+              (CellBoundary.Cell.intervals_mem hole.cell hole.member).2,
             ⟨rfl, rfl, found.endpoint_eq.symm⟩⟩
       | .exterior equal => False.elim ((ne_of_lt (base.hole_interior hole).right) equal)
 
@@ -289,8 +291,8 @@ other hole, and properness excludes the original hole itself. -/
 @[expose] def build (base : Meshes.FramedPuncturedGrid curve branches higher)
     (hole : Meshes.PuncturedGridFaces.BranchHole base.bank.toBranchCellBank) (side :
       Meshes.GridLiftedDualSteps.GridSide) :
-      Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace base hole side := by
-  let next := Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.adjacentCell_for_hole base hole
+      HoleAdjacentFace base hole side := by
+  let next := FramedPuncturedGrid.adjacentCell_for_hole base hole
     side
   cases base.faces.locate next.cell next.member with
   | regular position equal => exact ⟨position, by rw [equal]; exact next.matching⟩
@@ -301,10 +303,10 @@ other hole, and properness excludes the original hole itself. -/
       · have cells : hole.cell = other.cell := hole.cell_eq.trans ((congrArg base.bank.toBranchCellBank.cell same).trans
           other.cell_eq.symm)
         rw [← cells] at matching
-        exact (Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.matching_not_self_for_face hole.cell.box_proper
+        exact (HoleAdjacentFaces.matching_not_self_for_face hole.cell.box_proper
           matching).elim
       · have separated := base.holes_separated hole other same
-        exact (Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.matching_not_separated_for_face matching
+        exact (HoleAdjacentFaces.matching_not_separated_for_face matching
           separated).elim
 
 end HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace
@@ -316,13 +318,13 @@ Each named side retains its actual position and matching relation in the same fr
 structure HoleAdjacentFaces (base : Meshes.FramedPuncturedGrid curve branches higher)
     (hole : Meshes.PuncturedGridFaces.BranchHole base.bank.toBranchCellBank) where
   /-- The retained regular face adjoining the bottom hole side. -/ bottom :
-    Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace base hole .bottom
+    HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace base hole .bottom
   /-- The retained regular face adjoining the top hole side. -/ top :
-    Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace base hole .top
+    HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace base hole .top
   /-- The retained regular face adjoining the left hole side. -/ left :
-    Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace base hole .left
+    HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace base hole .left
   /-- The retained regular face adjoining the right hole side. -/ right :
-    Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace base hole .right
+    HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace base hole .right
 
 constructive_injectivity HoleAdjacentFaces
 
@@ -333,9 +335,9 @@ namespace HoleAdjacentFaces
     (hole : Meshes.PuncturedGridFaces.BranchHole base.bank.toBranchCellBank) :
       HoleAdjacentFaces base hole :=
   ⟨FramedPuncturedGrid.HoleAdjacentFace.build base hole .bottom,
-    Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace.build base hole .top,
-    Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace.build base hole .left,
-      Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace.build base hole .right⟩
+    FramedPuncturedGrid.HoleAdjacentFace.build base hole .top,
+    FramedPuncturedGrid.HoleAdjacentFace.build base hole .left,
+      FramedPuncturedGrid.HoleAdjacentFace.build base hole .right⟩
 
 end HoleAdjacentFaces
 

@@ -65,14 +65,25 @@ The initial leaf and refinement result carry exact construction equalities and t
 @[expose] public def fromEnclosures {realPolynomial imagPolynomial :
   Dense.Rational.Basic.CoordinatePolynomial} {parameters : Data.Rat.Interval.Bounds}
     (enclosures : Clearance.Pair.Enclosure.Components realPolynomial imagPolynomial parameters)
-    (cachedSample : Option (Clearance.Pair.Sample.Certificate realPolynomial imagPolynomial parameters) := none) :
+    (cachedSample : Option (Clearance.Pair.Sample.Certificate realPolynomial imagPolynomial parameters) := none)
+    (depth : Nat := Clearance.Pair.Cover.Prepare.defaultDepth) :
     Retained realPolynomial imagPolynomial parameters :=
   let source := Clearance.Pair.Cover.Leaf.Source.prepare realPolynomial imagPolynomial
   let initial := Leaf.ofEnclosures source enclosures cachedSample
   { source, source_eq := rfl, cachedSample
     initial, initial_eq := rfl
-    budget := Clearance.Pair.Cover.Prepare.defaultDepth
-    result := Clearance.Pair.Cover.Prepare.refine initial Clearance.Pair.Cover.Prepare.defaultDepth, result_eq := rfl }
+    budget := depth
+    result := Clearance.Pair.Cover.Prepare.refine initial depth, result_eq := rfl }
+
+/-- Compute both component enclosures and retain their exact bounded clearance refinement.
+
+The depth bounds this attempt only. The returned tree retains every unresolved
+leaf and does not assert eventual separation. -/
+@[expose] public def prepare (realPolynomial imagPolynomial : Dense.Rational.Basic.CoordinatePolynomial)
+    (parameters : Data.Rat.Interval.Bounds) (depth : Nat) :
+    Retained realPolynomial imagPolynomial parameters :=
+  fromEnclosures (Clearance.Pair.Enclosure.Components.prepare realPolynomial imagPolynomial parameters)
+    none depth
 
 end Retained
 

@@ -3,12 +3,16 @@ module
 import Purelib.Data.Rat.Fraction
 import Purelib.Data.Gaussian.Basic
 import Purelib.Geometry.Rational.Box.Basic
+public import Purelib.Geometry.Rational.Box.Hull
+import Purelib.Geometry.Rational.Box.Point
 import Purelib.Polynomial.Clearance.Box.Line.Basic
 public import Purelib.Polynomial.Geometry.ClearPath
 public import Purelib.Polynomial.Clearance.Box.Region
 import Purelib.Data.Gaussian.Components.Basic
 import Purelib.Data.Gaussian.Norm.Basic
 meta import Purelib.Elab.ConstructiveInjectivity
+
+open Purelib.Data.Gaussian.Components
 
 @[expose] public section
 
@@ -23,8 +27,8 @@ query has no segments, so transporting it can reuse its original owner.
 
 namespace Purelib.Riemann.Paths.ClearBoxPaths
 
-variable {polynomial : Purelib.Polynomial.Geometry.ClearPath.GaussianPolynomial} {box :
-  Purelib.Geometry.Rational.Box}
+variable {polynomial : Polynomial.Geometry.ClearPath.GaussianPolynomial} {box :
+  Geometry.Rational.Box}
 
 section
 open Purelib.Data
@@ -35,7 +39,7 @@ def horizontal (clearance : Clearance.Box.Region.RegionClearance polynomial box)
     Clearance.Box.Line.Basic.HorizontalLineClearance polynomial box y :=
   ⟨clearance.bound, clearance.positive, fun _ lower upper =>
     by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using
-      clearance.lower (Gaussian.Components.Basic.point _ y) ⟨lower, upper, inside.1, inside.2⟩⟩
+      clearance.lower (Basic.point _ y) ⟨lower, upper, inside.1, inside.2⟩⟩
 
 /-- Restrict a full-box clearance to a vertical line at a retained in-box coordinate. -/
 def vertical (clearance : Clearance.Box.Region.RegionClearance polynomial box)
@@ -43,7 +47,7 @@ def vertical (clearance : Clearance.Box.Region.RegionClearance polynomial box)
     Clearance.Box.Line.Basic.VerticalLineClearance polynomial box x :=
   ⟨clearance.bound, clearance.positive, fun _ lower upper =>
     by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using
-      clearance.lower (Gaussian.Components.Basic.point x _) ⟨inside.1, inside.2, lower, upper⟩⟩
+      clearance.lower (Basic.point x _) ⟨inside.1, inside.2, lower, upper⟩⟩
 
 end
 
@@ -54,7 +58,7 @@ set_option genInjectivity false in
 /-- A clear axis-aligned connector within the retained rectangle using at most two segments. -/
 structure Route (polynomial : Geometry.ClearPath.GaussianPolynomial) (box : Rational.Box) (start finish
   : Gaussian.Basic.Canonical) where
-  /-- The retained clear path joining the displayed endpoints. -/ path : Polynomial.Geometry.ClearPath polynomial box
+  /-- The retained clear path joining the displayed endpoints. -/ path : Geometry.ClearPath polynomial box
     start finish
   /-- Every segment of the path remains in the same cleared ambient box. -/ within : path.WithinAmbient
   /-- The retained connector has at most two segments. -/ short : path.segmentCount ≤ 2
@@ -76,20 +80,20 @@ def build (clearance : Clearance.Box.Region.RegionClearance polynomial box)
   if equal : start = finish then
     equal ▸ ⟨.nil start, .nil start, by change 0 ≤ 2; decide⟩
   else
-    let left : Geometry.ClearPath.ClearSegment polynomial box start (Gaussian.Components.Basic.point finish.re start.im)
+    let left : Geometry.ClearPath.ClearSegment polynomial box start (Basic.point finish.re start.im)
       :=
       .horizontal start.re finish.re start.im first.1 first.2.1 last.1 last.2.1
-        (Paths.ClearBoxPaths.horizontal clearance start.im first.2.2)
-    let right : Geometry.ClearPath.ClearSegment polynomial box (Gaussian.Components.Basic.point finish.re start.im)
+        (horizontal clearance start.im first.2.2)
+    let right : Geometry.ClearPath.ClearSegment polynomial box (Basic.point finish.re start.im)
       finish :=
       .vertical finish.re start.im finish.im first.2.2.1 first.2.2.2 last.2.2.1 last.2.2.2
-        (Paths.ClearBoxPaths.vertical clearance finish.re ⟨last.1, last.2.1⟩)
+        (vertical clearance finish.re ⟨last.1, last.2.1⟩)
     if sameHeight : start.im = finish.im then
-      let equal : Gaussian.Components.Basic.point finish.re start.im = finish := Gaussian.Basic.ext rfl sameHeight
+      let equal : Basic.point finish.re start.im = finish := Gaussian.Basic.ext rfl sameHeight
       ⟨.cons (left.castFinish equal) (.nil finish),
         .cons (left.castFinish_withinAmbient first.2.2 equal) (.nil finish), by change 1 ≤ 2; decide⟩
     else if sameWidth : start.re = finish.re then
-      let equal : Gaussian.Components.Basic.point finish.re start.im = start := Gaussian.Basic.ext sameWidth.symm rfl
+      let equal : Basic.point finish.re start.im = start := Gaussian.Basic.ext sameWidth.symm rfl
       ⟨.cons (right.castStart equal) (.nil finish),
         .cons (right.castStart_withinAmbient ⟨last.1, last.2.1⟩ equal) (.nil finish), by change 1 ≤ 2; decide⟩
     else
@@ -104,6 +108,44 @@ theorem build_self (clearance : Clearance.Box.Region.RegionClearance polynomial 
     (build clearance point point inside inside).path = .nil point := by
   unfold build
   rw [dif_pos rfl]
+
+section
+
+open Purelib.Data
+open Purelib.Polynomial
+open Purelib.Geometry.Rational
+
+/-- Every original vertex of the computed L route lies in the exact hull of its endpoint point boxes.
+
+The actual route branches preserve its original segment list. The only
+possible intermediate vertex has the target's real coordinate and the
+source's imaginary coordinate, so it lies in that same possibly degenerate
+rectangle without weakening the retained polynomial clearance.
+-/
+theorem build_inBox (clearance : Clearance.Box.Region.RegionClearance polynomial box)
+    (start finish : Gaussian.Basic.Canonical) (first : box.Contains start) (last : box.Contains finish) :
+    Geometry.ClearPath.InBox (Box.Hull.hull (Box.Point.pointBox start) (Box.Point.pointBox finish))
+      (build clearance start finish first last).path := by
+  have sourceInside := Box.Hull.hull_contains_left (right := Box.Point.pointBox finish)
+    (Box.Point.pointBox_contains start)
+  have targetInside := Box.Hull.hull_contains_right (left := Box.Point.pointBox start)
+    (Box.Point.pointBox_contains finish)
+  have cornerInside : (Box.Hull.hull (Box.Point.pointBox start) (Box.Point.pointBox finish)).Contains
+      (Basic.point finish.re start.im) :=
+    ⟨targetInside.1, targetInside.2.1, sourceInside.2.2.1, sourceInside.2.2.2⟩
+  unfold build
+  split
+  · rename_i equal
+    cases equal
+    exact sourceInside
+  · dsimp only
+    split
+    · exact ⟨sourceInside, targetInside⟩
+    · split
+      · exact ⟨sourceInside, targetInside⟩
+      · exact ⟨sourceInside, cornerInside, targetInside⟩
+
+end
 
 end Route
 

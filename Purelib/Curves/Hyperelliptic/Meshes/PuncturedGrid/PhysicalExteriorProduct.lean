@@ -43,6 +43,8 @@ import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior
+
 public section
 
 /-! The remaining terminal correction is a polarized product of a bounded
@@ -80,88 +82,88 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PhysicalExteriorProd
 exterior total. -/
 theorem product_readback (newSheet : Fin 2)
     (first second : Topology.Polygon.Stokes.OrientedEdge current.vertices.count → Gaussian.Basic.Canonical) :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-      Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
+    BilinearPolarization.extract (fun coefficient =>
+      Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
       included current.edges current.vertices newSheet
-        (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient))
+        (BilinearPolarization.mix first second coefficient))
         =
     Topology.Polygon.Stokes.edgeArea (⟨resplitExteriorFactor (paired := paired) included current.edges current.vertices
       newSheet first,
-      Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitExteriorFactor (paired := paired) included
+      Inclusion.ExteriorTotal.resplitExteriorFactor (paired := paired) included
         current.edges current.vertices newSheet second⟩ : Topology.Polygon.Stokes.PrimitivePoint)
       (⟨current.edges.chainValue current.vertices first (included.resplit base.bank.exterior
-        (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet,
+        (BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet,
         current.edges.chainValue current.vertices second (included.resplit base.bank.exterior
-          (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet⟩ :
+          (BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet⟩ :
           Topology.Polygon.Stokes.PrimitivePoint) := open Purelib.Integration in by
   have equal (coefficient : Gaussian.Basic.Canonical) :=
-    Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factor_mix (paired :=
+    PolarizedExteriorRequest.factor_mix (paired :=
     paired) included newSheet first second coefficient
   have scalar (coefficient : Gaussian.Basic.Canonical) :
-      Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
+      Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
         included current.edges current.vertices newSheet
-        (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient) =
+        (BilinearPolarization.mix first second coefficient) =
       Path.BoundaryRibbon.area
-        (Data.Gaussian.Basic.conj (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitExteriorFactor
+        (Gaussian.Basic.conj (Inclusion.ExteriorTotal.resplitExteriorFactor
           (paired := paired) included current.edges current.vertices newSheet first) +
-          coefficient * Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitExteriorFactor (paired :=
+          coefficient * Inclusion.ExteriorTotal.resplitExteriorFactor (paired :=
             paired) included current.edges current.vertices newSheet second)
-        (Data.Gaussian.Basic.conj (current.edges.chainValue current.vertices first
+        (Gaussian.Basic.conj (current.edges.chainValue current.vertices first
           (included.resplit base.bank.exterior
-            (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet) +
+            (BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet) +
           coefficient * current.edges.chainValue current.vertices second
             (included.resplit base.bank.exterior
-              (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet)
+              (BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet)
               := by
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection, equal coefficient,
+    rw [Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection, equal coefficient,
       SquareRoot.Grid.RootEdgeBank.chainValue,
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.word_mix]
+      BilinearPolarization.word_mix]
     rfl
-  have readback := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract_congr scalar
-  exact readback.trans (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract_area _ _
+  have readback := BilinearPolarization.extract_congr scalar
+  exact readback.trans (BilinearPolarization.extract_area _ _
     _ _)
 
 /-- The original exterior product is bounded by four times the larger retained factor bound times the common exterior
 tolerance. -/
 theorem product_bound {i j : Fin genus}
-    (first : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    (first : Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential i))
-    (second : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    (second : Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential j))
     (newSheet : Fin 2) {stage : Nat}
-    {leftBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    {leftBank : Face.PrimitiveData.FacePrimitiveBank
       (Periods.PeriodMatrix.standardDifferential i) stage domains}
-    {rightBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    {rightBank : Face.PrimitiveData.FacePrimitiveBank
       (Periods.PeriodMatrix.standardDifferential j) stage domains}
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh) (right
-      : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings rightBank current.mesh)
+    (left : TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh) (right
+      : TrianglePrimitiveReadings.TriangleReadings rightBank current.mesh)
     (firstLater : first.index ≤ stage) (secondLater : second.index ≤ stage)
     {tolerance : Fraction.Rational}
-    (leftSmall : Data.Gaussian.Norm.Basic.normSq (current.edges.chainValue current.vertices
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh left.values)
+    (leftSmall : Gaussian.Norm.Basic.normSq (current.edges.chainValue current.vertices
+      (CanonicalEdgeValues.edgeValuation current.mesh left.values)
       (included.resplit base.bank.exterior
-        (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet) ≤
+        (BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet) ≤
         tolerance)
-    (rightSmall : Data.Gaussian.Norm.Basic.normSq (current.edges.chainValue current.vertices
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh right.values)
+    (rightSmall : Gaussian.Norm.Basic.normSq (current.edges.chainValue current.vertices
+      (CanonicalEdgeValues.edgeValuation current.mesh right.values)
       (included.resplit base.bank.exterior
-        (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet) ≤
+        (BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet) ≤
         tolerance) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-      Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
+    Gaussian.Norm.Basic.normSq
+      (BilinearPolarization.extract (fun coefficient =>
+      Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
       included current.edges current.vertices newSheet
-      (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh left.values)
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh right.values) coefficient)))
+      (BilinearPolarization.mix
+        (CanonicalEdgeValues.edgeValuation current.mesh left.values)
+        (CanonicalEdgeValues.edgeValuation current.mesh right.values) coefficient)))
         ≤
-      4 * max (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound
+      4 * max (PolarizedExteriorRequest.factorBound
         (paired := paired) included first)
-        (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
+        (PolarizedExteriorRequest.factorBound (paired :=
           paired) included second) * tolerance := by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.PhysicalExteriorProduct.product_readback]
+  rw [PhysicalExteriorProduct.product_readback]
   have canonicalBound {point : Gaussian.Basic.Canonical} {limit : Fraction.Rational}
-      (h : Data.Gaussian.Norm.Basic.normSq point ≤ limit) :
+      (h : Gaussian.Norm.Basic.normSq point ≤ limit) :
       Gaussian.Basic.Canonical.normSq point ≤ limit := by
     change Fraction.Order.Basic.LessEqual _ _ at h ⊢
     rw [← Gaussian.Norm.Basic.normSq_eq_canonical]
@@ -169,18 +171,18 @@ theorem product_bound {i j : Fin genus}
   rw [Gaussian.Norm.Basic.normSq_eq_canonical]
   exact Readings.PrimitiveAreaBounds.PrimitivePoint.area_bound
     ⟨canonicalBound
-      ((Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factor_bounded included
-      first newSheet left firstLater).trans (Data.Rat.Fraction.Order.Basic.le_max_left
-      (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
+      ((PolarizedExteriorRequest.factor_bounded included
+      first newSheet left firstLater).trans (Fraction.Order.Basic.le_max_left
+      (PolarizedExteriorRequest.factorBound (paired :=
       paired) included first)
-      (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
+      (PolarizedExteriorRequest.factorBound (paired :=
       paired) included second))),
       canonicalBound
-        ((Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factor_bounded
-        included second newSheet right secondLater).trans (Data.Rat.Fraction.Order.Basic.le_max_right
-        (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
+        ((PolarizedExteriorRequest.factor_bounded
+        included second newSheet right secondLater).trans (Fraction.Order.Basic.le_max_right
+        (PolarizedExteriorRequest.factorBound (paired :=
         paired) included first)
-        (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
+        (PolarizedExteriorRequest.factorBound (paired :=
         paired) included second)))⟩
     ⟨canonicalBound leftSmall, canonicalBound rightSmall⟩
 
@@ -199,14 +201,14 @@ branch split, so its terminal factor is exactly zero. -/
 theorem factor_zero_of_odd (degree : curve.polynomial.natDegree = 2 * genus + 1)
     (newSheet : Fin 2) (value : Topology.Polygon.Stokes.OrientedEdge current.vertices.count → Gaussian.Basic.Canonical)
       :
-    Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitExteriorFactor (paired := paired) included
+    Inclusion.ExteriorTotal.resplitExteriorFactor (paired := paired) included
       current.edges current.vertices newSheet value = 0 := by
-  have labels := ((Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.labels_length ordered).trans
+  have labels := ((OrderedBranchPairs.Ordered.labels_length ordered).trans
     branches.count_eq).trans degree
   have count := congrArg List.length paired.split.labels_eq
-  rw [Append.length_append, Hyperelliptic.Meshes.PuncturedGrid.PhysicalExteriorProduct.pair_length,
+  rw [Append.length_append, PhysicalExteriorProduct.pair_length,
     paired.split.count_eq] at count
-  unfold Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitExteriorFactor
+  unfold Inclusion.ExteriorTotal.resplitExteriorFactor
   cases ending : paired.split.ending with
   | odd reference => rfl
   | even reference last =>
@@ -218,14 +220,14 @@ theorem factor_zero_of_odd (degree : curve.polynomial.natDegree = 2 * genus + 1)
 theorem product_zero_of_odd (degree : curve.polynomial.natDegree = 2 * genus + 1)
     (newSheet : Fin 2) (first second : Topology.Polygon.Stokes.OrientedEdge current.vertices.count →
       Gaussian.Basic.Canonical) :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-      Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
+    BilinearPolarization.extract (fun coefficient =>
+      Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
       included current.edges current.vertices newSheet
-        (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient))
+        (BilinearPolarization.mix first second coefficient))
         = 0 := by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.PhysicalExteriorProduct.product_readback,
-    Hyperelliptic.Meshes.PuncturedGrid.PhysicalExteriorProduct.factor_zero_of_odd included degree,
-    Hyperelliptic.Meshes.PuncturedGrid.PhysicalExteriorProduct.factor_zero_of_odd included degree]
+  rw [PhysicalExteriorProduct.product_readback,
+    PhysicalExteriorProduct.factor_zero_of_odd included degree,
+    PhysicalExteriorProduct.factor_zero_of_odd included degree]
   change Topology.Polygon.Stokes.edgeArea Topology.Polygon.Stokes.PrimitivePoint.zero _ = 0
   unfold Topology.Polygon.Stokes.edgeArea Topology.Polygon.Stokes.PrimitivePoint.zero
   ring1

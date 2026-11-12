@@ -104,30 +104,30 @@ open Purelib.Integration.Path.NoisyPathArea (LengthErrorBudget)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Gaussian.Norm.Basic (normSq_nonneg)
 open Purelib.Data.Rat.Fraction.Compatibility
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Riemann.Meshes.LiftedPuncturedGrid base} {differential other :
-    Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential other :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-    regular domains differential} {target : Riemann.Normalization.InverseRootPolynomial.Coordinate} {minimum stage fine
+    SurfaceOccurrence
+    regular domains differential} {target : Coordinate} {minimum stage fine
     index : Nat}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
-  {plan : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan occurrence other
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {plan : PairedSourcePlan occurrence other
     target minimum}
 
 variable {evaluated :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan
+  ParentEvaluation plan
   sample otherSample fine}
-  {data : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.FirstData occurrence index} {otherData
-    : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.SecondData occurrence other index}
+  {data : FirstData occurrence index} {otherData
+    : SecondData occurrence other index}
 
 open Purelib.Integration.Path.PairedIncrementArea (area)
 open Purelib.Integration.Path.ConjugateIncrementComparison (conjugateFirst)
@@ -135,16 +135,16 @@ open Purelib.Integration.Path.ConjugateIncrementComparison (conjugateFirst)
 set_option genInjectivity false in
 /-- A complete forward source chain of original owned fragments retaining one source entry and its actual
 parameter-width bound. -/
-structure GroupedSourceFragments (evaluated : PairedSourcePlan.ParentEvaluation plan sample otherSample fine)
-    (data : PairedFragmentValues.FirstData occurrence index) (otherData : PairedFragmentValues.SecondData occurrence
+structure GroupedSourceFragments (evaluated : ParentEvaluation plan sample otherSample fine)
+    (data : FirstData occurrence index) (otherData : SecondData occurrence
       other index) where
   /-- The exact original source entry retained by every fragment in the group. -/ entry :
-    PairedFragmentQueries.SourceEntry plan sample otherSample fine
+    SourceEntry plan sample otherSample fine
   /-- The original owned fragments in their retained physical order. -/ fragments : List
     (PairedFragmentBlocks.OwnedFragment evaluated data otherData)
-  /-- The common bound on the retained source parameter steps. -/ width : InverseRootPolynomial.Coordinate
+  /-- The common bound on the retained source parameter steps. -/ width : Coordinate
   /-- The original fragments form a complete adjacent source chain from zero to one. -/ chain :
-    SourceFragmentRuns.SourceFragmentChain entry width fragments 0 1
+    SourceFragmentChain entry width fragments 0 1
 
 constructive_injectivity GroupedSourceFragments
 
@@ -158,9 +158,9 @@ constructive_injectivity GroupedSourceFragments
 
 /-- The source path of concatenated retained fragments is the concatenation of their original source paths. -/
 private theorem sourcePath_append (left right : List (PairedFragmentBlocks.OwnedFragment evaluated data otherData)) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.fragmentSourcePath (left ++ right) =
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.fragmentSourcePath left ++
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies.fragmentSourcePath right := by
+    FragmentFamilies.fragmentSourcePath (left ++ right) =
+      FragmentFamilies.fragmentSourcePath left ++
+      FragmentFamilies.fragmentSourcePath right := by
   unfold FragmentFamilies.fragmentSourcePath
   rw [Data.List.Map.map_append, Data.List.Map.map_append, Data.List.Flatten.flatten_append]
 
@@ -169,7 +169,7 @@ private theorem grouped_source_path (groups : List
   (GroupedSourceFragments evaluated data
   otherData)) :
     ((groups.map
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.OwnedCapArcComparison.GroupedSourceFragments.resampled).map
+      GroupedSourceFragments.resampled).map
       ResampledSourceRun.conjugatePath).flatten =
       (FragmentFamilies.fragmentSourcePath (groups.map
         GroupedSourceFragments.fragments).flatten).map
@@ -187,19 +187,19 @@ private theorem grouped_source_path (groups : List
 /-- All geometric groups are consumed in physical order. The source-path readback is proved from their cached fragments,
 not supplied as an area claim. -/
 theorem JoinedFragmentFamily.conjugate_cap_arc_bound {Vertex : Type} {count : Nat}
-    {values : Vertex → Stokes.PrimitivePoint} {traces : Fin (count + 1) → JoinedTrace.VertexTrace Vertex}
+    {values : Vertex → PrimitivePoint} {traces : Fin (count + 1) → VertexTrace Vertex}
     (family : FragmentFamilies.JoinedFragmentFamily (evaluated := evaluated) (data := data) (otherData := otherData)
       values traces)
     (groups : List (GroupedSourceFragments
       evaluated data otherData))
     (partition : (groups.map
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.OwnedCapArcComparison.GroupedSourceFragments.fragments).flatten
+      GroupedSourceFragments.fragments).flatten
       = family.fragments)
     (parentOrder : groups.map
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.OwnedCapArcComparison.GroupedSourceFragments.entry =
+      GroupedSourceFragments.entry =
       evaluated.retained)
-    {whole : JoinedTrace.VertexTrace Vertex}
-    (original : CenteredBilinearPath.Sample (fun vertex => ConjugateIncrementComparison.conjugateFirst (values
+    {whole : VertexTrace Vertex}
+    (original : Sample (fun vertex => ConjugateIncrementComparison.conjugateFirst (values
       (whole.indexed vertex))))
     (traceEq : whole = VertexTrace.concatenate traces) (later : plan.parents.index ≤ stage) :
     Data.Gaussian.Norm.Basic.normSq (original.centeredArea -
@@ -213,21 +213,21 @@ theorem JoinedFragmentFamily.conjugate_cap_arc_bound {Vertex : Type} {count : Na
         (ConjugateIncrementComparison.conjugateFirst ⟨sample.primitive.value.eval occurrence.finish⁻¹,
           otherSample.primitive.value.eval occurrence.finish⁻¹⟩))) <
       2 * (family.error + 2 * (ConjugateSourceRuns.conjugateSourceRunError (groups.map
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.OwnedCapArcComparison.GroupedSourceFragments.resampled) +
+        GroupedSourceFragments.resampled) +
         target / 4)) := by
   have ordered : (groups.map
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.OwnedCapArcComparison.GroupedSourceFragments.resampled).map
+    GroupedSourceFragments.resampled).map
     ResampledSourceRun.entry = evaluated.retained := by
     rw [Data.List.Map.map_map]
     exact parentOrder
   have capBound := ConjugateSourceRuns.conjugate_source_runs_arc_bound evaluated (groups.map
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.OwnedCapArcComparison.GroupedSourceFragments.resampled) ordered
+    GroupedSourceFragments.resampled) ordered
     later
   have paths := grouped_source_path groups
   rw [partition, ← family.source_eq] at paths
   rw [paths] at capBound
   have ownerBound := JoinedFragmentFamily.conjugate_area_bound family original traceEq
-  have split (a b c : InverseRootPolynomial.Gaussian) : a - c = (a - b) + (b - c) := by ring1
+  have split (a b c : Gaussian) : a - c = (a - b) + (b - c) := by ring1
   rw [split _ (PairedIncrementArea.area (family.sourceIncrements.map ConjugateIncrementComparison.conjugateFirst))]
   exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans_lt
     (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide)

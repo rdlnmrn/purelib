@@ -55,24 +55,24 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCommonCover
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank (ChartRequest junctionLeft junctionRight)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.ChartRequest (Evaluation)
 
-variable {genus count otherCount depth floor index : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve
+variable {genus count otherCount depth floor index : Nat} {curve : HyperellipticCurve
   genus}
-  {differential other : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {otherPatch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch
-    (Purelib.Riemann.Integration.PreparedEdgeRecasting.recastCenteredEdge other parent)}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {otherData :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
-  {cover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {otherCover :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover otherData}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {common :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCommonCover.CommonCover cover otherCover}
-  {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {request :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.ChartRequest regular common depth target floor}
-  (evaluated : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.ChartRequest.Evaluation request
+  {differential other : Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent}
+  {otherPatch : PreparedPatch
+    (recastCenteredEdge other parent)}
+  {data : Data patch count} {otherData :
+    Data otherPatch otherCount}
+  {cover : Cover data} {otherCover :
+    Cover otherData}
+  {regular : RegularBounds.Data cap} {common :
+    CommonCover cover otherCover}
+  {target : Coordinate} {request :
+    ChartRequest regular common depth target floor}
+  (evaluated : Evaluation request
     index)
 
 /-- Every actual original common-interval joining area vanishes in the unramified reciprocal chart.
@@ -83,11 +83,11 @@ theorem regular_connector_zero (unramified : HyperellipticReciprocal.originOrder
     (i : Fin (common.intervals.length - 1)) :
     FanBankRequest.ConnectorArea
       (evaluated := evaluated) i = 0 := by
-  let left := evaluated.entries.get (CommonChartBank.junctionLeft common i)
-  let right := evaluated.entries.get (CommonChartBank.junctionRight common i)
+  let left := evaluated.entries.get (junctionLeft common i)
+  let right := evaluated.entries.get (junctionRight common i)
   exact Evaluation.regular_join_area
     (left.evaluated.chart.retained.area.evaluated.readings.get
-    (Fin.last (request.plans.get (CommonChartBank.junctionLeft common i)).geometry.tail.length))
+    (Fin.last (request.plans.get (junctionLeft common i)).geometry.tail.length))
     (right.evaluated.chart.retained.area.evaluated.readings.get 0) (request.junctions.get i).owners.first rfl rfl
       unramified
 
@@ -96,8 +96,8 @@ independently sampled roots is required. -/
 theorem regular_chartTrace_area (unramified : HyperellipticReciprocal.originOrder curve = 0) :
     (Evaluation.chartTrace evaluated).area id = evaluated.chartArea := by
   rw [Evaluation.chartTrace_area evaluated,
-    FiniteSum.Fin.sumFin_congr
-      (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularChartJoins.regular_connector_zero evaluated unramified),
+    sumFin_congr
+      (regular_connector_zero evaluated unramified),
     FiniteSum.Fin.sumFin_zero, add_zero]
 
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRegularChartJoins

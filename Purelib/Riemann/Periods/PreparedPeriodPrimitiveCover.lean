@@ -58,7 +58,7 @@ open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
 open Purelib.Riemann.Integration.CheckedPrimitiveNeighborhoods (grow_box_refines)
 open Purelib.Data in
 /-- The exact rational coordinate type. -/
-private abbrev Coordinate := Rat.Fraction.Rational
+private abbrev Coordinate := Fraction.Rational
 open Purelib.Riemann.Integration.PreparedDirectDyadicRefinements (CheckedDirectMeshes)
 open Purelib.Riemann.Topology.PreparedRootSafeCycleStates.PreparedRefinementRootEndpoints (RootClosedState)
 open Purelib.Riemann.RootContinuation.PreparedRootSafeAccuracy (RootSafeAccuracy)
@@ -73,7 +73,7 @@ set_option genInjectivity false in
 
 The dependent list follows the actual parent edges, allowing their bounds to pass through checked refinement while
 endpoints change. -/
-inductive SegmentBounds (radius : Rat.Fraction.Rational) : List (CenteredEdge curve source) → Type
+inductive SegmentBounds (radius : Fraction.Rational) : List (CenteredEdge curve source) → Type
   /-- The empty parent list has the common radius bound. -/ | nil : SegmentBounds radius []
   /-- Retain one original segment bound, its radius-floor proof and the bounds for the remaining parents. -/ | cons
     {parent : CenteredEdge curve source} {parents : List (CenteredEdge curve source)}
@@ -84,11 +84,11 @@ constructive_injectivity SegmentBounds
 
 namespace SegmentBounds
 
-variable {radius : Purelib.Data.Rat.Fraction.Rational}
+variable {radius : Fraction.Rational}
 
 open Purelib.Data in
 /-- Lower the common radius floor without changing any retained segment bounds. -/
-@[expose] def weaken {smaller : Rat.Fraction.Rational} (order : smaller ≤ radius) :
+@[expose] def weaken {smaller : Fraction.Rational} (order : smaller ≤ radius) :
     ∀ {parents : List (CenteredEdge curve source)}, SegmentBounds radius parents → SegmentBounds smaller parents
   | _, .nil => .nil
   | _, .cons bounds lower tail => .cons bounds (order.trans lower) (tail.weaken order)
@@ -105,14 +105,14 @@ open Purelib.Data
 
 Every accepted leaf retains its parent's exact segment, so the original clearance and radius evidence are reused. -/
 @[expose] def mesh {parent : PreparedEdge curve source}
-    (bounds : Bounds parent.segment) (lower : radius ≤ bounds.radius) {diameter : Rat.Fraction.Rational} :
+    (bounds : Bounds parent.segment) (lower : radius ≤ bounds.radius) {diameter : Fraction.Rational} :
     ∀ {depth : Nat} {left right : Endpoint}
       (mesh : Mesh parent diameter depth left right), SegmentBounds radius mesh.children
   | _, _, _, .leaf _ _ => .cons bounds lower .nil
   | _, _, _, .split first last => (mesh bounds lower first).append (mesh bounds lower last)
 
 /-- Carry each original parent's bounds through its exact checked mesh and ordered child blocks. -/
-@[expose] def meshes {depth : Nat} {diameter : Rat.Fraction.Rational} :
+@[expose] def meshes {depth : Nat} {diameter : Fraction.Rational} :
     ∀ {parents : List (CenteredEdge curve source)} (_bounds : SegmentBounds radius parents)
       (meshes : CheckedDirectMeshes depth diameter parents), SegmentBounds radius meshes.toBlocks.children
   | _, .nil, .nil => .nil
@@ -126,7 +126,7 @@ open Purelib.Curves in
 open Purelib.Data in
 /-- Transport retained segment bounds through the supplied root-safe refinement's actual blocks. -/
 @[expose] def refine {parents : List (CenteredEdge curve source)} (bounds : SegmentBounds radius parents)
-    {targets : List (Hyperelliptic.Differentials.Basic.Differential genus)} {target : Rat.Fraction.Rational} (accuracy :
+    {targets : List (Differential genus)} {target : Fraction.Rational} (accuracy :
       RootSafeAccuracy parents targets target) :
     SegmentBounds radius accuracy.blocks.children := by
   rw [accuracy.blocks_eq, accuracy.result.blocks_eq]
@@ -151,12 +151,12 @@ The positive common radius and movement bounds certify each endpoint using the o
 @[expose] def covered (positive : 0 < radius) (count : Nat) :
     ∀ {parents : List (CenteredEdge curve source)} (_bounds : SegmentBounds radius parents),
       (∀ parent ∈ parents, parent.edge.pointMovement ≤ radius ^ 2) →
-        Hyperelliptic.Integration.Observation.UniformPreparedMesh.CoveredParents count parents
+        CoveredParents count parents
   | _, .nil, _ => .nil
   | _, .cons bounds lower tail, small =>
       let patch := PreparedPatch.ofBounds _ bounds
       .cons patch (finish_inside patch count ((small _ List.mem_cons_self).trans
-        (Rat.Fraction.Order.Arithmetic.pow_le_pow_direct positive.le lower 2)))
+        (Fraction.Order.Arithmetic.pow_le_pow_direct positive.le lower 2)))
         (tail.covered positive count (fun parent member => small parent (List.mem_cons_of_mem _ member)))
 
 end SegmentBounds
@@ -168,7 +168,7 @@ set_option genInjectivity false in
 The dependent bounds follow the supplied parent list and supply the fixed geometric threshold used by later scheduled
 refinements. -/
 structure PeriodCoverSeed (parents : List (CenteredEdge curve source)) where
-  /-- The retained common radius floor for the original segments. -/ radius : Rat.Fraction.Rational
+  /-- The retained common radius floor for the original segments. -/ radius : Fraction.Rational
   /-- The common radius is strictly positive. -/ positive : 0 < radius
   /-- The actual original segment bounds sharing this radius floor. -/ bounds : SegmentBounds radius parents
 
@@ -200,9 +200,9 @@ set_option genInjectivity false in
 The state is stored for executable use, while a proof identifies it with the original schedule at the specified stage.
 -/
 structure BoundedPeriodStage {root : Gaussian.Name.Basic.Named}
-    (initial : RootClosedState curve source root) (targets : List (Hyperelliptic.Differentials.Basic.Differential
+    (initial : RootClosedState curve source root) (targets : List (Differential
       genus))
-    (radius : Rat.Fraction.Rational) (stage : Nat) where
+    (radius : Fraction.Rational) (stage : Nat) where
   /-- The cached root-closed state at the retained schedule stage. -/ current : RootClosedState curve source root
   /-- The cached state equals the exact original scheduled state. -/ current_eq : current = initial.states targets stage
   /-- The inherited original segment bounds on the cached state's actual parents. -/ bounds : SegmentBounds radius
@@ -212,7 +212,7 @@ constructive_injectivity BoundedPeriodStage
 
 namespace BoundedPeriodStage
 
-variable {root : Purelib.Approximation.Gaussian.Name.Basic.Named}
+variable {root : Approximation.Gaussian.Name.Basic.Named}
 
 open Purelib.Curves in
 open Purelib.Data in
@@ -221,8 +221,8 @@ open Purelib.Data in
 Each step consumes the cached preceding state and transports the same original bounds through that step's actual
 root-safe accuracy result. -/
 @[expose] def build (initial : RootClosedState curve source root) (targets : List
-  (Hyperelliptic.Differentials.Basic.Differential genus))
-    {radius : Rat.Fraction.Rational} (bounds : SegmentBounds radius initial.state.parents) :
+  (Differential genus))
+    {radius : Fraction.Rational} (bounds : SegmentBounds radius initial.state.parents) :
     (stage : Nat) → BoundedPeriodStage initial targets radius stage
   | 0 => ⟨initial, rfl, bounds⟩
   | stage + 1 =>
@@ -248,7 +248,7 @@ set_option genInjectivity false in
 The computed stage meets the requested minimum and a positive movement threshold. Its actual state, original bounds and
 coverage remain cached together. -/
 structure CoveredPeriodStage {root : Gaussian.Name.Basic.Named}
-    (initial : RootClosedState curve source root) (targets : List (Hyperelliptic.Differentials.Basic.Differential
+    (initial : RootClosedState curve source root) (targets : List (Differential
       genus)) (count minimum : Nat) where
   /-- The cached common-radius seed on the initial parents. -/ seed : PeriodCoverSeed initial.state.parents
   /-- The computed primitive-covered schedule stage. -/ stage : Nat
@@ -259,13 +259,13 @@ structure CoveredPeriodStage {root : Gaussian.Name.Basic.Named}
   /-- The actual scheduled state and inherited segment bounds. -/ retained : BoundedPeriodStage initial targets
     seed.radius stage
   /-- Primitive coverage on the retained state's exact current parents. -/ covered :
-    Hyperelliptic.Integration.Observation.UniformPreparedMesh.CoveredParents count retained.current.state.parents
+    CoveredParents count retained.current.state.parents
 
 constructive_injectivity CoveredPeriodStage
 
 namespace CoveredPeriodStage
 
-variable {root : Purelib.Approximation.Gaussian.Name.Basic.Named}
+variable {root : Approximation.Gaussian.Name.Basic.Named}
 
 open Purelib.Riemann in
 open Purelib.Curves in
@@ -276,7 +276,7 @@ open Purelib.Data in
 A finite quarter-radius search and the supplied minimum determine the stage; inherited bounds and actual child movement
 then certify the cached parent coverage. -/
 @[expose] def acquire (initial : RootClosedState curve source root) (targets : List
-  (Hyperelliptic.Differentials.Basic.Differential genus))
+  (Differential genus))
     (count minimum : Nat) : CoveredPeriodStage initial targets count minimum := by
   let seed := PeriodCoverSeed.build initial.state.parents
   let first := Rational.Geometric.Search.firstQuarterBelow (initial.state.scheduleBase targets) 0 (seed.radius ^ 2)
@@ -285,7 +285,7 @@ then certify the cached parent coverage. -/
     (quarterRadius_antitone (initial.state.scheduleBase_positive targets).le
       ((Order.le_max_right _ _).trans (Nat.le_succ _))).trans_lt
       (Rational.Geometric.Search.firstQuarterBelow_accurate _ (initial.state.scheduleBase_positive targets).le 0 _
-        (Rat.Fraction.Order.Arithmetic.pow_pos_direct seed.positive 2))
+        (Fraction.Order.Arithmetic.pow_pos_direct seed.positive 2))
   let retained := BoundedPeriodStage.build initial targets seed.bounds stage
   have movements : ∀ parent ∈ retained.current.state.parents, parent.edge.pointMovement ≤ seed.radius ^ 2 := by
     rw [retained.current_eq]
@@ -299,10 +299,10 @@ open Purelib.Riemann in
 open Purelib.Curves in
 /-- Change the differential while reusing the cached geometric coverage and original owners. -/
 @[expose] def recast {initial : RootClosedState curve source root} {targets : List
-  (Hyperelliptic.Differentials.Basic.Differential genus)} {count minimum : Nat}
-    (stage : CoveredPeriodStage initial targets count minimum) (target : Hyperelliptic.Differentials.Basic.Differential
+  (Differential genus)} {count minimum : Nat}
+    (stage : CoveredPeriodStage initial targets count minimum) (target : Differential
       genus) :
-    Hyperelliptic.Integration.Observation.UniformPreparedMesh.CoveredParents count
+    CoveredParents count
       (stage.retained.current.state.parents.map (recastCenteredEdge target)) :=
   Integration.PreparedCoveredParentLists.CoveredParents.recast target stage.covered
 

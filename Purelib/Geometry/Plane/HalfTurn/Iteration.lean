@@ -33,7 +33,7 @@ symmetry follows on every finite window in both orientations.
 
 namespace Purelib.Geometry.Plane.HalfTurn.Iteration
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Field.ExplicitField K]
 
 set_option genInjectivity false in
 /-- An adjacent pair in the finite successive-rotation construction. -/
@@ -46,28 +46,28 @@ constructive_injectivity SuccessiveRotationPair
 namespace SuccessiveRotationPair
 
 /-- One source step `(Aₙ,Aₙ₊₁) ↦ (Aₙ₊₁,ρ_{Aₙ₊₁}(Aₙ))`. -/
-def step (state : Geometry.Plane.HalfTurn.Iteration.SuccessiveRotationPair K) :
-  Geometry.Plane.HalfTurn.Iteration.SuccessiveRotationPair K where
+def step (state : SuccessiveRotationPair K) :
+  SuccessiveRotationPair K where
   previous := state.current
-  current := HalfTurn.Basic.rotateInPoint state.current state.previous
+  current := Basic.rotateInPoint state.current state.previous
 
 end SuccessiveRotationPair
 
 /-- Execute exactly the requested number of successive rotations. -/
 def successiveRotationPairAt
-    (initial : Purelib.Geometry.Plane.HalfTurn.Iteration.SuccessiveRotationPair K) : Nat →
-      Purelib.Geometry.Plane.HalfTurn.Iteration.SuccessiveRotationPair K
+    (initial : SuccessiveRotationPair K) : Nat →
+      SuccessiveRotationPair K
   | 0 => initial
-  | index + 1 => (Purelib.Geometry.Plane.HalfTurn.Iteration.successiveRotationPairAt initial index).step
+  | index + 1 => (Iteration.successiveRotationPairAt initial index).step
 
 /-- The point `Aₙ` computed by the finite iterator. -/
 def successiveRotationPointAt
-    (initial : Geometry.Plane.HalfTurn.Iteration.SuccessiveRotationPair K) (index : Nat) : Point K :=
-  (Geometry.Plane.HalfTurn.Iteration.successiveRotationPairAt initial index).previous
+    (initial : SuccessiveRotationPair K) (index : Nat) : Point K :=
+  (successiveRotationPairAt initial index).previous
 
 /-- The explicit arithmetic-progression point determined by the initial pair. -/
 def successiveRotationFormula
-    (initial : Geometry.Plane.HalfTurn.Iteration.SuccessiveRotationPair K) (index : Nat) : Point K :=
+    (initial : SuccessiveRotationPair K) (index : Nat) : Point K :=
   ⟨initial.previous.x + (index : K) *
       (initial.current.x - initial.previous.x),
     initial.previous.y + (index : K) *
@@ -75,16 +75,16 @@ def successiveRotationFormula
 
 /-- Both entries of every finitely computed state have the expected closed coordinate formula. -/
 theorem successiveRotationPairAt_formula
-    (initial : Geometry.Plane.HalfTurn.Iteration.SuccessiveRotationPair K) (index : Nat) :
-    (HalfTurn.Iteration.successiveRotationPairAt initial index).previous =
-        HalfTurn.Iteration.successiveRotationFormula initial index ∧
-      (HalfTurn.Iteration.successiveRotationPairAt initial index).current =
-        HalfTurn.Iteration.successiveRotationFormula initial (index + 1) := by
+    (initial : SuccessiveRotationPair K) (index : Nat) :
+    (successiveRotationPairAt initial index).previous =
+        successiveRotationFormula initial index ∧
+      (successiveRotationPairAt initial index).current =
+        successiveRotationFormula initial (index + 1) := by
   induction index with
   | zero =>
       constructor <;>
         apply Point.ext <;>
-        unfold HalfTurn.Iteration.successiveRotationPairAt HalfTurn.Iteration.successiveRotationFormula <;>
+        unfold successiveRotationPairAt successiveRotationFormula <;>
         simp only [AddMonoidWithOne.natCast_zero,
           AddMonoidWithOne.natCast_succ, AddZeroClass.zero_add,
           MulZeroClass.zero_mul, AddZeroClass.add_zero, MulOneClass.one_mul,
@@ -92,43 +92,43 @@ theorem successiveRotationPairAt_formula
         first | rfl | ring1
   | succ index inductionHypothesis =>
       change
-        (HalfTurn.Iteration.successiveRotationPairAt initial index).current =
-            HalfTurn.Iteration.successiveRotationFormula initial (Nat.succ index) ∧
-          HalfTurn.Basic.rotateInPoint
-              (HalfTurn.Iteration.successiveRotationPairAt initial index).current
-              (HalfTurn.Iteration.successiveRotationPairAt initial index).previous =
-            HalfTurn.Iteration.successiveRotationFormula initial (Nat.succ index + 1)
+        (successiveRotationPairAt initial index).current =
+            successiveRotationFormula initial (Nat.succ index) ∧
+          Basic.rotateInPoint
+              (successiveRotationPairAt initial index).current
+              (successiveRotationPairAt initial index).previous =
+            successiveRotationFormula initial (Nat.succ index + 1)
       constructor
       · simpa only [Nat.succ_eq_add_one] using inductionHypothesis.2
       · rw [inductionHypothesis.1, inductionHypothesis.2]
         apply Point.ext <;>
-          unfold HalfTurn.Basic.rotateInPoint HalfTurn.Iteration.successiveRotationFormula <;>
+          unfold Basic.rotateInPoint successiveRotationFormula <;>
           simp only [AddMonoidWithOne.natCast_succ, -eq_self, -iff_self] <;>
           ring1
 
 /-- The point projection of the iterator is the displayed closed formula. -/
 theorem successiveRotationPointAt_formula
-    (initial : Geometry.Plane.HalfTurn.Iteration.SuccessiveRotationPair K) (index : Nat) :
-    Geometry.Plane.HalfTurn.Iteration.successiveRotationPointAt initial index =
-      Geometry.Plane.HalfTurn.Iteration.successiveRotationFormula initial index :=
-  (Geometry.Plane.HalfTurn.Iteration.successiveRotationPairAt_formula initial index).1
+    (initial : SuccessiveRotationPair K) (index : Nat) :
+    successiveRotationPointAt initial index =
+      successiveRotationFormula initial index :=
+  (successiveRotationPairAt_formula initial index).1
 
 /-- Exercise 4.2, in finite-prefix form. The center is `leftIndex + offset`, and the other endpoint is the same distance
 beyond it. Both orientations of the book's equation `ρ_{Aₖ}(Aₗ)=A_{2k-l}` are retained. -/
 theorem exercise_4_2
-    (initial : Geometry.Plane.HalfTurn.Iteration.SuccessiveRotationPair K) (offset leftIndex : Nat) :
-    HalfTurn.Basic.rotateInPoint
-        (Geometry.Plane.HalfTurn.Iteration.successiveRotationPointAt initial (leftIndex + offset))
-        (Geometry.Plane.HalfTurn.Iteration.successiveRotationPointAt initial leftIndex) =
-          Geometry.Plane.HalfTurn.Iteration.successiveRotationPointAt initial (leftIndex + 2 * offset) ∧
-      HalfTurn.Basic.rotateInPoint
-        (Geometry.Plane.HalfTurn.Iteration.successiveRotationPointAt initial (leftIndex + offset))
-        (Geometry.Plane.HalfTurn.Iteration.successiveRotationPointAt initial (leftIndex + 2 * offset)) =
-          Geometry.Plane.HalfTurn.Iteration.successiveRotationPointAt initial leftIndex := by
+    (initial : SuccessiveRotationPair K) (offset leftIndex : Nat) :
+    Basic.rotateInPoint
+        (successiveRotationPointAt initial (leftIndex + offset))
+        (successiveRotationPointAt initial leftIndex) =
+          successiveRotationPointAt initial (leftIndex + 2 * offset) ∧
+      Basic.rotateInPoint
+        (successiveRotationPointAt initial (leftIndex + offset))
+        (successiveRotationPointAt initial (leftIndex + 2 * offset)) =
+          successiveRotationPointAt initial leftIndex := by
   constructor <;>
-    simp only [Geometry.Plane.HalfTurn.Iteration.successiveRotationPointAt_formula] <;>
+    simp only [successiveRotationPointAt_formula] <;>
     apply Point.ext <;>
-    unfold HalfTurn.Basic.rotateInPoint HalfTurn.Iteration.successiveRotationFormula <;>
+    unfold Basic.rotateInPoint successiveRotationFormula <;>
     simp only [NatCast.add, NatCast.mul, -eq_self, -iff_self] <;>
     ring1
 

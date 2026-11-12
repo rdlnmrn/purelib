@@ -122,11 +122,11 @@ open Purelib.Riemann.Paths.ClearBoxPaths (Route)
 
 /-- The coordinate connector also stays in any other rectangle containing both endpoints. Its original clearance and
 preparation remain unchanged. -/
-theorem build_inBox {polynomial : ClearPath.GaussianPolynomial} {box other : Rational.Box}
+theorem build_inBox {polynomial : GaussianPolynomial} {box other : Rational.Box}
     (clearance : Region.RegionClearance polynomial box)
     (start finish : Data.Gaussian.Basic.Canonical) (first : box.Contains start) (last : box.Contains finish)
     (otherFirst : other.Contains start) (otherLast : other.Contains finish) :
-    (Purelib.Riemann.Paths.ClearBoxPaths.Route.build clearance start finish first last).path.InBox other := by
+    (Route.build clearance start finish first last).path.InBox other := by
   unfold Route.build
   split
   · rename_i equal
@@ -162,28 +162,28 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.Branch
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SeamReadings (chart)
 open Purelib.Approximation.Gaussian.Equivalence (NamedEquivalent)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {source : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} {axes :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveAxes base.bank.grid}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
-    base.faces.regulars} {mesh : Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces}
-  {count : Nat} {target : Purelib.Data.Rat.Fraction.Rational}
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+  {source : Differential genus} {axes :
+    PrimitiveAxes base.bank.grid}
+  {domains : FaceDomainBank frames
+    base.faces.regulars} {mesh : LiftedMesh vertices edges base.faces}
+  {count : Nat} {target : Data.Rat.Fraction.Rational}
 
 /-- The actual original prepared query owner at the retained fragment's last point. -/
 @[expose] def finishOwner (piece : RootedWords.LiftedFragment axes domains mesh source count target) :
-  SquareRootContinuationChain.Owner (curve.polynomial.eval piece.last) :=
+  Owner (curve.polynomial.eval piece.last) :=
   PreparedEdge.ownerAtPoint piece.parent.edge piece.interval.upper piece.occurrence.finishInside piece.last
     piece.fragment.located.last_eq.symm
 
 /-- The last-point query owner has exactly the original retained fragment's final root name. -/
 theorem finishOwner_name (piece : RootedWords.LiftedFragment axes domains mesh source count target) :
     OwnerTraceReadings.ownerName
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.ChartContacts.LiftedFragment.finishOwner piece) =
+      (LiftedFragment.finishOwner piece) =
       piece.lastName := PreparedEdge.ownerAtPoint_name ..
 
 /-- The retained fragment's last point lies in its actual located regular face box. -/
@@ -212,18 +212,18 @@ original numerical bank. -/
 structure ChartContact (firstLeft firstRight lastLeft lastRight : RootedWords.LiftedFragment axes domains mesh source
   count target) : Type 2 where
   /-- The retained original query owner at the first left transition's last point. -/ owner :
-    SquareRootContinuationChain.Owner (curve.polynomial.eval firstLeft.last)
+    Owner (curve.polynomial.eval firstLeft.last)
   /-- The contact owner is exactly the original fragment's final prepared query owner. -/ owner_eq : owner =
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.ChartContacts.LiftedFragment.finishOwner firstLeft
+    LiftedFragment.finishOwner firstLeft
   /-- The actual retained clear connector in the original left face rectangle. -/ route : ClearBoxPaths.Route
     curve.polynomial firstLeft.fragment.face.located.face.cell.box firstLeft.last lastLeft.last
   /-- The shared covered connector preparation starting at the original retained query owner. -/ prepared :
-    PreparedClearPathModels.CoveredTracedPath route.path owner
+    CoveredTracedPath route.path owner
   /-- The single retained parent cache shared by both entered connector paths. -/ cache :
-    PreparedClearPathModels.ParentCache prepared source 0
-  /-- The cached entered connector path in the original left chart's models. -/ left : EnteredPaths.EnteredPath
+    ParentCache prepared source 0
+  /-- The cached entered connector path in the original left chart's models. -/ left : EnteredPath
     ((RegularPrimitiveFragment.domainCache firstLeft.fragment domains)).models prepared source 0
-  /-- The cached entered connector path in the original right chart's models. -/ right : EnteredPaths.EnteredPath
+  /-- The cached entered connector path in the original right chart's models. -/ right : EnteredPath
     ((RegularPrimitiveFragment.domainCache firstRight.fragment domains)).models prepared source 0
   /-- The left entered path reuses the exact shared original parent cache. -/ left_cache : left.cache = cache
   /-- The right entered path reuses the exact shared original parent cache. -/ right_cache : right.cache = cache
@@ -255,27 +255,27 @@ sheet without rebuilding its domain. -/
 @[expose] def build (firstLeft firstRight lastLeft lastRight : RootedWords.LiftedFragment axes domains mesh source count
   target)
     (firstCoordinate : firstLeft.last = firstRight.first) (lastCoordinate : lastLeft.last = lastRight.first)
-    (firstRoots : Nonempty (Gaussian.Equivalence.NamedEquivalent firstLeft.lastName firstRight.firstName))
+    (firstRoots : Nonempty (NamedEquivalent firstLeft.lastName firstRight.firstName))
     (sameLeft : SeamReadings.chart firstLeft = SeamReadings.chart lastLeft) (sameRight : SeamReadings.chart firstRight =
       SeamReadings.chart lastRight) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.ChartContacts.LiftedFragment.ChartContact firstLeft firstRight
+    ChartContact firstLeft firstRight
       lastLeft lastRight := by
   let leftFace := firstLeft.fragment.face.located.face
   let rightFace := firstRight.fragment.face.located.face
   have leftStart : leftFace.cell.box.Contains firstLeft.last :=
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.ChartContacts.LiftedFragment.last_inside firstLeft
+    LiftedFragment.last_inside firstLeft
   have leftFinish : leftFace.cell.box.Contains lastLeft.last := by
     rw [show leftFace = lastLeft.fragment.face.located.face from
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.ChartContacts.LiftedFragment.face_eq_of_chart sameLeft]
-    exact Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.ChartContacts.LiftedFragment.last_inside lastLeft
+      LiftedFragment.face_eq_of_chart sameLeft]
+    exact LiftedFragment.last_inside lastLeft
   have rightStart : rightFace.cell.box.Contains firstLeft.last := firstCoordinate.symm ▸
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.ChartContacts.LiftedFragment.first_inside firstRight
+    LiftedFragment.first_inside firstRight
   have rightFinish : rightFace.cell.box.Contains lastLeft.last := by
     rw [show rightFace = lastRight.fragment.face.located.face from
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.ChartContacts.LiftedFragment.face_eq_of_chart sameRight,
+      LiftedFragment.face_eq_of_chart sameRight,
       lastCoordinate]
-    exact Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.ChartContacts.LiftedFragment.first_inside lastRight
-  let owner := Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.ChartContacts.LiftedFragment.finishOwner firstLeft
+    exact LiftedFragment.first_inside lastRight
+  let owner := LiftedFragment.finishOwner firstLeft
   let route := Route.build leftFace.clearance firstLeft.last lastLeft.last leftStart leftFinish
   let prepared := CoveredTracedPath.build route.path route.within owner
   let cache := ParentCache.build prepared source 0
@@ -288,18 +288,18 @@ sheet without rebuilding its domain. -/
     ⟨firstRight.assigned.entry.sheet, by
       have reached := SheetEntry.first_query_reached firstRight.assigned
       obtain ⟨roots⟩ := firstRoots
-      have equivalent : Gaussian.Equivalence.NamedEquivalent
+      have equivalent : NamedEquivalent
           (OwnerTraceReadings.ownerName (PreparedEdge.ownerAtPoint firstRight.parent.edge firstRight.interval.lower
             firstRight.assigned.fractionInside
             firstRight.first firstRight.fragment.located.first_eq.symm)) (OwnerTraceReadings.ownerName owner) := by
         rw [PreparedEdge.ownerAtPoint_name,
-          Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.ChartContacts.LiftedFragment.finishOwner_name]
+          LiftedFragment.finishOwner_name]
         exact roots.symm
       exact reached.append (Reached.ofEquivalentAt firstCoordinate.symm equivalent)⟩
   let left := EnteredPath.ofEntry leftEntry firstLeft.assigned.domain prepared
-    (Polynomial.Geometry.ClearPath.InBox.ofWithin route.path route.within leftStart) source 0 cache
+    (InBox.ofWithin route.path route.within leftStart) source 0 cache
   let right := EnteredPath.ofEntry rightEntry firstRight.assigned.domain prepared
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.ChartContacts.Route.build_inBox leftFace.clearance _ _ leftStart
+    (Route.build_inBox leftFace.clearance _ _ leftStart
       leftFinish rightStart rightFinish) source 0 cache
   exact ⟨owner, rfl, route, prepared, cache, left, right, rfl, rfl, rfl, rfl, HEq.rfl, HEq.rfl,
     sameLeft, sameRight, firstCoordinate, lastCoordinate⟩

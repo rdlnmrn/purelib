@@ -86,14 +86,14 @@ open Purelib.Algebra in
 open Purelib.LinearAlgebra.Gaussian in
 /-- The sum of squared Gaussian norms of the original coefficient vector. -/
 def coefficientNormSq {count : Nat}
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector count) : Coordinate :=
+    (coefficients : Energy.GaussianVector count) : Coordinate :=
   FiniteSum.Fin.sumFin (fun row => normSq (coefficients row))
 
 open Purelib.Data.Gaussian in
 open Purelib.LinearAlgebra.Gaussian in
 /-- A retained nonzero coefficient witness makes the coefficient squared-norm sum strictly positive. -/
 theorem coefficientNormSq_positive {count : Nat}
-    {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector count}
+    {coefficients : Energy.GaussianVector count}
     (nonzero : Energy.NonzeroGaussianVector coefficients) :
     0 < coefficientNormSq coefficients := by
   have positive := Norm.Basic.normSq_pos nonzero.coefficient_nonzero
@@ -113,7 +113,7 @@ The polynomial is formed from the supplied coefficient vector, and the observati
 the retained bank. -/
 def observationNormSq {polynomial : GaussianPolynomial} {count : Nat}
     (bank : ObservationBank polynomial count)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector count) : Coordinate :=
+    (coefficients : Energy.GaussianVector count) : Coordinate :=
   FiniteSum.Fin.sumFin (fun column => normSq
     ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval
       (bank.pointAt column)))
@@ -237,7 +237,7 @@ The original interpolation reconstruction and finite Gaussian sum estimate suppl
 replacing the coefficient vector or bank. -/
 theorem coefficient_mul_scalarNorm_le
     (certificate : ObservationCoercivity polynomial count)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector count) (row : Fin count) :
+    (coefficients : Energy.GaussianVector count) (row : Fin count) :
     normSq (coefficients row) * certificate.scalarNorm <=
       (count : Coordinate) * observationNormSq certificate.interpolation.bank coefficients *
         certificate.inverseNorm := by
@@ -245,11 +245,11 @@ theorem coefficient_mul_scalarNorm_le
     <- Norm.Basic.normSq_mul,
     <- certificate.interpolation.reconstruct coefficients row]
   have localBounds : forall column : Fin count,
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
         ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval
             (certificate.interpolation.bank.pointAt column) *
           certificate.interpolation.inverse.inverse column row) <=
-      Data.Gaussian.Norm.Basic.normSq ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval
+      Norm.Basic.normSq ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval
         (certificate.interpolation.bank.pointAt column)) * certificate.inverseNorm := by
     intro column
     rw [Norm.Basic.normSq_mul]
@@ -262,7 +262,7 @@ theorem coefficient_mul_scalarNorm_le
     _ _ localBounds
   rw [FiniteSum.Fin.sumFin_mul_right] at bound
   have observationEq : FiniteSum.Fin.sumFin
-      (fun column => Data.Gaussian.Norm.Basic.normSq ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval
+      (fun column => Norm.Basic.normSq ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval
         (certificate.interpolation.bank.pointAt column))) =
       observationNormSq certificate.interpolation.bank coefficients := by
     apply FiniteSum.Fin.sumFin_congr
@@ -278,7 +278,7 @@ open Purelib.Polynomial in
 /-- The scalar-weighted coefficient norm sum is bounded by comparison scale times the observation norm sum. -/
 theorem coefficientNorm_mul_scalarNorm_le
     (certificate : ObservationCoercivity polynomial count)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector count) :
+    (coefficients : Energy.GaussianVector count) :
     coefficientNormSq coefficients * certificate.scalarNorm <=
       certificate.comparisonScale * observationNormSq certificate.interpolation.bank coefficients := by
   have bound := FiniteSum.Rational.Order.Positivity.sumFin_mono _ _
@@ -310,7 +310,7 @@ open Purelib.LinearAlgebra.Gaussian
 -/
 theorem lower_mul_coefficientNorm_le
     (certificate : ObservationCoercivity polynomial count)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector count) :
+    (coefficients : Energy.GaussianVector count) :
     certificate.lower * coefficientNormSq coefficients <=
       observationNormSq certificate.interpolation.bank coefficients := by
   apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
@@ -333,7 +333,7 @@ theorem lower_mul_coefficientNorm_le
 certificate. -/
 theorem observationNormSq_positive
     (certificate : ObservationCoercivity polynomial count)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector count)
+    (coefficients : Energy.GaussianVector count)
     (nonzero : Energy.NonzeroGaussianVector coefficients) :
     0 < observationNormSq certificate.interpolation.bank coefficients :=
   (Fraction.Order.Arithmetic.mul_pos_direct certificate.lower_positive

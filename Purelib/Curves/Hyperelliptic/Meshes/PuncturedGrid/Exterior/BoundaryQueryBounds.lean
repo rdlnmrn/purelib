@@ -59,6 +59,8 @@ import Purelib.Riemann.Periods.PreparedGridPeriodPrograms
 import Purelib.Riemann.RootContinuation.PreparedGridRootClosure
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! The pre-owner query requests pay the actual closed bank's source
@@ -101,28 +103,28 @@ open Purelib.Riemann.Normalization
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover (ParentCovers)
 open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
 open Purelib.Data.Rat.Fraction.Compatibility
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential other :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential other :
+    Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted
     differential} {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+    ExteriorProgram.SurfacePreparation
     regular domains program}
-  {requested : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
+  {requested : Coordinate} {minimum : Nat}
 
 /-- The original closed-bank primitive pair satisfies one retained cell query's trace-error target at paid source and
 face stages. -/
 private theorem cell_trace_error (comparison : prepared.ClosedBoundaryComparison other requested minimum)
-    (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential) (i : Fin
+    (occurrence : SurfaceOccurrence regular domains differential) (i : Fin
       comparison.original.plans.length)
-    (piece : ClosedBoundaryComparison.Piece comparison occurrence i) {target : InverseRootPolynomial.Coordinate}
-    (query : FamilyBounds.CellQuery occurrence other piece.column piece.row target) (positive : 0 < target)
+    (piece : Piece comparison occurrence i) {target : Coordinate}
+    (query : CellQuery occurrence other piece.column piece.row target) (positive : 0 < target)
     (sourcePaid : query.sourceMinimum ≤ minimum) {index : Nat} (facePaid : query.faceIndex ≤ index) :
     ClosedBoundaryComparison.traceError comparison occurrence i piece index ≤ target := by
   let leftSource := (comparison.entries.get i).first
@@ -133,12 +135,12 @@ private theorem cell_trace_error (comparison : prepared.ClosedBoundaryComparison
       piece.column piece.row leftSource.localRequest 0).trans
       (FragmentQueries.queryDensity_uniform_le occurrence.compared.entered.bounds
         piece.column piece.row leftSource.localRequest 0)).trans
-        (Fraction.Order.Basic.le_max_left _ _)
+        (Basic.le_max_left _ _)
   let diagonal := (occurrence.compared.entered.domain.geometry.box piece.column piece.row).diagonalSq
   have diagonalNonnegative : 0 ≤ diagonal :=
     (occurrence.compared.entered.domain.geometry.box piece.column piece.row).diagonalSq_nonneg
-  have weightNonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by
-    decide +kernel : (0 : InverseRootPolynomial.Coordinate) ≤ 32)
+  have weightNonnegative := Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by
+    decide +kernel : (0 : Coordinate) ≤ 32)
     queryNonnegative) diagonalNonnegative
   have radiusPositive : 0 < query.radius := query.radius_eq.trans_gt
     (Weighted.allowance_positive positive weightNonnegative)
@@ -162,17 +164,17 @@ private theorem cell_trace_error (comparison : prepared.ClosedBoundaryComparison
     (left.ceiling_le_uniform radiusPositive.le (left.source_eq.trans_lt leftSmall).le)
   have rightBound := (right.accurate index rightLater).trans
     (right.ceiling_le_uniform radiusPositive.le (right.source_eq.trans_lt rightSmall).le)
-  have factor : 0 ≤ 32 * query.radius := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
+  have factor : 0 ≤ 32 * query.radius := Arithmetic.mul_nonneg_direct (by decide +kernel)
     radiusPositive.le
   have paired : ClosedBoundaryComparison.queryDensity comparison occurrence i piece index ≤ 32 * query.radius *
     queryBound :=
-    Fraction.Order.Basic.max_le (leftBound.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Basic.le_max_left _ _) factor))
-      (rightBound.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Basic.le_max_right _
+    Basic.max_le (leftBound.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Basic.le_max_left _ _) factor))
+      (rightBound.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct (Basic.le_max_right _
         _) factor))
   have paid := Weighted.mul_allowance_le positive.le weightNonnegative
   have radiusEq : query.radius = Weighted.allowance target (32 * queryBound * diagonal) := query.radius_eq
-  have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct paired diagonalNonnegative
+  have scaled := Arithmetic.mul_le_mul_of_nonneg_right_direct paired diagonalNonnegative
   apply scaled.trans
   calc
     32 * query.radius * queryBound * diagonal = (32 * queryBound * diagonal) * query.radius := by ring1
@@ -181,10 +183,10 @@ private theorem cell_trace_error (comparison : prepared.ClosedBoundaryComparison
 /-- Both the source floor and later face index are taken from the retained pre-owner requests. The source primitives are
 those of `comparison` itself. -/
 theorem requested_trace_error (comparison : prepared.ClosedBoundaryComparison other requested minimum)
-    (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential) (i : Fin
+    (occurrence : SurfaceOccurrence regular domains differential) (i : Fin
       comparison.original.plans.length)
-    (piece : ClosedBoundaryComparison.Piece comparison occurrence i) {target : InverseRootPolynomial.Coordinate}
-    (queries : FamilyBounds.PreOwnerQueries occurrence other target) (positive : 0 < target)
+    (piece : Piece comparison occurrence i) {target : Coordinate}
+    (queries : PreOwnerQueries occurrence other target) (positive : 0 < target)
     (sourcePaid : queries.sourceMinimum ≤ minimum) {index : Nat} (facePaid : queries.faceIndex ≤ index) :
     ClosedBoundaryComparison.traceError comparison occurrence i piece index ≤ target := by
   have sourceLe := (DependentVector.get_le_maximum FamilyBounds.cellSourceWeight (queries.rows.get piece.column)
@@ -195,17 +197,17 @@ theorem requested_trace_error (comparison : prepared.ClosedBoundaryComparison ot
     piece.row).trans
     ((DependentVector.get_le_maximum FamilyBounds.rowFaceWeight queries.rows piece.column).trans
       (queries.face_eq.symm.trans_le facePaid))
-  exact Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.BoundaryQueryBounds.ClosedBoundaryComparison.cell_trace_error
+  exact ClosedBoundaryComparison.cell_trace_error
     comparison occurrence i piece ((queries.rows.get piece.column).get piece.row) positive sourceLe faceLe
 
 /-- The retained fragment area budget pays the original owned-area error when density, trace error, owner tolerance and
 unit length bounds hold. -/
 theorem ownedAreaError_paid (comparison : prepared.ClosedBoundaryComparison other requested minimum)
-    (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential) (i : Fin
+    (occurrence : SurfaceOccurrence regular domains differential) (i : Fin
       comparison.original.plans.length)
-    (piece : ClosedBoundaryComparison.Piece comparison occurrence i) (index : Nat) {density target length allowance
-      tolerance : InverseRootPolynomial.Coordinate}
-    (budget : PairedFragmentBlocks.FragmentAreaBudget density target)
+    (piece : Piece comparison occurrence i) (index : Nat) {density target length allowance
+      tolerance : Coordinate}
+    (budget : FragmentAreaBudget density target)
     (densityBound : comparison.traceDensity occurrence i piece index ≤ density)
     (traceBound : comparison.traceError occurrence i piece index ≤ budget.tolerance)
     (ownerNonnegative : 0 ≤ tolerance) (ownerBound : tolerance ≤ budget.tolerance)
@@ -213,32 +215,32 @@ theorem ownedAreaError_paid (comparison : prepared.ClosedBoundaryComparison othe
     comparison.ownedAreaError occurrence i piece index length allowance tolerance ≤ target := by
   let d := comparison.traceDensity occurrence i piece index
   let e := comparison.traceError occurrence i piece index
-  have dNonnegative : 0 ≤ d := Fraction.Order.Arithmetic.mul_nonneg_direct (by
-      decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
-    (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (comparison.queryDensity_nonnegative occurrence i piece
+  have dNonnegative : 0 ≤ d := Arithmetic.mul_nonneg_direct (by
+      decide : (0 : Coordinate) ≤ 2)
+    (add_nonneg (Arithmetic.mul_nonneg_direct (comparison.queryDensity_nonnegative occurrence i piece
       index)
       (Data.Gaussian.Norm.Basic.normSq_nonneg _)) (comparison.sourceDensity_nonnegative i))
-  have eNonnegative : 0 ≤ e := Fraction.Order.Arithmetic.mul_nonneg_direct
+  have eNonnegative : 0 ≤ e := Arithmetic.mul_nonneg_direct
     (comparison.queryDensity_nonnegative occurrence i piece index)
     (occurrence.compared.entered.domain.geometry.box piece.column piece.row).diagonalSq_nonneg
-  have square : length^2 ≤ 1 := (Fraction.Order.Arithmetic.pow_le_pow_direct lengthBound.1 lengthBound.2 2).trans_eq (by
+  have square : length^2 ≤ 1 := (Arithmetic.pow_le_pow_direct lengthBound.1 lengthBound.2 2).trans_eq (by
     ring1)
-  have sumLe : length + allowance ≤ 2 := (Fraction.Order.Arithmetic.add_le_add_direct lengthBound.2
+  have sumLe : length + allowance ≤ 2 := (Arithmetic.add_le_add_direct lengthBound.2
     allowanceBound.2).trans_eq (by ring1)
   have sumSquare : (length + allowance)^2 ≤ 4 :=
-    (Fraction.Order.Arithmetic.pow_le_pow_direct (add_nonneg lengthBound.1 allowanceBound.1) sumLe 2).trans_eq (by
+    (Arithmetic.pow_le_pow_direct (add_nonneg lengthBound.1 allowanceBound.1) sumLe 2).trans_eq (by
       ring1)
   have firstNonnegative : 0 ≤ 40 * tolerance * (4 * d + 3) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by
-        decide +kernel : (0 : InverseRootPolynomial.Coordinate) ≤ 40) ownerNonnegative)
-      (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) dNonnegative) (by decide))
+    Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by
+        decide +kernel : (0 : Coordinate) ≤ 40) ownerNonnegative)
+      (add_nonneg (Arithmetic.mul_nonneg_direct (by decide) dNonnegative) (by decide))
   have secondNonnegative : 0 ≤ 40 * e * d :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by
-        decide +kernel : (0 : InverseRootPolynomial.Coordinate) ≤ 40) eNonnegative) dNonnegative
-  have first := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct sumSquare firstNonnegative
-  have second := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct square secondNonnegative
-  have bounded := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.add_le_add_direct first second) (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
+    Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by
+        decide +kernel : (0 : Coordinate) ≤ 40) eNonnegative) dNonnegative
+  have first := Arithmetic.mul_le_mul_of_nonneg_left_direct sumSquare firstNonnegative
+  have second := Arithmetic.mul_le_mul_of_nonneg_left_direct square secondNonnegative
+  have bounded := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_direct first second) (by decide : (0 : Coordinate) ≤ 2)
   have paid := budget.bound dNonnegative ownerBound densityBound traceBound
   apply bounded.trans
   exact (show 2 * (40 * tolerance * (4 * d + 3) * 4 + 40 * e * d * 1) =
@@ -284,45 +286,45 @@ open Purelib.Riemann.Normalization
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover (ParentCovers)
 open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
 open Purelib.Data.Rat.Fraction.Compatibility
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential other :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential other :
+    Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted
     differential} {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+    ExteriorProgram.SurfacePreparation
     regular domains program}
 
 set_option genInjectivity false in
 /-- Cache the covers and uniform coefficients before choosing source indices. The subsequent closed bank consumes these
 very covers. -/
 structure SourceGeometry (prepared : ExteriorProgram.SurfacePreparation regular domains program) (other :
-  Differentials.Basic.Differential genus) where
+  Differential genus) where
   /-- The retained source covers for the second differential on the original recast parent list. -/ right :
-    UniformReciprocalCover.ParentCovers
+    ParentCovers
     (program.cache.parents.map (PreparedEdgeRecasting.recastCenteredEdge other))
-  /-- The cached common source slope of the original two cover banks. -/ slope : InverseRootPolynomial.Coordinate
+  /-- The cached common source slope of the original two cover banks. -/ slope : Coordinate
   /-- The source slope is exactly the maximum of the original two bank bounds. -/ slope_eq : slope = max
     (PairedParentRequest.sourceMaximum prepared.sourceCovers)
     (PairedParentRequest.sourceMaximum right)
   /-- The cached query-density maximum for each original surface occurrence. -/ queryRows : List
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The query rows are exactly the maxima over the retained occurrence cell queries. -/ queryRows_eq : queryRows =
     prepared.occurrences.map (fun occurrence => PairedFragmentBlocks.maximum id (FamilyBounds.preOwnerQueryRows
     occurrence other))
-  /-- The cached common query-density maximum over all original occurrences. -/ query : InverseRootPolynomial.Coordinate
+  /-- The cached common query-density maximum over all original occurrences. -/ query : Coordinate
   /-- The common query density is exactly the maximum of the retained row cache. -/ query_eq : query =
     PairedFragmentBlocks.maximum id queryRows
-  /-- The cached maximum movement of the original program parents. -/ movement : InverseRootPolynomial.Coordinate
+  /-- The cached maximum movement of the original program parents. -/ movement : Coordinate
   /-- The movement cache equals the maximum on the exact original parent list. -/ movement_eq : movement =
     PairedFragmentBlocks.maximum (fun parent => parent.edge.pointMovement) program.cache.parents
   /-- The cached uniform density combining retained query, movement and source slope. -/ density :
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The density cache equals twice the retained query-movement product plus source slope. -/ density_eq : density = 2
     * (query * movement + slope)
   /-- The cached uniform trace density is nonnegative. -/ density_nonnegative : 0 ≤ density
@@ -332,8 +334,8 @@ constructive_injectivity SourceGeometry
 /-- Cache the original second source covers, paired source slope and uniform query and movement bounds before selecting
 sample stages. -/
 @[expose] def SourceGeometry.build (prepared : ExteriorProgram.SurfacePreparation regular domains program) (other :
-  Differentials.Basic.Differential genus) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.BoundaryQueryBounds.SurfacePreparation.SourceGeometry prepared
+  Differential genus) :
+    SourceGeometry prepared
       other := by
   let right := prepared.otherSourceCovers other
   let slope := max (PairedParentRequest.sourceMaximum prepared.sourceCovers)
@@ -343,15 +345,15 @@ sample stages. -/
   let query := PairedFragmentBlocks.maximum id rows
   let movement := PairedFragmentBlocks.maximum (fun parent => parent.edge.pointMovement) program.cache.parents
   have slopeNonnegative : 0 ≤ slope :=
-    (PairedParentRequest.sourceMaximum_nonnegative prepared.sourceCovers).trans (Fraction.Order.Basic.le_max_left _ _)
+    (PairedParentRequest.sourceMaximum_nonnegative prepared.sourceCovers).trans (Basic.le_max_left _ _)
   exact ⟨right, slope, rfl, rows, rfl, query, rfl, movement, rfl, 2 * (query * movement + slope), rfl,
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (PairedFragmentBlocks.maximum_nonnegative _ _)
+    Arithmetic.mul_nonneg_direct (by decide) (add_nonneg
+      (Arithmetic.mul_nonneg_direct (PairedFragmentBlocks.maximum_nonnegative _ _)
         (PairedFragmentBlocks.maximum_nonnegative _ _)) slopeNonnegative)⟩
 
 /-- The cached uniform trace density bounds the original common source slope. -/
 theorem SourceGeometry.slope_le_density (geometry :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.BoundaryQueryBounds.SurfacePreparation.SourceGeometry prepared
+  SourceGeometry prepared
   other) : geometry.slope ≤ geometry.density := by
   have queryNonnegative : 0 ≤ geometry.query := by
     rw [geometry.query_eq]
@@ -361,23 +363,23 @@ theorem SourceGeometry.slope_le_density (geometry :
     exact PairedFragmentBlocks.maximum_nonnegative _ _
   have slopeNonnegative : 0 ≤ geometry.slope := by
     rw [geometry.slope_eq]
-    exact (PairedParentRequest.sourceMaximum_nonnegative prepared.sourceCovers).trans (Fraction.Order.Basic.le_max_left
+    exact (PairedParentRequest.sourceMaximum_nonnegative prepared.sourceCovers).trans (Basic.le_max_left
       _ _)
-  have extra := Fraction.Order.Arithmetic.mul_nonneg_direct queryNonnegative movementNonnegative
+  have extra := Arithmetic.mul_nonneg_direct queryNonnegative movementNonnegative
   exact (le_add_of_nonneg_left extra).trans
     ((le_add_of_nonneg_right (add_nonneg extra slopeNonnegative)).trans_eq (by rw [geometry.density_eq]; ring1))
 
 /-- The cached source geometry bounds every original closed-bank fragment trace density when the bank retains its exact
 slope. -/
 theorem SourceGeometry.density_bound (geometry :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.BoundaryQueryBounds.SurfacePreparation.SourceGeometry prepared
+  SourceGeometry prepared
   other)
-    {requested : InverseRootPolynomial.Coordinate} {minimum : Nat} (comparison : prepared.ClosedBoundaryComparison other
+    {requested : Coordinate} {minimum : Nat} (comparison : prepared.ClosedBoundaryComparison other
       requested minimum)
     (slope : comparison.original.slope = geometry.slope)
-    (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential) (member : occurrence ∈
+    (occurrence : SurfaceOccurrence regular domains differential) (member : occurrence ∈
       prepared.occurrences)
-    (i : Fin comparison.original.plans.length) (piece : ClosedBoundaryComparison.Piece comparison occurrence i) (index :
+    (i : Fin comparison.original.plans.length) (piece : Piece comparison occurrence i) (index :
       Nat) :
     comparison.traceDensity occurrence i piece index ≤ geometry.density := by
   have row := PairedFragmentBlocks.le_maximum (value := id) (Data.List.OfFn.Basic.mem_ofFn.mpr ⟨piece.row, rfl⟩ :
@@ -394,13 +396,13 @@ theorem SourceGeometry.density_bound (geometry :
       ((congrArg (PairedFragmentBlocks.maximum id) geometry.queryRows_eq.symm).trans geometry.query_eq.symm)
   have uniform : comparison.queryDensity occurrence i piece index ≤ FamilyBounds.preOwnerCellQuery occurrence other
     piece.column piece.row :=
-    Fraction.Order.Basic.max_le
+    Basic.max_le
       ((FragmentQueries.queryDensity_uniform_le occurrence.compared.entered.bounds
         piece.column piece.row (comparison.entries.get i).first.localRequest index).trans
-          (Fraction.Order.Basic.le_max_left _ _))
+          (Basic.le_max_left _ _))
       ((FragmentQueries.queryDensity_uniform_le
         (occurrence.recastComparison other).entered.bounds piece.column piece.row
-        (comparison.entries.get i).second.localRequest index).trans (Fraction.Order.Basic.le_max_right _ _))
+        (comparison.entries.get i).second.localRequest index).trans (Basic.le_max_right _ _))
   have queryBound := uniform.trans queryLe
   have parentMember := Map.mem_map_of_mem
     (f := Plan.parent)
@@ -412,14 +414,14 @@ theorem SourceGeometry.density_bound (geometry :
       geometry.movement_eq.symm
   have source := comparison.original.plan_bounds
     (PairedParentCharts.ChartParent comparison.original i) (List.getElem_mem i.isLt)
-  have sourceBound : comparison.sourceDensity i ≤ geometry.slope := (Fraction.Order.Basic.max_le source.1
+  have sourceBound : comparison.sourceDensity i ≤ geometry.slope := (Basic.max_le source.1
     source.2).trans_eq slope
-  have weighted := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct queryBound
+  have weighted := (Arithmetic.mul_le_mul_of_nonneg_right_direct queryBound
     (Data.Gaussian.Norm.Basic.normSq_nonneg _)).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct movementBound
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct movementBound
       ((comparison.queryDensity_nonnegative occurrence i piece index).trans queryBound))
-  exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
-    weighted sourceBound) (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)).trans_eq
+  exact (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
+    weighted sourceBound) (by decide : (0 : Coordinate) ≤ 2)).trans_eq
     geometry.density_eq.symm
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.BoundaryQueryBounds.SurfacePreparation

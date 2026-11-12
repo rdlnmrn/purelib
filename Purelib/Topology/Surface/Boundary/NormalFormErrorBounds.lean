@@ -94,31 +94,31 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.LinearAlgebra.Alternating.Handle.Basic (PivotIndices)
 open _root_.Purelib.LinearAlgebra.Alternating (NormalForm)
 
-variable {source target : Nat} {labels : Fin source → Fin target} {edges : List (Stokes.OrientedEdge source)}
-  {word : BoundaryWord.CutBoundaryWord labels edges} {pairing : Cut.IntegralPairing.CutBoundaryWord word}
-  {primitive : Fin source → Stokes.PrimitivePoint}
-  {values : Data.Vector Stokes.PrimitivePoint word.alphabet.count}
-  {routes : Sewing.ChordCycleBank word} {raw : List (Handle.Basic.PivotIndices word.alphabet.count)}
-  {normal : LinearAlgebra.Alternating.NormalForm pairing.paired raw} {bank : ChordCycleBank.Sample routes pairing
+variable {source target : Nat} {labels : Fin source → Fin target} {edges : List (OrientedEdge source)}
+  {word : CutBoundaryWord labels edges} {pairing : IntegralPairing word}
+  {primitive : Fin source → PrimitivePoint}
+  {values : Data.Vector PrimitivePoint word.alphabet.count}
+  {routes : ChordCycleBank word} {raw : List (PivotIndices word.alphabet.count)}
+  {normal : NormalForm pairing.paired raw} {bank : Sample routes pairing
     primitive
     values}
 
 /-- A retained row coefficient mass bounds both components of its transformed chord error. -/
-theorem errors_bounded (sample : Sewing.NormalFormCycles normal bank) (profile :
-  WeightedRowBudgets.CoefficientRows normal.reduction.cycleRows)
-    {bound : PrimitiveAreaBounds.AreaCoordinate} (bounded : ∀ index, (PrimitivePoint.Bounded (bank.errors index)) bound)
+theorem errors_bounded (sample : NormalFormCycles normal bank) (profile :
+  CoefficientRows normal.reduction.cycleRows)
+    {bound : AreaCoordinate} (bounded : ∀ index, (PrimitivePoint.Bounded (bank.errors index)) bound)
       (row : Fin word.alphabet.count) :
     (PrimitivePoint.Bounded (sample.errors row)) ((profile.coefficients.get row).mass * bound) := by
   rw [sample.errors_eq, sample.weights_eq]
   exact Coefficients.point_bounded (profile.coefficients.get row) bank.errors bounded
 
 /-- Paid component accuracy gives strict bounds on both components of each transformed error row. -/
-theorem errors_accurate (sample : Sewing.NormalFormCycles normal bank) (profile :
-  WeightedRowBudgets.CoefficientRows normal.reduction.cycleRows)
-    {target : PrimitiveAreaBounds.AreaCoordinate} (positive : 0 < target)
+theorem errors_accurate (sample : NormalFormCycles normal bank) (profile :
+  CoefficientRows normal.reduction.cycleRows)
+    {target : AreaCoordinate} (positive : 0 < target)
     (bounded : ∀ index, (PrimitivePoint.Bounded (bank.errors index)) (profile.perComponent target)) (row : Fin
       word.alphabet.count) :
-    Data.Gaussian.Norm.Basic.normSq (sample.errors row).left < target ∧ Data.Gaussian.Norm.Basic.normSq (sample.errors
+    normSq (sample.errors row).left < target ∧ normSq (sample.errors
       row).right < target := by
   rw [sample.errors_eq, sample.weights_eq]
   exact CoefficientRows.point_accurate profile bank.errors positive bounded row
@@ -126,15 +126,15 @@ theorem errors_accurate (sample : Sewing.NormalFormCycles normal bank) (profile 
 section
 open Purelib.Topology.Surface.Boundary
 /-- The first handle increment approximates its transformed coordinate with the physical correction retained. -/
-theorem first_accurate (sample : Sewing.NormalFormCycles normal bank) (evaluated :
+theorem first_accurate (sample : NormalFormCycles normal bank) (evaluated :
   NormalFormArea normal values)
-    (profile : WeightedRowBudgets.CoefficientRows normal.reduction.cycleRows) {target :
-      PrimitiveAreaBounds.AreaCoordinate} (positive : 0 < target)
+    (profile : CoefficientRows normal.reduction.cycleRows) {target :
+      AreaCoordinate} (positive : 0 < target)
     (bounded : ∀ index, (PrimitivePoint.Bounded (bank.errors index)) (profile.perComponent target))
-    (pair : Handle.Basic.PivotIndices word.alphabet.count) (member : pair ∈ raw) :
+    (pair : PivotIndices word.alphabet.count) (member : pair ∈ raw) :
     let difference := (PrimitivePoint.sub ((sample.handleFirst pair).increment primitive))
       ((PrimitivePoint.sub (evaluated.points pair.1)) (sample.physical pair.2))
-    Data.Gaussian.Norm.Basic.normSq difference.left < target ∧ Data.Gaussian.Norm.Basic.normSq difference.right <
+    normSq difference.left < target ∧ normSq difference.right <
       target := by
   have equal : (PrimitivePoint.sub ((sample.handleFirst pair).increment primitive))
       ((PrimitivePoint.sub (evaluated.points pair.1)) (sample.physical pair.2)) = (PrimitivePoint.sub
@@ -148,15 +148,15 @@ theorem first_accurate (sample : Sewing.NormalFormCycles normal bank) (evaluated
     using errors_accurate sample profile positive bounded pair.2
 
 /-- The last handle increment approximates its transformed coordinate with the physical correction retained. -/
-theorem last_accurate (sample : Sewing.NormalFormCycles normal bank) (evaluated :
+theorem last_accurate (sample : NormalFormCycles normal bank) (evaluated :
   NormalFormArea normal values)
-    (profile : WeightedRowBudgets.CoefficientRows normal.reduction.cycleRows) {target :
-      PrimitiveAreaBounds.AreaCoordinate} (positive : 0 < target)
+    (profile : CoefficientRows normal.reduction.cycleRows) {target :
+      AreaCoordinate} (positive : 0 < target)
     (bounded : ∀ index, (PrimitivePoint.Bounded (bank.errors index)) (profile.perComponent target))
-    (pair : Handle.Basic.PivotIndices word.alphabet.count) (member : pair ∈ raw) :
+    (pair : PivotIndices word.alphabet.count) (member : pair ∈ raw) :
     let difference := (PrimitivePoint.sub ((sample.handleLast pair).increment primitive))
       ((evaluated.points pair.2).add (sample.physical pair.1))
-    Data.Gaussian.Norm.Basic.normSq difference.left < target ∧ Data.Gaussian.Norm.Basic.normSq difference.right <
+    normSq difference.left < target ∧ normSq difference.right <
       target := by
   have equal : (PrimitivePoint.sub ((sample.handleLast pair).increment primitive))
       ((evaluated.points pair.2).add (sample.physical pair.1)) = sample.errors pair.1 := by
@@ -171,14 +171,14 @@ end
 
 /-- Transfer a sampled second row, with its forced negative orientation, to the first handle coordinate.
 Physical-boundary terms are not discarded. -/
-theorem first_sample_bounded (sample : Sewing.NormalFormCycles normal bank) (evaluated :
+theorem first_sample_bounded (sample : NormalFormCycles normal bank) (evaluated :
   NormalFormArea normal values)
     (rows : Fin word.alphabet.count → Gaussian.Basic.Canonical)
-    {jumpBound errorBound : Fin word.alphabet.count → PrimitiveAreaBounds.AreaCoordinate}
-    (jumps : ∀ row, Data.Gaussian.Norm.Basic.normSq ((sample.jumps row).right - rows row) ≤ jumpBound row)
-    (errors : ∀ row, Data.Gaussian.Norm.Basic.normSq (sample.errors row).right ≤ errorBound row)
-    (pair : Handle.Basic.PivotIndices word.alphabet.count) (member : pair ∈ raw) :
-    Data.Gaussian.Norm.Basic.normSq (-rows pair.2 - ((evaluated.points pair.1).right - (sample.physical pair.2).right))
+    {jumpBound errorBound : Fin word.alphabet.count → AreaCoordinate}
+    (jumps : ∀ row, normSq ((sample.jumps row).right - rows row) ≤ jumpBound row)
+    (errors : ∀ row, normSq (sample.errors row).right ≤ errorBound row)
+    (pair : PivotIndices word.alphabet.count) (member : pair ∈ raw) :
+    normSq (-rows pair.2 - ((evaluated.points pair.1).right - (sample.physical pair.2).right))
       ≤
       2 * (jumpBound pair.2 + errorBound pair.2) := by
   have model : (PrimitivePoint.sub (evaluated.points pair.1)) (sample.physical pair.2) =
@@ -198,14 +198,14 @@ theorem first_sample_bounded (sample : Sewing.NormalFormCycles normal bank) (eva
       (add_le_add (jumps pair.2) (errors pair.2)) (by decide))
 
 /-- The first row has positive orientation in the last handle coordinate. -/
-theorem last_sample_bounded (sample : Sewing.NormalFormCycles normal bank) (evaluated :
+theorem last_sample_bounded (sample : NormalFormCycles normal bank) (evaluated :
   NormalFormArea normal values)
     (rows : Fin word.alphabet.count → Gaussian.Basic.Canonical)
-    {jumpBound errorBound : Fin word.alphabet.count → PrimitiveAreaBounds.AreaCoordinate}
-    (jumps : ∀ row, Data.Gaussian.Norm.Basic.normSq ((sample.jumps row).right - rows row) ≤ jumpBound row)
-    (errors : ∀ row, Data.Gaussian.Norm.Basic.normSq (sample.errors row).right ≤ errorBound row)
-    (pair : Handle.Basic.PivotIndices word.alphabet.count) (member : pair ∈ raw) :
-    Data.Gaussian.Norm.Basic.normSq (rows pair.1 - ((evaluated.points pair.2).right + (sample.physical pair.1).right)) ≤
+    {jumpBound errorBound : Fin word.alphabet.count → AreaCoordinate}
+    (jumps : ∀ row, normSq ((sample.jumps row).right - rows row) ≤ jumpBound row)
+    (errors : ∀ row, normSq (sample.errors row).right ≤ errorBound row)
+    (pair : PivotIndices word.alphabet.count) (member : pair ∈ raw) :
+    normSq (rows pair.1 - ((evaluated.points pair.2).right + (sample.physical pair.1).right)) ≤
       2 * (jumpBound pair.1 + errorBound pair.1) := by
   have model : (evaluated.points pair.2).add (sample.physical pair.1) =
       (PrimitivePoint.sub ((sample.handleLast pair).increment primitive)) (sample.errors pair.1) := by

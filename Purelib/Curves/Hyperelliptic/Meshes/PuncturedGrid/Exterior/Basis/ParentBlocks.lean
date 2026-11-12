@@ -56,6 +56,8 @@ import Purelib.Riemann.Paths.PreparedPathDecomposition
 import Purelib.Riemann.Paths.PreparedPathParentCaches
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Curves
 
 open Purelib.Geometry
@@ -70,21 +72,21 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Paren
 open Purelib.Riemann.Normalization
 
 open Purelib.Data.Rat.Fraction.Compatibility
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
     regular domains differential}
 
 /-- Read a parent at its retained original cache index. -/
 def cacheParent (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
   regular domains differential)
     (index : Fin occurrence.compared.entered.cache.parents.length) :=
   Integration.PreparedParentSplitSelection.parentAt occurrence.compared.entered.cache.parents index
@@ -94,29 +96,29 @@ set_option genInjectivity false in
 
 The signed endpoint order, physical-axis correspondence and located subinterval share that exact cached parent. -/
 structure ParentBlock (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
   regular domains differential)
     (vertical forward : Bool) (physical : Rectangle.Partition.PreparedAxisPartitions.Interval) where
   /-- The selected parent's original finite cache index. -/ index : Fin occurrence.compared.entered.cache.parents.length
   /-- The retained splitting certificate for that exact original cached parent. -/ split :
     Integration.PreparedParentSplitSelection.Selected occurrence.compared.entered.mesh.splits
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent occurrence index)
+    (ParentBlocks.cacheParent occurrence index)
   /-- The original parent endpoints increase strictly in the signed traversal direction. -/ ordered :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward
-    ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent occurrence index).edge.point 0) <
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent occurrence index).edge.point 1)
+    SourceBlockParameters.signedAxis vertical forward
+    ((ParentBlocks.cacheParent occurrence index).edge.point 0) <
+    SourceBlockParameters.signedAxis vertical forward
+      ((ParentBlocks.cacheParent occurrence index).edge.point 1)
   /-- The executable parameter range for the signed physical block. -/ parameters :
     Integration.RectangularAxisParameterRange.AxisParameterRange
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward
-    ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent occurrence index).edge.point 0))
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent occurrence index).edge.point 1))
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward physical)
+    (SourceBlockParameters.signedAxis vertical forward
+    ((ParentBlocks.cacheParent occurrence index).edge.point 0))
+    (SourceBlockParameters.signedAxis vertical forward
+      ((ParentBlocks.cacheParent occurrence index).edge.point 1))
+      (SourceBlockParameters.signedInterval forward physical)
   /-- The retained parameter range has the actual physical-axis correspondence. -/ correspondence :
     Rectangle.SourceIntervals.AxisCorrespondence vertical
-    ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent occurrence index).edge.point 0)
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent occurrence index).edge.point 1)
+    ((ParentBlocks.cacheParent occurrence index).edge.point 0)
+      ((ParentBlocks.cacheParent occurrence index).edge.point 1)
       parameters.range physical
   /-- The same parameter range is located in the original retained parent split. -/ located :
     Paths.RectangularSegmentRefinement.Subinterval split.split parameters.range
@@ -124,54 +126,54 @@ structure ParentBlock (occurrence :
 constructive_injectivity ParentBlock
 
 /-- A retained mesh cut lies outside a physical interval in the selected signed orientation. -/
-private theorem signed_outside {columns rows : Nat} {geometry : Normalization.RectangularInverseModels.Geometry columns
+private theorem signed_outside {columns rows : Nat} {geometry : RectangularInverseModels.Geometry columns
   rows}
     {cuts : Paths.RectangularSegmentSplitting.GridCuts geometry} {meshBox : Rational.Box}
     (mesh : Meshes.RectangularObservationMesh.ObservationMesh cuts meshBox) (vertical forward : Bool)
     {physical : Rectangle.Partition.PreparedAxisPartitions.Interval} (member : physical ∈
       Rectangle.SourceIntervals.axisIntervals mesh vertical)
-    {point : Normalization.InverseRootPolynomial.Gaussian} (present : point ∈ mesh.points) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward point ≤
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward physical).lower ∨
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward physical).upper ≤
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward point := open
-        Purelib.Data.Rat in by
+    {point : InverseRootPolynomial.Gaussian} (present : point ∈ mesh.points) :
+    SourceBlockParameters.signedAxis vertical forward point ≤
+      (SourceBlockParameters.signedInterval forward physical).lower ∨
+      (SourceBlockParameters.signedInterval forward physical).upper ≤
+        SourceBlockParameters.signedAxis vertical forward point := open
+        Data.Rat in by
   have outside := Rectangle.SourceIntervals.axis_cut_outside mesh vertical member present
   cases forward with
   | true => exact outside
   | false =>
-    exact outside.elim (fun bound => Or.inr (Fraction.Order.Arithmetic.neg_le_neg_direct bound))
-      (fun bound => Or.inl (Fraction.Order.Arithmetic.neg_le_neg_direct bound))
+    exact outside.elim (fun bound => Or.inr (Arithmetic.neg_le_neg_direct bound))
+      (fun bound => Or.inl (Arithmetic.neg_le_neg_direct bound))
 
 /-- A retained physical mesh cut cannot lie strictly inside the corresponding signed side block. -/
-theorem signed_outside_for_block {columns rows : Nat} {geometry : Normalization.RectangularInverseModels.Geometry
+theorem signed_outside_for_block {columns rows : Nat} {geometry : RectangularInverseModels.Geometry
   columns rows}
     {cuts : Paths.RectangularSegmentSplitting.GridCuts geometry} {meshBox : Rational.Box}
     (mesh : Meshes.RectangularObservationMesh.ObservationMesh cuts meshBox) (vertical forward : Bool)
     {physical : Rectangle.Partition.PreparedAxisPartitions.Interval} (member : physical ∈
       Rectangle.SourceIntervals.axisIntervals mesh vertical)
-    {point : Normalization.InverseRootPolynomial.Gaussian} (present : point ∈ mesh.points) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward point ≤
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward physical).lower ∨
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward physical).upper ≤
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward point := open
-        Purelib.Data.Rat in by
+    {point : InverseRootPolynomial.Gaussian} (present : point ∈ mesh.points) :
+    SourceBlockParameters.signedAxis vertical forward point ≤
+      (SourceBlockParameters.signedInterval forward physical).lower ∨
+      (SourceBlockParameters.signedInterval forward physical).upper ≤
+        SourceBlockParameters.signedAxis vertical forward point := open
+        Data.Rat in by
   have outside := Rectangle.SourceIntervals.axis_cut_outside mesh vertical member present
   cases forward with
   | true => exact outside
   | false =>
-    exact outside.elim (fun bound => Or.inr (Fraction.Order.Arithmetic.neg_le_neg_direct bound))
-      (fun bound => Or.inl (Fraction.Order.Arithmetic.neg_le_neg_direct bound))
+    exact outside.elim (fun bound => Or.inr (Arithmetic.neg_le_neg_direct bound))
+      (fun bound => Or.inl (Arithmetic.neg_le_neg_direct bound))
 
 /-- Remove simultaneous negation from the retained affine parameter identity. -/
-private theorem unneg_affine {first last parameter value : Normalization.InverseRootPolynomial.Coordinate}
+private theorem unneg_affine {first last parameter value : InverseRootPolynomial.Coordinate}
     (equal : -first + parameter * (-last - -first) = -value) :
     first + parameter * (last - first) = value :=
   (show first + parameter * (last - first) = -(-first + parameter * (-last - -first)) by ring1).trans
     ((congrArg Neg.neg equal).trans (neg_neg value))
 
 /-- Convert a negated affine endpoint identity to its original physical-coordinate identity. -/
-theorem unneg_affine_for_block {first last parameter value : Normalization.InverseRootPolynomial.Coordinate}
+theorem unneg_affine_for_block {first last parameter value : InverseRootPolynomial.Coordinate}
     (equal : -first + parameter * (-last - -first) = -value) :
     first + parameter * (last - first) = value :=
   (show first + parameter * (last - first) = -(-first + parameter * (-last - -first)) by ring1).trans
@@ -183,53 +185,53 @@ def ParentBlock.build
     {prepared :
       SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
       regular domains differential} {previous :
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+      RegularDomainMeshes.RegularMeshes.CommonCuts domains}
     (selected : SourceCuts prepared previous) (member :
       occurrence ∈ prepared.occurrences)
     {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {meshTarget :
-      Normalization.InverseRootPolynomial.Coordinate}
-    (request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
+      RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {meshTarget :
+      InverseRootPolynomial.Coordinate}
+    (request : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+      RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
       coarseDepth) fixed meshTarget)
     (sheet : Fin 2) (position : Fin base.faces.regulars.length)
     (vertical forward : Bool) (physical : Rectangle.Partition.PreparedAxisPartitions.Interval)
     (present : physical ∈ Rectangle.SourceIntervals.axisIntervals
       ((request.entries.get sheet).meshes.entries.get position) vertical)
-    (lower : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward
-      occurrence.start ≤ Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.blockMidpoint forward
+    (lower : SourceBlockParameters.signedAxis vertical forward
+      occurrence.start ≤ SourceBlockParameters.blockMidpoint forward
       physical)
-    (upper : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.blockMidpoint forward physical <
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward occurrence.finish) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.ParentBlock occurrence vertical forward physical :=
+    (upper : SourceBlockParameters.blockMidpoint forward physical <
+      SourceBlockParameters.signedAxis vertical forward occurrence.finish) :
+    ParentBlock occurrence vertical forward physical :=
       open Purelib.Data.Rat in by
   let found := Integration.PreparedParentAxisLocation.ParentCache.locateAxis occurrence.compared.entered.cache
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward)
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.blockMidpoint forward physical) lower upper
+    (SourceBlockParameters.signedAxis vertical forward)
+    (SourceBlockParameters.blockMidpoint forward physical) lower upper
   let split := Integration.PreparedParentSplitSelection.select
     occurrence.compared.entered.mesh.splits found.index
   have firstPoint := Paths.RectangularSegmentRefinement.coordinate_point_mem split.split split.split.partition.lower_mem
   have lastPoint := Paths.RectangularSegmentRefinement.coordinate_point_mem split.split split.split.partition.upper_mem
   rw [Rectangle.Partition.PreparedSegmentCuts.point_zero] at firstPoint
   rw [Rectangle.Partition.PreparedSegmentCuts.point_one] at lastPoint
-  have firstOutside := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.signed_outside_for_block
+  have firstOutside := ParentBlocks.signed_outside_for_block
     ((request.entries.get sheet).meshes.entries.get position) vertical forward present
     (selected.requested_split_points request sheet position member split.member firstPoint)
-  have lastOutside := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.signed_outside_for_block
+  have lastOutside := ParentBlocks.signed_outside_for_block
     ((request.entries.get sheet).meshes.entries.get position) vertical forward present
     (selected.requested_split_points request sheet position member split.member lastPoint)
   have between := Rectangle.Partition.PreparedSegmentCuts.midpoint_bounds
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward physical)
-  have firstBound : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward
-    ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent occurrence found.index).edge.point 0) ≤
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward physical).lower := by
+    (SourceBlockParameters.signedInterval forward physical)
+  have firstBound : SourceBlockParameters.signedAxis vertical forward
+    ((ParentBlocks.cacheParent occurrence found.index).edge.point 0) ≤
+      (SourceBlockParameters.signedInterval forward physical).lower := by
     rcases firstOutside with bound | bound
     · exact bound
     · exact (not_lt_of_ge (bound.trans found.lower) between.2).elim
-  have lastBound : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward
+  have lastBound : (SourceBlockParameters.signedInterval forward
     physical).upper ≤
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward
-        ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent occurrence found.index).edge.point
+      SourceBlockParameters.signedAxis vertical forward
+        ((ParentBlocks.cacheParent occurrence found.index).edge.point
         1) := by
     rcases lastOutside with bound | bound
     · exact (not_lt_of_ge (bound.trans between.1.le) found.upper).elim
@@ -238,28 +240,28 @@ def ParentBlock.build
   let parameters := Integration.RectangularAxisParameterRange.AxisParameterRange.build _ _ _ ordered ⟨firstBound,
     lastBound⟩
   have correspondence : Rectangle.SourceIntervals.AxisCorrespondence vertical
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent occurrence found.index).edge.point 0)
-        ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent occurrence found.index).edge.point
+      ((ParentBlocks.cacheParent occurrence found.index).edge.point 0)
+        ((ParentBlocks.cacheParent occurrence found.index).edge.point
         1)
       parameters.range physical := by
     cases forward with
-    | true => exact Or.inl ⟨Fraction.Order.Arithmetic.sub_pos_direct ordered, parameters.first_eq, parameters.last_eq⟩
+    | true => exact Or.inl ⟨Arithmetic.sub_pos_direct ordered, parameters.first_eq, parameters.last_eq⟩
     | false =>
-      have reverse := Fraction.Order.Arithmetic.neg_lt_neg_direct ordered
+      have reverse := Arithmetic.neg_lt_neg_direct ordered
       change -(-Rectangle.SourceIntervals.axisCoordinate vertical
-        ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent occurrence found.index).edge.point
+        ((ParentBlocks.cacheParent occurrence found.index).edge.point
         1)) <
         -(-Rectangle.SourceIntervals.axisCoordinate vertical
-          ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent occurrence
+          ((ParentBlocks.cacheParent occurrence
           found.index).edge.point 0)) at reverse
       rw [neg_neg, neg_neg] at reverse
-      have negative := Fraction.Order.Arithmetic.sub_lt_sub_right_direct reverse
+      have negative := Arithmetic.sub_lt_sub_right_direct reverse
         (Rectangle.SourceIntervals.axisCoordinate vertical
-        ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent occurrence found.index).edge.point
+        ((ParentBlocks.cacheParent occurrence found.index).edge.point
         0))
       rw [sub_self] at negative
-      exact Or.inr ⟨negative, Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.unneg_affine_for_block
-        parameters.first_eq, Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.unneg_affine_for_block
+      exact Or.inr ⟨negative, ParentBlocks.unneg_affine_for_block
+        parameters.first_eq, ParentBlocks.unneg_affine_for_block
         parameters.last_eq⟩
   exact ⟨found.index, split, ordered, parameters, correspondence,
     selected.locateInterval request sheet position member split.split split.member vertical physical present
@@ -267,9 +269,9 @@ def ParentBlock.build
 
 /-- The selected parent block retains an actual member of the original occurrence's parent cache. -/
 theorem ParentBlock.member {vertical forward : Bool} {physical : Rectangle.Partition.PreparedAxisPartitions.Interval}
-    (block : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.ParentBlock occurrence vertical forward
+    (block : ParentBlock occurrence vertical forward
       physical) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent occurrence block.index ∈
+    ParentBlocks.cacheParent occurrence block.index ∈
       occurrence.compared.entered.cache.parents := List.getElem_mem block.index.isLt
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks

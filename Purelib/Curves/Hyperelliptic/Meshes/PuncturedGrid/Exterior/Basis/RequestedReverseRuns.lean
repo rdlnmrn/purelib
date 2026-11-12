@@ -151,35 +151,35 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSou
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSourceChains (ReverseSourceChain)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Riemann.Meshes.LiftedPuncturedGrid base} {differential other :
-    Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential other :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
   {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {count : Nat} {patch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {sourceData : Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
-    Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover sourceData}
-  {covers : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent} {minimum floor
+  {count : Nat} {patch : PreparedPatch parent}
+  {sourceData : Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
+    Cover sourceData}
+  {covers : Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent} {minimum floor
     index depth : Nat}
-  {common : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonCover cover covers minimum}
-  {areaAllowance sourceTarget coefficientTarget : Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest regular
+  {common : BasisCommonCover cover covers minimum}
+  {areaAllowance sourceTarget coefficientTarget : Coordinate}
+  {request : BasisPreparedCommonRequest regular
     common areaAllowance sourceTarget coefficientTarget floor}
   {box : Geometry.Rational.Box}
-  {polynomials : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index
+  {polynomials : RegularBasisPolynomials cap index
     box}
   {originals :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank covers
+    PrimitiveBank covers
     index}
-  {cells : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers
+  {cells : BasisSourceLocations.SampleBank covers
     index}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -189,7 +189,7 @@ open Purelib.Data.Gaussian.Norm.Basic (normSq_nonneg)
 open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 
 variable {acquired :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition request
+  BasisPreparedCommonRequest.Acquisition request
   polynomials originals cells coefficients depth}
 
 open Purelib.Riemann.Periods.CenteredBilinearPath (Sample)
@@ -201,7 +201,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentAr
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks (maximum maximum_nonnegative
   le_maximum)
 
-variable {faceIndex : Nat} {data : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
+variable {faceIndex : Nat} {data : RowData
   occurrence faceIndex}
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks (FragmentAreaBudget)
@@ -215,14 +215,14 @@ set_option genInjectivity false in
 value and its paid certificate. -/
 structure CertifiedReverseRun (acquired : BasisPreparedCommonRequest.Acquisition request polynomials originals cells
   coefficients depth)
-    {faceIndex : Nat} (data : FragmentQueries.RowData occurrence faceIndex) (target : InverseRootPolynomial.Coordinate)
+    {faceIndex : Nat} (data : RowData occurrence faceIndex) (target : Coordinate)
       where
   /-- The actual descending physical source run retained by this acquisition. -/ run :
-    ReverseSourceRuns.ReverseSourceRun acquired data
-  /-- The cached coefficient-independent area error of this reverse run. -/ error : InverseRootPolynomial.Coordinate
+    ReverseSourceRun acquired data
+  /-- The cached coefficient-independent area error of this reverse run. -/ error : Coordinate
   /-- The area-error cache equals the retained reverse run's original error. -/ error_eq : error = run.error
   /-- The retained reverse-run area error is strictly below the requested target. -/ paid : error < target
-  /-- The cached displacement error of the same reverse run. -/ totalError : InverseRootPolynomial.Coordinate
+  /-- The cached displacement error of the same reverse run. -/ totalError : Coordinate
   /-- The displacement-error cache equals the original reverse run's total error. -/ totalError_eq : totalError =
     run.totalError
   /-- The retained displacement error is strictly below one quarter of the requested target. -/ totalPaid : totalError <
@@ -231,8 +231,8 @@ structure CertifiedReverseRun (acquired : BasisPreparedCommonRequest.Acquisition
 constructive_injectivity CertifiedReverseRun
 
 namespace RunRequest
-variable {fragmentCount runMinimum : Nat} {target : Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  (selected : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedRuns.RunRequest occurrence covers
+variable {fragmentCount runMinimum : Nat} {target : Coordinate}
+  (selected : RunRequest occurrence covers
     fragmentCount target runMinimum)
 
 /-- Assemble and certify the original reverse source run from paid fragments and a complete descending source chain.
@@ -241,14 +241,14 @@ The original count, source and face stages, reversed parameter widths and refine
 displacement errors. -/
 @[expose] def acquireReverse {vertices : Fin fragmentCount → Nat}
     (owners : selected.blocks.OwnerPreparation vertices)
-    (fragments : List (BlockRequest.BudgetedFragment (originals := originals) (coefficients := coefficients)
+    (fragments : List (BudgetedFragment (originals := originals) (coefficients := coefficients)
       selected.blocks data))
     (countLe : fragments.length ≤ fragmentCount)
-    (chain : ReverseSourceChains.ReverseSourceChain (fragments.map BudgetedFragment.fragment) 1 0)
+    (chain : ReverseSourceChain (fragments.map BudgetedFragment.fragment) 1 0)
     (sourcePaid : selected.blocks.queries.sourceMinimum ≤ index) (facePaid : owners.faceIndex ≤ faceIndex)
     (widths : ∀ fragment ∈ fragments, fragment.fragment.reverseSourceWidth ≤ selected.refinement.width)
     (depthPaid : selected.refinement.depth ≤ common.depth + acquired.extraDepth) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedRuns.CertifiedReverseRun acquired data target :=
+    CertifiedReverseRun acquired data target :=
       by
   let retained := fragments.map BudgetedFragment.fragment
   let run := ReverseSourceRun.ofChain (acquired := acquired) retained chain
@@ -270,10 +270,10 @@ displacement errors. -/
       certified.tolerance_le
       (selected.blocks.fragment_bounds (acquired := acquired) certified.fragment sourcePaid (owners.query_le.trans
         facePaid)).2
-    have countRead : run.fragments.length ≤ fragmentCount := (Data.List.Map.length_map ..).trans_le countLe
+    have countRead : run.fragments.length ≤ fragmentCount := (Map.length_map ..).trans_le countLe
     have toleranceLe := Capacity.fragmentLocalTolerance_count_antitone countRead
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
-        (add_nonneg (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 1)
+      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 2)
+        (add_nonneg (by decide : (0 : Coordinate) ≤ 1)
           (BasisSourceCovers.primitiveSlope_nonnegative covers))) selected.blocks.positive.le
     exact localBound.trans ((Fraction.Order.Basic.min_le_right ..).trans toleranceLe)
   exact ⟨run, run.error, rfl, run.error_lt selected.refinement blocks.le widthLe depthPaid,
@@ -281,11 +281,11 @@ displacement errors. -/
 
 end RunRequest
 namespace CertifiedReverseRun
-variable {target : Riemann.Normalization.InverseRootPolynomial.Coordinate}
+variable {target : Coordinate}
 
 /-- The descending physical area plus its exact original source area satisfies the certified homogeneous error bound. -/
 theorem area_bound (certified :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedRuns.CertifiedReverseRun acquired data target)
+  CertifiedReverseRun acquired data target)
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs) :
     Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area ((certified.run.fragments.map
       OwnedFragment.pair).map Prod.fst).flatten +
@@ -295,7 +295,7 @@ theorem area_bound (certified :
 
 /-- The descending physical area satisfies the requested homogeneous bound against the negative original source area. -/
 theorem area_requested (certified :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedRuns.CertifiedReverseRun acquired data target)
+  CertifiedReverseRun acquired data target)
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs) :
     Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area ((certified.run.fragments.map
       OwnedFragment.pair).map Prod.fst).flatten +
@@ -305,7 +305,7 @@ theorem area_requested (certified :
 
 /-- The cached endpoint error is paid by the same request as the area error. -/
 theorem total_requested (certified :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedRuns.CertifiedReverseRun acquired data target)
+  CertifiedReverseRun acquired data target)
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs) :
     PrimitivePoint.Bounded
       ((PairedIncrementArea.total
@@ -316,7 +316,7 @@ theorem total_requested (certified :
   rw [← certified.totalError_eq] at bounded
   have massNN : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
-    (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : InverseRootPolynomial.Coordinate)) _
+    (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Coordinate)) _
       (fun row => Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
   have upper := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct certified.totalPaid.le massNN
   exact ⟨bounded.1.trans upper, bounded.2.trans upper⟩

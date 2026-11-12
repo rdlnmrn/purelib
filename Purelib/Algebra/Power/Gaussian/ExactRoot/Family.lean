@@ -66,10 +66,10 @@ The retained roots share the input and positive degree, their points are duplica
 degree. -/
 structure ExactRootFamily (input : Canonical) (degree :
   RootDegree) where
-  /-- The displayed roots, each with its exact power equation. -/ members : List (Algebra.Power.Gaussian.ExactRoot
+  /-- The displayed roots, each with its exact power equation. -/ members : List (ExactRoot
     input degree)
   /-- The displayed root points are pairwise distinct. -/ pointsNodup : (members.map
-    Algebra.Power.Gaussian.ExactRoot.point).Nodup
+    ExactRoot.point).Nodup
   /-- The number of displayed roots equals the positive degree. -/ count : members.length = degree.value
 
 constructive_injectivity ExactRootFamily
@@ -85,7 +85,7 @@ def ofCandidates? (input : Canonical) (degree :
   RootDegree)
     (candidates : List Canonical) : Option (ExactRootFamily input degree) :=
   let members := Check.promoteCandidates input degree candidates
-  if nodup : (members.map Algebra.Power.Gaussian.ExactRoot.point).Nodup then
+  if nodup : (members.map ExactRoot.point).Nodup then
     if count : members.length = degree.value then
       some ⟨members, nodup, count⟩
     else
@@ -107,9 +107,9 @@ A degree-sized duplicate-free family leaves no room for another distinct root of
 theorem containsDisplayed {input : Canonical}
   {degree : RootDegree}
     (family : ExactRootFamily input degree)
-    (candidate : Algebra.Power.Gaussian.ExactRoot input degree) :
-    candidate.point ∈ family.members.map Algebra.Power.Gaussian.ExactRoot.point := by
-  by_cases absent : candidate.point ∈ family.members.map Algebra.Power.Gaussian.ExactRoot.point
+    (candidate : ExactRoot input degree) :
+    candidate.point ∈ family.members.map ExactRoot.point := by
+  by_cases absent : candidate.point ∈ family.members.map ExactRoot.point
   · exact absent
   exfalso
   let polynomial := Power.Gaussian.rootPolynomial input degree
@@ -118,13 +118,13 @@ theorem containsDisplayed {input : Canonical}
       rw [Power.Gaussian.rootPolynomial_degree input degree]
       exact degree.positive)
   have nodup :
-      (candidate.point :: family.members.map Algebra.Power.Gaussian.ExactRoot.point).Nodup :=
+      (candidate.point :: family.members.map ExactRoot.point).Nodup :=
     List.Pairwise.cons (by
       intro point member equal
       cases equal
       exact absent member) family.pointsNodup
   have zeros : ∀ point ∈
-      candidate.point :: family.members.map Algebra.Power.Gaussian.ExactRoot.point,
+      candidate.point :: family.members.map ExactRoot.point,
       polynomial.eval point = 0 := by
     intro point member
     rcases Data.List.Membership.mem_cons.mp member with pointEqual | member
@@ -135,9 +135,9 @@ theorem containsDisplayed {input : Canonical}
       rw [← pointEqual]
       exact root.polynomialRoot
   have bound :=
-    Roots.nodup_zeros_length_lt_degreeCount
+    Extensionality.nodup_zeros_length_lt_degreeCount
       polynomial nonzero
-      (candidate.point :: family.members.map Algebra.Power.Gaussian.ExactRoot.point) nodup zeros
+      (candidate.point :: family.members.map ExactRoot.point) nodup zeros
   have countSlots :=
     DensePolynomial.natDegree_add_one_eq_degreeCount
       nonzero

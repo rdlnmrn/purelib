@@ -17,6 +17,8 @@ public import Mathlib.Tactic.NormNum.Result
 meta import Purelib.Elab.ConstructiveInjectivity
 public import Purelib.Data.List.Membership
 
+open Purelib.Data.GaussianInt.Division
+
 /-!
 # Certified finite Hurwitz encoding
 
@@ -45,13 +47,13 @@ structure Encoding (source : GaussianInt.Fraction) where
     digits.length ≤ Nat.log2 (GaussianInt.normNat source.denominator) + 1
   /-- Every member of the retained digit list satisfies the original source digit budget. -/ digit_norm_le : ∀ candidate
     ∈ digits,
-    GaussianInt.normNat candidate ≤ Hurwitz.Step.digitNormBudget source
+    GaussianInt.normNat candidate ≤ Step.digitNormBudget source
   /-- Evidence that the exact retained list's continuant denominator is nonzero. -/ denominatorNonzero :
-    (Hurwitz.Continuant.continuant digits).denominator ≠ 0
+    (Continuant.continuant digits).denominator ≠ 0
   /-- The original source value times the embedded continuant denominator equals its embedded numerator. -/ reconstruct
     :
-    source.value * GaussianInt.toGaussian (Hurwitz.Continuant.continuant digits).denominator =
-      GaussianInt.toGaussian (Hurwitz.Continuant.continuant digits).numerator
+    source.value * GaussianInt.toGaussian (Continuant.continuant digits).denominator =
+      GaussianInt.toGaussian (Continuant.continuant digits).numerator
 
 constructive_injectivity Encoding
 
@@ -65,31 +67,31 @@ The relation and decrease evidence constrain only that callback. -/
 @[expose] def step
     (relation : GaussianInt.Fraction → GaussianInt.Fraction → Prop)
     (fraction : GaussianInt.Fraction)
-    (decreases : ∀ nonterminal : GaussianInt.Division.Nearest.remainder fraction ≠ 0,
-      relation (Hurwitz.Step.next fraction nonterminal) fraction)
+    (decreases : ∀ nonterminal : Nearest.remainder fraction ≠ 0,
+      relation (Step.next fraction nonterminal) fraction)
     (recurse : ∀ next : GaussianInt.Fraction,
       relation next fraction → Encoding next) :
     Encoding fraction := by
-  if terminal : GaussianInt.Division.Nearest.remainder fraction = 0 then
+  if terminal : Nearest.remainder fraction = 0 then
     have integerIdentity :
-        GaussianInt.Division.Nearest.digit fraction * fraction.denominator = fraction.numerator := by
-      have division := GaussianInt.Division.Nearest.digit_mul_denominator_add_remainder fraction
+        Nearest.digit fraction * fraction.denominator = fraction.numerator := by
+      have division := Nearest.digit_mul_denominator_add_remainder fraction
       rw [terminal] at division
       simpa only [GaussianInt.add_zero]
         using division
-    have valueDigit : fraction.value = GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit fraction) := by
+    have valueDigit : fraction.value = GaussianInt.toGaussian (Nearest.digit fraction) := by
       apply Field.mul_right_cancel_of_ne
         fraction.denominatorGaussianNonzero
       calc
         fraction.value * GaussianInt.toGaussian fraction.denominator =
             GaussianInt.toGaussian fraction.numerator :=
           fraction.value_mul_denominator
-        _ = GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit fraction * fraction.denominator) := by
+        _ = GaussianInt.toGaussian (Nearest.digit fraction * fraction.denominator) := by
           rw [integerIdentity]
-        _ = GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit fraction) *
+        _ = GaussianInt.toGaussian (Nearest.digit fraction) *
             GaussianInt.toGaussian fraction.denominator := GaussianInt.toGaussian_mul _ _
     exact
-      { digits := [GaussianInt.Division.Nearest.digit fraction]
+      { digits := [Nearest.digit fraction]
         nonempty := by intro impossible; nomatch impossible
         length_le_width := by
           simp only [List.length_cons, List.length_nil]
@@ -98,22 +100,22 @@ The relation and decrease evidence constrain only that callback. -/
           intro candidate member
           have member := List.Membership.mem_singleton.mp member
           rw [member]
-          exact Hurwitz.Step.digit_norm_le_budget fraction
+          exact Step.digit_norm_le_budget fraction
         denominatorNonzero := by
           intro oneZero
           have realZero := congrArg
             GaussianInt.re oneZero
           exact (show (1 : Int) ≠ 0 by decide) realZero
         reconstruct := by
-          simpa only [Hurwitz.Continuant.continuant, Hurwitz.Continuant.prepend, GaussianInt.toGaussian_one,
+          simpa only [Continuant.continuant, Continuant.prepend, GaussianInt.toGaussian_one,
             Basic.mul_one,
             GaussianInt.mul_one,
             GaussianInt.add_zero]
             using valueDigit }
   else
-    let nextFraction := Hurwitz.Step.next fraction terminal
+    let nextFraction := Step.next fraction terminal
     let tail := recurse nextFraction (decreases terminal)
-    let tailPair := Hurwitz.Continuant.continuant tail.digits
+    let tailPair := Continuant.continuant tail.digits
     have tailDenominatorGaussianNonzero :
         GaussianInt.toGaussian tailPair.denominator ≠ 0 := by
       intro zero
@@ -132,63 +134,63 @@ The relation and decrease evidence constrain only that callback. -/
         _ = 0 * GaussianInt.toGaussian tailPair.denominator := by
           rw [Basic.zero_mul]
     have residualMulNumerator :
-        GaussianInt.Division.Nearest.residual fraction * GaussianInt.toGaussian tailPair.numerator =
+        Nearest.residual fraction * GaussianInt.toGaussian tailPair.numerator =
           GaussianInt.toGaussian tailPair.denominator := by
       calc
-        GaussianInt.Division.Nearest.residual fraction * GaussianInt.toGaussian tailPair.numerator =
-            GaussianInt.Division.Nearest.residual fraction *
+        Nearest.residual fraction * GaussianInt.toGaussian tailPair.numerator =
+            Nearest.residual fraction *
               (nextFraction.value * GaussianInt.toGaussian tailPair.denominator) := by
           rw [tail.reconstruct]
-        _ = GaussianInt.Division.Nearest.residual fraction *
-            ((GaussianInt.Division.Nearest.residual fraction)⁻¹ * GaussianInt.toGaussian tailPair.denominator) := by
-          rw [Hurwitz.Step.next_value]
-        _ = (GaussianInt.Division.Nearest.residual fraction * (GaussianInt.Division.Nearest.residual fraction)⁻¹) *
+        _ = Nearest.residual fraction *
+            ((Nearest.residual fraction)⁻¹ * GaussianInt.toGaussian tailPair.denominator) := by
+          rw [Step.next_value]
+        _ = (Nearest.residual fraction * (Nearest.residual fraction)⁻¹) *
             GaussianInt.toGaussian tailPair.denominator := by
           rw [Basic.mul_assoc]
         _ = GaussianInt.toGaussian tailPair.denominator := by
           rw [Field.inv_eq,
             Field.mul_inv _
-              (GaussianInt.Division.Nearest.residual_ne_zero terminal),
+              (Nearest.residual_ne_zero terminal),
             Basic.one_mul]
     exact
-      { digits := GaussianInt.Division.Nearest.digit fraction :: tail.digits
+      { digits := Nearest.digit fraction :: tail.digits
         nonempty := by intro impossible; nomatch impossible
         length_le_width := by
           simp only [List.length_cons]
           calc
             tail.digits.length + 1 ≤
-                (Nat.log2 (GaussianInt.normNat (GaussianInt.Division.Nearest.remainder fraction)) + 1) + 1 := by
+                (Nat.log2 (GaussianInt.normNat (Nearest.remainder fraction)) + 1) + 1 := by
               exact Nat.add_le_add_right tail.length_le_width 1
             _ ≤ Nat.log2 (GaussianInt.normNat fraction.denominator) + 1 := by
-              exact Nat.add_le_add_right (Hurwitz.Step.remainder_width_step terminal) 1
+              exact Nat.add_le_add_right (Step.remainder_width_step terminal) 1
         digit_norm_le := by
           intro candidate member
           rcases List.Membership.mem_cons.mp member with head | tailMember
           · rw [head]
-            exact Hurwitz.Step.digit_norm_le_budget fraction
+            exact Step.digit_norm_le_budget fraction
           · exact Nat.le_trans (tail.digit_norm_le candidate tailMember)
-              (Hurwitz.Step.next_digitNormBudget_le terminal)
+              (Step.next_digitNormBudget_le terminal)
         denominatorNonzero := by
           exact tailNumeratorNonzero
         reconstruct := by
           change fraction.value * GaussianInt.toGaussian tailPair.numerator =
             GaussianInt.toGaussian
-              (GaussianInt.Division.Nearest.digit fraction * tailPair.numerator + tailPair.denominator)
+              (Nearest.digit fraction * tailPair.numerator + tailPair.denominator)
           calc
             fraction.value * GaussianInt.toGaussian tailPair.numerator =
-                (GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit fraction) +
-                  GaussianInt.Division.Nearest.residual fraction) *
+                (GaussianInt.toGaussian (Nearest.digit fraction) +
+                  Nearest.residual fraction) *
                   GaussianInt.toGaussian tailPair.numerator := by
-              rw [GaussianInt.Division.Nearest.value_eq_digit_add_residual]
-            _ = GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit fraction) *
+              rw [Nearest.value_eq_digit_add_residual]
+            _ = GaussianInt.toGaussian (Nearest.digit fraction) *
                   GaussianInt.toGaussian tailPair.numerator +
-                GaussianInt.Division.Nearest.residual fraction * GaussianInt.toGaussian tailPair.numerator :=
+                Nearest.residual fraction * GaussianInt.toGaussian tailPair.numerator :=
               Basic.right_distrib _ _ _
-            _ = GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit fraction * tailPair.numerator) +
+            _ = GaussianInt.toGaussian (Nearest.digit fraction * tailPair.numerator) +
                 GaussianInt.toGaussian tailPair.denominator := by
               rw [GaussianInt.toGaussian_mul, residualMulNumerator]
             _ = GaussianInt.toGaussian
-                (GaussianInt.Division.Nearest.digit fraction * tailPair.numerator + tailPair.denominator) :=
+                (Nearest.digit fraction * tailPair.numerator + tailPair.denominator) :=
               (GaussianInt.toGaussian_add _ _).symm }
 
 /-- Equal retained digits determine the complete certified Encoding record. -/
@@ -204,15 +206,15 @@ private theorem record_eq {source : GaussianInt.Fraction}
 private theorem step_congr
     (firstRelation secondRelation : GaussianInt.Fraction → GaussianInt.Fraction → Prop)
     (fraction : GaussianInt.Fraction)
-    (firstDecrease : ∀ h : GaussianInt.Division.Nearest.remainder fraction ≠ 0,
-      firstRelation (Hurwitz.Step.next fraction h) fraction)
-    (secondDecrease : ∀ h : GaussianInt.Division.Nearest.remainder fraction ≠ 0,
-      secondRelation (Hurwitz.Step.next fraction h) fraction)
+    (firstDecrease : ∀ h : Nearest.remainder fraction ≠ 0,
+      firstRelation (Step.next fraction h) fraction)
+    (secondDecrease : ∀ h : Nearest.remainder fraction ≠ 0,
+      secondRelation (Step.next fraction h) fraction)
     (left : ∀ next, firstRelation next fraction → Encoding next)
     (right : ∀ next, secondRelation next fraction → Encoding next)
-    (agree : ∀ h : GaussianInt.Division.Nearest.remainder fraction ≠ 0,
-      left (Hurwitz.Step.next fraction h) (firstDecrease h) =
-      right (Hurwitz.Step.next fraction h) (secondDecrease h)) :
+    (agree : ∀ h : Nearest.remainder fraction ≠ 0,
+      left (Step.next fraction h) (firstDecrease h) =
+      right (Step.next fraction h) (secondDecrease h)) :
     step firstRelation fraction firstDecrease left =
       step secondRelation fraction secondDecrease right := by
   apply record_eq
@@ -222,14 +224,14 @@ private theorem step_congr
   · rename_i nonterminal
     dsimp only
     exact congrArg
-      (fun tail : Encoding (Hurwitz.Step.next fraction nonterminal) =>
-        GaussianInt.Division.Nearest.digit fraction :: tail.digits)
+      (fun tail : Encoding (Step.next fraction nonterminal) =>
+        Nearest.digit fraction :: tail.digits)
       (agree nonterminal)
 
 /-- The step specializes only its erased bound relation and proof witness. -/
 private def measuredStep (measure : GaussianInt.Fraction → Nat)
-    (decreases : ∀ fraction, ∀ h : GaussianInt.Division.Nearest.remainder fraction ≠ 0,
-      measure (Hurwitz.Step.next fraction h) < measure fraction)
+    (decreases : ∀ fraction, ∀ h : Nearest.remainder fraction ≠ 0,
+      measure (Step.next fraction h) < measure fraction)
     (fraction : GaussianInt.Fraction)
     (recurse : ∀ next, measure next < measure fraction → Encoding next) :
     Encoding fraction :=
@@ -237,15 +239,15 @@ private def measuredStep (measure : GaussianInt.Fraction → Nat)
 
 /-- The original natural fixpoint, specialized to the retained descent measure. -/
 private def fixed (measure : GaussianInt.Fraction → Nat)
-    (decreases : ∀ fraction, ∀ h : GaussianInt.Division.Nearest.remainder fraction ≠ 0,
-      measure (Hurwitz.Step.next fraction h) < measure fraction)
+    (decreases : ∀ fraction, ∀ h : Nearest.remainder fraction ≠ 0,
+      measure (Step.next fraction h) < measure fraction)
     (fraction : GaussianInt.Fraction) : Encoding fraction :=
   WellFounded.Nat.fix measure (measuredStep measure decreases) fraction
 
 /-- Fuel sufficiency leaves the complete original selected record unchanged. -/
 private theorem go_fuel_eq (measure : GaussianInt.Fraction → Nat)
-    (decreases : ∀ fraction, ∀ h : GaussianInt.Division.Nearest.remainder fraction ≠ 0,
-      measure (Hurwitz.Step.next fraction h) < measure fraction)
+    (decreases : ∀ fraction, ∀ h : Nearest.remainder fraction ≠ 0,
+      measure (Step.next fraction h) < measure fraction)
     (firstFuel : Nat) :
     ∀ (fraction : GaussianInt.Fraction) (secondFuel : Nat)
       (firstBound : measure fraction < firstFuel)
@@ -264,12 +266,12 @@ private theorem go_fuel_eq (measure : GaussianInt.Fraction → Nat)
       delta WellFounded.Nat.fix.go measuredStep
       apply step_congr
       intro nonterminal
-      exact ih (Hurwitz.Step.next fraction nonterminal) secondFuel _ _
+      exact ih (Step.next fraction nonterminal) secondFuel _ _
 
 /-- The retained fueled evaluator agrees with its complete fixpoint record. -/
 private theorem go_eq_fixed (measure : GaussianInt.Fraction → Nat)
-    (decreases : ∀ fraction, ∀ h : GaussianInt.Division.Nearest.remainder fraction ≠ 0,
-      measure (Hurwitz.Step.next fraction h) < measure fraction)
+    (decreases : ∀ fraction, ∀ h : Nearest.remainder fraction ≠ 0,
+      measure (Step.next fraction h) < measure fraction)
     (fraction : GaussianInt.Fraction) (fuel : Nat) (bound : measure fraction < fuel) :
     WellFounded.Nat.fix.go measure (measuredStep measure decreases) fuel fraction bound =
       fixed measure decreases fraction := by
@@ -278,8 +280,8 @@ private theorem go_eq_fixed (measure : GaussianInt.Fraction → Nat)
 
 /-- Unroll the complete selected record without extensionality. -/
 private theorem fixed_unroll (measure : GaussianInt.Fraction → Nat)
-    (decreases : ∀ fraction, ∀ h : GaussianInt.Division.Nearest.remainder fraction ≠ 0,
-      measure (Hurwitz.Step.next fraction h) < measure fraction)
+    (decreases : ∀ fraction, ∀ h : Nearest.remainder fraction ≠ 0,
+      measure (Step.next fraction h) < measure fraction)
     (fraction : GaussianInt.Fraction) :
     fixed measure decreases fraction =
       measuredStep measure decreases fraction (fun next _ => fixed measure decreases next) := by
@@ -299,7 +301,7 @@ private theorem fixed_unroll (measure : GaussianInt.Fraction → Nat)
   delta measuredStep
   apply step_congr
   intro nonterminal
-  exact go_eq_fixed measure decreases (Hurwitz.Step.next fraction nonterminal) _ _
+  exact go_eq_fixed measure decreases (Step.next fraction nonterminal) _ _
 
 /-- The original retained logarithm determines the new evaluator's measure. -/
 private def logMeasure (fraction : GaussianInt.Fraction) : Nat :=
@@ -307,10 +309,10 @@ private def logMeasure (fraction : GaussianInt.Fraction) : Nat :=
 
 /-- Original logarithmic descent at the same selected next fraction. -/
 theorem width_decreases (fraction : GaussianInt.Fraction)
-    (nonterminal : GaussianInt.Division.Nearest.remainder fraction ≠ 0) :
-    Nat.log2 (GaussianInt.normNat (Hurwitz.Step.next fraction nonterminal).denominator) <
+    (nonterminal : Nearest.remainder fraction ≠ 0) :
+    Nat.log2 (GaussianInt.normNat (Step.next fraction nonterminal).denominator) <
       Nat.log2 (GaussianInt.normNat fraction.denominator) :=
-  Nat.lt_of_succ_le (Hurwitz.Step.remainder_width_step nonterminal)
+  Nat.lt_of_succ_le (Step.remainder_width_step nonterminal)
 
 /-- Compute the complete finite Hurwitz record with retained logarithmic descent.
 
@@ -337,37 +339,37 @@ theorem encodeResult_unroll (fraction : GaussianInt.Fraction) :
   exact fixed_unroll logMeasure width_decreases fraction
 
 /-- Read the digit list from the certified finite Hurwitz encoding. -/
-@[expose] def encode (fraction : GaussianInt.Fraction) : List Data.GaussianInt :=
-  (Hurwitz.Encoding.encodeResult fraction).digits
+@[expose] def encode (fraction : GaussianInt.Fraction) : List GaussianInt :=
+  (encodeResult fraction).digits
 
 /-- The continuant denominator of the computed Hurwitz encoding is nonzero. -/
 theorem encode_denominatorNonzero (fraction : GaussianInt.Fraction) :
-    (Hurwitz.Continuant.continuant (Hurwitz.Encoding.encode fraction)).denominator ≠ 0 :=
-  (Hurwitz.Encoding.encodeResult fraction).denominatorNonzero
+    (Continuant.continuant (encode fraction)).denominator ≠ 0 :=
+  (encodeResult fraction).denominatorNonzero
 
 /-- Every retained output digit meets the original source fraction's norm budget. -/
 theorem encode_digit_norm_le (fraction : GaussianInt.Fraction) {candidate : GaussianInt.Fraction.Basic.Integer}
-    (member : candidate ∈ Hurwitz.Encoding.encode fraction) :
-    GaussianInt.normNat candidate ≤ Hurwitz.Step.digitNormBudget fraction :=
-  (Hurwitz.Encoding.encodeResult fraction).digit_norm_le candidate member
+    (member : candidate ∈ encode fraction) :
+    GaussianInt.normNat candidate ≤ Step.digitNormBudget fraction :=
+  (encodeResult fraction).digit_norm_le candidate member
 
 /-- The computed Hurwitz list length is at most the source denominator norm's binary logarithm plus one. -/
 theorem encode_length_le_width (fraction : GaussianInt.Fraction) :
-    (Hurwitz.Encoding.encode fraction).length ≤
+    (encode fraction).length ≤
       Nat.log2 (GaussianInt.normNat fraction.denominator) + 1 :=
-  (Hurwitz.Encoding.encodeResult fraction).length_le_width
+  (encodeResult fraction).length_le_width
 
 /-- The computed finite Hurwitz encoding is nonempty. -/
-theorem encode_nonempty (fraction : GaussianInt.Fraction) : Hurwitz.Encoding.encode fraction ≠ [] :=
-  (Hurwitz.Encoding.encodeResult fraction).nonempty
+theorem encode_nonempty (fraction : GaussianInt.Fraction) : encode fraction ≠ [] :=
+  (encodeResult fraction).nonempty
 
 /-- The original fraction value times the encoded continuant denominator equals its numerator after Gaussian embedding.
 -/
 theorem encode_reconstruct (fraction : GaussianInt.Fraction) :
-    fraction.value * GaussianInt.toGaussian (Hurwitz.Continuant.continuant (Hurwitz.Encoding.encode
+    fraction.value * GaussianInt.toGaussian (Continuant.continuant (encode
       fraction)).denominator =
-      GaussianInt.toGaussian (Hurwitz.Continuant.continuant (Hurwitz.Encoding.encode fraction)).numerator :=
-  (Hurwitz.Encoding.encodeResult fraction).reconstruct
+      GaussianInt.toGaussian (Continuant.continuant (encode fraction)).numerator :=
+  (encodeResult fraction).reconstruct
 
 end Encoding
 end Purelib.Data.ComplexContinuedFraction.Hurwitz

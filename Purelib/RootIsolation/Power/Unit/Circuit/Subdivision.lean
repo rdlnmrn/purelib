@@ -19,6 +19,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Geometry.Gaussian.UnitCircle
+
 open Purelib.Data.Nat.Positive (RootDegree)
 
 open Purelib.Data.Gaussian.Norm.Basic (normSq)
@@ -57,8 +59,8 @@ open Purelib.Data.Gaussian
 It is computed directly from the common move budget. -/
 @[expose] def unitCircuitStepCount (degree : RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) : Nat :=
-  Data.Rat.Rounding.Floor.ceilNat
-      (4 / Power.Unit.Circuit.Budget.unitCircuitMoveBudget degree degreeAtLeastTwo) + 1
+  Rounding.Floor.ceilNat
+      (4 / Budget.unitCircuitMoveBudget degree degreeAtLeastTwo) + 1
 end Purelib.RootIsolation.Power.Unit.Circuit.Subdivision
 
 end
@@ -90,17 +92,17 @@ theorem four_lt_unitCircuitStepCount_mul_budget (degree : RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) :
     (4 : Fraction.Rational) <
       (unitCircuitStepCount degree degreeAtLeastTwo : Fraction.Rational) *
-        Power.Unit.Circuit.Budget.unitCircuitMoveBudget degree degreeAtLeastTwo := by
-  let budget := Power.Unit.Circuit.Budget.unitCircuitMoveBudget degree degreeAtLeastTwo
-  let ceiling := Data.Rat.Rounding.Floor.ceilNat (4 / budget)
+        Budget.unitCircuitMoveBudget degree degreeAtLeastTwo := by
+  let budget := Budget.unitCircuitMoveBudget degree degreeAtLeastTwo
+  let ceiling := Rounding.Floor.ceilNat (4 / budget)
   have budgetPositive : 0 < budget :=
-    Power.Unit.Circuit.Budget.unitCircuitMoveBudget_pos degree degreeAtLeastTwo
+    Budget.unitCircuitMoveBudget_pos degree degreeAtLeastTwo
   have ratioNonnegative : (0 : Fraction.Rational) ≤ 4 / budget :=
     (Fraction.Order.Field.div_pos_direct (by decide)
       budgetPositive).le
   have ratioLeCeiling :
       4 / budget ≤ (ceiling : Fraction.Rational) :=
-    Data.Rat.Rounding.Floor.le_natCast_ceilNat_of_nonneg ratioNonnegative
+    Rounding.Floor.le_natCast_ceilNat_of_nonneg ratioNonnegative
   have ceilingLtStepsNat :
       ceiling < unitCircuitStepCount degree degreeAtLeastTwo := by
     dsimp only [ceiling, budget]
@@ -146,8 +148,26 @@ open Purelib.Data.Gaussian
 quarter. -/
 @[expose] def unitCircuitParameter (degree : RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) (index : Nat) : Fraction.Rational :=
-  (index : Fraction.Rational) /
-    (unitCircuitStepCount degree degreeAtLeastTwo : Fraction.Rational)
+  Fraction.Cast.fromInt (Int.ofNat index) /
+    Fraction.Cast.fromInt (Int.ofNat (unitCircuitStepCount degree degreeAtLeastTwo))
+
+/-- Direct rational construction retains the original index divided by the same computed subdivision count.
+
+Both natural displays are converted through their integer constructors. The
+original cast laws prove the same quotient for every degree and original index,
+without a recursive unary cast during numerical parameter evaluation.
+-/
+theorem unitCircuitParameter_eq (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value) (index : Nat) :
+    unitCircuitParameter degree degreeAtLeastTwo index =
+      (index : Fraction.Rational) / (unitCircuitStepCount degree degreeAtLeastTwo : Fraction.Rational) := by
+  have first : Fraction.Cast.fromInt (Int.ofNat index) = (index : Fraction.Rational) :=
+    (congrArg Fraction.Cast.fromInt (Int.ofNat_eq_natCast index)).trans
+      (Fraction.Cast.natCast_eq_fromInt index).symm
+  have second : Fraction.Cast.fromInt (Int.ofNat (unitCircuitStepCount degree degreeAtLeastTwo)) =
+      (unitCircuitStepCount degree degreeAtLeastTwo : Fraction.Rational) :=
+    (congrArg Fraction.Cast.fromInt (Int.ofNat_eq_natCast (unitCircuitStepCount degree degreeAtLeastTwo))).trans
+      (Fraction.Cast.natCast_eq_fromInt (unitCircuitStepCount degree degreeAtLeastTwo)).symm
+  exact congrArg₂ (fun left right : Fraction.Rational => left / right) first second
 end Purelib.RootIsolation.Power.Unit.Circuit.Subdivision
 
 end
@@ -178,7 +198,7 @@ open Purelib.Data.Gaussian
 theorem unitCircuitParameter_zero (degree : RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) :
     unitCircuitParameter degree degreeAtLeastTwo 0 = 0 := by
-  unfold unitCircuitParameter
+  rewrite [unitCircuitParameter_eq]
   exact Fraction.Field.zero_div_direct _
 end Purelib.RootIsolation.Power.Unit.Circuit.Subdivision
 
@@ -275,7 +295,7 @@ theorem four_div_unitCircuitStepCount_lt_budget (degree : RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) :
     (4 : Fraction.Rational) /
         (unitCircuitStepCount degree degreeAtLeastTwo : Fraction.Rational) <
-      Power.Unit.Circuit.Budget.unitCircuitMoveBudget degree degreeAtLeastTwo := by
+      Budget.unitCircuitMoveBudget degree degreeAtLeastTwo := by
   have stepsPositive :
       (0 : Fraction.Rational) <
         (unitCircuitStepCount degree degreeAtLeastTwo : Fraction.Rational) :=
@@ -285,9 +305,9 @@ theorem four_div_unitCircuitStepCount_lt_budget (degree : RootDegree)
   calc
     (4 : Fraction.Rational) <
         (unitCircuitStepCount degree degreeAtLeastTwo : Fraction.Rational) *
-          Power.Unit.Circuit.Budget.unitCircuitMoveBudget degree degreeAtLeastTwo :=
+          Budget.unitCircuitMoveBudget degree degreeAtLeastTwo :=
       four_lt_unitCircuitStepCount_mul_budget degree degreeAtLeastTwo
-    _ = Power.Unit.Circuit.Budget.unitCircuitMoveBudget degree degreeAtLeastTwo *
+    _ = Budget.unitCircuitMoveBudget degree degreeAtLeastTwo *
         (unitCircuitStepCount degree degreeAtLeastTwo : Fraction.Rational) := by ring1
 end Purelib.RootIsolation.Power.Unit.Circuit.Subdivision
 
@@ -320,7 +340,7 @@ theorem unitCircuitParameter_last (degree : RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) :
     unitCircuitParameter degree degreeAtLeastTwo
         (unitCircuitStepCount degree degreeAtLeastTwo) = 1 := by
-  unfold unitCircuitParameter
+  rewrite [unitCircuitParameter_eq]
   change
     (unitCircuitStepCount degree degreeAtLeastTwo : Fraction.Rational) *
         (unitCircuitStepCount degree degreeAtLeastTwo : Fraction.Rational)⁻¹ = 1
@@ -362,7 +382,7 @@ theorem unitCircuitParameter_le_one (degree : RootDegree)
   have stepsPositive : (0 : Fraction.Rational) < (steps : Fraction.Rational) :=
     Fraction.Cast.Order.natCast_pos_direct
       (unitCircuitStepCount_pos degree degreeAtLeastTwo)
-  unfold unitCircuitParameter
+  rewrite [unitCircuitParameter_eq]
   apply (Fraction.Order.Field.div_le_iff_pos stepsPositive).2
   have castBound : (index : Fraction.Rational) ≤ (steps : Fraction.Rational) :=
     Fraction.Cast.Order.natCast_le_direct indexBound
@@ -397,7 +417,7 @@ open Purelib.Data.Gaussian
 theorem unitCircuitParameter_nonnegative (degree : RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) (index : Nat) :
     0 ≤ unitCircuitParameter degree degreeAtLeastTwo index := by
-  unfold unitCircuitParameter
+  rewrite [unitCircuitParameter_eq]
   exact Fraction.Order.Field.div_nonneg_direct
     (Fraction.Cast.Order.natCast_le_direct
       (m := 0) (n := index) (Nat.zero_le index))
@@ -435,7 +455,7 @@ private theorem unitCircuitParameter_step_bound
     (index : Nat) :
     4 * (unitCircuitParameter degree degreeAtLeastTwo index -
         unitCircuitParameter degree degreeAtLeastTwo (index + 1)) ^ 2 <
-      Power.Unit.Circuit.Budget.unitCircuitMoveBudget degree degreeAtLeastTwo := by
+      Budget.unitCircuitMoveBudget degree degreeAtLeastTwo := by
   let steps : Fraction.Rational :=
     (unitCircuitStepCount degree degreeAtLeastTwo : Fraction.Rational)
   have stepsPositive : 0 < steps := by
@@ -466,7 +486,8 @@ private theorem unitCircuitParameter_step_bound
       unitCircuitParameter degree degreeAtLeastTwo index -
           unitCircuitParameter degree degreeAtLeastTwo (index + 1) =
         -steps⁻¹ := by
-    dsimp only [unitCircuitParameter, steps]
+    simp only [unitCircuitParameter_eq]
+    dsimp only [steps]
     rw [Algebra.NatCast.add, Nat.cast_one]
     change (index : Fraction.Rational) * steps⁻¹ -
         ((index : Fraction.Rational) + 1) * steps⁻¹ = -steps⁻¹
@@ -476,7 +497,7 @@ private theorem unitCircuitParameter_step_bound
   rw [negativeSquare]
   exact scaled.trans_lt (by
     change (4 : Fraction.Rational) / steps <
-      Power.Unit.Circuit.Budget.unitCircuitMoveBudget degree degreeAtLeastTwo
+      Budget.unitCircuitMoveBudget degree degreeAtLeastTwo
     exact four_div_unitCircuitStepCount_lt_budget degree degreeAtLeastTwo)
 end Purelib.RootIsolation.Power.Unit.Circuit.Subdivision
 
@@ -509,12 +530,12 @@ theorem unitQuarterSubdivision_budget
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (index : Nat) :
     normSq
-        (Geometry.Gaussian.UnitCircle.Stereographic.unitQuarterPoint
+        (Stereographic.unitQuarterPoint
           (unitCircuitParameter degree degreeAtLeastTwo index) -
-          Geometry.Gaussian.UnitCircle.Stereographic.unitQuarterPoint
+          Stereographic.unitQuarterPoint
             (unitCircuitParameter degree degreeAtLeastTwo (index + 1))) <
-      Power.Unit.Circuit.Budget.unitCircuitMoveBudget degree degreeAtLeastTwo :=
-  (Geometry.Gaussian.UnitCircle.Stereographic.unitQuarterPoint_distance_le _ _).trans_lt
+      Budget.unitCircuitMoveBudget degree degreeAtLeastTwo :=
+  (Stereographic.unitQuarterPoint_distance_le _ _).trans_lt
     (unitCircuitParameter_step_bound degree degreeAtLeastTwo index)
 end Purelib.RootIsolation.Power.Unit.Circuit.Subdivision
 
@@ -547,13 +568,13 @@ theorem unitQuarterSubdivision_liftMargin
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (index : Nat) :
     normSq
-        (Geometry.Gaussian.UnitCircle.Stereographic.unitQuarterPoint
+        (Stereographic.unitQuarterPoint
           (unitCircuitParameter degree degreeAtLeastTwo index) -
-          Geometry.Gaussian.UnitCircle.Stereographic.unitQuarterPoint
+          Stereographic.unitQuarterPoint
             (unitCircuitParameter degree degreeAtLeastTwo (index + 1))) <
       (1 / 128 : Fraction.Rational) :=
   (unitQuarterSubdivision_budget degree degreeAtLeastTwo index).trans_le
-    (Power.Unit.Circuit.Budget.unitCircuitMoveBudget_le_liftMargin degree degreeAtLeastTwo)
+    (Budget.unitCircuitMoveBudget_le_liftMargin degree degreeAtLeastTwo)
 end Purelib.RootIsolation.Power.Unit.Circuit.Subdivision
 
 end
@@ -585,13 +606,13 @@ theorem unitQuarterSubdivision_small
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (index : Nat) :
     normSq
-        (Geometry.Gaussian.UnitCircle.Stereographic.unitQuarterPoint
+        (Stereographic.unitQuarterPoint
           (unitCircuitParameter degree degreeAtLeastTwo index) -
-          Geometry.Gaussian.UnitCircle.Stereographic.unitQuarterPoint
+          Stereographic.unitQuarterPoint
             (unitCircuitParameter degree degreeAtLeastTwo (index + 1))) <
-      Power.Unit.Clearance.uniformRobustClearance degree degreeAtLeastTwo :=
+      Clearance.uniformRobustClearance degree degreeAtLeastTwo :=
   (unitQuarterSubdivision_budget degree degreeAtLeastTwo index).trans_le
-    (Power.Unit.Circuit.Budget.unitCircuitMoveBudget_le_clearance degree degreeAtLeastTwo)
+    (Budget.unitCircuitMoveBudget_le_clearance degree degreeAtLeastTwo)
 end Purelib.RootIsolation.Power.Unit.Circuit.Subdivision
 
 end

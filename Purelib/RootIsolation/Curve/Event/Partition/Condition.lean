@@ -22,6 +22,8 @@ import Purelib.Polynomial.Dense.Rational.Basic
 import Purelib.Polynomial.Dense.Rational.CauchyIndex.Events.Resolution.Signs
 import Purelib.RootIsolation.Curve.Event.Partition.Subdivision
 
+open Purelib.Polynomial.Dense.Rational
+
 open Purelib.Data.Rat.Interval.Proper (Cell)
 open Purelib.Polynomial.Dense.Basic (RationalPolynomial)
 
@@ -64,26 +66,26 @@ def polynomialEventResolution
     (event : RationalPolynomial) (eventNonzero : event.isZero = false)
     (curve : Curve.RationalCurve) (box : Box) (root leaf : Cell)
     (member : leaf ∈
-      (Curve.Event.Partition.commonSubdivision event eventNonzero curve box root).leaves) :
-    Dense.Rational.CauchyIndex.Events.Resolution.Basic.CauchyEventResolution
-      (Dense.Rational.Pair.Reduction.reducedNumerator (Dense.Derivative.derivative event) event)
-      (Dense.Rational.Pair.Reduction.reducedDenominator (Dense.Derivative.derivative event) event)
+      (commonSubdivision event eventNonzero curve box root).leaves) :
+    CauchyIndex.Events.Resolution.Basic.CauchyEventResolution
+      (Pair.Reduction.reducedNumerator (Dense.Derivative.derivative event) event)
+      (Pair.Reduction.reducedDenominator (Dense.Derivative.derivative event) event)
       leaf.interval :=
   Sturm.Event.polynomialEventResolutionOfBounds event root leaf
-    (Curve.Event.Partition.commonSubdivision_leaf_refines event eventNonzero curve box root leaf member)
-    ((Curve.Event.Partition.commonSubdivision_leaf_width_lt event eventNonzero curve box
+    (commonSubdivision_leaf_refines event eventNonzero curve box root leaf member)
+    ((commonSubdivision_leaf_width_lt event eventNonzero curve box
       root leaf member).trans_le
-        (Curve.Event.Partition.commonLeafWidth_le_event event curve box root))
+        (commonLeafWidth_le_event event curve box root))
 
 /-- Read the main polynomial-event signs on one original common-resolution leaf. -/
 def polynomialEventSigns
     (event : RationalPolynomial) (eventNonzero : event.isZero = false)
     (curve : Curve.RationalCurve) (box : Box) (root leaf : Cell)
     (member : leaf ∈
-      (Curve.Event.Partition.commonSubdivision event eventNonzero curve box root).leaves) :
-    Dense.Rational.CauchyIndex.Events.Signs.CauchyEventSigns
-      (Dense.Rational.Pair.Reduction.reducedNumerator (Dense.Derivative.derivative event) event)
-      (Dense.Rational.Pair.Reduction.reducedDenominator (Dense.Derivative.derivative event) event)
+      (commonSubdivision event eventNonzero curve box root).leaves) :
+    CauchyIndex.Events.Signs.CauchyEventSigns
+      (Pair.Reduction.reducedNumerator (Dense.Derivative.derivative event) event)
+      (Pair.Reduction.reducedDenominator (Dense.Derivative.derivative event) event)
       leaf.interval :=
   (polynomialEventResolution event eventNonzero curve box root leaf member).signs
 
@@ -97,10 +99,10 @@ structure ConditionEvent
   /-- The retained polynomial belongs to the original curve's active box conditions. -/ member : polynomial ∈
     Curve.Box.activeConditionPolynomials curve box
   /-- The retained derivative-quotient event resolution on the exact original leaf interval. -/ resolution :
-    Dense.Rational.CauchyIndex.Events.Resolution.Basic.CauchyEventResolution
-    (Dense.Rational.Pair.Reduction.reducedNumerator (Dense.Derivative.derivative polynomial)
+    CauchyIndex.Events.Resolution.Basic.CauchyEventResolution
+    (Pair.Reduction.reducedNumerator (Dense.Derivative.derivative polynomial)
       polynomial)
-    (Dense.Rational.Pair.Reduction.reducedDenominator (Dense.Derivative.derivative polynomial)
+    (Pair.Reduction.reducedDenominator (Dense.Derivative.derivative polynomial)
       polynomial)
     leaf.interval
 
@@ -112,12 +114,12 @@ namespace ConditionEvent
 def signs
     {event : RationalPolynomial} {eventNonzero : event.isZero = false}
     {curve : Curve.RationalCurve} {box : Box} {root leaf : Cell}
-    (condition : Curve.Event.Partition.ConditionEvent event eventNonzero curve box root leaf) :
-    Dense.Rational.CauchyIndex.Events.Signs.CauchyEventSigns
-      (Dense.Rational.Pair.Reduction.reducedNumerator
+    (condition : ConditionEvent event eventNonzero curve box root leaf) :
+    CauchyIndex.Events.Signs.CauchyEventSigns
+      (Pair.Reduction.reducedNumerator
         (Dense.Derivative.derivative condition.polynomial)
         condition.polynomial)
-      (Dense.Rational.Pair.Reduction.reducedDenominator
+      (Pair.Reduction.reducedDenominator
         (Dense.Derivative.derivative condition.polynomial)
         condition.polynomial)
       leaf.interval :=
@@ -132,7 +134,7 @@ def conditionEvent
     (event : RationalPolynomial) (eventNonzero : event.isZero = false)
     (curve : Curve.RationalCurve) (box : Box) (root leaf : Cell)
     (leafMember : leaf ∈
-      (Curve.Event.Partition.commonSubdivision event eventNonzero curve box root).leaves)
+      (commonSubdivision event eventNonzero curve box root).leaves)
     (polynomial : RationalPolynomial)
     (member : polynomial ∈
       Curve.Box.activeConditionPolynomials curve box) :
@@ -141,11 +143,11 @@ def conditionEvent
   member := member
   resolution :=
     Sturm.Event.polynomialEventResolutionOfBounds polynomial root leaf
-      (Curve.Event.Partition.commonSubdivision_leaf_refines event eventNonzero curve box
+      (commonSubdivision_leaf_refines event eventNonzero curve box
         root leaf leafMember)
-      ((Curve.Event.Partition.commonSubdivision_leaf_width_lt event eventNonzero
+      ((commonSubdivision_leaf_width_lt event eventNonzero
         curve box root leaf leafMember).trans_le
-          (Curve.Event.Partition.commonLeafWidth_le_condition event root member))
+          (commonLeafWidth_le_condition event root member))
 
 /-- Resolve every retained active box-condition polynomial on the same original subdivision leaf.
 
@@ -154,7 +156,7 @@ def conditionEvents
     (event : RationalPolynomial) (eventNonzero : event.isZero = false)
     (curve : Curve.RationalCurve) (box : Box) (root leaf : Cell)
     (leafMember : leaf ∈
-      (Curve.Event.Partition.commonSubdivision event eventNonzero curve box root).leaves) :
+      (commonSubdivision event eventNonzero curve box root).leaves) :
     List (ConditionEvent event eventNonzero curve box root leaf) :=
   (Curve.Box.activeConditionPolynomials curve box).attach.map
     fun entry => conditionEvent event eventNonzero curve box root leaf
@@ -166,7 +168,7 @@ theorem conditionEvents_length
     (event : RationalPolynomial) (eventNonzero : event.isZero = false)
     (curve : Curve.RationalCurve) (box : Box) (root leaf : Cell)
     (leafMember : leaf ∈
-      (Curve.Event.Partition.commonSubdivision event eventNonzero curve box root).leaves) :
+      (commonSubdivision event eventNonzero curve box root).leaves) :
     (conditionEvents event eventNonzero curve box root leaf leafMember).length =
       (Curve.Box.activeConditionPolynomials
         curve box).length := by

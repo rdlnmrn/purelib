@@ -41,6 +41,8 @@ import Purelib.Data.List.Map
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-!
@@ -102,7 +104,7 @@ theorem remainderMaximum_nonnegative : ∀ {parents : List (CenteredEdge curve d
   count target parents),
     0 ≤ remainderMaximum requests
   | _, .nil => le_rfl
-  | _, .cons _ tail => (remainderMaximum_nonnegative tail).trans (Fraction.Order.Basic.le_max_right _ _)
+  | _, .cons _ tail => (remainderMaximum_nonnegative tail).trans (Basic.le_max_right _ _)
 
 /-- The retained inverse-error coefficient maximum is nonnegative.
 
@@ -112,7 +114,7 @@ theorem coefficientMaximum_nonnegative : ∀ {parents : List (CenteredEdge curve
   RequestedParents count target parents),
     0 ≤ coefficientMaximum requests
   | _, .nil => le_rfl
-  | _, .cons _ tail => (coefficientMaximum_nonnegative tail).trans (Fraction.Order.Basic.le_max_right _ _)
+  | _, .cons _ tail => (coefficientMaximum_nonnegative tail).trans (Basic.le_max_right _ _)
 
 open Purelib.Data.Gaussian in
 open Purelib.Integration.Polynomial.Gaussian.Cell in
@@ -120,7 +122,7 @@ open Purelib.Riemann.Integration in
 /-- The original child weighted allowance equals sixteen times its model error and squared movement. -/
 private theorem weightedAllowance_eq (child : CenteredEdge curve differential) :
     child.model.weightedAllowance = child.edge.pointMovement * (16 * child.edge.modelErrorAllowance) := by
-  unfold PreparedSubdivisionModelCore.CenteredEdge.model
+  unfold CenteredEdge.model
     Basic.CellModel.weightedAllowance
     Basic.CellModel.displacement
     PreparedConstantModels.PreparedEdge.centeredModel PreparedConstantModels.PreparedEdge.pointMovement
@@ -161,20 +163,20 @@ private theorem childCharge_le {parent child : CenteredEdge curve differential} 
     (relation : RootSubedge parent child) {remainder coefficient : Coordinate}
     (rUpper : 2 * request.request.model.primitive.remainderBound ≤ remainder)
     (cUpper : localCoefficient request ≤ coefficient) :
-      Riemann.Comparison.PreparedNestedPrimitiveComparison.LocalRequest.childCharge request child ≤ charge remainder
+      Comparison.PreparedNestedPrimitiveComparison.LocalRequest.childCharge request child ≤ charge remainder
       coefficient child := by
   have coefficientLe : 4 * normSq ((PreparedPrimitiveSamples.differentialNumerator differential).eval (child.edge.point
     0)) *
       Geometric.Basic.quarterRadius request.neighborhood.inverseErrorScale request.request.index ≤ coefficient :=
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (request.request.numerator_le _ (Riemann.Comparison.PreparedNestedPrimitiveComparison.LocalRequest.child_inside
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (request.request.numerator_le _ (Comparison.PreparedNestedPrimitiveComparison.LocalRequest.child_inside
           request relation 0 child.edge.baseInside)) (by decide))
       (Geometric.Basic.quarterRadius_nonneg request.neighborhood.inverseErrorScale_positive.le _)).trans cUpper
   have main := add_le_add
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct rUpper (Fraction.Order.Arithmetic.sq_nonneg_direct
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct rUpper (Arithmetic.sq_nonneg_direct
       child.edge.pointMovement))
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct coefficientLe (Norm.Basic.normSq_nonneg
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct coefficientLe (Norm.Basic.normSq_nonneg
       (child.edge.point 1 - child.edge.point 0)))
   calc
     _ = (2 * request.request.model.primitive.remainderBound * child.edge.pointMovement ^ 2 +
@@ -182,7 +184,7 @@ private theorem childCharge_le {parent child : CenteredEdge curve differential} 
         Geometric.Basic.quarterRadius request.neighborhood.inverseErrorScale request.request.index) *
           child.edge.pointMovement) +
           40 * child.edge.modelErrorAllowance * child.edge.pointMovement := by
-      unfold Riemann.Comparison.PreparedNestedPrimitiveComparison.LocalRequest.childCharge; ring1
+      unfold Comparison.PreparedNestedPrimitiveComparison.LocalRequest.childCharge; ring1
     _ ≤ (remainder * child.edge.pointMovement ^ 2 + coefficient * child.edge.pointMovement) +
           40 * child.edge.modelErrorAllowance * child.edge.pointMovement := add_le_add main le_rfl
     _ = _ := by
@@ -198,34 +200,34 @@ private theorem localErrors_le {parent : CenteredEdge curve differential} (reque
     {remainder coefficient : Coordinate}
     (rUpper : 2 * request.request.model.primitive.remainderBound ≤ remainder)
     (cUpper : localCoefficient request ≤ coefficient) :
-    Norm.Sum.Basic.gaussianNormSqSum (Primitive.errorTerms request.request.model.primitive.value.eval
+    gaussianNormSqSum (Primitive.errorTerms request.request.model.primitive.value.eval
       (children.map CenteredEdge.model)) ≤ chargeSum remainder coefficient children := by
   induction roots with
   | nil => exact le_rfl
   | cons head tail ih =>
       exact add_le_add
-        ((Riemann.Comparison.PreparedNestedPrimitiveComparison.LocalRequest.child_error_le request head).trans
+        ((Comparison.PreparedNestedPrimitiveComparison.LocalRequest.child_error_le request head).trans
         (childCharge_le request head rUpper cUpper)) ih
 
 section
 open Purelib.Data.Gaussian
 /-- The ordered Gaussian sum is additive across list concatenation. -/
 private theorem gaussianSum_append (first second : List Basic.Canonical) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (first ++ second) = Data.Gaussian.Norm.Sum.Basic.gaussianSum first +
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum second := by
+    gaussianSum (first ++ second) = gaussianSum first +
+      gaussianSum second := by
   induction first with
   | nil =>
-      change Data.Gaussian.Norm.Sum.Basic.gaussianSum second = 0 + Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      change gaussianSum second = 0 + gaussianSum
         second; ring1
-  | cons head tail ih => simp only [List.cons_append, Data.Gaussian.Norm.Sum.Basic.gaussianSum, ih]; ring1
+  | cons head tail ih => simp only [List.cons_append, gaussianSum, ih]; ring1
 
 /-- The Gaussian squared-norm sum is additive across list concatenation. -/
 private theorem gaussianNormSqSum_append (first second : List Basic.Canonical) :
-    Norm.Sum.Basic.gaussianNormSqSum (first ++ second) = Norm.Sum.Basic.gaussianNormSqSum first +
-      Norm.Sum.Basic.gaussianNormSqSum second := by
+    gaussianNormSqSum (first ++ second) = gaussianNormSqSum first +
+      gaussianNormSqSum second := by
   induction first with
-  | nil => change Norm.Sum.Basic.gaussianNormSqSum second = 0 + Norm.Sum.Basic.gaussianNormSqSum second; ring1
-  | cons head tail ih => simp only [List.cons_append, Norm.Sum.Basic.gaussianNormSqSum, ih]; ring1
+  | nil => change gaussianNormSqSum second = 0 + gaussianNormSqSum second; ring1
+  | cons head tail ih => simp only [List.cons_append, gaussianNormSqSum, ih]; ring1
 
 end
 
@@ -262,16 +264,16 @@ The original root-subedge chain identifies each parent increment with its
 ordered child increments. Concatenation retains every signed error occurrence. -/
 private theorem cellErrors_sum : ∀ {parents children : List (CenteredEdge curve differential)}
     (requests : RequestedParents count target parents) (refinement : RootSubedgeRefinement parents children),
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (cellErrors requests refinement) = Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    gaussianSum (cellErrors requests refinement) = gaussianSum
       requests.increments -
-      (Basic.PathModel.mk (children.map CenteredEdge.model)).integralSample
+      (PathModel.mk (children.map CenteredEdge.model)).integralSample
   | _, _, .nil, .nil => by change (0 : Basic.Canonical) = 0 - 0; ring1
   | parent :: _, _, .cons request tail, .cons chain _ remaining => by
       rw [cellErrors, gaussianSum_append, Primitive.errorTerms_sum,
         PreparedPrimitivePaths.incrementSum_eq _ chain, cellErrors_sum tail remaining]
       rw [← parent.edge.point_one, ← parent.edge.point_zero]
-      simp only [RequestedParents.increments, Data.Gaussian.Norm.Sum.Basic.gaussianSum, Map.map_append,
-        Basic.PathModel.integralSample_mk_append]
+      simp only [RequestedParents.increments, gaussianSum, Map.map_append,
+        PathModel.integralSample_mk_append]
       ring1
 
 open Purelib.Data.Gaussian in
@@ -283,15 +285,15 @@ private theorem cellErrors_le : ∀ {parents children : List (CenteredEdge curve
     (requests : RequestedParents count target parents) (refinement : RootSubedgeRefinement parents children)
     {remainder coefficient : Coordinate}, remainderMaximum requests ≤ remainder → coefficientMaximum requests ≤
       coefficient →
-    Norm.Sum.Basic.gaussianNormSqSum (cellErrors requests refinement) ≤ chargeSum remainder coefficient children
+    gaussianNormSqSum (cellErrors requests refinement) ≤ chargeSum remainder coefficient children
   | _, _, .nil, .nil, _, _, _, _ => le_rfl
   | _, _, .cons request tail, .cons _ roots remaining, _, _, rUpper, cUpper => by
       rw [cellErrors, gaussianNormSqSum_append, chargeSum_append]
       exact add_le_add
-        (localErrors_le request roots ((Fraction.Order.Basic.le_max_left _ _).trans rUpper)
-          ((Fraction.Order.Basic.le_max_left _ _).trans cUpper))
-        (cellErrors_le tail remaining ((Fraction.Order.Basic.le_max_right _ _).trans rUpper)
-          ((Fraction.Order.Basic.le_max_right _ _).trans cUpper))
+        (localErrors_le request roots ((Basic.le_max_left _ _).trans rUpper)
+          ((Basic.le_max_left _ _).trans cUpper))
+        (cellErrors_le tail remaining ((Basic.le_max_right _ _).trans rUpper)
+          ((Basic.le_max_right _ _).trans cUpper))
 
 open Purelib.Data.Gaussian
 open Purelib.Data.Rat
@@ -301,7 +303,7 @@ private theorem chargeSum_le {remainder coefficient distance : Coordinate} (rNon
     (children : List (CenteredEdge curve differential))
     (movements : ∀ child ∈ children, child.edge.pointMovement ≤ distance) :
     chargeSum remainder coefficient children ≤ (remainder * distance + coefficient) * movementSum children +
-      (5 / 2) * (Basic.PathModel.mk (children.map CenteredEdge.model)).totalWeightedAllowance := by
+      (5 / 2) * (PathModel.mk (children.map CenteredEdge.model)).totalWeightedAllowance := by
   induction children with
   | nil =>
       change (0 : Coordinate) ≤ _ * 0 + (5 / 2) * 0
@@ -309,7 +311,7 @@ private theorem chargeSum_le {remainder coefficient distance : Coordinate} (rNon
       decide
   | cons child children ih =>
       have square : child.edge.pointMovement ^ 2 ≤ distance * child.edge.pointMovement := by
-        have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        have scaled := Arithmetic.mul_le_mul_of_nonneg_right_direct
           (movements child (List.mem_cons_self ..)) (Norm.Basic.normSq_nonneg (child.edge.point 1 - child.edge.point 0))
         exact (show child.edge.pointMovement ^ 2 = child.edge.pointMovement * child.edge.pointMovement by
           ring1).trans_le scaled
@@ -321,11 +323,11 @@ private theorem chargeSum_le {remainder coefficient distance : Coordinate} (rNon
             remainder * (distance * child.edge.pointMovement) + coefficient * child.edge.pointMovement + (5 / 2) *
               child.model.weightedAllowance :=
           add_le_add (add_le_add
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct square rNonneg) le_rfl) le_rfl
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct square rNonneg) le_rfl) le_rfl
         exact bounded.trans_eq (by ring1)
       have total := add_le_add head (ih fun other member => movements other (List.mem_cons_of_mem child member))
       exact total.trans_eq (by
-        simp only [movementSum, List.map_cons, Basic.PathModel.totalWeightedAllowance, List.foldr_cons]
+        simp only [movementSum, List.map_cons, PathModel.totalWeightedAllowance, List.foldr_cons]
         ring1)
 
 /-- Bound the total primitive-versus-integral error using retained movement mass and aggregate allowance.
@@ -335,20 +337,20 @@ coefficient remains five halves. -/
 theorem refinement_error_bound {parents children : List (CenteredEdge curve differential)}
     (requests : RequestedParents count target parents) (refinement : RootSubedgeRefinement parents children)
     {distance : Coordinate} (movements : ∀ child ∈ children, child.edge.pointMovement ≤ distance) :
-    normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum requests.increments - (Basic.PathModel.mk (children.map
+    normSq (gaussianSum requests.increments - (PathModel.mk (children.map
       CenteredEdge.model)).integralSample) ≤
       (remainderMaximum requests * distance + coefficientMaximum requests) * movementMass children +
-        (5 / 2) * (Basic.PathModel.mk (children.map CenteredEdge.model)).aggregateAllowance := by
+        (5 / 2) * (PathModel.mk (children.map CenteredEdge.model)).aggregateAllowance := by
   have charges := cellErrors_le requests refinement le_rfl le_rfl
   have errors := Norm.Sum.Basic.normSq_gaussianSum_le (cellErrors requests refinement)
   rw [cellErrors_sum, cellErrors_length] at errors
-  have summed := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  have summed := Arithmetic.mul_le_mul_of_nonneg_left_direct
     (charges.trans (chargeSum_le (coefficient := coefficientMaximum requests) (remainderMaximum_nonnegative requests)
       children movements))
     (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le children.length))
   exact (errors.trans summed).trans_eq (by
-    rw [movementMass_eq, Basic.PathModel.aggregateAllowance]
-    dsimp only [Basic.PathModel.cells]
+    rw [movementMass_eq, PathModel.aggregateAllowance]
+    dsimp only [PathModel.cells]
     rw [Map.length_map]
     ring1)
 

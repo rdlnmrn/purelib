@@ -1,9 +1,12 @@
 module
+public import Batteries.Data.Fin.Basic
 public import Mathlib.Order.Basic
 public import Mathlib.Data.Nat.Basic
 public import Purelib.Algebra.Field.ExplicitField
 
 public import Purelib.Data.Nat.Subtraction
+public import Purelib.Data.Nat.Division
+import Purelib.Data.Nat.Remainder
 
 /-!
 # Splitting finite indices
@@ -29,6 +32,19 @@ original finite bound certifies the successor-size output. -/
   if index.val < removed.val then
     ⟨index.val, index.isLt.trans (Nat.lt_succ_self n)⟩
   else ⟨index.val + 1, Nat.succ_lt_succ index.isLt⟩
+
+/-- Skipping a displayed position never returns that same removed finite index. -/
+theorem skipIndex_ne {n : Nat} (removed : Fin (n + 1)) (index : Fin n) :
+    skipIndex removed index ≠ removed := by
+  intro same
+  have values := congrArg Fin.val same
+  unfold skipIndex at values
+  split at values
+  · rename_i before
+    exact (Nat.ne_of_lt before) values
+  · rename_i notBefore
+    have after : removed.val < index.val + 1 := Nat.lt_succ_of_le (Nat.le_of_not_lt notBefore)
+    exact (Nat.ne_of_lt after) values.symm
 
 universe u
 
@@ -200,6 +216,29 @@ certificate; proof irrelevance identifies the corresponding finite constructors.
   | zero => exact first
   | succ value => exact following ⟨value, Nat.lt_of_succ_lt_succ bound⟩
 
+/-- Decide whether a proposition holds at an original bounded finite coordinate.
+
+Structural recursion checks the first coordinate and then the same proposition
+at every retained successor. Both negative branches retain their exact failed
+cases, so the returned decision certifies the complete original existential.
+-/
+def existsDecidable : (size : Nat) → (predicate : _root_.Fin size → Prop) →
+    [DecidablePred predicate] → Decidable (∃ index, predicate index)
+  | 0, _, _ => .isFalse (fun ⟨index, _⟩ => Nat.not_lt_zero index.val index.isLt)
+  | size + 1, predicate, decideEntry =>
+      match decideEntry ⟨0, Nat.zero_lt_succ size⟩ with
+      | .isTrue first => .isTrue ⟨⟨0, Nat.zero_lt_succ size⟩, first⟩
+      | .isFalse first =>
+          match @existsDecidable size (fun index => predicate index.succ)
+              (fun index => decideEntry index.succ) with
+          | .isTrue following => .isTrue (by
+              rcases following with ⟨index, holds⟩
+              exact ⟨index.succ, holds⟩)
+          | .isFalse following => .isFalse (by
+              intro ⟨index, holds⟩
+              exact cases_induction (motive := fun index => predicate index → False)
+                first (fun index accepted => following ⟨index, accepted⟩) index holds)
+
 /-- A successor finite coordinate differs from the first coordinate.
 
 Applying the natural-value projection reduces an alleged equality to equality
@@ -265,3 +304,74 @@ The retained recursion keeps the same finite-index evaluation procedure. -/
 end
 
 end Purelib.Data.Fin
+
+public section
+
+namespace Purelib.Data.Fin
+
+open Purelib.Data.Nat
+
+/-- Project the row coordinate of an original bounded product index.
+
+The original natural quotient supplies the value. Its strict bound follows from
+that same product bound through the constructive natural division equation.
+-/
+@[expose] def divNat {leftSize rightSize : Nat}
+    (index : _root_.Fin (leftSize * rightSize)) : _root_.Fin leftSize :=
+  ⟨index.val / rightSize,
+    Division.div_lt_of_lt_mul (Nat.mul_comm leftSize rightSize ▸ index.isLt)⟩
+
+/-- Project the column coordinate of an original bounded product index.
+
+The original natural remainder supplies the value. A product index forces a
+positive right size, which gives the strict remainder bound directly.
+-/
+@[expose] def modNat {leftSize rightSize : Nat}
+    (index : _root_.Fin (leftSize * rightSize)) : _root_.Fin rightSize :=
+  ⟨index.val % rightSize, by
+    have positive : 0 < rightSize := by
+      cases rightSize with
+      | zero =>
+          have impossible : index.val < 0 :=
+            Nat.lt_of_lt_of_eq index.isLt (Nat.mul_zero leftSize)
+          exact (Nat.not_lt_zero index.val impossible).elim
+      | succ rightSize => exact Nat.zero_lt_succ rightSize
+    exact Nat.mod_lt index.val positive⟩
+
+/-- The row projection retains the original natural quotient value. -/
+theorem divNat_val {leftSize rightSize : Nat}
+    (index : _root_.Fin (leftSize * rightSize)) :
+    (divNat index).val = index.val / rightSize := rfl
+
+/-- The column projection retains the original natural remainder value. -/
+theorem modNat_val {leftSize rightSize : Nat}
+    (index : _root_.Fin (leftSize * rightSize)) :
+    (modNat index).val = index.val % rightSize := rfl
+
+/-- The quotient projection recovers the first bounded component of a row-major product index. -/
+theorem divNat_mkDivMod {leftSize rightSize : Nat} (left : Fin leftSize) (right : Fin rightSize) :
+    divNat (_root_.Fin.mkDivMod left right) = left := by
+  apply _root_.Fin.ext
+  change (rightSize * left.val + right.val) / rightSize = left.val
+  have positive : 0 < rightSize := Nat.lt_of_le_of_lt (Nat.zero_le right.val) right.isLt
+  rewrite [Division.mul_add_div positive, Division.div_eq_of_lt right.isLt, Nat.add_zero]
+  rfl
+
+/-- The remainder projection recovers the second bounded component of a row-major product index. -/
+theorem modNat_mkDivMod {leftSize rightSize : Nat} (left : Fin leftSize) (right : Fin rightSize) :
+    modNat (_root_.Fin.mkDivMod left right) = right := by
+  apply _root_.Fin.ext
+  change (rightSize * left.val + right.val) % rightSize = right.val
+  rewrite [Remainder.mul_add_mod, Remainder.mod_eq_of_lt right.isLt]
+  rfl
+
+/-- The bounded quotient and remainder reconstruct their same row-major product index. -/
+theorem mkDivMod_divNat_modNat {leftSize rightSize : Nat} (index : Fin (leftSize * rightSize)) :
+    _root_.Fin.mkDivMod (divNat index) (modNat index) = index := by
+  apply _root_.Fin.ext
+  change rightSize * (index.val / rightSize) + index.val % rightSize = index.val
+  exact (Nat.add_comm _ _).trans (Division.mod_add_div index.val rightSize)
+
+end Purelib.Data.Fin
+
+end

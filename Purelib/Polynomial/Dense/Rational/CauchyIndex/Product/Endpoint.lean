@@ -33,16 +33,16 @@ namespace Purelib.Polynomial.Dense.Rational.CauchyIndex.Product.Endpoint
 
 /-- All finite facts needed on one resolved one-sided event cell. -/
 structure LocalEndpointData
-    (A B C D E H : Dense.Rational.Basic.CoordinatePolynomial) (a b : Fraction.Rational) : Prop where
+    (A B C D E H : Basic.CoordinatePolynomial) (a b : Fraction.Rational) : Prop where
   /-- The first factor index equals its one-sided endpoint contribution. -/ leftIndex :
-    Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 A B a b =
-    Data.Rat.Sign.CauchyIndex.Endpoint.leftEndpointIndex2 (A.eval a) (B.eval a) (A.eval b) (B.eval b)
+    Basic.Sturm.cauchyIndex2 A B a b =
+    Sign.CauchyIndex.Endpoint.leftEndpointIndex2 (A.eval a) (B.eval a) (A.eval b) (B.eval b)
   /-- The second factor index equals its one-sided endpoint contribution. -/ rightIndex :
-    Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 C D a b =
-    Data.Rat.Sign.CauchyIndex.Endpoint.leftEndpointIndex2 (C.eval a) (D.eval a) (C.eval b) (D.eval b)
+    Basic.Sturm.cauchyIndex2 C D a b =
+    Sign.CauchyIndex.Endpoint.leftEndpointIndex2 (C.eval a) (D.eval a) (C.eval b) (D.eval b)
   /-- The product index equals its one-sided endpoint contribution. -/ productIndex :
-    Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 E H a b =
-    Data.Rat.Sign.CauchyIndex.Endpoint.leftEndpointIndex2 (E.eval a) (H.eval a) (E.eval b) (H.eval b)
+    Basic.Sturm.cauchyIndex2 E H a b =
+    Sign.CauchyIndex.Endpoint.leftEndpointIndex2 (E.eval a) (H.eval a) (E.eval b) (H.eval b)
   /-- At least one coordinate of the first factor is nonzero at the start. -/ factorLeftStart : A.eval a ≠ 0 ∨ B.eval a
     ≠ 0
   /-- At least one coordinate of the second factor is nonzero at the start. -/ factorRightStart : C.eval a ≠ 0 ∨ D.eval
@@ -75,15 +75,15 @@ structure LocalEndpointData
 identity on that cell. -/
 theorem
   auxiliaryProductFormula_of_localEndpointData
-    {A B C D E H : Dense.Rational.Basic.CoordinatePolynomial} {a b : Fraction.Rational}
+    {A B C D E H : Basic.CoordinatePolynomial} {a b : Fraction.Rational}
     (data : LocalEndpointData A B C D E H a b) :
-    Dense.Rational.CauchyIndex.Product.Basic.AuxiliaryProductFormula A B C D E H a b := by
-  unfold Dense.Rational.CauchyIndex.Product.Basic.AuxiliaryProductFormula
-    Dense.Rational.CauchyIndex.Product.Basic.auxiliaryEndpointCorrection2
+    Basic.AuxiliaryProductFormula A B C D E H a b := by
+  unfold Basic.AuxiliaryProductFormula
+    Basic.auxiliaryEndpointCorrection2
   rw [data.leftIndex, data.rightIndex, data.productIndex,
     data.productRealStart, data.productImagStart,
     data.productRealStop, data.productImagStopEq]
-  exact Data.Rat.Sign.CauchyIndex.Product.coordinateLocalProductTable
+  exact Sign.CauchyIndex.Product.coordinateLocalProductTable
     (A.eval a) (B.eval a) (C.eval a) (D.eval a)
     (A.eval b) (B.eval b) (C.eval b) (D.eval b)
     data.factorLeftStart data.factorRightStart

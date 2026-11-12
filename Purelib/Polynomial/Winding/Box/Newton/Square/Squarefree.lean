@@ -27,6 +27,8 @@ import Purelib.Geometry.Rational.Box.Sample
 import Purelib.Polynomial.Dense.Arithmetic
 import Purelib.Polynomial.Dense.Basic
 
+open Purelib.Polynomial.Dense.Gaussian.Newton.Box
+
 open Purelib.Data
 
 open Purelib.Data.Rat
@@ -56,44 +58,44 @@ theorem
   quadrupledBoxWinding_eq_four_of_newtonSquare_of_sumIdentity
     {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient source : Box}
     {squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p}
-    (newton : Dense.Gaussian.Newton.Box.Squarefree.NewtonCenterCertificate p ambient source squarefree)
+    (newton : Squarefree.NewtonCenterCertificate p ambient source squarefree)
     (sourceRefines : source.Refines ambient)
     {r : Fraction.Rational} (positive : 0 < r)
     (targetRefines :
-      (Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) r
+      (Box.Square.Centered.Affine.centeredSquare (Anchor.anchorNewtonCenter p source) r
         positive.le).Refines ambient)
     (displacementSmall :
-      Data.Gaussian.Norm.Basic.normSq (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source - source.anchor)
+      Gaussian.Norm.Basic.normSq (Anchor.anchorNewtonCenter p source - source.anchor)
         ≤ r ^ 2)
     (taylorSmall :
       2 * (36 * Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p ambient * r ^ 2) ≤
         Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin squarefree ambient)
-    (sumIdentity : Dense.Gaussian.Newton.Box.Linearization.newtonLinearization p source +
-      Dense.Gaussian.Newton.Box.Linearization.newtonError p source =
+    (sumIdentity : Linearization.newtonLinearization p source +
+      Linearization.newtonError p source =
       p.normalize) :
-    Winding.Box.Basic.quadrupledBoxWinding p
-      (Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) r
+    Basic.quadrupledBoxWinding p
+      (Box.Square.Centered.Affine.centeredSquare (Anchor.anchorNewtonCenter p source) r
         positive.le) = 4 := by
-  let target := Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source)
+  let target := Box.Square.Centered.Affine.centeredSquare (Anchor.anchorNewtonCenter p source)
     r positive.le
-  have transfer := Winding.Box.Rouche.quadrupledBoxWinding_add_of_boundaryNormDominance
-    (Dense.Gaussian.Newton.Box.Linearization.newtonLinearization p source)
-      (Dense.Gaussian.Newton.Box.Linearization.newtonError p source) target
-    (Box.Square.Centered.centeredSquare_proper (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) positive)
+  have transfer := Rouche.quadrupledBoxWinding_add_of_boundaryNormDominance
+    (Linearization.newtonLinearization p source)
+      (Linearization.newtonError p source) target
+    (Box.Square.Centered.centeredSquare_proper (Anchor.anchorNewtonCenter p source) positive)
     (Clearance.Box.Boundary.Affine.affineCoordinate_boundaryClearance newton.derivativeNonzero
-      (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) positive)
+      (Anchor.anchorNewtonCenter p source) positive)
     (Clearance.Box.Dominance.Newton.Square.Squarefree.newtonBoundaryNormDominance newton sourceRefines positive
       targetRefines
       displacementSmall taylorSmall)
   rw [sumIdentity] at transfer
   calc
-    Winding.Box.Basic.quadrupledBoxWinding p target =
-        Winding.Box.Basic.quadrupledBoxWinding p.normalize target :=
-      (Winding.Box.Basic.quadrupledBoxWinding_normalize p target).symm
-    _ = Winding.Box.Basic.quadrupledBoxWinding (Dense.Gaussian.Newton.Box.Linearization.newtonLinearization p source)
+    Basic.quadrupledBoxWinding p target =
+        Basic.quadrupledBoxWinding p.normalize target :=
+      (Basic.quadrupledBoxWinding_normalize p target).symm
+    _ = Basic.quadrupledBoxWinding (Linearization.newtonLinearization p source)
       target := transfer
-    _ = 4 := Winding.Box.Affine.quadrupledBoxWinding_affineCoordinate_centeredSquare
-      newton.derivativeNonzero (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) positive
+    _ = 4 := Affine.quadrupledBoxWinding_affineCoordinate_centeredSquare
+      newton.derivativeNonzero (Anchor.anchorNewtonCenter p source) positive
 
 /-- Complete choice-free Newton-square winding theorem in degree at least
 two. -/
@@ -101,24 +103,24 @@ theorem quadrupledBoxWinding_eq_four_of_newtonSquare
     {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient source : Box}
     {squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p}
     (degreeAtLeastTwo : 2 ≤ p.natDegree)
-    (newton : Dense.Gaussian.Newton.Box.Squarefree.NewtonCenterCertificate p ambient source squarefree)
+    (newton : Squarefree.NewtonCenterCertificate p ambient source squarefree)
     (sourceRefines : source.Refines ambient)
     {r : Fraction.Rational} (positive : 0 < r)
     (targetRefines :
-      (Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) r
+      (Box.Square.Centered.Affine.centeredSquare (Anchor.anchorNewtonCenter p source) r
         positive.le).Refines ambient)
     (displacementSmall :
-      Data.Gaussian.Norm.Basic.normSq (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source - source.anchor)
+      Gaussian.Norm.Basic.normSq (Anchor.anchorNewtonCenter p source - source.anchor)
         ≤ r ^ 2)
     (taylorSmall :
       2 * (36 * Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p ambient * r ^ 2) ≤
         Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin squarefree ambient) :
-    Winding.Box.Basic.quadrupledBoxWinding p
-      (Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) r
+    Basic.quadrupledBoxWinding p
+      (Box.Square.Centered.Affine.centeredSquare (Anchor.anchorNewtonCenter p source) r
         positive.le) = 4 :=
-  Winding.Box.Newton.Square.Squarefree.quadrupledBoxWinding_eq_four_of_newtonSquare_of_sumIdentity newton
+  quadrupledBoxWinding_eq_four_of_newtonSquare_of_sumIdentity newton
     sourceRefines positive targetRefines displacementSmall taylorSmall
-    (Dense.Gaussian.Newton.Box.Linearization.newtonLinearization_add_error_eq_normalize degreeAtLeastTwo source
+    (Linearization.newtonLinearization_add_error_eq_normalize degreeAtLeastTwo source
       newton.derivativeNonzero)
 end Purelib.Polynomial.Winding.Box.Newton.Square.Squarefree
 

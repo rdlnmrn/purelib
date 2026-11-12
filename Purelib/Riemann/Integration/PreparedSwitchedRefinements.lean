@@ -57,6 +57,10 @@ import Mathlib.Data.Nat.Basic
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Riemann.Paths.PreparedClearPathModels
+
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_antitone quarterRadius_scale_mono)
 
 public section
@@ -92,22 +96,22 @@ open Purelib.Data.Gaussian in
 /-- The canonical Gaussian rational carrier of the switched path models. -/
 abbrev Gaussian := Basic.Canonical
 /-- The exact square-root continuation owner at its retained polynomial parameter. -/
-abbrev Owner := Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+abbrev Owner := SquareRootContinuationChain.Owner
 /-- The polynomial cell model used for each retained lifted edge or sheet switch. -/
-abbrev CellModel := Purelib.Integration.Polynomial.Gaussian.Cell.Basic.CellModel
+abbrev CellModel := Integration.Polynomial.Gaussian.Cell.Basic.CellModel
 /-- The ordered polynomial path model used by switched integral schedules. -/
-abbrev PathModel := Purelib.Integration.Polynomial.Gaussian.Path.Basic.PathModel
+abbrev PathModel := Integration.Polynomial.Gaussian.Path.Basic.PathModel
 /-- A prepared differential edge with its retained center and correctness certificate. -/
 abbrev CenteredEdge {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (differential : Differentials.Basic.Differential genus) :=
-  Purelib.Riemann.Integration.PreparedEdgeRecasting.CenteredEdge curve differential
+  PreparedEdgeRecasting.CenteredEdge curve differential
 /-- A synchronized refinement of the exact parent edge list at the stated depth and root diameter. -/
 abbrev SynchronizedDirectBlockRefinement {genus : Nat}
     {curve : Basic.HyperellipticCurve genus}
     {differential : Differentials.Basic.Differential genus}
     (depth : Nat) (rootDiameter : Coordinate)
     (parents : List (CenteredEdge curve differential)) :=
-  Purelib.Riemann.Integration.PreparedDirectDyadicRefinements.SynchronizedDirectBlockRefinement
+  PreparedDirectDyadicRefinements.SynchronizedDirectBlockRefinement
     depth rootDiameter parents
 
 open Purelib.Integration.Polynomial.Gaussian.Cell in
@@ -177,7 +181,7 @@ inductive SwitchedPathChain {genus : Nat}
       {remaining : List (CenteredEdge curve differential)}
       {finish : Lifted.Basic.LiftedPoint 2}
       (tail : SwitchedPathChain remaining
-        (start := { coordinate := coordinate, sheet := BranchCutLifts.otherSheet sheet })
+        (start := { coordinate := coordinate, sheet := otherSheet sheet })
         (finish := finish)) :
       SwitchedPathChain remaining
         (start := { coordinate := coordinate, sheet := sheet })
@@ -239,7 +243,7 @@ open Purelib.Curves.Hyperelliptic.Branches in
     (coordinate : Gaussian) (sheet : Fin 2) :
     SwitchedPathChain ([] : List (CenteredEdge curve differential))
       (start := { coordinate := coordinate, sheet := sheet })
-      (finish := { coordinate := coordinate, sheet := BranchCutLifts.otherSheet sheet }) :=
+      (finish := { coordinate := coordinate, sheet := otherSheet sheet }) :=
   .stationary coordinate sheet (.nil _)
 
 /-- Count stationary sheet switches in the chain, excluding all geometric edges. -/
@@ -288,11 +292,11 @@ open Purelib.Curves.Hyperelliptic.Branches in
   | [], _, _, .nil point => .nil point
   | _ :: _, _, _, .edge parent tail =>
       .cons
-        (BranchCutLifts.ClearSegment.liftOnSheet parent.edge.sheet
+        (ClearSegment.liftOnSheet parent.edge.sheet
           parent.edge.localSegment)
         tail.path
   | _, _, _, .stationary coordinate sheet tail =>
-      .cons (BranchCutLifts.switchCell coordinate sheet) tail.path
+      .cons (switchCell coordinate sheet) tail.path
 
 /-- Read the ordered polynomial models, inserting an exact zero cell for each stationary switch. -/
 @[expose] def cells {genus : Nat}
@@ -797,7 +801,7 @@ theorem cells_aggregateAllowance_le_switchFactor {genus : Nat}
         have productNonnegative :
             0 <= (chain.switchCount : Coordinate) *
               (remaining.length : Coordinate) :=
-          Fraction.Order.Arithmetic.mul_nonneg_direct switchesNonnegative
+          Arithmetic.mul_nonneg_direct switchesNonnegative
             remainingNonnegative
         simp only [List.length_cons, NatCast.add, Nat.cast_succ]
         calc
@@ -821,7 +825,7 @@ theorem cells_aggregateAllowance_le_switchFactor {genus : Nat}
               Coordinate) * weighted <=
             (((chain.switchCount : Coordinate) + 1) *
               ((parent :: remaining).length : Coordinate)) * weighted :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct countLe
+          Arithmetic.mul_le_mul_of_nonneg_right_direct countLe
             weightedNonnegative
         _ = ((chain.switchCount : Coordinate) + 1) *
             (((parent :: remaining).length : Coordinate) * weighted) := by
@@ -870,7 +874,7 @@ theorem switchFactor_positive {genus : Nat}
     {start finish : Lifted.Basic.LiftedPoint 2}
     (chain : SwitchedPathChain parents (start := start) (finish := finish)) :
     0 < chain.switchFactor :=
-  Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
+  Arithmetic.add_pos_of_nonneg_of_pos_direct
     (coordinateNatCast_nonnegative chain.switchCount) (by decide)
 
 open Purelib.Integration.Polynomial.Gaussian.Path in
@@ -921,7 +925,7 @@ theorem recastCells_aggregateAllowance_le_switchFactor {genus : Nat}
         have productNonnegative :
             0 <= (chain.switchCount : Coordinate) *
               (remaining.length : Coordinate) :=
-          Fraction.Order.Arithmetic.mul_nonneg_direct switchesNonnegative
+          Arithmetic.mul_nonneg_direct switchesNonnegative
             remainingNonnegative
         simp only [List.length_cons, NatCast.add, Nat.cast_succ, switchFactor]
         calc
@@ -946,7 +950,7 @@ theorem recastCells_aggregateAllowance_le_switchFactor {genus : Nat}
               Coordinate) * weighted <=
             (chain.switchFactor *
               ((parent :: remaining).length : Coordinate)) * weighted :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct countLe
+          Arithmetic.mul_le_mul_of_nonneg_right_direct countLe
             weightedNonnegative
         _ = chain.switchFactor *
             (((parent :: remaining).length : Coordinate) * weighted) := by
@@ -1170,7 +1174,7 @@ theorem directTarget_positive {genus : Nat}
     (state : DirectSwitchedState curve source)
     {target : Coordinate} (positive : 0 < target) :
     0 < state.directTarget target :=
-  Fraction.Order.Field.div_pos_direct positive
+  Field.div_pos_direct positive
     state.chain.switchFactor_positive
 
 /-- Refine the retained proper parents for the requested differentials and switch-adjusted tolerance. -/
@@ -1219,7 +1223,7 @@ theorem refineAccurately_modelAllowance_le {genus : Nat}
   have factorNonnegative : 0 <= state.chain.switchFactor :=
     state.chain.switchFactor_positive.le
   have scaledDirect :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct directBound
+    Arithmetic.mul_le_mul_of_nonneg_left_direct directBound
       factorNonnegative
   calc
     (refined.model differential).aggregateAllowance <=
@@ -1236,7 +1240,7 @@ theorem refineAccurately_modelAllowance_le {genus : Nat}
               (PreparedEdgeRecasting.recastCenteredEdge
                 differential)).map
                   PreparedSubdivisionModelCore.CenteredEdge.model)).aggregateAllowance := by
-      unfold refined DirectSwitchedState.refine SwitchedPathChain.switchFactor
+      unfold refined refine SwitchedPathChain.switchFactor
       rw [SwitchedPathChain.refined_switchCount]
     _ <= state.chain.switchFactor * state.directTarget target := scaledDirect
     _ = target := by
@@ -1384,7 +1388,7 @@ theorem scheduleBase_positive {genus : Nat}
     (targets : List (Differentials.Basic.Differential genus)) :
     0 < initial.scheduleBase targets := by
   unfold scheduleBase
-  exact Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
+  exact Arithmetic.add_pos_of_nonneg_of_pos_direct
     (initialAllowanceBoundSum_nonnegative initial targets)
     scheduleSlack_positive
 
@@ -1569,7 +1573,7 @@ theorem get_state_eq {genus : Nat}
     (targets : List (Differentials.Basic.Differential genus)) (count : Nat) :
     BoundedRefinementCache initial targets count := by
   simpa only [Nat.zero_add] using
-    (BoundedRefinementCache.empty (initial := initial)
+    (empty (initial := initial)
       (targets := targets)).extend count
 
 /-- Adding one stage preserves every earlier cached thunk exactly. -/
@@ -1589,8 +1593,8 @@ theorem pushNext_get {genus : Nat}
         (if _equal : index = priorCount + 1 then
           cachedRefinementSuccessor initial targets state priorCount
         else
-          (BoundedRefinementCache.push prior state state_eq).get index _) =
-        (BoundedRefinementCache.push prior state state_eq).get index within
+          (push prior state state_eq).get index _) =
+        (push prior state state_eq).get index within
       split
       · rename_i equal
         exact (Nat.ne_of_lt within equal).elim
@@ -1842,7 +1846,7 @@ theorem flatRefinementStep_comparisonAllowance_le {genus : Nat}
   have parentBound := initial.flatModel_allowance_le targets differential
     member index
   have doubledParent :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct parentBound
+    Arithmetic.mul_le_mul_of_nonneg_left_direct parentBound
       (show (0 : Coordinate) <= 2 by decide)
   have targetLeParent :
       initial.scheduleTarget targets index <=
@@ -1889,7 +1893,7 @@ allowance payment. -/
   model := initial.flatModel targets differential
   steps := initial.flatRefinementStep targets differential
   stepScale := 3 * initial.scheduleBase targets
-  stepScale_nonneg := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  stepScale_nonneg := Arithmetic.mul_nonneg_direct (by decide)
     (initial.scheduleBase_positive targets).le
   initialAllowance_le := by
     have initialBound := initial.initialFlatModelAllowance_le_base targets
@@ -1900,7 +1904,7 @@ allowance payment. -/
           initial.scheduleBase targets := initialBound
       _ = 1 * initial.scheduleBase targets := by ring1
       _ <= 12 * initial.scheduleBase targets :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           (show (1 : Coordinate) <= 12 by decide) baseNonnegative
       _ = 4 * (3 * initial.scheduleBase targets) := by ring1
   comparisonAllowance_le :=
@@ -2162,7 +2166,7 @@ come from the exact flat models. -/
         (initial.refinementStates targets index).model differential
       errorScale := factor * flat.errorScale
       errorScale_nonneg :=
-        Fraction.Order.Arithmetic.mul_nonneg_direct factorNonnegative
+        Arithmetic.mul_nonneg_direct factorNonnegative
           flat.errorScale_nonneg
       modelAllowance_le := by
         intro index
@@ -2171,7 +2175,7 @@ come from the exact flat models. -/
             differential (initial.refinementStates targets index).chain
         have flatBound := flat.modelAllowance_le index
         have scaledFlat :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct flatBound
+          Arithmetic.mul_le_mul_of_nonneg_left_direct flatBound
             factorNonnegative
         calc
           ((initial.refinementStates targets index).model
@@ -2199,7 +2203,7 @@ come from the exact flat models. -/
         have radiusNonnegative := Geometric.Basic.quarterRadius_nonneg
           flat.errorScale_nonneg earlier
         calc
-          Data.Gaussian.Norm.Basic.normSq
+          Norm.Basic.normSq
               ((initial.flatModel targets differential later).integralSample -
                 (initial.flatModel targets differential earlier).integralSample) <=
               Geometric.Basic.quarterRadius flat.errorScale earlier :=
@@ -2208,7 +2212,7 @@ come from the exact flat models. -/
             ring1
           _ <= factor *
                 Geometric.Basic.quarterRadius flat.errorScale earlier :=
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+            Arithmetic.mul_le_mul_of_nonneg_right_direct
               oneLeFactor radiusNonnegative
           _ = Geometric.Basic.quarterRadius
               (factor * flat.errorScale) earlier := by
@@ -2256,7 +2260,7 @@ theorem sourceScheduleBase_positive {genus : Nat}
     (initial : DirectSwitchedState curve source) :
     0 < initial.sourceScheduleBase := by
   unfold sourceScheduleBase
-  exact Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
+  exact Arithmetic.add_pos_of_nonneg_of_pos_direct
     ((Basic.PathModel.aggregateAllowance_nonneg _).trans
       (initial.initialAllowance_le source))
     scheduleSlack_positive
@@ -2408,7 +2412,7 @@ theorem sourceFlatRefinementStep_comparisonAllowance_le {genus : Nat}
     (initial.sourceScheduledRefinement index).comparisonAllowanceChildren_le
   have parentBound := initial.sourceFlatModel_allowance_le index
   have doubledParent :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct parentBound
+    Arithmetic.mul_le_mul_of_nonneg_left_direct parentBound
       (show (0 : Coordinate) <= 2 by decide)
   have targetLeParent : initial.sourceScheduleTarget index <=
       Geometric.Basic.quarterRadius initial.sourceScheduleBase index :=
@@ -2447,7 +2451,7 @@ scale. -/
   model := initial.sourceFlatModel
   steps := initial.sourceFlatRefinementStep
   stepScale := 3 * initial.sourceScheduleBase
-  stepScale_nonneg := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  stepScale_nonneg := Arithmetic.mul_nonneg_direct (by decide)
     initial.sourceScheduleBase_positive.le
   initialAllowance_le := by
     have baseNonnegative := initial.sourceScheduleBase_positive.le
@@ -2459,7 +2463,7 @@ scale. -/
             initial.sourceFlatModel_allowance_le 0
       _ = 1 * initial.sourceScheduleBase := by ring1
       _ <= 12 * initial.sourceScheduleBase :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           (show (1 : Coordinate) <= 12 by decide) baseNonnegative
       _ = 4 * (3 * initial.sourceScheduleBase) := by ring1
   comparisonAllowance_le := initial.sourceFlatRefinementStep_comparisonAllowance_le
@@ -2532,8 +2536,8 @@ theorem sourceModel_integralSample_eq_flatModel {genus : Nat}
 
 namespace SourceCache
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-  {source : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+  {source : Differentials.Basic.Differential genus}
 
 set_option genInjectivity false in
 /-- One cached source refinement stage with its exact index and state equality.
@@ -2670,8 +2674,8 @@ constructive_injectivity SourceCache
 
 namespace SourceCache
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-  {source : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+  {source : Differentials.Basic.Differential genus}
 
 /-- Construct the requested source prefix from the exact initial state thunk. -/
 @[expose] def canonical (initial : Thunk (DirectSwitchedState curve source)) (count : Nat) :
@@ -2756,7 +2760,7 @@ flat allowances and comparisons while preserving the sample bound. -/
     { model := cache.model
       errorScale := factor * flat.errorScale
       errorScale_nonneg :=
-        Fraction.Order.Arithmetic.mul_nonneg_direct factorNonnegative
+        Arithmetic.mul_nonneg_direct factorNonnegative
           flat.errorScale_nonneg
       modelAllowance_le := by
         intro index
@@ -2766,7 +2770,7 @@ flat allowances and comparisons while preserving the sample bound. -/
             (initial.sourceRefinementStates index).chain
         have flatBound := flat.modelAllowance_le index
         have scaledFlat :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct flatBound
+          Arithmetic.mul_le_mul_of_nonneg_left_direct flatBound
             factorNonnegative
         calc
           (initial.sourceModel index).aggregateAllowance <=
@@ -2794,7 +2798,7 @@ flat allowances and comparisons while preserving the sample bound. -/
         have radiusNonnegative := Geometric.Basic.quarterRadius_nonneg
           flat.errorScale_nonneg earlier
         calc
-          Data.Gaussian.Norm.Basic.normSq
+          Norm.Basic.normSq
               ((initial.sourceFlatModel later).integralSample -
                 (initial.sourceFlatModel earlier).integralSample) <=
               Geometric.Basic.quarterRadius flat.errorScale earlier :=
@@ -2803,7 +2807,7 @@ flat allowances and comparisons while preserving the sample bound. -/
             ring1
           _ <= factor *
                 Geometric.Basic.quarterRadius flat.errorScale earlier :=
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+            Arithmetic.mul_le_mul_of_nonneg_right_direct
               oneLeFactor radiusNonnegative
           _ = Geometric.Basic.quarterRadius
               (factor * flat.errorScale) earlier := by
@@ -3059,28 +3063,6 @@ private theorem gaussianNormSqSum_nonnegative : forall values : List Gaussian,
 
 end
 
-open Purelib.Data.Gaussian in
-open Purelib.Integration.Polynomial.Gaussian.Cell in
-open Purelib.Integration.Polynomial.Gaussian.Path in
-/-- A path model's integral sample is the Gaussian sum of its ordered cell samples. -/
-private theorem pathModel_integralSample_eq_gaussianSum
-    (cells : List Basic.CellModel) :
-    (Basic.PathModel.mk cells).integralSample =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum
-        (cells.map fun cell => cell.integralSample) := by
-  induction cells with
-  | nil => rfl
-  | cons cell remaining inductionHypothesis =>
-      simp only [Basic.PathModel.integralSample,
-        List.foldr_cons, List.map_cons,
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum]
-      change
-        remaining.foldr (fun cell total => cell.integralSample + total) 0 =
-          Data.Gaussian.Norm.Sum.Basic.gaussianSum
-            (remaining.map fun cell => cell.integralSample)
-        at inductionHypothesis
-      rw [inductionHypothesis]
-
 /-- Reading samples through centered edge models preserves the original parent order.
 
 Structural recursion reads the same integral sample at each original head.
@@ -3156,7 +3138,7 @@ open Purelib.Curves.Hyperelliptic.Branches
     (data : PreparedCycleModels.PreparedDoublePath curve) : Nat :=
   2 ^ data.depth * data.basePath.segmentCount +
     2 ^ data.depth *
-      (BranchCutLifts.ClearPath.reverse
+      (ClearPath.reverse
         data.basePath).segmentCount
 
 /-- The sum of the two bridge banks' source weighted-allowance bounds. -/
@@ -3169,7 +3151,7 @@ open Purelib.Curves.Hyperelliptic.Branches
       source data.rootDiameter data.depth data.basePath +
     PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathTotalWeightedBound
       source data.rootDiameter data.depth
-        (BranchCutLifts.ClearPath.reverse data.basePath)
+        (ClearPath.reverse data.basePath)
 
 /-- The sum of the two bridge banks' dyadic preflight weighted bounds. -/
 @[expose] def bridgeSourceTotalWeightedPreflightBound {genus : Nat}
@@ -3181,7 +3163,7 @@ open Purelib.Curves.Hyperelliptic.Branches
       source data.rootDiameter data.depth data.basePath +
     PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathTotalWeightedDyadicBound
       source data.rootDiameter data.depth
-        (BranchCutLifts.ClearPath.reverse data.basePath)
+        (ClearPath.reverse data.basePath)
 
 /-- The sum of the two bridge banks' integral squared-norm ceiling bounds. -/
 @[expose] def bridgeSourceIntegralNormSqSumBound {genus : Nat}
@@ -3193,7 +3175,7 @@ open Purelib.Curves.Hyperelliptic.Branches
       source data.rootDiameter data.depth data.basePath +
     PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathIntegralNormSqCeilBound
       source data.rootDiameter data.depth
-        (BranchCutLifts.ClearPath.reverse data.basePath)
+        (ClearPath.reverse data.basePath)
 
 end
 
@@ -3226,13 +3208,13 @@ theorem bridgeSourceAggregateBound_le_preflight {genus : Nat}
   unfold bridgeSourceAggregateBound bridgeSourcePreflightAggregateBound
     bridgeSourceTotalWeightedBound
     bridgeSourceTotalWeightedPreflightBound
-  apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  apply Arithmetic.mul_le_mul_of_nonneg_left_direct
   · exact add_le_add
       (PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathTotalWeightedBound_le_dyadicBound
         source data.rootDiameterPositive.le data.depth data.basePath)
       (PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathTotalWeightedBound_le_dyadicBound
         source data.rootDiameterPositive.le data.depth
-          (BranchCutLifts.ClearPath.reverse data.basePath))
+          (ClearPath.reverse data.basePath))
   · exact SwitchedPathChain.coordinateNatCast_nonnegative _
 
 /-- The bridge state's parents are exactly the forward bank followed by the reverse bank.
@@ -3304,7 +3286,7 @@ theorem bridgeState_sourceAllowance_le {genus : Nat}
     PreparedDirectDyadicRefinements.CenteredPathChain.ofDyadicBank_parents_length
       curve source 1 data.backwardChecked,
     totalWeightedAllowance_append]
-  apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  apply Arithmetic.mul_le_mul_of_nonneg_left_direct
   · exact add_le_add
       (PreparedDirectDyadicRefinements.CenteredPathChain.ofDyadicBank_totalWeightedAllowance_le
         curve source 0 data.forwardChecked)
@@ -3394,7 +3376,7 @@ open Purelib.Curves.Hyperelliptic.Branches
   2 ^ data.forwardDepth * data.connector.segmentCount +
     (2 ^ data.rightBoundaryDepth * data.rightBoundaryPath.segmentCount +
       (2 ^ data.backwardDepth *
-          (BranchCutLifts.ClearPath.reverse
+          (ClearPath.reverse
             data.connector).segmentCount +
         2 ^ data.leftBoundaryDepth * data.leftBoundaryPath.segmentCount))
 
@@ -3411,7 +3393,7 @@ open Purelib.Curves.Hyperelliptic.Branches
           data.rightBoundaryPath +
       (PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathTotalWeightedBound
           source data.rootDiameter data.backwardDepth
-            (BranchCutLifts.ClearPath.reverse data.connector) +
+            (ClearPath.reverse data.connector) +
         PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathTotalWeightedBound
           source data.rootDiameter data.leftBoundaryDepth data.leftBoundaryPath))
 
@@ -3428,7 +3410,7 @@ open Purelib.Curves.Hyperelliptic.Branches
           data.rightBoundaryPath +
       (PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathTotalWeightedDyadicBound
           source data.rootDiameter data.backwardDepth
-            (BranchCutLifts.ClearPath.reverse data.connector) +
+            (ClearPath.reverse data.connector) +
         PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathTotalWeightedDyadicBound
           source data.rootDiameter data.leftBoundaryDepth
             data.leftBoundaryPath))
@@ -3446,7 +3428,7 @@ open Purelib.Curves.Hyperelliptic.Branches
           data.rightBoundaryPath +
       (PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathIntegralNormSqCeilBound
           source data.rootDiameter data.backwardDepth
-            (BranchCutLifts.ClearPath.reverse data.connector) +
+            (ClearPath.reverse data.connector) +
         PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathIntegralNormSqCeilBound
           source data.rootDiameter data.leftBoundaryDepth data.leftBoundaryPath))
 
@@ -3481,7 +3463,7 @@ theorem boundarySourceAggregateBound_le_preflight {genus : Nat}
   unfold boundarySourceAggregateBound boundarySourcePreflightAggregateBound
     boundarySourceTotalWeightedBound
     boundarySourceTotalWeightedPreflightBound
-  apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  apply Arithmetic.mul_le_mul_of_nonneg_left_direct
   · exact add_le_add
       (PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathTotalWeightedBound_le_dyadicBound
         source data.rootDiameterPositive.le data.forwardDepth data.connector)
@@ -3492,7 +3474,7 @@ theorem boundarySourceAggregateBound_le_preflight {genus : Nat}
         (add_le_add
           (PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathTotalWeightedBound_le_dyadicBound
             source data.rootDiameterPositive.le data.backwardDepth
-              (BranchCutLifts.ClearPath.reverse data.connector))
+              (ClearPath.reverse data.connector))
           (PreparedDirectDyadicRefinements.CenteredPathChain.dyadicPathTotalWeightedBound_le_dyadicBound
             source data.rootDiameterPositive.le data.leftBoundaryDepth
               data.leftBoundaryPath)))
@@ -3581,7 +3563,7 @@ theorem boundaryState_sourceAllowance_le {genus : Nat}
       curve source 1 data.leftBoundaryChecked,
     totalWeightedAllowance_append, totalWeightedAllowance_append,
     totalWeightedAllowance_append]
-  apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  apply Arithmetic.mul_le_mul_of_nonneg_left_direct
   · exact add_le_add
       (PreparedDirectDyadicRefinements.CenteredPathChain.ofDyadicBank_totalWeightedAllowance_le
         curve source 0 data.forwardChecked)
@@ -3629,9 +3611,9 @@ open Purelib.Riemann.Paths
     PreparedDirectDyadicRefinements.CenteredPathChain.ofDyadicBank_parents_length,
     PreparedCycleModels.PreparedDoublePath.forward,
     PreparedCycleModels.PreparedDoublePath.backward]
-  rw [PreparedClearPathModels.PreparedPath.DyadicBank.prepared_stepCount
+  rw [PreparedPath.DyadicBank.prepared_stepCount
       data.forwardChecked,
-    PreparedClearPathModels.PreparedPath.DyadicBank.prepared_stepCount
+    PreparedPath.DyadicBank.prepared_stepCount
       data.backwardChecked]
 
 /-- The finite-cut parent count equals the four retained prepared path step counts. -/
@@ -3649,13 +3631,13 @@ open Purelib.Riemann.Paths
     PreparedCycleModels.PreparedBoundaryDoublePath.rightBoundary,
     PreparedCycleModels.PreparedBoundaryDoublePath.backward,
     PreparedCycleModels.PreparedBoundaryDoublePath.leftBoundary]
-  rw [PreparedClearPathModels.PreparedPath.DyadicBank.prepared_stepCount
+  rw [PreparedPath.DyadicBank.prepared_stepCount
       data.forwardChecked,
-    PreparedClearPathModels.PreparedPath.DyadicBank.prepared_stepCount
+    PreparedPath.DyadicBank.prepared_stepCount
       data.rightBoundaryChecked,
-    PreparedClearPathModels.PreparedPath.DyadicBank.prepared_stepCount
+    PreparedPath.DyadicBank.prepared_stepCount
       data.backwardChecked,
-    PreparedClearPathModels.PreparedPath.DyadicBank.prepared_stepCount
+    PreparedPath.DyadicBank.prepared_stepCount
       data.leftBoundaryChecked]
   omega0
 
@@ -3876,7 +3858,7 @@ theorem cycleSourceInitialSampleNormSqBound_nonnegative {genus : Nat}
     (data : PreparedCycleModels.PreparedCycleData curve) :
     0 <= cycleSourceInitialSampleNormSqBound source data := by
   unfold cycleSourceInitialSampleNormSqBound
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct
+  exact Arithmetic.mul_nonneg_direct
     (SwitchedPathChain.coordinateNatCast_nonnegative _)
     (cycleSourceIntegralNormSqSumBound_nonnegative source data)
 
@@ -3887,25 +3869,25 @@ theorem cycleState_sourceInitialSample_normSq_le {genus : Nat}
     (curve : Basic.HyperellipticCurve genus)
     (source : Differentials.Basic.Differential genus)
     (data : PreparedCycleModels.PreparedCycleData curve) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((Basic.PathModel.mk
           ((cycleState curve source data).parents.map
             PreparedSubdivisionModelCore.CenteredEdge.model)).integralSample) <=
       cycleSourceInitialSampleNormSqBound source data := by
   let samples := (cycleState curve source data).parents.map
     fun parent => parent.model.integralSample
-  rw [pathModel_integralSample_eq_gaussianSum]
+  rw [Basic.PathModel.integralSample_eq_gaussianSum]
   rw [centeredEdgeIntegralSamples_map_model]
   have finiteCauchy :=
     Norm.Sum.Basic.normSq_gaussianSum_le samples
   have additiveBound := cycleState_sourceIntegralNormSqSum_le curve source data
   unfold cycleSourceInitialSampleNormSqBound
   change
-    Data.Gaussian.Norm.Basic.normSq
-        (Data.Gaussian.Norm.Sum.Basic.gaussianSum samples) <= _
+    Norm.Basic.normSq
+        (Norm.Sum.Basic.gaussianSum samples) <= _
   calc
-    Data.Gaussian.Norm.Basic.normSq
-        (Data.Gaussian.Norm.Sum.Basic.gaussianSum samples) <=
+    Norm.Basic.normSq
+        (Norm.Sum.Basic.gaussianSum samples) <=
       (samples.length : Coordinate) *
         Norm.Sum.Basic.gaussianNormSqSum samples :=
           (Norm.Basic.normSq_eq_canonical _).trans_le finiteCauchy
@@ -3915,7 +3897,7 @@ theorem cycleState_sourceInitialSample_normSq_le {genus : Nat}
       rw [Map.length_map, cycleState_parents_length]
     _ <= (cycleSourceParentCount data : Coordinate) *
         cycleSourceIntegralNormSqSumBound source data :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct additiveBound
+      Arithmetic.mul_le_mul_of_nonneg_left_direct additiveBound
         (SwitchedPathChain.coordinateNatCast_nonnegative _)
 
 /-- The retained source aggregate-allowance bound for either prepared cycle construction. -/
@@ -4109,7 +4091,7 @@ theorem compactCycleState_sourceFlatInitialSample_normSq_le {genus : Nat}
     (curve : Basic.HyperellipticCurve genus)
     (source : Differentials.Basic.Differential genus)
     (data : PreparedCycleModels.PreparedCycleData curve) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((compactCycleState curve source data).flatModel [source] source
           0).integralSample <=
       cycleSourceInitialSampleNormSqBound source data := by
@@ -4124,11 +4106,11 @@ theorem compactCycleState_sourceInitialSample_normSq_le {genus : Nat}
     (source : Differentials.Basic.Differential genus)
     (data : PreparedCycleModels.PreparedCycleData curve)
     (member : source ∈ [source]) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((((compactCycleState curve source data).integral [source] source
           member).model 0).integralSample) <=
       cycleSourceInitialSampleNormSqBound source data := by
-  change Data.Gaussian.Norm.Basic.normSq
+  change Norm.Basic.normSq
       (((compactCycleState curve source data).refinementStates [source] 0).model
         source).integralSample <= _
   rw [(compactCycleState curve source data).model_integralSample_eq_flatModel
@@ -4206,7 +4188,7 @@ theorem cycleSourceScheduleBase_positive {genus : Nat}
   (data : PreparedCycleModels.PreparedCycleData curve) :
     0 < cycleSourceScheduleBase source data := by
   unfold cycleSourceScheduleBase CycleSourcePreflightBounds.scheduleBase
-  exact Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
+  exact Arithmetic.add_pos_of_nonneg_of_pos_direct
     ((cycleSourceAggregateBound_nonnegative curve source data).trans
       (cycleSourceAggregateBound_le_preflight source data))
     DirectSwitchedState.scheduleSlack_positive
@@ -4220,7 +4202,7 @@ theorem cycleSourceExactScheduleBase_le_preflight {genus : Nat}
       cycleSourceScheduleBase source data := by
   unfold cycleSourceExactScheduleBase cycleSourceScheduleBase
     CycleSourcePreflightBounds.scheduleBase
-  exact Fraction.Order.Arithmetic.add_le_add_right_direct
+  exact Arithmetic.add_le_add_right_direct
     (cycleSourceAggregateBound_le_preflight source data)
     DirectSwitchedState.scheduleSlack
 
@@ -4233,9 +4215,9 @@ theorem cycleSourceExactErrorScale_le_preflight {genus : Nat}
       cycleSourceErrorScale source data := by
   unfold cycleSourceExactErrorScale cycleSourceErrorScale
     CycleSourcePreflightBounds.errorScale
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  exact Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
         (cycleSourceExactScheduleBase_le_preflight source data) (by decide))
       (by decide))
     (by decide)
@@ -4247,9 +4229,9 @@ theorem cycleSourceErrorScale_nonnegative {genus : Nat}
   (data : PreparedCycleModels.PreparedCycleData curve) :
     0 <= cycleSourceErrorScale source data := by
   unfold cycleSourceErrorScale CycleSourcePreflightBounds.errorScale
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  exact Arithmetic.mul_nonneg_direct (by decide)
+    (Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.mul_nonneg_direct (by decide)
         (cycleSourceScheduleBase_positive curve source data).le))
 
 /-- The retained preflight uniform center bound is nonnegative. -/
@@ -4259,7 +4241,7 @@ theorem cycleSourceCenterBound_nonnegative {genus : Nat}
   (data : PreparedCycleModels.PreparedCycleData curve) :
     0 <= cycleSourceCenterBound source data := by
   unfold cycleSourceCenterBound CycleSourcePreflightBounds.centerBound
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  exact Arithmetic.mul_nonneg_direct (by decide)
     (add_nonneg
       ((cycleSourceInitialSampleNormSqBound_nonnegative source data).trans
         (cycleSourceInitialSampleNormSqBound_le_preflight source data))
@@ -4856,10 +4838,10 @@ preflight constants without replacing the geometric sequence. -/
           (((compactCycleState curve source data).refinementStates [source]
             0).model source).integralSample
         have movement :
-            Data.Gaussian.Norm.Basic.normSq
+            Norm.Basic.normSq
                 (current - initial) <= cycleSourceErrorScale source data := by
           calc
-            Data.Gaussian.Norm.Basic.normSq
+            Norm.Basic.normSq
                 (current - initial) <=
               Geometric.Basic.quarterRadius original.errorScale 0 :=
                 (Norm.Basic.normSq_eq_canonical _).trans_le
@@ -4877,12 +4859,12 @@ preflight constants without replacing the geometric sequence. -/
               Geometric.Basic.quarterRadius_le_scale
                 (cycleSourceErrorScale_nonnegative curve source data) 0
         have initialBound :
-            Data.Gaussian.Norm.Basic.normSq initial <=
+            Norm.Basic.normSq initial <=
               cycleSourceInitialSampleNormSqBound source data :=
           compactCycleState_sourceInitialSample_normSq_le curve source data
             member
         have initialPreflightBound :
-            Data.Gaussian.Norm.Basic.normSq initial <=
+            Norm.Basic.normSq initial <=
               preflight.initialSampleNormSqBound :=
           initialBound.trans
             (cycleSourceInitialSampleNormSqBound_le_preflight source data)
@@ -4892,18 +4874,18 @@ preflight constants without replacing the geometric sequence. -/
               Basic.sub_im,
               Basic.add_re,
               Basic.add_im] <;> ring1
-        change Data.Gaussian.Norm.Basic.normSq current <= _
+        change Norm.Basic.normSq current <= _
         rw [← identity]
         calc
-          Data.Gaussian.Norm.Basic.normSq
+          Norm.Basic.normSq
               ((current - initial) + initial) <=
-            2 * (Data.Gaussian.Norm.Basic.normSq
+            2 * (Norm.Basic.normSq
                   (current - initial) +
-                Data.Gaussian.Norm.Basic.normSq initial) :=
+                Norm.Basic.normSq initial) :=
               Norm.Bounds.normSq_add_le_two _ _
           _ <= 2 * (cycleSourceErrorScale source data +
                 preflight.initialSampleNormSqBound) :=
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+            Arithmetic.mul_le_mul_of_nonneg_left_direct
               (add_le_add movement initialPreflightBound) (by decide)
           _ = preflight.centerBound := by
             dsimp only [preflight, preflightCore,

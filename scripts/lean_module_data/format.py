@@ -107,18 +107,32 @@ def push_group(fill, items, remainder, width, column):
     candidate['fits']=not first[1] and combined[2]<=available
     return candidate
 
-def pretty(fmt, width=120, indent=0, column=0):
+def pretty(fmt, width=120, indent=0, column=0, max_chars=None):
+    """Render the original format, optionally stopping at a diagnostic output limit.
+
+    The unlimited observer remains exact. A limited observer preserves its
+    prefix and marks truncation without expanding the rest of a shared DAG.
+    """
     if width<0 or indent<0 or column<0:
         raise ValueError('pretty width/indent/column must be natural')
+    if max_chars is not None and max_chars < 1:
+        raise ValueError('pretty max_chars must be positive')
     groups=deque([{'fits':None,'fill':False,'items':deque([(fmt,indent)])}])
-    output=[]
+    output=[]; size=0; truncated=False
     def emit(value):
-        nonlocal column
+        nonlocal column, size, truncated
+        if max_chars is not None and len(value)>max_chars-size:
+            value=value[:max_chars-size]; truncated=True
+        size+=len(value)
         output.append(value); column+=len(value)
     def newline(amount):
-        nonlocal column
-        amount=max(amount,0); output.append('\n'+' '*amount); column=amount
-    while groups:
+        nonlocal column, truncated
+        amount=max(amount,0)
+        spaces=amount if max_chars is None else min(amount,max(max_chars-size-1,0))
+        emit('\n'+' '*spaces)
+        if spaces<amount: truncated=True
+        column=amount
+    while groups and not truncated:
         group=groups[0]
         if not group['items']:
             groups.popleft(); continue
@@ -150,10 +164,15 @@ def pretty(fmt, width=120, indent=0, column=0):
                 groups.appendleft(push_group(True,old['items'],groups,width,column))
         elif tag=='align':
             if group['fits'] is True and not f[1]: continue
-            if column<level: emit(' '*(level-column))
+            if column<level:
+                amount=level-column
+                spaces=amount if max_chars is None else min(amount,max_chars-size)
+                emit(' '*spaces)
+                if spaces<amount: truncated=True
             else: newline(level)
         elif tag=='group':
             if group['fits'] is True: group['items'].appendleft((f[1],level))
             else: groups.appendleft(push_group(f[2],[(f[1],level)],groups,width,column))
         else: raise ValueError(f'unknown Format alternative: {tag}')
-    return ''.join(output)
+    result=''.join(output)
+    return result[:-1]+'…' if truncated else result

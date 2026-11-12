@@ -52,6 +52,8 @@ import Purelib.Riemann.Paths.PreparedPathParentCaches
 import Purelib.Riemann.Periods.PreparedGridPeriodPrograms
 import Purelib.Riemann.RootContinuation.PreparedGridRootClosure
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -77,8 +79,8 @@ open Purelib.Riemann.Normalization
 
 open _root_.Purelib.Data.Gaussian.Basic (conj)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base}
 
@@ -87,11 +89,11 @@ order and root owners, even when each differential constructs its own cache. -/
 theorem DifferentialParents.ofCovered_parents_recast (source target : Differentials.Basic.Differential genus) (sheet :
   Fin 2)
     (covered : Paths.PreparedPathPrimitiveCover.PreparedClearPathModels.CoveredTracedPath
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.exteriorWalk base).path
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.exteriorOwner lifted sheet)) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram.ofCovered lifted source sheet
+      (PeriodPrograms.exteriorWalk base).path
+      (PeriodPrograms.exteriorOwner lifted sheet)) :
+    (PeriodPrograms.ExteriorProgram.ofCovered lifted source sheet
       covered).cache.parents.map (Integration.PreparedEdgeRecasting.recastCenteredEdge target) =
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram.ofCovered lifted target sheet
+      (PeriodPrograms.ExteriorProgram.ofCovered lifted target sheet
         covered).cache.parents :=
   Paths.PreparedPathDifferentialRecasting.ofPreparedPath_recast curve source target 0 covered.traced.prepared
 
@@ -99,60 +101,60 @@ theorem DifferentialParents.ofCovered_parents_recast (source target : Differenti
 differential. This identifies actual built caches rather than replacement ones. -/
 theorem
   PeriodPrograms.ExteriorProgram.build_parents_recast
-  (source target : Hyperelliptic.Differentials.Basic.Differential genus) (sheet : Fin 2) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram.build lifted source
+  (source target : Differentials.Basic.Differential genus) (sheet : Fin 2) :
+    (PeriodPrograms.ExteriorProgram.build lifted source
       sheet).cache.parents.map (Integration.PreparedEdgeRecasting.recastCenteredEdge target) =
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram.build lifted target
+      (PeriodPrograms.ExteriorProgram.build lifted target
         sheet).cache.parents :=
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.DifferentialParents.ofCovered_parents_recast source target sheet _
+  DifferentialParents.ofCovered_parents_recast source target sheet _
 
-variable {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-  Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {collar : ReciprocalExteriorCollar.Data curve} {cap :
+  ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap}
+  {domains : Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
 
 /-- Independent surface preparations preserve the same ordered parent list
 across all occurrence boundaries. Their local subdivisions need not be equal. -/
 theorem
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation.build_parents_recast
-    {source target : Hyperelliptic.Differentials.Basic.Differential genus} {sheet : Fin 2}
+    {source target : Differentials.Basic.Differential genus} {sheet : Fin 2}
     (first :
-      SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
-      regular domains (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram.build lifted source
+      SurfacePreparation
+      regular domains (PeriodPrograms.ExteriorProgram.build lifted source
       sheet))
     (last :
-      SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
-      regular domains (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram.build lifted target
+      SurfacePreparation
+      regular domains (PeriodPrograms.ExteriorProgram.build lifted target
       sheet)) :
     (first.occurrences.map (fun occurrence => occurrence.compared.entered.cache.parents)).flatten.map
         (Integration.PreparedEdgeRecasting.recastCenteredEdge target) =
       (last.occurrences.map (fun occurrence => occurrence.compared.entered.cache.parents)).flatten :=
   (congrArg (List.map (Integration.PreparedEdgeRecasting.recastCenteredEdge target)) first.parents_eq).trans
-    ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram.build_parents_recast source target
+    ((PeriodPrograms.ExteriorProgram.build_parents_recast source target
       sheet).trans last.parents_eq.symm)
 
 /-- The paired polygon of actual retained parent totals equals the unsigned primitive polygon when the parent lists
 agree by differential recasting. -/
 private theorem DifferentialParents.polygon_of_parent_eq
-    {source target : Hyperelliptic.Differentials.Basic.Differential genus} {index depth otherDepth : Nat} {box otherBox
+    {source target : Differentials.Basic.Differential genus} {index depth otherDepth : Nat} {box otherBox
       : Rational.Box}
-    {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap source index box}
-    {otherSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap target index otherBox}
+    {sample : Cap.Primitives.Sample cap source index box}
+    {otherSample : Cap.Primitives.Sample cap target index otherBox}
     {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve source)}
     {otherParents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve target)}
     (same : parents.map (Integration.PreparedEdgeRecasting.recastCenteredEdge target) = otherParents)
-    {covers : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents} {bank :
-      Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers}
-    {otherCovers : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers otherParents}
-      {otherBank : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular otherCovers}
-    {paths otherPaths : List (List Normalization.InverseRootPolynomial.Gaussian)}
-    (first : Charts.Reciprocal.Disk.RegularWitnesses sample depth bank paths)
-    (last : Charts.Reciprocal.Disk.RegularWitnesses otherSample otherDepth
+    {covers : UniformReciprocalCover.ParentCovers parents} {bank :
+      Disk.ParentJoins.SideBank regular covers}
+    {otherCovers : UniformReciprocalCover.ParentCovers otherParents}
+      {otherBank : Disk.ParentJoins.SideBank regular otherCovers}
+    {paths otherPaths : List (List InverseRootPolynomial.Gaussian)}
+    (first : Disk.RegularWitnesses sample depth bank paths)
+    (last : Disk.RegularWitnesses otherSample otherDepth
       otherBank otherPaths)
-    (links : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank.Links bank) (otherLinks :
-      Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank.Links otherBank) :
-    Path.PairedIncrementArea.area (List.zipWith (fun left right => (⟨conj (Data.Gaussian.Norm.Sum.Basic.gaussianSum
-      left), Data.Gaussian.Norm.Sum.Basic.gaussianSum right⟩ : Topology.Polygon.Stokes.PrimitivePoint)) paths
+    (links : Disk.ParentJoins.SideBank.Links bank) (otherLinks :
+      Disk.ParentJoins.SideBank.Links otherBank) :
+    Path.PairedIncrementArea.area (List.zipWith (fun left right => (⟨conj (Gaussian.Norm.Sum.Basic.gaussianSum
+      left), Gaussian.Norm.Sum.Basic.gaussianSum right⟩ : Topology.Polygon.Stokes.PrimitivePoint)) paths
       otherPaths) =
       Path.PairedIncrementArea.area (parents.map (fun parent =>
         (⟨conj (sample.primitive.value.eval (parent.edge.point 1)⁻¹ - sample.primitive.value.eval (parent.edge.point
@@ -161,7 +163,7 @@ private theorem DifferentialParents.polygon_of_parent_eq
             0)⁻¹⟩ :
             Topology.Polygon.Stokes.PrimitivePoint))) := by
   cases same
-  exact Hyperelliptic.Charts.Reciprocal.Disk.ConjugateWitnessTotals.RegularWitnesses.conjugate_total_polygon first last
+  exact Disk.ConjugateWitnessTotals.RegularWitnesses.conjugate_total_polygon first last
     links otherLinks
 
 /-- The actual independently built surface banks have a common root sign
@@ -169,42 +171,42 @@ along the whole exterior component. Their retained parent-total polygon is
 the unsigned primitive polygon on the original period cache. -/
 theorem
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation.conjugate_built_parent_polygon
-    {source target : Hyperelliptic.Differentials.Basic.Differential genus} {sheet : Fin 2}
+    {source target : Differentials.Basic.Differential genus} {sheet : Fin 2}
     (first :
-      SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
-      regular domains (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram.build lifted source
+      SurfacePreparation
+      regular domains (PeriodPrograms.ExteriorProgram.build lifted source
       sheet))
     (last :
-      SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
-      regular domains (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram.build lifted target
+      SurfacePreparation
+      regular domains (PeriodPrograms.ExteriorProgram.build lifted target
       sheet))
     {index depth otherDepth : Nat} {box otherBox : Rational.Box}
-    {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap source index box}
-    {otherSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap target index otherBox}
-    {paths otherPaths : List (List Normalization.InverseRootPolynomial.Gaussian)}
-    (firstWitnesses : Charts.Reciprocal.Disk.RegularWitnesses sample depth
-      (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence.capSpine
+    {sample : Cap.Primitives.Sample cap source index box}
+    {otherSample : Cap.Primitives.Sample cap target index otherBox}
+    {paths otherPaths : List (List InverseRootPolynomial.Gaussian)}
+    (firstWitnesses : Disk.RegularWitnesses sample depth
+      (SurfaceOccurrence.capSpine
       first.occurrences).bank paths)
-    (lastWitnesses : Charts.Reciprocal.Disk.RegularWitnesses otherSample
+    (lastWitnesses : Disk.RegularWitnesses otherSample
       otherDepth
-      (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence.capSpine
+      (SurfaceOccurrence.capSpine
       last.occurrences).bank otherPaths) :
-    Path.PairedIncrementArea.area (List.zipWith (fun left right => (⟨conj (Data.Gaussian.Norm.Sum.Basic.gaussianSum
-      left), Data.Gaussian.Norm.Sum.Basic.gaussianSum right⟩ : Topology.Polygon.Stokes.PrimitivePoint)) paths
+    Path.PairedIncrementArea.area (List.zipWith (fun left right => (⟨conj (Gaussian.Norm.Sum.Basic.gaussianSum
+      left), Gaussian.Norm.Sum.Basic.gaussianSum right⟩ : Topology.Polygon.Stokes.PrimitivePoint)) paths
       otherPaths) =
-      Path.PairedIncrementArea.area ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram.build
+      Path.PairedIncrementArea.area ((PeriodPrograms.ExteriorProgram.build
         lifted source sheet).cache.parents.map (fun parent =>
         (⟨conj (sample.primitive.value.eval (parent.edge.point 1)⁻¹ - sample.primitive.value.eval (parent.edge.point
           0)⁻¹),
           otherSample.primitive.value.eval (parent.edge.point 1)⁻¹ - otherSample.primitive.value.eval (parent.edge.point
             0)⁻¹⟩ :
             Topology.Polygon.Stokes.PrimitivePoint))) := by
-  have result := Hyperelliptic.Meshes.PuncturedGrid.Exterior.DifferentialParents.polygon_of_parent_eq
+  have result := DifferentialParents.polygon_of_parent_eq
     (first.build_parents_recast last) firstWitnesses lastWitnesses
 
-      (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation.JoinedCap.build
+      (SurfacePreparation.JoinedCap.build
       first).links
-      (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation.JoinedCap.build
+      (SurfacePreparation.JoinedCap.build
       last).links
   exact result.trans (congrArg (fun parents => Path.PairedIncrementArea.area (parents.map (fun parent =>
     (⟨conj (sample.primitive.value.eval (parent.edge.point 1)⁻¹ - sample.primitive.value.eval (parent.edge.point 0)⁻¹),
@@ -217,26 +219,26 @@ lists. The polygon identity therefore concerns the retained numerical paths,
 with independent request budgets and depths. -/
 theorem
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation.conjugate_sampled_parent_polygon
-    {source target : Hyperelliptic.Differentials.Basic.Differential genus} {sheet : Fin 2}
+    {source target : Differentials.Basic.Differential genus} {sheet : Fin 2}
     (first :
-      SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
-      regular domains (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram.build lifted source
+      SurfacePreparation
+      regular domains (PeriodPrograms.ExteriorProgram.build lifted source
       sheet))
     (last :
-      SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
-      regular domains (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram.build lifted target
+      SurfacePreparation
+      regular domains (PeriodPrograms.ExteriorProgram.build lifted target
       sheet))
     {index depth otherDepth readingIndex otherReadingIndex floor otherFloor : Nat} {box otherBox :
       Rational.Box}
-    {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap source index box}
-    {otherSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap target index otherBox}
-    {shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank source index domains}
-    {otherShared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank target index domains}
-    {localTarget localArea otherTarget otherArea : Normalization.InverseRootPolynomial.Coordinate}
-    (values : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry
+    {sample : Cap.Primitives.Sample cap source index box}
+    {otherSample : Cap.Primitives.Sample cap target index otherBox}
+    {shared : Face.PrimitiveData.FacePrimitiveBank source index domains}
+    {otherShared : Face.PrimitiveData.FacePrimitiveBank target index domains}
+    {localTarget localArea otherTarget otherArea : InverseRootPolynomial.Coordinate}
+    (values : List (SurfaceRequests.AllSurfacePreparation.SampledEntry
       (regular := regular)
       sample shared depth readingIndex localTarget localArea floor))
-    (otherValues : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry
+    (otherValues : List (SurfaceRequests.AllSurfacePreparation.SampledEntry
       (regular := regular)
       otherSample otherShared otherDepth otherReadingIndex otherTarget otherArea otherFloor))
     (occurrences : values.map (fun value => value.entry.occurrence) = first.occurrences)
@@ -245,10 +247,10 @@ theorem
     ∃ paths otherPaths,
       (values.map (fun value => value.evaluated.capPath)).flatten = paths.flatten ∧
       (otherValues.map (fun value => value.evaluated.capPath)).flatten = otherPaths.flatten ∧
-      Path.PairedIncrementArea.area (List.zipWith (fun left right => (⟨conj (Data.Gaussian.Norm.Sum.Basic.gaussianSum
-        left), Data.Gaussian.Norm.Sum.Basic.gaussianSum right⟩ : Topology.Polygon.Stokes.PrimitivePoint)) paths
+      Path.PairedIncrementArea.area (List.zipWith (fun left right => (⟨conj (Gaussian.Norm.Sum.Basic.gaussianSum
+        left), Gaussian.Norm.Sum.Basic.gaussianSum right⟩ : Topology.Polygon.Stokes.PrimitivePoint)) paths
         otherPaths) =
-        Path.PairedIncrementArea.area ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram.build
+        Path.PairedIncrementArea.area ((PeriodPrograms.ExteriorProgram.build
           lifted source sheet).cache.parents.map (fun parent =>
           (⟨conj (sample.primitive.value.eval (parent.edge.point 1)⁻¹ - sample.primitive.value.eval (parent.edge.point
             0)⁻¹),
@@ -256,10 +258,10 @@ theorem
               (parent.edge.point 0)⁻¹⟩ :
               Topology.Polygon.Stokes.PrimitivePoint))) := by
   obtain ⟨paths, pathsEq, witnesses⟩ :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry.regular_witnesses
+    SurfaceRequests.AllSurfacePreparation.SampledEntry.regular_witnesses
     values degree
   obtain ⟨otherPaths, otherPathsEq, otherWitnesses⟩ :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry.regular_witnesses
+    SurfaceRequests.AllSurfacePreparation.SampledEntry.regular_witnesses
     otherValues degree
   rw [occurrences] at witnesses
   rw [otherOccurrences] at otherWitnesses

@@ -82,6 +82,8 @@ import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Topology.Surface.Sewing.SewingTree
 import Purelib.Topology.Surface.Sewing.SewnPrimitiveContacts
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard
@@ -119,17 +121,17 @@ open Purelib.Data.Gaussian.Norm.Basic (normSq_zero)
 open Purelib.Riemann.Integration.PreparedRefinementPrograms (rawPeriodDataOfData)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
   {base : FramedPuncturedGrid curve
-    (Purelib.Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).branches higher}
+    (Branches.BranchConfiguration.configurationOfData curve branches).branches higher}
   {lifted : LiftedPuncturedGrid base}
   {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
   {index differential : Fin genus} {row :
     IntersectionRow lifted integral index}
   {minimum : Nat} {target : Rational} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
-  {extraPoints : List Purelib.Data.Gaussian.Basic.Canonical}
+  {extraPoints : List Gaussian}
 
 /-- When the retained A reading equals its route sum, the actual physical A boundary approximates the original period
 program strictly within the paid target. -/
@@ -137,26 +139,26 @@ theorem a_boundary_error_of_routes
     (readings : BoundaryReadings.StandardBoundaryReadings row differential minimum target domains extraPoints)
     (same : readings.a.value = readings.aRoutes.sum)
     (stage : Nat) (later : readings.original.comparison.stage ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    Basic.normSq (Sum.Basic.gaussianSum
       (row.pair.aFaces.geometry.values fun _ route => route.sourceEdge.increment readings.triangles.values) -
       (((PreparedRefinementPrograms.rawPeriodDataOfData curve branches).aProgram differential index).integral.model
         stage).integralSample) < target := by
   have estimate := readings.a_boundary_error stage later
-  rw [same, sub_self, Data.Gaussian.Norm.Basic.normSq_zero, mul_zero, zero_add] at estimate
+  rw [same, sub_self, Basic.normSq_zero, mul_zero, zero_add] at estimate
   exact estimate
 
 /-- The actual row constructor pays the full A comparison below the request, with no caller route-transport equality or
 residual term. -/
 theorem a_boundary_error_ofPeriod
     {raw : List (Handle.Basic.PivotIndices lifted.cutBoundaryWord.alphabet.count)}
-    (normal : LinearAlgebra.Alternating.NormalForm integral.paired raw)
-    (period : PreparedCycleModels.RootClosedPeriodRow curve)
+    (normal : NormalForm integral.paired raw)
+    (period : RootClosedPeriodRow curve)
     (periodEq : period = (RootClosedPeriodBank.ofData curve branches).rows index)
     (readings : BoundaryReadings.StandardBoundaryReadings (IntersectionRow.ofPeriod lifted integral normal index period
       periodEq)
       differential minimum target domains extraPoints)
     (stage : Nat) (later : readings.original.comparison.stage ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum ((IntersectionRow.ofPeriod
+    Basic.normSq (Sum.Basic.gaussianSum ((IntersectionRow.ofPeriod
       lifted integral normal index period periodEq).pair.aFaces.geometry.values
         fun _ route => route.sourceEdge.increment readings.triangles.values) -
       (((PreparedRefinementPrograms.rawPeriodDataOfData curve branches).aProgram differential index).integral.model
@@ -170,26 +172,26 @@ theorem b_boundary_error_of_routes
     (readings : BoundaryReadings.StandardBoundaryReadings row differential minimum target domains extraPoints)
     (same : readings.b.value = readings.bRoutes.sum)
     (stage : Nat) (later : readings.original.comparison.stage ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    Basic.normSq (Sum.Basic.gaussianSum
       (row.pair.bFaces.geometry.values fun _ route => route.sourceEdge.increment readings.triangles.values) -
       (((PreparedRefinementPrograms.rawPeriodDataOfData curve branches).bProgram differential index).integral.model
         stage).integralSample) < target := by
   have estimate := readings.b_boundary_error stage later
-  rw [same, sub_self, Data.Gaussian.Norm.Basic.normSq_zero, mul_zero, zero_add] at estimate
+  rw [same, sub_self, Basic.normSq_zero, mul_zero, zero_add] at estimate
   exact estimate
 
 /-- The actual row constructor pays the full B comparison below the request, with no caller route-transport equality or
 residual term. -/
 theorem b_boundary_error_ofPeriod
     {raw : List (Handle.Basic.PivotIndices lifted.cutBoundaryWord.alphabet.count)}
-    (normal : LinearAlgebra.Alternating.NormalForm integral.paired raw)
-    (period : PreparedCycleModels.RootClosedPeriodRow curve)
+    (normal : NormalForm integral.paired raw)
+    (period : RootClosedPeriodRow curve)
     (periodEq : period = (RootClosedPeriodBank.ofData curve branches).rows index)
     (readings : BoundaryReadings.StandardBoundaryReadings (IntersectionRow.ofPeriod lifted integral normal index period
       periodEq)
       differential minimum target domains extraPoints)
     (stage : Nat) (later : readings.original.comparison.stage ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum ((IntersectionRow.ofPeriod
+    Basic.normSq (Sum.Basic.gaussianSum ((IntersectionRow.ofPeriod
       lifted integral normal index period periodEq).pair.bFaces.geometry.values
         fun _ route => route.sourceEdge.increment readings.triangles.values) -
       (((PreparedRefinementPrograms.rawPeriodDataOfData curve branches).bProgram differential index).integral.model

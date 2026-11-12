@@ -12,6 +12,8 @@ import Purelib.Tactic.Ring
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Stability targets for retained coefficient tables and clearances
 
@@ -59,7 +61,7 @@ public theorem refinementEvaluationBound_stabilityTargetForBound_lt
   let scale := table.refinementEvaluationScale box
   have scalePositive : 0 < scale := table.refinementEvaluationScale_pos box
   have denominatorPositive : 0 < bound + scale :=
-    Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct positive scalePositive.le
+    Arithmetic.add_pos_of_pos_of_nonneg_direct positive scalePositive.le
   change bound / (bound + scale) * scale < bound
   calc
     bound / (bound + scale) * scale =
@@ -68,14 +70,14 @@ public theorem refinementEvaluationBound_stabilityTargetForBound_lt
         (bound * scale) * (bound + scale)⁻¹
       ring1
     _ < bound := by
-      apply (Fraction.Order.Field.div_lt_iff_pos
+      apply (Field.div_lt_iff_pos
         denominatorPositive).2
-      exact Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+      exact Arithmetic.mul_lt_mul_of_pos_left_direct
         positive (by
           calc
             scale = 0 + scale := by ring1
             _ < bound + scale :=
-              Fraction.Order.Arithmetic.add_lt_add_right_direct
+              Arithmetic.add_lt_add_right_direct
                 positive scale)
 
 /-- The stability target makes the refinement budget smaller than retained boundary clearance.
@@ -90,7 +92,7 @@ public theorem refinementEvaluationBound_stabilityTarget_lt
   let scale := table.refinementEvaluationScale box
   have scalePositive : 0 < scale := table.refinementEvaluationScale_pos box
   have denominatorPositive : 0 < clearance.bound + scale :=
-    Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct clearance.positive scalePositive.le
+    Arithmetic.add_pos_of_pos_of_nonneg_direct clearance.positive scalePositive.le
   change clearance.bound / (clearance.bound + scale) * scale <
     clearance.bound
   calc
@@ -100,14 +102,14 @@ public theorem refinementEvaluationBound_stabilityTarget_lt
         (clearance.bound * scale) * (clearance.bound + scale)⁻¹
       ring1
     _ < clearance.bound := by
-      apply (Fraction.Order.Field.div_lt_iff_pos
+      apply (Field.div_lt_iff_pos
         denominatorPositive).2
-      exact Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+      exact Arithmetic.mul_lt_mul_of_pos_left_direct
         clearance.positive (by
           calc
             scale = 0 + scale := by ring1
             _ < clearance.bound + scale :=
-              Fraction.Order.Arithmetic.add_lt_add_right_direct
+              Arithmetic.add_lt_add_right_direct
                 clearance.positive scale)
 
 /-- A positive proposed clearance bound gives a positive stability target.
@@ -118,8 +120,8 @@ the same numerator and denominator. -/
 public theorem stabilityTargetForBound_pos (table : CoefficientTable) (box : Box)
     {bound : Fraction.Rational} (positive : 0 < bound) :
     0 < table.stabilityTargetForBound box bound :=
-  Fraction.Order.Field.div_pos_direct positive
-    (Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct positive
+  Field.div_pos_direct positive
+    (Arithmetic.add_pos_of_pos_of_nonneg_direct positive
       (table.refinementEvaluationScale_pos box).le)
 
 /-- The target computed from retained boundary clearance is positive.
@@ -130,8 +132,8 @@ of the displayed target. -/
 public theorem stabilityTarget_pos (table : CoefficientTable) (box : Box)
     (clearance : Clearance.Box.Boundary.Basic.BoundaryClearance table.polynomial box) :
     0 < table.stabilityTarget box clearance :=
-  Fraction.Order.Field.div_pos_direct clearance.positive
-    (Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct clearance.positive
+  Field.div_pos_direct clearance.positive
+    (Arithmetic.add_pos_of_pos_of_nonneg_direct clearance.positive
       (table.refinementEvaluationScale_pos box).le)
 
 end Purelib.Polynomial.Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable

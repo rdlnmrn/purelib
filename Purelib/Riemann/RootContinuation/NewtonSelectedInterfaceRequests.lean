@@ -89,7 +89,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target radius : Rational}
@@ -107,19 +107,19 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 section
 open Purelib.Curves.Hyperelliptic
 /-- An original band-side reference indexed by the retained face, side, sheet and differential pair. -/
-@[expose] def InterfaceReference (traces : Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request)
-  (entry : Meshes.Newton.AllHoles.Excision.AnnularEntry grid lifted)
+@[expose] def InterfaceReference (traces : PerimeterTraceBank request)
+  (entry : AnnularEntry grid lifted)
     (i j : Fin genus) (position : Fin grid.faces.regulars.length) (side : GridSide) (sheet : Fin 2) :=
-  Meshes.PuncturedGrid.BandSideReferences.BandSideReference ((domains.get position).domain sheet) ((traces.get
+  BandSideReference ((domains.get position).domain sheet) ((traces.get
     position).get sheet)
     (grid.bands.entries.get entry.hole.index) i j side
 
 /-- The stage required by the exact retained interface reference. -/
-@[expose] def InterfaceReference.index {traces : Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request}
-  {entry : Meshes.Newton.AllHoles.Excision.AnnularEntry grid lifted}
+@[expose] def InterfaceReference.index {traces : PerimeterTraceBank request}
+  {entry : AnnularEntry grid lifted}
     {i j : Fin genus} {position : Fin grid.faces.regulars.length} {side : GridSide} {sheet : Fin 2}
     (reference : InterfaceReference traces entry i j position side sheet) : Nat :=
-  Meshes.PuncturedGrid.BandSideReferences.BandSideReference.index (domain := (domains.get position).domain sheet)
+  BandSideReference.index (domain := (domains.get position).domain sheet)
     (traces := (traces.get position).get sheet) (band := grid.bands.entries.get entry.hole.index) side reference
 
 end
@@ -131,14 +131,14 @@ set_option genInjectivity false in
 
 The entry belongs to the exact excision, its boundary certificate preserves the original face and side, and the common
 stage covers both retained sheet references. -/
-structure InterfaceRequest (excision : Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted) (traces :
-  Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request)
+structure InterfaceRequest (excision : AllHoleExcision grid lifted) (traces :
+  PerimeterTraceBank request)
     (i j : Fin genus) (position : Fin grid.faces.regulars.length) (side : GridSide) where
   /-- The retained original annular entry owning the side's band. -/ entry :
-    Meshes.Newton.AllHoles.Excision.AnnularEntry grid lifted
+    AnnularEntry grid lifted
   /-- The retained entry belongs to the exact original excision. -/ member : entry ∈ excision.entries
   /-- The original regular face side lies on the retained entry's exact band boundary. -/ boundary :
-    Meshes.PuncturedGrid.SideBoundaryGeometry.SideBoundary (grid.faces.regulars[position.val]'position.isLt).cell.box
+    SideBoundary (grid.faces.regulars[position.val]'position.isLt).cell.box
     (grid.bands.box entry.hole.index) side
   /-- The retained interface-reference vector indexed by the two original sheets. -/ references : Vector.DependentVector
     (InterfaceReference traces entry i j position side)
@@ -159,16 +159,16 @@ open Purelib.Data in
 
 The stored reference vector keeps the original domain, perimeter traces and annular entry; its maximum stage covers both
 exact reference indices. -/
-@[expose] def ofBoundary (excision : Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted) (traces :
-  Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request)
+@[expose] def ofBoundary (excision : AllHoleExcision grid lifted) (traces :
+  PerimeterTraceBank request)
     (i j : Fin genus) (position : Fin grid.faces.regulars.length) (side : GridSide)
-    (entry : Meshes.Newton.AllHoles.Excision.AnnularEntry grid lifted) (member : entry ∈ excision.entries)
-    (boundary : Meshes.PuncturedGrid.SideBoundaryGeometry.SideBoundary
+    (entry : AnnularEntry grid lifted) (member : entry ∈ excision.entries)
+    (boundary : SideBoundary
       (grid.faces.regulars[position.val]'position.isLt).cell.box (grid.bands.box entry.hole.index) side) :
     InterfaceRequest excision traces i j position side :=
   let references : Vector.DependentVector (InterfaceReference traces entry i j position side) :=
     Vector.DependentVector.ofFn (fun sheet : Fin 2 =>
-      Meshes.PuncturedGrid.BandSideReferences.BandSideReference.build ((traces.get position).get sheet)
+      BandSideReference.build ((traces.get position).get sheet)
         (grid.bands.entries.get entry.hole.index) i j side)
   ⟨entry, member, boundary, references,
     references.maximum (fun _ reference => InterfaceReference.index reference),
@@ -177,8 +177,8 @@ exact reference indices. -/
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Riemann.RootContinuation in
 /-- Construct the retained interface request from an original selected-to-discarded neighboring-face transition. -/
-@[expose] def build (excision : Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted) (traces :
-  Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request)
+@[expose] def build (excision : AllHoleExcision grid lifted) (traces :
+  PerimeterTraceBank request)
     (i j : Fin genus) (position next : Fin grid.faces.regulars.length) (side : GridSide)
     (matching : side.Matches (grid.faces.regulars[position.val]'position.isLt).cell.box
       (grid.faces.regulars[next.val]'next.isLt).cell.box)
@@ -192,7 +192,7 @@ open Purelib.Curves.Hyperelliptic.Branches in
 open Purelib.Data.Rat in
 open Purelib.Riemann.RootContinuation in
 /-- The exact retained band area coefficient times its selected radius squared. -/
-@[expose] def allowance (allocated : InterfaceRequest excision traces i j position side) : Fraction.Rational :=
+@[expose] def allowance (allocated : InterfaceRequest excision traces i j position side) : Rational :=
   PreparedNewtonAreaRate.PreparedBandFamily.areaCoefficient
     (curve := curve) (current := (BranchCellWinding.state original allocated.entry.hole.index).raw)
     (preparation.profiles.get allocated.entry.hole.index).differentials *
@@ -201,17 +201,17 @@ open Purelib.Riemann.RootContinuation in
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Gaussian in
 /-- Later original centered perimeter readings satisfy the retained interface's band-area allowance. -/
-theorem centered_bound {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains
+theorem centered_bound {stage : Nat} {cache : RegularMeshes.Numerics domains
   stage}
-    (samples : Meshes.PuncturedGrid.RequestedHoleCentering.CenteredPerimeters request cache i j)
-    (lengths : Meshes.PuncturedGrid.WeightedPerimeterAreas.CenteredPerimeters.Lengths samples)
+    (samples : CenteredPerimeters request cache i j)
+    (lengths : Lengths samples)
     (allocated : InterfaceRequest excision samples.traces i j position side)
     (later : allocated.index ≤ stage) (sheet : Fin 2) :
-    Data.Gaussian.Norm.Basic.normSq (Meshes.PuncturedGrid.SideCenteredRemainder.sideCenteredArea ((samples.samples.get
+    normSq (sideCenteredArea ((samples.samples.get
       position).get sheet) side) ≤ allocated.allowance := by
-  change Data.Gaussian.Norm.Basic.normSq (Meshes.PuncturedGrid.BandSideReferences.BandSideReference.sideArea
+  change normSq (BandSideReference.sideArea
     ((samples.samples.get position).get sheet) side) ≤ _
-  exact Meshes.PuncturedGrid.BandSideReferences.BandSideReference.area_bound (allocated.references.get sheet)
+  exact BandSideReference.area_bound (allocated.references.get sheet)
     ((lengths.get position).get sheet)
     allocated.boundary ((allocated.index_ge sheet).trans later)
     (cache.normalize.atDomain position sheet i) (cache.normalize.atDomain position sheet j)
@@ -224,26 +224,26 @@ open Purelib.Data.Rat in
 
 The same side's endpoint request controls its difference from the centered reading, whose original band reference pays
 the remaining term. -/
-theorem remainder_bound {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains
+theorem remainder_bound {stage : Nat} {cache : RegularMeshes.Numerics domains
   stage}
-    (samples : Meshes.PuncturedGrid.RequestedHoleCentering.CenteredPerimeters request cache i j)
-    (lengths : Meshes.PuncturedGrid.WeightedPerimeterAreas.CenteredPerimeters.Lengths samples)
+    (samples : CenteredPerimeters request cache i j)
+    (lengths : Lengths samples)
     (allocated : InterfaceRequest excision samples.traces i j position side)
-    (later : allocated.index ≤ stage) {error : Fraction.Rational}
-    (endpoints : Curves.Hyperelliptic.Meshes.PuncturedGrid.PerimeterEndpointRequest fixed i j error) (endpointLater
+    (later : allocated.index ≤ stage) {error : Rational}
+    (endpoints : PerimeterEndpointRequest fixed i j error) (endpointLater
       : endpoints.index ≤ stage)
-    (perimeters : Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters (request := request) cache.normalize
+    (perimeters : FacePerimeters (request := request) cache.normalize
         i j)
       (sheet : Fin 2) :
-    Data.Gaussian.Norm.Basic.normSq (Meshes.PuncturedGrid.HoleAreaRemainder.sideAreaRemainder perimeters position sheet
+    normSq (sideAreaRemainder perimeters position sheet
       side)
       ≤ 2 * (error + allocated.allowance) := by
   have centered := allocated.centered_bound samples lengths later sheet
   have difference := endpoints.bound endpointLater ((samples.samples.get position).get sheet) perimeters side
-  have equal : Meshes.PuncturedGrid.HoleAreaRemainder.sideAreaRemainder perimeters position sheet side =
-      (Meshes.PuncturedGrid.HoleAreaRemainder.sideAreaRemainder perimeters position sheet side -
-        Meshes.PuncturedGrid.SideCenteredRemainder.sideCenteredArea ((samples.samples.get position).get sheet) side) +
-      Meshes.PuncturedGrid.SideCenteredRemainder.sideCenteredArea ((samples.samples.get position).get sheet) side := by
+  have equal : sideAreaRemainder perimeters position sheet side =
+      (sideAreaRemainder perimeters position sheet side -
+        sideCenteredArea ((samples.samples.get position).get sheet) side) +
+      sideCenteredArea ((samples.samples.get position).get sheet) side := by
         ring1
   rw [equal]
   exact (Norm.Bounds.normSq_add_le_two _ _).trans

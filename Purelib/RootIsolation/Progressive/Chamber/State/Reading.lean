@@ -55,7 +55,7 @@ step. -/
 def nextTable
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) : CoefficientTable :=
   state.table.refine (state.coefficientTarget epsilon)
     (state.coefficientTarget_pos positive)
@@ -91,7 +91,7 @@ theorem
   nextTable_small_coefficientTarget
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) :
     AllowancesLt (state.nextTable epsilon
       positive).entries
@@ -129,9 +129,9 @@ namespace ChamberContinuationState
 theorem same_nextTable
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) :
-    Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.SameChannels state.table.entries
+    CoefficientTable.SameChannels state.table.entries
       (state.nextTable epsilon positive).entries :=
   state.table.sameChannels_refine (state.coefficientTarget epsilon)
     (state.coefficientTarget_pos positive)
@@ -166,7 +166,7 @@ namespace ChamberContinuationState
 theorem nextTableDegreeAtLeastTwo
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) :
     2 ≤ (state.nextTable epsilon positive).polynomial.natDegree := by
   rw [(state.nextTable epsilon positive).polynomial_natDegree,
@@ -204,7 +204,7 @@ namespace ChamberContinuationState
 theorem nextTable_chamberSmall
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) :
     AllowancesLt (state.nextTable epsilon
       positive).entries
@@ -242,7 +242,7 @@ namespace ChamberContinuationState
 theorem nextTable_guardSmall
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) :
     AllowancesLt (state.nextTable epsilon
       positive).entries
@@ -280,7 +280,7 @@ namespace ChamberContinuationState
 theorem nextTable_nextGuardSmall
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) :
     AllowancesLt (state.nextTable epsilon
       positive).entries
@@ -318,9 +318,9 @@ namespace ChamberContinuationState
 theorem reference_same_nextTable
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) :
-    Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.SameChannels reference.entries
+    CoefficientTable.SameChannels reference.entries
       (state.nextTable epsilon positive).entries :=
   CoefficientTable.sameChannels_trans state.same
     (state.same_nextTable epsilon positive)
@@ -355,7 +355,7 @@ namespace ChamberContinuationState
 theorem nextTableDegreePositive
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) :
     0 < (state.nextTable epsilon positive).polynomial.natDegree :=
   (show (0 : Nat) < 2 by decide).trans_le
@@ -394,7 +394,7 @@ bound certify transport. -/
 def transferAt
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (index : chamber.Index) :
     Dense.Gaussian.Coefficient.Progressive.Transport.Coarse.CoarseStableChannelReadings state.table
       (state.nextTable epsilon positive) state.guardTarget
@@ -439,7 +439,7 @@ namespace ChamberContinuationState
   transferAt_clearance_bound
     {reference : CoefficientTable} {chamber :
       SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (index : chamber.Index) :
     (state.transferAt epsilon positive index).explicitRightClearance.bound =
       state.transportedClearanceBound index := rfl

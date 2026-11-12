@@ -38,8 +38,8 @@ The supplied origin and direction scale the same polynomial. A single coefficien
 affine parameter before adding the two retained terms. -/
 @[expose] def mulLine (origin direction : Gaussian.Basic.Canonical) (p :
   Basic.CanonicalCoefficients.CoefficientPolynomial) :
-    (Dense.Basic.DensePolynomial Gaussian.Basic.Canonical) :=
-  Dense.Basic.DensePolynomial.scale origin p + Dense.Basic.DensePolynomial.shift 1 (Dense.Basic.DensePolynomial.scale
+    (Basic.DensePolynomial Gaussian.Basic.Canonical) :=
+  Basic.DensePolynomial.scale origin p + Basic.DensePolynomial.shift 1 (Basic.DensePolynomial.scale
     direction p)
 
 /-- Multiplying by an affine line produces a normalized Gaussian polynomial.
@@ -49,16 +49,16 @@ theorem normalize_mulLine (origin direction : Gaussian.Basic.Canonical)
     (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial) :
     (mulLine origin direction polynomial).normalize = mulLine origin direction polynomial := by
   unfold mulLine
-  exact Dense.Basic.DensePolynomial.normalize_add _ _
+  exact Basic.DensePolynomial.normalize_add _ _
 
 /-- Multiplication by the affine line sends the zero polynomial to zero.
 
 Both retained scalings and the single shift preserve the zero polynomial. Their normalized sum is therefore zero. -/
 @[simp] theorem mulLine_zero (origin direction : Gaussian.Basic.Canonical) :
     mulLine origin direction (0 : Basic.CanonicalCoefficients.CoefficientPolynomial) = 0 := by
-  rw [mulLine, Dense.Basic.DensePolynomial.scale_zero_right, Dense.Basic.DensePolynomial.scale_zero_right,
-    Dense.Basic.DensePolynomial.shift_zero,
-    Dense.Basic.DensePolynomial.zero_add_normalize, Dense.Basic.DensePolynomial.normalize_zero]
+  rw [mulLine, Basic.DensePolynomial.scale_zero_right, Basic.DensePolynomial.scale_zero_right,
+    Basic.DensePolynomial.shift_zero,
+    Basic.DensePolynomial.zero_add_normalize, Basic.DensePolynomial.normalize_zero]
 
 /-- At a rational parameter, polynomial multiplication by the line agrees with affine-path multiplication.
 
@@ -68,8 +68,8 @@ gives the displayed affine multiplier. -/
     (p : Basic.CanonicalCoefficients.CoefficientPolynomial) (t : Fraction.Rational) :
     (mulLine origin direction p).eval (Gaussian.Cast.Path.ofCoordinate t) =
       p.eval (Gaussian.Cast.Path.ofCoordinate t) * Geometry.Rational.Affine.line origin direction t := by
-  rw [mulLine, Dense.Basic.DensePolynomial.eval_add, Dense.Basic.DensePolynomial.eval_scale,
-    Dense.Basic.DensePolynomial.eval_shift, Dense.Basic.DensePolynomial.eval_scale]
+  rw [mulLine, Basic.DensePolynomial.eval_add, Basic.DensePolynomial.eval_scale,
+    Basic.DensePolynomial.eval_shift, Basic.DensePolynomial.eval_scale]
   apply Gaussian.Basic.ext <;>
     simp only [Geometry.Rational.Affine.line, Gaussian.Basic.add_re, Gaussian.Basic.add_im, Gaussian.Basic.mul_re,
       Gaussian.Basic.mul_im, Gaussian.Cast.ofCoordinate_re,
@@ -84,8 +84,8 @@ and direction. -/
     (p : Basic.CanonicalCoefficients.CoefficientPolynomial) (z : Gaussian.Basic.Canonical) :
     (mulLine origin direction p).eval z =
       p.eval z * (origin + z * direction) := by
-  rw [mulLine, Dense.Basic.DensePolynomial.eval_add, Dense.Basic.DensePolynomial.eval_scale,
-    Dense.Basic.DensePolynomial.eval_shift, Dense.Basic.DensePolynomial.eval_scale]
+  rw [mulLine, Basic.DensePolynomial.eval_add, Basic.DensePolynomial.eval_scale,
+    Basic.DensePolynomial.eval_shift, Basic.DensePolynomial.eval_scale]
   change origin * p.eval z + direction * p.eval z * z ^ 1 = _
   ring1
 
@@ -94,10 +94,10 @@ and direction. -/
 The descending coefficient list is folded from the zero polynomial. Each step multiplies the current polynomial by the
 same affine line and adds the next retained coefficient. -/
 @[expose] def composeLineCoeffs (origin direction : Gaussian.Basic.Canonical)
-    (coefficients : List Gaussian.Basic.Canonical) : (Dense.Basic.DensePolynomial Gaussian.Basic.Canonical) :=
+    (coefficients : List Gaussian.Basic.Canonical) : (Basic.DensePolynomial Gaussian.Basic.Canonical) :=
   coefficients.foldl
     (fun accumulator coefficient =>
-      mulLine origin direction accumulator + Dense.Basic.DensePolynomial.constant coefficient) 0
+      mulLine origin direction accumulator + Basic.DensePolynomial.constant coefficient) 0
 
 section
 /-- Removing leading zero coefficients preserves affine Horner substitution.
@@ -114,15 +114,15 @@ private theorem composeLineCoeffs_dropWhile_zero
   | cons coefficient coefficients inductionHypothesis =>
       by_cases coefficientZero : coefficient = 0
       · subst coefficient
-        rw [Purelib.Data.List.DropWhile.cons_of_true
+        rw [Data.List.DropWhile.cons_of_true
           (fun value : Gaussian.Basic.Canonical => decide (value = 0)) 0 coefficients
           (decide_eq_true (rfl : (0 : Gaussian.Basic.Canonical) = 0))]
         rw [inductionHypothesis]
         unfold composeLineCoeffs
         rw [List.foldl_cons]
-        rw [mulLine_zero, Dense.Basic.DensePolynomial.zero_add_normalize,
-          Dense.Basic.DensePolynomial.normalize_constant_zero]
-      · rw [Purelib.Data.List.DropWhile.cons_of_false
+        rw [mulLine_zero, Basic.DensePolynomial.zero_add_normalize,
+          Basic.DensePolynomial.normalize_constant_zero]
+      · rw [Data.List.DropWhile.cons_of_false
           (fun value : Gaussian.Basic.Canonical => decide (value = 0)) coefficient coefficients
           (decide_eq_false coefficientZero)]
 /-- Evaluate an affine Horner fold from an arbitrary polynomial accumulator at a rational parameter.
@@ -134,7 +134,7 @@ private theorem eval_composeLineCoeffs_from
     (coefficients : List Gaussian.Basic.Canonical) (accumulator : Basic.CanonicalCoefficients.CoefficientPolynomial) :
     (coefficients.foldl
       (fun value coefficient =>
-        mulLine origin direction value + Dense.Basic.DensePolynomial.constant coefficient)
+        mulLine origin direction value + Basic.DensePolynomial.constant coefficient)
       accumulator).eval (Gaussian.Cast.Path.ofCoordinate t) =
     coefficients.foldl
       (fun value coefficient => value * Geometry.Rational.Affine.line origin direction t + coefficient)
@@ -143,7 +143,7 @@ private theorem eval_composeLineCoeffs_from
   | nil => rfl
   | cons coefficient coefficients ih =>
       simp only [List.foldl_cons]
-      rw [ih, Dense.Basic.DensePolynomial.eval_add, eval_mulLine, Dense.Basic.DensePolynomial.eval_constant]
+      rw [ih, Basic.DensePolynomial.eval_add, eval_mulLine, Basic.DensePolynomial.eval_constant]
 end
 
 /-- Executable affine substitution.
@@ -152,7 +152,7 @@ The supplied polynomial contributes its exact descending coefficient table. The 
 the same origin and direction without constructing a new source table. -/
 @[expose] def composeLine (p : Basic.CanonicalCoefficients.CoefficientPolynomial) (origin direction :
   Gaussian.Basic.Canonical) :
-    (Dense.Basic.DensePolynomial Gaussian.Basic.Canonical) :=
+    (Basic.DensePolynomial Gaussian.Basic.Canonical) :=
   composeLineCoeffs origin direction p.coeffs
 
 /-- Affine substitution ignores only the finite prefix of representation
@@ -164,7 +164,7 @@ unchanged by removing that prefix. -/
     (origin direction : Gaussian.Basic.Canonical) :
     composeLine p.normalize origin direction = composeLine p origin direction := by
   unfold composeLine
-  exact Purelib.Polynomial.Dense.Gaussian.Substitution.Affine.composeLineCoeffs_dropWhile_zero origin direction p.coeffs
+  exact composeLineCoeffs_dropWhile_zero origin direction p.coeffs
 
 /-- Affine substitution evaluates to the original polynomial along the rational affine path.
 
@@ -175,7 +175,7 @@ theorem eval_composeLine (p : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (t : Fraction.Rational) :
     (composeLine p origin direction).eval (Gaussian.Cast.Path.ofCoordinate t) =
       p.eval (Geometry.Rational.Affine.line origin direction t) := by
-  rw [composeLine, composeLineCoeffs, Purelib.Polynomial.Dense.Gaussian.Substitution.Affine.eval_composeLineCoeffs_from]
+  rw [composeLine, composeLineCoeffs, eval_composeLineCoeffs_from]
   rfl
 
 section
@@ -188,7 +188,7 @@ private theorem eval_composeLineCoeffsGaussian_from
     (accumulator : Basic.CanonicalCoefficients.CoefficientPolynomial) :
     (coefficients.foldl
       (fun value coefficient =>
-        mulLine origin direction value + Dense.Basic.DensePolynomial.constant coefficient)
+        mulLine origin direction value + Basic.DensePolynomial.constant coefficient)
       accumulator).eval z =
     coefficients.foldl
       (fun value coefficient =>
@@ -198,8 +198,8 @@ private theorem eval_composeLineCoeffsGaussian_from
   | nil => rfl
   | cons coefficient coefficients inductionHypothesis =>
       simp only [List.foldl_cons]
-      rw [inductionHypothesis, Dense.Basic.DensePolynomial.eval_add, eval_mulLineGaussian,
-        Dense.Basic.DensePolynomial.eval_constant]
+      rw [inductionHypothesis, Basic.DensePolynomial.eval_add, eval_mulLineGaussian,
+        Basic.DensePolynomial.eval_constant]
 end
 
 /-- Affine substitution semantics at an arbitrary Gaussian argument.
@@ -211,7 +211,7 @@ theorem eval_composeLineGaussian (p : Basic.CanonicalCoefficients.CoefficientPol
     (composeLine p origin direction).eval z =
       p.eval (origin + z * direction) := by
   rw [composeLine, composeLineCoeffs,
-    Purelib.Polynomial.Dense.Gaussian.Substitution.Affine.eval_composeLineCoeffsGaussian_from]
+    eval_composeLineCoeffsGaussian_from]
   rfl
 end
 

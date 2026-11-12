@@ -92,7 +92,7 @@ def checkReciprocal (vertical : Bool) (bound majorant :
   Fraction.Rational) (positive : 0 < majorant) :
     Except Invalid {value : Fraction.Rational // value = 1 / majorant} :=
   let product := bound * majorant
-  if same : product = 1 then .ok ⟨bound, Data.Rat.Inverse.Check.reciprocal_eq bound majorant positive same⟩
+  if same : product = 1 then .ok ⟨bound, Inverse.Check.reciprocal_eq bound majorant positive same⟩
   else .error (.reciprocal vertical bound majorant product rfl same)
 
 variable {p : (Dense.Basic.DensePolynomial Gaussian.Basic.Canonical)} {degreeBound : Nat}
@@ -101,12 +101,12 @@ variable {p : (Dense.Basic.DensePolynomial Gaussian.Basic.Canonical)} {degreeBou
 
 /-- A retained four-cell grid together with exact equality to the original eliminant-based grid construction. -/
 abbrev Checked := {grid :
-  Clearance.Box.Grid.Four.Basic.ClearFourGrid p box // grid = Clearance.Box.Grid.Four.Elimination.buildClearFourGrid
+  Basic.ClearFourGrid p box // grid = Elimination.buildClearFourGrid
   elimination box proper}
 
 /-- Record the original grid's two safe coordinates and its two scalar line-clearance bounds. -/
 def capture : Data :=
-  let grid := Clearance.Box.Grid.Four.Elimination.buildClearFourGrid elimination box proper
+  let grid := Elimination.buildClearFourGrid elimination box proper
   ⟨grid.xCut, grid.yCut, grid.verticalClearance.bound, grid.horizontalClearance.bound⟩
 
 /-- Supplying the original scalar bound preserves the entire line certificate;
@@ -114,21 +114,21 @@ its remaining fields are proofs. No division is evaluated by this adapter. -/
 def vertical (x : Fraction.Rational) (safe :
   elimination.vertical.eval x ≠ 0)
     (bound : Fraction.Rational)
-    (same : bound = (Clearance.Box.Line.Bezout.verticalOfCoprime p box x (elimination.vertical_coprime x safe)).bound) :
-    Clearance.Box.Line.Basic.VerticalLineClearance p box x where
+    (same : bound = (Line.Bezout.verticalOfCoprime p box x (elimination.vertical_coprime x safe)).bound) :
+    Line.Basic.VerticalLineClearance p box x where
   bound := bound
-  positive := by rw [same]; exact (Clearance.Box.Line.Bezout.verticalOfCoprime p box x (elimination.vertical_coprime x
+  positive := by rw [same]; exact (Line.Bezout.verticalOfCoprime p box x (elimination.vertical_coprime x
     safe)).positive
-  lower := by intro y lower upper; rw [same]; exact (Clearance.Box.Line.Bezout.verticalOfCoprime p box x
+  lower := by intro y lower upper; rw [same]; exact (Line.Bezout.verticalOfCoprime p box x
     (elimination.vertical_coprime x safe)).lower y lower upper
 
 /-- Restoring the original vertical scalar bound reproduces the entire original vertical line-clearance certificate. -/
 theorem vertical_eq (x : Fraction.Rational) (safe :
   elimination.vertical.eval x ≠ 0)
     (bound : Fraction.Rational)
-    (same : bound = (Clearance.Box.Line.Bezout.verticalOfCoprime p box x (elimination.vertical_coprime x safe)).bound) :
-    Clearance.Box.Grid.Four.Replay.vertical elimination box x safe bound same =
-      Clearance.Box.Line.Bezout.verticalOfCoprime p box x (elimination.vertical_coprime x safe) := by
+    (same : bound = (Line.Bezout.verticalOfCoprime p box x (elimination.vertical_coprime x safe)).bound) :
+    Replay.vertical elimination box x safe bound same =
+      Line.Bezout.verticalOfCoprime p box x (elimination.vertical_coprime x safe) := by
   cases same
   rfl
 
@@ -139,13 +139,13 @@ evaluating division. -/
 def horizontal (y : Fraction.Rational) (safe :
   elimination.horizontal.eval y ≠ 0)
     (bound : Fraction.Rational)
-    (same : bound = (Clearance.Box.Line.Bezout.horizontalOfCoprime p box y (elimination.horizontal_coprime y
+    (same : bound = (Line.Bezout.horizontalOfCoprime p box y (elimination.horizontal_coprime y
       safe)).bound) :
-    Clearance.Box.Line.Basic.HorizontalLineClearance p box y where
+    Line.Basic.HorizontalLineClearance p box y where
   bound := bound
-  positive := by rw [same]; exact (Clearance.Box.Line.Bezout.horizontalOfCoprime p box y (elimination.horizontal_coprime
+  positive := by rw [same]; exact (Line.Bezout.horizontalOfCoprime p box y (elimination.horizontal_coprime
     y safe)).positive
-  lower := by intro x lower upper; rw [same]; exact (Clearance.Box.Line.Bezout.horizontalOfCoprime p box y
+  lower := by intro x lower upper; rw [same]; exact (Line.Bezout.horizontalOfCoprime p box y
     (elimination.horizontal_coprime y safe)).lower x lower upper
 
 /-- Restoring the original horizontal scalar bound reproduces the entire original horizontal line-clearance certificate.
@@ -153,10 +153,10 @@ def horizontal (y : Fraction.Rational) (safe :
 theorem horizontal_eq (y : Fraction.Rational) (safe :
   elimination.horizontal.eval y ≠ 0)
     (bound : Fraction.Rational)
-    (same : bound = (Clearance.Box.Line.Bezout.horizontalOfCoprime p box y (elimination.horizontal_coprime y
+    (same : bound = (Line.Bezout.horizontalOfCoprime p box y (elimination.horizontal_coprime y
       safe)).bound) :
-    Clearance.Box.Grid.Four.Replay.horizontal elimination box y safe bound same =
-      Clearance.Box.Line.Bezout.horizontalOfCoprime p box y (elimination.horizontal_coprime y safe) := by
+    horizontal elimination box y safe bound same =
+      Line.Bezout.horizontalOfCoprime p box y (elimination.horizontal_coprime y safe) := by
   cases same
   rfl
 
@@ -177,14 +177,14 @@ def check (data : Data) : Except
   let hy := elimination.horizontal_coprime y.val ySpec.1
   let vb ← checkReciprocal true data.vertical (bezoutSqMajorant vx
     (Box.Intervals.verticalInterval box))
-    (Clearance.Pair.Bezout.bezoutSqMajorant_pos vx (Box.Intervals.verticalInterval box))
+    (bezoutSqMajorant_pos vx (Box.Intervals.verticalInterval box))
   let hb ← checkReciprocal false data.horizontal (bezoutSqMajorant hy
     (Box.Intervals.horizontalInterval box))
-    (Clearance.Pair.Bezout.bezoutSqMajorant_pos hy (Box.Intervals.horizontalInterval box))
-  let grid : Clearance.Box.Grid.Four.Basic.ClearFourGrid p box :=
+    (bezoutSqMajorant_pos hy (Box.Intervals.horizontalInterval box))
+  let grid : Basic.ClearFourGrid p box :=
     ⟨x.val, y.val, ⟨xSpec.2.1.le, xSpec.2.2.le⟩, ⟨ySpec.2.1.le, ySpec.2.2.le⟩,
-      Clearance.Box.Grid.Four.Replay.vertical elimination box x.val xSpec.1 vb.val vb.property,
-      Clearance.Box.Grid.Four.Replay.horizontal elimination box y.val ySpec.1 hb.val hb.property⟩
+      Replay.vertical elimination box x.val xSpec.1 vb.val vb.property,
+      horizontal elimination box y.val ySpec.1 hb.val hb.property⟩
   return ⟨grid, by
     dsimp only [grid]
     rw [vertical_eq, horizontal_eq]

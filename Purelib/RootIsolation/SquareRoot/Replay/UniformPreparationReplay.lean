@@ -64,51 +64,51 @@ open Purelib.Riemann.Branches Purelib.Riemann.Integration Purelib.Riemann.RootCo
 
 open Purelib.Riemann.RootContinuation.UniformSquareRootPreparation
 
-variable {polynomial : Riemann.RootContinuation.UniformSquareRootPreparation.GaussianPolynomial} {ambient :
-  Riemann.RootContinuation.UniformSquareRootPreparation.Box} {start finish :
-  Riemann.RootContinuation.UniformSquareRootPreparation.Gaussian}
+variable {polynomial : GaussianPolynomial} {ambient :
+  UniformSquareRootPreparation.Box} {start finish :
+  Gaussian}
   (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) (parameter :
-    Riemann.RootContinuation.UniformSquareRootPreparation.Coordinate)
-  (inside : (0 : Riemann.RootContinuation.UniformSquareRootPreparation.Coordinate) ≤ parameter ∧ parameter ≤ 1)
-  (owner : Riemann.RootContinuation.UniformSquareRootPreparation.Owner (polynomial.eval (segment.pointAt parameter)))
-  (diameter : Riemann.RootContinuation.UniformSquareRootPreparation.Coordinate) (positive : 0 < diameter)
+    Coordinate)
+  (inside : (0 : Coordinate) ≤ parameter ∧ parameter ≤ 1)
+  (owner : Owner (polynomial.eval (segment.pointAt parameter)))
+  (diameter : Coordinate) (positive : 0 < diameter)
 
 /-- A retained Gaussian sample equal to the original uniform-preparation sample. -/
-abbrev Saved := {point : Riemann.RootContinuation.UniformSquareRootPreparation.Gaussian // point =
-  Riemann.RootContinuation.UniformSquareRootPreparation.sample segment owner diameter}
+abbrev Saved := {point : Gaussian // point =
+  sample segment owner diameter}
 
 /-- The original eight-step checked Newton sampling trace at its prescribed grid and midpoint. -/
 abbrev Samples := Newton.Replay.Trace
-  (polynomial.eval (segment.pointAt parameter)) (Riemann.RootContinuation.UniformSquareRootPreparation.SampleAcceptable
+  (polynomial.eval (segment.pointAt parameter)) (SampleAcceptable
     segment owner diameter)
   8 (Approximation.Rational.SquareRoot.Radius.Dyadic.CheckedSquareRootNewton.gridFor
-    (Riemann.RootContinuation.UniformSquareRootPreparation.sampleResidualTarget segment owner diameter))
-  (Riemann.RootContinuation.UniformSquareRootPreparation.ownerMidpoint owner.track.initial.box)
+    (sampleResidualTarget segment owner diameter))
+  (ownerMidpoint owner.track.initial.box)
 
 /-- Recover the canonical preparation sample from the retained successful sampling trace. -/
-def sampleFromTrace (trace : SquareRoot.Replay.UniformPreparationReplay.Samples segment parameter owner diameter)
-    (accepted : {point : Riemann.RootContinuation.UniformSquareRootPreparation.Gaussian //
-      Riemann.RootContinuation.UniformSquareRootPreparation.SampleAcceptable segment owner diameter point})
-    (found : trace.result = some accepted) : SquareRoot.Replay.UniformPreparationReplay.Saved segment parameter owner
+def sampleFromTrace (trace : Samples segment parameter owner diameter)
+    (accepted : {point : Gaussian //
+      SampleAcceptable segment owner diameter point})
+    (found : trace.result = some accepted) : Saved segment parameter owner
       diameter := by
-  have candidates : Riemann.RootContinuation.UniformSquareRootPreparation.sampleCandidates segment owner diameter = some
+  have candidates : sampleCandidates segment owner diameter = some
     accepted :=
     trace.result_eq.symm.trans found
-  exact ⟨accepted.val, by unfold Riemann.RootContinuation.UniformSquareRootPreparation.sample; rw [candidates]⟩
+  exact ⟨accepted.val, by unfold sample; rw [candidates]⟩
 
 /-- Build the original anchored source square from the retained canonical sample and preparation radius. -/
-def source (saved : SquareRoot.Replay.UniformPreparationReplay.Saved segment parameter owner diameter) :
-  Purelib.Geometry.Rational.Box :=
-  Box.Square.Anchored.anchoredSquare saved.val (Riemann.RootContinuation.UniformSquareRootPreparation.preparationRadius
+def source (saved : Saved segment parameter owner diameter) :
+  Geometry.Rational.Box :=
+  Box.Square.Anchored.anchoredSquare saved.val (preparationRadius
     segment diameter)
-    (Riemann.RootContinuation.UniformSquareRootPreparation.preparationRadius_positive segment positive).le
+    (preparationRadius_positive segment positive).le
 
 section
 open Purelib.RootIsolation.SquareRoot.Replay.UniformPreparationReplay
 /-- The replayed anchored square equals the original restart input's source box. -/
-theorem source_eq (saved : SquareRoot.Replay.UniformPreparationReplay.Saved segment parameter owner diameter) :
+theorem source_eq (saved : Saved segment parameter owner diameter) :
     source segment parameter owner diameter positive saved =
-      (Riemann.RootContinuation.UniformSquareRootPreparation.restartInput segment parameter inside owner diameter
+      (restartInput segment parameter inside owner diameter
         positive).source := by
   rcases saved with ⟨point, same⟩
   cases same
@@ -118,22 +118,22 @@ theorem source_eq (saved : SquareRoot.Replay.UniformPreparationReplay.Saved segm
 
 The exact source-box equality transports the original residual, displacement and strict-target certificates while
 preserving the original radius and Taylor bound. -/
-def restart (saved : SquareRoot.Replay.UniformPreparationReplay.Saved segment parameter owner diameter) :
+def restart (saved : Saved segment parameter owner diameter) :
     Newton.Restart.Separated.Basic.SeparatedRestartInput
-      (Riemann.Branches.ClearSheetContinuation.squareRootDerivativeSeparation
+      (ClearSheetContinuation.squareRootDerivativeSeparation
         (rootAmbient := rootAmbient segment) segment parameter inside) := by
-  let original := Riemann.RootContinuation.UniformSquareRootPreparation.restartInput segment parameter inside owner
+  let original := restartInput segment parameter inside owner
     diameter positive
   let box := source segment parameter owner diameter positive saved
-  have same : box = original.source := SquareRoot.Replay.UniformPreparationReplay.source_eq segment parameter inside
+  have same : box = original.source := source_eq segment parameter inside
     owner diameter positive saved
   refine
     { source := box
       sourceRefines := same.symm ▸ original.sourceRefines
       residual := ?_
       threshold := ?_
-      radius := Riemann.RootContinuation.UniformSquareRootPreparation.preparationRadius segment diameter
-      radiusPositive := Riemann.RootContinuation.UniformSquareRootPreparation.preparationRadius_positive segment
+      radius := preparationRadius segment diameter
+      radiusPositive := preparationRadius_positive segment
         positive
       displacementBudget := ?_
       targetStrict := ?_
@@ -151,9 +151,9 @@ def restart (saved : SquareRoot.Replay.UniformPreparationReplay.Saved segment pa
 end
 
 /-- The replayed separated restart input is exactly the original uniform-preparation input. -/
-theorem restart_eq (saved : SquareRoot.Replay.UniformPreparationReplay.Saved segment parameter owner diameter) :
-    SquareRoot.Replay.UniformPreparationReplay.restart segment parameter inside owner diameter positive saved =
-      Riemann.RootContinuation.UniformSquareRootPreparation.restartInput segment parameter inside owner diameter
+theorem restart_eq (saved : Saved segment parameter owner diameter) :
+    restart segment parameter inside owner diameter positive saved =
+      restartInput segment parameter inside owner diameter
         positive := by
   rcases saved with ⟨point, same⟩
   cases same
@@ -163,96 +163,96 @@ theorem restart_eq (saved : SquareRoot.Replay.UniformPreparationReplay.Saved seg
 
 The same separated restart, squarefree input, axis certificate and linearization majorant retain its original executable
 construction. -/
-def track (saved : SquareRoot.Replay.UniformPreparationReplay.Saved segment parameter owner diameter) :
+def track (saved : Saved segment parameter owner diameter) :
     Track.Basic.WindingOneTrack
-      (Riemann.RootContinuation.SquareRootReconditioning.rootPolynomial (polynomial.eval (segment.pointAt parameter)))
-      (SquareRoot.Replay.UniformPreparationReplay.restart segment parameter inside owner diameter positive
+      (SquareRootReconditioning.rootPolynomial (polynomial.eval (segment.pointAt parameter)))
+      (restart segment parameter inside owner diameter positive
         saved).centeredBox := by
-  let restored := SquareRoot.Replay.UniformPreparationReplay.restart segment parameter inside owner diameter positive
+  let restored := restart segment parameter inside owner diameter positive
     saved
-  let input := UniformSquareRootPreparation.inputAt segment parameter inside
-  let majorant := Riemann.RootContinuation.UniformSquareRootPreparation.linearizationMajorant segment diameter
-  have upper : ∀ z : Riemann.RootContinuation.UniformSquareRootPreparation.Gaussian, Box.Boundary.OnBoxBoundary
+  let input := inputAt segment parameter inside
+  let majorant := linearizationMajorant segment diameter
+  have upper : ∀ z : Gaussian, Box.Boundary.OnBoxBoundary
     restored.centeredBox z →
-      Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq
         ((Dense.Gaussian.Newton.Box.Linearization.newtonLinearization
-          (Riemann.RootContinuation.SquareRootReconditioning.rootPolynomial (polynomial.eval (segment.pointAt
+          (SquareRootReconditioning.rootPolynomial (polynomial.eval (segment.pointAt
             parameter))) restored.source).eval z) ≤ majorant := by
-    rw [show restored = Riemann.RootContinuation.UniformSquareRootPreparation.restartInput segment parameter inside
+    rw [show restored = restartInput segment parameter inside
       owner diameter positive from
-      SquareRoot.Replay.UniformPreparationReplay.restart_eq segment parameter inside owner diameter positive saved]
-    exact Riemann.RootContinuation.UniformSquareRootPreparation.restart_newtonLinearization_boundary_le_majorant segment
+      restart_eq segment parameter inside owner diameter positive saved]
+    exact restart_newtonLinearization_boundary_le_majorant segment
       parameter inside owner diameter positive
   exact restored.centeredTrackWithMajorant input.squarefree
-    (SquareRoot.Clearance.QuadraticAxisElimination.quadraticAxisElimination (polynomial.eval (segment.pointAt
+    (Clearance.QuadraticAxisElimination.quadraticAxisElimination (polynomial.eval (segment.pointAt
       parameter)))
     input.degreeAtLeastTwo majorant
-      (Riemann.RootContinuation.UniformSquareRootPreparation.linearizationMajorant_positive segment positive) upper
+      (linearizationMajorant_positive segment positive) upper
 
 /-- Package the original nonzero parameter, restored centered ambient and reconstructed track as the quadratic owner. -/
-def restoredOwner (saved : SquareRoot.Replay.UniformPreparationReplay.Saved segment parameter owner diameter) :
-    Riemann.RootContinuation.UniformSquareRootPreparation.Owner (polynomial.eval (segment.pointAt parameter)) where
+def restoredOwner (saved : Saved segment parameter owner diameter) :
+    Owner (polynomial.eval (segment.pointAt parameter)) where
   parameterNonzero := segment.pointAt_eval_ne_zero parameter inside
-  ambient := (SquareRoot.Replay.UniformPreparationReplay.restart segment parameter inside owner diameter positive
+  ambient := (restart segment parameter inside owner diameter positive
     saved).centeredBox
-  track := SquareRoot.Replay.UniformPreparationReplay.track segment parameter inside owner diameter positive saved
+  track := track segment parameter inside owner diameter positive saved
 
 /-- The restored quadratic owner equals the original uniform-preparation owner. -/
-theorem restoredOwner_eq (saved : SquareRoot.Replay.UniformPreparationReplay.Saved segment parameter owner diameter) :
-    SquareRoot.Replay.UniformPreparationReplay.restoredOwner segment parameter inside owner diameter positive saved =
-      Riemann.RootContinuation.UniformSquareRootPreparation.prepared segment parameter inside owner diameter positive :=
+theorem restoredOwner_eq (saved : Saved segment parameter owner diameter) :
+    restoredOwner segment parameter inside owner diameter positive saved =
+      prepared segment parameter inside owner diameter positive :=
         by
   rcases saved with ⟨point, same⟩
   cases same
-  unfold SquareRoot.Replay.UniformPreparationReplay.restoredOwner
-    Riemann.RootContinuation.UniformSquareRootPreparation.prepared SquareRoot.Replay.UniformPreparationReplay.track
-    Riemann.RootContinuation.UniformSquareRootPreparation.track
+  unfold restoredOwner
+    prepared track
+    UniformSquareRootPreparation.track
   rfl
 
 /-- Apply the original coefficient-clearance strengthening to the restored quadratic owner. -/
-def strengthened (saved : SquareRoot.Replay.UniformPreparationReplay.Saved segment parameter owner diameter) :=
-  SquareRoot.Clearance.QuadraticCoefficientClearance.strengthen
-    (SquareRoot.Replay.UniformPreparationReplay.restoredOwner segment parameter inside owner diameter positive saved)
+def strengthened (saved : Saved segment parameter owner diameter) :=
+  Clearance.QuadraticCoefficientClearance.strengthen
+    (restoredOwner segment parameter inside owner diameter positive saved)
 
 /-- Strengthening the restored owner equals strengthening the original uniform-preparation owner. -/
-theorem strengthened_eq (saved : SquareRoot.Replay.UniformPreparationReplay.Saved segment parameter owner diameter) :
-    SquareRoot.Replay.UniformPreparationReplay.strengthened segment parameter inside owner diameter positive saved =
-      SquareRoot.Clearance.QuadraticCoefficientClearance.strengthen
-        (Riemann.RootContinuation.UniformSquareRootPreparation.prepared segment parameter inside owner diameter
+theorem strengthened_eq (saved : Saved segment parameter owner diameter) :
+    strengthened segment parameter inside owner diameter positive saved =
+      Clearance.QuadraticCoefficientClearance.strengthen
+        (prepared segment parameter inside owner diameter
           positive) :=
-  congrArg SquareRoot.Clearance.QuadraticCoefficientClearance.strengthen
-    (SquareRoot.Replay.UniformPreparationReplay.restoredOwner_eq segment parameter inside owner diameter positive saved)
+  congrArg Clearance.QuadraticCoefficientClearance.strengthen
+    (restoredOwner_eq segment parameter inside owner diameter positive saved)
 
 /-- Restore the original cached prepared source after the checked-diameter proposal misses.
 
 The retained canonical sample reconstructs the uniform fallback owner; its carrying certificate and exact owner equality
 identify the same selected prepared source. -/
-def cachedOfMiss (current : Riemann.Branches.PreparedSheetContinuation.Endpoint)
-    (sourceOwner : Riemann.RootContinuation.UniformSquareRootPreparation.Owner (polynomial.eval (segment.pointAt
+def cachedOfMiss (current : PreparedSheetContinuation.Endpoint)
+    (sourceOwner : Owner (polynomial.eval (segment.pointAt
       current.parameter)))
-    (request : Riemann.Branches.PreparedSheetContinuation.StepRequest)
-    (notReady : ¬ Riemann.Branches.PreparedSheetContinuation.AlreadyPrepared segment current sourceOwner request)
-    (candidate : Riemann.RootContinuation.CheckedSquareRootPreparation.Result segment current.parameter sourceOwner
+    (request : PreparedSheetContinuation.StepRequest)
+    (notReady : ¬ PreparedSheetContinuation.AlreadyPrepared segment current sourceOwner request)
+    (candidate : CheckedSquareRootPreparation.Result segment current.parameter sourceOwner
       request.rootDiameter)
-    (found : (Riemann.RootContinuation.CheckedSquareRootPreparation.attempt segment current.parameter sourceOwner
+    (found : (CheckedSquareRootPreparation.attempt segment current.parameter sourceOwner
       request.rootDiameter).value = some candidate)
-    (miss : ¬ Riemann.Branches.ClearSheetContinuation.variationBound segment current.parameter
+    (miss : ¬ ClearSheetContinuation.variationBound segment current.parameter
       request.endpoint.parameter <
       candidate.value.track.initial.clearance.bound)
-    (saved : SquareRoot.Replay.UniformPreparationReplay.Saved segment current.parameter sourceOwner
+    (saved : Saved segment current.parameter sourceOwner
       request.rootDiameter)
-    (carries : Riemann.Branches.ClearSheetContinuation.variationBound segment current.parameter
+    (carries : ClearSheetContinuation.variationBound segment current.parameter
       request.endpoint.parameter <
-      (SquareRoot.Replay.UniformPreparationReplay.strengthened segment current.parameter current.inside sourceOwner
+      (strengthened segment current.parameter current.inside sourceOwner
         request.rootDiameter request.rootDiameterPositive saved).track.initial.clearance.bound) :
-    Riemann.Branches.PreparedSheetContinuation.CachedSource segment current sourceOwner request := by
-  let value := SquareRoot.Replay.UniformPreparationReplay.strengthened segment current.parameter current.inside
+    PreparedSheetContinuation.CachedSource segment current sourceOwner request := by
+  let value := strengthened segment current.parameter current.inside
     sourceOwner request.rootDiameter request.rootDiameterPositive saved
-  have same := SquareRoot.Replay.UniformPreparationReplay.strengthened_eq segment current.parameter current.inside
+  have same := strengthened_eq segment current.parameter current.inside
     sourceOwner request.rootDiameter request.rootDiameterPositive saved
   have originalCarries := carries
   rw [same] at originalCarries
-  exact ⟨value, same.trans (Riemann.Branches.PreparedSheetContinuation.prepared_eq_uniform_of_not_ready_of_checked_miss
+  exact ⟨value, same.trans (PreparedSheetContinuation.prepared_eq_uniform_of_not_ready_of_checked_miss
     segment current sourceOwner request notReady candidate found miss originalCarries).symm⟩
 
 end Purelib.RootIsolation.SquareRoot.Replay.UniformPreparationReplay

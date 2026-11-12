@@ -52,6 +52,43 @@ structure RefinementProgram where
 
 constructive_injectivity RefinementProgram
 
+namespace RefinementProgram
+
+open Purelib.Approximation.Rational.Geometric
+open Purelib.Integration.Polynomial.Gaussian.Path.Basic (PathModel)
+
+/-- Retain supplied original models with the same stage samples and certified allowances.
+
+The movement scale, center bound and their proofs come from the original
+program. Only the retained model sequence changes; scalar sample readbacks
+transport those same guarantees to the supplied cells. -/
+def withModels (program : RefinementProgram) (models : Nat → PathModel)
+    (samples : ∀ index, (models index).integralSample = (program.model index).integralSample)
+    (allowances : ∀ index, (models index).aggregateAllowance ≤ Basic.quarterRadius program.errorScale index) :
+    RefinementProgram where
+  model := models
+  errorScale := program.errorScale
+  errorScale_nonneg := program.errorScale_nonneg
+  modelAllowance_le := allowances
+  later_close := by
+    intro earlier later order
+    rw [samples later, samples earlier]
+    exact program.later_close order
+  centerBound := program.centerBound
+  centerBound_nonneg := program.centerBound_nonneg
+  sample_bounded := by
+    intro index
+    rw [samples index]
+    exact program.sample_bounded index
+
+/-- Replacing the model sequence retains each supplied original model literally. -/
+theorem withModels_model (program : RefinementProgram) (models : Nat → PathModel)
+    (samples : ∀ index, (models index).integralSample = (program.model index).integralSample)
+    (allowances : ∀ index, (models index).aggregateAllowance ≤ Basic.quarterRadius program.errorScale index)
+    (index : Nat) : (program.withModels models samples allowances).model index = models index := rfl
+
+end RefinementProgram
+
 end Purelib.Integration.Program.Gaussian.Basic
 
 end

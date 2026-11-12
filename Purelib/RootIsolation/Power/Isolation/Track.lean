@@ -30,6 +30,10 @@ import Purelib.RootIsolation.Progressive.Chamber.Basic
 import Purelib.RootIsolation.Progressive.Chamber.Target
 import Purelib.RootIsolation.State.WindingOne.Basic
 
+open Purelib.RootIsolation.Progressive.Power.Frame
+
+open Purelib.Polynomial.Power.Gaussian.Progressive
+
 open Purelib.Data
 open Purelib.Polynomial
 open Purelib.RootIsolation
@@ -53,12 +57,12 @@ without selecting a new owner or recomputing an independent track. -/
     {parameter : Gaussian.Basic.Canonical} (parameterNonzero : parameter ≠ 0)
     (degree : Data.Nat.Positive.RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (index : Fin degree.value) :
-    Track.Basic.WindingOneTrack (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+    Track.Basic.WindingOneTrack (Power.Gaussian.rootPolynomial parameter degree)
+      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Power.Gaussian.rootPolynomial parameter
         degree))
         :=
-  (Power.Isolation.isolationResult parameterNonzero degree degreeAtLeastTwo).trackAt
-    (Fin.cast (Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree parameter degree).symm index)
+  (isolationResult parameterNonzero degree degreeAtLeastTwo).trackAt
+    (Fin.cast (Power.Gaussian.rootPolynomial_degree parameter degree).symm index)
 
 /-- The independently isolated track starts in exactly the corresponding chamber owner's box.
 
@@ -68,20 +72,20 @@ original index and reads the same retained initial box. -/
 @[simp] public theorem isolatedTrack_initial_box_eq_chamber_owner
     {parameter : Gaussian.Basic.Canonical} (parameterNonzero : parameter ≠ 0)
     (degree : Data.Nat.Positive.RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
-    (index : (Progressive.Power.Frame.Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo).Index) :
-    (Power.Isolation.Track.isolatedTrack parameterNonzero degree degreeAtLeastTwo
+    (index : (Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo).Index) :
+    (isolatedTrack parameterNonzero degree degreeAtLeastTwo
       (Fin.cast
-        (Progressive.Power.Frame.Basic.chamberFrame_degree parameterNonzero degree degreeAtLeastTwo)
+        (Basic.chamberFrame_degree parameterNonzero degree degreeAtLeastTwo)
         index)).initial.box =
-      ((Progressive.Power.Frame.Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo).owner
+      ((Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo).owner
         index).box := by
-  let result := Power.Isolation.isolationResult parameterNonzero degree degreeAtLeastTwo
-  let countSame : (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree).natDegree =
-      (Power.Gaussian.Progressive.Coefficients.coefficientTable parameter degree).degree :=
-    (Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree parameter degree).trans
-      (Power.Gaussian.Progressive.Coefficients.coefficientTable_degree parameter degree).symm
+  let result := isolationResult parameterNonzero degree degreeAtLeastTwo
+  let countSame : (Power.Gaussian.rootPolynomial parameter degree).natDegree =
+      (Coefficients.coefficientTable parameter degree).degree :=
+    (Power.Gaussian.rootPolynomial_degree parameter degree).trans
+      (Coefficients.coefficientTable_degree parameter degree).symm
   have retained := Owner.Family.Transport.castOwnerFamilyFull_owner_box_target
-    (Power.Gaussian.Progressive.Coefficients.coefficientTable_polynomial parameter degree).symm
+    (Coefficients.coefficientTable_polynomial parameter degree).symm
     countSame (Owner.Family.Basic.OwnerFamily.ofResult result) index
   exact retained.symm
 
@@ -93,20 +97,20 @@ bound; no replacement clearance or new witness is selected. -/
 @[simp] public theorem isolatedTrack_initial_clearance_bound_eq_chamber_owner
     {parameter : Gaussian.Basic.Canonical} (parameterNonzero : parameter ≠ 0)
     (degree : Data.Nat.Positive.RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
-    (index : (Progressive.Power.Frame.Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo).Index) :
-    (Power.Isolation.Track.isolatedTrack parameterNonzero degree degreeAtLeastTwo
+    (index : (Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo).Index) :
+    (isolatedTrack parameterNonzero degree degreeAtLeastTwo
       (Fin.cast
-        (Progressive.Power.Frame.Basic.chamberFrame_degree parameterNonzero degree degreeAtLeastTwo)
+        (Basic.chamberFrame_degree parameterNonzero degree degreeAtLeastTwo)
         index)).initial.clearance.bound =
-      ((Progressive.Power.Frame.Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo).owner
+      ((Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo).owner
         index).clearance.bound := by
-  let result := Power.Isolation.isolationResult parameterNonzero degree degreeAtLeastTwo
-  let countSame : (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree).natDegree =
-      (Power.Gaussian.Progressive.Coefficients.coefficientTable parameter degree).degree :=
-    (Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree parameter degree).trans
-      (Power.Gaussian.Progressive.Coefficients.coefficientTable_degree parameter degree).symm
+  let result := isolationResult parameterNonzero degree degreeAtLeastTwo
+  let countSame : (Power.Gaussian.rootPolynomial parameter degree).natDegree =
+      (Coefficients.coefficientTable parameter degree).degree :=
+    (Power.Gaussian.rootPolynomial_degree parameter degree).trans
+      (Coefficients.coefficientTable_degree parameter degree).symm
   have retained := Owner.Family.Transport.castOwnerFamilyFull_owner_clearance_bound_target
-    (Power.Gaussian.Progressive.Coefficients.coefficientTable_polynomial parameter degree).symm
+    (Coefficients.coefficientTable_polynomial parameter degree).symm
     countSame (Owner.Family.Basic.OwnerFamily.ofResult result) index
   exact retained.symm
 

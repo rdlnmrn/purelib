@@ -67,11 +67,7 @@ theorem uniform_amplification (extra : Nat) :
       extra)) = 1 := by
   have intervals : (Unit.Normalized.ofRequest (CCL.Progressive.IntegrationPrograms.uniformCuts extra)).intervals =
       Interval.intervalsBetween (Uniform.Grid.point (extra + 1) 0) (Uniform.Grid.point (extra + 1) (0 + extra + 1))
-        (Uniform.Grid.nodes (extra + 1) 0 extra) := by
-    change Interval.intervalsBetween 0 1 (Unit.Normalize.normalize (CCL.Progressive.IntegrationPrograms.uniformCuts
-      extra)) = _
-    rw [Uniform.Grid.uniform_normalized, Uniform.Grid.uniformCuts_eq_nodes, Uniform.Grid.point_zero, Nat.zero_add,
-      Uniform.Grid.point_self (Nat.succ_pos extra)]
+        (Uniform.Grid.nodes (extra + 1) 0 extra) := Uniform.Grid.uniform_intervals extra
   unfold QuadraticWeight.amplification
   rw [intervals, Interval.intervalsBetween_length, Uniform.Grid.nodes_length, grid_weightSum]
   have nonzero : ((extra + 1 : Nat) : Fraction.Rational) ≠ 0 :=

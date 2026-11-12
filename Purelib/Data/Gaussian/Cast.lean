@@ -41,6 +41,12 @@ open Purelib.Data.Rat.Fraction
       rw [Nat.cast_succ, Gaussian.Basic.add_im, inductionHypothesis, Gaussian.Basic.one_im]
       exact _root_.zero_add 0
 
+/-- The original natural Gaussian cast has the square of its original rational natural cast as quadrance. -/
+theorem natCast_normSq (value : Nat) : Norm.Basic.normSq (value : Canonical) = (value : Rational) ^ 2 := by
+  unfold Norm.Basic.normSq
+  rewrite [natCast_re, natCast_im]
+  ring1
+
 /-- Embed the supplied rational coordinate on the real Gaussian axis. -/
 @[expose] def Path.ofCoordinate (t : Rational) : Canonical := ⟨t, 0⟩
 

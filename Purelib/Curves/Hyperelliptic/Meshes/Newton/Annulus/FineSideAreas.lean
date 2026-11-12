@@ -48,6 +48,8 @@ import Purelib.Topology.Polygon.Stokes
 import Purelib.Topology.Surface.Sewing.SewnPrimitiveContacts
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 open Purelib
@@ -101,13 +103,13 @@ open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target
     radius : Rational}
   {grid : NewtonGrid preparation target radius}
-    {index : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
+    {index : Branches.BranchIsolation.Data.Index branches}
   {annulus : AnnularFaces grid index} {lifted :
     LiftedPuncturedGrid grid.punctured} {region :
     Lifted annulus lifted}
@@ -124,61 +126,61 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 
 /-- A numerical read of the retained occurrence list, preserving every side excursion and both laps. No fresh path
 preparation enters this value. -/
-@[expose] def fineSideArea (prepared : Lifted.OuterPreparation region)
-    (perimeters : PuncturedGrid.Matched.FacePerimeters (request := request) cache.normalize i j) : Gaussian :=
-  Data.Gaussian.Norm.Sum.Basic.gaussianSum ((SideOccurrences.sideOccurrences prepared).map
+@[expose] def fineSideArea (prepared : OuterPreparation region)
+    (perimeters : FacePerimeters (request := request) cache.normalize i j) : Gaussian :=
+  Sum.Basic.gaussianSum ((SideOccurrences.sideOccurrences prepared).map
     (LiftedPuncturedGrid.occurrenceFineArea perimeters))
 
 /-- The centered area sum on the exact retained annular side-occurrence list, including both laps and all reversals. -/
-@[expose] def centeredSideArea (prepared : Lifted.OuterPreparation region)
+@[expose] def centeredSideArea (prepared : OuterPreparation region)
     (samples : RequestedHoleCentering.CenteredPerimeters request cache i j) : Gaussian :=
-  Data.Gaussian.Norm.Sum.Basic.gaussianSum ((SideOccurrences.sideOccurrences prepared).map
+  Sum.Basic.gaussianSum ((SideOccurrences.sideOccurrences prepared).map
     (CenteredPerimeters.occurrenceArea samples))
 
 /-- The area correction reads the original sources of the annular prepared word, not newly selected triangle chords.
 Counts refer to that same word. -/
-theorem fineSideArea_readback (prepared : Lifted.OuterPreparation region)
+theorem fineSideArea_readback (prepared : OuterPreparation region)
     (samples : RequestedHoleCentering.CenteredPerimeters request cache i j)
-    (perimeters : PuncturedGrid.Matched.FacePerimeters (request := request) cache.normalize i j)
+    (perimeters : FacePerimeters (request := request) cache.normalize i j)
     (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh) (right :
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
-    {error : Fraction.Rational} (allocated : PuncturedGrid.PerimeterEndpointRequest fixed i j error)
+    {error : Rational} (allocated : PuncturedGrid.PerimeterEndpointRequest fixed i j error)
     (later : allocated.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (fineSideArea
-      prepared perimeters - Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.sources.map
+    Basic.normSq (fineSideArea
+      prepared perimeters - Sum.Basic.gaussianSum (prepared.sources.map
       (TriangleReadings.sourceChord left right)) -
       centeredSideArea prepared samples) ≤
-      (region.outer.length : Fraction.Rational) * ((region.outer.length : Fraction.Rational) * error) := by
-  let residual := fun occurrence : LiftedMesh.SideOccurrence lifted.mesh =>
+      (region.outer.length : Rational) * ((region.outer.length : Rational) * error) := by
+  let residual := fun occurrence : SideOccurrence lifted.mesh =>
     LiftedPuncturedGrid.occurrenceFineArea perimeters occurrence - TriangleReadings.sourceChord left right
       occurrence.source - CenteredPerimeters.occurrenceArea samples occurrence
   have bounded : ∀ value ∈ (SideOccurrences.sideOccurrences prepared).map residual,
-    Data.Gaussian.Norm.Basic.normSq value ≤ error := by
+    Basic.normSq value ≤ error := by
     intro value member
     obtain ⟨occurrence, _, equal⟩ := Map.mem_map.mp member
     rw [← equal]
     exact PerimeterEndpointRequest.occurrence_bound allocated later samples perimeters left right occurrence
-  have estimate := Data.Gaussian.Norm.Sum.Bounds.normSq_sum_le _ _ bounded
-  rw [Purelib.Data.List.Map.length_map, SideOccurrences.sideOccurrences_count prepared] at estimate
-  have sumIdentity : Data.Gaussian.Norm.Sum.Basic.gaussianSum ((SideOccurrences.sideOccurrences prepared).map
+  have estimate := Sum.Bounds.normSq_sum_le _ _ bounded
+  rw [Map.length_map, SideOccurrences.sideOccurrences_count prepared] at estimate
+  have sumIdentity : Sum.Basic.gaussianSum ((SideOccurrences.sideOccurrences prepared).map
     residual) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum ((SideOccurrences.sideOccurrences prepared).map
+      Sum.Basic.gaussianSum ((SideOccurrences.sideOccurrences prepared).map
         (LiftedPuncturedGrid.occurrenceFineArea perimeters)) -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum ((SideOccurrences.sideOccurrences prepared).map (fun occurrence =>
+      Sum.Basic.gaussianSum ((SideOccurrences.sideOccurrences prepared).map (fun occurrence =>
         TriangleReadings.sourceChord left right occurrence.source)) -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum ((SideOccurrences.sideOccurrences prepared).map
+      Sum.Basic.gaussianSum ((SideOccurrences.sideOccurrences prepared).map
         (CenteredPerimeters.occurrenceArea samples)) := by
     induction (SideOccurrences.sideOccurrences prepared) with
     | nil => change (0 : Data.Gaussian.Basic.Canonical) = 0 - 0 - 0; ring1
     | cons occurrence tail ih =>
-        simp only [List.map_cons, Data.Gaussian.Norm.Sum.Basic.gaussianSum, -eq_self, -iff_self]
+        simp only [List.map_cons, Sum.Basic.gaussianSum, -eq_self, -iff_self]
         rw [ih]
         dsimp only [residual, -eq_self, -iff_self]
         ring1
   have sources : (SideOccurrences.sideOccurrences prepared).map (fun occurrence => TriangleReadings.sourceChord left
     right occurrence.source) =
       prepared.sources.map (TriangleReadings.sourceChord left right) :=
-    (Purelib.Data.List.Map.map_map ..).symm.trans (congrArg (List.map (TriangleReadings.sourceChord left right))
+    (Map.map_map ..).symm.trans (congrArg (List.map (TriangleReadings.sourceChord left right))
       (SideOccurrences.sideOccurrences_sources prepared))
   rw [sumIdentity, sources] at estimate
   exact estimate

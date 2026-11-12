@@ -8,6 +8,8 @@ import Purelib.Polynomial.Geometry.EvaluationLower
 public import Purelib.Riemann.Readings.PrimitiveTriangleEnergy
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-! Two-differential wedge bounds for the actual shared primitive basis.
@@ -34,32 +36,32 @@ open Purelib.Data.Gaussian.Basic (Canonical)
 section
 open Purelib.Data
 /-- The squared norm of three Gaussian summands is at most four times the sum of their squared norms. -/
-private theorem three_bound (a b c : Gaussian.Basic.Canonical) :
+private theorem three_bound (a b c : Canonical) :
     normSq (a + b + c) ≤ 4 * (normSq a + normSq b + normSq c) := by
   have first := Gaussian.Norm.Bounds.normSq_add_le_two (a + b) c
   simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at first
   have pair := Gaussian.Norm.Bounds.normSq_add_le_two a b
   simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at pair
-  have second := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Rat.Fraction.Order.Arithmetic.add_le_add_right_direct pair (normSq c))
+  have second := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_right_direct pair (normSq c))
     (by decide : (0 : Coordinate) ≤ 2)
-  have extra := Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
-    (by decide : (0 : Coordinate) ≤ 2) (Gaussian.Basic.Canonical.normSq_nonneg c)
+  have extra := Arithmetic.mul_nonneg_direct
+    (by decide : (0 : Coordinate) ≤ 2) (normSq_nonneg c)
   exact (first.trans second).trans
-    (Rat.Fraction.Order.Arithmetic.le_of_sub_nonneg_direct (by
+    (Arithmetic.le_of_sub_nonneg_direct (by
       have equal : 4 * (normSq a + normSq b + normSq c) -
           2 * (2 * (normSq a + normSq b) + normSq c) = 2 * normSq c := by ring1
       rw [equal]
       exact extra))
 
 /-- Multiply two separated squared-norm bounds while retaining their two independent coefficient factors. -/
-private theorem product_bound {x y : Gaussian.Basic.Canonical} {s t a b : Coordinate}
+private theorem product_bound {x y : Canonical} {s t a b : Coordinate}
     (first : normSq x ≤ s * a) (last : normSq y ≤ t * b) :
     normSq (x * y) ≤ s * t * (a * b) := by
-  rw [Gaussian.Basic.Canonical.normSq_mul]
-  exact ((Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct first (Gaussian.Basic.Canonical.normSq_nonneg
+  rw [normSq_mul]
+  exact ((Arithmetic.mul_le_mul_of_nonneg_right_direct first (normSq_nonneg
     y)).trans
-    (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct last ((Gaussian.Basic.Canonical.normSq_nonneg
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct last ((normSq_nonneg
       x).trans first))).trans_eq
     (by ring1)
 
@@ -67,7 +69,7 @@ private theorem product_bound {x y : Gaussian.Basic.Canonical} {s t a b : Coordi
 
 The exact affine determinant cancels. All remaining terms contain an actual approximation error, giving sixteen times
 the two mixed affine-error products and the error product. -/
-theorem bilinearDeterminant_bound (a b u v x y p q : Gaussian.Basic.Canonical) (s t A B E F : Coordinate)
+theorem bilinearDeterminant_bound (a b u v x y p q : Canonical) (s t A B E F : Coordinate)
     (au : normSq (a * u) ≤ s * A) (av : normSq (a * v) ≤ s * B)
     (bu : normSq (b * u) ≤ t * A) (bv : normSq (b * v) ≤ t * B)
     (xe : normSq (x - a * u) ≤ s * E) (yf : normSq (y - a * v) ≤ s * F)
@@ -86,9 +88,9 @@ theorem bilinearDeterminant_bound (a b u v x y p q : Gaussian.Basic.Canonical) (
   have last := three_bound ((a * v) * g) (f * (b * u)) (f * g)
   have firstTerms := add_le_add (add_le_add (product_bound au qh) (product_bound xe bv)) (product_bound xe qh)
   have lastTerms := add_le_add (add_le_add (product_bound av pg) (product_bound yf bu)) (product_bound yf pg)
-  have firstPaid := first.trans (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct firstTerms
+  have firstPaid := first.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct firstTerms
     (by decide : (0 : Coordinate) ≤ 4))
-  have lastPaid := last.trans (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct lastTerms
+  have lastPaid := last.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct lastTerms
     (by decide : (0 : Coordinate) ≤ 4))
   rw [decomposition]
   have triangle := Gaussian.Norm.Bounds.normSq_sub_le_two
@@ -96,7 +98,7 @@ theorem bilinearDeterminant_bound (a b u v x y p q : Gaussian.Basic.Canonical) (
     ((a * v) * g + f * (b * u) + f * g)
   simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at triangle
   exact triangle.trans
-    ((Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add firstPaid lastPaid)
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add firstPaid lastPaid)
       (by decide : (0 : Coordinate) ≤ 2)).trans_eq (by ring1))
 
 end
@@ -125,21 +127,21 @@ theorem bilinear_bound (budget : Readings.PrimitiveTriangleEnergy.PrimitiveTrian
     (left right : Coefficients count)
     (firstInside : patch.box.Contains first) (secondInside : patch.box.Contains second) (thirdInside :
       patch.box.Contains third)
-    (sample : ContinuedNeighborhood.Point patch first) {root : Gaussian.Basic.Canonical}
+    (sample : ContinuedNeighborhood.Point patch first) {root : Canonical}
     (possible : sample.certificate.value.name.process.Possible (sample.readingState index) root) :
     normSq (triangleWedgeArea
       ⟨basis.value left first, basis.value right first⟩
       ⟨basis.value left second, basis.value right second⟩
       ⟨basis.value left third, basis.value right third⟩) ≤
       coefficientNormSq left * coefficientNormSq right *
-        Periods.PrimitiveTriangleBilinear.PrimitiveTriangleBudget.bilinearSquare budget := by
-  have affine (coefficients : Coefficients count) (point : Gaussian.Basic.Canonical) :
+        bilinearSquare budget := by
+  have affine (coefficients : Coefficients count) (point : Canonical) :
       normSq (((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval first / root) * (point - first)) ≤
         coefficientNormSq coefficients * (basis.coefficientScale * normSq (point - first)) := by
-    rw [Gaussian.Basic.Canonical.normSq_mul]
-    exact (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    rw [normSq_mul]
+    exact (Arithmetic.mul_le_mul_of_nonneg_right_direct
       (basis.operational_coefficient_bound coefficients firstInside sample (sample.readingState index) possible)
-      (Gaussian.Basic.Canonical.normSq_nonneg _)).trans_eq (by ring1)
+      (normSq_nonneg _)).trans_eq (by ring1)
   unfold triangleWedgeArea bilinearSquare
   apply bilinearDeterminant_bound
     ((Geometry.EvaluationLower.coefficientPolynomial left).eval first / root)

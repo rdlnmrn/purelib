@@ -10,6 +10,8 @@ import Mathlib.Algebra.Ring.Defs
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.Rat
 
 open Purelib
@@ -64,17 +66,17 @@ theorem predictedExtractionRadiusData_pos
     (epsilonPositive : 0 < epsilon) :
     0 < predictedExtractionRadiusData ambient margin clearanceBound
       lipschitz taylor epsilon := by
-  exact Purelib.Data.Rat.Fraction.Order.Basic.lt_min
-    (Purelib.Data.Rat.Fraction.Order.Basic.lt_min
-      (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+  exact Basic.lt_min
+    (Basic.lt_min
+      (Arithmetic.mul_pos_direct (by decide)
         (Geometry.Rational.Box.Boundary.Budget.predictedProtectedRadiusData_pos proper clearancePositive
           lipschitzPositive))
-      (Purelib.Data.Rat.Fraction.Order.Basic.lt_min (by decide)
-        (Fraction.Order.Field.div_pos_direct marginPositive
-          (Fraction.Order.Arithmetic.mul_pos_direct
+      (Basic.lt_min (by decide)
+        (Field.div_pos_direct marginPositive
+          (Arithmetic.mul_pos_direct
             (Fraction.Cast.Order.natCast_pos_direct
               (n := 72) (by decide)) taylorPositive))))
-    (Fraction.Order.Arithmetic.mul_pos_direct (by decide) epsilonPositive)
+    (Arithmetic.mul_pos_direct (by decide) epsilonPositive)
 
 /-- Positive displayed bounds give a positive predicted extraction clearance.
 
@@ -94,13 +96,13 @@ theorem predictedExtractionClearanceData_pos
   have dominancePositive : 0 < margin *
       predictedExtractionRadiusData ambient margin clearanceBound lipschitz
         taylor epsilon ^ 2 / 2 :=
-    Fraction.Order.Field.div_pos_direct
-      (Fraction.Order.Arithmetic.mul_pos_direct marginPositive
-        (Fraction.Order.Arithmetic.pow_pos_direct radiusPositive 2))
+    Field.div_pos_direct
+      (Arithmetic.mul_pos_direct marginPositive
+        (Arithmetic.pow_pos_direct radiusPositive 2))
       (by decide)
-  exact Fraction.Order.Field.div_pos_direct
-    (Fraction.Order.Arithmetic.pow_pos_direct dominancePositive 2)
-    (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+  exact Field.div_pos_direct
+    (Arithmetic.pow_pos_direct dominancePositive 2)
+    (Arithmetic.mul_pos_direct (by decide)
       derivativePositive)
 end Purelib.Polynomial.Dense.Gaussian.Newton.Box.Budget.Data
 

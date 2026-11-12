@@ -82,36 +82,36 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Paren
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
-variable {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
-  {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {target coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
+variable {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {retained : Preparation.CommonBasisPreparation prepared}
+  {basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {target coefficientTarget : InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
     energyFloor radialDepth : Nat}
-  {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+  {box : Rational.Box} {capSample : Charts.Reciprocal.Cap.Primitives.Sample cap
     differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 namespace CommonBasisRequest
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisRequest retained basis
+variable {request : Preparation.CommonBasisRequest retained basis
   target coefficientTarget coverFloor floor}
   {plans : request.Plans capSample polynomials minimum} {inputs : retained.Inputs index}
-  {readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
+  {readings : Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
     request.schedule.bank plans inputs stage}
 
-variable {fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.FanPreparation request
+variable {fans : Connection.CommonBasisRequest.FanPreparation request
   plans inputs readings energyFloor}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -119,25 +119,25 @@ namespace Sampled
 
 /-- Select the original prepared comparison at the supplied bounded parent position. -/
 public abbrev selectedParent (sample :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.Sampled fans coefficients radialDepth)
+  Connection.CommonBasisRequest.Sampled fans coefficients radialDepth)
     (comparisons :
       CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
       sample) (position : Fin program.cache.parents.length) :=
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedSelection.Samples.PreparedComparisons.select retained.anchors
+  Charts.Reciprocal.Disk.Basis.PreparedSelection.Samples.PreparedComparisons.select retained.anchors
     retained.sources request.schedule.bank
     plans inputs readings fans sample.parents comparisons position
 
 /-- Assemble the physical/source comparisons on the retained parent order.
 The endpoint hypotheses pay all cross-parent wedges in the complete polygon. -/
 theorem physical_source_area_bound (sample :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.Sampled fans coefficients radialDepth)
+  Connection.CommonBasisRequest.Sampled fans coefficients radialDepth)
     (comparisons :
       CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
       sample) (periodStage : Nat)
     (physical : Fin program.cache.parents.length → List Topology.Polygon.Stokes.PrimitivePoint)
-    {areaError totalError bound : Normalization.InverseRootPolynomial.Coordinate} (totalNN : 0 ≤ totalError) (boundNN :
+    {areaError totalError bound : InverseRootPolynomial.Coordinate} (totalNN : 0 ≤ totalError) (boundNN :
       0 ≤ bound)
-    (areas : ∀ position, Data.Gaussian.Norm.Basic.normSq
+    (areas : ∀ position, Gaussian.Norm.Basic.normSq
       (Path.PairedIncrementArea.area (physical position) -
 
           (selectedParent
@@ -156,12 +156,12 @@ theorem physical_source_area_bound (sample :
 
           (selectedParent
           sample comparisons position).weighted.source.total) bound) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
       (Path.PairedIncrementArea.area (List.ofFn physical).flatten -
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonSourceArea.CommonBasisRequest.Sampled.sourceAreaAt sample
+        CommonSourceArea.CommonBasisRequest.Sampled.sourceAreaAt sample
           comparisons periodStage) ≤
-      2 * ((program.cache.parents.length : Normalization.InverseRootPolynomial.Coordinate)^2 * areaError +
-        16 * (program.cache.parents.length : Normalization.InverseRootPolynomial.Coordinate)^4 * totalError * bound) :=
+      2 * ((program.cache.parents.length : InverseRootPolynomial.Coordinate)^2 * areaError +
+        16 * (program.cache.parents.length : InverseRootPolynomial.Coordinate)^4 * totalError * bound) :=
           by
   have estimate := Path.ConjugateBlockComparison.conjugate_blocks_area_difference_bound
     (List.ofFn (fun position => (physical position,
@@ -193,7 +193,7 @@ theorem physical_source_area_bound (sample :
         (selectedParent
         sample comparisons position).weighted.source.total_eq]
       exact rightBound position)
-  rw [Data.List.OfFn.Basic.map_ofFn, Data.List.OfFn.Basic.map_ofFn, Data.List.OfFn.Basic.length_ofFn] at estimate
+  rw [List.OfFn.Basic.map_ofFn, List.OfFn.Basic.map_ofFn, List.OfFn.Basic.length_ofFn] at estimate
   rw
     [SelectedSourceArea.CommonBasisRequest.Sampled.sourceAreaAt_eq_selected
     sample comparisons periodStage]

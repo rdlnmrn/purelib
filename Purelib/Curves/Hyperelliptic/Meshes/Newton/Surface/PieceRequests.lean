@@ -101,38 +101,38 @@ open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces (PiecePe
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank (FaceModels)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels (Entry)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target
-    radius : Purelib.Data.Rat.Fraction.Rational} {grid :
-    Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-  {observations : Purelib.Riemann.RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
+  {preparation : NewtonPreparation original} {target
+    radius : Rational} {grid :
+    NewtonGrid preparation target radius}
+  {observations : ProtectedObservations original} {frames :
     RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
-    grid.faces.regulars} {partitions : Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions
+  {domains : FaceDomainBank frames
+    grid.faces.regulars} {partitions : SurfacePartitions
     observations grid}
-  {surfaceCuts : Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceCuts partitions domains}
+  {surfaceCuts : SurfaceCuts partitions domains}
   {first last : Fin grid.faces.regulars.length}
-  {start : Purelib.Data.Gaussian.Basic.Canonical} {owner : Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+  {start : Gaussian} {owner : Riemann.Topology.SquareRootContinuationChain.Owner
     (curve.polynomial.eval start)}
-  (firstEntry : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry (domains.get
+  (firstEntry : Entry (domains.get
     first).models start owner)
-  (lastEntry : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry (domains.get last).models
+  (lastEntry : Entry (domains.get last).models
     start owner)
   {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Purelib.Riemann.RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet} {error :
-    Purelib.Data.Rat.Fraction.Rational}
+    Preflights domains sheet} {error :
+    Rational}
 
-variable (requests : Purelib.Riemann.Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests
-  (fun sheet => Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains
+variable (requests : SynchronizedSurfaceRequests
+  (fun sheet => MeshCompatibility.surfaceMeshes partitions domains
     surfaceCuts sheet coarseDepth) fixed error)
 
 variable
-  (firstTraces : Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.PiecePerimeterTraces
+  (firstTraces : PiecePerimeterTraces
     (requests.entries.get firstEntry.sheet) first)
-  (lastTraces : Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.PiecePerimeterTraces
+  (lastTraces : PiecePerimeterTraces
     (requests.entries.get lastEntry.sheet) last)
 
 /-- Prepare the actual original horizontal piece comparison from its retained endpoint polygon contact.
@@ -140,7 +140,7 @@ variable
 The original shared root and piece origin are inherited from that bank, and the request pays both synchronized surface
 stages and the supplied floor. -/
 def horizontalPieceRequest {count : Nat}
-    (pieces : Fin (count + 1) → BoundaryPieces.HorizontalPieces (partitions.get first) (partitions.get last))
+    (pieces : Fin (count + 1) → HorizontalPieces (partitions.get first) (partitions.get last))
     (endpoints : PuncturedGrid.EndpointPolygonPreparation (leftEntry := firstEntry) (rightEntry :=
       lastEntry)
       (EndpointGeometry.horizontalPieces firstTraces lastTraces pieces))
@@ -149,7 +149,7 @@ def horizontalPieceRequest {count : Nat}
       lastEntry.sheet)
       first last (pieces piece).firstPiece (pieces piece).lastPiece
       (pieces piece).lower_eq (pieces piece).upper_eq (pieces piece).joined).Trace requests.depth)
-    (allowance : Fraction.Rational) (positive : 0 < allowance) (floor : Nat) :=
+    (allowance : Rational) (positive : 0 < allowance) (floor : Nat) :=
   let vertex := VertexTrace.pairedEndpointStart
     (fun index => RectangularOwnedPerimeterTraces.topOwned (firstTraces.get (pieces index).firstPiece))
     (fun index => RectangularOwnedPerimeterTraces.bottomOwned (lastTraces.get (pieces index).lastPiece)) piece
@@ -162,7 +162,7 @@ def horizontalPieceRequest {count : Nat}
 The original shared root and piece origin are inherited from that bank, and the request pays both synchronized surface
 stages and the supplied floor. -/
 def verticalPieceRequest {count : Nat}
-    (pieces : Fin (count + 1) → BoundaryPieces.VerticalPieces (partitions.get first) (partitions.get last))
+    (pieces : Fin (count + 1) → VerticalPieces (partitions.get first) (partitions.get last))
     (endpoints : PuncturedGrid.EndpointPolygonPreparation (leftEntry := firstEntry) (rightEntry :=
       lastEntry)
       (EndpointGeometry.verticalPieces firstTraces lastTraces pieces))
@@ -171,7 +171,7 @@ def verticalPieceRequest {count : Nat}
       lastEntry.sheet)
       first last (pieces piece).firstPiece (pieces piece).lastPiece
       (pieces piece).lower_eq (pieces piece).upper_eq (pieces piece).joined).Trace requests.depth)
-    (allowance : Fraction.Rational) (positive : 0 < allowance) (floor : Nat) :=
+    (allowance : Rational) (positive : 0 < allowance) (floor : Nat) :=
   let vertex := VertexTrace.pairedEndpointStart
     (fun index => RectangularOwnedPerimeterTraces.rightOwned (firstTraces.get (pieces index).firstPiece))
     (fun index => RectangularOwnedPerimeterTraces.leftOwned (lastTraces.get (pieces index).lastPiece)) piece

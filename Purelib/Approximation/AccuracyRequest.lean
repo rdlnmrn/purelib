@@ -26,8 +26,36 @@ set_option genInjectivity false in
 structure AccuracyRequest where
   /-- The retained rational tolerance of this request. -/ tolerance : Fraction.Rational
   /-- The requested tolerance is strictly positive. -/ positive : 0 < tolerance
+deriving @[expose] DecidableEq
 
 constructive_injectivity AccuracyRequest
+
+namespace AccuracyRequest
+
+/-- Equal retained tolerances identify the original positive accuracy requests. -/
+theorem eq_of_tolerance_eq {first last : AccuracyRequest}
+    (equal : first.tolerance = last.tolerance) : first = last := by
+  cases first with
+  | mk first firstPositive =>
+    cases last with
+    | mk last lastPositive =>
+      change first = last at equal
+      cases equal
+      rfl
+
+/-- The smaller of two actual positive accuracy demands pays both original requests. -/
+def minimum (first last : AccuracyRequest) : AccuracyRequest :=
+  ⟨min first.tolerance last.tolerance, Fraction.Order.Basic.lt_min first.positive last.positive⟩
+
+/-- The computed common accuracy pays its original left request. -/
+theorem minimum_le_left (first last : AccuracyRequest) : (first.minimum last).tolerance ≤ first.tolerance :=
+  Fraction.Order.Basic.min_le_left _ _
+
+/-- The same common accuracy also pays the independent original right request. -/
+theorem minimum_le_right (first last : AccuracyRequest) : (first.minimum last).tolerance ≤ last.tolerance :=
+  Fraction.Order.Basic.min_le_right _ _
+
+end AccuracyRequest
 
 namespace BoundProcess
 end BoundProcess

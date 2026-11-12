@@ -39,6 +39,10 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+open Purelib.Data.Gaussian.Norm
+open Purelib.Approximation.Gaussian.Process.Coherence.Basic
+
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_antitone)
 
 /-!
@@ -67,8 +71,8 @@ Both supplied coherent operands use the product process's computed input request
 certificates bound the same refined component allowances by the positive target. -/
 private theorem coherentProduct_refine_component_allowance_lt
     {leftProcess rightProcess : Process}
-    (leftCoherent : Gaussian.Process.Coherence.Basic.Coherent leftProcess)
-    (rightCoherent : Gaussian.Process.Coherence.Basic.Coherent rightProcess)
+    (leftCoherent : Coherent leftProcess)
+    (rightCoherent : Coherent rightProcess)
     (state : leftProcess.State × rightProcess.State)
     (request : Fraction.Rational) (requestPositive : 0 < request)
     (target : Fraction.Rational) (targetPositive : 0 < target)
@@ -91,7 +95,7 @@ private theorem coherentProduct_refine_component_allowance_lt
     Name.multiplicativeInputTarget_pos
       leftName rightName requestPositive
   have inputLtRequest : inputRequest < request :=
-    Gaussian.Process.Coherence.Basic.Coherent.processMultiplicativeInputTarget_lt_target
+    Coherent.processMultiplicativeInputTarget_lt_target
       leftName rightName requestPositive
   change leftCoherent.allowance
         (leftProcess.refine state.1 inputRequest inputPositive) < target ∧
@@ -108,17 +112,17 @@ The canonical product sample retains its two original component states. The two 
 corresponding coherent allowances at that finite index. -/
 public theorem coherentProduct_stateAt_component_allowance_lt
     {leftProcess rightProcess : Process}
-    (leftCoherent : Gaussian.Process.Coherence.Basic.Coherent leftProcess)
-    (rightCoherent : Gaussian.Process.Coherence.Basic.Coherent rightProcess)
+    (leftCoherent : Coherent leftProcess)
+    (rightCoherent : Coherent rightProcess)
     (start : leftProcess.State × rightProcess.State) (index : Nat)
     (target : Fraction.Rational) (targetPositive : 0 < target)
     (leftRequestSmall :
-      Gaussian.Process.Sampling.refinementTarget index <
+      Process.Sampling.refinementTarget index <
         leftCoherent.accuracyRequest target)
     (rightRequestSmall :
-      Gaussian.Process.Sampling.refinementTarget index <
+      Process.Sampling.refinementTarget index <
         rightCoherent.accuracyRequest target) :
-    let state := Gaussian.Process.Sampling.stateAt
+    let state := Process.Sampling.stateAt
       (leftProcess.mul rightProcess) start index
     leftCoherent.allowance state.1 < target ∧
       rightCoherent.allowance state.2 < target := by
@@ -130,7 +134,7 @@ public theorem coherentProduct_stateAt_component_allowance_lt
   | succ index =>
       exact coherentProduct_refine_component_allowance_lt
         leftCoherent rightCoherent
-          (Gaussian.Process.Sampling.stateAt
+          (Process.Sampling.stateAt
             (leftProcess.mul rightProcess) start index) _ _ target
               targetPositive leftRequestSmall rightRequestSmall
 
@@ -151,13 +155,13 @@ factors preserve nonnegativity of their combined contribution. -/
 public theorem coherentProductBridgeCoefficient_pos (left right : Process) :
     0 < coherentProductBridgeCoefficient left right := by
   unfold coherentProductBridgeCoefficient
-  exact Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct (by decide)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  exact Arithmetic.add_pos_of_pos_of_nonneg_direct (by decide)
+    (Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.mul_nonneg_direct (by decide)
         (add_nonneg
-          (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+          (Arithmetic.mul_nonneg_direct (by decide)
             (add_nonneg (by decide) left.centerBound_nonneg))
-          (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+          (Arithmetic.mul_nonneg_direct (by decide)
             (add_nonneg (by decide) right.centerBound_nonneg)))))
 
 /-- The semantic operand target obtained by dividing the output target by its sum with the retained product comparison
@@ -176,8 +180,8 @@ rational input tolerance. -/
 public theorem coherentProductBridgeTarget_pos (left right : Process)
     {target : Fraction.Rational} (positive : 0 < target) :
     0 < coherentProductBridgeTarget left right target :=
-  Fraction.Order.Field.div_pos_direct positive
-    (Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct positive
+  Field.div_pos_direct positive
+    (Arithmetic.add_pos_of_pos_of_nonneg_direct positive
       (coherentProductBridgeCoefficient_pos left right).le)
 
 /-- The semantic product comparison target is strictly below one for a positive output target.
@@ -187,14 +191,14 @@ this positive sum gives the displayed strict unit bound. -/
 public theorem coherentProductBridgeTarget_lt_one (left right : Process)
     {target : Fraction.Rational} (positive : 0 < target) :
     coherentProductBridgeTarget left right target < 1 := by
-  apply (Fraction.Order.Field.div_lt_iff_pos
-    (Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct positive
+  apply (Field.div_lt_iff_pos
+    (Arithmetic.add_pos_of_pos_of_nonneg_direct positive
       (coherentProductBridgeCoefficient_pos left right).le)).2
   calc
     target = 0 + target :=
       (Fraction.Field.zero_add target).symm
     _ < coherentProductBridgeCoefficient left right + target :=
-      Fraction.Order.Arithmetic.add_lt_add_right_direct
+      Arithmetic.add_lt_add_right_direct
         (coherentProductBridgeCoefficient_pos left right) target
     _ = target + coherentProductBridgeCoefficient left right :=
       _root_.add_comm _ _
@@ -212,7 +216,7 @@ public theorem coherentProductBridgeTarget_budget_lt (left right : Process)
         coherentProductBridgeCoefficient left right < target := by
   have denominatorPositive :
       0 < target + coherentProductBridgeCoefficient left right :=
-    Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct positive
+    Arithmetic.add_pos_of_pos_of_nonneg_direct positive
       (coherentProductBridgeCoefficient_pos left right).le
   change target / (target + coherentProductBridgeCoefficient left right) *
       coherentProductBridgeCoefficient left right < target
@@ -243,7 +247,7 @@ public theorem coherentProductBridgeTarget_budget_lt (left right : Process)
             (target + coherentProductBridgeCoefficient left right)⁻¹ :=
           (_root_.mul_assoc _ _ _).symm
     _ < target := by
-      apply (Fraction.Order.Field.div_lt_iff_pos
+      apply (Field.div_lt_iff_pos
         denominatorPositive).2
       have coefficientLt : coherentProductBridgeCoefficient left right <
           target + coherentProductBridgeCoefficient left right := by
@@ -252,8 +256,8 @@ public theorem coherentProductBridgeTarget_budget_lt (left right : Process)
               0 + coherentProductBridgeCoefficient left right :=
             (Fraction.Field.zero_add _).symm
           _ < target + coherentProductBridgeCoefficient left right :=
-            Fraction.Order.Arithmetic.add_lt_add_right_direct positive _
-      exact Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+            Arithmetic.add_lt_add_right_direct positive _
+      exact Arithmetic.mul_lt_mul_of_pos_left_direct
         positive coefficientLt
 
 /-- Actual stateful multiplication of two coherent names is operationally equivalent to their canonical equal-index
@@ -261,16 +265,16 @@ sampled product.
 
 The comparison retains the original coherent operand processes and their canonical sample observations. Every positive
 request is paid by the same computed finite indices and center-bound coefficient. -/
-@[expose] public def coherentMul_toNamed (left right : Coherent.CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
-      (Named.mul left.name right.name)
-      (Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation left.name right.name).toNamed := by
+@[expose] public def coherentMul_toSampled (left right : CoherentNamed) :
+    Equivalent
+      (Sampling.approximation (Named.mul left.name right.name))
+      (Sequence.Arithmetic.Product.sampledProductApproximation left.name right.name) := by
   let leftProcess := left.name.process
   let rightProcess := right.name.process
   let process := leftProcess.mul rightProcess
   let start : process.State := (left.name.state, right.name.state)
-  let product := Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation left.name right.name
-  let bridge : Gaussian.Equivalence.Equivalent
+  let product := Sequence.Arithmetic.Product.sampledProductApproximation left.name right.name
+  let bridge : Equivalent
       (Sampling.approximation
         (Named.mul
           left.name right.name)) product :=
@@ -289,16 +293,16 @@ request is paid by the same computed finite indices and center-bound coefficient
         have rightThresholdPositive : 0 < rightThreshold :=
           right.coherent.accuracyRequest_pos semanticPositive
         let inputThreshold :=
-          Gaussian.Process.Coherence.Basic.Coherent.commonRequest
+          Coherent.commonRequest
             leftThreshold rightThreshold
         have inputThresholdPositive : 0 < inputThreshold :=
-          Gaussian.Process.Coherence.Basic.Coherent.commonRequest_pos
+          Coherent.commonRequest_pos
             leftThresholdPositive rightThresholdPositive
         let outputThreshold :=
-          Gaussian.Process.Coherence.Basic.Coherent.commonRequest
+          Coherent.commonRequest
             inputThreshold semanticTarget
         have outputThresholdPositive : 0 < outputThreshold :=
-          Gaussian.Process.Coherence.Basic.Coherent.commonRequest_pos
+          Coherent.commonRequest_pos
             inputThresholdPositive semanticPositive
         let leftIndex := Search.firstQuarterBelow
           1 leftStart outputThreshold
@@ -306,33 +310,33 @@ request is paid by the same computed finite indices and center-bound coefficient
           Search.firstQuarterBelow_ge
             1 leftStart outputThreshold
         have outputRequestSmall :
-            Gaussian.Process.Sampling.refinementTarget leftIndex <
+            Process.Sampling.refinementTarget leftIndex <
               outputThreshold :=
           Search.firstQuarterBelow_accurate
             1 (by decide) leftStart outputThreshold outputThresholdPositive
         have outputRequestLtInput :
-            Gaussian.Process.Sampling.refinementTarget leftIndex <
+            Process.Sampling.refinementTarget leftIndex <
               inputThreshold :=
           outputRequestSmall.trans
-            (Gaussian.Process.Coherence.Basic.Coherent.commonRequest_lt_left
+            (Coherent.commonRequest_lt_left
               inputThresholdPositive semanticPositive)
         have outputRequestLtSemantic :
-            Gaussian.Process.Sampling.refinementTarget leftIndex <
+            Process.Sampling.refinementTarget leftIndex <
               semanticTarget :=
           outputRequestSmall.trans
-            (Gaussian.Process.Coherence.Basic.Coherent.commonRequest_lt_right
+            (Coherent.commonRequest_lt_right
               inputThresholdPositive semanticPositive)
         have outputRequestLtLeft :
-            Gaussian.Process.Sampling.refinementTarget leftIndex <
+            Process.Sampling.refinementTarget leftIndex <
               leftThreshold :=
           outputRequestLtInput.trans
-            (Gaussian.Process.Coherence.Basic.Coherent.commonRequest_lt_left
+            (Coherent.commonRequest_lt_left
               leftThresholdPositive rightThresholdPositive)
         have outputRequestLtRight :
-            Gaussian.Process.Sampling.refinementTarget leftIndex <
+            Process.Sampling.refinementTarget leftIndex <
               rightThreshold :=
           outputRequestLtInput.trans
-            (Gaussian.Process.Coherence.Basic.Coherent.commonRequest_lt_right
+            (Coherent.commonRequest_lt_right
               leftThresholdPositive rightThresholdPositive)
         let rightIndex := Search.firstQuarterBelow
           1 rightStart inputThreshold
@@ -340,11 +344,11 @@ request is paid by the same computed finite indices and center-bound coefficient
           Search.firstQuarterBelow_ge
             1 rightStart inputThreshold
         have rightRequestSmall :
-            Gaussian.Process.Sampling.refinementTarget rightIndex <
+            Process.Sampling.refinementTarget rightIndex <
               inputThreshold :=
           Search.firstQuarterBelow_accurate
             1 (by decide) rightStart inputThreshold inputThresholdPositive
-        let baseState := Gaussian.Process.Sampling.stateAt
+        let baseState := Process.Sampling.stateAt
           process start leftIndex
         have componentSmall :
             left.coherent.allowance baseState.1 < semanticTarget ∧
@@ -360,46 +364,46 @@ request is paid by the same computed finite indices and center-bound coefficient
             close := by
               intro leftLater rightLater leftOrder rightOrder
               have canonicalRequestSmall :
-                  Gaussian.Process.Sampling.refinementTarget
+                  Process.Sampling.refinementTarget
                       rightLater < inputThreshold :=
                 (quarterRadius_antitone (by decide)
                   rightOrder).trans_lt
                   rightRequestSmall
               have canonicalRequestLtLeft :
-                  Gaussian.Process.Sampling.refinementTarget
+                  Process.Sampling.refinementTarget
                       rightLater < leftThreshold :=
                 canonicalRequestSmall.trans
-                  (Gaussian.Process.Coherence.Basic.Coherent.commonRequest_lt_left
+                  (Coherent.commonRequest_lt_left
                     leftThresholdPositive rightThresholdPositive)
               have canonicalRequestLtRight :
-                  Gaussian.Process.Sampling.refinementTarget
+                  Process.Sampling.refinementTarget
                       rightLater < rightThreshold :=
                 canonicalRequestSmall.trans
-                  (Gaussian.Process.Coherence.Basic.Coherent.commonRequest_lt_right
+                  (Coherent.commonRequest_lt_right
                     leftThresholdPositive rightThresholdPositive)
               have canonicalLeftSmall :
                   left.coherent.allowance
-                      (Gaussian.Process.Sampling.stateAt leftProcess
+                      (Process.Sampling.stateAt leftProcess
                         left.name.state rightLater) < semanticTarget :=
-                Gaussian.Process.Coherence.Basic.Coherent.stateAt_allowance_lt
+                Coherent.stateAt_allowance_lt
                   left.coherent left.name.state
                     rightLater semanticTarget semanticPositive
                       canonicalRequestLtLeft
               have canonicalRightSmall :
                   right.coherent.allowance
-                      (Gaussian.Process.Sampling.stateAt rightProcess
+                      (Process.Sampling.stateAt rightProcess
                         right.name.state rightLater) < semanticTarget :=
-                Gaussian.Process.Coherence.Basic.Coherent.stateAt_allowance_lt
+                Coherent.stateAt_allowance_lt
                   right.coherent right.name.state
                     rightLater semanticTarget semanticPositive
                       canonicalRequestLtRight
               let leftReading := (leftProcess.witness baseState.1).val
               let rightReading := (rightProcess.witness baseState.2).val
               let canonicalLeft :=
-                Gaussian.Process.Sampling.witnessAt leftProcess
+                Process.Sampling.witnessAt leftProcess
                   left.name.state rightLater
               let canonicalRight :=
-                Gaussian.Process.Sampling.witnessAt rightProcess
+                Process.Sampling.witnessAt rightProcess
                   right.name.state rightLater
               have leftPossible :
                   leftProcess.Possible baseState.1 leftReading :=
@@ -409,47 +413,47 @@ request is paid by the same computed finite indices and center-bound coefficient
                 (rightProcess.witness baseState.2).property
               have canonicalLeftPossible :
                   leftProcess.Possible
-                      (Gaussian.Process.Sampling.stateAt leftProcess
+                      (Process.Sampling.stateAt leftProcess
                         left.name.state rightLater) canonicalLeft :=
-                Gaussian.Process.Sampling.witnessAt_possible
+                Process.Sampling.witnessAt_possible
                   leftProcess left.name.state rightLater
               have canonicalRightPossible :
                   rightProcess.Possible
-                      (Gaussian.Process.Sampling.stateAt rightProcess
+                      (Process.Sampling.stateAt rightProcess
                         right.name.state rightLater) canonicalRight :=
-                Gaussian.Process.Sampling.witnessAt_possible
+                Process.Sampling.witnessAt_possible
                   rightProcess right.name.state rightLater
               have leftCloseRaw := left.coherent.possible_close
                 leftPossible canonicalLeftPossible
               have rightCloseRaw := right.coherent.possible_close
                 rightPossible canonicalRightPossible
-              have leftClose : Data.Gaussian.Norm.Basic.normSq (leftReading - canonicalLeft) ≤
+              have leftClose : Basic.normSq (leftReading - canonicalLeft) ≤
                   8 * semanticTarget := by
                 calc
-                  Data.Gaussian.Norm.Basic.normSq (leftReading - canonicalLeft) ≤
+                  Basic.normSq (leftReading - canonicalLeft) ≤
                     4 *
                       (left.coherent.allowance baseState.1 +
                         left.coherent.allowance
-                          (Gaussian.Process.Sampling.stateAt
+                          (Process.Sampling.stateAt
                             leftProcess left.name.state rightLater)) :=
                     leftCloseRaw
                   _ ≤ 4 * (semanticTarget + semanticTarget) :=
-                    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                    Arithmetic.mul_le_mul_of_nonneg_left_direct
                       (add_le_add componentSmall.1.le canonicalLeftSmall.le)
                       (by decide)
                   _ = 8 * semanticTarget := by ring1
-              have rightClose : Data.Gaussian.Norm.Basic.normSq (rightReading - canonicalRight) ≤
+              have rightClose : Basic.normSq (rightReading - canonicalRight) ≤
                   8 * semanticTarget := by
                 calc
-                  Data.Gaussian.Norm.Basic.normSq (rightReading - canonicalRight) ≤
+                  Basic.normSq (rightReading - canonicalRight) ≤
                     4 *
                       (right.coherent.allowance baseState.2 +
                         right.coherent.allowance
-                          (Gaussian.Process.Sampling.stateAt
+                          (Process.Sampling.stateAt
                             rightProcess right.name.state rightLater)) :=
                     rightCloseRaw
                   _ ≤ 4 * (semanticTarget + semanticTarget) :=
-                    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                    Arithmetic.mul_le_mul_of_nonneg_left_direct
                       (add_le_add componentSmall.2.le canonicalRightSmall.le)
                       (by decide)
                   _ = 8 * semanticTarget := by ring1
@@ -473,16 +477,16 @@ request is paid by the same computed finite indices and center-bound coefficient
                     _root_.add_comm _ _
               have canonicalLeftAllowanceBound :
                   left.coherent.allowance
-                      (Gaussian.Process.Sampling.stateAt leftProcess
+                      (Process.Sampling.stateAt leftProcess
                         left.name.state rightLater) + leftProcess.centerBound ≤
                     1 + leftProcess.centerBound := by
                 calc
                   left.coherent.allowance
-                        (Gaussian.Process.Sampling.stateAt leftProcess
+                        (Process.Sampling.stateAt leftProcess
                           left.name.state rightLater) + leftProcess.centerBound =
                     leftProcess.centerBound +
                       left.coherent.allowance
-                        (Gaussian.Process.Sampling.stateAt leftProcess
+                        (Process.Sampling.stateAt leftProcess
                           left.name.state rightLater) :=
                     _root_.add_comm _ _
                   _ ≤ leftProcess.centerBound + semanticTarget :=
@@ -491,33 +495,33 @@ request is paid by the same computed finite indices and center-bound coefficient
                     add_le_add_right semanticLtOne.le _
                   _ = 1 + leftProcess.centerBound :=
                     _root_.add_comm _ _
-              have rightReadingNorm : Data.Gaussian.Norm.Basic.normSq rightReading ≤ rightBound :=
-                (Gaussian.Process.Coherence.Basic.Coherent.possible_normSq_le
+              have rightReadingNorm : Basic.normSq rightReading ≤ rightBound :=
+                (Coherent.possible_normSq_le
                   right.coherent rightPossible).trans
-                    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                    (Arithmetic.mul_le_mul_of_nonneg_left_direct
                       rightAllowanceBound (by decide))
-              have canonicalLeftNorm : Data.Gaussian.Norm.Basic.normSq canonicalLeft ≤ leftBound :=
-                (Gaussian.Process.Coherence.Basic.Coherent.possible_normSq_le
+              have canonicalLeftNorm : Basic.normSq canonicalLeft ≤ leftBound :=
+                (Coherent.possible_normSq_le
                   left.coherent
                     canonicalLeftPossible).trans
-                      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                      (Arithmetic.mul_le_mul_of_nonneg_left_direct
                           canonicalLeftAllowanceBound (by decide))
               have firstTerm :
-                  Data.Gaussian.Norm.Basic.normSq ((leftReading - canonicalLeft) * rightReading) ≤
+                  Basic.normSq ((leftReading - canonicalLeft) * rightReading) ≤
                     (8 * semanticTarget) * rightBound := by
-                rw [Data.Gaussian.Norm.Basic.normSq_mul]
-                exact Fraction.Order.Arithmetic.mul_le_mul_direct
-                  leftClose rightReadingNorm (Data.Gaussian.Norm.Basic.normSq_nonneg _)
-                  (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+                rw [Basic.normSq_mul]
+                exact Arithmetic.mul_le_mul_direct
+                  leftClose rightReadingNorm (Basic.normSq_nonneg _)
+                  (Arithmetic.mul_nonneg_direct (by decide)
                     semanticPositive.le)
               have secondTerm :
-                  Data.Gaussian.Norm.Basic.normSq
+                  Basic.normSq
                       (canonicalLeft * (rightReading - canonicalRight)) ≤
                     leftBound * (8 * semanticTarget) := by
-                rw [Data.Gaussian.Norm.Basic.normSq_mul]
-                exact Fraction.Order.Arithmetic.mul_le_mul_direct
-                  canonicalLeftNorm rightClose (Data.Gaussian.Norm.Basic.normSq_nonneg _)
-                  (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+                rw [Basic.normSq_mul]
+                exact Arithmetic.mul_le_mul_direct
+                  canonicalLeftNorm rightClose (Basic.normSq_nonneg _)
+                  (Arithmetic.mul_nonneg_direct (by decide)
                     (add_nonneg (by decide) leftProcess.centerBound_nonneg))
               have productIdentity :
                   leftReading * rightReading -
@@ -525,47 +529,47 @@ request is paid by the same computed finite indices and center-bound coefficient
                     (leftReading - canonicalLeft) * rightReading +
                       canonicalLeft * (rightReading - canonicalRight) := by
                 apply Data.Gaussian.Basic.ext <;>
-                  simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-                    Purelib.Data.Gaussian.Basic.add_re, Purelib.Data.Gaussian.Basic.add_im,
-                    Purelib.Data.Gaussian.Basic.mul_re, Purelib.Data.Gaussian.Basic.mul_im] <;>
+                  simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+                    Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im,
+                    Data.Gaussian.Basic.mul_re, Data.Gaussian.Basic.mul_im] <;>
                     ring1
               have productBound :
-                  Data.Gaussian.Norm.Basic.normSq
+                  Basic.normSq
                       (leftReading * rightReading -
                         canonicalLeft * canonicalRight) ≤
                     16 * semanticTarget * (leftBound + rightBound) := by
                 rw [productIdentity]
                 calc
-                  Data.Gaussian.Norm.Basic.normSq
+                  Basic.normSq
                       ((leftReading - canonicalLeft) * rightReading +
                         canonicalLeft * (rightReading - canonicalRight)) ≤
                     2 *
-                      (Data.Gaussian.Norm.Basic.normSq
+                      (Basic.normSq
                           ((leftReading - canonicalLeft) * rightReading) +
-                        Data.Gaussian.Norm.Basic.normSq
+                        Basic.normSq
                           (canonicalLeft *
                             (rightReading - canonicalRight))) :=
-                    Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _
+                    Bounds.normSq_add_le_two _ _
                   _ ≤ 2 *
                       ((8 * semanticTarget) * rightBound +
                         leftBound * (8 * semanticTarget)) :=
-                    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                    Arithmetic.mul_le_mul_of_nonneg_left_direct
                       (add_le_add firstTerm secondTerm) (by decide)
                   _ = 16 * semanticTarget * (leftBound + rightBound) := by
                     ring1
               have actualTail :
-                  Data.Gaussian.Norm.Basic.normSq
-                      (Gaussian.Process.Sampling.witnessAt process
+                  Basic.normSq
+                      (Process.Sampling.witnessAt process
                           start leftLater -
-                        Gaussian.Process.Sampling.witnessAt process
+                        Process.Sampling.witnessAt process
                           start leftIndex) ≤
-                    4 * Gaussian.Process.Sampling.refinementTarget
+                    4 * Process.Sampling.refinementTarget
                       leftIndex := by
-                rw [← Gaussian.Sampling.Dyadic.quarterRadius_four_eq_four_refinementTarget]
-                exact Gaussian.Process.Sampling.witnessAt_later_close
+                rw [← Sampling.Dyadic.quarterRadius_four_eq_four_refinementTarget]
+                exact Process.Sampling.witnessAt_later_close
                   process start leftOrder
               have baseWitness :
-                  Gaussian.Process.Sampling.witnessAt process
+                  Process.Sampling.witnessAt process
                       start leftIndex = leftReading * rightReading :=
                 rfl
               have canonicalLeftSample :
@@ -576,32 +580,32 @@ request is paid by the same computed finite indices and center-bound coefficient
                   (Sampling.approximation right.name).sample
                       rightLater = canonicalRight :=
                 rfl
-              change Data.Gaussian.Norm.Basic.normSq
-                  (Gaussian.Process.Sampling.witnessAt process
+              change Basic.normSq
+                  (Process.Sampling.witnessAt process
                       start leftLater - product.sample rightLater) < target
-              rw [Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation_sample,
+              rw [Sequence.Arithmetic.Product.sampledProductApproximation_sample,
                 canonicalLeftSample, canonicalRightSample]
               calc
-                Data.Gaussian.Norm.Basic.normSq
-                    (Gaussian.Process.Sampling.witnessAt process
+                Basic.normSq
+                    (Process.Sampling.witnessAt process
                         start leftLater - canonicalLeft * canonicalRight) ≤
                   2 *
-                    (Data.Gaussian.Norm.Basic.normSq
-                        (Gaussian.Process.Sampling.witnessAt process
+                    (Basic.normSq
+                        (Process.Sampling.witnessAt process
                             start leftLater -
-                          Gaussian.Process.Sampling.witnessAt process
+                          Process.Sampling.witnessAt process
                             start leftIndex) +
-                      Data.Gaussian.Norm.Basic.normSq
-                        (Gaussian.Process.Sampling.witnessAt process
+                      Basic.normSq
+                        (Process.Sampling.witnessAt process
                             start leftIndex -
                           canonicalLeft * canonicalRight)) :=
-                    Data.Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _
+                    Bounds.normSq_sub_le_via _ _ _
                 _ ≤ 2 *
                     (4 *
-                        Gaussian.Process.Sampling.refinementTarget
+                        Process.Sampling.refinementTarget
                           leftIndex +
                       16 * semanticTarget * (leftBound + rightBound)) := by
-                  apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                  apply Arithmetic.mul_le_mul_of_nonneg_left_direct
                   · apply add_le_add actualTail
                     rw [baseWitness]
                     exact productBound
@@ -609,9 +613,9 @@ request is paid by the same computed finite indices and center-bound coefficient
                 _ ≤ 2 *
                     (4 * semanticTarget +
                       16 * semanticTarget * (leftBound + rightBound)) :=
-                  Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                  Arithmetic.mul_le_mul_of_nonneg_left_direct
                     (add_le_add
-                      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                      (Arithmetic.mul_le_mul_of_nonneg_left_direct
                           outputRequestLtSemantic.le (by decide)) le_rfl)
                     (by decide)
                 _ = semanticTarget *
@@ -623,9 +627,15 @@ request is paid by the same computed finite indices and center-bound coefficient
                 _ < target :=
                   coherentProductBridgeTarget_budget_lt
                     leftProcess rightProcess positive } }
-  exact Equivalent.trans bridge
-    (Equivalent.symm
-      (Equivalent.toNamed_sampling
-        product))
+  exact bridge
+
+/-- Compare the original coherent product to the productive name of its same retained canonical sampler. -/
+@[expose] public def coherentMul_toNamed (left right : CoherentNamed) :
+    NamedEquivalent
+      (Named.mul left.name right.name)
+      (Sequence.Arithmetic.Product.sampledProductApproximation left.name right.name).toNamed :=
+  Equivalent.trans (coherentMul_toSampled left right)
+    (Equivalent.symm (Equivalent.toNamed_sampling
+      (Sequence.Arithmetic.Product.sampledProductApproximation left.name right.name)))
 
 end Purelib.Approximation.Gaussian.Name.Coherent.Arithmetic.Product.Bridge

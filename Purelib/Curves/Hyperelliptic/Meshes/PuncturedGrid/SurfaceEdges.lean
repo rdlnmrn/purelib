@@ -85,9 +85,9 @@ excluded. This certificate counts actual finite incidence rather than relying on
 
 The retained occurrence list determines support and coverage. Every displayed representative is unique, excludes its
 reverse and accounts for the same original oriented incidences. -/
-structure EdgeRepresentativeBank {vertices : Nat} (occurrences : List (Stokes.OrientedEdge vertices)) where
+structure EdgeRepresentativeBank {vertices : Nat} (occurrences : List (OrientedEdge vertices)) where
   /-- The retained oriented representatives of the original finite edge occurrences. -/ representatives : List
-    (Stokes.OrientedEdge vertices)
+    (OrientedEdge vertices)
   /-- The retained oriented representative list has no duplicate. -/ unique : representatives.Nodup
   /-- No retained representative's reverse also occurs in the original bank. -/ no_reverse : ∀ edge ∈ representatives,
     edge.reverse ∉ representatives
@@ -103,6 +103,8 @@ end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SurfaceEdges.PolygonStokes
 end
 
 section
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SurfaceEdges
 
 open Purelib
 open Purelib.Curves.Hyperelliptic.Branches.BranchCellBank
@@ -138,23 +140,23 @@ open Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh
 
 section
 
-variable {polynomial : Purelib.Polynomial.Geometry.ClearPath.GaussianPolynomial} {ambient :
-  Purelib.Geometry.Rational.Box} {grid : Polynomial.Geometry.Grid.ClearGrid polynomial
+variable {polynomial : Polynomial.Geometry.ClearPath.GaussianPolynomial} {ambient :
+  Geometry.Rational.Box} {grid : Polynomial.Geometry.Grid.ClearGrid polynomial
   ambient}
 
 namespace Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank
 
 /-- The sum of the original vertex coordinates orders positive grid edges and diagonals. -/
 @[expose] def edgeHeight (vertices :
-  LiftedVertices.VertexBank grid) (vertex : Fin vertices.count) : Fraction.Rational :=
+  VertexBank grid) (vertex : Fin vertices.count) : Fraction.Rational :=
   (vertices.coordinate vertex).re + (vertices.coordinate vertex).im
 
 /-- A positive original grid-axis edge strictly increases the retained coordinate-sum height. -/
 theorem axis_increasing (vertices :
-  LiftedVertices.VertexBank grid) {edge : Stokes.OrientedEdge vertices.count}
-    (positive : SkeletonEdges.PositiveAxis vertices edge) : vertices.edgeHeight edge.start < vertices.edgeHeight
+  VertexBank grid) {edge : OrientedEdge vertices.count}
+    (positive : PositiveAxis vertices edge) : vertices.edgeHeight edge.start < vertices.edgeHeight
       edge.finish := by
-  unfold LiftedVertices.VertexBank.edgeHeight
+  unfold VertexBank.edgeHeight
   rcases positive with ⟨horizontal, level⟩ | ⟨level, vertical⟩
   · rw [level]
     exact Fraction.Order.Arithmetic.add_lt_add_right_direct horizontal _
@@ -168,12 +170,12 @@ end
 section
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
+  {frames : RootFrames bank.grid} {vertices :
     VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+    RootEdgeBank frames}
 
 section
 
@@ -183,7 +185,7 @@ namespace Purelib.Riemann.Meshes.GridLiftedFaces.BranchCellBank.LiftedFace
 
 /-- The original lifted face diagonal strictly increases both actual coordinate components. -/
 theorem diagonal_positive (lifted :
-  BranchCellBank.LiftedFace vertices edges face sheet) :
+  LiftedFace vertices edges face sheet) :
     (vertices.coordinate (lifted.quad.edge .upDiagonal).start).re <
         (vertices.coordinate (lifted.quad.edge .upDiagonal).finish).re ∧
       (vertices.coordinate (lifted.quad.edge .upDiagonal).start).im <
@@ -198,8 +200,8 @@ end Purelib.Riemann.Meshes.GridLiftedFaces.BranchCellBank.LiftedFace
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SurfaceEdges.ClearGrid.BranchCellBank.LiftedFace
 
 /-- Each original lifted face side occurs in the retained grid skeleton up to reversal. -/
-private theorem side_skeleton (lifted : BranchCellBank.LiftedFace vertices edges face sheet) (side :
-  GridLiftedDualSteps.GridSide) :
+private theorem side_skeleton (lifted : LiftedFace vertices edges face sheet) (side :
+  GridSide) :
     lifted.quad.edge side.kind ∈ edges.skeleton vertices ∨
       (lifted.quad.edge side.kind).reverse ∈ edges.skeleton vertices := by
   rw [lifted.side_edge_eq]
@@ -212,28 +214,28 @@ namespace Purelib.Riemann.Meshes.GridLiftedFaces.BranchCellBank.LiftedFace
 
 /-- Every original lifted rectangle edge is a retained skeleton edge or that face's actual diagonal, up to reversal. -/
 theorem edge_skeleton_or_diagonal (lifted :
-  BranchCellBank.LiftedFace vertices edges face sheet) (kind : RectangleEdge.Kind) :
+  LiftedFace vertices edges face sheet) (kind : RectangleEdge.Kind) :
     (lifted.quad.edge kind ∈ edges.skeleton vertices ∨ (lifted.quad.edge kind).reverse ∈ edges.skeleton vertices) ∨
       lifted.quad.edge kind = lifted.quad.edge .upDiagonal ∨ (lifted.quad.edge kind).reverse = lifted.quad.edge
         .upDiagonal := by
   cases kind with
   | bottom =>
     exact Or.inl
-      (SurfaceEdges.ClearGrid.BranchCellBank.LiftedFace.side_skeleton lifted
+      (ClearGrid.BranchCellBank.LiftedFace.side_skeleton lifted
       .bottom)
   | right =>
     exact Or.inl
-      (SurfaceEdges.ClearGrid.BranchCellBank.LiftedFace.side_skeleton lifted
+      (ClearGrid.BranchCellBank.LiftedFace.side_skeleton lifted
       .right)
   | downDiagonal => exact Or.inr (Or.inr rfl)
   | upDiagonal => exact Or.inr (Or.inl rfl)
   | top =>
     exact Or.inl
-      (SurfaceEdges.ClearGrid.BranchCellBank.LiftedFace.side_skeleton lifted
+      (ClearGrid.BranchCellBank.LiftedFace.side_skeleton lifted
       .top)
   | left =>
     exact Or.inl
-      (SurfaceEdges.ClearGrid.BranchCellBank.LiftedFace.side_skeleton lifted
+      (ClearGrid.BranchCellBank.LiftedFace.side_skeleton lifted
       .left)
 
 end Purelib.Riemann.Meshes.GridLiftedFaces.BranchCellBank.LiftedFace
@@ -246,14 +248,14 @@ namespace Purelib.Riemann.Meshes.GridLiftedMesh.LiftedFaces
 
 /-- Enumerate the positive diagonal of each original retained lifted face in face and sheet order. -/
 @[expose] def diagonals : {faces : List
-  (PuncturedGridFaces.RegularFace bank)} → GridLiftedMesh.LiftedFaces vertices edges faces → List (Stokes.OrientedEdge
+  (RegularFace bank)} → LiftedFaces vertices edges faces → List (OrientedEdge
   vertices.count)
   | _, .nil => []
   | _, .cons zero one tail => zero.quad.edge .upDiagonal :: one.quad.edge .upDiagonal :: tail.diagonals
 
 /-- There are exactly two retained diagonals for each original regular base face. -/
 theorem diagonals_length : ∀ {faces : List
-  (PuncturedGridFaces.RegularFace bank)} (lifts : GridLiftedMesh.LiftedFaces vertices edges faces),
+  (RegularFace bank)} (lifts : LiftedFaces vertices edges faces),
     lifts.diagonals.length = 2 * faces.length
   | _, .nil => rfl
   | _, .cons _ _ tail => by
@@ -263,7 +265,7 @@ theorem diagonals_length : ∀ {faces : List
 /-- Each retained diagonal is an original oriented triangle occurrence, not a new geometric chord inserted after
 computing the mesh. -/
 theorem diagonals_sublist : ∀ {faces : List
-  (PuncturedGridFaces.RegularFace bank)} (lifts : GridLiftedMesh.LiftedFaces vertices edges faces),
+  (RegularFace bank)} (lifts : LiftedFaces vertices edges faces),
     lifts.diagonals.Sublist (lifts.triangles.flatMap OrientedTriangle.boundary)
   | _, .nil => .slnil
   | _, .cons _ _ tail =>
@@ -272,8 +274,8 @@ theorem diagonals_sublist : ∀ {faces : List
 
 /-- Every retained diagonal strictly increases both original coordinate components. -/
 theorem diagonals_positive : ∀ {faces : List
-  (PuncturedGridFaces.RegularFace bank)} (lifts : GridLiftedMesh.LiftedFaces vertices edges faces)
-    {edge : Stokes.OrientedEdge vertices.count}, edge ∈ lifts.diagonals →
+  (RegularFace bank)} (lifts : LiftedFaces vertices edges faces)
+    {edge : OrientedEdge vertices.count}, edge ∈ lifts.diagonals →
       (vertices.coordinate edge.start).re < (vertices.coordinate edge.finish).re ∧
         (vertices.coordinate edge.start).im < (vertices.coordinate edge.finish).im
   | _, .nil, _, member => (List.not_mem_nil member).elim
@@ -289,8 +291,8 @@ end Purelib.Riemann.Meshes.GridLiftedMesh.LiftedFaces
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SurfaceEdges.ClearGrid.BranchCellBank.LiftedFaces
 
 /-- Every edge occurrence in one original lifted face is represented by its retained skeleton or diagonal. -/
-private theorem local_covered {face : PuncturedGridFaces.RegularFace bank} {sheet : Fin 2}
-    (lifted : BranchCellBank.LiftedFace vertices edges face sheet) {edge : Stokes.OrientedEdge vertices.count}
+private theorem local_covered {face : RegularFace bank} {sheet : Fin 2}
+    (lifted : LiftedFace vertices edges face sheet) {edge : OrientedEdge vertices.count}
     (member : edge ∈ lifted.quad.triangles.flatMap OrientedTriangle.boundary) :
     (edge ∈ edges.skeleton vertices ∨ edge.reverse ∈ edges.skeleton vertices) ∨
       edge = lifted.quad.edge .upDiagonal ∨ edge.reverse = lifted.quad.edge .upDiagonal := by
@@ -305,8 +307,8 @@ namespace Purelib.Riemann.Meshes.GridLiftedMesh.LiftedFaces
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SurfaceEdges.ClearGrid.BranchCellBank.LiftedFaces in
 /-- The retained skeleton and original face diagonals cover every actual lifted triangle edge up to reversal. -/
 theorem edges_covered : ∀ {faces : List
-  (PuncturedGridFaces.RegularFace bank)} (lifts : GridLiftedMesh.LiftedFaces vertices edges faces)
-    {edge : Stokes.OrientedEdge vertices.count}, edge ∈ lifts.triangles.flatMap OrientedTriangle.boundary →
+  (RegularFace bank)} (lifts : LiftedFaces vertices edges faces)
+    {edge : OrientedEdge vertices.count}, edge ∈ lifts.triangles.flatMap OrientedTriangle.boundary →
       (edge ∈ edges.skeleton vertices ∨ edge.reverse ∈ edges.skeleton vertices) ∨
         edge ∈ lifts.diagonals ∨ edge.reverse ∈ lifts.diagonals
   | _, .nil, _, member => (List.not_mem_nil member).elim
@@ -314,12 +316,12 @@ theorem edges_covered : ∀ {faces : List
       rw [LiftedFaces.triangleEdges_cons] at member
       rcases Membership.mem_append.mp member with localMember | tailMember
       · rcases Membership.mem_append.mp localMember with zeroMember | oneMember
-        · rcases SurfaceEdges.ClearGrid.BranchCellBank.LiftedFaces.local_covered zero zeroMember with skeleton | same |
+        · rcases ClearGrid.BranchCellBank.LiftedFaces.local_covered zero zeroMember with skeleton | same |
           reversed
           · exact Or.inl skeleton
           · exact Or.inr (Or.inl (Membership.mem_cons.mpr (Or.inl same)))
           · exact Or.inr (Or.inr (Membership.mem_cons.mpr (Or.inl reversed)))
-        · rcases SurfaceEdges.ClearGrid.BranchCellBank.LiftedFaces.local_covered one oneMember with skeleton | same |
+        · rcases ClearGrid.BranchCellBank.LiftedFaces.local_covered one oneMember with skeleton | same |
           reversed
           · exact Or.inl skeleton
           · exact Or.inr (Or.inl (List.mem_cons_of_mem _ (Membership.mem_cons.mpr (Or.inl same))))
@@ -336,21 +338,21 @@ end
 section
 
 variable {base : FramedPuncturedGrid curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
+  {frames : RootFrames base.bank.grid} {vertices :
     VertexBank base.bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+    RootEdgeBank frames}
 
 namespace Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh
 
 /-- The actual lifted mesh edge representatives: retained positive grid edges followed by original positive face
 diagonals. -/
 @[expose] def edgeRepresentatives (mesh :
-  GridLiftedMesh.LiftedMesh vertices edges base.faces) : List (Stokes.OrientedEdge vertices.count) :=
+  LiftedMesh vertices edges base.faces) : List (OrientedEdge vertices.count) :=
   edges.skeleton vertices ++ mesh.lifts.diagonals
 
 /-- The retained mesh edge count is twice the sum of original horizontal, vertical and regular-face counts. -/
 theorem edgeRepresentatives_length (mesh :
-  GridLiftedMesh.LiftedMesh vertices edges base.faces) :
+  LiftedMesh vertices edges base.faces) :
     mesh.edgeRepresentatives.length = 2 * (base.bank.grid.xIntervals.length * base.bank.grid.horizontal.length +
       base.bank.grid.yIntervals.length * base.bank.grid.vertical.length + base.faces.regulars.length) := by
   rw [edgeRepresentatives, Append.length_append, edges.skeleton_length,
@@ -359,7 +361,7 @@ theorem edgeRepresentatives_length (mesh :
 
 /-- The original lifted mesh edge representatives have no repeated oriented edge. -/
 theorem edgeRepresentatives_nodup (mesh :
-  GridLiftedMesh.LiftedMesh vertices edges base.faces) : mesh.edgeRepresentatives.Nodup := by
+  LiftedMesh vertices edges base.faces) : mesh.edgeRepresentatives.Nodup := by
   have unique := mesh.orientedEdges_unique
   rw [mesh.triangleEdges_eq] at unique
   refine Nodup.nodup_append (edges.skeleton_nodup vertices) (mesh.lifts.diagonals_sublist.nodup unique) ?_
@@ -372,8 +374,8 @@ theorem edgeRepresentatives_nodup (mesh :
 
 /-- Every retained original edge representative strictly increases coordinate-sum height. -/
 theorem edgeRepresentatives_increasing (mesh :
-  GridLiftedMesh.LiftedMesh vertices edges base.faces)
-    {edge : Stokes.OrientedEdge vertices.count} (member : edge ∈ mesh.edgeRepresentatives) :
+  LiftedMesh vertices edges base.faces)
+    {edge : OrientedEdge vertices.count} (member : edge ∈ mesh.edgeRepresentatives) :
     vertices.edgeHeight edge.start < vertices.edgeHeight edge.finish := by
   rcases Membership.mem_append.mp member with skeleton | diagonal
   · exact vertices.axis_increasing (edges.skeleton_positive vertices skeleton)
@@ -382,8 +384,8 @@ theorem edgeRepresentatives_increasing (mesh :
 
 /-- The retained original edge representative bank cannot contain both orientations of an edge. -/
 theorem edgeRepresentatives_no_reverse (mesh :
-  GridLiftedMesh.LiftedMesh vertices edges base.faces)
-    {edge : Stokes.OrientedEdge vertices.count} (member : edge ∈ mesh.edgeRepresentatives) : edge.reverse ∉
+  LiftedMesh vertices edges base.faces)
+    {edge : OrientedEdge vertices.count} (member : edge ∈ mesh.edgeRepresentatives) : edge.reverse ∉
       mesh.edgeRepresentatives := by
   intro reversed
   have forward := mesh.edgeRepresentatives_increasing (edge := edge) member
@@ -392,8 +394,8 @@ theorem edgeRepresentatives_no_reverse (mesh :
 
 /-- Every retained edge representative is supported by an actual original lifted triangle, up to reversal. -/
 theorem edgeRepresentatives_supported (mesh :
-  GridLiftedMesh.LiftedMesh vertices edges base.faces)
-    {edge : Stokes.OrientedEdge vertices.count} (member : edge ∈ mesh.edgeRepresentatives) :
+  LiftedMesh vertices edges base.faces)
+    {edge : OrientedEdge vertices.count} (member : edge ∈ mesh.edgeRepresentatives) :
     edge ∈ Stokes.triangleEdgeOccurrences mesh.triangulation.faces ∨ edge.reverse ∈ Stokes.triangleEdgeOccurrences
       mesh.triangulation.faces := by
   rcases Membership.mem_append.mp member with skeleton | diagonal
@@ -404,8 +406,8 @@ theorem edgeRepresentatives_supported (mesh :
 
 /-- Every original lifted triangle edge has exactly one orientation represented in the retained bank. -/
 theorem edgeRepresentatives_cover (mesh :
-  GridLiftedMesh.LiftedMesh vertices edges base.faces)
-    {edge : Stokes.OrientedEdge vertices.count} (member : edge ∈ Stokes.triangleEdgeOccurrences
+  LiftedMesh vertices edges base.faces)
+    {edge : OrientedEdge vertices.count} (member : edge ∈ Stokes.triangleEdgeOccurrences
       mesh.triangulation.faces) :
     edge ∈ mesh.edgeRepresentatives ∨ edge.reverse ∈ mesh.edgeRepresentatives := by
   rw [mesh.triangleEdges_eq] at member
@@ -419,19 +421,19 @@ set_option genInjectivity false in
 /-- Cached representatives count each actual unoriented mesh edge once.
 
 No successful edge-matching check is supplied by the caller. -/
-structure SurfaceEdges (mesh : GridLiftedMesh.LiftedMesh
+structure SurfaceEdges (mesh : LiftedMesh
   vertices edges base.faces) extends
-    SurfaceEdges.PolygonStokes.EdgeRepresentativeBank
+    EdgeRepresentativeBank
       (Stokes.triangleEdgeOccurrences mesh.triangulation.faces) where
   /-- The retained representative count equals the exact original horizontal, vertical and regular-face formula. -/
     length_eq : representatives.length = 2 * (base.bank.grid.xIntervals.length * base.bank.grid.horizontal.length +
     base.bank.grid.yIntervals.length * base.bank.grid.vertical.length + base.faces.regulars.length)
 
-constructive_injectivity Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh.SurfaceEdges
+constructive_injectivity SurfaceEdges
 
 /-- Construct the exact finite edge representative certificate from the original lifted mesh and cached root transports.
 -/
-@[expose] def surfaceEdges (mesh : GridLiftedMesh.LiftedMesh
+@[expose] def surfaceEdges (mesh : LiftedMesh
   vertices edges base.faces) : SurfaceEdges mesh where
   representatives := mesh.edgeRepresentatives
   unique := mesh.edgeRepresentatives_nodup
@@ -444,7 +446,7 @@ constructive_injectivity Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh.Surfac
 
 The counts refer to checked triangle vertices and edge representatives, not allocation sizes or an abstract
 genus-labelled replacement complex. -/
-theorem punctured_euler (mesh : GridLiftedMesh.LiftedMesh
+theorem punctured_euler (mesh : LiftedMesh
   vertices edges base.faces)
     (vertexBank : ActiveVertices mesh) (edgeBank : SurfaceEdges
       mesh) :
@@ -465,7 +467,7 @@ theorem punctured_euler (mesh : GridLiftedMesh.LiftedMesh
 
 /-- The generic construction discharges both enumeration certificates. -/
 theorem automatic_punctured_euler (mesh :
-  GridLiftedMesh.LiftedMesh vertices edges base.faces) :
+  LiftedMesh vertices edges base.faces) :
     ((LiftedMesh.activeVertices mesh).indices.length : Int) - mesh.surfaceEdges.representatives.length +
       mesh.triangles.length =
       2 - 2 * curve.polynomial.natDegree :=
@@ -479,7 +481,7 @@ end
 section
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SurfaceEdges.ClearGrid.LiftedPuncturedGrid

@@ -85,36 +85,36 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Physi
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
-variable {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
-  {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {target coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
+variable {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {retained : Preparation.CommonBasisPreparation prepared}
+  {basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {target coefficientTarget : InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
     energyFloor radialDepth : Nat}
-  {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+  {box : Rational.Box} {capSample : Charts.Reciprocal.Cap.Primitives.Sample cap
     differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 namespace CommonBasisRequest
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisRequest retained basis
+variable {request : Preparation.CommonBasisRequest retained basis
   target coefficientTarget coverFloor floor}
   {plans : request.Plans capSample polynomials minimum} {inputs : retained.Inputs index}
-  {readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
+  {readings : Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
     request.schedule.bank plans inputs stage}
 
-variable {fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.FanPreparation request
+variable {fans : Connection.CommonBasisRequest.FanPreparation request
   plans inputs readings energyFloor}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -122,19 +122,19 @@ namespace Sampled
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable (sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.Sampled fans
+variable (sample : Connection.CommonBasisRequest.Sampled fans
   coefficients radialDepth) (comparisons :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
+  CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
   sample)
   {faceIndex : Nat} (banks : PhysicalRunEntries
     retained inputs coefficients faceIndex)
 
 /-- Compose two Gaussian squared-error bounds with the factor-two loss for the sum of their residuals. -/
-private theorem scalar_error_trans {first middle last : Normalization.InverseRootPolynomial.Gaussian} {before after :
-  Normalization.InverseRootPolynomial.Coordinate}
-    (left : Data.Gaussian.Norm.Basic.normSq (first - middle) ≤ before) (right :
-      Data.Gaussian.Norm.Basic.normSq (middle - last) ≤ after) :
-    Data.Gaussian.Norm.Basic.normSq (first - last) ≤ 2 * (before + after) := open Purelib.Data.Rat in
+private theorem scalar_error_trans {first middle last : InverseRootPolynomial.Gaussian} {before after :
+  InverseRootPolynomial.Coordinate}
+    (left : Gaussian.Norm.Basic.normSq (first - middle) ≤ before) (right :
+      Gaussian.Norm.Basic.normSq (middle - last) ≤ after) :
+    Gaussian.Norm.Basic.normSq (first - last) ≤ 2 * (before + after) := open Rat in
       by
   have bound := (Gaussian.Norm.Bounds.normSq_add_le_two (first - middle) (middle - last)).trans
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct left right)
@@ -145,40 +145,40 @@ private theorem scalar_error_trans {first middle last : Normalization.InverseRoo
 /-- The actual run and its root endpoints share the selected source summary.
 This pays both comparison steps without replacing the odd root coordinate. -/
 theorem physical_parent_root_error (outer : Fin prepared.occurrences.length)
-    (position : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (position : Fin (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length)
-    {localTarget : Normalization.InverseRootPolynomial.Coordinate}
-    (run : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PreparedPhysicalRuns.PhysicalRunBank.PreparedRun (banks.get
+    {localTarget : InverseRootPolynomial.Coordinate}
+    (run : PreparedPhysicalRuns.PhysicalRunBank.PreparedRun (banks.get
       outer).bank position
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentPrepared.CommonBasisRequest.Sampled.parentPrepared sample
+      (ParentPrepared.CommonBasisRequest.Sampled.parentPrepared sample
       comparisons outer position) localTarget) :
     Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded ((Path.PairedIncrementArea.total ((banks.get
       outer).bank.physical position)).sub
       (Path.ConjugatePathReadback.conjugateDiagonal
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentRootTotals.CommonBasisRequest.Sampled.parentRootTotal
+        (ParentRootTotals.CommonBasisRequest.Sampled.parentRootTotal
         sample outer position)))
         (2 * (localTarget / 4 + 34 * request.allocation.allowance^2) *
-          Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) := open Purelib.Data.Rat in by
+          Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) := open Rat in by
   have source :=
     ParentRootTotals.CommonBasisRequest.Sampled.parent_source_root_error
     sample comparisons outer position
   have canonicalBound {point : Gaussian.Basic.Canonical} {limit : Fraction.Rational}
-      (h : Data.Gaussian.Norm.Basic.normSq point ≤ limit) :
+      (h : Gaussian.Norm.Basic.normSq point ≤ limit) :
       Gaussian.Basic.Canonical.normSq point ≤ limit := by
     change Fraction.Order.Basic.LessEqual _ _ at h ⊢
     rw [← Gaussian.Norm.Basic.normSq_eq_canonical]
     exact h
   have oldBound {point : Gaussian.Basic.Canonical} {limit : Fraction.Rational}
       (h : Gaussian.Basic.Canonical.normSq point ≤ limit) :
-      Data.Gaussian.Norm.Basic.normSq point ≤ limit := by
+      Gaussian.Norm.Basic.normSq point ≤ limit := by
     change Fraction.Order.Basic.LessEqual _ _ at h ⊢
     rw [Gaussian.Norm.Basic.normSq_eq_canonical]
     exact h
   have root : Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded ((Path.ConjugatePathReadback.conjugateDiagonal
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentPrepared.CommonBasisRequest.Sampled.parentPrepared sample
+    (ParentPrepared.CommonBasisRequest.Sampled.parentPrepared sample
     comparisons outer position).weighted.source.total).sub
       (Path.ConjugatePathReadback.conjugateDiagonal
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentRootTotals.CommonBasisRequest.Sampled.parentRootTotal
+        (ParentRootTotals.CommonBasisRequest.Sampled.parentRootTotal
         sample outer position)))
         (34 * request.allocation.allowance^2 * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) :=
           by

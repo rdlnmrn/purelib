@@ -30,6 +30,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.Gaussian.Basic (Canonical)
 
 open Purelib
@@ -80,28 +82,28 @@ namespace Purelib.Approximation.Gaussian.Process.Gamma.Inverse.Scale
 
 /-- Divide the inverse tail by the unary scale already emitted. -/
 def normalizedInverseProcess
-    (residual : Approximation.Gaussian.Process) (base : residual.State)
+    (residual : Process) (base : residual.State)
     (certificate : Ball.Apart
-      (residual.ball base)) (count : Nat) : Approximation.Gaussian.Process :=
-  Approximation.Gaussian.Process.mul
-    (Approximation.Gaussian.Process.exact
+      (residual.ball base)) (count : Nat) : Process :=
+  mul
+    (exact
       (Power.natPow Canonical.gamma count)⁻¹)
-    (Inverse.inverseOfApartProcess residual base certificate)
+    (inverseOfApartProcess residual base certificate)
 
 /-- Construct the initial normalized inverse state from the exact reciprocal unary factor and the retained apart
 residual state. -/
 def normalizedInverseInitial
-    (residual : Approximation.Gaussian.Process) (base : residual.State)
+    (residual : Process) (base : residual.State)
     (certificate : Ball.Apart
       (residual.ball base)) (count : Nat) :
     (normalizedInverseProcess residual base certificate count).State
       :=
-  ((), Inverse.inverseOfApartInitial residual base certificate)
+  ((), inverseOfApartInitial residual base certificate)
 
 /-- Every candidate of the normalized inverse chart is an exact scaled post-sector inverse of one nonzero residual
 admitted at the retained base. The scale records precisely the unary padding already emitted. -/
 theorem normalizedInverse_candidate_semantics
-    (residual : Approximation.Gaussian.Process) (base : residual.State)
+    (residual : Process) (base : residual.State)
     (certificate : Ball.Apart
       (residual.ball base)) (count : Nat)
     {state : (normalizedInverseProcess residual base certificate
@@ -122,12 +124,12 @@ theorem normalizedInverse_candidate_semantics
       inverseEqual⟩
   have residualAtBase : residual.Possible base residualValue :=
     state.2.2.source.persists residualPossible
-  have residualNormPositive : 0 < Data.Gaussian.Norm.Basic.normSq residualValue :=
+  have residualNormPositive : 0 < Norm.Basic.normSq residualValue :=
     certificate.positive.trans_le
       (certificate.lower (residual.possible_inside residualAtBase))
   have residualNonzero : residualValue ≠ 0 := by
     intro residualZero
-    rw [residualZero, Data.Gaussian.Norm.Basic.normSq_zero] at residualNormPositive
+    rw [residualZero, Norm.Basic.normSq_zero] at residualNormPositive
     exact (lt_irrefl _ residualNormPositive).elim
   refine ⟨residualValue, residualAtBase, residualNonzero, ?_⟩
   calc
@@ -147,17 +149,17 @@ The candidate retains the same normalized inverse process and its strict residua
 upper bound. That bound supplies an explicit apartness witness at the requested
 stage. -/
 def normalizedInversePossibleApart
-    (residual : Approximation.Gaussian.Process) (base : residual.State)
+    (residual : Process) (base : residual.State)
     (certificate : Ball.Apart
-      (residual.ball base)) (count : Nat) (upper : Fraction.Rational)
+      (residual.ball base)) (count : Nat) (upper : Rational)
     (upperBound : ∀ {value : Canonical}, residual.Possible base value →
-      Data.Gaussian.Norm.Basic.normSq value ≤ upper)
+      Norm.Basic.normSq value ≤ upper)
     (upperStrict : upper <
       Residual.paddingTarget count) :
     Possible.PossibleApart (normalizedInverseProcess residual base
       certificate count) := by
-  let power : Fraction.Rational := (2 : Fraction.Rational) ^ (count + 1)
-  let lowerSq : Fraction.Rational := (power * upper)⁻¹
+  let power : Rational := (2 : Rational) ^ (count + 1)
+  let lowerSq : Rational := (power * upper)⁻¹
   rcases residual.witness base with ⟨displayed, displayedPossible⟩
   have displayedLower := certificate.lower
     (residual.possible_inside displayedPossible)
@@ -165,26 +167,26 @@ def normalizedInversePossibleApart
     certificate.positive.trans_le
       (displayedLower.trans (upperBound displayedPossible))
   have powerPositive : 0 < power :=
-    Fraction.Order.Arithmetic.pow_pos_direct (by decide) (count + 1)
+    Arithmetic.pow_pos_direct (by decide) (count + 1)
   have denominatorPositive : 0 < power * upper :=
-    Fraction.Order.Arithmetic.mul_pos_direct powerPositive upperPositive
+    Arithmetic.mul_pos_direct powerPositive upperPositive
   have denominatorLtOne : power * upper < 1 := by
-    have scaled := (Fraction.Order.Field.lt_div_iff_pos powerPositive).1
+    have scaled := (Field.lt_div_iff_pos powerPositive).1
       upperStrict
     calc
       power * upper = upper * power :=
-        Fraction.Field.mul_comm _ _
+        Field.mul_comm _ _
       _ < 1 := scaled
   have lowerPositive : 0 < lowerSq := by
-    exact Fraction.Order.Field.inv_pos_direct denominatorPositive
+    exact Field.inv_pos_direct denominatorPositive
   have lowerGtOne : 1 < lowerSq := by
-    apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+    apply Arithmetic.lt_of_mul_lt_mul_right_direct
       (c := power * upper) _ denominatorPositive
     calc
       1 * (power * upper) = power * upper := by ring1
       _ < 1 := denominatorLtOne
       _ = (power * upper)⁻¹ * (power * upper) :=
-        (Fraction.Field.inv_mul_cancel _
+        (Field.inv_mul_cancel _
           denominatorPositive.ne').symm
   let candidateApart := Based.possibleApartOfBall residual base certificate
   exact
@@ -202,40 +204,40 @@ def normalizedInversePossibleApart
         have denominatorUpper := upperBound denominatorAtBase
         have denominatorLower :=
           candidateApart.lower state.2.2.source denominatorPossible
-        have denominatorNormPositive : 0 < Data.Gaussian.Norm.Basic.normSq denominator :=
+        have denominatorNormPositive : 0 < Norm.Basic.normSq denominator :=
           candidateApart.positive.trans_le denominatorLower
         have denominatorNonzero : denominator ≠ 0 := by
           intro denominatorZero
-          rw [denominatorZero, Data.Gaussian.Norm.Basic.normSq_zero] at denominatorNormPositive
+          rw [denominatorZero, Norm.Basic.normSq_zero] at denominatorNormPositive
           exact (lt_irrefl _ denominatorNormPositive).elim
         have smallDenominatorPositive :
-            0 < power * Data.Gaussian.Norm.Basic.normSq denominator :=
-          Fraction.Order.Arithmetic.mul_pos_direct powerPositive
+            0 < power * Norm.Basic.normSq denominator :=
+          Arithmetic.mul_pos_direct powerPositive
             denominatorNormPositive
         have smallDenominatorLe :
-            power * Data.Gaussian.Norm.Basic.normSq denominator ≤ power * upper :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+            power * Norm.Basic.normSq denominator ≤ power * upper :=
+          Arithmetic.mul_le_mul_of_nonneg_left_direct
             denominatorUpper powerPositive.le
         have inverseOrder : (power * upper)⁻¹ ≤
-            (power * Data.Gaussian.Norm.Basic.normSq denominator)⁻¹ :=
-          Fraction.Order.Field.inv_le_inv_of_pos_direct
+            (power * Norm.Basic.normSq denominator)⁻¹ :=
+          Field.inv_le_inv_of_pos_direct
             smallDenominatorPositive smallDenominatorLe
         rw [valueEqual, scalePossible, tailEqual, numeratorPossible,
-          Data.Gaussian.Norm.Basic.normSq_mul, Gamma.normSq_natPow_gamma_inv,
-          Data.Gaussian.Field.normSq_div _ _ denominatorNonzero, Inverse.normSq_gamma_inv,
+          Norm.Basic.normSq_mul, Gamma.normSq_natPow_gamma_inv,
+          Field.normSq_div _ _ denominatorNonzero, Inverse.normSq_gamma_inv,
           Field.half_mul_inverse]
         have normIdentity :
-            ((2 : Fraction.Rational) ^ count)⁻¹ *
-                (1 / (2 * Data.Gaussian.Norm.Basic.normSq denominator)) =
-              (power * Data.Gaussian.Norm.Basic.normSq denominator)⁻¹ := by
+            ((2 : Rational) ^ count)⁻¹ *
+                (1 / (2 * Norm.Basic.normSq denominator)) =
+              (power * Norm.Basic.normSq denominator)⁻¹ := by
           have firstInverse :
-              (1 / (2 * Data.Gaussian.Norm.Basic.normSq denominator) : Fraction.Rational) =
-                (2 * Data.Gaussian.Norm.Basic.normSq denominator)⁻¹ := by
-            change 1 * (2 * Data.Gaussian.Norm.Basic.normSq denominator)⁻¹ =
-              (2 * Data.Gaussian.Norm.Basic.normSq denominator)⁻¹
+              (1 / (2 * Norm.Basic.normSq denominator) : Rational) =
+                (2 * Norm.Basic.normSq denominator)⁻¹ := by
+            change 1 * (2 * Norm.Basic.normSq denominator)⁻¹ =
+              (2 * Norm.Basic.normSq denominator)⁻¹
             exact _root_.one_mul _
-          rw [firstInverse, ← Fraction.Field.inv_mul_direct]
-          apply congrArg (fun coordinate : Fraction.Rational => coordinate⁻¹)
+          rw [firstInverse, ← Field.inv_mul_direct]
+          apply congrArg (fun coordinate : Rational => coordinate⁻¹)
           dsimp only [power]
           rw [pow_succ]
           ring1
@@ -247,45 +249,85 @@ emitted padding target.
 
 The lower squared norm uses the exact displayed padding count and the original residual candidate bound. -/
 def normalizedInverseLoopDomain
-    (residual : Approximation.Gaussian.Process) (base : residual.State)
+    (residual : Process) (base : residual.State)
     (certificate : Ball.Apart
-      (residual.ball base)) (count : Nat) (upper : Fraction.Rational)
+      (residual.ball base)) (count : Nat) (upper : Rational)
     (upperBound : ∀ {value : Canonical}, residual.Possible base value →
-      Data.Gaussian.Norm.Basic.normSq value ≤ upper)
+      Norm.Basic.normSq value ≤ upper)
     (upperStrict : upper <
       Residual.paddingTarget count) :
-    Gaussian.Process.Normalization.Basic.LoopDomain
+    LoopDomain
       (normalizedInverseProcess residual base certificate count) :=
   let apart := normalizedInversePossibleApart residual base
     certificate count
     upper upperBound upperStrict
   LoopDomain.ofLower apart (by
     dsimp only [apart]
-    let power : Fraction.Rational := (2 : Fraction.Rational) ^ (count + 1)
+    let power : Rational := (2 : Rational) ^ (count + 1)
     rcases residual.witness base with ⟨displayed, displayedPossible⟩
     have displayedLower := certificate.lower
       (residual.possible_inside displayedPossible)
     have upperPositive : 0 < upper := certificate.positive.trans_le
       (displayedLower.trans (upperBound displayedPossible))
     have powerPositive : 0 < power :=
-      Fraction.Order.Arithmetic.pow_pos_direct (by decide) (count + 1)
+      Arithmetic.pow_pos_direct (by decide) (count + 1)
     have denominatorPositive : 0 < power * upper :=
-      Fraction.Order.Arithmetic.mul_pos_direct powerPositive upperPositive
+      Arithmetic.mul_pos_direct powerPositive upperPositive
     have denominatorLtOne : power * upper < 1 := by
-      have scaled := (Fraction.Order.Field.lt_div_iff_pos powerPositive).1
+      have scaled := (Field.lt_div_iff_pos powerPositive).1
         upperStrict
       calc
         power * upper = upper * power :=
-          Fraction.Field.mul_comm _ _
+          Field.mul_comm _ _
         _ < 1 := scaled
-    apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+    apply Arithmetic.lt_of_mul_lt_mul_right_direct
       (c := power * upper) _ denominatorPositive
     calc
       1 * (power * upper) = power * upper := by ring1
       _ < 1 := denominatorLtOne
       _ = (power * upper)⁻¹ * (power * upper) :=
-        (Fraction.Field.inv_mul_cancel _
+        (Field.inv_mul_cancel _
           denominatorPositive.ne').symm)
 end Purelib.Approximation.Gaussian.Process.Gamma.Inverse.Scale
 
 end
+
+namespace Purelib.Approximation.Gaussian.Process.Gamma.Inverse.Scale
+
+open Purelib.Approximation.Gaussian.Process.Based (BasedState)
+
+/-- Construct the original normalized inverse initial state from its same retained source refinement.
+
+The source reply belongs to the original residual, base and apartness target.
+Only that returned state supplies executable data; the original preparation
+supplies its logical persistence and whole-ball certificates.
+-/
+public def normalizedInverseInitialOfRefinement
+    (residual : Process) (base : residual.State) (certificate : Ball.Apart (residual.ball base)) (count : Nat)
+    (retained : { state : residual.State // state = residual.refine base
+      ((Based.possibleApartOfBall residual base certificate).lowerSq / 12)
+      (Based.possibleApartOfBall residual base certificate).twelfth_pos }) :
+    { state : (normalizedInverseProcess residual base certificate count).State //
+      state = normalizedInverseInitial residual base certificate count } :=
+  let original := normalizedInverseInitial residual base certificate count
+  let based : BasedState residual base :=
+    { source := retained.val
+      persists := by
+        intro value possible
+        exact residual.refine_persists base _ _ (retained.property ▸ possible) }
+  let apart : Preparation.ApartState (Process.Based.based residual base)
+      (Based.possibleApartOfBall residual base certificate) :=
+    { source := based
+      wholeBallLower := by
+        intro value inside
+        apply original.2.2.wholeBallLower
+        have originalInside : (residual.ball (residual.refine base
+            ((Based.possibleApartOfBall residual base certificate).lowerSq / 12)
+            (Based.possibleApartOfBall residual base certificate).twelfth_pos)).Contains value :=
+          retained.property ▸ inside
+        exact originalInside }
+  let state : (normalizedInverseProcess residual base certificate count).State := ((), ((), apart))
+  ⟨state, Prod.ext rfl (Prod.ext rfl
+    (Preparation.ApartState.eq_of_source_eq (BasedState.eq_of_source_eq retained.property)))⟩
+
+end Purelib.Approximation.Gaussian.Process.Gamma.Inverse.Scale

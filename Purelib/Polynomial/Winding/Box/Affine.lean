@@ -32,6 +32,11 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Rational
+open Purelib.Polynomial.Dense.Gaussian
+open Purelib.Data.Rat.Fraction.Order
+open Purelib.Polynomial.Dense.Rational.SignedRemainder
+
 open Purelib.Polynomial.Dense.Basic (DensePolynomial)
 open Purelib.Polynomial.Dense.Rational.Pair.Path.Basic (PolynomialEdge)
 
@@ -65,14 +70,14 @@ The original oriented edge retains its coordinate and raw constant tables. The s
 endpoint signs and the finite signed-remainder index. -/
 private theorem translated_bottom_winding
     (c : Gaussian.Basic.Canonical) {r : Fraction.Rational} (positive : 0 < r) :
-    (Purelib.Polynomial.Dense.Gaussian.Path.Box.Sides.horizontalEdge
-      (Dense.Gaussian.Linear.Translated.translatedCoordinate c) (c.im - r)
+    (Path.Box.Sides.horizontalEdge
+      (Linear.Translated.translatedCoordinate c) (c.im - r)
       (c.re - r) (c.re + r)).doubledWinding = 0 := open Purelib in by
   rw [PolynomialEdge.doubledWinding,
-    Dense.Gaussian.Path.Box.Translated.translated_horizontal_real,
-      Dense.Gaussian.Path.Box.Translated.translated_horizontal_imag]
-  change Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 (Dense.Rational.Linear.Translated.affineVariable c.re)
-    (Dense.Rational.Constants.RawLinear.rawConstant (c.im - r - c.im)) (c.re - r) (c.re + r) = 0
+    Path.Box.Translated.translated_horizontal_real,
+      Path.Box.Translated.translated_horizontal_imag]
+  change CauchyIndex.Basic.Sturm.cauchyIndex2 (Linear.Translated.affineVariable c.re)
+    (Constants.RawLinear.rawConstant (c.im - r - c.im)) (c.re - r) (c.re + r) = 0
   have negativeNonzero : c.im - r - c.im ≠ 0 := by
     have equality : c.im - r - c.im = -r := by ring1
     rw [equality]
@@ -80,24 +85,24 @@ private theorem translated_bottom_winding
     have positiveZero := congrArg Neg.neg negativeZero
     rewrite [_root_.neg_neg, _root_.neg_zero] at positiveZero
     exact positive.ne' positiveZero
-  rw [Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2,
-    Dense.Rational.SignedRemainder.Linear.Translated.signedChain_rawConstant_affineVariable negativeNonzero,
-    Dense.Rational.Constants.RawLinear.rawConstant_normalize negativeNonzero]
-  simp only [Dense.Rational.SignedRemainder.Variation.Sturm.endpointVariation2, List.map_cons, List.map_nil,
-    Dense.Rational.Constants.RawLinear.rawConstant_eval, Dense.Rational.Linear.Translated.affineVariable_eval,
+  rw [CauchyIndex.Basic.Sturm.cauchyIndex2,
+    Linear.Translated.signedChain_rawConstant_affineVariable negativeNonzero,
+    Constants.RawLinear.rawConstant_normalize negativeNonzero]
+  simp only [Variation.Sturm.endpointVariation2, List.map_cons, List.map_nil,
+    Constants.RawLinear.rawConstant_eval, Linear.Translated.affineVariable_eval,
       DensePolynomial.eval_neg, DensePolynomial.eval_constant,
-    Data.Rat.Sign.Variation.variation2]
+    Sign.Variation.variation2]
   have imaginaryValue : c.im - r - c.im = -r := by ring1
   have startValue : c.re - r - c.re = -r := by ring1
   have stopValue : c.re + r - c.re = r := by ring1
   rw [imaginaryValue, startValue, stopValue]
   simp only [_root_.neg_neg]
-  rw [Data.Rat.Sign.Jump.signJump_self, Data.Rat.Sign.Jump.signJump_self]
+  rw [Sign.Jump.signJump_self, Sign.Jump.signJump_self]
   have opposite : (-r) * r < 0 := by
-    have negative := Fraction.Order.Arithmetic.neg_lt_neg_direct positive
+    have negative := Arithmetic.neg_lt_neg_direct positive
     rewrite [_root_.neg_zero] at negative
-    exact Fraction.Order.Arithmetic.mul_neg_of_neg_of_pos_direct negative positive
-  rw [Data.Rat.Sign.Jump.signJump_eq_two_of_mul_neg opposite]
+    exact Arithmetic.mul_neg_of_neg_of_pos_direct negative positive
+  rw [Sign.Jump.signJump_eq_two_of_mul_neg opposite]
   rfl
 
 /-- The translated coordinate has doubled winding zero along the positively oriented top side of a positive centered
@@ -107,35 +112,35 @@ The original oriented edge retains its coordinate and raw constant tables. The s
 endpoint signs and the finite signed-remainder index. -/
 private theorem translated_top_winding
     (c : Gaussian.Basic.Canonical) {r : Fraction.Rational} (positive : 0 < r) :
-    (Purelib.Polynomial.Dense.Gaussian.Path.Box.Sides.horizontalEdge
-      (Dense.Gaussian.Linear.Translated.translatedCoordinate c) (c.im + r)
+    (Path.Box.Sides.horizontalEdge
+      (Linear.Translated.translatedCoordinate c) (c.im + r)
       (c.re + r) (c.re - r)).doubledWinding = 0 := open Purelib in by
   rw [PolynomialEdge.doubledWinding,
-    Dense.Gaussian.Path.Box.Translated.translated_horizontal_real,
-      Dense.Gaussian.Path.Box.Translated.translated_horizontal_imag]
-  change Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 (Dense.Rational.Linear.Translated.affineVariable c.re)
-    (Dense.Rational.Constants.RawLinear.rawConstant (c.im + r - c.im)) (c.re + r) (c.re - r) = 0
+    Path.Box.Translated.translated_horizontal_real,
+      Path.Box.Translated.translated_horizontal_imag]
+  change CauchyIndex.Basic.Sturm.cauchyIndex2 (Linear.Translated.affineVariable c.re)
+    (Constants.RawLinear.rawConstant (c.im + r - c.im)) (c.re + r) (c.re - r) = 0
   have nonzero : c.im + r - c.im ≠ 0 := by
     have equality : c.im + r - c.im = r := by ring1
     rw [equality]
     exact positive.ne'
-  rw [Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2,
-    Dense.Rational.SignedRemainder.Linear.Translated.signedChain_rawConstant_affineVariable nonzero,
-    Dense.Rational.Constants.RawLinear.rawConstant_normalize nonzero]
-  simp only [Dense.Rational.SignedRemainder.Variation.Sturm.endpointVariation2, List.map_cons, List.map_nil,
-    Dense.Rational.Constants.RawLinear.rawConstant_eval, Dense.Rational.Linear.Translated.affineVariable_eval,
+  rw [CauchyIndex.Basic.Sturm.cauchyIndex2,
+    Linear.Translated.signedChain_rawConstant_affineVariable nonzero,
+    Constants.RawLinear.rawConstant_normalize nonzero]
+  simp only [Variation.Sturm.endpointVariation2, List.map_cons, List.map_nil,
+    Constants.RawLinear.rawConstant_eval, Linear.Translated.affineVariable_eval,
       DensePolynomial.eval_neg, DensePolynomial.eval_constant,
-    Data.Rat.Sign.Variation.variation2]
+    Sign.Variation.variation2]
   have imaginaryValue : c.im + r - c.im = r := by ring1
   have startValue : c.re + r - c.re = r := by ring1
   have stopValue : c.re - r - c.re = -r := by ring1
   rw [imaginaryValue, startValue, stopValue]
-  rw [Data.Rat.Sign.Jump.signJump_self, Data.Rat.Sign.Jump.signJump_self]
+  rw [Sign.Jump.signJump_self, Sign.Jump.signJump_self]
   have opposite : r * (-r) < 0 := by
-    have negative := Fraction.Order.Arithmetic.neg_lt_neg_direct positive
+    have negative := Arithmetic.neg_lt_neg_direct positive
     rewrite [_root_.neg_zero] at negative
-    exact Fraction.Order.Arithmetic.mul_neg_of_pos_of_neg_direct positive negative
-  rw [Data.Rat.Sign.Jump.signJump_eq_two_of_mul_neg opposite]
+    exact Arithmetic.mul_neg_of_pos_of_neg_direct positive negative
+  rw [Sign.Jump.signJump_eq_two_of_mul_neg opposite]
   rfl
 
 /-- The translated coordinate has doubled winding two along the positively oriented right side of a positive centered
@@ -145,34 +150,34 @@ The original oriented edge retains its coordinate and raw constant tables. The s
 endpoint signs and the finite signed-remainder index. -/
 private theorem translated_right_winding
     (c : Gaussian.Basic.Canonical) {r : Fraction.Rational} (positive : 0 < r) :
-    (Purelib.Polynomial.Dense.Gaussian.Path.Box.Sides.verticalEdge
-      (Dense.Gaussian.Linear.Translated.translatedCoordinate c) (c.re + r)
+    (Path.Box.Sides.verticalEdge
+      (Linear.Translated.translatedCoordinate c) (c.re + r)
       (c.im - r) (c.im + r)).doubledWinding = 2 := open Purelib in by
   rw [PolynomialEdge.doubledWinding,
-    Dense.Gaussian.Path.Box.Translated.translated_vertical_real,
-      Dense.Gaussian.Path.Box.Translated.translated_vertical_imag]
-  change Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 (Dense.Rational.Constants.RawLinear.rawConstant (c.re + r -
+    Path.Box.Translated.translated_vertical_real,
+      Path.Box.Translated.translated_vertical_imag]
+  change CauchyIndex.Basic.Sturm.cauchyIndex2 (Constants.RawLinear.rawConstant (c.re + r -
     c.re))
-    (Dense.Rational.Linear.Translated.affineVariable c.im) (c.im - r) (c.im + r) = 2
+    (Linear.Translated.affineVariable c.im) (c.im - r) (c.im + r) = 2
   have nonzero : c.re + r - c.re ≠ 0 := by
     have equality : c.re + r - c.re = r := by ring1
     rw [equality]
     exact positive.ne'
-  rw [Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2,
-    Dense.Rational.SignedRemainder.Linear.Translated.signedChain_affineVariable_rawConstant nonzero]
-  simp only [Dense.Rational.SignedRemainder.Variation.Sturm.endpointVariation2, List.map_cons, List.map_nil,
-    Dense.Rational.Constants.RawLinear.rawConstant_eval, Dense.Rational.Linear.Translated.affineVariable_eval,
-      Data.Rat.Sign.Variation.variation2]
+  rw [CauchyIndex.Basic.Sturm.cauchyIndex2,
+    Linear.Translated.signedChain_affineVariable_rawConstant nonzero]
+  simp only [Variation.Sturm.endpointVariation2, List.map_cons, List.map_nil,
+    Constants.RawLinear.rawConstant_eval, Linear.Translated.affineVariable_eval,
+      Sign.Variation.variation2]
   have realValue : c.re + r - c.re = r := by ring1
   have startValue : c.im - r - c.im = -r := by ring1
   have stopValue : c.im + r - c.im = r := by ring1
   rw [realValue, startValue, stopValue]
-  rw [Data.Rat.Sign.Jump.signJump_self]
+  rw [Sign.Jump.signJump_self]
   have opposite : (-r) * r < 0 := by
-    have negative := Fraction.Order.Arithmetic.neg_lt_neg_direct positive
+    have negative := Arithmetic.neg_lt_neg_direct positive
     rewrite [_root_.neg_zero] at negative
-    exact Fraction.Order.Arithmetic.mul_neg_of_neg_of_pos_direct negative positive
-  rw [Data.Rat.Sign.Jump.signJump_eq_two_of_mul_neg opposite]
+    exact Arithmetic.mul_neg_of_neg_of_pos_direct negative positive
+  rw [Sign.Jump.signJump_eq_two_of_mul_neg opposite]
   rfl
 
 /-- The translated coordinate has doubled winding two along the positively oriented left side of a positive centered
@@ -182,15 +187,15 @@ The original oriented edge retains its coordinate and raw constant tables. The s
 endpoint signs and the finite signed-remainder index. -/
 private theorem translated_left_winding
     (c : Gaussian.Basic.Canonical) {r : Fraction.Rational} (positive : 0 < r) :
-    (Purelib.Polynomial.Dense.Gaussian.Path.Box.Sides.verticalEdge
-      (Dense.Gaussian.Linear.Translated.translatedCoordinate c) (c.re - r)
+    (Path.Box.Sides.verticalEdge
+      (Linear.Translated.translatedCoordinate c) (c.re - r)
       (c.im + r) (c.im - r)).doubledWinding = 2 := open Purelib in by
   rw [PolynomialEdge.doubledWinding,
-    Dense.Gaussian.Path.Box.Translated.translated_vertical_real,
-      Dense.Gaussian.Path.Box.Translated.translated_vertical_imag]
-  change Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 (Dense.Rational.Constants.RawLinear.rawConstant (c.re - r -
+    Path.Box.Translated.translated_vertical_real,
+      Path.Box.Translated.translated_vertical_imag]
+  change CauchyIndex.Basic.Sturm.cauchyIndex2 (Constants.RawLinear.rawConstant (c.re - r -
     c.re))
-    (Dense.Rational.Linear.Translated.affineVariable c.im) (c.im + r) (c.im - r) = 2
+    (Linear.Translated.affineVariable c.im) (c.im + r) (c.im - r) = 2
   have nonzero : c.re - r - c.re ≠ 0 := by
     have equality : c.re - r - c.re = -r := by ring1
     rw [equality]
@@ -198,21 +203,21 @@ private theorem translated_left_winding
     have positiveZero := congrArg Neg.neg negativeZero
     rewrite [_root_.neg_neg, _root_.neg_zero] at positiveZero
     exact positive.ne' positiveZero
-  rw [Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2,
-    Dense.Rational.SignedRemainder.Linear.Translated.signedChain_affineVariable_rawConstant nonzero]
-  simp only [Dense.Rational.SignedRemainder.Variation.Sturm.endpointVariation2, List.map_cons, List.map_nil,
-    Dense.Rational.Constants.RawLinear.rawConstant_eval, Dense.Rational.Linear.Translated.affineVariable_eval,
-      Data.Rat.Sign.Variation.variation2]
+  rw [CauchyIndex.Basic.Sturm.cauchyIndex2,
+    Linear.Translated.signedChain_affineVariable_rawConstant nonzero]
+  simp only [Variation.Sturm.endpointVariation2, List.map_cons, List.map_nil,
+    Constants.RawLinear.rawConstant_eval, Linear.Translated.affineVariable_eval,
+      Sign.Variation.variation2]
   have realValue : c.re - r - c.re = -r := by ring1
   have startValue : c.im + r - c.im = r := by ring1
   have stopValue : c.im - r - c.im = -r := by ring1
   rw [realValue, startValue, stopValue]
-  rw [Data.Rat.Sign.Jump.signJump_self]
+  rw [Sign.Jump.signJump_self]
   have opposite : r * (-r) < 0 := by
-    have negative := Fraction.Order.Arithmetic.neg_lt_neg_direct positive
+    have negative := Arithmetic.neg_lt_neg_direct positive
     rewrite [_root_.neg_zero] at negative
-    exact Fraction.Order.Arithmetic.mul_neg_of_pos_of_neg_direct positive negative
-  rw [Data.Rat.Sign.Jump.signJump_eq_two_of_mul_neg opposite]
+    exact Arithmetic.mul_neg_of_pos_of_neg_direct positive negative
+  rw [Sign.Jump.signJump_eq_two_of_mul_neg opposite]
   rfl
 
 /-- The translated coordinate has doubled winding zero along the positively oriented bottom box side under the stated
@@ -224,44 +229,44 @@ private theorem translated_bottom_winding_box
     (c : Gaussian.Basic.Canonical) {box : Box}
     (left : box.xLower < c.re) (right : c.re < box.xUpper)
     (below : box.yLower < c.im) :
-    (Purelib.Polynomial.Dense.Gaussian.Path.Box.Sides.horizontalEdge
-      (Dense.Gaussian.Linear.Translated.translatedCoordinate c) box.yLower
+    (Path.Box.Sides.horizontalEdge
+      (Linear.Translated.translatedCoordinate c) box.yLower
       box.xLower box.xUpper).doubledWinding = 0 := open Purelib in by
   rw [PolynomialEdge.doubledWinding,
-    Dense.Gaussian.Path.Box.Translated.translated_horizontal_real,
-      Dense.Gaussian.Path.Box.Translated.translated_horizontal_imag]
-  change Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 (Dense.Rational.Linear.Translated.affineVariable c.re)
-    (Dense.Rational.Constants.RawLinear.rawConstant (box.yLower - c.im)) box.xLower box.xUpper = 0
+    Path.Box.Translated.translated_horizontal_real,
+      Path.Box.Translated.translated_horizontal_imag]
+  change CauchyIndex.Basic.Sturm.cauchyIndex2 (Linear.Translated.affineVariable c.re)
+    (Constants.RawLinear.rawConstant (box.yLower - c.im)) box.xLower box.xUpper = 0
   have imaginaryNonzero : box.yLower - c.im ≠ 0 :=
-    (Fraction.Order.Arithmetic.sub_neg_direct below).ne
-  rw [Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2,
-    Dense.Rational.SignedRemainder.Linear.Translated.signedChain_rawConstant_affineVariable imaginaryNonzero,
-    Dense.Rational.Constants.RawLinear.rawConstant_normalize imaginaryNonzero]
-  simp only [Dense.Rational.SignedRemainder.Variation.Sturm.endpointVariation2, List.map_cons, List.map_nil,
-    Dense.Rational.Constants.RawLinear.rawConstant_eval, Dense.Rational.Linear.Translated.affineVariable_eval,
+    (Arithmetic.sub_neg_direct below).ne
+  rw [CauchyIndex.Basic.Sturm.cauchyIndex2,
+    Linear.Translated.signedChain_rawConstant_affineVariable imaginaryNonzero,
+    Constants.RawLinear.rawConstant_normalize imaginaryNonzero]
+  simp only [Variation.Sturm.endpointVariation2, List.map_cons, List.map_nil,
+    Constants.RawLinear.rawConstant_eval, Linear.Translated.affineVariable_eval,
       DensePolynomial.eval_neg, DensePolynomial.eval_constant,
-    Data.Rat.Sign.Variation.variation2]
+    Sign.Variation.variation2]
   have qNegative : box.yLower - c.im < 0 :=
-    Fraction.Order.Arithmetic.sub_neg_direct below
+    Arithmetic.sub_neg_direct below
   have negQPositive : 0 < -(box.yLower - c.im) := by
-    have reversed := Fraction.Order.Arithmetic.neg_lt_neg_direct qNegative
+    have reversed := Arithmetic.neg_lt_neg_direct qNegative
     rewrite [_root_.neg_zero] at reversed
     exact reversed
   have leftNegative : box.xLower - c.re < 0 :=
-    Fraction.Order.Arithmetic.sub_neg_direct left
+    Arithmetic.sub_neg_direct left
   have rightPositive : 0 < box.xUpper - c.re :=
-    Fraction.Order.Arithmetic.sub_pos_direct right
-  rw [Data.Rat.Sign.Jump.signJump_eq_zero_of_mul_pos
-      (Fraction.Order.Arithmetic.mul_pos_of_neg_of_neg_direct
+    Arithmetic.sub_pos_direct right
+  rw [Sign.Jump.signJump_eq_zero_of_mul_pos
+      (Arithmetic.mul_pos_of_neg_of_neg_direct
         qNegative leftNegative),
-    Data.Rat.Sign.Jump.signJump_eq_two_of_mul_neg
-      (Fraction.Order.Arithmetic.mul_neg_of_neg_of_pos_direct
+    Sign.Jump.signJump_eq_two_of_mul_neg
+      (Arithmetic.mul_neg_of_neg_of_pos_direct
         leftNegative negQPositive),
-    Data.Rat.Sign.Jump.signJump_eq_two_of_mul_neg
-      (Fraction.Order.Arithmetic.mul_neg_of_neg_of_pos_direct
+    Sign.Jump.signJump_eq_two_of_mul_neg
+      (Arithmetic.mul_neg_of_neg_of_pos_direct
         qNegative rightPositive),
-    Data.Rat.Sign.Jump.signJump_eq_zero_of_mul_pos
-      (Fraction.Order.Arithmetic.mul_pos_direct rightPositive negQPositive)]
+    Sign.Jump.signJump_eq_zero_of_mul_pos
+      (Arithmetic.mul_pos_direct rightPositive negQPositive)]
   rfl
 
 /-- The translated coordinate has doubled winding zero along the positively oriented top box side under the stated
@@ -273,43 +278,43 @@ private theorem translated_top_winding_box
     (c : Gaussian.Basic.Canonical) {box : Box}
     (left : box.xLower < c.re) (right : c.re < box.xUpper)
     (above : c.im < box.yUpper) :
-    (Purelib.Polynomial.Dense.Gaussian.Path.Box.Sides.horizontalEdge
-      (Dense.Gaussian.Linear.Translated.translatedCoordinate c) box.yUpper
+    (Path.Box.Sides.horizontalEdge
+      (Linear.Translated.translatedCoordinate c) box.yUpper
       box.xUpper box.xLower).doubledWinding = 0 := open Purelib in by
   rw [PolynomialEdge.doubledWinding,
-    Dense.Gaussian.Path.Box.Translated.translated_horizontal_real,
-      Dense.Gaussian.Path.Box.Translated.translated_horizontal_imag]
-  change Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 (Dense.Rational.Linear.Translated.affineVariable c.re)
-    (Dense.Rational.Constants.RawLinear.rawConstant (box.yUpper - c.im)) box.xUpper box.xLower = 0
+    Path.Box.Translated.translated_horizontal_real,
+      Path.Box.Translated.translated_horizontal_imag]
+  change CauchyIndex.Basic.Sturm.cauchyIndex2 (Linear.Translated.affineVariable c.re)
+    (Constants.RawLinear.rawConstant (box.yUpper - c.im)) box.xUpper box.xLower = 0
   have imaginaryNonzero : box.yUpper - c.im ≠ 0 :=
-    (Fraction.Order.Arithmetic.sub_pos_direct above).ne'
-  rw [Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2,
-    Dense.Rational.SignedRemainder.Linear.Translated.signedChain_rawConstant_affineVariable imaginaryNonzero,
-    Dense.Rational.Constants.RawLinear.rawConstant_normalize imaginaryNonzero]
-  simp only [Dense.Rational.SignedRemainder.Variation.Sturm.endpointVariation2, List.map_cons, List.map_nil,
-    Dense.Rational.Constants.RawLinear.rawConstant_eval, Dense.Rational.Linear.Translated.affineVariable_eval,
+    (Arithmetic.sub_pos_direct above).ne'
+  rw [CauchyIndex.Basic.Sturm.cauchyIndex2,
+    Linear.Translated.signedChain_rawConstant_affineVariable imaginaryNonzero,
+    Constants.RawLinear.rawConstant_normalize imaginaryNonzero]
+  simp only [Variation.Sturm.endpointVariation2, List.map_cons, List.map_nil,
+    Constants.RawLinear.rawConstant_eval, Linear.Translated.affineVariable_eval,
       DensePolynomial.eval_neg, DensePolynomial.eval_constant,
-    Data.Rat.Sign.Variation.variation2]
+    Sign.Variation.variation2]
   have qPositive : 0 < box.yUpper - c.im :=
-    Fraction.Order.Arithmetic.sub_pos_direct above
+    Arithmetic.sub_pos_direct above
   have negQNegative : -(box.yUpper - c.im) < 0 := by
-    have reversed := Fraction.Order.Arithmetic.neg_lt_neg_direct qPositive
+    have reversed := Arithmetic.neg_lt_neg_direct qPositive
     rewrite [_root_.neg_zero] at reversed
     exact reversed
   have leftNegative : box.xLower - c.re < 0 :=
-    Fraction.Order.Arithmetic.sub_neg_direct left
+    Arithmetic.sub_neg_direct left
   have rightPositive : 0 < box.xUpper - c.re :=
-    Fraction.Order.Arithmetic.sub_pos_direct right
-  rw [Data.Rat.Sign.Jump.signJump_eq_zero_of_mul_pos
-      (Fraction.Order.Arithmetic.mul_pos_direct qPositive rightPositive),
-    Data.Rat.Sign.Jump.signJump_eq_two_of_mul_neg
-      (Fraction.Order.Arithmetic.mul_neg_of_pos_of_neg_direct
+    Arithmetic.sub_pos_direct right
+  rw [Sign.Jump.signJump_eq_zero_of_mul_pos
+      (Arithmetic.mul_pos_direct qPositive rightPositive),
+    Sign.Jump.signJump_eq_two_of_mul_neg
+      (Arithmetic.mul_neg_of_pos_of_neg_direct
         rightPositive negQNegative),
-    Data.Rat.Sign.Jump.signJump_eq_two_of_mul_neg
-      (Fraction.Order.Arithmetic.mul_neg_of_pos_of_neg_direct
+    Sign.Jump.signJump_eq_two_of_mul_neg
+      (Arithmetic.mul_neg_of_pos_of_neg_direct
         qPositive leftNegative),
-    Data.Rat.Sign.Jump.signJump_eq_zero_of_mul_pos
-      (Fraction.Order.Arithmetic.mul_pos_of_neg_of_neg_direct
+    Sign.Jump.signJump_eq_zero_of_mul_pos
+      (Arithmetic.mul_pos_of_neg_of_neg_direct
         leftNegative negQNegative)]
   rfl
 
@@ -322,33 +327,33 @@ private theorem translated_right_winding_box
     (c : Gaussian.Basic.Canonical) {box : Box}
     (right : c.re < box.xUpper)
     (below : box.yLower < c.im) (above : c.im < box.yUpper) :
-    (Purelib.Polynomial.Dense.Gaussian.Path.Box.Sides.verticalEdge
-      (Dense.Gaussian.Linear.Translated.translatedCoordinate c) box.xUpper
+    (Path.Box.Sides.verticalEdge
+      (Linear.Translated.translatedCoordinate c) box.xUpper
       box.yLower box.yUpper).doubledWinding = 2 := open Purelib in by
   rw [PolynomialEdge.doubledWinding,
-    Dense.Gaussian.Path.Box.Translated.translated_vertical_real,
-      Dense.Gaussian.Path.Box.Translated.translated_vertical_imag]
-  change Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 (Dense.Rational.Constants.RawLinear.rawConstant (box.xUpper
+    Path.Box.Translated.translated_vertical_real,
+      Path.Box.Translated.translated_vertical_imag]
+  change CauchyIndex.Basic.Sturm.cauchyIndex2 (Constants.RawLinear.rawConstant (box.xUpper
     - c.re))
-    (Dense.Rational.Linear.Translated.affineVariable c.im) box.yLower box.yUpper = 2
+    (Linear.Translated.affineVariable c.im) box.yLower box.yUpper = 2
   have realNonzero : box.xUpper - c.re ≠ 0 :=
-    (Fraction.Order.Arithmetic.sub_pos_direct right).ne'
-  rw [Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2,
-    Dense.Rational.SignedRemainder.Linear.Translated.signedChain_affineVariable_rawConstant realNonzero]
-  simp only [Dense.Rational.SignedRemainder.Variation.Sturm.endpointVariation2, List.map_cons, List.map_nil,
-    Dense.Rational.Constants.RawLinear.rawConstant_eval, Dense.Rational.Linear.Translated.affineVariable_eval,
-      Data.Rat.Sign.Variation.variation2]
+    (Arithmetic.sub_pos_direct right).ne'
+  rw [CauchyIndex.Basic.Sturm.cauchyIndex2,
+    Linear.Translated.signedChain_affineVariable_rawConstant realNonzero]
+  simp only [Variation.Sturm.endpointVariation2, List.map_cons, List.map_nil,
+    Constants.RawLinear.rawConstant_eval, Linear.Translated.affineVariable_eval,
+      Sign.Variation.variation2]
   have realPositive : 0 < box.xUpper - c.re :=
-    Fraction.Order.Arithmetic.sub_pos_direct right
+    Arithmetic.sub_pos_direct right
   have lowerNegative : box.yLower - c.im < 0 :=
-    Fraction.Order.Arithmetic.sub_neg_direct below
+    Arithmetic.sub_neg_direct below
   have upperPositive : 0 < box.yUpper - c.im :=
-    Fraction.Order.Arithmetic.sub_pos_direct above
-  rw [Data.Rat.Sign.Jump.signJump_eq_two_of_mul_neg
-      (Fraction.Order.Arithmetic.mul_neg_of_neg_of_pos_direct
+    Arithmetic.sub_pos_direct above
+  rw [Sign.Jump.signJump_eq_two_of_mul_neg
+      (Arithmetic.mul_neg_of_neg_of_pos_direct
         lowerNegative realPositive),
-    Data.Rat.Sign.Jump.signJump_eq_zero_of_mul_pos
-      (Fraction.Order.Arithmetic.mul_pos_direct upperPositive realPositive)]
+    Sign.Jump.signJump_eq_zero_of_mul_pos
+      (Arithmetic.mul_pos_direct upperPositive realPositive)]
   rfl
 
 /-- The translated coordinate has doubled winding two along the positively oriented left box side under the stated
@@ -360,33 +365,33 @@ private theorem translated_left_winding_box
     (c : Gaussian.Basic.Canonical) {box : Box}
     (left : box.xLower < c.re)
     (below : box.yLower < c.im) (above : c.im < box.yUpper) :
-    (Purelib.Polynomial.Dense.Gaussian.Path.Box.Sides.verticalEdge
-      (Dense.Gaussian.Linear.Translated.translatedCoordinate c) box.xLower
+    (Path.Box.Sides.verticalEdge
+      (Linear.Translated.translatedCoordinate c) box.xLower
       box.yUpper box.yLower).doubledWinding = 2 := open Purelib in by
   rw [PolynomialEdge.doubledWinding,
-    Dense.Gaussian.Path.Box.Translated.translated_vertical_real,
-      Dense.Gaussian.Path.Box.Translated.translated_vertical_imag]
-  change Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2 (Dense.Rational.Constants.RawLinear.rawConstant (box.xLower
+    Path.Box.Translated.translated_vertical_real,
+      Path.Box.Translated.translated_vertical_imag]
+  change CauchyIndex.Basic.Sturm.cauchyIndex2 (Constants.RawLinear.rawConstant (box.xLower
     - c.re))
-    (Dense.Rational.Linear.Translated.affineVariable c.im) box.yUpper box.yLower = 2
+    (Linear.Translated.affineVariable c.im) box.yUpper box.yLower = 2
   have realNonzero : box.xLower - c.re ≠ 0 :=
-    (Fraction.Order.Arithmetic.sub_neg_direct left).ne
-  rw [Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2,
-    Dense.Rational.SignedRemainder.Linear.Translated.signedChain_affineVariable_rawConstant realNonzero]
-  simp only [Dense.Rational.SignedRemainder.Variation.Sturm.endpointVariation2, List.map_cons, List.map_nil,
-    Dense.Rational.Constants.RawLinear.rawConstant_eval, Dense.Rational.Linear.Translated.affineVariable_eval,
-      Data.Rat.Sign.Variation.variation2]
+    (Arithmetic.sub_neg_direct left).ne
+  rw [CauchyIndex.Basic.Sturm.cauchyIndex2,
+    Linear.Translated.signedChain_affineVariable_rawConstant realNonzero]
+  simp only [Variation.Sturm.endpointVariation2, List.map_cons, List.map_nil,
+    Constants.RawLinear.rawConstant_eval, Linear.Translated.affineVariable_eval,
+      Sign.Variation.variation2]
   have realNegative : box.xLower - c.re < 0 :=
-    Fraction.Order.Arithmetic.sub_neg_direct left
+    Arithmetic.sub_neg_direct left
   have lowerNegative : box.yLower - c.im < 0 :=
-    Fraction.Order.Arithmetic.sub_neg_direct below
+    Arithmetic.sub_neg_direct below
   have upperPositive : 0 < box.yUpper - c.im :=
-    Fraction.Order.Arithmetic.sub_pos_direct above
-  rw [Data.Rat.Sign.Jump.signJump_eq_two_of_mul_neg
-      (Fraction.Order.Arithmetic.mul_neg_of_pos_of_neg_direct
+    Arithmetic.sub_pos_direct above
+  rw [Sign.Jump.signJump_eq_two_of_mul_neg
+      (Arithmetic.mul_neg_of_pos_of_neg_direct
         upperPositive realNegative),
-    Data.Rat.Sign.Jump.signJump_eq_zero_of_mul_pos
-      (Fraction.Order.Arithmetic.mul_pos_of_neg_of_neg_direct
+    Sign.Jump.signJump_eq_zero_of_mul_pos
+      (Arithmetic.mul_pos_of_neg_of_neg_direct
         lowerNegative realNegative)]
   rfl
 
@@ -399,9 +404,9 @@ theorem quadrupledBoxWinding_translatedCoordinate
     (c : Gaussian.Basic.Canonical) {box : Box}
     (left : box.xLower < c.re) (right : c.re < box.xUpper)
     (below : box.yLower < c.im) (above : c.im < box.yUpper) :
-    Winding.Box.Basic.quadrupledBoxWinding (Dense.Gaussian.Linear.Translated.translatedCoordinate c) box = 4 :=
+    Basic.quadrupledBoxWinding (Linear.Translated.translatedCoordinate c) box = 4 :=
       by
-  rw [Winding.Box.Basic.quadrupledBoxWinding_eq,
+  rw [Basic.quadrupledBoxWinding_eq,
     translated_bottom_winding_box c left right below,
     translated_right_winding_box c right below above,
     translated_top_winding_box c left right above,
@@ -414,9 +419,9 @@ The same displayed rectangle and affine coefficient inputs determine the four or
 product and boundary certificates preserve those readings. -/
 theorem quadrupledBoxWinding_translatedCoordinate_centeredSquare
     (c : Gaussian.Basic.Canonical) {r : Fraction.Rational} (positive : 0 < r) :
-    Winding.Box.Basic.quadrupledBoxWinding (Dense.Gaussian.Linear.Translated.translatedCoordinate c)
+    Basic.quadrupledBoxWinding (Linear.Translated.translatedCoordinate c)
       (Box.Square.Centered.Affine.centeredSquare c r positive.le) = 4 := by
-  rw [Winding.Box.Basic.quadrupledBoxWinding_eq]
+  rw [Basic.quadrupledBoxWinding_eq]
   dsimp only [Box.Square.Centered.Affine.centeredSquare]
   rw [translated_bottom_winding c positive,
     translated_right_winding c positive,
@@ -432,16 +437,16 @@ theorem quadrupledBoxWinding_affineCoordinate
     {s : Gaussian.Basic.Canonical} (slopeNonzero : s ≠ 0) (c : Gaussian.Basic.Canonical) {box : Box}
     (left : box.xLower < c.re) (right : c.re < box.xUpper)
     (below : box.yLower < c.im) (above : c.im < box.yUpper) :
-    Winding.Box.Basic.quadrupledBoxWinding (Dense.Gaussian.Linear.Affine.affineCoordinate s c) box = 4 := by
+    Basic.quadrupledBoxWinding (Linear.Affine.affineCoordinate s c) box = 4 := by
   have proper : box.Proper :=
     ⟨left.trans right, below.trans above⟩
   have product :=
-    Winding.Box.Product.quadrupledBoxWinding_mul_of_boundaryClearances
-      (Dense.Gaussian.Constants.gaussianConstant s) (Dense.Gaussian.Linear.Translated.translatedCoordinate c) box
+    Product.quadrupledBoxWinding_mul_of_boundaryClearances
+      (Constants.gaussianConstant s) (Linear.Translated.translatedCoordinate c) box
         proper
       (Clearance.Box.Boundary.Constant.gaussianConstant_boundaryClearance slopeNonzero box)
       (Clearance.Box.Boundary.Translated.Affine.translatedCoordinate_boundaryClearanceBox c left right below above)
-  rw [Winding.Box.Constant.quadrupledBoxWinding_gaussianConstant slopeNonzero,
+  rw [Constant.quadrupledBoxWinding_gaussianConstant slopeNonzero,
     quadrupledBoxWinding_translatedCoordinate c left right below above]
     at product
   exact product
@@ -453,15 +458,15 @@ product and boundary certificates preserve those readings. -/
 theorem quadrupledBoxWinding_affineCoordinate_centeredSquare
     {s : Gaussian.Basic.Canonical} (slopeNonzero : s ≠ 0) (c : Gaussian.Basic.Canonical)
     {r : Fraction.Rational} (positive : 0 < r) :
-    Winding.Box.Basic.quadrupledBoxWinding (Dense.Gaussian.Linear.Affine.affineCoordinate s c)
+    Basic.quadrupledBoxWinding (Linear.Affine.affineCoordinate s c)
       (Box.Square.Centered.Affine.centeredSquare c r positive.le) = 4 := by
   have product :=
-    Winding.Box.Product.quadrupledBoxWinding_mul_of_boundaryClearances
-      (Dense.Gaussian.Constants.gaussianConstant s) (Dense.Gaussian.Linear.Translated.translatedCoordinate c)
+    Product.quadrupledBoxWinding_mul_of_boundaryClearances
+      (Constants.gaussianConstant s) (Linear.Translated.translatedCoordinate c)
       (Box.Square.Centered.Affine.centeredSquare c r positive.le) (Box.Square.Centered.centeredSquare_proper c positive)
       (Clearance.Box.Boundary.Constant.gaussianConstant_boundaryClearance slopeNonzero _)
       (Clearance.Box.Boundary.Translated.translatedCoordinate_boundaryClearance c positive)
-  rw [Winding.Box.Constant.quadrupledBoxWinding_gaussianConstant slopeNonzero,
+  rw [Constant.quadrupledBoxWinding_gaussianConstant slopeNonzero,
     quadrupledBoxWinding_translatedCoordinate_centeredSquare c positive]
     at product
   exact product

@@ -1,0 +1,348 @@
+module
+import TestPurelib.Integration.Cell.Source
+import TestPurelib.Integration.Cell.Numerical
+import TestPurelib.Integration.Cell.Numerical.Refinement
+import TestPurelib.Approximation.Gaussian.Provenance.Rational
+import TestPurelib.Approximation.Gaussian.Process.Coordinate
+import TestPurelib.Integration.Exponential.Real
+import TestPurelib.Integration.Cell.Source.Exceptional.Piecewise
+import TestPurelib.Integration.Polynomial.Rational.Continuous.Model
+import TestPurelib.Approximation.Rational.Segment.Increment
+import TestPurelib.Approximation.Rational.Pi.Source
+import TestPurelib.Integration.Exponential.Program.Source
+import TestPurelib.Integration.Exponential.Program.Source.Numerical
+import TestPurelib.Integration.Polynomial.Gaussian.Partition.Continuous
+import TestPurelib.Approximation.Queries.Adaptive
+import TestPurelib.Approximation.Gaussian.Acquisition.Automation
+import TestPurelib.Approximation.Gaussian.Division.Bounded
+import TestPurelib.Curves.Legendre.Acquisition.Words
+import TestPurelib.Integration.Polynomial.Gaussian.Partition
+import TestPurelib.Integration.Polynomial.Rational.Continuous
+import TestPurelib.Integration.Polynomial.Rational.Continuous.Affine
+import TestPurelib.Integration.Partition.Exceptional
+import TestPurelib.Integration.Partition.Initial
+import TestPurelib.Integration.Cell.Source.Exceptional
+import TestPurelib.Integration.Cell.Source.Affine
+import TestPurelib.Integration.Step.Reciprocal
+import TestPurelib.Integration.Program.Gaussian.CCL.Replay.Controller
+import TestPurelib.Integration.Program.Gaussian.CCL.Replay.Program
+import TestPurelib.Integration.Program.Gaussian.Cached.Policy
+import TestPurelib.Integration.Program.Gaussian.Schedule
+import TestPurelib.Integration.Program.Gaussian.CCL.Replay.Observation
+import TestPurelib.Integration.Program.Gaussian.Query.Chart
+import TestPurelib.Integration.Exponential.Program
+import TestPurelib.Calculus.Jet.Progressive.TraceProgram
+import TestPurelib.Approximation.Rational.SquareRoot.Radius.Scaled
+import TestPurelib.Geometry.Rotations.MinkowskiPublication
+import TestPurelib.Geometry.Rotations.EuclideanPublication
+import TestPurelib.Data.ByteArray.UTF8
+meta import TestPurelib.Meta.FunInfo
+import TestPurelib.Data.Json
+public import TestPurelib.Elab.ConstructiveInjectivity
+import TestPurelib.Elab.ConstructorContracts
+import TestPurelib.Elab.ConstructorExposure
+import TestPurelib.Elab.ConstructorContexts
+import TestPurelib.Elab.ConstructorNames
+import TestPurelib.Elab.ConstructorDomains
+public import TestPurelib.Geometry.CoordinateFormulas
+
+public import TestPurelib.Polynomial.ProgramContracts
+
+public import TestPurelib.Integration.CachedProgramContracts
+
+public import TestPurelib.LinearAlgebra.Gaussian.QuadraticForms
+
+public import TestPurelib.RootIsolation.SquareRoot.Preparation.Bank.Adaptive
+public import TestPurelib.Curves.Hyperelliptic.Integration.Preparation.Reports
+public import Purelib.Topology.Surface.Sewing.AreaChainTests
+public import TestPurelib.Topology.Cut.BoundaryContraction
+public import TestPurelib.Riemann.JoinedCenteredAreaTests
+public import TestPurelib.Integration.Path.RamifiedJoining
+public import TestPurelib.Topology.Surface.Sewing.Diagnostics
+public import TestPurelib.Riemann.PolynomialCurveTests
+public import TestPurelib.Riemann.PolynomialPeriodTests
+public import TestPurelib.LinearAlgebra.Matrix.Approximation.ScalarTailLower
+public import TestPurelib.Riemann.SquareFactorAccuracyTests
+public import TestPurelib.Riemann.SquareFactorCellTests
+public import TestPurelib.Riemann.SquareFactorInconclusiveTests
+public import TestPurelib.Riemann.SquareFactorObservationInputTests
+public import TestPurelib.Integration.Algebraic.SquareFactor.Transport
+import TestPurelib.Data.Nat.GCD
+import TestPurelib.Data.Nat.GCD.Scalar
+public import TestPurelib.Data.Rat.Fraction.Regression
+public import TestPurelib.Data.Gaussian.Regression
+import TestPurelib.Data.List.Membership
+import TestPurelib.Data.List.DependentProduct
+public import TestPurelib.Polynomial.Dense.Gaussian.Regression
+public import TestPurelib.Polynomial.Evaluation.Gaussian.NewtonResidual
+public import Purelib.LinearAlgebra.PolynomialMatrix.Inverse.Scaled.Replay
+
+public import TestPurelib.Geometry.Rotations.CoordinateRepresentations
+
+public import TestPurelib.Data.GaussianRepresentations
+
+import TestPurelib.Algebra.Power.Gaussian
+import TestPurelib.Approximation.Gaussian.AlgebraicRoots
+import TestPurelib.Approximation.Gaussian.CheckedExpression
+import TestPurelib.Approximation.Gaussian.Enclosure.Ball.Conjugation
+import TestPurelib.Approximation.Gaussian.Enclosure.Ball.Presentation
+import TestPurelib.Approximation.Gaussian.Grid.Nearest
+import TestPurelib.Approximation.Gaussian.Logarithm.ChartSafety
+import TestPurelib.Approximation.Gaussian.ResidualPower
+import TestPurelib.Approximation.Gaussian.SequenceSelection
+import TestPurelib.Approximation.Gaussian.TailSelection
+import TestPurelib.Curves.Hyperelliptic.Integration.SourceCache
+import TestPurelib.Curves.Legendre.PositivityAcquisition
+import TestPurelib.Curves.Legendre.PositivityObstructions
+import TestPurelib.Curves.Legendre.Separated
+import TestPurelib.Curves.Legendre.SignedAcquisition
+import TestPurelib.Curves.Legendre.SignedGap
+import TestPurelib.Data.Json.Number
+import TestPurelib.Data.String.Regression
+import TestPurelib.Integration.Circle
+import TestPurelib.Integration.Surface.Coercivity
+import TestPurelib.Measure.QuantileCongruenceCache
+import TestPurelib.NumberTheory.Approximation.Homography
+import TestPurelib.NumberTheory.Approximation.Publication
+import TestPurelib.Polynomial.ClearanceCover
+import TestPurelib.Polynomial.CompanionArithmetic
+import TestPurelib.Polynomial.ComputedAxisCofactors
+import TestPurelib.Polynomial.Enclosure
+import TestPurelib.Polynomial.DenseGaussianApproximation
+import TestPurelib.Polynomial.QuadraticBounds
+import TestPurelib.Polynomial.QuadraticSplit
+import TestPurelib.Riemann.Prepared.ModelProjections
+import TestPurelib.Riemann.Prepared.TraceCrop
+import TestPurelib.Polynomial.RecursiveArithmetic
+import TestPurelib.Polynomial.ResidualChannel
+import TestPurelib.Polynomial.RootLocalization
+import TestPurelib.Polynomial.UnaryResiduals
+import TestPurelib.Riemann.MultiplicityRootCache
+import TestPurelib.Riemann.MultiplicitySelection
+import TestPurelib.Riemann.RootArithmetic
+import TestPurelib.Riemann.RootPolynomial
+import TestPurelib.Riemann.RootComparison
+import TestPurelib.Riemann.RootStateCache
+import TestPurelib.Riemann.RootIdentification
+import TestPurelib.Riemann.RootLocalization
+import TestPurelib.Riemann.RootLocalizationRequest
+import TestPurelib.Riemann.RootOwnerPreparation
+import TestPurelib.Riemann.RootSelectionCheckpoint
+import TestPurelib.Riemann.RootTailSeparation
+import TestPurelib.Riemann.RootContinuation.Interior
+import TestPurelib.Riemann.RootContinuation.PowerInterior
+import TestPurelib.Riemann.RootContinuation.Expression
+import TestPurelib.Riemann.RootContinuation.Denominator.Compound
+import TestPurelib.Riemann.RootContinuation.Denominator.Trace
+import TestPurelib.Riemann.RootContinuation.Denominator.Trace.Occurrences
+import TestPurelib.Riemann.RootContinuation.PowerInteriorRuntime
+import TestPurelib.Riemann.RootContinuation.Denominator
+import TestPurelib.Approximation.Gaussian.Acquisition.Expression.Geometric
+import TestPurelib.Approximation.Gaussian.Geometric.Enclosure.Bounds
+import TestPurelib.Data.Gaussian.Inverse.Prepared
+import TestPurelib.Polynomial.Dense.Rational.Evaluation
+import TestPurelib.RootIsolation.Progressive.Power.Unit.Move.Interpolation
+import TestPurelib.Approximation.Gaussian.CheckedGeometric.Bounds
+import TestPurelib.Riemann.Prepared.SubdivisionProjections
+import TestPurelib.Riemann.Paths.PreparedRootChains
+import TestPurelib.Riemann.RootContinuation.SquareRootChannelOwnership
+import TestPurelib.Riemann.RootContinuation.CoordinateRootReference
+import TestPurelib.RootIsolation.MultiplicityRealization
+import TestPurelib.RootIsolation.Owner.Interpolation
+import TestPurelib.RootIsolation.ResidualAssignment
+import TestPurelib.RootIsolation.SquareRoot.LineClearance
+import TestPurelib.RootIsolation.SquareRoot.Newton
+import TestPurelib.RootIsolation.SquareRoot.Observation
+import TestPurelib.RootIsolation.SquareRoot.Sidecar
+import TestPurelib.Tactic.Omega
+import TestPurelib.Tactic.Ring
+
+import TestPurelib.Riemann.PreparedNormalizedEntry
+import TestPurelib.Riemann.PreparedObservationRequests
+import TestPurelib.Riemann.CheckedPreparationReports
+import TestPurelib.Riemann.Prepared.ParentRequests
+import TestPurelib.Riemann.Prepared.PathExecution
+import TestPurelib.Riemann.RectangularPrimitives
+import TestPurelib.Curves.Hyperelliptic.NormalizedCapLoop
+import TestPurelib.Curves.Hyperelliptic.NormalizedCapLoop.EvenNegative
+import TestPurelib.Curves.Hyperelliptic.ReadingInterfaces
+import TestPurelib.Curves.Hyperelliptic.OddPower
+import TestPurelib.Curves.Hyperelliptic.DifferentialReduction
+import TestPurelib.Curves.Hyperelliptic.InfinityCoefficients
+import TestPurelib.Curves.Hyperelliptic.Reciprocal
+import TestPurelib.Algebra.QuadraticPairGaussian
+import TestPurelib.Algebra.QuadraticPairNorm
+import TestPurelib.Algebra.QuadraticPairNormGaussian
+import TestPurelib.Algebra.QuadraticPairPreparation
+import TestPurelib.Algebra.QuadraticPairRealization
+import TestPurelib.Algebra.QuadraticPolynomial
+import TestPurelib.Algebra.QuadraticDifferentials
+import TestPurelib.Algebra.QuadraticPrimitive
+import TestPurelib.Integration.AlgebraicPrimitive
+import TestPurelib.Riemann.Normalization.Primitive
+import TestPurelib.Riemann.ParentRequestRows
+import TestPurelib.Riemann.PrimitiveOverlap
+import TestPurelib.Approximation.Gaussian.BindingAppend
+import TestPurelib.Approximation.Gaussian.ExpressionComparison
+import TestPurelib.Approximation.Gaussian.ExpressionCoordinates
+import TestPurelib.Approximation.Gaussian.ExpressionDistribution
+import TestPurelib.Approximation.Gaussian.ExpressionNormalization
+import TestPurelib.Approximation.Gaussian.ExpressionOwnerLinks
+import TestPurelib.Approximation.Gaussian.ExpressionPowerReduction
+import TestPurelib.Approximation.Gaussian.ExpressionRealization
+import TestPurelib.Approximation.Gaussian.ExpressionRebinding
+import TestPurelib.Approximation.Gaussian.FactorPreparation
+import TestPurelib.Approximation.Gaussian.OperationalCosts
+import TestPurelib.Approximation.Gaussian.OperationalEquivalence
+import TestPurelib.Approximation.Gaussian.Exponential.E
+import TestPurelib.Approximation.Gaussian.Constants
+import TestPurelib.Approximation.Gaussian.OperationalEquivalence.Algebraic
+import TestPurelib.Approximation.Gaussian.OperationalRebasing
+import TestPurelib.Approximation.Gaussian.TranslationRoundTrip
+import TestPurelib.Approximation.Gaussian.PowerFactorization
+import TestPurelib.Approximation.Gaussian.QuadraticAdmission
+import TestPurelib.Curves.Legendre.ParallelOddPowerReadback
+import TestPurelib.Curves.Legendre.ParallelOddPowerResidual
+import TestPurelib.Curves.Legendre.ParallelCoefficientRequests
+import TestPurelib.Curves.Legendre.ParallelScalarLayers
+import TestPurelib.Curves.Legendre.ParallelScalarRequests
+import TestPurelib.Curves.Legendre.ParallelParentSources
+import TestPurelib.Curves.Legendre.ParallelPrimitiveRequests
+import TestPurelib.Curves.Legendre.ParallelParentPoints
+import TestPurelib.Curves.Legendre.ParallelPrimitiveCover
+import TestPurelib.Curves.Legendre.PeriodSourcePrimitives
+import TestPurelib.Curves.Legendre.PeriodSourcePrograms
+import TestPurelib.Curves.Legendre.PeriodSourceParentCaches
+import TestPurelib.Curves.Legendre.CompositeAcquisition
+import TestPurelib.Curves.Legendre.Degeneration
+import TestPurelib.Curves.Legendre.Degeneration.DetourBuild
+import TestPurelib.Curves.Legendre.Degeneration.DetourContainment
+import TestPurelib.Curves.Legendre.Degeneration.DetourReference
+import TestPurelib.Curves.Legendre.Degeneration.DetourWords
+import TestPurelib.Curves.Legendre.Degeneration.DetourSource
+import TestPurelib.Curves.Legendre.Degeneration.DetourPeriods
+import TestPurelib.Curves.Legendre.Degeneration.DetourSigned
+import TestPurelib.Curves.Legendre.Degeneration.DetourStart
+import TestPurelib.Curves.Legendre.Degeneration.DetourWalks
+import TestPurelib.Curves.Legendre.UnitRoot
+import TestPurelib.Curves.Legendre.UnitTransport
+import TestPurelib.Curves.Legendre.UnitPreparedTransport
+import TestPurelib.Curves.Legendre.QuadraticPreparation
+import TestPurelib.Curves.Legendre.PrimitiveEndpoints
+import TestPurelib.Curves.Legendre.RegularCycle
+import TestPurelib.Curves.Legendre.PeriodRelations
+import TestPurelib.Curves.Legendre.VaryingBasepoint
+import TestPurelib.Curves.Legendre.RegularCycleResidual
+import TestPurelib.Curves.Legendre.RationalAcquisition
+import TestPurelib.Curves.Legendre.RationalSquareAcquisition
+import TestPurelib.Curves.Legendre.RationalWords
+import TestPurelib.Data.Rat.Fraction.Square
+import TestPurelib.Data.Rat.Rounding.Floor
+import TestPurelib.Polynomial.MultivariateDenotation
+import TestPurelib.Polynomial.MultivariateOperational
+import TestPurelib.Polynomial.MultivariatePowerCoordinates
+import TestPurelib.Polynomial.MultivariatePowerReduction
+import TestPurelib.Polynomial.MultivariateRealization
+import TestPurelib.Polynomial.MultivariateRenaming
+import TestPurelib.Polynomial.MultivariateSparse
+
+import TestPurelib.Data.Gaussian.Norm.Radial
+import TestPurelib.Data.List.Occurrences
+import TestPurelib.Geometry.Rational.Box.Separation
+import TestPurelib.LinearAlgebra.Matrix.Inverse.Scaled.Action
+import TestPurelib.LinearAlgebra.Matrix.NormalForm.Attempt
+import TestPurelib.LinearAlgebra.Matrix.Triangular
+import TestPurelib.Polynomial.Dense.Companion.Adjunction.Reading
+import TestPurelib.Polynomial.Dense.Companion.Reading
+import TestPurelib.Polynomial.Dense.Cyclic
+import TestPurelib.Polynomial.Dense.Derivative.Map
+import TestPurelib.Polynomial.Dense.Division.Synthetic.Replay
+import TestPurelib.Polynomial.Dense.Gaussian.Interpolation
+import TestPurelib.Polynomial.Dense.Gaussian.Interpolation.Schedule
+import TestPurelib.Polynomial.Dense.Gaussian.Multiplicity.Roots.Images.Product
+import TestPurelib.Polynomial.Dense.Gaussian.Multiplicity.Roots.Recurrence
+import TestPurelib.Polynomial.Dense.Multiplication
+import TestPurelib.Polynomial.Dense.Reflection
+import TestPurelib.Polynomial.Dense.Ring
+import TestPurelib.Polynomial.Dense.Roots.Product
+import TestPurelib.Polynomial.Dense.Roots.Tower.Reading
+import TestPurelib.Polynomial.Dense.Roots.Tower.Reading.Radial
+import TestPurelib.Polynomial.Dense.Roots.Tower.Reading.Realization.Roots
+import TestPurelib.Polynomial.Dense.Roots.Tower.Reading.Sources.Radial
+import TestPurelib.Polynomial.Dense.Roots.Units
+import TestPurelib.Polynomial.Dense.Roots.Word.Selection
+import TestPurelib.Polynomial.Laurent.Normalization
+import TestPurelib.Polynomial.Laurent.Transport
+import TestPurelib.Polynomial.Recurrence.Boundary
+import TestPurelib.Polynomial.Recurrence.Boundary.Constant
+import TestPurelib.Polynomial.Recurrence.Boundary.Hermite
+import TestPurelib.Polynomial.Recurrence.Boundary.NormalForm
+import TestPurelib.Polynomial.Recurrence.Mode.Bounds
+import TestPurelib.Polynomial.Recurrence.Mode.Hermite
+import TestPurelib.Polynomial.Recurrence.Mode.Hermite.Rectangle
+import TestPurelib.Polynomial.Recurrence.Mode.Reading
+import TestPurelib.Polynomial.Recurrence.Mode.Reading.Selected
+import TestPurelib.Polynomial.Recurrence.Reduction
+import TestPurelib.Polynomial.Recurrence.Ring
+import TestPurelib.Polynomial.Winding.Circle.Transport
+import TestPurelib.Polynomial.Grid.GapSelection
+import TestPurelib.RootIsolation.FTA.Squarefree
+import TestPurelib.RootIsolation.Multiplicity.Circle.Roots.Reading.Exact
+import TestPurelib.RootIsolation.Multiplicity.Circle.Roots.Reading.Modes
+import TestPurelib.RootIsolation.Multiplicity.Circle.Roots.Samples
+
+import TestPurelib.Approximation.Gaussian.Logarithm.TransitionComparison
+import TestPurelib.Approximation.Gaussian.Translation.CursorArithmetic
+import TestPurelib.Approximation.Rational.Grid.Unit
+import TestPurelib.Curves.Hyperelliptic.NormalizedCapLoop.ProgramDefaults
+import TestPurelib.Curves.Hyperelliptic.CanonicalWordReadings
+import TestPurelib.Curves.Legendre.ParameterChannels
+import TestPurelib.Curves.Legendre.Paths
+import TestPurelib.Curves.Legendre.Paths.AxisSegment
+import TestPurelib.Curves.Legendre.Paths.AxisSegment.Preparation
+import TestPurelib.Curves.Legendre.Paths.AxisSegment.Projection
+import TestPurelib.Curves.Legendre.Paths.AxisSegment.Projection.Crossing
+import TestPurelib.Curves.Legendre.Paths.AxisSegment.Projection.Restriction
+import TestPurelib.Curves.Legendre.Paths.AxisSegment.Projection.Separation
+import TestPurelib.Curves.Legendre.Paths.AxisSegment.Projection.Window
+import TestPurelib.Curves.Legendre.Paths.AxisSegment.Projection.Window.Bridges
+import TestPurelib.Curves.Legendre.Paths.AxisSegment.Projection.Window.Complement
+import TestPurelib.Curves.Legendre.Paths.AxisSegment.Projection.Window.Cover
+import TestPurelib.Curves.Legendre.Paths.AxisSegment.Projection.Window.Crossing
+import TestPurelib.Curves.Legendre.Paths.AxisSegment.Projection.Window.Height
+import TestPurelib.Curves.Legendre.Paths.AxisSegment.Projection.Window.Overlap
+import TestPurelib.Curves.Legendre.Paths.AxisSegment.Projection.Window.Stationary
+import TestPurelib.Curves.Legendre.Paths.AxisSegment.Window
+import TestPurelib.Curves.Legendre.Paths.Frame
+import TestPurelib.Curves.Legendre.Paths.Frame.Overlap
+import TestPurelib.Curves.Legendre.Paths.Owners
+import TestPurelib.Curves.Legendre.Paths.Path
+import TestPurelib.Curves.Legendre.Paths.Path.Refinement
+import TestPurelib.Curves.Legendre.Paths.Preparation
+import TestPurelib.Curves.Legendre.Paths.Projection
+import TestPurelib.Curves.Legendre.Paths.SafePath
+import TestPurelib.Curves.Legendre.Paths.SafePath.Preparation
+import TestPurelib.Curves.Legendre.PeriodVariation
+import TestPurelib.Curves.Legendre.PeriodVariation.Arithmetic.Reobservation
+import TestPurelib.Curves.Legendre.PeriodVariation.Bounds
+import TestPurelib.Curves.Legendre.PeriodVariation.Joint
+import TestPurelib.Curves.Legendre.PeriodVariation.Parallel
+import TestPurelib.Curves.Legendre.PeriodVariation.Reduction
+import TestPurelib.Curves.Legendre.PrimitiveRows
+import TestPurelib.Curves.Legendre.PrimitiveTaylor.Observation
+import TestPurelib.Curves.Legendre.ParallelPartitionFactory
+import TestPurelib.Curves.Legendre.SourceBlockRows
+import TestPurelib.Curves.Legendre.SourcePrimitiveComparison
+import TestPurelib.Curves.Legendre.TraceSourceLayers
+import TestPurelib.Geometry.Path.Gaussian.LiftedIncidence
+import TestPurelib.Geometry.Rational.Box.Outside.Separation
+import TestPurelib.Geometry.Rational.Box.Rotation
+import TestPurelib.Integration.Exponential.Comparison
+
+@[expose] public section
+
+/-!
+# Purelib regression tests
+
+Engineering and regression modules are built through the separate TestPurelib target.
+-/

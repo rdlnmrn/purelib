@@ -69,10 +69,10 @@ observation selection, the index bank includes every supplied face position. -/
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {faces : List (Meshes.PuncturedGridFaces.RegularFace
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {faces : List (Meshes.PuncturedGridFaces.RegularFace
       bank)}
 
 set_option genInjectivity false in
@@ -80,10 +80,10 @@ set_option genInjectivity false in
 
 Each bounded face position reads its own domain and retained observation
 mesh. The dependent vector keeps those nominal face and sheet owners. -/
-structure RegularMeshes (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces)
+structure RegularMeshes (domains : Face.DomainBanks.FaceDomainBank frames faces)
   (sheet : Fin 2) where
   /-- The actual dependent observation mesh for each original retained regular-face position. -/ entries :
-    Data.Vector.DependentVector (fun position : Fin faces.length =>
+    Vector.DependentVector (fun position : Fin faces.length =>
     Meshes.RectangularObservationMesh.ObservationMesh ((domains.get position).domain sheet).cuts
       faces[position.val].cell.box)
 
@@ -91,14 +91,14 @@ constructive_injectivity RegularMeshes
 
 namespace RegularMeshes
 
-variable {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces} {sheet : Fin 2}
+variable {domains : Face.DomainBanks.FaceDomainBank frames faces} {sheet : Fin 2}
 
 set_option genInjectivity false in
 /-- One finite cut bank covers every face and both sheet occurrences.
 
 The ordered list contains every rectangle-cut point at each bounded face
 and sheet index, retaining the original points and containment witnesses. -/
-structure CommonCuts (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces) where
+structure CommonCuts (domains : Face.DomainBanks.FaceDomainBank frames faces) where
   /-- The retained common finite point list covering all original face and sheet rectangle cuts. -/ points : List
     Gaussian.Basic.Canonical
   /-- Every actual rectangle-cut point of either original sheet occurs in the retained common list. -/ includes : ∀
@@ -108,8 +108,8 @@ structure CommonCuts (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBa
 constructive_injectivity CommonCuts
 
 /-- Collect the complete original rectangle-cut points of every retained face and both sheets. -/
-@[expose] def CommonCuts.build (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
-  faces) : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains :=
+@[expose] def CommonCuts.build (domains : Face.DomainBanks.FaceDomainBank frames
+  faces) : CommonCuts domains :=
   let points := (List.ofFn (fun position : Fin faces.length => position)).flatMap fun position =>
     (List.ofFn (fun sheet : Fin 2 => sheet)).flatMap fun sheet =>
       ((domains.get position).domain sheet).cuts.rectanglePoints faces[position.val].cell.box
@@ -118,112 +118,112 @@ constructive_injectivity CommonCuts
       ⟨sheet, Data.List.OfFn.Basic.mem_ofFn.mpr ⟨sheet, rfl⟩, member⟩⟩⟩
 
 /-- Construct every original whole-face mesh using one retained common cut bank and the supplied finite depth. -/
-@[expose] def build (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces) (cuts :
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains) (sheet : Fin 2) (depth : Nat)
-  : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains sheet :=
-  ⟨Data.Vector.DependentVector.ofFn fun position => Meshes.RectangularObservationMesh.ObservationMesh.build
+@[expose] def build (domains : Face.DomainBanks.FaceDomainBank frames faces) (cuts :
+  CommonCuts domains) (sheet : Fin 2) (depth : Nat)
+  : RegularMeshes domains sheet :=
+  ⟨Vector.DependentVector.ofFn fun position => Meshes.RectangularObservationMesh.ObservationMesh.build
     ((domains.get position).domain sheet).cuts faces[position.val].cell.box faces[position.val].cell.box_proper
     (fun _ inside => ((domains.get position).domain sheet).covers inside)
     cuts.points (cuts.includes position sheet) depth⟩
 
 /-- Each original constructed face mesh uses exactly the retained common point list. -/
-theorem build_points (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces) (cuts :
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains)
+theorem build_points (domains : Face.DomainBanks.FaceDomainBank frames faces) (cuts :
+  CommonCuts domains)
     (sheet : Fin 2) (depth : Nat) (position : Fin faces.length) :
-    ((Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet depth).entries.get
+    ((RegularMeshes.build domains cuts sheet depth).entries.get
       position).points = cuts.points := by
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build]
-  rw [Data.Vector.DependentVector.ofFn_get]
+  dsimp only [RegularMeshes.build]
+  rw [Vector.DependentVector.ofFn_get]
   rfl
 
 /-- Read the original constructed x intervals from the retained face bounds and common real-coordinate cuts. -/
-theorem build_x_intervals (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces)
-  (cuts : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains)
+theorem build_x_intervals (domains : Face.DomainBanks.FaceDomainBank frames faces)
+  (cuts : CommonCuts domains)
     (sheet : Fin 2) (depth : Nat) (position : Fin faces.length) :
-    ((Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet depth).entries.get
+    ((RegularMeshes.build domains cuts sheet depth).entries.get
       position).partition.x.intervals =
-      (Geometry.Rectangle.AxisPartition.build faces[position.val].cell.box.xLower
+      (Rectangle.AxisPartition.build faces[position.val].cell.box.xLower
         faces[position.val].cell.box.xUpper
         faces[position.val].cell.box_proper.1 (cuts.points.map (fun point => point.re))).intervals := by
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build]
-  rw [Data.Vector.DependentVector.ofFn_get]
+  dsimp only [RegularMeshes.build]
+  rw [Vector.DependentVector.ofFn_get]
   rfl
 
 /-- Read the original constructed y intervals from the retained face bounds and common imaginary-coordinate cuts. -/
-theorem build_y_intervals (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces)
-  (cuts : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains)
+theorem build_y_intervals (domains : Face.DomainBanks.FaceDomainBank frames faces)
+  (cuts : CommonCuts domains)
     (sheet : Fin 2) (depth : Nat) (position : Fin faces.length) :
-    ((Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet depth).entries.get
+    ((RegularMeshes.build domains cuts sheet depth).entries.get
       position).partition.y.intervals =
-      (Geometry.Rectangle.AxisPartition.build faces[position.val].cell.box.yLower
+      (Rectangle.AxisPartition.build faces[position.val].cell.box.yLower
         faces[position.val].cell.box.yUpper
         faces[position.val].cell.box_proper.2 (cuts.points.map (fun point => point.im))).intervals := by
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build]
-  rw [Data.Vector.DependentVector.ofFn_get]
+  dsimp only [RegularMeshes.build]
+  rw [Vector.DependentVector.ofFn_get]
   rfl
 
 /-- Equal original axis endpoints and the same cuts produce exactly equal finite interval lists. -/
 private theorem axis_intervals_eq {firstLower firstUpper lastLower lastUpper : Fraction.Rational}
     (firstProper : firstLower < firstUpper) (lastProper : lastLower < lastUpper)
     (lowerEq : firstLower = lastLower) (upperEq : firstUpper = lastUpper) (cuts : List Fraction.Rational) :
-    (Geometry.Rectangle.AxisPartition.build firstLower firstUpper firstProper cuts).intervals =
-      (Geometry.Rectangle.AxisPartition.build lastLower lastUpper lastProper cuts).intervals := by
+    (Rectangle.AxisPartition.build firstLower firstUpper firstProper cuts).intervals =
+      (Rectangle.AxisPartition.build lastLower lastUpper lastProper cuts).intervals := by
   cases lowerEq
   cases upperEq
   rfl
 
 /-- Original faces with equal horizontal bounds retain equal x interval lists across independent sheets and depths. -/
-theorem build_x_compatible (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces)
-  (cuts : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains)
+theorem build_x_compatible (domains : Face.DomainBanks.FaceDomainBank frames faces)
+  (cuts : CommonCuts domains)
     (firstSheet lastSheet : Fin 2) (firstDepth lastDepth : Nat) (first last : Fin faces.length)
     (lowerEq : faces[first.val].cell.box.xLower = faces[last.val].cell.box.xLower)
     (upperEq : faces[first.val].cell.box.xUpper = faces[last.val].cell.box.xUpper) :
-    ((Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts firstSheet
+    ((RegularMeshes.build domains cuts firstSheet
       firstDepth).entries.get first).partition.x.intervals =
-      ((Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts lastSheet
+      ((RegularMeshes.build domains cuts lastSheet
         lastDepth).entries.get last).partition.x.intervals := by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build_x_intervals,
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build_x_intervals]
-  exact Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.axis_intervals_eq _ _ lowerEq upperEq _
+  rw [RegularMeshes.build_x_intervals,
+    RegularMeshes.build_x_intervals]
+  exact RegularMeshes.axis_intervals_eq _ _ lowerEq upperEq _
 
 /-- Original faces with equal vertical bounds retain equal y interval lists across independent sheets and depths. -/
-theorem build_y_compatible (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces)
-  (cuts : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains)
+theorem build_y_compatible (domains : Face.DomainBanks.FaceDomainBank frames faces)
+  (cuts : CommonCuts domains)
     (firstSheet lastSheet : Fin 2) (firstDepth lastDepth : Nat) (first last : Fin faces.length)
     (lowerEq : faces[first.val].cell.box.yLower = faces[last.val].cell.box.yLower)
     (upperEq : faces[first.val].cell.box.yUpper = faces[last.val].cell.box.yUpper) :
-    ((Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts firstSheet
+    ((RegularMeshes.build domains cuts firstSheet
       firstDepth).entries.get first).partition.y.intervals =
-      ((Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts lastSheet
+      ((RegularMeshes.build domains cuts lastSheet
         lastDepth).entries.get last).partition.y.intervals := by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build_y_intervals,
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build_y_intervals]
-  exact Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.axis_intervals_eq _ _ lowerEq upperEq _
+  rw [RegularMeshes.build_y_intervals,
+    RegularMeshes.build_y_intervals]
+  exact RegularMeshes.axis_intervals_eq _ _ lowerEq upperEq _
 
 /-- The dependent bank of deferred energy preparations for every original retained face domain. -/
-abbrev Preflights (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces) (sheet :
+abbrev Preflights (domains : Face.DomainBanks.FaceDomainBank frames faces) (sheet :
   Fin 2) :=
-  Data.Vector.DependentVector (fun position : Fin faces.length => Thunk
-    (Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight ((domains.get position).domain sheet)))
+  Vector.DependentVector (fun position : Fin faces.length => Thunk
+    (DomainBasisBounds.EnergyPreflight ((domains.get position).domain sheet)))
 
 /-- Store one deferred original energy preparation for every retained face and selected sheet. -/
-@[expose] def preflights (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces)
-  (sheet : Fin 2) : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet :=
-  Data.Vector.DependentVector.ofFn fun position => ⟨fun _ =>
-    Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight.build ((domains.get position).domain sheet)⟩
+@[expose] def preflights (domains : Face.DomainBanks.FaceDomainBank frames faces)
+  (sheet : Fin 2) : Preflights domains sheet :=
+  Vector.DependentVector.ofFn fun position => ⟨fun _ =>
+    DomainBasisBounds.EnergyPreflight.build ((domains.get position).domain sheet)⟩
 
 /-- The original dependent primitive bank for every standard differential at one retained stage. -/
-abbrev Numerics (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces) (stage :
+abbrev Numerics (domains : Face.DomainBanks.FaceDomainBank frames faces) (stage :
   Nat) :=
-  Data.Vector.DependentVector (fun row : Fin genus =>
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank (Periods.PeriodMatrix.standardDifferential
+  Vector.DependentVector (fun row : Fin genus =>
+    Face.PrimitiveData.FacePrimitiveBank (Periods.PeriodMatrix.standardDifferential
     row) stage domains)
 
 /-- Read the original cached standard-differential data at the supplied face position and sheet. -/
 @[expose] def Numerics.atDomain {stage : Nat} (cache :
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage) (position : Fin
+  Numerics domains stage) (position : Fin
   faces.length) (sheet : Fin 2)
-    (row : Fin genus) : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives ((domains.get
+    (row : Fin genus) : Face.PrimitiveData.DomainPrimitives ((domains.get
       position).domain sheet) (Periods.PeriodMatrix.standardDifferential row) stage :=
   ((cache.get row).get position).atSheet sheet
 
@@ -232,38 +232,38 @@ set_option genInjectivity false in
 
 Each mesh occurrence reads the same indexed numerical bank. Its dependent
 entry preserves the original domain, sheet and cached basis values. -/
-structure Samples (meshes : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains sheet) {stage :
-  Nat} (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage) where
+structure Samples (meshes : RegularMeshes domains sheet) {stage :
+  Nat} (cache : Numerics domains stage) where
   /-- The original dependent basis readings for the exact retained face meshes and numerical bank. -/ readings :
-    Data.Vector.DependentVector (fun position : Fin faces.length =>
-    Hyperelliptic.Meshes.PuncturedGrid.DomainBasisEnergy.BasisReadings (cache.atDomain position sheet)
+    Vector.DependentVector (fun position : Fin faces.length =>
+    DomainBasisEnergy.BasisReadings (cache.atDomain position sheet)
       (meshes.entries.get position).surface)
 
 constructive_injectivity Samples
 
 /-- Construct all retained face-basis readings from the supplied original numerical bank. -/
-@[expose] def Samples.ofNumerics (meshes : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains
-  sheet) {stage : Nat} (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains
+@[expose] def Samples.ofNumerics (meshes : RegularMeshes domains
+  sheet) {stage : Nat} (cache : Numerics domains
   stage) :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Samples meshes cache :=
-  ⟨Data.Vector.DependentVector.ofFn fun position =>
-    Hyperelliptic.Meshes.PuncturedGrid.DomainBasisEnergy.BasisReadings.build
+    Samples meshes cache :=
+  ⟨Vector.DependentVector.ofFn fun position =>
+    DomainBasisEnergy.BasisReadings.build
     (cache.atDomain position sheet) (meshes.entries.get position).surface⟩
 
 set_option genInjectivity false in
 /-- Count-paid energy requests for every original whole-face mesh.
 
 Retain the original per-face preparations and a stage sufficient for every actual model request. -/
-structure Request (coarse : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains sheet) (fixed :
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet) (target :
+structure Request (coarse : RegularMeshes domains sheet) (fixed :
+  Preflights domains sheet) (target :
   Fraction.Rational) where
   /-- The retained energy allowance paid separately for each original face. -/ perFace : Fraction.Rational
   /-- The original per-face energy allowance is strictly positive. -/ positive : 0 < perFace
   /-- The original face count times the retained allowance is strictly below the requested total. -/ paid :
     (faces.length : Fraction.Rational) * perFace < target
   /-- The actual dependent original energy requests for all retained coarse face meshes. -/ entries :
-    Data.Vector.DependentVector (fun position : Fin faces.length =>
-    Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest (fixed.get position).get (coarse.entries.get
+    Vector.DependentVector (fun position : Fin faces.length =>
+    DomainEnergyRequest.EnergyRequest (fixed.get position).get (coarse.entries.get
       position) perFace)
   /-- The shared sufficient numerical stage for every original face model request. -/ index : Nat
   /-- Every actual retained model-request stage is at most the original common floor. -/ index_ge : ∀ position,
@@ -273,24 +273,24 @@ constructive_injectivity Request
 
 namespace Request
 
-variable {coarse : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains sheet}
-  {fixed : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
+variable {coarse : RegularMeshes domains sheet}
+  {fixed : Preflights domains sheet}
   {target : Fraction.Rational}
 
 /-- Prepare the original per-face energy requests at a count-paid positive allowance and retain their maximum model
 stage. -/
-@[expose] def build (coarse : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains sheet) (fixed
-  : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet)
+@[expose] def build (coarse : RegularMeshes domains sheet) (fixed
+  : Preflights domains sheet)
     (target : Fraction.Rational) (positive : 0 < target) :
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request coarse fixed target := by
+      Request coarse fixed target := by
   let count := Rational.Budget.Aggregate.countCoordinate faces.length
   have countEq : count = (faces.length : Fraction.Rational) := Rational.Budget.Aggregate.countCoordinate_eq _
   have countNonnegative : 0 ≤ count :=
     (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le faces.length)).trans_eq countEq.symm
   let perFace := Rational.Budget.Weighted.allowance target count
   have perFacePositive : 0 < perFace := Rational.Budget.Weighted.allowance_positive positive countNonnegative
-  let entries := Data.Vector.DependentVector.ofFn fun position =>
-    Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest.build (fixed.get position).get
+  let entries := Vector.DependentVector.ofFn fun position =>
+    DomainEnergyRequest.EnergyRequest.build (fixed.get position).get
       (coarse.entries.get position) perFace perFacePositive
   refine ⟨perFace, perFacePositive, ?_, entries,
     entries.maximum (fun _ request => request.modelRequest.index),
@@ -307,41 +307,41 @@ stage. -/
 
 /-- Reuse the retained per-face budgets at one common spatial depth, then
 select a numerical index covering all newly required owner-reading errors. -/
-@[expose] def atDepth (request : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request coarse
+@[expose] def atDepth (request : Request coarse
   fixed target) (depth : Nat)
     (later : ∀ position, (request.entries.get position).depth ≤ depth) :
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request coarse fixed target :=
-  let entries := Data.Vector.DependentVector.ofFn fun position =>
+      Request coarse fixed target :=
+  let entries := Vector.DependentVector.ofFn fun position =>
     (request.entries.get position).refineDepth depth (later position)
   let maximum := entries.maximum (fun _ entry => entry.modelRequest.index)
   { request with
     entries := entries
     index := max request.index maximum
     index_ge := fun position => (entries.get_le_maximum (fun _ entry => entry.modelRequest.index) position).trans
-      (Data.Nat.Order.le_max_right _ _) }
+      (Nat.Order.le_max_right _ _) }
 
 /-- Refining to a common depth sets every retained original face request to exactly that depth. -/
-theorem atDepth_entry_depth (request : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request
+theorem atDepth_entry_depth (request : Request
   coarse fixed target) (depth : Nat)
     (later : ∀ position, (request.entries.get position).depth ≤ depth) (position : Fin faces.length) :
     ((request.atDepth depth later).entries.get position).depth = depth := by
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request.atDepth]
-  rw [Data.Vector.DependentVector.ofFn_get]
+  dsimp only [Request.atDepth]
+  rw [Vector.DependentVector.ofFn_get]
   rfl
 
 /-- Read the actual refined face meshes retained by the original energy request bank. -/
-@[expose] def meshes (request : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request coarse
-  fixed target) : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains sheet :=
-  ⟨Data.Vector.DependentVector.ofFn fun position => (request.entries.get position).mesh⟩
+@[expose] def meshes (request : Request coarse
+  fixed target) : RegularMeshes domains sheet :=
+  ⟨Vector.DependentVector.ofFn fun position => (request.entries.get position).mesh⟩
 
 /-- Indexed lookup in the retained mesh bank returns the exact corresponding original request mesh. -/
-theorem mesh_eq (request : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request coarse fixed
+theorem mesh_eq (request : Request coarse fixed
   target) (position : Fin faces.length) :
-    request.meshes.entries.get position = (request.entries.get position).mesh := Data.Vector.DependentVector.ofFn_get _
+    request.meshes.entries.get position = (request.entries.get position).mesh := Vector.DependentVector.ofFn_get _
       position
 
 /-- Refine the original selected face request to the supplied stage above the retained shared floor. -/
-@[expose] def atStage (request : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request coarse
+@[expose] def atStage (request : Request coarse
   fixed target) (stage : Nat) (later : request.index ≤ stage)
     (position : Fin faces.length) :=
   (request.entries.get position).refineIndex stage ((request.index_ge position).trans later)

@@ -66,7 +66,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target radius : Rational}
@@ -87,8 +87,8 @@ set_option genInjectivity false in
 
 Each side retains its own exact classification, neighboring face and allocated request under the same original excision,
 trace owner and differential pair. -/
-structure InterfaceRow (excision : Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted) (traces :
-  Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request)
+structure InterfaceRow (excision : AllHoleExcision grid lifted) (traces :
+  PerimeterTraceBank request)
     (i j : Fin genus) (position : Fin grid.faces.regulars.length) where
   /-- The retained original bottom-side interface decision. -/ bottom : InterfaceDecision excision traces i j position
     .bottom
@@ -128,8 +128,8 @@ theorem index_le (row : InterfaceRow excision traces i j position) (side : GridS
 section
 open Purelib.Curves.Hyperelliptic
 /-- Classify all four original side neighbors and retain their exact interface decisions. -/
-@[expose] def build (excision : Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted) (traces :
-  Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request) (i j : Fin genus)
+@[expose] def build (excision : AllHoleExcision grid lifted) (traces :
+  PerimeterTraceBank request) (i j : Fin genus)
     (position : Fin grid.faces.regulars.length) (neighbors : PuncturedFaces.FaceNeighbors grid.faces
       (grid.faces.regulars[position.val]'position.isLt)) :
     InterfaceRow excision traces i j position :=
@@ -139,10 +139,10 @@ open Purelib.Curves.Hyperelliptic
     InterfaceDecision.build excision traces i j position .left neighbors.left⟩
 
 /-- Read the eight signed original side occurrences, with sheet zero followed by sheet one. -/
-@[expose] def values {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains
+@[expose] def values {stage : Nat} {cache : RegularMeshes.Numerics domains
   stage}
     (row : InterfaceRow excision traces i j position) (perimeters :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters (request := request) cache.normalize i j) : List
+      FacePerimeters (request := request) cache.normalize i j) : List
       Gaussian :=
   [row.bottom.value perimeters 0, row.right.value perimeters 0, -row.top.value perimeters 0, -row.left.value perimeters
     0,
@@ -150,10 +150,10 @@ open Purelib.Curves.Hyperelliptic
      1]
 
 /-- The original interface row contains exactly eight signed sheet-side occurrences. -/
-theorem values_length {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains
+theorem values_length {stage : Nat} {cache : RegularMeshes.Numerics domains
   stage}
     (row : InterfaceRow excision traces i j position) (perimeters :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters (request := request) cache.normalize i j) :
+      FacePerimeters (request := request) cache.normalize i j) :
     (row.values perimeters).length = 8 := rfl
 
 end
@@ -162,13 +162,13 @@ open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
 /-- A common bound for the four original decisions on both sheets bounds every signed row occurrence. -/
-theorem values_bound {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains
+theorem values_bound {stage : Nat} {cache : RegularMeshes.Numerics domains
   stage}
     (row : InterfaceRow excision traces i j position) (perimeters :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters (request := request) cache.normalize i j)
-    {bound : Fraction.Rational} (bounded : ∀ side sheet, Data.Gaussian.Norm.Basic.normSq ((row.sideDecision side).value
+      FacePerimeters (request := request) cache.normalize i j)
+    {bound : Rational} (bounded : ∀ side sheet, normSq ((row.sideDecision side).value
       perimeters sheet) ≤ bound) :
-    ∀ value ∈ row.values perimeters, Data.Gaussian.Norm.Basic.normSq value ≤ bound := by
+    ∀ value ∈ row.values perimeters, normSq value ≤ bound := by
   intro value member
   rcases Data.List.Membership.mem_cons.mp member with rfl | member
   · exact bounded .bottom 0
@@ -196,8 +196,8 @@ set_option genInjectivity false in
 /-- Dependent interface rows indexed by the original regular faces and a retained common stage.
 
 The bank preserves each exact face index and certifies that its cached common stage covers every original row. -/
-structure InterfaceBank (excision : Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted) (traces :
-  Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request) (i j : Fin genus) where
+structure InterfaceBank (excision : AllHoleExcision grid lifted) (traces :
+  PerimeterTraceBank request) (i j : Fin genus) where
   /-- The dependent cached interface rows at the exact original face indices. -/ rows : Vector.DependentVector
     (InterfaceRow excision traces i j)
   /-- The retained common stage for all original interface rows. -/ index : Nat
@@ -216,8 +216,8 @@ open Purelib.Data in
 
 Every row consumes the corresponding retained neighbor entry, preserving the original bounded face index and both
 differential owners. -/
-@[expose] def build (excision : Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted) (traces :
-  Meshes.PuncturedGrid.BandOccurrenceRequests.PerimeterTraceBank request) (i j : Fin genus)
+@[expose] def build (excision : AllHoleExcision grid lifted) (traces :
+  PerimeterTraceBank request) (i j : Fin genus)
     (neighbors : PuncturedFaces.NeighborBank grid.faces) : InterfaceBank excision traces i j :=
   let rows := Vector.DependentVector.ofFn (fun position => InterfaceRow.build excision traces i j position
     (neighbors.entries.get position))
@@ -226,18 +226,18 @@ differential owners. -/
 section
 open Purelib.Curves.Hyperelliptic
 /-- Flatten the exact cached rows in original bounded-face order, preserving all signed sheet-side occurrences. -/
-@[expose] def values {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains
+@[expose] def values {stage : Nat} {cache : RegularMeshes.Numerics domains
   stage}
     (bank : InterfaceBank excision traces i j) (perimeters :
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters
+        FacePerimeters
       (request := request) cache.normalize i j) : List Gaussian :=
   (List.finRange grid.faces.regulars.length).flatMap (fun p => (bank.rows.get p).values perimeters)
 
 /-- The retained bank contains eight signed occurrences per original regular face. -/
-theorem values_length {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains
+theorem values_length {stage : Nat} {cache : RegularMeshes.Numerics domains
   stage}
     (bank : InterfaceBank excision traces i j) (perimeters :
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters
+        FacePerimeters
       (request := request) cache.normalize i j) :
     (bank.values perimeters).length = 8 * grid.faces.regulars.length := by
   have count (positions : List (Fin grid.faces.regulars.length)) :
@@ -258,14 +258,14 @@ open Purelib.Data.Gaussian in
 open Purelib.Data.List in
 open Purelib.Data.Rat in
 /-- The common original face, side and sheet bound controls every occurrence in the retained bank. -/
-theorem values_bound {stage : Nat} {cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains
+theorem values_bound {stage : Nat} {cache : RegularMeshes.Numerics domains
   stage}
     (bank : InterfaceBank excision traces i j) (perimeters :
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters
+        FacePerimeters
       (request := request) cache.normalize i j)
-    {bound : Fraction.Rational} (bounded : ∀ position side sheet, Data.Gaussian.Norm.Basic.normSq (((bank.rows.get
+    {bound : Rational} (bounded : ∀ position side sheet, normSq (((bank.rows.get
       position).sideDecision side).value perimeters sheet) ≤ bound) :
-    ∀ value ∈ bank.values perimeters, Data.Gaussian.Norm.Basic.normSq value ≤ bound := by
+    ∀ value ∈ bank.values perimeters, normSq value ≤ bound := by
   intro value member
   obtain ⟨position, _, belongs⟩ := Flatten.mem_flatMap.mp member
   exact (bank.rows.get position).values_bound perimeters (bounded position) value belongs

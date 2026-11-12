@@ -4,6 +4,7 @@ import Purelib.Data.Gaussian.Basic
 import Purelib.Curves.Legendre.Paths
 public import Purelib.Curves.Legendre.PicardFuchs.Clearance
 public import Purelib.Curves.Legendre.PicardFuchs.Polynomials
+public import Purelib.Algebra.Quadratic.Pair.Polynomial.Derivative
 import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Polynomial.Dense.Gaussian.GCD
 import Mathlib.Algebra.Ring.Defs
@@ -153,6 +154,100 @@ def secondConnectionReduction (parameter :
   basisLinear := -parameter
   primitiveNumerator := Polynomials.secondPrimitivePolynomial parameter
   clearedIdentity := secondConnectionPolynomialIdentity parameter
+
+namespace ConnectionReduction
+
+open Purelib.Algebra.Quadratic.Pair.Polynomial (Expression)
+open Purelib.Polynomial.Dense
+open Purelib.Polynomial.Dense.Basic.DensePolynomial
+
+/-- The retained connection basis coefficients as one exact finite polynomial. -/
+def basisNumerator {parameter : Data.Gaussian.Basic.Canonical}
+    (reduction : ConnectionReduction parameter) :
+    Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial :=
+  ⟨[reduction.basisLinear, reduction.basisConstant]⟩
+
+/-- The basis polynomial reads back as the original constant and linear coefficients. -/
+theorem basisNumerator_eval {parameter : Data.Gaussian.Basic.Canonical}
+    (reduction : ConnectionReduction parameter) (point : Data.Gaussian.Basic.Canonical) :
+    reduction.basisNumerator.eval point = reduction.basisConstant + reduction.basisLinear * point := by
+  change (0 * point + reduction.basisLinear) * point + reduction.basisConstant = _
+  ring1
+
+/-- The exact parameter-derivative differential retains the original half-scaled numerator and original curve. -/
+def parameterDifferential {parameter : Data.Gaussian.Basic.Canonical}
+    (reduction : ConnectionReduction parameter) : Expression (Paths.polynomial parameter) :=
+  (Expression.oddReciprocal (Paths.polynomial parameter) 1 reduction.parameterDerivativeNumerator).scale
+    (constant (⟨1 / 2, 0⟩ : Data.Gaussian.Basic.Canonical))
+
+/-- The exact connection basis differential uses the retained original basis polynomial over the original sheet. -/
+def basisDifferential {parameter : Data.Gaussian.Basic.Canonical}
+    (reduction : ConnectionReduction parameter) : Expression (Paths.polynomial parameter) :=
+  Expression.oddReciprocal (Paths.polynomial parameter) 0 reduction.basisNumerator
+
+/-- The exact connection primitive retains the original stored numerator over the original sheet. -/
+def primitiveExpression {parameter : Data.Gaussian.Basic.Canonical}
+    (reduction : ConnectionReduction parameter) : Expression (Paths.polynomial parameter) :=
+  Expression.oddReciprocal (Paths.polynomial parameter) 0 reduction.primitiveNumerator
+
+/-- The exact spatial primitive differential is constructed by the shared odd-power calculus. -/
+def primitiveDifferential {parameter : Data.Gaussian.Basic.Canonical}
+    (reduction : ConnectionReduction parameter) : Expression (Paths.polynomial parameter) :=
+  Expression.oddPrimitiveDerivative (Paths.polynomial parameter) 0 reduction.primitiveNumerator
+
+/-- Formal differentiation of the retained original primitive gives the constructed primitive differential. -/
+theorem primitive_derivative {parameter : Data.Gaussian.Basic.Canonical}
+    (reduction : ConnectionReduction parameter) :
+    reduction.primitiveExpression.derivative.Equal reduction.primitiveDifferential :=
+  Expression.derivative_oddReciprocal _ _ _
+
+/-- A scalar cleared connection identity survives multiplication by the common odd-power denominator. -/
+private theorem connection_cross {D S B P R dR dP : Data.Gaussian.Basic.Canonical}
+    (cleared : D * S = 2 * B * P + 2 * dR * P - R * dP) :
+    D * ((⟨1 / 2, 0⟩ : Data.Gaussian.Basic.Canonical) * S) * (P * (2 * P ^ 2)) =
+      (2 * P ^ 2 * B + P * (2 * (P * dR) - R * dP)) * P ^ 2 := by
+  have halfTwice : (⟨1 / 2, 0⟩ : Data.Gaussian.Basic.Canonical) * 2 = 1 := by decide
+  calc
+    _ = (D * S) * P ^ 3 * ((⟨1 / 2, 0⟩ : Data.Gaussian.Basic.Canonical) * 2) := by ring1
+    _ = (D * S) * P ^ 3 := by rw [halfTwice, mul_one]
+    _ = (2 * B * P + 2 * dR * P - R * dP) * P ^ 3 := congrArg (fun value => value * P ^ 3) cleared
+    _ = _ := by ring1
+
+/-- The original denominator-scaled connection row is an exact coefficient identity with its retained primitive.
+
+The certificate is constructed from the reduction's actual polynomial data
+and the shared odd-power derivative formula. No period observation,
+quadrature schedule or caller-provided differential identity is needed. -/
+theorem differential_identity {parameter : Data.Gaussian.Basic.Canonical}
+    (reduction : ConnectionReduction parameter) :
+    (reduction.parameterDifferential.scale (constant (Clearance.connectionDenominator parameter))).Equal
+      (reduction.basisDifferential.add reduction.primitiveDifferential) := by
+  apply Expression.equal_of_cross_eval
+  · intro point
+    simp only [parameterDifferential, basisDifferential, primitiveDifferential,
+      Expression.scale, Expression.add, Expression.oddReciprocal, Expression.oddPrimitiveDerivative,
+      Purelib.Algebra.Quadratic.Pair.scale, Purelib.Algebra.Quadratic.Pair.add_re,
+      eval_mul, eval_add, eval_zero]
+    ring1
+  · intro point
+    have cleared := reduction.clearedIdentity point
+    rw [GCD.derivative, GCD.derivative] at cleared
+    rw [← reduction.basisNumerator_eval point] at cleared
+    simp only [parameterDifferential, basisDifferential, primitiveDifferential,
+      Expression.scale, Expression.add, Expression.oddReciprocal, Expression.oddPrimitiveDerivative,
+      Expression.oddPrimitiveNumerator, Purelib.Algebra.Quadratic.Pair.scale,
+      Purelib.Algebra.Quadratic.Pair.add_im, eval_mul, eval_add, eval_sub, eval_scale, eval_constant,
+      Power.eval_power, Nat.cast_zero, mul_zero, zero_add, one_mul, pow_one]
+    exact connection_cross
+      (D := Clearance.connectionDenominator parameter)
+      (S := reduction.parameterDerivativeNumerator.eval point)
+      (B := reduction.basisNumerator.eval point)
+      (P := (Paths.polynomial parameter).eval point)
+      (R := reduction.primitiveNumerator.eval point)
+      (dR := (Derivative.derivative reduction.primitiveNumerator).eval point)
+      (dP := (Derivative.derivative (Paths.polynomial parameter)).eval point) cleared
+
+end ConnectionReduction
 end Purelib.Curves.Legendre.PicardFuchs.Connection
 
 end

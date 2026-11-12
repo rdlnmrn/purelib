@@ -64,6 +64,8 @@ import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Topology.Surface.Sewing.SewingTree
 import Purelib.Tactic.Ring
 
+open Purelib.Topology.Surface.Sewing
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -97,21 +99,21 @@ open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
 open Purelib.Topology.Surface.Sewing.SewnPrimitiveFaces hiding Coordinate
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted}
+    PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted}
   {preparation : NewtonPreparation base.bank.toBranchCellBank} {target radius : Rational}
   {grid : NewtonGrid preparation target radius} {current : LiftedPuncturedGrid grid.punctured}
-  {index : Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
-  {outer : OriginalAnnularFaces grid index} {annulus : Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid
+  {index : Branches.BranchIsolation.Data.Index branches}
+  {outer : OriginalAnnularFaces grid index} {annulus : Annulus.Faces.AnnularFaces grid
     index}
-  {region : Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus current}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
-    {leftDifferential rightDifferential : Hyperelliptic.Differentials.Basic.Differential genus}
+  {region : Annulus.LiftedBoundary.Lifted annulus current}
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
+    {leftDifferential rightDifferential : Differentials.Basic.Differential genus}
   {geometry : IncludedHoleSewing bank grid.shrunk.included index domains leftDifferential}
-  {leftValues rightValues : Fin current.mesh.triangles.length → Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues
+  {leftValues rightValues : Fin current.mesh.triangles.length → PrimitiveSewing.PrimitiveValues
     3}
 
 set_option genInjectivity false in
@@ -119,12 +121,12 @@ set_option genInjectivity false in
 
 It retains the complete projected pairing, original occurrence readback and cached inner and selected region areas. -/
 structure ConjugateSample (balance : OriginalCutBalance outer region geometry left)
-    (right : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch rightValues)
-    (pair : Topology.Surface.Sewing.SewnConjugateSamples.ConjugatePair left right) where
+    (right : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch rightValues)
+    (pair : SewnConjugateSamples.ConjugatePair left right) where
   /-- The actual primitive sample on the complete original projected pairing. -/ pairing :
     Topology.Surface.Cut.PrimitiveJumps.ProjectedEdgePairing.PrimitiveSample balance.complete.pairing pair.values
   /-- The retained paired occurrence readback on the original hole word. -/ readback :
-    Integration.Path.PairedOccurrenceArea pair.values geometry.word.edges
+    Path.PairedOccurrenceArea pair.values geometry.word.edges
   /-- The cached original inner boundary area. -/ inner : Gaussian.Basic.Canonical
   /-- The inner area is exactly the value on the retained inner word. -/ inner_eq : inner = edgeListArea pair.values
     balance.inner.word.edges
@@ -136,19 +138,19 @@ constructive_injectivity ConjugateSample
 
 namespace ConjugateSample
 
-variable {left : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch leftValues}
-  {right : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch rightValues}
+variable {left : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch leftValues}
+  {right : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch rightValues}
   {balance : OriginalCutBalance outer region geometry left}
-  {pair : Topology.Surface.Sewing.SewnConjugateSamples.ConjugatePair left right}
+  {pair : SewnConjugateSamples.ConjugatePair left right}
 
 /-- Cache the original conjugate pairing, occurrence readback and both region areas without changing their cut owners.
 -/
 @[expose] def build (balance : OriginalCutBalance outer region geometry left)
-    (right : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch rightValues)
-    (pair : Topology.Surface.Sewing.SewnConjugateSamples.ConjugatePair left right) : ConjugateSample balance right pair
+    (right : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch rightValues)
+    (pair : SewnConjugateSamples.ConjugatePair left right) : ConjugateSample balance right pair
       :=
   ⟨Topology.Surface.Cut.PrimitiveJumps.ProjectedEdgePairing.PrimitiveSample.build balance.complete.pairing pair.values,
-    Integration.Path.PairedOccurrenceArea.build pair.values geometry.word.edges,
+    Path.PairedOccurrenceArea.build pair.values geometry.word.edges,
     edgeListArea pair.values balance.inner.word.edges, rfl,
     edgeListArea pair.values (balance.selected.triangles.flatMap OrientedTriangle.boundary), rfl⟩
 
@@ -180,30 +182,30 @@ erase the inner boundary or replace the doubled word by a single based lap. -/
 theorem canonical_accurate {leftFixed : FaceMagnitudeBank domains leftDifferential}
     {rightFixed : FaceMagnitudeBank domains rightDifferential} {error : Rational} {floor : Nat}
     (request : PairedRequest geometry leftFixed rightFixed error floor)
-    {stage : Nat} {leftBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank leftDifferential
+    {stage : Nat} {leftBank : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank leftDifferential
       stage domains}
-    {rightBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank rightDifferential stage
+    {rightBank : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank rightDifferential stage
       domains}
-    (leftReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh)
-      (rightReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings rightBank
+    (leftReadings : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh)
+      (rightReadings : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings rightBank
       current.mesh)
-    (leftSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch
+    (leftSurface : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch
       leftReadings.values)
-    (rightSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch
+    (rightSurface : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch
       rightReadings.values)
     {balance : OriginalCutBalance outer region geometry leftSurface}
-    (pair : Topology.Surface.Sewing.SewnConjugateSamples.ConjugatePair leftSurface rightSurface)
+    (pair : SewnConjugateSamples.ConjugatePair leftSurface rightSurface)
     (sample : ConjugateSample balance rightSurface pair) (later : request.index ≤ stage) :
     let walk := grid.shrunk.included.resplit (bank.rows.get index).boundary
       ((base.bank.cell index).anchor_mem (base.bank.cell_mem index))
-    Data.Gaussian.Norm.Basic.normSq (sample.area - sample.correction -
+    Gaussian.Norm.Basic.normSq (sample.area - sample.correction -
       Path.PairedIncrementArea.area ((current.edges.indexedEdges current.vertices (walk.append walk) 0).map (fun edge =>
-        (⟨Data.Gaussian.Basic.conj (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation
+        (⟨Gaussian.Basic.conj (PuncturedGrid.CanonicalEdgeValues.edgeValuation
           current.mesh leftReadings.values edge),
-          Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh rightReadings.values edge⟩ :
+          PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh rightReadings.values edge⟩ :
             PrimitivePoint)))) ≤ error := by
   rw [sample.corrected_area]
-  exact Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ConjugateHoleSewing.PairedRequest.conjugate_accurate
+  exact PuncturedGrid.Inclusion.ConjugateHoleSewing.PairedRequest.conjugate_accurate
     request leftReadings rightReadings leftSurface rightSurface pair sample.readback later
 
 end ConjugateSample

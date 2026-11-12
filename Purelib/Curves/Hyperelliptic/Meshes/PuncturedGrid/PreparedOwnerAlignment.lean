@@ -36,6 +36,7 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Riemann.Meshes.GridLiftedFaces
 import Purelib.Riemann.Paths.PreparedPathTrace
+import Purelib.Riemann.Paths.PreparedPathGluing
 import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.RootIsolation.SquareRoot.Grid.RootEdges
 import Purelib.Topology.Polygon.Stokes
@@ -144,6 +145,8 @@ end Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments
 
+open Purelib.Riemann
+
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 open _root_.Purelib.Polynomial.Geometry (ClearPath)
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
@@ -183,6 +186,53 @@ def OwnersAligned
       Nonempty (Gaussian.Equivalence.NamedEquivalent (ownerName owner) (ownerName (vertices.owner frames
         placement.indexed.start))) ∧ tail.OwnersAligned
 
+/-- The original assigned-segment alignment fold retains its actual final-owner alignment as well.
+
+The same cached edge transport supplies each intermediate sheet and the
+terminal sheet. The exact retained prepared tail is transported only by
+its original cached-owner equality; no query or selection is constructed.
+-/
+private theorem alignment_of_indexed
+    (mesh : LiftedMesh vertices edges faces) :
+    ∀ {start finish : Data.Gaussian.Basic.Canonical} (walk : Walks.Walk bank.grid start finish) (sheet : Fin 2)
+      (member : Polynomial.Geometry.Grid.FromStates.ContainsVertex bank.grid start) {owner : Owner
+        (curve.polynomial.eval start)}
+      {prepared : PreparedPath walk.path owner} {pieces : CoveredSegments prepared}
+      (assigned : PreparedFaceSegments.AssignedSegments mesh pieces),
+      assigned.indexed = edges.indexedEdges vertices walk sheet →
+      Nonempty (NamedEquivalent (ownerName owner) (ownerName ((frames.frameAt start member).owners sheet))) →
+      assigned.OwnersAligned ∧
+        ∀ last : Polynomial.Geometry.Grid.FromStates.ContainsVertex bank.grid finish,
+          Nonempty (NamedEquivalent (ownerName (Paths.PreparedPathGluing.finishOwner prepared))
+            (ownerName ((frames.frameAt finish last).owners
+              (EdgeBank.RootEdgeBank.target edges walk sheet)))) := by
+  intro start finish walk
+  induction walk with
+  | nil point =>
+      intro sheet member owner prepared pieces assigned equal initial
+      cases assigned
+      exact ⟨True.intro, fun _ => initial⟩
+  | cons edge tail ih =>
+      intro sheet member owner prepared pieces assigned equal initial
+      cases assigned with
+      | cons placement remaining =>
+          have headEq : placement.indexed = edges.indexedEdge vertices edge sheet := (List.cons.inj equal).1
+          have rest := ih ((edges.edge edge).forward.target sheet) edge.vertices.2 remaining
+            (List.cons.inj equal).2 (edges.coveredSegment_finish_aligned edge _ sheet initial)
+          constructor
+          · constructor
+            · rewrite [headEq]
+              change Nonempty (NamedEquivalent (ownerName owner)
+                (ownerName (vertices.owner frames (vertices.index _ edge.vertices.1 sheet))))
+              rewrite [VertexBank.ownerName_index]
+              exact initial
+            · exact rest.1
+          · intro last
+            obtain ⟨equivalent⟩ := rest.2 last
+            exact ⟨NamedEquivalent.transport
+              (congrArg ownerName (Paths.PreparedPathTrace.PreparedPath.castOwner_finishOwner _ _)).symm
+              rfl equivalent⟩
+
 /-- The agreement proof consumes the semantic cached-index equation, not the internals of the assignment constructor.
 Generated assignments satisfying that same equation have the identical owner guarantee. -/
 theorem
@@ -197,24 +247,29 @@ theorem
       Nonempty (Gaussian.Equivalence.NamedEquivalent (ownerName owner) (ownerName ((frames.frameAt start member).owners
         sheet))) →
       assigned.OwnersAligned := by
-  intro start finish walk
-  induction walk with
-  | nil point =>
-      intro sheet member owner prepared pieces assigned equal initial
-      cases assigned
-      trivial
-  | cons edge tail ih =>
-      intro sheet member owner prepared pieces assigned equal initial
-      cases assigned with
-      | cons placement remaining =>
-          have headEq : placement.indexed = edges.indexedEdge vertices edge sheet := (List.cons.inj equal).1
-          constructor
-          · rw [headEq]
-            change Nonempty (Gaussian.Equivalence.NamedEquivalent (ownerName owner)
-              (ownerName (vertices.owner frames (vertices.index _ edge.vertices.1 sheet))))
-            rw [VertexBank.ownerName_index]
-            exact initial
-          · exact ih ((edges.edge edge).forward.target sheet) edge.vertices.2 remaining
-              (List.cons.inj equal).2 (edges.coveredSegment_finish_aligned edge _ sheet initial)
+  intro start finish walk sheet member owner prepared pieces assigned equal initial
+  exact (alignment_of_indexed mesh walk sheet member assigned equal initial).1
+
+/-- The actual last prepared owner agrees with the exact target sheet of the original grid transport.
+
+The result follows the same retained assignment fold as the intermediate
+owner alignments. Both the actual prepared owner and the terminal frame
+owner remain in the statement; no new endpoint classification is needed.
+-/
+theorem finishAligned_of_indexed
+    (mesh : LiftedMesh vertices edges faces)
+    {start finish : Data.Gaussian.Basic.Canonical} (walk : Walks.Walk bank.grid start finish) (sheet : Fin 2)
+    (member : Polynomial.Geometry.Grid.FromStates.ContainsVertex bank.grid start)
+    (last : Polynomial.Geometry.Grid.FromStates.ContainsVertex bank.grid finish)
+    {owner : Owner (curve.polynomial.eval start)}
+    {prepared : PreparedPath walk.path owner} {pieces : CoveredSegments prepared}
+    (assigned : PreparedFaceSegments.AssignedSegments mesh pieces)
+    (equal : assigned.indexed = edges.indexedEdges vertices walk sheet)
+    (initial : Nonempty (NamedEquivalent (ownerName owner)
+      (ownerName ((frames.frameAt start member).owners sheet)))) :
+    Nonempty (NamedEquivalent (ownerName (Paths.PreparedPathGluing.finishOwner prepared))
+      (ownerName ((frames.frameAt finish last).owners
+        (EdgeBank.RootEdgeBank.target edges walk sheet)))) :=
+  (alignment_of_indexed mesh walk sheet member assigned equal initial).2 last
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments

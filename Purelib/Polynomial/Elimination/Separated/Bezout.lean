@@ -28,6 +28,9 @@ import Purelib.Polynomial.Dense.Bivariate.Gaussian.Reflection.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Bivariate.Gaussian
+open Purelib.Polynomial.Dense.Bivariate.Gaussian.Reflection.Basic
+
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 
 open Purelib.Data
@@ -59,7 +62,7 @@ The matrix has twice the source polynomial's degree, and the result retains the 
 def separatedData (p :
   CoefficientPolynomial) :=
   PolynomialMatrix.Inverse.Scaled.Compute.scaledInverseData
-    (p.natDegree + p.natDegree) (Elimination.Separated.Sylvester.separatedSylvester p)
+    (p.natDegree + p.natDegree) (Sylvester.separatedSylvester p)
 
 /-- The zero column index of the separated Sylvester matrix, justified by positive polynomial degree. -/
 def firstColumnIndex (p :
@@ -99,14 +102,14 @@ theorem separated_bezout_identity (p :
     (nonzero : p.isZero = false) (degreePositive : 0 < p.natDegree)
     (outer parameter : Gaussian.Basic.Canonical) :
     (leftCofactor p degreePositive parameter).eval outer *
-        Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected p) outer
+        Dense.Bivariate.Basic.eval (SeparatedVariables.reflected p) outer
           parameter +
       (rightCofactor p degreePositive parameter).eval outer *
-        Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.lifted p) outer parameter =
+        Dense.Bivariate.Basic.eval (Lift.SeparatedVariables.lifted p) outer parameter =
       (separatedData p).scalar.eval parameter := open Purelib.Algebra in by
   let size := p.natDegree + p.natDegree
   let matrix := PolynomialMatrix.Evaluation.evalMatrix parameter
-    (Elimination.Separated.Sylvester.separatedSylvester p)
+    (Sylvester.separatedSylvester p)
   let inverse := PolynomialMatrix.Evaluation.evalMatrix parameter
     (separatedData p).inverse
   let scalar := (separatedData p).scalar.eval parameter
@@ -118,7 +121,7 @@ theorem separated_bezout_identity (p :
     Data.Vector.Basic.vectorOfFn fun row => outer ^ (row : Nat)
   have inverseIdentity :=
     (PolynomialMatrix.Inverse.Scaled.Evaluation.scaledInverseData_spec parameter size
-      (Elimination.Separated.Sylvester.separatedSylvester p)).2
+      (Sylvester.separatedSylvester p)).2
   have matrixVectorIdentity :
       SquareMatrix.Multiplication.matrixVector matrix vector =
         Data.Vector.Basic.vectorOfFn fun row =>
@@ -130,14 +133,9 @@ theorem separated_bezout_identity (p :
     change SquareMatrix.Multiplication.mul matrix inverse row first =
       SquareMatrix.Multiplication.scaleIdentity scalar row first
       at entryIdentity
-    rw [SquareMatrix.Multiplication.mul,
-      SquareMatrix.matrixOfFn_apply,
-      SquareMatrix.Multiplication.scaleIdentity,
-      SquareMatrix.matrixOfFn_apply] at entryIdentity
-    rw [SquareMatrix.Multiplication.matrixVector,
-      Data.Vector.Basic.vectorOfFn_apply,
-      Data.Vector.Basic.vectorOfFn_apply]
-    exact entryIdentity
+    rw [Data.Vector.Basic.vectorOfFn_apply]
+    exact (SquareMatrix.Multiplication.matrixVector_column_eq_mul_apply matrix inverse row first).trans
+      (entryIdentity.trans (SquareMatrix.Multiplication.scaleIdentity_apply scalar row first))
   have weightedIdentity :
       FiniteSum.Fin.sumFin
           (fun row =>
@@ -163,16 +161,16 @@ theorem separated_bezout_identity (p :
     simp only [weights, first,
       Data.Vector.Basic.vectorOfFn_apply, firstColumnIndex]
     rw [pow_zero, mul_one]
-  have columnIdentity := Purelib.LinearAlgebra.Matrix.Gaussian.WeightedSum.weighted_matrixVector
+  have columnIdentity := SquareMatrix.Gaussian.WeightedSum.weighted_matrixVector
     matrix vector
     weights
   rw [weightedIdentity] at columnIdentity
   calc
     (leftCofactor p degreePositive parameter).eval outer *
-          Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected p) outer
+          Dense.Bivariate.Basic.eval (SeparatedVariables.reflected p) outer
             parameter +
         (rightCofactor p degreePositive parameter).eval outer *
-          Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.lifted p) outer parameter =
+          Dense.Bivariate.Basic.eval (Lift.SeparatedVariables.lifted p) outer parameter =
       FiniteSum.Fin.sumFin
         (fun column : Fin size =>
           FiniteSum.Fin.sumFin
@@ -188,11 +186,11 @@ theorem separated_bezout_identity (p :
                     (fun index =>
                       (outer ^ (index : Nat) *
                         Dense.Bivariate.Basic.eval
-                          (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected p)
+                          (SeparatedVariables.reflected p)
                           outer parameter) * vector (Fin.castAdd p.natDegree index))
                     (fun index =>
                       (outer ^ (index : Nat) *
-                        Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.lifted p)
+                        Dense.Bivariate.Basic.eval (Lift.SeparatedVariables.lifted p)
                           outer parameter) * vector
                             (Fin.natAdd p.natDegree index)) column)
                 (fun column => by
@@ -206,7 +204,7 @@ theorem separated_bezout_identity (p :
                               weights row) =
                         outer ^ (index : Nat) *
                           Dense.Bivariate.Basic.eval
-                            (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected p)
+                            (SeparatedVariables.reflected p)
                             outer parameter by
                           calc
                             FiniteSum.Fin.sumFin
@@ -217,7 +215,7 @@ theorem separated_bezout_identity (p :
                                 FiniteSum.Fin.sumFin
                                   (fun row : Fin size =>
                                     PolynomialMatrix.Evaluation.evalMatrix
-                                        parameter (Elimination.Separated.Sylvester.separatedSylvester p) row
+                                        parameter (Sylvester.separatedSylvester p) row
                                         (Fin.castAdd p.natDegree index) *
                                       outer ^ (row : Nat)) := by
                               apply FiniteSum.Fin.sumFin_congr
@@ -225,9 +223,9 @@ theorem separated_bezout_identity (p :
                               rw [Data.Vector.Basic.vectorOfFn_apply]
                             _ = outer ^ (index : Nat) *
                                   Dense.Bivariate.Basic.eval
-                                    (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected p)
+                                    (SeparatedVariables.reflected p)
                                     outer parameter :=
-                              Elimination.Separated.Sylvester.Evaluation.separatedLeftColumnPowerSum p nonzero
+                              Sylvester.Evaluation.separatedLeftColumnPowerSum p nonzero
                                 outer parameter index]
                   · simp only [Data.Fin.addCases_right]
                     rw [show
@@ -236,7 +234,7 @@ theorem separated_bezout_identity (p :
                             matrix row (Fin.natAdd p.natDegree index) *
                               weights row) =
                         outer ^ (index : Nat) *
-                          Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.lifted p)
+                          Dense.Bivariate.Basic.eval (Lift.SeparatedVariables.lifted p)
                             outer parameter by
                           calc
                             FiniteSum.Fin.sumFin
@@ -247,24 +245,24 @@ theorem separated_bezout_identity (p :
                                 FiniteSum.Fin.sumFin
                                   (fun row : Fin size =>
                                     PolynomialMatrix.Evaluation.evalMatrix
-                                        parameter (Elimination.Separated.Sylvester.separatedSylvester p) row
+                                        parameter (Sylvester.separatedSylvester p) row
                                         (Fin.natAdd p.natDegree index) *
                                       outer ^ (row : Nat)) := by
                               apply FiniteSum.Fin.sumFin_congr
                               intro row
                               rw [Data.Vector.Basic.vectorOfFn_apply]
                             _ = outer ^ (index : Nat) *
-                                  Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.lifted p)
+                                  Dense.Bivariate.Basic.eval (Lift.SeparatedVariables.lifted p)
                                     outer parameter :=
-                              Elimination.Separated.Sylvester.Evaluation.separatedRightColumnPowerSum p nonzero
+                              Sylvester.Evaluation.separatedRightColumnPowerSum p nonzero
                                 outer parameter index])]
-              rw [Purelib.Algebra.FiniteSum.Gaussian.sumFin_addCases]
+              rw [FiniteSum.Gaussian.sumFin_addCases]
               unfold leftCofactor rightCofactor
               rw [Dense.Gaussian.Ascending.eval_polynomialFromLow, Dense.Gaussian.Ascending.eval_polynomialFromLow]
               rw [FiniteSum.Fin.sumFin_congr
                 (left := fun index : Fin p.natDegree =>
                   (outer ^ (index : Nat) *
-                    Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected
+                    Dense.Bivariate.Basic.eval (SeparatedVariables.reflected
                       p)
                       outer parameter) *
                     vector (Fin.castAdd p.natDegree index))
@@ -273,7 +271,7 @@ theorem separated_bezout_identity (p :
                     (Fin.castAdd p.natDegree index)
                     (firstColumnIndex p degreePositive)).eval parameter *
                       outer ^ (index : Nat)) *
-                    Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected
+                    Dense.Bivariate.Basic.eval (SeparatedVariables.reflected
                       p)
                       outer parameter)
                 (fun index => by
@@ -285,7 +283,7 @@ theorem separated_bezout_identity (p :
               rw [FiniteSum.Fin.sumFin_congr
                 (left := fun index : Fin p.natDegree =>
                   (outer ^ (index : Nat) *
-                    Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.lifted p)
+                    Dense.Bivariate.Basic.eval (Lift.SeparatedVariables.lifted p)
                       outer parameter) *
                     vector (Fin.natAdd p.natDegree index))
                 (right := fun index : Fin p.natDegree =>
@@ -293,7 +291,7 @@ theorem separated_bezout_identity (p :
                     (Fin.natAdd p.natDegree index)
                     (firstColumnIndex p degreePositive)).eval parameter *
                       outer ^ (index : Nat)) *
-                    Dense.Bivariate.Basic.eval (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.lifted p)
+                    Dense.Bivariate.Basic.eval (Lift.SeparatedVariables.lifted p)
                       outer parameter)
                 (fun index => by
                   dsimp only [vector, inverse]

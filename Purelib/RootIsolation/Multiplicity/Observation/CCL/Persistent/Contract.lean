@@ -26,6 +26,8 @@ import Purelib.Geometry.Rational.Box.Bounds
 import Purelib.Geometry.Rational.Box.Refinement
 import Purelib.RootIsolation.Multiplicity.Observation.CCL.Name
 
+open Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis
+
 open Purelib
 
 open Purelib.Data
@@ -51,18 +53,18 @@ namespace Purelib.RootIsolation.Multiplicity.Observation.CCL.Persistent.Contract
 
 /-- A persistent site request extends the exact previously emitted CCL word. -/
 theorem observationPersistentRequest_word_extends
-    {source opposite : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    {input : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput source opposite}
-    {context : Dense.Gaussian.Multiplicity.Basis.Context.Basic.PositiveContext input.entries}
+    {source opposite : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {input : Coprime.Side.PositiveSideInput source opposite}
+    {context : Context.Basic.PositiveContext input.entries}
     (observation :
-      Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.FactorObservation input context)
-    (data : Multiplicity.Observation.CCL.Basic.ObservationCCL observation)
-    (index : Multiplicity.Observation.Index.ObservationIndex observation)
-    (current : Multiplicity.Observation.CCL.Persistent.Basic.ObservationPersistentState observation data index)
+      Coprime.Side.PositiveSideInput.FactorObservation input context)
+    (data : Basic.ObservationCCL observation)
+    (index : Index.ObservationIndex observation)
+    (current : Basic.ObservationPersistentState observation data index)
     (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (count : Nat) :
     current.cursor.machine.emitted.IsPrefix
-      (Multiplicity.Observation.CCL.Persistent.Request.observationPersistentRequest observation data index current
+      (Request.observationPersistentRequest observation data index current
         epsilon
         positive count).cursor.machine.emitted := by
   exact current.cursor.request_extends (epsilon ^ 2)
@@ -70,17 +72,17 @@ theorem observationPersistentRequest_word_extends
 
 /-- A persistent site request emits exactly the requested number of additional bits. -/
 theorem observationPersistentRequest_word_length
-    {source opposite : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    {input : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput source opposite}
-    {context : Dense.Gaussian.Multiplicity.Basis.Context.Basic.PositiveContext input.entries}
+    {source opposite : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {input : Coprime.Side.PositiveSideInput source opposite}
+    {context : Context.Basic.PositiveContext input.entries}
     (observation :
-      Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.FactorObservation input context)
-    (data : Multiplicity.Observation.CCL.Basic.ObservationCCL observation)
-    (index : Multiplicity.Observation.Index.ObservationIndex observation)
-    (current : Multiplicity.Observation.CCL.Persistent.Basic.ObservationPersistentState observation data index)
+      Coprime.Side.PositiveSideInput.FactorObservation input context)
+    (data : Basic.ObservationCCL observation)
+    (index : Index.ObservationIndex observation)
+    (current : Basic.ObservationPersistentState observation data index)
     (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (count : Nat) :
-    (Multiplicity.Observation.CCL.Persistent.Request.observationPersistentRequest observation data index current epsilon
+    (Request.observationPersistentRequest observation data index current epsilon
       positive count).cursor.machine.emitted.length =
         current.cursor.machine.emitted.length + count := by
   exact current.cursor.request_length (epsilon ^ 2)
@@ -89,21 +91,21 @@ theorem observationPersistentRequest_word_length
 /-- Uniform optional-box contract: exact rational sites remain exact, while
 higher sites return a box nested in the preceding displayed box. -/
 theorem observationPersistentRequest_box_refines
-    {source opposite : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    {input : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput source opposite}
-    {context : Dense.Gaussian.Multiplicity.Basis.Context.Basic.PositiveContext input.entries}
+    {source opposite : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {input : Coprime.Side.PositiveSideInput source opposite}
+    {context : Context.Basic.PositiveContext input.entries}
     (observation :
-      Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.FactorObservation input context)
-    (data : Multiplicity.Observation.CCL.Basic.ObservationCCL observation)
-    (index : Multiplicity.Observation.Index.ObservationIndex observation)
-    (current : Multiplicity.Observation.CCL.Persistent.Basic.ObservationPersistentState observation data index)
+      Coprime.Side.PositiveSideInput.FactorObservation input context)
+    (data : Basic.ObservationCCL observation)
+    (index : Index.ObservationIndex observation)
+    (current : Basic.ObservationPersistentState observation data index)
     (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (count : Nat) :
-    match Multiplicity.Observation.CCL.Numerical.observationNumericalBox? observation data index
-        (Multiplicity.Observation.CCL.Persistent.Request.observationPersistentRequest observation data index current
+    match Numerical.observationNumericalBox? observation data index
+        (Request.observationPersistentRequest observation data index current
           epsilon
           positive count).numerical,
-      Multiplicity.Observation.CCL.Numerical.observationNumericalBox? observation data index current.numerical with
+      Numerical.observationNumericalBox? observation data index current.numerical with
     | none, none => True
     | some inner, some outer => inner.Refines outer
     | none, some _ => False
@@ -115,18 +117,18 @@ theorem observationPersistentRequest_box_refines
 
 /-- Uniform optional-box accuracy contract. -/
 theorem observationPersistentRequest_box_accurate
-    {source opposite : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    {input : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput source opposite}
-    {context : Dense.Gaussian.Multiplicity.Basis.Context.Basic.PositiveContext input.entries}
+    {source opposite : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {input : Coprime.Side.PositiveSideInput source opposite}
+    {context : Context.Basic.PositiveContext input.entries}
     (observation :
-      Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.FactorObservation input context)
-    (data : Multiplicity.Observation.CCL.Basic.ObservationCCL observation)
-    (index : Multiplicity.Observation.Index.ObservationIndex observation)
-    (current : Multiplicity.Observation.CCL.Persistent.Basic.ObservationPersistentState observation data index)
+      Coprime.Side.PositiveSideInput.FactorObservation input context)
+    (data : Basic.ObservationCCL observation)
+    (index : Index.ObservationIndex observation)
+    (current : Basic.ObservationPersistentState observation data index)
     (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (count : Nat) :
-    match Multiplicity.Observation.CCL.Numerical.observationNumericalBox? observation data index
-      (Multiplicity.Observation.CCL.Persistent.Request.observationPersistentRequest observation data index current
+    match Numerical.observationNumericalBox? observation data index
+      (Request.observationPersistentRequest observation data index current
         epsilon
         positive count).numerical with
     | none => True
@@ -139,34 +141,34 @@ theorem observationPersistentRequest_box_accurate
 /-- Any two possible points in the requested CCL cylinder have squared chordal distance at most the squared requested
 tolerance. -/
 theorem observationPersistentRequest_cylinder_accurate
-    {source opposite : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    {input : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput source opposite}
-    {context : Dense.Gaussian.Multiplicity.Basis.Context.Basic.PositiveContext input.entries}
+    {source opposite : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {input : Coprime.Side.PositiveSideInput source opposite}
+    {context : Context.Basic.PositiveContext input.entries}
     (observation :
-      Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.FactorObservation input context)
-    (data : Multiplicity.Observation.CCL.Basic.ObservationCCL observation)
-    (index : Multiplicity.Observation.Index.ObservationIndex observation)
-    (current : Multiplicity.Observation.CCL.Persistent.Basic.ObservationPersistentState observation data index)
+      Coprime.Side.PositiveSideInput.FactorObservation input context)
+    (data : Basic.ObservationCCL observation)
+    (index : Index.ObservationIndex observation)
+    (current : Basic.ObservationPersistentState observation data index)
     (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (count : Nat)
     {left right : Gaussian.Basic.Canonical}
     (leftPossible :
-      Data.CCL.Transducer.Mode.Semantics.SemanticMode.possible
-        (Multiplicity.Observation.CCL.Persistent.Request.observationPersistentRequest observation data index current
+      CCL.Transducer.Mode.Semantics.SemanticMode.possible
+        (Request.observationPersistentRequest observation data index current
           epsilon
           positive count).cursor.machine.mode left)
     (rightPossible :
-      Data.CCL.Transducer.Mode.Semantics.SemanticMode.possible
-        (Multiplicity.Observation.CCL.Persistent.Request.observationPersistentRequest observation data index current
+      CCL.Transducer.Mode.Semantics.SemanticMode.possible
+        (Request.observationPersistentRequest observation data index current
           epsilon
           positive count).cursor.machine.mode right) :
     Geometry.Projective.Chordal.Basic.chordalSq
-        (Data.CCL.Progressive.Cursor.Image.Machine.image
-          (Multiplicity.Observation.CCL.Persistent.Request.observationPersistentRequest observation data index current
+        (CCL.Progressive.Cursor.Image.Machine.image
+          (Request.observationPersistentRequest observation data index current
             epsilon
             positive count).cursor.machine left)
-        (Data.CCL.Progressive.Cursor.Image.Machine.image
-          (Multiplicity.Observation.CCL.Persistent.Request.observationPersistentRequest observation data index current
+        (CCL.Progressive.Cursor.Image.Machine.image
+          (Request.observationPersistentRequest observation data index current
             epsilon
             positive count).cursor.machine right) ≤ epsilon ^ 2 := by
   exact current.cursor.request_pair_chordalSq_le (epsilon ^ 2)

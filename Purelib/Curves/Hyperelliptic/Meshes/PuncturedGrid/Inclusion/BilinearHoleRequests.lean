@@ -65,6 +65,8 @@ import Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! The paired area of the doubled original branch-cell contour. The cross
@@ -142,13 +144,13 @@ open Purelib.Data.Gaussian.Norm.Basic (normSq_neg)
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base next : FramedPuncturedGrid curve branches
     higher}
   {lifted : LiftedPuncturedGrid base} {current : LiftedPuncturedGrid next}
     {bank : BasedBranchBank
     lifted}
-  {included : Purelib.Polynomial.Geometry.Grid.Extension.CoordinateInclusion base.bank.grid next.bank.grid}
+  {included : Extension.CoordinateInclusion base.bank.grid next.bank.grid}
   {domains : FaceDomainBank current.frames
     next.faces.regulars} {leftDifferential rightDifferential :
     Differential genus}
@@ -156,14 +158,14 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 namespace BilinearHoleRequest
 
 /-- The original branch-cell boundary resplit on the retained enlarged grid. -/
-@[expose] def boundary (bank : LiftedPuncturedGrid.BasedBranchBank lifted) (included : Extension.CoordinateInclusion
+@[expose] def boundary (bank : BasedBranchBank lifted) (included : Extension.CoordinateInclusion
   base.bank.grid next.bank.grid)
     (branch : BranchIsolation.Data.Index branches) :=
   included.resplit (bank.rows.get branch).boundary ((base.bank.cell branch).anchor_mem (base.bank.cell_mem branch))
 
 /-- The paired edge-word total reads the actual word value of each differential. -/
-private theorem total_readback {count : Nat} (first second : Stokes.OrientedEdge count → Data.Gaussian.Basic.Canonical)
-  (word : List (Stokes.OrientedEdge count)) :
+private theorem total_readback {count : Nat} (first second : OrientedEdge count → Gaussian.Basic.Canonical)
+  (word : List (OrientedEdge count)) :
     PairedIncrementArea.total (word.map (fun edge => (⟨first edge, second edge⟩ : Stokes.PrimitivePoint))) =
       ⟨wordValue first word, SewingRetraction.wordValue second word⟩ := by
   induction word with
@@ -174,37 +176,37 @@ private theorem total_readback {count : Nat} (first second : Stokes.OrientedEdge
       rfl
 
 /-- The indexed walk value obeys the paid face magnitude bound scaled by its squared edge count. -/
-private theorem word_bound {differential : Differentials.Basic.Differential genus} (fixed :
-  MagnitudeBank.FaceMagnitudeBank domains differential)
-    {stage : Nat} {shared : PrimitiveData.FacePrimitiveBank differential stage domains} (readings :
-      TrianglePrimitiveReadings.TriangleReadings shared current.mesh)
-    (later : fixed.index ≤ stage) {start finish : Data.Gaussian.Basic.Canonical} (walk : Walks.Walk next.bank.grid start
+private theorem word_bound {differential : Differential genus} (fixed :
+  FaceMagnitudeBank domains differential)
+    {stage : Nat} {shared : FacePrimitiveBank differential stage domains} (readings :
+      TriangleReadings shared current.mesh)
+    (later : fixed.index ≤ stage) {start finish : Gaussian.Basic.Canonical} (walk : Walks.Walk next.bank.grid start
       finish) (sheet : Fin 2) :
-    Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation current.mesh
+    Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation current.mesh
       readings.values) (current.edges.indexedEdges current.vertices walk sheet)) ≤
-      (walk.edgeCount : Fraction.Rational)^2 * (4 * fixed.bound) := by
-  let retainedMagnitude := Readings.EdgeMagnitude.ofBank
+      (walk.edgeCount : Rational)^2 * (4 * fixed.bound) := by
+  let retainedMagnitude := EdgeMagnitude.ofBank
     (owner := SourceChartComparison.ownerFromMesh current.mesh) fixed later readings
   let observation := WordObservations.realize retainedMagnitude (current.edges.indexedEdges current.vertices walk sheet)
   have cached := observation.bounded
-  change Data.Gaussian.Norm.Basic.normSq observation.total ≤ observation.bound at cached
+  change Gaussian.Norm.Basic.normSq observation.total ≤ observation.bound at cached
   rw [observation.total_readback, observation.bound_readback, WordObservations.BoundSpecification] at cached
-  change Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation
+  change Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation
     current.mesh readings.values) (current.edges.indexedEdges current.vertices walk sheet)) ≤
-    ((current.edges.indexedEdges current.vertices walk sheet).length : Fraction.Rational) ^ 2 * (4 * fixed.bound)
+    ((current.edges.indexedEdges current.vertices walk sheet).length : Rational) ^ 2 * (4 * fixed.bound)
       at cached
   rw [current.edges.indexedEdges_length] at cached
   exact cached
 /-- The two-differential resplit boundary magnitude ceiling is nonnegative. -/
-theorem magnitude_nonnegative (leftFixed : MagnitudeBank.FaceMagnitudeBank domains leftDifferential)
-    (rightFixed : MagnitudeBank.FaceMagnitudeBank domains rightDifferential) (branch : BranchIsolation.Data.Index
+theorem magnitude_nonnegative (leftFixed : FaceMagnitudeBank domains leftDifferential)
+    (rightFixed : FaceMagnitudeBank domains rightDifferential) (branch : BranchIsolation.Data.Index
       branches) :
     0 ≤ ((boundary bank
-      included branch).edgeCount : Fraction.Rational)^2 * (4 * max leftFixed.bound rightFixed.bound) :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.pow_nonneg_direct
+      included branch).edgeCount : Rational)^2 * (4 * max leftFixed.bound rightFixed.bound) :=
+  Arithmetic.mul_nonneg_direct (Arithmetic.pow_nonneg_direct
     (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 2)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (leftFixed.nonnegative.trans
-      (Fraction.Order.Basic.le_max_left _ _)))
+    (Arithmetic.mul_nonneg_direct (by decide) (leftFixed.nonnegative.trans
+      (Basic.le_max_left _ _)))
 
 end BilinearHoleRequest
 
@@ -213,30 +215,30 @@ set_option genInjectivity false in
 
 The same retained boundary placement carries both differential increment requests and the polygon request, including
 their cross-term budget. -/
-structure BilinearHoleRequest (bank : LiftedPuncturedGrid.BasedBranchBank lifted) (included :
+structure BilinearHoleRequest (bank : BasedBranchBank lifted) (included :
   Extension.CoordinateInclusion base.bank.grid next.bank.grid)
-    (leftFixed : MagnitudeBank.FaceMagnitudeBank domains leftDifferential) (rightFixed : MagnitudeBank.FaceMagnitudeBank
+    (leftFixed : FaceMagnitudeBank domains leftDifferential) (rightFixed : FaceMagnitudeBank
       domains rightDifferential)
-    (branch : BranchIsolation.Data.Index branches) (error : Fraction.Rational) where
+    (branch : BranchIsolation.Data.Index branches) (error : Rational) where
   /-- The requested squared-area error is strictly positive. -/ positive : 0 < error
-  /-- The cached common magnitude bound for the actual resplit boundary. -/ magnitude : Fraction.Rational
+  /-- The cached common magnitude bound for the actual resplit boundary. -/ magnitude : Rational
   /-- The magnitude uses the squared boundary count and maximum of the retained differential magnitude bounds. -/
     magnitude_eq : magnitude =
-    ((Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.BilinearHoleRequests.BilinearHoleRequest.boundary bank
-    included branch).edgeCount : Fraction.Rational)^2 *
+    ((BilinearHoleRequest.boundary bank
+    included branch).edgeCount : Rational)^2 *
     (4 * max leftFixed.bound rightFixed.bound)
-  /-- The retained common allowance for both differential increment requests. -/ totalTarget : Fraction.Rational
+  /-- The retained common allowance for both differential increment requests. -/ totalTarget : Rational
   /-- The increment allowance is the weighted share of one quarter of the error target. -/ totalTarget_eq : totalTarget
     = Weighted.allowance (error / 4) (4 * magnitude)
   /-- The actual paired source placement on the resplit original boundary. -/ paired : WalkOccurrences.PairedWalk
-    current.mesh (Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.BilinearHoleRequests.BilinearHoleRequest.boundary
+    current.mesh (BilinearHoleRequest.boundary
     bank included branch)
   /-- The retained opposite-sheet polygon comparison at one quarter of the target. -/ polygons :
-    PolygonRequests.PolygonRequest leftFixed rightFixed paired 0 1 (error / 4)
-  /-- The first differential increment request on the same paired placement. -/ leftTotal : PairedWalk.IncrementRequest
+    PolygonRequest leftFixed rightFixed paired 0 1 (error / 4)
+  /-- The first differential increment request on the same paired placement. -/ leftTotal : IncrementRequest
     paired domains leftDifferential 0 totalTarget
   /-- The second differential increment request on the same paired placement. -/ rightTotal :
-    PairedWalk.IncrementRequest paired domains rightDifferential 0 totalTarget
+    IncrementRequest paired domains rightDifferential 0 totalTarget
 
 constructive_injectivity BilinearHoleRequest
 
@@ -245,24 +247,24 @@ namespace BilinearHoleRequest
 variable {leftFixed : FaceMagnitudeBank domains
   leftDifferential} {rightFixed : FaceMagnitudeBank
   domains rightDifferential}
-  {branch : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches} {error :
+  {branch : BranchIsolation.Data.Index branches} {error :
     Rational}
 
 /-- Prepare the retained boundary placement, opposite-sheet polygon comparison and both weighted increment requests. -/
-@[expose] def build (bank : LiftedPuncturedGrid.BasedBranchBank lifted) (included : Extension.CoordinateInclusion
+@[expose] def build (bank : BasedBranchBank lifted) (included : Extension.CoordinateInclusion
   base.bank.grid next.bank.grid)
-    (leftFixed : MagnitudeBank.FaceMagnitudeBank domains leftDifferential) (rightFixed : MagnitudeBank.FaceMagnitudeBank
+    (leftFixed : FaceMagnitudeBank domains leftDifferential) (rightFixed : FaceMagnitudeBank
       domains rightDifferential)
-    (branch : BranchIsolation.Data.Index branches) (error : Fraction.Rational) (positive : 0 < error) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.BilinearHoleRequests.BilinearHoleRequest bank included leftFixed
+    (branch : BranchIsolation.Data.Index branches) (error : Rational) (positive : 0 < error) :
+    BilinearHoleRequest bank included leftFixed
       rightFixed branch error :=
   let magnitude :=
     ((boundary bank
-    included branch).edgeCount : Fraction.Rational)^2 * (4 * max leftFixed.bound rightFixed.bound)
+    included branch).edgeCount : Rational)^2 * (4 * max leftFixed.bound rightFixed.bound)
   let totalTarget := Weighted.allowance (error / 4) (4 * magnitude)
-  have quarterPositive := Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Fraction.Rational) < 4)
+  have quarterPositive := Field.div_pos_direct positive (by decide : (0 : Rational) < 4)
   have totalPositive := Weighted.allowance_positive quarterPositive
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    (Arithmetic.mul_nonneg_direct (by decide)
       (magnitude_nonnegative
       (bank := bank) (included := included) leftFixed rightFixed branch))
   let paired := PairedWalk.build current.mesh
@@ -275,25 +277,25 @@ variable {leftFixed : FaceMagnitudeBank domains
 
 /-- The common maximum stage paying the polygon and both differential increment requests. -/
 @[expose] def index (request :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.BilinearHoleRequests.BilinearHoleRequest bank included leftFixed
+  BilinearHoleRequest bank included leftFixed
   rightFixed branch error) : Nat :=
   max request.polygons.index (max request.leftTotal.index request.rightTotal.index)
 
 /-- Twice either lap approximates the actual doubled contour. The two-sheet total pays its cross term; no zero-area
 assertion is used. -/
-theorem accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.BilinearHoleRequests.BilinearHoleRequest
+theorem accurate (request : BilinearHoleRequest
   bank included leftFixed rightFixed branch error)
-    {stage : Nat} {leftBank : PrimitiveData.FacePrimitiveBank leftDifferential stage domains}
-    {rightBank : PrimitiveData.FacePrimitiveBank rightDifferential stage domains}
-    (leftReadings : TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh) (rightReadings :
-      TrianglePrimitiveReadings.TriangleReadings rightBank current.mesh)
+    {stage : Nat} {leftBank : FacePrimitiveBank leftDifferential stage domains}
+    {rightBank : FacePrimitiveBank rightDifferential stage domains}
+    (leftReadings : TriangleReadings leftBank current.mesh) (rightReadings :
+      TriangleReadings rightBank current.mesh)
     (later : request.index ≤ stage) (sheet : Fin 2) :
     let value := fun edge => (⟨edgeValuation current.mesh leftReadings.values edge,
       CanonicalEdgeValues.edgeValuation current.mesh rightReadings.values edge⟩ : Stokes.PrimitivePoint)
     let walk := boundary
       bank included branch
     let lap := PairedIncrementArea.area ((current.edges.indexedEdges current.vertices walk sheet).map value)
-    Data.Gaussian.Norm.Basic.normSq (lap + lap - PairedIncrementArea.area
+    Gaussian.Norm.Basic.normSq (lap + lap - PairedIncrementArea.area
       ((current.edges.indexedEdges current.vertices (walk.append walk) 0).map value)) ≤ error := by
   intro value walk lap
   have polygonLater := (Nat.Order.le_max_left _ _).trans later
@@ -307,45 +309,45 @@ theorem accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.
   have magnitudeNonnegative : 0 ≤ request.magnitude := request.magnitude_eq ▸
     magnitude_nonnegative
     leftFixed rightFixed branch
-  have bounded : PrimitivePoint.Bounded (totals 0) request.magnitude := by
+  have bounded : Bounded (totals 0) request.magnitude := by
     dsimp only [totals, value]
     rw [total_readback,
       request.magnitude_eq]
     constructor
     · have h := (word_bound
         leftFixed leftReadings fixedLater.1 walk 0).trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Basic.le_max_left leftFixed.bound
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct (Basic.le_max_left leftFixed.bound
             rightFixed.bound) (by decide))
-          (Fraction.Order.Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 2))
-      change Fraction.Order.Basic.LessEqual _ _ at h ⊢
-      simp only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at h
+          (Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 2))
+      change Basic.LessEqual _ _ at h ⊢
+      simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at h
       convert h using 1
     · have h := (word_bound
         rightFixed rightReadings fixedLater.2 walk 0).trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Basic.le_max_right leftFixed.bound
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct (Basic.le_max_right leftFixed.bound
             rightFixed.bound) (by decide))
-          (Fraction.Order.Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 2))
-      change Fraction.Order.Basic.LessEqual _ _ at h ⊢
-      simp only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at h
+          (Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 2))
+      change Basic.LessEqual _ _ at h ⊢
+      simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at h
       convert h using 1
-  have oldBound {point : Data.Gaussian.Basic.Canonical} {limit : Fraction.Rational}
-      (h : Data.Gaussian.Basic.Canonical.normSq point ≤ limit) :
-      Data.Gaussian.Norm.Basic.normSq point ≤ limit := by
-    change Fraction.Order.Basic.LessEqual _ _ at h ⊢
-    simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using h
-  have canonicalBound {point : Data.Gaussian.Basic.Canonical} {limit : Fraction.Rational}
-      (h : Data.Gaussian.Norm.Basic.normSq point ≤ limit) :
-      Data.Gaussian.Basic.Canonical.normSq point ≤ limit := by
-    change Fraction.Order.Basic.LessEqual _ _ at h ⊢
-    simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using h
-  have small : PrimitivePoint.Bounded ((totals 0).add (totals 1)) request.totalTarget := by
+  have oldBound {point : Gaussian.Basic.Canonical} {limit : Rational}
+      (h : Gaussian.normSq point ≤ limit) :
+      Gaussian.Norm.Basic.normSq point ≤ limit := by
+    change Basic.LessEqual _ _ at h ⊢
+    simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using h
+  have canonicalBound {point : Gaussian.Basic.Canonical} {limit : Rational}
+      (h : Gaussian.Norm.Basic.normSq point ≤ limit) :
+      Gaussian.normSq point ≤ limit := by
+    change Basic.LessEqual _ _ at h ⊢
+    simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using h
+  have small : Bounded ((totals 0).add (totals 1)) request.totalTarget := by
     dsimp only [totals, value]
     rw [total_readback,
       total_readback]
     exact ⟨canonicalBound leftTotal, canonicalBound rightTotal⟩
-  have cross : Data.Gaussian.Norm.Basic.normSq (Stokes.edgeArea (totals 0) (totals 1)) ≤ error / 4 := by
+  have cross : Gaussian.Norm.Basic.normSq (Stokes.edgeArea (totals 0) (totals 1)) ≤ error / 4 := by
     have same : Stokes.edgeArea (totals 0) (totals 1) = Stokes.edgeArea (totals 0) ((totals 0).add (totals 1)) := by
       simp only [Stokes.edgeArea, PrimitivePoint.add]
       ring1
@@ -354,30 +356,30 @@ theorem accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.
     apply (PrimitivePoint.area_bound bounded small).trans
     rw [request.totalTarget_eq]
     exact Weighted.mul_allowance_le
-      (Fraction.Order.Field.div_pos_direct request.positive (by decide : (0 : Fraction.Rational) < 4)).le
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) magnitudeNonnegative)
+      (Field.div_pos_direct request.positive (by decide : (0 : Rational) < 4)).le
+      (Arithmetic.mul_nonneg_direct (by decide) magnitudeNonnegative)
   have opposite := request.polygons.accurate leftReadings rightReadings polygonLater (by decide)
-  have either : ∀ sheet : Fin 2, Data.Gaussian.Norm.Basic.normSq (areas sheet + areas sheet - (areas 0 + areas
+  have either : ∀ sheet : Fin 2, Gaussian.Norm.Basic.normSq (areas sheet + areas sheet - (areas 0 + areas
     1)) ≤ error / 4 := by
-    refine Data.Fin.cases_induction ?_ (fun predecessor => Data.Fin.cases_induction ?_ (fun empty => Fin.elim0 empty)
+    refine Fin.cases_induction ?_ (fun predecessor => Fin.cases_induction ?_ (fun empty => Fin.elim0 empty)
       predecessor)
-    · change Data.Gaussian.Norm.Basic.normSq (areas 0 + areas 0 - (areas 0 + areas 1)) ≤ error / 4
+    · change Gaussian.Norm.Basic.normSq (areas 0 + areas 0 - (areas 0 + areas 1)) ≤ error / 4
       rw [show areas 0 + areas 0 - (areas 0 + areas 1) = areas 0 - areas 1 by ring1]
       exact opposite
-    · change Data.Gaussian.Norm.Basic.normSq (areas 1 + areas 1 - (areas 0 + areas 1)) ≤ error / 4
+    · change Gaussian.Norm.Basic.normSq (areas 1 + areas 1 - (areas 0 + areas 1)) ≤ error / 4
       rw [show areas 1 + areas 1 - (areas 0 + areas 1) = -(areas 0 - areas 1) by ring1,
-        Data.Gaussian.Norm.Basic.normSq_neg]
+        Gaussian.Norm.Basic.normSq_neg]
       exact opposite
   have double : current.edges.indexedEdges current.vertices (walk.append walk) 0 = words 0 ++ words 1 :=
     HoleRequests.resplit_hole_double_indexed bank included branch
   rw [double, List.Map.map_append, PairedAreaBlocks.area_append]
-  change Data.Gaussian.Norm.Basic.normSq (areas sheet + areas sheet - (areas 0 + areas 1 + Stokes.edgeArea
+  change Gaussian.Norm.Basic.normSq (areas sheet + areas sheet - (areas 0 + areas 1 + Stokes.edgeArea
     (totals 0) (totals 1))) ≤ error
   rw [show areas sheet + areas sheet - (areas 0 + areas 1 + Stokes.edgeArea (totals 0) (totals 1)) =
     (areas sheet + areas sheet - (areas 0 + areas 1)) - Stokes.edgeArea (totals 0) (totals 1) by ring1]
-  exact ((Data.Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.add_le_add_direct (either sheet) cross) (by decide))).trans_eq
+  exact ((Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_direct (either sheet) cross) (by decide))).trans_eq
       ((by ring1 : 2 * (error / 4 + error / 4) = error / 4 * 4).trans (Fraction.Field.div_mul_cancel_of_ne _ _ (by
         decide)))
 

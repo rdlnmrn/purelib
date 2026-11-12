@@ -45,15 +45,15 @@ set_option genInjectivity false in
 
 The original state indexes the selected refined nonzero-event state. The exact finite refinement operation retains its
 source relation and quantitative interval-width bound. -/
-structure Step {polynomial : Dense.Rational.Basic.CoordinatePolynomial} (current : Sturm.Track.Basic.State polynomial)
+structure Step {polynomial : Dense.Rational.Basic.CoordinatePolynomial} (current : Basic.State polynomial)
   where
-  /-- The selected proper child cell with its retained nonzero doubled Sturm count. -/ next : Sturm.Track.Basic.State
+  /-- The selected proper child cell with its retained nonzero doubled Sturm count. -/ next : Basic.State
     polynomial
   /-- The selected child cell refines the original parameter cell. -/ refines : next.cell.interval.Refines
     current.cell.interval
   /-- The selected width is strictly less than two thirds of the original width. -/ contracts :
-    (Data.Rat.Interval.Bounds.width next.cell.interval) <
-    (2 / 3 : Fraction.Rational) * (Data.Rat.Interval.Bounds.width current.cell.interval)
+    (Interval.Bounds.width next.cell.interval) <
+    (2 / 3 : Fraction.Rational) * (Interval.Bounds.width current.cell.interval)
 
 constructive_injectivity Step
 
@@ -64,28 +64,28 @@ The original certified safe split gives left and right cells. The retained left 
 nonzero; finite additivity certifies the selected right cell otherwise. -/
 @[expose] def step
     (polynomial : Dense.Rational.Basic.CoordinatePolynomial) (polynomialNonzero : polynomial.isZero = false)
-    (current : Sturm.Track.Basic.State polynomial) : Sturm.Track.Refinement.Step current := by
+    (current : Basic.State polynomial) : Step current := by
   let split := Dense.Rational.CauchyIndex.EventPartition.Cut.safeSplit
     (Dense.Derivative.derivative polynomial) polynomial
     polynomialNonzero current.cell
-  let leftCount := Sturm.Count.Basic.sturmRootCount2 polynomial
+  let leftCount := Count.Basic.sturmRootCount2 polynomial
     split.leftCell.interval.lower split.leftCell.interval.upper
   by_cases leftNonzero : leftCount ≠ 0
   · exact
       { next :=
           { cell := split.leftCell
             countNonzero := leftNonzero }
-        refines := Data.Rat.Interval.Bounds.leftChild_refines current.cell.interval split.cut
+        refines := Interval.Bounds.leftChild_refines current.cell.interval split.cut
           split.lowerLt.le split.upperLt.le
         contracts := split.leftContracts }
   · have leftZero : leftCount = 0 := Decidable.not_not.mp leftNonzero
-    have rightNonzero : Sturm.Count.Basic.sturmRootCount2 polynomial
+    have rightNonzero : Count.Basic.sturmRootCount2 polynomial
         split.rightCell.interval.lower split.rightCell.interval.upper ≠ 0 := by
       intro rightZero
       apply current.countNonzero
-      rw [Sturm.Count.Basic.sturmRootCount2_add polynomial current.cell.interval.lower
+      rw [Count.Basic.sturmRootCount2_add polynomial current.cell.interval.lower
         split.cut current.cell.interval.upper]
-      change leftCount + Sturm.Count.Basic.sturmRootCount2 polynomial
+      change leftCount + Count.Basic.sturmRootCount2 polynomial
         split.rightCell.interval.lower split.rightCell.interval.upper = 0
       rw [leftZero, rightZero]
       decide
@@ -93,7 +93,7 @@ nonzero; finite additivity certifies the selected right cell otherwise. -/
       { next :=
           { cell := split.rightCell
             countNonzero := rightNonzero }
-        refines := Data.Rat.Interval.Bounds.rightChild_refines current.cell.interval split.cut
+        refines := Interval.Bounds.rightChild_refines current.cell.interval split.cut
           split.lowerLt.le split.upperLt.le
         contracts := split.rightContracts }
 
@@ -103,56 +103,56 @@ Zero steps retain the original current cell. Each successor step uses the same n
 actual returned state to the remaining finite iteration. -/
 @[expose] def refineN
     (polynomial : Dense.Rational.Basic.CoordinatePolynomial) (polynomialNonzero : polynomial.isZero = false) :
-    Sturm.Track.Basic.State polynomial → Nat → Sturm.Track.Basic.State polynomial
+    Basic.State polynomial → Nat → Basic.State polynomial
   | current, 0 => current
   | current, depth + 1 =>
-      Purelib.RootIsolation.Sturm.Track.Refinement.refineN polynomial polynomialNonzero
-        (Sturm.Track.Refinement.step polynomial polynomialNonzero current).next depth
+      Refinement.refineN polynomial polynomialNonzero
+        (step polynomial polynomialNonzero current).next depth
 
 /-- Every finite nonzero-event refinement remains within the original parameter cell. -/
 theorem refineN_refines
     (polynomial : Dense.Rational.Basic.CoordinatePolynomial) (polynomialNonzero : polynomial.isZero = false)
-    (current : Sturm.Track.Basic.State polynomial) (depth : Nat) :
-    (Sturm.Track.Refinement.refineN polynomial polynomialNonzero current depth).cell.interval.Refines
+    (current : Basic.State polynomial) (depth : Nat) :
+    (refineN polynomial polynomialNonzero current depth).cell.interval.Refines
       current.cell.interval := by
   induction depth generalizing current with
   | zero => exact ⟨le_rfl, le_rfl⟩
   | succ depth inductionHypothesis =>
-      exact Data.Rat.Interval.Refinement.intervalRefines_trans
+      exact Interval.Refinement.intervalRefines_trans
         (inductionHypothesis
-          (Sturm.Track.Refinement.step polynomial polynomialNonzero current).next)
-        (Sturm.Track.Refinement.step polynomial polynomialNonzero current).refines
+          (step polynomial polynomialNonzero current).next)
+        (step polynomial polynomialNonzero current).refines
 
 /-- After `n` nonzero-event steps, the width is at most `(2/3)^n` times its original value. -/
 theorem refineN_width_le
     (polynomial : Dense.Rational.Basic.CoordinatePolynomial) (polynomialNonzero : polynomial.isZero = false)
-    (current : Sturm.Track.Basic.State polynomial) (depth : Nat) :
-    (Data.Rat.Interval.Bounds.width (Sturm.Track.Refinement.refineN polynomial polynomialNonzero current
+    (current : Basic.State polynomial) (depth : Nat) :
+    (Interval.Bounds.width (refineN polynomial polynomialNonzero current
       depth).cell.interval) ≤
-      (2 / 3 : Fraction.Rational) ^ depth * (Data.Rat.Interval.Bounds.width current.cell.interval) := by
+      (2 / 3 : Fraction.Rational) ^ depth * (Interval.Bounds.width current.cell.interval) := by
   induction depth generalizing current with
   | zero =>
-      simp only [Sturm.Track.Refinement.refineN, pow_zero, one_mul]
+      simp only [refineN, pow_zero, one_mul]
       exact le_rfl
   | succ depth inductionHypothesis =>
-      let next := (Sturm.Track.Refinement.step polynomial polynomialNonzero current).next
+      let next := (step polynomial polynomialNonzero current).next
       have recursive := inductionHypothesis next
       have powerPositive : 0 < (2 / 3 : Fraction.Rational) ^ depth :=
         Fraction.Order.Arithmetic.pow_pos_direct (by decide) depth
       exact (calc
-        (Data.Rat.Interval.Bounds.width (Sturm.Track.Refinement.refineN polynomial polynomialNonzero current
+        (Interval.Bounds.width (refineN polynomial polynomialNonzero current
           (depth + 1)).cell.interval) =
-            (Data.Rat.Interval.Bounds.width (Sturm.Track.Refinement.refineN polynomial polynomialNonzero next
+            (Interval.Bounds.width (refineN polynomial polynomialNonzero next
               depth).cell.interval) :=
           rfl
-        _ ≤ (2 / 3 : Fraction.Rational) ^ depth * (Data.Rat.Interval.Bounds.width next.cell.interval) :=
+        _ ≤ (2 / 3 : Fraction.Rational) ^ depth * (Interval.Bounds.width next.cell.interval) :=
           recursive
         _ < (2 / 3 : Fraction.Rational) ^ depth *
-              ((2 / 3 : Fraction.Rational) * (Data.Rat.Interval.Bounds.width current.cell.interval)) :=
+              ((2 / 3 : Fraction.Rational) * (Interval.Bounds.width current.cell.interval)) :=
           Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct powerPositive
-            (Sturm.Track.Refinement.step polynomial polynomialNonzero current).contracts
+            (step polynomial polynomialNonzero current).contracts
         _ = (2 / 3 : Fraction.Rational) ^ Nat.succ depth *
-              (Data.Rat.Interval.Bounds.width current.cell.interval) := by
+              (Interval.Bounds.width current.cell.interval) := by
           rw [pow_succ]
           ring1
       ).le

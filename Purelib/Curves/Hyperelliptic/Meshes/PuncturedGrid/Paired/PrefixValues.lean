@@ -22,6 +22,8 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices
 import Purelib.RootIsolation.SquareRoot.Grid.Walk.Vertex
 
+open Purelib.Topology.Surface.Sewing
+
 open Purelib.Algebra
 
 open Purelib.Curves
@@ -37,55 +39,55 @@ open Purelib
 /-! Read the actual corrected B prefix as the finite sum of preceding A words. -/
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PrefixValues
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {reference : Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
+    BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {reference : Branches.BranchIsolation.Data.Index branches}
 
 namespace PairedRows
 
 /-- The original prior word reads as the base prior value plus the finite sum of preceding A values. -/
 theorem prior_value
-    {labels : List (Hyperelliptic.Branches.BranchIsolation.Data.Index branches ×
-      Hyperelliptic.Branches.BranchIsolation.Data.Index branches)}
-    {prior : Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.CommonLoop lifted sheet} (rows :
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRows bank reference sheet labels prior)
+    {labels : List (Branches.BranchIsolation.Data.Index branches ×
+      Branches.BranchIsolation.Data.Index branches)}
+    {prior : BranchArea.CommonLoop lifted sheet} (rows :
+      BranchArea.PairedRows bank reference sheet labels prior)
     (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) (index : Fin
       labels.length) :
-    Topology.Surface.Sewing.SewingRetraction.wordValue value (rows.get index).prior.indexed =
-      Topology.Surface.Sewing.SewingRetraction.wordValue value prior.indexed +
+    SewingRetraction.wordValue value (rows.get index).prior.indexed =
+      SewingRetraction.wordValue value prior.indexed +
       FiniteSum.Fin.sumFin (fun earlier : Fin labels.length => if earlier.val < index.val then
-        Topology.Surface.Sewing.SewingRetraction.wordValue value (rows.get earlier).row.a.closed.indexed else 0) := by
+        SewingRetraction.wordValue value (rows.get earlier).row.a.closed.indexed else 0) := by
   induction rows with
   | nil => exact Fin.elim0 index
   | @cons labels rest prior row tail ih =>
       rcases index with ⟨position, bounded⟩
       cases position with
       | zero =>
-        change Topology.Surface.Sewing.SewingRetraction.wordValue value prior.indexed =
-          Topology.Surface.Sewing.SewingRetraction.wordValue value prior.indexed + _
+        change SewingRetraction.wordValue value prior.indexed =
+          SewingRetraction.wordValue value prior.indexed + _
         have zero : FiniteSum.Fin.sumFin (fun earlier : Fin (labels :: rest).length => if earlier.val < 0 then
-            Topology.Surface.Sewing.SewingRetraction.wordValue value
-              ((Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRows.cons row tail).get
+            SewingRetraction.wordValue value
+              ((BranchArea.PairedRows.cons row tail).get
               earlier).row.a.closed.indexed else 0) = 0 :=
           (FiniteSum.Fin.sumFin_congr (fun earlier => if_neg (Nat.not_lt_zero earlier.val))).trans
             FiniteSum.Fin.sumFin_zero
-        exact (congrArg (Topology.Surface.Sewing.SewingRetraction.wordValue value prior.indexed + ·) zero).trans
+        exact (congrArg (SewingRetraction.wordValue value prior.indexed + ·) zero).trans
           (Gaussian.Basic.add_zero _ ) |>.symm
       | succ position =>
         let index : Fin rest.length := ⟨position, Nat.lt_of_succ_lt_succ bounded⟩
-        change Topology.Surface.Sewing.SewingRetraction.wordValue value (tail.get index).prior.indexed = _
+        change SewingRetraction.wordValue value (tail.get index).prior.indexed = _
         rw [ih index, FiniteSum.Fin.sumFin_succ]
-        change Topology.Surface.Sewing.SewingRetraction.wordValue value (prior.indexed ++ row.a.closed.indexed) + _ =
-          Topology.Surface.Sewing.SewingRetraction.wordValue value prior.indexed + ((if 0 < index.val + 1 then
-            Topology.Surface.Sewing.SewingRetraction.wordValue value row.a.closed.indexed else 0) + _)
-        rw [Topology.Surface.Sewing.SewingRetraction.wordValue_append, if_pos (Nat.zero_lt_succ _)]
+        change SewingRetraction.wordValue value (prior.indexed ++ row.a.closed.indexed) + _ =
+          SewingRetraction.wordValue value prior.indexed + ((if 0 < index.val + 1 then
+            SewingRetraction.wordValue value row.a.closed.indexed else 0) + _)
+        rw [SewingRetraction.wordValue_append, if_pos (Nat.zero_lt_succ _)]
         have equal := FiniteSum.Fin.sumFin_congr (fun earlier : Fin rest.length =>
-          (show (if earlier.val < index.val then Topology.Surface.Sewing.SewingRetraction.wordValue value (tail.get
+          (show (if earlier.val < index.val then SewingRetraction.wordValue value (tail.get
             earlier).row.a.closed.indexed else 0) =
-              (if earlier.val + 1 < index.val + 1 then Topology.Surface.Sewing.SewingRetraction.wordValue value
+              (if earlier.val + 1 < index.val + 1 then SewingRetraction.wordValue value
                 (tail.get earlier).row.a.closed.indexed else 0) from by
             by_cases before : earlier.val < index.val
             · rw [if_pos before, if_pos (Nat.add_lt_add_right before 1)]
@@ -95,8 +97,8 @@ theorem prior_value
 end PairedRows
 
 section Ordered.Paired
-variable {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank
-  sheet} (paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered)
+variable {ordered : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank
+  sheet} (paired : OrderedBranchPairs.Ordered.Paired ordered)
 
 /-- Transporting the retained finite index preserves the exact Gaussian sum. -/
 private theorem sum_cast {first last : Nat} (equal : first = last) (value : Fin first → Gaussian.Basic.Canonical) :
@@ -107,12 +109,12 @@ private theorem sum_cast {first last : Nat} (equal : first = last) (value : Fin 
 /-- The original ordered prior word reads as the finite sum of preceding A values. -/
 theorem prior_value (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
   (index : Fin genus) :
-    Topology.Surface.Sewing.SewingRetraction.wordValue value (paired.row index).prior.indexed =
+    SewingRetraction.wordValue value (paired.row index).prior.indexed =
       FiniteSum.Fin.sumFin (fun earlier : Fin genus => if earlier.val < index.val then
-        Topology.Surface.Sewing.SewingRetraction.wordValue value (paired.row earlier).row.a.closed.indexed else 0) := by
-  have reading := Hyperelliptic.Meshes.PuncturedGrid.Paired.PrefixValues.PairedRows.prior_value paired.rows value
+        SewingRetraction.wordValue value (paired.row earlier).row.a.closed.indexed else 0) := by
+  have reading := PairedRows.prior_value paired.rows value
     (Fin.cast paired.split.count_eq.symm index)
-  change Topology.Surface.Sewing.SewingRetraction.wordValue value (paired.row index).prior.indexed = 0 + _ at reading
+  change SewingRetraction.wordValue value (paired.row index).prior.indexed = 0 + _ at reading
   rw [Gaussian.Basic.zero_add] at reading
   exact reading.trans (sum_cast
     paired.split.count_eq _)
@@ -120,27 +122,27 @@ theorem prior_value (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertice
 /-- The original corrected B word reads as its B value plus the preceding A-prefix sum. -/
 theorem corrected_value (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
   (index : Fin genus) :
-    Topology.Surface.Sewing.SewingRetraction.wordValue value (paired.row index).row.corrected.indexed =
-      Topology.Surface.Sewing.SewingRetraction.wordValue value (paired.row index).row.b.closed.indexed +
+    SewingRetraction.wordValue value (paired.row index).row.corrected.indexed =
+      SewingRetraction.wordValue value (paired.row index).row.b.closed.indexed +
         FiniteSum.Fin.sumFin (fun earlier : Fin genus => if earlier.val < index.val then
-          Topology.Surface.Sewing.SewingRetraction.wordValue value (paired.row earlier).row.a.closed.indexed else 0) :=
+          SewingRetraction.wordValue value (paired.row earlier).row.a.closed.indexed else 0) :=
             by
   rw [(paired.row index).row.corrected_eq]
-  change Topology.Surface.Sewing.SewingRetraction.wordValue value ((paired.row index).row.b.closed.indexed ++
+  change SewingRetraction.wordValue value ((paired.row index).row.b.closed.indexed ++
     (paired.row index).prior.indexed) = _
-  rw [Topology.Surface.Sewing.SewingRetraction.wordValue_append,
+  rw [SewingRetraction.wordValue_append,
     prior_value paired]
 
 namespace Prepared
-variable (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+variable (prepared : PeriodPrograms.Prepared paired)
 
 /-- The retained prepared B word reads as the original B value plus the exact preceding prepared A-prefix sum. -/
 theorem bWord_prefix_value (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count →
   Gaussian.Basic.Canonical) (index : Fin genus) :
-    Topology.Surface.Sewing.SewingRetraction.wordValue value (prepared.bWord index) =
-      Topology.Surface.Sewing.SewingRetraction.wordValue value (paired.row index).row.b.closed.indexed +
+    SewingRetraction.wordValue value (prepared.bWord index) =
+      SewingRetraction.wordValue value (paired.row index).row.b.closed.indexed +
       FiniteSum.Fin.sumFin (fun earlier : Fin genus => if earlier.val < index.val then
-        Topology.Surface.Sewing.SewingRetraction.wordValue value (prepared.aWord earlier) else 0) := by
+        SewingRetraction.wordValue value (prepared.aWord earlier) else 0) := by
   rw [prepared.bWord_eq, corrected_value paired]
   apply congrArg (_ + ·)
   apply FiniteSum.Fin.sumFin_congr

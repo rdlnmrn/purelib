@@ -57,29 +57,29 @@ theorem centeredSquare_normSq_sub_anchor_le
       Fraction.Rational}
     (positive : 0 < r)
     (displacementSmall :
-      Data.Gaussian.Norm.Basic.normSq (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source - source.anchor)
+      Gaussian.Norm.Basic.normSq (Anchor.anchorNewtonCenter p source - source.anchor)
         ≤ r ^ 2)
     {z : Gaussian.Basic.Canonical}
-    (inside : (Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source)
+    (inside : (Box.Square.Centered.Affine.centeredSquare (Anchor.anchorNewtonCenter p source)
       r positive.le).Contains z) :
-    Data.Gaussian.Norm.Basic.normSq (z - source.anchor) ≤ 6 * r ^ 2 := by
+    Gaussian.Norm.Basic.normSq (z - source.anchor) ≤ 6 * r ^ 2 := by
   have radial := Box.Square.Centered.centeredSquare_normSq_sub_center_le
-    (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) positive.le inside
+    (Anchor.anchorNewtonCenter p source) positive.le inside
   have decomposition : z - source.anchor =
-      (z - Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) +
-        (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source - source.anchor) := by
+      (z - Anchor.anchorNewtonCenter p source) +
+        (Anchor.anchorNewtonCenter p source - source.anchor) := by
     apply Gaussian.Basic.ext <;>
       simp only [Gaussian.Basic.sub_re, Gaussian.Basic.sub_im, Gaussian.Basic.add_re, Gaussian.Basic.add_im] <;>
       ring1
   rw [decomposition]
   have sumBound := Gaussian.Norm.Bounds.normSq_add_le_two
-    (z - Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source)
-    (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source - source.anchor)
+    (z - Anchor.anchorNewtonCenter p source)
+    (Anchor.anchorNewtonCenter p source - source.anchor)
   calc
-    Data.Gaussian.Norm.Basic.normSq ((z - Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) +
-        (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source - source.anchor)) ≤
-        2 * (Data.Gaussian.Norm.Basic.normSq (z - Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) +
-          Data.Gaussian.Norm.Basic.normSq (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source -
+    Gaussian.Norm.Basic.normSq ((z - Anchor.anchorNewtonCenter p source) +
+        (Anchor.anchorNewtonCenter p source - source.anchor)) ≤
+        2 * (Gaussian.Norm.Basic.normSq (z - Anchor.anchorNewtonCenter p source) +
+          Gaussian.Norm.Basic.normSq (Anchor.anchorNewtonCenter p source -
             source.anchor)) := sumBound
     _ ≤ 2 * (2 * r ^ 2 + r ^ 2) :=
       Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
@@ -90,7 +90,7 @@ theorem centeredSquare_normSq_sub_anchor_le
 def newtonErrorBudget (p :
   CoefficientPolynomial) (ambient : Box)
     (r : Fraction.Rational) : Fraction.Rational :=
-  36 * Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p ambient * (r ^ 2) ^ 2
+  36 * Bounds.Box.Taylor.denseTaylorRemainderBound p ambient * (r ^ 2) ^ 2
 
 /-- Explicit upper bound for the Newton linearization on its centered-square
 boundary. -/
@@ -98,7 +98,7 @@ def separatedNewtonLinearizationMajorant
     (p : CoefficientPolynomial) (ambient : Box) (r :
       Fraction.Rational) :
       Fraction.Rational :=
-  2 * Dense.Gaussian.Bounds.Box.denseEvalNormMajorant (Dense.Gaussian.GCD.derivative p) ambient * r ^ 2
+  2 * Bounds.Box.denseEvalNormMajorant (GCD.derivative p) ambient * r ^ 2
 
 /-- The Newton boundary majorant is positive at every positive radius. -/
 theorem separatedNewtonLinearizationMajorant_pos
@@ -108,8 +108,8 @@ theorem separatedNewtonLinearizationMajorant_pos
     0 < separatedNewtonLinearizationMajorant p ambient r :=
   Fraction.Order.Arithmetic.mul_pos_direct
     (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-      (Dense.Gaussian.Bounds.Box.denseEvalNormMajorant_pos
-        (Dense.Gaussian.GCD.derivative p) ambient))
+      (Bounds.Box.denseEvalNormMajorant_pos
+        (GCD.derivative p) ambient))
     (Fraction.Order.Arithmetic.pow_pos_direct positive 2)
 
 /-- Bound the Newton linearization on its centered-square boundary.
@@ -121,28 +121,28 @@ theorem newtonLinearization_boundary_le_majorant
     (sourceRefines : source.Refines ambient)
     {r : Fraction.Rational} (positive : 0 < r) {z : Gaussian.Basic.Canonical}
     (boundary : Box.Boundary.OnBoxBoundary
-      (Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) r
+      (Box.Square.Centered.Affine.centeredSquare (Anchor.anchorNewtonCenter p source) r
         positive.le) z) :
-    Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Newton.Box.Linearization.newtonLinearization p source).eval z)
+    Gaussian.Norm.Basic.normSq ((Linearization.newtonLinearization p source).eval z)
       ≤
       separatedNewtonLinearizationMajorant p ambient r := by
   have sourceAnchorInside : ambient.Contains source.anchor :=
     sourceRefines.contains source.contains_anchor
-  have derivativeBound := Dense.Gaussian.Bounds.Box.normSq_eval_le_denseEvalNormMajorant
-    (Dense.Gaussian.GCD.derivative p) sourceAnchorInside
+  have derivativeBound := Bounds.Box.normSq_eval_le_denseEvalNormMajorant
+    (GCD.derivative p) sourceAnchorInside
   have radial := Box.Square.Centered.centeredSquare_normSq_sub_center_le
-    (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) positive.le boundary.1
-  rw [Dense.Gaussian.Newton.Box.Linearization.newtonLinearization, Dense.Gaussian.Linear.Affine.affineCoordinate_eval,
+    (Anchor.anchorNewtonCenter p source) positive.le boundary.1
+  rw [Linearization.newtonLinearization, Linear.Affine.affineCoordinate_eval,
     Gaussian.Norm.Basic.normSq_mul]
   calc
-    Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.GCD.derivative p).eval source.anchor) *
-        Data.Gaussian.Norm.Basic.normSq (z - Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) ≤
-      Dense.Gaussian.Bounds.Box.denseEvalNormMajorant (Dense.Gaussian.GCD.derivative p) ambient *
+    Gaussian.Norm.Basic.normSq ((GCD.derivative p).eval source.anchor) *
+        Gaussian.Norm.Basic.normSq (z - Anchor.anchorNewtonCenter p source) ≤
+      Bounds.Box.denseEvalNormMajorant (GCD.derivative p) ambient *
         (2 * r ^ 2) :=
       Fraction.Order.Arithmetic.mul_le_mul_direct derivativeBound radial
-        (Gaussian.Norm.Basic.normSq_nonneg (z - Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source))
-        (Dense.Gaussian.Bounds.Box.denseEvalNormMajorant_pos
-          (Dense.Gaussian.GCD.derivative p) ambient).le
+        (Gaussian.Norm.Basic.normSq_nonneg (z - Anchor.anchorNewtonCenter p source))
+        (Bounds.Box.denseEvalNormMajorant_pos
+          (GCD.derivative p) ambient).le
     _ = separatedNewtonLinearizationMajorant p ambient r := by
       unfold separatedNewtonLinearizationMajorant
       ring1

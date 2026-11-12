@@ -65,7 +65,7 @@ open Purelib.Data.Gaussian.Norm.Basic (normSq_nonneg)
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -84,13 +84,13 @@ set_option genInjectivity false in
 
 The canonical exterior equation ties the boundary components to the original lifted mesh. The terminal budget, source
 depth and joining endpoints share the same retained allowance. -/
-structure ResplitExteriorPreparation (paired : Ordered.Paired ordered)
+structure ResplitExteriorPreparation (paired : Paired ordered)
     (boundary : BoundaryPreparation preparation i j target radius floor) where
   /-- The retained indexed exterior components are the original lifted exterior boundaries. -/ canonical :
     boundary.exterior.prepared.components.map (fun component => component.program.indexed) =
     boundary.lifted.exteriorBoundaries
   /-- The terminal exterior budget for the original paired bank and boundary. -/ budget :
-    Curves.Hyperelliptic.Meshes.Newton.TerminalExteriorBudget paired boundary
+    TerminalExteriorBudget paired boundary
   /-- The retained source request at the terminal budget's allowance and original floor. -/ source :
     ExteriorSourceRequest boundary budget.allowance floor
   /-- The joining endpoint request at the exact retained source depth and allowance. -/ endpoints :
@@ -110,7 +110,7 @@ open Purelib.Riemann.RootContinuation.NewtonBoundaryDepthRefinement in
 
 The source depth determines the refined boundary used by the endpoint request, preserving the same terminal allowance.
 -/
-@[expose] def build (paired : Ordered.Paired ordered) (boundary : BoundaryPreparation preparation i j target radius
+@[expose] def build (paired : Paired ordered) (boundary : BoundaryPreparation preparation i j target radius
   floor)
     (canonical : boundary.exterior.prepared.components.map (fun component => component.program.indexed) =
       boundary.lifted.exteriorBoundaries) :
@@ -144,20 +144,20 @@ open Purelib.Riemann.RootContinuation.NewtonBoundaryDepthRefinement in
 
 The threshold pays all cached source, endpoint and terminal magnitude requests and respects the requested minimum. The
 retained physical exterior correction supplies the final determinant estimate. -/
-@[expose] def determinantRequest (data : ResplitExteriorPreparation paired boundary) (prepared : PeriodPrograms.Prepared
+@[expose] def determinantRequest (data : ResplitExteriorPreparation paired boundary) (prepared : Prepared
   paired)
     (newSheet : Fin 2) (minimum : Nat) :
     let refined := BoundaryPreparation.atDepth boundary data.source.depth
     {threshold : Nat // minimum ≤ threshold ∧
-      ∀ stage (cache : RegularMeshes.Numerics boundary.domains stage)
+      ∀ stage (cache : Numerics boundary.domains stage)
         (readings : CutPairingRequest.Readings refined.paid.cut cache)
         (_cached : Branches.NewtonRequestedCutComparison.CutAnnularReadings refined.comparison readings), threshold ≤
           stage →
-        Data.Gaussian.Norm.Basic.normSq (LocalPairedPeriodComparison.resplitWordDeterminant prepared (current :=
+        normSq (resplitWordDeterminant prepared (current :=
           refined.lifted)
           newSheet
-          (CanonicalEdgeValues.edgeValuation refined.lifted.mesh readings.left.values)
-            (CanonicalEdgeValues.edgeValuation refined.lifted.mesh readings.right.values)) < 816 * target} := by
+          (edgeValuation refined.lifted.mesh readings.left.values)
+            (edgeValuation refined.lifted.mesh readings.right.values)) < 816 * target} := by
   intro refined
   let adjusted := exteriorAdjustedRequest prepared newSheet boundary data.canonical data.source data.endpoints minimum
   let threshold := max adjusted.val (max (max data.source.index data.endpoints.val.endpoints.index)
@@ -168,20 +168,20 @@ retained physical exterior correction supplies the final determinant estimate. -
   have referenceLater := (Nat.Order.le_max_left _ _).trans otherLater
   have magnitudeLater := (Nat.Order.le_max_right _ _).trans otherLater
   have reduced := adjusted.property.2 stage cache readings cached ((Nat.Order.le_max_left _ _).trans later)
-  have terminal := TerminalExteriorBound.terminal_exterior_bound (paired := paired) newSheet boundary data.canonical
+  have terminal := terminal_exterior_bound (paired := paired) newSheet boundary data.canonical
     data.budget.first data.budget.second
     data.source data.endpoints.val readings ((Nat.Order.le_max_left _ _).trans referenceLater) ((Nat.Order.le_max_right
       _ _).trans referenceLater)
       ((Nat.Order.le_max_left _ _).trans magnitudeLater) ((Nat.Order.le_max_right _ _).trans magnitudeLater)
-  let determinant := LocalPairedPeriodComparison.resplitWordDeterminant prepared (current := refined.lifted) newSheet
-    (CanonicalEdgeValues.edgeValuation refined.lifted.mesh readings.left.values) (CanonicalEdgeValues.edgeValuation
+  let determinant := resplitWordDeterminant prepared (current := refined.lifted) newSheet
+    (edgeValuation refined.lifted.mesh readings.left.values) (edgeValuation
       refined.lifted.mesh readings.right.values)
-  let correction := BilinearPolarization.extract (fun coefficient => ExteriorTotal.resplitPhysicalExteriorCorrection
+  let correction := extract (fun coefficient => resplitPhysicalExteriorCorrection
     (paired := paired)
     refined.fine.family.single.grid.shrunk.included refined.lifted.edges refined.lifted.vertices newSheet
-    (BilinearPolarization.mix (CanonicalEdgeValues.edgeValuation refined.lifted.mesh readings.left.values)
-      (CanonicalEdgeValues.edgeValuation refined.lifted.mesh readings.right.values) coefficient))
-  have paid : Data.Gaussian.Norm.Basic.normSq correction ≤ target := by
+    (mix (edgeValuation refined.lifted.mesh readings.left.values)
+      (edgeValuation refined.lifted.mesh readings.right.values) coefficient))
+  have paid : normSq correction ≤ target := by
     have weight := data.budget.weight_eq
     have bound := (congrArg (fun weight => weight * (2 * (data.budget.allowance + data.budget.allowance))) weight).symm
     exact terminal.trans (bound.trans_le data.budget.paid)
@@ -191,21 +191,21 @@ retained physical exterior correction supplies the final determinant estimate. -
       (2 * (data.budget.allowance + data.budget.allowance) + data.budget.allowance))) ≤ 404 * target :=
     (show _ = 364 * target + 40 * data.budget.allowance by ring1).trans_le
       ((Arithmetic.add_le_add_direct (le_refl (364 * target)) scaled).trans_eq (by ring1))
-  change Data.Gaussian.Norm.Basic.normSq ((determinant - correction) + (determinant - correction)) < _ at reduced
+  change normSq ((determinant - correction) + (determinant - correction)) < _ at reduced
   have reduced := reduced.trans_le allowanceBound
-  have doubled : Data.Gaussian.Norm.Basic.normSq (correction + correction) ≤ 4 * target :=
+  have doubled : normSq (correction + correction) ≤ 4 * target :=
     (Basic.normSq_double correction).trans_le (Arithmetic.mul_le_mul_of_nonneg_left_direct paid (by decide))
   have estimate := (Bounds.normSq_add_le_two ((determinant - correction) + (determinant - correction)) (correction +
     correction)).trans_lt
-    (Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Rat.Fraction.Rational) < 2)
+    (Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Rational) < 2)
       ((Arithmetic.add_lt_add_right_direct reduced _).trans_le (Arithmetic.add_le_add_direct (le_refl _) doubled)))
   rw [show (determinant - correction) + (determinant - correction) + (correction + correction) = determinant +
     determinant by ring1] at estimate
-  have smaller : Data.Gaussian.Norm.Basic.normSq determinant ≤ Data.Gaussian.Norm.Basic.normSq (determinant +
+  have smaller : normSq determinant ≤ normSq (determinant +
     determinant) :=
-    (show Data.Gaussian.Norm.Basic.normSq determinant = 1 * Data.Gaussian.Norm.Basic.normSq determinant by
+    (show normSq determinant = 1 * normSq determinant by
       ring1).le.trans
-      ((Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide : (1 : Rat.Fraction.Rational) ≤ 4) (Basic.normSq_nonneg
+      ((Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide : (1 : Rational) ≤ 4) (normSq_nonneg
         determinant)).trans_eq
         (Basic.normSq_double determinant).symm)
   exact smaller.trans_lt (estimate.trans_eq (by ring1))

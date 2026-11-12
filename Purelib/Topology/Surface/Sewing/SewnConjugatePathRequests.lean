@@ -81,21 +81,21 @@ open Purelib.Data.Gaussian.Basic (Canonical)
 
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
-variable {vertexCount faceCount : Nat} {faces : Fin faceCount → Stokes.OrientedTriangle vertexCount}
-  {indices : List (Fin faceCount)} {boundary : List (Stokes.OrientedEdge vertexCount)}
-  {patch : Patch.CutPatch faces indices boundary} {edges : List (Stokes.OrientedEdge patch.count)}
-  {sources : SewnPrimitiveFaces.PathSources patch edges}
-  {leftLocal rightLocal : Fin faceCount → PrimitiveSewing.PrimitiveValues 3}
-  {leftValues rightValues : PrimitiveSewing.PrimitiveValues patch.count}
-  {leftBank : SewnPrimitiveFaces.FaceBank patch leftLocal leftValues} {rightBank : SewnPrimitiveFaces.FaceBank patch
+variable {vertexCount faceCount : Nat} {faces : Fin faceCount → OrientedTriangle vertexCount}
+  {indices : List (Fin faceCount)} {boundary : List (OrientedEdge vertexCount)}
+  {patch : CutPatch faces indices boundary} {edges : List (OrientedEdge patch.count)}
+  {sources : PathSources patch edges}
+  {leftLocal rightLocal : Fin faceCount → PrimitiveValues 3}
+  {leftValues rightValues : PrimitiveValues patch.count}
+  {leftBank : FaceBank patch leftLocal leftValues} {rightBank : FaceBank patch
     rightLocal rightValues}
 
 /-- A source magnitude bound and retained difference bound control the actual Gaussian reading. -/
-private theorem perturbed_norm {actual original : Gaussian.Basic.Canonical} {magnitude error :
-  SewnPrimitiveFaces.Coordinate}
-    (bounded : Data.Gaussian.Norm.Basic.normSq original ≤ magnitude) (accurate : Data.Gaussian.Norm.Basic.normSq
+private theorem perturbed_norm {actual original : Canonical} {magnitude error :
+  Coordinate}
+    (bounded : normSq original ≤ magnitude) (accurate : normSq
       (actual - original) ≤ error) :
-    Data.Gaussian.Norm.Basic.normSq actual ≤ 2 * (magnitude + error) := by
+    normSq actual ≤ 2 * (magnitude + error) := by
   have estimate := (Gaussian.Norm.Bounds.normSq_add_le_two original (actual - original)).trans
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add bounded accurate) (by decide))
   have equal : original + (actual - original) = actual := by ring1
@@ -103,23 +103,23 @@ private theorem perturbed_norm {actual original : Gaussian.Basic.Canonical} {mag
 
 /-- The complete sewn polygon is compared to the original source polygon. The actual occurrence count and both inherited
 sewing allowances remain. -/
-theorem conjugate_area_error_le (left : PathSources.Sample sources leftBank) (right : PathSources.Sample sources
+theorem conjugate_area_error_le (left : Sample sources leftBank) (right : Sample sources
   rightBank)
-    {magnitude : SewnPrimitiveFaces.Coordinate} (nonnegative : 0 ≤ magnitude)
+    {magnitude : Coordinate} (nonnegative : 0 ≤ magnitude)
     (bounded : ∀ source ∈ sources.sources,
-      (PrimitivePoint.Bounded (⟨source.increment leftLocal, source.increment rightLocal⟩ : Stokes.PrimitivePoint))
+      (Bounded (⟨source.increment leftLocal, source.increment rightLocal⟩ : PrimitivePoint))
         magnitude) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area (edges.map (fun edge =>
-      (⟨Data.Gaussian.Basic.conj (leftValues edge.finish - leftValues edge.start),
-        rightValues edge.finish - rightValues edge.start⟩ : Stokes.PrimitivePoint))) -
+    normSq (PairedIncrementArea.area (edges.map (fun edge =>
+      (⟨Gaussian.Basic.conj (leftValues edge.finish - leftValues edge.start),
+        rightValues edge.finish - rightValues edge.start⟩ : PrimitivePoint))) -
       PairedIncrementArea.area (sources.sources.map (fun source =>
-        (⟨Data.Gaussian.Basic.conj (source.increment leftLocal), source.increment rightLocal⟩ :
-          Stokes.PrimitivePoint)))) ≤
-      32 * (edges.length : SewnPrimitiveFaces.Coordinate)^4 * max left.bound right.bound *
+        (⟨Gaussian.Basic.conj (source.increment leftLocal), source.increment rightLocal⟩ :
+          PrimitivePoint)))) ≤
+      32 * (edges.length : Coordinate)^4 * max left.bound right.bound *
         (magnitude + max left.bound right.bound) := by
   let error := max left.bound right.bound
   have errorNonnegative : 0 ≤ error := (Sample.bound_nonnegative left).trans (Fraction.Order.Basic.le_max_left _ _)
-  have sourceBound : ∀ pair ∈ SewnPairedPathArea.pairedAreaPairs left right, (PrimitivePoint.Bounded pair.2) magnitude
+  have sourceBound : ∀ pair ∈ SewnPairedPathArea.pairedAreaPairs left right, (Bounded pair.2) magnitude
     := by
     intro pair member
     obtain ⟨route, inRoutes, rfl⟩ := Map.mem_map.mp member
@@ -142,7 +142,7 @@ theorem conjugate_area_error_le (left : PathSources.Sample sources leftBank) (ri
       have errorRight := errors.2
       rw [← Gaussian.Norm.Basic.normSq_eq_canonical] at sourceLeft sourceRight errorLeft errorRight
       have leftBound := perturbed_norm sourceLeft errorLeft
-      have rightBound := Sample.perturbed_norm sourceRight errorRight
+      have rightBound := perturbed_norm sourceRight errorRight
       rw [Gaussian.Norm.Basic.normSq_eq_canonical] at leftBound rightBound
       exact ⟨leftBound, rightBound⟩)
     (by
@@ -180,55 +180,55 @@ open Purelib.Data.Gaussian.Basic (Canonical)
 
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
-variable {vertexCount faceCount : Nat} {faces : Fin faceCount → Stokes.OrientedTriangle vertexCount}
-  {indices : List (Fin faceCount)} {boundary : List (Stokes.OrientedEdge vertexCount)}
-  {patch : Patch.CutPatch faces indices boundary} {assembly : CutPatch.Assembly faces patch}
-  {count : Nat} {magnitude target : SewnPrimitiveFaces.Coordinate}
-  {leftLocal rightLocal : Fin faceCount → PrimitiveSewing.PrimitiveValues 3}
-  {leftValues rightValues : PrimitiveSewing.PrimitiveValues patch.count}
-  {leftBank : SewnPrimitiveFaces.FaceBank patch leftLocal leftValues} {rightBank : SewnPrimitiveFaces.FaceBank patch
+variable {vertexCount faceCount : Nat} {faces : Fin faceCount → OrientedTriangle vertexCount}
+  {indices : List (Fin faceCount)} {boundary : List (OrientedEdge vertexCount)}
+  {patch : CutPatch faces indices boundary} {assembly : CutPatch.Assembly faces patch}
+  {count : Nat} {magnitude target : Coordinate}
+  {leftLocal rightLocal : Fin faceCount → PrimitiveValues 3}
+  {leftValues rightValues : PrimitiveValues patch.count}
+  {leftBank : FaceBank patch leftLocal leftValues} {rightBank : FaceBank patch
     rightLocal rightValues}
-  {edges : List (Stokes.OrientedEdge patch.count)} {sources : SewnPrimitiveFaces.PathSources patch edges}
+  {edges : List (OrientedEdge patch.count)} {sources : PathSources patch edges}
 
 /-- One precomputed budget pays the actual full paired polygon difference. -/
-theorem conjugate_accurate (request : SewnPathAreaRequests.PathAreaRequest assembly count magnitude target)
+theorem conjugate_accurate (request : PathAreaRequest assembly count magnitude target)
     (left : PathSources.Sample sources leftBank) (right : PathSources.Sample sources rightBank)
     (lengthEq : edges.length = count)
     (bounded : ∀ source ∈ sources.sources,
-      (PrimitivePoint.Bounded (⟨source.increment leftLocal, source.increment rightLocal⟩ : Stokes.PrimitivePoint))
+      (Bounded (⟨source.increment leftLocal, source.increment rightLocal⟩ : PrimitivePoint))
         magnitude)
     (leftSmall : left.bound < request.error) (rightSmall : right.bound < request.error) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area (edges.map (fun edge =>
-      (⟨Data.Gaussian.Basic.conj (leftValues edge.finish - leftValues edge.start),
-        rightValues edge.finish - rightValues edge.start⟩ : Stokes.PrimitivePoint))) -
+    normSq (PairedIncrementArea.area (edges.map (fun edge =>
+      (⟨Gaussian.Basic.conj (leftValues edge.finish - leftValues edge.start),
+        rightValues edge.finish - rightValues edge.start⟩ : PrimitivePoint))) -
       PairedIncrementArea.area (sources.sources.map (fun source =>
-        (⟨Data.Gaussian.Basic.conj (source.increment leftLocal), source.increment rightLocal⟩ :
-          Stokes.PrimitivePoint)))) < target := by
-  have estimate := SewnConjugatePathRequests.Sample.conjugate_area_error_le left right request.magnitude_nonnegative
+        (⟨Gaussian.Basic.conj (source.increment leftLocal), source.increment rightLocal⟩ :
+          PrimitivePoint)))) < target := by
+  have estimate := Sample.conjugate_area_error_le left right request.magnitude_nonnegative
     bounded
   rw [lengthEq] at estimate
   exact estimate.trans_lt (request.paid ((Sample.bound_nonnegative left).trans (Fraction.Order.Basic.le_max_left _ _))
     (Fraction.Order.Basic.max_lt leftSmall rightSmall))
 
 /-- Both actual cached surfaces consume the same contact tolerance. -/
-theorem conjugate_cached_accurate {sewnPatch : SewingTree.SewnPatch faces}
-    (request : SewnPathAreaRequests.PathAreaRequest sewnPatch.assembly count magnitude target)
-    (left : SewnPrimitiveSamples.CachedSample sewnPatch leftLocal) (right : SewnPrimitiveSamples.CachedSample sewnPatch
+theorem conjugate_cached_accurate {sewnPatch : SewnPatch faces}
+    (request : PathAreaRequest sewnPatch.assembly count magnitude target)
+    (left : CachedSample sewnPatch leftLocal) (right : CachedSample sewnPatch
       rightLocal)
-    (leftAccurate : SewnPrimitiveRequests.LocalAccuracy request.path.tolerance left.sewn.readings)
-    (rightAccurate : SewnPrimitiveRequests.LocalAccuracy request.path.tolerance right.sewn.readings)
-    {edges : List (Stokes.OrientedEdge sewnPatch.cut.count)} (sources : SewnPrimitiveFaces.PathSources sewnPatch.cut
+    (leftAccurate : LocalAccuracy request.path.tolerance left.sewn.readings)
+    (rightAccurate : LocalAccuracy request.path.tolerance right.sewn.readings)
+    {edges : List (OrientedEdge sewnPatch.cut.count)} (sources : PathSources sewnPatch.cut
       edges)
     (lengthEq : edges.length = count)
     (bounded : ∀ source ∈ sources.sources,
-      (PrimitivePoint.Bounded (⟨source.increment leftLocal, source.increment rightLocal⟩ : Stokes.PrimitivePoint))
+      (Bounded (⟨source.increment leftLocal, source.increment rightLocal⟩ : PrimitivePoint))
         magnitude) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area (edges.map (fun edge =>
-      (⟨Data.Gaussian.Basic.conj (left.sewn.values edge.finish - left.sewn.values edge.start),
-        right.sewn.values edge.finish - right.sewn.values edge.start⟩ : Stokes.PrimitivePoint))) -
+    normSq (PairedIncrementArea.area (edges.map (fun edge =>
+      (⟨Gaussian.Basic.conj (left.sewn.values edge.finish - left.sewn.values edge.start),
+        right.sewn.values edge.finish - right.sewn.values edge.start⟩ : PrimitivePoint))) -
       PairedIncrementArea.area (sources.sources.map (fun source =>
-        (⟨Data.Gaussian.Basic.conj (source.increment leftLocal), source.increment rightLocal⟩ :
-          Stokes.PrimitivePoint)))) < target :=
+        (⟨Gaussian.Basic.conj (source.increment leftLocal), source.increment rightLocal⟩ :
+          PrimitivePoint)))) < target :=
   conjugate_accurate request (CachedSample.pathSample left sources) (CachedSample.pathSample right
     sources) lengthEq bounded
     (request.path.cached_accurate left leftAccurate sources lengthEq.le)

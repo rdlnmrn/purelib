@@ -18,6 +18,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Mathlib.Order.Basic
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -73,8 +75,8 @@ theorem l1Bound_nonnegative {α : Type}
     (budget : BoundedInMeasureBudget distribution left right) :
     0 ≤ budget.l1Bound := by
   apply add_nonneg budget.inMeasure.threshold_positive.le
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.sub_nonneg_direct
+  exact Arithmetic.mul_nonneg_direct
+    (Arithmetic.sub_nonneg_direct
       budget.threshold_le_ceiling)
     budget.inMeasure.failure_nonnegative
 
@@ -91,7 +93,7 @@ theorem l1Distance_le {α : Type}
   let allowance : α → Fraction.Rational := fun item =>
     budget.inMeasure.threshold + extra * indicator event item
   have extraNonnegative : 0 ≤ extra :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct
+    Arithmetic.sub_nonneg_direct
       budget.threshold_le_ceiling
   have pointwise : ∀ atom, atom ∈ distribution.atoms →
       Distance.rationalSeparation (left atom.item) (right atom.item) ≤
@@ -103,9 +105,9 @@ theorem l1Distance_le {α : Type}
         unfold event separationAtLeast at selected
         exact decide_eq_false_iff_not.mp selected
       have below :=
-        Fraction.Order.Arithmetic.lt_of_not_ge_direct notThreshold
+        Arithmetic.lt_of_not_ge_direct notThreshold
       simp only [allowance, indicator, selected, mul_zero, add_zero]
-      exact Fraction.Order.Arithmetic.le_of_lt_direct below
+      exact Arithmetic.le_of_lt_direct below
     · simp only [allowance, indicator, selected, mul_one]
       calc
         Distance.rationalSeparation (left atom.item) (right atom.item) ≤
@@ -137,8 +139,8 @@ theorem l1Distance_le {α : Type}
         extra * distribution.probability event := allowanceExpectation
     _ ≤ budget.inMeasure.threshold +
         extra * budget.inMeasure.failure :=
-      Fraction.Order.Arithmetic.add_le_add_direct le_rfl
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.add_le_add_direct le_rfl
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
           budget.inMeasure.probability_le extraNonnegative)
     _ = budget.l1Bound := rfl
 

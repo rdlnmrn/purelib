@@ -123,25 +123,25 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy (
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {cover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {covers :
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {cover : UniformReciprocalCover.Cover data} {covers :
     BasisSourceCovers parent}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {bounds :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {regular : RegularBounds.Data cap} {bounds :
+    ReciprocalPaddedInverse.UniformBounds regular.padded}
   {depth floor sourceFloor : Nat} {target sourceTarget : Coordinate}
-  {index minimum stage : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {index minimum stage : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
   {polynomials : RegularBasisPolynomials cap
     index box}
-  {anchorBank : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.PrimitiveCells data index
+  {anchorBank : UniformReciprocalPrimitives.PrimitiveCells data index
     cover.mesh.edges}
   {bank : BasisSourceLocations.SampleBank
     covers index}
-  {basis : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {basis : ReciprocalPaddedBasisBounds.BasisBounds bounds}
   {joinTarget : Coordinate} {joinFloor : Nat}
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCoordinateRequest (BasisCommonCoordinateRequest)
@@ -172,7 +172,7 @@ open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 variable {energyTarget : Coordinate} {energyFloor energyDepth : Nat}
 
 variable {originals :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+  CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
   covers index}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -190,7 +190,7 @@ variable {intervals : List (BasisCommonInterval
     regular depth target sourceTarget floor sourceFloor intervals}
   {plans : Plans
     capSample polynomials minimum requests} {readings :
-    CommonChartReadings.BasisCommonChartRequests.Plans.Readings
+    Readings
     anchorBank bank stage requests plans}
   {paths :
     Paths
@@ -209,22 +209,22 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.RestorationJoins 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisEndpointValues (EndpointEstimate)
 
 variable {leftCount rightCount leftIndex rightIndex joinFloor : Nat}
-  {leftParent rightParent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {leftPatch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch leftParent}
-  {rightPatch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch rightParent}
-  {leftData : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data leftPatch leftCount}
-  {rightData : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data rightPatch rightCount}
+  {leftParent rightParent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {leftPatch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch leftParent}
+  {rightPatch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch rightParent}
+  {leftData : UniformReciprocalModels.Data leftPatch leftCount}
+  {rightData : UniformReciprocalModels.Data rightPatch rightCount}
   {leftEdge rightEdge : ParameterEdge}
-  {leftCell : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell leftData leftEdge}
-  {rightCell : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell rightData rightEdge}
-  {leftModel : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel leftCell}
-  {rightModel : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel rightCell}
+  {leftCell : UniformReciprocalCover.Cell leftData leftEdge}
+  {rightCell : UniformReciprocalCover.Cell rightData rightEdge}
+  {leftModel : UniformReciprocalRootChannels.RootModel leftCell}
+  {rightModel : UniformReciprocalRootChannels.RootModel rightCell}
   {leftParameter rightParameter : Coordinate}
   {leftPoint : Point cap leftModel leftParameter}
     {rightPoint : Point cap rightModel rightParameter}
-  {leftEndpoint : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap.Endpoint leftPoint.coordinates
+  {leftEndpoint : Coordinates.Overlap.Endpoint leftPoint.coordinates
     capSample}
-  {rightEndpoint : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap.Endpoint
+  {rightEndpoint : Coordinates.Overlap.Endpoint
     rightPoint.coordinates capSample}
   {joined : Join leftPoint rightPoint}
 
@@ -233,12 +233,12 @@ variable {leftCount rightCount leftIndex rightIndex joinFloor : Nat}
 The acquired endpoint readings pay the incoming gap and shifted-potential error, preserving the tighter join tolerance
 and all source/chart endpoint readbacks. -/
 @[expose] def restoreFromReadings (ends : Paths.Extremes paths)
-    (connection : HomogeneousTraceConnection.HomogeneousTrace coefficients
+    (connection : HomogeneousTrace coefficients
       (((Paths.joinedBlocks 0 paths connectors).map (fun block => block.1 :: block.2)).flatten)
       (Readings.firstChartValue coefficients requests readings) (Readings.lastChartValue coefficients requests readings)
       firstPotential lastPotential loss)
-    (allocation : Restoration.BasisCommonRestorationAllowance allowance) (positive : 0 ≤ allowance)
-    (request : RestorationJoins.BasisRestorationRequest basis joined allocation.target joinFloor)
+    (allocation : BasisCommonRestorationAllowance allowance) (positive : 0 ≤ allowance)
+    (request : BasisRestorationRequest basis joined allocation.target joinFloor)
     (sourceNonnegative : 0 ≤ sourceTarget) (sourceLe : sourceTarget ≤ allocation.incomingAllowance)
     (leftReading : ChartReadings.Endpoint.Reading leftEndpoint leftIndex)
     (rightReading : ChartReadings.Endpoint.Reading rightEndpoint rightIndex)
@@ -250,27 +250,27 @@ and all source/chart endpoint readbacks. -/
       rightReading.coordinate)
     (rightPotential : firstPotential = RootRadialGeometry.radialArea (polynomials.value coefficients) energyDepth
       rightReading.coordinate)
-    (previousSource previous previousPotential : InverseRootPolynomial.Gaussian)
-    (previousReadback : previousPotential = IncrementRestoration.potential
+    (previousSource previous previousPotential : Gaussian)
+    (previousReadback : previousPotential = potential
       (RootRadialGeometry.radialArea (polynomials.value coefficients) energyDepth leftReading.coordinate)
       (polynomials.value coefficients leftReading.coordinate) previous)
-    {previousTarget : InverseRootPolynomial.Coordinate} (previousLe : previousTarget ≤ allocation.target / 16)
-    (previousEstimate : ParentBasisEndpointValues.EndpointEstimate coefficients previousTarget
+    {previousTarget : Coordinate} (previousLe : previousTarget ≤ allocation.target / 16)
+    (previousEstimate : EndpointEstimate coefficients previousTarget
       (polynomials.value coefficients leftReading.coordinate) (previousSource, previous)) :
-    HomogeneousTraceConnection.HomogeneousTrace coefficients
-      (HomogeneousTraceRestoration.sourceRestoredPath (((Paths.joinedBlocks 0 paths connectors).map (fun block =>
+    HomogeneousTrace coefficients
+      (sourceRestoredPath (((Paths.joinedBlocks 0 paths connectors).map (fun block =>
         block.1 :: block.2)).flatten)
         (Readings.firstChartValue coefficients requests readings) (Readings.lastChartValue coefficients requests
           readings)
         ends.first.1 ends.last.1 ends.last.2 previous)
       previous ends.last.2 previousPotential
-      (IncrementRestoration.potential lastPotential (Readings.lastChartValue coefficients requests readings)
+      (potential lastPotential (Readings.lastChartValue coefficients requests readings)
         ends.last.2) (loss + allowance) := by
   have sourcePaidForJoin := allocation.incoming_paid sourceNonnegative sourceLe
-  have normNonnegative : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients :=
+  have normNonnegative : 0 ≤ coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
-    (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : InverseRootPolynomial.Coordinate)) _ (fun row =>
-      Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
+    (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Coordinate)) _ (fun row =>
+      normSq_nonneg (coefficients row)))
   have firstClose := previousEstimate.direct_close.trans
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (previousLe.trans_eq request.endpoint_eq.symm)
       normNonnegative)
@@ -286,13 +286,13 @@ and all source/chart endpoint readbacks. -/
   have sourcePaid : sourceTarget^2 ≤ allocation.sourceAllowance^2 := by
     apply sourcePaidForJoin.trans
     rw [allocation.target_eq]
-    apply (Fraction.Order.Field.div_le_iff_pos (by decide : (0 : InverseRootPolynomial.Coordinate) < 16)).mpr
+    apply (Fraction.Order.Field.div_le_iff_pos (by decide : (0 : Coordinate) < 16)).mpr
     exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide : (4 :
-      InverseRootPolynomial.Coordinate) ≤ 16) (Fraction.Order.Arithmetic.sq_nonneg_direct _)).trans_eq (by ring1)
-  have incoming : Data.Gaussian.Norm.Basic.normSq (IncrementRestoration.potential firstPotential
+      Coordinate) ≤ 16) (Fraction.Order.Arithmetic.sq_nonneg_direct _)).trans_eq (by ring1)
+  have incoming : Data.Gaussian.Norm.Basic.normSq (potential firstPotential
     (Readings.firstChartValue coefficients requests readings) ends.first.2 -
       previousPotential - BoundaryRibbon.area previous ends.first.2) ≤
-      (80 * allocation.target + 2 * allocation.target) * (PreparedObservationCoercivity.coefficientNormSq
+      (80 * allocation.target + 2 * allocation.target) * (coefficientNormSq
         coefficients)^2 := by
     rw [rightPotential, rightChart, previousReadback]
     exact potentialBound

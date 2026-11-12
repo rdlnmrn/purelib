@@ -29,6 +29,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian
+
 open Purelib.Data.Gaussian.Basic (Canonical)
 open Purelib.Data.Nat.Positive (RootDegree)
 open Purelib.Polynomial.Dense.Basic (DensePolynomial)
@@ -75,36 +77,36 @@ private theorem unitRobustSegmentHomotopy_of_residual
     (sourceUnit : normSq source = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (index : Fin degree.value)
-    (startInside : (Power.Unit.Box.unitRobustBox (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
+    (startInside : (Box.unitRobustBox (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
       sourceUnit degree degreeAtLeastTwo index).Contains start)
-    (finishInside : (Power.Unit.Box.unitRobustBox (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
+    (finishInside : (Box.unitRobustBox (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
       sourceUnit degree degreeAtLeastTwo index).Contains finish)
     (residual : ∀ {time : Fraction.Rational},
       (0 : Fraction.Rational) ≤ time ∧ time ≤ 1 →
       normSq
-          ((Purelib.Geometry.Rational.Affine.line start (finish - start) time) ^ degree.value -
-            Purelib.Geometry.Rational.Affine.line parameterStart
+          ((Geometry.Rational.Affine.line start (finish - start) time) ^ degree.value -
+            Geometry.Rational.Affine.line parameterStart
               (parameterFinish - parameterStart) time) ≤
         (1 / 8 : Fraction.Rational)) :
     SegmentHomotopyFormula
-      (Dense.Gaussian.Power.Coordinate.coordinatePositivePower (degree.value - 1))
-      Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial start finish parameterStart
+      (Power.Coordinate.coordinatePositivePower (degree.value - 1))
+      Monomial.Coordinate.coordinatePolynomial start finish parameterStart
         parameterFinish := open Purelib.Geometry.Rational in by
-  let power := Dense.Gaussian.Power.Coordinate.coordinatePositivePower (degree.value - 1)
-  let coordinate := Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
-  let A := Dense.Gaussian.Path.Components.pathReal power start (finish - start)
-  let B := Dense.Gaussian.Path.Components.pathImag power start (finish - start)
-  let U := Dense.Gaussian.Path.Components.pathReal coordinate parameterStart
+  let power := Power.Coordinate.coordinatePositivePower (degree.value - 1)
+  let coordinate := Monomial.Coordinate.coordinatePolynomial
+  let A := Path.Components.pathReal power start (finish - start)
+  let B := Path.Components.pathImag power start (finish - start)
+  let U := Path.Components.pathReal coordinate parameterStart
     (parameterFinish - parameterStart)
-  let V := Dense.Gaussian.Path.Components.pathImag coordinate parameterStart
+  let V := Path.Components.pathImag coordinate parameterStart
     (parameterFinish - parameterStart)
   let C := U - A
   let D := V - B
-  let interval : Data.Rat.Interval.Bounds :=
+  let interval : Interval.Bounds :=
     { lower := 0, upper := 1, valid := by decide }
   let clearance : Clearance.Pair.Basic.Certificate A B interval :=
     unitRobustSegmentPowerCertificate
-      (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree degreeAtLeastTwo
+      (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree degreeAtLeastTwo
       index startInside finishInside
   have exponent : degree.value - 1 + 1 = degree.value :=
     Nat.Subtraction.sub_add_cancel degree.positive
@@ -112,18 +114,18 @@ private theorem unitRobustSegmentHomotopy_of_residual
     intro zero
     have pair := clearance.eval_ne_zero
       (x := (0 : Fraction.Rational)) (show interval.Contains 0 from ⟨le_rfl, by decide⟩)
-    simp only [-eq_self, -iff_self, A, B, Dense.Gaussian.Path.Components.eval_pathReal,
-      Dense.Gaussian.Path.Components.eval_pathImag, Affine.Segment.line_segment_zero,
-      zero, Gaussian.Basic.zero_re, Gaussian.Basic.zero_im] at pair
+    simp only [-eq_self, -iff_self, A, B, Path.Components.eval_pathReal,
+      Path.Components.eval_pathImag, Affine.Segment.line_segment_zero,
+      zero, Basic.zero_re, Basic.zero_im] at pair
     exact pair.elim (fun impossible => impossible rfl)
       (fun impossible => impossible rfl)
   have finishNonzero : power.eval finish ≠ 0 := by
     intro zero
     have pair := clearance.eval_ne_zero
       (x := (1 : Fraction.Rational)) (show interval.Contains 1 from ⟨by decide, le_rfl⟩)
-    simp only [-eq_self, -iff_self, A, B, Dense.Gaussian.Path.Components.eval_pathReal,
-      Dense.Gaussian.Path.Components.eval_pathImag, Affine.Segment.line_segment_one,
-      zero, Gaussian.Basic.zero_re, Gaussian.Basic.zero_im] at pair
+    simp only [-eq_self, -iff_self, A, B, Path.Components.eval_pathReal,
+      Path.Components.eval_pathImag, Affine.Segment.line_segment_one,
+      zero, Basic.zero_re, Basic.zero_im] at pair
     exact pair.elim (fun impossible => impossible rfl)
       (fun impossible => impossible rfl)
   refine
@@ -134,17 +136,17 @@ private theorem unitRobustSegmentHomotopy_of_residual
     (A := A) (B := B) (C := C) (D := D) (U := U) (V := V)
     (root := interval) (by decide) clearance (1 / 8) (by decide)
   · intro time timeInside
-    have powerLower := Power.Unit.Segment.Bounds.unitRobustSegment_power_lower
-      (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree degreeAtLeastTwo
+    have powerLower := Bounds.unitRobustSegment_power_lower
+      (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree degreeAtLeastTwo
       index startInside finishInside timeInside
     have errorUpper := residual timeInside
     have powerCoordinates : (1 / 4 : Fraction.Rational) ≤
         A.eval time ^ 2 + B.eval time ^ 2 := by
-      rw [← Gaussian.Power.normSq_pow] at powerLower
+      rw [← Power.normSq_pow] at powerLower
       rw [← exponent] at powerLower
-      simpa only [-eq_self, -iff_self, A, B, power, Dense.Gaussian.Path.Components.eval_pathReal,
-        Dense.Gaussian.Path.Components.eval_pathImag,
-        Dense.Gaussian.Power.Coordinate.coordinatePositivePower_eval, normSq] using powerLower
+      simpa only [-eq_self, -iff_self, A, B, power, Path.Components.eval_pathReal,
+        Path.Components.eval_pathImag,
+        Power.Coordinate.coordinatePositivePower_eval, normSq] using powerLower
     have errorCoordinates : C.eval time ^ 2 + D.eval time ^ 2 ≤
         (1 / 8 : Fraction.Rational) := by
       calc
@@ -155,10 +157,10 @@ private theorem unitRobustSegmentHomotopy_of_residual
                 (Affine.line start (finish - start) time) ^
                   degree.value) := by
           simp only [-eq_self, -iff_self, C, D, U, V, A, B, power, coordinate, DensePolynomial.eval_sub,
-            Dense.Gaussian.Path.Components.eval_pathReal,
-            Dense.Gaussian.Path.Components.eval_pathImag,
-            Dense.Gaussian.Power.Coordinate.coordinatePositivePower_eval,
-            Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial_eval, exponent, normSq,
+            Path.Components.eval_pathReal,
+            Path.Components.eval_pathImag,
+            Power.Coordinate.coordinatePositivePower_eval,
+            Monomial.Coordinate.coordinatePolynomial_eval, exponent, normSq,
             sub_re, sub_im]
           rfl
         _ = normSq
@@ -213,20 +215,20 @@ theorem unitRobustSegmentConstantTargetHomotopy
     {source target start finish : Canonical}
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
-    (small : Power.Unit.Move.Budget.UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
+    (small : Move.Budget.UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
     (index : Fin degree.value)
-    (startInside : (Power.Unit.Box.unitRobustBox (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
+    (startInside : (Box.unitRobustBox (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
       sourceUnit degree degreeAtLeastTwo index).Contains start)
-    (finishInside : (Power.Unit.Box.unitRobustBox (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
+    (finishInside : (Box.unitRobustBox (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
       sourceUnit degree degreeAtLeastTwo index).Contains finish) :
     SegmentHomotopyFormula
-      (Dense.Gaussian.Power.Coordinate.coordinatePositivePower (degree.value - 1))
-      Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial start finish target target := by
+      (Power.Coordinate.coordinatePositivePower (degree.value - 1))
+      Monomial.Coordinate.coordinatePolynomial start finish target target := by
   apply unitRobustSegmentHomotopy_of_residual sourceUnit degree degreeAtLeastTwo
     index startInside finishInside
   intro time timeInside
   rw [Geometry.Rational.Affine.Segment.line_self]
-  exact Power.Unit.Segment.Residual.unitRobustSegment_constantTarget_residual_le_eighth sourceUnit
+  exact Residual.unitRobustSegment_constantTarget_residual_le_eighth sourceUnit
     targetUnit degree degreeAtLeastTwo small index startInside finishInside
     timeInside
 end Purelib.RootIsolation.Power.Unit.Segment.Homotopy
@@ -261,19 +263,19 @@ theorem unitRobustSegmentHomotopy
     {source target start finish : Canonical}
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
-    (small : Power.Unit.Move.Budget.UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
+    (small : Move.Budget.UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
     (index : Fin degree.value)
-    (startInside : (Power.Unit.Box.unitRobustBox (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
+    (startInside : (Box.unitRobustBox (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
       sourceUnit degree degreeAtLeastTwo index).Contains start)
-    (finishInside : (Power.Unit.Box.unitRobustBox (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
+    (finishInside : (Box.unitRobustBox (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
       sourceUnit degree degreeAtLeastTwo index).Contains finish) :
     SegmentHomotopyFormula
-      (Dense.Gaussian.Power.Coordinate.coordinatePositivePower (degree.value - 1))
-      Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial start finish source target := by
+      (Power.Coordinate.coordinatePositivePower (degree.value - 1))
+      Monomial.Coordinate.coordinatePolynomial start finish source target := by
   apply unitRobustSegmentHomotopy_of_residual sourceUnit degree degreeAtLeastTwo
     index startInside finishInside
   intro time timeInside
-  exact Power.Unit.Segment.Residual.unitRobustSegment_parameter_residual_le_eighth sourceUnit targetUnit
+  exact Residual.unitRobustSegment_parameter_residual_le_eighth sourceUnit targetUnit
     degree degreeAtLeastTwo small index startInside finishInside timeInside
 end Purelib.RootIsolation.Power.Unit.Segment.Homotopy
 

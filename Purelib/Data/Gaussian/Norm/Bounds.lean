@@ -23,6 +23,8 @@ import Mathlib.Order.Basic
 import Mathlib.Algebra.Ring.Commute
 import Purelib.Data.Rat.Bounds.Square
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.Rat
 
 section
@@ -176,10 +178,10 @@ theorem gaussian_dot_sq_le_product_normSq
     (left sum : Basic.Canonical) :
     (left.re * sum.re + left.im * sum.im) ^ 2 ≤
       Basic.normSq left * Basic.normSq sum := by
-  apply Order.Arithmetic.le_of_sub_nonneg_direct
+  apply Arithmetic.le_of_sub_nonneg_direct
   calc
     0 ≤ (left.re * sum.im - left.im * sum.re) ^ 2 :=
-      Order.Arithmetic.sq_nonneg_direct _
+      Arithmetic.sq_nonneg_direct _
     _ = Basic.normSq left * Basic.normSq sum -
         (left.re * sum.re + left.im * sum.im) ^ 2 := by
       unfold Basic.normSq
@@ -384,7 +386,7 @@ theorem horizontal_symmetric_norm_bounds
     calc
       radius ^ 2 = 0 + radius ^ 2 := by ring1
       _ ≤ value ^ 2 + radius ^ 2 :=
-        add_le_add (Fraction.Order.Arithmetic.sq_nonneg_direct value) le_rfl
+        add_le_add (Arithmetic.sq_nonneg_direct value) le_rfl
   · change value ^ 2 + height ^ 2 ≤ 2 * radius ^ 2
     rw [heightSquare]
     exact (add_le_add valueSquare le_rfl).trans_eq (by ring1)
@@ -571,7 +573,7 @@ theorem vertical_symmetric_norm_bounds
       radius ^ 2 = radius ^ 2 + 0 := by ring1
       _ ≤ radius ^ 2 + value ^ 2 :=
         add_le_add le_rfl
-          (Fraction.Order.Arithmetic.sq_nonneg_direct value)
+          (Arithmetic.sq_nonneg_direct value)
   · change width ^ 2 + value ^ 2 ≤ 2 * radius ^ 2
     rw [widthSquare]
     exact (add_le_add le_rfl valueSquare).trans_eq (by ring1)
@@ -895,26 +897,26 @@ open Purelib.Data Purelib.Algebra
 The supplied radius is nonnegative, and each retained coordinate square is
 bounded by its square. Rational square monotonicity gives the signed bounds. -/
 theorem coordinate_bounds_of_normSq_le
-    {z : Gaussian.Basic.Canonical} {r : Rat.Fraction.Rational} (nonnegative : 0 ≤ r)
-    (bound : Data.Gaussian.Norm.Basic.normSq z ≤ r ^ 2) :
+    {z : Basic.Canonical} {r : Fraction.Rational} (nonnegative : 0 ≤ r)
+    (bound : Basic.normSq z ≤ r ^ 2) :
     -r ≤ z.re ∧ z.re ≤ r ∧ -r ≤ z.im ∧ z.im ≤ r := by
   have realSquare : z.re ^ 2 ≤ r ^ 2 := by
     calc
       z.re ^ 2 = z.re ^ 2 + 0 := by ring1
       _ ≤ z.re ^ 2 + z.im ^ 2 :=
         add_le_add (le_refl _)
-          (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct z.im)
+          (Arithmetic.sq_nonneg_direct z.im)
       _ ≤ r ^ 2 := bound
   have imaginarySquare : z.im ^ 2 ≤ r ^ 2 := by
     calc
       z.im ^ 2 = 0 + z.im ^ 2 := by ring1
       _ ≤ z.re ^ 2 + z.im ^ 2 :=
-        add_le_add (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct z.re)
+        add_le_add (Arithmetic.sq_nonneg_direct z.re)
           (le_refl _)
       _ ≤ r ^ 2 := bound
-  have coordinateBounds : ∀ x : Rat.Fraction.Rational, x ^ 2 ≤ r ^ 2 →
+  have coordinateBounds : ∀ x : Fraction.Rational, x ^ 2 ≤ r ^ 2 →
       -r ≤ x ∧ x ≤ r := by
-    have nonnegativeUpper : ∀ {x : Rat.Fraction.Rational}, 0 ≤ x →
+    have nonnegativeUpper : ∀ {x : Fraction.Rational}, 0 ≤ x →
         x ^ 2 ≤ r ^ 2 → x ≤ r := by
       intro x xNonnegative square
       by_cases upper : x ≤ r
@@ -922,10 +924,10 @@ theorem coordinate_bounds_of_normSq_le
       · have strict : r < x := lt_of_not_ge upper
         have xPositive : 0 < x := nonnegative.trans_lt strict
         have first : r * r ≤ r * x :=
-          Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          Arithmetic.mul_le_mul_of_nonneg_left_direct
             strict.le nonnegative
         have second : r * x < x * x :=
-          Rat.Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+          Arithmetic.mul_lt_mul_of_pos_right_direct
             strict xPositive
         have squaresStrict : r ^ 2 < x ^ 2 := by
           rw [pow_two, pow_two]
@@ -934,13 +936,13 @@ theorem coordinate_bounds_of_normSq_le
     intro x square
     by_cases xNonnegative : 0 ≤ x
     · have negRNonpositive :=
-        Rat.Fraction.Order.Arithmetic.neg_le_neg_direct nonnegative
+        Arithmetic.neg_le_neg_direct nonnegative
       rw [neg_zero] at negRNonpositive
       exact ⟨negRNonpositive.trans xNonnegative,
         nonnegativeUpper xNonnegative square⟩
     · have xNonpositive : x ≤ 0 := le_of_not_ge xNonnegative
       have negXNonnegative :=
-        Rat.Fraction.Order.Arithmetic.neg_le_neg_direct xNonpositive
+        Arithmetic.neg_le_neg_direct xNonpositive
       rw [neg_zero] at negXNonnegative
       have negSquare : (-x) ^ 2 = x ^ 2 := by
         rw [pow_two, pow_two, Ring.Multiplication.neg_mul_neg]
@@ -949,7 +951,7 @@ theorem coordinate_bounds_of_normSq_le
           rw [negSquare]
           exact square)
       exact ⟨by
-          have := Rat.Fraction.Order.Arithmetic.neg_le_neg_direct negXLe
+          have := Arithmetic.neg_le_neg_direct negXLe
           rw [_root_.neg_neg] at this
           exact this,
         xNonpositive.trans nonnegative⟩
@@ -1347,11 +1349,11 @@ open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
 /-- The norm of a Gaussian sum is bounded by three times the first norm plus three halves of the second. -/
 theorem normSq_add_le_three_one_and_half (u v : Basic.Canonical) :
-    Data.Gaussian.Norm.Basic.normSq (u + v) ≤
-      3 * Data.Gaussian.Norm.Basic.normSq u + (3 / 2) * Data.Gaussian.Norm.Basic.normSq v := by
+    Basic.normSq (u + v) ≤
+      3 * Basic.normSq u + (3 / 2) * Basic.normSq v := by
   let difference :=
-    3 * Data.Gaussian.Norm.Basic.normSq u + (3 / 2) * Data.Gaussian.Norm.Basic.normSq v -
-      Data.Gaussian.Norm.Basic.normSq (u + v)
+    3 * Basic.normSq u + (3 / 2) * Basic.normSq v -
+      Basic.normSq (u + v)
   let scalarTwo : Basic.Canonical := ⟨2, 0⟩
   have coefficient : (2 : Fraction.Rational) * (3 / 2) = 3 := by
     calc
@@ -1360,37 +1362,37 @@ theorem normSq_add_le_three_one_and_half (u v : Basic.Canonical) :
       _ = 3 :=
         Fraction.Field.div_mul_cancel_of_ne 3 2 (by decide)
   have scaledIdentity :
-      2 * difference = Data.Gaussian.Norm.Basic.normSq (scalarTwo * u - v) := by
+      2 * difference = Basic.normSq (scalarTwo * u - v) := by
     calc
       2 * difference =
-          6 * Data.Gaussian.Norm.Basic.normSq u + (2 * (3 / 2)) * Data.Gaussian.Norm.Basic.normSq v -
-            2 * Data.Gaussian.Norm.Basic.normSq (u + v) := by
+          6 * Basic.normSq u + (2 * (3 / 2)) * Basic.normSq v -
+            2 * Basic.normSq (u + v) := by
         dsimp only [difference]
         ring1
-      _ = 6 * Data.Gaussian.Norm.Basic.normSq u + 3 * Data.Gaussian.Norm.Basic.normSq v -
-          2 * Data.Gaussian.Norm.Basic.normSq (u + v) := by
+      _ = 6 * Basic.normSq u + 3 * Basic.normSq v -
+          2 * Basic.normSq (u + v) := by
         rw [coefficient]
-      _ = Data.Gaussian.Norm.Basic.normSq (scalarTwo * u - v) := by
-        dsimp only [scalarTwo, Data.Gaussian.Norm.Basic.normSq]
+      _ = Basic.normSq (scalarTwo * u - v) := by
+        dsimp only [scalarTwo, Basic.normSq]
         simp only [Basic.sub_re, Basic.sub_im, Basic.add_re, Basic.add_im, Basic.mul_re, Basic.mul_im]
         ring1
   have scaledNonnegative : 0 ≤ 2 * difference := by
     rw [scaledIdentity]
-    exact Norm.Basic.normSq_nonneg _
+    exact Basic.normSq_nonneg _
   have differenceNonnegative : 0 ≤ difference := by
-    apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+    apply Arithmetic.le_of_mul_le_mul_right_direct
       (c := (2 : Fraction.Rational)) _ (by decide)
     calc
       0 * 2 = 0 := by ring1
       _ ≤ 2 * difference := scaledNonnegative
       _ = difference * 2 := _root_.mul_comm _ _
-  apply Fraction.Order.Arithmetic.le_of_add_le_add_right_direct
-    (c := -Data.Gaussian.Norm.Basic.normSq (u + v))
+  apply Arithmetic.le_of_add_le_add_right_direct
+    (c := -Basic.normSq (u + v))
   calc
-    Data.Gaussian.Norm.Basic.normSq (u + v) + -Data.Gaussian.Norm.Basic.normSq (u + v) = 0 := by ring1
+    Basic.normSq (u + v) + -Basic.normSq (u + v) = 0 := by ring1
     _ ≤ difference := differenceNonnegative
-    _ = (3 * Data.Gaussian.Norm.Basic.normSq u + (3 / 2) * Data.Gaussian.Norm.Basic.normSq v) +
-        -Data.Gaussian.Norm.Basic.normSq (u + v) := by
+    _ = (3 * Basic.normSq u + (3 / 2) * Basic.normSq v) +
+        -Basic.normSq (u + v) := by
       dsimp only [difference]
       ring1
 end Purelib.Data.Gaussian.Norm.Bounds
@@ -1585,9 +1587,9 @@ theorem Norm.Bounds.normSq_add_le_two (left right : Basic.Canonical) :
   calc
     (left.re + right.re) ^ 2 + (left.im + right.im) ^ 2 ≤
         2 * (left.re ^ 2 + right.re ^ 2) + 2 * (left.im ^ 2 + right.im ^ 2) :=
-      Rat.Fraction.Order.Arithmetic.add_le_add_direct
-        (Purelib.Data.Rat.Bounds.Square.add_sq_le_two left.re right.re)
-        (Purelib.Data.Rat.Bounds.Square.add_sq_le_two left.im right.im)
+      Arithmetic.add_le_add_direct
+        (Bounds.Square.add_sq_le_two left.re right.re)
+        (Bounds.Square.add_sq_le_two left.im right.im)
     _ = 2 * ((left.re ^ 2 + left.im ^ 2) + (right.re ^ 2 + right.im ^ 2)) := by ring1
 
 end Gaussian
@@ -1787,10 +1789,10 @@ theorem lower_of_tail (value leading :
       Basic.normSq leading / 4 ≤ Basic.normSq value := by
   have split : value + (leading - value) = leading := by ring1
   have symmetric : Basic.normSq (leading - value) = Basic.normSq (value - leading) := by
-    rw [show leading - value = -(value - leading) by ring1, Norm.Basic.normSq_neg]
+    rw [show leading - value = -(value - leading) by ring1, Basic.normSq_neg]
   have triangle := normSq_add_le_two value (leading - value)
   rw [split, symmetric] at triangle
-  have doubled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct triangle (by
+  have doubled := Arithmetic.mul_le_mul_of_nonneg_left_direct triangle (by
       decide : (0 : Fraction.Rational) ≤ 2)
   have combined : Basic.normSq leading + Basic.normSq leading ≤ 4 *
     Basic.normSq value + Basic.normSq leading := by
@@ -1799,8 +1801,8 @@ theorem lower_of_tail (value leading :
       _ ≤ 2 * (2 * (Basic.normSq value + Basic.normSq (value - leading))) := doubled
       _ = 4 * Basic.normSq value + 4 * Basic.normSq (value - leading) := by ring1
       _ ≤ _ := add_le_add (le_refl (4 * Basic.normSq value)) tail
-  apply (Fraction.Order.Field.div_le_iff_pos (by decide : (0 : Fraction.Rational) < 4)).mpr
-  exact (Fraction.Order.Arithmetic.le_of_add_le_add_right_direct combined).trans_eq (by ring1)
+  apply (Field.div_le_iff_pos (by decide : (0 : Fraction.Rational) < 4)).mpr
+  exact (Arithmetic.le_of_add_le_add_right_direct combined).trans_eq (by ring1)
 
 end Purelib.Data.Gaussian.Norm.Bounds
 
@@ -1941,7 +1943,7 @@ theorem Norm.Bounds.half_normSq_sub_le_normSq_sub (left right : Basic.Canonical)
   have quotientBound :
       Norm.Basic.normSq left / 2 ≤ Norm.Basic.normSq (left - right) + Norm.Basic.normSq right
         := by
-    apply (Fraction.Order.Field.div_le_iff_pos
+    apply (Field.div_le_iff_pos
       (Fraction.Cast.Order.natCast_pos_direct
         (n := 2) (by decide))).mpr
     calc
@@ -1949,7 +1951,7 @@ theorem Norm.Bounds.half_normSq_sub_le_normSq_sub (left right : Basic.Canonical)
         right) := bound
       _ = (Norm.Basic.normSq (left - right) + Norm.Basic.normSq right) * 2 :=
         _root_.mul_comm _ _
-  have translated := Fraction.Order.Arithmetic.add_le_add_right_direct
+  have translated := Arithmetic.add_le_add_right_direct
     quotientBound (-Norm.Basic.normSq right)
   calc
     Norm.Basic.normSq left / 2 - Norm.Basic.normSq right =
@@ -2113,11 +2115,11 @@ The weights are one plus the positive parameter and one plus its reciprocal. No 
 representation is introduced. -/
 theorem normSq_add_le_weighted (scale : Fraction.Rational)
     (scalePositive : 0 < scale) (u v : Basic.Canonical) :
-    Data.Gaussian.Norm.Basic.normSq (u + v) ≤
-      (scale + 1) * Data.Gaussian.Norm.Basic.normSq u + ((scale + 1) / scale) * Data.Gaussian.Norm.Basic.normSq v := by
+    Basic.normSq (u + v) ≤
+      (scale + 1) * Basic.normSq u + ((scale + 1) / scale) * Basic.normSq v := by
   let difference :=
-    (scale + 1) * Data.Gaussian.Norm.Basic.normSq u + ((scale + 1) / scale) * Data.Gaussian.Norm.Basic.normSq v -
-      Data.Gaussian.Norm.Basic.normSq (u + v)
+    (scale + 1) * Basic.normSq u + ((scale + 1) / scale) * Basic.normSq v -
+      Basic.normSq (u + v)
   have coefficient : scale * ((scale + 1) / scale) = scale + 1 := by
     calc
       scale * ((scale + 1) / scale) =
@@ -2131,38 +2133,38 @@ theorem normSq_add_le_weighted (scale : Fraction.Rational)
         (scale * u.re - v.re) ^ 2 + (scale * u.im - v.im) ^ 2 := by
     calc
       scale * difference =
-          scale * (scale + 1) * Data.Gaussian.Norm.Basic.normSq u +
-            (scale * ((scale + 1) / scale)) * Data.Gaussian.Norm.Basic.normSq v -
-            scale * Data.Gaussian.Norm.Basic.normSq (u + v) := by
+          scale * (scale + 1) * Basic.normSq u +
+            (scale * ((scale + 1) / scale)) * Basic.normSq v -
+            scale * Basic.normSq (u + v) := by
         dsimp only [difference]
         ring1
-      _ = scale * (scale + 1) * Data.Gaussian.Norm.Basic.normSq u +
-            (scale + 1) * Data.Gaussian.Norm.Basic.normSq v - scale * Data.Gaussian.Norm.Basic.normSq (u + v) := by
+      _ = scale * (scale + 1) * Basic.normSq u +
+            (scale + 1) * Basic.normSq v - scale * Basic.normSq (u + v) := by
         rw [coefficient]
       _ = (scale * u.re - v.re) ^ 2 +
             (scale * u.im - v.im) ^ 2 := by
-        simp only [Data.Gaussian.Norm.Basic.normSq, Basic.add_re, Basic.add_im]
+        simp only [Basic.normSq, Basic.add_re, Basic.add_im]
         ring1
   have scaledNonnegative : 0 ≤ scale * difference := by
     rw [scaledIdentity]
     exact add_nonneg
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+      (Arithmetic.sq_nonneg_direct _)
+      (Arithmetic.sq_nonneg_direct _)
   have differenceNonnegative : 0 ≤ difference := by
-    apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+    apply Arithmetic.le_of_mul_le_mul_right_direct
       (c := scale) _ scalePositive
     calc
       0 * scale = 0 := by ring1
       _ ≤ scale * difference := scaledNonnegative
       _ = difference * scale := _root_.mul_comm _ _
-  apply Fraction.Order.Arithmetic.le_of_add_le_add_right_direct
-    (c := -Data.Gaussian.Norm.Basic.normSq (u + v))
+  apply Arithmetic.le_of_add_le_add_right_direct
+    (c := -Basic.normSq (u + v))
   calc
-    Data.Gaussian.Norm.Basic.normSq (u + v) + -Data.Gaussian.Norm.Basic.normSq (u + v) = 0 := by ring1
+    Basic.normSq (u + v) + -Basic.normSq (u + v) = 0 := by ring1
     _ ≤ difference := differenceNonnegative
-    _ = ((scale + 1) * Data.Gaussian.Norm.Basic.normSq u +
-          ((scale + 1) / scale) * Data.Gaussian.Norm.Basic.normSq v) +
-        -Data.Gaussian.Norm.Basic.normSq (u + v) := by
+    _ = ((scale + 1) * Basic.normSq u +
+          ((scale + 1) / scale) * Basic.normSq v) +
+        -Basic.normSq (u + v) := by
       dsimp only [difference]
       ring1
 end Purelib.Data.Gaussian.Norm.Bounds
@@ -2510,7 +2512,7 @@ theorem Norm.Bounds.projection_sq_le_normSq_mul (direction sample : Basic.Canoni
         product.re ^ 2 := by rw [productReal]
     _ <= product.re ^ 2 + product.im ^ 2 :=
       le_add_of_nonneg_right
-        (Fraction.Order.Arithmetic.sq_nonneg_direct product.im)
+        (Arithmetic.sq_nonneg_direct product.im)
     _ = Norm.Basic.normSq product := rfl
     _ = Norm.Basic.normSq direction * Norm.Basic.normSq sample := by
       dsimp only [product]
@@ -2630,14 +2632,14 @@ public theorem sq_le_normSq_sub_of_imaginary_forward
     {gap : Fraction.Rational} (gapNonnegative : 0 ≤ gap)
     {left right : Basic.Canonical} (lower : gap ≤ left.im - right.im) :
     gap ^ 2 ≤ Basic.normSq (left - right) := by
-  have squares := Fraction.Order.Arithmetic.pow_le_pow_direct
+  have squares := Arithmetic.pow_le_pow_direct
     gapNonnegative lower 2
   calc
     gap ^ 2 ≤ (left.im - right.im) ^ 2 := squares
     _ = 0 + (left.im - right.im) ^ 2 := by ring1
     _ ≤ Basic.normSq (left - right) :=
       add_le_add
-        (Fraction.Order.Arithmetic.sq_nonneg_direct
+        (Arithmetic.sq_nonneg_direct
           (left.re - right.re))
         (le_refl _)
 
@@ -2793,14 +2795,14 @@ public theorem sq_le_normSq_sub_of_imaginary_reverse
     {gap : Fraction.Rational} (gapNonnegative : 0 ≤ gap)
     {left right : Basic.Canonical} (lower : gap ≤ right.im - left.im) :
     gap ^ 2 ≤ Basic.normSq (left - right) := by
-  have squares := Fraction.Order.Arithmetic.pow_le_pow_direct
+  have squares := Arithmetic.pow_le_pow_direct
     gapNonnegative lower 2
   calc
     gap ^ 2 ≤ (right.im - left.im) ^ 2 := squares
     _ = 0 + (left.im - right.im) ^ 2 := by ring1
     _ ≤ Basic.normSq (left - right) :=
       add_le_add
-        (Fraction.Order.Arithmetic.sq_nonneg_direct
+        (Arithmetic.sq_nonneg_direct
           (left.re - right.re))
         (le_refl _)
 
@@ -2956,14 +2958,14 @@ public theorem sq_le_normSq_sub_of_real_forward
     {gap : Fraction.Rational} (gapNonnegative : 0 ≤ gap)
     {left right : Basic.Canonical} (lower : gap ≤ left.re - right.re) :
     gap ^ 2 ≤ Basic.normSq (left - right) := by
-  have squares := Fraction.Order.Arithmetic.pow_le_pow_direct
+  have squares := Arithmetic.pow_le_pow_direct
     gapNonnegative lower 2
   calc
     gap ^ 2 ≤ (left.re - right.re) ^ 2 := squares
     _ = (left.re - right.re) ^ 2 + 0 := by ring1
     _ ≤ Basic.normSq (left - right) :=
       add_le_add (le_refl _)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct
+        (Arithmetic.sq_nonneg_direct
           (left.im - right.im))
 
 end Purelib.Data.Gaussian.Norm.Bounds
@@ -3118,14 +3120,14 @@ public theorem sq_le_normSq_sub_of_real_reverse
     {gap : Fraction.Rational} (gapNonnegative : 0 ≤ gap)
     {left right : Basic.Canonical} (lower : gap ≤ right.re - left.re) :
     gap ^ 2 ≤ Basic.normSq (left - right) := by
-  have squares := Fraction.Order.Arithmetic.pow_le_pow_direct
+  have squares := Arithmetic.pow_le_pow_direct
     gapNonnegative lower 2
   calc
     gap ^ 2 ≤ (right.re - left.re) ^ 2 := squares
     _ = (left.re - right.re) ^ 2 + 0 := by ring1
     _ ≤ Basic.normSq (left - right) :=
       add_le_add (le_refl _)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct
+        (Arithmetic.sq_nonneg_direct
           (left.im - right.im))
 
 end Purelib.Data.Gaussian.Norm.Bounds
@@ -3330,10 +3332,10 @@ Apply the sum-square bound to the retained negated second input; its square
 equals the original square by the direct product-negation identity. -/
 private theorem Norm.Bounds.sub_sq_le_two_squares (left right : Fraction.Rational) :
     (left - right) ^ 2 ≤ 2 * (left ^ 2 + right ^ 2) := by
-  rw [Rat.Fraction.Arithmetic.sub_eq_add_neg_direct]
+  rw [Fraction.Arithmetic.sub_eq_add_neg_direct]
   calc
     (left + -right) ^ 2 ≤ 2 * (left ^ 2 + (-right) ^ 2) :=
-      Purelib.Data.Rat.Bounds.Square.add_sq_le_two left (-right)
+      Bounds.Square.add_sq_le_two left (-right)
     _ = 2 * (left ^ 2 + right ^ 2) := by
       have negativeSquare : (-right) ^ 2 = right ^ 2 := by
         rw [pow_two, pow_two, Ring.Multiplication.neg_mul_neg]
@@ -3506,7 +3508,7 @@ theorem Norm.Bounds.normSq_sub_le_two (left right : Basic.Canonical) :
   calc
     (left.re - right.re) ^ 2 + (left.im - right.im) ^ 2 ≤
         2 * (left.re ^ 2 + right.re ^ 2) + 2 * (left.im ^ 2 + right.im ^ 2) :=
-      Rat.Fraction.Order.Arithmetic.add_le_add_direct
+      Arithmetic.add_le_add_direct
         (Norm.Bounds.sub_sq_le_two_squares left.re right.re)
         (Norm.Bounds.sub_sq_le_two_squares left.im right.im)
     _ = 2 * ((left.re ^ 2 + left.im ^ 2) + (right.re ^ 2 + right.im ^ 2)) := by ring1
@@ -3841,7 +3843,7 @@ The positive margin is bounded by the original difference of input quadrances.
 The denominator uses four times the first input quadrance, which this gap
 proves positive. -/
 theorem Norm.Bounds.normSq_add_lower_of_gap
-    {left right : Gaussian.Basic.Canonical} {margin : Rat.Fraction.Rational}
+    {left right : Basic.Canonical} {margin : Fraction.Rational}
     (marginPositive : 0 < margin)
     (gap : margin ≤ Norm.Basic.normSq left - Norm.Basic.normSq right) :
     margin ^ 2 / (4 * Norm.Basic.normSq left) ≤ Norm.Basic.normSq (left + right) :=
@@ -3852,20 +3854,20 @@ theorem Norm.Bounds.normSq_add_lower_of_gap
   have leftNormPositive : 0 < Norm.Basic.normSq left := by
     have gapLeNorm : margin ≤ Norm.Basic.normSq left :=
       gap.trans (by
-        have bound := Rat.Fraction.Order.Arithmetic.neg_le_neg_direct
-          (Gaussian.Norm.Basic.normSq_nonneg right)
+        have bound := Arithmetic.neg_le_neg_direct
+          (Norm.Basic.normSq_nonneg right)
         rw [neg_zero] at bound
         change Norm.Basic.normSq left + -Norm.Basic.normSq right ≤ _
-        have translated := Rat.Fraction.Order.Arithmetic.add_le_add_direct
+        have translated := Arithmetic.add_le_add_direct
           (le_refl (Norm.Basic.normSq left)) bound
         rw [add_zero] at translated
         exact translated)
     exact marginPositive.trans_le gapLeNorm
-  have fourPositive : (0 : Rat.Fraction.Rational) < 4 :=
-    Rat.Fraction.Cast.Order.natCast_pos_direct (n := 4) (by decide)
+  have fourPositive : (0 : Fraction.Rational) < 4 :=
+    Fraction.Cast.Order.natCast_pos_direct (n := 4) (by decide)
   have denominatorPositive : 0 < 4 * Norm.Basic.normSq left :=
-    Rat.Fraction.Order.Arithmetic.mul_pos_direct fourPositive leftNormPositive
-  have sumNormNonnegative : 0 ≤ Norm.Basic.normSq sum := Gaussian.Norm.Basic.normSq_nonneg sum
+    Arithmetic.mul_pos_direct fourPositive leftNormPositive
+  have sumNormNonnegative : 0 ≤ Norm.Basic.normSq sum := Norm.Basic.normSq_nonneg sum
   have doubledDot : 2 * dot =
       (Norm.Basic.normSq left - Norm.Basic.normSq right) +
         Norm.Basic.normSq sum := by
@@ -3883,19 +3885,19 @@ theorem Norm.Bounds.normSq_add_lower_of_gap
     rw [doubledDot]
     exact gap.trans (le_add_of_nonneg_right sumNormNonnegative)
   have squaredMargin : margin ^ 2 ≤ (2 * dot) ^ 2 :=
-    Rat.Fraction.Order.Arithmetic.pow_le_pow_direct marginPositive.le
+    Arithmetic.pow_le_pow_direct marginPositive.le
       marginLeDoubledDot 2
   have dotCauchy : dot ^ 2 ≤ Norm.Basic.normSq left * Norm.Basic.normSq sum := by
     calc
       dot ^ 2 ≤ dot ^ 2 + product.im ^ 2 :=
         le_add_of_nonneg_right
-          (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct product.im)
+          (Arithmetic.sq_nonneg_direct product.im)
       _ = Norm.Basic.normSq product := by rfl
       _ = Norm.Basic.normSq (Basic.conj left) * Norm.Basic.normSq
-        sum := Gaussian.Norm.Basic.normSq_mul _ _
+        sum := Norm.Basic.normSq_mul _ _
       _ = Norm.Basic.normSq left * Norm.Basic.normSq sum := by
-        rw [Gaussian.Norm.Basic.normSq_conj]
-  apply (Rat.Fraction.Order.Field.div_le_iff_pos
+        rw [Norm.Basic.normSq_conj]
+  apply (Field.div_le_iff_pos
     denominatorPositive).2
   rw [_root_.mul_comm (Norm.Basic.normSq sum)]
   calc
@@ -3904,7 +3906,7 @@ theorem Norm.Bounds.normSq_add_lower_of_gap
       rw [pow_two, pow_two]
       ring1
     _ ≤ 4 * (Norm.Basic.normSq left * Norm.Basic.normSq sum) :=
-      Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         dotCauchy fourPositive.le
     _ = (4 * Norm.Basic.normSq left) * Norm.Basic.normSq sum :=
       (_root_.mul_assoc _ _ _).symm
@@ -4090,11 +4092,11 @@ public theorem normSq_difference_sq_le_two_mul
     simp only [Basic.sub_re, Basic.sub_im, Basic.add_re, Basic.add_im]
     ring1
   have cauchy : dot ^ 2 ≤ Norm.Basic.normSq difference * Norm.Basic.normSq total := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       0 ≤
           (difference.re * total.im - difference.im * total.re) ^ 2 :=
-        Fraction.Order.Arithmetic.sq_nonneg_direct _
+        Arithmetic.sq_nonneg_direct _
       _ = Norm.Basic.normSq difference * Norm.Basic.normSq total - dot ^ 2 := by
         dsimp only [Norm.Basic.normSq, dot]
         ring1
@@ -4103,7 +4105,7 @@ public theorem normSq_difference_sq_le_two_mul
     _ ≤ Norm.Basic.normSq difference * Norm.Basic.normSq total := cauchy
     _ ≤ Norm.Basic.normSq difference *
         (2 * (Norm.Basic.normSq left + Norm.Basic.normSq right)) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (Norm.Bounds.normSq_add_le_two left right) (Norm.Basic.normSq_nonneg difference)
     _ = 2 * Norm.Basic.normSq (left - right) *
         (Norm.Basic.normSq left + Norm.Basic.normSq right) := by
@@ -4277,20 +4279,20 @@ open Purelib.Data.Rat in
 /-- A strict quarter-target bound and a weak quarter-target bound give a strict target bound on the sum norm. -/
 theorem normSq_add_lt_of_quarters
     {left right : Basic.Canonical} {target : Fraction.Rational}
-    (leftSmall : Data.Gaussian.Norm.Basic.normSq left < target / 4)
-    (rightSmall : Data.Gaussian.Norm.Basic.normSq right ≤ target / 4) :
-    Data.Gaussian.Norm.Basic.normSq (left + right) < target := by
+    (leftSmall : Norm.Basic.normSq left < target / 4)
+    (rightSmall : Norm.Basic.normSq right ≤ target / 4) :
+    Norm.Basic.normSq (left + right) < target := by
   have valueUpper := Norm.Bounds.normSq_add_le_two left right
-  have sumStrict : Data.Gaussian.Norm.Basic.normSq left + Data.Gaussian.Norm.Basic.normSq right < target / 2 := by
-    have first := Fraction.Order.Arithmetic.add_lt_add_right_direct leftSmall
-      (Data.Gaussian.Norm.Basic.normSq right)
-    have second : target / 4 + Data.Gaussian.Norm.Basic.normSq right ≤
+  have sumStrict : Norm.Basic.normSq left + Norm.Basic.normSq right < target / 2 := by
+    have first := Arithmetic.add_lt_add_right_direct leftSmall
+      (Norm.Basic.normSq right)
+    have second : target / 4 + Norm.Basic.normSq right ≤
         target / 4 + target / 4 := by
       calc
-        target / 4 + Data.Gaussian.Norm.Basic.normSq right = Data.Gaussian.Norm.Basic.normSq right + target / 4 :=
+        target / 4 + Norm.Basic.normSq right = Norm.Basic.normSq right + target / 4 :=
           _root_.add_comm _ _
         _ ≤ target / 4 + target / 4 :=
-          Fraction.Order.Arithmetic.add_le_add_right_direct rightSmall
+          Arithmetic.add_le_add_right_direct rightSmall
             (target / 4)
     exact (first.trans_le second).trans_eq (by
       apply Fraction.Field.mul_right_cancel_of_ne
@@ -4309,11 +4311,11 @@ theorem normSq_add_lt_of_quarters
           Fraction.Field.mul_assoc (target / 2) 2 2
         _ = (target / 2) * 4 := by
           rw [show (2 : Fraction.Rational) * 2 = 4 by decide])
-  have twiceStrict : 2 * (Data.Gaussian.Norm.Basic.normSq left + Data.Gaussian.Norm.Basic.normSq right) < target := by
-    have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+  have twiceStrict : 2 * (Norm.Basic.normSq left + Norm.Basic.normSq right) < target := by
+    have scaled := Arithmetic.mul_lt_mul_of_pos_left_direct
       (show (0 : Fraction.Rational) < 2 by decide) sumStrict
     calc
-      2 * (Data.Gaussian.Norm.Basic.normSq left + Data.Gaussian.Norm.Basic.normSq right) < 2 * (target / 2) := scaled
+      2 * (Norm.Basic.normSq left + Norm.Basic.normSq right) < 2 * (target / 2) := scaled
       _ = target := by
         rw [Fraction.Field.mul_comm]
         exact Fraction.Field.div_mul_cancel_of_ne target 2 (by decide)
@@ -5038,8 +5040,8 @@ open Purelib.Data.Rat in
 /-- A displacement bound from a center bounds the value norm by twice the sum of center norm and displacement bound. -/
 theorem value_normSq_le_of_offset {value center : Basic.Canonical} {bound :
   Fraction.Rational}
-    (offsetBound : Data.Gaussian.Norm.Basic.normSq (value - center) ≤ bound) :
-    Data.Gaussian.Norm.Basic.normSq value ≤ 2 * (Data.Gaussian.Norm.Basic.normSq center + bound) := by
+    (offsetBound : Basic.normSq (value - center) ≤ bound) :
+    Basic.normSq value ≤ 2 * (Basic.normSq center + bound) := by
   have sumBound := normSq_add_le_two (value - center) center
   have identity : value - center + center = value := by
     apply Basic.ext <;>
@@ -5050,13 +5052,13 @@ theorem value_normSq_le_of_offset {value center : Basic.Canonical} {bound :
       ring1
   rw [identity] at sumBound
   apply sumBound.trans
-  apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct _
+  apply Arithmetic.mul_le_mul_of_nonneg_left_direct _
     (show (0 : Fraction.Rational) ≤ 2 by decide)
   calc
-    Data.Gaussian.Norm.Basic.normSq (value - center) + Data.Gaussian.Norm.Basic.normSq center ≤
-        bound + Data.Gaussian.Norm.Basic.normSq center :=
+    Basic.normSq (value - center) + Basic.normSq center ≤
+        bound + Basic.normSq center :=
       add_le_add offsetBound (le_refl _)
-    _ = Data.Gaussian.Norm.Basic.normSq center + bound := by ring1
+    _ = Basic.normSq center + bound := by ring1
 end Purelib.Data.Gaussian.Norm.Bounds
 
 end
@@ -5076,7 +5078,7 @@ theorem coordinate_nonzero {coordinate parameter : Basic.Canonical} {bound : Fra
     (accurate : Basic.normSq (coordinate * coordinate - parameter) < bound)
     (small : bound ≤ Basic.normSq parameter) : coordinate ≠ 0 := by
   intro zero
-  rw [zero, Basic.mul_zero, Basic.zero_sub, Norm.Basic.normSq_neg] at accurate
+  rw [zero, Basic.mul_zero, Basic.zero_sub, Basic.normSq_neg] at accurate
   exact (lt_irrefl _ (accurate.trans_le small))
 
 end Purelib.Data.Gaussian.Norm.Bounds
@@ -5116,9 +5118,9 @@ public theorem northeast_lune_exterior
     exact ((fun {a b : Fraction.Rational} (h : 0 ≤ b) =>
       (show a ≤ a + b from by
         simpa only [add_zero, -eq_self, -iff_self] using
-          Fraction.Order.Arithmetic.add_le_add_direct
-            (Fraction.Order.Basic.le_refl a) h))
-      (Fraction.Order.Arithmetic.sq_nonneg_direct yImaginary)).trans_lt
+          Arithmetic.add_le_add_direct
+            (Basic.le_refl a) h))
+      (Arithmetic.sq_nonneg_direct yImaginary)).trans_lt
         yInside
   have yImaginarySquareLt : yImaginary ^ 2 < 1 := by
     have reordered : yImaginary ^ 2 + yReal ^ 2 < 1 := by
@@ -5129,33 +5131,33 @@ public theorem northeast_lune_exterior
     exact ((fun {a b : Fraction.Rational} (h : 0 ≤ b) =>
       (show a ≤ a + b from by
         simpa only [add_zero, -eq_self, -iff_self] using
-          Fraction.Order.Arithmetic.add_le_add_direct
-            (Fraction.Order.Basic.le_refl a) h))
-      (Fraction.Order.Arithmetic.sq_nonneg_direct yReal)).trans_lt
+          Arithmetic.add_le_add_direct
+            (Basic.le_refl a) h))
+      (Arithmetic.sq_nonneg_direct yReal)).trans_lt
         reordered
   have realCoordinatePositive : 0 < realCoordinate := by
-    have lower := Fraction.Order.Square.neg_one_lt_of_square_lt_one yRealSquareLt
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct lower 1
+    have lower := Square.neg_one_lt_of_square_lt_one yRealSquareLt
+    have shifted := Arithmetic.add_lt_add_right_direct lower 1
     calc
       0 = (-1 : Fraction.Rational) + 1 := by ring1
       _ < yReal + 1 := shifted
       _ = realCoordinate := by dsimp only [realCoordinate]; ring1
   have imaginaryCoordinatePositive : 0 < imaginaryCoordinate := by
-    have lower := Fraction.Order.Square.neg_one_lt_of_square_lt_one yImaginarySquareLt
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct lower 1
+    have lower := Square.neg_one_lt_of_square_lt_one yImaginarySquareLt
+    have shifted := Arithmetic.add_lt_add_right_direct lower 1
     calc
       0 = (-1 : Fraction.Rational) + 1 := by ring1
       _ < yImaginary + 1 := shifted
       _ = imaginaryCoordinate := by dsimp only [imaginaryCoordinate]; ring1
   have realExteriorGap : 0 ≤ rhoNorm + 2 * rhoReal := by
-    have gap := Fraction.Order.Arithmetic.sub_nonneg_direct realExterior
+    have gap := Arithmetic.sub_nonneg_direct realExterior
     calc
       0 ≤ ((1 + rhoReal) ^ 2 + rhoImaginary ^ 2) - 1 := gap
       _ = rhoNorm + 2 * rhoReal := by
         dsimp only [rhoNorm]
         ring1
   have imaginaryExteriorGap : 0 ≤ rhoNorm + 2 * rhoImaginary := by
-    have gap := Fraction.Order.Arithmetic.sub_nonneg_direct imaginaryExterior
+    have gap := Arithmetic.sub_nonneg_direct imaginaryExterior
     calc
       0 ≤ (rhoReal ^ 2 + (1 + rhoImaginary) ^ 2) - 1 := gap
       _ = rhoNorm + 2 * rhoImaginary := by
@@ -5164,25 +5166,25 @@ public theorem northeast_lune_exterior
   have notBothNegative : ¬ (rhoReal < 0 ∧ rhoImaginary < 0) := by
     rintro ⟨rhoRealNegative, rhoImaginaryNegative⟩
     have negRealNonnegative : 0 ≤ -rhoReal :=
-      (by have translated := Fraction.Order.Arithmetic.neg_le_neg_direct rhoRealNegative.le; simpa only [show -(0 :
+      (by have translated := Arithmetic.neg_le_neg_direct rhoRealNegative.le; simpa only [show -(0 :
         Fraction.Rational) = 0 by decide] using translated)
     have negImaginaryNonnegative : 0 ≤ -rhoImaginary :=
-      (by have translated := Fraction.Order.Arithmetic.neg_le_neg_direct rhoImaginaryNegative.le; simpa only [show -(0 :
+      (by have translated := Arithmetic.neg_le_neg_direct rhoImaginaryNegative.le; simpa only [show -(0 :
         Fraction.Rational) = 0 by decide] using translated)
     have negRealLeHalf : -rhoReal ≤ (1 / 2 : Fraction.Rational) := by
-      have reversed := Fraction.Order.Arithmetic.neg_le_neg_direct rhoRealLower
+      have reversed := Arithmetic.neg_le_neg_direct rhoRealLower
       simpa only [neg_neg] using reversed
     have negImaginaryLeHalf :
         -rhoImaginary ≤ (1 / 2 : Fraction.Rational) := by
       have reversed :=
-        Fraction.Order.Arithmetic.neg_le_neg_direct rhoImaginaryLower
+        Arithmetic.neg_le_neg_direct rhoImaginaryLower
       simpa only [neg_neg] using reversed
     have realSquareBound : 2 * rhoReal ^ 2 ≤ -rhoReal := by
       have factorNonnegative : 0 ≤ 2 * (-rhoReal) :=
-        Fraction.Order.Arithmetic.mul_nonneg_direct
+        Arithmetic.mul_nonneg_direct
           (show (0 : Fraction.Rational) ≤ 2 by decide) negRealNonnegative
       have scaled :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           negRealLeHalf factorNonnegative
       calc
         2 * rhoReal ^ 2 = (-rhoReal) * (2 * (-rhoReal)) := by ring1
@@ -5198,10 +5200,10 @@ public theorem northeast_lune_exterior
     have imaginarySquareBound :
         2 * rhoImaginary ^ 2 ≤ -rhoImaginary := by
       have factorNonnegative : 0 ≤ 2 * (-rhoImaginary) :=
-        Fraction.Order.Arithmetic.mul_nonneg_direct
+        Arithmetic.mul_nonneg_direct
           (show (0 : Fraction.Rational) ≤ 2 by decide) negImaginaryNonnegative
       have scaled :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           negImaginaryLeHalf factorNonnegative
       calc
         2 * rhoImaginary ^ 2 =
@@ -5224,7 +5226,7 @@ public theorem northeast_lune_exterior
           dsimp only [rhoNorm]
           ring1
         _ ≤ -rhoReal + -rhoImaginary :=
-          Fraction.Order.Arithmetic.add_le_add_direct
+          Arithmetic.add_le_add_direct
             realSquareBound imaginarySquareBound
         _ = -(rhoReal + rhoImaginary) := by ring1
     have summedGap :
@@ -5232,7 +5234,7 @@ public theorem northeast_lune_exterior
           (rhoNorm + 2 * rhoImaginary) :=
       add_nonneg realExteriorGap imaginaryExteriorGap
     have sumNegative : rhoReal + rhoImaginary < 0 :=
-      Fraction.Order.Arithmetic.add_lt_add_direct
+      Arithmetic.add_lt_add_direct
         rhoRealNegative rhoImaginaryNegative
     have impossible :
         (rhoNorm + 2 * rhoReal) +
@@ -5243,12 +5245,12 @@ public theorem northeast_lune_exterior
             2 * rhoNorm + 2 * (rhoReal + rhoImaginary) := by ring1
         _ ≤ -(rhoReal + rhoImaginary) +
             2 * (rhoReal + rhoImaginary) :=
-          Fraction.Order.Arithmetic.add_le_add_right_direct
+          Arithmetic.add_le_add_right_direct
             twiceRhoNormUpper (2 * (rhoReal + rhoImaginary))
         _ = rhoReal + rhoImaginary := by ring1
         _ < 0 := sumNegative
     exact (not_lt_of_ge summedGap impossible)
-  apply Fraction.Order.Arithmetic.le_of_not_gt_direct
+  apply Arithmetic.le_of_not_gt_direct
   intro outside
   have translatedStrict :
       (1 + rhoReal + yReal) ^ 2 +
@@ -5259,7 +5261,7 @@ public theorem northeast_lune_exterior
       rhoNorm + 2 * realCoordinate * rhoReal +
           2 * imaginaryCoordinate * rhoImaginary < 0 := by
     have difference :=
-      Fraction.Order.Arithmetic.sub_neg_direct translatedStrict
+      Arithmetic.sub_neg_direct translatedStrict
     calc
       rhoNorm + 2 * realCoordinate * rhoReal +
             2 * imaginaryCoordinate * rhoImaginary =
@@ -5273,19 +5275,19 @@ public theorem northeast_lune_exterior
   · by_cases imaginaryNonnegative : 0 ≤ rhoImaginary
     · have realTerm :
           0 ≤ 2 * realCoordinate * rhoReal := by
-        exact Fraction.Order.Arithmetic.mul_nonneg_direct
-          (Fraction.Order.Arithmetic.mul_nonneg_direct
+        exact Arithmetic.mul_nonneg_direct
+          (Arithmetic.mul_nonneg_direct
             (show (0 : Fraction.Rational) ≤ 2 by decide)
             realCoordinatePositive.le) realNonnegative
       have imaginaryTerm :
           0 ≤ 2 * imaginaryCoordinate * rhoImaginary := by
-        exact Fraction.Order.Arithmetic.mul_nonneg_direct
-          (Fraction.Order.Arithmetic.mul_nonneg_direct
+        exact Arithmetic.mul_nonneg_direct
+          (Arithmetic.mul_nonneg_direct
             (show (0 : Fraction.Rational) ≤ 2 by decide)
             imaginaryCoordinatePositive.le) imaginaryNonnegative
       have nonnegative := add_nonneg
-        (add_nonneg (Fraction.Order.Arithmetic.sq_nonneg_direct rhoReal)
-          (Fraction.Order.Arithmetic.sq_nonneg_direct rhoImaginary))
+        (add_nonneg (Arithmetic.sq_nonneg_direct rhoReal)
+          (Arithmetic.sq_nonneg_direct rhoImaginary))
         (add_nonneg realTerm imaginaryTerm)
       have reordered :
           0 ≤ rhoNorm + 2 * realCoordinate * rhoReal +
@@ -5300,15 +5302,15 @@ public theorem northeast_lune_exterior
             ring1
       exact (not_lt_of_ge reordered differenceNegative)
     · have imaginaryNegative : rhoImaginary < 0 :=
-        Fraction.Order.Arithmetic.lt_of_not_ge_direct imaginaryNonnegative
+        Arithmetic.lt_of_not_ge_direct imaginaryNonnegative
       by_cases coordinateLeOne : imaginaryCoordinate ≤ 1
       · have productComparison :
             rhoImaginary ≤ imaginaryCoordinate * rhoImaginary := by
           have coordinateGap : 0 ≤ 1 - imaginaryCoordinate :=
-            Fraction.Order.Arithmetic.sub_nonneg_direct coordinateLeOne
+            Arithmetic.sub_nonneg_direct coordinateLeOne
           have productNonnegative :=
-            Fraction.Order.Arithmetic.mul_nonneg_direct
-              (by have translated := Fraction.Order.Arithmetic.neg_le_neg_direct imaginaryNegative.le; simpa only [show
+            Arithmetic.mul_nonneg_direct
+              (by have translated := Arithmetic.neg_le_neg_direct imaginaryNegative.le; simpa only [show
                 -(0 : Fraction.Rational) = 0 by decide] using translated) coordinateGap
           calc
             rhoImaginary ≤ rhoImaginary +
@@ -5316,11 +5318,11 @@ public theorem northeast_lune_exterior
               (fun {a b : Fraction.Rational} (h : 0 ≤ b) =>
                 (show a ≤ a + b from by
                   simpa only [add_zero, -eq_self, -iff_self] using
-                    Fraction.Order.Arithmetic.add_le_add_direct
-                      (Fraction.Order.Basic.le_refl a) h)) productNonnegative
+                    Arithmetic.add_le_add_direct
+                      (Basic.le_refl a) h)) productNonnegative
             _ = imaginaryCoordinate * rhoImaginary := by ring1
         have scaledComparison :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          Arithmetic.mul_le_mul_of_nonneg_left_direct
             productComparison (show (0 : Fraction.Rational) ≤ 2 by decide)
         have imaginaryPart :
             0 ≤ rhoNorm + 2 * imaginaryCoordinate * rhoImaginary := by
@@ -5331,14 +5333,14 @@ public theorem northeast_lune_exterior
                 rhoNorm + 2 * rhoImaginary =
                     2 * rhoImaginary + rhoNorm := by ring1
                 _ ≤ 2 * (imaginaryCoordinate * rhoImaginary) + rhoNorm :=
-                  Fraction.Order.Arithmetic.add_le_add_direct
+                  Arithmetic.add_le_add_direct
                     scaledComparison le_rfl
                 _ = rhoNorm + 2 * imaginaryCoordinate * rhoImaginary := by
                   ring1
         have realPart :
             0 ≤ 2 * realCoordinate * rhoReal :=
-          Fraction.Order.Arithmetic.mul_nonneg_direct
-            (Fraction.Order.Arithmetic.mul_nonneg_direct
+          Arithmetic.mul_nonneg_direct
+            (Arithmetic.mul_nonneg_direct
               (show (0 : Fraction.Rational) ≤ 2 by decide)
               realCoordinatePositive.le) realNonnegative
         have reordered := add_nonneg imaginaryPart realPart
@@ -5352,10 +5354,10 @@ public theorem northeast_lune_exterior
                 2 * imaginaryCoordinate * rhoImaginary := by ring1
         exact (not_lt_of_ge final differenceNegative)
       · have coordinateGreater : 1 < imaginaryCoordinate :=
-          Fraction.Order.Arithmetic.lt_of_not_ge_direct coordinateLeOne
+          Arithmetic.lt_of_not_ge_direct coordinateLeOne
         have yImaginaryPositive : 0 < yImaginary := by
           have shifted :=
-            Fraction.Order.Arithmetic.sub_lt_sub_right_direct
+            Arithmetic.sub_lt_sub_right_direct
               coordinateGreater 1
           calc
             0 = (1 : Fraction.Rational) - 1 := by ring1
@@ -5371,27 +5373,27 @@ public theorem northeast_lune_exterior
                 1 + (-(1 / 2 : Fraction.Rational)) =
                     (-(1 / 2 : Fraction.Rational)) + 1 := by ring1
                 _ ≤ rhoImaginary + 1 :=
-                  Fraction.Order.Arithmetic.add_le_add_direct
+                  Arithmetic.add_le_add_direct
                     rhoImaginaryLower le_rfl
                 _ = 1 + rhoImaginary := by ring1
         have baseRealSquareLe : rhoReal ^ 2 ≤
             (rhoReal + realCoordinate) ^ 2 := by
           have strict : rhoReal < rhoReal + realCoordinate := by
-            have shifted := Fraction.Order.Arithmetic.add_lt_add_left_direct
+            have shifted := Arithmetic.add_lt_add_left_direct
               realCoordinatePositive rhoReal
             calc
               rhoReal = rhoReal + 0 := by ring1
               _ < rhoReal + realCoordinate := shifted
-          exact (Fraction.Order.Square.square_lt_square_of_nonneg_of_lt realNonnegative strict).le
+          exact (Square.square_lt_square_of_nonneg_of_lt realNonnegative strict).le
         have baseImaginaryStrict :
             1 + rhoImaginary < 1 + rhoImaginary + yImaginary := by
-          have shifted := Fraction.Order.Arithmetic.add_lt_add_left_direct
+          have shifted := Arithmetic.add_lt_add_left_direct
             yImaginaryPositive (1 + rhoImaginary)
           calc
             1 + rhoImaginary = 1 + rhoImaginary + 0 := by ring1
             _ < 1 + rhoImaginary + yImaginary := shifted
         have baseImaginarySquareStrict :=
-          Fraction.Order.Square.square_lt_square_of_nonneg_of_lt baseImaginaryNonnegative
+          Square.square_lt_square_of_nonneg_of_lt baseImaginaryNonnegative
             baseImaginaryStrict
         have exteriorStrict :
             1 < (rhoReal + realCoordinate) ^ 2 +
@@ -5405,11 +5407,11 @@ public theorem northeast_lune_exterior
                 rhoReal ^ 2 + (1 + rhoImaginary) ^ 2 ≤
                     (rhoReal + realCoordinate) ^ 2 +
                       (1 + rhoImaginary) ^ 2 :=
-                  Fraction.Order.Arithmetic.add_le_add_direct
+                  Arithmetic.add_le_add_direct
                     baseRealSquareLe le_rfl
                 _ < (rhoReal + realCoordinate) ^ 2 +
                     (1 + rhoImaginary + yImaginary) ^ 2 :=
-                  Fraction.Order.Arithmetic.add_lt_add_left_direct
+                  Arithmetic.add_lt_add_left_direct
                     baseImaginarySquareStrict
                     ((rhoReal + realCoordinate) ^ 2)
         have translatedIdentity :
@@ -5422,30 +5424,30 @@ public theorem northeast_lune_exterior
         rw [translatedIdentity] at exteriorStrict
         exact (not_lt_of_ge translatedInside exteriorStrict)
   · have realNegative : rhoReal < 0 :=
-      Fraction.Order.Arithmetic.lt_of_not_ge_direct realNonnegative
+      Arithmetic.lt_of_not_ge_direct realNonnegative
     have imaginaryNonnegative : 0 ≤ rhoImaginary := by
-      apply Fraction.Order.Arithmetic.le_of_not_gt_direct
+      apply Arithmetic.le_of_not_gt_direct
       intro imaginaryNegative
       exact notBothNegative ⟨realNegative, imaginaryNegative⟩
     by_cases coordinateLeOne : realCoordinate ≤ 1
     · have productComparison :
           rhoReal ≤ realCoordinate * rhoReal := by
         have coordinateGap : 0 ≤ 1 - realCoordinate :=
-          Fraction.Order.Arithmetic.sub_nonneg_direct coordinateLeOne
+          Arithmetic.sub_nonneg_direct coordinateLeOne
         have productNonnegative :=
-          Fraction.Order.Arithmetic.mul_nonneg_direct
-            (by have translated := Fraction.Order.Arithmetic.neg_le_neg_direct realNegative.le; simpa only [show -(0 :
+          Arithmetic.mul_nonneg_direct
+            (by have translated := Arithmetic.neg_le_neg_direct realNegative.le; simpa only [show -(0 :
               Fraction.Rational) = 0 by decide] using translated) coordinateGap
         calc
           rhoReal ≤ rhoReal + ((-rhoReal) * (1 - realCoordinate)) :=
             (fun {a b : Fraction.Rational} (h : 0 ≤ b) =>
               (show a ≤ a + b from by
                 simpa only [add_zero, -eq_self, -iff_self] using
-                  Fraction.Order.Arithmetic.add_le_add_direct
-                    (Fraction.Order.Basic.le_refl a) h)) productNonnegative
+                  Arithmetic.add_le_add_direct
+                    (Basic.le_refl a) h)) productNonnegative
           _ = realCoordinate * rhoReal := by ring1
       have scaledComparison :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           productComparison (show (0 : Fraction.Rational) ≤ 2 by decide)
       have realPart :
           0 ≤ rhoNorm + 2 * realCoordinate * rhoReal := by
@@ -5455,22 +5457,22 @@ public theorem northeast_lune_exterior
             calc
               rhoNorm + 2 * rhoReal = 2 * rhoReal + rhoNorm := by ring1
               _ ≤ 2 * (realCoordinate * rhoReal) + rhoNorm :=
-                Fraction.Order.Arithmetic.add_le_add_direct
+                Arithmetic.add_le_add_direct
                   scaledComparison le_rfl
               _ = rhoNorm + 2 * realCoordinate * rhoReal := by ring1
       have imaginaryPart :
           0 ≤ 2 * imaginaryCoordinate * rhoImaginary :=
-        Fraction.Order.Arithmetic.mul_nonneg_direct
-          (Fraction.Order.Arithmetic.mul_nonneg_direct
+        Arithmetic.mul_nonneg_direct
+          (Arithmetic.mul_nonneg_direct
             (show (0 : Fraction.Rational) ≤ 2 by decide)
             imaginaryCoordinatePositive.le) imaginaryNonnegative
       have final := add_nonneg realPart imaginaryPart
       exact (not_lt_of_ge final differenceNegative)
     · have coordinateGreater : 1 < realCoordinate :=
-        Fraction.Order.Arithmetic.lt_of_not_ge_direct coordinateLeOne
+        Arithmetic.lt_of_not_ge_direct coordinateLeOne
       have yRealPositive : 0 < yReal := by
         have shifted :=
-          Fraction.Order.Arithmetic.sub_lt_sub_right_direct
+          Arithmetic.sub_lt_sub_right_direct
             coordinateGreater 1
         calc
           0 = (1 : Fraction.Rational) - 1 := by ring1
@@ -5486,28 +5488,28 @@ public theorem northeast_lune_exterior
               1 + (-(1 / 2 : Fraction.Rational)) =
                   (-(1 / 2 : Fraction.Rational)) + 1 := by ring1
               _ ≤ rhoReal + 1 :=
-                Fraction.Order.Arithmetic.add_le_add_direct
+                Arithmetic.add_le_add_direct
                   rhoRealLower le_rfl
               _ = 1 + rhoReal := by ring1
       have baseRealStrict :
           1 + rhoReal < 1 + rhoReal + yReal := by
-        have shifted := Fraction.Order.Arithmetic.add_lt_add_left_direct
+        have shifted := Arithmetic.add_lt_add_left_direct
           yRealPositive (1 + rhoReal)
         calc
           1 + rhoReal = 1 + rhoReal + 0 := by ring1
           _ < 1 + rhoReal + yReal := shifted
       have baseRealSquareStrict :=
-        Fraction.Order.Square.square_lt_square_of_nonneg_of_lt baseRealNonnegative baseRealStrict
+        Square.square_lt_square_of_nonneg_of_lt baseRealNonnegative baseRealStrict
       have baseImaginarySquareLe : rhoImaginary ^ 2 ≤
           (rhoImaginary + imaginaryCoordinate) ^ 2 := by
         have strict :
             rhoImaginary < rhoImaginary + imaginaryCoordinate := by
-          have shifted := Fraction.Order.Arithmetic.add_lt_add_left_direct
+          have shifted := Arithmetic.add_lt_add_left_direct
             imaginaryCoordinatePositive rhoImaginary
           calc
             rhoImaginary = rhoImaginary + 0 := by ring1
             _ < rhoImaginary + imaginaryCoordinate := shifted
-        exact (Fraction.Order.Square.square_lt_square_of_nonneg_of_lt imaginaryNonnegative strict).le
+        exact (Square.square_lt_square_of_nonneg_of_lt imaginaryNonnegative strict).le
       have exteriorStrict :
           1 < (1 + rhoReal + yReal) ^ 2 +
               (rhoImaginary + imaginaryCoordinate) ^ 2 := by
@@ -5518,11 +5520,11 @@ public theorem northeast_lune_exterior
             calc
               (1 + rhoReal) ^ 2 + rhoImaginary ^ 2 <
                   (1 + rhoReal + yReal) ^ 2 + rhoImaginary ^ 2 :=
-                Fraction.Order.Arithmetic.add_lt_add_right_direct
+                Arithmetic.add_lt_add_right_direct
                   baseRealSquareStrict (rhoImaginary ^ 2)
               _ ≤ (1 + rhoReal + yReal) ^ 2 +
                   (rhoImaginary + imaginaryCoordinate) ^ 2 :=
-                Fraction.Order.Arithmetic.add_le_add_direct
+                Arithmetic.add_le_add_direct
                   le_rfl baseImaginarySquareLe
       have translatedIdentity :
           (1 + rhoReal + yReal) ^ 2 +
@@ -5540,16 +5542,16 @@ public section
 namespace Purelib.Data.Gaussian.Norm.Bounds
 
 /-- Two successive original squared-norm discrepancies below quarter targets pay their full combined target. -/
-public theorem normSq_sub_lt_of_quarter_bounds {first middle last : Purelib.Data.Gaussian.Basic.Canonical} {target :
-  Purelib.Data.Rat.Fraction.Rational}
+public theorem normSq_sub_lt_of_quarter_bounds {first middle last : Basic.Canonical} {target :
+  Fraction.Rational}
     (left : Basic.normSq (first - middle) < target / 4) (right :
       Basic.normSq (middle - last) < target / 4) :
     Basic.normSq (first - last) < target := by
   rw [show first - last = (first - middle) + (middle - last) by ring1]
   apply (normSq_add_le_two _ _).trans_lt
-  apply (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by
-      decide : (0 : Purelib.Data.Rat.Fraction.Rational) < 2)
-    (Fraction.Order.Arithmetic.add_lt_add_direct left right)).trans_eq
+  apply (Arithmetic.mul_lt_mul_of_pos_left_direct (by
+      decide : (0 : Fraction.Rational) < 2)
+    (Arithmetic.add_lt_add_direct left right)).trans_eq
   rw [show 2 * (target / 4 + target / 4) = (target / 4) * 4 by ring1]
   exact Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
 
@@ -5591,10 +5593,10 @@ public theorem normSq_sub_le_weighted_sum
             Basic.normSq (second - fourth)) :=
       throughSecond
     _ <= 2 * (firstBound + 2 * (middleBound + lastBound)) := by
-      apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      apply Arithmetic.mul_le_mul_of_nonneg_left_direct
       · apply add_le_add firstClose
         exact throughThird.trans
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct
             (add_le_add middleClose lastClose) (by decide))
       · decide
 
@@ -5609,6 +5611,35 @@ public theorem normSq_sub_symm
         Basic.sub_im,
         Basic.neg_re,
         Basic.neg_im] <;> ring1,
-    Norm.Basic.normSq_neg]
+    Basic.normSq_neg]
+
+/-- The squared difference of two Gaussian sums is bounded by twice the sum of the corresponding squared differences. -/
+public theorem normSq_add_sub_add_le (first second third fourth : Basic.Canonical) :
+    Basic.normSq ((first + second) - (third + fourth)) ≤
+      2 * (Basic.normSq (first - third) + Basic.normSq (second - fourth)) := by
+  have same : (first + second) - (third + fourth) = (first - third) + (second - fourth) := by
+    apply Basic.ext <;>
+      simp only [Basic.sub_re, Basic.sub_im, Basic.add_re, Basic.add_im] <;> ring1
+  rewrite [same]
+  exact normSq_add_le_two _ _
+
+/-- Gaussian product differences retain the squared magnitudes of the actual intermediate factors.
+
+The difference splits as `(a-c)b+c(b-d)`. The squared triangle bound and
+multiplicativity retain precisely the displayed first right and second
+left factors, without division or nonzero assumptions.
+-/
+public theorem normSq_mul_sub_mul_le (first second third fourth : Basic.Canonical) :
+    Basic.normSq (first * second - third * fourth) ≤
+      2 * (Basic.normSq (first - third) * Basic.normSq second +
+        Basic.normSq third * Basic.normSq (second - fourth)) := by
+  have same : first * second - third * fourth =
+      (first - third) * second + third * (second - fourth) := by
+    apply Basic.ext <;>
+      simp only [Basic.sub_re, Basic.sub_im, Basic.add_re, Basic.add_im, Basic.mul_re, Basic.mul_im] <;> ring1
+  rewrite [same]
+  have estimate := normSq_add_le_two ((first - third) * second) (third * (second - fourth))
+  rewrite [Basic.normSq_mul, Basic.normSq_mul] at estimate
+  exact estimate
 
 end Purelib.Data.Gaussian.Norm.Bounds

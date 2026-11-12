@@ -61,15 +61,15 @@ set_option genInjectivity false in
 /-- Both outcomes share the exact cached inspection; only the successful branch carries candidate apartness. There is no
 unresolved outcome. -/
 structure Report (denominator :
-  Coherent.CoherentNamed) (start : State denominator)
+  CoherentNamed) (start : State denominator)
     (threshold : Fraction.Rational) (positive : 0 < threshold) where
   /-- The exact cached denominator inspection at one sixth of the displayed positive threshold. -/ inspection :
-    Approximation.Gaussian.Name.Coherent.Refinement.Inspection denominator start (threshold / 6)
+    Inspection denominator start (threshold / 6)
         (Request.Sixth.requestTarget_positive positive)
   /-- Either candidate apartness or a persistent strict candidate bound at the exact retained inspection state. -/
     outcome : Sum
-    (Possible.PossibleApart (Gaussian.Process.Based.based denominator.name.process inspection.retained.source))
-    (Approximation.Gaussian.Name.Coherent.Refinement.Small denominator inspection.retained threshold)
+    (Possible.PossibleApart (Process.Based.based denominator.name.process inspection.retained.source))
+    (Small denominator inspection.retained threshold)
   /-- Selecting the small branch retains its whole-ball certificate for the original cached enclosure. -/ small_ball : ∀
     certificate, outcome = .inr certificate →
     Residual.SmallBall inspection.ball threshold
@@ -78,9 +78,9 @@ constructive_injectivity Report
 
 /-- Consume an already cached fine inspection without another refinement. -/
 def classify {denominator :
-  Coherent.CoherentNamed} {start : State denominator}
+  CoherentNamed} {start : State denominator}
     (threshold : Fraction.Rational) (positive : 0 < threshold)
-    (inspection : Approximation.Gaussian.Name.Coherent.Refinement.Inspection denominator start (threshold / 6)
+    (inspection : Inspection denominator start (threshold / 6)
         (Request.Sixth.requestTarget_positive
       positive)) :
     Report denominator start threshold positive :=
@@ -106,10 +106,10 @@ def classify {denominator :
 /-- The inspected ball retains its original whole-ball certificate. Only the separately stored candidate bound is
 propagated to later sources; their displayed balls need not be nested inside this one. -/
 theorem Report.small_bound {denominator :
-  Coherent.CoherentNamed} {start : State denominator}
+  CoherentNamed} {start : State denominator}
     {threshold : Fraction.Rational} {positive : 0 < threshold}
     (report : Report denominator start threshold positive)
-    {certificate : Approximation.Gaussian.Name.Coherent.Refinement.Small denominator report.inspection.retained
+    {certificate : Small denominator report.inspection.retained
         threshold}
     (selected : report.outcome = .inr certificate)
     {value : Data.Gaussian.Basic.Canonical} (inside : report.inspection.ball.Contains value) :
@@ -119,7 +119,7 @@ theorem Report.small_bound {denominator :
 /-- One prescribed refinement, then one finite rational decision. This counts refinement calls, not the runtime of the
 underlying evaluator. -/
 def acquire {denominator :
-  Coherent.CoherentNamed} (start : State denominator)
+  CoherentNamed} (start : State denominator)
     (threshold : Fraction.Rational) (positive : 0 < threshold) :
       Report denominator start threshold positive :=
   classify threshold positive (Inspection.request start
@@ -127,9 +127,9 @@ def acquire {denominator :
 
 /-- A small cached inspection selects the branch carrying a persistent candidate-smallness certificate. -/
 theorem classify_small {denominator :
-  Coherent.CoherentNamed} {start : State denominator}
+  CoherentNamed} {start : State denominator}
     (threshold : Fraction.Rational) (positive : 0 < threshold)
-    (inspection : Approximation.Gaussian.Name.Coherent.Refinement.Inspection denominator start (threshold / 6)
+    (inspection : Inspection denominator start (threshold / 6)
         (Request.Sixth.requestTarget_positive
       positive))
     (small : Residual.SmallBall inspection.ball threshold) :
@@ -142,9 +142,9 @@ theorem classify_small {denominator :
 
 /-- A cached inspection that fails the smallness predicate selects the branch carrying candidate apartness. -/
 theorem classify_apart {denominator :
-  Coherent.CoherentNamed} {start : State denominator}
+  CoherentNamed} {start : State denominator}
     (threshold : Fraction.Rational) (positive : 0 < threshold)
-    (inspection : Approximation.Gaussian.Name.Coherent.Refinement.Inspection denominator start (threshold / 6)
+    (inspection : Inspection denominator start (threshold / 6)
         (Request.Sixth.requestTarget_positive
       positive))
     (notSmall : ¬ Residual.SmallBall inspection.ball threshold) :
@@ -157,7 +157,7 @@ theorem classify_apart {denominator :
 
 /-- Acquisition retains exactly the source produced by refining at one sixth of the threshold. -/
 @[simp] theorem acquire_source {denominator
-  : Coherent.CoherentNamed} (start : State denominator)
+  : CoherentNamed} (start : State denominator)
     (threshold : Fraction.Rational) (positive : 0 < threshold) :
     (acquire start threshold
       positive).inspection.retained.source =
@@ -166,7 +166,7 @@ theorem classify_apart {denominator :
 
 /-- Requested-threshold acquisition preserves the canonical retry index. -/
 @[simp] theorem acquire_nextIndex
-  {denominator : Coherent.CoherentNamed} (start : State denominator)
+  {denominator : CoherentNamed} (start : State denominator)
     (threshold : Fraction.Rational) (positive : 0 < threshold) :
     (acquire start threshold
       positive).inspection.retained.nextIndex = start.nextIndex := rfl

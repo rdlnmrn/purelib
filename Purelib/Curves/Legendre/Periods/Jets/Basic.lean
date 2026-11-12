@@ -5,97 +5,105 @@ import Purelib.Curves.Hyperelliptic.Integration.Algebraic.Period
 import Purelib.Curves.Legendre.Paths
 public import Purelib.Curves.Legendre.Periods.Fibre
 public import Purelib.Curves.Legendre.Periods.Jets.Specification
+public import Purelib.Curves.Legendre.Periods.Jets.Source.Attachment
 import Purelib.Geometry.Path.Gaussian.Lifted.Refinement
 import Init.Prelude
 import Purelib.Approximation.Gaussian.Name.Coherent
 
-open Purelib
-
-open Purelib.Approximation.Gaussian.Name
-
-open Purelib.Curves.Hyperelliptic.Integration.Algebraic.Period
-
-open Purelib.Curves.Legendre
-
-open Purelib.Curves.Legendre.Periods
-
-open Purelib.Curves.Legendre.Periods.Jets
-
-open Purelib.Geometry.Path.Gaussian.Lifted
-
-section
-@[expose] public section
-
 /-!
-# Synchronized finite Legendre period jets
+# Differential channels on one retained Legendre cycle
 
-The ordinary period layer certifies differentials of the form `x^k dx/y`.
-Parameter differentiation of the Legendre family also needs the odd powers
-`y^3` and `y^5`.  This module adds only that narrow algebraic-integrand
-interface.  A finite observation evaluates an explicit polynomial numerator,
-uses the already certified sheet value, and builds the odd reciprocal power
-from repeated constructive multiplication of `1/y`.
-
-Value, first-derivative, and second-derivative programs are then locked to the
-same displayed lifted cycle and exposed through one finite request table.
+The channel index selects `dx/y` or `x dx/y`, independently of the cycle
+index in a period matrix. All six value and symbolic derivative programs
+retain one common lifted cycle. Separate instances on the A and B cycles
+therefore give the two columns of the differential-by-cycle period matrix.
+The original source attachment derives fixed-parameter differential relations.
+These algebraic programs and that attachment alone do not assert a parameter-variation law.
 -/
+
+public section
 
 namespace Purelib.Curves.Legendre.Periods.Jets.Basic
 
-/-! ## One common lifted-cycle period jet -/
+open Purelib
+open Purelib.Approximation.Gaussian.Name
+open Purelib.Curves.Hyperelliptic.Integration.Algebraic.Period
+open Purelib.Curves.Legendre
+open Purelib.Curves.Legendre.Periods
+open Purelib.Geometry.Path.Gaussian.Lifted
 
 set_option genInjectivity false in
-/-- Value, first derivative, and second derivative are certified on literally the same displayed lifted cycle for each
-of the two genus-one coordinates. -/
+/-- Both differential channels and their symbolic derivatives are certified on one shared lifted cycle.
+
+The differential index selects the numerator, never a different cycle. The
+retained programs certify algebraic integrands; actual parameter-variation
+estimates must additionally account for transport of this cycle. -/
 structure SynchronizedPeriodJet {parameter :
   Data.Gaussian.Basic.Canonical}
     (frame : Paths.Frame parameter) where
-  /-- The original shared lifted cycle refinement for each of the two period coordinates. -/ cycle : Fin 2 ->
+  /-- The original lifted cycle shared by every differential and derivative channel. -/ cycle :
     Refinement.LiftedCycleRefinement 2
-  /-- The certified value-period program on the original coordinate cycle. -/ value : forall coordinate,
+  /-- The certified value integral for each differential on the retained common cycle. -/ value : forall coordinate,
     Jets.CertifiedPeriodProgram
       (Fibre.frameCurve frame)
-      (Specification.valueSpecification coordinate) (cycle coordinate)
-  /-- The certified first parameter-derivative program on that same original coordinate cycle. -/ first : forall
+      (Specification.valueSpecification parameter coordinate) cycle
+  /-- The certified first symbolic derivative integral on the retained common cycle. -/ first : forall
     coordinate,
     Jets.CertifiedPeriodProgram
       (Fibre.frameCurve frame)
-      (Specification.firstDerivativeSpecification coordinate) (cycle coordinate)
-  /-- The certified second parameter-derivative program on that same original coordinate cycle. -/ second : forall
+      (Specification.firstDerivativeSpecification parameter coordinate) cycle
+  /-- The certified second symbolic derivative integral on the retained common cycle. -/ second : forall
     coordinate,
     Jets.CertifiedPeriodProgram
       (Fibre.frameCurve frame)
-      (Specification.secondDerivativeSpecification coordinate) (cycle coordinate)
+      (Specification.secondDerivativeSpecification parameter coordinate) cycle
+  /-- The original fixed-parameter cell-source attachment shared by these same six retained programs. -/
+  source : Source.Attachment frame cycle value first second
 
-constructive_injectivity Purelib.Curves.Legendre.Periods.Jets.Basic.SynchronizedPeriodJet
+constructive_injectivity SynchronizedPeriodJet
 
 namespace SynchronizedPeriodJet
 
+/-- Retain six original certified programs with their identical fixed-parameter cell-source attachment.
+
+The attachment preserves the original chart owners and literal cell lists.
+It certifies fixed-parameter differential relations; parameter-variation
+realization remains a separate certificate on these retained channels.
+-/
+@[expose] def ofSource {parameter : Data.Gaussian.Basic.Canonical} {frame : Paths.Frame parameter}
+    (cycle : Refinement.LiftedCycleRefinement 2)
+    (value : ∀ coordinate, Jets.CertifiedPeriodProgram (Fibre.frameCurve frame)
+      (Specification.valueSpecification parameter coordinate) cycle)
+    (first : ∀ coordinate, Jets.CertifiedPeriodProgram (Fibre.frameCurve frame)
+      (Specification.firstDerivativeSpecification parameter coordinate) cycle)
+    (second : ∀ coordinate, Jets.CertifiedPeriodProgram (Fibre.frameCurve frame)
+      (Specification.secondDerivativeSpecification parameter coordinate) cycle)
+    (source : Source.Attachment frame cycle value first second) : SynchronizedPeriodJet frame :=
+  ⟨cycle, value, first, second, source⟩
+
 /-- Read the retained value-period program output at the original coordinate. -/
-def valueName {parameter :
+@[expose] def valueName {parameter :
   Data.Gaussian.Basic.Canonical}
     {frame : Paths.Frame parameter}
-    (jet : Curves.Legendre.Periods.Jets.Basic.SynchronizedPeriodJet frame) (coordinate : Fin 2) : Coherent.CoherentNamed
+    (jet : SynchronizedPeriodJet frame) (coordinate : Fin 2) : Coherent.CoherentNamed
       :=
   (jet.value coordinate).output
 
 /-- Read the retained first-derivative period program output at the original coordinate. -/
-def firstName {parameter :
+@[expose] def firstName {parameter :
   Data.Gaussian.Basic.Canonical}
     {frame : Paths.Frame parameter}
-    (jet : Curves.Legendre.Periods.Jets.Basic.SynchronizedPeriodJet frame) (coordinate : Fin 2) : Coherent.CoherentNamed
+    (jet : SynchronizedPeriodJet frame) (coordinate : Fin 2) : Coherent.CoherentNamed
       :=
   (jet.first coordinate).output
 
 /-- Read the retained second-derivative period program output at the original coordinate. -/
-def secondName {parameter :
+@[expose] def secondName {parameter :
   Data.Gaussian.Basic.Canonical}
     {frame : Paths.Frame parameter}
-    (jet : Curves.Legendre.Periods.Jets.Basic.SynchronizedPeriodJet frame) (coordinate : Fin 2) : Coherent.CoherentNamed
+    (jet : SynchronizedPeriodJet frame) (coordinate : Fin 2) : Coherent.CoherentNamed
       :=
   (jet.second coordinate).output
 end SynchronizedPeriodJet
 
 end Purelib.Curves.Legendre.Periods.Jets.Basic
-
-end

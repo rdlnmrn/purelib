@@ -46,32 +46,32 @@ open Purelib.Approximation
 
 /-- For an arbitrary coherent progressive input, one additional finite input halving followed by one additional actual
 output squaring preserves the restored local exponential name. -/
-@[expose] def coherentDyadicExp_step (exponent : Nat) (input : Coherent.CoherentNamed)
-    (domain : Name.UnitDisk input.name) :
-    Gaussian.Equivalence.NamedEquivalent
+@[expose] def coherentDyadicExp_step (exponent : Nat) (input : CoherentNamed)
+    (domain : UnitDisk input.name) :
+    NamedEquivalent
       (Power.squareIterate (exponent + 1)
-        (Exponential.Progressive.Local.Name.named (Dyadic.halfScaled input).name
-          (Exponential.Progressive.Local.Halving.halfScaledUnitDisk input domain)))
+        (Local.Name.named (Dyadic.halfScaled input).name
+          (Local.Halving.halfScaledUnitDisk input domain)))
       (Power.squareIterate exponent
-        (Exponential.Progressive.Local.Name.named input.name domain)) := by
+        (Local.Name.named input.name domain)) := by
   let half := Dyadic.halfScaled input
-  let halfDomain := Exponential.Progressive.Local.Halving.halfScaledUnitDisk input domain
-  let sumDomain := Exponential.Progressive.Local.Halving.halfScaledSelfSumUnitDisk input domain
-  let halfExp : Coherent.CoherentNamed :=
-    { name := Exponential.Progressive.Local.Name.named half.name halfDomain
-      coherent := Exponential.Progressive.Local.Coherent.localExpCoherent half.name halfDomain }
+  let halfDomain := Local.Halving.halfScaledUnitDisk input domain
+  let sumDomain := Local.Halving.halfScaledSelfSumUnitDisk input domain
+  let halfExp : CoherentNamed :=
+    { name := Local.Name.named half.name halfDomain
+      coherent := Local.Coherent.localExpCoherent half.name halfDomain }
   let sumInput :=
     CoherentNamed.add half half
-  let sumExp : Coherent.CoherentNamed :=
-    { name := Exponential.Progressive.Local.Name.named sumInput.name sumDomain
-      coherent := Exponential.Progressive.Local.Coherent.localExpCoherent sumInput.name sumDomain }
-  let inputExp : Coherent.CoherentNamed :=
-    { name := Exponential.Progressive.Local.Name.named input.name domain
-      coherent := Exponential.Progressive.Local.Coherent.localExpCoherent input.name domain }
-  have localLaw := Exponential.Progressive.Local.Addition.Power.coherentLocalExp_add_after_squareIterate exponent
+  let sumExp : CoherentNamed :=
+    { name := Local.Name.named sumInput.name sumDomain
+      coherent := Local.Coherent.localExpCoherent sumInput.name sumDomain }
+  let inputExp : CoherentNamed :=
+    { name := Local.Name.named input.name domain
+      coherent := Local.Coherent.localExpCoherent input.name domain }
+  have localLaw := Local.Addition.Power.coherentLocalExp_add_after_squareIterate exponent
     half half halfDomain halfDomain sumDomain
-  have sumToInput : Gaussian.Equivalence.NamedEquivalent sumExp.name inputExp.name :=
-    Exponential.Progressive.Local.Congruence.localExpNamed_respects sumDomain domain
+  have sumToInput : NamedEquivalent sumExp.name inputExp.name :=
+    Local.Congruence.localExpNamed_respects sumDomain domain
       (Dyadic.halfScaledSelfAdd_equivalent input)
   have restoredSumToInput := Congruence.squareIterate_respects exponent
     sumExp inputExp sumToInput

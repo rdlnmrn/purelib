@@ -10,6 +10,8 @@ import Purelib.Data.Gaussian.Basic
 import Purelib.Geometry.Rational.Box.Refinement
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Polynomial.Clearance.Box.Grid.Central.Cell
+
 open Purelib.Geometry.Rational
 
 open Purelib.Polynomial
@@ -34,32 +36,32 @@ structure Arrangement
   /-- Both coordinate intervals of the central box have positive width. -/ centerProper : center.Proper
   /-- The central box lies strictly inside the outer box. -/ centerInterior : center.StrictInterior outer
   /-- The southwest complement cell, retaining its boundary clearance and relation to the outer and central boxes. -/
-    southwest : Clearance.Box.Grid.Central.Cell.ClearCell p outer center
+    southwest : ClearCell p outer center
   /-- The west complement cell, retaining its boundary clearance and relation to the outer and central boxes. -/ west :
-    Clearance.Box.Grid.Central.Cell.ClearCell p outer center
+    ClearCell p outer center
   /-- The northwest complement cell, retaining its boundary clearance and relation to the outer and central boxes. -/
-    northwest : Clearance.Box.Grid.Central.Cell.ClearCell p outer center
+    northwest : ClearCell p outer center
   /-- The south complement cell, retaining its boundary clearance and relation to the outer and central boxes. -/ south
-    : Clearance.Box.Grid.Central.Cell.ClearCell p outer center
+    : ClearCell p outer center
   /-- The north complement cell, retaining its boundary clearance and relation to the outer and central boxes. -/ north
-    : Clearance.Box.Grid.Central.Cell.ClearCell p outer center
+    : ClearCell p outer center
   /-- The southeast complement cell, retaining its boundary clearance and relation to the outer and central boxes. -/
-    southeast : Clearance.Box.Grid.Central.Cell.ClearCell p outer center
+    southeast : ClearCell p outer center
   /-- The east complement cell, retaining its boundary clearance and relation to the outer and central boxes. -/ east :
-    Clearance.Box.Grid.Central.Cell.ClearCell p outer center
+    ClearCell p outer center
   /-- The northeast complement cell, retaining its boundary clearance and relation to the outer and central boxes. -/
-    northeast : Clearance.Box.Grid.Central.Cell.ClearCell p outer center
+    northeast : ClearCell p outer center
   /-- The outer raw winding equals the central raw winding plus the eight complement contributions. -/ additive :
-    Winding.Box.Basic.quadrupledBoxWinding p outer =
-    Winding.Box.Basic.quadrupledBoxWinding p center +
-      Winding.Box.Basic.quadrupledBoxWinding p southwest.box +
-      Winding.Box.Basic.quadrupledBoxWinding p west.box +
-      Winding.Box.Basic.quadrupledBoxWinding p northwest.box +
-      Winding.Box.Basic.quadrupledBoxWinding p south.box +
-      Winding.Box.Basic.quadrupledBoxWinding p north.box +
-      Winding.Box.Basic.quadrupledBoxWinding p southeast.box +
-      Winding.Box.Basic.quadrupledBoxWinding p east.box +
-      Winding.Box.Basic.quadrupledBoxWinding p northeast.box
+    Basic.quadrupledBoxWinding p outer =
+    Basic.quadrupledBoxWinding p center +
+      Basic.quadrupledBoxWinding p southwest.box +
+      Basic.quadrupledBoxWinding p west.box +
+      Basic.quadrupledBoxWinding p northwest.box +
+      Basic.quadrupledBoxWinding p south.box +
+      Basic.quadrupledBoxWinding p north.box +
+      Basic.quadrupledBoxWinding p southeast.box +
+      Basic.quadrupledBoxWinding p east.box +
+      Basic.quadrupledBoxWinding p northeast.box
   /-- Distinct displayed complement cells have separated interiors. -/ complementsPairwise :
     [southwest, west, northwest, south, north, southeast, east,
       northeast].Pairwise
@@ -86,7 +88,7 @@ namespace Arrangement
 negative-cell selection. -/
 def complements
     {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {outer center : Box}
-    (grid : Arrangement p outer center) : List (Clearance.Box.Grid.Central.Cell.ClearCell p
+    (grid : Arrangement p outer center) : List (ClearCell p
       outer center) :=
   [grid.southwest, grid.west, grid.northwest, grid.south, grid.north,
     grid.southeast, grid.east, grid.northeast]

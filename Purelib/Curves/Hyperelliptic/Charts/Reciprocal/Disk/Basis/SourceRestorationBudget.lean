@@ -61,6 +61,8 @@ import Purelib.Integration.Budget.Trace.Restoration
 import Purelib.Integration.Path.IncrementArea
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Algebra
@@ -119,18 +121,18 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy (
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+    UniformReciprocalModels.Data patch count}
   {cover : Cover data} {covers :
     BasisSourceCovers parent}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {bounds :
+  {regular : RegularBounds.Data cap} {bounds :
     UniformBounds regular.padded}
   {depth floor sourceFloor : Nat} {target sourceTarget : Coordinate}
-  {index minimum stage : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {index minimum stage : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
   {polynomials : RegularBasisPolynomials cap
     index box}
   {anchorBank : PrimitiveCells data index
@@ -155,7 +157,7 @@ open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 variable {energyTarget : Coordinate} {energyFloor energyDepth : Nat}
 
 variable {originals :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+  CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
   covers index}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -174,7 +176,7 @@ private theorem dyadic_nonempty (depth : Nat)
 
 /-- The retained common cover has at least one actual interval. -/
 private theorem common_nonempty {coverFloor : Nat}
-    (common : CommonCover.BasisCommonCover cover covers coverFloor) : common.intervals ≠ [] := by
+    (common : BasisCommonCover cover covers coverFloor) : common.intervals ≠ [] := by
   intro empty
   have edges := common.edges_eq
   rw [empty, List.map_nil] at edges
@@ -207,7 +209,7 @@ variable {request :
   {plan : Plan
     request capSample polynomials minimum}
   {acquired :
-    CommonParentReadings.BasisCommonParentRequest.Plan.Acquisition
+    Plan.Acquisition
     plan anchorBank bank stage}
   {energyFloor radialDepth : Nat}
 
@@ -248,12 +250,12 @@ variable {sample :
 /-- The retained prepared-source target is at most the square of the original allowance. -/
 private theorem source_target_paid : request.prepared.sourceTarget ≤ allowance ^ 2 := by
   have nonnegative := request.prepared.request.source_positive.le
-  have extra := Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.sq_nonneg_direct
-    (common.intervals.length : InverseRootPolynomial.Coordinate))
+  have extra := Arithmetic.mul_nonneg_direct (Arithmetic.sq_nonneg_direct
+    (common.intervals.length : Coordinate))
     request.prepared.request.comparison.positive.le
   have left := le_add_of_nonneg_right extra (a := request.prepared.sourceTarget)
-  have doubled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by
-      decide : (1 : InverseRootPolynomial.Coordinate) ≤ 2) (add_nonneg nonnegative extra)
+  have doubled := Arithmetic.mul_le_mul_of_nonneg_right_direct (by
+      decide : (1 : Coordinate) ≤ 2) (add_nonneg nonnegative extra)
   rw [Fraction.Field.one_mul] at doubled
   exact (left.trans doubled).trans (BasisPreparedAreaRequest.endpoint_paid request.prepared)
 
@@ -261,66 +263,66 @@ private theorem source_target_paid : request.prepared.sourceTarget ≤ allowance
 private theorem source_area_paid :
     32 * request.prepared.sourceTarget * (BasisSourceCovers.primitiveSlope covers + request.prepared.sourceTarget) ≤
       allowance ^ 2 := by
-  have nonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : InverseRootPolynomial.Coordinate) ≤ 32)
+  have nonnegative := Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Coordinate) ≤ 32)
       request.prepared.request.source_positive.le)
     (add_nonneg (BasisSourceCovers.primitiveSlope_nonnegative covers) request.prepared.request.source_positive.le)
-  have left := le_add_of_nonneg_right (Fraction.Order.Arithmetic.sq_nonneg_direct request.prepared.half)
+  have left := le_add_of_nonneg_right (Arithmetic.sq_nonneg_direct request.prepared.half)
     (a := 32 * request.prepared.sourceTarget * (BasisSourceCovers.primitiveSlope covers +
       request.prepared.sourceTarget))
-  have doubled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by
-      decide : (1 : InverseRootPolynomial.Coordinate) ≤ 2)
-    (add_nonneg nonnegative (Fraction.Order.Arithmetic.sq_nonneg_direct request.prepared.half))
+  have doubled := Arithmetic.mul_le_mul_of_nonneg_right_direct (by
+      decide : (1 : Coordinate) ≤ 2)
+    (add_nonneg nonnegative (Arithmetic.sq_nonneg_direct request.prepared.half))
   rw [Fraction.Field.one_mul] at doubled
   exact (left.trans doubled).trans request.prepared.paid
 
 /-- The endpoint detour ceiling is paid uniformly by the original parent allowance, before any source polynomials or
 children are acquired. -/
 theorem endpointError_uniform : PreparedComparison.endpointError (request := request) ≤ 64 * allowance ^ 2 := by
-  have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by
-      decide +kernel : (1 : InverseRootPolynomial.Coordinate) ≤ 436) request.restoration.positive.le
+  have scaled := Arithmetic.mul_le_mul_of_nonneg_right_direct (by
+      decide +kernel : (1 : Coordinate) ≤ 436) request.restoration.positive.le
   rw [Fraction.Field.one_mul] at scaled
   have paid : request.restoration.target ≤ (4 * allowance) ^ 2 :=
     (scaled.trans_eq (show 436 * request.restoration.target =
       416 * request.restoration.target + 20 * request.restoration.target by ring1)).trans request.restoration.paid
   exact ((PreparedComparison.endpointError_paid (request := request)).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct paid (by
-        decide : (0 : InverseRootPolynomial.Coordinate) ≤ 4))).trans_eq (by ring1)
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct paid (by
+        decide : (0 : Coordinate) ≤ 4))).trans_eq (by ring1)
 
 /-- Uniform per-parent constants keep the original allowance and a common source slope, with no refinement-count
 dependence. -/
-@[expose] def uniformSourceAreaError (allowance slope : InverseRootPolynomial.Coordinate) : Coordinate :=
+@[expose] def uniformSourceAreaError (allowance slope : Coordinate) : Coordinate :=
   2 * (240 * (64 * allowance ^ 2) * (2 * (slope + 1)) + 352 * (64 * allowance ^ 2) ^ 2 + allowance ^ 2)
 
 /-- The coefficient-independent uniform displacement allowance for restoring the original source polygon. -/
-@[expose] def uniformSourceTotalError (allowance : InverseRootPolynomial.Coordinate) : Coordinate := 2050 * allowance ^
+@[expose] def uniformSourceTotalError (allowance : Coordinate) : Coordinate := 2050 * allowance ^
   2
 
 /-- The remaining scalar weight is fixed by the retained source covers. -/
-@[expose] def uniformSourceAreaWeight (slope : InverseRootPolynomial.Coordinate) : Coordinate :=
+@[expose] def uniformSourceAreaWeight (slope : Coordinate) : Coordinate :=
   2 * (240 * 64 * (2 * (slope + 1)) + 352 * 64 ^ 2 + 1)
 
 /-- An allowance of squared size at most one reduces the uniform area error to its retained slope weight times that
 squared allowance. -/
-theorem uniformSourceAreaError_le {allowance : InverseRootPolynomial.Coordinate} (slope :
-  InverseRootPolynomial.Coordinate) (small : allowance ^ 2 ≤ 1) :
+theorem uniformSourceAreaError_le {allowance : Coordinate} (slope :
+  Coordinate) (small : allowance ^ 2 ≤ 1) :
 
       uniformSourceAreaError
       allowance slope ≤
       uniformSourceAreaWeight
       slope * allowance ^ 2 := by
-  have squared := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct small
-    (Fraction.Order.Arithmetic.sq_nonneg_direct allowance)
+  have squared := Arithmetic.mul_le_mul_of_nonneg_left_direct small
+    (Arithmetic.sq_nonneg_direct allowance)
   have quartic : (allowance ^ 2) ^ 2 ≤ allowance ^ 2 :=
     (show (allowance ^ 2) ^ 2 = allowance ^ 2 * allowance ^ 2 by ring1).trans_le
       (squared.trans_eq (Fraction.Field.mul_one_direct _))
-  have weighted := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct quartic
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : InverseRootPolynomial.Coordinate) ≤ 352)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct (64 : InverseRootPolynomial.Coordinate)))
-  have combined := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.add_le_add_direct (Fraction.Order.Arithmetic.add_le_add_direct
+  have weighted := Arithmetic.mul_le_mul_of_nonneg_left_direct quartic
+    (Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Coordinate) ≤ 352)
+      (Arithmetic.sq_nonneg_direct (64 : Coordinate)))
+  have combined := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_direct (Arithmetic.add_le_add_direct
       (le_refl (240 * 64 * (2 * (slope + 1)) * allowance ^ 2)) weighted) (le_refl (allowance ^ 2)))
-    (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
+    (by decide : (0 : Coordinate) ≤ 2)
   exact (show
     uniformSourceAreaError
     allowance slope =
@@ -332,7 +334,7 @@ theorem uniformSourceAreaError_le {allowance : InverseRootPolynomial.Coordinate}
           ring1))
 
 /-- A shared upper bound on the original source slope bounds the retained restoration area allowance uniformly. -/
-theorem restoredSourceAreaError_uniform {slope : InverseRootPolynomial.Coordinate}
+theorem restoredSourceAreaError_uniform {slope : Coordinate}
     (slopeLe : BasisSourceCovers.primitiveSlope covers ≤ slope) :
 
       Plan.Acquisition.Sample.PreparedComparison.restoredSourceAreaError
@@ -341,35 +343,35 @@ theorem restoredSourceAreaError_uniform {slope : InverseRootPolynomial.Coordinat
       allowance slope := by
   have sourceSmall : request.prepared.sourceTarget ≤ 1 := by
     rw [request.prepared.sourceTarget_eq]
-    exact Fraction.Order.Basic.min_le_left _ _
-  have boundLe := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.add_le_add_direct slopeLe sourceSmall) (by
-        decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
+    exact Basic.min_le_left _ _
+  have boundLe := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_direct slopeLe sourceSmall) (by
+        decide : (0 : Coordinate) ≤ 2)
   have endpointNonnegative : 0 ≤ PreparedComparison.endpointError (request := request) :=
-    add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 10)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
-        (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤
-          4) (Fraction.Order.Arithmetic.sq_nonneg_direct _)) request.restoration.positive.le))
-  have boundNonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct (by
-      decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
+    add_nonneg (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 10)
+      (Arithmetic.sq_nonneg_direct _))
+      (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 2)
+        (add_nonneg (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤
+          4) (Arithmetic.sq_nonneg_direct _)) request.restoration.positive.le))
+  have boundNonnegative := Arithmetic.mul_nonneg_direct (by
+      decide : (0 : Coordinate) ≤ 2)
     (add_nonneg (BasisSourceCovers.primitiveSlope_nonnegative covers) request.prepared.request.source_positive.le)
-  have product := Fraction.Order.Arithmetic.mul_le_mul_direct
+  have product := Arithmetic.mul_le_mul_direct
     (endpointError_uniform
     (request := request)) boundLe boundNonnegative
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : InverseRootPolynomial.Coordinate) ≤ 64)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct allowance))
-  have linear := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct product (by
-      decide +kernel : (0 : InverseRootPolynomial.Coordinate) ≤ 240)
-  have squared := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.pow_le_pow_direct endpointNonnegative
+    (Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Coordinate) ≤ 64)
+      (Arithmetic.sq_nonneg_direct allowance))
+  have linear := Arithmetic.mul_le_mul_of_nonneg_left_direct product (by
+      decide +kernel : (0 : Coordinate) ≤ 240)
+  have squared := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.pow_le_pow_direct endpointNonnegative
     (endpointError_uniform
     (request := request)) 2)
-    (by decide +kernel : (0 : InverseRootPolynomial.Coordinate) ≤ 352)
-  have total := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.add_le_add_direct (Fraction.Order.Arithmetic.add_le_add_direct linear squared)
+    (by decide +kernel : (0 : Coordinate) ≤ 352)
+  have total := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_direct (Arithmetic.add_le_add_direct linear squared)
       (source_area_paid
-      (request := request))) (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
+      (request := request))) (by decide : (0 : Coordinate) ≤ 2)
   exact (show PreparedComparison.restoredSourceAreaError (request := request) =
     2 * (240 * (PreparedComparison.endpointError (request := request) * (2 * (BasisSourceCovers.primitiveSlope covers +
       request.prepared.sourceTarget))) +
@@ -384,60 +386,60 @@ theorem restoredSourceTotalError_uniform :
     PreparedComparison.restoredSourceTotalError (request := request) ≤
       uniformSourceTotalError
       allowance :=
-  (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
       (endpointError_uniform
-      (request := request)) (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 16))
+      (request := request)) (by decide : (0 : Coordinate) ≤ 16))
 
       (source_target_paid
-      (request := request))) (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)).trans_eq (by
+      (request := request))) (by decide : (0 : Coordinate) ≤ 2)).trans_eq (by
         unfold uniformSourceTotalError
         ring1)
 
 /-- Every parent can use the same source slope ceiling in the concatenation estimate, while retaining its own literal
 restored and source polygons. -/
 theorem restored_source_area_uniform (comparison : Acquisition.Sample.PreparedComparison sample) (previous :
-  InverseRootPolynomial.Gaussian)
-    (gap : Data.Gaussian.Norm.Basic.normSq (sample.endpoints.first.2 - previous) ≤ request.restoration.target *
-      PreparedObservationCoercivity.coefficientNormSq coefficients)
-    {slope : InverseRootPolynomial.Coordinate} (slopeLe : BasisSourceCovers.primitiveSlope covers ≤ slope) :
-    Data.Gaussian.Norm.Basic.normSq ((PreparedComparison.restoredIntegral comparison previous).area -
+  Gaussian)
+    (gap : Gaussian.Norm.Basic.normSq (sample.endpoints.first.2 - previous) ≤ request.restoration.target *
+      coefficientNormSq coefficients)
+    {slope : Coordinate} (slopeLe : BasisSourceCovers.primitiveSlope covers ≤ slope) :
+    Gaussian.Norm.Basic.normSq ((PreparedComparison.restoredIntegral comparison previous).area -
       comparison.weighted.source.area) ≤
 
         uniformSourceAreaError
-        allowance slope * (PreparedObservationCoercivity.coefficientNormSq coefficients) ^ 2 :=
+        allowance slope * (coefficientNormSq coefficients) ^ 2 :=
   (PreparedComparison.restored_source_area_error comparison previous gap).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct
       (restoredSourceAreaError_uniform
-      slopeLe) (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+      slopeLe) (Arithmetic.sq_nonneg_direct _))
 
 /-- The actual restored displacement approximates its retained source displacement with a uniform homogeneous bound.
 
 The original incoming root gap must be paid; the estimate retains the exact restored and cached source totals. -/
 theorem restored_source_total_uniform (comparison : Acquisition.Sample.PreparedComparison sample) (previous :
-  InverseRootPolynomial.Gaussian)
-    (gap : Data.Gaussian.Norm.Basic.normSq (sample.endpoints.first.2 - previous) ≤ request.restoration.target *
-      PreparedObservationCoercivity.coefficientNormSq coefficients) :
-    Data.Gaussian.Norm.Basic.normSq ((PreparedComparison.restoredIntegral comparison previous).total -
+  Gaussian)
+    (gap : Gaussian.Norm.Basic.normSq (sample.endpoints.first.2 - previous) ≤ request.restoration.target *
+      coefficientNormSq coefficients) :
+    Gaussian.Norm.Basic.normSq ((PreparedComparison.restoredIntegral comparison previous).total -
       comparison.weighted.source.total) ≤
 
         uniformSourceTotalError
-        allowance * PreparedObservationCoercivity.coefficientNormSq coefficients :=
+        allowance * coefficientNormSq coefficients :=
   (PreparedComparison.restored_source_total_error comparison previous gap).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct
       (restoredSourceTotalError_uniform
       (request := request))
       (FiniteSum.Fin.sumFin_zero.symm.trans_le
-        (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : InverseRootPolynomial.Coordinate)) _ (fun row =>
-          Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))))
+        (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Coordinate)) _ (fun row =>
+          normSq_nonneg (coefficients row)))))
 
 /-- The cached source total is bounded by its original cover slope. -/
 theorem source_total_bound (comparison : Acquisition.Sample.PreparedComparison sample) :
-    Data.Gaussian.Norm.Basic.normSq comparison.weighted.source.total ≤ BasisSourceCovers.primitiveSlope covers
-      * PreparedObservationCoercivity.coefficientNormSq coefficients := by
+    Gaussian.Norm.Basic.normSq comparison.weighted.source.total ≤ BasisSourceCovers.primitiveSlope covers
+      * coefficientNormSq coefficients := by
   have bounded := ReciprocalDiskArcOwners.increment_bound originals coefficients (first := 0) (last := 1) ⟨le_rfl, by
     decide⟩ ⟨by decide, le_rfl⟩
-  rw [show ((1 : InverseRootPolynomial.Coordinate) - 0) ^ 2 = 1 by decide, Fraction.Field.mul_one_direct, ←
+  rw [show ((1 : Coordinate) - 0) ^ 2 = 1 by decide, Fraction.Field.mul_one_direct, ←
     Weighted.source_total comparison.weighted] at bounded
   exact bounded
 

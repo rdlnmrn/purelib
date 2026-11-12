@@ -116,6 +116,26 @@ open Purelib.Data.ComplexContinuedFraction.Encoding
   [.east, .northEast, .north, .northWest,
     .west, .southWest, .south, .southEast]
 
+/-- Every original sector occurs in the displayed finite sector table. -/
+theorem mem_sectorTable (sector : Sector) : sector ∈ sectorTable := by
+  cases sector
+  · exact List.Mem.head _
+  · exact List.Mem.tail _ (List.Mem.head _)
+  · exact List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _))
+  · exact List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _)))
+  · exact List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _))))
+  · exact List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _)))))
+  · exact List.Mem.tail _ (
+      List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _))))))
+  · exact List.Mem.tail _ (
+      List.Mem.tail _ (
+      List.Mem.tail _ (
+      List.Mem.tail _ (
+      List.Mem.tail _ (
+      List.Mem.tail _ (
+      List.Mem.tail _ (
+      List.Mem.head _)))))))
+
 open Purelib.Data.List in
 /-- Filter the retained sector table by the exact unfinished code prefix.
 
@@ -186,6 +206,19 @@ theorem sectorCandidates_length (bits :
   | true, false, true => .southWest
   | true, true, false => .south
   | true, true, true => .southEast
+
+/-- Every retained sector is the decoder of its exact three Boolean bits. -/
+theorem sector_eq_bits (sector : Sector) :
+    ∃ first second third, sector = sectorOfBits first second third := by
+  cases sector
+  · exact ⟨false, false, false, rfl⟩
+  · exact ⟨false, false, true, rfl⟩
+  · exact ⟨false, true, false, rfl⟩
+  · exact ⟨false, true, true, rfl⟩
+  · exact ⟨true, false, false, rfl⟩
+  · exact ⟨true, false, true, rfl⟩
+  · exact ⟨true, true, false, rfl⟩
+  · exact ⟨true, true, true, rfl⟩
 
 /-- Encoding the decoded sector recovers the same three bits. -/
 @[simp] theorem sectorOfBits_code (first second third

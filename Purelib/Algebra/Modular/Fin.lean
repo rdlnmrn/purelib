@@ -1,6 +1,7 @@
 module
 
 import Init.Data.Fin.Basic
+import Init.Data.Fin.Lemmas
 -- Retain the original direct finite-power instances and their executable bodies.
 public import Init.GrindInstances.Ring.Fin
 public import Mathlib.Algebra.Ring.Defs
@@ -9,6 +10,7 @@ public import Purelib.Algebra.Semiring.Nat
 import Purelib.Data.Nat.Remainder.Arithmetic
 import Purelib.Data.Nat.Subtraction
 import Purelib.Data.Nat.Multiplication
+import Purelib.Algebra.Ring.IntCast
 
 /-!
 # Original arithmetic and commutative-ring certificates on finite residues
@@ -201,5 +203,41 @@ proof laws are supplied by the displayed constructive scalar certificates. -/
   right_distrib := fin_right_distrib
   zero_mul := fin_zero_mul
   mul_zero := fin_mul_zero
+
+/-- The retained finite ring's natural cast is the original bounded remainder.
+
+The ring keeps its original cast implementation. This equality identifies its
+value with the direct remainder constructor, including the one-element carrier. -/
+public theorem natCast_eq_ofNat (modulus : Nat) [NeZero modulus] (value : Nat) :
+    letI := finCommRing modulus
+    (value : Fin modulus) = Fin.ofNat modulus value := by
+  letI := finCommRing modulus
+  induction value with
+  | zero => rfl
+  | succ value ih =>
+      rewrite [Nat.cast_succ, ih]
+      apply Fin.ext
+      change (value % modulus + 1 % modulus) % modulus = (value + 1) % modulus
+      rewrite [Remainder.Arithmetic.add_mod_left, Remainder.Arithmetic.add_mod_right]
+      rfl
+
+/-- The original signed remainder cast agrees with the retained finite ring's integer cast.
+
+Both signs use the same bounded natural remainder and original finite negation.
+The direct signed constructor can therefore avoid recursive numerical casts
+while preserving the ring's original data and all of its operations. -/
+public theorem intCast_eq (modulus : Nat) [NeZero modulus] (value : Int) :
+    letI := finCommRing modulus
+    Fin.intCast value = (value : Fin modulus) := by
+  letI := finCommRing modulus
+  cases value with
+  | ofNat value =>
+      change Fin.ofNat modulus value = ((value : Nat) : Fin modulus)
+      exact (natCast_eq_ofNat modulus value).symm
+  | negSucc value =>
+      change -Fin.ofNat modulus (value + 1) = ((Int.negSucc value : Int) : Fin modulus)
+      rewrite [Ring.IntCast.cast_negSucc]
+      exact congrArg (fun residue : Fin modulus => -residue)
+        (natCast_eq_ofNat modulus (value + 1)).symm
 
 end Purelib.Algebra.Modular.Fin

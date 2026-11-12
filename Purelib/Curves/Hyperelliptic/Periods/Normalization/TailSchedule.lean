@@ -28,6 +28,8 @@ import Purelib.LinearAlgebra.Matrix.Inverse.Scaled.Basic
 import Purelib.LinearAlgebra.Matrix.Rational.Budget
 import Purelib.Riemann.Integration.ScalarTailLower
 
+open Purelib.LinearAlgebra.Gaussian
+
 open Purelib.Curves
 
 open Purelib.Data.Rat
@@ -45,10 +47,10 @@ namespace Purelib.Curves.Hyperelliptic.Periods.Normalization.TailSchedule
 open Purelib.Curves.Hyperelliptic.Periods.Normalization
 open Purelib.Riemann.Readings.TailEnergyRadii
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {bank :
-  Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve} {floor : Nat}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {bank :
+  Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve} {floor : Nat}
   (request : Readings.CurveRawRequest.PairedPeriodBank.RawRequest bank floor) (action :
-    Hyperelliptic.Periods.Action.LowerBound.ActionLower request)
+    Action.LowerBound.ActionLower request)
   (geometry : Topology.PreparedObservationSurface.ObservationBoxEnergy curve.polynomial genus)
   (aBound : Readings.NamedMatrixActionBound.UniformActionBound bank.periodData.aMatrix)
 
@@ -62,15 +64,15 @@ The executable schedule consumes the supplied physical tail. -/
 energy floor. -/
 @[expose] def comparisonUsingTail (inverseTail : Periods.PeriodMatrix.ScalarTailSeparationCertificate
   bank.periodData.aMatrix)
-    (vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector genus) (nonzero :
-      LinearAlgebra.Gaussian.QuadraticForm.NonzeroVector vector)
+    (vector : QuadraticForm.RationalVector genus) (nonzero :
+      QuadraticForm.NonzeroVector vector)
     (target : Fraction.Rational) (positive : 0 < target) :
     Readings.TailSynchronizedEnergy.TailComparisonSchedule bank.periodData inverseTail
       vector nonzero target positive :=
   let energy := CurveNormalizedEnergy.normalizedFloor request geometry aBound vector
   let energyPositive := CurveNormalizedEnergy.normalizedFloor_positive request geometry aBound vector nonzero
   let radius := comparison vector energy
-  let radiusPositive := Readings.TailEnergyRadii.comparison_positive vector energyPositive
+  let radiusPositive := comparison_positive vector energyPositive
   { radius := radius
     positive := radiusPositive
     sampleIndex := inverseTail.anchor +
@@ -82,10 +84,10 @@ action-derived certificate. -/
 @[expose] def requestUsingTail (inverseTail : Periods.PeriodMatrix.ScalarTailSeparationCertificate
   bank.periodData.aMatrix)
     (tailEq : SuppliedTailIdentity (request := request) (action := action) inverseTail)
-    (vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector genus) (nonzero :
-      LinearAlgebra.Gaussian.QuadraticForm.NonzeroVector vector)
+    (vector : QuadraticForm.RationalVector genus) (nonzero :
+      QuadraticForm.NonzeroVector vector)
     (target : Fraction.Rational) (positive : 0 < target) :
-    Hyperelliptic.Integration.Energy.Prepared.TailControlledRequestCertificate bank.periodData inverseTail
+    Integration.Energy.Prepared.TailControlledRequestCertificate bank.periodData inverseTail
       vector nonzero target positive := open Purelib.Data in by
   let comparison := comparisonUsingTail (request := request) (geometry := geometry) (aBound := aBound) inverseTail
     vector nonzero target positive
@@ -98,24 +100,24 @@ action-derived certificate. -/
   have raw_le : request.index ≤ comparison.sampleIndex :=
     (CurveNormalizedEnergy.ActionLower.rawIndex_le_anchor action).trans canonicalAnchor
   have scalarNonzero := CurveNormalizedEnergy.ActionLower.scalar_nonzero action comparison.sampleIndex canonicalAnchor
-  let coefficients := LinearAlgebra.Gaussian.Energy.scaledNormalizedCoefficients bank.periodData comparison.sampleIndex
+  let coefficients := Energy.scaledNormalizedCoefficients bank.periodData comparison.sampleIndex
     vector
-  let coefficientsNonzero := LinearAlgebra.Gaussian.Energy.scaledNormalizedCoefficients_nonzero_of_scalar
+  let coefficientsNonzero := Energy.scaledNormalizedCoefficients_nonzero_of_scalar
     bank.periodData
     comparison.sampleIndex vector nonzero scalarNonzero
-  let witness := Hyperelliptic.Integration.Observation.CurveRawCells.surfaceWitness request geometry coefficients
+  let witness := Integration.Observation.CurveRawCells.surfaceWitness request geometry coefficients
     coefficientsNonzero
   let energy := CurveNormalizedEnergy.normalizedFloor request geometry aBound vector
   have energyPositive : 0 < energy := CurveNormalizedEnergy.normalizedFloor_positive request geometry aBound vector
     nonzero
-  let radius := Readings.TailEnergyRadii.refinement vector energy target
-  have radiusPositive : 0 < radius := Readings.TailEnergyRadii.refinement_positive vector energyPositive positive
+  let radius := refinement vector energy target
+  have radiusPositive : 0 < radius := refinement_positive vector energyPositive positive
   refine Readings.TailSynchronizedEnergy.TailControlledRequestCertificate.ofSchedule comparison radius radiusPositive
-    (Readings.TailEnergyRadii.refinement_target vector energyPositive positive)
-    (Readings.TailEnergyRadii.refinement_comparison vector energyPositive positive)
+    (refinement_target vector energyPositive positive)
+    (refinement_comparison vector energyPositive positive)
     genus witness.cells (witness.controlledReduction raw_le) (CurveNormalizedEnergy.SurfaceWitness.controlled_error_lt
       witness raw_le) ?_
-  exact (Readings.TailEnergyRadii.budgets_lt_energy
+  exact (budgets_lt_energy
     (Periods.PeriodMatrix.NormalizedPeriodData.ofScaledInverse bank.periodData inverseTail.toScaledInverseCertificate)
     vector energyPositive positive).trans_le
       (CurveNormalizedEnergy.SurfaceWitness.normalized_energy_lower (aBound := aBound) witness raw_le
@@ -132,8 +134,8 @@ repeat scalarTailLower or its tail-separation construction. -/
     inverseTail tailEq
 
 /-- Build a comparison schedule on the action-derived tail for the supplied nonzero vector and positive target. -/
-@[expose] def tailComparison (vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector genus) (nonzero :
-  LinearAlgebra.Gaussian.QuadraticForm.NonzeroVector vector)
+@[expose] def tailComparison (vector : QuadraticForm.RationalVector genus) (nonzero :
+  QuadraticForm.NonzeroVector vector)
     (target : Fraction.Rational) (positive : 0 < target) :
     Readings.TailSynchronizedEnergy.TailComparisonSchedule bank.periodData (CurveInverseTail.ActionLower.scalarTailLower
       action).toScalarTailSeparationCertificate
@@ -144,10 +146,10 @@ repeat scalarTailLower or its tail-separation construction. -/
 
 /-- Build a controlled normalized request on the retained action-derived tail for the supplied nonzero vector and
 positive target. -/
-@[expose] def tailRequest (vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector genus) (nonzero :
-  LinearAlgebra.Gaussian.QuadraticForm.NonzeroVector vector)
+@[expose] def tailRequest (vector : QuadraticForm.RationalVector genus) (nonzero :
+  QuadraticForm.NonzeroVector vector)
     (target : Fraction.Rational) (positive : 0 < target) :
-    Hyperelliptic.Integration.Energy.Prepared.TailControlledRequestCertificate bank.periodData
+    Integration.Energy.Prepared.TailControlledRequestCertificate bank.periodData
       (CurveInverseTail.ActionLower.scalarTailLower action).toScalarTailSeparationCertificate
       vector nonzero target positive :=
   let inverseTail := (CurveInverseTail.ActionLower.scalarTailLower action).toScalarTailSeparationCertificate

@@ -38,7 +38,7 @@ a positive supplied threshold. -/
 @[expose] public def residualRefinementRadius
     (p : Basic.CanonicalCoefficients.CoefficientPolynomial) (ambient : Box)
     (threshold : Fraction.Rational) : Fraction.Rational :=
-  min 1 (threshold / Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient)
+  min 1 (threshold / denseLipschitzBound p ambient)
 
 /-- A positive residual threshold makes the computed refinement radius positive.
 
@@ -47,11 +47,11 @@ The retained minimum therefore satisfies the same strict lower bound. -/
 public theorem residualRefinementRadius_pos
     (p : Basic.CanonicalCoefficients.CoefficientPolynomial) (ambient : Box) {threshold : Fraction.Rational}
     (thresholdPositive : 0 < threshold) :
-    0 < Dense.Gaussian.Bounds.Box.Residual.Radius.residualRefinementRadius p ambient threshold := by
+    0 < residualRefinementRadius p ambient threshold := by
   exact Fraction.Order.Basic.lt_min
     (Fraction.Cast.Order.natCast_pos_direct (n := 1) (by decide))
     (Fraction.Order.Field.div_pos_direct thresholdPositive
-      (Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos p ambient))
+      (denseLipschitzBound_pos p ambient))
 
 /-- The retained squared radius times its Lipschitz bound fits the threshold.
 
@@ -61,15 +61,15 @@ comparison for the same polynomial and ambient box. -/
 public theorem lipschitz_mul_residualRadius_sq_le
     (p : Basic.CanonicalCoefficients.CoefficientPolynomial) (ambient : Box) {threshold : Fraction.Rational}
     (thresholdPositive : 0 < threshold) :
-    Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient *
-        Dense.Gaussian.Bounds.Box.Residual.Radius.residualRefinementRadius p ambient threshold ^ 2 ≤ threshold := by
-  let radius := Dense.Gaussian.Bounds.Box.Residual.Radius.residualRefinementRadius p ambient threshold
-  let lipschitz := Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient
-  have radiusPositive := Dense.Gaussian.Bounds.Box.Residual.Radius.residualRefinementRadius_pos p ambient
+    denseLipschitzBound p ambient *
+        residualRefinementRadius p ambient threshold ^ 2 ≤ threshold := by
+  let radius := residualRefinementRadius p ambient threshold
+  let lipschitz := denseLipschitzBound p ambient
+  have radiusPositive := residualRefinementRadius_pos p ambient
     thresholdPositive
   have radiusLeOne : radius ≤ 1 := Fraction.Order.Basic.min_le_left _ _
   have radiusRatio : radius ≤ threshold / lipschitz := Fraction.Order.Basic.min_le_right _ _
-  have lipschitzPositive := Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos p ambient
+  have lipschitzPositive := denseLipschitzBound_pos p ambient
   have squareLeRadius : radius ^ 2 ≤ radius := by
     rw [pow_two]
     calc

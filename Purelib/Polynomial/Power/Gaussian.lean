@@ -25,6 +25,9 @@ import Purelib.Tactic.QuotientFreeOmega
 import Mathlib.Algebra.Ring.Defs
 import Mathlib.Algebra.GroupWithZero.NeZero
 
+open Purelib.Polynomial.Dense
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients
+
 /-!
 # Gaussian power polynomials
 
@@ -43,7 +46,7 @@ open Purelib.Polynomial
 The original leading one is followed by degree-1 zero coefficients and the
 negated input constant, retaining the supplied positive degree. -/
 @[expose] public def rootPolynomial (input : Gaussian.Basic.Canonical) (degree : Data.Nat.Positive.RootDegree) :
-    (Dense.Basic.DensePolynomial Gaussian.Basic.Canonical) :=
+    (Basic.DensePolynomial Gaussian.Basic.Canonical) :=
   ⟨1 :: (List.replicate (degree.value - 1) 0 ++ [-input])⟩
 
 /-- Changing the constant parameter leaves the original formal derivative unchanged.
@@ -52,45 +55,45 @@ The final derivative-state step ignores its constant coefficient. Both
 parameter tables therefore retain exactly the same derivative coefficient list. -/
 public theorem derivative_polynomial_eq (source target : Gaussian.Basic.Canonical)
     (degree : Data.Nat.Positive.RootDegree) :
-    Dense.Gaussian.GCD.derivative (Purelib.Polynomial.Power.Gaussian.rootPolynomial source degree) =
-      Dense.Gaussian.GCD.derivative (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree) := by
-  apply Dense.Basic.DensePolynomial.ext
-  unfold Dense.Gaussian.GCD.derivative Dense.Derivative.derivative
-    Dense.Derivative.derivativeState rootPolynomial
+    Gaussian.GCD.derivative (rootPolynomial source degree) =
+      Gaussian.GCD.derivative (rootPolynomial target degree) := by
+  apply Basic.DensePolynomial.ext
+  unfold Gaussian.GCD.derivative Derivative.derivative
+    Derivative.derivativeState rootPolynomial
   change ((List.replicate (degree.value - 1) (0 : Gaussian.Basic.Canonical) ++ [-source]).foldl
-      Dense.Derivative.derivativeStep (Dense.Derivative.derivativeStep (0, 0) 1)).2.coeffs =
+      Derivative.derivativeStep (Derivative.derivativeStep (0, 0) 1)).2.coeffs =
     ((List.replicate (degree.value - 1) (0 : Gaussian.Basic.Canonical) ++ [-target]).foldl
-      Dense.Derivative.derivativeStep (Dense.Derivative.derivativeStep (0, 0) 1)).2.coeffs
-  let initial : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial ×
-    Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial :=
-    Dense.Derivative.derivativeStep (0, 0) 1
-  have sourceReadback := List.Fold.foldl_append Dense.Derivative.derivativeStep
+      Derivative.derivativeStep (Derivative.derivativeStep (0, 0) 1)).2.coeffs
+  let initial : CoefficientPolynomial ×
+    CoefficientPolynomial :=
+    Derivative.derivativeStep (0, 0) 1
+  have sourceReadback := List.Fold.foldl_append Derivative.derivativeStep
     (List.replicate (degree.value - 1) (0 : Gaussian.Basic.Canonical)) [-source] initial
-  have targetReadback := List.Fold.foldl_append Dense.Derivative.derivativeStep
+  have targetReadback := List.Fold.foldl_append Derivative.derivativeStep
     (List.replicate (degree.value - 1) (0 : Gaussian.Basic.Canonical)) [-target] initial
-  exact (congrArg (fun state : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial ×
-    Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial => state.2.coeffs) sourceReadback).trans
-    (congrArg (fun state : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial ×
-      Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial => state.2.coeffs) targetReadback).symm
+  exact (congrArg (fun state : CoefficientPolynomial ×
+    CoefficientPolynomial => state.2.coeffs) sourceReadback).trans
+    (congrArg (fun state : CoefficientPolynomial ×
+      CoefficientPolynomial => state.2.coeffs) targetReadback).symm
 
 /-- The root coefficient table evaluates to the specified positive power minus its input.
 
 The original Horner scan retains the leading one, the degree-1 zero block
 and the final negated input coefficient. -/
 public theorem rootPolynomial_eval (input point : Gaussian.Basic.Canonical) (degree : Data.Nat.Positive.RootDegree) :
-    (Power.Gaussian.rootPolynomial input degree).eval point =
+    (rootPolynomial input degree).eval point =
       point ^ degree.value - input := by
   have predecessor : degree.value - 1 + 1 = degree.value := by
     exact (Nat.add_comm _ _).trans (Nat.Subtraction.add_sub_of_le degree.positive)
   change
-    Dense.Basic.DensePolynomial.evalCoeffs point
+    Basic.DensePolynomial.evalCoeffs point
         (1 :: (List.replicate (degree.value - 1) 0 ++ [-input])) =
       point ^ degree.value - input
   rw [show
       1 :: (List.replicate (degree.value - 1) 0 ++ [-input]) =
         ([1] ++ List.replicate (degree.value - 1) 0) ++ [-input] by rfl]
-  rw [Dense.Gaussian.Evaluation.evalCoeffs_append_singleton,
-    Dense.Basic.DensePolynomial.evalCoeffs_append_replicate_zero]
+  rw [Gaussian.Evaluation.evalCoeffs_append_singleton,
+    Basic.DensePolynomial.evalCoeffs_append_replicate_zero]
   change ((0 * point + 1) * point ^ (degree.value - 1)) * point + -input =
     point ^ degree.value - input
   rewrite [Gaussian.Basic.zero_mul,
@@ -103,8 +106,8 @@ public theorem rootPolynomial_eval (input point : Gaussian.Basic.Canonical) (deg
 Its original leading coefficient is one. The retained zero-prefix test therefore
 keeps the entire original coefficient spine. -/
 public theorem rootPolynomial_normalized (input : Gaussian.Basic.Canonical) (degree : Data.Nat.Positive.RootDegree) :
-    (Power.Gaussian.rootPolynomial input degree).normalize = Power.Gaussian.rootPolynomial input degree := by
-  apply Dense.Basic.DensePolynomial.ext
+    (rootPolynomial input degree).normalize = rootPolynomial input degree := by
+  apply Basic.DensePolynomial.ext
   change ((1 : Gaussian.Basic.Canonical) ::
     (List.replicate (degree.value - 1) 0 ++ [-input])).dropWhile
       (fun value => decide (value = 0)) =
@@ -119,16 +122,16 @@ Both original normalized coefficient programs have the same evaluations at
 the existing finite comparison candidates, giving structural polynomial equality. -/
 public theorem polynomial_eq_coordinatePower_sub_constant
     (parameter : Gaussian.Basic.Canonical) (degree : Data.Nat.Positive.RootDegree) :
-    Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree =
-      Dense.Gaussian.Power.Coordinate.coordinatePositivePower (degree.value - 1) -
-        Dense.Basic.DensePolynomial.constant parameter := by
-  apply Dense.Extensionality.normalized_eq_of_sub_isZero
-    (Purelib.Polynomial.Power.Gaussian.rootPolynomial_normalized parameter degree)
-    (Dense.Basic.DensePolynomial.normalize_sub _ _)
-  apply Dense.Gaussian.NonzeroEvaluation.difference_isZero_of_candidate_evals
+    rootPolynomial parameter degree =
+      Gaussian.Power.Coordinate.coordinatePositivePower (degree.value - 1) -
+        Basic.DensePolynomial.constant parameter := by
+  apply Extensionality.normalized_eq_of_sub_isZero
+    (rootPolynomial_normalized parameter degree)
+    (Basic.DensePolynomial.normalize_sub _ _)
+  apply Gaussian.NonzeroEvaluation.difference_isZero_of_candidate_evals
   intro point _member
-  rw [Dense.Basic.DensePolynomial.eval_sub, Purelib.Polynomial.Power.Gaussian.rootPolynomial_eval,
-    Dense.Gaussian.Power.Coordinate.coordinatePositivePower_eval, Dense.Basic.DensePolynomial.eval_constant]
+  rw [Basic.DensePolynomial.eval_sub, rootPolynomial_eval,
+    Gaussian.Power.Coordinate.coordinatePositivePower_eval, Basic.DensePolynomial.eval_constant]
   rewrite [(Nat.add_comm _ _).trans (Nat.Subtraction.add_sub_of_le degree.positive)]
   exact Eq.refl _
 
@@ -137,19 +140,19 @@ public theorem polynomial_eq_coordinatePower_sub_constant
 The retained coordinate-power program gives the variable term; the original
 constant parameter has zero formal derivative. -/
 public theorem derivative_eval (parameter point : Gaussian.Basic.Canonical) (degree : Data.Nat.Positive.RootDegree) :
-    (Dense.Gaussian.GCD.derivative
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree)).eval point =
+    (Gaussian.GCD.derivative
+      (rootPolynomial parameter degree)).eval point =
       (degree.value : Gaussian.Basic.Canonical) * point ^ (degree.value - 1) := by
-  unfold Dense.Gaussian.GCD.derivative
-  rw [Power.Gaussian.polynomial_eq_coordinatePower_sub_constant,
-    Dense.Derivative.eval_derivative_sub,
-    Dense.Gaussian.Derivative.Monomial.derivative_coordinatePositivePower_eval]
+  unfold Gaussian.GCD.derivative
+  rw [polynomial_eq_coordinatePower_sub_constant,
+    Derivative.eval_derivative_sub,
+    Gaussian.Derivative.Monomial.derivative_coordinatePositivePower_eval]
   have derivativeConstant :
-      (Dense.Derivative.derivative
-        (Dense.Basic.DensePolynomial.constant parameter)).eval point = 0 := by
-    rw [Dense.Derivative.eval_derivative]
+      (Derivative.derivative
+        (Basic.DensePolynomial.constant parameter)).eval point = 0 := by
+    rw [Derivative.eval_derivative]
     change
-      (Dense.Derivative.evalDerivativeCoeffs point [parameter]).2 = 0
+      (Derivative.evalDerivativeCoeffs point [parameter]).2 = 0
     change (0 : Gaussian.Basic.Canonical) * point + 0 = 0
     rewrite [Gaussian.Basic.zero_mul, Gaussian.Basic.zero_add]
     exact Eq.refl _
@@ -162,10 +165,10 @@ public theorem derivative_eval (parameter point : Gaussian.Basic.Canonical) (deg
 Its original leading-one table is normalized and has one leading entry,
 degree-1 zeros and the original final constant entry. -/
 public theorem rootPolynomial_degree (input : Gaussian.Basic.Canonical) (degree : Data.Nat.Positive.RootDegree) :
-    (Power.Gaussian.rootPolynomial input degree).natDegree = degree.value := by
+    (rootPolynomial input degree).natDegree = degree.value := by
   change
-    (Power.Gaussian.rootPolynomial input degree).normalize.coeffs.length - 1 = degree.value
-  rw [Power.Gaussian.rootPolynomial_normalized]
+    (rootPolynomial input degree).normalize.coeffs.length - 1 = degree.value
+  rw [rootPolynomial_normalized]
   change (List.replicate (degree.value - 1) (0 : Gaussian.Basic.Canonical) ++ [-input]).length + 1 - 1 =
     degree.value
   rewrite [List.Append.length_append, List.Replicate.length_replicate]

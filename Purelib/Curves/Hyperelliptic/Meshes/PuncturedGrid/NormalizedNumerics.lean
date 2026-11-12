@@ -71,24 +71,28 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid
 open Purelib.Riemann.Meshes.PuncturedGridFaces (PuncturedFaces RegularFace)
 
 open Purelib.Riemann.Meshes.GridLiftedMesh (LiftedMesh)
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid}
+
+open Purelib.Riemann.Normalization.InverseRootPolynomial (Polynomial)
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid}
+
+variable {numerator : Polynomial} {pairs : Nat}
 
 namespace Face.PrimitiveData.FacePrimitives
-variable {face : RegularFace bank} {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomains frames
-  face} {differential : Hyperelliptic.Differentials.Basic.Differential genus} {stage : Nat}
+variable {face : RegularFace bank} {domains : DomainBanks.FaceDomains frames
+  face} {differential : Differentials.Basic.Differential genus} {stage : Nat}
 
 /-- Normalize both original sheet primitive caches while retaining their exact domain owners. -/
 def normalize
-    (cached : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitives domains differential stage) :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitives domains differential stage :=
+    (cached : FacePrimitives domains differential stage numerator pairs) :
+      FacePrimitives domains differential stage numerator pairs :=
   ⟨⟨fun _ => cached.zero.get.normalize⟩, ⟨fun _ => cached.one.get.normalize⟩⟩
 
 /-- Selecting a sheet commutes exactly with normalization of the original face primitive cache. -/
 theorem normalize_atSheet
-    (cached : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitives domains differential stage) (sheet :
+    (cached : FacePrimitives domains differential stage numerator pairs) (sheet :
       Fin 2) :
     cached.normalize.atSheet sheet = (cached.atSheet sheet).normalize := by
   rcases sheet with ⟨sheet, bound⟩
@@ -98,22 +102,22 @@ theorem normalize_atSheet
 end Face.PrimitiveData.FacePrimitives
 
 namespace Face.PrimitiveData.FacePrimitiveBank
-variable {differential : Hyperelliptic.Differentials.Basic.Differential genus} {stage : Nat}
+variable {differential : Differentials.Basic.Differential genus} {stage : Nat}
 
 /-- Normalize the original primitive caches recursively across the retained face-domain bank. -/
 def normalize :
-    {faces : List (RegularFace bank)} → {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank
+    {faces : List (RegularFace bank)} → {domains : DomainBanks.FaceDomainBank
       frames faces} →
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential stage domains →
-      Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential stage domains
+    FacePrimitiveBank differential stage domains numerator pairs →
+      FacePrimitiveBank differential stage domains numerator pairs
   | _, .nil, _ => ⟨⟩
   | _, .cons _ _, cached => ⟨⟨fun _ => cached.1.get.normalize⟩, normalize cached.2⟩
 
 /-- Indexed lookup commutes exactly with normalization of the retained original primitive bank. -/
 theorem normalize_get :
-    {faces : List (RegularFace bank)} → {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank
+    {faces : List (RegularFace bank)} → {domains : DomainBanks.FaceDomainBank
       frames faces} →
-    (cached : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential stage domains) →
+    (cached : FacePrimitiveBank differential stage domains numerator pairs) →
       (position : Fin faces.length) →
     cached.normalize.get position = (cached.get position).normalize
   | _, .nil, _, position => Fin.elim0 position
@@ -127,42 +131,42 @@ theorem
     {vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges : SquareRoot.Grid.RootEdgeBank
       frames}
     {faces : PuncturedFaces bank} {mesh : LiftedMesh vertices edges faces} {domains :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
-    (cached : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential stage domains)
+      DomainBanks.FaceDomainBank frames faces.regulars}
+    (cached : FacePrimitiveBank differential stage domains numerator pairs)
     {edge : Topology.Polygon.Stokes.OrientedEdge vertices.count} (route :
-      Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute mesh edge) :
+      MeshPathWalks.EdgeRoute mesh edge) :
     cached.normalize.edgeIncrement route = cached.edgeIncrement route := by
   rw [cached.normalize.edgeIncrement_eq, cached.edgeIncrement_eq, cached.normalize_get,
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitives.normalize_atSheet]
+    FacePrimitives.normalize_atSheet]
   exact ((cached.get route.position).atSheet route.sheet).normalize_increment _ _
 
 end Face.PrimitiveData.FacePrimitiveBank
 
-variable {faces : List (RegularFace bank)} {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank
+variable {faces : List (RegularFace bank)} {domains : Face.DomainBanks.FaceDomainBank
   frames faces} {stage : Nat}
 
 /-- Normalize every original standard-differential primitive bank at the retained shared stage. -/
 def RegularDomainMeshes.RegularMeshes.Numerics.normalize
-    (cached : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage) :
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage :=
-  Data.Vector.DependentVector.ofFn (fun row => (cached.get row).normalize)
+    (cached : RegularDomainMeshes.RegularMeshes.Numerics domains stage) :
+      RegularDomainMeshes.RegularMeshes.Numerics domains stage :=
+  Vector.DependentVector.ofFn (fun row => (cached.get row).normalize)
 
 /-- Domain lookup commutes exactly with normalization of the original shared numerical bank. -/
 theorem
   RegularDomainMeshes.RegularMeshes.Numerics.normalize_atDomain
-    (cached : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage) (position :
+    (cached : RegularDomainMeshes.RegularMeshes.Numerics domains stage) (position :
       Fin faces.length) (sheet : Fin 2) (row : Fin genus) :
     cached.normalize.atDomain position sheet row = (cached.atDomain position sheet row).normalize := by
-  unfold Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics.atDomain
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics.normalize
-  rw [Data.Vector.DependentVector.ofFn_get,
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank.normalize_get,
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitives.normalize_atSheet]
+  unfold RegularDomainMeshes.RegularMeshes.Numerics.atDomain
+    RegularDomainMeshes.RegularMeshes.Numerics.normalize
+  rw [Vector.DependentVector.ofFn_get,
+    Face.PrimitiveData.FacePrimitiveBank.normalize_get,
+    Face.PrimitiveData.FacePrimitives.normalize_atSheet]
 
 /-- Normalization preserves each exact original corner increment on the retained face and sheet. -/
 theorem
   RegularDomainMeshes.RegularMeshes.Numerics.normalize_corner_increment
-    (cached : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage)
+    (cached : RegularDomainMeshes.RegularMeshes.Numerics domains stage)
     (position : Fin faces.length) (sheet : Fin 2) (row : Fin genus) (first last : Fin 4) :
     (cached.normalize.atDomain position sheet row).corners.values last -
       (cached.normalize.atDomain position sheet row).corners.values first =
@@ -179,35 +183,35 @@ open Purelib.Riemann.Meshes.PuncturedGridFaces (PuncturedFaces)
 
 open Purelib.Riemann.Meshes.GridLiftedMesh (LiftedMesh)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid}
   {vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges : SquareRoot.Grid.RootEdgeBank
     frames}
-  {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
+  {faces : PuncturedFaces bank} {mesh : LiftedMesh vertices edges faces}
     {ambient : Rational.Box}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars} {differential :
-    Hyperelliptic.Differentials.Basic.Differential genus} {stage : Nat}
+  {domains : Face.DomainBanks.FaceDomainBank frames faces.regulars} {differential :
+    Differentials.Basic.Differential genus} {stage : Nat}
 
 /-- Normalization preserves the complete ordered original corner-increment list along the retained segment assignment.
 -/
-theorem cornerIncrements_normalize (cached : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+theorem cornerIncrements_normalize (cached : Face.PrimitiveData.FacePrimitiveBank
   differential stage domains) :
-    ∀ {start finish : Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start
+    ∀ {start finish : Gaussian.Basic.Canonical} {path : Geometry.ClearPath curve.polynomial ambient start
       finish}
       {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
         Paths.PreparedClearPathModels.PreparedPath path owner} {pieces :
         Paths.PreparedPathDecomposition.PreparedPath.CoveredSegments prepared}
-      (assigned : Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces),
-      Hyperelliptic.Meshes.PuncturedGrid.Cut.CornerRequests.AssignedSegments.cornerIncrements cached.normalize assigned
-        = Hyperelliptic.Meshes.PuncturedGrid.Cut.CornerRequests.AssignedSegments.cornerIncrements cached assigned
+      (assigned : PreparedFaceSegments.AssignedSegments mesh pieces),
+      AssignedSegments.cornerIncrements cached.normalize assigned
+        = AssignedSegments.cornerIncrements cached assigned
   | _, _, _, _, _, _, .nil _ _ => rfl
   | _, _, _, _, _, _, .cons placement remaining => by
-      rw [Hyperelliptic.Meshes.PuncturedGrid.Cut.CornerRequests.AssignedSegments.cornerIncrements,
-        Hyperelliptic.Meshes.PuncturedGrid.Cut.CornerRequests.AssignedSegments.cornerIncrements,
+      rw [AssignedSegments.cornerIncrements,
+        AssignedSegments.cornerIncrements,
         cached.normalize_edgeIncrement,
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.CornerRequests.AssignedSegments.cornerIncrements_normalize
+        AssignedSegments.cornerIncrements_normalize
           cached remaining]
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.CornerRequests.AssignedSegments

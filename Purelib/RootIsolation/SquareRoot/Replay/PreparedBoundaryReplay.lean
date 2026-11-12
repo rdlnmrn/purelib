@@ -35,6 +35,8 @@ import Purelib.Polynomial.Dense.Rational.Basic
 import Purelib.Polynomial.Dense.Rational.Bezout.Basic
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Polynomial.Dense.Gaussian.Path
+
 public section
 
 /-!
@@ -69,9 +71,9 @@ open Purelib.RootIsolation.Winding
 /-- The rational coordinate field for checked boundary-clearance bounds. -/
 abbrev Coordinate := Fraction.Rational
 /-- The dense Gaussian polynomial type checked on the retained boundary. -/
-abbrev Polynomial := Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+abbrev Polynomial := Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
 /-- The rational rectangular box whose four sides are checked. -/
-abbrev Box := Purelib.Geometry.Rational.Box
+abbrev Box := Geometry.Rational.Box
 /-- The original finite polynomial-pair witness used by a side-clearance check. -/
 abbrev Witness := Clearance.Pair.Replay.Witness
 
@@ -82,13 +84,13 @@ The four fields retain the original cofactor tables in left, right, bottom and t
 check certifies them. -/
 structure Witnesses where
   /-- The retained polynomial-pair witness for the original box's left side. -/ left :
-    SquareRoot.Replay.PreparedBoundaryReplay.Witness
+    Witness
   /-- The retained polynomial-pair witness for the original box's right side. -/ right :
-    SquareRoot.Replay.PreparedBoundaryReplay.Witness
+    Witness
   /-- The retained polynomial-pair witness for the original box's bottom side. -/ bottom :
-    SquareRoot.Replay.PreparedBoundaryReplay.Witness
+    Witness
   /-- The retained polynomial-pair witness for the original box's top side. -/ top :
-    SquareRoot.Replay.PreparedBoundaryReplay.Witness
+    Witness
 
 constructive_injectivity Witnesses
 
@@ -97,7 +99,7 @@ inductive Side where
   /-- The original box's left side. -/ | left /-- The original box's right side. -/ | right /-- The original box's
     bottom side. -/ | bottom /-- The original box's top side. -/ | top
 deriving DecidableEq
-derive_exposed_repr Purelib.RootIsolation.SquareRoot.Replay.PreparedBoundaryReplay.Side
+derive_exposed_repr PreparedBoundaryReplay.Side
 
 set_option genInjectivity false in
 /-- The exact boundary-check request and its failing side and polynomial-pair reason.
@@ -106,11 +108,11 @@ The original polynomial, box and requested bound remain attached to the actual f
 polynomial-pair rejection evidence. -/
 structure Failure where
   /-- The exact polynomial supplied to the failed boundary check. -/ polynomial :
-    SquareRoot.Replay.PreparedBoundaryReplay.Polynomial
-  /-- The exact box supplied to the failed boundary check. -/ box : SquareRoot.Replay.PreparedBoundaryReplay.Box
+    Polynomial
+  /-- The exact box supplied to the failed boundary check. -/ box : Box
   /-- The requested rational boundary-clearance bound. -/ requested :
-    SquareRoot.Replay.PreparedBoundaryReplay.Coordinate
-  /-- The original side on which checking failed. -/ side : SquareRoot.Replay.PreparedBoundaryReplay.Side
+    Coordinate
+  /-- The original side on which checking failed. -/ side : Side
   /-- The retained polynomial-pair checking failure on that side. -/ reason : Clearance.Pair.Replay.Failure
 
 constructive_injectivity Failure
@@ -120,8 +122,8 @@ set_option genInjectivity false in
 
 The certificate concerns the same retained polynomial and box; its bound equality preserves the exact original requested
 rational value. -/
-structure Checked (polynomial : SquareRoot.Replay.PreparedBoundaryReplay.Polynomial) (box :
-  SquareRoot.Replay.PreparedBoundaryReplay.Box) (bound : SquareRoot.Replay.PreparedBoundaryReplay.Coordinate) where
+structure Checked (polynomial : Polynomial) (box :
+  Box) (bound : Coordinate) where
   /-- The actual reconstructed boundary-clearance certificate. -/ clearance :
     Clearance.Box.Boundary.Basic.BoundaryClearance polynomial box
   /-- The reconstructed certificate retains the requested bound exactly. -/ bound_eq : clearance.bound = bound
@@ -132,44 +134,44 @@ constructive_injectivity Checked
 
 Coprimality and interval bounds are checked on the exact vertical and horizontal restrictions; failure retains the
 original request and side, while success preserves the requested bound exactly. -/
-@[expose] def check (polynomial : SquareRoot.Replay.PreparedBoundaryReplay.Polynomial) (box :
-  SquareRoot.Replay.PreparedBoundaryReplay.Box) (bound : SquareRoot.Replay.PreparedBoundaryReplay.Coordinate)
-    (witnesses : SquareRoot.Replay.PreparedBoundaryReplay.Witnesses) : Except
-      SquareRoot.Replay.PreparedBoundaryReplay.Failure (SquareRoot.Replay.PreparedBoundaryReplay.Checked polynomial box
+@[expose] def check (polynomial : Polynomial) (box :
+  Box) (bound : Coordinate)
+    (witnesses : Witnesses) : Except
+      Failure (Checked polynomial box
       bound) := do
   let leftCoprime ← (Clearance.Pair.Replay.checkCoprime
-    (Dense.Gaussian.Path.Components.pathReal polynomial (Gaussian.Cast.Winding.verticalBase box.xLower)
+    (Components.pathReal polynomial (Gaussian.Cast.Winding.verticalBase box.xLower)
       Gaussian.Constants.imaginaryUnit)
-    (Dense.Gaussian.Path.Components.pathImag polynomial (Gaussian.Cast.Winding.verticalBase box.xLower)
+    (Components.pathImag polynomial (Gaussian.Cast.Winding.verticalBase box.xLower)
       Gaussian.Constants.imaginaryUnit)
-    witnesses.left).mapError (SquareRoot.Replay.PreparedBoundaryReplay.Failure.mk polynomial box bound .left)
+    witnesses.left).mapError (Failure.mk polynomial box bound .left)
   let rightCoprime ← (Clearance.Pair.Replay.checkCoprime
-    (Dense.Gaussian.Path.Components.pathReal polynomial (Gaussian.Cast.Winding.verticalBase box.xUpper)
+    (Components.pathReal polynomial (Gaussian.Cast.Winding.verticalBase box.xUpper)
       Gaussian.Constants.imaginaryUnit)
-    (Dense.Gaussian.Path.Components.pathImag polynomial (Gaussian.Cast.Winding.verticalBase box.xUpper)
+    (Components.pathImag polynomial (Gaussian.Cast.Winding.verticalBase box.xUpper)
       Gaussian.Constants.imaginaryUnit)
-    witnesses.right).mapError (SquareRoot.Replay.PreparedBoundaryReplay.Failure.mk polynomial box bound .right)
+    witnesses.right).mapError (Failure.mk polynomial box bound .right)
   let bottomCoprime ← (Clearance.Pair.Replay.checkCoprime
-    (Dense.Gaussian.Path.Components.pathReal polynomial (Gaussian.Cast.Imaginary.horizontalBase box.yLower)
+    (Components.pathReal polynomial (Gaussian.Cast.Imaginary.horizontalBase box.yLower)
       Gaussian.Constants.horizontalDirection)
-    (Dense.Gaussian.Path.Components.pathImag polynomial (Gaussian.Cast.Imaginary.horizontalBase box.yLower)
+    (Components.pathImag polynomial (Gaussian.Cast.Imaginary.horizontalBase box.yLower)
       Gaussian.Constants.horizontalDirection)
-    witnesses.bottom).mapError (SquareRoot.Replay.PreparedBoundaryReplay.Failure.mk polynomial box bound .bottom)
+    witnesses.bottom).mapError (Failure.mk polynomial box bound .bottom)
   let topCoprime ← (Clearance.Pair.Replay.checkCoprime
-    (Dense.Gaussian.Path.Components.pathReal polynomial (Gaussian.Cast.Imaginary.horizontalBase box.yUpper)
+    (Components.pathReal polynomial (Gaussian.Cast.Imaginary.horizontalBase box.yUpper)
       Gaussian.Constants.horizontalDirection)
-    (Dense.Gaussian.Path.Components.pathImag polynomial (Gaussian.Cast.Imaginary.horizontalBase box.yUpper)
+    (Components.pathImag polynomial (Gaussian.Cast.Imaginary.horizontalBase box.yUpper)
       Gaussian.Constants.horizontalDirection)
-    witnesses.top).mapError (SquareRoot.Replay.PreparedBoundaryReplay.Failure.mk polynomial box bound .top)
+    witnesses.top).mapError (Failure.mk polynomial box bound .top)
   let left ← (Clearance.Pair.Replay.checkCertified leftCoprime (Box.Intervals.verticalInterval box) bound).mapError
-    (SquareRoot.Replay.PreparedBoundaryReplay.Failure.mk polynomial box bound .left)
+    (Failure.mk polynomial box bound .left)
   let right ← (Clearance.Pair.Replay.checkCertified rightCoprime (Box.Intervals.verticalInterval box) bound).mapError
-    (SquareRoot.Replay.PreparedBoundaryReplay.Failure.mk polynomial box bound .right)
+    (Failure.mk polynomial box bound .right)
   let bottom ← (Clearance.Pair.Replay.checkCertified bottomCoprime (Box.Intervals.horizontalInterval box)
     bound).mapError
-    (SquareRoot.Replay.PreparedBoundaryReplay.Failure.mk polynomial box bound .bottom)
+    (Failure.mk polynomial box bound .bottom)
   let top ← (Clearance.Pair.Replay.checkCertified topCoprime (Box.Intervals.horizontalInterval box) bound).mapError
-    (SquareRoot.Replay.PreparedBoundaryReplay.Failure.mk polynomial box bound .top)
+    (Failure.mk polynomial box bound .top)
   let clearance := Clearance.Box.Boundary.Lines.boundaryOfLines
     (Clearance.Box.Line.Path.verticalOfPathCertificate polynomial box box.xLower left.certificate)
     (Clearance.Box.Line.Path.verticalOfPathCertificate polynomial box box.xUpper right.certificate)
@@ -181,8 +183,8 @@ original request and side, while success preserves the requested bound exactly. 
     rw [left.bound_eq, right.bound_eq, bottom.bound_eq, top.bound_eq, min_self, min_self, min_self]⟩
 
 /-- Boundary-clearance certificates on the same polynomial and box are equal when their bounds agree. -/
-theorem boundary_eq_of_bound_eq {polynomial : SquareRoot.Replay.PreparedBoundaryReplay.Polynomial} {box :
-  SquareRoot.Replay.PreparedBoundaryReplay.Box}
+theorem boundary_eq_of_bound_eq {polynomial : Polynomial} {box :
+  Box}
     (first second : Clearance.Box.Boundary.Basic.BoundaryClearance polynomial box) (same : first.bound = second.bound) :
     first = second := by
   cases first
@@ -193,38 +195,38 @@ theorem boundary_eq_of_bound_eq {polynomial : SquareRoot.Replay.PreparedBoundary
 /-- Once the saved polynomial, box and bound are the original data, a
 successful check restores the entire original boundary certificate.  No
 equality of proof terms, root selection, or analytic assumption is requested. -/
-theorem Checked.eq_original {polynomial : SquareRoot.Replay.PreparedBoundaryReplay.Polynomial} {box :
-  SquareRoot.Replay.PreparedBoundaryReplay.Box}
+theorem Checked.eq_original {polynomial : Polynomial} {box :
+  Box}
     (original : Clearance.Box.Boundary.Basic.BoundaryClearance polynomial box)
-    (restored : SquareRoot.Replay.PreparedBoundaryReplay.Checked polynomial box original.bound) : restored.clearance =
+    (restored : Checked polynomial box original.bound) : restored.clearance =
       original :=
-  SquareRoot.Replay.PreparedBoundaryReplay.boundary_eq_of_bound_eq restored.clearance original restored.bound_eq
+  boundary_eq_of_bound_eq restored.clearance original restored.bound_eq
 
 /-- The exact Gaussian parameter type of the quadratic root polynomial. -/
 abbrev Gaussian := Gaussian.Basic.Canonical
 
 /-- Construct the degree-two root polynomial for the supplied Gaussian parameter. -/
-@[expose] def rootPolynomial (parameter : SquareRoot.Replay.PreparedBoundaryReplay.Gaussian) : Polynomial :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter Riemann.RootContinuation.SquareRootDegree.degreeTwo
+@[expose] def rootPolynomial (parameter : Gaussian) : Polynomial :=
+  Power.Gaussian.rootPolynomial parameter Riemann.RootContinuation.SquareRootDegree.degreeTwo
 
 /-- The finite method that established the exact requested quadratic boundary bound. -/
 inductive Method where
   /-- The supplied finite Bézout witnesses establish the requested bound. -/ | bezout /-- The exact quadratic
     coefficient and gap bound establishes the requested bound. -/ | quadratic
-derive_exposed_repr Purelib.RootIsolation.SquareRoot.Replay.PreparedBoundaryReplay.Method
+derive_exposed_repr PreparedBoundaryReplay.Method
 
 set_option genInjectivity false in
 /-- The checked quadratic boundary certificate together with the method establishing its bound.
 
 The original parameter, box and requested bound identify the retained boundary certificate, and the method records which
 finite route established that same bound. -/
-structure QuadraticChecked (parameter : SquareRoot.Replay.PreparedBoundaryReplay.Gaussian) (box :
-  SquareRoot.Replay.PreparedBoundaryReplay.Box) (bound : SquareRoot.Replay.PreparedBoundaryReplay.Coordinate) where
+structure QuadraticChecked (parameter : Gaussian) (box :
+  Box) (bound : Coordinate) where
   /-- The retained certificate for the same quadratic polynomial, box and bound. -/ result :
-    SquareRoot.Replay.PreparedBoundaryReplay.Checked (SquareRoot.Replay.PreparedBoundaryReplay.rootPolynomial parameter)
+    Checked (rootPolynomial parameter)
     box bound
   /-- The actual successful finite route used to certify this bound. -/ method :
-    SquareRoot.Replay.PreparedBoundaryReplay.Method
+    Method
 
 constructive_injectivity QuadraticChecked
 
@@ -233,20 +235,20 @@ set_option genInjectivity false in
 
 Distinguish nonpositive requests, invalid witnesses and an insufficient Bézout bound whose coefficient-based fallback
 also misses. -/
-inductive QuadraticFailure (parameter : SquareRoot.Replay.PreparedBoundaryReplay.Gaussian) (box :
-  SquareRoot.Replay.PreparedBoundaryReplay.Box) (bound : SquareRoot.Replay.PreparedBoundaryReplay.Coordinate)
-    (witnesses : SquareRoot.Replay.PreparedBoundaryReplay.Witnesses) where
+inductive QuadraticFailure (parameter : Gaussian) (box :
+  Box) (bound : Coordinate)
+    (witnesses : Witnesses) where
   /-- The requested clearance bound fails positivity. -/ | nonpositive (failed : ¬ 0 < bound)
   /-- The original witness check reports invalid finite data, retaining its exact procedure equation. -/ |
-    invalidWitness (failure : SquareRoot.Replay.PreparedBoundaryReplay.Failure)
-      (procedure : SquareRoot.Replay.PreparedBoundaryReplay.check
-        (SquareRoot.Replay.PreparedBoundaryReplay.rootPolynomial parameter) box bound witnesses = .error failure)
+    invalidWitness (failure : Failure)
+      (procedure : check
+        (rootPolynomial parameter) box bound witnesses = .error failure)
   /-- Retain the failed witness bound, its procedure equation, the exact quadratic ceiling and the failed comparison
-    against that ceiling. -/ | insufficient (failure : SquareRoot.Replay.PreparedBoundaryReplay.Failure)
-      (procedure : SquareRoot.Replay.PreparedBoundaryReplay.check
-        (SquareRoot.Replay.PreparedBoundaryReplay.rootPolynomial parameter) box bound witnesses = .error failure)
-      (ceiling : SquareRoot.Replay.PreparedBoundaryReplay.Coordinate)
-      (ceiling_eq : ceiling = SquareRoot.Clearance.QuadraticCoefficientClearance.boundaryBound parameter box)
+    against that ceiling. -/ | insufficient (failure : Failure)
+      (procedure : check
+        (rootPolynomial parameter) box bound witnesses = .error failure)
+      (ceiling : Coordinate)
+      (ceiling_eq : ceiling = Clearance.QuadraticCoefficientClearance.boundaryBound parameter box)
       (failed : ¬ bound ≤ ceiling)
 
 constructive_injectivity QuadraticFailure
@@ -260,31 +262,31 @@ Malformed witnesses remain invalid, and a miss retains both failed methods.
 The retained original witness check is consumed before any coefficient
 fallback. Its exact procedure equation, computed ceiling and typed failure
 or certificate remain tied to the same original request. -/
-@[expose] def checkQuadratic (parameter : SquareRoot.Replay.PreparedBoundaryReplay.Gaussian) (box :
-  SquareRoot.Replay.PreparedBoundaryReplay.Box) (bound : SquareRoot.Replay.PreparedBoundaryReplay.Coordinate)
-    (witnesses : SquareRoot.Replay.PreparedBoundaryReplay.Witnesses) :
-    Except (SquareRoot.Replay.PreparedBoundaryReplay.QuadraticFailure parameter box bound witnesses)
-      (SquareRoot.Replay.PreparedBoundaryReplay.QuadraticChecked parameter box bound) :=
+@[expose] def checkQuadratic (parameter : Gaussian) (box :
+  Box) (bound : Coordinate)
+    (witnesses : Witnesses) :
+    Except (QuadraticFailure parameter box bound witnesses)
+      (QuadraticChecked parameter box bound) :=
   if positive : 0 < bound then
-    match attempted : SquareRoot.Replay.PreparedBoundaryReplay.check
-      (SquareRoot.Replay.PreparedBoundaryReplay.rootPolynomial parameter) box bound witnesses with
+    match attempted : check
+      (rootPolynomial parameter) box bound witnesses with
     | .ok verified => .ok ⟨verified, .bezout⟩
     | .error failure =>
         match failure.reason with
         | .insufficient .. =>
-            let ceiling := SquareRoot.Clearance.QuadraticCoefficientClearance.boundaryBound parameter box
+            let ceiling := Clearance.QuadraticCoefficientClearance.boundaryBound parameter box
             if carries : bound ≤ ceiling then
               let clearance : Clearance.Box.Boundary.Basic.BoundaryClearance
-                (SquareRoot.Replay.PreparedBoundaryReplay.rootPolynomial parameter) box :=
+                (rootPolynomial parameter) box :=
                 { bound := bound
                   positive := positive
                   lower := fun point boundary => carries.trans
                     (by
-                      have lower := SquareRoot.Clearance.QuadraticCoefficientClearance.boundary_lower parameter box
+                      have lower := Clearance.QuadraticCoefficientClearance.boundary_lower parameter box
                         point boundary
                       simpa only [Gaussian.Norm.Basic.normSq_eq_canonical, ceiling,
-                        SquareRoot.Replay.PreparedBoundaryReplay.rootPolynomial,
-                        SquareRoot.Clearance.QuadraticCoefficientClearance.rootPolynomial] using lower) }
+                        rootPolynomial,
+                        Clearance.QuadraticCoefficientClearance.rootPolynomial] using lower) }
               .ok ⟨⟨clearance, rfl⟩, .quadratic⟩
             else .error (.insufficient failure attempted ceiling rfl carries)
         | _ => .error (.invalidWitness failure attempted)

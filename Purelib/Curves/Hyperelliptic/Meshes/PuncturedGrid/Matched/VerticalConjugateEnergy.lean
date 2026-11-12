@@ -80,20 +80,20 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.VerticalConj
 
 attribute [local congr] FiniteSum.Fin.sumFin_congr
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {firstFace lastFace :
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {firstFace lastFace :
       Meshes.PuncturedGridFaces.RegularFace
     bank}
-  {firstModels : Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames firstFace}
-    {lastModels : Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames lastFace}
+  {firstModels : Face.InverseModels.BranchCellBank.FaceModels frames firstFace}
+    {lastModels : Face.InverseModels.BranchCellBank.FaceModels frames lastFace}
   {start : Gaussian.Basic.Canonical} {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)}
-  {leftEntry : Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry firstModels start owner} {rightEntry :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry lastModels start owner}
-  {leftDomain : Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain firstModels leftEntry.sheet} {rightDomain :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain lastModels rightEntry.sheet}
-  {firstDifferential secondDifferential : Hyperelliptic.Differentials.Basic.Differential genus} {firstSheet secondSheet
+  {leftEntry : Face.Entries.FaceModels.Entry firstModels start owner} {rightEntry :
+    Face.Entries.FaceModels.Entry lastModels start owner}
+  {leftDomain : Face.Periods.PeriodDomain firstModels leftEntry.sheet} {rightDomain :
+    Face.Periods.PeriodDomain lastModels rightEntry.sheet}
+  {firstDifferential secondDifferential : Differentials.Basic.Differential genus} {firstSheet secondSheet
     : Fin 2}
 
 variable {leftBox rightBox : Rational.Box}
@@ -111,21 +111,21 @@ open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
 open _root_.Purelib.Data.Gaussian.Basic (conj)
 
 variable {preparation :
-  Hyperelliptic.Meshes.PuncturedGrid.Matched.VerticalSidePreparation.MatchedVerticalSidePreparation trace}
+  VerticalSidePreparation.MatchedVerticalSidePreparation trace}
   {target : Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
 
 /-- The actual conjugate area requests for every standard-differential pair on the retained vertical side. -/
 @[expose] def EnergyPairs (preparation :
-  Hyperelliptic.Meshes.PuncturedGrid.Matched.VerticalSidePreparation.MatchedVerticalSidePreparation trace)
+  VerticalSidePreparation.MatchedVerticalSidePreparation trace)
     (target : Normalization.InverseRootPolynomial.Coordinate) (floor : Nat) :=
-  Data.Vector.DependentVector (fun i : Fin genus => Data.Vector.DependentVector (fun j : Fin genus =>
-    Hyperelliptic.Meshes.PuncturedGrid.Matched.VerticalSideAreaRequest.MatchedVerticalSidePreparation.AreaRequest
+  Vector.DependentVector (fun i : Fin genus => Vector.DependentVector (fun j : Fin genus =>
+    VerticalSideAreaRequest.MatchedVerticalSidePreparation.AreaRequest
       preparation (Periods.PeriodMatrix.standardDifferential i) (Periods.PeriodMatrix.standardDifferential j) 0 0 target
       floor))
 
 /-- Every original basis-pair request index is bounded by the supplied stage. -/
 @[expose] def EnergyPairs.IndexBound (entries :
-  Hyperelliptic.Meshes.PuncturedGrid.Matched.VerticalConjugateEnergy.MatchedVerticalSidePreparation.EnergyPairs
+  EnergyPairs
   preparation target floor) (index : Nat) : Prop :=
   ∀ i j, ((entries.get i).get j).index ≤ index
 
@@ -134,10 +134,10 @@ set_option genInjectivity false in
 
 The retained maximum stage also meets the requested floor. -/
 structure EnergyRequest (preparation :
-  Hyperelliptic.Meshes.PuncturedGrid.Matched.VerticalSidePreparation.MatchedVerticalSidePreparation trace)
+  VerticalSidePreparation.MatchedVerticalSidePreparation trace)
     (target : Normalization.InverseRootPolynomial.Coordinate) (floor : Nat) where
   /-- The actual retained original basis-pair requests. -/ entries :
-    Hyperelliptic.Meshes.PuncturedGrid.Matched.VerticalConjugateEnergy.MatchedVerticalSidePreparation.EnergyPairs
+    EnergyPairs
     preparation target floor
   /-- The common sufficient reading stage. -/ index : Nat
   /-- The common stage meets the original requested floor. -/ floor_le : floor ≤ index
@@ -149,14 +149,14 @@ namespace EnergyRequest
 
 /-- Prepare every original basis pair and cache the maximum of their stages and the requested floor. -/
 @[expose] def build (preparation :
-  Hyperelliptic.Meshes.PuncturedGrid.Matched.VerticalSidePreparation.MatchedVerticalSidePreparation trace)
+  VerticalSidePreparation.MatchedVerticalSidePreparation trace)
     (target : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < target) (floor : Nat) :
-      Hyperelliptic.Meshes.PuncturedGrid.Matched.VerticalConjugateEnergy.MatchedVerticalSidePreparation.EnergyRequest
+      EnergyRequest
       preparation target floor := by
   let entries :
-    Hyperelliptic.Meshes.PuncturedGrid.Matched.VerticalConjugateEnergy.MatchedVerticalSidePreparation.EnergyPairs
-    preparation target floor := Data.Vector.DependentVector.ofFn fun i => Data.Vector.DependentVector.ofFn fun j =>
-    Hyperelliptic.Meshes.PuncturedGrid.Matched.VerticalSideAreaRequest.MatchedVerticalSidePreparation.AreaRequest.build
+    EnergyPairs
+    preparation target floor := Vector.DependentVector.ofFn fun i => Vector.DependentVector.ofFn fun j =>
+    VerticalSideAreaRequest.MatchedVerticalSidePreparation.AreaRequest.build
       preparation (Periods.PeriodMatrix.standardDifferential i) (Periods.PeriodMatrix.standardDifferential j) 0 0 target
       positive floor
   let maximum := entries.maximum (fun _ row => row.maximum fun _ request => request.index)
@@ -169,11 +169,11 @@ namespace EnergyRequest
 /-- The actual homogeneous centered-energy difference is bounded by genus squared times the squared coefficient norm and
 retained target. -/
 theorem accurate (request :
-  Hyperelliptic.Meshes.PuncturedGrid.Matched.VerticalConjugateEnergy.MatchedVerticalSidePreparation.EnergyRequest
+  EnergyRequest
   preparation target floor) {stage : Nat} (later : request.index ≤ stage)
-    (leftData : (i : Fin genus) → Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives leftDomain
+    (leftData : (i : Fin genus) → Face.PrimitiveData.DomainPrimitives leftDomain
       (Periods.PeriodMatrix.standardDifferential i) stage)
-    (rightData : (i : Fin genus) → Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives rightDomain
+    (rightData : (i : Fin genus) → Face.PrimitiveData.DomainPrimitives rightDomain
       (Periods.PeriodMatrix.standardDifferential i) stage)
     (coefficients : Fin genus → Gaussian.Basic.Canonical)
     (leftPairs : (i j : Fin genus) → Periods.CenteredBilinearPath.Sample (fun vertex =>
@@ -183,19 +183,19 @@ theorem accurate (request :
       ⟨conj ((trace.rightReadings (rightData i).anchors (rightData i).offsets).values vertex),
         (trace.rightReadings (rightData j).anchors (rightData j).offsets).values vertex⟩))
     (left : Periods.CenteredBilinearPath.Sample (fun vertex =>
-      ⟨sumFin (fun i => Data.Gaussian.Basic.conj (coefficients i) * Data.Gaussian.Basic.conj
+      ⟨sumFin (fun i => Gaussian.Basic.conj (coefficients i) * Gaussian.Basic.conj
         ((trace.leftReadings (leftData i).anchors (leftData i).offsets).values vertex)),
         FiniteSum.Fin.sumFin (fun i => coefficients i * (trace.leftReadings (leftData i).anchors (leftData
           i).offsets).values vertex)⟩))
     (right : Periods.CenteredBilinearPath.Sample (fun vertex =>
-      ⟨sumFin (fun i => Data.Gaussian.Basic.conj (coefficients i) * Data.Gaussian.Basic.conj
+      ⟨sumFin (fun i => Gaussian.Basic.conj (coefficients i) * Gaussian.Basic.conj
         ((trace.rightReadings (rightData i).anchors (rightData i).offsets).values vertex)),
         FiniteSum.Fin.sumFin (fun i => coefficients i * (trace.rightReadings (rightData i).anchors (rightData
           i).offsets).values vertex)⟩)) :
-    Data.Gaussian.Norm.Basic.normSq (left.centeredArea - right.centeredArea) ≤
+    Gaussian.Norm.Basic.normSq (left.centeredArea - right.centeredArea) ≤
       (genus : Normalization.InverseRootPolynomial.Coordinate)^2 * (FiniteSum.Fin.sumFin (fun i =>
-        Data.Gaussian.Norm.Basic.normSq (coefficients i)))^2 * target := open Purelib.Integration in by
-  have pairs (i j : Fin genus) : Data.Gaussian.Norm.Basic.normSq ((leftPairs i j).centeredArea - (rightPairs i
+        Gaussian.Norm.Basic.normSq (coefficients i)))^2 * target := open Purelib.Integration in by
+  have pairs (i j : Fin genus) : Gaussian.Norm.Basic.normSq ((leftPairs i j).centeredArea - (rightPairs i
     j).centeredArea) ≤ target := by
     have bound :=
       VerticalConjugateRequest.MatchedVerticalSidePreparation.AreaRequest.conjugate_accurate
@@ -209,16 +209,16 @@ theorem accurate (request :
     rw [equal] at bound
     exact bound.le
   have bound := Path.CenteredAreaDifference.Sample.centeredArea_difference_bound
-    (fun i => Data.Gaussian.Basic.conj (coefficients i)) coefficients
-    (fun i vertex => Data.Gaussian.Basic.conj ((trace.leftReadings (leftData i).anchors (leftData i).offsets).values
+    (fun i => Gaussian.Basic.conj (coefficients i)) coefficients
+    (fun i vertex => Gaussian.Basic.conj ((trace.leftReadings (leftData i).anchors (leftData i).offsets).values
       vertex))
-    (fun i vertex => Data.Gaussian.Basic.conj ((trace.rightReadings (rightData i).anchors (rightData
+    (fun i vertex => Gaussian.Basic.conj ((trace.rightReadings (rightData i).anchors (rightData
       i).offsets).values vertex))
     (fun i vertex => (trace.leftReadings (leftData i).anchors (leftData i).offsets).values vertex)
     (fun i vertex => (trace.rightReadings (rightData i).anchors (rightData i).offsets).values vertex)
     left right leftPairs rightPairs pairs
-  have norms : FiniteSum.Fin.sumFin (fun i => Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Basic.conj
-    (coefficients i))) = FiniteSum.Fin.sumFin (fun i => Data.Gaussian.Norm.Basic.normSq (coefficients i)) :=
+  have norms : FiniteSum.Fin.sumFin (fun i => Gaussian.Norm.Basic.normSq (Gaussian.Basic.conj
+    (coefficients i))) = FiniteSum.Fin.sumFin (fun i => Gaussian.Norm.Basic.normSq (coefficients i)) :=
     FiniteSum.Fin.sumFin_congr fun i => Gaussian.Norm.Basic.normSq_conj (coefficients i)
   rw [norms] at bound
   exact bound.trans_eq (by ring1)

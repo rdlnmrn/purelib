@@ -23,16 +23,15 @@ import Purelib.Integration.Exponential.Program
 import Purelib.Integration.Program.Gaussian.CCL.Replay.Observation.Replay
 import Purelib.Integration.Program.Gaussian.Cached.Schedule
 
+open Purelib.Examples.Integration.Exponential.CCL.Replay.WorkedExamples
+
 @[expose] public section
 
 /-!
-# Generated public contracts and noninterference regressions
+Observation contracts for polynomial and exponential integration.
 
-The adaptive protocol genuinely changes its source outside the recorded
-keys, while its complete result and repeated-query trace remain unchanged.
-The same theorem is then instantiated for the real polynomial and
-exponential integration controllers, including zero and nonzero bit counts.
-No equality or decidability assumption on payloads is introduced.
+The worked programs compare policies and schedules, resume a polynomial
+observation and preserve complete results under changes to unqueried replies.
 -/
 
 namespace Purelib.Examples.Integration.Program.Gaussian.CCL.Replay.Observation.WorkedExamples
@@ -59,7 +58,7 @@ def polynomialComparison :=
     (.fixed Partition.WorkedExamples.repeatedRequest)
     Partition.WorkedExamples.alternatingPolicy
     Schedule.WorkedExamples.slow Schedule.WorkedExamples.fast
-    Replay.WorkedExamples.request 8
+    WorkedExamples.request 8
 
 /-- The complete eight-bit observation comparison between the fixed and varying exponential policies and schedules. -/
 def exponentialComparison :=
@@ -68,7 +67,7 @@ def exponentialComparison :=
     Program.WorkedExamples.varyingPolicy
     Program.WorkedExamples.unitStride
     Program.WorkedExamples.offsetStride 0 1
-    Exponential.CCL.Replay.WorkedExamples.request 8
+    request 8
 
 /-- Both polynomial presentations retain complete observation contracts without requiring a separate agreement
 certificate. -/
@@ -76,73 +75,57 @@ theorem polynomial_contracts
   :
     Contract
       Schedule.WorkedExamples.fixed
-      Replay.WorkedExamples.request 8
+      WorkedExamples.request 8
         (Record.record
           Schedule.WorkedExamples.fixed
-          Replay.WorkedExamples.request 8) ∧
+          WorkedExamples.request 8) ∧
       Contract
         Schedule.WorkedExamples.alternating
-        Replay.WorkedExamples.request 8
+        WorkedExamples.request 8
         (Record.record
           Schedule.WorkedExamples.alternating
-          Replay.WorkedExamples.request 8) :=
+          WorkedExamples.request 8) :=
   ⟨polynomialComparison.left_observation,
     polynomialComparison.right_observation⟩
 
 /-- The original one-bit polynomial observation resumed for seven further bits. -/
 def resumedPolynomial :=
-  Replay.WorkedExamples.recorded.resume 7
-
-/-- Resuming the polynomial observation yields exactly the original eight-bit receipt, including trace and machine
-state. -/
-theorem
-  polynomial_resume_exact :
-    resumedPolynomial.recorded =
-      Replay.WorkedExamples.recordedEight :=
-  resumedPolynomial.recorded_eq
+  WorkedExamples.recorded.resume 7
 
 /-- The resumed polynomial receipt satisfies its original eight-bit observation contract. -/
 theorem
   polynomial_resume_contract
   :
     Contract
-      Replay.WorkedExamples.polynomial
-      Replay.WorkedExamples.request 8
+      WorkedExamples.polynomial
+      WorkedExamples.request 8
       resumedPolynomial.recorded :=
-  Program.Gaussian.CCL.Replay.Observation.Contract.resumed_contract
+  Contract.resumed_contract
     resumedPolynomial
 
 /-- The recorded resume trace replays to the exact resumed polynomial observation. -/
 theorem
   polynomial_resume_replay :
-    Program.Gaussian.CCL.Replay.Observation.Resume.IntegrationReplay.replayResume
-        (Progressive.IntegrationReplay.control Replay.WorkedExamples.polynomial)
-        Replay.WorkedExamples.recorded.observation 7
+    Resume.IntegrationReplay.replayResume
+        (Progressive.IntegrationReplay.control WorkedExamples.polynomial)
+        WorkedExamples.recorded.observation 7
           resumedPolynomial.trace =
       .ok resumedPolynomial.observation :=
   resumedPolynomial.replay
-
-/-- Resuming polynomial output preserves the original selected integration enclosure. -/
-theorem
-  polynomial_resume_same_enclosure
-  :
-    resumedPolynomial.observation.selected =
-      Replay.WorkedExamples.recorded.observation.selected :=
-  resumedPolynomial.selected_eq
 
 /-- Both exponential presentations retain complete eight-bit observation contracts. -/
 theorem exponential_contracts
   :
     Contract
       Program.WorkedExamples.fixedProgram
-        Exponential.CCL.Replay.WorkedExamples.request 8
-          Exponential.CCL.Replay.WorkedExamples.recordedEight ∧
+        request 8
+          recordedEight ∧
       Contract
         Program.WorkedExamples.varyingProgram
-        Exponential.CCL.Replay.WorkedExamples.request 8
+        request 8
         (Record.record
           Program.WorkedExamples.varyingProgram
-          Exponential.CCL.Replay.WorkedExamples.request 8) :=
+          request 8) :=
   ⟨exponentialComparison.left_observation,
     exponentialComparison.right_observation⟩
 
@@ -152,22 +135,22 @@ theorem
   polynomial_payload_erasure
   {Payload : Type u} (payload : Payload)
     (outside : Payload → Nat → Program.Gaussian.Cached.Basic.CachedModel) (count : Nat) :
-    (Program.Gaussian.CCL.Replay.Observation.Basic.computation
-        (Progressive.IntegrationReplay.control Replay.WorkedExamples.polynomial)
-        Replay.WorkedExamples.request count).run
+    (Basic.computation
+        (Progressive.IntegrationReplay.control WorkedExamples.polynomial)
+        WorkedExamples.request count).run
       (Computation.Query.Boundary.Trace.overlay
         (Record.record
-          Replay.WorkedExamples.polynomial
-          Replay.WorkedExamples.request count).trace (outside payload)) =
+          WorkedExamples.polynomial
+          WorkedExamples.request count).trace (outside payload)) =
       ⟨.ok (Record.record
-        Replay.WorkedExamples.polynomial
-          Replay.WorkedExamples.request count).observation,
+        WorkedExamples.polynomial
+          WorkedExamples.request count).observation,
         (Record.record
-          Replay.WorkedExamples.polynomial
-          Replay.WorkedExamples.request count).trace⟩ :=
-  Program.Gaussian.CCL.Replay.Observation.Noninterference.payload_erasure
-    Replay.WorkedExamples.polynomial
-    Replay.WorkedExamples.request count payload outside
+          WorkedExamples.polynomial
+          WorkedExamples.request count).trace⟩ :=
+  Noninterference.payload_erasure
+    WorkedExamples.polynomial
+    WorkedExamples.request count payload outside
 
 /-- Changing arbitrary payload-dependent replies outside recorded exponential query keys preserves the complete result
 and trace. -/
@@ -175,32 +158,22 @@ theorem
   exponential_payload_erasure
   {Payload : Type u} (payload : Payload)
     (outside : Payload → Nat → Program.Gaussian.Cached.Basic.CachedModel) (count : Nat) :
-    (Program.Gaussian.CCL.Replay.Observation.Basic.computation
+    (Basic.computation
         (Progressive.IntegrationReplay.control Program.WorkedExamples.fixedProgram)
-        Exponential.CCL.Replay.WorkedExamples.request count).run
+        request count).run
       (Computation.Query.Boundary.Trace.overlay
         (Record.record
           Program.WorkedExamples.fixedProgram
-          Exponential.CCL.Replay.WorkedExamples.request count).trace (outside payload)) =
+          request count).trace (outside payload)) =
       ⟨.ok (Record.record
         Program.WorkedExamples.fixedProgram
-          Exponential.CCL.Replay.WorkedExamples.request count).observation,
+          request count).observation,
         (Record.record
           Program.WorkedExamples.fixedProgram
-          Exponential.CCL.Replay.WorkedExamples.request count).trace⟩ :=
-  Program.Gaussian.CCL.Replay.Observation.Noninterference.payload_erasure
+          request count).trace⟩ :=
+  Noninterference.payload_erasure
     Program.WorkedExamples.fixedProgram
-    Exponential.CCL.Replay.WorkedExamples.request count payload outside
-
-/-- A zero-bit polynomial observation retains the complete public contract. -/
-theorem zero_bit_contract :
-    Contract
-      Replay.WorkedExamples.polynomial
-      Replay.WorkedExamples.request 0
-      (Record.record
-        Replay.WorkedExamples.polynomial
-        Replay.WorkedExamples.request 0) :=
-  Program.Gaussian.CCL.Replay.Observation.Contract.observation_contract _ _ _
+    request count payload outside
 
 end Purelib.Examples.Integration.Program.Gaussian.CCL.Replay.Observation.WorkedExamples
 

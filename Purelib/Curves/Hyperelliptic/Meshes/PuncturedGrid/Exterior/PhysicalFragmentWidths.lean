@@ -140,21 +140,21 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Gaussian.Norm.Basic (normSq_nonneg)
 open Purelib.Data.Rat.Fraction.Compatibility
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential} {target : Coordinate} {minimum
     stage fine index : Nat}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
   {plan : PairedSourcePlan occurrence
     other target minimum}
 
@@ -172,7 +172,7 @@ variable {lc lr rc rr depth : Nat} {lg : Geometry lc lr} {rg :
   Geometry rc rr}
   {leftCuts : GridCuts lg} {rightCuts :
     GridCuts rg} {leftBox rightBox :
-    Purelib.Geometry.Rational.Box}
+    Geometry.Rational.Box}
   {left : ObservationMesh leftCuts leftBox} {right :
     ObservationMesh rightCuts rightBox}
 
@@ -182,26 +182,26 @@ open Purelib.Riemann.Paths.RectangularDyadicPairedTrace (dyadicCount)
 bound. -/
 theorem buildHorizontal_indexed_fine_enough
     {leftRow : Fin left.partition.y.intervals.length} {rightRow : Fin right.partition.y.intervals.length}
-    {height : InverseRootPolynomial.Coordinate} {side : ObservationMesh.MatchedHorizontalSide left right leftRow
+    {height : Coordinate} {side : MatchedHorizontalSide left right leftRow
       rightRow height}
     (trace : side.Trace depth) {forward : Bool}
-    (sources : FragmentFamilies.AxisSourceBank evaluated left false forward)
+    (sources : AxisSourceBank evaluated left false forward)
     (sourceFirst : occurrence.start.im = height) (sourceLast : occurrence.finish.im = height)
-    {allowance junctionAllowance : InverseRootPolynomial.Coordinate}
-    (budget : NoisyPathArea.LengthErrorBudget (RectangularDyadicPairedTrace.dyadicCount depth) allowance)
-    (junctionBudget : NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
-    (owners : PairedOwnerRequest.OwnerRequest occurrence other budget.tolerance) (later : owners.index ≤ index)
-    (junctionOwners : PairedOwnerRequest.OwnerRequest occurrence other junctionBudget.tolerance) (junctionLater :
+    {allowance junctionAllowance : Coordinate}
+    (budget : LengthErrorBudget (RectangularDyadicPairedTrace.dyadicCount depth) allowance)
+    (junctionBudget : LengthErrorBudget 1 junctionAllowance)
+    (owners : OwnerRequest occurrence other budget.tolerance) (later : owners.index ≤ index)
+    (junctionOwners : OwnerRequest occurrence other junctionBudget.tolerance) (junctionLater :
       junctionOwners.index ≤ index)
-    (first : RectangularPointReadings.PointReadings data.anchors data.offsets (fun vertex => trace.point
+    (first : PointReadings data.anchors data.offsets (fun vertex => trace.point
       (trace.vertices.indexed vertex)))
-    (second : RectangularPointReadings.PointReadings otherData.anchors otherData.offsets (fun vertex => trace.point
+    (second : PointReadings otherData.anchors otherData.offsets (fun vertex => trace.point
       (trace.vertices.indexed vertex)))
-    (leftValues rightValues : side.Vertex depth → InverseRootPolynomial.Gaussian)
+    (leftValues rightValues : side.Vertex depth → Gaussian)
     (leftEq : ∀ vertex, first.values vertex = leftValues (trace.vertices.indexed vertex))
     (rightEq : ∀ vertex, second.values vertex = rightValues (trace.vertices.indexed vertex))
-    (direction : forward = true) (width : InverseRootPolynomial.Coordinate) (refined : (1 / 2 :
-      InverseRootPolynomial.Coordinate) ^ depth ≤ width) :
+    (direction : forward = true) (width : Coordinate) (refined : (1 / 2 :
+      Coordinate) ^ depth ≤ width) :
     let family := JoinedFragmentFamily.buildHorizontal trace sources sourceFirst sourceLast budget junctionBudget owners
       later junctionOwners junctionLater first second leftValues rightValues leftEq rightEq
     let parents := fun i : Fin (left.boundaryColumns + 1) => (sources.get (Fin.cast left.boundaryColumns_eq
@@ -222,33 +222,33 @@ theorem buildHorizontal_indexed_fine_enough
     refine ⟨bounds.1, ?_⟩
     intro edge
     rw [bounds.2 edge.succ, bounds.2 edge.castSucc, sub_self]
-    exact (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 1 / 2)
+    exact (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide : (0 : Coordinate) ≤ 1 / 2)
       depth).trans refined
 
 /-- The actual vertical trace depth pays every indexed forward piece and stationary owner junction's source-width bound.
 -/
 theorem buildVertical_indexed_fine_enough
     {leftColumn : Fin left.partition.x.intervals.length} {rightColumn : Fin right.partition.x.intervals.length}
-    {horizontal : InverseRootPolynomial.Coordinate} {side : ObservationMesh.MatchedVerticalSide left right leftColumn
+    {horizontal : Coordinate} {side : MatchedVerticalSide left right leftColumn
       rightColumn horizontal}
     (trace : side.Trace depth) {forward : Bool}
-    (sources : FragmentFamilies.AxisSourceBank evaluated left true forward)
+    (sources : AxisSourceBank evaluated left true forward)
     (sourceFirst : occurrence.start.re = horizontal) (sourceLast : occurrence.finish.re = horizontal)
-    {allowance junctionAllowance : InverseRootPolynomial.Coordinate}
-    (budget : NoisyPathArea.LengthErrorBudget (RectangularDyadicPairedTrace.dyadicCount depth) allowance)
-    (junctionBudget : NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
-    (owners : PairedOwnerRequest.OwnerRequest occurrence other budget.tolerance) (later : owners.index ≤ index)
-    (junctionOwners : PairedOwnerRequest.OwnerRequest occurrence other junctionBudget.tolerance) (junctionLater :
+    {allowance junctionAllowance : Coordinate}
+    (budget : LengthErrorBudget (RectangularDyadicPairedTrace.dyadicCount depth) allowance)
+    (junctionBudget : LengthErrorBudget 1 junctionAllowance)
+    (owners : OwnerRequest occurrence other budget.tolerance) (later : owners.index ≤ index)
+    (junctionOwners : OwnerRequest occurrence other junctionBudget.tolerance) (junctionLater :
       junctionOwners.index ≤ index)
-    (first : RectangularPointReadings.PointReadings data.anchors data.offsets (fun vertex => trace.point
+    (first : PointReadings data.anchors data.offsets (fun vertex => trace.point
       (trace.vertices.indexed vertex)))
-    (second : RectangularPointReadings.PointReadings otherData.anchors otherData.offsets (fun vertex => trace.point
+    (second : PointReadings otherData.anchors otherData.offsets (fun vertex => trace.point
       (trace.vertices.indexed vertex)))
-    (leftValues rightValues : side.Vertex depth → InverseRootPolynomial.Gaussian)
+    (leftValues rightValues : side.Vertex depth → Gaussian)
     (leftEq : ∀ vertex, first.values vertex = leftValues (trace.vertices.indexed vertex))
     (rightEq : ∀ vertex, second.values vertex = rightValues (trace.vertices.indexed vertex))
-    (direction : forward = true) (width : InverseRootPolynomial.Coordinate) (refined : (1 / 2 :
-      InverseRootPolynomial.Coordinate) ^ depth ≤ width) :
+    (direction : forward = true) (width : Coordinate) (refined : (1 / 2 :
+      Coordinate) ^ depth ≤ width) :
     let family := JoinedFragmentFamily.buildVertical trace sources sourceFirst sourceLast budget junctionBudget owners
       later junctionOwners junctionLater first second leftValues rightValues leftEq rightEq
     let parents := fun i : Fin (left.boundaryRows + 1) => (sources.get (Fin.cast left.boundaryRows_eq i)).block.index
@@ -268,7 +268,7 @@ theorem buildVertical_indexed_fine_enough
     refine ⟨bounds.1, ?_⟩
     intro edge
     rw [bounds.2 edge.succ, bounds.2 edge.castSucc, sub_self]
-    exact (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 1 / 2)
+    exact (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide : (0 : Coordinate) ≤ 1 / 2)
       depth).trans refined
 
 end MatchedSides

@@ -1,4 +1,8 @@
 module
+
+public import Purelib.Riemann.Paths.PreparedSubdivisionTrace.RootPath
+public import Purelib.Riemann.Paths.OwnerTracePath.StationaryHead
+public import Purelib.Riemann.Integration.PreparedConstantModels.Endpoints
 import Purelib.Riemann.Branches.PreparedSheetContinuation
 import Purelib.Riemann.Branches.PreparedSheetContinuationCore
 import Purelib.Riemann.Integration.PreparedSubdivisionModelCore
@@ -71,6 +75,11 @@ open Purelib.Riemann.RootContinuation in
 abbrev ownerName {parameter : Basic.Canonical} (owner : Owner parameter) : Named :=
   SquareRootTrackEquivalence.ownerRootName owner.parameterNonzero owner
 
+open Purelib.Data.Gaussian in
+/-- The retained root name reads the original owner's certificate without constructing another owner. -/
+public theorem ownerName_eq_certificate {parameter : Basic.Canonical} (owner : Owner parameter) :
+    ownerName owner = (owner.certificate owner.parameterNonzero).value.name := rfl
+
 variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
   Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
 
@@ -118,33 +127,6 @@ def queryEquivalentAdvance (edge : PreparedEdge curve differential) :
     edge.small)
     (preparedClearanceLower edge.segment edge.left edge.request)
 
-open Purelib.Approximation.Gaussian in
-open Purelib.Curves.Hyperelliptic in
-open Purelib.Data.Gaussian in
-open Purelib.Geometry.Rational in
-open Purelib.Polynomial in
-/-- Construct the original root-name chain through a retained prepared subdivision and its supplied center states.
-
-Each exact subdivision step retains its cached edge, incoming owner comparison and advanced terminal owner; recursion
-preserves the original centered-edge order. -/
-def subdivisionRootChain (curve : Basic.HyperellipticCurve genus) (differential : Differentials.Basic.Differential
-  genus)
-    {ambient : Box} {start finish : Basic.Canonical}
-    (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish)
-    (within : segment.WithinAmbient) (sheet : Fin 2) :
-    ∀ {left : Endpoint} {owner : Owner (curve.polynomial.eval (segment.pointAt left.parameter))}
-      (subdivision : Subdivision segment within left owner)
-      (centers : CenterStates curve differential sheet subdivision),
-      RootChain (centeredEdges curve differential sheet subdivision centers)
-        (ownerName owner) (ownerName subdivision.terminalOwner)
-  | _, _, .stop _ owner, _ => .nil (Equivalence.NamedEquivalent.refl (ownerName owner))
-  | _, _, .next current owner request cached ordered small remaining, centers =>
-      let edge := edgeOfStep curve differential segment within current owner request cached ordered small sheet
-      let child : CenteredEdge curve differential := ⟨edge, centers.1⟩
-      .cons child edge.ownerRootEquivalent_baseQuery
-        ((subdivisionRootChain curve differential segment within sheet remaining centers.2).changeStart
-          (queryEquivalentAdvance edge))
-
 open Purelib.Data.Gaussian in
 /-- Heterogeneous equality of original owners over equal parameters gives equality of their retained root names. -/
 public theorem ownerName_eq_of_heq {firstParameter secondParameter : Basic.Canonical}
@@ -153,6 +135,66 @@ public theorem ownerName_eq_of_heq {firstParameter secondParameter : Basic.Canon
   cases equal
   cases same
   rfl
+
+open Purelib.Approximation.Gaussian in
+open Purelib.Curves.Hyperelliptic in
+open Purelib.Data.Gaussian in
+open Purelib.Geometry.Rational in
+open Purelib.Polynomial in
+/-- Construct the original root-name chain through a retained prepared subdivision and its supplied center states.
+
+Each exact subdivision step retains its cached edge, incoming owner comparison and advanced terminal owner; recursion
+preserves the original centered-edge order. A supplied actual Trace view
+instead consumes its stored source and retention handoffs. The default
+branch retains the complete original computation and endpoint procedure. -/
+def subdivisionRootChain (curve : Basic.HyperellipticCurve genus) (differential : Differentials.Basic.Differential
+  genus)
+    {ambient : Box} {start finish : Basic.Canonical}
+    (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish)
+    (within : segment.WithinAmbient) (sheet : Fin 2) :
+    ∀ {left : Endpoint} {owner : Owner (curve.polynomial.eval (segment.pointAt left.parameter))}
+      (subdivision : Subdivision segment within left owner)
+      (centers : CenterStates curve differential sheet subdivision)
+      (_retained : Option (Paths.PreparedSubdivisionTrace.PreparedTraceBudget.Trace.RootViews subdivision) := none),
+      RootChain (centeredEdges curve differential sheet subdivision centers)
+        (ownerName owner) (ownerName subdivision.terminalOwner)
+  | _, _, .stop _ owner, _, none => .nil (Equivalence.NamedEquivalent.refl (ownerName owner))
+  | _, _, .next current owner request cached ordered small remaining, centers, none =>
+      let edge := edgeOfStep curve differential segment within current owner request cached ordered small sheet
+      let child : CenteredEdge curve differential := ⟨edge, centers.1⟩
+      .cons child edge.ownerRootEquivalent_baseQuery
+        ((subdivisionRootChain curve differential segment within sheet remaining centers.2).changeStart
+          (queryEquivalentAdvance edge))
+
+  | _, _, .stop _ owner, _, some _ => .nil (Equivalence.NamedEquivalent.refl (ownerName owner))
+  | _, _, .next current inherited request cached ordered small remaining, centers, some retained =>
+      let budget := retained.2.2.1
+      let fits := retained.2.2.2.1.down
+      let trace := retained.2.2.2.2.1
+      let views := retained.2.2.2.2.2
+      let view := views.1
+      let edge := edgeOfStep curve differential segment within current inherited request cached ordered small sheet
+      let child : CenteredEdge curve differential := ⟨edge, centers.1⟩
+      let originalSource := trace.path.stationaryHeadEquivalent view.source view.1.property view.source_point
+      let source : NamedEquivalent (ownerName inherited) (ownerName cached.preparedOwner) :=
+        Equivalence.NamedEquivalent.transport rfl view.source_name_eq originalSource
+      let entry : NamedEquivalent (ownerName inherited) (edge.rootName 0 edge.baseInside) :=
+        Equivalence.NamedEquivalent.transport rfl edge.rootName_zero_eq_cached.symm source
+      let originalRetention := view.moving.path.stationaryHeadEquivalent view.tail view.2.2.property
+        (view.tail_point.trans view.moving_point.symm)
+      let movingName : ownerName view.movingOwner = ownerName view.moving.owner :=
+        ownerName_eq_of_heq (congrArg curve.polynomial.eval view.moving_point).symm view.movingOwner_heq
+      let storedName := congrArg (fun owner => ownerName owner) remaining.sourceOwner_eq
+      let retention : NamedEquivalent (ownerName view.movingOwner) (ownerName remaining.sourceOwner) :=
+        Equivalence.NamedEquivalent.transport movingName.symm view.tail_name_eq originalRetention
+      let movingQuery : edge.rootName 1 (by decide) = ownerName view.movingOwner :=
+        edge.rootName_one_eq_transported.trans
+          (congrArg (fun owner => ownerName owner) view.movingOwner_eq).symm
+      let seam := Equivalence.NamedEquivalent.transport movingQuery.symm storedName retention
+      let following : Paths.PreparedSubdivisionTrace.PreparedTraceBudget.Trace.RootViews remaining :=
+        ⟨retained.1, retained.2.1, budget, ⟨fits.2.2⟩, view.tailTrace, views.2⟩
+      let tail := subdivisionRootChain curve differential segment within sheet remaining centers.2 (some following)
+      .cons child entry (tail.changeStart seam)
 
 open Purelib.Data.Gaussian in
 open Purelib.Geometry.Rational in

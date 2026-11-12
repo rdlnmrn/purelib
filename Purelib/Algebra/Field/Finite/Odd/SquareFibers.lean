@@ -23,7 +23,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section FiniteOddFieldPresentation
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Filtering a finite list for roots of a nonsquare returns the empty list.
 
@@ -40,7 +40,7 @@ private theorem filter_squareRoot_eq_nil
       rw [List.filter_cons_of_neg
         (p := fun root : K => decide (root ^ 2 = value))
         (fun accepted => noRoot head (of_decide_eq_true accepted))]
-      exact Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.filter_squareRoot_eq_nil
+      exact FiniteOddFieldPresentation.filter_squareRoot_eq_nil
         eqDecidable value noRoot tail
 end FiniteOddFieldPresentation
 end Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
@@ -52,13 +52,13 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section FiniteOddFieldPresentation
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- A nonzero scalar in the presented odd field differs from its negative.
 
 The presentation's nonzero-two certificate rules out equality of the two signs. -/
 private theorem root_ne_neg_root
-    (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+    (presentation : FiniteOddFieldPresentation K)
     (root : K) (rootNonzero : root ≠ 0) :
     root ≠ -root := by
   intro equal
@@ -79,7 +79,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section FiniteOddFieldPresentation
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- A displayed root of a nonzero square value is nonzero.
 
@@ -104,7 +104,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section FiniteOddFieldPresentation
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Filter the complete carrier for scalars whose squares differ from the target.
 
@@ -123,7 +123,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section FiniteOddFieldPresentation
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Filter the complete carrier for square roots of the target.
 
@@ -142,7 +142,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section FiniteOddFieldPresentation
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The root and nonroot filters partition the length of any finite scalar list.
 
@@ -168,7 +168,7 @@ private theorem
           simp only [List.length_cons]
           rw [Nat.succ_add]
           exact congrArg Nat.succ
-            (Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.squareRoot_partition_length
+            (FiniteOddFieldPresentation.squareRoot_partition_length
               eqDecidable value tail)
       | isFalse different =>
           rw [List.filter_cons_of_neg
@@ -180,7 +180,7 @@ private theorem
           simp only [List.length_cons]
           rw [Nat.add_succ]
           exact congrArg Nat.succ
-            (Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.squareRoot_partition_length
+            (FiniteOddFieldPresentation.squareRoot_partition_length
               eqDecidable value tail)
 end FiniteOddFieldPresentation
 end Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
@@ -192,7 +192,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section FiniteOddFieldPresentation
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Count the retained carrier entries that do not square to the target. -/
 def squareNonrootCount (value : K) : Nat
@@ -208,7 +208,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section FiniteOddFieldPresentation
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Count the retained carrier entries that square to the target. -/
 def squareRootCount (value : K) : Nat :=
@@ -223,7 +223,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section FiniteOddFieldPresentation
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 open Purelib.Algebra.Field.Finite.Odd.Presentation in
 /-- Membership in the retained root fiber is exactly the target square equation.
@@ -233,7 +233,7 @@ theorem mem_squareRootFiber_iff (value
   root : K) :
     root ∈ presentation.squareRootFiber value ↔ root ^ 2 = value := by
   letI : DecidableEq K := presentation.eqDecidable
-  unfold FiniteOddFieldPresentation.squareRootFiber
+  unfold squareRootFiber
   constructor
   · intro member
     exact of_decide_eq_true (Filter.mem_filter.mp member).2
@@ -249,7 +249,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section FiniteOddFieldPresentation
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 open Purelib.Algebra.Field.Finite.Odd.Presentation in
 /-- The retained root fiber of a certified nonsquare is empty. -/
@@ -258,8 +258,8 @@ theorem
   (value : K)
     (noRoot : ∀ root : K, root ^ 2 ≠ value) :
     presentation.squareRootFiber value = [] := open Purelib.Algebra.Field.Finite.Odd.Presentation in by
-  unfold FiniteOddFieldPresentation.squareRootFiber
-  exact FiniteOddFieldPresentation.filter_squareRoot_eq_nil presentation.eqDecidable value noRoot
+  unfold squareRootFiber
+  exact filter_squareRoot_eq_nil presentation.eqDecidable value noRoot
     presentation.carrier
 end FiniteOddFieldPresentation
 end Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
@@ -271,7 +271,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section FiniteOddFieldPresentation
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 open Purelib.Algebra.Field.Finite.Odd.Presentation in
 /-- The retained root fiber contains no repeated roots.
@@ -281,7 +281,7 @@ theorem squareRootFiber_nodup (value :
   K) :
     (presentation.squareRootFiber value).Nodup := by
   letI : DecidableEq K := presentation.eqDecidable
-  unfold FiniteOddFieldPresentation.squareRootFiber
+  unfold squareRootFiber
   exact Filter.pairwise_filter _ presentation.carrierNodup
 end FiniteOddFieldPresentation
 end Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
@@ -293,7 +293,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section FiniteOddFieldPresentation
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Identify the root fiber with the displayed root and its negative using identity maps.
 
@@ -362,7 +362,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section FiniteOddFieldPresentation
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 open Purelib.Algebra.Field.Finite.Odd.Presentation in
 /-- A certified nonsquare has zero retained square roots. -/
@@ -370,7 +370,7 @@ theorem squareRootCount_of_nonsquare
   (value : K)
     (noRoot : ∀ root : K, root ^ 2 ≠ value) :
     presentation.squareRootCount value = 0 := by
-  unfold FiniteOddFieldPresentation.squareRootCount
+  unfold squareRootCount
   rw [presentation.squareRootFiber_eq_nil_of_nonsquare value noRoot]
   rfl
 end FiniteOddFieldPresentation
@@ -383,7 +383,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section FiniteOddFieldPresentation
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 open Purelib.Algebra.Field.Finite.Odd.Presentation in
 /-- The root and nonroot counts add to the full carrier length. -/
@@ -393,9 +393,9 @@ theorem
     presentation.squareRootCount value +
       presentation.squareNonrootCount value = presentation.carrier.length := open
         Purelib.Algebra.Field.Finite.Odd.Presentation in by
-  unfold FiniteOddFieldPresentation.squareRootCount FiniteOddFieldPresentation.squareNonrootCount
-    FiniteOddFieldPresentation.squareRootFiber FiniteOddFieldPresentation.squareNonrootFiber
-  exact FiniteOddFieldPresentation.squareRoot_partition_length presentation.eqDecidable value
+  unfold squareRootCount squareNonrootCount
+    squareRootFiber squareNonrootFiber
+  exact squareRoot_partition_length presentation.eqDecidable value
     presentation.carrier
 end FiniteOddFieldPresentation
 end Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
@@ -407,7 +407,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section FiniteOddFieldPresentation
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- Identify the zero-square fiber with the singleton zero using identity maps.
 
@@ -440,7 +440,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section FiniteOddFieldPresentation
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The nonroot count is the carrier length minus the root count.
 
@@ -471,7 +471,7 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section FiniteOddFieldPresentation
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 open Purelib.Algebra.Field.Finite.Odd.Presentation in
 /-- A displayed nonzero square has exactly two roots in the retained carrier.
@@ -482,20 +482,20 @@ theorem
   (value root : K)
     (valueNonzero : value ≠ 0) (rootSquare : root ^ 2 = value) :
     presentation.squareRootCount value = 2 := open Purelib.Algebra.Field.Finite.Odd.Presentation in open Purelib in by
-  unfold FiniteOddFieldPresentation.squareRootCount
+  unfold squareRootCount
   exact ListBijection.length_eq
     (presentation.nonzeroSquareRootBijection value root rootSquare)
     (presentation.squareRootFiber_nodup value)
-    (Data.List.Nodup.nodup_append
-      (Data.List.Nodup.nodup_singleton root)
-      (Data.List.Nodup.nodup_singleton (-root)) (by
+    (Nodup.nodup_append
+      (Nodup.nodup_singleton root)
+      (Nodup.nodup_singleton (-root)) (by
         intro left leftMember right rightMember
         rcases Membership.mem_cons.mp leftMember with leftEqual | leftImpossible
         · rcases Membership.mem_cons.mp rightMember with
             rightEqual | rightImpossible
           · rw [leftEqual, rightEqual]
-            exact FiniteOddFieldPresentation.root_ne_neg_root presentation root
-              (FiniteOddFieldPresentation.root_ne_zero_of_square_ne_zero valueNonzero rootSquare)
+            exact root_ne_neg_root presentation root
+              (root_ne_zero_of_square_ne_zero valueNonzero rootSquare)
           · nomatch rightImpossible
         · nomatch leftImpossible))
 end FiniteOddFieldPresentation
@@ -508,16 +508,16 @@ section
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 variable {K : Type*} [ExplicitField K]
 section FiniteOddFieldPresentation
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 open Purelib.Algebra.Field.Finite.Odd.Presentation in
 /-- Zero has exactly one square root in the retained carrier. -/
 theorem squareRootCount_zero :
   presentation.squareRootCount 0 = 1 := open Purelib in by
-  unfold FiniteOddFieldPresentation.squareRootCount
+  unfold squareRootCount
   exact ListBijection.length_eq presentation.zeroSquareRootBijection
     (presentation.squareRootFiber_nodup 0)
-    (Data.List.Nodup.nodup_singleton (0 : K))
+    (Nodup.nodup_singleton (0 : K))
 end FiniteOddFieldPresentation
 end Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 

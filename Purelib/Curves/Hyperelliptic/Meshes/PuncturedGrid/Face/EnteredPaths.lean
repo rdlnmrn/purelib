@@ -49,6 +49,10 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Polynomial.Geometry.Grid.ClearGrid
 import Purelib.Riemann.Branches.RectangularSheetGauge
+public import Purelib.Riemann.Branches.PreparedPolynomialSheetPropagation
+import Purelib.Riemann.Branches.ContainedPreparedPolynomialSheets
+import Purelib.Riemann.Paths.PreparedPathTrace
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy
 import Purelib.Riemann.Integration.PreparedConstantModels
 import Purelib.Riemann.Integration.PreparedDyadicRefinements
 import Purelib.Riemann.Integration.PreparedSubdivisionModelCore
@@ -152,22 +156,25 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Periods (PeriodDomai
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels (Entry)
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
 open Purelib.Riemann.Readings.PreparedPrimitiveSamples (differentialNumerator)
+open Purelib.Riemann.Branches.PreparedPolynomialSheetPropagation.InverseRootPolynomial
+open Purelib.Riemann.Paths.PreparedPathTrace (TracedPath)
+open Purelib.Riemann.Paths.RectangularSegmentSplitting (SegmentPiece)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face :
     RegularFace bank} {models :
     FaceModels frames face}
-  {base finish : Purelib.Data.Gaussian.Basic.Canonical} {owner :
+  {base finish : Data.Gaussian.Basic.Canonical} {owner :
     Owner (curve.polynomial.eval base)} {ambient :
-    Purelib.Geometry.Rational.Box}
-  {path : Polynomial.Geometry.ClearPath curve.polynomial ambient base finish}
+    Rational.Box}
+  {path : ClearPath curve.polynomial ambient base finish}
 
 /-- The final point of an original path contained in a box remains in that box. -/
-public theorem finish_inside {polynomial : ClearPath.GaussianPolynomial} {ambient box : Rational.Box} :
-    ∀ {start finish : Data.Gaussian.Basic.Canonical} (path : Polynomial.Geometry.ClearPath polynomial ambient start
+public theorem finish_inside {polynomial : GaussianPolynomial} {ambient box : Rational.Box} :
+    ∀ {start finish : Data.Gaussian.Basic.Canonical} (path : ClearPath polynomial ambient start
       finish),
       path.InBox box → box.Contains finish
   | _, _, .nil _, inside => inside
@@ -178,7 +185,7 @@ namespace PeriodDomain
 
 /-- Locate on the retained axes, including independently generated axes. -/
 def locate {sheet : Fin 2} (domain : Periods.PeriodDomain models sheet) (point : Data.Gaussian.Basic.Canonical)
-    (inside : face.cell.box.Contains point) : Geometry.Rectangle.Partition.RectangularUniformGeometry.Located
+    (inside : face.cell.box.Contains point) : Rectangle.Partition.RectangularUniformGeometry.Located
         domain.geometry point :=
   let covered := domain.covers inside
   let horizontal := Axis.locate domain.geometry.x point.re covered.1 covered.2.1
@@ -191,22 +198,22 @@ set_option genInjectivity false in
 /-- All expensive finite data are explicit caches. The source owner is the one in the supplied preparation, not an
 independently prepared substitute. -/
 structure EnteredPath (models : BranchCellBank.FaceModels frames face) (prepared :
-  PreparedClearPathModels.CoveredTracedPath path owner)
-    (differential : Differentials.Basic.Differential genus) (parentSheet : Fin 2) where
-  /-- The original inherited source owner's retained face-sheet assignment. -/ entry : FaceModels.Entry models base
+  CoveredTracedPath path owner)
+    (differential : Differential genus) (parentSheet : Fin 2) where
+  /-- The original inherited source owner's retained face-sheet assignment. -/ entry : Entry models base
     owner
   /-- The cached complete face domain on this exact original selected sheet. -/ domain : Periods.PeriodDomain models
     entry.sheet
   /-- The original preparation's retained differential parent and coverage cache. -/ cache :
-    PreparedClearPathModels.ParentCache prepared differential parentSheet
+    ParentCache prepared differential parentSheet
   /-- Every original cached parent is reached from the retained face owner on its actual sheet. -/ reached : ∀ parent ∈
-    cache.parents, PreparedFaceTracePrefixes.ParentReached face.cell.box (models.frame.owners entry.sheet) parent
+    cache.parents, ParentReached face.cell.box (models.frame.owners entry.sheet) parent
   /-- The cached original parent splitting retaining both actual path endpoint coordinates. -/ mesh :
-    PreparedParentSplitting.PreparedSplitMesh domain.cuts cache.parents [base, finish]
+    PreparedSplitMesh domain.cuts cache.parents [base, finish]
   /-- The retained fragment bounds for the original face patch and differential. -/ bounds :
-    FragmentReadings.FragmentBounds domain.patch differential
+    FragmentBounds domain.patch differential
   /-- The retained original clear-face primitive overlap bounds. -/ globalBounds :
-    PrimitiveEdgeComparison.PrimitiveOverlapBounds face.clearance (PreparedPrimitiveSamples.differentialNumerator
+    PrimitiveOverlapBounds face.clearance (PreparedPrimitiveSamples.differentialNumerator
     differential)
   /-- The cached index of the original starting point in the retained split mesh. -/ first : Fin
     mesh.mesh.surface.mesh.vertices.length
@@ -221,18 +228,58 @@ constructive_injectivity EnteredPath
 
 namespace EnteredPath
 
+/-- Every contained parent piece follows the original entered face's operational root at its first endpoint.
+
+The retained parent occurrence supplies its original reachability from the
+selected face owner. Its bounded interval and actual cell containment
+transport that same root to the piece endpoint at any refinement stage.
+No source preparation or endpoint selection is repeated.
+-/
+theorem parent_piece_aligned (entered : EnteredPath models prepared differential parentSheet)
+    (position : Fin entered.cache.parents.length)
+    (piece : SegmentPiece entered.domain.geometry
+      ((entered.cache.parents[position.val]'position.isLt).edge.point 0)
+      ((entered.cache.parents[position.val]'position.isLt).edge.point 1)) (index : Nat) :
+    RootAligned ((Model.overlapRefine
+      (entered.domain.patch.transported.cell piece.column piece.row).model) index) piece.firstPoint
+      ((entered.cache.parents[position.val]'position.isLt).edge.rootName piece.interval.lower
+        ⟨piece.within.1, piece.interval.ordered.le.trans piece.within.2⟩) := by
+  let parent := entered.cache.parents[position.val]'position.isLt
+  let anchorTrace := TracedPath.build
+    (ClearPath.nil (polynomial := curve.polynomial) (ambient := face.cell.box) face.cell.box.anchor)
+    (.nil face.cell.box.anchor) (models.frame.owners entered.entry.sheet)
+  have reached := entered.reached parent (List.getElem_mem position.isLt)
+  have firstEq : piece.firstPoint = parent.edge.point piece.interval.lower :=
+    piece.first_eq.trans (PreparedParentSplitting.prepared_point_eq parent _).symm
+  have firstInside : 0 ≤ piece.interval.lower ∧ piece.interval.lower ≤ 1 :=
+    ⟨piece.within.1, piece.interval.ordered.le.trans piece.within.2⟩
+  have aligned : RootAligned
+      ((Model.overlapRefine (entered.domain.patch.transported.cell piece.column piece.row).model) index)
+      (parent.edge.point piece.interval.lower) (parent.edge.rootName piece.interval.lower firstInside) := by
+    intro otherCount otherPatch otherInside otherSample roots otherIndex
+    exact TransportedFaceInverseModels.TransportedCell.prepared_query_aligned
+      (curve := curve) (entered := anchorTrace)
+      (cell := entered.domain.patch.transported.cell piece.column piece.row)
+      face.cell.box.contains_anchor differential (Branches.BranchIsolation.degreePositive curve)
+      (LoopMonodromy.BranchCellBank.referenceAt bank _ (face.cell.anchor_mem face.member)).toLoop
+      parent reached piece.interval.lower firstInside (firstEq ▸ piece.first_inside) index
+      otherPatch otherInside otherSample roots otherIndex
+  exact @Eq.mpr _ _ (congrArg (fun point => RootAligned
+    ((Model.overlapRefine (entered.domain.patch.transported.cell piece.column piece.row).model) index)
+    point (parent.edge.rootName piece.interval.lower firstInside)) firstEq) @aligned
+
 variable {prepared : CoveredTracedPath path
   owner} {differential : Differential genus} {parentSheet : Fin 2}
 
 /-- Reuse the assigned occurrence, shared face domain, and original centered parent/cover cache. The endpoint chain is
 needed only in erased proofs. -/
-def ofEntry (entry : FaceModels.Entry models base owner) (domain : Periods.PeriodDomain models entry.sheet)
-    (prepared : PreparedClearPathModels.CoveredTracedPath path owner) (inside : ClearPath.InBox face.cell.box path)
-    (differential : Differentials.Basic.Differential genus) (parentSheet : Fin 2) (cache :
-      PreparedClearPathModels.ParentCache prepared differential parentSheet) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.EnteredPaths.EnteredPath models prepared differential parentSheet :=
+def ofEntry (entry : Entry models base owner) (domain : Periods.PeriodDomain models entry.sheet)
+    (prepared : CoveredTracedPath path owner) (inside : InBox face.cell.box path)
+    (differential : Differential genus) (parentSheet : Fin 2) (cache :
+      ParentCache prepared differential parentSheet) :
+    EnteredPath models prepared differential parentSheet :=
   have reached : ∀ parent ∈ cache.parents,
-      PreparedFaceTracePrefixes.ParentReached face.cell.box (models.frame.owners entry.sheet) parent := by
+      ParentReached face.cell.box (models.frame.owners entry.sheet) parent := by
     intro parent member
     exact entry.parent_reached differential parentSheet prepared.traced inside parent (by
         rw [← cache.parents_eq];
@@ -246,10 +293,10 @@ def ofEntry (entry : FaceModels.Entry models base owner) (domain : Periods.Perio
   have lastMember : finish ∈ mesh.points := by
     rw [mesh.points_eq]
     exact List.mem_append_right _ (List.mem_cons_of_mem _ List.mem_cons_self)
-  let firstCell := Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.EnteredPaths.PeriodDomain.locate domain base
+  let firstCell := PeriodDomain.locate domain base
     inside.start
-  let lastCell := Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.EnteredPaths.PeriodDomain.locate domain finish
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.EnteredPaths.finish_inside path inside)
+  let lastCell := PeriodDomain.locate domain finish
+    (EnteredPaths.finish_inside path inside)
   let first := mesh.mesh.lookup base firstMember firstCell.column firstCell.row
     (Geometry.allCells_mem domain.geometry _ _) firstCell.inside
   let last := mesh.mesh.lookup finish lastMember lastCell.column lastCell.row
@@ -262,10 +309,10 @@ def ofEntry (entry : FaceModels.Entry models base owner) (domain : Periods.Perio
 /-- Automatic sheet assignment and comparison geometry for an actual contained preparation starting at any grid vertex.
 No analytic premise is required, and the original preparation is never run again. -/
 def acquire (models : BranchCellBank.FaceModels frames face) (member :
-  Polynomial.Geometry.Grid.FromStates.ContainsVertex bank.grid base)
-    (prepared : PreparedClearPathModels.CoveredTracedPath path owner) (inside : ClearPath.InBox face.cell.box path)
-    (differential : Differentials.Basic.Differential genus) (parentSheet : Fin 2) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.EnteredPaths.EnteredPath models prepared differential parentSheet
+  ContainsVertex bank.grid base)
+    (prepared : CoveredTracedPath path owner) (inside : InBox face.cell.box path)
+    (differential : Differential genus) (parentSheet : Fin 2) :
+      EnteredPath models prepared differential parentSheet
       :=
   let entry := Entry.acquire models member inside.start owner
   ofEntry entry (PeriodDomain.build models
@@ -273,8 +320,8 @@ def acquire (models : BranchCellBank.FaceModels frames face) (member :
     (ParentCache.build prepared differential parentSheet)
 
 /-- Pay a new numerical target on the original cached entered-path geometry, parents and face bounds. -/
-def request (entered : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.EnteredPaths.EnteredPath models prepared
-  differential parentSheet) (target : InverseRootPolynomial.Coordinate) (positive : 0 < target) :
+def request (entered : EnteredPath models prepared
+  differential parentSheet) (target : Coordinate) (positive : 0 < target) :
     RequestedFragments entered.mesh entered.bounds entered.globalBounds genus target :=
   RequestedFragments.acquire entered.mesh entered.bounds entered.globalBounds entered.cache.covered entered.cache.proper
     target positive entered.reached
@@ -282,9 +329,9 @@ def request (entered : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.EnteredPat
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.EnteredPaths.EnteredPath
 /-- Exact telescoping uses the retained original endpoints even when the base is not the anchor, the owner is inherited,
 or the chart label differs from the selected face occurrence. -/
-theorem value_eq_increment (entered : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.EnteredPaths.EnteredPath models
+theorem value_eq_increment (entered : EnteredPath models
   prepared differential parentSheet)
-    {target : InverseRootPolynomial.Coordinate} (request : RequestedFragments entered.mesh
+    {target : Coordinate} (request : RequestedFragments entered.mesh
       entered.bounds entered.globalBounds genus target) :
     request.summary.value = request.readings.values entered.last - request.readings.values entered.first := by
   obtain ⟨chain⟩ := entered.cache.chain
@@ -292,9 +339,9 @@ theorem value_eq_increment (entered : Curves.Hyperelliptic.Meshes.PuncturedGrid.
 
 /-- The actual retained endpoint primitive increment differs from the original controlled request sum by less than one
 quarter target. -/
-theorem accurate (entered : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.EnteredPaths.EnteredPath models prepared
+theorem accurate (entered : EnteredPath models prepared
   differential parentSheet)
-    {target : InverseRootPolynomial.Coordinate} (request : RequestedFragments entered.mesh
+    {target : Coordinate} (request : RequestedFragments entered.mesh
       entered.bounds entered.globalBounds genus target) :
     Data.Gaussian.Norm.Basic.normSq
       ((request.readings.values entered.last - request.readings.values entered.first) - request.request.primitiveSum) <

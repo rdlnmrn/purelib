@@ -77,19 +77,19 @@ open Purelib.LinearAlgebra.Bilinear.Matrix.Basic (bilinear)
 open Purelib.LinearAlgebra.Vector.Unit (unitVector weighted_right_unit)
 local notation "vget" => Data.Vector.get
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {bank :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {bank :
+    BasedBranchBank lifted}
     {sheet : Fin 2}
   {ordered :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank
-    sheet} {paired : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered}
-    {prepared : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired}
-  (cut : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.CutBank prepared) {word : List
-    (Purelib.Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count)}
-  (row : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodCoordinates.ClosedCoordinates word cut.integral)
+    Ordered bank
+    sheet} {paired : OrderedBranchPairs.Ordered.Paired ordered}
+    {prepared : Prepared paired}
+  (cut : CutBank prepared) {word : List
+    (OrientedEdge lifted.vertices.count)}
+  (row : ClosedCoordinates word cut.integral)
 
 /-- Every original paired column is reconstructed from its retained integral A/B intersection coordinates. -/
 theorem paired_spanning (column : Fin lifted.cutBoundaryWord.alphabet.count) :
@@ -143,9 +143,9 @@ structure BasisCoordinates where
   /-- The cached full physical remainder on the original cut alphabet. -/ physical : Data.Vector Int
     lifted.cutBoundaryWord.alphabet.count
   /-- The physical cache has the exact retained original row subtraction equation. -/ physical_eq :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.SpanningRows.BasisPhysicalEquation cut row a b physical
+    BasisPhysicalEquation cut row a b physical
   /-- The cached coefficients and physical remainder reconstruct the entire original closed row. -/ equation :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.SpanningRows.BasisEquation cut row a b physical
+    BasisEquation cut row a b physical
 
 constructive_injectivity BasisCoordinates
 
@@ -156,10 +156,10 @@ theorem row_equation (a b : Data.Vector Int genus)
     (aEq : ∀ index, vget a index = -(SpanningCoordinates.intersection (cut.rows.get index).b.span) row.span)
     (bEq : ∀ index, vget b index = (SpanningCoordinates.intersection (cut.rows.get index).a.span) row.span)
     (physical : Data.Vector Int lifted.cutBoundaryWord.alphabet.count)
-    (physicalEq : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.SpanningRows.BasisPhysicalEquation cut row a b
-      physical) : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.SpanningRows.BasisEquation cut row a b physical := by
+    (physicalEq : BasisPhysicalEquation cut row a b
+      physical) : BasisEquation cut row a b physical := by
   intro column
-  have paired := Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.SpanningRows.paired_spanning cut row column
+  have paired := SpanningRows.paired_spanning cut row column
   change row.coordinates.totals column - row.span.physical column = _ at paired
   have expanded : FiniteSum.Fin.sumFin (fun index : Fin genus => vget a index * (cut.rows.get
     index).a.coordinates.totals column +
@@ -181,7 +181,7 @@ theorem row_equation (a b : Data.Vector Int genus)
 
 /-- Compute the original A/B intersection coefficients and physical remainder once, retaining their exact full row
 reconstruction. -/
-@[expose] def build : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.SpanningRows.BasisCoordinates cut row :=
+@[expose] def build : BasisCoordinates cut row :=
   let a := Data.Vector.Basic.vectorOfFn fun index : Fin genus => -(SpanningCoordinates.intersection (cut.rows.get
     index).b.span) row.span
   let b := Data.Vector.Basic.vectorOfFn fun index : Fin genus => (SpanningCoordinates.intersection (cut.rows.get
@@ -192,11 +192,11 @@ reconstruction. -/
       column)
   ⟨a, b, Data.Vector.Basic.vectorOfFn_apply _, Data.Vector.Basic.vectorOfFn_apply _, physical,
     Data.Vector.Basic.vectorOfFn_apply _,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.SpanningRows.BasisCoordinates.row_equation cut row a b
+    BasisCoordinates.row_equation cut row a b
       (Data.Vector.Basic.vectorOfFn_apply _) (Data.Vector.Basic.vectorOfFn_apply _) physical
       (Data.Vector.Basic.vectorOfFn_apply _)⟩
 
-variable {cut row} (coordinates : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.SpanningRows.BasisCoordinates
+variable {cut row} (coordinates : BasisCoordinates
   cut row)
 
 /-- The retained physical remainder vanishes at every paired column of the original cut alphabet. -/

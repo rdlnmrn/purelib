@@ -25,6 +25,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Polynomial.Dense.Gaussian.Coprime.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Bézout bounds for retained coefficient readings
 
@@ -51,12 +53,12 @@ on the supplied box. These multiply the same evaluation and derivative
 refinement scales before their original doubled sum is formed. -/
 @[expose] public def bezoutPerturbationScale
     (table : CoefficientTable)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate table.polynomial)
+    (squarefree : Squarefree.Basic.SquarefreeCertificate table.polynomial)
     (box : Box) : Fraction.Rational :=
   2 *
-    (Dense.Gaussian.Bounds.Box.denseEvalNormMajorant squarefree.left box *
+    (Bounds.Box.denseEvalNormMajorant squarefree.left box *
         table.refinementEvaluationScale box +
-      Dense.Gaussian.Bounds.Box.denseEvalNormMajorant squarefree.right box *
+      Bounds.Box.denseEvalNormMajorant squarefree.right box *
         table.refinementDerivativeScale box)
 
 /-- The exact reference Bézout identity remains an approximate identity for
@@ -67,81 +69,81 @@ target. The reference factors and their exact Bézout identity bound the
 second reading residual throughout the supplied box. -/
 public theorem approximateBezout_error_le
     (left right : CoefficientTable)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate left.polynomial)
+    (squarefree : Squarefree.Basic.SquarefreeCertificate left.polynomial)
     (box : Box) (target : Fraction.Rational) (positive : 0 < target)
-    (same : CoefficientTable.SameChannels left.entries right.entries)
-    (leftSmall : CoefficientTable.AllowancesLt left.entries target)
-    (rightSmall : CoefficientTable.AllowancesLt right.entries target)
-    {point : Gaussian.Basic.Canonical} (inside : box.Contains point) :
-    Data.Gaussian.Norm.Basic.normSq
+    (same : SameChannels left.entries right.entries)
+    (leftSmall : AllowancesLt left.entries target)
+    (rightSmall : AllowancesLt right.entries target)
+    {point : Basic.Canonical} (inside : box.Contains point) :
+    Norm.Basic.normSq
         (1 - (squarefree.left.eval point * right.polynomial.eval point +
           squarefree.right.eval point *
-            (Dense.Gaussian.GCD.derivative right.polynomial).eval point)) ≤
+            (GCD.derivative right.polynomial).eval point)) ≤
       target * left.bezoutPerturbationScale squarefree box := by
   let leftValue := squarefree.left.eval point
   let rightValue := squarefree.right.eval point
   let valueDifference :=
     left.polynomial.eval point - right.polynomial.eval point
   let derivativeDifference :=
-    (Dense.Gaussian.GCD.derivative left.polynomial).eval point -
-      (Dense.Gaussian.GCD.derivative right.polynomial).eval point
+    (GCD.derivative left.polynomial).eval point -
+      (GCD.derivative right.polynomial).eval point
   have identity :
       1 - (leftValue * right.polynomial.eval point + rightValue *
-          (Dense.Gaussian.GCD.derivative right.polynomial).eval point) =
+          (GCD.derivative right.polynomial).eval point) =
         leftValue * valueDifference + rightValue * derivativeDifference := by
     have reference := squarefree.identity point
     dsimp only [leftValue, rightValue, valueDifference, derivativeDifference]
     rw [reference]
-    apply Gaussian.Basic.ext <;>
-      simp only [Gaussian.Basic.sub_re, Gaussian.Basic.sub_im, Gaussian.Basic.add_re, Gaussian.Basic.add_im,
-        Gaussian.Basic.mul_re, Gaussian.Basic.mul_im] <;> ring1
+    apply Basic.ext <;>
+      simp only [Basic.sub_re, Basic.sub_im, Basic.add_re, Basic.add_im,
+        Basic.mul_re, Basic.mul_im] <;> ring1
   have leftMajorant :=
-    Dense.Gaussian.Bounds.Box.normSq_eval_le_denseEvalNormMajorant
+    Bounds.Box.normSq_eval_le_denseEvalNormMajorant
       squarefree.left inside
   have rightMajorant :=
-    Dense.Gaussian.Bounds.Box.normSq_eval_le_denseEvalNormMajorant
+    Bounds.Box.normSq_eval_le_denseEvalNormMajorant
       squarefree.right inside
   have valueBound := left.polynomial_eval_sub_le_of_sameChannels right target
     positive same leftSmall rightSmall box inside
   have derivativeBound := left.derivative_eval_sub_le_of_sameChannels right
     target positive same leftSmall rightSmall box inside
-  have valueProduct : Data.Gaussian.Norm.Basic.normSq leftValue * Data.Gaussian.Norm.Basic.normSq
+  have valueProduct : Norm.Basic.normSq leftValue * Norm.Basic.normSq
     valueDifference ≤
-      Dense.Gaussian.Bounds.Box.denseEvalNormMajorant squarefree.left box *
+      Bounds.Box.denseEvalNormMajorant squarefree.left box *
         left.refinementEvaluationBound target box :=
-    Fraction.Order.Arithmetic.mul_le_mul_direct leftMajorant valueBound
-      (Gaussian.Norm.Basic.normSq_nonneg valueDifference)
-      (Dense.Gaussian.Bounds.Box.denseEvalNormMajorant_pos
+    Arithmetic.mul_le_mul_direct leftMajorant valueBound
+      (Norm.Basic.normSq_nonneg valueDifference)
+      (Bounds.Box.denseEvalNormMajorant_pos
         squarefree.left box).le
   have derivativeProduct :
-      Data.Gaussian.Norm.Basic.normSq rightValue * Data.Gaussian.Norm.Basic.normSq derivativeDifference ≤
-        Dense.Gaussian.Bounds.Box.denseEvalNormMajorant squarefree.right box *
+      Norm.Basic.normSq rightValue * Norm.Basic.normSq derivativeDifference ≤
+        Bounds.Box.denseEvalNormMajorant squarefree.right box *
           left.refinementDerivativeBound target box :=
-    Fraction.Order.Arithmetic.mul_le_mul_direct rightMajorant derivativeBound
-      (Gaussian.Norm.Basic.normSq_nonneg derivativeDifference)
-      (Dense.Gaussian.Bounds.Box.denseEvalNormMajorant_pos
+    Arithmetic.mul_le_mul_direct rightMajorant derivativeBound
+      (Norm.Basic.normSq_nonneg derivativeDifference)
+      (Bounds.Box.denseEvalNormMajorant_pos
         squarefree.right box).le
   rw [identity]
   calc
-    Data.Gaussian.Norm.Basic.normSq (leftValue * valueDifference + rightValue * derivativeDifference) ≤
-        2 * (Data.Gaussian.Norm.Basic.normSq (leftValue * valueDifference) +
-          Data.Gaussian.Norm.Basic.normSq (rightValue * derivativeDifference)) :=
-      Gaussian.Norm.Bounds.normSq_add_le_two _ _
-    _ = 2 * (Data.Gaussian.Norm.Basic.normSq leftValue * Data.Gaussian.Norm.Basic.normSq valueDifference +
-          Data.Gaussian.Norm.Basic.normSq rightValue * Data.Gaussian.Norm.Basic.normSq derivativeDifference) :=
+    Norm.Basic.normSq (leftValue * valueDifference + rightValue * derivativeDifference) ≤
+        2 * (Norm.Basic.normSq (leftValue * valueDifference) +
+          Norm.Basic.normSq (rightValue * derivativeDifference)) :=
+      Norm.Bounds.normSq_add_le_two _ _
+    _ = 2 * (Norm.Basic.normSq leftValue * Norm.Basic.normSq valueDifference +
+          Norm.Basic.normSq rightValue * Norm.Basic.normSq derivativeDifference) :=
             by
-      rw [Gaussian.Norm.Basic.normSq_mul, Gaussian.Norm.Basic.normSq_mul]
+      rw [Norm.Basic.normSq_mul, Norm.Basic.normSq_mul]
     _ ≤ 2 *
-        (Dense.Gaussian.Bounds.Box.denseEvalNormMajorant squarefree.left box *
+        (Bounds.Box.denseEvalNormMajorant squarefree.left box *
             left.refinementEvaluationBound target box +
-          Dense.Gaussian.Bounds.Box.denseEvalNormMajorant squarefree.right box *
+          Bounds.Box.denseEvalNormMajorant squarefree.right box *
             left.refinementDerivativeBound target box) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.add_le_add_direct valueProduct derivativeProduct) (by decide)
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.add_le_add_direct valueProduct derivativeProduct) (by decide)
     _ = target * left.bezoutPerturbationScale squarefree box := by
       rw [left.refinementEvaluationBound_eq_target_mul_scale,
         left.refinementDerivativeBound_eq_target_mul_scale]
-      unfold CoefficientTable.bezoutPerturbationScale
+      unfold bezoutPerturbationScale
       ring1
 
 /-- The combined evaluation and derivative perturbation scale is strictly positive.
@@ -151,23 +153,23 @@ positive and the derivative scale is nonnegative. Their original doubled
 sum is therefore strictly positive. -/
 public theorem bezoutPerturbationScale_pos
     (table : CoefficientTable)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate table.polynomial)
+    (squarefree : Squarefree.Basic.SquarefreeCertificate table.polynomial)
     (box : Box) : 0 < table.bezoutPerturbationScale squarefree box := by
   have leftProductPositive : 0 <
-      Dense.Gaussian.Bounds.Box.denseEvalNormMajorant squarefree.left box *
+      Bounds.Box.denseEvalNormMajorant squarefree.left box *
         table.refinementEvaluationScale box :=
-    Fraction.Order.Arithmetic.mul_pos_direct
-      (Dense.Gaussian.Bounds.Box.denseEvalNormMajorant_pos squarefree.left box)
+    Arithmetic.mul_pos_direct
+      (Bounds.Box.denseEvalNormMajorant_pos squarefree.left box)
       (table.refinementEvaluationScale_pos box)
   have rightProductNonnegative : 0 ≤
-      Dense.Gaussian.Bounds.Box.denseEvalNormMajorant squarefree.right box *
+      Bounds.Box.denseEvalNormMajorant squarefree.right box *
         table.refinementDerivativeScale box :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Dense.Gaussian.Bounds.Box.denseEvalNormMajorant_pos
+    Arithmetic.mul_nonneg_direct
+      (Bounds.Box.denseEvalNormMajorant_pos
         squarefree.right box).le
       (table.refinementDerivativeScale_nonneg box)
-  exact Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-    (Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct leftProductPositive rightProductNonnegative)
+  exact Arithmetic.mul_pos_direct (by decide)
+    (Arithmetic.add_pos_of_pos_of_nonneg_direct leftProductPositive rightProductNonnegative)
 
 /-- A reference-computed target making the complete approximate-Bézout
 error at most `1/16`, without any square-root choice.
@@ -176,7 +178,7 @@ The target divides one by sixteen times the original positive Bézout
 perturbation scale. It retains the same reference factors and rational box. -/
 @[expose] public def bezoutStabilityTarget
     (table : CoefficientTable)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate table.polynomial)
+    (squarefree : Squarefree.Basic.SquarefreeCertificate table.polynomial)
     (box : Box) : Fraction.Rational :=
   1 / (16 * table.bezoutPerturbationScale squarefree box)
 
@@ -187,7 +189,7 @@ original rational target. The resulting product is bounded by the exact
 one-sixteenth threshold. -/
 public theorem bezoutStabilityTarget_mul_scale_le
     (table : CoefficientTable)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate table.polynomial)
+    (squarefree : Squarefree.Basic.SquarefreeCertificate table.polynomial)
     (box : Box) :
     table.bezoutStabilityTarget squarefree box *
         table.bezoutPerturbationScale squarefree box ≤
@@ -195,16 +197,16 @@ public theorem bezoutStabilityTarget_mul_scale_le
   let scale := table.bezoutPerturbationScale squarefree box
   have scalePositive : 0 < scale :=
     table.bezoutPerturbationScale_pos squarefree box
-  apply (Fraction.Order.Field.le_div_iff_pos
+  apply (Field.le_div_iff_pos
     (show (0 : Fraction.Rational) < 16 by decide)).mpr
   calc
     (table.bezoutStabilityTarget squarefree box * scale) * 16 =
         table.bezoutStabilityTarget squarefree box * (16 * scale) := by ring1
     _ = 1 := Fraction.Field.div_mul_cancel_of_ne 1
       (16 * scale)
-      (ne_of_gt (Fraction.Order.Arithmetic.mul_pos_direct
+      (ne_of_gt (Arithmetic.mul_pos_direct
         (by decide) scalePositive))
-    _ ≤ 1 := Fraction.Order.Basic.le_refl _
+    _ ≤ 1 := Basic.le_refl _
 
 /-- The coefficient table's Bézout stability target is strictly positive.
 
@@ -212,10 +214,10 @@ The original reference factors and box give a strictly positive scale.
 The reciprocal target retains that scale and is strictly positive. -/
 public theorem bezoutStabilityTarget_pos
     (table : CoefficientTable)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate table.polynomial)
+    (squarefree : Squarefree.Basic.SquarefreeCertificate table.polynomial)
     (box : Box) : 0 < table.bezoutStabilityTarget squarefree box :=
-  Fraction.Order.Field.div_pos_direct (by decide)
-    (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+  Field.div_pos_direct (by decide)
+    (Arithmetic.mul_pos_direct (by decide)
       (table.bezoutPerturbationScale_pos squarefree box))
 
 /-- Construct robust derivative separation for an admitted reading from one
@@ -226,15 +228,15 @@ Bézout target. The original approximate-identity builder retains both
 reference factors, the second polynomial and the same rational box. -/
 @[expose] public def robustDerivativeSeparation
     (left right : CoefficientTable)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate left.polynomial)
+    (squarefree : Squarefree.Basic.SquarefreeCertificate left.polynomial)
     (box : Box)
-    (same : CoefficientTable.SameChannels left.entries right.entries)
-    (leftSmall : CoefficientTable.AllowancesLt left.entries
+    (same : SameChannels left.entries right.entries)
+    (leftSmall : AllowancesLt left.entries
       (left.bezoutStabilityTarget squarefree box))
-    (rightSmall : CoefficientTable.AllowancesLt right.entries
+    (rightSmall : AllowancesLt right.entries
       (left.bezoutStabilityTarget squarefree box)) :
-    Dense.Gaussian.Derivative.Separation.Basic.Certificate right.polynomial box :=
-  Dense.Gaussian.Derivative.Separation.Bezout.ofApproximateBezout right.polynomial
+    Derivative.Separation.Basic.Certificate right.polynomial box :=
+  Derivative.Separation.Bezout.ofApproximateBezout right.polynomial
     squarefree.left squarefree.right box (by
       intro point inside
       exact (left.approximateBezout_error_le right squarefree box

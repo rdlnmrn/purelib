@@ -1,12 +1,16 @@
 module
 import Purelib.Data.List.Map
 import Purelib.Data.Gaussian.Basic
+import Purelib.Data.Gaussian.Components.Basic
 import Purelib.Data.Rat.Fraction
 import Purelib.Curves.Hyperelliptic.Basic
 import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Polynomial.Geometry.ClearPath
 public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchGrid
 import Purelib.Polynomial.Geometry.Grid.FromStates
+public import Purelib.Polynomial.Elimination.Axis.Gap
+public import Purelib.Polynomial.Clearance.Box.Line.Elimination.Provider
+public import Purelib.Riemann.Paths.ClearBoxPaths
 
 import Purelib.Polynomial.Geometry.Grid.ClearGrid
 public import Purelib.Polynomial.Geometry.Grid.Walks
@@ -115,6 +119,111 @@ theorem resplit_winding (included : CoordinateInclusion first second) {start fin
   Geometry.Grid.Winding.splitPath_winding second walk.path _
 
 end CoordinateInclusion
+
+section
+
+open Purelib.Polynomial.Elimination.Axis
+open Purelib.Polynomial.Elimination.Axis.Certificate.AxisSafeCuts (AxisEliminationCertificate)
+open Purelib.Polynomial.Clearance.Box.Line.Elimination.Provider (AxisClearances)
+
+/-- Select an eliminant-safe point strictly inside the supplied proper rational box.
+
+The two original central scans depend only on the retained eliminant and
+the numerical box endpoints. Local ambient and clearance proofs do not
+change the selected point, including at repeated source occurrences.
+-/
+def gapPoint {degreeBound : Nat}
+    (elimination : AxisEliminationCertificate polynomial degreeBound)
+    (inner : Box) (proper : inner.Proper) : Gaussian.Basic.Canonical :=
+  Gaussian.Basic.point (Gap.verticalGapCoordinate elimination proper.1)
+    (Gap.horizontalGapCoordinate elimination proper.2)
+
+/-- The selected point retains both original nonzero eliminant readings and strict box bounds. -/
+theorem gapPoint_spec {degreeBound : Nat}
+    (elimination : AxisEliminationCertificate polynomial degreeBound)
+    (inner : Box) (proper : inner.Proper) :
+    elimination.vertical.eval (gapPoint elimination inner proper).re ≠ 0 ∧
+      elimination.horizontal.eval (gapPoint elimination inner proper).im ≠ 0 ∧
+      inner.StrictContains (gapPoint elimination inner proper) := by
+  have vertical := Gap.verticalGapCoordinate_spec elimination proper.1
+  have horizontal := Gap.horizontalGapCoordinate_spec elimination proper.2
+  exact ⟨vertical.1, horizontal.1, vertical.2.1, vertical.2.2, horizontal.2.1, horizontal.2.2⟩
+
+/-- Select two original certified clear-line payloads meeting strictly inside the supplied proper subbox.
+
+Each eliminant-safe coordinate is computed once. The supplied original axis
+provider consumes that literal coordinate and its exact nonzero certificate;
+neither old source coordinate is asserted to be globally clear.
+-/
+@[expose] def gapLines {degreeBound : Nat}
+    (elimination : AxisEliminationCertificate polynomial degreeBound)
+    (clearances : AxisClearances elimination) (inner : Box) (proper : inner.Proper)
+    (refines : inner.Refines ambient) : VerticalLine polynomial ambient × HorizontalLine polynomial ambient :=
+  let point := gapPoint elimination inner proper
+  have retained := gapPoint_spec elimination inner proper
+  (⟨point.re, ⟨refines.1.trans retained.2.2.1.le, retained.2.2.2.1.le.trans refines.2.1⟩,
+      clearances.vertical ambient point.re retained.1⟩,
+    ⟨point.im, ⟨refines.2.2.1.trans retained.2.2.2.2.1.le, retained.2.2.2.2.2.le.trans refines.2.2.2⟩,
+      clearances.horizontal ambient point.im retained.2.1⟩)
+
+/-- The actual two cached line payloads intersect at the same original selected point. -/
+theorem gapLines_point {degreeBound : Nat}
+    (elimination : AxisEliminationCertificate polynomial degreeBound)
+    (clearances : AxisClearances elimination) (inner : Box) (proper : inner.Proper)
+    (refines : inner.Refines ambient) :
+    Gaussian.Basic.point (gapLines elimination clearances inner proper refines).1.coordinate
+      (gapLines elimination clearances inner proper refines).2.coordinate =
+      gapPoint elimination inner proper := (rfl)
+
+/-- The intersection of the actual two selected line payloads lies strictly inside the original supplied subbox.
+
+Both coordinate inequalities are the retained central-search specifications
+for those same two line payloads, including their original eliminants.
+-/
+theorem gapLines_strictContains {degreeBound : Nat}
+    (elimination : AxisEliminationCertificate polynomial degreeBound)
+    (clearances : AxisClearances elimination) (inner : Box) (proper : inner.Proper)
+    (refines : inner.Refines ambient) :
+    inner.StrictContains (Gaussian.Basic.point
+      (gapLines elimination clearances inner proper refines).1.coordinate
+      (gapLines elimination clearances inner proper refines).2.coordinate) := by
+  have vertical := Gap.verticalGapCoordinate_spec elimination proper.1
+  have horizontal := Gap.horizontalGapCoordinate_spec elimination proper.2
+  exact ⟨vertical.2.1, vertical.2.2, horizontal.2.1, horizontal.2.2⟩
+
+/-- The literal retained clear-box route uses only endpoint coordinates from the same grid.
+
+Its whole factory equation reduces the original zero, one or two-edge
+construction. The actual possible corner combines the retained target's
+real coordinate with the source's imaginary coordinate. No containing-edge
+claim is inferred from box containment, and the supplied route is unchanged.
+-/
+theorem route_vertices {box : Box} (grid : ClearGrid polynomial ambient)
+    (clearance : Clearance.Box.Region.RegionClearance polynomial box)
+    (source target : Gaussian.Basic.Canonical) (first : box.Contains source) (last : box.Contains target)
+    (route : Paths.ClearBoxPaths.Route polynomial box source target)
+    (route_eq : route = Paths.ClearBoxPaths.Route.build clearance source target first last)
+    (sourceOn : FromStates.ContainsVertex grid source) (targetOn : FromStates.ContainsVertex grid target) :
+    FromStates.ContainsPathVertices grid route.path := by
+  cases route_eq
+  unfold Paths.ClearBoxPaths.Route.build
+  split
+  · rename_i same
+    cases same
+    exact sourceOn
+  · dsimp only
+    split
+    · change FromStates.ContainsVertex grid source ∧ FromStates.ContainsVertex grid target
+      exact ⟨sourceOn, targetOn⟩
+    · split
+      · change FromStates.ContainsVertex grid source ∧ FromStates.ContainsVertex grid target
+        exact ⟨sourceOn, targetOn⟩
+      · change FromStates.ContainsVertex grid source ∧
+          FromStates.ContainsVertex grid (Gaussian.Components.Basic.point target.re source.im) ∧
+          FromStates.ContainsVertex grid target
+        exact ⟨sourceOn, ⟨targetOn.1, sourceOn.2⟩, targetOn⟩
+
+end
 
 /-- Extend a clear grid with two displayed lists of certified lines.
 

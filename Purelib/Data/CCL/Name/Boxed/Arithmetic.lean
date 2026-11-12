@@ -22,24 +22,24 @@ namespace ProgressiveName
 open Purelib.Approximation.Gaussian
 open Purelib.Data.CCL.Name
 /-- Add the exact named approximations of the two retained progressive boxed names. -/
-def addOutput (left right : Boxed.Process.ProgressiveName)
+def addOutput (left right : Process.ProgressiveName)
   : Name.Basic.Named :=
-  (Boxed.Approximation.ProgressiveName.toNamed left).add (Boxed.Approximation.ProgressiveName.toNamed right)
+  (Approximation.ProgressiveName.toNamed left).add (Approximation.ProgressiveName.toNamed right)
 
 /-- Subtract the right retained boxed-name approximation from the left one. -/
-def subOutput (left right : Boxed.Process.ProgressiveName)
+def subOutput (left right : Process.ProgressiveName)
   : Name.Basic.Named :=
-  (Boxed.Approximation.ProgressiveName.toNamed left).sub (Boxed.Approximation.ProgressiveName.toNamed right)
+  (Approximation.ProgressiveName.toNamed left).sub (Approximation.ProgressiveName.toNamed right)
 
 /-- Multiply the exact named approximations of the two retained progressive boxed names. -/
-def mulOutput (left right : Boxed.Process.ProgressiveName)
+def mulOutput (left right : Process.ProgressiveName)
   : Name.Basic.Named :=
-  (Boxed.Approximation.ProgressiveName.toNamed left).mul (Boxed.Approximation.ProgressiveName.toNamed right)
+  (Approximation.ProgressiveName.toNamed left).mul (Approximation.ProgressiveName.toNamed right)
 
 /-- Divide the left retained boxed-name approximation by the right using apartness of that same right name. -/
-def divOutput (left right : Boxed.Process.ProgressiveName)
-  (apart : Boxed.Apart right) : Name.Basic.Named :=
-  (Boxed.Approximation.ProgressiveName.toNamed left).div (Boxed.Approximation.ProgressiveName.toNamed right)
+def divOutput (left right : Process.ProgressiveName)
+  (apart : Apart right) : Name.Basic.Named :=
+  (Approximation.ProgressiveName.toNamed left).div (Approximation.ProgressiveName.toNamed right)
     apart.toNamedApart
 end ProgressiveName
 

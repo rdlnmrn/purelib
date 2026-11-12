@@ -68,24 +68,24 @@ namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk
 
 open Purelib.Data.Gaussian.Basic.Canonical
 
-variable {genus count : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+variable {genus count : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {cover :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data}
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap} {cover :
+    UniformReciprocalCover.Cover data}
 
 set_option genInjectivity false in
 /-- A paid chart replacement of the original joined exterior parent.
 
 Retain both original requests, their common model stage and the required spatial depth. -/
-structure JoinedChartRequest (prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison.Preparation regular
+structure JoinedChartRequest (prepared : ParentComparison.Preparation regular
   cover) (totalTarget areaTarget : Normalization.InverseRootPolynomial.Coordinate) (floor : Nat) where
   /-- The original join request with the retained total target and quarter area target. -/ joined :
-    Hyperelliptic.Charts.Reciprocal.Disk.JoinedParent.JoinedRequest prepared totalTarget (areaTarget / 4) floor
+    JoinedParent.JoinedRequest prepared totalTarget (areaTarget / 4) floor
   /-- The original chart replacement request with its quarter area target. -/ replacement :
     ChartReplacementRequest prepared (areaTarget / 4) floor
   /-- The common model stage for the original join and replacement charts. -/ index : Nat
@@ -107,22 +107,22 @@ and depth.
 Each original request receives the same quarter area target. The retained
 maximum model stage pays both requests, while the replacement charts determine
 the required spatial depth. -/
-@[expose] def build (prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison.Preparation regular cover)
+@[expose] def build (prepared : ParentComparison.Preparation regular cover)
   (totalTarget areaTarget : Normalization.InverseRootPolynomial.Coordinate)
     (totalPositive : 0 < totalTarget) (areaPositive : 0 < areaTarget) (floor : Nat) :
     JoinedChartRequest prepared totalTarget areaTarget floor :=
       by
   have quarterPositive := Fraction.Order.Field.div_pos_direct areaPositive (by
       decide : (0 : Normalization.InverseRootPolynomial.Coordinate) < 4)
-  let joined := Hyperelliptic.Charts.Reciprocal.Disk.JoinedParent.JoinedRequest.build prepared totalTarget (areaTarget /
+  let joined := JoinedParent.JoinedRequest.build prepared totalTarget (areaTarget /
     4) totalPositive quarterPositive floor
   let replacement := ChartReplacementRequest.build prepared
     (areaTarget / 4) quarterPositive floor
   exact ⟨joined, replacement, max joined.index replacement.charts.maximum, rfl, replacement.charts.depthMaximum, rfl⟩
 
-variable {prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison.Preparation regular cover} {totalTarget
+variable {prepared : ParentComparison.Preparation regular cover} {totalTarget
   areaTarget : Normalization.InverseRootPolynomial.Coordinate} {floor index minimum : Nat}
-  {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+  {box : Rational.Box} {capSample : Cap.Primitives.Sample cap
     differential index box}
   {request : JoinedChartRequest prepared
     totalTarget areaTarget floor}
@@ -137,9 +137,9 @@ set_option genInjectivity false in
 /-- The actual replacement chart plans for the supplied original cap sample and a sufficient shared reading stage. -/
 structure Plan (request : JoinedChartRequest prepared
   totalTarget areaTarget floor)
-    (capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box) (minimum : Nat) where
+    (capSample : Cap.Primitives.Sample cap differential index box) (minimum : Nat) where
   /-- The actual original chart plans for the retained cap sample. -/ charts :
-    Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans capSample minimum request.replacement.charts
+    ParentChartRequests.ChartPlans capSample minimum request.replacement.charts
   /-- The common numerical reading stage. -/ stage : Nat
   /-- The retained stage is exactly the maximum of the joined reading requirement and original chart maximum. -/
     stage_eq : stage = max request.joined.readingIndex charts.maximum
@@ -157,30 +157,30 @@ The supplied cap sample and minimum are used by the original chart-plan
 builder. The shared maximum stage also pays the joined endpoint request. -/
 @[expose] def build (request : JoinedChartRequest prepared
   totalTarget areaTarget floor)
-    (capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box) (minimum : Nat) :
+    (capSample : Cap.Primitives.Sample cap differential index box) (minimum : Nat) :
       Plan request capSample minimum :=
-  let charts := Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans.build capSample minimum
+  let charts := ParentChartRequests.ChartPlans.build capSample minimum
     request.replacement.charts
   ⟨charts, max request.joined.readingIndex charts.maximum, rfl⟩
 
 variable {depth readingIndex : Nat} {originalTarget : Normalization.InverseRootPolynomial.Coordinate}
-  {original : Hyperelliptic.Charts.Reciprocal.ReciprocalBoundaryArea.Cover.AreaRequest cover depth originalTarget}
-  {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential original.index box}
+  {original : ReciprocalBoundaryArea.Cover.AreaRequest cover depth originalTarget}
+  {capSample : Cap.Primitives.Sample cap differential original.index box}
 
 set_option genInjectivity false in
 /-- The complete original joined-parent comparison with its actual replacement vertices.
 
 Retain shared endpoint-reading identities and the paid total and area bounds. -/
-structure Evaluation (original : Hyperelliptic.Charts.Reciprocal.ReciprocalBoundaryArea.Cover.AreaRequest cover depth
+structure Evaluation (original : ReciprocalBoundaryArea.Cover.AreaRequest cover depth
   originalTarget)
-    {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential original.index box}
+    {capSample : Cap.Primitives.Sample cap differential original.index box}
     (plan : Plan request capSample minimum)
       (readingIndex : Nat) where
   /-- The original joined-parent evaluation with its retained source polynomial cells. -/ compared :
-    Hyperelliptic.Charts.Reciprocal.Disk.JoinedParent.JoinedRequest.Evaluation request.joined original capSample
+    JoinedParent.JoinedRequest.Evaluation request.joined original capSample
     readingIndex
   /-- The actual replacement vertices read from those original cells. -/ vertices :
-    Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans.EvaluationData readingIndex plan.charts
+    ParentChartRequests.ChartPlans.EvaluationData readingIndex plan.charts
     compared.polynomial.cells
   /-- The retained source model is late enough for the original endpoint requests. -/ model_later :
     request.joined.endpoints.maximum ≤ original.index
@@ -192,14 +192,14 @@ structure Evaluation (original : Hyperelliptic.Charts.Reciprocal.ReciprocalBound
     plan.charts.endpointReadings compared.polynomial.cells vertices request.joined.endpoints
     model_later reading_later
   /-- The actual chart replacement on the original polynomial cells, vertices and endpoint readings. -/ replacement :
-    Hyperelliptic.Charts.Reciprocal.Disk.JoinedCharts.Replacement plan.charts compared.polynomial.cells vertices
+    JoinedCharts.Replacement plan.charts compared.polynomial.cells vertices
     request.joined.endpoints
     compared.readings compared.firstValue
   /-- The original source total and actual replacement total differ by less than the retained total target. -/
-    total_close : Data.Gaussian.Norm.Basic.normSq (compared.polynomial.left.total - replacement.summary.total) <
+    total_close : Gaussian.Norm.Basic.normSq (compared.polynomial.left.total - replacement.summary.total) <
     totalTarget
   /-- The original source area and actual replacement area differ by less than the retained area target. -/ area_close :
-    Data.Gaussian.Norm.Basic.normSq (compared.polynomial.left.area - replacement.summary.area) < areaTarget
+    Gaussian.Norm.Basic.normSq (compared.polynomial.left.area - replacement.summary.area) < areaTarget
 
 -- Preserve the original constructor API on this nominal parent.
 
@@ -227,9 +227,9 @@ fine-mesh and reading stage. Every joining equality is constructed internally. -
   let readings := plan.charts.endpointReadings polynomial.cells vertices request.joined.endpoints
     ((Data.Nat.Order.le_max_right _ _).trans joinedIndices) pairReadingLater
   let joined := request.joined.evaluateWithReadings polynomial readings joinedReadingLater
-  let replacement := Hyperelliptic.Charts.Reciprocal.Disk.JoinedCharts.Replacement.build plan.charts polynomial.cells
+  let replacement := JoinedCharts.Replacement.build plan.charts polynomial.cells
     vertices request.joined.endpoints readings joined.firstValue
-  have replacementError : Data.Gaussian.Norm.Basic.normSq (joined.joined.summary.area - replacement.summary.area) <
+  have replacementError : Gaussian.Norm.Basic.normSq (joined.joined.summary.area - replacement.summary.area) <
     areaTarget / 4 := by
     rw [show joined.joined.summary.area - replacement.summary.area =
       -(replacement.summary.area - joined.joined.summary.area) by ring1, Gaussian.Norm.Basic.normSq_neg]

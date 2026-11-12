@@ -71,6 +71,21 @@ the preceding diagonal. -/
   | row + 1 => by
       rw [choose_succ_succ, choose_self,
         choose_eq_zero_of_lt (Nat.lt_succ_self row), Nat.add_zero]
+/-- The original Pascal recursion equals the same natural binomial coefficient. -/
+theorem eq_choose : ∀ row column : Nat, choose row column = row.choose column
+  | row, 0 => (choose_zero_right row).trans (Nat.choose_zero_right row).symm
+  | 0, column + 1 => rfl
+  | row + 1, column + 1 => by
+      rw [choose_succ_succ, eq_choose row column, eq_choose row (column + 1), Nat.choose_succ_succ']
+
+/-- Every original Pascal coefficient on or below the diagonal is positive. -/
+theorem positive : ∀ row column : Nat, column ≤ row → 0 < choose row column
+  | row, 0, _ => by rw [choose_zero_right]; exact Nat.zero_lt_succ 0
+  | 0, column + 1, impossible => (Nat.not_succ_le_zero column impossible).elim
+  | row + 1, column + 1, bounded => by
+      rw [choose_succ_succ]
+      exact Nat.lt_of_lt_of_le (positive row column (Nat.le_of_succ_le_succ bounded)) (Nat.le_add_right _ _)
+
 end Purelib.Data.Nat.Choose.Pascal
 
 end

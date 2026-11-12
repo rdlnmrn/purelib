@@ -52,6 +52,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk
@@ -103,22 +105,22 @@ open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourcePolygons.BasisEndpointPlans (SourcePolygons)
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap}
 
 variable {target sourceTarget : Coordinate} {floor sourceFloor :
   Nat}
 
 variable {covers : BasisSourceCovers parent}
-  {index minimum depth readingIndex : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {index minimum depth readingIndex : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
   {polynomials : RegularBasisPolynomials cap
     index box}
-  {source : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
+  {source : UniformReciprocalPrimitives.SourcePrimitive data index}
   {endpointTarget allowance : Coordinate}
 
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Gaussian)
@@ -134,17 +136,17 @@ variable {numerical :
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 /-- Read already-computed cell discrepancies in their original order. -/
-def differences : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data
-  edges} → {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+def differences : {edges : List ParameterEdge} → {bank : Bank regular data
+  edges} → {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → (evaluated : ChartPlans.EvaluationData
+    (cells : ComparedCells source capSample depth bank) → (evaluated : EvaluationData
       readingIndex plans cells) →
-    (sources : ParentBasisEndpoints.BasisEndpointRequests covers sourceTarget sourceFloor requests) →
-    (planned : ParentBasisEndpoints.BasisEndpointPlans polynomials plans sources) → (endpoints :
-      BasisEndpointPlans.Samples numerical plans cells evaluated sources planned) →
-    BasisEndpointPlans.SourcePolygons numerical coefficients allowance plans cells evaluated sources planned endpoints →
-      List InverseRootPolynomial.Gaussian
+    (sources : BasisEndpointRequests covers sourceTarget sourceFloor requests) →
+    (planned : BasisEndpointPlans polynomials plans sources) → (endpoints :
+      Samples numerical plans cells evaluated sources planned) →
+    SourcePolygons numerical coefficients allowance plans cells evaluated sources planned endpoints →
+      List Gaussian
   | _, _, _, _, .nil, .nil, _, _, _, _, _ => []
   | _, _, _, _, .cons _ tail, .cons _ cells, evaluated, sources, planned, endpoints, polygons =>
       polygons.1.difference ::
@@ -152,16 +154,16 @@ def differences : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge
         tail cells evaluated.2 sources.2 planned.2 endpoints.2 polygons.2
 
 /-- The retained discrepancy list has exactly one entry for each original parent edge. -/
-theorem differences_count : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank
-  regular data edges} → {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+theorem differences_count : {edges : List ParameterEdge} → {bank : Bank
+  regular data edges} → {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → (evaluated : ChartPlans.EvaluationData
+    (cells : ComparedCells source capSample depth bank) → (evaluated : EvaluationData
       readingIndex plans cells) →
-    (sources : ParentBasisEndpoints.BasisEndpointRequests covers sourceTarget sourceFloor requests) →
-    (planned : ParentBasisEndpoints.BasisEndpointPlans polynomials plans sources) → (endpoints :
-      BasisEndpointPlans.Samples numerical plans cells evaluated sources planned) →
-    (polygons : BasisEndpointPlans.SourcePolygons numerical coefficients allowance plans cells evaluated sources planned
+    (sources : BasisEndpointRequests covers sourceTarget sourceFloor requests) →
+    (planned : BasisEndpointPlans polynomials plans sources) → (endpoints :
+      Samples numerical plans cells evaluated sources planned) →
+    (polygons : SourcePolygons numerical coefficients allowance plans cells evaluated sources planned
       endpoints) →
     (differences
       plans cells evaluated sources planned endpoints polygons).length = edges.length
@@ -173,22 +175,22 @@ theorem differences_count : {edges : List ClearSheetContinuation.Subdivision.Par
 
 /-- Every cached original cell discrepancy satisfies the common source allowance with its homogeneous coefficient
 factor. -/
-theorem differences_bounded : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank
-  regular data edges} → {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+theorem differences_bounded : {edges : List ParameterEdge} → {bank : Bank
+  regular data edges} → {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → (evaluated : ChartPlans.EvaluationData
+    (cells : ComparedCells source capSample depth bank) → (evaluated : EvaluationData
       readingIndex plans cells) →
-    (sources : ParentBasisEndpoints.BasisEndpointRequests covers sourceTarget sourceFloor requests) →
-    (planned : ParentBasisEndpoints.BasisEndpointPlans polynomials plans sources) → (endpoints :
-      BasisEndpointPlans.Samples numerical plans cells evaluated sources planned) →
-    (polygons : BasisEndpointPlans.SourcePolygons numerical coefficients allowance plans cells evaluated sources planned
+    (sources : BasisEndpointRequests covers sourceTarget sourceFloor requests) →
+    (planned : BasisEndpointPlans polynomials plans sources) → (endpoints :
+      Samples numerical plans cells evaluated sources planned) →
+    (polygons : SourcePolygons numerical coefficients allowance plans cells evaluated sources planned
       endpoints) →
     ∀ value ∈
       differences
       plans cells evaluated sources planned endpoints polygons,
-      Data.Gaussian.Norm.Basic.normSq value ≤ (4 * allowance)^2 *
-        (PreparedObservationCoercivity.coefficientNormSq coefficients)^2
+      Gaussian.Norm.Basic.normSq value ≤ (4 * allowance)^2 *
+        (coefficientNormSq coefficients)^2
   | _, _, _, _, .nil, .nil, _, _, _, _, _, _, member => by cases member
   | _, _, _, _, .cons _ tail, .cons _ cells, evaluated, sources, planned, endpoints, polygons, value, member => by
       rcases List.Membership.mem_cons.mp member with equal | later
@@ -216,40 +218,40 @@ variable {edges : List ParameterEdge} {bank :
 set_option genInjectivity false in
 /-- Sum only the certified cell area discrepancies. Joining polygons and trace origins remain separate obligations in
 the surface comparison. -/
-structure ErrorSum (polygons : BasisEndpointPlans.SourcePolygons numerical coefficients allowance plans cells evaluated
+structure ErrorSum (polygons : SourcePolygons numerical coefficients allowance plans cells evaluated
   sources planned endpoints) where
   /-- The cached actual original cell area discrepancies in their retained order. -/ errors : List
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The retained error list is exactly the original source polygon discrepancy list. -/ errors_eq : errors =
     differences
     plans cells evaluated sources planned endpoints polygons
-  /-- The cached sum of the actual retained cell discrepancies. -/ total : InverseRootPolynomial.Gaussian
+  /-- The cached sum of the actual retained cell discrepancies. -/ total : Gaussian
   /-- The retained total is exactly the Gaussian sum of the cached original errors. -/ total_eq : total =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum errors
+    gaussianSum errors
   /-- The actual error total satisfies the retained count-scaled homogeneous area bound. -/ bounded :
-    Data.Gaussian.Norm.Basic.normSq total ≤ (4 * ((edges.length : InverseRootPolynomial.Coordinate) *
-    allowance))^2 * (PreparedObservationCoercivity.coefficientNormSq coefficients)^2
+    Gaussian.Norm.Basic.normSq total ≤ (4 * ((edges.length : Coordinate) *
+    allowance))^2 * (coefficientNormSq coefficients)^2
 
 constructive_injectivity ErrorSum
 
 /-- Cache and sum the original certified cell discrepancies, preserving their actual count and homogeneous squared
 allowance. -/
-def sumErrors (polygons : BasisEndpointPlans.SourcePolygons numerical coefficients allowance plans cells evaluated
+def sumErrors (polygons : SourcePolygons numerical coefficients allowance plans cells evaluated
   sources planned endpoints) :
   ErrorSum
   polygons := by
   let errors :=
     differences
     plans cells evaluated sources planned endpoints polygons
-  let total := Data.Gaussian.Norm.Sum.Basic.gaussianSum errors
-  have bound := Data.Gaussian.Norm.Sum.Bounds.normSq_sum_le errors
-    ((4 * allowance)^2 * (PreparedObservationCoercivity.coefficientNormSq coefficients)^2)
+  let total := gaussianSum errors
+  have bound := Gaussian.Norm.Sum.Bounds.normSq_sum_le errors
+    ((4 * allowance)^2 * (coefficientNormSq coefficients)^2)
 
       (differences_bounded
       plans cells evaluated sources planned endpoints polygons)
-  change Data.Gaussian.Norm.Basic.normSq total ≤ (errors.length : InverseRootPolynomial.Coordinate) *
-    ((errors.length : InverseRootPolynomial.Coordinate) * ((4 * allowance)^2 *
-      (PreparedObservationCoercivity.coefficientNormSq coefficients)^2)) at bound
+  change Gaussian.Norm.Basic.normSq total ≤ (errors.length : Coordinate) *
+    ((errors.length : Coordinate) * ((4 * allowance)^2 *
+      (coefficientNormSq coefficients)^2)) at bound
   have countEq : errors.length = edges.length :=
     differences_count
     plans cells evaluated sources planned endpoints polygons
@@ -257,22 +259,22 @@ def sumErrors (polygons : BasisEndpointPlans.SourcePolygons numerical coefficien
   exact ⟨errors, rfl, total, rfl, bound.trans_eq (by ring1)⟩
 
 /-- A later parent allowance absorbs the retained count factor. -/
-theorem ErrorSum.paid {polygons : BasisEndpointPlans.SourcePolygons numerical coefficients allowance plans cells
+theorem ErrorSum.paid {polygons : SourcePolygons numerical coefficients allowance plans cells
   evaluated sources planned endpoints}
     (errors :
       ErrorSum
-      polygons) {parentAllowance : InverseRootPolynomial.Coordinate} (nonnegative : 0 ≤ allowance)
-    (paid : (edges.length : InverseRootPolynomial.Coordinate) * allowance ≤ parentAllowance) :
-    Data.Gaussian.Norm.Basic.normSq errors.total ≤ (4 * parentAllowance)^2 *
-      (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
-  have nonnegativeCount := Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Cast.Order.natCast_le_direct
+      polygons) {parentAllowance : Coordinate} (nonnegative : 0 ≤ allowance)
+    (paid : (edges.length : Coordinate) * allowance ≤ parentAllowance) :
+    Gaussian.Norm.Basic.normSq errors.total ≤ (4 * parentAllowance)^2 *
+      (coefficientNormSq coefficients)^2 := by
+  have nonnegativeCount := Arithmetic.mul_nonneg_direct (Fraction.Cast.Order.natCast_le_direct
     (Nat.zero_le edges.length)) nonnegative
-  have squared := Fraction.Order.Arithmetic.pow_le_pow_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by
-      decide : (0 : InverseRootPolynomial.Coordinate) ≤ 4) nonnegativeCount)
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct paid (by
-        decide : (0 : InverseRootPolynomial.Coordinate) ≤ 4)) 2
-  exact errors.bounded.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct squared
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+  have squared := Arithmetic.pow_le_pow_direct (Arithmetic.mul_nonneg_direct (by
+      decide : (0 : Coordinate) ≤ 4) nonnegativeCount)
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct paid (by
+        decide : (0 : Coordinate) ≤ 4)) 2
+  exact errors.bounded.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct squared
+    (Arithmetic.sq_nonneg_direct _))
 
 end BasisEndpointPlans.SourcePolygons
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourceErrors

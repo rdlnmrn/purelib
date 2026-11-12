@@ -54,6 +54,10 @@ public theorem sub_pf {a b c d : R} (negative : -b = c) (computed : a + c = d) :
   rw [SubNegMonoid.sub_eq_add_neg, negative]
   exact computed
 
+/-- Subtracting zero preserves the original ring value. -/
+public theorem sub_zero (value : R) : value - 0 = value :=
+  sub_pf neg_zero (AddZeroClass.add_zero value)
+
 /-- Scalar equality transports a computed negation. -/
 public theorem neg_congr {a a' b : R} (source : a = a') (computed : -a' = b) :
     -a = b := (congrArg Neg.neg source).trans computed

@@ -55,6 +55,8 @@ import Purelib.Riemann.Paths.PreparedPathDecomposition
 import Purelib.Riemann.Paths.PreparedPathParentCaches
 import Purelib.Topology.Polygon.Stokes
 
+open Purelib.Integration.Path.CenteredPathIncrements
+
 open Purelib.Curves
 
 open Purelib.Geometry
@@ -77,59 +79,59 @@ open Purelib.Riemann.Normalization
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedHorizontalRuns
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedRunBudgets.SharedHorizontalRuns
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
 open Purelib.Riemann.Normalization.RectangularInverseModels
 
 namespace SharedOccurrenceRuns
-variable (retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared)
+variable (retained : Preparation.CommonBasisPreparation prepared)
   {index : Nat} (inputs : retained.Inputs index)
   (outer : Fin prepared.occurrences.length) {stage : Nat}
   {cuts : Paths.RectangularSegmentSplitting.GridCuts ((domains.get
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer).sideOccurrence.position).domain
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (ParentIndices.occurrenceAt prepared.occurrences
       outer).sideOccurrence.sheet).geometry}
   {meshBox : Rational.Box} {mesh : Meshes.RectangularObservationMesh.ObservationMesh cuts meshBox}
   (traces : Paths.RectangularPerimeterTraces.PerimeterTraces mesh) (cache :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage)
-  (banks : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PerimeterSamples.SharedPerimeter.Banks (occurrence :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) traces
+    RegularDomainMeshes.RegularMeshes.Numerics domains stage)
+  (banks : SharedPerimeter.Banks (occurrence :=
+    ParentIndices.occurrenceAt prepared.occurrences outer) traces
     cache)
   (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
 
-variable {allowance : Normalization.InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
+variable {allowance : InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
   (Paths.RectangularDyadicPairedTrace.dyadicCount mesh.depth) allowance)
   (owners : OwnerRequest
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer)
+    (ParentIndices.occurrenceAt prepared.occurrences outer)
     budget.tolerance) (later : owners.index ≤ stage)
-  {junctionAllowance : Normalization.InverseRootPolynomial.Coordinate} (junctionBudget :
+  {junctionAllowance : InverseRootPolynomial.Coordinate} (junctionBudget :
     Path.NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
   (junctionOwners : OwnerRequest
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer)
+    (ParentIndices.occurrenceAt prepared.occurrences outer)
     junctionBudget.tolerance)
   (junctionLater : junctionOwners.index ≤ stage)
-  (blocks : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBank.ParentBlockBank
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) mesh
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
-      outer).sourceVertical (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (blocks : ParentBank.ParentBlockBank
+    (ParentIndices.occurrenceAt prepared.occurrences outer) mesh
+    (ParentIndices.occurrenceAt prepared.occurrences
+      outer).sourceVertical (ParentIndices.occurrenceAt
       prepared.occurrences outer).sourceForward)
   (boxEq : meshBox = (base.faces.regulars[(ParentIndices.occurrenceAt prepared.occurrences
     outer).sideOccurrence.position.val]'(ParentIndices.occurrenceAt prepared.occurrences
       outer).sideOccurrence.position.isLt).cell.box)
 
 /-- A property holding in each grid-side branch holds for the dependent case split on the retained side. -/
-private theorem side_rec_property {side : Purelib.Riemann.Meshes.GridLiftedDualSteps.GridSide} {T : Sort u}
+private theorem side_rec_property {side : Meshes.GridLiftedDualSteps.GridSide} {T : Sort u}
     (bottom : side = .bottom → T) (right : side = .right → T)
     (top : side = .top → T) (left : side = .left → T) (P : T → Prop)
     (hb : ∀ h, P (bottom h)) (hr : ∀ h, P (right h))
@@ -143,16 +145,16 @@ private theorem side_rec_property {side : Purelib.Riemann.Meshes.GridLiftedDualS
   | left => exact hl rfl
 
 /-- Applying a grid-side equality transport agrees with the original value after transporting its argument. -/
-private theorem transport_apply {a b : Purelib.Riemann.Meshes.GridLiftedDualSteps.GridSide} {T : Sort u}
+private theorem transport_apply {a b : Meshes.GridLiftedDualSteps.GridSide} {T : Sort u}
     (value : b = a → T) (equal : a = b) (selfEq : b = b) :
     (Eq.rec (motive := fun x _ => b = x → T) value equal) selfEq = value equal.symm := by
   cases equal
   rfl
 
 /-- Equality transport of side capacity and area preserves the original physical run bank. -/
-private theorem physical_side_cast (capacity : Purelib.Riemann.Meshes.GridLiftedDualSteps.GridSide → Nat) (area :
-  Purelib.Riemann.Meshes.GridLiftedDualSteps.GridSide → Normalization.InverseRootPolynomial.Gaussian)
-    {first last : Purelib.Riemann.Meshes.GridLiftedDualSteps.GridSide} (equal : first = last)
+private theorem physical_side_cast (capacity : Meshes.GridLiftedDualSteps.GridSide → Nat) (area :
+  Meshes.GridLiftedDualSteps.GridSide → InverseRootPolynomial.Gaussian)
+    {first last : Meshes.GridLiftedDualSteps.GridSide} (equal : first = last)
     (bank : PhysicalRunBank retained inputs outer
       coefficients stage mesh.depth (capacity last) (area last)
       (max allowance junctionAllowance) (max budget.tolerance junctionBudget.tolerance)) :
@@ -169,13 +171,13 @@ theorem build_increments :
       retained inputs outer traces cache banks coefficients
       budget owners later junctionBudget junctionOwners junctionLater blocks boxEq).physical).flatten =
       let sample := (banks.sample traces cache coefficients).get traces cache coefficients
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+        (ParentIndices.occurrenceAt prepared.occurrences
           outer).sideOccurrence.side
-      if (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
-        outer).sourceForward then Path.CenteredPathIncrements.Sample.increments sample
-      else Path.PairedAreaReversal.reverseIncrements (Path.CenteredPathIncrements.Sample.increments sample) := by
+      if (ParentIndices.occurrenceAt prepared.occurrences
+        outer).sourceForward then Sample.increments sample
+      else Path.PairedAreaReversal.reverseIncrements (Sample.increments sample) := by
   unfold SharedOccurrenceRuns.build
-  apply Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedOccurrenceTotals.SharedOccurrenceRuns.side_rec_property
+  apply SharedOccurrenceRuns.side_rec_property
     (T := PhysicalRunBank retained inputs outer
     coefficients stage mesh.depth
     (SharedOccurrenceRuns.sideCapacity outer
@@ -186,10 +188,10 @@ theorem build_increments :
     _ _ _ _ (fun bank => (List.ofFn bank.physical).flatten = _)
   · intro side
     dsimp only [Eq.ndrec]
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedOccurrenceTotals.SharedOccurrenceRuns.transport_apply]
+    rw [SharedOccurrenceRuns.transport_apply]
     dsimp only [id_eq]
     erw
-      [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedOccurrenceTotals.SharedOccurrenceRuns.physical_side_cast
+      [SharedOccurrenceRuns.physical_side_cast
       (retained := retained) (inputs := inputs) (outer := outer)
       (coefficients := coefficients) (budget := budget) (junctionBudget := junctionBudget) (equal := side)
       (capacity := fun side => match side with
@@ -197,7 +199,7 @@ theorem build_increments :
         | .left | .right => 2 * mesh.boundaryRows + 1)
       (area := fun side => ((banks.sample traces cache coefficients).get traces cache coefficients side).centeredArea)]
     have words := congrArg (fun chosen =>
-      Path.CenteredPathIncrements.Sample.increments ((banks.sample traces cache coefficients).get traces cache
+      Sample.increments ((banks.sample traces cache coefficients).get traces cache
         coefficients chosen)) side
     rw [words]
     exact
@@ -206,10 +208,10 @@ theorem build_increments :
       budget owners later junctionBudget junctionOwners junctionLater blocks _ _ boxEq
   · intro side
     dsimp only [Eq.ndrec]
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedOccurrenceTotals.SharedOccurrenceRuns.transport_apply]
+    rw [SharedOccurrenceRuns.transport_apply]
     dsimp only [id_eq]
     erw
-      [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedOccurrenceTotals.SharedOccurrenceRuns.physical_side_cast
+      [SharedOccurrenceRuns.physical_side_cast
       (retained := retained) (inputs := inputs) (outer := outer)
       (coefficients := coefficients) (budget := budget) (junctionBudget := junctionBudget) (equal := side)
       (capacity := fun side => match side with
@@ -217,7 +219,7 @@ theorem build_increments :
         | .left | .right => 2 * mesh.boundaryRows + 1)
       (area := fun side => ((banks.sample traces cache coefficients).get traces cache coefficients side).centeredArea)]
     have words := congrArg (fun chosen =>
-      Path.CenteredPathIncrements.Sample.increments ((banks.sample traces cache coefficients).get traces cache
+      Sample.increments ((banks.sample traces cache coefficients).get traces cache
         coefficients chosen)) side
     rw [words]
     exact
@@ -226,10 +228,10 @@ theorem build_increments :
       budget owners later junctionBudget junctionOwners junctionLater blocks _ _ boxEq
   · intro side
     dsimp only [Eq.ndrec]
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedOccurrenceTotals.SharedOccurrenceRuns.transport_apply]
+    rw [SharedOccurrenceRuns.transport_apply]
     dsimp only [id_eq]
     erw
-      [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedOccurrenceTotals.SharedOccurrenceRuns.physical_side_cast
+      [SharedOccurrenceRuns.physical_side_cast
       (retained := retained) (inputs := inputs) (outer := outer)
       (coefficients := coefficients) (budget := budget) (junctionBudget := junctionBudget) (equal := side)
       (capacity := fun side => match side with
@@ -237,7 +239,7 @@ theorem build_increments :
         | .left | .right => 2 * mesh.boundaryRows + 1)
       (area := fun side => ((banks.sample traces cache coefficients).get traces cache coefficients side).centeredArea)]
     have words := congrArg (fun chosen =>
-      Path.CenteredPathIncrements.Sample.increments ((banks.sample traces cache coefficients).get traces cache
+      Sample.increments ((banks.sample traces cache coefficients).get traces cache
         coefficients chosen)) side
     rw [words]
     exact
@@ -246,10 +248,10 @@ theorem build_increments :
       budget owners later junctionBudget junctionOwners junctionLater blocks _ _ boxEq
   · intro side
     dsimp only [Eq.ndrec]
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedOccurrenceTotals.SharedOccurrenceRuns.transport_apply]
+    rw [SharedOccurrenceRuns.transport_apply]
     dsimp only [id_eq]
     erw
-      [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedOccurrenceTotals.SharedOccurrenceRuns.physical_side_cast
+      [SharedOccurrenceRuns.physical_side_cast
       (retained := retained) (inputs := inputs) (outer := outer)
       (coefficients := coefficients) (budget := budget) (junctionBudget := junctionBudget) (equal := side)
       (capacity := fun side => match side with
@@ -257,7 +259,7 @@ theorem build_increments :
         | .left | .right => 2 * mesh.boundaryRows + 1)
       (area := fun side => ((banks.sample traces cache coefficients).get traces cache coefficients side).centeredArea)]
     have words := congrArg (fun chosen =>
-      Path.CenteredPathIncrements.Sample.increments ((banks.sample traces cache coefficients).get traces cache
+      Sample.increments ((banks.sample traces cache coefficients).get traces cache
         coefficients chosen)) side
     rw [words]
     exact

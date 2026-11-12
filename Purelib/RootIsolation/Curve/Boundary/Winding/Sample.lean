@@ -75,11 +75,11 @@ is outside it.  Neither alternative asserts that a factor zero exists.
 namespace Purelib.RootIsolation.Curve.Boundary.Winding.Sample
 section Boundary
 
-variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
 variable {denominatorMargin : Fraction.Rational}
 variable {marginPositive : 0 < denominatorMargin}
 variable {atom : Geometry.Projective.Hermitian.Atom}
-variable {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+variable {boundary : Analysis.CurveBoundary p reference current denominatorMargin
   marginPositive atom}
 
 set_option genInjectivity false in
@@ -95,9 +95,9 @@ inductive ChildComparison
       (owner :
         ControlledCompleteRequestMeeting
           family.boxes family.boxes_pairwise
-            (Curve.Boundary.Winding.Budget.windingTarget (boundary := boundary) squarefree family)
+            (Budget.windingTarget (boundary := boundary) squarefree family)
             classified.entry)
-      (residual : Data.Gaussian.Norm.Basic.normSq
+      (residual : Gaussian.Norm.Basic.normSq
           (p.eval
             (classified.entry.parent.parent.chart.parameterization.curve.point
               owner.parameter)) <
@@ -125,13 +125,13 @@ def compareChild
   | meeting owner =>
       exact .owned owner
         ((owner.residual_lt
-            (Curve.Boundary.Winding.Budget.windingTarget_pos (boundary := boundary) squarefree family)).trans_le
-          (Curve.Boundary.Winding.Budget.windingTarget_le_derivativeThreshold
+            (Budget.windingTarget_pos (boundary := boundary) squarefree family)).trans_le
+          (Budget.windingTarget_le_derivativeThreshold
             (boundary := boundary) squarefree family))
         (owner.derivative_ne_zero squarefree
           family.boxAt_refinesAmbient
-          (Curve.Boundary.Winding.Budget.windingTarget_pos (boundary := boundary) squarefree family)
-          (Curve.Boundary.Winding.Budget.windingTarget_le_derivativeThreshold
+          (Budget.windingTarget_pos (boundary := boundary) squarefree family)
+          (Budget.windingTarget_le_derivativeThreshold
             (boundary := boundary) squarefree family))
   | outside proof =>
       exact .outside (by
@@ -158,7 +158,7 @@ def compareWindingRequestFamily
     (squarefree : SquarefreeCertificate p)
     (family : WindingFamily p ambient) :
     List (ComparedChild (boundary := boundary) squarefree family) :=
-  (Curve.Boundary.Winding.Budget.classifiedWindingRequestFamily (boundary := boundary) squarefree family).map
+  (Budget.classifiedWindingRequestFamily (boundary := boundary) squarefree family).map
     fun classified =>
       { classified := classified
         comparison := compareChild squarefree family classified }
@@ -190,9 +190,9 @@ inductive FamilySampleResolution
       (owner :
         ControlledCompleteRequestMeeting
           family.boxes family.boxes_pairwise
-            (Curve.Boundary.Winding.Budget.windingTarget (boundary := boundary) squarefree family)
+            (Budget.windingTarget (boundary := boundary) squarefree family)
             child.classified.entry)
-      (residual : Data.Gaussian.Norm.Basic.normSq
+      (residual : Gaussian.Norm.Basic.normSq
           (p.eval
             (child.classified.entry.parent.parent.chart.parameterization.curve.point
               owner.parameter)) <
@@ -263,9 +263,9 @@ inductive FamilyDescendantResolution
       (owner :
         ControlledCompleteRequestMeeting
           family.boxes family.boxes_pairwise
-            (Curve.Boundary.Winding.Budget.windingTarget (boundary := boundary) squarefree family)
+            (Budget.windingTarget (boundary := boundary) squarefree family)
             child.classified.entry)
-      (initialResidual : Data.Gaussian.Norm.Basic.normSq
+      (initialResidual : Gaussian.Norm.Basic.normSq
           (p.eval
             (child.classified.entry.parent.parent.chart.parameterization.curve.point
               owner.parameter)) <
@@ -276,11 +276,11 @@ inductive FamilyDescendantResolution
             owner.parameter) ≠ 0)
       (strict : (family.stateAtBoxIndex owner.index).box.StrictContains
         (child.classified.entry.parent.parent.chart.parameterization.curve.point
-          (Curve.Boundary.Winding.Descendant.familyStrictDescendantSample child.classified.entry family).parameter))
-      (descendantResidual : Data.Gaussian.Norm.Basic.normSq
+          (Descendant.familyStrictDescendantSample child.classified.entry family).parameter))
+      (descendantResidual : Gaussian.Norm.Basic.normSq
         (p.eval
           (child.classified.entry.parent.parent.chart.parameterization.curve.point
-            (Curve.Boundary.Winding.Descendant.familyStrictDescendantSample child.classified.entry family).parameter)) <
+            (Descendant.familyStrictDescendantSample child.classified.entry family).parameter)) <
           (family.stateAtBoxIndex owner.index).clearance.bound)
   /-- The initial finite scan found every retained child sample outside all winding-state boxes. -/ | initiallyOutside
       (proof : ∀ child ∈
@@ -298,7 +298,7 @@ def resolveFamilyDescendant
   match resolveWindingRequestFamily (boundary := boundary) squarefree family with
   | .outside proof => exact .initiallyOutside proof
   | .owned child member owner initialResidual derivativeNonzero =>
-      match Curve.Boundary.Winding.Descendant.resolveOwnedChildDescendant squarefree family child.classified owner with
+      match Descendant.resolveOwnedChildDescendant squarefree family child.classified owner with
       | .retained strict descendantResidual =>
           exact .retained child member owner initialResidual derivativeNonzero
             strict descendantResidual

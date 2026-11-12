@@ -32,6 +32,9 @@ import Purelib.LinearAlgebra.Coordinates3.Vector
 import Purelib.Tactic.Ring
 import Purelib.Data.Rat.Fraction.Order.Cast
 
+open Purelib.Geometry.Triangles.NonNull.Basic
+open Purelib.Geometry.Triangles.Altitude.Foot
+
 open Purelib.Algebra
 open Purelib.Algebra.Field
 
@@ -59,11 +62,11 @@ namespace ChapterTenExamples
 namespace ExerciseTenSix
 
 /-- The rational vertex (3, 0) of the displayed right triangle. -/
-def first : Purelib.Geometry.Plane.Point Fraction.Rational := ⟨3, 0⟩
+def first : Point Fraction.Rational := ⟨3, 0⟩
 /-- The rational vertex (0, 4) of the displayed right triangle. -/
-def second : Purelib.Geometry.Plane.Point Fraction.Rational := ⟨0, 4⟩
+def second : Point Fraction.Rational := ⟨0, 4⟩
 /-- The origin, at which the displayed rational triangle is right. -/
-def third : Purelib.Geometry.Plane.Point Fraction.Rational := ⟨0, 0⟩
+def third : Point Fraction.Rational := ⟨0, 0⟩
 
 /-- The first two vertices of the displayed right triangle are distinct. -/
 private theorem firstSecondDistinct : first ≠ second := by decide
@@ -86,25 +89,25 @@ private theorem notCollinear : ¬ Line.Incidence.Collinear first second third :=
 /-- The side joining the first two vertices has nonzero norm. -/
 private theorem firstSecondNonNull :
     ¬ (Line.Incidence.lineThrough first second firstSecondDistinct).IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull Line.Incidence.lineThrough first second
+  unfold Line.IsNull Line.Incidence.lineThrough first second
   decide
 
 /-- The side joining the first and third vertices has nonzero norm. -/
 private theorem firstThirdNonNull :
     ¬ (Line.Incidence.lineThrough first third ExerciseTenSix.firstThirdDistinct).IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull Line.Incidence.lineThrough first third
+  unfold Line.IsNull Line.Incidence.lineThrough first third
   decide
 
 /-- The side joining the second and third vertices has nonzero norm. -/
 private theorem secondThirdNonNull :
     ¬ (Line.Incidence.lineThrough second third ExerciseTenSix.secondThirdDistinct).IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull Line.Incidence.lineThrough second third
+  unfold Line.IsNull Line.Incidence.lineThrough second third
   decide
 
 /-- The rational triangle with vertices (3, 0), (0, 4) and (0, 0).
 
 Its retained certificates establish noncollinearity, distinct vertices and non-null sides. -/
-def triangle : NonNull.Basic.NonNullTriangle Fraction.Rational :=
+def triangle : NonNullTriangle Fraction.Rational :=
   let firstSecondDistinct : first ≠ second := by decide
   let
     firstThirdDistinct
@@ -120,17 +123,17 @@ def triangle : NonNull.Basic.NonNullTriangle Fraction.Rational :=
     exact determinantNonzero determinantZero
   let firstSecondNonNull :
       ¬ (Line.Incidence.lineThrough first second firstSecondDistinct).IsNull := by
-    unfold Purelib.Geometry.Plane.Line.IsNull Line.Incidence.lineThrough first second
+    unfold Line.IsNull Line.Incidence.lineThrough first second
     decide
   let firstThirdNonNull :
       ¬ (Line.Incidence.lineThrough first third
         firstThirdDistinct).IsNull
         := by
-    unfold Purelib.Geometry.Plane.Line.IsNull Line.Incidence.lineThrough first third
+    unfold Line.IsNull Line.Incidence.lineThrough first third
     decide
   let secondThirdNonNull :
       ¬ (Line.Incidence.lineThrough second third secondThirdDistinct).IsNull := by
-    unfold Purelib.Geometry.Plane.Line.IsNull Line.Incidence.lineThrough second third
+    unfold Line.IsNull Line.Incidence.lineThrough second third
     decide
   {
     first := first
@@ -150,13 +153,13 @@ def triangle : NonNull.Basic.NonNullTriangle Fraction.Rational :=
 public theorem rightAtThird :
     (Line.Incidence.lineThrough first third ExerciseTenSix.firstThirdDistinct).Perpendicular
       (Line.Incidence.lineThrough second third ExerciseTenSix.secondThirdDistinct) := by
-  unfold Purelib.Geometry.Plane.Line.Perpendicular Line.Incidence.lineThrough first second third
+  unfold Line.Perpendicular Line.Incidence.lineThrough first second third
   ring1
 
 /-- The opposite-side quadrances of the displayed right triangle are 16, 9 and 25. -/
 theorem quadrance_values : triangle.quadrances = ⟨16, 9, 25⟩ := by
   apply Vector3.ext <;>
-    unfold NonNull.Basic.NonNullTriangle.quadrances Quadrance.Basic.triangleQuadrances Point.Quadrance.quadrance
+    unfold NonNullTriangle.quadrances Quadrance.Basic.triangleQuadrances Point.Quadrance.quadrance
       triangle first second third <;>
     ring1
 
@@ -164,26 +167,26 @@ theorem quadrance_values : triangle.quadrances = ⟨16, 9, 25⟩ := by
 
 These values use the retained right-angle witness and distinguish the two endpoint formulas. -/
 theorem corrected_values :
-    Point.Quadrance.quadrance first (Altitude.Foot.NonNullTriangle.thirdAltitudeFoot triangle) = (81 :
+    Point.Quadrance.quadrance first (NonNullTriangle.thirdAltitudeFoot triangle) = (81 :
       Fraction.Rational) / 25 ∧
-      Point.Quadrance.quadrance second (Altitude.Foot.NonNullTriangle.thirdAltitudeFoot triangle) = (256 :
+      Point.Quadrance.quadrance second (NonNullTriangle.thirdAltitudeFoot triangle) = (256 :
         Fraction.Rational) / 25 ∧
-      Point.Quadrance.quadrance third (Altitude.Foot.NonNullTriangle.thirdAltitudeFoot triangle) = (144 :
+      Point.Quadrance.quadrance third (NonNullTriangle.thirdAltitudeFoot triangle) = (144 :
         Fraction.Rational) / 25 := open formalisations.DivineProportions.Chapters.Examples.ChapterSix in by
   have corrected := Right.Altitude.quadrance_formulas triangle
-    (Purelib.Data.Rat.Fraction.Order.Cast.rational_natCast_nonzero (by decide : 2 ≠ 0)) ExerciseTenSix.rightAtThird
+    (Fraction.Order.Cast.rational_natCast_nonzero (by decide : 2 ≠ 0)) rightAtThird
   rw [quadrance_values] at corrected
   refine ⟨?_, ?_, ?_⟩
   · calc
-      Point.Quadrance.quadrance first (Altitude.Foot.NonNullTriangle.thirdAltitudeFoot triangle) =
+      Point.Quadrance.quadrance first (NonNullTriangle.thirdAltitudeFoot triangle) =
           (9 : Fraction.Rational) ^ 2 / 25 := corrected.1
       _ = 81 / 25 := by rw [show (9 : Fraction.Rational) ^ 2 = 81 by ring1]
   · calc
-      Point.Quadrance.quadrance second (Altitude.Foot.NonNullTriangle.thirdAltitudeFoot triangle) =
+      Point.Quadrance.quadrance second (NonNullTriangle.thirdAltitudeFoot triangle) =
           (16 : Fraction.Rational) ^ 2 / 25 := corrected.2.1
       _ = 256 / 25 := by rw [show (16 : Fraction.Rational) ^ 2 = 256 by ring1]
   · calc
-      Point.Quadrance.quadrance third (Altitude.Foot.NonNullTriangle.thirdAltitudeFoot triangle) =
+      Point.Quadrance.quadrance third (NonNullTriangle.thirdAltitudeFoot triangle) =
           (16 : Fraction.Rational) * 9 / 25 := corrected.2.2
       _ = 144 / 25 := by rw [show (16 : Fraction.Rational) * 9 = 144 by ring1]
 
@@ -191,13 +194,13 @@ theorem corrected_values :
 this explicit right triangle gives `81/25`, whereas that printed expression
 is `256/25`. -/
 theorem exercise_10_6_printed_counterexample :
-    Point.Quadrance.quadrance first (Altitude.Foot.NonNullTriangle.thirdAltitudeFoot triangle) ≠
+    Point.Quadrance.quadrance first (NonNullTriangle.thirdAltitudeFoot triangle) ≠
       triangle.quadrances.t ^ 2 / triangle.quadrances.s := by
   intro printed
   have impossible : (81 : Fraction.Rational) / 25 = 256 / 25 := by
     calc
       (81 : Fraction.Rational) / 25 =
-          Point.Quadrance.quadrance first (Altitude.Foot.NonNullTriangle.thirdAltitudeFoot triangle) :=
+          Point.Quadrance.quadrance first (NonNullTriangle.thirdAltitudeFoot triangle) :=
         corrected_values.1.symm
       _ = triangle.quadrances.t ^ 2 /
           triangle.quadrances.s := printed
@@ -212,18 +215,18 @@ end ExerciseTenSix
 namespace ExerciseTenSeven
 
 /-- The first vertex (2, 3) of the first congruence example. -/
-def firstA : Purelib.Geometry.Plane.Point Fraction.Rational := ⟨2, 3⟩
+def firstA : Point Fraction.Rational := ⟨2, 3⟩
 /-- The second vertex (3, 1) of the first congruence example. -/
-def secondA : Purelib.Geometry.Plane.Point Fraction.Rational := ⟨3, 1⟩
+def secondA : Point Fraction.Rational := ⟨3, 1⟩
 /-- The third vertex (10, 2) of the first congruence example. -/
-def thirdA : Purelib.Geometry.Plane.Point Fraction.Rational := ⟨10, 2⟩
+def thirdA : Point Fraction.Rational := ⟨10, 2⟩
 
 /-- The first vertex (0, 1) of the second congruence example. -/
-def firstB : Purelib.Geometry.Plane.Point Fraction.Rational := ⟨0, 1⟩
+def firstB : Point Fraction.Rational := ⟨0, 1⟩
 /-- The second vertex (−2, 2) of the second congruence example. -/
-def secondB : Purelib.Geometry.Plane.Point Fraction.Rational := ⟨-2, 2⟩
+def secondB : Point Fraction.Rational := ⟨-2, 2⟩
 /-- The third vertex (5, 6) of the second congruence example. -/
-def thirdB : Purelib.Geometry.Plane.Point Fraction.Rational := ⟨5, 6⟩
+def thirdB : Point Fraction.Rational := ⟨5, 6⟩
 
 /-- Exercise 10.7.  The side triples are respectively `{50,65,5}` and
 `{65,50,5}`, so the first two opposite sides are exchanged. -/
@@ -242,18 +245,18 @@ end ExerciseTenSeven
 namespace ExerciseTenEight
 
 /-- The first vertex (−4, 3) of the first similarity example. -/
-def firstA : Purelib.Geometry.Plane.Point Fraction.Rational := ⟨-4, 3⟩
+def firstA : Point Fraction.Rational := ⟨-4, 3⟩
 /-- The second vertex (6, 5) of the first similarity example. -/
-def secondA : Purelib.Geometry.Plane.Point Fraction.Rational := ⟨6, 5⟩
+def secondA : Point Fraction.Rational := ⟨6, 5⟩
 /-- The third vertex (−1, 1) of the first similarity example. -/
-def thirdA : Purelib.Geometry.Plane.Point Fraction.Rational := ⟨-1, 1⟩
+def thirdA : Point Fraction.Rational := ⟨-1, 1⟩
 
 /-- The first vertex (4, −7) of the second similarity example. -/
-def firstB : Purelib.Geometry.Plane.Point Fraction.Rational := ⟨4, -7⟩
+def firstB : Point Fraction.Rational := ⟨4, -7⟩
 /-- The second vertex (−2, −11) of the second similarity example. -/
-def secondB : Purelib.Geometry.Plane.Point Fraction.Rational := ⟨-2, -11⟩
+def secondB : Point Fraction.Rational := ⟨-2, -11⟩
 /-- The third vertex (2, 9) of the second similarity example. -/
-def thirdB : Purelib.Geometry.Plane.Point Fraction.Rational := ⟨2, 9⟩
+def thirdB : Point Fraction.Rational := ⟨2, 9⟩
 
 /-- The first two vertices of triangle A are distinct. -/
 private theorem firstSecondDistinctA : firstA ≠ secondA := by decide
@@ -291,43 +294,43 @@ private theorem notCollinearB : ¬ Line.Incidence.Collinear firstB secondB third
 /-- The first-to-second side of triangle A has nonzero norm. -/
 private theorem firstSecondNonNullA :
     ¬ (Line.Incidence.lineThrough firstA secondA ExerciseTenEight.firstSecondDistinctA).IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull Line.Incidence.lineThrough firstA secondA
+  unfold Line.IsNull Line.Incidence.lineThrough firstA secondA
   decide
 
 /-- The first-to-third side of triangle A has nonzero norm. -/
 private theorem firstThirdNonNullA :
     ¬ (Line.Incidence.lineThrough firstA thirdA ExerciseTenEight.firstThirdDistinctA).IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull Line.Incidence.lineThrough firstA thirdA
+  unfold Line.IsNull Line.Incidence.lineThrough firstA thirdA
   decide
 
 /-- The second-to-third side of triangle A has nonzero norm. -/
 private theorem secondThirdNonNullA :
     ¬ (Line.Incidence.lineThrough secondA thirdA ExerciseTenEight.secondThirdDistinctA).IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull Line.Incidence.lineThrough secondA thirdA
+  unfold Line.IsNull Line.Incidence.lineThrough secondA thirdA
   decide
 
 /-- The first-to-second side of triangle B has nonzero norm. -/
 private theorem firstSecondNonNullB :
     ¬ (Line.Incidence.lineThrough firstB secondB ExerciseTenEight.firstSecondDistinctB).IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull Line.Incidence.lineThrough firstB secondB
+  unfold Line.IsNull Line.Incidence.lineThrough firstB secondB
   decide
 
 /-- The first-to-third side of triangle B has nonzero norm. -/
 private theorem firstThirdNonNullB :
     ¬ (Line.Incidence.lineThrough firstB thirdB ExerciseTenEight.firstThirdDistinctB).IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull Line.Incidence.lineThrough firstB thirdB
+  unfold Line.IsNull Line.Incidence.lineThrough firstB thirdB
   decide
 
 /-- The second-to-third side of triangle B has nonzero norm. -/
 private theorem secondThirdNonNullB :
     ¬ (Line.Incidence.lineThrough secondB thirdB ExerciseTenEight.secondThirdDistinctB).IsNull := by
-  unfold Purelib.Geometry.Plane.Line.IsNull Line.Incidence.lineThrough secondB thirdB
+  unfold Line.IsNull Line.Incidence.lineThrough secondB thirdB
   decide
 
 /-- The first certified rational triangle in the similarity example.
 
 Retain the displayed three vertices and the proofs of noncollinearity, distinctness and non-null sides. -/
-def triangleA : NonNull.Basic.NonNullTriangle Fraction.Rational :=
+def triangleA : NonNullTriangle Fraction.Rational :=
   let
     firstSecondDistinctA
     : firstA ≠ secondA := by decide
@@ -337,7 +340,7 @@ def triangleA : NonNull.Basic.NonNullTriangle Fraction.Rational :=
   let
     secondThirdDistinctA
     : secondA ≠ thirdA := by decide
-  let formalisations.DivineProportions.Chapters.Examples.ChapterTen.ChapterTenExamples.ExerciseTenEight.notCollinearA :
+  let notCollinearA :
     ¬ Line.Incidence.Collinear firstA secondA thirdA := by
     intro collinear
     have determinantZero :=
@@ -352,7 +355,7 @@ def triangleA : NonNull.Basic.NonNullTriangle Fraction.Rational :=
       ¬ (Line.Incidence.lineThrough firstA secondA
         firstSecondDistinctA).IsNull
         := by
-    unfold Purelib.Geometry.Plane.Line.IsNull Line.Incidence.lineThrough firstA secondA
+    unfold Line.IsNull Line.Incidence.lineThrough firstA secondA
     decide
   let
     firstThirdNonNullA
@@ -360,7 +363,7 @@ def triangleA : NonNull.Basic.NonNullTriangle Fraction.Rational :=
       ¬ (Line.Incidence.lineThrough firstA thirdA
         firstThirdDistinctA).IsNull
         := by
-    unfold Purelib.Geometry.Plane.Line.IsNull Line.Incidence.lineThrough firstA thirdA
+    unfold Line.IsNull Line.Incidence.lineThrough firstA thirdA
     decide
   let
     secondThirdNonNullA
@@ -368,14 +371,14 @@ def triangleA : NonNull.Basic.NonNullTriangle Fraction.Rational :=
       ¬ (Line.Incidence.lineThrough secondA thirdA
         secondThirdDistinctA).IsNull
         := by
-    unfold Purelib.Geometry.Plane.Line.IsNull Line.Incidence.lineThrough secondA thirdA
+    unfold Line.IsNull Line.Incidence.lineThrough secondA thirdA
     decide
   {
     first := firstA
     second := secondA
     third := thirdA
     notCollinear :=
-      formalisations.DivineProportions.Chapters.Examples.ChapterTen.ChapterTenExamples.ExerciseTenEight.notCollinearA
+      notCollinearA
     firstSecondDistinct :=
       firstSecondDistinctA
     firstThirdDistinct :=
@@ -393,7 +396,7 @@ def triangleA : NonNull.Basic.NonNullTriangle Fraction.Rational :=
 /-- The second certified rational triangle in the similarity example.
 
 Retain the displayed three vertices and the proofs of noncollinearity, distinctness and non-null sides. -/
-def triangleB : NonNull.Basic.NonNullTriangle Fraction.Rational :=
+def triangleB : NonNullTriangle Fraction.Rational :=
   let
     firstSecondDistinctB
     : firstB ≠ secondB := by decide
@@ -403,7 +406,7 @@ def triangleB : NonNull.Basic.NonNullTriangle Fraction.Rational :=
   let
     secondThirdDistinctB
     : secondB ≠ thirdB := by decide
-  let formalisations.DivineProportions.Chapters.Examples.ChapterTen.ChapterTenExamples.ExerciseTenEight.notCollinearB :
+  let notCollinearB :
     ¬ Line.Incidence.Collinear firstB secondB thirdB := by
     intro collinear
     have determinantZero :=
@@ -418,7 +421,7 @@ def triangleB : NonNull.Basic.NonNullTriangle Fraction.Rational :=
       ¬ (Line.Incidence.lineThrough firstB secondB
         firstSecondDistinctB).IsNull
         := by
-    unfold Purelib.Geometry.Plane.Line.IsNull Line.Incidence.lineThrough firstB secondB
+    unfold Line.IsNull Line.Incidence.lineThrough firstB secondB
     decide
   let
     firstThirdNonNullB
@@ -426,7 +429,7 @@ def triangleB : NonNull.Basic.NonNullTriangle Fraction.Rational :=
       ¬ (Line.Incidence.lineThrough firstB thirdB
         firstThirdDistinctB).IsNull
         := by
-    unfold Purelib.Geometry.Plane.Line.IsNull Line.Incidence.lineThrough firstB thirdB
+    unfold Line.IsNull Line.Incidence.lineThrough firstB thirdB
     decide
   let
     secondThirdNonNullB
@@ -434,14 +437,14 @@ def triangleB : NonNull.Basic.NonNullTriangle Fraction.Rational :=
       ¬ (Line.Incidence.lineThrough secondB thirdB
         secondThirdDistinctB).IsNull
         := by
-    unfold Purelib.Geometry.Plane.Line.IsNull Line.Incidence.lineThrough secondB thirdB
+    unfold Line.IsNull Line.Incidence.lineThrough secondB thirdB
     decide
   {
     first := firstB
     second := secondB
     third := thirdB
     notCollinear :=
-      formalisations.DivineProportions.Chapters.Examples.ChapterTen.ChapterTenExamples.ExerciseTenEight.notCollinearB
+      notCollinearB
     firstSecondDistinct :=
       firstSecondDistinctB
     firstThirdDistinct :=
@@ -463,12 +466,12 @@ theorem quadrance_values :
       triangleB.quadrances = ⟨416, 260, 52⟩ := by
   constructor
   · apply Vector3.ext <;>
-      unfold NonNull.Basic.NonNullTriangle.quadrances Quadrance.Basic.triangleQuadrances Point.Quadrance.quadrance
-        ExerciseTenEight.triangleA firstA secondA thirdA <;>
+      unfold NonNullTriangle.quadrances Quadrance.Basic.triangleQuadrances Point.Quadrance.quadrance
+        triangleA firstA secondA thirdA <;>
       ring1
   · apply Vector3.ext <;>
-      unfold NonNull.Basic.NonNullTriangle.quadrances Quadrance.Basic.triangleQuadrances Point.Quadrance.quadrance
-        ExerciseTenEight.triangleB firstB secondB thirdB <;>
+      unfold NonNullTriangle.quadrances Quadrance.Basic.triangleQuadrances Point.Quadrance.quadrance
+        triangleB firstB secondB thirdB <;>
       ring1
 
 /-- The first spread triple is `(1/2,1/10,4/5)`. -/
@@ -478,27 +481,27 @@ theorem triangleA_spread_values :
       triangleA.spreads.s = (4 : Fraction.Rational) / 5 := open
         formalisations.DivineProportions.Chapters.Examples.ChapterSix in by
   constructor
-  · unfold NonNull.Basic.NonNullTriangle.spreads Line.Spread.spread
+  · unfold NonNullTriangle.spreads Line.Spread.spread
     apply Ratio.ratio_eq_of_cross_product
       (ExplicitField.mul_ne_zero ExerciseTenEight.firstSecondNonNullA ExerciseTenEight.firstThirdNonNullA)
-      (Purelib.Data.Rat.Fraction.Order.Cast.rational_natCast_nonzero (by decide : 2 ≠ 0))
-    unfold ExerciseTenEight.triangleA Line.Incidence.lineThrough firstA secondA thirdA
+      (Fraction.Order.Cast.rational_natCast_nonzero (by decide : 2 ≠ 0))
+    unfold triangleA Line.Incidence.lineThrough firstA secondA thirdA
     ring1
   constructor
-  · unfold NonNull.Basic.NonNullTriangle.spreads Line.Spread.spread
+  · unfold NonNullTriangle.spreads Line.Spread.spread
     apply Ratio.ratio_eq_of_cross_product
       (ExplicitField.mul_ne_zero
         triangleA.firstSecondReversedNonNull ExerciseTenEight.secondThirdNonNullA)
-      (Purelib.Data.Rat.Fraction.Order.Cast.rational_natCast_nonzero (by decide : 10 ≠ 0))
-    unfold ExerciseTenEight.triangleA Line.Incidence.lineThrough firstA secondA thirdA
+      (Fraction.Order.Cast.rational_natCast_nonzero (by decide : 10 ≠ 0))
+    unfold triangleA Line.Incidence.lineThrough firstA secondA thirdA
     ring1
-  · unfold NonNull.Basic.NonNullTriangle.spreads Line.Spread.spread
+  · unfold NonNullTriangle.spreads Line.Spread.spread
     apply Ratio.ratio_eq_of_cross_product
       (ExplicitField.mul_ne_zero
         triangleA.firstThirdReversedNonNull
         triangleA.secondThirdReversedNonNull)
-      (Purelib.Data.Rat.Fraction.Order.Cast.rational_natCast_nonzero (by decide : 5 ≠ 0))
-    unfold ExerciseTenEight.triangleA Line.Incidence.lineThrough firstA secondA thirdA
+      (Fraction.Order.Cast.rational_natCast_nonzero (by decide : 5 ≠ 0))
+    unfold triangleA Line.Incidence.lineThrough firstA secondA thirdA
     ring1
 
 /-- The second spread triple is `(4/5,1/2,1/10)`. -/
@@ -508,31 +511,31 @@ theorem triangleB_spread_values :
       triangleB.spreads.s = (1 : Fraction.Rational) / 10 := open
         formalisations.DivineProportions.Chapters.Examples.ChapterSix in by
   constructor
-  · unfold NonNull.Basic.NonNullTriangle.spreads Line.Spread.spread
+  · unfold NonNullTriangle.spreads Line.Spread.spread
     apply Ratio.ratio_eq_of_cross_product
       (ExplicitField.mul_ne_zero ExerciseTenEight.firstSecondNonNullB ExerciseTenEight.firstThirdNonNullB)
-      (Purelib.Data.Rat.Fraction.Order.Cast.rational_natCast_nonzero (by decide : 5 ≠ 0))
-    unfold ExerciseTenEight.triangleB Line.Incidence.lineThrough firstB secondB thirdB
+      (Fraction.Order.Cast.rational_natCast_nonzero (by decide : 5 ≠ 0))
+    unfold triangleB Line.Incidence.lineThrough firstB secondB thirdB
     ring1
   constructor
-  · unfold NonNull.Basic.NonNullTriangle.spreads Line.Spread.spread
+  · unfold NonNullTriangle.spreads Line.Spread.spread
     apply Ratio.ratio_eq_of_cross_product
       (ExplicitField.mul_ne_zero
         triangleB.firstSecondReversedNonNull ExerciseTenEight.secondThirdNonNullB)
-      (Purelib.Data.Rat.Fraction.Order.Cast.rational_natCast_nonzero (by decide : 2 ≠ 0))
-    unfold ExerciseTenEight.triangleB Line.Incidence.lineThrough firstB secondB thirdB
+      (Fraction.Order.Cast.rational_natCast_nonzero (by decide : 2 ≠ 0))
+    unfold triangleB Line.Incidence.lineThrough firstB secondB thirdB
     ring1
-  · unfold NonNull.Basic.NonNullTriangle.spreads Line.Spread.spread
+  · unfold NonNullTriangle.spreads Line.Spread.spread
     apply Ratio.ratio_eq_of_cross_product
       (ExplicitField.mul_ne_zero
         triangleB.firstThirdReversedNonNull
         triangleB.secondThirdReversedNonNull)
-      (Purelib.Data.Rat.Fraction.Order.Cast.rational_natCast_nonzero (by decide : 10 ≠ 0))
-    unfold ExerciseTenEight.triangleB Line.Incidence.lineThrough firstB secondB thirdB
+      (Fraction.Order.Cast.rational_natCast_nonzero (by decide : 10 ≠ 0))
+    unfold triangleB Line.Incidence.lineThrough firstB secondB thirdB
     ring1
 
 /-- The displayed triangles are similar by a cyclic permutation of their spreads. -/
-theorem triangles_similar : triangleA.Similar ExerciseTenEight.triangleB := by
+theorem triangles_similar : triangleA.Similar triangleB := by
   apply Vector3.Permutation.SameEntries.bca
   · exact triangleA_spread_values.1.trans triangleB_spread_values.2.1.symm
   · exact triangleA_spread_values.2.1.trans
@@ -540,7 +543,7 @@ theorem triangles_similar : triangleA.Similar ExerciseTenEight.triangleB := by
   · exact triangleA_spread_values.2.2.trans triangleB_spread_values.1.symm
 
 /-- The displayed triangles are not congruent because their quadrance triples have no matching permutation. -/
-theorem triangles_not_congruent : ¬ triangleA.Congruent ExerciseTenEight.triangleB := by
+theorem triangles_not_congruent : ¬ triangleA.Congruent triangleB := by
   intro congruent
   have sameValues :
       Vector3.Permutation.SameEntries triangleA.quadrances triangleB.quadrances :=
@@ -561,9 +564,9 @@ theorem triangles_not_congruent : ¬ triangleA.Congruent ExerciseTenEight.triang
 
 The conjunction retains both the similarity witness and the obstruction to congruence for the explicit pair (Exercise
 10.8). -/
-theorem exercise_10_8 : triangleA.Similar ExerciseTenEight.triangleB ∧
-    ¬ triangleA.Congruent ExerciseTenEight.triangleB :=
-  ⟨ExerciseTenEight.triangles_similar, ExerciseTenEight.triangles_not_congruent⟩
+theorem exercise_10_8 : triangleA.Similar triangleB ∧
+    ¬ triangleA.Congruent triangleB :=
+  ⟨triangles_similar, triangles_not_congruent⟩
 
 end ExerciseTenEight
 
@@ -604,7 +607,7 @@ theorem quadrance_alternatives
       _ = ((98 / 13) * 13) * q₂ := by ring1
       _ = 98 * q₂ := by
         rw [ExplicitField.div_mul_cancel 98 thirteenNonzero]
-  have factored := (ExampleTenOne.cross_law_factorization q₂).1 cleared
+  have factored := (cross_law_factorization q₂).1 cleared
   by_cases secondFactorZero : q₂ - 26 = 0
   · exact Or.inr (Group.eq_of_sub_eq_zero secondFactorZero)
   · have firstFactorZero : 13 * q₂ - 72 = 0 := by
@@ -626,7 +629,7 @@ theorem rational_quadrance_alternatives (q₂ : Fraction.Rational)
     (crossLaw : (q₂ - 12) ^ 2 = (98 / 13) * q₂) :
     q₂ = 72 / 13 ∨ q₂ = 26 :=
   open formalisations.DivineProportions.Chapters.Examples.ChapterSix in ExampleTenOne.quadrance_alternatives q₂
-    (Purelib.Data.Rat.Fraction.Order.Cast.rational_natCast_nonzero (by decide : 13 ≠ 0)) crossLaw
+    (Fraction.Order.Cast.rational_natCast_nonzero (by decide : 13 ≠ 0)) crossLaw
 
 /-- Recover the cross-law equation from its denominator-cleared form when thirteen is nonzero. -/
 private theorem cross_law_of_cleared
@@ -649,10 +652,10 @@ theorem quadrance_candidates_satisfy :
       ((26 : Fraction.Rational) - 12) ^ 2 = (98 / 13) * 26 := open
         formalisations.DivineProportions.Chapters.Examples.ChapterSix in by
   have thirteenNonzero : (13 : Fraction.Rational) ≠ 0 :=
-    Purelib.Data.Rat.Fraction.Order.Cast.rational_natCast_nonzero (by decide)
+    Fraction.Order.Cast.rational_natCast_nonzero (by decide)
   constructor
-  · apply ExampleTenOne.cross_law_of_cleared ((72 : Fraction.Rational) / 13) thirteenNonzero
-    apply (ExampleTenOne.cross_law_factorization ((72 : Fraction.Rational) / 13)).2
+  · apply cross_law_of_cleared ((72 : Fraction.Rational) / 13) thirteenNonzero
+    apply (cross_law_factorization ((72 : Fraction.Rational) / 13)).2
     have firstFactorZero :
         13 * ((72 : Fraction.Rational) / 13) - 72 = 0 := by
       calc
@@ -663,8 +666,8 @@ theorem quadrance_candidates_satisfy :
         _ = 0 := by ring1
     rw [firstFactorZero]
     ring1
-  · apply ExampleTenOne.cross_law_of_cleared (26 : Fraction.Rational) thirteenNonzero
-    apply (ExampleTenOne.cross_law_factorization (26 : Fraction.Rational)).2
+  · apply cross_law_of_cleared (26 : Fraction.Rational) thirteenNonzero
+    apply (cross_law_factorization (26 : Fraction.Rational)).2
     ring1
 
 /-- The first candidate satisfies the first cross-product equality in the spread law. -/
@@ -699,18 +702,18 @@ theorem first_spread_solution :
         ((81 : Fraction.Rational) / 130) / 17 := open formalisations.DivineProportions.Chapters.Examples.ChapterSix in
           by
   have seventyTwoNonzero : (72 : Fraction.Rational) ≠ 0 :=
-    Purelib.Data.Rat.Fraction.Order.Cast.rational_natCast_nonzero (by decide)
+    Fraction.Order.Cast.rational_natCast_nonzero (by decide)
   have thirteenNonzero : (13 : Fraction.Rational) ≠ 0 :=
-    Purelib.Data.Rat.Fraction.Order.Cast.rational_natCast_nonzero (by decide)
+    Fraction.Order.Cast.rational_natCast_nonzero (by decide)
   have q₂Nonzero : (72 : Fraction.Rational) / 13 ≠ 0 :=
     ExplicitField.div_ne_zero seventyTwoNonzero thirteenNonzero
   exact ⟨
     Ratio.ratio_eq_of_cross_product
-      (Purelib.Data.Rat.Fraction.Order.Cast.rational_natCast_nonzero (by decide : 5 ≠ 0)) q₂Nonzero
-      ExampleTenOne.case_one_first_cross,
+      (Fraction.Order.Cast.rational_natCast_nonzero (by decide : 5 ≠ 0)) q₂Nonzero
+      case_one_first_cross,
     Ratio.ratio_eq_of_cross_product q₂Nonzero
-      (Purelib.Data.Rat.Fraction.Order.Cast.rational_natCast_nonzero (by decide : 17 ≠ 0))
-      ExampleTenOne.case_one_second_cross⟩
+      (Fraction.Order.Cast.rational_natCast_nonzero (by decide : 17 ≠ 0))
+      case_one_second_cross⟩
 
 /-- The second candidate satisfies the first cross-product equality in the spread law. -/
 private theorem case_two_first_cross :
@@ -747,13 +750,13 @@ theorem second_spread_solution :
           by
   exact ⟨
     Ratio.ratio_eq_of_cross_product
-      (Purelib.Data.Rat.Fraction.Order.Cast.rational_natCast_nonzero (by decide : 5 ≠ 0))
-      (Purelib.Data.Rat.Fraction.Order.Cast.rational_natCast_nonzero (by decide : 26 ≠ 0))
-      ExampleTenOne.case_two_first_cross,
+      (Fraction.Order.Cast.rational_natCast_nonzero (by decide : 5 ≠ 0))
+      (Fraction.Order.Cast.rational_natCast_nonzero (by decide : 26 ≠ 0))
+      case_two_first_cross,
     Ratio.ratio_eq_of_cross_product
-      (Purelib.Data.Rat.Fraction.Order.Cast.rational_natCast_nonzero (by decide : 26 ≠ 0))
-      (Purelib.Data.Rat.Fraction.Order.Cast.rational_natCast_nonzero (by decide : 17 ≠ 0))
-      ExampleTenOne.case_two_second_cross⟩
+      (Fraction.Order.Cast.rational_natCast_nonzero (by decide : 26 ≠ 0))
+      (Fraction.Order.Cast.rational_natCast_nonzero (by decide : 17 ≠ 0))
+      case_two_second_cross⟩
 
 /-- Example 10.1, collecting both Cross-law candidates and both displayed
 Spread-law solutions. -/
@@ -767,19 +770,19 @@ theorem example_10_1 :
           ((81 : Fraction.Rational) / 130) / 17) ∧
       (((81 : Fraction.Rational) / 442) / 5 = ((81 : Fraction.Rational) / 85) / 26 ∧
         ((81 : Fraction.Rational) / 85) / 26 = ((81 : Fraction.Rational) / 130) / 17) :=
-  ⟨ExampleTenOne.quadrance_candidates_satisfy, ExampleTenOne.first_spread_solution,
-    ExampleTenOne.second_spread_solution⟩
+  ⟨quadrance_candidates_satisfy, first_spread_solution,
+    second_spread_solution⟩
 
 end ExampleTenOne
 
 namespace ExerciseTenTen
 
 /-- The origin in the coordinate plane over the field with three elements. -/
-def first : Purelib.Geometry.Plane.Point Finite.Three.Element := ⟨0, 0⟩
+def first : Point Finite.Three.Element := ⟨0, 0⟩
 /-- The vertex (1, 0) over the field with three elements. -/
-def second : Purelib.Geometry.Plane.Point Finite.Three.Element := ⟨1, 0⟩
+def second : Point Finite.Three.Element := ⟨1, 0⟩
 /-- The vertex (0, 1) over the field with three elements. -/
-def third : Purelib.Geometry.Plane.Point Finite.Three.Element := ⟨0, 1⟩
+def third : Point Finite.Three.Element := ⟨0, 1⟩
 
 /-- The three displayed vertices over the field with three elements are noncollinear. -/
 private theorem notCollinear : ¬ Line.Incidence.Collinear first second third := by
@@ -789,7 +792,7 @@ private theorem notCollinear : ¬ Line.Incidence.Collinear first second third :=
     determinantZero
 
 /-- The certified triangle with vertices (0, 0), (1, 0) and (0, 1) over the field with three elements. -/
-def triangle : NonNull.Basic.NonNullTriangle Finite.Three.Element :=
+def triangle : NonNullTriangle Finite.Three.Element :=
   let notCollinear : ¬ Line.Incidence.Collinear first second third := by
     intro collinear
     have determinantZero := Line.Incidence.pointDeterminant_eq_zero_of_collinear collinear
@@ -811,7 +814,7 @@ theorem representative :
   · unfold Right.Isosceles.Basic.NonNullTriangle.RightIsoscelesAtFirst
     constructor
     · decide
-    · unfold Purelib.Geometry.Plane.Line.Perpendicular
+    · unfold Line.Perpendicular
       decide
 
 end ExerciseTenTen
@@ -821,11 +824,11 @@ namespace ExerciseTenEleven
 namespace SpreadThree
 
 /-- The vertex (0, 1) of the singly-null triangle with opposite spread three. -/
-def first : Purelib.Geometry.Plane.Point Finite.Five.Element := ⟨0, 1⟩
+def first : Point Finite.Five.Element := ⟨0, 1⟩
 /-- The vertex (1, 2) of the singly-null triangle with opposite spread three. -/
-def second : Purelib.Geometry.Plane.Point Finite.Five.Element := ⟨1, 2⟩
+def second : Point Finite.Five.Element := ⟨1, 2⟩
 /-- The origin of the singly-null triangle with opposite spread three. -/
-def third : Purelib.Geometry.Plane.Point Finite.Five.Element := ⟨0, 0⟩
+def third : Point Finite.Five.Element := ⟨0, 0⟩
 
 /-- The vertices of the spread-three triangle over the field with five elements are noncollinear. -/
 private theorem notCollinear : ¬ Line.Incidence.Collinear first second third := by
@@ -866,11 +869,11 @@ end SpreadThree
 namespace SpreadOne
 
 /-- The vertex (0, 1) of the singly-null triangle with opposite spread one. -/
-def first : Purelib.Geometry.Plane.Point Finite.Five.Element := ⟨0, 1⟩
+def first : Point Finite.Five.Element := ⟨0, 1⟩
 /-- The vertex (2, 1) of the singly-null triangle with opposite spread one. -/
-def second : Purelib.Geometry.Plane.Point Finite.Five.Element := ⟨2, 1⟩
+def second : Point Finite.Five.Element := ⟨2, 1⟩
 /-- The origin of the singly-null triangle with opposite spread one. -/
-def third : Purelib.Geometry.Plane.Point Finite.Five.Element := ⟨0, 0⟩
+def third : Point Finite.Five.Element := ⟨0, 0⟩
 
 /-- The vertices of the spread-one triangle over the field with five elements are noncollinear. -/
 private theorem notCollinear : ¬ Line.Incidence.Collinear first second third := by
@@ -911,11 +914,11 @@ end SpreadOne
 namespace TwoNullSides
 
 /-- The vertex (0, 1) of the two-null-side triangle over the field with five elements. -/
-def first : Purelib.Geometry.Plane.Point Finite.Five.Element := ⟨0, 1⟩
+def first : Point Finite.Five.Element := ⟨0, 1⟩
 /-- The vertex (1, 3) of the two-null-side triangle over the field with five elements. -/
-def second : Purelib.Geometry.Plane.Point Finite.Five.Element := ⟨1, 3⟩
+def second : Point Finite.Five.Element := ⟨1, 3⟩
 /-- The origin of the two-null-side triangle over the field with five elements. -/
-def third : Purelib.Geometry.Plane.Point Finite.Five.Element := ⟨0, 0⟩
+def third : Point Finite.Five.Element := ⟨0, 0⟩
 
 /-- The first two vertices of the two-null-side triangle are distinct. -/
 private theorem firstSecondDistinct : first ≠ second := by decide
@@ -952,11 +955,11 @@ theorem separate_degenerate_regime :
         := by
   dsimp only
   refine ⟨notCollinear, ?_, ?_, ?_⟩
-  · unfold Purelib.Geometry.Plane.Line.IsNull
+  · unfold Line.IsNull
     decide
-  · unfold Purelib.Geometry.Plane.Line.IsNull
+  · unfold Line.IsNull
     decide
-  · unfold Purelib.Geometry.Plane.Line.IsNull
+  · unfold Line.IsNull
     decide
 
 end TwoNullSides

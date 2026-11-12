@@ -61,15 +61,15 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedOccu
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedOccurrence
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
@@ -80,59 +80,59 @@ namespace RequestedSurfaceRuns
 variable {whole :
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
   regular domains differential} {previous :
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+  RegularDomainMeshes.RegularMeshes.CommonCuts domains}
   (selected : SourceCuts whole previous)
   {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {meshTarget :
-    Normalization.InverseRootPolynomial.Coordinate}
-  (request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
-    (fun sheet => Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
+    RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {meshTarget :
+    InverseRootPolynomial.Coordinate}
+  (request : TwoSheetBilinearRequest.TwoSheetRequest
+    (fun sheet => RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
       coarseDepth) fixed meshTarget)
 
 /-- Read each retained occurrence physical side capacity from its actual requested mesh. -/
 def capacities (outer : Fin prepared.occurrences.length) : Nat :=
   SharedOccurrenceRuns.sideCapacity outer (mesh
-    := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedOccurrence.RequestedOccurrenceRuns.mesh outer selected
+    := RequestedOccurrenceRuns.mesh outer selected
     request)
 
-variable (retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared)
+variable (retained : Preparation.CommonBasisPreparation prepared)
   {index : Nat} (inputs : retained.Inputs index)
 
 /-- The dependent occurrence schedule vector indexed by the exact retained mesh capacities and input bank. -/
-def Schedules (requested : Normalization.InverseRootPolynomial.Coordinate) (minimum : Nat) :=
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules
+def Schedules (requested : InverseRootPolynomial.Coordinate) (minimum : Nat) :=
+  RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules
     retained inputs
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.capacities (prepared :=
+    (RequestedSurfaceRuns.capacities (prepared :=
     prepared) selected request) requested minimum
 
 /-- Each request uses the actual side capacity and the same retained source inputs. -/
-def prepare (requested : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < requested) (minimum : Nat) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.Schedules selected
+def prepare (requested : InverseRootPolynomial.Coordinate) (positive : 0 < requested) (minimum : Nat) :
+    Schedules selected
       request retained inputs requested minimum :=
   Data.Vector.DependentVector.ofFn fun outer =>
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedOccurrence.RequestedOccurrenceRuns.parentSchedule
+    RequestedOccurrenceRuns.parentSchedule
       retained inputs outer selected request requested positive minimum
 
-variable {selected request retained inputs} {requested : Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
+variable {selected request retained inputs} {requested : InverseRootPolynomial.Coordinate} {minimum : Nat}
   (schedules :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.Schedules
+    Schedules
     selected request retained inputs requested minimum)
 
 /-- Changing only the dyadic depth preserves the computed parent requests. -/
 def atDepth (depth : Nat) (later : request.depth ≤ depth) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.Schedules selected
+    Schedules selected
       (request.atDepth depth later) retained inputs requested minimum :=
   Data.Vector.DependentVector.ofFn fun outer =>
     ParentCapacityTransport.CommonBasisPreparation.ParentRunSchedule.castCapacity
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OccurrenceRefinement.RequestedOccurrenceRuns.atDepth_capacity
+    (OccurrenceRefinement.RequestedOccurrenceRuns.atDepth_capacity
       outer selected request depth later).symm (schedules.get outer)
 
 /-- Refining the physical mesh preserves each retained occurrence request depth. -/
 theorem atDepth_depth (depth : Nat) (later : request.depth ≤ depth)
     (outer : Fin prepared.occurrences.length) :
-    ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.atDepth schedules depth
+    ((RequestedSurfaceRuns.atDepth schedules depth
       later).get outer).depth = (schedules.get outer).depth := by
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.atDepth]
+  dsimp only [RequestedSurfaceRuns.atDepth]
   rw [Data.Vector.DependentVector.ofFn_get]
   exact
     ParentCapacityTransport.CommonBasisPreparation.ParentRunSchedule.castCapacity_depth
@@ -141,9 +141,9 @@ theorem atDepth_depth (depth : Nat) (later : request.depth ≤ depth)
 /-- Refining the physical mesh preserves each retained occurrence numerical source threshold. -/
 theorem atDepth_sourceIndex (depth : Nat) (later : request.depth ≤ depth)
     (outer : Fin prepared.occurrences.length) :
-    ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.atDepth schedules depth
+    ((RequestedSurfaceRuns.atDepth schedules depth
       later).get outer).sourceIndex = (schedules.get outer).sourceIndex := by
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.atDepth]
+  dsimp only [RequestedSurfaceRuns.atDepth]
   rw [Data.Vector.DependentVector.ofFn_get]
   exact
     ParentCapacityTransport.CommonBasisPreparation.ParentRunSchedule.castCapacity_sourceIndex
@@ -152,9 +152,9 @@ theorem atDepth_sourceIndex (depth : Nat) (later : request.depth ≤ depth)
 /-- Refining the physical mesh preserves each retained occurrence source magnitude. -/
 theorem atDepth_magnitude (depth : Nat) (later : request.depth ≤ depth)
     (outer : Fin prepared.occurrences.length) :
-    ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.atDepth schedules depth
+    ((RequestedSurfaceRuns.atDepth schedules depth
       later).get outer).magnitude = (schedules.get outer).magnitude := by
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.atDepth]
+  dsimp only [RequestedSurfaceRuns.atDepth]
   rw [Data.Vector.DependentVector.ofFn_get]
   exact
     ParentCapacityTransport.CommonBasisPreparation.ParentRunSchedule.castCapacity_magnitude

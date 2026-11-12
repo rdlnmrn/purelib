@@ -60,10 +60,10 @@ set_option genInjectivity false in
 /-- Sufficient finite data for transporting one winding box through one
 simultaneous coefficient refinement. -/
 structure StableRefinement
-    (table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable) (target : Fraction.Rational)
+    (table : Table.CoefficientTable) (target : Fraction.Rational)
     (positive : 0 < target) (box : Box) where
   /-- Every retained current coefficient allowance is smaller than the common refinement target. -/ currentSmall :
-    Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.AllowancesLt table.entries target
+    Table.CoefficientTable.AllowancesLt table.entries target
   /-- The retained winding box has strictly positive width and height. -/ proper : box.Proper
   /-- The current table's polynomial has the retained positive boundary clearance. -/ clearance :
     Clearance.Box.Boundary.Basic.BoundaryClearance table.polynomial box
@@ -100,10 +100,10 @@ section StableRefinement
 /-- Refine all retained coefficient channels to the displayed positive target. -/
 @[expose] def
   nextTable
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target} {box : Box}
-    (_step : Dense.Gaussian.Coefficient.Progressive.Refinement.Transport.StableRefinement table target positive box) :
-      Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable :=
+    (_step : StableRefinement table target positive box) :
+      Table.CoefficientTable :=
   table.refine target positive
 end StableRefinement
 
@@ -135,9 +135,9 @@ section StableRefinement
 /-- Read the polynomial difference produced by simultaneous coefficient refinement. -/
 @[expose] def
   perturbation
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target} {box : Box}
-    (_step : Dense.Gaussian.Coefficient.Progressive.Refinement.Transport.StableRefinement table target positive box) :
+    (_step : StableRefinement table target positive box) :
       Basic.CanonicalCoefficients.CoefficientPolynomial :=
   table.refinementPerturbation target positive
 end StableRefinement
@@ -170,9 +170,9 @@ section StableRefinement
 /-- The refined polynomial is the original polynomial plus its exact refinement perturbation. -/
 theorem
   polynomial_eq_add
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target} {box : Box}
-    (step : Dense.Gaussian.Coefficient.Progressive.Refinement.Transport.StableRefinement table target positive box) :
+    (step : StableRefinement table target positive box) :
     step.nextTable.polynomial = table.polynomial + step.perturbation := by
   exact (table.polynomial_add_refinementPerturbation target positive).symm
 end StableRefinement
@@ -207,9 +207,9 @@ The uniform evaluation budget and current coefficient allowances certify the per
 clearance. -/
 @[expose] def
   dominance
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target} {box : Box}
-    (step : Dense.Gaussian.Coefficient.Progressive.Refinement.Transport.StableRefinement table target positive box) :
+    (step : StableRefinement table target positive box) :
     Clearance.Box.Dominance.Basic.BoundaryNormDominance table.polynomial
       step.perturbation box :=
   Clearance.Box.Dominance.Uniform.boundaryNormDominanceOfUniformBound table.polynomial step.perturbation box
@@ -218,9 +218,9 @@ clearance. -/
       intro point boundary
       have scalarBound := table.refinementPerturbation_eval_le_onBox target positive
         step.currentSmall box boundary.1
-      simpa only [Dense.Gaussian.Coefficient.Progressive.Refinement.Transport.StableRefinement.perturbation,
-        Gaussian.Norm.Basic.normSq_eq_canonical,
-        Gaussian.Basic.Canonical.normSq, pow_two] using scalarBound)
+      simpa only [perturbation,
+        Norm.Basic.normSq_eq_canonical,
+        Basic.Canonical.normSq, pow_two] using scalarBound)
 end StableRefinement
 
 end Purelib.Polynomial.Dense.Gaussian.Coefficient.Progressive.Refinement.Transport.StableRefinement
@@ -252,9 +252,9 @@ section StableRefinement
 same rational box. -/
 @[expose] def
   nextClearance
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target} {box : Box}
-    (step : Dense.Gaussian.Coefficient.Progressive.Refinement.Transport.StableRefinement table target positive box) :
+    (step : StableRefinement table target positive box) :
     Clearance.Box.Boundary.Basic.BoundaryClearance step.nextTable.polynomial box := by
   rw [step.polynomial_eq_add]
   exact Clearance.Box.Dominance.Sum.boundaryClearance_add_of_boundaryNormDominance
@@ -289,9 +289,9 @@ section StableRefinement
 /-- Simultaneous coefficient refinement preserves the retained table degree. -/
 @[simp] theorem
   next_degree
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target} {box : Box}
-    (step : Dense.Gaussian.Coefficient.Progressive.Refinement.Transport.StableRefinement table target positive box) :
+    (step : StableRefinement table target positive box) :
     step.nextTable.degree = table.degree :=
   table.refine_degree target positive
 
@@ -325,9 +325,9 @@ section StableRefinement
 /-- Exact winding is retained by the newly read progressive polynomial. -/
 theorem
   next_winding_eq
-    {table : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {table : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target} {box : Box}
-    (step : Dense.Gaussian.Coefficient.Progressive.Refinement.Transport.StableRefinement table target positive box) :
+    (step : StableRefinement table target positive box) :
     Winding.Box.Basic.quadrupledBoxWinding step.nextTable.polynomial box =
       Winding.Box.Basic.quadrupledBoxWinding table.polynomial box := by
   rw [step.polynomial_eq_add]

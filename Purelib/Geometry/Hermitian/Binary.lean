@@ -26,6 +26,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Algebra
@@ -53,16 +55,16 @@ namespace Purelib.Geometry.Hermitian.Binary
 finite ring calculations. -/
 def hermitianForm (constant radial realCross imaginaryCross :
   Fraction.Rational)
-    (value : Data.Gaussian.Basic.Canonical) : Fraction.Rational :=
-  constant + radial * Data.Gaussian.Norm.Basic.normSq value +
+    (value : Gaussian.Basic.Canonical) : Fraction.Rational :=
+  constant + radial * Gaussian.Norm.Basic.normSq value +
     2 * (realCross * value.re + imaginaryCross * value.im)
 
 /-- A rational certificate that a binary Hermitian form is nonnegative on the closed unit disc. The identity used here
 is a completed-square identity, with `slack` supplied explicitly rather than selected by an existence proof. -/
 theorem hermitianForm_nonnegative_of_certificate
     (constant radial realCross imaginaryCross : Fraction.Rational)
-    (value : Data.Gaussian.Basic.Canonical) (slack : Fraction.Rational)
-    (valueInside : Data.Gaussian.Norm.Basic.normSq value ≤ 1)
+    (value : Gaussian.Basic.Canonical) (slack : Fraction.Rational)
+    (valueInside : Gaussian.Norm.Basic.normSq value ≤ 1)
     (slackNonnegative : 0 ≤ slack)
     (scalePositive : 0 < radial + slack)
     (determinantGap :
@@ -71,24 +73,24 @@ theorem hermitianForm_nonnegative_of_certificate
     0 ≤ hermitianForm constant radial realCross imaginaryCross value := by
   let scale := radial + slack
   have scaleNonnegative : 0 ≤ scale := scalePositive.le
-  have discGap : 0 ≤ 1 - Data.Gaussian.Norm.Basic.normSq value :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct valueInside
+  have discGap : 0 ≤ 1 - Gaussian.Norm.Basic.normSq value :=
+    Arithmetic.sub_nonneg_direct valueInside
   have scaledDiscGap :
-      0 ≤ scale * slack * (1 - Data.Gaussian.Norm.Basic.normSq value) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
+      0 ≤ scale * slack * (1 - Gaussian.Norm.Basic.normSq value) :=
+    Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct
         scaleNonnegative slackNonnegative) discGap
   have realSquare :
       0 ≤ (scale * value.re + realCross) ^ 2 :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct _
+    Arithmetic.sq_nonneg_direct _
   have imaginarySquare :
       0 ≤ (scale * value.im + imaginaryCross) ^ 2 :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct _
+    Arithmetic.sq_nonneg_direct _
   have certificateNonnegative :
       0 ≤
         (scale * value.re + realCross) ^ 2 +
           (scale * value.im + imaginaryCross) ^ 2 +
-          scale * slack * (1 - Data.Gaussian.Norm.Basic.normSq value) +
+          scale * slack * (1 - Gaussian.Norm.Basic.normSq value) +
           ((constant - slack) * scale -
             (realCross ^ 2 + imaginaryCross ^ 2)) :=
     add_nonneg
@@ -101,15 +103,15 @@ theorem hermitianForm_nonnegative_of_certificate
       0 ≤
           (scale * value.re + realCross) ^ 2 +
             (scale * value.im + imaginaryCross) ^ 2 +
-            scale * slack * (1 - Data.Gaussian.Norm.Basic.normSq value) +
+            scale * slack * (1 - Gaussian.Norm.Basic.normSq value) +
             ((constant - slack) * scale -
               (realCross ^ 2 + imaginaryCross ^ 2)) :=
         certificateNonnegative
       _ = scale *
           hermitianForm constant radial realCross imaginaryCross value := by
-        dsimp only [scale, hermitianForm, Data.Gaussian.Norm.Basic.normSq]
+        dsimp only [scale, hermitianForm, Gaussian.Norm.Basic.normSq]
         ring1
-  apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+  apply Arithmetic.le_of_mul_le_mul_right_direct
     (c := scale) _ scalePositive
   calc
     0 * scale = 0 := by ring1
@@ -122,11 +124,11 @@ theorem hermitianForm_nonnegative_of_certificate
 /-- Clearing one reciprocal step transforms the displayed Hermitian form by an exact coefficient calculation. -/
 theorem hermitianForm_inverse_add_mul_normSq
     (constant radial realCross imaginaryCross : Fraction.Rational)
-    (coefficient : Data.GaussianInt) (value : Data.Gaussian.Basic.Canonical)
+    (coefficient : GaussianInt) (value : Gaussian.Basic.Canonical)
     (sumNonzero : GaussianInt.toGaussian coefficient + value ≠ 0) :
     hermitianForm constant radial realCross imaginaryCross
           ((GaussianInt.toGaussian coefficient + value)⁻¹) *
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian coefficient + value) =
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian coefficient + value) =
       hermitianForm
         (constant * (GaussianInt.normNat coefficient : Fraction.Rational) + radial +
           2 *
@@ -137,39 +139,39 @@ theorem hermitianForm_inverse_add_mul_normSq
         (constant * (coefficient.im : Fraction.Rational) - imaginaryCross)
         value := by
   let sum := GaussianInt.toGaussian coefficient + value
-  have normNonzero : Data.Gaussian.Norm.Basic.normSq sum ≠ 0 := by
+  have normNonzero : Gaussian.Norm.Basic.normSq sum ≠ 0 := by
     intro normZero
-    exact sumNonzero (Data.Gaussian.Norm.Basic.normSq_eq_zero.mp normZero)
-  have realCancel : sum⁻¹.re * Data.Gaussian.Norm.Basic.normSq sum = sum.re := by
-    rw [Data.Gaussian.Field.inv_eq]
-    change (sum.re / Data.Gaussian.Norm.Basic.normSq sum) * Data.Gaussian.Norm.Basic.normSq sum =
+    exact sumNonzero (Gaussian.Norm.Basic.normSq_eq_zero.mp normZero)
+  have realCancel : sum⁻¹.re * Gaussian.Norm.Basic.normSq sum = sum.re := by
+    rw [Gaussian.Field.inv_eq]
+    change (sum.re / Gaussian.Norm.Basic.normSq sum) * Gaussian.Norm.Basic.normSq sum =
       sum.re
     exact Fraction.Field.div_mul_cancel_of_ne _ _ normNonzero
-  have imaginaryCancel : sum⁻¹.im * Data.Gaussian.Norm.Basic.normSq sum = -sum.im := by
-    rw [Data.Gaussian.Field.inv_eq]
-    change ((-sum.im) / Data.Gaussian.Norm.Basic.normSq sum) * Data.Gaussian.Norm.Basic.normSq sum =
+  have imaginaryCancel : sum⁻¹.im * Gaussian.Norm.Basic.normSq sum = -sum.im := by
+    rw [Gaussian.Field.inv_eq]
+    change ((-sum.im) / Gaussian.Norm.Basic.normSq sum) * Gaussian.Norm.Basic.normSq sum =
       -sum.im
     exact Fraction.Field.div_mul_cancel_of_ne _ _ normNonzero
-  have inverseNormCancel : Data.Gaussian.Norm.Basic.normSq sum⁻¹ * Data.Gaussian.Norm.Basic.normSq sum
+  have inverseNormCancel : Gaussian.Norm.Basic.normSq sum⁻¹ * Gaussian.Norm.Basic.normSq sum
     = 1 := by
-    rw [Data.Gaussian.Field.inv_eq, Data.Gaussian.Field.normSq_inv sum sumNonzero]
+    rw [Gaussian.Field.inv_eq, Gaussian.Field.normSq_inv sum sumNonzero]
     calc
-      (Data.Gaussian.Norm.Basic.normSq sum)⁻¹ * Data.Gaussian.Norm.Basic.normSq sum =
-          Data.Gaussian.Norm.Basic.normSq sum * (Data.Gaussian.Norm.Basic.normSq sum)⁻¹ :=
+      (Gaussian.Norm.Basic.normSq sum)⁻¹ * Gaussian.Norm.Basic.normSq sum =
+          Gaussian.Norm.Basic.normSq sum * (Gaussian.Norm.Basic.normSq sum)⁻¹ :=
         Fraction.Field.mul_comm _ _
       _ = 1 :=
         Fraction.Field.mul_inv_cancel _ normNonzero
   calc
     hermitianForm constant radial realCross imaginaryCross sum⁻¹ *
-          Data.Gaussian.Norm.Basic.normSq sum =
-        constant * Data.Gaussian.Norm.Basic.normSq sum + radial * (Data.Gaussian.Norm.Basic.normSq
-          sum⁻¹ * Data.Gaussian.Norm.Basic.normSq sum) +
+          Gaussian.Norm.Basic.normSq sum =
+        constant * Gaussian.Norm.Basic.normSq sum + radial * (Gaussian.Norm.Basic.normSq
+          sum⁻¹ * Gaussian.Norm.Basic.normSq sum) +
           2 *
-            (realCross * (sum⁻¹.re * Data.Gaussian.Norm.Basic.normSq sum) +
-              imaginaryCross * (sum⁻¹.im * Data.Gaussian.Norm.Basic.normSq sum)) := by
+            (realCross * (sum⁻¹.re * Gaussian.Norm.Basic.normSq sum) +
+              imaginaryCross * (sum⁻¹.im * Gaussian.Norm.Basic.normSq sum)) := by
       dsimp only [hermitianForm]
       ring1
-    _ = constant * Data.Gaussian.Norm.Basic.normSq sum + radial +
+    _ = constant * Gaussian.Norm.Basic.normSq sum + radial +
           2 * (realCross * sum.re - imaginaryCross * sum.im) := by
       rw [inverseNormCancel, realCancel, imaginaryCancel]
       ring1
@@ -184,9 +186,9 @@ theorem hermitianForm_inverse_add_mul_normSq
         value := by
       dsimp only [sum, hermitianForm]
       rw [← GaussianInt.normSq_toGaussian coefficient]
-      simp only [Data.Gaussian.Norm.Basic.normSq,
+      simp only [Gaussian.Norm.Basic.normSq,
         Gaussian.Basic.add_re,
-        Gaussian.Basic.add_im, GaussianInt.toGaussian, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        Gaussian.Basic.add_im, GaussianInt.toGaussian, ← Fraction.Cast.intCast_eq_fromInt]
       ring1
 
 set_option genInjectivity false in
@@ -206,7 +208,7 @@ The four coefficients are cast to constructive rationals before evaluating the d
 terms. -/
 def IntegralHermitianForm.evaluate (form :
   IntegralHermitianForm)
-    (value : Data.Gaussian.Basic.Canonical) : Fraction.Rational :=
+    (value : Gaussian.Basic.Canonical) : Fraction.Rational :=
   hermitianForm (form.constant : Fraction.Rational)
     (form.radial : Fraction.Rational) (form.realCross : Fraction.Rational)
     (form.imaginaryCross : Fraction.Rational) value
@@ -214,7 +216,7 @@ def IntegralHermitianForm.evaluate (form :
 /-- Exact integral pullback of a Hermitian form through `z ↦ (a+z)⁻¹`. -/
 def IntegralHermitianForm.pullback (form :
   IntegralHermitianForm)
-    (coefficient : Data.GaussianInt) : IntegralHermitianForm :=
+    (coefficient : GaussianInt) : IntegralHermitianForm :=
   { constant :=
       form.constant * GaussianInt.normInt coefficient + form.radial +
         2 * (form.realCross * coefficient.re -
@@ -232,10 +234,10 @@ def IntegralHermitianForm.determinant (form :
 
 /-- Reciprocal-translation pullback preserves the integral Hermitian determinant. -/
 theorem IntegralHermitianForm.pullback_determinant
-    (form : IntegralHermitianForm) (coefficient : Data.GaussianInt) :
+    (form : IntegralHermitianForm) (coefficient : GaussianInt) :
     (form.pullback coefficient).determinant = form.determinant := by
-  dsimp only [Geometry.Hermitian.Binary.IntegralHermitianForm.pullback,
-    Geometry.Hermitian.Binary.IntegralHermitianForm.determinant, GaussianInt.normInt]
+  dsimp only [IntegralHermitianForm.pullback,
+    IntegralHermitianForm.determinant, GaussianInt.normInt]
   ring1
 
 /-- Bound the pulled-back constant by completing two integral squares.
@@ -243,14 +245,14 @@ theorem IntegralHermitianForm.pullback_determinant
 The lower bound uses the coefficient norm, the original radial coefficient, and the sum of squares of the two cross
 coefficients. -/
 theorem IntegralHermitianForm.pullback_constant_lower
-    (form : IntegralHermitianForm) (coefficient : Data.GaussianInt) :
+    (form : IntegralHermitianForm) (coefficient : GaussianInt) :
     (form.constant - 1) * GaussianInt.normInt coefficient + form.radial -
         (form.realCross * form.realCross +
           form.imaginaryCross * form.imaginaryCross) ≤
       (form.pullback coefficient).constant := by
-  have realSquare := Purelib.Data.Int.Order.mul_self_nonneg
+  have realSquare := Data.Int.Order.mul_self_nonneg
     (coefficient.re + form.realCross)
-  have imaginarySquare := Purelib.Data.Int.Order.mul_self_nonneg
+  have imaginarySquare := Data.Int.Order.mul_self_nonneg
     (coefficient.im - form.imaginaryCross)
   have sumNonnegative :
       0 ≤ (coefficient.re + form.realCross) *
@@ -267,7 +269,7 @@ theorem IntegralHermitianForm.pullback_constant_lower
             (coefficient.re + form.realCross) +
           (coefficient.im - form.imaginaryCross) *
             (coefficient.im - form.imaginaryCross) := by
-    dsimp only [Geometry.Hermitian.Binary.IntegralHermitianForm.pullback, GaussianInt.normInt]
+    dsimp only [IntegralHermitianForm.pullback, GaussianInt.normInt]
     ring1
   rw [← differenceIdentity] at sumNonnegative
   have shifted := Int.Order.add_le_add sumNonnegative
@@ -294,24 +296,24 @@ theorem IntegralHermitianForm.pullback_constant_lower
 
 The Gaussian coefficient plus the input must be nonzero; the multiplier is its squared norm. -/
 theorem IntegralHermitianForm.evaluate_pullback_mul_normSq
-    (form : IntegralHermitianForm) (coefficient : Data.GaussianInt)
-    (value : Data.Gaussian.Basic.Canonical) (sumNonzero : GaussianInt.toGaussian coefficient + value ≠ 0) :
+    (form : IntegralHermitianForm) (coefficient : GaussianInt)
+    (value : Gaussian.Basic.Canonical) (sumNonzero : GaussianInt.toGaussian coefficient + value ≠ 0) :
     form.evaluate ((GaussianInt.toGaussian coefficient + value)⁻¹) *
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian coefficient + value) =
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian coefficient + value) =
       (form.pullback coefficient).evaluate value := by
   have transformed := hermitianForm_inverse_add_mul_normSq
     (form.constant : Fraction.Rational) (form.radial : Fraction.Rational)
     (form.realCross : Fraction.Rational) (form.imaginaryCross : Fraction.Rational)
     coefficient value sumNonzero
-  simpa only [Geometry.Hermitian.Binary.IntegralHermitianForm.evaluate,
-    Geometry.Hermitian.Binary.IntegralHermitianForm.pullback, GaussianInt.Norm.Basic.normInt_eq_natCast_normNat,
+  simpa only [IntegralHermitianForm.evaluate,
+    IntegralHermitianForm.pullback, GaussianInt.Norm.Basic.normInt_eq_natCast_normNat,
     Ring.IntCast.add, Ring.IntCast.sub, Ring.IntCast.intCast_mul, Int.cast_ofNat,
     Int.cast_natCast] using transformed
 
 /-- An explicit slack-one certificate for an integral Hermitian form. -/
 theorem IntegralHermitianForm.evaluate_nonnegative_of_slack_one
-    (form : IntegralHermitianForm) (value : Data.Gaussian.Basic.Canonical)
-    (valueInside : Data.Gaussian.Norm.Basic.normSq value ≤ 1)
+    (form : IntegralHermitianForm) (value : Gaussian.Basic.Canonical)
+    (valueInside : Gaussian.Norm.Basic.normSq value ≤ 1)
     (scalePositive : 0 < (form.radial : Fraction.Rational) + 1)
     (determinantGap :
       0 ≤ ((form.constant : Fraction.Rational) - 1) *
@@ -329,8 +331,8 @@ theorem IntegralHermitianForm.evaluate_nonnegative_of_slack_one
 On the closed unit disc, positivity of `constant + 1` and an increase of at least three in the pulled-back constant give
 the slack-one certificate. -/
 theorem IntegralHermitianForm.pullback_evaluate_nonnegative_of_constant_gap
-    (form : IntegralHermitianForm) (coefficient : Data.GaussianInt)
-    (value : Data.Gaussian.Basic.Canonical) (valueInside : Data.Gaussian.Norm.Basic.normSq value ≤ 1)
+    (form : IntegralHermitianForm) (coefficient : GaussianInt)
+    (value : Gaussian.Basic.Canonical) (valueInside : Gaussian.Norm.Basic.normSq value ≤ 1)
     (scalePositive : 0 < (form.constant : Fraction.Rational) + 1)
     (determinantValue : form.determinant = -2)
     (constantGap :
@@ -339,7 +341,7 @@ theorem IntegralHermitianForm.pullback_evaluate_nonnegative_of_constant_gap
   let pulled := form.pullback coefficient
   have pulledDeterminant : pulled.determinant = -2 := by
     dsimp only [pulled]
-    rw [Geometry.Hermitian.Binary.IntegralHermitianForm.pullback_determinant, determinantValue]
+    rw [IntegralHermitianForm.pullback_determinant, determinantValue]
   have castGap :
       (form.constant : Fraction.Rational) + 3 ≤
         (pulled.constant : Fraction.Rational) := by
@@ -350,7 +352,7 @@ theorem IntegralHermitianForm.pullback_evaluate_nonnegative_of_constant_gap
   have differenceNonnegative :
       0 ≤ (pulled.constant : Fraction.Rational) -
         (form.constant : Fraction.Rational) - 3 := by
-    have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+    have shifted := Arithmetic.add_le_add_right_direct
       castGap (-(form.constant : Fraction.Rational) - 3)
     calc
       0 = (form.constant : Fraction.Rational) + 3 +
@@ -359,7 +361,7 @@ theorem IntegralHermitianForm.pullback_evaluate_nonnegative_of_constant_gap
           (-(form.constant : Fraction.Rational) - 3) := shifted
       _ = (pulled.constant : Fraction.Rational) -
           (form.constant : Fraction.Rational) - 3 := by ring1
-  apply Geometry.Hermitian.Binary.IntegralHermitianForm.evaluate_nonnegative_of_slack_one
+  apply IntegralHermitianForm.evaluate_nonnegative_of_slack_one
     pulled value valueInside
   · change 0 < (form.constant : Fraction.Rational) + 1
     exact scalePositive
@@ -382,7 +384,7 @@ theorem IntegralHermitianForm.pullback_evaluate_nonnegative_of_constant_gap
                     (pulled.realCross : Fraction.Rational) +
                     (pulled.imaginaryCross : Fraction.Rational) *
                     (pulled.imaginaryCross : Fraction.Rational)) = -2 := by
-          simp only [Geometry.Hermitian.Binary.IntegralHermitianForm.determinant, Ring.IntCast.sub,
+          simp only [IntegralHermitianForm.determinant, Ring.IntCast.sub,
             Ring.IntCast.intCast_mul, Ring.IntCast.add] at determinantCast
           rw [radialIdentity] at determinantCast
           exact determinantCast

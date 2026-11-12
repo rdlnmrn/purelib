@@ -121,22 +121,22 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourceErrors
   (ErrorSum differences)
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap}
 
 variable {target sourceTarget : Coordinate} {floor sourceFloor :
   Nat}
 
 variable {covers : BasisSourceCovers parent}
-  {index minimum depth readingIndex : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {index minimum depth readingIndex : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
   {polynomials : RegularBasisPolynomials cap
     index box}
-  {source : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
+  {source : UniformReciprocalPrimitives.SourcePrimitive data index}
   {endpointTarget allowance : Coordinate}
 
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Gaussian)
@@ -149,20 +149,20 @@ namespace BasisEndpointPlans.SourcePolygons
 variable {numerical :
   BasisSourceLocations.SampleBank covers
   index}
-  {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
+  {coefficients : GaussianVector genus}
 
 /-- The actual retained source-increment paths in original parent-cell order. -/
-def sourcePaths : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data
-  edges} → {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+def sourcePaths : {edges : List ParameterEdge} → {bank : Bank regular data
+  edges} → {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → (evaluated : ChartPlans.EvaluationData
+    (cells : ComparedCells source capSample depth bank) → (evaluated : EvaluationData
       readingIndex plans cells) →
-    (sources : ParentBasisEndpoints.BasisEndpointRequests covers sourceTarget sourceFloor requests) →
-    (planned : ParentBasisEndpoints.BasisEndpointPlans polynomials plans sources) → (endpoints :
-      BasisEndpointPlans.Samples numerical plans cells evaluated sources planned) →
-    BasisEndpointPlans.SourcePolygons numerical coefficients allowance plans cells evaluated sources planned endpoints →
-      List (List InverseRootPolynomial.Gaussian)
+    (sources : BasisEndpointRequests covers sourceTarget sourceFloor requests) →
+    (planned : BasisEndpointPlans polynomials plans sources) → (endpoints :
+      Samples numerical plans cells evaluated sources planned) →
+    SourcePolygons numerical coefficients allowance plans cells evaluated sources planned endpoints →
+      List (List Gaussian)
   | _, _, _, _, .nil, .nil, _, _, _, _, _ => []
   | _, _, _, _, .cons _ tail, .cons _ cells, evaluated, sources, planned, endpoints, polygons =>
       polygons.1.values.values.pairs.map Prod.fst ::
@@ -170,17 +170,17 @@ def sourcePaths : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge
         tail cells evaluated.2 sources.2 planned.2 endpoints.2 polygons.2
 
 /-- The actual retained chart-increment paths in the same parent-cell order. -/
-def chartPaths : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data
-  edges} → {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+def chartPaths : {edges : List ParameterEdge} → {bank : Bank regular data
+  edges} → {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → (evaluated : ChartPlans.EvaluationData
+    (cells : ComparedCells source capSample depth bank) → (evaluated : EvaluationData
       readingIndex plans cells) →
-    (sources : ParentBasisEndpoints.BasisEndpointRequests covers sourceTarget sourceFloor requests) →
-    (planned : ParentBasisEndpoints.BasisEndpointPlans polynomials plans sources) → (endpoints :
-      BasisEndpointPlans.Samples numerical plans cells evaluated sources planned) →
-    BasisEndpointPlans.SourcePolygons numerical coefficients allowance plans cells evaluated sources planned endpoints →
-      List (List InverseRootPolynomial.Gaussian)
+    (sources : BasisEndpointRequests covers sourceTarget sourceFloor requests) →
+    (planned : BasisEndpointPlans polynomials plans sources) → (endpoints :
+      Samples numerical plans cells evaluated sources planned) →
+    SourcePolygons numerical coefficients allowance plans cells evaluated sources planned endpoints →
+      List (List Gaussian)
   | _, _, _, _, .nil, .nil, _, _, _, _, _ => []
   | _, _, _, _, .cons _ tail, .cons _ cells, evaluated, sources, planned, endpoints, polygons =>
       polygons.1.values.values.pairs.map Prod.snd ::
@@ -188,58 +188,58 @@ def chartPaths : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge}
         tail cells evaluated.2 sources.2 planned.2 endpoints.2 polygons.2
 
 /-- Summing each retained source path gives the first coordinates of the cached source/chart total pairs. -/
-theorem sourcePaths_totals : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank
-  regular data edges} → {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+theorem sourcePaths_totals : {edges : List ParameterEdge} → {bank : Bank
+  regular data edges} → {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → (evaluated : ChartPlans.EvaluationData
+    (cells : ComparedCells source capSample depth bank) → (evaluated : EvaluationData
       readingIndex plans cells) →
-    (sources : ParentBasisEndpoints.BasisEndpointRequests covers sourceTarget sourceFloor requests) →
-    (planned : ParentBasisEndpoints.BasisEndpointPlans polynomials plans sources) → (endpoints :
-      BasisEndpointPlans.Samples numerical plans cells evaluated sources planned) →
-    (polygons : BasisEndpointPlans.SourcePolygons numerical coefficients allowance plans cells evaluated sources planned
+    (sources : BasisEndpointRequests covers sourceTarget sourceFloor requests) →
+    (planned : BasisEndpointPlans polynomials plans sources) → (endpoints :
+      Samples numerical plans cells evaluated sources planned) →
+    (polygons : SourcePolygons numerical coefficients allowance plans cells evaluated sources planned
       endpoints) →
 
       (sourcePaths
-      plans cells evaluated sources planned endpoints polygons).map Data.Gaussian.Norm.Sum.Basic.gaussianSum =
-      (SourcePolygons.totals plans cells evaluated sources planned endpoints polygons).map Prod.fst
+      plans cells evaluated sources planned endpoints polygons).map gaussianSum =
+      (totals plans cells evaluated sources planned endpoints polygons).map Prod.fst
   | _, _, _, _, .nil, .nil, _, _, _, _, _ => rfl
   | _, _, _, _, .cons _ tail, .cons _ cells, evaluated, sources, planned, endpoints, polygons => by
-      change Data.Gaussian.Norm.Sum.Basic.gaussianSum (polygons.1.values.values.pairs.map Prod.fst) ::
+      change gaussianSum (polygons.1.values.values.pairs.map Prod.fst) ::
 
           (sourcePaths
           tail cells evaluated.2 sources.2 planned.2 endpoints.2 polygons.2).map
-          Data.Gaussian.Norm.Sum.Basic.gaussianSum =
-        polygons.1.values.values.source.total :: (SourcePolygons.totals tail cells evaluated.2 sources.2 planned.2
+          gaussianSum =
+        polygons.1.values.values.source.total :: (totals tail cells evaluated.2 sources.2 planned.2
           endpoints.2 polygons.2).map Prod.fst
       rw [← polygons.1.values.values.source.total_eq,
         sourcePaths_totals
         tail cells evaluated.2 sources.2 planned.2 endpoints.2 polygons.2]
 
 /-- Summing each retained chart path gives the second coordinates of the cached source/chart total pairs. -/
-theorem chartPaths_totals : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank
-  regular data edges} → {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+theorem chartPaths_totals : {edges : List ParameterEdge} → {bank : Bank
+  regular data edges} → {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → (evaluated : ChartPlans.EvaluationData
+    (cells : ComparedCells source capSample depth bank) → (evaluated : EvaluationData
       readingIndex plans cells) →
-    (sources : ParentBasisEndpoints.BasisEndpointRequests covers sourceTarget sourceFloor requests) →
-    (planned : ParentBasisEndpoints.BasisEndpointPlans polynomials plans sources) → (endpoints :
-      BasisEndpointPlans.Samples numerical plans cells evaluated sources planned) →
-    (polygons : BasisEndpointPlans.SourcePolygons numerical coefficients allowance plans cells evaluated sources planned
+    (sources : BasisEndpointRequests covers sourceTarget sourceFloor requests) →
+    (planned : BasisEndpointPlans polynomials plans sources) → (endpoints :
+      Samples numerical plans cells evaluated sources planned) →
+    (polygons : SourcePolygons numerical coefficients allowance plans cells evaluated sources planned
       endpoints) →
 
       (chartPaths
-      plans cells evaluated sources planned endpoints polygons).map Data.Gaussian.Norm.Sum.Basic.gaussianSum =
-      (SourcePolygons.totals plans cells evaluated sources planned endpoints polygons).map Prod.snd
+      plans cells evaluated sources planned endpoints polygons).map gaussianSum =
+      (totals plans cells evaluated sources planned endpoints polygons).map Prod.snd
   | _, _, _, _, .nil, .nil, _, _, _, _, _ => rfl
   | _, _, _, _, .cons _ tail, .cons _ cells, evaluated, sources, planned, endpoints, polygons => by
-      change Data.Gaussian.Norm.Sum.Basic.gaussianSum (polygons.1.values.values.pairs.map Prod.snd) ::
+      change gaussianSum (polygons.1.values.values.pairs.map Prod.snd) ::
 
           (chartPaths
           tail cells evaluated.2 sources.2 planned.2 endpoints.2 polygons.2).map
-          Data.Gaussian.Norm.Sum.Basic.gaussianSum =
-        polygons.1.chart.total :: (SourcePolygons.totals tail cells evaluated.2 sources.2 planned.2 endpoints.2
+          gaussianSum =
+        polygons.1.chart.total :: (totals tail cells evaluated.2 sources.2 planned.2 endpoints.2
           polygons.2).map Prod.snd
       rw [← polygons.1.chart.total_eq,
         chartPaths_totals
@@ -247,36 +247,36 @@ theorem chartPaths_totals : {edges : List ClearSheetContinuation.Subdivision.Par
 
 /-- The difference of the actual internal source and chart areas is exactly the sum of the retained cell discrepancies.
 -/
-theorem internal_difference : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank
-  regular data edges} → {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+theorem internal_difference : {edges : List ParameterEdge} → {bank : Bank
+  regular data edges} → {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → (evaluated : ChartPlans.EvaluationData
+    (cells : ComparedCells source capSample depth bank) → (evaluated : EvaluationData
       readingIndex plans cells) →
-    (sources : ParentBasisEndpoints.BasisEndpointRequests covers sourceTarget sourceFloor requests) →
-    (planned : ParentBasisEndpoints.BasisEndpointPlans polynomials plans sources) → (endpoints :
-      BasisEndpointPlans.Samples numerical plans cells evaluated sources planned) →
-    (polygons : BasisEndpointPlans.SourcePolygons numerical coefficients allowance plans cells evaluated sources planned
+    (sources : BasisEndpointRequests covers sourceTarget sourceFloor requests) →
+    (planned : BasisEndpointPlans polynomials plans sources) → (endpoints :
+      Samples numerical plans cells evaluated sources planned) →
+    (polygons : SourcePolygons numerical coefficients allowance plans cells evaluated sources planned
       endpoints) →
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    gaussianSum
       ((sourcePaths
       plans cells evaluated sources planned endpoints polygons).map IncrementArea.pathArea) -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      gaussianSum
         ((chartPaths
         plans cells evaluated sources planned endpoints polygons).map IncrementArea.pathArea) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (SourcePolygons.differences plans cells evaluated sources planned
+      gaussianSum (differences plans cells evaluated sources planned
         endpoints polygons)
-  | _, _, _, _, .nil, .nil, _, _, _, _, _ => by change (0 : InverseRootPolynomial.Gaussian) - 0 = 0; ring1
+  | _, _, _, _, .nil, .nil, _, _, _, _, _ => by change (0 : Gaussian) - 0 = 0; ring1
   | _, _, _, _, .cons _ tail, .cons _ cells, evaluated, sources, planned, endpoints, polygons => by
       change (IncrementArea.pathArea (polygons.1.values.values.pairs.map Prod.fst) +
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum
+        gaussianSum
           ((sourcePaths
           tail cells evaluated.2 sources.2 planned.2 endpoints.2 polygons.2).map IncrementArea.pathArea)) -
         (IncrementArea.pathArea (polygons.1.values.values.pairs.map Prod.snd) +
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum
+        gaussianSum
           ((chartPaths
           tail cells evaluated.2 sources.2 planned.2 endpoints.2 polygons.2).map IncrementArea.pathArea)) =
-        polygons.1.difference + Data.Gaussian.Norm.Sum.Basic.gaussianSum (SourcePolygons.differences tail cells
+        polygons.1.difference + gaussianSum (differences tail cells
           evaluated.2 sources.2 planned.2 endpoints.2 polygons.2)
       rw [← polygons.1.values.values.source.area_eq, ← polygons.1.chart.area_eq, polygons.1.difference_eq,
         ←
@@ -303,9 +303,9 @@ variable {edges : List ParameterEdge} {bank :
 /-- Exact discrepancy of the literal concatenated paths. The complete coarse polygon is present alongside the internal
 cell areas. -/
 theorem concatenated_difference
-    (polygons : BasisEndpointPlans.SourcePolygons numerical coefficients allowance plans cells evaluated sources planned
+    (polygons : SourcePolygons numerical coefficients allowance plans cells evaluated sources planned
       endpoints)
-    (errors : SourcePolygons.ErrorSum polygons) (joining : SourcePolygons.JoiningComparison polygons) :
+    (errors : ErrorSum polygons) (joining : JoiningComparison polygons) :
     IncrementArea.pathArea
       (sourcePaths
       plans cells evaluated sources planned endpoints polygons).flatten -
@@ -339,28 +339,28 @@ polygon is needed. -/
 theorem concatenated_bound (budget : ParentBasisSourceBudget covers requests endpointTarget
   parentAllowance sourceFloor)
     {numerical : BasisSourceLocations.SampleBank covers index} {coefficients :
-      LinearAlgebra.Gaussian.Energy.GaussianVector genus}
-    {plans : ParentChartRequests.ChartPlans capSample minimum requests} {cells : ParentPaths.ComparedCells source
+      GaussianVector genus}
+    {plans : ChartPlans capSample minimum requests} {cells : ComparedCells source
       capSample depth bank}
-    {evaluated : ChartPlans.EvaluationData readingIndex plans cells}
-    {sources : ParentBasisEndpoints.BasisEndpointRequests covers budget.prepared.sourceTarget sourceFloor requests}
-    {planned : ParentBasisEndpoints.BasisEndpointPlans polynomials plans sources}
-    {endpoints : BasisEndpointPlans.Samples numerical plans cells evaluated sources planned}
-    (polygons : BasisEndpointPlans.SourcePolygons numerical coefficients budget.cellAllowance plans cells evaluated
+    {evaluated : EvaluationData readingIndex plans cells}
+    {sources : BasisEndpointRequests covers budget.prepared.sourceTarget sourceFloor requests}
+    {planned : BasisEndpointPlans polynomials plans sources}
+    {endpoints : Samples numerical plans cells evaluated sources planned}
+    (polygons : SourcePolygons numerical coefficients budget.cellAllowance plans cells evaluated
       sources planned endpoints)
-    (errors : SourcePolygons.ErrorSum polygons)
-    (joining : SourcePolygons.JoiningComparison polygons) :
+    (errors : ErrorSum polygons)
+    (joining : JoiningComparison polygons) :
     Data.Gaussian.Norm.Basic.normSq (IncrementArea.pathArea
       (BasisEndpointPlans.SourcePolygons.sourcePaths
       plans cells evaluated sources planned endpoints polygons).flatten -
       IncrementArea.pathArea
         (BasisEndpointPlans.SourcePolygons.chartPaths
         plans cells evaluated sources planned endpoints polygons).flatten) ≤
-      (4 * parentAllowance)^2 * (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
+      (4 * parentAllowance)^2 * (coefficientNormSq coefficients)^2 := by
   rw
     [BasisEndpointPlans.SourcePolygons.concatenated_difference
     polygons errors joining]
-  exact ParentBasisSourceBudget.combined_bound budget errors joining
+  exact combined_bound budget errors joining
 
 end ParentBasisSourceBudget
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisSourceConcatenation

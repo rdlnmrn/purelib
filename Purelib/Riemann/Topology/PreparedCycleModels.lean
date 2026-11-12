@@ -56,6 +56,16 @@ import Purelib.Data.List.Append
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Integration.Polynomial.Gaussian.Path.Constant.PathModel
+
+open Purelib.RootIsolation.SquareRoot.Preparation.Bank
+
+open Purelib.Integration.Polynomial.Gaussian.Path.CompatibleRefinement.PathModel
+
+open Purelib.Riemann.Paths.PreparedClearPathModels
+
 public section
 
 /-!
@@ -94,40 +104,40 @@ abbrev Gaussian := Basic.Canonical
 /-- The rational coordinate carrier of the retained cycle schedules and allowances. -/
 abbrev Coordinate := Fraction.Rational
 /-- The rational rectangle carrier of the original clear-path ambient regions. -/
-abbrev Box := Purelib.Geometry.Rational.Box
+abbrev Box := Geometry.Rational.Box
 /-- The original square-root continuation owner at its exact polynomial parameter. -/
-abbrev Owner := Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+abbrev Owner := SquareRootContinuationChain.Owner
 /-- The original certified polynomial cell model used by the retained lifted paths. -/
-abbrev CellModel := Purelib.Integration.Polynomial.Gaussian.Cell.Basic.CellModel
+abbrev CellModel := Integration.Polynomial.Gaussian.Cell.Basic.CellModel
 /-- The original ordered polynomial path model of the retained cycle cells. -/
-abbrev PathModel := Purelib.Integration.Polynomial.Gaussian.Path.Basic.PathModel
+abbrev PathModel := Basic.PathModel
 /-- The original wedge chart indexed by the same curve and ordered differential pair. -/
 abbrev WedgeChart {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (leftDifferential rightDifferential : Differentials.Basic.Differential genus) :=
-  Purelib.Riemann.Integration.PreparedSubdivisionModelCore.WedgeChart curve leftDifferential
+  Integration.PreparedSubdivisionModelCore.WedgeChart curve leftDifferential
     rightDifferential
 /-- The original executable Gaussian integral refinement program. -/
 abbrev RefinementProgram :=
-  Purelib.Integration.Program.Gaussian.Basic.RefinementProgram
+  Integration.Program.Gaussian.Basic.RefinementProgram
 /-- The original compatibility certificate between exact constant-cell path models. -/
 abbrev CompatibleConstantPathRefinement :=
-  Purelib.Integration.Polynomial.Gaussian.Path.Basic.PathModel.CompatibleConstantPathRefinement
+  Basic.PathModel.CompatibleConstantPathRefinement
 /-- The original prepared clear path retaining its starting square-root owner. -/
 abbrev PreparedPath
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (path : Polynomial.Geometry.ClearPath polynomial ambient start finish)
+    (path : Geometry.ClearPath polynomial ambient start finish)
     (owner : Owner (polynomial.eval start)) :=
-  Purelib.Riemann.Paths.PreparedClearPathModels.PreparedPath path owner
+  Paths.PreparedClearPathModels.PreparedPath path owner
 /-- The original checked dyadic path bank at its retained depth and positive root diameter. -/
 abbrev DyadicBank
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box} {start finish : Gaussian}
     (depth : Nat) (rootDiameter : Coordinate)
     (rootDiameterPositive : 0 < rootDiameter)
-    (path : Polynomial.Geometry.ClearPath polynomial ambient start finish)
+    (path : Geometry.ClearPath polynomial ambient start finish)
     (owner : Owner (polynomial.eval start)) :=
-  Purelib.Riemann.Paths.PreparedClearPathModels.PreparedPath.DyadicBank depth
+  PreparedPath.DyadicBank depth
     rootDiameter rootDiameterPositive path owner
 
 set_option genInjectivity false in
@@ -150,9 +160,9 @@ constructive_injectivity CertifiedLift
 @[expose] def stationarySwitchPath (coordinate : Gaussian) (sheet : Fin 2) :
     Lifted.Basic.LiftedPath 2
       { coordinate := coordinate, sheet := sheet }
-      { coordinate := coordinate, sheet := BranchCutLifts.otherSheet sheet } :=
-  .cons (BranchCutLifts.switchCell coordinate sheet)
-    (.nil { coordinate := coordinate, sheet := BranchCutLifts.otherSheet sheet })
+      { coordinate := coordinate, sheet := otherSheet sheet } :=
+  .cons (switchCell coordinate sheet)
+    (.nil { coordinate := coordinate, sheet := otherSheet sheet })
 
 /-- The exact zero wedge chart for the original stationary sheet-switch segment. -/
 @[expose] def stationaryWedgeChart {genus : Nat}
@@ -236,11 +246,11 @@ retains the displayed Gaussian sample. -/
     (curve : Basic.HyperellipticCurve genus)
     (differential : Differentials.Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (prepared : PreparedPath path owner) :
     CertifiedLift curve differential
-      (BranchCutLifts.ClearPath.liftOnSheet sheet
+      (ClearPath.liftOnSheet sheet
         prepared.toClearPath) :=
   let certified := prepared.certify curve differential sheet
   { cells := certified.cells
@@ -251,12 +261,12 @@ retains the displayed Gaussian sample. -/
     (curve : Basic.HyperellipticCurve genus)
     (differential : Differentials.Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (sheet : Fin 2) (prepared : PreparedPath path owner) :
     Basic.PathModel.ConstantCells
       (ofPreparedPath curve differential sheet prepared).cells :=
-  PreparedClearPathModels.PreparedPath.certify_constantCells
+  PreparedPath.certify_constantCells
     curve differential sheet prepared
 
 /-- The original zero stationary switch has an exact constant-cell certificate. -/
@@ -286,7 +296,7 @@ retains the displayed Gaussian sample. -/
       Basic.PathModel.ConstantCells second.cells) :
     Basic.PathModel.ConstantCells
       (first.append second).cells :=
-  Constant.PathModel.ConstantCells.append firstConstant secondConstant
+  ConstantCells.append firstConstant secondConstant
 
 /-- The original certified cell list has exactly the retained lifted path's cell count. -/
 theorem cellCount {genus : Nat}
@@ -340,7 +350,7 @@ structure PreparedDoublePath {genus : Nat}
   /-- The connector's exact starting parameter. -/ start : Gaussian
   /-- The connector's exact final parameter. -/ finish : Gaussian
   /-- The original polynomial-clear connector between the retained endpoints. -/ basePath :
-    Polynomial.Geometry.ClearPath
+    Geometry.ClearPath
     curve.polynomial ambient start finish
   /-- The common selected dyadic depth of the forward and reverse root banks. -/ depth : Nat
   /-- The requested upper bound on the retained root diameters. -/ rootDiameter : Coordinate
@@ -354,7 +364,7 @@ structure PreparedDoublePath {genus : Nat}
     (curve.polynomial.eval finish)
   /-- The checked dyadic bank for the retained reverse path and starting owner. -/ backwardChecked : DyadicBank depth
     rootDiameter rootDiameterPositive
-    (BranchCutLifts.ClearPath.reverse basePath) backwardOwner
+    (ClearPath.reverse basePath) backwardOwner
 
 constructive_injectivity PreparedDoublePath
 
@@ -370,18 +380,18 @@ Both exact endpoint owners and the positive root-diameter request feed a single 
 and reverse banks retain that shared selected depth. -/
 @[expose] def total {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {ambient : Box} {start finish : Gaussian}
-    (basePath : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish)
+    (basePath : Geometry.ClearPath curve.polynomial ambient start finish)
     (within : basePath.WithinAmbient)
     (forwardOwner : Owner (curve.polynomial.eval start))
     (backwardOwner : Owner (curve.polynomial.eval finish))
     (rootDiameter : Coordinate) (rootDiameterPositive : 0 < rootDiameter) :
     PreparedDoublePath curve := by
   let backwardPath :=
-    BranchCutLifts.ClearPath.reverse basePath
-  let selected := SquareRoot.Preparation.Bank.Adaptive.select
-    [SquareRoot.Preparation.Bank.Adaptive.Task.ofPath basePath within forwardOwner,
-      SquareRoot.Preparation.Bank.Adaptive.Task.ofPath backwardPath
-        (BranchCutLifts.ClearPath.reverse_withinAmbient basePath within) backwardOwner]
+    ClearPath.reverse basePath
+  let selected := Adaptive.select
+    [Adaptive.Task.ofPath basePath within forwardOwner,
+      Adaptive.Task.ofPath backwardPath
+        (ClearPath.reverse_withinAmbient basePath within) backwardOwner]
     rootDiameter rootDiameterPositive
   exact
     { ambient := ambient
@@ -446,7 +456,7 @@ theorem within {genus : Nat} {curve : Basic.HyperellipticCurve genus}
 @[expose] def backward {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     (data : PreparedDoublePath curve) :
     PreparedPath
-      (BranchCutLifts.ClearPath.reverse data.basePath)
+      (ClearPath.reverse data.basePath)
         data.backwardOwner :=
   data.backwardChecked.prepared
 
@@ -456,10 +466,10 @@ theorem within {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     (data : PreparedDoublePath curve) : Lifted.Closed.ClosedLiftedPath 2 :=
   { basepoint := { coordinate := data.start, sheet := 0 }
     path :=
-      (BranchCutLifts.ClearPath.liftOnSheet 0
+      (ClearPath.liftOnSheet 0
         data.forward.toClearPath).append
           ((stationarySwitchPath data.finish 0).append
-            ((BranchCutLifts.ClearPath.liftOnSheet 1
+            ((ClearPath.liftOnSheet 1
               data.backward.toClearPath).append
                 (stationarySwitchPath data.start 1))) }
 
@@ -532,10 +542,10 @@ theorem integralRealLower_le_certifiedModel {genus : Nat}
       (Basic.PathModel.mk
         (data.certifiedModel differential).cells).integralSample.re := by
   have forwardLower :=
-    PreparedClearPathModels.PreparedPath.integralRealLower_le_certify
+    PreparedPath.integralRealLower_le_certify
       curve differential 0 exponentZero data.forward
   have backwardLower :=
-    PreparedClearPathModels.PreparedPath.integralRealLower_le_certify
+    PreparedPath.integralRealLower_le_certify
       curve differential 1 exponentZero data.backward
   rw [data.certifiedModel_integralSample differential,
     Basic.add_re]
@@ -557,10 +567,10 @@ theorem directionalIntegralLower_le_certifiedModel {genus : Nat}
           (Basic.PathModel.mk
             (data.certifiedModel differential).cells).integralSample.im := by
   have forwardLower :=
-    PreparedClearPathModels.PreparedPath.directionalIntegralLower_le_certify
+    PreparedPath.directionalIntegralLower_le_certify
       curve differential 0 direction exponentZero data.forward
   have backwardLower :=
-    PreparedClearPathModels.PreparedPath.directionalIntegralLower_le_certify
+    PreparedPath.directionalIntegralLower_le_certify
       curve differential 1 direction exponentZero data.backward
   rw [data.certifiedModel_integralSample differential]
   unfold CertifiedLift.ofPreparedPath
@@ -580,10 +590,10 @@ theorem directionalIntegralLower_le_certifiedModel {genus : Nat}
   let backward := CertifiedLift.ofPreparedPath curve differential 1 data.backward
   let atStart := CertifiedLift.switch curve differential data.start 1
   exact
-    (Constant.PathModel.ConstantCells.append (CertifiedLift.ofPreparedPath_constantCells curve differential 0
+    (ConstantCells.append (CertifiedLift.ofPreparedPath_constantCells curve differential 0
       data.forward))
-      ((Constant.PathModel.ConstantCells.append (CertifiedLift.switch_constantCells curve differential data.finish 0))
-        ((Constant.PathModel.ConstantCells.append (CertifiedLift.ofPreparedPath_constantCells curve differential 1
+      ((ConstantCells.append (CertifiedLift.switch_constantCells curve differential data.finish 0))
+        ((ConstantCells.append (CertifiedLift.ofPreparedPath_constantCells curve differential 1
           data.backward))
             (CertifiedLift.switch_constantCells curve differential data.start 1)))
 
@@ -593,10 +603,10 @@ theorem directionalIntegralLower_le_certifiedModel {genus : Nat}
     (data : PreparedDoublePath curve)
     (leftDifferential rightDifferential : Differentials.Basic.Differential genus) :
     List (WedgeChart curve leftDifferential rightDifferential) :=
-  PreparedClearPathModels.PreparedPath.wedgeCharts curve
+  PreparedPath.wedgeCharts curve
       leftDifferential rightDifferential 0 data.forward ++
     [stationaryWedgeChart curve leftDifferential rightDifferential] ++
-      PreparedClearPathModels.PreparedPath.wedgeCharts curve
+      PreparedPath.wedgeCharts curve
           leftDifferential rightDifferential 1 data.backward ++
         [stationaryWedgeChart curve leftDifferential rightDifferential]
 
@@ -612,8 +622,8 @@ readbacks determine the displayed natural count. -/
       data.forward.stepCount + 1 + (data.backward.stepCount + 1) := by
   rw [← CertifiedClosedModel.cellCount]
   simp only [certifiedModel, CertifiedLift.append, CertifiedLift.switch,
-    CertifiedLift.ofPreparedPath, Purelib.Data.List.Append.length_append, List.length_cons,
-    List.length_nil, PreparedClearPathModels.PreparedPath.certify_cellCount]
+    CertifiedLift.ofPreparedPath, Data.List.Append.length_append, List.length_cons,
+    List.length_nil, PreparedPath.certify_cellCount]
   omega0
 
 /-- The exact certified cycle count is determined by the original segment counts and retained dyadic depths. -/
@@ -626,11 +636,11 @@ theorem certifiedModel_cellCount_eq_dyadic {genus : Nat}
   rw [certifiedModel_cellCount]
   simp only [forward, backward]
   rw [
-    PreparedClearPathModels.PreparedPath.DyadicBank.prepared_stepCount
+    PreparedPath.DyadicBank.prepared_stepCount
       data.forwardChecked,
-    PreparedClearPathModels.PreparedPath.DyadicBank.prepared_stepCount
+    PreparedPath.DyadicBank.prepared_stepCount
       data.backwardChecked,
-    BranchCutLifts.ClearPath.segmentCount_reverse]
+    ClearPath.segmentCount_reverse]
   omega0
 
 /-- The retained wedge-chart list has the same length as the original certified model's cell list. -/
@@ -642,9 +652,9 @@ theorem certifiedModel_cellCount_eq_dyadic {genus : Nat}
       (data.certifiedModel leftDifferential).cells.length := by
   rw [CertifiedClosedModel.cellCount,
     data.certifiedModel_cellCount leftDifferential]
-  simp only [wedgeCharts, Purelib.Data.List.Append.length_append, List.length_cons,
+  simp only [wedgeCharts, Data.List.Append.length_append, List.length_cons,
     List.length_nil,
-    PreparedClearPathModels.PreparedPath.wedgeCharts_length]
+    PreparedPath.wedgeCharts_length]
   omega0
 
 end PreparedDoublePath
@@ -664,12 +674,12 @@ structure PreparedBoundaryDoublePath {genus : Nat}
   /-- The retained right root-isolation state and its exact box. -/ rightState : State.WindingOne.Basic.WindingOneState
     curve.polynomial rightAmbient
   /-- The original clear path from the left box anchor to the right box anchor. -/ connector :
-    Polynomial.Geometry.ClearPath curve.polynomial connectorAmbient
+    Geometry.ClearPath curve.polynomial connectorAmbient
     leftState.box.anchor rightState.box.anchor
   /-- The original clear boundary path based at the right box anchor. -/ rightBoundaryPath :
-    Polynomial.Geometry.ClearPath curve.polynomial rightState.box
+    Geometry.ClearPath curve.polynomial rightState.box
     rightState.box.anchor rightState.box.anchor
-  /-- The original clear boundary path based at the left box anchor. -/ leftBoundaryPath : Polynomial.Geometry.ClearPath
+  /-- The original clear boundary path based at the left box anchor. -/ leftBoundaryPath : Geometry.ClearPath
     curve.polynomial leftState.box
     leftState.box.anchor leftState.box.anchor
   /-- The selected dyadic depth of the forward connector bank. -/ forwardDepth : Nat
@@ -693,7 +703,7 @@ structure PreparedBoundaryDoublePath {genus : Nat}
     (curve.polynomial.eval rightState.box.anchor)
   /-- The checked dyadic bank for the retained reverse path and starting owner. -/ backwardChecked : DyadicBank
     backwardDepth rootDiameter rootDiameterPositive
-    (BranchCutLifts.ClearPath.reverse connector) backwardOwner
+    (ClearPath.reverse connector) backwardOwner
   /-- The square-root owner at the left boundary's exact starting parameter. -/ leftBoundaryOwner : Owner
     (curve.polynomial.eval leftState.box.anchor)
   /-- The checked dyadic bank for the retained left boundary path and owner. -/ leftBoundaryChecked : DyadicBank
@@ -720,7 +730,7 @@ sequential execution of the same four retained finite preparations. -/
       leftAmbient)
     (rightState : State.WindingOne.Basic.WindingOneState curve.polynomial
       rightAmbient)
-    (connector : Polynomial.Geometry.ClearPath curve.polynomial connectorAmbient
+    (connector : Geometry.ClearPath curve.polynomial connectorAmbient
       leftState.box.anchor rightState.box.anchor)
     (connectorWithin : connector.WithinAmbient)
     (forwardOwner : Owner
@@ -733,23 +743,23 @@ sequential execution of the same four retained finite preparations. -/
       (curve.polynomial.eval leftState.box.anchor))
     (rootDiameter : Coordinate) (rootDiameterPositive : 0 < rootDiameter) :
     PreparedBoundaryDoublePath curve := by
-  let rightBoundary := BranchCutLifts.ownerBoundaryPath rightState
-  let backward := BranchCutLifts.ClearPath.reverse connector
-  let leftBoundary := BranchCutLifts.ownerBoundaryPath leftState
-  let prepareForward := fun (_ : Unit) => SquareRoot.Preparation.Bank.Adaptive.select
-    [SquareRoot.Preparation.Bank.Adaptive.Task.ofPath connector connectorWithin forwardOwner]
+  let rightBoundary := ownerBoundaryPath rightState
+  let backward := ClearPath.reverse connector
+  let leftBoundary := ownerBoundaryPath leftState
+  let prepareForward := fun (_ : Unit) => Adaptive.select
+    [Adaptive.Task.ofPath connector connectorWithin forwardOwner]
     rootDiameter rootDiameterPositive
-  let prepareRight := fun (_ : Unit) => SquareRoot.Preparation.Bank.Adaptive.select
-    [SquareRoot.Preparation.Bank.Adaptive.Task.ofPath rightBoundary
-      (BranchCutLifts.ownerBoundaryPath_withinAmbient rightState) rightBoundaryOwner]
+  let prepareRight := fun (_ : Unit) => Adaptive.select
+    [Adaptive.Task.ofPath rightBoundary
+      (ownerBoundaryPath_withinAmbient rightState) rightBoundaryOwner]
     rootDiameter rootDiameterPositive
-  let prepareBackward := fun (_ : Unit) => SquareRoot.Preparation.Bank.Adaptive.select
-    [SquareRoot.Preparation.Bank.Adaptive.Task.ofPath backward
-      (BranchCutLifts.ClearPath.reverse_withinAmbient connector connectorWithin) backwardOwner]
+  let prepareBackward := fun (_ : Unit) => Adaptive.select
+    [Adaptive.Task.ofPath backward
+      (ClearPath.reverse_withinAmbient connector connectorWithin) backwardOwner]
     rootDiameter rootDiameterPositive
-  let prepareLeft := fun (_ : Unit) => SquareRoot.Preparation.Bank.Adaptive.select
-    [SquareRoot.Preparation.Bank.Adaptive.Task.ofPath leftBoundary
-      (BranchCutLifts.ownerBoundaryPath_withinAmbient leftState) leftBoundaryOwner]
+  let prepareLeft := fun (_ : Unit) => Adaptive.select
+    [Adaptive.Task.ofPath leftBoundary
+      (ownerBoundaryPath_withinAmbient leftState) leftBoundaryOwner]
     rootDiameter rootDiameterPositive
   let selected := if parallel then
       Task.Parallel.four prepareForward prepareRight prepareBackward prepareLeft
@@ -890,7 +900,7 @@ theorem connectorWithin {genus : Nat} {curve : Basic.HyperellipticCurve genus}
 @[expose] def backward {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     (data : PreparedBoundaryDoublePath curve) :
     PreparedPath
-      (BranchCutLifts.ClearPath.reverse data.connector)
+      (ClearPath.reverse data.connector)
         data.backwardOwner :=
   data.backwardChecked.prepared
 
@@ -906,14 +916,14 @@ theorem connectorWithin {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     (data : PreparedBoundaryDoublePath curve) : Lifted.Closed.ClosedLiftedPath 2 :=
   { basepoint := { coordinate := data.leftState.box.anchor, sheet := 0 }
     path :=
-      (BranchCutLifts.ClearPath.liftOnSheet 0
+      (ClearPath.liftOnSheet 0
         data.forward.toClearPath).append
-        ((BranchCutLifts.ClearPath.liftOnSheet 0
+        ((ClearPath.liftOnSheet 0
           data.rightBoundary.toClearPath).append
           ((stationarySwitchPath data.rightState.box.anchor 0).append
-            ((BranchCutLifts.ClearPath.liftOnSheet 1
+            ((ClearPath.liftOnSheet 1
               data.backward.toClearPath).append
-              ((BranchCutLifts.ClearPath.liftOnSheet 1
+              ((ClearPath.liftOnSheet 1
                 data.leftBoundary.toClearPath).append
                   (stationarySwitchPath data.leftState.box.anchor 1))))) }
 
@@ -1013,25 +1023,25 @@ theorem integralRealLower_le_certifiedModel {genus : Nat}
       data.forward.integralRealLower curve differential 0 <=
         (Basic.PathModel.mk
           forward.cells).integralSample.re :=
-    PreparedClearPathModels.PreparedPath.integralRealLower_le_certify
+    PreparedPath.integralRealLower_le_certify
       curve differential 0 exponentZero data.forward
   have rightLower :
       data.rightBoundary.integralRealLower curve differential 0 <=
         (Basic.PathModel.mk
           rightBoundary.cells).integralSample.re :=
-    PreparedClearPathModels.PreparedPath.integralRealLower_le_certify
+    PreparedPath.integralRealLower_le_certify
       curve differential 0 exponentZero data.rightBoundary
   have backwardLower :
       data.backward.integralRealLower curve differential 1 <=
         (Basic.PathModel.mk
           backward.cells).integralSample.re :=
-    PreparedClearPathModels.PreparedPath.integralRealLower_le_certify
+    PreparedPath.integralRealLower_le_certify
       curve differential 1 exponentZero data.backward
   have leftLower :
       data.leftBoundary.integralRealLower curve differential 1 <=
         (Basic.PathModel.mk
           leftBoundary.cells).integralSample.re :=
-    PreparedClearPathModels.PreparedPath.integralRealLower_le_certify
+    PreparedPath.integralRealLower_le_certify
       curve differential 1 exponentZero data.leftBoundary
   have componentLower := add_le_add forwardLower
     (add_le_add rightLower (add_le_add backwardLower leftLower))
@@ -1055,16 +1065,16 @@ theorem directionalIntegralLower_le_certifiedModel {genus : Nat}
           (Basic.PathModel.mk
             (data.certifiedModel differential).cells).integralSample.im := by
   have forwardLower :=
-    PreparedClearPathModels.PreparedPath.directionalIntegralLower_le_certify
+    PreparedPath.directionalIntegralLower_le_certify
       curve differential 0 direction exponentZero data.forward
   have rightLower :=
-    PreparedClearPathModels.PreparedPath.directionalIntegralLower_le_certify
+    PreparedPath.directionalIntegralLower_le_certify
       curve differential 0 direction exponentZero data.rightBoundary
   have backwardLower :=
-    PreparedClearPathModels.PreparedPath.directionalIntegralLower_le_certify
+    PreparedPath.directionalIntegralLower_le_certify
       curve differential 1 direction exponentZero data.backward
   have leftLower :=
-    PreparedClearPathModels.PreparedPath.directionalIntegralLower_le_certify
+    PreparedPath.directionalIntegralLower_le_certify
       curve differential 1 direction exponentZero data.leftBoundary
   have componentLower := add_le_add forwardLower
     (add_le_add rightLower (add_le_add backwardLower leftLower))
@@ -1082,15 +1092,15 @@ theorem directionalIntegralLower_le_certifiedModel {genus : Nat}
     Basic.PathModel.ConstantCells
       (data.certifiedModel differential).cells := by
   exact
-    (Constant.PathModel.ConstantCells.append (CertifiedLift.ofPreparedPath_constantCells curve differential 0
+    (ConstantCells.append (CertifiedLift.ofPreparedPath_constantCells curve differential 0
       data.forward))
-      ((Constant.PathModel.ConstantCells.append (CertifiedLift.ofPreparedPath_constantCells curve differential 0
+      ((ConstantCells.append (CertifiedLift.ofPreparedPath_constantCells curve differential 0
         data.rightBoundary))
-        ((Constant.PathModel.ConstantCells.append (CertifiedLift.switch_constantCells curve differential
+        ((ConstantCells.append (CertifiedLift.switch_constantCells curve differential
           data.rightState.box.anchor 0))
-          ((Constant.PathModel.ConstantCells.append (CertifiedLift.ofPreparedPath_constantCells curve differential 1
+          ((ConstantCells.append (CertifiedLift.ofPreparedPath_constantCells curve differential 1
             data.backward))
-            ((Constant.PathModel.ConstantCells.append (CertifiedLift.ofPreparedPath_constantCells curve differential 1
+            ((ConstantCells.append (CertifiedLift.ofPreparedPath_constantCells curve differential 1
               data.leftBoundary))
               (CertifiedLift.switch_constantCells curve differential
                 data.leftState.box.anchor 1)))))
@@ -1101,14 +1111,14 @@ theorem directionalIntegralLower_le_certifiedModel {genus : Nat}
     (data : PreparedBoundaryDoublePath curve)
     (leftDifferential rightDifferential : Differentials.Basic.Differential genus) :
     List (WedgeChart curve leftDifferential rightDifferential) :=
-  PreparedClearPathModels.PreparedPath.wedgeCharts curve
+  PreparedPath.wedgeCharts curve
       leftDifferential rightDifferential 0 data.forward ++
-    PreparedClearPathModels.PreparedPath.wedgeCharts curve
+    PreparedPath.wedgeCharts curve
         leftDifferential rightDifferential 0 data.rightBoundary ++
       [stationaryWedgeChart curve leftDifferential rightDifferential] ++
-        PreparedClearPathModels.PreparedPath.wedgeCharts curve
+        PreparedPath.wedgeCharts curve
             leftDifferential rightDifferential 1 data.backward ++
-          PreparedClearPathModels.PreparedPath.wedgeCharts curve
+          PreparedPath.wedgeCharts curve
               leftDifferential rightDifferential 1 data.leftBoundary ++
             [stationaryWedgeChart curve leftDifferential rightDifferential]
 
@@ -1127,8 +1137,8 @@ readbacks determine the displayed natural count. -/
             (data.leftBoundary.stepCount + 1))) := by
   rw [← CertifiedClosedModel.cellCount]
   simp only [certifiedModel, CertifiedLift.append, CertifiedLift.switch,
-    CertifiedLift.ofPreparedPath, Purelib.Data.List.Append.length_append, List.length_cons,
-    List.length_nil, PreparedClearPathModels.PreparedPath.certify_cellCount]
+    CertifiedLift.ofPreparedPath, Data.List.Append.length_append, List.length_cons,
+    List.length_nil, PreparedPath.certify_cellCount]
   omega0
 
 /-- The exact certified cycle count is determined by the original segment counts and retained dyadic depths. -/
@@ -1146,15 +1156,15 @@ theorem certifiedModel_cellCount_eq_dyadic {genus : Nat}
   rw [certifiedModel_cellCount]
   simp only [forward, rightBoundary, backward, leftBoundary]
   rw [
-    PreparedClearPathModels.PreparedPath.DyadicBank.prepared_stepCount
+    PreparedPath.DyadicBank.prepared_stepCount
       data.forwardChecked,
-    PreparedClearPathModels.PreparedPath.DyadicBank.prepared_stepCount
+    PreparedPath.DyadicBank.prepared_stepCount
       data.rightBoundaryChecked,
-    PreparedClearPathModels.PreparedPath.DyadicBank.prepared_stepCount
+    PreparedPath.DyadicBank.prepared_stepCount
       data.backwardChecked,
-    PreparedClearPathModels.PreparedPath.DyadicBank.prepared_stepCount
+    PreparedPath.DyadicBank.prepared_stepCount
       data.leftBoundaryChecked,
-    BranchCutLifts.ClearPath.segmentCount_reverse]
+    ClearPath.segmentCount_reverse]
   omega0
 
 /-- The retained wedge-chart list has the same length as the original certified model's cell list. -/
@@ -1166,9 +1176,9 @@ theorem certifiedModel_cellCount_eq_dyadic {genus : Nat}
       (data.certifiedModel leftDifferential).cells.length := by
   rw [CertifiedClosedModel.cellCount,
     data.certifiedModel_cellCount leftDifferential]
-  simp only [wedgeCharts, Purelib.Data.List.Append.length_append, List.length_cons,
+  simp only [wedgeCharts, Data.List.Append.length_append, List.length_cons,
     List.length_nil,
-    PreparedClearPathModels.PreparedPath.wedgeCharts_length]
+    PreparedPath.wedgeCharts_length]
   omega0
 
 end PreparedBoundaryDoublePath
@@ -1273,8 +1283,8 @@ theorem directionalIntegralLower_sq_le_normSq_mul {genus : Nat}
     (exponentZero : differential.exponent = 0)
     (positive : 0 < data.directionalIntegralLower differential direction) :
     data.directionalIntegralLower differential direction ^ 2 <=
-      Data.Gaussian.Norm.Basic.normSq direction *
-        Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq direction *
+        Norm.Basic.normSq
           (Basic.PathModel.mk
             (data.certifiedModel differential).cells).integralSample := by
   let sample :=
@@ -1287,10 +1297,10 @@ theorem directionalIntegralLower_sq_le_normSq_mul {genus : Nat}
       exponentZero
   have lowerSqLe :
       data.directionalIntegralLower differential direction ^ 2 <= dot ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct positive.le lowerLe 2
+    Arithmetic.pow_le_pow_direct positive.le lowerLe 2
   have dotSqLe : dot ^ 2 <=
-      Data.Gaussian.Norm.Basic.normSq direction *
-        Data.Gaussian.Norm.Basic.normSq sample := by
+      Norm.Basic.normSq direction *
+        Norm.Basic.normSq sample := by
     exact Norm.Bounds.projection_sq_le_normSq_mul
       direction sample
   exact lowerSqLe.trans dotSqLe
@@ -1404,73 +1414,73 @@ inductive RealizesRaw {genus : Nat}
   /-- A prepared double path with stationary sheet switches at its two endpoints. -/ | bridge (data : PreparedDoublePath
     curve) :
       RealizesRaw (.bridge data)
-        (BranchCutLifts.doubleLift data.basePath)
+        (doubleLift data.basePath)
   /-- A prepared connector cycle with both retained owner-boundary paths. -/ | finiteCut (data :
     PreparedBoundaryDoublePath curve)
-      (_rightBoundary : data.rightBoundaryPath = BranchCutLifts.ownerBoundaryPath data.rightState)
-      (_leftBoundary : data.leftBoundaryPath = BranchCutLifts.ownerBoundaryPath data.leftState) :
+      (_rightBoundary : data.rightBoundaryPath = ownerBoundaryPath data.rightState)
+      (_leftBoundary : data.leftBoundaryPath = ownerBoundaryPath data.leftState) :
       RealizesRaw (.finiteCut data)
-        (BranchCutLifts.doubleLiftWithBoundaryOwners
+        (doubleLiftWithBoundaryOwners
           data.leftState data.rightState data.connector)
   /-- An exact uniform dyadic refinement of the retained raw bridge path. -/ | bridgeDyadic (data : PreparedDoublePath
     curve)
-      (rawPath : Polynomial.Geometry.ClearPath curve.polynomial data.ambient data.start data.finish)
+      (rawPath : Geometry.ClearPath curve.polynomial data.ambient data.start data.finish)
       (rawWithin : rawPath.WithinAmbient) (outerDepth : Nat)
       (_refined : data.basePath =
         PreparedClearPathModels.dyadicRefinePath rawPath rawWithin
           outerDepth) :
       RealizesRaw (.bridge data)
-        (BranchCutLifts.doubleLift rawPath)
+        (doubleLift rawPath)
   /-- An exact dyadic refinement of the raw bridge with a retained per-segment depth list. -/ | bridgeDyadicScheduled
     (data : PreparedDoublePath curve)
-      (rawPath : Polynomial.Geometry.ClearPath curve.polynomial data.ambient data.start data.finish)
+      (rawPath : Geometry.ClearPath curve.polynomial data.ambient data.start data.finish)
       (rawWithin : rawPath.WithinAmbient) (outerDepths : List Nat)
       (_refined : data.basePath =
         PreparedClearPathModels.dyadicRefinePathScheduled rawPath
           rawWithin outerDepths) :
       RealizesRaw (.bridge data)
-        (BranchCutLifts.doubleLift rawPath)
+        (doubleLift rawPath)
   /-- Exact uniform dyadic refinements of the raw connector and both original owner-boundary paths. -/ | finiteCutDyadic
     (data : PreparedBoundaryDoublePath curve)
-      (rawConnector : Polynomial.Geometry.ClearPath curve.polynomial data.connectorAmbient
+      (rawConnector : Geometry.ClearPath curve.polynomial data.connectorAmbient
         data.leftState.box.anchor data.rightState.box.anchor)
       (rawWithin : rawConnector.WithinAmbient) (outerDepth : Nat)
       (_refined : data.connector =
         PreparedClearPathModels.dyadicRefinePath rawConnector
           rawWithin outerDepth)
-      (rightRawWithin : (BranchCutLifts.ownerBoundaryPath data.rightState).WithinAmbient)
+      (rightRawWithin : (ownerBoundaryPath data.rightState).WithinAmbient)
       (rightOuterDepth : Nat)
       (_rightRefined : data.rightBoundaryPath =
         PreparedClearPathModels.dyadicRefinePath
-          (BranchCutLifts.ownerBoundaryPath data.rightState) rightRawWithin rightOuterDepth)
-      (leftRawWithin : (BranchCutLifts.ownerBoundaryPath data.leftState).WithinAmbient)
+          (ownerBoundaryPath data.rightState) rightRawWithin rightOuterDepth)
+      (leftRawWithin : (ownerBoundaryPath data.leftState).WithinAmbient)
       (leftOuterDepth : Nat)
       (_leftRefined : data.leftBoundaryPath =
         PreparedClearPathModels.dyadicRefinePath
-          (BranchCutLifts.ownerBoundaryPath data.leftState) leftRawWithin leftOuterDepth) :
+          (ownerBoundaryPath data.leftState) leftRawWithin leftOuterDepth) :
       RealizesRaw (.finiteCut data)
-        (BranchCutLifts.doubleLiftWithBoundaryOwners
+        (doubleLiftWithBoundaryOwners
           data.leftState data.rightState rawConnector)
   /-- Exact independently scheduled dyadic refinements of the connector and both original owner-boundary paths. -/ |
     finiteCutDyadicScheduled (data : PreparedBoundaryDoublePath curve)
-      (rawConnector : Polynomial.Geometry.ClearPath curve.polynomial data.connectorAmbient
+      (rawConnector : Geometry.ClearPath curve.polynomial data.connectorAmbient
         data.leftState.box.anchor data.rightState.box.anchor)
       (rawWithin : rawConnector.WithinAmbient) (connectorDepths : List Nat)
       (_refined : data.connector =
         PreparedClearPathModels.dyadicRefinePathScheduled
           rawConnector rawWithin connectorDepths)
-      (rightRawWithin : (BranchCutLifts.ownerBoundaryPath data.rightState).WithinAmbient)
+      (rightRawWithin : (ownerBoundaryPath data.rightState).WithinAmbient)
       (rightDepths : List Nat)
       (_rightRefined : data.rightBoundaryPath =
         PreparedClearPathModels.dyadicRefinePathScheduled
-          (BranchCutLifts.ownerBoundaryPath data.rightState) rightRawWithin rightDepths)
-      (leftRawWithin : (BranchCutLifts.ownerBoundaryPath data.leftState).WithinAmbient)
+          (ownerBoundaryPath data.rightState) rightRawWithin rightDepths)
+      (leftRawWithin : (ownerBoundaryPath data.leftState).WithinAmbient)
       (leftDepths : List Nat)
       (_leftRefined : data.leftBoundaryPath =
         PreparedClearPathModels.dyadicRefinePathScheduled
-          (BranchCutLifts.ownerBoundaryPath data.leftState) leftRawWithin leftDepths) :
+          (ownerBoundaryPath data.leftState) leftRawWithin leftDepths) :
       RealizesRaw (.finiteCut data)
-        (BranchCutLifts.doubleLiftWithBoundaryOwners
+        (doubleLiftWithBoundaryOwners
           data.leftState data.rightState rawConnector)
 
 namespace RealizesRaw
@@ -1479,18 +1489,18 @@ namespace RealizesRaw
 theorem bridge_raw_cellCount {genus : Nat}
     {curve : Basic.HyperellipticCurve genus}
     (data : PreparedDoublePath curve) :
-    (BranchCutLifts.doubleLift data.basePath).cellCount =
+    (doubleLift data.basePath).cellCount =
       2 * data.basePath.segmentCount + 2 :=
-  BranchCutLifts.doubleLift_cellCount data.basePath
+  doubleLift_cellCount data.basePath
 
 /-- The original raw finite-cut lift has twice its connector segment count plus eight boundary and switch cells. -/
 theorem cut_raw_cellCount {genus : Nat}
     {curve : Basic.HyperellipticCurve genus}
     (data : PreparedBoundaryDoublePath curve) :
-    (BranchCutLifts.doubleLiftWithBoundaryOwners
+    (doubleLiftWithBoundaryOwners
         data.leftState data.rightState data.connector).cellCount =
       2 * data.connector.segmentCount + 8 :=
-  BranchCutLifts.doubleLiftWithBoundaryOwners_cellCount
+  doubleLiftWithBoundaryOwners_cellCount
     data.leftState data.rightState data.connector
 
 end RealizesRaw
@@ -1649,7 +1659,7 @@ structure SequentialCompatibleDifferentialCore {genus : Nat}
       4 * stepScale
   /-- The retained comparison allowance satisfies its stated geometric radius bound at the earlier stage. -/
     comparisonAllowance_le : forall index,
-    (CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.comparisonAllowance (steps index)) <=
+    (CompatibleConstantPathRefinement.comparisonAllowance (steps index)) <=
       Geometric.Basic.quarterRadius stepScale index
 
 constructive_injectivity SequentialCompatibleDifferentialCore
@@ -1713,7 +1723,7 @@ structure StrictCompatibleDifferentialCore {genus : Nat}
   /-- The retained comparison allowance satisfies its stated geometric radius bound at the earlier stage. -/
     comparisonAllowance_le : forall {earlier later : Nat}
       (order : earlier < later),
-    (CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.comparisonAllowance (laterRefinements order)) <=
+    (CompatibleConstantPathRefinement.comparisonAllowance (laterRefinements order)) <=
       Geometric.Basic.quarterRadius (4 * modelScale) earlier
 
 constructive_injectivity StrictCompatibleDifferentialCore
@@ -1737,7 +1747,7 @@ structure CompatibleDifferentialCore {genus : Nat}
   /-- The retained comparison allowance satisfies its stated geometric radius bound at the earlier stage. -/
     comparisonAllowance_le : forall {earlier later : Nat}
       (order : earlier <= later),
-    (CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.comparisonAllowance (refinements order)) <=
+    (CompatibleConstantPathRefinement.comparisonAllowance (refinements order)) <=
       Geometric.Basic.quarterRadius errorScale earlier
 
 constructive_injectivity CompatibleDifferentialCore
@@ -1760,7 +1770,7 @@ theorem errorScale_nonnegative {genus : Nat}
     {differential : Differentials.Basic.Differential genus}
     (core : StrictCompatibleDifferentialCore curve geometry differential) :
     0 <= core.errorScale :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  Arithmetic.mul_nonneg_direct (by decide)
     core.modelScale_nonnegative
 
 /-- A nonnegative model scale's quarter allowance is bounded by that of its factor-four comparison scale. -/
@@ -1772,13 +1782,13 @@ private theorem quarterRadius_model_le_errorScale
     Geometric.Basic.quarterRadius_eq_mul_pow]
   have powerNonnegative :
       0 <= (1 / 4 : Coordinate) ^ index :=
-    Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) index
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    Arithmetic.pow_nonneg_direct (by decide) index
+  exact Arithmetic.mul_le_mul_of_nonneg_right_direct
     (by
       calc
         scale = 1 * scale := by ring1
         _ <= 4 * scale :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          Arithmetic.mul_le_mul_of_nonneg_right_direct
             (by decide) nonnegative)
     powerNonnegative
 
@@ -1794,7 +1804,7 @@ private theorem quarterRadius_model_le_errorScale
       ((geometry.data later).pathModel differential).cells := by
   by_cases equal : earlier = later
   · subst later
-    exact CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.refl
+    exact CompatibleConstantPathRefinement.refl
       ((geometry.data earlier).pathModel_constantCells differential)
   · exact core.laterRefinements (Nat.lt_of_le_of_ne order equal)
 
@@ -1820,17 +1830,17 @@ theorem refinements_comparisonAllowance_le {genus : Nat}
     {differential : Differentials.Basic.Differential genus}
     (core : StrictCompatibleDifferentialCore curve geometry differential)
     {earlier later : Nat} (order : earlier <= later) :
-    (CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.comparisonAllowance (core.refinements order)) <=
+    (CompatibleConstantPathRefinement.comparisonAllowance (core.refinements order)) <=
       Geometric.Basic.quarterRadius core.errorScale earlier := by
   by_cases equal : earlier = later
   · subst later
     unfold refinements
     rewrite [dif_pos (Eq.refl earlier)]
-    rw [CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.comparisonAllowance_refl_eq]
+    rw [CompatibleConstantPathRefinement.comparisonAllowance_refl_eq]
     calc
       4 * ((geometry.data earlier).pathModel differential).aggregateAllowance <=
           4 * Geometric.Basic.quarterRadius core.modelScale earlier :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (core.modelAllowance_le earlier) (by decide)
       _ = Geometric.Basic.quarterRadius core.errorScale earlier := by
         unfold errorScale
@@ -1878,12 +1888,12 @@ structure CompatibleDifferentialSchedule {genus : Nat}
   /-- The retained comparison allowance satisfies its stated geometric radius bound at the earlier stage. -/
     comparisonAllowance_le : forall {earlier later : Nat}
       (order : earlier <= later),
-    (CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.comparisonAllowance (refinements order)) <=
+    (CompatibleConstantPathRefinement.comparisonAllowance (refinements order)) <=
       Geometric.Basic.quarterRadius errorScale earlier
   /-- A uniform rational bound on the squared norms of the integral samples. -/ centerBound : Coordinate
   /-- The uniform squared-norm bound is nonnegative. -/ centerBound_nonnegative : 0 <= centerBound
   /-- Every retained model's integral sample satisfies the uniform squared-norm bound. -/ sample_bounded : forall index,
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
       ((geometry.data index).pathModel differential).integralSample <=
         centerBound
 
@@ -1943,9 +1953,9 @@ theorem modelAllowance_le {genus : Nat}
       Geometric.Basic.quarterRadius core.errorScale index := by
   calc
     ((geometry.data index).pathModel differential).aggregateAllowance <=
-        (CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.comparisonAllowance (core.refinements
+        (CompatibleConstantPathRefinement.comparisonAllowance (core.refinements
           (Nat.le_refl index))) :=
-      (CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.childAggregateAllowance_le_comparisonAllowance
+      (CompatibleConstantPathRefinement.childAggregateAllowance_le_comparisonAllowance
         (core.refinements
         (Nat.le_refl index)))
     _ <= Geometric.Basic.quarterRadius core.errorScale index :=
@@ -1958,7 +1968,7 @@ theorem modelAllowance_le {genus : Nat}
     {differential : Differentials.Basic.Differential genus}
     (core : CompatibleDifferentialCore curve geometry differential) :
     Coordinate :=
-  2 * (Data.Gaussian.Norm.Basic.normSq
+  2 * (Norm.Basic.normSq
       ((geometry.data 0).pathModel differential).integralSample +
     core.errorScale)
 
@@ -1970,7 +1980,7 @@ theorem centerBound_nonnegative {genus : Nat}
     (core : CompatibleDifferentialCore curve geometry differential) :
     0 <= core.centerBound := by
   unfold centerBound
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  exact Arithmetic.mul_nonneg_direct (by decide)
     (add_nonneg (Norm.Basic.normSq_nonneg _)
       core.errorScale_nonnegative)
 
@@ -1978,10 +1988,10 @@ theorem centerBound_nonnegative {genus : Nat}
 private theorem normSq_le_initial_bound
     (current initial : Basic.Canonical)
     (scale : Coordinate)
-    (movement : Data.Gaussian.Norm.Basic.normSq
+    (movement : Norm.Basic.normSq
       (current - initial) <= scale) :
-    Data.Gaussian.Norm.Basic.normSq current <=
-      2 * (Data.Gaussian.Norm.Basic.normSq initial + scale) := by
+    Norm.Basic.normSq current <=
+      2 * (Norm.Basic.normSq initial + scale) := by
   have sumBound :=
     Norm.Bounds.normSq_add_le_two
       (current - initial) initial
@@ -1993,14 +2003,14 @@ private theorem normSq_le_initial_bound
         Basic.add_im] <;> ring1
   rw [identity] at sumBound
   apply sumBound.trans
-  apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct _
+  apply Arithmetic.mul_le_mul_of_nonneg_left_direct _
     (show (0 : Coordinate) <= 2 by decide)
   calc
-    Data.Gaussian.Norm.Basic.normSq (current - initial) +
-        Data.Gaussian.Norm.Basic.normSq initial <=
-      scale + Data.Gaussian.Norm.Basic.normSq initial :=
+    Norm.Basic.normSq (current - initial) +
+        Norm.Basic.normSq initial <=
+      scale + Norm.Basic.normSq initial :=
         add_le_add movement (le_refl _)
-    _ = Data.Gaussian.Norm.Basic.normSq initial + scale := by ring1
+    _ = Norm.Basic.normSq initial + scale := by ring1
 
 /-- Every original cycle sample differs from the exact initial sample within the retained comparison scale. -/
 private theorem sample_sub_initial_bounded {genus : Nat}
@@ -2009,15 +2019,15 @@ private theorem sample_sub_initial_bounded {genus : Nat}
     {differential : Differentials.Basic.Differential genus}
     (core : CompatibleDifferentialCore curve geometry differential)
     (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (((geometry.data index).pathModel differential).integralSample -
           ((geometry.data 0).pathModel differential).integralSample) <=
       core.errorScale := by
   calc
-    _ <= (CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.comparisonAllowance (core.refinements
+    _ <= (CompatibleConstantPathRefinement.comparisonAllowance (core.refinements
       (Nat.zero_le index))) :=
       by simpa only [Norm.Basic.normSq_eq_canonical] using
-        (CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.integral_difference_le (core.refinements
+        (CompatibleConstantPathRefinement.integral_difference_le (core.refinements
         (Nat.zero_le index)))
     _ <= Geometric.Basic.quarterRadius core.errorScale 0 :=
       core.comparisonAllowance_le (Nat.zero_le index)
@@ -2032,7 +2042,7 @@ theorem sample_bounded {genus : Nat}
     {differential : Differentials.Basic.Differential genus}
     (core : CompatibleDifferentialCore curve geometry differential)
     (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((geometry.data index).pathModel differential).integralSample <=
       core.centerBound := by
   let initial := ((geometry.data 0).pathModel differential).integralSample

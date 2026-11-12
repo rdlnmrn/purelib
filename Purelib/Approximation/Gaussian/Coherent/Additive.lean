@@ -55,48 +55,48 @@ namespace Purelib.Approximation.Gaussian.Coherent.Additive
 private theorem negStateAt
     (process : Process)
     (start : process.State) (index : Nat) :
-    Gaussian.Process.Sampling.stateAt
+    Process.Sampling.stateAt
         (Process.neg process) start index =
-      Gaussian.Process.Sampling.stateAt process start index := by
+      Process.Sampling.stateAt process start index := by
   induction index with
   | zero => rfl
   | succ index inductionHypothesis =>
-      rw [Gaussian.Process.Sampling.stateAt_succ,
-        Gaussian.Process.Sampling.stateAt_succ, inductionHypothesis]
+      rw [Process.Sampling.stateAt_succ,
+        Process.Sampling.stateAt_succ, inductionHypothesis]
       change process.refine _ _ _ = process.refine _ _ _
       rfl
 
 /-- The canonical sample of a negated name is the negative of the original sample at the same index. -/
 public theorem negSampling_sample (input :
-  Gaussian.Name.Basic.Named)
+  Named)
     (index : Nat) :
     (Sampling.approximation
       (Named.neg input)).sample index =
       -(Sampling.approximation input).sample index := by
   change
-    Gaussian.Process.Sampling.witnessAt
+    Process.Sampling.witnessAt
         (Process.neg input.process)
         input.state index =
-      -Gaussian.Process.Sampling.witnessAt input.process input.state index
-  unfold Gaussian.Process.Sampling.witnessAt
+      -Process.Sampling.witnessAt input.process input.state index
+  unfold Process.Sampling.witnessAt
   rw [negStateAt]
   rfl
 
 /-- Operational cancellation of `left - right` proves that the two original names are operationally equal. -/
-def equivalent_of_sub_zero (left right : Coherent.CoherentNamed)
-    (zeroDifference : Gaussian.Equivalence.NamedEquivalent
+def equivalent_of_sub_zero (left right : CoherentNamed)
+    (zeroDifference : NamedEquivalent
       (CoherentNamed.add left
         (CoherentNamed.neg right)).name
       (Coherence.exact 0).name) :
-    Gaussian.Equivalence.NamedEquivalent left.name right.name := by
+    NamedEquivalent left.name right.name := by
   let negative := CoherentNamed.neg right
   let zero := Coherence.exact 0
   let difference := CoherentNamed.add left negative
-  have begin : Gaussian.Equivalence.NamedEquivalent left.name
+  have begin : NamedEquivalent left.name
       (CoherentNamed.add left zero).name :=
     NamedEquivalent.symm
       (Add.coherentAdd_zero_right left)
-  have insertCancellation : Gaussian.Equivalence.NamedEquivalent
+  have insertCancellation : NamedEquivalent
       (CoherentNamed.add left zero).name
       (CoherentNamed.add left
         (CoherentNamed.add negative right)).name :=
@@ -110,7 +110,7 @@ def equivalent_of_sub_zero (left right : Coherent.CoherentNamed)
             Coherence.exact,
             CoherentNamed.add] using
             Neg.coherentAdd_neg_left right))
-  have reassociate : Gaussian.Equivalence.NamedEquivalent
+  have reassociate : NamedEquivalent
       (CoherentNamed.add left
         (CoherentNamed.add negative right)).name
       (CoherentNamed.add difference right).name :=
@@ -119,12 +119,12 @@ def equivalent_of_sub_zero (left right : Coherent.CoherentNamed)
         simpa only [difference,
           CoherentNamed.add] using
           Add.coherentAdd_assoc left negative right)
-  have differenceZero : Gaussian.Equivalence.NamedEquivalent difference.name zero.name := by
+  have differenceZero : NamedEquivalent difference.name zero.name := by
     simpa only [difference, negative, zero,
       CoherentNamed.add,
       CoherentNamed.neg,
       Coherence.exact] using zeroDifference
-  have replaceDifference : Gaussian.Equivalence.NamedEquivalent
+  have replaceDifference : NamedEquivalent
       (CoherentNamed.add difference right).name
       (CoherentNamed.add zero right).name :=
     Congruence.coherentAdd_respects difference zero right right
@@ -138,8 +138,8 @@ def equivalent_of_sub_zero (left right : Coherent.CoherentNamed)
 
 /-- Four-term additive interchange, derived only from operational commutativity and associativity. -/
 def coherentAdd_interchange
-    (first second third fourth : Coherent.CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
+    (first second third fourth : CoherentNamed) :
+    NamedEquivalent
       (CoherentNamed.add
         (CoherentNamed.add first second)
         (CoherentNamed.add third fourth)).name
@@ -154,14 +154,14 @@ def coherentAdd_interchange
     CoherentNamed.add third second
   let secondFourth :=
     CoherentNamed.add second fourth
-  have exposeMiddle : Gaussian.Equivalence.NamedEquivalent
+  have exposeMiddle : NamedEquivalent
       (CoherentNamed.add second thirdFourth).name
       (CoherentNamed.add secondThird fourth).name :=
     NamedEquivalent.symm (by
       simpa only [thirdFourth, secondThird,
         CoherentNamed.add] using
         Add.coherentAdd_assoc second third fourth)
-  have swapMiddle : Gaussian.Equivalence.NamedEquivalent
+  have swapMiddle : NamedEquivalent
       (CoherentNamed.add secondThird fourth).name
       (CoherentNamed.add thirdSecond fourth).name :=
     Congruence.coherentAdd_respects
@@ -170,13 +170,13 @@ def coherentAdd_interchange
           simpa only [secondThird, thirdSecond, CoherentNamed.add]
             using Add.coherentAdd_comm second third)
       (NamedEquivalent.refl fourth.name)
-  have regroupMiddle : Gaussian.Equivalence.NamedEquivalent
+  have regroupMiddle : NamedEquivalent
       (CoherentNamed.add thirdSecond fourth).name
       (CoherentNamed.add third secondFourth).name := by
     simpa only [thirdSecond, secondFourth,
       CoherentNamed.add] using
       Add.coherentAdd_assoc third second fourth
-  have middleInterchange : Gaussian.Equivalence.NamedEquivalent
+  have middleInterchange : NamedEquivalent
       (CoherentNamed.add second thirdFourth).name
       (CoherentNamed.add third secondFourth).name :=
     NamedEquivalent.trans exposeMiddle
@@ -196,23 +196,35 @@ def coherentAdd_interchange
           Add.coherentAdd_assoc
             first third secondFourth)))
 
+/-- Swap the first two retained terms while reassociating their operational sum.
+
+The comparison changes `first + (second + third)` to `(second + first) + third`
+using the original three coherent channels and their finite arithmetic laws. -/
+def coherentAdd_swap_assoc (first second third : CoherentNamed) :
+    NamedEquivalent
+      (CoherentNamed.add first (CoherentNamed.add second third)).name
+      (CoherentNamed.add (CoherentNamed.add second first) third).name :=
+  NamedEquivalent.trans (NamedEquivalent.symm (Add.coherentAdd_assoc first second third))
+    (Congruence.coherentAdd_respects (CoherentNamed.add first second) (CoherentNamed.add second first)
+      third third (Add.coherentAdd_comm first second) (NamedEquivalent.refl third.name))
+
 /-- An operational right inverse of an additive value is equal to its actual stateful negation. -/
 def equivalent_neg_of_add_zero (value candidate :
-  Coherent.CoherentNamed)
-    (cancel : Gaussian.Equivalence.NamedEquivalent
+  CoherentNamed)
+    (cancel : NamedEquivalent
       (CoherentNamed.add value candidate).name
       (Coherence.exact 0).name) :
-    Gaussian.Equivalence.NamedEquivalent candidate.name
+    NamedEquivalent candidate.name
       (CoherentNamed.neg value).name := by
   let zero := Coherence.exact 0
   let negative := CoherentNamed.neg value
   let negativeValue :=
     CoherentNamed.add negative value
-  have begin : Gaussian.Equivalence.NamedEquivalent candidate.name
+  have begin : NamedEquivalent candidate.name
       (CoherentNamed.add zero candidate).name :=
     NamedEquivalent.symm
       (Add.coherentAdd_zero_left candidate)
-  have insertInverse : Gaussian.Equivalence.NamedEquivalent
+  have insertInverse : NamedEquivalent
       (CoherentNamed.add zero candidate).name
       (CoherentNamed.add
         negativeValue candidate).name :=
@@ -225,7 +237,7 @@ def equivalent_neg_of_add_zero (value candidate :
           CoherentNamed.add] using
           Neg.coherentAdd_neg_left value))
       (NamedEquivalent.refl candidate.name)
-  have associate : Gaussian.Equivalence.NamedEquivalent
+  have associate : NamedEquivalent
       (CoherentNamed.add
         negativeValue candidate).name
       (CoherentNamed.add negative
@@ -233,7 +245,7 @@ def equivalent_neg_of_add_zero (value candidate :
     simpa only [negativeValue,
       CoherentNamed.add] using
       Add.coherentAdd_assoc negative value candidate
-  have replaceCancellation : Gaussian.Equivalence.NamedEquivalent
+  have replaceCancellation : NamedEquivalent
       (CoherentNamed.add negative
         (CoherentNamed.add value candidate)).name
       (CoherentNamed.add negative zero).name :=
@@ -248,22 +260,22 @@ def equivalent_neg_of_add_zero (value candidate :
           (Add.coherentAdd_zero_right negative))))
 
 /-- Stateful negation respects operational equivalence. -/
-def coherentNeg_respects (left right : Coherent.CoherentNamed)
-    (equivalent : Gaussian.Equivalence.NamedEquivalent left.name right.name) :
-    Gaussian.Equivalence.NamedEquivalent
+def coherentNeg_respects (left right : CoherentNamed)
+    (equivalent : NamedEquivalent left.name right.name) :
+    NamedEquivalent
       (CoherentNamed.neg left).name
       (CoherentNamed.neg right).name := by
   let negativeLeft := CoherentNamed.neg left
   let negativeRight := CoherentNamed.neg right
   let zero := Coherence.exact 0
-  have replaceInput : Gaussian.Equivalence.NamedEquivalent
+  have replaceInput : NamedEquivalent
       (CoherentNamed.add right negativeLeft).name
       (CoherentNamed.add left negativeLeft).name :=
     Congruence.coherentAdd_respects
       right left negativeLeft negativeLeft
       (NamedEquivalent.symm equivalent)
       (NamedEquivalent.refl negativeLeft.name)
-  have cancel : Gaussian.Equivalence.NamedEquivalent
+  have cancel : NamedEquivalent
       (CoherentNamed.add right negativeLeft).name
       zero.name :=
     NamedEquivalent.trans replaceInput (by
@@ -276,8 +288,8 @@ def coherentNeg_respects (left right : Coherent.CoherentNamed)
     equivalent_neg_of_add_zero right negativeLeft cancel
 
 /-- Stateful negation distributes over a finite operational sum. -/
-def coherentNeg_add (left right : Coherent.CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
+def coherentNeg_add (left right : CoherentNamed) :
+    NamedEquivalent
       (CoherentNamed.add
         (CoherentNamed.neg left)
         (CoherentNamed.neg right)).name
@@ -289,14 +301,14 @@ def coherentNeg_add (left right : Coherent.CoherentNamed) :
   let candidate :=
     CoherentNamed.add negativeLeft negativeRight
   let zero := Coherence.exact 0
-  have separate : Gaussian.Equivalence.NamedEquivalent
+  have separate : NamedEquivalent
       (CoherentNamed.add value candidate).name
       (CoherentNamed.add
         (CoherentNamed.add left negativeLeft)
         (CoherentNamed.add right negativeRight)).name := by
     simpa only [value, candidate] using
       coherentAdd_interchange left right negativeLeft negativeRight
-  have cancelBoth : Gaussian.Equivalence.NamedEquivalent
+  have cancelBoth : NamedEquivalent
       (CoherentNamed.add
         (CoherentNamed.add left negativeLeft)
         (CoherentNamed.add right negativeRight)).name
@@ -310,7 +322,7 @@ def coherentNeg_add (left right : Coherent.CoherentNamed) :
       (by
           simpa only [negativeRight, zero, CoherentNamed.neg, Coherence.exact, CoherentNamed.add]
             using Neg.coherentAdd_neg_right right)
-  have totalZero : Gaussian.Equivalence.NamedEquivalent
+  have totalZero : NamedEquivalent
       (CoherentNamed.add value candidate).name
       zero.name :=
     NamedEquivalent.trans separate
@@ -323,7 +335,7 @@ def coherentNeg_add (left right : Coherent.CoherentNamed) :
 
 /-- The actual negation of the terminating zero is operationally zero. -/
 def zero_equivalent_neg_zero :
-    Gaussian.Equivalence.NamedEquivalent (Coherence.exact 0).name
+    NamedEquivalent (Coherence.exact 0).name
       (CoherentNamed.neg
         (Coherence.exact 0)).name := by
   let zero := Coherence.exact 0
@@ -331,8 +343,8 @@ def zero_equivalent_neg_zero :
     (Add.coherentAdd_zero_right zero)
 
 /-- Applying the actual stateful negation twice returns the original operational value. -/
-def coherent_doubleNeg (value : Coherent.CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent value.name
+def coherent_doubleNeg (value : CoherentNamed) :
+    NamedEquivalent value.name
       (CoherentNamed.neg
         (CoherentNamed.neg value)).name := by
   let negative := CoherentNamed.neg value
@@ -344,8 +356,8 @@ def coherent_doubleNeg (value : Coherent.CoherentNamed) :
       Neg.coherentAdd_neg_left value)
 
 /-- Swapping the two entries of an operational difference negates it. -/
-def coherentSub_swap (left right : Coherent.CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
+def coherentSub_swap (left right : CoherentNamed) :
+    NamedEquivalent
       (CoherentNamed.add right
         (CoherentNamed.neg left)).name
       (CoherentNamed.neg
@@ -355,11 +367,11 @@ def coherentSub_swap (left right : Coherent.CoherentNamed) :
   let negativeRight := CoherentNamed.neg right
   let doubleNegativeRight :=
     CoherentNamed.neg negativeRight
-  have commute : Gaussian.Equivalence.NamedEquivalent
+  have commute : NamedEquivalent
       (CoherentNamed.add right negativeLeft).name
       (CoherentNamed.add negativeLeft right).name :=
     Add.coherentAdd_comm right negativeLeft
-  have replaceRight : Gaussian.Equivalence.NamedEquivalent
+  have replaceRight : NamedEquivalent
       (CoherentNamed.add negativeLeft right).name
       (CoherentNamed.add negativeLeft
         doubleNegativeRight).name :=
@@ -396,8 +408,8 @@ same displayed lifted cycle and exposed through one finite request table.
 namespace Purelib.Approximation.Gaussian.Coherent.Additive
 
 /-- Subtract two coherent names by adding the original left input to the stateful negation of the right input. -/
-def subtractName (left right : Coherent.CoherentNamed) :
-  Coherent.CoherentNamed :=
+def subtractName (left right : CoherentNamed) :
+  CoherentNamed :=
   CoherentNamed.add left
     (CoherentNamed.neg right)
 

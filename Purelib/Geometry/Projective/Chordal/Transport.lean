@@ -22,6 +22,9 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -82,7 +85,7 @@ private theorem adjugate_act_act (matrix :
 estimate. -/
 theorem determinant_mul_weight_le_act_weight
     (matrix : GaussianMatrix) (point : GaussianLine) :
-    Data.Gaussian.Norm.Basic.normSq (BoundaryAdjugate.determinant matrix) *
+    Basic.normSq (BoundaryAdjugate.determinant matrix) *
         Proj.weight point ≤
       Mat2.actionWeightCoefficient
           (BoundaryAdjugate.adjugate matrix) *
@@ -91,7 +94,7 @@ theorem determinant_mul_weight_le_act_weight
   let image := Line.Matrix.act matrix point
   have upper := Mat2.act_weight_le inverse image
   calc
-    Data.Gaussian.Norm.Basic.normSq (BoundaryAdjugate.determinant matrix) *
+    Basic.normSq (BoundaryAdjugate.determinant matrix) *
         Proj.weight point =
         Proj.weight
           (Proj.scale
@@ -111,7 +114,7 @@ def transportCoefficient (matrix :
     Mat2.actionWeightCoefficient
       (BoundaryAdjugate.adjugate matrix)
   coefficient ^ 2 /
-    Data.Gaussian.Norm.Basic.normSq (BoundaryAdjugate.determinant matrix)
+    Basic.normSq (BoundaryAdjugate.determinant matrix)
 
 /-- A nonzero matrix determinant makes the squared-chordal transport coefficient positive. -/
 theorem transportCoefficient_pos (matrix :
@@ -119,11 +122,11 @@ theorem transportCoefficient_pos (matrix :
     (determinantNonzero :
       BoundaryAdjugate.determinant matrix ≠ 0) :
     0 < transportCoefficient matrix := by
-  exact Fraction.Order.Field.div_pos_direct
-    (Fraction.Order.Arithmetic.pow_pos_direct
+  exact Field.div_pos_direct
+    (Arithmetic.pow_pos_direct
       (Mat2.actionWeightCoefficient_pos
         (BoundaryAdjugate.adjugate matrix)) 2)
-    (Data.Gaussian.Norm.Basic.normSq_pos determinantNonzero)
+    (Basic.normSq_pos determinantNonzero)
 
 /-- Any one finite invertible decoder can enlarge squared-chordal error by at most its displayed rational condition
 coefficient. This is the accounting needed before later half-contracting blocks make up for one annulus-free initial
@@ -135,16 +138,16 @@ theorem chordalSq_act_le_transportCoefficient
     (left right : GaussianLine)
     (leftValid : Proj.HasNonzeroCoordinate left)
     (rightValid : Proj.HasNonzeroCoordinate right) :
-    Chordal.Basic.chordalSq
+    Basic.chordalSq
         (Line.Matrix.act matrix left) (Line.Matrix.act matrix right) ≤
       transportCoefficient matrix *
-        Chordal.Basic.chordalSq left right := by
+        Basic.chordalSq left right := by
   let determinantNorm :=
-    Data.Gaussian.Norm.Basic.normSq (BoundaryAdjugate.determinant matrix)
+    Basic.normSq (BoundaryAdjugate.determinant matrix)
   let coefficient :=
     Mat2.actionWeightCoefficient
       (BoundaryAdjugate.adjugate matrix)
-  let numerator := Data.Gaussian.Norm.Basic.normSq (Proj.cross left right)
+  let numerator := Basic.normSq (Proj.cross left right)
   let inputDenominator :=
     Proj.weight left *
       Proj.weight right
@@ -152,11 +155,11 @@ theorem chordalSq_act_le_transportCoefficient
     Proj.weight (Line.Matrix.act matrix left) *
       Proj.weight (Line.Matrix.act matrix right)
   have determinantPositive : 0 < determinantNorm :=
-    Data.Gaussian.Norm.Basic.normSq_pos determinantNonzero
+    Basic.normSq_pos determinantNonzero
   have coefficientPositive : 0 < coefficient :=
     Mat2.actionWeightCoefficient_pos _
   have inputDenominatorPositive : 0 < inputDenominator :=
-    Fraction.Order.Arithmetic.mul_pos_direct
+    Arithmetic.mul_pos_direct
       (Proj.weight_pos leftValid)
       (Proj.weight_pos rightValid)
   have leftImageValid :=
@@ -166,7 +169,7 @@ theorem chordalSq_act_le_transportCoefficient
     Gaussian.Mat2.act_hasNonzeroCoordinate
       determinantNonzero rightValid
   have outputDenominatorPositive : 0 < outputDenominator :=
-    Fraction.Order.Arithmetic.mul_pos_direct
+    Arithmetic.mul_pos_direct
       (Proj.weight_pos leftImageValid)
       (Proj.weight_pos rightImageValid)
   have leftWeight := determinant_mul_weight_le_act_weight matrix left
@@ -174,11 +177,11 @@ theorem chordalSq_act_le_transportCoefficient
   have denominatorOrder :
       determinantNorm ^ 2 * inputDenominator ≤
         coefficient ^ 2 * outputDenominator := by
-    have productOrder := Fraction.Order.Arithmetic.mul_le_mul_direct
+    have productOrder := Arithmetic.mul_le_mul_direct
       leftWeight rightWeight
-      (Fraction.Order.Arithmetic.mul_nonneg_direct determinantPositive.le
+      (Arithmetic.mul_nonneg_direct determinantPositive.le
         (Proj.weight_pos rightValid).le)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct coefficientPositive.le
+      (Arithmetic.mul_nonneg_direct coefficientPositive.le
         (Proj.weight_pos leftImageValid).le)
     calc
       determinantNorm ^ 2 * inputDenominator =
@@ -195,13 +198,13 @@ theorem chordalSq_act_le_transportCoefficient
       _ = coefficient ^ 2 * outputDenominator := by
         dsimp only [outputDenominator]
         ring1
-  have numeratorNonnegative : 0 ≤ numerator := Data.Gaussian.Norm.Basic.normSq_nonneg _
+  have numeratorNonnegative : 0 ≤ numerator := Basic.normSq_nonneg _
   have denominatorProductPositive :
       0 < determinantNorm * inputDenominator :=
-    Fraction.Order.Arithmetic.mul_pos_direct determinantPositive
+    Arithmetic.mul_pos_direct determinantPositive
       inputDenominatorPositive
   rw [Mat2.chordalSq_act]
-  simp only [Chordal.Basic.chordalSq_eq_cross]
+  simp only [Basic.chordalSq_eq_cross]
   change determinantNorm * numerator / outputDenominator ≤
     (coefficient ^ 2 / determinantNorm) *
       (numerator / inputDenominator)
@@ -212,7 +215,7 @@ theorem chordalSq_act_le_transportCoefficient
           (determinantNorm * inputDenominator) :=
     Fraction.Field.div_mul_div_direct _ _ _ _
   rw [quotientProduct]
-  apply (Fraction.Order.Field.div_le_iff_pos
+  apply (Field.div_le_iff_pos
     outputDenominatorPositive).2
   have rightIdentity :
       ((coefficient ^ 2 * numerator) /
@@ -240,10 +243,10 @@ theorem chordalSq_act_le_transportCoefficient
           (determinantNorm * inputDenominator) := by
         rw [Fraction.Field.mul_one_direct]
   rw [rightIdentity]
-  apply (Fraction.Order.Field.le_div_iff_pos
+  apply (Field.le_div_iff_pos
     denominatorProductPositive).2
   have scaledOrder :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       denominatorOrder numeratorNonnegative
   calc
     determinantNorm * numerator *
@@ -268,7 +271,7 @@ theorem terminalCoefficient_pos (matrix :
     0 < terminalCoefficient matrix := by
   have imageValid := Gaussian.Mat2.act_hasNonzeroCoordinate
     determinantNonzero Proj.omega_hasNonzeroCoordinate
-  exact Fraction.Order.Field.div_pos_direct
+  exact Field.div_pos_direct
     (Mat2.actionWeightCoefficient_pos
       (BoundaryAdjugate.adjugate matrix))
     (Proj.weight_pos imageValid)
@@ -283,13 +286,13 @@ theorem chordalSq_act_affine_omega_le
     (determinantNonzero :
       BoundaryAdjugate.determinant matrix ≠ 0)
     (tail : Data.Gaussian.Basic.Canonical) :
-    Chordal.Basic.chordalSq
+    Basic.chordalSq
         (Line.Matrix.act matrix (Proj.affine tail))
         (Line.Matrix.act matrix Proj.omega) ≤
-      terminalCoefficient matrix / (1 + Data.Gaussian.Norm.Basic.normSq
+      terminalCoefficient matrix / (1 + Basic.normSq
         tail) := by
   let determinantNorm :=
-    Data.Gaussian.Norm.Basic.normSq (BoundaryAdjugate.determinant matrix)
+    Basic.normSq (BoundaryAdjugate.determinant matrix)
   let coefficient :=
     Mat2.actionWeightCoefficient
       (BoundaryAdjugate.adjugate matrix)
@@ -298,9 +301,9 @@ theorem chordalSq_act_affine_omega_le
   let affineWeight :=
     Proj.weight
       (Line.Matrix.act matrix (Proj.affine tail))
-  let tailWeight := 1 + Data.Gaussian.Norm.Basic.normSq tail
+  let tailWeight := 1 + Basic.normSq tail
   have determinantPositive : 0 < determinantNorm :=
-    Data.Gaussian.Norm.Basic.normSq_pos determinantNonzero
+    Basic.normSq_pos determinantNonzero
   have coefficientPositive : 0 < coefficient :=
     Mat2.actionWeightCoefficient_pos _
   have omegaValid := Gaussian.Mat2.act_hasNonzeroCoordinate
@@ -312,13 +315,13 @@ theorem chordalSq_act_affine_omega_le
   have affinePositive : 0 < affineWeight :=
     Proj.weight_pos affineValid
   have tailPositive : 0 < tailWeight :=
-    add_pos_of_pos_of_nonneg (by decide) (Data.Gaussian.Norm.Basic.normSq_nonneg tail)
+    add_pos_of_pos_of_nonneg (by decide) (Basic.normSq_nonneg tail)
   have affineLower : determinantNorm * tailWeight ≤
       coefficient * affineWeight := by
     have lower := determinant_mul_weight_le_act_weight matrix
       (Proj.affine tail)
     simpa only [determinantNorm, coefficient, affineWeight, tailWeight,
-      Proj.weight, Proj.affine, Data.Gaussian.Norm.Basic.normSq_one,
+      Proj.weight, Proj.affine, Basic.normSq_one,
       Fraction.Field.add_comm] using lower
   have denominatorOrder :
       omegaWeight * (determinantNorm * tailWeight) ≤
@@ -326,21 +329,21 @@ theorem chordalSq_act_affine_omega_le
     calc
       omegaWeight * (determinantNorm * tailWeight) ≤
           omegaWeight * (coefficient * affineWeight) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           affineLower omegaPositive.le
       _ = coefficient * (omegaWeight * affineWeight) := by ring1
   have smallDenominatorPositive :
       0 < omegaWeight * (determinantNorm * tailWeight) :=
-    Fraction.Order.Arithmetic.mul_pos_direct omegaPositive
-      (Fraction.Order.Arithmetic.mul_pos_direct determinantPositive
+    Arithmetic.mul_pos_direct omegaPositive
+      (Arithmetic.mul_pos_direct determinantPositive
         tailPositive)
   have numeratorNonnegative : 0 ≤ coefficient * determinantNorm :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct coefficientPositive.le
+    Arithmetic.mul_nonneg_direct coefficientPositive.le
       determinantPositive.le
   rw [Mat2.chordalSq_truncation]
-  rw [show Data.Gaussian.Norm.Basic.normSq (Matrix2.determinant matrix) =
+  rw [show Basic.normSq (Matrix2.determinant matrix) =
       determinantNorm by rfl]
-  rw [show Data.Gaussian.Norm.Basic.normSq matrix.a + Data.Gaussian.Norm.Basic.normSq matrix.c =
+  rw [show Basic.normSq matrix.a + Basic.normSq matrix.c =
     omegaWeight by
     dsimp only [omegaWeight]
     simp only [Proj.weight, Line.Matrix.act,
@@ -349,8 +352,8 @@ theorem chordalSq_act_affine_omega_le
       Data.Gaussian.Basic.add_zero, -eq_self, -iff_self]
     rfl]
   rw [show
-      Data.Gaussian.Norm.Basic.normSq (matrix.a * tail + matrix.b) +
-          Data.Gaussian.Norm.Basic.normSq (matrix.c * tail + matrix.d) = affineWeight by
+      Basic.normSq (matrix.a * tail + matrix.b) +
+          Basic.normSq (matrix.c * tail + matrix.d) = affineWeight by
     dsimp only [affineWeight, Proj.weight,
       Line.Matrix.act, Proj.affine]
     simp only [Data.Gaussian.Basic.mul_one, -eq_self, -iff_self]
@@ -366,7 +369,7 @@ theorem chordalSq_act_affine_omega_le
         coefficientPositive.ne').symm
     _ ≤ (coefficient * determinantNorm) /
         (omegaWeight * (determinantNorm * tailWeight)) :=
-      Fraction.Order.Field.div_le_div_of_nonneg_left_direct
+      Field.div_le_div_of_nonneg_left_direct
         numeratorNonnegative smallDenominatorPositive denominatorOrder
     _ = coefficient / (omegaWeight * tailWeight) := by
       rw [show coefficient * determinantNorm =

@@ -55,6 +55,8 @@ import Purelib.Riemann.Meshes.PuncturedGridFaces
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Approximation.Rational
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds
@@ -107,35 +109,35 @@ open _root_.Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceRun
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentBlocks (fragmentBlockError)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Riemann.Meshes.LiftedPuncturedGrid base} {differential other :
-    Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential other :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
   {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {count : Nat} {patch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {sourceData : Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
-    Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover sourceData}
-  {covers : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent} {minimum floor
+  {count : Nat} {patch : PreparedPatch parent}
+  {sourceData : Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
+    Cover sourceData}
+  {covers : Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent} {minimum floor
     index depth : Nat}
-  {common : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonCover cover covers minimum}
-  {areaAllowance sourceTarget coefficientTarget : Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest regular
+  {common : BasisCommonCover cover covers minimum}
+  {areaAllowance sourceTarget coefficientTarget : Coordinate}
+  {request : BasisPreparedCommonRequest regular
     common areaAllowance sourceTarget coefficientTarget floor}
   {box : Geometry.Rational.Box}
-  {polynomials : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index
+  {polynomials : RegularBasisPolynomials cap index
     box}
   {originals :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank covers
+    PrimitiveBank covers
     index}
-  {cells : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers
+  {cells : BasisSourceLocations.SampleBank covers
     index}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -145,7 +147,7 @@ open Purelib.Data.Gaussian.Norm.Basic (normSq_nonneg)
 open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 
 variable {acquired :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition request
+  BasisPreparedCommonRequest.Acquisition request
   polynomials originals cells coefficients depth}
 
 open Purelib.Riemann.Periods.CenteredBilinearPath (Sample)
@@ -157,47 +159,47 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentAr
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks (maximum maximum_nonnegative
   le_maximum)
 
-variable {faceIndex : Nat} {data : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
+variable {faceIndex : Nat} {data : RowData
   occurrence faceIndex}
 
 namespace ReverseSourceRun
 
 /-- The retained reverse source run's resampling cost fits its requested refinement target once the actual width and
 depth are paid. -/
-theorem resampling_paid (run : ReverseSourceRuns.ReverseSourceRun acquired data) {requested :
-  InverseRootPolynomial.Coordinate} {minimum : Nat}
+theorem resampling_paid (run : ReverseSourceRun acquired data) {requested :
+  Coordinate} {minimum : Nat}
     (refinement : SourceRunRefinement 1 (BasisSourceCovers.primitiveSlope covers) requested minimum)
     (widthLe : run.width ≤ refinement.width) (later : refinement.depth ≤ common.depth + acquired.extraDepth) :
     16 * (BasisSourceCovers.primitiveSlope covers)^2 *
-      (max run.width ((1 / 2 : InverseRootPolynomial.Coordinate)^(common.depth + acquired.extraDepth)))^2 < requested :=
+      (max run.width ((1 / 2 : Coordinate)^(common.depth + acquired.extraDepth)))^2 < requested :=
         by
-  have maxNonnegative : 0 ≤ max run.width ((1 / 2 : InverseRootPolynomial.Coordinate)^(common.depth +
+  have maxNonnegative : 0 ≤ max run.width ((1 / 2 : Coordinate)^(common.depth +
     acquired.extraDepth)) :=
-    (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) _).trans (Fraction.Order.Basic.le_max_right ..)
-  have depthWidth : (1 / 2 : InverseRootPolynomial.Coordinate)^(common.depth + acquired.extraDepth) ≤
-      (1 / 2 : InverseRootPolynomial.Coordinate)^refinement.depth := by
+    (Arithmetic.pow_nonneg_direct (by decide) _).trans (Basic.le_max_right ..)
+  have depthWidth : (1 / 2 : Coordinate)^(common.depth + acquired.extraDepth) ≤
+      (1 / 2 : Coordinate)^refinement.depth := by
     have split := Data.Nat.Subtraction.add_sub_of_le later
     rw [← split, pow_add]
-    have bounded := Fraction.Order.Arithmetic.pow_le_pow_direct
-      (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 1 / 2)
-      (by decide : (1 / 2 : InverseRootPolynomial.Coordinate) ≤ 1)
+    have bounded := Arithmetic.pow_le_pow_direct
+      (by decide : (0 : Coordinate) ≤ 1 / 2)
+      (by decide : (1 / 2 : Coordinate) ≤ 1)
       (common.depth + acquired.extraDepth - refinement.depth)
     rw [one_pow] at bounded
-    exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct bounded
-      (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) refinement.depth)).trans_eq (mul_one _)
-  have upper := Fraction.Order.Basic.max_le widthLe (depthWidth.trans_eq refinement.width_eq.symm)
-  have bound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.pow_le_pow_direct
+    exact (Arithmetic.mul_le_mul_of_nonneg_left_direct bounded
+      (Arithmetic.pow_nonneg_direct (by decide) refinement.depth)).trans_eq (mul_one _)
+  have upper := Basic.max_le widthLe (depthWidth.trans_eq refinement.width_eq.symm)
+  have bound := Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.pow_le_pow_direct
     maxNonnegative upper 2)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 16)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct (BasisSourceCovers.primitiveSlope covers)))
+    (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 16)
+      (Arithmetic.sq_nonneg_direct (BasisSourceCovers.primitiveSlope covers)))
   have equal : 16 * (BasisSourceCovers.primitiveSlope covers)^2 * refinement.width^2 =
       Geometric.Basic.quarterRadius
         (SourceRunRefinement.sourceRunScale 1 (BasisSourceCovers.primitiveSlope covers)) refinement.depth := by
-    have widthSquare : ((1 / 2 : InverseRootPolynomial.Coordinate)^refinement.depth)^2 =
-        (1 / 4 : InverseRootPolynomial.Coordinate)^refinement.depth := by
+    have widthSquare : ((1 / 2 : Coordinate)^refinement.depth)^2 =
+        (1 / 4 : Coordinate)^refinement.depth := by
       rw [← pow_mul, Nat.mul_comm, pow_mul]
-      exact congrArg (fun value : InverseRootPolynomial.Coordinate => value^refinement.depth)
-        (by decide : (1 / 2 : InverseRootPolynomial.Coordinate)^2 = 1 / 4)
+      exact congrArg (fun value : Coordinate => value^refinement.depth)
+        (by decide : (1 / 2 : Coordinate)^2 = 1 / 4)
     rw [refinement.width_eq, widthSquare, Geometric.Basic.quarterRadius_eq_mul_pow]
     unfold SourceRunRefinement.sourceRunScale
     simp only [Nat.cast_one, one_pow, mul_one, -eq_self, -iff_self]
@@ -205,7 +207,7 @@ theorem resampling_paid (run : ReverseSourceRuns.ReverseSourceRun acquired data)
   exact (bound.trans_eq equal).trans_lt refinement.accurate
 
 /-- Both whole-path errors are charged; no equality of total increments is used as a replacement for area comparison. -/
-theorem error_lt (run : ReverseSourceRuns.ReverseSourceRun acquired data) {requested : InverseRootPolynomial.Coordinate}
+theorem error_lt (run : ReverseSourceRun acquired data) {requested : Coordinate}
   {minimum : Nat}
     (refinement : SourceRunRefinement 1 (BasisSourceCovers.primitiveSlope covers) (requested / 4)
       minimum)
@@ -213,10 +215,10 @@ theorem error_lt (run : ReverseSourceRuns.ReverseSourceRun acquired data) {reque
     (widthLe : run.width ≤ refinement.width) (later : refinement.depth ≤ common.depth + acquired.extraDepth) :
     run.error < requested := by
   have source := run.resampling_paid refinement widthLe later
-  have summed := (Fraction.Order.Arithmetic.add_le_add_direct blocks (le_refl _)).trans_lt
-    (Fraction.Order.Arithmetic.add_lt_add_left_direct source (requested / 4))
-  have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by
-      decide : (0 : InverseRootPolynomial.Coordinate) < 2) summed
+  have summed := (Arithmetic.add_le_add_direct blocks (le_refl _)).trans_lt
+    (Arithmetic.add_lt_add_left_direct source (requested / 4))
+  have scaled := Arithmetic.mul_lt_mul_of_pos_left_direct (by
+      decide : (0 : Coordinate) < 2) summed
   apply scaled.trans_eq
   calc
     2 * (requested / 4 + requested / 4) = requested / 4 * 4 := by ring1
@@ -226,8 +228,8 @@ theorem error_lt (run : ReverseSourceRuns.ReverseSourceRun acquired data) {reque
 bound.
 
 Both the original fragment-block error and the retained source-resampling width and depth must be paid. -/
-theorem cached_source_area_requested (run : ReverseSourceRuns.ReverseSourceRun acquired data) {requested :
-  InverseRootPolynomial.Coordinate} {minimum : Nat}
+theorem cached_source_area_requested (run : ReverseSourceRun acquired data) {requested :
+  Coordinate} {minimum : Nat}
     (refinement : SourceRunRefinement 1 (BasisSourceCovers.primitiveSlope covers) (requested / 4)
       minimum)
     (blocks : FragmentBlocks.fragmentBlockError (acquired := acquired) run.fragments ≤ requested / 4)
@@ -237,8 +239,8 @@ theorem cached_source_area_requested (run : ReverseSourceRuns.ReverseSourceRun a
       Prod.fst).flatten +
       weighted.source.area) ≤ requested * (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 :=
   (run.cached_source_area_bound weighted).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (run.error_lt refinement blocks widthLe later).le
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct (run.error_lt refinement blocks widthLe later).le
+      (Arithmetic.sq_nonneg_direct _))
 
 end ReverseSourceRun
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSourceRuns

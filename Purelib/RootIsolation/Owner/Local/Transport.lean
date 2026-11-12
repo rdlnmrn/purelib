@@ -41,6 +41,13 @@ def castOwner {left right :
   rw [← same]
   exact owner
 
+/-- Casting a local owner back along the same polynomial equality retains its complete original record. -/
+theorem castOwner_inverse {left right : CoefficientPolynomial}
+    (same : left = right) (owner : LocalOwner left) :
+    castOwner same.symm (castOwner same owner) = owner := by
+  cases same
+  rfl
+
 /-- Transporting a local owner along polynomial equality preserves its exact box. -/
 @[simp] theorem castOwner_box {left right :
   CoefficientPolynomial}

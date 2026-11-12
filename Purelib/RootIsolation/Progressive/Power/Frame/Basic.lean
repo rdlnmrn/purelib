@@ -25,6 +25,8 @@ import Purelib.RootIsolation.FTA.Squarefree.Basic
 import Purelib.RootIsolation.Progressive.Chamber.Basic
 import Purelib.RootIsolation.State.WindingOne.Basic
 
+open Purelib.Polynomial.Power.Gaussian.Progressive
+
 open Purelib.Data
 open Purelib.Polynomial
 open Purelib.RootIsolation
@@ -38,54 +40,53 @@ retain their common polynomial and finite degree through the original transports
 
 namespace Purelib.RootIsolation.Progressive.Power.Frame.Basic
 
-/-- The exact coefficient table and its computed complete root-owner family
-as a finite-monodromy chamber frame.
+/-- Attach the exact coefficient table to a retained complete power-polynomial root result.
 
 The retained reference table and independently computed root owners refer
 to the same parameter and positive degree. Polynomial/count transports
 retain those exact owners, their maximality and their coefficient allowances. -/
-@[expose] public def chamberFrame
+@[expose] public def fromResult
     {parameter : Gaussian.Basic.Canonical} (parameterNonzero : parameter ≠ 0)
-    (degree : Data.Nat.Positive.RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value) :
-    Progressive.Chamber.Frame.ChamberFrame where
-  reference := Power.Gaussian.Progressive.Coefficients.coefficientTable parameter degree
+    (degree : Data.Nat.Positive.RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
+    (result : FTA.Squarefree.AdapterResult (Power.Gaussian.rootPolynomial parameter degree)) :
+    Chamber.Frame.ChamberFrame where
+  reference := Coefficients.coefficientTable parameter degree
   chamber := by
-    let result := Power.Isolation.isolationResult parameterNonzero degree degreeAtLeastTwo
     let rawOwners :=
       Owner.Family.Basic.OwnerFamily.ofResult result
-    have countSame : (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree).natDegree =
-        (Power.Gaussian.Progressive.Coefficients.coefficientTable parameter degree).degree := by
-      rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree,
-        Power.Gaussian.Progressive.Coefficients.coefficientTable_degree]
+    have countSame : (Power.Gaussian.rootPolynomial parameter degree).natDegree =
+        (Coefficients.coefficientTable parameter degree).degree := by
+      rw [Power.Gaussian.rootPolynomial_degree,
+        Coefficients.coefficientTable_degree]
     let owners : Owner.Family.Basic.OwnerFamily
-        (Power.Gaussian.Progressive.Coefficients.coefficientTable parameter degree).polynomial
-        (Power.Gaussian.Progressive.Coefficients.coefficientTable parameter degree).degree :=
+        (Coefficients.coefficientTable parameter degree).polynomial
+        (Coefficients.coefficientTable parameter degree).degree :=
       Owner.Family.Transport.castOwnerFamilyFull
-        (Power.Gaussian.Progressive.Coefficients.coefficientTable_polynomial parameter degree).symm countSame rawOwners
+        (Coefficients.coefficientTable_polynomial parameter degree).symm countSame rawOwners
     let squarefreeCertificate :=
-      Power.Gaussian.Progressive.Coefficients.coefficientTableSquarefree parameterNonzero degree
+      Coefficients.coefficientTableSquarefree parameterNonzero degree
     have tableDegreeAtLeastTwo :
-        2 ≤ (Power.Gaussian.Progressive.Coefficients.coefficientTable parameter degree).degree := by
-      rw [Power.Gaussian.Progressive.Coefficients.coefficientTable_degree]
+        2 ≤ (Coefficients.coefficientTable parameter degree).degree := by
+      rw [Coefficients.coefficientTable_degree]
       exact degreeAtLeastTwo
     exact
       { degreeAtLeastTwo := tableDegreeAtLeastTwo
         squarefree := squarefreeCertificate
         owners := owners
-        referenceSmall := Power.Gaussian.Progressive.Coefficients.coefficientTable_allowances_lt parameter degree
-          (Progressive.Chamber.Target.simpleRootChamberTarget_pos
-            (Power.Gaussian.Progressive.Coefficients.coefficientTable parameter degree) squarefreeCertificate owners)
+        referenceSmall := Coefficients.coefficientTable_allowances_lt parameter degree
+          (Chamber.Target.simpleRootChamberTarget_pos
+            (Coefficients.coefficientTable parameter degree) squarefreeCertificate owners)
         referenceMaximality := by
           intro familyCount family pairwise
           let rawFamily : Fin familyCount →
               Track.Basic.WindingOneTrack
-                (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree)
+                (Power.Gaussian.rootPolynomial parameter degree)
                 (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox
-                  (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree)) := fun index =>
+                  (Power.Gaussian.rootPolynomial parameter degree)) := fun index =>
             Track.Transport.castWindingOneTrack
-              (Power.Gaussian.Progressive.Coefficients.coefficientTable_polynomial parameter degree)
+              (Coefficients.coefficientTable_polynomial parameter degree)
               (congrArg Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox
-                (Power.Gaussian.Progressive.Coefficients.coefficientTable_polynomial parameter degree))
+                (Coefficients.coefficientTable_polynomial parameter degree))
               (family index)
           have rawPairwise : ∀ left right, left ≠ right →
               (rawFamily left).initial.box.Separated
@@ -97,6 +98,39 @@ retain those exact owners, their maximality and their coefficient allowances. -/
           have bound := result.boxes.maximality rawFamily rawPairwise
           exact bound.trans_eq countSame }
 
+/-- Construct the original coefficient-selected power-polynomial chamber frame.
+
+The complete isolation is computed once and retained by `fromResult`.
+Its ordered owners, finite maximality and coefficient allowances concern
+that same original polynomial and degree.
+-/
+@[expose] public def chamberFrame
+    {parameter : Gaussian.Basic.Canonical} (parameterNonzero : parameter ≠ 0)
+    (degree : Data.Nat.Positive.RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value) :
+    Chamber.Frame.ChamberFrame :=
+  fromResult parameterNonzero degree degreeAtLeastTwo
+    (Power.Isolation.isolationResult parameterNonzero degree degreeAtLeastTwo)
+
+/-- A retained original complete result gives the same whole canonical chamber frame. -/
+public theorem fromResult_eq_chamberFrame
+    {parameter : Gaussian.Basic.Canonical} (parameterNonzero : parameter ≠ 0)
+    (degree : Data.Nat.Positive.RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
+    (result : FTA.Squarefree.AdapterResult (Power.Gaussian.rootPolynomial parameter degree))
+    (same : result = Power.Isolation.isolationResult parameterNonzero degree degreeAtLeastTwo) :
+    fromResult parameterNonzero degree degreeAtLeastTwo result =
+      chamberFrame parameterNonzero degree degreeAtLeastTwo :=
+  congrArg (fromResult parameterNonzero degree degreeAtLeastTwo) same
+
+/-- The original chamber frame retains the independently computed power-family squarefree certificate.
+
+Reading this field does not mathematically depend on the frame's separate
+complete isolation result or root-owner family.
+-/
+public theorem chamberFrame_squarefree {parameter : Gaussian.Basic.Canonical} (parameterNonzero : parameter ≠ 0)
+    (degree : Data.Nat.Positive.RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value) :
+    (chamberFrame parameterNonzero degree degreeAtLeastTwo).chamber.squarefree =
+      Power.Gaussian.Progressive.Coefficients.coefficientTableSquarefree parameterNonzero degree := rfl
+
 /-- The constructed power-polynomial chamber frame retains the supplied root degree exactly.
 
 The reference table has one exact state per original non-leading
@@ -104,9 +138,9 @@ coefficient. Its retained count is the same supplied positive root degree. -/
 @[simp] public theorem chamberFrame_degree
     {parameter : Gaussian.Basic.Canonical} (parameterNonzero : parameter ≠ 0)
     (degree : Data.Nat.Positive.RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value) :
-    (Progressive.Power.Frame.Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo).degree =
+    (chamberFrame parameterNonzero degree degreeAtLeastTwo).degree =
       degree.value := by
-  exact Power.Gaussian.Progressive.Coefficients.coefficientTable_degree parameter degree
+  exact Coefficients.coefficientTable_degree parameter degree
 
 /-- The constructed chamber frame's polynomial is exactly the original power polynomial at the supplied parameter.
 
@@ -116,8 +150,8 @@ power polynomial used by the independently computed owners. -/
 @[simp] public theorem chamberFrame_polynomial
     {parameter : Gaussian.Basic.Canonical} (parameterNonzero : parameter ≠ 0)
     (degree : Data.Nat.Positive.RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value) :
-    (Progressive.Power.Frame.Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo).polynomial =
-      Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree := by
-  exact Power.Gaussian.Progressive.Coefficients.coefficientTable_polynomial parameter degree
+    (chamberFrame parameterNonzero degree degreeAtLeastTwo).polynomial =
+      Power.Gaussian.rootPolynomial parameter degree := by
+  exact Coefficients.coefficientTable_polynomial parameter degree
 
 end Purelib.RootIsolation.Progressive.Power.Frame.Basic

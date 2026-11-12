@@ -58,6 +58,8 @@ import Purelib.Topology.Surface.Sewing.SewingTree
 import Purelib.Topology.Surface.Sewing.SewnPrimitiveFaces
 import Purelib.Tactic.Ring
 
+open Purelib.Topology.Surface.Sewing
+
 open Purelib.Algebra
 
 open Purelib.Curves
@@ -79,35 +81,35 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.Newton.Complement.LocalBilinear
 
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
     Fraction.Rational}
 
 namespace NewtonPreparation.FamilyAreaRequest
 
-variable {request : Hyperelliptic.Meshes.Newton.AllHoles.PrimitiveComparison.NewtonPreparation.FamilyAreaRequest
+variable {request : AllHoles.PrimitiveComparison.NewtonPreparation.FamilyAreaRequest
   preparation target radius}
   {lifted : Meshes.LiftedPuncturedGrid request.single.grid.punctured}
-  {excision : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision request.single.grid lifted}
-  {first second : Fin genus} {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+  {excision : AllHoles.Excision.AllHoleExcision request.single.grid lifted}
+  {first second : Fin genus} {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
     request.single.grid.faces.regulars}
 
 namespace PairedComparison
 
 variable {stage : Nat}
-  {firstBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+  {firstBank : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
     (Periods.PeriodMatrix.standardDifferential first) stage domains}
-  {secondBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+  {secondBank : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
     (Periods.PeriodMatrix.standardDifferential second) stage domains}
-  {left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings firstBank lifted.mesh} {right :
-    Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings secondBank lifted.mesh}
-  {firstSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch left.values}
-  {secondSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch right.values}
+  {left : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings firstBank lifted.mesh} {right :
+    PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings secondBank lifted.mesh}
+  {firstSurface : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch left.values}
+  {secondSurface : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch right.values}
 
 variable {prepared :
-  Hyperelliptic.Meshes.Newton.AllHoles.PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations excision}
+  AllHoles.PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations excision}
   {comparison :
   AllHoles.PairedComparison prepared
   first second domains}
@@ -118,7 +120,7 @@ variable {prepared :
 namespace SewnSample.Excision
 
 variable {sample :
-  Hyperelliptic.Meshes.Newton.AllHoles.PairedAnnuli.NewtonPreparation.FamilyAreaRequest.PairedComparison.SewnSample
+  AllHoles.PairedAnnuli.NewtonPreparation.FamilyAreaRequest.PairedComparison.SewnSample
   source firstSurface secondSurface}
 
 /-- The paired triangle area on the actual surviving region after excluding the retained hole masks. -/
@@ -127,14 +129,14 @@ variable {sample :
   sample) : Gaussian :=
   FiniteSum.Fin.sumFin (fun position : Fin lifted.cutPolygon.patch.cut.triangles.length =>
     if !(excision.entries.any (fun entry => Topology.NewtonSewnExcision.AllHoleExcision.sourceMask entry
-      (Topology.Surface.Sewing.Bilinear.Errors.traceAt firstSurface position).source)) then
+      (Bilinear.Errors.traceAt firstSurface position).source)) then
         Topology.Polygon.Stokes.triangleWedgeArea
-      ⟨left.values (Topology.Surface.Sewing.Bilinear.Errors.traceAt firstSurface position).source 0, right.values
-        (Topology.Surface.Sewing.Bilinear.Errors.traceAt firstSurface position).source 0⟩
-      ⟨left.values (Topology.Surface.Sewing.Bilinear.Errors.traceAt firstSurface position).source 1, right.values
-        (Topology.Surface.Sewing.Bilinear.Errors.traceAt firstSurface position).source 1⟩
-      ⟨left.values (Topology.Surface.Sewing.Bilinear.Errors.traceAt firstSurface position).source 2, right.values
-        (Topology.Surface.Sewing.Bilinear.Errors.traceAt firstSurface position).source 2⟩
+      ⟨left.values (Bilinear.Errors.traceAt firstSurface position).source 0, right.values
+        (Bilinear.Errors.traceAt firstSurface position).source 0⟩
+      ⟨left.values (Bilinear.Errors.traceAt firstSurface position).source 1, right.values
+        (Bilinear.Errors.traceAt firstSurface position).source 1⟩
+      ⟨left.values (Bilinear.Errors.traceAt firstSurface position).source 2, right.values
+        (Bilinear.Errors.traceAt firstSurface position).source 2⟩
     else 0)
 
 set_option genInjectivity false in
@@ -163,30 +165,30 @@ theorem local_word_accurate (cached :
   sample) (localReading :
   LocalReading
   cached)
-    (bilinear : Topology.Surface.Sewing.Bilinear.Samples firstSurface secondSurface)
+    (bilinear : Bilinear.Samples firstSurface secondSurface)
     {magnitude localTarget : Fraction.Rational}
-    (budget : Topology.Surface.Sewing.Bilinear.Requests.AreaRequest lifted.cutPolygon.patch magnitude localTarget)
-    (leftAccurate : Topology.Surface.Sewing.SewnPrimitiveRequests.LocalAccuracy budget.tolerance
+    (budget : Bilinear.Requests.AreaRequest lifted.cutPolygon.patch magnitude localTarget)
+    (leftAccurate : SewnPrimitiveRequests.LocalAccuracy budget.tolerance
       firstSurface.sewn.readings)
-    (rightAccurate : Topology.Surface.Sewing.SewnPrimitiveRequests.LocalAccuracy budget.tolerance
+    (rightAccurate : SewnPrimitiveRequests.LocalAccuracy budget.tolerance
       secondSurface.sewn.readings)
     (bounded : ∀ position (index : Fin 3),
       Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded
-        (⟨left.values (Topology.Surface.Sewing.Bilinear.Errors.traceAt firstSurface position).source index - left.values
-          (Topology.Surface.Sewing.Bilinear.Errors.traceAt firstSurface position).source 0,
-        right.values (Topology.Surface.Sewing.Bilinear.Errors.traceAt firstSurface position).source index - right.values
-          (Topology.Surface.Sewing.Bilinear.Errors.traceAt firstSurface position).source 0⟩ :
+        (⟨left.values (Bilinear.Errors.traceAt firstSurface position).source index - left.values
+          (Bilinear.Errors.traceAt firstSurface position).source 0,
+        right.values (Bilinear.Errors.traceAt firstSurface position).source index - right.values
+          (Bilinear.Errors.traceAt firstSurface position).source 0⟩ :
           Topology.Polygon.Stokes.PrimitivePoint) magnitude)
     {word : Topology.Surface.Cut.BoundaryWord.CutBoundaryWord lifted.cutPolygon.patch.cut.vertexLabels
       lifted.cutPolygon.patch.cut.boundary}
     (area : Topology.Surface.Cut.WordArea.CutBoundaryWord.AreaSample word bilinear.values
       (bilinear.values lifted.cutPolygon.patch.cut.anchor)) (later : comparison.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (localReading.value -
+    Gaussian.Norm.Basic.normSq (localReading.value -
       (Topology.Surface.Word.Pairing.contract (fun row column => word.signature.matrix row column) area.values +
         area.closedCorrection - sample.correction)) < 2 * (target + localTarget) := open Purelib.Integration in by
   have localBound := Surface.Sewn.Selection.BilinearReadback.paired_request_accurate
     cached.retained.remaining bilinear budget leftAccurate rightAccurate bounded
-  change Data.Gaussian.Norm.Basic.normSq (Topology.Polygon.Stokes.edgeListArea bilinear.values
+  change Gaussian.Norm.Basic.normSq (Topology.Polygon.Stokes.edgeListArea bilinear.values
     (cached.retained.remaining.triangles.flatMap Topology.Polygon.Stokes.OrientedTriangle.boundary) -
       localArea
       cached) < localTarget at localBound

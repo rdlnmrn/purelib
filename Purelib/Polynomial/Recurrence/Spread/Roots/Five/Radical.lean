@@ -81,13 +81,13 @@ private theorem sixteen_ne_zero (twoNonzero : (2 : K) ≠
 /-- Multiplying the minus radical expression by eight clears its denominator when two is nonzero. -/
 private theorem alpha_mul_eight (root : K) (twoNonzero :
   (2 : K) ≠ 0) :
-    Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root * 8 = 5 - root := by
+    ChapterFourteenPentagonMetrics.alpha root * 8 = 5 - root := by
   exact ExplicitField.div_mul_cancel _ (eight_ne_zero twoNonzero)
 
 /-- Multiplying the plus radical expression by eight clears its denominator when two is nonzero. -/
 private theorem beta_mul_eight (root : K) (twoNonzero :
   (2 : K) ≠ 0) :
-    Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root * 8 = 5 + root := by
+    ChapterFourteenPentagonMetrics.beta root * 8 = 5 + root := by
   exact ExplicitField.div_mul_cancel _ (eight_ne_zero twoNonzero)
 
 /-- A displayed nonzero square root of five certifies that five is nonzero. -/
@@ -108,12 +108,12 @@ private theorem five_ne_zero [DecidableEq K]
 theorem alpha_ne_zero [DecidableEq K]
     (root : K) (rootNonzero : root ≠ 0)
     (rootSquare : root ^ 2 = 5) (twoNonzero : (2 : K) ≠ 0) :
-    Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root ≠ 0 := by
+    ChapterFourteenPentagonMetrics.alpha root ≠ 0 := by
   intro alphaZero
   have rootFive : root = 5 := by
     have differenceZero : (5 : K) - root = 0 := by
       calc
-        (5 : K) - root = Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root * 8 :=
+        (5 : K) - root = ChapterFourteenPentagonMetrics.alpha root * 8 :=
           (alpha_mul_eight root twoNonzero).symm
         _ = 0 := by rw [alphaZero]; ring1
     exact Group.eq_of_sub_eq_zero differenceZero |>.symm
@@ -131,12 +131,12 @@ theorem alpha_ne_zero [DecidableEq K]
 theorem beta_ne_zero [DecidableEq K]
     (root : K) (rootNonzero : root ≠ 0)
     (rootSquare : root ^ 2 = 5) (twoNonzero : (2 : K) ≠ 0) :
-    Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root ≠ 0 := by
+    ChapterFourteenPentagonMetrics.beta root ≠ 0 := by
   intro betaZero
   have rootNegativeFive : root = -5 := by
     have sumZero : (5 : K) + root = 0 := by
       calc
-        (5 : K) + root = Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root * 8 :=
+        (5 : K) + root = ChapterFourteenPentagonMetrics.beta root * 8 :=
           (beta_mul_eight root twoNonzero).symm
         _ = 0 := by rw [betaZero]; ring1
     apply eq_neg_of_add_eq_zero_left
@@ -157,14 +157,14 @@ theorem beta_ne_zero [DecidableEq K]
 theorem factor_alpha (root : K) (rootSquare : root ^ 2 =
   5)
     (twoNonzero : (2 : K) ≠ 0) :
-    5 - 20 * Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root + 16 *
-      Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root ^ 2 = 0 := by
+    5 - 20 * ChapterFourteenPentagonMetrics.alpha root + 16 *
+      ChapterFourteenPentagonMetrics.alpha root ^ 2 = 0 := by
   apply ExplicitField.eq_of_mul_eq_mul_right (four_ne_zero twoNonzero)
   calc
-    (5 - 20 * Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root + 16 *
-      Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root ^ 2) * 4 =
-        20 - 10 * (Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root * 8) +
-          (Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root * 8) ^ 2 := by ring1
+    (5 - 20 * ChapterFourteenPentagonMetrics.alpha root + 16 *
+      ChapterFourteenPentagonMetrics.alpha root ^ 2) * 4 =
+        20 - 10 * (ChapterFourteenPentagonMetrics.alpha root * 8) +
+          (ChapterFourteenPentagonMetrics.alpha root * 8) ^ 2 := by ring1
     _ = 20 - 10 * (5 - root) + (5 - root) ^ 2 := by
       rw [alpha_mul_eight root twoNonzero]
     _ = root ^ 2 - 5 := by ring1
@@ -175,14 +175,14 @@ theorem factor_alpha (root : K) (rootSquare : root ^ 2 =
 theorem factor_beta (root : K) (rootSquare : root ^ 2 =
   5)
     (twoNonzero : (2 : K) ≠ 0) :
-    5 - 20 * Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root + 16 *
-      Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root ^ 2 = 0 := by
+    5 - 20 * ChapterFourteenPentagonMetrics.beta root + 16 *
+      ChapterFourteenPentagonMetrics.beta root ^ 2 = 0 := by
   apply ExplicitField.eq_of_mul_eq_mul_right (four_ne_zero twoNonzero)
   calc
-    (5 - 20 * Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root + 16 *
-      Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root ^ 2) * 4 =
-        20 - 10 * (Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root * 8) +
-          (Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root * 8) ^ 2 := by ring1
+    (5 - 20 * ChapterFourteenPentagonMetrics.beta root + 16 *
+      ChapterFourteenPentagonMetrics.beta root ^ 2) * 4 =
+        20 - 10 * (ChapterFourteenPentagonMetrics.beta root * 8) +
+          (ChapterFourteenPentagonMetrics.beta root * 8) ^ 2 := by ring1
     _ = 20 - 10 * (5 + root) + (5 + root) ^ 2 := by
       rw [beta_mul_eight root twoNonzero]
     _ = root ^ 2 - 5 := by ring1
@@ -193,13 +193,13 @@ theorem factor_beta (root : K) (rootSquare : root ^ 2 =
 theorem beta_logistic_alpha (root : K) (rootSquare : root
   ^ 2 = 5)
     (twoNonzero : (2 : K) ≠ 0) :
-    Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root = 4 *
-      Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root * (1 -
-      Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root) := by
+    ChapterFourteenPentagonMetrics.beta root = 4 *
+      ChapterFourteenPentagonMetrics.alpha root * (1 -
+      ChapterFourteenPentagonMetrics.alpha root) := by
   apply ExplicitField.eq_of_mul_eq_mul_left (sixteen_ne_zero twoNonzero)
   calc
-    16 * Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root = 2 *
-      (Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root * 8) := by ring1
+    16 * ChapterFourteenPentagonMetrics.beta root = 2 *
+      (ChapterFourteenPentagonMetrics.beta root * 8) := by ring1
     _ = 2 * (5 + root) := by rw [beta_mul_eight root twoNonzero]
     _ = 8 * (5 - root) - (5 - root) ^ 2 := by
       apply Group.eq_of_sub_eq_zero
@@ -207,24 +207,24 @@ theorem beta_logistic_alpha (root : K) (rootSquare : root
         2 * (5 + root) - (8 * (5 - root) - (5 - root) ^ 2) =
             root ^ 2 - 5 := by ring1
         _ = 0 := by rw [rootSquare]; ring1
-    _ = 8 * (Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root * 8) -
-      (Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root * 8) ^ 2 := by
+    _ = 8 * (ChapterFourteenPentagonMetrics.alpha root * 8) -
+      (ChapterFourteenPentagonMetrics.alpha root * 8) ^ 2 := by
       rw [alpha_mul_eight root twoNonzero]
-    _ = 16 * (4 * Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root * (1 -
-      Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root)) := by
+    _ = 16 * (4 * ChapterFourteenPentagonMetrics.alpha root * (1 -
+      ChapterFourteenPentagonMetrics.alpha root)) := by
       ring1
 
 /-- The symmetric order-five identity `α=4β(1-β)`. -/
 theorem alpha_logistic_beta (root : K) (rootSquare : root
   ^ 2 = 5)
     (twoNonzero : (2 : K) ≠ 0) :
-    Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root = 4 *
-      Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root * (1 -
-      Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root) := by
+    ChapterFourteenPentagonMetrics.alpha root = 4 *
+      ChapterFourteenPentagonMetrics.beta root * (1 -
+      ChapterFourteenPentagonMetrics.beta root) := by
   apply ExplicitField.eq_of_mul_eq_mul_left (sixteen_ne_zero twoNonzero)
   calc
-    16 * Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root = 2 *
-      (Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root * 8) := by ring1
+    16 * ChapterFourteenPentagonMetrics.alpha root = 2 *
+      (ChapterFourteenPentagonMetrics.alpha root * 8) := by ring1
     _ = 2 * (5 - root) := by rw [alpha_mul_eight root twoNonzero]
     _ = 8 * (5 + root) - (5 + root) ^ 2 := by
       apply Group.eq_of_sub_eq_zero
@@ -232,11 +232,11 @@ theorem alpha_logistic_beta (root : K) (rootSquare : root
         2 * (5 - root) - (8 * (5 + root) - (5 + root) ^ 2) =
             root ^ 2 - 5 := by ring1
         _ = 0 := by rw [rootSquare]; ring1
-    _ = 8 * (Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root * 8) -
-      (Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root * 8) ^ 2 := by
+    _ = 8 * (ChapterFourteenPentagonMetrics.beta root * 8) -
+      (ChapterFourteenPentagonMetrics.beta root * 8) ^ 2 := by
       rw [beta_mul_eight root twoNonzero]
-    _ = 16 * (4 * Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root * (1 -
-      Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root)) := by
+    _ = 16 * (4 * ChapterFourteenPentagonMetrics.beta root * (1 -
+      ChapterFourteenPentagonMetrics.beta root)) := by
       ring1
 
 /-- Every zero of the quadratic factor is one of the two displayed values.
@@ -246,8 +246,8 @@ theorem factor_root_classification [DecidableEq K]
     (root value : K) (rootSquare : root ^ 2 = 5)
     (twoNonzero : (2 : K) ≠ 0)
     (factorZero : 5 - 20 * value + 16 * value ^ 2 = 0) :
-    value = Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root ∨ value =
-      Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root := by
+    value = ChapterFourteenPentagonMetrics.alpha root ∨ value =
+      ChapterFourteenPentagonMetrics.beta root := by
   let transformed := 8 * value - 5
   have transformedSquare : transformed ^ 2 = 5 := by
     calc
@@ -270,7 +270,7 @@ theorem factor_root_classification [DecidableEq K]
         calc
           value * 8 = transformed + 5 := by ring1
           _ = 5 + root := by rw [transformedRoot]; ring1
-      _ = Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root * 8 :=
+      _ = ChapterFourteenPentagonMetrics.beta root * 8 :=
         (beta_mul_eight root twoNonzero).symm
   · left
     have secondZero : transformed + root = 0 := by
@@ -286,7 +286,7 @@ theorem factor_root_classification [DecidableEq K]
         calc
           value * 8 = transformed + 5 := by ring1
           _ = 5 - root := by rw [transformedNegativeRoot]; ring1
-      _ = Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root * 8 :=
+      _ = ChapterFourteenPentagonMetrics.alpha root * 8 :=
         (alpha_mul_eight root twoNonzero).symm
 
 /-- Exercise 14.3's root claim: `alpha` and `beta` are roots of `S₅`, and
@@ -294,23 +294,23 @@ they exhaust all its requested nonzero roots. -/
 theorem nontrivial_zeroes [DecidableEq K]
     (root : K) (rootSquare : root ^ 2 = 5)
     (twoNonzero : (2 : K) ≠ 0) :
-    Recurrence.Spread.Basic.spreadPolynomial 5
-      (Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root) = 0 ∧
-      Recurrence.Spread.Basic.spreadPolynomial 5
-        (Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root) = 0 ∧
-      ∀ value : K, value ≠ 0 → Recurrence.Spread.Basic.spreadPolynomial 5 value = 0 →
-        value = Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root ∨ value =
-          Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root := by
+    Basic.spreadPolynomial 5
+      (ChapterFourteenPentagonMetrics.alpha root) = 0 ∧
+      Basic.spreadPolynomial 5
+        (ChapterFourteenPentagonMetrics.beta root) = 0 ∧
+      ∀ value : K, value ≠ 0 → Basic.spreadPolynomial 5 value = 0 →
+        value = ChapterFourteenPentagonMetrics.alpha root ∨ value =
+          ChapterFourteenPentagonMetrics.beta root := by
   constructor
-  · rw [Recurrence.Spread.Values.spreadPolynomial_five_formula,
+  · rw [Values.spreadPolynomial_five_formula,
       factor_alpha root rootSquare twoNonzero]
     ring1
   constructor
-  · rw [Recurrence.Spread.Values.spreadPolynomial_five_formula,
+  · rw [Values.spreadPolynomial_five_formula,
       factor_beta root rootSquare twoNonzero]
     ring1
   · intro value valueNonzero polynomialZero
-    rw [Recurrence.Spread.Values.spreadPolynomial_five_formula] at polynomialZero
+    rw [Values.spreadPolynomial_five_formula] at polynomialZero
     have factorSquareZero : (5 - 20 * value + 16 * value ^ 2) ^ 2 = 0 := by
       by_cases factorSquareZero :
           (5 - 20 * value + 16 * value ^ 2) ^ 2 = 0
@@ -356,36 +356,36 @@ section Golden
 
 /-- The same minus radical expression `(5 - root) / 8`, with its original definition retained. -/
 abbrev PlatonicSolids.alpha (root : K) : K :=
-  Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.alpha root
+  ChapterFourteenPentagonMetrics.alpha root
 
 /-- The same plus radical expression `(5 + root) / 8`, with its original definition retained. -/
 abbrev PlatonicSolids.beta (root : K) : K :=
-  Recurrence.Spread.Roots.Five.Radical.ChapterFourteenPentagonMetrics.beta root
+  ChapterFourteenPentagonMetrics.beta root
 
 /-- The golden identity used to simplify the icosahedral face spread. -/
 theorem
   Golden.beta_mul_three_alpha_sub_beta_eq_alpha_square
     (root : K) (rootSquare : root ^ 2 = 5)
     (twoNonzero : (2 : K) ≠ 0) :
-    Recurrence.Spread.Roots.Five.Radical.PlatonicSolids.beta root * (3 *
-      Recurrence.Spread.Roots.Five.Radical.PlatonicSolids.alpha root -
-      Recurrence.Spread.Roots.Five.Radical.PlatonicSolids.beta root) =
-      Recurrence.Spread.Roots.Five.Radical.PlatonicSolids.alpha root ^ 2 := open Purelib in by
-  have eightNonzero := (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] (twoNonzero : (2 : K) ≠ 0) =>
-    (Purelib.Algebra.Field.Characteristic.Nonzero.eight_ne_zero (K := K) twoNonzero : (8 : K) ≠ 0)) twoNonzero
-  have alphaEight : Recurrence.Spread.Roots.Five.Radical.PlatonicSolids.alpha root * 8 = 5 - root :=
+    PlatonicSolids.beta root * (3 *
+      PlatonicSolids.alpha root -
+      PlatonicSolids.beta root) =
+      PlatonicSolids.alpha root ^ 2 := open Purelib in by
+  have eightNonzero := (fun {K : Type _} [ExplicitField K] (twoNonzero : (2 : K) ≠ 0) =>
+    (Characteristic.Nonzero.eight_ne_zero (K := K) twoNonzero : (8 : K) ≠ 0)) twoNonzero
+  have alphaEight : PlatonicSolids.alpha root * 8 = 5 - root :=
     ExplicitField.div_mul_cancel _ eightNonzero
-  have betaEight : Recurrence.Spread.Roots.Five.Radical.PlatonicSolids.beta root * 8 = 5 + root :=
+  have betaEight : PlatonicSolids.beta root * 8 = 5 + root :=
     ExplicitField.div_mul_cancel _ eightNonzero
   apply ExplicitField.eq_of_mul_eq_mul_right
-    (Algebra.Field.Characteristic.Nonzero.Golden.sixtyFour_ne_zero twoNonzero)
+    (Characteristic.Nonzero.Golden.sixtyFour_ne_zero twoNonzero)
   calc
-    (Recurrence.Spread.Roots.Five.Radical.PlatonicSolids.beta root * (3 *
-      Recurrence.Spread.Roots.Five.Radical.PlatonicSolids.alpha root -
-      Recurrence.Spread.Roots.Five.Radical.PlatonicSolids.beta root)) * 64 =
-        (Recurrence.Spread.Roots.Five.Radical.PlatonicSolids.beta root * 8) *
-          (3 * (Recurrence.Spread.Roots.Five.Radical.PlatonicSolids.alpha root * 8) -
-            Recurrence.Spread.Roots.Five.Radical.PlatonicSolids.beta root * 8) := by ring1
+    (PlatonicSolids.beta root * (3 *
+      PlatonicSolids.alpha root -
+      PlatonicSolids.beta root)) * 64 =
+        (PlatonicSolids.beta root * 8) *
+          (3 * (PlatonicSolids.alpha root * 8) -
+            PlatonicSolids.beta root * 8) := by ring1
     _ = (5 + root) * (3 * (5 - root) - (5 + root)) := by
       rw [alphaEight, betaEight]
     _ = (5 - root) ^ 2 := by
@@ -394,24 +394,24 @@ theorem
         (5 + root) * (3 * (5 - root) - (5 + root)) -
             (5 - root) ^ 2 = -5 * (root ^ 2 - 5) := by ring1
         _ = 0 := by rw [rootSquare]; ring1
-    _ = Recurrence.Spread.Roots.Five.Radical.PlatonicSolids.alpha root ^ 2 * 64 := by rw [← alphaEight]; ring1
+    _ = PlatonicSolids.alpha root ^ 2 * 64 := by rw [← alphaEight]; ring1
 
 /-- The golden identity used to simplify the dodecahedral face spread. -/
 theorem
   Golden.five_mul_four_alpha_sub_one_eq_sixteen_alpha_square
     (root : K) (rootSquare : root ^ 2 = 5)
     (twoNonzero : (2 : K) ≠ 0) :
-    5 * (4 * Recurrence.Spread.Roots.Five.Radical.PlatonicSolids.alpha root - 1) = 16 *
-      Recurrence.Spread.Roots.Five.Radical.PlatonicSolids.alpha root ^ 2 := by
+    5 * (4 * PlatonicSolids.alpha root - 1) = 16 *
+      PlatonicSolids.alpha root ^ 2 := by
   have factor :=
     factor_alpha
       root rootSquare twoNonzero
   apply Group.eq_of_sub_eq_zero
   calc
-    5 * (4 * Recurrence.Spread.Roots.Five.Radical.PlatonicSolids.alpha root - 1) - 16 *
-      Recurrence.Spread.Roots.Five.Radical.PlatonicSolids.alpha root ^ 2 =
-        -(5 - 20 * Recurrence.Spread.Roots.Five.Radical.PlatonicSolids.alpha root + 16 *
-          Recurrence.Spread.Roots.Five.Radical.PlatonicSolids.alpha root ^ 2) := by ring1
+    5 * (4 * PlatonicSolids.alpha root - 1) - 16 *
+      PlatonicSolids.alpha root ^ 2 =
+        -(5 - 20 * PlatonicSolids.alpha root + 16 *
+          PlatonicSolids.alpha root ^ 2) := by ring1
     _ = 0 := by rw [factor]; ring1
 
 end Golden

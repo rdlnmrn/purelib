@@ -1,5 +1,6 @@
 module
 import Purelib.Data.List.Append
+public import Purelib.Data.List.GetD
 meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Data.Rat.Fraction
 import Purelib.Data.Rat.Fraction.Order.Arithmetic
@@ -166,6 +167,58 @@ inductive IntegrationFrontierRefines {α : Type} :
       IntegrationFrontierRefines inner outer
 
 namespace IntegrationFrontierRefines
+
+/-- A common leading cell preserves any finite frontier refinement. -/
+theorem cons {α : Type} {inner outer : List (IntegrationCell α)}
+    (head : IntegrationCell α) (refines : IntegrationFrontierRefines inner outer) :
+    IntegrationFrontierRefines (head :: inner) (head :: outer) := by
+  induction refines with
+  | refl frontier => exact .refl _
+  | split before after parent children =>
+      change IntegrationFrontierRefines ((head :: before) ++ children.children ++ after)
+        ((head :: before) ++ [parent] ++ after)
+      exact .split (head :: before) after parent children
+  | trans _ _ first second => exact .trans first second
+
+/-- A common leading frontier preserves any finite frontier refinement. -/
+theorem prepend {α : Type} (leading : List (IntegrationCell α)) {inner outer : List (IntegrationCell α)}
+    (refines : IntegrationFrontierRefines inner outer) :
+    IntegrationFrontierRefines (leading ++ inner) (leading ++ outer) := by
+  induction leading with
+  | nil => exact refines
+  | cons head tail inductionHypothesis => exact cons head inductionHypothesis
+
+/-- Ordered indexed parent splits assemble into a finite frontier refinement.
+
+The child groups and parents have the same retained length. Each shared index
+selects an actual parent and a certified split whose children are that exact
+group. Their ordered flattening is obtained by composing those original splits. -/
+theorem of_indexed_splits {α : Type} (parents : List (IntegrationCell α)) (groups : List (List (IntegrationCell α)))
+    (lengths : groups.length = parents.length)
+    (splits : ∀ index parent children, Purelib.Data.List.getElem? parents index = some parent →
+      Purelib.Data.List.getElem? groups index = some children →
+        ∃ split : IntegrationSplit parent, split.children = children) :
+    IntegrationFrontierRefines groups.flatten parents := by
+  induction parents generalizing groups with
+  | nil =>
+      cases groups with
+      | nil => exact .refl []
+      | cons _ _ => cases lengths
+  | cons parent remaining inductionHypothesis =>
+      cases groups with
+      | nil => cases lengths
+      | cons children later =>
+          have tailLengths : later.length = remaining.length := Nat.succ.inj lengths
+          have tailSplits : ∀ index next childGroup, Purelib.Data.List.getElem? remaining index = some next →
+              Purelib.Data.List.getElem? later index = some childGroup →
+                ∃ split : IntegrationSplit next, split.children = childGroup := by
+            intro index next childGroup parentRead childRead
+            exact splits (index + 1) next childGroup parentRead childRead
+          have tailRefines := inductionHypothesis later tailLengths tailSplits
+          rcases splits 0 parent children rfl rfl with ⟨first, childEqual⟩
+          have headRefines := IntegrationFrontierRefines.split [] later.flatten parent first
+          rw [childEqual] at headRefines
+          exact .trans headRefines (prepend [parent] tailRefines)
 
 open Purelib in
 open Purelib.Data.Rat in

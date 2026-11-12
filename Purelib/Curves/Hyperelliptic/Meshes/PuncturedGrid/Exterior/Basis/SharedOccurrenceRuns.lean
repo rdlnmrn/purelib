@@ -77,15 +77,15 @@ open Purelib.Riemann.Normalization
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedHorizontalRuns
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedRunBudgets.SharedHorizontalRuns
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
@@ -94,25 +94,25 @@ open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate Gaussian)
 open Purelib.Riemann.Normalization.RectangularInverseModels
 
 section SharedOccurrenceRuns
-variable (retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared)
+variable (retained : Preparation.CommonBasisPreparation prepared)
   {index : Nat} (inputs : retained.Inputs index)
   (outer : Fin prepared.occurrences.length) {stage : Nat}
   {cuts : Paths.RectangularSegmentSplitting.GridCuts ((domains.get
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer).sideOccurrence.position).domain
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (ParentIndices.occurrenceAt prepared.occurrences
       outer).sideOccurrence.sheet).geometry}
   {meshBox : Rational.Box} {mesh : Meshes.RectangularObservationMesh.ObservationMesh cuts meshBox}
   (traces : Paths.RectangularPerimeterTraces.PerimeterTraces mesh) (cache :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage)
-  (banks : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PerimeterSamples.SharedPerimeter.Banks (occurrence :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) traces
+    RegularDomainMeshes.RegularMeshes.Numerics domains stage)
+  (banks : SharedPerimeter.Banks (occurrence :=
+    ParentIndices.occurrenceAt prepared.occurrences outer) traces
     cache)
   (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
 
 /-- Fix the run request capacity from the mesh before numerical acquisition. -/
 @[expose] def sideCapacity : Nat :=
-  match (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  match (ParentIndices.occurrenceAt prepared.occurrences
     outer).sideOccurrence.side with
   | .bottom | .top => 2 * mesh.boundaryColumns + 1
   | .left | .right => 2 * mesh.boundaryRows + 1
@@ -121,24 +121,24 @@ variable (retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparati
 as the perimeter-to-triangle comparison. -/
 @[expose] def sideArea : Gaussian :=
   ((banks.sample traces cache coefficients).get traces cache coefficients
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (ParentIndices.occurrenceAt prepared.occurrences
       outer).sideOccurrence.side).centeredArea
 
-variable {allowance : Normalization.InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
+variable {allowance : Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
   (Paths.RectangularDyadicPairedTrace.dyadicCount mesh.depth) allowance)
   (owners : OwnerRequest
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer)
+    (ParentIndices.occurrenceAt prepared.occurrences outer)
     budget.tolerance) (later : owners.index ≤ stage)
-  {junctionAllowance : Normalization.InverseRootPolynomial.Coordinate} (junctionBudget :
+  {junctionAllowance : Coordinate} (junctionBudget :
     Path.NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
   (junctionOwners : OwnerRequest
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer)
+    (ParentIndices.occurrenceAt prepared.occurrences outer)
     junctionBudget.tolerance)
   (junctionLater : junctionOwners.index ≤ stage)
-  (blocks : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBank.ParentBlockBank
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) mesh
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
-      outer).sourceVertical (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (blocks : ParentBank.ParentBlockBank
+    (ParentIndices.occurrenceAt prepared.occurrences outer) mesh
+    (ParentIndices.occurrenceAt prepared.occurrences
+      outer).sourceVertical (ParentIndices.occurrenceAt
       prepared.occurrences outer).sourceForward)
   (boxEq : meshBox = (base.faces.regulars[(ParentIndices.occurrenceAt prepared.occurrences
     outer).sideOccurrence.position.val]'(ParentIndices.occurrenceAt prepared.occurrences
@@ -153,18 +153,18 @@ an independent caller: all four cases read the retained occurrence geometry. -/
     (sideArea outer traces
       cache banks coefficients)
     (max allowance junctionAllowance) (max budget.tolerance junctionBudget.tolerance) := by
-  cases side : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  cases side : (ParentIndices.occurrenceAt prepared.occurrences
     outer).sideOccurrence.side with
   | bottom =>
-    have fixed : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    have fixed : (ParentIndices.occurrenceAt prepared.occurrences
       outer).sourceConstant =
         (mesh.partition.y.intervals[(Fin.cast mesh.boundaryRows_eq 0).val]'(Fin.cast mesh.boundaryRows_eq 0).isLt).lower
           := by
-      have original : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      have original : (ParentIndices.occurrenceAt prepared.occurrences
         outer).sourceConstant =
-          (base.faces.regulars[(Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+          (base.faces.regulars[(ParentIndices.occurrenceAt
             prepared.occurrences outer).sideOccurrence.position.val]'
-            (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+            (ParentIndices.occurrenceAt prepared.occurrences
               outer).sideOccurrence.position.isLt).cell.box.yLower := by
         simp only
           [SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence.sourceConstant,
@@ -173,25 +173,25 @@ an independent caller: all four cases read the retained occurrence geometry. -/
       exact original.trans ((congrArg (fun box : Rational.Box => box.yLower) boxEq).symm.trans
         mesh.y_first.symm)
     have selected :=
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.HorizontalOccurrence.SharedHorizontalRuns.forOccurrence retained
+      HorizontalOccurrence.SharedHorizontalRuns.forOccurrence retained
       inputs outer traces.bottom cache banks.bottom coefficients
       budget owners later junctionBudget junctionOwners junctionLater blocks
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      ((ParentIndices.occurrenceAt prepared.occurrences
         outer).bottom_axis side) fixed boxEq
     unfold sideArea
       sideCapacity
     rw [side]
     exact selected
   | top =>
-    have fixed : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    have fixed : (ParentIndices.occurrenceAt prepared.occurrences
       outer).sourceConstant =
         (mesh.partition.y.intervals[(Fin.cast mesh.boundaryRows_eq (Fin.last mesh.boundaryRows)).val]'(Fin.cast
           mesh.boundaryRows_eq (Fin.last mesh.boundaryRows)).isLt).upper := by
-      have original : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      have original : (ParentIndices.occurrenceAt prepared.occurrences
         outer).sourceConstant =
-          (base.faces.regulars[(Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+          (base.faces.regulars[(ParentIndices.occurrenceAt
             prepared.occurrences outer).sideOccurrence.position.val]'
-            (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+            (ParentIndices.occurrenceAt prepared.occurrences
               outer).sideOccurrence.position.isLt).cell.box.yUpper := by
         simp only
           [SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence.sourceConstant,
@@ -200,25 +200,25 @@ an independent caller: all four cases read the retained occurrence geometry. -/
       exact original.trans ((congrArg (fun box : Rational.Box => box.yUpper) boxEq).symm.trans
         mesh.y_last.symm)
     have selected :=
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.HorizontalOccurrence.SharedHorizontalRuns.forOccurrence retained
+      HorizontalOccurrence.SharedHorizontalRuns.forOccurrence retained
       inputs outer traces.top cache banks.top coefficients
       budget owners later junctionBudget junctionOwners junctionLater blocks
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      ((ParentIndices.occurrenceAt prepared.occurrences
         outer).top_axis side) fixed boxEq
     unfold sideArea
       sideCapacity
     rw [side]
     exact selected
   | left =>
-    have fixed : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    have fixed : (ParentIndices.occurrenceAt prepared.occurrences
       outer).sourceConstant =
         (mesh.partition.x.intervals[(Fin.cast mesh.boundaryColumns_eq 0).val]'(Fin.cast mesh.boundaryColumns_eq
           0).isLt).lower := by
-      have original : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      have original : (ParentIndices.occurrenceAt prepared.occurrences
         outer).sourceConstant =
-          (base.faces.regulars[(Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+          (base.faces.regulars[(ParentIndices.occurrenceAt
             prepared.occurrences outer).sideOccurrence.position.val]'
-            (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+            (ParentIndices.occurrenceAt prepared.occurrences
               outer).sideOccurrence.position.isLt).cell.box.xLower := by
         simp only
           [SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence.sourceConstant,
@@ -227,25 +227,25 @@ an independent caller: all four cases read the retained occurrence geometry. -/
       exact original.trans ((congrArg (fun box : Rational.Box => box.xLower) boxEq).symm.trans
         mesh.x_first.symm)
     have selected :=
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.VerticalOccurrence.SharedVerticalRuns.forOccurrence retained
+      VerticalOccurrence.SharedVerticalRuns.forOccurrence retained
       inputs outer traces.left cache banks.left coefficients
       budget owners later junctionBudget junctionOwners junctionLater blocks
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      ((ParentIndices.occurrenceAt prepared.occurrences
         outer).left_axis side) fixed boxEq
     unfold sideArea
       sideCapacity
     rw [side]
     exact selected
   | right =>
-    have fixed : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    have fixed : (ParentIndices.occurrenceAt prepared.occurrences
       outer).sourceConstant =
         (mesh.partition.x.intervals[(Fin.cast mesh.boundaryColumns_eq (Fin.last mesh.boundaryColumns)).val]'(Fin.cast
           mesh.boundaryColumns_eq (Fin.last mesh.boundaryColumns)).isLt).upper := by
-      have original : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      have original : (ParentIndices.occurrenceAt prepared.occurrences
         outer).sourceConstant =
-          (base.faces.regulars[(Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+          (base.faces.regulars[(ParentIndices.occurrenceAt
             prepared.occurrences outer).sideOccurrence.position.val]'
-            (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+            (ParentIndices.occurrenceAt prepared.occurrences
               outer).sideOccurrence.position.isLt).cell.box.xUpper := by
         simp only
           [SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence.sourceConstant,
@@ -254,10 +254,10 @@ an independent caller: all four cases read the retained occurrence geometry. -/
       exact original.trans ((congrArg (fun box : Rational.Box => box.xUpper) boxEq).symm.trans
         mesh.x_last.symm)
     have selected :=
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.VerticalOccurrence.SharedVerticalRuns.forOccurrence retained
+      VerticalOccurrence.SharedVerticalRuns.forOccurrence retained
       inputs outer traces.right cache banks.right coefficients
       budget owners later junctionBudget junctionOwners junctionLater blocks
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      ((ParentIndices.occurrenceAt prepared.occurrences
         outer).right_axis side) fixed boxEq
     unfold sideArea
       sideCapacity

@@ -11,6 +11,8 @@ import Purelib.Tactic.QuotientFreeOmega
 import Purelib.RootIsolation.State.WindingOne.Basic
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Polynomial.Dense.Gaussian.Basic
+
 open Purelib.Data
 
 open Purelib.Geometry.Rational
@@ -34,8 +36,8 @@ set_option genInjectivity false in
 
 The index selects either an original track's initial box or an original remainder region. -/
 public inductive PartitionLocation
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {count : Nat}
-    (output : Exact.Basic.Output p ambient count) : Type
+    {p : CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {count : Nat}
+    (output : Basic.Output p ambient count) : Type
   /-- An index into the original retained track list. -/ | track (index : Fin output.tracks.length)
   /-- An index into the original retained remainder-region list. -/ | remainder (index : Fin output.remainder.length)
 
@@ -46,8 +48,8 @@ constructive_injectivity PartitionLocation
 A track location projects its stored initial box; a remainder location projects
 the stored clear-region box at the retained index. -/
 @[expose] public def PartitionLocation.box
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {count : Nat}
-    {output : Exact.Basic.Output p ambient count} : PartitionLocation output → Box
+    {p : CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {count : Nat}
+    {output : Basic.Output p ambient count} : PartitionLocation output → Box
   | .track index => (output.tracks.get index).initial.box
   | .remainder index => (output.remainder.get index).box
 
@@ -55,8 +57,8 @@ the stored clear-region box at the retained index. -/
 
 Return the original list index of the first containing cell when one exists. -/
 @[expose] public def findPartitionLocation?
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {count : Nat}
-    (output : Exact.Basic.Output p ambient count) (point : Gaussian.Basic.Canonical) :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {count : Nat}
+    (output : Basic.Output p ambient count) (point : Gaussian.Basic.Canonical) :
     Option (PartitionLocation output) :=
   match Box.Search.findContainingIndex (fun track => track.initial.box) point
       output.tracks with
@@ -72,8 +74,8 @@ Return the original list index of the first containing cell when one exists. -/
 The proof follows the two finite searches and their original list indices,
 using the corresponding containing-box certificate without rebuilding a cell. -/
 public theorem findPartitionLocation_sound
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {count : Nat}
-    (output : Exact.Basic.Output p ambient count) (point : Gaussian.Basic.Canonical)
+    {p : CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {count : Nat}
+    (output : Basic.Output p ambient count) (point : Gaussian.Basic.Canonical)
     (location : PartitionLocation output)
     (found : findPartitionLocation? output point = some location) :
     location.box.Contains point := by
@@ -105,8 +107,8 @@ public theorem findPartitionLocation_sound
 The stored covering certificate supplies an actual track or remainder
 occurrence. Finite search completeness excludes the absent result directly. -/
 public theorem findPartitionLocation_ne_none
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {count : Nat}
-    (output : Exact.Basic.Output p ambient count) {point : Gaussian.Basic.Canonical}
+    {p : CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {count : Nat}
+    (output : Basic.Output p ambient count) {point : Gaussian.Basic.Canonical}
     (inside : output.support.Contains point) :
     findPartitionLocation? output point ≠ none := by
   rcases output.partition_covers inside with
@@ -146,8 +148,8 @@ public theorem findPartitionLocation_ne_none
 
 The retained covering certificate makes the finite first-containing-cell search total. -/
 @[expose] public def locatePartition
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {count : Nat}
-    (output : Exact.Basic.Output p ambient count) (point : Gaussian.Basic.Canonical)
+    {p : CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {count : Nat}
+    (output : Basic.Output p ambient count) (point : Gaussian.Basic.Canonical)
     (inside : output.support.Contains point) : PartitionLocation output :=
   match found : findPartitionLocation? output point with
   | some location => location
@@ -158,8 +160,8 @@ The retained covering certificate makes the finite first-containing-cell search 
 The result retains the same first-search index. Its containment certificate
 comes from the successful search equation and the original covering witness. -/
 public theorem locatePartition_contains
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {count : Nat}
-    (output : Exact.Basic.Output p ambient count) (point : Gaussian.Basic.Canonical)
+    {p : CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {count : Nat}
+    (output : Basic.Output p ambient count) (point : Gaussian.Basic.Canonical)
     (inside : output.support.Contains point) :
     (locatePartition output point inside).box.Contains point := by
   unfold locatePartition

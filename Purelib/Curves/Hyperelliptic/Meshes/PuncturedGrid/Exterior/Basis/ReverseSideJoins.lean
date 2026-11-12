@@ -81,6 +81,8 @@ import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Topology.Polygon.Stokes
 
+open Purelib.Data.Vector (DependentVector)
+
 public section
 
 /-! Descending joins and order on cached physical side fragments. -/
@@ -90,66 +92,66 @@ open Purelib.Riemann.Normalization
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.ParentBlock
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : Riemann.Meshes.FramedPuncturedGrid curve branches higher}
+  {lifted : Riemann.Meshes.LiftedPuncturedGrid base} {differential :
+    Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted
     differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
-variable (retained : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation
+variable (retained : Preparation.CommonBasisPreparation
   prepared) {index : Nat} (inputs : retained.Inputs index)
   (outer : Fin prepared.occurrences.length)
-  {lc lr rc rr depth faceIndex : Nat} {lg : Purelib.Riemann.Normalization.RectangularInverseModels.Geometry lc lr} {rg :
-    Purelib.Riemann.Normalization.RectangularInverseModels.Geometry rc rr}
-  {leftCuts : Purelib.Riemann.Paths.RectangularSegmentSplitting.GridCuts lg} {rightCuts :
-    Purelib.Riemann.Paths.RectangularSegmentSplitting.GridCuts rg} {leftBox rightBox :
-    Purelib.Geometry.Rational.Box}
-  {left : Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh leftCuts leftBox} {right :
-    Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh rightCuts rightBox}
-  {data : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  {lc lr rc rr depth faceIndex : Nat} {lg : RectangularInverseModels.Geometry lc lr} {rg :
+    RectangularInverseModels.Geometry rc rr}
+  {leftCuts : Riemann.Paths.RectangularSegmentSplitting.GridCuts lg} {rightCuts :
+    Riemann.Paths.RectangularSegmentSplitting.GridCuts rg} {leftBox rightBox :
+    Geometry.Rational.Box}
+  {left : Riemann.Meshes.RectangularObservationMesh.ObservationMesh leftCuts leftBox} {right :
+    Riemann.Meshes.RectangularObservationMesh.ObservationMesh rightCuts rightBox}
+  {data : FragmentQueries.RowData
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) faceIndex}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 section Horizontal
 variable {leftRow : Fin left.partition.y.intervals.length} {rightRow : Fin right.partition.y.intervals.length} {height :
-  Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {side : Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedHorizontalSide left right
+  InverseRootPolynomial.Coordinate}
+  {side : Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedHorizontalSide left right
     leftRow rightRow height}
   (trace : side.Trace depth) {forward : Bool}
-  (blocks : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBank.ParentBlockBank
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (blocks : ParentBank.ParentBlockBank
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) left false forward)
-  (sourceFirst : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (sourceFirst : (ParentIndices.occurrenceAt
     prepared.occurrences outer).start.im = height)
-  (sourceLast : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (sourceLast : (ParentIndices.occurrenceAt
     prepared.occurrences outer).finish.im = height)
 
-variable {allowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} (budget :
-  Purelib.Integration.Path.NoisyPathArea.LengthErrorBudget
-  (Purelib.Riemann.Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
+variable {allowance : InverseRootPolynomial.Coordinate} (budget :
+  Integration.Path.NoisyPathArea.LengthErrorBudget
+  (Riemann.Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
     (owners : OwnerRequest
-      (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      (ParentIndices.occurrenceAt prepared.occurrences
       outer) budget.tolerance)
     (later : owners.index ≤ faceIndex)
-    (original : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings data (fun
+    (original : OwnerRequest.OwnedReadings data (fun
       vertex => trace.point (trace.vertices.indexed vertex)))
-    (values : Fin genus → side.Vertex depth → Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian)
+    (values : Fin genus → side.Vertex depth → InverseRootPolynomial.Gaussian)
     (readback : ∀ basisRow vertex, (original basisRow).values vertex = values basisRow (trace.vertices.indexed vertex))
     (column : Fin left.boundaryColumns)
 
-variable {junctionAllowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} (junctionBudget :
-  Purelib.Integration.Path.NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
+variable {junctionAllowance : InverseRootPolynomial.Coordinate} (junctionBudget :
+  Integration.Path.NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
   (junctionOwners : OwnerRequest
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) junctionBudget.tolerance)
   (junctionLater : junctionOwners.index ≤ faceIndex)
 
@@ -174,10 +176,10 @@ parameter, while retaining its separate physical point-owner readings. -/
 theorem horizontalPieces_reverse_join_junction : (piece).ReverseJoined (junction) := by
   constructor
   · intro _
-    exact (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalParameterReadback.horizontalPieces_last retained
+    exact (PhysicalParameterReadback.horizontalPieces_last retained
       inputs outer trace blocks sourceFirst sourceLast
       budget owners later original values readback column.castSucc).trans
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.JunctionParameterReadback.horizontalJunctions_first retained
+      (JunctionParameterReadback.horizontalJunctions_first retained
         inputs outer trace blocks sourceFirst sourceLast
         junctionBudget junctionOwners junctionLater original values readback column).symm
   · intro different
@@ -189,10 +191,10 @@ open Purelib.Integration in
 open Purelib in
 open Purelib.Riemann in
 /-- Every stationary owner junction is decreasing, in either side orientation. -/
-theorem horizontalJunctions_decreasing : (junction).Decreasing := open Purelib.Data.Rat in by
+theorem horizontalJunctions_decreasing : (junction).Decreasing := open Data.Rat in by
   intro edge
   have width :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.JunctionParameterReadback.horizontalJunctions_sourceWidth retained
+    JunctionParameterReadback.horizontalJunctions_sourceWidth retained
     (coefficients := coefficients) inputs outer trace blocks
     sourceFirst sourceLast junctionBudget junctionOwners junctionLater original values readback column
   have step := (Path.Dyadic.SourceSampleResampling.step_le_meshWidth (junction).fragment.parameters true edge).trans
@@ -215,7 +217,7 @@ local notation "current" =>
 theorem horizontalPieces_decreasing (orientation : forward = false) : (current).Decreasing := by
   intro edge
   have ordered := (current).fragment.ordered edge
-  have forwardEq := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalParameterReadback.horizontalPieces_forward
+  have forwardEq := PhysicalParameterReadback.horizontalPieces_forward
     retained (coefficients := coefficients) inputs outer trace blocks
     sourceFirst sourceLast budget owners later original values readback position
   change (current).fragment.forward = forward at forwardEq
@@ -226,35 +228,35 @@ theorem horizontalPieces_decreasing (orientation : forward = false) : (current).
 end Horizontal
 section Vertical
 variable {leftColumn : Fin left.partition.x.intervals.length} {rightColumn : Fin right.partition.x.intervals.length}
-  {width : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {side : Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedVerticalSide left right
+  {width : InverseRootPolynomial.Coordinate}
+  {side : Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedVerticalSide left right
     leftColumn rightColumn width}
   (trace : side.Trace depth) {forward : Bool}
-  (blocks : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBank.ParentBlockBank
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (blocks : ParentBank.ParentBlockBank
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) left true forward)
-  (sourceFirst : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (sourceFirst : (ParentIndices.occurrenceAt
     prepared.occurrences outer).start.re = width)
-  (sourceLast : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (sourceLast : (ParentIndices.occurrenceAt
     prepared.occurrences outer).finish.re = width)
 
-variable {allowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} (budget :
-  Purelib.Integration.Path.NoisyPathArea.LengthErrorBudget
-  (Purelib.Riemann.Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
+variable {allowance : InverseRootPolynomial.Coordinate} (budget :
+  Integration.Path.NoisyPathArea.LengthErrorBudget
+  (Riemann.Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
     (owners : OwnerRequest
-      (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      (ParentIndices.occurrenceAt prepared.occurrences
       outer) budget.tolerance)
     (later : owners.index ≤ faceIndex)
-    (original : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings data (fun
+    (original : OwnerRequest.OwnedReadings data (fun
       vertex => trace.point (trace.vertices.indexed vertex)))
-    (values : Fin genus → side.Vertex depth → Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian)
+    (values : Fin genus → side.Vertex depth → InverseRootPolynomial.Gaussian)
     (readback : ∀ basisRow vertex, (original basisRow).values vertex = values basisRow (trace.vertices.indexed vertex))
     (row : Fin left.boundaryRows)
 
-variable {junctionAllowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} (junctionBudget :
-  Purelib.Integration.Path.NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
+variable {junctionAllowance : InverseRootPolynomial.Coordinate} (junctionBudget :
+  Integration.Path.NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
   (junctionOwners : OwnerRequest
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) junctionBudget.tolerance)
   (junctionLater : junctionOwners.index ≤ faceIndex)
 
@@ -279,10 +281,10 @@ parameter, while retaining its separate physical point-owner readings. -/
 theorem verticalPieces_reverse_join_junction : (piece).ReverseJoined (junction) := by
   constructor
   · intro _
-    exact (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalParameterReadback.verticalPieces_last retained
+    exact (PhysicalParameterReadback.verticalPieces_last retained
       inputs outer trace blocks sourceFirst sourceLast
       budget owners later original values readback row.castSucc).trans
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.JunctionParameterReadback.verticalJunctions_first retained
+      (JunctionParameterReadback.verticalJunctions_first retained
         inputs outer trace blocks sourceFirst sourceLast
         junctionBudget junctionOwners junctionLater original values readback row).symm
   · intro different
@@ -294,10 +296,10 @@ open Purelib.Integration in
 open Purelib in
 open Purelib.Riemann in
 /-- Every stationary owner junction is decreasing, in either side orientation. -/
-theorem verticalJunctions_decreasing : (junction).Decreasing := open Purelib.Data.Rat in by
+theorem verticalJunctions_decreasing : (junction).Decreasing := open Data.Rat in by
   intro edge
   have width :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.JunctionParameterReadback.verticalJunctions_sourceWidth retained
+    JunctionParameterReadback.verticalJunctions_sourceWidth retained
     (coefficients := coefficients) inputs outer trace blocks
     sourceFirst sourceLast junctionBudget junctionOwners junctionLater original values readback row
   have step := (Path.Dyadic.SourceSampleResampling.step_le_meshWidth (junction).fragment.parameters true edge).trans
@@ -320,7 +322,7 @@ local notation "current" =>
 theorem verticalPieces_decreasing (orientation : forward = false) : (current).Decreasing := by
   intro edge
   have ordered := (current).fragment.ordered edge
-  have forwardEq := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalParameterReadback.verticalPieces_forward
+  have forwardEq := PhysicalParameterReadback.verticalPieces_forward
     retained (coefficients := coefficients) inputs outer trace blocks
     sourceFirst sourceLast budget owners later original values readback position
   change (current).fragment.forward = forward at forwardEq

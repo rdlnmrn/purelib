@@ -48,15 +48,15 @@ inductive Trace (parameter : Gaussian.Basic.Canonical) (acceptable : Gaussian.Ba
     {fuel : Nat} {grid : Fraction.Rational} {proposal : Gaussian.Basic.Canonical}
       (point : Grid.Nearest.Replay.Rounded grid proposal) (value : {value : Gaussian.Basic.Canonical // acceptable
         value})
-      (selected : SquareRoot.Newton.Search.select parameter acceptable point.val = some value) :
+      (selected : Search.select parameter acceptable point.val = some value) :
       Trace parameter acceptable (fuel + 1) grid proposal
   /-- A rejected rounded point and checked inverse lead to the retained lower-fuel continuation trace. -/ | next {fuel :
     Nat} {grid : Fraction.Rational} {proposal : Gaussian.Basic.Canonical}
-      (point : Grid.Nearest.Replay.Rounded grid proposal) (miss : SquareRoot.Newton.Search.select parameter acceptable
+      (point : Grid.Nearest.Replay.Rounded grid proposal) (miss : Search.select parameter acceptable
         point.val = none)
-      (inverse : Data.Gaussian.Basic.Canonical.Inverse.Certificate point.val)
+      (inverse : Gaussian.Basic.Canonical.Inverse.Certificate point.val)
       (tail : Trace parameter acceptable fuel (grid / 4)
-        (SquareRoot.Newton.Replay.Step.advance parameter point.val inverse)) :
+        (Step.advance parameter point.val inverse)) :
       Trace parameter acceptable (fuel + 1) grid proposal
 
 constructive_injectivity Trace
@@ -86,16 +86,16 @@ theorem result_eq {parameter : Gaussian.Basic.Canonical} {acceptable : Gaussian.
   [DecidablePred acceptable]
     {fuel : Nat} {grid : Fraction.Rational} {proposal : Gaussian.Basic.Canonical}
     (trace : Trace parameter acceptable fuel grid proposal) :
-    trace.result = SquareRoot.Newton.Search.search parameter acceptable fuel grid proposal := by
+    trace.result = Search.search parameter acceptable fuel grid proposal := by
   induction trace with
   | exhausted => rfl
   | accepted point value selected =>
-      rw [SquareRoot.Newton.Search.search_step, ← point.property, selected]
+      rw [Search.search_step, ← point.property, selected]
       rfl
   | next point miss inverse tail ih =>
-      rw [SquareRoot.Newton.Search.search_step, ← point.property, miss]
-      exact ih.trans (congrArg (SquareRoot.Newton.Search.search parameter acceptable _ _)
-        (SquareRoot.Newton.Replay.Step.advance_eq parameter point.val inverse))
+      rw [Search.search_step, ← point.property, miss]
+      exact ih.trans (congrArg (Search.search parameter acceptable _ _)
+        (Step.advance_eq parameter point.val inverse))
 
 end Trace
 

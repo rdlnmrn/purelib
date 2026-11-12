@@ -120,17 +120,17 @@ open Purelib.Riemann.Normalization.RectangularInverseModels (Geometry)
 open Purelib.Riemann.Paths.RectangularSegmentSplitting (GridCuts)
 open Purelib.Riemann.Meshes.RectangularObservationMesh (ObservationMesh)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {program : ExteriorProgram lifted
     differential} {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+    SurfacePreparation
     regular domains program}
 
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate Gaussian)
@@ -144,14 +144,14 @@ open Purelib.Riemann.Paths.RectangularDyadicPairedTrace (dyadicCount)
 
 /-- A physical sample retains the numerical original selected from the component's common bank at its exact geometric
 parent index. -/
-@[expose] def BlockSample (retained : Preparation.CommonBasisPreparation prepared) {index : Nat} (inputs :
+@[expose] def BlockSample (retained : CommonBasisPreparation prepared) {index : Nat} (inputs :
   retained.Inputs index)
     (outer : Fin prepared.occurrences.length) {vertical forward : Bool} {physical : PreparedAxisPartitions.Interval}
-    (block : ParentBlocks.ParentBlock (ParentIndices.occurrenceAt prepared.occurrences outer) vertical forward physical)
-    {faceIndex : Nat} (data : FragmentQueries.RowData (ParentIndices.occurrenceAt prepared.occurrences outer) faceIndex)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) {vertices : Nat}
-    (values : Fin (vertices + 1) → Stokes.PrimitivePoint) :=
-  JoinedFragments.SampledFragment (originals := (BlockInputs.blockInput retained inputs outer
+    (block : ParentBlock (ParentIndices.occurrenceAt prepared.occurrences outer) vertical forward physical)
+    {faceIndex : Nat} (data : RowData (ParentIndices.occurrenceAt prepared.occurrences outer) faceIndex)
+    (coefficients : GaussianVector genus) {vertices : Nat}
+    (values : Fin (vertices + 1) → PrimitivePoint) :=
+  SampledFragment (originals := (BlockInputs.blockInput retained inputs outer
     block).numerical.originals)
     (coefficients := coefficients) (data := data) values
 
@@ -162,13 +162,13 @@ variable (retained : CommonBasisPreparation
     Geometry rc rr}
   {leftCuts : GridCuts lg} {rightCuts :
     GridCuts rg} {leftBox rightBox :
-    Purelib.Geometry.Rational.Box}
+    Geometry.Rational.Box}
   {left : ObservationMesh leftCuts leftBox} {right :
     ObservationMesh rightCuts rightBox}
   {data : RowData
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) faceIndex}
-  {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
+  {coefficients : GaussianVector genus}
 
 section Horizontal
 variable {leftRow : Fin left.partition.y.intervals.length} {rightRow : Fin right.partition.y.intervals.length} {height :
@@ -177,29 +177,29 @@ variable {leftRow : Fin left.partition.y.intervals.length} {rightRow : Fin right
     leftRow rightRow height}
   (trace : side.Trace depth) {forward : Bool}
   (blocks : ParentBlockBank
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) left false forward)
-  (sourceFirst : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (sourceFirst : (ParentIndices.occurrenceAt
     prepared.occurrences outer).start.im = height)
-  (sourceLast : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (sourceLast : (ParentIndices.occurrenceAt
     prepared.occurrences outer).finish.im = height)
 
 /-- Build all horizontal piece samples using the retained component inputs. -/
-@[expose] def horizontalPieces {allowance : InverseRootPolynomial.Coordinate} (budget : NoisyPathArea.LengthErrorBudget
+@[expose] def horizontalPieces {allowance : Coordinate} (budget : LengthErrorBudget
   (RectangularDyadicPairedTrace.dyadicCount depth) allowance)
     (owners : OwnerRequest (ParentIndices.occurrenceAt prepared.occurrences outer) budget.tolerance)
     (later : owners.index ≤ faceIndex)
-    (original : OwnerRequest.OwnedReadings data (fun vertex => trace.point (trace.vertices.indexed vertex)))
-    (values : Fin genus → side.Vertex depth → InverseRootPolynomial.Gaussian)
+    (original : OwnedReadings data (fun vertex => trace.point (trace.vertices.indexed vertex)))
+    (values : Fin genus → side.Vertex depth → Gaussian)
     (readback : ∀ basisRow vertex, (original basisRow).values vertex = values basisRow (trace.vertices.indexed vertex))
       :
-    Data.Vector.DependentVector (fun column : Fin (left.boundaryColumns + 1) =>
+    DependentVector (fun column : Fin (left.boundaryColumns + 1) =>
       BlockSample retained inputs outer
         (blocks.get (Fin.cast left.boundaryColumns_eq column)) data coefficients
         (fun vertex => ((fun vertex => ConjugateIncrementComparison.conjugateFirst (⟨sumFin (fun basisRow =>
           coefficients basisRow * values basisRow vertex),
         FiniteSum.Fin.sumFin (fun basisRow => coefficients basisRow * values basisRow vertex)⟩ :
-          Stokes.PrimitivePoint))) ((side.pieceVertices depth column).indexed vertex))) :=
+          PrimitivePoint))) ((side.pieceVertices depth column).indexed vertex))) :=
   DependentVector.ofFn (fun column =>
     (blocks.get (Fin.cast left.boundaryColumns_eq column)).certifiedHorizontalPiece
       (originals := (BlockInputs.blockInput retained inputs outer (blocks.get (Fin.cast left.boundaryColumns_eq
@@ -207,20 +207,20 @@ variable {leftRow : Fin left.partition.y.intervals.length} {rightRow : Fin right
       (coefficients := coefficients) trace column sourceFirst sourceLast budget owners later original values readback)
 
 /-- Build all horizontal junction samples using the retained component inputs. -/
-@[expose] def horizontalJunctions {allowance : InverseRootPolynomial.Coordinate} (budget :
-  NoisyPathArea.LengthErrorBudget (1) allowance)
+@[expose] def horizontalJunctions {allowance : Coordinate} (budget :
+  LengthErrorBudget (1) allowance)
     (owners : OwnerRequest (ParentIndices.occurrenceAt prepared.occurrences outer) budget.tolerance)
     (later : owners.index ≤ faceIndex)
-    (original : OwnerRequest.OwnedReadings data (fun vertex => trace.point (trace.vertices.indexed vertex)))
-    (values : Fin genus → side.Vertex depth → InverseRootPolynomial.Gaussian)
+    (original : OwnedReadings data (fun vertex => trace.point (trace.vertices.indexed vertex)))
+    (values : Fin genus → side.Vertex depth → Gaussian)
     (readback : ∀ basisRow vertex, (original basisRow).values vertex = values basisRow (trace.vertices.indexed vertex))
       :
-    Data.Vector.DependentVector (fun column : Fin left.boundaryColumns =>
+    DependentVector (fun column : Fin left.boundaryColumns =>
       BlockSample retained inputs outer
         (blocks.get (Fin.cast left.boundaryColumns_eq column.castSucc)) data coefficients
         (JoinedSampleBlocks.JunctionValues (fun vertex => ConjugateIncrementComparison.conjugateFirst (⟨sumFin (fun
           basisRow => coefficients basisRow * values basisRow vertex),
-        FiniteSum.Fin.sumFin (fun basisRow => coefficients basisRow * values basisRow vertex)⟩ : Stokes.PrimitivePoint))
+        FiniteSum.Fin.sumFin (fun basisRow => coefficients basisRow * values basisRow vertex)⟩ : PrimitivePoint))
       (side.pieceVertices depth column.castSucc) (side.pieceVertices depth column.succ))) :=
   DependentVector.ofFn (fun column =>
     (blocks.get (Fin.cast left.boundaryColumns_eq column.castSucc)).certifiedHorizontalJunction
@@ -236,29 +236,29 @@ variable {leftColumn : Fin left.partition.x.intervals.length} {rightColumn : Fin
     leftColumn rightColumn width}
   (trace : side.Trace depth) {forward : Bool}
   (blocks : ParentBlockBank
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) left true forward)
-  (sourceFirst : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (sourceFirst : (ParentIndices.occurrenceAt
     prepared.occurrences outer).start.re = width)
-  (sourceLast : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (sourceLast : (ParentIndices.occurrenceAt
     prepared.occurrences outer).finish.re = width)
 
 /-- Build all vertical piece samples using the retained component inputs. -/
-@[expose] def verticalPieces {allowance : InverseRootPolynomial.Coordinate} (budget : NoisyPathArea.LengthErrorBudget
+@[expose] def verticalPieces {allowance : Coordinate} (budget : LengthErrorBudget
   (RectangularDyadicPairedTrace.dyadicCount depth) allowance)
     (owners : OwnerRequest (ParentIndices.occurrenceAt prepared.occurrences outer) budget.tolerance)
     (later : owners.index ≤ faceIndex)
-    (original : OwnerRequest.OwnedReadings data (fun vertex => trace.point (trace.vertices.indexed vertex)))
-    (values : Fin genus → side.Vertex depth → InverseRootPolynomial.Gaussian)
+    (original : OwnedReadings data (fun vertex => trace.point (trace.vertices.indexed vertex)))
+    (values : Fin genus → side.Vertex depth → Gaussian)
     (readback : ∀ basisRow vertex, (original basisRow).values vertex = values basisRow (trace.vertices.indexed vertex))
       :
-    Data.Vector.DependentVector (fun row : Fin (left.boundaryRows + 1) =>
+    DependentVector (fun row : Fin (left.boundaryRows + 1) =>
       BlockSample retained inputs outer
         (blocks.get (Fin.cast left.boundaryRows_eq row)) data coefficients
         (fun vertex => ((fun vertex => ConjugateIncrementComparison.conjugateFirst (⟨sumFin (fun basisRow =>
           coefficients basisRow * values basisRow vertex),
         FiniteSum.Fin.sumFin (fun basisRow => coefficients basisRow * values basisRow vertex)⟩ :
-          Stokes.PrimitivePoint))) ((side.pieceVertices depth row).indexed vertex))) :=
+          PrimitivePoint))) ((side.pieceVertices depth row).indexed vertex))) :=
   DependentVector.ofFn (fun row =>
     (blocks.get (Fin.cast left.boundaryRows_eq row)).certifiedVerticalPiece
       (originals := (BlockInputs.blockInput retained inputs outer (blocks.get (Fin.cast left.boundaryRows_eq
@@ -266,20 +266,20 @@ variable {leftColumn : Fin left.partition.x.intervals.length} {rightColumn : Fin
       (coefficients := coefficients) trace row sourceFirst sourceLast budget owners later original values readback)
 
 /-- Build all vertical junction samples using the retained component inputs. -/
-@[expose] def verticalJunctions {allowance : InverseRootPolynomial.Coordinate} (budget : NoisyPathArea.LengthErrorBudget
+@[expose] def verticalJunctions {allowance : Coordinate} (budget : LengthErrorBudget
   (1) allowance)
     (owners : OwnerRequest (ParentIndices.occurrenceAt prepared.occurrences outer) budget.tolerance)
     (later : owners.index ≤ faceIndex)
-    (original : OwnerRequest.OwnedReadings data (fun vertex => trace.point (trace.vertices.indexed vertex)))
-    (values : Fin genus → side.Vertex depth → InverseRootPolynomial.Gaussian)
+    (original : OwnedReadings data (fun vertex => trace.point (trace.vertices.indexed vertex)))
+    (values : Fin genus → side.Vertex depth → Gaussian)
     (readback : ∀ basisRow vertex, (original basisRow).values vertex = values basisRow (trace.vertices.indexed vertex))
       :
-    Data.Vector.DependentVector (fun row : Fin left.boundaryRows =>
+    DependentVector (fun row : Fin left.boundaryRows =>
       BlockSample retained inputs outer
         (blocks.get (Fin.cast left.boundaryRows_eq row.castSucc)) data coefficients
         (JoinedSampleBlocks.JunctionValues (fun vertex => ConjugateIncrementComparison.conjugateFirst (⟨sumFin (fun
           basisRow => coefficients basisRow * values basisRow vertex),
-        FiniteSum.Fin.sumFin (fun basisRow => coefficients basisRow * values basisRow vertex)⟩ : Stokes.PrimitivePoint))
+        FiniteSum.Fin.sumFin (fun basisRow => coefficients basisRow * values basisRow vertex)⟩ : PrimitivePoint))
       (side.pieceVertices depth row.castSucc) (side.pieceVertices depth row.succ))) :=
   DependentVector.ofFn (fun row =>
     (blocks.get (Fin.cast left.boundaryRows_eq row.castSucc)).certifiedVerticalJunction

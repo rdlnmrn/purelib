@@ -68,27 +68,27 @@ open Purelib.Riemann.Meshes.PuncturedGridFaces (PuncturedFaces)
 
 open Purelib.Riemann.Meshes.GridLiftedMesh (LiftedMesh)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
     bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
-  {faces : PuncturedFaces bank} {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
+  {faces : PuncturedFaces bank} {domains : Face.DomainBanks.FaceDomainBank frames
     faces.regulars}
-  {cuts : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
-    {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+  {cuts : RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
+    {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet} {target : Fraction.Rational}
   {mesh : LiftedMesh vertices edges faces}
   {firstPosition : Fin faces.regulars.length} {firstSheet : Fin 2}
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+variable {request : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+  RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
   target}
 
 variable {i j : Fin genus} {firstParent secondParent : Fin 2} {tolerance : Fraction.Rational} {floor stage : Nat}
   {first : mesh.LocatedFace firstPosition firstSheet} {nextPosition : Fin faces.regulars.length}
 
-variable {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+variable {cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage}
 /-- The paid original local triangle and sewing comparisons bound the complete sewn boundary with its physical
 correction retained.
 
@@ -96,16 +96,16 @@ Both original triangle readings share the numerical bank; the local, corner and 
 late. -/
 theorem
   local_sewn_boundary_bound
-    (exterior : Hyperelliptic.Meshes.PuncturedGrid.RegularExteriorRequest.ExteriorBoundaryRequest (fun sheet =>
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+    (exterior : RegularExteriorRequest.ExteriorBoundaryRequest (fun sheet =>
+      RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
       ((target / 4) / 4))
     {retained : CrossingBank exterior.prepared.energy mesh}
-    (total : Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingTotal.CrossingRequests.TotalRequest retained i j
+    (total : TotalRequest retained i j
       firstParent secondParent (((target / 4) / 4) / 4) floor)
-    (corner : Hyperelliptic.Meshes.PuncturedGrid.CrossingCornerBudget.CornerRequest fixed i j (target / 4))
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
-      Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.CrossingRequests.Samples total.allocated
+    (corner : CrossingCornerBudget.CornerRequest fixed i j (target / 4))
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
+      TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
+    (samples : CrossingSamples.CrossingRequests.Samples total.allocated
       cache.normalize)
     (original : FacePerimeters (request :=
       exterior.prepared.energy) cache i j)
@@ -113,41 +113,41 @@ theorem
       exterior.prepared.energy) cache.normalize i j)
     {forest : Topology.Surface.Sewing.SewingForest mesh.triangulation.faces}
     {polygon : Topology.Surface.Sewing.SewingConnected.SewingForest.SinglePolygon forest}
-    {prepared : Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation polygon domains i j}
-    (sewing : Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation.Request prepared target floor)
+    {prepared : SewnBilinearRequest.BilinearPreparation polygon domains i j}
+    (sewing : SewnBilinearRequest.BilinearPreparation.Request prepared target floor)
     {leftSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample polygon.patch left.values}
     {rightSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample polygon.patch right.values}
     (surface : Topology.Surface.Sewing.Bilinear.Samples leftSurface rightSurface)
     (sewingLater : sewing.index ≤ stage)
     (neighbors : PuncturedFaces.NeighborBank faces) (positive : 0 < target)
     (later : total.allocated.index ≤ stage) (cornerLater : corner.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.localTotalSum original -
+    Gaussian.Norm.Basic.normSq
+      (NormalizedFaceAreas.FacePerimeters.localTotalSum original -
       surface.boundaryArea -
-      (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors
+      (GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors
         -
-        Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.physicalTriangleArea neighbors left right)) ≤ 4 *
-          target := open Purelib.Algebra in by
+        CrossingTriangleAreas.physicalTriangleArea neighbors left right)) ≤ 4 *
+          target := open Algebra in by
   have localBound :=
-    Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.CrossingRequests.TotalRequest.local_full_triangle_paid
+    CrossingTriangleAreas.CrossingRequests.TotalRequest.local_full_triangle_paid
     exterior total corner left right samples original normalized neighbors
     positive later cornerLater
-  rw [Hyperelliptic.Meshes.PuncturedGrid.TriangleSums.RegularMeshes.TwoSheetRequest.fullTriangleArea_eq_sum left right]
+  rw [TriangleSums.RegularMeshes.TwoSheetRequest.fullTriangleArea_eq_sum left right]
     at localBound
   have sewnBound := sewing.accurate sewingLater left right surface
-  have equal : Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.localTotalSum original -
+  have equal : NormalizedFaceAreas.FacePerimeters.localTotalSum original -
     surface.boundaryArea -
-      (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors
+      (GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors
         -
-        Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.physicalTriangleArea neighbors left right) =
-      (Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.localTotalSum original -
-        FiniteSum.Fin.sumFin (Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left
+        CrossingTriangleAreas.physicalTriangleArea neighbors left right) =
+      (NormalizedFaceAreas.FacePerimeters.localTotalSum original -
+        FiniteSum.Fin.sumFin (CornerTriangleAreas.TriangleReadings.bilinearArea left
         right) -
-        (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized
+        (GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized
           neighbors -
-          Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.physicalTriangleArea neighbors left right)) -
+          CrossingTriangleAreas.physicalTriangleArea neighbors left right)) -
       (surface.boundaryArea - FiniteSum.Fin.sumFin
-        (Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right)) := by ring1
+        (CornerTriangleAreas.TriangleReadings.bilinearArea left right)) := by ring1
   rw [equal]
   exact (Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
     ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct

@@ -24,6 +24,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 public section
 
@@ -43,8 +45,8 @@ open Purelib.Data.Rat
 /-! Approximation Gaussian Exponential Horner Addition Sequence and its finite structural certificates. -/
 
 /-- Multiply the two finite exponential Horner samples at the same index. -/
-@[expose] public def expProductSample (x y : Data.Gaussian.Basic.Canonical) (index : Nat) :
-  Data.Gaussian.Basic.Canonical :=
+@[expose] public def expProductSample (x y : Basic.Canonical) (index : Nat) :
+  Basic.Canonical :=
   Sample.sample x index *
     Sample.sample y index
 
@@ -53,8 +55,8 @@ open Purelib.Data.Rat
 
 /-- The exponential product error scale is nonnegative. -/
 theorem expProductErrorScale_nonneg : 0 ≤
-  Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductErrorScale :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct
+  expProductErrorScale :=
+  Arithmetic.mul_nonneg_direct
     (Fraction.Cast.Order.natCast_pos_direct
       (n := 40) (by decide)).le
     (Fraction.Cast.Order.natCast_pos_direct
@@ -65,69 +67,69 @@ theorem expProductErrorScale_nonneg : 0 ≤
 
 /-- The exponential product center bound is nonnegative. -/
 theorem expProductCenterBound_nonneg : 0 ≤
-  Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductCenterBound :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct
+  expProductCenterBound :=
+  Arithmetic.mul_nonneg_direct
     (Fraction.Cast.Order.natCast_pos_direct
       (n := 10) (by decide)).le
     (Fraction.Cast.Order.natCast_pos_direct
       (n := 10) (by decide)).le
 
 /-- Products of exponential samples at unit-disk inputs satisfy the retained uniform squared-norm bound. -/
-theorem expProductSample_bounded {x y : Data.Gaussian.Basic.Canonical}
-    (xUnit : Data.Gaussian.Norm.Basic.normSq x ≤ 1) (yUnit : Data.Gaussian.Norm.Basic.normSq y ≤ 1)
+theorem expProductSample_bounded {x y : Basic.Canonical}
+    (xUnit : Norm.Basic.normSq x ≤ 1) (yUnit : Norm.Basic.normSq y ≤ 1)
       (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductSample x y index) ≤
-      Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductCenterBound := by
-  rw [Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductSample, Data.Gaussian.Norm.Basic.normSq_mul]
-  have multiplied := Fraction.Order.Arithmetic.mul_le_mul_direct
+    Norm.Basic.normSq
+      (expProductSample x y index) ≤
+      expProductCenterBound := by
+  rw [expProductSample, Norm.Basic.normSq_mul]
+  have multiplied := Arithmetic.mul_le_mul_direct
     (Sample.sample_bounded x xUnit index)
     (Sample.sample_bounded y yUnit index)
-    (Data.Gaussian.Norm.Basic.normSq_nonneg _) (by decide : (0 : Fraction.Rational) ≤ 10)
+    (Norm.Basic.normSq_nonneg _) (by decide : (0 : Fraction.Rational) ≤ 10)
   calc
-    Data.Gaussian.Norm.Basic.normSq (Sample.sample x index) *
-        Data.Gaussian.Norm.Basic.normSq (Sample.sample y index) ≤ 10 * 10 :=
+    Norm.Basic.normSq (Sample.sample x index) *
+        Norm.Basic.normSq (Sample.sample y index) ≤ 10 * 10 :=
       multiplied
     _ = Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductCenterBound := rfl
 
 /-- Later equal-index exponential products remain within the geometric squared-error radius of the earlier index. -/
-theorem expProductSample_later_close {x y : Data.Gaussian.Basic.Canonical}
-    (xUnit : Data.Gaussian.Norm.Basic.normSq x ≤ 1) (yUnit : Data.Gaussian.Norm.Basic.normSq y ≤ 1)
+theorem expProductSample_later_close {x y : Basic.Canonical}
+    (xUnit : Norm.Basic.normSq x ≤ 1) (yUnit : Norm.Basic.normSq y ≤ 1)
     {earlier later : Nat} (order : earlier ≤ later) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductSample x y later -
-      Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductSample x y earlier) ≤
-      Geometric.Basic.quarterRadius
-        Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductErrorScale earlier := by
-  rw [Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductSample,
-    Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductSample,
+    Norm.Basic.normSq
+      (expProductSample x y later -
+      expProductSample x y earlier) ≤
+      Basic.quarterRadius
+        expProductErrorScale earlier := by
+  rw [expProductSample,
+    expProductSample,
     Multiplication.product_difference_identity]
   let radius :=
-    Geometric.Basic.quarterRadius 10 earlier
+    Basic.quarterRadius 10 earlier
   have xClose := Sample.sample_later_close x xUnit order
   have yClose := Sample.sample_later_close y yUnit order
   have yLaterBound := Sample.sample_bounded y yUnit later
   have xEarlierBound := Sample.sample_bounded x xUnit earlier
   have firstBound :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           ((Sample.sample x later -
               Sample.sample x earlier) *
             Sample.sample y later) ≤ radius * 10 := by
-    rw [Data.Gaussian.Norm.Basic.normSq_mul]
-    exact Fraction.Order.Arithmetic.mul_le_mul_direct xClose yLaterBound
-      (Data.Gaussian.Norm.Basic.normSq_nonneg _) (Geometric.Basic.quarterRadius_nonneg
+    rw [Norm.Basic.normSq_mul]
+    exact Arithmetic.mul_le_mul_direct xClose yLaterBound
+      (Norm.Basic.normSq_nonneg _) (Basic.quarterRadius_nonneg
         (by decide) _)
   have secondBound :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (Sample.sample x earlier *
             (Sample.sample y later -
               Sample.sample y earlier)) ≤ 10 * radius := by
-    rw [Data.Gaussian.Norm.Basic.normSq_mul]
-    exact Fraction.Order.Arithmetic.mul_le_mul_direct xEarlierBound yClose
-      (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+    rw [Norm.Basic.normSq_mul]
+    exact Arithmetic.mul_le_mul_direct xEarlierBound yClose
+      (Norm.Basic.normSq_nonneg _)
       (by decide : (0 : Fraction.Rational) ≤ 10)
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((Sample.sample x later -
               Sample.sample x earlier) *
             Sample.sample y later +
@@ -135,54 +137,54 @@ theorem expProductSample_later_close {x y : Data.Gaussian.Basic.Canonical}
             (Sample.sample y later -
               Sample.sample y earlier)) ≤
       2 * (radius * 10 + 10 * radius) := by
-        exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        exact (Norm.Bounds.normSq_add_le_two _ _).trans
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct
             (add_le_add firstBound secondBound) (by decide))
-    _ = Geometric.Basic.quarterRadius
-        Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductErrorScale earlier := by
+    _ = Basic.quarterRadius
+        expProductErrorScale earlier := by
       dsimp only [radius]
-      rw [Geometric.Basic.quarterRadius_eq_mul_pow,
-        Geometric.Basic.quarterRadius_eq_mul_pow]
-      dsimp only [Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductErrorScale]
+      rw [Basic.quarterRadius_eq_mul_pow,
+        Basic.quarterRadius_eq_mul_pow]
+      dsimp only [expProductErrorScale]
       ring1
 
 /-- The pointwise product of the two finite exponential programs, equipped with an explicit finite tail sidecar. -/
-@[expose] public def expProductApproximation (x y : Data.Gaussian.Basic.Canonical)
-    (xUnit : Data.Gaussian.Norm.Basic.normSq x ≤ 1) (yUnit : Data.Gaussian.Norm.Basic.normSq y ≤ 1) :
+@[expose] public def expProductApproximation (x y : Basic.Canonical)
+    (xUnit : Norm.Basic.normSq x ≤ 1) (yUnit : Norm.Basic.normSq y ≤ 1) :
       ApproximationData where
-  sample := Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductSample x y
-  radiusSq := Geometric.Basic.quarterRadius
-    Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductErrorScale
+  sample := expProductSample x y
+  radiusSq := Basic.quarterRadius
+    expProductErrorScale
   radiusSq_nonneg :=
-    Geometric.Basic.quarterRadius_nonneg
-      Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductErrorScale_nonneg
-  later_close := Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductSample_later_close xUnit yUnit
+    Basic.quarterRadius_nonneg
+      expProductErrorScale_nonneg
+  later_close := expProductSample_later_close xUnit yUnit
   refineIndex current target _ :=
     Search.firstQuarterBelow
-      Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductErrorScale current target
+      expProductErrorScale current target
   refineIndex_ge current target _ :=
     Search.firstQuarterBelow_ge
-      Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductErrorScale current target
+      expProductErrorScale current target
   refineIndex_accurate :=
     Search.firstQuarterBelow_accurate
-      Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductErrorScale
-        Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductErrorScale_nonneg
-  centerBound := Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductCenterBound
-  centerBound_nonneg := Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductCenterBound_nonneg
-  sample_bounded := Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductSample_bounded xUnit yUnit
+      expProductErrorScale
+        expProductErrorScale_nonneg
+  centerBound := expProductCenterBound
+  centerBound_nonneg := expProductCenterBound_nonneg
+  sample_bounded := expProductSample_bounded xUnit yUnit
 
 /-- At an odd sample index, the product and sum-input exponential samples differ by at most the displayed geometric
 squared-error bound.
 
 Both original Gaussian inputs must lie in the unit disk; the estimate uses their finite Cauchy-product identity. -/
-theorem expProductSample_addition_error_odd {x y : Data.Gaussian.Basic.Canonical}
-    (xUnit : Data.Gaussian.Norm.Basic.normSq x ≤ 1) (yUnit : Data.Gaussian.Norm.Basic.normSq y ≤ 1)
+theorem expProductSample_addition_error_odd {x y : Basic.Canonical}
+    (xUnit : Norm.Basic.normSq x ≤ 1) (yUnit : Norm.Basic.normSq y ≤ 1)
       (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
-        (Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductSample x y (2 * index + 1) -
+    Norm.Basic.normSq
+        (expProductSample x y (2 * index + 1) -
           Sample.sample (x + y) (2 * index + 1)) ≤
-      Geometric.Basic.quarterRadius 16 index := by
-  rw [Approximation.Gaussian.Exponential.Horner.Addition.Sequence.expProductSample,
+      Basic.quarterRadius 16 index := by
+  rw [expProductSample,
     Taylor.sample_eq_truncatedExp, Taylor.sample_eq_truncatedExp,
     Taylor.sample_eq_truncatedExp]
   simpa only [show 2 * index + 1 + 1 = 2 * index + 2 by rfl] using

@@ -39,6 +39,8 @@ import Mathlib.Order.Basic
 import Mathlib.Data.Nat.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -100,7 +102,7 @@ open Purelib.Data.Rat
 /-- Maximum patch density over the covered parent list.
 
 Recurses through the exact covered-parent witnesses with zero for the empty cover. -/
-def coverDensity : {parents : List (CenteredEdge curve differential)} → Observation.UniformPreparedMesh.CoveredParents
+def coverDensity : {parents : List (CenteredEdge curve differential)} → CoveredParents
   count parents → Fraction.Rational
   | _, .nil => 0
   | _, .cons patch _ tail => max (patchDensity patch count) (coverDensity tail)
@@ -109,9 +111,9 @@ def coverDensity : {parents : List (CenteredEdge curve differential)} → Observ
 
 The empty value is zero and each recursive maximum retains the nonnegative tail bound. -/
 private theorem coverDensity_nonnegative : ∀ {parents : List (CenteredEdge curve differential)}
-    (covered : Observation.UniformPreparedMesh.CoveredParents count parents), 0 ≤ coverDensity covered
+    (covered : CoveredParents count parents), 0 ≤ coverDensity covered
   | _, .nil => le_rfl
-  | _, .cons _ _ tail => (coverDensity_nonnegative tail).trans (Fraction.Order.Basic.le_max_right _ _)
+  | _, .cons _ _ tail => (coverDensity_nonnegative tail).trans (Basic.le_max_right _ _)
 
 end
 
@@ -123,7 +125,7 @@ open Purelib.Riemann.Readings in
 The sample-density maximum is independent of the requested numerical targets and minimum index because acquisition
 retains the original patch neighborhoods. -/
 private theorem acquired_density {parents : List (CenteredEdge curve differential)} (covered :
-  Observation.UniformPreparedMesh.CoveredParents count parents)
+  CoveredParents count parents)
     (target coefficientTarget : Fraction.Rational) (positive : 0 < target) (coefficientPositive : 0 < coefficientTarget)
     (proper : AllParentsProper parents) (minimum : Nat) :
     sampleDensityMaximum (ControlledParents.acquire covered target coefficientTarget positive coefficientPositive proper
@@ -148,14 +150,14 @@ open Purelib.Data.Rat in
 
 Specializes the controlled-parent density identity to the sum request and its retained properness witnesses. -/
 private theorem acquired_sum_density {parents : List (CenteredEdge curve differential)} (covered :
-  Observation.UniformPreparedMesh.CoveredParents count parents)
+  CoveredParents count parents)
     (proper : AllParentsProper parents) (target : Fraction.Rational) (positive : 0 < target) (minimum : Nat) :
     sampleDensityMaximum (ControlledSumRequest.acquire covered proper target positive minimum).requests = coverDensity
       covered :=
   acquired_density covered _ _ _ _ proper minimum
 
 variable {source : Differential genus} {root :
-  Purelib.Riemann.Topology.PreparedRefinementRootChains.Named}
+  Topology.PreparedRefinementRootChains.Named}
   {initial : RootClosedState curve source root} {targets : List
     (Differential genus)} {minimum : Nat}
 
@@ -166,7 +168,7 @@ open Purelib.Riemann.Integration in
 
 Combines the recast cover density and parent movement mass with five halves of the initial schedule base. -/
 def coverSampleBound (cover : CoveredPeriodStage initial targets count minimum) (differential :
-  Differentials.Basic.Differential genus) : Fraction.Rational :=
+  Differential genus) : Fraction.Rational :=
   coverDensity (cover.recast differential) * movementMass (cover.retained.current.state.parents.map
     (PreparedEdgeRecasting.recastCenteredEdge differential)) +
     (5 / 2) * initial.state.scheduleBase targets
@@ -177,10 +179,10 @@ open Purelib.Data.Rat in
 
 Uses the nonnegative cover density and movement mass together with positivity of the initial schedule base. -/
 theorem coverSampleBound_nonnegative (cover : CoveredPeriodStage initial targets count minimum) (differential :
-  Differentials.Basic.Differential genus) :
+  Differential genus) :
     0 ≤ coverSampleBound cover differential :=
-  add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (coverDensity_nonnegative _) (movementMass_nonnegative _))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 5 / 2)
+  add_nonneg (Arithmetic.mul_nonneg_direct (coverDensity_nonnegative _) (movementMass_nonnegative _))
+    (Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 5 / 2)
       (initial.state.scheduleBase_positive targets).le)
 
 open Purelib.Curves.Hyperelliptic in
@@ -192,7 +194,7 @@ open Purelib.Riemann.Periods in
 The acquired request keeps the cover, recast parents and density data, so its sample bound is exactly the bound computed
 before acquisition. -/
 theorem acquired_sampleBound (cover : CoveredPeriodStage initial targets count minimum) (differential :
-  Differentials.Basic.Differential genus)
+  Differential genus)
     (target : Fraction.Rational) (positive : 0 < target) (minimumIndex : Nat) :
     PreparedCoveredPeriodTrace.CoveredPeriodRequest.sampleBound (CoveredPeriodRequest.ofCover cover differential target
       positive minimumIndex) = coverSampleBound cover differential := by
@@ -213,8 +215,8 @@ open Purelib.Riemann.Periods in
 Retains a positive comparison tolerance and its exact sample bound, with the quadratic and start-dependent terms paid by
 the requested target. -/
 structure CoveredTraceRequest (initial : RootClosedState curve source root) (targets : List
-  (Differentials.Basic.Differential genus))
-    (differential : Differentials.Basic.Differential genus) (count minimum : Nat) (start : Gaussian) (target :
+  (Differential genus))
+    (differential : Differential genus) (count minimum : Nat) (start : Gaussian) (target :
       Fraction.Rational) where
   /-- Positive local tolerance allocated to the period comparison. -/ tolerance : Fraction.Rational
   /-- Strict positivity of the retained tolerance. -/ tolerance_positive : 0 < tolerance
@@ -224,7 +226,7 @@ structure CoveredTraceRequest (initial : RootClosedState curve source root) (tar
   /-- The cached bound is exactly the comparison sample bound. -/ sampleBound_eq : sampleBound =
     PreparedCoveredPeriodTrace.CoveredPeriodRequest.sampleBound comparison
   /-- The trace perturbation and starting-point terms fit the target. -/ paid : 64 * tolerance * (sampleBound +
-    tolerance) + 8 * Data.Gaussian.Norm.Basic.normSq start * tolerance ≤ target
+    tolerance) + 8 * normSq start * tolerance ≤ target
 
 constructive_injectivity CoveredTraceRequest
 
@@ -238,37 +240,37 @@ open Purelib.Data.Rat in
 
 Caps the weighted allowance at one, uses the cover sample bound to allocate the comparison tolerance, and retains the
 exact sample-bound identity and payment. -/
-def ofCover (cover : CoveredPeriodStage initial targets count minimum) (differential : Differentials.Basic.Differential
+def ofCover (cover : CoveredPeriodStage initial targets count minimum) (differential : Differential
   genus)
     (start : Gaussian) (target : Fraction.Rational) (positive : 0 < target) (minimumIndex : Nat := 0) :
     CoveredTraceRequest initial targets differential count minimum start target := by
   let bound := coverSampleBound cover differential
   have boundNonnegative : 0 ≤ bound := coverSampleBound_nonnegative cover differential
-  let weight := 64 * (bound + 1) + 8 * Data.Gaussian.Norm.Basic.normSq start
+  let weight := 64 * (bound + 1) + 8 * normSq start
   have weightNonnegative : 0 ≤ weight := add_nonneg
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Fraction.Rational) ≤ 64) (add_nonneg
+    (Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Fraction.Rational) ≤ 64) (add_nonneg
       boundNonnegative (by decide)))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 8) (Norm.Basic.normSq_nonneg
+    (Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 8) (normSq_nonneg
       start))
   let tolerance := min 1 (Budget.Weighted.allowance target weight)
-  have tolerancePositive : 0 < tolerance := Fraction.Order.Basic.lt_min (by decide)
+  have tolerancePositive : 0 < tolerance := Basic.lt_min (by decide)
     (Budget.Weighted.allowance_positive positive weightNonnegative)
   let comparison := CoveredPeriodRequest.ofCover cover differential tolerance tolerancePositive minimumIndex
-  have paid : 64 * tolerance * (bound + tolerance) + 8 * Data.Gaussian.Norm.Basic.normSq start * tolerance ≤ target :=
+  have paid : 64 * tolerance * (bound + tolerance) + 8 * normSq start * tolerance ≤ target :=
     by
-    have linear : 64 * tolerance * (bound + tolerance) + 8 * Data.Gaussian.Norm.Basic.normSq start * tolerance ≤
-        64 * tolerance * (bound + 1) + 8 * Data.Gaussian.Norm.Basic.normSq start * tolerance :=
-          Fraction.Order.Arithmetic.add_le_add_direct
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct le_rfl
-        (Fraction.Order.Basic.min_le_left 1 _))
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Fraction.Rational) ≤ 64)
+    have linear : 64 * tolerance * (bound + tolerance) + 8 * normSq start * tolerance ≤
+        64 * tolerance * (bound + 1) + 8 * normSq start * tolerance :=
+          Arithmetic.add_le_add_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct le_rfl
+        (Basic.min_le_left 1 _))
+        (Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Fraction.Rational) ≤ 64)
           tolerancePositive.le))
-      (le_rfl : 8 * Data.Gaussian.Norm.Basic.normSq start * tolerance ≤ 8 * Data.Gaussian.Norm.Basic.normSq start *
+      (le_rfl : 8 * normSq start * tolerance ≤ 8 * normSq start *
         tolerance)
-    have budget := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Basic.min_le_right 1 _)
+    have budget := (Arithmetic.mul_le_mul_of_nonneg_left_direct (Basic.min_le_right 1 _)
       weightNonnegative).trans
       (Budget.Weighted.mul_allowance_le positive.le weightNonnegative)
-    exact (linear.trans_eq (show 64 * tolerance * (bound + 1) + 8 * Data.Gaussian.Norm.Basic.normSq start * tolerance =
+    exact (linear.trans_eq (show 64 * tolerance * (bound + 1) + 8 * normSq start * tolerance =
       weight * tolerance by
       dsimp only [weight]; ring1)).trans budget
   exact ⟨tolerance, tolerancePositive, comparison, bound, (acquired_sampleBound cover differential tolerance
@@ -280,8 +282,8 @@ open Purelib.Data.Rat in
 
 Builds the covered period stage at the requested count and floor, then allocates a positive trace tolerance for the
 supplied differential and start point. -/
-def acquire (initial : RootClosedState curve source root) (targets : List (Differentials.Basic.Differential genus))
-    (differential : Differentials.Basic.Differential genus) (count minimum : Nat) (start : Gaussian) (target :
+def acquire (initial : RootClosedState curve source root) (targets : List (Differential genus))
+    (differential : Differential genus) (count minimum : Nat) (start : Gaussian) (target :
       Fraction.Rational)
     (positive : 0 < target) (minimumIndex : Nat := 0) :
     CoveredTraceRequest initial targets differential count minimum start target :=
@@ -299,7 +301,7 @@ retained tolerance payment. -/
 theorem accurate {start : Gaussian} {target : Fraction.Rational}
     (request : CoveredTraceRequest initial targets differential count minimum start target)
     (member : differential ∈ targets) (stage : Nat) (later : request.comparison.stage ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (IncrementArea.traceArea start
+    normSq (IncrementArea.traceArea start
       (PreparedCoveredPeriodTrace.CoveredPeriodRequest.primitiveTracePath request.comparison stage
         (request.comparison.stage_after.trans later)) -
       IncrementArea.traceArea start (PathArea.increments ((initial.states targets stage).state.model differential))) ≤

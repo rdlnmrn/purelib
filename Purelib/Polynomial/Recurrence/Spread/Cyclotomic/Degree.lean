@@ -18,6 +18,9 @@ import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Data.Rat.Fraction
 import Purelib.Data.Rat.Fraction.Field
 
+open Purelib.Polynomial.Dense.Rational.AscendingInteger
+open Purelib.Polynomial.Dense.Basic
+
 open Purelib.Algebra.Field
 
 open Purelib.Data.Rat
@@ -82,7 +85,7 @@ theorem
           rw
             [IntegerPolynomial.spreadCyclotomicFactorCoefficients_one]
           exact
-            Purelib.Polynomial.Dense.Rational.AscendingInteger.Certificate.endpointPolynomial_nonzero
+            Certificate.endpointPolynomial_nonzero
       | succ index =>
           let number := index + 2
           have twoLe : 2 ≤ number := by omega0
@@ -100,7 +103,7 @@ theorem
                   IntegerPolynomial.ofAscending_divisorProduct_eq_endpoint_mul_proper_mul_current
                   number twoLe
               have productZero :
-                  (Dense.Rational.AscendingInteger.Basic.ofAscending
+                  (Basic.ofAscending
                         [0, 1] *
 
                         IntegerPolynomial.properSpreadCyclotomicProductPolynomial
@@ -108,20 +111,20 @@ theorem
 
                       IntegerPolynomial.spreadCyclotomicFactorPolynomial
                       number = 0 :=
-                Dense.Basic.DensePolynomial.mul_eq_zero_of_isZero_right
+                DensePolynomial.mul_eq_zero_of_isZero_right
                   zeroTest
               have spreadZero :
-                  Dense.Rational.AscendingInteger.Basic.ofAscending
+                  Basic.ofAscending
 
                         (Coefficients.ExerciseEightThirteen.IntegerPolynomial.spreadPolynomialCoefficients
                         number) = 0 :=
                 represented.trans (divisorShape.trans productZero)
               have zeroTests := congrArg
-                Dense.Basic.DensePolynomial.isZero spreadZero
+                DensePolynomial.isZero spreadZero
               rw
                 [Coefficients.Degree.ExerciseEightThirteen.IntegerPolynomial.spreadPolynomialCoefficients_nonzero
                 number (by omega0),
-                Dense.Basic.DensePolynomial.isZero_zero]
+                DensePolynomial.isZero_zero]
                 at zeroTests
               exact Bool.noConfusion zeroTests
 
@@ -129,7 +132,7 @@ theorem
 theorem
   ExerciseEightThirteen.IntegerPolynomial.properSpreadCyclotomicFactorPolynomial_nonzero
     (number : Nat) (positive : 0 < number) (divisor : Fin number) :
-    (Dense.Rational.AscendingInteger.Basic.ofAscending
+    (Basic.ofAscending
 
         (IntegerPolynomial.properSpreadCyclotomicFactorCoefficients
         number divisor)).isZero =
@@ -146,7 +149,7 @@ theorem
       [IntegerPolynomial.properSpreadCyclotomicFactorCoefficients,
       dif_neg selected]
     exact
-      Purelib.Polynomial.Dense.Rational.AscendingInteger.Certificate.constantOnePolynomial_nonzero
+      Certificate.constantOnePolynomial_nonzero
 
 /-- The constructive spread-cyclotomic factor has exactly Euler-totient
 degree, completing the degree clause of Exercise 8.13. -/
@@ -173,13 +176,13 @@ theorem
                 [IntegerPolynomial.spreadCyclotomicFactorCoefficients_one,
                 Totient.Basic.totient_one]
               exact
-                Purelib.Polynomial.Dense.Rational.AscendingInteger.Certificate.endpointPolynomial_natDegree
+                Certificate.endpointPolynomial_natDegree
           | succ index =>
               let number := index + 2
               have numberPositive : 0 < number := by omega0
               have twoLe : 2 ≤ number := by omega0
-              let slotPolynomial : Fin number → (Dense.Basic.DensePolynomial Fraction.Rational) := fun divisor =>
-                Dense.Rational.AscendingInteger.Basic.ofAscending
+              let slotPolynomial : Fin number → (DensePolynomial Fraction.Rational) := fun divisor =>
+                Basic.ofAscending
 
                     (IntegerPolynomial.properSpreadCyclotomicFactorCoefficients
                     number divisor)
@@ -200,7 +203,7 @@ theorem
                     [IntegerPolynomial.properSpreadCyclotomicFactorCoefficients,
                     dif_pos selected, if_pos selected]
                   exact inductionHypothesis (number / divisor.val)
-                    (Purelib.Data.Nat.Division.div_lt_self numberPositive (by omega0))
+                    (Data.Nat.Division.div_lt_self numberPositive (by omega0))
                     (Divisor.divisorQuotient_positive
                       numberPositive selected.2)
                 · unfold slotPolynomial
@@ -208,7 +211,7 @@ theorem
                     [IntegerPolynomial.properSpreadCyclotomicFactorCoefficients,
                     dif_neg selected, if_neg selected]
                   exact
-                    Purelib.Polynomial.Dense.Rational.AscendingInteger.Certificate.constantOnePolynomial_natDegree
+                    Certificate.constantOnePolynomial_natDegree
               have properNonzero :
 
                     (IntegerPolynomial.properSpreadCyclotomicProductPolynomial
@@ -239,15 +242,15 @@ theorem
                   ExerciseEightThirteen.IntegerPolynomial.spreadCyclotomicFactorPolynomial_nonzero
                   number numberPositive
               have endpointProperNonzero :
-                  (Dense.Rational.AscendingInteger.Basic.ofAscending
+                  (Basic.ofAscending
                         [0, 1] *
 
                         IntegerPolynomial.properSpreadCyclotomicProductPolynomial
                         number).isZero =
                     false :=
-                Dense.Basic.DensePolynomial.isZero_mul_eq_false
+                DensePolynomial.isZero_mul_eq_false
 
-                    Purelib.Polynomial.Dense.Rational.AscendingInteger.Certificate.endpointPolynomial_nonzero
+                    Certificate.endpointPolynomial_nonzero
                     properNonzero
               have represented :=
 
@@ -257,18 +260,18 @@ theorem
                       (IntegerPolynomial.ofAscending_divisorProduct_eq_endpoint_mul_proper_mul_current
                       number twoLe)
               have degreeIdentity := congrArg
-                Dense.Basic.DensePolynomial.natDegree represented
+                DensePolynomial.natDegree represented
               rw
                 [Coefficients.Degree.ExerciseEightThirteen.IntegerPolynomial.spreadPolynomialCoefficients_natDegree
                 number numberPositive,
-                Dense.Basic.DensePolynomial.natDegree_mul
+                DensePolynomial.natDegree_mul
                   endpointProperNonzero currentNonzero,
-                Dense.Basic.DensePolynomial.natDegree_mul
+                DensePolynomial.natDegree_mul
 
-                    Purelib.Polynomial.Dense.Rational.AscendingInteger.Certificate.endpointPolynomial_nonzero
+                    Certificate.endpointPolynomial_nonzero
                     properNonzero,
 
-                  Purelib.Polynomial.Dense.Rational.AscendingInteger.Certificate.endpointPolynomial_natDegree,
+                  Certificate.endpointPolynomial_natDegree,
                   properDegree] at degreeIdentity
               have totalDegree :=
 

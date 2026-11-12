@@ -15,7 +15,7 @@ import Purelib.Data.Rat.Fraction.Field
 
 open Purelib
 
-open Purelib.Curves.Hyperelliptic.Differentials
+open Purelib.Curves.Hyperelliptic.Differentials.OddPower.Basic
 
 open Purelib.Curves.Legendre.PicardFuchs
 
@@ -42,88 +42,85 @@ same displayed lifted cycle and exposed through one finite request table.
 
 namespace Purelib.Curves.Legendre.Periods.Jets.Specification
 
+open Purelib.Curves.Legendre
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
+
+/-- The original coordinate-selected numerator of the two value rows. -/
+def valueNumerator (coordinate : Fin 2) : CoefficientPolynomial :=
+  if coordinate = 0 then Dense.Gaussian.Basic.constantOnePolynomial
+  else Dense.Gaussian.Basic.coordinatePolynomial
+
+/-- The original coordinate-selected numerator of the first parameter derivative rows. -/
+def firstDerivativeNumerator (coordinate : Fin 2) : CoefficientPolynomial :=
+  if coordinate = 0 then Polynomials.basePolynomial
+  else Polynomials.weightedBasePolynomial
+
+/-- The original coordinate-selected numerator of the second parameter derivative rows. -/
+def secondDerivativeNumerator (coordinate : Fin 2) : CoefficientPolynomial :=
+  if coordinate = 0 then Polynomials.squaredBasePolynomial
+  else Polynomials.weightedSquaredBasePolynomial
+
 /-- The value-channel integrand `x^k/y`, for `k=0,1`. -/
-def valueSpecification (coordinate : Fin 2) :
-  OddPower.Basic.OddPowerDifferential :=
-  if coordinate = 0 then
-    { numerator := Dense.Gaussian.Basic.constantOnePolynomial
-      denominatorPairs := 0
-      scale := 1 }
-  else
-    { numerator := Dense.Gaussian.Basic.coordinatePolynomial
-      denominatorPairs := 0
-      scale := 1 }
+def valueSpecification (parameter : Data.Gaussian.Basic.Canonical) (coordinate : Fin 2) :
+  OddPowerDifferential (Paths.polynomial parameter) :=
+  OddPowerDifferential.ofCoefficients (Paths.polynomial parameter) (valueNumerator coordinate) 0 1
+
+/-- Both original value-channel differentials have exactly one sheet factor in their denominator. -/
+theorem valueSpecification_denominatorPairs (parameter : Data.Gaussian.Basic.Canonical) (coordinate : Fin 2) :
+    (valueSpecification parameter coordinate).denominatorPairs = 0 := rfl
 
 /-- The first parameter derivative `x^k g(x)/(2 y^3)`. -/
-def firstDerivativeSpecification (coordinate : Fin 2) :
-    OddPower.Basic.OddPowerDifferential :=
-  if coordinate = 0 then
-    { numerator := Polynomials.basePolynomial
-      denominatorPairs := 1
-      scale := LegendrePeriodJets.realGaussian (1 / 2) }
-  else
-    { numerator := Polynomials.weightedBasePolynomial
-      denominatorPairs := 1
-      scale := LegendrePeriodJets.realGaussian (1 / 2) }
+def firstDerivativeSpecification (parameter : Data.Gaussian.Basic.Canonical) (coordinate : Fin 2) :
+    OddPowerDifferential (Paths.polynomial parameter) :=
+  OddPowerDifferential.ofCoefficients (Paths.polynomial parameter)
+    (firstDerivativeNumerator coordinate) 1 (LegendrePeriodJets.realGaussian (1 / 2))
 
 /-- The second parameter derivative `3 x^k g(x)^2/(4 y^5)`. -/
-def secondDerivativeSpecification (coordinate : Fin 2) :
-    OddPower.Basic.OddPowerDifferential :=
-  if coordinate = 0 then
-    { numerator := Polynomials.squaredBasePolynomial
-      denominatorPairs := 2
-      scale := LegendrePeriodJets.realGaussian (3 / 4) }
-  else
-    { numerator := Polynomials.weightedSquaredBasePolynomial
-      denominatorPairs := 2
-      scale := LegendrePeriodJets.realGaussian (3 / 4) }
+def secondDerivativeSpecification (parameter : Data.Gaussian.Basic.Canonical) (coordinate : Fin 2) :
+    OddPowerDifferential (Paths.polynomial parameter) :=
+  OddPowerDifferential.ofCoefficients (Paths.polynomial parameter)
+    (secondDerivativeNumerator coordinate) 2 (LegendrePeriodJets.realGaussian (3 / 4))
 
 /-- The first value channel is the unit numerator over the original sheet value. -/
-@[simp] theorem valueSpecification_zero :
-    valueSpecification 0 =
-      { numerator := Dense.Gaussian.Basic.constantOnePolynomial
-        denominatorPairs := 0
-        scale := 1 } := rfl
+@[simp] theorem valueSpecification_zero (parameter : Data.Gaussian.Basic.Canonical) :
+    valueSpecification parameter 0 =
+      OddPowerDifferential.ofCoefficients (Paths.polynomial parameter)
+      Dense.Gaussian.Basic.constantOnePolynomial 0 1 := rfl
 
 /-- The second value channel is the coordinate numerator over the original sheet value. -/
-@[simp] theorem valueSpecification_one :
-    valueSpecification 1 =
-      { numerator := Dense.Gaussian.Basic.coordinatePolynomial
-        denominatorPairs := 0
-        scale := 1 } := by
-  unfold valueSpecification
+@[simp] theorem valueSpecification_one (parameter : Data.Gaussian.Basic.Canonical) :
+    valueSpecification parameter 1 =
+      OddPowerDifferential.ofCoefficients (Paths.polynomial parameter)
+      Dense.Gaussian.Basic.coordinatePolynomial 0 1 := by
+  unfold valueSpecification valueNumerator
   rw [if_neg (by decide : (1 : Fin 2) ≠ 0)]
 
 /-- The first derivative channel uses the base quadratic over twice the sheet cube. -/
-@[simp] theorem firstDerivativeSpecification_zero :
-    firstDerivativeSpecification 0 =
-      { numerator := Polynomials.basePolynomial
-        denominatorPairs := 1
-        scale := LegendrePeriodJets.realGaussian (1 / 2) } := rfl
+@[simp] theorem firstDerivativeSpecification_zero (parameter : Data.Gaussian.Basic.Canonical) :
+    firstDerivativeSpecification parameter 0 =
+      OddPowerDifferential.ofCoefficients (Paths.polynomial parameter)
+      Polynomials.basePolynomial 1 (LegendrePeriodJets.realGaussian (1 / 2)) := rfl
 
 /-- The weighted first derivative channel uses x times the base quadratic over twice the sheet cube. -/
-@[simp] theorem firstDerivativeSpecification_one :
-    firstDerivativeSpecification 1 =
-      { numerator := Polynomials.weightedBasePolynomial
-        denominatorPairs := 1
-        scale := LegendrePeriodJets.realGaussian (1 / 2) } := by
-  unfold firstDerivativeSpecification
+@[simp] theorem firstDerivativeSpecification_one (parameter : Data.Gaussian.Basic.Canonical) :
+    firstDerivativeSpecification parameter 1 =
+      OddPowerDifferential.ofCoefficients (Paths.polynomial parameter)
+      Polynomials.weightedBasePolynomial 1 (LegendrePeriodJets.realGaussian (1 / 2)) := by
+  unfold firstDerivativeSpecification firstDerivativeNumerator
   rw [if_neg (by decide : (1 : Fin 2) ≠ 0)]
 
 /-- The second derivative channel uses three quarters of the squared base quadratic over the sheet fifth power. -/
-@[simp] theorem secondDerivativeSpecification_zero :
-    secondDerivativeSpecification 0 =
-      { numerator := Polynomials.squaredBasePolynomial
-        denominatorPairs := 2
-        scale := LegendrePeriodJets.realGaussian (3 / 4) } := rfl
+@[simp] theorem secondDerivativeSpecification_zero (parameter : Data.Gaussian.Basic.Canonical) :
+    secondDerivativeSpecification parameter 0 =
+      OddPowerDifferential.ofCoefficients (Paths.polynomial parameter)
+      Polynomials.squaredBasePolynomial 2 (LegendrePeriodJets.realGaussian (3 / 4)) := rfl
 
 /-- The weighted second derivative channel includes the original coordinate factor over the sheet fifth power. -/
-@[simp] theorem secondDerivativeSpecification_one :
-    secondDerivativeSpecification 1 =
-      { numerator := Polynomials.weightedSquaredBasePolynomial
-        denominatorPairs := 2
-        scale := LegendrePeriodJets.realGaussian (3 / 4) } := by
-  unfold secondDerivativeSpecification
+@[simp] theorem secondDerivativeSpecification_one (parameter : Data.Gaussian.Basic.Canonical) :
+    secondDerivativeSpecification parameter 1 =
+      OddPowerDifferential.ofCoefficients (Paths.polynomial parameter)
+      Polynomials.weightedSquaredBasePolynomial 2 (LegendrePeriodJets.realGaussian (3 / 4)) := by
+  unfold secondDerivativeSpecification secondDerivativeNumerator
   rw [if_neg (by decide : (1 : Fin 2) ≠ 0)]
 
 end Purelib.Curves.Legendre.Periods.Jets.Specification

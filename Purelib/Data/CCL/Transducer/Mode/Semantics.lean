@@ -24,8 +24,10 @@ as `[1 : γr]`; this is an affine inverse tail when `r ≠ 0` and is exactly
 namespace Purelib.Data.CCL.Transducer.Mode.Semantics
 namespace SemanticMode
 
-open Purelib.Data.CCL.Transducer in
-open Purelib.Data.Gaussian in
+open Purelib.Data.CCL.Transducer
+open Purelib.Data.Gaussian
+open Purelib.Geometry.Projective
+
 /-- Read the retained mode's possible-value predicate from its exact process and dependent state. -/
 def possible : (mode : Data.CCL.Transducer.Mode) →
   Basic.Canonical
@@ -35,9 +37,14 @@ def possible : (mode : Data.CCL.Transducer.Mode) →
   | .loop current => current.process.Possible current.state
   | .residual current => current.process.Possible current.state
 
-open Purelib.Data.CCL.Transducer
-open Purelib.Data.Gaussian
-open Purelib.Geometry.Projective
+/-- Select the actual retained process witness at this same mode's original dependent state. -/
+def witness : (mode : Data.CCL.Transducer.Mode) →
+    {value : Basic.Canonical // possible mode value}
+  | .initial current => current.process.witness current.state
+  | .low current => current.process.witness current.state
+  | .loop current => current.process.witness current.state
+  | .residual current => current.process.witness current.state
+
 /-- Construct the exact projective parser tail modeled by a possible mode value.
 
 Initial mode uses the affine value; low and loop modes undo their retained normalization counts in opposite directions.

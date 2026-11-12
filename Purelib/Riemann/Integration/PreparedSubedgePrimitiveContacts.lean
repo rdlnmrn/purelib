@@ -154,6 +154,26 @@ theorem increment_le (overlap : PrimitiveOverlap parentPatch childPatch parentCo
     ((childPatch.neighborhood childCount).base.refine childIndex) rfl rfl
   exact overlap.budget.increment_le first second edge rfl index parentLater childLater
 
+open Purelib.Approximation.Rational in
+open Purelib.Data.Rat in
+/-- The original root-subedge primitive increments meet their retained finite request at independent later indices.
+
+The actual root-subedge relation constructs the unflipped transition on the
+same original neighborhoods. The supplied Selection comes from the retained
+pair budget, preserving its finite fuel and attained allowance; no successful
+accuracy test or new root-owner comparison is an extra premise.
+-/
+theorem selected_increment_lt (overlap : PrimitiveOverlap parentPatch childPatch parentCount childCount numerator)
+    (relation : RootSubedge parent child) {current parentIndex childIndex : Nat} {target : Fraction.Rational}
+    (selection : Geometric.Search.Selection overlap.budget.scale current target)
+    (first : PrimitiveModel (parentPatch.neighborhood parentCount) parentIndex numerator)
+    (second : PrimitiveModel (childPatch.neighborhood childCount) childIndex numerator)
+    (parentLater : selection.stage ≤ parentIndex) (childLater : selection.stage ≤ childIndex) :
+    normSq (first.primitive.value.eval (child.edge.point 1) - first.primitive.value.eval (child.edge.point 0) +
+      (second.primitive.value.eval (child.edge.point 0) - second.primitive.value.eval (child.edge.point 1))) < target :=
+  (overlap.increment_le relation first second selection.stage parentLater childLater).trans_lt
+    (selection.allowance_eq.symm.trans_lt selection.accurate)
+
 open Purelib.Data.Gaussian in
 open Purelib.Topology.Surface in
 /-- Construct a sewn contact rate from the original parent/child primitive overlap.

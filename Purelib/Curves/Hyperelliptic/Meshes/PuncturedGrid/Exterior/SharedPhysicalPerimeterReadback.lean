@@ -91,21 +91,21 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Gaussian.Norm.Basic (normSq_nonneg)
 open Purelib.Data.Rat.Fraction.Compatibility
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential} {target : Coordinate} {minimum
     stage fine index : Nat}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
   {plan : PairedSourcePlan occurrence
     other target minimum}
 
@@ -119,36 +119,36 @@ open Purelib.Riemann.Meshes.RectangularObservationMesh (ObservationMesh)
 open Purelib.Integration.Path.ConjugateIncrementComparison (conjugateFirst)
 variable {cuts : GridCuts ((domains.get
   occurrence.sideOccurrence.position).domain occurrence.sideOccurrence.sheet).geometry} {meshBox :
-  Purelib.Geometry.Rational.Box}
+  Geometry.Rational.Box}
   {mesh : ObservationMesh cuts meshBox} {depth : Nat}
 
 namespace SharedPhysicalPerimeterReadings
 
 /-- Read the original two face-bank values at the retained grid owner and point, conjugating the first coordinate. -/
-def gridValues (firstBank : PrimitiveData.FacePrimitiveBank differential index domains) (secondBank :
-  PrimitiveData.FacePrimitiveBank other index domains)
+def gridValues (firstBank : FacePrimitiveBank differential index domains) (secondBank :
+  FacePrimitiveBank other index domains)
     (column row : Fin (((domains.get occurrence.sideOccurrence.position).domain occurrence.sideOccurrence.sheet).steps +
       1))
-    (point : InverseRootPolynomial.Gaussian) : PrimitivePoint :=
+    (point : Gaussian) : PrimitivePoint :=
   let first := (firstBank.get occurrence.sideOccurrence.position).atSheet occurrence.sideOccurrence.sheet
   let second := (secondBank.get occurrence.sideOccurrence.position).atSheet occurrence.sideOccurrence.sheet
   ConjugateIncrementComparison.conjugateFirst ⟨first.anchors.alignedValue first.offsets column row point,
     second.anchors.alignedValue second.offsets column row point⟩
 
 /-- Read the selected rectangle side's already cached perimeter area. -/
-def sideArea {assembly : ObservationMesh.ClippedAssembly mesh
+def sideArea {assembly : ClippedAssembly mesh
   (gridValues
-  firstBank secondBank)} (perimeter : assembly.Perimeter) : GridLiftedDualSteps.GridSide →
-  InverseRootPolynomial.Gaussian
+  firstBank secondBank)} (perimeter : assembly.Perimeter) : GridSide →
+  Gaussian
   | .bottom => perimeter.bottom
   | .top => perimeter.top
   | .left => perimeter.left
   | .right => perimeter.right
 
 /-- The sample uses the very owner values of the perimeter assembly. -/
-theorem original_area (traces : RectangularPerimeterTraces.PerimeterTraces mesh) {side : GridLiftedDualSteps.GridSide}
+theorem original_area (traces : PerimeterTraces mesh) {side : GridSide}
     (readings : SharedPhysicalPerimeterReadings.Entries traces firstBank secondBank side)
-    (assembly : ObservationMesh.ClippedAssembly mesh
+    (assembly : ClippedAssembly mesh
       (gridValues
       firstBank secondBank)) (perimeter : assembly.Perimeter) :
     (SharedPhysicalPerimeterReadings.original traces readings).originalArea =
@@ -163,10 +163,10 @@ theorem original_area (traces : RectangularPerimeterTraces.PerimeterTraces mesh)
 
 /-- Centering removes an actual endpoint chord. Keep that term when transporting the cap estimate to the uncentered
 physical boundary. -/
-theorem centered_add_endpoint (traces : RectangularPerimeterTraces.PerimeterTraces mesh) {side :
-  GridLiftedDualSteps.GridSide}
+theorem centered_add_endpoint (traces : PerimeterTraces mesh) {side :
+  GridSide}
     (readings : SharedPhysicalPerimeterReadings.Entries traces firstBank secondBank side)
-    (assembly : ObservationMesh.ClippedAssembly mesh
+    (assembly : ClippedAssembly mesh
       (gridValues
       firstBank secondBank)) (perimeter : assembly.Perimeter) :
     (SharedPhysicalPerimeterReadings.original traces readings).centeredArea + (SharedPhysicalPerimeterReadings.original

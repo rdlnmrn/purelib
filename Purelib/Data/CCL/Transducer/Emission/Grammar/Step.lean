@@ -1,4 +1,6 @@
 module
+import Purelib.Approximation.Gaussian.Process.Route
+import Purelib.Approximation.Gaussian.Process.Observation
 import Purelib.Data.Gaussian.Norm.Basic
 import Purelib.Approximation.Gaussian.Process.Gamma.Inverse.Scale
 import Purelib.Data.CCL.Encoding.Padding.Process
@@ -62,7 +64,8 @@ A unary chunk increments the same regular count. A separator and the selected se
 loop-unary count zero. -/
 theorem loopStep_follows (current : Mode.Basic.LoopState) :
     Emission.Grammar.Basic.EmissionFollows (.loop current) (Emission.Loop.loopStep current) := by
-  unfold Emission.Grammar.Basic.EmissionFollows Emission.Loop.loopStep
+  unfold Emission.Grammar.Basic.EmissionFollows
+  rewrite [Emission.Loop.loopStep_eq]
   split
   · change Parser.Syntax.Phase.consume
         (Mode.Grammar.regularRawPhase current.kind current.count) [true] =
@@ -82,27 +85,49 @@ theorem step_follows (mode : Mode) : Emission.Grammar.Basic.EmissionFollows mode
   by
   cases mode with
   | initial current =>
-      change Emission.Grammar.Basic.EmissionFollows (.initial current) (Emission.Initial.initialStep current)
+      let route : Process.Route current.process current.process := .input
+      let receipt := route.refine current.state Emission.Initial.Budget.initialRadiusSq
+        Emission.Initial.Budget.initialRadiusSq_pos
+      have accurate : (current.process.ball receipt.state).radiusSq < Emission.Initial.Budget.initialRadiusSq :=
+        receipt.stateEq.symm ▸ current.process.accurate current.state
+          Emission.Initial.Budget.initialRadiusSq Emission.Initial.Budget.initialRadiusSq_pos
+      have fine := receipt.observation.ballEq.symm ▸ accurate
+      let selected := Emission.Initial.Selection.decide receipt.observation.ball
+        (fine.trans Emission.Initial.Budget.initialRadiusSq_lt_uniform)
+      change Emission.Grammar.Basic.EmissionFollows (.initial current)
+        (selected.emission current receipt.state receipt.observation accurate)
       unfold Emission.Grammar.Basic.EmissionFollows
-      simp only [Emission.Initial.initialStep]
-      split
-      · split
-        · rfl
-        · rename_i sector certificate decision
-          exact Parser.Syntax.Chunks.consume_initial_low_sector sector
-      · exact Parser.Syntax.Chunks.consume_initial_low_unary
+      cases selected with
+      | low small => exact Parser.Syntax.Chunks.consume_initial_low_unary
+      | high decision =>
+          cases decision with
+          | unary certificate => rfl
+          | sector sector certificate => exact Parser.Syntax.Chunks.consume_initial_low_sector sector
   | low current =>
-      change Emission.Grammar.Basic.EmissionFollows (.low current) (Emission.Low.lowStep current)
+      let route : Process.Route current.process current.process := .input
+      let receipt := route.refine current.state Emission.Initial.Budget.initialRadiusSq
+        Emission.Initial.Budget.initialRadiusSq_pos
+      have accurate : (current.process.ball receipt.state).radiusSq < Emission.Initial.Budget.initialRadiusSq :=
+        receipt.stateEq.symm ▸ current.process.accurate current.state
+          Emission.Initial.Budget.initialRadiusSq Emission.Initial.Budget.initialRadiusSq_pos
+      have upper : Norm.Basic.normSq (current.process.ball receipt.state).center < 13 / 6 :=
+        receipt.stateEq.symm ▸ Emission.Low.Preparation.low_center_lt_extended_upper current
+      have fine := receipt.observation.ballEq.symm ▸ accurate
+      have cachedUpper := receipt.observation.ballEq.symm ▸ upper
+      let selected := Emission.Low.Selection.decide receipt.observation.ball cachedUpper
+        (fine.trans Emission.Initial.Budget.initialRadiusSq_lt_uniform)
+      change Emission.Grammar.Basic.EmissionFollows (.low current)
+        (selected.emission current receipt.state receipt.observation accurate)
       unfold Emission.Grammar.Basic.EmissionFollows
-      simp only [Emission.Low.lowStep]
-      split
-      · exact Parser.Syntax.Chunks.consume_low_sector current.count _
-      · exact Parser.Syntax.Chunks.consume_low_unary current.count
+      cases selected with
+      | low small => exact Parser.Syntax.Chunks.consume_low_unary current.count
+      | sector chosen certificate => exact Parser.Syntax.Chunks.consume_low_sector current.count chosen
   | loop current => exact loopStep_follows current
   | residual current =>
       change Emission.Grammar.Basic.EmissionFollows (.residual current) (Emission.Residual.residualStep current)
       unfold Emission.Grammar.Basic.EmissionFollows
-      simp only [Emission.Residual.residualStep]
+      rewrite [Emission.Residual.residualStep_eq]
+      dsimp only
       split
       · exact Parser.Syntax.Chunks.consume_residual_unary current.count
       · rename_i certificate decision

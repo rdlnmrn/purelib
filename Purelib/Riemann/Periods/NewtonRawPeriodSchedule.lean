@@ -58,19 +58,19 @@ open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateReq
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.HomogeneousPhysicalComparison (Request)
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.HomogeneousCutRequest.Request (CutRequest)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted}
+    BasedBranchBank lifted}
     {sheet : Fin 2}
   {ordered :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank
-    sheet} {paired : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered}
-  {preparation : NewtonPreparation base.bank.toBranchCellBank} {radius : Purelib.Data.Rat.Fraction.Rational}
+    Ordered bank
+    sheet} {paired : Paired ordered}
+  {preparation : NewtonPreparation base.bank.toBranchCellBank} {radius : Rational}
   {observations : ProtectedObservations base.bank.toBranchCellBank}
   {gridData : RawEnergyGrid observations preparation radius}
-  (prepared : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired) {sewingFloor :
+  (prepared : Prepared paired) {sewingFloor :
     Nat}
   (sewingData : SewingSchedule gridData sewingFloor)
 
@@ -82,12 +82,12 @@ Keeps the selected sheet, original excision and sewing magnitudes, with separate
 energy-allowance targets. -/
 structure RawPeriodSchedule (newSheet : Fin 2) (floor minimum : Nat) where
   /-- Physical comparison for the selected sheet and original excision. -/ request :
-    Meshes.Newton.HomogeneousPhysicalComparison.Request prepared newSheet gridData.excision
+    Request prepared newSheet gridData.excision
     sewingData.prepared.magnitudes
     (Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus (rawEnergyAllowance observations) /
       4) floor
   /-- Cut comparison retaining that physical request and its quarter allowance. -/ cut :
-    Meshes.Newton.HomogeneousCutRequest.Request.CutRequest request
+    CutRequest request
     (Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus (rawEnergyAllowance observations) /
       4) minimum
 
@@ -105,12 +105,12 @@ stage floors. -/
   minimum :=
   let positive := Fraction.Order.Field.div_pos_direct
     (Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget_positive (rawEnergyAllowance_positive
-      observations)) (by decide : (0 : Fraction.Rational) < 4)
-  let request := Meshes.Newton.HomogeneousPhysicalComparison.Request.build prepared newSheet gridData.excision
+      observations)) (by decide : (0 : Rational) < 4)
+  let request := Request.build prepared newSheet gridData.excision
     sewingData.prepared.magnitudes
     (Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus (rawEnergyAllowance observations) /
       4) positive floor
-  let cut := Meshes.Newton.HomogeneousCutRequest.Request.CutRequest.build request sewingData.prepared
+  let cut := CutRequest.build request sewingData.prepared
     (Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus (rawEnergyAllowance observations) /
       4) positive minimum
   ⟨request, cut⟩

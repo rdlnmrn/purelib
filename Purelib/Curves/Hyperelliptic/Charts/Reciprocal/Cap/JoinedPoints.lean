@@ -104,11 +104,11 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover (Parent Parent
 set_option genInjectivity false in
 /-- Both evaluated occurrences and the certified discrepancy of their selected values are retained. The two local
 request types may differ. -/
-structure JoinedPoints (First : Type u) (Last : Type v) (firstValue : First → InverseRootPolynomial.Gaussian)
-    (lastValue : Last → InverseRootPolynomial.Gaussian) (target : InverseRootPolynomial.Coordinate) where
+structure JoinedPoints (First : Type u) (Last : Type v) (firstValue : First → Gaussian)
+    (lastValue : Last → Gaussian) (target : Coordinate) where
   /-- The retained first evaluated endpoint occurrence with its original request type. -/ first : First
   /-- The retained second evaluated endpoint occurrence with its original request type. -/ last : Last
-  /-- The cached difference of the two actual retained endpoint values. -/ connector : InverseRootPolynomial.Gaussian
+  /-- The cached difference of the two actual retained endpoint values. -/ connector : Gaussian
   /-- The connector is exactly the last retained value minus the first. -/ connector_eq : connector = lastValue last -
     firstValue first
   /-- The actual retained connector satisfies the original squared-norm target. -/ close :
@@ -119,21 +119,21 @@ constructive_injectivity JoinedPoints
 namespace JoinedPoints
 
 variable {First : Type u} {Last : Type v} {firstValue : First →
-  Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian} {lastValue : Last →
-  Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian} {target :
-  Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+  Gaussian} {lastValue : Last →
+  Gaussian} {target :
+  Coordinate}
 
 /-- The connector is attached using the next block's retained summary. -/
-@[expose] def connect (joined : Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.JoinedPoints First Last firstValue
-  lastValue target) {increments : List InverseRootPolynomial.Gaussian}
+@[expose] def connect (joined : JoinedPoints First Last firstValue
+  lastValue target) {increments : List Gaussian}
     (summary : IncrementArea.Summary increments) : IncrementArea.Summary (joined.connector :: increments) :=
   Summary.prepend summary joined.connector
 
 /-- Prepending the retained endpoint connector changes the original next-block area by at most four times its target and
 total bound. -/
-theorem connection_area_bound (joined : Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.JoinedPoints First Last
-  firstValue lastValue target) {increments : List InverseRootPolynomial.Gaussian}
-    (summary : IncrementArea.Summary increments) {bound : InverseRootPolynomial.Coordinate} (bounded :
+theorem connection_area_bound (joined : JoinedPoints First Last
+  firstValue lastValue target) {increments : List Gaussian}
+    (summary : IncrementArea.Summary increments) {bound : Coordinate} (bounded :
       Data.Gaussian.Norm.Basic.normSq summary.total ≤ bound) :
     Data.Gaussian.Norm.Basic.normSq ((joined.connect summary).area - summary.area) ≤ 4 * target * bound :=
   Summary.prepend_area_error summary joined.connector joined.close.le bounded
@@ -142,41 +142,41 @@ end JoinedPoints
 
 namespace PointRequest
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {collar :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {firstCenter lastCenter : Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian} {firstCount lastCount : Nat}
-  {firstOwner : Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
-    ((Purelib.Curves.Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.polynomial curve).eval firstCenter)}
-  {lastOwner : Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
-    ((Purelib.Curves.Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.polynomial curve).eval lastCenter)}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {collar :
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {differential :
+    Differential genus}
+  {firstCenter lastCenter : Gaussian} {firstCount lastCount : Nat}
+  {firstOwner : Riemann.Topology.SquareRootContinuationChain.Owner
+    ((HyperellipticReciprocal.polynomial curve).eval firstCenter)}
+  {lastOwner : Riemann.Topology.SquareRootContinuationChain.Owner
+    ((HyperellipticReciprocal.polynomial curve).eval lastCenter)}
   {firstTerminal : Terminal cap firstOwner firstCount} {lastTerminal : Terminal cap lastOwner lastCount}
-  {firstComparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.TerminalComparison.Data firstTerminal
+  {firstComparison : TerminalComparison.Data firstTerminal
     differential}
-  {lastComparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.TerminalComparison.Data lastTerminal
+  {lastComparison : TerminalComparison.Data lastTerminal
     differential}
-  {firstPoint lastPoint : Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian} {firstTarget lastTarget :
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {firstFloor lastFloor index : Nat}
-  {firstRequest : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.PointRequest firstComparison firstPoint
+  {firstPoint lastPoint : Gaussian} {firstTarget lastTarget :
+    Coordinate} {firstFloor lastFloor index : Nat}
+  {firstRequest : PointRequest firstComparison firstPoint
     firstTarget firstFloor}
-  {lastRequest : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.PointRequest lastComparison lastPoint
+  {lastRequest : PointRequest lastComparison lastPoint
     lastTarget lastFloor}
-  {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {firstSource : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PolynomialPullback.Sample firstTerminal.preparation
+  {box : Geometry.Rational.Box} {capSample :
+    Primitives.Sample cap differential index box}
+  {firstSource : PolynomialPullback.Sample firstTerminal.preparation
     capSample}
-  {lastSource : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PolynomialPullback.Sample lastTerminal.preparation
+  {lastSource : PolynomialPullback.Sample lastTerminal.preparation
     capSample}
 
 /-- The indices are selected from the certified join of these very channels. The source polynomial samples and their
 cached factor readings are reused. -/
-@[expose] def synchronize (first : PointRequest.Evaluation firstRequest firstSource) (last : PointRequest.Evaluation
+@[expose] def synchronize (first : Evaluation firstRequest firstSource) (last : Evaluation
   lastRequest lastSource)
     (join : RootCoordinates.Overlap.Join firstRequest.prepared.coordinates lastRequest.prepared.coordinates)
-    (target : InverseRootPolynomial.Coordinate) (positive : 0 < target) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.JoinedPoints (PointRequest.Evaluation firstRequest
-      firstSource) (PointRequest.Evaluation lastRequest lastSource)
+    (target : Coordinate) (positive : 0 < target) :
+    JoinedPoints (Evaluation firstRequest
+      firstSource) (Evaluation lastRequest lastSource)
       (fun evaluated => evaluated.vertex.value) (fun evaluated => evaluated.vertex.value) target := by
   let comparison := (join.readings capSample).compare first.chart.stage last.chart.stage target positive
   let left := first.refine comparison.leftIndex comparison.left_ge
@@ -195,21 +195,21 @@ end PointRequest
 
 namespace ParentBoundary
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {collar :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} {count : Nat}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {collar :
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {differential :
+    Differential genus} {count : Nat}
   {parent next : Parent curve differential}
   {firstData : ParentData cap differential count parent} {lastData : ParentData cap differential count next}
-  {firstPoint lastPoint : Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian} {firstTarget lastTarget :
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {firstFloor lastFloor : Nat}
+  {firstPoint lastPoint : Gaussian} {firstTarget lastTarget :
+    Coordinate} {firstFloor lastFloor : Nat}
 
 /-- Transfer the retained coarse-parent join to the actual requests at the two fine-block endpoints. Each local transfer
 uses its original parent query. -/
 @[expose] def join (coarse : RootCoordinates.Overlap.Join firstData.data.last.coordinates
   lastData.data.first.coordinates)
-    (firstRequest : FineCharts.PointRequest firstData.comparison firstPoint firstTarget firstFloor)
-    (lastRequest : FineCharts.PointRequest lastData.comparison lastPoint lastTarget lastFloor)
+    (firstRequest : PointRequest firstData.comparison firstPoint firstTarget firstFloor)
+    (lastRequest : PointRequest lastData.comparison lastPoint lastTarget lastFloor)
     (firstEq : parent.edge.point 1 = firstPoint) (lastEq : next.edge.point 0 = lastPoint) :
     RootCoordinates.Overlap.Join firstRequest.prepared.coordinates lastRequest.prepared.coordinates :=
   (firstData.point_join 1 (by decide) firstEq firstData.last_eq.symm firstRequest.prepared firstData.data.last).trans

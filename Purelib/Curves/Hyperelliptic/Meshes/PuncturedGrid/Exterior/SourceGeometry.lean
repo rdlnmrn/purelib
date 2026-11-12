@@ -97,22 +97,22 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceRefe
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters (signedAxis signedInterval)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.FragmentFamilies (LocatedSourceBlock)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes (RegularMeshes)
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid
 namespace ExteriorProgram
 namespace SurfaceOccurrence
 
 /-- The original rectangle side endpoints in the retained occurrence's traversal direction. -/
-@[expose] def sideEndpoints (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential) :
+@[expose] def sideEndpoints (occurrence : SurfaceOccurrence regular domains differential) :
   Data.Gaussian.Basic.Canonical × Gaussian :=
   let side := occurrence.sideOccurrence
   let endpoints := RectangleEdge.coordinates
@@ -120,7 +120,7 @@ namespace SurfaceOccurrence
   if side.backward then (endpoints.2, endpoints.1) else endpoints
 
 /-- The occurrence endpoints equal the original oriented rectangle side endpoints certified by its retained location. -/
-theorem endpoints_eq (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential) :
+theorem endpoints_eq (occurrence : SurfaceOccurrence regular domains differential) :
     (occurrence.start, occurrence.finish) =
       (sideEndpoints
       occurrence) := by
@@ -161,19 +161,19 @@ theorem endpoints_eq (occurrence : ExteriorProgram.SurfaceOccurrence regular dom
     (endpoints.symm.trans sourceCoordinates)
 
 /-- Whether the original retained occurrence runs on a vertical rectangle side. -/
-@[expose] def sourceVertical (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential) : Bool :=
+@[expose] def sourceVertical (occurrence : SurfaceOccurrence regular domains differential) : Bool :=
   match occurrence.sideOccurrence.side with
   | .bottom | .top => false
   | .right | .left => true
 
 /-- Whether the original side traversal increases its selected source coordinate. -/
-@[expose] def sourceForward (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential) : Bool :=
+@[expose] def sourceForward (occurrence : SurfaceOccurrence regular domains differential) : Bool :=
   match occurrence.sideOccurrence.side with
   | .bottom | .right => !occurrence.sideOccurrence.backward
   | .top | .left => occurrence.sideOccurrence.backward
 
 /-- The original proper face interval expressed in the retained source traversal orientation. -/
-@[expose] def sourceSpan (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential) :
+@[expose] def sourceSpan (occurrence : SurfaceOccurrence regular domains differential) :
   PreparedAxisPartitions.Interval :=
   let face := base.faces.regulars[occurrence.sideOccurrence.position.val]'occurrence.sideOccurrence.position.isLt
   SourceBlockParameters.signedInterval
@@ -185,7 +185,7 @@ theorem endpoints_eq (occurrence : ExteriorProgram.SurfaceOccurrence regular dom
       else ⟨face.cell.box.xLower, face.cell.box.xUpper, face.cell.box_proper.1⟩)
 
 /-- The signed occurrence endpoints are exactly the lower and upper endpoints of its retained source span. -/
-theorem source_span_endpoints (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential) :
+theorem source_span_endpoints (occurrence : SurfaceOccurrence regular domains differential) :
     SourceBlockParameters.signedAxis
       (sourceVertical
       occurrence)
@@ -238,35 +238,35 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceGeome
 
 The retained endpoint certificates identify each block with its actual side interval and source owner. -/
 @[expose] def sourceBank
-    {other : Differentials.Basic.Differential genus} {occurrence : ExteriorProgram.SurfaceOccurrence regular domains
+    {other : Differential genus} {occurrence : SurfaceOccurrence regular domains
       differential}
-    {target : InverseRootPolynomial.Coordinate} {minimum stage fine : Nat} {box otherBox : Rational.Box}
+    {target : Coordinate} {minimum stage fine : Nat} {box otherBox : Rational.Box}
     {sample : Primitives.Sample cap differential stage box}
     {otherSample : Primitives.Sample cap other stage otherBox}
-    {plan : PairedSourceReferences.PairedSourcePlan occurrence other target minimum}
-    {prepared : ExteriorProgram.AllSurfacePreparation regular domains differential} {previous : RegularMeshes.CommonCuts
+    {plan : PairedSourcePlan occurrence other target minimum}
+    {prepared : AllSurfacePreparation regular domains differential} {previous : RegularMeshes.CommonCuts
       domains}
     (selected : SourceCuts prepared previous) (member : occurrence ∈ prepared.occurrences)
     {coarseDepth : Nat} {fixed : (sheet : Fin 2) → RegularMeshes.Preflights domains sheet} {meshTarget :
-      InverseRootPolynomial.Coordinate}
+      Coordinate}
     (request : TwoSheetBilinearRequest.TwoSheetRequest
       (fun sheet => RegularMeshes.build domains selected.cuts sheet coarseDepth) fixed meshTarget)
-    (evaluated : PairedSourcePlan.ParentEvaluation plan sample otherSample fine) :=
+    (evaluated : ParentEvaluation plan sample otherSample fine) :=
   LocatedSourceBlock.buildBank selected member request occurrence.sideOccurrence.sheet
     occurrence.sideOccurrence.position
     evaluated
-      (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence.sourceVertical
+      (SurfaceOccurrence.sourceVertical
       occurrence)
-      (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence.sourceForward
+      (SurfaceOccurrence.sourceForward
       occurrence)
     (by
       have endpoint :=
-        (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence.source_span_endpoints
+        (SurfaceOccurrence.source_span_endpoints
         occurrence).1
       exact endpoint.le)
     (by
       have endpoint :=
-        (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence.source_span_endpoints
+        (SurfaceOccurrence.source_span_endpoints
         occurrence).2
       exact endpoint.symm.le)
 

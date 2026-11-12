@@ -35,6 +35,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Mathlib.Order.Basic
 import Mathlib.Data.Nat.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Resample retained primitive requests at a second model-error ceiling
 
@@ -65,8 +67,8 @@ open Purelib.Riemann.Readings.UniformPreparedRequests (PrimitiveSumRequest)
 open Purelib.Riemann.Normalization.InverseRootPrimitive (PrimitiveModel)
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius quarterRadius_antitone)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
   {parent : CenteredEdge curve differential} {patch : ContinuedNeighborhood curve.polynomial count}
   {target ceiling : Coordinate}
 
@@ -84,28 +86,28 @@ the original Taylor and request payments. -/
   let error := min request.budget.error ceiling
   let selected := PreparedModelAccuracy.Budget.build (movement parent) (preparedScale parent)
     (preparationDepth parent) (movement_nonnegative parent) (preparedScale_nonnegative parent)
-    (Fraction.Order.Basic.lt_min request.budget.error_positive positive : 0 < error)
+    (Basic.lt_min request.budget.error_positive positive : 0 < error)
   let depth := max request.budget.depth selected.depth
   have decreased := quarterRadius_antitone (movement_nonnegative parent)
     (Order.le_max_right request.budget.depth selected.depth)
   exact
     { error := error
-      error_positive := Fraction.Order.Basic.lt_min request.budget.error_positive positive
-      relative_small := (Fraction.Order.Field.divide_mono (Fraction.Order.Basic.min_le_left _ _)
+      error_positive := Basic.lt_min request.budget.error_positive positive
+      relative_small := (Field.divide_mono (Basic.min_le_left _ _)
         (denominatorLower_positive patch)).trans request.budget.relative_small
       rootDiameter := selected.diameter
       rootDiameter_positive := selected.diameterPositive
       depth := depth
       prepared_depth := selected.prepared.trans (Order.le_max_right _ _)
-      modelError_le := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.add_le_add_direct decreased (by exact Eq.le (Eq.refl _))) (preparedScale_nonnegative
+      modelError_le := (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.add_le_add_direct decreased (by exact Eq.le (Eq.refl _))) (preparedScale_nonnegative
           parent)).trans selected.paid
-      taylor_le := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      taylor_le := (Arithmetic.mul_le_mul_of_nonneg_left_direct
         (quarterRadius_antitone (movement_nonnegative parent) (Order.le_max_left _ _))
-        (Fraction.Order.Arithmetic.mul_nonneg_direct
-          (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) request.model.primitive.remainderBound_nonnegative)
+        (Arithmetic.mul_nonneg_direct
+          (Arithmetic.mul_nonneg_direct (by decide) request.model.primitive.remainderBound_nonnegative)
           (movement_nonnegative parent))).trans request.budget.taylor_le
-      error_le := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Basic.min_le_left _ _)
+      error_le := (Arithmetic.mul_le_mul_of_nonneg_left_direct (Basic.min_le_left _ _)
         (errorWeight_nonnegative patch request.numerator_nonnegative (movement_nonnegative parent))).trans
           request.budget.error_le }
 
@@ -126,13 +128,13 @@ open Purelib.Riemann.Integration
 /-- Resampling retains the exact original primitive model. -/
 theorem resample_model (request : Request parent patch target)
     (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) (positive : 0 < ceiling) :
-    (PreparedPrimitiveResampling.Request.resample request proper positive).model = request.model := rfl
+    (resample request proper positive).model = request.model := rfl
 
 /-- The resampled budget's retained model-error bound is at most the requested ceiling. -/
 theorem resample_error_le (request : Request parent patch target)
     (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) (positive : 0 < ceiling) :
-    (PreparedPrimitiveResampling.Request.resample request proper positive).budget.error ≤ ceiling :=
-      Fraction.Order.Basic.min_le_right _ _
+    (resample request proper positive).budget.error ≤ ceiling :=
+      Basic.min_le_right _ _
 
 end
 
@@ -144,12 +146,12 @@ The child belongs to the same resampled direct block. Its original model-error a
 budget error, which is at most the supplied ceiling. -/
 theorem resample_child_error (request : Request parent patch target)
     (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) (positive : 0 < ceiling)
-    {child : CenteredEdge curve differential} (member : child ∈ (PreparedPrimitiveResampling.Request.resample request
+    {child : CenteredEdge curve differential} (member : child ∈ (resample request
       proper positive).block.children) :
     child.edge.modelErrorAllowance ≤ ceiling :=
-  ((PreparedPrimitiveRequests.Request.child_modelError_le
-    (PreparedPrimitiveResampling.Request.resample request proper positive) member).trans
-      (Fraction.Order.Basic.min_le_right _ _))
+  ((Request.child_modelError_le
+    (resample request proper positive) member).trans
+      (Basic.min_le_right _ _))
 
 end Request
 
@@ -165,9 +167,9 @@ open Purelib.Riemann.Integration.PreparedDirectDyadicRefinements (DirectBlockRef
 open Purelib.Riemann.Readings.UniformPreparedRequests (RequestedParents PrimitiveSumRequest LocalRequest)
 open Purelib.Riemann.Readings.PreparedPrimitiveRequests (Request)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {target ceiling : Purelib.Riemann.Readings.PreparedPrimitiveRequests.Coordinate}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {target ceiling : Readings.PreparedPrimitiveRequests.Coordinate}
 
 open Purelib.Riemann.Integration in
 /-- Resample the local request while preserving its original patch, neighborhood and endpoint containment.
@@ -178,7 +180,7 @@ ownership and endpoint witnesses remain the same fields. -/
   target)
     (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) (positive : 0 < ceiling) :
     LocalRequest parent count target :=
-  { request with request := PreparedPrimitiveResampling.Request.resample request.request proper positive }
+  { request with request := Request.resample request.request proper positive }
 
 namespace RequestedParents
 
@@ -192,14 +194,14 @@ Each original proper parent retains its primitive model while its local spatial 
   match requests with
   | .nil => .nil
   | .cons request tail => .cons
-      (PreparedPrimitiveResampling.UniformPrimitiveNeighborhoods.LocalRequest.resample request proper.1 positive)
+      (LocalRequest.resample request proper.1 positive)
       (resample tail proper.2 positive)
 
 /-- Resampling retains the exact original primitive increment list. -/
 theorem resample_increments {parents : List (CenteredEdge curve differential)} (requests : RequestedParents count target
   parents)
     (proper : AllParentsProper parents) (positive : 0 < ceiling) :
-    (RequestedParents.resample requests proper positive).increments = requests.increments := by
+    (resample requests proper positive).increments = requests.increments := by
   induction requests with
   | nil => rfl
   | cons request tail ih => exact congrArg (List.cons _) (ih proper.2)
@@ -208,7 +210,7 @@ theorem resample_increments {parents : List (CenteredEdge curve differential)} (
 theorem resample_primitiveValues {parents : List (CenteredEdge curve differential)} (requests : RequestedParents count
   target parents)
     (proper : AllParentsProper parents) (positive : 0 < ceiling) :
-    (RequestedParents.resample requests proper positive).primitiveValues = requests.primitiveValues := by
+    (resample requests proper positive).primitiveValues = requests.primitiveValues := by
   induction requests with
   | nil => rfl
   | cons request tail ih => exact congrArg (List.cons _) (ih proper.2)
@@ -221,14 +223,14 @@ head block or remaining tail, and its original allowance meets the same supplied
 theorem resample_child_error {parents : List (CenteredEdge curve differential)} (requests : RequestedParents count
   target parents)
     (proper : AllParentsProper parents) (positive : 0 < ceiling) :
-    ∀ child ∈ (RequestedParents.resample requests proper positive).blocks.children, child.edge.modelErrorAllowance ≤
+    ∀ child ∈ (resample requests proper positive).blocks.children, child.edge.modelErrorAllowance ≤
       ceiling := by
   induction requests with
   | nil => intro child member; cases member
   | cons request tail ih =>
       intro child member
       rcases Membership.mem_append.mp member with first | last
-      · exact PreparedPrimitiveResampling.Request.resample_child_error
+      · exact Request.resample_child_error
           request.request proper.1 positive first
       · exact ih proper.2 child last
 
@@ -261,7 +263,7 @@ open Purelib.Riemann.Integration
 /-- Resampling retains the exact original cached primitive sum. -/
 theorem resample_primitiveSum (request : PrimitiveSumRequest parents count target) (proper : AllParentsProper parents)
     (positive : 0 < ceiling) :
-    (PreparedPrimitiveResampling.UniformPrimitiveNeighborhoods.PrimitiveSumRequest.resample request proper
+    (resample request proper
       positive).primitiveSum = request.primitiveSum := rfl
 
 /-- Every retained resampled child meets the positive model-error ceiling.
@@ -270,7 +272,7 @@ The original request family retains its parent order and properness witnesses. E
 head block or remaining tail, and its original allowance meets the same supplied ceiling. -/
 theorem resample_child_error (request : PrimitiveSumRequest parents count target) (proper : AllParentsProper parents)
     (positive : 0 < ceiling) :
-    ∀ child ∈ (PreparedPrimitiveResampling.UniformPrimitiveNeighborhoods.PrimitiveSumRequest.resample request proper
+    ∀ child ∈ (resample request proper
       positive).blocks.children, child.edge.modelErrorAllowance ≤ ceiling :=
   RequestedParents.resample_child_error request.requests proper positive
 

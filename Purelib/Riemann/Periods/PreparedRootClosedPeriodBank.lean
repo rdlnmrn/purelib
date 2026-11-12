@@ -56,14 +56,14 @@ open Purelib.Riemann.Periods.PreparedRootSafePeriodPrograms.RootClosedState (per
 
 open Purelib.Curves.Hyperelliptic
 /-- Transport the retained closed state along an exact equality of its root name. -/
-def castRoot {genus : Nat} {curve : Basic.HyperellipticCurve genus} {source : Differentials.Basic.Differential genus}
+def castRoot {genus : Nat} {curve : HyperellipticCurve genus} {source : Differential genus}
     {first second : Named} (initial : RootClosedState curve source first) (equal : first = second) :
     RootClosedState curve source second := by
   cases equal
   exact initial
 
 /-- Transporting the root-name index preserves the exact switched state. -/
-theorem castRoot_state {genus : Nat} {curve : Basic.HyperellipticCurve genus} {source : Differentials.Basic.Differential
+theorem castRoot_state {genus : Nat} {curve : HyperellipticCurve genus} {source : Differential
   genus}
     {first second : Named} (initial : RootClosedState curve source first) (equal : first = second) :
     (castRoot initial equal).state = initial.state := by
@@ -71,19 +71,19 @@ theorem castRoot_state {genus : Nat} {curve : Basic.HyperellipticCurve genus} {s
   rfl
 
 /-- Transporting the root-name index preserves the exact period refinement program. -/
-theorem castRoot_period {genus : Nat} {curve : Basic.HyperellipticCurve genus} {source :
-  Differentials.Basic.Differential genus}
+theorem castRoot_period {genus : Nat} {curve : HyperellipticCurve genus} {source :
+  Differential genus}
     {first second : Named} (initial : RootClosedState curve source first) (equal : first = second)
-    (targets : List (Differentials.Basic.Differential genus)) (differential : Differentials.Basic.Differential genus)
+    (targets : List (Differential genus)) (differential : Differential genus)
       (member : differential ∈ targets) :
     period (castRoot initial equal) targets differential member = period initial targets differential member := by
   cases equal
   rfl
 
 /-- Every root-safe refinement stage preserves the initial lifted starting point. -/
-theorem states_start_eq {genus : Nat} {curve : Basic.HyperellipticCurve genus} {source :
-  Differentials.Basic.Differential genus}
-    {root : Named} (initial : RootClosedState curve source root) (targets : List (Differentials.Basic.Differential
+theorem states_start_eq {genus : Nat} {curve : HyperellipticCurve genus} {source :
+  Differential genus}
+    {root : Named} (initial : RootClosedState curve source root) (targets : List (Differential
       genus)) :
     ∀ stage, (initial.states targets stage).state.start = initial.state.start
   | 0 => rfl
@@ -106,55 +106,55 @@ open Purelib.Riemann.Integration.PreparedRefinementProgramCore (standardDifferen
 
 namespace OwnerClosedCyclePair
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+variable {genus : Nat} {curve : HyperellipticCurve genus}
 
 section
 open Purelib.Curves.Hyperelliptic
 open Purelib.Riemann.Periods
 open Purelib.Riemann.Topology
 /-- Read the original A tour's initial closed state indexed by the pair's retained shared root name. -/
-def aInitial (pair : OwnerClosedCyclePair curve) (source : Differentials.Basic.Differential genus) :
+def aInitial (pair : OwnerClosedCyclePair curve) (source : Differential genus) :
     RootClosedState curve source pair.root :=
-  PreparedRootClosedPeriodBank.RootClosedState.castRoot
+  RootClosedState.castRoot
     (PreparedRootSafeCycleStates.ClosedBoundaryDoublePath.rootClosedInitial pair.aTour source)
     pair.aRoot_eq
 
 /-- Read the original B tour's initial closed state indexed by the pair's retained shared root name. -/
-def bInitial (pair : OwnerClosedCyclePair curve) (source : Differentials.Basic.Differential genus) :
+def bInitial (pair : OwnerClosedCyclePair curve) (source : Differential genus) :
     RootClosedState curve source pair.root :=
-  PreparedRootClosedPeriodBank.RootClosedState.castRoot
+  RootClosedState.castRoot
     (PreparedRootSafeCycleStates.ClosedBoundaryDoublePath.rootClosedInitial pair.bTour source)
     pair.bRoot_eq
 
 /-- Reading the A initial state preserves the original tour's exact switched state. -/
-theorem aInitial_state (pair : OwnerClosedCyclePair curve) (source : Differentials.Basic.Differential genus) :
+theorem aInitial_state (pair : OwnerClosedCyclePair curve) (source : Differential genus) :
     (aInitial pair source).state =
       (PreparedRootSafeCycleStates.ClosedBoundaryDoublePath.rootClosedInitial pair.aTour source).state :=
-  PreparedRootClosedPeriodBank.RootClosedState.castRoot_state _ _
+  RootClosedState.castRoot_state _ _
 
 /-- Reading the B initial state preserves the original tour's exact switched state. -/
-theorem bInitial_state (pair : OwnerClosedCyclePair curve) (source : Differentials.Basic.Differential genus) :
+theorem bInitial_state (pair : OwnerClosedCyclePair curve) (source : Differential genus) :
     (bInitial pair source).state =
       (PreparedRootSafeCycleStates.ClosedBoundaryDoublePath.rootClosedInitial pair.bTour source).state :=
-  PreparedRootClosedPeriodBank.RootClosedState.castRoot_state _ _
+  RootClosedState.castRoot_state _ _
 
 /-- The retained A initial state gives the original tour's exact period program. -/
-theorem aInitial_period (pair : OwnerClosedCyclePair curve) (source : Differentials.Basic.Differential genus)
-    (targets : List (Differentials.Basic.Differential genus)) (differential : Differentials.Basic.Differential genus)
+theorem aInitial_period (pair : OwnerClosedCyclePair curve) (source : Differential genus)
+    (targets : List (Differential genus)) (differential : Differential genus)
       (member : differential ∈ targets) :
     period (aInitial pair source) targets differential member =
       period (PreparedRootSafeCycleStates.ClosedBoundaryDoublePath.rootClosedInitial pair.aTour source)
         targets differential member :=
-  PreparedRootClosedPeriodBank.RootClosedState.castRoot_period _ _ _ _ _
+  RootClosedState.castRoot_period _ _ _ _ _
 
 /-- The retained B initial state gives the original tour's exact period program. -/
-theorem bInitial_period (pair : OwnerClosedCyclePair curve) (source : Differentials.Basic.Differential genus)
-    (targets : List (Differentials.Basic.Differential genus)) (differential : Differentials.Basic.Differential genus)
+theorem bInitial_period (pair : OwnerClosedCyclePair curve) (source : Differential genus)
+    (targets : List (Differential genus)) (differential : Differential genus)
       (member : differential ∈ targets) :
     period (bInitial pair source) targets differential member =
       period (PreparedRootSafeCycleStates.ClosedBoundaryDoublePath.rootClosedInitial pair.bTour source)
         targets differential member :=
-  PreparedRootClosedPeriodBank.RootClosedState.castRoot_period _ _ _ _ _
+  RootClosedState.castRoot_period _ _ _ _ _
 
 end
 
@@ -167,29 +167,29 @@ set_option genInjectivity false in
 
 Both original initial states are indexed by the same stored root name and source differential, with equalities tying
 them to their respective tours. -/
-structure RootClosedPeriodRow {genus : Nat} (curve : Basic.HyperellipticCurve genus) where
+structure RootClosedPeriodRow {genus : Nat} (curve : HyperellipticCurve genus) where
   /-- The original owner-closed A and B tour pair sharing a root name. -/ tours : OwnerClosedCyclePair curve
-  /-- The retained source differential used by both initial states. -/ source : Differentials.Basic.Differential genus
+  /-- The retained source differential used by both initial states. -/ source : Differential genus
   /-- The exact retained A root-closed initial state. -/ aInitial : RootClosedState curve source tours.root
   /-- The exact retained B root-closed initial state. -/ bInitial : RootClosedState curve source tours.root
   /-- The retained A initial state equals construction from the original A tour. -/ aInitial_eq : aInitial =
-    PreparedRootClosedPeriodBank.PreparedCycleModels.OwnerClosedCyclePair.aInitial tours source
+    OwnerClosedCyclePair.aInitial tours source
   /-- The retained B initial state equals construction from the original B tour. -/ bInitial_eq : bInitial =
-    PreparedRootClosedPeriodBank.PreparedCycleModels.OwnerClosedCyclePair.bInitial tours source
+    OwnerClosedCyclePair.bInitial tours source
 
 constructive_injectivity RootClosedPeriodRow
 
 namespace RootClosedPeriodRow
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+variable {genus : Nat} {curve : HyperellipticCurve genus}
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Riemann.Periods in
 /-- Cache the exact A and B root-closed initial states of the supplied tour pair. -/
-def ofTours (tours : OwnerClosedCyclePair curve) (source : Differentials.Basic.Differential genus) : RootClosedPeriodRow
+def ofTours (tours : OwnerClosedCyclePair curve) (source : Differential genus) : RootClosedPeriodRow
   curve :=
-  let aInitial := PreparedRootClosedPeriodBank.PreparedCycleModels.OwnerClosedCyclePair.aInitial tours source
-  let bInitial := PreparedRootClosedPeriodBank.PreparedCycleModels.OwnerClosedCyclePair.bInitial tours source
+  let aInitial := OwnerClosedCyclePair.aInitial tours source
+  let bInitial := OwnerClosedCyclePair.bInitial tours source
   ⟨tours, source, aInitial, bInitial, rfl, rfl⟩
 
 /-- Read the retained A initial state's root-safe stage for the standard differential family. -/
@@ -205,16 +205,16 @@ open Purelib.Curves.Hyperelliptic
 open Purelib.Riemann.Integration
 open Purelib.Riemann.Topology
 /-- Recast the retained A-stage root chain to the requested differential with the same shared endpoint name. -/
-def aRoots (row : RootClosedPeriodRow curve) (differential : Differentials.Basic.Differential genus) (stage : Nat) :
+def aRoots (row : RootClosedPeriodRow curve) (differential : Differential genus) (stage : Nat) :
     RootChain
-      ((row.aState stage).state.parents.map (PreparedEdgeRecasting.recastCenteredEdge differential))
+      ((row.aState stage).state.parents.map (recastCenteredEdge differential))
       row.tours.root row.tours.root :=
   PreparedRecastRootChains.RootChain.recast differential (row.aState stage).roots
 
 /-- Recast the retained B-stage root chain to the requested differential with the same shared endpoint name. -/
-def bRoots (row : RootClosedPeriodRow curve) (differential : Differentials.Basic.Differential genus) (stage : Nat) :
+def bRoots (row : RootClosedPeriodRow curve) (differential : Differential genus) (stage : Nat) :
     RootChain
-      ((row.bState stage).state.parents.map (PreparedEdgeRecasting.recastCenteredEdge differential))
+      ((row.bState stage).state.parents.map (recastCenteredEdge differential))
       row.tours.root row.tours.root :=
   PreparedRecastRootChains.RootChain.recast differential (row.bState stage).roots
 
@@ -227,10 +227,10 @@ open Purelib.Riemann.Periods
 theorem states_base_eq (row : RootClosedPeriodRow curve) (aStage bStage : Nat) :
     (row.aState aStage).state.start = (row.bState bStage).state.start := by
   unfold aState bState
-  rw [PreparedRootClosedPeriodBank.RootClosedState.states_start_eq,
-    PreparedRootClosedPeriodBank.RootClosedState.states_start_eq, row.aInitial_eq, row.bInitial_eq,
-    PreparedRootClosedPeriodBank.PreparedCycleModels.OwnerClosedCyclePair.aInitial_state,
-      PreparedRootClosedPeriodBank.PreparedCycleModels.OwnerClosedCyclePair.bInitial_state]
+  rw [RootClosedState.states_start_eq,
+    RootClosedState.states_start_eq, row.aInitial_eq, row.bInitial_eq,
+    OwnerClosedCyclePair.aInitial_state,
+      OwnerClosedCyclePair.bInitial_state]
   exact congrArg (fun coordinate => (⟨coordinate, 0⟩ : Lifted.Basic.LiftedPoint 2)) row.tours.base_eq
 
 /-- The closed A-cycle refinement sequence from the retained A initial state. -/
@@ -248,14 +248,14 @@ open Purelib.Curves.Hyperelliptic.Integration
 open Purelib.Riemann.Periods
 /-- The requested standard differential's certified period on the retained A-cycle sequence. -/
 def aProgram (row : RootClosedPeriodRow curve) (differential : Fin genus) :
-    Algebraic.Period.Basis.CertifiedPeriodProgram curve (PeriodMatrix.standardDifferential differential) row.aCycle :=
+    CertifiedPeriodProgram curve (PeriodMatrix.standardDifferential differential) row.aCycle :=
   PreparedRootSafePeriodPrograms.RootClosedState.certifiedPeriodProgram row.aInitial (standardDifferentials genus)
     (PeriodMatrix.standardDifferential differential)
     (standardDifferential_mem_standardDifferentials differential)
 
 /-- The requested standard differential's certified period on the retained B-cycle sequence. -/
 def bProgram (row : RootClosedPeriodRow curve) (differential : Fin genus) :
-    Algebraic.Period.Basis.CertifiedPeriodProgram curve (PeriodMatrix.standardDifferential differential) row.bCycle :=
+    CertifiedPeriodProgram curve (PeriodMatrix.standardDifferential differential) row.bCycle :=
   PreparedRootSafePeriodPrograms.RootClosedState.certifiedPeriodProgram row.bInitial (standardDifferentials genus)
     (PeriodMatrix.standardDifferential differential)
     (standardDifferential_mem_standardDifferentials differential)
@@ -267,24 +267,24 @@ open Purelib.Curves.Hyperelliptic
 open Purelib.Riemann.Periods
 open Purelib.Riemann.Topology
 /-- The cached A entry's integral is the exact original tour's period program. -/
-theorem ofTours_aProgram_integral (tours : OwnerClosedCyclePair curve) (source : Differentials.Basic.Differential genus)
+theorem ofTours_aProgram_integral (tours : OwnerClosedCyclePair curve) (source : Differential genus)
     (differential : Fin genus) :
     ((ofTours tours source).aProgram differential).integral =
       period (PreparedRootSafeCycleStates.ClosedBoundaryDoublePath.rootClosedInitial tours.aTour source)
         (standardDifferentials genus)
         (PeriodMatrix.standardDifferential differential)
         (standardDifferential_mem_standardDifferentials differential) :=
-  PreparedRootClosedPeriodBank.PreparedCycleModels.OwnerClosedCyclePair.aInitial_period tours source _ _ _
+  OwnerClosedCyclePair.aInitial_period tours source _ _ _
 
 /-- The cached B entry's integral is the exact original tour's period program. -/
-theorem ofTours_bProgram_integral (tours : OwnerClosedCyclePair curve) (source : Differentials.Basic.Differential genus)
+theorem ofTours_bProgram_integral (tours : OwnerClosedCyclePair curve) (source : Differential genus)
     (differential : Fin genus) :
     ((ofTours tours source).bProgram differential).integral =
       period (PreparedRootSafeCycleStates.ClosedBoundaryDoublePath.rootClosedInitial tours.bTour source)
         (standardDifferentials genus)
         (PeriodMatrix.standardDifferential differential)
         (standardDifferential_mem_standardDifferentials differential) :=
-  PreparedRootClosedPeriodBank.PreparedCycleModels.OwnerClosedCyclePair.bInitial_period tours source _ _ _
+  OwnerClosedCyclePair.bInitial_period tours source _ _ _
 
 end
 
@@ -303,12 +303,12 @@ open Purelib.Riemann.Integration
 open Purelib.Riemann.Periods
 /-- The retained A initial state has exactly two stationary switches. -/
 theorem aInitial_switchCount (row : RootClosedPeriodRow curve) : row.aInitial.state.chain.switchCount = 2 := by
-  rw [row.aInitial_eq, PreparedRootClosedPeriodBank.PreparedCycleModels.OwnerClosedCyclePair.aInitial_state]
+  rw [row.aInitial_eq, OwnerClosedCyclePair.aInitial_state]
   exact PreparedSwitchedRefinements.compactCycleState_switchCount _ _ _
 
 /-- The retained B initial state has exactly two stationary switches. -/
 theorem bInitial_switchCount (row : RootClosedPeriodRow curve) : row.bInitial.state.chain.switchCount = 2 := by
-  rw [row.bInitial_eq, PreparedRootClosedPeriodBank.PreparedCycleModels.OwnerClosedCyclePair.bInitial_state]
+  rw [row.bInitial_eq, OwnerClosedCyclePair.bInitial_state]
   exact PreparedSwitchedRefinements.compactCycleState_switchCount _ _ _
 
 end
@@ -342,7 +342,7 @@ set_option genInjectivity false in
 /-- A finite vector of retained root-closed period rows indexed by the curve's genus.
 
 Each row owns its original tour pair and cached initial states; the vector preserves their finite cycle order. -/
-structure RootClosedPeriodBank {genus : Nat} (curve : Basic.HyperellipticCurve genus) where
+structure RootClosedPeriodBank {genus : Nat} (curve : HyperellipticCurve genus) where
   /-- The retained finite vector of root-closed period rows in cycle-index order. -/ rows : Data.Vector
     (RootClosedPeriodRow curve) genus
 
@@ -350,7 +350,7 @@ constructive_injectivity RootClosedPeriodBank
 
 namespace RootClosedPeriodBank
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+variable {genus : Nat} {curve : HyperellipticCurve genus}
 
 open Purelib.Geometry.Path.Gaussian in
 /-- Read the original paired A and B cycle families from the retained row vector. -/
@@ -373,14 +373,14 @@ open Purelib.Data
 
 Each cycle index retains its corresponding owner-closed tour pair and standard source differential in the resulting
 vector. -/
-def ofData (curve : Basic.HyperellipticCurve genus) (branches : BranchIsolation.Data curve) : RootClosedPeriodBank curve
+def ofData (curve : HyperellipticCurve genus) (branches : BranchIsolation.Data curve) : RootClosedPeriodBank curve
   :=
   ⟨Vector.Basic.vectorOfFn fun index =>
     RootClosedPeriodRow.ofTours (OwnerClosedCyclePair.ofData curve branches index) (PeriodMatrix.standardDifferential
       index)⟩
 
 /-- The indexed row is exactly the retained tour-pair construction for that original branch-data index. -/
-theorem ofData_row (curve : Basic.HyperellipticCurve genus) (branches : BranchIsolation.Data curve) (index : Fin genus)
+theorem ofData_row (curve : HyperellipticCurve genus) (branches : BranchIsolation.Data curve) (index : Fin genus)
   :
     (ofData curve branches).rows index =
       RootClosedPeriodRow.ofTours (OwnerClosedCyclePair.ofData curve branches index)
@@ -391,7 +391,7 @@ end
 
 open Purelib.Riemann.Integration in
 /-- The indexed A tour equals the original owner-closed A seed for the same branch data. -/
-theorem ofData_aTour (curve : Basic.HyperellipticCurve genus) (branches : BranchIsolation.Data curve) (index : Fin
+theorem ofData_aTour (curve : HyperellipticCurve genus) (branches : BranchIsolation.Data curve) (index : Fin
   genus) :
     ((ofData curve branches).rows index).tours.aTour =
       PreparedOwnerClosedSchedules.PreparedRefinementPrograms.ownerClosedASeedOfData curve branches index := by
@@ -400,7 +400,7 @@ theorem ofData_aTour (curve : Basic.HyperellipticCurve genus) (branches : Branch
 
 open Purelib.Riemann.Topology in
 /-- The indexed B tour explicitly realizes the same original stage-zero reference bridge. -/
-theorem ofData_bTour_realizesRaw (curve : Basic.HyperellipticCurve genus) (branches : BranchIsolation.Data curve)
+theorem ofData_bTour_realizesRaw (curve : HyperellipticCurve genus) (branches : BranchIsolation.Data curve)
     (index : Fin genus) :
     PreparedCycleModels.PreparedCycleData.RealizesRaw (.finiteCut ((ofData curve branches).rows
       index).tours.bTour.joined.data)
@@ -409,7 +409,7 @@ theorem ofData_bTour_realizesRaw (curve : Basic.HyperellipticCurve genus) (branc
   exact OwnerClosedCyclePair.ofData_bTour_realizesRaw curve branches index
 
 /-- Construct the canonical root-closed bank, returning the empty vector for genus zero. -/
-def ofCurve : {genus : Nat} → (curve : Basic.HyperellipticCurve genus) → RootClosedPeriodBank curve
+def ofCurve : {genus : Nat} → (curve : HyperellipticCurve genus) → RootClosedPeriodBank curve
   | 0, _ => ⟨.nil⟩
   | _ + 1, curve => ofData curve (BranchIsolation.data curve)
 

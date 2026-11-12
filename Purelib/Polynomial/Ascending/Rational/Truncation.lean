@@ -37,17 +37,17 @@ namespace Purelib.Polynomial.Ascending.Rational.Truncation
 def EqualBelow (count : Nat) (left right :
   CoefficientPolynomial) : Prop :=
   ∀ degree, degree < count →
-    Ascending.Rational.Basic.coefficient left degree = Ascending.Rational.Basic.coefficient right degree
+    Basic.coefficient left degree = Basic.coefficient right degree
 
 /-- Vanishing of every polynomial coefficient strictly below a finite bound. -/
 def VanishesBelow (count : Nat) (polynomial :
   CoefficientPolynomial) : Prop :=
-  ∀ degree, degree < count → Ascending.Rational.Basic.coefficient polynomial degree = 0
+  ∀ degree, degree < count → Basic.coefficient polynomial degree = 0
 
 /-- Restrict coefficientwise equality to any finite initial range of degrees. -/
 theorem CoefficientwiseEqual.equalBelow {left right :
   CoefficientPolynomial}
-    (equal : Ascending.Rational.Coefficientwise.CoefficientwiseEqual left right) (count : Nat) :
+    (equal : Coefficientwise.CoefficientwiseEqual left right) (count : Nat) :
     EqualBelow count left right := fun degree _ => equal degree
 
 /-- A polynomial agrees with itself below every degree bound. -/
@@ -76,10 +76,10 @@ theorem equalBelow_add {count : Nat}
     {left left' right right' : CoefficientPolynomial}
     (leftEqual : EqualBelow count left left')
     (rightEqual : EqualBelow count right right') :
-    EqualBelow count (Ascending.Rational.Basic.add left right)
-      (Ascending.Rational.Basic.add left' right') := by
+    EqualBelow count (Basic.add left right)
+      (Basic.add left' right') := by
   intro degree below
-  rw [Ascending.Rational.Basic.coefficient_add, Ascending.Rational.Basic.coefficient_add,
+  rw [Basic.coefficient_add, Basic.coefficient_add,
     leftEqual degree below, rightEqual degree below]
 
 /-- Rational scaling preserves equality below a degree bound. -/
@@ -87,10 +87,10 @@ theorem equalBelow_scale (factor : Fraction.Rational) {count :
   Nat}
     {left right : CoefficientPolynomial} (equal : EqualBelow
       count left right) :
-    EqualBelow count (Ascending.Rational.Basic.scale factor left)
-      (Ascending.Rational.Basic.scale factor right) := by
+    EqualBelow count (Basic.scale factor left)
+      (Basic.scale factor right) := by
   intro degree below
-  rw [Ascending.Rational.Basic.coefficient_scale, Ascending.Rational.Basic.coefficient_scale, equal degree below]
+  rw [Basic.coefficient_scale, Basic.coefficient_scale, equal degree below]
 
 /-- Multiplication preserves equality below a shared degree bound.
 
@@ -99,10 +99,10 @@ theorem equalBelow_mul {count : Nat}
     {left left' right right' : CoefficientPolynomial}
     (leftEqual : EqualBelow count left left')
     (rightEqual : EqualBelow count right right') :
-    EqualBelow count (Ascending.Rational.Basic.mul left right)
-      (Ascending.Rational.Basic.mul left' right') := open Purelib.Algebra in by
+    EqualBelow count (Basic.mul left right)
+      (Basic.mul left' right') := open Purelib.Algebra in by
   intro degree below
-  rw [Ascending.Rational.Convolution.coefficient_mul, Ascending.Rational.Convolution.coefficient_mul]
+  rw [Convolution.coefficient_mul, Convolution.coefficient_mul]
   apply FiniteSum.Prefix.coordinateSum_congr_lt
   intro index inSum
   rw [leftEqual index ((Nat.le_of_lt_succ inSum).trans_lt below),
@@ -113,18 +113,18 @@ theorem vanishesBelow_scale (factor : Fraction.Rational) {count
   : Nat}
     {polynomial : CoefficientPolynomial} (vanishes :
       VanishesBelow count polynomial) :
-    VanishesBelow count (Ascending.Rational.Basic.scale factor polynomial) := by
+    VanishesBelow count (Basic.scale factor polynomial) := by
   intro degree below
-  rw [Ascending.Rational.Basic.coefficient_scale, vanishes degree below,
+  rw [Basic.coefficient_scale, vanishes degree below,
     Fraction.Field.mul_zero_direct]
 
 /-- A monomial vanishes below every bound at most its degree. -/
 theorem vanishesBelow_monomial (count degree : Nat) (order :
   count ≤ degree)
     (value : Fraction.Rational) : VanishesBelow count
-      (Ascending.Rational.Monomial.monomial degree value) := by
+      (Monomial.monomial degree value) := by
   intro outputDegree below
-  rw [Ascending.Rational.Monomial.coefficient_monomial,
+  rw [Monomial.coefficient_monomial,
     if_neg (Nat.ne_of_lt (below.trans_le order))]
 
 /-- A product vanishes below any bound below which its left factor vanishes. -/
@@ -132,10 +132,10 @@ theorem vanishesBelow_mul_left {count : Nat} {left :
   CoefficientPolynomial}
     (vanishes : VanishesBelow count left) (right :
       CoefficientPolynomial) :
-    VanishesBelow count (Ascending.Rational.Basic.mul left right) := open Purelib.Algebra
+    VanishesBelow count (Basic.mul left right) := open Purelib.Algebra
       in by
   intro degree below
-  rw [Ascending.Rational.Convolution.coefficient_mul]
+  rw [Convolution.coefficient_mul]
   rw [FiniteSum.Prefix.coordinateSum_congr_lt (degree + 1) (by
     intro index inSum
     rw [vanishes index
@@ -148,9 +148,9 @@ theorem vanishesBelow_mul_left {count : Nat} {left :
 theorem vanishesBelow_add_right {count : Nat} {left right :
   CoefficientPolynomial}
     (vanishes : VanishesBelow count right) :
-    EqualBelow count (Ascending.Rational.Basic.add left right) left := by
+    EqualBelow count (Basic.add left right) left := by
   intro degree below
-  rw [Ascending.Rational.Basic.coefficient_add, vanishes degree below]
+  rw [Basic.coefficient_add, vanishes degree below]
   ring1
 
 /-- A polynomial with zero constant term has its `n`th power vanishing below degree `n`.
@@ -159,18 +159,18 @@ Each low convolution coefficient either uses an already vanishing coefficient of
 constant of the final factor. -/
 theorem vanishesBelow_pow_of_zero_constant {polynomial :
   CoefficientPolynomial}
-    (zeroConstant : Ascending.Rational.Basic.coefficient polynomial 0 = 0) : ∀ exponent,
-    VanishesBelow exponent (Ascending.Rational.Basic.pow polynomial exponent)
+    (zeroConstant : Basic.coefficient polynomial 0 = 0) : ∀ exponent,
+    VanishesBelow exponent (Basic.pow polynomial exponent)
   | 0 => fun degree below => (Nat.not_lt_zero degree below).elim
   | exponent + 1 => by
       intro degree below
-      rw [Ascending.Rational.Basic.pow, Purelib.Polynomial.Ascending.Rational.Convolution.coefficient_mul]
-      rw [Purelib.Algebra.FiniteSum.Prefix.coordinateSum_congr_lt (degree + 1) (by
+      rw [Basic.pow, Convolution.coefficient_mul]
+      rw [Algebra.FiniteSum.Prefix.coordinateSum_congr_lt (degree + 1) (by
         intro index inSum
         by_cases before : index < exponent
         · rw [vanishesBelow_pow_of_zero_constant zeroConstant exponent
               index before,
-            Purelib.Data.Rat.Fraction.Field.zero_mul_direct]
+            Fraction.Field.zero_mul_direct]
         · have degreeLe : degree ≤ exponent := Nat.le_of_lt_succ below
           have indexLe : index ≤ degree := Nat.le_of_lt_succ inSum
           have exponentLe : exponent ≤ index := Nat.le_of_not_gt before
@@ -181,24 +181,24 @@ theorem vanishesBelow_pow_of_zero_constant {polynomial :
             Nat.le_antisymm degreeLe indexLe
           subst degree
           rw [Nat.sub_self, zeroConstant,
-            Purelib.Data.Rat.Fraction.Field.mul_zero_direct])]
-      exact Purelib.Algebra.FiniteSum.Prefix.coordinateSum_all_zero (fun _ => (0 : Fraction.Rational))
+            Fraction.Field.mul_zero_direct])]
+      exact Algebra.FiniteSum.Prefix.coordinateSum_all_zero (fun _ => (0 : Fraction.Rational))
         (fun _ => rfl) (degree + 1)
 
 /-- Dropping an initial coefficient block translates all subsequent coefficient indices. -/
 theorem coefficientCoefficients_drop : ∀ count coefficients
   degree,
-    Ascending.Rational.Basic.coefficientCoefficients (coefficients.drop count) degree =
-      Ascending.Rational.Basic.coefficientCoefficients coefficients (count + degree)
+    Basic.coefficientCoefficients (coefficients.drop count) degree =
+      Basic.coefficientCoefficients coefficients (count + degree)
   | 0, coefficients, degree => by rw [List.drop_zero, Nat.zero_add]
   | count + 1, [], degree => by
-      rw [List.drop_nil, Ascending.Rational.Basic.coefficientCoefficients_nil,
-        Ascending.Rational.Basic.coefficientCoefficients_nil]
+      rw [List.drop_nil, Basic.coefficientCoefficients_nil,
+        Basic.coefficientCoefficients_nil]
   | count + 1, coefficient :: remaining, degree => by
       rw [List.drop_succ_cons,
         coefficientCoefficients_drop count remaining degree]
       rw [show count + 1 + degree = (count + degree) + 1 by ring1,
-        Ascending.Rational.Basic.coefficientCoefficients_cons_succ]
+        Basic.coefficientCoefficients_cons_succ]
 end Purelib.Polynomial.Ascending.Rational.Truncation
 
 end

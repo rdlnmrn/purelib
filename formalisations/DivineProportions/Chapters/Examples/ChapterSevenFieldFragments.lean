@@ -70,8 +70,8 @@ theorem cross_values
       (((1 : K) + (-1) - i) ^ 2) / (4 * 1 * (-1)) =
         QuadraticFragment.Imaginary.complexValue i (1 / 4) 0 := by
   have iNonzero := QuadraticFragment.Imaginary.i_nonzero i iSquare
-  have fourNonzero := (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] (twoNonzero : (2 : K) ≠ 0) =>
-    (Purelib.Algebra.Field.Characteristic.Nonzero.four_ne_zero (K := K) twoNonzero : (4 : K) ≠ 0)) twoNonzero
+  have fourNonzero := (fun {K : Type _} [ExplicitField K] (twoNonzero : (2 : K) ≠ 0) =>
+    (Characteristic.Nonzero.four_ne_zero (K := K) twoNonzero : (4 : K) ≠ 0)) twoNonzero
   have firstDenominatorNonzero : (4 : K) * (-1) * i ≠ 0 :=
     ExplicitField.mul_ne_zero
       (ExplicitField.mul_ne_zero fourNonzero (Group.neg_ne_zero one_ne_zero))
@@ -142,8 +142,8 @@ theorem triple_cross_value
     (c₁ + c₂ + c₃ - 1) ^ 2 = 25 / 16 ∧
       4 * c₁ * c₂ * c₃ = 25 / 16 := by
   dsimp only
-  have fourNonzero := (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] (twoNonzero : (2 : K) ≠ 0) =>
-    (Purelib.Algebra.Field.Characteristic.Nonzero.four_ne_zero (K := K) twoNonzero : (4 : K) ≠ 0)) twoNonzero
+  have fourNonzero := (fun {K : Type _} [ExplicitField K] (twoNonzero : (2 : K) ≠ 0) =>
+    (Characteristic.Nonzero.four_ne_zero (K := K) twoNonzero : (4 : K) ≠ 0)) twoNonzero
   have sixteenNonzero : (16 : K) ≠ 0 := by
     rw [show (16 : K) = 4 * 4 by ring1]
     exact ExplicitField.mul_ne_zero fourNonzero fourNonzero
@@ -193,14 +193,14 @@ structure AdmissibleCharacteristic (K : Type*) [ExplicitField K] : Prop where
 private theorem eight_nonzero
     (admissible : AdmissibleCharacteristic K) : (8 : K) ≠ 0 := by
   rw [show (8 : K) = 2 * 2 * 2 by ring1]
-  exact Purelib.Algebra.Field.ExplicitField.mul_three_ne_zero admissible.twoNonzero admissible.twoNonzero
+  exact ExplicitField.mul_three_ne_zero admissible.twoNonzero admissible.twoNonzero
     admissible.twoNonzero
 
 /-- Twenty is nonzero under the retained characteristic exclusions. -/
 private theorem twenty_nonzero
     (admissible : AdmissibleCharacteristic K) : (20 : K) ≠ 0 := by
   rw [show (20 : K) = 2 * 2 * 5 by ring1]
-  exact Purelib.Algebra.Field.ExplicitField.mul_three_ne_zero admissible.twoNonzero admissible.twoNonzero
+  exact ExplicitField.mul_three_ne_zero admissible.twoNonzero admissible.twoNonzero
     admissible.fiveNonzero
 
 /-- Thirty-four is nonzero under the retained characteristic exclusions. -/
@@ -214,14 +214,14 @@ private theorem thirtyFour_nonzero
 private theorem forty_nonzero
     (admissible : AdmissibleCharacteristic K) : (40 : K) ≠ 0 := by
   rw [show (40 : K) = 2 * 2 * 2 * 5 by ring1]
-  exact Purelib.Algebra.Field.ExplicitField.mul_four_ne_zero admissible.twoNonzero admissible.twoNonzero
+  exact ExplicitField.mul_four_ne_zero admissible.twoNonzero admissible.twoNonzero
     admissible.twoNonzero admissible.fiveNonzero
 
 /-- Fifty-two is nonzero under the retained characteristic exclusions. -/
 private theorem fiftyTwo_nonzero
     (admissible : AdmissibleCharacteristic K) : (52 : K) ≠ 0 := by
   rw [show (52 : K) = 2 * 2 * 13 by ring1]
-  exact Purelib.Algebra.Field.ExplicitField.mul_three_ne_zero admissible.twoNonzero admissible.twoNonzero
+  exact ExplicitField.mul_three_ne_zero admissible.twoNonzero admissible.twoNonzero
     admissible.thirteenNonzero
 
 /-- Sixty-five is nonzero under the retained characteristic exclusions. -/
@@ -242,14 +242,14 @@ private theorem eightyTwo_nonzero
 private theorem oneHundredFour_nonzero
     (admissible : AdmissibleCharacteristic K) : (104 : K) ≠ 0 := by
   rw [show (104 : K) = 2 * 2 * 2 * 13 by ring1]
-  exact Purelib.Algebra.Field.ExplicitField.mul_four_ne_zero admissible.twoNonzero admissible.twoNonzero
+  exact ExplicitField.mul_four_ne_zero admissible.twoNonzero admissible.twoNonzero
     admissible.twoNonzero admissible.thirteenNonzero
 
 /-- One hundred thirty is nonzero under the retained characteristic exclusions. -/
 private theorem oneHundredThirty_nonzero
     (admissible : AdmissibleCharacteristic K) : (130 : K) ≠ 0 := by
   rw [show (130 : K) = 2 * 5 * 13 by ring1]
-  exact Purelib.Algebra.Field.ExplicitField.mul_three_ne_zero admissible.twoNonzero admissible.fiveNonzero
+  exact ExplicitField.mul_three_ne_zero admissible.twoNonzero admissible.fiveNonzero
     admissible.thirteenNonzero
 
 /-- Nine is nonzero under the retained characteristic exclusions. -/
@@ -263,7 +263,7 @@ private theorem nine_nonzero
 private theorem eighteen_nonzero
     (admissible : AdmissibleCharacteristic K) : (18 : K) ≠ 0 := by
   rw [show (18 : K) = 2 * 3 * 3 by ring1]
-  exact Purelib.Algebra.Field.ExplicitField.mul_three_ne_zero admissible.twoNonzero admissible.threeNonzero
+  exact ExplicitField.mul_three_ne_zero admissible.twoNonzero admissible.threeNonzero
     admissible.threeNonzero
 
 /-- Two hundred eighty-nine is nonzero under the retained characteristic exclusions. -/
@@ -278,7 +278,7 @@ private theorem fiveHundredTwenty_nonzero
     (admissible : AdmissibleCharacteristic K) : (520 : K) ≠ 0 := by
   rw [show (520 : K) = (2 * 2 * 2 * 5) * 13 by ring1]
   exact ExplicitField.mul_ne_zero
-    (Purelib.Algebra.Field.ExplicitField.mul_four_ne_zero admissible.twoNonzero admissible.twoNonzero
+    (ExplicitField.mul_four_ne_zero admissible.twoNonzero admissible.twoNonzero
       admissible.twoNonzero admissible.fiveNonzero)
     admissible.thirteenNonzero
 
@@ -286,8 +286,8 @@ private theorem fiveHundredTwenty_nonzero
 private theorem oneThousandForty_nonzero
     (admissible : AdmissibleCharacteristic K) : (1040 : K) ≠ 0 := by
   rw [show (1040 : K) = 2 * (2 * 2 * 2 * 5) * 13 by ring1]
-  exact Purelib.Algebra.Field.ExplicitField.mul_three_ne_zero admissible.twoNonzero
-    (Purelib.Algebra.Field.ExplicitField.mul_four_ne_zero admissible.twoNonzero admissible.twoNonzero
+  exact ExplicitField.mul_three_ne_zero admissible.twoNonzero
+    (ExplicitField.mul_four_ne_zero admissible.twoNonzero admissible.twoNonzero
       admissible.twoNonzero admissible.fiveNonzero)
     admissible.thirteenNonzero
 
@@ -302,7 +302,7 @@ private theorem oneThousandSixHundredEightyOne_nonzero
 private theorem twoThousandNinetyOne_nonzero
     (admissible : AdmissibleCharacteristic K) : (2091 : K) ≠ 0 := by
   rw [show (2091 : K) = 3 * 17 * 41 by ring1]
-  exact Purelib.Algebra.Field.ExplicitField.mul_three_ne_zero admissible.threeNonzero
+  exact ExplicitField.mul_three_ne_zero admissible.threeNonzero
     admissible.seventeenNonzero admissible.fortyOneNonzero
 
 /-- Four thousand two hundred twenty-five is nonzero under the retained characteristic exclusions. -/
@@ -323,7 +323,7 @@ private theorem oneHundredThirtyFiveThousandTwoHundred_nonzero
   exact ExplicitField.mul_ne_zero
     (ExplicitField.mul_ne_zero
       (ExplicitField.mul_ne_zero
-        (Purelib.Algebra.Field.ExplicitField.mul_four_ne_zero admissible.twoNonzero admissible.twoNonzero
+        (ExplicitField.mul_four_ne_zero admissible.twoNonzero admissible.twoNonzero
           admissible.twoNonzero admissible.twoNonzero)
         admissible.twoNonzero)
       (ExplicitField.mul_ne_zero admissible.fiveNonzero
@@ -335,7 +335,7 @@ private theorem oneHundredThirtyFiveThousandTwoHundred_nonzero
 private theorem oneMillionFourHundredFiftySevenThousandFourHundredTwentySeven_nonzero
     (admissible : AdmissibleCharacteristic K) : (1457427 : K) ≠ 0 := by
   rw [show (1457427 : K) = 3 * (17 * 17) * (41 * 41) by ring1]
-  exact Purelib.Algebra.Field.ExplicitField.mul_three_ne_zero admissible.threeNonzero
+  exact ExplicitField.mul_three_ne_zero admissible.threeNonzero
     (ExplicitField.mul_ne_zero admissible.seventeenNonzero
       admissible.seventeenNonzero)
     (ExplicitField.mul_ne_zero admissible.fortyOneNonzero
@@ -345,7 +345,7 @@ private theorem oneMillionFourHundredFiftySevenThousandFourHundredTwentySeven_no
 private theorem fourMillionThreeHundredSeventyTwoThousandTwoHundredEightyOne_nonzero
     (admissible : AdmissibleCharacteristic K) : (4372281 : K) ≠ 0 := by
   rw [show (4372281 : K) = (3 * 3) * (17 * 17) * (41 * 41) by ring1]
-  exact Purelib.Algebra.Field.ExplicitField.mul_three_ne_zero
+  exact ExplicitField.mul_three_ne_zero
     (ExplicitField.mul_ne_zero admissible.threeNonzero
       admissible.threeNonzero)
     (ExplicitField.mul_ne_zero admissible.seventeenNonzero
@@ -354,18 +354,18 @@ private theorem fourMillionThreeHundredSeventyTwoThousandTwoHundredEightyOne_non
       admissible.fortyOneNonzero)
 
 /-- The origin vertex `A₁=[0,0]`. -/
-def point₁ : Purelib.Geometry.Plane.Point K := ⟨0, 0⟩
+def point₁ : Point K := ⟨0, 0⟩
 
 /-- The second vertex `A₂=[3,-i]`. -/
-def point₂ (i : K) : Purelib.Geometry.Plane.Point K := ⟨3, -i⟩
+def point₂ (i : K) : Point K := ⟨3, -i⟩
 
 /-- The third vertex `A₃=[1+i,2i]`. -/
-def point₃ (i : K) : Purelib.Geometry.Plane.Point K := ⟨1 + i, 2 * i⟩
+def point₃ (i : K) : Point K := ⟨1 + i, 2 * i⟩
 
 /-- The side `A₂A₃`, with the exact coefficient triple
 `⟨-3i:-2+i:-1+7i⟩`. -/
 def line₁ (i : K) (threeNonzero : (3 : K) ≠ 0) (iNonzero : i ≠ 0) :
-    Purelib.Geometry.Plane.Line K where
+    Line K where
   a := -3 * i
   b := -2 + i
   c := QuadraticFragment.Imaginary.complexValue i (-1) 7
@@ -374,7 +374,7 @@ def line₁ (i : K) (threeNonzero : (3 : K) ≠ 0) (iNonzero : i ≠ 0) :
 
 /-- The side `A₁A₃`, represented by `⟨-2i:1+i:0⟩`. -/
 def line₂ (i : K) (twoNonzero : (2 : K) ≠ 0) (iNonzero : i ≠ 0) :
-    Purelib.Geometry.Plane.Line K where
+    Line K where
   a := -2 * i
   b := 1 + i
   c := 0
@@ -382,7 +382,7 @@ def line₂ (i : K) (twoNonzero : (2 : K) ≠ 0) (iNonzero : i ≠ 0) :
     (ExplicitField.mul_ne_zero (Group.neg_ne_zero twoNonzero) iNonzero)
 
 /-- The side `A₁A₂`, represented by `⟨i:3:0⟩`. -/
-def line₃ (i : K) (iNonzero : i ≠ 0) : Purelib.Geometry.Plane.Line K where
+def line₃ (i : K) (iNonzero : i ≠ 0) : Line K where
   a := i
   b := 3
   c := 0
@@ -453,7 +453,7 @@ theorem line_incidence [Nontrivial K]
       (line₃ i iNonzero).Contains point₁ ∧
       (line₃ i iNonzero).Contains (point₂ i) := by
   dsimp only
-  unfold Purelib.Geometry.Plane.Line.Contains line₁ line₂ line₃ point₁ point₂ point₃
+  unfold Line.Contains line₁ line₂ line₃ point₁ point₂ point₃
   unfold QuadraticFragment.Imaginary.complexValue
   constructor
   · calc

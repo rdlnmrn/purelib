@@ -63,22 +63,22 @@ open Purelib.Riemann.Normalization
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
 
-variable {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {target coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor index minimum
+variable {basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {target coefficientTarget : InverseRootPolynomial.Coordinate} {coverFloor floor index minimum
     readingIndex : Nat}
-  {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+  {box : Rational.Box} {capSample : Charts.Reciprocal.Cap.Primitives.Sample cap
     differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 variable {energyFloor radialDepth : Nat}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
@@ -89,40 +89,40 @@ namespace RootSourceSchedule
 variable {prepared :
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
   regular domains differential}
-  {desired errorTarget rootAllowance : Normalization.InverseRootPolynomial.Coordinate} {errorPositive : 0 < errorTarget}
+  {desired errorTarget rootAllowance : InverseRootPolynomial.Coordinate} {errorPositive : 0 < errorTarget}
   (schedule : RootSourceSchedule prepared basis
     desired errorTarget rootAllowance errorPositive floor)
-  (acquired : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceEnergy.Request.Acquisition
+  (acquired : SurfaceEnergy.Request.Acquisition
     schedule.scheduled.request capSample polynomials minimum energyFloor)
   (evaluation : acquired.Evaluation coefficients)
-  {physicalAllowance : Normalization.InverseRootPolynomial.Coordinate}
+  {physicalAllowance : InverseRootPolynomial.Coordinate}
   (physicalPositive : 0 < physicalAllowance) (rootPositive : 0 < rootAllowance)
-  (physical : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalSurfaceEnergy.Plans.Samples.PhysicalCertificates
+  (physical : PhysicalSurfaceEnergy.Plans.Samples.PhysicalCertificates
     (schedule.request acquired.plans physicalPositive rootPositive).requested
     schedule.scheduled.request.entries acquired.plans acquired.readings acquired.fans evaluation.samples
       evaluation.comparisons)
 
 /-- The complete root-corrected boundary is bounded using automatically chosen
 source and physical tolerances, at the originally requested surface allowance. -/
-theorem energy_upper (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
-    (Data.Gaussian.Norm.Sum.Basic.gaussianSum
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootSurfaceEnergy.Plans.Samples.rootBoundaryValues
+theorem energy_upper (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
+    (Gaussian.Norm.Sum.Basic.gaussianSum
+      (RootSurfaceEnergy.Plans.Samples.rootBoundaryValues
       schedule.scheduled.request.entries acquired.plans acquired.readings
       acquired.fans evaluation.samples evaluation.comparisons physical)).im / 4 ≤
-      (5 / 4 * desired + (schedule.scheduled.request.entries.length : Normalization.InverseRootPolynomial.Coordinate) *
+      (5 / 4 * desired + (schedule.scheduled.request.entries.length : InverseRootPolynomial.Coordinate) *
         (physicalAllowance + rootAllowance)) *
-        Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := open Purelib.Algebra in open
-          Purelib.Data.Rat in by
+        Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := open Algebra in open
+          Rat in by
   have upper :=
     RequestedRootSurface.ScheduledRequest.requested_root_boundary_upper
     schedule.scheduled acquired evaluation
     (schedule.request acquired.plans physicalPositive rootPositive) physical physicalPositive.le rootPositive.le branch
   have targetLe := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct schedule.target_le (by
-      decide +kernel : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤ 5 / 4)
+      decide +kernel : (0 : InverseRootPolynomial.Coordinate) ≤ 5 / 4)
   have massNN : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
     (FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 :
-      Normalization.InverseRootPolynomial.Coordinate)) _ (fun row => Gaussian.Basic.Canonical.normSq_nonneg
+      InverseRootPolynomial.Coordinate)) _ (fun row => Gaussian.Basic.Canonical.normSq_nonneg
       (coefficients row)))
   exact upper.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
     (Fraction.Order.Arithmetic.add_le_add_right_direct targetLe _) massNN)

@@ -61,6 +61,10 @@ import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Topology.Surface.Sewing.SewingTree
 import Purelib.Tactic.Ring
 
+open Purelib.Topology.Surface.Sewing
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid
+
 public section
 
 /-! All original branch regions, budgeted on the same cache as the regular
@@ -78,17 +82,17 @@ open Purelib.Riemann
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues (edgeValuation)
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted}
+    BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation base.bank.toBranchCellBank}
     {target radius : Fraction.Rational}
   {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius} {current :
     Meshes.LiftedPuncturedGrid grid.punctured}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
-    {leftDifferential rightDifferential : Hyperelliptic.Differentials.Basic.Differential genus}
+  {domains : Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
+    {leftDifferential rightDifferential : Differentials.Basic.Differential genus}
 
 set_option genInjectivity false in
 /-- The dependent bank of requests for the original paired branch annuli.
@@ -96,201 +100,201 @@ set_option genInjectivity false in
 Each entry keeps its branch sheet, both original magnitude banks, the common local target and the supplied stage floor.
 -/
 inductive PairedBranchRequests (bank :
-  Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted) (sheet :
-  Hyperelliptic.Branches.BranchIsolation.Data.Index branches → Fin 2)
-    (leftFixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains leftDifferential)
-      (rightFixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains rightDifferential)
+  BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted) (sheet :
+  Branches.BranchIsolation.Data.Index branches → Fin 2)
+    (leftFixed : Face.MagnitudeBank.FaceMagnitudeBank domains leftDifferential)
+      (rightFixed : Face.MagnitudeBank.FaceMagnitudeBank domains rightDifferential)
       (error : Fraction.Rational) (floor : Nat) :
-    List (Hyperelliptic.Meshes.Newton.AllHoles.Excision.AnnularEntry grid current) → Type 3 where
+    List (AllHoles.Excision.AnnularEntry grid current) → Type 3 where
   /-- The paired branch requests for an empty original annulus list. -/ | nil :
-    Purelib.Curves.Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed
+    PairedBranchRequests bank sheet leftFixed
     rightFixed error floor []
   /-- Prepend the actual head annulus request to its original tail. -/ | cons {entry rest} (head :
-    Hyperelliptic.Meshes.Newton.PairedBranchRegion.PairedBranchRequest bank entry (sheet entry.hole.index) leftFixed
+    PairedBranchRegion.PairedBranchRequest bank entry (sheet entry.hole.index) leftFixed
     rightFixed error floor)
-      (tail : Purelib.Curves.Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed
+      (tail : PairedBranchRequests bank sheet leftFixed
         rightFixed error floor rest) :
-      Purelib.Curves.Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed
+      PairedBranchRequests bank sheet leftFixed
         rightFixed error floor (entry :: rest)
 
 constructive_injectivity PairedBranchRequests
 
 namespace PairedBranchRequests
 
-variable {sheet : Hyperelliptic.Branches.BranchIsolation.Data.Index branches → Fin 2}
-  {leftFixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains leftDifferential}
-    {rightFixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains rightDifferential}
+variable {sheet : Branches.BranchIsolation.Data.Index branches → Fin 2}
+  {leftFixed : Face.MagnitudeBank.FaceMagnitudeBank domains leftDifferential}
+    {rightFixed : Face.MagnitudeBank.FaceMagnitudeBank domains rightDifferential}
     {error : Fraction.Rational} {floor : Nat}
-  {entries : List (Hyperelliptic.Meshes.Newton.AllHoles.Excision.AnnularEntry grid current)}
+  {entries : List (AllHoles.Excision.AnnularEntry grid current)}
 
 /-- Prepare both original branch readings at each retained annulus with the common target and floor. -/
-@[expose] def build (bank : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank
-  lifted) (sheet : Hyperelliptic.Branches.BranchIsolation.Data.Index branches → Fin 2)
-    (leftFixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains leftDifferential)
-      (rightFixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains rightDifferential)
+@[expose] def build (bank : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank
+  lifted) (sheet : Branches.BranchIsolation.Data.Index branches → Fin 2)
+    (leftFixed : Face.MagnitudeBank.FaceMagnitudeBank domains leftDifferential)
+      (rightFixed : Face.MagnitudeBank.FaceMagnitudeBank domains rightDifferential)
       (error : Fraction.Rational) (positive : 0 < error) (floor : Nat) :
-    (entries : List (Hyperelliptic.Meshes.Newton.AllHoles.Excision.AnnularEntry grid current)) →
-      Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed rightFixed error floor
+    (entries : List (AllHoles.Excision.AnnularEntry grid current)) →
+      PairedBranchRequests bank sheet leftFixed rightFixed error floor
       entries
   | [] => .nil
-  | entry :: rest => .cons (Hyperelliptic.Meshes.Newton.PairedBranchRegion.PairedBranchRequest.build bank entry (sheet
+  | entry :: rest => .cons (PairedBranchRegion.PairedBranchRequest.build bank entry (sheet
     entry.hole.index) leftFixed rightFixed error positive floor)
-      (Purelib.Curves.Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.build bank sheet leftFixed
+      (PairedBranchRequests.build bank sheet leftFixed
         rightFixed error positive floor rest)
 
 /-- The maximum sufficient stage for all retained paired branch requests, including the empty-bank floor. -/
-@[expose] def index : {entries : List (Hyperelliptic.Meshes.Newton.AllHoles.Excision.AnnularEntry grid current)} →
-  Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed rightFixed error floor
+@[expose] def index : {entries : List (AllHoles.Excision.AnnularEntry grid current)} →
+  PairedBranchRequests bank sheet leftFixed rightFixed error floor
   entries → Nat
   | _, .nil => floor
   | _, .cons head tail => max head.index tail.index
 
 /-- The retained paired branch threshold is at least its supplied floor. -/
-theorem floor_le (requests : Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed
+theorem floor_le (requests : PairedBranchRequests bank sheet leftFixed
   rightFixed error floor entries) : floor ≤ requests.index := by
   cases requests with
   | nil => exact Nat.le_refl _
-  | cons head tail => exact head.floor_le.trans (Data.Nat.Order.le_max_left _ _)
+  | cons head tail => exact head.floor_le.trans (Nat.Order.le_max_left _ _)
 
 set_option genInjectivity false in
 /-- The paired branch receipts at one shared stage and on the supplied two sewn surfaces.
 
 The dependent bank preserves each original annulus, actual cut correction and cached original paired polygon. -/
-inductive Samples {stage : Nat} {leftBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
-  leftDifferential stage domains} {rightBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+inductive Samples {stage : Nat} {leftBank : Face.PrimitiveData.FacePrimitiveBank
+  leftDifferential stage domains} {rightBank : Face.PrimitiveData.FacePrimitiveBank
   rightDifferential stage domains}
-    (leftReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh)
-      (rightReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings rightBank
-      current.mesh) (leftSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch
-      leftReadings.values) (rightSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample
+    (leftReadings : TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh)
+      (rightReadings : TrianglePrimitiveReadings.TriangleReadings rightBank
+      current.mesh) (leftSurface : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch
+      leftReadings.values) (rightSurface : SewnPrimitiveSamples.CachedSample
       current.cutPolygon.patch rightReadings.values) :
-    {entries : List (Hyperelliptic.Meshes.Newton.AllHoles.Excision.AnnularEntry grid current)} →
-      Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed rightFixed error floor
+    {entries : List (AllHoles.Excision.AnnularEntry grid current)} →
+      PairedBranchRequests bank sheet leftFixed rightFixed error floor
       entries → Type 3 where
   /-- The receipts for an empty original branch request bank. -/ | nil :
-    Purelib.Curves.Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.Samples leftReadings
+    Samples leftReadings
     rightReadings leftSurface rightSurface .nil
   /-- Prepend the actual head paired annulus sample to its retained tail. -/ | cons {entry rest} {head :
-    Hyperelliptic.Meshes.Newton.PairedBranchRegion.PairedBranchRequest bank entry (sheet entry.hole.index) leftFixed
+    PairedBranchRegion.PairedBranchRequest bank entry (sheet entry.hole.index) leftFixed
     rightFixed error floor}
-      {tail : Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed rightFixed
+      {tail : PairedBranchRequests bank sheet leftFixed rightFixed
         error floor rest}
       (first : head.Sample leftReadings rightReadings leftSurface rightSurface) (last :
-        Purelib.Curves.Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.Samples leftReadings
+        Samples leftReadings
         rightReadings leftSurface rightSurface tail) :
-        Purelib.Curves.Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.Samples leftReadings
+        Samples leftReadings
         rightReadings leftSurface rightSurface (.cons head tail)
 
 constructive_injectivity Samples
 
 namespace Samples
 
-variable {stage : Nat} {leftBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
-  leftDifferential stage domains} {rightBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+variable {stage : Nat} {leftBank : Face.PrimitiveData.FacePrimitiveBank
+  leftDifferential stage domains} {rightBank : Face.PrimitiveData.FacePrimitiveBank
   rightDifferential stage domains} {leftReadings :
-  Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh} {rightReadings :
-  Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings rightBank current.mesh}
-  {leftSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch leftReadings.values}
-    {rightSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch
+  TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh} {rightReadings :
+  TrianglePrimitiveReadings.TriangleReadings rightBank current.mesh}
+  {leftSurface : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch leftReadings.values}
+    {rightSurface : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch
     rightReadings.values} {requests :
-    Purelib.Curves.Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed
+    PairedBranchRequests bank sheet leftFixed
     rightFixed error floor entries}
 
 /-- Cache all original paired branch receipts using the supplied common readings and sewn surfaces. -/
-@[expose] def build (leftReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings
-  leftBank current.mesh) (rightReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings
-  rightBank current.mesh) (leftSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample
+@[expose] def build (leftReadings : TrianglePrimitiveReadings.TriangleReadings
+  leftBank current.mesh) (rightReadings : TrianglePrimitiveReadings.TriangleReadings
+  rightBank current.mesh) (leftSurface : SewnPrimitiveSamples.CachedSample
   current.cutPolygon.patch leftReadings.values) (rightSurface :
-  Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch rightReadings.values) :
-    {entries : List (Hyperelliptic.Meshes.Newton.AllHoles.Excision.AnnularEntry grid current)} → (requests :
-      Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed rightFixed error floor
+  SewnPrimitiveSamples.CachedSample current.cutPolygon.patch rightReadings.values) :
+    {entries : List (AllHoles.Excision.AnnularEntry grid current)} → (requests :
+      PairedBranchRequests bank sheet leftFixed rightFixed error floor
       entries) →
-      Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.Samples leftReadings rightReadings
+      Samples leftReadings rightReadings
         leftSurface rightSurface requests
   | _, .nil => .nil
-  | _, .cons head tail => .cons (Hyperelliptic.Meshes.Newton.PairedBranchRegion.PairedBranchRequest.Sample.build head
+  | _, .cons head tail => .cons (PairedBranchRegion.PairedBranchRequest.Sample.build head
     leftReadings rightReadings leftSurface rightSurface)
-    (Purelib.Curves.Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.Samples.build leftReadings
+    (Samples.build leftReadings
     rightReadings leftSurface rightSurface tail)
 
 /-- Sum the cached actual paired branch region areas. -/
-@[expose] def areas : {entries : List (Hyperelliptic.Meshes.Newton.AllHoles.Excision.AnnularEntry grid current)} →
-  {requests : Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed rightFixed
+@[expose] def areas : {entries : List (AllHoles.Excision.AnnularEntry grid current)} →
+  {requests : PairedBranchRequests bank sheet leftFixed rightFixed
   error floor entries} →
-    Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.Samples leftReadings rightReadings
+    Samples leftReadings rightReadings
       leftSurface rightSurface requests → Gaussian.Basic.Canonical
   | _, _, .nil => 0
   | _, _, .cons first last => first.cut.area + last.areas
 
 /-- Sum the complete retained cut corrections for the original paired branch regions. -/
-@[expose] def corrections : {entries : List (Hyperelliptic.Meshes.Newton.AllHoles.Excision.AnnularEntry grid current)} →
-  {requests : Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed rightFixed
+@[expose] def corrections : {entries : List (AllHoles.Excision.AnnularEntry grid current)} →
+  {requests : PairedBranchRequests bank sheet leftFixed rightFixed
   error floor entries} →
-    Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.Samples leftReadings rightReadings
+    Samples leftReadings rightReadings
       leftSurface rightSurface requests → Gaussian.Basic.Canonical
   | _, _, .nil => 0
   | _, _, .cons first last => first.cut.correction + last.corrections
 
 /-- Sum the cached original paired branch reference polygons. -/
-@[expose] def polygons : {entries : List (Hyperelliptic.Meshes.Newton.AllHoles.Excision.AnnularEntry grid current)} →
-  {requests : Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed rightFixed
+@[expose] def polygons : {entries : List (AllHoles.Excision.AnnularEntry grid current)} →
+  {requests : PairedBranchRequests bank sheet leftFixed rightFixed
   error floor entries} →
-    Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.Samples leftReadings rightReadings
+    Samples leftReadings rightReadings
       leftSurface rightSurface requests → Gaussian.Basic.Canonical
   | _, _, .nil => 0
   | _, _, .cons first last => first.polygon + last.polygons
 
 /-- List the corrected paired branch residuals in original annulus order. -/
-@[expose] def residuals : {entries : List (Hyperelliptic.Meshes.Newton.AllHoles.Excision.AnnularEntry grid current)} →
-  {requests : Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed rightFixed
+@[expose] def residuals : {entries : List (AllHoles.Excision.AnnularEntry grid current)} →
+  {requests : PairedBranchRequests bank sheet leftFixed rightFixed
   error floor entries} →
-    Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.Samples leftReadings rightReadings
+    Samples leftReadings rightReadings
       leftSurface rightSurface requests → List Gaussian.Basic.Canonical
   | _, _, .nil => []
   | _, _, .cons first last => first.residual :: last.residuals
 
 /-- There is exactly one paired residual for each original annulus. -/
-theorem residuals_length (samples : Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.Samples
+theorem residuals_length (samples : Samples
   leftReadings rightReadings leftSurface rightSurface requests) : samples.residuals.length = entries.length := by
   induction samples with
   | nil => rfl
   | cons first last ih => exact congrArg Nat.succ ih
 
 /-- Every cached original paired branch residual meets the common local target at every sufficient stage. -/
-theorem residuals_small (samples : Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.Samples
+theorem residuals_small (samples : Samples
   leftReadings rightReadings leftSurface rightSurface requests) (later : requests.index ≤ stage) :
-    ∀ residual ∈ samples.residuals, Data.Gaussian.Norm.Basic.normSq residual ≤ error := by
+    ∀ residual ∈ samples.residuals, Gaussian.Norm.Basic.normSq residual ≤ error := by
   induction samples with
   | nil => intro residual member; exact (List.not_mem_nil member).elim
   | cons first last ih =>
       intro residual member
       rcases Data.List.Membership.mem_cons.mp member with rfl | member
-      · exact first.accurate ((Data.Nat.Order.le_max_left _ _).trans later)
-      · exact ih ((Data.Nat.Order.le_max_right _ _).trans later) residual member
+      · exact first.accurate ((Nat.Order.le_max_left _ _).trans later)
+      · exact ih ((Nat.Order.le_max_right _ _).trans later) residual member
 
 /-- The residual sum equals the retained branch area total minus all cut corrections and twice the polygon total. -/
-theorem residuals_sum (samples : Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.Samples
+theorem residuals_sum (samples : Samples
   leftReadings rightReadings leftSurface rightSurface requests) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum samples.residuals = samples.areas - samples.corrections - (samples.polygons
+    Gaussian.Norm.Sum.Basic.gaussianSum samples.residuals = samples.areas - samples.corrections - (samples.polygons
       + samples.polygons) := by
   induction samples with
   | nil => change 0 = 0 - 0 - (0 + 0); ring1
   | cons first last ih =>
-      change first.residual + Data.Gaussian.Norm.Sum.Basic.gaussianSum last.residuals =
+      change first.residual + Gaussian.Norm.Sum.Basic.gaussianSum last.residuals =
         (first.cut.area + last.areas) - (first.cut.correction + last.corrections) -
           ((first.polygon + last.polygons) + (first.polygon + last.polygons))
-      rw [ih, Hyperelliptic.Meshes.Newton.PairedBranchRegion.PairedBranchRequest.Sample.residual]
+      rw [ih, PairedBranchRegion.PairedBranchRequest.Sample.residual]
       ring1
 
 /-- The cached branch area total agrees with retained selections having the same original cell masks and primitive
 values. -/
-theorem areas_eq (samples : Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.Samples leftReadings
+theorem areas_eq (samples : Samples leftReadings
   rightReadings leftSurface rightSurface requests)
-    (selected : (cell : Geometry.Grid.ClearGrid.Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve)) →
+    (selected : (cell : Geometry.Grid.ClearGrid.Cell curve.polynomial (Branches.Cuts.Ambient curve)) →
       Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection leftSurface
       (RootContinuation.NewtonOriginalRegionPartition.NewtonGrid.originalCellMask current cell)) :
     samples.areas = Geometry.Grid.CellBoundary.sumValues (fun entry => Topology.Polygon.Stokes.edgeListArea
-      (Hyperelliptic.Meshes.Newton.Regular.PairedRegion.pairedValues leftSurface rightSurface) ((selected
+      (Regular.PairedRegion.pairedValues leftSurface rightSurface) ((selected
       (base.bank.cell entry.hole.index)).triangles.flatMap Topology.Polygon.Stokes.OrientedTriangle.boundary)) entries
       := by
   induction samples with
@@ -302,15 +306,15 @@ theorem areas_eq (samples : Hyperelliptic.Meshes.Newton.PairedBranchAggregate.Pa
 
 /-- The cached paired polygon total is computed from the original resplit words with their supplied incoming branch
 sheets. -/
-theorem polygons_eq (samples : Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.Samples
+theorem polygons_eq (samples : Samples
   leftReadings rightReadings leftSurface rightSurface requests) :
     samples.polygons = Geometry.Grid.CellBoundary.sumValues (fun entry => Path.PairedIncrementArea.area
       ((current.edges.indexedEdges current.vertices
         (grid.shrunk.included.resplit (bank.rows.get entry.hole.index).reference.walk
-          (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank))
+          (BasedBranchTours.FramedBranchCellBank.baseMember base.bank))
         (sheet entry.hole.index)).map (fun edge =>
           (⟨edgeValuation current.mesh leftReadings.values edge,
-            Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh rightReadings.values edge⟩
+            CanonicalEdgeValues.edgeValuation current.mesh rightReadings.values edge⟩
               : Topology.Polygon.Stokes.PrimitivePoint)))) entries := by
   induction samples with
   | nil => rfl
@@ -321,11 +325,11 @@ theorem polygons_eq (samples : Hyperelliptic.Meshes.Newton.PairedBranchAggregate
 The local per-term allocation is summed over the retained original annuli, preserving all cut corrections and paired
 polygon terms. -/
 theorem aggregate_accurate {target : Fraction.Rational} (positive : 0 < target)
-    {requests : Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed rightFixed
+    {requests : PairedBranchRequests bank sheet leftFixed rightFixed
       (Rational.Budget.Aggregate.perTerm target entries.length) floor entries}
-    (samples : Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.Samples leftReadings rightReadings
+    (samples : Samples leftReadings rightReadings
       leftSurface rightSurface requests) (later : requests.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (samples.areas - samples.corrections - (samples.polygons + samples.polygons)) <
+    Gaussian.Norm.Basic.normSq (samples.areas - samples.corrections - (samples.polygons + samples.polygons)) <
       target := by
   rw [← samples.residuals_sum]
   apply Gaussian.Budget.Aggregate.normSq_sum_lt _ positive

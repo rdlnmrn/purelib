@@ -8,6 +8,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 @[expose] public section
 
@@ -44,11 +46,11 @@ private theorem eq_at_depth {Alpha : Type} (value : Fraction.Rational →
       have twiceMiddle : middle * 2 = x + y := Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
       have middleInside : interval.Contains middle := by
         constructor
-        · apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct (c := 2) ?_ (by decide)
+        · apply Arithmetic.le_of_mul_le_mul_right_direct (c := 2) ?_ (by decide)
           rw [twiceMiddle]
           exact (by ring1 : interval.lower * 2 = interval.lower + interval.lower).trans_le
             (add_le_add xInside.1 yInside.1)
-        · apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct (c := 2) ?_ (by decide)
+        · apply Arithmetic.le_of_mul_le_mul_right_direct (c := 2) ?_ (by decide)
           rw [twiceMiddle]
           exact (add_le_add xInside.2 yInside.2).trans_eq (by ring1)
       have leftTwice : (x - middle) * 2 = x - y := by
@@ -56,14 +58,14 @@ private theorem eq_at_depth {Alpha : Type} (value : Fraction.Rational →
           _ = x * 2 - middle * 2 := by ring1
           _ = x - y := by rw [twiceMiddle]; ring1
       have leftWidth : (x - middle) ^ 2 ≤ (2 / 3 : Fraction.Rational) * (x - y) ^ 2 := by
-        apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct (c := 4) ?_ (by decide)
+        apply Arithmetic.le_of_mul_le_mul_right_direct (c := 4) ?_ (by decide)
         calc
           _ = ((x - middle) * 2) ^ 2 := by ring1
           _ = (x - y) ^ 2 := by rw [leftTwice]
           _ = 1 * (x - y) ^ 2 := by ring1
           _ ≤ ((2 / 3 : Fraction.Rational) * 4) * (x - y) ^ 2 :=
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide)
-              (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+            Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide)
+              (Arithmetic.sq_nonneg_direct _)
           _ = _ := by ring1
       have rightWidth : (middle - y) ^ 2 = (x - middle) ^ 2 := by
         apply congrArg (fun value : Fraction.Rational => value ^ 2)
@@ -76,8 +78,8 @@ private theorem eq_at_depth {Alpha : Type} (value : Fraction.Rational →
       have leftSmall : (2 / 3 : Fraction.Rational) ^ depth * (x - middle) ^ 2 ≤ radius := by
         calc
           _ ≤ (2 / 3 : Fraction.Rational) ^ depth * ((2 / 3 : Fraction.Rational) * (x - y) ^ 2) :=
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct leftWidth
-              (Fraction.Order.Arithmetic.pow_pos_direct (by decide) depth).le
+            Arithmetic.mul_le_mul_of_nonneg_left_direct leftWidth
+              (Arithmetic.pow_pos_direct (by decide) depth).le
           _ = (2 / 3 : Fraction.Rational) ^ (depth + 1) * (x - y) ^ 2 := by rw [pow_succ]; ring1
           _ ≤ _ := small
       exact (ih xInside middleInside leftSmall).trans
@@ -100,7 +102,7 @@ theorem eq_of_uniform_local {Alpha : Type} (value : Fraction.Rational →
     value x = value y :=
   eq_at_depth value interval radius localEq
     (Contraction.geometricDepth ((x - y) ^ 2) radius) xInside yInside
-    (Contraction.geometricDepth_sufficient (Fraction.Order.Arithmetic.sq_nonneg_direct _) positive)
+    (Contraction.geometricDepth_sufficient (Arithmetic.sq_nonneg_direct _) positive)
 
 end Purelib.Data.Rat.Interval.Bounds
 

@@ -13,6 +13,8 @@ import Purelib.Integration.Path.SuccessiveMagnitude
 import Purelib.Tactic.Ring
 public import Purelib.Riemann.Readings.RectangularSeamBounds
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 
 open Purelib.Riemann.Normalization.InverseRootPolynomial
@@ -66,11 +68,11 @@ theorem matched_side_magnitude (request : GridPrimitiveAccuracy bounds columns t
     {transitions : Transitions (bank.refine request.index)} {gauge : Grid.Signs.Gauge transitions.flatGrid}
     {primitives : Primitives (Branches.RectangularSheetGauge.Transitions.oriented transitions gauge) numerator} (anchors
       : PrimitiveAnchors primitives)
-    (offsets : LinearAlgebra.Grid.Offsets anchors.edges) (refines : ∀ column row, (geometry.box column row).Refines
+    (offsets : Grid.Offsets anchors.edges) (refines : ∀ column row, (geometry.box column row).Refines
       ambient)
     (small : request.globalBound ≤ 1) (trace : side.Trace depth) (vertex : side.Vertex depth) :
     let origin := side.pieces (Fin.cast left.boundaryColumns_eq 0)
-    Gaussian.Basic.Canonical.normSq (anchors.alignedValue offsets (side.pieces vertex.1).rightColumn (side.pieces
+    normSq (anchors.alignedValue offsets (side.pieces vertex.1).rightColumn (side.pieces
       vertex.1).rightRow (trace.point vertex) -
       anchors.alignedValue offsets origin.rightColumn origin.rightRow origin.first) ≤
       2 * (boundarySlope bounds + (left.boundaryColumns : Coordinate) ^ 2 * (2 * (4 + boundarySlope bounds))) := by
@@ -78,12 +80,12 @@ theorem matched_side_magnitude (request : GridPrimitiveAccuracy bounds columns t
     let piece := side.pieces (Fin.cast left.boundaryColumns_eq column)
     anchors.alignedValue offsets piece.rightColumn piece.rightRow piece.first
   have slopeNonnegative : 0 ≤ boundarySlope bounds :=
-    Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct bounds.numeratorUpper_nonnegative
+    Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.mul_nonneg_direct bounds.numeratorUpper_nonnegative
       bounds.inverseUpper_positive.le)) ambient.diagonalSq_nonneg
   have increment (column : Fin (columns + 1)) (row : Fin (rows + 1)) {first last : Gaussian}
       (firstInside : (geometry.box column row).Contains first) (lastInside : (geometry.box column row).Contains last) :
-      Gaussian.Basic.Canonical.normSq (anchors.alignedValue offsets column row last - anchors.alignedValue offsets
+      normSq (anchors.alignedValue offsets column row last - anchors.alignedValue offsets
         column row first) ≤ boundarySlope bounds := by
     rw [show anchors.alignedValue offsets column row last -
         anchors.alignedValue offsets column row first =
@@ -92,7 +94,7 @@ theorem matched_side_magnitude (request : GridPrimitiveAccuracy bounds columns t
       ring1]
     exact primitives.local_increment_bound bounds refines column row firstInside lastInside
   have steps (column : Fin left.boundaryColumns) :
-      Gaussian.Basic.Canonical.normSq (startValue column.succ - startValue column.castSucc) ≤ 2 * (4 + boundarySlope
+      normSq (startValue column.succ - startValue column.castSucc) ≤ 2 * (4 + boundarySlope
         bounds) := by
     let before := side.pieces (Fin.cast left.boundaryColumns_eq column.castSucc)
     let after := side.pieces (Fin.cast left.boundaryColumns_eq column.succ)
@@ -101,11 +103,11 @@ theorem matched_side_magnitude (request : GridPrimitiveAccuracy bounds columns t
     have gap := request.overlap_bound anchors offsets refines after.rightColumn before.rightColumn after.rightRow
       before.rightRow
       after.rightFirst (joined ▸ before.rightLast)
-    have gapLe : Gaussian.Basic.Canonical.normSq (anchors.alignedValue offsets after.rightColumn after.rightRow
+    have gapLe : normSq (anchors.alignedValue offsets after.rightColumn after.rightRow
       after.first -
         anchors.alignedValue offsets before.rightColumn before.rightRow before.last) ≤ 4 := by
       rw [joined]
-      exact gap.trans ((Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct small (show (0 : Coordinate) ≤ 4
+      exact gap.trans ((Arithmetic.mul_le_mul_of_nonneg_left_direct small (show (0 : Coordinate) ≤ 4
         by decide)).trans_eq (by ring1))
     have localLe := increment before.rightColumn before.rightRow before.rightFirst before.rightLast
     have estimate := (Gaussian.Norm.Bounds.normSq_add_le_two
@@ -115,12 +117,12 @@ theorem matched_side_magnitude (request : GridPrimitiveAccuracy bounds columns t
         before.rightColumn before.rightRow before.first))
     simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
     have estimate := estimate.trans
-      (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add gapLe localLe) (by decide))
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add gapLe localLe) (by decide))
     rw [cancel] at estimate
     exact estimate
   let column := Fin.cast left.boundaryColumns_eq.symm vertex.1
   have origins := Path.SuccessiveMagnitude.successive_magnitude startValue
-    (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct
       (by decide : (0 : Rat.Fraction.Rational) ≤ 2)
       (add_nonneg (by decide : (0 : Rat.Fraction.Rational) ≤ 4) slopeNonnegative))
     (fun index => by
@@ -134,7 +136,7 @@ theorem matched_side_magnitude (request : GridPrimitiveAccuracy bounds columns t
       vertex) - startValue column)
     (startValue column - startValue 0))
   simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at estimate
-  have estimate := estimate.trans (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add localLe
+  have estimate := estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add localLe
     origins) (by decide))
   rw [cancel] at estimate
   exact estimate
@@ -155,10 +157,10 @@ theorem matched_readings_magnitude (request : GridPrimitiveAccuracy bounds colum
     {transitions : Transitions (bank.refine request.index)} {gauge : Grid.Signs.Gauge transitions.flatGrid}
     {primitives : Primitives (Branches.RectangularSheetGauge.Transitions.oriented transitions gauge) numerator} (anchors
       : PrimitiveAnchors primitives)
-    (offsets : LinearAlgebra.Grid.Offsets anchors.edges) (refines : ∀ column row, (geometry.box column row).Refines
+    (offsets : Grid.Offsets anchors.edges) (refines : ∀ column row, (geometry.box column row).Refines
       ambient)
     (small : request.globalBound ≤ 1) (trace : side.Trace depth) (vertex : Fin (trace.vertices.rest.length + 1)) :
-    Gaussian.Basic.Canonical.normSq ((trace.rightReadings anchors offsets).values vertex - (trace.rightReadings anchors
+    normSq ((trace.rightReadings anchors offsets).values vertex - (trace.rightReadings anchors
       offsets).values 0) ≤
       2 * (boundarySlope bounds + (left.boundaryColumns : Coordinate) ^ 2 * (2 * (4 + boundarySlope bounds))) := by
   rw [trace.rightReadings_value, trace.rightReadings_value, trace.first_point, trace.first_index]

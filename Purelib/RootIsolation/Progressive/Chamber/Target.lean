@@ -13,6 +13,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.RootIsolation.Owner.Local.Basic
 import Purelib.Data.List.OfFn.Basic
 
+open Purelib.Polynomial.Dense.Gaussian.Squarefree
+
 /-!
 # Common allowances for finite simple-root owner families
 
@@ -40,7 +42,7 @@ Bézout allowance and boundary-clearance allowance. The finite table retains
 the original owner order and boxes. -/
 @[expose] public def simpleRootOwnerTargets
     (reference : CoefficientTable)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate reference.polynomial)
+    (squarefree : Basic.SquarefreeCertificate reference.polynomial)
     (owners : Owner.Family.Basic.OwnerFamily reference.polynomial reference.degree) :
     List Fraction.Rational :=
   List.ofFn fun index : Fin reference.degree =>
@@ -58,10 +60,10 @@ owner-target list. It supplies one rational target without changing any
 owner, reference factor or boundary certificate. -/
 @[expose] public def simpleRootChamberTarget
     (reference : CoefficientTable)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate reference.polynomial)
+    (squarefree : Basic.SquarefreeCertificate reference.polynomial)
     (owners : Owner.Family.Basic.OwnerFamily reference.polynomial reference.degree) : Fraction.Rational :=
   Data.Rat.List.Minimum.positiveMinimum
-    (Progressive.Chamber.Target.simpleRootOwnerTargets reference squarefree owners)
+    (simpleRootOwnerTargets reference squarefree owners)
 
 /-- The common chamber target fits the Bézout-stability allowance of every original owner.
 
@@ -70,14 +72,14 @@ minimum target. The common positive minimum lies below that target and
 therefore below the same owner Bézout allowance. -/
 public theorem simpleRootChamberTarget_le_bezout
     (reference : CoefficientTable)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate reference.polynomial)
+    (squarefree : Basic.SquarefreeCertificate reference.polynomial)
     (owners : Owner.Family.Basic.OwnerFamily reference.polynomial reference.degree)
     (index : Fin reference.degree) :
-    Progressive.Chamber.Target.simpleRootChamberTarget reference squarefree owners ≤
+    simpleRootChamberTarget reference squarefree owners ≤
       reference.bezoutStabilityTarget squarefree
         (owners.owner index).box := by
   have commonLe := Data.Rat.List.Minimum.positiveMinimum_le_of_mem
-    (values := Progressive.Chamber.Target.simpleRootOwnerTargets reference squarefree owners)
+    (values := simpleRootOwnerTargets reference squarefree owners)
     (value := min
       (reference.bezoutStabilityTarget squarefree
         (owners.owner index).box)
@@ -93,14 +95,14 @@ minimum target. The common positive minimum lies below that target and
 therefore below the same owner boundary allowance. -/
 public theorem simpleRootChamberTarget_le_stability
     (reference : CoefficientTable)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate reference.polynomial)
+    (squarefree : Basic.SquarefreeCertificate reference.polynomial)
     (owners : Owner.Family.Basic.OwnerFamily reference.polynomial reference.degree)
     (index : Fin reference.degree) :
-    Progressive.Chamber.Target.simpleRootChamberTarget reference squarefree owners ≤
+    simpleRootChamberTarget reference squarefree owners ≤
       reference.stabilityTarget (owners.owner index).box
         (owners.owner index).clearance := by
   have commonLe := Data.Rat.List.Minimum.positiveMinimum_le_of_mem
-    (values := Progressive.Chamber.Target.simpleRootOwnerTargets reference squarefree owners)
+    (values := simpleRootOwnerTargets reference squarefree owners)
     (value := min
       (reference.bezoutStabilityTarget squarefree
         (owners.owner index).box)
@@ -116,9 +118,9 @@ Its reference Bézout and boundary targets are both strictly positive,
 so their original minimum is strictly positive. -/
 public theorem simpleRootOwnerTargets_positive
     (reference : CoefficientTable)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate reference.polynomial)
+    (squarefree : Basic.SquarefreeCertificate reference.polynomial)
     (owners : Owner.Family.Basic.OwnerFamily reference.polynomial reference.degree) :
-    ∀ target ∈ Progressive.Chamber.Target.simpleRootOwnerTargets reference squarefree owners,
+    ∀ target ∈ simpleRootOwnerTargets reference squarefree owners,
       0 < target := by
   intro target member
   rcases Data.List.OfFn.Basic.mem_ofFn.mp member with ⟨index, rfl⟩
@@ -135,10 +137,10 @@ positive-minimum operation therefore gives a strictly positive common
 chamber allowance. -/
 public theorem simpleRootChamberTarget_pos
     (reference : CoefficientTable)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate reference.polynomial)
+    (squarefree : Basic.SquarefreeCertificate reference.polynomial)
     (owners : Owner.Family.Basic.OwnerFamily reference.polynomial reference.degree) :
-    0 < Progressive.Chamber.Target.simpleRootChamberTarget reference squarefree owners :=
+    0 < simpleRootChamberTarget reference squarefree owners :=
   Data.Rat.List.Minimum.positiveMinimum_pos _
-    (Progressive.Chamber.Target.simpleRootOwnerTargets_positive reference squarefree owners)
+    (simpleRootOwnerTargets_positive reference squarefree owners)
 
 end Purelib.RootIsolation.Progressive.Chamber.Target

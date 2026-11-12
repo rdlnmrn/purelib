@@ -58,7 +58,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -78,18 +78,18 @@ open Purelib.Data.Rat
 
 The request retains the prepared ordered periods, Newton preparation, radius and stage floor for the specified
 differential pair. -/
-@[expose] def OrderedOriginalRequest (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+@[expose] def OrderedOriginalRequest (prepared : Prepared paired)
     (preparation : NewtonPreparation base.bank.toBranchCellBank) (first second : Fin genus)
-    (error radius : Fraction.Rational) (minimum : Nat) :=
+    (error radius : Rational) (minimum : Nat) :=
   OriginalDeterminantRequest prepared preparation first second (error / 4) radius minimum
 
 /-- Surface bilinear request with one quarter of the error budget.
 
 The request uses the original face-domain bank and ordered differential pair, preserving the requested minimum stage. -/
-@[expose] def OrderedSurfaceRequest (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired) (domains :
-  Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars)
-    (first second : Fin genus) (error : Fraction.Rational) (minimum : Nat) :=
-  Meshes.PuncturedGrid.Paired.BilinearRequests.BilinearRequest prepared domains first second (error / 4) minimum
+@[expose] def OrderedSurfaceRequest (prepared : Prepared paired) (domains :
+  FaceDomainBank lifted.frames base.faces.regulars)
+    (first second : Fin genus) (error : Rational) (minimum : Nat) :=
+  BilinearRequest prepared domains first second (error / 4) minimum
 
 end
 
@@ -98,9 +98,9 @@ open Purelib.Data.Gaussian in
 /-- Strict bound on the retained surface bilinear residual.
 
 The residual is evaluated on the actual left and right surface readings and compared with the full requested error. -/
-@[expose] def OrderedResidualSmall (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+@[expose] def OrderedResidualSmall (prepared : Prepared paired)
     (surface : OrderedSurfaceRequest prepared domains first second error minimum) : Prop :=
-  Data.Gaussian.Norm.Basic.normSq (Meshes.PuncturedGrid.Paired.BilinearIdentity.bilinearResidual prepared
+  normSq (bilinearResidual prepared
     surface.surface.left.value surface.surface.right.value) < error
 
 open Purelib.Curves.Hyperelliptic in
@@ -110,10 +110,10 @@ set_option genInjectivity false in
 
 Both quarter-budget requests are retained with a common stage above their thresholds and a strict full-budget residual
 certificate. -/
-structure OrderedDeterminantRequest (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+structure OrderedDeterminantRequest (prepared : Prepared paired)
     (preparation : NewtonPreparation base.bank.toBranchCellBank) (domains :
-      Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars)
-    (first second : Fin genus) (error radius : Fraction.Rational) (minimum : Nat) where
+      FaceDomainBank lifted.frames base.faces.regulars)
+    (first second : Fin genus) (error radius : Rational) (minimum : Nat) where
   /-- Original determinant request at one quarter of the error. -/ original : OrderedOriginalRequest prepared
     preparation first second error radius minimum
   /-- Surface bilinear request at one quarter of the error. -/ surface : OrderedSurfaceRequest prepared domains first
@@ -136,7 +136,7 @@ open Purelib.Data.Rat in
 
 The two quarter-budget estimates are combined using the squared-norm sum bound, retaining both request owners and
 proving the full residual payment. -/
-@[expose] def ofRequests (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+@[expose] def ofRequests (prepared : Prepared paired)
     (original : OrderedOriginalRequest prepared preparation first second error radius minimum)
     (surface : OrderedSurfaceRequest prepared domains first second error minimum) :
     OrderedDeterminantRequest prepared preparation domains first second error radius minimum := by
@@ -145,19 +145,19 @@ proving the full residual payment. -/
     Nat.Order.le_max_left _ _, Nat.Order.le_max_right _ _, ?_⟩
   have model := original.accurate stage (Nat.Order.le_max_left _ _)
   have sampling := surface.accurate stage (Nat.Order.le_max_right _ _)
-  let residual := Meshes.PuncturedGrid.Paired.BilinearIdentity.bilinearResidual prepared surface.surface.left.value
+  let residual := bilinearResidual prepared surface.surface.left.value
     surface.surface.right.value
-  let determinant := Meshes.PuncturedGrid.Paired.BilinearRequests.BilinearRequest.determinant prepared first second
+  let determinant := BilinearRequest.determinant prepared first second
     stage
   have estimate := (Norm.Bounds.normSq_add_le_two (residual - determinant) determinant).trans_lt
-    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2)
+    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Rational) < 2)
       ((Fraction.Order.Arithmetic.add_lt_add_right_direct sampling _).trans
         (Fraction.Order.Arithmetic.add_lt_add_left_direct model _)))
   have equal : residual - determinant + determinant = residual := by ring1
   have total : 2 * (error / 4 + error / 4) = error :=
     (show 2 * (error / 4 + error / 4) = (error / 4) * 4 by ring1).trans
       (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))
-  exact ((congrArg Data.Gaussian.Norm.Basic.normSq equal).symm.trans_lt estimate).trans_eq total
+  exact ((congrArg normSq equal).symm.trans_lt estimate).trans_eq total
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Gaussian in
@@ -169,16 +169,16 @@ open Purelib.Data.Rat in
 
 Builds the original and surface requests at one quarter of the error, then retains their common threshold and residual
 certificate. -/
-@[expose] def build (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired) (preparation :
+@[expose] def build (prepared : Prepared paired) (preparation :
   NewtonPreparation base.bank.toBranchCellBank)
-    (domains : Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars) (first second :
+    (domains : FaceDomainBank lifted.frames base.faces.regulars) (first second :
       Fin genus)
-    (error radius : Fraction.Rational) (positive : 0 < error) (radiusPositive : 0 < radius) (minimum : Nat) :
+    (error radius : Rational) (positive : 0 < error) (radiusPositive : 0 < radius) (minimum : Nat) :
     OrderedDeterminantRequest prepared preparation domains first second error radius minimum :=
-  let quarterPositive := Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Fraction.Rational) < 4)
+  let quarterPositive := Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Rational) < 4)
   let original := OriginalDeterminantRequest.build prepared preparation first second (error / 4) radius quarterPositive
     radiusPositive minimum
-  let surface := Meshes.PuncturedGrid.Paired.BilinearRequests.BilinearRequest.build prepared domains first second (error
+  let surface := BilinearRequest.build prepared domains first second (error
     / 4) quarterPositive minimum
   ofRequests prepared original surface
 

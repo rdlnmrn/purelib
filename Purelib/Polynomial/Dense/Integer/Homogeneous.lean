@@ -16,6 +16,8 @@ public import Purelib.Algebra.Monoid.Int
 import Purelib.Data.Int.Arithmetic
 import Purelib.Data.List.Map
 import Purelib.Algebra.Semiring.Normalization
+import Purelib.Algebra.Modular.Fin
+import Init.Data.Fin.Lemmas
 
 /-!
 # Homogeneous readbacks of descending integer coefficient tables
@@ -79,16 +81,167 @@ public theorem evalIntegers_map_mul (point : Fraction.Rational) (initial : Int)
 
 /-! ## Homogeneous integer evaluation -/
 
+/-- Traverse a descending homogeneous tail with its retained scalar operations.
+
+Exact integers and bounded residues use the same ordered accumulator and power
+updates. The final coefficient needs no further denominator multiplication.
+-/
+@[expose, specialize 2 3] public def evalFromWith {Scalar : Type}
+    (multiply add : Scalar → Scalar → Scalar) (num den power accumulator : Scalar) :
+    List Scalar → Scalar
+  | [] => accumulator
+  | [coefficient] => add (multiply accumulator num) (multiply coefficient power)
+  | coefficient :: next :: remaining =>
+      evalFromWith multiply add num den (multiply power den)
+        (add (multiply accumulator num) (multiply coefficient power)) (next :: remaining)
+
+/-- Evaluate an integer tail with the original accumulated value and denominator power. -/
+private def evalFrom (num den power accumulator : Int) (coefficients : List Int) : Int :=
+  evalFromWith (fun left right : Int => left * right) (fun left right : Int => left + right)
+    num den power accumulator coefficients
+
+/-- A scalar map preserving both operations preserves every homogeneous accumulator state.
+
+The same original factors, coefficient order and final-step rule are retained.
+Only pointwise scalar operation equalities transport the accumulated values.
+-/
+private theorem evalFromWith_map {Scalar : Type} (multiply add : Scalar → Scalar → Scalar)
+    (map : Int → Scalar)
+    (map_mul : ∀ left right, map (left * right) = multiply (map left) (map right))
+    (map_add : ∀ left right, map (left + right) = add (map left) (map right))
+    (num den power accumulator : Int) (coefficients : List Int) :
+    evalFromWith multiply add (map num) (map den) (map power) (map accumulator)
+        (coefficients.map map) =
+      map (evalFrom num den power accumulator coefficients) := by
+  induction coefficients generalizing power accumulator with
+  | nil => rfl
+  | cons coefficient remaining ih =>
+      cases remaining with
+      | nil =>
+          change add (multiply (map accumulator) (map num)) (multiply (map coefficient) (map power)) =
+            map (accumulator * num + coefficient * power)
+          rewrite [map_add, map_mul, map_mul]
+          rfl
+      | cons next remaining =>
+          change evalFromWith multiply add (map num) (map den)
+              (multiply (map power) (map den))
+              (add (multiply (map accumulator) (map num)) (multiply (map coefficient) (map power)))
+              ((next :: remaining).map map) =
+            map (evalFrom num den (power * den) (accumulator * num + coefficient * power)
+              (next :: remaining))
+          rewrite [← map_mul, ← map_mul, ← map_mul, ← map_add]
+          exact ih (power * den) (accumulator * num + coefficient * power)
+
+/-- Execute homogeneous evaluation with one forward integer accumulator and denominator-power cache.
+
+The original leading coefficient initializes the accumulator. The unchanged
+ordered tail consumes successive powers by multiplication, without retaining
+a separate numerator power at every recursive head.
+-/
+public def eval (num : Int) (den : Nat) : List Int → Int
+  | [] => 0
+  | coefficient :: remaining =>
+      let denominator : Int := den
+      evalFrom num denominator denominator coefficient remaining
+
 /-- High-to-low homogeneous evaluation.  For `m+1` coefficients it is the
 ordinary rational evaluation at `num/den`, multiplied by `den^m`.
 
 Each original head contributes its numerator power at the retained tail length.
 The original natural denominator multiplies the recursive evaluation of that tail. -/
-@[expose] public def homogeneousEval (num : Int) (den : Nat) : List Int → Int
+@[expose, implemented_by eval] public def homogeneousEval (num : Int) (den : Nat) : List Int → Int
   | [] => 0
   | coefficient :: remaining =>
       coefficient * num ^ remaining.length +
         (den : Int) * homogeneousEval num den remaining
+
+/-- The forward accumulator contributes its exact numerator power beside the original homogeneous tail.
+
+Both factors and the remaining coefficient order are arbitrary, including
+zero denominators and negative numerators. The invariant identifies the whole
+integer value before any rational denominator interpretation is required.
+-/
+private theorem evalFrom_eq (num : Int) (den : Nat) (power accumulator : Int) (coefficients : List Int) :
+    evalFrom num (den : Int) power accumulator coefficients =
+      accumulator * num ^ coefficients.length + power * homogeneousEval num den coefficients := by
+  induction coefficients generalizing power accumulator with
+  | nil =>
+      change accumulator = accumulator * num ^ 0 + power * 0
+      rewrite [Arithmetic.pow_zero, Arithmetic.mul_one, Int.mul_zero, Int.add_zero]
+      rfl
+  | cons coefficient remaining ih =>
+      cases remaining with
+      | nil =>
+          change accumulator * num + coefficient * power =
+            accumulator * num ^ 1 + power * (coefficient * num ^ 0 + (den : Int) * 0)
+          rewrite [Arithmetic.pow_succ, Arithmetic.pow_zero]
+          ring1
+      | cons next remaining =>
+          change evalFrom num (den : Int) (power * (den : Int))
+              (accumulator * num + coefficient * power) (next :: remaining) = _
+          rewrite [ih]
+          change (accumulator * num + coefficient * power) * num ^ (next :: remaining).length +
+              (power * (den : Int)) * homogeneousEval num den (next :: remaining) =
+            accumulator * num ^ ((next :: remaining).length + 1) +
+              power * (coefficient * num ^ (next :: remaining).length +
+                (den : Int) * homogeneousEval num den (next :: remaining))
+          rewrite [Arithmetic.pow_succ]
+          ring1
+
+/-- The executable accumulator returns the complete original homogeneous integer for every input.
+
+The original recursive definition remains the logical unfolding contract.
+This pointwise equality also retains the executable target in the mathematical
+proof closure independently of its compiler replacement attribute.
+-/
+private theorem eval_eq (num : Int) (den : Nat) (coefficients : List Int) :
+    eval num den coefficients = homogeneousEval num den coefficients := by
+  cases coefficients with
+  | nil => rfl
+  | cons coefficient remaining =>
+      exact evalFrom_eq num den (den : Int) coefficient remaining
+
+/-- Evaluate a retained residue table with the same homogeneous accumulator.
+
+The original signed numerator and natural denominator are reduced directly.
+Every subsequent scalar operation stays in the supplied finite residue carrier;
+no large integer power or recursive numerical cast is constructed.
+-/
+@[expose] public def modularEval (modulus : Nat) [NeZero modulus] (num : Int) (den : Nat) :
+    List (Fin modulus) → Fin modulus
+  | [] => 0
+  | coefficient :: remaining =>
+      let numerator : Fin modulus := Fin.intCast num
+      let denominator := Fin.ofNat modulus den
+      evalFromWith Fin.mul Fin.add numerator denominator denominator coefficient remaining
+
+/-- Reducing the original coefficient table preserves the complete homogeneous value in finite residues.
+
+The original finite-ring operations and casts are retained. Direct signed casts
+agree with that ring, and the shared accumulator transports each scalar update.
+-/
+public theorem modularEval_eq (modulus : Nat) [NeZero modulus] (num : Int) (den : Nat)
+    (coefficients : List Int) :
+    modularEval modulus num den (coefficients.map Fin.intCast) =
+      Fin.intCast (homogeneousEval num den coefficients) := by
+  letI := Modular.Fin.finCommRing modulus
+  have map_mul (left right : Int) :
+      Fin.intCast (left * right) = (Fin.intCast left : Fin modulus) * Fin.intCast right := by
+    rewrite [Modular.Fin.intCast_eq modulus, Ring.IntCast.intCast_mul,
+      Modular.Fin.intCast_eq modulus, Modular.Fin.intCast_eq modulus]
+    rfl
+  have map_add (left right : Int) :
+      Fin.intCast (left + right) = (Fin.intCast left : Fin modulus) + Fin.intCast right := by
+    rewrite [Modular.Fin.intCast_eq modulus, Ring.IntCast.add,
+      Modular.Fin.intCast_eq modulus, Modular.Fin.intCast_eq modulus]
+    rfl
+  cases coefficients with
+  | nil => rfl
+  | cons coefficient remaining =>
+      have mapped := evalFromWith_map Fin.mul Fin.add (fun value : Int => (Fin.intCast value : Fin modulus))
+        map_mul map_add num (den : Int) (den : Int) coefficient remaining
+      exact mapped.trans (congrArg (fun value : Int => (Fin.intCast value : Fin modulus))
+        (eval_eq num den (coefficient :: remaining)))
 
 /-- Last high-to-low coefficient, with zero only for the empty list. -/
 @[expose] public def constantCoefficient : List Int → Int

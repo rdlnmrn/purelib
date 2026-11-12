@@ -7,6 +7,7 @@ checks. All compilation uses separate outputs.
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -21,30 +22,66 @@ class HostBackendTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
         self.src=self.root/'source/ModuleVerification';self.obj=self.root/'objects/ModuleVerification'
         self.src.mkdir(parents=True);self.obj.mkdir(parents=True)
-        base=subprocess.check_output([str(LAKE),'env','printenv','LEAN_PATH'],cwd=ROOT,text=True).strip()
-        self.env={**os.environ,'LEAN_PATH':str(self.obj.parent)+':'+base}
+        raw=subprocess.check_output([str(LAKE),'env','python3','-c',
+            'import json,os; print(json.dumps(dict(os.environ)))'],cwd=ROOT,text=True)
+        self.env=json.loads(raw)
+        self.env['LEAN_PATH']=str(self.obj.parent)+os.pathsep+self.env['LEAN_PATH']
+        self.lean=shutil.which('lean',path=self.env['PATH'])
+        self.python=shutil.which('python3',path=self.env['PATH'])
+        self.assertIsNotNone(self.lean)
+        self.assertIsNotNone(self.python)
 
     def compile(self,text):
         source=self.src/'RootMetadata.lean';source.write_text(text)
-        r=subprocess.run([str(LAKE),'env','env','LEAN_PATH='+self.env['LEAN_PATH'],'lean','-E','warning',
+        r=subprocess.run([self.lean,'-E','warning',
              '--root='+str(self.src.parent),'-o',str(self.obj/'RootMetadata.olean'),str(source)],
-             cwd=ROOT,text=True,capture_output=True)
+             cwd=ROOT,env=self.env,text=True,capture_output=True)
         self.assertEqual(r.returncode,0,r.stdout+r.stderr)
 
-    def audit(self,report_ir_only=False,success=False,all_helpers=False):
+    def audit(self,report_ir_only=False,success=False,all_helpers=False,cores=1):
         module='ModuleVerification.RootMetadata';manifest=self.root/'modules.txt';manifest.write_text(module+'\n')
         self.audit_count=getattr(self,'audit_count',0)+1
         result=self.root/('audit-'+str(self.audit_count)+'.tsv')
-        args=[str(LAKE),'env','env','LEAN_PATH='+self.env['LEAN_PATH'],'python3',
+        args=[self.python,
              str(ROOT/'scripts/project-module-data.py'),'audit','--project',str(manifest),
-             '--assigned',str(manifest),'--canonical','false','--result',str(result)]
+             '--assigned',str(manifest),'--canonical','false','--result',str(result),'--cores',str(cores)]
         if report_ir_only:args.append('--report-ir-only')
         if all_helpers:args.append('--all-helpers')
-        r=subprocess.run(args,cwd=ROOT,text=True,capture_output=True)
+        r=subprocess.run(args,cwd=ROOT,env=self.env,text=True,capture_output=True)
         self.assertEqual(r.returncode==0,success,r.stdout+r.stderr)
         self.assertEqual(result.exists(),success)
         rows=[json.loads(line)for line in Path(str(result)+'.closures.jsonl').read_text().splitlines()]
         return r,rows,result
+
+    def check_parallel_records(self, helpers):
+        self.compile('''module
+public import Init
+namespace ModuleVerification
+/-- A clean source-facing operation. -/
+public def cleanValue : Nat := 7
+/-- An independently excluded helper with an intentionally dirty proof. -/
+private meta def dirtyMeta : (0 : Nat) = 0 := Eq.mp (propext Iff.rfl) rfl
+/-- An excluded generated-style equation whose closure remains inspectable. -/
+public theorem generated.eq_def : cleanValue = 7 := Eq.mp (propext Iff.rfl) rfl
+end ModuleVerification
+''')
+        _, serial, first = self.audit(report_ir_only=True, success=not helpers,
+                                      all_helpers=helpers, cores=1)
+        _, parallel, second = self.audit(report_ir_only=True, success=not helpers,
+                                         all_helpers=helpers, cores=2)
+        self.assertEqual(parallel, serial)
+        self.assertEqual(Path(str(first)+'.ir-only.jsonl').read_bytes(),
+                         Path(str(second)+'.ir-only.jsonl').read_bytes())
+        if helpers:
+            self.assertTrue(any(row['axioms'] == ['propext'] for row in parallel if row['kind']=='root'))
+        else:
+            self.assertEqual(first.read_bytes(), second.read_bytes())
+
+    def test_parallel_normal_and_ir_records_match_serial(self):
+        self.check_parallel_records(False)
+
+    def test_parallel_all_helpers_and_ir_records_match_serial(self):
+        self.check_parallel_records(True)
 
     def test_actual_meta_unsafe_registered_rewrite_and_partial_helpers(self):
         self.compile('''module
@@ -196,10 +233,10 @@ private meta def ModuleVerification.dirtyMeta : (0 : Nat) = 0 := Eq.mp (propext 
         self.compile('module\npublic theorem ModuleVerification.clean : True := True.intro\n')
         main=self.obj/'RootMetadata.olean';raw=bytearray(main.read_bytes());raw[40]^=1;main.write_bytes(raw)
         manifest=self.root/'modules.txt';manifest.write_text('ModuleVerification.RootMetadata\n');result=self.root/'invalid.tsv'
-        r=subprocess.run([str(LAKE),'env','env','LEAN_PATH='+self.env['LEAN_PATH'],'python3',
+        r=subprocess.run([self.python,
              str(ROOT/'scripts/project-module-data.py'),'audit','--project',str(manifest),
              '--assigned',str(manifest),'--canonical','false','--result',str(result)],
-             cwd=ROOT,text=True,capture_output=True)
+             cwd=ROOT,env=self.env,text=True,capture_output=True)
         self.assertNotEqual(r.returncode,0)
         self.assertIn('compiler revision mismatch',r.stdout)
         self.assertFalse(result.exists())

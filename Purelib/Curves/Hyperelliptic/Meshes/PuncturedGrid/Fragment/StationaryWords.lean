@@ -1,4 +1,5 @@
 module
+import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Data.List.Filter
 import Purelib.Riemann.Integration.PreparedSubdivisionModelCore
 import Purelib.Riemann.Meshes.FramedPuncturedGrid
@@ -81,15 +82,19 @@ open Purelib.Riemann.Meshes.GridLiftedMesh (LiftedMesh)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment
 open Purelib.Riemann.Readings.PreparedBoundaryClosure (ClosedBoundaryDoublePath)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
+
+variable {numerator : CoefficientPolynomial}
+
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
+  {frames : SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
       SquareRoot.Grid.LiftedVertices.VertexBank
     base.bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
-  {source : Hyperelliptic.Differentials.Basic.Differential genus} {axes :
-    Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveAxes base.bank.grid}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames base.faces.regulars} {mesh :
+  {source : Differentials.Basic.Differential genus} {axes :
+    PreparedPrimitiveSplits.PrimitiveAxes base.bank.grid}
+  {domains : Face.DomainBanks.FaceDomainBank frames base.faces.regulars} {mesh :
     LiftedMesh vertices edges base.faces}
   {count : Nat} {target : Fraction.Rational}
 
@@ -100,20 +105,20 @@ namespace SheetEntries.RegularPrimitiveFragment.SheetEntry
 The original local request and endpoint contact retain the sample's patch membership. Its point comparison uses the
 supplied parameter and exact contact equality with that same sample owner. -/
 private theorem query_equivalent_at_first {parent : CenteredEdge curve source}
-    {partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)}
-      {interval : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval}
-    {fragment : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.RegularPrimitiveFragment axes
+    {cuts : List Fraction.Rational} {partition : Rectangle.AxisPartition 0 1 cuts}
+      {interval : Rectangle.Partition.PreparedAxisPartitions.Interval}
+    {fragment : RegularFaces.RegularPrimitiveFragment axes
       parent partition interval} {request : LocalRequest parent count target}
     (assigned :
-      Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SheetEntries.RegularPrimitiveFragment.SheetEntry
+      SheetEntry
       fragment domains request) (parameter : Fraction.Rational) (inside : 0 ≤ parameter ∧ parameter ≤ 1)
     (equal : parent.edge.point parameter = fragment.located.first) :
     Nonempty (Gaussian.Equivalence.NamedEquivalent (parent.edge.rootName parameter inside)
-      (Purelib.Riemann.Paths.OwnerTraceReadings.ownerName assigned.sample.owner)) := by
+      (Riemann.Paths.OwnerTraceReadings.ownerName assigned.sample.owner)) := by
   rcases request with ⟨patch, neighborhood, neighborhoodEq, requested, finishInside⟩
   subst neighborhood
   exact ⟨patch.point_equivalent_at count parameter inside equal
-    (Hyperelliptic.Meshes.PuncturedGrid.Fragment.AnalyticComparison.neighborhood_endpoints assigned).1 assigned.sample⟩
+    (AnalyticComparison.neighborhood_endpoints assigned).1 assigned.sample⟩
 
 end SheetEntries.RegularPrimitiveFragment.SheetEntry
 
@@ -123,11 +128,11 @@ namespace RootedWords.LiftedFragment
 
 Stationarity identifies the original fragment endpoints. The two retained point comparisons compose through the same
 local sample owner to certify the root handoff. -/
-theorem stationary_roots (piece : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains
+theorem stationary_roots (piece : LiftedFragment axes domains
   mesh source count target)
     (stationary : piece.last = piece.first) : Nonempty (Gaussian.Equivalence.NamedEquivalent piece.firstName
       piece.lastName) := by
-  obtain ⟨first⟩ := piece.assigned.original
+  let first := piece.assigned.original
   obtain ⟨last⟩ := piece.assigned.query_equivalent_at_first piece.interval.upper piece.occurrence.finishInside
     (piece.fragment.located.last_eq.symm.trans stationary)
   exact ⟨first.trans last.symm⟩
@@ -136,9 +141,9 @@ theorem stationary_roots (piece : Hyperelliptic.Meshes.PuncturedGrid.Fragment.Ro
 
 The original Boolean endpoint comparison filters the supplied list in order. Every moving occurrence retains its same
 parent, request, face assignment and lifted edge cache. -/
-@[expose] def movingPieces (pieces : List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes
+@[expose] def movingPieces (pieces : List (LiftedFragment axes
   domains mesh source count target)) :
-    List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh source count target)
+    List (LiftedFragment axes domains mesh source count target)
       :=
   pieces.filter (fun piece => decide (piece.last ≠ piece.first))
 
@@ -147,21 +152,21 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.Lift
 
 The unchanged Boolean predicate acts on both original list spines. Filtering keeps the same accepted occurrences and
 their order before concatenating them. -/
-theorem movingPieces_append (first last : List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment
+theorem movingPieces_append (first last : List (LiftedFragment
   axes domains mesh source count target)) :
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.movingPieces (first ++ last) =
-      Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.movingPieces first ++
-      Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.movingPieces last := Filter.filter_append _
+    LiftedFragment.movingPieces (first ++ last) =
+      LiftedFragment.movingPieces first ++
+      LiftedFragment.movingPieces last := Filter.filter_append _
       first last
 
 /-- Each retained moving fragment is an original list member with distinct endpoints.
 
 The unchanged filter supplies the original occurrence and its true Boolean acceptance certificate. Decoding that same
 result certifies the retained endpoint inequality. -/
-theorem movingPieces_mem {pieces : List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes
+theorem movingPieces_mem {pieces : List (LiftedFragment axes
   domains mesh source count target)}
-    {piece : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh source count
-      target} (member : piece ∈ Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.movingPieces
+    {piece : LiftedFragment axes domains mesh source count
+      target} (member : piece ∈ LiftedFragment.movingPieces
       pieces) :
     piece ∈ pieces ∧ piece.last ≠ piece.first := by
   have present := Filter.mem_filter.mp member
@@ -172,26 +177,26 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.Lift
 
 Each removed occurrence supplies its actual query-root handoff through the retained sample owner. The remaining word
 keeps its original endpoint equivalences and all moving occurrences. -/
-theorem RootedWord.moving {pieces : List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes
+theorem RootedWord.moving {pieces : List (LiftedFragment axes
   domains mesh source count target)}
     {first last : Gaussian.Basic.Canonical} {firstName lastName : Gaussian.Name.Basic.Named}
-    (word : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.RootedWord pieces first firstName
+    (word : RootedWord pieces first firstName
       last lastName) :
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.RootedWord
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.movingPieces pieces) first firstName last
+    RootedWord
+      (LiftedFragment.movingPieces pieces) first firstName last
       lastName := by
   induction word with
   | nil coordinate root => exact .nil coordinate root
   | cons piece coordinate root tail ih =>
       by_cases stationary : piece.last = piece.first
       · have removed : decide (piece.last ≠ piece.first) = false := decide_eq_false (not_not_intro stationary)
-        rewrite [Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.movingPieces,
+        rewrite [LiftedFragment.movingPieces,
           Filter.filter_cons_of_neg (head := piece) (predicate := fun item => decide (item.last ≠ item.first)) (fun
             accepted => Bool.noConfusion (removed.symm.trans accepted))]
         obtain ⟨entry⟩ := root
         obtain ⟨through⟩ := piece.stationary_roots stationary
         exact ih.changeStart (coordinate.trans stationary.symm) ⟨entry.trans through⟩
-      · rewrite [Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.movingPieces,
+      · rewrite [LiftedFragment.movingPieces,
           Filter.filter_cons_of_pos (head := piece) (predicate := fun item => decide (item.last ≠ item.first))
             (decide_eq_true stationary)]
         exact .cons piece coordinate root ih
@@ -200,42 +205,42 @@ theorem RootedWord.moving {pieces : List (Hyperelliptic.Meshes.PuncturedGrid.Fra
 
 Each removed occurrence has a certified zero increment for its original route and face selection. Scalar addition
 transports the unchanged tail, preserving repeated occurrences and the original moving sum. -/
-theorem movingPieces_sum (pieces : List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes
+theorem movingPieces_sum (pieces : List (LiftedFragment axes
   domains mesh source count target))
     {points : List Gaussian.Basic.Canonical} {tolerance : Fraction.Rational} {index : Nat}
-    {budgets : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceMeshBudgets source points tolerance domains}
-      {numerics : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank source index domains}
-    (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum
-      ((Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.movingPieces pieces).map (fun piece =>
-      Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteContacts.routeValue piece
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.canonicalRoute piece) shared)) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (pieces.map (fun piece =>
-        Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteContacts.routeValue piece
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.canonicalRoute piece) shared)) := by
+    {budgets : Face.CommonMeshes.FaceMeshBudgets source points tolerance (numerator := numerator) domains}
+      {numerics : Face.PrimitiveData.FacePrimitiveBank source index (numerator := numerator) domains}
+    (shared : Face.CommonMeshes.FaceSharedMeshes budgets numerics) :
+    Gaussian.Norm.Sum.Basic.gaussianSum
+      ((LiftedFragment.movingPieces pieces).map (fun piece =>
+      RouteContacts.routeValue piece
+      (RouteWords.canonicalRoute piece) shared)) =
+      Gaussian.Norm.Sum.Basic.gaussianSum (pieces.map (fun piece =>
+        RouteContacts.routeValue piece
+        (RouteWords.canonicalRoute piece) shared)) := by
   induction pieces with
   | nil => rfl
   | cons piece pieces ih =>
       by_cases stationary : piece.last = piece.first
       · have removed : decide (piece.last ≠ piece.first) = false := decide_eq_false (not_not_intro stationary)
-        rewrite [Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.movingPieces,
+        rewrite [LiftedFragment.movingPieces,
           Filter.filter_cons_of_neg (head := piece) (predicate := fun item => decide (item.last ≠ item.first)) (fun
             accepted => Bool.noConfusion (removed.symm.trans accepted)), List.map_cons]
-        change Data.Gaussian.Norm.Sum.Basic.gaussianSum _ =
-          Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteContacts.routeValue piece
-          (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.canonicalRoute piece) shared +
-          Data.Gaussian.Norm.Sum.Basic.gaussianSum _
-        rw [Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.routeValue_stationary piece stationary shared,
+        change Gaussian.Norm.Sum.Basic.gaussianSum _ =
+          RouteContacts.routeValue piece
+          (RouteWords.canonicalRoute piece) shared +
+          Gaussian.Norm.Sum.Basic.gaussianSum _
+        rw [RouteCancellation.routeValue_stationary piece stationary shared,
           zero_add]
         exact ih
-      · rewrite [Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.movingPieces,
+      · rewrite [LiftedFragment.movingPieces,
           Filter.filter_cons_of_pos (head := piece) (predicate := fun item => decide (item.last ≠ item.first))
             (decide_eq_true stationary), List.map_cons, List.map_cons]
-        change Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteContacts.routeValue piece
-          (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.canonicalRoute piece) shared +
-          Data.Gaussian.Norm.Sum.Basic.gaussianSum _ = _ + Data.Gaussian.Norm.Sum.Basic.gaussianSum _
-        exact congrArg (fun rest => Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteContacts.routeValue piece
-          (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.canonicalRoute piece) shared + rest) ih
+        change RouteContacts.routeValue piece
+          (RouteWords.canonicalRoute piece) shared +
+          Gaussian.Norm.Sum.Basic.gaussianSum _ = _ + Gaussian.Norm.Sum.Basic.gaussianSum _
+        exact congrArg (fun rest => RouteContacts.routeValue piece
+          (RouteWords.canonicalRoute piece) shared + rest) ih
 
 end RootedWords.LiftedFragment
 
@@ -246,19 +251,19 @@ namespace SourceWords
 Every original segment retains its rooted word and source certificates on the accepted subword. Concatenation joins the
 same ordered segment groups after the certified stationary handoffs. -/
 theorem PathSourceWords.moving {ambient : Rational.Box} {start finish : Gaussian.Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {firstName lastName : Gaussian.Name.Basic.Named}
-    {pieces : List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh source
+    {pieces : List (RootedWords.LiftedFragment axes domains mesh source
       count target)}
-    (words : Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceWords.PathSourceWords path firstName lastName pieces) :
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceWords.PathSourceWords path firstName lastName
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.movingPieces pieces) := by
+    (words : PathSourceWords path firstName lastName pieces) :
+    PathSourceWords path firstName lastName
+      (RootedWords.LiftedFragment.movingPieces pieces) := by
   induction words with
   | nil point equivalent => exact .nil point equivalent
   | cons word original remaining ih =>
-      rw [Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.movingPieces_append]
+      rw [RootedWords.LiftedFragment.movingPieces_append]
       exact .cons word.moving (fun piece member => original piece
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.movingPieces_mem member).1) ih
+        (RootedWords.LiftedFragment.movingPieces_mem member).1) ih
 
 /-- Remove stationary original fragments from all four retained tour segments while preserving their query-root handoffs
 and source grouping.
@@ -267,16 +272,16 @@ The original forward, right, backward and left words are filtered independently 
 original tour ordering and retained junction certificates compose unchanged. -/
 theorem TourSourceWords.moving {tour : ClosedBoundaryDoublePath curve}
     {firstName lastName : Gaussian.Name.Basic.Named}
-    {pieces : List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh source
+    {pieces : List (RootedWords.LiftedFragment axes domains mesh source
       count target)}
-    (words : Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceWords.TourSourceWords tour firstName lastName pieces) :
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceWords.TourSourceWords tour firstName lastName
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.movingPieces pieces) := by
+    (words : TourSourceWords tour firstName lastName pieces) :
+    TourSourceWords tour firstName lastName
+      (RootedWords.LiftedFragment.movingPieces pieces) := by
   cases words with
   | mk forward right backward left =>
-      rw [Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.movingPieces_append,
-        Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.movingPieces_append,
-        Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.movingPieces_append]
+      rw [RootedWords.LiftedFragment.movingPieces_append,
+        RootedWords.LiftedFragment.movingPieces_append,
+        RootedWords.LiftedFragment.movingPieces_append]
       exact .mk forward.moving right.moving backward.moving left.moving
 
 end SourceWords

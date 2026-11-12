@@ -100,10 +100,17 @@ example {polynomial : CheckedSquareRootPreparation.GaussianPolynomial}
     report.warmup.steps.length ≤ 2 ∧ report.search.steps.length ≤ 6 ∧ report.value =
       match CheckedSquareRootPreparation.searchValue segment parameter owner diameter with
       | none => none
-      | some accepted => CheckedSquareRootPreparation.acceptedValue segment parameter owner diameter accepted :=
-  ⟨(CheckedSquareRootPreparation.attempt segment parameter owner diameter).warmup.execution.length_le,
-    (CheckedSquareRootPreparation.attempt segment parameter owner diameter).search.execution.length_le,
-    CheckedSquareRootPreparation.attempt_value_eq segment parameter owner diameter⟩
+      | some accepted => CheckedSquareRootPreparation.acceptedValue segment parameter owner diameter accepted := by
+  refine ⟨(CheckedSquareRootPreparation.attempt segment parameter owner diameter).warmup.execution.length_le,
+    (CheckedSquareRootPreparation.attempt segment parameter owner diameter).search.execution.length_le, ?_⟩
+  have retained := CheckedSquareRootPreparation.attempt_value_eq segment parameter owner diameter
+  cases found : CheckedSquareRootPreparation.searchValue segment parameter owner diameter with
+  | none =>
+      rewrite [found] at retained
+      exact retained
+  | some accepted =>
+      rewrite [found] at retained
+      exact retained
 
 end
 

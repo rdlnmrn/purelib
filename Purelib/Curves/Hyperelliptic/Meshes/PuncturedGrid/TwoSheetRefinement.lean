@@ -47,24 +47,24 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks (FaceDom
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes (RegularMeshes)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes (Preflights)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest (TwoSheetRequest)
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {faces : List
-    (Purelib.Riemann.Meshes.PuncturedGridFaces.RegularFace bank)}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces}
-  {coarse : (sheet : Fin 2) → Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes
+    (RegularFace bank)}
+  {domains : FaceDomainBank frames faces}
+  {coarse : (sheet : Fin 2) → RegularMeshes
     domains sheet}
   {fixed : (sheet : Fin 2) →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
-    {target : Purelib.Data.Rat.Fraction.Rational}
+    Preflights domains sheet}
+    {target : Rational}
 
 /-- Refine both retained regular-sheet energy requests to the supplied later depth, preserving their original coarse
 partitions and numerical stage floor. -/
-@[expose] def atDepth (request : TwoSheetBilinearRequest.TwoSheetRequest coarse fixed target) (depth : Nat) (later :
+@[expose] def atDepth (request : TwoSheetRequest coarse fixed target) (depth : Nat) (later :
   request.depth ≤ depth) :
-    TwoSheetBilinearRequest.TwoSheetRequest coarse fixed target := by
+    TwoSheetRequest coarse fixed target := by
   have faceLater (sheet : Fin 2) (position : Fin faces.length) :
       ((request.entries.get sheet).entries.get position).depth ≤ depth :=
     (request.depth_eq sheet position).trans_le later
@@ -76,15 +76,15 @@ partitions and numerical stage floor. -/
     rw [DependentVector.ofFn_get]
     exact (request.entries.get sheet).atDepth_entry_depth depth (faceLater sheet) position
   · intro sheet
-    exact (entries.get_le_maximum (fun _ entry => entry.index) sheet).trans (Purelib.Data.Nat.Order.le_max_right _ _)
+    exact (entries.get_le_maximum (fun _ entry => entry.index) sheet).trans (Data.Nat.Order.le_max_right _ _)
 
 /-- The original numerical lower bound remains part of the refined request.
 
 The refined request retains the original request index as one argument of its displayed maximum. The comparison does not
 alter any selected sheet or entry. -/
-theorem atDepth_index_ge (request : TwoSheetBilinearRequest.TwoSheetRequest coarse fixed target) (depth : Nat)
+theorem atDepth_index_ge (request : TwoSheetRequest coarse fixed target) (depth : Nat)
     (later : request.depth ≤ depth) : request.index ≤ (request.atDepth depth later).index :=
-  Purelib.Data.Nat.Order.le_max_left _ _
+  Data.Nat.Order.le_max_left _ _
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
 

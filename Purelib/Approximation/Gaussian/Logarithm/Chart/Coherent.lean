@@ -18,6 +18,8 @@ import Purelib.Approximation.Gaussian.Logarithm.Complex.Progressive.Local.Domain
 import Purelib.Approximation.Gaussian.Name.Apart
 import Purelib.Data.Gaussian.Basic
 
+open Purelib.Approximation.Gaussian.Process.Coherence.Basic
+
 open Purelib.Approximation.Gaussian.Logarithm (Chart)
 open Purelib.Approximation.Gaussian.Name.Basic (Named)
 
@@ -56,9 +58,9 @@ namespace Purelib.Approximation.Gaussian.Logarithm.Chart.Coherent
 def complexLogNamedCoherent (input :
   Named)
     (chart : Chart input)
-    (correctionCoherent : Gaussian.Process.Coherence.Basic.Coherent chart.correction.process) :
-    Gaussian.Process.Coherence.Basic.Coherent (Name.named input chart).process :=
-  Gaussian.Process.Coherence.Basic.Coherent.add
+    (correctionCoherent : Coherent chart.correction.process) :
+    Coherent (Name.named input chart).process :=
+  Coherent.add
     (Coherent.localComplexLogCoherent
       (Reduction.reduced input chart.factor
         chart.denominatorApart) chart.reducedDisk)
@@ -98,44 +100,44 @@ namespace Purelib.Approximation.Gaussian.Logarithm.Chart.Coherent
 def scaledCoherent (input : Named)
   (chart : Chart input)
     (inputCoherent :
-      Gaussian.Process.Coherence.Basic.Coherent input.process) :
-    Gaussian.Process.Coherence.Basic.Coherent
+      Coherent input.process) :
+    Coherent
       (Reduction.scaled input chart.factor).process :=
-  Gaussian.Process.Coherence.Basic.Coherent.mul
-    (Gaussian.Process.Coherence.Basic.Coherent.exact chart.factor)
+  Coherent.mul
+    (Coherent.exact chart.factor)
     inputCoherent
 
 /-- The stateful chart numerator inherits finite coherence. -/
 def numeratorCoherent (input : Named)
   (chart : Chart input)
     (inputCoherent :
-      Gaussian.Process.Coherence.Basic.Coherent input.process) :
-    Gaussian.Process.Coherence.Basic.Coherent
+      Coherent input.process) :
+    Coherent
       (Reduction.numerator input chart.factor).process :=
-  Gaussian.Process.Coherence.Basic.Coherent.sub
+  Coherent.sub
     (scaledCoherent input chart inputCoherent)
-    (Gaussian.Process.Coherence.Basic.Coherent.exact 1)
+    (Coherent.exact 1)
 
 /-- The unprepared stateful chart denominator inherits finite coherence. -/
 def denominatorCoherent (input :
   Named) (chart : Chart input)
     (inputCoherent :
-      Gaussian.Process.Coherence.Basic.Coherent input.process) :
-    Gaussian.Process.Coherence.Basic.Coherent
+      Coherent input.process) :
+    Coherent
       (Reduction.denominator input chart.factor).process :=
-  Gaussian.Process.Coherence.Basic.Coherent.add
+  Coherent.add
     (scaledCoherent input chart inputCoherent)
-    (Gaussian.Process.Coherence.Basic.Coherent.exact 1)
+    (Coherent.exact 1)
 
 /-- One finite whole-ball apartness preparation preserves denominator coherence. -/
 def preparedDenominatorCoherent (input :
   Named) (chart : Chart input)
     (inputCoherent :
-      Gaussian.Process.Coherence.Basic.Coherent input.process) :
-    Gaussian.Process.Coherence.Basic.Coherent
+      Coherent input.process) :
+    Coherent
       (Reduction.preparedDenominator input chart.factor
         chart.denominatorApart).process :=
-  Gaussian.Process.Coherence.Basic.Coherent.apartify
+  Coherent.apartify
     (denominatorCoherent input chart inputCoherent)
       chart.denominatorApart
 
@@ -144,11 +146,11 @@ and its displayed denominator apartness. -/
 def reducedCoherent (input : Named)
   (chart : Chart input)
     (inputCoherent :
-      Gaussian.Process.Coherence.Basic.Coherent input.process) :
-    Gaussian.Process.Coherence.Basic.Coherent
+      Coherent input.process) :
+    Coherent
       (Reduction.reduced input chart.factor
         chart.denominatorApart).process :=
-  Gaussian.Process.Coherence.Basic.Coherent.div
+  Coherent.div
     (numeratorCoherent input chart inputCoherent)
     (preparedDenominatorCoherent input chart inputCoherent)
     (Reduction.preparedDenominatorApart
@@ -159,7 +161,7 @@ def reducedCoherent (input : Named)
 /-- The actual local-output and correction inputs of a chart, packaged with their finite coherence certificates. -/
 def localOutputCoherentNamed (input :
   Named) (chart : Chart input) :
-    Coherent.CoherentNamed :=
+    CoherentNamed :=
   { name := Name.localOutput input chart
     coherent :=
       Coherent.localComplexLogCoherent
@@ -170,9 +172,9 @@ def localOutputCoherentNamed (input :
 def correctionCoherentNamed (input :
   Named) (chart : Chart input)
     (correctionCoherent :
-      Gaussian.Process.Coherence.Basic.Coherent
+      Coherent
         chart.correction.process) :
-    Coherent.CoherentNamed :=
+    CoherentNamed :=
   { name := chart.correction
     coherent := correctionCoherent }
 end Purelib.Approximation.Gaussian.Logarithm.Chart.Coherent
@@ -199,50 +201,50 @@ independently selected branches from equality of their exponentials.
 namespace Purelib.Approximation.Gaussian.Logarithm.Chart.Coherent
 
 /-- Coherent packaging of the chart numerator. -/
-def numeratorName (input : Coherent.CoherentNamed)
+def numeratorName (input : CoherentNamed)
   (branch : Anchored.AnchoredChart input) :
-    Coherent.CoherentNamed where
+    CoherentNamed where
   name := Reduction.numerator input.name branch.chart.factor
   coherent := numeratorCoherent
     input.name branch.chart input.coherent
 
 /-- Coherent packaging of the unprepared chart denominator. -/
-def denominatorName (input : Coherent.CoherentNamed)
+def denominatorName (input : CoherentNamed)
   (branch : Anchored.AnchoredChart input) :
-    Coherent.CoherentNamed where
+    CoherentNamed where
   name := Reduction.denominator input.name branch.chart.factor
   coherent := denominatorCoherent
     input.name branch.chart input.coherent
 
 /-- Coherent packaging of the chart's actual apartified denominator. -/
 def preparedDenominatorName (input :
-  Coherent.CoherentNamed)
-    (branch : Anchored.AnchoredChart input) : Coherent.CoherentNamed :=
+  CoherentNamed)
+    (branch : Anchored.AnchoredChart input) : CoherentNamed :=
   CoherentNamed.apartify
     (denominatorName input branch) branch.chart.denominatorApart
 
 /-- Coherent packaging of the independently sampled reduced quotient. -/
-def reducedName (input : Coherent.CoherentNamed) (branch
+def reducedName (input : CoherentNamed) (branch
   : Anchored.AnchoredChart input) :
-    Coherent.CoherentNamed where
+    CoherentNamed where
   name := Reduction.reduced input.name branch.chart.factor
     branch.chart.denominatorApart
   coherent := reducedCoherent
     input.name branch.chart input.coherent
 
 /-- Coherent packaging of the local logarithm before adding its branch correction. -/
-def localOutputName (input : Coherent.CoherentNamed)
+def localOutputName (input : CoherentNamed)
   (branch : Anchored.AnchoredChart input) :
-    Coherent.CoherentNamed where
+    CoherentNamed where
   name := Name.localOutput input.name branch.chart
   coherent := Coherent.localComplexLogCoherent
     (Reduction.reduced input.name branch.chart.factor
       branch.chart.denominatorApart) branch.chart.reducedDisk
 
 /-- Coherent packaging of the explicitly anchored correction. -/
-def correctionName {input : Coherent.CoherentNamed}
+def correctionName {input : CoherentNamed}
   (branch : Anchored.AnchoredChart input) :
-    Coherent.CoherentNamed where
+    CoherentNamed where
   name := branch.chart.correction
   coherent := branch.correctionCoherent
 end Purelib.Approximation.Gaussian.Logarithm.Chart.Coherent

@@ -85,7 +85,7 @@ open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {source :
   Differential genus}
-  {ambient : Purelib.Geometry.Rational.Box} {grid : Polynomial.Geometry.Grid.ClearGrid
+  {ambient : Geometry.Rational.Box} {grid : ClearGrid
     curve.polynomial ambient} {axes :
     PrimitiveAxes grid}
 
@@ -96,8 +96,8 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits (
 /-- Each crossing with an original retained vertical grid coordinate belongs to the parent's full split-parameter list.
 -/
 private theorem vertical_parameters (axes : PreparedPrimitiveSplits.PrimitiveAxes grid) (parent :
-  PreparedSubdivisionModelCore.CenteredEdge curve source)
-    {cut : Fraction.Rational} (present : cut ∈ axes.vertical) {parameter : Fraction.Rational}
+  CenteredEdge curve source)
+    {cut : Rational} (present : cut ∈ axes.vertical) {parameter : Rational}
     (member : parameter ∈ PreparedSegmentCuts.crossings (parent.edge.point 0).re
       ((parent.edge.point 1).re - (parent.edge.point 0).re) [cut]) : parameter ∈ axes.parameters parent := by
   apply List.mem_append_left
@@ -107,8 +107,8 @@ private theorem vertical_parameters (axes : PreparedPrimitiveSplits.PrimitiveAxe
 /-- Each crossing with an original retained horizontal grid coordinate belongs to the parent's full split-parameter
 list. -/
 private theorem horizontal_parameters (axes : PreparedPrimitiveSplits.PrimitiveAxes grid) (parent :
-  PreparedSubdivisionModelCore.CenteredEdge curve source)
-    {cut : Fraction.Rational} (present : cut ∈ axes.horizontal) {parameter : Fraction.Rational}
+  CenteredEdge curve source)
+    {cut : Rational} (present : cut ∈ axes.horizontal) {parameter : Rational}
     (member : parameter ∈ PreparedSegmentCuts.crossings (parent.edge.point 0).im
       ((parent.edge.point 1).im - (parent.edge.point 0).im) [cut]) : parameter ∈ axes.parameters parent := by
   apply List.mem_append_right
@@ -118,10 +118,10 @@ private theorem horizontal_parameters (axes : PreparedPrimitiveSplits.PrimitiveA
 /-- The selected actual cell contains the whole affine fragment, rather than only the point used by the finite locator.
 -/
 theorem cell_endpoints (axes : PreparedPrimitiveSplits.PrimitiveAxes grid) (parent :
-  PreparedSubdivisionModelCore.CenteredEdge curve source)
-    (partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)) {interval :
+  CenteredEdge curve source)
+    (partition : Partition 0 1 (axes.parameters parent)) {interval :
       PreparedAxisPartitions.Interval}
-    (member : interval ∈ partition.intervals) {cell : ClearGrid.Cell curve.polynomial ambient} (cellMember : cell ∈
+    (member : interval ∈ partition.intervals) {cell : Cell curve.polynomial ambient} (cellMember : cell ∈
       grid.cells)
     (middleInside : cell.box.Contains (parent.edge.point ((interval.lower + interval.upper) / 2))) :
     cell.box.Contains (parent.edge.point interval.lower) ∧ cell.box.Contains (parent.edge.point interval.upper) := by
@@ -170,11 +170,11 @@ set_option genInjectivity false in
 The selected cell contains both endpoints and the complete affine fragment.
 The indices and bounds refer to the original parent and splitting interval. -/
 structure PrimitiveFragmentCell (axes : PreparedPrimitiveSplits.PrimitiveAxes grid) (parent :
-  PreparedSubdivisionModelCore.CenteredEdge curve source)
-    (partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)) (interval :
+  CenteredEdge curve source)
+    {cuts : List Rational} (partition : Partition 0 1 cuts) (interval :
       PreparedAxisPartitions.Interval) where
   /-- The original interval belongs to its retained parent partition. -/ member : interval ∈ partition.intervals
-  /-- The cached actual grid cell containing the original fragment. -/ cell : ClearGrid.Cell curve.polynomial ambient
+  /-- The cached actual grid cell containing the original fragment. -/ cell : Cell curve.polynomial ambient
   /-- The cached fragment cell belongs to the original retained grid. -/ cell_member : cell ∈ grid.cells
   /-- The cached original fragment starting point. -/ first : Data.Gaussian.Basic.Canonical
   /-- The cached start equals the original parent point at the retained lower partition endpoint. -/ first_eq : first =
@@ -189,19 +189,19 @@ constructive_injectivity PrimitiveFragmentCell
 
 namespace PrimitiveFragmentCell
 
-variable {branches : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve} {higher : 1 <
+variable {branches : BranchIsolation.Data curve} {higher : 1 <
   curve.polynomial.natDegree}
 
 /-- Locate the original fragment midpoint in the retained framed grid and certify both original endpoints in that same
 cell. -/
-@[expose] def build (bank : Branches.FramedBranchCellBank curve branches higher) (axes :
+@[expose] def build (bank : FramedBranchCellBank curve branches higher) (axes :
   PreparedPrimitiveSplits.PrimitiveAxes bank.grid)
-    (parent : PreparedSubdivisionModelCore.CenteredEdge curve source) (partition : Geometry.Rectangle.AxisPartition 0 1
+    (parent : CenteredEdge curve source) (partition : Partition 0 1
       (axes.parameters parent))
     (interval : PreparedAxisPartitions.Interval) (member : interval ∈ partition.intervals)
     (inside : (Cuts.Ambient curve).Contains (parent.edge.point 0) ∧
       (Cuts.Ambient curve).Contains (parent.edge.point 1)) :
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedFragmentCells.PrimitiveFragmentCell axes parent partition
+        PrimitiveFragmentCell axes parent partition
         interval := by
   let parameter := (interval.lower + interval.upper) / 2
   have bounds := partition.interval_bounds member
@@ -210,7 +210,7 @@ cell. -/
     ⟨bounds.1.trans middle.1.le, middle.2.le.trans bounds.2⟩
   let found := bank.locate (parent.edge.point parameter)
     (PreparedPrimitivePaths.point_inside_of_endpoints parent _ inside.1 inside.2 parameterInside)
-  have endpoints := Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedFragmentCells.PrimitiveAxes.cell_endpoints axes
+  have endpoints := PrimitiveAxes.cell_endpoints axes
     parent partition member found.member found.contains
   exact ⟨member, found.cell, found.member, parent.edge.point interval.lower, rfl,
     parent.edge.point interval.upper, rfl, endpoints.1, endpoints.2⟩
@@ -223,8 +223,8 @@ set_option genInjectivity false in
 The dependent spine keeps each interval and its cell certificate in the
 original partition order, including repeated parent occurrences. -/
 inductive PrimitiveFragmentCells (axes : PreparedPrimitiveSplits.PrimitiveAxes grid) (parent :
-  PreparedSubdivisionModelCore.CenteredEdge curve source)
-    (partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)) : List PreparedAxisPartitions.Interval →
+  CenteredEdge curve source)
+    (partition : Partition 0 1 (axes.parameters parent)) : List PreparedAxisPartitions.Interval →
       Type
   /-- The empty original interval list retains no fragment locations. -/ | nil :
     PrimitiveFragmentCells axes parent partition
@@ -242,23 +242,23 @@ constructive_injectivity PrimitiveFragmentCells
 
 namespace PrimitiveFragmentCells
 
-variable {branches : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve} {higher : 1 <
+variable {branches : BranchIsolation.Data curve} {higher : 1 <
   curve.polynomial.natDegree}
 
 /-- Locate every original partition interval in order, retaining the actual grid cells and original endpoint
 certificates. -/
-@[expose] def build (bank : Branches.FramedBranchCellBank curve branches higher) (axes :
+@[expose] def build (bank : FramedBranchCellBank curve branches higher) (axes :
   PreparedPrimitiveSplits.PrimitiveAxes bank.grid)
-    (parent : PreparedSubdivisionModelCore.CenteredEdge curve source) (partition : Geometry.Rectangle.AxisPartition 0 1
+    (parent : CenteredEdge curve source) (partition : Partition 0 1
       (axes.parameters parent))
     (inside : (Cuts.Ambient curve).Contains (parent.edge.point 0) ∧ (Cuts.Ambient curve).Contains (parent.edge.point 1))
       :
     (intervals : List PreparedAxisPartitions.Interval) → (∀ interval ∈ intervals, interval ∈ partition.intervals) →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedFragmentCells.PrimitiveFragmentCells axes parent partition
+      PrimitiveFragmentCells axes parent partition
         intervals
   | [], _ => .nil
   | interval :: intervals, members =>
-      .cons (Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedFragmentCells.PrimitiveFragmentCell.build bank axes
+      .cons (PrimitiveFragmentCell.build bank axes
         parent partition interval (members _ List.mem_cons_self) inside)
         (build bank axes
           parent partition inside intervals (fun interval member => members interval (List.mem_cons_of_mem _ member)))
@@ -271,15 +271,15 @@ set_option genInjectivity false in
 Every repeated parent occurrence retains the locations of all its primitive
 fragments, with the original parent and interval identities. -/
 inductive LocatedPrimitiveSplits (axes : PreparedPrimitiveSplits.PrimitiveAxes grid) :
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)} → PreparedPrimitiveSplits.PrimitiveSplits
+    {parents : List (CenteredEdge curve source)} → PrimitiveSplits
       axes parents → Type
   /-- The empty original parent splitting has no retained fragment cells. -/ | nil :
     LocatedPrimitiveSplits axes .nil
   /-- Retain all original head-parent fragment locations and the exact matching split tail. -/ | cons {parent :
-    PreparedSubdivisionModelCore.CenteredEdge curve source} {parents : List (PreparedSubdivisionModelCore.CenteredEdge
+    CenteredEdge curve source} {parents : List (CenteredEdge
     curve source)}
-      {partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)} {splits :
-        PreparedPrimitiveSplits.PrimitiveSplits axes parents}
+      {partition : Partition 0 1 (axes.parameters parent)} {splits :
+        PrimitiveSplits axes parents}
       (head : PrimitiveFragmentCells axes parent
         partition partition.intervals) (tail :
         LocatedPrimitiveSplits axes splits) :
@@ -290,21 +290,21 @@ constructive_injectivity LocatedPrimitiveSplits
 
 namespace LocatedPrimitiveSplits
 
-variable {branches : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve} {higher : 1 <
+variable {branches : BranchIsolation.Data curve} {higher : 1 <
   curve.polynomial.natDegree}
 
 /-- Locate the fragments of every original parent splitting, preserving repeated parent occurrences and the exact
 partition spine. -/
-@[expose] def build (bank : Branches.FramedBranchCellBank curve branches higher) (axes :
+@[expose] def build (bank : FramedBranchCellBank curve branches higher) (axes :
   PreparedPrimitiveSplits.PrimitiveAxes bank.grid) :
-    ∀ {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)} (splits :
-      PreparedPrimitiveSplits.PrimitiveSplits axes parents),
+    ∀ {parents : List (CenteredEdge curve source)} (splits :
+      PrimitiveSplits axes parents),
       (∀ parent ∈ parents, (Cuts.Ambient curve).Contains (parent.edge.point 0) ∧
         (Cuts.Ambient curve).Contains (parent.edge.point 1)) →
-          Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedFragmentCells.LocatedPrimitiveSplits axes splits
+          LocatedPrimitiveSplits axes splits
   | _, .nil, _ => .nil
   | _, .cons (parent := parent) partition tail, inside =>
-      .cons (Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedFragmentCells.PrimitiveFragmentCells.build bank axes
+      .cons (PrimitiveFragmentCells.build bank axes
         parent partition (inside _ List.mem_cons_self) partition.intervals (fun _ member => member))
         (build bank axes
           tail (fun parent member => inside parent (List.mem_cons_of_mem _ member)))

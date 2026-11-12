@@ -83,15 +83,15 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedOccu
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedOccurrence
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
@@ -106,45 +106,45 @@ namespace RequestedSurfaceRuns
 variable {whole :
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
   regular domains differential} {previous :
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+  RegularDomainMeshes.RegularMeshes.CommonCuts domains}
   (selected : SourceCuts whole previous)
   {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {meshTarget :
-    Normalization.InverseRootPolynomial.Coordinate}
-  (request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
-    (fun sheet => Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
+    RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {meshTarget :
+    InverseRootPolynomial.Coordinate}
+  (request : TwoSheetBilinearRequest.TwoSheetRequest
+    (fun sheet => RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
       coarseDepth) fixed meshTarget)
 
 variable (traces :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedPhysicalComponent.RequestedSurfaceRuns.Traces (prepared :=
+  RequestedPhysicalComponent.RequestedSurfaceRuns.Traces (prepared :=
   prepared) selected request) {stage : Nat} (cache :
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage)
+  RegularDomainMeshes.RegularMeshes.Numerics domains stage)
 
-variable {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared}
+variable {retained : Preparation.CommonBasisPreparation prepared}
   {index : Nat} {inputs : retained.Inputs index}
   (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) {requested :
-    Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
-  (schedules : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.Schedules
+    InverseRootPolynomial.Coordinate} {minimum : Nat}
+  (schedules : SurfaceRunSchedules.RequestedSurfaceRuns.Schedules
     selected request retained inputs requested minimum)
   {vertices : (outer : Fin prepared.occurrences.length) → Fin
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.capacities selected
+    (SurfaceRunSchedules.RequestedSurfaceRuns.capacities selected
     request outer) → Nat}
   (owners :
     RunFaceSynchronization.CommonBasisPreparation.ParentRunSchedules.SharedOwnerBanks
     schedules
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedPhysicalComponent.RequestedSurfaceRuns.pieceCounts
+    (RequestedPhysicalComponent.RequestedSurfaceRuns.pieceCounts
     selected request) vertices)
   (perimeters :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedPhysicalComponent.RequestedSurfaceRuns.Perimeters
+    RequestedPhysicalComponent.RequestedSurfaceRuns.Perimeters
     selected request traces cache)
 
-variable (member : ∀ outer, Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+variable (member : ∀ outer, ParentIndices.occurrenceAt
   prepared.occurrences outer ∈ whole.occurrences)
   (face :
     RunFaceSynchronization.CommonBasisPreparation.ParentRunSchedules.FaceStage
     owners request.index) (later : face.stage ≤ stage)
 
-variable (readings : (row : Fin genus) → Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings
+variable (readings : (row : Fin genus) → TrianglePrimitiveReadings.TriangleReadings
   (cache.get row) lifted.mesh)
 
 /-- Each acquired occurrence contributes the corresponding canonical edge increment. -/
@@ -158,10 +158,10 @@ theorem acquired_canonical_word :
           outer)).flatten) =
       program.indexed.map (fun edge => Path.ConjugatePathReadback.conjugateDiagonal (FiniteSum.Fin.sumFin fun row =>
         coefficients row *
-        Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values edge)) :=
+        CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values edge)) :=
           by
   have totals := Data.List.OfFn.Basic.ofFn_congr (fun outer =>
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.AcquiredJoiningReadback.RequestedSurfaceRuns.acquired_total
+    AcquiredJoiningReadback.RequestedSurfaceRuns.acquired_total
       selected request traces cache coefficients schedules owners perimeters member face later outer)
   exact totals.trans
     (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation.cached_increment_word
@@ -175,7 +175,7 @@ theorem acquired_canonical_joiningArea :
       selected request traces cache coefficients schedules owners perimeters member face later) =
       Path.PairedIncrementArea.area (program.indexed.map (fun edge =>
         Path.ConjugatePathReadback.conjugateDiagonal (FiniteSum.Fin.sumFin fun row => coefficients row *
-          Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values edge)))
+          CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values edge)))
             :=
   congrArg Path.PairedIncrementArea.area
 
@@ -198,7 +198,7 @@ theorem acquired_canonical_boundary :
         physical +
         Path.PairedIncrementArea.area (program.indexed.map (fun edge =>
           Path.ConjugatePathReadback.conjugateDiagonal (FiniteSum.Fin.sumFin fun row => coefficients row *
-            Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values
+            CanonicalEdgeValues.edgeValuation lifted.mesh (readings row).values
               edge))) := by
   have boundary :=
     RequestedPerimeterBoundary.RequestedSurfaceRuns.PhysicalSamples.boundary_eq

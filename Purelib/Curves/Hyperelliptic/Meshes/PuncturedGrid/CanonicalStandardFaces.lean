@@ -71,7 +71,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.Framed
 variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
   Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
+  {frames : SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
       SquareRoot.Grid.LiftedVertices.VertexBank
     base.bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
   {mesh : LiftedMesh vertices edges base.faces} {first last : Gaussian.Basic.Canonical}
@@ -81,28 +81,28 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.F
 
 /-- The retained original face geometry is exactly the canonical lookup on its actual sheet. -/
 @[expose] def Canonical (faces :
-  Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces mesh walk owner) : Prop :=
-  faces.geometry = Hyperelliptic.Meshes.PuncturedGrid.SkeletonFaceAssignments.walkFaces mesh walk faces.sheet
+  OwnerWalkFaces mesh walk owner) : Prop :=
+  faces.geometry = SkeletonFaceAssignments.walkFaces mesh walk faces.sheet
 
 /-- The original sheet-specific face constructor selects the canonical lookup. -/
 theorem ofSheet_canonical (mesh : LiftedMesh vertices edges base.faces)
     (walk : Geometry.Grid.Walks.Walk base.bank.grid first last) (firstMember :
-      Polynomial.Geometry.Grid.FromStates.ContainsVertex base.bank.grid first)
+      Geometry.Grid.FromStates.ContainsVertex base.bank.grid first)
     (sheet : Fin 2) (aligned : Nonempty (Gaussian.Equivalence.NamedEquivalent
       (ownerName owner) (ownerName ((frames.frameAt first firstMember).owners sheet)))) :
-    Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces.Canonical
-      (Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces.ofSheet mesh walk
+    Canonical
+      (OwnerWalkFaces.ofSheet mesh walk
       firstMember sheet aligned) := rfl
 
 /-- The original owner-based face constructor selects the canonical lookup on its retained sheet. -/
 theorem build_canonical (mesh : LiftedMesh vertices edges base.faces)
     (walk : Geometry.Grid.Walks.Walk base.bank.grid first last) (firstMember :
-      Polynomial.Geometry.Grid.FromStates.ContainsVertex base.bank.grid first)
+      Geometry.Grid.FromStates.ContainsVertex base.bank.grid first)
     (owner : Owner (curve.polynomial.eval first)) :
-      Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces.Canonical
-      (Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces.build mesh walk
+      Canonical
+      (OwnerWalkFaces.build mesh walk
       firstMember owner) :=
-  Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces.ofSheet_canonical mesh walk
+  OwnerWalkFaces.ofSheet_canonical mesh walk
     firstMember _ _
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces
@@ -125,10 +125,10 @@ open Purelib.Data.List
 
 open Purelib.Riemann.Meshes (FramedPuncturedGrid LiftedPuncturedGrid)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
-  {base : FramedPuncturedGrid curve (Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve
+  {base : FramedPuncturedGrid curve (Branches.BranchConfiguration.configurationOfData curve
     branches).branches higher}
   {lifted : LiftedPuncturedGrid base} {index : Fin genus}
 
@@ -138,9 +138,9 @@ theorem
   (lifted : LiftedPuncturedGrid base) (index : Fin genus)
     (source : Integration.PreparedOwnerClosedBridges.OwnerClosedCyclePair curve)
     (sourceEq : source = Integration.PreparedOwnerClosedBridges.OwnerClosedCyclePair.ofData curve branches index) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.Pair.ofSource lifted index source
+    (TourFaces.StandardTours.Pair.ofSource lifted index source
       sourceEq).aFaces.Canonical :=
-  Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces.build_canonical _ _ _ _
+  TourFaces.FramedPuncturedGrid.OwnerWalkFaces.build_canonical _ _ _ _
 
 /-- The original source-pair constructor selects canonical face geometry for its actual B tour. -/
 theorem
@@ -148,9 +148,9 @@ theorem
   (lifted : LiftedPuncturedGrid base) (index : Fin genus)
     (source : Integration.PreparedOwnerClosedBridges.OwnerClosedCyclePair curve)
     (sourceEq : source = Integration.PreparedOwnerClosedBridges.OwnerClosedCyclePair.ofData curve branches index) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.Pair.ofSource lifted index source
+    (TourFaces.StandardTours.Pair.ofSource lifted index source
       sourceEq).bFaces.Canonical :=
-  Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces.ofSheet_canonical _ _ _ _ _
+  TourFaces.FramedPuncturedGrid.OwnerWalkFaces.ofSheet_canonical _ _ _ _ _
 
 variable {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
 
@@ -158,24 +158,24 @@ variable {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted
 theorem
   TourIntersection.IntersectionRow.ofPeriod_a_canonical
     {raw : List (Handle.Basic.PivotIndices lifted.cutBoundaryWord.alphabet.count)}
-    (normal : LinearAlgebra.Alternating.NormalForm integral.paired raw)
+    (normal : NormalForm integral.paired raw)
     (period : Periods.PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodRow curve)
     (periodEq : period = (Periods.PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodBank.ofData curve
       branches).rows index) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Standard.TourIntersection.IntersectionRow.ofPeriod lifted integral normal index
+    (TourIntersection.IntersectionRow.ofPeriod lifted integral normal index
       period periodEq).pair.aFaces.Canonical :=
-  Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.Pair.ofSource_a_canonical _ _ _ _
+  TourFaces.StandardTours.Pair.ofSource_a_canonical _ _ _ _
 
 /-- The actual B tour of the retained original period row has canonical face geometry. -/
 theorem
   TourIntersection.IntersectionRow.ofPeriod_b_canonical
     {raw : List (Handle.Basic.PivotIndices lifted.cutBoundaryWord.alphabet.count)}
-    (normal : LinearAlgebra.Alternating.NormalForm integral.paired raw)
+    (normal : NormalForm integral.paired raw)
     (period : Periods.PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodRow curve)
     (periodEq : period = (Periods.PreparedRootClosedPeriodBank.PreparedCycleModels.RootClosedPeriodBank.ofData curve
       branches).rows index) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Standard.TourIntersection.IntersectionRow.ofPeriod lifted integral normal index
+    (TourIntersection.IntersectionRow.ofPeriod lifted integral normal index
       period periodEq).pair.bFaces.Canonical :=
-  Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.Pair.ofSource_b_canonical _ _ _ _
+  TourFaces.StandardTours.Pair.ofSource_b_canonical _ _ _ _
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard

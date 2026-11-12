@@ -122,13 +122,13 @@ namespace PairEnding
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.PairEnding
 /-- Read the original retained reference label from either ending shape. -/
-@[expose] def reference {Alpha : Type} : Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.PairEnding Alpha →
+@[expose] def reference {Alpha : Type} : PairEnding Alpha →
   Alpha
   | .odd reference => reference
   | .even reference _ => reference
 
 /-- Read the original one- or two-label terminal list in its retained order. -/
-@[expose] def labels {Alpha : Type} : Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.PairEnding Alpha →
+@[expose] def labels {Alpha : Type} : PairEnding Alpha →
   List Alpha
   | .odd reference => [reference]
   | .even reference last => [reference, last]
@@ -142,7 +142,7 @@ structure LabelPairs {Alpha : Type} (count : Nat) (labels : List Alpha) where
   /-- The actual consecutive label pairs in their original order. -/ pairs : List (Alpha × Alpha)
   /-- The retained pair count is exactly the supplied genus count. -/ count_eq : pairs.length = count
   /-- The retained one- or two-branch terminal data with its actual tour owners. -/ ending :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.PairEnding Alpha
+    PairEnding Alpha
   /-- The original ordered labels are exactly the retained pair flattening followed by the actual terminal labels. -/
     labels_eq : labels = pairs.flatMap (fun pair => [pair.1, pair.2]) ++ ending.labels
 
@@ -154,7 +154,7 @@ namespace LabelPairs
 ending. -/
 @[expose] def build {Alpha : Type} : (count : Nat) → (labels : List Alpha) →
     (labels.length = 2 * count + 1 ∨ labels.length = 2 * count + 2) →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.LabelPairs count labels
+      LabelPairs count labels
   | 0, [], shape => (by simp only [List.length_nil, -eq_self, -iff_self] at shape; omega : False).elim
   | 0, [reference], _ => ⟨[], rfl, .odd reference, rfl⟩
   | 0, [reference, last], _ => ⟨[], rfl, .even reference last, rfl⟩
@@ -164,7 +164,7 @@ ending. -/
       simp only [List.length_cons, List.length_nil, -eq_self, -iff_self] at shape;
       omega : False).elim
   | count + 1, first :: last :: rest, shape =>
-      let tail := Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.LabelPairs.build count rest (by
+      let tail := LabelPairs.build count rest (by
         simp only [List.length_cons, -eq_self, -iff_self] at shape; omega)
       ⟨(first, last) :: tail.pairs, congrArg Nat.succ tail.count_eq, tail.ending,
         congrArg (fun suffix => first :: last :: suffix) tail.labels_eq⟩
@@ -172,70 +172,70 @@ termination_by structural count _ _ => count
 
 end LabelPairs
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {bank :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : Riemann.Meshes.LiftedPuncturedGrid base} {bank :
+    BasedBranchBank lifted}
     {sheet : Fin 2}
 
 set_option genInjectivity false in
 /-- The actual reference and terminal branch tours indexed by the original ending labels and starting sheet. -/
-inductive EndingTours (bank : LiftedPuncturedGrid.BasedBranchBank lifted) (sheet : Fin 2) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.PairEnding (BranchIsolation.Data.Index branches) → Type
+inductive EndingTours (bank : BasedBranchBank lifted) (sheet : Fin 2) :
+  PairEnding (BranchIsolation.Data.Index branches) → Type
   /-- Retain the original single terminal reference label or its actual branch tour. -/ | odd (index) (reference :
     BasedBranchBank.Pair bank index index sheet) :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.EndingTours bank sheet (.odd index)
+    EndingTours bank sheet (.odd index)
   /-- Retain the original reference and last terminal labels or their actual branch tours. -/ | even (index last)
     (reference : BasedBranchBank.Pair bank index index sheet) (terminal : BasedBranchBank.Pair bank index last sheet) :
-      Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.EndingTours bank sheet (.even index last)
+      EndingTours bank sheet (.even index last)
 
 constructive_injectivity EndingTours
 
 namespace EndingTours
 
-variable {ending : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.PairEnding
-  (Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches)}
+variable {ending : PairEnding
+  (BranchIsolation.Data.Index branches)}
 
 /-- Construct the actual reference and terminal tours on the original retained branch bank and starting sheet. -/
-@[expose] def build (bank : LiftedPuncturedGrid.BasedBranchBank lifted) (sheet : Fin 2) : (ending :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.PairEnding (BranchIsolation.Data.Index branches)) →
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.EndingTours bank sheet ending
+@[expose] def build (bank : BasedBranchBank lifted) (sheet : Fin 2) : (ending :
+  PairEnding (BranchIsolation.Data.Index branches)) →
+    EndingTours bank sheet ending
   | .odd index => .odd index (bank.pair index index sheet)
   | .even index last => .even index last (bank.pair index index sheet) (bank.pair index last sheet)
 
 section
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.EndingTours
 /-- Read the original repeated-reference pair retained by either terminal shape. -/
-@[expose] def reference : {ending : Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.PairEnding
+@[expose] def reference : {ending : PairEnding
   (BranchIsolation.Data.Index branches)} →
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.EndingTours bank sheet ending → BasedBranchBank.Pair
+    EndingTours bank sheet ending → BasedBranchBank.Pair
       bank ending.reference ending.reference sheet
   | _, .odd _ reference => reference
   | _, .even _ _ reference _ => reference
 
 /-- Read the actual outward indexed word of the retained terminal branch tour. -/
-@[expose] def forward : {ending : Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.PairEnding
+@[expose] def forward : {ending : PairEnding
   (BranchIsolation.Data.Index branches)} →
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.EndingTours bank sheet ending → List
-      (Stokes.OrientedEdge lifted.vertices.count)
+    EndingTours bank sheet ending → List
+      (OrientedEdge lifted.vertices.count)
   | _, .odd _ reference => reference.outward.indexed
   | _, .even _ _ _ terminal => terminal.outward.indexed
 
 /-- Read the complete actual terminal indexed word: one outward leg for odd endings or both terminal legs for even
 endings. -/
-@[expose] def word : {ending : Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.PairEnding
+@[expose] def word : {ending : PairEnding
   (BranchIsolation.Data.Index branches)} →
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.EndingTours bank sheet ending → List
-      (Stokes.OrientedEdge lifted.vertices.count)
+    EndingTours bank sheet ending → List
+      (OrientedEdge lifted.vertices.count)
   | _, .odd _ reference => reference.outward.indexed
   | _, .even _ _ _ terminal => terminal.closed.indexed
 
 /-- Sum the original internal areas of the retained terminal branch legs. -/
-@[expose] def internalArea (value : Stokes.OrientedEdge lifted.vertices.count → Data.Gaussian.Basic.Canonical) :
-    {ending : Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.PairEnding (BranchIsolation.Data.Index
-      branches)} → Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.EndingTours bank sheet ending →
-      Data.Gaussian.Basic.Canonical
+@[expose] def internalArea (value : OrientedEdge lifted.vertices.count → Canonical) :
+    {ending : PairEnding (BranchIsolation.Data.Index
+      branches)} → EndingTours bank sheet ending →
+      Canonical
   | _, .odd _ reference => RetracingWords.wordArea value reference.outward.indexed
   | _, .even _ _ _ terminal => RetracingWords.wordArea value terminal.outward.indexed + RetracingWords.wordArea value
     terminal.returning.indexed
@@ -243,34 +243,34 @@ endings. -/
 end
 
 /-- Read the exact retained exterior cross term of an even ending, with zero contribution for an odd ending. -/
-@[expose] def exteriorArea (value : Stokes.OrientedEdge lifted.vertices.count → Data.Gaussian.Basic.Canonical) (total :
-  Data.Gaussian.Basic.Canonical) :
-    {ending : Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.PairEnding (BranchIsolation.Data.Index
-      branches)} → Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.EndingTours bank sheet ending →
-      Data.Gaussian.Basic.Canonical
+@[expose] def exteriorArea (value : OrientedEdge lifted.vertices.count → Canonical) (total :
+  Canonical) :
+    {ending : PairEnding (BranchIsolation.Data.Index
+      branches)} → EndingTours bank sheet ending →
+      Canonical
   | _, .odd _ _ => 0
   | _, .even _ _ _ terminal => BoundaryRibbon.area (SewingRetraction.wordValue value terminal.outward.indexed + total)
     (total + SewingRetraction.wordValue value terminal.closed.indexed)
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.EndingTours
 /-- The retained terminal word is exactly the original branch-loop product on its actual starting sheet. -/
-theorem word_eq (tours : Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.EndingTours bank sheet ending) :
+theorem word_eq (tours : EndingTours bank sheet ending) :
     tours.word = lifted.edges.indexedEdges lifted.vertices (bank.loopProduct ending.labels) sheet := by
   cases tours with
   | odd index reference =>
       change reference.outward.indexed = lifted.edges.indexedEdges lifted.vertices (bank.loopProduct [index]) sheet
       rw [reference.outward_eq, BasedBranchBank.liftedLoop_indexed, BasedBranchBank.loopProduct,
         lifted.edges.indexedEdges_append]
-      exact (Purelib.Data.List.Append.append_nil _).symm
+      exact (Append.append_nil _).symm
   | even index last reference terminal =>
-      rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.PairEnding.labels, bank.loopProduct_pair_indexed
+      rw [PairEnding.labels, bank.loopProduct_pair_indexed
         _ _ [] sheet terminal]
-      exact (Purelib.Data.List.Append.append_nil _).symm
+      exact (Append.append_nil _).symm
 
 /-- The actual repeated-reference value splits into its retained forward leg and original reference return on the
 exchanged sheet. -/
-theorem reference_value (tours : Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.EndingTours bank sheet
-  ending) (value : Stokes.OrientedEdge lifted.vertices.count → Data.Gaussian.Basic.Canonical) :
+theorem reference_value (tours : EndingTours bank sheet
+  ending) (value : OrientedEdge lifted.vertices.count → Canonical) :
     SewingRetraction.wordValue value tours.reference.closed.indexed = SewingRetraction.wordValue value tours.forward +
       SewingRetraction.wordValue value (lifted.edges.indexedEdges lifted.vertices (bank.rows.get
         ending.reference).reference.walk (BranchCutLifts.otherSheet sheet)) := by
@@ -290,12 +290,12 @@ theorem reference_value (tours : Curves.Hyperelliptic.Meshes.PuncturedGrid.Order
 
 /-- The complete paired and terminal word area retains every internal leg area, corrected pair area and exact reference
 and exterior cross term. -/
-theorem area_formula (tours : Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.EndingTours bank sheet
+theorem area_formula (tours : EndingTours bank sheet
   ending)
     {labels : List (BranchIsolation.Data.Index branches × BranchIsolation.Data.Index branches)}
-    (rows : BranchArea.PairedRows bank ending.reference sheet labels (VertexWalk.nil lifted.vertices lifted.edges
+    (rows : PairedRows bank ending.reference sheet labels (VertexWalk.nil lifted.vertices lifted.edges
       (BasedBranchBank.anchor lifted sheet)))
-    (value : Stokes.OrientedEdge lifted.vertices.count → Data.Gaussian.Basic.Canonical) :
+    (value : OrientedEdge lifted.vertices.count → Canonical) :
     RetracingWords.wordArea value (rows.word ++ tours.word) + rows.correctedArea value = rows.internalArea value +
       tours.internalArea value +
       BoundaryRibbon.area (SewingRetraction.wordValue value rows.word) (SewingRetraction.wordValue value
@@ -338,9 +338,9 @@ theorem labels_length (ordered : BasedBranchBank.Ordered bank sheet) : ordered.p
 /-- Split the original certified geometric branch order into genus-many consecutive pairs and its actual terminal
 labels. -/
 @[expose] def labelPairs (ordered : BasedBranchBank.Ordered bank sheet) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.LabelPairs genus ordered.prepared.labels :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.LabelPairs.build genus ordered.prepared.labels (by
-    have degree := (Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.labels_length ordered).trans
+  LabelPairs genus ordered.prepared.labels :=
+  LabelPairs.build genus ordered.prepared.labels (by
+    have degree := (Ordered.labels_length ordered).trans
       branches.count_eq
     cases curve.degreeShape with
     | odd equal => exact Or.inl (degree.trans equal)
@@ -352,12 +352,12 @@ set_option genInjectivity false in
 The original ordered labels, cumulative A prefixes and actual starting sheet remain unchanged. -/
 structure Paired (ordered : BasedBranchBank.Ordered bank sheet) where
   /-- The cached exact split of the original ordered branch labels. -/ split :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.LabelPairs genus ordered.prepared.labels
+    LabelPairs genus ordered.prepared.labels
   /-- The actual retained paired A and corrected B walks beginning at the original common anchor with an empty prior
-    prefix. -/ rows : BranchArea.PairedRows bank split.ending.reference sheet split.pairs (VertexWalk.nil
+    prefix. -/ rows : PairedRows bank split.ending.reference sheet split.pairs (VertexWalk.nil
     lifted.vertices lifted.edges (BasedBranchBank.anchor lifted sheet))
   /-- The retained one- or two-branch terminal data with its actual tour owners. -/ ending :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.EndingTours bank sheet split.ending
+    EndingTours bank sheet split.ending
   /-- The actual physical hole location of the original retained terminal reference branch. -/ reference :
     PuncturedGridFaces.HoleLocation base.faces.holes (base.bank.cell split.ending.reference)
   /-- The physical reference hole carries exactly the retained terminal reference branch label. -/ reference_eq :
@@ -368,11 +368,11 @@ constructive_injectivity Paired
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered in
 /-- Cache the exact ordered label split and paired walks, then locate the original physical reference hole. -/
 @[expose] def paired (ordered : BasedBranchBank.Ordered bank sheet) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered := by
-  let split := Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.labelPairs ordered
+  Paired ordered := by
+  let split := Ordered.labelPairs ordered
   let rows := PairedRows.build bank split.ending.reference sheet split.pairs (VertexWalk.nil lifted.vertices
     lifted.edges (BasedBranchBank.anchor lifted sheet))
-  let ending := Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.EndingTours.build bank sheet split.ending
+  let ending := EndingTours.build bank sheet split.ending
   match base.faces.locateCell (base.bank.cell split.ending.reference) (base.bank.cell_mem split.ending.reference) with
   | .regular found => exact (found.face.unassigned split.ending.reference found.cell_eq).elim
   | .hole found => exact ⟨split, rows, ending, found, FaceKind.branch_unique found.hole.cell_eq found.cell_eq⟩
@@ -380,14 +380,14 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordere
 namespace Paired
 
 variable {ordered :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank
-  sheet} (paired : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered)
+  BasedBranchBank.Ordered bank
+  sheet} (paired : Paired ordered)
 
 /-- Read the actual retained paired row at a genus index, transporting only its original count equality. -/
 @[expose] def row (index : Fin genus) := paired.rows.get (Fin.cast paired.split.count_eq.symm index)
 
 /-- Transporting a finite index along equality of its original size preserves the exact Gaussian sum. -/
-private theorem sum_cast {first last : Nat} (equal : first = last) (value : Fin first → Data.Gaussian.Basic.Canonical) :
+private theorem sum_cast {first last : Nat} (equal : first = last) (value : Fin first → Canonical) :
     FiniteSum.Fin.sumFin value =
       FiniteSum.Fin.sumFin (fun index : Fin last => value (Fin.cast equal.symm index)) := by
   cases equal
@@ -395,12 +395,12 @@ private theorem sum_cast {first last : Nat} (equal : first = last) (value : Fin 
 
 /-- The retained corrected-pair area is exactly the finite sum of the actual genus-indexed A and corrected B readings.
 -/
-theorem correctedArea_sum (value : Stokes.OrientedEdge lifted.vertices.count → Data.Gaussian.Basic.Canonical) :
+theorem correctedArea_sum (value : OrientedEdge lifted.vertices.count → Canonical) :
     paired.rows.correctedArea value = FiniteSum.Fin.sumFin (fun index : Fin genus =>
       BoundaryRibbon.area (SewingRetraction.wordValue value (paired.row index).row.a.closed.indexed)
         (SewingRetraction.wordValue value (paired.row index).row.corrected.indexed)) :=
   (paired.rows.correctedArea_sum value).trans
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired.sum_cast paired.split.count_eq _)
+    (Paired.sum_cast paired.split.count_eq _)
 
 /-- The original complete ordered branch word is exactly the retained paired A prefix followed by its actual terminal
 word. -/
@@ -413,7 +413,7 @@ theorem branch_word : ordered.word = paired.rows.word ++ paired.ending.word := b
 
 /-- For an antisymmetric valuation, the actual repeated-reference tour reads the negative original physical
 reference-hole boundary value. -/
-theorem reference_value (value : Stokes.OrientedEdge lifted.vertices.count → Data.Gaussian.Basic.Canonical)
+theorem reference_value (value : OrientedEdge lifted.vertices.count → Canonical)
     (anti : ∀ edge, value edge.reverse = -value edge) :
     SewingRetraction.wordValue value paired.ending.reference.closed.indexed =
       -SewingRetraction.wordValue value (paired.reference.hole.liftedBoundary lifted.vertices lifted.edges) := by
@@ -426,7 +426,7 @@ theorem reference_value (value : Stokes.OrientedEdge lifted.vertices.count → D
 
 /-- The corrected genus-many actual A/B words satisfy the complete area formula. Regular-face excursions, the reference
 hole and the finite exterior term are all retained; no physical boundary is assumed negligible. -/
-theorem area_formula (value : Stokes.OrientedEdge lifted.vertices.count → Data.Gaussian.Basic.Canonical)
+theorem area_formula (value : OrientedEdge lifted.vertices.count → Canonical)
     (anti : ∀ edge, value edge.reverse = -value edge) :
     lifted.edges.chainArea lifted.vertices value base.bank.exterior sheet + paired.rows.correctedArea value =
       paired.rows.internalArea value + paired.ending.internalArea value +

@@ -53,6 +53,8 @@ import Purelib.Riemann.Readings.UniformPreparedRequests
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-!
@@ -100,7 +102,7 @@ private theorem segment_difference {ambient : Rational.Box} {start finish : Gaus
       Gaussian.Basic.mul_im, Gaussian.Scale.scale_re, Gaussian.Scale.scale_im, -eq_self, -iff_self] <;> ring1
 
 /-- The actual fragment displacement is its retained interval width times the original parent displacement. -/
-private theorem parent_difference (piece : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes
+private theorem parent_difference (piece : RootedWords.LiftedFragment axes
   domains mesh source count target) :
     piece.last - piece.first = (⟨piece.interval.upper - piece.interval.lower, 0⟩ : Gaussian.Basic.Canonical) *
       (piece.parent.edge.point 1 - piece.parent.edge.point 0) := by
@@ -115,7 +117,7 @@ private theorem parent_difference (piece : Hyperelliptic.Meshes.PuncturedGrid.Fr
 
 /-- The actual fragment displacement equals its original containing-edge displacement times its retained parameter
 difference. -/
-private theorem edge_difference (piece : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes
+private theorem edge_difference (piece : RootedWords.LiftedFragment axes
   domains mesh source count target) :
     piece.last - piece.first =
       (⟨piece.fragment.source.last.parameter - piece.fragment.source.first.parameter, 0⟩ : Gaussian.Basic.Canonical) *
@@ -123,11 +125,11 @@ private theorem edge_difference (piece : Hyperelliptic.Meshes.PuncturedGrid.Frag
   change piece.fragment.located.last - piece.fragment.located.first = _
   exact (congrArg₂ (fun a b : Gaussian.Basic.Canonical => a - b) piece.fragment.source.last.point_eq
     piece.fragment.source.first.point_eq).symm.trans
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.segment_difference _ _ _)
+      (SourceDirection.segment_difference _ _ _)
 
 /-- Positive movement along the exact original segment; the factor comes
 from its retained endpoint parameters and the actual fragment interval. -/
-theorem source_displacement (piece : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains
+theorem source_displacement (piece : RootedWords.LiftedFragment axes domains
   mesh source count target)
     {ambient : Rational.Box} {start finish : Gaussian.Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -136,12 +138,12 @@ theorem source_displacement (piece : Hyperelliptic.Meshes.PuncturedGrid.Fragment
       (finish - start) := by
   obtain ⟨first, last, nonnegative, ordered, bounded, firstEq, lastEq⟩ := original
   let factor := (piece.interval.upper - piece.interval.lower) * (last - first)
-  have factorNonnegative : 0 ≤ factor := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.sub_nonneg_direct piece.interval.ordered.le)
-    (Fraction.Order.Arithmetic.sub_nonneg_direct ordered)
+  have factorNonnegative : 0 ≤ factor := Arithmetic.mul_nonneg_direct
+    (Arithmetic.sub_nonneg_direct piece.interval.ordered.le)
+    (Arithmetic.sub_nonneg_direct ordered)
   have movement : piece.last - piece.first = (⟨factor, 0⟩ : Gaussian.Basic.Canonical) * (finish - start) := by
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.parent_difference, firstEq, lastEq,
-      Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.segment_difference]
+    rw [SourceDirection.parent_difference, firstEq, lastEq,
+      SourceDirection.segment_difference]
     apply Gaussian.Basic.ext <;>
       simp only [Gaussian.Basic.mul_re, Gaussian.Basic.mul_im,
         Gaussian.Basic.sub_re, Gaussian.Basic.sub_im, factor, -eq_self, -iff_self] <;> ring1
@@ -170,8 +172,8 @@ private theorem scalar_nonnegative_iff {a b k l : Fraction.Rational} {edgeDelta 
     0 ≤ a ↔ 0 ≤ b := by
   have scaled : (⟨a * l, 0⟩ : Gaussian.Basic.Canonical) * edgeDelta = (⟨b * k, 0⟩ : Gaussian.Basic.Canonical) *
     edgeDelta := by
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.scalar_product a l,
-      Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.scalar_product b k]
+    rw [SourceDirection.scalar_product a l,
+      SourceDirection.scalar_product b k]
     calc
       _ = (⟨l, 0⟩ : Gaussian.Basic.Canonical) * ((⟨a, 0⟩ : Gaussian.Basic.Canonical) * edgeDelta) := by ring1
       _ = (⟨k, 0⟩ : Gaussian.Basic.Canonical) * ((⟨l, 0⟩ : Gaussian.Basic.Canonical) * sourceDelta) := by
@@ -182,19 +184,19 @@ private theorem scalar_nonnegative_iff {a b k l : Fraction.Rational} {edgeDelta 
     (Gaussian.Field.mul_right_cancel_of_ne edgeNonzero scaled)
   constructor
   · intro nonnegative
-    have bound := Fraction.Order.Arithmetic.mul_nonneg_direct nonnegative lPositive.le
+    have bound := Arithmetic.mul_nonneg_direct nonnegative lPositive.le
     rw [equal] at bound
-    exact Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+    exact Arithmetic.le_of_mul_le_mul_right_direct
       (by simpa only [Fraction.Field.zero_mul_direct, -eq_self, -iff_self] using bound) kPositive
   · intro nonnegative
-    have bound := Fraction.Order.Arithmetic.mul_nonneg_direct nonnegative kPositive.le
+    have bound := Arithmetic.mul_nonneg_direct nonnegative kPositive.le
     rw [← equal] at bound
-    exact Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+    exact Arithmetic.le_of_mul_le_mul_right_direct
       (by simpa only [Fraction.Field.zero_mul_direct, -eq_self, -iff_self] using bound) lPositive
 
 /-- Direction agreement is derived from the actual original source data,
 including fragments from different descendant parents. -/
-theorem routeForward_eq_of_source {left right : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment
+theorem routeForward_eq_of_source {left right : RootedWords.LiftedFragment
   axes domains mesh source count target}
     {ambient : Rational.Box} {start finish : Gaussian.Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -203,34 +205,34 @@ theorem routeForward_eq_of_source {left right : Hyperelliptic.Meshes.PuncturedGr
     (leftMoving : left.last ≠ left.first) (rightMoving : right.last ≠ right.first)
     (startEq : left.fragment.source.start = right.fragment.source.start)
     (finishEq : left.fragment.source.finish = right.fragment.source.finish) :
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.routeForward left) =
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.routeForward right) := by
+      (RouteWords.routeForward left) =
+      (RouteWords.routeForward right) := by
   obtain ⟨k, kPositive, leftMovement⟩ :=
-    (Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.source_displacement left) leftSource leftMoving
+    (SourceDirection.source_displacement left) leftSource leftMoving
   obtain ⟨l, lPositive, rightMovement⟩ :=
-    (Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.source_displacement right) rightSource rightMoving
+    (SourceDirection.source_displacement right) rightSource rightMoving
   have edgeNonzero : left.fragment.source.finish - left.fragment.source.start ≠ 0 := by
     intro zero
-    have movement := Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.edge_difference left
+    have movement := SourceDirection.edge_difference left
     rw [zero, mul_zero] at movement
     exact leftMoving (Algebra.Group.eq_of_sub_eq_zero movement)
-  have first := (Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.edge_difference left).symm.trans
+  have first := (SourceDirection.edge_difference left).symm.trans
     leftMovement
-  have last := (Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.edge_difference right).symm.trans
+  have last := (SourceDirection.edge_difference right).symm.trans
     rightMovement
   have lastSame := (congrArg
     (fun delta : Gaussian.Basic.Canonical => (⟨right.fragment.source.last.parameter -
       right.fragment.source.first.parameter, 0⟩ : Gaussian.Basic.Canonical) * delta)
     (congrArg₂ (fun a b : Gaussian.Basic.Canonical => a - b) finishEq startEq)).trans last
-  have ordered := Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.scalar_nonnegative_iff kPositive lPositive
+  have ordered := SourceDirection.scalar_nonnegative_iff kPositive lPositive
     edgeNonzero first lastSame
   have sameOrder :
       (left.fragment.source.first.parameter ≤ left.fragment.source.last.parameter) ↔
       (right.fragment.source.first.parameter ≤ right.fragment.source.last.parameter) :=
     ⟨fun h => Fraction.Order.Boundary.sub_nonnegative_iff.mp
-        (ordered.mp (Fraction.Order.Arithmetic.sub_nonneg_direct h)),
+        (ordered.mp (Arithmetic.sub_nonneg_direct h)),
       fun h => Fraction.Order.Boundary.sub_nonnegative_iff.mp
-        (ordered.mpr (Fraction.Order.Arithmetic.sub_nonneg_direct h))⟩
+        (ordered.mpr (Arithmetic.sub_nonneg_direct h))⟩
   change decide _ = decide _
   by_cases firstOrder : left.fragment.source.first.parameter ≤ left.fragment.source.last.parameter
   · exact (decide_eq_true firstOrder).trans (decide_eq_true (sameOrder.mp firstOrder)).symm
@@ -240,7 +242,7 @@ theorem routeForward_eq_of_source {left right : Hyperelliptic.Meshes.PuncturedGr
 /-- Opposite presentations of the same containing edge select opposite
 flags, as forced by their moving original source segments. -/
 theorem routeForward_reverse_of_source {left right :
-  Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh source count target}
+  RootedWords.LiftedFragment axes domains mesh source count target}
     {ambient : Rational.Box} {start finish : Gaussian.Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
     (leftSource : Paths.PreparedSegmentSources.SegmentSource segment left.parent) (rightSource :
@@ -248,18 +250,18 @@ theorem routeForward_reverse_of_source {left right :
     (leftMoving : left.last ≠ left.first) (rightMoving : right.last ≠ right.first)
     (startEq : left.fragment.source.start = right.fragment.source.finish)
     (finishEq : left.fragment.source.finish = right.fragment.source.start) :
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.routeForward left) =
-      !(Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.routeForward right) := by
+      (RouteWords.routeForward left) =
+      !(RouteWords.routeForward right) := by
   obtain ⟨k, kPositive, leftMovement⟩ :=
-    (Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.source_displacement left) leftSource leftMoving
+    (SourceDirection.source_displacement left) leftSource leftMoving
   obtain ⟨l, lPositive, rightMovement⟩ :=
-    (Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.source_displacement right) rightSource rightMoving
+    (SourceDirection.source_displacement right) rightSource rightMoving
   have edgeNonzero : left.fragment.source.finish - left.fragment.source.start ≠ 0 := by
     intro zero
-    have movement := Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.edge_difference left
+    have movement := SourceDirection.edge_difference left
     rw [zero, mul_zero] at movement
     exact leftMoving (Algebra.Group.eq_of_sub_eq_zero movement)
-  have first := (Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.edge_difference left).symm.trans
+  have first := (SourceDirection.edge_difference left).symm.trans
     leftMovement
   have last : (⟨right.fragment.source.first.parameter - right.fragment.source.last.parameter, 0⟩ :
     Gaussian.Basic.Canonical) *
@@ -273,13 +275,13 @@ theorem routeForward_reverse_of_source {left right :
         apply Gaussian.Basic.ext <;>
           simp only [Gaussian.Basic.mul_re, Gaussian.Basic.mul_im,
             Gaussian.Basic.sub_re, Gaussian.Basic.sub_im, -eq_self, -iff_self] <;> ring1
-      _ = _ := (Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.edge_difference right).symm.trans
+      _ = _ := (SourceDirection.edge_difference right).symm.trans
         rightMovement
-  have ordered := Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.scalar_nonnegative_iff kPositive lPositive
+  have ordered := SourceDirection.scalar_nonnegative_iff kPositive lPositive
     edgeNonzero first last
   have different : right.fragment.source.first.parameter ≠ right.fragment.source.last.parameter := by
     intro same
-    have movement := Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.edge_difference right
+    have movement := SourceDirection.edge_difference right
     rw [same, sub_self] at movement
     change right.last - right.first = (0 : Gaussian.Basic.Canonical) * _ at movement
     rw [zero_mul] at movement
@@ -288,16 +290,16 @@ theorem routeForward_reverse_of_source {left right :
   · have backward : ¬left.fragment.source.first.parameter ≤ left.fragment.source.last.parameter := by
       intro leftForward
       have reverseOrder := Fraction.Order.Boundary.sub_nonnegative_iff.mp (ordered.mp
-        (Fraction.Order.Arithmetic.sub_nonneg_direct leftForward))
+        (Arithmetic.sub_nonneg_direct leftForward))
       exact different (le_antisymm forward reverseOrder)
-    unfold Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.routeForward
+    unfold RouteWords.routeForward
     rewrite [decide_eq_false backward, decide_eq_true forward]
     rfl
   · have reverseOrder : right.fragment.source.last.parameter ≤ right.fragment.source.first.parameter :=
       (le_total _ _).resolve_left forward
     have leftForward := Fraction.Order.Boundary.sub_nonnegative_iff.mp (ordered.mpr
-      (Fraction.Order.Arithmetic.sub_nonneg_direct reverseOrder))
-    unfold Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.routeForward
+      (Arithmetic.sub_nonneg_direct reverseOrder))
+    unfold RouteWords.routeForward
     rewrite [decide_eq_true leftForward, decide_eq_false forward]
     rfl
 
@@ -311,43 +313,43 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirec
 
 /-- The actual rooted group and original segment sources discharge the
 route agreement needed by the endpoint telescope. -/
-theorem source_telescope {head : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains
+theorem source_telescope {head : RootedWords.LiftedFragment axes domains
   mesh source count target}
-    {pieces : List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh source
+    {pieces : List (RootedWords.LiftedFragment axes domains mesh source
       count target)}
     {first last : Gaussian.Basic.Canonical} {firstName lastName : Gaussian.Name.Basic.Named}
     {ambient : Rational.Box} {start finish : Gaussian.Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
-    (word : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.RootedWord (head :: pieces) first
+    (word : RootedWords.LiftedFragment.RootedWord (head :: pieces) first
       firstName last lastName)
     (original : ∀ piece ∈ head :: pieces, Paths.PreparedSegmentSources.SegmentSource segment piece.parent)
     (moving : ∀ piece ∈ head :: pieces, piece.last ≠ piece.first)
     (same : ∀ piece ∈ pieces, head.fragment.source.start = piece.fragment.source.start ∧
       head.fragment.source.finish = piece.fragment.source.finish)
-    (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum ((head :: pieces).map (fun piece =>
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteContacts.routeValue piece)
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.canonicalRoute piece) shared)) =
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint head) shared last -
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint head) shared first := by
-  apply Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.RootedWord.canonical_telescope word _ shared
+    (shared : Face.CommonMeshes.FaceSharedMeshes budgets numerics) :
+    Gaussian.Norm.Sum.Basic.gaussianSum ((head :: pieces).map (fun piece =>
+      (RouteContacts.routeValue piece)
+      (RouteWords.canonicalRoute piece) shared)) =
+      (RouteCancellation.canonicalPoint head) shared last -
+        (RouteCancellation.canonicalPoint head) shared first := by
+  apply RouteCancellation.RootedWord.canonical_telescope word _ shared
   intro piece member
   have present := List.mem_cons_of_mem head member
   exact ⟨(same piece member).1, (same piece member).2,
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.routeForward_eq_of_source (original head
+    SourceDirection.routeForward_eq_of_source (original head
       List.mem_cons_self) (original piece present)
       (moving head List.mem_cons_self) (moving piece present) (same piece member).1 (same piece member).2⟩
 
 /-- Once an original source group covers the complete edge, its partial
 readings equal that edge's cached increment, with the displayed orientation. -/
-theorem source_edge_increment {head : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes
+theorem source_edge_increment {head : RootedWords.LiftedFragment axes
   domains mesh source count target}
-    {pieces : List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh source
+    {pieces : List (RootedWords.LiftedFragment axes domains mesh source
       count target)}
     {first last : Gaussian.Basic.Canonical} {firstName lastName : Gaussian.Name.Basic.Named}
     {ambient : Rational.Box} {start finish : Gaussian.Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
-    (word : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.RootedWord (head :: pieces) first
+    (word : RootedWords.LiftedFragment.RootedWord (head :: pieces) first
       firstName last lastName)
     (original : ∀ piece ∈ head :: pieces, Paths.PreparedSegmentSources.SegmentSource segment piece.parent)
     (moving : ∀ piece ∈ head :: pieces, piece.last ≠ piece.first)
@@ -358,24 +360,24 @@ theorem source_edge_increment {head : Hyperelliptic.Meshes.PuncturedGrid.Fragmen
       head.occurrence.side.edge.finish))
     (lastEq : last = vertices.coordinate (if forward then head.occurrence.side.edge.finish else
       head.occurrence.side.edge.start))
-    (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum ((head :: pieces).map (fun piece =>
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteContacts.routeValue piece)
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.canonicalRoute piece) shared)) =
-      if forward then Hyperelliptic.Meshes.PuncturedGrid.Face.MeshWords.FaceSharedMeshes.edgeIncrement shared
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.canonicalRoute head) else
-        -Hyperelliptic.Meshes.PuncturedGrid.Face.MeshWords.FaceSharedMeshes.edgeIncrement shared
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.canonicalRoute head) := by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.RootedWord.source_telescope word original moving same
+    (shared : Face.CommonMeshes.FaceSharedMeshes budgets numerics) :
+    Gaussian.Norm.Sum.Basic.gaussianSum ((head :: pieces).map (fun piece =>
+      (RouteContacts.routeValue piece)
+      (RouteWords.canonicalRoute piece) shared)) =
+      if forward then Face.MeshWords.FaceSharedMeshes.edgeIncrement shared
+        (RouteWords.canonicalRoute head) else
+        -Face.MeshWords.FaceSharedMeshes.edgeIncrement shared
+        (RouteWords.canonicalRoute head) := by
+  rw [RootedWord.source_telescope word original moving same
     shared, firstEq, lastEq]
   cases forward
-  · change ((Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint head) shared
+  · change ((RouteCancellation.canonicalPoint head) shared
       (vertices.coordinate head.occurrence.side.edge.start) -
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint head) shared (vertices.coordinate
+        (RouteCancellation.canonicalPoint head) shared (vertices.coordinate
           head.occurrence.side.edge.finish)) =
-      -((Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint head) shared (vertices.coordinate
+      -((RouteCancellation.canonicalPoint head) shared (vertices.coordinate
         head.occurrence.side.edge.finish) -
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint head) shared (vertices.coordinate
+        (RouteCancellation.canonicalPoint head) shared (vertices.coordinate
           head.occurrence.side.edge.start))
     ring1
   · rfl
@@ -387,9 +389,9 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirec
 /-- An adjacent pair in the actual rooted word has equal cached junction
 readings when its moving pieces belong to the same original segment and
 containing edge. No root-equivalence premise is left to the consumer. -/
-theorem canonical_join {left right : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains
+theorem canonical_join {left right : RootedWords.LiftedFragment axes domains
   mesh source count target}
-    (joined : Hyperelliptic.Meshes.PuncturedGrid.Fragment.WordJunctions.Junction left right)
+    (joined : WordJunctions.Junction left right)
     {ambient : Rational.Box} {start finish : Gaussian.Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
     (leftSource : Paths.PreparedSegmentSources.SegmentSource segment left.parent) (rightSource :
@@ -397,13 +399,13 @@ theorem canonical_join {left right : Hyperelliptic.Meshes.PuncturedGrid.Fragment
     (leftMoving : left.last ≠ left.first) (rightMoving : right.last ≠ right.first)
     (startEq : left.fragment.source.start = right.fragment.source.start)
     (finishEq : left.fragment.source.finish = right.fragment.source.finish)
-    (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint left) shared left.last =
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint right) shared right.first :=
-  (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint_eq (joined.2.2 startEq finishEq)
-    (Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.routeForward_eq_of_source leftSource rightSource
+    (shared : Face.CommonMeshes.FaceSharedMeshes budgets numerics) :
+    (RouteCancellation.canonicalPoint left) shared left.last =
+      (RouteCancellation.canonicalPoint right) shared right.first :=
+  (RouteCancellation.canonicalPoint_eq (joined.2.2 startEq finishEq)
+    (SourceDirection.routeForward_eq_of_source leftSource rightSource
       leftMoving rightMoving startEq finishEq) shared left.last).trans
-      (congrArg ((Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint right) shared) joined.1)
+      (congrArg ((RouteCancellation.canonicalPoint right) shared) joined.1)
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.Junction
 

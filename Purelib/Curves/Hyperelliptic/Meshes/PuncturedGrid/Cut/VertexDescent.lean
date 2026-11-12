@@ -86,7 +86,7 @@ open _root_.Purelib.Topology.Surface.Boundary (BoundaryContraction)
 open Purelib.Data.Vector.Basic (vectorOfFn vectorOfFn_apply)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
 
 /-- Find an explicit retained source vertex mapping to the supplied target vertex.
@@ -109,9 +109,9 @@ set_option genInjectivity false in
 
 The complete finite value vector uses the original lifted vertex owner. Its
 source equation identifies each retained cut-boundary starting vertex. -/
-structure SurfaceVertexReading (lifted : Meshes.LiftedPuncturedGrid base) {size : Nat}
-    {other : Vertices.WordVertexRealization (CutBoundaryWord.pairedLetters lifted.cutBoundaryWord) size}
-    (reading : VertexReading.CutVertexReading lifted.cutBoundaryWord other lifted.cutPolygon.patch.cut.anchor) where
+structure SurfaceVertexReading (lifted : LiftedPuncturedGrid base) {size : Nat}
+    {other : WordVertexRealization (CutBoundaryWord.pairedLetters lifted.cutBoundaryWord) size}
+    (reading : CutVertexReading lifted.cutBoundaryWord other lifted.cutPolygon.patch.cut.anchor) where
   /-- The cached reading at every actual lifted-surface vertex index. -/ values : Data.Vector (Fin size)
     lifted.vertices.count
   /-- Every original cut-boundary starting vertex reads back its exact retained source value. -/ source_eq : ∀ vertex ∈
@@ -124,30 +124,30 @@ namespace SurfaceVertexReading
 
 variable {lifted : LiftedPuncturedGrid base} {size : Nat}
   {other : WordVertexRealization
-    (Purelib.Topology.Surface.Word.PairedWord.CutBoundaryWord.pairedLetters lifted.cutBoundaryWord) size}
+    (CutBoundaryWord.pairedLetters lifted.cutBoundaryWord) size}
   {reading : CutVertexReading lifted.cutBoundaryWord other
     lifted.cutPolygon.patch.cut.anchor}
 
 /-- Descend the cut reading by finite preimage lookup and the certified cut-vertex gluing relation. -/
-@[expose] def build (lifted : Meshes.LiftedPuncturedGrid base)
-    {other : Vertices.WordVertexRealization (CutBoundaryWord.pairedLetters lifted.cutBoundaryWord) size}
-    (reading : VertexReading.CutVertexReading lifted.cutBoundaryWord other lifted.cutPolygon.patch.cut.anchor) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.VertexDescent.SurfaceVertexReading lifted reading :=
+@[expose] def build (lifted : LiftedPuncturedGrid base)
+    {other : WordVertexRealization (CutBoundaryWord.pairedLetters lifted.cutBoundaryWord) size}
+    (reading : CutVertexReading lifted.cutBoundaryWord other lifted.cutPolygon.patch.cut.anchor) :
+      SurfaceVertexReading lifted reading :=
   let vertices := lifted.cutPolygon.patch.cut.boundary.map OrientedEdge.start
   let labels := lifted.cutPolygon.patch.cut.vertexLabels
   let value := fun vertex : Fin lifted.vertices.count =>
     if member : vertex ∈ vertices.map labels then reading.values
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.VertexDescent.preimage labels vertex vertices member).val
+      (VertexDescent.preimage labels vertex vertices member).val
     else reading.values lifted.cutPolygon.patch.cut.anchor
   { values := Data.Vector.Basic.vectorOfFn value
     source_eq := fun vertex member => by
       rw [Data.Vector.Basic.vectorOfFn_apply]
       have projected : labels vertex ∈ vertices.map labels := Map.mem_map_of_mem member
       change (if present : labels vertex ∈ vertices.map labels then
-        reading.values (Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.VertexDescent.preimage labels (labels vertex)
+        reading.values (VertexDescent.preimage labels (labels vertex)
           vertices present).val else _) = _
       rw [dif_pos projected]
-      let selected := Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.VertexDescent.preimage labels (labels vertex)
+      let selected := VertexDescent.preimage labels (labels vertex)
         vertices projected
       apply reading.joined_eq
       exact (VertexGluing.cutVertexJoin_iff lifted
@@ -155,7 +155,7 @@ variable {lifted : LiftedPuncturedGrid base} {size : Nat}
         ((Assembly.active_iff_boundary lifted.cutPolygon.patch.assembly vertex).mpr member)).mpr selected.property.2 }
 
 /-- Both actual endpoints of a retained cut-boundary edge preserve their source readings. -/
-theorem edge_endpoints (surface : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.VertexDescent.SurfaceVertexReading
+theorem edge_endpoints (surface : SurfaceVertexReading
   lifted reading)
     (edge : Stokes.OrientedEdge lifted.cutPolygon.patch.cut.count) (member : edge ∈
       lifted.cutPolygon.patch.cut.boundary) :
@@ -165,7 +165,7 @@ theorem edge_endpoints (surface : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.
     surface.source_eq _ (SimpleBoundaryCycles.finish_mem lifted.cutPolygon.patch.cut.closed member)⟩
 
 /-- Every physical-boundary edge has equal values at its actual surface endpoints. -/
-theorem physical_constant (surface : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.VertexDescent.SurfaceVertexReading
+theorem physical_constant (surface : SurfaceVertexReading
   lifted reading)
     (edge : Stokes.OrientedEdge lifted.vertices.count) (member : edge ∈ lifted.boundaryComponents.cycles.flatten) :
     surface.values edge.start = surface.values edge.finish := by
@@ -184,7 +184,7 @@ private theorem source_active (vertex : Fin lifted.cutPolygon.patch.cut.count)
     (Map.mem_map_of_mem member))
 
 /-- Factoring through the retained physical-boundary contraction preserves each original cut vertex reading. -/
-theorem contracted_source (surface : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.VertexDescent.SurfaceVertexReading
+theorem contracted_source (surface : SurfaceVertexReading
   lifted reading)
     (contraction : Topology.Surface.Boundary.BoundaryContraction lifted.boundaryComponents (LiftedMesh.activeVertices
       lifted.mesh).indices)
@@ -199,7 +199,7 @@ theorem contracted_source (surface : Curves.Hyperelliptic.Meshes.PuncturedGrid.C
 /-- Factor the retained paired-word realization through the actual contracted surface vertices.
 
 The resulting vertex map preserves the anchor and every kept generator edge using the same cached surface reading. -/
-@[expose] def factor (surface : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.VertexDescent.SurfaceVertexReading lifted
+@[expose] def factor (surface : SurfaceVertexReading lifted
   reading)
     (contraction : Topology.Surface.Boundary.BoundaryContraction lifted.boundaryComponents (LiftedMesh.activeVertices
       lifted.mesh).indices)

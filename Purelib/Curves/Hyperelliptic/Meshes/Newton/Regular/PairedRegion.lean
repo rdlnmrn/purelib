@@ -68,6 +68,10 @@ import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Topology.Surface.Sewing.SewingTree
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Topology.Surface.Sewing
+
 public section
 
 /-! The original regular region on a pair of actual sewn surfaces. Both
@@ -106,19 +110,19 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearAreaReques
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : NewtonPreparation original} {target radius : Rational}
   {grid : NewtonGrid preparation target radius} {face : RegularFace original}
   {lifted : LiftedPuncturedGrid grid.punctured}
-  {leftValues rightValues : Fin lifted.mesh.triangles.length → Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues
+  {leftValues rightValues : Fin lifted.mesh.triangles.length → PrimitiveSewing.PrimitiveValues
     3}
 
 /-- The two sewn primitive components, with their original owners retained. -/
-@[expose] def pairedValues (left : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch
+@[expose] def pairedValues (left : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch
   leftValues)
-    (right : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch rightValues) : Fin
+    (right : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch rightValues) : Fin
       lifted.cutPolygon.patch.cut.count → PrimitivePoint :=
   fun vertex => ⟨left.sewn.values vertex, right.sewn.values vertex⟩
 
@@ -128,18 +132,18 @@ set_option genInjectivity false in
 It keeps the original cut balance, complete projected pairing and both sheet occurrence corrections with the cached
 selected area. -/
 structure PairedRegionSample (region : OriginalRegularFaces grid face) (words :
-  Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords face lifted)
-    (left : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch leftValues) (right :
-      Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch rightValues) where
+  CutBalance.BoundaryWords face lifted)
+    (left : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch leftValues) (right :
+      SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch rightValues) where
   /-- The original regular-region cut balance on the left sewn surface. -/ balance :
     CutBalance region words left
   /-- The complete original edge pairing evaluated on both actual sewn primitive components. -/ pairing :
     Topology.Surface.Cut.PrimitiveJumps.ProjectedEdgePairing.PrimitiveSample balance.complete.pairing (pairedValues left
     right)
   /-- The original sheet-zero paired occurrence area and offset correction. -/ zero :
-    Integration.Path.PairedOccurrenceArea (pairedValues left right) words.zero.edges
+    Path.PairedOccurrenceArea (pairedValues left right) words.zero.edges
   /-- The original sheet-one paired occurrence area and offset correction. -/ one :
-    Integration.Path.PairedOccurrenceArea (pairedValues left right) words.one.edges
+    Path.PairedOccurrenceArea (pairedValues left right) words.one.edges
   /-- The cached actual selected paired region area. -/ area : Gaussian.Basic.Canonical
   /-- The area is the paired edge area of the original selected triangle boundaries. -/ area_eq : area = edgeListArea
     (pairedValues left right) (balance.selected.triangles.flatMap OrientedTriangle.boundary)
@@ -148,24 +152,24 @@ constructive_injectivity PairedRegionSample
 
 namespace PairedRegionSample
 
-variable {region : OriginalRegularFaces grid face} {words : Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords
+variable {region : OriginalRegularFaces grid face} {words : CutBalance.BoundaryWords
   face lifted}
-  {left : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch leftValues} {right :
-    Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch rightValues}
+  {left : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch leftValues} {right :
+    SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch rightValues}
 
 /-- Cache the original paired region area, complete pairing and both sheet occurrence readbacks from the supplied sewn
 surfaces. -/
 @[expose] def build (region : OriginalRegularFaces grid face) (words :
-  Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords face lifted)
-    (left : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch leftValues) (right :
-      Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch rightValues) :
+  CutBalance.BoundaryWords face lifted)
+    (left : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch leftValues) (right :
+      SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch rightValues) :
     PairedRegionSample region words left right :=
   let balance := CutBalance.build region words left
   let values := pairedValues left right
   ⟨balance, Topology.Surface.Cut.PrimitiveJumps.ProjectedEdgePairing.PrimitiveSample.build balance.complete.pairing
     values,
-    Integration.Path.PairedOccurrenceArea.build values words.zero.edges,
-      Integration.Path.PairedOccurrenceArea.build values words.one.edges,
+    Path.PairedOccurrenceArea.build values words.zero.edges,
+      Path.PairedOccurrenceArea.build values words.one.edges,
     edgeListArea values (balance.selected.triangles.flatMap OrientedTriangle.boundary), rfl⟩
 
 /-- The complete original jump, defect and both sheet occurrence-offset correction. -/
@@ -179,7 +183,7 @@ theorem area_balance (sample : PairedRegionSample region words left right) :
   have equal := (congrArg (edgeListArea (pairedValues left right)) sample.balance.edges_eq).symm.trans
     (sample.balance.complete.area_eq_jumps_defects (pairedValues left right) sample.pairing)
   rw [edgeListArea_append, Topology.Polygon.WitnessReadbacks.reverse_area,
-    Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords.edges, edgeListArea_append,
+    CutBalance.BoundaryWords.edges, edgeListArea_append,
     ← sample.area_eq, ← sample.zero.raw_eq, ← sample.one.raw_eq] at equal
   calc
     sample.area = (sample.area + -(sample.zero.raw + sample.one.raw)) + (sample.zero.raw + sample.one.raw) := by ring1
@@ -195,18 +199,18 @@ theorem corrected_area (sample : PairedRegionSample region words left right) :
 
 end PairedRegionSample
 
-variable {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+variable {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
   grid.faces.regulars}
-  {leftDifferential rightDifferential : Hyperelliptic.Differentials.Basic.Differential genus}
+  {leftDifferential rightDifferential : Differentials.Basic.Differential genus}
 
 /-- The actual resplit polygon, with both differential readings retained. -/
 @[expose] def pairedPolygon (face : RegularFace original) (lifted : LiftedPuncturedGrid grid.punctured)
-    (leftValues rightValues : Fin lifted.mesh.triangles.length → Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues
+    (leftValues rightValues : Fin lifted.mesh.triangles.length → PrimitiveSewing.PrimitiveValues
       3) (sheet : Fin 2) : Gaussian :=
   Path.PairedIncrementArea.area ((lifted.edges.indexedEdges lifted.vertices
     (grid.shrunk.included.resplit face.boundary (face.cell.anchor_mem face.member)) sheet).map (fun edge =>
       (⟨edgeValuation lifted.mesh leftValues edge,
-        Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh rightValues edge⟩ :
+        PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh rightValues edge⟩ :
           PrimitivePoint)))
 
 set_option genInjectivity false in
@@ -214,7 +218,7 @@ set_option genInjectivity false in
 
 It retains both sheet sewing comparisons and the opposite-sheet source comparison at one thirty-second of the total
 target. -/
-structure PairedRegionRequest (words : Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords face lifted)
+structure PairedRegionRequest (words : CutBalance.BoundaryWords face lifted)
     (leftFixed : FaceMagnitudeBank domains leftDifferential) (rightFixed : FaceMagnitudeBank domains rightDifferential)
     (error : Rational) (floor : Nat) where
   /-- The whole paired region-area target is positive. -/ positive : 0 < error
@@ -229,16 +233,16 @@ constructive_injectivity PairedRegionRequest
 
 namespace PairedRegionRequest
 
-variable {words : Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords face lifted}
+variable {words : CutBalance.BoundaryWords face lifted}
   {leftFixed : FaceMagnitudeBank domains leftDifferential} {rightFixed : FaceMagnitudeBank domains rightDifferential}
   {error : Rational} {floor : Nat}
 
 /-- Prepare the two original sheet sewing requests and their opposite-sheet comparison with the supplied stage floor. -/
-@[expose] def build (words : Hyperelliptic.Meshes.Newton.Regular.CutBalance.BoundaryWords face lifted)
+@[expose] def build (words : CutBalance.BoundaryWords face lifted)
     (leftFixed : FaceMagnitudeBank domains leftDifferential) (rightFixed : FaceMagnitudeBank domains rightDifferential)
     (error : Rational) (positive : 0 < error) (floor : Nat) : PairedRegionRequest words leftFixed rightFixed error floor
       :=
-  let partPositive := Fraction.Order.Field.div_pos_direct positive (by decide +kernel : (0 : Rational) < 32)
+  let partPositive := Field.div_pos_direct positive (by decide +kernel : (0 : Rational) < 32)
   ⟨positive, PairedSheetRequest.build words 0 words.zero leftFixed rightFixed (error / 32) partPositive floor,
     PairedSheetRequest.build words 1 words.one leftFixed rightFixed (error / 32) partPositive floor,
     BilinearAreaRequest.build leftFixed rightFixed words.paired (error / 32) partPositive⟩
@@ -253,15 +257,15 @@ theorem floor_le (request : PairedRegionRequest words leftFixed rightFixed error
 
 /-- The two actual paired canonical sheet polygons differ by at most ten times the retained local allowance. -/
 private theorem canonical_difference (request : PairedRegionRequest words leftFixed rightFixed error floor)
-    {stage : Nat} {leftBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank leftDifferential
+    {stage : Nat} {leftBank : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank leftDifferential
       stage domains}
-    {rightBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank rightDifferential stage
+    {rightBank : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank rightDifferential stage
       domains}
-    (leftReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings leftBank lifted.mesh)
-      (rightReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings rightBank
+    (leftReadings : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings leftBank lifted.mesh)
+      (rightReadings : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings rightBank
       lifted.mesh)
     (later : request.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (pairedPolygon face lifted leftReadings.values rightReadings.values 0 -
+    Gaussian.Norm.Basic.normSq (pairedPolygon face lifted leftReadings.values rightReadings.values 0 -
       pairedPolygon face lifted leftReadings.values rightReadings.values 1) ≤ 10 * (error / 32) := by
   have zeroLater := (Nat.Order.le_max_left _ _).trans ((Nat.Order.le_max_left _ _).trans later)
   have oneLater := (Nat.Order.le_max_right _ _).trans ((Nat.Order.le_max_left _ _).trans later)
@@ -283,59 +287,59 @@ private theorem canonical_difference (request : PairedRegionRequest words leftFi
   have readback (sheet : Fin 2) :
       Path.PairedIncrementArea.area ((words.paired.sources sheet).map (fun source =>
         (⟨edgeValuation lifted.mesh leftReadings.values (source.project lifted.mesh.triangulation.faces),
-          Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh rightReadings.values
+          PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh rightReadings.values
             (source.project lifted.mesh.triangulation.faces)⟩ : PrimitivePoint))) =
       polygon sheet := by
     unfold polygon pairedPolygon
     rw [← words.paired.sources_project sheet, List.Map.map_map]
     rfl
-  change Data.Gaussian.Norm.Basic.normSq (source 0 - Path.PairedIncrementArea.area
+  change Gaussian.Norm.Basic.normSq (source 0 - Path.PairedIncrementArea.area
       ((words.paired.sources 0).map (fun source =>
-        (⟨Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh leftReadings.values
+        (⟨PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh leftReadings.values
           (source.project lifted.mesh.triangulation.faces),
-          Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh rightReadings.values
+          PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh rightReadings.values
             (source.project lifted.mesh.triangulation.faces)⟩ : PrimitivePoint)))) ≤ error / 32 / 4 at zero
   rw [readback 0] at zero
-  change Data.Gaussian.Norm.Basic.normSq (source 1 - Path.PairedIncrementArea.area
+  change Gaussian.Norm.Basic.normSq (source 1 - Path.PairedIncrementArea.area
       ((words.paired.sources 1).map (fun source =>
-        (⟨Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh leftReadings.values
+        (⟨PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh leftReadings.values
           (source.project lifted.mesh.triangulation.faces),
-          Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh rightReadings.values
+          PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh rightReadings.values
             (source.project lifted.mesh.triangulation.faces)⟩ : PrimitivePoint)))) ≤ error / 32 / 4 at one
   rw [readback 1] at one
-  have partNonnegative := (Fraction.Order.Field.div_pos_direct request.positive (by
+  have partNonnegative := (Field.div_pos_direct request.positive (by
       decide +kernel : (0 : Rational) < 32)).le
-  have smaller : error / 32 / 4 ≤ error / 32 := Fraction.Order.Field.divide_le_self partNonnegative (by decide)
-  have reversed : Data.Gaussian.Norm.Basic.normSq (polygon 0 - source 0) ≤ error / 32 := by
+  have smaller : error / 32 / 4 ≤ error / 32 := Field.divide_le_self partNonnegative (by decide)
+  have reversed : Gaussian.Norm.Basic.normSq (polygon 0 - source 0) ≤ error / 32 := by
     rw [show polygon 0 - source 0 = -(source 0 - polygon 0) by ring1,
       Gaussian.Norm.Basic.normSq_neg]
     exact zero.trans smaller
-  have middle : Data.Gaussian.Norm.Basic.normSq (source 0 - polygon 1) ≤ 2 * (error / 32 + error / 32) :=
+  have middle : Gaussian.Norm.Basic.normSq (source 0 - polygon 1) ≤ 2 * (error / 32 + error / 32) :=
     (Gaussian.Norm.Bounds.normSq_sub_le_via (source 0) (source 1) (polygon 1)).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct opposite
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct opposite
         (one.trans smaller)) (by decide))
   exact ((Gaussian.Norm.Bounds.normSq_sub_le_via (polygon 0) (source 0) (polygon 1)).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct reversed
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct reversed
       middle) (by decide))).trans_eq (by ring1)
 
 /-- The compiler may arrive on either sheet. Both chart errors and the
 opposite-sheet source comparison are paid on the same retained samples. -/
 theorem accurate (request : PairedRegionRequest words leftFixed rightFixed error floor) (sheet : Fin 2)
-    {stage : Nat} {leftBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank leftDifferential
+    {stage : Nat} {leftBank : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank leftDifferential
       stage domains}
-    {rightBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank rightDifferential stage
+    {rightBank : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank rightDifferential stage
       domains}
-    (leftReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings leftBank lifted.mesh)
-      (rightReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings rightBank
+    (leftReadings : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings leftBank lifted.mesh)
+      (rightReadings : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings rightBank
       lifted.mesh)
-    (leftSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch
+    (leftSurface : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch
       leftReadings.values)
-    (rightSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch
+    (rightSurface : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch
       rightReadings.values)
     {region : OriginalRegularFaces grid face} (sample : PairedRegionSample region words leftSurface rightSurface)
     (later : request.index ≤ stage) :
     let polygon := pairedPolygon face lifted leftReadings.values rightReadings.values sheet
-    Data.Gaussian.Norm.Basic.normSq (sample.area - sample.correction - (polygon + polygon)) ≤ error := by
+    Gaussian.Norm.Basic.normSq (sample.area - sample.correction - (polygon + polygon)) ≤ error := by
   intro polygon
   let canonical := pairedPolygon face lifted leftReadings.values rightReadings.values
   let readings :=
@@ -346,7 +350,7 @@ theorem accurate (request : PairedRegionRequest words leftFixed rightFixed error
     ((Nat.Order.le_max_left _ _).trans ((Nat.Order.le_max_left _ _).trans later)) sample.zero
   have one := request.one.corrected_accurate readings leftSurface rightSurface
     ((Nat.Order.le_max_right _ _).trans ((Nat.Order.le_max_left _ _).trans later)) sample.one
-  have sumBound : Data.Gaussian.Norm.Basic.normSq (sample.area - sample.correction - (canonical 0 + canonical 1)) ≤
+  have sumBound : Gaussian.Norm.Basic.normSq (sample.area - sample.correction - (canonical 0 + canonical 1)) ≤
     4 * (error / 32) := by
     have equal : sample.area - sample.correction - (canonical 0 + canonical 1) =
         ((sample.zero.raw - sample.zero.correction) - canonical 0) +
@@ -355,32 +359,32 @@ theorem accurate (request : PairedRegionRequest words leftFixed rightFixed error
       ring1
     rw [equal]
     exact ((Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct zero one)
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct zero one)
         (by decide))).trans_eq (by ring1)
   have difference := request.canonical_difference leftReadings rightReadings later
-  have either : ∀ sheet : Fin 2, Data.Gaussian.Norm.Basic.normSq (canonical 0 + canonical 1 - (canonical sheet +
+  have either : ∀ sheet : Fin 2, Gaussian.Norm.Basic.normSq (canonical 0 + canonical 1 - (canonical sheet +
     canonical sheet)) ≤ 10 * (error / 32) := by
-    refine Data.Fin.cases_induction ?_ (fun predecessor => Data.Fin.cases_induction ?_ (fun empty => Fin.elim0 empty)
+    refine Fin.cases_induction ?_ (fun predecessor => Fin.cases_induction ?_ (fun empty => Fin.elim0 empty)
       predecessor)
-    · change Data.Gaussian.Norm.Basic.normSq (canonical 0 + canonical 1 - (canonical 0 + canonical 0)) ≤ 10 * (error
+    · change Gaussian.Norm.Basic.normSq (canonical 0 + canonical 1 - (canonical 0 + canonical 0)) ≤ 10 * (error
         / 32)
       rw [show canonical 0 + canonical 1 - (canonical 0 + canonical 0) = -(canonical 0 - canonical 1) by ring1,
         Gaussian.Norm.Basic.normSq_neg]
       exact difference
-    · change Data.Gaussian.Norm.Basic.normSq (canonical 0 + canonical 1 - (canonical 1 + canonical 1)) ≤ 10 * (error
+    · change Gaussian.Norm.Basic.normSq (canonical 0 + canonical 1 - (canonical 1 + canonical 1)) ≤ 10 * (error
         / 32)
       rw [show canonical 0 + canonical 1 - (canonical 1 + canonical 1) = canonical 0 - canonical 1 by ring1]
       exact difference
   have estimate := (Gaussian.Norm.Bounds.normSq_sub_le_via (sample.area - sample.correction)
     (canonical 0 + canonical 1) (canonical sheet + canonical sheet)).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct sumBound
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct sumBound
         (either sheet)) (by decide))
-  have partNonnegative := (Fraction.Order.Field.div_pos_direct request.positive (by
+  have partNonnegative := (Field.div_pos_direct request.positive (by
       decide +kernel : (0 : Rational) < 32)).le
   have paid : 2 * (4 * (error / 32) + 10 * (error / 32)) ≤ error := by
     calc
       _ = 28 * (error / 32) := by ring1
-      _ ≤ 32 * (error / 32) := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel)
+      _ ≤ 32 * (error / 32) := Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel)
         partNonnegative
       _ = error := by
         rw [Fraction.Field.mul_comm]

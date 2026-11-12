@@ -83,7 +83,8 @@ theorem normalizedScalar_within (polynomial :
       (Elimination.Separated.Scalar.normalizedScalar polynomial)
       (eliminantMagnitudeEnvelope polynomial) := open Purelib in by
   let working := id polynomial
-  unfold Elimination.Separated.Scalar.normalizedScalar eliminantMagnitudeEnvelope
+  rewrite [Elimination.Separated.Scalar.normalizedScalar_eq]
+  unfold eliminantMagnitudeEnvelope
   apply PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Scalar.scaledInverseScalar_within
   · exact (Elimination.Separated.Resource.Reflection.source_zero_within working).trans
       (Algebra.Field.Resource.Magnitude.bound_le_grow Purelib.Data.Gaussian.Resource.Model.gaussianModel _ _)
@@ -120,6 +121,7 @@ theorem normalizedEliminant_within (polynomial :
       (eliminantMagnitudeEnvelope polynomial) := open Purelib in by
   have scalarWithin := normalizedScalar_within polynomial
   unfold Elimination.Separated.Scalar.normalizedEliminant
+  dsimp only
   split
   · intro candidate member
     unfold Dense.Gaussian.Components.imagPart at member

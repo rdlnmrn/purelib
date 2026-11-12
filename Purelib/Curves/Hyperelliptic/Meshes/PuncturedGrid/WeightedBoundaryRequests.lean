@@ -144,13 +144,13 @@ open Purelib.Riemann.Readings.PreparedPrimitiveChargeBounds (Coordinate)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {source :
     Differential genus} {boundary :
     BoundaryProgram lifted
     source}
-  {segments : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank boundary.program.period}
+  {segments : PeriodSegmentBanks.SegmentBank boundary.program.period}
     {differential : Fin genus}
   {comparison : PrimitiveBank
     (FaceBank.ofSegments boundary.program segments)
@@ -165,26 +165,26 @@ set_option genInjectivity false in
 
 The original coarse boundary magnitude determines the weight before the shared fine contact and period stages are
 chosen. -/
-structure AreaBudget (family : PeriodFamilies.PrimitiveFamily programs comparison.domains differential)
-    (prepared : BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch pairing
+structure AreaBudget (family : PrimitiveFamily programs comparison.domains differential)
+    (prepared : BoundaryContactPreparations lifted.cutPolygon.patch pairing
       (PeriodMatrix.standardDifferential differential) comparison.domains)
-    (reference : BoundaryPrimitiveReferences.BoundaryReference boundary comparison prepared.prepared)
-    (lengthBound : Nat) (pathTarget areaTarget : PreparedPrimitiveChargeBounds.Coordinate) (targets :
-      Data.Vector PreparedPrimitiveChargeBounds.Coordinate count) (floor : Nat) where
+    (reference : BoundaryReference boundary comparison prepared.prepared)
+    (lengthBound : Nat) (pathTarget areaTarget : Coordinate) (targets :
+      Data.Vector Coordinate count) (floor : Nat) where
   /-- The requested weighted area-error target is strictly positive. -/ positive : 0 < areaTarget
   /-- The cached weight determined by the original coarse boundary reference. -/ weight :
-    PreparedPrimitiveChargeBounds.Coordinate
+    Coordinate
   /-- The cached weight is exactly four times the original reference magnitude bound. -/ weight_eq : weight = 4 *
     reference.bound
   /-- The cached unweighted endpoint-error allowance paying the original area target. -/ endpointTarget :
-    PreparedPrimitiveChargeBounds.Coordinate
+    Coordinate
   /-- The endpoint allowance is exactly the weighted budget allocation at the retained reference weight. -/
     endpointTarget_eq : endpointTarget = Weighted.allowance areaTarget weight
   /-- The cached common lower stage for the fine contact and period requests. -/ minimum : Nat
   /-- The retained minimum is exactly the maximum of the caller floor and original reference stage. -/ minimum_eq :
     minimum = max floor reference.reference.contactRequest.index
   /-- The retained common contact and period budget paying these exact original targets and stage floor. -/ request :
-    ContactPeriodRequests.ContactBudget family prepared lengthBound pathTarget endpointTarget targets minimum
+    ContactBudget family prepared lengthBound pathTarget endpointTarget targets minimum
 
 constructive_injectivity AreaBudget
 
@@ -193,7 +193,7 @@ namespace AreaBudget
 variable {family : PrimitiveFamily programs
   comparison.domains differential}
   {prepared : BoundaryContactPreparations
-    lifted.cutPolygon.patch pairing (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential differential)
+    lifted.cutPolygon.patch pairing (PeriodMatrix.standardDifferential differential)
     comparison.domains}
   {reference : BoundaryReference boundary
     comparison prepared.prepared}
@@ -203,20 +203,20 @@ variable {family : PrimitiveFamily programs
 
 /-- Use the original coarse boundary reference to allocate the weighted defect target and prepare the shared fine
 contact and period requests. -/
-def build (family : PeriodFamilies.PrimitiveFamily programs comparison.domains differential)
-    (prepared : BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch pairing
+def build (family : PrimitiveFamily programs comparison.domains differential)
+    (prepared : BoundaryContactPreparations lifted.cutPolygon.patch pairing
       (PeriodMatrix.standardDifferential differential) comparison.domains)
-    (reference : BoundaryPrimitiveReferences.BoundaryReference boundary comparison prepared.prepared)
-    (lengthBound : Nat) (pathTarget : PreparedPrimitiveChargeBounds.Coordinate) (pathPositive : 0 < pathTarget)
-    (areaTarget : PreparedPrimitiveChargeBounds.Coordinate) (areaPositive : 0 < areaTarget)
-    (targets : Data.Vector PreparedPrimitiveChargeBounds.Coordinate count) (positive : ∀ index, 0 < targets
+    (reference : BoundaryReference boundary comparison prepared.prepared)
+    (lengthBound : Nat) (pathTarget : Coordinate) (pathPositive : 0 < pathTarget)
+    (areaTarget : Coordinate) (areaPositive : 0 < areaTarget)
+    (targets : Data.Vector Coordinate count) (positive : ∀ index, 0 < targets
       index) (floor : Nat) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.WeightedBoundaryRequests.AreaBudget family prepared reference lengthBound
+    AreaBudget family prepared reference lengthBound
       pathTarget areaTarget targets floor :=
   let weight := 4 * reference.bound
   let endpointTarget := Weighted.allowance areaTarget weight
   have endpointPositive := Weighted.allowance_positive areaPositive
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : PreparedPrimitiveChargeBounds.Coordinate) ≤ 4)
+    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 4)
       reference.bound_positive.le)
   let minimum := max floor reference.reference.contactRequest.index
   ⟨areaPositive, weight, rfl, endpointTarget, rfl, minimum, rfl,
@@ -224,7 +224,7 @@ def build (family : PeriodFamilies.PrimitiveFamily programs comparison.domains d
       positive minimum⟩
 
 /-- The retained period request stage also pays the original coarse boundary reference. -/
-theorem reference_later (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.WeightedBoundaryRequests.AreaBudget family
+theorem reference_later (budget : AreaBudget family
   prepared reference lengthBound pathTarget areaTarget targets floor) :
     reference.reference.contactRequest.index ≤ budget.request.periods.index := by
   have floorLe : reference.reference.contactRequest.index ≤ budget.minimum := by
@@ -233,7 +233,7 @@ theorem reference_later (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Weig
   exact floorLe.trans (budget.request.contacts.floor_le.trans budget.request.periods.surface_later)
 
 /-- The retained period request stage meets the original caller floor. -/
-theorem floor_le (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.WeightedBoundaryRequests.AreaBudget family prepared
+theorem floor_le (budget : AreaBudget family prepared
   reference lengthBound pathTarget areaTarget targets floor) :
     floor ≤ budget.request.periods.index := by
   have floorLe : floor ≤ budget.minimum := by rw [budget.minimum_eq]; exact Order.le_max_left _ _
@@ -241,7 +241,7 @@ theorem floor_le (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.WeightedBou
 
 /-- Each actual paired boundary defect receives exactly the count allocation of the original weighted endpoint
 allowance. -/
-theorem perPair_eq (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.WeightedBoundaryRequests.AreaBudget family
+theorem perPair_eq (budget : AreaBudget family
   prepared reference lengthBound pathTarget areaTarget targets floor) :
     budget.request.perPair = Aggregate.perTerm
       (Weighted.allowance areaTarget (4 * reference.bound)) budget.request.pairCount :=
@@ -251,11 +251,11 @@ theorem perPair_eq (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.WeightedB
         budget.request.pairCount) budget.weight_eq))
 
 /-- Every actual retained centered boundary-pair defect satisfies its original per-pair allowance. -/
-theorem centered_defect_accurate (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.WeightedBoundaryRequests.AreaBudget
+theorem centered_defect_accurate (budget : AreaBudget
   family prepared reference lengthBound pathTarget areaTarget targets floor)
     {minimumStages : Data.Vector Nat count} {requested : PrimitiveFamily.Requested budget.request.periods
       minimumStages}
-    (sample : Requested.Sewn requested lifted.cutPolygon.patch) (centered : CenteredSewnSamples.Centered sample.surface)
+    (sample : Requested.Sewn requested lifted.cutPolygon.patch) (centered : Centered sample.surface)
     (data : ProjectedEdgePairing.PrimitiveSample pairing centered.energyValues)
     (entry : ProjectedEdgePair.Sample (labels := lifted.cutPolygon.patch.cut.vertexLabels) centered.energyValues)
     (member : entry ∈ data.samples) : Data.Gaussian.Norm.Basic.normSq entry.defect.right <
@@ -269,11 +269,11 @@ theorem centered_defect_accurate (budget : Curves.Hyperelliptic.Meshes.Punctured
 
 /-- This is the weighted area defect from the complete boundary identity, not merely a sum of endpoint differences. The
 coarse magnitude and both pair-count factors are paid before constructing the shared fine sample. -/
-theorem defectSum_accurate (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.WeightedBoundaryRequests.AreaBudget
+theorem defectSum_accurate (budget : AreaBudget
   family prepared reference lengthBound pathTarget areaTarget targets floor)
     {minimumStages : Data.Vector Nat count} {requested : PrimitiveFamily.Requested budget.request.periods
       minimumStages}
-    (sample : Requested.Sewn requested lifted.cutPolygon.patch) (centered : CenteredSewnSamples.Centered sample.surface)
+    (sample : Requested.Sewn requested lifted.cutPolygon.patch) (centered : Centered sample.surface)
     (data : ProjectedEdgePairing.PrimitiveSample pairing centered.energyValues) :
       Data.Gaussian.Norm.Basic.normSq data.defectSum < areaTarget := by
   have countEq : data.samples.length = budget.request.pairCount := by
@@ -297,11 +297,11 @@ theorem defectSum_accurate (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.W
 
 /-- Only the now-paid compatibility defect is removed up to the requested error. Genuine physical-boundary area and the
 actual jump sum remain. -/
-theorem boundary_accurate (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.WeightedBoundaryRequests.AreaBudget family
+theorem boundary_accurate (budget : AreaBudget family
   prepared reference lengthBound pathTarget areaTarget targets floor)
     {minimumStages : Data.Vector Nat count} {requested : PrimitiveFamily.Requested budget.request.periods
       minimumStages}
-    (sample : Requested.Sewn requested lifted.cutPolygon.patch) (centered : CenteredSewnSamples.Centered sample.surface)
+    (sample : Requested.Sewn requested lifted.cutPolygon.patch) (centered : Centered sample.surface)
     (data : ProjectedEdgePairing.PrimitiveSample pairing centered.energyValues) :
     Data.Gaussian.Norm.Basic.normSq (sample.surface.boundaryArea - (data.boundaryArea + data.jumpSum)) <
       areaTarget := by

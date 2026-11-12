@@ -59,27 +59,27 @@ attribute [local congr] FiniteSum.Fin.sumFin_congr
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentCorrection
   (physicalComponentCorrection componentTriangleArea physicalCorrection_components)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
     bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
   {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
-  {cuts : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
-    {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+    Face.DomainBanks.FaceDomainBank frames faces.regulars}
+  {cuts : RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
+    {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet} {target : Fraction.Rational}
   {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
   {firstPosition : Fin faces.regulars.length} {firstSheet : Fin 2}
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+variable {request : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+  RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
   target}
 
 variable {i j : Fin genus} {firstParent secondParent : Fin 2} {tolerance : Fraction.Rational} {floor stage : Nat}
   {first : mesh.LocatedFace firstPosition firstSheet} {nextPosition : Fin faces.regulars.length}
 
-variable {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+variable {cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage}
 
 /-- Keep the original side contribution exactly when its regular box matches the specified original hole box. -/
 def holeSideValue (hole : Fin faces.holes.length) (side : Meshes.GridLiftedDualSteps.GridSide)
@@ -92,24 +92,24 @@ Selection uses the retained regular and hole boxes directly, preserving orientat
 witnesses. -/
 def holeCorrection (perimeters : Matched.FacePerimeters (request :=
   request) cache.normalize i j)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
-      Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
+      TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
     (hole : Fin faces.holes.length) : Gaussian.Basic.Canonical :=
-  (FiniteSum.Fin.sumFin (fun p => Hyperelliptic.Meshes.PuncturedGrid.HoleComponentCorrection.holeSideValue hole .right p
-    (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters .right p)) -
-    FiniteSum.Fin.sumFin (fun p => Hyperelliptic.Meshes.PuncturedGrid.HoleComponentCorrection.holeSideValue hole .left p
-      (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters .left p)) -
-    (FiniteSum.Fin.sumFin (fun p => Hyperelliptic.Meshes.PuncturedGrid.HoleComponentCorrection.holeSideValue hole .top p
-      (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters .top p)) -
-      FiniteSum.Fin.sumFin (fun p => Hyperelliptic.Meshes.PuncturedGrid.HoleComponentCorrection.holeSideValue hole
-        .bottom p (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters .bottom
+  (FiniteSum.Fin.sumFin (fun p => HoleComponentCorrection.holeSideValue hole .right p
+    (GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters .right p)) -
+    FiniteSum.Fin.sumFin (fun p => HoleComponentCorrection.holeSideValue hole .left p
+      (GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters .left p)) -
+    (FiniteSum.Fin.sumFin (fun p => HoleComponentCorrection.holeSideValue hole .top p
+      (GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters .top p)) -
+      FiniteSum.Fin.sumFin (fun p => HoleComponentCorrection.holeSideValue hole
+        .bottom p (GlobalPerimeterIdentity.FacePerimeters.sideSum perimeters .bottom
         p)))) -
   FiniteSum.Fin.sumFin (fun sheet =>
-    FiniteSum.Fin.sumFin (fun p => Hyperelliptic.Meshes.PuncturedGrid.HoleComponentCorrection.holeSideValue hole .right
-      p (Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+    FiniteSum.Fin.sumFin (fun p => HoleComponentCorrection.holeSideValue hole .right
+      p (CornerTriangleAreas.TriangleReadings.bilinearArea left right
       (mesh.triangleIndex p sheet false))) +
-    FiniteSum.Fin.sumFin (fun p => Hyperelliptic.Meshes.PuncturedGrid.HoleComponentCorrection.holeSideValue hole .top p
-      (Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+    FiniteSum.Fin.sumFin (fun p => HoleComponentCorrection.holeSideValue hole .top p
+      (CornerTriangleAreas.TriangleReadings.bilinearArea left right
       (mesh.triangleIndex p sheet true))))
 
 /-- The direct original-box hole correction equals the corresponding certified physical-component correction.
@@ -120,18 +120,18 @@ agree with the direct box selectors at the same bounded hole position. -/
 theorem holeCorrection_eq_component (perimeters :
   Matched.FacePerimeters (request := request) cache.normalize i j)
     (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank faces)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
-      Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
+      TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
     (hole : Fin faces.holes.length) :
-    Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentCorrection.physicalComponentCorrection perimeters neighbors left
-      right (.hole hole) = Hyperelliptic.Meshes.PuncturedGrid.HoleComponentCorrection.holeCorrection perimeters left
+    PhysicalComponentCorrection.physicalComponentCorrection perimeters neighbors left
+      right (.hole hole) = HoleComponentCorrection.holeCorrection perimeters left
       right hole := by
-  simp only [Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentCorrection.physicalComponentCorrection,
-    Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentCorrection.FacePerimeters.componentPerimeter,
-    Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentCorrection.componentTriangleArea,
-    Hyperelliptic.Meshes.PuncturedGrid.HoleSideSelection.SideNeighbor.hole_value_eq,
-      Hyperelliptic.Meshes.PuncturedGrid.HoleComponentCorrection.holeCorrection,
-      Hyperelliptic.Meshes.PuncturedGrid.HoleComponentCorrection.holeSideValue, -eq_self, -iff_self]
+  simp only [PhysicalComponentCorrection.physicalComponentCorrection,
+    PhysicalComponentCorrection.FacePerimeters.componentPerimeter,
+    PhysicalComponentCorrection.componentTriangleArea,
+    HoleSideSelection.SideNeighbor.hole_value_eq,
+      HoleComponentCorrection.holeCorrection,
+      HoleComponentCorrection.holeSideValue, -eq_self, -iff_self]
   rfl
 
 /-- The complete physical correction is its retained exterior component plus the original-box corrections for every
@@ -139,17 +139,17 @@ hole. -/
 theorem physicalCorrection_eq_holes (perimeters :
   Matched.FacePerimeters (request := request) cache.normalize i j)
     (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank faces)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
-      Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
-    Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter perimeters neighbors -
-      Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.physicalTriangleArea neighbors left right =
-      Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentCorrection.physicalComponentCorrection perimeters neighbors
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
+      TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh) :
+    GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter perimeters neighbors -
+      CrossingTriangleAreas.physicalTriangleArea neighbors left right =
+      PhysicalComponentCorrection.physicalComponentCorrection perimeters neighbors
         left right .exterior +
-        FiniteSum.Fin.sumFin (fun hole => Hyperelliptic.Meshes.PuncturedGrid.HoleComponentCorrection.holeCorrection
+        FiniteSum.Fin.sumFin (fun hole => HoleComponentCorrection.holeCorrection
           perimeters left right hole) := by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentCorrection.physicalCorrection_components]
+  rw [PhysicalComponentCorrection.physicalCorrection_components]
   rw [FiniteSum.Fin.sumFin_congr (fun hole =>
-    Hyperelliptic.Meshes.PuncturedGrid.HoleComponentCorrection.holeCorrection_eq_component perimeters neighbors left
+    HoleComponentCorrection.holeCorrection_eq_component perimeters neighbors left
     right hole)]
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleComponentCorrection

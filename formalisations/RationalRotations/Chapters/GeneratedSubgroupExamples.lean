@@ -15,6 +15,8 @@ import Purelib.LinearAlgebra.Span.Boolean.Basic
 import Purelib.NumberTheory.SquareClass.Rational.Signature
 import Purelib.NumberTheory.SquareClass.Rational.Span
 
+open Purelib.Geometry.Rotations.Rational.Generators.Profile
+
 open Purelib
 
 @[expose] public section
@@ -39,7 +41,7 @@ open GeneratorProfileExamples
 quarter-turn.
 
 It retains the rank-two square-class image together with exact word and kernel-query operations. -/
-def classification := Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.classify
+def classification := GeneratedSubgroups.classify
   [(Geometry.Rotations.Projective.Action.NonNullProportion.rotation
     Examples.Geometry.Rotations.QuaternionObstruction.ExampleSixtyFour.quarterTurn),
     (Geometry.Rotations.Projective.Action.NonNullProportion.rotation
@@ -62,7 +64,7 @@ theorem classification_image_cardinality :
 not merely to have a suggestive zero signature. -/
 theorem inversePairWord_in_kernel :
     Algebra.Quaternion.Projective.UnitObstruction.NonNullProportion.QuaternionObstruction.HasUnitRepresentative
-      (Geometry.Rotations.Rational.Generators.Profile.RotationProfiles.signedWordProduct redundantRotationProfile
+      (RotationProfiles.signedWordProduct redundantRotationProfile
         inversePairWord) :=
 
     (GeneratedSubgroups.signedWord_hasUnitRepresentative_iff_vector_zero
@@ -71,12 +73,12 @@ theorem inversePairWord_in_kernel :
 /-- The same word is in the identity kernel coset. -/
 theorem inversePairWord_same_identity_coset :
     Algebra.Quaternion.Projective.UnitObstruction.NonNullProportion.InSameUnitKernelCoset
-      (Geometry.Rotations.Rational.Generators.Profile.RotationProfiles.signedWordProduct redundantRotationProfile
+      (RotationProfiles.signedWordProduct redundantRotationProfile
         inversePairWord)
-      (Geometry.Rotations.Rational.Generators.Profile.RotationProfiles.signedWordProduct redundantRotationProfile
+      (RotationProfiles.signedWordProduct redundantRotationProfile
         []) := by
   apply
-    (Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.signedWords_sameKernelCoset_iff_vector_eq
+    (GeneratedSubgroups.signedWords_sameKernelCoset_iff_vector_eq
     redundantRotationProfile inversePairWord []).mpr
   rw [inversePairWord_vector]
   rfl
@@ -84,12 +86,12 @@ theorem inversePairWord_same_identity_coset :
 /-- Forward and inverse quarter turns occupy the same `chi` coset. -/
 theorem forward_inverse_same_kernel_coset :
     Algebra.Quaternion.Projective.UnitObstruction.NonNullProportion.InSameUnitKernelCoset
-      (Geometry.Rotations.Rational.Generators.Profile.RotationProfiles.signedWordProduct redundantRotationProfile
+      (RotationProfiles.signedWordProduct redundantRotationProfile
         [firstForward])
-      (Geometry.Rotations.Rational.Generators.Profile.RotationProfiles.signedWordProduct redundantRotationProfile
+      (RotationProfiles.signedWordProduct redundantRotationProfile
         [firstInverse]) := by
   apply
-    (Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.signedWords_sameKernelCoset_iff_vector_eq
+    (GeneratedSubgroups.signedWords_sameKernelCoset_iff_vector_eq
     redundantRotationProfile [firstForward] [firstInverse]).mpr
   rfl
 
@@ -97,33 +99,33 @@ theorem forward_inverse_same_kernel_coset :
 classifier is not being confused with equality in the generated group. -/
 theorem forward_inverse_different_rotations :
     (Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix
-      (Geometry.Rotations.Rational.Generators.Profile.RotationProfiles.signedWordProduct redundantRotationProfile
+      (RotationProfiles.signedWordProduct redundantRotationProfile
         [firstForward])) ≠
       (Geometry.Rotations.Projective.Action.NonNullProportion.rotationMatrix
-        (Geometry.Rotations.Rational.Generators.Profile.RotationProfiles.signedWordProduct redundantRotationProfile
+        (RotationProfiles.signedWordProduct redundantRotationProfile
         [firstInverse])) := by
   decide +kernel
 
 /-- The inverse-word algorithm returns the displayed inverse generator. -/
 theorem firstForward_inverse_product :
-    Geometry.Rotations.Rational.Generators.Profile.RotationProfiles.signedWordProduct redundantRotationProfile
-        (Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.inverseWord [firstForward]) =
+    RotationProfiles.signedWordProduct redundantRotationProfile
+        (GeneratedSubgroups.inverseWord [firstForward]) =
       Algebra.Quaternion.Projective.Basic.NonNullProportion.conjugate
-        (Geometry.Rotations.Rational.Generators.Profile.RotationProfiles.signedWordProduct redundantRotationProfile
+        (RotationProfiles.signedWordProduct redundantRotationProfile
           [firstForward]) :=
-  Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.signedWordProduct_inverseWord
+  GeneratedSubgroups.signedWordProduct_inverseWord
     redundantRotationProfile [firstForward]
 
 /-- A queried kernel word retains an explicit normalizer whose scaled norm
 is its computed square-free natural kernel. -/
 theorem inversePairWord_normalization_spec :
-    let evaluation := Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.evaluate
+    let evaluation := GeneratedSubgroups.evaluate
       redundantRotationProfile inversePairWord
     (Algebra.Quaternion.Projective.Basic.Proportion.scale evaluation.normalization.factor
       evaluation.proportion.toProportion).norm =
         (evaluation.normalization.signature.kernel :
-          Geometry.Rotations.Rational.Generators.Profile.RotationProfiles.Scalar) :=
-  (Geometry.Rotations.Rational.Generators.Classification.GeneratedSubgroups.evaluate redundantRotationProfile
+          RotationProfiles.Scalar) :=
+  (GeneratedSubgroups.evaluate redundantRotationProfile
     inversePairWord).normalization.norm_eq_kernel
 
 end GeneratedSubgroupExamples

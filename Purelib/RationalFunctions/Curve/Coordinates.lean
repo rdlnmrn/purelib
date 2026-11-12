@@ -10,6 +10,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Arithmetic
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian
+
 open Purelib.Data.Gaussian.Basic (Canonical)
 open Purelib.Data.Rat.Fraction (Rational)
 open Purelib.Polynomial.Dense.Basic (DensePolynomial)
@@ -41,58 +43,58 @@ section
 open Purelib.Polynomial
 open Purelib.RationalFunctions
 /-- Extract the rational real-coordinate polynomial of the curve numerator. -/
-def numeratorReal (curve : Curve.RationalCurve) :
+def numeratorReal (curve : RationalCurve) :
   (DensePolynomial Rational) :=
-  Dense.Gaussian.Components.realPart curve.numerator
+  Components.realPart curve.numerator
 
 /-- Extract the rational imaginary-coordinate polynomial of the curve numerator. -/
-def numeratorImaginary (curve : Curve.RationalCurve) :
+def numeratorImaginary (curve : RationalCurve) :
   (DensePolynomial Rational) :=
-  Dense.Gaussian.Components.imagPart curve.numerator
+  Components.imagPart curve.numerator
 
 /-- Extract the rational real-coordinate polynomial of the curve denominator. -/
-def denominatorReal (curve : Curve.RationalCurve) :
+def denominatorReal (curve : RationalCurve) :
   (DensePolynomial Rational) :=
-  Dense.Gaussian.Components.realPart curve.denominator
+  Components.realPart curve.denominator
 
 /-- Extract the rational imaginary-coordinate polynomial of the curve denominator. -/
-def denominatorImaginary (curve : Curve.RationalCurve) :
+def denominatorImaginary (curve : RationalCurve) :
   (DensePolynomial Rational) :=
-  Dense.Gaussian.Components.imagPart curve.denominator
+  Components.imagPart curve.denominator
 
 /-- Form the sum of squares of the two denominator coordinate polynomials. -/
-def denominatorNormSq (curve : Curve.RationalCurve) :
+def denominatorNormSq (curve : RationalCurve) :
   (DensePolynomial Rational) :=
   denominatorReal curve * denominatorReal curve +
     denominatorImaginary curve * denominatorImaginary curve
 
 /-- Form the real coordinate polynomial of the numerator times the conjugate denominator. -/
-def affineRealNumerator (curve : Curve.RationalCurve) :
+def affineRealNumerator (curve : RationalCurve) :
   (DensePolynomial Rational) :=
   numeratorReal curve * denominatorReal curve +
     numeratorImaginary curve * denominatorImaginary curve
 
 /-- Form the imaginary coordinate polynomial of the numerator times the conjugate denominator. -/
-def affineImaginaryNumerator (curve : Curve.RationalCurve) :
+def affineImaginaryNumerator (curve : RationalCurve) :
   (DensePolynomial Rational) :=
   numeratorImaginary curve * denominatorReal curve -
     numeratorReal curve * denominatorImaginary curve
 
 /-- The denominator quadrance polynomial evaluates to the quadrance of the denominator value. -/
 @[simp] theorem eval_denominatorNormSq
-    (curve : Curve.RationalCurve) (parameter : Rational) :
+    (curve : RationalCurve) (parameter : Rational) :
     (denominatorNormSq curve).eval parameter =
       Gaussian.Norm.Basic.normSq (curve.denominatorAt parameter) := by
   simp only [denominatorNormSq, denominatorReal,
     denominatorImaginary,
-    DensePolynomial.eval_add, DensePolynomial.eval_mul, Dense.Gaussian.Components.eval_realPart,
-    Dense.Gaussian.Components.eval_imagPart,
-    Curve.RationalCurve.denominatorAt, Gaussian.Norm.Basic.normSq]
+    DensePolynomial.eval_add, DensePolynomial.eval_mul, Components.eval_realPart,
+    Components.eval_imagPart,
+    RationalCurve.denominatorAt, Gaussian.Norm.Basic.normSq]
   ring1
 
 /-- The real numerator polynomial evaluates to the real part of numerator times conjugate denominator. -/
 @[simp] theorem eval_affineRealNumerator
-    (curve : Curve.RationalCurve) (parameter : Rational) :
+    (curve : RationalCurve) (parameter : Rational) :
     (affineRealNumerator curve).eval parameter =
       (curve.numeratorAt parameter *
         Gaussian.Basic.conj
@@ -101,17 +103,17 @@ def affineImaginaryNumerator (curve : Curve.RationalCurve) :
     numeratorImaginary,
     denominatorReal, denominatorImaginary, DensePolynomial.eval_add,
       DensePolynomial.eval_mul,
-    Dense.Gaussian.Components.eval_realPart,
-    Dense.Gaussian.Components.eval_imagPart,
-    Curve.RationalCurve.numeratorAt,
-    Curve.RationalCurve.denominatorAt,
+    Components.eval_realPart,
+    Components.eval_imagPart,
+    RationalCurve.numeratorAt,
+    RationalCurve.denominatorAt,
     Gaussian.Basic.mul_re,
     Gaussian.Basic.conj]
   ring1
 
 /-- The imaginary numerator polynomial evaluates to the imaginary part of numerator times conjugate denominator. -/
 @[simp] theorem eval_affineImaginaryNumerator
-    (curve : Curve.RationalCurve) (parameter : Rational) :
+    (curve : RationalCurve) (parameter : Rational) :
     (affineImaginaryNumerator curve).eval parameter =
       (curve.numeratorAt parameter *
         Gaussian.Basic.conj
@@ -120,10 +122,10 @@ def affineImaginaryNumerator (curve : Curve.RationalCurve) :
     numeratorImaginary,
     denominatorReal, denominatorImaginary, DensePolynomial.eval_sub,
       DensePolynomial.eval_mul,
-    Dense.Gaussian.Components.eval_realPart,
-    Dense.Gaussian.Components.eval_imagPart,
-    Curve.RationalCurve.numeratorAt,
-    Curve.RationalCurve.denominatorAt,
+    Components.eval_realPart,
+    Components.eval_imagPart,
+    RationalCurve.numeratorAt,
+    RationalCurve.denominatorAt,
     Gaussian.Basic.mul_im,
     Gaussian.Basic.conj]
   ring1
@@ -134,7 +136,7 @@ open Purelib.RationalFunctions
 /-- At a nonzero denominator, the real numerator polynomial equals the affine real coordinate times denominator
 quadrance. -/
 theorem eval_affineRealNumerator_eq_point_mul_normSq
-    (curve : Curve.RationalCurve) (parameter : Rational)
+    (curve : RationalCurve) (parameter : Rational)
     (denominatorNonzero : curve.denominatorAt parameter ≠ 0) :
     (affineRealNumerator curve).eval parameter =
       (curve.point parameter).re * Gaussian.Norm.Basic.normSq (curve.denominatorAt parameter) := by
@@ -155,7 +157,7 @@ theorem eval_affineRealNumerator_eq_point_mul_normSq
 /-- At a nonzero denominator, the imaginary numerator polynomial equals the affine imaginary coordinate times
 denominator quadrance. -/
 theorem eval_affineImaginaryNumerator_eq_point_mul_normSq
-    (curve : Curve.RationalCurve) (parameter : Rational)
+    (curve : RationalCurve) (parameter : Rational)
     (denominatorNonzero : curve.denominatorAt parameter ≠ 0) :
     (affineImaginaryNumerator curve).eval parameter =
       (curve.point parameter).im * Gaussian.Norm.Basic.normSq (curve.denominatorAt parameter) := by
@@ -200,7 +202,7 @@ open Purelib.Data
 open Purelib.Polynomial
 open Purelib.RationalFunctions
 /-- Form the sum of squares of the two numerator coordinate polynomials. -/
-def numeratorNormSq (curve : Curve.RationalCurve) :
+def numeratorNormSq (curve : RationalCurve) :
   (DensePolynomial Rational) :=
   numeratorReal curve *
       numeratorReal curve +
@@ -209,16 +211,16 @@ def numeratorNormSq (curve : Curve.RationalCurve) :
 
 /-- The numerator quadrance polynomial evaluates to the quadrance of the numerator value. -/
 @[simp] theorem eval_numeratorNormSq
-    (curve : Curve.RationalCurve) (parameter : Rational) :
+    (curve : RationalCurve) (parameter : Rational) :
     (numeratorNormSq curve).eval parameter =
       Gaussian.Norm.Basic.normSq (curve.numeratorAt parameter) := by
   simp only [numeratorNormSq,
     numeratorReal,
     numeratorImaginary,
     DensePolynomial.eval_add, DensePolynomial.eval_mul,
-    Dense.Gaussian.Components.eval_realPart,
-    Dense.Gaussian.Components.eval_imagPart,
-    Curve.RationalCurve.numeratorAt, Gaussian.Norm.Basic.normSq]
+    Components.eval_realPart,
+    Components.eval_imagPart,
+    RationalCurve.numeratorAt, Gaussian.Norm.Basic.normSq]
   ring1
 end Purelib.RationalFunctions.Curve.Coordinates
 

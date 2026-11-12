@@ -1,4 +1,5 @@
 module
+import Purelib.Data.Rat.Fraction.Square
 import Purelib.Data.Rat.Fraction
 import Purelib.Data.Rat.Bounds.Square
 import Purelib.Data.Rat.Fraction.Order.Arithmetic
@@ -6,6 +7,7 @@ import Purelib.Data.Rat.Interval.Basic
 public import Purelib.Polynomial.Dense.Evaluation
 public import Purelib.Polynomial.Dense.Rational.Basic
 import Purelib.Data.Rat.Fraction.Field
+public import Purelib.Data.Rat.Fraction.Square
 import Mathlib.Algebra.Ring.Defs
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
@@ -36,9 +38,21 @@ open Purelib.Algebra.Semiring
 
 The original step multiplies the retained squared-value bound by the
 supplied squared radius, adds the exact coefficient square, and doubles
-that same rational sum. -/
+that same rational sum. The canonical coefficient square reuses its
+original reducedness certificate instead of repeating gcd normalization. -/
 @[expose] public def evalSqBoundStep (radiusSq bound coefficient : Fraction.Rational) : Fraction.Rational :=
-  2 * (bound * radiusSq + coefficient ^ 2)
+  2 * (bound * radiusSq + Fraction.square coefficient)
+
+/-- The direct squared Horner step equals its original displayed second-power formula.
+
+The retained radius, accumulator and coefficient keep their original
+scalar expression and grouping. Direct reduced-fraction squaring supplies
+the same canonical coefficient square without a new normalization. -/
+public theorem evalSqBoundStep_eq (radiusSq bound coefficient : Fraction.Rational) :
+    evalSqBoundStep radiusSq bound coefficient = 2 * (bound * radiusSq + coefficient ^ 2) := by
+  unfold evalSqBoundStep
+  rewrite [Fraction.square_eq_mul, pow_two]
+  rfl
 
 /-- Finite Horner majorant for `p(t)^2` throughout an interval.
 
@@ -48,6 +62,22 @@ the same original order. -/
 @[expose] public def evalSqBound (p : Basic.CoordinatePolynomial) (interval : Data.Rat.Interval.Bounds) :
   Fraction.Rational :=
   p.coeffs.foldl (evalSqBoundStep interval.squareBound) 0
+
+/-- The complete finite majorant retains the original coefficient order and scalar fold for every input. -/
+public theorem evalSqBound_eq_original (p : Basic.CoordinatePolynomial) (interval : Data.Rat.Interval.Bounds) :
+    evalSqBound p interval =
+      p.coeffs.foldl (fun bound coefficient => 2 * (bound * interval.squareBound + coefficient ^ 2)) 0 := by
+  have sameFold (coefficients : List Fraction.Rational) (bound : Fraction.Rational) :
+      coefficients.foldl (evalSqBoundStep interval.squareBound) bound =
+        coefficients.foldl (fun value coefficient => 2 * (value * interval.squareBound + coefficient ^ 2)) bound := by
+    induction coefficients generalizing bound with
+    | nil => rfl
+    | cons coefficient rest ih =>
+        change rest.foldl (evalSqBoundStep interval.squareBound)
+            (evalSqBoundStep interval.squareBound bound coefficient) = _
+        rewrite [evalSqBoundStep_eq]
+        exact ih _
+  exact sameFold p.coeffs 0
 
 /-- Monotonicity of one squared Horner-majorant step against separately
 displayed radius, accumulator, and coefficient-square ceilings.
@@ -65,7 +95,7 @@ public theorem evalSqBoundStep_le
     (boundCeilingNonnegative : 0 ≤ boundCeiling) :
     evalSqBoundStep radius bound coefficient ≤
       2 * (boundCeiling * radiusCeiling + coefficientSqCeiling) := by
-  unfold evalSqBoundStep
+  rewrite [evalSqBoundStep_eq]
   apply Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
   · exact add_le_add
       (Order.Arithmetic.mul_le_mul_direct boundLe radiusLe
@@ -150,14 +180,17 @@ private theorem evalSqBoundCoeffs_monotone
           smallRadiusNonnegative largeBoundNonnegative
       have nextLe : evalSqBoundStep smallRadius smallBound coefficient ≤
           evalSqBoundStep largeRadius largeBound coefficient := by
+        rewrite [evalSqBoundStep_eq, evalSqBoundStep_eq]
         exact twice_le_twice (add_le_add productLe (le_refl _))
       apply inductionHypothesis
-      · apply twice_nonneg
+      · rewrite [evalSqBoundStep_eq]
+        apply twice_nonneg
         exact add_nonneg
           (Order.Arithmetic.mul_nonneg_direct
             smallBoundNonnegative smallRadiusNonnegative)
           (Order.Arithmetic.sq_nonneg_direct coefficient)
-      · apply twice_nonneg
+      · rewrite [evalSqBoundStep_eq]
+        apply twice_nonneg
         exact add_nonneg
           (Order.Arithmetic.mul_nonneg_direct
             largeBoundNonnegative largeRadiusNonnegative)
@@ -199,12 +232,14 @@ private theorem evalSqBoundCoeffs_spec (coefficients : List Fraction.Rational)
   | cons coefficient coefficients inductionHypothesis =>
       simp only [List.foldl_cons]
       apply inductionHypothesis
-      · apply twice_nonneg
+      · rewrite [evalSqBoundStep_eq]
+        apply twice_nonneg
         exact add_nonneg
           (Order.Arithmetic.mul_nonneg_direct boundNonnegative
             interval.squareBound_nonneg)
           (Order.Arithmetic.sq_nonneg_direct coefficient)
-      · have productBound : (accumulator * x) ^ 2 ≤
+      · rewrite [evalSqBoundStep_eq]
+        have productBound : (accumulator * x) ^ 2 ≤
             bound * interval.squareBound := by
           rw [Normalization.product_pow accumulator x 2]
           exact Order.Arithmetic.mul_le_mul_direct accumulatorBound

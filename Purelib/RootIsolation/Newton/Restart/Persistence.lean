@@ -52,6 +52,10 @@ import Purelib.RootIsolation.Newton.Restart.Anchored.Basic
 import Purelib.RootIsolation.Newton.Restart.Seed.Geometry
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Polynomial.Clearance.Box
+
 open Purelib.Data.Gaussian.Basic (Canonical)
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 open Purelib.Polynomial.Dense.Gaussian.Squarefree.Basic (SquarefreeCertificate)
@@ -112,33 +116,33 @@ theorem sample_inside_later_of_auxiliary_winding
     (sample : Canonical)
     (auxiliaryLeft :
       sample.re -
-          4 * Clearance.Box.ProtectedRadius.protectedBoundaryRadius p
+          4 * ProtectedRadius.protectedBoundaryRadius p
             later.box later.clearance ≤ auxiliary.box.xLower)
     (auxiliaryRight : auxiliary.box.xUpper ≤
       sample.re +
-        4 * Clearance.Box.ProtectedRadius.protectedBoundaryRadius p
+        4 * ProtectedRadius.protectedBoundaryRadius p
           later.box later.clearance)
     (auxiliaryBottom :
       sample.im -
-          4 * Clearance.Box.ProtectedRadius.protectedBoundaryRadius p
+          4 * ProtectedRadius.protectedBoundaryRadius p
             later.box later.clearance ≤ auxiliary.box.yLower)
     (auxiliaryTop : auxiliary.box.yUpper ≤
       sample.im +
-        4 * Clearance.Box.ProtectedRadius.protectedBoundaryRadius p
+        4 * ProtectedRadius.protectedBoundaryRadius p
           later.box later.clearance) :
     later.box.Contains sample := by
   let rho :=
-    Clearance.Box.ProtectedRadius.protectedBoundaryRadius p later.box
+    ProtectedRadius.protectedBoundaryRadius p later.box
       later.clearance
   let rhoPositive :=
-    Clearance.Box.ProtectedRadius.protectedBoundaryRadius_pos p
+    ProtectedRadius.protectedBoundaryRadius_pos p
       later.clearance later.proper
   let deep := Track.Protected.protectedRefinement track later
   have deepInsideLater : deep.box.StrictInterior later.box := by
     simpa only [deep, Track.Protected.protectedRefinement, rho, rhoPositive] using
       track.strict later rho rhoPositive
   have deepInsideContainer : deep.box.StrictInterior container.box :=
-    (Geometry.Rational.Box.Refinement.StrictInterior.Boxes.trans_refines deepInsideLater) laterRefines
+    (Box.Refinement.StrictInterior.Boxes.trans_refines deepInsideLater) laterRefines
   have notSeparated : ¬auxiliary.box.Separated deep.box :=
     State.WindingOne.Comparison.not_separated_inside_winding_one degreeAtLeastTwo squarefree elimination
       container auxiliary deep auxiliaryInside deepInsideContainer
@@ -170,64 +174,64 @@ theorem residual_seed_anchor_inside_later
     (seed : Seed squarefree elimination
       (State.WindingOne.Region.protectedAmbient current))
     (radiusSmall : 3 * seed.radius ≤
-      4 * Clearance.Box.ProtectedRadius.protectedBoundaryRadius p
+      4 * ProtectedRadius.protectedBoundaryRadius p
         later.box later.clearance) :
     later.box.Contains seed.source.anchor := by
   let auxiliary := seed.state degreeAtLeastTwo
   have bandBounds := seed.anchor_band_coordinate_bounds
   have left : seed.source.anchor.re -
-        4 * Clearance.Box.ProtectedRadius.protectedBoundaryRadius p
+        4 * ProtectedRadius.protectedBoundaryRadius p
           later.box later.clearance ≤ auxiliary.box.xLower := by
     calc
       seed.source.anchor.re -
-          4 * Clearance.Box.ProtectedRadius.protectedBoundaryRadius p
+          4 * ProtectedRadius.protectedBoundaryRadius p
             later.box later.clearance ≤
           seed.source.anchor.re - 3 * seed.radius :=
-        Fraction.Order.Arithmetic.sub_le_sub_left_direct radiusSmall seed.source.anchor.re
+        Arithmetic.sub_le_sub_left_direct radiusSmall seed.source.anchor.re
       _ ≤ auxiliary.box.xLower := by
         simpa only [auxiliary, Seed.state]
           using bandBounds.1
   have right : auxiliary.box.xUpper ≤ seed.source.anchor.re +
-        4 * Clearance.Box.ProtectedRadius.protectedBoundaryRadius p
+        4 * ProtectedRadius.protectedBoundaryRadius p
           later.box later.clearance := by
     calc
       auxiliary.box.xUpper ≤ seed.source.anchor.re + 3 * seed.radius := by
         simpa only [auxiliary, Seed.state]
           using bandBounds.2.1
       _ = 3 * seed.radius + seed.source.anchor.re := by ring1
-      _ ≤ 4 * Clearance.Box.ProtectedRadius.protectedBoundaryRadius p
+      _ ≤ 4 * ProtectedRadius.protectedBoundaryRadius p
           later.box later.clearance + seed.source.anchor.re :=
-        Fraction.Order.Arithmetic.add_le_add_right_direct radiusSmall
+        Arithmetic.add_le_add_right_direct radiusSmall
           seed.source.anchor.re
       _ = seed.source.anchor.re +
-          4 * Clearance.Box.ProtectedRadius.protectedBoundaryRadius p
+          4 * ProtectedRadius.protectedBoundaryRadius p
             later.box later.clearance := by ring1
   have bottom : seed.source.anchor.im -
-        4 * Clearance.Box.ProtectedRadius.protectedBoundaryRadius p
+        4 * ProtectedRadius.protectedBoundaryRadius p
           later.box later.clearance ≤ auxiliary.box.yLower := by
     calc
       seed.source.anchor.im -
-          4 * Clearance.Box.ProtectedRadius.protectedBoundaryRadius p
+          4 * ProtectedRadius.protectedBoundaryRadius p
             later.box later.clearance ≤
           seed.source.anchor.im - 3 * seed.radius :=
-        Fraction.Order.Arithmetic.sub_le_sub_left_direct radiusSmall seed.source.anchor.im
+        Arithmetic.sub_le_sub_left_direct radiusSmall seed.source.anchor.im
       _ ≤ auxiliary.box.yLower := by
         simpa only [auxiliary, Seed.state]
           using bandBounds.2.2.1
   have top : auxiliary.box.yUpper ≤ seed.source.anchor.im +
-        4 * Clearance.Box.ProtectedRadius.protectedBoundaryRadius p
+        4 * ProtectedRadius.protectedBoundaryRadius p
           later.box later.clearance := by
     calc
       auxiliary.box.yUpper ≤ seed.source.anchor.im + 3 * seed.radius := by
         simpa only [auxiliary, Seed.state]
           using bandBounds.2.2.2
       _ = 3 * seed.radius + seed.source.anchor.im := by ring1
-      _ ≤ 4 * Clearance.Box.ProtectedRadius.protectedBoundaryRadius p
+      _ ≤ 4 * ProtectedRadius.protectedBoundaryRadius p
           later.box later.clearance + seed.source.anchor.im :=
-        Fraction.Order.Arithmetic.add_le_add_right_direct radiusSmall
+        Arithmetic.add_le_add_right_direct radiusSmall
           seed.source.anchor.im
       _ = seed.source.anchor.im +
-          4 * Clearance.Box.ProtectedRadius.protectedBoundaryRadius p
+          4 * ProtectedRadius.protectedBoundaryRadius p
             later.box later.clearance := by ring1
   exact sample_inside_later_of_auxiliary_winding degreeAtLeastTwo squarefree
     elimination track current later auxiliary laterRefines
@@ -250,40 +254,40 @@ theorem strict_residual_sample_inside_later
     (laterRefines : later.box.Refines current.box)
     (point : Canonical)
     (strict : current.box.StrictContains point)
-    (residual : Data.Gaussian.Norm.Basic.normSq (p.eval point) <
-      Newton.Restart.Anchored.Budget.anchoredResidualTarget squarefree
+    (residual : Gaussian.Norm.Basic.normSq (p.eval point) <
+      Anchored.Budget.anchoredResidualTarget squarefree
         (State.WindingOne.Region.protectedAmbient current)
         point
-        (Clearance.Box.ProtectedRadius.protectedBoundaryRadius p
+        (ProtectedRadius.protectedBoundaryRadius p
           later.box later.clearance)) :
     later.box.Contains point := by
   let cap :=
-    Clearance.Box.ProtectedRadius.protectedBoundaryRadius p later.box
+    ProtectedRadius.protectedBoundaryRadius p later.box
       later.clearance
   let capPositive :=
-    Clearance.Box.ProtectedRadius.protectedBoundaryRadius_pos p
+    ProtectedRadius.protectedBoundaryRadius_pos p
       later.clearance later.proper
-  let seed := Newton.Restart.Anchored.Seed.seedOfResidual squarefree
+  let seed := Anchored.Seed.seedOfResidual squarefree
     elimination (State.WindingOne.Region.protectedAmbient current) point strict capPositive residual
   have radiusLeCap : seed.radius ≤ cap := by
     simpa only [seed, cap, capPositive] using
-      Newton.Restart.Anchored.Seed.seedOfResidual_radius_le_cap squarefree
+      Anchored.Seed.seedOfResidual_radius_le_cap squarefree
         elimination (State.WindingOne.Region.protectedAmbient current) point strict capPositive residual
   have threeLeFour : (3 : Fraction.Rational) ≤ 4 := by decide
   have threeRadiusLeThreeCap : 3 * seed.radius ≤ 3 * cap :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct radiusLeCap
+    Arithmetic.mul_le_mul_of_nonneg_left_direct radiusLeCap
       (by decide)
   have threeCapLeFourCap : 3 * cap ≤ 4 * cap :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct threeLeFour
+    Arithmetic.mul_le_mul_of_nonneg_right_direct threeLeFour
       capPositive.le
   have radiusSmall : 3 * seed.radius ≤ 4 * cap :=
     threeRadiusLeThreeCap.trans threeCapLeFourCap
   have contains := residual_seed_anchor_inside_later degreeAtLeastTwo
     squarefree elimination track current later laterRefines seed (by
       simpa only [cap] using radiusSmall)
-  simpa only [seed, Newton.Restart.Anchored.Seed.seedOfResidual,
-    Newton.Restart.Anchored.Basic.AnchoredInput.seed,
-    Newton.Restart.Anchored.Prepare.anchoredInputOfResidual,
+  simpa only [seed, Anchored.Seed.seedOfResidual,
+    Anchored.Basic.AnchoredInput.seed,
+    Anchored.Prepare.anchoredInputOfResidual,
     Box.Square.Anchored.anchoredSquare_anchor] using contains
 
 /-- Point-independent automatic specialization.  Boundary clearance supplies
@@ -301,21 +305,21 @@ theorem uniform_residual_sample_inside_later
     (laterRefines : later.box.Refines current.box)
     (point : Canonical)
     (contains : current.box.Contains point)
-    (residual : Data.Gaussian.Norm.Basic.normSq (p.eval point) <
-      Newton.Restart.Uniform.Budget.uniformAnchoredResidualTarget squarefree
+    (residual : Gaussian.Norm.Basic.normSq (p.eval point) <
+      Uniform.Budget.uniformAnchoredResidualTarget squarefree
         (State.WindingOne.Region.protectedAmbient current)
-        (Clearance.Box.ProtectedRadius.protectedBoundaryRadius p
+        (ProtectedRadius.protectedBoundaryRadius p
           later.box later.clearance)) :
     later.box.Contains point := by
   let cap :=
-    Clearance.Box.ProtectedRadius.protectedBoundaryRadius p later.box
+    ProtectedRadius.protectedBoundaryRadius p later.box
       later.clearance
   have capPositive : 0 < cap := by
     simpa only [cap] using
-      Clearance.Box.ProtectedRadius.protectedBoundaryRadius_pos p
+      ProtectedRadius.protectedBoundaryRadius_pos p
         later.clearance later.proper
   have ready :=
-    Newton.Restart.Uniform.Anchored.uniform_residual_strict_and_anchored
+    Uniform.Anchored.uniform_residual_strict_and_anchored
       squarefree (State.WindingOne.Region.protectedAmbient current) point contains capPositive (by
         simpa only [cap] using residual)
   exact strict_residual_sample_inside_later degreeAtLeastTwo squarefree

@@ -66,6 +66,8 @@ import Purelib.Riemann.Topology.NewtonObservationSurfaceEnergy
 import Purelib.Riemann.Topology.NewtonObservationSurfacePartition
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Algebra
@@ -109,7 +111,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredComparison
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.PieceIndices (columns rows columns_eq rows_eq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target
@@ -122,18 +124,18 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     observations grid}
   {surfaceCuts : SurfaceCuts partitions domains}
   {first last : Fin grid.faces.regulars.length}
-  {start : Purelib.Data.Gaussian.Basic.Canonical} {owner : Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+  {start : Gaussian} {owner : Riemann.Topology.SquareRootContinuationChain.Owner
     (curve.polynomial.eval start)}
-  (firstEntry : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry (domains.get
+  (firstEntry : PuncturedGrid.Face.Entries.FaceModels.Entry (domains.get
     first).models start owner)
-  (lastEntry : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry (domains.get last).models
+  (lastEntry : PuncturedGrid.Face.Entries.FaceModels.Entry (domains.get last).models
     start owner)
   {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
     Preflights domains sheet} {error :
     Rational}
 
 variable (requests : SynchronizedSurfaceRequests
-  (fun sheet => Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains
+  (fun sheet => MeshCompatibility.surfaceMeshes partitions domains
     surfaceCuts sheet coarseDepth) fixed error)
 
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces (FacePerimeterTraces)
@@ -160,35 +162,35 @@ theorem horizontal_contact_accurate
       (grid.faces.regulars[last.val]'last.isLt).cell.box.yLower)
     (origin : (EndpointGeometry.horizontalPieces firstTraces.pieces lastTraces.pieces
       (HorizontalPieces.build _ _ equal adjacent)).points 0 = start)
-    (allowance : Fraction.Rational) (positive : 0 < allowance) (floor : Nat)
+    (allowance : Rational) (positive : 0 < allowance) (floor : Nat)
     (later : (EndpointRequests.horizontalEndpointRequest firstEntry lastEntry requests firstTraces.pieces
       lastTraces.pieces
       equal adjacent origin allowance positive floor).index ≤ stage)
-    (firstPolygon : CenteredBilinearPath.Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients first
+    (firstPolygon : Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients first
       ((JoinedCenteredArea.endpointPolygon firstTraces.pieces.topPieces).indexed vertex)))
-    (lastPolygon : CenteredBilinearPath.Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients last
+    (lastPolygon : Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients last
       ((JoinedCenteredArea.endpointPolygon (fun index => lastTraces.pieces.bottomPieces
         (Fin.cast ((PieceIndices.columns_eq (partitions.get first)).trans ((congrArg List.length equal).trans
           (PieceIndices.columns_eq (partitions.get last)).symm)) index))).indexed vertex)))
-    (firstSamples : FacePerimeterTraces.Centered firstTraces cache coefficients)
-    (lastSamples : FacePerimeterTraces.Centered lastTraces cache coefficients)
+    (firstSamples : Centered firstTraces cache coefficients)
+    (lastSamples : Centered lastTraces cache coefficients)
     (firstPieces : (index : Fin (PieceIndices.columns (partitions.get first) + 1)) →
-      CenteredBilinearPath.Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients first
+      Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients first
         ((firstTraces.pieces.topPieces index).indexed vertex)))
     (lastPieces : (index : Fin (PieceIndices.columns (partitions.get first) + 1)) →
-      CenteredBilinearPath.Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients last
+      Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients last
         ((lastTraces.pieces.bottomPieces (Fin.cast ((PieceIndices.columns_eq (partitions.get first)).trans
           ((congrArg List.length equal).trans (PieceIndices.columns_eq (partitions.get last)).symm)) index)).indexed
             vertex)))
-    {pieceAllowance : Fraction.Rational}
-    (piecesBound : ∀ index, Data.Gaussian.Norm.Basic.normSq ((firstPieces index).centeredArea - (lastPieces
+    {pieceAllowance : Rational}
+    (piecesBound : ∀ index, Basic.normSq ((firstPieces index).centeredArea - (lastPieces
       index).centeredArea) ≤
-      (genus : Fraction.Rational) ^ 2 * (FiniteSum.Fin.sumFin (fun i => Data.Gaussian.Norm.Basic.normSq
+      (genus : Rational) ^ 2 * (FiniteSum.Fin.sumFin (fun i => Basic.normSq
         (coefficients i))) ^ 2 * pieceAllowance) :
-    Data.Gaussian.Norm.Basic.normSq (firstSamples.top.centeredArea - lastSamples.bottom.centeredArea) ≤
-      2 * (genus : Fraction.Rational) ^ 2 * (FiniteSum.Fin.sumFin (fun i => Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq (firstSamples.top.centeredArea - lastSamples.bottom.centeredArea) ≤
+      2 * (genus : Rational) ^ 2 * (FiniteSum.Fin.sumFin (fun i => Basic.normSq
         (coefficients i))) ^ 2 *
-        (((PieceIndices.columns (partitions.get first) + 1 : Nat) : Fraction.Rational) ^ 2 * pieceAllowance + allowance)
+        (((PieceIndices.columns (partitions.get first) + 1 : Nat) : Rational) ^ 2 * pieceAllowance + allowance)
           := by
   have polygonBound := EndpointAccuracy.horizontalEndpointRequest_accurate firstEntry lastEntry requests cache
     coefficients
@@ -212,35 +214,35 @@ theorem vertical_contact_accurate
       (grid.faces.regulars[last.val]'last.isLt).cell.box.xLower)
     (origin : (EndpointGeometry.verticalPieces firstTraces.pieces lastTraces.pieces
       (VerticalPieces.build _ _ equal adjacent)).points 0 = start)
-    (allowance : Fraction.Rational) (positive : 0 < allowance) (floor : Nat)
+    (allowance : Rational) (positive : 0 < allowance) (floor : Nat)
     (later : (EndpointRequests.verticalEndpointRequest firstEntry lastEntry requests firstTraces.pieces
       lastTraces.pieces
       equal adjacent origin allowance positive floor).index ≤ stage)
-    (firstPolygon : CenteredBilinearPath.Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients first
+    (firstPolygon : Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients first
       ((JoinedCenteredArea.endpointPolygon firstTraces.pieces.rightPieces).indexed vertex)))
-    (lastPolygon : CenteredBilinearPath.Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients last
+    (lastPolygon : Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients last
       ((JoinedCenteredArea.endpointPolygon (fun index => lastTraces.pieces.leftPieces
         (Fin.cast ((PieceIndices.rows_eq (partitions.get first)).trans ((congrArg List.length equal).trans
           (PieceIndices.rows_eq (partitions.get last)).symm)) index))).indexed vertex)))
-    (firstSamples : FacePerimeterTraces.Centered firstTraces cache coefficients)
-    (lastSamples : FacePerimeterTraces.Centered lastTraces cache coefficients)
+    (firstSamples : Centered firstTraces cache coefficients)
+    (lastSamples : Centered lastTraces cache coefficients)
     (firstPieces : (index : Fin (PieceIndices.rows (partitions.get first) + 1)) →
-      CenteredBilinearPath.Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients first
+      Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients first
         ((firstTraces.pieces.rightPieces index).indexed vertex)))
     (lastPieces : (index : Fin (PieceIndices.rows (partitions.get first) + 1)) →
-      CenteredBilinearPath.Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients last
+      Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients last
         ((lastTraces.pieces.leftPieces (Fin.cast ((PieceIndices.rows_eq (partitions.get first)).trans
           ((congrArg List.length equal).trans (PieceIndices.rows_eq (partitions.get last)).symm)) index)).indexed
             vertex)))
-    {pieceAllowance : Fraction.Rational}
-    (piecesBound : ∀ index, Data.Gaussian.Norm.Basic.normSq ((firstPieces index).centeredArea - (lastPieces
+    {pieceAllowance : Rational}
+    (piecesBound : ∀ index, Basic.normSq ((firstPieces index).centeredArea - (lastPieces
       index).centeredArea) ≤
-      (genus : Fraction.Rational) ^ 2 * (FiniteSum.Fin.sumFin (fun i => Data.Gaussian.Norm.Basic.normSq
+      (genus : Rational) ^ 2 * (FiniteSum.Fin.sumFin (fun i => Basic.normSq
         (coefficients i))) ^ 2 * pieceAllowance) :
-    Data.Gaussian.Norm.Basic.normSq (firstSamples.right.centeredArea - lastSamples.left.centeredArea) ≤
-      2 * (genus : Fraction.Rational) ^ 2 * (FiniteSum.Fin.sumFin (fun i => Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq (firstSamples.right.centeredArea - lastSamples.left.centeredArea) ≤
+      2 * (genus : Rational) ^ 2 * (FiniteSum.Fin.sumFin (fun i => Basic.normSq
         (coefficients i))) ^ 2 *
-        (((PieceIndices.rows (partitions.get first) + 1 : Nat) : Fraction.Rational) ^ 2 * pieceAllowance + allowance) :=
+        (((PieceIndices.rows (partitions.get first) + 1 : Nat) : Rational) ^ 2 * pieceAllowance + allowance) :=
           by
   have polygonBound := EndpointAccuracy.verticalEndpointRequest_accurate firstEntry lastEntry requests cache
     coefficients

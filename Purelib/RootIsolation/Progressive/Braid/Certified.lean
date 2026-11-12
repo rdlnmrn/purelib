@@ -47,7 +47,7 @@ strand action is exactly the root-owner monodromy. -/
 structure CertifiedLoopBraid (frame :
   ChamberFrame)
     (loop : ChamberPath frame frame) where
-  /-- The actual finite braid word retained for the original closed root path. -/ word : Topology.Knot.Braid.Word
+  /-- The actual finite braid word retained for the original closed root path. -/ word : Word
     frame.degree
   /-- The retained word's strand permutation agrees pointwise with the original owner monodromy. -/ agrees :
     Data.Fin.Bijection.Same
@@ -60,7 +60,7 @@ namespace CertifiedLoopBraid
 /-- Certify the empty braid word for the empty path at the original chamber frame. -/
 @[expose] def identity (frame :
   ChamberFrame) :
-    Progressive.Braid.Certified.CertifiedLoopBraid frame (.nil frame) where
+    CertifiedLoopBraid frame (.nil frame) where
   word := []
   agrees := fun _ => rfl
 
@@ -68,9 +68,9 @@ namespace CertifiedLoopBraid
 matching. -/
 @[expose] def append {frame :
   ChamberFrame} {first second : ChamberPath frame frame}
-    (firstBraid : Progressive.Braid.Certified.CertifiedLoopBraid frame first)
-    (secondBraid : Progressive.Braid.Certified.CertifiedLoopBraid frame second) :
-    Progressive.Braid.Certified.CertifiedLoopBraid frame (first.append second) where
+    (firstBraid : CertifiedLoopBraid frame first)
+    (secondBraid : CertifiedLoopBraid frame second) :
+    CertifiedLoopBraid frame (first.append second) where
   word := firstBraid.word ++ secondBraid.word
   agrees := by
     intro index
@@ -88,8 +88,8 @@ matching. -/
 /-- Invert the retained braid word and its exact agreement with the original reversed root path. -/
 @[expose] def reverse {frame :
   ChamberFrame} {loop : ChamberPath frame frame}
-    (braid : Progressive.Braid.Certified.CertifiedLoopBraid frame loop) :
-    Progressive.Braid.Certified.CertifiedLoopBraid frame loop.reverse where
+    (braid : CertifiedLoopBraid frame loop) :
+    CertifiedLoopBraid frame loop.reverse where
   word := braid.word.inverse
   agrees := Data.Fin.Bijection.same_trans
     braid.word.permutation_inverse
@@ -101,7 +101,7 @@ matching. -/
 /-- Form the finite braid closure from the retained word and original chamber degree. -/
 @[expose] def closure {frame :
   ChamberFrame} {loop : ChamberPath frame frame}
-    (braid : Progressive.Braid.Certified.CertifiedLoopBraid frame loop) : Topology.Knot.Braid.Closure :=
+    (braid : CertifiedLoopBraid frame loop) : Topology.Knot.Braid.Closure :=
   { strands := frame.degree
     word := braid.word }
 
@@ -109,7 +109,7 @@ matching. -/
 theorem
   closure_isKnot_of_monodromy_isSingleCycle
     {frame : ChamberFrame} {loop : ChamberPath frame frame}
-    (braid : Progressive.Braid.Certified.CertifiedLoopBraid frame loop)
+    (braid : CertifiedLoopBraid frame loop)
     (single : Data.Fin.Bijection.IsSingleCycle
       loop.monodromy) :
     braid.closure.IsKnot := by

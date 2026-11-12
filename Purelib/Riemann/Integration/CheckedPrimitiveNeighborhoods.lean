@@ -140,6 +140,12 @@ private theorem translated_inside {point : Gaussian}
   have imaginaryBounds := shifted ⟨inside.2.2.1, inside.2.2.2⟩
   exact ⟨realBounds.1, realBounds.2, imaginaryBounds.1, imaginaryBounds.2⟩
 
+open Purelib.Polynomial in
+/-- The retained finite translated-polynomial norm ceiling is nonnegative. -/
+theorem normBound_nonnegative (bound : RadiusBound variation radius positive) : 0 ≤ bound.normBound := by
+  rewrite [bound.normBound_eq]
+  exact (Dense.Gaussian.Bounds.Box.denseHornerNormBounds_nonneg variation.value bound.box).1
+
 open Purelib.Data in
 open Purelib.Polynomial in
 open Purelib.Geometry in
@@ -213,5 +219,73 @@ theorem grow_box_refines (patch : ContinuedNeighborhood polynomial count) : patc
   rw [center]
   exact Readings.PreparedObservationNeighborhoods.centeredBox_refines _ patch.radius_positive.le
     (grow patch).radius_positive.le (grow_radius_ge patch)
+
+section MovementBounds
+
+open Purelib.Data
+open Purelib.Data.Rat
+
+/-- Compute a whole-box movement ceiling from the same original slope/radius and a finite translated-polynomial bound.
+
+The minimum retains cancellation in the original polynomial coefficients.
+It uses the already retained neighborhood and its exact box, center and
+radius; no point owner, root process or replacement patch is constructed.
+-/
+def movementCeiling (patch : ContinuedNeighborhood polynomial count) : Coordinate :=
+  let variation := Variation.build polynomial patch.base.site.center
+  let bound := RadiusBound.build variation patch.radius patch.radius_positive
+  min (patch.base.site.denominatorSlope * (8 * patch.radius ^ 2)) bound.normBound
+
+/-- Both computed finite bounds make the whole-box movement ceiling nonnegative. -/
+theorem movementCeiling_nonnegative (patch : ContinuedNeighborhood polynomial count) :
+    0 ≤ movementCeiling patch := by
+  unfold movementCeiling
+  apply Fraction.Order.Basic.le_min
+  · exact Fraction.Order.Arithmetic.mul_nonneg_direct patch.base.site.denominatorSlope_positive.le
+      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Coordinate) ≤ 8)
+        (Fraction.Order.Arithmetic.sq_nonneg_direct patch.radius))
+  · exact RadiusBound.normBound_nonnegative _
+
+/-- Every point of the identical original continued box satisfies the computed uniform movement ceiling. -/
+theorem movement_le_ceiling (patch : ContinuedNeighborhood polynomial count) {point : Gaussian}
+    (inside : patch.box.Contains point) :
+    normSq (polynomial.eval patch.base.site.center - polynomial.eval point) ≤ movementCeiling patch := by
+  unfold movementCeiling
+  apply Fraction.Order.Basic.le_min (patch.movement_le inside)
+  have retained := inside
+  rewrite [patch.box_eq] at retained
+  exact (RadiusBound.build (Variation.build polynomial patch.base.site.center) patch.radius
+    patch.radius_positive).movement_le retained
+
+/-- The original checked growth retains a strict computed ceiling whenever its unchanged input slope/radius pays one.
+
+An accepted growth uses its actual finite translated-polynomial bound.
+A rejected growth keeps the original neighborhood and its original weak
+slope/radius ceiling. Both branches retain the same owners and factories.
+-/
+theorem grow_movementCeiling_lt (patch : ContinuedNeighborhood polynomial count)
+    (small : patch.base.site.denominatorSlope * (8 * patch.radius ^ 2) < patch.continuationAllowance) :
+    movementCeiling (grow patch) < (grow patch).continuationAllowance := by
+  let variation := Variation.build polynomial patch.base.site.center
+  let bound := RadiusBound.build variation patch.base.radius patch.base.radius_positive
+  rewrite [grow_allowance]
+  unfold grow
+  change movementCeiling (if paid : bound.normBound < patch.continuationAllowance then
+    ofBound patch patch.base.radius_positive (Fraction.Order.Basic.le_refl _) bound paid else patch) <
+      patch.continuationAllowance
+  split
+  next paid =>
+    have selected : movementCeiling
+        (ofBound patch patch.base.radius_positive (Fraction.Order.Basic.le_refl _) bound paid) ≤ bound.normBound := by
+      change min (patch.base.site.denominatorSlope * (8 * patch.base.radius ^ 2)) bound.normBound ≤ bound.normBound
+      exact Fraction.Order.Basic.min_le_right _ _
+    exact selected.trans_lt paid
+  next unpaid =>
+    have retained : movementCeiling patch ≤ patch.base.site.denominatorSlope * (8 * patch.radius ^ 2) := by
+      unfold movementCeiling
+      exact Fraction.Order.Basic.min_le_left _ _
+    exact retained.trans_lt small
+
+end MovementBounds
 
 end Purelib.Riemann.Integration.CheckedPrimitiveNeighborhoods

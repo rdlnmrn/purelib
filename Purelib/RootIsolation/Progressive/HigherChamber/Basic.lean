@@ -69,7 +69,7 @@ structure HigherChamber
     (positive : 0 < target) where
   /-- The original displayed polynomial has degree at least two. -/ degreeAtLeastTwo : 2 ≤ table.polynomial.natDegree
   /-- The original current coefficient allowances fit the retained common target. -/ currentSmall :
-    Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.AllowancesLt table.entries target
+    CoefficientTable.AllowancesLt table.entries target
   /-- The exact original degree-sized isolated owner family. -/ owners : AdapterResult table.polynomial
   /-- The next exact coefficient reading has its retained squarefree certificate. -/ nextSquarefree :
     Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate
@@ -142,9 +142,9 @@ open Purelib.Data.Gaussian
 theorem higherOwnerStabilityTargets_positive
     (table : CoefficientTable)
     (owners : AdapterResult table.polynomial) :
-    ∀ target ∈ Progressive.HigherChamber.Basic.higherOwnerStabilityTargets table owners, 0 < target := by
+    ∀ target ∈ higherOwnerStabilityTargets table owners, 0 < target := by
   intro target member
-  rw [Progressive.HigherChamber.Basic.higherOwnerStabilityTargets] at member
+  rw [higherOwnerStabilityTargets] at member
   rcases Data.List.OfFn.Basic.mem_ofFn.mp member with ⟨index, rfl⟩
   exact table.stabilityTarget_pos (owners.trackAt index).initial.box
     (owners.trackAt index).initial.clearance
@@ -177,7 +177,7 @@ degree-many owner boundaries. -/
 def higherStabilityTarget
     (table : CoefficientTable)
     (owners : AdapterResult table.polynomial) : Fraction.Rational :=
-  Data.Rat.List.Minimum.positiveMinimum (Progressive.HigherChamber.Basic.higherOwnerStabilityTargets table owners)
+  Data.Rat.List.Minimum.positiveMinimum (higherOwnerStabilityTargets table owners)
 end Purelib.RootIsolation.Progressive.HigherChamber.Basic
 
 end
@@ -207,11 +207,11 @@ theorem higherStabilityTarget_le_owner
     (table : CoefficientTable)
     (owners : AdapterResult table.polynomial)
     (index : Fin table.polynomial.natDegree) :
-    Progressive.HigherChamber.Basic.higherStabilityTarget table owners ≤
+    higherStabilityTarget table owners ≤
       table.stabilityTarget (owners.trackAt index).initial.box
         (owners.trackAt index).initial.clearance := by
   apply Data.Rat.List.Minimum.positiveMinimum_le_of_mem
-  rw [Progressive.HigherChamber.Basic.higherOwnerStabilityTargets]
+  rw [higherOwnerStabilityTargets]
   exact Data.List.OfFn.Basic.mem_ofFn.mpr ⟨index, rfl⟩
 end Purelib.RootIsolation.Progressive.HigherChamber.Basic
 
@@ -241,9 +241,9 @@ open Purelib.Data.Gaussian
 theorem higherStabilityTarget_pos
     (table : CoefficientTable)
     (owners : AdapterResult table.polynomial) :
-    0 < Progressive.HigherChamber.Basic.higherStabilityTarget table owners :=
+    0 < higherStabilityTarget table owners :=
   Data.Rat.List.Minimum.positiveMinimum_pos _
-    (Progressive.HigherChamber.Basic.higherOwnerStabilityTargets_positive table owners)
+    (higherOwnerStabilityTargets_positive table owners)
 end Purelib.RootIsolation.Progressive.HigherChamber.Basic
 
 end
@@ -276,14 +276,14 @@ def higherChamberOfComputedTarget
     (table : CoefficientTable)
     (degreeAtLeastTwo : 2 ≤ table.polynomial.natDegree)
     (owners : AdapterResult table.polynomial)
-    (currentSmall : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.AllowancesLt table.entries
-      (Progressive.HigherChamber.Basic.higherStabilityTarget table owners))
+    (currentSmall : CoefficientTable.AllowancesLt table.entries
+      (higherStabilityTarget table owners))
     (nextSquarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate
-      (table.refine (Progressive.HigherChamber.Basic.higherStabilityTarget table owners)
-        (Progressive.HigherChamber.Basic.higherStabilityTarget_pos table owners)).polynomial) :
-    HigherChamber table (Progressive.HigherChamber.Basic.higherStabilityTarget table
+      (table.refine (higherStabilityTarget table owners)
+        (higherStabilityTarget_pos table owners)).polynomial) :
+    HigherChamber table (higherStabilityTarget table
       owners)
-      (Progressive.HigherChamber.Basic.higherStabilityTarget_pos table owners) where
+      (higherStabilityTarget_pos table owners) where
   degreeAtLeastTwo := degreeAtLeastTwo
   currentSmall := currentSmall
   owners := owners
@@ -292,17 +292,17 @@ def higherChamberOfComputedTarget
     intro index
     let box := (owners.trackAt index).initial.box
     let clearance := (owners.trackAt index).initial.clearance
-    let common := Progressive.HigherChamber.Basic.higherStabilityTarget table owners
+    let common := higherStabilityTarget table owners
     let localTarget := table.stabilityTarget box clearance
     have commonLe : common ≤ localTarget :=
-      Progressive.HigherChamber.Basic.higherStabilityTarget_le_owner table owners index
+      higherStabilityTarget_le_owner table owners index
     have scaleNonnegative :
         0 ≤ table.refinementEvaluationScale box :=
       (table.refinementEvaluationScale_pos box).le
     have localBudget :=
       table.refinementEvaluationBound_stabilityTarget_lt box clearance
     rw [table.refinementEvaluationBound_eq_target_mul_scale] at localBudget ⊢
-    exact (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
       commonLe scaleNonnegative).trans_lt
         localBudget
 

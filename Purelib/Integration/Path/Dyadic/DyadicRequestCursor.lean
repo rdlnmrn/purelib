@@ -42,47 +42,47 @@ structure Frame where
 constructive_injectivity Frame
 
 /-- The ordered stack of retained dyadic request frames. -/
-abbrev Cursor := List Integration.Path.Dyadic.DyadicRequestCursor.Frame
+abbrev Cursor := List Frame
 
 /-- Expand the exact pending frame stack into its ordered original target endpoints. -/
-@[expose] def endpoints : Integration.Path.Dyadic.DyadicRequestCursor.Cursor → List Endpoint
+@[expose] def endpoints : Cursor → List Endpoint
   | [] => []
   | frame :: rest => dyadicTargets frame.depth frame.left frame.right ++
-    Purelib.Integration.Path.Dyadic.DyadicRequestCursor.endpoints rest
+    DyadicRequestCursor.endpoints rest
 
 /-- Count the pending target endpoints by summing two to each retained frame depth. -/
-@[expose] def count : Integration.Path.Dyadic.DyadicRequestCursor.Cursor → Nat
+@[expose] def count : Cursor → Nat
   | [] => 0
-  | frame :: rest => 2 ^ frame.depth + Purelib.Integration.Path.Dyadic.DyadicRequestCursor.count rest
+  | frame :: rest => 2 ^ frame.depth + DyadicRequestCursor.count rest
 
 /-- Read the exact pending cursor endpoints as continuation requests at the supplied positive root diameter. -/
 @[expose] def requests (diameter : Coordinate) (positive : 0 < diameter) (cursor :
-  Integration.Path.Dyadic.DyadicRequestCursor.Cursor) : List StepRequest :=
-  requestsAtDiameter diameter positive (Integration.Path.Dyadic.DyadicRequestCursor.endpoints cursor)
+  Cursor) : List StepRequest :=
+  requestsAtDiameter diameter positive (endpoints cursor)
 
 /-- The retained request list has length equal to the cursor's exact pending count. -/
 theorem requests_length (diameter : Coordinate) (positive : 0 < diameter) (cursor :
-  Integration.Path.Dyadic.DyadicRequestCursor.Cursor) :
-    (Integration.Path.Dyadic.DyadicRequestCursor.requests diameter positive cursor).length =
-      Integration.Path.Dyadic.DyadicRequestCursor.count cursor := by
-  rw [Integration.Path.Dyadic.DyadicRequestCursor.requests, requestsAtDiameter_length]
+  Cursor) :
+    (requests diameter positive cursor).length =
+      DyadicRequestCursor.count cursor := by
+  rw [requests, requestsAtDiameter_length]
   induction cursor with
   | nil => rfl
   | cons frame rest ih =>
-      simp only [Integration.Path.Dyadic.DyadicRequestCursor.endpoints, Data.List.Append.length_append,
-        dyadicTargets_length, Integration.Path.Dyadic.DyadicRequestCursor.count, ih, -eq_self]
+      simp only [endpoints, Data.List.Append.length_append,
+        dyadicTargets_length, DyadicRequestCursor.count, ih, -eq_self]
       rfl
 
 set_option genInjectivity false in
 /-- One retained next request and remaining cursor with an exact original request-list decomposition. -/
 structure Head (diameter : Coordinate) (positive : 0 < diameter) (cursor :
-  Integration.Path.Dyadic.DyadicRequestCursor.Cursor) where
+  Cursor) where
   /-- The retained next continuation request at the original diameter. -/ request : StepRequest
   /-- The retained cursor for the exact remaining requests. -/ remaining :
-    Integration.Path.Dyadic.DyadicRequestCursor.Cursor
+    Cursor
   /-- The original request stream is this request followed by the exact remaining cursor's stream. -/ equation :
-    Integration.Path.Dyadic.DyadicRequestCursor.requests diameter positive cursor = request ::
-    Integration.Path.Dyadic.DyadicRequestCursor.requests diameter positive remaining
+    requests diameter positive cursor = request ::
+    requests diameter positive remaining
 
 constructive_injectivity Head
 
@@ -91,18 +91,18 @@ constructive_injectivity Head
 Each subdivision preserves the exact endpoint witnesses and requested diameter; the returned decomposition links this
 head and remaining cursor to the original request stream. -/
 @[expose] def expose (diameter : Coordinate) (positive : 0 < diameter) :
-    (depth : Nat) → (left right : Endpoint) → (rest : Integration.Path.Dyadic.DyadicRequestCursor.Cursor) →
-      Integration.Path.Dyadic.DyadicRequestCursor.Head diameter positive (⟨depth, left, right⟩ :: rest)
+    (depth : Nat) → (left right : Endpoint) → (rest : Cursor) →
+      Head diameter positive (⟨depth, left, right⟩ :: rest)
   | 0, _, right, rest => ⟨⟨right, diameter, positive⟩, rest, rfl⟩
   | depth + 1, left, right, rest =>
       let middle : Endpoint := ⟨midpoint left.parameter right.parameter,
         midpoint_inside left.inside right.inside⟩
-      let head := Purelib.Integration.Path.Dyadic.DyadicRequestCursor.expose diameter positive depth left middle
+      let head := DyadicRequestCursor.expose diameter positive depth left middle
         (⟨depth, middle, right⟩ :: rest)
       ⟨head.request, head.remaining, by
         change requestsAtDiameter diameter positive
           ((dyadicTargets depth left middle ++ dyadicTargets depth middle right) ++
-            Integration.Path.Dyadic.DyadicRequestCursor.endpoints rest) = _
+            endpoints rest) = _
         rw [Data.List.Append.append_assoc]
         exact head.equation⟩
 
@@ -118,19 +118,19 @@ remaining cursor's exact request stream at the same positive diameter. -/
       (requests_length diameter positive cursor)
 
 /-- Removing the retained head request strictly decreases the exact pending cursor count. -/
-theorem Head.decreases {diameter positive cursor} (head : Integration.Path.Dyadic.DyadicRequestCursor.Head diameter
+theorem Head.decreases {diameter positive cursor} (head : Head diameter
   positive cursor) :
-    Integration.Path.Dyadic.DyadicRequestCursor.count head.remaining < Integration.Path.Dyadic.DyadicRequestCursor.count
+    DyadicRequestCursor.count head.remaining < DyadicRequestCursor.count
       cursor := by
   have lengths := congrArg List.length head.equation
-  simp only [List.length_cons, Integration.Path.Dyadic.DyadicRequestCursor.requests_length] at lengths
+  simp only [List.length_cons, requests_length] at lengths
   omega
 
 /-- The exposed request retains the original cursor request's exact root diameter. -/
-theorem Head.rootDiameter_eq {diameter positive cursor} (head : Integration.Path.Dyadic.DyadicRequestCursor.Head
+theorem Head.rootDiameter_eq {diameter positive cursor} (head : Head
   diameter positive cursor) :
     head.request.rootDiameter = diameter := by
-  have member : head.request ∈ Integration.Path.Dyadic.DyadicRequestCursor.requests diameter positive cursor := by
+  have member : head.request ∈ requests diameter positive cursor := by
     rw [head.equation]
     exact List.Mem.head _
   have fixed : ∀ values, ∀ request ∈ requestsAtDiameter diameter positive values,
@@ -147,17 +147,17 @@ theorem Head.rootDiameter_eq {diameter positive cursor} (head : Integration.Path
   exact fixed _ _ member
 
 /-- Create a one-frame cursor for the original depth and endpoint owners. -/
-@[expose] def initial (depth : Nat) (left right : Endpoint) : Integration.Path.Dyadic.DyadicRequestCursor.Cursor :=
+@[expose] def initial (depth : Nat) (left right : Endpoint) : Cursor :=
   [⟨depth, left, right⟩]
 
 /-- The initial cursor's requests are exactly the original canonical dyadic requests. -/
 theorem initial_eq (depth : Nat) (left right : Endpoint)
     (diameter : Coordinate) (positive : 0 < diameter) :
-    Integration.Path.Dyadic.DyadicRequestCursor.requests diameter positive
-      (Integration.Path.Dyadic.DyadicRequestCursor.initial depth left right) =
+    requests diameter positive
+      (initial depth left right) =
       PreparedSheetContinuation.Subdivision.dyadicRequests depth left right diameter positive := by
-  simp only [Integration.Path.Dyadic.DyadicRequestCursor.requests, Integration.Path.Dyadic.DyadicRequestCursor.initial,
-    Integration.Path.Dyadic.DyadicRequestCursor.endpoints, Data.List.Append.append_nil,
+  simp only [requests, initial,
+    endpoints, Data.List.Append.append_nil,
     PreparedSheetContinuation.Subdivision.dyadicRequests, -eq_self]
   rfl
 
@@ -175,6 +175,7 @@ identify the exact head and take of the same canonical target list.
 
 namespace Purelib.Integration.Path.Dyadic.DyadicRequestCursor
 
+open Purelib.Riemann.Branches
 open Purelib.Riemann.Branches.PreparedSheetContinuation (Endpoint StepRequest)
 open Purelib.Curves.Hyperelliptic.Branches.Cuts
   (connectorAt_start_eval_ne_zero connectorAt_finish_eval_ne_zero)
@@ -182,18 +183,18 @@ open Purelib.Curves.Hyperelliptic.Branches.Cuts
 /-- Descend the original leftmost subdivision branch to its first target endpoint. -/
 @[expose] def firstDyadicEndpoint : Nat → Endpoint → Endpoint → Endpoint
   | 0, _, right => right
-  | depth + 1, left, right => Purelib.Integration.Path.Dyadic.DyadicRequestCursor.firstDyadicEndpoint depth left
-      ⟨Purelib.Riemann.Branches.ClearSheetContinuation.midpoint left.parameter right.parameter,
-        Purelib.Riemann.Branches.ClearSheetContinuation.midpoint_inside left.inside right.inside⟩
+  | depth + 1, left, right => DyadicRequestCursor.firstDyadicEndpoint depth left
+      ⟨Riemann.Branches.ClearSheetContinuation.midpoint left.parameter right.parameter,
+        Riemann.Branches.ClearSheetContinuation.midpoint_inside left.inside right.inside⟩
 
 /-- The first target of the original dyadic endpoint list is the directly selected endpoint. -/
 theorem firstDyadicEndpoint_eq (depth : Nat) (left right : Endpoint) :
-    (Riemann.Branches.ClearSheetContinuation.Subdivision.dyadicTargets depth left right).head? =
-      some (Integration.Path.Dyadic.DyadicRequestCursor.firstDyadicEndpoint depth left right) := by
+    (ClearSheetContinuation.Subdivision.dyadicTargets depth left right).head? =
+      some (firstDyadicEndpoint depth left right) := by
   induction depth generalizing left right with
   | zero => rfl
   | succ depth ih =>
-      rw [Riemann.Branches.ClearSheetContinuation.Subdivision.dyadicTargets, Data.List.Append.head?_append, ih]
+      rw [ClearSheetContinuation.Subdivision.dyadicTargets, Data.List.Append.head?_append, ih]
       rfl
 
 /-- Compute the requested initial prefix of original dyadic target endpoints without expanding the unused suffix.
@@ -207,31 +208,31 @@ subtree. -/
       let middle : Endpoint :=
         ⟨Riemann.Branches.ClearSheetContinuation.midpoint left.parameter right.parameter,
           Riemann.Branches.ClearSheetContinuation.midpoint_inside left.inside right.inside⟩
-      Purelib.Integration.Path.Dyadic.DyadicRequestCursor.firstDyadicEndpoints depth (count + 1) left middle ++
-        Purelib.Integration.Path.Dyadic.DyadicRequestCursor.firstDyadicEndpoints depth (count + 1 - 2 ^ depth) middle
+      DyadicRequestCursor.firstDyadicEndpoints depth (count + 1) left middle ++
+        DyadicRequestCursor.firstDyadicEndpoints depth (count + 1 - 2 ^ depth) middle
           right
 
 /-- The directly computed original endpoint prefix equals taking that count from the canonical target list. -/
 theorem firstDyadicEndpoints_eq (depth count : Nat) (left right : Endpoint) :
-    Integration.Path.Dyadic.DyadicRequestCursor.firstDyadicEndpoints depth count left right =
-      (Riemann.Branches.ClearSheetContinuation.Subdivision.dyadicTargets depth left right).take count := by
+    firstDyadicEndpoints depth count left right =
+      (ClearSheetContinuation.Subdivision.dyadicTargets depth left right).take count := by
   induction depth generalizing count left right with
   | zero =>
       cases count with
       | zero => rfl
       | succ count =>
-          simp only [Integration.Path.Dyadic.DyadicRequestCursor.firstDyadicEndpoints,
-            Riemann.Branches.ClearSheetContinuation.Subdivision.dyadicTargets,
+          simp only [firstDyadicEndpoints,
+            ClearSheetContinuation.Subdivision.dyadicTargets,
             List.take_succ_cons, List.take_nil, -eq_self]
           rfl
   | succ depth ih =>
       cases count with
       | zero => rfl
       | succ count =>
-          rw [Integration.Path.Dyadic.DyadicRequestCursor.firstDyadicEndpoints,
-            Riemann.Branches.ClearSheetContinuation.Subdivision.dyadicTargets,
+          rw [firstDyadicEndpoints,
+            ClearSheetContinuation.Subdivision.dyadicTargets,
             Data.List.Append.take_append_direct,
-              Riemann.Branches.ClearSheetContinuation.Subdivision.dyadicTargets_length,
+              ClearSheetContinuation.Subdivision.dyadicTargets_length,
             ih, ih]
 end Purelib.Integration.Path.Dyadic.DyadicRequestCursor
 

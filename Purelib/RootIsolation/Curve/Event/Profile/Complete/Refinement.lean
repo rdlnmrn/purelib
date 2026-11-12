@@ -70,10 +70,10 @@ In particular, nonzero count is never converted into a root-existence claim.
 namespace Purelib.RootIsolation.Curve.Event.Profile.Complete.Basic
 section Profile
 
-variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
   Geometry.Projective.Hermitian.HermitianForm}
 variable {chart : Geometry.Projective.Hermitian.Chart.BoundedChart form}
-variable {data : Curve.Event.Nontrivial p
+variable {data : Nontrivial p
   chart.parameterization.curve}
 variable {gcdDegreePositive : 0 <
   (Curve.Substitution.gcdPolynomial p
@@ -90,7 +90,7 @@ used after an owner has been selected. -/
 def request {leaf :
   SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
   Fraction.Rational}
-    (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational) :
+    (entry : CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational) :
     Sturm.Track.Basic.State
       analysis.profile.factor.polynomial :=
   Sturm.Track.Request.request
@@ -101,10 +101,10 @@ def request {leaf :
 theorem request_refines
     {leaf : SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
       Fraction.Rational}
-    (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational) :
+    (entry : CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational) :
     (entry.request target).cell.interval.Refines entry.cell.interval := by
   simpa only [request,
-    Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf.state] using
+    state] using
     Sturm.Track.Request.request_refines
       analysis.profile.factor.polynomial analysis.profile.factor.nonzero
         entry.state target
@@ -113,20 +113,20 @@ theorem request_refines
 theorem request_refines_chart
     {leaf : SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
       Fraction.Rational}
-    (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational) :
+    (entry : CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational) :
     (entry.request target).cell.interval.Refines chart.cell.interval :=
-  Data.Rat.Interval.Refinement.intervalRefines_trans
+  Interval.Refinement.intervalRefines_trans
     (entry.request_refines target) entry.refines_chart
 
 /-- A positive later request bounds the width of the retained child's deterministic refinement. -/
 theorem request_width_le
     {leaf : SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
       Fraction.Rational}
-    (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational)
+    (entry : CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational)
     (positive : 0 < target) :
     (Bounds.width (entry.request target).cell.interval) ≤ target := by
   simpa only [request,
-    Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf.state] using
+    state] using
     Sturm.Track.Request.request_width_le
       analysis.profile.factor.polynomial analysis.profile.factor.nonzero
         entry.state target positive
@@ -139,7 +139,7 @@ nonzero integer count and rational interval refinements. -/
 def CompleteRequestLeaf.requestResolution
     {leaf : SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
       Fraction.Rational}
-    (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational) :
+    (entry : CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational) :
     Dense.Rational.CauchyIndex.Events.Resolution.Basic.CauchyEventResolution
       (Dense.Rational.Pair.Reduction.reducedNumerator
         (Dense.Derivative.derivative
@@ -160,24 +160,24 @@ def CompleteRequestLeaf.requestResolution
       entry.request_refines target
     have requestLeaf :
         (entry.request target).cell.interval.Refines leaf.cell.interval :=
-      Data.Rat.Interval.Refinement.intervalRefines_trans requestEntry
+      Interval.Refinement.intervalRefines_trans requestEntry
         entry.refines_leaf
     have requestWidth : (Bounds.width (entry.request target).cell.interval) ≤
         (Bounds.width leaf.cell.interval) :=
       Fraction.Order.Arithmetic.sub_le_sub_direct requestLeaf.2 requestLeaf.1
     have leafWidthSmall : (Bounds.width leaf.cell.interval) <
-        Curve.Event.Partition.Squarefree.squarefreeLeafWidth
+        Partition.Squarefree.squarefreeLeafWidth
           analysis.profile.factor.polynomial analysis.profile.factor.squarefree
             chart.parameterization.curve box chart.cell := by
       simpa only [leaf.classification_cell] using
         leaf.classification.widthSmall
     exact requestWidth.trans_lt
       (leafWidthSmall.trans_le
-        ((Curve.Event.Partition.Squarefree.squarefreeLeafWidth_le_common
+        ((Partition.Squarefree.squarefreeLeafWidth_le_common
           analysis.profile.factor.polynomial
             analysis.profile.factor.squarefree
               chart.parameterization.curve box chart.cell).trans
-          (Curve.Event.Partition.commonLeafWidth_le_event
+          (Partition.commonLeafWidth_le_event
             analysis.profile.factor.polynomial chart.parameterization.curve
               box chart.cell)))
 

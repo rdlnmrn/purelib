@@ -70,33 +70,33 @@ namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.RootCoordinates (Overlap)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {collar :
-  Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {differential :
-    Hyperelliptic.Differentials.Basic.Differential genus} {count : Nat}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {collar :
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {differential :
+    Differentials.Basic.Differential genus} {count : Nat}
 
 /-- Join the final retained endpoint to the supplied actual occurrence.
 The empty bank contributes no endpoint. -/
 def LastJoin {point : Normalization.InverseRootPolynomial.Gaussian}
     {owner : Topology.SquareRootContinuationChain.Owner
-      ((Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.polynomial curve).eval point)}
-    (target : Overlap cap point owner) : {parents : List (Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Parent curve
-      differential)} → Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank cap differential count parents → Type
+      ((HyperellipticReciprocal.polynomial curve).eval point)}
+    (target : Overlap cap point owner) : {parents : List (Parent curve
+      differential)} → Bank cap differential count parents → Type
   | [], .nil => PUnit
   | [_], .cons data .nil => Overlap.Join data.data.last.coordinates target
-  | _ :: _ :: _, .cons _ (.cons next rest) => Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.LastJoin
+  | _ :: _ :: _, .cons _ (.cons next rest) => Bank.LastJoin
     target (.cons next rest)
 
 /-- The closure join identifies the final and initial retained cap coordinates. -/
-def ClosingJoin : {parents : List (Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Parent curve differential)} →
-  Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank cap differential count parents → Type
+def ClosingJoin : {parents : List (Parent curve differential)} →
+  Bank cap differential count parents → Type
   | [], .nil => PUnit
-  | _ :: _, .cons data rest => Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.LastJoin data.data.first.coordinates
+  | _ :: _, .cons data rest => LastJoin data.data.first.coordinates
     (.cons data rest)
 
 /-- The first cached parent begins at the original lifted chain's initial coordinate. -/
-theorem first_coordinate {parent : Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Parent curve differential} {parents :
-  List (Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Parent curve differential)}
+theorem first_coordinate {parent : Parent curve differential} {parents :
+  List (Parent curve differential)}
     {first last : Path.Gaussian.Lifted.Basic.LiftedPoint 2}
     (chain : Nonempty (Integration.PreparedDirectDyadicRefinements.CenteredPathChain (parent :: parents) (start :=
       first) (finish := last))) :
@@ -106,8 +106,8 @@ theorem first_coordinate {parent : Hyperelliptic.Charts.Reciprocal.Cap.PathCover
   exact parent.edge.point_zero
 
 /-- Remove the first original parent while retaining the dependent lifted chain of remaining parents. -/
-theorem remaining_chain {parent : Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Parent curve differential} {parents :
-  List (Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Parent curve differential)}
+theorem remaining_chain {parent : Parent curve differential} {parents :
+  List (Parent curve differential)}
     {first last : Path.Gaussian.Lifted.Basic.LiftedPoint 2}
     (chain : Nonempty (Integration.PreparedDirectDyadicRefinements.CenteredPathChain (parent :: parents) (start :=
       first) (finish := last))) :
@@ -119,7 +119,7 @@ theorem remaining_chain {parent : Hyperelliptic.Charts.Reciprocal.Cap.PathCover.
   | cons _ tail => exact ⟨tail⟩
 
 /-- A singleton cached parent ends at the original lifted chain's final coordinate. -/
-theorem final_coordinate {parent : Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Parent curve differential} {first last
+theorem final_coordinate {parent : Parent curve differential} {first last
   : Path.Gaussian.Lifted.Basic.LiftedPoint 2}
     (chain : Nonempty (Integration.PreparedDirectDyadicRefinements.CenteredPathChain [parent] (start := first) (finish
       := last))) :
@@ -130,48 +130,48 @@ theorem final_coordinate {parent : Hyperelliptic.Charts.Reciprocal.Cap.PathCover
 
 /-- Read the retained equivalence of root names from the empty parent bank's root links. -/
 def emptyRoots {first last : Topology.PreparedRefinementRootChains.Named} :
-  Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.RootLinks (.nil :
-  Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank cap differential count []) first last →
+  RootLinks (.nil :
+  Bank cap differential count []) first last →
   Gaussian.Equivalence.NamedEquivalent first last
   | .nil equivalent => equivalent
 
 /-- Construct the final coordinate join using the original cached root links, endpoint geometry and supplied root-return
 equivalence. -/
-def lastJoin : ∀ {parents : List (Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Parent curve differential)} (bank :
-  Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank cap differential count parents)
+def lastJoin : ∀ {parents : List (Parent curve differential)} (bank :
+  Bank cap differential count parents)
     {first last : Topology.PreparedRefinementRootChains.Named},
-      Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.RootLinks bank first last →
+      RootLinks bank first last →
     {start finish : Path.Gaussian.Lifted.Basic.LiftedPoint 2} → Nonempty
       (Integration.PreparedDirectDyadicRefinements.CenteredPathChain parents (start := start) (finish := finish)) →
     {point : Normalization.InverseRootPolynomial.Gaussian} → {owner : Topology.SquareRootContinuationChain.Owner
-      ((Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.polynomial curve).eval point)} →
+      ((HyperellipticReciprocal.polynomial curve).eval point)} →
     (target : Overlap cap point owner) → finish.coordinate = point → Gaussian.Equivalence.NamedEquivalent last
-      target.reciprocal.value.name → Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.LastJoin target bank
+      target.reciprocal.value.name → LastJoin target bank
   | [], .nil, _, _, _, _, _, _, _, _, _, _, _ => ⟨⟩
   | [_], .cons data .nil, _, _, roots, _, _, chain, _, _, target, pointEq, returned =>
       Overlap.Join.build data.data.last.coordinates target ((data.last_eq.trans
-        (Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.final_coordinate chain)).trans pointEq) (by
+        (final_coordinate chain)).trans pointEq) (by
         rw [data.data.last.coordinates.reciprocal_eq]
-        exact (Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.emptyRoots roots.tail).trans returned)
+        exact (emptyRoots roots.tail).trans returned)
   | _ :: _ :: _, .cons _ (.cons next rest), _, _, roots, _, _, chain, _, _, target, pointEq, returned =>
-      Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.lastJoin (.cons next rest) roots.tail
-        (Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.remaining_chain chain) target pointEq returned
+      Bank.lastJoin (.cons next rest) roots.tail
+        (remaining_chain chain) target pointEq returned
 
 /-- Construct the closing join from actual root return and the erased geometry
 of the same cached parent list. -/
-def ClosingJoin.build : ∀ {parents : List (Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Parent curve differential)}
-  (bank : Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank cap differential count parents)
+def ClosingJoin.build : ∀ {parents : List (Parent curve differential)}
+  (bank : Bank cap differential count parents)
     {first last : Topology.PreparedRefinementRootChains.Named},
-      Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.RootLinks bank first last →
+      RootLinks bank first last →
     {start finish : Path.Gaussian.Lifted.Basic.LiftedPoint 2} → Nonempty
       (Integration.PreparedDirectDyadicRefinements.CenteredPathChain parents (start := start) (finish := finish)) →
     start.coordinate = finish.coordinate → Gaussian.Equivalence.NamedEquivalent last first →
-      Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.ClosingJoin bank
+      ClosingJoin bank
   | [], .nil, _, _, _, _, _, _, _, _ => ⟨⟩
   | _ :: _, .cons data rest, _, _, roots, _, _, chain, pointEq, returned =>
-      Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.lastJoin (.cons data rest) roots chain
+      lastJoin (.cons data rest) roots chain
         data.data.first.coordinates
-        (pointEq.symm.trans ((Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.first_coordinate chain).symm.trans
+        (pointEq.symm.trans ((first_coordinate chain).symm.trans
           data.first_eq.symm)) (by
           rw [data.data.first.coordinates.reciprocal_eq]
           exact returned.trans roots.entry)
@@ -180,17 +180,17 @@ end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank
 
 namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Boundary
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {collar :
-  Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {collar :
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar}
   {owner : Topology.SquareRootContinuationChain.Owner
-    ((Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.polynomial curve).eval collar.box.anchor)}
-  {differential : Hyperelliptic.Differentials.Basic.Differential genus}
+    ((HyperellipticReciprocal.polynomial curve).eval collar.box.anchor)}
+  {differential : Differentials.Basic.Differential genus}
 
 /-- The complete cap boundary closes at its actual cached cap coordinates. -/
-def closingCoordinates (data : Hyperelliptic.Charts.Reciprocal.Cap.Boundary.Data cap owner differential) :
-  Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.ClosingJoin data.covered.bank :=
-  Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.ClosingJoin.build data.covered.bank data.covered.roots
+def closingCoordinates (data : Data cap owner differential) :
+  PathCover.Bank.ClosingJoin data.covered.bank :=
+  PathCover.Bank.ClosingJoin.build data.covered.bank data.covered.roots
     data.covered.cache.chain rfl data.returned
 
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Boundary

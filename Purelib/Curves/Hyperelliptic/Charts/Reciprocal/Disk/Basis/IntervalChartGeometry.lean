@@ -55,6 +55,8 @@ import Purelib.Riemann.RootContinuation.CertifiedSquareRoot
 import Purelib.Riemann.RootContinuation.SquareRootChannelOwnership
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation.Rational
@@ -102,14 +104,14 @@ open _root_.Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CoordinatePolyno
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+    UniformReciprocalModels.Data patch count}
   {edge : ParameterEdge} {cell :
     Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {model :
+  {regular : RegularBounds.Data cap} {model :
     RootModel cell}
   {parameter target sourceTarget : Coordinate} {floor sourceFloor :
     Nat}
@@ -122,10 +124,10 @@ variable {cover : Cover data}
 namespace BasisIntervalChartRequest
 
 variable {interval : BasisCommonInterval cover
-  covers} {depth index minimum : Nat} {box : Purelib.Geometry.Rational.Box}
+  covers} {depth index minimum : Nat} {box : Geometry.Rational.Box}
   {request : BasisIntervalChartRequest
     interval regular depth target sourceTarget floor sourceFloor}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
   {polynomials : RegularBasisPolynomials cap
     index box}
 
@@ -134,8 +136,8 @@ namespace Plan.Evaluation
 variable {plan :
   Plan
   request capSample polynomials minimum}
-  {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular interval.anchor.cell}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample comparison capSample}
+  {comparison : ArcSamples.Data regular interval.anchor.cell}
+  {sample : ArcSamples.Sample comparison capSample}
   {bank : BasisSourceLocations.SampleBank
     covers index} {stage : Nat}
 
@@ -146,8 +148,8 @@ open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius)
 /-- The square certificate refers to the physical parent parameter even when the chart is restricted to a smaller common
 interval. -/
 theorem square_inside (branch : HyperellipticReciprocal.originOrder curve = 1)
-    (paid : target ≤ regular.padded.squareTolerance) {parameter : InverseRootPolynomial.Coordinate}
-    (reading : VertexRequests.Reading regular (BasisIntervalChartRequest.Model interval) sample parameter target floor
+    (paid : target ≤ regular.padded.squareTolerance) {parameter : Coordinate}
+    (reading : Reading regular (Model interval) sample parameter target floor
       stage) :
     regular.padded.Contains (reading.root.coordinate * reading.root.coordinate) := by
   have square := reading.square
@@ -163,36 +165,36 @@ theorem square_inside (branch : HyperellipticReciprocal.originOrder curve = 1)
 
 /-- Use the acquired path width, not the width of its larger anchor cell. -/
 theorem coordinate_step_bound (evaluated : Plan.Evaluation plan sample bank stage)
-    (bounds : CoordinatePolynomial.CoordinateBounds comparison)
+    (bounds : CoordinateBounds comparison)
     (coordinate : CoordinatePolynomial sample)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
-    (segment : VertexPaths.Segment regular (BasisIntervalChartRequest.Model interval) sample target floor stage)
+    (segment : Segment regular (Model interval) sample target floor stage)
     (member : segment ∈ (Evaluation.path evaluated).segments) :
     Data.Gaussian.Norm.Basic.normSq (segment.last.root.coordinate - segment.first.root.coordinate) <
-      2 * (Geometric.Basic.quarterRadius bounds.slope depth + 4 * target) := by
+      2 * (quarterRadius bounds.slope depth + 4 * target) := by
   have widthLe : interval.edge.right.parameter - interval.edge.left.parameter ≤ 1 := by
-    exact (Fraction.Order.Arithmetic.sub_le_sub_direct
+    exact (Arithmetic.sub_le_sub_direct
       interval.edge.right.inside.2 interval.edge.left.inside.1).trans_eq
       (show (1 : Fraction.Rational) - 0 = 1 by decide)
   have widthSquare : (interval.edge.right.parameter - interval.edge.left.parameter)^2 ≤ 1 :=
-    (Fraction.Order.Arithmetic.pow_le_pow_direct (Fraction.Order.Arithmetic.sub_nonneg_direct interval.ordered) widthLe
+    (Arithmetic.pow_le_pow_direct (Arithmetic.sub_nonneg_direct interval.ordered) widthLe
       2).trans_eq (one_pow _)
   have bounded := Path.coordinate_increment_bound (Evaluation.path evaluated) bounds coordinate branch segment member
-  have upper := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct widthSquare
+  have upper := Arithmetic.mul_le_mul_of_nonneg_left_direct widthSquare
     (Geometric.Basic.quarterRadius_nonneg bounds.slope_nonnegative depth)
   rw [Fraction.Field.mul_one_direct] at upper
-  exact bounded.trans_le (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.add_le_add_direct upper le_rfl) (by decide))
+  exact bounded.trans_le (Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_direct upper le_rfl) (by decide))
 
 /-- Consecutive acquired root coordinates have positive Euclidean dot product when the retained step, clearance and
 error bounds are paid. -/
 theorem coordinate_dot_positive (evaluated : Plan.Evaluation plan sample bank stage)
-    (bounds : CoordinatePolynomial.CoordinateBounds comparison)
+    (bounds : CoordinateBounds comparison)
     (coordinate : CoordinatePolynomial sample)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
     (small : target ≤ 1) (clearance : target ≤ collar.coordinateBound / 4)
-    (paid : 2 * (Geometric.Basic.quarterRadius bounds.slope depth + 4 * target) ≤ collar.coordinateBound / 20)
-    (segment : VertexPaths.Segment regular (BasisIntervalChartRequest.Model interval) sample target floor stage)
+    (paid : 2 * (quarterRadius bounds.slope depth + 4 * target) ≤ collar.coordinateBound / 20)
+    (segment : Segment regular (Model interval) sample target floor stage)
     (member : segment ∈ (Evaluation.path evaluated).segments) :
     0 < segment.first.root.coordinate.re * segment.last.root.coordinate.re +
       segment.first.root.coordinate.im * segment.last.root.coordinate.im :=

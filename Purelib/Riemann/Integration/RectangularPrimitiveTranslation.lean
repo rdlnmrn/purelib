@@ -3,6 +3,10 @@ import Purelib.Data.Vector.Basic
 
 import Purelib.LinearAlgebra.Grid.Offsets
 public import Purelib.Riemann.Readings.RectangularPointReadings
+import Purelib.Riemann.Integration.RectangularPrimitiveModels
+import Purelib.Riemann.Integration.RectangularPrimitiveGluing
+import Purelib.Riemann.Normalization.InverseRootPolynomial
+import Purelib.Riemann.Normalization.RectangularInverseModels
 import Purelib.Tactic.Ring
 
 @[expose] public section
@@ -51,8 +55,8 @@ open Purelib.Riemann.Integration.RectangularPrimitiveModels (Primitives)
 open Purelib.Riemann.Integration.RectangularPrimitiveGluing (PrimitiveAnchors)
 open Purelib.Riemann.Readings.RectangularPointReadings (PointReadings)
 open Purelib.Data.Vector.Basic (vectorOfFn vectorOfFn_apply)
-variable {polynomial numerator : Polynomial} {columns rows count : Nat} {geometry : Geometry columns rows}
-  {models : Bank polynomial geometry} {primitives : Primitives models numerator}
+variable {polynomial numerator : Polynomial} {columns rows count pairs : Nat} {geometry : Geometry columns rows}
+  {models : Bank polynomial geometry} {primitives : Primitives models numerator pairs}
   {anchors : PrimitiveAnchors primitives} {offsets : LinearAlgebra.Grid.Offsets anchors.edges}
   {points : Fin count → Gaussian}
 

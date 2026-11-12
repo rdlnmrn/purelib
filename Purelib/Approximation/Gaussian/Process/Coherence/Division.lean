@@ -31,6 +31,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 /-!
 # Coherence of apartness-certified Gaussian process division
 
@@ -57,7 +59,7 @@ original state allowances. The original paired state and apartness certificate
 supply those same retained observations. -/
 @[expose] public def divisionAllowance {left right : Process}
     (leftCoherent : Coherent left) (rightCoherent : Coherent right)
-    (apart : Process.Apart right)
+    (apart : Apart right)
     (state : (left.div right apart).State) : Fraction.Rational :=
   ((left.div right apart).ball state).radiusSq +
     divisionSemanticAllowance left.centerBound right.centerBound apart.lowerSq
@@ -71,14 +73,14 @@ uniform strictly positive lower squared norm. -/
 public theorem division_possible_close
     {left right : Process} (leftCoherent : Coherent left)
     (rightCoherent : Coherent right)
-    (apart : Process.Apart right)
+    (apart : Apart right)
     {leftState rightState : (left.div right apart).State}
     {leftX leftY rightX rightY : Data.Gaussian.Basic.Canonical}
     (leftXPossible : left.Possible leftState.1 leftX)
     (leftYPossible : right.Possible leftState.2 leftY)
     (rightXPossible : left.Possible rightState.1 rightX)
     (rightYPossible : right.Possible rightState.2 rightY) :
-    Data.Gaussian.Norm.Basic.normSq (leftX / leftY - rightX / rightY) ≤
+    Basic.normSq (leftX / leftY - rightX / rightY) ≤
       4 *
         (divisionAllowance leftCoherent rightCoherent apart leftState +
           divisionAllowance leftCoherent rightCoherent apart rightState) := by
@@ -90,51 +92,51 @@ public theorem division_possible_close
     leftOne rightOne
   let marginalTwo := divisionMarginal left.centerBound right.centerBound
     leftTwo rightTwo
-  have leftDenominatorLower : apart.lowerSq ≤ Data.Gaussian.Norm.Basic.normSq leftY :=
+  have leftDenominatorLower : apart.lowerSq ≤ Basic.normSq leftY :=
     apart.lower leftState.2 (right.possible_inside leftYPossible)
-  have rightDenominatorLower : apart.lowerSq ≤ Data.Gaussian.Norm.Basic.normSq rightY :=
+  have rightDenominatorLower : apart.lowerSq ≤ Basic.normSq rightY :=
     apart.lower rightState.2 (right.possible_inside rightYPossible)
-  have leftDenominatorPositive : 0 < Data.Gaussian.Norm.Basic.normSq leftY :=
+  have leftDenominatorPositive : 0 < Basic.normSq leftY :=
     apart.positive.trans_le leftDenominatorLower
-  have rightDenominatorPositive : 0 < Data.Gaussian.Norm.Basic.normSq rightY :=
+  have rightDenominatorPositive : 0 < Basic.normSq rightY :=
     apart.positive.trans_le rightDenominatorLower
   have leftDenominatorNonzero : leftY ≠ 0 := by
     intro equal
-    rw [equal, Data.Gaussian.Norm.Basic.normSq_zero] at leftDenominatorPositive
+    rw [equal, Basic.normSq_zero] at leftDenominatorPositive
     exact (lt_irrefl _ leftDenominatorPositive).elim
   have rightDenominatorNonzero : rightY ≠ 0 := by
     intro equal
-    rw [equal, Data.Gaussian.Norm.Basic.normSq_zero] at rightDenominatorPositive
+    rw [equal, Basic.normSq_zero] at rightDenominatorPositive
     exact (lt_irrefl _ rightDenominatorPositive).elim
-  have leftClose : Data.Gaussian.Norm.Basic.normSq (leftX - rightX) ≤
+  have leftClose : Basic.normSq (leftX - rightX) ≤
       4 * (leftOne + leftTwo) :=
     leftCoherent.possible_close leftXPossible rightXPossible
-  have rightClose : Data.Gaussian.Norm.Basic.normSq (rightY - leftY) ≤
+  have rightClose : Basic.normSq (rightY - leftY) ≤
       4 * (rightTwo + rightOne) :=
     rightCoherent.possible_close rightYPossible leftYPossible
-  have rightTwoNorm : Data.Gaussian.Norm.Basic.normSq rightY ≤
+  have rightTwoNorm : Basic.normSq rightY ≤
       2 * (rightTwo + right.centerBound) :=
     possible_normSq_le rightCoherent rightYPossible
-  have leftTwoNorm : Data.Gaussian.Norm.Basic.normSq rightX ≤
+  have leftTwoNorm : Basic.normSq rightX ≤
       2 * (leftTwo + left.centerBound) :=
     possible_normSq_le leftCoherent rightXPossible
   have firstTerm :
-      Data.Gaussian.Norm.Basic.normSq ((leftX - rightX) * rightY) ≤
+      Basic.normSq ((leftX - rightX) * rightY) ≤
         (4 * (leftOne + leftTwo)) *
           (2 * (rightTwo + right.centerBound)) := by
-    rw [Data.Gaussian.Norm.Basic.normSq_mul]
+    rw [Basic.normSq_mul]
     exact Arithmetic.mul_le_mul_direct
-      leftClose rightTwoNorm (Data.Gaussian.Norm.Basic.normSq_nonneg rightY)
+      leftClose rightTwoNorm (Basic.normSq_nonneg rightY)
       (Arithmetic.mul_nonneg_direct (by decide)
         (add_nonneg (leftCoherent.allowance_nonneg leftState.1)
           (leftCoherent.allowance_nonneg rightState.1)))
   have secondTerm :
-      Data.Gaussian.Norm.Basic.normSq (rightX * (rightY - leftY)) ≤
+      Basic.normSq (rightX * (rightY - leftY)) ≤
         (2 * (leftTwo + left.centerBound)) *
           (4 * (rightTwo + rightOne)) := by
-    rw [Data.Gaussian.Norm.Basic.normSq_mul]
+    rw [Basic.normSq_mul]
     exact Arithmetic.mul_le_mul_direct
-      leftTwoNorm rightClose (Data.Gaussian.Norm.Basic.normSq_nonneg (rightY - leftY))
+      leftTwoNorm rightClose (Basic.normSq_nonneg (rightY - leftY))
       (Arithmetic.mul_nonneg_direct (by decide)
         (add_nonneg (leftCoherent.allowance_nonneg rightState.1)
           left.centerBound_nonneg))
@@ -149,7 +151,7 @@ public theorem division_possible_close
     (leftCoherent.allowance_nonneg leftState.1)
     (rightCoherent.allowance_nonneg leftState.2)
   have crossProductBound :
-      Data.Gaussian.Norm.Basic.normSq (leftX * rightY - rightX * leftY) ≤
+      Basic.normSq (leftX * rightY - rightX * leftY) ≤
         4 *
           (productAllowance left.centerBound right.centerBound
               leftOne rightTwo +
@@ -157,11 +159,11 @@ public theorem division_possible_close
               leftTwo rightOne) := by
     rw [numeratorIdentity]
     calc
-      Data.Gaussian.Norm.Basic.normSq
+      Basic.normSq
           ((leftX - rightX) * rightY + rightX * (rightY - leftY)) ≤
-        2 * (Data.Gaussian.Norm.Basic.normSq ((leftX - rightX) * rightY) +
-          Data.Gaussian.Norm.Basic.normSq (rightX * (rightY - leftY))) :=
-        Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _
+        2 * (Basic.normSq ((leftX - rightX) * rightY) +
+          Basic.normSq (rightX * (rightY - leftY))) :=
+        Bounds.normSq_add_le_two _ _
       _ ≤ 2 *
           ((4 * (leftOne + leftTwo)) *
               (2 * (rightTwo + right.centerBound)) +
@@ -205,21 +207,21 @@ public theorem division_possible_close
         unfold divisionMarginal
         ring1
   have numeratorBound :
-      Data.Gaussian.Norm.Basic.normSq (leftX * rightY - rightX * leftY) ≤
+      Basic.normSq (leftX * rightY - rightX * leftY) ≤
         4 * (marginalOne + marginalTwo) :=
     crossProductBound.trans
       (Arithmetic.mul_le_mul_of_nonneg_left_direct
         crossMarginalBound (by decide))
   have denominatorLower : apart.lowerSq * apart.lowerSq ≤
-      Data.Gaussian.Norm.Basic.normSq leftY * Data.Gaussian.Norm.Basic.normSq rightY :=
+      Basic.normSq leftY * Basic.normSq rightY :=
     Arithmetic.mul_le_mul_direct
       leftDenominatorLower rightDenominatorLower apart.positive.le
-      (Data.Gaussian.Norm.Basic.normSq_nonneg leftY)
+      (Basic.normSq_nonneg leftY)
   have lowerProductPositive : 0 < apart.lowerSq * apart.lowerSq :=
     Arithmetic.mul_pos_direct apart.positive apart.positive
   have numeratorNonnegative :
-      0 ≤ Data.Gaussian.Norm.Basic.normSq (leftX * rightY - rightX * leftY) :=
-    Data.Gaussian.Norm.Basic.normSq_nonneg _
+      0 ≤ Basic.normSq (leftX * rightY - rightX * leftY) :=
+    Basic.normSq_nonneg _
   have marginalOneNonnegative : 0 ≤ marginalOne :=
     divisionMarginal_nonneg left.centerBound_nonneg right.centerBound_nonneg
       (leftCoherent.allowance_nonneg leftState.1)
@@ -228,27 +230,27 @@ public theorem division_possible_close
     divisionMarginal_nonneg left.centerBound_nonneg right.centerBound_nonneg
       (leftCoherent.allowance_nonneg rightState.1)
       (rightCoherent.allowance_nonneg rightState.2)
-  rw [Purelib.Data.Gaussian.Field.div_sub_div _ _ _ _
+  rw [Data.Gaussian.Field.div_sub_div _ _ _ _
       leftDenominatorNonzero rightDenominatorNonzero,
     Data.Gaussian.Field.normSq_div _ _
       (Data.Gaussian.Field.mul_ne_zero_direct
-        leftDenominatorNonzero rightDenominatorNonzero), Data.Gaussian.Norm.Basic.normSq_mul]
+        leftDenominatorNonzero rightDenominatorNonzero), Basic.normSq_mul]
   calc
-    Data.Gaussian.Norm.Basic.normSq (leftX * rightY - rightX * leftY) /
-          (Data.Gaussian.Norm.Basic.normSq leftY * Data.Gaussian.Norm.Basic.normSq rightY) ≤
-        Data.Gaussian.Norm.Basic.normSq (leftX * rightY - rightX * leftY) /
+    Basic.normSq (leftX * rightY - rightX * leftY) /
+          (Basic.normSq leftY * Basic.normSq rightY) ≤
+        Basic.normSq (leftX * rightY - rightX * leftY) /
           (apart.lowerSq * apart.lowerSq) :=
-      Fraction.Order.Field.div_le_div_of_nonneg_left_direct
+      Field.div_le_div_of_nonneg_left_direct
         numeratorNonnegative lowerProductPositive denominatorLower
     _ ≤ (4 * (marginalOne + marginalTwo)) /
           (apart.lowerSq * apart.lowerSq) := by
-      change Data.Gaussian.Norm.Basic.normSq (leftX * rightY - rightX * leftY) *
+      change Basic.normSq (leftX * rightY - rightX * leftY) *
           (apart.lowerSq * apart.lowerSq)⁻¹ ≤
         (4 * (marginalOne + marginalTwo)) *
           (apart.lowerSq * apart.lowerSq)⁻¹
       exact Arithmetic.mul_le_mul_of_nonneg_right_direct
         numeratorBound
-        (Fraction.Order.Field.inv_pos_direct lowerProductPositive).le
+        (Field.inv_pos_direct lowerProductPositive).le
     _ = divisionSemanticAllowance left.centerBound right.centerBound
           apart.lowerSq leftOne rightOne +
         divisionSemanticAllowance left.centerBound right.centerBound
@@ -302,7 +304,7 @@ product-to-marginal comparison and the same positive squared lower quadrance
 give the strict quarter-target bound. -/
 public theorem divisionSemanticAllowance_lt_quarter
     {left right : Process}
-    (apart : Process.Apart right)
+    (apart : Apart right)
     {leftAllowance rightAllowance target : Fraction.Rational}
     (targetPositive : 0 < target)
     (leftSmall : leftAllowance <
@@ -345,7 +347,7 @@ public theorem divisionSemanticAllowance_lt_quarter
       (Arithmetic.mul_lt_mul_of_pos_left_direct
         (by decide) productSmall)
   unfold divisionSemanticAllowance
-  apply (Fraction.Order.Field.div_lt_iff_pos
+  apply (Field.div_lt_iff_pos
     (Arithmetic.mul_pos_direct
       apart.positive apart.positive)).2
   calc
@@ -355,7 +357,7 @@ public theorem divisionSemanticAllowance_lt_quarter
     _ = (target / 4) * (apart.lowerSq * apart.lowerSq) := by
       unfold divisionSemanticTarget
       rw [← Fraction.Field.mul_assoc,
-        Purelib.Data.Rat.Bounds.Quarter.eight_div_thirtyTwo]
+        Bounds.Quarter.eight_div_thirtyTwo]
 
 /-- The outer quotient request bound obtained by scaling an operand request by the
 center-bound denominator and inverse squared apartness bound.
@@ -379,16 +381,16 @@ public theorem divisionOuterTarget_pos (left right : Process)
     {lowerSq operandRequest : Fraction.Rational}
     (lowerPositive : 0 < lowerSq) (requestPositive : 0 < operandRequest) :
     0 < divisionOuterTarget left right lowerSq operandRequest := by
-  apply Fraction.Order.Field.div_pos_direct
+  apply Field.div_pos_direct
   · exact Arithmetic.mul_pos_direct requestPositive
       (Name.divisionDenominator_pos
         (Name.centerOnly 0
           left.centerBound left.centerBound_nonneg (by
-            rw [Data.Gaussian.Norm.Basic.normSq_zero]
+            rw [Basic.normSq_zero]
             exact left.centerBound_nonneg))
         (Name.centerOnly 0
           right.centerBound right.centerBound_nonneg (by
-            rw [Data.Gaussian.Norm.Basic.normSq_zero]
+            rw [Basic.normSq_zero]
             exact right.centerBound_nonneg)))
   · exact Arithmetic.mul_pos_direct
       lowerPositive lowerPositive
@@ -399,14 +401,14 @@ displayed allowance request.
 The two request names retain exactly the original operand center bounds. -/
 public theorem processDivisionInputTarget_lt
     {left right : Process}
-    (leftName rightName : Gaussian.Request.Basic.Name)
+    (leftName rightName : Name)
     (leftBound : leftName.centerBound = left.centerBound)
     (rightBound : rightName.centerBound = right.centerBound)
     {lowerSq operandRequest request : Fraction.Rational}
     (lowerPositive : 0 < lowerSq)
     (requestSmall :
       request < divisionOuterTarget left right lowerSq operandRequest) :
-    Purelib.Approximation.Gaussian.Request.Basic.Name.divisionInputTarget
+    Name.divisionInputTarget
         leftName rightName lowerSq request < operandRequest := by
   let denominator := 4 * (left.centerBound + right.centerBound + 1)
   have denominatorPositive : 0 < denominator := by
@@ -418,7 +420,7 @@ public theorem processDivisionInputTarget_lt
     Arithmetic.mul_pos_direct lowerPositive lowerPositive
   unfold Name.divisionInputTarget
   rw [leftBound, rightBound]
-  apply (Fraction.Order.Field.div_lt_iff_pos denominatorPositive).2
+  apply (Field.div_lt_iff_pos denominatorPositive).2
   have scaled := Arithmetic.mul_lt_mul_of_pos_right_direct
     requestSmall lowerProductPositive
   unfold divisionOuterTarget at scaled
@@ -442,7 +444,7 @@ in the quotient construction. The retained ball radius and semantic allowance
 determine the same outer request and refinement certificates. -/
 @[expose] public def div {left right : Process} (leftCoherent : Coherent left)
     (rightCoherent : Coherent right)
-    (apart : Process.Apart right) :
+    (apart : Apart right) :
     Coherent (left.div right apart) where
   allowance := divisionAllowance leftCoherent rightCoherent apart
   allowance_nonneg state :=
@@ -489,7 +491,7 @@ determine the same outer request and refinement certificates. -/
     have sharedPositive : 0 < sharedRequest :=
       commonRequest_pos leftRequestPositive rightRequestPositive
     exact Common.commonTarget_pos
-      (Fraction.Order.Field.div_pos_direct positive (by decide))
+      (Field.div_pos_direct positive (by decide))
       (divisionOuterTarget_pos left right apart.positive sharedPositive)
   refine_accurate := by
     intro state target positive request requestPositive requestSmall
@@ -514,7 +516,7 @@ determine the same outer request and refinement certificates. -/
       divisionOuterTarget_pos left right apart.positive sharedPositive
     let radiusTarget := target / 2
     have radiusPositive : 0 < radiusTarget :=
-      Fraction.Order.Field.div_pos_direct positive (by decide)
+      Field.div_pos_direct positive (by decide)
     change request <
       Common.commonTarget radiusTarget outerTarget
         at requestSmall
@@ -589,6 +591,6 @@ determine the same outer request and refinement certificates. -/
             (right.refine state.2 processInputTarget processInputPositive)) <
         target
     exact (Arithmetic.add_lt_add_direct
-      radiusSmall semanticSmall).trans (Purelib.Data.Rat.Bounds.Quarter.half_add_quarter_lt positive)
+      radiusSmall semanticSmall).trans (Bounds.Quarter.half_add_quarter_lt positive)
 
 end Purelib.Approximation.Gaussian.Process.Coherence.Basic.Coherent

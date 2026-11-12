@@ -34,6 +34,9 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Rat.Fraction.Order
+open Purelib.Algebra.Field
+
 open Purelib
 
 open Purelib.Algebra.Quaternion
@@ -85,21 +88,21 @@ namespace Purelib.Geometry.Rotations.Rational.Kernel.Approximation.KernelApproxi
 
 /-- For displayed rotations, squared entrywise error is determined by the trace of their relative rotation. -/
 theorem matrixDistanceSq_eq_six_sub_two_trace_mul_transpose
-    (left right : Rotations.Basic.Rotation Fraction.Rational) :
+    (left right : Basic.Rotation Fraction.Rational) :
     Distance.KernelApproximation.matrixDistanceSq left.matrix right.matrix =
       6 - 2 * Matrix3.trace
         (Matrix3.mul left.matrix (Matrix3.transpose right.matrix)) := by
-  have leftFirst := congrArg (fun matrix : Coordinates3.Matrix3 Fraction.Rational => matrix.tt)
+  have leftFirst := congrArg (fun matrix : Matrix3 Fraction.Rational => matrix.tt)
     left.orthogonal
-  have leftSecond := congrArg (fun matrix : Coordinates3.Matrix3 Fraction.Rational => matrix.rr)
+  have leftSecond := congrArg (fun matrix : Matrix3 Fraction.Rational => matrix.rr)
     left.orthogonal
-  have leftThird := congrArg (fun matrix : Coordinates3.Matrix3 Fraction.Rational => matrix.ss)
+  have leftThird := congrArg (fun matrix : Matrix3 Fraction.Rational => matrix.ss)
     left.orthogonal
-  have rightFirst := congrArg (fun matrix : Coordinates3.Matrix3 Fraction.Rational => matrix.tt)
+  have rightFirst := congrArg (fun matrix : Matrix3 Fraction.Rational => matrix.tt)
     right.orthogonal
-  have rightSecond := congrArg (fun matrix : Coordinates3.Matrix3 Fraction.Rational => matrix.rr)
+  have rightSecond := congrArg (fun matrix : Matrix3 Fraction.Rational => matrix.rr)
     right.orthogonal
-  have rightThird := congrArg (fun matrix : Coordinates3.Matrix3 Fraction.Rational => matrix.ss)
+  have rightThird := congrArg (fun matrix : Matrix3 Fraction.Rational => matrix.ss)
     right.orthogonal
   change left.matrix.tt * left.matrix.tt +
       left.matrix.tr * left.matrix.tr +
@@ -150,7 +153,7 @@ theorem matrixDistanceSq_eq_six_sub_two_trace_mul_transpose
       ring1
 
 /-- Quaternion conjugation displays the transpose inverse rotation. -/
-theorem conjugate_rotationMatrix (proportion : Projective.Basic.NonNullProportion Fraction.Rational) :
+theorem conjugate_rotationMatrix (proportion : NonNullProportion Fraction.Rational) :
     (NonNullProportion.rotationMatrix (NonNullProportion.conjugate proportion)) =
       Matrix3.transpose (NonNullProportion.rotationMatrix proportion) := by
   rw [NonNullProportion.rotationMatrix_eq_scaled_numerator,
@@ -169,7 +172,7 @@ theorem conjugate_rotationMatrix (proportion : Projective.Basic.NonNullProportio
 
 /-- Squared matrix error is eight times the half spread of the relative quaternion rotation. -/
 theorem matrixDistanceSq_eq_eight_mul_halfSpread_relative
-    (left right : Projective.Basic.NonNullProportion Fraction.Rational) :
+    (left right : NonNullProportion Fraction.Rational) :
     Distance.KernelApproximation.matrixDistanceSq (NonNullProportion.rotationMatrix left)
       (NonNullProportion.rotationMatrix right) =
       8 * Spread.halfSpread
@@ -184,9 +187,9 @@ theorem matrixDistanceSq_eq_eight_mul_halfSpread_relative
   rw [← conjugate_rotationMatrix right,
     ← NonNullProportion.rotationMatrix_mul]
   have fourCancel : (4 : Fraction.Rational) * (4 : Fraction.Rational)⁻¹ = 1 :=
-    Algebra.Field.ExplicitField.mul_inv_cancel 4 (by decide)
+    ExplicitField.mul_inv_cancel 4 (by decide)
   unfold Spread.halfSpread NonNullProportion.rotation
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  simp only [ExplicitField.div_eq_mul_inv]
   calc
     6 - 2 * Matrix3.trace
         (NonNullProportion.rotationMatrix (NonNullProportion.mul left
@@ -214,8 +217,8 @@ theorem matrixDistanceSq_eq_eight_mul_halfSpread_relative
 /-! ## A rational norm-one stereographic candidate -/
 
 /-- Select the projectively equal sign whose scalar coordinate is nonnegative. -/
-@[expose] def orientNonnegative (proportion : Projective.Basic.NonNullProportion Fraction.Rational) :
-    Projective.Basic.NonNullProportion Fraction.Rational :=
+@[expose] def orientNonnegative (proportion : NonNullProportion Fraction.Rational) :
+    NonNullProportion Fraction.Rational :=
   if nonnegative : 0 ≤ proportion.scalar then proportion
   else NonNullProportion.scale (-1) (by
     intro negativeOneZero
@@ -227,7 +230,7 @@ theorem matrixDistanceSq_eq_eight_mul_halfSpread_relative
     exact proportion.one_ne_zero oneZero) proportion
 
 /-- Choosing the nonnegative scalar orientation preserves explicit projective equivalence. -/
-theorem orientNonnegative_equivalent (proportion : Projective.Basic.NonNullProportion Fraction.Rational) :
+theorem orientNonnegative_equivalent (proportion : NonNullProportion Fraction.Rational) :
     proportion.Equivalent (orientNonnegative proportion) := by
   unfold orientNonnegative
   split
@@ -244,7 +247,7 @@ theorem orientNonnegative_equivalent (proportion : Projective.Basic.NonNullPropo
 
 /-- The oriented representative has nonnegative scalar coordinate. -/
 theorem orientNonnegative_scalar_nonnegative
-    (proportion : Projective.Basic.NonNullProportion Fraction.Rational) :
+    (proportion : NonNullProportion Fraction.Rational) :
     0 ≤ (orientNonnegative proportion).scalar := by
   unfold orientNonnegative
   split
@@ -257,14 +260,14 @@ theorem orientNonnegative_scalar_nonnegative
       ring1
     change 0 ≤ (Proportion.scale (-1) proportion.toProportion).scalar
     rw [scaledScalar]
-    have less := Fraction.Order.Arithmetic.lt_of_not_ge_direct negative
-    have reversed := Fraction.Order.Arithmetic.neg_le_neg_direct less.le
+    have less := Arithmetic.lt_of_not_ge_direct negative
+    have reversed := Arithmetic.neg_le_neg_direct less.le
     change 0 ≤ -proportion.scalar at reversed
     exact reversed
 
 /-- Choosing the scalar orientation preserves the quaternion norm. -/
 theorem orientNonnegative_norm
-    (proportion : Projective.Basic.NonNullProportion Fraction.Rational) :
+    (proportion : NonNullProportion Fraction.Rational) :
     (orientNonnegative proportion).toProportion.norm =
       proportion.toProportion.norm := by
   unfold orientNonnegative
@@ -276,27 +279,27 @@ theorem orientNonnegative_norm
     ring1
 
 /-- Positive norm packaged for the finite square-root bracket. -/
-@[expose] def positiveNormTarget (proportion : Projective.Basic.NonNullProportion Fraction.Rational) :
+@[expose] def positiveNormTarget (proportion : NonNullProportion Fraction.Rational) :
     TheoremSixtyTwo.PositiveSquareClassRepresentative where
   representative := (NonNullProportion.quadranceClass proportion)
   positive := TheoremSixtyTwo.nonNullProportion_norm_positive proportion
 
 /-- Unnormalized rational stereographic point. -/
-@[expose] def stereographicRaw (proportion : Projective.Basic.NonNullProportion Fraction.Rational)
-    (root : Fraction.Rational) : Projective.Basic.Proportion Fraction.Rational :=
+@[expose] def stereographicRaw (proportion : NonNullProportion Fraction.Rational)
+    (root : Fraction.Rational) : Proportion Fraction.Rational :=
   let chart := root + proportion.scalar
   { scalar := chart ^ 2 - proportion.vector.quadrance
     vector := Coordinates3.Vector.scale (2 * chart) proportion.vector }
 
 /-- Common stereographic denominator. -/
-@[expose] def stereographicDenominator (proportion : Projective.Basic.NonNullProportion Fraction.Rational)
+@[expose] def stereographicDenominator (proportion : NonNullProportion Fraction.Rational)
     (root : Fraction.Rational) : Fraction.Rational :=
   let chart := root + proportion.scalar
   chart ^ 2 + proportion.vector.quadrance
 
 /-- The raw stereographic quaternion norm is the square of its common denominator. -/
 theorem stereographicRaw_norm
-    (proportion : Projective.Basic.NonNullProportion Fraction.Rational) (root : Fraction.Rational) :
+    (proportion : NonNullProportion Fraction.Rational) (root : Fraction.Rational) :
     (stereographicRaw proportion root).norm =
       stereographicDenominator proportion root ^ 2 := by
   unfold stereographicRaw stereographicDenominator Proportion.norm
@@ -311,31 +314,31 @@ theorem vector_quadrance_nonnegative (vector : Coordinates3.Vector Fraction.Rati
     (add_nonneg
       (by
           simpa only [pow_two]
-            using Fraction.Order.Arithmetic.sq_nonneg_direct vector.t)
+            using Arithmetic.sq_nonneg_direct vector.t)
       (by
           simpa only [pow_two]
-            using Fraction.Order.Arithmetic.sq_nonneg_direct vector.r))
+            using Arithmetic.sq_nonneg_direct vector.r))
     (by
         simpa only [pow_two]
-          using Fraction.Order.Arithmetic.sq_nonneg_direct vector.s)
+          using Arithmetic.sq_nonneg_direct vector.s)
 
 /-- A positive root and nonnegative scalar coordinate give a positive stereographic denominator. -/
 theorem stereographicDenominator_positive
-    (proportion : Projective.Basic.NonNullProportion Fraction.Rational) (root : Fraction.Rational)
+    (proportion : NonNullProportion Fraction.Rational) (root : Fraction.Rational)
     (rootPositive : 0 < root) (scalarNonnegative : 0 ≤ proportion.scalar) :
     0 < stereographicDenominator proportion root := by
   have chartPositive : 0 < root + proportion.scalar :=
     add_pos_of_pos_of_nonneg rootPositive scalarNonnegative
   have chartSquarePositive :=
-    Fraction.Order.Arithmetic.pow_pos_direct chartPositive 2
+    Arithmetic.pow_pos_direct chartPositive 2
   unfold stereographicDenominator
   exact add_pos_of_pos_of_nonneg chartSquarePositive
     (vector_quadrance_nonnegative proportion.vector)
 
 set_option genInjectivity false in
 /-- Cached finite data for one exact unit-quaternion candidate. -/
-structure UnitCandidate (source : Projective.Basic.NonNullProportion Fraction.Rational) (scale : Nat) where
-  /-- The cached representative with nonnegative scalar orientation. -/ oriented : Projective.Basic.NonNullProportion
+structure UnitCandidate (source : NonNullProportion Fraction.Rational) (scale : Nat) where
+  /-- The cached representative with nonnegative scalar orientation. -/ oriented : NonNullProportion
     Fraction.Rational
   /-- The retained orientation is exactly the computed sign adjustment of the source. -/ oriented_eq : oriented =
     orientNonnegative source
@@ -346,7 +349,7 @@ structure UnitCandidate (source : Projective.Basic.NonNullProportion Fraction.Ra
   /-- The cached rational upper endpoint of the root bracket. -/ root : Fraction.Rational
   /-- The cached root is exactly the retained bracket's upper endpoint. -/ root_eq : root = bracket.upper
   /-- The retained root is strictly positive. -/ root_positive : 0 < root
-  /-- The cached non-null raw stereographic representative. -/ raw : Projective.Basic.NonNullProportion
+  /-- The cached non-null raw stereographic representative. -/ raw : NonNullProportion
     Fraction.Rational
   /-- The raw representative is exactly the stereographic expression in the retained orientation and root. -/ raw_value
     : raw.toProportion = stereographicRaw oriented root
@@ -354,10 +357,10 @@ structure UnitCandidate (source : Projective.Basic.NonNullProportion Fraction.Ra
   /-- The cached denominator is exactly the stereographic denominator in the retained orientation and root. -/
     denominator_eq : denominator = stereographicDenominator oriented root
   /-- The cached normalization denominator is positive. -/ denominator_positive : 0 < denominator
-  /-- The cached normalized quaternion representative. -/ unit : Projective.Basic.NonNullProportion Fraction.Rational
+  /-- The cached normalized quaternion representative. -/ unit : NonNullProportion Fraction.Rational
   /-- The normalized representative is exactly the raw representative scaled by the retained denominator inverse. -/
     unit_eq : unit = NonNullProportion.scale denominator⁻¹
-    (Algebra.Field.ExplicitField.inv_ne_zero denominator_positive.ne') raw
+    (ExplicitField.inv_ne_zero denominator_positive.ne') raw
   /-- The retained normalized representative has norm one. -/ unit_norm : unit.toProportion.norm = 1
   /-- The raw and normalized representatives are projectively equivalent. -/ unit_equivalent_raw : raw.Equivalent unit
   /-- The retained normalized representative belongs to the unit-quaternion kernel. -/ unit_hasUnitRepresentative :
@@ -366,7 +369,7 @@ structure UnitCandidate (source : Projective.Basic.NonNullProportion Fraction.Ra
 constructive_injectivity UnitCandidate
 
 /-- Compute one rational norm-one candidate at the supplied finite square-root refinement. -/
-@[expose] def unitCandidate (source : Projective.Basic.NonNullProportion Fraction.Rational) (scale : Nat) :
+@[expose] def unitCandidate (source : NonNullProportion Fraction.Rational) (scale : Nat) :
     UnitCandidate source scale := by
   let oriented := orientNonnegative source
   let bracket := KernelApproximation.sqrtBracket (positiveNormTarget source) scale
@@ -378,15 +381,15 @@ constructive_injectivity UnitCandidate
   have denominatorPositive : 0 < denominator :=
     stereographicDenominator_positive oriented root rootPositive
       scalarNonnegative
-  let raw : Projective.Basic.NonNullProportion Fraction.Rational :=
+  let raw : NonNullProportion Fraction.Rational :=
     { toProportion := stereographicRaw oriented root
       normNonzero := by
         rw [stereographicRaw_norm]
-        simpa only [pow_two] using Algebra.Field.ExplicitField.mul_ne_zero
+        simpa only [pow_two] using ExplicitField.mul_ne_zero
           denominatorPositive.ne' denominatorPositive.ne' }
   let unit := NonNullProportion.scale denominator⁻¹
-    (Algebra.Field.ExplicitField.inv_ne_zero denominatorPositive.ne') raw
-  have denominatorCancel := Algebra.Field.ExplicitField.mul_inv_cancel
+    (ExplicitField.inv_ne_zero denominatorPositive.ne') raw
+  have denominatorCancel := ExplicitField.mul_inv_cancel
     denominator denominatorPositive.ne'
   have unitNorm : unit.toProportion.norm = 1 := by
     unfold unit
@@ -419,7 +422,7 @@ constructive_injectivity UnitCandidate
       unit_equivalent_raw := ?_
       unit_hasUnitRepresentative := ?_ }
   · refine ⟨denominator⁻¹,
-      Algebra.Field.ExplicitField.inv_ne_zero denominatorPositive.ne', rfl⟩
+      ExplicitField.inv_ne_zero denominatorPositive.ne', rfl⟩
   · refine ⟨1, unit.one_ne_zero, ?_⟩
     rw [Proportion.one_scale]
     exact unitNorm
@@ -427,7 +430,7 @@ constructive_injectivity UnitCandidate
 /-- The raw candidate is a scalar multiple of the oriented source plus one explicit scalar-coordinate error `root^2 -
 norm`. -/
 theorem stereographicRaw_decomposition
-    (source : Projective.Basic.NonNullProportion Fraction.Rational) (root : Fraction.Rational) :
+    (source : NonNullProportion Fraction.Rational) (root : Fraction.Rational) :
     stereographicRaw source root =
       { scalar :=
           (2 * (root + source.scalar)) * source.scalar +
@@ -441,7 +444,7 @@ theorem stereographicRaw_decomposition
 /-- Multiplying the raw candidate by the conjugate target cancels its scalar multiple exactly; only the square-root
 error remains in the vector part. -/
 theorem stereographicRaw_mul_conjugate_vector_quadrance
-    (source : Projective.Basic.NonNullProportion Fraction.Rational) (root : Fraction.Rational) :
+    (source : NonNullProportion Fraction.Rational) (root : Fraction.Rational) :
     (Proportion.mul (stereographicRaw source root)
         (Proportion.conjugate source.toProportion)).vector.quadrance =
       (root ^ 2 - source.toProportion.norm) ^ 2 *
@@ -455,7 +458,7 @@ theorem stereographicRaw_mul_conjugate_vector_quadrance
 /-- Exact rational error of the cached norm-one candidate. The only approximation term is the square-root bracket error
 `root² - norm`; all remaining factors are cached source and chart data. -/
 theorem unitCandidate_matrixDistanceSq
-    (source : Projective.Basic.NonNullProportion Fraction.Rational) (scale : Nat) :
+    (source : NonNullProportion Fraction.Rational) (scale : Nat) :
     Distance.KernelApproximation.matrixDistanceSq (NonNullProportion.rotationMatrix (unitCandidate source scale).unit)
         (NonNullProportion.rotationMatrix source) =
       8 * (((unitCandidate source scale).root ^ 2 -
@@ -509,18 +512,18 @@ theorem unitCandidate_matrixDistanceSq
 
 /-- The bracket error of a cached candidate is strictly positive. -/
 theorem unitCandidate_square_error_positive
-    (source : Projective.Basic.NonNullProportion Fraction.Rational) (scale : Nat) :
+    (source : NonNullProportion Fraction.Rational) (scale : Nat) :
     0 < (unitCandidate source scale).root ^ 2 -
       source.toProportion.norm := by
   let candidate := unitCandidate source scale
   have upperBound := candidate.bracket.value_lt_upper_square
   change source.toProportion.norm < candidate.bracket.upper ^ 2 at upperBound
   rw [← candidate.root_eq] at upperBound
-  exact Fraction.Order.Arithmetic.sub_pos_direct upperBound
+  exact Arithmetic.sub_pos_direct upperBound
 
 /-- The candidate's square-root error obeys the reciprocal finite-refinement bound supplied by its cached bracket. -/
 theorem unitCandidate_square_error_le
-    (source : Projective.Basic.NonNullProportion Fraction.Rational) (scale : Nat) :
+    (source : NonNullProportion Fraction.Rational) (scale : Nat) :
     (unitCandidate source scale).root ^ 2 -
         source.toProportion.norm ≤
       (2 * source.toProportion.norm + 3) / (scale + 1 : Nat) := by
@@ -533,12 +536,12 @@ theorem unitCandidate_square_error_le
 
 /-- The oriented vector quadrance is bounded by the positive source norm. -/
 theorem unitCandidate_oriented_vector_quadrance_le_norm
-    (source : Projective.Basic.NonNullProportion Fraction.Rational) (scale : Nat) :
+    (source : NonNullProportion Fraction.Rational) (scale : Nat) :
     (unitCandidate source scale).oriented.vector.quadrance ≤
       source.toProportion.norm := by
   let candidate := unitCandidate source scale
   have scalarSquareNonnegative :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct candidate.oriented.scalar
+    Arithmetic.sq_nonneg_direct candidate.oriented.scalar
   have bounded : candidate.oriented.vector.quadrance ≤
       candidate.oriented.toProportion.norm := by
     unfold Proportion.norm
@@ -549,7 +552,7 @@ theorem unitCandidate_oriented_vector_quadrance_le_norm
 /-- The positive stereographic denominator strictly exceeds the source norm, providing the denominator separation used
 by the error estimate. -/
 theorem unitCandidate_norm_lt_denominator
-    (source : Projective.Basic.NonNullProportion Fraction.Rational) (scale : Nat) :
+    (source : NonNullProportion Fraction.Rational) (scale : Nat) :
     source.toProportion.norm < (unitCandidate source scale).denominator := by
   let candidate := unitCandidate source scale
   have rootSquareAbove := candidate.bracket.value_lt_upper_square
@@ -563,7 +566,7 @@ theorem unitCandidate_norm_lt_denominator
     le_add_of_nonneg_right scalarNonnegative
   have chartSquareAbove : candidate.root ^ 2 ≤
       (candidate.root + candidate.oriented.scalar) ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
+    Arithmetic.pow_le_pow_direct
       candidate.root_positive.le rootLeChart 2
   have vectorNonnegative :=
     vector_quadrance_nonnegative candidate.oriented.vector
@@ -580,47 +583,47 @@ theorem unitCandidate_norm_lt_denominator
 
 /-- Conservative rational refinement demand for one positive squared-radius request. Its natural numerator is already a
 terminating sufficient scale. -/
-@[expose] def precisionDemand (source : Projective.Basic.NonNullProportion Fraction.Rational)
+@[expose] def precisionDemand (source : NonNullProportion Fraction.Rational)
     (radiusSq : Fraction.Rational) : Fraction.Rational :=
   8 * (2 * source.toProportion.norm + 3) ^ 2 /
     (radiusSq * source.toProportion.norm ^ 2)
 
 /-- A positive requested squared radius gives a positive conservative refinement demand. -/
-theorem precisionDemand_positive (source : Projective.Basic.NonNullProportion Fraction.Rational)
+theorem precisionDemand_positive (source : NonNullProportion Fraction.Rational)
     (radiusSq : Fraction.Rational) (radiusPositive : 0 < radiusSq) :
     0 < precisionDemand source radiusSq := by
   have normPositive :=
     TheoremSixtyTwo.nonNullProportion_norm_positive source
   have factorPositive : 0 < 2 * source.toProportion.norm + 3 := by
-    exact Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_pos_direct (by decide) normPositive)
+    exact Arithmetic.add_pos_of_pos_of_nonneg_direct
+      (Arithmetic.mul_pos_direct (by decide) normPositive)
       (by decide)
   unfold precisionDemand
-  exact Fraction.Order.Field.div_pos_direct
-    (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-      (Fraction.Order.Arithmetic.pow_pos_direct factorPositive 2))
-    (Fraction.Order.Arithmetic.mul_pos_direct radiusPositive
-      (Fraction.Order.Arithmetic.pow_pos_direct normPositive 2))
+  exact Field.div_pos_direct
+    (Arithmetic.mul_pos_direct (by decide)
+      (Arithmetic.pow_pos_direct factorPositive 2))
+    (Arithmetic.mul_pos_direct radiusPositive
+      (Arithmetic.pow_pos_direct normPositive 2))
 
 /-- A finite refinement selected directly from the canonical numerator of the conservative rational demand. -/
-@[expose] def precisionScale (source : Projective.Basic.NonNullProportion Fraction.Rational)
+@[expose] def precisionScale (source : NonNullProportion Fraction.Rational)
     (radiusSq : Fraction.Rational) : Nat :=
   (precisionDemand source radiusSq).num.toNat
 
 /-- The canonical numerator-based scale plus one strictly exceeds the positive refinement demand. -/
 theorem precisionDemand_lt_precisionScale_succ
-    (source : Projective.Basic.NonNullProportion Fraction.Rational) (radiusSq : Fraction.Rational)
+    (source : NonNullProportion Fraction.Rational) (radiusSq : Fraction.Rational)
     (radiusPositive : 0 < radiusSq) :
     precisionDemand source radiusSq <
       (precisionScale source radiusSq + 1 : Nat) := by
-  exact Fraction.Order.Bounds.positiveRational_lt_numerator_succ
+  exact Bounds.positiveRational_lt_numerator_succ
     (precisionDemand source radiusSq)
     (precisionDemand_positive source radiusSq radiusPositive)
 
 /-- Any refinement strictly above the conservative demand meets the requested squared matrix radius. The proof clears
 only positive rational factors and uses the cached bracket, chart, and norm data. -/
 theorem unitCandidate_matrixDistanceSq_lt_of_demand_lt
-    (source : Projective.Basic.NonNullProportion Fraction.Rational) (radiusSq : Fraction.Rational)
+    (source : NonNullProportion Fraction.Rational) (radiusSq : Fraction.Rational)
     (radiusPositive : 0 < radiusSq) (scale : Nat)
     (demandBelow : precisionDemand source radiusSq <
       (scale + 1 : Nat)) :
@@ -635,12 +638,12 @@ theorem unitCandidate_matrixDistanceSq_lt_of_demand_lt
     unfold norm
     exact TheoremSixtyTwo.nonNullProportion_norm_positive source
   have radiusNormSquarePositive : 0 < radiusSq * norm ^ 2 :=
-    Fraction.Order.Arithmetic.mul_pos_direct radiusPositive
-      (Fraction.Order.Arithmetic.pow_pos_direct normPositive 2)
+    Arithmetic.mul_pos_direct radiusPositive
+      (Arithmetic.pow_pos_direct normPositive 2)
   have factorPositive : 0 < factor := by
     unfold factor
-    exact Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_pos_direct (by decide) normPositive)
+    exact Arithmetic.add_pos_of_pos_of_nonneg_direct
+      (Arithmetic.mul_pos_direct (by decide) normPositive)
       (by decide)
   have refinementPositive : 0 < refinement := by
     unfold refinement
@@ -653,7 +656,7 @@ theorem unitCandidate_matrixDistanceSq_lt_of_demand_lt
     calc
       refinement = 1 * refinement := by ring1
       _ ≤ refinement * refinement :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           refinementAtLeastOne refinementPositive.le
       _ = refinement ^ 2 := by ring1
   have errorPositive : 0 < error := by
@@ -663,14 +666,14 @@ theorem unitCandidate_matrixDistanceSq_lt_of_demand_lt
     unfold error factor norm refinement candidate
     exact unitCandidate_square_error_le source scale
   have errorTimesRefinementLe : error * refinement ≤ factor :=
-    (Fraction.Order.Field.le_div_iff_pos refinementPositive).mp errorLe
+    (Field.le_div_iff_pos refinementPositive).mp errorLe
   have errorTimesRefinementNonnegative :
       0 ≤ error * refinement :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct errorPositive.le
+    Arithmetic.mul_nonneg_direct errorPositive.le
       refinementPositive.le
   have errorSquareCleared :
       error ^ 2 * refinement ^ 2 ≤ factor ^ 2 := by
-    have squares := Fraction.Order.Arithmetic.pow_le_pow_direct
+    have squares := Arithmetic.pow_le_pow_direct
       errorTimesRefinementNonnegative errorTimesRefinementLe 2
     calc
       error ^ 2 * refinement ^ 2 =
@@ -681,12 +684,12 @@ theorem unitCandidate_matrixDistanceSq_lt_of_demand_lt
     exact demandBelow.trans_le refinementLeSquare
   have demandCleared : 8 * factor ^ 2 <
       refinement ^ 2 * (radiusSq * norm ^ 2) := by
-    apply (Fraction.Order.Field.div_lt_iff_pos
+    apply (Field.div_lt_iff_pos
       radiusNormSquarePositive).mp
     change precisionDemand source radiusSq < refinement ^ 2
     exact demandBelowSquare
   have errorCoefficientNonnegative : 0 ≤ 8 * norm :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) normPositive.le
+    Arithmetic.mul_nonneg_direct (by decide) normPositive.le
   have scaledErrorLe :
       (8 * error ^ 2 * norm) * refinement ^ 2 ≤
         8 * factor ^ 2 * norm := by
@@ -694,14 +697,14 @@ theorem unitCandidate_matrixDistanceSq_lt_of_demand_lt
       (8 * error ^ 2 * norm) * refinement ^ 2 =
           (8 * norm) * (error ^ 2 * refinement ^ 2) := by ring1
       _ ≤ (8 * norm) * factor ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           errorSquareCleared errorCoefficientNonnegative
       _ = 8 * factor ^ 2 * norm := by ring1
   have demandTimesNorm :
       8 * factor ^ 2 * norm <
         (radiusSq * norm ^ 2 * norm) * refinement ^ 2 := by
     have scaled :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+      Arithmetic.mul_lt_mul_of_pos_right_direct
         demandCleared normPositive
     calc
       8 * factor ^ 2 * norm <
@@ -713,8 +716,8 @@ theorem unitCandidate_matrixDistanceSq_lt_of_demand_lt
     scaledErrorLe.trans_lt demandTimesNorm
   have core : 8 * error ^ 2 * norm <
       radiusSq * norm ^ 2 * norm :=
-    Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct coreScaled
-      (Fraction.Order.Arithmetic.pow_pos_direct refinementPositive 2)
+    Arithmetic.lt_of_mul_lt_mul_right_direct coreScaled
+      (Arithmetic.pow_pos_direct refinementPositive 2)
   have vectorNonnegative :
       0 ≤ candidate.oriented.vector.quadrance :=
     vector_quadrance_nonnegative candidate.oriented.vector
@@ -724,19 +727,19 @@ theorem unitCandidate_matrixDistanceSq_lt_of_demand_lt
   have numeratorLe :
       8 * error ^ 2 * candidate.oriented.vector.quadrance ≤
         8 * error ^ 2 * norm := by
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_left_direct
       vectorLeNorm
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct error))
+      (Arithmetic.mul_nonneg_direct (by decide)
+        (Arithmetic.sq_nonneg_direct error))
   have normBelowDenominator : norm < candidate.denominator := by
     unfold norm candidate
     exact unitCandidate_norm_lt_denominator source scale
   have normSquareLeDenominatorSquare :
       norm ^ 2 ≤ candidate.denominator ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct normPositive.le
+    Arithmetic.pow_le_pow_direct normPositive.le
       normBelowDenominator.le 2
   have radiusNormNonnegative : 0 ≤ radiusSq * norm :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct radiusPositive.le
+    Arithmetic.mul_nonneg_direct radiusPositive.le
       normPositive.le
   have requestedDenominatorLe : radiusSq * norm ^ 2 * norm ≤
       radiusSq * candidate.denominator ^ 2 * norm := by
@@ -744,7 +747,7 @@ theorem unitCandidate_matrixDistanceSq_lt_of_demand_lt
       radiusSq * norm ^ 2 * norm =
           (radiusSq * norm) * norm ^ 2 := by ring1
       _ ≤ (radiusSq * norm) * candidate.denominator ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           normSquareLeDenominatorSquare radiusNormNonnegative
       _ = radiusSq * candidate.denominator ^ 2 * norm := by ring1
   have numeratorStrict :
@@ -758,8 +761,8 @@ theorem unitCandidate_matrixDistanceSq_lt_of_demand_lt
         requestedDenominatorLe
       _ = radiusSq * (candidate.denominator ^ 2 * norm) := by ring1
   have denominatorPositive : 0 < candidate.denominator ^ 2 * norm :=
-    Fraction.Order.Arithmetic.mul_pos_direct
-      (Fraction.Order.Arithmetic.pow_pos_direct
+    Arithmetic.mul_pos_direct
+      (Arithmetic.pow_pos_direct
         candidate.denominator_positive 2)
       normPositive
   change Distance.KernelApproximation.matrixDistanceSq (NonNullProportion.rotationMatrix candidate.unit)
@@ -771,9 +774,9 @@ theorem unitCandidate_matrixDistanceSq_lt_of_demand_lt
       (candidate.denominator ^ 2 * norm)) =
       (8 * error ^ 2 * candidate.oriented.vector.quadrance) /
         (candidate.denominator ^ 2 * norm) by
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    simp only [ExplicitField.div_eq_mul_inv]
     ring1]
-  exact (Fraction.Order.Field.div_lt_iff_pos denominatorPositive).2
+  exact (Field.div_lt_iff_pos denominatorPositive).2
     numeratorStrict
 
 /-! ## One finite certificate for one rational precision request -/
@@ -782,11 +785,11 @@ set_option genInjectivity false in
 /-- The complete finite output for one target rotation and one positive rational squared radius. The canonical source
 representative, selected refinement, bracketed candidate, exact unit representative, associated rotation, and final
 error comparison are all retained as executable data. -/
-structure KernelApproximationCertificate (target : Rotations.Basic.Rotation Fraction.Rational)
+structure KernelApproximationCertificate (target : Basic.Rotation Fraction.Rational)
     (radiusSq : Fraction.Rational) where
   /-- The original requested squared radius is positive. -/ radius_positive : 0 < radiusSq
   /-- The cached canonical quaternion representative of the target rotation. -/ source :
-    Projective.Basic.NonNullProportion Fraction.Rational
+    NonNullProportion Fraction.Rational
   /-- The source is exactly the canonical inverse representative of the original target. -/ source_eq : source =
     RotationProportion.ofRotation target (by decide)
   /-- The cached source represents the original target rotation matrix. -/ source_represents :
@@ -798,14 +801,14 @@ structure KernelApproximationCertificate (target : Rotations.Basic.Rotation Frac
     source scale
   /-- The candidate is exactly the finite construction at the retained source and scale. -/ candidate_eq : candidate =
     unitCandidate source scale
-  /-- The cached norm-one approximating quaternion. -/ approximant : Projective.Basic.NonNullProportion
+  /-- The cached norm-one approximating quaternion. -/ approximant : NonNullProportion
     Fraction.Rational
   /-- The approximant is exactly the retained candidate's normalized quaternion. -/ approximant_eq : approximant =
     candidate.unit
   /-- The cached approximant has norm one. -/ approximant_norm : approximant.toProportion.norm = 1
   /-- The approximant belongs to the unit-quaternion kernel. -/ approximant_hasUnitRepresentative :
     (QuaternionObstruction.HasUnitRepresentative approximant)
-  /-- The cached certified rotation of the approximant. -/ rotation : Rotations.Basic.Rotation Fraction.Rational
+  /-- The cached certified rotation of the approximant. -/ rotation : Basic.Rotation Fraction.Rational
   /-- The retained rotation is exactly the action of the cached approximant. -/ rotation_eq : rotation =
     (NonNullProportion.rotation approximant)
   /-- The squared entrywise matrix error from the original target is strictly below the requested radius. -/ error_lt :
@@ -816,7 +819,7 @@ constructive_injectivity KernelApproximationCertificate
 /-- Compute an exact rational unit-kernel approximation for one displayed rational rotation and one positive rational
 squared-radius request. The constructor performs only the canonical finite inverse, base-four integer square-root
 refinement, and fixed-coordinate rational arithmetic. -/
-@[expose] def kernelApproximation (target : Rotations.Basic.Rotation Fraction.Rational) (radiusSq : Fraction.Rational)
+@[expose] def kernelApproximation (target : Basic.Rotation Fraction.Rational) (radiusSq : Fraction.Rational)
     (radiusPositive : 0 < radiusSq) :
     KernelApproximationCertificate target radiusSq := by
   let source := RotationProportion.ofRotation target (by decide)
@@ -861,7 +864,7 @@ refinement, and fixed-coordinate rational arithmetic. -/
 
 /-- The candidate's stored rotation is in the unit-quaternion kernel. -/
 theorem unitCandidate_rotation_hasUnitQuaternion
-    (source : Projective.Basic.NonNullProportion Fraction.Rational) (scale : Nat) :
+    (source : NonNullProportion Fraction.Rational) (scale : Nat) :
     (QuaternionObstruction.HasUnitRepresentative (unitCandidate source scale).unit) :=
   (unitCandidate source scale).unit_hasUnitRepresentative
 

@@ -26,6 +26,9 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Approximation.Gaussian.Logarithm (Chart)
 open Purelib.Approximation.Gaussian.Name.Basic (Named)
 
@@ -88,7 +91,7 @@ theorem synchronizedReducedSample_disk
   (input : Named)
     (chart : Chart input) (certificate : Branch.BranchCertificate input chart)
     (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       (synchronizedReducedSample input chart index) ≤ 1 /
       9 := by
   apply chart.reducedDisk.possible_normSq
@@ -101,7 +104,7 @@ squared norm. -/
 def synchronizedReducedSensitivity (input :
   Named) (chart : Chart input) :
     Fraction.Rational :=
-  (4 * Data.Gaussian.Norm.Basic.normSq chart.factor) /
+  (4 * Basic.normSq chart.factor) /
     (chart.denominatorApart.lowerSq * chart.denominatorApart.lowerSq)
 
 /-- The synchronized reduced-chart sensitivity coefficient is nonnegative. -/
@@ -110,10 +113,10 @@ theorem
   (input : Named)
     (chart : Chart input) :
     0 ≤ synchronizedReducedSensitivity input chart := by
-  apply Fraction.Order.Field.div_nonneg_direct
-  · exact Fraction.Order.Arithmetic.mul_nonneg_direct
-      (by decide) (Data.Gaussian.Norm.Basic.normSq_nonneg chart.factor)
-  · exact Fraction.Order.Arithmetic.mul_nonneg_direct
+  apply Field.div_nonneg_direct
+  · exact Arithmetic.mul_nonneg_direct
+      (by decide) (Basic.normSq_nonneg chart.factor)
+  · exact Arithmetic.mul_nonneg_direct
       chart.denominatorApart.positive.le chart.denominatorApart.positive.le
 
 /-- Four times the retained reduced-chart sensitivity, accounting for canonical input sample movement. -/
@@ -128,7 +131,7 @@ theorem
   (input : Named)
     (chart : Chart input) :
     0 ≤ synchronizedReducedErrorScale input chart :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct
+  Arithmetic.mul_nonneg_direct
     (synchronizedReducedSensitivity_nonneg input chart)
       (by decide)
 
@@ -138,19 +141,19 @@ theorem synchronizedReducedErrorScale_pos
     (chart : Chart input) (certificate : Branch.BranchCertificate input chart) :
     0 < synchronizedReducedErrorScale input chart
       := by
-  have factorPositive : 0 < Data.Gaussian.Norm.Basic.normSq chart.factor :=
-    Data.Gaussian.Norm.Basic.normSq_pos certificate.factor_ne_zero
-  have numeratorPositive : 0 < 4 * Data.Gaussian.Norm.Basic.normSq chart.factor :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide) factorPositive
+  have factorPositive : 0 < Basic.normSq chart.factor :=
+    Basic.normSq_pos certificate.factor_ne_zero
+  have numeratorPositive : 0 < 4 * Basic.normSq chart.factor :=
+    Arithmetic.mul_pos_direct (by decide) factorPositive
   have denominatorPositive :
       0 < chart.denominatorApart.lowerSq *
         chart.denominatorApart.lowerSq :=
-    Fraction.Order.Arithmetic.mul_pos_direct
+    Arithmetic.mul_pos_direct
       chart.denominatorApart.positive chart.denominatorApart.positive
   unfold synchronizedReducedErrorScale
     synchronizedReducedSensitivity
-  exact Fraction.Order.Arithmetic.mul_pos_direct
-    (Fraction.Order.Field.div_pos_direct numeratorPositive
+  exact Arithmetic.mul_pos_direct
+    (Field.div_pos_direct numeratorPositive
       denominatorPositive) (by decide)
 
 /-- Later synchronized reduced samples remain within the earlier index's geometric squared-error radius. -/
@@ -159,11 +162,11 @@ theorem
   (input : Named)
     (chart : Chart input) (certificate : Branch.BranchCertificate input chart)
     {oldIndex newIndex : Nat} (order : oldIndex ≤ newIndex) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
         (synchronizedReducedSample input chart newIndex -
           synchronizedReducedSample input chart oldIndex)
             ≤
-      Geometric.Basic.quarterRadius
+      Basic.quarterRadius
         (synchronizedReducedErrorScale input
           chart) oldIndex := by
   let newValue := ComplexLog.inputSample
@@ -187,26 +190,26 @@ theorem
   have movement :=
     Sampling.inputSample_later_close
       (Prepared.preparedChartInput input chart) order
-  change Data.Gaussian.Norm.Basic.normSq
+  change Basic.normSq
       (Prepared.synchronizedReducedValue input chart newValue -
         Prepared.synchronizedReducedValue input chart oldValue) ≤ _
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
         (Prepared.synchronizedReducedValue input chart newValue -
           Prepared.synchronizedReducedValue input chart oldValue) ≤
         synchronizedReducedSensitivity input chart *
-          Data.Gaussian.Norm.Basic.normSq (newValue - oldValue) := by
+          Basic.normSq (newValue - oldValue) := by
       exact sensitivity
     _ ≤ synchronizedReducedSensitivity input chart *
-        Geometric.Basic.quarterRadius 4 oldIndex :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct movement
+        Basic.quarterRadius 4 oldIndex :=
+      Arithmetic.mul_le_mul_of_nonneg_left_direct movement
         (synchronizedReducedSensitivity_nonneg input
           chart)
-    _ = Geometric.Basic.quarterRadius
+    _ = Basic.quarterRadius
           (synchronizedReducedErrorScale input chart)
             oldIndex := by
-      rw [Geometric.Basic.quarterRadius_eq_mul_pow,
-        Geometric.Basic.quarterRadius_eq_mul_pow]
+      rw [Basic.quarterRadius_eq_mul_pow,
+        Basic.quarterRadius_eq_mul_pow]
       unfold synchronizedReducedErrorScale
       ring1
 
@@ -215,10 +218,10 @@ def synchronizedReducedApproximation (input
   : Named) (chart : Chart input)
     (certificate : Branch.BranchCertificate input chart) : ApproximationData where
   sample := synchronizedReducedSample input chart
-  radiusSq := Geometric.Basic.quarterRadius
+  radiusSq := Basic.quarterRadius
     (synchronizedReducedErrorScale input chart)
   radiusSq_nonneg index :=
-    Geometric.Basic.quarterRadius_nonneg
+    Basic.quarterRadius_nonneg
       (synchronizedReducedErrorScale_nonneg input chart)
         index
   later_close := synchronizedReducedSample_later_close

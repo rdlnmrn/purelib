@@ -22,6 +22,9 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Operational congruence of Gaussian sampled products
 
@@ -40,17 +43,77 @@ open Purelib.Approximation.Gaussian.Sequence.Arithmetic.Multiplication
 open Purelib.Data.Rat
 open Purelib.Data.Nat
 
+/-- Combine two paid finite operand comparisons through their actual pointwise product samples.
+
+The output bound uses the first right and second left operands' certified
+squared-magnitude ceilings. The positive combined margin pays strictness
+even when a ceiling is zero. Defaults retain the original center bounds,
+request tolerances and complete output. The paired maxima retain both
+original comparisons and paid starts.
+-/
+@[expose] public def pointwiseComparison
+    {leftOne leftTwo rightOne rightTwo firstProduct secondProduct : ApproximationData}
+    {firstStart secondStart : Nat} {leftTarget rightTarget : Fraction.Rational}
+    (leftComparison : Comparison leftOne leftTwo firstStart secondStart leftTarget)
+    (rightComparison : Comparison rightOne rightTwo firstStart secondStart rightTarget)
+    (firstSamples : ∀ index, firstProduct.sample index = leftOne.sample index * rightOne.sample index)
+    (secondSamples : ∀ index, secondProduct.sample index = leftTwo.sample index * rightTwo.sample index)
+    (firstRightCeiling : { upper : Fraction.Rational //
+        ∀ index, Basic.normSq (rightOne.sample index) ≤ upper } :=
+      ⟨rightOne.centerBound, rightOne.sample_bounded⟩)
+    (secondLeftCeiling : { upper : Fraction.Rational //
+        ∀ index, Basic.normSq (leftTwo.sample index) ≤ upper } :=
+      ⟨leftTwo.centerBound, leftTwo.sample_bounded⟩)
+    (margins : { pair : Fraction.Rational × Fraction.Rational // 0 < pair.1 + pair.2 } :=
+      ⟨(leftTarget, rightTarget), Arithmetic.add_pos_of_pos_of_nonneg_direct
+        leftComparison.target_positive rightComparison.target_positive.le⟩) :
+    Comparison firstProduct secondProduct firstStart secondStart
+      (2 * (leftTarget * firstRightCeiling.val + secondLeftCeiling.val * rightTarget) +
+        margins.val.1 + margins.val.2) := by
+  let firstIndex := max leftComparison.leftIndex rightComparison.leftIndex
+  let secondIndex := max leftComparison.rightIndex rightComparison.rightIndex
+  have firstLeft : leftComparison.leftIndex ≤ firstIndex := Order.le_max_left _ _
+  have firstRight : rightComparison.leftIndex ≤ firstIndex := Order.le_max_right _ _
+  have secondLeft : leftComparison.rightIndex ≤ secondIndex := Order.le_max_left _ _
+  have secondRight : rightComparison.rightIndex ≤ secondIndex := Order.le_max_right _ _
+  refine ⟨firstIndex, secondIndex, leftComparison.left_ge.trans firstLeft,
+    leftComparison.right_ge.trans secondLeft, ?_⟩
+  intro firstLater secondLater firstOrder secondOrder
+  have leftClose := leftComparison.close (firstLeft.trans firstOrder) (secondLeft.trans secondOrder)
+  have rightClose := rightComparison.close (firstRight.trans firstOrder) (secondRight.trans secondOrder)
+  have secondUpperNonnegative : 0 ≤ secondLeftCeiling.val :=
+    (Basic.normSq_nonneg _).trans (secondLeftCeiling.property 0)
+  have firstTerm : Basic.normSq (leftOne.sample firstLater - leftTwo.sample secondLater) *
+      Basic.normSq (rightOne.sample firstLater) ≤ leftTarget * firstRightCeiling.val :=
+    Arithmetic.mul_le_mul_direct leftClose.le (firstRightCeiling.property firstLater)
+      (Basic.normSq_nonneg _) leftComparison.target_positive.le
+  have secondTerm : Basic.normSq (leftTwo.sample secondLater) *
+      Basic.normSq (rightOne.sample firstLater - rightTwo.sample secondLater) ≤ secondLeftCeiling.val * rightTarget :=
+    Arithmetic.mul_le_mul_direct (secondLeftCeiling.property secondLater) rightClose.le
+      (Basic.normSq_nonneg _) secondUpperNonnegative
+  rewrite [firstSamples firstLater, secondSamples secondLater]
+  have bounded := (Bounds.normSq_mul_sub_mul_le _ _ _ _).trans
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct firstTerm secondTerm) (by decide))
+  have strict := Arithmetic.add_lt_add_left_direct margins.property
+    (2 * (leftTarget * firstRightCeiling.val + secondLeftCeiling.val * rightTarget))
+  rewrite [_root_.add_zero] at strict
+  have same : 2 * (leftTarget * firstRightCeiling.val + secondLeftCeiling.val * rightTarget) +
+      (margins.val.1 + margins.val.2) =
+      2 * (leftTarget * firstRightCeiling.val + secondLeftCeiling.val * rightTarget) + margins.val.1 + margins.val.2 :=
+    (Fraction.Field.add_assoc _ _ _).symm
+  exact bounded.trans_lt (strict.trans_eq same)
+
 /-- Canonical finite products respect operational equivalence in both operands.
 
 The supplied comparisons retain both input owners and finite observation indices. The same paired maxima and rational
 request payment bound their product observations at every later pair of indices. -/
 @[expose] public def sampledProductApproximation_respects
-    {leftOne leftTwo rightOne rightTwo : Gaussian.Name.Basic.Named}
-    (leftEquivalent : Gaussian.Equivalence.NamedEquivalent leftOne leftTwo)
-    (rightEquivalent : Gaussian.Equivalence.NamedEquivalent rightOne rightTwo) :
-    Gaussian.Equivalence.Equivalent
-      (Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation leftOne rightOne)
-      (Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation leftTwo rightTwo) where
+    {leftOne leftTwo rightOne rightTwo : Basic.Named}
+    (leftEquivalent : NamedEquivalent leftOne leftTwo)
+    (rightEquivalent : NamedEquivalent rightOne rightTwo) :
+    Equivalent
+      (sampledProductApproximation leftOne rightOne)
+      (sampledProductApproximation leftTwo rightTwo) where
   compare := by
     intro firstStart secondStart target positive
     let firstLeftSource :=
@@ -69,126 +132,11 @@ request payment bound their product observations at every later pair of indices.
       inputTarget inputPositive
     let rightComparison := rightEquivalent.compare firstStart secondStart
       inputTarget inputPositive
-    let firstIndex := max leftComparison.leftIndex rightComparison.leftIndex
-    let secondIndex := max leftComparison.rightIndex rightComparison.rightIndex
-    exact
-      { leftIndex := firstIndex
-        rightIndex := secondIndex
-        left_ge := leftComparison.left_ge.trans
-          (Order.le_max_left _ _)
-        right_ge := leftComparison.right_ge.trans
-          (Order.le_max_left _ _)
-        close := by
-          intro firstLater secondLater firstOrder secondOrder
-          have leftClose := leftComparison.close
-            ((Order.le_max_left leftComparison.leftIndex
-              rightComparison.leftIndex).trans firstOrder)
-            ((Order.le_max_left leftComparison.rightIndex
-              rightComparison.rightIndex).trans secondOrder)
-          have rightClose := rightComparison.close
-            ((Order.le_max_right leftComparison.leftIndex
-              rightComparison.leftIndex).trans firstOrder)
-            ((Order.le_max_right leftComparison.rightIndex
-              rightComparison.rightIndex).trans secondOrder)
-          have firstTerm :
-              Data.Gaussian.Norm.Basic.normSq
-                  ((firstLeftSource.sample firstLater -
-                      secondLeftSource.sample secondLater) *
-                    firstRightSource.sample firstLater) ≤
-                Data.Gaussian.Norm.Basic.normSq
-                    (firstLeftSource.sample firstLater -
-                      secondLeftSource.sample secondLater) *
-                  firstRightSource.centerBound := by
-            rw [Data.Gaussian.Norm.Basic.normSq_mul]
-            exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-              (firstRightSource.sample_bounded firstLater) (Data.Gaussian.Norm.Basic.normSq_nonneg _)
-          have secondTerm :
-              Data.Gaussian.Norm.Basic.normSq
-                  (secondLeftSource.sample secondLater *
-                    (firstRightSource.sample firstLater -
-                      secondRightSource.sample secondLater)) ≤
-                secondLeftSource.centerBound *
-                  Data.Gaussian.Norm.Basic.normSq
-                    (firstRightSource.sample firstLater -
-                      secondRightSource.sample secondLater) := by
-            rw [Data.Gaussian.Norm.Basic.normSq_mul]
-            exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-              (secondLeftSource.sample_bounded secondLater) (Data.Gaussian.Norm.Basic.normSq_nonneg _)
-          have identity :
-              firstLeftSource.sample firstLater *
-                    firstRightSource.sample firstLater -
-                  secondLeftSource.sample secondLater *
-                    secondRightSource.sample secondLater =
-                (firstLeftSource.sample firstLater -
-                    secondLeftSource.sample secondLater) *
-                    firstRightSource.sample firstLater +
-                  secondLeftSource.sample secondLater *
-                    (firstRightSource.sample firstLater -
-                      secondRightSource.sample secondLater) := by
-            apply Data.Gaussian.Basic.ext <;>
-              simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-                Purelib.Data.Gaussian.Basic.add_re, Purelib.Data.Gaussian.Basic.add_im,
-                Purelib.Data.Gaussian.Basic.mul_re, Purelib.Data.Gaussian.Basic.mul_im] <;>
-                ring1
-          change Data.Gaussian.Norm.Basic.normSq
-              (firstLeftSource.sample firstLater *
-                    firstRightSource.sample firstLater -
-                secondLeftSource.sample secondLater *
-                    secondRightSource.sample secondLater) < target
-          rw [identity]
-          calc
-            Data.Gaussian.Norm.Basic.normSq
-                ((firstLeftSource.sample firstLater -
-                    secondLeftSource.sample secondLater) *
-                    firstRightSource.sample firstLater +
-                  secondLeftSource.sample secondLater *
-                    (firstRightSource.sample firstLater -
-                      secondRightSource.sample secondLater)) ≤
-              2 *
-                (Data.Gaussian.Norm.Basic.normSq
-                    ((firstLeftSource.sample firstLater -
-                        secondLeftSource.sample secondLater) *
-                      firstRightSource.sample firstLater) +
-                  Data.Gaussian.Norm.Basic.normSq
-                    (secondLeftSource.sample secondLater *
-                      (firstRightSource.sample firstLater -
-                        secondRightSource.sample secondLater))) :=
-              Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _
-            _ ≤ 2 *
-                (inputTarget * firstRightSource.centerBound +
-                  secondLeftSource.centerBound * inputTarget) :=
-              Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-                (add_le_add
-                  (firstTerm.trans
-                    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-                      leftClose.le firstRightSource.centerBound_nonneg))
-                  (secondTerm.trans
-                    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-                      rightClose.le secondLeftSource.centerBound_nonneg)))
-                (by decide)
-            _ = inputTarget *
-                (2 * (firstRightSource.centerBound +
-                  secondLeftSource.centerBound)) := by ring1
-            _ ≤ inputTarget *
-
-                  Multiplication.Bridge.approximationMulBridgeCoefficient
-                  firstRightSource secondLeftSource := by
-              apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-              · unfold
-                  Multiplication.Bridge.approximationMulBridgeCoefficient
-                have nonnegative :
-                    0 ≤ 8 +
-                        2 * (firstRightSource.centerBound +
-                          secondLeftSource.centerBound) :=
-                  add_nonneg (by decide)
-                    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-                      (add_nonneg firstRightSource.centerBound_nonneg
-                        secondLeftSource.centerBound_nonneg))
-                apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
-                convert nonnegative using 1
-                ring1
-              · exact inputPositive.le
-            _ < target :=
-              Bridge.approximationMulBridgeTarget_budget_lt _ _ positive }
+    let result := pointwiseComparison leftComparison rightComparison
+      (sampledProductApproximation_sample leftOne rightOne)
+      (sampledProductApproximation_sample leftTwo rightTwo)
+    have paid := Bridge.approximationMulBridgeCoefficient_pair_bound firstRightSource secondLeftSource
+      inputTarget inputPositive.le
+    exact result.weaken target (paid.trans (Bridge.approximationMulBridgeTarget_budget_lt _ _ positive).le)
 
 end Purelib.Approximation.Gaussian.Sequence.Arithmetic.Product.Congruence

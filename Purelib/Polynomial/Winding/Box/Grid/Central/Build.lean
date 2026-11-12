@@ -22,6 +22,9 @@ import Purelib.Geometry.Rational.Box.Separation
 import Purelib.Polynomial.Clearance.Box.Line.Restriction
 import Purelib.Polynomial.Winding.Box.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+open Purelib.Polynomial.Clearance.Box.Grid.Central
+
 open Purelib.Data
 open Purelib.Geometry.Rational
 
@@ -64,56 +67,56 @@ Direct finite membership certificates establish their separation and covering. -
   let se := Box.Grid.Central.southeast outer center strict
   let e := Box.Grid.Central.east outer center strict
   let ne := Box.Grid.Central.northeast outer center strict
-  let swCell : Clearance.Box.Grid.Central.Cell.ClearCell p outer center := Clearance.Box.Grid.Central.Build.makeCell
+  let swCell : Cell.ClearCell p outer center := Build.makeCell
     (box := sw)
-    ⟨(Rat.Fraction.Order.Basic.le_refl _), center.x_valid.trans strict.right.le,
-      (Rat.Fraction.Order.Basic.le_refl _), center.y_valid.trans strict.top.le⟩
+    ⟨(Basic.le_refl _), center.x_valid.trans strict.right.le,
+      (Basic.le_refl _), center.y_valid.trans strict.top.le⟩
     ⟨strict.left, strict.bottom⟩
     outerLeft innerLeft outerBottom innerBottom (Or.inl rfl)
-  let wCell : Clearance.Box.Grid.Central.Cell.ClearCell p outer center := Clearance.Box.Grid.Central.Build.makeCell
+  let wCell : Cell.ClearCell p outer center := Build.makeCell
     (box := w)
-    ⟨(Rat.Fraction.Order.Basic.le_refl _), center.x_valid.trans strict.right.le,
+    ⟨(Basic.le_refl _), center.x_valid.trans strict.right.le,
       strict.bottom.le, strict.top.le⟩
     ⟨strict.left, centerProper.2⟩
     outerLeft innerLeft innerBottom innerTop (Or.inl rfl)
-  let nwCell : Clearance.Box.Grid.Central.Cell.ClearCell p outer center := Clearance.Box.Grid.Central.Build.makeCell
+  let nwCell : Cell.ClearCell p outer center := Build.makeCell
     (box := nw)
-    ⟨(Rat.Fraction.Order.Basic.le_refl _), center.x_valid.trans strict.right.le,
-      strict.bottom.le.trans center.y_valid, (Rat.Fraction.Order.Basic.le_refl _)⟩
+    ⟨(Basic.le_refl _), center.x_valid.trans strict.right.le,
+      strict.bottom.le.trans center.y_valid, (Basic.le_refl _)⟩
     ⟨strict.left, strict.top⟩
     outerLeft innerLeft innerTop outerTop (Or.inl rfl)
-  let sCell : Clearance.Box.Grid.Central.Cell.ClearCell p outer center := Clearance.Box.Grid.Central.Build.makeCell
+  let sCell : Cell.ClearCell p outer center := Build.makeCell
     (box := s)
     ⟨strict.left.le, strict.right.le,
-      (Rat.Fraction.Order.Basic.le_refl _), center.y_valid.trans strict.top.le⟩
+      (Basic.le_refl _), center.y_valid.trans strict.top.le⟩
     ⟨centerProper.1, strict.bottom⟩
     innerLeft innerRight outerBottom innerBottom
       (Or.inr (Or.inr (Or.inl rfl)))
-  let nCell : Clearance.Box.Grid.Central.Cell.ClearCell p outer center := Clearance.Box.Grid.Central.Build.makeCell
+  let nCell : Cell.ClearCell p outer center := Build.makeCell
     (box := n)
     ⟨strict.left.le, strict.right.le,
-      strict.bottom.le.trans center.y_valid, (Rat.Fraction.Order.Basic.le_refl _)⟩
+      strict.bottom.le.trans center.y_valid, (Basic.le_refl _)⟩
     ⟨centerProper.1, strict.top⟩
     innerLeft innerRight innerTop outerTop
       (Or.inr (Or.inr (Or.inr rfl)))
-  let seCell : Clearance.Box.Grid.Central.Cell.ClearCell p outer center := Clearance.Box.Grid.Central.Build.makeCell
+  let seCell : Cell.ClearCell p outer center := Build.makeCell
     (box := se)
-    ⟨strict.left.le.trans center.x_valid, (Rat.Fraction.Order.Basic.le_refl _),
-      (Rat.Fraction.Order.Basic.le_refl _), center.y_valid.trans strict.top.le⟩
+    ⟨strict.left.le.trans center.x_valid, (Basic.le_refl _),
+      (Basic.le_refl _), center.y_valid.trans strict.top.le⟩
     ⟨strict.right, strict.bottom⟩
     innerRight outerRight outerBottom innerBottom
       (Or.inr (Or.inl rfl))
-  let eCell : Clearance.Box.Grid.Central.Cell.ClearCell p outer center := Clearance.Box.Grid.Central.Build.makeCell
+  let eCell : Cell.ClearCell p outer center := Build.makeCell
     (box := e)
-    ⟨strict.left.le.trans center.x_valid, (Rat.Fraction.Order.Basic.le_refl _),
+    ⟨strict.left.le.trans center.x_valid, (Basic.le_refl _),
       strict.bottom.le, strict.top.le⟩
     ⟨strict.right, centerProper.2⟩
     innerRight outerRight innerBottom innerTop
       (Or.inr (Or.inl rfl))
-  let neCell : Clearance.Box.Grid.Central.Cell.ClearCell p outer center := Clearance.Box.Grid.Central.Build.makeCell
+  let neCell : Cell.ClearCell p outer center := Build.makeCell
     (box := ne)
-    ⟨strict.left.le.trans center.x_valid, (Rat.Fraction.Order.Basic.le_refl _),
-      strict.bottom.le.trans center.y_valid, (Rat.Fraction.Order.Basic.le_refl _)⟩
+    ⟨strict.left.le.trans center.x_valid, (Basic.le_refl _),
+      strict.bottom.le.trans center.y_valid, (Basic.le_refl _)⟩
     ⟨strict.right, strict.top⟩
     innerRight outerRight innerTop outerTop
       (Or.inr (Or.inl rfl))
@@ -130,20 +133,20 @@ Direct finite membership certificates establish their separation and covering. -
       northeast := neCell
       additive := by
         simpa only [swCell, wCell, nwCell, sCell, nCell, seCell, eCell,
-          neCell, Clearance.Box.Grid.Central.Build.makeCell, sw, w, nw, s, n, se, e, ne] using
-          Winding.Box.Grid.Central.Additivity.raw_additivity p outer center strict
+          neCell, Build.makeCell, sw, w, nw, s, n, se, e, ne] using
+          Additivity.raw_additivity p outer center strict
       complementsPairwise := by
         apply List.pairwise_cons.mpr
         constructor
         · intro cell member
           rcases List.Membership.mem_cons.mp member with rfl | member
-          · exact Or.inr (Or.inr (Or.inl (Rat.Fraction.Order.Basic.le_refl _)))
+          · exact Or.inr (Or.inr (Or.inl (Basic.le_refl _)))
           · rcases List.Membership.mem_cons.mp member with rfl | member
             · exact Or.inr (Or.inr (Or.inl center.y_valid))
             · rcases List.Membership.mem_cons.mp member with rfl | member
-              · exact Or.inl (Rat.Fraction.Order.Basic.le_refl _)
+              · exact Or.inl (Basic.le_refl _)
               · rcases List.Membership.mem_cons.mp member with rfl | member
-                · exact Or.inl (Rat.Fraction.Order.Basic.le_refl _)
+                · exact Or.inl (Basic.le_refl _)
                 · rcases List.Membership.mem_cons.mp member with rfl | member
                   · exact Or.inl center.x_valid
                   · rcases List.Membership.mem_cons.mp member with rfl | member
@@ -155,11 +158,11 @@ Direct finite membership certificates establish their separation and covering. -
           constructor
           · intro cell member
             rcases List.Membership.mem_cons.mp member with rfl | member
-            · exact Or.inr (Or.inr (Or.inl (Rat.Fraction.Order.Basic.le_refl _)))
+            · exact Or.inr (Or.inr (Or.inl (Basic.le_refl _)))
             · rcases List.Membership.mem_cons.mp member with rfl | member
-              · exact Or.inl (Rat.Fraction.Order.Basic.le_refl _)
+              · exact Or.inl (Basic.le_refl _)
               · rcases List.Membership.mem_cons.mp member with rfl | member
-                · exact Or.inl (Rat.Fraction.Order.Basic.le_refl _)
+                · exact Or.inl (Basic.le_refl _)
                 · rcases List.Membership.mem_cons.mp member with rfl | member
                   · exact Or.inl center.x_valid
                   · rcases List.Membership.mem_cons.mp member with rfl | member
@@ -171,9 +174,9 @@ Direct finite membership certificates establish their separation and covering. -
             constructor
             · intro cell member
               rcases List.Membership.mem_cons.mp member with rfl | member
-              · exact Or.inl (Rat.Fraction.Order.Basic.le_refl _)
+              · exact Or.inl (Basic.le_refl _)
               · rcases List.Membership.mem_cons.mp member with rfl | member
-                · exact Or.inl (Rat.Fraction.Order.Basic.le_refl _)
+                · exact Or.inl (Basic.le_refl _)
                 · rcases List.Membership.mem_cons.mp member with rfl | member
                   · exact Or.inl center.x_valid
                   · rcases List.Membership.mem_cons.mp member with rfl | member
@@ -187,27 +190,27 @@ Direct finite membership certificates establish their separation and covering. -
                 rcases List.Membership.mem_cons.mp member with rfl | member
                 · exact Or.inr (Or.inr (Or.inl center.y_valid))
                 · rcases List.Membership.mem_cons.mp member with rfl | member
-                  · exact Or.inl (Rat.Fraction.Order.Basic.le_refl _)
+                  · exact Or.inl (Basic.le_refl _)
                   · rcases List.Membership.mem_cons.mp member with rfl | member
-                    · exact Or.inl (Rat.Fraction.Order.Basic.le_refl _)
+                    · exact Or.inl (Basic.le_refl _)
                     · have equal : cell = _ := List.Membership.mem_singleton.mp member
                       subst cell
-                      exact Or.inl (Rat.Fraction.Order.Basic.le_refl _)
+                      exact Or.inl (Basic.le_refl _)
               · apply List.pairwise_cons.mpr
                 constructor
                 · intro cell member
                   rcases List.Membership.mem_cons.mp member with rfl | member
-                  · exact Or.inl (Rat.Fraction.Order.Basic.le_refl _)
+                  · exact Or.inl (Basic.le_refl _)
                   · rcases List.Membership.mem_cons.mp member with rfl | member
-                    · exact Or.inl (Rat.Fraction.Order.Basic.le_refl _)
+                    · exact Or.inl (Basic.le_refl _)
                     · have equal : cell = _ := List.Membership.mem_singleton.mp member
                       subst cell
-                      exact Or.inl (Rat.Fraction.Order.Basic.le_refl _)
+                      exact Or.inl (Basic.le_refl _)
                 · apply List.pairwise_cons.mpr
                   constructor
                   · intro cell member
                     rcases List.Membership.mem_cons.mp member with rfl | member
-                    · exact Or.inr (Or.inr (Or.inl (Rat.Fraction.Order.Basic.le_refl _)))
+                    · exact Or.inr (Or.inr (Or.inl (Basic.le_refl _)))
                     · have equal : cell = _ := List.Membership.mem_singleton.mp member
                       subst cell
                       exact Or.inr (Or.inr (Or.inl center.y_valid))
@@ -216,7 +219,7 @@ Direct finite membership certificates establish their separation and covering. -
                     · intro cell member
                       have equal : cell = neCell := List.Membership.mem_singleton.mp member
                       subst cell
-                      exact Or.inr (Or.inr (Or.inl (Rat.Fraction.Order.Basic.le_refl _)))
+                      exact Or.inr (Or.inr (Or.inl (Basic.le_refl _)))
                     · exact Data.List.Pairwise.pairwise_singleton _ _
       covers := by
         intro z inside

@@ -12,7 +12,8 @@ import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Polynomial.Dense.Gaussian.Bounds.Box.Residual
 import Purelib.Polynomial.Geometry.ClearPath
 import Purelib.RootIsolation.State.WindingOne.Basic
-import Purelib.RootIsolation.State.WindingOne.Interior
+import Purelib.RootIsolation.State.Raw.Interior
+public import Purelib.RootIsolation.State.WindingOne.Raw
 import Purelib.RootIsolation.Track.Basic
 public import Purelib.Polynomial.Geometry.Grid.FromStates
 
@@ -34,6 +35,12 @@ import Purelib.Polynomial.Clearance.Box.Boundary.Basic
 import Purelib.Polynomial.Clearance.Box.Line.Basic
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Tactic.Ring
+
+open Purelib.Data.Rat.List.Minimum
+
+open Purelib.Polynomial.Dense.Gaussian
+
+open Purelib.Data.Rat.Fraction.Order
 
 open Purelib.Data.Rat
 
@@ -66,23 +73,23 @@ variable {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient : Box}
 
 /-- A positive grid-wide boundary margin, computed from the line banks
 without materializing the Cartesian product of faces. -/
-@[expose] def lineMargin (grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient) : Fraction.Rational :=
-  min (Data.Rat.List.Minimum.Maximality.positiveMinimum (grid.vertical.map fun line => line.clearance.bound))
-    (Data.Rat.List.Minimum.Maximality.positiveMinimum (grid.horizontal.map fun line => line.clearance.bound))
+@[expose] def lineMargin (grid : Geometry.Grid.ClearGrid polynomial ambient) : Fraction.Rational :=
+  min (Maximality.positiveMinimum (grid.vertical.map fun line => line.clearance.bound))
+    (Maximality.positiveMinimum (grid.horizontal.map fun line => line.clearance.bound))
 
 /-- The grid-wide margin computed from the finite line banks is strictly positive.
 
 Every retained vertical and horizontal line has a positive clearance bound. Their original finite minima and the common
 minimum therefore remain strictly positive. -/
-theorem lineMargin_positive (grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient) : 0 <
-  SquareRoot.Grid.Branch.Location.lineMargin grid := by
-  apply Fraction.Order.Basic.lt_min
-  · apply Data.Rat.List.Minimum.Maximality.positiveMinimum_pos
+theorem lineMargin_positive (grid : Geometry.Grid.ClearGrid polynomial ambient) : 0 <
+  lineMargin grid := by
+  apply Basic.lt_min
+  · apply Maximality.positiveMinimum_pos
     intro value member
     rcases Data.List.Map.mem_map.mp member with ⟨line, _, equal⟩
     rw [← equal]
     exact line.clearance.positive
-  · apply Data.Rat.List.Minimum.Maximality.positiveMinimum_pos
+  · apply Maximality.positiveMinimum_pos
     intro value member
     rcases Data.List.Map.mem_map.mp member with ⟨line, _, equal⟩
     rw [← equal]
@@ -92,39 +99,39 @@ theorem lineMargin_positive (grid : Polynomial.Geometry.Grid.ClearGrid polynomia
 
 The original vertical-line occurrence supplies the corresponding bound for its finite minimum. The common minimum is at
 most that retained vertical minimum. -/
-theorem lineMargin_le_vertical (grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient) (line :
+theorem lineMargin_le_vertical (grid : Geometry.Grid.ClearGrid polynomial ambient) (line :
   Geometry.Grid.ClearGrid.VerticalLine polynomial ambient)
-    (member : line ∈ grid.vertical) : SquareRoot.Grid.Branch.Location.lineMargin grid ≤ line.clearance.bound :=
-  (Fraction.Order.Basic.min_le_left _ _).trans (Data.Rat.List.Minimum.Maximality.positiveMinimum_le_of_mem
+    (member : line ∈ grid.vertical) : lineMargin grid ≤ line.clearance.bound :=
+  (Basic.min_le_left _ _).trans (Maximality.positiveMinimum_le_of_mem
     (Data.List.Map.mem_map_of_mem member))
 
 /-- The common grid margin is at most every retained horizontal-line clearance bound.
 
 The original horizontal-line occurrence supplies the corresponding bound for its finite minimum. The common minimum is
 at most that retained horizontal minimum. -/
-theorem lineMargin_le_horizontal (grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient) (line :
+theorem lineMargin_le_horizontal (grid : Geometry.Grid.ClearGrid polynomial ambient) (line :
   Geometry.Grid.ClearGrid.HorizontalLine polynomial ambient)
-    (member : line ∈ grid.horizontal) : SquareRoot.Grid.Branch.Location.lineMargin grid ≤ line.clearance.bound :=
-  (Fraction.Order.Basic.min_le_right _ _).trans (Data.Rat.List.Minimum.Maximality.positiveMinimum_le_of_mem
+    (member : line ∈ grid.horizontal) : lineMargin grid ≤ line.clearance.bound :=
+  (Basic.min_le_right _ _).trans (Maximality.positiveMinimum_le_of_mem
     (Data.List.Map.mem_map_of_mem member))
 
 /-- The common grid margin is at most every actual grid cell's boundary-clearance bound.
 
 The retained cell occurrence identifies its original two vertical and two horizontal endpoints. The common line margin
 is below each of those four bounds and hence below the same cell boundary minimum. -/
-theorem lineMargin_le_cell (grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient) (cell :
+theorem lineMargin_le_cell (grid : Geometry.Grid.ClearGrid polynomial ambient) (cell :
   Geometry.Grid.ClearGrid.Cell
   polynomial ambient)
-    (member : cell ∈ grid.cells) : SquareRoot.Grid.Branch.Location.lineMargin grid ≤ cell.boundaryClearance.bound := by
+    (member : cell ∈ grid.cells) : lineMargin grid ≤ cell.boundaryClearance.bound := by
   rcases Data.List.Flatten.mem_flatMap.mp member with ⟨horizontal, horizontalMember, member⟩
   rcases Data.List.Map.mem_map.mp member with ⟨vertical, verticalMember, equal⟩
   subst cell
   have x := Geometry.Grid.ClearGrid.Interval.endpoints_mem _ grid.vertical_ordered horizontalMember
   have y := Geometry.Grid.ClearGrid.Interval.endpoints_mem _ grid.horizontal_ordered verticalMember
-  exact Fraction.Order.Basic.le_min (SquareRoot.Grid.Branch.Location.lineMargin_le_vertical grid _ x.1)
-    (Fraction.Order.Basic.le_min (SquareRoot.Grid.Branch.Location.lineMargin_le_vertical grid _ x.2)
-      (Fraction.Order.Basic.le_min (SquareRoot.Grid.Branch.Location.lineMargin_le_horizontal grid _ y.1)
-        (SquareRoot.Grid.Branch.Location.lineMargin_le_horizontal grid _ y.2)))
+  exact Basic.le_min (lineMargin_le_vertical grid _ x.1)
+    (Basic.le_min (lineMargin_le_vertical grid _ x.2)
+      (Basic.le_min (lineMargin_le_horizontal grid _ y.1)
+        (lineMargin_le_horizontal grid _ y.2)))
 
 set_option genInjectivity false in
 /-- Cached executable numbers used by every branch assigned to this grid.
@@ -133,14 +140,14 @@ canonical minimum or radius calculation.
 
 The cached margin, Lipschitz coefficient and radius retain their displayed scalar identities and positivity. Every
 original cell receives the same boundary margin; the scaled radius fits strictly beneath that same bound. -/
-structure BranchBudget (grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient) where
+structure BranchBudget (grid : Geometry.Grid.ClearGrid polynomial ambient) where
   /-- The retained grid-wide boundary margin. -/ margin : Fraction.Rational
   /-- The retained common margin is strictly positive. -/ margin_positive : 0 < margin
   /-- The common margin is below every actual grid cell's boundary-clearance bound. -/ margin_le_cell : ∀ cell ∈
     grid.cells, margin ≤ cell.boundaryClearance.bound
   /-- The cached polynomial Lipschitz coefficient on the original ambient box. -/ lipschitz : Fraction.Rational
   /-- The cached coefficient equals the original finite Horner-Lipschitz bound. -/ lipschitz_eq : lipschitz =
-    Dense.Gaussian.Bounds.Box.denseLipschitzBound polynomial ambient
+    Bounds.Box.denseLipschitzBound polynomial ambient
   /-- The retained common branch-refinement radius. -/ radius : Fraction.Rational
   /-- The retained common radius is strictly positive. -/ radius_positive : 0 < radius
   /-- The retained radius is at most one. -/ radius_le_one : radius ≤ 1
@@ -151,71 +158,71 @@ constructive_injectivity BranchBudget
 
 namespace BranchBudget
 
-variable {grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient}
+variable {grid : Geometry.Grid.ClearGrid polynomial ambient}
 
 /-- A proved finite arithmetic selector; no successful-search premise.
 
 The original finite line margins and polynomial Lipschitz bound determine the retained radius as the same rational
 minimum. Direct scalar bounds certify its positivity, unit ceiling and strict scaled margin without a successful-search
 premise. -/
-@[expose] def ofGrid (grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient) :
-  SquareRoot.Grid.Branch.Location.BranchBudget grid := by
-  let margin := SquareRoot.Grid.Branch.Location.lineMargin grid
-  let lipschitz := Dense.Gaussian.Bounds.Box.denseLipschitzBound polynomial ambient
+@[expose] def ofGrid (grid : Geometry.Grid.ClearGrid polynomial ambient) :
+  BranchBudget grid := by
+  let margin := lineMargin grid
+  let lipschitz := Bounds.Box.denseLipschitzBound polynomial ambient
   let radius := min 1 (margin / (8 * lipschitz))
-  have lipschitzPositive : 0 < lipschitz := Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos _ _
+  have lipschitzPositive : 0 < lipschitz := Bounds.Box.denseLipschitzBound_pos _ _
   have denominatorPositive : 0 < 8 * lipschitz :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide) lipschitzPositive
+    Arithmetic.mul_pos_direct (by decide) lipschitzPositive
   have radiusPositive : 0 < radius :=
-    Fraction.Order.Basic.lt_min (by decide) (Fraction.Order.Field.div_pos_direct
-      (SquareRoot.Grid.Branch.Location.lineMargin_positive grid) denominatorPositive)
+    Basic.lt_min (by decide) (Field.div_pos_direct
+      (lineMargin_positive grid) denominatorPositive)
   have scaled : radius * (8 * lipschitz) ≤ margin :=
-    (Fraction.Order.Field.le_div_iff_pos denominatorPositive).mp (Fraction.Order.Basic.min_le_right _ _)
-  refine ⟨margin, SquareRoot.Grid.Branch.Location.lineMargin_positive grid,
-    SquareRoot.Grid.Branch.Location.lineMargin_le_cell grid, lipschitz, rfl,
-    radius, radiusPositive, Fraction.Order.Basic.min_le_left _ _, ?_⟩
+    (Field.le_div_iff_pos denominatorPositive).mp (Basic.min_le_right _ _)
+  refine ⟨margin, lineMargin_positive grid,
+    lineMargin_le_cell grid, lipschitz, rfl,
+    radius, radiusPositive, Basic.min_le_left _ _, ?_⟩
   calc
     4 * lipschitz * radius = 4 * (lipschitz * radius) := by ring1
-    _ < 8 * (lipschitz * radius) := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
-      (show (4 : Fraction.Rational) < 8 by decide) (Fraction.Order.Arithmetic.mul_pos_direct lipschitzPositive
+    _ < 8 * (lipschitz * radius) := Arithmetic.mul_lt_mul_of_pos_right_direct
+      (show (4 : Fraction.Rational) < 8 by decide) (Arithmetic.mul_pos_direct lipschitzPositive
         radiusPositive)
     _ = radius * (8 * lipschitz) := by ring1
     _ ≤ margin := scaled
 
 /-- Squaring the retained branch radius does not increase it. -/
-theorem radius_sq_le (budget : SquareRoot.Grid.Branch.Location.BranchBudget grid) : budget.radius ^ 2 ≤ budget.radius :=
+theorem radius_sq_le (budget : BranchBudget grid) : budget.radius ^ 2 ≤ budget.radius :=
   by
   rw [pow_two]
   calc
     budget.radius * budget.radius ≤ 1 * budget.radius :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct budget.radius_le_one budget.radius_positive.le
+      Arithmetic.mul_le_mul_of_nonneg_right_direct budget.radius_le_one budget.radius_positive.le
     _ = budget.radius := by ring1
 
 /-- The common radius makes the existing finite boundary-exclusion theorem
 applicable to every actual grid cell. -/
-theorem dominates (budget : SquareRoot.Grid.Branch.Location.BranchBudget grid) (state :
+theorem dominates (budget : BranchBudget grid) (state :
   State.WindingOne.Basic.WindingOneState polynomial ambient)
     (diagonal : state.box.diagonalSq ≤ budget.radius ^ 2)
     (cell : Geometry.Grid.ClearGrid.Cell polynomial ambient) (member : cell ∈ grid.cells) :
-    2 * (Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound polynomial ambient state.box +
-      Dense.Gaussian.Bounds.Box.denseLipschitzBound polynomial ambient * state.box.diagonalSq) <
+    2 * (Bounds.Box.Residual.anchorResidualBound polynomial ambient state.box +
+      Bounds.Box.denseLipschitzBound polynomial ambient * state.box.diagonalSq) <
         cell.boundaryClearance.bound := by
   have lipschitzPositive : 0 < budget.lipschitz := by
     rw [budget.lipschitz_eq]
-    exact Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos _ _
+    exact Bounds.Box.denseLipschitzBound_pos _ _
   have factorNonnegative : 0 ≤ 4 * budget.lipschitz :=
-    (Fraction.Order.Arithmetic.mul_pos_direct (by decide) lipschitzPositive).le
+    (Arithmetic.mul_pos_direct (by decide) lipschitzPositive).le
   calc
-    2 * (Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound polynomial ambient state.box +
-        Dense.Gaussian.Bounds.Box.denseLipschitzBound polynomial ambient * state.box.diagonalSq) =
+    2 * (Bounds.Box.Residual.anchorResidualBound polynomial ambient state.box +
+        Bounds.Box.denseLipschitzBound polynomial ambient * state.box.diagonalSq) =
         4 * budget.lipschitz * state.box.diagonalSq := by
           rw [budget.lipschitz_eq]
-          unfold Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound
+          unfold Bounds.Box.Residual.anchorResidualBound
           ring1
     _ ≤ 4 * budget.lipschitz * budget.radius ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct diagonal factorNonnegative
+      Arithmetic.mul_le_mul_of_nonneg_left_direct diagonal factorNonnegative
     _ ≤ 4 * budget.lipschitz * budget.radius :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct budget.radius_sq_le factorNonnegative
+      Arithmetic.mul_le_mul_of_nonneg_left_direct budget.radius_sq_le factorNonnegative
     _ < budget.margin := budget.scaled_lt_margin
     _ ≤ cell.boundaryClearance.bound := budget.margin_le_cell cell member
 
@@ -228,7 +235,7 @@ will eventually find a face.
 
 The selected refined state and its grid-cell occurrence remain executable witnesses with the original parent identities.
 Strict containment and refinement link that exact state, cell and original branch box. -/
-structure BranchLocation (grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient) (original :
+structure BranchLocation (grid : Geometry.Grid.ClearGrid polynomial ambient) (original :
   State.WindingOne.Basic.WindingOneState polynomial ambient) where
   /-- The actual refined branch state retained by the locator. -/ state : State.WindingOne.Basic.WindingOneState
     polynomial ambient
@@ -243,13 +250,13 @@ constructive_injectivity BranchLocation
 
 namespace BranchLocation
 
-variable {grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient} {original :
+variable {grid : Geometry.Grid.ClearGrid polynomial ambient} {original :
   State.WindingOne.Basic.WindingOneState
   polynomial ambient}
 
 /-- Accept a retained sufficiently accurate refinement.  Generated branch
 boxes can use this entry without reexecuting the canonical track. -/
-@[expose] def ofRefinement (budget : SquareRoot.Grid.Branch.Location.BranchBudget grid) (degreePositive : 0 <
+@[expose] def ofRefinement (budget : BranchBudget grid) (degreePositive : 0 <
   polynomial.natDegree)
     (state : State.WindingOne.Basic.WindingOneState polynomial ambient) (refines : state.box.Refines original.box)
     (diagonal : state.box.diagonalSq ≤ budget.radius ^ 2)
@@ -257,12 +264,12 @@ boxes can use this entry without reexecuting the canonical track. -/
     (xUpper : original.box.xUpper ∈ grid.vertical.map Geometry.Grid.ClearGrid.VerticalLine.coordinate)
     (yLower : original.box.yLower ∈ grid.horizontal.map Geometry.Grid.ClearGrid.HorizontalLine.coordinate)
     (yUpper : original.box.yUpper ∈ grid.horizontal.map Geometry.Grid.ClearGrid.HorizontalLine.coordinate) :
-      SquareRoot.Grid.Branch.Location.BranchLocation grid original :=
+      BranchLocation grid original :=
   let inside := refines.contains state.box.contains_anchor
-  let found := Polynomial.Geometry.Grid.ClearGridCoverage.locate grid state.box.anchor
-    (Polynomial.Geometry.Grid.FromStates.spanned_of_keys _ _ xLower xUpper original.proper.1 ⟨inside.1, inside.2.1⟩)
-    (Polynomial.Geometry.Grid.FromStates.spanned_of_keys _ _ yLower yUpper original.proper.2 inside.2.2)
-  let strict := State.WindingOne.Interior.strictInterior_of_anchor_mem_of_dominates polynomial state degreePositive
+  let found := Geometry.Grid.ClearGridCoverage.locate grid state.box.anchor
+    (Geometry.Grid.FromStates.spanned_of_keys _ _ xLower xUpper original.proper.1 ⟨inside.1, inside.2.1⟩)
+    (Geometry.Grid.FromStates.spanned_of_keys _ _ yLower yUpper original.proper.2 inside.2.2)
+  let strict := State.Raw.Interior.strictInterior_of_anchor_mem_of_dominates polynomial state.raw degreePositive
     found.cell.box_refines found.cell.boundaryClearance found.contains (budget.dominates state diagonal found.cell
       found.member)
   { state := state
@@ -270,13 +277,13 @@ boxes can use this entry without reexecuting the canonical track. -/
     cell := found.cell
     member := found.member
     strict := strict
-    cell_refines := Polynomial.Geometry.Grid.Incidence.cell_refines_of_strict_inner grid found.cell found.member xLower
+    cell_refines := Geometry.Grid.Incidence.cell_refines_of_strict_inner grid found.cell found.member xLower
       xUpper
       yLower yUpper refines strict }
 
 /-- Refine once to the computed common radius and scan the two finite axes.
 The track is already supplied by branch isolation and is not reacquired. -/
-@[expose] def acquire (budget : SquareRoot.Grid.Branch.Location.BranchBudget grid) (degreePositive : 0 <
+@[expose] def acquire (budget : BranchBudget grid) (degreePositive : 0 <
   polynomial.natDegree)
     (track : Track.Basic.WindingOneTrack polynomial ambient) (original : State.WindingOne.Basic.WindingOneState
       polynomial ambient)
@@ -284,9 +291,9 @@ The track is already supplied by branch isolation and is not reacquired. -/
     (xUpper : original.box.xUpper ∈ grid.vertical.map Geometry.Grid.ClearGrid.VerticalLine.coordinate)
     (yLower : original.box.yLower ∈ grid.horizontal.map Geometry.Grid.ClearGrid.HorizontalLine.coordinate)
     (yUpper : original.box.yUpper ∈ grid.horizontal.map Geometry.Grid.ClearGrid.HorizontalLine.coordinate) :
-      SquareRoot.Grid.Branch.Location.BranchLocation grid original :=
+      BranchLocation grid original :=
   let state := track.refine original budget.radius budget.radius_positive
-  SquareRoot.Grid.Branch.Location.BranchLocation.ofRefinement budget degreePositive state (track.nested original
+  ofRefinement budget degreePositive state (track.nested original
     budget.radius budget.radius_positive)
     (track.accurate original budget.radius budget.radius_positive) xLower xUpper yLower yUpper
 
@@ -321,10 +328,10 @@ private theorem cell_unique {small : Box} {cells : List (Geometry.Grid.ClearGrid
 
 /-- A sufficiently refined branch cannot belong to two adjacent faces, even
 though ordinary point location permits points on shared grid boundaries. -/
-theorem unique (location : SquareRoot.Grid.Branch.Location.BranchLocation grid original) (other :
+theorem unique (location : BranchLocation grid original) (other :
   Geometry.Grid.ClearGrid.Cell polynomial ambient)
     (member : other ∈ grid.cells) (strict : location.state.box.StrictInterior other.box) : location.cell = other :=
-  SquareRoot.Grid.Branch.Location.BranchLocation.cell_unique (Polynomial.Geometry.Grid.ClearGridCoverage.cells_pairwise
+  cell_unique (Geometry.Grid.ClearGridCoverage.cells_pairwise
     grid)
     location.member member location.strict strict
 

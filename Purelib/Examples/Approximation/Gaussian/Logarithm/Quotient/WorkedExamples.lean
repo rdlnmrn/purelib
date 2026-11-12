@@ -80,8 +80,8 @@ def sourceInput :
 
 Certifies the original exact source's separation and pairwise bounds directly, preserving its named correction. -/
 def sourceChart :
-  Approximation.Gaussian.Logarithm.Chart sourceInput.name :=
-  Approximation.Gaussian.Logarithm.Chart.ofBounds
+  Logarithm.Chart sourceInput.name :=
+  Logarithm.Chart.ofBounds
       sourceInput.name
     1 1 (by decide)
     (by
@@ -118,15 +118,15 @@ def sourceAnchor :
 
 /-- The logarithm-quotient client retaining the denominator, source input and anchor. -/
 def client :
-  Approximation.Gaussian.Logarithm.Quotient.Client where
+  Logarithm.Quotient.Client where
   denominator := denominator
   sourceInput := sourceInput
   source := sourceAnchor
 
 /-- The original joint logarithm/denominator search state. -/
 def initial :
-  Approximation.Gaussian.Logarithm.Quotient.State client :=
-  Approximation.Gaussian.Logarithm.Quotient.State.initial
+  Logarithm.Quotient.State client :=
+  Logarithm.Quotient.State.initial
       client
 
 /-- The initial logarithm-refinement state for the client's actual argument. -/
@@ -136,9 +136,9 @@ def logState : LogarithmState.State
 
 /-- The initial denominator-refinement state of the same client. -/
 def denominatorState :
-    Refinement.State
+    State
   client.denominator :=
-  Refinement.State.initial
+  State.initial
       client.denominator
 
 /-- The original argument ball satisfies the retained chart-safety certificate. -/
@@ -152,7 +152,7 @@ theorem initialLogSafety :
 
 /-- The overlap requirement retaining the initial logarithm safety evidence. -/
 def logRequirement :
-    Approximation.Gaussian.Logarithm.Chart.Partial.Requirement
+    Logarithm.Chart.Partial.Requirement
       client.sourceInput
       client.argument
       client.source
@@ -170,7 +170,7 @@ def logBlocked :
 
 Keeps its actual possible-value witnesses for the source input and prepared quotient argument. -/
 def logOverlap :
-    Coherent.Overlap.OverlapWitness client.sourceInput
+    Overlap.OverlapWitness client.sourceInput
       (LogarithmState.preparedTarget
         logState) where
   point := threeHalves
@@ -180,7 +180,7 @@ def logOverlap :
 
 /-- The original joint state resumed with the retained logarithm overlap. -/
 def afterLog :
-  Approximation.Gaussian.Logarithm.Quotient.State client :=
+  Logarithm.Quotient.State client :=
   logBlocked.resume
   logOverlap
 
@@ -201,7 +201,7 @@ def firstStepExpected :
 theorem denominatorSeparated :
     2 * (client.denominator.name.process.ball
       denominatorState.source).radiusSq <
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
         (client.denominator.name.process.ball
           denominatorState.source).center := by
   decide
@@ -216,8 +216,8 @@ def denominatorEvidence :
 
 /-- The joint state with the original logarithm and denominator evidence retained. -/
 def afterBoth :
-  Approximation.Gaussian.Logarithm.Quotient.State client :=
-  Approximation.Gaussian.Logarithm.Quotient.State.withDenominatorReady
+  Logarithm.Quotient.State client :=
+  Logarithm.Quotient.State.withDenominatorReady
     afterLog.log
     denominatorState
     denominatorEvidence
@@ -270,7 +270,7 @@ def finalOutput :
 Retains the original logarithm state/output/validity and denominator state/evidence with its defining output identity.
 -/
 def finalReady :
-  Approximation.Gaussian.Logarithm.Quotient.Ready client
+  Logarithm.Quotient.Ready client
   finalOutput where
   logState := logState
   logOutput := logSatisfied.output
@@ -283,7 +283,7 @@ def finalReady :
 
 Returns the actual coherent output and its original client-indexed certificate. -/
 theorem third_step_is_ready :
-    ∃ output : CoherentNamed, ∃ valid : Approximation.Gaussian.Logarithm.Quotient.Ready
+    ∃ output : CoherentNamed, ∃ valid : Logarithm.Quotient.Ready
       client output,
       Logarithm.Quotient.Step.step client
         afterBoth = .ready output valid := by

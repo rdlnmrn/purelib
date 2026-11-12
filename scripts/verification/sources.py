@@ -6,10 +6,15 @@ authoritative for visibility, elaboration and mathematical dependency closures.
 
 import re
 
-from scripts.module_style.core import lex, mask
+from scripts.module_style.core import NAME, lex, mask
 
 
-IMPORT = re.compile(r"(?:(public|private)\s+)?(?:(meta)\s+)?import(?:\s+(all))?\s+(.+)")
+IMPORT = re.compile(r"(?:(public|private)\s+)?(?:(meta)\s+)?import(?:\s+(all))?(?:\s+(.+))?")
+HEADER_COMMANDS = set("module prelude public private meta import namespace section end open export "
+                      "def theorem lemma abbrev opaque structure inductive class instance example "
+                      "variable variables universe universes set_option attribute initialize "
+                      "builtin_initialize run_cmd run_meta run_elab elab syntax macro macro_rules "
+                      "local scoped protected unsafe partial noncomputable mutual deriving".split())
 
 
 def code(source, quoted_input=False):
@@ -40,15 +45,41 @@ def code(source, quoted_input=False):
 
 def imports(source):
     """Read all module-header imports and their retained visibility/phase modes."""
-    result = []
-    for line in code(source).splitlines():
-        line = line.strip()
+    result, lines, index = [], code(source).splitlines(), 0
+
+    def names(text):
+        values = text.split()
+        return (values if values and all(NAME.fullmatch(value) and value not in HEADER_COMMANDS
+                                        for value in values) else None)
+
+    while index < len(lines):
+        raw = lines[index]
+        line = raw.strip()
+        index += 1
         if not line or line in {"module", "prelude"}:
             continue
         if not (match := IMPORT.fullmatch(line)):
             break
         mode = " ".join(part for part in match.groups()[:3] if part) or "ordinary"
-        result.extend((name, mode) for name in match[4].split())
+        modules = names(match[4]) if match[4] else []
+        if modules is None:
+            break
+        indent = len(raw) - len(raw.lstrip())
+        while index < len(lines):
+            following = lines[index]
+            if not following.strip():
+                index += 1
+                continue
+            if modules and len(following) - len(following.lstrip()) <= indent:
+                break
+            continuation = names(following.strip())
+            if continuation is None:
+                break
+            modules.extend(continuation)
+            index += 1
+        if not modules:
+            break
+        result.extend((name, mode) for name in modules)
     return result
 
 

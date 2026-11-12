@@ -183,6 +183,11 @@ if [[ ! "$requested_audit_jobs" =~ ^[1-9][0-9]*$ ]]; then
     "AXIOM_AUDIT_JOBS must be a positive integer (received: $requested_audit_jobs)" >&2
   exit 1
 fi
+audit_core_budget="${CCL_CHECK_CORES:-$requested_audit_jobs}"
+if [[ ! "$audit_core_budget" =~ ^[1-9][0-9]*$ ]]; then
+  printf '%s\n' 'CCL_CHECK_CORES must be a positive integer' >&2
+  exit 1
+fi
 
 audit_dir="$(mktemp -d "${TMPDIR:-/tmp}/ccl-project-axioms.XXXXXX")"
 declare -a audit_temp_files=()
@@ -306,9 +311,12 @@ awk -F '\t' -v OFS='\t' -v hits="$cache_hits" -v misses="$cache_misses" '
 miss_count="$(awk 'END {print NR}' "$cache_misses")"
 hit_count="$(awk 'END {print NR}' "$cache_hits")"
 audit_jobs="$requested_audit_jobs"
+if (( audit_jobs > audit_core_budget )); then audit_jobs="$audit_core_budget"; fi
 if (( miss_count != 0 && audit_jobs > miss_count )); then
   audit_jobs="$miss_count"
 fi
+query_cores=$((audit_core_budget / audit_jobs))
+if (( query_cores < 1 )); then query_cores=1; fi
 
 declare -a assignment_files=()
 declare -a worker_active=()
@@ -359,13 +367,13 @@ if (( miss_count != 0 )); then
       audit_canonical=true
     fi
     # Retain the exact worker invocation as data, without compiling another reader.
-    python3 - "$audit_source" "$project_list" "$input_manifest" "$audit_canonical" "$report_ir_only" "$all_helpers" "$audit_result" "${all_modules[@]}" <<'PYWORKER'
+    python3 - "$audit_source" "$project_list" "$input_manifest" "$audit_canonical" "$report_ir_only" "$all_helpers" "$audit_result" "$query_cores" "${all_modules[@]}" <<'PYWORKER'
 import json,sys
 from pathlib import Path
-output,assigned,inputs,canonical,report_ir_only,all_helpers,result,*project=sys.argv[1:]
+output,assigned,inputs,canonical,report_ir_only,all_helpers,result,cores,*project=sys.argv[1:]
 Path(output).write_text(json.dumps({'assigned_manifest':assigned,'input_manifest':inputs,
  'canonical':canonical,'report_ir_only':report_ir_only,'all_helpers':all_helpers,'result':result,'project_modules':project,
- 'assigned_modules':Path(assigned).read_text().splitlines()},sort_keys=True)+'\n')
+ 'assigned_modules':Path(assigned).read_text().splitlines(),'core_budget':int(cores)},sort_keys=True)+'\n')
 PYWORKER
 
   done
@@ -396,7 +404,7 @@ PYWORKER
     "$lake_runner" env env LEAN_PATH="$audit_lean_path" \
       python3 "$repo_dir/scripts/project-module-data.py" audit \
       --project "$project_boundary" --assigned "$audit_dir/project-modules.$worker.txt" \
-      --canonical "$audit_canonical" --result "$audit_dir/ProjectAxiomAudit.$worker.tsv" \
+      --canonical "$audit_canonical" --result "$audit_dir/ProjectAxiomAudit.$worker.tsv" --cores "$query_cores" \
       "${report_options[@]}" >"${audit_logs[$worker]}" 2>&1 &
     audit_pids+=("$!")
     audit_worker_indices+=("$worker")

@@ -53,15 +53,15 @@ namespace Purelib.Approximation.Gaussian.Exponential.Taylor.Bounds
 /-- On the rational unit disk, an exponential Horner monomial starting at denominator at least two has squared norm
 bounded by the matching quarter-power. -/
 theorem hornerTerm_normSq_le_quarter_pow {x :
-  Data.Gaussian.Basic.Canonical}
-    (unitInput : Data.Gaussian.Norm.Basic.normSq x ≤ 1) :
+  Basic.Canonical}
+    (unitInput : Norm.Basic.normSq x ≤ 1) :
     ∀ (degree denominator : Nat), 2 ≤ denominator →
-      Data.Gaussian.Norm.Basic.normSq (Taylor.Basic.hornerTerm x denominator degree) ≤
+      Norm.Basic.normSq (Basic.hornerTerm x denominator degree) ≤
         (1 / 4 : Fraction.Rational) ^ degree
   | 0, denominator, atLeastTwo => by
-      rw [Taylor.Basic.hornerTerm_zero, Data.Gaussian.Norm.Basic.normSq_one, pow_zero]
+      rw [Basic.hornerTerm_zero, Norm.Basic.normSq_one, pow_zero]
   | degree + 1, denominator, atLeastTwo => by
-      rw [Taylor.Basic.hornerTerm_succ, Scale.normSq_scale, Data.Gaussian.Norm.Basic.normSq_mul,
+      rw [Basic.hornerTerm_succ, Scale.normSq_scale, Norm.Basic.normSq_mul,
         pow_succ]
       have reciprocal :=
         Bounds.ReciprocalNatural.reciprocal_nat_sq_le_quarter atLeastTwo
@@ -69,38 +69,38 @@ theorem hornerTerm_normSq_le_quarter_pow {x :
         degree
         (denominator + 1) (by omega)
       have inner :
-          Data.Gaussian.Norm.Basic.normSq x * Data.Gaussian.Norm.Basic.normSq (Taylor.Basic.hornerTerm
+          Norm.Basic.normSq x * Norm.Basic.normSq (Basic.hornerTerm
             x (denominator + 1) degree) ≤
             1 * (1 / 4 : Fraction.Rational) ^ degree :=
         Fraction.Order.Arithmetic.mul_le_mul_direct unitInput tail
-          (Data.Gaussian.Norm.Basic.normSq_nonneg _) (by decide)
+          (Norm.Basic.normSq_nonneg _) (by decide)
       calc
         (1 / (denominator : Fraction.Rational)) ^ 2 *
-            (Data.Gaussian.Norm.Basic.normSq x * Data.Gaussian.Norm.Basic.normSq
-              (Taylor.Basic.hornerTerm x (denominator + 1) degree)) ≤
+            (Norm.Basic.normSq x * Norm.Basic.normSq
+              (Basic.hornerTerm x (denominator + 1) degree)) ≤
           (1 / 4 : Fraction.Rational) *
             (1 * (1 / 4 : Fraction.Rational) ^ degree) :=
           Fraction.Order.Arithmetic.mul_le_mul_direct reciprocal inner
             (Fraction.Order.Arithmetic.mul_nonneg_direct
-              (Data.Gaussian.Norm.Basic.normSq_nonneg x) (Data.Gaussian.Norm.Basic.normSq_nonneg _))
+              (Norm.Basic.normSq_nonneg x) (Norm.Basic.normSq_nonneg _))
             (by decide)
         _ = (1 / 4 : Fraction.Rational) ^ degree * (1 / 4) := by ring1
 
 /-- On the rational unit disk, the next Taylor monomial has squared norm bounded by the quarter-power at the preceding
 degree. -/
 theorem taylorTerm_succ_normSq_le {x :
-  Data.Gaussian.Basic.Canonical}
-    (unitInput : Data.Gaussian.Norm.Basic.normSq x ≤ 1) (degree : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (Taylor.Basic.taylorTerm x (degree + 1)) ≤
+  Basic.Canonical}
+    (unitInput : Norm.Basic.normSq x ≤ 1) (degree : Nat) :
+    Norm.Basic.normSq (Basic.taylorTerm x (degree + 1)) ≤
       (1 / 4 : Fraction.Rational) ^ degree := by
-  rw [← Taylor.hornerTerm_one_eq_taylorTerm, Taylor.Basic.hornerTerm_succ,
-    Scale.normSq_scale, Data.Gaussian.Norm.Basic.normSq_mul]
+  rw [← Taylor.hornerTerm_one_eq_taylorTerm, Basic.hornerTerm_succ,
+    Scale.normSq_scale, Norm.Basic.normSq_mul]
   have scalar : (1 / ((1 : Nat) : Fraction.Rational)) ^ 2 = 1 := by decide
   rw [scalar, Fraction.Field.one_mul]
   have tail := hornerTerm_normSq_le_quarter_pow unitInput degree 2 (by
     decide)
   have product := Fraction.Order.Arithmetic.mul_le_mul_direct unitInput tail
-    (Data.Gaussian.Norm.Basic.normSq_nonneg _) (by decide : (0 : Fraction.Rational) ≤ 1)
+    (Norm.Basic.normSq_nonneg _) (by decide : (0 : Fraction.Rational) ≤ 1)
   simpa only [Fraction.Field.one_mul] using product
 end Purelib.Approximation.Gaussian.Exponential.Taylor.Bounds
 

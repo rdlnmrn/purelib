@@ -62,19 +62,19 @@ open Purelib.Riemann.Normalization
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
-    Normalization.InverseRootPolynomial.Coordinate}
+    InverseRootPolynomial.Coordinate}
   {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-  {lifted : Meshes.LiftedPuncturedGrid grid.punctured} {differential : Hyperelliptic.Differentials.Basic.Differential
+  {lifted : Meshes.LiftedPuncturedGrid grid.punctured} {differential : Differentials.Basic.Differential
     genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
+  {program : PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
@@ -86,31 +86,31 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.Regul
 variable {whole :
   PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
   regular domains differential} {previous :
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+  CommonCuts domains}
   {selected : PuncturedGrid.Exterior.SourceCuts whole previous}
   {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {meshTarget :
-    Normalization.InverseRootPolynomial.Coordinate}
-  {request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
-    (fun sheet => Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
+    Preflights domains sheet} {meshTarget :
+    InverseRootPolynomial.Coordinate}
+  {request : PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
+    (fun sheet => PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
       coarseDepth) fixed meshTarget}
-  {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared} {index :
+  {retained : PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared} {index :
     Nat} {inputs : retained.Inputs index}
-  {requested : Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
-  (schedules : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.Schedules
+  {requested : InverseRootPolynomial.Coordinate} {minimum : Nat}
+  (schedules : Schedules
     selected request retained inputs requested minimum)
 
 variable {observations : RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {partitions :
   Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid}
   {surfaceCoarse : (sheet : Fin 2) → Topology.NewtonRequestedSurfaceEnergy.SurfaceMeshes partitions domains sheet}
   {surfaceFixed : (sheet : Fin 2) → RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet}
-    {surfaceTarget : Normalization.InverseRootPolynomial.Coordinate}
+    {surfaceTarget : InverseRootPolynomial.Coordinate}
   (initialSurface : Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests surfaceCoarse surfaceFixed
     surfaceTarget)
 
-variable {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
-  (basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds)
-  (energyTarget coefficientTarget : Normalization.InverseRootPolynomial.Coordinate) (traceFloor sourceFloor : Nat)
+variable {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  (basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds)
+  (energyTarget coefficientTarget : InverseRootPolynomial.Coordinate) (traceFloor sourceFloor : Nat)
 
 set_option genInjectivity false in
 /-- Choose the common cover before the final source stage; retained parent depths make this order constructive. -/
@@ -125,7 +125,7 @@ structure SourceSurfaceAcquisition where
   /-- The cover floor is exactly the maximum of the trace floor and seed physical depth. -/ cover_eq : coverFloor = max
     traceFloor seed.spatial.depths.depth
   /-- The original source comparison request at the retained common-cover floor. -/ request :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisRequest retained basis energyTarget
+    PuncturedGrid.Exterior.Basis.Preparation.CommonBasisRequest retained basis energyTarget
     coefficientTarget coverFloor sourceFloor
   /-- The common source stage paying the original occurrence schedules. -/ sourceStage :
     PuncturedGrid.Exterior.Basis.RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules.SourceStage
@@ -155,7 +155,7 @@ namespace SourceSurfaceAcquisition
   let seed := SurfaceAcquisition.build
     schedules initialSurface
   let coverFloor := max traceFloor seed.spatial.depths.depth
-  let request := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisRequest.build retained basis
+  let request := PuncturedGrid.Exterior.Basis.Preparation.CommonBasisRequest.build retained basis
     energyTarget coefficientTarget positive coefficientPositive coverFloor sourceFloor
   let sourceStage :=
     PuncturedGrid.Exterior.Basis.RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules.SourceStage.build
@@ -163,12 +163,12 @@ namespace SourceSurfaceAcquisition
   let index := max request.index sourceStage.stage
   have sourceLater : sourceStage.stage ≤ index := Nat.Order.le_max_right _ _
   let source :=
-    PuncturedGrid.Exterior.Basis.SynchronizedSourceInputs.CommonBasisPreparation.ParentRunSchedules.SourceStage.acquire
+    CommonBasisPreparation.ParentRunSchedules.SourceStage.acquire
     sourceStage sourceLater
   let geometry := SurfaceAcquisition.build
     source.requests initialSurface
   exact ⟨seed, rfl, coverFloor, rfl, request, sourceStage, index, rfl, sourceLater, source, geometry,
-    Hyperelliptic.Meshes.Newton.Basis.SourceDepthReadback.RequestedSurfaceRuns.SurfaceAcquisition.acquired_source_depth
+    SourceDepthReadback.RequestedSurfaceRuns.SurfaceAcquisition.acquired_source_depth
       initialSurface sourceStage source⟩
 
 variable {schedules initialSurface basis energyTarget coefficientTarget traceFloor sourceFloor}

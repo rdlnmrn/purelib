@@ -56,6 +56,8 @@ import Purelib.Riemann.Meshes.ShrinkingPuncturedGrid
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Algebra
@@ -115,7 +117,7 @@ open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 open Purelib.Topology.BranchedCover.Double.Attachment (Face)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target
@@ -131,7 +133,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {fixed : Preflights domains sheet} {error :
     Rational}
   {energy : SurfaceRequest partitions
-    (Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
+    (MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
     sheet depth) fixed error}
   {position : Fin grid.faces.regulars.length}
 
@@ -146,15 +148,15 @@ variable {pieceError : Rational} {minimum : Nat}
 namespace DefectRequest
 
 /-- The dependent bank of actual matched seam traces on every original regular face. -/
-@[expose] def SurfaceSeamTraces (energy : NewtonRequestedSurfaceEnergy.SurfaceRequest partitions
+@[expose] def SurfaceSeamTraces (energy : SurfaceRequest partitions
   (MeshCompatibility.surfaceMeshes partitions domains surfaceCuts sheet depth) fixed error) :=
-  Data.Vector.DependentVector (fun position : Fin grid.faces.regulars.length => MatchedSides.SeamTraces energy position)
+  DependentVector (fun position : Fin grid.faces.regulars.length => SeamTraces energy position)
 
 /-- The complete original face-defect request bank on those same retained seam traces. -/
 @[expose] def SurfaceFaceRequests (base : ExteriorRequest energy pieceError minimum)
     (traces : SurfaceSeamTraces energy) (perFace :
-      Fraction.Rational) :=
-  Data.Vector.DependentVector (fun position : Fin grid.faces.regulars.length => FaceDefectRequest base
+      Rational) :=
+  DependentVector (fun position : Fin grid.faces.regulars.length => FaceDefectRequest base
     (traces.get position) perFace)
 
 end DefectRequest
@@ -163,9 +165,9 @@ namespace DefectRequest.SurfaceFaceRequests
 
 /-- The supplied common stage pays every original retained face request. -/
 @[expose] def IndexBound {base : ExteriorRequest energy pieceError minimum}
-    {traces : Curves.Hyperelliptic.Meshes.Newton.Surface.DefectRequest.SurfaceSeamTraces energy} {perFace :
-      Fraction.Rational}
-    (entries : Curves.Hyperelliptic.Meshes.Newton.Surface.DefectRequest.SurfaceFaceRequests base traces perFace) (index
+    {traces : SurfaceSeamTraces energy} {perFace :
+      Rational}
+    (entries : SurfaceFaceRequests base traces perFace) (index
       : Nat) : Prop :=
   ∀ position, (entries.get position).index ≤ index
 
@@ -175,15 +177,15 @@ set_option genInjectivity false in
 /-- The request retains the actual matched traces and all local requests. Its index works for every coefficient vector
 and every later sample. -/
 structure DefectRequest (base : ExteriorRequest energy pieceError minimum) (allowance :
-  Fraction.Rational) where
+  Rational) where
   /-- The original total defect allowance is strictly positive. -/ positive : 0 < allowance
   /-- The complete original matched seam trace bank. -/ traces :
-    Curves.Hyperelliptic.Meshes.Newton.Surface.DefectRequest.SurfaceSeamTraces energy
-  /-- The retained common allowance for each original face defect. -/ perFace : Fraction.Rational
+    DefectRequest.SurfaceSeamTraces energy
+  /-- The retained common allowance for each original face defect. -/ perFace : Rational
   /-- The per-face allowance is exactly the aggregate share of the total target over the original face count. -/
     perFace_eq : perFace = Aggregate.perTerm allowance grid.faces.regulars.length
   /-- The original complete local defect requests on the retained seam traces. -/ entries :
-    Curves.Hyperelliptic.Meshes.Newton.Surface.DefectRequest.SurfaceFaceRequests base traces perFace
+    DefectRequest.SurfaceFaceRequests base traces perFace
   /-- The cached common stage paying all original face-defect and base requests. -/ index : Nat
   /-- The common stage pays the original base exterior request. -/ base_le : base.index ≤ index
   /-- The common stage pays every retained original face-defect request. -/ index_ge : entries.IndexBound index
@@ -197,7 +199,7 @@ variable {base : ExteriorRequest energy pieceError
 
 /-- Construct the original matched seam traces and local requests, then cache one stage paying their complete bank and
 base request. -/
-@[expose] def build (base : ExteriorRequest energy pieceError minimum) (allowance : Fraction.Rational)
+@[expose] def build (base : ExteriorRequest energy pieceError minimum) (allowance : Rational)
   (positive : 0 < allowance) :
     DefectRequest base allowance := by
   let traces : SurfaceSeamTraces energy := DependentVector.ofFn
@@ -213,7 +215,7 @@ base request. -/
 
 variable {stage : Nat} {cache : Numerics
   domains stage} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
-  {assemblies : ExteriorRequest.Assemblies energy
+  {assemblies : Assemblies energy
     cache coefficients} {perimeters : Perimeters
     assemblies}
 
@@ -221,29 +223,29 @@ variable {stage : Nat} {cache : Numerics
 coefficient factor. -/
 theorem error_bound (request : DefectRequest base allowance)
   (later : request.index ≤ stage)
-    (faces : FaceAssembly.FaceAssemblies perimeters) :
-    Data.Gaussian.Norm.Basic.normSq faces.defect ≤ (genus : Fraction.Rational) ^ 2 *
+    (faces : FaceAssemblies perimeters) :
+    Gaussian.Norm.Basic.normSq faces.defect ≤ (genus : Rational) ^ 2 *
       PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 * allowance := by
   have bound := Indexed.normSq_sumFin_le
     (fun position => (faces.get position).seams + (faces.get position).cornerTotal)
-    ((genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
+    ((genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
       request.perFace)
     (fun position => FaceDefectRequest.accurate (request.entries.get position) ((request.index_ge position).trans later)
       (faces.get position))
-  have payment : (grid.faces.regulars.length : Fraction.Rational) ^ 2 * request.perFace ≤ allowance := by
+  have payment : (grid.faces.regulars.length : Rational) ^ 2 * request.perFace ≤ allowance := by
     rw [request.perFace_eq]
     exact (le_of_eq (by ring1)).trans (Aggregate.count_mul_perTerm_lt request.positive _).le
   apply bound.trans
   calc
-    _ = ((genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2) *
-      ((grid.faces.regulars.length : Fraction.Rational) ^ 2 * request.perFace) := by ring1
-    _ ≤ _ := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct payment
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+    _ = ((genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2) *
+      ((grid.faces.regulars.length : Rational) ^ 2 * request.perFace) := by ring1
+    _ ≤ _ := Arithmetic.mul_le_mul_of_nonneg_left_direct payment
+      (Arithmetic.mul_nonneg_direct (Arithmetic.sq_nonneg_direct _)
+        (Arithmetic.sq_nonneg_direct _))
 
 /-- Prepare the original complete defect request at the allowance required for the supplied homogeneous energy loss. -/
 @[expose] def forEnergyAllowance (base : ExteriorRequest energy pieceError minimum)
-    (allowance : Fraction.Rational) (positive : 0 < allowance) :
+    (allowance : Rational) (positive : 0 < allowance) :
     DefectRequest base (ConjugateRequest.energyAllowanceTarget
       genus allowance) :=
   build base _
@@ -251,7 +253,7 @@ theorem error_bound (request : DefectRequest base allowance)
 
 /-- The complete regular-face exterior inherits the independent observation lower bound after all internal ownership,
 seam and corner losses are paid. -/
-theorem energy_lower {ownershipAllowance exteriorAllowance faceAllowance : Fraction.Rational}
+theorem energy_lower {ownershipAllowance exteriorAllowance faceAllowance : Rational}
     (ownership : ConjugateRequest energy (ConjugateRequest.energyAllowanceTarget genus
       ownershipAllowance))
     (base : ExteriorRequest energy (ConjugateRequest.energyAllowanceTarget genus exteriorAllowance)
@@ -260,37 +262,37 @@ theorem energy_lower {ownershipAllowance exteriorAllowance faceAllowance : Fract
       (ConjugateRequest.energyAllowanceTarget genus faceAllowance))
     (ownershipPositive : 0 < ownershipAllowance) (exteriorPositive : 0 < exteriorAllowance)
     (facePositive : 0 < faceAllowance) (later : request.index ≤ stage) (samples : energy.Readings cache)
-    (face : Attachment.Face) (faces : FaceAssembly.FaceAssemblies perimeters) :
+    (face : Face) (faces : FaceAssemblies perimeters) :
     (NewtonObservationSurfaceLower.surfaceLowerConstant observations - error - ownershipAllowance - exteriorAllowance -
       faceAllowance) *
         PreparedObservationCoercivity.coefficientNormSq coefficients ≤ faces.exterior.im / 4 := by
   have close := request.error_bound later faces
   have normNonnegative : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients := by
-    have bound := Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Fraction.Rational)) _
-      (fun row => Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row))
+    have bound := Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Rational)) _
+      (fun row => Canonical.normSq_nonneg (coefficients row))
     exact (FiniteSum.Fin.sumFin_zero).symm.trans_le bound
   have difference : ExteriorRequest.exterior assemblies - faces.exterior = faces.defect := by
     rw [faces.decomposition]
     ring1
-  have squared : Data.Gaussian.Norm.Basic.normSq (ExteriorRequest.exterior assemblies - faces.exterior) ≤
+  have squared : Gaussian.Norm.Basic.normSq (ExteriorRequest.exterior assemblies - faces.exterior) ≤
       (4 * (faceAllowance * PreparedObservationCoercivity.coefficientNormSq coefficients)) ^ 2 := by
     rw [difference]
     apply close.trans
     calc
-      _ = ((genus : Fraction.Rational) ^ 2 * ConjugateRequest.energyAllowanceTarget genus faceAllowance) *
+      _ = ((genus : Rational) ^ 2 * ConjugateRequest.energyAllowanceTarget genus faceAllowance) *
         PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 := by
         ring1
       _ ≤ (4 * faceAllowance) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-          (ConjugateRequest.energyAllowanceTarget_paid facePositive) (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
+          (ConjugateRequest.energyAllowanceTarget_paid facePositive) (Arithmetic.sq_nonneg_direct _)
       _ = _ := by ring1
   have comparison := PreparedSurfaceCoercivity.boundaryEnergy_sub_budget_le
     (ExteriorRequest.exterior assemblies) faces.exterior (faceAllowance *
       PreparedObservationCoercivity.coefficientNormSq coefficients)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct facePositive.le normNonnegative) squared
+    (Arithmetic.mul_nonneg_direct facePositive.le normNonnegative) squared
   have lower := base.energy_lower ownership ownershipPositive exteriorPositive (request.base_le.trans later)
     samples coefficients face assemblies
-  have paid := (Fraction.Order.Arithmetic.sub_le_sub_direct lower
+  have paid := (Arithmetic.sub_le_sub_direct lower
     (le_rfl (a := faceAllowance * PreparedObservationCoercivity.coefficientNormSq coefficients))).trans comparison
   exact (le_of_eq (by ring1)).trans paid
 

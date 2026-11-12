@@ -49,9 +49,9 @@ open Purelib.Data.Rat in
 def coefficientComponentMagnitude (coefficient :
   Basic.Canonical) : Nat :=
   max
-    (Fraction.Resource.Components.NormalizedFraction.componentMagnitude
+    (Components.NormalizedFraction.componentMagnitude
       (Fraction.Basic.ofRational coefficient.re))
-    (Fraction.Resource.Components.NormalizedFraction.componentMagnitude
+    (Components.NormalizedFraction.componentMagnitude
       (Fraction.Basic.ofRational coefficient.im))
 end Purelib.Data.Gaussian.Resource.ClearingCalculationSize
 
@@ -79,8 +79,8 @@ open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
 /-- Take the larger reduced-fraction component magnitude of the two retained normalized Gaussian coordinates. -/
 def componentMagnitude (source : Basic.Number) : Nat :=
-  max (Fraction.Resource.Components.NormalizedFraction.componentMagnitude source.re)
-    (Fraction.Resource.Components.NormalizedFraction.componentMagnitude source.im)
+  max (Components.NormalizedFraction.componentMagnitude source.re)
+    (Components.NormalizedFraction.componentMagnitude source.im)
 end Purelib.Data.Gaussian.Resource.GaussianNormalized
 
 end
@@ -116,7 +116,7 @@ open Purelib.Data.Rat in
 Add the two original scalar coordinate costs; the magnitude envelope is the scalar additive envelope on the input
 bounds. -/
 def addMagnitudeEnvelope (left right : Nat) : Nat :=
-  Fraction.Resource.Components.additiveMagnitudeEnvelope left right
+  Components.additiveMagnitudeEnvelope left right
 end Purelib.Data.Gaussian.Resource
 
 end
@@ -154,7 +154,7 @@ theorem addMagnitudeEnvelope_mono
     (leftLe : left ≤ leftBound) (rightLe : right ≤ rightBound) :
     addMagnitudeEnvelope left right ≤
       addMagnitudeEnvelope leftBound rightBound :=
-  Fraction.Resource.Components.additiveMagnitudeEnvelope_mono leftLe rightLe
+  Components.additiveMagnitudeEnvelope_mono leftLe rightLe
 end Purelib.Data.Gaussian.Resource
 
 end
@@ -190,8 +190,8 @@ open Purelib.Data.Rat in
 Add the two original scalar coordinate costs; the magnitude envelope is the scalar additive envelope on the input
 bounds. -/
 def addStepEnvelope (left right : Nat) : Nat :=
-  Fraction.Resource.Clauses.addStepEnvelope left right +
-    Fraction.Resource.Clauses.addStepEnvelope left right
+  Clauses.addStepEnvelope left right +
+    Clauses.addStepEnvelope left right
 end Purelib.Data.Gaussian.Resource
 
 end
@@ -229,8 +229,8 @@ theorem addStepEnvelope_mono
     (leftLe : left ≤ leftBound) (rightLe : right ≤ rightBound) :
     addStepEnvelope left right ≤ addStepEnvelope leftBound rightBound :=
   Nat.add_le_add
-    (Fraction.Resource.Clauses.addStepEnvelope_mono leftLe rightLe)
-    (Fraction.Resource.Clauses.addStepEnvelope_mono leftLe rightLe)
+    (Clauses.addStepEnvelope_mono leftLe rightLe)
+    (Clauses.addStepEnvelope_mono leftLe rightLe)
 end Purelib.Data.Gaussian.Resource
 
 end
@@ -269,8 +269,8 @@ open Purelib.Data.Rat in
 Add the two original scalar coordinate costs; the magnitude envelope is the scalar additive envelope on the input
 bounds. -/
 def addSteps (left right : Basic.Number) : Nat :=
-  Fraction.Resource.Clauses.addSteps left.re right.re +
-    Fraction.Resource.Clauses.addSteps left.im right.im
+  Clauses.addSteps left.re right.re +
+    Clauses.addSteps left.im right.im
 end Purelib.Data.Gaussian.Resource
 
 end
@@ -305,8 +305,8 @@ namespace Purelib.Data.Gaussian.Resource
 The Gaussian magnitude retains the maximum of the original real and imaginary
 component magnitudes, so its second contribution supplies this bound. -/
 theorem imaginaryMagnitude_le (source : Basic.Number) :
-    Fraction.Resource.Components.NormalizedFraction.componentMagnitude source.im ≤
-      Resource.GaussianNormalized.componentMagnitude source :=
+    Components.NormalizedFraction.componentMagnitude source.im ≤
+      GaussianNormalized.componentMagnitude source :=
   Nat.Order.le_max_right _ _
 end Purelib.Data.Gaussian.Resource
 
@@ -344,8 +344,8 @@ Retain four coordinate products, then one real-coordinate subtraction and one im
 intermediate products with the original scalar multiplicative magnitude envelope. -/
 def mulMagnitudeEnvelope (left right : Nat) : Nat :=
   let product :=
-    Fraction.Resource.Components.multiplicativeMagnitudeEnvelope left right
-  Fraction.Resource.Components.additiveMagnitudeEnvelope product product
+    Components.multiplicativeMagnitudeEnvelope left right
+  Components.additiveMagnitudeEnvelope product product
 end Purelib.Data.Gaussian.Resource
 
 end
@@ -385,14 +385,14 @@ theorem mulMagnitudeEnvelope_mono
       mulMagnitudeEnvelope leftBound rightBound := by
   unfold mulMagnitudeEnvelope
   let product :=
-    Fraction.Resource.Components.multiplicativeMagnitudeEnvelope left right
+    Components.multiplicativeMagnitudeEnvelope left right
   let productBound :=
-    Fraction.Resource.Components.multiplicativeMagnitudeEnvelope
+    Components.multiplicativeMagnitudeEnvelope
       leftBound rightBound
   have productLe : product ≤ productBound :=
-    Fraction.Resource.Components.multiplicativeMagnitudeEnvelope_mono
+    Components.multiplicativeMagnitudeEnvelope_mono
       leftLe rightLe
-  exact Fraction.Resource.Components.additiveMagnitudeEnvelope_mono
+  exact Components.additiveMagnitudeEnvelope_mono
     productLe productLe
 end Purelib.Data.Gaussian.Resource
 
@@ -430,13 +430,13 @@ Retain four coordinate products, then one real-coordinate subtraction and one im
 intermediate products with the original scalar multiplicative magnitude envelope. -/
 def mulStepEnvelope (left right : Nat) : Nat :=
   let product :=
-    Fraction.Resource.Components.multiplicativeMagnitudeEnvelope left right
-  Fraction.Resource.Clauses.mulStepEnvelope left right +
-    Fraction.Resource.Clauses.mulStepEnvelope left right +
-    Fraction.Resource.Clauses.mulStepEnvelope left right +
-    Fraction.Resource.Clauses.mulStepEnvelope left right +
-    Fraction.Resource.Clauses.subStepEnvelope product product +
-    Fraction.Resource.Clauses.addStepEnvelope product product
+    Components.multiplicativeMagnitudeEnvelope left right
+  Clauses.mulStepEnvelope left right +
+    Clauses.mulStepEnvelope left right +
+    Clauses.mulStepEnvelope left right +
+    Clauses.mulStepEnvelope left right +
+    Clauses.subStepEnvelope product product +
+    Clauses.addStepEnvelope product product
 end Purelib.Data.Gaussian.Resource
 
 end
@@ -474,17 +474,17 @@ theorem mulStepEnvelope_mono
     (leftLe : left ≤ leftBound) (rightLe : right ≤ rightBound) :
     mulStepEnvelope left right ≤ mulStepEnvelope leftBound rightBound := by
   let product :=
-    Fraction.Resource.Components.multiplicativeMagnitudeEnvelope left right
+    Components.multiplicativeMagnitudeEnvelope left right
   let productBound :=
-    Fraction.Resource.Components.multiplicativeMagnitudeEnvelope
+    Components.multiplicativeMagnitudeEnvelope
       leftBound rightBound
-  have scalar := Fraction.Resource.Clauses.mulStepEnvelope_mono leftLe rightLe
+  have scalar := Clauses.mulStepEnvelope_mono leftLe rightLe
   have productLe : product ≤ productBound :=
-    Fraction.Resource.Components.multiplicativeMagnitudeEnvelope_mono
+    Components.multiplicativeMagnitudeEnvelope_mono
       leftLe rightLe
-  have subtraction := Fraction.Resource.Clauses.subStepEnvelope_mono
+  have subtraction := Clauses.subStepEnvelope_mono
     productLe productLe
-  have addition := Fraction.Resource.Clauses.addStepEnvelope_mono
+  have addition := Clauses.addStepEnvelope_mono
     productLe productLe
   unfold mulStepEnvelope
   dsimp only [product, productBound] at scalar subtraction addition ⊢
@@ -537,12 +537,12 @@ def mulSteps (left right : Basic.Number) : Nat :=
   let realRight := Fraction.Arithmetic.mul left.im right.im
   let imaginaryLeft := Fraction.Arithmetic.mul left.re right.im
   let imaginaryRight := Fraction.Arithmetic.mul left.im right.re
-  Fraction.Resource.Clauses.mulSteps left.re right.re +
-    Fraction.Resource.Clauses.mulSteps left.im right.im +
-    Fraction.Resource.Clauses.mulSteps left.re right.im +
-    Fraction.Resource.Clauses.mulSteps left.im right.re +
-    Fraction.Resource.Clauses.subSteps realLeft realRight +
-    Fraction.Resource.Clauses.addSteps imaginaryLeft imaginaryRight
+  Clauses.mulSteps left.re right.re +
+    Clauses.mulSteps left.im right.im +
+    Clauses.mulSteps left.re right.im +
+    Clauses.mulSteps left.im right.re +
+    Clauses.subSteps realLeft realRight +
+    Clauses.addSteps imaginaryLeft imaginaryRight
 end Purelib.Data.Gaussian.Resource
 
 end
@@ -578,8 +578,8 @@ open Purelib.Data.Rat in
 Negate both original reduced rational coordinates and add their scalar negation costs. The component magnitude does not
 increase. -/
 def negStepEnvelope (source : Nat) : Nat :=
-  Fraction.Resource.Clauses.negStepEnvelope source +
-    Fraction.Resource.Clauses.negStepEnvelope source
+  Clauses.negStepEnvelope source +
+    Clauses.negStepEnvelope source
 end Purelib.Data.Gaussian.Resource
 
 end
@@ -615,8 +615,8 @@ open Purelib.Data.Rat in
 theorem negStepEnvelope_mono {source bound : Nat} (sourceLe : source ≤ bound) :
     negStepEnvelope source ≤ negStepEnvelope bound :=
   Nat.add_le_add
-    (Fraction.Resource.Clauses.negStepEnvelope_mono sourceLe)
-    (Fraction.Resource.Clauses.negStepEnvelope_mono sourceLe)
+    (Clauses.negStepEnvelope_mono sourceLe)
+    (Clauses.negStepEnvelope_mono sourceLe)
 end Purelib.Data.Gaussian.Resource
 
 end
@@ -653,8 +653,8 @@ open Purelib.Data.Rat in
 Negate both original reduced rational coordinates and add their scalar negation costs. The component magnitude does not
 increase. -/
 def negSteps (source : Basic.Number) : Nat :=
-  Fraction.Resource.Clauses.negSteps source.re +
-    Fraction.Resource.Clauses.negSteps source.im
+  Clauses.negSteps source.re +
+    Clauses.negSteps source.im
 end Purelib.Data.Gaussian.Resource
 
 end
@@ -691,8 +691,8 @@ Square each retained coordinate and add the two squares. Intermediate square mag
 envelope at the same input bound. -/
 def normSqMagnitudeEnvelope (source : Nat) : Nat :=
   let square :=
-    Fraction.Resource.Components.multiplicativeMagnitudeEnvelope source source
-  Fraction.Resource.Components.additiveMagnitudeEnvelope square square
+    Components.multiplicativeMagnitudeEnvelope source source
+  Components.additiveMagnitudeEnvelope square square
 end Purelib.Data.Gaussian.Resource
 
 end
@@ -729,7 +729,7 @@ open Purelib.Data.Rat in
 Compute the retained norm-square denominator, divide both coordinates by it and negate the imaginary coordinate. The
 cost includes that same denominator computation and both scalar divisions, including the totalized zero case. -/
 def invMagnitudeEnvelope (source : Nat) : Nat :=
-  Fraction.Resource.Components.multiplicativeMagnitudeEnvelope source
+  Components.multiplicativeMagnitudeEnvelope source
     (normSqMagnitudeEnvelope source)
 end Purelib.Data.Gaussian.Resource
 
@@ -803,9 +803,9 @@ theorem normSqMagnitudeEnvelope_mono {source bound : Nat}
     (sourceLe : source ≤ bound) :
     normSqMagnitudeEnvelope source ≤ normSqMagnitudeEnvelope bound := by
   unfold normSqMagnitudeEnvelope
-  have squareLe := Fraction.Resource.Components.multiplicativeMagnitudeEnvelope_mono
+  have squareLe := Components.multiplicativeMagnitudeEnvelope_mono
     sourceLe sourceLe
-  exact Fraction.Resource.Components.additiveMagnitudeEnvelope_mono
+  exact Components.additiveMagnitudeEnvelope_mono
     squareLe squareLe
 end Purelib.Data.Gaussian.Resource
 
@@ -843,7 +843,7 @@ theorem invMagnitudeEnvelope_mono {source bound : Nat}
     (sourceLe : source ≤ bound) :
     invMagnitudeEnvelope source ≤ invMagnitudeEnvelope bound := by
   unfold invMagnitudeEnvelope
-  exact Fraction.Resource.Components.multiplicativeMagnitudeEnvelope_mono
+  exact Components.multiplicativeMagnitudeEnvelope_mono
     sourceLe (normSqMagnitudeEnvelope_mono sourceLe)
 end Purelib.Data.Gaussian.Resource
 
@@ -919,10 +919,10 @@ Square each retained coordinate and add the two squares. Intermediate square mag
 envelope at the same input bound. -/
 def normSqStepEnvelope (source : Nat) : Nat :=
   let square :=
-    Fraction.Resource.Components.multiplicativeMagnitudeEnvelope source source
-  Fraction.Resource.Clauses.mulStepEnvelope source source +
-    Fraction.Resource.Clauses.mulStepEnvelope source source +
-    Fraction.Resource.Clauses.addStepEnvelope square square
+    Components.multiplicativeMagnitudeEnvelope source source
+  Clauses.mulStepEnvelope source source +
+    Clauses.mulStepEnvelope source source +
+    Clauses.addStepEnvelope square square
 end Purelib.Data.Gaussian.Resource
 
 end
@@ -961,9 +961,9 @@ cost includes that same denominator computation and both scalar divisions, inclu
 def invStepEnvelope (source : Nat) : Nat :=
   let normBound := normSqMagnitudeEnvelope source
   normSqStepEnvelope source +
-    Fraction.Resource.Clauses.divStepEnvelope source normBound +
-    Fraction.Resource.Clauses.negStepEnvelope source +
-    Fraction.Resource.Clauses.divStepEnvelope source normBound
+    Clauses.divStepEnvelope source normBound +
+    Clauses.negStepEnvelope source +
+    Clauses.divStepEnvelope source normBound
 end Purelib.Data.Gaussian.Resource
 
 end
@@ -1036,15 +1036,15 @@ theorem normSqStepEnvelope_mono {source bound : Nat}
     (sourceLe : source ≤ bound) :
     normSqStepEnvelope source ≤ normSqStepEnvelope bound := by
   let square :=
-    Fraction.Resource.Components.multiplicativeMagnitudeEnvelope source source
+    Components.multiplicativeMagnitudeEnvelope source source
   let squareBound :=
-    Fraction.Resource.Components.multiplicativeMagnitudeEnvelope bound bound
-  have multiplication := Fraction.Resource.Clauses.mulStepEnvelope_mono
+    Components.multiplicativeMagnitudeEnvelope bound bound
+  have multiplication := Clauses.mulStepEnvelope_mono
     sourceLe sourceLe
   have squareLe : square ≤ squareBound :=
-    Fraction.Resource.Components.multiplicativeMagnitudeEnvelope_mono
+    Components.multiplicativeMagnitudeEnvelope_mono
       sourceLe sourceLe
-  have addition := Fraction.Resource.Clauses.addStepEnvelope_mono
+  have addition := Clauses.addStepEnvelope_mono
     squareLe squareLe
   unfold normSqStepEnvelope
   dsimp only [square, squareBound] at multiplication addition ⊢
@@ -1090,9 +1090,9 @@ theorem invStepEnvelope_mono {source bound : Nat} (sourceLe : source ≤ bound) 
   have normLe : normBound ≤ largerNormBound :=
     normSqMagnitudeEnvelope_mono sourceLe
   have normSteps := normSqStepEnvelope_mono sourceLe
-  have division := Fraction.Resource.Clauses.divStepEnvelope_mono
+  have division := Clauses.divStepEnvelope_mono
     sourceLe normLe
-  have negation := Fraction.Resource.Clauses.negStepEnvelope_mono sourceLe
+  have negation := Clauses.negStepEnvelope_mono sourceLe
   unfold invStepEnvelope
   dsimp only [normBound, largerNormBound] at normSteps division negation ⊢
   exact Nat.add_le_add
@@ -1176,9 +1176,9 @@ envelope at the same input bound. -/
 def normSqSteps (source : Basic.Number) : Nat :=
   let realSquare := Fraction.Arithmetic.mul source.re source.re
   let imaginarySquare := Fraction.Arithmetic.mul source.im source.im
-  Fraction.Resource.Clauses.mulSteps source.re source.re +
-    Fraction.Resource.Clauses.mulSteps source.im source.im +
-    Fraction.Resource.Clauses.addSteps realSquare imaginarySquare
+  Clauses.mulSteps source.re source.re +
+    Clauses.mulSteps source.im source.im +
+    Clauses.addSteps realSquare imaginarySquare
 end Purelib.Data.Gaussian.Resource
 
 end
@@ -1217,9 +1217,9 @@ cost includes that same denominator computation and both scalar divisions, inclu
 def invSteps (source : Basic.Number) : Nat :=
   let denominator := Norm.Basic.GaussianNormalized.normSq source
   normSqSteps source +
-    Fraction.Resource.Clauses.divSteps source.re denominator +
-    Fraction.Resource.Clauses.negSteps source.im +
-    Fraction.Resource.Clauses.divSteps
+    Clauses.divSteps source.re denominator +
+    Clauses.negSteps source.im +
+    Clauses.divSteps
       (Fraction.Arithmetic.neg source.im) denominator
 end Purelib.Data.Gaussian.Resource
 
@@ -1291,8 +1291,8 @@ namespace Purelib.Data.Gaussian.Resource
 The Gaussian magnitude retains the maximum of the original real and imaginary
 component magnitudes, so its first contribution supplies this bound. -/
 theorem realMagnitude_le (source : Basic.Number) :
-    Fraction.Resource.Components.NormalizedFraction.componentMagnitude source.re ≤
-      Resource.GaussianNormalized.componentMagnitude source :=
+    Components.NormalizedFraction.componentMagnitude source.re ≤
+      GaussianNormalized.componentMagnitude source :=
   Nat.Order.le_max_left _ _
 end Purelib.Data.Gaussian.Resource
 
@@ -1329,15 +1329,15 @@ open Purelib.Data.Rat in
 magnitudes. -/
 theorem addSteps_le_envelope (left right : Basic.Number) :
     addSteps left right ≤
-      addStepEnvelope (Resource.GaussianNormalized.componentMagnitude left)
-        (Resource.GaussianNormalized.componentMagnitude right) := by
+      addStepEnvelope (GaussianNormalized.componentMagnitude left)
+        (GaussianNormalized.componentMagnitude right) := by
   unfold addSteps addStepEnvelope
   exact Nat.add_le_add
-    ((Fraction.Resource.Clauses.addSteps_le_envelope left.re right.re).trans
-      (Fraction.Resource.Clauses.addStepEnvelope_mono
+    ((Clauses.addSteps_le_envelope left.re right.re).trans
+      (Clauses.addStepEnvelope_mono
         (realMagnitude_le left) (realMagnitude_le right)))
-    ((Fraction.Resource.Clauses.addSteps_le_envelope left.im right.im).trans
-      (Fraction.Resource.Clauses.addStepEnvelope_mono
+    ((Clauses.addSteps_le_envelope left.im right.im).trans
+      (Clauses.addStepEnvelope_mono
         (imaginaryMagnitude_le left) (imaginaryMagnitude_le right)))
 end Purelib.Data.Gaussian.Resource
 
@@ -1373,9 +1373,9 @@ namespace Purelib.Data.Gaussian.Resource
 Both retained rational coordinate sums satisfy the same envelope after
 transporting their original magnitudes into the Gaussian component maxima. -/
 theorem componentMagnitude_add_le (left right : Basic.Number) :
-    Resource.GaussianNormalized.componentMagnitude (Basic.add left right) ≤
-      addMagnitudeEnvelope (Resource.GaussianNormalized.componentMagnitude left)
-        (Resource.GaussianNormalized.componentMagnitude right) := by
+    GaussianNormalized.componentMagnitude (Basic.add left right) ≤
+      addMagnitudeEnvelope (GaussianNormalized.componentMagnitude left)
+        (GaussianNormalized.componentMagnitude right) := by
   apply Nat.Order.max_le
   · exact (Components.componentMagnitude_add_le_magnitudeEnvelope
       left.re right.re).trans
@@ -1419,28 +1419,28 @@ namespace Purelib.Data.Gaussian.Resource
 The four retained coordinate products are bounded before their difference
 and sum are formed, preserving the original product and addition envelopes. -/
 theorem componentMagnitude_mul_le (left right : Basic.Number) :
-    Resource.GaussianNormalized.componentMagnitude (Basic.mul left right) ≤
-      mulMagnitudeEnvelope (Resource.GaussianNormalized.componentMagnitude left)
-        (Resource.GaussianNormalized.componentMagnitude right) := by
+    GaussianNormalized.componentMagnitude (Basic.mul left right) ≤
+      mulMagnitudeEnvelope (GaussianNormalized.componentMagnitude left)
+        (GaussianNormalized.componentMagnitude right) := by
   let product := Components.multiplicativeMagnitudeEnvelope
-    (Resource.GaussianNormalized.componentMagnitude left) (Resource.GaussianNormalized.componentMagnitude right)
+    (GaussianNormalized.componentMagnitude left) (GaussianNormalized.componentMagnitude right)
   have realLeft : Components.NormalizedFraction.componentMagnitude
-      (Rat.Fraction.Arithmetic.mul left.re right.re) ≤ product :=
+      (Fraction.Arithmetic.mul left.re right.re) ≤ product :=
     (Components.componentMagnitude_mul_le_magnitudeEnvelope left.re right.re).trans
       (Components.multiplicativeMagnitudeEnvelope_mono
         (realMagnitude_le left) (realMagnitude_le right))
   have realRight : Components.NormalizedFraction.componentMagnitude
-      (Rat.Fraction.Arithmetic.mul left.im right.im) ≤ product :=
+      (Fraction.Arithmetic.mul left.im right.im) ≤ product :=
     (Components.componentMagnitude_mul_le_magnitudeEnvelope left.im right.im).trans
       (Components.multiplicativeMagnitudeEnvelope_mono
         (imaginaryMagnitude_le left) (imaginaryMagnitude_le right))
   have imaginaryLeft : Components.NormalizedFraction.componentMagnitude
-      (Rat.Fraction.Arithmetic.mul left.re right.im) ≤ product :=
+      (Fraction.Arithmetic.mul left.re right.im) ≤ product :=
     (Components.componentMagnitude_mul_le_magnitudeEnvelope left.re right.im).trans
       (Components.multiplicativeMagnitudeEnvelope_mono
         (realMagnitude_le left) (imaginaryMagnitude_le right))
   have imaginaryRight : Components.NormalizedFraction.componentMagnitude
-      (Rat.Fraction.Arithmetic.mul left.im right.re) ≤ product :=
+      (Fraction.Arithmetic.mul left.im right.re) ≤ product :=
     (Components.componentMagnitude_mul_le_magnitudeEnvelope left.im right.re).trans
       (Components.multiplicativeMagnitudeEnvelope_mono
         (imaginaryMagnitude_le left) (realMagnitude_le right))
@@ -1485,7 +1485,7 @@ namespace Purelib.Data.Gaussian.Resource
 Each retained coordinate negation is bounded by its original magnitude,
 which is a contribution to the unchanged Gaussian component maximum. -/
 theorem componentMagnitude_neg_le (source : Basic.Number) :
-    Resource.GaussianNormalized.componentMagnitude (Basic.neg source) ≤ Resource.GaussianNormalized.componentMagnitude
+    GaussianNormalized.componentMagnitude (Basic.neg source) ≤ GaussianNormalized.componentMagnitude
       source := by
   apply Nat.Order.max_le
   · exact (Components.componentMagnitude_neg_le source.re).trans
@@ -1526,22 +1526,22 @@ open Purelib.Data.Rat in
 /-- The component magnitude after Gaussian squared norm is bounded by the corresponding envelope at the original input
 component magnitudes. -/
 theorem componentMagnitude_normSq_le (source : Basic.Number) :
-    Fraction.Resource.Components.NormalizedFraction.componentMagnitude (Norm.Basic.GaussianNormalized.normSq source) ≤
-      normSqMagnitudeEnvelope (Resource.GaussianNormalized.componentMagnitude source) := by
-  let square := Fraction.Resource.Components.multiplicativeMagnitudeEnvelope
-    (Resource.GaussianNormalized.componentMagnitude source) (Resource.GaussianNormalized.componentMagnitude source)
-  have realSquare : Fraction.Resource.Components.NormalizedFraction.componentMagnitude
+    Components.NormalizedFraction.componentMagnitude (Norm.Basic.GaussianNormalized.normSq source) ≤
+      normSqMagnitudeEnvelope (GaussianNormalized.componentMagnitude source) := by
+  let square := Components.multiplicativeMagnitudeEnvelope
+    (GaussianNormalized.componentMagnitude source) (GaussianNormalized.componentMagnitude source)
+  have realSquare : Components.NormalizedFraction.componentMagnitude
       (Fraction.Arithmetic.mul source.re source.re) ≤ square :=
-    (Fraction.Resource.Components.componentMagnitude_mul_le_magnitudeEnvelope source.re source.re).trans
-      (Fraction.Resource.Components.multiplicativeMagnitudeEnvelope_mono
+    (Components.componentMagnitude_mul_le_magnitudeEnvelope source.re source.re).trans
+      (Components.multiplicativeMagnitudeEnvelope_mono
         (realMagnitude_le source) (realMagnitude_le source))
-  have imaginarySquare : Fraction.Resource.Components.NormalizedFraction.componentMagnitude
+  have imaginarySquare : Components.NormalizedFraction.componentMagnitude
       (Fraction.Arithmetic.mul source.im source.im) ≤ square :=
-    (Fraction.Resource.Components.componentMagnitude_mul_le_magnitudeEnvelope source.im source.im).trans
-      (Fraction.Resource.Components.multiplicativeMagnitudeEnvelope_mono
+    (Components.componentMagnitude_mul_le_magnitudeEnvelope source.im source.im).trans
+      (Components.multiplicativeMagnitudeEnvelope_mono
         (imaginaryMagnitude_le source) (imaginaryMagnitude_le source))
-  exact (Fraction.Resource.Components.componentMagnitude_add_le_magnitudeEnvelope _ _).trans
-    (Fraction.Resource.Components.additiveMagnitudeEnvelope_mono
+  exact (Components.componentMagnitude_add_le_magnitudeEnvelope _ _).trans
+    (Components.additiveMagnitudeEnvelope_mono
       realSquare imaginarySquare)
 end Purelib.Data.Gaussian.Resource
 
@@ -1577,8 +1577,8 @@ namespace Purelib.Data.Gaussian.Resource
 The retained squared norm bounds the denominator of both coordinate
 divisions; the imaginary coordinate also retains its negation bound. -/
 theorem componentMagnitude_inv_le (source : Basic.Number) :
-    Resource.GaussianNormalized.componentMagnitude (Field.GaussianNormalized.inv source) ≤
-      invMagnitudeEnvelope (Resource.GaussianNormalized.componentMagnitude source) := by
+    GaussianNormalized.componentMagnitude (Field.GaussianNormalized.inv source) ≤
+      invMagnitudeEnvelope (GaussianNormalized.componentMagnitude source) := by
   have denominatorBound := componentMagnitude_normSq_le source
   apply Nat.Order.max_le
   · exact (Components.componentMagnitude_div_le _ _).trans
@@ -1622,23 +1622,23 @@ open Purelib.Data.Rat in
 /-- The component magnitude after Gaussian division is bounded by the corresponding envelope at the original input
 component magnitudes. -/
 theorem componentMagnitude_div_le (left right : Basic.Number) :
-    Resource.GaussianNormalized.componentMagnitude (Field.div left right) ≤
-      divMagnitudeEnvelope (Resource.GaussianNormalized.componentMagnitude left)
-        (Resource.GaussianNormalized.componentMagnitude right) := by
+    GaussianNormalized.componentMagnitude (Field.div left right) ≤
+      divMagnitudeEnvelope (GaussianNormalized.componentMagnitude left)
+        (GaussianNormalized.componentMagnitude right) := by
   exact (componentMagnitude_mul_le left (Field.GaussianNormalized.inv right)).trans
     (by
       unfold divMagnitudeEnvelope
-      let leftMagnitude := Resource.GaussianNormalized.componentMagnitude left
-      let inverseMagnitude := Resource.GaussianNormalized.componentMagnitude (Field.GaussianNormalized.inv right)
-      let inverseBound := invMagnitudeEnvelope (Resource.GaussianNormalized.componentMagnitude right)
-      let product := Fraction.Resource.Components.multiplicativeMagnitudeEnvelope
+      let leftMagnitude := GaussianNormalized.componentMagnitude left
+      let inverseMagnitude := GaussianNormalized.componentMagnitude (Field.GaussianNormalized.inv right)
+      let inverseBound := invMagnitudeEnvelope (GaussianNormalized.componentMagnitude right)
+      let product := Components.multiplicativeMagnitudeEnvelope
         leftMagnitude inverseMagnitude
-      let productBound := Fraction.Resource.Components.multiplicativeMagnitudeEnvelope
+      let productBound := Components.multiplicativeMagnitudeEnvelope
         leftMagnitude inverseBound
-      apply Fraction.Resource.Components.additiveMagnitudeEnvelope_mono
-      · exact Fraction.Resource.Components.multiplicativeMagnitudeEnvelope_mono
+      apply Components.additiveMagnitudeEnvelope_mono
+      · exact Components.multiplicativeMagnitudeEnvelope_mono
           (le_refl _) (componentMagnitude_inv_le right)
-      · exact Fraction.Resource.Components.multiplicativeMagnitudeEnvelope_mono
+      · exact Components.multiplicativeMagnitudeEnvelope_mono
           (le_refl _) (componentMagnitude_inv_le right))
 end Purelib.Data.Gaussian.Resource
 
@@ -1674,11 +1674,11 @@ open Purelib.Data.Rat in
 /-- The component magnitude after Gaussian subtraction is bounded by the corresponding envelope at the original input
 component magnitudes. -/
 theorem componentMagnitude_sub_le (left right : Basic.Number) :
-    Resource.GaussianNormalized.componentMagnitude (Basic.sub left right) ≤
-      addMagnitudeEnvelope (Resource.GaussianNormalized.componentMagnitude left)
-        (Resource.GaussianNormalized.componentMagnitude right) := by
+    GaussianNormalized.componentMagnitude (Basic.sub left right) ≤
+      addMagnitudeEnvelope (GaussianNormalized.componentMagnitude left)
+        (GaussianNormalized.componentMagnitude right) := by
   exact (componentMagnitude_add_le left (Basic.neg right)).trans
-    (Fraction.Resource.Components.additiveMagnitudeEnvelope_mono (le_refl _)
+    (Components.additiveMagnitudeEnvelope_mono (le_refl _)
       (componentMagnitude_neg_le right))
 end Purelib.Data.Gaussian.Resource
 
@@ -1715,57 +1715,57 @@ open Purelib.Data.Rat in
 magnitudes. -/
 theorem mulSteps_le_envelope (left right : Basic.Number) :
     mulSteps left right ≤
-      mulStepEnvelope (Resource.GaussianNormalized.componentMagnitude left)
-        (Resource.GaussianNormalized.componentMagnitude right) := by
-  let product := Fraction.Resource.Components.multiplicativeMagnitudeEnvelope
-    (Resource.GaussianNormalized.componentMagnitude left) (Resource.GaussianNormalized.componentMagnitude right)
+      mulStepEnvelope (GaussianNormalized.componentMagnitude left)
+        (GaussianNormalized.componentMagnitude right) := by
+  let product := Components.multiplicativeMagnitudeEnvelope
+    (GaussianNormalized.componentMagnitude left) (GaussianNormalized.componentMagnitude right)
   let realLeft := Fraction.Arithmetic.mul left.re right.re
   let realRight := Fraction.Arithmetic.mul left.im right.im
   let imaginaryLeft := Fraction.Arithmetic.mul left.re right.im
   let imaginaryRight := Fraction.Arithmetic.mul left.im right.re
-  have realLeftMagnitude : Fraction.Resource.Components.NormalizedFraction.componentMagnitude
+  have realLeftMagnitude : Components.NormalizedFraction.componentMagnitude
       realLeft ≤ product :=
-    (Fraction.Resource.Components.componentMagnitude_mul_le_magnitudeEnvelope left.re right.re).trans
-      (Fraction.Resource.Components.multiplicativeMagnitudeEnvelope_mono
+    (Components.componentMagnitude_mul_le_magnitudeEnvelope left.re right.re).trans
+      (Components.multiplicativeMagnitudeEnvelope_mono
         (realMagnitude_le left) (realMagnitude_le right))
-  have realRightMagnitude : Fraction.Resource.Components.NormalizedFraction.componentMagnitude
+  have realRightMagnitude : Components.NormalizedFraction.componentMagnitude
       realRight ≤ product :=
-    (Fraction.Resource.Components.componentMagnitude_mul_le_magnitudeEnvelope left.im right.im).trans
-      (Fraction.Resource.Components.multiplicativeMagnitudeEnvelope_mono
+    (Components.componentMagnitude_mul_le_magnitudeEnvelope left.im right.im).trans
+      (Components.multiplicativeMagnitudeEnvelope_mono
         (imaginaryMagnitude_le left) (imaginaryMagnitude_le right))
-  have imaginaryLeftMagnitude : Fraction.Resource.Components.NormalizedFraction.componentMagnitude
+  have imaginaryLeftMagnitude : Components.NormalizedFraction.componentMagnitude
       imaginaryLeft ≤ product :=
-    (Fraction.Resource.Components.componentMagnitude_mul_le_magnitudeEnvelope left.re right.im).trans
-      (Fraction.Resource.Components.multiplicativeMagnitudeEnvelope_mono
+    (Components.componentMagnitude_mul_le_magnitudeEnvelope left.re right.im).trans
+      (Components.multiplicativeMagnitudeEnvelope_mono
         (realMagnitude_le left) (imaginaryMagnitude_le right))
-  have imaginaryRightMagnitude : Fraction.Resource.Components.NormalizedFraction.componentMagnitude
+  have imaginaryRightMagnitude : Components.NormalizedFraction.componentMagnitude
       imaginaryRight ≤ product :=
-    (Fraction.Resource.Components.componentMagnitude_mul_le_magnitudeEnvelope left.im right.re).trans
-      (Fraction.Resource.Components.multiplicativeMagnitudeEnvelope_mono
+    (Components.componentMagnitude_mul_le_magnitudeEnvelope left.im right.re).trans
+      (Components.multiplicativeMagnitudeEnvelope_mono
         (imaginaryMagnitude_le left) (realMagnitude_le right))
-  have first := (Fraction.Resource.Clauses.mulSteps_le_envelope
+  have first := (Clauses.mulSteps_le_envelope
     left.re right.re).trans
-      (Fraction.Resource.Clauses.mulStepEnvelope_mono
+      (Clauses.mulStepEnvelope_mono
         (realMagnitude_le left) (realMagnitude_le right))
-  have second := (Fraction.Resource.Clauses.mulSteps_le_envelope
+  have second := (Clauses.mulSteps_le_envelope
     left.im right.im).trans
-      (Fraction.Resource.Clauses.mulStepEnvelope_mono
+      (Clauses.mulStepEnvelope_mono
         (imaginaryMagnitude_le left) (imaginaryMagnitude_le right))
-  have third := (Fraction.Resource.Clauses.mulSteps_le_envelope
+  have third := (Clauses.mulSteps_le_envelope
     left.re right.im).trans
-      (Fraction.Resource.Clauses.mulStepEnvelope_mono
+      (Clauses.mulStepEnvelope_mono
         (realMagnitude_le left) (imaginaryMagnitude_le right))
-  have fourth := (Fraction.Resource.Clauses.mulSteps_le_envelope
+  have fourth := (Clauses.mulSteps_le_envelope
     left.im right.re).trans
-      (Fraction.Resource.Clauses.mulStepEnvelope_mono
+      (Clauses.mulStepEnvelope_mono
         (imaginaryMagnitude_le left) (realMagnitude_le right))
-  have fifth := (Fraction.Resource.Clauses.subSteps_le_envelope
+  have fifth := (Clauses.subSteps_le_envelope
     realLeft realRight).trans
-      (Fraction.Resource.Clauses.subStepEnvelope_mono
+      (Clauses.subStepEnvelope_mono
         realLeftMagnitude realRightMagnitude)
-  have sixth := (Fraction.Resource.Clauses.addSteps_le_envelope
+  have sixth := (Clauses.addSteps_le_envelope
     imaginaryLeft imaginaryRight).trans
-      (Fraction.Resource.Clauses.addStepEnvelope_mono
+      (Clauses.addStepEnvelope_mono
         imaginaryLeftMagnitude imaginaryRightMagnitude)
   unfold mulSteps mulStepEnvelope
   dsimp only [realLeft, realRight, imaginaryLeft, imaginaryRight, product]
@@ -1813,14 +1813,14 @@ open Purelib.Data.Rat in
 /-- The retained Gaussian negation cost is bounded by its step envelope evaluated at the original input component
 magnitudes. -/
 theorem negSteps_le_envelope (source : Basic.Number) :
-    negSteps source ≤ negStepEnvelope (Resource.GaussianNormalized.componentMagnitude source) := by
+    negSteps source ≤ negStepEnvelope (GaussianNormalized.componentMagnitude source) := by
   unfold negSteps negStepEnvelope
   exact Nat.add_le_add
-    ((Fraction.Resource.Clauses.negSteps_le_envelope source.re).trans
-      (Fraction.Resource.Clauses.negStepEnvelope_mono
+    ((Clauses.negSteps_le_envelope source.re).trans
+      (Clauses.negStepEnvelope_mono
         (realMagnitude_le source)))
-    ((Fraction.Resource.Clauses.negSteps_le_envelope source.im).trans
-      (Fraction.Resource.Clauses.negStepEnvelope_mono
+    ((Clauses.negSteps_le_envelope source.im).trans
+      (Clauses.negStepEnvelope_mono
         (imaginaryMagnitude_le source)))
 end Purelib.Data.Gaussian.Resource
 
@@ -1856,33 +1856,33 @@ open Purelib.Data.Rat in
 /-- The retained Gaussian squared norm cost is bounded by its step envelope evaluated at the original input component
 magnitudes. -/
 theorem normSqSteps_le_envelope (source : Basic.Number) :
-    normSqSteps source ≤ normSqStepEnvelope (Resource.GaussianNormalized.componentMagnitude source) :=
+    normSqSteps source ≤ normSqStepEnvelope (GaussianNormalized.componentMagnitude source) :=
       by
-  let square := Fraction.Resource.Components.multiplicativeMagnitudeEnvelope
-    (Resource.GaussianNormalized.componentMagnitude source) (Resource.GaussianNormalized.componentMagnitude source)
+  let square := Components.multiplicativeMagnitudeEnvelope
+    (GaussianNormalized.componentMagnitude source) (GaussianNormalized.componentMagnitude source)
   let realSquare := Fraction.Arithmetic.mul source.re source.re
   let imaginarySquare := Fraction.Arithmetic.mul source.im source.im
-  have realMagnitude : Fraction.Resource.Components.NormalizedFraction.componentMagnitude
+  have realMagnitude : Components.NormalizedFraction.componentMagnitude
       realSquare ≤ square :=
-    (Fraction.Resource.Components.componentMagnitude_mul_le_magnitudeEnvelope source.re source.re).trans
-      (Fraction.Resource.Components.multiplicativeMagnitudeEnvelope_mono
+    (Components.componentMagnitude_mul_le_magnitudeEnvelope source.re source.re).trans
+      (Components.multiplicativeMagnitudeEnvelope_mono
         (realMagnitude_le source) (realMagnitude_le source))
-  have imaginaryMagnitude : Fraction.Resource.Components.NormalizedFraction.componentMagnitude
+  have imaginaryMagnitude : Components.NormalizedFraction.componentMagnitude
       imaginarySquare ≤ square :=
-    (Fraction.Resource.Components.componentMagnitude_mul_le_magnitudeEnvelope source.im source.im).trans
-      (Fraction.Resource.Components.multiplicativeMagnitudeEnvelope_mono
+    (Components.componentMagnitude_mul_le_magnitudeEnvelope source.im source.im).trans
+      (Components.multiplicativeMagnitudeEnvelope_mono
         (imaginaryMagnitude_le source) (imaginaryMagnitude_le source))
-  have first := (Fraction.Resource.Clauses.mulSteps_le_envelope
+  have first := (Clauses.mulSteps_le_envelope
     source.re source.re).trans
-      (Fraction.Resource.Clauses.mulStepEnvelope_mono
+      (Clauses.mulStepEnvelope_mono
         (realMagnitude_le source) (realMagnitude_le source))
-  have second := (Fraction.Resource.Clauses.mulSteps_le_envelope
+  have second := (Clauses.mulSteps_le_envelope
     source.im source.im).trans
-      (Fraction.Resource.Clauses.mulStepEnvelope_mono
+      (Clauses.mulStepEnvelope_mono
         (imaginaryMagnitude_le source) (imaginaryMagnitude_le source))
-  have third := (Fraction.Resource.Clauses.addSteps_le_envelope
+  have third := (Clauses.addSteps_le_envelope
     realSquare imaginarySquare).trans
-      (Fraction.Resource.Clauses.addStepEnvelope_mono
+      (Clauses.addStepEnvelope_mono
         realMagnitude imaginaryMagnitude)
   unfold normSqSteps normSqStepEnvelope
   dsimp only [realSquare, imaginarySquare, square]
@@ -1922,24 +1922,24 @@ open Purelib.Data.Rat in
 /-- The retained Gaussian inversion cost is bounded by its step envelope evaluated at the original input component
 magnitudes. -/
 theorem invSteps_le_envelope (source : Basic.Number) :
-    invSteps source ≤ invStepEnvelope (Resource.GaussianNormalized.componentMagnitude source) := by
+    invSteps source ≤ invStepEnvelope (GaussianNormalized.componentMagnitude source) := by
   let denominator := Norm.Basic.GaussianNormalized.normSq source
-  let normBound := normSqMagnitudeEnvelope (Resource.GaussianNormalized.componentMagnitude source)
-  have denominatorMagnitude : Fraction.Resource.Components.NormalizedFraction.componentMagnitude
+  let normBound := normSqMagnitudeEnvelope (GaussianNormalized.componentMagnitude source)
+  have denominatorMagnitude : Components.NormalizedFraction.componentMagnitude
       denominator ≤ normBound := componentMagnitude_normSq_le source
   have normStepsBound := normSqSteps_le_envelope source
-  have realDivision := (Fraction.Resource.Clauses.divSteps_le_envelope
+  have realDivision := (Clauses.divSteps_le_envelope
     source.re denominator).trans
-      (Fraction.Resource.Clauses.divStepEnvelope_mono
+      (Clauses.divStepEnvelope_mono
         (realMagnitude_le source) denominatorMagnitude)
-  have negation := (Fraction.Resource.Clauses.negSteps_le_envelope
+  have negation := (Clauses.negSteps_le_envelope
     source.im).trans
-      (Fraction.Resource.Clauses.negStepEnvelope_mono
+      (Clauses.negStepEnvelope_mono
         (imaginaryMagnitude_le source))
-  have imaginaryDivision := (Fraction.Resource.Clauses.divSteps_le_envelope
+  have imaginaryDivision := (Clauses.divSteps_le_envelope
     (Fraction.Arithmetic.neg source.im) denominator).trans
-      (Fraction.Resource.Clauses.divStepEnvelope_mono
-        ((Fraction.Resource.Components.componentMagnitude_neg_le source.im).trans
+      (Clauses.divStepEnvelope_mono
+        ((Components.componentMagnitude_neg_le source.im).trans
           (imaginaryMagnitude_le source)) denominatorMagnitude)
   have combined := Nat.add_le_add
     (Nat.add_le_add
@@ -1980,15 +1980,15 @@ open Purelib.Data.Gaussian in
 magnitudes. -/
 theorem divSteps_le_envelope (left right : Basic.Number) :
     divSteps left right ≤
-      divStepEnvelope (Resource.GaussianNormalized.componentMagnitude left)
-        (Resource.GaussianNormalized.componentMagnitude right) := by
+      divStepEnvelope (GaussianNormalized.componentMagnitude left)
+        (GaussianNormalized.componentMagnitude right) := by
   have inverseSteps := invSteps_le_envelope right
   have multiplication := (mulSteps_le_envelope left (Field.GaussianNormalized.inv right)).trans
     (mulStepEnvelope_mono
-      (left := Resource.GaussianNormalized.componentMagnitude left)
-      (right := Resource.GaussianNormalized.componentMagnitude (Field.GaussianNormalized.inv right))
-      (leftBound := Resource.GaussianNormalized.componentMagnitude left)
-      (rightBound := invMagnitudeEnvelope (Resource.GaussianNormalized.componentMagnitude right))
+      (left := GaussianNormalized.componentMagnitude left)
+      (right := GaussianNormalized.componentMagnitude (Field.GaussianNormalized.inv right))
+      (leftBound := GaussianNormalized.componentMagnitude left)
+      (rightBound := invMagnitudeEnvelope (GaussianNormalized.componentMagnitude right))
       (le_refl _) (componentMagnitude_inv_le right))
   unfold divSteps divStepEnvelope
   exact Nat.add_le_add inverseSteps multiplication
@@ -2136,15 +2136,15 @@ open Purelib.Data.Gaussian in
 magnitudes. -/
 theorem subSteps_le_envelope (left right : Basic.Number) :
     subSteps left right ≤
-      subStepEnvelope (Resource.GaussianNormalized.componentMagnitude left)
-        (Resource.GaussianNormalized.componentMagnitude right) := by
+      subStepEnvelope (GaussianNormalized.componentMagnitude left)
+        (GaussianNormalized.componentMagnitude right) := by
   have negBound := negSteps_le_envelope right
   have addBound := addSteps_le_envelope left (Basic.neg right)
   have addEnvelopeBound := addStepEnvelope_mono
-    (left := Resource.GaussianNormalized.componentMagnitude left)
-    (right := Resource.GaussianNormalized.componentMagnitude (Basic.neg right))
-    (leftBound := Resource.GaussianNormalized.componentMagnitude left)
-    (rightBound := Resource.GaussianNormalized.componentMagnitude right)
+    (left := GaussianNormalized.componentMagnitude left)
+    (right := GaussianNormalized.componentMagnitude (Basic.neg right))
+    (leftBound := GaussianNormalized.componentMagnitude left)
+    (rightBound := GaussianNormalized.componentMagnitude right)
     (le_refl _) (componentMagnitude_neg_le right)
   unfold subSteps subStepEnvelope
   exact Nat.add_le_add negBound (addBound.trans addEnvelopeBound)
@@ -2182,7 +2182,7 @@ open Purelib.Data.Gaussian in
 open Purelib.Data.Nat in
 /-- Compute natural bit width of the maximum reduced-coordinate component magnitude. -/
 def workingGaussianWidth (value : Basic.Number) : Nat :=
-  BitWidth.natWidth (Resource.GaussianNormalized.componentMagnitude value)
+  BitWidth.natWidth (GaussianNormalized.componentMagnitude value)
 end Purelib.Data.Gaussian.Resource
 
 end
@@ -2230,7 +2230,7 @@ namespace Purelib.Data.Gaussian.Resource
 open Purelib.Data.Gaussian in
 /-- Compute the retained Gaussian component magnitude after conversion to the original normalized representation. -/
 def componentMagnitude (source : Basic.Canonical) : Nat :=
-  Resource.GaussianNormalized.componentMagnitude
+  GaussianNormalized.componentMagnitude
     (Basic.ofGaussian source)
 end Purelib.Data.Gaussian.Resource
 

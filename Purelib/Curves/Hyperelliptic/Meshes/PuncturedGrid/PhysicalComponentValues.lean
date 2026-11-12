@@ -31,9 +31,9 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentVal
 
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
   {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {face : Meshes.PuncturedGridFaces.RegularFace bank} {side :
     Meshes.GridLiftedDualSteps.GridSide}
 
@@ -56,7 +56,7 @@ Exterior sides contribute only to the exterior component. A side classified at
 a retained hole contributes only at that same bounded hole position; all other
 original neighbor/component combinations contribute zero. -/
 def SideNeighbor.componentValue (neighbor : Meshes.PuncturedGridFaces.PuncturedFaces.SideNeighbor faces face side)
-    (component : Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.PhysicalComponent faces) (value :
+    (component : PhysicalComponent faces) (value :
       Gaussian.Basic.Canonical) : Gaussian :=
   match neighbor, component with
   | .exterior _, .exterior => value
@@ -70,17 +70,17 @@ The finite sum over the original hole positions recovers precisely that retained
 contribution, with no enumeration or witness replacement. -/
 theorem SideNeighbor.physical_components (neighbor : Meshes.PuncturedGridFaces.PuncturedFaces.SideNeighbor faces face
   side) (value : Gaussian.Basic.Canonical) :
-    Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.physicalValue
-      neighbor value = Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue neighbor
+    NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.physicalValue
+      neighbor value = SideNeighbor.componentValue neighbor
       .exterior value +
       FiniteSum.Fin.sumFin (fun hole =>
-        Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue neighbor (.hole hole)
+        SideNeighbor.componentValue neighbor (.hole hole)
         value) := by
   cases neighbor with
   | exterior equal =>
       simp only
         [NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.physicalValue,
-        Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue,
+        SideNeighbor.componentValue,
         FiniteSum.Fin.sumFin_zero, add_zero, -eq_self, -iff_self]
       rfl
   | neighbor cell member matching location =>
@@ -88,13 +88,13 @@ theorem SideNeighbor.physical_components (neighbor : Meshes.PuncturedGridFaces.P
     | regular position equal =>
         simp only
           [NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.physicalValue,
-          Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue,
+          SideNeighbor.componentValue,
           FiniteSum.Fin.sumFin_zero, add_zero, -eq_self, -iff_self]
         rfl
     | hole position equal =>
       simp only
         [NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.physicalValue,
-        Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue]
+        SideNeighbor.componentValue]
       rw [zero_add]
       exact (FiniteSum.Fin.sumFin_ite_eq position (fun _ => value)).symm
 
@@ -106,7 +106,7 @@ to the requested physical hole box. -/
 theorem SideNeighbor.hole_component_supported (neighbor : Meshes.PuncturedGridFaces.PuncturedFaces.SideNeighbor faces
   face side)
     (hole : Fin faces.holes.length) (value : Gaussian.Basic.Canonical)
-    (nonzero : Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue neighbor (.hole
+    (nonzero : SideNeighbor.componentValue neighbor (.hole
       hole) value ≠ 0) :
     side.Matches face.cell.box (faces.holes[hole.val]'hole.isLt).cell.box := by
   cases neighbor with
@@ -121,7 +121,7 @@ theorem SideNeighbor.hole_component_supported (neighbor : Meshes.PuncturedGridFa
         exact matching
       · apply False.elim
         apply nonzero
-        simp only [Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue, if_neg same,
+        simp only [SideNeighbor.componentValue, if_neg same,
           -eq_self, -iff_self]
         rfl
 
@@ -129,9 +129,9 @@ theorem SideNeighbor.hole_component_supported (neighbor : Meshes.PuncturedGridFa
 theorem SideNeighbor.exterior_component_supported (neighbor : Meshes.PuncturedGridFaces.PuncturedFaces.SideNeighbor
   faces face side)
     (value : Gaussian.Basic.Canonical) (nonzero :
-      Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue neighbor .exterior value ≠
+      SideNeighbor.componentValue neighbor .exterior value ≠
       0) :
-    side.Exterior face.cell.box (Hyperelliptic.Branches.Cuts.Ambient curve) := by
+    side.Exterior face.cell.box (Branches.Cuts.Ambient curve) := by
   cases neighbor with
   | exterior equal => exact equal
   | neighbor cell member matching location =>

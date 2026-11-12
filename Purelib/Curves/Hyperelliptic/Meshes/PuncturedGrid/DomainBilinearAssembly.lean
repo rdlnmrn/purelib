@@ -61,6 +61,8 @@ import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Riemann.Readings.RectangularClippedCornerBounds
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Algebra
@@ -115,7 +117,7 @@ open Purelib.Riemann.Readings.RectangularSeamBounds (boundarySlope)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face :
@@ -126,9 +128,9 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 
 /-- Reuse precisely the two entries supplied by the all-differential cache. -/
 def DomainBilinearAssembly.bilinearAssembly
-    (cached : (row : Fin genus) → PrimitiveData.DomainPrimitives domain (PeriodMatrix.standardDifferential row) stage)
+    (cached : (row : Fin genus) → DomainPrimitives domain (PeriodMatrix.standardDifferential row) stage)
     (first second : Fin genus) (depth : Nat) :
-    RectangularBilinearBoundaryAssembly.BilinearBoundaryAssembly (cached first).anchors (cached first).offsets
+    BilinearBoundaryAssembly (cached first).anchors (cached first).offsets
       (cached second).anchors (cached second).offsets depth :=
   BilinearBoundaryAssembly.build (cached first).anchors (cached first).offsets
     (cached second).anchors (cached second).offsets depth
@@ -136,7 +138,7 @@ def DomainBilinearAssembly.bilinearAssembly
 /-- Apply the clipped-box identity to the very same cached primitive pair. The local model owner is retained, including
 on boundary vertices. -/
 theorem DomainBilinearAssembly.bilinear_clipped_boundary
-    (cached : (row : Fin genus) → PrimitiveData.DomainPrimitives domain (PeriodMatrix.standardDifferential row) stage)
+    (cached : (row : Fin genus) → DomainPrimitives domain (PeriodMatrix.standardDifferential row) stage)
     (first second : Fin genus) {box : Rational.Box}
     (mesh : RectangularObservationMesh.ObservationMesh domain.cuts box) :
     let values := fun column row point =>
@@ -165,16 +167,16 @@ theorem
   DomainBasisBounds.EnergyPreflight.Request.clipped_cornerTotal_bound
   (request : EnergyPreflight.Request preflight target)
     (later : request.index ≤ stage)
-    (cached : (row : Fin genus) → PrimitiveData.DomainPrimitives domain (PeriodMatrix.standardDifferential row) stage)
+    (cached : (row : Fin genus) → DomainPrimitives domain (PeriodMatrix.standardDifferential row) stage)
     (first second : Fin genus) {box : Rational.Box}
     {mesh : RectangularObservationMesh.ObservationMesh domain.cuts box}
-    (assembly : ObservationMesh.ClippedAssembly mesh
+    (assembly : ClippedAssembly mesh
       (fun column row point =>
         ⟨(cached first).anchors.alignedValue (cached first).offsets column row point,
           (cached second).anchors.alignedValue (cached second).offsets column row point⟩)) :
-    Data.Gaussian.Norm.Basic.normSq assembly.cornerTotal ≤
-      256 * ((mesh.boundaryColumns : InverseRootPolynomial.Coordinate) * (mesh.boundaryRows :
-        InverseRootPolynomial.Coordinate)) ^ 2 *
+    Basic.normSq assembly.cornerTotal ≤
+      256 * ((mesh.boundaryColumns : Coordinate) * (mesh.boundaryRows :
+        Coordinate)) ^ 2 *
         (max (request.rowAtStage stage later first).globalBound
           (request.rowAtStage stage later second).globalBound) ^ 2 := by
   exact assembly.cornerTotal_bound
@@ -187,10 +189,10 @@ synchronized request index. -/
 theorem DomainBilinearAssembly.EnergyPreflight.Request.clipped_local_sub_exterior_bound (request :
   EnergyPreflight.Request preflight target)
     (later : request.index ≤ stage)
-    (cached : (row : Fin genus) → PrimitiveData.DomainPrimitives domain (PeriodMatrix.standardDifferential row) stage)
+    (cached : (row : Fin genus) → DomainPrimitives domain (PeriodMatrix.standardDifferential row) stage)
     (first second : Fin genus) {box : Rational.Box}
     {mesh : RectangularObservationMesh.ObservationMesh domain.cuts box}
-    (assembly : ObservationMesh.ClippedAssembly mesh
+    (assembly : ClippedAssembly mesh
       (fun column row point =>
         ⟨(cached first).anchors.alignedValue (cached first).offsets column row point,
           (cached second).anchors.alignedValue (cached second).offsets column row point⟩)) :
@@ -201,13 +203,13 @@ theorem DomainBilinearAssembly.EnergyPreflight.Request.clipped_local_sub_exterio
         (preflight.overlaps.get second)) +
         max (4 * RectangularSeamBounds.boundarySlope (preflight.overlaps.get first)) (4 *
           RectangularSeamBounds.boundarySlope (preflight.overlaps.get second)))
-    Data.Gaussian.Norm.Basic.normSq (assembly.localTotal - assembly.exterior) ≤
-      4 * ((mesh.boundaryColumns : InverseRootPolynomial.Coordinate) ^ 2 * ((mesh.boundaryRows + 1 : Nat) :
-        InverseRootPolynomial.Coordinate) ^ 2 +
-        ((mesh.boundaryColumns + 1 : Nat) : InverseRootPolynomial.Coordinate) ^ 2 * (mesh.boundaryRows :
-          InverseRootPolynomial.Coordinate) ^ 2) * seam +
-      512 * ((mesh.boundaryColumns : InverseRootPolynomial.Coordinate) * (mesh.boundaryRows :
-        InverseRootPolynomial.Coordinate)) ^ 2 *
+    Basic.normSq (assembly.localTotal - assembly.exterior) ≤
+      4 * ((mesh.boundaryColumns : Coordinate) ^ 2 * ((mesh.boundaryRows + 1 : Nat) :
+        Coordinate) ^ 2 +
+        ((mesh.boundaryColumns + 1 : Nat) : Coordinate) ^ 2 * (mesh.boundaryRows :
+          Coordinate) ^ 2) * seam +
+      512 * ((mesh.boundaryColumns : Coordinate) * (mesh.boundaryRows :
+        Coordinate)) ^ 2 *
         (max left.globalBound right.globalBound) ^ 2 := by
   exact assembly.local_sub_exterior_bound
     (request.rowAtStage stage later first) (request.rowAtStage stage later second)
@@ -219,21 +221,21 @@ rows. -/
 theorem DomainBilinearAssembly.EnergyPreflight.Request.weighted_clipped_cornerTotal_bound (request :
   EnergyPreflight.Request preflight target)
     (later : request.index ≤ stage)
-    (cached : (row : Fin genus) → PrimitiveData.DomainPrimitives domain (PeriodMatrix.standardDifferential row) stage)
+    (cached : (row : Fin genus) → DomainPrimitives domain (PeriodMatrix.standardDifferential row) stage)
     (left right : Fin genus → Data.Gaussian.Basic.Canonical) {box : Rational.Box}
     {mesh : RectangularObservationMesh.ObservationMesh domain.cuts box}
-    (assembly : ObservationMesh.ClippedAssembly mesh
+    (assembly : ClippedAssembly mesh
       (fun column row point =>
         ⟨FiniteSum.Fin.sumFin (fun i => left i *
             (cached i).anchors.alignedValue (cached i).offsets column row point),
           FiniteSum.Fin.sumFin (fun j => right j *
             (cached j).anchors.alignedValue (cached j).offsets column row point)⟩)) :
-    Data.Gaussian.Norm.Basic.normSq assembly.cornerTotal ≤
-      ((genus : InverseRootPolynomial.Coordinate) * (genus : InverseRootPolynomial.Coordinate)) *
-        FiniteSum.Fin.sumFin (fun i => Data.Gaussian.Norm.Basic.normSq (left i)) *
-        FiniteSum.Fin.sumFin (fun j => Data.Gaussian.Norm.Basic.normSq (right j)) *
-        (256 * ((mesh.boundaryColumns : InverseRootPolynomial.Coordinate) * (mesh.boundaryRows :
-          InverseRootPolynomial.Coordinate)) ^ 2 * target ^ 2) := by
+    Basic.normSq assembly.cornerTotal ≤
+      ((genus : Coordinate) * (genus : Coordinate)) *
+        FiniteSum.Fin.sumFin (fun i => Basic.normSq (left i)) *
+        FiniteSum.Fin.sumFin (fun j => Basic.normSq (right j)) *
+        (256 * ((mesh.boundaryColumns : Coordinate) * (mesh.boundaryRows :
+          Coordinate)) ^ 2 * target ^ 2) := by
   rw [assembly.cornerTotal_eq_values, ClippedCornerCombination.cornerSum_combination]
   apply BilinearCombination.combination_bound
   intro first second
@@ -258,9 +260,9 @@ bilinear assembly. -/
 theorem DomainBilinearAssembly.EnergyPreflight.Request.bilinear_assembly_bound (request : EnergyPreflight.Request
   preflight target)
     (later : request.index ≤ stage)
-    (cached : (row : Fin genus) → PrimitiveData.DomainPrimitives domain (PeriodMatrix.standardDifferential row) stage)
+    (cached : (row : Fin genus) → DomainPrimitives domain (PeriodMatrix.standardDifferential row) stage)
     (first second : Fin genus) {depth : Nat}
-    (assembly : RectangularBilinearBoundaryAssembly.BilinearBoundaryAssembly (cached first).anchors (cached
+    (assembly : BilinearBoundaryAssembly (cached first).anchors (cached
       first).offsets
       (cached second).anchors (cached second).offsets depth) :
     let left := request.rowAtStage stage later first
@@ -269,12 +271,12 @@ theorem DomainBilinearAssembly.EnergyPreflight.Request.bilinear_assembly_bound (
       (4 * max (RectangularSeamBounds.boundarySlope (preflight.overlaps.get first)) (RectangularSeamBounds.boundarySlope
         (preflight.overlaps.get second)) +
         max left.edgeBound right.edgeBound)
-    Data.Gaussian.Norm.Basic.normSq (assembly.localTotal - assembly.exterior) ≤
-      4 * ((domain.steps : InverseRootPolynomial.Coordinate) ^ 2 * ((domain.steps + 1 : Nat) :
-        InverseRootPolynomial.Coordinate) ^ 2 +
-        ((domain.steps + 1 : Nat) : InverseRootPolynomial.Coordinate) ^ 2 * (domain.steps :
-          InverseRootPolynomial.Coordinate) ^ 2) * seam +
-      128 * ((domain.steps : InverseRootPolynomial.Coordinate) * (domain.steps : InverseRootPolynomial.Coordinate)) ^ 2
+    Basic.normSq (assembly.localTotal - assembly.exterior) ≤
+      4 * ((domain.steps : Coordinate) ^ 2 * ((domain.steps + 1 : Nat) :
+        Coordinate) ^ 2 +
+        ((domain.steps + 1 : Nat) : Coordinate) ^ 2 * (domain.steps :
+          Coordinate) ^ 2) * seam +
+      128 * ((domain.steps : Coordinate) * (domain.steps : Coordinate)) ^ 2
         *
         (max left.globalBound right.globalBound) ^ 2 := by
   exact assembly.local_sub_exterior_bound

@@ -105,19 +105,19 @@ open Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed (mul)
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+    UniformReciprocalModels.Data patch count}
   {edge : ParameterEdge} {cell :
     Cell data edge}
   {model : RootModel cell} {parameter :
     Coordinate}
   {otherCount : Nat} {otherDifferential : Differential genus}
-  {otherParent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve otherDifferential}
+  {otherParent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve otherDifferential}
   {otherPatch : PreparedPatch otherParent} {otherData :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
+    UniformReciprocalModels.Data otherPatch otherCount}
   {otherEdge : ParameterEdge} {otherCell :
     Cell otherData otherEdge}
   {otherModel : RootModel otherCell}
@@ -127,14 +127,14 @@ variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
 
 /-- Reconstruct an operational comparison of the original reciprocal roots from equal physical points and retained
 cap-coordinate equivalence. -/
-public def paired_roots_of_coordinates {firstPoint lastPoint : InverseRootPolynomial.Gaussian}
+public def paired_roots_of_coordinates {firstPoint lastPoint : Gaussian}
     {firstOwner : SquareRootContinuationChain.Owner ((HyperellipticReciprocal.polynomial curve).eval firstPoint)}
     {lastOwner : SquareRootContinuationChain.Owner ((HyperellipticReciprocal.polynomial curve).eval lastPoint)}
     (first : Coordinates.Overlap cap firstPoint firstOwner)
     (last : Coordinates.Overlap cap lastPoint lastOwner) (same : firstPoint = lastPoint)
-    (coordinates : Gaussian.Equivalence.NamedEquivalent first.coordinate.prepared.denominator.name
+    (coordinates : NamedEquivalent first.coordinate.prepared.denominator.name
       last.coordinate.prepared.denominator.name) :
-    Gaussian.Equivalence.NamedEquivalent first.reciprocal.value.name last.reciprocal.value.name := by
+    NamedEquivalent first.reciprocal.value.name last.reciprocal.value.name := by
   cases same
   have regular := InverseModelRootAgreement.equivalent_of_value
     first.regular.channel last.regular.channel rfl
@@ -145,27 +145,27 @@ public def paired_roots_of_coordinates {firstPoint lastPoint : InverseRootPolyno
 
 /-- Reconstruct the original polynomial root channels from the join's retained coordinate comparison and the shared
 regular root. -/
-def Join.pairedRootEquivalent (joined : ArcOwners.Join first last) :
-    Gaussian.Equivalence.NamedEquivalent first.root.channel.certificate.value.name
+def Join.pairedRootEquivalent (joined : Join first last) :
+    NamedEquivalent first.root.channel.certificate.value.name
       last.root.channel.certificate.value.name := by
   have owned := paired_roots_of_coordinates
     first.coordinates last.coordinates (congrArg Inv.inv joined.point_eq) joined.coordinate
   rw [first.coordinates.reciprocal_eq, last.coordinates.reciprocal_eq] at owned
   exact first.root.channel.owner_equivalent.symm.trans (owned.trans last.root.channel.owner_equivalent)
 
-variable {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell}
-  {otherComparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular otherCell}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {before : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample comparison capSample}
-  {otherBox : Purelib.Geometry.Rational.Box} {otherCapSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap otherDifferential index otherBox}
-  {after : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample otherComparison otherCapSample}
+variable {regular : RegularBounds.Data cap}
+  {comparison : ArcSamples.Data regular cell}
+  {otherComparison : ArcSamples.Data regular otherCell}
+  {index : Nat} {box : Geometry.Rational.Box} {capSample :
+    Cap.Primitives.Sample cap differential index box}
+  {before : ArcSamples.Sample comparison capSample}
+  {otherBox : Geometry.Rational.Box} {otherCapSample :
+    Cap.Primitives.Sample cap otherDifferential index otherBox}
+  {after : ArcSamples.Sample otherComparison otherCapSample}
 
 /-- An actual retained root join forces the two parent cells to select the same regular-cap sheet. The common polynomial
 stage is supplied by the existing shared sample, and two preparation stages suffice. -/
-theorem Join.paired_same_sign (joined : ArcOwners.Join first last)
+theorem Join.paired_same_sign (joined : Join first last)
     (left : SheetAlignment.RegularAlignment before)
     (right : SheetAlignment.RegularAlignment after) (later : 2 ≤ index) :
     left.first.flip = right.first.flip := by
@@ -176,19 +176,19 @@ theorem Join.paired_same_sign (joined : ArcOwners.Join first last)
     rw [after.retained.inverse_eq, after.cell_eq]
   have nearest := InverseModelEquivalentSigns.equivalent_nearest_at first.root.channel last.root.channel
     (congrArg Inv.inv joined.point_eq)
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedSigns.Join.pairedRootEquivalent joined) (index - 2) (index - 2)
+      (Join.pairedRootEquivalent joined) (index - 2) (index - 2)
   rw [model.refine_eq, otherModel.refine_eq, shifted, ← beforeEq, ← afterEq, joined.point_eq] at nearest
   let firstValue := before.retained.inverse.value.eval (otherParent.edge.point otherParameter)⁻¹
   let lastValue := after.retained.inverse.value.eval (otherParent.edge.point otherParameter)⁻¹
   let shared := capSample.inverse.value.eval (otherParent.edge.point otherParameter)⁻¹
-  have firstResidual : Data.Gaussian.Basic.Canonical.normSq (1 - (HyperellipticReciprocal.polynomial curve).eval
+  have firstResidual : normSq (1 - (HyperellipticReciprocal.polynomial curve).eval
     (otherParent.edge.point otherParameter)⁻¹ *
       firstValue ^ 2) ≤ before.retained.inverse.bound := by
     have bounded := before.retained.inverse.residualBound (parent.edge.point parameter)⁻¹
       (cell.contains parameter first.root.between)
     rw [before.retained.inverse.residual_eq, joined.point_eq] at bounded
     exact bounded
-  have lastResidual : Data.Gaussian.Basic.Canonical.normSq (1 - (HyperellipticReciprocal.polynomial curve).eval
+  have lastResidual : normSq (1 - (HyperellipticReciprocal.polynomial curve).eval
     (otherParent.edge.point otherParameter)⁻¹ *
       lastValue ^ 2) ≤ after.retained.inverse.bound := by
     rw [← after.retained.inverse.residual_eq]
@@ -211,9 +211,9 @@ theorem Join.paired_same_sign (joined : ArcOwners.Join first last)
       (Geometric.Basic.quarterRadius_le_scale otherModel.model.bound_nonnegative (index - 2))).trans otherModel.small
     rw [otherModel.refine_eq, shifted, ← afterEq] at bounded
     exact bounded
-  have sharedSmall : Geometric.Basic.quarterRadius (1 / 256) index ≤ (1 / 256 : InverseRootPolynomial.Coordinate) :=
+  have sharedSmall : Geometric.Basic.quarterRadius (1 / 256) index ≤ (1 / 256 : Coordinate) :=
     Geometric.Basic.quarterRadius_le_scale (by decide +kernel) index
-  let connecting : InverseModelOverlap.SignAlignment firstValue lastValue := ⟨false, lastValue, rfl, nearest⟩
+  let connecting : SignAlignment firstValue lastValue := ⟨false, lastValue, rfl, nearest⟩
   rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at sharedResidual
   have composed := SignAlignment.cocycle connecting (SignAlignment.build lastValue shared) (SignAlignment.build
     firstValue shared)

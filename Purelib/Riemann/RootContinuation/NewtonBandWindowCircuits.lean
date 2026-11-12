@@ -38,11 +38,11 @@ open Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces (AnnularFaces)
 open Purelib.Riemann.Meshes (LiftedPuncturedGrid)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve branches
     higher}
-  {preparation : NewtonPreparation original} {target radius : Data.Rat.Fraction.Rational}
+  {preparation : NewtonPreparation original} {target radius : Rational}
   {grid : NewtonGrid preparation target radius} {index : Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index
     branches}
   {current : LiftedPuncturedGrid grid.punctured}
@@ -51,7 +51,7 @@ open Purelib.Curves in
 /-- Prepare the ordered branch circuits in the retained Newton annulus window on the chosen sheet.
 
 The window, edge bank and vertex bank all belong to the same refined grid. -/
-@[expose] def fineOrder (region : Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index) (sheet : Fin 2) :=
+@[expose] def fineOrder (region : AnnularFaces grid index) (sheet : Fin 2) :=
   Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.Window.prepareBranches
     grid.faces region.window current.edges current.vertices sheet
 
@@ -61,13 +61,13 @@ open Purelib.Polynomial in
 
 The result retains its word, ordered hole circuit, connectors and regular area terms with the original sheet and anchor.
 -/
-@[expose] def fineCompiler (region : Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index) (sheet : Fin 2)
+@[expose] def fineCompiler (region : AnnularFaces grid index) (sheet : Fin 2)
   :
-    Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitCompiled
+    ResplitCompiled
       (Geometry.Grid.Extension.CoordinateInclusion.refl grid.punctured.bank.grid) current.edges current.vertices
       (Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.anchor_onGrid region)
       (fineOrder (current := current) region sheet).partition sheet :=
-  Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.compileResplit _
+  compileResplit _
     current.edges current.vertices
     (fun point member => (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
       grid.punctured.bank.toBranchCellBank point member).toLoop) _
@@ -95,15 +95,15 @@ open Purelib.Geometry in
 
 The shrunken cell is present, and the original cell separation excludes every other branch label, preserving
 multiplicity in the partition. -/
-theorem fine_kept_labels (region : Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index) (sheet : Fin 2) :
+theorem fine_kept_labels (region : AnnularFaces grid index) (sheet : Fin 2) :
     (fineOrder (current := current) region sheet).partition.labels = [index] := by
   let order := fineOrder (current := current) region sheet
   have present : index ∈ order.labels := order.selected index |>.mpr (grid.cell_refines_band index)
   have only : ∀ entry ∈ order.labels, entry = index := by
     intro entry member
-    have inside := ((order.selected entry).mp member).trans (Geometry.Rational.Box.Refinement.StrictInterior.refines
+    have inside := ((order.selected entry).mp member).trans (Rational.Box.Refinement.StrictInterior.refines
       (grid.bands.strict_original index))
-    have retained := (Geometry.Rational.Box.Refinement.StrictInterior.refines (grid.shrunk.cell_strict entry))
+    have retained := (Rational.Box.Refinement.StrictInterior.refines (grid.shrunk.cell_strict entry))
     by_cases same : entry = index
     · exact same
     · exact ((original.cells_separated entry index same).points_ne
@@ -119,20 +119,20 @@ open Purelib.Polynomial in
 
 The comparison uses an antisymmetric edge reading and the exact window order, identity resplitting, connectors and hole
 polygon. -/
-theorem fineCompiler_area (region : Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index) (sheet : Fin 2)
+theorem fineCompiler_area (region : AnnularFaces grid index) (sheet : Fin 2)
     (value : OrientedEdge current.vertices.count → Gaussian.Basic.Canonical)
     (anti : ∀ edge, value edge.reverse = -value edge) :
     current.edges.chainArea current.vertices value
       region.boundary sheet =
-      Mesh.RetracingWords.wordArea value (fineCompiler (current := current) region sheet).word +
-        Mesh.RetracingWords.AreaTerm.total value (fineCompiler (current := current) region sheet).areaTerms := by
+      wordArea value (fineCompiler (current := current) region sheet).word +
+        AreaTerm.total value (fineCompiler (current := current) region sheet).areaTerms := by
   let order := fineOrder (current := current) region sheet
   let compiled := fineCompiler (current := current) region sheet
   let reference := fun point member => (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
     grid.punctured.bank.toBranchCellBank point member).toLoop
   have ordered := order.ordered.comparison.areas value anti sheet
   rw [order.ordered.product_eq] at ordered
-  have self := Polynomial.Geometry.Grid.ClearGrid.self_resplit_comparison
+  have self := Geometry.Grid.ClearGrid.self_resplit_comparison
     current.edges current.vertices reference order.ordered.tree.product
     (Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.anchor_onGrid region)
   exact ordered.symm.trans ((self.areas value anti sheet).symm.trans (compiled.areas value anti))

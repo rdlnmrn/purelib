@@ -42,6 +42,8 @@ import Purelib.Riemann.Normalization.InverseRootPolynomial
 import Purelib.Riemann.Readings.RectangularObservationAssembly
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! Restrict the existing fine perimeter bank to any retained face subset.
@@ -61,18 +63,18 @@ open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars} {cuts :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
-  {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank}
+  {domains : Face.DomainBanks.FaceDomainBank frames faces.regulars} {cuts :
+    RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
+  {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet} {target : Fraction.Rational}
-  {stage : Nat} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage} {i
+  {stage : Nat} {cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage} {i
     j : Fin genus}
-  {request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+  {request : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+    RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
     target}
 
 namespace Matched.FacePerimeters
@@ -119,7 +121,7 @@ theorem selected_normalized_decomposition
     | true =>
         simp only [if_pos (rfl : true = true), -eq_self, -iff_self]
         rw [← ((normalized.perimeters.get position).get sheet).exterior_eq,
-          ← Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.normalized_corrected_exterior_eq
+          ← NormalizedFaceAreas.FacePerimeters.normalized_corrected_exterior_eq
             original normalized position sheet]
         ring1
   have equal := FiniteSum.Fin.sumFin_congr (fun position => FiniteSum.Fin.sumFin_congr (pointwise position))
@@ -133,16 +135,16 @@ theorem selected_normalized_decomposition
 
 /-- The original per-pair budget bounds the complete selected seam and corner sum with its actual face-count weight. -/
 theorem selected_seam_corner_bound
-    (exterior : Hyperelliptic.Meshes.PuncturedGrid.RegularExteriorRequest.ExteriorBoundaryRequest (fun sheet =>
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+    (exterior : RegularExteriorRequest.ExteriorBoundaryRequest (fun sheet =>
+      RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
       target)
     (perimeters : Matched.FacePerimeters (request :=
       exterior.prepared.energy) cache i j)
     (keep : Fin faces.regulars.length → Bool) (later : exterior.prepared.energy.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (perimeters.selectedSeamCornerSum keep) ≤ 4 * (faces.regulars.length :
+    Gaussian.Norm.Basic.normSq (perimeters.selectedSeamCornerSum keep) ≤ 4 * (faces.regulars.length :
       Fraction.Rational)^2 * exterior.pairTarget := by
   have bounded (position : Fin faces.regulars.length) (sheet : Fin 2) :
-      Data.Gaussian.Norm.Basic.normSq (if keep position then ((perimeters.assemblies.get position).get sheet).seams
+      Gaussian.Norm.Basic.normSq (if keep position then ((perimeters.assemblies.get position).get sheet).seams
         +
         ((perimeters.assemblies.get position).get sheet).cornerTotal else 0) ≤ exterior.pairTarget := by
     cases keep position with
@@ -171,44 +173,44 @@ theorem selected_seam_corner_bound
 /-- No subtraction of possibly cancelling discarded areas is used here.
 The subset's local and seam errors are each bounded from their own terms. -/
 theorem selected_perimeter_bound
-    (exterior : Hyperelliptic.Meshes.PuncturedGrid.RegularExteriorRequest.ExteriorBoundaryRequest (fun sheet =>
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+    (exterior : RegularExteriorRequest.ExteriorBoundaryRequest (fun sheet =>
+      RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
       target)
     (original : Matched.FacePerimeters (request :=
       exterior.prepared.energy) cache i j)
     (normalized : Matched.FacePerimeters (request :=
       exterior.prepared.energy) cache.normalize i j)
     (keep : Fin faces.regulars.length → Bool) (later : exterior.prepared.ownership.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (normalized.selectedPerimeterSum keep) ≤ target := by
-  have localBound := Hyperelliptic.Meshes.PuncturedGrid.LocalPairBound.FacePerimeters.selected_local_bound
+    Gaussian.Norm.Basic.normSq (normalized.selectedPerimeterSum keep) ≤ target := by
+  have localBound := LocalPairBound.FacePerimeters.selected_local_bound
     exterior.prepared original keep later
-  have seamBound := Hyperelliptic.Meshes.PuncturedGrid.SelectedPerimeterBounds.selected_seam_corner_bound exterior
+  have seamBound := SelectedPerimeterBounds.selected_seam_corner_bound exterior
     normalized keep
     (exterior.prepared.ownership.energy_le.trans later)
   have equal : normalized.selectedPerimeterSum keep = original.selectedLocalSum keep - normalized.selectedSeamCornerSum
     keep := by
-    rw [← Hyperelliptic.Meshes.PuncturedGrid.SelectedPerimeterBounds.selected_normalized_decomposition original
+    rw [← SelectedPerimeterBounds.selected_normalized_decomposition original
       normalized keep]
     ring1
   rw [equal]
   have estimate := (Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct localBound
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct localBound
       seamBound) (by decide))
   have genusLe : (1 : Fraction.Rational) ≤ (genus : Fraction.Rational) :=
     Fraction.Cast.Order.natCast_le_direct (Nat.succ_le_of_lt ((Nat.zero_le i.val).trans_lt i.isLt))
   have genusSquare : (1 : Fraction.Rational) ≤ (genus : Fraction.Rational)^2 := by
-    simpa only [one_pow, -eq_self, -iff_self] using Fraction.Order.Arithmetic.pow_le_pow_direct (by
+    simpa only [one_pow, -eq_self, -iff_self] using Arithmetic.pow_le_pow_direct (by
         decide : (0 : Fraction.Rational) ≤ 1) genusLe 2
-  have paid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct genusSquare
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 8)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct (faces.regulars.length : Fraction.Rational))))
+  have paid := Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct genusSquare
+      (Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 8)
+        (Arithmetic.sq_nonneg_direct (faces.regulars.length : Fraction.Rational))))
     exterior.pair_positive.le
   exact estimate.trans ((show 2 * (exterior.localTarget + 4 * (faces.regulars.length : Fraction.Rational)^2 *
     exterior.pairTarget) =
     2 * exterior.localTarget + (8 * (faces.regulars.length : Fraction.Rational)^2 * 1) * exterior.pairTarget by
       ring1).trans_le
-    ((Fraction.Order.Arithmetic.add_le_add_direct (le_refl _) paid).trans exterior.paid))
+    ((Arithmetic.add_le_add_direct (le_refl _) paid).trans exterior.paid))
 
 end SelectedPerimeterBounds
 

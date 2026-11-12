@@ -32,70 +32,70 @@ namespace Purelib.Polynomial.Ascending.Integer.Products
 @[expose] def sum : Nat → (Nat → List Int) → List Int
   | 0, _ => []
   | count + 1, term =>
-    Ascending.Integer.Basic.Certificate.add (Purelib.Polynomial.Ascending.Integer.Products.sum count term) (term count)
+    Basic.Certificate.add (Products.sum count term) (term count)
 
 /-- The sum of an empty coefficient-table prefix is the empty zero table. -/
 @[simp] theorem sum_zero (term : Nat → List Int) :
-    Ascending.Integer.Products.sum 0 term = [] := rfl
+    sum 0 term = [] := rfl
 
 /-- Extend a finite polynomial sum by adding its final indexed table. -/
 @[simp] theorem sum_succ (count : Nat) (term : Nat → List Int) :
-    Ascending.Integer.Products.sum (count + 1) term =
-      Ascending.Integer.Basic.Certificate.add (Ascending.Integer.Products.sum count term) (term count) := rfl
+    sum (count + 1) term =
+      Basic.Certificate.add (sum count term) (term count) := rfl
 
 /-- Evaluate a primitive-recursive sum directly in the target field. -/
 @[expose] def valueSum {K : Type*} [ExplicitField K] :
     Nat → (Nat → K) → K
   | 0, _ => 0
-  | count + 1, term => Purelib.Polynomial.Ascending.Integer.Products.valueSum count term + term count
+  | count + 1, term => Products.valueSum count term + term count
 
 /-- Evaluation of a finite coefficient-table sum equals the sum of the individual values. -/
 theorem eval_sum {K : Type*} [ExplicitField K]
     (count : Nat) (term : Nat → List Int) (value : K) :
-    Ascending.Integer.Basic.eval (Ascending.Integer.Products.sum count term) value =
-      Ascending.Integer.Products.valueSum count (fun index => Ascending.Integer.Basic.eval (term index) value) := by
+    Basic.eval (sum count term) value =
+      valueSum count (fun index => Basic.eval (term index) value) := by
   induction count with
   | zero => rfl
   | succ count inductionHypothesis =>
-      rw [Ascending.Integer.Products.sum_succ, Ascending.Integer.Basic.eval_add, inductionHypothesis,
-        Ascending.Integer.Products.valueSum]
+      rw [sum_succ, Basic.eval_add, inductionHypothesis,
+        valueSum]
 
 /-- Multiply a displayed prefix of integer polynomials. -/
 @[expose] def product : Nat → (Nat → List Int) → List Int
   | 0, _ => [1]
   | count + 1, term =>
-    Ascending.Integer.Basic.Certificate.mul (Purelib.Polynomial.Ascending.Integer.Products.product count term) (term
+    Basic.Certificate.mul (Products.product count term) (term
       count)
 
 /-- The product of an empty coefficient-table prefix is the singleton one table. -/
 @[simp] theorem product_zero (term : Nat → List Int) :
-    Ascending.Integer.Products.product 0 term = [1] := rfl
+    product 0 term = [1] := rfl
 
 /-- Extend a finite polynomial product by multiplying by its final indexed table. -/
 @[simp] theorem product_succ (count : Nat)
     (term : Nat → List Int) :
-    Ascending.Integer.Products.product (count + 1) term =
-      Ascending.Integer.Basic.Certificate.mul (Ascending.Integer.Products.product count term) (term count) := rfl
+    product (count + 1) term =
+      Basic.Certificate.mul (product count term) (term count) := rfl
 
 /-- Evaluate the same primitive-recursive product directly in the target
 field. -/
 @[expose] def valueProduct {K : Type*} [ExplicitField K] :
     Nat → (Nat → K) → K
   | 0, _ => 1
-  | count + 1, term => Purelib.Polynomial.Ascending.Integer.Products.valueProduct count term * term count
+  | count + 1, term => Products.valueProduct count term * term count
 
 /-- Evaluation of a finite coefficient-table product equals the product of the individual values. -/
 theorem eval_product {K : Type*} [ExplicitField K]
     (count : Nat) (term : Nat → List Int) (value : K) :
-    Ascending.Integer.Basic.eval (Ascending.Integer.Products.product count term) value =
-      Ascending.Integer.Products.valueProduct count (fun index => Ascending.Integer.Basic.eval (term index) value) := by
+    Basic.eval (product count term) value =
+      valueProduct count (fun index => Basic.eval (term index) value) := by
   induction count with
   | zero =>
-      simp only [Ascending.Integer.Products.product_zero, Ascending.Integer.Basic.eval_cons,
-        Ascending.Integer.Basic.eval_nil, Int.cast_one,
-        mul_zero, add_zero, Ascending.Integer.Products.valueProduct, -eq_self, -iff_self] ; rfl
+      simp only [product_zero, Basic.eval_cons,
+        Basic.eval_nil, Int.cast_one,
+        mul_zero, add_zero, valueProduct, -eq_self, -iff_self] ; rfl
   | succ count inductionHypothesis =>
-      rw [Ascending.Integer.Products.product_succ, Ascending.Integer.Basic.eval_mul, inductionHypothesis]
+      rw [product_succ, Basic.eval_mul, inductionHypothesis]
       rfl
 
 /-- The finite list with one coefficient in the requested degree. -/
@@ -106,31 +106,31 @@ theorem eval_product {K : Type*} [ExplicitField K]
 /-- An integer monomial evaluates to its cast coefficient times the argument power. -/
 theorem eval_monomial {K : Type*} [ExplicitField K]
     (degree : Nat) (coefficient : Int) (value : K) :
-    Ascending.Integer.Basic.eval (Ascending.Integer.Products.Certificate.monomial degree coefficient) value =
+    Basic.eval (Certificate.monomial degree coefficient) value =
       (coefficient : K) * value ^ degree := by
   induction degree with
   | zero =>
-    simp [Ascending.Integer.Products.Certificate.monomial, Ascending.Integer.Basic.eval, -eq_self, -iff_self]; rfl
+    simp [Certificate.monomial, Basic.eval, -eq_self, -iff_self]; rfl
   | succ degree inductionHypothesis =>
-      rw [Ascending.Integer.Products.Certificate.monomial, List.replicate_succ, List.cons_append,
-        Ascending.Integer.Basic.eval_cons]
+      rw [Certificate.monomial, List.replicate_succ, List.cons_append,
+        Basic.eval_cons]
       rw [show List.replicate degree 0 ++ [coefficient] =
-          Ascending.Integer.Products.Certificate.monomial degree coefficient by rfl]
+          Certificate.monomial degree coefficient by rfl]
       rw [inductionHypothesis, pow_succ]
-      simp only [Purelib.Algebra.Ring.IntCast.cast_zero, zero_add]
+      simp only [Algebra.Ring.IntCast.cast_zero, zero_add]
       ring1
 
 /-- Coefficients of `X^modulus-X`. -/
 @[expose] def frobenius (modulus : Nat) : List Int :=
-  Ascending.Integer.Basic.Certificate.add (Ascending.Integer.Products.Certificate.monomial modulus 1)
-    (Ascending.Integer.Products.Certificate.monomial 1 (-1))
+  Basic.Certificate.add (Certificate.monomial modulus 1)
+    (Certificate.monomial 1 (-1))
 
 /-- The Frobenius coefficient table evaluates to `value^modulus - value`. -/
 theorem eval_frobenius {K : Type*} [ExplicitField K]
     (modulus : Nat) (value : K) :
-    Ascending.Integer.Basic.eval (Ascending.Integer.Products.frobenius modulus) value = value ^ modulus - value := by
-  rw [Ascending.Integer.Products.frobenius, Ascending.Integer.Basic.eval_add, Ascending.Integer.Products.eval_monomial,
-    Ascending.Integer.Products.eval_monomial]
+    Basic.eval (frobenius modulus) value = value ^ modulus - value := by
+  rw [frobenius, Basic.eval_add, eval_monomial,
+    eval_monomial]
   simp only [Int.cast_one, one_mul]
   ring1
 end Purelib.Polynomial.Ascending.Integer.Products
@@ -171,20 +171,20 @@ theorem
   eval_coefficientProductFin_congr
   : ∀ (count : Nat)
     (left right : Fin count → List Int) (leftPoint rightPoint : K),
-    (∀ index, Ascending.Integer.Basic.eval (left index) leftPoint =
-      Ascending.Integer.Basic.eval (right index) rightPoint) →
-    Ascending.Integer.Basic.eval (Dense.Rational.FiniteProduct.Integer.coefficientProductFin count left)
+    (∀ index, Basic.eval (left index) leftPoint =
+      Basic.eval (right index) rightPoint) →
+    Basic.eval (Dense.Rational.FiniteProduct.Integer.coefficientProductFin count left)
         leftPoint =
-      Ascending.Integer.Basic.eval (Dense.Rational.FiniteProduct.Integer.coefficientProductFin count right)
+      Basic.eval (Dense.Rational.FiniteProduct.Integer.coefficientProductFin count right)
         rightPoint
   | 0, left, right, leftPoint, rightPoint, pointwise => by
       simp only [Dense.Rational.FiniteProduct.Integer.coefficientProductFin_zero,
-        Ascending.Integer.Basic.eval_cons, Ascending.Integer.Basic.eval_nil, Int.cast_one, mul_zero, add_zero, -eq_self,
+        Basic.eval_cons, Basic.eval_nil, Int.cast_one, mul_zero, add_zero, -eq_self,
           -iff_self] ; rfl
   | count + 1, left, right, leftPoint, rightPoint, pointwise => by
       rw [Dense.Rational.FiniteProduct.Integer.coefficientProductFin_succ,
         Dense.Rational.FiniteProduct.Integer.coefficientProductFin_succ,
-        Ascending.Integer.Basic.eval_mul, Ascending.Integer.Basic.eval_mul,
+        Basic.eval_mul, Basic.eval_mul,
 
           eval_coefficientProductFin_congr
           count
@@ -232,7 +232,7 @@ def TorusInvariants.monomial (degree : Nat) (coefficient : Int) :
 
 /-- Construct the ascending integer table for `1 - X^exponent`. -/
 def oneSubPower (exponent : Nat) : (List Int) :=
-  Ascending.Integer.Basic.TorusInvariants.add [1] (Ascending.Integer.Products.TorusInvariants.monomial exponent (-1))
+  Basic.TorusInvariants.add [1] (TorusInvariants.monomial exponent (-1))
 end IntPolynomial
 end Purelib.Polynomial.Ascending.Integer.Products
 

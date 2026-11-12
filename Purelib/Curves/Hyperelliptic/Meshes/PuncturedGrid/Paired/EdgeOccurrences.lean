@@ -1,4 +1,6 @@
 module
+import Purelib.Polynomial.Dense.Gaussian.Basic
+import Purelib.Riemann.Readings.PreparedPrimitiveSamples
 meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Data.Gaussian.Basic
 import Purelib.Curves.Hyperelliptic.Basic
@@ -88,6 +90,8 @@ open Purelib.Topology.Surface.Sewing.SewnPrimitiveContacts
 
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
+open Purelib.Riemann.Readings.PreparedPrimitiveSamples (differentialNumerator)
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 open Purelib.Topology.Polygon.Stokes
 open Purelib.LinearAlgebra.Gaussian.QuadraticForm (GaussianMatrix)
@@ -307,28 +311,30 @@ theorem one_project (paired : EdgeOccurrences mesh edge) :
 @[expose] def request (paired : EdgeOccurrences mesh edge)
   (domains : DomainBanks.FaceDomainBank frames base.faces.regulars) (differential : Differentials.Basic.Differential
   genus)
-    (target : InverseRootPolynomial.Coordinate) (positive : 0 < target) :
+    (target : InverseRootPolynomial.Coordinate) (positive : 0 < target)
+    (numerator : CoefficientPolynomial := differentialNumerator differential) :
     PairedEdgeRequests.PairedEdgeRequest (domains.get paired.cell.located.index) differential
       (FaceCorners.point base.faces.regulars[paired.cell.located.index.val].cell.box (FaceCorners.quad.edge
         paired.cell.geometry.side.kind).start)
       (FaceCorners.point base.faces.regulars[paired.cell.located.index.val].cell.box (FaceCorners.quad.edge
-        paired.cell.geometry.side.kind).finish) target :=
+        paired.cell.geometry.side.kind).finish) target numerator :=
   TriangleSheetCancellation.pairedEdgeRequest domains differential paired.cell.located.index
-    paired.cell.geometry.side.kind target positive
+    paired.cell.geometry.side.kind target positive numerator
 
 /-- The two actual retained source-edge increments cancel within the requested target at sufficient original numerical
 stages, including reversed edge orientations. -/
 theorem accurate (paired : EdgeOccurrences mesh edge) {domains :
   DomainBanks.FaceDomainBank frames base.faces.regulars} {differential : Differentials.Basic.Differential genus}
-    {leftIndex rightIndex : Nat} {leftBank : PrimitiveData.FacePrimitiveBank differential leftIndex domains} {rightBank
-      : PrimitiveData.FacePrimitiveBank differential rightIndex domains}
+    {numerator : CoefficientPolynomial} {leftIndex rightIndex : Nat}
+    {leftBank : PrimitiveData.FacePrimitiveBank differential leftIndex domains (numerator := numerator)} {rightBank
+      : PrimitiveData.FacePrimitiveBank differential rightIndex domains (numerator := numerator)}
     (left : TrianglePrimitiveReadings.TriangleReadings leftBank mesh) (right :
       TrianglePrimitiveReadings.TriangleReadings rightBank mesh) {target : InverseRootPolynomial.Coordinate}
     (request : PairedEdgeRequests.PairedEdgeRequest (domains.get paired.cell.located.index) differential
       (FaceCorners.point base.faces.regulars[paired.cell.located.index.val].cell.box (FaceCorners.quad.edge
         paired.cell.geometry.side.kind).start)
       (FaceCorners.point base.faces.regulars[paired.cell.located.index.val].cell.box (FaceCorners.quad.edge
-        paired.cell.geometry.side.kind).finish) target)
+        paired.cell.geometry.side.kind).finish) target numerator)
     (leftLater : request.index ≤ leftIndex) (rightLater : request.index ≤ rightIndex) :
     Data.Gaussian.Norm.Basic.normSq (paired.zeroSource.increment left.values + paired.oneSource.increment
       right.values) < target := by

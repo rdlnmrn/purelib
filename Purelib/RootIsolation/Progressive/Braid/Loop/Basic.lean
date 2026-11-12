@@ -58,61 +58,61 @@ namespace AdmissibleLoop
 /-- Read the braid word extracted from the retained projected loop. -/
 def word {strands : Nat} {base :
   ProjectedFrame strands}
-    (loop : Progressive.Braid.Loop.Basic.AdmissibleLoop base) : Topology.Knot.Braid.Word strands :=
+    (loop : AdmissibleLoop base) : Topology.Knot.Braid.Word strands :=
   loop.path.word
 
 /-- Close the retained loop's braid word with its original strand count. -/
 def closure {strands : Nat} {base :
   ProjectedFrame strands}
-    (loop : Progressive.Braid.Loop.Basic.AdmissibleLoop base) : Topology.Knot.Braid.Closure where
+    (loop : AdmissibleLoop base) : Topology.Knot.Braid.Closure where
   strands := strands
   word := loop.word
 
 /-- The constant projected loop at the displayed base frame. -/
 def identity {strands : Nat} (base :
   ProjectedFrame strands) :
-    Progressive.Braid.Loop.Basic.AdmissibleLoop base where
+    AdmissibleLoop base where
   path := .nil base
 
 /-- Reverse the retained projected loop while keeping its original base frame. -/
 def reverse {strands : Nat} {base :
   ProjectedFrame strands}
-    (loop : Progressive.Braid.Loop.Basic.AdmissibleLoop base) : Progressive.Braid.Loop.Basic.AdmissibleLoop base where
+    (loop : AdmissibleLoop base) : AdmissibleLoop base where
   path := loop.path.reverse
 
 /-- The constant projected loop extracts the empty braid word. -/
 @[simp] theorem identity_word {strands : Nat}
     (base : ProjectedFrame strands) :
-      (Progressive.Braid.Loop.Basic.AdmissibleLoop.identity base).word = [] := rfl
+      (identity base).word = [] := rfl
 
 /-- Reversing the retained projected loop extracts the inverse original braid word. -/
 @[simp] theorem reverse_word {strands : Nat}
     {base : ProjectedFrame strands} (loop :
-      Progressive.Braid.Loop.Basic.AdmissibleLoop base) :
+      AdmissibleLoop base) :
     loop.reverse.word = loop.word.inverse :=
   ProjectedPath.word_reverse loop.path
 
 /-- Read every retained coefficient polynomial along the projected loop, including its endpoints. -/
 def coefficientVertices {strands : Nat} {base :
   ProjectedFrame strands}
-    (loop : Progressive.Braid.Loop.Basic.AdmissibleLoop base) : List
-      Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial :=
-  Progressive.Braid.Projected.Vertices.coefficientVertices loop.path
+    (loop : AdmissibleLoop base) : List
+      Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial :=
+  Projected.Vertices.coefficientVertices loop.path
 
 /-- The coefficient-vertex list has one more entry than the original loop step count. -/
 @[simp] theorem coefficientVertices_length
   {strands : Nat}
     {base : ProjectedFrame strands} (loop :
-      Progressive.Braid.Loop.Basic.AdmissibleLoop base) :
+      AdmissibleLoop base) :
     loop.coefficientVertices.length = loop.path.stepCount + 1 :=
-  Progressive.Braid.Projected.Vertices.coefficientVertices_length loop.path
+  Projected.Vertices.coefficientVertices_length loop.path
 
 /-- Headline finite polynomial-loop braid theorem.  The existential witness
 is the directly evaluated word, and its equation is the previously proved
 finite extraction calculation. -/
 theorem yieldsCertifiedBraid {strands : Nat}
     {base : ProjectedFrame strands} (loop :
-      Progressive.Braid.Loop.Basic.AdmissibleLoop base) :
+      AdmissibleLoop base) :
     ∃ word : Topology.Knot.Braid.Word strands,
       ∀ position : Fin strands,
         loop.path.chamberPath.monodromy.forward
@@ -125,7 +125,7 @@ theorem
   closure_isKnot_of_monodromy_isSingleCycle
   {strands : Nat}
     {base : ProjectedFrame strands} (loop :
-      Progressive.Braid.Loop.Basic.AdmissibleLoop base)
+      AdmissibleLoop base)
     (single : Data.Fin.Bijection.IsSingleCycle
       loop.path.chamberPath.monodromy) : loop.closure.IsKnot :=
   loop.path.closure_isKnot_of_monodromy_isSingleCycle base single
@@ -133,14 +133,14 @@ theorem
 /-- Concatenation of closed coefficient loops. -/
 def append {strands : Nat} {base :
   ProjectedFrame strands}
-    (first second : Progressive.Braid.Loop.Basic.AdmissibleLoop base) : Progressive.Braid.Loop.Basic.AdmissibleLoop base
+    (first second : AdmissibleLoop base) : AdmissibleLoop base
       where
   path := first.path.append second.path
 
 /-- Concatenating retained loops concatenates their extracted braid words in the same order. -/
 @[simp] theorem append_word {strands : Nat}
     {base : ProjectedFrame strands} (first second :
-      Progressive.Braid.Loop.Basic.AdmissibleLoop base) :
+      AdmissibleLoop base) :
     (first.append second).word = first.word ++ second.word := by
   exact ProjectedPath.word_append first.path second.path
 

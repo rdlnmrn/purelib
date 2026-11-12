@@ -13,6 +13,7 @@ import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Geometry.Rational.Box.Segment
 
 import Purelib.Curves.Hyperelliptic.Branches.BranchIsolation
+import Purelib.Curves.Hyperelliptic.Branches.BranchCutLifts
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits
 import Purelib.Data.Rat.Fraction.Compatibility
 import Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions
@@ -82,7 +83,7 @@ open Purelib.Riemann.Meshes
 
 open Purelib.Riemann.Meshes.PuncturedEdgeFaces
 
-open Purelib.Riemann.Paths.PreparedPathWinding
+open Purelib.Polynomial.Geometry.ClearPath.ClearSegment (pointAt_eq_line)
 
 open Purelib.Riemann.Periods.StandardPeriodGridLines
 
@@ -103,12 +104,12 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedFragmentCells (Pr
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {source :
   Differential genus}
-  {ambient : Purelib.Geometry.Rational.Box} {grid : Polynomial.Geometry.Grid.ClearGrid
+  {ambient : Rational.Box} {grid : ClearGrid
     curve.polynomial ambient} {axes :
     PrimitiveAxes grid}
-  {parent : CenteredEdge curve source} {partition :
-    Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)}
-  {interval : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval}
+  {parent : CenteredEdge curve source} {cuts : List Rational} {partition :
+    Partition 0 1 cuts}
+  {interval : PreparedAxisPartitions.Interval}
 
 set_option genInjectivity false in
 /-- The point may be internal to the complete grid edge or one of its endpoints. Its parameter is certified, not
@@ -116,7 +117,7 @@ inferred from a shared coordinate.
 
 Its original closed-unit parameter identifies the point on the retained edge.
 Both endpoint positions are permitted and retain their supplied coordinates. -/
-structure EdgePoint {start finish : Data.Gaussian.Basic.Canonical} (edge : Walks.Edge grid start finish) (point :
+structure EdgePoint {start finish : Data.Gaussian.Basic.Canonical} (edge : Edge grid start finish) (point :
   Data.Gaussian.Basic.Canonical) where
   /-- The retained rational location on the original complete grid edge. -/ parameter : Fraction.Rational
   /-- The retained edge parameter lies in the original closed unit interval. -/ inside : 0 ≤ parameter ∧ parameter ≤ 1
@@ -128,13 +129,13 @@ constructive_injectivity EdgePoint
 namespace EdgePoint
 
 /-- Retain the exact normalized position of an original point on its complete horizontal grid edge. -/
-@[expose] def horizontal (span : ClearGrid.Interval (VerticalLine.coordinate (polynomial := curve.polynomial) (ambient
+@[expose] def horizontal (span : Grid.Interval (VerticalLine.coordinate (polynomial := curve.polynomial) (ambient
   := ambient)))
-    (adjacent : span ∈ grid.xIntervals) (line : ClearGrid.HorizontalLine curve.polynomial ambient) (member : line ∈
+    (adjacent : span ∈ grid.xIntervals) (line : HorizontalLine curve.polynomial ambient) (member : line ∈
       grid.horizontal)
     (point : Data.Gaussian.Basic.Canonical) (inside : span.lower.coordinate ≤ point.re ∧ point.re ≤
       span.upper.coordinate)
-    (fixed : point.im = line.coordinate) : Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.EdgePoint
+    (fixed : point.im = line.coordinate) : EdgePoint
       (Edge.horizontal span adjacent line member) point := by
   let parameter := (point.re - span.lower.coordinate) / (span.upper.coordinate - span.lower.coordinate)
   have identity : parameter * (span.upper.coordinate - span.lower.coordinate) = point.re - span.lower.coordinate :=
@@ -149,13 +150,13 @@ namespace EdgePoint
     ring1
 
 /-- Retain the exact normalized position of an original point on its complete vertical grid edge. -/
-@[expose] def vertical (span : ClearGrid.Interval (HorizontalLine.coordinate (polynomial := curve.polynomial) (ambient
+@[expose] def vertical (span : Grid.Interval (HorizontalLine.coordinate (polynomial := curve.polynomial) (ambient
   := ambient)))
-    (adjacent : span ∈ grid.yIntervals) (line : ClearGrid.VerticalLine curve.polynomial ambient) (member : line ∈
+    (adjacent : span ∈ grid.yIntervals) (line : VerticalLine curve.polynomial ambient) (member : line ∈
       grid.vertical)
     (point : Data.Gaussian.Basic.Canonical) (inside : span.lower.coordinate ≤ point.im ∧ point.im ≤
       span.upper.coordinate)
-    (fixed : point.re = line.coordinate) : Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.EdgePoint
+    (fixed : point.re = line.coordinate) : EdgePoint
       (Edge.vertical span adjacent line member) point := by
   let parameter := (point.im - span.lower.coordinate) / (span.upper.coordinate - span.lower.coordinate)
   have identity : parameter * (span.upper.coordinate - span.lower.coordinate) = point.im - span.lower.coordinate :=
@@ -170,11 +171,11 @@ namespace EdgePoint
     ring1
 
 /-- An original point on a retained edge belongs to every box containing both original edge endpoints. -/
-theorem contained {start finish point : Data.Gaussian.Basic.Canonical} {edge : Walks.Edge grid start finish} (location :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.EdgePoint edge point)
+theorem contained {start finish point : Data.Gaussian.Basic.Canonical} {edge : Edge grid start finish} (location :
+  EdgePoint edge point)
     {box : Rational.Box} (first : box.Contains start) (last : box.Contains finish) : box.Contains point
       := by
-  rw [← location.point_eq, ClearSegment.pointAt_eq_line]
+  rw [← location.point_eq, pointAt_eq_line]
   exact Rational.Box.contains_line first last location.inside
 
 end EdgePoint
@@ -184,10 +185,10 @@ set_option genInjectivity false in
 
 The retained edge carries certified parameters for both original fragment
 endpoints; it does not substitute a new fragment or reverse their order. -/
-structure FragmentGridEdge (fragment : PreparedFragmentCells.PrimitiveFragmentCell axes parent partition interval) where
+structure FragmentGridEdge (fragment : PrimitiveFragmentCell axes parent partition interval) where
   /-- The original complete grid edge starting point. -/ start : Data.Gaussian.Basic.Canonical
   /-- The original complete grid edge finishing point. -/ finish : Data.Gaussian.Basic.Canonical
-  /-- The retained complete original grid edge containing the source fragment. -/ edge : Walks.Edge grid start finish
+  /-- The retained complete original grid edge containing the source fragment. -/ edge : Edge grid start finish
   /-- The retained parameter identifying the original fragment start on the complete edge. -/ first :
     EdgePoint edge fragment.first
   /-- The retained parameter identifying the original fragment finish on the complete edge. -/ last :
@@ -201,7 +202,7 @@ namespace FragmentGridEdge
 
 The original cell occurrence splits into its retained horizontal and vertical
 interval memberships, without searching either coordinate list again. -/
-theorem cell_intervals {cell : ClearGrid.Cell curve.polynomial ambient} (member : cell ∈ grid.cells) :
+theorem cell_intervals {cell : Cell curve.polynomial ambient} (member : cell ∈ grid.cells) :
     cell.horizontal ∈ grid.xIntervals ∧ cell.vertical ∈ grid.yIntervals := by
   obtain ⟨horizontal, xMember, row⟩ := Flatten.mem_flatMap.mp member
   obtain ⟨vertical, yMember, rfl⟩ := Map.mem_map.mp row
@@ -209,9 +210,9 @@ theorem cell_intervals {cell : ClearGrid.Cell curve.polynomial ambient} (member 
 
 /-- Reuse the located cell's adjacent interval and the actual source line. The fragment keeps its original direction
 through its two edge parameters. -/
-@[expose] def build (fragment : PreparedFragmentCells.PrimitiveFragmentCell axes parent partition interval) (onLine :
-  Grid.ParentOnLine grid parent) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.FragmentGridEdge fragment := by
+@[expose] def build (fragment : PrimitiveFragmentCell axes parent partition interval) (onLine :
+  ParentOnLine grid parent) :
+    FragmentGridEdge fragment := by
   let intervals := cell_intervals
     fragment.cell_member
   if horizontal : (parent.edge.point 0).im ∈ grid.horizontal.map HorizontalLine.coordinate ∧
@@ -224,10 +225,10 @@ through its two edge parameters. -/
     have lastFixed : fragment.last.im = line.entry.coordinate := by
       rw [fragment.last_eq]
       exact (ParentOnLine.horizontal parent horizontal.2 _).trans line.coordinate_eq.symm
-    exact ⟨_, _, edge, Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.EdgePoint.horizontal _
+    exact ⟨_, _, edge, EdgePoint.horizontal _
       intervals.1 line.entry line.member fragment.first
       ⟨fragment.first_inside.1, fragment.first_inside.2.1⟩ firstFixed,
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.EdgePoint.horizontal _ intervals.1 line.entry
+      EdgePoint.horizontal _ intervals.1 line.entry
         line.member fragment.last
         ⟨fragment.last_inside.1, fragment.last_inside.2.1⟩ lastFixed⟩
   else
@@ -240,16 +241,91 @@ through its two edge parameters. -/
     have lastFixed : fragment.last.re = line.entry.coordinate := by
       rw [fragment.last_eq]
       exact (ParentOnLine.vertical parent vertical.2 _).trans line.coordinate_eq.symm
-    exact ⟨_, _, edge, Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.EdgePoint.vertical _ intervals.2
+    exact ⟨_, _, edge, EdgePoint.vertical _ intervals.2
       line.entry line.member fragment.first
       ⟨fragment.first_inside.2.2.1, fragment.first_inside.2.2.2⟩ firstFixed,
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.EdgePoint.vertical _ intervals.2 line.entry
+      EdgePoint.vertical _ intervals.2 line.entry
         line.member fragment.last
         ⟨fragment.last_inside.2.2.1, fragment.last_inside.2.2.2⟩ lastFixed⟩
 
+/-- A grid edge uses the containing cell's actual interval in its varying coordinate. -/
+private def sameIntervals (cell : Cell curve.polynomial ambient) :
+    {start finish : Gaussian} → Edge grid start finish → Prop
+  | _, _, .horizontal span _ _ _ => span = cell.horizontal
+  | _, _, .vertical span _ _ _ => span = cell.vertical
+  | _, _, .reverse edge => sameIntervals cell edge
+
+/-- The original fragment-edge factory preserves the located cell's varying interval. -/
+private theorem build_sameIntervals (fragment : PrimitiveFragmentCell axes parent partition interval)
+    (onLine : ParentOnLine grid parent) : sameIntervals fragment.cell (build fragment onLine).edge := by
+  unfold build
+  dsimp only
+  by_cases horizontal : (parent.edge.point 0).im ∈ grid.horizontal.map HorizontalLine.coordinate ∧
+      (parent.edge.point 1).im = (parent.edge.point 0).im
+  · rewrite [dif_pos horizontal]
+    rfl
+  · rewrite [dif_neg horizontal]
+    rfl
+
+/-- Read a containing cell from a cached edge's own line and interval payload, including reversal. -/
+private def containingCell (cell : Cell curve.polynomial ambient)
+    (horizontalMember : cell.horizontal ∈ grid.xIntervals) (verticalMember : cell.vertical ∈ grid.yIntervals) :
+    {start finish : Gaussian} → (edge : Edge grid start finish) → sameIntervals cell edge →
+    (point : Gaussian) → (parameter : Rational) → edge.segment.pointAt parameter = point →
+    cell.box.Contains point → {geometry : EdgeSides.EdgeCell grid start finish // geometry.cell = cell}
+  | _, _, .horizontal span _ line member => fun same point parameter pointEq inside => by
+      cases same
+      have fixed : point.im = line.coordinate := by
+        have equal := congrArg (fun value : Gaussian => value.im) pointEq
+        change line.coordinate + parameter * (line.coordinate - line.coordinate) = point.im at equal
+        have scalar : line.coordinate + parameter * (line.coordinate - line.coordinate) = line.coordinate := by
+          ring1
+        exact equal.symm.trans scalar
+      have lineInside : cell.vertical.lower.coordinate ≤ line.coordinate ∧
+          line.coordinate ≤ cell.vertical.upper.coordinate := by
+        rewrite [← fixed]
+        exact inside.2.2
+      exact EdgeSides.EdgeCell.horizontalInCell cell.horizontal horizontalMember cell.vertical verticalMember
+        line member lineInside
+  | _, _, .vertical span _ line member => fun same point parameter pointEq inside => by
+      cases same
+      have fixed : point.re = line.coordinate := by
+        have equal := congrArg (fun value : Gaussian => value.re) pointEq
+        change line.coordinate + parameter * (line.coordinate - line.coordinate) = point.re at equal
+        have scalar : line.coordinate + parameter * (line.coordinate - line.coordinate) = line.coordinate := by
+          ring1
+        exact equal.symm.trans scalar
+      have lineInside : cell.horizontal.lower.coordinate ≤ line.coordinate ∧
+          line.coordinate ≤ cell.horizontal.upper.coordinate := by
+        rewrite [← fixed]
+        exact ⟨inside.1, inside.2.1⟩
+      exact EdgeSides.EdgeCell.verticalInCell cell.vertical verticalMember cell.horizontal horizontalMember
+        line member lineInside
+  | _, _, .reverse edge => fun same point parameter pointEq inside =>
+      let previous := containingCell cell horizontalMember verticalMember edge same point (1 - parameter)
+        ((Curves.Hyperelliptic.Branches.BranchCutLifts.ClearSegment.reverse_pointAt edge.segment parameter).symm.trans
+          pointEq) inside
+      ⟨previous.val.reverse, previous.property⟩
+
+/-- Attach the once-built fragment edge to the SAME located cell using its complete factory identity.
+
+The executable branch consumes the supplied edge's cached line and interval
+payloads. Its factory equality supplies only erased interval-incidence
+evidence; the original edge factory and axis lookup are not run again. -/
+def selectedCell (fragment : PrimitiveFragmentCell axes parent partition interval)
+    (onLine : ParentOnLine grid parent) (retained : FragmentGridEdge fragment)
+    (retained_eq : retained = build fragment onLine) :
+    {geometry : EdgeSides.EdgeCell grid retained.start retained.finish // geometry.cell = fragment.cell} := by
+  have same : sameIntervals fragment.cell retained.edge :=
+    Eq.mpr (congrArg (fun value : FragmentGridEdge fragment => sameIntervals fragment.cell value.edge) retained_eq)
+      (build_sameIntervals fragment onLine)
+  let intervals := cell_intervals fragment.cell_member
+  exact containingCell fragment.cell intervals.1 intervals.2 retained.edge same fragment.first
+    retained.first.parameter retained.first.point_eq fragment.first_inside
+
 end FragmentGridEdge
 
-variable {branches : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve} {higher : 1 <
+variable {branches : Branches.BranchIsolation.Data curve} {higher : 1 <
   curve.polynomial.natDegree}
   {base : FramedPuncturedGrid curve branches higher}
 
@@ -258,16 +334,16 @@ set_option genInjectivity false in
 
 The retained incident face contains both original fragment endpoints.
 The selected edge and its position certificates preserve the original direction. -/
-structure RegularPrimitiveFragment (axes : PreparedPrimitiveSplits.PrimitiveAxes base.bank.grid) (parent :
-  PreparedSubdivisionModelCore.CenteredEdge curve source)
-    (partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)) (interval :
+structure RegularPrimitiveFragment (axes : PrimitiveAxes base.bank.grid) (parent :
+  CenteredEdge curve source)
+    {cuts : List Rational} (partition : Partition 0 1 cuts) (interval :
       PreparedAxisPartitions.Interval) where
   /-- The original source fragment with its cached grid cell and endpoint positions. -/ located :
-    PreparedFragmentCells.PrimitiveFragmentCell axes parent partition interval
+    PrimitiveFragmentCell axes parent partition interval
   /-- The retained complete original grid edge containing the fragment endpoints. -/ source :
     FragmentGridEdge located
   /-- The retained certified regular face incident to the complete original edge. -/ face :
-    PuncturedEdgeFaces.RegularEdgeCell base source.start source.finish
+    RegularEdgeCell base source.start source.finish
   /-- The original oriented fragment start belongs to the selected regular face. -/ first_inside :
     face.geometry.cell.box.Contains located.first
   /-- The original oriented fragment finish belongs to the same selected regular face. -/ last_inside :
@@ -279,21 +355,69 @@ namespace RegularPrimitiveFragment
 
 variable {axes : PrimitiveAxes base.bank.grid}
   {parent : CenteredEdge curve source}
-  {partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)}
-    {interval : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval}
+  {cuts : List Rational} {partition : Partition 0 1 cuts}
+    {interval : PreparedAxisPartitions.Interval}
 
 /-- Select the original complete edge's retained regular incident face and certify both original fragment endpoints
 inside it. -/
-@[expose] def build (located : PreparedFragmentCells.PrimitiveFragmentCell axes parent partition interval)
-    (onLine : Grid.ParentOnLine base.bank.grid parent) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.RegularPrimitiveFragment axes parent partition
+@[expose] def build (located : PrimitiveFragmentCell axes parent partition interval)
+    (onLine : ParentOnLine base.bank.grid parent) :
+      RegularPrimitiveFragment axes parent partition
       interval :=
-  let source := Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.FragmentGridEdge.build located onLine
+  let source := FragmentGridEdge.build located onLine
   let star := VertexStar.build base source.start source.edge.vertices.1
   let face := RegularEdgeCell.acquire star source.edge
   ⟨located, source, face,
     source.first.contained face.geometry.first.corner.contains face.geometry.last.corner.contains,
     source.last.contained face.geometry.first.corner.contains face.geometry.last.corner.contains⟩
+
+/-- Retain an existing selected regular location on the same once-built fragment edge and geometric cell.
+
+Only the exact cell equality transports the original RegularLocation. The
+source fragment, its endpoint parameters and its actual selected payload
+remain inputs; no star, incident-face lookup or root classification runs. -/
+@[expose] def ofSelectedCell (located : PrimitiveFragmentCell axes parent partition interval)
+    (retained : FragmentGridEdge located)
+    (selected : {geometry : EdgeSides.EdgeCell base.bank.grid retained.start retained.finish //
+      geometry.cell = located.cell})
+    (location : PuncturedGridFaces.RegularLocation base.faces.regulars located.cell) :
+    RegularPrimitiveFragment axes parent partition interval :=
+  ⟨located, retained,
+    ⟨selected.val,
+      Eq.mpr (congrArg (fun cell => PuncturedGridFaces.RegularLocation base.faces.regulars cell)
+        selected.property) location⟩,
+    Eq.mpr (congrArg (fun cell => cell.box.Contains located.first) selected.property) located.first_inside,
+    Eq.mpr (congrArg (fun cell => cell.box.Contains located.last) selected.property) located.last_inside⟩
+
+/-- The selected-cell construction retains the complete original located fragment. -/
+theorem ofSelectedCell_located (located : PrimitiveFragmentCell axes parent partition interval)
+    (retained : FragmentGridEdge located)
+    (selected : {geometry : EdgeSides.EdgeCell base.bank.grid retained.start retained.finish //
+      geometry.cell = located.cell})
+    (location : PuncturedGridFaces.RegularLocation base.faces.regulars located.cell) :
+    (ofSelectedCell located retained selected location).located = located := rfl
+
+/-- The selected-cell construction retains the complete original fragment-edge cache. -/
+theorem ofSelectedCell_source (located : PrimitiveFragmentCell axes parent partition interval)
+    (retained : FragmentGridEdge located)
+    (selected : {geometry : EdgeSides.EdgeCell base.bank.grid retained.start retained.finish //
+      geometry.cell = located.cell})
+    (location : PuncturedGridFaces.RegularLocation base.faces.regulars located.cell) :
+    (ofSelectedCell located retained selected location).source = retained := rfl
+
+/-- The regular-face payload remains the same original selected location under its exact cell-index transport. -/
+theorem ofSelectedCell_location_heq (located : PrimitiveFragmentCell axes parent partition interval)
+    (retained : FragmentGridEdge located)
+    (selected : {geometry : EdgeSides.EdgeCell base.bank.grid retained.start retained.finish //
+      geometry.cell = located.cell})
+    (location : PuncturedGridFaces.RegularLocation base.faces.regulars located.cell) :
+    HEq (ofSelectedCell located retained selected location).face.located location := by
+  have transported {First Last : Sort _} (equal : First = Last) (value : Last) :
+      HEq (Eq.mpr equal value) value := by
+    cases equal
+    rfl
+  exact transported
+    (congrArg (fun cell => PuncturedGridFaces.RegularLocation base.faces.regulars cell) selected.property) location
 
 end RegularPrimitiveFragment
 
@@ -302,9 +426,9 @@ set_option genInjectivity false in
 
 The recursive certificate aligns each original interval and fragment with
 its retained incident face, preserving the source partition order. -/
-inductive RegularPrimitiveFragments (axes : PreparedPrimitiveSplits.PrimitiveAxes base.bank.grid) (parent :
-  PreparedSubdivisionModelCore.CenteredEdge curve source)
-    (partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)) : List PreparedAxisPartitions.Interval →
+inductive RegularPrimitiveFragments (axes : PrimitiveAxes base.bank.grid) (parent :
+  CenteredEdge curve source)
+    (partition : Partition 0 1 (axes.parameters parent)) : List PreparedAxisPartitions.Interval →
       Type
   /-- The empty original fragment list retains no regular faces. -/ | nil :
     RegularPrimitiveFragments axes parent
@@ -324,17 +448,17 @@ namespace RegularPrimitiveFragments
 
 variable {axes : PrimitiveAxes base.bank.grid}
   {parent : CenteredEdge curve source}
-  {partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)}
+  {partition : Partition 0 1 (axes.parameters parent)}
 
 /-- Assign a retained regular incident face to each original located fragment without changing its endpoint order. -/
-@[expose] def build (onLine : Grid.ParentOnLine base.bank.grid parent) :
-    ∀ {intervals : List PreparedAxisPartitions.Interval}, PreparedFragmentCells.PrimitiveFragmentCells axes parent
+@[expose] def build (onLine : ParentOnLine base.bank.grid parent) :
+    ∀ {intervals : List PreparedAxisPartitions.Interval}, PrimitiveFragmentCells axes parent
       partition intervals →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.RegularPrimitiveFragments axes parent partition
+      RegularPrimitiveFragments axes parent partition
         intervals
   | _, .nil => .nil
   | _, .cons head tail => .cons
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.RegularPrimitiveFragment.build (base := base) head
+    (RegularPrimitiveFragment.build (base := base) head
     onLine) (build
     onLine tail)
 
@@ -345,16 +469,16 @@ set_option genInjectivity false in
 
 The recursive certificate follows the retained parent and fragment spines.
 Every chosen incident face keeps its original owner and endpoint positions. -/
-inductive RegularPrimitiveSplits (axes : PreparedPrimitiveSplits.PrimitiveAxes base.bank.grid) :
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)} → PreparedPrimitiveSplits.PrimitiveSplits
+inductive RegularPrimitiveSplits (axes : PrimitiveAxes base.bank.grid) :
+    {parents : List (CenteredEdge curve source)} → PrimitiveSplits
       axes parents → Type
   /-- The empty original parent splitting retains no regular fragment faces. -/ | nil :
     RegularPrimitiveSplits axes .nil
   /-- Retain the original head parent's regular fragment faces followed by the exact original splitting tail. -/ | cons
-    {parent : PreparedSubdivisionModelCore.CenteredEdge curve source} {parents : List
-    (PreparedSubdivisionModelCore.CenteredEdge curve source)}
-      {partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)} {splits :
-        PreparedPrimitiveSplits.PrimitiveSplits axes parents}
+    {parent : CenteredEdge curve source} {parents : List
+    (CenteredEdge curve source)}
+      {partition : Partition 0 1 (axes.parameters parent)} {splits :
+        PrimitiveSplits axes parents}
       (head : RegularPrimitiveFragments axes parent
         partition partition.intervals) (tail :
         RegularPrimitiveSplits axes splits) :
@@ -370,13 +494,13 @@ variable {axes : PrimitiveAxes base.bank.grid}
 /-- Assign regular incident faces throughout the original located splitting using its retained source grid-line
 certificates. -/
 @[expose] def build :
-    ∀ {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)} {splits :
-      PreparedPrimitiveSplits.PrimitiveSplits axes parents},
-      PreparedFragmentCells.LocatedPrimitiveSplits axes splits → Grid.ParentsOnLines base.bank.grid parents →
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.RegularPrimitiveSplits axes splits
+    ∀ {parents : List (CenteredEdge curve source)} {splits :
+      PrimitiveSplits axes parents},
+      LocatedPrimitiveSplits axes splits → ParentsOnLines base.bank.grid parents →
+        RegularPrimitiveSplits axes splits
   | _, _, .nil, _ => .nil
   | _, _, .cons head tail, onLines =>
-      .cons (Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.RegularPrimitiveFragments.build (base :=
+      .cons (RegularPrimitiveFragments.build (base :=
         base) onLines.1 head)
         (build tail
         onLines.2)

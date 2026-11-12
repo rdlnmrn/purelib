@@ -21,6 +21,8 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.RootIsolation.State.WindingOne.Basic
 import Purelib.RootIsolation.Track.Basic
 
+open Purelib.RootIsolation.SquareRoot.Preparation.Terminal
+
 open Purelib.Data.Rat
 
 open Purelib.Polynomial
@@ -43,8 +45,8 @@ open Purelib.Riemann.Branches.PreparedSheetContinuation
 open Purelib.Riemann.Paths.PreparedClearPathModels
   (GaussianPolynomial Gaussian Box Owner Endpoint zeroEndpoint oneEndpoint ownerAtStart CompleteSegment)
 
-attribute [local irreducible] Riemann.Branches.PreparedSheetContinuation.advanceCached
-  Riemann.Branches.PreparedSheetContinuation.retainedAtReserve
+attribute [local irreducible] advanceCached
+  retainedAtReserve
 
 variable {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
   (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) (within : segment.WithinAmbient)
@@ -52,51 +54,51 @@ variable {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gauss
 /-- The original checked acquisition attempt for the exact initial owner and finite request list. -/
 abbrev Outcome (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter))) (requests : List
-      Riemann.Branches.PreparedSheetContinuation.StepRequest) :=
-  SquareRoot.Preparation.Terminal.TerminalAcquisition.Attempt segment within current owner requests
+      StepRequest) :=
+  TerminalAcquisition.Attempt segment within current owner requests
 
 /-- A retained acquisition outcome with equality to the original finite execution. -/
 abbrev Checked (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter))) (requests : List
-      Riemann.Branches.PreparedSheetContinuation.StepRequest) :=
-  {value : SquareRoot.Replay.TerminalAcquisitionReplay.Outcome segment within current owner requests //
-    value = SquareRoot.Preparation.Terminal.TerminalAcquisition.attempt segment within current owner requests}
+      StepRequest) :=
+  {value : Outcome segment within current owner requests //
+    value = TerminalAcquisition.attempt segment within current owner requests}
 
 /-- Restore the empty-request execution with its original endpoint and owner. -/
 @[expose] def stop (current : Endpoint) (owner : Owner (polynomial.eval (segment.pointAt current.parameter))) :
-    SquareRoot.Replay.TerminalAcquisitionReplay.Checked segment within current owner [] :=
-  ⟨SquareRoot.Preparation.Terminal.TerminalAcquisition.Attempt.accepted
-    (SquareRoot.Preparation.Terminal.TerminalAcquisition.Execution.mk (.stop current owner) rfl current rfl owner
+    Checked segment within current owner [] :=
+  ⟨TerminalAcquisition.Attempt.accepted
+    (Preparation.Terminal.TerminalAcquisition.Execution.mk (.stop current owner) rfl current rfl owner
     HEq.rfl), rfl⟩
 
 /-- Restore a declined attempt whose first requested endpoint precedes the current parameter. -/
 @[expose] def unordered (current : Endpoint) (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
-    (request : Riemann.Branches.PreparedSheetContinuation.StepRequest) (requests : List
-      Riemann.Branches.PreparedSheetContinuation.StepRequest)
+    (request : StepRequest) (requests : List
+      StepRequest)
     (miss : ¬ current.parameter ≤ request.endpoint.parameter) :
-    SquareRoot.Replay.TerminalAcquisitionReplay.Checked segment within current owner (request :: requests) := by
-  refine ⟨SquareRoot.Preparation.Terminal.TerminalAcquisition.Attempt.declined ?_, ?_⟩
-  · simp only [Riemann.Branches.PreparedSheetContinuation.Subdivision.trySteps, dif_neg miss, -eq_self]
+    Checked segment within current owner (request :: requests) := by
+  refine ⟨TerminalAcquisition.Attempt.declined ?_, ?_⟩
+  · simp only [Subdivision.trySteps, dif_neg miss, -eq_self]
     rfl
-  · dsimp only [SquareRoot.Preparation.Terminal.TerminalAcquisition.attempt]
+  · dsimp only [TerminalAcquisition.attempt]
     simp only [dif_neg miss, -eq_self]
     rfl
 
 /-- Restore a declined attempt whose first variation bound fails the cached source's clearance test. -/
 @[expose] def tooLarge (current : Endpoint) (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
-    (request : Riemann.Branches.PreparedSheetContinuation.StepRequest) (requests : List
-      Riemann.Branches.PreparedSheetContinuation.StepRequest)
-    (cached : Riemann.Branches.PreparedSheetContinuation.CachedSource segment current owner request)
+    (request : StepRequest) (requests : List
+      StepRequest)
+    (cached : CachedSource segment current owner request)
     (ordered : current.parameter ≤ request.endpoint.parameter)
-    (miss : ¬ Riemann.Branches.ClearSheetContinuation.variationBound segment current.parameter
+    (miss : ¬ ClearSheetContinuation.variationBound segment current.parameter
       request.endpoint.parameter <
       cached.preparedOwner.track.initial.clearance.bound) :
-    SquareRoot.Replay.TerminalAcquisitionReplay.Checked segment within current owner (request :: requests) := by
+    Checked segment within current owner (request :: requests) := by
   have same := cached.eq_canonical
   cases same
-  refine ⟨SquareRoot.Preparation.Terminal.TerminalAcquisition.Attempt.declined ?_, ?_⟩
-  · rw [Riemann.Branches.PreparedSheetContinuation.Subdivision.trySteps, dif_pos ordered, dif_neg miss]
-  · dsimp only [SquareRoot.Preparation.Terminal.TerminalAcquisition.attempt]
+  refine ⟨TerminalAcquisition.Attempt.declined ?_, ?_⟩
+  · rw [Subdivision.trySteps, dif_pos ordered, dif_neg miss]
+  · dsimp only [TerminalAcquisition.attempt]
     simp only [dif_pos ordered, dif_neg miss, -eq_self]
     rfl
 
@@ -105,22 +107,22 @@ abbrev Checked (current : Endpoint)
 The successor owner must equal the original cached advance; both accepted and declined tails preserve the original full
 execution. -/
 @[expose] def prepend (current : Endpoint) (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
-    (request : Riemann.Branches.PreparedSheetContinuation.StepRequest) (requests : List
-      Riemann.Branches.PreparedSheetContinuation.StepRequest)
-    (cached : Riemann.Branches.PreparedSheetContinuation.CachedSource segment current owner request)
+    (request : StepRequest) (requests : List
+      StepRequest)
+    (cached : CachedSource segment current owner request)
     (ordered : current.parameter ≤ request.endpoint.parameter)
-    (small : Riemann.Branches.ClearSheetContinuation.variationBound segment current.parameter request.endpoint.parameter
+    (small : ClearSheetContinuation.variationBound segment current.parameter request.endpoint.parameter
       <
       cached.preparedOwner.track.initial.clearance.bound)
     (next : Owner (polynomial.eval (segment.pointAt request.endpoint.parameter)))
-    (nextEq : next = Riemann.Branches.PreparedSheetContinuation.advanceCached segment within current owner request
+    (nextEq : next = advanceCached segment within current owner request
       cached small)
-    (tail : SquareRoot.Replay.TerminalAcquisitionReplay.Checked segment within request.endpoint next requests) :
-    SquareRoot.Replay.TerminalAcquisitionReplay.Checked segment within current owner (request :: requests) := by
+    (tail : Checked segment within request.endpoint next requests) :
+    Checked segment within current owner (request :: requests) := by
   cases nextEq
-  have canonicalSmall : Riemann.Branches.ClearSheetContinuation.variationBound segment current.parameter
+  have canonicalSmall : ClearSheetContinuation.variationBound segment current.parameter
     request.endpoint.parameter <
-      (Riemann.Branches.PreparedSheetContinuation.prepared segment current owner request).track.initial.clearance.bound
+      (prepared segment current owner request).track.initial.clearance.bound
         := by
     rw [← cached.preparedOwner_eq]
     exact small
@@ -129,33 +131,33 @@ execution. -/
   rcases tail with ⟨tail, tailEq⟩
   cases tail with
   | declined failure =>
-      refine ⟨SquareRoot.Preparation.Terminal.TerminalAcquisition.Attempt.declined ?_, ?_⟩
-      · rw [Riemann.Branches.PreparedSheetContinuation.Subdivision.trySteps, dif_pos ordered, dif_pos small]
+      refine ⟨TerminalAcquisition.Attempt.declined ?_, ?_⟩
+      · rw [Subdivision.trySteps, dif_pos ordered, dif_pos small]
         dsimp only
         rw [failure]
-      · dsimp only [SquareRoot.Preparation.Terminal.TerminalAcquisition.attempt]
+      · dsimp only [TerminalAcquisition.attempt]
         simp only [dif_pos ordered, dif_pos small, ← tailEq, -eq_self]
         rfl
   | accepted rest =>
-      refine ⟨SquareRoot.Preparation.Terminal.TerminalAcquisition.Attempt.accepted
-        (SquareRoot.Preparation.Terminal.TerminalAcquisition.Execution.mk
-        (Riemann.Branches.PreparedSheetContinuation.Subdivision.nextCached segment within current owner request
-          (Riemann.Branches.PreparedSheetContinuation.CachedSource.canonical segment current owner request) ordered
-            small canonicalSmall (SquareRoot.Preparation.Terminal.TerminalAcquisition.Execution.subdivision rest))
-        ?_ (SquareRoot.Preparation.Terminal.TerminalAcquisition.Execution.endpoint rest)
-          ((Riemann.Branches.PreparedSheetContinuation.Subdivision.nextCached_endpoint ..).trans
-          (SquareRoot.Preparation.Terminal.TerminalAcquisition.Execution.endpoint_eq rest))
-        (SquareRoot.Preparation.Terminal.TerminalAcquisition.Execution.terminalOwner rest) ?_), ?_⟩
-      · rw [Riemann.Branches.PreparedSheetContinuation.Subdivision.trySteps, dif_pos ordered, dif_pos small]
+      refine ⟨TerminalAcquisition.Attempt.accepted
+        (Preparation.Terminal.TerminalAcquisition.Execution.mk
+        (Subdivision.nextCached segment within current owner request
+          (CachedSource.canonical segment current owner request) ordered
+            small canonicalSmall (TerminalAcquisition.Execution.subdivision rest))
+        ?_ (TerminalAcquisition.Execution.endpoint rest)
+          ((Subdivision.nextCached_endpoint ..).trans
+          (TerminalAcquisition.Execution.endpoint_eq rest))
+        (TerminalAcquisition.Execution.terminalOwner rest) ?_), ?_⟩
+      · rw [Subdivision.trySteps, dif_pos ordered, dif_pos small]
         dsimp only
-        rw [(SquareRoot.Preparation.Terminal.TerminalAcquisition.Execution.success rest)]
-      · exact (SquareRoot.Preparation.Terminal.TerminalAcquisition.Execution.terminalOwner_heq rest).trans
-          (SquareRoot.Preparation.Terminal.TerminalAcquisition.castOwner_terminal_heq
-          (Riemann.Branches.PreparedSheetContinuation.advanceCached_eq_advance segment within current owner request
-            (Riemann.Branches.PreparedSheetContinuation.CachedSource.canonical segment current owner request) small
+        rw [(TerminalAcquisition.Execution.success rest)]
+      · exact (TerminalAcquisition.Execution.terminalOwner_heq rest).trans
+          (TerminalAcquisition.castOwner_terminal_heq
+          (advanceCached_eq_advance segment within current owner request
+            (CachedSource.canonical segment current owner request) small
               canonicalSmall)
-          (SquareRoot.Preparation.Terminal.TerminalAcquisition.Execution.subdivision rest)).symm
-      · dsimp only [SquareRoot.Preparation.Terminal.TerminalAcquisition.attempt]
+          (TerminalAcquisition.Execution.subdivision rest)).symm
+      · dsimp only [TerminalAcquisition.attempt]
         simp only [dif_pos ordered, dif_pos small, ← tailEq, -eq_self]
         rfl
 
@@ -163,7 +165,7 @@ execution. -/
 including their request list and terminal owner. -/
 theorem acquired_eq_of_depth {owner : Owner (polynomial.eval start)} {diameter : Fraction.Rational}
     {positive : 0 < diameter}
-    (first second : SquareRoot.Preparation.Terminal.AcquiredDyadic segment within owner diameter positive)
+    (first second : Preparation.Terminal.AcquiredDyadic segment within owner diameter positive)
     (same : first.depth = second.depth) : first = second := by
   cases first with
   | mk firstDepth firstPrepared firstSuccess firstRequests firstRequestsEq firstOwner firstOwnerEq =>
@@ -190,103 +192,103 @@ the requested depth; neither case substitutes a different mesh. -/
 inductive DepthResult (owner : Owner (polynomial.eval start)) (diameter : Fraction.Rational)
     (positive : 0 < diameter) (depth : Nat) where
   /-- A complete retained acquisition whose actual depth equals the original requested depth. -/ | accepted (value :
-    SquareRoot.Preparation.Terminal.AcquiredDyadic segment within owner diameter positive) (same : value.depth = depth)
+    Preparation.Terminal.AcquiredDyadic segment within owner diameter positive) (same : value.depth = depth)
   /-- The original dyadic checker returned no subdivision at the exact requested depth. -/ | declined (failure :
-    Riemann.Branches.PreparedSheetContinuation.Subdivision.tryDyadic segment within
-    Riemann.Paths.PreparedClearPathModels.zeroEndpoint Riemann.Paths.PreparedClearPathModels.oneEndpoint
-      (Riemann.Paths.PreparedClearPathModels.ownerAtStart segment owner) depth diameter positive = none)
+    Subdivision.tryDyadic segment within
+    zeroEndpoint oneEndpoint
+      (ownerAtStart segment owner) depth diameter positive = none)
 
 constructive_injectivity DepthResult
 
 /-- A successful acquisition at the safe depth equals the original safe-depth constructor's complete retained result. -/
 theorem acquired_eq_safe (owner : Owner (polynomial.eval start)) (diameter : Fraction.Rational)
     (positive : 0 < diameter) (depth : Nat)
-    (safe : Riemann.Branches.PreparedSheetContinuation.Subdivision.DyadicMeshSafe segment
-      Riemann.Paths.PreparedClearPathModels.zeroEndpoint Riemann.Paths.PreparedClearPathModels.oneEndpoint
-      (Riemann.Paths.PreparedClearPathModels.ownerAtStart segment owner)
+    (safe : Subdivision.DyadicMeshSafe segment
+      zeroEndpoint oneEndpoint
+      (ownerAtStart segment owner)
       depth diameter positive)
-    (value : SquareRoot.Preparation.Terminal.AcquiredDyadic segment within owner diameter positive) (same : value.depth
+    (value : Preparation.Terminal.AcquiredDyadic segment within owner diameter positive) (same : value.depth
       = depth) :
-    value = (SquareRoot.Preparation.Terminal.AcquiredDyadic.acquire segment within owner diameter positive depth depth
+    value = (AcquiredDyadic.acquire segment within owner diameter positive depth depth
       safe).val := by
-  apply SquareRoot.Replay.TerminalAcquisitionReplay.acquired_eq_of_depth segment within value
-  have selected := (SquareRoot.Preparation.Terminal.AcquiredDyadic.acquire segment within owner diameter positive depth
+  apply acquired_eq_of_depth segment within value
+  have selected := (AcquiredDyadic.acquire segment within owner diameter positive depth
     depth safe).property
   exact same.trans (selected.elim id id).symm
 
 /-- Read a checked dyadic attempt as either its exact requested-depth acquisition or the retained checker failure. -/
 @[expose] def atDepth (owner : Owner (polynomial.eval start)) (diameter : Fraction.Rational)
     (positive : 0 < diameter) (depth : Nat)
-    (saved : SquareRoot.Replay.TerminalAcquisitionReplay.Checked segment within
-      Riemann.Paths.PreparedClearPathModels.zeroEndpoint (Riemann.Paths.PreparedClearPathModels.ownerAtStart segment
+    (saved : Checked segment within
+      zeroEndpoint (ownerAtStart segment
       owner)
-      (Riemann.Branches.PreparedSheetContinuation.Subdivision.dyadicRequests depth
-        Riemann.Paths.PreparedClearPathModels.zeroEndpoint Riemann.Paths.PreparedClearPathModels.oneEndpoint diameter
+      (Subdivision.dyadicRequests depth
+        zeroEndpoint oneEndpoint diameter
         positive)) :
-    SquareRoot.Replay.TerminalAcquisitionReplay.DepthResult segment within owner diameter positive depth := by
+    DepthResult segment within owner diameter positive depth := by
   rcases saved with ⟨saved, _same⟩
   cases saved with
   | declined failure => exact .declined failure
   | accepted retained =>
-      exact .accepted (SquareRoot.Preparation.Terminal.AcquiredDyadic.ofExecution depth _ rfl retained) rfl
+      exact .accepted (AcquiredDyadic.ofExecution depth _ rfl retained) rfl
 
 /-- A successful shorter preferred-depth acquisition equals the original constructor's selected result. -/
 theorem acquired_eq_preferred (owner : Owner (polynomial.eval start)) (diameter : Fraction.Rational)
     (positive : 0 < diameter) (preferred safeDepth : Nat)
-    (safe : Riemann.Branches.PreparedSheetContinuation.Subdivision.DyadicMeshSafe segment
-      Riemann.Paths.PreparedClearPathModels.zeroEndpoint Riemann.Paths.PreparedClearPathModels.oneEndpoint
-      (Riemann.Paths.PreparedClearPathModels.ownerAtStart segment owner)
+    (safe : Subdivision.DyadicMeshSafe segment
+      zeroEndpoint oneEndpoint
+      (ownerAtStart segment owner)
       safeDepth diameter positive) (shorter : preferred < safeDepth)
-    (value : SquareRoot.Preparation.Terminal.AcquiredDyadic segment within owner diameter positive) (same : value.depth
+    (value : Preparation.Terminal.AcquiredDyadic segment within owner diameter positive) (same : value.depth
       = preferred) :
-    value = (SquareRoot.Preparation.Terminal.AcquiredDyadic.acquire segment within owner diameter positive preferred
+    value = (AcquiredDyadic.acquire segment within owner diameter positive preferred
       safeDepth safe).val := by
-  apply SquareRoot.Replay.TerminalAcquisitionReplay.acquired_eq_of_depth segment within value
+  apply acquired_eq_of_depth segment within value
   apply same.trans
   symm
-  unfold SquareRoot.Preparation.Terminal.AcquiredDyadic.acquire
+  unfold AcquiredDyadic.acquire
   simp only [if_pos shorter]
-  cases found : SquareRoot.Preparation.Terminal.TerminalAcquisition.attempt segment within
-    Riemann.Paths.PreparedClearPathModels.zeroEndpoint (Riemann.Paths.PreparedClearPathModels.ownerAtStart segment
+  cases found : TerminalAcquisition.attempt segment within
+    zeroEndpoint (ownerAtStart segment
     owner)
-      (Riemann.Branches.PreparedSheetContinuation.Subdivision.dyadicRequests preferred
-        Riemann.Paths.PreparedClearPathModels.zeroEndpoint Riemann.Paths.PreparedClearPathModels.oneEndpoint diameter
+      (Subdivision.dyadicRequests preferred
+        zeroEndpoint oneEndpoint diameter
         positive) with
   | accepted retained => rfl
   | declined failure =>
       have success := value.success
       rw [same] at success
-      change Riemann.Branches.PreparedSheetContinuation.Subdivision.trySteps _ _ _ _ _ = some _ at success
+      change Subdivision.trySteps _ _ _ _ _ = some _ at success
       rw [failure] at success
       cases success
 
 /-- When the preferred depth is not shorter, a successful safe-depth acquisition equals the original selected result. -/
 theorem acquired_eq_without_preferred (owner : Owner (polynomial.eval start)) (diameter : Fraction.Rational)
     (positive : 0 < diameter) (preferred safeDepth : Nat)
-    (safe : Riemann.Branches.PreparedSheetContinuation.Subdivision.DyadicMeshSafe segment
-      Riemann.Paths.PreparedClearPathModels.zeroEndpoint Riemann.Paths.PreparedClearPathModels.oneEndpoint
-      (Riemann.Paths.PreparedClearPathModels.ownerAtStart segment owner)
+    (safe : Subdivision.DyadicMeshSafe segment
+      zeroEndpoint oneEndpoint
+      (ownerAtStart segment owner)
       safeDepth diameter positive) (notShorter : ¬ preferred < safeDepth)
-    (value : SquareRoot.Preparation.Terminal.AcquiredDyadic segment within owner diameter positive) (same : value.depth
+    (value : Preparation.Terminal.AcquiredDyadic segment within owner diameter positive) (same : value.depth
       = safeDepth) :
-    value = (SquareRoot.Preparation.Terminal.AcquiredDyadic.acquire segment within owner diameter positive preferred
+    value = (AcquiredDyadic.acquire segment within owner diameter positive preferred
       safeDepth safe).val := by
-  apply SquareRoot.Replay.TerminalAcquisitionReplay.acquired_eq_of_depth segment within value
+  apply acquired_eq_of_depth segment within value
   apply same.trans
   symm
-  unfold SquareRoot.Preparation.Terminal.AcquiredDyadic.acquire
+  unfold AcquiredDyadic.acquire
   simp only [if_neg notShorter]
-  cases found : SquareRoot.Preparation.Terminal.TerminalAcquisition.attempt segment within
-    Riemann.Paths.PreparedClearPathModels.zeroEndpoint (Riemann.Paths.PreparedClearPathModels.ownerAtStart segment
+  cases found : TerminalAcquisition.attempt segment within
+    zeroEndpoint (ownerAtStart segment
     owner)
-      (Riemann.Branches.PreparedSheetContinuation.Subdivision.dyadicRequests safeDepth
-        Riemann.Paths.PreparedClearPathModels.zeroEndpoint Riemann.Paths.PreparedClearPathModels.oneEndpoint diameter
+      (Subdivision.dyadicRequests safeDepth
+        zeroEndpoint oneEndpoint diameter
         positive) with
   | accepted retained => rfl
   | declined failure =>
       have success := value.success
       rw [same] at success
-      change Riemann.Branches.PreparedSheetContinuation.Subdivision.trySteps _ _ _ _ _ = some _ at success
+      change Subdivision.trySteps _ _ _ _ _ = some _ at success
       rw [failure] at success
       cases success
 
@@ -294,46 +296,46 @@ theorem acquired_eq_without_preferred (owner : Owner (polynomial.eval start)) (d
 -/
 theorem acquired_eq_after_decline (owner : Owner (polynomial.eval start)) (diameter : Fraction.Rational)
     (positive : 0 < diameter) (preferred safeDepth : Nat)
-    (safe : Riemann.Branches.PreparedSheetContinuation.Subdivision.DyadicMeshSafe segment
-      Riemann.Paths.PreparedClearPathModels.zeroEndpoint Riemann.Paths.PreparedClearPathModels.oneEndpoint
-      (Riemann.Paths.PreparedClearPathModels.ownerAtStart segment owner)
+    (safe : Subdivision.DyadicMeshSafe segment
+      zeroEndpoint oneEndpoint
+      (ownerAtStart segment owner)
       safeDepth diameter positive) (shorter : preferred < safeDepth)
-    (declined : Riemann.Branches.PreparedSheetContinuation.Subdivision.tryDyadic segment within
-      Riemann.Paths.PreparedClearPathModels.zeroEndpoint Riemann.Paths.PreparedClearPathModels.oneEndpoint
-      (Riemann.Paths.PreparedClearPathModels.ownerAtStart segment owner)
+    (declined : Subdivision.tryDyadic segment within
+      zeroEndpoint oneEndpoint
+      (ownerAtStart segment owner)
       preferred diameter positive = none)
-    (value : SquareRoot.Preparation.Terminal.AcquiredDyadic segment within owner diameter positive) (same : value.depth
+    (value : Preparation.Terminal.AcquiredDyadic segment within owner diameter positive) (same : value.depth
       = safeDepth) :
-    value = (SquareRoot.Preparation.Terminal.AcquiredDyadic.acquire segment within owner diameter positive preferred
+    value = (AcquiredDyadic.acquire segment within owner diameter positive preferred
       safeDepth safe).val := by
-  apply SquareRoot.Replay.TerminalAcquisitionReplay.acquired_eq_of_depth segment within value
+  apply acquired_eq_of_depth segment within value
   apply same.trans
   symm
-  unfold SquareRoot.Preparation.Terminal.AcquiredDyadic.acquire
+  unfold AcquiredDyadic.acquire
   simp only [if_pos shorter]
-  cases found : SquareRoot.Preparation.Terminal.TerminalAcquisition.attempt segment within
-    Riemann.Paths.PreparedClearPathModels.zeroEndpoint (Riemann.Paths.PreparedClearPathModels.ownerAtStart segment
+  cases found : TerminalAcquisition.attempt segment within
+    zeroEndpoint (ownerAtStart segment
     owner)
-      (Riemann.Branches.PreparedSheetContinuation.Subdivision.dyadicRequests preferred
-        Riemann.Paths.PreparedClearPathModels.zeroEndpoint Riemann.Paths.PreparedClearPathModels.oneEndpoint diameter
+      (Subdivision.dyadicRequests preferred
+        zeroEndpoint oneEndpoint diameter
         positive) with
   | accepted retained =>
-      have success := SquareRoot.Preparation.Terminal.TerminalAcquisition.Execution.success retained
-      change Riemann.Branches.PreparedSheetContinuation.Subdivision.trySteps _ _ _ _ _ = none at declined
+      have success := TerminalAcquisition.Execution.success retained
+      change Subdivision.trySteps _ _ _ _ _ = none at declined
       rw [declined] at success
       cases success
   | declined failure =>
-      cases later : SquareRoot.Preparation.Terminal.TerminalAcquisition.attempt segment within
-        Riemann.Paths.PreparedClearPathModels.zeroEndpoint (Riemann.Paths.PreparedClearPathModels.ownerAtStart segment
+      cases later : TerminalAcquisition.attempt segment within
+        zeroEndpoint (ownerAtStart segment
         owner)
-          (Riemann.Branches.PreparedSheetContinuation.Subdivision.dyadicRequests safeDepth
-            Riemann.Paths.PreparedClearPathModels.zeroEndpoint Riemann.Paths.PreparedClearPathModels.oneEndpoint
+          (Subdivision.dyadicRequests safeDepth
+            zeroEndpoint oneEndpoint
             diameter positive) with
       | accepted retained => rfl
       | declined failure =>
           have success := value.success
           rw [same] at success
-          change Riemann.Branches.PreparedSheetContinuation.Subdivision.trySteps _ _ _ _ _ = some _ at success
+          change Subdivision.trySteps _ _ _ _ _ = some _ at success
           rw [failure] at success
           cases success
 

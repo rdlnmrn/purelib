@@ -33,6 +33,8 @@ import Purelib.Riemann.Normalization.InverseRootPolynomial
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation.Rational
@@ -62,13 +64,13 @@ open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives (Sample)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.EnergyBounds
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {collar :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} {index : Nat} {box :
-    Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {domain :
-    Purelib.Geometry.Rational.Box}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {collar :
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {differential :
+    Differential genus} {index : Nat} {box :
+    Geometry.Rational.Box}
+  {sample : Sample cap differential index box} {domain :
+    Geometry.Rational.Box}
 
 set_option genInjectivity false in
 /-- A finite spatial-depth request paying the original cap Taylor error and complete triangle count.
@@ -87,7 +89,7 @@ structure EnergyRequest (bounds : EnergyBounds sample domain) (count : Nat) (tar
     toleranceIndex = Search.firstQuarterBelow 1 0 (target / (scale + 1))
   /-- The cached positive local Taylor tolerance. -/ epsilon : Fraction.Rational
   /-- The tolerance is the unit geometric quarter-radius at the retained tolerance index. -/ epsilon_eq : epsilon =
-    Geometric.Basic.quarterRadius 1 toleranceIndex
+    quarterRadius 1 toleranceIndex
   /-- The cached local tolerance is strictly positive. -/ epsilon_positive : 0 < epsilon
   /-- The cached local tolerance is at most one. -/ epsilon_le_one : epsilon ≤ 1
   /-- The cached minimum spatial depth paying the original Taylor remainder. -/ requiredDepth : Nat
@@ -98,7 +100,7 @@ structure EnergyRequest (bounds : EnergyBounds sample domain) (count : Nat) (tar
   /-- The actual spatial depth respects the original requested minimum. -/ minimum_le : minimum ≤ depth
   /-- The cached dyadic squared-diameter bound at the actual depth. -/ diameter : Fraction.Rational
   /-- The diameter is the scale-64 geometric quarter-radius at the retained depth. -/ diameter_eq : diameter =
-    Geometric.Basic.quarterRadius 64 depth
+    quarterRadius 64 depth
   /-- The cached tolerance-scaled local radius. -/ radius : Fraction.Rational
   /-- The radius is exactly the original tolerance times the retained diameter. -/ radius_eq : radius = epsilon *
     diameter
@@ -114,7 +116,7 @@ constructive_injectivity EnergyRequest
 namespace EnergyRequest
 
 variable {bounds : EnergyBounds sample domain} {count :
-  Nat} {target : Purelib.Data.Rat.Fraction.Rational} {minimum : Nat}
+  Nat} {target : Fraction.Rational} {minimum : Nat}
 
 /-- Select a positive tolerance and spatial depth paying the polynomial remainder and finite triangle count.
 
@@ -128,35 +130,35 @@ def build (bounds : EnergyBounds sample domain) (count : Nat) (target : Fraction
   have countNonnegative : (0 : Fraction.Rational) ≤ (count : Fraction.Rational) := Fraction.Cast.Order.natCast_le_direct
     (Nat.zero_le count)
   have constantNonnegative : (0 : Fraction.Rational) ≤ 128 := by decide +kernel
-  have scaleNonnegative : 0 ≤ scale := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct constantNonnegative countNonnegative)
-    (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) bounds.coefficient_nonnegative) (by decide))
-  have denominatorPositive : 0 < scale + 1 := Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct scaleNonnegative
+  have scaleNonnegative : 0 ≤ scale := Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct constantNonnegative countNonnegative)
+    (add_nonneg (Arithmetic.mul_nonneg_direct (by decide) bounds.coefficient_nonnegative) (by decide))
+  have denominatorPositive : 0 < scale + 1 := Arithmetic.add_pos_of_nonneg_of_pos_direct scaleNonnegative
     (by decide)
   let toleranceIndex := Search.firstQuarterBelow 1 0 (target / (scale + 1))
-  let epsilon := Geometric.Basic.quarterRadius 1 toleranceIndex
-  have epsilonPositive : 0 < epsilon := Geometric.Basic.quarterRadius_pos (by decide) toleranceIndex
+  let epsilon := quarterRadius 1 toleranceIndex
+  have epsilonPositive : 0 < epsilon := quarterRadius_pos (by decide) toleranceIndex
   have tiny : epsilon < target / (scale + 1) := Search.firstQuarterBelow_accurate 1 (by decide) 0 _
-    (Fraction.Order.Field.div_pos_direct positive denominatorPositive)
-  have paid : epsilon * (scale + 1) < target := (Fraction.Order.Field.lt_div_iff_pos denominatorPositive).mp tiny
+    (Field.div_pos_direct positive denominatorPositive)
+  have paid : epsilon * (scale + 1) < target := (Field.lt_div_iff_pos denominatorPositive).mp tiny
   let depth := Search.firstQuarterBelow (64 * bounds.remainder) minimum (epsilon ^ 2)
-  let diameter := Geometric.Basic.quarterRadius 64 depth
+  let diameter := quarterRadius 64 depth
   refine ⟨positive, scale, rfl, toleranceIndex, rfl, epsilon, rfl, epsilonPositive,
-    Geometric.Basic.quarterRadius_le_scale (by decide) toleranceIndex, depth, rfl, depth, le_rfl,
+    quarterRadius_le_scale (by decide) toleranceIndex, depth, rfl, depth, le_rfl,
       Search.firstQuarterBelow_ge _ minimum _, diameter, rfl, epsilon * diameter, rfl,
     ?_, scale * epsilon, rfl, ?_⟩
-  · have same : bounds.remainder * diameter = Geometric.Basic.quarterRadius (64 * bounds.remainder) depth := by
-      simp only [diameter, Geometric.Basic.quarterRadius, Purelib.Data.Rat.Fraction.Field.div_eq_mul_inv_direct]
+  · have same : bounds.remainder * diameter = quarterRadius (64 * bounds.remainder) depth := by
+      simp only [diameter, quarterRadius, Fraction.Field.div_eq_mul_inv_direct]
       ring1
     rw [same]
-    exact (Search.firstQuarterBelow_accurate _ (Fraction.Order.Arithmetic.mul_nonneg_direct
+    exact (Search.firstQuarterBelow_accurate _ (Arithmetic.mul_nonneg_direct
       (Fraction.Cast.Order.natCast_le_direct (by decide : 0 ≤ 64)) bounds.remainder_nonnegative)
-      minimum _ (Fraction.Order.Arithmetic.pow_pos_direct epsilonPositive 2)).le
+      minimum _ (Arithmetic.pow_pos_direct epsilonPositive 2)).le
   · have enlarged : scale ≤ scale + 1 := by
       calc
         scale = scale + 0 := by ring1
-        _ ≤ scale + 1 := Fraction.Order.Arithmetic.add_le_add_direct (Fraction.Order.Basic.le_refl scale) (by decide)
-    exact ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct enlarged epsilonPositive.le).trans_eq (by
+        _ ≤ scale + 1 := Arithmetic.add_le_add_direct (Basic.le_refl scale) (by decide)
+    exact ((Arithmetic.mul_le_mul_of_nonneg_right_direct enlarged epsilonPositive.le).trans_eq (by
       ring1)).trans_lt paid
 
 /-- Synchronize several retained requests without repeating their bound calculation or accuracy search. The smaller
@@ -165,7 +167,7 @@ def atDepth (request : EnergyRequest bounds count target
   minimum) (depth : Nat)
     (later : request.depth ≤ depth) : EnergyRequest bounds
       count target minimum := by
-  let diameter := Geometric.Basic.quarterRadius 64 depth
+  let diameter := quarterRadius 64 depth
   have smaller : diameter ≤ request.diameter := by
     rw [request.diameter_eq]
     exact quarterRadius_antitone (by decide +kernel) later
@@ -177,20 +179,20 @@ def atDepth (request : EnergyRequest bounds count target
     diameter_eq := rfl
     radius := request.epsilon * diameter
     radius_eq := rfl
-    taylor := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct smaller
+    taylor := (Arithmetic.mul_le_mul_of_nonneg_left_direct smaller
       bounds.remainder_nonnegative).trans request.taylor }
 
 /-- The retained dyadic squared-diameter bound is strictly positive. -/
 theorem diameter_positive (request : EnergyRequest bounds count
   target minimum) : 0 < request.diameter := by
   rw [request.diameter_eq]
-  exact Geometric.Basic.quarterRadius_pos (Fraction.Cast.Order.natCast_pos_direct (by decide : 0 < 64)) request.depth
+  exact quarterRadius_pos (Fraction.Cast.Order.natCast_pos_direct (by decide : 0 < 64)) request.depth
 
 /-- The retained tolerance-scaled radius is strictly positive. -/
 theorem radius_positive (request : EnergyRequest bounds count
   target minimum) : 0 < request.radius := by
   rw [request.radius_eq]
-  exact Fraction.Order.Arithmetic.mul_pos_direct request.epsilon_positive request.diameter_positive
+  exact Arithmetic.mul_pos_direct request.epsilon_positive request.diameter_positive
 
 open Purelib.Algebra in
 /-- The fine-face count cancels the squared-diameter factor.
@@ -202,11 +204,11 @@ theorem face_count_cancel (request : EnergyRequest bounds count
   target minimum) :
     ((2 * 4 ^ request.depth : Nat) : Fraction.Rational) * request.diameter = 128 := by
   rw [request.diameter_eq]
-  simp only [NatCast.mul, NatCast.pow, Nat.cast_ofNat, Geometric.Basic.quarterRadius]
+  simp only [NatCast.mul, NatCast.pow, Nat.cast_ofNat, quarterRadius]
   calc
     _ = 2 * ((64 / (4 : Fraction.Rational) ^ request.depth) * (4 : Fraction.Rational) ^ request.depth) := by ring1
     _ = _ := by rw [Fraction.Field.div_mul_cancel_of_ne _ _
-      (Fraction.Order.Arithmetic.pow_pos_direct (by decide) request.depth).ne']; ring1
+      (Arithmetic.pow_pos_direct (by decide) request.depth).ne']; ring1
 
 end EnergyRequest
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap

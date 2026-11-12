@@ -88,22 +88,22 @@ any actual integer-weighted row is compared. -/
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.CommonFamily
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
-  {base : Meshes.FramedPuncturedGrid curve (Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve
+  {base : Meshes.FramedPuncturedGrid curve (Branches.BranchConfiguration.configurationOfData curve
     branches).branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base}
   {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
-  {index differential : Fin genus} {row : Hyperelliptic.Meshes.PuncturedGrid.Standard.TourIntersection.IntersectionRow
-    lifted integral index} {source : Hyperelliptic.Differentials.Basic.Differential genus}
-  {prepared : Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutChordPrograms lifted source} {components :
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples prepared.programs differential}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {family : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily prepared.programs.programs domains
+  {index differential : Fin genus} {row : TourIntersection.IntersectionRow
+    lifted integral index} {source : Differentials.Basic.Differential genus}
+  {prepared : Cut.CyclePrograms.CutChordPrograms lifted source} {components :
+    Cut.ChainPeriods.ComponentSamples prepared.programs differential}
+  {domains : Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {family : Cut.PeriodFamilies.PrimitiveFamily prepared.programs.programs domains
     differential}
   {targets : Data.Vector Fraction.Rational lifted.cutBoundaryWord.alphabet.count}
-  {floor : Nat} {budget : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily.Budget family targets
+  {floor : Nat} {budget : Cut.PeriodFamilies.PrimitiveFamily.Budget family targets
     floor}
   {minimumStages : Data.Vector Nat lifted.cutBoundaryWord.alphabet.count}
   {minimum : Nat} {target : Fraction.Rational} {extraPoints : List Gaussian.Basic.Canonical}
@@ -111,26 +111,26 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
 /-- Type of the common-stage cache, retaining the family's parameters. -/
 @[expose] def CommonStage (readings : FamilyReadings row
   budget minimumStages minimum target extraPoints)
-    (components : Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples prepared.programs differential)
+    (components : Cut.ChainPeriods.ComponentSamples prepared.programs differential)
       (sampleFloor : Nat) :=
-  Hyperelliptic.Meshes.PuncturedGrid.SynchronizedPeriodSamples.CommonSamples components readings.requested (max
+  SynchronizedPeriodSamples.CommonSamples components readings.requested (max
     sampleFloor readings.standard.original.comparison.stage)
 
 /-- Retain the existing common-stage cache. Including the standard floor
 also covers an empty component bank without choosing a component index. -/
 @[expose] def commonSamples (readings : FamilyReadings row
   budget minimumStages minimum target extraPoints)
-    (components : Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples prepared.programs differential)
+    (components : Cut.ChainPeriods.ComponentSamples prepared.programs differential)
       (sampleFloor : Nat) :
-    Hyperelliptic.Meshes.PuncturedGrid.Standard.CommonFamily.CommonStage readings components sampleFloor :=
-  Hyperelliptic.Meshes.PuncturedGrid.SynchronizedPeriodSamples.CommonSamples.build components readings.requested (max
+    CommonStage readings components sampleFloor :=
+  SynchronizedPeriodSamples.CommonSamples.build components readings.requested (max
     sampleFloor readings.standard.original.comparison.stage)
 
 /-- The common cached stage is at least the original standard comparison stage. -/
 @[expose] def CommonStandardLater
     {readings : FamilyReadings row budget minimumStages
       minimum target extraPoints} {sampleFloor : Nat}
-    (common : Hyperelliptic.Meshes.PuncturedGrid.Standard.CommonFamily.CommonStage readings components sampleFloor) :
+    (common : CommonStage readings components sampleFloor) :
       Prop :=
     readings.standard.original.comparison.stage ≤ common.common.stage
 
@@ -139,17 +139,17 @@ also covers an empty component bank without choosing a component index. -/
 theorem common_standard_later
     {readings : FamilyReadings row budget minimumStages
       minimum target extraPoints} {sampleFloor : Nat}
-    (common : Hyperelliptic.Meshes.PuncturedGrid.Standard.CommonFamily.CommonStage readings components sampleFloor) :
-    Hyperelliptic.Meshes.PuncturedGrid.Standard.CommonFamily.CommonStandardLater common :=
-  (Data.Nat.Order.le_max_right _ _).trans common.common.floor_le
+    (common : CommonStage readings components sampleFloor) :
+    CommonStandardLater common :=
+  (Nat.Order.le_max_right _ _).trans common.common.floor_le
 
 /-- Combine the retained component values without rerunning their models. -/
 @[expose] def CachedWeightedEq
     {readings : FamilyReadings row budget minimumStages
       minimum target extraPoints} {sampleFloor : Nat}
-    (common : Hyperelliptic.Meshes.PuncturedGrid.Standard.CommonFamily.CommonStage readings components sampleFloor)
+    (common : CommonStage readings components sampleFloor)
     {weights : Data.Vector Int lifted.cutBoundaryWord.alphabet.count}
-    (period : Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ChainPeriod components weights) : Prop :=
+    (period : Cut.ChainPeriods.ChainPeriod components weights) : Prop :=
     period.coefficients.combine common.common.values = period.approximation.sample common.common.stage
 
 /-- Combining the cached component values with the retained integer coefficients gives the original weighted sample at
@@ -157,44 +157,44 @@ that same common stage. -/
 theorem cached_weighted_eq
     {readings : FamilyReadings row budget minimumStages
       minimum target extraPoints} {sampleFloor : Nat}
-    (common : Hyperelliptic.Meshes.PuncturedGrid.Standard.CommonFamily.CommonStage readings components sampleFloor)
+    (common : CommonStage readings components sampleFloor)
     {weights : Data.Vector Int lifted.cutBoundaryWord.alphabet.count}
-    (period : Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ChainPeriod components weights) :
-    Hyperelliptic.Meshes.PuncturedGrid.Standard.CommonFamily.CachedWeightedEq common period := open Purelib.Algebra in
+    (period : Cut.ChainPeriods.ChainPeriod components weights) :
+    CachedWeightedEq common period := open Algebra in
       by
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.Standard.CommonFamily.CachedWeightedEq]
+  dsimp only [CachedWeightedEq]
   rw [period.sample_eq]
   unfold Periods.WeightedPeriods.Coefficients.combine
   exact FiniteSum.Fin.sumFin_congr fun entry => congrArg
     (fun value => period.coefficients.values entry * value) (common.common.values_eq entry)
 
-variable (segments : Data.Vector.DependentVector (fun entry =>
-  Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank (prepared.programs.programs entry).period))
-  {budget : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily.Budget
-    (Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily.ofSegments segments domains differential)
+variable (segments : Vector.DependentVector (fun entry =>
+  PeriodSegmentBanks.SegmentBank (prepared.programs.programs entry).period))
+  {budget : Cut.PeriodFamilies.PrimitiveFamily.Budget
+    (Cut.PeriodFamilies.PrimitiveFamily.ofSegments segments domains differential)
     targets floor}
   {movementTarget : Fraction.Rational} {floors : Data.Vector Nat lifted.cutBoundaryWord.alphabet.count}
   (movement : Budget.SynchronizedSamples.StageRequest components.streams movementTarget floors)
   (readings : FamilyReadings row budget movement.stages
     minimum target extraPoints) {sampleFloor : Nat}
-  (common : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.CommonFamily.CommonStage readings components
+  (common : CommonStage readings components
     sampleFloor)
 
 /-- The retained standard cochain reading meets its component bound against the cached common-stage value. -/
 @[expose] def CochainCommonAccurate (entry : Fin lifted.cutBoundaryWord.alphabet.count) : Prop :=
-    Data.Gaussian.Norm.Basic.normSq (Topology.Surface.Sewing.SewingRetraction.wordValue
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
+    Gaussian.Norm.Basic.normSq (Topology.Surface.Sewing.SewingRetraction.wordValue
+      (CanonicalEdgeValues.edgeValuation lifted.mesh
       readings.standard.triangles.values)
         (prepared.programs.programs entry).cycle.path.surfaceEdges - common.common.values entry) <
       2 * (4 * targets entry + movementTarget)
 
 /-- The original movement request transports each retained cochain comparison to the common cached stage. -/
 theorem cochain_common_accurate (entry : Fin lifted.cutBoundaryWord.alphabet.count) :
-    Hyperelliptic.Meshes.PuncturedGrid.Standard.CommonFamily.CochainCommonAccurate segments movement readings common
+    CochainCommonAccurate segments movement readings common
       entry := by
   apply common.common.comparison movement (fun next => ?_)
     (fun next => Topology.Surface.Sewing.SewingRetraction.wordValue
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
+      (CanonicalEdgeValues.edgeValuation lifted.mesh
       readings.standard.triangles.values)
       (prepared.programs.programs next).cycle.path.surfaceEdges) (fun next => 4 * targets next) (fun next => ?_) entry
   · rw [common.stages_eq]
@@ -204,8 +204,8 @@ theorem cochain_common_accurate (entry : Fin lifted.cutBoundaryWord.alphabet.cou
 
 /-- The retained cochain reading meets its component bound against the original program sample at the common stage. -/
 @[expose] def CochainCommonProgramAccurate (entry : Fin lifted.cutBoundaryWord.alphabet.count) : Prop :=
-    Data.Gaussian.Norm.Basic.normSq (Topology.Surface.Sewing.SewingRetraction.wordValue
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
+    Gaussian.Norm.Basic.normSq (Topology.Surface.Sewing.SewingRetraction.wordValue
+      (CanonicalEdgeValues.edgeValuation lifted.mesh
       readings.standard.triangles.values)
         (prepared.programs.programs entry).cycle.path.surfaceEdges -
       (((prepared.programs.programs entry).program differential).integral.model common.common.stage).integralSample) <
@@ -213,20 +213,20 @@ theorem cochain_common_accurate (entry : Fin lifted.cutBoundaryWord.alphabet.cou
 
 /-- The cached common-stage component comparison is the corresponding original program comparison. -/
 theorem cochain_common_program_accurate (entry : Fin lifted.cutBoundaryWord.alphabet.count) :
-    Hyperelliptic.Meshes.PuncturedGrid.Standard.CommonFamily.CochainCommonProgramAccurate segments movement readings
+    CochainCommonProgramAccurate segments movement readings
       common entry := by
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.Standard.CommonFamily.CochainCommonProgramAccurate]
+  dsimp only [CochainCommonProgramAccurate]
   rw [← common.values_eq_programs entry]
-  exact Hyperelliptic.Meshes.PuncturedGrid.Standard.CommonFamily.cochain_common_accurate segments movement readings
+  exact CommonFamily.cochain_common_accurate segments movement readings
     common entry
 
 /-- The actual cached integer coefficients pay the common-stage component
 errors. No unit amplification or analytic component bound is assumed. -/
 @[expose] def WeightedCommonBound
     {weights : Data.Vector Int lifted.cutBoundaryWord.alphabet.count}
-    (period : Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ChainPeriod components weights) : Prop :=
-    Data.Gaussian.Norm.Basic.normSq (Topology.Surface.Chord.Spanning.CutCycleChain.edgeValue period.chain
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
+    (period : Cut.ChainPeriods.ChainPeriod components weights) : Prop :=
+    Gaussian.Norm.Basic.normSq (Topology.Surface.Chord.Spanning.CutCycleChain.edgeValue period.chain
+      (CanonicalEdgeValues.edgeValuation lifted.mesh
       readings.standard.triangles.values) -
       period.approximation.sample common.common.stage) ≤
       period.coefficients.charge (fun entry => 2 * (4 * targets entry + movementTarget))
@@ -237,25 +237,25 @@ Each component contributes its actual primitive and movement allowance; the cach
 amplification. -/
 theorem weighted_common_bound
     {weights : Data.Vector Int lifted.cutBoundaryWord.alphabet.count}
-    (period : Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ChainPeriod components weights) :
-    Hyperelliptic.Meshes.PuncturedGrid.Standard.CommonFamily.WeightedCommonBound segments movement readings common
+    (period : Cut.ChainPeriods.ChainPeriod components weights) :
+    WeightedCommonBound segments movement readings common
       period := by
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.Standard.CommonFamily.WeightedCommonBound]
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ChainPeriod.chain,
+  dsimp only [WeightedCommonBound]
+  dsimp only [Cut.ChainPeriods.ChainPeriod.chain,
     Topology.Surface.Chord.Spanning.CutCycleChain.edgeValue]
   have comparison := period.comparison_bound
     (fun entry => Topology.Surface.Sewing.SewingRetraction.wordValue
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
+      (CanonicalEdgeValues.edgeValuation lifted.mesh
       readings.standard.triangles.values)
       (prepared.routes.cycles entry).path.surfaceEdges) common.common.stage
     (fun entry => 2 * (4 * targets entry + movementTarget)) (fun entry => by
-      have bound := (Hyperelliptic.Meshes.PuncturedGrid.Standard.CommonFamily.cochain_common_program_accurate segments
+      have bound := (CommonFamily.cochain_common_program_accurate segments
         movement readings common entry).le
       have equal := congrArg (fun cycle => Topology.Surface.Sewing.SewingRetraction.wordValue
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
+        (CanonicalEdgeValues.edgeValuation lifted.mesh
           readings.standard.triangles.values) cycle.path.surfaceEdges)
         (prepared.programs.cycles_eq entry)
-      exact (congrArg (fun value => Data.Gaussian.Norm.Basic.normSq (value -
+      exact (congrArg (fun value => Gaussian.Norm.Basic.normSq (value -
         (((prepared.programs.programs entry).program differential).integral.model common.common.stage).integralSample))
           equal).symm.trans_le bound)
   rw [period.coefficients.combine_eq] at comparison

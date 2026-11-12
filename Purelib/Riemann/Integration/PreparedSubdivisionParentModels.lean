@@ -33,6 +33,8 @@ import Purelib.Riemann.RootContinuation.CertifiedSquareRoot
 import Purelib.RootIsolation.Track.Basic
 import Mathlib.Order.Basic
 
+open Purelib.Curves.Hyperelliptic
+
 @[expose] public section
 
 /-!
@@ -59,7 +61,7 @@ open Purelib.Riemann.Branches in
 Each retained fraction has unit-interval bounds and its exact affine parameter equation. The dependent constructors
 preserve the actual requests, caches and successive owners. -/
 inductive ParentPositions {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedEdge curve differential) :
     {current : Endpoint} ->
@@ -102,7 +104,7 @@ open Purelib in
 open Purelib.Curves.Hyperelliptic.Differentials in
 /-- Read the retained parent position of the subdivision's current endpoint. -/
 def currentPosition {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parent : PreparedEdge curve differential}
     {current : Endpoint}
@@ -121,7 +123,7 @@ open Purelib.Polynomial in
 open Purelib.Polynomial.Dense.Gaussian in
 /-- The original subdivision's ordered steps place its terminal parameter after its starting parameter. -/
 theorem subdivision_start_le_endpoint
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : PreparedSubdivisionModelCore.Box}
     {start finish : PreparedSubdivisionModelCore.Gaussian}
     {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
@@ -142,7 +144,7 @@ open Purelib.Riemann.Branches in
 The supplied starting lower bound and terminal upper bound propagate through the original ordered requests. Every
 fraction is computed from that endpoint's actual offset and the parent width. -/
 def parentPositionsOfBounds {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedEdge curve differential)
     (proper : parent.left.parameter < parent.request.endpoint.parameter) :
@@ -172,7 +174,7 @@ open Purelib.Curves.Hyperelliptic.Differentials in
 /-- Construct all parent positions when the subdivision has the same starting owner and terminal parameter as the
 parent. -/
 def parentPositionsOfEndpointEq {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedEdge curve differential)
     (proper : parent.left.parameter < parent.request.endpoint.parameter)
@@ -192,7 +194,7 @@ open Purelib.Riemann.Branches in
 The dependent list preserves each original request, cache and owner, together with the direct-move evidence of its
 associated position. -/
 inductive ParentStepSmalls {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedEdge curve differential) :
     {current : Endpoint} ->
@@ -247,7 +249,7 @@ open Purelib.Riemann.Branches in
 Success returns the dependent certificates for those exact steps. `none` records that this finite check did not return
 the full certificate family. -/
 def tryParentStepSmalls {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedEdge curve differential) :
     (current : Endpoint) ->
@@ -279,7 +281,7 @@ def tryParentStepSmalls {genus : Nat}
 
 /-- Report whether the finite parent-step check returned its complete certificate family. -/
 def parentStepSmallsAccepted {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedEdge curve differential)
     {current : Endpoint}
@@ -295,10 +297,10 @@ open Purelib.Riemann.Branches
 The supplied depth, positive root-diameter target and mesh-safety certificate determine the original checked
 subdivision, starting from the parent's retained owner. -/
 def parentDyadicSubdivision {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedEdge curve differential)
-    (depth : Nat) (rootDiameter : PreparedSubdivisionModelCore.Coordinate)
+    (depth : Nat) (rootDiameter : Coordinate)
     (rootDiameterPositive : 0 < rootDiameter)
     (safe : PreparedSheetContinuation.Subdivision.DyadicMeshSafe
       parent.segment parent.left parent.request.endpoint parent.owner depth
@@ -310,10 +312,10 @@ def parentDyadicSubdivision {genus : Nat}
 
 /-- The checked dyadic subdivision ends at the parent's exact request parameter. -/
 theorem parentDyadicSubdivision_endpoint_eq {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedEdge curve differential)
-    (depth : Nat) (rootDiameter : PreparedSubdivisionModelCore.Coordinate)
+    (depth : Nat) (rootDiameter : Coordinate)
     (rootDiameterPositive : 0 < rootDiameter)
     (safe : PreparedSheetContinuation.Subdivision.DyadicMeshSafe
       parent.segment parent.left parent.request.endpoint parent.owner depth
@@ -333,11 +335,11 @@ theorem parentDyadicSubdivision_endpoint_eq {genus : Nat}
 Strict parent endpoint order and the checked subdivision's terminal equation supply all affine fractions and
 unit-interval bounds. -/
 def parentDyadicPositions {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedEdge curve differential)
     (proper : parent.left.parameter < parent.request.endpoint.parameter)
-    (depth : Nat) (rootDiameter : PreparedSubdivisionModelCore.Coordinate)
+    (depth : Nat) (rootDiameter : Coordinate)
     (rootDiameterPositive : 0 < rootDiameter)
     (safe : PreparedSheetContinuation.Subdivision.DyadicMeshSafe
       parent.segment parent.left parent.request.endpoint parent.owner depth
@@ -362,11 +364,11 @@ open Purelib.Riemann.Branches in
 The certificate is indexed by the parent, depth, positive diameter target and original mesh-safety evidence, preserving
 the actual subdivision and position family. -/
 structure CheckedParentDyadic {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedEdge curve differential)
     (proper : parent.left.parameter < parent.request.endpoint.parameter)
-    (depth : Nat) (rootDiameter : PreparedSubdivisionModelCore.Coordinate)
+    (depth : Nat) (rootDiameter : Coordinate)
     (rootDiameterPositive : 0 < rootDiameter)
     (safe : PreparedSheetContinuation.Subdivision.DyadicMeshSafe
       parent.segment parent.left parent.request.endpoint parent.owner depth
@@ -386,11 +388,11 @@ open Purelib.Riemann.Branches in
 Success packages the returned certificate family with its original depth, diameter and safety indices. Failure is the
 unsuccessful result of this finite certificate check. -/
 def tryCheckedParentDyadic {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedEdge curve differential)
     (proper : parent.left.parameter < parent.request.endpoint.parameter)
-    (depth : Nat) (rootDiameter : PreparedSubdivisionModelCore.Coordinate)
+    (depth : Nat) (rootDiameter : Coordinate)
     (rootDiameterPositive : 0 < rootDiameter)
     (safe : PreparedSheetContinuation.Subdivision.DyadicMeshSafe
       parent.segment parent.left parent.request.endpoint parent.owner depth
@@ -416,7 +418,7 @@ open Purelib.Riemann.RootContinuation in
 The comparison reverses same-radicand advancement and the prepared-source root equivalence, retaining the exact source
 coordinate and both owner names. -/
 def parentInitialRootEquivalent {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedEdge curve differential)
     (sourceSmall :
@@ -465,7 +467,7 @@ open Purelib.Riemann.Branches
 At each original request, direct-step and direct-move clearance produce the next root equivalence; the dependent result
 retains the exact subdivision and its original owner sequence. -/
 def directlyCoherentOfParentStepSmalls {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedEdge curve differential) :
     (current : Endpoint) ->
@@ -517,7 +519,7 @@ def directlyCoherentOfParentStepSmalls {genus : Nat}
 The initial comparison uses the parent's original owner, and every subsequent comparison follows the original cached
 subdivision. -/
 def directlyCoherentParentBlock {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedEdge curve differential)
     (subdivision : PreparedSubdivision parent.segment parent.within
@@ -542,7 +544,7 @@ def directlyCoherentParentBlock {genus : Nat}
 Each child retains its actual cached edge and center. The parent positions identify its query coordinates, while the
 original coherence supplies the root-name comparison. -/
 def rootChildBlockOfDirectlyCoherent {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : CenteredEdge curve differential)
     {current : Endpoint}
@@ -603,7 +605,7 @@ open Purelib.Curves.Hyperelliptic.Differentials in
 Direct coherence is derived from the original parent owner and subdivision before transferring it to the centered child
 edges. -/
 def rootChildBlockOfParentStepSmalls {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : CenteredEdge curve differential)
     (subdivision : PreparedSubdivision parent.edge.segment parent.edge.within
@@ -629,7 +631,7 @@ open Purelib.Data.List in
 The root comparison block preserves both centers and caches. The supplied terminal parameter equation gives the exact
 total displacement required by the refinement. -/
 def singleParentRefinement {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : CenteredEdge curve differential)
     (subdivision : PreparedSubdivision parent.edge.segment parent.edge.within
@@ -658,7 +660,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 The child list is the exact ordered centered subdivision, and the parent model remains the supplied original centered
 model. -/
 def compatibleSingleParentRefinement {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : CenteredEdge curve differential)
     (subdivision : PreparedSubdivision parent.edge.segment parent.edge.within
@@ -688,11 +690,11 @@ open Purelib.Riemann.Integration in
 The retained safety and step certificates determine the exact dyadic child subdivision; the original parent center and
 each supplied child center are preserved. -/
 def compatible {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parent : PreparedEdge curve differential}
     {proper : parent.left.parameter < parent.request.endpoint.parameter}
-    {depth : Nat} {rootDiameter : PreparedSubdivisionModelCore.Coordinate}
+    {depth : Nat} {rootDiameter : Coordinate}
     {rootDiameterPositive : 0 < rootDiameter}
     {safe : PreparedSheetContinuation.Subdivision.DyadicMeshSafe
       parent.segment parent.left parent.request.endpoint parent.owner depth

@@ -55,16 +55,16 @@ theorem spreadBinomialExpansion_prime_odd
     (oneNonzero : (1 : K) ≠ 0)
     (primeEquation : prime = half + half + 1)
     (center radialSquare : K) :
-    Recurrence.Spread.Binomial.spreadBinomialExpansion prime (half + 1) center radialSquare =
+    Binomial.spreadBinomialExpansion prime (half + 1) center radialSquare =
       center ^ prime := open Purelib.Algebra in open Purelib.NumberTheory in by
   have firstTerm :
-      Recurrence.Spread.Binomial.spreadBinomialTerm prime center radialSquare 0 = center ^ prime := by
-    unfold Recurrence.Spread.Binomial.spreadBinomialTerm
+      Binomial.spreadBinomialTerm prime center radialSquare 0 = center ^ prime := by
+    unfold Binomial.spreadBinomialTerm
     simp only [zero_add, Nat.sub_zero, pow_zero, Nat.choose_zero_right,
       Nat.cast_one, one_mul, mul_one, -eq_self, -iff_self]
     rfl
   have tailTermZero (index : Nat) (indexBelow : index < half) :
-      Recurrence.Spread.Binomial.spreadBinomialTerm prime center radialSquare (index + 1) = 0 := by
+      Binomial.spreadBinomialTerm prime center radialSquare (index + 1) = 0 := by
     let coefficientIndex := (index + 1) + (index + 1)
     have coefficientPositive : coefficientIndex ≠ 0 := by
       unfold coefficientIndex
@@ -75,7 +75,7 @@ theorem spreadBinomialExpansion_prime_odd
     have coefficientZero : (prime.choose coefficientIndex : K) = 0 :=
       Prime.Binomial.prime_interior_choose_cast_zero prime primeIsPrime primeCastZero
         oneNonzero coefficientIndex coefficientPositive coefficientBelow
-    unfold Recurrence.Spread.Binomial.spreadBinomialTerm
+    unfold Binomial.spreadBinomialTerm
     change
       (-radialSquare) ^ (index + 1) *
           center ^ (prime - coefficientIndex) *
@@ -83,16 +83,16 @@ theorem spreadBinomialExpansion_prime_odd
     rw [coefficientZero, mul_zero]
   have tailZero :
       FiniteSum.Prefix.prefixSum half (fun index =>
-        Recurrence.Spread.Binomial.spreadBinomialTerm prime center radialSquare (index + 1)) = 0 := by
+        Binomial.spreadBinomialTerm prime center radialSquare (index + 1)) = 0 := by
     calc
       FiniteSum.Prefix.prefixSum half (fun index =>
-          Recurrence.Spread.Binomial.spreadBinomialTerm prime center radialSquare (index + 1)) =
+          Binomial.spreadBinomialTerm prime center radialSquare (index + 1)) =
         FiniteSum.Prefix.prefixSum half (fun _ : Nat => (0 : K)) := by
           apply FiniteSum.Prefix.prefixSum_congr
           intro index indexBelow
           exact tailTermZero index indexBelow
       _ = 0 := FiniteSum.Prefix.prefixSum_zero_values half
-  unfold Recurrence.Spread.Binomial.spreadBinomialExpansion
+  unfold Binomial.spreadBinomialExpansion
   rw [FiniteSum.Prefix.prefixSum_succ, firstTerm, tailZero, add_zero]
 end
 

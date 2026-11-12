@@ -1,6 +1,7 @@
 module
 
 import Purelib.Data.Gaussian.Basic
+public import Purelib.Data.List.DependentProduct
 import Purelib.Integration.Polynomial.Gaussian.Cell.Basic
 import Purelib.Integration.Polynomial.Gaussian.Path.Basic
 public import Purelib.Integration.Polynomial.Gaussian.Path.ConstantComparison
@@ -50,6 +51,33 @@ inductive ConstantPathRefinement :
         (childCells ++ children)
 
 constructive_injectivity Purelib.Integration.Polynomial.Gaussian.Path.Basic.PathModel.ConstantPathRefinement
+
+namespace ConstantPathRefinement
+
+universe u v
+
+/-- Assemble actual singleton partitions over the same original dependent bank in its retained order.
+
+Each supplied certificate uses its literal parent and child cells. Structural
+recursion consumes the current stored head and passes the original tail
+unchanged; neither cell constructor nor certificate producer is repeated.
+-/
+def ofSingletons {Entry : Type u} :
+    (items : List Entry) → {family : Fin items.length → Type v} →
+    (retained : Data.List.DependentProduct items family) →
+    (parent child : (index : Fin items.length) → family index → Basic.CellModel) →
+    ((index : Fin items.length) → (entry : family index) →
+      ConstantPartitionCertificate (parent index entry) (Basic.PathModel.mk [child index entry])) →
+    ConstantPathRefinement
+      (Data.List.DependentProduct.mapToList items retained parent)
+      (Data.List.DependentProduct.mapToList items retained child)
+  | [], _, _, _, _, _ => .nil
+  | _ :: tail, _, retained, parent, child, partition =>
+      .cons (partition ⟨0, Nat.zero_lt_succ _⟩ retained.1)
+        (ofSingletons tail retained.2 (fun index => parent index.succ) (fun index => child index.succ)
+          (fun index => partition index.succ))
+
+end ConstantPathRefinement
 
 end Purelib.Integration.Polynomial.Gaussian.Path.Basic.PathModel
 

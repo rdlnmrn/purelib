@@ -3,6 +3,7 @@ import Purelib.Data.Gaussian.Basic
 public import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Data.Rat.Fraction
 import Purelib.Data.Rat.Fraction.Order.Basic
+import Purelib.Data.Rat.Fraction.Order.Arithmetic
 meta import Mathlib.Tactic.Linter.Lint
 import Mathlib.Order.Basic
 
@@ -28,6 +29,11 @@ section Box
 def Refines (inner outer : Rational.Box) : Prop :=
   outer.xLower ≤ inner.xLower ∧ inner.xUpper ≤ outer.xUpper ∧
     outer.yLower ≤ inner.yLower ∧ inner.yUpper ≤ outer.yUpper
+
+/-- Decide coordinatewise box refinement through its original four endpoint comparisons. -/
+def refinesDecidable (inner outer : Rational.Box) : Decidable (inner.Refines outer) := by
+  unfold Refines
+  infer_instance
 
 /-- Strict coordinatewise containment of one constructive box in another. -/
 structure StrictInterior (inner outer :
@@ -148,3 +154,15 @@ theorem
 end Purelib.Geometry.Rational.Box.Refinement.StrictInterior.GlobalNonnegativity
 
 end
+
+namespace Purelib.Geometry.Rational.Box
+
+open Purelib.Data.Rat
+
+/-- Conjugation preserves refinement of the same two original rational boxes. -/
+public theorem Refines.conj {inner outer : Box} (refinement : inner.Refines outer) :
+    inner.conj.Refines outer.conj :=
+  ⟨refinement.1, refinement.2.1, Fraction.Order.Arithmetic.neg_le_neg_direct refinement.2.2.2,
+    Fraction.Order.Arithmetic.neg_le_neg_direct refinement.2.2.1⟩
+
+end Purelib.Geometry.Rational.Box

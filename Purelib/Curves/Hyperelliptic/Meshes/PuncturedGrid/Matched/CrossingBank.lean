@@ -57,24 +57,24 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.Regul
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest (TwoSheetRequest)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.LiftedSides (HorizontalCrossing VerticalCrossing)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {faces : Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces bank} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
-  {cuts : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+    VertexBank bank.grid} {edges :
+    RootEdgeBank frames}
+  {faces : PuncturedFaces bank} {domains :
+    FaceDomainBank frames faces.regulars}
+  {cuts : CommonCuts domains}
     {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
-    {target : Purelib.Data.Rat.Fraction.Rational}
-  {mesh : Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
+    Preflights domains sheet}
+    {target : Rational}
+  {mesh : LiftedMesh vertices edges faces}
   {firstPosition : Fin faces.regulars.length} {firstSheet : Fin 2}
 
-variable (request : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet
-  => Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet
+variable (request : TwoSheetRequest (fun sheet
+  => RegularMeshes.build domains cuts sheet
   coarseDepth) fixed target)
 
 namespace CrossingBank
@@ -83,15 +83,15 @@ namespace CrossingBank
 inductive HorizontalObstruction (firstPosition nextPosition : Fin faces.regulars.length) where
   /-- The original faces have unequal lower horizontal span coordinates. -/ | lower :
     faces.regulars[firstPosition.val].cell.box.xLower ≠ faces.regulars[nextPosition.val].cell.box.xLower →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.HorizontalObstruction firstPosition
+    HorizontalObstruction firstPosition
     nextPosition
   /-- The original faces have unequal upper horizontal span coordinates. -/ | upper :
     faces.regulars[firstPosition.val].cell.box.xUpper ≠ faces.regulars[nextPosition.val].cell.box.xUpper →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.HorizontalObstruction firstPosition
+    HorizontalObstruction firstPosition
     nextPosition
   /-- The original faces have unequal adjoining top and bottom boundary coordinates. -/ | boundary :
     faces.regulars[firstPosition.val].cell.box.yUpper ≠ faces.regulars[nextPosition.val].cell.box.yLower →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.HorizontalObstruction firstPosition
+    HorizontalObstruction firstPosition
     nextPosition
 
 set_option genInjectivity false in
@@ -99,11 +99,11 @@ set_option genInjectivity false in
 inductive HorizontalOutcome (first : mesh.LocatedFace firstPosition firstSheet)
     (nextPosition : Fin faces.regulars.length) where
   /-- The actual retained horizontal side crossing on the original located source owner. -/ | matched :
-    LiftedSides.HorizontalCrossing request first nextPosition false false →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.HorizontalOutcome first nextPosition
+    HorizontalCrossing request first nextPosition false false →
+    HorizontalOutcome first nextPosition
   /-- A specific proved obstruction to this original horizontal side match. -/ | separated :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.HorizontalObstruction (faces := faces) firstPosition
-    nextPosition → Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.HorizontalOutcome first
+    HorizontalObstruction (faces := faces) firstPosition
+    nextPosition → HorizontalOutcome first
     nextPosition
 
 constructive_injectivity HorizontalOutcome
@@ -116,7 +116,7 @@ namespace CrossingBank.HorizontalOutcome
 coordinate obstruction. -/
 def build (first : mesh.LocatedFace firstPosition firstSheet)
     (nextPosition : Fin faces.regulars.length) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.HorizontalOutcome request first nextPosition :=
+      HorizontalOutcome request first nextPosition :=
   if lowerEq : faces.regulars[firstPosition.val].cell.box.xLower = faces.regulars[nextPosition.val].cell.box.xLower then
     if upperEq : faces.regulars[firstPosition.val].cell.box.xUpper = faces.regulars[nextPosition.val].cell.box.xUpper
       then
@@ -130,7 +130,7 @@ def build (first : mesh.LocatedFace firstPosition firstSheet)
 /-- When the three original horizontal adjacency equalities hold, the retained outcome contains an actual crossing. -/
 theorem complete {first : mesh.LocatedFace firstPosition firstSheet}
     {nextPosition : Fin faces.regulars.length} (outcome :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.HorizontalOutcome request first nextPosition)
+      HorizontalOutcome request first nextPosition)
     (lowerEq : faces.regulars[firstPosition.val].cell.box.xLower = faces.regulars[nextPosition.val].cell.box.xLower)
       (upperEq : faces.regulars[firstPosition.val].cell.box.xUpper = faces.regulars[nextPosition.val].cell.box.xUpper)
       (adjacent : faces.regulars[firstPosition.val].cell.box.yUpper = faces.regulars[nextPosition.val].cell.box.yLower)
@@ -152,15 +152,15 @@ namespace CrossingBank
 inductive VerticalObstruction (firstPosition nextPosition : Fin faces.regulars.length) where
   /-- The original faces have unequal lower vertical span coordinates. -/ | lower :
     faces.regulars[firstPosition.val].cell.box.yLower ≠ faces.regulars[nextPosition.val].cell.box.yLower →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.VerticalObstruction firstPosition
+    VerticalObstruction firstPosition
     nextPosition
   /-- The original faces have unequal upper vertical span coordinates. -/ | upper :
     faces.regulars[firstPosition.val].cell.box.yUpper ≠ faces.regulars[nextPosition.val].cell.box.yUpper →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.VerticalObstruction firstPosition
+    VerticalObstruction firstPosition
     nextPosition
   /-- The original faces have unequal adjoining right and left boundary coordinates. -/ | boundary :
     faces.regulars[firstPosition.val].cell.box.xUpper ≠ faces.regulars[nextPosition.val].cell.box.xLower →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.VerticalObstruction firstPosition
+    VerticalObstruction firstPosition
     nextPosition
 
 set_option genInjectivity false in
@@ -168,11 +168,11 @@ set_option genInjectivity false in
 inductive VerticalOutcome (first : mesh.LocatedFace firstPosition firstSheet)
     (nextPosition : Fin faces.regulars.length) where
   /-- The actual retained vertical side crossing on the original located source owner. -/ | matched :
-    LiftedSides.VerticalCrossing request first nextPosition false false →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.VerticalOutcome first nextPosition
+    VerticalCrossing request first nextPosition false false →
+    VerticalOutcome first nextPosition
   /-- A specific proved obstruction to this original vertical side match. -/ | separated :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.VerticalObstruction (faces := faces) firstPosition
-    nextPosition → Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.VerticalOutcome first
+    VerticalObstruction (faces := faces) firstPosition
+    nextPosition → VerticalOutcome first
     nextPosition
 
 constructive_injectivity VerticalOutcome
@@ -185,7 +185,7 @@ namespace CrossingBank.VerticalOutcome
 coordinate obstruction. -/
 def build (first : mesh.LocatedFace firstPosition firstSheet)
     (nextPosition : Fin faces.regulars.length) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.VerticalOutcome request first nextPosition :=
+      VerticalOutcome request first nextPosition :=
   if lowerEq : faces.regulars[firstPosition.val].cell.box.yLower = faces.regulars[nextPosition.val].cell.box.yLower then
     if upperEq : faces.regulars[firstPosition.val].cell.box.yUpper = faces.regulars[nextPosition.val].cell.box.yUpper
       then
@@ -199,7 +199,7 @@ def build (first : mesh.LocatedFace firstPosition firstSheet)
 /-- When the three original vertical adjacency equalities hold, the retained outcome contains an actual crossing. -/
 theorem complete {first : mesh.LocatedFace firstPosition firstSheet}
     {nextPosition : Fin faces.regulars.length} (outcome :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.VerticalOutcome request first nextPosition)
+      VerticalOutcome request first nextPosition)
     (lowerEq : faces.regulars[firstPosition.val].cell.box.yLower = faces.regulars[nextPosition.val].cell.box.yLower)
       (upperEq : faces.regulars[firstPosition.val].cell.box.yUpper = faces.regulars[nextPosition.val].cell.box.yUpper)
       (adjacent : faces.regulars[firstPosition.val].cell.box.xUpper = faces.regulars[nextPosition.val].cell.box.xLower)
@@ -220,21 +220,21 @@ set_option genInjectivity false in
 
 Every successful crossing retains its actual located source owner; every failure retains the exact unequal physical
 coordinates. -/
-structure CrossingBank (mesh : GridLiftedMesh.LiftedMesh vertices edges faces) where
-  /-- The actual located source face on each original face position and sheet. -/ sources : Data.Vector.DependentVector
+structure CrossingBank (mesh : LiftedMesh vertices edges faces) where
+  /-- The actual located source face on each original face position and sheet. -/ sources : DependentVector
     (fun firstPosition : Fin faces.regulars.length =>
-    Data.Vector.DependentVector (fun sheet : Fin 2 => mesh.LocatedFace firstPosition sheet))
+    DependentVector (fun sheet : Fin 2 => mesh.LocatedFace firstPosition sheet))
   /-- The complete horizontal crossing outcomes for every retained source owner and original destination position. -/
-    horizontal : Data.Vector.DependentVector (fun firstPosition : Fin faces.regulars.length =>
-    Data.Vector.DependentVector (fun sheet : Fin 2 =>
-      Data.Vector.DependentVector (fun nextPosition : Fin faces.regulars.length =>
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.HorizontalOutcome request ((sources.get
+    horizontal : DependentVector (fun firstPosition : Fin faces.regulars.length =>
+    DependentVector (fun sheet : Fin 2 =>
+      DependentVector (fun nextPosition : Fin faces.regulars.length =>
+        CrossingBank.HorizontalOutcome request ((sources.get
           firstPosition).get sheet) nextPosition)))
   /-- The complete vertical crossing outcomes for every retained source owner and original destination position. -/
-    vertical : Data.Vector.DependentVector (fun firstPosition : Fin faces.regulars.length =>
-    Data.Vector.DependentVector (fun sheet : Fin 2 =>
-      Data.Vector.DependentVector (fun nextPosition : Fin faces.regulars.length =>
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.VerticalOutcome request ((sources.get
+    vertical : DependentVector (fun firstPosition : Fin faces.regulars.length =>
+    DependentVector (fun sheet : Fin 2 =>
+      DependentVector (fun nextPosition : Fin faces.regulars.length =>
+        CrossingBank.VerticalOutcome request ((sources.get
           firstPosition).get sheet) nextPosition)))
 
 constructive_injectivity CrossingBank
@@ -242,18 +242,18 @@ constructive_injectivity CrossingBank
 namespace CrossingBank
 
 /-- Locate every original face on both sheets once and classify all actual ordered horizontal and vertical crossings. -/
-def build (mesh : GridLiftedMesh.LiftedMesh vertices edges faces) :
+def build (mesh : LiftedMesh vertices edges faces) :
   CrossingBank request mesh := by
   let sources := DependentVector.ofFn (fun firstPosition : Fin faces.regulars.length =>
     DependentVector.ofFn (fun sheet : Fin 2 => mesh.locateFace firstPosition sheet))
   exact ⟨sources,
     DependentVector.ofFn (fun firstPosition => DependentVector.ofFn (fun sheet =>
       DependentVector.ofFn (fun nextPosition =>
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.HorizontalOutcome.build request ((sources.get
+        HorizontalOutcome.build request ((sources.get
           firstPosition).get sheet) nextPosition))),
     DependentVector.ofFn (fun firstPosition => DependentVector.ofFn (fun sheet =>
       DependentVector.ofFn (fun nextPosition =>
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.VerticalOutcome.build request ((sources.get
+        VerticalOutcome.build request ((sources.get
           firstPosition).get sheet) nextPosition)))⟩
 
 /-- Every physically adjacent horizontal pair appears as an actual matched crossing in the retained complete bank. -/
@@ -264,7 +264,7 @@ theorem horizontal_complete (retained :
     (upperEq : faces.regulars[firstPosition.val].cell.box.xUpper = faces.regulars[nextPosition.val].cell.box.xUpper)
     (adjacent : faces.regulars[firstPosition.val].cell.box.yUpper = faces.regulars[nextPosition.val].cell.box.yLower) :
     ∃ joined, ((retained.horizontal.get firstPosition).get sheet).get nextPosition = .matched joined :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.HorizontalOutcome.complete request _ lowerEq upperEq
+  HorizontalOutcome.complete request _ lowerEq upperEq
     adjacent
 
 /-- Every physically adjacent vertical pair appears as an actual matched crossing in the retained complete bank. -/
@@ -275,7 +275,7 @@ theorem vertical_complete (retained :
     (upperEq : faces.regulars[firstPosition.val].cell.box.yUpper = faces.regulars[nextPosition.val].cell.box.yUpper)
     (adjacent : faces.regulars[firstPosition.val].cell.box.xUpper = faces.regulars[nextPosition.val].cell.box.xLower) :
     ∃ joined, ((retained.vertical.get firstPosition).get sheet).get nextPosition = .matched joined :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.VerticalOutcome.complete request _ lowerEq upperEq
+  VerticalOutcome.complete request _ lowerEq upperEq
     adjacent
 
 end CrossingBank

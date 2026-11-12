@@ -65,14 +65,14 @@ set_option genInjectivity false in
 /-- A root owner guarded against every other reading of the same channels
 whose displayed allowances meet the common target. -/
 structure StableChannelReadings
-    (left right : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable) (target : Fraction.Rational)
+    (left right : Table.CoefficientTable) (target : Fraction.Rational)
     (positive : 0 < target) (box : Box) where
   /-- The two retained coefficient lists read the same original process channels. -/ same :
-    Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.SameChannels left.entries right.entries
+    Table.CoefficientTable.SameChannels left.entries right.entries
   /-- Every allowance in the left reading is below the common positive target. -/ leftSmall :
-    Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.AllowancesLt left.entries target
+    Table.CoefficientTable.AllowancesLt left.entries target
   /-- Every allowance in the right reading is below the common positive target. -/ rightSmall :
-    Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.AllowancesLt right.entries target
+    Table.CoefficientTable.AllowancesLt right.entries target
   /-- The winding box has strictly positive width and height. -/ proper : box.Proper
   /-- The left reading retains a positive boundary clearance on the winding box. -/ clearance :
     Clearance.Box.Boundary.Basic.BoundaryClearance left.polynomial box
@@ -109,12 +109,12 @@ section StableChannelReadings
 /-- Read the exact coefficient-difference polynomial between the two retained channel readings. -/
 @[expose] def
   perturbation
-    {left right : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {left right : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target} {box : Box}
-    (_transfer : Dense.Gaussian.Coefficient.Progressive.Transport.StableChannelReadings left right target positive box)
+    (_transfer : StableChannelReadings left right target positive box)
       :
     Basic.CanonicalCoefficients.CoefficientPolynomial :=
-  Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.readingPerturbation left right
+  Table.CoefficientTable.readingPerturbation left right
 end StableChannelReadings
 
 end Purelib.Polynomial.Dense.Gaussian.Coefficient.Progressive.Transport.StableChannelReadings
@@ -145,9 +145,9 @@ section StableChannelReadings
 /-- The right reading's polynomial is the left polynomial plus their exact perturbation. -/
 theorem
   rightPolynomial_eq_add
-    {left right : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {left right : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target} {box : Box}
-    (transfer : Dense.Gaussian.Coefficient.Progressive.Transport.StableChannelReadings left right target positive box) :
+    (transfer : StableChannelReadings left right target positive box) :
     right.polynomial = left.polynomial + transfer.perturbation :=
   (left.polynomial_add_readingPerturbation right).symm
 end StableChannelReadings
@@ -182,9 +182,9 @@ section StableChannelReadings
 Their common allowance target bounds the perturbation on the winding box against the left reading's retained clearance.
 -/
 @[expose] def dominance
-    {left right : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {left right : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target} {box : Box}
-    (transfer : Dense.Gaussian.Coefficient.Progressive.Transport.StableChannelReadings left right target positive box) :
+    (transfer : StableChannelReadings left right target positive box) :
     Clearance.Box.Dominance.Basic.BoundaryNormDominance left.polynomial
       transfer.perturbation box :=
   Clearance.Box.Dominance.Uniform.boundaryNormDominanceOfUniformBound left.polynomial transfer.perturbation box
@@ -193,9 +193,9 @@ Their common allowance target bounds the perturbation on the winding box against
       intro point boundary
       have scalarBound := left.readingPerturbation_eval_le_onBox right target positive
         transfer.same transfer.leftSmall transfer.rightSmall box boundary.1
-      simpa only [Dense.Gaussian.Coefficient.Progressive.Transport.StableChannelReadings.perturbation,
-        Gaussian.Norm.Basic.normSq_eq_canonical,
-        Gaussian.Basic.Canonical.normSq, pow_two] using scalarBound)
+      simpa only [perturbation,
+        Norm.Basic.normSq_eq_canonical,
+        Basic.Canonical.normSq, pow_two] using scalarBound)
 end StableChannelReadings
 
 end Purelib.Polynomial.Dense.Gaussian.Coefficient.Progressive.Transport.StableChannelReadings
@@ -229,34 +229,34 @@ Unlike the general homotopy clearance, this formula is available before the
 right process states are revealed. -/
 @[expose] def
   explicitRightClearance
-    {left right : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {left right : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target} {box : Box}
-    (transfer : Dense.Gaussian.Coefficient.Progressive.Transport.StableChannelReadings left right target positive box) :
+    (transfer : StableChannelReadings left right target positive box) :
     Clearance.Box.Boundary.Basic.BoundaryClearance right.polynomial box where
   bound :=
     (transfer.clearance.bound -
         left.refinementEvaluationBound target box) ^ 2 /
-      (4 * Dense.Gaussian.Bounds.Box.denseEvalNormMajorant
+      (4 * Bounds.Box.denseEvalNormMajorant
         left.polynomial box)
   positive := by
-    exact Purelib.Data.Rat.Fraction.Order.Field.div_pos_direct
-      (Purelib.Data.Rat.Fraction.Order.Arithmetic.pow_pos_direct
-        (Purelib.Data.Rat.Fraction.Order.Arithmetic.sub_pos_direct transfer.budget_lt) 2)
-      (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-        (Dense.Gaussian.Bounds.Box.denseEvalNormMajorant_pos
+    exact Fraction.Order.Field.div_pos_direct
+      (Fraction.Order.Arithmetic.pow_pos_direct
+        (Fraction.Order.Arithmetic.sub_pos_direct transfer.budget_lt) 2)
+      (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+        (Bounds.Box.denseEvalNormMajorant_pos
           left.polynomial box))
   lower := by
     intro point boundary
     rw [transfer.rightPolynomial_eq_add]
     exact
-      (Purelib.Polynomial.Clearance.Box.Dominance.Majorant.boundaryClearance_add_of_dominance_with_majorant
+      (Clearance.Box.Dominance.Majorant.boundaryClearance_add_of_dominance_with_majorant
         left.polynomial transfer.perturbation box transfer.dominance
-        (Dense.Gaussian.Bounds.Box.denseEvalNormMajorant left.polynomial box)
-        (Dense.Gaussian.Bounds.Box.denseEvalNormMajorant_pos left.polynomial box)
+        (Bounds.Box.denseEvalNormMajorant left.polynomial box)
+        (Bounds.Box.denseEvalNormMajorant_pos left.polynomial box)
         (by
           intro z onBoundary
-          simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using
-            Dense.Gaussian.Bounds.Box.normSq_eval_le_denseEvalNormMajorant
+          simpa only [Norm.Basic.normSq_eq_canonical] using
+            Bounds.Box.normSq_eval_le_denseEvalNormMajorant
             left.polynomial onBoundary.1)).lower point boundary
 end StableChannelReadings
 
@@ -289,13 +289,13 @@ section StableChannelReadings
 majorant. -/
 @[simp] theorem
   explicitRightClearance_bound
-    {left right : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {left right : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target} {box : Box}
-    (transfer : Dense.Gaussian.Coefficient.Progressive.Transport.StableChannelReadings left right target positive box) :
+    (transfer : StableChannelReadings left right target positive box) :
     transfer.explicitRightClearance.bound =
       (transfer.clearance.bound -
           left.refinementEvaluationBound target box) ^ 2 /
-        (4 * Dense.Gaussian.Bounds.Box.denseEvalNormMajorant
+        (4 * Bounds.Box.denseEvalNormMajorant
           left.polynomial box) := by
   rfl
 end StableChannelReadings
@@ -330,9 +330,9 @@ section StableChannelReadings
 The retained dominance certificate gives a positive clearance for their exact polynomial sum. -/
 @[expose] def
   rightClearance
-    {left right : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {left right : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target} {box : Box}
-    (transfer : Dense.Gaussian.Coefficient.Progressive.Transport.StableChannelReadings left right target positive box) :
+    (transfer : StableChannelReadings left right target positive box) :
     Clearance.Box.Boundary.Basic.BoundaryClearance right.polynomial box := by
   rw [transfer.rightPolynomial_eq_add]
   exact Clearance.Box.Dominance.Sum.boundaryClearance_add_of_boundaryNormDominance
@@ -367,9 +367,9 @@ section StableChannelReadings
 
 /-- Two certified accurate readings of the same channels have equal raw winding on the retained box. -/
 theorem rightWinding_eq
-    {left right : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {target : Fraction.Rational}
+    {left right : Table.CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target} {box : Box}
-    (transfer : Dense.Gaussian.Coefficient.Progressive.Transport.StableChannelReadings left right target positive box) :
+    (transfer : StableChannelReadings left right target positive box) :
     Winding.Box.Basic.quadrupledBoxWinding right.polynomial box =
       Winding.Box.Basic.quadrupledBoxWinding left.polynomial box := by
   rw [transfer.rightPolynomial_eq_add]

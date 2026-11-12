@@ -43,7 +43,10 @@ import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Riemann.Normalization.InverseRootPrimitive
 import Mathlib.Order.Basic
+import Purelib.Data.Nat.Order
 import Purelib.Tactic.Ring
+
+open Purelib.Data.Rat.Fraction.Order
 
 @[expose] public section
 
@@ -65,7 +68,7 @@ open Purelib.Riemann.Normalization.ContinuedInverseRoot (ContinuedNeighborhood)
 open Purelib.Riemann.Normalization.InverseRootPrimitive (PrimitiveModel)
 open Purelib.Riemann.Integration.PreparedSubdivisionModelCore (CenteredEdge)
 open Purelib.Riemann.Integration.PreparedDirectDyadicRefinements
-  (DirectParentBlock geometricMovement directParentBlockAtDepth)
+  (DirectParentBlock geometricMovement directParentBlockAtDepth localModelErrorBound)
 open Purelib.Riemann.Readings.PreparedPrimitiveSamples (differentialNumerator coefficientError)
 open Purelib.Approximation.Rational.Budget.Spatial (SpatialBudget)
 open Purelib.Integration.Polynomial.Gaussian.Path.Basic (PathModel)
@@ -77,8 +80,8 @@ open Purelib.Data.Gaussian in
 /-- The exact rational Gaussian carrier. -/
 abbrev Gaussian := Basic.Canonical
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
 
 /-- The exact original centered parent's geometric movement between its retained parameter endpoints. -/
 def movement (parent : CenteredEdge curve differential) : Coordinate :=
@@ -110,15 +113,15 @@ open Purelib.Riemann.Integration in
 allowances. -/
 theorem localModelErrorBound_le_preparedScale (parent : CenteredEdge curve differential)
     {rootDiameter : Coordinate} (nonnegative : 0 ≤ rootDiameter) (depth : Nat) :
-    PreparedDirectDyadicRefinements.localModelErrorBound differential parent.edge.segment rootDiameter depth
+    localModelErrorBound differential parent.edge.segment rootDiameter depth
       parent.edge.left.parameter parent.edge.request.endpoint.parameter ≤
         preparedScale parent * (Geometric.Basic.quarterRadius (movement parent) depth + rootDiameter) := by
   have spatialNonnegative := Geometric.Basic.quarterRadius_nonneg (movement_nonnegative parent) depth
   have bound := add_le_add
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
       (le_add_of_nonneg_right nonnegative : Geometric.Basic.quarterRadius (movement parent) depth ≤ _)
       (PreparedConstantModels.PreparedEdge.pointErrorCoefficient_nonnegative differential parent.edge.segment))
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
       (le_add_of_nonneg_left spatialNonnegative : rootDiameter ≤ _)
       (PreparedConstantModels.PreparedEdge.rootErrorCoefficient_nonnegative differential parent.edge.segment))
   exact bound.trans_eq (by unfold preparedScale; ring1)
@@ -130,7 +133,7 @@ def denominatorLower (patch : ContinuedNeighborhood curve.polynomial count) : Co
 open Purelib.Data.Rat in
 /-- The original continued neighborhood's retained denominator lower bound is strictly positive. -/
 theorem denominatorLower_positive (patch : ContinuedNeighborhood curve.polynomial count) : 0 < denominatorLower patch :=
-  Fraction.Order.Field.div_pos_direct patch.base.site.denominatorValue_positive (by decide)
+  Field.div_pos_direct patch.base.site.denominatorValue_positive (by decide)
 
 /-- The original root-refinement error scale combining numerator bound, root lower bound and parent movement. -/
 def rootScale (patch : ContinuedNeighborhood curve.polynomial count) (numeratorBound distance : Coordinate) : Coordinate
@@ -143,10 +146,10 @@ theorem rootScale_nonnegative (patch : ContinuedNeighborhood curve.polynomial co
   Coordinate}
     (numeratorNonnegative : 0 ≤ numeratorBound) (distanceNonnegative : 0 ≤ distance) :
     0 ≤ rootScale patch numeratorBound distance :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Field.div_nonneg_direct
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) numeratorNonnegative) patch.rootLower_positive.le)
+  Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct
+      (Field.div_nonneg_direct
+        (Arithmetic.mul_nonneg_direct (by decide) numeratorNonnegative) patch.rootLower_positive.le)
       distanceNonnegative) (by decide +kernel)
 
 /-- The retained coefficient-error weight for the original neighborhood, numerator bound and movement. -/
@@ -161,10 +164,10 @@ theorem errorWeight_nonnegative (patch : ContinuedNeighborhood curve.polynomial 
     (numeratorNonnegative : 0 ≤ numeratorBound) (distanceNonnegative : 0 ≤ distance) :
     0 ≤ errorWeight patch numeratorBound distance := by
   have scaled : 0 ≤ 64 * numeratorBound :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) numeratorNonnegative
-  have first := Fraction.Order.Field.div_nonneg_direct scaled (denominatorLower_positive patch).le
-  have second := Fraction.Order.Field.div_nonneg_direct first patch.rootLower_positive.le
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct (add_nonneg second (by decide)) distanceNonnegative
+    Arithmetic.mul_nonneg_direct (by decide +kernel) numeratorNonnegative
+  have first := Field.div_nonneg_direct scaled (denominatorLower_positive patch).le
+  have second := Field.div_nonneg_direct first patch.rootLower_positive.le
+  exact Arithmetic.mul_nonneg_direct (add_nonneg second (by decide)) distanceNonnegative
 
 open Purelib.Algebra in
 open Purelib.Approximation.Rational in
@@ -204,7 +207,7 @@ structure Request (parent : CenteredEdge curve differential)
   /-- The original geometric root-refinement error is strictly below one third of the target. -/ polynomial_accurate :
     Geometric.Basic.quarterRadius (rootScale patch numeratorBound (movement parent)) index < target / 3
   /-- The retained spatial, root-diameter and preparation-error budget for the original parent and model. -/ budget :
-    Budget.Spatial.SpatialBudget target (movement parent) (4 * model.primitive.remainderBound * movement parent)
+    SpatialBudget target (movement parent) (4 * model.primitive.remainderBound * movement parent)
     (errorWeight patch numeratorBound (movement parent)) (preparedScale parent) (denominatorLower patch)
       (preparationDepth parent)
   /-- The exact original direct-refinement child block acquired for this request. -/ block : DirectParentBlock parent
@@ -231,13 +234,13 @@ def ofModel (parent : CenteredEdge curve differential) (patch : ContinuedNeighbo
     (index : Nat) (model : PrimitiveModel patch index (differentialNumerator differential))
     (accurate : Geometric.Basic.quarterRadius (rootScale patch numeratorBound (movement parent)) index < target / 3) :
     Request parent patch target :=
-  let budget := Budget.Spatial.SpatialBudget.acquire target (movement parent) (4 * model.primitive.remainderBound *
+  let budget := SpatialBudget.acquire target (movement parent) (4 * model.primitive.remainderBound *
     movement parent)
     (errorWeight patch numeratorBound (movement parent)) (preparedScale parent) (denominatorLower patch)
       (preparationDepth parent)
     targetPositive (movement_nonnegative parent)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) model.primitive.remainderBound_nonnegative)
+    (Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct (by decide) model.primitive.remainderBound_nonnegative)
       (movement_nonnegative parent))
     (errorWeight_nonnegative patch numeratorNonnegative (movement_nonnegative parent))
     (preparedScale_nonnegative parent) (denominatorLower_positive patch)
@@ -278,7 +281,304 @@ def acquire (parent : CenteredEdge curve differential) (patch : ContinuedNeighbo
       simpa only [Norm.Basic.normSq_eq_canonical] using scalar) index model
     (Geometric.Search.firstQuarterBelow_accurate scale (rootScale_nonnegative patch numeratorNonnegative
       (movement_nonnegative parent))
-      0 (target / 3) (Fraction.Order.Field.div_pos_direct targetPositive (by decide)))
+      0 (target / 3) (Field.div_pos_direct targetPositive (by decide)))
+
+section
+
+open Purelib.Approximation.Rational
+open Purelib.Data.Rat
+
+/-- Refine the actual retained primitive request only when its stored model index is below the requested floor.
+
+An already adequate request is returned literally. Otherwise the same
+neighborhood, numerator bound and certificates build one necessary later
+primitive; the original ofModel builder pays its actual spatial/Taylor budget
+and retains the resulting child block at the unchanged target and parent.
+-/
+def refine {parent : CenteredEdge curve differential} {patch : ContinuedNeighborhood curve.polynomial count}
+    {target : Coordinate} (request : Request parent patch target) (positive : 0 < target)
+    (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) (minimum : Nat) :
+    Request parent patch target :=
+  if adequate : minimum ≤ request.index then request
+  else
+    let model := PrimitiveModel.ofIndex patch minimum (differentialNumerator differential)
+    ofModel parent patch target positive proper request.numeratorBound request.numerator_nonnegative
+      request.numerator_le minimum model
+      ((Geometric.Basic.quarterRadius_antitone
+        (rootScale_nonnegative patch request.numerator_nonnegative (movement_nonnegative parent))
+        (Nat.le_of_lt (Nat.lt_of_not_ge adequate))).trans_lt request.polynomial_accurate)
+
+/-- An adequate retained request is returned as the same complete original value. -/
+theorem refine_of_ge {parent : CenteredEdge curve differential} {patch : ContinuedNeighborhood curve.polynomial count}
+    {target : Coordinate} (request : Request parent patch target) (positive : 0 < target)
+    (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) (minimum : Nat)
+    (adequate : minimum ≤ request.index) : request.refine positive proper minimum = request := by
+  unfold refine
+  rewrite [dif_pos adequate]
+  rfl
+
+/-- A zero minimum preserves the whole original primitive request and every cached field. -/
+theorem refine_zero {parent : CenteredEdge curve differential} {patch : ContinuedNeighborhood curve.polynomial count}
+    {target : Coordinate} (request : Request parent patch target) (positive : 0 < target)
+    (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) :
+    request.refine positive proper 0 = request := request.refine_of_ge positive proper 0 (Nat.zero_le _)
+
+/-- Actual retained-request refinement attains the requested model-index floor. -/
+theorem refine_index_ge {parent : CenteredEdge curve differential}
+    {patch : ContinuedNeighborhood curve.polynomial count} {target : Coordinate}
+    (request : Request parent patch target) (positive : 0 < target)
+    (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) (minimum : Nat) :
+    minimum ≤ (request.refine positive proper minimum).index := by
+  unfold refine
+  split
+  · assumption
+  · exact Nat.le_refl minimum
+
+/-- Refinement preserves the original cached numerator bound, including the already adequate branch. -/
+theorem refine_numeratorBound {parent : CenteredEdge curve differential}
+    {patch : ContinuedNeighborhood curve.polynomial count} {target : Coordinate}
+    (request : Request parent patch target) (positive : 0 < target)
+    (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) (minimum : Nat) :
+    (request.refine positive proper minimum).numeratorBound = request.numeratorBound := by
+  unfold refine
+  split <;> rfl
+
+/-- Retain the actual primitive model, spatial data and child block while changing only their paid target index.
+
+All three new scalar payments concern this actual retained request. Its
+original numerator certificate, model, root diameter, depth and complete
+child block are reused, without any numerical search or preparation.
+-/
+def atTarget {parent : CenteredEdge curve differential} {patch : ContinuedNeighborhood curve.polynomial count}
+    {target : Coordinate} (request : Request parent patch target) (next : Coordinate)
+    (polynomialPaid : Geometric.Basic.quarterRadius
+      (rootScale patch request.numeratorBound (movement parent)) request.index < next / 3)
+    (taylorPaid : 4 * request.model.primitive.remainderBound * movement parent *
+      Geometric.Basic.quarterRadius (movement parent) request.budget.depth ≤ next / 3)
+    (errorPaid : errorWeight patch request.numeratorBound (movement parent) * request.budget.error ≤ next / 3) :
+    Request parent patch next :=
+  { numeratorBound := request.numeratorBound
+    numerator_nonnegative := request.numerator_nonnegative
+    numerator_le := request.numerator_le
+    index := request.index
+    model := request.model
+    polynomial_accurate := polynomialPaid
+    budget := request.budget.atTarget next taylorPaid errorPaid
+    block := request.block
+    block_depth := request.block_depth
+    block_rootDiameter := request.block_rootDiameter }
+
+/-- Keeping the original target preserves the complete retained original request. -/
+theorem atTarget_self {parent : CenteredEdge curve differential} {patch : ContinuedNeighborhood curve.polynomial count}
+    {target : Coordinate} (request : Request parent patch target) :
+    request.atTarget target request.polynomial_accurate request.budget.taylor_le request.budget.error_le = request := by
+  cases request
+  rfl
+
+/-- Pay a new positive target and model floor using the same actual neighborhood, numerator cache and original owners.
+
+The unchanged target delegates the original refinement procedure. Otherwise
+an adequate model is retained, and actual sufficient Taylor/preparation
+payments retain its whole child block too. Only necessary new spatial
+work invokes original ofModel. An insufficient polynomial or index computes
+one original finite Selection, builds one later model and uses ofModel.
+-/
+def retarget {parent : CenteredEdge curve differential} {patch : ContinuedNeighborhood curve.polynomial count}
+    {target : Coordinate} (request : Request parent patch target) (next : Coordinate) (positive : 0 < next)
+    (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) (minimum : Nat := 0) :
+    Request parent patch next :=
+  if same : next = target then
+    Eq.mp (congrArg (Request parent patch) same.symm)
+      (request.refine (same ▸ positive) proper minimum)
+  else
+    let scale := rootScale patch request.numeratorBound (movement parent)
+    if adequate : minimum ≤ request.index ∧ Geometric.Basic.quarterRadius scale request.index < next / 3 then
+      if spatial : 4 * request.model.primitive.remainderBound * movement parent *
+          Geometric.Basic.quarterRadius (movement parent) request.budget.depth ≤ next / 3 ∧
+          errorWeight patch request.numeratorBound (movement parent) * request.budget.error ≤ next / 3 then
+        request.atTarget next adequate.2 spatial.1 spatial.2
+      else
+        ofModel parent patch next positive proper request.numeratorBound request.numerator_nonnegative
+          request.numerator_le request.index request.model adequate.2
+    else
+      let selected := Geometric.Search.Selection.build scale
+        (rootScale_nonnegative patch request.numerator_nonnegative (movement_nonnegative parent))
+        (max request.index minimum) (next / 3) (Fraction.Order.Field.div_pos_direct positive (by decide +kernel))
+      let model := PrimitiveModel.ofIndex patch selected.stage (differentialNumerator differential)
+      ofModel parent patch next positive proper request.numeratorBound request.numerator_nonnegative
+        request.numerator_le selected.stage model (selected.allowance_eq.symm.trans_lt selected.accurate)
+
+/-- The unchanged target returns the complete original refinement result with identical retained cache branches. -/
+theorem retarget_self {parent : CenteredEdge curve differential} {patch : ContinuedNeighborhood curve.polynomial count}
+    {target : Coordinate} (request : Request parent patch target) (positive : 0 < target)
+    (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) (minimum : Nat := 0) :
+    request.retarget target positive proper minimum = request.refine positive proper minimum := by
+  unfold retarget
+  rewrite [dif_pos rfl]
+  rfl
+
+/-- The original target and zero floor return the same whole original request without any new numerical work. -/
+theorem retarget_self_zero {parent : CenteredEdge curve differential}
+    {patch : ContinuedNeighborhood curve.polynomial count} {target : Coordinate}
+    (request : Request parent patch target) (positive : 0 < target)
+    (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) :
+    request.retarget target positive proper = request :=
+  (request.retarget_self positive proper).trans (request.refine_zero positive proper)
+
+/-- Every retargeted request meets the actual requested model-index floor. -/
+theorem retarget_index_ge {parent : CenteredEdge curve differential}
+    {patch : ContinuedNeighborhood curve.polynomial count} {target : Coordinate}
+    (request : Request parent patch target) (next : Coordinate) (positive : 0 < next)
+    (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) (minimum : Nat := 0) :
+    minimum ≤ (request.retarget next positive proper minimum).index := by
+  by_cases same : next = target
+  · subst next
+    rewrite [request.retarget_self positive proper minimum]
+    exact request.refine_index_ge positive proper minimum
+  · unfold retarget
+    rewrite [dif_neg same]
+    dsimp only
+    split
+    · rename_i adequate
+      split <;> exact adequate.1
+    · exact (Purelib.Data.Nat.Order.le_max_right request.index minimum).trans
+        (Geometric.Search.Selection.build _
+          (rootScale_nonnegative patch request.numerator_nonnegative (movement_nonnegative parent))
+          (max request.index minimum) (next / 3)
+          (Fraction.Order.Field.div_pos_direct positive (by decide +kernel))).lower
+
+/-- Retargeting keeps the original cached numerator bound in every branch. -/
+theorem retarget_numeratorBound {parent : CenteredEdge curve differential}
+    {patch : ContinuedNeighborhood curve.polynomial count} {target : Coordinate}
+    (request : Request parent patch target) (next : Coordinate) (positive : 0 < next)
+    (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) (minimum : Nat := 0) :
+    (request.retarget next positive proper minimum).numeratorBound = request.numeratorBound := by
+  by_cases same : next = target
+  · subst next
+    rewrite [request.retarget_self positive proper minimum]
+    exact request.refine_numeratorBound positive proper minimum
+  · unfold retarget
+    rewrite [dif_neg same]
+    dsimp only
+    split
+    · split <;> rfl
+    · rfl
+
+/-- The actual retained polynomial, Taylor and preparation payments at a proposed target and index floor.
+
+These scalar tests inspect only the existing model, budget and index. They
+perform no sampling, finite selection, model construction or child-block
+preparation, including when the proposed target is stricter.
+-/
+def cachePays {parent : CenteredEdge curve differential} {patch : ContinuedNeighborhood curve.polynomial count}
+    {target : Coordinate} (request : Request parent patch target) (next : Coordinate) (minimum : Nat) : Prop :=
+  minimum ≤ request.index ∧
+    Geometric.Basic.quarterRadius (rootScale patch request.numeratorBound (movement parent)) request.index < next / 3 ∧
+    4 * request.model.primitive.remainderBound * movement parent *
+      Geometric.Basic.quarterRadius (movement parent) request.budget.depth ≤ next / 3 ∧
+    errorWeight patch request.numeratorBound (movement parent) * request.budget.error ≤ next / 3
+
+/-- The actual retained scalar payments can be checked constructively without any new numerical observations. -/
+instance instDecidableCachePays {parent : CenteredEdge curve differential}
+    {patch : ContinuedNeighborhood curve.polynomial count}
+    {target : Coordinate} (request : Request parent patch target) (next : Coordinate) (minimum : Nat) :
+    Decidable (request.cachePays next minimum) := by
+  unfold cachePays
+  infer_instance
+
+/-- An adequate floor and weaker target are paid by the same original three retained accuracy certificates. -/
+theorem cachePays_of_le {parent : CenteredEdge curve differential}
+    {patch : ContinuedNeighborhood curve.polynomial count} {target : Coordinate}
+    (request : Request parent patch target) (next : Coordinate) (minimum : Nat)
+    (weaker : target ≤ next) (adequate : minimum ≤ request.index) : request.cachePays next minimum := by
+  have thirds := Fraction.Order.Field.divide_mono (denominator := (3 : Coordinate)) weaker (by decide +kernel)
+  exact ⟨adequate, request.polynomial_accurate.trans_le thirds,
+    request.budget.taylor_le.trans thirds, request.budget.error_le.trans thirds⟩
+
+/-- Sufficient actual cached payments make the existing retarget procedure return its exact retained-cache view.
+
+The equality is of the whole original request, including its original
+model, budget data and complete child block. It applies to either ordering
+of the two target values; it assumes no approximate-value coincidence.
+-/
+theorem retarget_of_cachePays {parent : CenteredEdge curve differential}
+    {patch : ContinuedNeighborhood curve.polynomial count} {target : Coordinate}
+    (request : Request parent patch target) (next : Coordinate) (positive : 0 < next)
+    (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) (minimum : Nat)
+    (paid : request.cachePays next minimum) :
+    request.retarget next positive proper minimum = request.atTarget next paid.2.1 paid.2.2.1 paid.2.2.2 := by
+  by_cases same : next = target
+  · subst next
+    rewrite [request.retarget_self positive proper minimum,
+      request.refine_of_ge positive proper minimum paid.1]
+    cases request
+    rfl
+  · unfold retarget
+    rewrite [dif_neg same]
+    dsimp only
+    rewrite [dif_pos ⟨paid.1, paid.2.1⟩, dif_pos ⟨paid.2.2.1, paid.2.2.2⟩]
+    rfl
+
+/-- Retaining the actual paid caches preserves every additional payment already satisfied by those same caches. -/
+theorem cachePays_retarget {parent : CenteredEdge curve differential}
+    {patch : ContinuedNeighborhood curve.polynomial count} {target : Coordinate}
+    (request : Request parent patch target) (next : Coordinate) (positive : 0 < next)
+    (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) (minimum : Nat)
+    (paid : request.cachePays next minimum) (future : Coordinate) (floor : Nat)
+    (futurePaid : request.cachePays future floor) :
+    (request.retarget next positive proper minimum).cachePays future floor := by
+  rewrite [request.retarget_of_cachePays next positive proper minimum paid]
+  exact futurePaid
+
+/-- A weaker positive target and adequate floor retain the complete original model, budget data and child block.
+
+The original three scalar payments imply the new payments directly. The
+result is exactly the target-indexed view of the SAME complete cached
+request, rather than another approximation or reconstructed source owner.
+-/
+theorem retarget_of_le {parent : CenteredEdge curve differential}
+    {patch : ContinuedNeighborhood curve.polynomial count} {target : Coordinate}
+    (request : Request parent patch target) (next : Coordinate) (positive : 0 < next)
+    (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) (minimum : Nat)
+    (weaker : target ≤ next) (adequate : minimum ≤ request.index) :
+    request.retarget next positive proper minimum = request.atTarget next
+      (request.polynomial_accurate.trans_le (Fraction.Order.Field.divide_mono weaker (by decide +kernel)))
+      (request.budget.taylor_le.trans (Fraction.Order.Field.divide_mono weaker (by decide +kernel)))
+      (request.budget.error_le.trans (Fraction.Order.Field.divide_mono weaker (by decide +kernel))) := by
+  have thirds := Fraction.Order.Field.divide_mono (denominator := (3 : Coordinate)) weaker (by decide +kernel)
+  by_cases same : next = target
+  · subst next
+    rewrite [request.retarget_self positive proper minimum, request.refine_of_ge positive proper minimum adequate]
+    cases request
+    rfl
+  · unfold retarget
+    rewrite [dif_neg same]
+    dsimp only
+    rewrite [dif_pos ⟨adequate, request.polynomial_accurate.trans_le thirds⟩,
+      dif_pos ⟨request.budget.taylor_le.trans thirds, request.budget.error_le.trans thirds⟩]
+    rfl
+
+/-- A sufficient weaker target retains the actual complete primitive model at its same original index. -/
+theorem retarget_model_heq_of_le {parent : CenteredEdge curve differential}
+    {patch : ContinuedNeighborhood curve.polynomial count} {target : Coordinate}
+    (request : Request parent patch target) (next : Coordinate) (positive : 0 < next)
+    (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) (minimum : Nat)
+    (weaker : target ≤ next) (adequate : minimum ≤ request.index) :
+    HEq (request.retarget next positive proper minimum).model request.model := by
+  rewrite [request.retarget_of_le next positive proper minimum weaker adequate]
+  rfl
+
+/-- A sufficient weaker target retains the same whole actual child block, including original child owners and caches. -/
+theorem retarget_block_of_le {parent : CenteredEdge curve differential}
+    {patch : ContinuedNeighborhood curve.polynomial count} {target : Coordinate}
+    (request : Request parent patch target) (next : Coordinate) (positive : 0 < next)
+    (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) (minimum : Nat)
+    (weaker : target ≤ next) (adequate : minimum ≤ request.index) :
+    (request.retarget next positive proper minimum).block = request.block := by
+  rewrite [request.retarget_of_le next positive proper minimum weaker adequate]
+  rfl
+
+end
 
 open Purelib.Riemann.Paths in
 /-- Every original retained child in the request block satisfies the exact stored preparation-error budget. -/
@@ -309,7 +609,7 @@ theorem integral_error_lt {parent : CenteredEdge curve differential}
       child.edge.cached.preparedOwner.track.initial.box.Refines patch.base.seed.owner.track.initial.box) :
     normSq (request.model.primitive.value.eval (parent.edge.point 1) - request.model.primitive.value.eval
       (parent.edge.point 0) -
-      (Basic.PathModel.mk (request.block.children.map PreparedSubdivisionModelCore.CenteredEdge.model)).integralSample)
+      (PathModel.mk (request.block.children.map CenteredEdge.model)).integralSample)
         < target := by
   have errors : ∀ child ∈ request.block.children, child.edge.modelErrorAllowance ≤ request.budget.error := by
     intro child member
@@ -320,7 +620,7 @@ theorem integral_error_lt {parent : CenteredEdge curve differential}
     (fun child member => request.numerator_le _ (startInside child member)) errors request.budget.relative_small
     (fun _ member => PreparedPrimitivePaths.block_movement_le request.block member)
   rw [request.block_depth, coefficientError_split] at bound
-  have total := (Fraction.Order.Arithmetic.add_lt_add_right_direct request.polynomial_accurate
+  have total := (Arithmetic.add_lt_add_right_direct request.polynomial_accurate
     (4 * request.model.primitive.remainderBound * movement parent * Geometric.Basic.quarterRadius (movement parent)
       request.budget.depth +
       errorWeight patch request.numeratorBound (movement parent) * request.budget.error)).trans_le
@@ -357,7 +657,7 @@ theorem integral_error_lt_of_endpoints {parent : CenteredEdge curve differential
       child.edge.cached.preparedOwner.track.initial.box.Refines patch.base.seed.owner.track.initial.box) :
     normSq (request.model.primitive.value.eval (parent.edge.point 1) - request.model.primitive.value.eval
       (parent.edge.point 0) -
-      (Basic.PathModel.mk (request.block.children.map PreparedSubdivisionModelCore.CenteredEdge.model)).integralSample)
+      (PathModel.mk (request.block.children.map CenteredEdge.model)).integralSample)
         < target :=
   request.integral_error_lt (PreparedPrimitivePaths.block_starts_inside request.block patch.box startInside
     finishInside)

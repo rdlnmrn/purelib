@@ -67,13 +67,13 @@ def horizontalClearanceAfterMove
     {source target : Canonical} (degree : RootDegree)
     {ambient : Box} {y : Fraction.Rational}
     (clearance : HorizontalLineClearance
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial source degree) ambient y)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) < clearance.bound) :
+      (Power.Gaussian.rootPolynomial source degree) ambient y)
+    (small : Norm.Basic.normSq (source - target) < clearance.bound) :
     HorizontalLineClearance
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree) ambient y :=
+      (Power.Gaussian.rootPolynomial target degree) ambient y :=
   Clearance.Box.Line.Path.horizontalOfPathCertificate
-    (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree) ambient y
-      (Power.Clearance.Path.Transport.pathCertificateAfterMove degree clearance.toPathCertificate small)
+    (Power.Gaussian.rootPolynomial target degree) ambient y
+      (Path.Transport.pathCertificateAfterMove degree clearance.toPathCertificate small)
 end Purelib.RootIsolation.Power.Clearance.Box.Transport
 
 end
@@ -105,24 +105,24 @@ open Purelib.Data.Gaussian
     {source target : Canonical} (degree : RootDegree)
     {ambient : Box} {y : Fraction.Rational}
     (clearance : HorizontalLineClearance
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial source degree) ambient y)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) < clearance.bound) :
+      (Power.Gaussian.rootPolynomial source degree) ambient y)
+    (small : Norm.Basic.normSq (source - target) < clearance.bound) :
     (horizontalClearanceAfterMove degree clearance small).bound =
-      (clearance.bound - Data.Gaussian.Norm.Basic.normSq (source - target)) ^ 2 /
+      (clearance.bound - Norm.Basic.normSq (source - target)) ^ 2 /
         (4 * max 1
           (Dense.Rational.Bounds.Horner.evalSqBound
-              (Dense.Gaussian.Path.Components.pathReal (Purelib.Polynomial.Power.Gaussian.rootPolynomial source degree)
-                (Gaussian.Cast.Imaginary.horizontalBase y)
-                  Gaussian.Constants.horizontalDirection)
+              (Dense.Gaussian.Path.Components.pathReal (Power.Gaussian.rootPolynomial source degree)
+                (Cast.Imaginary.horizontalBase y)
+                  Constants.horizontalDirection)
               (Box.Intervals.horizontalInterval ambient) +
             Dense.Rational.Bounds.Horner.evalSqBound
-              (Dense.Gaussian.Path.Components.pathImag (Purelib.Polynomial.Power.Gaussian.rootPolynomial source degree)
-                (Gaussian.Cast.Imaginary.horizontalBase y)
-                  Gaussian.Constants.horizontalDirection)
+              (Dense.Gaussian.Path.Components.pathImag (Power.Gaussian.rootPolynomial source degree)
+                (Cast.Imaginary.horizontalBase y)
+                  Constants.horizontalDirection)
               (Box.Intervals.horizontalInterval ambient))) := by
   unfold horizontalClearanceAfterMove
   rw [Clearance.Box.Line.Path.horizontalOfPathCertificate_bound,
-    Power.Clearance.Path.Transport.pathCertificateAfterMove_bound,
+    Path.Transport.pathCertificateAfterMove_bound,
     HorizontalLineClearance.toPathCertificate_bound]
 end Purelib.RootIsolation.Power.Clearance.Box.Transport
 
@@ -158,13 +158,13 @@ def verticalClearanceAfterMove
     {source target : Canonical} (degree : RootDegree)
     {ambient : Box} {x : Fraction.Rational}
     (clearance : VerticalLineClearance
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial source degree) ambient x)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) < clearance.bound) :
+      (Power.Gaussian.rootPolynomial source degree) ambient x)
+    (small : Norm.Basic.normSq (source - target) < clearance.bound) :
     VerticalLineClearance
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree) ambient x :=
+      (Power.Gaussian.rootPolynomial target degree) ambient x :=
   Clearance.Box.Line.Path.verticalOfPathCertificate
-    (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree) ambient x
-      (Power.Clearance.Path.Transport.pathCertificateAfterMove degree clearance.toPathCertificate small)
+    (Power.Gaussian.rootPolynomial target degree) ambient x
+      (Path.Transport.pathCertificateAfterMove degree clearance.toPathCertificate small)
 end Purelib.RootIsolation.Power.Clearance.Box.Transport
 
 end
@@ -196,22 +196,22 @@ open Purelib.Data.Gaussian
     {source target : Canonical} (degree : RootDegree)
     {ambient : Box} {x : Fraction.Rational}
     (clearance : VerticalLineClearance
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial source degree) ambient x)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) < clearance.bound) :
+      (Power.Gaussian.rootPolynomial source degree) ambient x)
+    (small : Norm.Basic.normSq (source - target) < clearance.bound) :
     (verticalClearanceAfterMove degree clearance small).bound =
-      (clearance.bound - Data.Gaussian.Norm.Basic.normSq (source - target)) ^ 2 /
+      (clearance.bound - Norm.Basic.normSq (source - target)) ^ 2 /
         (4 * max 1
           (Dense.Rational.Bounds.Horner.evalSqBound
-              (Dense.Gaussian.Path.Components.pathReal (Purelib.Polynomial.Power.Gaussian.rootPolynomial source degree)
-                (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit)
+              (Dense.Gaussian.Path.Components.pathReal (Power.Gaussian.rootPolynomial source degree)
+                (Cast.Winding.verticalBase x) Constants.imaginaryUnit)
               (Box.Intervals.verticalInterval ambient) +
             Dense.Rational.Bounds.Horner.evalSqBound
-              (Dense.Gaussian.Path.Components.pathImag (Purelib.Polynomial.Power.Gaussian.rootPolynomial source degree)
-                (Gaussian.Cast.Winding.verticalBase x) Gaussian.Constants.imaginaryUnit)
+              (Dense.Gaussian.Path.Components.pathImag (Power.Gaussian.rootPolynomial source degree)
+                (Cast.Winding.verticalBase x) Constants.imaginaryUnit)
               (Box.Intervals.verticalInterval ambient))) := by
   unfold verticalClearanceAfterMove
   rw [Clearance.Box.Line.Path.verticalOfPathCertificate_bound,
-    Power.Clearance.Path.Transport.pathCertificateAfterMove_bound,
+    Path.Transport.pathCertificateAfterMove_bound,
     VerticalLineClearance.toPathCertificate_bound]
 end Purelib.RootIsolation.Power.Clearance.Box.Transport
 

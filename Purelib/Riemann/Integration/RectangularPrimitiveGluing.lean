@@ -30,6 +30,8 @@ Cauchy controls the accumulated mismatch on every non-tree edge.
 
 namespace Purelib.Riemann.Integration.RectangularPrimitiveGluing
 
+variable {pairs : Nat}
+
 open Purelib.Riemann.Integration.RectangularPrimitiveModels
 open Purelib.LinearAlgebra.Grid.Offsets (Edges Gaussian Coordinate)
 open Purelib.Riemann.Normalization.RectangularInverseModels (Geometry Bank Transitions)
@@ -45,10 +47,10 @@ open Purelib in
 set_option genInjectivity false in
 /-- The four ordered Gaussian corner values of an original rectangular cell. -/
 structure CornerValues where
-  /-- The original lower-left corner value. -/ lowerLeft : LinearAlgebra.Grid.Offsets.Gaussian
-  /-- The original lower-right corner value. -/ lowerRight : LinearAlgebra.Grid.Offsets.Gaussian
-  /-- The original upper-left corner value. -/ upperLeft : LinearAlgebra.Grid.Offsets.Gaussian
-  /-- The original upper-right corner value. -/ upperRight : LinearAlgebra.Grid.Offsets.Gaussian
+  /-- The original lower-left corner value. -/ lowerLeft : Gaussian
+  /-- The original lower-right corner value. -/ lowerRight : Gaussian
+  /-- The original upper-left corner value. -/ upperLeft : Gaussian
+  /-- The original upper-right corner value. -/ upperRight : Gaussian
 
 constructive_injectivity CornerValues
 
@@ -58,7 +60,7 @@ set_option genInjectivity false in
 
 Each readback equation refers to the same original primitive and exact geometric column and row indices. -/
 structure PrimitiveCorners {polynomial numerator : Polynomial} {columns rows : Nat} {geometry : Geometry columns rows}
-    {models : Bank polynomial geometry} (primitives : Primitives models numerator) where
+    {models : Bank polynomial geometry} (primitives : Primitives models numerator pairs) where
   /-- The retained corner-value vector indexed by original column and row. -/ values : Data.Vector
     (Data.Vector CornerValues (rows + 1)) (columns + 1)
   /-- The lower-left cache equals the original primitive at that exact geometric corner. -/ lowerLeft_eq : ∀ column row,
@@ -75,20 +77,20 @@ constructive_injectivity PrimitiveCorners
 namespace PrimitiveCorners
 
 variable {polynomial numerator : Polynomial} {columns rows : Nat} {geometry : Geometry columns rows}
-    {models : Bank polynomial geometry} {primitives : Primitives models numerator}
+    {models : Bank polynomial geometry} {primitives : Primitives models numerator pairs}
 
 open Purelib.Data in
 /-- Cache the original primitives' values at their four geometric cell corners. -/
-def build (primitives : Primitives models numerator) : PrimitiveCorners primitives where
-  values := Vector.Basic.vectorOfFn fun column => Vector.Basic.vectorOfFn fun row =>
+def build (primitives : Primitives models numerator pairs) : PrimitiveCorners primitives where
+  values := vectorOfFn fun column => vectorOfFn fun row =>
     ⟨primitives.value column row (geometry.vertex column.castSucc row.castSucc),
       primitives.value column row (geometry.vertex column.succ row.castSucc),
       primitives.value column row (geometry.vertex column.castSucc row.succ),
       primitives.value column row (geometry.vertex column.succ row.succ)⟩
-  lowerLeft_eq := fun column row => by rw [Vector.Basic.vectorOfFn_apply, Vector.Basic.vectorOfFn_apply]
-  lowerRight_eq := fun column row => by rw [Vector.Basic.vectorOfFn_apply, Vector.Basic.vectorOfFn_apply]
-  upperLeft_eq := fun column row => by rw [Vector.Basic.vectorOfFn_apply, Vector.Basic.vectorOfFn_apply]
-  upperRight_eq := fun column row => by rw [Vector.Basic.vectorOfFn_apply, Vector.Basic.vectorOfFn_apply]
+  lowerLeft_eq := fun column row => by rw [vectorOfFn_apply, vectorOfFn_apply]
+  lowerRight_eq := fun column row => by rw [vectorOfFn_apply, vectorOfFn_apply]
+  upperLeft_eq := fun column row => by rw [vectorOfFn_apply, vectorOfFn_apply]
+  upperRight_eq := fun column row => by rw [vectorOfFn_apply, vectorOfFn_apply]
 
 end PrimitiveCorners
 
@@ -99,9 +101,9 @@ set_option genInjectivity false in
 Both offset vectors are computed from those exact cached values and retain their original horizontal and vertical
 adjacency indices. -/
 structure PrimitiveAnchors {polynomial numerator : Polynomial} {columns rows : Nat} {geometry : Geometry columns rows}
-    {models : Bank polynomial geometry} (primitives : Primitives models numerator) where
+    {models : Bank polynomial geometry} (primitives : Primitives models numerator pairs) where
   /-- The original retained four-corner primitive caches. -/ corners : PrimitiveCorners primitives
-  /-- The retained adjacent-cell anchor-offset vectors. -/ edges : LinearAlgebra.Grid.Offsets.Edges columns rows
+  /-- The retained adjacent-cell anchor-offset vectors. -/ edges : Edges columns rows
   /-- Each horizontal offset is the exact difference of the retained common-edge starting corner values. -/
     horizontal_eq : ∀ column row,
     edges.horizontal column row = (corners.values column.castSucc row).lowerRight - (corners.values column.succ
@@ -116,22 +118,23 @@ constructive_injectivity PrimitiveAnchors
 namespace PrimitiveAnchors
 
 variable {polynomial numerator : Polynomial} {columns rows : Nat} {geometry : Geometry columns rows}
-    {models : Bank polynomial geometry} {primitives : Primitives models numerator}
+    {models : Bank polynomial geometry} {primitives : Primitives models numerator pairs}
 
 open Purelib.Data in
 /-- Compute original adjacent-cell offsets from the exact retained primitive corner caches. -/
 def ofCorners (corners : PrimitiveCorners primitives) : PrimitiveAnchors primitives where
   corners := corners
   edges :=
-    { horizontal := Vector.Basic.vectorOfFn fun column => Vector.Basic.vectorOfFn fun row =>
+    { horizontal := vectorOfFn fun column => vectorOfFn fun row =>
         (corners.values column.castSucc row).lowerRight - (corners.values column.succ row).lowerLeft
-      vertical := Vector.Basic.vectorOfFn fun column => Vector.Basic.vectorOfFn fun row =>
+      vertical := vectorOfFn fun column => vectorOfFn fun row =>
         (corners.values column row.castSucc).upperLeft - (corners.values column row.succ).lowerLeft }
-  horizontal_eq := fun column row => by rw [Vector.Basic.vectorOfFn_apply, Vector.Basic.vectorOfFn_apply]
-  vertical_eq := fun column row => by rw [Vector.Basic.vectorOfFn_apply, Vector.Basic.vectorOfFn_apply]
+  horizontal_eq := fun column row => by rw [vectorOfFn_apply, vectorOfFn_apply]
+  vertical_eq := fun column row => by rw [vectorOfFn_apply, vectorOfFn_apply]
 
 /-- Cache the original primitives' corner values and construct their exact adjacent-cell anchor offsets. -/
-def build (primitives : Primitives models numerator) : PrimitiveAnchors primitives := ofCorners (.build primitives)
+def build (primitives : Primitives models numerator pairs) : PrimitiveAnchors primitives :=
+  ofCorners (.build primitives)
 
 /-- The retained horizontal offset equals the original primitive difference at the common edge's starting vertex. -/
 theorem horizontal_spec (anchors : PrimitiveAnchors primitives) (column : Fin columns) (row : Fin (rows + 1)) :
@@ -153,13 +156,13 @@ section
 open Purelib
 /-- The original adjacent-column primitive difference minus its retained edge-start offset. -/
 def horizontalDrift (anchors : PrimitiveAnchors primitives) (column : Fin columns) (row : Fin (rows + 1)) (point :
-  LinearAlgebra.Grid.Offsets.Gaussian) : Gaussian :=
+  Gaussian) : Gaussian :=
   primitives.value column.castSucc row point - primitives.value column.succ row point - anchors.edges.horizontal column
     row
 
 /-- The original adjacent-row primitive difference minus its retained edge-start offset. -/
 def verticalDrift (anchors : PrimitiveAnchors primitives) (column : Fin (columns + 1)) (row : Fin rows) (point :
-  LinearAlgebra.Grid.Offsets.Gaussian) : Gaussian :=
+  Gaussian) : Gaussian :=
   primitives.value column row.castSucc point - primitives.value column row.succ point - anchors.edges.vertical column
     row
 
@@ -168,7 +171,7 @@ theorem square_eq_drifts (anchors : PrimitiveAnchors primitives) (column : Fin c
     anchors.edges.square column row =
       anchors.verticalDrift column.castSucc row (geometry.vertex column.castSucc.succ row.castSucc.succ) -
         anchors.horizontalDrift column row.castSucc (geometry.vertex column.castSucc.succ row.castSucc.succ) := by
-  rw [LinearAlgebra.Grid.Offsets.Edges.square, anchors.vertical_spec column.succ row, anchors.horizontal_spec column
+  rw [Edges.square, anchors.vertical_spec column.succ row, anchors.horizontal_spec column
     row.succ]
   simp only [horizontalDrift, verticalDrift, Fin.castSucc_succ]
   ring1
@@ -176,7 +179,7 @@ theorem square_eq_drifts (anchors : PrimitiveAnchors primitives) (column : Fin c
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
 /-- A common bound on original endpoint drifts bounds each offset-square defect by four times that bound. -/
-theorem square_bound (anchors : PrimitiveAnchors primitives) (bound : LinearAlgebra.Grid.Offsets.Coordinate)
+theorem square_bound (anchors : PrimitiveAnchors primitives) (bound : Coordinate)
     (horizontal : ∀ column row, normSq (anchors.horizontalDrift column row (geometry.vertex column.castSucc.succ
       row.succ)) ≤ bound)
     (vertical : ∀ column row, normSq (anchors.verticalDrift column row (geometry.vertex column.succ row.castSucc.succ))
@@ -204,13 +207,13 @@ def offsets (anchors : PrimitiveAnchors primitives) (initial : Gaussian := 0) : 
 
 /-- Add the retained cell offset to the exact original primitive value. -/
 def alignedValue (anchors : PrimitiveAnchors primitives) (offsets : LinearAlgebra.Grid.Offsets anchors.edges)
-    (column : Fin (columns + 1)) (row : Fin (rows + 1)) (point : LinearAlgebra.Grid.Offsets.Gaussian) : Gaussian :=
+    (column : Fin (columns + 1)) (row : Fin (rows + 1)) (point : Gaussian) : Gaussian :=
   offsets.values column row + primitives.value column row point
 
 /-- The horizontally aligned primitive difference equals the original horizontal edge drift. -/
 theorem horizontal_difference (anchors : PrimitiveAnchors primitives) (offsets : LinearAlgebra.Grid.Offsets
   anchors.edges)
-    (column : Fin columns) (row : Fin (rows + 1)) (point : LinearAlgebra.Grid.Offsets.Gaussian) :
+    (column : Fin columns) (row : Fin (rows + 1)) (point : Gaussian) :
     anchors.alignedValue offsets column.castSucc row point - anchors.alignedValue offsets column.succ row point =
       anchors.horizontalDrift column row point := by
   simp only [alignedValue, offsets.horizontal, horizontalDrift]
@@ -219,7 +222,7 @@ theorem horizontal_difference (anchors : PrimitiveAnchors primitives) (offsets :
 /-- The vertically aligned primitive difference equals the original vertical drift minus the retained offset gap. -/
 theorem vertical_difference (anchors : PrimitiveAnchors primitives) (offsets : LinearAlgebra.Grid.Offsets
   anchors.edges)
-    (column : Fin (columns + 1)) (row : Fin rows) (point : LinearAlgebra.Grid.Offsets.Gaussian) :
+    (column : Fin (columns + 1)) (row : Fin rows) (point : Gaussian) :
     anchors.alignedValue offsets column row.castSucc point - anchors.alignedValue offsets column row.succ point =
       anchors.verticalDrift column row point - offsets.verticalGap column row := by
   simp only [alignedValue, verticalDrift, LinearAlgebra.Grid.Offsets.verticalGap]
@@ -233,17 +236,17 @@ The exact offset-square defects control accumulated vertical gaps, preserving th
 bound. -/
 theorem vertical_difference_bound (anchors : PrimitiveAnchors primitives) (offsets : LinearAlgebra.Grid.Offsets
   anchors.edges)
-    (bound : LinearAlgebra.Grid.Offsets.Coordinate) (nonnegative : 0 ≤ bound)
+    (bound : Coordinate) (nonnegative : 0 ≤ bound)
     (horizontal : ∀ column row, normSq (anchors.horizontalDrift column row (geometry.vertex column.castSucc.succ
       row.succ)) ≤ bound)
     (vertical : ∀ column row, normSq (anchors.verticalDrift column row (geometry.vertex column.succ row.castSucc.succ))
       ≤ bound)
-    (column : Fin (columns + 1)) (row : Fin rows) (point : LinearAlgebra.Grid.Offsets.Gaussian)
+    (column : Fin (columns + 1)) (row : Fin rows) (point : Gaussian)
     (localBound : normSq (anchors.verticalDrift column row point) ≤ bound) :
     normSq (anchors.alignedValue offsets column row.castSucc point - anchors.alignedValue offsets column row.succ point)
       ≤
-      (8 * (columns : LinearAlgebra.Grid.Offsets.Coordinate) ^ 2 + 2) * bound := by
-  have squares : ∀ column row, Data.Gaussian.Norm.Basic.normSq (anchors.edges.square column row) ≤ 4 * bound := fun
+      (8 * (columns : Coordinate) ^ 2 + 2) * bound := by
+  have squares : ∀ column row, Norm.Basic.normSq (anchors.edges.square column row) ≤ 4 * bound := fun
     column
     row => by
     rw [Norm.Basic.normSq_eq_canonical]; exact anchors.square_bound bound horizontal vertical column row

@@ -125,4 +125,4 @@ class Renderer:
     for j,q in reversed(self.deps(i,p)):
      if (j,q) not in self.cache: tasks.append((j,q,False))
   return self.cache[idx,prec]
- def repr(self,idx): return F.pretty(self.format(idx))
+ def repr(self,idx,max_chars=None): return F.pretty(self.format(idx),max_chars=max_chars)

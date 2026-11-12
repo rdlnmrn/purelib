@@ -50,7 +50,7 @@ namespace PrimitiveBoxSurface
 /-- The exact rational carrier of the surface error budgets. -/
 private abbrev Coordinate := Rat.Fraction.Rational
 /-- The exact Gaussian rational carrier of the surface readings. -/
-private abbrev Gaussian := Gaussian.Basic.Canonical
+private abbrev Gaussian := Canonical
 
 end PrimitiveBoxSurface
 
@@ -60,10 +60,10 @@ namespace PrimitiveBoxSurface
 
 open Purelib.Polynomial.Dense.Gaussian.Basic in
 /-- The dense Gaussian polynomial carrier of the retained primitive basis. -/
-private abbrev Polynomial := Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+private abbrev Polynomial := CanonicalCoefficients.CoefficientPolynomial
 open Purelib.Geometry.Rational (Box) in
 /-- The rational box type of the original surface and root patch. -/
-private abbrev Box := Purelib.Geometry.Rational.Box
+private abbrev Box := Geometry.Rational.Box
 
 end PrimitiveBoxSurface
 
@@ -97,14 +97,14 @@ open Purelib.Polynomial.Dense.Gaussian.Basic in
 The original box refines the continued-root patch, and the selected budget fixes the actual mesh depth and polynomial
 accuracy. The mesh retains its exact parent-box equation. -/
 structure PrimitiveBoxSurface {polynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {siteCount count : Nat}
+  CanonicalCoefficients.CoefficientPolynomial} {siteCount count : Nat}
     {patch : ContinuedNeighborhood polynomial siteCount} (preflight : PrimitiveBasisPreflight patch count)
-    (box : Purelib.Geometry.Rational.Box) (target : Rat.Fraction.Rational) where
+    (box : Geometry.Rational.Box) (target : Rat.Fraction.Rational) where
   /-- The original surface box lies within the retained root patch. -/ box_refines : box.Refines patch.box
   /-- The primitive-basis request paying the complete surface error at the selected depth. -/ budget :
     PrimitiveSurfaceBudget preflight box.diagonalSq target
   /-- The actual retained dyadic box triangulation at that budget's depth. -/ mesh :
-    PreparedBoxTriangulation.TriangulatedPartition budget.depth
+    TriangulatedPartition budget.depth
   /-- The triangulation's original parent is the requested surface box. -/ parent_eq : mesh.partition.parent = box
 
 constructive_injectivity PrimitiveBoxSurface
@@ -114,8 +114,8 @@ namespace PrimitiveBoxSurface
 variable {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {siteCount count :
   Nat} {patch :
   ContinuedNeighborhood polynomial siteCount}
-  {preflight : PrimitiveBasisPreflight patch count} {box : Purelib.Geometry.Rational.Box} {target :
-    Purelib.Data.Rat.Fraction.Rational}
+  {preflight : PrimitiveBasisPreflight patch count} {box : Geometry.Rational.Box} {target :
+    Data.Rat.Fraction.Rational}
 
 open Purelib.Data in
 open Purelib.Geometry.Rational (Box) in
@@ -123,7 +123,7 @@ open Purelib.Geometry.Rectangle.Partition.PreparedBoxTriangulation in
 /-- Acquire the primitive budget and construct its actual dyadic box triangulation.
 
 The positive target and certified box inclusion determine a retained mesh with exact parent readback. -/
-def build (preflight : PrimitiveBasisPreflight patch count) (box : Purelib.Geometry.Rational.Box) (refines :
+def build (preflight : PrimitiveBasisPreflight patch count) (box : Geometry.Rational.Box) (refines :
   box.Refines patch.box)
     (target : Rat.Fraction.Rational) (positive : 0 < target) : PrimitiveBoxSurface preflight box target :=
   let budget := PrimitiveSurfaceBudget.acquire preflight box.diagonalSq target box.diagonalSq_nonneg positive
@@ -148,7 +148,7 @@ theorem refineIndex_mesh (surface : PrimitiveBoxSurface preflight box target) (i
 
 open Purelib.Geometry.Rectangle.Partition in
 /-- The number of actual triangles in the retained dyadic box partition. -/
-abbrev faceCount (surface : PrimitiveBoxSurface preflight box target) : Nat := (PreparedBoxTriangulation.boxTriangles
+abbrev faceCount (surface : PrimitiveBoxSurface preflight box target) : Nat := (boxTriangles
   surface.mesh.partition.leaves).length
 
 /-- The retained triangulation has two times four to the selected depth faces. -/
@@ -201,12 +201,12 @@ open Purelib.Polynomial.Dense.Gaussian.Basic in
 The point is stored explicitly with patch containment; the possible-value certificate links the cached root to the
 original owner's reading state. -/
 structure PrimitiveFaceReading {polynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {siteCount : Nat}
+  CanonicalCoefficients.CoefficientPolynomial} {siteCount : Nat}
     (patch : ContinuedNeighborhood polynomial siteCount) (index : Nat) where
-  /-- The cached coordinate of the original face-reading point. -/ point : Gaussian.Basic.Canonical
+  /-- The cached coordinate of the original face-reading point. -/ point : Canonical
   /-- The cached point lies in the retained root patch. -/ inside : patch.box.Contains point
   /-- The actual continued-root owner at that point. -/ sample : ContinuedNeighborhood.Point patch point
-  /-- The retained possible root value at the specified reading index. -/ root : Gaussian.Basic.Canonical
+  /-- The retained possible root value at the specified reading index. -/ root : Canonical
   /-- The cached root is possible in that owner's actual reading state. -/ possible :
     sample.certificate.value.name.process.Possible (sample.readingState index) root
 
@@ -219,9 +219,9 @@ namespace PrimitiveBoxSurface.PrimitiveFaceReading
 open Purelib.Data in
 open Purelib.Polynomial.Dense.Gaussian.Basic in
 /-- Acquire a root owner and retain an actual possible value at the requested point and index. -/
-def acquire {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {siteCount :
+def acquire {polynomial : CanonicalCoefficients.CoefficientPolynomial} {siteCount :
   Nat} (patch : ContinuedNeighborhood polynomial siteCount)
-    (index : Nat) (point : Gaussian.Basic.Canonical) (inside : patch.box.Contains point) : PrimitiveFaceReading patch
+    (index : Nat) (point : Canonical) (inside : patch.box.Contains point) : PrimitiveFaceReading patch
       index :=
   let sample := ContinuedNeighborhood.Point.acquire patch point inside
   let witness := sample.certificate.value.name.process.witness (sample.readingState index)
@@ -229,7 +229,7 @@ def acquire {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.
 
 open Purelib.Polynomial.Dense.Gaussian.Basic in
 /-- Read a new index while reusing the original point and root owner. -/
-def atIndex {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {siteCount index
+def atIndex {polynomial : CanonicalCoefficients.CoefficientPolynomial} {siteCount index
   : Nat} {patch : ContinuedNeighborhood polynomial siteCount}
     (reading : PrimitiveFaceReading patch index) (next : Nat) : PrimitiveFaceReading patch next :=
   let witness := reading.sample.certificate.value.name.process.witness (reading.sample.readingState next)
@@ -243,12 +243,12 @@ open Purelib.Polynomial.Dense.Gaussian.Basic in
 
 The other vertices lie in the same root patch and both squared edge distances obey the selected budget's leaf diameter.
 -/
-def triangleCertificate {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+def triangleCertificate {polynomial : CanonicalCoefficients.CoefficientPolynomial}
   {siteCount count : Nat} {patch : ContinuedNeighborhood polynomial
   siteCount}
     {preflight : PrimitiveBasisPreflight patch count} {diameter target : Rat.Fraction.Rational}
     (budget : PrimitiveSurfaceBudget preflight diameter target) (reading : PrimitiveFaceReading patch budget.index)
-    (coefficients : Coefficients count) {first second third : Gaussian.Basic.Canonical} (pointEq : reading.point =
+    (coefficients : Coefficients count) {first second third : Canonical} (pointEq : reading.point =
       first)
     (secondInside : patch.box.Contains second) (thirdInside : patch.box.Contains third)
     (secondDistance : normSq (second - first) ≤ budget.leafDiameter) (thirdDistance : normSq (third - first) ≤
@@ -266,11 +266,11 @@ open Purelib.Polynomial.Dense.Gaussian.Basic in
 open Purelib.Riemann in
 /-- Read the three exact coefficient-scaled budgets retained by the triangle certificate. -/
 theorem triangleCertificate_budgets {polynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {siteCount count : Nat}
+  CanonicalCoefficients.CoefficientPolynomial} {siteCount count : Nat}
     {patch : ContinuedNeighborhood polynomial siteCount} {preflight : PrimitiveBasisPreflight patch count}
     {diameter target : Rat.Fraction.Rational} (budget : PrimitiveSurfaceBudget preflight diameter target)
     (reading : PrimitiveFaceReading patch budget.index) (coefficients : Coefficients count)
-    {first second third : Gaussian.Basic.Canonical} (pointEq : reading.point = first)
+    {first second third : Canonical} (pointEq : reading.point = first)
     (secondInside : patch.box.Contains second) (thirdInside : patch.box.Contains third)
     (secondDistance : normSq (second - first) ≤ budget.leafDiameter)
     (thirdDistance : normSq (third - first) ≤ budget.leafDiameter) :
@@ -292,8 +292,8 @@ namespace PrimitiveBoxSurface
 variable {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {siteCount count :
   Nat} {patch :
   ContinuedNeighborhood polynomial siteCount}
-  {preflight : PrimitiveBasisPreflight patch count} {box : Purelib.Geometry.Rational.Box} {target :
-    Purelib.Data.Rat.Fraction.Rational}
+  {preflight : PrimitiveBasisPreflight patch count} {box : Geometry.Rational.Box} {target :
+    Data.Rat.Fraction.Rational}
 
 set_option genInjectivity false in
 open Purelib.Data in
@@ -414,7 +414,7 @@ theorem sample_error_le (readings : Readings surface) (coefficients : Coefficien
 
 open Purelib.Topology in
 /-- Pointwise equality of primitive values preserves the area of any finite oriented edge list. -/
-private theorem edgeListArea_congr {size : Nat} (first second : Fin size → Polygon.Stokes.PrimitivePoint)
+private theorem edgeListArea_congr {size : Nat} (first second : Fin size → PrimitivePoint)
     (equal : ∀ vertex, first vertex = second vertex) (edges : List (OrientedEdge size)) :
     edgeListArea first edges = edgeListArea second edges := by
   induction edges with
@@ -433,7 +433,7 @@ The retained vertex cache and exact parent-box equation transport the triangulat
 rectangle. -/
 theorem sample_boundaryArea (readings : Readings surface) (coefficients : Coefficients count) :
     (readings.sample coefficients).boundaryArea =
-      PreparedBoxBoundary.rectangleBoundary (fun point => Energy.Polygon.energyPrimitivePoint
+      rectangleBoundary (fun point => Energy.Polygon.energyPrimitivePoint
         (surface.budget.basis.value coefficients point))
         surface.budget.depth box := by
   rw [(readings.sample coefficients).boundaryArea_eq]
@@ -445,7 +445,7 @@ theorem sample_boundaryArea (readings : Readings surface) (coefficients : Coeffi
         rw [Vector.Basic.vectorOfFn_apply]) _)
   exact TriangulatedPartition.boundaryArea_eq_rectangleBoundary surface.mesh
     (fun point => Energy.Polygon.energyPrimitivePoint (surface.budget.basis.value coefficients point)) |>.trans
-      (congrArg (PreparedBoxBoundary.rectangleBoundary _ surface.budget.depth) surface.parent_eq)
+      (congrArg (rectangleBoundary _ surface.budget.depth) surface.parent_eq)
 
 open Purelib.Geometry.Rectangle.Partition in
 open Purelib.Integration in
@@ -458,7 +458,7 @@ original requested tolerance. -/
 theorem sample_energy_le_rectangleBoundary (readings : Readings surface) (coefficients : Coefficients count) :
     (readings.sample coefficients).affineEnergy - Readings.PreparedObservationCoercivity.coefficientNormSq coefficients
       * target ≤
-      (PreparedBoxBoundary.rectangleBoundary (fun point => Energy.Polygon.energyPrimitivePoint
+      (rectangleBoundary (fun point => Energy.Polygon.energyPrimitivePoint
         (surface.budget.basis.value coefficients point))
         surface.budget.depth box).im / 4 := by
   have lower := (Fraction.Order.Arithmetic.sub_le_sub_left_direct (readings.sample_error_le coefficients)

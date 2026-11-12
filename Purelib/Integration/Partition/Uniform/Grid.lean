@@ -5,6 +5,10 @@ import Purelib.Data.Rat.Fraction.Cast.Order
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Field
+public import Purelib.Data.Rat.Rounding.Floor
+import Purelib.Data.Rat.Rounding.Floor.Bounds
+import Purelib.Data.List.Membership
+public import Purelib.Integration.Partition.Length
 import Purelib.Integration.Partition.Unit.Normalize
 
 import Purelib.Algebra.Field.ExplicitField
@@ -32,6 +36,8 @@ covered; all arithmetic is on the finite rational grid.
 -/
 
 namespace Purelib.Integration.Partition.Uniform.Grid
+
+open Purelib.CCL.Progressive
 
 open Purelib.Data.Rat in
 /-- The exact rational grid point given by index divided by denominator. -/
@@ -78,9 +84,9 @@ open Purelib.Data.List in
 open Purelib.Integration.Partition in
 /-- The original uniform cut request is the consecutive interior node list with denominator one more than its length. -/
 theorem uniformCuts_eq_nodes (extra : Nat) :
-    CCL.Progressive.IntegrationPrograms.uniformCuts extra = nodes (extra + 1) 0 extra := by
+    IntegrationPrograms.uniformCuts extra = nodes (extra + 1) 0 extra := by
   rw [nodes_eq_map]
-  unfold CCL.Progressive.IntegrationPrograms.uniformCuts
+  unfold IntegrationPrograms.uniformCuts
   apply Map.map_congr_left
   intro index _
   unfold point
@@ -88,13 +94,14 @@ theorem uniformCuts_eq_nodes (extra : Nat) :
 
 section
 open Purelib.Data.Rat
+open Purelib.Data.Rat.Fraction.Order
 open Purelib.Integration.Partition
 /-- A positive denominator preserves strict order between natural grid indices. -/
 theorem point_lt {denominator left right : Nat} (positive : 0 < denominator) (order : left < right) :
     point denominator left < point denominator right := by
   change (left : Fraction.Rational) * (denominator : Fraction.Rational)⁻¹ <
     (right : Fraction.Rational) * (denominator : Fraction.Rational)⁻¹
-  exact Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+  exact Arithmetic.mul_lt_mul_of_pos_right_direct
     (Fraction.Cast.Order.natCast_lt_direct order)
     (Fraction.Order.Field.inv_pos_direct (Fraction.Cast.Order.natCast_pos_direct positive))
 
@@ -146,8 +153,8 @@ open Purelib in
 open Purelib.Integration.Partition in
 /-- Normalizing the original uniform cut request leaves it unchanged. -/
 theorem uniform_normalized (extra : Nat) :
-    Unit.Normalize.normalize (CCL.Progressive.IntegrationPrograms.uniformCuts extra) =
-      CCL.Progressive.IntegrationPrograms.uniformCuts extra := by
+    Unit.Normalize.normalize (IntegrationPrograms.uniformCuts extra) =
+      IntegrationPrograms.uniformCuts extra := by
   rw [uniformCuts_eq_nodes]
   exact Unit.Normalize.normalize_eq_of_sorted (nodes_sorted (Nat.succ_pos extra) 0 extra) (uniform_nodes_inside extra)
 
@@ -164,4 +171,66 @@ theorem point_step (denominator start : Nat) :
   rw [NatCast.add, Nat.cast_one]
   simp only [Field.ExplicitField.div_eq_mul_inv]
   ring1
+
+section
+open Purelib
+open Purelib.Data.List
+open Purelib.Data.Rat
+open Purelib.Data.Rat.Fraction.Order
+open Purelib.Integration.Partition
+
+/-- Every interval in a consecutive rational grid has the original reciprocal step as its exact length.
+
+The finite node list and both endpoint indices are retained. The identity also
+holds for denominator zero, where rational division is total. -/
+theorem intervals_length (denominator : Nat) : ∀ (start count : Nat) (interval : Interval),
+    interval ∈ Interval.intervalsBetween (point denominator start) (point denominator (start + count + 1))
+      (nodes denominator start count) →
+      interval.signedLength = 1 / (denominator : Fraction.Rational)
+  | start, 0, interval, member => by
+      change interval ∈ [⟨point denominator start, point denominator (start + 1)⟩] at member
+      have equal := Membership.mem_singleton.mp member
+      cases equal
+      exact point_step denominator start
+  | start, count + 1, interval, member => by
+      change interval ∈ ⟨point denominator start, point denominator (start + 1)⟩ ::
+        Interval.intervalsBetween (point denominator (start + 1)) (point denominator (start + (count + 1) + 1))
+          (nodes denominator (start + 1) count) at member
+      rcases Membership.mem_cons.mp member with equal | remaining
+      · cases equal
+        exact point_step denominator start
+      · rw [show start + (count + 1) + 1 = (start + 1) + count + 1 from by omega0] at remaining
+        exact intervals_length denominator (start + 1) count interval remaining
+
+/-- The normalized original uniform request retains its exact consecutive grid intervals. -/
+theorem uniform_intervals (extra : Nat) :
+    (Unit.Normalized.ofRequest (IntegrationPrograms.uniformCuts extra)).intervals =
+      Interval.intervalsBetween (point (extra + 1) 0) (point (extra + 1) (0 + extra + 1))
+        (nodes (extra + 1) 0 extra) := by
+  change Interval.intervalsBetween 0 1 (Unit.Normalize.normalize (IntegrationPrograms.uniformCuts
+    extra)) = _
+  rw [uniform_normalized, uniformCuts_eq_nodes, point_zero, Nat.zero_add, point_self (Nat.succ_pos extra)]
+
+/-- Every retained interval in the original normalized uniform request has the same exact length. -/
+theorem uniform_interval_length (extra : Nat) (interval : Interval)
+    (member : interval ∈ (Unit.Normalized.ofRequest
+      (IntegrationPrograms.uniformCuts extra)).intervals) :
+    interval.signedLength = 1 / ((extra + 1 : Nat) : Fraction.Rational) := by
+  rw [uniform_intervals] at member
+  exact intervals_length (extra + 1) 0 extra interval member
+
+/-- Compute a normalized uniform partition from the reciprocal ceiling of the requested width. -/
+@[expose] def forWidth (width : Fraction.Rational) : Unit.Normalized :=
+  Unit.Normalized.ofRequest (IntegrationPrograms.uniformCuts (Rounding.Floor.ceilNat (1 / width)))
+
+/-- Every interval of the computed uniform partition is narrower than the supplied positive width. -/
+theorem forWidth_interval_lt {width : Fraction.Rational} (positive : 0 < width) (interval : Interval)
+    (member : interval ∈ (forWidth width).intervals) : interval.signedLength < width := by
+  change interval ∈ (Unit.Normalized.ofRequest
+    (IntegrationPrograms.uniformCuts (Rounding.Floor.ceilNat (1 / width)))).intervals at member
+  rw [uniform_interval_length _ interval member]
+  exact Rounding.Floor.Bounds.reciprocal_ceilNat_lt width positive
+
+end
+
 end Purelib.Integration.Partition.Uniform.Grid

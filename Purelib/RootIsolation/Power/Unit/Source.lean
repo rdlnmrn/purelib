@@ -22,6 +22,8 @@ import Purelib.Geometry.Rational.Box.Bounds
 import Purelib.RootIsolation.Track.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian.Bounds
+
 open Purelib.Data.Gaussian.Basic (Canonical)
 open Purelib.Data.Nat.Positive (RootDegree)
 
@@ -63,18 +65,18 @@ open Purelib.Data.Gaussian
 source scale used by the robust Newton construction. -/
 def unitRobustSourceState
     {parameter : Canonical} (parameterNonzero : parameter ≠ 0)
-    (parameterUnit : Data.Gaussian.Norm.Basic.normSq parameter = 1)
+    (parameterUnit : Norm.Basic.normSq parameter = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (index : Fin degree.value) :
-    State.WindingOne.Basic.WindingOneState (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+    State.WindingOne.Basic.WindingOneState (Power.Gaussian.rootPolynomial parameter degree)
+      (RootRadius.Box.largeSquareBox (Power.Gaussian.rootPolynomial parameter
         degree))
         :=
-  let track := Power.Isolation.Track.isolatedTrack parameterNonzero degree degreeAtLeastTwo index
+  let track := Isolation.Track.isolatedTrack parameterNonzero degree degreeAtLeastTwo index
   let radius :=
-    Power.Unit.Radius.unitRobustSourceRadius parameterUnit degree degreeAtLeastTwo
+    Radius.unitRobustSourceRadius parameterUnit degree degreeAtLeastTwo
   track.refine track.initial radius
-    (Power.Unit.Radius.unitRobustSourceRadius_pos parameterUnit degree degreeAtLeastTwo)
+    (Radius.unitRobustSourceRadius_pos parameterUnit degree degreeAtLeastTwo)
 end Purelib.RootIsolation.Power.Unit.Source
 
 end
@@ -104,16 +106,16 @@ open Purelib.Data.Gaussian
 /-- The refined unit-power source box has squared diagonal at most the square of its retained source radius. -/
 theorem unitRobustSourceState_diagonalSq_le_radius_sq
     {parameter : Canonical} (parameterNonzero : parameter ≠ 0)
-    (parameterUnit : Data.Gaussian.Norm.Basic.normSq parameter = 1)
+    (parameterUnit : Norm.Basic.normSq parameter = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (index : Fin degree.value) :
     (unitRobustSourceState parameterNonzero parameterUnit degree
       degreeAtLeastTwo index).box.diagonalSq ≤
-      Power.Unit.Radius.unitRobustSourceRadius parameterUnit degree degreeAtLeastTwo ^ 2 := by
-  exact (Power.Isolation.Track.isolatedTrack parameterNonzero degree degreeAtLeastTwo index).accurate
-    (Power.Isolation.Track.isolatedTrack parameterNonzero degree degreeAtLeastTwo index).initial
-    (Power.Unit.Radius.unitRobustSourceRadius parameterUnit degree degreeAtLeastTwo)
-    (Power.Unit.Radius.unitRobustSourceRadius_pos parameterUnit degree degreeAtLeastTwo)
+      Radius.unitRobustSourceRadius parameterUnit degree degreeAtLeastTwo ^ 2 := by
+  exact (Isolation.Track.isolatedTrack parameterNonzero degree degreeAtLeastTwo index).accurate
+    (Isolation.Track.isolatedTrack parameterNonzero degree degreeAtLeastTwo index).initial
+    (Radius.unitRobustSourceRadius parameterUnit degree degreeAtLeastTwo)
+    (Radius.unitRobustSourceRadius_pos parameterUnit degree degreeAtLeastTwo)
 end Purelib.RootIsolation.Power.Unit.Source
 
 end
@@ -143,22 +145,22 @@ open Purelib.Data.Gaussian
 /-- The source box's squared diagonal is at most the retained source radius, which is no larger than one. -/
 theorem unitRobustSourceState_diagonalSq_le_radius
     {parameter : Canonical} (parameterNonzero : parameter ≠ 0)
-    (parameterUnit : Data.Gaussian.Norm.Basic.normSq parameter = 1)
+    (parameterUnit : Norm.Basic.normSq parameter = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (index : Fin degree.value) :
     (unitRobustSourceState parameterNonzero parameterUnit degree
       degreeAtLeastTwo index).box.diagonalSq ≤
-      Power.Unit.Radius.unitRobustSourceRadius parameterUnit degree degreeAtLeastTwo := by
+      Radius.unitRobustSourceRadius parameterUnit degree degreeAtLeastTwo := by
   let sourceRadius :=
-    Power.Unit.Radius.unitRobustSourceRadius parameterUnit degree degreeAtLeastTwo
+    Radius.unitRobustSourceRadius parameterUnit degree degreeAtLeastTwo
   have radiusPositive : 0 < sourceRadius :=
-    Power.Unit.Radius.unitRobustSourceRadius_pos parameterUnit degree degreeAtLeastTwo
+    Radius.unitRobustSourceRadius_pos parameterUnit degree degreeAtLeastTwo
   have squareLeRadius : sourceRadius ^ 2 ≤ sourceRadius := by
     rw [pow_two]
     calc
       sourceRadius * sourceRadius ≤ 1 * sourceRadius :=
         Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-          (Power.Unit.Radius.unitRobustSourceRadius_le_one parameterUnit degree degreeAtLeastTwo)
+          (Radius.unitRobustSourceRadius_le_one parameterUnit degree degreeAtLeastTwo)
           radiusPositive.le
       _ = sourceRadius := by ring1
   exact (unitRobustSourceState_diagonalSq_le_radius_sq parameterNonzero
@@ -192,32 +194,32 @@ open Purelib.Data.Gaussian
 /-- The source anchor's residual bound satisfies the original one-eighth squared quarter-radius displacement budget. -/
 theorem unitRobustSourceState_anchorResidual_le_displacementBudget
     {parameter : Canonical} (parameterNonzero : parameter ≠ 0)
-    (parameterUnit : Data.Gaussian.Norm.Basic.normSq parameter = 1)
+    (parameterUnit : Norm.Basic.normSq parameter = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (index : Fin degree.value) :
-    Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+    Box.Residual.anchorResidualBound (Power.Gaussian.rootPolynomial parameter
       degree)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (RootRadius.Box.largeSquareBox (Power.Gaussian.rootPolynomial parameter
         degree))
       (unitRobustSourceState parameterNonzero parameterUnit degree
         degreeAtLeastTwo index).box ≤
       (1 / 8 : Fraction.Rational) *
-        (Power.Unit.Radius.unitRobustRadius parameterUnit degree degreeAtLeastTwo / 4) ^ 2 := by
-  let p := Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree
-  let ambient := Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox p
-  let lipschitz := Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient
+        (Radius.unitRobustRadius parameterUnit degree degreeAtLeastTwo / 4) ^ 2 := by
+  let p := Power.Gaussian.rootPolynomial parameter degree
+  let ambient := RootRadius.Box.largeSquareBox p
+  let lipschitz := Box.denseLipschitzBound p ambient
   let sourceRadius :=
-    Power.Unit.Radius.unitRobustSourceRadius parameterUnit degree degreeAtLeastTwo
+    Radius.unitRobustSourceRadius parameterUnit degree degreeAtLeastTwo
   let budget := (1 / 8 : Fraction.Rational) *
-    (Power.Unit.Radius.unitRobustRadius parameterUnit degree degreeAtLeastTwo / 4) ^ 2
+    (Radius.unitRobustRadius parameterUnit degree degreeAtLeastTwo / 4) ^ 2
   have lipschitzPositive : 0 < lipschitz :=
-    Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos p ambient
+    Box.denseLipschitzBound_pos p ambient
   have scaled : sourceRadius * lipschitz ≤ budget :=
     (Fraction.Order.Field.le_div_iff_pos lipschitzPositive).mp
-      (Power.Unit.Radius.unitRobustSourceRadius_le_displacementRatio parameterUnit degree
+      (Radius.unitRobustSourceRadius_le_displacementRatio parameterUnit degree
         degreeAtLeastTwo)
   calc
-    Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound p ambient
+    Box.Residual.anchorResidualBound p ambient
         (unitRobustSourceState parameterNonzero parameterUnit degree
           degreeAtLeastTwo index).box =
       lipschitz *
@@ -258,28 +260,28 @@ open Purelib.Data.Gaussian
 /-- The source anchor's residual bound is at most the original threshold of one quarter. -/
 theorem unitRobustSourceState_anchorResidual_le_threshold
     {parameter : Canonical} (parameterNonzero : parameter ≠ 0)
-    (parameterUnit : Data.Gaussian.Norm.Basic.normSq parameter = 1)
+    (parameterUnit : Norm.Basic.normSq parameter = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (index : Fin degree.value) :
-    Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+    Box.Residual.anchorResidualBound (Power.Gaussian.rootPolynomial parameter
       degree)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (RootRadius.Box.largeSquareBox (Power.Gaussian.rootPolynomial parameter
         degree))
       (unitRobustSourceState parameterNonzero parameterUnit degree
         degreeAtLeastTwo index).box ≤ (1 / 4 : Fraction.Rational) := by
-  let p := Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree
-  let ambient := Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox p
-  let lipschitz := Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient
+  let p := Power.Gaussian.rootPolynomial parameter degree
+  let ambient := RootRadius.Box.largeSquareBox p
+  let lipschitz := Box.denseLipschitzBound p ambient
   let sourceRadius :=
-    Power.Unit.Radius.unitRobustSourceRadius parameterUnit degree degreeAtLeastTwo
+    Radius.unitRobustSourceRadius parameterUnit degree degreeAtLeastTwo
   have lipschitzPositive : 0 < lipschitz :=
-    Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos p ambient
+    Box.denseLipschitzBound_pos p ambient
   have scaled : sourceRadius * lipschitz ≤ (1 / 4 : Fraction.Rational) :=
     (Fraction.Order.Field.le_div_iff_pos lipschitzPositive).mp
-      (Power.Unit.Radius.unitRobustSourceRadius_le_derivativeRatio parameterUnit degree
+      (Radius.unitRobustSourceRadius_le_derivativeRatio parameterUnit degree
         degreeAtLeastTwo)
   calc
-    Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound p ambient
+    Box.Residual.anchorResidualBound p ambient
         (unitRobustSourceState parameterNonzero parameterUnit degree
           degreeAtLeastTwo index).box =
       lipschitz *
@@ -320,15 +322,15 @@ open Purelib.Data.Gaussian
 /-- The source box's squared diagonal is at most the square of one quarter of the robust radius. -/
 theorem unitRobustSourceState_diagonalSq_le_quarterRadius_sq
     {parameter : Canonical} (parameterNonzero : parameter ≠ 0)
-    (parameterUnit : Data.Gaussian.Norm.Basic.normSq parameter = 1)
+    (parameterUnit : Norm.Basic.normSq parameter = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (index : Fin degree.value) :
     (unitRobustSourceState parameterNonzero parameterUnit degree
       degreeAtLeastTwo index).box.diagonalSq ≤
-      (Power.Unit.Radius.unitRobustRadius parameterUnit degree degreeAtLeastTwo / 4) ^ 2 :=
+      (Radius.unitRobustRadius parameterUnit degree degreeAtLeastTwo / 4) ^ 2 :=
   (unitRobustSourceState_diagonalSq_le_radius parameterNonzero parameterUnit
     degree degreeAtLeastTwo index).trans
-      (Power.Unit.Radius.unitRobustSourceRadius_le_quarterRadius_sq parameterUnit degree
+      (Radius.unitRobustSourceRadius_le_quarterRadius_sq parameterUnit degree
         degreeAtLeastTwo)
 end Purelib.RootIsolation.Power.Unit.Source
 

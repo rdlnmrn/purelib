@@ -46,17 +46,17 @@ section
 between `1` at even indices and the point at odd indices. -/
 theorem chebyshevFirst_square_one
     (half : Nat) (center : K) (centerSquare : center ^ 2 = 1) :
-    Recurrence.Chebyshev.First.Basic.chebyshevFirst (half + half) center = 1 ∧
-      Recurrence.Chebyshev.First.Basic.chebyshevFirst (half + half + 1) center = center := by
+    Basic.chebyshevFirst (half + half) center = 1 ∧
+      Basic.chebyshevFirst (half + half + 1) center = center := by
   induction half with
   | zero =>
       constructor
-      · exact Recurrence.Chebyshev.First.Basic.chebyshevFirst_zero center
-      · exact Recurrence.Chebyshev.First.Basic.chebyshevFirst_one center
+      · exact Basic.chebyshevFirst_zero center
+      · exact Basic.chebyshevFirst_one center
   | succ half inductionHypothesis =>
       have nextEven :
-          Recurrence.Chebyshev.First.Basic.chebyshevFirst (half + half + 2) center = 1 := by
-        rw [Recurrence.Chebyshev.First.Basic.chebyshevFirst_succ_succ, inductionHypothesis.1,
+          Basic.chebyshevFirst (half + half + 2) center = 1 := by
+        rw [Basic.chebyshevFirst_succ_succ, inductionHypothesis.1,
           inductionHypothesis.2]
         rw [show 2 * center * center = 2 * center ^ 2 by
           rw [pow_two]
@@ -69,7 +69,7 @@ theorem chebyshevFirst_square_one
           using nextEven
       · rw [show Nat.succ half + Nat.succ half + 1 =
           (half + half + 1) + 2 by omega0]
-        rw [Recurrence.Chebyshev.First.Basic.chebyshevFirst_succ_succ, nextEven, inductionHypothesis.2]
+        rw [Basic.chebyshevFirst_succ_succ, nextEven, inductionHypothesis.2]
         ring1
 end
 

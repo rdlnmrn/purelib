@@ -33,12 +33,12 @@ namespace Purelib.Polynomial.Ascending.Rational.Nonnegative.Evaluation
 theorem scalarEvalCoefficients_nonnegative {radius :
   Fraction.Rational}
     (radiusNonnegative : 0 ≤ radius) : ∀ coefficients,
-    (∀ degree, 0 ≤ Ascending.Rational.Basic.coefficientCoefficients coefficients degree) →
-      0 ≤ Ascending.Rational.Evaluation.scalarEvalCoefficients radius coefficients
+    (∀ degree, 0 ≤ Basic.coefficientCoefficients coefficients degree) →
+      0 ≤ Evaluation.scalarEvalCoefficients radius coefficients
   | [], _ => le_rfl
   | _ :: remaining, coefficientsNonnegative =>
       add_nonneg (coefficientsNonnegative 0)
-        (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct radiusNonnegative
+        (Fraction.Order.Arithmetic.mul_nonneg_direct radiusNonnegative
           (scalarEvalCoefficients_nonnegative
             radiusNonnegative remaining
             (fun degree => coefficientsNonnegative (degree + 1))))
@@ -50,10 +50,10 @@ nonnegative. -/
 theorem scalarEvalCoefficients_drop_scaled_le
   {radius : Fraction.Rational}
     (radiusNonnegative : 0 ≤ radius) : ∀ coefficients count,
-    (∀ degree, 0 ≤ Ascending.Rational.Basic.coefficientCoefficients coefficients degree) →
+    (∀ degree, 0 ≤ Basic.coefficientCoefficients coefficients degree) →
       radius ^ count *
-          Ascending.Rational.Evaluation.scalarEvalCoefficients radius (coefficients.drop count) ≤
-        Ascending.Rational.Evaluation.scalarEvalCoefficients radius coefficients
+          Evaluation.scalarEvalCoefficients radius (coefficients.drop count) ≤
+        Evaluation.scalarEvalCoefficients radius coefficients
   | coefficients, 0, coefficientsNonnegative => by
       rw [List.drop_zero, pow_zero,
         Fraction.Field.one_mul]
@@ -61,22 +61,22 @@ theorem scalarEvalCoefficients_drop_scaled_le
       change radius ^ (count + 1) * 0 ≤ 0
       rw [Fraction.Field.mul_zero_direct]
   | coefficient :: remaining, count + 1, coefficientsNonnegative => by
-      rw [List.drop_succ_cons, pow_succ, Ascending.Rational.Evaluation.scalarEvalCoefficients]
+      rw [List.drop_succ_cons, pow_succ, Evaluation.scalarEvalCoefficients]
       have tailBound :=
         scalarEvalCoefficients_drop_scaled_le
         radiusNonnegative remaining count
         (fun degree => coefficientsNonnegative (degree + 1))
       calc
         radius ^ count * radius *
-            Ascending.Rational.Evaluation.scalarEvalCoefficients radius (remaining.drop count) =
+            Evaluation.scalarEvalCoefficients radius (remaining.drop count) =
           radius *
             (radius ^ count *
-              Ascending.Rational.Evaluation.scalarEvalCoefficients radius (remaining.drop count)) := by
+              Evaluation.scalarEvalCoefficients radius (remaining.drop count)) := by
             ring1
-        _ ≤ radius * Ascending.Rational.Evaluation.scalarEvalCoefficients radius remaining :=
+        _ ≤ radius * Evaluation.scalarEvalCoefficients radius remaining :=
           Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
             tailBound radiusNonnegative
-        _ ≤ coefficient + radius * Ascending.Rational.Evaluation.scalarEvalCoefficients radius remaining :=
+        _ ≤ coefficient + radius * Evaluation.scalarEvalCoefficients radius remaining :=
           le_add_of_nonneg_left (coefficientsNonnegative 0)
 end Purelib.Polynomial.Ascending.Rational.Nonnegative.Evaluation
 

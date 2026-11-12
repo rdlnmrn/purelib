@@ -48,14 +48,14 @@ open _root_.Purelib.Polynomial.Geometry.Grid.ClearGrid (Interval HorizontalLine 
 open Purelib.Polynomial.Geometry.Grid.ClearGrid.Interval (Before)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces (EdgePoint)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-  {ambient : Purelib.Geometry.Rational.Box} {grid : Polynomial.Geometry.Grid.ClearGrid
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+  {ambient : Geometry.Rational.Box} {grid : ClearGrid
     curve.polynomial ambient}
 
 namespace EdgePoint
 
 /-- Complement the actual parameter when reading an oppositely presented edge. -/
-def unreverse {start finish point : Data.Gaussian.Basic.Canonical} {edge : Walks.Edge grid start finish}
+def unreverse {start finish point : Basic.Canonical} {edge : Walks.Edge grid start finish}
     (location : RegularFaces.EdgePoint (.reverse edge) point) : RegularFaces.EdgePoint edge point := by
   refine ⟨1 - location.parameter, ⟨Fraction.Order.Arithmetic.sub_nonneg_direct location.inside.2, ?_⟩, ?_⟩
   · have bound := Fraction.Order.Arithmetic.sub_le_sub_left_direct location.inside.1 1
@@ -65,10 +65,10 @@ def unreverse {start finish point : Data.Gaussian.Basic.Canonical} {edge : Walks
 /-- The original retained point on a horizontal grid edge has its certified transverse bounds and exact fixed imaginary
 coordinate. -/
 theorem horizontal_bounds
-    {span : ClearGrid.Interval (VerticalLine.coordinate (polynomial := curve.polynomial) (ambient := ambient))}
-    {member : span ∈ grid.xIntervals} {line : ClearGrid.HorizontalLine curve.polynomial ambient} {onLine : line ∈
+    {span : Grid.Interval (VerticalLine.coordinate (polynomial := curve.polynomial) (ambient := ambient))}
+    {member : span ∈ grid.xIntervals} {line : HorizontalLine curve.polynomial ambient} {onLine : line ∈
       grid.horizontal}
-    {point : Data.Gaussian.Basic.Canonical} (location : RegularFaces.EdgePoint (.horizontal span member line onLine)
+    {point : Basic.Canonical} (location : RegularFaces.EdgePoint (.horizontal span member line onLine)
       point) :
     span.lower.coordinate ≤ point.re ∧ point.re ≤ span.upper.coordinate ∧ point.im = line.coordinate := by
   have inside := location.contained (box := ⟨span.lower.coordinate, span.upper.coordinate, line.coordinate,
@@ -79,10 +79,10 @@ theorem horizontal_bounds
 /-- The original retained point on a vertical grid edge has its certified transverse bounds and exact fixed real
 coordinate. -/
 theorem vertical_bounds
-    {span : ClearGrid.Interval (HorizontalLine.coordinate (polynomial := curve.polynomial) (ambient := ambient))}
-    {member : span ∈ grid.yIntervals} {line : ClearGrid.VerticalLine curve.polynomial ambient} {onLine : line ∈
+    {span : Grid.Interval (HorizontalLine.coordinate (polynomial := curve.polynomial) (ambient := ambient))}
+    {member : span ∈ grid.yIntervals} {line : VerticalLine curve.polynomial ambient} {onLine : line ∈
       grid.vertical}
-    {point : Data.Gaussian.Basic.Canonical} (location : RegularFaces.EdgePoint (.vertical span member line onLine)
+    {point : Basic.Canonical} (location : RegularFaces.EdgePoint (.vertical span member line onLine)
       point) :
     span.lower.coordinate ≤ point.im ∧ point.im ≤ span.upper.coordinate ∧ point.re = line.coordinate := by
   have inside := location.contained (box := ⟨line.coordinate, line.coordinate, span.lower.coordinate,
@@ -93,10 +93,10 @@ theorem vertical_bounds
 end EdgePoint
 
 /-- Two intervals in the original separated interval list containing the same two distinct rational points are equal. -/
-private theorem interval_eq_of_two_points {Alpha : Type} {key : Alpha → Fraction.Rational}
-    {intervals : List (ClearGrid.Interval key)} (separated : intervals.Pairwise Interval.Before)
-    {left right : ClearGrid.Interval key} (leftMember : left ∈ intervals) (rightMember : right ∈ intervals)
-    {first last : Fraction.Rational} (different : first ≠ last)
+private theorem interval_eq_of_two_points {Alpha : Type} {key : Alpha → Rational}
+    {intervals : List (Grid.Interval key)} (separated : intervals.Pairwise Before)
+    {left right : Grid.Interval key} (leftMember : left ∈ intervals) (rightMember : right ∈ intervals)
+    {first last : Rational} (different : first ≠ last)
     (leftFirst : key left.lower ≤ first ∧ first ≤ key left.upper)
     (leftLast : key left.lower ≤ last ∧ last ≤ key left.upper)
     (rightFirst : key right.lower ≤ first ∧ first ≤ key right.upper)
@@ -112,12 +112,12 @@ namespace Edge
 /-- Two queries with distinct real coordinates identify the exact horizontal adjacent interval and fixed line, up to
 presentation reversal. -/
 theorem horizontal_endpoints
-    {span : ClearGrid.Interval (VerticalLine.coordinate (polynomial := curve.polynomial) (ambient := ambient))}
-    (member : span ∈ grid.xIntervals) {first last : Data.Gaussian.Basic.Canonical}
+    {span : Grid.Interval (VerticalLine.coordinate (polynomial := curve.polynomial) (ambient := ambient))}
+    (member : span ∈ grid.xIntervals) {first last : Basic.Canonical}
     (different : first.re ≠ last.re)
     (firstInside : span.lower.coordinate ≤ first.re ∧ first.re ≤ span.upper.coordinate)
     (lastInside : span.lower.coordinate ≤ last.re ∧ last.re ≤ span.upper.coordinate)
-    {start finish : Data.Gaussian.Basic.Canonical} (edge : Walks.Edge grid start finish)
+    {start finish : Basic.Canonical} (edge : Walks.Edge grid start finish)
     (firstPoint : RegularFaces.EdgePoint edge first) (lastPoint : RegularFaces.EdgePoint edge last) :
     (start = Components.Basic.point span.lower.coordinate first.im ∧ finish = Components.Basic.point
       span.upper.coordinate first.im) ∨
@@ -125,29 +125,29 @@ theorem horizontal_endpoints
       span.upper.coordinate first.im) := by
   induction edge with
   | horizontal interval adjacent line onLine =>
-      have a := Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.EdgeGeometry.EdgePoint.horizontal_bounds firstPoint
-      have b := Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.EdgeGeometry.EdgePoint.horizontal_bounds lastPoint
-      have same := Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.EdgeGeometry.interval_eq_of_two_points
+      have a := EdgePoint.horizontal_bounds firstPoint
+      have b := EdgePoint.horizontal_bounds lastPoint
+      have same := EdgeGeometry.interval_eq_of_two_points
         (Interval.adjacent_pairwise grid.vertical grid.vertical_ordered)
         adjacent member different ⟨a.1, a.2.1⟩ ⟨b.1, b.2.1⟩ firstInside lastInside
       exact Or.inl ⟨congrArg₂ Components.Basic.point (congrArg (fun span => span.lower.coordinate) same) a.2.2.symm,
         congrArg₂ Components.Basic.point (congrArg (fun span => span.upper.coordinate) same) a.2.2.symm⟩
   | vertical interval adjacent line onLine =>
-      exact (different ((Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.EdgeGeometry.EdgePoint.vertical_bounds
-        firstPoint).2.2.trans (Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.EdgeGeometry.EdgePoint.vertical_bounds
+      exact (different ((EdgePoint.vertical_bounds
+        firstPoint).2.2.trans (EdgePoint.vertical_bounds
         lastPoint).2.2.symm)).elim
   | reverse edge ih =>
-      exact (ih (Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.EdgeGeometry.EdgePoint.unreverse firstPoint)
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.EdgeGeometry.EdgePoint.unreverse lastPoint)).symm
+      exact (ih (EdgePoint.unreverse firstPoint)
+        (EdgePoint.unreverse lastPoint)).symm
 
 /-- The vertical version reads the same retained query parameters. -/
 theorem vertical_endpoints
-    {span : ClearGrid.Interval (HorizontalLine.coordinate (polynomial := curve.polynomial) (ambient := ambient))}
-    (member : span ∈ grid.yIntervals) {first last : Data.Gaussian.Basic.Canonical}
+    {span : Grid.Interval (HorizontalLine.coordinate (polynomial := curve.polynomial) (ambient := ambient))}
+    (member : span ∈ grid.yIntervals) {first last : Basic.Canonical}
     (different : first.im ≠ last.im)
     (firstInside : span.lower.coordinate ≤ first.im ∧ first.im ≤ span.upper.coordinate)
     (lastInside : span.lower.coordinate ≤ last.im ∧ last.im ≤ span.upper.coordinate)
-    {start finish : Data.Gaussian.Basic.Canonical} (edge : Walks.Edge grid start finish)
+    {start finish : Basic.Canonical} (edge : Walks.Edge grid start finish)
     (firstPoint : RegularFaces.EdgePoint edge first) (lastPoint : RegularFaces.EdgePoint edge last) :
     (start = Components.Basic.point first.re span.lower.coordinate ∧ finish = Components.Basic.point first.re
       span.upper.coordinate) ∨
@@ -155,21 +155,21 @@ theorem vertical_endpoints
       span.upper.coordinate) := by
   induction edge with
   | horizontal interval adjacent line onLine =>
-      exact (different ((Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.EdgeGeometry.EdgePoint.horizontal_bounds
+      exact (different ((EdgePoint.horizontal_bounds
         firstPoint).2.2.trans
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.EdgeGeometry.EdgePoint.horizontal_bounds
+        (EdgePoint.horizontal_bounds
         lastPoint).2.2.symm)).elim
   | vertical interval adjacent line onLine =>
-      have a := Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.EdgeGeometry.EdgePoint.vertical_bounds firstPoint
-      have b := Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.EdgeGeometry.EdgePoint.vertical_bounds lastPoint
-      have same := Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.EdgeGeometry.interval_eq_of_two_points
+      have a := EdgePoint.vertical_bounds firstPoint
+      have b := EdgePoint.vertical_bounds lastPoint
+      have same := EdgeGeometry.interval_eq_of_two_points
         (Interval.adjacent_pairwise grid.horizontal grid.horizontal_ordered)
         adjacent member different ⟨a.1, a.2.1⟩ ⟨b.1, b.2.1⟩ firstInside lastInside
       exact Or.inl ⟨congrArg₂ Components.Basic.point a.2.2.symm (congrArg (fun span => span.lower.coordinate) same),
         congrArg₂ Components.Basic.point a.2.2.symm (congrArg (fun span => span.upper.coordinate) same)⟩
   | reverse edge ih =>
-      exact (ih (Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.EdgeGeometry.EdgePoint.unreverse firstPoint)
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.EdgeGeometry.EdgePoint.unreverse lastPoint)).symm
+      exact (ih (EdgePoint.unreverse firstPoint)
+        (EdgePoint.unreverse lastPoint)).symm
 
 end Edge
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.EdgeGeometry

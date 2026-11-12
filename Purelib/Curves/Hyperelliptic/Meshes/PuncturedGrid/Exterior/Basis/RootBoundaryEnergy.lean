@@ -74,6 +74,8 @@ import Purelib.Riemann.RootContinuation.PreparedGridRootClosure
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -101,36 +103,36 @@ open
 
 open Purelib.Integration.Path.PairedIncrementArea (area total)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
-variable {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
-  {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {target coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
+variable {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {retained : Preparation.CommonBasisPreparation prepared}
+  {basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {target coefficientTarget : Coordinate} {coverFloor floor index minimum stage
     energyFloor radialDepth : Nat}
-  {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+  {box : Rational.Box} {capSample : Charts.Reciprocal.Cap.Primitives.Sample cap
     differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 namespace CommonBasisRequest
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisRequest retained basis
+variable {request : Preparation.CommonBasisRequest retained basis
   target coefficientTarget coverFloor floor}
   {plans : request.Plans capSample polynomials minimum} {inputs : retained.Inputs index}
-  {readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
+  {readings : Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
     request.schedule.bank plans inputs stage}
 
-variable {fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.FanPreparation request
+variable {fans : Connection.CommonBasisRequest.FanPreparation request
   plans inputs readings energyFloor}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -139,9 +141,9 @@ open Purelib.Riemann.Normalization.InverseRootPolynomial (Gaussian)
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable (sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.Sampled fans
+variable (sample : Connection.CommonBasisRequest.Sampled fans
   coefficients radialDepth) (comparisons :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
+  CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
   sample)
   {faceIndex : Nat} (banks : PhysicalRunEntries
     retained inputs coefficients faceIndex)
@@ -154,22 +156,22 @@ def rootJoiningArea : Gaussian :=
       sample outer)))
 
 /-- The squared comparison cost contains no coefficient-vector dependence. -/
-def rootJoiningCost (requested : Normalization.InverseRootPolynomial.Coordinate) : Coordinate :=
-  16 * (prepared.occurrences.length : Normalization.InverseRootPolynomial.Coordinate)^4 *
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.HierarchicalRequest.CommonBasisRequest.Sampled.componentMagnitude
+def rootJoiningCost (requested : Coordinate) : Coordinate :=
+  16 * (prepared.occurrences.length : Coordinate)^4 *
+    HierarchicalRequest.CommonBasisRequest.Sampled.componentMagnitude
       prepared
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootParentBounds.CommonBasisRequest.Sampled.rootParentError
+      (RootParentBounds.CommonBasisRequest.Sampled.rootParentError
       (request := request) requested) *
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.HierarchicalRequest.CommonBasisRequest.Sampled.componentMagnitude
+    HierarchicalRequest.CommonBasisRequest.Sampled.componentMagnitude
       prepared
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootParentBounds.CommonBasisRequest.Sampled.rootParentMagnitude
+      (RootParentBounds.CommonBasisRequest.Sampled.rootParentMagnitude
       (request := request) (inputs := inputs))
 
 /-- The coefficient-independent squared root-polygon comparison cost is nonnegative for a nonnegative physical target.
 -/
-theorem rootJoiningCost_nonnegative {requested : Normalization.InverseRootPolynomial.Coordinate} (nonnegative : 0 ≤
+theorem rootJoiningCost_nonnegative {requested : Coordinate} (nonnegative : 0 ≤
   requested) :
-    0 ≤ Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootBoundaryEnergy.CommonBasisRequest.Sampled.rootJoiningCost
+    0 ≤ Sampled.rootJoiningCost
       (request := request) (inputs := inputs) requested :=
   open Purelib.Data.Rat in Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct
     (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) (Fraction.Order.Arithmetic.pow_nonneg_direct
@@ -184,11 +186,11 @@ theorem rootJoiningCost_nonnegative {requested : Normalization.InverseRootPolyno
       (request := request) (inputs := inputs)))
 
 namespace PhysicalCertificate
-variable {sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.Sampled fans
+variable {sample : Connection.CommonBasisRequest.Sampled fans
   coefficients radialDepth} {comparisons :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
+  CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
   sample}
-  {requested : Normalization.InverseRootPolynomial.Coordinate} (certificate :
+  {requested : Coordinate} (certificate :
     PhysicalComponentEnergy.CommonBasisRequest.Sampled.PhysicalCertificate
     sample comparisons requested)
 
@@ -196,7 +198,7 @@ variable {sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.
 def rootRows :
   PhysicalComponentComparison.CommonBasisRequest.Sampled.PreparedPhysicalRows
   sample comparisons certificate.banks
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceMagnitude.CommonBasisRequest.Sampled.parentMagnitude retained
+  (SourceMagnitude.CommonBasisRequest.Sampled.parentMagnitude retained
   inputs) requested :=
   certificate.magnitude_eq ▸ certificate.runs
 
@@ -212,16 +214,16 @@ def rootBoundary : Gaussian :=
   certificate.area -
     physicalJoiningArea
     certificate +
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootBoundaryEnergy.CommonBasisRequest.Sampled.rootJoiningArea
+    Sampled.rootJoiningArea
     sample
 
 /-- Replacing the physical joining polygon by the retained root polygon satisfies the explicit coefficient-weighted
 squared-error cost. -/
 theorem rootBoundary_error (positive : 0 < requested) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
       (rootBoundary
       certificate - certificate.area) ≤
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootBoundaryEnergy.CommonBasisRequest.Sampled.rootJoiningCost
+      Sampled.rootJoiningCost
         (request := request) (inputs := inputs) requested * (Readings.PreparedObservationCoercivity.coefficientNormSq
         coefficients)^2 := by
   have bound :=
@@ -235,7 +237,7 @@ theorem rootBoundary_error (positive : 0 < requested) :
 
         -(physicalJoiningArea
         certificate -
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootBoundaryEnergy.CommonBasisRequest.Sampled.rootJoiningArea
+        Sampled.rootJoiningArea
         sample) := by
     unfold
       rootBoundary
@@ -248,11 +250,11 @@ and the actual root polygon. No endpoint correction is removed. -/
 theorem rootBoundary_eq_sides :
   rootBoundary
   certificate =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn (fun outer =>
-      if (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn (fun outer =>
+      if (ParentIndices.occurrenceAt prepared.occurrences
         outer).sourceForward then (certificate.banks.get outer).sideArea
       else -(certificate.banks.get outer).sideArea)) +
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootBoundaryEnergy.CommonBasisRequest.Sampled.rootJoiningArea
+        Sampled.rootJoiningArea
         sample := by
   have boundary :=
     PhysicalComponentBoundary.CommonBasisRequest.Sampled.physical_boundary
@@ -267,46 +269,46 @@ theorem rootBoundary_eq_sides :
 
 /-- A paid root-polygon comparison adds one homogeneous energy allowance. -/
 theorem rootBoundary_upper (positive : 0 < requested)
-    {physicalAllowance rootAllowance : Normalization.InverseRootPolynomial.Coordinate}
+    {physicalAllowance rootAllowance : Coordinate}
     (physicalNN : 0 ≤ physicalAllowance) (rootNN : 0 ≤ rootAllowance)
     (physicalPaid : requested ≤ 16 * physicalAllowance ^ 2)
     (rootPaid :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootBoundaryEnergy.CommonBasisRequest.Sampled.rootJoiningCost
+      Sampled.rootJoiningCost
       (request := request) (inputs := inputs) requested ≤ 16 * rootAllowance ^ 2)
     (trace :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedTrace
-      sample comparisons) (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+      CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedTrace
+      sample comparisons) (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
     (later : request.readingStage plans ≤ stage) :
 
       (rootBoundary
       certificate).im / 4 ≤
       (5 * target + physicalAllowance + rootAllowance) * Readings.PreparedObservationCoercivity.coefficientNormSq
-        coefficients := open Purelib.Algebra in open Purelib.Data.Rat in by
+        coefficients := open Algebra in open Rat in by
   have massNN : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
     (FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 :
-      Normalization.InverseRootPolynomial.Coordinate)) _
+      Coordinate)) _
       (fun row => Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
-  have close : Data.Gaussian.Norm.Basic.normSq
+  have close : Gaussian.Norm.Basic.normSq
     (rootBoundary
     certificate - certificate.area) ≤
       (4 * (rootAllowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients))^2 :=
 
       (rootBoundary_error
       certificate positive).trans
-      ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct rootPaid (Fraction.Order.Arithmetic.sq_nonneg_direct
+      ((Arithmetic.mul_le_mul_of_nonneg_right_direct rootPaid (Arithmetic.sq_nonneg_direct
         _)).trans_eq (by ring1))
   have comparison := Topology.PreparedSurfaceCoercivity.boundaryEnergy_sub_budget_le
 
       (rootBoundary
       certificate) certificate.area (rootAllowance * Readings.PreparedObservationCoercivity.coefficientNormSq
       coefficients)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct rootNN massNN) close
+    (Arithmetic.mul_nonneg_direct rootNN massNN) close
   have upper :=
     PhysicalComponentEnergy.CommonBasisRequest.Sampled.physical_energy_upper
     sample comparisons certificate.banks certificate.magnitude_eq positive
     certificate.runs physicalNN physicalPaid trace branch later 0
-  have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct (comparison.trans upper) (rootAllowance *
+  have shifted := Arithmetic.add_le_add_right_direct (comparison.trans upper) (rootAllowance *
     Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)
   exact (show
     (rootBoundary

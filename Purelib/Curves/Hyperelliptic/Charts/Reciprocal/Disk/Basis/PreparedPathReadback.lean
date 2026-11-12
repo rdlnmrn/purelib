@@ -43,6 +43,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Integration.Path.IncrementArea
 import Purelib.Tactic.Ring
 
+open Purelib.Integration.Path.Dyadic
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -63,85 +65,85 @@ namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedPath
 
 open Purelib.Data.Gaussian.Basic.Canonical
 
-variable {genus count : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
+variable {genus count : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {covers :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
+    UniformReciprocalModels.Data patch count}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {covers :
+    SourceLocations.BasisSourceCovers parent}
   {index : Nat} {box : Rational.Box}
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {cover : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {target :
+variable {cover : UniformReciprocalCover.Cover data} {target :
   Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
 
-variable {minimum : Nat} {common : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonCover cover covers
+variable {minimum : Nat} {common : CommonCover.BasisCommonCover cover covers
   minimum}
 
 namespace BasisPreparedCommonRequest.Acquisition
 
 variable {areaAllowance sourceTarget coefficientTarget : Normalization.InverseRootPolynomial.Coordinate}
-  {request : Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest regular common
+  {request : PreparedCommonRequest.BasisPreparedCommonRequest regular common
     areaAllowance sourceTarget coefficientTarget floor}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
-    {originals : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+  {polynomials : Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+    {originals : CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
     covers index}
-  {cells : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers index}
+  {cells : SourceLocations.BasisSourceLocations.SampleBank covers index}
     {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus} {depth : Nat}
 
 namespace ChildPairs
 
 variable {acquired :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition request
+  PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition request
   polynomials originals cells coefficients depth}
 
 /-- Each retained child-pair source entry equals the corresponding original parent dyadic primitive increment. -/
 private theorem source_read (pairs :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
+  PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
   acquired) (row : Fin genus)
     (column : Fin (2 ^ (common.depth + acquired.extraDepth))) :
     (pairs.read row column).1 =
-      (Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements
+      (DyadicPrimitivePaths.dyadicIncrements
         (fun parameter => (originals.get row).primitive.value.eval (parent.edge.point parameter))
         (common.depth + acquired.extraDepth) 0 1)[column.val]'(
-          (Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements_length _ _ _ _).symm ▸ column.isLt) := by
+          (DyadicPrimitivePaths.dyadicIncrements_length _ _ _ _).symm ▸ column.isLt) := by
   have equal := pairs.source_path row
   have inside : column.val < ((pairs.values row).map Prod.fst).length := by
-    rw [Purelib.Data.List.Map.length_map, pairs.count_eq]
+    rw [Data.List.Map.length_map, pairs.count_eq]
     exact column.isLt
   have sourceInside : column.val < (pairs.values row).length :=
-    (Purelib.Data.List.Map.length_map Prod.fst (pairs.values row)) ▸ inside
+    (Data.List.Map.length_map Prod.fst (pairs.values row)) ▸ inside
   have readback := congrArg (fun values : List Normalization.InverseRootPolynomial.Gaussian =>
-    Purelib.Data.List.getElem? values column.val) equal
-  rw [Purelib.Data.List.getElem?_eq_getElem _ _ inside,
-    Purelib.Data.List.getElem?_eq_getElem _ _ ((Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements_length _ _ _ _).symm ▸
+    Data.List.getElem? values column.val) equal
+  rw [Data.List.getElem?_eq_getElem _ _ inside,
+    Data.List.getElem?_eq_getElem _ _ ((DyadicPrimitivePaths.dyadicIncrements_length _ _ _ _).symm ▸
       column.isLt)] at readback
   have scalar := Option.some.inj readback
-  rw [Purelib.Data.List.Map.getElem_map Prod.fst (pairs.values row) column.val sourceInside inside] at scalar
+  rw [Data.List.Map.getElem_map Prod.fst (pairs.values row) column.val sourceInside inside] at scalar
   exact scalar
 
 /-- The weighted original source entries form exactly the dyadic increment path of the retained finite primitive
 combination. -/
 theorem Weighted.source_path {pairs :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
+  PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
   acquired} (weighted :
   PreparedWeightedPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs.Weighted
   pairs) :
-    weighted.values.map Prod.fst = Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements
-      (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+    weighted.values.map Prod.fst = DyadicPrimitivePaths.dyadicIncrements
+      (CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
         originals coefficients) (common.depth + acquired.extraDepth) 0 1 := open Purelib.Algebra in by
   rw [weighted.values_eq, Data.List.OfFn.Basic.map_ofFn]
   calc
     _ = List.ofFn (fun column : Fin (2 ^ (common.depth + acquired.extraDepth)) =>
       FiniteSum.Fin.sumFin (fun row => coefficients row *
-        (Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements
+        (DyadicPrimitivePaths.dyadicIncrements
           (fun parameter => (originals.get row).primitive.value.eval (parent.edge.point parameter))
           (common.depth + acquired.extraDepth) 0 1)[column.val]'(
-            (Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements_length _ _ _ _).symm ▸ column.isLt))) := by
+            (DyadicPrimitivePaths.dyadicIncrements_length _ _ _ _).symm ▸ column.isLt))) := by
       apply Data.List.OfFn.Basic.ofFn_congr
       intro column
       change FiniteSum.Fin.sumFin _ = FiniteSum.Fin.sumFin _
@@ -153,7 +155,7 @@ theorem Weighted.source_path {pairs :
 /-- The retained weighted child-pair source area equals the same cached source area used by the common primitive
 acquisition. -/
 theorem Weighted.source_area {pairs :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
+  PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
   acquired} (weighted :
   PreparedWeightedPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs.Weighted
   pairs) :
@@ -161,18 +163,18 @@ theorem Weighted.source_area {pairs :
   rw [weighted.source.area_eq,
     Weighted.source_path
     weighted,
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.CommonPrimitiveRequest.Acquisition.source_area
+    CommonPrimitiveReadback.CommonPrimitiveRequest.Acquisition.source_area
     acquired.area]
 
 /-- Both comparisons now share the exact cached source area. -/
 theorem Weighted.integral_pullback_bound {pairs :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
+  PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
   acquired} (weighted :
   PreparedWeightedPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs.Weighted
   pairs) :
-    Data.Gaussian.Norm.Basic.normSq (weighted.integral.area - acquired.area.pullback.area) ≤
+    Gaussian.Norm.Basic.normSq (weighted.integral.area - acquired.area.pullback.area) ≤
       2 * (32 * sourceTarget *
-        (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope covers +
+        (CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope covers +
         sourceTarget) + areaAllowance^2) *
         (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := open Purelib.Data.Rat in by
   have source := acquired.area.bounded

@@ -83,10 +83,10 @@ open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 open _root_.Purelib.Data.Gaussian.Basic (conj)
 
 /-- Negate both coordinates of the retained primitive point. -/
-private def negate (point : Stokes.PrimitivePoint) : PrimitivePoint := ⟨-point.left, -point.right⟩
+private def negate (point : PrimitivePoint) : PrimitivePoint := ⟨-point.left, -point.right⟩
 
 /-- Negating each original paired increment negates its complete total. -/
-private theorem total_negate (points : List Stokes.PrimitivePoint) :
+private theorem total_negate (points : List PrimitivePoint) :
     PairedIncrementArea.total (points.map negate) =
       negate (PairedIncrementArea.total points) := by
   induction points with
@@ -102,7 +102,7 @@ private theorem total_negate (points : List Stokes.PrimitivePoint) :
         [negate, PrimitivePoint.add] <;> ring1
 
 /-- Negating both coordinates of every original paired increment preserves its complete area. -/
-private theorem area_negate (points : List Stokes.PrimitivePoint) :
+private theorem area_negate (points : List PrimitivePoint) :
     PairedIncrementArea.area (points.map negate) =
       PairedIncrementArea.area points := by
   induction points with
@@ -110,35 +110,35 @@ private theorem area_negate (points : List Stokes.PrimitivePoint) :
   | cons head tail ih =>
       rw [List.map_cons, PairedAreaBlocks.area_cons, PairedAreaBlocks.area_cons,
         total_negate, ih]
-      simp only [Stokes.edgeArea, negate]
+      simp only [edgeArea, negate]
       ring1
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {source target :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {index depth otherDepth : Nat}
-    {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap source index box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap target index otherBox}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {index depth otherDepth : Nat}
+    {box otherBox : Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap source index box}
+  {otherSample : Cap.Primitives.Sample cap target index otherBox}
 
 /-- The original pair of cap-polynomial endpoint increments with the first coordinate conjugated. -/
-private def endpointPair (left right : InverseRootPolynomial.Polynomial) (parent :
-  PreparedSubdivisionModelCore.CenteredEdge curve source) : PrimitivePoint :=
+private def endpointPair (left right : Polynomial) (parent :
+  CenteredEdge curve source) : PrimitivePoint :=
   ⟨conj (left.eval (parent.edge.point 1)⁻¹ - left.eval (parent.edge.point 0)⁻¹),
     right.eval (parent.edge.point 1)⁻¹ - right.eval (parent.edge.point 0)⁻¹⟩
 
 /-- The actual paired regular path totals equal the original endpoint-pair list, independently of their retained covers
 and depths. -/
-private theorem paths_totals (left right : InverseRootPolynomial.Polynomial)
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)} {covers :
+private theorem paths_totals (left right : Polynomial)
+    {parents : List (CenteredEdge curve source)} {covers :
       UniformReciprocalCover.ParentCovers parents}
-    (bank : ParentJoins.SideBank regular covers) :
-    ∀ {otherCovers : UniformReciprocalCover.ParentCovers (parents.map (PreparedEdgeRecasting.recastCenteredEdge
+    (bank : SideBank regular covers) :
+    ∀ {otherCovers : UniformReciprocalCover.ParentCovers (parents.map (recastCenteredEdge
       target))}
-      (otherBank : ParentJoins.SideBank regular otherCovers),
-      List.zipWith (fun first last => (⟨conj (Data.Gaussian.Norm.Sum.Basic.gaussianSum first),
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum last⟩ : Stokes.PrimitivePoint))
+      (otherBank : SideBank regular otherCovers),
+      List.zipWith (fun first last => (⟨conj (gaussianSum first),
+        gaussianSum last⟩ : PrimitivePoint))
         (SideBank.regularPrimitivePaths left depth bank)
         (SideBank.regularPrimitivePaths right otherDepth otherBank) =
       parents.map (endpointPair left right) := by
@@ -148,18 +148,18 @@ private theorem paths_totals (left right : InverseRootPolynomial.Polynomial)
       intro otherCovers otherBank
       cases otherBank with
       | cons otherHead otherTail =>
-          change (⟨conj (Data.Gaussian.Norm.Sum.Basic.gaussianSum (Preparation.regularPrimitivePath head left
+          change (⟨conj (gaussianSum (Preparation.regularPrimitivePath head left
             depth)),
-            Data.Gaussian.Norm.Sum.Basic.gaussianSum (Preparation.regularPrimitivePath otherHead right otherDepth)⟩
-              : Stokes.PrimitivePoint) :: _ = _ :: _
+            gaussianSum (Preparation.regularPrimitivePath otherHead right otherDepth)⟩
+              : PrimitivePoint) :: _ = _ :: _
           apply congrArg₂ List.cons ?_ (ih otherTail)
           simp only [Preparation.regularPrimitivePath,
             DyadicPrimitivePaths.dyadicIncrements_sum]
           rfl
 
 /-- One common sign on the two original cap polynomials preserves the complete conjugate endpoint polygon area. -/
-private theorem endpoint_signed (left right : InverseRootPolynomial.Polynomial) (flip : Bool) (parents : List
-  (PreparedSubdivisionModelCore.CenteredEdge curve source)) :
+private theorem endpoint_signed (left right : Polynomial) (flip : Bool) (parents : List
+  (CenteredEdge curve source)) :
     PairedIncrementArea.area (parents.map
       (endpointPair (if flip then -left else left)
       (if flip then -right else right))) =
@@ -175,10 +175,10 @@ private theorem endpoint_signed (left right : InverseRootPolynomial.Polynomial) 
         apply Map.map_congr_left
         intro parent _
         apply congrArg₂ PrimitivePoint.mk
-        · change Data.Gaussian.Basic.conj ((-left).eval _ - (-left).eval _) =
-            -Data.Gaussian.Basic.conj (left.eval _ - left.eval _)
+        · change conj ((-left).eval _ - (-left).eval _) =
+            -conj (left.eval _ - left.eval _)
           rw [DensePolynomial.eval_neg, DensePolynomial.eval_neg]
-          have equal (a b : InverseRootPolynomial.Gaussian) : -a - -b = -(a - b) := by ring1
+          have equal (a b : Gaussian) : -a - -b = -(a - b) := by ring1
           rw [equal]
           rfl
         · change (-right).eval _ - (-right).eval _ = -(right.eval _ - right.eval _)
@@ -190,29 +190,29 @@ private theorem endpoint_signed (left right : InverseRootPolynomial.Polynomial) 
 /-- The actual root joins, together with recasting, remove one common sign from the full polygon of cached totals. No
 equality of subdivisions is needed. -/
 theorem RegularWitnesses.conjugate_total_polygon
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)} {covers :
+    {parents : List (CenteredEdge curve source)} {covers :
       UniformReciprocalCover.ParentCovers parents}
-    {bank : ParentJoins.SideBank regular covers} {paths : List (List InverseRootPolynomial.Gaussian)}
-    {otherCovers : UniformReciprocalCover.ParentCovers (parents.map (PreparedEdgeRecasting.recastCenteredEdge target))}
-    {otherBank : ParentJoins.SideBank regular otherCovers} {otherPaths : List (List InverseRootPolynomial.Gaussian)}
+    {bank : SideBank regular covers} {paths : List (List Gaussian)}
+    {otherCovers : UniformReciprocalCover.ParentCovers (parents.map (recastCenteredEdge target))}
+    {otherBank : SideBank regular otherCovers} {otherPaths : List (List Gaussian)}
     (first : RegularWitnesses sample depth bank paths) (last : RegularWitnesses otherSample otherDepth
       otherBank otherPaths)
-    (links : SideBank.Links bank) (otherLinks : SideBank.Links otherBank) :
+    (links : Links bank) (otherLinks : Links otherBank) :
     PairedIncrementArea.area (List.zipWith
-      (fun left right => (⟨conj (Data.Gaussian.Norm.Sum.Basic.gaussianSum left),
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum right⟩ : Stokes.PrimitivePoint)) paths otherPaths) =
+      (fun left right => (⟨conj (gaussianSum left),
+        gaussianSum right⟩ : PrimitivePoint)) paths otherPaths) =
       PairedIncrementArea.area (parents.map (fun parent =>
         (⟨conj (sample.primitive.value.eval (parent.edge.point 1)⁻¹ - sample.primitive.value.eval (parent.edge.point
           0)⁻¹),
           otherSample.primitive.value.eval (parent.edge.point 1)⁻¹ - otherSample.primitive.value.eval (parent.edge.point
             0)⁻¹⟩ :
-            Stokes.PrimitivePoint))) := by
+            PrimitivePoint))) := by
   let sign := RegularWitnesses.recastSign first last
   have pathsEq := RegularWitnesses.paired_paths_signed
     first last sign links otherLinks
   have totals := (congrArg₂ (List.zipWith
-    (fun left right => (⟨conj (Data.Gaussian.Norm.Sum.Basic.gaussianSum left),
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum right⟩ : Stokes.PrimitivePoint))) pathsEq.1 pathsEq.2).trans
+    (fun left right => (⟨conj (gaussianSum left),
+      gaussianSum right⟩ : PrimitivePoint))) pathsEq.1 pathsEq.2).trans
       (paths_totals _ _ bank otherBank)
   exact (congrArg PairedIncrementArea.area totals).trans
     (endpoint_signed _ _ sign.flip parents)

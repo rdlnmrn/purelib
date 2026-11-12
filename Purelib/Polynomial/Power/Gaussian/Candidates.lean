@@ -17,6 +17,9 @@ import Purelib.Tactic.QuotientFreeOmega
 import Mathlib.Algebra.Ring.Defs
 import Purelib.Polynomial.Dense.Basic
 
+open Purelib.Polynomial.Elimination.Gaussian
+open Purelib.Polynomial.Dense.Rational
+
 open Purelib.Algebra.Power.Gaussian (ExactRoot)
 
 open Purelib
@@ -57,22 +60,22 @@ namespace Purelib.Polynomial.Power.Gaussian.Candidates
 def radiusPolynomial (input : Gaussian.Basic.Canonical) (degree :
   Data.Nat.Positive.RootDegree) :
     (Dense.Basic.DensePolynomial Fraction.Rational) :=
-  Dense.Rational.Power.powerPolynomial
-    (Data.Gaussian.Norm.Basic.normSq input) degree.value
+  Power.powerPolynomial
+    (Gaussian.Norm.Basic.normSq input) degree.value
 
 /-- Every rational candidate for the squared norm, derived from the two
 nonzero endpoint coefficients of the sparse norm equation. -/
 def radiusCandidates (input : Gaussian.Basic.Canonical) (degree :
   Data.Nat.Positive.RootDegree) :
     List Fraction.Rational :=
-  Dense.Rational.RootCandidates.candidates
+  RootCandidates.candidates
     (radiusPolynomial input degree)
 
 /-- The real-coordinate Lucas equation at one displayed radius. -/
 def realCoordinatePolynomial (input : Gaussian.Basic.Canonical)
   (degree : Data.Nat.Positive.RootDegree)
     (radius : Fraction.Rational) : (Dense.Basic.DensePolynomial Fraction.Rational) :=
-  Elimination.Gaussian.PowerCoordinates.coordinatePolynomial radius input.re
+  PowerCoordinates.coordinatePolynomial radius input.re
     degree.value
 
 /-- The imaginary-coordinate equation is the same recurrence after the fixed
@@ -80,7 +83,7 @@ quarter turn `-i`, which exposes the imaginary coordinate as a real one. -/
 def imaginaryCoordinatePolynomial (input : Gaussian.Basic.Canonical)
   (degree : Data.Nat.Positive.RootDegree)
     (radius : Fraction.Rational) : (Dense.Basic.DensePolynomial Fraction.Rational) :=
-  Elimination.Gaussian.PowerCoordinates.coordinatePolynomial radius
+  PowerCoordinates.coordinatePolynomial radius
     ((Gaussian.Constants.negativeImaginaryUnit ^
       degree.value * input).re) degree.value
 
@@ -89,8 +92,8 @@ theorem radiusPolynomial_coefficients_length (input :
   Gaussian.Basic.Canonical)
     (degree : Data.Nat.Positive.RootDegree) :
     (radiusPolynomial input degree).coeffs.length = degree.value + 1 :=
-  Dense.Rational.Power.powerPolynomial_coefficients_length
-    (Data.Gaussian.Norm.Basic.normSq input) degree.value degree.positive
+  Power.powerPolynomial_coefficients_length
+    (Gaussian.Norm.Basic.normSq input) degree.value degree.positive
 
 /-- The real-coordinate Lucas equation retains exactly degree plus one coefficients. -/
 theorem realCoordinatePolynomial_coefficients_length (input :
@@ -98,7 +101,7 @@ theorem realCoordinatePolynomial_coefficients_length (input :
     (degree : Data.Nat.Positive.RootDegree) (radius : Fraction.Rational) :
     (realCoordinatePolynomial input degree radius).coeffs.length =
       degree.value + 1 :=
-  Elimination.Gaussian.PowerCoordinates.coordinatePolynomial_coefficients_length
+  PowerCoordinates.coordinatePolynomial_coefficients_length
     radius input.re degree.value degree.positive
 
 /-- The quarter-turned imaginary-coordinate equation retains exactly degree plus one coefficients. -/
@@ -107,7 +110,7 @@ theorem imaginaryCoordinatePolynomial_coefficients_length (input :
     (degree : Data.Nat.Positive.RootDegree) (radius : Fraction.Rational) :
     (imaginaryCoordinatePolynomial input degree radius).coeffs.length =
       degree.value + 1 :=
-  Elimination.Gaussian.PowerCoordinates.coordinatePolynomial_coefficients_length
+  PowerCoordinates.coordinatePolynomial_coefficients_length
     radius
       ((Gaussian.Constants.negativeImaginaryUnit ^
         degree.value * input).re) degree.value degree.positive
@@ -116,14 +119,14 @@ theorem imaginaryCoordinatePolynomial_coefficients_length (input :
 def realCoordinateCandidates (input : Gaussian.Basic.Canonical)
   (degree : Data.Nat.Positive.RootDegree)
     (radius : Fraction.Rational) : List Fraction.Rational :=
-  Dense.Rational.RootCandidates.candidates
+  RootCandidates.candidates
     (realCoordinatePolynomial input degree radius)
 
 /-- Enumerate rational candidates from the finite imaginary-coordinate equation at the retained radius. -/
 def imaginaryCoordinateCandidates (input : Gaussian.Basic.Canonical)
   (degree : Data.Nat.Positive.RootDegree)
     (radius : Fraction.Rational) : List Fraction.Rational :=
-  Dense.Rational.RootCandidates.candidates
+  RootCandidates.candidates
     (imaginaryCoordinatePolynomial input degree radius)
 
 /-- Cartesian coordinate candidates at one already-derived rational radius. -/
@@ -157,41 +160,41 @@ theorem exactRoot_mem_derivedCandidates
     (root : ExactRoot input degree) :
     root.point ∈ derivedCandidates input degree := by
   have radiusRoot :
-      (radiusPolynomial input degree).eval (Data.Gaussian.Norm.Basic.normSq root.point) =
+      (radiusPolynomial input degree).eval (Gaussian.Norm.Basic.normSq root.point) =
         0 :=
-    Elimination.Gaussian.PowerCoordinates.powerPolynomial_norm_root
+    PowerCoordinates.powerPolynomial_norm_root
       degree.positive root.power_eq
   have radiusMember :
-      Data.Gaussian.Norm.Basic.normSq root.point ∈ radiusCandidates input degree :=
-    Dense.Rational.RootCandidates.root_mem_candidates
+      Gaussian.Norm.Basic.normSq root.point ∈ radiusCandidates input degree :=
+    RootCandidates.root_mem_candidates
       (radiusPolynomial input degree)
-      (Dense.Rational.Power.powerPolynomial_nonzero
-        (Data.Gaussian.Norm.Basic.normSq input) degree.value degree.positive)
-      (Data.Gaussian.Norm.Basic.normSq root.point) radiusRoot
+      (Power.powerPolynomial_nonzero
+        (Gaussian.Norm.Basic.normSq input) degree.value degree.positive)
+      (Gaussian.Norm.Basic.normSq root.point) radiusRoot
   have realRoot :
-      (realCoordinatePolynomial input degree (Data.Gaussian.Norm.Basic.normSq
+      (realCoordinatePolynomial input degree (Gaussian.Norm.Basic.normSq
         root.point)).eval
         root.point.re = 0 :=
-    Elimination.Gaussian.PowerCoordinates.coordinatePolynomial_real_root
+    PowerCoordinates.coordinatePolynomial_real_root
       degree.positive root.power_eq
   have imaginaryRoot :
-      (imaginaryCoordinatePolynomial input degree (Data.Gaussian.Norm.Basic.normSq
+      (imaginaryCoordinatePolynomial input degree (Gaussian.Norm.Basic.normSq
         root.point)).eval
         root.point.im = 0 :=
-    Elimination.Gaussian.PowerCoordinates.coordinatePolynomial_imaginary_root
+    PowerCoordinates.coordinatePolynomial_imaginary_root
       degree.positive root.power_eq
   have realMember :=
-    Dense.Rational.RootCandidates.root_mem_candidates
-      (realCoordinatePolynomial input degree (Data.Gaussian.Norm.Basic.normSq root.point))
-      (Elimination.Gaussian.PowerCoordinates.coordinatePolynomial_nonzero
-        (Data.Gaussian.Norm.Basic.normSq root.point) input.re degree.value degree.positive)
+    RootCandidates.root_mem_candidates
+      (realCoordinatePolynomial input degree (Gaussian.Norm.Basic.normSq root.point))
+      (PowerCoordinates.coordinatePolynomial_nonzero
+        (Gaussian.Norm.Basic.normSq root.point) input.re degree.value degree.positive)
       root.point.re realRoot
   have imaginaryMember :=
-    Dense.Rational.RootCandidates.root_mem_candidates
-      (imaginaryCoordinatePolynomial input degree (Data.Gaussian.Norm.Basic.normSq
+    RootCandidates.root_mem_candidates
+      (imaginaryCoordinatePolynomial input degree (Gaussian.Norm.Basic.normSq
         root.point))
-      (Elimination.Gaussian.PowerCoordinates.coordinatePolynomial_nonzero
-        (Data.Gaussian.Norm.Basic.normSq root.point)
+      (PowerCoordinates.coordinatePolynomial_nonzero
+        (Gaussian.Norm.Basic.normSq root.point)
         ((Gaussian.Constants.negativeImaginaryUnit ^
           degree.value * input).re) degree.value degree.positive)
       root.point.im imaginaryRoot
@@ -202,7 +205,7 @@ theorem exactRoot_mem_derivedCandidates
   change root.point ∈ (radiusCandidates input degree).flatMap
     (candidatesAtRadius input degree)
   apply Data.List.Flatten.mem_flatMap.mpr
-  refine ⟨Data.Gaussian.Norm.Basic.normSq root.point, radiusMember, ?_⟩
+  refine ⟨Gaussian.Norm.Basic.normSq root.point, radiusMember, ?_⟩
   rw [candidatesAtRadius]
   apply Data.List.Flatten.mem_flatMap.mpr
   refine ⟨root.point.re, realMember, ?_⟩

@@ -64,6 +64,8 @@ import Purelib.Riemann.Readings.RectangularObservationAssembly
 import Purelib.Riemann.Readings.RectangularPointReadings
 import Purelib.Riemann.RootContinuation.RootOwnerFrames
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! A complete finite area request from cached common trace preparation.
@@ -84,20 +86,20 @@ attribute [local congr] FiniteSum.Fin.sumFin_congr
 
 open Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedHorizontalSide
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {firstFace lastFace :
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {firstFace lastFace :
       Meshes.PuncturedGridFaces.RegularFace
     bank}
-  {firstModels : Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames firstFace}
-    {lastModels : Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames lastFace}
+  {firstModels : Face.InverseModels.BranchCellBank.FaceModels frames firstFace}
+    {lastModels : Face.InverseModels.BranchCellBank.FaceModels frames lastFace}
   {start : Gaussian.Basic.Canonical} {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)}
-  {leftEntry : Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry firstModels start owner} {rightEntry :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry lastModels start owner}
-  {leftDomain : Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain firstModels leftEntry.sheet} {rightDomain :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain lastModels rightEntry.sheet}
-  {firstDifferential secondDifferential : Hyperelliptic.Differentials.Basic.Differential genus} {firstSheet secondSheet
+  {leftEntry : Face.Entries.FaceModels.Entry firstModels start owner} {rightEntry :
+    Face.Entries.FaceModels.Entry lastModels start owner}
+  {leftDomain : Face.Periods.PeriodDomain firstModels leftEntry.sheet} {rightDomain :
+    Face.Periods.PeriodDomain lastModels rightEntry.sheet}
+  {firstDifferential secondDifferential : Differentials.Basic.Differential genus} {firstSheet secondSheet
     : Fin 2}
 
 variable {leftBox rightBox : Rational.Box}
@@ -122,8 +124,8 @@ Cache both differential bounds, original contact banks and a stage sufficient fo
 -/
 structure AreaRequest
     (preparation :
-      _root_.Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.SidePreparation.MatchedSidePreparation trace)
-    (firstDifferential secondDifferential : Hyperelliptic.Differentials.Basic.Differential genus) (firstSheet
+      SidePreparation.MatchedSidePreparation trace)
+    (firstDifferential secondDifferential : Differentials.Basic.Differential genus) (firstSheet
       secondSheet : Fin 2)
     (target : Normalization.InverseRootPolynomial.Coordinate) (floor : Nat) where
   /-- The first differential's original primitive-overlap bounds. -/ firstBounds :
@@ -137,20 +139,20 @@ structure AreaRequest
   /-- The second original grid accuracy request for the retained right domain. -/ secondGrid :
     Integration.RectangularPrimitiveAccuracy.GridPrimitiveAccuracy secondBounds rightDomain.steps 1
   /-- The first differential's actual original trace-contact bank. -/ firstBank :
-    Hyperelliptic.Meshes.PuncturedGrid.TraceContactBanks.TraceContactBank leftEntry rightEntry leftDomain rightDomain
+    TraceContactBanks.TraceContactBank leftEntry rightEntry leftDomain rightDomain
     (fun vertex => trace.point (trace.vertices.indexed vertex)) firstDifferential firstSheet
   /-- The second differential's actual original trace-contact bank. -/ secondBank :
-    Hyperelliptic.Meshes.PuncturedGrid.TraceContactBanks.TraceContactBank leftEntry rightEntry leftDomain rightDomain
+    TraceContactBanks.TraceContactBank leftEntry rightEntry leftDomain rightDomain
     (fun vertex => trace.point (trace.vertices.indexed vertex)) secondDifferential secondSheet
   /-- The first bank is exactly the contact cache of the retained original preparation. -/ firstBank_eq : firstBank =
     preparation.contacts firstDifferential firstSheet
   /-- The second bank is exactly the contact cache of the retained original preparation. -/ secondBank_eq : secondBank =
     preparation.contacts secondDifferential secondSheet
   /-- The paid paired-trace request using both original banks and their common magnitude bound. -/ request :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.TraceRequest.PairedTraceRequest firstBank secondBank
-    (max (Hyperelliptic.Meshes.PuncturedGrid.Matched.SideAreaRequest.MatchedSidePreparation.wholeMagnitude
+    Paired.TraceRequest.PairedTraceRequest firstBank secondBank
+    (max (MatchedSidePreparation.wholeMagnitude
       leftMesh.boundaryColumns (Readings.RectangularSeamBounds.boundarySlope firstBounds))
-      (Hyperelliptic.Meshes.PuncturedGrid.Matched.SideAreaRequest.MatchedSidePreparation.wholeMagnitude
+      (MatchedSidePreparation.wholeMagnitude
         leftMesh.boundaryColumns (Readings.RectangularSeamBounds.boundarySlope secondBounds))) target floor
   /-- The common sufficient stage for all original bounds and contact requests. -/ index : Nat
   /-- The original paired request is ready by the retained common stage. -/ request_le : request.index ≤ index
@@ -162,17 +164,17 @@ constructive_injectivity AreaRequest
 namespace AreaRequest
 
 variable {preparation :
-  _root_.Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.SidePreparation.MatchedSidePreparation trace}
+  SidePreparation.MatchedSidePreparation trace}
   {target : Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
 
 /-- Prepare both original differential bounds and contact banks on the retained horizontal trace, then select a common
 sufficient stage. -/
 @[expose] def build (preparation :
-  _root_.Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.SidePreparation.MatchedSidePreparation trace)
-    (firstDifferential secondDifferential : Hyperelliptic.Differentials.Basic.Differential genus) (firstSheet
+  SidePreparation.MatchedSidePreparation trace)
+    (firstDifferential secondDifferential : Differentials.Basic.Differential genus) (firstSheet
       secondSheet : Fin 2)
     (target : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < target) (floor : Nat) :
-    Hyperelliptic.Meshes.PuncturedGrid.Matched.SideAreaRequest.MatchedSidePreparation.AreaRequest preparation
+    AreaRequest preparation
       firstDifferential secondDifferential firstSheet secondSheet target floor := by
   let firstBounds := Comparison.PrimitiveEdgeComparison.PrimitiveOverlapBounds.build lastFace.clearance
     (Readings.PreparedPrimitiveSamples.differentialNumerator firstDifferential)
@@ -181,43 +183,43 @@ sufficient stage. -/
   let firstBank := preparation.contacts firstDifferential firstSheet
   let secondBank := preparation.contacts secondDifferential secondSheet
   have nonnegative : 0 ≤ Readings.RectangularSeamBounds.boundarySlope firstBounds :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct firstBounds.numeratorUpper_nonnegative
+    Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.mul_nonneg_direct firstBounds.numeratorUpper_nonnegative
       firstBounds.inverseUpper_positive.le)) lastFace.cell.box.diagonalSq_nonneg
   let firstGrid := Integration.RectangularPrimitiveAccuracy.GridPrimitiveAccuracy.build firstBounds rightDomain.steps 1
     (by decide)
   let secondGrid := Integration.RectangularPrimitiveAccuracy.GridPrimitiveAccuracy.build secondBounds rightDomain.steps
     1 (by decide)
   have magnitudeNonnegative : 0 ≤
-    Hyperelliptic.Meshes.PuncturedGrid.Matched.SideAreaRequest.MatchedSidePreparation.wholeMagnitude
+    MatchedSidePreparation.wholeMagnitude
     leftMesh.boundaryColumns (Readings.RectangularSeamBounds.boundarySlope firstBounds) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg nonnegative
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _) (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    Arithmetic.mul_nonneg_direct (by decide) (add_nonneg nonnegative
+      (Arithmetic.mul_nonneg_direct
+      (Arithmetic.sq_nonneg_direct _) (Arithmetic.mul_nonneg_direct (by decide)
         (add_nonneg (by decide) nonnegative))))
-  let request := Hyperelliptic.Meshes.PuncturedGrid.Paired.TraceRequest.PairedTraceRequest.build firstBank secondBank _
+  let request := Paired.TraceRequest.PairedTraceRequest.build firstBank secondBank _
     target
-    (magnitudeNonnegative.trans (Fraction.Order.Basic.le_max_left _
-      (Hyperelliptic.Meshes.PuncturedGrid.Matched.SideAreaRequest.MatchedSidePreparation.wholeMagnitude
+    (magnitudeNonnegative.trans (Basic.le_max_left _
+      (MatchedSidePreparation.wholeMagnitude
       leftMesh.boundaryColumns (Readings.RectangularSeamBounds.boundarySlope secondBounds)))) positive floor
   exact ⟨firstBounds, secondBounds, firstGrid, secondGrid, firstBank, secondBank, rfl, rfl, request,
-    max request.index (max firstGrid.index secondGrid.index), Purelib.Data.Nat.Order.le_max_left _ _,
-    (Purelib.Data.Nat.Order.le_max_left _ _).trans (Purelib.Data.Nat.Order.le_max_right _ _),
-      (Purelib.Data.Nat.Order.le_max_right _ _).trans (Purelib.Data.Nat.Order.le_max_right _ _)⟩
+    max request.index (max firstGrid.index secondGrid.index), Nat.Order.le_max_left _ _,
+    (Nat.Order.le_max_left _ _).trans (Nat.Order.le_max_right _ _),
+      (Nat.Order.le_max_right _ _).trans (Nat.Order.le_max_right _ _)⟩
 
 /-- The original horizontal trace areas differ by less than the target after subtracting their actual endpoint
 correction. -/
 theorem accurate (assembled :
-  Hyperelliptic.Meshes.PuncturedGrid.Matched.SideAreaRequest.MatchedSidePreparation.AreaRequest preparation
+  AreaRequest preparation
   firstDifferential secondDifferential firstSheet secondSheet target floor)
     {stage : Nat} (later : assembled.index ≤ stage)
-    (firstLeft : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives leftDomain firstDifferential
+    (firstLeft : Face.PrimitiveData.DomainPrimitives leftDomain firstDifferential
       stage)
-    (firstRight : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives rightDomain firstDifferential
+    (firstRight : Face.PrimitiveData.DomainPrimitives rightDomain firstDifferential
       stage)
-    (secondLeft : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives leftDomain secondDifferential
+    (secondLeft : Face.PrimitiveData.DomainPrimitives leftDomain secondDifferential
       stage)
-    (secondRight : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives rightDomain secondDifferential
+    (secondRight : Face.PrimitiveData.DomainPrimitives rightDomain secondDifferential
       stage)
     (left : Periods.CenteredBilinearPath.Sample (fun vertex => ⟨(trace.leftReadings firstLeft.anchors
       firstLeft.offsets).values vertex,
@@ -225,7 +227,7 @@ theorem accurate (assembled :
     (right : Periods.CenteredBilinearPath.Sample (fun vertex => ⟨(trace.rightReadings firstRight.anchors
       firstRight.offsets).values vertex,
       (trace.rightReadings secondRight.anchors secondRight.offsets).values vertex⟩)) :
-    Data.Gaussian.Norm.Basic.normSq ((left.originalArea - right.originalArea) - (left.endpoint - right.endpoint)) <
+    Gaussian.Norm.Basic.normSq ((left.originalArea - right.originalArea) - (left.endpoint - right.endpoint)) <
       target :=
 open Purelib.Integration in by
   apply assembled.request.accurate (assembled.request_le.trans later) firstLeft firstRight secondLeft secondRight
@@ -250,16 +252,16 @@ open Purelib.Integration in by
 /-- The original matched horizontal side areas and joins satisfy the paid comparison with the endpoint correction
 retained. -/
 theorem boundary_accurate (assembled :
-  Hyperelliptic.Meshes.PuncturedGrid.Matched.SideAreaRequest.MatchedSidePreparation.AreaRequest preparation
+  AreaRequest preparation
   firstDifferential secondDifferential firstSheet secondSheet target floor)
     {stage : Nat} (later : assembled.index ≤ stage)
-    (firstLeft : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives leftDomain firstDifferential
+    (firstLeft : Face.PrimitiveData.DomainPrimitives leftDomain firstDifferential
       stage)
-    (firstRight : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives rightDomain firstDifferential
+    (firstRight : Face.PrimitiveData.DomainPrimitives rightDomain firstDifferential
       stage)
-    (secondLeft : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives leftDomain secondDifferential
+    (secondLeft : Face.PrimitiveData.DomainPrimitives leftDomain secondDifferential
       stage)
-    (secondRight : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives rightDomain secondDifferential
+    (secondRight : Face.PrimitiveData.DomainPrimitives rightDomain secondDifferential
       stage)
     (left : Periods.CenteredBilinearPath.Sample (fun vertex => ⟨(trace.leftReadings firstLeft.anchors
       firstLeft.offsets).values vertex,
@@ -271,7 +273,7 @@ theorem boundary_accurate (assembled :
       secondLeft.anchors.alignedValue secondLeft.offsets column row point⟩ : Topology.Polygon.Stokes.PrimitivePoint)
     let rightValue := fun column row point => (⟨firstRight.anchors.alignedValue firstRight.offsets column row point,
       secondRight.anchors.alignedValue secondRight.offsets column row point⟩ : Topology.Polygon.Stokes.PrimitivePoint)
-    Data.Gaussian.Norm.Basic.normSq (((side.leftArea leftValue depth + side.leftJoins leftValue) -
+    Gaussian.Norm.Basic.normSq (((side.leftArea leftValue depth + side.leftJoins leftValue) -
       (side.rightArea rightValue depth + side.rightJoins rightValue)) - (left.endpoint - right.endpoint)) < target := by
   intro leftValue rightValue
   have leftArea : left.originalArea = side.leftArea leftValue depth + side.leftJoins leftValue := by

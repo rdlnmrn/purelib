@@ -24,6 +24,8 @@ import Purelib.Geometry.Rational.Box.Refinement
 import Purelib.Geometry.Rational.Box.Sample
 import Purelib.Polynomial.Dense.Evaluation
 
+open Purelib.Polynomial.Dense.Gaussian.Newton.Box.Band
+
 open Purelib.Data
 
 open Purelib.Data.Rat
@@ -48,7 +50,7 @@ namespace Purelib.Polynomial.Clearance.Box.Dominance.Newton.Band
 
 /-- Finite Taylor dominance on every side of a selected Newton band. -/
 def newtonBandBoundaryNormDominance
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient source : Box}
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient source : Box}
     {squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p}
     (newton : Dense.Gaussian.Newton.Box.Squarefree.NewtonCenterCertificate
       p ambient source squarefree)
@@ -56,26 +58,26 @@ def newtonBandBoundaryNormDominance
     (positive : 0 < r)
     (band : Box.Band.Basic.BandBox (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) r)
     (targetRefines : band.box.Refines ambient)
-    (displacementSmall : Data.Gaussian.Norm.Basic.normSq
+    (displacementSmall : Gaussian.Norm.Basic.normSq
       (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source - source.anchor) ≤ r ^ 2)
     (taylorSmall :
-      2 * (Dense.Gaussian.Newton.Box.Band.Parameters.extractionBandTaylorCoefficient *
+      2 * (Parameters.extractionBandTaylorCoefficient *
         Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p ambient * r ^ 2) ≤
           Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin squarefree ambient) :
-    Clearance.Box.Dominance.Basic.BoundaryNormDominance
+    Basic.BoundaryNormDominance
       (Dense.Gaussian.Newton.Box.Linearization.newtonLinearization p source)
         (Dense.Gaussian.Newton.Box.Linearization.newtonError p source) band.box where
-  margin := Dense.Gaussian.Newton.Box.Band.Bounds.bandDominanceMargin squarefree ambient r
-  positive := Dense.Gaussian.Newton.Box.Band.Bounds.bandDominanceMargin_pos squarefree positive taylorSmall
+  margin := Bounds.bandDominanceMargin squarefree ambient r
+  positive := Bounds.bandDominanceMargin_pos squarefree positive taylorSmall
   lower := by
     intro z boundary
-    have errorBound := Dense.Gaussian.Newton.Box.Band.Bounds.newtonError_le_bandBudget newton sourceRefines band
+    have errorBound := Bounds.newtonError_le_bandBudget newton sourceRefines band
       targetRefines
       displacementSmall boundary
-    have linearBound := Dense.Gaussian.Newton.Box.Band.Bounds.newtonLinearization_band_boundary_lower newton band
+    have linearBound := Bounds.newtonLinearization_band_boundary_lower newton band
       positive.le boundary
-    have estimate := Purelib.Data.Rat.Fraction.Order.Arithmetic.sub_le_sub_direct linearBound errorBound
-    simpa only [Dense.Gaussian.Newton.Box.Band.Bounds.bandDominanceMargin, Gaussian.Norm.Basic.normSq_eq_canonical]
+    have estimate := Fraction.Order.Arithmetic.sub_le_sub_direct linearBound errorBound
+    simpa only [Bounds.bandDominanceMargin, Gaussian.Norm.Basic.normSq_eq_canonical]
       using estimate
 end Purelib.Polynomial.Clearance.Box.Dominance.Newton.Band
 

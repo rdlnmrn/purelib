@@ -28,10 +28,10 @@ open Purelib.Polynomial
 
 The identity is a finite telescoping calculation and does not require `1 - z` to be nonzero. -/
 theorem one_sub_mul_geometricPrefix (z : Gaussian.Basic.Canonical) : ∀ degree,
-    (1 - z) * Ascending.Rational.GaussianEvaluation.eval (Ascending.Rational.Geometric.geometricPrefix degree) z =
+    (1 - z) * GaussianEvaluation.eval (geometricPrefix degree) z =
       1 + z + Gaussian.Scale.scale (-2) (z ^ (degree + 1))
   | 0 => by
-      rw [Ascending.Rational.Geometric.geometricPrefix]
+      rw [geometricPrefix]
       rw [show z ^ (0 + 1) = z by
         rw [Nat.zero_add, pow_one]]
       change (1 - z) *
@@ -43,13 +43,13 @@ theorem one_sub_mul_geometricPrefix (z : Gaussian.Basic.Canonical) : ∀ degree,
           Gaussian.Basic.mul_re, Gaussian.Basic.mul_im, Gaussian.Basic.zero_re, Gaussian.Basic.zero_im,
             Gaussian.Basic.one_re, Gaussian.Basic.one_im] <;> ring1
   | degree + 1 => by
-      rw [Ascending.Rational.Geometric.geometricPrefix, Ascending.Rational.GaussianEvaluation.eval_add,
-        Ascending.Rational.GaussianEvaluation.eval_monomial, pow_succ]
+      rw [geometricPrefix, GaussianEvaluation.eval_add,
+        GaussianEvaluation.eval_monomial, pow_succ]
       calc
         (1 - z) *
-            (Ascending.Rational.GaussianEvaluation.eval (Ascending.Rational.Geometric.geometricPrefix degree) z +
+            (GaussianEvaluation.eval (geometricPrefix degree) z +
               Gaussian.Scale.scale 2 (z ^ degree * z)) =
-            (1 - z) * Ascending.Rational.GaussianEvaluation.eval (Ascending.Rational.Geometric.geometricPrefix degree) z
+            (1 - z) * GaussianEvaluation.eval (geometricPrefix degree) z
               +
               (1 - z) *
                 Gaussian.Scale.scale 2 (z ^ degree * z) := by
@@ -61,7 +61,7 @@ theorem one_sub_mul_geometricPrefix (z : Gaussian.Basic.Canonical) : ∀ degree,
               Gaussian.Scale.scale (-2) (z ^ (degree + 1))) +
             (1 - z) *
               Gaussian.Scale.scale 2 (z ^ degree * z) := by
-          rw [Purelib.Polynomial.Ascending.Rational.Geometric.GaussianEvaluation.one_sub_mul_geometricPrefix z degree]
+          rw [GaussianEvaluation.one_sub_mul_geometricPrefix z degree]
         _ = 1 + z +
             Gaussian.Scale.scale (-2)
               (z ^ (degree + 1 + 1)) := by
@@ -81,19 +81,19 @@ theorem one_sub_mul_geometricPrefix (z : Gaussian.Basic.Canonical) : ∀ degree,
 
 All coefficients in the dropped tail vanish. -/
 theorem geometricPrefix_eval_eq_prefix (z : Gaussian.Basic.Canonical) (degree : Nat) :
-    Ascending.Rational.GaussianEvaluation.eval (Ascending.Rational.Geometric.geometricPrefix degree) z =
-      Ascending.Rational.GaussianEvaluation.Truncation.prefixEval z (Ascending.Rational.Geometric.geometricPrefix
+    GaussianEvaluation.eval (geometricPrefix degree) z =
+      GaussianEvaluation.Truncation.prefixEval z (geometricPrefix
         degree) (degree + 1) := by
-  rw [Ascending.Rational.GaussianEvaluation.Truncation.eval_split]
+  rw [GaussianEvaluation.Truncation.eval_split]
   have tailZero :
-      Ascending.Rational.GaussianEvaluation.eval
-        ⟨(Ascending.Rational.Geometric.geometricPrefix degree).coefficients.drop (degree + 1)⟩ z = 0 := by
-    apply Ascending.Rational.GaussianEvaluation.evalCoefficients_zero_of_coefficients_zero
+      GaussianEvaluation.eval
+        ⟨(geometricPrefix degree).coefficients.drop (degree + 1)⟩ z = 0 := by
+    apply GaussianEvaluation.evalCoefficients_zero_of_coefficients_zero
     intro tailDegree
-    rw [Ascending.Rational.Truncation.coefficientCoefficients_drop]
-    change Ascending.Rational.Basic.coefficient (Ascending.Rational.Geometric.geometricPrefix degree) (degree + 1 +
+    rw [Truncation.coefficientCoefficients_drop]
+    change Basic.coefficient (geometricPrefix degree) (degree + 1 +
       tailDegree) = 0
-    rw [Ascending.Rational.Geometric.geometricPrefix_coefficient, if_neg (by omega), if_neg (by omega)]
+    rw [geometricPrefix_coefficient, if_neg (by omega), if_neg (by omega)]
   rw [tailZero]
   apply Gaussian.Basic.ext <;>
     simp only [Gaussian.Basic.add_re, Gaussian.Basic.add_im, Gaussian.Basic.mul_re, Gaussian.Basic.mul_im,

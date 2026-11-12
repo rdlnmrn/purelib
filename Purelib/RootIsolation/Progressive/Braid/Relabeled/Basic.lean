@@ -36,8 +36,8 @@ set_option genInjectivity false in
 /-- A certified loop braid whose word positions are related to the chamber's
 internal owner indices by an explicit finite bijection. -/
 structure RelabeledLoopBraid
-    (frame : Progressive.Chamber.Frame.ChamberFrame)
-    (loop : Progressive.Chamber.Path.Basic.ChamberPath frame frame) where
+    (frame : Chamber.Frame.ChamberFrame)
+    (loop : Chamber.Path.Basic.ChamberPath frame frame) where
   /-- The actual finite braid word of the original closed root path. -/ word : Topology.Knot.Braid.Word frame.degree
   /-- The retained finite bijection from word positions to original chamber-owner indices. -/ labeling :
     Data.Fin.Bijection frame.degree frame.degree
@@ -52,8 +52,8 @@ section RelabeledLoopBraid
 
 /-- Certify the empty braid word and identity labeling for the empty original chamber path. -/
 @[expose] def RelabeledLoopBraid.identity (frame :
-  Progressive.Chamber.Frame.ChamberFrame) :
-    Progressive.Braid.Relabeled.Basic.RelabeledLoopBraid frame (.nil frame) where
+  Chamber.Frame.ChamberFrame) :
+    RelabeledLoopBraid frame (.nil frame) where
   word := []
   labeling := Data.Fin.Bijection.identity frame.degree
   agrees := fun _ => rfl
@@ -63,13 +63,13 @@ section RelabeledLoopBraid
 The output keeps the first labeling and concatenates the actual words, with transport agreement through the shared
 chamber frame. -/
 @[expose] def RelabeledLoopBraid.append {frame :
-  Progressive.Chamber.Frame.ChamberFrame}
-    {first second : Progressive.Chamber.Path.Basic.ChamberPath frame frame}
-    (firstBraid : Progressive.Braid.Relabeled.Basic.RelabeledLoopBraid frame first)
-    (secondBraid : Progressive.Braid.Relabeled.Basic.RelabeledLoopBraid frame second)
+  Chamber.Frame.ChamberFrame}
+    {first second : Chamber.Path.Basic.ChamberPath frame frame}
+    (firstBraid : RelabeledLoopBraid frame first)
+    (secondBraid : RelabeledLoopBraid frame second)
     (sameLabeling : Data.Fin.Bijection.Same
       firstBraid.labeling secondBraid.labeling) :
-    Progressive.Braid.Relabeled.Basic.RelabeledLoopBraid frame (first.append second) where
+    RelabeledLoopBraid frame (first.append second) where
   word := firstBraid.word ++ secondBraid.word
   labeling := firstBraid.labeling
   agrees := by
@@ -80,7 +80,7 @@ chamber frame. -/
         second.monodromy.forward
           (first.monodromy.forward
             (firstBraid.labeling.forward position)) :=
-        Progressive.Chamber.Path.Basic.ChamberPath.monodromy_append first second _
+        Chamber.Path.Basic.ChamberPath.monodromy_append first second _
       _ = second.monodromy.forward
           (firstBraid.labeling.forward
             (firstBraid.word.permutation.forward position)) := by
@@ -105,10 +105,10 @@ chamber frame. -/
 
 /-- Invert a retained loop braid while preserving its original owner labeling. -/
 @[expose] def RelabeledLoopBraid.reverse {frame :
-  Progressive.Chamber.Frame.ChamberFrame}
-    {loop : Progressive.Chamber.Path.Basic.ChamberPath frame frame}
-    (braid : Progressive.Braid.Relabeled.Basic.RelabeledLoopBraid frame loop) :
-    Progressive.Braid.Relabeled.Basic.RelabeledLoopBraid frame loop.reverse where
+  Chamber.Frame.ChamberFrame}
+    {loop : Chamber.Path.Basic.ChamberPath frame frame}
+    (braid : RelabeledLoopBraid frame loop) :
+    RelabeledLoopBraid frame loop.reverse where
   word := braid.word.inverse
   labeling := braid.labeling
   agrees := by
@@ -116,7 +116,7 @@ chamber frame. -/
     calc
       loop.reverse.monodromy.forward (braid.labeling.forward position) =
           loop.monodromy.backward (braid.labeling.forward position) :=
-        Progressive.Chamber.Path.Basic.ChamberPath.transport_reverse_forward loop _
+        Chamber.Path.Basic.ChamberPath.transport_reverse_forward loop _
       _ = braid.labeling.forward
           (braid.word.inverse.permutation.forward position) := by
         have forwardAt := braid.agrees
@@ -129,9 +129,9 @@ chamber frame. -/
 
 /-- Finite iterations of the retained word permutation and original monodromy agree through the saved labeling. -/
 theorem RelabeledLoopBraid.iterate_agrees {frame :
-  Progressive.Chamber.Frame.ChamberFrame}
-    {loop : Progressive.Chamber.Path.Basic.ChamberPath frame frame}
-    (braid : Progressive.Braid.Relabeled.Basic.RelabeledLoopBraid frame loop) (steps : Nat)
+  Chamber.Frame.ChamberFrame}
+    {loop : Chamber.Path.Basic.ChamberPath frame frame}
+    (braid : RelabeledLoopBraid frame loop) (steps : Nat)
     (position : Fin frame.degree) :
     Data.Fin.Bijection.iterateForward loop.monodromy steps
         (braid.labeling.forward position) =
@@ -148,18 +148,18 @@ theorem RelabeledLoopBraid.iterate_agrees {frame :
 
 /-- Form the finite closure of the retained braid word at the original chamber degree. -/
 @[expose] def RelabeledLoopBraid.closure {frame :
-  Progressive.Chamber.Frame.ChamberFrame}
-    {loop : Progressive.Chamber.Path.Basic.ChamberPath frame frame}
-    (braid : Progressive.Braid.Relabeled.Basic.RelabeledLoopBraid frame loop) : Topology.Knot.Braid.Closure where
+  Chamber.Frame.ChamberFrame}
+    {loop : Chamber.Path.Basic.ChamberPath frame frame}
+    (braid : RelabeledLoopBraid frame loop) : Topology.Knot.Braid.Closure where
   strands := frame.degree
   word := braid.word
 
 /-- A relabeled retained braid closure is a knot when the original owner monodromy is a single cycle. -/
 theorem
   RelabeledLoopBraid.closure_isKnot_of_monodromy_isSingleCycle
-    {frame : Progressive.Chamber.Frame.ChamberFrame}
-    {loop : Progressive.Chamber.Path.Basic.ChamberPath frame frame}
-    (braid : Progressive.Braid.Relabeled.Basic.RelabeledLoopBraid frame loop)
+    {frame : Chamber.Frame.ChamberFrame}
+    {loop : Chamber.Path.Basic.ChamberPath frame frame}
+    (braid : RelabeledLoopBraid frame loop)
     (single : Data.Fin.Bijection.IsSingleCycle
       loop.monodromy) : braid.closure.IsKnot := by
   refine

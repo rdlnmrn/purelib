@@ -36,7 +36,7 @@ namespace Purelib.Geometry.Quadrilaterals.Cyclic.Circumquadrance.Polynomial
 
 open Purelib.Algebra
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Field.ExplicitField K]
 
 namespace Quadrilateral
 
@@ -77,22 +77,22 @@ multiplied by `256` and the sixth power of the circle quadrance. -/
 theorem
   circumquadrance_polynomial_scaled_spread
     (r₁₂ r₂₃ r₃₄ r₁₄ circleQuadrance : K) :
-    Geometry.Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientP
+    circumquadranceCoefficientP
           (4 * circleQuadrance * r₁₂) (4 * circleQuadrance * r₂₃)
           (4 * circleQuadrance * r₃₄) (4 * circleQuadrance * r₁₄) *
         circleQuadrance ^ 2 -
-      2 * Geometry.Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientQ
+      2 * circumquadranceCoefficientQ
           (4 * circleQuadrance * r₁₂) (4 * circleQuadrance * r₂₃)
           (4 * circleQuadrance * r₃₄) (4 * circleQuadrance * r₁₄) *
         circleQuadrance +
-      Geometry.Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientR
+      circumquadranceCoefficientR
           (4 * circleQuadrance * r₁₂) (4 * circleQuadrance * r₂₃)
           (4 * circleQuadrance * r₃₄) (4 * circleQuadrance * r₁₄) =
     256 * circleQuadrance ^ 6 *
       Quadruple.quadrupleSpreadFunction r₁₂ r₂₃ r₃₄ r₁₄ := by
-  unfold Geometry.Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientP
-    Geometry.Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientQ
-    Geometry.Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientR
+  unfold circumquadranceCoefficientP
+    circumquadranceCoefficientQ
+    circumquadranceCoefficientR
       Quadruple.quadrupleQuadFunction
     Quadruple.quadrupleSpreadFunction Quadruple.quadrupleSpreadCore
   ring1
@@ -111,16 +111,16 @@ theorem
     (fourthScaled : q₁₄ = 4 * circleQuadrance * r₁₄)
     (spreadRelation :
       Quadruple.quadrupleSpreadFunction r₁₂ r₂₃ r₃₄ r₁₄ = 0) :
-    Geometry.Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientP q₁₂ q₂₃ q₃₄ q₁₄
+    circumquadranceCoefficientP q₁₂ q₂₃ q₃₄ q₁₄
       *
         circleQuadrance ^ 2 -
-      2 * Geometry.Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientQ q₁₂ q₂₃
+      2 * circumquadranceCoefficientQ q₁₂ q₂₃
         q₃₄ q₁₄ *
         circleQuadrance +
-      Geometry.Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientR q₁₂ q₂₃ q₃₄
+      circumquadranceCoefficientR q₁₂ q₂₃ q₃₄
         q₁₄ = 0 := by
   rw [firstScaled, secondScaled, thirdScaled, fourthScaled,
-    Geometry.Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadrance_polynomial_scaled_spread,
+    circumquadrance_polynomial_scaled_spread,
       spreadRelation]
   ring1
 
@@ -131,19 +131,19 @@ two coefficients equals four times the product of the side quadrances and
 three explicit signed-sum squares. The identity holds over the displayed field. -/
 theorem exercise_17_1 (q₁₂ q₂₃
   q₃₄ q₁₄ : K) :
-    (2 * Geometry.Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientQ q₁₂ q₂₃ q₃₄
+    (2 * circumquadranceCoefficientQ q₁₂ q₂₃ q₃₄
       q₁₄) ^ 2 -
-        4 * Geometry.Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientP q₁₂ q₂₃
+        4 * circumquadranceCoefficientP q₁₂ q₂₃
           q₃₄ q₁₄ *
-          Geometry.Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientR q₁₂ q₂₃
+          circumquadranceCoefficientR q₁₂ q₂₃
             q₃₄ q₁₄ =
       4 * q₁₂ * q₂₃ * q₃₄ * q₁₄ *
         (q₁₂ + q₂₃ - q₃₄ - q₁₄) ^ 2 *
         (q₁₂ - q₂₃ + q₃₄ - q₁₄) ^ 2 *
         (q₁₂ - q₂₃ - q₃₄ + q₁₄) ^ 2 := by
-  unfold Geometry.Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientP
-    Geometry.Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientQ
-    Geometry.Quadrilaterals.Cyclic.Circumquadrance.Polynomial.Quadrilateral.circumquadranceCoefficientR
+  unfold circumquadranceCoefficientP
+    circumquadranceCoefficientQ
+    circumquadranceCoefficientR
       Quadruple.quadrupleQuadFunction
   ring1
 

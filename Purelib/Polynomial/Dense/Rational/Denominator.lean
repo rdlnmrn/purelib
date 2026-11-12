@@ -6,7 +6,7 @@ import Purelib.Data.Rat.Fraction.Basic
 import Purelib.Data.Rat.Fraction.Cast
 import Purelib.Polynomial.Dense.Evaluation
 public import Purelib.Polynomial.Dense.Integer.Homogeneous
-public import Purelib.Polynomial.Dense.Rational.Coefficients
+public import Purelib.Polynomial.Dense.Coefficients
 import Mathlib.Algebra.Ring.Defs
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Field
@@ -82,9 +82,9 @@ denominator.
 The canonical head numerator/denominator equality transports one Horner
 step. The exact cached tail clearance supplies the remaining scaled evaluation. -/
 public theorem eval_clear (point : Fraction.Rational) (coefficients : List Fraction.Rational) :
-    Dense.Integer.Homogeneous.evalIntegers point (clear coefficients).coefficients =
+    Integer.Homogeneous.evalIntegers point (clear coefficients).coefficients =
       ((clear coefficients).denominator : Fraction.Rational) *
-        Dense.Basic.DensePolynomial.evalCoeffs point coefficients := open Purelib.Algebra in by
+        Basic.DensePolynomial.evalCoeffs point coefficients := open Purelib.Algebra in by
   induction coefficients with
   | nil =>
       change (0 : Fraction.Rational) = 1 * 0
@@ -96,20 +96,20 @@ public theorem eval_clear (point : Fraction.Rational) (coefficients : List Fract
           head.num * (tail.denominator : Int) ::
             tail.coefficients.map (fun value => (head.den : Int) * value)
         from rfl]
-      rw [Dense.Integer.Homogeneous.evalIntegers_cons, Map.length_map, clear_length,
-        Dense.Integer.Homogeneous.evalIntegers_map_mul, Ring.IntCast.intCast_mul, Int.cast_natCast,
+      rw [Integer.Homogeneous.evalIntegers_cons, Map.length_map, clear_length,
+        Integer.Homogeneous.evalIntegers_map_mul, Ring.IntCast.intCast_mul, Int.cast_natCast,
         inductionHypothesis]
       change
         (head.num : Fraction.Rational) * (tail.denominator : Fraction.Rational) *
               point ^ remaining.length +
             (head.den : Fraction.Rational) *
-              ((tail.denominator : Fraction.Rational) * Dense.Basic.DensePolynomial.evalCoeffs point remaining) =
+              ((tail.denominator : Fraction.Rational) * Basic.DensePolynomial.evalCoeffs point remaining) =
           ((head.den * tail.denominator : Nat) : Fraction.Rational) *
-            Dense.Basic.DensePolynomial.evalCoeffs point (coefficient :: remaining)
+            Basic.DensePolynomial.evalCoeffs point (coefficient :: remaining)
       have clearance := Fraction.Cast.representative_mul_den coefficient
       change coefficient * (head.den : Fraction.Rational) =
         (head.num : Fraction.Rational) at clearance
-      rw [Dense.Basic.DensePolynomial.evalCoeffs_cons_expansion, ← clearance, NatCast.mul]
+      rw [Basic.DensePolynomial.evalCoeffs_cons_expansion, ← clearance, NatCast.mul]
       ring1
 
 /-- A nonzero constructive rational has a nonzero canonical numerator.
@@ -129,14 +129,14 @@ The original last-entry accumulator retains the same final occurrence.
 Its displayed integer factor multiplies that retained constant coefficient. -/
 private theorem constantCoefficient_map_mul (factor : Int)
     (leading : Int) (remaining : List Int) :
-    Dense.Integer.Homogeneous.constantCoefficient
+    Integer.Homogeneous.constantCoefficient
         ((leading :: remaining).map fun value => factor * value) =
-      factor * Dense.Integer.Homogeneous.constantCoefficient (leading :: remaining) := by
+      factor * Integer.Homogeneous.constantCoefficient (leading :: remaining) := by
   induction remaining generalizing leading with
   | nil => rfl
   | cons next remaining inductionHypothesis =>
-      rw [List.map_cons, List.map_cons, Dense.Integer.Homogeneous.constantCoefficient_cons_cons,
-        Dense.Integer.Homogeneous.constantCoefficient_cons_cons]
+      rw [List.map_cons, List.map_cons, Integer.Homogeneous.constantCoefficient_cons_cons,
+        Integer.Homogeneous.constantCoefficient_cons_cons]
       exact inductionHypothesis next
 
 /-- A nonzero first rational coefficient clears to a nonzero first integer
@@ -169,8 +169,8 @@ The unchanged original final coefficient supplies its nonzero representative.
 Each preceding canonical positive denominator retains the nonzero integer scaling. -/
 public theorem clear_constant_nonzero
     (leading : Fraction.Rational) (remaining : List Fraction.Rational)
-    (nonzero : Dense.Rational.Coefficients.rationalConstantCoefficient (leading :: remaining) ≠ 0) :
-    Dense.Integer.Homogeneous.constantCoefficient (clear (leading :: remaining)).coefficients ≠ 0 := by
+    (nonzero : Dense.Coefficients.constantCoefficient (leading :: remaining) ≠ 0) :
+    Integer.Homogeneous.constantCoefficient (clear (leading :: remaining)).coefficients ≠ 0 := by
   induction remaining generalizing leading with
   | nil =>
       have leadingNonzero : leading ≠ 0 := nonzero
@@ -192,7 +192,7 @@ public theorem clear_constant_nonzero
             (clear (next :: remaining)).coefficients.map
               (fun value => ((Fraction.Basic.representative leading).den : Int) * value)
         from rfl]
-      rw [tailShape, List.map_cons, Dense.Integer.Homogeneous.constantCoefficient_cons_cons]
+      rw [tailShape, List.map_cons, Integer.Homogeneous.constantCoefficient_cons_cons]
       rw [← List.map_cons, constantCoefficient_map_mul]
       intro vanished
       exact (Arithmetic.eq_zero_of_mul_eq_zero vanished).elim

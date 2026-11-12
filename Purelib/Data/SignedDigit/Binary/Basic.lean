@@ -7,6 +7,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 public import Purelib.Data.Rat.Fraction.Order.Basic
 import Mathlib.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 public section
 
@@ -82,24 +84,24 @@ theorem select_residual_bounded {value : Fraction.Rational}
       2 * value - (-1 : Fraction.Rational) ≤ 1
     have doubledLower : (-2 : Fraction.Rational) ≤ 2 * value := by
       have scaled :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           bounded.1 (by decide : (0 : Fraction.Rational) ≤ 2)
       rw [show (2 : Fraction.Rational) * -1 = -2 by decide] at scaled
       exact scaled
     have doubledUpper : 2 * value ≤ 0 := by
       have nonpositive := le_of_lt negative
       have scaled :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           nonpositive (by decide : (0 : Fraction.Rational) ≤ 2)
       rw [show (2 : Fraction.Rational) * 0 = 0 by decide] at scaled
       exact scaled
     constructor
     · calc
         (-1 : Fraction.Rational) = -2 - (-1) := by decide
-        _ ≤ 2 * value - (-1) := Fraction.Order.Arithmetic.sub_le_sub_right_direct doubledLower _
+        _ ≤ 2 * value - (-1) := Arithmetic.sub_le_sub_right_direct doubledLower _
     · calc
         2 * value - (-1 : Fraction.Rational) ≤ 0 - (-1) :=
-          Fraction.Order.Arithmetic.sub_le_sub_right_direct doubledUpper _
+          Arithmetic.sub_le_sub_right_direct doubledUpper _
         _ = 1 := by decide
   · rename_i nonnegative
     change -1 ≤ 2 * value - (1 : Fraction.Rational) ∧
@@ -107,23 +109,23 @@ theorem select_residual_bounded {value : Fraction.Rational}
     have zeroLe : (0 : Fraction.Rational) ≤ value := le_of_not_gt nonnegative
     have doubledLower : (0 : Fraction.Rational) ≤ 2 * value := by
       have scaled :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           zeroLe (by decide : (0 : Fraction.Rational) ≤ 2)
       rw [show (2 : Fraction.Rational) * 0 = 0 by decide] at scaled
       exact scaled
     have doubledUpper : 2 * value ≤ 2 := by
       have scaled :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           bounded.2 (by decide : (0 : Fraction.Rational) ≤ 2)
       rw [show (2 : Fraction.Rational) * 1 = 2 by decide] at scaled
       exact scaled
     constructor
     · calc
         (-1 : Fraction.Rational) = 0 - 1 := by decide
-        _ ≤ 2 * value - 1 := Fraction.Order.Arithmetic.sub_le_sub_right_direct doubledLower _
+        _ ≤ 2 * value - 1 := Arithmetic.sub_le_sub_right_direct doubledLower _
     · calc
         2 * value - (1 : Fraction.Rational) ≤ 2 - 1 :=
-          Fraction.Order.Arithmetic.sub_le_sub_right_direct doubledUpper _
+          Arithmetic.sub_le_sub_right_direct doubledUpper _
         _ = 1 := by decide
 end Purelib.Data.SignedDigit.Binary.Basic
 

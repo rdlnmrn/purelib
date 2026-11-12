@@ -14,6 +14,8 @@ public import Purelib.RationalFunctions.Winding.Line.Quotient
 import Purelib.RationalFunctions.Winding.Path.Correction
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Clearance.Box.Boundary
+
 open Purelib.Polynomial.Clearance.Box.Boundary.Basic (BoundaryClearance)
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 open Purelib.RationalFunctions.Winding.Line.Quotient (LineQuotientFormula)
@@ -77,31 +79,31 @@ theorem boxQuotientFormula_of_boundaryClearances
     (numeratorClearance : BoundaryClearance numerator box)
     (denominatorClearance : BoundaryClearance denominator box) :
     BoxQuotientFormula numerator denominator box := by
-  have bottom := Winding.Line.Quotient.lineQuotientFormula_of_clearances numerator denominator
+  have bottom := Line.Quotient.lineQuotientFormula_of_clearances numerator denominator
     (Gaussian.Cast.Imaginary.horizontalBase box.yLower) Gaussian.Constants.horizontalDirection proper.1
-    (Clearance.Box.Boundary.Lines.bottomOfBoundary
+    (Lines.bottomOfBoundary
       numeratorClearance).toPathCertificate
-    (Clearance.Box.Boundary.Lines.bottomOfBoundary
+    (Lines.bottomOfBoundary
       denominatorClearance).toPathCertificate
-  have right := Winding.Line.Quotient.lineQuotientFormula_of_clearances numerator denominator
+  have right := Line.Quotient.lineQuotientFormula_of_clearances numerator denominator
     (Gaussian.Cast.Winding.verticalBase box.xUpper) Gaussian.Constants.imaginaryUnit proper.2
-    (Clearance.Box.Boundary.Lines.rightOfBoundary
+    (Lines.rightOfBoundary
       numeratorClearance).toPathCertificate
-    (Clearance.Box.Boundary.Lines.rightOfBoundary
+    (Lines.rightOfBoundary
       denominatorClearance).toPathCertificate
-  have topIncreasing := Winding.Line.Quotient.lineQuotientFormula_of_clearances
+  have topIncreasing := Line.Quotient.lineQuotientFormula_of_clearances
     numerator denominator (Gaussian.Cast.Imaginary.horizontalBase box.yUpper) Gaussian.Constants.horizontalDirection
     proper.1
-    (Clearance.Box.Boundary.Lines.topOfBoundary
+    (Lines.topOfBoundary
       numeratorClearance).toPathCertificate
-    (Clearance.Box.Boundary.Lines.topOfBoundary
+    (Lines.topOfBoundary
       denominatorClearance).toPathCertificate
-  have leftIncreasing := Winding.Line.Quotient.lineQuotientFormula_of_clearances
+  have leftIncreasing := Line.Quotient.lineQuotientFormula_of_clearances
     numerator denominator (Gaussian.Cast.Winding.verticalBase box.xLower) Gaussian.Constants.imaginaryUnit
     proper.2
-    (Clearance.Box.Boundary.Lines.leftOfBoundary
+    (Lines.leftOfBoundary
       numeratorClearance).toPathCertificate
-    (Clearance.Box.Boundary.Lines.leftOfBoundary
+    (Lines.leftOfBoundary
       denominatorClearance).toPathCertificate
   exact
     { bottom := bottom
@@ -124,7 +126,7 @@ theorem rationalQuadrupledWinding_eq_sub_of_boundaryClearances
     (proper : box.Proper)
     (numeratorClearance : BoundaryClearance numerator box)
     (denominatorClearance : BoundaryClearance denominator box) :
-    Winding.Box.Basic.rationalQuadrupledWinding numerator denominator box =
+    Basic.rationalQuadrupledWinding numerator denominator box =
       Winding.Box.Basic.quadrupledBoxWinding numerator box -
         Winding.Box.Basic.quadrupledBoxWinding denominator box := by
   let formula := boxQuotientFormula_of_boundaryClearances
@@ -133,11 +135,11 @@ theorem rationalQuadrupledWinding_eq_sub_of_boundaryClearances
   have right := formula.right
   have top := formula.top
   have left := formula.left
-  unfold LineQuotientFormula Winding.Path.Correction.lineQuotientCorrection2
+  unfold LineQuotientFormula Path.Correction.lineQuotientCorrection2
     at bottom right top left
   simp only [Rational.Affine.Axis.line_horizontal] at bottom top
   simp only [Rational.Affine.Axis.line_vertical] at right left
-  rw [Winding.Box.Basic.rationalQuadrupledWinding_eq, Winding.Box.Basic.quadrupledBoxWinding_eq,
+  rw [Basic.rationalQuadrupledWinding_eq, Winding.Box.Basic.quadrupledBoxWinding_eq,
     Winding.Box.Basic.quadrupledBoxWinding_eq]
   simp only [Dense.Gaussian.Path.Box.Sides.horizontalEdge, Dense.Gaussian.Path.Box.Sides.verticalEdge]
   rw [bottom, right, top, left]

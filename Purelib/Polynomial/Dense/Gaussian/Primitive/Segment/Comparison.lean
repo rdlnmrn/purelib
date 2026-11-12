@@ -21,6 +21,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data
 
 open Purelib.Data.Rat
@@ -49,39 +51,39 @@ open Purelib.Data.Gaussian.Basic.Canonical
 section
 
 variable {leftCoefficient rightCoefficient :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {leftBox rightBox :
+  Basic.CanonicalCoefficients.CoefficientPolynomial} {leftBox rightBox :
   Box}
 
 /-- Compare arbitrary checked primitive representations along a common
 affine segment.  A unit sign may be any displayed Gaussian of squared norm
 one; the sheet application uses only `1` and `-1`. -/
 theorem difference_increment_le
-    (left : Dense.Gaussian.Primitive.Certificate.DensePrimitive leftCoefficient leftBox) (right :
-      Dense.Gaussian.Primitive.Certificate.DensePrimitive rightCoefficient rightBox)
-    (sign origin direction : Gaussian.Basic.Canonical) (signNorm : Data.Gaussian.Norm.Basic.normSq sign = 1)
-      (interval : Data.Rat.Interval.Bounds)
+    (left : Certificate.DensePrimitive leftCoefficient leftBox) (right :
+      Certificate.DensePrimitive rightCoefficient rightBox)
+    (sign origin direction : Gaussian.Basic.Canonical) (signNorm : Gaussian.Norm.Basic.normSq sign = 1)
+      (interval : Interval.Bounds)
     (leftInside : ∀ parameter, interval.Contains parameter → leftBox.Contains (Affine.line origin direction parameter))
     (rightInside : ∀ parameter, interval.Contains parameter → rightBox.Contains (Affine.line origin direction
       parameter))
     (bound : Fraction.Rational)
     (coefficientBound : ∀ parameter, interval.Contains parameter →
-      Data.Gaussian.Norm.Basic.normSq (leftCoefficient.eval (Affine.line origin direction parameter) -
+      Gaussian.Norm.Basic.normSq (leftCoefficient.eval (Affine.line origin direction parameter) -
         sign * rightCoefficient.eval (Affine.line origin direction parameter)) ≤ bound)
     {first last : Fraction.Rational} (firstInside : interval.Contains first) (lastInside : interval.Contains last) :
-    Data.Gaussian.Norm.Basic.normSq ((left.value.eval (Affine.line origin direction first) -
+    Gaussian.Norm.Basic.normSq ((left.value.eval (Affine.line origin direction first) -
         left.value.eval (Affine.line origin direction last)) -
       sign * (right.value.eval (Affine.line origin direction first) -
         right.value.eval (Affine.line origin direction last))) ≤
-      2 * bound * Data.Gaussian.Norm.Basic.normSq direction * (first - last) ^ 2 := open Purelib.Approximation in by
+      2 * bound * Gaussian.Norm.Basic.normSq direction * (first - last) ^ 2 := open Purelib.Approximation in by
   let value := fun parameter => left.value.eval (Affine.line origin direction parameter) -
     sign * right.value.eval (Affine.line origin direction parameter)
-  let remainder := 4 * (left.remainderBound + right.remainderBound) * Data.Gaussian.Norm.Basic.normSq direction ^ 2
-  have remainderNonnegative : 0 ≤ remainder := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  let remainder := 4 * (left.remainderBound + right.remainderBound) * Gaussian.Norm.Basic.normSq direction ^ 2
+  have remainderNonnegative : 0 ≤ remainder := Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide)
       (add_nonneg left.remainderBound_nonnegative right.remainderBound_nonnegative))
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+    (Arithmetic.sq_nonneg_direct _)
   have localBound {x y : Fraction.Rational} (xInside : interval.Contains x) (yInside : interval.Contains y) :
-      Data.Gaussian.Norm.Basic.normSq (value x - value y) ≤ (2 * bound * Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq (value x - value y) ≤ (2 * bound * Gaussian.Norm.Basic.normSq
         direction) * (x - y) ^ 2 + remainder * (x - y) ^ 4 := by
     let start := Affine.line origin direction y
     let finish := Affine.line origin direction x
@@ -89,37 +91,37 @@ theorem difference_increment_le
     let coefficient := leftCoefficient.eval start - sign * rightCoefficient.eval start
     let leftError := left.value.eval finish - left.value.eval start - leftCoefficient.eval start * movement
     let rightError := right.value.eval finish - right.value.eval start - rightCoefficient.eval start * movement
-    have leftTaylor : Data.Gaussian.Norm.Basic.normSq leftError ≤ left.remainderBound *
-      Data.Gaussian.Norm.Basic.normSq movement ^ 2 :=
+    have leftTaylor : Gaussian.Norm.Basic.normSq leftError ≤ left.remainderBound *
+      Gaussian.Norm.Basic.normSq movement ^ 2 :=
       left.increment_bound (start := start) (finish := finish) (leftInside y yInside) (leftInside x xInside)
-    have rightTaylor : Data.Gaussian.Norm.Basic.normSq (sign * rightError) ≤ right.remainderBound *
-      Data.Gaussian.Norm.Basic.normSq movement ^ 2 := by
+    have rightTaylor : Gaussian.Norm.Basic.normSq (sign * rightError) ≤ right.remainderBound *
+      Gaussian.Norm.Basic.normSq movement ^ 2 := by
       rw [Gaussian.Norm.Basic.normSq_mul, signNorm, Fraction.Field.one_mul]
       exact right.increment_bound (start := start) (finish := finish) (rightInside y yInside) (rightInside x xInside)
-    have taylor : Data.Gaussian.Norm.Basic.normSq (leftError - sign * rightError) ≤
-        2 * (left.remainderBound + right.remainderBound) * Data.Gaussian.Norm.Basic.normSq movement ^ 2 :=
-      (Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    have taylor : Gaussian.Norm.Basic.normSq (leftError - sign * rightError) ≤
+        2 * (left.remainderBound + right.remainderBound) * Gaussian.Norm.Basic.normSq movement ^ 2 :=
+      (Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans ((Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add leftTaylor rightTaylor) (by decide)).trans_eq (by ring1))
-    have linear : Data.Gaussian.Norm.Basic.normSq (coefficient * movement) ≤ bound *
-      Data.Gaussian.Norm.Basic.normSq movement := by
+    have linear : Gaussian.Norm.Basic.normSq (coefficient * movement) ≤ bound *
+      Gaussian.Norm.Basic.normSq movement := by
       rw [Gaussian.Norm.Basic.normSq_mul]
-      exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (coefficientBound y yInside)
+      exact Arithmetic.mul_le_mul_of_nonneg_right_direct (coefficientBound y yInside)
         (Gaussian.Norm.Basic.normSq_nonneg _)
     have identity : value x - value y = (leftError - sign * rightError) + coefficient * movement := by
       dsimp only [value, leftError, rightError, coefficient, movement, start, finish]
       ring1
-    have distance : Data.Gaussian.Norm.Basic.normSq movement = Data.Gaussian.Norm.Basic.normSq direction * (x -
+    have distance : Gaussian.Norm.Basic.normSq movement = Gaussian.Norm.Basic.normSq direction * (x -
       y) ^ 2 := Affine.normSq_line_sub origin direction x y
     rw [identity]
     calc
-      _ ≤ 2 * (Data.Gaussian.Norm.Basic.normSq (leftError - sign * rightError) + Data.Gaussian.Norm.Basic.normSq
+      _ ≤ 2 * (Gaussian.Norm.Basic.normSq (leftError - sign * rightError) + Gaussian.Norm.Basic.normSq
         (coefficient * movement)) := Gaussian.Norm.Bounds.normSq_add_le_two _ _
-      _ ≤ 2 * ((2 * (left.remainderBound + right.remainderBound) * Data.Gaussian.Norm.Basic.normSq movement ^ 2) +
-        bound * Data.Gaussian.Norm.Basic.normSq movement) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add taylor linear) (by decide)
+      _ ≤ 2 * ((2 * (left.remainderBound + right.remainderBound) * Gaussian.Norm.Basic.normSq movement ^ 2) +
+        bound * Gaussian.Norm.Basic.normSq movement) :=
+        Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add taylor linear) (by decide)
       _ = _ := by rw [distance]; dsimp only [remainder]; ring1
   have estimate := Gaussian.Segment.Increment.remove_quartic value interval
-    (2 * bound * Data.Gaussian.Norm.Basic.normSq direction) remainder remainderNonnegative localBound firstInside
+    (2 * bound * Gaussian.Norm.Basic.normSq direction) remainder remainderNonnegative localBound firstInside
       lastInside
   have identity : (left.value.eval (Affine.line origin direction first) -
         left.value.eval (Affine.line origin direction last)) -

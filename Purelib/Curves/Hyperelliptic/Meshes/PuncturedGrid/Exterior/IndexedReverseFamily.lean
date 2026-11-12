@@ -89,21 +89,21 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Gaussian.Norm.Basic (normSq_nonneg)
 open Purelib.Data.Rat.Fraction.Compatibility
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential} {target : Coordinate} {minimum
     stage fine index : Nat}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
   {plan : PairedSourcePlan occurrence
     other target minimum}
 
@@ -141,11 +141,11 @@ zero. -/
 private theorem IndexedReverseFamily.interleave_after {count : Nat}
     (pieces : Fin (count + 1) → IndexedFragmentGrouping.IndexedOwnedFragment evaluated data otherData)
     (junctions : Fin count → IndexedFragmentGrouping.IndexedOwnedFragment evaluated data otherData)
-    (into : ∀ i, IndexedOwnedFragment.ReverseJoined (pieces i.castSucc) (junctions i))
-    (out : ∀ i, IndexedOwnedFragment.ReverseJoined (junctions i) (pieces i.succ))
+    (into : ∀ i, ReverseJoined (pieces i.castSucc) (junctions i))
+    (out : ∀ i, ReverseJoined (junctions i) (pieces i.succ))
     (finish : IndexedOwnedFragment.lastParameter (pieces (Fin.last count)) = 0)
     (before : IndexedFragmentGrouping.IndexedOwnedFragment evaluated data otherData) (joined :
-      IndexedOwnedFragment.ReverseJoined before (pieces 0)) :
+      ReverseJoined before (pieces 0)) :
     IndexedOwnedFragment.ReverseAfter before (IndexedFragmentFamily.interleaveIndexed pieces junctions) := by
   induction count generalizing before with
   | zero => exact ⟨joined, finish⟩
@@ -157,15 +157,15 @@ private theorem IndexedReverseFamily.interleave_after {count : Nat}
 private theorem IndexedReverseFamily.interleave_word {count : Nat}
     (pieces : Fin (count + 1) → IndexedFragmentGrouping.IndexedOwnedFragment evaluated data otherData)
     (junctions : Fin count → IndexedFragmentGrouping.IndexedOwnedFragment evaluated data otherData)
-    (into : ∀ i, IndexedOwnedFragment.ReverseJoined (pieces i.castSucc) (junctions i))
-    (out : ∀ i, IndexedOwnedFragment.ReverseJoined (junctions i) (pieces i.succ))
+    (into : ∀ i, ReverseJoined (pieces i.castSucc) (junctions i))
+    (out : ∀ i, ReverseJoined (junctions i) (pieces i.succ))
     (start : IndexedOwnedFragment.firstParameter (pieces 0) = 1) (finish : IndexedOwnedFragment.lastParameter (pieces
       (Fin.last count)) = 0) :
     IndexedOwnedFragment.ReverseWord (IndexedFragmentFamily.interleaveIndexed pieces junctions) := by
   cases count with
   | zero => exact ⟨start, finish⟩
   | succ count =>
-    exact ⟨start, into 0, Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedReverseFamily.interleave_after (fun
+    exact ⟨start, into 0, IndexedReverseFamily.interleave_after (fun
       i => pieces i.succ) (fun i => junctions i.succ)
       (fun i => into i.succ) (fun i => out i.succ) finish (junctions 0) (out 0)⟩
 
@@ -195,14 +195,14 @@ private theorem IndexedReverseFamily.interleave_property {count : Nat}
 
 namespace FragmentFamilies.JoinedFragmentFamily
 
-variable {Vertex : Type} {count : Nat} {values : Vertex → Purelib.Topology.Polygon.Stokes.PrimitivePoint}
-  {traces : Fin (count + 1) → Purelib.Integration.Path.JoinedTrace.VertexTrace Vertex}
+variable {Vertex : Type} {count : Nat} {values : Vertex → Topology.Polygon.Stokes.PrimitivePoint}
+  {traces : Fin (count + 1) → Integration.Path.JoinedTrace.VertexTrace Vertex}
 
 /-- The family's original parent indices form a complete descending parent word, retaining the same index on each
 following owner junction. -/
 theorem
   indexedItems_reverse_parent_word
-    (family : FragmentFamilies.JoinedFragmentFamily (evaluated := evaluated) (data := data) (otherData := otherData)
+    (family : JoinedFragmentFamily (evaluated := evaluated) (data := data) (otherData := otherData)
       values traces)
     (parents : Fin (count + 1) → Fin evaluated.retained.length)
     (pieceOwners : ∀ i, (family.pieces.get i).fragment.entry = IndexedSourceSplits.indexedEntry evaluated (parents i))
@@ -218,7 +218,7 @@ theorem
     fun i => ⟨parents i, (family.pieces.get i).fragment, pieceOwners i⟩
   let junctions : Fin count → IndexedFragmentGrouping.IndexedOwnedFragment evaluated data otherData :=
     fun i => ⟨parents i.castSucc, (family.junctions.get i).fragment, junctionOwners i⟩
-  have after := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedReverseFamily.interleave_parent_after pieces
+  have after := IndexedReverseFamily.interleave_parent_after pieces
     junctions (fun _ => rfl) steps finish (parents 0).val (Or.inl rfl)
   cases count with
   | zero => exact ⟨start, after.2⟩
@@ -228,7 +228,7 @@ theorem
 handoffs agree. -/
 theorem
   indexedItems_reverse_word
-    (family : FragmentFamilies.JoinedFragmentFamily (evaluated := evaluated) (data := data) (otherData := otherData)
+    (family : JoinedFragmentFamily (evaluated := evaluated) (data := data) (otherData := otherData)
       values traces)
     (parents : Fin (count + 1) → Fin evaluated.retained.length)
     (pieceOwners : ∀ i, (family.pieces.get i).fragment.entry = IndexedSourceSplits.indexedEntry evaluated (parents i))
@@ -247,7 +247,7 @@ theorem
     fun i => ⟨parents i, (family.pieces.get i).fragment, pieceOwners i⟩
   let joints : Fin count → IndexedFragmentGrouping.IndexedOwnedFragment evaluated data otherData :=
     fun i => ⟨parents i.castSucc, (family.junctions.get i).fragment, junctionOwners i⟩
-  apply Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedReverseFamily.interleave_word pieces joints _ _ start
+  apply IndexedReverseFamily.interleave_word pieces joints _ _ start
     finish
   · intro i
     exact ⟨fun _ => (junctions i 0).symm, fun different => (different rfl).elim⟩
@@ -262,13 +262,13 @@ theorem
 /-- The original piece and junction step bounds hold for every indexed fragment of their retained reverse family. -/
 theorem
   indexedItems_reverse_fine_enough
-    (family : FragmentFamilies.JoinedFragmentFamily (evaluated := evaluated) (data := data) (otherData := otherData)
+    (family : JoinedFragmentFamily (evaluated := evaluated) (data := data) (otherData := otherData)
       values traces)
     (parents : Fin (count + 1) → Fin evaluated.retained.length)
     (pieceOwners : ∀ i, (family.pieces.get i).fragment.entry = IndexedSourceSplits.indexedEntry evaluated (parents i))
     (junctionOwners : ∀ i, (family.junctions.get i).fragment.entry = IndexedSourceSplits.indexedEntry evaluated (parents
       i.castSucc))
-    (width : InverseRootPolynomial.Coordinate)
+    (width : Coordinate)
     (pieces : ∀ i, let fragment := (family.pieces.get i).fragment
       (∀ edge : Fin fragment.count, fragment.parameters edge.succ ≤ fragment.parameters edge.castSucc) ∧
       ∀ edge : Fin fragment.count, fragment.parameters edge.castSucc - fragment.parameters edge.succ ≤ width)
@@ -276,9 +276,9 @@ theorem
       (∀ edge : Fin fragment.count, fragment.parameters edge.succ ≤ fragment.parameters edge.castSucc) ∧
       ∀ edge : Fin fragment.count, fragment.parameters edge.castSucc - fragment.parameters edge.succ ≤ width) :
     ∀ item ∈ JoinedFragmentFamily.indexedItems family parents pieceOwners junctionOwners,
-      IndexedOwnedFragment.ReverseFineEnough item width :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedReverseFamily.interleave_property _ _ (fun item =>
-    IndexedOwnedFragment.ReverseFineEnough item width) pieces junctions
+      ReverseFineEnough item width :=
+  IndexedReverseFamily.interleave_property _ _ (fun item =>
+    ReverseFineEnough item width) pieces junctions
 
 end FragmentFamilies.JoinedFragmentFamily
 end

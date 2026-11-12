@@ -57,15 +57,15 @@ open Purelib.Data
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
@@ -74,12 +74,12 @@ namespace CommonBasisPreparation
 open Purelib.Data.Rat.Fraction.Compatibility
 
 namespace ParentRunSchedules
-variable {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared}
+variable {retained : Preparation.CommonBasisPreparation prepared}
   {index : Nat} {inputs : retained.Inputs index}
-  {capacities : Fin prepared.occurrences.length → Nat} {requested : Normalization.InverseRootPolynomial.Coordinate}
+  {capacities : Fin prepared.occurrences.length → Nat} {requested : InverseRootPolynomial.Coordinate}
     {minimum : Nat}
   (schedules :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules
+    RunSourceSynchronization.CommonBasisPreparation.ParentRunSchedules
     retained inputs capacities requested minimum)
 
 set_option genInjectivity false in
@@ -96,12 +96,12 @@ namespace DepthStage
 
 /-- Compute the common depth paying the supplied floor and every original occurrence schedule. -/
 @[expose] def build (floor : Nat) :
-  ParentRunSchedules.DepthStage
+  DepthStage
   schedules floor :=
   ⟨max floor (schedules.maximum (fun _ schedule => schedule.depth)), rfl⟩
 
 variable {schedules} {floor : Nat} (selected :
-  ParentRunSchedules.DepthStage
+  DepthStage
   schedules floor)
 
 /-- The prescribed depth floor is bounded by the selected common depth. -/
@@ -115,17 +115,17 @@ theorem depth_le (outer : Fin prepared.occurrences.length) : (schedules.get oute
 
 /-- Every retained parent refinement depth is bounded by the selected common depth. -/
 theorem refinement_le (outer : Fin prepared.occurrences.length)
-    (position : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (position : Fin (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length) :
     ((schedules.get outer).requests.get position).refinement.depth ≤ selected.depth :=
   ((schedules.get outer).refinement_le position).trans (selected.depth_le outer)
 
 /-- A physical mesh at or beyond the common depth satisfies every retained parent request width. -/
 theorem width_le (outer : Fin prepared.occurrences.length)
-    (position : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (position : Fin (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length)
     {physicalDepth : Nat} (later : selected.depth ≤ physicalDepth) :
-    (1 / 2 : Normalization.InverseRootPolynomial.Coordinate)^physicalDepth ≤ ((schedules.get outer).requests.get
+    (1 / 2 : InverseRootPolynomial.Coordinate)^physicalDepth ≤ ((schedules.get outer).requests.get
       position).refinement.width :=
   (schedules.get outer).width_le position ((selected.depth_le outer).trans later)
 

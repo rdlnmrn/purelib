@@ -17,6 +17,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Polynomial.Dense.Evaluation
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Strict polynomial signs on rational intervals
 
@@ -37,13 +39,13 @@ set_option genInjectivity false in
 
 The retained sample lies in the interval, and its squared value exceeds the
 Lipschitz error bound throughout that interval. -/
-structure Certificate (p : Dense.Rational.Basic.CoordinatePolynomial) (interval : Data.Rat.Interval.Bounds)
+structure Certificate (p : Basic.CoordinatePolynomial) (interval : Interval.Bounds)
   where
   /-- The rational sample at which the polynomial sign is certified. -/ sample : Fraction.Rational
   /-- The retained sample belongs to the closed interval. -/ sampleInside : interval.Contains sample
   /-- The squared sample value strictly exceeds the interval Lipschitz error bound. -/ margin :
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound p interval *
-      Data.Rat.Interval.Radius.sampleRadiusSq interval sample < p.eval sample ^ 2
+    Bounds.Lipschitz.denseEvalSqLipschitzBound p interval *
+      Interval.Radius.sampleRadiusSq interval sample < p.eval sample ^ 2
 
 constructive_injectivity Certificate
 
@@ -60,32 +62,32 @@ open Purelib.Data.Rat
 /-- Every value in the interval has the same strict sign as the sample value.
 
 The retained squared margin excludes both a zero value and a sign change from the sample. -/
-public theorem eval_mul_sample_pos {p : Dense.Rational.Basic.CoordinatePolynomial} {interval :
-  Data.Rat.Interval.Bounds}
-    (certificate : Dense.Rational.Sign.Interval.Basic.Certificate p interval) {x : Fraction.Rational}
+public theorem eval_mul_sample_pos {p : Basic.CoordinatePolynomial} {interval :
+  Interval.Bounds}
+    (certificate : Certificate p interval) {x : Fraction.Rational}
     (inside : interval.Contains x) :
     0 < p.eval x * p.eval certificate.sample := by
-  have difference := Dense.Rational.Bounds.Lipschitz.eval_sub_sq_le p interval inside certificate.sampleInside
-  have radius := Data.Rat.Interval.Radius.sub_sq_le_sampleRadiusSq interval
+  have difference := Bounds.Lipschitz.eval_sub_sq_le p interval inside certificate.sampleInside
+  have radius := Interval.Radius.sub_sq_le_sampleRadiusSq interval
     (sample := certificate.sample) (x := x) inside
-  have slopeNonnegative := (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg p interval).2
+  have slopeNonnegative := (Bounds.Lipschitz.denseHornerSqBounds_nonneg p interval).2
   have scaledRadius :
-      Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound p interval *
+      Bounds.Lipschitz.denseEvalSqLipschitzBound p interval *
           (x - certificate.sample) ^ 2 ≤
-        Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound p interval *
-          Data.Rat.Interval.Radius.sampleRadiusSq interval certificate.sample :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Bounds.Lipschitz.denseEvalSqLipschitzBound p interval *
+          Interval.Radius.sampleRadiusSq interval certificate.sample :=
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       radius slopeNonnegative
-  exact Data.Rat.Sign.Products.mul_pos_of_sub_sq_lt_sq
+  exact Sign.Products.mul_pos_of_sub_sq_lt_sq
     (difference.trans_lt (scaledRadius.trans_lt certificate.margin))
 
 /-- Polynomial values at any two points of the certified interval have positive product.
 
 Both points belong to the retained interval. Their signs agree with the same
 nonzero sample value, so their product is strictly positive. -/
-public theorem eval_mul_pos {p : Dense.Rational.Basic.CoordinatePolynomial} {interval :
-  Data.Rat.Interval.Bounds}
-    (certificate : Dense.Rational.Sign.Interval.Basic.Certificate p interval) {x y : Fraction.Rational}
+public theorem eval_mul_pos {p : Basic.CoordinatePolynomial} {interval :
+  Interval.Bounds}
+    (certificate : Certificate p interval) {x y : Fraction.Rational}
     (xInside : interval.Contains x) (yInside : interval.Contains y) :
     0 < p.eval x * p.eval y := by
   have xSample := certificate.eval_mul_sample_pos xInside
@@ -98,7 +100,7 @@ public theorem eval_mul_pos {p : Dense.Rational.Basic.CoordinatePolynomial} {int
       · rw [xZero, zero_mul] at xSample
         exact (lt_irrefl 0 xSample).elim
       · have productNegative :=
-          Fraction.Order.Arithmetic.mul_neg_of_pos_of_neg_direct
+          Arithmetic.mul_neg_of_pos_of_neg_direct
             xPositive sampleNegative
         exact (lt_asymm xSample productNegative).elim
     have yNegative : p.eval y < 0 := by
@@ -107,17 +109,17 @@ public theorem eval_mul_pos {p : Dense.Rational.Basic.CoordinatePolynomial} {int
       · rw [yZero, zero_mul] at ySample
         exact (lt_irrefl 0 ySample).elim
       · have productNegative :=
-          Fraction.Order.Arithmetic.mul_neg_of_pos_of_neg_direct
+          Arithmetic.mul_neg_of_pos_of_neg_direct
             yPositive sampleNegative
         exact (lt_asymm ySample productNegative).elim
-    exact Fraction.Order.Arithmetic.mul_pos_of_neg_of_neg_direct
+    exact Arithmetic.mul_pos_of_neg_of_neg_direct
       xNegative yNegative
   · rw [sampleZero, mul_zero] at xSample
     exact (lt_irrefl 0 xSample).elim
   · have xPositive : 0 < p.eval x := by
       rcases lt_trichotomy (p.eval x) 0 with xNegative | xZero | xPositive
       · have productNegative :=
-          Fraction.Order.Arithmetic.mul_neg_of_neg_of_pos_direct
+          Arithmetic.mul_neg_of_neg_of_pos_direct
             xNegative samplePositive
         exact (lt_asymm xSample productNegative).elim
       · rw [xZero, zero_mul] at xSample
@@ -126,21 +128,21 @@ public theorem eval_mul_pos {p : Dense.Rational.Basic.CoordinatePolynomial} {int
     have yPositive : 0 < p.eval y := by
       rcases lt_trichotomy (p.eval y) 0 with yNegative | yZero | yPositive
       · have productNegative :=
-          Fraction.Order.Arithmetic.mul_neg_of_neg_of_pos_direct
+          Arithmetic.mul_neg_of_neg_of_pos_direct
             yNegative samplePositive
         exact (lt_asymm ySample productNegative).elim
       · rw [yZero, zero_mul] at ySample
         exact (lt_irrefl 0 ySample).elim
       · exact yPositive
-    exact Fraction.Order.Arithmetic.mul_pos_direct xPositive yPositive
+    exact Arithmetic.mul_pos_direct xPositive yPositive
 
 /-- The polynomial does not vanish at any point of the certified interval.
 
 Interval membership and the retained strict squared margin exclude a zero
 value at the supplied point. -/
-public theorem eval_ne_zero {p : Dense.Rational.Basic.CoordinatePolynomial} {interval :
-  Data.Rat.Interval.Bounds}
-    (certificate : Dense.Rational.Sign.Interval.Basic.Certificate p interval) {x : Fraction.Rational}
+public theorem eval_ne_zero {p : Basic.CoordinatePolynomial} {interval :
+  Interval.Bounds}
+    (certificate : Certificate p interval) {x : Fraction.Rational}
     (inside : interval.Contains x) : p.eval x ≠ 0 := by
   intro zero
   have positive := certificate.eval_mul_sample_pos inside
@@ -151,9 +153,9 @@ public theorem eval_ne_zero {p : Dense.Rational.Basic.CoordinatePolynomial} {int
 
 Both endpoints belong to the retained closed interval, so the strict sample
 margin gives a positive product of their polynomial values. -/
-public theorem endpoint_stable {p : Dense.Rational.Basic.CoordinatePolynomial} {interval :
-  Data.Rat.Interval.Bounds}
-    (certificate : Dense.Rational.Sign.Interval.Basic.Certificate p interval) :
+public theorem endpoint_stable {p : Basic.CoordinatePolynomial} {interval :
+  Interval.Bounds}
+    (certificate : Certificate p interval) :
     0 < p.eval interval.lower * p.eval interval.upper :=
   certificate.eval_mul_pos ⟨le_rfl, interval.valid⟩ ⟨interval.valid, le_rfl⟩
 
@@ -161,10 +163,10 @@ public theorem endpoint_stable {p : Dense.Rational.Basic.CoordinatePolynomial} {
 
 The retained sample supplies an explicit nonzero evaluation, which rules
 out the polynomial zero test. -/
-public theorem polynomial_nonzero {p : Dense.Rational.Basic.CoordinatePolynomial} {interval :
-  Data.Rat.Interval.Bounds}
-    (certificate : Dense.Rational.Sign.Interval.Basic.Certificate p interval) : p.isZero = false :=
-  Dense.Basic.DensePolynomial.isZero_false_of_eval_ne
+public theorem polynomial_nonzero {p : Basic.CoordinatePolynomial} {interval :
+  Interval.Bounds}
+    (certificate : Certificate p interval) : p.isZero = false :=
+  Basic.DensePolynomial.isZero_false_of_eval_ne
     (certificate.eval_ne_zero certificate.sampleInside)
 
 end Purelib.Polynomial.Dense.Rational.Sign.Interval.Basic.Certificate

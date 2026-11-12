@@ -17,6 +17,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -70,12 +72,12 @@ private theorem requiredChebyshev_ratio_lt_count
       ((requiredChebyshevSampleCount
         varianceBudget threshold failure : Nat) : Fraction.Rational) := by
   have squarePositive : 0 < threshold ^ 2 :=
-    Fraction.Order.Arithmetic.pow_pos_direct thresholdPositive 2
+    Arithmetic.pow_pos_direct thresholdPositive 2
   have denominatorPositive : 0 < failure * threshold ^ 2 :=
-    Fraction.Order.Arithmetic.mul_pos_direct failurePositive squarePositive
+    Arithmetic.mul_pos_direct failurePositive squarePositive
   let ratio := varianceBudget / (failure * threshold ^ 2)
   have ratioNonnegative : 0 ≤ ratio :=
-    Fraction.Order.Field.div_nonneg_direct varianceBudgetNonnegative
+    Field.div_nonneg_direct varianceBudgetNonnegative
       denominatorPositive.le
   have ratioLeCeiling : ratio ≤
       (Floor.ceilNat ratio : Fraction.Rational) :=
@@ -98,9 +100,9 @@ theorem requiredChebyshevSampleCount_accurate
           varianceBudget threshold failure : Fraction.Rational)) /
       threshold ^ 2 < failure := by
   have squarePositive : 0 < threshold ^ 2 :=
-    Fraction.Order.Arithmetic.pow_pos_direct thresholdPositive 2
+    Arithmetic.pow_pos_direct thresholdPositive 2
   have failureTimesSquarePositive : 0 < failure * threshold ^ 2 :=
-    Fraction.Order.Arithmetic.mul_pos_direct failurePositive squarePositive
+    Arithmetic.mul_pos_direct failurePositive squarePositive
   have countPositive := requiredChebyshevSampleCount_positive
     varianceBudget threshold failure
   have ratioSmall := requiredChebyshev_ratio_lt_count
@@ -110,7 +112,7 @@ theorem requiredChebyshevSampleCount_accurate
       (failure * threshold ^ 2) *
         (requiredChebyshevSampleCount
           varianceBudget threshold failure : Fraction.Rational) := by
-    have crossed := (Fraction.Order.Field.div_lt_iff_pos
+    have crossed := (Field.div_lt_iff_pos
       failureTimesSquarePositive).1 ratioSmall
     calc
       varianceBudget <
@@ -120,8 +122,8 @@ theorem requiredChebyshevSampleCount_accurate
       _ = (failure * threshold ^ 2) *
           (requiredChebyshevSampleCount
             varianceBudget threshold failure : Fraction.Rational) := by ring1
-  apply (Fraction.Order.Field.div_lt_iff_pos squarePositive).2
-  apply (Fraction.Order.Field.div_lt_iff_pos countPositive).2
+  apply (Field.div_lt_iff_pos squarePositive).2
+  apply (Field.div_lt_iff_pos countPositive).2
   exact numeratorSmall
 
 /-- Every larger finite sample count preserves the strict Chebyshev request. -/
@@ -142,12 +144,12 @@ theorem requiredChebyshevSampleCount_accurate_of_le
         (count : Fraction.Rational) :=
     Fraction.Cast.Order.natCast_le_direct enough
   have squarePositive : 0 < threshold ^ 2 :=
-    Fraction.Order.Arithmetic.pow_pos_direct thresholdPositive 2
+    Arithmetic.pow_pos_direct thresholdPositive 2
   have firstDivisionLe : varianceBudget / (count : Fraction.Rational) ≤
       varianceBudget /
         (requiredChebyshevSampleCount
           varianceBudget threshold failure : Fraction.Rational) :=
-    Fraction.Order.Field.div_le_div_of_nonneg_left_direct
+    Field.div_le_div_of_nonneg_left_direct
       varianceBudgetNonnegative requestedPositive countOrder
   have bothDivisionsLe :
       (varianceBudget / (count : Fraction.Rational)) / threshold ^ 2 ≤
@@ -161,9 +163,9 @@ theorem requiredChebyshevSampleCount_accurate_of_le
         (requiredChebyshevSampleCount
           varianceBudget threshold failure : Fraction.Rational)) *
         (threshold ^ 2)⁻¹
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
       firstDivisionLe
-      (Fraction.Order.Field.inv_pos_direct squarePositive).le
+      (Field.inv_pos_direct squarePositive).le
   exact bothDivisionsLe.trans_lt
     (requiredChebyshevSampleCount_accurate varianceBudget threshold failure
       varianceBudgetNonnegative thresholdPositive failurePositive)

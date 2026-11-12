@@ -36,9 +36,9 @@ open Purelib.Riemann
 which certified neighbor bank supplied the retained classification. -/
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSideSelection
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
   {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {face : Meshes.PuncturedGridFaces.RegularFace bank} {side :
     Meshes.GridLiftedDualSteps.GridSide}
 
@@ -47,13 +47,13 @@ theorem hole_position_eq_of_cell (faces : Meshes.PuncturedGridFaces.PuncturedFac
     (first second : Fin faces.holes.length)
     (equal : faces.holes[first.val].cell = faces.holes[second.val].cell) : first = second := open Purelib in by
   rcases Nat.lt_trichotomy first.val second.val with before | same | after
-  · have separated := Data.List.Pairwise.pairwise_getElem faces.holes_pairwise _ _ first.isLt second.isLt before
-    exact (separated (Hyperelliptic.Branches.BranchFaceClassification.FaceKind.branch_unique
+  · have separated := List.Pairwise.pairwise_getElem faces.holes_pairwise _ _ first.isLt second.isLt before
+    exact (separated (Branches.BranchFaceClassification.FaceKind.branch_unique
       faces.holes[first.val].cell_eq
       (equal.trans faces.holes[second.val].cell_eq))).elim
   · exact Fin.ext same
-  · have separated := Data.List.Pairwise.pairwise_getElem faces.holes_pairwise _ _ second.isLt first.isLt after
-    exact (separated (Hyperelliptic.Branches.BranchFaceClassification.FaceKind.branch_unique
+  · have separated := List.Pairwise.pairwise_getElem faces.holes_pairwise _ _ second.isLt first.isLt after
+    exact (separated (Branches.BranchFaceClassification.FaceKind.branch_unique
       faces.holes[second.val].cell_eq
       (equal.symm.trans faces.holes[first.val].cell_eq))).elim
 
@@ -66,7 +66,7 @@ theorem SideNeighbor.hole_value_of_matches (neighbor : Meshes.PuncturedGridFaces
   side)
     (hole : Fin faces.holes.length) (value : Gaussian.Basic.Canonical)
     (matching : side.Matches face.cell.box faces.holes[hole.val].cell.box) :
-    Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue neighbor (.hole hole) value =
+    PhysicalComponentValues.SideNeighbor.componentValue neighbor (.hole hole) value =
       value := by
   cases neighbor with
   | exterior exterior =>
@@ -80,9 +80,9 @@ theorem SideNeighbor.hole_value_of_matches (neighbor : Meshes.PuncturedGridFaces
         exact (faces.regulars[position.val].unassigned faces.holes[hole.val].index
           (foundEq.trans (equal.symm.trans faces.holes[hole.val].cell_eq))).elim
     | hole position foundEq =>
-        have same := Hyperelliptic.Meshes.PuncturedGrid.HoleSideSelection.hole_position_eq_of_cell faces hole position
+        have same := HoleSideSelection.hole_position_eq_of_cell faces hole position
           (equal.trans foundEq.symm)
-        simp only [Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue, if_pos same,
+        simp only [PhysicalComponentValues.SideNeighbor.componentValue, if_pos same,
           -eq_self, -iff_self]
         rfl
 
@@ -93,11 +93,11 @@ contribute. Every other retained classification returns zero, preserving both th
 original geometry and the supplied contribution. -/
 theorem SideNeighbor.hole_value_eq (neighbor : Meshes.PuncturedGridFaces.PuncturedFaces.SideNeighbor faces face side)
     (hole : Fin faces.holes.length) (value : Gaussian.Basic.Canonical) :
-    Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue neighbor (.hole hole) value =
+    PhysicalComponentValues.SideNeighbor.componentValue neighbor (.hole hole) value =
       if side.Matches face.cell.box faces.holes[hole.val].cell.box then value else 0 := by
   by_cases matching : side.Matches face.cell.box faces.holes[hole.val].cell.box
   · rw [if_pos matching]
-    exact Hyperelliptic.Meshes.PuncturedGrid.HoleSideSelection.SideNeighbor.hole_value_of_matches neighbor hole value
+    exact SideNeighbor.hole_value_of_matches neighbor hole value
       matching
   · rw [if_neg matching]
     cases neighbor with
@@ -112,7 +112,7 @@ theorem SideNeighbor.hole_value_eq (neighbor : Meshes.PuncturedGridFaces.Punctur
           apply matching
           rw [← foundEq] at neighborMatches
           exact neighborMatches
-        simp only [Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue, if_neg
+        simp only [PhysicalComponentValues.SideNeighbor.componentValue, if_neg
           different, -eq_self, -iff_self]
         rfl
 
@@ -130,22 +130,22 @@ theorem NeighborBank.hole_side_sum (neighbors : Meshes.PuncturedGridFaces.Punctu
     (position : Fin faces.regulars.length) (values : Fin faces.regulars.length → Gaussian.Basic.Canonical)
     (matching : side.Matches faces.regulars[position.val].cell.box faces.holes[hole.val].cell.box) :
     FiniteSum.Fin.sumFin (fun index =>
-      Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue
-      (Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+      PhysicalComponentValues.SideNeighbor.componentValue
+      (NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
       (neighbors.entries.get index) side) (.hole hole) (values index)) = values position := by
   have equal (index : Fin faces.regulars.length) :
-      Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue
-        (Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+      PhysicalComponentValues.SideNeighbor.componentValue
+        (NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
         (neighbors.entries.get index) side) (.hole hole) (values index) =
         if index = position then values index else 0 := by
-    rw [Hyperelliptic.Meshes.PuncturedGrid.HoleSideSelection.SideNeighbor.hole_value_eq
-      (Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+    rw [SideNeighbor.hole_value_eq
+      (NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
       (neighbors.entries.get index) side) hole (values index)]
     by_cases same : index = position
     · subst index
       rw [if_pos matching, if_pos rfl]
     · have absent : ¬ side.Matches faces.regulars[index.val].cell.box faces.holes[hole.val].cell.box :=
-        fun found => same (Hyperelliptic.Meshes.PuncturedGrid.HoleSideSelection.hole_side_unique hole index position
+        fun found => same (HoleSideSelection.hole_side_unique hole index position
           found matching)
       rw [if_neg absent, if_neg same]
   rw [FiniteSum.Fin.sumFin_congr equal]

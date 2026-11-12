@@ -56,6 +56,8 @@ import Purelib.Integration.Path.HomogeneousTraceConnection
 import Purelib.Integration.Path.IncrementArea
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedIntegralReadback.BasisPreparedCommonRequest
 
 open Purelib
@@ -100,18 +102,18 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy (
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+    UniformReciprocalModels.Data patch count}
   {cover : Cover data} {covers :
     BasisSourceCovers parent}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {bounds :
+  {regular : RegularBounds.Data cap} {bounds :
     UniformBounds regular.padded}
   {depth floor sourceFloor : Nat} {target sourceTarget : Coordinate}
-  {index minimum stage : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {index minimum stage : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
   {polynomials : RegularBasisPolynomials cap
     index box}
   {anchorBank : PrimitiveCells data index
@@ -136,7 +138,7 @@ open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 variable {energyTarget : Coordinate} {energyFloor energyDepth : Nat}
 
 variable {originals :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+  CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
   covers index}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -156,7 +158,7 @@ variable {request :
   {plan : Plan
     request capSample polynomials minimum}
   {acquired :
-    CommonParentReadings.BasisCommonParentRequest.Plan.Acquisition
+    Plan.Acquisition
     plan anchorBank bank stage}
   {energyFloor radialDepth : Nat}
 
@@ -191,12 +193,12 @@ variable {sample :
 /-- The retained prepared source target is bounded by the square of its original allowance. -/
 private theorem source_target_paid : request.prepared.sourceTarget ≤ allowance^2 := by
   have nonnegative := request.prepared.request.source_positive.le
-  have extra := Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.sq_nonneg_direct
-    (common.intervals.length : InverseRootPolynomial.Coordinate))
+  have extra := Arithmetic.mul_nonneg_direct (Arithmetic.sq_nonneg_direct
+    (common.intervals.length : Coordinate))
     request.prepared.request.comparison.positive.le
   have left := le_add_of_nonneg_right extra (a := request.prepared.sourceTarget)
-  have doubled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by
-      decide : (1 : InverseRootPolynomial.Coordinate) ≤ 2) (add_nonneg nonnegative extra)
+  have doubled := Arithmetic.mul_le_mul_of_nonneg_right_direct (by
+      decide : (1 : Coordinate) ≤ 2) (add_nonneg nonnegative extra)
   rw [Fraction.Field.one_mul] at doubled
   exact (left.trans doubled).trans
     (BasisPreparedAreaRequest.endpoint_paid request.prepared)
@@ -205,13 +207,13 @@ private theorem source_target_paid : request.prepared.sourceTarget ≤ allowance
 endpoint is substituted. -/
 theorem source_connection_total (comparison : Acquisition.Sample.PreparedComparison sample) :
     Data.Gaussian.Norm.Basic.normSq (comparison.weighted.source.total - sample.connection.summary.total) ≤
-      34 * allowance^2 * PreparedObservationCoercivity.coefficientNormSq coefficients := by
-  have massNN : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients :=
+      34 * allowance^2 * coefficientNormSq coefficients := by
+  have massNN : 0 ≤ coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
-    (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : InverseRootPolynomial.Coordinate)) _
-      (fun row => Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
+    (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Coordinate)) _
+      (fun row => normSq_nonneg (coefficients row)))
   have source := Weighted.total_error comparison.weighted
-  have targetPaid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+  have targetPaid := Arithmetic.mul_le_mul_of_nonneg_right_direct
     (source_target_paid
     (request := request)) massNN
   have integral := comparison.total_bounded
@@ -219,7 +221,7 @@ theorem source_connection_total (comparison : Acquisition.Sample.PreparedCompari
   have summed := (Data.Gaussian.Norm.Bounds.normSq_add_le_two
     (comparison.weighted.source.total - comparison.weighted.integral.total)
     (comparison.weighted.integral.total - sample.connection.summary.total)).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
       (source.trans targetPaid) integral) (by decide))
   rw [show comparison.weighted.source.total - comparison.weighted.integral.total +
     (comparison.weighted.integral.total - sample.connection.summary.total) =
@@ -232,7 +234,7 @@ theorem source_root_endpoints (comparison : Acquisition.Sample.PreparedCompariso
     Data.Gaussian.Norm.Basic.normSq (comparison.weighted.source.total -
       (Readings.lastChartValue coefficients request.charts.requests acquired.readings -
         Readings.firstChartValue coefficients request.charts.requests acquired.readings)) ≤
-      34 * allowance^2 * PreparedObservationCoercivity.coefficientNormSq coefficients := by
+      34 * allowance^2 * coefficientNormSq coefficients := by
   have bound :=
     source_connection_total
     comparison

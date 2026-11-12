@@ -46,7 +46,7 @@ namespace SquarefreeObservation
 def siteCount
     {source opposite : CoefficientPolynomial}
     {input : SquarefreeSideInput source opposite} :
-    Squarefree.Observation.Basic.SquarefreeObservation input → Nat
+    SquarefreeObservation input → Nat
   | .constant _ => 0
   | .exact _ _ _ => 1
   | .higher boxes _ => boxes.isolation.tracks.length
@@ -55,7 +55,7 @@ def siteCount
 theorem siteCount_eq_natDegree
     {source opposite : CoefficientPolynomial}
     {input : SquarefreeSideInput source opposite}
-    (observation : Squarefree.Observation.Basic.SquarefreeObservation input) :
+    (observation : SquarefreeObservation input) :
     observation.siteCount = source.natDegree := by
   cases observation with
   | constant degreeZero => exact degreeZero.symm
@@ -66,7 +66,7 @@ theorem siteCount_eq_natDegree
 def InternallySeparated
     {source opposite : CoefficientPolynomial}
     {input : SquarefreeSideInput source opposite}
-    (observation : Squarefree.Observation.Basic.SquarefreeObservation input) : Type :=
+    (observation : SquarefreeObservation input) : Type :=
   match observation with
   | .constant _ => PUnit
   | .exact _ _ _ => PUnit
@@ -79,7 +79,7 @@ def InternallySeparated
 def internallySeparated
     {source opposite : CoefficientPolynomial}
     {input : SquarefreeSideInput source opposite}
-    (observation : Squarefree.Observation.Basic.SquarefreeObservation input) :
+    (observation : SquarefreeObservation input) :
     observation.InternallySeparated := by
   cases observation with
   | constant => exact PUnit.unit
@@ -92,7 +92,7 @@ alternative higher winding-one track receives a deterministic output owner. -/
 def AtomicMaximality
     {source opposite : CoefficientPolynomial}
     {input : SquarefreeSideInput source opposite}
-    (observation : Squarefree.Observation.Basic.SquarefreeObservation input) : Type :=
+    (observation : SquarefreeObservation input) : Type :=
   match observation with
   | .constant _ => PUnit
   | .exact root _ _ => PLift (source.eval root.point = 0)
@@ -106,7 +106,7 @@ def AtomicMaximality
 def atomicMaximality
     {source opposite : CoefficientPolynomial}
     {input : SquarefreeSideInput source opposite}
-    (observation : Squarefree.Observation.Basic.SquarefreeObservation input) :
+    (observation : SquarefreeObservation input) :
     observation.AtomicMaximality := by
   cases observation with
   | constant => exact PUnit.unit

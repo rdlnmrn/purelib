@@ -47,6 +47,10 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Topology.Surface.Cut.PrimitiveJumps
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 open Purelib
@@ -84,72 +88,72 @@ open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius)
 variable {genus count otherCount : Nat} {curve : HyperellipticCurve genus}
   {differential other : Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
   {parent : CenteredEdge curve differential} {patch :
-    Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {otherPatch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch
-    (Purelib.Riemann.Integration.PreparedEdgeRecasting.recastCenteredEdge other parent)}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {otherData :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
-  {edge otherEdge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
+    UniformPrimitiveSheetCompatibility.PreparedPatch parent}
+  {otherPatch : UniformPrimitiveSheetCompatibility.PreparedPatch
+    (recastCenteredEdge other parent)}
+  {data : UniformReciprocalModels.Data patch count} {otherData :
+    UniformReciprocalModels.Data otherPatch otherCount}
+  {edge otherEdge : ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
     Cell data edge} {otherCell :
     Cell otherData otherEdge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {comparison :
+  {regular : RegularBounds.Data cap} {comparison :
     Data regular cell} {otherComparison :
     Data regular otherCell}
-  {index : Nat} {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other index otherBox}
+  {index : Nat} {box otherBox : Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential index box}
+  {otherSample : Cap.Primitives.Sample cap other index otherBox}
   {retained : Sample comparison sample} {otherRetained :
     Sample otherComparison otherSample}
 
 /-- Increasing the retained geometric scale increases its quarter-radius at every original stage. -/
-private theorem quarter_mono {left right : InverseRootPolynomial.Coordinate} (order : left ≤ right) (index : Nat) :
-    Geometric.Basic.quarterRadius left index ≤ Geometric.Basic.quarterRadius right index := by
-  rw [Geometric.Basic.quarterRadius_eq_mul_pow, Geometric.Basic.quarterRadius_eq_mul_pow]
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct order (Fraction.Order.Arithmetic.pow_nonneg_direct
+private theorem quarter_mono {left right : Coordinate} (order : left ≤ right) (index : Nat) :
+    quarterRadius left index ≤ quarterRadius right index := by
+  rw [quarterRadius_eq_mul_pow, quarterRadius_eq_mul_pow]
+  exact Arithmetic.mul_le_mul_of_nonneg_right_direct order (Arithmetic.pow_nonneg_direct
     (by decide) index)
 
 /-- The squared width of an original ordered covered parameter edge is at most one. -/
 private theorem edge_width_le_one (edge : ClearSheetContinuation.Subdivision.ParameterEdge) (ordered :
   edge.left.parameter ≤ edge.right.parameter) :
     (edge.right.parameter - edge.left.parameter)^2 ≤ 1 := by
-  have zeroDifference (value : Purelib.Data.Rat.Fraction.Rational) : value - 0 = value := by ring1
-  have width := Fraction.Order.Arithmetic.sub_le_sub_direct edge.right.inside.2 edge.left.inside.1
+  have zeroDifference (value : Fraction.Rational) : value - 0 = value := by ring1
+  have width := Arithmetic.sub_le_sub_direct edge.right.inside.2 edge.left.inside.1
   rw [zeroDifference] at width
-  exact (Fraction.Order.Arithmetic.pow_le_pow_direct (Fraction.Order.Arithmetic.sub_nonneg_direct ordered) width
+  exact (Arithmetic.pow_le_pow_direct (Arithmetic.sub_nonneg_direct ordered) width
     2).trans_eq (by decide)
 
 namespace RegularAlignment
 
 /-- Pair the two original source primitives at one parameter while retaining their separate cell anchors. -/
-@[expose] def pairedSourceValues (source : UniformReciprocalPrimitives.SourcePrimitive data index) (otherSource :
-  UniformReciprocalPrimitives.SourcePrimitive otherData index)
-    (parameter : InverseRootPolynomial.Coordinate) : PrimitivePoint := ⟨sourceValue source edge parameter,
-      CellPrimitive.sourceValue otherSource otherEdge parameter⟩
+@[expose] def pairedSourceValues (source : SourcePrimitive data index) (otherSource :
+  SourcePrimitive otherData index)
+    (parameter : Coordinate) : PrimitivePoint := ⟨sourceValue source edge parameter,
+      sourceValue otherSource otherEdge parameter⟩
 
 /-- Pair the two retained signed cap primitive values at their original common parameter. -/
-@[expose] def pairedCapValues (left : SheetAlignment.RegularAlignment retained) (right : SheetAlignment.RegularAlignment
+@[expose] def pairedCapValues (left : RegularAlignment retained) (right : RegularAlignment
   otherRetained)
-    (parameter : InverseRootPolynomial.Coordinate) : PrimitivePoint := ⟨RegularAlignment.capValue left parameter,
+    (parameter : Coordinate) : PrimitivePoint := ⟨RegularAlignment.capValue left parameter,
       RegularAlignment.capValue right parameter⟩
 
 /-- The interval is contained in both actual cells; their anchoring points need not coincide. No endpoint correction has
 been discarded. -/
-theorem paired_ribbon_bound (source : UniformReciprocalPrimitives.SourcePrimitive data index) (otherSource :
-  UniformReciprocalPrimitives.SourcePrimitive otherData index)
-    (left : SheetAlignment.RegularAlignment retained) (right : SheetAlignment.RegularAlignment otherRetained)
-    {lower upper : InverseRootPolynomial.Coordinate}
+theorem paired_ribbon_bound (source : SourcePrimitive data index) (otherSource :
+  SourcePrimitive otherData index)
+    (left : RegularAlignment retained) (right : RegularAlignment otherRetained)
+    {lower upper : Coordinate}
     (leftLower : edge.left.parameter ≤ lower) (leftUpper : upper ≤ edge.right.parameter)
     (rightLower : otherEdge.left.parameter ≤ lower) (rightUpper : upper ≤ otherEdge.right.parameter)
     (ordered : lower ≤ upper) (depth : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (DyadicBilinearBoundaryRibbon.dyadicDifference
+    normSq (DyadicBilinearBoundaryRibbon.dyadicDifference
       (pairedSourceValues (edge := edge)
       (otherEdge := otherEdge) source otherSource)
       (pairedCapValues left right) depth lower
         upper) ≤
-      Geometric.Basic.quarterRadius (8 * max (RegularComparison.Data.regularScale comparison)
+      quarterRadius (8 * max (RegularComparison.Data.regularScale comparison)
         (RegularComparison.Data.regularScale otherComparison) *
         (8 * max data.sourceSlope otherData.sourceSlope + 9 * max (RegularComparison.Data.regularScale comparison)
           (RegularComparison.Data.regularScale otherComparison))) index *
@@ -157,21 +161,21 @@ theorem paired_ribbon_bound (source : UniformReciprocalPrimitives.SourcePrimitiv
   let scale := max (RegularComparison.Data.regularScale comparison) (RegularComparison.Data.regularScale
     otherComparison)
   let slope := max data.sourceSlope otherData.sourceSlope
-  let error := Geometric.Basic.quarterRadius scale index
+  let error := quarterRadius scale index
   have scaleNonnegative : 0 ≤ scale := (RegularComparison.Data.regularScale_nonnegative comparison).trans
-    (Fraction.Order.Basic.le_max_left _ _)
-  have errorNonnegative : 0 ≤ error := Geometric.Basic.quarterRadius_nonneg scaleNonnegative index
-  have leftError : Geometric.Basic.quarterRadius (RegularComparison.Data.regularScale comparison) index ≤ error :=
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.quarter_mono (Fraction.Order.Basic.le_max_left _ _) index
-  have rightError : Geometric.Basic.quarterRadius (RegularComparison.Data.regularScale otherComparison) index ≤ error :=
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.quarter_mono (Fraction.Order.Basic.le_max_right _ _) index
-  have leftInside (parameter : InverseRootPolynomial.Coordinate) (inside : lower ≤ parameter ∧ parameter ≤ upper) :
+    (Basic.le_max_left _ _)
+  have errorNonnegative : 0 ≤ error := quarterRadius_nonneg scaleNonnegative index
+  have leftError : quarterRadius (RegularComparison.Data.regularScale comparison) index ≤ error :=
+    quarter_mono (Basic.le_max_left _ _) index
+  have rightError : quarterRadius (RegularComparison.Data.regularScale otherComparison) index ≤ error :=
+    quarter_mono (Basic.le_max_right _ _) index
+  have leftInside (parameter : Coordinate) (inside : lower ≤ parameter ∧ parameter ≤ upper) :
       edge.left.parameter ≤ parameter ∧ parameter ≤ edge.right.parameter := ⟨leftLower.trans inside.1, inside.2.trans
         leftUpper⟩
-  have rightInside (parameter : InverseRootPolynomial.Coordinate) (inside : lower ≤ parameter ∧ parameter ≤ upper) :
+  have rightInside (parameter : Coordinate) (inside : lower ≤ parameter ∧ parameter ≤ upper) :
       otherEdge.left.parameter ≤ parameter ∧ parameter ≤ otherEdge.right.parameter := ⟨rightLower.trans inside.1,
         inside.2.trans rightUpper⟩
-  have points (parameter : InverseRootPolynomial.Coordinate) (inside : lower ≤ parameter ∧ parameter ≤ upper) :
+  have points (parameter : Coordinate) (inside : lower ≤ parameter ∧ parameter ≤ upper) :
       PrimitivePoint.Bounded
         ((pairedSourceValues (edge := edge)
         (otherEdge := otherEdge) source otherSource parameter).sub
@@ -179,22 +183,22 @@ theorem paired_ribbon_bound (source : UniformReciprocalPrimitives.SourcePrimitiv
         parameter)) error := by
     constructor
     · have scalar := RegularAlignment.point_error_bound source left (leftInside parameter inside)
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+      rw [Basic.normSq_eq_canonical] at scalar
       exact scalar.trans
-        ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.edge_width_le_one edge cell.ordered.le)
-          (Geometric.Basic.quarterRadius_nonneg (RegularComparison.Data.regularScale_nonnegative comparison)
+        ((Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (edge_width_le_one edge cell.ordered.le)
+          (quarterRadius_nonneg (RegularComparison.Data.regularScale_nonnegative comparison)
             index)).trans
           ((mul_one _).trans_le leftError))
     · have scalar := RegularAlignment.point_error_bound otherSource right (rightInside parameter inside)
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+      rw [Basic.normSq_eq_canonical] at scalar
       exact scalar.trans
-        ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.edge_width_le_one otherEdge otherCell.ordered.le)
-          (Geometric.Basic.quarterRadius_nonneg (RegularComparison.Data.regularScale_nonnegative otherComparison)
+        ((Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (edge_width_le_one otherEdge otherCell.ordered.le)
+          (quarterRadius_nonneg (RegularComparison.Data.regularScale_nonnegative otherComparison)
             index)).trans
           ((mul_one _).trans_le rightError))
-  have movement (first last : InverseRootPolynomial.Coordinate) (firstInside : lower ≤ first ∧ first ≤ upper)
+  have movement (first last : Coordinate) (firstInside : lower ≤ first ∧ first ≤ upper)
       (lastInside : lower ≤ last ∧ last ≤ upper) :
       PrimitivePoint.Bounded ((pairedCapValues
         left right last).sub (pairedCapValues
@@ -202,21 +206,21 @@ theorem paired_ribbon_bound (source : UniformReciprocalPrimitives.SourcePrimitiv
     constructor
     · have scalar := RegularAlignment.cap_increment_bound source left (leftInside first firstInside) (leftInside last
         lastInside)
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+      rw [Basic.normSq_eq_canonical] at scalar
       exact scalar.trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
-            (Fraction.Order.Basic.le_max_left data.sourceSlope otherData.sourceSlope) leftError) (by decide))
-            (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+        (Arithmetic.mul_le_mul_of_nonneg_right_direct
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
+            (Basic.le_max_left data.sourceSlope otherData.sourceSlope) leftError) (by decide))
+            (Arithmetic.sq_nonneg_direct _))
     · have scalar := RegularAlignment.cap_increment_bound otherSource right (rightInside first firstInside) (rightInside
         last lastInside)
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+      rw [Basic.normSq_eq_canonical] at scalar
       exact scalar.trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
-            (Fraction.Order.Basic.le_max_right data.sourceSlope otherData.sourceSlope) rightError) (by decide))
-            (Fraction.Order.Arithmetic.sq_nonneg_direct _))
-  have drift (first last : InverseRootPolynomial.Coordinate) (firstInside : lower ≤ first ∧ first ≤ upper)
+        (Arithmetic.mul_le_mul_of_nonneg_right_direct
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
+            (Basic.le_max_right data.sourceSlope otherData.sourceSlope) rightError) (by decide))
+            (Arithmetic.sq_nonneg_direct _))
+  have drift (first last : Coordinate) (firstInside : lower ≤ first ∧ first ≤ upper)
       (lastInside : lower ≤ last ∧ last ≤ upper) :
       PrimitivePoint.Bounded
         (((pairedSourceValues (edge := edge)
@@ -229,34 +233,34 @@ theorem paired_ribbon_bound (source : UniformReciprocalPrimitives.SourcePrimitiv
     constructor
     · have scalar := RegularAlignment.drift_bound source left (leftInside first firstInside) (leftInside last
         lastInside)
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+      rw [Basic.normSq_eq_canonical] at scalar
       exact scalar.trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct leftError
-          (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+        (Arithmetic.mul_le_mul_of_nonneg_right_direct leftError
+          (Arithmetic.sq_nonneg_direct _))
     · have scalar := RegularAlignment.drift_bound otherSource right (rightInside first firstInside) (rightInside last
         lastInside)
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+      rw [Basic.normSq_eq_canonical] at scalar
       exact scalar.trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct rightError
-          (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+        (Arithmetic.mul_le_mul_of_nonneg_right_direct rightError
+          (Arithmetic.sq_nonneg_direct _))
   have estimate := DyadicBilinearBoundaryRibbon.dyadicDifference_bound _ _ points movement drift depth
     ⟨le_rfl, ordered⟩ ⟨ordered, le_rfl⟩ ordered
-  have errorLe : error ≤ scale := Geometric.Basic.quarterRadius_le_scale scaleNonnegative index
+  have errorLe : error ≤ scale := quarterRadius_le_scale scaleNonnegative index
   have enlarged : 8 * error * (8 * slope + 9 * error) * (upper - lower)^2 ≤
       8 * error * (8 * slope + 9 * scale) * (upper - lower)^2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct (le_refl (8 * slope))
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct errorLe (by decide)))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) errorNonnegative))
-        (Fraction.Order.Arithmetic.sq_nonneg_direct (upper - lower))
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct (le_refl (8 * slope))
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct errorLe (by decide)))
+      (Arithmetic.mul_nonneg_direct (by decide) errorNonnegative))
+        (Arithmetic.sq_nonneg_direct (upper - lower))
   apply estimate.trans
   calc
     _ = 8 * error * (8 * slope + 9 * error) * (upper - lower)^2 := by ring1
     _ ≤ 8 * error * (8 * slope + 9 * scale) * (upper - lower)^2 := enlarged
     _ = _ := by
       dsimp only [error, scale, slope]
-      simp only [Geometric.Basic.quarterRadius_eq_mul_pow, -eq_self, -iff_self]
+      simp only [quarterRadius_eq_mul_pow, -eq_self, -iff_self]
       ring1
 
 end RegularAlignment
@@ -266,10 +270,10 @@ set_option genInjectivity false in
 
 The scale retains both cell comparison bounds and source slopes; it pays every finite subdivision depth while keeping
 the open endpoint correction explicit. -/
-structure PairedRibbonRequest (comparison : ArcSamples.Data regular cell) (otherComparison : ArcSamples.Data regular
+structure PairedRibbonRequest (comparison : Data regular cell) (otherComparison : Data regular
   otherCell)
-    (target : InverseRootPolynomial.Coordinate) (minimum : Nat) where
-  /-- The cached common paired ribbon discrepancy scale. -/ scale : InverseRootPolynomial.Coordinate
+    (target : Coordinate) (minimum : Nat) where
+  /-- The cached common paired ribbon discrepancy scale. -/ scale : Coordinate
   /-- The scale uses the maxima of both original regular comparison ceilings and source slopes. -/ scale_eq : scale = 8
     * max (RegularComparison.Data.regularScale comparison) (RegularComparison.Data.regularScale otherComparison) *
     (8 * max data.sourceSlope otherData.sourceSlope + 9 * max (RegularComparison.Data.regularScale comparison)
@@ -279,9 +283,9 @@ structure PairedRibbonRequest (comparison : ArcSamples.Data regular cell) (other
   /-- The stage is the first quarter-radius search result at or above the original minimum. -/ index_eq : index =
     Search.firstQuarterBelow scale minimum target
   /-- The retained common stage respects the original minimum stage. -/ minimum_le : minimum ≤ index
-  /-- The cached geometric discrepancy at the retained common stage. -/ error : InverseRootPolynomial.Coordinate
+  /-- The cached geometric discrepancy at the retained common stage. -/ error : Coordinate
   /-- The discrepancy is exactly the retained scale's quarter-radius. -/ error_eq : error =
-    Geometric.Basic.quarterRadius scale index
+    quarterRadius scale index
   /-- The retained geometric discrepancy or actual ribbon remainder is strictly below the original target. -/ accurate :
     error < target
 
@@ -290,55 +294,55 @@ constructive_injectivity PairedRibbonRequest
 namespace PairedRibbonRequest
 
 /-- Cache the original paired discrepancy scale and select one common stage paying the retained target. -/
-@[expose] def build (comparison : ArcSamples.Data regular cell) (otherComparison : ArcSamples.Data regular otherCell)
-    (target : InverseRootPolynomial.Coordinate) (positive : 0 < target) (minimum : Nat) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.PairedRibbonRequest comparison otherComparison target
+@[expose] def build (comparison : Data regular cell) (otherComparison : Data regular otherCell)
+    (target : Coordinate) (positive : 0 < target) (minimum : Nat) :
+      PairedRibbonRequest comparison otherComparison target
       minimum := by
   let scale := max (RegularComparison.Data.regularScale comparison) (RegularComparison.Data.regularScale
     otherComparison)
   let slope := max data.sourceSlope otherData.sourceSlope
   let total := 8 * scale * (8 * slope + 9 * scale)
   have scaleNonnegative : 0 ≤ scale := (RegularComparison.Data.regularScale_nonnegative comparison).trans
-    (Fraction.Order.Basic.le_max_left _ _)
-  have slopeNonnegative : 0 ≤ slope := data.sourceSlope_nonnegative.trans (Fraction.Order.Basic.le_max_left _ _)
-  have totalNonnegative : 0 ≤ total := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) scaleNonnegative)
-    (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) slopeNonnegative)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) scaleNonnegative))
+    (Basic.le_max_left _ _)
+  have slopeNonnegative : 0 ≤ slope := data.sourceSlope_nonnegative.trans (Basic.le_max_left _ _)
+  have totalNonnegative : 0 ≤ total := Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide) scaleNonnegative)
+    (add_nonneg (Arithmetic.mul_nonneg_direct (by decide) slopeNonnegative)
+      (Arithmetic.mul_nonneg_direct (by decide) scaleNonnegative))
   let index := Search.firstQuarterBelow total minimum target
   exact ⟨total, rfl, totalNonnegative, index, rfl, Search.firstQuarterBelow_ge total minimum target,
-    Geometric.Basic.quarterRadius total index, rfl, Search.firstQuarterBelow_accurate total totalNonnegative minimum
+    quarterRadius total index, rfl, Search.firstQuarterBelow_accurate total totalNonnegative minimum
       target positive⟩
 
 variable {target : Coordinate} {minimum : Nat}
 
 /-- One computed model stage pays every spatial depth on every common subinterval. This controls the ribbon remainder,
 with its endpoint correction still explicitly present in `dyadicDifference`. -/
-theorem accurate_at (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.PairedRibbonRequest comparison
+theorem accurate_at (request : PairedRibbonRequest comparison
   otherComparison target minimum)
-    (source : UniformReciprocalPrimitives.SourcePrimitive data index) (otherSource :
-      UniformReciprocalPrimitives.SourcePrimitive otherData index)
-    (left : SheetAlignment.RegularAlignment retained) (right : SheetAlignment.RegularAlignment otherRetained)
-    (later : request.index ≤ index) {lower upper : InverseRootPolynomial.Coordinate}
+    (source : SourcePrimitive data index) (otherSource :
+      SourcePrimitive otherData index)
+    (left : RegularAlignment retained) (right : RegularAlignment otherRetained)
+    (later : request.index ≤ index) {lower upper : Coordinate}
     (leftLower : edge.left.parameter ≤ lower) (leftUpper : upper ≤ edge.right.parameter)
     (rightLower : otherEdge.left.parameter ≤ lower) (rightUpper : upper ≤ otherEdge.right.parameter)
     (ordered : lower ≤ upper) (depth : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (DyadicBilinearBoundaryRibbon.dyadicDifference
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.RegularAlignment.pairedSourceValues (edge := edge)
+    normSq (DyadicBilinearBoundaryRibbon.dyadicDifference
+      (RegularAlignment.pairedSourceValues (edge := edge)
         (otherEdge := otherEdge) source otherSource)
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.RegularAlignment.pairedCapValues left right) depth lower
+      (RegularAlignment.pairedCapValues left right) depth lower
         upper) < target := by
-  have zeroDifference (value : Purelib.Data.Rat.Fraction.Rational) : value - 0 = value := by ring1
-  have bound := Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.RegularAlignment.paired_ribbon_bound source
+  have zeroDifference (value : Fraction.Rational) : value - 0 = value := by ring1
+  have bound := RegularAlignment.paired_ribbon_bound source
     otherSource left right leftLower leftUpper rightLower rightUpper ordered depth
   rw [← request.scale_eq] at bound
   have width : (upper - lower)^2 ≤ 1 := by
-    have interval := Fraction.Order.Arithmetic.sub_le_sub_direct (leftUpper.trans edge.right.inside.2)
+    have interval := Arithmetic.sub_le_sub_direct (leftUpper.trans edge.right.inside.2)
       (edge.left.inside.1.trans leftLower)
     rw [zeroDifference] at interval
-    exact (Fraction.Order.Arithmetic.pow_le_pow_direct (Fraction.Order.Arithmetic.sub_nonneg_direct ordered) interval
+    exact (Arithmetic.pow_le_pow_direct (Arithmetic.sub_nonneg_direct ordered) interval
       2).trans_eq (by decide)
-  have paid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct width (Geometric.Basic.quarterRadius_nonneg
+  have paid := Arithmetic.mul_le_mul_of_nonneg_left_direct width (quarterRadius_nonneg
     request.scale_nonnegative index)
   rw [mul_one] at paid
   exact bound.trans_lt (paid.trans_lt ((quarterRadius_antitone request.scale_nonnegative later).trans_lt
@@ -349,12 +353,12 @@ set_option genInjectivity false in
 
 The common interval retains containment in both original cells, and the cached remainder is certified against the paid
 target. -/
-structure Evaluation (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.PairedRibbonRequest comparison
+structure Evaluation (request : PairedRibbonRequest comparison
   otherComparison target minimum)
-    (source : UniformReciprocalPrimitives.SourcePrimitive data index) (otherSource :
-      UniformReciprocalPrimitives.SourcePrimitive otherData index)
-    (left : SheetAlignment.RegularAlignment retained) (right : SheetAlignment.RegularAlignment otherRetained)
-    (lower upper : InverseRootPolynomial.Coordinate) (depth : Nat) where
+    (source : SourcePrimitive data index) (otherSource :
+      SourcePrimitive otherData index)
+    (left : RegularAlignment retained) (right : RegularAlignment otherRetained)
+    (lower upper : Coordinate) (depth : Nat) where
   /-- Both original paired polynomial samples meet the retained common stage. -/ later : request.index ≤ index
   /-- The common lower parameter is after the original first cell's left endpoint. -/ leftLower : edge.left.parameter ≤
     lower
@@ -366,55 +370,55 @@ structure Evaluation (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Pair
     otherEdge.right.parameter
   /-- The retained common parameter interval is ordered. -/ ordered : lower ≤ upper
   /-- The cached actual bilinear dyadic area of the original paired source primitives. -/ sourceArea :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The cached source area uses the original value pair on the exact common interval and depth. -/ sourceArea_eq :
     sourceArea = DyadicBilinearBoundaryRibbon.dyadicArea
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.RegularAlignment.pairedSourceValues (edge := edge)
+    (RegularAlignment.pairedSourceValues (edge := edge)
       (otherEdge := otherEdge) source otherSource) depth lower upper
   /-- The cached actual bilinear dyadic area of the retained signed cap pair. -/ capArea :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The cached cap area uses the original retained cap pair on the exact common interval and depth. -/ capArea_eq :
     capArea = DyadicBilinearBoundaryRibbon.dyadicArea
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.RegularAlignment.pairedCapValues left right) depth lower
+    (RegularAlignment.pairedCapValues left right) depth lower
     upper
   /-- The cached open endpoint wedge correction of the original paired paths. -/ endpoint :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The retained endpoint correction is the original upper wedge minus the lower wedge. -/ endpoint_eq : endpoint =
-    Stokes.edgeArea (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.RegularAlignment.pairedCapValues left
+    Stokes.edgeArea (RegularAlignment.pairedCapValues left
       right upper)
-      ((Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.RegularAlignment.pairedSourceValues (edge := edge)
+      ((RegularAlignment.pairedSourceValues (edge := edge)
         (otherEdge := otherEdge) source otherSource upper).sub
-        (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.RegularAlignment.pairedCapValues left right upper)) -
-    Stokes.edgeArea (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.RegularAlignment.pairedCapValues left
+        (RegularAlignment.pairedCapValues left right upper)) -
+    Stokes.edgeArea (RegularAlignment.pairedCapValues left
       right lower)
-      ((Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.RegularAlignment.pairedSourceValues (edge := edge)
+      ((RegularAlignment.pairedSourceValues (edge := edge)
         (otherEdge := otherEdge) source otherSource lower).sub
-        (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.RegularAlignment.pairedCapValues left right lower))
+        (RegularAlignment.pairedCapValues left right lower))
   /-- The cached source-minus-cap area after retaining the original endpoint correction. -/ remainder :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The cached remainder is exactly source area minus cap area minus the original endpoint term. -/ remainder_eq :
     remainder = sourceArea - capArea - endpoint
   /-- The retained geometric discrepancy or actual ribbon remainder is strictly below the original target. -/ accurate :
-    Data.Gaussian.Norm.Basic.normSq remainder < target
+    normSq remainder < target
 
 constructive_injectivity Evaluation
 
 /-- Materialize the complete paired ribbon exactly once. In particular the open endpoint contribution is retained as
 data, not hidden in an error flag. -/
-@[expose] def evaluate (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.PairedRibbonRequest
+@[expose] def evaluate (request : PairedRibbonRequest
   comparison otherComparison target minimum)
-    (source : UniformReciprocalPrimitives.SourcePrimitive data index) (otherSource :
-      UniformReciprocalPrimitives.SourcePrimitive otherData index)
-    (left : SheetAlignment.RegularAlignment retained) (right : SheetAlignment.RegularAlignment otherRetained)
-    (later : request.index ≤ index) (lower upper : InverseRootPolynomial.Coordinate)
+    (source : SourcePrimitive data index) (otherSource :
+      SourcePrimitive otherData index)
+    (left : RegularAlignment retained) (right : RegularAlignment otherRetained)
+    (later : request.index ≤ index) (lower upper : Coordinate)
     (leftLower : edge.left.parameter ≤ lower) (leftUpper : upper ≤ edge.right.parameter)
     (rightLower : otherEdge.left.parameter ≤ lower) (rightUpper : upper ≤ otherEdge.right.parameter)
     (ordered : lower ≤ upper) (depth : Nat) :
       Evaluation request source otherSource
       left right lower upper depth := by
-  let sourceValues := Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.RegularAlignment.pairedSourceValues (edge
+  let sourceValues := RegularAlignment.pairedSourceValues (edge
     := edge) (otherEdge := otherEdge) source otherSource
-  let capValues := Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.RegularAlignment.pairedCapValues left right
+  let capValues := RegularAlignment.pairedCapValues left right
   let sourceArea := DyadicBilinearBoundaryRibbon.dyadicArea sourceValues depth lower upper
   let capArea := DyadicBilinearBoundaryRibbon.dyadicArea capValues depth lower upper
   let endpoint := Stokes.edgeArea (capValues upper) ((sourceValues upper).sub (capValues upper)) -

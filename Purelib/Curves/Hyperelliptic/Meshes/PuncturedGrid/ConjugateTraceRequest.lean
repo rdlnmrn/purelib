@@ -53,6 +53,8 @@ import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Topology.Surface.Cut.PrimitiveJumps
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian
+
 open Purelib.Data.Rat
 
 open Purelib
@@ -103,7 +105,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData (Domai
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.TracePreparation (PairedTracePreparation)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {firstFace lastFace :
@@ -111,7 +113,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {firstModels : FaceModels frames
     firstFace} {lastModels :
     FaceModels frames lastFace}
-  {start : Purelib.Data.Gaussian.Basic.Canonical} {owner : Owner
+  {start : Gaussian} {owner : Owner
     (curve.polynomial.eval start)}
   {leftEntry : Entry firstModels start owner}
     {rightEntry : Entry lastModels start
@@ -119,7 +121,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {leftDomain : PeriodDomain firstModels leftEntry.sheet}
     {rightDomain : PeriodDomain lastModels
     rightEntry.sheet}
-  {count : Nat} {points : Fin (count + 1) → Purelib.Data.Gaussian.Basic.Canonical} {firstDifferential secondDifferential
+  {count : Nat} {points : Fin (count + 1) → Gaussian} {firstDifferential secondDifferential
     : Differential genus} {firstSheet secondSheet : Fin 2}
 
 open Purelib.Topology.Polygon.Stokes (PrimitivePoint)
@@ -140,66 +142,66 @@ variable {firstBank : TraceContactBank leftEntry
   {magnitude target : Coordinate} {floor : Nat}
 
 /-- Gaussian conjugation preserves the difference of the original values. -/
-private theorem conjugate_sub (first last : Data.Gaussian.Basic.Canonical) : Data.Gaussian.Basic.conj (first -
-  last) = Data.Gaussian.Basic.conj first - Data.Gaussian.Basic.conj last := by
-  apply Data.Gaussian.Basic.ext
+private theorem conjugate_sub (first last : Gaussian) : Basic.conj (first -
+  last) = Basic.conj first - Basic.conj last := by
+  apply Basic.ext
   · rfl
-  · simp only [Data.Gaussian.Basic.conj, Data.Gaussian.Basic.sub_im]; ring1
+  · simp only [Basic.conj, Basic.sub_im]; ring1
 
 /-- Each actual centered conjugate trace discrepancy satisfies the retained paired contact error at a paid stage. -/
 theorem conjugate_centered_accurate (request : TraceRequest.PairedTraceRequest firstBank secondBank magnitude target
   floor) {stage : Nat}
     (later : request.index ≤ stage)
-    (firstLeft : PrimitiveData.DomainPrimitives leftDomain firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives rightDomain firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives leftDomain secondDifferential stage)
-    (secondRight : PrimitiveData.DomainPrimitives rightDomain secondDifferential stage)
-    (leftFirst : RectangularPointReadings.PointReadings firstLeft.anchors firstLeft.offsets points)
-    (rightFirst : RectangularPointReadings.PointReadings firstRight.anchors firstRight.offsets points)
-    (leftSecond : RectangularPointReadings.PointReadings secondLeft.anchors secondLeft.offsets points)
-    (rightSecond : RectangularPointReadings.PointReadings secondRight.anchors secondRight.offsets points)
-    (left : CenteredBilinearPath.Sample (fun vertex => ⟨conj (leftFirst.values vertex), leftSecond.values vertex⟩))
-    (right : CenteredBilinearPath.Sample (fun vertex => ⟨conj (rightFirst.values vertex), rightSecond.values vertex⟩))
+    (firstLeft : DomainPrimitives leftDomain firstDifferential stage)
+    (firstRight : DomainPrimitives rightDomain firstDifferential stage)
+    (secondLeft : DomainPrimitives leftDomain secondDifferential stage)
+    (secondRight : DomainPrimitives rightDomain secondDifferential stage)
+    (leftFirst : PointReadings firstLeft.anchors firstLeft.offsets points)
+    (rightFirst : PointReadings firstRight.anchors firstRight.offsets points)
+    (leftSecond : PointReadings secondLeft.anchors secondLeft.offsets points)
+    (rightSecond : PointReadings secondRight.anchors secondRight.offsets points)
+    (left : Sample (fun vertex => ⟨conj (leftFirst.values vertex), leftSecond.values vertex⟩))
+    (right : Sample (fun vertex => ⟨conj (rightFirst.values vertex), rightSecond.values vertex⟩))
     (vertex : Fin (count + 1)) :
     PrimitivePoint.Bounded
       ((left.centered vertex).sub (right.centered vertex)) request.budget.error := by
   rw [left.centered_eq, right.centered_eq]
   have secondScalar := (request.second.accurate (request.second_le.trans later)
     secondLeft secondRight leftSecond rightSecond vertex).le
-  rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at secondScalar
+  rw [Norm.Basic.normSq_eq_canonical] at secondScalar
   refine ⟨?_, secondScalar⟩
-  change Data.Gaussian.Basic.Canonical.normSq ((Data.Gaussian.Basic.conj (leftFirst.values vertex) -
-    Data.Gaussian.Basic.conj (leftFirst.values 0)) -
-    (Data.Gaussian.Basic.conj (rightFirst.values vertex) - Data.Gaussian.Basic.conj (rightFirst.values
+  change Gaussian.normSq ((Basic.conj (leftFirst.values vertex) -
+    Basic.conj (leftFirst.values 0)) -
+    (Basic.conj (rightFirst.values vertex) - Basic.conj (rightFirst.values
       0))) ≤ _
   rw [← conjugate_sub, ←
     conjugate_sub, ←
     conjugate_sub, ←
-    Data.Gaussian.Norm.Basic.normSq_eq_canonical, Data.Gaussian.Norm.Basic.normSq_conj,
-    Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+    Norm.Basic.normSq_eq_canonical, Norm.Basic.normSq_conj,
+    Norm.Basic.normSq_eq_canonical]
   have firstScalar := (request.first.accurate (request.first_le.trans later)
     firstLeft firstRight leftFirst rightFirst vertex).le
-  simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using firstScalar
+  simpa only [Norm.Basic.normSq_eq_canonical] using firstScalar
 
 /-- The actual conjugate endpoint-increment correction is bounded using its original origin magnitude and retained
 contact error. -/
 theorem conjugate_endpointIncrementError_bound (request : TraceRequest.PairedTraceRequest firstBank secondBank magnitude
   target floor) {stage : Nat}
     (later : request.index ≤ stage)
-    (firstLeft : PrimitiveData.DomainPrimitives leftDomain firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives rightDomain firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives leftDomain secondDifferential stage)
-    (secondRight : PrimitiveData.DomainPrimitives rightDomain secondDifferential stage)
-    (leftFirst : RectangularPointReadings.PointReadings firstLeft.anchors firstLeft.offsets points)
-    (rightFirst : RectangularPointReadings.PointReadings firstRight.anchors firstRight.offsets points)
-    (leftSecond : RectangularPointReadings.PointReadings secondLeft.anchors secondLeft.offsets points)
-    (rightSecond : RectangularPointReadings.PointReadings secondRight.anchors secondRight.offsets points)
-    (left : CenteredBilinearPath.Sample (fun vertex => ⟨conj (leftFirst.values vertex), leftSecond.values vertex⟩))
-    (right : CenteredBilinearPath.Sample (fun vertex => ⟨conj (rightFirst.values vertex), rightSecond.values vertex⟩))
-    {originMagnitude : InverseRootPolynomial.Coordinate}
+    (firstLeft : DomainPrimitives leftDomain firstDifferential stage)
+    (firstRight : DomainPrimitives rightDomain firstDifferential stage)
+    (secondLeft : DomainPrimitives leftDomain secondDifferential stage)
+    (secondRight : DomainPrimitives rightDomain secondDifferential stage)
+    (leftFirst : PointReadings firstLeft.anchors firstLeft.offsets points)
+    (rightFirst : PointReadings firstRight.anchors firstRight.offsets points)
+    (leftSecond : PointReadings secondLeft.anchors secondLeft.offsets points)
+    (rightSecond : PointReadings secondRight.anchors secondRight.offsets points)
+    (left : Sample (fun vertex => ⟨conj (leftFirst.values vertex), leftSecond.values vertex⟩))
+    (right : Sample (fun vertex => ⟨conj (rightFirst.values vertex), rightSecond.values vertex⟩))
+    {originMagnitude : Coordinate}
     (origin : PrimitivePoint.Bounded
       (⟨conj (rightFirst.values 0), rightSecond.values 0⟩ : Stokes.PrimitivePoint) originMagnitude) :
-    Data.Gaussian.Norm.Basic.normSq (left.endpointIncrementError right) ≤ 4 * originMagnitude *
+    Norm.Basic.normSq (left.endpointIncrementError right) ≤ 4 * originMagnitude *
       request.budget.error :=
   left.endpointIncrementError_bound right origin
     (conjugate_centered_accurate
@@ -211,19 +213,19 @@ original magnitude bound is supplied. -/
 theorem conjugate_accurate (request : TraceRequest.PairedTraceRequest firstBank secondBank magnitude target floor)
   {stage : Nat}
     (later : request.index ≤ stage)
-    (firstLeft : PrimitiveData.DomainPrimitives leftDomain firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives rightDomain firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives leftDomain secondDifferential stage)
-    (secondRight : PrimitiveData.DomainPrimitives rightDomain secondDifferential stage)
-    (leftFirst : RectangularPointReadings.PointReadings firstLeft.anchors firstLeft.offsets points)
-    (rightFirst : RectangularPointReadings.PointReadings firstRight.anchors firstRight.offsets points)
-    (leftSecond : RectangularPointReadings.PointReadings secondLeft.anchors secondLeft.offsets points)
-    (rightSecond : RectangularPointReadings.PointReadings secondRight.anchors secondRight.offsets points)
-    (left : CenteredBilinearPath.Sample (fun vertex => ⟨conj (leftFirst.values vertex), leftSecond.values vertex⟩))
-    (right : CenteredBilinearPath.Sample (fun vertex => ⟨conj (rightFirst.values vertex), rightSecond.values vertex⟩))
+    (firstLeft : DomainPrimitives leftDomain firstDifferential stage)
+    (firstRight : DomainPrimitives rightDomain firstDifferential stage)
+    (secondLeft : DomainPrimitives leftDomain secondDifferential stage)
+    (secondRight : DomainPrimitives rightDomain secondDifferential stage)
+    (leftFirst : PointReadings firstLeft.anchors firstLeft.offsets points)
+    (rightFirst : PointReadings firstRight.anchors firstRight.offsets points)
+    (leftSecond : PointReadings secondLeft.anchors secondLeft.offsets points)
+    (rightSecond : PointReadings secondRight.anchors secondRight.offsets points)
+    (left : Sample (fun vertex => ⟨conj (leftFirst.values vertex), leftSecond.values vertex⟩))
+    (right : Sample (fun vertex => ⟨conj (rightFirst.values vertex), rightSecond.values vertex⟩))
     (bounded : ∀ vertex, PrimitivePoint.Bounded
       (right.centered vertex) magnitude) :
-    Data.Gaussian.Norm.Basic.normSq ((left.originalArea - right.originalArea) - (left.endpoint -
+    Norm.Basic.normSq ((left.originalArea - right.originalArea) - (left.endpoint -
       right.endpoint)) < target := by
   have errors (vertex : Fin (count + 1)) :
       PrimitivePoint.Bounded
@@ -235,15 +237,15 @@ theorem conjugate_accurate (request : TraceRequest.PairedTraceRequest firstBank 
     request.budget.error_le_one bounded errors
   have paid := request.budget.error_paid
   rw [request.budget.weight_eq] at paid
-  exact estimate.trans_lt ((show (count : InverseRootPolynomial.Coordinate) ^ 2 * (32 * (magnitude + 1) *
+  exact estimate.trans_lt ((show (count : Coordinate) ^ 2 * (32 * (magnitude + 1) *
     request.budget.error) =
-    (count : InverseRootPolynomial.Coordinate) ^ 2 * (32 * (magnitude + 1)) * request.budget.error by ring1).trans_lt
+    (count : Coordinate) ^ 2 * (32 * (magnitude + 1)) * request.budget.error by ring1).trans_lt
       paid)
 
 end PairedTraceRequest
-variable {piece : Purelib.Riemann.Paths.RectangularPairedSegments.PairedSegmentPiece leftDomain.geometry
+variable {piece : RectangularPairedSegments.PairedSegmentPiece leftDomain.geometry
   rightDomain.geometry}
-  {trace : Purelib.Riemann.Integration.RectangularPairedPointBanks.Trace piece count}
+  {trace : Riemann.Integration.RectangularPairedPointBanks.Trace piece count}
 
 namespace PairedTracePreparation.AreaRequest
 
@@ -253,22 +255,22 @@ variable {preparation : PairedTracePreparation
 
 /-- The prepared original conjugate trace request supplies its own retained magnitude bounds and pays the full
 endpoint-corrected area target. -/
-theorem conjugate_accurate (assembled : PairedTracePreparation.AreaRequest preparation firstDifferential
+theorem conjugate_accurate (assembled : AreaRequest preparation firstDifferential
   secondDifferential firstSheet secondSheet target floor)
     {stage : Nat} (later : assembled.request.index ≤ stage)
-    (firstLeft : PrimitiveData.DomainPrimitives leftDomain firstDifferential stage)
-    (firstRight : PrimitiveData.DomainPrimitives rightDomain firstDifferential stage)
-    (secondLeft : PrimitiveData.DomainPrimitives leftDomain secondDifferential stage)
-    (secondRight : PrimitiveData.DomainPrimitives rightDomain secondDifferential stage)
-    (left : CenteredBilinearPath.Sample (fun vertex => ⟨conj ((trace.leftReadings firstLeft.anchors
+    (firstLeft : DomainPrimitives leftDomain firstDifferential stage)
+    (firstRight : DomainPrimitives rightDomain firstDifferential stage)
+    (secondLeft : DomainPrimitives leftDomain secondDifferential stage)
+    (secondRight : DomainPrimitives rightDomain secondDifferential stage)
+    (left : Sample (fun vertex => ⟨conj ((trace.leftReadings firstLeft.anchors
       firstLeft.offsets).values vertex),
       (trace.leftReadings secondLeft.anchors secondLeft.offsets).values vertex⟩))
-    (right : CenteredBilinearPath.Sample (fun vertex => ⟨conj ((trace.rightReadings firstRight.anchors
+    (right : Sample (fun vertex => ⟨conj ((trace.rightReadings firstRight.anchors
       firstRight.offsets).values vertex),
       (trace.rightReadings secondRight.anchors secondRight.offsets).values vertex⟩)) :
-    Data.Gaussian.Norm.Basic.normSq ((left.originalArea - right.originalArea) - (left.endpoint -
+    Norm.Basic.normSq ((left.originalArea - right.originalArea) - (left.endpoint -
       right.endpoint)) < target := by
-  apply Curves.Hyperelliptic.Meshes.PuncturedGrid.ConjugateTraceRequest.PairedTraceRequest.conjugate_accurate
+  apply PairedTraceRequest.conjugate_accurate
     assembled.request later firstLeft firstRight secondLeft secondRight
     (trace.leftReadings firstLeft.anchors firstLeft.offsets)
     (trace.rightReadings firstRight.anchors firstRight.offsets)
@@ -280,18 +282,18 @@ theorem conjugate_accurate (assembled : PairedTracePreparation.AreaRequest prepa
     secondRight.offsets
     assembled.secondBounds rightDomain.patch.cell_refines vertex).trans (Fraction.Order.Basic.le_max_right
       (RectangularSeamBounds.boundarySlope assembled.firstBounds) _)
-  rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at secondScalar
+  rw [Norm.Basic.normSq_eq_canonical] at secondScalar
   refine ⟨?_, secondScalar⟩
-  change Data.Gaussian.Basic.Canonical.normSq (Data.Gaussian.Basic.conj ((trace.rightReadings
+  change Gaussian.normSq (Basic.conj ((trace.rightReadings
     firstRight.anchors firstRight.offsets).values vertex) -
-    Data.Gaussian.Basic.conj ((trace.rightReadings firstRight.anchors firstRight.offsets).values 0)) ≤ _
-  rw [← Curves.Hyperelliptic.Meshes.PuncturedGrid.ConjugateTraceRequest.PairedTraceRequest.conjugate_sub, ←
-    Data.Gaussian.Norm.Basic.normSq_eq_canonical, Data.Gaussian.Norm.Basic.normSq_conj,
-    Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+    Basic.conj ((trace.rightReadings firstRight.anchors firstRight.offsets).values 0)) ≤ _
+  rw [← PairedTraceRequest.conjugate_sub, ←
+    Norm.Basic.normSq_eq_canonical, Norm.Basic.normSq_conj,
+    Norm.Basic.normSq_eq_canonical]
   have firstScalar := (RectangularPairedTraceMagnitude.right_increment_bound trace firstRight.anchors firstRight.offsets
     assembled.firstBounds rightDomain.patch.cell_refines vertex).trans (Fraction.Order.Basic.le_max_left _
       (RectangularSeamBounds.boundarySlope assembled.secondBounds))
-  simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using firstScalar
+  simpa only [Norm.Basic.normSq_eq_canonical] using firstScalar
 
 end PairedTracePreparation.AreaRequest
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.ConjugateTraceRequest

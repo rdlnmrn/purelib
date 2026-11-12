@@ -66,6 +66,8 @@ import Purelib.Riemann.Readings.RectangularObservationAssembly
 import Purelib.RootIsolation.Newton.Band.Basic
 import Purelib.Topology.Polygon.Stokes
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid
@@ -122,7 +124,7 @@ open Purelib.Riemann.Paths.PreparedBoundarySegments (SameSide)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
@@ -135,7 +137,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     RegularMeshes.build domains cuts sheet
     coarseDepth) fixed meshTarget}
   {position : Fin base.faces.regulars.length}
-  {ambient : Purelib.Geometry.Rational.Box} {start finish : Purelib.Data.Gaussian.Basic.Canonical}
+  {ambient : Geometry.Rational.Box} {start finish : Gaussian}
   {segment : ClearSegment curve.polynomial ambient start finish}
   {owner : Owner (curve.polynomial.eval start)} {piece :
     CoveredSegment segment owner}
@@ -143,23 +145,23 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 
 /-- Attach the supplied original preparation to the selected shared face and sheet. This constructs comparison geometry,
 not another path preparation. -/
-def perimeterEntry (entry : FaceModels.Entry (domains.get position).models start owner)
-    (inside : ClearPath.InBox (base.faces.regulars[position.val]'position.isLt).cell.box (.cons segment (.nil finish)))
-    (parents : PreparedClearPathModels.ParentCache piece.path (PeriodMatrix.standardDifferential j) parentSheet) :=
+def perimeterEntry (entry : Entry (domains.get position).models start owner)
+    (inside : InBox (base.faces.regulars[position.val]'position.isLt).cell.box (.cons segment (.nil finish)))
+    (parents : ParentCache piece.path (PeriodMatrix.standardDifferential j) parentSheet) :=
   EnteredPath.ofEntry entry ((domains.get position).domain entry.sheet) piece.path inside
     (PeriodMatrix.standardDifferential j) parentSheet parents
 
 variable {entry : Entry (domains.get
   position).models start owner}
-  {inside : Polynomial.Geometry.ClearPath.InBox
+  {inside : InBox
     (base.faces.regulars[position.val]'position.isLt).cell.box (.cons segment (.nil finish))}
   {parents : ParentCache piece.path
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential j) parentSheet}
-  {bandAmbient : Purelib.Geometry.Rational.Box} {current :
-    Purelib.RootIsolation.State.Raw.RawWindingState curve.polynomial bandAmbient}
-  {profile : Purelib.Riemann.RootContinuation.NewtonBandBounds.Profile curve.squarefree current.box}
-  {differentialProfile : Purelib.Riemann.RootContinuation.NewtonBandDifferentials.DifferentialProfile profile
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential j).exponent}
+    (PeriodMatrix.standardDifferential j) parentSheet}
+  {bandAmbient : Geometry.Rational.Box} {current :
+    RootIsolation.State.Raw.RawWindingState curve.polynomial bandAmbient}
+  {profile : NewtonBandBounds.Profile curve.squarefree current.box}
+  {differentialProfile : NewtonBandDifferentials.DifferentialProfile profile
+    (PeriodMatrix.standardDifferential j).exponent}
   {target tolerance : Rational}
 
 namespace CenteredPerimeters
@@ -168,23 +170,23 @@ namespace CenteredPerimeters
 offset data come from the cache. -/
 theorem newton_bottom_bound
     (samples : RequestedHoleCentering.CenteredPerimeters request cache i j)
-    (reference : PrimitiveReferences.Reference
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonCenteredPerimeters.perimeterEntry entry inside parents)
+    (reference : Reference
+      (NewtonCenteredPerimeters.perimeterEntry entry inside parents)
       tolerance)
-    (band : PreparedNewtonBandSamples.PreparedBandRequest differentialProfile target)
+    (band : PreparedBandRequest differentialProfile target)
     (firstInside : band.sample.output.box.Contains start)
     (lastInside : band.sample.output.box.Contains finish)
-    (side : PreparedBoundarySegments.SameSide band.sample.output.box start finish)
+    (side : SameSide band.sample.output.box start finish)
     (later : reference.budget.grid.index ≤ stage)
     (vertex : Fin ((((samples.traces.get position).get entry.sheet).bottom).vertices.rest.length + 1))
     (firstEq : ((samples.traces.get position).get entry.sheet).bottom.point
       (((samples.traces.get position).get entry.sheet).bottom.vertices.indexed 0) = start)
     (lastEq : ((samples.traces.get position).get entry.sheet).bottom.point
       (((samples.traces.get position).get entry.sheet).bottom.vertices.indexed vertex) = finish) :
-    Data.Gaussian.Norm.Basic.normSq ((((samples.samples.get position).get entry.sheet).bottom.centered
+    Basic.normSq ((((samples.samples.get position).get entry.sheet).bottom.centered
       vertex).right) ≤
       3 * tolerance + 4 * (PreparedNewtonBandSamples.Sample.preparedDensity band.sample differentialProfile band.error *
-        Data.Gaussian.Norm.Basic.normSq (finish - start)) := by
+        Basic.normSq (finish - start)) := by
   exact NewtonTraceReferences.newton_bottom_centered_density_bound reference band firstInside lastInside side later
     (cache.normalize.atDomain position entry.sheet j)
     (fun column row point => (cache.normalize.atDomain position entry.sheet i).anchors.alignedValue
@@ -195,23 +197,23 @@ theorem newton_bottom_bound
 offset data come from the cache. -/
 theorem newton_top_bound
     (samples : RequestedHoleCentering.CenteredPerimeters request cache i j)
-    (reference : PrimitiveReferences.Reference
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonCenteredPerimeters.perimeterEntry entry inside parents)
+    (reference : Reference
+      (NewtonCenteredPerimeters.perimeterEntry entry inside parents)
       tolerance)
-    (band : PreparedNewtonBandSamples.PreparedBandRequest differentialProfile target)
+    (band : PreparedBandRequest differentialProfile target)
     (firstInside : band.sample.output.box.Contains start)
     (lastInside : band.sample.output.box.Contains finish)
-    (side : PreparedBoundarySegments.SameSide band.sample.output.box start finish)
+    (side : SameSide band.sample.output.box start finish)
     (later : reference.budget.grid.index ≤ stage)
     (vertex : Fin ((((samples.traces.get position).get entry.sheet).top).vertices.rest.length + 1))
     (firstEq : ((samples.traces.get position).get entry.sheet).top.point
       (((samples.traces.get position).get entry.sheet).top.vertices.indexed 0) = start)
     (lastEq : ((samples.traces.get position).get entry.sheet).top.point
       (((samples.traces.get position).get entry.sheet).top.vertices.indexed vertex) = finish) :
-    Data.Gaussian.Norm.Basic.normSq ((((samples.samples.get position).get entry.sheet).top.centered
+    Basic.normSq ((((samples.samples.get position).get entry.sheet).top.centered
       vertex).right) ≤
       3 * tolerance + 4 * (PreparedNewtonBandSamples.Sample.preparedDensity band.sample differentialProfile band.error *
-        Data.Gaussian.Norm.Basic.normSq (finish - start)) := by
+        Basic.normSq (finish - start)) := by
   exact NewtonTraceReferences.newton_top_centered_density_bound reference band firstInside lastInside side later
     (cache.normalize.atDomain position entry.sheet j)
     (fun column row point => (cache.normalize.atDomain position entry.sheet i).anchors.alignedValue
@@ -222,23 +224,23 @@ theorem newton_top_bound
 offset data come from the cache. -/
 theorem newton_left_bound
     (samples : RequestedHoleCentering.CenteredPerimeters request cache i j)
-    (reference : PrimitiveReferences.Reference
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonCenteredPerimeters.perimeterEntry entry inside parents)
+    (reference : Reference
+      (NewtonCenteredPerimeters.perimeterEntry entry inside parents)
       tolerance)
-    (band : PreparedNewtonBandSamples.PreparedBandRequest differentialProfile target)
+    (band : PreparedBandRequest differentialProfile target)
     (firstInside : band.sample.output.box.Contains start)
     (lastInside : band.sample.output.box.Contains finish)
-    (side : PreparedBoundarySegments.SameSide band.sample.output.box start finish)
+    (side : SameSide band.sample.output.box start finish)
     (later : reference.budget.grid.index ≤ stage)
     (vertex : Fin ((((samples.traces.get position).get entry.sheet).left).vertices.rest.length + 1))
     (firstEq : ((samples.traces.get position).get entry.sheet).left.point
       (((samples.traces.get position).get entry.sheet).left.vertices.indexed 0) = start)
     (lastEq : ((samples.traces.get position).get entry.sheet).left.point
       (((samples.traces.get position).get entry.sheet).left.vertices.indexed vertex) = finish) :
-    Data.Gaussian.Norm.Basic.normSq ((((samples.samples.get position).get entry.sheet).left.centered
+    Basic.normSq ((((samples.samples.get position).get entry.sheet).left.centered
       vertex).right) ≤
       3 * tolerance + 4 * (PreparedNewtonBandSamples.Sample.preparedDensity band.sample differentialProfile band.error *
-        Data.Gaussian.Norm.Basic.normSq (finish - start)) := by
+        Basic.normSq (finish - start)) := by
   exact NewtonTraceReferences.newton_left_centered_density_bound reference band firstInside lastInside side later
     (cache.normalize.atDomain position entry.sheet j)
     (fun column row point => (cache.normalize.atDomain position entry.sheet i).anchors.alignedValue
@@ -249,23 +251,23 @@ theorem newton_left_bound
 offset data come from the cache. -/
 theorem newton_right_bound
     (samples : RequestedHoleCentering.CenteredPerimeters request cache i j)
-    (reference : PrimitiveReferences.Reference
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonCenteredPerimeters.perimeterEntry entry inside parents)
+    (reference : Reference
+      (NewtonCenteredPerimeters.perimeterEntry entry inside parents)
       tolerance)
-    (band : PreparedNewtonBandSamples.PreparedBandRequest differentialProfile target)
+    (band : PreparedBandRequest differentialProfile target)
     (firstInside : band.sample.output.box.Contains start)
     (lastInside : band.sample.output.box.Contains finish)
-    (side : PreparedBoundarySegments.SameSide band.sample.output.box start finish)
+    (side : SameSide band.sample.output.box start finish)
     (later : reference.budget.grid.index ≤ stage)
     (vertex : Fin ((((samples.traces.get position).get entry.sheet).right).vertices.rest.length + 1))
     (firstEq : ((samples.traces.get position).get entry.sheet).right.point
       (((samples.traces.get position).get entry.sheet).right.vertices.indexed 0) = start)
     (lastEq : ((samples.traces.get position).get entry.sheet).right.point
       (((samples.traces.get position).get entry.sheet).right.vertices.indexed vertex) = finish) :
-    Data.Gaussian.Norm.Basic.normSq ((((samples.samples.get position).get entry.sheet).right.centered
+    Basic.normSq ((((samples.samples.get position).get entry.sheet).right.centered
       vertex).right) ≤
       3 * tolerance + 4 * (PreparedNewtonBandSamples.Sample.preparedDensity band.sample differentialProfile band.error *
-        Data.Gaussian.Norm.Basic.normSq (finish - start)) := by
+        Basic.normSq (finish - start)) := by
   exact NewtonTraceReferences.newton_right_centered_density_bound reference band firstInside lastInside side later
     (cache.normalize.atDomain position entry.sheet j)
     (fun column row point => (cache.normalize.atDomain position entry.sheet i).anchors.alignedValue

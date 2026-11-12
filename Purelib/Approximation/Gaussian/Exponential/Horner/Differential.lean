@@ -71,7 +71,7 @@ theorem expDifferentialSample_diagonal (base :
     expDifferentialSample base 0 index =
       Sample.sample base index := by
   rw [expDifferentialSample, Sample.expRelSample_zero,
-    Data.Gaussian.Basic.mul_one]
+    Basic.mul_one]
 
 /-- The product computation of `exp(base) * exp(increment)` has an exact finite first-order factorization at every
 sample depth. -/
@@ -90,7 +90,7 @@ theorem expProductSample_sub_base_factor (base
         Sample.sample base index =
       Sample.sample base index *
         (Sample.sample increment index - 1) := by
-        apply Data.Gaussian.Basic.ext <;>
+        apply Basic.ext <;>
           simp only [Basic.sub_re, Basic.sub_im, Basic.mul_re, Basic.mul_im, Basic.one_re, Basic.one_im] <;> ring1
     _ = Sample.sample base index *
         (increment * Sample.expRelSample increment index) := by
@@ -98,7 +98,7 @@ theorem expProductSample_sub_base_factor (base
     _ = increment *
         (Sample.sample base index *
           Sample.expRelSample increment index) := by
-      apply Data.Gaussian.Basic.ext <;>
+      apply Basic.ext <;>
         simp only [Basic.mul_re, Basic.mul_im] <;> ring1
 
 /-- After subtracting its diagonal factor, the translated exponential computation has an exact quadratic remainder at
@@ -122,7 +122,7 @@ theorem expProductSample_second_order (base
       Sample.sample base (index + 1) *
         (Sample.sample increment (index + 1) - 1 -
           increment) := by
-        apply Data.Gaussian.Basic.ext <;>
+        apply Basic.ext <;>
           simp only [Basic.sub_re, Basic.sub_im, Basic.mul_re, Basic.mul_im, Basic.one_re, Basic.one_im] <;> ring1
     _ = Sample.sample base (index + 1) *
         (increment ^ 2 * Sample.expSecondRelSample increment index) := by
@@ -130,44 +130,44 @@ theorem expProductSample_second_order (base
     _ = increment ^ 2 *
         (Sample.sample base (index + 1) *
           Sample.expSecondRelSample increment index) := by
-      apply Data.Gaussian.Basic.ext <;>
+      apply Basic.ext <;>
         simp only [Basic.mul_re, Basic.mul_im, pow_two] <;> ring1
 
 /-- The translated product program has a uniform, wholly rational quadratic quadrance bound on the two displayed unit
 disks. -/
 theorem expProductSample_second_order_normSq_le
   {base increment : Canonical}
-    (baseUnit : Data.Gaussian.Norm.Basic.normSq base ≤ 1) (incrementUnit :
-      Data.Gaussian.Norm.Basic.normSq increment ≤ 1)
+    (baseUnit : Norm.Basic.normSq base ≤ 1) (incrementUnit :
+      Norm.Basic.normSq increment ≤ 1)
     (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (Sequence.expProductSample base increment
               (index + 1) -
             Sample.sample base (index + 1) -
             increment * Sample.sample base (index + 1)) ≤
-      10 * Data.Gaussian.Norm.Basic.normSq increment ^ 2 := by
+      10 * Norm.Basic.normSq increment ^ 2 := by
   rw [expProductSample_second_order,
-    Data.Gaussian.Norm.Basic.normSq_mul, Power.normSq_pow, Data.Gaussian.Norm.Basic.normSq_mul]
+    Norm.Basic.normSq_mul, Power.normSq_pow, Norm.Basic.normSq_mul]
   have cofactorBound :
-      Data.Gaussian.Norm.Basic.normSq (Sample.sample base (index + 1)) *
-          Data.Gaussian.Norm.Basic.normSq (Sample.expSecondRelSample increment index) ≤ 10 := by
+      Norm.Basic.normSq (Sample.sample base (index + 1)) *
+          Norm.Basic.normSq (Sample.expSecondRelSample increment index) ≤ 10 := by
     calc
-      Data.Gaussian.Norm.Basic.normSq (Sample.sample base (index + 1)) *
-            Data.Gaussian.Norm.Basic.normSq (Sample.expSecondRelSample increment index) ≤ 10 * 1 :=
+      Norm.Basic.normSq (Sample.sample base (index + 1)) *
+            Norm.Basic.normSq (Sample.expSecondRelSample increment index) ≤ 10 * 1 :=
         Fraction.Order.Arithmetic.mul_le_mul_direct
           (Sample.sample_bounded base baseUnit (index + 1))
           (Sample.expSecondRelSample_bounded incrementUnit index)
-          (Data.Gaussian.Norm.Basic.normSq_nonneg (Sample.expSecondRelSample increment index)) (by decide)
+          (Norm.Basic.normSq_nonneg (Sample.expSecondRelSample increment index)) (by decide)
       _ = 10 := Fraction.Field.mul_one_direct _
   calc
-    Data.Gaussian.Norm.Basic.normSq increment ^ 2 *
-          (Data.Gaussian.Norm.Basic.normSq (Sample.sample base (index + 1)) *
-            Data.Gaussian.Norm.Basic.normSq (Sample.expSecondRelSample increment index)) ≤
-        Data.Gaussian.Norm.Basic.normSq increment ^ 2 * 10 :=
+    Norm.Basic.normSq increment ^ 2 *
+          (Norm.Basic.normSq (Sample.sample base (index + 1)) *
+            Norm.Basic.normSq (Sample.expSecondRelSample increment index)) ≤
+        Norm.Basic.normSq increment ^ 2 * 10 :=
       Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct cofactorBound
         (Fraction.Order.Arithmetic.pow_nonneg_direct
-          (Data.Gaussian.Norm.Basic.normSq_nonneg increment) 2)
-    _ = 10 * Data.Gaussian.Norm.Basic.normSq increment ^ 2 :=
+          (Norm.Basic.normSq_nonneg increment) 2)
+    _ = 10 * Norm.Basic.normSq increment ^ 2 :=
       Fraction.Field.mul_comm _ _
 end Purelib.Approximation.Gaussian.Exponential.Horner.Differential
 

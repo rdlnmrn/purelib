@@ -34,6 +34,8 @@ import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PathValues
 import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths
 import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCommonCover
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests
+
 open Purelib.Curves
 
 open Purelib.Geometry
@@ -50,21 +52,21 @@ public section
 Cached summaries preserve every block and the polygon of block totals. -/
 namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartPaths
 
-variable {genus count : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+variable {genus count : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+    UniformReciprocalModels.Data patch count}
   {edge : Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {model :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell}
+    UniformReciprocalCover.Cell data edge}
+  {regular : RegularBounds.Data cap} {model :
+    UniformReciprocalRootChannels.RootModel cell}
   {parameter target sourceTarget : Normalization.InverseRootPolynomial.Coordinate} {floor sourceFloor : Nat}
-  {covers : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
+  {covers : SourceLocations.BasisSourceCovers parent}
 
-variable {cover : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data}
+variable {cover : UniformReciprocalCover.Cover data}
 
 open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Data.Gaussian.Basic.Canonical
@@ -72,31 +74,31 @@ open Purelib.Data.Gaussian.Basic.Canonical
 variable {depth : Nat} {allowance : Normalization.InverseRootPolynomial.Coordinate}
 
 variable {index minimum stage : Nat} {box : Rational.Box}
-  {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {polynomials : Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 namespace BasisCommonChartRequests.Plans
 
-variable {anchorBank : Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.PrimitiveCells data index
+variable {anchorBank : UniformReciprocalPrimitives.PrimitiveCells data index
   cover.mesh.edges}
-  {bank : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers index}
-  {originals : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+  {bank : SourceLocations.BasisSourceLocations.SampleBank covers index}
+  {originals : CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
     covers index} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 /-- Keep each interval's acquired paths and both retained endpoint values. -/
 @[expose] def Paths (originals :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank covers index)
+  CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank covers index)
   (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers)} →
-    (requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+    {intervals : List (CommonCover.BasisCommonInterval cover covers)} →
+    (requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target allowance floor sourceFloor intervals) →
-    (plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    (plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests) →
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      Plans.Readings anchorBank
       bank stage requests plans → Type 2
   | _, .nil, _, _ => PUnit
   | _, .cons _ tail, plans, readings =>
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartPath.BasisIntervalChartRequest.Plan.Evaluation.PathData
+      IntervalChartPath.BasisIntervalChartRequest.Plan.Evaluation.PathData
         readings.1.evaluated originals coefficients ×
           Paths
           originals coefficients tail plans.2 readings.2
@@ -104,16 +106,16 @@ variable {anchorBank : Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitiv
 /-- Acquire each original common interval's paired source/chart path from the retained reading and primitive banks in
 interval order. -/
 @[expose] def acquirePaths (originals :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank covers index)
+  CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank covers index)
   (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers)} →
-    (requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+    {intervals : List (CommonCover.BasisCommonInterval cover covers)} →
+    (requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target allowance floor sourceFloor intervals) →
-    (plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    (plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests) → (readings :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      Plans.Readings anchorBank
       bank stage requests plans) →
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
+    Paths originals
       coefficients requests plans readings
   | _, .nil, _, _ => ⟨⟩
   | _, .cons _ tail, plans, readings =>
@@ -127,15 +129,15 @@ interval order. -/
 namespace Paths
 
 /-- The ordered original source and chart increment blocks retained by each interval acquisition. -/
-@[expose] def pairs : {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval
+@[expose] def pairs : {intervals : List (CommonCover.BasisCommonInterval
   cover covers)} →
-    {requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+    {requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target allowance floor sourceFloor intervals} →
-    {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    {plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests} → {readings :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      Plans.Readings anchorBank
       bank stage requests plans} →
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
+    Paths originals
       coefficients requests plans readings → List (List Normalization.InverseRootPolynomial.Gaussian × List
       Normalization.InverseRootPolynomial.Gaussian)
   | _, .nil, _, _, _ => []
@@ -144,43 +146,43 @@ namespace Paths
     paths.2
 
 /-- There is exactly one retained source/chart block pair per original common interval. -/
-theorem count_eq : {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover
+theorem count_eq : {intervals : List (CommonCover.BasisCommonInterval cover
   covers)} →
-    {requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+    {requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target allowance floor sourceFloor intervals} →
-    {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    {plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests} → {readings :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      Plans.Readings anchorBank
       bank stage requests plans} →
-    (paths : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
+    (paths : Paths originals
       coefficients requests plans readings) → paths.pairs.length = intervals.length
   | _, .nil, _, _, _ => rfl
   | _, .cons _ _, _, _, paths => congrArg Nat.succ paths.2.count_eq
 
 /-- Compose the cached source summaries in original interval order, retaining the complete polygon of block totals. -/
 @[expose] def sourceSummary : {intervals : List
-  (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers)} →
-    {requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+  (CommonCover.BasisCommonInterval cover covers)} →
+    {requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target allowance floor sourceFloor intervals} →
-    {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    {plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests} → {readings :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      Plans.Readings anchorBank
       bank stage requests plans} →
-    (paths : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
+    (paths : Paths originals
       coefficients requests plans readings) → Path.IncrementArea.Summary (paths.pairs.map Prod.fst).flatten
   | _, .nil, _, _, _ => Path.IncrementArea.Summary.build []
   | _, .cons _ _, _, _, paths => paths.1.paired.source.append paths.2.sourceSummary
 
 /-- Compose the cached chart summaries in original interval order, retaining the complete polygon of block totals. -/
 @[expose] def chartSummary : {intervals : List
-  (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers)} →
-    {requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+  (CommonCover.BasisCommonInterval cover covers)} →
+    {requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target allowance floor sourceFloor intervals} →
-    {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    {plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests} → {readings :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      Plans.Readings anchorBank
       bank stage requests plans} →
-    (paths : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
+    (paths : Paths originals
       coefficients requests plans readings) → Path.IncrementArea.Summary (paths.pairs.map Prod.snd).flatten
   | _, .nil, _, _, _ => Path.IncrementArea.Summary.build []
   | _, .cons _ _, _, _, paths => paths.1.chart.append paths.2.chartSummary
@@ -188,18 +190,18 @@ theorem count_eq : {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.Basis
 /-- Exact agreement with the common primitive acquisition, block by block in
 original interval order. No independent origins or endpoint totals are identified. -/
 theorem source_paths {primitiveTarget : Normalization.InverseRootPolynomial.Coordinate} {primitiveFloor : Nat} :
-    {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers)} →
-    {requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+    {intervals : List (CommonCover.BasisCommonInterval cover covers)} →
+    {requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target allowance floor sourceFloor intervals} →
-    {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    {plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests} → {readings :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      Plans.Readings anchorBank
       bank stage requests plans} →
-    (paths : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
+    (paths : Paths originals
       coefficients requests plans readings) →
-    {primitivePlans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveAcquisition.CommonPrimitivePlans regular
+    {primitivePlans : CommonPrimitiveAcquisition.CommonPrimitivePlans regular
       primitiveTarget primitiveFloor intervals} →
-    (blocks : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveAcquisition.CommonPrimitivePlans.Blocks regular
+    (blocks : CommonPrimitiveAcquisition.CommonPrimitivePlans.Blocks regular
       polynomials originals bank coefficients depth primitivePlans) →
     paths.pairs.map Prod.fst = blocks.paths.map Prod.snd
   | _, .nil, _, _, _, _, .nil => rfl

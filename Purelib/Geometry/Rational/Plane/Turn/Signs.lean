@@ -11,6 +11,9 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+open Purelib.Data.Rat.Sign.Typed.Compatibility
+
 /-!
 # Rational coordinate certificates for formal small turns
 
@@ -35,7 +38,7 @@ public theorem smallTurnCompatible_of_dot_pos
     (AₗNonzero : Aₗ ≠ 0) (BₗNonzero : Bₗ ≠ 0)
     (AᵣNonzero : Aᵣ ≠ 0) (BᵣNonzero : Bᵣ ≠ 0)
     (dotPositive : 0 < Aₗ * Aᵣ + Bₗ * Bᵣ) :
-    Data.Sign.Pair.Turn.SmallTurnCompatible
+    SmallTurnCompatible
       (FiniteSign.ofCoordinate Aₗ) (FiniteSign.ofCoordinate Bₗ)
       (FiniteSign.ofCoordinate Aᵣ) (FiniteSign.ofCoordinate Bᵣ)
       (FiniteSign.ofCoordinate (Aₗ * Bᵣ - Bₗ * Aᵣ)) := by
@@ -61,21 +64,21 @@ public theorem smallTurnCompatible_of_dot_pos
         (add_nonpos AProductNegative.le BProductNegative.le))
           dotPositive).elim
     · exact (BProductNonzero BProductZero).elim
-    · have ASignsDiffer := Typed.Compatibility.Turn.ofCoordinate_ne_of_mul_neg AProductNegative
-      have BSignsEqual := Typed.Compatibility.Turn.ofCoordinate_eq_of_mul_pos BProductPositive
+    · have ASignsDiffer := Turn.ofCoordinate_ne_of_mul_neg AProductNegative
+      have BSignsEqual := Turn.ofCoordinate_eq_of_mul_pos BProductPositive
       have firstPositive :
           0 < Aₗ ^ 2 * (Bₗ * Bᵣ) :=
-        Fraction.Order.Arithmetic.mul_pos_direct
-          (Fraction.Order.Arithmetic.exact_rational_sq_pos AₗNonzero) BProductPositive
+        Arithmetic.mul_pos_direct
+          (Arithmetic.exact_rational_sq_pos AₗNonzero) BProductPositive
       have secondNegative :
           Bₗ ^ 2 * (Aₗ * Aᵣ) < 0 :=
-        Fraction.Order.Arithmetic.mul_neg_of_pos_of_neg_direct
-          (Fraction.Order.Arithmetic.exact_rational_sq_pos BₗNonzero) AProductNegative
+        Arithmetic.mul_neg_of_pos_of_neg_direct
+          (Arithmetic.exact_rational_sq_pos BₗNonzero) AProductNegative
       have crossProductPositive : 0 < cross * (Aₗ * Bₗ) := by
         calc
           0 < Aₗ ^ 2 * (Bₗ * Bᵣ) -
               Bₗ ^ 2 * (Aₗ * Aᵣ) :=
-            Fraction.Order.Arithmetic.sub_pos_direct
+            Arithmetic.sub_pos_direct
               (secondNegative.trans firstPositive)
           _ = cross * (Aₗ * Bₗ) := by
             dsimp only [cross]
@@ -84,27 +87,27 @@ public theorem smallTurnCompatible_of_dot_pos
           FiniteSign.mul (FiniteSign.ofCoordinate Aₗ)
             (FiniteSign.ofCoordinate Bₗ) := by
         simpa only [FiniteSign.ofCoordinate_mul] using
-          Typed.Compatibility.Turn.ofCoordinate_eq_of_mul_pos crossProductPositive
+          Turn.ofCoordinate_eq_of_mul_pos crossProductPositive
       rw [if_neg ASignsDiffer]
       exact ⟨BSignsEqual, by simpa only [cross] using turn⟩
   · exact (AProductNonzero AProductZero).elim
   · rcases lt_trichotomy (Bₗ * Bᵣ) 0 with
         BProductNegative | BProductZero | BProductPositive
-    · have ASignsEqual := Typed.Compatibility.Turn.ofCoordinate_eq_of_mul_pos AProductPositive
-      have BSignsDiffer := Typed.Compatibility.Turn.ofCoordinate_ne_of_mul_neg BProductNegative
+    · have ASignsEqual := Turn.ofCoordinate_eq_of_mul_pos AProductPositive
+      have BSignsDiffer := Turn.ofCoordinate_ne_of_mul_neg BProductNegative
       have firstNegative :
           Aₗ ^ 2 * (Bₗ * Bᵣ) < 0 :=
-        Fraction.Order.Arithmetic.mul_neg_of_pos_of_neg_direct
-          (Fraction.Order.Arithmetic.exact_rational_sq_pos AₗNonzero) BProductNegative
+        Arithmetic.mul_neg_of_pos_of_neg_direct
+          (Arithmetic.exact_rational_sq_pos AₗNonzero) BProductNegative
       have secondPositive :
           0 < Bₗ ^ 2 * (Aₗ * Aᵣ) :=
-        Fraction.Order.Arithmetic.mul_pos_direct
-          (Fraction.Order.Arithmetic.exact_rational_sq_pos BₗNonzero) AProductPositive
+        Arithmetic.mul_pos_direct
+          (Arithmetic.exact_rational_sq_pos BₗNonzero) AProductPositive
       have crossProductPositive : 0 < cross * (-(Aₗ * Bₗ)) := by
         calc
           0 < Bₗ ^ 2 * (Aₗ * Aᵣ) -
               Aₗ ^ 2 * (Bₗ * Bᵣ) :=
-            Fraction.Order.Arithmetic.sub_pos_direct
+            Arithmetic.sub_pos_direct
               (firstNegative.trans secondPositive)
           _ = cross * (-(Aₗ * Bₗ)) := by
             dsimp only [cross]
@@ -115,12 +118,12 @@ public theorem smallTurnCompatible_of_dot_pos
             (FiniteSign.ofCoordinate Bₗ)) := by
         simpa only [FiniteSign.ofCoordinate_neg,
           FiniteSign.ofCoordinate_mul] using
-          Typed.Compatibility.Turn.ofCoordinate_eq_of_mul_pos crossProductPositive
+          Turn.ofCoordinate_eq_of_mul_pos crossProductPositive
       rw [if_pos ASignsEqual, if_neg BSignsDiffer]
       simpa only [cross] using turn
     · exact (BProductNonzero BProductZero).elim
-    · have ASignsEqual := Typed.Compatibility.Turn.ofCoordinate_eq_of_mul_pos AProductPositive
-      have BSignsEqual := Typed.Compatibility.Turn.ofCoordinate_eq_of_mul_pos BProductPositive
+    · have ASignsEqual := Turn.ofCoordinate_eq_of_mul_pos AProductPositive
+      have BSignsEqual := Turn.ofCoordinate_eq_of_mul_pos BProductPositive
       rw [if_pos ASignsEqual, if_pos BSignsEqual]
       trivial
 

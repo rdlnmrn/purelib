@@ -35,11 +35,11 @@ open Purelib.Data.List in
 open Purelib.Geometry.Projective in
 /-- Completed-sector constraints imply the old state constraints at the exact newly emitted block homography image. -/
 theorem completeSector_holds_previous
-    (state : State) (kind : Parser.Syntax.BlockKind) (exponent : Nat)
+    (state : State) (kind : Syntax.BlockKind) (exponent : Nat)
     (first second third : Bool) (tail : Basic.Canonical)
     (phase : state.phase = .sector kind exponent (.two first second))
     (holds :
-      (Parser.State.completeSector state kind exponent first second third).Holds tail) :
+      (State.completeSector state kind exponent first second third).Holds tail) :
     state.Holds
       (Homography.Basic.homographic
         (Block.Matrix.blockMatrix kind exponent (Sector.Code.sectorOfBits first second third)) tail) := by
@@ -53,7 +53,7 @@ theorem completeSector_holds_previous
     exact List.mem_cons_self
   have blockDenominator : Homography.Basic.denominator block tail ≠ 0 := newest.1
   have full :
-      Parser.Semantics.Basic.fullBlockHolds kind exponent sector (Homography.Basic.homographic block tail) := newest.2
+      Basic.fullBlockHolds kind exponent sector (Homography.Basic.homographic block tail) := newest.2
   constructor
   · intro constraint member
     have mapped : (constraint.precompose block).Holds tail := by
@@ -63,7 +63,7 @@ theorem completeSector_holds_previous
           state.history.map (fun item => item.precompose block)
       exact List.mem_cons_of_mem _
         (Map.mem_map.mpr ⟨constraint, member, rfl⟩)
-    exact (Parser.Constraint.constraint_precompose_iff constraint block tail
+    exact (Constraint.constraint_precompose_iff constraint block tail
       blockDenominator).1 mapped
   · rw [phase]
     exact ⟨full.1, sector,
@@ -76,12 +76,12 @@ open Purelib.Geometry.Projective in
 open Purelib.LinearAlgebra.Coordinates2 renaming Matrix -> Matrix2 in
 /-- A completed-sector representation pulls back to the original state through that exact block homography. -/
 theorem completeSector_represents_previous
-    (state : State) (kind : Parser.Syntax.BlockKind) (exponent : Nat)
+    (state : State) (kind : Syntax.BlockKind) (exponent : Nat)
     (first second third : Bool) (input tail : Basic.Canonical)
     (phase : state.phase = .sector kind exponent (.two first second))
-    (represents : Parser.Semantics.State.Represents
-      (Parser.State.completeSector state kind exponent first second third) input tail) :
-    Parser.Semantics.State.Represents state input
+    (represents : State.Represents
+      (State.completeSector state kind exponent first second third) input tail) :
+    State.Represents state input
       (Homography.Basic.homographic
         (Block.Matrix.blockMatrix kind exponent (Sector.Code.sectorOfBits first second third)) tail) := by
   let sector := Sector.Code.sectorOfBits first second third
@@ -95,7 +95,7 @@ theorem completeSector_represents_previous
   have blockDenominator : Homography.Basic.denominator block tail ≠ 0 := newest.1
   have productDenominator :
       Homography.Basic.denominator (Matrix2.mul state.matrix block) tail ≠ 0 := by
-    simpa [Parser.State.completeSector, sector, block] using represents.1
+    simpa [State.completeSector, sector, block] using represents.1
   have oldDenominator :
       Homography.Basic.denominator state.matrix (Homography.Basic.homographic block tail) ≠ 0 :=
     (Homography.Composition.denominator_mul_ne_iff state.matrix block tail
@@ -103,7 +103,7 @@ theorem completeSector_represents_previous
   refine ⟨oldDenominator, ?_, ?_⟩
   · calc
       input = Homography.Basic.homographic (Matrix2.mul state.matrix block) tail := by
-        simpa [Parser.State.completeSector, sector, block] using represents.2.1
+        simpa [State.completeSector, sector, block] using represents.2.1
       _ = Homography.Basic.homographic state.matrix (Homography.Basic.homographic block tail) :=
         Homography.Composition.homographic_mul state.matrix block tail blockDenominator oldDenominator
   · exact completeSector_holds_previous state kind exponent first second third
@@ -112,11 +112,11 @@ theorem completeSector_represents_previous
 open Purelib.Data.CCL.Encoding in
 /-- Reading the third retained sector bit performs exactly the completeSector update. -/
 theorem step_eq_completeSector
-    (state : State) (kind : Parser.Syntax.BlockKind) (exponent : Nat)
+    (state : State) (kind : Syntax.BlockKind) (exponent : Nat)
     (first second third : Bool)
     (phase : state.phase = .sector kind exponent (.two first second)) :
-    Parser.State.step state third =
-      Parser.State.completeSector state kind exponent first second third := by
+    State.step state third =
+      State.completeSector state kind exponent first second third := by
   rcases state with ⟨statePhase, matrix, history⟩
   simp only at phase
   subst statePhase
@@ -151,31 +151,31 @@ open Purelib.Data.Gaussian
 open Purelib.LinearAlgebra.Coordinates2 renaming Matrix -> Matrix2
 /-- Replace only the parser phase in a retained representation using the supplied old active-phase witness. -/
 theorem represents_with_previous_phase
-    (oldPhase newPhase : Parser.Syntax.Phase) (matrix : LinearAlgebra.Coordinates2.Matrix.GaussianMatrix)
+    (oldPhase newPhase : Syntax.Phase) (matrix : Matrix2.GaussianMatrix)
     (history : List Constraint) (input tail : Basic.Canonical)
-    (represents : Parser.Semantics.State.Represents ⟨newPhase, matrix, history⟩ input tail)
-    (active : Parser.Semantics.Basic.activeHolds oldPhase tail) :
-    Parser.Semantics.State.Represents ⟨oldPhase, matrix, history⟩ input tail :=
+    (represents : State.Represents ⟨newPhase, matrix, history⟩ input tail)
+    (active : Basic.activeHolds oldPhase tail) :
+    State.Represents ⟨oldPhase, matrix, history⟩ input tail :=
   ⟨represents.1, represents.2.1, represents.2.2.1, active⟩
 
 /-- Undo an initial bit while preserving the exact represented input, tail, matrix and history. -/
 theorem step_represents_previous_initial
-    (matrix : LinearAlgebra.Coordinates2.Matrix.GaussianMatrix) (history : List Constraint)
+    (matrix : Matrix2.GaussianMatrix) (history : List Constraint)
       (bit : Bool)
     (input tail : Basic.Canonical)
-    (represents : Parser.Semantics.State.Represents
-      (Parser.State.step ⟨Parser.Syntax.Phase.initial, matrix, history⟩ bit) input tail) :
-    Parser.Semantics.State.Represents ⟨Parser.Syntax.Phase.initial, matrix, history⟩ input tail := by
+    (represents : State.Represents
+      (State.step ⟨Syntax.Phase.initial, matrix, history⟩ bit) input tail) :
+    State.Represents ⟨Syntax.Phase.initial, matrix, history⟩ input tail := by
   cases bit with
   | false =>
-      have after : Parser.Semantics.State.Represents
-          ⟨Parser.Syntax.Phase.lowUnary 0, matrix, history⟩ input tail := by
+      have after : State.Represents
+          ⟨Syntax.Phase.lowUnary 0, matrix, history⟩ input tail := by
         exact represents
       exact represents_with_previous_phase .initial (.lowUnary 0) matrix
         history input tail after True.intro
   | true =>
-      have after : Parser.Semantics.State.Represents
-          ⟨Parser.Syntax.Phase.highUnary 1, matrix, history⟩ input tail := by
+      have after : State.Represents
+          ⟨Syntax.Phase.highUnary 1, matrix, history⟩ input tail := by
         exact represents
       exact represents_with_previous_phase .initial (.highUnary 1) matrix
         history input tail after True.intro
@@ -189,103 +189,103 @@ open Purelib.Data.Rat
 open Purelib.LinearAlgebra.Coordinates2 renaming Matrix -> Matrix2
 /-- Undo a high-unary bit using the retained power-of-two lower bound at the unchanged tail. -/
 theorem step_represents_previous_highUnary
-    (count : Nat) (matrix : LinearAlgebra.Coordinates2.Matrix.GaussianMatrix)
+    (count : Nat) (matrix : Matrix2.GaussianMatrix)
       (history : List Constraint)
       (bit : Bool)
     (input tail : Basic.Canonical)
-    (represents : Parser.Semantics.State.Represents
-      (Parser.State.step ⟨Parser.Syntax.Phase.highUnary count, matrix, history⟩ bit) input tail) :
-    Parser.Semantics.State.Represents ⟨Parser.Syntax.Phase.highUnary count, matrix, history⟩ input tail := by
+    (represents : State.Represents
+      (State.step ⟨Syntax.Phase.highUnary count, matrix, history⟩ bit) input tail) :
+    State.Represents ⟨Syntax.Phase.highUnary count, matrix, history⟩ input tail := by
   cases bit with
   | false =>
-      have after : Parser.Semantics.State.Represents
-          ⟨Parser.Syntax.Phase.sector .initialHigh count .zero,
+      have after : State.Represents
+          ⟨Syntax.Phase.sector .initialHigh count .zero,
             matrix, history⟩ input tail := by
         exact represents
-      have active : Parser.Semantics.Basic.activeHolds (.highUnary count) tail :=
+      have active : Basic.activeHolds (.highUnary count) tail :=
         after.2.2.2.1.1
       exact represents_with_previous_phase (.highUnary count)
         (.sector .initialHigh count .zero) matrix history input tail after active
   | true =>
-      have after : Parser.Semantics.State.Represents
-          ⟨Parser.Syntax.Phase.highUnary (count + 1), matrix, history⟩ input tail := by
+      have after : State.Represents
+          ⟨Syntax.Phase.highUnary (count + 1), matrix, history⟩ input tail := by
         exact represents
-      have active : Parser.Semantics.Basic.activeHolds (.highUnary count) tail :=
+      have active : Basic.activeHolds (.highUnary count) tail :=
         (Dyadic.two_pow_le_succ count).trans after.2.2.2
       exact represents_with_previous_phase (.highUnary count)
         (.highUnary (count + 1)) matrix history input tail after active
 
 /-- Undo a low-unary bit using its exact retained radial or successor upper bound at the unchanged tail. -/
 theorem step_represents_previous_lowUnary
-    (count : Nat) (matrix : LinearAlgebra.Coordinates2.Matrix.GaussianMatrix)
+    (count : Nat) (matrix : Matrix2.GaussianMatrix)
       (history : List Constraint)
       (bit : Bool)
     (input tail : Basic.Canonical)
-    (represents : Parser.Semantics.State.Represents
-      (Parser.State.step ⟨Parser.Syntax.Phase.lowUnary count, matrix, history⟩ bit) input tail) :
-    Parser.Semantics.State.Represents ⟨Parser.Syntax.Phase.lowUnary count, matrix, history⟩ input tail := by
+    (represents : State.Represents
+      (State.step ⟨Syntax.Phase.lowUnary count, matrix, history⟩ bit) input tail) :
+    State.Represents ⟨Syntax.Phase.lowUnary count, matrix, history⟩ input tail := by
   cases bit with
   | false =>
-      have after : Parser.Semantics.State.Represents
-          ⟨Parser.Syntax.Phase.sector .initialLow count .zero,
+      have after : State.Represents
+          ⟨Syntax.Phase.sector .initialLow count .zero,
             matrix, history⟩ input tail := by
         exact represents
       cases count with
       | zero =>
-          have active : Parser.Semantics.Basic.activeHolds (.lowUnary 0) tail := by
-            simpa only [Parser.Semantics.Basic.activeHolds, Norm.Basic.normSq_eq_canonical, pow_zero,
+          have active : Basic.activeHolds (.lowUnary 0) tail := by
+            simpa only [Basic.activeHolds, Norm.Basic.normSq_eq_canonical, pow_zero,
               Fraction.Field.one_mul, -eq_self, -iff_self] using after.2.2.2.1.2
           exact represents_with_previous_phase (.lowUnary 0)
             (.sector .initialLow 0 .zero) matrix history input tail after active
       | succ count =>
-          have active : Parser.Semantics.Basic.activeHolds (.lowUnary (count + 1)) tail :=
+          have active : Basic.activeHolds (.lowUnary (count + 1)) tail :=
             Dyadic.lower_low_active_of_radial_upper count tail after.2.2.2.1.2
           exact represents_with_previous_phase (.lowUnary (count + 1))
             (.sector .initialLow (count + 1) .zero) matrix history input tail
             after active
   | true =>
-      have after : Parser.Semantics.State.Represents
-          ⟨Parser.Syntax.Phase.lowUnary (count + 1), matrix, history⟩ input tail := by
+      have after : State.Represents
+          ⟨Syntax.Phase.lowUnary (count + 1), matrix, history⟩ input tail := by
         exact represents
       cases count with
       | zero =>
-          have active : Parser.Semantics.Basic.activeHolds (.lowUnary 0) tail := by
-            have newer : Gaussian.Norm.Basic.normSq tail < 1 := by
-              simpa only [Parser.Semantics.Basic.activeHolds, Norm.Basic.normSq_eq_canonical, pow_zero,
+          have active : Basic.activeHolds (.lowUnary 0) tail := by
+            have newer : Norm.Basic.normSq tail < 1 := by
+              simpa only [Basic.activeHolds, Norm.Basic.normSq_eq_canonical, pow_zero,
                 Fraction.Field.one_mul, -eq_self, -iff_self] using after.2.2.2
-            simpa only [Parser.Semantics.Basic.activeHolds, Norm.Basic.normSq_eq_canonical, pow_zero,
+            simpa only [Basic.activeHolds, Norm.Basic.normSq_eq_canonical, pow_zero,
               Fraction.Field.one_mul, -eq_self, -iff_self] using newer.trans (by decide : (1 : Fraction.Rational) < 2)
           exact represents_with_previous_phase (.lowUnary 0) (.lowUnary 1)
             matrix history input tail after active
       | succ count =>
-          have active : Parser.Semantics.Basic.activeHolds (.lowUnary (count + 1)) tail :=
+          have active : Basic.activeHolds (.lowUnary (count + 1)) tail :=
             Dyadic.lower_low_active_of_next count tail after.2.2.2
           exact represents_with_previous_phase (.lowUnary (count + 1))
             (.lowUnary (count + 2)) matrix history input tail after active
 
 /-- Undo a loop-unary bit using the retained strict power-of-two lower bound at the unchanged tail. -/
 theorem step_represents_previous_loopUnary
-    (count : Nat) (matrix : LinearAlgebra.Coordinates2.Matrix.GaussianMatrix)
+    (count : Nat) (matrix : Matrix2.GaussianMatrix)
       (history : List Constraint)
       (bit : Bool)
     (input tail : Basic.Canonical)
-    (represents : Parser.Semantics.State.Represents
-      (Parser.State.step ⟨Parser.Syntax.Phase.loopUnary count, matrix, history⟩ bit) input tail) :
-    Parser.Semantics.State.Represents ⟨Parser.Syntax.Phase.loopUnary count, matrix, history⟩ input tail := by
+    (represents : State.Represents
+      (State.step ⟨Syntax.Phase.loopUnary count, matrix, history⟩ bit) input tail) :
+    State.Represents ⟨Syntax.Phase.loopUnary count, matrix, history⟩ input tail := by
   cases bit with
   | false =>
-      have after : Parser.Semantics.State.Represents
-          ⟨Parser.Syntax.Phase.sector .loop count .zero, matrix, history⟩ input tail := by
+      have after : State.Represents
+          ⟨Syntax.Phase.sector .loop count .zero, matrix, history⟩ input tail := by
         exact represents
-      have active : Parser.Semantics.Basic.activeHolds (.loopUnary count) tail :=
+      have active : Basic.activeHolds (.loopUnary count) tail :=
         after.2.2.2.1.1
       exact represents_with_previous_phase (.loopUnary count)
         (.sector .loop count .zero) matrix history input tail after active
   | true =>
-      have after : Parser.Semantics.State.Represents
-          ⟨Parser.Syntax.Phase.loopUnary (count + 1), matrix, history⟩ input tail := by
+      have after : State.Represents
+          ⟨Syntax.Phase.loopUnary (count + 1), matrix, history⟩ input tail := by
         exact represents
-      have active : Parser.Semantics.Basic.activeHolds (.loopUnary count) tail :=
+      have active : Basic.activeHolds (.loopUnary count) tail :=
         (Dyadic.two_pow_le_succ count).trans_lt after.2.2.2
       exact represents_with_previous_phase (.loopUnary count)
         (.loopUnary (count + 1)) matrix history input tail after active
@@ -299,43 +299,43 @@ open Purelib.Data.Gaussian
 open Purelib.LinearAlgebra.Coordinates2 renaming Matrix -> Matrix2
 /-- Undo the first sector bit by retaining its sector witness in the original zero-bit candidate list. -/
 theorem step_represents_previous_sector_zero
-    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (matrix : LinearAlgebra.Coordinates2.Matrix.GaussianMatrix)
+    (kind : Syntax.BlockKind) (exponent : Nat) (matrix : Matrix2.GaussianMatrix)
     (history : List Constraint) (bit : Bool) (input tail : Basic.Canonical)
-    (represents : Parser.Semantics.State.Represents
-      (Parser.State.step ⟨Parser.Syntax.Phase.sector kind exponent .zero, matrix, history⟩ bit)
+    (represents : State.Represents
+      (State.step ⟨Syntax.Phase.sector kind exponent .zero, matrix, history⟩ bit)
         input tail) :
-    Parser.Semantics.State.Represents ⟨Parser.Syntax.Phase.sector kind exponent .zero, matrix, history⟩
+    State.Represents ⟨Syntax.Phase.sector kind exponent .zero, matrix, history⟩
       input tail := by
-  have after : Parser.Semantics.State.Represents
-      ⟨Parser.Syntax.Phase.sector kind exponent (.one bit),
+  have after : State.Represents
+      ⟨Syntax.Phase.sector kind exponent (.one bit),
         matrix, history⟩ input tail := by
     exact represents
   rcases after.2.2.2 with ⟨radial, sector, member, sectorHolds⟩
   have oldMember : sector ∈ Sector.Code.sectorCandidates .zero :=
     Sector.Code.sectorCandidates_mono rfl member
-  have active : Parser.Semantics.Basic.activeHolds (.sector kind exponent .zero) tail :=
+  have active : Basic.activeHolds (.sector kind exponent .zero) tail :=
     ⟨radial, sector, oldMember, sectorHolds⟩
   exact represents_with_previous_phase (.sector kind exponent .zero)
     (.sector kind exponent (.one bit)) matrix history input tail after active
 
 /-- Undo the second sector bit by retaining its sector witness in the original one-bit candidate list. -/
 theorem step_represents_previous_sector_one
-    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (first : Bool) (matrix :
-      LinearAlgebra.Coordinates2.Matrix.GaussianMatrix)
+    (kind : Syntax.BlockKind) (exponent : Nat) (first : Bool) (matrix :
+      Matrix2.GaussianMatrix)
     (history : List Constraint) (bit : Bool) (input tail : Basic.Canonical)
-    (represents : Parser.Semantics.State.Represents
-      (Parser.State.step ⟨Parser.Syntax.Phase.sector kind exponent (.one first), matrix, history⟩ bit)
+    (represents : State.Represents
+      (State.step ⟨Syntax.Phase.sector kind exponent (.one first), matrix, history⟩ bit)
         input tail) :
-    Parser.Semantics.State.Represents ⟨Parser.Syntax.Phase.sector kind exponent (.one first), matrix, history⟩
+    State.Represents ⟨Syntax.Phase.sector kind exponent (.one first), matrix, history⟩
       input tail := by
-  have after : Parser.Semantics.State.Represents
-      ⟨Parser.Syntax.Phase.sector kind exponent (.two first bit),
+  have after : State.Represents
+      ⟨Syntax.Phase.sector kind exponent (.two first bit),
         matrix, history⟩ input tail := by
     exact represents
   rcases after.2.2.2 with ⟨radial, sector, member, sectorHolds⟩
   have oldMember : sector ∈ Sector.Code.sectorCandidates (.one first) :=
     Sector.Code.sectorCandidates_mono (by cases first <;> rfl) member
-  have active : Parser.Semantics.Basic.activeHolds
+  have active : Basic.activeHolds
       (.sector kind exponent (.one first)) tail :=
     ⟨radial, sector, oldMember, sectorHolds⟩
   exact represents_with_previous_phase (.sector kind exponent (.one first))
@@ -349,19 +349,19 @@ open Purelib.Data.Gaussian in
 open Purelib.LinearAlgebra.Coordinates2 renaming Matrix -> Matrix2 in
 /-- Undo the third sector bit by applying the exact completed-block homography to the retained new tail. -/
 theorem step_represents_previous_sector_two
-    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (first second : Bool) (matrix :
-      LinearAlgebra.Coordinates2.Matrix.GaussianMatrix)
+    (kind : Syntax.BlockKind) (exponent : Nat) (first second : Bool) (matrix :
+      Matrix2.GaussianMatrix)
     (history : List Constraint) (bit : Bool) (input tail : Basic.Canonical)
-    (represents : Parser.Semantics.State.Represents
-      (Parser.State.step ⟨Parser.Syntax.Phase.sector kind exponent (.two first second), matrix, history⟩
+    (represents : State.Represents
+      (State.step ⟨Syntax.Phase.sector kind exponent (.two first second), matrix, history⟩
         bit) input tail) :
-    Parser.Semantics.State.Represents ⟨Parser.Syntax.Phase.sector kind exponent (.two first second), matrix, history⟩
+    State.Represents ⟨Syntax.Phase.sector kind exponent (.two first second), matrix, history⟩
       input (previousTail
-        ⟨Parser.Syntax.Phase.sector kind exponent (.two first second), matrix, history⟩
+        ⟨Syntax.Phase.sector kind exponent (.two first second), matrix, history⟩
         bit tail) := by
-  simpa [previousTail, Parser.State.step] using
+  simpa [previousTail, State.step] using
     completeSector_represents_previous
-      ⟨Parser.Syntax.Phase.sector kind exponent (.two first second), matrix, history⟩
+      ⟨Syntax.Phase.sector kind exponent (.two first second), matrix, history⟩
       kind exponent first second bit input tail rfl represents
 
 open Purelib.Data.CCL.Encoding in
@@ -370,40 +370,40 @@ open Purelib.Data.Gaussian in
 open Purelib.LinearAlgebra.Coordinates2 renaming Matrix -> Matrix2 in
 /-- Undo any sector-reading step with the exact previous tail and original candidate constraints. -/
 theorem step_represents_previous_sector
-    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (bits : Sector.Code.SectorBits)
-    (matrix : LinearAlgebra.Coordinates2.Matrix.GaussianMatrix) (history : List Constraint)
+    (kind : Syntax.BlockKind) (exponent : Nat) (bits : Sector.Code.SectorBits)
+    (matrix : Matrix2.GaussianMatrix) (history : List Constraint)
       (bit : Bool)
     (input tail : Basic.Canonical)
-    (represents : Parser.Semantics.State.Represents
-      (Parser.State.step ⟨Parser.Syntax.Phase.sector kind exponent bits, matrix, history⟩ bit)
+    (represents : State.Represents
+      (State.step ⟨Syntax.Phase.sector kind exponent bits, matrix, history⟩ bit)
         input tail) :
-    Parser.Semantics.State.Represents ⟨Parser.Syntax.Phase.sector kind exponent bits, matrix, history⟩ input
-      (previousTail ⟨Parser.Syntax.Phase.sector kind exponent bits, matrix, history⟩
+    State.Represents ⟨Syntax.Phase.sector kind exponent bits, matrix, history⟩ input
+      (previousTail ⟨Syntax.Phase.sector kind exponent bits, matrix, history⟩
         bit tail) := by
   cases bits with
   | zero =>
-      have after : Parser.Semantics.State.Represents
-          ⟨Parser.Syntax.Phase.sector kind exponent (.one bit),
+      have after : State.Represents
+          ⟨Syntax.Phase.sector kind exponent (.one bit),
             matrix, history⟩ input tail := by
         exact represents
       rcases after.2.2.2 with ⟨radial, sector, member, sectorHolds⟩
       have oldMember : sector ∈ Sector.Code.sectorCandidates .zero :=
         Sector.Code.sectorCandidates_mono rfl member
-      have active : Parser.Semantics.Basic.activeHolds (.sector kind exponent .zero) tail :=
+      have active : Basic.activeHolds (.sector kind exponent .zero) tail :=
         ⟨radial, sector, oldMember, sectorHolds⟩
       simpa [previousTail] using
         represents_with_previous_phase (.sector kind exponent .zero)
           (.sector kind exponent (.one bit)) matrix history input tail
           after active
   | one first =>
-      have after : Parser.Semantics.State.Represents
-          ⟨Parser.Syntax.Phase.sector kind exponent (.two first bit),
+      have after : State.Represents
+          ⟨Syntax.Phase.sector kind exponent (.two first bit),
             matrix, history⟩ input tail := by
         exact represents
       rcases after.2.2.2 with ⟨radial, sector, member, sectorHolds⟩
       have oldMember : sector ∈ Sector.Code.sectorCandidates (.one first) :=
         Sector.Code.sectorCandidates_mono (by cases first <;> rfl) member
-      have active : Parser.Semantics.Basic.activeHolds
+      have active : Basic.activeHolds
           (.sector kind exponent (.one first)) tail :=
         ⟨radial, sector, oldMember, sectorHolds⟩
       simpa [previousTail] using
@@ -411,9 +411,9 @@ theorem step_represents_previous_sector
           (.sector kind exponent (.two first bit)) matrix history input tail
           after active
   | two first second =>
-      simpa [previousTail, Parser.State.step] using
+      simpa [previousTail, State.step] using
         completeSector_represents_previous
-          ⟨Parser.Syntax.Phase.sector kind exponent (.two first second), matrix, history⟩
+          ⟨Syntax.Phase.sector kind exponent (.two first second), matrix, history⟩
           kind exponent first second bit input tail rfl represents
 
 open Purelib.Data.CCL.Encoding in
@@ -421,8 +421,8 @@ open Purelib.Data.Gaussian in
 /-- Every retained next-state representation gives an old-state representation at its exact previousTail. -/
 theorem step_represents_previous
     (state : State) (bit : Bool) (input tail : Basic.Canonical)
-    (represents : Parser.Semantics.State.Represents (Parser.State.step state bit) input tail) :
-    Parser.Semantics.State.Represents state input (previousTail state bit tail) := by
+    (represents : State.Represents (State.step state bit) input tail) :
+    State.Represents state input (previousTail state bit tail) := by
   rcases state with ⟨phase, matrix, history⟩
   cases phase with
   | initial =>
@@ -456,9 +456,9 @@ The old representation uses this step's previousTail. On sector completion the n
 block denominator, allowing exact homography composition with the unchanged input. -/
 theorem step_represents_next
     (state : State) (bit : Bool) (input tail : Basic.Canonical)
-    (before : Parser.Semantics.State.Represents state input (previousTail state bit tail))
-    (afterHolds : (Parser.State.step state bit).Holds tail) :
-    Parser.Semantics.State.Represents (Parser.State.step state bit) input tail := by
+    (before : State.Represents state input (previousTail state bit tail))
+    (afterHolds : (State.step state bit).Holds tail) :
+    State.Represents (State.step state bit) input tail := by
   rcases state with ⟨phase, matrix, history⟩
   cases phase with
   | initial | highUnary | lowUnary | loopUnary =>
@@ -488,14 +488,14 @@ theorem step_represents_next
             (Homography.Composition.denominator_mul_ne_iff matrix block tail blockDenominator).2
               before.1
           refine ⟨?_, ?_, afterHolds⟩
-          · simpa [Parser.State.step, Parser.State.completeSector, sector, block] using productDenominator
+          · simpa [State.step, State.completeSector, sector, block] using productDenominator
           · calc
               input = Homography.Basic.homographic matrix (Homography.Basic.homographic block tail) := before.2.1
               _ = Homography.Basic.homographic (Matrix2.mul matrix block) tail :=
                 (Homography.Composition.homographic_mul matrix block tail blockDenominator
                   before.1).symm
               _ = Homography.Basic.homographic
-                  (Parser.State.step ⟨Parser.Syntax.Phase.sector kind exponent (.two first second),
+                  (State.step ⟨Syntax.Phase.sector kind exponent (.two first second),
                     matrix, history⟩ bit).matrix tail := by
                 rfl
 
@@ -510,36 +510,36 @@ The supplied block image equals the previous tail and has nonzero denominator. P
 initial loop condition, prepend that exact constraint, and transport every original history constraint through the same
 block. -/
 theorem completeSector_represents_next
-    (state : State) (kind : Parser.Syntax.BlockKind) (exponent : Nat)
+    (state : State) (kind : Syntax.BlockKind) (exponent : Nat)
     (first second third : Bool) (input before tail : Basic.Canonical)
     (phase : state.phase = .sector kind exponent (.two first second))
-    (beforeRepresents : Parser.Semantics.State.Represents state input before)
+    (beforeRepresents : State.Represents state input before)
     (beforeEq : Homography.Basic.homographic
       (Block.Matrix.blockMatrix kind exponent (Sector.Code.sectorOfBits first second third)) tail =
         before)
     (blockDenominator : Homography.Basic.denominator
       (Block.Matrix.blockMatrix kind exponent (Sector.Code.sectorOfBits first second third)) tail ≠ 0)
-    (fullBlock : Parser.Semantics.Basic.fullBlockHolds kind exponent
+    (fullBlock : Basic.fullBlockHolds kind exponent
       (Sector.Code.sectorOfBits first second third) before)
-    (loopActive : Parser.Semantics.Basic.activeHolds (.loopUnary 0) tail) :
-    Parser.Semantics.State.Represents (Parser.State.completeSector state kind exponent first second third)
+    (loopActive : Basic.activeHolds (.loopUnary 0) tail) :
+    State.Represents (State.completeSector state kind exponent first second third)
       input tail := by
   let sector := Sector.Code.sectorOfBits first second third
   let block := Block.Matrix.blockMatrix kind exponent sector
   have afterHolds :
-      (Parser.State.completeSector state kind exponent first second third).Holds tail := by
+      (State.completeSector state kind exponent first second third).Holds tail := by
     constructor
     · intro constraint member
       change constraint ∈
         (Constraint.mk block kind exponent sector) ::
           state.history.map (fun item => item.precompose block) at member
-      rcases Purelib.Data.List.Membership.mem_cons.mp member with newest | older
+      rcases Membership.mem_cons.mp member with newest | older
       · subst constraint
         refine ⟨blockDenominator, ?_⟩
         rw [beforeEq]
         exact fullBlock
       · rcases Map.mem_map.mp older with ⟨old, oldMember, rfl⟩
-        apply (Parser.Constraint.constraint_precompose_iff old block tail blockDenominator).2
+        apply (Constraint.constraint_precompose_iff old block tail blockDenominator).2
         rw [beforeEq]
         exact beforeRepresents.2.2.1 old oldMember
     · exact loopActive

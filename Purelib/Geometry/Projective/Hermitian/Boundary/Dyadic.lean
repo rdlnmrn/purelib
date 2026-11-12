@@ -57,47 +57,47 @@ namespace Purelib.Geometry.Projective.Hermitian.Boundary
     (inner : GaussianMatrix)
     (innerNonzero : Matrix2.determinant inner ≠ 0)
     (exponent : Nat) :
-    Boundary.BoundaryDescription inner
-      (Hermitian.pullbackForm inner
-        (Hermitian.affineNormComparisonForm
+    BoundaryDescription inner
+      (pullbackForm inner
+        (affineNormComparisonForm
           ((2 : Fraction.Rational) ^ exponent))) := by
-  let base := Power.natPow Data.Gaussian.Basic.Canonical.gamma exponent
+  let base := Power.natPow Basic.Canonical.gamma exponent
   have sourceIdentity :
-      Hermitian.affineNormComparisonForm
+      affineNormComparisonForm
           ((2 : Fraction.Rational) ^ exponent) =
-        Hermitian.normComparisonForm Coordinates2.Matrix.identityMatrix
-          (Data.Gaussian.Norm.Basic.normSq base) := by
+        normComparisonForm Coordinates2.Matrix.identityMatrix
+          (Norm.Basic.normSq base) := by
     have canonicalIdentity (threshold : Fraction.Rational) :
-        Hermitian.affineNormComparisonForm threshold =
-          Hermitian.normComparisonForm Coordinates2.Matrix.identityMatrix
+        affineNormComparisonForm threshold =
+          normComparisonForm Coordinates2.Matrix.identityMatrix
             threshold := by
       apply HermitianForm.ext <;>
-        simp only [Hermitian.affineNormComparisonForm,
-          Purelib.Geometry.Projective.Hermitian.constantForm, Hermitian.normComparisonForm,
-          Hermitian.HermitianForm.sub, Hermitian.HermitianForm.add, Hermitian.HermitianForm.neg,
-          Hermitian.HermitianForm.scale, Purelib.Geometry.Projective.Hermitian.affineNormForm,
-          Coordinates2.Matrix.identityMatrix, Data.Gaussian.Norm.Basic.normSq,
-          Purelib.Data.Gaussian.Basic.one_re,
-          Purelib.Data.Gaussian.Basic.one_im,
-          Purelib.Data.Gaussian.Basic.zero_re,
-          Purelib.Data.Gaussian.Basic.zero_im, -eq_self, -iff_self] <;>
+        simp only [affineNormComparisonForm,
+          constantForm, normComparisonForm,
+          HermitianForm.sub, HermitianForm.add, HermitianForm.neg,
+          HermitianForm.scale, affineNormForm,
+          Coordinates2.Matrix.identityMatrix, Norm.Basic.normSq,
+          Basic.one_re,
+          Basic.one_im,
+          Basic.zero_re,
+          Basic.zero_im, -eq_self, -iff_self] <;>
         ring1
     rw [canonicalIdentity, Power.normSq_natPow, Constants.normSq_gamma]
   exact BoundaryDescription.cast
-    (congrArg (Hermitian.pullbackForm inner)
+    (congrArg (pullbackForm inner)
       sourceIdentity).symm
-    (Boundary.pulledNormComparison Coordinates2.Matrix.identityMatrix inner
+    (pulledNormComparison Coordinates2.Matrix.identityMatrix inner
       (by
         intro determinantZero
-        have realZero := congrArg Data.Gaussian.Basic.re determinantZero
+        have realZero := congrArg Basic.re determinantZero
         simp only [Matrix2.determinant,
           Coordinates2.Matrix.identityMatrix,
-          Purelib.Data.Gaussian.Basic.mul_re,
-          Purelib.Data.Gaussian.Basic.sub_re,
-          Purelib.Data.Gaussian.Basic.one_re,
-          Purelib.Data.Gaussian.Basic.one_im,
-          Purelib.Data.Gaussian.Basic.zero_re,
-          Purelib.Data.Gaussian.Basic.zero_im, -eq_self, -iff_self] at realZero
+          Basic.mul_re,
+          Basic.sub_re,
+          Basic.one_re,
+          Basic.one_im,
+          Basic.zero_re,
+          Basic.zero_im, -eq_self, -iff_self] at realZero
         exact Fraction.Field.zero_ne_one realZero.symm)
       innerNonzero ⟨rfl, rfl⟩ base)
 end Purelib.Geometry.Projective.Hermitian.Boundary

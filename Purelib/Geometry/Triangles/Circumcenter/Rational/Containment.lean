@@ -18,6 +18,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -52,7 +54,7 @@ section
 
 /-- A point lies on the closed triangle when it has displayed nonnegative barycentric weights. -/
 def LiesOnTriangle
-    (point first second third : Geometry.Plane.Point Fraction.Rational) : Prop :=
+    (point first second third : Plane.Point Fraction.Rational) : Prop :=
   ∃ firstWeight secondWeight thirdWeight : Fraction.Rational,
     0 ≤ firstWeight ∧ 0 ≤ secondWeight ∧ 0 ≤ thirdWeight ∧
       firstWeight + secondWeight + thirdWeight = 1 ∧
@@ -72,34 +74,34 @@ theorem affineCircumcenterWeight_nonnegative_iff
     have productNonnegative :
         0 ≤ Affine.affineCircumcenterWeight opposite adjacentOne adjacentTwo area *
           area :=
-      Fraction.Order.Arithmetic.mul_nonneg_direct weightNonnegative
-        (Fraction.Order.Arithmetic.le_of_lt_direct areaPositive)
+      Arithmetic.mul_nonneg_direct weightNonnegative
+        (Arithmetic.le_of_lt_direct areaPositive)
     unfold Affine.affineCircumcenterWeight at productNonnegative
     rw [Algebra.Field.ExplicitField.div_mul_cancel _ areaNonzero]
       at productNonnegative
     have differenceNonnegative :=
-      (Fraction.Order.PositiveMul.nonnegative_mul_iff_of_positive opposite
+      (PositiveMul.nonnegative_mul_iff_of_positive opposite
         (adjacentOne + adjacentTwo - opposite) oppositePositive).1
         productNonnegative
-    exact Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    exact Arithmetic.le_of_sub_nonneg_direct
       differenceNonnegative
   · intro bound
     have differenceNonnegative :
         0 ≤ adjacentOne + adjacentTwo - opposite :=
-      Fraction.Order.Arithmetic.sub_nonneg_direct bound
+      Arithmetic.sub_nonneg_direct bound
     unfold Affine.affineCircumcenterWeight
-    exact Fraction.Order.Field.div_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Fraction.Order.Arithmetic.le_of_lt_direct oppositePositive)
+    exact Field.div_nonneg_direct
+      (Arithmetic.mul_nonneg_direct
+        (Arithmetic.le_of_lt_direct oppositePositive)
         differenceNonnegative)
-      (Fraction.Order.Arithmetic.le_of_lt_direct areaPositive)
+      (Arithmetic.le_of_lt_direct areaPositive)
 
 /-- The rational circumcenter lies in the closed triangle exactly when the three weak quadrance bounds hold.
 
 The triangle is noncollinear, with positive side quadrances and positive quadrea; barycentric uniqueness identifies the
 displayed nonnegative weights. -/
 theorem problem_2
-    (first second third : Geometry.Plane.Point Fraction.Rational)
+    (first second third : Plane.Point Fraction.Rational)
     (firstThirdDistinct : first ≠ third)
     (secondThirdDistinct : second ≠ third)
     (notCollinear : ¬ Incidence.Collinear first second third)
@@ -108,7 +110,7 @@ theorem problem_2
     (thirdQuadrancePositive : 0 < Quadrance.quadrance first second)
     (areaPositive : 0 < Quadrea.Basic.quadrea first second third) :
     LiesOnTriangle
-        (Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+        (Basic.circumcenterPoint first second third firstThirdDistinct
           secondThirdDistinct notCollinear)
         first second third ↔
       TriangleSpreadRules.AcuteQuadranceBounds
@@ -159,7 +161,7 @@ theorem problem_2
         Affine.affineCombinationThree firstWeight first secondWeight second
             thirdWeight third =
             Affine.affineCircumcenterPoint first second third := canonicalPoint
-        _ = Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+        _ = Basic.circumcenterPoint first second third firstThirdDistinct
               secondThirdDistinct notCollinear := circumcenterFormula.symm
         _ = Affine.affineCombinationThree otherFirstWeight first
               otherSecondWeight second otherThirdWeight third :=
@@ -194,7 +196,7 @@ theorem problem_2
     calc
       Affine.affineCombinationThree firstWeight first secondWeight second
           thirdWeight third = Affine.affineCircumcenterPoint first second third := rfl
-      _ = Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+      _ = Basic.circumcenterPoint first second third firstThirdDistinct
           secondThirdDistinct notCollinear := circumcenterFormula.symm
 end
 end Purelib.Geometry.Triangles.Circumcenter.Rational.Containment

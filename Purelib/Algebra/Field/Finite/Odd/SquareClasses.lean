@@ -60,13 +60,13 @@ open FiniteOddFieldPresentation
 
 Membership is checked against the retained square table while preserving carrier order. -/
 def FiniteOddFieldPresentation.squareCarrierValues : List K :=
-  presentation.carrier.filter (SquareClasses.FiniteOddFieldPresentation.isSquare presentation)
+  presentation.carrier.filter (FiniteOddFieldPresentation.isSquare presentation)
 
 /-- Filter the complete carrier for its nonsquare values.
 
 The complementary square-table test preserves carrier order and excludes zero. -/
 def FiniteOddFieldPresentation.nonsquareValues : List K :=
-  presentation.carrier.filter fun value => !(SquareClasses.FiniteOddFieldPresentation.isSquare presentation) value
+  presentation.carrier.filter fun value => !(FiniteOddFieldPresentation.isSquare presentation) value
 
 /-- Filter the retained square table to remove zero.
 
@@ -90,10 +90,10 @@ theorem FiniteOddFieldPresentation.zero_mem_squareValues : (0 : K) ∈ presentat
 Carrier completeness supplies the source occurrence for every table member.
 The original executable membership decision supplies the filter certificate. -/
 theorem FiniteOddFieldPresentation.mem_squareCarrierValues_iff (value : K) :
-    value ∈ (SquareClasses.FiniteOddFieldPresentation.squareCarrierValues presentation) ↔
+    value ∈ (FiniteOddFieldPresentation.squareCarrierValues presentation) ↔
       value ∈ presentation.squareValues := by
   letI : DecidableEq K := presentation.eqDecidable
-  unfold SquareClasses.FiniteOddFieldPresentation.squareCarrierValues SquareClasses.FiniteOddFieldPresentation.isSquare
+  unfold FiniteOddFieldPresentation.squareCarrierValues FiniteOddFieldPresentation.isSquare
   constructor
   · intro member
     exact of_decide_eq_true (Filter.mem_filter.mp member).2
@@ -104,10 +104,10 @@ theorem FiniteOddFieldPresentation.mem_squareCarrierValues_iff (value : K) :
 
 The complete carrier and certified square table make the finite test exhaustive. -/
 theorem FiniteOddFieldPresentation.mem_nonsquareValues_iff (value : K) :
-    value ∈ (SquareClasses.FiniteOddFieldPresentation.nonsquareValues presentation) ↔
+    value ∈ (FiniteOddFieldPresentation.nonsquareValues presentation) ↔
       ∀ root : K, root ^ 2 ≠ value := by
   letI : DecidableEq K := presentation.eqDecidable
-  unfold SquareClasses.FiniteOddFieldPresentation.nonsquareValues SquareClasses.FiniteOddFieldPresentation.isSquare
+  unfold FiniteOddFieldPresentation.nonsquareValues FiniteOddFieldPresentation.isSquare
   constructor
   · intro member root rootSquare
     have rejected := (Filter.mem_filter.mp member).2
@@ -139,10 +139,10 @@ theorem FiniteOddFieldPresentation.nonsquare_ne_zero {value : K}
 Filtering the retained square table removes zero, and the presentation
 certificates identify its remaining members with their explicit square roots. -/
 theorem FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff (value : K) :
-    value ∈ (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation) ↔
+    value ∈ (FiniteOddFieldPresentation.nonzeroSquareValues presentation) ↔
       value ≠ 0 ∧ Presentation.FiniteOddFieldPresentation.HasSquareRoot value := by
   letI : DecidableEq K := presentation.eqDecidable
-  unfold SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues
+  unfold FiniteOddFieldPresentation.nonzeroSquareValues
   constructor
   · intro member
     have retained := Filter.mem_filter.mp member
@@ -158,17 +158,17 @@ theorem FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff (value : K) :
 Every retained filtered occurrence belongs to the original complete carrier,
 whose pairwise distinctness certificate is preserved by filtering. -/
 theorem FiniteOddFieldPresentation.squareCarrierValues_nodup :
-    (SquareClasses.FiniteOddFieldPresentation.squareCarrierValues presentation).Nodup := by
-  unfold SquareClasses.FiniteOddFieldPresentation.squareCarrierValues
+    (FiniteOddFieldPresentation.squareCarrierValues presentation).Nodup := by
+  unfold FiniteOddFieldPresentation.squareCarrierValues
   exact Filter.pairwise_filter _ presentation.carrierNodup
 
 /-- The retained nonsquare list has no repeated values.
 
 The original carrier has distinct occurrences. Applying the complementary
 Boolean test retains that certificate for the surviving entries. -/
-theorem FiniteOddFieldPresentation.nonsquareValues_nodup : (SquareClasses.FiniteOddFieldPresentation.nonsquareValues
+theorem FiniteOddFieldPresentation.nonsquareValues_nodup : (FiniteOddFieldPresentation.nonsquareValues
   presentation).Nodup := by
-  unfold SquareClasses.FiniteOddFieldPresentation.nonsquareValues
+  unfold FiniteOddFieldPresentation.nonsquareValues
   exact Filter.pairwise_filter _ presentation.carrierNodup
 
 /-- The nonzero-square list has no repeated values.
@@ -176,84 +176,84 @@ theorem FiniteOddFieldPresentation.nonsquareValues_nodup : (SquareClasses.Finite
 The retained square table already has distinct occurrences, and removing zero
 preserves their original pairwise distinctness certificate. -/
 theorem FiniteOddFieldPresentation.nonzeroSquareValues_nodup :
-    (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).Nodup := by
+    (FiniteOddFieldPresentation.nonzeroSquareValues presentation).Nodup := by
   letI : DecidableEq K := presentation.eqDecidable
-  unfold SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues
+  unfold FiniteOddFieldPresentation.nonzeroSquareValues
   exact Filter.pairwise_filter _ presentation.squareValuesNodup
 
 /-- Identify the carrier square filter with the cached square table.
 
 Both directions are identity maps preserving the displayed scalar values. -/
 def FiniteOddFieldPresentation.squareCarrierBijection : ListBijection
-    (SquareClasses.FiniteOddFieldPresentation.squareCarrierValues presentation) presentation.squareValues where
+    (FiniteOddFieldPresentation.squareCarrierValues presentation) presentation.squareValues where
   forward := fun value => value
   backward := fun value => value
   forward_mem := by
     intro value member
-    exact ((SquareClasses.FiniteOddFieldPresentation.mem_squareCarrierValues_iff presentation) value).1 member
+    exact ((FiniteOddFieldPresentation.mem_squareCarrierValues_iff presentation) value).1 member
   backward_mem := by
     intro value member
-    exact ((SquareClasses.FiniteOddFieldPresentation.mem_squareCarrierValues_iff presentation) value).2 member
+    exact ((FiniteOddFieldPresentation.mem_squareCarrierValues_iff presentation) value).2 member
   backward_forward := by intro _ _; rfl
   forward_backward := by intro _ _; rfl
 
 /-- The carrier square filter and cached square table have the same length. -/
 theorem FiniteOddFieldPresentation.squareCarrierValues_length :
-    (SquareClasses.FiniteOddFieldPresentation.squareCarrierValues presentation).length =
+    (FiniteOddFieldPresentation.squareCarrierValues presentation).length =
       presentation.squareValues.length := by
-  exact ListBijection.length_eq (SquareClasses.FiniteOddFieldPresentation.squareCarrierBijection presentation)
-    (SquareClasses.FiniteOddFieldPresentation.squareCarrierValues_nodup presentation) presentation.squareValuesNodup
+  exact ListBijection.length_eq (FiniteOddFieldPresentation.squareCarrierBijection presentation)
+    (FiniteOddFieldPresentation.squareCarrierValues_nodup presentation) presentation.squareValuesNodup
 
 /-- The square-table and nonsquare-list lengths add to the complete carrier length. -/
 theorem FiniteOddFieldPresentation.squareValues_length_add_nonsquareValues_length :
-    presentation.squareValues.length + (SquareClasses.FiniteOddFieldPresentation.nonsquareValues presentation).length =
+    presentation.squareValues.length + (FiniteOddFieldPresentation.nonsquareValues presentation).length =
       presentation.carrier.length := open Purelib.Algebra.Field.Finite.Odd.SquareClasses in by
   have partition := Filter.filter_bool_add_complement_length
     presentation.carrier
-    (SquareClasses.FiniteOddFieldPresentation.isSquare presentation)
-  change (SquareClasses.FiniteOddFieldPresentation.squareCarrierValues presentation).length +
-      (SquareClasses.FiniteOddFieldPresentation.nonsquareValues presentation).length = presentation.carrier.length
+    (FiniteOddFieldPresentation.isSquare presentation)
+  change (FiniteOddFieldPresentation.squareCarrierValues presentation).length +
+      (FiniteOddFieldPresentation.nonsquareValues presentation).length = presentation.carrier.length
         at partition
-  rw [(SquareClasses.FiniteOddFieldPresentation.squareCarrierValues_length presentation)]
+  rw [(FiniteOddFieldPresentation.squareCarrierValues_length presentation)]
     at partition
   exact partition
 
 /-- Removing zero shortens the certified square table by exactly one. -/
 theorem FiniteOddFieldPresentation.nonzeroSquareValues_length_add_one :
-    (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length + 1 =
+    (FiniteOddFieldPresentation.nonzeroSquareValues presentation).length + 1 =
       presentation.squareValues.length := open Purelib.Algebra.Field.Finite.Odd.SquareClasses in by
-  unfold SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues
+  unfold FiniteOddFieldPresentation.nonzeroSquareValues
   exact Filter.filter_ne_target_length_add_one presentation.eqDecidable 0
-    presentation.squareValuesNodup (SquareClasses.FiniteOddFieldPresentation.zero_mem_squareValues presentation)
+    presentation.squareValuesNodup (FiniteOddFieldPresentation.zero_mem_squareValues presentation)
 
 /-- The nonzero-square and nonsquare lists have equal length.
 
 The retained odd-size count and the single zero square account for the two equal nonzero classes. -/
 theorem FiniteOddFieldPresentation.nonzeroSquareValues_length_eq_nonsquareValues_length :
-    (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length =
-      (SquareClasses.FiniteOddFieldPresentation.nonsquareValues presentation).length := by
+    (FiniteOddFieldPresentation.nonzeroSquareValues presentation).length =
+      (FiniteOddFieldPresentation.nonsquareValues presentation).length := by
   have squarePartition :=
-    (SquareClasses.FiniteOddFieldPresentation.squareValues_length_add_nonsquareValues_length presentation)
+    (FiniteOddFieldPresentation.squareValues_length_add_nonsquareValues_length presentation)
   have squareCount := presentation.squareCount
-  have nonsquarePlusOne : (SquareClasses.FiniteOddFieldPresentation.nonsquareValues presentation).length + 1 =
+  have nonsquarePlusOne : (FiniteOddFieldPresentation.nonsquareValues presentation).length + 1 =
       presentation.squareValues.length := by
     apply Addition.add_left_cancel
       (common := presentation.squareValues.length)
     calc
       presentation.squareValues.length +
-          ((SquareClasses.FiniteOddFieldPresentation.nonsquareValues presentation).length + 1) =
+          ((FiniteOddFieldPresentation.nonsquareValues presentation).length + 1) =
         (presentation.squareValues.length +
-          (SquareClasses.FiniteOddFieldPresentation.nonsquareValues presentation).length) + 1 := by
+          (FiniteOddFieldPresentation.nonsquareValues presentation).length) + 1 := by
             rw [Nat.add_assoc]
       _ = presentation.carrier.length + 1 := by rw [squarePartition]
       _ = presentation.squareValues.length +
           presentation.squareValues.length := squareCount.symm
   apply Addition.add_right_cancel
   exact calc
-    (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length + 1 =
+    (FiniteOddFieldPresentation.nonzeroSquareValues presentation).length + 1 =
         presentation.squareValues.length :=
-      (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues_length_add_one presentation)
-    _ = (SquareClasses.FiniteOddFieldPresentation.nonsquareValues presentation).length + 1 := nonsquarePlusOne.symm
+      (FiniteOddFieldPresentation.nonzeroSquareValues_length_add_one presentation)
+    _ = (FiniteOddFieldPresentation.nonsquareValues presentation).length + 1 := nonsquarePlusOne.symm
 
 section
 open Purelib.Algebra.Field.Finite.Odd.SquareClasses.FiniteOddFieldPresentation
@@ -263,15 +263,15 @@ Negation pairs the finite nonzero-square list without fixed points. -/
 theorem FiniteOddFieldPresentation.nonzeroSquareValues_length_even_of_minus_one_square
     (minusOneRoot : K) (minusOneSquare : minusOneRoot ^ 2 = -1) :
     ∃ half : Nat,
-      (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length = half + half := open
+      (FiniteOddFieldPresentation.nonzeroSquareValues presentation).length = half + half := open
         Purelib.Algebra.Field.Finite.Odd.SquareClasses in by
   apply Nodup.fixedPointFreeInvolution_length_even presentation.eqDecidable
-    (fun value : K => -value) (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation)
-    (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues_nodup presentation)
+    (fun value : K => -value) (FiniteOddFieldPresentation.nonzeroSquareValues presentation)
+    (FiniteOddFieldPresentation.nonzeroSquareValues_nodup presentation)
   · intro value member
-    rcases ((SquareClasses.FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) value).1 member with
+    rcases ((FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) value).1 member with
       ⟨valueNonzero, valueRoot, valueSquare⟩
-    apply ((SquareClasses.FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) (-value)).2
+    apply ((FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) (-value)).2
     constructor
     · intro negativeZero
       apply valueNonzero
@@ -289,7 +289,7 @@ theorem FiniteOddFieldPresentation.nonzeroSquareValues_length_even_of_minus_one_
     ring1
   · intro value member fixed
     have valueNonzero :=
-      (((SquareClasses.FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) value).1 member).1
+      (((FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) value).1 member).1
     have twiceZero : (2 : K) * value = 0 := by
       calc
         (2 : K) * value = value - (-value) := by ring1
@@ -308,10 +308,10 @@ Inversion pairs every retained nonzero square except one without fixed points. -
 theorem FiniteOddFieldPresentation.nonzeroSquareValues_length_odd_of_minus_one_nonsquare
     (minusOneNoRoot : ∀ root : K, root ^ 2 ≠ -1) :
     ∃ half : Nat,
-      (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length = half + half + 1 := open
+      (FiniteOddFieldPresentation.nonzeroSquareValues presentation).length = half + half + 1 := open
         Purelib.Algebra.Field.Finite.Odd.SquareClasses in by
   letI : DecidableEq K := presentation.eqDecidable
-  let withoutOne := (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).filter
+  let withoutOne := (FiniteOddFieldPresentation.nonzeroSquareValues presentation).filter
     fun value => value ≠ 1
   have oneNonzero : (1 : K) ≠ 0 := by
     intro oneZero
@@ -319,17 +319,17 @@ theorem FiniteOddFieldPresentation.nonzeroSquareValues_length_odd_of_minus_one_n
     calc
       (2 : K) = 1 + 1 := by ring1
       _ = 0 := by rw [oneZero, zero_add]
-  have oneMember : (1 : K) ∈ (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation) :=
-    ((SquareClasses.FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) 1).2
+  have oneMember : (1 : K) ∈ (FiniteOddFieldPresentation.nonzeroSquareValues presentation) :=
+    ((FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) 1).2
       ⟨oneNonzero, ⟨1, by ring1⟩⟩
   have withoutOneNodup : withoutOne.Nodup :=
     Filter.pairwise_filter _
-      (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues_nodup presentation)
+      (FiniteOddFieldPresentation.nonzeroSquareValues_nodup presentation)
   have withoutOneClosed : ∀ value ∈ withoutOne, value⁻¹ ∈ withoutOne := by
     intro value member
     have memberData := Filter.mem_filter.mp member
     have valueNotOne : value ≠ 1 := of_decide_eq_true memberData.2
-    rcases ((SquareClasses.FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) value).1 memberData.1
+    rcases ((FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) value).1 memberData.1
       with
       ⟨valueNonzero, valueRoot, valueSquare⟩
     have rootNonzero : valueRoot ≠ 0 := by
@@ -352,7 +352,7 @@ theorem FiniteOddFieldPresentation.nonzeroSquareValues_length_odd_of_minus_one_n
           rw [mul_comm, ExplicitField.mul_inv_cancel value valueNonzero]
     apply Filter.mem_filter.mpr
     constructor
-    · apply ((SquareClasses.FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) value⁻¹).2
+    · apply ((FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) value⁻¹).2
       exact ⟨ExplicitField.inv_ne_zero valueNonzero,
         ⟨valueRoot⁻¹, inverseSquare⟩⟩
     · apply decide_eq_true
@@ -368,7 +368,7 @@ theorem FiniteOddFieldPresentation.nonzeroSquareValues_length_odd_of_minus_one_n
     intro value member
     have originalMember := (Filter.mem_filter.mp member).1
     have valueNonzero :=
-      (((SquareClasses.FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) value).1 originalMember).1
+      (((FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) value).1 originalMember).1
     have inverseNonzero := ExplicitField.inv_ne_zero valueNonzero
     apply ExplicitField.eq_of_mul_eq_mul_right inverseNonzero
     calc
@@ -382,7 +382,7 @@ theorem FiniteOddFieldPresentation.nonzeroSquareValues_length_odd_of_minus_one_n
     intro value member fixed
     have memberData := Filter.mem_filter.mp member
     have valueNotOne : value ≠ 1 := of_decide_eq_true memberData.2
-    rcases ((SquareClasses.FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) value).1 memberData.1
+    rcases ((FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) value).1 memberData.1
       with
       ⟨valueNonzero, valueRoot, valueSquare⟩
     have squareOne : value ^ 2 = 1 := by
@@ -413,12 +413,12 @@ theorem FiniteOddFieldPresentation.nonzeroSquareValues_length_odd_of_minus_one_n
       withoutOneClosed withoutOneInvolutive withoutOneFixedPointFree with
     ⟨half, halfEquation⟩
   have withoutOneLength : withoutOne.length + 1 =
-      (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length :=
+      (FiniteOddFieldPresentation.nonzeroSquareValues presentation).length :=
     Filter.filter_ne_target_length_add_one presentation.eqDecidable 1
-      (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues_nodup presentation) oneMember
+      (FiniteOddFieldPresentation.nonzeroSquareValues_nodup presentation) oneMember
   refine ⟨half, ?_⟩
   calc
-    (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length = withoutOne.length + 1 :=
+    (FiniteOddFieldPresentation.nonzeroSquareValues presentation).length = withoutOne.length + 1 :=
       withoutOneLength.symm
     _ = half + half + 1 := by rw [halfEquation]
 
@@ -429,18 +429,18 @@ private theorem
   FiniteOddFieldPresentation.carrier_length_eq_twice_nonzeroSquares_add_one
   :
     presentation.carrier.length =
-      (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length +
-        (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length + 1 := by
+      (FiniteOddFieldPresentation.nonzeroSquareValues presentation).length +
+        (FiniteOddFieldPresentation.nonzeroSquareValues presentation).length + 1 := by
   calc
     presentation.carrier.length = presentation.squareValues.length +
-        (SquareClasses.FiniteOddFieldPresentation.nonsquareValues presentation).length :=
-      (SquareClasses.FiniteOddFieldPresentation.squareValues_length_add_nonsquareValues_length presentation).symm
-    _ = ((SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length + 1) +
-        (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length := by
-      rw [(SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues_length_add_one presentation),
-        (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues_length_eq_nonsquareValues_length presentation)]
-    _ = (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length +
-        (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length + 1 := by ring1
+        (FiniteOddFieldPresentation.nonsquareValues presentation).length :=
+      (FiniteOddFieldPresentation.squareValues_length_add_nonsquareValues_length presentation).symm
+    _ = ((FiniteOddFieldPresentation.nonzeroSquareValues presentation).length + 1) +
+        (FiniteOddFieldPresentation.nonzeroSquareValues presentation).length := by
+      rw [(FiniteOddFieldPresentation.nonzeroSquareValues_length_add_one presentation),
+        (FiniteOddFieldPresentation.nonzeroSquareValues_length_eq_nonsquareValues_length presentation)]
+    _ = (FiniteOddFieldPresentation.nonzeroSquareValues presentation).length +
+        (FiniteOddFieldPresentation.nonzeroSquareValues presentation).length + 1 := by ring1
 
 /-- A displayed square root of negative one gives carrier size four times a natural number plus one.
 
@@ -449,7 +449,7 @@ theorem FiniteOddFieldPresentation.carrier_length_eq_four_mul_add_one_of_minus_o
     (minusOneRoot : K) (minusOneSquare : minusOneRoot ^ 2 = -1) :
     ∃ quarter : Nat,
       presentation.carrier.length = 4 * quarter + 1 := open Purelib.Algebra.Field.Finite.Odd.SquareClasses in by
-  rcases (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues_length_even_of_minus_one_square presentation)
+  rcases (FiniteOddFieldPresentation.nonzeroSquareValues_length_even_of_minus_one_square presentation)
       minusOneRoot minusOneSquare with ⟨quarter, squareLength⟩
   refine ⟨quarter, ?_⟩
   rw [(FiniteOddFieldPresentation.carrier_length_eq_twice_nonzeroSquares_add_one presentation),
@@ -463,7 +463,7 @@ theorem FiniteOddFieldPresentation.carrier_length_eq_four_mul_add_three_of_minus
     (minusOneNoRoot : ∀ root : K, root ^ 2 ≠ -1) :
     ∃ quarter : Nat,
       presentation.carrier.length = 4 * quarter + 3 := open Purelib.Algebra.Field.Finite.Odd.SquareClasses in by
-  rcases (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues_length_odd_of_minus_one_nonsquare presentation)
+  rcases (FiniteOddFieldPresentation.nonzeroSquareValues_length_odd_of_minus_one_nonsquare presentation)
       minusOneNoRoot with ⟨quarter, squareLength⟩
   refine ⟨quarter, ?_⟩
   rw [(FiniteOddFieldPresentation.carrier_length_eq_twice_nonzeroSquares_add_one presentation),
@@ -493,23 +493,23 @@ def FiniteOddFieldPresentation.classifyMinusOneCardinality :
     (MinusOneCardinalityClassification presentation) := by
   have carrierLength :
       presentation.carrier.length =
-        (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length +
-          (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length + 1 := by
+        (FiniteOddFieldPresentation.nonzeroSquareValues presentation).length +
+          (FiniteOddFieldPresentation.nonzeroSquareValues presentation).length + 1 := by
     calc
       presentation.carrier.length = presentation.squareValues.length +
-          (SquareClasses.FiniteOddFieldPresentation.nonsquareValues presentation).length :=
-        (SquareClasses.FiniteOddFieldPresentation.squareValues_length_add_nonsquareValues_length presentation).symm
-      _ = ((SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length + 1) +
-          (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length := by
-        rw [(SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues_length_add_one presentation),
-          (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues_length_eq_nonsquareValues_length presentation)]
-      _ = (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length +
-          (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length + 1 := by ring1
+          (FiniteOddFieldPresentation.nonsquareValues presentation).length :=
+        (FiniteOddFieldPresentation.squareValues_length_add_nonsquareValues_length presentation).symm
+      _ = ((FiniteOddFieldPresentation.nonzeroSquareValues presentation).length + 1) +
+          (FiniteOddFieldPresentation.nonzeroSquareValues presentation).length := by
+        rw [(FiniteOddFieldPresentation.nonzeroSquareValues_length_add_one presentation),
+          (FiniteOddFieldPresentation.nonzeroSquareValues_length_eq_nonsquareValues_length presentation)]
+      _ = (FiniteOddFieldPresentation.nonzeroSquareValues presentation).length +
+          (FiniteOddFieldPresentation.nonzeroSquareValues presentation).length + 1 := by ring1
   cases presentation.classifyMinusOne with
   | square root rootSquare =>
       refine MinusOneCardinalityClassification.square root rootSquare
-        ((SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length / 2) ?_
-      rcases (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues_length_even_of_minus_one_square presentation)
+        ((FiniteOddFieldPresentation.nonzeroSquareValues presentation).length / 2) ?_
+      rcases (FiniteOddFieldPresentation.nonzeroSquareValues_length_even_of_minus_one_square presentation)
           root rootSquare with ⟨quarter, squareLength⟩
       have doubled : quarter + quarter = 2 * quarter := by
         rw [Nat.succ_mul, Nat.one_mul]
@@ -518,8 +518,8 @@ def FiniteOddFieldPresentation.classifyMinusOneCardinality :
       rw [show (4 : Nat) = 2 + 2 from rfl, Multiplication.right_distrib]
   | nonsquare noRoot =>
       refine MinusOneCardinalityClassification.nonsquare noRoot
-        ((SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).length / 2) ?_
-      rcases (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues_length_odd_of_minus_one_nonsquare
+        ((FiniteOddFieldPresentation.nonzeroSquareValues presentation).length / 2) ?_
+      rcases (FiniteOddFieldPresentation.nonzeroSquareValues_length_odd_of_minus_one_nonsquare
         presentation)
           noRoot with ⟨quarter, squareLength⟩
       have doubled : quarter + quarter = 2 * quarter := by
@@ -539,7 +539,7 @@ Removing that displayed multiple leaves remainder one. -/
 theorem FiniteOddFieldPresentation.carrier_length_mod_four_eq_one_of_minus_one_square
     (minusOneRoot : K) (minusOneSquare : minusOneRoot ^ 2 = -1) :
     presentation.carrier.length % 4 = 1 := by
-  rcases (SquareClasses.FiniteOddFieldPresentation.carrier_length_eq_four_mul_add_one_of_minus_one_square presentation)
+  rcases (FiniteOddFieldPresentation.carrier_length_eq_four_mul_add_one_of_minus_one_square presentation)
       minusOneRoot minusOneSquare with ⟨quarter, cardinality⟩
   rw [cardinality, Remainder.mul_add_mod]
 
@@ -550,7 +550,7 @@ Removing that displayed multiple leaves remainder three. -/
 theorem FiniteOddFieldPresentation.carrier_length_mod_four_eq_three_of_minus_one_nonsquare
     (minusOneNoRoot : ∀ root : K, root ^ 2 ≠ -1) :
     presentation.carrier.length % 4 = 3 := by
-  rcases (SquareClasses.FiniteOddFieldPresentation.carrier_length_eq_four_mul_add_three_of_minus_one_nonsquare
+  rcases (FiniteOddFieldPresentation.carrier_length_eq_four_mul_add_three_of_minus_one_nonsquare
     presentation)
       minusOneNoRoot with ⟨quarter, cardinality⟩
   rw [cardinality, Remainder.mul_add_mod]
@@ -562,14 +562,14 @@ theorem FiniteOddFieldPresentation.minusOne_hasSquareRoot_iff_carrier_length_mod
     Presentation.FiniteOddFieldPresentation.HasSquareRoot (-1 : K) ↔ presentation.carrier.length % 4 = 1 := by
   constructor
   · rintro ⟨root, rootSquare⟩
-    exact (SquareClasses.FiniteOddFieldPresentation.carrier_length_mod_four_eq_one_of_minus_one_square presentation)
+    exact (FiniteOddFieldPresentation.carrier_length_mod_four_eq_one_of_minus_one_square presentation)
       root rootSquare
   · intro cardinalityModFour
     cases presentation.classifyMinusOne with
     | square root rootSquare => exact ⟨root, rootSquare⟩
     | nonsquare noRoot =>
         have nonsquareModFour :=
-          (SquareClasses.FiniteOddFieldPresentation.carrier_length_mod_four_eq_three_of_minus_one_nonsquare
+          (FiniteOddFieldPresentation.carrier_length_mod_four_eq_three_of_minus_one_nonsquare
             presentation)
             noRoot
         exact False.elim ((by decide : (1 : Nat) ≠ 3)
@@ -581,13 +581,13 @@ The square-table classification makes both directions constructive. -/
 theorem FiniteOddFieldPresentation.minusOne_noRoot_iff_carrier_length_mod_four_eq_three :
     (∀ root : K, root ^ 2 ≠ -1) ↔ presentation.carrier.length % 4 = 3 := by
   constructor
-  · exact (SquareClasses.FiniteOddFieldPresentation.carrier_length_mod_four_eq_three_of_minus_one_nonsquare
+  · exact (FiniteOddFieldPresentation.carrier_length_mod_four_eq_three_of_minus_one_nonsquare
       presentation)
   · intro cardinalityModFour
     cases presentation.classifyMinusOne with
     | square root rootSquare =>
         have squareModFour :=
-          (SquareClasses.FiniteOddFieldPresentation.carrier_length_mod_four_eq_one_of_minus_one_square presentation)
+          (FiniteOddFieldPresentation.carrier_length_mod_four_eq_one_of_minus_one_square presentation)
             root rootSquare
         exact False.elim ((by decide : (1 : Nat) ≠ 3)
           (squareModFour.symm.trans cardinalityModFour))
@@ -614,19 +614,19 @@ def FiniteOddFieldPresentation.chosenNonsquare : NonsquareWitness (K := K) := by
     calc
       (2 : K) = 1 + 1 := by ring1
       _ = 0 := by rw [oneZero, zero_add]
-  have oneMember : (1 : K) ∈ (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation) :=
-    ((SquareClasses.FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) 1).2
+  have oneMember : (1 : K) ∈ (FiniteOddFieldPresentation.nonzeroSquareValues presentation) :=
+    ((FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) 1).2
       ⟨oneNonzero, ⟨1, by ring1⟩⟩
   have equalLengths :=
-    (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues_length_eq_nonsquareValues_length presentation)
-  cases valuesEquation : (SquareClasses.FiniteOddFieldPresentation.nonsquareValues presentation) with
+    (FiniteOddFieldPresentation.nonzeroSquareValues_length_eq_nonsquareValues_length presentation)
+  cases valuesEquation : (FiniteOddFieldPresentation.nonsquareValues presentation) with
   | nil =>
       have positive := List.length_pos_of_mem oneMember
       rw [equalLengths, valuesEquation] at positive
       exact False.elim (Nat.lt_irrefl 0 positive)
   | cons head tail =>
       refine ⟨head, ?_⟩
-      apply ((SquareClasses.FiniteOddFieldPresentation.mem_nonsquareValues_iff presentation) head).1
+      apply ((FiniteOddFieldPresentation.mem_nonsquareValues_iff presentation) head).1
       rw [valuesEquation]
       exact List.mem_cons_self
 
@@ -634,14 +634,14 @@ def FiniteOddFieldPresentation.chosenNonsquare : NonsquareWitness (K := K) := by
 
 The mapped list keeps the original square-table order. -/
 def FiniteOddFieldPresentation.scaledNonzeroSquareValues (factor : K) : List K :=
-  (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation).map fun value => factor * value
+  (FiniteOddFieldPresentation.nonzeroSquareValues presentation).map fun value => factor * value
 
 /-- Scaling the nonzero-square list by a nonzero factor preserves distinctness. -/
 theorem FiniteOddFieldPresentation.scaledNonzeroSquareValues_nodup (factor : K)
     (factorNonzero : factor ≠ 0) :
-    ((SquareClasses.FiniteOddFieldPresentation.scaledNonzeroSquareValues presentation) factor).Nodup := open Purelib in
+    ((FiniteOddFieldPresentation.scaledNonzeroSquareValues presentation) factor).Nodup := open Purelib in
       by
-  unfold SquareClasses.FiniteOddFieldPresentation.scaledNonzeroSquareValues
+  unfold FiniteOddFieldPresentation.scaledNonzeroSquareValues
   apply Data.List.Nodup.nodup_map_of_injective
   · intro left right equal
     change factor * left = factor * right at equal
@@ -652,22 +652,22 @@ theorem FiniteOddFieldPresentation.scaledNonzeroSquareValues_nodup (factor : K)
       _ = factor⁻¹ * (factor * right) := by rw [equal]
       _ = (factor * factor⁻¹) * right := by ring1
       _ = right := by rw [cancel, one_mul]
-  · exact (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues_nodup presentation)
+  · exact (FiniteOddFieldPresentation.nonzeroSquareValues_nodup presentation)
 
 /-- Multiplying a nonzero square by a nonsquare yields a retained nonsquare.
 
 A hypothetical product root divided by the square root would contradict the supplied factor obstruction. -/
 theorem FiniteOddFieldPresentation.scaledNonzeroSquareValues_contained_in_nonsquares
     (factor : K) (factorNoRoot : ∀ root : K, root ^ 2 ≠ factor) :
-    ∀ value ∈ (SquareClasses.FiniteOddFieldPresentation.scaledNonzeroSquareValues presentation) factor,
-      value ∈ (SquareClasses.FiniteOddFieldPresentation.nonsquareValues presentation) := open
+    ∀ value ∈ (FiniteOddFieldPresentation.scaledNonzeroSquareValues presentation) factor,
+      value ∈ (FiniteOddFieldPresentation.nonsquareValues presentation) := open
         Purelib.Algebra.Field.Finite.Odd.SquareClasses in open Purelib in by
   intro value member
-  rcases Data.List.Map.mem_map.mp member with
+  rcases Map.mem_map.mp member with
     ⟨squareValue, squareMember, equal⟩
-  rcases ((SquareClasses.FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) squareValue).1
+  rcases ((FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) squareValue).1
       squareMember with ⟨squareNonzero, squareRoot, squareEquation⟩
-  apply ((SquareClasses.FiniteOddFieldPresentation.mem_nonsquareValues_iff presentation) value).2
+  apply ((FiniteOddFieldPresentation.mem_nonsquareValues_iff presentation) value).2
   intro productRoot productEquation
   apply factorNoRoot (productRoot / squareRoot)
   apply Squares.quotient_square_of_product_square squareNonzero squareEquation
@@ -681,18 +681,18 @@ The scaled square list is duplicate-free, contained in the nonsquare list and ha
 theorem FiniteOddFieldPresentation.nonsquare_mem_scaledNonzeroSquareValues
     (factor : K) (factorNoRoot : ∀ root : K, root ^ 2 ≠ factor)
     {value : K} (valueNoRoot : ∀ root : K, root ^ 2 ≠ value) :
-    value ∈ (SquareClasses.FiniteOddFieldPresentation.scaledNonzeroSquareValues presentation) factor := open
+    value ∈ (FiniteOddFieldPresentation.scaledNonzeroSquareValues presentation) factor := open
       Purelib.Algebra.Field.Finite.Odd.SquareClasses in by
-  have factorNonzero := SquareClasses.FiniteOddFieldPresentation.nonsquare_ne_zero factorNoRoot
+  have factorNonzero := FiniteOddFieldPresentation.nonsquare_ne_zero factorNoRoot
   apply Nodup.mem_of_nodup_contained_length_eq presentation.eqDecidable
-    ((SquareClasses.FiniteOddFieldPresentation.scaledNonzeroSquareValues_nodup presentation) factor factorNonzero)
-    (SquareClasses.FiniteOddFieldPresentation.nonsquareValues_nodup presentation)
-    ((SquareClasses.FiniteOddFieldPresentation.scaledNonzeroSquareValues_contained_in_nonsquares presentation)
+    ((FiniteOddFieldPresentation.scaledNonzeroSquareValues_nodup presentation) factor factorNonzero)
+    (FiniteOddFieldPresentation.nonsquareValues_nodup presentation)
+    ((FiniteOddFieldPresentation.scaledNonzeroSquareValues_contained_in_nonsquares presentation)
       factor factorNoRoot)
-  · unfold SquareClasses.FiniteOddFieldPresentation.scaledNonzeroSquareValues
+  · unfold FiniteOddFieldPresentation.scaledNonzeroSquareValues
     rw [Map.length_map,
-      (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues_length_eq_nonsquareValues_length presentation)]
-  · exact ((SquareClasses.FiniteOddFieldPresentation.mem_nonsquareValues_iff presentation) value).2 valueNoRoot
+      (FiniteOddFieldPresentation.nonzeroSquareValues_length_eq_nonsquareValues_length presentation)]
+  · exact ((FiniteOddFieldPresentation.mem_nonsquareValues_iff presentation) value).2 valueNoRoot
 
 section
 open Purelib.Algebra.Field.Finite.Odd.SquareClasses.FiniteOddFieldPresentation
@@ -773,9 +773,9 @@ def FiniteOddFieldPresentation.nonsquareMulNonsquareSquareWitness
     (left right : K) (leftNoRoot : ∀ root : K, root ^ 2 ≠ left)
     (rightNoRoot : ∀ root : K, root ^ 2 ≠ right) :
     SquareRootWitness (left * right) := by
-  let values := (SquareClasses.FiniteOddFieldPresentation.nonzeroSquareValues presentation)
+  let values := (FiniteOddFieldPresentation.nonzeroSquareValues presentation)
   let found := scaledPreimage? presentation.eqDecidable left right values
-  have rightMember := SquareClasses.FiniteOddFieldPresentation.nonsquare_mem_scaledNonzeroSquareValues presentation
+  have rightMember := FiniteOddFieldPresentation.nonsquare_mem_scaledNonzeroSquareValues presentation
     left leftNoRoot rightNoRoot
   have foundNonempty : found ≠ none := by
     exact scaledPreimage?_ne_none_of_mem presentation.eqDecidable
@@ -786,7 +786,7 @@ def FiniteOddFieldPresentation.nonsquareMulNonsquareSquareWitness
       have foundSpec := scaledPreimage?_eq_some_spec
         presentation.eqDecidable left right squareValue values foundEquation
       have squareData :=
-        ((SquareClasses.FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) squareValue).1 foundSpec.1
+        ((FiniteOddFieldPresentation.mem_nonzeroSquareValues_iff presentation) squareValue).1 foundSpec.1
       let root := presentation.squareRoot squareValue
       have rootSquare : root ^ 2 = squareValue := by
         exact presentation.squareRoot_spec squareValue
@@ -807,7 +807,7 @@ theorem FiniteOddFieldPresentation.nonsquare_mul_nonsquare_hasSquareRoot
     (left right : K) (leftNoRoot : ∀ root : K, root ^ 2 ≠ left)
     (rightNoRoot : ∀ root : K, root ^ 2 ≠ right) :
     Presentation.FiniteOddFieldPresentation.HasSquareRoot (left * right) := by
-  let witness := (SquareClasses.FiniteOddFieldPresentation.nonsquareMulNonsquareSquareWitness presentation)
+  let witness := (FiniteOddFieldPresentation.nonsquareMulNonsquareSquareWitness presentation)
     left right leftNoRoot rightNoRoot
   exact ⟨witness.root, witness.equation⟩
 

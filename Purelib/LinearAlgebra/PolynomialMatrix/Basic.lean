@@ -721,12 +721,31 @@ variable {K : Type*} [ExplicitField K] [DecidableEq K]
 open Purelib.LinearAlgebra in
 /-- Compute the fraction-free Schur complement over dense polynomials.
 
-Each tail entry is multiplied by the leading pivot and corrected by its left-column and top-row product. -/
+The original head, tail, left column and top row are retained once before
+entry production. Each same tail entry is multiplied by that pivot and
+corrected by its same column/row product. -/
 def Basic.schur (matrix : PolynomialMatrix.Basic.Matrix K (n + 1)) :
   PolynomialMatrix.Basic.Matrix K n :=
-  SquareMatrix.matrixOfFn fun row column =>
-    PolynomialMatrix.Basic.head matrix * PolynomialMatrix.Basic.tail matrix row column -
-      PolynomialMatrix.Basic.leftColumn matrix row * PolynomialMatrix.Basic.topRow matrix column
+  let pivot := PolynomialMatrix.Basic.head matrix
+  let tail := PolynomialMatrix.Basic.tail matrix
+  let column := PolynomialMatrix.Basic.leftColumn matrix
+  let row := PolynomialMatrix.Basic.topRow matrix
+  SquareMatrix.matrixOfFn fun rowIndex columnIndex =>
+    pivot * tail rowIndex columnIndex - column rowIndex * row columnIndex
+
+namespace Basic
+
+/-- The complete retained Schur matrix is exactly the original pivot correction materialization at every input.
+
+This whole structural equality preserves all coefficient records and original
+bounded entries. It requires no nonzero pivot or normalized-input condition.
+-/
+theorem schur_eq (matrix : Matrix K (n + 1)) :
+    schur matrix = SquareMatrix.matrixOfFn (fun row column =>
+      head matrix * tail matrix row column - leftColumn matrix row * topRow matrix column) := rfl
+
+end Basic
+
 end Purelib.LinearAlgebra.PolynomialMatrix
 
 end

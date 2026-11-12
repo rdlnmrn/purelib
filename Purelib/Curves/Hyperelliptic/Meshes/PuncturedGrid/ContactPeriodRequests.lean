@@ -158,7 +158,7 @@ open Purelib.Riemann.Periods.PeriodMatrix (standardDifferential)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {source :
     Differential genus} {count : Nat}
@@ -174,24 +174,24 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 set_option genInjectivity false in
 /-- Geometry preparation is reusable across positive requests. Both the contact scalar caches and the cycle scalar
 caches precede one shared sample. -/
-structure ContactBudget (family : PeriodFamilies.PrimitiveFamily programs domains differential)
-    (prepared : BoundaryContacts.BoundaryContactPreparations patch pairing (PeriodMatrix.standardDifferential
+structure ContactBudget (family : PrimitiveFamily programs domains differential)
+    (prepared : BoundaryContactPreparations patch pairing (PeriodMatrix.standardDifferential
       differential) domains)
-    (lengthBound : Nat) (pathTarget boundaryTarget : PreparedPrimitiveChargeBounds.Coordinate) (targets :
-      Data.Vector PreparedPrimitiveChargeBounds.Coordinate count) (floor : Nat) where
+    (lengthBound : Nat) (pathTarget boundaryTarget : Coordinate) (targets :
+      Data.Vector Coordinate count) (floor : Nat) where
   /-- The retained sewn-path accuracy request using the original assembly and length bound. -/ path :
-    SewnPathRequests.PathRequest patch.assembly lengthBound pathTarget
+    PathRequest patch.assembly lengthBound pathTarget
   /-- The original complete boundary-defect target is strictly positive. -/ boundary_positive : 0 < boundaryTarget
   /-- The cached number of actual original exposed cut pairs. -/ pairCount : Nat
   /-- The cache is exactly the original retained pairing's pair count. -/ pairCount_eq : pairCount =
     pairing.pairs.length
   /-- The cached per-pair allowance paying the complete original boundary target. -/ perPair :
-    PreparedPrimitiveChargeBounds.Coordinate
+    Coordinate
   /-- The allowance is exactly the aggregate allocation using the original target and retained pair count. -/ perPair_eq
     : perPair = Aggregate.perTerm boundaryTarget pairCount
   /-- The retained exposed-boundary contact request at the cached per-pair allowance. -/ boundary :
-    BoundaryContactErrors.BoundaryContactRequest patch.assembly perPair
-  /-- The cached common local contact tolerance. -/ tolerance : PreparedPrimitiveChargeBounds.Coordinate
+    BoundaryContactRequest patch.assembly perPair
+  /-- The cached common local contact tolerance. -/ tolerance : Coordinate
   /-- The tolerance is exactly the minimum of the original path and exposed-boundary tolerances. -/ tolerance_eq :
     tolerance = min path.tolerance boundary.tolerance
   /-- The actual contact request on the retained prepared geometry and common local tolerance. -/ contacts :
@@ -204,21 +204,21 @@ constructive_injectivity ContactBudget
 namespace ContactBudget
 
 variable {prepared : BoundaryContactPreparations
-  patch pairing (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential differential) domains}
+  patch pairing (PeriodMatrix.standardDifferential differential) domains}
   {lengthBound : Nat} {pathTarget boundaryTarget : Coordinate}
     {targets : Data.Vector Coordinate count}
     {floor : Nat}
 
 /-- Cache path and exposed-pair budgets from the original sewing profile, then include their shared contact index before
 selecting period-family numerics. -/
-@[expose] def build (family : PeriodFamilies.PrimitiveFamily programs domains differential)
-    (prepared : BoundaryContacts.BoundaryContactPreparations patch pairing (PeriodMatrix.standardDifferential
+@[expose] def build (family : PrimitiveFamily programs domains differential)
+    (prepared : BoundaryContactPreparations patch pairing (PeriodMatrix.standardDifferential
       differential) domains)
-    (lengthBound : Nat) (pathTarget : PreparedPrimitiveChargeBounds.Coordinate) (pathPositive : 0 < pathTarget)
-    (boundaryTarget : PreparedPrimitiveChargeBounds.Coordinate) (boundaryPositive : 0 < boundaryTarget)
-    (targets : Data.Vector PreparedPrimitiveChargeBounds.Coordinate count) (positive : ∀ index, 0 < targets
+    (lengthBound : Nat) (pathTarget : Coordinate) (pathPositive : 0 < pathTarget)
+    (boundaryTarget : Coordinate) (boundaryPositive : 0 < boundaryTarget)
+    (targets : Data.Vector Coordinate count) (positive : ∀ index, 0 < targets
       index) (floor : Nat) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.ContactPeriodRequests.ContactBudget family prepared lengthBound pathTarget
+    ContactBudget family prepared lengthBound pathTarget
       boundaryTarget targets floor :=
   let path := PathRequest.ofProfile prepared.profile prepared.profile_eq lengthBound pathTarget pathPositive
   let pairCount := prepared.pairCount
@@ -232,11 +232,11 @@ selecting period-family numerics. -/
     Budget.build family targets positive contacts.index⟩
 
 /-- The actual shared sewn surface satisfies the retained path-contact tolerance. -/
-theorem localAccuracy (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.ContactPeriodRequests.ContactBudget family
+theorem localAccuracy (budget : ContactBudget family
   prepared lengthBound pathTarget boundaryTarget targets floor)
     {minimumStages : Data.Vector Nat count} {requested : PrimitiveFamily.Requested budget.periods
       minimumStages}
-    (sample : Requested.Sewn requested patch) : SewnPrimitiveRequests.LocalAccuracy budget.path.tolerance
+    (sample : Sewn requested patch) : LocalAccuracy budget.path.tolerance
       sample.surface.sewn.readings :=
   prepared.localAccuracy budget.contacts (by
       rw [budget.tolerance_eq];
@@ -245,22 +245,22 @@ theorem localAccuracy (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Contac
 
 /-- Every actual retained cut path within the original length bound satisfies the paid path target on the same shared
 sewn surface. -/
-theorem path_bound (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.ContactPeriodRequests.ContactBudget family
+theorem path_bound (budget : ContactBudget family
   prepared lengthBound pathTarget boundaryTarget targets floor)
     {minimumStages : Data.Vector Nat count} {requested : PrimitiveFamily.Requested budget.periods
       minimumStages}
-    (sample : Requested.Sewn requested patch) {edges : List (Stokes.OrientedEdge patch.cut.count)}
+    (sample : Sewn requested patch) {edges : List (OrientedEdge patch.cut.count)}
     (sources : SewnPrimitiveFaces.PathSources patch.cut edges) (length_le : edges.length ≤ lengthBound) :
     (CachedSample.pathSample sample.surface sources).bound < pathTarget :=
   budget.path.cached_accurate sample.surface (budget.localAccuracy sample) sources length_le
 
 /-- Actual exposed cut-pair increments are small after every inherited sewing correction. Their two endpoints are not
 identified or discarded. -/
-theorem boundary_accurate (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.ContactPeriodRequests.ContactBudget family
+theorem boundary_accurate (budget : ContactBudget family
   prepared lengthBound pathTarget boundaryTarget targets floor)
     {minimumStages : Data.Vector Nat count} {requested : PrimitiveFamily.Requested budget.periods
       minimumStages}
-    (sample : Requested.Sewn requested patch) (entry : Fin pairing.pairs.length) :
+    (sample : Sewn requested patch) (entry : Fin pairing.pairs.length) :
     BoundaryContactSources.mismatch
       (prepared.boundary.entries.get entry) sample.surface.sewn.values < budget.perPair :=
   prepared.boundary_accurate budget.boundary budget.contacts (by
@@ -270,11 +270,11 @@ theorem boundary_accurate (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Co
 
 /-- The bound is for the actual cached defect used by the full boundary decomposition, not a separately evaluated
 surrogate contact. -/
-theorem defect_accurate (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.ContactPeriodRequests.ContactBudget family
+theorem defect_accurate (budget : ContactBudget family
   prepared lengthBound pathTarget boundaryTarget targets floor)
     {minimumStages : Data.Vector Nat count} {requested : PrimitiveFamily.Requested budget.periods
       minimumStages}
-    (sample : Requested.Sewn requested patch) (boundary : ProjectedEdgePairing.PrimitiveSample pairing
+    (sample : Sewn requested patch) (boundary : ProjectedEdgePairing.PrimitiveSample pairing
       sample.surface.energyValues)
     (entry : ProjectedEdgePair.Sample (labels := patch.cut.vertexLabels) sample.surface.energyValues) (member : entry ∈
       boundary.samples) :
@@ -292,11 +292,11 @@ theorem defect_accurate (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cont
 /-- Both finite pair-count factors are paid. This controls the sum of the actual endpoint-jump defects; weighted area
 defects and physical boundary areas remain distinct terms of the global Stokes identity. -/
 theorem endpoint_defect_sum_accurate (budget :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.ContactPeriodRequests.ContactBudget family prepared lengthBound pathTarget
+  ContactBudget family prepared lengthBound pathTarget
   boundaryTarget targets floor)
     {minimumStages : Data.Vector Nat count} {requested : PrimitiveFamily.Requested budget.periods
       minimumStages}
-    (sample : Requested.Sewn requested patch) (boundary : ProjectedEdgePairing.PrimitiveSample pairing
+    (sample : Sewn requested patch) (boundary : ProjectedEdgePairing.PrimitiveSample pairing
       sample.surface.energyValues) :
     Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (boundary.samples.map (fun
       entry => entry.defect.right))) < boundaryTarget := by
@@ -306,9 +306,9 @@ theorem endpoint_defect_sum_accurate (budget :
   rw [← equal]
   have lengthEq : boundary.samples.length = budget.pairCount := by
     have lengths := congrArg List.length boundary.pairs_eq
-    rw [Data.List.Map.length_map] at lengths
+    rw [Map.length_map] at lengths
     exact lengths.trans budget.pairCount_eq.symm
-  rw [Data.List.Map.length_map, lengthEq, ← budget.perPair_eq]
+  rw [Map.length_map, lengthEq, ← budget.perPair_eq]
   exact (budget.defect_accurate sample boundary entry member).le
 
 end ContactBudget
@@ -319,15 +319,15 @@ theorem ofSegments_path_program_contact_accurate
     (segments : Data.Vector.DependentVector (fun index => PeriodSegmentBanks.SegmentBank (programs index).period))
     {pairing : ProjectedEdgePairs.ProjectedEdgePairing lifted.cutPolygon.patch.cut.vertexLabels
       lifted.cutPolygon.patch.cut.boundary}
-    {prepared : BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch pairing
+    {prepared : BoundaryContactPreparations lifted.cutPolygon.patch pairing
       (PeriodMatrix.standardDifferential differential) domains}
-    {lengthBound : Nat} {pathTarget boundaryTarget : PreparedPrimitiveChargeBounds.Coordinate} {targets :
-      Data.Vector PreparedPrimitiveChargeBounds.Coordinate count} {floor : Nat}
+    {lengthBound : Nat} {pathTarget boundaryTarget : Coordinate} {targets :
+      Data.Vector Coordinate count} {floor : Nat}
     (budget : ContactBudget (PrimitiveFamily.ofSegments
       segments domains differential) prepared lengthBound pathTarget boundaryTarget targets floor)
     {minimumStages : Data.Vector Nat count} {requested : PrimitiveFamily.Requested budget.periods
       minimumStages}
-    (sample : Requested.Sewn requested lifted.cutPolygon.patch) (index : Fin count)
+    (sample : Sewn requested lifted.cutPolygon.patch) (index : Fin count)
     (routedPositive : RouteSpine.Positive
       (programs index).routed.spine)
     (sources : SewnPrimitiveFaces.PathSources lifted.cutPolygon.patch.cut (programs index).cycle.path.cutEdges)

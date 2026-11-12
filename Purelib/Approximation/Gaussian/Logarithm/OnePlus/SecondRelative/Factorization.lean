@@ -57,12 +57,12 @@ namespace Purelib.Approximation.Gaussian.Logarithm.OnePlus.SecondRelative.Factor
 
 /-- The next relative-logarithm term factors as the input times the matching second-relative term. -/
 theorem log1pRelTerm_succ_factor (u
-  : Data.Gaussian.Basic.Canonical) (index : Nat) :
+  : Basic.Canonical) (index : Nat) :
     Sample.log1pRelTerm u (index + 1) =
       u * Sample.log1pSecondRelTerm u index := by
   rw [Sample.log1pRelTerm, Sample.log1pSecondRelTerm, pow_succ]
   rw [show index + 1 + 1 = index + 2 by ring1]
-  apply Data.Gaussian.Basic.ext <;>
+  apply Basic.ext <;>
     simp only [Scale.scale_re,
       Scale.scale_im, Basic.mul_re, Basic.mul_im, Basic.neg_re, Basic.neg_im,
       NatCast.add] <;> ring1
@@ -70,7 +70,7 @@ theorem log1pRelTerm_succ_factor (u
 /-- Subtracting one from the next relative-logarithm sample leaves the input times the second-relative sample. -/
 theorem
   log1pRelSample_succ_sub_one_factor
-  (u : Data.Gaussian.Basic.Canonical) (index : Nat) :
+  (u : Basic.Canonical) (index : Nat) :
     Sample.log1pRelSample u (index + 1) - 1 =
       u * Sample.log1pSecondRelSample u index := by
   rw [Sample.log1pRelSample,
@@ -81,12 +81,12 @@ theorem
           (fun termIndex => Sample.log1pRelTerm u (termIndex + 1)) (index + 1) - 1 =
         Prefix.sum
           (fun termIndex => Sample.log1pRelTerm u (termIndex + 1)) (index + 1) := by
-      apply Data.Gaussian.Basic.ext <;>
+      apply Basic.ext <;>
         simp only [Basic.add_re, Basic.add_im, Basic.sub_re, Basic.sub_im, Basic.one_re, Basic.one_im] <;> ring1
     _ = Prefix.sum
         (fun termIndex => u * Sample.log1pSecondRelTerm u termIndex) (index + 1) :=
       Prefix.sum_congr
-        (fun termIndex => Approximation.Gaussian.Logarithm.OnePlus.SecondRelative.Factorization.log1pRelTerm_succ_factor
+        (fun termIndex => log1pRelTerm_succ_factor
           u termIndex) (index + 1)
     _ = u * Sample.log1pSecondRelSample u index := by
       exact (Prefix.mul_sum_left
@@ -95,38 +95,38 @@ theorem
 /-- The finite logarithm linearization remainder factors as the squared input times its second-relative sample. -/
 theorem
   log1pSample_second_order_factor
-  (u : Data.Gaussian.Basic.Canonical) (index : Nat) :
+  (u : Basic.Canonical) (index : Nat) :
     Sample.log1pSample u (index + 1) - u =
       u ^ 2 * Sample.log1pSecondRelSample u index := by
   rw [Sample.log1pSample]
   calc
     u * Sample.log1pRelSample u (index + 1) - u =
         u * (Sample.log1pRelSample u (index + 1) - 1) := by
-      apply Data.Gaussian.Basic.ext <;>
+      apply Basic.ext <;>
         simp only [Basic.sub_re, Basic.sub_im, Basic.mul_re, Basic.mul_im, Basic.one_re, Basic.one_im] <;> ring1
     _ = u * (u * Sample.log1pSecondRelSample u index) := by
-      rw [Approximation.Gaussian.Logarithm.OnePlus.SecondRelative.Factorization.log1pRelSample_succ_sub_one_factor]
+      rw [log1pRelSample_succ_sub_one_factor]
     _ = u ^ 2 * Sample.log1pSecondRelSample u index := by
-      rw [pow_two, Data.Gaussian.Basic.mul_assoc]
+      rw [pow_two, Basic.mul_assoc]
 
 /-- On the certified quarter disk, the quadrance of the finite local-log linearization remainder is bounded by four
 times the square of the input quadrance. -/
 theorem
   log1pSample_second_order_normSq_le
-  {u : Data.Gaussian.Basic.Canonical}
-    (disk : Data.Gaussian.Norm.Basic.normSq u ≤ 1 / 4) (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (Sample.log1pSample u (index + 1) - u) ≤
-      4 * Data.Gaussian.Norm.Basic.normSq u ^ 2 := by
-  rw [Approximation.Gaussian.Logarithm.OnePlus.SecondRelative.Factorization.log1pSample_second_order_factor,
-    Data.Gaussian.Norm.Basic.normSq_mul, Power.normSq_pow]
+  {u : Basic.Canonical}
+    (disk : Norm.Basic.normSq u ≤ 1 / 4) (index : Nat) :
+    Norm.Basic.normSq (Sample.log1pSample u (index + 1) - u) ≤
+      4 * Norm.Basic.normSq u ^ 2 := by
+  rw [log1pSample_second_order_factor,
+    Norm.Basic.normSq_mul, Power.normSq_pow]
   calc
-    Data.Gaussian.Norm.Basic.normSq u ^ 2 * Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq u ^ 2 * Norm.Basic.normSq
       (Sample.log1pSecondRelSample u index) ≤
-        Data.Gaussian.Norm.Basic.normSq u ^ 2 * 4 :=
+        Norm.Basic.normSq u ^ 2 * 4 :=
       Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (SecondRelative.Bounds.log1pSecondRelSample_bounded disk index)
-        (Fraction.Order.Arithmetic.pow_nonneg_direct (Data.Gaussian.Norm.Basic.normSq_nonneg u) 2)
-    _ = 4 * Data.Gaussian.Norm.Basic.normSq u ^ 2 :=
+        (Bounds.log1pSecondRelSample_bounded disk index)
+        (Fraction.Order.Arithmetic.pow_nonneg_direct (Norm.Basic.normSq_nonneg u) 2)
+    _ = 4 * Norm.Basic.normSq u ^ 2 :=
       Fraction.Field.mul_comm _ _
 end Purelib.Approximation.Gaussian.Logarithm.OnePlus.SecondRelative.Factorization
 

@@ -104,51 +104,51 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.Lifted
 open Purelib.Riemann.Normalization
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry (arcArea)
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Curves.Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {faces : Riemann.Meshes.PuncturedGridFaces.PuncturedFaces bank} {mesh : Riemann.Meshes.GridLiftedMesh.LiftedMesh
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+  {faces : PuncturedFaces bank} {mesh : LiftedMesh
     vertices edges faces}
-  {start finish : Data.Gaussian.Basic.Canonical} {segment : Polynomial.Geometry.ClearPath.ClearSegment curve.polynomial
-    (Curves.Hyperelliptic.Branches.Cuts.Ambient curve) start finish}
-  {owner : Riemann.Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {piece :
-    Riemann.Paths.PreparedPathDecomposition.CoveredSegment segment owner}
-  {placement : Riemann.Meshes.GridLiftedMesh.LiftedMesh.SegmentFace mesh segment} {differential :
-    Curves.Hyperelliptic.Differentials.Basic.Differential genus} {parentSheet : Fin 2}
-  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {compared : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison placement piece
+  {start finish : Data.Gaussian.Basic.Canonical} {segment : ClearSegment curve.polynomial
+    (Ambient curve) start finish}
+  {owner : Owner (curve.polynomial.eval start)} {piece :
+    CoveredSegment segment owner}
+  {placement : SegmentFace mesh segment} {differential :
+    Differential genus} {parentSheet : Fin 2}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap}
+  {compared : Cut.PrimitiveBanks.LiftedMesh.SegmentComparison placement piece
     differential parentSheet}
 
 variable {prepared :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapPreparation regular
-  compared} {target areaTarget : Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box} {sample :
-    Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  CapPreparation regular
+  compared} {target areaTarget : Coordinate} {floor : Nat}
+  {index : Nat} {box : Geometry.Rational.Box} {sample :
+    Primitives.Sample cap differential index box}
 
 /-- The original regular request's retained inverse-arc plan; a ramified request has no such plan. -/
-@[expose] def ArcPlan (request : SegmentComparison.CapRequest prepared target areaTarget floor)
-    (sample : Primitives.Sample cap differential index box) (arcTarget : InverseRootPolynomial.Coordinate) : Type :=
+@[expose] def ArcPlan (request : CapRequest prepared target areaTarget floor)
+    (sample : Primitives.Sample cap differential index box) (arcTarget : Coordinate) : Type :=
   match request with
-  | .regular request => RegularCapRequest.ArcRequest request sample arcTarget
+  | .regular request => ArcRequest request sample arcTarget
   | .ramified _ _ => PEmpty
 
 namespace ArcPlan
 
-variable {arcTarget : Riemann.Normalization.InverseRootPolynomial.Coordinate} {request :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapRequest prepared target
+variable {arcTarget : Coordinate} {request :
+  Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapRequest prepared target
   areaTarget floor}
 
 /-- Prepare the original regular inverse-arc request from retained polynomial energy bounds; the even degree identity
 excludes the ramified case. -/
-@[expose] def build (request : SegmentComparison.CapRequest prepared target areaTarget floor)
-    (degree : curve.polynomial.natDegree = 2 * genus + 2) (bounds : Charts.Reciprocal.Cap.EnergyBounds sample)
-    (arcTarget : InverseRootPolynomial.Coordinate) (positive : 0 < arcTarget) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularArcPlans.SegmentComparison.CapRequest.ArcPlan request sample
+@[expose] def build (request : CapRequest prepared target areaTarget floor)
+    (degree : curve.polynomial.natDegree = 2 * genus + 2) (bounds : EnergyBounds sample)
+    (arcTarget : Coordinate) (positive : 0 < arcTarget) :
+      ArcPlan request sample
       arcTarget := by
   cases request with
   | regular request => exact ArcRequest.build request bounds arcTarget positive
@@ -158,7 +158,7 @@ excludes the ramified case. -/
 
 /-- The actual uniform fine subdivision required by the retained original regular arc plan. -/
 @[expose] def fine (plan :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularArcPlans.SegmentComparison.CapRequest.ArcPlan request sample
+  ArcPlan request sample
   arcTarget) : Nat :=
   match request, plan with
   | .regular _, plan => plan.uniform.depth
@@ -167,7 +167,7 @@ excludes the ramified case. -/
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularArcPlans.SegmentComparison.CapRequest.ArcPlan
 /-- The energy subdivision floor required by the original retained arc plan at the supplied fine depth. -/
 @[expose] def energyMinimum (plan :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularArcPlans.SegmentComparison.CapRequest.ArcPlan request sample
+  ArcPlan request sample
   arcTarget) (fine : Nat) : Nat :=
   match request, plan with
   | .regular _, plan => plan.minimumAt fine
@@ -175,7 +175,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularArcPlans.SegmentCo
 
 /-- The original numerical result is an input. The local arc comparison is used only for its proved error; no new
 polynomial path is evaluated to explain the already cached energy boundary. -/
-theorem error (plan : Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularArcPlans.SegmentComparison.CapRequest.ArcPlan
+theorem error (plan : ArcPlan
   request sample arcTarget) {fine readingIndex : Nat}
     (evaluated : CapRequest.Evaluation request sample fine readingIndex) (energyDepth : Nat)
     (fineLater : plan.fine ≤ fine) (energyLater : plan.energyMinimum fine ≤ energyDepth) :
@@ -221,20 +221,20 @@ open Purelib.Riemann.Normalization
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry (arcArea)
 open Purelib.Data.Gaussian.Basic.Canonical
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Riemann.Meshes.LiftedPuncturedGrid base} {differential :
-    Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {domains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential :
+    Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap}
+  {domains : FaceDomainBank lifted.frames
     base.faces.regulars}
-  {index fine readingIndex : Nat} {box : Purelib.Geometry.Rational.Box}
-  {sample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains}
-  {localTarget localArea arcTarget : Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
+  {index fine readingIndex : Nat} {box : Geometry.Rational.Box}
+  {sample : Primitives.Sample cap differential index box} {shared :
+    FacePrimitiveBank differential index domains}
+  {localTarget localArea arcTarget : Coordinate} {floor : Nat}
 
 set_option genInjectivity false in
 /-- The dependent complete arc plan bank on the original exterior request list.
@@ -242,17 +242,17 @@ set_option genInjectivity false in
 Every entry preserves its actual regular request and the shared cap sample, so later selection reuses the prepared
 plans. -/
 inductive ArcPlans (sample : Primitives.Sample cap differential index box) (arcTarget :
-  InverseRootPolynomial.Coordinate) :
-    List (AllSurfacePreparation.Entry regular domains differential localTarget localArea floor) → Type 2
+  Coordinate) :
+    List (Entry regular domains differential localTarget localArea floor) → Type 2
   /-- The empty original request list carries an empty arc plan bank. -/ | nil :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularArcPlans.AllSurfacePreparation.ArcPlans sample arcTarget []
+    ArcPlans sample arcTarget []
   /-- Retain the actual original head arc plan and the dependent plans on the unchanged request tail. -/ | cons {entry :
-    AllSurfacePreparation.Entry regular domains differential localTarget localArea floor}
-      {entries : List (AllSurfacePreparation.Entry regular domains differential localTarget localArea floor)}
-      (head : Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularArcPlans.SegmentComparison.CapRequest.ArcPlan
+    Entry regular domains differential localTarget localArea floor}
+      {entries : List (Entry regular domains differential localTarget localArea floor)}
+      (head : ArcPlan
         entry.request sample arcTarget) (tail :
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularArcPlans.AllSurfacePreparation.ArcPlans sample arcTarget
-        entries) : Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularArcPlans.AllSurfacePreparation.ArcPlans sample
+        ArcPlans sample arcTarget
+        entries) : ArcPlans sample
         arcTarget (entry :: entries)
 
 constructive_injectivity ArcPlans
@@ -261,40 +261,40 @@ namespace ArcPlans
 
 /-- Prepare the arc plan for each actual original exterior request, preserving the dependent list and shared cap sample.
 -/
-@[expose] def build (degree : curve.polynomial.natDegree = 2 * genus + 2) (bounds : Charts.Reciprocal.Cap.EnergyBounds
+@[expose] def build (degree : curve.polynomial.natDegree = 2 * genus + 2) (bounds : EnergyBounds
     sample)
-    (arcTarget : InverseRootPolynomial.Coordinate) (positive : 0 < arcTarget) :
-    (entries : List (AllSurfacePreparation.Entry regular domains differential localTarget localArea floor)) →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularArcPlans.AllSurfacePreparation.ArcPlans sample arcTarget entries
+    (arcTarget : Coordinate) (positive : 0 < arcTarget) :
+    (entries : List (Entry regular domains differential localTarget localArea floor)) →
+      ArcPlans sample arcTarget entries
   | [] => .nil
   | entry :: entries => .cons
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularArcPlans.SegmentComparison.CapRequest.ArcPlan.build entry.request
+    (ArcPlan.build entry.request
     degree bounds arcTarget positive)
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularArcPlans.AllSurfacePreparation.ArcPlans.build degree bounds
+    (ArcPlans.build degree bounds
     arcTarget positive entries)
 
 /-- The maximum actual fine subdivision requested by the complete original arc plan bank. -/
-@[expose] def fineMaximum : {entries : List (AllSurfacePreparation.Entry regular domains differential localTarget
-  localArea floor)} → Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularArcPlans.AllSurfacePreparation.ArcPlans sample
+@[expose] def fineMaximum : {entries : List (Entry regular domains differential localTarget
+  localArea floor)} → ArcPlans sample
   arcTarget entries → Nat
   | _, .nil => 0
   | _, .cons head tail => max head.fine tail.fineMaximum
 
 /-- The maximum actual energy floor requested by all original plans at the supplied common fine depth. -/
-@[expose] def energyMaximum (fine : Nat) : {entries : List (AllSurfacePreparation.Entry regular domains differential
+@[expose] def energyMaximum (fine : Nat) : {entries : List (Entry regular domains differential
   localTarget localArea floor)} →
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularArcPlans.AllSurfacePreparation.ArcPlans sample arcTarget entries →
+  ArcPlans sample arcTarget entries →
   Nat
   | _, .nil => 0
   | _, .cons head tail => max (head.energyMinimum fine) (tail.energyMaximum fine)
 
 /-- Every original request occurrence has a retained plan whose fine and energy floors are paid by the complete cached
 maxima. -/
-theorem bounded {entries : List (AllSurfacePreparation.Entry regular domains differential localTarget localArea floor)}
-    (plans : Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularArcPlans.AllSurfacePreparation.ArcPlans sample arcTarget
+theorem bounded {entries : List (Entry regular domains differential localTarget localArea floor)}
+    (plans : ArcPlans sample arcTarget
       entries) (fine : Nat) :
     ∀ entry ∈ entries, ∃ plan :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularArcPlans.SegmentComparison.CapRequest.ArcPlan entry.request
+      ArcPlan entry.request
       sample arcTarget,
       plan.fine ≤ plans.fineMaximum ∧ plan.energyMinimum fine ≤ plans.energyMaximum fine := by
   induction plans with
@@ -308,10 +308,10 @@ theorem bounded {entries : List (AllSurfacePreparation.Entry regular domains dif
 
 /-- The acquired original exterior samples satisfy their retained local arc errors at common subdivisions paying every
 stored plan. -/
-theorem local_errors {entries : List (AllSurfacePreparation.Entry regular domains differential localTarget localArea
+theorem local_errors {entries : List (Entry regular domains differential localTarget localArea
   floor)}
-    (plans : Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularArcPlans.AllSurfacePreparation.ArcPlans sample arcTarget
-      entries) (samples : AllSurfacePreparation.Samples entries sample shared fine readingIndex)
+    (plans : ArcPlans sample arcTarget
+      entries) (samples : Samples entries sample shared fine readingIndex)
     (energyDepth : Nat) (fineLater : plans.fineMaximum ≤ fine) (energyLater : plans.energyMaximum fine ≤ energyDepth) :
     ∀ value ∈ samples.values,
       Data.Gaussian.Norm.Basic.normSq (ReciprocalRadialGeometry.arcArea sample.primitive.value.eval energyDepth

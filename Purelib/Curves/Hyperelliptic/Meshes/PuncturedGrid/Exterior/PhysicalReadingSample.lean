@@ -91,21 +91,21 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Gaussian.Norm.Basic (normSq_nonneg)
 open Purelib.Data.Rat.Fraction.Compatibility
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential} {target : Coordinate} {minimum
     stage fine index : Nat}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
   {plan : PairedSourcePlan occurrence
     other target minimum}
 
@@ -121,20 +121,20 @@ set_option genInjectivity false in
 readbacks.
 
 The original anchor and offset owners are preserved at the supplied physical points. -/
-structure PhysicalReadingSample (data : PairedFragmentValues.FirstData occurrence index) (otherData :
-  PairedFragmentValues.SecondData occurrence other index)
-    {count : Nat} (points : Fin (count + 1) → InverseRootPolynomial.Gaussian) (values : Fin (count + 1) →
-      Stokes.PrimitivePoint) where
+structure PhysicalReadingSample (data : FirstData occurrence index) (otherData :
+  SecondData occurrence other index)
+    {count : Nat} (points : Fin (count + 1) → Gaussian) (values : Fin (count + 1) →
+      PrimitivePoint) where
   /-- The original first-differential readings at the retained physical points. -/ first :
-    RectangularPointReadings.PointReadings data.anchors data.offsets points
+    PointReadings data.anchors data.offsets points
   /-- The original second-differential readings at the same retained physical points. -/ second :
-    RectangularPointReadings.PointReadings otherData.anchors otherData.offsets points
+    PointReadings otherData.anchors otherData.offsets points
   /-- The first retained readings equal the supplied left primitive values at every vertex. -/ first_eq : ∀ vertex,
     first.values vertex = (values vertex).left
   /-- The second retained readings equal the supplied right primitive values at every vertex. -/ second_eq : ∀ vertex,
     second.values vertex = (values vertex).right
   /-- The cached conjugate centered sample on the exact original paired values. -/ original :
-    CenteredBilinearPath.Sample (fun vertex => ConjugateIncrementComparison.conjugateFirst (values vertex))
+    Sample (fun vertex => ConjugateIncrementComparison.conjugateFirst (values vertex))
 
 constructive_injectivity PhysicalReadingSample
 
@@ -142,15 +142,15 @@ namespace PhysicalReadingSample
 
 /-- Build the area from cached reading vectors and transport only pointwise certificates. No primitive is evaluated
 again to establish the readback. -/
-def build {count : Nat} {points : Fin (count + 1) → InverseRootPolynomial.Gaussian}
-    {values : Fin (count + 1) → Stokes.PrimitivePoint}
-    (first : RectangularPointReadings.PointReadings data.anchors data.offsets points)
-    (second : RectangularPointReadings.PointReadings otherData.anchors otherData.offsets points)
+def build {count : Nat} {points : Fin (count + 1) → Gaussian}
+    {values : Fin (count + 1) → PrimitivePoint}
+    (first : PointReadings data.anchors data.offsets points)
+    (second : PointReadings otherData.anchors otherData.offsets points)
     (firstEq : ∀ vertex, first.values vertex = (values vertex).left)
     (secondEq : ∀ vertex, second.values vertex = (values vertex).right) :
     PhysicalReadingSample data otherData points
       values :=
-  let original := CenteredBilinearPath.Sample.build (fun vertex => ConjugateIncrementComparison.conjugateFirst
+  let original := Sample.build (fun vertex => ConjugateIncrementComparison.conjugateFirst
     ⟨first.values vertex, second.values vertex⟩)
   ⟨first, second, firstEq, secondEq, SampleReadback.Sample.readback original (fun vertex =>
     congrArg ConjugateIncrementComparison.conjugateFirst (congrArg₂ PrimitivePoint.mk (firstEq vertex) (secondEq

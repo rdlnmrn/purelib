@@ -4,6 +4,8 @@ import Purelib.Data.Gaussian.Field
 public import Purelib.Data.List.Gaussian.Arithmetic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.List.Gaussian
+
 open Purelib
 
 section
@@ -35,14 +37,14 @@ def dot : List Data.Gaussian.Basic.Canonical → List
 
 The recursion stops when the direction list ends, preserving the original conventions for unequal list lengths. -/
 theorem dot_addPartials : ∀ left right direction,
-    dot (Data.List.Gaussian.Arithmetic.addCoefficients left right) direction =
+    dot (Arithmetic.addCoefficients left right) direction =
       dot left direction + dot right direction
   | [], right, direction => by
-      simp only [Data.List.Gaussian.Arithmetic.addCoefficients]
+      simp only [Arithmetic.addCoefficients]
       cases direction <;>
         simp only [-eq_self, -iff_self, dot, Data.Gaussian.Basic.zero_add] <;> rfl
   | left :: leftTail, [], direction => by
-      simp only [Data.List.Gaussian.Arithmetic.addCoefficients]
+      simp only [Arithmetic.addCoefficients]
       cases direction <;>
         simp only [-eq_self, -iff_self, dot, Data.Gaussian.Basic.add_zero] <;> rfl
   | left :: leftTail, right :: rightTail, [] => by
@@ -52,7 +54,7 @@ theorem dot_addPartials : ∀ left right direction,
           Data.Gaussian.Basic.zero_im] <;> ring1
   | left :: leftTail, right :: rightTail,
       direction :: directionTail => by
-      rw [Data.List.Gaussian.Arithmetic.addCoefficients, dot,
+      rw [Arithmetic.addCoefficients, dot,
         dot, dot,
         dot_addPartials]
       apply Data.Gaussian.Basic.ext <;>
@@ -64,21 +66,21 @@ theorem dot_addPartials : ∀ left right direction,
 Both sides retain the same direction list and truncate at the first exhausted list. -/
 theorem dot_scalePartials (factor : Data.Gaussian.Basic.Canonical) : ∀
   partials direction,
-    dot (Data.List.Gaussian.Arithmetic.scalePartials factor partials) direction =
+    dot (Arithmetic.scalePartials factor partials) direction =
       factor * dot partials direction
   | [], direction => by
       cases direction <;>
-        simp only [-eq_self, -iff_self, Data.List.Gaussian.Arithmetic.scalePartials, List.map,
+        simp only [-eq_self, -iff_self, Arithmetic.scalePartials, List.map,
           dot, Data.Gaussian.Basic.mul_zero] <;> rfl
   | coefficient :: partials, [] => by
-      simp only [-eq_self, -iff_self, Data.List.Gaussian.Arithmetic.scalePartials, List.map,
+      simp only [-eq_self, -iff_self, Arithmetic.scalePartials, List.map,
         dot, Data.Gaussian.Basic.mul_zero] ; rfl
   | coefficient :: partials, direction :: directions => by
       have inductionHypothesis :=
         dot_scalePartials factor partials directions
       change dot (List.map (fun value => factor * value) partials) directions =
         factor * dot partials directions at inductionHypothesis
-      rw [Data.List.Gaussian.Arithmetic.scalePartials, List.map, dot,
+      rw [Arithmetic.scalePartials, List.map, dot,
         dot, inductionHypothesis]
       apply Data.Gaussian.Basic.ext <;>
         simp only [Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im, Data.Gaussian.Basic.mul_re,

@@ -100,60 +100,60 @@ open Purelib.Riemann.Meshes.GridLiftedMesh.LiftedFaces (triangleArea)
 open Purelib.Riemann.Meshes (LiftedPuncturedGrid)
 open Purelib.Polynomial.Geometry.Grid.CellBoundary (sumValues sumValues_congr)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve
     branches higher}
-  {preparation : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target
-    radius : Purelib.Data.Rat.Fraction.Rational}
-  {grid : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-    {index : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
+  {preparation : NewtonPreparation original} {target
+    radius : Rational}
+  {grid : NewtonGrid preparation target radius}
+    {index : Data.Index branches}
 
 /-- The original Newton-band lower-left anchor belongs to the retained grid. -/
-theorem anchor_onGrid (_annulus : Faces.AnnularFaces grid index) :
-    Polynomial.Geometry.Grid.FromStates.ContainsVertex grid.shrunk.prepared.grid (grid.bands.box index).anchor :=
+theorem anchor_onGrid (_annulus : AnnularFaces grid index) :
+    ContainsVertex grid.shrunk.prepared.grid (grid.bands.box index).anchor :=
   ⟨(NewtonGrid.band_x_lines grid index).1,
     (NewtonGrid.band_y_lines grid index).1⟩
 
 /-- Traverse the original Newton-band boundary twice in the same orientation. -/
-@[expose] def doubleBoundary (annulus : Faces.AnnularFaces grid index) :
+@[expose] def doubleBoundary (annulus : AnnularFaces grid index) :
     Walks.Walk grid.shrunk.prepared.grid
       (point (grid.bands.box index).xLower (grid.bands.box index).yLower)
       (point (grid.bands.box index).xLower (grid.bands.box index).yLower) :=
   annulus.boundary.append annulus.boundary
 
 /-- One original Newton-band boundary tour exchanges the two retained root sheets. -/
-theorem boundary_swap (annulus : Faces.AnnularFaces grid index) {frames : RootIsolation.SquareRoot.Grid.RootFrames
+theorem boundary_swap (annulus : AnnularFaces grid index) {frames : RootFrames
   grid.shrunk.prepared.grid}
     (edges : RootEdgeBank frames) (sheet : Fin 2) :
     RootEdgeBank.target edges annulus.boundary sheet = BranchCutLifts.otherSheet sheet :=
     RootEdgeBank.target_odd edges annulus.boundary
-      (Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.anchor_onGrid annulus) 0
+      (LiftedBoundary.anchor_onGrid annulus) 0
       (annulus.boundary_winding.trans (by decide)) sheet
 
 /-- Two original Newton-band tours return to the retained starting sheet. -/
-theorem doubleBoundary_return (annulus : Faces.AnnularFaces grid index) {frames :
-    RootIsolation.SquareRoot.Grid.RootFrames
+theorem doubleBoundary_return (annulus : AnnularFaces grid index) {frames :
+    RootFrames
   grid.shrunk.prepared.grid}
     (edges : RootEdgeBank frames) (sheet : Fin 2) :
-    RootEdgeBank.target edges (Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.doubleBoundary annulus) sheet =
+    RootEdgeBank.target edges (LiftedBoundary.doubleBoundary annulus) sheet =
       sheet := by
-  rw [Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.doubleBoundary, RootEdgeBank.target_append edges,
-    Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.boundary_swap,
-    Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.boundary_swap,
+  rw [LiftedBoundary.doubleBoundary, RootEdgeBank.target_append edges,
+    LiftedBoundary.boundary_swap,
+    LiftedBoundary.boundary_swap,
     BranchCutLifts.otherSheet_other]
 
 /-- Find the original branch-labelled hole by finite traversal, retaining its list membership and exact branch index. -/
 @[expose] def findHole (index : Data.Index branches) :
-    ∀ (holes : List (PuncturedGridFaces.BranchHole grid.shrunk.prepared.toBranchCellBank)), (∃ hole ∈ holes, hole.index
+    ∀ (holes : List (BranchHole grid.shrunk.prepared.toBranchCellBank)), (∃ hole ∈ holes, hole.index
       = index) →
-      { hole : PuncturedGridFaces.BranchHole grid.shrunk.prepared.toBranchCellBank // hole ∈ holes ∧ hole.index = index
+      { hole : BranchHole grid.shrunk.prepared.toBranchCellBank // hole ∈ holes ∧ hole.index = index
         }
   | [], found => False.elim (by obtain ⟨_, member, _⟩ := found; cases member)
   | hole :: tail, found =>
       if same : hole.index = index then ⟨hole, List.mem_cons_self, same⟩
       else
-        let rest := Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.findHole index tail (by
+        let rest := LiftedBoundary.findHole index tail (by
           obtain ⟨other, member, equal⟩ := found
           rcases Membership.mem_cons.mp member with rfl | member
           · exact (same equal).elim
@@ -166,38 +166,38 @@ readbacks without replaying lookup.
 
 The selected triangles, complementary triangles, actual hole and boundary tours retain the original annulus and lifted
 grid. The stored equations link each cache to that same selection. -/
-structure Lifted (annulus : Faces.AnnularFaces grid index) (lifted : Meshes.LiftedPuncturedGrid grid.punctured) where
-  /-- The retained lifts of exactly the original annular regular faces. -/ selected : GridLiftedMesh.LiftedFaces
+structure Lifted (annulus : AnnularFaces grid index) (lifted : LiftedPuncturedGrid grid.punctured) where
+  /-- The retained lifts of exactly the original annular regular faces. -/ selected : LiftedFaces
     lifted.vertices lifted.edges annulus.faces
   /-- The cached oriented triangle list of the selected original lifted annulus. -/ triangles : List
-    (Stokes.OrientedTriangle lifted.vertices.count)
+    (OrientedTriangle lifted.vertices.count)
   /-- The cached annular triangle list is exactly the retained selected lifts' triangle list. -/ triangles_eq :
     triangles = selected.triangles
   /-- Every cached annular triangle belongs to the original complete lifted mesh. -/ triangles_mem : ∀ triangle ∈
     triangles, triangle ∈ lifted.mesh.triangles
-  /-- The cached original lifted triangles outside the selected annulus. -/ complement : List (Stokes.OrientedTriangle
+  /-- The cached original lifted triangles outside the selected annulus. -/ complement : List (OrientedTriangle
     lifted.vertices.count)
   /-- The selected annulus and retained complement partition every finite triangle-value sum of the original lifted
-    mesh. -/ partition : ∀ value : Stokes.OrientedTriangle lifted.vertices.count → Data.Gaussian.Basic.Canonical,
+    mesh. -/ partition : ∀ value : OrientedTriangle lifted.vertices.count → Canonical,
     CellBoundary.sumValues value triangles + CellBoundary.sumValues value complement = CellBoundary.sumValues value
       lifted.mesh.triangles
-  /-- The retained original branch hole enclosed by this Newton band. -/ hole : PuncturedGridFaces.BranchHole
+  /-- The retained original branch hole enclosed by this Newton band. -/ hole : BranchHole
     grid.shrunk.prepared.toBranchCellBank
   /-- The retained branch hole belongs to the original face bank. -/ hole_mem : hole ∈ grid.faces.holes
   /-- The retained hole has exactly the original selected branch index. -/ hole_index : hole.index = index
-  /-- The cached indexed edge word of the original two-lap Newton-band tour. -/ outer : List (Stokes.OrientedEdge
+  /-- The cached indexed edge word of the original two-lap Newton-band tour. -/ outer : List (OrientedEdge
     lifted.vertices.count)
   /-- The outer word is exactly the original double boundary lifted from sheet zero. -/ outer_eq : outer =
     lifted.edges.indexedEdges lifted.vertices
-    (Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.doubleBoundary annulus) 0
-  /-- The cached indexed edge word of the original clockwise branch-hole tour. -/ inner : List (Stokes.OrientedEdge
+    (LiftedBoundary.doubleBoundary annulus) 0
+  /-- The cached indexed edge word of the original clockwise branch-hole tour. -/ inner : List (OrientedEdge
     lifted.vertices.count)
   /-- The inner word is exactly the retained hole's original lifted boundary. -/ inner_eq : inner = hole.liftedBoundary
     lifted.vertices lifted.edges
   /-- The retained original indexed sheet-zero anchor of the outer tour. -/ outerAnchor : Fin lifted.vertices.count
   /-- The outer anchor is exactly the original Newton-band lower-left vertex index on sheet zero. -/ outerAnchor_eq :
     outerAnchor = lifted.vertices.index (grid.bands.box index).anchor
-    (Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.anchor_onGrid annulus) 0
+    (LiftedBoundary.anchor_onGrid annulus) 0
   /-- The retained original indexed sheet-zero anchor of the inner tour. -/ innerAnchor : Fin lifted.vertices.count
   /-- The inner anchor is exactly the original hole anchor vertex index on sheet zero. -/ innerAnchor_eq : innerAnchor =
     lifted.vertices.index hole.cell.box.anchor (hole.cell.anchor_mem hole.member) 0
@@ -206,18 +206,18 @@ constructive_injectivity Lifted
 
 namespace Lifted
 
-variable {annulus : Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index} {lifted :
-  Purelib.Riemann.Meshes.LiftedPuncturedGrid grid.punctured}
+variable {annulus : AnnularFaces grid index} {lifted :
+  LiftedPuncturedGrid grid.punctured}
 
 /-- Select and cache the original annular lifted faces around the supplied original labelled hole.
 
 The triangle complement, exact indexed boundary words and original sheet-zero anchors are retained with their readback
 certificates. -/
-@[expose] def ofHole (annulus : Faces.AnnularFaces grid index) (lifted : Meshes.LiftedPuncturedGrid grid.punctured)
-    (hole : PuncturedGridFaces.BranchHole grid.shrunk.prepared.toBranchCellBank) (member : hole ∈ grid.faces.holes)
-    (label : hole.index = index) : Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted :=
+@[expose] def ofHole (annulus : AnnularFaces grid index) (lifted : LiftedPuncturedGrid grid.punctured)
+    (hole : BranchHole grid.shrunk.prepared.toBranchCellBank) (member : hole ∈ grid.faces.holes)
+    (label : hole.index = index) : Lifted annulus lifted :=
   let box := grid.bands.box index
-  let keep := fun face : PuncturedGridFaces.RegularFace grid.shrunk.prepared.toBranchCellBank => decide
+  let keep := fun face : RegularFace grid.shrunk.prepared.toBranchCellBank => decide
     (face.cell.box.Refines box)
   let selection := GridLiftedFaceSelection.select keep lifted.mesh.lifts
   let selected := GridLiftedFaceSelection.reindex selection.selected
@@ -237,60 +237,60 @@ certificates. -/
     hole_mem := member
     hole_index := label
     outer := lifted.edges.indexedEdges lifted.vertices
-      (Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.doubleBoundary annulus) 0
+      (LiftedBoundary.doubleBoundary annulus) 0
     outer_eq := rfl
     inner := hole.liftedBoundary lifted.vertices lifted.edges
     inner_eq := rfl
     outerAnchor := lifted.vertices.index (grid.bands.box index).anchor
-      (Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.anchor_onGrid annulus) 0
+      (LiftedBoundary.anchor_onGrid annulus) 0
     outerAnchor_eq := rfl
     innerAnchor := lifted.vertices.index hole.cell.box.anchor (hole.cell.anchor_mem hole.member) 0
     innerAnchor_eq := rfl }
 
 /-- Locate the original labelled branch hole and cache its lifted annulus and exact boundary tours. -/
-@[expose] def build (annulus : Faces.AnnularFaces grid index) (lifted : Meshes.LiftedPuncturedGrid grid.punctured) :
-  Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted :=
-  let found := Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.findHole index grid.faces.holes
+@[expose] def build (annulus : AnnularFaces grid index) (lifted : LiftedPuncturedGrid grid.punctured) :
+  Lifted annulus lifted :=
+  let found := LiftedBoundary.findHole index grid.faces.holes
     (grid.faces.hole_complete index)
-  Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted.ofHole annulus lifted found.val found.property.1
+  Lifted.ofHole annulus lifted found.val found.property.1
     found.property.2
 
 /-- Constructing from an original retained hole preserves exactly the selected lifted-face triangle list. -/
-theorem ofHole_triangles (annulus : Faces.AnnularFaces grid index) (lifted : Meshes.LiftedPuncturedGrid grid.punctured)
-    (hole : PuncturedGridFaces.BranchHole grid.shrunk.prepared.toBranchCellBank) (member : hole ∈ grid.faces.holes)
+theorem ofHole_triangles (annulus : AnnularFaces grid index) (lifted : LiftedPuncturedGrid grid.punctured)
+    (hole : BranchHole grid.shrunk.prepared.toBranchCellBank) (member : hole ∈ grid.faces.holes)
     (label : hole.index = index) :
-    (Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted.ofHole annulus lifted hole member label).triangles
+    (Lifted.ofHole annulus lifted hole member label).triangles
       =
       (GridLiftedFaceSelection.select
         (fun face => decide (face.cell.box.Refines (grid.bands.box index))) lifted.mesh.lifts).selected.triangles :=
   GridLiftedFaceSelection.reindex_triangles _ _
 
 /-- The retained lifted annulus has four oriented triangles per original regular face. -/
-theorem triangleCount (region : Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted) :
+theorem triangleCount (region : Lifted annulus lifted) :
   region.triangles.length = 4 * annulus.faces.length := by
   rw [region.triangles_eq]
   exact region.selected.triangles_length
 
 /-- Every retained annular triangle has strictly positive original geometric area. -/
-theorem triangle_positive (region : Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted)
-  (triangle : Stokes.OrientedTriangle lifted.vertices.count)
+theorem triangle_positive (region : Lifted annulus lifted)
+  (triangle : OrientedTriangle lifted.vertices.count)
     (member : triangle ∈ region.triangles) : 0 < LiftedFaces.triangleArea lifted.vertices triangle := by
   rw [region.triangles_eq] at member
   exact region.selected.triangle_positive triangle member
 
 /-- The original two-lap outer indexed edge word closes at its retained sheet-zero anchor. -/
-theorem outer_closed (region : Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted) :
-    PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish region.outer region.outerAnchor region.outerAnchor
+theorem outer_closed (region : Lifted annulus lifted) :
+    PathEndpoints OrientedEdge.start OrientedEdge.finish region.outer region.outerAnchor region.outerAnchor
       := by
   rw [region.outer_eq, region.outerAnchor_eq]
   exact lifted.edges.indexedEdges_closed lifted.vertices
-    (Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.doubleBoundary annulus)
-    (Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.anchor_onGrid annulus) 0
-    (Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.doubleBoundary_return annulus lifted.edges 0)
+    (LiftedBoundary.doubleBoundary annulus)
+    (LiftedBoundary.anchor_onGrid annulus) 0
+    (LiftedBoundary.doubleBoundary_return annulus lifted.edges 0)
 
 /-- The original inner indexed edge word closes at its retained sheet-zero anchor. -/
-theorem inner_closed (region : Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted) :
-    PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish region.inner region.innerAnchor region.innerAnchor
+theorem inner_closed (region : Lifted annulus lifted) :
+    PathEndpoints OrientedEdge.start OrientedEdge.finish region.inner region.innerAnchor region.innerAnchor
       := by
   rw [region.inner_eq, region.innerAnchor_eq]
   exact region.hole.liftedBoundary_closed lifted.vertices lifted.edges
@@ -299,7 +299,7 @@ theorem inner_closed (region : Curves.Hyperelliptic.Meshes.Newton.Annulus.Lifted
 
 Both indexed boundary copies retain their original walk and sheet transitions. Their displayed list lengths add to twice
 the original edge count. -/
-theorem outer_length (region : Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted) :
+theorem outer_length (region : Lifted annulus lifted) :
   region.outer.length = 2 * annulus.boundary.edgeCount :=
   (congrArg List.length (region.outer_eq.trans
     (lifted.edges.indexedEdges_append lifted.vertices annulus.boundary annulus.boundary 0))).trans
@@ -311,18 +311,18 @@ theorem outer_length (region : Curves.Hyperelliptic.Meshes.Newton.Annulus.Lifted
             (Nat.two_mul _).symm))
 
 /-- The original lifted branch-hole boundary has eight indexed edges. -/
-theorem inner_length (region : Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted) :
+theorem inner_length (region : Lifted annulus lifted) :
   region.inner.length = 8 := by
   rw [region.inner_eq]
   exact region.hole.liftedBoundary_length lifted.vertices lifted.edges
 
 /-- The retained two-lap outer area equals the original two-sheet Newton-band boundary area. -/
-theorem outer_area (region : Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted) (primitive
-  : Fin lifted.vertices.count → Stokes.PrimitivePoint) :
+theorem outer_area (region : Lifted annulus lifted) (primitive
+  : Fin lifted.vertices.count → PrimitivePoint) :
     Stokes.edgeListArea primitive region.outer = lifted.edges.twoSheetArea lifted.vertices primitive annulus.boundary :=
       by
   have second := congrArg (fun sheet => lifted.edges.indexedEdges lifted.vertices annulus.boundary sheet)
-    (Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.boundary_swap annulus lifted.edges 0)
+    (LiftedBoundary.boundary_swap annulus lifted.edges 0)
   exact (congrArg (Stokes.edgeListArea primitive) (region.outer_eq.trans
     (lifted.edges.indexedEdges_append lifted.vertices annulus.boundary annulus.boundary 0))).trans
       ((Stokes.edgeListArea_append _ _ _).trans
@@ -331,8 +331,8 @@ theorem outer_area (region : Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBo
           Stokes.edgeListArea primitive rest) second))
 
 /-- The retained inner area equals the original two-sheet inward branch-hole boundary area. -/
-theorem inner_area (region : Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted) (primitive
-  : Fin lifted.vertices.count → Stokes.PrimitivePoint) :
+theorem inner_area (region : Lifted annulus lifted) (primitive
+  : Fin lifted.vertices.count → PrimitivePoint) :
     Stokes.edgeListArea primitive region.inner = lifted.edges.twoSheetArea lifted.vertices primitive
       region.hole.inwardBoundary := by
   rw [region.inner_eq]
@@ -340,12 +340,12 @@ theorem inner_area (region : Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBo
 
 /-- Actual selected surface triangles equal the outer two-lap tour plus the clockwise two-lap hole tour, for independent
 values on the two sheets. -/
-theorem triangleEdges_area (region : Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted)
-  (primitive : Fin lifted.vertices.count → Stokes.PrimitivePoint) :
+theorem triangleEdges_area (region : Lifted annulus lifted)
+  (primitive : Fin lifted.vertices.count → PrimitivePoint) :
     Stokes.edgeListArea primitive (region.triangles.flatMap OrientedTriangle.boundary) =
       Stokes.edgeListArea primitive region.outer + Stokes.edgeListArea primitive region.inner := by
   let values := RootEdgeBank.edgeValues lifted.edges lifted.vertices primitive
-  have walks {start finish : Data.Gaussian.Basic.Canonical} (walk : Walks.Walk grid.shrunk.prepared.grid start finish) :
+  have walks {start finish : Canonical} (walk : Walks.Walk grid.shrunk.prepared.grid start finish) :
       values.walk walk = lifted.edges.twoSheetArea lifted.vertices primitive walk :=
     RootEdgeBank.edgeValues_walk lifted.edges lifted.vertices primitive
       (fun point member => (BranchCellBank.referenceAt grid.shrunk.prepared.toBranchCellBank point member).toLoop) walk
@@ -366,8 +366,8 @@ theorem triangleEdges_area (region : Curves.Hyperelliptic.Meshes.Newton.Annulus.
       ((walks region.hole.inwardBoundary).trans (region.inner_area primitive).symm)
 
 /-- The concatenated original triangle-boundary area equals the finite sum of the individual original triangle areas. -/
-theorem triangleEdges_sum {count : Nat} (primitive : Fin count → Stokes.PrimitivePoint)
-    (triangles : List (Stokes.OrientedTriangle count)) :
+theorem triangleEdges_sum {count : Nat} (primitive : Fin count → PrimitivePoint)
+    (triangles : List (OrientedTriangle count)) :
     Stokes.edgeListArea primitive (triangles.flatMap OrientedTriangle.boundary) =
       CellBoundary.sumValues (fun triangle => Stokes.edgeListArea primitive triangle.boundary) triangles := by
   induction triangles with
@@ -380,15 +380,15 @@ theorem triangleEdges_sum {count : Nat} (primitive : Fin count → Stokes.Primit
 
 The remaining cached triangles plus the two actual boundary tours account for the full original primitive area, even
 when individual readings are signed. -/
-theorem complement_area (region : Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted)
-  (primitive : Fin lifted.vertices.count → Stokes.PrimitivePoint) :
+theorem complement_area (region : Lifted annulus lifted)
+  (primitive : Fin lifted.vertices.count → PrimitivePoint) :
     Stokes.edgeListArea primitive (region.complement.flatMap OrientedTriangle.boundary) +
       Stokes.edgeListArea primitive region.outer + Stokes.edgeListArea primitive region.inner =
         Stokes.edgeListArea primitive lifted.mesh.triangulation.boundary := by
   have partition := region.partition (fun triangle => Stokes.edgeListArea primitive triangle.boundary)
-  rw [← Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted.triangleEdges_sum primitive region.triangles, ←
-    Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted.triangleEdges_sum primitive region.complement,
-    ← Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted.triangleEdges_sum primitive
+  rw [← Lifted.triangleEdges_sum primitive region.triangles, ←
+    Lifted.triangleEdges_sum primitive region.complement,
+    ← Lifted.triangleEdges_sum primitive
       lifted.mesh.triangles, region.triangleEdges_area primitive,
     lifted.mesh.triangles_eq, lifted.mesh.lifts.triangleEdges_area primitive,
     ← lifted.mesh.boundary_eq_faceWalks primitive] at partition
@@ -399,8 +399,8 @@ theorem complement_area (region : Curves.Hyperelliptic.Meshes.Newton.Annulus.Lif
 not by assuming either boundary area vanishes.
 
 This is the physical-boundary excision identity. -/
-theorem excision_area (region : Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted)
-  (primitive : Fin lifted.vertices.count → Stokes.PrimitivePoint) :
+theorem excision_area (region : Lifted annulus lifted)
+  (primitive : Fin lifted.vertices.count → PrimitivePoint) :
     Stokes.edgeListArea primitive lifted.mesh.triangulation.boundary - Stokes.edgeListArea primitive region.inner =
       Stokes.edgeListArea primitive (region.complement.flatMap OrientedTriangle.boundary) + Stokes.edgeListArea
         primitive region.outer := by

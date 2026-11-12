@@ -72,14 +72,14 @@ theorem pellParameter_mul_denominator (stage :
 stage; after clearing the displayed denominator its value is exactly one. -/
 theorem parameterPolynomial_pellParameter_scaled
   (stage : Nat) :
-    Dirichlet.Critical.Cylinder.Basic.parameterPolynomial (pellParameter stage) *
+    Cylinder.Basic.parameterPolynomial (pellParameter stage) *
         (Pell.FiniteBranch.pellDenominator stage : Fraction.Rational) ^ 2 = 1 := by
   have castEquation := congrArg (fun value : Nat => (value : Fraction.Rational))
     (Pell.FiniteBranch.pellEquation stage)
   simp only [Algebra.NatCast.add, Algebra.NatCast.mul, Algebra.NatCast.pow, Nat.cast_ofNat, -eq_self, -iff_self]
     at castEquation
   calc
-    Dirichlet.Critical.Cylinder.Basic.parameterPolynomial (pellParameter stage) *
+    Cylinder.Basic.parameterPolynomial (pellParameter stage) *
           (Pell.FiniteBranch.pellDenominator stage : Fraction.Rational) ^ 2 =
         (pellParameter stage * (Pell.FiniteBranch.pellDenominator stage :
           Fraction.Rational)) ^ 2 -
@@ -87,7 +87,7 @@ theorem parameterPolynomial_pellParameter_scaled
             (Pell.FiniteBranch.pellDenominator stage : Fraction.Rational)) *
               (Pell.FiniteBranch.pellDenominator stage : Fraction.Rational) +
           (Pell.FiniteBranch.pellDenominator stage : Fraction.Rational) ^ 2 := by
-      unfold Dirichlet.Critical.Cylinder.Basic.parameterPolynomial
+      unfold Cylinder.Basic.parameterPolynomial
       ring1
     _ =
         (Pell.FiniteBranch.pellNumerator stage : Fraction.Rational) ^ 2 -
@@ -112,17 +112,17 @@ theorem parameterPolynomial_pellParameter_scaled
 Its product with the positive squared denominator is exactly one, so no limiting argument is needed. -/
 theorem parameterPolynomial_pellParameter_pos
   (stage : Nat) :
-    0 < Dirichlet.Critical.Cylinder.Basic.parameterPolynomial (pellParameter stage) := by
+    0 < Cylinder.Basic.parameterPolynomial (pellParameter stage) := by
   have denominatorSquareNonnegative :
       (0 : Fraction.Rational) ≤ (Pell.FiniteBranch.pellDenominator stage : Fraction.Rational) ^ 2 :=
     Fraction.Order.Arithmetic.sq_nonneg_direct _
   have productPositive :
       0 < (Pell.FiniteBranch.pellDenominator stage : Fraction.Rational) ^ 2 *
-        Dirichlet.Critical.Cylinder.Basic.parameterPolynomial (pellParameter stage) := by
+        Cylinder.Basic.parameterPolynomial (pellParameter stage) := by
     calc
       (0 : Fraction.Rational) < 1 := by decide
       _ = (Pell.FiniteBranch.pellDenominator stage : Fraction.Rational) ^ 2 *
-          Dirichlet.Critical.Cylinder.Basic.parameterPolynomial (pellParameter stage) := by
+          Cylinder.Basic.parameterPolynomial (pellParameter stage) := by
         rw [Fraction.Field.mul_comm,
           parameterPolynomial_pellParameter_scaled]
   exact Fraction.Order.Arithmetic.pos_of_mul_pos_right_direct
@@ -198,7 +198,7 @@ theorem pellParameter_lt_oneThird (stage : Nat) :
 /-- Every finite Pell ratio lies in the exact chamber required by the
 minimal-cylinder calculation. -/
 theorem pellParameter_isCritical (stage : Nat) :
-    Dirichlet.Critical.Cylinder.Basic.IsCriticalParameter (pellParameter stage) :=
+    Cylinder.Basic.IsCriticalParameter (pellParameter stage) :=
   ⟨oneFourth_le_pellParameter stage, pellParameter_lt_oneThird
     stage,
     parameterPolynomial_pellParameter_pos stage⟩

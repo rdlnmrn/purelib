@@ -51,8 +51,8 @@ open Purelib.Data in
 /-- The exact rational coordinate type. -/
 private abbrev Coordinate := Rat.Fraction.Rational
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
 
 section
 open Purelib.Integration
@@ -120,7 +120,7 @@ The block grouping and child data agree with those consumed by the root chain an
   | _, _, _, .cons head tail, .cons block _ _ blocks =>
       let safe : EndpointSafeBlock _ :=
         ⟨head, block⟩
-      .cons block.chain (RootContinuation.PreparedSubedgeRootQueries.EndpointSafeBlock.subedges safe)
+      .cons block.chain (PreparedSubedgeRootQueries.EndpointSafeBlock.subedges safe)
         (tail.subedgeRefinement blocks)
 
 end BudgetBank
@@ -133,7 +133,7 @@ set_option genInjectivity false in
 The result retains the original accuracy selection, its child-block identity and a movement bound for every actual
 child. -/
 structure RootSafeAccuracy (parents : List (CenteredEdge curve differential))
-    (targets : List (Hyperelliptic.Differentials.Basic.Differential genus)) (target : Rat.Fraction.Rational) where
+    (targets : List (Differential genus)) (target : Rat.Fraction.Rational) where
   /-- The retained root-comparison budget bank for the original parents. -/ budgets : BudgetBank parents
   /-- The checked finite-differential-family accuracy result. -/ result : DifferentialAccurateDirectRefinement parents
     targets target
@@ -181,7 +181,7 @@ open Purelib.Data
 The original nonnegative coefficient makes its denominator at least one, so
 dividing the retained target cannot increase the requested accuracy. -/
 theorem accuracy_le_target (parents : List (CenteredEdge curve differential)) (targets : List
-  (Hyperelliptic.Differentials.Basic.Differential genus))
+  (Differential genus))
     {target : Rat.Fraction.Rational} (positive : 0 < target) : differentialRefinementAccuracy parents targets target ≤
       target := by
   unfold differentialRefinementAccuracy
@@ -202,7 +202,7 @@ theorem accuracy_le_target (parents : List (CenteredEdge curve differential)) (t
 Each retained recursive attempt advances that depth by one. A successful
 original selection carries the exact depth of the attempt that produced it. -/
 theorem search_depth (parents : List (CenteredEdge curve differential))
-    (proper : AllParentsProper parents) (targets : List (Hyperelliptic.Differentials.Basic.Differential genus)) (target
+    (proper : AllParentsProper parents) (targets : List (Differential genus)) (target
       : Rat.Fraction.Rational) :
     ∀ fuel depth rootBits (selected : CheckedSelection parents targets target),
       searchSelection parents proper targets target fuel depth rootBits = some selected →
@@ -227,7 +227,7 @@ set_option genInjectivity false in
 
 The movement certificate uses the same selected meshes and requested target. -/
 structure Selection (parents : List (CenteredEdge curve differential))
-    (targets : List (Hyperelliptic.Differentials.Basic.Differential genus)) (target : Rat.Fraction.Rational) where
+    (targets : List (Differential genus)) (target : Rat.Fraction.Rational) where
   /-- The retained checked selection of common depth, root diameter and allowances. -/ selected : CheckedSelection
     parents targets target
   /-- Every child of the selected meshes meets the target movement bound. -/ movement : ∀ child ∈
@@ -243,7 +243,7 @@ open Purelib.Data
 Reuse the finite proposal search and its uniform fallback; cached root-comparison clearance imposes no additional
 integration-depth floor. -/
 @[expose] def select (parents : List (CenteredEdge curve differential)) (proper : AllParentsProper parents)
-    (targets : List (Hyperelliptic.Differentials.Basic.Differential genus)) (target : Rat.Fraction.Rational) (positive :
+    (targets : List (Differential genus)) (target : Rat.Fraction.Rational) (positive :
       0 < target) :
     Selection parents targets target :=
   let depth := commonAccuracyDepth target parents
@@ -263,7 +263,7 @@ integration-depth floor. -/
 
 Store the parent root budgets alongside geometric movement and finite-family accuracy certificates. -/
 @[expose] def acquire (parents : List (CenteredEdge curve differential)) (proper : AllParentsProper parents)
-    (targets : List (Hyperelliptic.Differentials.Basic.Differential genus)) (target : Rat.Fraction.Rational) (positive :
+    (targets : List (Differential genus)) (target : Rat.Fraction.Rational) (positive :
       0 < target) :
     RootSafeAccuracy parents targets target :=
   let budgets := BudgetBank.acquire parents
@@ -283,7 +283,7 @@ Store the parent root budgets alongside geometric movement and finite-family acc
 end
 
 variable {parents : List (CenteredEdge curve differential)} {targets : List
-  (Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus)} {target : Purelib.Data.Rat.Fraction.Rational}
+  (Differential genus)} {target : Data.Rat.Fraction.Rational}
 
 /-- Extend an original root chain through the retained cached child blocks. -/
 @[expose] def rootChain (safe : RootSafeAccuracy parents targets target) {first last : Named}
@@ -301,7 +301,7 @@ open Purelib.Curves in
 The comparison preserves the same parent and child models after recasting their differential, even outside the selected
 finite family. -/
 @[expose] def compatible (safe : RootSafeAccuracy parents targets target) (memberDifferential :
-  Hyperelliptic.Differentials.Basic.Differential genus) :
+  Differential genus) :
     CompatibleConstantPathRefinement ((parents.map (recastCenteredEdge memberDifferential)).map CenteredEdge.model)
       ((safe.blocks.children.map (recastCenteredEdge memberDifferential)).map CenteredEdge.model) :=
   reindexCompatible (congrArg (fun blocks =>
@@ -313,7 +313,7 @@ open Purelib.Integration
 /-- A selected differential's comparison allowance is bounded by twice its original aggregate allowance plus the target.
 -/
 theorem comparisonAllowance_le (safe : RootSafeAccuracy parents targets target)
-    (memberDifferential : Hyperelliptic.Differentials.Basic.Differential genus) (member : memberDifferential ∈ targets)
+    (memberDifferential : Differential genus) (member : memberDifferential ∈ targets)
       :
     (Polynomial.Gaussian.Path.CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.comparisonAllowance
       (safe.compatible memberDifferential)) ≤
@@ -325,7 +325,7 @@ theorem comparisonAllowance_le (safe : RootSafeAccuracy parents targets target)
 
 /-- A selected differential's actual cached child model meets the target aggregate allowance. -/
 theorem modelAllowance_le (safe : RootSafeAccuracy parents targets target)
-    (memberDifferential : Hyperelliptic.Differentials.Basic.Differential genus) (member : memberDifferential ∈ targets)
+    (memberDifferential : Differential genus) (member : memberDifferential ∈ targets)
       :
     (Polynomial.Gaussian.Path.Basic.PathModel.mk
       ((safe.blocks.children.map (recastCenteredEdge memberDifferential)).map CenteredEdge.model)).aggregateAllowance ≤

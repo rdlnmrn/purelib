@@ -41,6 +41,8 @@ import Purelib.Riemann.Meshes.PuncturedGridFaces
 import Purelib.Riemann.Meshes.ShrinkingPuncturedGrid
 import Purelib.Riemann.Topology.NewtonObservationSurfacePartition
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface
@@ -77,7 +79,7 @@ open Purelib.Riemann.RootContinuation.NewtonObservationLocalEnergy.LocalMeshes (
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target
@@ -95,10 +97,10 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {firstError lastError : Rational}
 
 variable {firstRequest : SurfaceRequest partitions
-  (Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
+  (MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
   firstSheet firstDepth) firstFixed firstError}
   {lastRequest : SurfaceRequest partitions
-    (Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
+    (MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
     lastSheet lastDepth) lastFixed lastError}
   {first last : Fin grid.faces.regulars.length}
   {stage : Nat} {cache : Numerics domains
@@ -112,7 +114,7 @@ namespace FacePerimeterComparison
 /-- Casting the original finite piece indices along their count equality preserves the complete retained concatenated
 trace. -/
 private theorem concatenate_cast {Vertex : Type} {firstCount lastCount : Nat}
-    (equal : firstCount + 1 = lastCount + 1) (traces : Fin (lastCount + 1) → JoinedTrace.VertexTrace Vertex) :
+    (equal : firstCount + 1 = lastCount + 1) (traces : Fin (lastCount + 1) → VertexTrace Vertex) :
     VertexTrace.concatenate (fun index => traces (Fin.cast equal index)) = VertexTrace.concatenate traces := by
   have same := Nat.succ.inj equal
   cases same
@@ -127,23 +129,23 @@ theorem horizontal
     (firstSamples : FacePerimeterTraces.Centered firstTraces cache coefficients)
     (lastSamples : FacePerimeterTraces.Centered lastTraces cache coefficients)
     (firstPieces : (index : Fin ((PieceIndices.columns (partitions.get first)) + 1)) →
-      CenteredBilinearPath.Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients first
+      Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients first
         ((firstTraces.pieces.topPieces index).indexed vertex)))
     (lastPieces : (index : Fin ((PieceIndices.columns (partitions.get first)) + 1)) →
-      CenteredBilinearPath.Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients last
+      Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients last
         ((lastTraces.pieces.bottomPieces (Fin.cast counts index)).indexed vertex)))
-    (firstPolygon : CenteredBilinearPath.Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients first
+    (firstPolygon : Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients first
       ((JoinedCenteredArea.endpointPolygon firstTraces.pieces.topPieces).indexed vertex)))
-    (lastPolygon : CenteredBilinearPath.Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients last
+    (lastPolygon : Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients last
       ((JoinedCenteredArea.endpointPolygon (fun index => lastTraces.pieces.bottomPieces (Fin.cast counts
         index))).indexed vertex)))
-    {pieceAllowance polygonAllowance : Fraction.Rational}
-    (piecesBound : ∀ index, Data.Gaussian.Norm.Basic.normSq ((firstPieces index).centeredArea - (lastPieces
+    {pieceAllowance polygonAllowance : Rational}
+    (piecesBound : ∀ index, Basic.normSq ((firstPieces index).centeredArea - (lastPieces
       index).centeredArea) ≤ pieceAllowance)
-    (polygonBound : Data.Gaussian.Norm.Basic.normSq (firstPolygon.centeredArea - lastPolygon.centeredArea) ≤
+    (polygonBound : Basic.normSq (firstPolygon.centeredArea - lastPolygon.centeredArea) ≤
       polygonAllowance) :
-    Data.Gaussian.Norm.Basic.normSq (firstSamples.top.centeredArea - lastSamples.bottom.centeredArea) ≤
-      2 * ((((PieceIndices.columns (partitions.get first)) + 1 : Nat) : Fraction.Rational)^2 * pieceAllowance +
+    Basic.normSq (firstSamples.top.centeredArea - lastSamples.bottom.centeredArea) ≤
+      2 * ((((PieceIndices.columns (partitions.get first)) + 1 : Nat) : Rational)^2 * pieceAllowance +
         polygonAllowance) :=
   JoinedCenteredArea.centered_comparison_bound firstTraces.pieces.topPieces
     (fun index => lastTraces.pieces.bottomPieces (Fin.cast counts index))
@@ -162,23 +164,23 @@ theorem vertical
     (firstSamples : FacePerimeterTraces.Centered firstTraces cache coefficients)
     (lastSamples : FacePerimeterTraces.Centered lastTraces cache coefficients)
     (firstPieces : (index : Fin ((PieceIndices.rows (partitions.get first)) + 1)) →
-      CenteredBilinearPath.Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients first
+      Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients first
         ((firstTraces.pieces.rightPieces index).indexed vertex)))
     (lastPieces : (index : Fin ((PieceIndices.rows (partitions.get first)) + 1)) →
-      CenteredBilinearPath.Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients last
+      Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients last
         ((lastTraces.pieces.leftPieces (Fin.cast counts index)).indexed vertex)))
-    (firstPolygon : CenteredBilinearPath.Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients first
+    (firstPolygon : Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients first
       ((JoinedCenteredArea.endpointPolygon firstTraces.pieces.rightPieces).indexed vertex)))
-    (lastPolygon : CenteredBilinearPath.Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients last
+    (lastPolygon : Sample (fun vertex => FacePerimeterTraces.ownerValues cache coefficients last
       ((JoinedCenteredArea.endpointPolygon (fun index => lastTraces.pieces.leftPieces (Fin.cast counts index))).indexed
         vertex)))
-    {pieceAllowance polygonAllowance : Fraction.Rational}
-    (piecesBound : ∀ index, Data.Gaussian.Norm.Basic.normSq ((firstPieces index).centeredArea - (lastPieces
+    {pieceAllowance polygonAllowance : Rational}
+    (piecesBound : ∀ index, Basic.normSq ((firstPieces index).centeredArea - (lastPieces
       index).centeredArea) ≤ pieceAllowance)
-    (polygonBound : Data.Gaussian.Norm.Basic.normSq (firstPolygon.centeredArea - lastPolygon.centeredArea) ≤
+    (polygonBound : Basic.normSq (firstPolygon.centeredArea - lastPolygon.centeredArea) ≤
       polygonAllowance) :
-    Data.Gaussian.Norm.Basic.normSq (firstSamples.right.centeredArea - lastSamples.left.centeredArea) ≤
-      2 * ((((PieceIndices.rows (partitions.get first)) + 1 : Nat) : Fraction.Rational)^2 * pieceAllowance +
+    Basic.normSq (firstSamples.right.centeredArea - lastSamples.left.centeredArea) ≤
+      2 * ((((PieceIndices.rows (partitions.get first)) + 1 : Nat) : Rational)^2 * pieceAllowance +
         polygonAllowance) :=
   JoinedCenteredArea.centered_comparison_bound firstTraces.pieces.rightPieces
     (fun index => lastTraces.pieces.leftPieces (Fin.cast counts index))

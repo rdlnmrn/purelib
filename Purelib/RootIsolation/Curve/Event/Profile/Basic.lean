@@ -21,6 +21,10 @@ import Purelib.RootIsolation.Curve.Chart.Analysis
 import Purelib.RootIsolation.Curve.Event.Partition.Squarefree.Basic
 import Purelib.RootIsolation.Curve.Event.Partition.Subdivision
 
+open Purelib.Polynomial.Dense.Gaussian.Basic
+
+open Purelib.Geometry.Projective
+
 open Purelib
 
 open Purelib.Geometry.Rational
@@ -52,10 +56,10 @@ namespace Purelib.RootIsolation.Curve.Event.Profile.Basic
 set_option genInjectivity false in
 /-- One nonzero-count Sturm leaf for a final box-condition profile factor. -/
 structure ProfileEventLeaf
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
-      Geometry.Projective.Hermitian.HermitianForm}
-    {chart : Geometry.Projective.Hermitian.Chart.BoundedChart form}
-    {data : Curve.Event.Nontrivial p
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+      Hermitian.HermitianForm}
+    {chart : Hermitian.Chart.BoundedChart form}
+    {data : Nontrivial p
       chart.parameterization.curve}
     {gcdDegreePositive : 0 <
       (Curve.Substitution.gcdPolynomial p
@@ -77,10 +81,10 @@ namespace ProfileEventLeaf
 
 /-- Read the original condition-profile partition's classification of this retained leaf. -/
 @[expose] def classification
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
-      Geometry.Projective.Hermitian.HermitianForm}
-    {chart : Geometry.Projective.Hermitian.Chart.BoundedChart form}
-    {data : Curve.Event.Nontrivial p
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+      Hermitian.HermitianForm}
+    {chart : Hermitian.Chart.BoundedChart form}
+    {data : Nontrivial p
       chart.parameterization.curve}
     {gcdDegreePositive : 0 <
       (Curve.Substitution.gcdPolynomial p
@@ -89,15 +93,15 @@ namespace ProfileEventLeaf
       data
       gcdDegreePositive}
     {analysis : CCL.Boundary.Charts.SourcePersistentConditionProfilesProfileAnalysisAlias factorAnalysis}
-    (leaf : Curve.Event.Profile.Basic.ProfileEventLeaf analysis) :=
+    (leaf : ProfileEventLeaf analysis) :=
   analysis.partition.classify leaf.cell leaf.member
 
 /-- Construct the persistent Sturm state of the original profiled factor on the retained nonzero-count leaf. -/
 @[expose] def state
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
-      Geometry.Projective.Hermitian.HermitianForm}
-    {chart : Geometry.Projective.Hermitian.Chart.BoundedChart form}
-    {data : Curve.Event.Nontrivial p
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+      Hermitian.HermitianForm}
+    {chart : Hermitian.Chart.BoundedChart form}
+    {data : Nontrivial p
       chart.parameterization.curve}
     {gcdDegreePositive : 0 <
       (Curve.Substitution.gcdPolynomial p
@@ -106,17 +110,17 @@ namespace ProfileEventLeaf
       data
       gcdDegreePositive}
     {analysis : CCL.Boundary.Charts.SourcePersistentConditionProfilesProfileAnalysisAlias factorAnalysis}
-    (leaf : Curve.Event.Profile.Basic.ProfileEventLeaf analysis) :
+    (leaf : ProfileEventLeaf analysis) :
     Sturm.Track.Basic.State
       analysis.profile.factor.polynomial :=
   leaf.classification.eventState leaf.countNonzero
 
 /-- The profile partition's classification retains the original leaf cell exactly. -/
 theorem classification_cell
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
-      Geometry.Projective.Hermitian.HermitianForm}
-    {chart : Geometry.Projective.Hermitian.Chart.BoundedChart form}
-    {data : Curve.Event.Nontrivial p
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+      Hermitian.HermitianForm}
+    {chart : Hermitian.Chart.BoundedChart form}
+    {data : Nontrivial p
       chart.parameterization.curve}
     {gcdDegreePositive : 0 <
       (Curve.Substitution.gcdPolynomial p
@@ -125,16 +129,16 @@ theorem classification_cell
       data
       gcdDegreePositive}
     {analysis : CCL.Boundary.Charts.SourcePersistentConditionProfilesProfileAnalysisAlias factorAnalysis}
-    (leaf : Curve.Event.Profile.Basic.ProfileEventLeaf analysis) :
+    (leaf : ProfileEventLeaf analysis) :
     leaf.classification.cell = leaf.cell :=
   analysis.partition.classify_cell leaf.cell leaf.member
 
 /-- The profiled event state uses the exact original retained leaf. -/
 theorem state_cell
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
-      Geometry.Projective.Hermitian.HermitianForm}
-    {chart : Geometry.Projective.Hermitian.Chart.BoundedChart form}
-    {data : Curve.Event.Nontrivial p
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+      Hermitian.HermitianForm}
+    {chart : Hermitian.Chart.BoundedChart form}
+    {data : Nontrivial p
       chart.parameterization.curve}
     {gcdDegreePositive : 0 <
       (Curve.Substitution.gcdPolynomial p
@@ -143,15 +147,15 @@ theorem state_cell
       data
       gcdDegreePositive}
     {analysis : CCL.Boundary.Charts.SourcePersistentConditionProfilesProfileAnalysisAlias factorAnalysis}
-    (leaf : Curve.Event.Profile.Basic.ProfileEventLeaf analysis) : leaf.state.cell = leaf.cell :=
+    (leaf : ProfileEventLeaf analysis) : leaf.state.cell = leaf.cell :=
   leaf.classification_cell
 
 /-- The retained profiled event leaf refines the original bounded chart interval. -/
 theorem cell_refines_chart
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
-      Geometry.Projective.Hermitian.HermitianForm}
-    {chart : Geometry.Projective.Hermitian.Chart.BoundedChart form}
-    {data : Curve.Event.Nontrivial p
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+      Hermitian.HermitianForm}
+    {chart : Hermitian.Chart.BoundedChart form}
+    {data : Nontrivial p
       chart.parameterization.curve}
     {gcdDegreePositive : 0 <
       (Curve.Substitution.gcdPolynomial p
@@ -160,7 +164,7 @@ theorem cell_refines_chart
       data
       gcdDegreePositive}
     {analysis : CCL.Boundary.Charts.SourcePersistentConditionProfilesProfileAnalysisAlias factorAnalysis}
-    (leaf : Curve.Event.Profile.Basic.ProfileEventLeaf analysis) :
+    (leaf : ProfileEventLeaf analysis) :
     leaf.cell.interval.Refines chart.cell.interval := by
   rw [← leaf.classification_cell]
   exact leaf.classification.refines
@@ -190,10 +194,10 @@ existence assertion.
 namespace Purelib.RootIsolation.Curve.Event.Profile.Basic
 /-- The original nonzero-count event leaf indexed by its retained condition-profile analysis. -/
 abbrev SourcePersistentProfileResidualProfileEventLeafAlias
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
-      Geometry.Projective.Hermitian.HermitianForm}
-    {chart : Geometry.Projective.Hermitian.Chart.BoundedChart form}
-    {data : Curve.Event.Nontrivial p
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+      Hermitian.HermitianForm}
+    {chart : Hermitian.Chart.BoundedChart form}
+    {data : Nontrivial p
       chart.parameterization.curve}
     {gcdDegreePositive : 0 <
       (Curve.Substitution.gcdPolynomial p
@@ -201,7 +205,7 @@ abbrev SourcePersistentProfileResidualProfileEventLeafAlias
     {factorAnalysis : CCL.Boundary.Charts.SourcePersistentProfileResidualSquarefreeFactorAnalysisAlias p box chart data
       gcdDegreePositive}
     (analysis : CCL.Boundary.Charts.SourcePersistentProfileResidualProfileAnalysisAlias factorAnalysis) :=
-  Curve.Event.Profile.Basic.ProfileEventLeaf analysis
+  ProfileEventLeaf analysis
 
 end Purelib.RootIsolation.Curve.Event.Profile.Basic
 
@@ -227,10 +231,10 @@ In particular, nonzero count is never converted into a root-existence claim.
 namespace Purelib.RootIsolation.Curve.Event.Profile.Basic
 /-- The retained profile's original nonzero-count event leaf with its exact partition membership. -/
 abbrev SourcePersistentProfileRequestFamilyProfileEventLeafAlias
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
-      Geometry.Projective.Hermitian.HermitianForm}
-    {chart : Geometry.Projective.Hermitian.Chart.BoundedChart form}
-    {data : Curve.Event.Nontrivial p
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+      Hermitian.HermitianForm}
+    {chart : Hermitian.Chart.BoundedChart form}
+    {data : Nontrivial p
       chart.parameterization.curve}
     {gcdDegreePositive : 0 <
       (Curve.Substitution.gcdPolynomial p
@@ -239,7 +243,7 @@ abbrev SourcePersistentProfileRequestFamilyProfileEventLeafAlias
       data
       gcdDegreePositive}
     (analysis : CCL.Boundary.Charts.SourcePersistentProfileRequestFamilyProfileAnalysisAlias factorAnalysis) :=
-  Curve.Event.Profile.Basic.SourcePersistentProfileResidualProfileEventLeafAlias analysis
+  SourcePersistentProfileResidualProfileEventLeafAlias analysis
 
 /-! ## Complete requested families through a dispatched boundary -/
 

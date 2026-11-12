@@ -1,4 +1,7 @@
 module
+import Purelib.Riemann.Integration.RectangularSharedPrimitives
+
+import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Rat.Fraction
 import Purelib.Curves.Hyperelliptic.Basic
@@ -87,35 +90,41 @@ point readings. Opposite presentations of the same lifted edge therefore
 select identical point readings when their traversal flags are reversed.
 -/
 
+open Purelib.Riemann.Integration.RectangularSharedPrimitives renaming SharedPrimitiveValues -> SharedValues
+
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.ReverseRoutes
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
+
+variable {numerator : CoefficientPolynomial}
+
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
+  {frames : SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
       SquareRoot.Grid.LiftedVertices.VertexBank
     base.bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
-  {source : Hyperelliptic.Differentials.Basic.Differential genus} {axes :
-    Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveAxes base.bank.grid}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames base.faces.regulars} {mesh :
+  {source : Differentials.Basic.Differential genus} {axes :
+    PreparedPrimitiveSplits.PrimitiveAxes base.bank.grid}
+  {domains : Face.DomainBanks.FaceDomainBank frames base.faces.regulars} {mesh :
     Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces}
   {count : Nat} {target : Fraction.Rational}
   {points : List Gaussian.Basic.Canonical} {tolerance : Fraction.Rational} {index : Nat}
-  {budgets : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceMeshBudgets source points tolerance domains}
-    {numerics : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank source index domains}
+  {budgets : Face.CommonMeshes.FaceMeshBudgets source points tolerance (numerator := numerator) domains}
+    {numerics : Face.PrimitiveData.FacePrimitiveBank source index (numerator := numerator) domains}
 
 /-- Reorientation changes neither the selected face nor the sheet used by
 the actual shared primitive point lookup. -/
 theorem reverseRoute_point_eq {edge : Topology.Polygon.Stokes.OrientedEdge vertices.count}
-    (route : Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute mesh edge.reverse) (shared :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) (point :
+    (route : MeshPathWalks.EdgeRoute mesh edge.reverse) (shared :
+      Face.CommonMeshes.FaceSharedMeshes budgets numerics) (point :
       Gaussian.Basic.Canonical) :
-    Readings.RectangularPrimitiveBoundary.SharedPrimitiveValues.atPoint
-      ((Hyperelliptic.Meshes.PuncturedGrid.Face.MeshWords.FaceSharedMeshes.atRoute shared
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.reverseRoute route)).atSheet
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.reverseRoute route).sheet).readings point =
-      Readings.RectangularPrimitiveBoundary.SharedPrimitiveValues.atPoint
-      ((Hyperelliptic.Meshes.PuncturedGrid.Face.MeshWords.FaceSharedMeshes.atRoute shared route).atSheet
+    SharedValues.atPoint
+      ((Face.MeshWords.FaceSharedMeshes.atRoute shared
+        (RouteWords.reverseRoute route)).atSheet
+        (RouteWords.reverseRoute route).sheet).readings point =
+      SharedValues.atPoint
+      ((Face.MeshWords.FaceSharedMeshes.atRoute shared route).atSheet
         route.sheet).readings point := by
   cases route with
   | forward location => rfl
@@ -128,47 +137,47 @@ private theorem directed_reverse_point_eq {left right : Topology.Polygon.Stokes.
     (rightSupported : right ∈ Topology.Polygon.Stokes.triangleEdgeOccurrences mesh.triangulation.faces ∨
       right.reverse ∈ Topology.Polygon.Stokes.triangleEdgeOccurrences mesh.triangulation.faces)
     {first last : Bool} (edgeEq : left = right.reverse) (directionEq : first = !last)
-    (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) (point :
+    (shared : Face.CommonMeshes.FaceSharedMeshes budgets numerics) (point :
       Gaussian.Basic.Canonical) :
-    Readings.RectangularPrimitiveBoundary.SharedPrimitiveValues.atPoint
-      ((Hyperelliptic.Meshes.PuncturedGrid.Face.MeshWords.FaceSharedMeshes.atRoute shared
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.directedRoute mesh left leftSupported first)).atSheet
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.directedRoute mesh left leftSupported
+    SharedValues.atPoint
+      ((Face.MeshWords.FaceSharedMeshes.atRoute shared
+        (RouteWords.directedRoute mesh left leftSupported first)).atSheet
+      (RouteWords.directedRoute mesh left leftSupported
         first).sheet).readings point =
-    Readings.RectangularPrimitiveBoundary.SharedPrimitiveValues.atPoint
-      ((Hyperelliptic.Meshes.PuncturedGrid.Face.MeshWords.FaceSharedMeshes.atRoute shared
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.directedRoute mesh right rightSupported last)).atSheet
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.directedRoute mesh right rightSupported
+    SharedValues.atPoint
+      ((Face.MeshWords.FaceSharedMeshes.atRoute shared
+        (RouteWords.directedRoute mesh right rightSupported last)).atSheet
+      (RouteWords.directedRoute mesh right rightSupported
         last).sheet).readings point := by
   cases edgeEq
   rcases right with ⟨start, finish⟩
   cases last <;> cases directionEq
-  · exact (Hyperelliptic.Meshes.PuncturedGrid.Fragment.ReverseRoutes.reverseRoute_point_eq (edge := ⟨start, finish⟩)
-      (Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute.build mesh ⟨finish, start⟩ leftSupported) shared
+  · exact (ReverseRoutes.reverseRoute_point_eq (edge := ⟨start, finish⟩)
+      (MeshPathWalks.EdgeRoute.build mesh ⟨finish, start⟩ leftSupported) shared
         point).symm
-  · exact Hyperelliptic.Meshes.PuncturedGrid.Fragment.ReverseRoutes.reverseRoute_point_eq (edge := ⟨finish, start⟩)
-      (Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute.build mesh ⟨start, finish⟩ rightSupported) shared
+  · exact ReverseRoutes.reverseRoute_point_eq (edge := ⟨finish, start⟩)
+      (MeshPathWalks.EdgeRoute.build mesh ⟨start, finish⟩ rightSupported) shared
         point
 
 /-- This is equality of retained primitive values, not merely equality of
 coordinates. The hypothesis identifies the actual lifted reversed edge. -/
-theorem canonicalPoint_eq_reverse {left right : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment
+theorem canonicalPoint_eq_reverse {left right : RootedWords.LiftedFragment
   axes domains mesh source count target}
     (edgeEq : left.occurrence.side.edge = right.occurrence.side.edge.reverse)
-    (directionEq : (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.routeForward left) =
-      !(Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.routeForward right))
-    (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) (point :
+    (directionEq : (RouteWords.routeForward left) =
+      !(RouteWords.routeForward right))
+    (shared : Face.CommonMeshes.FaceSharedMeshes budgets numerics) (point :
       Gaussian.Basic.Canonical) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint left) shared point =
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint right) shared point :=
-  Hyperelliptic.Meshes.PuncturedGrid.Fragment.ReverseRoutes.directed_reverse_point_eq _ _ edgeEq directionEq shared
+    (RouteCancellation.canonicalPoint left) shared point =
+      (RouteCancellation.canonicalPoint right) shared point :=
+  ReverseRoutes.directed_reverse_point_eq _ _ edgeEq directionEq shared
     point
 
 /-- The actual original junction and moving source certificates discharge
 both the sheet and direction obligations for opposite edge presentations. -/
 theorem Junction.canonical_join_reverse {left right :
-  Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh source count target}
-    (joined : Hyperelliptic.Meshes.PuncturedGrid.Fragment.WordJunctions.Junction left right)
+  RootedWords.LiftedFragment axes domains mesh source count target}
+    (joined : WordJunctions.Junction left right)
     {ambient : Rational.Box} {start finish : Gaussian.Basic.Canonical}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
     (leftSource : Paths.PreparedSegmentSources.SegmentSource segment left.parent)
@@ -176,14 +185,14 @@ theorem Junction.canonical_join_reverse {left right :
     (leftMoving : left.last ≠ left.first) (rightMoving : right.last ≠ right.first)
     (startEq : left.fragment.source.start = right.fragment.source.finish)
     (finishEq : left.fragment.source.finish = right.fragment.source.start)
-    (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint left) shared left.last =
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint right) shared right.first := by
+    (shared : Face.CommonMeshes.FaceSharedMeshes budgets numerics) :
+    (RouteCancellation.canonicalPoint left) shared left.last =
+      (RouteCancellation.canonicalPoint right) shared right.first := by
   obtain ⟨roots⟩ := joined.2.1
-  exact (Hyperelliptic.Meshes.PuncturedGrid.Fragment.ReverseRoutes.canonicalPoint_eq_reverse
+  exact (ReverseRoutes.canonicalPoint_eq_reverse
     (left.occurrence.edge_eq_of_reverse_query_junction right.occurrence joined.1 roots startEq finishEq)
-    (Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceDirection.routeForward_reverse_of_source leftSource rightSource
+    (SourceDirection.routeForward_reverse_of_source leftSource rightSource
       leftMoving rightMoving startEq finishEq) shared left.last).trans
-      (congrArg ((Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint right) shared) joined.1)
+      (congrArg ((RouteCancellation.canonicalPoint right) shared) joined.1)
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.ReverseRoutes

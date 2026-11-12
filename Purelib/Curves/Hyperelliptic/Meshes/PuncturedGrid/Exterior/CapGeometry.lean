@@ -95,9 +95,9 @@ open Purelib.Riemann.Paths.PreparedExteriorPathGeometry.ClearPath (OnBoxSides)
 /-- Every original grid-walk edge lies on one ambient box side when its clear path has that side property. -/
 theorem sameSide {polynomial : ClearPath.GaussianPolynomial} {ambient : Rational.Box} {grid :
   ClearGrid polynomial ambient} :
-    {start finish : Data.Gaussian.Basic.Canonical} → (walk : Walks.Walk grid start finish) → ClearPath.OnBoxSides
+    {start finish : Data.Gaussian.Basic.Canonical} → (walk : Walk grid start finish) → OnBoxSides
       ambient walk.path →
-      walk.Edgewise (PreparedBoundarySegments.SameSide ambient)
+      walk.Edgewise (SameSide ambient)
   | _, _, .nil _, _ => trivial
   | _, _, .cons _ tail, sides => ⟨sides.1, sameSide tail sides.2⟩
 
@@ -111,15 +111,15 @@ open Purelib.Riemann.Meshes (FramedPuncturedGrid LiftedPuncturedGrid)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms (ExteriorProgram exteriorWalk_sides)
 
 /-- Each actual indexed exterior-period edge retains the original ambient box-side relation. -/
-theorem indexed_sameSide {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
+theorem indexed_sameSide {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   BranchIsolation.Data curve}
-    {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-    {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
-    (program : PeriodPrograms.ExteriorProgram lifted differential) : ∀ edge ∈ program.indexed,
-    PreparedBoundarySegments.SameSide (Cuts.Ambient curve)
+    {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+    {lifted : LiftedPuncturedGrid base} {differential : Differential genus}
+    (program : ExteriorProgram lifted differential) : ∀ edge ∈ program.indexed,
+    SameSide (Cuts.Ambient curve)
       (lifted.vertices.coordinate edge.start) (lifted.vertices.coordinate edge.finish) :=
   Edgewise.indexed lifted.edges lifted.vertices program.period.closed.walk
-    (Polynomial.Geometry.Grid.Walks.Walk.Edgewise.sameSide _ (by
+    (Edgewise.sameSide _ (by
         rw [program.walk_eq];
         exact PeriodPrograms.exteriorWalk_sides base)) program.sheet
 
@@ -145,20 +145,20 @@ open Purelib.Riemann.Normalization
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry (source point)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
     regular domains differential}
 
 /-- Every retained exterior attachment edge has strictly positive reciprocal cap orientation. -/
-theorem words_reciprocal_oriented (attached : AllSurfacePreparation.CapAttachment prepared) : ∀ word ∈ attached.words, ∀
+theorem words_reciprocal_oriented (attached : CapAttachment prepared) : ∀ word ∈ attached.words, ∀
   edge ∈ word,
     0 < AffineTriangle.coordinateTriangleArea 0 (lifted.vertices.coordinate edge.finish)⁻¹ (lifted.vertices.coordinate
       edge.start)⁻¹ := by
@@ -169,7 +169,7 @@ theorem words_reciprocal_oriented (attached : AllSurfacePreparation.CapAttachmen
   exact component.program.indexed_reciprocal_oriented edge edgeMember
 
 /-- Both original inverse endpoint coordinates of every retained attachment edge lie in the reciprocal disk. -/
-theorem words_reciprocal_inside (attached : AllSurfacePreparation.CapAttachment prepared) : ∀ word ∈ attached.words, ∀
+theorem words_reciprocal_inside (attached : CapAttachment prepared) : ∀ word ∈ attached.words, ∀
   edge ∈ word,
     Reciprocal.Bounds.InDisk curve.polynomial (lifted.vertices.coordinate edge.finish)⁻¹ ∧
       Reciprocal.Bounds.InDisk curve.polynomial (lifted.vertices.coordinate edge.start)⁻¹ := by
@@ -182,10 +182,10 @@ theorem words_reciprocal_inside (attached : AllSurfacePreparation.CapAttachment 
     boundary.1⟩
 
 /-- Every retained cap edge keeps its original same-side ambient endpoints and strict source orientation. -/
-theorem words_source (attached : AllSurfacePreparation.CapAttachment prepared) : ∀ word ∈ attached.words, ∀ edge ∈ word,
+theorem words_source (attached : CapAttachment prepared) : ∀ word ∈ attached.words, ∀ edge ∈ word,
     (Cuts.Ambient curve).Contains (lifted.vertices.coordinate edge.finish) ∧
     (Cuts.Ambient curve).Contains (lifted.vertices.coordinate edge.start) ∧
-    PreparedBoundarySegments.SameSide (Cuts.Ambient curve)
+    SameSide (Cuts.Ambient curve)
       (lifted.vertices.coordinate edge.finish) (lifted.vertices.coordinate edge.start) ∧
     0 < AffineTriangle.coordinateTriangleArea 0 (lifted.vertices.coordinate edge.start) (lifted.vertices.coordinate
       edge.finish) := by
@@ -206,7 +206,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfaceP
 coordinate is zero. -/
 theorem fans_property {original target : Nat} (predicate : Gaussian → Gaussian → Gaussian → Prop)
     (coordinates : Fin target → Gaussian)
-    (vertex : Fin original → Fin target) (words : List (List (Stokes.OrientedEdge original)))
+    (vertex : Fin original → Fin target) (words : List (List (OrientedEdge original)))
     (apices : Fin words.length → Fin target) (apices_zero : ∀ index, coordinates (apices index) = 0)
     (oriented : ∀ word ∈ words, ∀ edge ∈ word,
       predicate 0 (coordinates (vertex edge.finish)) (coordinates (vertex edge.start))) :
@@ -233,7 +233,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfaceP
 set_option genInjectivity false in
 /-- Coordinates are evaluated once and kept with pointwise specifications and the orientation proof for every retained
 cap triangle. -/
-structure ReciprocalGeometry (attached : AllSurfacePreparation.CapAttachment prepared) where
+structure ReciprocalGeometry (attached : CapAttachment prepared) where
   /-- The cached original boundary coordinates with a separate zero coordinate at each retained apex index. -/
     sourceCoordinates : Data.Vector Gaussian (lifted.vertices.count + attached.words.length)
   /-- Each original embedded boundary vertex keeps exactly its source coordinate. -/ source_vertex_eq : ∀ index,
@@ -278,8 +278,8 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry
   CapAttachment in
 /-- Cache the original source and inverse coordinates once, retaining exact vertex/apex readbacks and every actual
 triangle's orientation. -/
-@[expose] def build (attached : AllSurfacePreparation.CapAttachment prepared) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
+@[expose] def build (attached : CapAttachment prepared) :
+  ReciprocalGeometry
   attached := by
   let sourceCoordinates := Data.Vector.Basic.vectorOfFn (fun index : Fin (lifted.vertices.count + attached.words.length)
     =>
@@ -303,7 +303,7 @@ triangle's orientation. -/
       0 < AffineTriangle.coordinateTriangleArea 0 (sourceCoordinates triangle.third) (sourceCoordinates triangle.second)
         := by
     rw [attached.caps_eq]
-    apply Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.fans_property (fun
+    apply CapAttachment.fans_property (fun
       _ second third =>
       ((Cuts.Ambient curve).Contains second ∧ (Cuts.Ambient curve).Contains third ∧
         PreparedBoundarySegments.SameSide (Cuts.Ambient curve) second third) ∧
@@ -324,19 +324,19 @@ triangle's orientation. -/
   refine ⟨sourceCoordinates, sourceVertexEq, sourceApexEq, (fun triangle member => (sourceValid triangle member).1),
     (fun triangle member => (sourceValid triangle member).2), coordinates, inverseEq, vertexEq, apexEq, ?_, ?_⟩
   · rw [attached.caps_eq]
-    apply Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.fans_property (fun
-      first second third => Purelib.Polynomial.Dense.Gaussian.Reciprocal.Bounds.InDisk curve.polynomial first ∧
-      Purelib.Polynomial.Dense.Gaussian.Reciprocal.Bounds.InDisk curve.polynomial second ∧
-        Purelib.Polynomial.Dense.Gaussian.Reciprocal.Bounds.InDisk curve.polynomial third)
+    apply CapAttachment.fans_property (fun
+      first second third => Reciprocal.Bounds.InDisk curve.polynomial first ∧
+      Reciprocal.Bounds.InDisk curve.polynomial second ∧
+        Reciprocal.Bounds.InDisk curve.polynomial third)
       coordinates vertex attached.words CapAttachment.apex apexEq
     intro word member edge edgeMember
     rw [vertexEq, vertexEq]
     refine ⟨?_, attached.words_reciprocal_inside word member edge edgeMember⟩
-    unfold Purelib.Polynomial.Dense.Gaussian.Reciprocal.Bounds.InDisk
+    unfold Reciprocal.Bounds.InDisk
     rw [Data.Gaussian.Norm.Basic.normSq_zero, mul_zero]
     decide
   · rw [attached.caps_eq]
-    apply Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.fans_property (fun
+    apply CapAttachment.fans_property (fun
       first second third => 0 < AffineTriangle.coordinateTriangleArea first second third)
       coordinates vertex attached.words CapAttachment.apex apexEq
     intro word member edge edgeMember
@@ -346,18 +346,18 @@ triangle's orientation. -/
 /-- Radial contraction of the actual inverse source edge. The outer edge retains the inverse arc, with the cap's
 reversed boundary orientation. -/
 @[expose] def point (geometry :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
+  ReciprocalGeometry
   attached)
-    (triangle : Stokes.OrientedTriangle (lifted.vertices.count + attached.words.length))
+    (triangle : OrientedTriangle (lifted.vertices.count + attached.words.length))
     (radial transverse : Fraction.Rational) : Gaussian :=
   ReciprocalRadialGeometry.point (geometry.sourceCoordinates triangle.second)
     (geometry.sourceCoordinates triangle.third) ⟨radial, transverse⟩
 
 /-- At radial parameter one, the retained cap point is exactly the inverse of the original affine source edge. -/
 theorem point_outer (geometry :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
+  ReciprocalGeometry
   attached)
-    (triangle : Stokes.OrientedTriangle (lifted.vertices.count + attached.words.length)) (transverse :
+    (triangle : OrientedTriangle (lifted.vertices.count + attached.words.length)) (transverse :
       Fraction.Rational) :
     geometry.point triangle 1 transverse = (ReciprocalRadialGeometry.source
       (geometry.sourceCoordinates triangle.second) (geometry.sourceCoordinates triangle.third) transverse)⁻¹ :=
@@ -366,9 +366,9 @@ theorem point_outer (geometry :
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry in
 /-- Every unit radial and transverse parameter remains in the reciprocal disk of the original retained cap triangle. -/
 theorem point_inside (geometry :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
+  ReciprocalGeometry
   attached)
-    (triangle : Stokes.OrientedTriangle (lifted.vertices.count + attached.words.length)) (member : triangle ∈
+    (triangle : OrientedTriangle (lifted.vertices.count + attached.words.length)) (member : triangle ∈
       attached.caps)
     {radial transverse : Fraction.Rational} (radialUnit : 0 ≤ radial ∧ radial ≤ 1)
     (transverseUnit : 0 ≤ transverse ∧ transverse ≤ 1) :
@@ -380,9 +380,9 @@ theorem point_inside (geometry :
 /-- The existing shared cap sample is bounded on the whole projected fan, using its already retained regular-disk
 certificate. -/
 theorem factor_bound (geometry :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
+  ReciprocalGeometry
   attached)
-    (triangle : Stokes.OrientedTriangle (lifted.vertices.count + attached.words.length)) (member : triangle ∈
+    (triangle : OrientedTriangle (lifted.vertices.count + attached.words.length)) (member : triangle ∈
       attached.caps)
     {index : Nat} {box : Rational.Box} (sample : Primitives.Sample cap differential index box)
     {radial transverse : Fraction.Rational} (radialUnit : 0 ≤ radial ∧ radial ≤ 1)

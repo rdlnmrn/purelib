@@ -57,6 +57,8 @@ import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Topology.Surface.Sewing.SewnPrimitiveContacts
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation.Rational.Budget
@@ -138,17 +140,17 @@ set_option genInjectivity false in
 
 The retained magnitude references and complete paired walk determine a single per-edge allowance and common request
 stage. -/
-structure ValueAreaRequest {leftDifferential rightDifferential : Differentials.Basic.Differential genus}
+structure ValueAreaRequest {leftDifferential rightDifferential : Differential genus}
     (leftFixed : MagnitudeBank owner domains leftDifferential)
-    (rightFixed : MagnitudeBank owner domains rightDifferential) (coefficient : Data.Gaussian.Basic.Canonical)
-    {start finish : Data.Gaussian.Basic.Canonical} {walk : Walks.Walk owner.base.bank.grid start finish}
-    (paired : WalkOccurrences.PairedWalk owner.mesh walk) (target : Fraction.Rational) where
+    (rightFixed : MagnitudeBank owner domains rightDifferential) (coefficient : Gaussian)
+    {start finish : Gaussian} {walk : Walks.Walk owner.base.bank.grid start finish}
+    (paired : WalkOccurrences.PairedWalk owner.mesh walk) (target : Rational) where
   /-- The original requested target is strictly positive. -/ positive : 0 < target
-  /-- The retained complete walk-count and mixed-magnitude area weight. -/ weight : Fraction.Rational
+  /-- The retained complete walk-count and mixed-magnitude area weight. -/ weight : Rational
   /-- The cached weight is exactly the original mixed-area scaling expression. -/ weight_eq : weight = 128 * (1 + normSq
-    coefficient) * (walk.edgeCount : Fraction.Rational) ^ 4 *
+    coefficient) * (walk.edgeCount : Rational) ^ 4 *
     EdgeMagnitude.mixBound leftFixed.bound rightFixed.bound coefficient
-  /-- The retained positive allowance for every original paired edge. -/ perEdge : Fraction.Rational
+  /-- The retained positive allowance for every original paired edge. -/ perEdge : Rational
   /-- The per-edge allowance is exactly the weighted allowance for the original target and cached weight. -/ perEdge_eq
     : perEdge = Weighted.allowance target weight
   /-- The retained per-edge allowance is strictly positive. -/ perEdge_positive : 0 < perEdge
@@ -163,34 +165,34 @@ constructive_injectivity ValueAreaRequest
 namespace ValueAreaRequest
 
 variable {leftDifferential rightDifferential : Differential genus}
-  {coefficient : Purelib.Data.Gaussian.Basic.Canonical}
+  {coefficient : Gaussian}
   {leftFixed : MagnitudeBank owner domains leftDifferential}
   {rightFixed : MagnitudeBank owner domains rightDifferential}
-  {start finish : Purelib.Data.Gaussian.Basic.Canonical} {walk : Purelib.Polynomial.Geometry.Grid.Walks.Walk
+  {start finish : Gaussian} {walk : Walks.Walk
     owner.base.bank.grid start finish}
   {paired : PairedWalk owner.mesh walk} {target
     : Rational}
 
 /-- The complete mixed-area weight is nonnegative for the original magnitude references and walk. -/
 public theorem weight_nonnegative (leftFixed : MagnitudeBank owner domains leftDifferential)
-    (rightFixed : MagnitudeBank owner domains rightDifferential) (coefficient : Data.Gaussian.Basic.Canonical)
+    (rightFixed : MagnitudeBank owner domains rightDifferential) (coefficient : Gaussian)
     (walk : Walks.Walk owner.base.bank.grid start finish) :
-    0 ≤ 128 * (1 + normSq coefficient) * (walk.edgeCount : Fraction.Rational) ^ 4 *
+    0 ≤ 128 * (1 + normSq coefficient) * (walk.edgeCount : Rational) ^ 4 *
       EdgeMagnitude.mixBound leftFixed.bound rightFixed.bound coefficient :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Fraction.Rational) ≤ 128)
-    (add_nonneg (by decide) (Data.Gaussian.Basic.Canonical.normSq_nonneg coefficient)))
-    (Fraction.Order.Arithmetic.pow_nonneg_direct
+  Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Rational) ≤ 128)
+    (add_nonneg (by decide) (Gaussian.normSq_nonneg coefficient)))
+    (Arithmetic.pow_nonneg_direct
       (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 4))
     (EdgeMagnitude.mixBound_nonnegative leftFixed.nonnegative rightFixed.nonnegative coefficient)
 
 /-- Prepare the original mixed whole-edge request bank with the weighted per-edge allowance and cache its common stage
 with both magnitude references. -/
 @[expose] def build (leftFixed : MagnitudeBank owner domains leftDifferential)
-    (rightFixed : MagnitudeBank owner domains rightDifferential) (coefficient : Data.Gaussian.Basic.Canonical)
-    (paired : WalkOccurrences.PairedWalk owner.mesh walk) (target : Fraction.Rational) (positive : 0 < target) :
+    (rightFixed : MagnitudeBank owner domains rightDifferential) (coefficient : Gaussian)
+    (paired : WalkOccurrences.PairedWalk owner.mesh walk) (target : Rational) (positive : 0 < target) :
     ValueAreaRequest (owner := owner) leftFixed rightFixed coefficient paired target :=
-  let weight := 128 * (1 + normSq coefficient) * (walk.edgeCount : Fraction.Rational) ^ 4 *
+  let weight := 128 * (1 + normSq coefficient) * (walk.edgeCount : Rational) ^ 4 *
     EdgeMagnitude.mixBound leftFixed.bound rightFixed.bound coefficient
   let perEdge := Weighted.allowance target weight
   have weightNonnegative : 0 ≤ weight := weight_nonnegative leftFixed rightFixed coefficient walk
@@ -213,7 +215,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Readings.ValuePairedEdgeR
 
 /-- Four times the original mixed magnitude bound on the two retained references. -/
 @[expose, reducible] def RealizationBound (leftFixed : MagnitudeBank owner domains leftDifferential)
-    (rightFixed : MagnitudeBank owner domains rightDifferential) (coefficient : Data.Gaussian.Basic.Canonical) :=
+    (rightFixed : MagnitudeBank owner domains rightDifferential) (coefficient : Gaussian) :=
   4 * EdgeMagnitude.mixBound leftFixed.bound rightFixed.bound coefficient
 
 /-- The actual opposite-sheet polygon comparison on the original mixed readings and retained error and magnitude bounds.
@@ -331,11 +333,11 @@ these retained observations unchanged. -/
   have magnitudeBound : mixedMagnitude.bound =
       EdgeMagnitude.mixBound leftFixed.bound rightFixed.bound coefficient := rfl
   have targetNonnegative : 0 ≤ RealizationError request :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg (by
-      decide) (Data.Gaussian.Basic.Canonical.normSq_nonneg coefficient)))
+    Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide) (add_nonneg (by
+      decide) (Gaussian.normSq_nonneg coefficient)))
       request.perEdge_positive.le
   have boundNonnegative : 0 ≤ RealizationBound leftFixed rightFixed coefficient :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    Arithmetic.mul_nonneg_direct (by decide)
       (EdgeMagnitude.mixBound_nonnegative leftFixed.nonnegative rightFixed.nonnegative coefficient)
   let comparison := OppositeComparison.realize
     (EdgeMagnitude.mixValues (owner := owner) leftReadings.values rightReadings.values coefficient)
@@ -358,7 +360,7 @@ these retained observations unchanged. -/
     weight_nonnegative leftFixed rightFixed coefficient walk
   have paid : comparison.areaBound ≤ target := by
     calc
-      comparison.areaBound = 16 * (walk.edgeCount : Fraction.Rational) ^ 4 *
+      comparison.areaBound = 16 * (walk.edgeCount : Rational) ^ 4 *
           RealizationError request * RealizationBound leftFixed rightFixed coefficient := comparison.areaBound_eq
       _ = request.weight * request.perEdge := by
         rw [request.weight_eq]
@@ -403,18 +405,18 @@ set_option genInjectivity false in
 
 Both original differential requests use a common scaled allowance, and their maximum stage pays the mixed cancellation
 bound. -/
-structure ValueIncrementRequest (leftDifferential rightDifferential : Differentials.Basic.Differential genus)
-    (domains : Domains owner) (coefficient : Data.Gaussian.Basic.Canonical)
-    {start finish : Data.Gaussian.Basic.Canonical} {walk : Walks.Walk owner.base.bank.grid start finish}
-    (paired : WalkOccurrences.PairedWalk owner.mesh walk) (sheet : Fin 2) (target : Fraction.Rational) where
+structure ValueIncrementRequest (leftDifferential rightDifferential : Differential genus)
+    (domains : Domains owner) (coefficient : Gaussian)
+    {start finish : Gaussian} {walk : Walks.Walk owner.base.bank.grid start finish}
+    (paired : WalkOccurrences.PairedWalk owner.mesh walk) (sheet : Fin 2) (target : Rational) where
   /-- The original requested target is strictly positive. -/ positive : 0 < target
-  /-- The retained common allowance for the two original differential increment requests. -/ part : Fraction.Rational
+  /-- The retained common allowance for the two original differential increment requests. -/ part : Rational
   /-- The common allowance is the target divided by twice one plus the coefficient squared norm. -/ part_eq : part =
     target / (2 * (1 + normSq coefficient))
   /-- The original left differential increment request on the retained walk and sheet. -/ left :
-    PairedWalk.IncrementRequest (mesh := owner.mesh) paired domains leftDifferential sheet part
+    IncrementRequest (mesh := owner.mesh) paired domains leftDifferential sheet part
   /-- The original right differential increment request on the same retained walk and sheet. -/ right :
-    PairedWalk.IncrementRequest (mesh := owner.mesh) paired domains rightDifferential sheet part
+    IncrementRequest (mesh := owner.mesh) paired domains rightDifferential sheet part
   /-- The cached common stage paying all retained original requests. -/ index : Nat
   /-- The cached stage is the maximum of the original retained request stages. -/ index_eq : index = max left.index
     right.index
@@ -424,22 +426,22 @@ constructive_injectivity ValueIncrementRequest
 namespace ValueIncrementRequest
 
 variable {leftDifferential rightDifferential : Differential genus}
-  {coefficient : Purelib.Data.Gaussian.Basic.Canonical}
-  {start finish : Purelib.Data.Gaussian.Basic.Canonical} {walk : Purelib.Polynomial.Geometry.Grid.Walks.Walk
+  {coefficient : Gaussian}
+  {start finish : Gaussian} {walk : Walks.Walk
     owner.base.bank.grid start finish}
   {paired : PairedWalk owner.mesh walk} {sheet
     : Fin 2} {target : Rational}
 
 /-- Prepare both original differential increment requests at the common scaled allowance and retain the maximum of their
 stages. -/
-@[expose] def build (leftDifferential rightDifferential : Differentials.Basic.Differential genus)
-    (domains : Domains owner) (coefficient : Data.Gaussian.Basic.Canonical)
-    (paired : WalkOccurrences.PairedWalk owner.mesh walk) (sheet : Fin 2) (target : Fraction.Rational) (positive : 0 <
+@[expose] def build (leftDifferential rightDifferential : Differential genus)
+    (domains : Domains owner) (coefficient : Gaussian)
+    (paired : WalkOccurrences.PairedWalk owner.mesh walk) (sheet : Fin 2) (target : Rational) (positive : 0 <
       target) :
     ValueIncrementRequest (owner := owner) leftDifferential rightDifferential domains coefficient paired sheet target :=
   let part := target / (2 * (1 + normSq coefficient))
   have partPositive : 0 < part :=
-    Fraction.Order.Field.div_pos_direct positive (Data.Gaussian.Basic.Canonical.double_one_add_normSq_positive
+    Field.div_pos_direct positive (Gaussian.double_one_add_normSq_positive
       coefficient)
   let left := IncrementRequest.build paired domains leftDifferential sheet part partPositive
   let right := IncrementRequest.build paired domains rightDifferential sheet part partPositive
@@ -476,8 +478,8 @@ theorem accurate (request : ValueIncrementRequest (owner := owner) leftDifferent
             edgeList := by
     induction edgeList with
     | nil =>
-        change (0 : Data.Gaussian.Basic.Canonical) = conj 0 + coefficient * 0
-        rw [show conj (0 : Data.Gaussian.Basic.Canonical) = 0 by rfl,
+        change (0 : Gaussian) = conj 0 + coefficient * 0
+        rw [show conj (0 : Gaussian) = 0 by rfl,
           Data.Gaussian.Basic.mul_zero, Data.Gaussian.Basic.add_zero]
     | cons edge rest inductionHypothesis =>
         change
@@ -492,7 +494,7 @@ theorem accurate (request : ValueIncrementRequest (owner := owner) leftDifferent
         rw [EdgeMagnitude.edgeValuation_mixValues (owner := owner) (leftValues := leftReadings.values)
             (rightValues := rightReadings.values) coefficient (support edge List.mem_cons_self),
           inductionHypothesis (fun next member => support next (List.mem_cons_of_mem _ member)),
-            Data.Gaussian.Basic.Canonical.conj_add]
+            Gaussian.conj_add]
         rw [Data.Gaussian.Basic.conj_eq_canonical]
         ring1
   have leftSupport : ∀ edge ∈ owner.edges.indexedEdges owner.vertices walk sheet,
@@ -522,7 +524,7 @@ theorem accurate (request : ValueIncrementRequest (owner := owner) leftDifferent
           (owner.edges.indexedEdges owner.vertices walk sheet) +
           SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation owner.mesh rightReadings.values)
             (owner.edges.indexedEdges owner.vertices walk (BranchCutLifts.otherSheet sheet))) := by
-    rw [Data.Gaussian.Basic.Canonical.conj_add]
+    rw [Gaussian.conj_add]
     ring1
   rw [combine]
   have estimate := EdgeMagnitude.normSq_conj_add_mul
@@ -547,16 +549,16 @@ theorem accurate (request : ValueIncrementRequest (owner := owner) leftDifferent
         SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation owner.mesh rightReadings.values)
           (owner.edges.indexedEdges owner.vertices walk (BranchCutLifts.otherSheet sheet))) ≤
       request.part + normSq coefficient * request.part :=
-    Fraction.Order.Arithmetic.add_le_add_direct
+    Arithmetic.add_le_add_direct
       (by simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using leftBound)
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
         (by simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using rightBound)
-        (Data.Gaussian.Basic.Canonical.normSq_nonneg coefficient))
-  have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct inner (by
-      decide : (0 : Fraction.Rational) ≤ 2)
+        (Gaussian.normSq_nonneg coefficient))
+  have scaled := Arithmetic.mul_le_mul_of_nonneg_left_direct inner (by
+      decide : (0 : Rational) ≤ 2)
   have equal : 2 * (request.part + normSq coefficient * request.part) = target := by
     have nonvanishing : 2 * (1 + normSq coefficient) ≠ 0 :=
-      (Data.Gaussian.Basic.Canonical.double_one_add_normSq_positive coefficient).ne'
+      (Gaussian.double_one_add_normSq_positive coefficient).ne'
     calc
       2 * (request.part + normSq coefficient * request.part) =
           2 * (1 + normSq coefficient) * request.part := by ring1

@@ -34,20 +34,30 @@ The original completed result supplies its leading coefficient and normalization
 degree-zero witnesses identify that retained common factor with the displayed constant. -/
 @[expose] public def certificateOfConstantGCD
     (p q : GCD.CoefficientPolynomial)
-    (nonzero : (GCD.extendedGCD p q).gcd.isZero = false)
-    (degreeZero :
-      (GCD.extendedGCD p q).gcd.natDegree = 0) :
+    (result : Purelib.Polynomial.Dense.GCD.BezoutResult p q)
+    (resultEq : result = GCD.extendedGCD p q)
+    (nonzero : result.gcd.isZero = false)
+    (degreeZero : result.gcd.natDegree = 0) :
     CoprimeCertificate p q := by
-  let result := GCD.extendedGCD p q
+  let unit := result.gcd.leadingCoeff
+  let inverse := unit⁻¹
+  let left := DensePolynomial.scale inverse result.left
+  let right := DensePolynomial.scale inverse result.right
   exact
-    { unit := result.gcd.leadingCoeff
+    { result := result
+      result_eq := resultEq
+      unit := unit
       unit_ne_zero := DensePolynomial.leadingCoeff_ne_zero nonzero
       gcd_eq_constant := by
+        rewrite [← resultEq]
         calc
           result.gcd = result.gcd.normalize := result.normalized.symm
           _ = DensePolynomial.constant result.gcd.leadingCoeff :=
-            DensePolynomial.normalize_eq_constant_leadingCoeff_of_degree_zero nonzero
-              degreeZero }
+            DensePolynomial.normalize_eq_constant_leadingCoeff_of_degree_zero nonzero degreeZero
+      left := left
+      left_eq := rfl
+      right := right
+      right_eq := rfl }
 
 set_option genInjectivity false in
 /-- The negative branch of the same finite Euclidean decision: a displayed
@@ -58,6 +68,8 @@ positive-degree witnesses certify the same divisor obstruction. -/
 public structure NonconstantCommonDivisor (p q : GCD.CoefficientPolynomial) where
   /-- The original extended-Euclid result with both quotient and Bezout identities. -/ result :
     Purelib.Polynomial.Dense.GCD.BezoutResult p q
+  /-- The retained complete result is the original Euclidean computation on the same ordered inputs. -/
+  result_eq : result = GCD.extendedGCD p q
   /-- The retained gcd polynomial is nonzero. -/ nonzero : result.gcd.isZero = false
   /-- The retained gcd has positive natural degree. -/ positiveDegree : 0 < result.gcd.natDegree
 
@@ -114,15 +126,27 @@ The same original nonzero common factor and its exact natural-degree decision de
 consume the completed original Euclidean record and preserve their original selected witnesses. -/
 @[expose] public def coprimeOutcome
     (p q : GCD.CoefficientPolynomial)
-    (someNonzero : p.isZero = false ∨ q.isZero = false) :
+    (someNonzero : p.isZero = false ∨ q.isZero = false)
+    (result : Purelib.Polynomial.Dense.GCD.BezoutResult p q := GCD.extendedGCD p q)
+    (resultEq : result = GCD.extendedGCD p q := by rfl) :
     CoprimeOutcome p q := by
-  let result := GCD.extendedGCD p q
   have gcdNonzero : result.gcd.isZero = false := result.nonzero someNonzero
   if degreeZero : result.gcd.natDegree = 0 then
-    exact .coprime (certificateOfConstantGCD p q gcdNonzero degreeZero)
+    exact .coprime (certificateOfConstantGCD p q result resultEq gcdNonzero degreeZero)
   else
     exact .commonDivisor
       { result := result
+        result_eq := resultEq
         nonzero := gcdNonzero
         positiveDegree := Nat.pos_of_ne_zero degreeZero }
+
+/-- Supplying the actual original result preserves the complete default decision, including its selected certificate. -/
+public theorem coprimeOutcome_eq_default (p q : GCD.CoefficientPolynomial)
+    (someNonzero : p.isZero = false ∨ q.isZero = false)
+    (result : Purelib.Polynomial.Dense.GCD.BezoutResult p q)
+    (resultEq : result = GCD.extendedGCD p q) :
+    coprimeOutcome p q someNonzero result resultEq = coprimeOutcome p q someNonzero := by
+  cases resultEq
+  rfl
+
 end Purelib.Polynomial.Dense.Gaussian.Coprime.Decision

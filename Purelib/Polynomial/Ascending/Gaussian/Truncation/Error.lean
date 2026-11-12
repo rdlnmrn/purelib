@@ -42,7 +42,7 @@ def coefficientNormBudget : List Gaussian.Basic.Canonical
   → Fraction.Rational → Fraction.Rational
   | [], _ => 0
   | coefficient :: remaining, inputNormSq =>
-      2 * (Data.Gaussian.Norm.Basic.normSq coefficient +
+      2 * (Gaussian.Norm.Basic.normSq coefficient +
         inputNormSq * coefficientNormBudget remaining
           inputNormSq)
 
@@ -52,9 +52,9 @@ theorem coefficientNormBudget_nonneg : ∀ coefficients
     0 ≤ inputNormSq → 0 ≤ coefficientNormBudget coefficients inputNormSq
   | [], inputNormSq, _inputNonnegative => le_rfl
   | coefficient :: remaining, inputNormSq, inputNonnegative =>
-      Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
         (add_nonneg (Gaussian.Norm.Basic.normSq_nonneg coefficient)
-          (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct inputNonnegative
+          (Fraction.Order.Arithmetic.mul_nonneg_direct inputNonnegative
             (coefficientNormBudget_nonneg remaining inputNormSq
               inputNonnegative)))
 
@@ -63,27 +63,27 @@ theorem coefficientNormBudget_nonneg : ∀ coefficients
 The recursive budget uses the squared norm of each retained coefficient and the supplied input's squared norm. -/
 theorem eval_normSq_le : ∀ coefficients (input :
   Gaussian.Basic.Canonical),
-    Data.Gaussian.Norm.Basic.normSq (Ascending.Gaussian.Evaluation.evalList coefficients input) ≤
-      coefficientNormBudget coefficients (Data.Gaussian.Norm.Basic.normSq input)
+    Gaussian.Norm.Basic.normSq (Evaluation.evalList coefficients input) ≤
+      coefficientNormBudget coefficients (Gaussian.Norm.Basic.normSq input)
   | [], input => by
-      change Data.Gaussian.Norm.Basic.normSq (0 : Gaussian.Basic.Canonical) ≤ 0
+      change Gaussian.Norm.Basic.normSq (0 : Gaussian.Basic.Canonical) ≤ 0
       rw [Gaussian.Norm.Basic.normSq_zero]
   | coefficient :: remaining, input => by
-      change Data.Gaussian.Norm.Basic.normSq (coefficient + input * Ascending.Gaussian.Evaluation.evalList remaining
+      change Gaussian.Norm.Basic.normSq (coefficient + input * Evaluation.evalList remaining
         input) ≤ _
       calc
-        Data.Gaussian.Norm.Basic.normSq (coefficient + input * Ascending.Gaussian.Evaluation.evalList remaining
+        Gaussian.Norm.Basic.normSq (coefficient + input * Evaluation.evalList remaining
           input) ≤
-            2 * (Data.Gaussian.Norm.Basic.normSq coefficient +
-              Data.Gaussian.Norm.Basic.normSq (input * Ascending.Gaussian.Evaluation.evalList remaining input)) :=
+            2 * (Gaussian.Norm.Basic.normSq coefficient +
+              Gaussian.Norm.Basic.normSq (input * Evaluation.evalList remaining input)) :=
           Gaussian.Norm.Bounds.normSq_add_le_two _ _
-        _ = 2 * (Data.Gaussian.Norm.Basic.normSq coefficient +
-              Data.Gaussian.Norm.Basic.normSq input * Data.Gaussian.Norm.Basic.normSq
-                (Ascending.Gaussian.Evaluation.evalList remaining input)) := by
+        _ = 2 * (Gaussian.Norm.Basic.normSq coefficient +
+              Gaussian.Norm.Basic.normSq input * Gaussian.Norm.Basic.normSq
+                (Evaluation.evalList remaining input)) := by
           rw [Gaussian.Norm.Basic.normSq_mul]
-        _ ≤ 2 * (Data.Gaussian.Norm.Basic.normSq coefficient +
-              Data.Gaussian.Norm.Basic.normSq input *
-                coefficientNormBudget remaining (Data.Gaussian.Norm.Basic.normSq
+        _ ≤ 2 * (Gaussian.Norm.Basic.normSq coefficient +
+              Gaussian.Norm.Basic.normSq input *
+                coefficientNormBudget remaining (Gaussian.Norm.Basic.normSq
                   input)) := by
           apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct _
             (by decide)
@@ -92,7 +92,7 @@ theorem eval_normSq_le : ∀ coefficients (input :
               (eval_normSq_le remaining input)
                 (Gaussian.Norm.Basic.normSq_nonneg input))
         _ = coefficientNormBudget (coefficient :: remaining)
-            (Data.Gaussian.Norm.Basic.normSq input) := rfl
+            (Gaussian.Norm.Basic.normSq input) := rfl
 
 /-- Split the value of two concatenated coefficient blocks into the prefix value and shifted tail value.
 
@@ -100,17 +100,17 @@ The tail contribution is multiplied by the input to the retained prefix length. 
 theorem eval_append : ∀ (retained discarded : List
   Gaussian.Basic.Canonical)
     (input : Gaussian.Basic.Canonical),
-    Ascending.Gaussian.Evaluation.evalList (retained ++ discarded) input =
-      Ascending.Gaussian.Evaluation.evalList retained input + input ^ retained.length *
-        Ascending.Gaussian.Evaluation.evalList discarded input
+    Evaluation.evalList (retained ++ discarded) input =
+      Evaluation.evalList retained input + input ^ retained.length *
+        Evaluation.evalList discarded input
   | [], discarded, input => by
-      change Ascending.Gaussian.Evaluation.evalList discarded input = 0 + 1 * Ascending.Gaussian.Evaluation.evalList
+      change Evaluation.evalList discarded input = 0 + 1 * Evaluation.evalList
         discarded input
       rw [Gaussian.Basic.one_mul,
         Gaussian.Basic.zero_add]
   | coefficient :: remaining, discarded, input => by
       rw [List.cons_append]
-      simp only [Ascending.Gaussian.Evaluation.evalList, List.length_cons]
+      simp only [Evaluation.evalList, List.length_cons]
       rw [eval_append remaining discarded input, pow_succ]
       apply Gaussian.Basic.ext <;>
         simp only [Gaussian.Basic.add_re, Gaussian.Basic.add_im, Gaussian.Basic.mul_re, Gaussian.Basic.mul_im] <;> ring1
@@ -120,17 +120,17 @@ tail is charged.  There is no unmentioned infinite remainder. -/
 theorem truncation_error_le (retained discarded : List
   Gaussian.Basic.Canonical)
     (input : Gaussian.Basic.Canonical) :
-    Data.Gaussian.Norm.Basic.normSq (Ascending.Gaussian.Evaluation.evalList (retained ++ discarded) input -
-      Ascending.Gaussian.Evaluation.evalList retained input) ≤
-      Data.Gaussian.Norm.Basic.normSq (input ^ retained.length) *
-        coefficientNormBudget discarded (Data.Gaussian.Norm.Basic.normSq input)
+    Gaussian.Norm.Basic.normSq (Evaluation.evalList (retained ++ discarded) input -
+      Evaluation.evalList retained input) ≤
+      Gaussian.Norm.Basic.normSq (input ^ retained.length) *
+        coefficientNormBudget discarded (Gaussian.Norm.Basic.normSq input)
           := by
   rw [eval_append]
   have identity :
-      Ascending.Gaussian.Evaluation.evalList retained input + input ^ retained.length *
-        Ascending.Gaussian.Evaluation.evalList discarded input -
-          Ascending.Gaussian.Evaluation.evalList retained input =
-        input ^ retained.length * Ascending.Gaussian.Evaluation.evalList discarded input := by
+      Evaluation.evalList retained input + input ^ retained.length *
+        Evaluation.evalList discarded input -
+          Evaluation.evalList retained input =
+        input ^ retained.length * Evaluation.evalList discarded input := by
     apply Gaussian.Basic.ext <;>
       simp only [Gaussian.Basic.add_re, Gaussian.Basic.add_im, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im,
         Gaussian.Basic.mul_re, Gaussian.Basic.mul_im] <;> ring1

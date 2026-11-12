@@ -72,6 +72,10 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Approximation.Rational.Budget
+
 open Purelib.Algebra
 
 open Purelib.Approximation
@@ -103,14 +107,14 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
     Fraction.Rational} {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
   {observations : RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
-    RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars} {sheet : Fin
+    SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars} {sheet : Fin
     2}
   {partitions : Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid} {coarse :
     Topology.NewtonRequestedSurfaceEnergy.SurfaceMeshes partitions domains sheet}
@@ -123,10 +127,10 @@ namespace ExteriorRequest
 @[expose] def ExteriorPieces (energy : Topology.NewtonRequestedSurfaceEnergy.SurfaceRequest partitions coarse fixed
   energyTarget)
     (perFace : Fraction.Rational) (position : Fin grid.faces.regulars.length) :=
-  Data.Vector.DependentVector (fun piece : Fin (partitions.get position).cuts.boxes.length =>
-    Hyperelliptic.Meshes.PuncturedGrid.DomainConjugateExteriorRequest.ConjugateExteriorRequest (fixed.get position).get
+  Vector.DependentVector (fun piece : Fin (partitions.get position).cuts.boxes.length =>
+    PuncturedGrid.DomainConjugateExteriorRequest.ConjugateExteriorRequest (fixed.get position).get
       ((energy.meshes.get position).entries.get piece)
-      (Rational.Budget.Aggregate.perTerm perFace (partitions.get position).cuts.boxes.length))
+      (Aggregate.perTerm perFace (partitions.get position).cuts.boxes.length))
 
 end ExteriorRequest
 
@@ -140,9 +144,9 @@ structure ExteriorRequest (energy : Topology.NewtonRequestedSurfaceEnergy.Surfac
   /-- The requested whole-surface error is positive. -/ positive : 0 < error
   /-- The retained local face allowance. -/ perFace : Fraction.Rational
   /-- The face allowance is the original face-count target allocation. -/ perFace_eq : perFace =
-    Rational.Budget.Aggregate.perTerm error grid.faces.regulars.length
-  /-- The actual retained exterior requests for every original face and piece. -/ entries : Data.Vector.DependentVector
-    (Hyperelliptic.Meshes.Newton.Surface.ExteriorRequest.ExteriorPieces energy perFace)
+    Aggregate.perTerm error grid.faces.regulars.length
+  /-- The actual retained exterior requests for every original face and piece. -/ entries : Vector.DependentVector
+    (ExteriorRequest.ExteriorPieces energy perFace)
   /-- The cached common sufficient exterior stage. -/ index : Nat
   /-- The common stage is at least the original energy request stage. -/ energy_le : energy.index ≤ index
   /-- The common stage respects the supplied floor. -/ minimum_le : minimum ≤ index
@@ -160,14 +164,14 @@ variable {energy : Topology.NewtonRequestedSurfaceEnergy.SurfaceRequest partitio
 @[expose] def build (energy : Topology.NewtonRequestedSurfaceEnergy.SurfaceRequest partitions coarse fixed energyTarget)
   (error : Fraction.Rational) (positive : 0 < error)
     (minimum : Nat) : ExteriorRequest energy error minimum :=
-  let perFace := Rational.Budget.Aggregate.perTerm error grid.faces.regulars.length
-  let entries : Data.Vector.DependentVector (Hyperelliptic.Meshes.Newton.Surface.ExteriorRequest.ExteriorPieces energy
+  let perFace := Aggregate.perTerm error grid.faces.regulars.length
+  let entries : Vector.DependentVector (ExteriorPieces energy
     perFace) :=
-    Data.Vector.DependentVector.ofFn fun position => Data.Vector.DependentVector.ofFn fun piece =>
-      Hyperelliptic.Meshes.PuncturedGrid.DomainConjugateExteriorRequest.ConjugateExteriorRequest.build (fixed.get
+    Vector.DependentVector.ofFn fun position => Vector.DependentVector.ofFn fun piece =>
+      PuncturedGrid.DomainConjugateExteriorRequest.ConjugateExteriorRequest.build (fixed.get
         position).get ((energy.meshes.get position).entries.get piece)
-        (Rational.Budget.Aggregate.perTerm perFace (partitions.get position).cuts.boxes.length)
-        (Rational.Budget.Aggregate.perTerm_positive (Rational.Budget.Aggregate.perTerm_positive positive _) _)
+        (Aggregate.perTerm perFace (partitions.get position).cuts.boxes.length)
+        (Aggregate.perTerm_positive (Aggregate.perTerm_positive positive _) _)
   let floor := entries.maximum fun _ row => row.maximum fun _ request => request.models.index
   ⟨positive, perFace, rfl, entries, max (max energy.index minimum) floor,
     (Nat.Order.le_max_left _ _).trans (Nat.Order.le_max_left _ _), (Nat.Order.le_max_right _ _).trans
@@ -184,9 +188,9 @@ vector. -/
 @[expose] def Assemblies (energy : Topology.NewtonRequestedSurfaceEnergy.SurfaceRequest partitions coarse fixed
   energyTarget) (cache : RootContinuation.NewtonObservationLocalEnergy.LocalMeshes.Numerics domains stage)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :=
-  Data.Vector.DependentVector (fun position => Data.Vector.DependentVector (fun piece : Fin (partitions.get
+  Vector.DependentVector (fun position => Vector.DependentVector (fun piece : Fin (partitions.get
     position).cuts.boxes.length =>
-    Hyperelliptic.Meshes.PuncturedGrid.DomainConjugateExteriorRequest.ConjugateExteriorRequest.EnergyAssembly
+    PuncturedGrid.DomainConjugateExteriorRequest.ConjugateExteriorRequest.EnergyAssembly
       (cache.atDomain position sheet)
       ((energy.meshes.get position).entries.get piece) coefficients))
 
@@ -195,11 +199,11 @@ vector. -/
   energyTarget) (cache : RootContinuation.NewtonObservationLocalEnergy.LocalMeshes.Numerics domains stage)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
       Assemblies energy cache coefficients :=
-  Data.Vector.DependentVector.ofFn fun position => Data.Vector.DependentVector.ofFn fun piece =>
+  Vector.DependentVector.ofFn fun position => Vector.DependentVector.ofFn fun piece =>
     Readings.RectangularObservationAssembly.ObservationMesh.ClippedAssembly.build ((energy.meshes.get
       position).entries.get piece)
       (fun column row point =>
-        ⟨sumFin (fun i => Data.Gaussian.Basic.conj (coefficients i) * Data.Gaussian.Basic.conj ((cache.atDomain
+        ⟨sumFin (fun i => Gaussian.Basic.conj (coefficients i) * Gaussian.Basic.conj ((cache.atDomain
           position sheet i).anchors.alignedValue
           (cache.atDomain position sheet i).offsets column row point)),
           FiniteSum.Fin.sumFin (fun i => coefficients i * (cache.atDomain position sheet i).anchors.alignedValue
@@ -214,8 +218,8 @@ open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.ExteriorRequest in
 
 /-- The original count-squared local allocation fits its positive whole target. -/
 private theorem payment {count : Nat} {target : Fraction.Rational} (positive : 0 < target) :
-    (count : Fraction.Rational) ^ 2 * Rational.Budget.Aggregate.perTerm target count ≤ target :=
-  (le_of_eq (by ring1)).trans (Rational.Budget.Aggregate.count_mul_perTerm_lt positive count).le
+    (count : Fraction.Rational) ^ 2 * Aggregate.perTerm target count ≤ target :=
+  (le_of_eq (by ring1)).trans (Aggregate.count_mul_perTerm_lt positive count).le
 
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.ExteriorRequest in
 /-- The original local energy and retained piece exteriors differ by the paid homogeneous whole-surface bound. -/
@@ -223,44 +227,44 @@ theorem error_bound (request : ExteriorRequest energy error minimum)
   (later : request.index ≤ stage)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (assemblies :
       Assemblies energy cache coefficients) :
-    Data.Gaussian.Norm.Basic.normSq (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.localEnergyArea energy cache
+    Gaussian.Norm.Basic.normSq (LocalEnergy.localEnergyArea energy cache
       coefficients - exterior assemblies) ≤
       (genus : Fraction.Rational) ^ 2 * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
         error := by
   let factor := (genus : Fraction.Rational) ^ 2 * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients
     ^ 2
-  have factorNonnegative : 0 ≤ factor := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _) (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+  have factorNonnegative : 0 ≤ factor := Arithmetic.mul_nonneg_direct
+    (Arithmetic.sq_nonneg_direct _) (Arithmetic.sq_nonneg_direct _)
   have perFacePositive : 0 < request.perFace := by
     rw [request.perFace_eq]
-    exact Rational.Budget.Aggregate.perTerm_positive request.positive _
+    exact Aggregate.perTerm_positive request.positive _
   let difference := fun position piece =>
     ((assemblies.get position).get piece).localTotal - ((assemblies.get position).get piece).exterior
   have faceBound (position : Fin grid.faces.regulars.length) :
-      Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (difference position)) ≤ factor * request.perFace := by
+      Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (difference position)) ≤ factor * request.perFace := by
     have estimate := Gaussian.Norm.Sum.Indexed.normSq_sumFin_le (difference position)
-      (factor * Rational.Budget.Aggregate.perTerm request.perFace (partitions.get position).cuts.boxes.length)
+      (factor * Aggregate.perTerm request.perFace (partitions.get position).cuts.boxes.length)
       (fun piece =>
-        Hyperelliptic.Meshes.PuncturedGrid.DomainConjugateExteriorRequest.ConjugateExteriorRequest.weighted_bound
+        PuncturedGrid.DomainConjugateExteriorRequest.ConjugateExteriorRequest.weighted_bound
         ((request.entries.get position).get piece) ((request.index_ge position piece).trans later)
         (cache.atDomain position sheet) coefficients ((assemblies.get position).get piece))
     apply estimate.trans
     calc
       _ = factor * (((partitions.get position).cuts.boxes.length : Fraction.Rational) ^ 2 *
-        Rational.Budget.Aggregate.perTerm request.perFace (partitions.get position).cuts.boxes.length) := by ring1
-      _ ≤ _ := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Aggregate.perTerm request.perFace (partitions.get position).cuts.boxes.length) := by ring1
+      _ ≤ _ := Arithmetic.mul_le_mul_of_nonneg_left_direct
         (payment perFacePositive) factorNonnegative
   have estimate := Gaussian.Norm.Sum.Indexed.normSq_sumFin_le _ (factor * request.perFace) faceBound
   have paid : (grid.faces.regulars.length : Fraction.Rational) ^ 2 * (factor * request.perFace) ≤ factor * error := by
     rw [request.perFace_eq]
     calc
       _ = factor * ((grid.faces.regulars.length : Fraction.Rational) ^ 2 *
-        Rational.Budget.Aggregate.perTerm error grid.faces.regulars.length) := by ring1
-      _ ≤ _ := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Aggregate.perTerm error grid.faces.regulars.length) := by ring1
+      _ ≤ _ := Arithmetic.mul_le_mul_of_nonneg_left_direct
         (payment request.positive) factorNonnegative
   have total := estimate.trans paid
   have equal : FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (difference position)) =
-    Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.localEnergyArea energy cache coefficients -
+    LocalEnergy.localEnergyArea energy cache coefficients -
     exterior assemblies := by
     rw [FiniteSum.Fin.sumFin_congr (fun position => FiniteSum.Fin.sumFin_sub _ _), FiniteSum.Fin.sumFin_sub]
     apply congrArg (fun localTotal => localTotal - _)
@@ -278,10 +282,10 @@ theorem error_bound (request : ExteriorRequest energy error minimum)
   energyTarget)
     (allowance : Fraction.Rational) (positive : 0 < allowance) (minimum : Nat) :
     ExteriorRequest energy
-      (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance) minimum
+      (LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance) minimum
       :=
   build energy _
-    (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget_positive positive) minimum
+    (LocalEnergy.ConjugateRequest.energyAllowanceTarget_positive positive) minimum
 
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.ExteriorRequest in
 /-- The positive surface margin survives both ownership and seam/corner
@@ -289,9 +293,9 @@ losses at one common numerical sample. Piece exteriors keep their joining
 edges; joining different pieces and faces remains a separate comparison. -/
 theorem energy_lower {ownershipAllowance exteriorAllowance : Fraction.Rational}
     (ownership : ConjugateRequest energy
-      (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus ownershipAllowance))
+      (LocalEnergy.ConjugateRequest.energyAllowanceTarget genus ownershipAllowance))
     (request : ExteriorRequest energy
-      (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus exteriorAllowance)
+      (LocalEnergy.ConjugateRequest.energyAllowanceTarget genus exteriorAllowance)
       ownership.index)
     (ownershipPositive : 0 < ownershipAllowance) (exteriorPositive : 0 < exteriorAllowance)
     (later : request.index ≤ stage) (samples : energy.Readings cache)
@@ -305,31 +309,31 @@ theorem energy_lower {ownershipAllowance exteriorAllowance : Fraction.Rational}
   have close := request.error_bound later coefficients assemblies
   have normNonnegative : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := by
     have bound := FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Fraction.Rational)) _
-      (fun row => Gaussian.Basic.Canonical.normSq_nonneg (coefficients row))
+      (fun row => Gaussian.normSq_nonneg (coefficients row))
     exact (FiniteSum.Fin.sumFin_zero).symm.trans_le bound
-  have squared : Data.Gaussian.Norm.Basic.normSq (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.localEnergyArea
+  have squared : Gaussian.Norm.Basic.normSq (LocalEnergy.localEnergyArea
     energy cache coefficients - exterior assemblies)
     ≤
       (4 * (exteriorAllowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)) ^ 2 := by
     apply close.trans
     calc
       _ = ((genus : Fraction.Rational) ^ 2 *
-        Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus exteriorAllowance)
+        LocalEnergy.ConjugateRequest.energyAllowanceTarget genus exteriorAllowance)
         * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 := by
         ring1
       _ ≤ (4 * exteriorAllowance) ^ 2 * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-          (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget_paid exteriorPositive)
-            (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
+          (LocalEnergy.ConjugateRequest.energyAllowanceTarget_paid exteriorPositive)
+            (Arithmetic.sq_nonneg_direct _)
       _ = _ := by ring1
   have comparison := Topology.PreparedSurfaceCoercivity.boundaryEnergy_sub_budget_le
-    (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.localEnergyArea energy cache coefficients)
+    (LocalEnergy.localEnergyArea energy cache coefficients)
       (exterior assemblies) (exteriorAllowance *
       Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct exteriorPositive.le normNonnegative) squared
-  have lower := Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.local_energy_lower ownership
+    (Arithmetic.mul_nonneg_direct exteriorPositive.le normNonnegative) squared
+  have lower := LocalEnergy.ConjugateRequest.local_energy_lower ownership
     ownershipPositive (request.minimum_le.trans later) samples coefficients face
-  have paid := (Fraction.Order.Arithmetic.sub_le_sub_direct lower
+  have paid := (Arithmetic.sub_le_sub_direct lower
     (le_rfl (a := exteriorAllowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients))).trans
       comparison
   exact (le_of_eq (by ring1)).trans paid

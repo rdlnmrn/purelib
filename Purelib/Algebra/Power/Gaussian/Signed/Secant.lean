@@ -4,6 +4,7 @@ import Purelib.Algebra.Field.ExplicitField
 public import Purelib.Algebra.Power.Gaussian.Secant
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Gaussian.Field
+import Purelib.Data.Gaussian.Conjugate.Arithmetic
 import Purelib.Data.Gaussian.Inverse.Subtraction
 import Purelib.Data.Gaussian.Power
 import Purelib.Data.Gaussian.Scale
@@ -159,6 +160,148 @@ theorem signedPowerKernel_diagonal (x : Canonical) (xNonzero : x ≠ 0) :
       apply Basic.ext <;>
         simp only [Scale.scale_re,
           Scale.scale_im, Basic.neg_re, Basic.neg_im] <;> ring1
+
+end Purelib.Algebra.Power.Gaussian.Signed.Secant
+
+end
+
+namespace Purelib.Algebra.Power.Gaussian.Signed.Secant
+
+/-- A sufficient polynomializing shift clears the original signed power.
+
+A displayed negative exponent retains its supplied nonzero-input certificate;
+nonnegative exponents also allow zero as an evaluation point. -/
+public theorem signedPower_shift (point : Canonical) (exponent : Exponent)
+    (shift : Nat) (sufficient : exponent.negativeMagnitude ≤ shift)
+    (defined : exponent.negativeMagnitude ≠ 0 → point ≠ 0) :
+    point ^ shift * signedPower point exponent = point ^ (exponent.shifted shift) := by
+  cases exponent with
+  | nonnegative degree => exact (pow_add point shift degree).symm
+  | negative predecessor =>
+      change predecessor + 1 ≤ shift at sufficient
+      have nonzero : point ≠ 0 := defined (Nat.succ_ne_zero predecessor)
+      have powerNonzero := Power.pow_ne_zero_direct point nonzero (predecessor + 1)
+      change point ^ shift * (point ^ (predecessor + 1))⁻¹ =
+        point ^ (shift - (predecessor + 1))
+      calc
+        point ^ shift * (point ^ (predecessor + 1))⁻¹ =
+            (point ^ (shift - (predecessor + 1)) * point ^ (predecessor + 1)) *
+              (point ^ (predecessor + 1))⁻¹ := by
+          exact congrArg (fun value : Canonical => value * (point ^ (predecessor + 1))⁻¹)
+            ((congrArg (fun degree : Nat => point ^ degree)
+              (Nat.sub_add_cancel sufficient)).symm.trans
+                (pow_add point (shift - (predecessor + 1)) (predecessor + 1)))
+        _ = point ^ (shift - (predecessor + 1)) := by
+          rewrite [Basic.mul_assoc, ExplicitField.mul_inv_cancel _ powerNonzero, Basic.mul_one]
+          exact Eq.refl _
+
+end Purelib.Algebra.Power.Gaussian.Signed.Secant
+
+namespace Purelib.Algebra.Power.Gaussian.Signed.Secant
+
+/-- The original negative magnitude makes the retained signed integer exponent nonnegative. -/
+private theorem value_add_negativeMagnitude_nonnegative (exponent : Exponent) :
+    0 ≤ exponent.value + (exponent.negativeMagnitude : Int) := by
+  cases exponent with
+  | nonnegative degree => change 0 ≤ (degree : Int) + (0 : Nat); omega0
+  | negative predecessor => change 0 ≤ Int.negSucc predecessor + ((predecessor + 1 : Nat) : Int); omega0
+
+/-- Signed-power multiplication at a nonzero point follows the original exponent addition. -/
+private theorem signedPower_add_nonzero (point : Canonical) (nonzero : point ≠ 0)
+    (left right : Exponent) :
+    signedPower point (Exponent.add left right) = signedPower point left * signedPower point right := by
+  let combined := Exponent.add left right
+  let shift := left.negativeMagnitude + right.negativeMagnitude
+  have combinedValue : combined.value = left.value + right.value := Exponent.add_value left right
+  have sufficient : combined.negativeMagnitude ≤ shift := by
+    have leftLower := value_add_negativeMagnitude_nonnegative left
+    have rightLower := value_add_negativeMagnitude_nonnegative right
+    cases shape : combined with
+    | nonnegative degree => exact Nat.zero_le _
+    | negative predecessor =>
+        rewrite [shape] at combinedValue
+        change Int.negSucc predecessor = left.value + right.value at combinedValue
+        change predecessor + 1 ≤ left.negativeMagnitude + right.negativeMagnitude
+        omega0
+  have leftDegree := left.shifted_value left.negativeMagnitude (Nat.le_refl _)
+  have rightDegree := right.shifted_value right.negativeMagnitude (Nat.le_refl _)
+  have combinedDegree := combined.shifted_value shift sufficient
+  have degreeEqual : combined.shifted shift =
+      left.shifted left.negativeMagnitude + right.shifted right.negativeMagnitude := by
+    dsimp only [shift] at combinedDegree
+    change combined.shifted (left.negativeMagnitude + right.negativeMagnitude) = _
+    omega0
+  have leftPower := signedPower_shift point left left.negativeMagnitude (Nat.le_refl _) (fun _ => nonzero)
+  have rightPower := signedPower_shift point right right.negativeMagnitude (Nat.le_refl _) (fun _ => nonzero)
+  have combinedPower := signedPower_shift point combined shift sufficient (fun _ => nonzero)
+  apply Field.mul_right_cancel_of_ne (Power.pow_ne_zero_direct point nonzero shift)
+  calc
+    signedPower point combined * point ^ shift = point ^ combined.shifted shift :=
+      (Basic.mul_comm _ _).trans combinedPower
+    _ = point ^ (left.shifted left.negativeMagnitude + right.shifted right.negativeMagnitude) :=
+      congrArg (fun exponent : Nat => point ^ exponent) degreeEqual
+    _ = (point ^ left.negativeMagnitude * signedPower point left) *
+        (point ^ right.negativeMagnitude * signedPower point right) := by
+      rewrite [pow_add, leftPower, rightPower]
+      exact Eq.refl _
+    _ = (signedPower point left * signedPower point right) * point ^ shift := by
+      change _ = (signedPower point left * signedPower point right) *
+        point ^ (left.negativeMagnitude + right.negativeMagnitude)
+      rewrite [pow_add]
+      ring1
+
+/-- Signed powers multiply on the common original guarded domain.
+
+The zero-input case is allowed only when both original exponents are
+nonnegative. Cancellation in their sum does not erase either source guard. -/
+public theorem signedPower_add (point : Canonical) (left right : Exponent)
+    (leftDefined : left.negativeMagnitude ≠ 0 → point ≠ 0)
+    (rightDefined : right.negativeMagnitude ≠ 0 → point ≠ 0) :
+    signedPower point (Exponent.add left right) = signedPower point left * signedPower point right := by
+  by_cases pointZero : point = 0
+  · cases left with
+    | negative predecessor => exact (leftDefined (Nat.succ_ne_zero predecessor) pointZero).elim
+    | nonnegative leftDegree =>
+        cases right with
+        | negative predecessor => exact (rightDefined (Nat.succ_ne_zero predecessor) pointZero).elim
+        | nonnegative rightDegree =>
+            change point ^ (leftDegree + rightDegree) = point ^ leftDegree * point ^ rightDegree
+            exact pow_add point leftDegree rightDegree
+  · exact signedPower_add_nonzero point pointZero left right
+
+end Purelib.Algebra.Power.Gaussian.Signed.Secant
+
+public section
+
+namespace Purelib.Algebra.Power.Gaussian.Signed.Secant
+
+open Purelib.Data.Gaussian.Basic (Canonical)
+open Purelib.Data.Gaussian
+open Purelib.Data.Int (Exponent)
+open Purelib.Algebra.Field
+
+/-- Reversing the signed exponent is evaluation at the reciprocal on its original nonzero domain. -/
+theorem signedPower_neg (point : Canonical) (nonzero : point ≠ 0) (exponent : Exponent) :
+    signedPower point exponent.neg = signedPower point⁻¹ exponent := by
+  cases exponent with
+  | nonnegative degree =>
+      cases degree with
+      | zero => rfl
+      | succ degree => exact ExplicitField.inverse_pow_nonzero nonzero (degree + 1)
+  | negative predecessor =>
+      change point ^ (predecessor + 1) = (point⁻¹ ^ (predecessor + 1))⁻¹
+      rewrite [← ExplicitField.inverse_pow_nonzero nonzero]
+      exact (Canonical.inv_inv_nonzero _ (ExplicitField.pow_ne_zero_of_ne_zero nonzero _)).symm
+
+/-- Gaussian conjugation preserves the same finite signed-power evaluator. -/
+theorem signedPower_conj (point : Canonical) (exponent : Exponent) :
+    Canonical.conj (signedPower point exponent) = signedPower (Canonical.conj point) exponent := by
+  cases exponent with
+  | nonnegative degree => exact Power.conj_pow point degree
+  | negative predecessor =>
+      change Canonical.conj ((point ^ (predecessor + 1))⁻¹) = _
+      rewrite [Canonical.conj_inv]
+      exact congrArg Inv.inv (Power.conj_pow point (predecessor + 1))
 
 end Purelib.Algebra.Power.Gaussian.Signed.Secant
 

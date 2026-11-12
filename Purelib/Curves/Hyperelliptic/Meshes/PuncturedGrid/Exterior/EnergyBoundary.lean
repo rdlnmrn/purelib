@@ -55,6 +55,8 @@ import Purelib.Riemann.Periods.PreparedGridPeriodPrograms
 import Purelib.Riemann.RootContinuation.PreparedGridRootClosure
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Approximation
 
 open Purelib.Curves
@@ -86,54 +88,54 @@ open Purelib.Data.Gaussian.Basic.Canonical
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {totalTarget areaTarget target :
-    Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
-  {entry : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapComparison.Entry regular lifted differential totalTarget
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {totalTarget areaTarget target :
+    Coordinate} {minimum : Nat}
+  {entry : CapComparison.Entry regular lifted differential totalTarget
     areaTarget minimum}
-  {charts : Hyperelliptic.Charts.Reciprocal.Disk.ConnectedCharts.ChartRequest entry.request target}
-  {index : Nat} {box : Rational.Box} {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+  {charts : Charts.Reciprocal.Disk.ConnectedCharts.ChartRequest entry.request target}
+  {index : Nat} {box : Rational.Box} {sample : Charts.Reciprocal.Cap.Primitives.Sample cap
     differential index box}
-  {plan : Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartClosure.ChartPlan entry charts sample} {depth readingIndex :
+  {plan : ChartClosure.ChartPlan entry charts sample} {depth readingIndex :
     Nat}
 
 /-- A nonnegative rational quarter is at most the original value. -/
-private theorem quarter_le {value : Normalization.InverseRootPolynomial.Coordinate} (nonnegative : 0 ≤ value) : value /
+private theorem quarter_le {value : Coordinate} (nonnegative : 0 ≤ value) : value /
   4 ≤ value := by
-  apply (Fraction.Order.Field.div_le_iff_pos (by decide : (0 : Normalization.InverseRootPolynomial.Coordinate) < 4)).mpr
+  apply (Field.div_le_iff_pos (by decide : (0 : Coordinate) < 4)).mpr
   exact (show value = value * 1 by ring1).trans_le
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (by decide) nonnegative)
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (by decide) nonnegative)
 
 /-- The original parent-count-squared charge of the allocated chart tolerance fits the supplied target. -/
 private theorem parent_paid :
-    ((entry.prepared.program.cache.parents.length : Normalization.InverseRootPolynomial.Coordinate) ^ 2 + 1) *
+    ((entry.prepared.program.cache.parents.length : Coordinate) ^ 2 + 1) *
       charts.parentTarget ≤ target := by
-  let n : Coordinate := (entry.prepared.program.cache.parents.length : Normalization.InverseRootPolynomial.Coordinate)
+  let n : Coordinate := (entry.prepared.program.cache.parents.length : Coordinate)
   have nonnegative : 0 ≤ n := Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)
-  have denominatorPositive : 0 < 2 * (n + 1) ^ 2 := Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-    (Fraction.Order.Arithmetic.pow_pos_direct (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct nonnegative (by
+  have denominatorPositive : 0 < 2 * (n + 1) ^ 2 := Arithmetic.mul_pos_direct (by decide)
+    (Arithmetic.pow_pos_direct (Arithmetic.add_pos_of_nonneg_of_pos_direct nonnegative (by
       decide)) 2)
   have targetNonnegative : 0 ≤ charts.parentTarget := by
     rw [charts.parentTarget_eq]
     exact (Rational.Budget.Aggregate.perTerm_positive charts.positive _).le
   have coefficient : n ^ 2 + 1 ≤ 2 * (n + 1) ^ 2 := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
-    exact (add_nonneg (add_nonneg (Fraction.Order.Arithmetic.sq_nonneg_direct n)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤
-        4) nonnegative)) (by decide : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤ 1)).trans_eq (by ring1)
+    apply Arithmetic.le_of_sub_nonneg_direct
+    exact (add_nonneg (add_nonneg (Arithmetic.sq_nonneg_direct n)
+      (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤
+        4) nonnegative)) (by decide : (0 : Coordinate) ≤ 1)).trans_eq (by ring1)
   have paid : (2 * (n + 1) ^ 2) * charts.parentTarget = target := by
     rw [charts.parentTarget_eq, Rational.Budget.Aggregate.perTerm, Rational.Budget.Aggregate.countCoordinate_eq,
       Fraction.Field.mul_comm]
     exact Fraction.Field.div_mul_cancel_of_ne _ _ denominatorPositive.ne'
-  exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct coefficient targetNonnegative).trans_eq paid
+  exact (Arithmetic.mul_le_mul_of_nonneg_right_direct coefficient targetNonnegative).trans_eq paid
 
 /-- Expand the original parent and closing boundary charges, cancelling the final quarter exactly. -/
-private theorem boundary_scale (n localTarget joining totalTarget : Normalization.InverseRootPolynomial.Coordinate) :
+private theorem boundary_scale (n localTarget joining totalTarget : Coordinate) :
     2 * (n ^ 2 * (80 * localTarget + 2 * joining) + (80 * localTarget + 2 * (totalTarget / 4))) =
       160 * ((n ^ 2 + 1) * localTarget) + 4 * n ^ 2 * joining + totalTarget := by
   have cancel : 4 * (totalTarget / 4) = totalTarget := by
@@ -143,87 +145,87 @@ private theorem boundary_scale (n localTarget joining totalTarget : Normalizatio
     _ = 160 * ((n ^ 2 + 1) * localTarget) + 4 * n ^ 2 * joining + 4 * (totalTarget / 4) := by ring1
     _ = _ := by rw [cancel]
 
-variable (evaluated : Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartClosure.ChartPlan.Evaluation plan depth
-  readingIndex) {energyTarget : Normalization.InverseRootPolynomial.Coordinate} {energyFloor : Nat}
-  (energy : Hyperelliptic.Charts.Reciprocal.Disk.ConnectedEnergy.RequestedEnergy evaluated.chart energyTarget
+variable (evaluated : ChartClosure.ChartPlan.Evaluation plan depth
+  readingIndex) {energyTarget : Coordinate} {energyFloor : Nat}
+  (energy : Charts.Reciprocal.Disk.ConnectedEnergy.RequestedEnergy evaluated.chart energyTarget
     energyFloor)
-  (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) (small : totalTarget ≤ 1)
+  (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) (small : totalTarget ≤ 1)
 
 include branch small in
 /-- The complete original odd-degree energy boundary residual fits the retained chart, joining and closing allowances.
 
 The proof uses the actual parent count, origin order one and the supplied target bound by one. -/
 theorem energy_boundary_paid :
-    Data.Gaussian.Norm.Basic.normSq (energy.connected.boundary - Path.BoundaryRibbon.area
+    Gaussian.Norm.Basic.normSq (energy.connected.boundary - Path.BoundaryRibbon.area
       evaluated.chart.original.firstValue evaluated.chart.connected.summary.total) ≤
       160 * target + (((totalTarget / 4) / 4) / 4) + totalTarget := by
   have parentPositive : 0 < charts.parentTarget := by
     rw [charts.parentTarget_eq]
     exact Rational.Budget.Aggregate.perTerm_positive charts.positive _
-  have bound := Hyperelliptic.Charts.Reciprocal.Disk.EnergyBoundaryControl.boundary_small
+  have bound := Charts.Reciprocal.Disk.EnergyBoundaryControl.boundary_small
     energy.connected evaluated.chart.connected evaluated.chart.original.firstValue_eq branch
     parentPositive.le entry.request.budget.positive.le (entry.request.budget.tolerance_eq.trans_le
-      (Fraction.Order.Basic.min_le_left _ _))
-    (Fraction.Order.Field.div_nonneg_direct entry.positive.le (by decide))
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.EnergyBoundary.quarter_le entry.positive.le).trans small)
+      (Basic.min_le_left _ _))
+    (Field.div_nonneg_direct entry.positive.le (by decide))
+      ((EnergyBoundary.quarter_le entry.positive.le).trans small)
     entry.request.junctions evaluated.chart.original.junction_later entry.closing evaluated.closing_later
-  have paid := add_le_add (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.EnergyBoundary.parent_paid (charts := charts))
-    (by decide +kernel : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤ 160)) entry.request.budget.total_paid.le
-  have combined := Fraction.Order.Arithmetic.add_le_add_right_direct paid (4 * (totalTarget / 4))
+  have paid := add_le_add (Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (EnergyBoundary.parent_paid (charts := charts))
+    (by decide +kernel : (0 : Coordinate) ≤ 160)) entry.request.budget.total_paid.le
+  have combined := Arithmetic.add_le_add_right_direct paid (4 * (totalTarget / 4))
   have cancel : 4 * (totalTarget / 4) = totalTarget := by
     rw [Fraction.Field.mul_comm]
     exact Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
   rw [cancel] at combined
   calc
-    _ ≤ 2 * ((entry.prepared.program.cache.parents.length : Normalization.InverseRootPolynomial.Coordinate) ^ 2 *
+    _ ≤ 2 * ((entry.prepared.program.cache.parents.length : Coordinate) ^ 2 *
       (80 * charts.parentTarget + 2 * entry.request.budget.tolerance) +
       (80 * charts.parentTarget + 2 * (totalTarget / 4))) := bound
-    _ = 160 * (((entry.prepared.program.cache.parents.length : Normalization.InverseRootPolynomial.Coordinate) ^ 2 + 1)
+    _ = 160 * (((entry.prepared.program.cache.parents.length : Coordinate) ^ 2 + 1)
       * charts.parentTarget) +
-      4 * (entry.prepared.program.cache.parents.length : Normalization.InverseRootPolynomial.Coordinate) ^ 2 *
+      4 * (entry.prepared.program.cache.parents.length : Coordinate) ^ 2 *
         entry.request.budget.tolerance + totalTarget :=
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.EnergyBoundary.boundary_scale
-          (entry.prepared.program.cache.parents.length : Normalization.InverseRootPolynomial.Coordinate)
+        EnergyBoundary.boundary_scale
+          (entry.prepared.program.cache.parents.length : Coordinate)
           charts.parentTarget entry.request.budget.tolerance totalTarget
     _ ≤ 160 * target + (((totalTarget / 4) / 4) / 4) + totalTarget := combined
 
 include branch small in
 /-- The actual signed cap energy and closed polygon area satisfy their combined paid boundary and chart-error bound. -/
 theorem closed_polygon_energy :
-    Data.Gaussian.Norm.Basic.normSq (energy.connected.energy + evaluated.polygon.area) <
+    Gaussian.Norm.Basic.normSq (energy.connected.energy + evaluated.polygon.area) <
       2 * (256 * (4 * target + ((((totalTarget / 4) / 4) / 4) / 4) / 4) +
         (160 * target + (((totalTarget / 4) / 4) / 4) + totalTarget)) := by
   let residual := energy.connected.boundary - Path.BoundaryRibbon.area evaluated.chart.original.firstValue
     evaluated.chart.connected.summary.total
   let error := energy.connected.energy + evaluated.polygon.area - residual
-  have close : Data.Gaussian.Norm.Basic.normSq error < 256 * (4 * target + ((((totalTarget / 4) / 4) / 4) / 4) / 4)
+  have close : Gaussian.Norm.Basic.normSq error < 256 * (4 * target + ((((totalTarget / 4) / 4) / 4) / 4) / 4)
     :=
-    (congrArg Data.Gaussian.Norm.Basic.normSq (by dsimp only [error, residual]; ring1)).trans_lt
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartEnergy.energy_polygon_close evaluated energy)
-  have bounded : Data.Gaussian.Norm.Basic.normSq residual ≤ 160 * target + (((totalTarget / 4) / 4) / 4) +
-    totalTarget := Hyperelliptic.Meshes.PuncturedGrid.Exterior.EnergyBoundary.energy_boundary_paid evaluated energy
+    (congrArg Gaussian.Norm.Basic.normSq (by dsimp only [error, residual]; ring1)).trans_lt
+      (ChartEnergy.energy_polygon_close evaluated energy)
+  have bounded : Gaussian.Norm.Basic.normSq residual ≤ 160 * target + (((totalTarget / 4) / 4) / 4) +
+    totalTarget := EnergyBoundary.energy_boundary_paid evaluated energy
     branch small
-  have sum := (add_le_add le_rfl bounded).trans_lt (Fraction.Order.Arithmetic.add_lt_add_right_direct close _)
+  have sum := (add_le_add le_rfl bounded).trans_lt (Arithmetic.add_lt_add_right_direct close _)
   have estimate := (Gaussian.Norm.Bounds.normSq_add_le_two error residual).trans_lt
-    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by
-        decide : (0 : Normalization.InverseRootPolynomial.Coordinate) < 2) sum)
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq (by dsimp only [error]; ring1)).trans_lt estimate
+    (Arithmetic.mul_lt_mul_of_pos_left_direct (by
+        decide : (0 : Coordinate) < 2) sum)
+  exact (congrArg Gaussian.Norm.Basic.normSq (by dsimp only [error]; ring1)).trans_lt estimate
 
 include branch small in
 /-- The original source area and signed cap energy satisfy the combined closed-polygon, chart and area comparison bound.
 -/
 theorem closed_source_energy :
-    Data.Gaussian.Norm.Basic.normSq (energy.connected.energy + evaluated.chart.original.separated.left.area) <
+    Gaussian.Norm.Basic.normSq (energy.connected.energy + evaluated.chart.original.separated.left.area) <
       2 * (2 * (256 * (4 * target + ((((totalTarget / 4) / 4) / 4) / 4) / 4) +
         (160 * target + (((totalTarget / 4) / 4) / 4) + totalTarget)) + 2 * (areaTarget + target)) := by
-  have close := Hyperelliptic.Meshes.PuncturedGrid.Exterior.EnergyBoundary.closed_polygon_energy evaluated energy branch
+  have close := EnergyBoundary.closed_polygon_energy evaluated energy branch
     small
   have estimate := (Gaussian.Norm.Bounds.normSq_add_le_two (energy.connected.energy + evaluated.polygon.area)
     (evaluated.chart.original.separated.left.area - evaluated.polygon.area)).trans_lt
-      (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by
-          decide : (0 : Normalization.InverseRootPolynomial.Coordinate) < 2)
-        (Fraction.Order.Arithmetic.add_lt_add_direct close evaluated.area_close))
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq (by ring1)).trans_lt estimate
+      (Arithmetic.mul_lt_mul_of_pos_left_direct (by
+          decide : (0 : Coordinate) < 2)
+        (Arithmetic.add_lt_add_direct close evaluated.area_close))
+  exact (congrArg Gaussian.Norm.Basic.normSq (by ring1)).trans_lt estimate
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.EnergyBoundary

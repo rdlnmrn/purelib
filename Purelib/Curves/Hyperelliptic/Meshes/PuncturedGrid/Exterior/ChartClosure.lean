@@ -91,29 +91,29 @@ open Purelib.Riemann.Meshes (FramedPuncturedGrid LiftedPuncturedGrid)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapComparison (Entry SampledEntry)
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {totalTarget areaTarget target
-    : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
-  {entry : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapComparison.Entry regular lifted differential
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {totalTarget areaTarget target
+    : Coordinate} {minimum : Nat}
+  {entry : Entry regular lifted differential
     totalTarget areaTarget minimum}
-  {charts : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ConnectedCharts.ChartRequest entry.request target}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box} {sample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {charts : ChartRequest entry.request target}
+  {index : Nat} {box : Geometry.Rational.Box} {sample :
+    Primitives.Sample cap differential index box}
 
 set_option genInjectivity false in
 /-- A complete original exterior component's chart plan and root-return stage.
 
 The common stage pays both the retained chart evaluation and the original component's closing request. -/
-structure ChartPlan (entry : CapComparison.Entry regular lifted differential totalTarget areaTarget minimum)
-    (charts : ConnectedCharts.ChartRequest entry.request target)
+structure ChartPlan (entry : Entry regular lifted differential totalTarget areaTarget minimum)
+    (charts : ChartRequest entry.request target)
     (sample : Primitives.Sample cap differential index box) where
-  /-- The original chart evaluation plan for the retained exterior entry and cap sample. -/ chart : ChartRequest.Plan
+  /-- The original chart evaluation plan for the retained exterior entry and cap sample. -/ chart : Plan
     charts sample
   /-- The cached common chart and root-return reading stage. -/ stage : Nat
   /-- The retained stage is the maximum of the actual chart stage and original root-return maximum. -/ stage_eq : stage
@@ -124,14 +124,14 @@ constructive_injectivity ChartPlan
 namespace ChartPlan
 
 /-- Prepare the actual exterior chart evaluation and cache a stage paying the original component's root return. -/
-@[expose] def build (entry : CapComparison.Entry regular lifted differential totalTarget areaTarget minimum)
-    (charts : ConnectedCharts.ChartRequest entry.request target)
+@[expose] def build (entry : Entry regular lifted differential totalTarget areaTarget minimum)
+    (charts : ChartRequest entry.request target)
     (sample : Primitives.Sample cap differential index box) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartClosure.ChartPlan entry charts sample :=
+      ChartPlan entry charts sample :=
   let chart := Plan.build charts sample
   ⟨chart, max chart.stage entry.closing.maximum, rfl⟩
 
-variable {plan : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartClosure.ChartPlan entry charts sample}
+variable {plan : ChartPlan entry charts sample}
   {depth readingIndex : Nat}
 
 set_option genInjectivity false in
@@ -139,12 +139,12 @@ set_option genInjectivity false in
 
 It retains the original sampled period and chart evaluation, exact zero total and area readback, and separate area,
 period and coordinate-return estimates. -/
-structure Evaluation (plan : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartClosure.ChartPlan entry charts
+structure Evaluation (plan : ChartPlan entry charts
   sample) (depth readingIndex : Nat) where
   /-- The actual retained chart evaluation at the supplied depth and reading stage. -/ chart : Plan.Evaluation
     plan.chart depth readingIndex
   /-- The sampled original exterior period component on the same retained cap sample. -/ original :
-    CapComparison.SampledEntry regular lifted sample totalTarget areaTarget minimum depth readingIndex
+    SampledEntry regular lifted sample totalTarget areaTarget minimum depth readingIndex
   /-- The original sample retains exactly the supplied exterior entry. -/ original_entry : original.entry = entry
   /-- The original entry sample reuses the actual chart evaluation's original result. -/ original_result : HEq
     original.result chart.original
@@ -167,10 +167,10 @@ structure Evaluation (plan : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.
 constructive_injectivity Evaluation
 
 /-- Evaluate the retained chart and original period at the paid stage, then close the actual connected chart path. -/
-@[expose] def evaluate (plan : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartClosure.ChartPlan entry charts
+@[expose] def evaluate (plan : ChartPlan entry charts
   sample) (depth readingIndex : Nat)
     (later : charts.index ≤ index) (fineLater : charts.depth ≤ depth) (readingLater : plan.stage ≤ readingIndex) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartClosure.ChartPlan.Evaluation plan depth readingIndex := by
+    Evaluation plan depth readingIndex := by
   have stages := plan.stage_eq.ge.trans readingLater
   let chart := plan.chart.evaluate depth readingIndex later fineLater ((Data.Nat.Order.le_max_left _ _).trans stages)
   let original := SampledEntry.build entry chart.original ((Data.Nat.Order.le_max_right _ _).trans stages)
@@ -187,30 +187,30 @@ set_option genInjectivity false in
 /-- The fully prepared and evaluated closed chart component at a retained depth floor.
 
 The original entry, computed cap sample, chart request and maximum depth remain the owners of the cached evaluation. -/
-structure ChartAcquisition (entry : CapComparison.Entry regular lifted differential totalTarget areaTarget minimum)
-    (target : InverseRootPolynomial.Coordinate) (depthFloor : Nat) where
-  /-- The actual positive chart request on the original exterior entry. -/ request : ConnectedCharts.ChartRequest
+structure ChartAcquisition (entry : Entry regular lifted differential totalTarget areaTarget minimum)
+    (target : Coordinate) (depthFloor : Nat) where
+  /-- The actual positive chart request on the original exterior entry. -/ request : ChartRequest
     entry.request target
   /-- The cached cap primitive sample at the chart request's original stage and collar box. -/ sample :
     Primitives.Sample cap differential request.index collar.box
   /-- The chart and closing plan for that exact retained cap sample. -/ plan :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartClosure.ChartPlan entry request sample
+    ChartPlan entry request sample
   /-- The cached common evaluation depth. -/ depth : Nat
   /-- The evaluation depth is the maximum of the supplied floor and original chart depth. -/ depth_eq : depth = max
     depthFloor request.depth
   /-- The cached closed evaluation at the retained depth and common reading stage. -/ evaluated :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartClosure.ChartPlan.Evaluation plan depth plan.stage
+    ChartPlan.Evaluation plan depth plan.stage
 
 constructive_injectivity ChartAcquisition
 
 /-- Prepare the complete closed chart component from positive requests, with computed source, mesh, root-reading and
 root-return stages. -/
-@[expose] def acquireCharts (entry : CapComparison.Entry regular lifted differential totalTarget areaTarget minimum)
-    (target : InverseRootPolynomial.Coordinate) (positive : 0 < target) (depthFloor : Nat) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartClosure.ChartAcquisition entry target depthFloor :=
+@[expose] def acquireCharts (entry : Entry regular lifted differential totalTarget areaTarget minimum)
+    (target : Coordinate) (positive : 0 < target) (depthFloor : Nat) :
+      ChartAcquisition entry target depthFloor :=
   let request := ChartRequest.build entry.request target positive
   let sample := Primitives.Sample.build cap differential request.index collar.box
-  let plan := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartClosure.ChartPlan.build entry request sample
+  let plan := ChartPlan.build entry request sample
   let depth := max depthFloor request.depth
   ⟨request, sample, plan, depth, rfl, plan.evaluate depth plan.stage le_rfl (Data.Nat.Order.le_max_right _ _) le_rfl⟩
 

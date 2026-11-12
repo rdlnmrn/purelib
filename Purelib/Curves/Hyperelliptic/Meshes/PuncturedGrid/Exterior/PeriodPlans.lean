@@ -73,15 +73,15 @@ open Purelib.Riemann.Normalization
 open Purelib.Riemann.Integration.PreparedRefinementMovement (movementMass movementMass_nonnegative)
 open Purelib.Approximation.Rational.Budget.Aggregate (perTerm perTerm_positive)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential :
+    Differential genus}
+  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPlans
 
@@ -90,18 +90,18 @@ set_option genInjectivity false in
 
 The original parent list fixes the cached movement mass, local target and coefficient allowance before numerical segment
 construction. -/
-structure ComponentPeriodPlan (component : ExteriorProgram.SurfaceComponent regular domains differential) (target :
-  InverseRootPolynomial.Coordinate) where
+structure ComponentPeriodPlan (component : SurfaceComponent regular domains differential) (target :
+  Coordinate) where
   /-- The original complete component target is strictly positive. -/ positive : 0 < target
-  /-- The cached movement mass of the original exterior program parents. -/ mass : InverseRootPolynomial.Coordinate
+  /-- The cached movement mass of the original exterior program parents. -/ mass : Coordinate
   /-- The mass cache is exactly the original program's retained parent movement mass. -/ mass_eq : mass =
     PreparedRefinementMovement.movementMass component.program.cache.parents
-  /-- The cached per-parent primitive accuracy target. -/ localTarget : InverseRootPolynomial.Coordinate
+  /-- The cached per-parent primitive accuracy target. -/ localTarget : Coordinate
   /-- The local target is the aggregate allocation using the original component target and parent count. -/
     localTarget_eq : localTarget = Aggregate.perTerm target component.program.cache.parents.length
   /-- The retained local target or complete-bank minimum is strictly positive. -/ local_positive : 0 < localTarget
   /-- The cached coefficient-error allowance for the retained movement mass. -/ coefficient :
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The coefficient allowance is half the original target divided by one plus the retained mass. -/ coefficient_eq :
     coefficient = (target / 2) / (mass + 1)
   /-- The retained coefficient allowance or complete-bank minimum is strictly positive. -/ coefficient_positive : 0 <
@@ -115,9 +115,9 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPlans
 
 /-- Cache the actual original parent movement mass and both positive scalar allowances for this retained exterior
 component. -/
-@[expose] def build (component : ExteriorProgram.SurfaceComponent regular domains differential) (target :
-  InverseRootPolynomial.Coordinate) (positive : 0 < target) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPlans.ComponentPeriodPlan component target :=
+@[expose] def build (component : SurfaceComponent regular domains differential) (target :
+  Coordinate) (positive : 0 < target) :
+    ComponentPeriodPlan component target :=
   let mass := PreparedRefinementMovement.movementMass component.program.cache.parents
   let localTarget := Aggregate.perTerm target component.program.cache.parents.length
   let coefficient := (target / 2) / (mass + 1)
@@ -132,63 +132,63 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPlans
 
 set_option genInjectivity false in
 /-- The complete scalar plan spine on the actual retained exterior components. -/
-inductive ComponentPeriodPlans (target : InverseRootPolynomial.Coordinate) : List (ExteriorProgram.SurfaceComponent
+inductive ComponentPeriodPlans (target : Coordinate) : List (SurfaceComponent
   regular domains differential) → Type 2
   /-- The empty original component list needs no scalar period plans. -/ | nil :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPlans.ComponentPeriodPlans target []
+    ComponentPeriodPlans target []
   /-- Retain one actual component's scalar plan with the original remaining component plans. -/ | cons {component
-    components} (head : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPlans.ComponentPeriodPlan component
+    components} (head : ComponentPeriodPlan component
     target)
-      (tail : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPlans.ComponentPeriodPlans target
-        components) : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPlans.ComponentPeriodPlans target
+      (tail : ComponentPeriodPlans target
+        components) : ComponentPeriodPlans target
         (component :: components)
 
 constructive_injectivity ComponentPeriodPlans
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPlans
 
-variable {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+variable {target : Coordinate}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPlans.ComponentPeriodPlans
 
 /-- Cache one scalar period plan per actual original exterior component in retained order. -/
-@[expose] def build (target : InverseRootPolynomial.Coordinate) (positive : 0 < target) :
-    (components : List (ExteriorProgram.SurfaceComponent regular domains differential)) →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPlans.ComponentPeriodPlans target components
+@[expose] def build (target : Coordinate) (positive : 0 < target) :
+    (components : List (SurfaceComponent regular domains differential)) →
+      ComponentPeriodPlans target components
   | [] => .nil
   | component :: components => .cons
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPlans.ComponentPeriodPlan.build component target positive)
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPlans.ComponentPeriodPlans.build target positive
+    (ComponentPeriodPlan.build component target positive)
+    (ComponentPeriodPlans.build target positive
     components)
 
 /-- Read the positive common local allowance from the original component plans, bounded by one. -/
-@[expose] def localMinimum : {components : List (ExteriorProgram.SurfaceComponent regular domains differential)} →
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPlans.ComponentPeriodPlans target components →
-  InverseRootPolynomial.Coordinate
+@[expose] def localMinimum : {components : List (SurfaceComponent regular domains differential)} →
+  ComponentPeriodPlans target components →
+  Coordinate
   | _, .nil => 1
   | _, .cons head tail => min head.localTarget tail.localMinimum
 
 /-- Read the positive common coefficient allowance from the original component plans, bounded by one. -/
-@[expose] def coefficientMinimum : {components : List (ExteriorProgram.SurfaceComponent regular domains differential)} →
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPlans.ComponentPeriodPlans target components →
-  InverseRootPolynomial.Coordinate
+@[expose] def coefficientMinimum : {components : List (SurfaceComponent regular domains differential)} →
+  ComponentPeriodPlans target components →
+  Coordinate
   | _, .nil => 1
   | _, .cons head tail => min head.coefficient tail.coefficientMinimum
 
 /-- The retained local target or complete-bank minimum is strictly positive. -/
-theorem local_positive {components : List (ExteriorProgram.SurfaceComponent regular domains differential)} (plans :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPlans.ComponentPeriodPlans target components) :
+theorem local_positive {components : List (SurfaceComponent regular domains differential)} (plans :
+  ComponentPeriodPlans target components) :
     0 < plans.localMinimum := by
   induction plans with
-  | nil => change (0 : InverseRootPolynomial.Coordinate) < 1; decide
+  | nil => change (0 : Coordinate) < 1; decide
   | cons head tail ih => exact Fraction.Order.Basic.lt_min head.local_positive ih
 
 /-- The retained coefficient allowance or complete-bank minimum is strictly positive. -/
-theorem coefficient_positive {components : List (ExteriorProgram.SurfaceComponent regular domains differential)} (plans
-  : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPlans.ComponentPeriodPlans target components) :
+theorem coefficient_positive {components : List (SurfaceComponent regular domains differential)} (plans
+  : ComponentPeriodPlans target components) :
     0 < plans.coefficientMinimum := by
   induction plans with
-  | nil => change (0 : InverseRootPolynomial.Coordinate) < 1; decide
+  | nil => change (0 : Coordinate) < 1; decide
   | cons head tail ih => exact Fraction.Order.Basic.lt_min head.coefficient_positive ih
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPlans.ComponentPeriodPlans

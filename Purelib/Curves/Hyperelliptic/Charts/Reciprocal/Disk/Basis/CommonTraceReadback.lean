@@ -69,6 +69,10 @@ import Purelib.Riemann.RootContinuation.SquareRootChannelOwnership
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests
+
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonConnectedPaths.BasisCommonChartRequests.Plans
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -86,24 +90,24 @@ public section
 /-! Exact endpoint and trace readbacks for the physically joined common path. -/
 namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback
 
-variable {genus count : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+variable {genus count : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {cover : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {covers :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {bounds :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+    UniformReciprocalModels.Data patch count}
+  {cover : UniformReciprocalCover.Cover data} {covers :
+    SourceLocations.BasisSourceCovers parent}
+  {regular : RegularBounds.Data cap} {bounds :
+    ReciprocalPaddedInverse.UniformBounds regular.padded}
   {depth floor sourceFloor : Nat} {target sourceTarget : Normalization.InverseRootPolynomial.Coordinate}
   {index minimum stage : Nat} {box : Rational.Box}
-  {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
-  {anchorBank : Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.PrimitiveCells data index cover.mesh.edges}
-  {bank : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers index}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {polynomials : Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {anchorBank : UniformReciprocalPrimitives.PrimitiveCells data index cover.mesh.edges}
+  {bank : SourceLocations.BasisSourceLocations.SampleBank covers index}
+  {basis : ReciprocalPaddedBasisBounds.BasisBounds bounds}
   {joinTarget : Normalization.InverseRootPolynomial.Coordinate} {joinFloor : Nat}
 
 open Purelib.Data.Rat.Fraction.Compatibility
@@ -112,19 +116,19 @@ open Purelib.Data.Gaussian.Basic.Canonical
 variable {energyTarget : Normalization.InverseRootPolynomial.Coordinate} {energyFloor energyDepth : Nat}
 
 variable {originals :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank covers index}
+  CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank covers index}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 namespace Readings
 
 /-- The first original chart endpoint value, or zero for an empty common interval list. -/
 @[expose] def firstChartValue (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers)} →
-    (requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+    {intervals : List (CommonCover.BasisCommonInterval cover covers)} →
+    (requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target sourceTarget floor sourceFloor intervals) →
-    {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    {plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests} →
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      Plans.Readings anchorBank
       bank stage requests plans → Normalization.InverseRootPolynomial.Gaussian
   | _, .nil, _, _ => 0
   | _, .cons _ _, _, readings => polynomials.value coefficients readings.1.evaluated.first.root.coordinate
@@ -132,17 +136,17 @@ namespace Readings
 /-- The last original chart endpoint value, traversing the retained interval readings and returning zero for an empty
 list. -/
 @[expose] def lastChartValue (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers)} →
-    (requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+    {intervals : List (CommonCover.BasisCommonInterval cover covers)} →
+    (requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target sourceTarget floor sourceFloor intervals) →
-    {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    {plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests} →
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      Plans.Readings anchorBank
       bank stage requests plans → Normalization.InverseRootPolynomial.Gaussian
   | _, .nil, _, _ => 0
   | _, .cons _ .nil, _, readings => polynomials.value coefficients readings.1.evaluated.last.root.coordinate
   | _, .cons _ (.cons next remaining), _, readings =>
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.Readings.lastChartValue coefficients
+    Readings.lastChartValue coefficients
     (.cons next remaining) readings.2
 
 end Readings
@@ -151,37 +155,37 @@ namespace EnergySamples
 
 /-- The first retained energy potential, or zero for an empty interval list. -/
 @[expose] def firstPotential : {intervals : List
-  (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers)} →
-    (requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+  (CommonCover.BasisCommonInterval cover covers)} →
+    (requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target sourceTarget floor sourceFloor intervals) →
-    {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    {plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests} → {readings :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      Plans.Readings anchorBank
       bank stage requests plans} →
-    {energies : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartEnergy.Energies energyTarget energyFloor
+    {energies : CommonChartEnergy.Energies energyTarget energyFloor
       energyDepth requests plans readings} →
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEnergySamples.EnergySamples coefficients requests plans readings
+    CommonEnergySamples.EnergySamples coefficients requests plans readings
       energies → Normalization.InverseRootPolynomial.Gaussian
   | _, .nil, _, _, _, _ => 0
   | _, .cons _ _, _, _, _, samples => samples.1.firstPotential
 
 /-- The last retained energy potential on the original common interval traversal. -/
 @[expose] def lastPotential : {intervals : List
-  (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers)} →
-    (requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+  (CommonCover.BasisCommonInterval cover covers)} →
+    (requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target sourceTarget floor sourceFloor intervals) →
-    {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    {plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests} → {readings :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      Plans.Readings anchorBank
       bank stage requests plans} →
-    {energies : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartEnergy.Energies energyTarget energyFloor
+    {energies : CommonChartEnergy.Energies energyTarget energyFloor
       energyDepth requests plans readings} →
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEnergySamples.EnergySamples coefficients requests plans readings
+    CommonEnergySamples.EnergySamples coefficients requests plans readings
       energies → Normalization.InverseRootPolynomial.Gaussian
   | _, .nil, _, _, _, _ => 0
   | _, .cons _ .nil, _, _, _, samples => samples.1.lastPotential
   | _, .cons _ (.cons next remaining), _, _, _, samples =>
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.EnergySamples.lastPotential (.cons
+    EnergySamples.lastPotential (.cons
     next remaining) samples.2
 
 end EnergySamples
@@ -198,11 +202,11 @@ private theorem endpoint_add (first last : Normalization.InverseRootPolynomial.G
 endpoints. -/
 private theorem trace_step (start incoming first last : Normalization.InverseRootPolynomial.Gaussian) (head tail : List
   Normalization.InverseRootPolynomial.Gaussian)
-    (begins : start + incoming = first) (total : Data.Gaussian.Norm.Sum.Basic.gaussianSum head = last - first) :
+    (begins : start + incoming = first) (total : Gaussian.Norm.Sum.Basic.gaussianSum head = last - first) :
     Path.IncrementArea.traceArea start (incoming :: (head ++ tail)) = Path.BoundaryRibbon.area start first +
       (Path.IncrementArea.traceArea first head + Path.IncrementArea.traceArea last tail) := by
   rw [Path.IncrementArea.traceArea, begins, Path.IncrementArea.traceArea_append, total,
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.Traces.endpoint_add]
+    endpoint_add]
 
 /-- The signed head and tail corrections telescope with the original connector potential difference. -/
 private theorem splice_corrections (a b c d e f g h i j : Normalization.InverseRootPolynomial.Gaussian)
@@ -215,41 +219,41 @@ private theorem splice_corrections (a b c d e f g h i j : Normalization.InverseR
 /-- The complete joined original path has total increment equal to its last chart value minus the supplied start.
 
 The incoming increment must reach the first retained chart endpoint, and the original interval list is nonempty. -/
-theorem joined_total : {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval
+theorem joined_total : {intervals : List (CommonCover.BasisCommonInterval
   cover covers)} →
-    (requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+    (requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target sourceTarget floor sourceFloor intervals) →
-    {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    {plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests} → (readings :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      Plans.Readings anchorBank
       bank stage requests plans) →
-    (paths : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
+    (paths : CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
       coefficients requests plans readings) →
-    (energies : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartEnergy.Energies energyTarget energyFloor
+    (energies : CommonChartEnergy.Energies energyTarget energyFloor
       energyDepth requests plans readings) →
-    (samples : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEnergySamples.EnergySamples coefficients requests plans
+    (samples : CommonEnergySamples.EnergySamples coefficients requests plans
       readings energies) →
-    (traces : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartTraces.Traces arcAllowance requests plans readings
+    (traces : CommonChartTraces.Traces arcAllowance requests plans readings
       paths energies samples) →
-    (connectors : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonConnectorBank.Connectors coefficients energyDepth
+    (connectors : CommonConnectorBank.Connectors coefficients energyDepth
       joinTarget requests plans readings) →
     intervals ≠ [] → (start incoming : Normalization.InverseRootPolynomial.Gaussian) →
-    start + incoming = Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.Readings.firstChartValue
+    start + incoming = Readings.firstChartValue
       coefficients requests readings →
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum
-      (((CommonConnectedPaths.BasisCommonChartRequests.Plans.Paths.joinedBlocks
+    Gaussian.Norm.Sum.Basic.gaussianSum
+      (((Paths.joinedBlocks
       incoming paths connectors).map (fun block => block.1 :: block.2)).flatten) =
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.Readings.lastChartValue coefficients requests
+      Readings.lastChartValue coefficients requests
         readings - start
   | _, .nil, _, _, _, _, _, _, _, nonempty, _, _, _ => by cases nonempty rfl
   | _, .cons _ .nil, _, readings, paths, energies, samples, traces, _, _, start, incoming, begins => by
       have total := traces.1.summary.total_eq.symm.trans traces.1.total_eq
       change start + incoming = polynomials.value coefficients readings.1.evaluated.first.root.coordinate at begins
       rw
-        [CommonConnectedPaths.BasisCommonChartRequests.Plans.Paths.joinedBlocks]
+        [Paths.joinedBlocks]
       simp only [-eq_self, -iff_self, List.map_cons, List.map_nil, List.flatten_cons, List.flatten_nil,
-        Purelib.Data.List.Append.append_nil]
-      change incoming + Data.Gaussian.Norm.Sum.Basic.gaussianSum (paths.1.paired.pairs.map Prod.snd) = _
+        Data.List.Append.append_nil]
+      change incoming + Gaussian.Norm.Sum.Basic.gaussianSum (paths.1.paired.pairs.map Prod.snd) = _
       rw [total, ← begins]
       change _ = polynomials.value coefficients readings.1.evaluated.last.root.coordinate - start
       ring1
@@ -259,21 +263,21 @@ theorem joined_total : {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.B
       have total := traces.1.summary.total_eq.symm.trans traces.1.total_eq
       have nextBegins : polynomials.value coefficients readings.1.evaluated.last.root.coordinate +
         connectors.1.increment =
-          Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.Readings.firstChartValue coefficients (.cons
+          Readings.firstChartValue coefficients (.cons
             next remaining) readings.2 := by
         rw [connectors.1.increment_eq, connectors.1.first_eq, connectors.1.last_eq]
         change _ = polynomials.value coefficients readings.2.1.evaluated.first.root.coordinate
         ring1
-      have tail := Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.Traces.joined_total
+      have tail := Traces.joined_total
         (.cons next remaining) readings.2 paths.2 energies.2 samples.2 traces.2 connectors.2
         (by intro impossible; cases impossible) _ _ nextBegins
       change start + incoming = polynomials.value coefficients readings.1.evaluated.first.root.coordinate at begins
       rw
-        [CommonConnectedPaths.BasisCommonChartRequests.Plans.Paths.joinedBlocks]
+        [Paths.joinedBlocks]
       simp only [-eq_self, -iff_self, List.map_cons, List.flatten_cons, List.cons_append]
-      change incoming + Data.Gaussian.Norm.Sum.Basic.gaussianSum ((paths.1.paired.pairs.map Prod.snd) ++ _) = _
+      change incoming + Gaussian.Norm.Sum.Basic.gaussianSum ((paths.1.paired.pairs.map Prod.snd) ++ _) = _
       rw [Path.IncrementArea.sum_append, total, tail, ← begins]
-      change _ = Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.Readings.lastChartValue coefficients
+      change _ = Readings.lastChartValue coefficients
         (.cons next remaining) readings.2 - start
       ring1
 
@@ -282,46 +286,46 @@ joined path.
 
 All original connector increments, endpoint potentials and the initial ribbon correction remain in the exact readback.
 -/
-theorem joined_trace : {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval
+theorem joined_trace : {intervals : List (CommonCover.BasisCommonInterval
   cover covers)} →
-    (requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+    (requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target sourceTarget floor sourceFloor intervals) →
-    {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    {plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests} → (readings :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      Plans.Readings anchorBank
       bank stage requests plans) →
-    (paths : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
+    (paths : CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
       coefficients requests plans readings) →
-    (energies : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartEnergy.Energies energyTarget energyFloor
+    (energies : CommonChartEnergy.Energies energyTarget energyFloor
       energyDepth requests plans readings) →
-    (samples : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEnergySamples.EnergySamples coefficients requests plans
+    (samples : CommonEnergySamples.EnergySamples coefficients requests plans
       readings energies) →
-    (traces : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartTraces.Traces arcAllowance requests plans readings
+    (traces : CommonChartTraces.Traces arcAllowance requests plans readings
       paths energies samples) →
-    (connectors : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonConnectorBank.Connectors coefficients energyDepth
+    (connectors : CommonConnectorBank.Connectors coefficients energyDepth
       joinTarget requests plans readings) →
     intervals ≠ [] → (start incoming : Normalization.InverseRootPolynomial.Gaussian) →
-    start + incoming = Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.Readings.firstChartValue
+    start + incoming = Readings.firstChartValue
       coefficients requests readings →
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum traces.correctedAreas + Data.Gaussian.Norm.Sum.Basic.gaussianSum
-      (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonRibbons.Connectors.ribbonValues requests energies samples
+    Gaussian.Norm.Sum.Basic.gaussianSum traces.correctedAreas + Gaussian.Norm.Sum.Basic.gaussianSum
+      (CommonRibbons.Connectors.ribbonValues requests energies samples
       connectors) =
       -Path.IncrementArea.traceArea start
-        (((CommonConnectedPaths.BasisCommonChartRequests.Plans.Paths.joinedBlocks
+        (((Paths.joinedBlocks
         incoming paths connectors).map (fun block => block.1 :: block.2)).flatten) +
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.EnergySamples.lastPotential requests samples -
-        Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.EnergySamples.firstPotential requests samples +
+      EnergySamples.lastPotential requests samples -
+        EnergySamples.firstPotential requests samples +
         Path.BoundaryRibbon.area start
-        (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.Readings.firstChartValue coefficients requests
+        (Readings.firstChartValue coefficients requests
         readings)
   | _, .nil, _, _, _, _, _, _, _, nonempty, _, _, _ => by cases nonempty rfl
   | _, .cons _ .nil, _, readings, paths, energies, samples, traces, _, _, start, incoming, begins => by
       have total := traces.1.summary.total_eq.symm.trans traces.1.total_eq
       change start + incoming = polynomials.value coefficients readings.1.evaluated.first.root.coordinate at begins
       rw
-        [CommonConnectedPaths.BasisCommonChartRequests.Plans.Paths.joinedBlocks]
+        [Paths.joinedBlocks]
       simp only [-eq_self, -iff_self, List.map_cons, List.map_nil, List.flatten_cons, List.flatten_nil,
-        Purelib.Data.List.Append.append_nil]
+        Data.List.Append.append_nil]
       change (traces.1.corrected + 0) + 0 =
         -Path.IncrementArea.traceArea start (incoming :: paths.1.paired.pairs.map Prod.snd) + samples.1.lastPotential -
           samples.1.firstPotential +
@@ -334,37 +338,37 @@ theorem joined_trace : {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.B
       have total := traces.1.summary.total_eq.symm.trans traces.1.total_eq
       have nextBegins : polynomials.value coefficients readings.1.evaluated.last.root.coordinate +
         connectors.1.increment =
-          Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.Readings.firstChartValue coefficients (.cons
+          Readings.firstChartValue coefficients (.cons
             next remaining) readings.2 := by
         rw [connectors.1.increment_eq, connectors.1.first_eq, connectors.1.last_eq]
         change _ = polynomials.value coefficients readings.2.1.evaluated.first.root.coordinate
         ring1
-      have tail := Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.Traces.joined_trace
+      have tail := Traces.joined_trace
         (.cons next remaining) readings.2 paths.2 energies.2 samples.2 traces.2 connectors.2
         (by intro impossible; cases impossible) _ _ nextBegins
       change start + incoming = polynomials.value coefficients readings.1.evaluated.first.root.coordinate at begins
       rw
-        [CommonConnectedPaths.BasisCommonChartRequests.Plans.Paths.joinedBlocks]
+        [Paths.joinedBlocks]
       simp only [-eq_self, -iff_self, List.map_cons, List.flatten_cons, List.cons_append]
-      change (traces.1.corrected + Data.Gaussian.Norm.Sum.Basic.gaussianSum traces.2.correctedAreas) +
+      change (traces.1.corrected + Gaussian.Norm.Sum.Basic.gaussianSum traces.2.correctedAreas) +
         ((samples.2.1.firstPotential - samples.1.lastPotential - Path.BoundaryRibbon.area connectors.1.firstValue
           connectors.1.lastValue) +
-          Data.Gaussian.Norm.Sum.Basic.gaussianSum
-            (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonRibbons.Connectors.ribbonValues (.cons next remaining)
+          Gaussian.Norm.Sum.Basic.gaussianSum
+            (CommonRibbons.Connectors.ribbonValues (.cons next remaining)
             energies.2 samples.2 connectors.2)) =
         -Path.IncrementArea.traceArea start (incoming :: ((paths.1.paired.pairs.map Prod.snd) ++ _)) +
-        Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.EnergySamples.lastPotential (.cons next
+        EnergySamples.lastPotential (.cons next
           remaining) samples.2 - samples.1.firstPotential +
         Path.BoundaryRibbon.area start (polynomials.value coefficients readings.1.evaluated.first.root.coordinate)
-      rw [Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.Traces.trace_step start incoming _ _ _ _ begins
+      rw [trace_step start incoming _ _ _ _ begins
         total,
         ← traces.1.trace_eq, traces.1.corrected_eq]
       have rearrange := tail
-      change Data.Gaussian.Norm.Sum.Basic.gaussianSum traces.2.correctedAreas + Data.Gaussian.Norm.Sum.Basic.gaussianSum
-        (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonRibbons.Connectors.ribbonValues (.cons next remaining)
+      change Gaussian.Norm.Sum.Basic.gaussianSum traces.2.correctedAreas + Gaussian.Norm.Sum.Basic.gaussianSum
+        (CommonRibbons.Connectors.ribbonValues (.cons next remaining)
         energies.2 samples.2 connectors.2) =
         -Path.IncrementArea.traceArea _ _ +
-          Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.EnergySamples.lastPotential (.cons next
+          EnergySamples.lastPotential (.cons next
           remaining) samples.2 - samples.2.1.firstPotential +
         Path.BoundaryRibbon.area (polynomials.value coefficients readings.1.evaluated.last.root.coordinate)
           (polynomials.value coefficients readings.2.1.evaluated.first.root.coordinate) at rearrange
@@ -373,7 +377,7 @@ theorem joined_trace : {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.B
             (polynomials.value coefficients readings.2.1.evaluated.first.root.coordinate) :=
         congrArg₂ Path.BoundaryRibbon.area connectors.1.first_eq connectors.1.last_eq
       rw [← connectorArea] at rearrange
-      exact Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.Traces.splice_corrections _ _ _ _ _ _ _ _ _ _
+      exact splice_corrections _ _ _ _ _ _ _ _ _ _
         rearrange
 
 end Traces

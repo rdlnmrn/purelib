@@ -64,6 +64,25 @@ end Purelib.RootIsolation.Owner.Local.Basic
 end
 
 section
+public section
+
+namespace Purelib.RootIsolation.Owner.Local.Basic.LocalOwner
+
+/-- The original local initial state retains the identical owner box. -/
+theorem initialState_box
+    {polynomial : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    (owner : LocalOwner polynomial) : owner.initialState.box = owner.box := rfl
+
+/-- The original local initial state retains the identical boundary-clearance bound. -/
+theorem initialState_clearance_bound
+    {polynomial : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    (owner : LocalOwner polynomial) : owner.initialState.clearance.bound = owner.clearance.bound := rfl
+
+end Purelib.RootIsolation.Owner.Local.Basic.LocalOwner
+
+end
+
+section
 @[expose] public section
 
 /-!

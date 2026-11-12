@@ -1,6 +1,7 @@
 module
 public import Purelib.Data.Rat.Fraction.Arithmetic
-import Purelib.Data.Int.Order
+-- The exposed strict decision retains the original integer-order equivalence.
+public import Purelib.Data.Int.Order
 import Purelib.Data.Rat.Fraction
 
 import Mathlib.Algebra.Order.Ring.Defs
@@ -45,9 +46,20 @@ instance instDecidableLE : DecidableLE Rational := fun left right =>
   inferInstanceAs (Decidable
     (left.num * (right.den : Int) ≤ right.num * (left.den : Int)))
 
-/-- Decide strict rational order by its concrete asymmetric weak comparisons. -/
+/-- Decide strict rational order with one pair of integer cross-products.
+
+The strict integer comparison is transported to the retained asymmetric weak
+order. Each cross-product is computed once for the complete decision.
+-/
 instance instDecidableLT : DecidableLT Rational := fun left right =>
-  inferInstanceAs (Decidable (left ≤ right ∧ ¬right ≤ left))
+  let leftProduct := left.num * (right.den : Int)
+  let rightProduct := right.num * (left.den : Int)
+  match (inferInstance : Decidable (leftProduct < rightProduct)) with
+  | .isTrue less =>
+      .isTrue ((Int.Order.lt_iff_le_and_not_ge (left := leftProduct) (right := rightProduct)).mp less)
+  | .isFalse notLess =>
+      .isFalse (fun bounded =>
+        notLess ((Int.Order.lt_iff_le_and_not_ge (left := leftProduct) (right := rightProduct)).mpr bounded))
 
 /-- A canonical rational is weakly bounded by itself. -/
 theorem le_refl (source : Rational) : source ≤ source :=

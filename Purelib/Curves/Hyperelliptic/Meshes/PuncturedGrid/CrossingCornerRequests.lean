@@ -50,6 +50,10 @@ import Purelib.Riemann.Meshes.GridLiftedFaceLocations
 import Purelib.Riemann.Normalization.InverseRootPolynomial
 import Purelib.Riemann.Readings.PreparedPrimitiveSamples
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds
@@ -106,7 +110,7 @@ open Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh
   MatchedVerticalSide)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
@@ -134,12 +138,12 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.CrossingCornerReques
 
 set_option genInjectivity false in
 /-- Scalar grid requests are shared by every crossing touching a face and sheet. -/
-structure CornerGrids (fixed : (sheet : Fin 2) → RegularMeshes.Preflights domains sheet) (tolerance : Fraction.Rational)
+structure CornerGrids (fixed : (sheet : Fin 2) → Preflights domains sheet) (tolerance : Rational)
   where
   /-- The retained scalar grid request bank for every original sheet and regular-face position. -/ entries :
-    Data.Vector.DependentVector (fun sheet : Fin 2 => Data.Vector.DependentVector (fun position : Fin
+    DependentVector (fun sheet : Fin 2 => DependentVector (fun position : Fin
     faces.regulars.length =>
-    EnergyPreflight.Request ((fixed sheet).get position).get tolerance))
+    Request ((fixed sheet).get position).get tolerance))
   /-- The cached common stage paying all original corner-grid requests. -/ index : Nat
   /-- Every retained face-and-sheet grid request is paid by the common stage. -/ index_ge : ∀ sheet position,
     ((entries.get sheet).get position).index ≤ index
@@ -154,11 +158,11 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.CrossingCornerReques
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.CrossingCornerRequests.CornerGrids in
 /-- Prepare each original face-and-sheet grid request once and cache the maximum stage of the complete bank. -/
-@[expose] def build (fixed : (sheet : Fin 2) → RegularMeshes.Preflights domains sheet) (tolerance : Fraction.Rational)
+@[expose] def build (fixed : (sheet : Fin 2) → Preflights domains sheet) (tolerance : Rational)
   (positive : 0 < tolerance) :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.CrossingCornerRequests.CornerGrids fixed tolerance := by
+    CornerGrids fixed tolerance := by
   let entries := DependentVector.ofFn (fun sheet : Fin 2 => DependentVector.ofFn
-    (fun position : Fin faces.regulars.length => EnergyPreflight.Request.build
+    (fun position : Fin faces.regulars.length => Request.build
       ((fixed sheet).get position).get tolerance positive))
   let index := entries.maximum (fun _ row => row.maximum (fun _ entry => entry.index))
   refine ⟨entries, index, ?_⟩
@@ -167,12 +171,12 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.CrossingCornerRequests.Co
     (entries.get_le_maximum (fun _ row => row.maximum (fun _ entry => entry.index)) sheet)
 
 /-- The retained scalar grid request for the selected original sheet, face and differential basis index. -/
-@[expose] def row (grids : CrossingCornerRequests.CornerGrids fixed tolerance)
+@[expose] def row (grids : CornerGrids fixed tolerance)
   (sheet : Fin 2) (position : Fin faces.regulars.length) (basis : Fin genus) :=
   (((grids.entries.get sheet).get position).rows.get basis)
 
 /-- Every retained basis row is paid by the common corner-grid stage. -/
-theorem row_index_le (grids : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.CrossingCornerRequests.CornerGrids fixed
+theorem row_index_le (grids : CornerGrids fixed
   tolerance) (sheet : Fin 2) (position : Fin faces.regulars.length) (basis : Fin genus) :
     (grids.row sheet position basis).index ≤ grids.index :=
   (((grids.entries.get sheet).get position).index_eq basis).trans_le (grids.index_ge sheet position)
@@ -186,7 +190,7 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank
 /-- The actual normalized corner determinant jump for a matched horizontal crossing, with zero for certified separation.
 -/
 @[expose] def cornerJump
-    (outcome : CrossingBank.HorizontalOutcome request first nextPosition)
+    (outcome : HorizontalOutcome request first nextPosition)
     (cache : RegularMeshes.Numerics domains stage) (i j : Fin genus) : Data.Gaussian.Basic.Canonical :=
   match outcome with
   | .matched joined =>
@@ -202,27 +206,27 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.CrossingCornerReques
 shared grid requests are paid. -/
 theorem
   corner_jump_bound
-    {outcome : CrossingBank.HorizontalOutcome request first nextPosition}
+    {outcome : HorizontalOutcome request first nextPosition}
     {prepared : CrossingRequests.HorizontalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j)
       firstParent secondParent tolerance floor outcome}
     {cache : RegularMeshes.Numerics domains stage}
-    (sample : HorizontalPrepared.Sample prepared cache.normalize)
-    (firstMagnitude : MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential i))
-    (secondMagnitude : MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential j))
+    (sample : Sample prepared cache.normalize)
+    (firstMagnitude : FaceMagnitudeBank domains (PeriodMatrix.standardDifferential i))
+    (secondMagnitude : FaceMagnitudeBank domains (PeriodMatrix.standardDifferential j))
     (firstLater : firstMagnitude.index ≤ stage) (secondLater : secondMagnitude.index ≤ stage)
-    {cornerTolerance : Fraction.Rational} (grids :
-      CrossingCornerRequests.CornerGrids fixed cornerTolerance) (gridLater :
+    {cornerTolerance : Rational} (grids :
+      CornerGrids fixed cornerTolerance) (gridLater :
       grids.index ≤ stage)
     (positive : 0 < cornerTolerance) (small : 16 * cornerTolerance ≤ 1) :
-    Data.Gaussian.Norm.Basic.normSq (HorizontalPrepared.Sample.endpointJump sample -
+    Basic.normSq (HorizontalPrepared.Sample.endpointJump sample -
       outcome.cornerJump cache.normalize i j) ≤
       512 * (4 * (firstMagnitude.bound + secondMagnitude.bound) + 1) * cornerTolerance := by
   cases prepared with
   | @matched joined allocated =>
       rcases sample with ⟨left, right⟩
       dsimp only [HorizontalPrepared.Sample.endpointJump,
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.HorizontalOutcome.cornerJump]
+        HorizontalOutcome.cornerJump]
       have bound := HorizontalCrossing.corner_jump_bound
         joined allocated.trace firstMagnitude secondMagnitude firstLater secondLater positive small
         (grids.row firstSheet firstPosition i) ((grids.row_index_le firstSheet firstPosition i).trans gridLater)
@@ -234,10 +238,10 @@ theorem
         cache left right
       exact bound
   | separated obstruction =>
-      change Data.Gaussian.Norm.Basic.normSq (0 - 0) ≤ _
-      rw [sub_self, Data.Gaussian.Norm.Basic.normSq_zero]
-      exact Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
-        (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg firstMagnitude.nonnegative
+      change Basic.normSq (0 - 0) ≤ _
+      rw [sub_self, Basic.normSq_zero]
+      exact Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide +kernel)
+        (add_nonneg (Arithmetic.mul_nonneg_direct (by decide) (add_nonneg firstMagnitude.nonnegative
           secondMagnitude.nonnegative)) (by decide))) positive.le
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.CrossingCornerRequests.HorizontalPrepared.Sample
@@ -247,7 +251,7 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank
 /-- The actual normalized corner determinant jump for a matched vertical crossing, with zero for certified separation.
 -/
 @[expose] def cornerJump
-    (outcome : CrossingBank.VerticalOutcome request first nextPosition)
+    (outcome : VerticalOutcome request first nextPosition)
     (cache : RegularMeshes.Numerics domains stage) (i j : Fin genus) : Data.Gaussian.Basic.Canonical :=
   match outcome with
   | .matched joined =>
@@ -263,27 +267,27 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.CrossingCornerReques
 grid requests are paid. -/
 theorem
   corner_jump_bound
-    {outcome : CrossingBank.VerticalOutcome request first nextPosition}
+    {outcome : VerticalOutcome request first nextPosition}
     {prepared : CrossingRequests.VerticalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j)
       firstParent secondParent tolerance floor outcome}
     {cache : RegularMeshes.Numerics domains stage}
-    (sample : VerticalPrepared.Sample prepared cache.normalize)
-    (firstMagnitude : MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential i))
-    (secondMagnitude : MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential j))
+    (sample : Sample prepared cache.normalize)
+    (firstMagnitude : FaceMagnitudeBank domains (PeriodMatrix.standardDifferential i))
+    (secondMagnitude : FaceMagnitudeBank domains (PeriodMatrix.standardDifferential j))
     (firstLater : firstMagnitude.index ≤ stage) (secondLater : secondMagnitude.index ≤ stage)
-    {cornerTolerance : Fraction.Rational} (grids :
-      CrossingCornerRequests.CornerGrids fixed cornerTolerance) (gridLater :
+    {cornerTolerance : Rational} (grids :
+      CornerGrids fixed cornerTolerance) (gridLater :
       grids.index ≤ stage)
     (positive : 0 < cornerTolerance) (small : 16 * cornerTolerance ≤ 1) :
-    Data.Gaussian.Norm.Basic.normSq (VerticalPrepared.Sample.endpointJump sample -
+    Basic.normSq (VerticalPrepared.Sample.endpointJump sample -
       outcome.cornerJump cache.normalize i j) ≤
       512 * (4 * (firstMagnitude.bound + secondMagnitude.bound) + 1) * cornerTolerance := by
   cases prepared with
   | @matched joined allocated =>
       rcases sample with ⟨left, right⟩
       dsimp only [VerticalPrepared.Sample.endpointJump,
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingBank.VerticalOutcome.cornerJump]
+        VerticalOutcome.cornerJump]
       have bound := VerticalCrossing.corner_jump_bound
         joined allocated.trace firstMagnitude secondMagnitude firstLater secondLater positive small
         (grids.row firstSheet firstPosition i) ((grids.row_index_le firstSheet firstPosition i).trans gridLater)
@@ -295,10 +299,10 @@ theorem
         cache left right
       exact bound
   | separated obstruction =>
-      change Data.Gaussian.Norm.Basic.normSq (0 - 0) ≤ _
-      rw [sub_self, Data.Gaussian.Norm.Basic.normSq_zero]
-      exact Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
-        (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg firstMagnitude.nonnegative
+      change Basic.normSq (0 - 0) ≤ _
+      rw [sub_self, Basic.normSq_zero]
+      exact Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide +kernel)
+        (add_nonneg (Arithmetic.mul_nonneg_direct (by decide) (add_nonneg firstMagnitude.nonnegative
           secondMagnitude.nonnegative)) (by decide))) positive.le
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.CrossingCornerRequests.VerticalPrepared.Sample

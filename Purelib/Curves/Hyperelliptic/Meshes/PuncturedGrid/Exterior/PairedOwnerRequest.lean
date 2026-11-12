@@ -82,70 +82,77 @@ open Purelib.Riemann.Normalization
 open Purelib.Riemann.Integration.RectangularPrimitiveAccuracy (GridPrimitiveAccuracy)
 
 open Purelib.Data.Rat.Fraction.Compatibility
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
 
 /-- The original first-differential grid-owner accuracy request at one sixteenth of the tolerance. -/
 @[expose] def FirstOwnerBudget (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-  regular domains differential) (tolerance : Normalization.InverseRootPolynomial.Coordinate) :=
-  Integration.RectangularPrimitiveAccuracy.GridPrimitiveAccuracy occurrence.compared.entered.globalBounds
+  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  regular domains differential) (tolerance : InverseRootPolynomial.Coordinate) :=
+  GridPrimitiveAccuracy occurrence.compared.entered.globalBounds
     occurrence.compared.entered.domain.steps (tolerance / 16)
 
 /-- The corresponding recast second-differential owner request at the same allocated tolerance. -/
 @[expose] def SecondOwnerBudget (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-  regular domains differential) (other : Hyperelliptic.Differentials.Basic.Differential genus) (tolerance :
-  Normalization.InverseRootPolynomial.Coordinate) :=
-  Integration.RectangularPrimitiveAccuracy.GridPrimitiveAccuracy (occurrence.recastComparison
+  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  regular domains differential) (other : Differentials.Basic.Differential genus) (tolerance :
+  InverseRootPolynomial.Coordinate) :=
+  GridPrimitiveAccuracy (occurrence.recastComparison
     other).entered.globalBounds
     (occurrence.recastComparison other).entered.domain.steps (tolerance / 16)
+
+section
+
+-- Retain the exact budget types while generating heterogeneous equality helpers.
+attribute [local irreducible] FirstOwnerBudget SecondOwnerBudget
 
 set_option genInjectivity false in
 /-- Both original point-owner error budgets on one retained exterior occurrence.
 
 The paired request keeps the original and recast domains distinct while allowing a common later reading stage. -/
 structure OwnerRequest (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-  regular domains differential) (other : Hyperelliptic.Differentials.Basic.Differential genus) (tolerance :
-  Normalization.InverseRootPolynomial.Coordinate) where
+  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  regular domains differential) (other : Differentials.Basic.Differential genus) (tolerance :
+  InverseRootPolynomial.Coordinate) where
   /-- The retained owner-error budget for the original first differential. -/ first :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.FirstOwnerBudget occurrence tolerance
+    FirstOwnerBudget occurrence tolerance
   /-- The retained owner-error budget for the recast second differential. -/ second :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.SecondOwnerBudget occurrence other tolerance
+    SecondOwnerBudget occurrence other tolerance
 
 constructive_injectivity OwnerRequest
 
+end
+
 namespace OwnerRequest
 variable {occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-  regular domains differential} {tolerance : Normalization.InverseRootPolynomial.Coordinate}
+  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  regular domains differential} {tolerance : InverseRootPolynomial.Coordinate}
 
 /-- Allocate both original owner-error budgets from the supplied positive tolerance before reading primitive values. -/
 @[expose] def build (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-  regular domains differential) (other : Hyperelliptic.Differentials.Basic.Differential genus)
-    (tolerance : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < tolerance) :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest occurrence other tolerance :=
+  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  regular domains differential) (other : Differentials.Basic.Differential genus)
+    (tolerance : InverseRootPolynomial.Coordinate) (positive : 0 < tolerance) :
+      OwnerRequest occurrence other tolerance :=
   let small := Fraction.Order.Field.div_pos_direct positive (by
-      decide : (0 : Normalization.InverseRootPolynomial.Coordinate) < 16)
+      decide : (0 : InverseRootPolynomial.Coordinate) < 16)
   ⟨GridPrimitiveAccuracy.build _ _ (tolerance / 16) small,
-    Integration.RectangularPrimitiveAccuracy.GridPrimitiveAccuracy.build _ _ (tolerance / 16) small⟩
+    GridPrimitiveAccuracy.build _ _ (tolerance / 16) small⟩
 
 /-- The common stage dominating both retained owner-error budgets. -/
-@[expose] def index (request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest occurrence
+@[expose] def index (request : OwnerRequest occurrence
   other tolerance) : Nat := max request.first.index request.second.index
 
 /-- Four times one sixteenth of a rational value is at most one quarter of that value. -/
-private theorem four_sixteenths (value : Normalization.InverseRootPolynomial.Coordinate) : 4 * (value / 16) ≤ value / 4
+private theorem four_sixteenths (value : InverseRootPolynomial.Coordinate) : 4 * (value / 16) ≤ value / 4
   := by
-  apply (Fraction.Order.Field.le_div_iff_pos (by decide : (0 : Normalization.InverseRootPolynomial.Coordinate) < 4)).mpr
+  apply (Fraction.Order.Field.le_div_iff_pos (by decide : (0 : InverseRootPolynomial.Coordinate) < 4)).mpr
   exact ((show (4 * (value / 16)) * 4 = (value / 16) * 16 by ring1).trans
     (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))).le
 
@@ -154,40 +161,40 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnerReque
 tolerance.
 
 The common late request stage and original cell containment pay the comparison. -/
-theorem first_bound (request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest occurrence
+theorem first_bound (request : OwnerRequest occurrence
   other tolerance) {index count : Nat} (later : request.index ≤ index)
-    (data : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.FirstData occurrence index) {points : Fin
-      count → Normalization.InverseRootPolynomial.Gaussian}
+    (data : PairedFragmentValues.FirstData occurrence index) {points : Fin
+      count → InverseRootPolynomial.Gaussian}
     (readings : Readings.RectangularPointReadings.PointReadings data.anchors data.offsets points)
     (vertex : Fin count) (column row : Fin (occurrence.compared.entered.domain.steps + 1))
     (inside : (occurrence.compared.entered.domain.geometry.box column row).Contains (points vertex)) :
-    Data.Gaussian.Norm.Basic.normSq (readings.values vertex - data.anchors.alignedValue data.offsets column row
+    Gaussian.Norm.Basic.normSq (readings.values vertex - data.anchors.alignedValue data.offsets column row
       (points vertex)) ≤ tolerance / 4 := open Purelib.Integration in by
   let selected := Polynomial.Rectangle.Accuracy.FragmentIndex.GridPrimitiveAccuracy.atIndex request.first index
-    ((Data.Nat.Order.le_max_left ..).trans later)
+    ((Nat.Order.le_max_left ..).trans later)
   have bound := Readings.RectangularPointOwnerBounds.point_cell_bound selected readings
     occurrence.compared.entered.domain.patch.cell_refines vertex column row inside
   exact bound.trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct selected.accurate.le (by decide)).trans
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest.four_sixteenths tolerance))
+    (OwnerRequest.four_sixteenths tolerance))
 
 /-- The recast second point-owner reading differs from its actual containing cell value by at most a quarter tolerance.
 
 Its own retained domain and common late request stage supply the bound. -/
-theorem second_bound (request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest occurrence
+theorem second_bound (request : OwnerRequest occurrence
   other tolerance) {index count : Nat} (later : request.index ≤ index)
-    (data : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.SecondData occurrence other index) {points
-      : Fin count → Normalization.InverseRootPolynomial.Gaussian}
+    (data : PairedFragmentValues.SecondData occurrence other index) {points
+      : Fin count → InverseRootPolynomial.Gaussian}
     (readings : Readings.RectangularPointReadings.PointReadings data.anchors data.offsets points)
     (vertex : Fin count) (column row : Fin ((occurrence.recastComparison other).entered.domain.steps + 1))
     (inside : ((occurrence.recastComparison other).entered.domain.geometry.box column row).Contains (points vertex)) :
-    Data.Gaussian.Norm.Basic.normSq (readings.values vertex - data.anchors.alignedValue data.offsets column row
+    Gaussian.Norm.Basic.normSq (readings.values vertex - data.anchors.alignedValue data.offsets column row
       (points vertex)) ≤ tolerance / 4 := open Purelib.Integration in by
   let selected := Polynomial.Rectangle.Accuracy.FragmentIndex.GridPrimitiveAccuracy.atIndex request.second index
-    ((Data.Nat.Order.le_max_right ..).trans later)
+    ((Nat.Order.le_max_right ..).trans later)
   have bound := Readings.RectangularPointOwnerBounds.point_cell_bound selected readings (occurrence.recastComparison
     other).entered.domain.patch.cell_refines vertex column row inside
   exact bound.trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct selected.accurate.le (by decide)).trans
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest.four_sixteenths tolerance))
+    (OwnerRequest.four_sixteenths tolerance))
 
 end OwnerRequest
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnerRequest

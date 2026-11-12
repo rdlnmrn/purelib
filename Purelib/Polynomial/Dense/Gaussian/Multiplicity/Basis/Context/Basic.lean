@@ -26,13 +26,13 @@ namespace Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis.Context.Basic
 set_option genInjectivity false in
 /-- A displayed split of a finite positive multiplicity list around one
 focused factor. -/
-structure PositiveContext (entries : List Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry) where
+structure PositiveContext (entries : List Positive.PositiveEntry) where
   /-- The entries preceding the focused occurrence. -/ before : List
-    Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry
+    Positive.PositiveEntry
   /-- The retained positive-degree entry at the focused position. -/ focus :
-    Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry
+    Positive.PositiveEntry
   /-- The entries following the focused occurrence. -/ after : List
-    Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry
+    Positive.PositiveEntry
   /-- The original list is exactly the prefix, focused occurrence and suffix in this order. -/ split : entries = before
     ++ focus :: after
 
@@ -42,10 +42,10 @@ constructive_injectivity PositiveContext
 
 The new entry extends the retained prefix; the focus and suffix remain those of the original context. -/
 @[expose] def PositiveContext.lift
-    (head : Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry) {entries : List
-      Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry}
-    (context : Dense.Gaussian.Multiplicity.Basis.Context.Basic.PositiveContext entries) :
-    Dense.Gaussian.Multiplicity.Basis.Context.Basic.PositiveContext (head :: entries) where
+    (head : Positive.PositiveEntry) {entries : List
+      Positive.PositiveEntry}
+    (context : PositiveContext entries) :
+    PositiveContext (head :: entries) where
   before := head :: context.before
   focus := context.focus
   after := context.after
@@ -58,37 +58,67 @@ The new entry extends the retained prefix; the focus and suffix remain those of 
 
 /-- Enumerate every focused position by structural recursion on the finite
 entry list. -/
-@[expose] def positiveContexts : (entries : List Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry) →
-    List (Dense.Gaussian.Multiplicity.Basis.Context.Basic.PositiveContext entries)
+@[expose] def positiveContexts : (entries : List Positive.PositiveEntry) →
+    List (PositiveContext entries)
   | [] => []
   | head :: entries =>
       { before := []
         focus := head
         after := entries
         split := rfl } ::
-      (Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis.Context.Basic.positiveContexts entries).map
-        (Dense.Gaussian.Multiplicity.Basis.Context.Basic.PositiveContext.lift head)
+      (Basic.positiveContexts entries).map
+        (PositiveContext.lift head)
 
 /-- The explicit list of focused contexts has one element for each original entry. -/
-theorem positiveContexts_length : ∀ entries : List Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry,
-    (Dense.Gaussian.Multiplicity.Basis.Context.Basic.positiveContexts entries).length = entries.length
+theorem positiveContexts_length : ∀ entries : List Positive.PositiveEntry,
+    (positiveContexts entries).length = entries.length
   | [] => rfl
   | head :: entries => by
-      simp only [Dense.Gaussian.Multiplicity.Basis.Context.Basic.positiveContexts, List.length_cons,
-        Purelib.Data.List.Map.length_map,
-        Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis.Context.Basic.positiveContexts_length entries, -eq_self,
+      simp only [positiveContexts, List.length_cons,
+        Data.List.Map.length_map,
+        Basic.positiveContexts_length entries, -eq_self,
           -iff_self]
       rfl
 
+/-- Lifting an original context preserves its focused entry throughout the same finite list. -/
+private theorem lifted_focuses (head : Positive.PositiveEntry) {entries : List Positive.PositiveEntry} :
+    (contexts : List (PositiveContext entries)) →
+    ((contexts.map (PositiveContext.lift head)).map (fun context => context.focus)) =
+      contexts.map (fun context => context.focus)
+  | [] => rfl
+  | context :: contexts => congrArg (List.cons context.focus) (lifted_focuses head contexts)
+
+/-- The ordered focused entries of the complete original context enumeration are exactly the original entries. -/
+theorem positiveContexts_focuses : (entries : List Positive.PositiveEntry) →
+    (positiveContexts entries).map (fun context => context.focus) = entries
+  | [] => rfl
+  | head :: entries => by
+      change head :: (((positiveContexts entries).map (PositiveContext.lift head)).map
+        (fun context => context.focus)) = head :: entries
+      rw [lifted_focuses head (positiveContexts entries), positiveContexts_focuses entries]
+
+/-- Reading one original context focus gives its same original bounded entry occurrence. -/
+theorem positiveContexts_get_focus (entries : List Positive.PositiveEntry)
+    (index : Fin (positiveContexts entries).length) :
+    ((positiveContexts entries).get index).focus =
+      entries.get (Fin.cast (positiveContexts_length entries) index) := by
+  have mappedBound : index.val < ((positiveContexts entries).map (fun context => context.focus)).length := by
+    rw [positiveContexts_focuses]
+    exact (Fin.cast (positiveContexts_length entries) index).isLt
+  have mapped := Data.List.Map.getElem_map (fun context : PositiveContext entries => context.focus)
+    (positiveContexts entries) index.val index.isLt mappedBound
+  exact mapped.symm.trans
+    (getElem_congr (positiveContexts_focuses entries) (Eq.refl index.val) mappedBound)
+
 /-- The focused entry belongs to the original list certified by the context. -/
 theorem PositiveContext.focus_mem
-    {entries : List Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry} (context :
-      Dense.Gaussian.Multiplicity.Basis.Context.Basic.PositiveContext entries) :
+    {entries : List Positive.PositiveEntry} (context :
+      PositiveContext entries) :
     context.focus ∈ entries := by
   have member : context.focus ∈
       context.before ++ context.focus :: context.after :=
     List.mem_append_right _ List.mem_cons_self
-  exact (congrArg (fun values : List Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry =>
+  exact (congrArg (fun values : List Positive.PositiveEntry =>
     context.focus ∈ values) context.split).symm.mp member
 
 end Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis.Context.Basic

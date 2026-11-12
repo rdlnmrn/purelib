@@ -60,18 +60,18 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Req
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Integration.Path.ConjugateIncrementComparison (conjugateFirst)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {target : Rational} {minimum stage fine : Nat} {box otherBox :
-    Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+    Geometry.Rational.Box}
+  {sample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Integration.Path in
@@ -84,20 +84,20 @@ open Purelib.Topology.Polygon in
 The identity retains the original paired samples, actual cap bank and summed mesh/request/refinement depth, conjugating
 only the first primitive component. -/
 theorem conjugate_cap_area_arc (occurrence :
-  Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence regular domains
+  SurfaceOccurrence regular domains
   differential)
-    {request : Charts.Reciprocal.Disk.PairedParentRequest.Request regular other
+    {request : Request regular other
       occurrence.compared.entered.cache.parents target minimum}
-    (evaluated : Charts.Reciprocal.Disk.PairedParentRequest.Request.Evaluation request sample otherSample fine) :
-    PairedIncrementArea.area ((evaluated.pairs.map Prod.snd).flatten.map ConjugateIncrementComparison.conjugateFirst) =
+    (evaluated : Evaluation request sample otherSample fine) :
+    PairedIncrementArea.area ((evaluated.pairs.map Prod.snd).flatten.map conjugateFirst) =
       Charts.Reciprocal.ReciprocalRadialGeometry.Bilinear.arcArea
-        (fun point => ConjugateIncrementComparison.conjugateFirst ⟨sample.primitive.value.eval point,
+        (fun point => conjugateFirst ⟨sample.primitive.value.eval point,
           otherSample.primitive.value.eval point⟩)
         (occurrence.piece.mesh.depth + (request.depth + fine)) occurrence.start occurrence.finish -
       Stokes.edgeArea
-        (ConjugateIncrementComparison.conjugateFirst ⟨sample.primitive.value.eval occurrence.start⁻¹,
+        (conjugateFirst ⟨sample.primitive.value.eval occurrence.start⁻¹,
           otherSample.primitive.value.eval occurrence.start⁻¹⟩)
-        (ConjugateIncrementComparison.conjugateFirst ⟨sample.primitive.value.eval occurrence.finish⁻¹,
+        (conjugateFirst ⟨sample.primitive.value.eval occurrence.finish⁻¹,
           otherSample.primitive.value.eval occurrence.finish⁻¹⟩) := by
   rw [PreparedPairedParentCapReadback.Request.Evaluation.cap_paths evaluated occurrence.cap.path.bank,
     Charts.Reciprocal.PreparedPairedReciprocalArc.pairedUniformPaths_segment occurrence.compared.entered.cache
@@ -115,22 +115,22 @@ open Purelib.Topology.Polygon in
 Its squared Gaussian norm is compared with the request's exact target, using the same paired evaluation, ordered
 endpoints and summed dyadic depth. -/
 @[expose] def ConjugateArcError (occurrence :
-  Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence regular domains
+  SurfaceOccurrence regular domains
   differential)
-    {request : Charts.Reciprocal.Disk.PairedParentRequest.Request regular other
+    {request : Request regular other
       occurrence.compared.entered.cache.parents target minimum}
-    (evaluated : Charts.Reciprocal.Disk.PairedParentRequest.Request.Evaluation request sample otherSample fine) : Prop
+    (evaluated : Evaluation request sample otherSample fine) : Prop
       :=
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area ((evaluated.pairs.map Prod.fst).flatten.map
-      ConjugateIncrementComparison.conjugateFirst) -
+    normSq (PairedIncrementArea.area ((evaluated.pairs.map Prod.fst).flatten.map
+      conjugateFirst) -
       (Charts.Reciprocal.ReciprocalRadialGeometry.Bilinear.arcArea
-        (fun point => ConjugateIncrementComparison.conjugateFirst ⟨sample.primitive.value.eval point,
+        (fun point => conjugateFirst ⟨sample.primitive.value.eval point,
           otherSample.primitive.value.eval point⟩)
         (occurrence.piece.mesh.depth + (request.depth + fine)) occurrence.start occurrence.finish -
       Stokes.edgeArea
-        (ConjugateIncrementComparison.conjugateFirst ⟨sample.primitive.value.eval occurrence.start⁻¹,
+        (conjugateFirst ⟨sample.primitive.value.eval occurrence.start⁻¹,
           otherSample.primitive.value.eval occurrence.start⁻¹⟩)
-        (ConjugateIncrementComparison.conjugateFirst ⟨sample.primitive.value.eval occurrence.finish⁻¹,
+        (conjugateFirst ⟨sample.primitive.value.eval occurrence.finish⁻¹,
           otherSample.primitive.value.eval occurrence.finish⁻¹⟩))) < target
 
 open Purelib.Curves.Hyperelliptic in
@@ -140,11 +140,11 @@ open Purelib.Riemann.RootContinuation in
 The proof uses the exact cached parent chain and owner-root chain, then rewrites the paired primitive area to its
 retained reciprocal arc readback. -/
 theorem conjugate_arc_error (occurrence :
-  Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence regular domains
+  SurfaceOccurrence regular domains
   differential)
-    {request : Charts.Reciprocal.Disk.PairedParentRequest.Request regular other
+    {request : Request regular other
       occurrence.compared.entered.cache.parents target minimum}
-    (evaluated : Charts.Reciprocal.Disk.PairedParentRequest.Request.Evaluation request sample otherSample fine)
+    (evaluated : Evaluation request sample otherSample fine)
     (later : request.index ≤ stage) :
     ConjugateArcError occurrence evaluated := by
   have bound := Charts.Reciprocal.Disk.ConjugateParentArea.Evaluation.full_conjugate_area_error evaluated later

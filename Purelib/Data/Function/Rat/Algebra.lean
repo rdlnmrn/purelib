@@ -6,6 +6,8 @@ public import Purelib.CCL.Measure.Basic
 import Purelib.Tactic.Ring
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Geometry.Projective.Line
+
 /-!
 # Pointwise algebra of rational projective probes
 -/
@@ -20,15 +22,15 @@ public section
 
 /-- Negate a rational-valued function on projective points. -/
 @[expose] def negProbe
-    (probe : Geometry.Projective.Line.GaussianLine → Coordinate) : Geometry.Projective.Line.GaussianLine → Coordinate :=
+    (probe : GaussianLine → Coordinate) : GaussianLine → Coordinate :=
   fun point => -probe point
 
 /-- Negating a rational probe preserves separation between its values.
 
 For two projective inputs, the maximum of the two directed rational differences is
 unchanged when both probe values are negated. -/
-theorem rationalSeparation_negProbe (probe : Geometry.Projective.Line.GaussianLine → Coordinate)
-    (left right : Geometry.Projective.Line.GaussianLine) :
+theorem rationalSeparation_negProbe (probe : GaussianLine → Coordinate)
+    (left right : GaussianLine) :
     Distance.rationalSeparation
         (negProbe probe left) (negProbe probe right) =
       Distance.rationalSeparation (probe left) (probe right) := by
@@ -38,12 +40,12 @@ theorem rationalSeparation_negProbe (probe : Geometry.Projective.Line.GaussianLi
 
 /-- Square each value of a rational probe on projective points. -/
 @[expose] def squareProbe
-    (probe : Geometry.Projective.Line.GaussianLine → Coordinate) : Geometry.Projective.Line.GaussianLine → Coordinate :=
+    (probe : GaussianLine → Coordinate) : GaussianLine → Coordinate :=
   fun point => probe point ^ 2
 
 /-- Add two rational-valued functions pointwise on their common domain. -/
 @[expose] def addProbe
-    (left right : Geometry.Projective.Line.GaussianLine → Coordinate) : Geometry.Projective.Line.GaussianLine →
+    (left right : GaussianLine → Coordinate) : GaussianLine →
       Coordinate :=
   fun point => left point + right point
 

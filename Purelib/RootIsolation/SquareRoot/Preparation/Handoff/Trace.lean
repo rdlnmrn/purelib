@@ -16,6 +16,8 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.RootIsolation.State.WindingOne.Basic
 import Purelib.RootIsolation.Track.Basic
 
+open Purelib.Riemann.Paths.OwnerTraceReadings
+
 open Purelib.Polynomial
 
 open Purelib
@@ -37,59 +39,59 @@ open Purelib.Riemann.Branches.PreparedSheetContinuation
 
 /-- Finite trace handoff from the inherited owner to the exact prepared owner
 already cached on an accepted edge. -/
-def CachedSource.traceJoin {polynomial : Riemann.Branches.PreparedSheetContinuation.GaussianPolynomial} {ambient :
-  Riemann.Branches.PreparedSheetContinuation.Box}
-    {start finish : Riemann.Branches.PreparedSheetContinuation.Gaussian} {segment : Geometry.ClearPath.ClearSegment
+def CachedSource.traceJoin {polynomial : GaussianPolynomial} {ambient :
+  Box}
+    {start finish : Gaussian} {segment : Geometry.ClearPath.ClearSegment
       polynomial ambient start finish}
-    {current : Riemann.Branches.PreparedSheetContinuation.Endpoint} {owner :
+    {current : Endpoint} {owner :
       Riemann.Branches.PreparedSheetContinuation.Owner (polynomial.eval (segment.pointAt current.parameter))}
-    {request : Riemann.Branches.PreparedSheetContinuation.StepRequest} (cached :
-      Riemann.Branches.PreparedSheetContinuation.CachedSource segment current owner request) :
+    {request : StepRequest} (cached :
+      CachedSource segment current owner request) :
     Riemann.Paths.OwnerTraceReadings.OwnerJoin owner cached.preparedOwner := by
-  by_cases ready : Riemann.Branches.PreparedSheetContinuation.AlreadyPrepared segment current owner request ∧
+  by_cases ready : AlreadyPrepared segment current owner request ∧
       Riemann.Branches.ClearSheetContinuation.variationBound segment
         current.parameter request.endpoint.parameter < owner.track.initial.clearance.bound
-  · rw [cached.preparedOwner_eq, Riemann.Branches.PreparedSheetContinuation.prepared_eq_self_of_ready segment current
+  · rw [cached.preparedOwner_eq, prepared_eq_self_of_ready segment current
       owner request ready.1 ready.2]
-    exact Riemann.Paths.OwnerTraceReadings.OwnerJoin.reflexive owner
-  · exact Riemann.Paths.OwnerTraceReadings.OwnerJoin.acquire owner cached.preparedOwner (by
+    exact OwnerJoin.reflexive owner
+  · exact OwnerJoin.acquire owner cached.preparedOwner (by
       rw [cached.preparedOwner_eq]
-      exact Riemann.Branches.PreparedSheetContinuation.sourceRootEquivalent segment current owner request)
+      exact sourceRootEquivalent segment current owner request)
 
 /-- The reserve-triggered endpoint reset supplies its own same-root trace
 handoff.  Its two supplied owners are precisely the transported and retained
 presentations used by `advance`. -/
-def retainedTraceJoin {parameter : Riemann.Branches.PreparedSheetContinuation.Gaussian} (owner :
+def retainedTraceJoin {parameter : Gaussian} (owner :
   Riemann.Branches.PreparedSheetContinuation.Owner parameter) (reserve :
-  Riemann.Branches.PreparedSheetContinuation.Coordinate) :
-    Riemann.Paths.OwnerTraceReadings.OwnerJoin owner (Riemann.Branches.PreparedSheetContinuation.retainedAtReserve owner
+  Coordinate) :
+    Riemann.Paths.OwnerTraceReadings.OwnerJoin owner (retainedAtReserve owner
       reserve) := by
   by_cases enough : reserve ≤ owner.track.initial.clearance.bound
-  · rw [Riemann.Branches.PreparedSheetContinuation.retainedAtReserve_eq_self owner reserve enough]
-    exact Riemann.Paths.OwnerTraceReadings.OwnerJoin.reflexive owner
-  · exact Riemann.Paths.OwnerTraceReadings.OwnerJoin.acquire owner
-      (Riemann.Branches.PreparedSheetContinuation.retainedAtReserve owner reserve)
-      (Riemann.Branches.PreparedSheetContinuation.retainedAtReserveRootEquivalent owner reserve)
+  · rw [retainedAtReserve_eq_self owner reserve enough]
+    exact OwnerJoin.reflexive owner
+  · exact OwnerJoin.acquire owner
+      (retainedAtReserve owner reserve)
+      (retainedAtReserveRootEquivalent owner reserve)
 
 open Purelib.RootIsolation in
 /-- Handoff at the end of an actual accepted prepared step, before starting
 the following step's source preparation. -/
-def advanceTraceJoin {polynomial : Riemann.Branches.PreparedSheetContinuation.GaussianPolynomial} {ambient :
-  Riemann.Branches.PreparedSheetContinuation.Box}
-    {start finish : Riemann.Branches.PreparedSheetContinuation.Gaussian} (segment : Geometry.ClearPath.ClearSegment
+def advanceTraceJoin {polynomial : GaussianPolynomial} {ambient :
+  Box}
+    {start finish : Gaussian} (segment : Geometry.ClearPath.ClearSegment
       polynomial ambient start finish)
-    (within : segment.WithinAmbient) (current : Riemann.Branches.PreparedSheetContinuation.Endpoint)
+    (within : segment.WithinAmbient) (current : Endpoint)
     (owner : Riemann.Branches.PreparedSheetContinuation.Owner (polynomial.eval (segment.pointAt current.parameter)))
-      (request : Riemann.Branches.PreparedSheetContinuation.StepRequest)
+      (request : StepRequest)
     (small : Riemann.Branches.ClearSheetContinuation.variationBound segment
       current.parameter request.endpoint.parameter <
-        (Riemann.Branches.PreparedSheetContinuation.prepared segment current owner
+        (prepared segment current owner
           request).track.initial.clearance.bound) :
-    Riemann.Paths.OwnerTraceReadings.OwnerJoin (Riemann.Branches.PreparedSheetContinuation.transported segment within
+    Riemann.Paths.OwnerTraceReadings.OwnerJoin (transported segment within
       current owner request small)
-      (Riemann.Branches.PreparedSheetContinuation.advance segment within current owner request small) :=
-  SquareRoot.Preparation.Handoff.Trace.retainedTraceJoin (Riemann.Branches.PreparedSheetContinuation.transported segment
+      (advance segment within current owner request small) :=
+  retainedTraceJoin (transported segment
     within current owner request small)
-    (Riemann.Branches.PreparedSheetContinuation.preparedClearanceLower segment current request)
+    (preparedClearanceLower segment current request)
 
 end Purelib.RootIsolation.SquareRoot.Preparation.Handoff.Trace

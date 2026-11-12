@@ -86,6 +86,8 @@ import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Data.List.Membership
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Algebra
@@ -161,7 +163,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 open Purelib.Algebra.FiniteSum.Fin (sumFin)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -172,10 +174,10 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {domains : FaceDomainBank current.frames
     grid.faces.regulars} {i j : Fin genus}
   {leftFixed : FaceMagnitudeBank domains
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential i)}
+    (Riemann.Periods.PeriodMatrix.standardDifferential i)}
   {rightFixed : FaceMagnitudeBank domains
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential j)}
-  {sheet : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches → Fin 2} {error :
+    (Riemann.Periods.PeriodMatrix.standardDifferential j)}
+  {sheet : Branches.BranchIsolation.Data.Index branches → Fin 2} {error :
     Rational} {floor stage : Nat}
   {cache : Numerics domains stage}
   {left : TriangleReadings (cache.get i)
@@ -192,34 +194,34 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     sheet => RegularMeshes.build domains cuts
     sheet coarseDepth) fixed physicalTarget}
   (sides : (entry : AnnularEntry grid current) →
-    Annulus.HoleSides entry.region)
-  (perimeters : PuncturedGrid.Matched.FacePerimeters (request :=
+    HoleSides entry.region)
+  (perimeters : Matched.FacePerimeters (request :=
     physicalRequest) cache.normalize i j)
 
 /-- These are precisely the fine perimeter and the remaining sewn terms of one original branch-region receipt after its
 physical chords cancel. -/
-def holeBoundaryTerm {entry : Excision.AnnularEntry grid current}
-    {request : PairedBranchRegion.PairedBranchRequest bank entry (sheet entry.hole.index) leftFixed rightFixed error
+def holeBoundaryTerm {entry : AnnularEntry grid current}
+    {request : PairedBranchRequest bank entry (sheet entry.hole.index) leftFixed rightFixed error
       floor}
     (sample : request.Sample left right leftSurface rightSurface) : Gaussian :=
   let raw := OriginalPairedCutBalance.pairedValues leftSurface rightSurface
   (sides entry).finePerimeter perimeters +
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (sample.balance.inner.word.sources.entries.map (fun route =>
+    Sum.Basic.gaussianSum (sample.balance.inner.word.sources.entries.map (fun route =>
       Stokes.edgeArea (raw current.cutPolygon.patch.cut.triangles[route.owner.position.val].first)
         ((raw route.cutEdge.finish).sub (raw route.cutEdge.start)))) +
     sample.cut.pairing.jumpSum + sample.cut.pairing.defectSum + sample.cut.readback.correction
 
 /-- The exact remaining boundary terms of the original branch samples in their retained entry order. -/
-def holeBoundaryTerms : {entries : List (Excision.AnnularEntry grid current)} →
-    {requests : PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed rightFixed error floor entries} →
+def holeBoundaryTerms : {entries : List (AnnularEntry grid current)} →
+    {requests : PairedBranchRequests bank sheet leftFixed rightFixed error floor entries} →
     PairedBranchRequests.Samples left right leftSurface rightSurface requests → List Data.Gaussian.Basic.Canonical
   | _, _, .nil => []
   | _, _, .cons first last => holeBoundaryTerm sides
     perimeters first :: holeBoundaryTerms last
 
 /-- The original per-hole discrepancy after subtracting its retained fine-perimeter and sewn boundary terms. -/
-private def holeResiduals : {entries : List (Excision.AnnularEntry grid current)} →
-    {requests : PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed rightFixed error floor entries} →
+private def holeResiduals : {entries : List (AnnularEntry grid current)} →
+    {requests : PairedBranchRequests bank sheet leftFixed rightFixed error floor entries} →
     PairedBranchRequests.Samples left right leftSurface rightSurface requests → List Data.Gaussian.Basic.Canonical
   | _, _, .nil => []
   | _, _, .cons (entry := entry) first last =>
@@ -244,18 +246,18 @@ private theorem holeResiduals_length (samples : PairedBranchRequests.Samples lef
 boundary terms. -/
 private theorem holeResiduals_sum (samples : PairedBranchRequests.Samples left right leftSurface rightSurface requests)
   :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    Sum.Basic.gaussianSum
       (holeResiduals sides perimeters samples) =
       samples.corrections +
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map (fun entry => HoleAreaRemainder.holeAreaRemainder
+      Sum.Basic.gaussianSum (entries.map (fun entry => HoleAreaRemainder.holeAreaRemainder
         perimeters (sides entry).sides)) -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      Sum.Basic.gaussianSum
         (holeBoundaryTerms sides perimeters samples) :=
         by
   induction samples with
   | nil => change (0 : Data.Gaussian.Basic.Canonical) = 0 + 0 - 0; ring1
   | cons first last ih =>
-      change (_ + _ - _) + Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      change (_ + _ - _) + Sum.Basic.gaussianSum
         (holeResiduals sides perimeters last) =
         (first.cut.correction + last.corrections) + (_ + _) - (_ + _)
       rw [ih]
@@ -264,20 +266,20 @@ private theorem holeResiduals_sum (samples : PairedBranchRequests.Samples left r
 /-- One global sewing request pays all original branch regions, with the actual number of retained holes and all eight
 occurrences per hole. -/
 theorem hole_corrections_bound (samples : PairedBranchRequests.Samples left right leftSurface rightSurface requests)
-    {global : SewnBilinearRequest.BilinearPreparation current.cutPolygon domains i j}
-    {sewingTarget : Fraction.Rational} {sewingFloor : Nat}
+    {global : BilinearPreparation current.cutPolygon domains i j}
+    {sewingTarget : Rational} {sewingFloor : Nat}
     (sewing : BilinearPreparation.Request global sewingTarget sewingFloor)
-    (later : sewing.index ≤ stage) (bilinear : Topology.Surface.Sewing.Bilinear.Samples leftSurface rightSurface) :
-    Data.Gaussian.Norm.Basic.normSq (samples.corrections +
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map (fun entry => HoleAreaRemainder.holeAreaRemainder
+    (later : sewing.index ≤ stage) (bilinear : Bilinear leftSurface rightSurface) :
+    Basic.normSq (samples.corrections +
+      Sum.Basic.gaussianSum (entries.map (fun entry => HoleAreaRemainder.holeAreaRemainder
         perimeters (sides entry).sides)) -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      Sum.Basic.gaussianSum
         (holeBoundaryTerms sides perimeters samples)) ≤
-      (entries.length : Fraction.Rational) * ((entries.length : Fraction.Rational) *
+      (entries.length : Rational) * ((entries.length : Rational) *
         (8 * (8 * (sewing.budget.weight * sewing.budget.error)))) := by
   have bounds : ∀ value ∈ holeResiduals sides perimeters
     samples,
-      Data.Gaussian.Norm.Basic.normSq value ≤ 8 * (8 * (sewing.budget.weight * sewing.budget.error)) := by
+      Basic.normSq value ≤ 8 * (8 * (sewing.budget.weight * sewing.budget.error)) := by
     induction samples with
     | nil => intro value member; exact (List.not_mem_nil member).elim
     | cons first last ih =>
@@ -286,27 +288,27 @@ theorem hole_corrections_bound (samples : PairedBranchRequests.Samples left righ
         · exact NewtonOriginalPairedHoleCorrection.correction_add_remainder_accurate first.cut (sides _) perimeters
             sewing later bilinear
         · exact ih value member
-  have bound := Data.Gaussian.Norm.Sum.Bounds.normSq_sum_le _ _ bounds
+  have bound := Sum.Bounds.normSq_sum_le _ _ bounds
   rw [holeResiduals_length,
     holeResiduals_sum] at bound
   exact bound
 
 /-- The sum is the complete physical hole correction, with no missing or repeated physical component and no replacement
 annular sample. -/
-theorem all_hole_corrections_bound (excision : Excision.AllHoleExcision grid current)
-    {requests : PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed rightFixed error floor excision.entries}
+theorem all_hole_corrections_bound (excision : AllHoleExcision grid current)
+    {requests : PairedBranchRequests bank sheet leftFixed rightFixed error floor excision.entries}
     (samples : PairedBranchRequests.Samples left right leftSurface rightSurface requests)
-    {global : SewnBilinearRequest.BilinearPreparation current.cutPolygon domains i j}
-    {sewingTarget : Fraction.Rational} {sewingFloor : Nat}
+    {global : BilinearPreparation current.cutPolygon domains i j}
+    {sewingTarget : Rational} {sewingFloor : Nat}
     (sewing : BilinearPreparation.Request global sewingTarget sewingFloor)
-    (later : sewing.index ≤ stage) (bilinear : Topology.Surface.Sewing.Bilinear.Samples leftSurface rightSurface) :
-    Data.Gaussian.Norm.Basic.normSq (samples.corrections + FiniteSum.Fin.sumFin (fun hole =>
+    (later : sewing.index ≤ stage) (bilinear : Bilinear leftSurface rightSurface) :
+    Basic.normSq (samples.corrections + FiniteSum.Fin.sumFin (fun hole =>
       HoleComponentCorrection.holeCorrection perimeters left right hole) -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      Sum.Basic.gaussianSum
         (holeBoundaryTerms sides perimeters samples)) ≤
-      (excision.entries.length : Fraction.Rational) * ((excision.entries.length : Fraction.Rational) *
+      (excision.entries.length : Rational) * ((excision.entries.length : Rational) *
         (8 * (8 * (sewing.budget.weight * sewing.budget.error)))) := by
-  have equal (entry : Excision.AnnularEntry grid current) : HoleAreaRemainder.holeAreaRemainder perimeters (sides
+  have equal (entry : AnnularEntry grid current) : HoleAreaRemainder.holeAreaRemainder perimeters (sides
     entry).sides =
       HoleComponentCorrection.holeCorrection perimeters left right (sides entry).position := by
     exact (HoleAreaRemainder.rootedHoleCorrection_eq_remainder perimeters left right (sides entry).sides).symm.trans
@@ -314,7 +316,7 @@ theorem all_hole_corrections_bound (excision : Excision.AllHoleExcision grid cur
         (HoleFourSideCorrection.holeCorrection_eq_fourSides perimeters left right (sides entry).position (sides
           entry).adjacent).symm)
   have mapped := Map.map_congr_left (values := excision.entries) (fun entry _ => equal entry)
-  have total := (congrArg Data.Gaussian.Norm.Sum.Basic.gaussianSum mapped).trans
+  have total := (congrArg Sum.Basic.gaussianSum mapped).trans
     (NewtonOriginalHolePositions.original_side_sum excision sides (fun hole => HoleComponentCorrection.holeCorrection
       perimeters left right hole))
   have bound := hole_corrections_bound sides perimeters
@@ -324,22 +326,22 @@ theorem all_hole_corrections_bound (excision : Excision.AllHoleExcision grid cur
 
 /-- Replace the hole part of the full physical correction on these same readings. The actual exterior component remains,
 with its original sign. -/
-theorem physical_correction_bound (excision : Excision.AllHoleExcision grid current)
-    {requests : PairedBranchAggregate.PairedBranchRequests bank sheet leftFixed rightFixed error floor excision.entries}
+theorem physical_correction_bound (excision : AllHoleExcision grid current)
+    {requests : PairedBranchRequests bank sheet leftFixed rightFixed error floor excision.entries}
     (samples : PairedBranchRequests.Samples left right leftSurface rightSurface requests)
     (neighbors : PuncturedFaces.NeighborBank grid.faces)
-    {global : SewnBilinearRequest.BilinearPreparation current.cutPolygon domains i j}
-    {sewingTarget : Fraction.Rational} {sewingFloor : Nat}
+    {global : BilinearPreparation current.cutPolygon domains i j}
+    {sewingTarget : Rational} {sewingFloor : Nat}
     (sewing : BilinearPreparation.Request global sewingTarget sewingFloor)
-    (later : sewing.index ≤ stage) (bilinear : Topology.Surface.Sewing.Bilinear.Samples leftSurface rightSurface) :
-    Data.Gaussian.Norm.Basic.normSq (samples.corrections +
+    (later : sewing.index ≤ stage) (bilinear : Bilinear leftSurface rightSurface) :
+    Basic.normSq (samples.corrections +
       (FacePerimeters.physicalPerimeter perimeters neighbors - CrossingTriangleAreas.physicalTriangleArea neighbors left
         right) -
       (PhysicalComponentCorrection.physicalComponentCorrection perimeters neighbors left right .exterior +
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum
+        Sum.Basic.gaussianSum
           (holeBoundaryTerms sides perimeters samples)))
           ≤
-      (excision.entries.length : Fraction.Rational) * ((excision.entries.length : Fraction.Rational) *
+      (excision.entries.length : Rational) * ((excision.entries.length : Rational) *
         (8 * (8 * (sewing.budget.weight * sewing.budget.error)))) := by
   have split := HoleComponentCorrection.physicalCorrection_eq_holes perimeters neighbors left right
   have equal (correction physical exterior holes terms : Data.Gaussian.Basic.Canonical)
@@ -347,8 +349,8 @@ theorem physical_correction_bound (excision : Excision.AllHoleExcision grid curr
       correction + physical - (exterior + terms) = correction + holes - terms := by
     rw [split]
     ring1
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq (equal samples.corrections _ _ _
-    (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+  exact (congrArg Basic.normSq (equal samples.corrections _ _ _
+    (Sum.Basic.gaussianSum
       (holeBoundaryTerms sides perimeters samples))
       split)).trans_le
       (all_hole_corrections_bound sides perimeters

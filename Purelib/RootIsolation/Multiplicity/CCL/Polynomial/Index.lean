@@ -40,31 +40,31 @@ namespace NonzeroResult
 
 /-- Finite dependent index of every exact root or higher root-approximation
 track of a nonzero polynomial. -/
-abbrev RootIndex {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-  Multiplicity.CCL.Polynomial.Basic.NonzeroResult p) :=
+abbrev RootIndex {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
+  Basic.NonzeroResult p) :=
   (ArgumentPrinciple.CCL.Basic.NonzeroResult.ZeroIndex result)
 
 /-- Displayed finite list of all root-site indices. -/
-@[expose] def rootIndices {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-  Multiplicity.CCL.Polynomial.Basic.NonzeroResult p) :
-    List (Multiplicity.CCL.Polynomial.Index.NonzeroResult.RootIndex result) :=
-  Multiplicity.Side.Index.sideIndices result.rfap.numeratorSites
+@[expose] def rootIndices {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
+  Basic.NonzeroResult p) :
+    List (RootIndex result) :=
+  Side.Index.sideIndices result.rfap.numeratorSites
 
 /-- Every root-site index occurs in the displayed finite index list. -/
 theorem mem_rootIndices
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-      Multiplicity.CCL.Polynomial.Basic.NonzeroResult p)
-    (index : (Multiplicity.CCL.Polynomial.Index.NonzeroResult.RootIndex result)) : index ∈
-      (Multiplicity.CCL.Polynomial.Index.NonzeroResult.rootIndices result) :=
-  Multiplicity.Side.Index.mem_sideIndices
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
+      Basic.NonzeroResult p)
+    (index : (RootIndex result)) : index ∈
+      (rootIndices result) :=
+  Side.Index.mem_sideIndices
     result.rfap.numeratorSites index
 
 /-- Algebraic multiplicity of one distinct exact or higher root site. -/
 @[expose] def rootMultiplicity
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
-      Multiplicity.CCL.Polynomial.Basic.NonzeroResult p)
-    (index : (Multiplicity.CCL.Polynomial.Index.NonzeroResult.RootIndex result)) : Nat :=
-  Multiplicity.Side.Index.sideMultiplicity
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (result :
+      Basic.NonzeroResult p)
+    (index : (RootIndex result)) : Nat :=
+  Side.Index.sideMultiplicity
     result.rfap.numeratorSites index
 end NonzeroResult
 

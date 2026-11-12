@@ -35,6 +35,8 @@ import Purelib.Riemann.Paths.PreparedPathParentCaches
 import Purelib.Riemann.Periods.PreparedGridPeriodPrograms
 import Purelib.Riemann.RootContinuation.PreparedGridRootClosure
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid
+
 public section
 
 /-! Embed retained occurrence positions into the original common parent bank. -/
@@ -49,27 +51,27 @@ open Purelib.Geometry
 open Purelib.Riemann
 
 open Purelib.Riemann.Normalization
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
 
 /-- Flatten the parent caches in retained surface-occurrence order.
 
 Each occurrence contributes its cached parent list unchanged. Mapping and flattening preserve the order of occurrences,
 the order within each cache and repeated parent data. -/
 @[expose] def occurrenceParents (occurrences : List
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  (ExteriorProgram.SurfaceOccurrence
   regular domains differential)) :=
   (occurrences.map (fun occurrence => occurrence.compared.entered.cache.parents)).flatten
 
 /-- Read an original surface occurrence using its retained finite index bound. -/
 @[expose] def occurrenceAt (occurrences : List
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  (ExteriorProgram.SurfaceOccurrence
   regular domains differential))
     (index : Fin occurrences.length) := occurrences[index.val]'index.isLt
 
@@ -77,26 +79,26 @@ the order within each cache and repeated parent data. -/
 
 The construction uses prefix lengths and preserves distinct positions even when parent data repeat. -/
 @[expose] def embed : (occurrences : List
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  (ExteriorProgram.SurfaceOccurrence
   regular domains differential)) →
     (outer : Fin occurrences.length) →
-    Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt occurrences
+    Fin (ParentIndices.occurrenceAt occurrences
       outer).compared.entered.cache.parents.length →
-    Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceParents occurrences).length
+    Fin (ParentIndices.occurrenceParents occurrences).length
   | [], outer, _ => Fin.elim0 outer
   | head :: tail, ⟨0, _⟩, inner =>
       ⟨inner.val, by
-        simpa only [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceParents,
-          Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt, List.getElem_cons_zero,
+        simpa only [ParentIndices.occurrenceParents,
+          ParentIndices.occurrenceAt, List.getElem_cons_zero,
           List.map_cons, List.flatten_cons, Append.length_append] using
-          Nat.lt_add_right (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceParents
+          Nat.lt_add_right (ParentIndices.occurrenceParents
             tail).length inner.isLt⟩
   | head :: tail, ⟨outer + 1, bound⟩, inner =>
-      let next := Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.embed tail ⟨outer,
+      let next := ParentIndices.embed tail ⟨outer,
         Nat.lt_of_succ_lt_succ bound⟩ inner
       ⟨head.compared.entered.cache.parents.length + next.val,
         by
-          simpa only [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceParents, List.map_cons,
+          simpa only [ParentIndices.occurrenceParents, List.map_cons,
             List.flatten_cons, Append.length_append] using
             Nat.add_lt_add_left next.isLt head.compared.entered.cache.parents.length⟩
 
@@ -105,13 +107,13 @@ The construction uses prefix lengths and preserves distinct positions even when 
 Structural recursion accumulates exactly the retained prefix lengths. The resulting natural offset identifies a position
 even when earlier occurrences contain repeated or empty parent caches. -/
 private theorem embed_val (occurrences : List
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  (ExteriorProgram.SurfaceOccurrence
   regular domains differential))
     (outer : Fin occurrences.length)
-    (inner : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt occurrences
+    (inner : Fin (ParentIndices.occurrenceAt occurrences
       outer).compared.entered.cache.parents.length) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.embed occurrences outer inner).val =
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceParents (occurrences.take
+    (ParentIndices.embed occurrences outer inner).val =
+      (ParentIndices.occurrenceParents (occurrences.take
       outer.val)).length + inner.val := by
   induction occurrences with
   | nil => exact Fin.elim0 outer
@@ -121,10 +123,10 @@ private theorem embed_val (occurrences : List
     | zero => exact (Nat.zero_add inner.val).symm
     | succ outer =>
       change head.compared.entered.cache.parents.length +
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.embed tail ⟨outer, Nat.lt_of_succ_lt_succ
+        (ParentIndices.embed tail ⟨outer, Nat.lt_of_succ_lt_succ
         bound⟩ inner).val = _
       rw [ih ⟨outer, Nat.lt_of_succ_lt_succ bound⟩ inner]
-      simp only [List.take_succ_cons, Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceParents,
+      simp only [List.take_succ_cons, ParentIndices.occurrenceParents,
         List.map_cons, List.flatten_cons, Append.length_append,
         Nat.add_assoc, -eq_self]
       rfl
@@ -134,29 +136,29 @@ private theorem embed_val (occurrences : List
 The supplied outer and inner bounds retain their original occurrences. Bounded concatenation readback removes the
 accumulated prefix and reads that exact cached parent without searching for equal data. -/
 private theorem embed_read : ∀ (occurrences : List
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  (ExteriorProgram.SurfaceOccurrence
   regular domains differential))
     (outer : Fin occurrences.length)
-    (inner : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt occurrences
+    (inner : Fin (ParentIndices.occurrenceAt occurrences
       outer).compared.entered.cache.parents.length),
     Integration.PreparedParentSplitSelection.parentAt
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceParents occurrences)
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.embed occurrences outer inner) =
+      (ParentIndices.occurrenceParents occurrences)
+      (ParentIndices.embed occurrences outer inner) =
       Integration.PreparedParentSplitSelection.parentAt
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt occurrences
+        (ParentIndices.occurrenceAt occurrences
         outer).compared.entered.cache.parents inner
   | [], outer, _ => Fin.elim0 outer
   | head :: tail, ⟨0, _⟩, inner => Append.getElem_append_left _ _ inner.val inner.isLt _
   | head :: tail, ⟨outer + 1, bound⟩, inner => by
-      let next := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.embed tail ⟨outer,
+      let next := ParentIndices.embed tail ⟨outer,
         Nat.lt_of_succ_lt_succ bound⟩ inner
       change (head.compared.entered.cache.parents ++
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceParents
+        ParentIndices.occurrenceParents
         tail)[head.compared.entered.cache.parents.length + next.val]'(by
         rw [Append.length_append]
         exact Nat.add_lt_add_left next.isLt head.compared.entered.cache.parents.length) = _
       exact (Append.getElem_append_right _ _ next.val next.isLt _).trans
-        (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.embed_read tail ⟨outer,
+        (ParentIndices.embed_read tail ⟨outer,
           Nat.lt_of_succ_lt_succ bound⟩ inner)
 
 /-- Enumerating through an equality transport of finite indices preserves the complete ordered list. -/
@@ -170,34 +172,34 @@ private theorem ofFn_cast {Item : Type u} {first last : Nat} (equal : first = la
 original flattened enumeration, including empty occurrences and repeated data. -/
 private theorem embed_all {Item : Type u}
     (occurrences : List
-      (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+      (ExteriorProgram.SurfaceOccurrence
       regular domains differential))
-    (values : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceParents occurrences).length
+    (values : Fin (ParentIndices.occurrenceParents occurrences).length
       → Item) :
     (List.ofFn (fun outer : Fin occurrences.length =>
-      List.ofFn (fun inner => values (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.embed occurrences
+      List.ofFn (fun inner => values (ParentIndices.embed occurrences
         outer inner)))).flatten = List.ofFn values := open Purelib in by
   induction occurrences with
   | nil => rfl
   | cons head tail ih =>
-    rw [Data.List.OfFn.Basic.ofFn_succ, List.flatten_cons]
+    rw [OfFn.Basic.ofFn_succ, List.flatten_cons]
     let count := head.compared.entered.cache.parents.length
-    have lengthEq : count + (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceParents
+    have lengthEq : count + (ParentIndices.occurrenceParents
       tail).length =
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceParents (head :: tail)).length :=
+        (ParentIndices.occurrenceParents (head :: tail)).length :=
           (Append.length_append ..).symm
-    let shifted (position : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceParents
+    let shifted (position : Fin (ParentIndices.occurrenceParents
       tail).length) : Item :=
       values (Fin.cast lengthEq (position.natAdd count))
     have remaining := ih shifted
     have tailEq :
         (List.ofFn (fun outer : Fin tail.length => List.ofFn (fun inner =>
-          values (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.embed (head :: tail) outer.succ
+          values (ParentIndices.embed (head :: tail) outer.succ
             inner)))).flatten = List.ofFn shifted := by
       exact remaining
     rw [tailEq]
-    have full := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.ofFn_cast lengthEq values
-    rw [Data.List.OfFn.Basic.ofFn_add] at full
+    have full := ParentIndices.ofFn_cast lengthEq values
+    rw [OfFn.Basic.ofFn_add] at full
     exact full
 
 /-- Transporting a parent index along list equality preserves its exact parent readback. -/
@@ -209,73 +211,73 @@ private theorem parentAt_cast
   cases equal
   rfl
 
-variable {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential}
+variable {program : PeriodPrograms.ExteriorProgram lifted differential}
   (prepared :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+  ExteriorProgram.SurfacePreparation
   regular domains program)
 
 /-- The local position is embedded by its occurrence prefix, not by equality
 search on parent data. Repeated parents retain distinct positions. -/
 @[expose] def parentIndex (outer : Fin prepared.occurrences.length)
-    (inner : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (inner : Fin (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length) :
     Fin program.cache.parents.length :=
   Fin.cast (congrArg List.length prepared.parents_eq)
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.embed prepared.occurrences outer inner)
+    (ParentIndices.embed prepared.occurrences outer inner)
 
 /-- The selected program-cache position reads the original occurrence-local parent. -/
 theorem parentIndex_read (outer : Fin prepared.occurrences.length)
-    (inner : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (inner : Fin (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length) :
     Integration.PreparedParentSplitSelection.parentAt program.cache.parents
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.parentIndex prepared outer inner) =
+      (ParentIndices.parentIndex prepared outer inner) =
       Integration.PreparedParentSplitSelection.parentAt
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+        (ParentIndices.occurrenceAt prepared.occurrences
         outer).compared.entered.cache.parents inner :=
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.parentAt_cast prepared.parents_eq
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.embed prepared.occurrences outer inner)).trans
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.embed_read prepared.occurrences outer inner)
+  (ParentIndices.parentAt_cast prepared.parents_eq
+    (ParentIndices.embed prepared.occurrences outer inner)).trans
+    (ParentIndices.embed_read prepared.occurrences outer inner)
 
 /-- The program-cache index is exactly the preceding occurrence-prefix length plus its local index. -/
 theorem parentIndex_val (outer : Fin prepared.occurrences.length)
-    (inner : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (inner : Fin (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.parentIndex prepared outer inner).val =
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceParents (prepared.occurrences.take
+    (ParentIndices.parentIndex prepared outer inner).val =
+      (ParentIndices.occurrenceParents (prepared.occurrences.take
         outer.val)).length + inner.val :=
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.embed_val prepared.occurrences outer inner
+  ParentIndices.embed_val prepared.occurrences outer inner
 
 /-- Positional selection commutes with flattening the retained occurrence bank. -/
 theorem parentIndex_all {Item : Type u} (values : Fin program.cache.parents.length → Item) :
     (List.ofFn (fun outer : Fin prepared.occurrences.length =>
-      List.ofFn (fun inner => values (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.parentIndex
+      List.ofFn (fun inner => values (ParentIndices.parentIndex
         prepared outer inner)))).flatten = List.ofFn values :=
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.embed_all prepared.occurrences (fun position =>
+  (ParentIndices.embed_all prepared.occurrences (fun position =>
     values (Fin.cast (congrArg List.length prepared.parents_eq) position))).trans
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.ofFn_cast (congrArg List.length
+      (ParentIndices.ofFn_cast (congrArg List.length
         prepared.parents_eq) values)
 
 /-- A canonical mesh block selects the same original parent position consumed
 by the component's common-basis numerical bank. -/
 @[expose] def blockIndex (outer : Fin prepared.occurrences.length)
     {vertical forward : Bool} {physical : Rectangle.Partition.PreparedAxisPartitions.Interval}
-    (block : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.ParentBlock
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) vertical
+    (block : ParentBlocks.ParentBlock
+      (ParentIndices.occurrenceAt prepared.occurrences outer) vertical
       forward physical) :
-    Fin program.cache.parents.length := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.parentIndex
+    Fin program.cache.parents.length := ParentIndices.parentIndex
       prepared outer block.index
 
 /-- The common-bank position selected by a physical block reads its exact original cached parent. -/
 theorem blockIndex_read (outer : Fin prepared.occurrences.length)
     {vertical forward : Bool} {physical : Rectangle.Partition.PreparedAxisPartitions.Interval}
-    (block : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.ParentBlock
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) vertical
+    (block : ParentBlocks.ParentBlock
+      (ParentIndices.occurrenceAt prepared.occurrences outer) vertical
       forward physical) :
     Integration.PreparedParentSplitSelection.parentAt program.cache.parents
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.blockIndex prepared outer block) =
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer)
+      (ParentIndices.blockIndex prepared outer block) =
+      ParentBlocks.cacheParent
+        (ParentIndices.occurrenceAt prepared.occurrences outer)
         block.index :=
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.parentIndex_read prepared outer block.index
+  ParentIndices.parentIndex_read prepared outer block.index
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices

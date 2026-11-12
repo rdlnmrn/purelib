@@ -74,6 +74,8 @@ import Purelib.Topology.Surface.Sewing.SewnPrimitivePaths
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Gaussian.Norm.Sum
+
 open Purelib
 
 open Purelib.Algebra
@@ -123,14 +125,14 @@ open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 open Purelib.Algebra.FiniteSum.Fin (sumFin)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {hole : Fin base.faces.holes.length}
   {adjacent : HoleAdjacentFaces
     base (base.faces.holes[hole.val]'hole.isLt)}
 
 /-- The original inward source occurrences of one physical hole lap in transported root-sheet order. -/
-@[expose] def lapSources (sides : HoleRootedCorrection.HoleSideLifts lifted adjacent) (sheet : Fin 2) : List
+@[expose] def lapSources (sides : HoleSideLifts lifted adjacent) (sheet : Fin 2) : List
   (SewnPrimitiveContacts.SourceEdge lifted.mesh.triangles.length) :=
   let source := (base.faces.holes[hole.val]'hole.isLt)
   let afterLeft := (lifted.edges.edge (source.side .left).reverse).forward.target sheet
@@ -142,7 +144,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     LocatedFace.sideSource (sides.bottom.get afterRight).selected.located .top]
 
 /-- The retained source lap projects to the actual inward lifted hole lap. -/
-theorem lapSources_project (sides : HoleRootedCorrection.HoleSideLifts lifted adjacent) (sheet : Fin 2) :
+theorem lapSources_project (sides : HoleSideLifts lifted adjacent) (sheet : Fin 2) :
     (lapSources sides sheet).map (fun source => source.project
       lifted.mesh.triangulation.faces) =
       HoleBoundaryReadback.lap sides sheet := by
@@ -151,13 +153,13 @@ theorem lapSources_project (sides : HoleRootedCorrection.HoleSideLifts lifted ad
   rfl
 
 /-- Both original inward source laps, starting on sheet zero and then sheet one. -/
-@[expose] def boundarySources (sides : HoleRootedCorrection.HoleSideLifts lifted adjacent) : List
+@[expose] def boundarySources (sides : HoleSideLifts lifted adjacent) : List
   (SewnPrimitiveContacts.SourceEdge lifted.mesh.triangles.length) :=
   lapSources sides 0 ++
     lapSources sides 1
 
 /-- The complete retained source list projects to the original lifted physical hole boundary. -/
-theorem boundarySources_project (sides : HoleRootedCorrection.HoleSideLifts lifted adjacent) :
+theorem boundarySources_project (sides : HoleSideLifts lifted adjacent) :
     (boundarySources sides).map (fun source => source.project
       lifted.mesh.triangulation.faces) =
       (base.faces.holes[hole.val]'hole.isLt).liftedBoundary lifted.vertices lifted.edges := by
@@ -180,7 +182,7 @@ private theorem sources_positive (sources : List (SewnPrimitiveContacts.SourceEd
 
 /-- The original physical boundary has a unique positive triangle source at every occurrence. This applies to already
 retained annular source lists. -/
-theorem boundarySources_eq (sides : HoleRootedCorrection.HoleSideLifts lifted adjacent)
+theorem boundarySources_eq (sides : HoleSideLifts lifted adjacent)
     (sources : List (SewnPrimitiveContacts.SourceEdge lifted.mesh.triangles.length))
     (projected : sources.map (fun source => source.project lifted.mesh.triangulation.faces) =
       (base.faces.holes[hole.val]'hole.isLt).liftedBoundary lifted.vertices lifted.edges) :
@@ -194,9 +196,9 @@ theorem boundarySources_eq (sides : HoleRootedCorrection.HoleSideLifts lifted ad
 
 /-- Root transport only permutes the two sheets; the sum reads each of the four actual adjacent sides twice, with its
 original source orientation. -/
-theorem boundarySources_sum (sides : HoleRootedCorrection.HoleSideLifts lifted adjacent)
+theorem boundarySources_sum (sides : HoleSideLifts lifted adjacent)
     (value : SewnPrimitiveContacts.SourceEdge lifted.mesh.triangles.length → Data.Gaussian.Basic.Canonical) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    Basic.gaussianSum
       ((boundarySources sides).map value) =
       FiniteSum.Fin.sumFin (fun sheet =>
         value (LocatedFace.sideSource (sides.left.get sheet).selected.located .right) +
@@ -205,17 +207,17 @@ theorem boundarySources_sum (sides : HoleRootedCorrection.HoleSideLifts lifted a
         value (LocatedFace.sideSource (sides.bottom.get sheet).selected.located .top)) := by
   let source := (base.faces.holes[hole.val]'hole.isLt)
   let target := fun side => (lifted.edges.edge (source.side side).reverse).forward.target
-  have injective (side : GridLiftedDualSteps.GridSide) : Function.Injective (target side) :=
+  have injective (side : GridSide) : Function.Injective (target side) :=
     ((lifted.edges.edge (source.side side).reverse).bijection
       (BranchCellBank.referenceAt base.bank.toBranchCellBank _ (source.side side).reverse.vertices.1).toLoop
       (BranchCellBank.referenceAt base.bank.toBranchCellBank _ (source.side
         side).reverse.vertices.2).toLoop).forward_injective
-  have top := Data.Gaussian.Norm.Sum.Basic.sum_two_reindex (target .left) (injective .left)
+  have top := Basic.sum_two_reindex (target .left) (injective .left)
     (fun sheet => value (LocatedFace.sideSource (sides.top.get sheet).selected.located .bottom))
-  have right := Data.Gaussian.Norm.Sum.Basic.sum_two_reindex (fun sheet => target .top (target .left sheet))
+  have right := Basic.sum_two_reindex (fun sheet => target .top (target .left sheet))
     ((injective .top).comp (injective .left))
     (fun sheet => value (LocatedFace.sideSource (sides.right.get sheet).selected.located .left))
-  have bottom := Data.Gaussian.Norm.Sum.Basic.sum_two_reindex (fun sheet => target .right (target .top (target
+  have bottom := Basic.sum_two_reindex (fun sheet => target .right (target .top (target
     .left sheet)))
     ((injective .right).comp ((injective .top).comp (injective .left)))
     (fun sheet => value (LocatedFace.sideSource (sides.bottom.get sheet).selected.located .top))
@@ -228,7 +230,7 @@ theorem boundarySources_sum (sides : HoleRootedCorrection.HoleSideLifts lifted a
   simp only [boundarySources,
     lapSources, List.cons_append, List.nil_append,
     List.map_cons, List.map_nil,
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum, FiniteSum.Fin.sumFin_succ]
+    Basic.gaussianSum, FiniteSum.Fin.sumFin_succ]
   simp only [FiniteSum.Fin.sumFin, List.ofFn_zero, List.foldl_nil]
   change _ =
     (value (LocatedFace.sideSource (sides.left.get 0).selected.located .right) +
@@ -249,10 +251,10 @@ variable {domains : FaceDomainBank lifted.frames
     {i j : Fin genus}
 
 /-- Summing the actual boundary source chords gives the retained two-sheet hole chord readback. -/
-theorem boundarySources_chords (sides : HoleRootedCorrection.HoleSideLifts lifted adjacent)
+theorem boundarySources_chords (sides : HoleSideLifts lifted adjacent)
     (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh) (right :
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    Basic.gaussianSum
       ((boundarySources sides).map
       (TriangleReadings.sourceChord left right)) = LiftedPuncturedGrid.holeSourceChords left right sides :=
   boundarySources_sum sides (TriangleReadings.sourceChord left
@@ -260,12 +262,12 @@ theorem boundarySources_chords (sides : HoleRootedCorrection.HoleSideLifts lifte
 
 /-- The physical cut word and the root-ordered side list retain exactly the same source occurrences; no independently
 sampled values are substituted. -/
-theorem physical_sources_chords (sides : HoleRootedCorrection.HoleSideLifts lifted adjacent)
-    (physical : BranchHoleCutWords.PhysicalCutWord lifted ((base.faces.holes[hole.val]'hole.isLt).liftedBoundary
+theorem physical_sources_chords (sides : HoleSideLifts lifted adjacent)
+    (physical : PhysicalCutWord lifted ((base.faces.holes[hole.val]'hole.isLt).liftedBoundary
       lifted.vertices lifted.edges))
     (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh) (right :
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (physical.sources.sources.map (TriangleReadings.sourceChord left
+    Basic.gaussianSum (physical.sources.sources.map (TriangleReadings.sourceChord left
       right)) = LiftedPuncturedGrid.holeSourceChords left right sides := by
   rw [← boundarySources_eq sides physical.sources.sources
     physical.sources_project]
@@ -276,20 +278,20 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.T
 variable {cuts : CommonCuts domains}
   {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
   Preflights domains sheet}
-  {target : Purelib.Data.Rat.Fraction.Rational}
+  {target : Data.Rat.Fraction.Rational}
   {request : TwoSheetRequest (fun sheet =>
     RegularMeshes.build domains cuts sheet
     coarseDepth) fixed target}
 
 /-- The fine physical hole remainder is compared with the exact source list carried by the cut word, including the
 retained annular inner word. -/
-theorem remainder_add_physical_source_chords (sides : HoleRootedCorrection.HoleSideLifts lifted adjacent)
-    (physical : BranchHoleCutWords.PhysicalCutWord lifted ((base.faces.holes[hole.val]'hole.isLt).liftedBoundary
+theorem remainder_add_physical_source_chords (sides : HoleSideLifts lifted adjacent)
+    (physical : PhysicalCutWord lifted ((base.faces.holes[hole.val]'hole.isLt).liftedBoundary
       lifted.vertices lifted.edges))
-    (perimeters : Matched.FacePerimeters (request := request) cache.normalize i j)
+    (perimeters : FacePerimeters (request := request) cache.normalize i j)
     (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh) (right :
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh) :
-    HoleAreaRemainder.holeAreaRemainder perimeters sides + Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    HoleAreaRemainder.holeAreaRemainder perimeters sides + Basic.gaussianSum
       (physical.sources.sources.map (TriangleReadings.sourceChord left right)) =
       FiniteSum.Fin.sumFin (fun sheet =>
         ((perimeters.perimeters.get adjacent.left.position).get (sides.left.get sheet).selected.sheet).right -

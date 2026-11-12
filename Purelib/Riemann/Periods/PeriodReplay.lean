@@ -24,6 +24,8 @@ import Purelib.Computation.Query.Basic
 
 public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank
 
+open Purelib.Integration.Program.Gaussian.CCL.Replay
+
 public section
 
 /-!
@@ -67,7 +69,7 @@ constructive_injectivity Entry
 
 namespace Entry
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
 
 open Purelib.Geometry in
 /-- Read the retained lifted cycle from its shared thunk. -/
@@ -82,14 +84,14 @@ open Purelib.Integration
 
 /-- Record the requested finite observation prefix and its consumed model trace. -/
 @[expose] def record (entry : Entry curve) (request : Request) (count : Nat) :
-    Program.Gaussian.CCL.Replay.Observation.Record.Recorded entry.cached request count :=
-  Program.Gaussian.CCL.Replay.Observation.Record.record entry.cached request count
+    Observation.Record.Recorded entry.cached request count :=
+  Observation.Record.record entry.cached request count
 
 end
 
 /-- Compute the requested observation's selected refinement index. -/
 @[expose] def selectedIndex (entry : Entry curve) (request : Request) : Nat :=
-  Purelib.CCL.Progressive.IntegrationReplay.selectedIndex (Purelib.CCL.Progressive.IntegrationReplay.control
+  CCL.Progressive.IntegrationReplay.selectedIndex (CCL.Progressive.IntegrationReplay.control
     entry.cached) request
 
 open Purelib.Curves in
@@ -107,12 +109,12 @@ open Purelib.Integration in
 Trace membership identifies the retained reply with the original program model at the same queried cycle stage,
 including adaptive later requests. -/
 @[expose] def traceCertificates (entry : Entry curve) (request : Request) (count : Nat)
-    (exchange : Purelib.Computation.Query.Basic.Exchange Nat Program.Gaussian.Cached.Basic.CachedModel)
+    (exchange : Computation.Query.Basic.Exchange Nat Program.Gaussian.Cached.Basic.CachedModel)
     (member : exchange ∈ (entry.record request count).trace) :
     Hyperelliptic.Integration.Algebraic.Path.Basis.UniformPathCertificates curve entry.differential
       exchange.reply.model.cells
       (entry.cycle.liftedPath exchange.query).path := by
-  rw [Program.Gaussian.CCL.Replay.Observation.Record.recorded_reply entry.cached request count exchange member]
+  rw [Observation.Record.recorded_reply entry.cached request count exchange member]
   exact entry.program.certificates exchange.query
 
 open Purelib.Integration in
@@ -121,15 +123,15 @@ open Purelib.CCL.Progressive in
 theorem recorded_sample (entry : Entry curve) (request : Request) (count : Nat) :
     (entry.record request count).observation.selected.sample =
       (entry.program.integral.model (entry.selectedIndex request)).integralSample := by
-  rw [record, Program.Gaussian.CCL.Replay.Observation.Record.recorded_selected]
+  rw [record, Observation.Record.recorded_selected]
   exact IntegrationReplay.requestedReading_sample_model entry.cached request
 
 open Purelib.Integration in
 /-- The first recorded model is the retained model at the selected request index. -/
 theorem recorded_model (entry : Entry curve) (request : Request) (count : Nat) :
-    (Purelib.Data.List.getElem? (entry.record request count).trace 0).map (fun exchange => exchange.reply.model) =
+    (Data.List.getElem? (entry.record request count).trace 0).map (fun exchange => exchange.reply.model) =
       some (entry.program.integral.model (entry.selectedIndex request)) :=
-  Program.Gaussian.CCL.Replay.Observation.Record.recorded_model entry.cached request count
+  Observation.Record.recorded_model entry.cached request count
 
 open Purelib.Approximation in
 /-- Refine the retained integral name from the request's current state to its positive target. -/
@@ -144,25 +146,25 @@ open Purelib.Data in
 theorem recorded_prefix (entry : Entry curve) (request : Request) (count : Nat) :
     (entry.record request count).observation.word =
       (CCL.Transducer.Machine.Advance.advance (entry.refinedName request).machine count).emitted :=
-  Program.Gaussian.CCL.Replay.Observation.Record.recorded_prefix entry.cached request count
+  Observation.Record.recorded_prefix entry.cached request count
 
 section
 open Purelib.Integration
 /-- The recorded selected enclosure has squared radius strictly below the requested target. -/
 theorem recorded_accurate (entry : Entry curve) (request : Request) (count : Nat) :
     (entry.record request count).observation.selected.ball.radiusSq < request.target :=
-  Program.Gaussian.CCL.Replay.Observation.Record.recorded_accurate entry.cached request count
+  Observation.Record.recorded_accurate entry.cached request count
 
 /-- The recorded output word has exactly the requested finite length. -/
 theorem recorded_length (entry : Entry curve) (request : Request) (count : Nat) :
     (entry.record request count).observation.word.length = count :=
-  Program.Gaussian.CCL.Replay.Observation.Record.recorded_length entry.cached request count
+  Observation.Record.recorded_length entry.cached request count
 
 /-- A longer record extends the earlier output word as a prefix. -/
 theorem recorded_extends (entry : Entry curve) (request : Request) (count extra : Nat) :
     (entry.record request count).observation.word.IsPrefix
       (entry.record request (count + extra)).observation.word :=
-  Program.Gaussian.CCL.Replay.Observation.Record.recorded_extends entry.cached request count extra
+  Observation.Record.recorded_extends entry.cached request count extra
 
 end
 
@@ -170,20 +172,20 @@ open Purelib.Integration in
 open Purelib.Data in
 /-- The recorded word belongs to an actual exact cursor of the refined integral process. -/
 theorem recorded_exactCursor (entry : Entry curve) (request : Request) (count : Nat) :
-    ∃ actual : Data.CCL.Transducer.Machine,
+    ∃ actual : CCL.Transducer.Machine,
       actual.emitted = (entry.record request count).observation.word ∧
       CCL.Transducer.Machine.Semantics.Basic.ExactCursor
         (entry.refinedName request).process (entry.refinedName request).state actual :=
-  Program.Gaussian.CCL.Replay.Observation.Record.recorded_exactCursor entry.cached request count
+  Observation.Record.recorded_exactCursor entry.cached request count
 
 open Purelib.Integration in
 /-- Replaying the retained observation trace returns the exact recorded finite observation. -/
 theorem replay (entry : Entry curve) (request : Request) (count : Nat) :
-    Integration.Program.Gaussian.CCL.Replay.Observation.Transcript.replay
-      (Purelib.CCL.Progressive.IntegrationReplay.control
+    Observation.Transcript.replay
+      (CCL.Progressive.IntegrationReplay.control
       entry.cached) request count
         (entry.record request count).trace = .ok (entry.record request count).observation :=
-  Integration.Program.Gaussian.CCL.Replay.Observation.Transcript.observation_replay entry.cached request count
+  Observation.Transcript.observation_replay entry.cached request count
 
 end Entry
 
@@ -199,12 +201,12 @@ open Purelib.Riemann in
 open Purelib.Curves in
 /-- Select a replay entry from retained period data while sharing its exact cycle through a thunk. -/
 @[expose] def ofPeriodData {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    (data : Periods.PeriodMatrix.PeriodData curve) : StandardEntry genus → Entry curve
+    (data : PeriodMatrix.PeriodData curve) : StandardEntry genus → Entry curve
   | .a differential cycle =>
-      ⟨Periods.PeriodMatrix.standardDifferential differential,
+      ⟨PeriodMatrix.standardDifferential differential,
         ⟨fun _ => data.cycles.aCycle cycle⟩, data.aProgram differential cycle⟩
   | .b differential cycle =>
-      ⟨Periods.PeriodMatrix.standardDifferential differential,
+      ⟨PeriodMatrix.standardDifferential differential,
         ⟨fun _ => data.cycles.bCycle cycle⟩, data.bProgram differential cycle⟩
 
 open Purelib.Curves in

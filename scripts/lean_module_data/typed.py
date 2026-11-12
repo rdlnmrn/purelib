@@ -52,10 +52,15 @@ def substring_equal_observer(string,start,stop):
  return data[begin:end].decode('utf8','strict')
 
 class TypedDecoder:
- def __init__(self, paths):
+ def __init__(self, paths, shared=None):
+  """Keep pointer caches local; optionally intern immutable nodes across modules."""
   self.parts=stage_a.ModuleParts()
   for path in paths: self.parts.add(path)
-  self.cache={}; self.active=set(); self.nodes=[]; self.identities={}; self.raw_objects={}; self.eq_ids=[]; self.eq_identities={}; self.name_payload_ids=[]; self.name_payloads={}
+  self.cache={}; self.active=set()
+  for field in ('nodes','eq_ids','name_payload_ids'):
+   setattr(self,field,getattr(shared,field) if shared is not None else [])
+  for field in ('identities','eq_identities','name_payloads'):
+   setattr(self,field,getattr(shared,field) if shared is not None else {})
 
  def header(self, ptr):
   r,o=self.parts.locate(ptr)
@@ -199,12 +204,13 @@ class TypedDecoder:
    else:
     tag,requests,scalar,atom=desc
     children=tuple(self.cache[c] for c in requests)
-    self.raw_objects[key]={"tag":tag,"children":requests,"scalars":scalar,"value":atom}
     # Expr equality observes its hash, but does not compare the other computed
     # cache bits. Level equality likewise tests hash before logical structure.
     identity_scalar=scalar
     if key[0] in ('Expr','Level'): identity_scalar=scalar[:4]+scalar[8:]
-    identity=(key[0],tag,children,identity_scalar,atom)
+    # Node storage preserves every scalar byte even when kernel equality
+    # deliberately ignores computed cache bits (including across modules).
+    identity=(key[0],tag,children,scalar,atom)
     idx=self.identities.get(identity)
     if idx is None:
      idx=len(self.nodes); self.identities[identity]=idx

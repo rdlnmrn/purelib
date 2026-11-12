@@ -57,6 +57,8 @@ import Purelib.Riemann.Meshes.PuncturedGridFaces
 import Purelib.Riemann.Meshes.ShrinkingPuncturedGrid
 import Purelib.RootIsolation.Newton.Band.Basic
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Algebra
@@ -114,7 +116,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FaceP
 open Purelib.Data.Gaussian.Basic (Canonical)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target
@@ -131,7 +133,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {energy : SurfaceRequest partitions coarse fixed error}
   {stage : Nat} {cache : Numerics domains
     stage} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
-  {assemblies : ExteriorRequest.Assemblies energy
+  {assemblies : Assemblies energy
     cache coefficients} {perimeters : Perimeters
     assemblies}
   {position : Fin grid.faces.regulars.length}
@@ -148,7 +150,7 @@ open Purelib.Data.Gaussian.Basic (Canonical)
 open Purelib.Riemann.Periods.CenteredBilinearPath (Sample area)
 open _root_.Purelib.Data.Gaussian.Basic (conj)
 
-variable {trace : Purelib.Integration.Path.JoinedTrace.VertexTrace
+variable {trace : Integration.Path.JoinedTrace.VertexTrace
   (OwnedVertex ((domains.get position).domain
   sheet).geometry)}
 
@@ -157,24 +159,24 @@ open Purelib.Riemann.RootContinuation.PreparedNewtonBandSamples (PreparedBandReq
 open Purelib.Riemann.Paths.PreparedBoundarySegments (SameSide)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
-variable (geometry : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry (domains.get
+variable (geometry : PuncturedGrid.Face.SidePreparation.SideGeometry (domains.get
   position).models (fun vertex => (trace.indexed vertex).point))
 
 open Purelib.Riemann.RootContinuation.PreparedNewtonBandFamilies (PreparedBandFamily DifferentialFamily)
 open Purelib.Riemann.RootContinuation.PreparedNewtonBandSamples (PreparedBandBudget)
 
-variable {bandAmbient : Purelib.Geometry.Rational.Box} {current :
-  Purelib.RootIsolation.State.Raw.RawWindingState curve.polynomial bandAmbient}
-  {profile : Purelib.Riemann.RootContinuation.NewtonBandBounds.Profile curve.squarefree current.box}
+variable {bandAmbient : Geometry.Rational.Box} {current :
+  RootIsolation.State.Raw.RawWindingState curve.polynomial bandAmbient}
+  {profile : NewtonBandBounds.Profile curve.squarefree current.box}
   {family : DifferentialFamily profile genus}
   {periodTarget radius areaTarget : Rational}
 
 /-- The total of the original retained nonnegative coordinate lengths is nonnegative. -/
-private theorem lengths_nonnegative {coordinate : RectangularOwnedTriangulation.OwnedVertex ((domains.get
-  position).domain sheet).geometry → Fraction.Rational}
+private theorem lengths_nonnegative {coordinate : OwnedVertex ((domains.get
+  position).domain sheet).geometry → Rational}
     (lengths : VertexTrace.Lengths trace coordinate) : 0 ≤ lengths.total := by
   rw [lengths.total_eq]
-  have bound := Order.Positivity.sumFin_mono (fun _ : Fin trace.rest.length => (0 : Fraction.Rational))
+  have bound := Order.Positivity.sumFin_mono (fun _ : Fin trace.rest.length => (0 : Rational))
     (fun edge => lengths.values edge) lengths.nonnegative
   exact FiniteSum.Fin.sumFin_zero.symm.trans_le bound
 
@@ -215,22 +217,22 @@ variable {geometry}
 /-- The actual selected radius controls each conjugate side area before the pre-grid allocation is paid. -/
 theorem band_pair_bound
     (band : PreparedNewtonBandFamilies.PreparedBandFamily family periodTarget radius)
-    (request : FacePerimeterTraces.SideRequest geometry (PreparedBandFamily.sideBudget band
+    (request : SideRequest geometry (PreparedBandFamily.sideBudget band
       trace.rest.length).tolerance)
     (inside : ∀ vertex, band.selection.sample.output.box.Contains (trace.indexed vertex).point)
-    (side : ∀ first last, PreparedBoundarySegments.SameSide band.selection.sample.output.box (trace.indexed first).point
+    (side : ∀ first last, SameSide band.selection.sample.output.box (trace.indexed first).point
       (trace.indexed last).point)
     (later : request.index ≤ stage) (readings : BasisReadings trace cache) (first second : Fin
       genus)
     (sample : CenteredBilinearPath.Sample (FacePerimeterTraces.pairValues cache trace first second))
-    {coordinate : RectangularOwnedTriangulation.OwnedVertex ((domains.get position).domain sheet).geometry →
-      Fraction.Rational}
+    {coordinate : OwnedVertex ((domains.get position).domain sheet).geometry →
+      Rational}
     (lengths : VertexTrace.Lengths trace coordinate)
     (movement : ∀ edge : Fin trace.rest.length,
-      Data.Gaussian.Norm.Basic.normSq ((trace.indexed edge.succ).point - (trace.indexed edge.castSucc).point) =
+      Basic.normSq ((trace.indexed edge.succ).point - (trace.indexed edge.castSucc).point) =
         (lengths.values edge)^2)
     (lengthLe : lengths.total ≤ 4 * band.selection.sample.output.radius) :
-    Data.Gaussian.Norm.Basic.normSq sample.centeredArea ≤ PreparedBandFamily.areaCoefficient family *
+    Basic.normSq sample.centeredArea ≤ PreparedBandFamily.areaCoefficient family *
       band.selection.sample.output.radius^2 := by
   have bound := request.pair_area_bound (PreparedBandFamily.sideBudget band trace.rest.length) first second
     (band.forDifferential first) (band.forDifferential second) inside side inside side
@@ -239,54 +241,54 @@ theorem band_pair_bound
     (PreparedBandFamily.second_density_le band first second) later readings sample lengths movement
   have rate := PreparedBandFamily.area_rate band first second (PreparedBandFamily.sideBudget band trace.rest.length)
     (PreparedBandFamily.sideBudget_padding_le band trace.rest.length)
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces.lengths_nonnegative lengths)
+    (FacePerimeterTraces.lengths_nonnegative lengths)
       lengthLe
   exact bound.trans rate
 
 /-- A prepared radius pays the complete conjugate side area, for every pair at the request's common numerical stage. The
 actual band-side condition is retained; containment in a band alone does not imply it. -/
 theorem band_pair_paid
-    (radiusBudget : PreparedNewtonBandSamples.PreparedBandBudget (PreparedBandFamily.areaCoefficient family) areaTarget
+    (radiusBudget : PreparedBandBudget (PreparedBandFamily.areaCoefficient family) areaTarget
       radius)
     (band : PreparedNewtonBandFamilies.PreparedBandFamily family periodTarget radiusBudget.size)
-    (request : FacePerimeterTraces.SideRequest geometry (PreparedBandFamily.sideBudget band
+    (request : SideRequest geometry (PreparedBandFamily.sideBudget band
       trace.rest.length).tolerance)
     (inside : ∀ vertex, band.selection.sample.output.box.Contains (trace.indexed vertex).point)
-    (side : ∀ first last, PreparedBoundarySegments.SameSide band.selection.sample.output.box (trace.indexed first).point
+    (side : ∀ first last, SameSide band.selection.sample.output.box (trace.indexed first).point
       (trace.indexed last).point)
     (later : request.index ≤ stage) (readings : BasisReadings trace cache) (first second : Fin
       genus)
     (sample : CenteredBilinearPath.Sample (FacePerimeterTraces.pairValues cache trace first second))
-    {coordinate : RectangularOwnedTriangulation.OwnedVertex ((domains.get position).domain sheet).geometry →
-      Fraction.Rational}
+    {coordinate : OwnedVertex ((domains.get position).domain sheet).geometry →
+      Rational}
     (lengths : VertexTrace.Lengths trace coordinate)
     (movement : ∀ edge : Fin trace.rest.length,
-      Data.Gaussian.Norm.Basic.normSq ((trace.indexed edge.succ).point - (trace.indexed edge.castSucc).point) =
+      Basic.normSq ((trace.indexed edge.succ).point - (trace.indexed edge.castSucc).point) =
         (lengths.values edge)^2)
     (lengthLe : lengths.total ≤ 4 * band.selection.sample.output.radius) :
-    Data.Gaussian.Norm.Basic.normSq sample.centeredArea ≤ areaTarget :=
+    Basic.normSq sample.centeredArea ≤ areaTarget :=
   (request.band_pair_bound band inside side later readings first second sample lengths movement lengthLe).trans
     (PreparedBandFamily.quadratic_paid radiusBudget band)
 
 /-- Homogeneous bound using the actual radius of an already selected band. -/
 theorem band_energy_bound
     (band : PreparedNewtonBandFamilies.PreparedBandFamily family periodTarget radius)
-    (request : FacePerimeterTraces.SideRequest geometry (PreparedBandFamily.sideBudget band
+    (request : SideRequest geometry (PreparedBandFamily.sideBudget band
       trace.rest.length).tolerance)
     (inside : ∀ vertex, band.selection.sample.output.box.Contains (trace.indexed vertex).point)
-    (side : ∀ first last, PreparedBoundarySegments.SameSide band.selection.sample.output.box (trace.indexed first).point
+    (side : ∀ first last, SameSide band.selection.sample.output.box (trace.indexed first).point
       (trace.indexed last).point)
     (later : request.index ≤ stage) (readings : BasisReadings trace cache)
     (combined : CenteredBilinearPath.Sample (FacePerimeterTraces.traceValues cache coefficients trace))
-    {coordinate : RectangularOwnedTriangulation.OwnedVertex ((domains.get position).domain sheet).geometry →
-      Fraction.Rational}
+    {coordinate : OwnedVertex ((domains.get position).domain sheet).geometry →
+      Rational}
     (lengths : VertexTrace.Lengths trace coordinate)
     (movement : ∀ edge : Fin trace.rest.length,
-      Data.Gaussian.Norm.Basic.normSq ((trace.indexed edge.succ).point - (trace.indexed edge.castSucc).point) =
+      Basic.normSq ((trace.indexed edge.succ).point - (trace.indexed edge.castSucc).point) =
         (lengths.values edge)^2)
     (lengthLe : lengths.total ≤ 4 * band.selection.sample.output.radius) :
-    Data.Gaussian.Norm.Basic.normSq combined.centeredArea ≤
-      (genus : Fraction.Rational)^2 * PreparedObservationCoercivity.coefficientNormSq coefficients^2 *
+    Basic.normSq combined.centeredArea ≤
+      (genus : Rational)^2 * PreparedObservationCoercivity.coefficientNormSq coefficients^2 *
         (PreparedBandFamily.areaCoefficient family * band.selection.sample.output.radius^2) := by
   let pairs := readings.pairSamples
   apply FacePerimeterTraces.centered_combination_bound trace combined (fun first second => (pairs.get first).get second)
@@ -297,25 +299,25 @@ theorem band_energy_bound
 /-- The radius and numerical request are independent of the coefficients. The squared area error retains the required
 homogeneous quadratic factor. -/
 theorem band_energy_paid
-    (radiusBudget : PreparedNewtonBandSamples.PreparedBandBudget (PreparedBandFamily.areaCoefficient family) areaTarget
+    (radiusBudget : PreparedBandBudget (PreparedBandFamily.areaCoefficient family) areaTarget
       radius)
     (band : PreparedNewtonBandFamilies.PreparedBandFamily family periodTarget radiusBudget.size)
-    (request : FacePerimeterTraces.SideRequest geometry (PreparedBandFamily.sideBudget band
+    (request : SideRequest geometry (PreparedBandFamily.sideBudget band
       trace.rest.length).tolerance)
     (inside : ∀ vertex, band.selection.sample.output.box.Contains (trace.indexed vertex).point)
-    (side : ∀ first last, PreparedBoundarySegments.SameSide band.selection.sample.output.box (trace.indexed first).point
+    (side : ∀ first last, SameSide band.selection.sample.output.box (trace.indexed first).point
       (trace.indexed last).point)
     (later : request.index ≤ stage) (readings : BasisReadings trace cache)
     (combined : CenteredBilinearPath.Sample (FacePerimeterTraces.traceValues cache coefficients trace))
-    {coordinate : RectangularOwnedTriangulation.OwnedVertex ((domains.get position).domain sheet).geometry →
-      Fraction.Rational}
+    {coordinate : OwnedVertex ((domains.get position).domain sheet).geometry →
+      Rational}
     (lengths : VertexTrace.Lengths trace coordinate)
     (movement : ∀ edge : Fin trace.rest.length,
-      Data.Gaussian.Norm.Basic.normSq ((trace.indexed edge.succ).point - (trace.indexed edge.castSucc).point) =
+      Basic.normSq ((trace.indexed edge.succ).point - (trace.indexed edge.castSucc).point) =
         (lengths.values edge)^2)
     (lengthLe : lengths.total ≤ 4 * band.selection.sample.output.radius) :
-    Data.Gaussian.Norm.Basic.normSq combined.centeredArea ≤
-      (genus : Fraction.Rational)^2 * PreparedObservationCoercivity.coefficientNormSq coefficients^2 * areaTarget := by
+    Basic.normSq combined.centeredArea ≤
+      (genus : Rational)^2 * PreparedObservationCoercivity.coefficientNormSq coefficients^2 * areaTarget := by
   let pairs := readings.pairSamples
   apply FacePerimeterTraces.centered_combination_bound trace combined (fun first second => (pairs.get first).get second)
   intro first second

@@ -40,6 +40,8 @@ import Purelib.Topology.Polygon.Stokes
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-! Opposite-sheet conjugate polygons on the actual edge valuation reuse
@@ -74,16 +76,16 @@ open Purelib.Data.Gaussian.Norm.Basic (normSq_neg)
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid}
-  {edges : Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames} {mesh : LiftedMesh vertices edges
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid}
+  {edges : RootIsolation.SquareRoot.Grid.RootEdgeBank frames} {mesh : LiftedMesh vertices edges
     base.faces}
   {domains : FaceDomainBank frames
     base.faces.regulars}
   {leftDifferential rightDifferential : Differential genus}
-  {start finish : Canonical} {walk : Purelib.Polynomial.Geometry.Grid.Walks.Walk
+  {start finish : Canonical} {walk : Polynomial.Geometry.Grid.Walks.Walk
     base.bank.grid start finish}
 
 variable {leftFixed : FaceMagnitudeBank domains leftDifferential} {rightFixed : FaceMagnitudeBank domains
@@ -96,15 +98,15 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.ConjugatePolygonRequ
 
 Both chart transfers reuse the source observations from the same retained whole-walk conjugate comparison. -/
 theorem conjugate_accurate (request : PolygonRequest leftFixed rightFixed paired first last error)
-    {stage : Nat} {leftBank : PrimitiveData.FacePrimitiveBank leftDifferential stage domains}
-    {rightBank : PrimitiveData.FacePrimitiveBank rightDifferential stage domains}
-    (leftReadings : TrianglePrimitiveReadings.TriangleReadings leftBank mesh) (rightReadings :
-      TrianglePrimitiveReadings.TriangleReadings rightBank mesh)
+    {stage : Nat} {leftBank : FacePrimitiveBank leftDifferential stage domains}
+    {rightBank : FacePrimitiveBank rightDifferential stage domains}
+    (leftReadings : TriangleReadings leftBank mesh) (rightReadings :
+      TriangleReadings rightBank mesh)
     (later : request.index ≤ stage) (different : first ≠ last) :
     let value := fun edge => (⟨Data.Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation mesh
       leftReadings.values edge),
       CanonicalEdgeValues.edgeValuation mesh rightReadings.values edge⟩ : PrimitivePoint)
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area ((edges.indexedEdges vertices walk first).map
+    Basic.normSq (PairedIncrementArea.area ((edges.indexedEdges vertices walk first).map
       value) -
       PairedIncrementArea.area ((edges.indexedEdges vertices walk last).map value)) ≤ error := by
   intro value
@@ -132,22 +134,22 @@ theorem conjugate_accurate (request : PolygonRequest leftFixed rightFixed paired
     unfold polygon
     rw [← paired.sources_project sheet, Map.map_map]
     rfl
-  change Data.Gaussian.Norm.Basic.normSq (source first - PairedIncrementArea.area
+  change Basic.normSq (source first - PairedIncrementArea.area
     ((paired.sources first).map (fun source => value (source.project mesh.triangulation.faces)))) ≤ error / 10 at left
   rw [readback first] at left
-  change Data.Gaussian.Norm.Basic.normSq (source last - PairedIncrementArea.area
+  change Basic.normSq (source last - PairedIncrementArea.area
     ((paired.sources last).map (fun source => value (source.project mesh.triangulation.faces)))) ≤ error / 10 at right
   rw [readback last] at right
-  have reversed : Data.Gaussian.Norm.Basic.normSq (polygon first - source first) ≤ error / 10 := by
+  have reversed : Basic.normSq (polygon first - source first) ≤ error / 10 := by
     rw [show polygon first - source first = -(source first - polygon first) by ring1,
-      Data.Gaussian.Norm.Basic.normSq_neg]
+      Basic.normSq_neg]
     exact left
-  have middle : Data.Gaussian.Norm.Basic.normSq (source first - polygon last) ≤ 2 * (error / 10 + error / 10)
+  have middle : Basic.normSq (source first - polygon last) ≤ 2 * (error / 10 + error / 10)
     :=
-    (Data.Gaussian.Norm.Bounds.normSq_sub_le_via (source first) (source last) (polygon last)).trans
+    (Bounds.normSq_sub_le_via (source first) (source last) (polygon last)).trans
       (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct opposite
         right) (by decide))
-  have estimate := (Data.Gaussian.Norm.Bounds.normSq_sub_le_via (polygon first) (source first) (polygon last)).trans
+  have estimate := (Bounds.normSq_sub_le_via (polygon first) (source first) (polygon last)).trans
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct reversed
       middle) (by decide))
   exact estimate.trans_eq ((by ring1 : 2 * (error / 10 + 2 * (error / 10 + error / 10)) = error / 10 * 10).trans

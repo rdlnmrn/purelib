@@ -11,6 +11,8 @@ import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Data.Gaussian.Field
 import Purelib.Polynomial.Dense.Evaluation
 
+open Purelib.Polynomial.Dense.Gaussian.Path
+
 open Purelib.Polynomial.Dense.Rational.Pair.Path.Basic (PolynomialEdge)
 
 open Purelib.Data
@@ -38,41 +40,41 @@ namespace Purelib.Polynomial.Dense.Rational.Pair.Path.Basic.PolynomialEdge
 /-- Pointwise nonvanishing of an affine polynomial path gives the displayed
 coordinate coprimality used by the constructive Sturm chain. -/
 theorem ofLine_coprime_of_eval_ne_zero
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (origin direction :
+    (p : Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (origin direction :
       Gaussian.Basic.Canonical)
     (start stop : Fraction.Rational)
     (nonzero : ∀ t : Fraction.Rational, p.eval (Affine.line origin direction t) ≠ 0) :
-    (PolynomialEdge.ofLine p origin direction start stop).Coprime := by
+    (ofLine p origin direction start stop).Coprime := by
   intro t
   by_cases realZero :
-      (PolynomialEdge.ofLine p origin direction start stop).realPart.eval t = 0
+      (ofLine p origin direction start stop).realPart.eval t = 0
   · right
     intro imaginaryZero
     apply nonzero t
     apply Gaussian.Basic.ext
-    · rw [← Dense.Gaussian.Path.Components.eval_pathReal]
+    · rw [← Components.eval_pathReal]
       exact realZero
-    · rw [← Dense.Gaussian.Path.Components.eval_pathImag]
+    · rw [← Components.eval_pathImag]
       exact imaginaryZero
   · exact Or.inl realZero
 
 /-- Conversely, displayed coordinate coprimality certifies pointwise
 nonvanishing of the represented affine Gaussian path. -/
 theorem eval_ne_zero_of_ofLine_coprime
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (origin direction :
+    (p : Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (origin direction :
       Gaussian.Basic.Canonical)
     (start stop t : Fraction.Rational)
-    (coprime : (PolynomialEdge.ofLine p origin direction start stop).Coprime) :
+    (coprime : (ofLine p origin direction start stop).Coprime) :
     p.eval (Affine.line origin direction t) ≠ 0 := by
   intro zero
   rcases coprime t with realNonzero | imaginaryNonzero
   · apply realNonzero
-    change (Dense.Gaussian.Path.Components.pathReal p origin direction).eval t = 0
-    rw [Dense.Gaussian.Path.Components.eval_pathReal]
+    change (Components.pathReal p origin direction).eval t = 0
+    rw [Components.eval_pathReal]
     exact congrArg (fun z : Gaussian.Basic.Canonical => z.re) zero
   · apply imaginaryNonzero
-    change (Dense.Gaussian.Path.Components.pathImag p origin direction).eval t = 0
-    rw [Dense.Gaussian.Path.Components.eval_pathImag]
+    change (Components.pathImag p origin direction).eval t = 0
+    rw [Components.eval_pathImag]
     exact congrArg (fun z : Gaussian.Basic.Canonical => z.im) zero
 end Purelib.Polynomial.Dense.Rational.Pair.Path.Basic.PolynomialEdge
 

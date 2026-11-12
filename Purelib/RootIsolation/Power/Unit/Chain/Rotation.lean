@@ -62,7 +62,7 @@ structure RotationFormulas
     {degree : RootDegree} {degreeAtLeastTwo : 2 ≤ degree.value}
     (quarter : UnitCircuitQuarter) {start finish :
       UnitVertex}
-    (chain : Power.Unit.Chain.Basic.UnitChain degree degreeAtLeastTwo start finish) : Prop where
+    (chain : UnitChain degree degreeAtLeastTwo start finish) : Prop where
   /-- The original edgewise right-half-plane formulas for the rotated retained parameter chain. -/ halfPlane :
     Winding.Polygon.HalfPlane.ChainHalfPlaneFormula
     (Dense.Gaussian.UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter) start.value chain.vertices
@@ -104,9 +104,9 @@ theorem castFinish
     {degree : RootDegree} {degreeAtLeastTwo : 2 ≤ degree.value}
     (quarter : UnitCircuitQuarter)
     {start left right : UnitVertex} (same : left = right)
-    {chain : Power.Unit.Chain.Basic.UnitChain degree degreeAtLeastTwo start left}
-    (formulas : Power.Unit.Chain.Basic.UnitChain.RotationFormulas quarter chain) :
-    Power.Unit.Chain.Basic.UnitChain.RotationFormulas quarter (Power.Unit.Chain.Basic.UnitChain.castFinish same chain)
+    {chain : Basic.UnitChain degree degreeAtLeastTwo start left}
+    (formulas : Basic.UnitChain.RotationFormulas quarter chain) :
+    Basic.UnitChain.RotationFormulas quarter (Basic.UnitChain.castFinish same chain)
       := by
   subst right
   exact formulas
@@ -143,8 +143,8 @@ theorem cons
     {degree : RootDegree} {degreeAtLeastTwo : 2 ≤ degree.value}
     (quarter : UnitCircuitQuarter)
     {source middle finish : UnitVertex}
-    {small : Power.Unit.Move.Budget.UnitMoveSmall source.unit middle.unit degree degreeAtLeastTwo}
-    {remaining : Power.Unit.Chain.Basic.UnitChain degree degreeAtLeastTwo middle finish}
+    {small : Move.Budget.UnitMoveSmall source.unit middle.unit degree degreeAtLeastTwo}
+    {remaining : Basic.UnitChain degree degreeAtLeastTwo middle finish}
     (edgeHalfPlane : Dense.Rational.CauchyIndex.HalfPlane.Formula
       (Dense.Gaussian.Path.Components.pathReal (Dense.Gaussian.UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter)
         source.value (middle.value - source.value))
@@ -154,8 +154,8 @@ theorem cons
       Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
       (Dense.Gaussian.Constants.gaussianConstant (Geometry.Gaussian.UnitCircle.Quarter.unitCircuitRotation quarter))
       source.value (middle.value - source.value) 0 1)
-    (tail : Power.Unit.Chain.Basic.UnitChain.RotationFormulas quarter remaining) :
-    Power.Unit.Chain.Basic.UnitChain.RotationFormulas quarter (Power.Unit.Chain.Basic.UnitChain.cons small remaining) :=
+    (tail : Basic.UnitChain.RotationFormulas quarter remaining) :
+    Basic.UnitChain.RotationFormulas quarter (Basic.UnitChain.cons small remaining) :=
   { halfPlane := .cons edgeHalfPlane tail.halfPlane
     product := .cons edgeProduct tail.product }
 end UnitChain
@@ -192,12 +192,12 @@ theorem coordinateRaw_eq_endpoint
     {degree : RootDegree} {degreeAtLeastTwo : 2 ≤ degree.value}
     {quarter : UnitCircuitQuarter} {start finish :
       UnitVertex}
-    {chain : Power.Unit.Chain.Basic.UnitChain degree degreeAtLeastTwo start finish}
-    (formulas : Power.Unit.Chain.Basic.UnitChain.RotationFormulas quarter chain) :
+    {chain : Basic.UnitChain degree degreeAtLeastTwo start finish}
+    (formulas : Basic.UnitChain.RotationFormulas quarter chain) :
     Winding.Polygon.Basic.chainRaw
         Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial start.value chain.vertices =
-      Power.Unit.Chain.Basic.UnitChain.rotationEndpointCorrection quarter start.value -
-        Power.Unit.Chain.Basic.UnitChain.rotationEndpointCorrection quarter finish.value := by
+      Basic.UnitChain.rotationEndpointCorrection quarter start.value -
+        Basic.UnitChain.rotationEndpointCorrection quarter finish.value := by
   have halfPlane :=
     Winding.Polygon.HalfPlane.chainRaw_eq_endpoint_corrections_of_halfPlane
       (Dense.Gaussian.UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter) start.value chain.vertices
@@ -209,7 +209,7 @@ theorem coordinateRaw_eq_endpoint
     start.value chain.vertices formulas.product
   have constantZero := Winding.Polygon.Constant.chainRaw_gaussianConstant_zero
     (Geometry.Gaussian.UnitCircle.Quarter.unitCircuitRotation_ne_zero quarter) start.value chain.vertices
-  unfold Power.Unit.Chain.Basic.UnitChain.rotationEndpointCorrection
+  unfold Basic.UnitChain.rotationEndpointCorrection
   unfold Dense.Gaussian.UnitCircle.Rotation.unitCircuitRotatedCoordinate at halfPlane ⊢
   rw [halfPlane, constantZero] at product
   rw [chain.vertices_terminal] at product
@@ -247,9 +247,9 @@ theorem nil
     {degree : RootDegree} {degreeAtLeastTwo : 2 ≤ degree.value}
     (quarter : UnitCircuitQuarter) (vertex :
       UnitVertex) :
-    Power.Unit.Chain.Basic.UnitChain.RotationFormulas (degree := degree)
+    Basic.UnitChain.RotationFormulas (degree := degree)
       (degreeAtLeastTwo := degreeAtLeastTwo) quarter
-      (Power.Unit.Chain.Basic.UnitChain.nil vertex) :=
+      (Basic.UnitChain.nil vertex) :=
   { halfPlane := Winding.Polygon.HalfPlane.ChainHalfPlaneFormula.nil vertex.value
     product := Winding.Polygon.Product.ChainProductFormula.nil vertex.value }
 end UnitChain

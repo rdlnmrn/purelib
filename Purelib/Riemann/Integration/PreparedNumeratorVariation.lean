@@ -27,6 +27,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -47,7 +49,7 @@ open Purelib.Riemann.Readings.PreparedObservationInterpolation (eval_reverse_ofF
 open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 
 /-- The original rational box carrier with retained coordinate bounds. -/
-abbrev Box := Purelib.Geometry.Rational.Box
+abbrev Box := Geometry.Rational.Box
 
 open Purelib.Data in
 open Purelib.Data.Gaussian in
@@ -151,7 +153,7 @@ open Purelib.Data.Rat in
 theorem scale_nonnegative (variation : NumeratorVariation count ambient) :
     0 <= variation.scale := by
   rw [variation.scale_eq]
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct
+  exact Arithmetic.mul_nonneg_direct
     (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count))
     variation.totalSlope_nonnegative
 
@@ -181,7 +183,7 @@ theorem power_sub_bound (variation : NumeratorVariation count ambient)
     (basisNumerator row) leftInside rightInside
   rw [basisNumerator_eval, basisNumerator_eval, <- variation.basisSlope_eq] at bound
   simp only [Norm.Basic.normSq_eq_canonical] at bound
-  exact bound.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+  exact bound.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct
     (variation.basisSlope_le_total row) (by
         simpa only [Norm.Basic.normSq_eq_canonical]
           using (Norm.Basic.normSq_nonneg _)))
@@ -196,7 +198,7 @@ open Purelib.Polynomial in
 The bound is the retained count-scaled basis slope times the original coefficient norm sum and squared distance between
 the supplied points. -/
 theorem numerator_sub_bound (variation : NumeratorVariation count ambient)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector count)
+    (coefficients : Energy.GaussianVector count)
     {left right : Basic.Canonical}
     (leftInside : ambient.Contains left) (rightInside : ambient.Contains right) :
     normSq ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval left -
@@ -212,7 +214,7 @@ theorem numerator_sub_bound (variation : NumeratorVariation count ambient)
     intro row
     rw [<- mul_sub, ← Norm.Basic.normSq_eq_canonical, Norm.Basic.normSq_mul]
     simp only [Norm.Basic.normSq_eq_canonical]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_left_direct
       (variation.power_sub_bound row leftInside rightInside) (by
           simpa only [Norm.Basic.normSq_eq_canonical]
             using (Norm.Basic.normSq_nonneg _))
@@ -232,7 +234,7 @@ open Purelib.Polynomial in
 Half the sample value minus the original variation scale times coefficient norm and cell diagonal squared is a lower
 bound at every supplied point of that cell. -/
 theorem sampled_lower_le (variation : NumeratorVariation count ambient)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector count)
+    (coefficients : Energy.GaussianVector count)
     {sample point : Basic.Canonical} {cell : Box}
     (sampleInside : cell.Contains sample) (pointInside : cell.Contains point)
     (refines : cell.Refines ambient) :
@@ -245,11 +247,11 @@ theorem sampled_lower_le (variation : NumeratorVariation count ambient)
     sum_nonnegative _ (fun row => by
         simpa only [Norm.Basic.normSq_eq_canonical]
           using (Norm.Basic.normSq_nonneg (coefficients row)))
-  have distanceBound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  have distanceBound := Arithmetic.mul_le_mul_of_nonneg_left_direct
     (show normSq (sample - point) ≤ cell.diagonalSq from by
       simpa only [Norm.Basic.normSq_eq_canonical] using
         (Box.normSq_sub_le_diagonalSq sampleInside pointInside))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct variation.scale_nonnegative coefficientNonnegative)
+    (Arithmetic.mul_nonneg_direct variation.scale_nonnegative coefficientNonnegative)
   have triangle := Norm.Bounds.half_normSq_sub_le_normSq_sub
     ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval sample)
     ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval point)
@@ -269,9 +271,9 @@ theorem sampled_lower_le (variation : NumeratorVariation count ambient)
           (normSq ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval point) -
             normSq ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval sample -
               (Geometry.EvaluationLower.coefficientPolynomial coefficients).eval point)) :=
-        Fraction.Order.Arithmetic.add_le_add_direct triangle le_rfl
+        Arithmetic.add_le_add_direct triangle le_rfl
       _ = normSq ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval point) := by ring1
-  exact (Fraction.Order.Arithmetic.sub_le_sub_left_direct
+  exact (Arithmetic.sub_le_sub_left_direct
     (bound.trans distanceBound)
     (normSq ((Geometry.EvaluationLower.coefficientPolynomial coefficients).eval sample) / 2)).trans rearranged
 

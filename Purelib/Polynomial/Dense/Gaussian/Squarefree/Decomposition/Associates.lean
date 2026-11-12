@@ -49,7 +49,7 @@ namespace Basic.Factor
 for finite comparison; the original factor and its certificate remain the
 paper-facing isolation input. -/
 def monicKey (factor :
-  Factor) : (Dense.Basic.DensePolynomial Gaussian.Basic.Canonical) :=
+  Factor) : (DensePolynomial Gaussian.Basic.Canonical) :=
   DensePolynomial.scale factor.polynomial.leadingCoeff⁻¹ factor.polynomial
 
 end Basic.Factor
@@ -103,8 +103,8 @@ theorem eval_eq_zero_iff_of_monicKey_eq
     (point : Gaussian.Basic.Canonical) :
     left.polynomial.eval point = 0 ↔ right.polynomial.eval point = 0 := by
   constructor
-  · exact Purelib.Polynomial.Dense.Gaussian.Squarefree.Decomposition.Associates.eval_eq_zero_of_monicKey_eq same
-  · exact Purelib.Polynomial.Dense.Gaussian.Squarefree.Decomposition.Associates.eval_eq_zero_of_monicKey_eq same.symm
+  · exact Associates.eval_eq_zero_of_monicKey_eq same
+  · exact Associates.eval_eq_zero_of_monicKey_eq same.symm
 
 end Basic.Factor
 
@@ -215,7 +215,7 @@ def representatives : List
   | [] => []
   | factor :: factors =>
       insertRepresentative factor
-        (Purelib.Polynomial.Dense.Gaussian.Squarefree.Decomposition.Associates.representatives factors)
+        (Associates.representatives factors)
 
 end Associates
 
@@ -225,7 +225,7 @@ namespace Associates
 theorem representative_mem_source : ∀
   (source : List Factor)
     {representative : Factor},
-    representative ∈ Dense.Gaussian.Squarefree.Decomposition.Associates.representatives source → representative ∈ source
+    representative ∈ Associates.representatives source → representative ∈ source
   | [], _, member => by
       change _ ∈ [] at member
       exact (List.not_mem_nil member).elim
@@ -246,14 +246,14 @@ distinct list. -/
 theorem source_has_representative : ∀
   (source : List Factor)
     {occurrence : Factor}, occurrence ∈ source →
-    ∃ representative ∈ Dense.Gaussian.Squarefree.Decomposition.Associates.representatives source,
+    ∃ representative ∈ Associates.representatives source,
       occurrence.monicKey = representative.monicKey
   | [], _, member => by nomatch member
   | factor :: factors, occurrence, member => by
       cases member with
       | head =>
         exact inserted_has_representative factor
-          (Dense.Gaussian.Squarefree.Decomposition.Associates.representatives factors)
+          (Associates.representatives factors)
       | tail _ member =>
         rcases source_has_representative factors member with
           ⟨representative, representativeMember, same⟩
@@ -303,7 +303,7 @@ namespace Associates
 /-- The selected representatives have pairwise different monic keys. -/
 theorem representatives_pairwise : ∀ source
   : List Factor,
-    (Dense.Gaussian.Squarefree.Decomposition.Associates.representatives source).Pairwise
+    (Associates.representatives source).Pairwise
       (fun left right => left.monicKey ≠ right.monicKey)
   | [] => List.Pairwise.nil
   | factor :: factors =>
@@ -334,12 +334,12 @@ namespace Associates
 /-- A nonempty occurrence list has a nonempty representative list. -/
 theorem representatives_ne_nil_of_ne_nil
     {source : List Factor} (nonempty : source ≠ []) :
-    Dense.Gaussian.Squarefree.Decomposition.Associates.representatives source ≠ [] := by
+    Associates.representatives source ≠ [] := by
   cases source with
   | nil => exact (nonempty rfl).elim
   | cons factor factors =>
       exact insertRepresentative_ne_nil factor
-        (Dense.Gaussian.Squarefree.Decomposition.Associates.representatives factors)
+        (Associates.representatives factors)
 
 end Associates
 
@@ -360,11 +360,11 @@ namespace Associates
 theorem multiplicity_positive_of_mem
     {source : List Factor} {factor :
       Factor} (member : factor ∈ source) :
-    0 < Dense.Gaussian.Squarefree.Decomposition.Associates.multiplicity source factor := by
+    0 < multiplicity source factor := by
   have filteredMember : factor ∈ source.filter fun occurrence =>
       decide (occurrence.monicKey = factor.monicKey) :=
     List.Filter.mem_filter.mpr ⟨member, decide_eq_true rfl⟩
-  unfold Dense.Gaussian.Squarefree.Decomposition.Associates.multiplicity
+  unfold multiplicity
   cases filteredEquation : source.filter (fun occurrence =>
       decide (occurrence.monicKey = factor.monicKey)) with
   | nil =>
@@ -399,9 +399,9 @@ Representatives retain their original certified factors, and multiplicities coun
 def multiplicityFactors (source : List
   Factor) : List
   MultiplicityFactor :=
-  (Dense.Gaussian.Squarefree.Decomposition.Associates.representatives source).map fun factor =>
+  (Associates.representatives source).map fun factor =>
     { factor := factor
-      multiplicity := Dense.Gaussian.Squarefree.Decomposition.Associates.multiplicity source factor }
+      multiplicity := multiplicity source factor }
 
 end Associates
 
@@ -429,8 +429,8 @@ Each output retains a representative factor and its exact count in the original 
 def associateFactors {p :
   CoefficientPolynomial}
     (decomposition : Decomposition p) : List
-      Dense.Gaussian.Squarefree.Decomposition.Associates.MultiplicityFactor :=
-  Dense.Gaussian.Squarefree.Decomposition.Associates.multiplicityFactors decomposition.factors
+      Associates.MultiplicityFactor :=
+  Associates.multiplicityFactors decomposition.factors
 
 /-- Every decomposition yields a nonempty list of associate factors. -/
 theorem associateFactors_nonempty
@@ -438,10 +438,10 @@ theorem associateFactors_nonempty
       Decomposition p) :
     decomposition.associateFactors ≠ [] := by
   have representativesNonempty :=
-    Dense.Gaussian.Squarefree.Decomposition.Associates.representatives_ne_nil_of_ne_nil decomposition.factorsNonempty
-  change Dense.Gaussian.Squarefree.Decomposition.Associates.multiplicityFactors decomposition.factors ≠ []
-  unfold Dense.Gaussian.Squarefree.Decomposition.Associates.multiplicityFactors
-  cases representativesEquation : Dense.Gaussian.Squarefree.Decomposition.Associates.representatives
+    Associates.representatives_ne_nil_of_ne_nil decomposition.factorsNonempty
+  change Associates.multiplicityFactors decomposition.factors ≠ []
+  unfold Associates.multiplicityFactors
+  cases representativesEquation : Associates.representatives
     decomposition.factors with
   | nil => exact (representativesNonempty representativesEquation).elim
   | cons factor factors =>

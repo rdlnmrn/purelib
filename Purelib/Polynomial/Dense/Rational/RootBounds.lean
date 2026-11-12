@@ -60,11 +60,11 @@ The original final-entry accumulator returns one actual coefficient occurrence.
 Removing a preceding head preserves that same retained tail occurrence. -/
 public theorem constantCoefficient_mem
     (leading : Int) (remaining : List Int) :
-    Dense.Integer.Homogeneous.constantCoefficient (leading :: remaining) ∈ leading :: remaining := by
+    Integer.Homogeneous.constantCoefficient (leading :: remaining) ∈ leading :: remaining := by
   induction remaining generalizing leading with
   | nil => exact List.mem_cons_self
   | cons next remaining inductionHypothesis =>
-      rw [Dense.Integer.Homogeneous.constantCoefficient_cons_cons]
+      rw [Integer.Homogeneous.constantCoefficient_cons_cons]
       exact List.mem_cons_of_mem leading (inductionHypothesis next)
 
 /-- A homogeneous zero with coprime numerator and denominator has numerator
@@ -79,14 +79,14 @@ public theorem reduced_divisors_of_homogeneous_zero
     (reduced : Fraction.Basic.ReducedFraction) (leading : Int) (remaining : List Int)
     (_leadingNonzero : leading ≠ 0)
     (_constantNonzero :
-      Dense.Integer.Homogeneous.constantCoefficient (leading :: remaining) ≠ 0)
-    (zero : Dense.Integer.Homogeneous.homogeneousEval reduced.num reduced.den
+      Integer.Homogeneous.constantCoefficient (leading :: remaining) ≠ 0)
+    (zero : Integer.Homogeneous.homogeneousEval reduced.num reduced.den
       (leading :: remaining) = 0) :
     reduced.num.natAbs ∣
-        (Dense.Integer.Homogeneous.constantCoefficient (leading :: remaining)).natAbs ∧
+        (Integer.Homogeneous.constantCoefficient (leading :: remaining)).natAbs ∧
       reduced.den ∣ leading.natAbs := open Purelib in by
   have denominatorDvdInteger :=
-    Dense.Integer.Homogeneous.denominator_dvd_homogeneousEval_sub_leading reduced.num reduced.den
+    Integer.Homogeneous.denominator_dvd_homogeneousEval_sub_leading reduced.num reduced.den
       leading remaining
   rewrite [zero, Arithmetic.zero_sub] at denominatorDvdInteger
   have denominatorDvdNat :=
@@ -100,7 +100,7 @@ public theorem reduced_divisors_of_homogeneous_zero
         remaining.length denominatorDvdNat
 
   have numeratorDvdInteger :=
-    Dense.Integer.Homogeneous.numerator_dvd_homogeneousEval_sub_constant reduced.num reduced.den
+    Integer.Homogeneous.numerator_dvd_homogeneousEval_sub_constant reduced.num reduced.den
       leading remaining
   rewrite [zero, Arithmetic.zero_sub] at numeratorDvdInteger
   have numeratorDvdNat := Divisibility.natAbs_dvd_natAbs_of_dvd numeratorDvdInteger
@@ -108,7 +108,7 @@ public theorem reduced_divisors_of_homogeneous_zero
     Int.natAbs_natCast] at numeratorDvdNat
   have numeratorDvdConstant :
       reduced.num.natAbs ∣
-        (Dense.Integer.Homogeneous.constantCoefficient (leading :: remaining)).natAbs :=
+        (Integer.Homogeneous.constantCoefficient (leading :: remaining)).natAbs :=
     by
       rcases reduced.reduced with ⟨certificate⟩
       exact certificate.dvd_of_dvd_mul_right_pow
@@ -124,8 +124,8 @@ public theorem reduced_bounds_of_homogeneous_zero
     (reduced : Fraction.Basic.ReducedFraction) (leading : Int) (remaining : List Int)
     (leadingNonzero : leading ≠ 0)
     (constantNonzero :
-      Dense.Integer.Homogeneous.constantCoefficient (leading :: remaining) ≠ 0)
-    (zero : Dense.Integer.Homogeneous.homogeneousEval reduced.num reduced.den
+      Integer.Homogeneous.constantCoefficient (leading :: remaining) ≠ 0)
+    (zero : Integer.Homogeneous.homogeneousEval reduced.num reduced.den
       (leading :: remaining) = 0) :
     reduced.num.natAbs ≤ coefficientBound (leading :: remaining) ∧
       reduced.den ≤ coefficientBound (leading :: remaining) := by
@@ -147,26 +147,26 @@ The exact cached common-denominator result scales the original rational zero.
 Its retained representative and same integer table supply the homogeneous zero. -/
 public theorem homogeneous_zero_of_eval_zero
     (point : Fraction.Rational) (coefficient : Fraction.Rational) (remaining : List Fraction.Rational)
-    (zero : Dense.Basic.DensePolynomial.evalCoeffs point (coefficient :: remaining) = 0) :
-    Dense.Integer.Homogeneous.homogeneousEval (Fraction.Basic.representative point).num (Fraction.Basic.representative
+    (zero : Basic.DensePolynomial.evalCoeffs point (coefficient :: remaining) = 0) :
+    Integer.Homogeneous.homogeneousEval (Fraction.Basic.representative point).num (Fraction.Basic.representative
       point).den
-      (Dense.Rational.Denominator.clear (coefficient :: remaining)).coefficients = 0 := by
+      (Denominator.clear (coefficient :: remaining)).coefficients = 0 := by
   have clearedZero :
-      Dense.Integer.Homogeneous.evalIntegers point (Dense.Rational.Denominator.clear (coefficient ::
+      Integer.Homogeneous.evalIntegers point (Denominator.clear (coefficient ::
         remaining)).coefficients = 0 := by
-    rw [Dense.Rational.Denominator.eval_clear, zero, mul_zero]
+    rw [Denominator.eval_clear, zero, mul_zero]
   let leading :=
     (Fraction.Basic.representative coefficient).num *
-      ((Dense.Rational.Denominator.clear remaining).denominator : Int)
+      ((Denominator.clear remaining).denominator : Int)
   let integerRemaining :=
-    (Dense.Rational.Denominator.clear remaining).coefficients.map
+    (Denominator.clear remaining).coefficients.map
       (fun value => ((Fraction.Basic.representative coefficient).den : Int) * value)
   have clearedShape :
-      (Dense.Rational.Denominator.clear (coefficient :: remaining)).coefficients =
+      (Denominator.clear (coefficient :: remaining)).coefficients =
         leading :: integerRemaining := rfl
   rw [clearedShape] at clearedZero ⊢
   rw [Fraction.Cast.representative_eq_num_div_den point] at clearedZero
-  have scaled := Dense.Integer.Homogeneous.homogeneousEval_cons_eq_scaled
+  have scaled := Integer.Homogeneous.homogeneousEval_cons_eq_scaled
     (Fraction.Basic.representative point).num (Fraction.Basic.representative point).den_pos
     leading integerRemaining
   rw [clearedZero, mul_zero] at scaled

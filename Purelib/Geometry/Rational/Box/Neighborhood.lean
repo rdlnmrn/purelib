@@ -8,6 +8,8 @@ import Purelib.Data.Gaussian.Norm.Basic
 import Purelib.Data.Rat.Fraction.Order.Arithmetic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Proper rational neighbourhoods inside retained boxes
 
@@ -37,15 +39,15 @@ theorem midpoint_strictContains {box : Box} (proper : box.Proper) : box.StrictCo
       lower < (lower + upper) / 2 ∧ (lower + upper) / 2 < upper := by
     intro lower upper strict
     constructor
-    · apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct (c := (2 : Fraction.Rational)) _ (by decide)
+    · apply Arithmetic.lt_of_mul_lt_mul_right_direct (c := (2 : Fraction.Rational)) _ (by decide)
       rewrite [Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)]
       calc
         lower * 2 = lower + lower := by ring1
-        _ < lower + upper := Fraction.Order.Arithmetic.add_lt_add_left_direct strict _
-    · apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct (c := (2 : Fraction.Rational)) _ (by decide)
+        _ < lower + upper := Arithmetic.add_lt_add_left_direct strict _
+    · apply Arithmetic.lt_of_mul_lt_mul_right_direct (c := (2 : Fraction.Rational)) _ (by decide)
       rewrite [Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)]
       calc
-        lower + upper < upper + upper := Fraction.Order.Arithmetic.add_lt_add_right_direct strict _
+        lower + upper < upper + upper := Arithmetic.add_lt_add_right_direct strict _
         _ = upper * 2 := by ring1
   have realBounds := midpointBounds box.xLower box.xUpper proper.1
   have imaginaryBounds := midpointBounds box.yLower box.yUpper proper.2
@@ -62,10 +64,10 @@ namespace Neighborhood
 theorem radius_pos {outer : Box} {center : Gaussian.Basic.Canonical}
     (strict : outer.StrictContains center) {distanceSq : Fraction.Rational} (positive : 0 < distanceSq) :
     0 < radius outer center distanceSq :=
-  Fraction.Order.Basic.lt_min (by decide)
-    (Fraction.Order.Basic.lt_min
-      (Fraction.Order.Arithmetic.mul_pos_direct positive (by decide))
-      (Fraction.Order.Arithmetic.mul_pos_direct (Interior.strictCoordinateGap_pos strict) (by decide)))
+  Basic.lt_min (by decide)
+    (Basic.lt_min
+      (Arithmetic.mul_pos_direct positive (by decide))
+      (Arithmetic.mul_pos_direct (Interior.strictCoordinateGap_pos strict) (by decide)))
 
 /-- Construct the centred rational square with its exact computed radius and endpoint-order certificates. -/
 @[expose] def innerBox (outer : Box) (center : Gaussian.Basic.Canonical)
@@ -87,14 +89,14 @@ theorem innerBox_strictContains_center {outer : Box} {center : Gaussian.Basic.Ca
     intro coordinate
     calc
       coordinate - radius outer center distanceSq < coordinate - 0 :=
-        Fraction.Order.Arithmetic.sub_lt_sub_left_direct selectedPositive coordinate
+        Arithmetic.sub_lt_sub_left_direct selectedPositive coordinate
       _ = coordinate := by ring1
   have upper : ∀ coordinate : Fraction.Rational, coordinate < coordinate + radius outer center distanceSq := by
     intro coordinate
     calc
       coordinate = coordinate + 0 := by ring1
       _ < coordinate + radius outer center distanceSq :=
-        Fraction.Order.Arithmetic.add_lt_add_left_direct selectedPositive coordinate
+        Arithmetic.add_lt_add_left_direct selectedPositive coordinate
   exact ⟨lower center.re, upper center.re, lower center.im, upper center.im⟩
 
 /-- The computed neighbourhood lies strictly inside the original retained box. -/
@@ -105,42 +107,42 @@ theorem innerBox_strictInterior {outer : Box} {center : Gaussian.Basic.Canonical
   let selected := radius outer center distanceSq
   have gapPositive : 0 < gap := Interior.strictCoordinateGap_pos strict
   have radiusLeHalf : selected ≤ gap * (1 / 2) :=
-    (Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_right _ _)
+    (Basic.min_le_right _ _).trans (Basic.min_le_right _ _)
   have halfStrict : gap * (1 / 2) < gap := by
     calc
       gap * (1 / 2) < gap * 1 :=
-        Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct gapPositive (by decide)
+        Arithmetic.mul_lt_mul_of_pos_left_direct gapPositive (by decide)
       _ = gap := Fraction.Field.mul_one_direct _
   have radiusLess : selected < gap := radiusLeHalf.trans_lt halfStrict
-  have leftGap : gap ≤ center.re - outer.xLower := Fraction.Order.Basic.min_le_left _ _
+  have leftGap : gap ≤ center.re - outer.xLower := Basic.min_le_left _ _
   have rightGap : gap ≤ outer.xUpper - center.re :=
-    (Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _)
+    (Basic.min_le_right _ _).trans (Basic.min_le_left _ _)
   have bottomGap : gap ≤ center.im - outer.yLower :=
-    (Fraction.Order.Basic.min_le_right _ _).trans
-      ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _))
+    (Basic.min_le_right _ _).trans
+      ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _))
   have topGap : gap ≤ outer.yUpper - center.im :=
-    (Fraction.Order.Basic.min_le_right _ _).trans
-      ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_right _ _))
+    (Basic.min_le_right _ _).trans
+      ((Basic.min_le_right _ _).trans (Basic.min_le_right _ _))
   refine ⟨?_, ?_, ?_, ?_⟩
   · change outer.xLower < center.re - selected
     calc
       outer.xLower = center.re - (center.re - outer.xLower) := by ring1
       _ < center.re - selected :=
-        Fraction.Order.Arithmetic.sub_lt_sub_left_direct (radiusLess.trans_le leftGap) _
+        Arithmetic.sub_lt_sub_left_direct (radiusLess.trans_le leftGap) _
   · change center.re + selected < outer.xUpper
     calc
       center.re + selected < center.re + (outer.xUpper - center.re) :=
-        Fraction.Order.Arithmetic.add_lt_add_left_direct (radiusLess.trans_le rightGap) _
+        Arithmetic.add_lt_add_left_direct (radiusLess.trans_le rightGap) _
       _ = outer.xUpper := by ring1
   · change outer.yLower < center.im - selected
     calc
       outer.yLower = center.im - (center.im - outer.yLower) := by ring1
       _ < center.im - selected :=
-        Fraction.Order.Arithmetic.sub_lt_sub_left_direct (radiusLess.trans_le bottomGap) _
+        Arithmetic.sub_lt_sub_left_direct (radiusLess.trans_le bottomGap) _
   · change center.im + selected < outer.yUpper
     calc
       center.im + selected < center.im + (outer.yUpper - center.im) :=
-        Fraction.Order.Arithmetic.add_lt_add_left_direct (radiusLess.trans_le topGap) _
+        Arithmetic.add_lt_add_left_direct (radiusLess.trans_le topGap) _
       _ = outer.yUpper := by ring1
 
 /-- Every sample within the selected coordinate-radius square remains strictly inside the retained outer box. -/
@@ -160,24 +162,24 @@ private theorem two_mul_radius_sq_lt {outer : Box} {center : Gaussian.Basic.Cano
     2 * radius outer center distanceSq ^ 2 < distanceSq := by
   let selected := radius outer center distanceSq
   have radiusNonnegative : 0 ≤ selected := (radius_pos strict positive).le
-  have radiusLeOne : selected ≤ 1 := Fraction.Order.Basic.min_le_left _ _
+  have radiusLeOne : selected ≤ 1 := Basic.min_le_left _ _
   have squareLe : selected ^ 2 ≤ selected := by
     calc
       selected ^ 2 = selected * selected := by ring1
-      _ ≤ selected * 1 := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct radiusLeOne radiusNonnegative
+      _ ≤ selected * 1 := Arithmetic.mul_le_mul_of_nonneg_left_direct radiusLeOne radiusNonnegative
       _ = selected := Fraction.Field.mul_one_direct _
   have quarterLe : selected ≤ distanceSq * (1 / 4) :=
-    (Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _)
+    (Basic.min_le_right _ _).trans (Basic.min_le_left _ _)
   calc
     2 * selected ^ 2 ≤ 2 * selected :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct squareLe (by decide)
+      Arithmetic.mul_le_mul_of_nonneg_left_direct squareLe (by decide)
     _ ≤ 2 * (distanceSq * (1 / 4)) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct quarterLe (by decide)
+      Arithmetic.mul_le_mul_of_nonneg_left_direct quarterLe (by decide)
     _ = distanceSq * (2 * (1 / 4)) := by ring1
     _ = distanceSq * (1 / 2) := by
       rewrite [show (2 * (1 / 4) : Fraction.Rational) = 1 / 2 by decide]
       rfl
-    _ < distanceSq * 1 := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct positive (by decide)
+    _ < distanceSq * 1 := Arithmetic.mul_lt_mul_of_pos_left_direct positive (by decide)
     _ = distanceSq := Fraction.Field.mul_one_direct _
 
 /-- The squared diagonal of the computed neighbourhood is strictly below four times its distance request. -/
@@ -188,7 +190,7 @@ theorem innerBox_diagonalSq_lt {outer : Box} {center : Gaussian.Basic.Canonical}
   calc
     8 * radius outer center distanceSq ^ 2 = 4 * (2 * radius outer center distanceSq ^ 2) := by ring1
     _ < 4 * distanceSq :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide)
+      Arithmetic.mul_lt_mul_of_pos_left_direct (by decide)
         (two_mul_radius_sq_lt strict positive)
 
 /-- Every sample in the computed neighbourhood pays the exact requested squared-displacement budget. -/

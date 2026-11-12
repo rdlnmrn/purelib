@@ -126,7 +126,7 @@ private theorem
       unfold Determinant.positionDeterminant
       ring1
 /-- Moving the final vertex to the front preserves the cyclic doubled signed area. -/
-private theorem
+theorem
   polygonDoubleSignedArea_rotate_last
     (first : Plane.Point K) (initial : List (Plane.Point K)) :
     SignedArea.Basic.polygonDoubleSignedArea (initial ++ [first]) =

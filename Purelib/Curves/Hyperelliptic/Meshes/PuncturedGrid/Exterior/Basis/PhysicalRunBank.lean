@@ -68,23 +68,23 @@ open Purelib.Riemann
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
-variable (retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared)
+variable (retained : Preparation.CommonBasisPreparation prepared)
   {index : Nat} (inputs : retained.Inputs index)
   (outer : Fin prepared.occurrences.length) {faceIndex : Nat}
-  (data : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) faceIndex)
+  (data : FragmentQueries.RowData
+    (ParentIndices.occurrenceAt prepared.occurrences outer) faceIndex)
   (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
 
 variable {retained inputs outer data coefficients}
@@ -94,9 +94,9 @@ open Purelib.Topology.Polygon.Stokes (PrimitivePoint)
 namespace PhysicalRunBank
 
 /-- Read the physical path at one retained source-parent position in the specified direction. -/
-@[expose] def Physical (ordered : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentOrderedRuns
+@[expose] def Physical (ordered : SourceOrderedRuns.ParentOrderedRuns
   retained inputs outer data coefficients) (forward : Bool)
-    (position : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (position : Fin (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length) : List PrimitivePoint :=
   if forward then ordered.physical position else Path.PairedAreaReversal.reverseIncrements (ordered.physical position)
 
@@ -104,39 +104,39 @@ namespace PhysicalRunBank
 
 Forward runs traverse parameter zero to one; reverse runs traverse one to zero without changing their fragment owners.
 -/
-@[expose] def Chains (ordered : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentOrderedRuns
+@[expose] def Chains (ordered : SourceOrderedRuns.ParentOrderedRuns
   retained inputs outer data coefficients) (forward : Bool) : Prop :=
-  if forward then ∀ run ∈ ordered.runs, Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains.SourceChain
+  if forward then ∀ run ∈ ordered.runs, SourceChains.SourceChain
     run.fragments 0 1
-  else ∀ run ∈ ordered.runs, Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSourceChains.ReverseSourceChain
+  else ∀ run ∈ ordered.runs, ReverseSourceChains.ReverseSourceChain
     run.fragments 1 0
 
 /-- Each retained run has source mesh width at most the requested dyadic scale in its specified direction. -/
-@[expose] def Widths (ordered : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentOrderedRuns
+@[expose] def Widths (ordered : SourceOrderedRuns.ParentOrderedRuns
   retained inputs outer data coefficients) (forward : Bool) (depth : Nat) : Prop :=
-  if forward then ∀ run ∈ ordered.runs, Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.sourceWidth run.fragments ≤ (1 / 2 :
-    Normalization.InverseRootPolynomial.Coordinate) ^ depth
-  else ∀ run ∈ ordered.runs, Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.reverseSourceWidth run.fragments ≤ (1
-    / 2 : Normalization.InverseRootPolynomial.Coordinate) ^ depth
+  if forward then ∀ run ∈ ordered.runs, PairedFragmentBlocks.maximum
+    OwnedFragments.OwnedFragment.sourceWidth run.fragments ≤ (1 / 2 :
+    InverseRootPolynomial.Coordinate) ^ depth
+  else ∀ run ∈ ordered.runs, PairedFragmentBlocks.maximum
+    OwnedFragments.OwnedFragment.reverseSourceWidth run.fragments ≤ (1
+    / 2 : InverseRootPolynomial.Coordinate) ^ depth
 
 /-- Each retained run contains at most the supplied number of fragments. -/
-@[expose] def Capacity (ordered : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentOrderedRuns
+@[expose] def Capacity (ordered : SourceOrderedRuns.ParentOrderedRuns
   retained inputs outer data coefficients) (capacity : Nat) : Prop :=
   ∀ run ∈ ordered.runs, run.fragments.length ≤ capacity
 
 /-- Each retained fragment respects the common allowance and tolerance bounds. -/
-@[expose] def Budgets (ordered : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentOrderedRuns
+@[expose] def Budgets (ordered : SourceOrderedRuns.ParentOrderedRuns
   retained inputs outer data coefficients)
-    (allowance tolerance : Normalization.InverseRootPolynomial.Coordinate) : Prop :=
+    (allowance tolerance : InverseRootPolynomial.Coordinate) : Prop :=
   ∀ run ∈ ordered.runs, ∀ fragment ∈ run.fragments,
     fragment.allowance ≤ allowance ∧ fragment.budget.tolerance ≤ tolerance
 
 /-- The complete source-ordered physical word reads the supplied side area with the sign determined by its direction. -/
-@[expose] def Area (ordered : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentOrderedRuns
+@[expose] def Area (ordered : SourceOrderedRuns.ParentOrderedRuns
   retained inputs outer data coefficients) (forward : Bool)
-    (sideArea : Normalization.InverseRootPolynomial.Gaussian) : Prop :=
+    (sideArea : InverseRootPolynomial.Gaussian) : Prop :=
   Path.PairedIncrementArea.area (List.ofFn
     (Physical ordered
     forward)).flatten =
@@ -148,20 +148,20 @@ set_option genInjectivity false in
 /-- The direction belongs to the retained source occurrence. The area is that
 of its cached Newton side sample, with reversal and every joining term retained. -/
 structure PhysicalRunBank (retained :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared) (inputs :
+  Preparation.CommonBasisPreparation prepared) (inputs :
   retained.Inputs index)
     (outer : Fin prepared.occurrences.length) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
-    (faceIndex depth capacity : Nat) (sideArea : Normalization.InverseRootPolynomial.Gaussian)
-    (allowance tolerance : Normalization.InverseRootPolynomial.Coordinate) where
+    (faceIndex depth capacity : Nat) (sideArea : InverseRootPolynomial.Gaussian)
+    (allowance tolerance : InverseRootPolynomial.Coordinate) where
   /-- The original row data for this source occurrence and face index. -/ data :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) faceIndex
+    FragmentQueries.RowData
+    (ParentIndices.occurrenceAt prepared.occurrences outer) faceIndex
   /-- The original physical runs indexed by their retained source-parent positions. -/ ordered :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentOrderedRuns retained inputs outer data
+    SourceOrderedRuns.ParentOrderedRuns retained inputs outer data
     coefficients
   /-- The direction used to read the retained physical runs. -/ forward : Bool
   /-- The chosen direction is exactly that of the original source occurrence. -/ direction : forward =
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer).sourceForward
   /-- Every retained run is a complete source chain in its recorded direction. -/ chains :
     PhysicalRunBank.Chains ordered forward
@@ -178,22 +178,22 @@ structure PhysicalRunBank (retained :
 constructive_injectivity PhysicalRunBank
 
 namespace PhysicalRunBank
-variable {depth capacity : Nat} {sideArea : Normalization.InverseRootPolynomial.Gaussian} {allowance tolerance :
-  Normalization.InverseRootPolynomial.Coordinate}
+variable {depth capacity : Nat} {sideArea : InverseRootPolynomial.Gaussian} {allowance tolerance :
+  InverseRootPolynomial.Coordinate}
 
 /-- Assemble a forward physical run bank from the original source-ordered runs and their supplied certificates.
 
 The construction retains the row data, complete source chains, dyadic width bounds, capacity, budgets and exact
 side-area equality. -/
-@[expose] def ofForward (ordered : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentOrderedRuns
+@[expose] def ofForward (ordered : SourceOrderedRuns.ParentOrderedRuns
   retained inputs outer data coefficients)
-    (direction : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (direction : (ParentIndices.occurrenceAt prepared.occurrences
       outer).sourceForward = true)
-    (chains : ∀ run ∈ ordered.runs, Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains.SourceChain
+    (chains : ∀ run ∈ ordered.runs, SourceChains.SourceChain
       run.fragments 0 1)
-    (widths : ∀ run ∈ ordered.runs, Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.sourceWidth run.fragments ≤ (1 / 2
-      : Normalization.InverseRootPolynomial.Coordinate) ^ depth)
+    (widths : ∀ run ∈ ordered.runs, PairedFragmentBlocks.maximum
+      OwnedFragments.OwnedFragment.sourceWidth run.fragments ≤ (1 / 2
+      : InverseRootPolynomial.Coordinate) ^ depth)
     (capacityBound : ∀ run ∈ ordered.runs, run.fragments.length ≤ capacity)
     (budgetBounds : Budgets ordered
       allowance tolerance)
@@ -206,15 +206,15 @@ side-area equality. -/
 
 The original descending chains and reverse-width bounds are retained, together with the negated side-area readback and
 the same fragment budgets. -/
-@[expose] def ofReverse (ordered : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentOrderedRuns
+@[expose] def ofReverse (ordered : SourceOrderedRuns.ParentOrderedRuns
   retained inputs outer data coefficients)
-    (direction : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (direction : (ParentIndices.occurrenceAt prepared.occurrences
       outer).sourceForward = false)
     (chains : ∀ run ∈ ordered.runs,
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSourceChains.ReverseSourceChain run.fragments 1 0)
-    (widths : ∀ run ∈ ordered.runs, Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.reverseSourceWidth run.fragments ≤
-      (1 / 2 : Normalization.InverseRootPolynomial.Coordinate) ^ depth)
+      ReverseSourceChains.ReverseSourceChain run.fragments 1 0)
+    (widths : ∀ run ∈ ordered.runs, PairedFragmentBlocks.maximum
+      OwnedFragments.OwnedFragment.reverseSourceWidth run.fragments ≤
+      (1 / 2 : InverseRootPolynomial.Coordinate) ^ depth)
     (capacityBound : ∀ run ∈ ordered.runs, run.fragments.length ≤ capacity)
     (budgetBounds : Budgets ordered
       allowance tolerance)
@@ -234,7 +234,7 @@ occurrence. -/
 theorem area_readback (bank : PhysicalRunBank retained
   inputs outer coefficients faceIndex depth capacity sideArea allowance tolerance) :
     Path.PairedIncrementArea.area (List.ofFn bank.physical).flatten =
-      if (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      if (ParentIndices.occurrenceAt prepared.occurrences
         outer).sourceForward then sideArea else -sideArea :=
   bank.area_eq.trans (congrArg (fun forward => if forward then sideArea else -sideArea) bank.direction)
 

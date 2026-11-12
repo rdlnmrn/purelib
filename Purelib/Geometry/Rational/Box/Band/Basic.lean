@@ -55,6 +55,27 @@ structure BandBox (center : Data.Gaussian.Basic.Canonical) (r : Fraction.Rationa
 
 constructive_injectivity BandBox
 
+/-- Retain a band box while identifying its center with the same supplied point. -/
+def BandBox.recenter {center target : Data.Gaussian.Basic.Canonical} {radius : Fraction.Rational}
+    (band : BandBox center radius) (same : center = target) : BandBox target radius where
+  box := band.box
+  left_lower := by rewrite [← same]; exact band.left_lower
+  left_upper := by rewrite [← same]; exact band.left_upper
+  right_lower := by rewrite [← same]; exact band.right_lower
+  right_upper := by rewrite [← same]; exact band.right_upper
+  bottom_lower := by rewrite [← same]; exact band.bottom_lower
+  bottom_upper := by rewrite [← same]; exact band.bottom_upper
+  top_lower := by rewrite [← same]; exact band.top_lower
+  top_upper := by rewrite [← same]; exact band.top_upper
+
+/-- Identifying a band's center retains its exact original box. -/
+theorem BandBox.recenter_box {center target : Data.Gaussian.Basic.Canonical} {radius : Fraction.Rational}
+    (band : BandBox center radius) (same : center = target) : (band.recenter same).box = band.box := rfl
+
+/-- Identifying a band center with itself retains the complete original band. -/
+theorem BandBox.recenter_self {center : Data.Gaussian.Basic.Canonical} {radius : Fraction.Rational}
+    (band : BandBox center radius) : band.recenter rfl = band := rfl
+
 end
 
 /-- The centred square attains the outer endpoints allowed by the retained band constraints.

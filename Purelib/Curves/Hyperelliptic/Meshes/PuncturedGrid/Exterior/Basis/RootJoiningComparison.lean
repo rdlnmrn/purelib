@@ -71,6 +71,16 @@ import Purelib.Topology.Polygon.Stokes
 import Purelib.Topology.Surface.Cut.PrimitiveJumps
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OccurrenceRootTotals.CommonBasisRequest
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalComponentComparison.CommonBasisRequest
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.HierarchicalRequest.CommonBasisRequest
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootParentBounds.CommonBasisRequest
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -101,36 +111,36 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Occurrence
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.HierarchicalRequest.CommonBasisRequest.Sampled
   (componentMagnitude componentMagnitude_nonnegative occurrenceMagnitude_le parentTarget_le_one)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
-variable {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
-  {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {target coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
+variable {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {retained : Preparation.CommonBasisPreparation prepared}
+  {basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {target coefficientTarget : InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
     energyFloor radialDepth : Nat}
-  {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+  {box : Rational.Box} {capSample : Charts.Reciprocal.Cap.Primitives.Sample cap
     differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 namespace CommonBasisRequest
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisRequest retained basis
+variable {request : Preparation.CommonBasisRequest retained basis
   target coefficientTarget coverFloor floor}
   {plans : request.Plans capSample polynomials minimum} {inputs : retained.Inputs index}
-  {readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
+  {readings : Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
     request.schedule.bank plans inputs stage}
 
-variable {fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.FanPreparation request
+variable {fans : Connection.CommonBasisRequest.FanPreparation request
   plans inputs readings energyFloor}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -138,18 +148,18 @@ namespace Sampled
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable (sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.Sampled fans
+variable (sample : Connection.CommonBasisRequest.Sampled fans
   coefficients radialDepth) (comparisons :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
+  CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
   sample)
   {faceIndex : Nat} (banks : PhysicalRunEntries
     retained inputs coefficients faceIndex)
 
-variable {requested : Normalization.InverseRootPolynomial.Coordinate} (positive : 0 < requested)
+variable {requested : InverseRootPolynomial.Coordinate} (positive : 0 < requested)
   (runs :
-    PhysicalComponentComparison.CommonBasisRequest.Sampled.PreparedPhysicalRows
+    Sampled.PreparedPhysicalRows
     sample comparisons banks
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceMagnitude.CommonBasisRequest.Sampled.parentMagnitude
+    (SourceMagnitude.CommonBasisRequest.Sampled.parentMagnitude
     retained inputs) requested)
 
 /-- The finite sum of squared Gaussian coefficient norms is nonnegative. -/
@@ -164,26 +174,26 @@ include comparisons positive runs in
 restoration bound. -/
 theorem physical_root_join_error (outer : Fin prepared.occurrences.length) :
     Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded ((Path.PairedIncrementArea.total (List.ofFn
-      (PhysicalComponentComparison.CommonBasisRequest.Sampled.physicalPaths
+      (Sampled.physicalPaths
       banks outer)).flatten).sub
       (Path.ConjugatePathReadback.conjugateDiagonal
-        (OccurrenceRootTotals.CommonBasisRequest.Sampled.occurrenceRootTotal
+        (Sampled.occurrenceRootTotal
         sample outer)))
 
-          (HierarchicalRequest.CommonBasisRequest.Sampled.componentMagnitude
+          (Sampled.componentMagnitude
           prepared
-          (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootParentBounds.CommonBasisRequest.Sampled.rootParentError
+          (Sampled.rootParentError
           (request := request) requested) * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) := by
   have error :=
-    OccurrenceRootTotals.CommonBasisRequest.Sampled.physical_occurrence_root_error
+    Sampled.physical_occurrence_root_error
     sample comparisons banks positive runs outer
-  have paid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+  have paid := Arithmetic.mul_le_mul_of_nonneg_right_direct
 
-      (HierarchicalRequest.CommonBasisRequest.Sampled.occurrenceMagnitude_le
+      (Sampled.occurrenceMagnitude_le
       outer
-      (RootParentBounds.CommonBasisRequest.Sampled.rootParentError_nonnegative
+      (Sampled.rootParentError_nonnegative
       (request := request) positive.le))
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootJoiningComparison.CommonBasisRequest.Sampled.mass_nonnegative
+    (Sampled.mass_nonnegative
       (coefficients := coefficients))
   rw [Fraction.Field.mul_assoc] at paid
   exact ⟨error.1.trans paid, error.2.trans paid⟩
@@ -192,24 +202,24 @@ include comparisons in
 /-- Each retained root endpoint obeys the common component-scaled magnitude bound. -/
 theorem root_join_bounded (outer : Fin prepared.occurrences.length) :
     Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (Path.ConjugatePathReadback.conjugateDiagonal
-      (OccurrenceRootTotals.CommonBasisRequest.Sampled.occurrenceRootTotal
+      (Sampled.occurrenceRootTotal
       sample outer))
 
-        (HierarchicalRequest.CommonBasisRequest.Sampled.componentMagnitude
+        (Sampled.componentMagnitude
         prepared
-        (RootParentBounds.CommonBasisRequest.Sampled.rootParentMagnitude
+        (Sampled.rootParentMagnitude
         (request := request) (inputs := inputs)) * Readings.PreparedObservationCoercivity.coefficientNormSq
         coefficients) := by
   have bound :=
-    OccurrenceRootTotals.CommonBasisRequest.Sampled.occurrence_root_bounded
+    Sampled.occurrence_root_bounded
     sample comparisons outer
-  have paid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+  have paid := Arithmetic.mul_le_mul_of_nonneg_right_direct
 
-      (HierarchicalRequest.CommonBasisRequest.Sampled.occurrenceMagnitude_le
+      (Sampled.occurrenceMagnitude_le
       outer
-      (RootParentBounds.CommonBasisRequest.Sampled.rootParentMagnitude_nonnegative
+      (Sampled.rootParentMagnitude_nonnegative
       (request := request) (inputs := inputs)))
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootJoiningComparison.CommonBasisRequest.Sampled.mass_nonnegative
+    (Sampled.mass_nonnegative
       (coefficients := coefficients))
   rw [Fraction.Field.mul_assoc] at paid
   exact ⟨bound.1.trans paid, bound.2.trans paid⟩
@@ -218,21 +228,21 @@ include comparisons runs in
 /-- Each original physical occurrence endpoint obeys the same component-scaled root magnitude bound. -/
 theorem physical_root_join_bounded (outer : Fin prepared.occurrences.length) :
     Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (Path.PairedIncrementArea.total (List.ofFn
-      (PhysicalComponentComparison.CommonBasisRequest.Sampled.physicalPaths
+      (Sampled.physicalPaths
       banks outer)).flatten)
 
-        (HierarchicalRequest.CommonBasisRequest.Sampled.componentMagnitude
+        (Sampled.componentMagnitude
         prepared
-        (RootParentBounds.CommonBasisRequest.Sampled.rootParentMagnitude
+        (Sampled.rootParentMagnitude
         (request := request) (inputs := inputs)) * Readings.PreparedObservationCoercivity.coefficientNormSq
         coefficients) := by
   have bound :=
     Connection.CommonBasisRequest.Sampled.occurrence_physical_total_bound
     outer
-    (PhysicalComponentComparison.CommonBasisRequest.Sampled.physicalPaths
+    (Sampled.physicalPaths
     banks outer)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (RootParentBounds.CommonBasisRequest.Sampled.rootParentMagnitude_nonnegative
+    (Arithmetic.mul_nonneg_direct
+      (Sampled.rootParentMagnitude_nonnegative
       (request := request) (inputs := inputs))
 
         (mass_nonnegative
@@ -241,27 +251,27 @@ theorem physical_root_join_bounded (outer : Fin prepared.occurrences.length) :
         have localBound :=
           PreparedPhysicalBounds.PhysicalRunBank.PreparedRun.total_bounded_requested
           ((runs.get outer).get position)
-            (HierarchicalRequest.CommonBasisRequest.Sampled.parentTarget_le_one
+            (Sampled.parentTarget_le_one
             outer
             (SourceMagnitude.CommonBasisRequest.Sampled.parentMagnitude
             retained inputs) requested)
-        have paid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-          ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceMagnitude.CommonBasisRequest.Sampled.runMagnitude_le
+        have paid := Arithmetic.mul_le_mul_of_nonneg_right_direct
+          ((SourceMagnitude.CommonBasisRequest.Sampled.runMagnitude_le
             retained inputs outer position).trans
 
-              (RootParentBounds.CommonBasisRequest.Sampled.parentMagnitude_le_root
+              (Sampled.parentMagnitude_le_root
               (request := request) (inputs := inputs)))
 
             (mass_nonnegative
             (coefficients := coefficients))
         exact ⟨localBound.1.trans paid, localBound.2.trans paid⟩)
-  have paid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+  have paid := Arithmetic.mul_le_mul_of_nonneg_right_direct
 
-      (HierarchicalRequest.CommonBasisRequest.Sampled.occurrenceMagnitude_le
+      (Sampled.occurrenceMagnitude_le
       outer
-      (RootParentBounds.CommonBasisRequest.Sampled.rootParentMagnitude_nonnegative
+      (Sampled.rootParentMagnitude_nonnegative
       (request := request) (inputs := inputs)))
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootJoiningComparison.CommonBasisRequest.Sampled.mass_nonnegative
+    (Sampled.mass_nonnegative
       (coefficients := coefficients))
   rw [Fraction.Field.mul_assoc] at paid
   exact ⟨bound.1.trans paid, bound.2.trans paid⟩
@@ -269,44 +279,44 @@ theorem physical_root_join_bounded (outer : Fin prepared.occurrences.length) :
 include comparisons positive runs in
 /-- Compare the actual occurrence joining polygon with retained root totals. -/
 theorem physical_root_joining_area_error :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area
+    Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area
       (List.ofFn (fun outer => Path.PairedIncrementArea.total (List.ofFn
-        (PhysicalComponentComparison.CommonBasisRequest.Sampled.physicalPaths
+        (Sampled.physicalPaths
         banks outer)).flatten)) -
       Path.PairedIncrementArea.area (List.ofFn (fun outer =>
         Path.ConjugatePathReadback.conjugateDiagonal
-          (OccurrenceRootTotals.CommonBasisRequest.Sampled.occurrenceRootTotal
+          (Sampled.occurrenceRootTotal
           sample outer)))) ≤
-      16 * (prepared.occurrences.length : Normalization.InverseRootPolynomial.Coordinate)^4 *
+      16 * (prepared.occurrences.length : InverseRootPolynomial.Coordinate)^4 *
 
-          HierarchicalRequest.CommonBasisRequest.Sampled.componentMagnitude
+          Sampled.componentMagnitude
           prepared
-          (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootParentBounds.CommonBasisRequest.Sampled.rootParentError
+          (Sampled.rootParentError
           (request := request) requested) *
 
-          HierarchicalRequest.CommonBasisRequest.Sampled.componentMagnitude
+          Sampled.componentMagnitude
           prepared
-          (RootParentBounds.CommonBasisRequest.Sampled.rootParentMagnitude
+          (Sampled.rootParentMagnitude
           (request := request) (inputs := inputs)) *
         (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
   have estimate := Path.PairedIncrementComparison.area_difference_bound
     (List.ofFn (fun outer =>
       (Path.PairedIncrementArea.total (List.ofFn
-        (PhysicalComponentComparison.CommonBasisRequest.Sampled.physicalPaths
+        (Sampled.physicalPaths
         banks outer)).flatten,
         Path.ConjugatePathReadback.conjugateDiagonal
-          (OccurrenceRootTotals.CommonBasisRequest.Sampled.occurrenceRootTotal
+          (Sampled.occurrenceRootTotal
           sample outer))))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (HierarchicalRequest.CommonBasisRequest.Sampled.componentMagnitude_nonnegative
-      (RootParentBounds.CommonBasisRequest.Sampled.rootParentError_nonnegative
+    (Arithmetic.mul_nonneg_direct
+      (Sampled.componentMagnitude_nonnegative
+      (Sampled.rootParentError_nonnegative
       (request := request) positive.le))
 
         (mass_nonnegative
         (coefficients := coefficients)))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (HierarchicalRequest.CommonBasisRequest.Sampled.componentMagnitude_nonnegative
-      (RootParentBounds.CommonBasisRequest.Sampled.rootParentMagnitude_nonnegative
+    (Arithmetic.mul_nonneg_direct
+      (Sampled.componentMagnitude_nonnegative
+      (Sampled.rootParentMagnitude_nonnegative
       (request := request) (inputs := inputs)))
 
         (mass_nonnegative
@@ -329,7 +339,7 @@ theorem physical_root_joining_area_error :
       exact
         root_join_bounded
         sample comparisons outer)
-  rw [Data.List.OfFn.Basic.map_ofFn, Data.List.OfFn.Basic.map_ofFn, Data.List.OfFn.Basic.length_ofFn] at estimate
+  rw [List.OfFn.Basic.map_ofFn, List.OfFn.Basic.map_ofFn, List.OfFn.Basic.length_ofFn] at estimate
   exact estimate.trans_eq (by ring1)
 
 end Sampled

@@ -64,6 +64,8 @@ import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic
@@ -118,24 +120,24 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.Branch
 open Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh (MatchedHorizontalSide
   MatchedVerticalSide)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {faces : Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces bank} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
-  {cuts : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+    VertexBank bank.grid} {edges :
+    RootEdgeBank frames}
+  {faces : PuncturedFaces bank} {domains :
+    FaceDomainBank frames faces.regulars}
+  {cuts : CommonCuts domains}
     {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
-    {target : Purelib.Data.Rat.Fraction.Rational}
-  {mesh : Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
+    Preflights domains sheet}
+    {target : Rational}
+  {mesh : LiftedMesh vertices edges faces}
   {firstPosition : Fin faces.regulars.length} {firstSheet : Fin 2}
 
-variable {request : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet
-  => Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet
+variable {request : TwoSheetRequest (fun sheet
+  => RegularMeshes.build domains cuts sheet
   coarseDepth) fixed target}
 
 namespace HorizontalCrossing
@@ -148,12 +150,12 @@ theorem left_corner_increment_bound
     (joined : LiftedSides.HorizontalCrossing request first nextPosition firstUpper lastUpper)
     {depth : Nat} (trace : joined.side.Trace depth) {differential : Differentials.Basic.Differential genus}
     {bounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds faces.regulars[firstPosition.val].clearance
-      (PreparedPrimitiveSamples.differentialNumerator differential)} {tolerance : Fraction.Rational}
+      (PreparedPrimitiveSamples.differentialNumerator differential)} {tolerance : Rational}
     (gridRequest : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds
       ((domains.get firstPosition).domain firstSheet).steps tolerance)
     (cached : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) differential
       gridRequest.index) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       (((trace.leftReadings cached.anchors cached.offsets).values (Fin.last trace.vertices.rest.length) -
         (trace.leftReadings cached.anchors cached.offsets).values 0) -
         (cached.corners.values 2 - cached.corners.values 3)) ≤ 16 * gridRequest.globalBound := by
@@ -171,12 +173,12 @@ theorem right_corner_increment_bound
     (joined : LiftedSides.HorizontalCrossing request first nextPosition firstUpper lastUpper)
     {depth : Nat} (trace : joined.side.Trace depth) {differential : Differentials.Basic.Differential genus}
     {bounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds faces.regulars[nextPosition.val].clearance
-      (PreparedPrimitiveSamples.differentialNumerator differential)} {tolerance : Fraction.Rational}
+      (PreparedPrimitiveSamples.differentialNumerator differential)} {tolerance : Rational}
     (gridRequest : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds
       ((domains.get nextPosition).domain joined.crossing.next.sheet).steps tolerance)
     (cached : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet) differential
       gridRequest.index) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       (((trace.rightReadings cached.anchors cached.offsets).values (Fin.last trace.vertices.rest.length) -
         (trace.rightReadings cached.anchors cached.offsets).values 0) -
         (cached.corners.values 1 - cached.corners.values 0)) ≤ 16 * gridRequest.globalBound := by
@@ -197,12 +199,12 @@ theorem left_corner_origin_bound
     (joined : LiftedSides.HorizontalCrossing request first nextPosition firstUpper lastUpper)
     {depth : Nat} (trace : joined.side.Trace depth) {differential : Differentials.Basic.Differential genus}
     {bounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds faces.regulars[firstPosition.val].clearance
-      (PreparedPrimitiveSamples.differentialNumerator differential)} {tolerance : Fraction.Rational}
+      (PreparedPrimitiveSamples.differentialNumerator differential)} {tolerance : Rational}
     (gridRequest : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds
       ((domains.get firstPosition).domain firstSheet).steps tolerance)
     (cached : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) differential
       gridRequest.index) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       ((trace.leftReadings cached.anchors cached.offsets).values 0 - cached.corners.values 3) ≤
       4 * gridRequest.globalBound := by
   apply DomainPrimitives.reading_corner_bound gridRequest cached
@@ -216,12 +218,12 @@ theorem right_corner_origin_bound
     (joined : LiftedSides.HorizontalCrossing request first nextPosition firstUpper lastUpper)
     {depth : Nat} (trace : joined.side.Trace depth) {differential : Differentials.Basic.Differential genus}
     {bounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds faces.regulars[nextPosition.val].clearance
-      (PreparedPrimitiveSamples.differentialNumerator differential)} {tolerance : Fraction.Rational}
+      (PreparedPrimitiveSamples.differentialNumerator differential)} {tolerance : Rational}
     (gridRequest : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds
       ((domains.get nextPosition).domain joined.crossing.next.sheet).steps tolerance)
     (cached : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet) differential
       gridRequest.index) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       ((trace.rightReadings cached.anchors cached.offsets).values 0 - cached.corners.values 0) ≤
       4 * gridRequest.globalBound := by
   apply DomainPrimitives.reading_corner_bound gridRequest cached
@@ -241,12 +243,12 @@ theorem left_corner_increment_bound
     (joined : LiftedSides.VerticalCrossing request first nextPosition firstUpper lastUpper)
     {depth : Nat} (trace : joined.side.Trace depth) {differential : Differentials.Basic.Differential genus}
     {bounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds faces.regulars[firstPosition.val].clearance
-      (PreparedPrimitiveSamples.differentialNumerator differential)} {tolerance : Fraction.Rational}
+      (PreparedPrimitiveSamples.differentialNumerator differential)} {tolerance : Rational}
     (gridRequest : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds
       ((domains.get firstPosition).domain firstSheet).steps tolerance)
     (cached : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) differential
       gridRequest.index) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       (((trace.leftReadings cached.anchors cached.offsets).values (Fin.last trace.vertices.rest.length) -
         (trace.leftReadings cached.anchors cached.offsets).values 0) -
         (cached.corners.values 2 - cached.corners.values 1)) ≤ 16 * gridRequest.globalBound := by
@@ -264,12 +266,12 @@ theorem right_corner_increment_bound
     (joined : LiftedSides.VerticalCrossing request first nextPosition firstUpper lastUpper)
     {depth : Nat} (trace : joined.side.Trace depth) {differential : Differentials.Basic.Differential genus}
     {bounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds faces.regulars[nextPosition.val].clearance
-      (PreparedPrimitiveSamples.differentialNumerator differential)} {tolerance : Fraction.Rational}
+      (PreparedPrimitiveSamples.differentialNumerator differential)} {tolerance : Rational}
     (gridRequest : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds
       ((domains.get nextPosition).domain joined.crossing.next.sheet).steps tolerance)
     (cached : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet) differential
       gridRequest.index) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       (((trace.rightReadings cached.anchors cached.offsets).values (Fin.last trace.vertices.rest.length) -
         (trace.rightReadings cached.anchors cached.offsets).values 0) -
         (cached.corners.values 3 - cached.corners.values 0)) ≤ 16 * gridRequest.globalBound := by
@@ -290,12 +292,12 @@ theorem left_corner_origin_bound
     (joined : LiftedSides.VerticalCrossing request first nextPosition firstUpper lastUpper)
     {depth : Nat} (trace : joined.side.Trace depth) {differential : Differentials.Basic.Differential genus}
     {bounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds faces.regulars[firstPosition.val].clearance
-      (PreparedPrimitiveSamples.differentialNumerator differential)} {tolerance : Fraction.Rational}
+      (PreparedPrimitiveSamples.differentialNumerator differential)} {tolerance : Rational}
     (gridRequest : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds
       ((domains.get firstPosition).domain firstSheet).steps tolerance)
     (cached : PrimitiveData.DomainPrimitives ((domains.get firstPosition).domain firstSheet) differential
       gridRequest.index) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       ((trace.leftReadings cached.anchors cached.offsets).values 0 - cached.corners.values 1) ≤
       4 * gridRequest.globalBound := by
   apply DomainPrimitives.reading_corner_bound gridRequest cached
@@ -309,12 +311,12 @@ theorem right_corner_origin_bound
     (joined : LiftedSides.VerticalCrossing request first nextPosition firstUpper lastUpper)
     {depth : Nat} (trace : joined.side.Trace depth) {differential : Differentials.Basic.Differential genus}
     {bounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds faces.regulars[nextPosition.val].clearance
-      (PreparedPrimitiveSamples.differentialNumerator differential)} {tolerance : Fraction.Rational}
+      (PreparedPrimitiveSamples.differentialNumerator differential)} {tolerance : Rational}
     (gridRequest : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds
       ((domains.get nextPosition).domain joined.crossing.next.sheet).steps tolerance)
     (cached : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet) differential
       gridRequest.index) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       ((trace.rightReadings cached.anchors cached.offsets).values 0 - cached.corners.values 0) ≤
       4 * gridRequest.globalBound := by
   apply DomainPrimitives.reading_corner_bound gridRequest cached

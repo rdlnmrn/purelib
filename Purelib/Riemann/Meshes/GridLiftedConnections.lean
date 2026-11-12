@@ -24,6 +24,8 @@ import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Riemann.Meshes.GridLiftedFaces
 import Purelib.Riemann.Meshes.GridLiftedBoundaryLoops
 
+open Purelib.Polynomial.Geometry
+
 open Purelib
 
 public section
@@ -77,7 +79,7 @@ section
 namespace Purelib.Riemann.Meshes.GridLiftedConnections.Grid.SheetAlignment
 
 /-- Compare two sheet indices and retain the matching alignment equation. -/
-@[expose] def build (arrival requested : Fin 2) : Grid.SheetAlignment arrival requested :=
+@[expose] def build (arrival requested : Fin 2) : SheetAlignment arrival requested :=
   if equal : arrival = requested then .same equal
   else .swapped (by
     apply Fin.ext
@@ -88,13 +90,13 @@ namespace Purelib.Riemann.Meshes.GridLiftedConnections.Grid.SheetAlignment
     omega)
 
 /-- Read whether the certified alignment requires a sheet exchange. -/
-@[expose] def usesSwap {arrival requested : Fin 2} : Grid.SheetAlignment arrival requested → Bool
+@[expose] def usesSwap {arrival requested : Fin 2} : SheetAlignment arrival requested → Bool
   | .same _ => false
   | .swapped _ => true
 
 open Purelib.Curves in
 /-- Applying the retained alignment decision reaches the requested sheet. -/
-theorem applied {arrival requested : Fin 2} (alignment : Grid.SheetAlignment arrival requested) :
+theorem applied {arrival requested : Fin 2} (alignment : SheetAlignment arrival requested) :
     (if alignment.usesSwap then Hyperelliptic.Branches.BranchCutLifts.otherSheet arrival else arrival) = requested := by
   cases alignment with
   | same equal => exact equal
@@ -108,8 +110,8 @@ end
 section
 
 variable {polynomial : GaussianPolynomial} {ambient :
-  Box} {grid : Polynomial.Geometry.Grid.ClearGrid polynomial
-  ambient} {frames : RootIsolation.SquareRoot.Grid.RootFrames grid}
+  Box} {grid : Grid.ClearGrid polynomial
+  ambient} {frames : RootFrames grid}
 
 namespace Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
 
@@ -122,21 +124,21 @@ set_option genInjectivity false in
 The retained vertex membership proofs and sheet equation concern the supplied root-edge bank and the actual walk
 transport. -/
 structure LiftedWalk (edges :
-  SquareRoot.Grid.RootEdgeBank frames) (start : Gaussian.Basic.Canonical) (firstSheet : Fin 2)
-    (finish : Gaussian.Basic.Canonical) (lastSheet : Fin 2) where
-  /-- The retained base walk connecting the endpoint coordinates. -/ walk : Geometry.Grid.Walks.Walk grid start finish
+  RootEdgeBank frames) (start : Canonical) (firstSheet : Fin 2)
+    (finish : Canonical) (lastSheet : Fin 2) where
+  /-- The retained base walk connecting the endpoint coordinates. -/ walk : Walk grid start finish
   /-- The starting coordinate belongs to the retained grid. -/ first :
-    Polynomial.Geometry.Grid.FromStates.ContainsVertex grid
+    Grid.FromStates.ContainsVertex grid
     start
   /-- The finishing coordinate belongs to the retained grid. -/ last :
-    Polynomial.Geometry.Grid.FromStates.ContainsVertex grid
+    Grid.FromStates.ContainsVertex grid
     finish
   /-- Transport along the actual walk reaches the requested finishing sheet. -/ sheet_eq :
-    SquareRoot.Grid.EdgeBank.RootEdgeBank.target edges walk firstSheet = lastSheet
+    EdgeBank.RootEdgeBank.target edges walk firstSheet = lastSheet
 
 -- Preserve the original constructor certificate names of this unchanged nominal datatype.
 
-constructive_injectivity Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank.LiftedWalk
+constructive_injectivity RootEdgeBank.LiftedWalk
 
 end Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
 
@@ -154,17 +156,17 @@ open Purelib.Polynomial in
 open Purelib.RootIsolation in
 /-- The empty walk connects a retained vertex and sheet to itself. -/
 @[expose] def nil (edges :
-  SquareRoot.Grid.RootEdgeBank frames) (base : Gaussian.Basic.Canonical) (member :
-  Polynomial.Geometry.Grid.FromStates.ContainsVertex grid base) (sheet : Fin 2) :
-    SquareRoot.Grid.RootEdgeBank.LiftedWalk edges base sheet base sheet := ⟨.nil base, member, member, rfl⟩
+  RootEdgeBank frames) (base : Canonical) (member :
+  Grid.FromStates.ContainsVertex grid base) (sheet : Fin 2) :
+    LiftedWalk edges base sheet base sheet := ⟨.nil base, member, member, rfl⟩
 
 open Purelib.RootIsolation in
 /-- Compose two lifted walks sharing the exact intermediate coordinate and sheet. -/
 @[expose] def append (left :
-  SquareRoot.Grid.RootEdgeBank.LiftedWalk edges start firstSheet middle middleSheet)
-    (right : SquareRoot.Grid.RootEdgeBank.LiftedWalk edges middle middleSheet finish lastSheet) :
-      SquareRoot.Grid.RootEdgeBank.LiftedWalk edges start firstSheet finish lastSheet :=
-  ⟨left.walk.append right.walk, left.first, right.last, by rw [SquareRoot.Grid.EdgeBank.RootEdgeBank.target_append
+  LiftedWalk edges start firstSheet middle middleSheet)
+    (right : LiftedWalk edges middle middleSheet finish lastSheet) :
+      LiftedWalk edges start firstSheet finish lastSheet :=
+  ⟨left.walk.append right.walk, left.first, right.last, by rw [EdgeBank.RootEdgeBank.target_append
     edges, left.sheet_eq, right.sheet_eq]⟩
 
 open Purelib.Riemann in
@@ -174,21 +176,21 @@ open Purelib.RootIsolation in
 
 Winding-one reference loops certify transport reversibility at the retained grid vertices. -/
 @[expose] def reverse (path :
-  SquareRoot.Grid.RootEdgeBank.LiftedWalk edges start firstSheet finish lastSheet)
-    (reference : ∀ point, Polynomial.Geometry.Grid.FromStates.ContainsVertex grid point →
+  LiftedWalk edges start firstSheet finish lastSheet)
+    (reference : ∀ point, Grid.FromStates.ContainsVertex grid point →
       Paths.OwnerLoopMonodromy.WindingOneLoop polynomial point) :
-    SquareRoot.Grid.RootEdgeBank.LiftedWalk edges finish lastSheet start firstSheet :=
+    LiftedWalk edges finish lastSheet start firstSheet :=
   ⟨path.walk.reverse, path.last, path.first,
-    (congrArg (SquareRoot.Grid.EdgeBank.RootEdgeBank.target edges path.walk.reverse) path.sheet_eq.symm).trans
+    (congrArg (EdgeBank.RootEdgeBank.target edges path.walk.reverse) path.sheet_eq.symm).trans
       (edges.target_reverse reference path.walk firstSheet)⟩
 
 open Purelib.Topology in
 open Purelib.RootIsolation in
 /-- Read the lifted walk as an indexed edge path with its specified endpoint owners. -/
 theorem endpoints (path :
-  SquareRoot.Grid.RootEdgeBank.LiftedWalk edges start firstSheet finish lastSheet) (vertices :
-  SquareRoot.Grid.LiftedVertices.VertexBank grid) :
-    Chain.PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish (edges.indexedEdges vertices path.walk
+  LiftedWalk edges start firstSheet finish lastSheet) (vertices :
+  VertexBank grid) :
+    PathEndpoints OrientedEdge.start OrientedEdge.finish (edges.indexedEdges vertices path.walk
       firstSheet)
       (vertices.index start path.first firstSheet) (vertices.index finish path.last lastSheet) :=
   (edges.indexedEdges_endpoints vertices path.walk path.first path.last firstSheet).castFinish
@@ -202,10 +204,10 @@ end
 section
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid}
+  {frames : RootFrames bank.grid}
 
 namespace Purelib.Curves.Hyperelliptic.Branches.BranchCellBank
 
@@ -218,19 +220,19 @@ open Purelib.RootIsolation in
 The existing branch and edge banks determine the actual transports; a destination reference loop exchanges sheets only
 when the direct connector arrives on the other sheet. -/
 @[expose] def connectSheets (bank :
-  Hyperelliptic.Branches.BranchCellBank curve branches higher) {frames : RootIsolation.SquareRoot.Grid.RootFrames
+  BranchCellBank curve branches higher) {frames : RootFrames
   bank.grid}
-    (edges : SquareRoot.Grid.RootEdgeBank frames) (start finish : Gaussian.Basic.Canonical)
-    (first : Polynomial.Geometry.Grid.FromStates.ContainsVertex bank.grid start) (last :
-      Polynomial.Geometry.Grid.FromStates.ContainsVertex bank.grid finish)
-    (firstSheet lastSheet : Fin 2) : SquareRoot.Grid.RootEdgeBank.LiftedWalk edges start firstSheet finish
+    (edges : RootEdgeBank frames) (start finish : Canonical)
+    (first : Grid.FromStates.ContainsVertex bank.grid start) (last :
+      Grid.FromStates.ContainsVertex bank.grid finish)
+    (firstSheet lastSheet : Fin 2) : RootEdgeBank.LiftedWalk edges start firstSheet finish
       lastSheet :=
-  let connector := Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.Grid.connect bank.grid start finish first last
+  let connector := Meshes.PuncturedGrid.LoopMonodromy.Grid.connect bank.grid start finish first last
   let arrival := SquareRoot.Grid.EdgeBank.RootEdgeBank.target edges connector firstSheet
-  match Purelib.Riemann.Meshes.GridLiftedConnections.Grid.SheetAlignment.build arrival lastSheet with
+  match Riemann.Meshes.GridLiftedConnections.Grid.SheetAlignment.build arrival lastSheet with
   | .same reached => ⟨connector, first, last, reached⟩
   | .swapped reached =>
-      let reference := Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt bank finish last
+      let reference := Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt bank finish last
       ⟨connector.append reference.walk, first, last, by
         rw [SquareRoot.Grid.EdgeBank.RootEdgeBank.target_append edges, SquareRoot.Grid.EdgeBank.RootEdgeBank.target_odd
           edges reference.walk last 0 (reference.winding.trans (by decide))]
@@ -243,13 +245,13 @@ open Purelib.Polynomial in
 open Purelib.RootIsolation in
 /-- The constructed sheet connector has the requested endpoints in the actual indexed vertex bank. -/
 theorem connectSheets_endpoints (bank :
-  Hyperelliptic.Branches.BranchCellBank curve branches higher) {frames : RootIsolation.SquareRoot.Grid.RootFrames
+  BranchCellBank curve branches higher) {frames : RootFrames
   bank.grid}
-    (vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid) (edges : SquareRoot.Grid.RootEdgeBank
-      frames) (start finish : Gaussian.Basic.Canonical)
-    (first : Polynomial.Geometry.Grid.FromStates.ContainsVertex bank.grid start) (last :
-      Polynomial.Geometry.Grid.FromStates.ContainsVertex bank.grid finish) (firstSheet lastSheet : Fin 2) :
-    Chain.PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish
+    (vertices : VertexBank bank.grid) (edges : RootEdgeBank
+      frames) (start finish : Canonical)
+    (first : Grid.FromStates.ContainsVertex bank.grid start) (last :
+      Grid.FromStates.ContainsVertex bank.grid finish) (firstSheet lastSheet : Fin 2) :
+    PathEndpoints OrientedEdge.start OrientedEdge.finish
       (edges.indexedEdges vertices (bank.connectSheets edges start finish first last firstSheet lastSheet).walk
         firstSheet)
       (vertices.index start first firstSheet) (vertices.index finish last lastSheet) :=

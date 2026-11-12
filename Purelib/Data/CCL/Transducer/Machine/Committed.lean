@@ -56,5 +56,14 @@ theorem consumeEmission_mode (emitted : List Bool) (emission : Emission) :
       | nil => exact (nonempty rfl).elim
       | cons bit rest => rfl
 
+/-- Consuming a retained pending bit preserves the complete original committed word. -/
+theorem nextBit_of_pending (machine : Machine) (nonempty : machine.pending ≠ []) :
+    committed (Machine.Step.nextBit machine).2 = committed machine := by
+  cases machine with
+  | mk mode emitted pending =>
+      cases pending with
+      | nil => exact (nonempty rfl).elim
+      | cons bit rest => exact Append.append_assoc emitted [bit] rest
+
 end Committed
 end Purelib.Data.CCL.Transducer.Machine

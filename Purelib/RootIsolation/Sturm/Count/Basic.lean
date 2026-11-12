@@ -12,6 +12,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Data.Int.Arithmetic
 
+open Purelib.Polynomial.Dense.Rational.CauchyIndex
+
 open Purelib.Polynomial.Dense.Rational.Basic (CoordinatePolynomial)
 
 open Purelib.Data.Rat
@@ -40,7 +42,7 @@ namespace Purelib.RootIsolation.Sturm.Count.Basic
 def sturmRootCount2 (p : CoordinatePolynomial)
   (lower
   upper : Fraction.Rational) : Int :=
-  Dense.Rational.CauchyIndex.Reduced.reducedCauchyIndex2 (Dense.Derivative.derivative p) p lower upper
+  Reduced.reducedCauchyIndex2 (Dense.Derivative.derivative p) p lower upper
 
 section
 open Purelib.RootIsolation
@@ -49,13 +51,13 @@ theorem sturmRootCount2_add
     (p : CoordinatePolynomial) (lower middle upper : Fraction.Rational) :
     sturmRootCount2 p lower upper =
       sturmRootCount2 p lower middle + sturmRootCount2 p middle upper :=
-  Dense.Rational.CauchyIndex.Reduced.reducedCauchyIndex2_add _ _ _ _ _
+  Reduced.reducedCauchyIndex2_add _ _ _ _ _
 
 /-- Reversing the interval negates its doubled reduced Sturm count. -/
 theorem sturmRootCount2_reverse
     (p : CoordinatePolynomial) (lower upper : Fraction.Rational) :
     sturmRootCount2 p upper lower = -sturmRootCount2 p lower upper :=
-  Dense.Rational.CauchyIndex.Reduced.reducedCauchyIndex2_reverse _ _ _ _
+  Reduced.reducedCauchyIndex2_reverse _ _ _ _
 
 end
 
@@ -65,8 +67,8 @@ open Purelib.RootIsolation in
 @[simp] theorem sturmRootCount2_refl
     (p : CoordinatePolynomial) (parameter : Fraction.Rational) :
     sturmRootCount2 p parameter parameter = 0 := by
-  unfold sturmRootCount2 Dense.Rational.CauchyIndex.Reduced.reducedCauchyIndex2
-  unfold Dense.Rational.CauchyIndex.Basic.Sturm.cauchyIndex2
+  unfold sturmRootCount2 Reduced.reducedCauchyIndex2
+  unfold Basic.Sturm.cauchyIndex2
   exact Arithmetic.sub_eq_zero_of_eq rfl
 
 open Purelib.RootIsolation in
@@ -76,7 +78,7 @@ theorem sturmRootCount2_even
     {lower upper : Fraction.Rational}
     (lowerClear : p.eval lower ≠ 0) (upperClear : p.eval upper ≠ 0) :
     Even (sturmRootCount2 p lower upper) :=
-  Dense.Rational.CauchyIndex.Reduced.Parity.reducedCauchyIndex2_even lowerClear upperClear
+  Reduced.Parity.reducedCauchyIndex2_even lowerClear upperClear
 end Purelib.RootIsolation.Sturm.Count.Basic
 
 end
@@ -87,7 +89,7 @@ open Purelib
 
 /-- The doubled Sturm count of a polynomial on the endpoints of one proper rational cell. -/
 @[expose] public def cellCount2 (event :
-  Dense.Basic.RationalPolynomial) (cell : Data.Rat.Interval.Proper.Cell) : Int :=
+  Dense.Basic.RationalPolynomial) (cell : Interval.Proper.Cell) : Int :=
   sturmRootCount2 event cell.interval.lower cell.interval.upper
 
 end Purelib.RootIsolation.Sturm.Count.Basic

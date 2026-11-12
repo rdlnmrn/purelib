@@ -158,20 +158,20 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChai
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {count : Nat} {patch : PreparedPatch parent}
-  {sourceData : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
+  {sourceData : Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
     Cover sourceData}
   {covers : BasisSourceCovers parent} {minimum
     floor index depth : Nat}
@@ -179,7 +179,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {areaAllowance sourceTarget coefficientTarget : Coordinate}
   {request : BasisPreparedCommonRequest
     regular common areaAllowance sourceTarget coefficientTarget floor}
-  {box : Purelib.Geometry.Rational.Box}
+  {box : Geometry.Rational.Box}
   {polynomials : RegularBasisPolynomials cap
     index box}
   {originals :
@@ -219,10 +219,10 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBl
 set_option genInjectivity false in
 /-- Choose block and reference-mesh requirements before acquiring either primitive bank. Fragment counts come from the
 retained geometric partition. -/
-structure RunRequest (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential)
+structure RunRequest (occurrence : SurfaceOccurrence regular domains differential)
     (covers : SourceLocations.BasisSourceCovers parent) (fragmentCount : Nat)
-    (target : InverseRootPolynomial.Coordinate) (minimum : Nat) where
-  /-- The retained fragment-block request paid from one quarter of the target. -/ blocks : RequestedBlocks.BlockRequest
+    (target : Coordinate) (minimum : Nat) where
+  /-- The retained fragment-block request paid from one quarter of the target. -/ blocks : BlockRequest
     occurrence covers fragmentCount (target / 4)
   /-- The source resampling request at the original primitive slope, quarter target and minimum stage. -/ refinement :
     SourceRunRefinement 1 (BasisSourceCovers.primitiveSlope covers) (target / 4) minimum
@@ -230,9 +230,9 @@ structure RunRequest (occurrence : ExteriorProgram.SurfaceOccurrence regular dom
 constructive_injectivity RunRequest
 
 /-- Prepare the original fragment-block and source-refinement requirements before either sample bank is acquired. -/
-@[expose] def RunRequest.build (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential)
+@[expose] def RunRequest.build (occurrence : SurfaceOccurrence regular domains differential)
     (covers : SourceLocations.BasisSourceCovers parent) (fragmentCount : Nat)
-    (target : InverseRootPolynomial.Coordinate) (positive : 0 < target) (minimum : Nat) :
+    (target : Coordinate) (positive : 0 < target) (minimum : Nat) :
     RunRequest occurrence covers fragmentCount
       target minimum :=
   ⟨BlockRequest.build occurrence covers fragmentCount (target / 4) (Fraction.Order.Field.div_pos_direct positive (by
@@ -244,13 +244,13 @@ set_option genInjectivity false in
 value and its paid certificate. -/
 structure CertifiedRun (acquired : BasisPreparedCommonRequest.Acquisition request polynomials originals cells
   coefficients depth)
-    {faceIndex : Nat} (data : FragmentQueries.RowData occurrence faceIndex) (target : InverseRootPolynomial.Coordinate)
+    {faceIndex : Nat} (data : RowData occurrence faceIndex) (target : Coordinate)
       where
   /-- The actual retained source run built from the acquired fragments. -/ run : SourceRuns.SourceRun acquired data
-  /-- The cached coefficient-independent area error of this exact run. -/ error : InverseRootPolynomial.Coordinate
+  /-- The cached coefficient-independent area error of this exact run. -/ error : Coordinate
   /-- The area-error cache equals the retained run's original error. -/ error_eq : error = run.error
   /-- The retained area error is strictly below the requested target. -/ paid : error < target
-  /-- The cached displacement error of the same retained run. -/ totalError : InverseRootPolynomial.Coordinate
+  /-- The cached displacement error of the same retained run. -/ totalError : Coordinate
   /-- The displacement-error cache equals the original run's total error. -/ totalError_eq : totalError = run.totalError
   /-- The retained displacement error is strictly below one quarter of the requested target. -/ totalPaid : totalError <
     target / 4
@@ -259,7 +259,7 @@ constructive_injectivity CertifiedRun
 
 namespace RunRequest
 variable {fragmentCount runMinimum : Nat} {target : Coordinate}
-  (selected : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedRuns.RunRequest occurrence
+  (selected : RunRequest occurrence
     covers fragmentCount target runMinimum)
 
 /-- Assemble and certify the original source run from paid retained fragment owners and a complete adjacent source
@@ -269,14 +269,14 @@ The supplied count, source and face stages, parameter widths and refinement dept
 displacement errors. -/
 @[expose] def acquire {vertices : Fin fragmentCount → Nat}
     (owners : selected.blocks.OwnerPreparation vertices)
-    (fragments : List (BlockRequest.BudgetedFragment (originals := originals) (coefficients := coefficients)
+    (fragments : List (BudgetedFragment (originals := originals) (coefficients := coefficients)
       selected.blocks data))
     (countLe : fragments.length ≤ fragmentCount)
-    (chain : SourceChains.SourceChain (fragments.map BudgetedFragment.fragment) 0 1)
+    (chain : SourceChain (fragments.map BudgetedFragment.fragment) 0 1)
     (sourcePaid : selected.blocks.queries.sourceMinimum ≤ index) (facePaid : owners.faceIndex ≤ faceIndex)
     (widths : ∀ fragment ∈ fragments, fragment.fragment.sourceWidth ≤ selected.refinement.width)
     (depthPaid : selected.refinement.depth ≤ common.depth + acquired.extraDepth) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedRuns.CertifiedRun acquired data target := by
+    CertifiedRun acquired data target := by
   let retained := fragments.map BudgetedFragment.fragment
   let run := SourceRun.ofChain (acquired := acquired) retained chain
   have blocks := owners.block_error (acquired := acquired) fragments countLe sourcePaid facePaid
@@ -297,10 +297,10 @@ displacement errors. -/
       certified.tolerance_le
       (selected.blocks.fragment_bounds (acquired := acquired) certified.fragment sourcePaid (owners.query_le.trans
         facePaid)).2
-    have countRead : run.fragments.length ≤ fragmentCount := (List.Map.length_map ..).trans_le countLe
+    have countRead : run.fragments.length ≤ fragmentCount := (Map.length_map ..).trans_le countLe
     have toleranceLe := Capacity.fragmentLocalTolerance_count_antitone countRead
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
-        (add_nonneg (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 1)
+      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 2)
+        (add_nonneg (by decide : (0 : Coordinate) ≤ 1)
           (BasisSourceCovers.primitiveSlope_nonnegative covers))) selected.blocks.positive.le
     exact localBound.trans ((Fraction.Order.Basic.min_le_right ..).trans toleranceLe)
   exact ⟨run, run.error, rfl, run.error_lt selected.refinement blocks.le widthLe depthPaid,
@@ -312,27 +312,27 @@ variable {target : Coordinate}
 
 /-- The retained physical area differs from the exact cached source area by at most its certified error times squared
 coefficient mass. -/
-theorem area_bound (certified : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedRuns.CertifiedRun
+theorem area_bound (certified : CertifiedRun
   acquired data target)
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area ((certified.run.fragments.map
+    Gaussian.Norm.Basic.normSq (PairedIncrementArea.area ((certified.run.fragments.map
       OwnedFragment.pair).map Prod.fst).flatten -
       weighted.source.area) ≤ certified.error * (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
   rw [certified.error_eq]
   exact certified.run.cached_source_area_bound weighted
 
 /-- The retained physical area satisfies the requested homogeneous bound against its exact cached source area. -/
-theorem area_requested (certified : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedRuns.CertifiedRun
+theorem area_requested (certified : CertifiedRun
   acquired data target)
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area ((certified.run.fragments.map
+    Gaussian.Norm.Basic.normSq (PairedIncrementArea.area ((certified.run.fragments.map
       OwnedFragment.pair).map Prod.fst).flatten -
       weighted.source.area) ≤ target * (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 :=
   (certified.area_bound weighted).trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct certified.paid.le
     (Fraction.Order.Arithmetic.sq_nonneg_direct _))
 
 /-- The cached endpoint error is paid by the same request as the area error. -/
-theorem total_requested (certified : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedRuns.CertifiedRun
+theorem total_requested (certified : CertifiedRun
   acquired data target)
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs) :
     PrimitivePoint.Bounded
@@ -344,8 +344,8 @@ theorem total_requested (certified : Curves.Hyperelliptic.Meshes.PuncturedGrid.E
   rw [← certified.totalError_eq] at bounded
   have massNN : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
-    (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : InverseRootPolynomial.Coordinate)) _
-      (fun row => Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
+    (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Coordinate)) _
+      (fun row => Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
   have upper := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct certified.totalPaid.le massNN
   exact ⟨bounded.1.trans upper, bounded.2.trans upper⟩
 

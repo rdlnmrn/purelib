@@ -16,6 +16,8 @@ import Purelib.Polynomial.Geometry.Grid.ClearGridCoverage
 public import Purelib.Riemann.Meshes.AnalyticGridFaces
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Curves.Hyperelliptic
+
 public section
 
 /-!
@@ -38,8 +40,8 @@ open Purelib.Curves.Hyperelliptic.Branches.BranchFaceClassification (FaceKind)
 open Purelib.Curves.Hyperelliptic.Branches.BranchFaceClassification.FaceKind (branch_unique)
 open Purelib.Curves.Hyperelliptic.Branches.BranchCellWinding (selected_winding_four)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
 
 open Purelib.Curves in
@@ -48,9 +50,9 @@ set_option genInjectivity false in
 /-- A retained grid face with zero winding and whole-box polynomial clearance.
 
 The actual cell and membership proof belong to the original branch-cell bank's grid. -/
-structure RegularFace (bank : Hyperelliptic.Branches.BranchCellBank curve branches higher) where
-  /-- The actual regular cell in the retained common grid. -/ cell : Geometry.Grid.ClearGrid.Cell curve.polynomial
-    (Hyperelliptic.Branches.Cuts.Ambient curve)
+structure RegularFace (bank : BranchCellBank curve branches higher) where
+  /-- The actual regular cell in the retained common grid. -/ cell : Cell curve.polynomial
+    (Branches.Cuts.Ambient curve)
   /-- The regular cell belongs to the original grid's cell list. -/ member : cell ∈ bank.grid.cells
   /-- The defining polynomial has zero quadrupled boundary winding on this cell. -/ winding_zero :
     Winding.Box.Basic.quadrupledBoxWinding curve.polynomial cell.box = 0
@@ -66,14 +68,14 @@ set_option genInjectivity false in
 
 The cell belongs to the common grid, equals the bank's selected cell for that label, and has the same box as the
 retained state. -/
-structure BranchHole (bank : Hyperelliptic.Branches.BranchCellBank curve branches higher) where
-  /-- The retained finite branch label. -/ index : Hyperelliptic.Branches.BranchIsolation.Data.Index branches
-  /-- The actual branch-hole cell of the common grid. -/ cell : Geometry.Grid.ClearGrid.Cell curve.polynomial
-    (Hyperelliptic.Branches.Cuts.Ambient curve)
+structure BranchHole (bank : BranchCellBank curve branches higher) where
+  /-- The retained finite branch label. -/ index : Branches.BranchIsolation.Data.Index branches
+  /-- The actual branch-hole cell of the common grid. -/ cell : Cell curve.polynomial
+    (Branches.Cuts.Ambient curve)
   /-- The hole cell belongs to the original grid's cell list. -/ member : cell ∈ bank.grid.cells
   /-- The actual hole cell equals the bank's selected cell for its retained label. -/ cell_eq : cell = bank.cell index
-  /-- The retained winding-one root state in the original ambient box. -/ state : Geometry.Grid.FromStates.BranchState
-    curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve)
+  /-- The retained winding-one root state in the original ambient box. -/ state : BranchState
+    curve.polynomial (Branches.Cuts.Ambient curve)
   /-- The retained root state and hole cell have the same actual box. -/ box_eq : state.box = cell.box
 
 constructive_injectivity BranchHole
@@ -82,11 +84,11 @@ namespace RegularFace
 
 open Purelib.Curves in
 /-- A zero-winding regular face is distinct from every selected branch cell. -/
-theorem unassigned {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher} (face : RegularFace bank)
-    (index : Hyperelliptic.Branches.BranchIsolation.Data.Index branches) : face.cell ≠ bank.cell index := by
+theorem unassigned {bank : BranchCellBank curve branches higher} (face : RegularFace bank)
+    (index : Branches.BranchIsolation.Data.Index branches) : face.cell ≠ bank.cell index := by
   intro equal
   have zero := face.winding_zero
-  rw [equal, Hyperelliptic.Branches.BranchCellWinding.selected_winding_four bank index] at zero
+  rw [equal, selected_winding_four bank index] at zero
   exact (by decide : (4 : Int) ≠ 0) zero
 
 end RegularFace
@@ -98,14 +100,14 @@ set_option genInjectivity false in
 
 Each constructor retains either a certified regular face or a branch hole while preserving that cell at the head of the
 original list. -/
-inductive FaceSplit (bank : Hyperelliptic.Branches.BranchCellBank curve branches higher) :
-    List (Geometry.Grid.ClearGrid.Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve)) → Type
+inductive FaceSplit (bank : BranchCellBank curve branches higher) :
+    List (Cell curve.polynomial (Branches.Cuts.Ambient curve)) → Type
   /-- The empty cell list has an empty classification spine. -/ | nil : FaceSplit bank []
   /-- Prepend a retained regular face to the exact classified cell tail. -/ | regular {cells : List
-    (Geometry.Grid.ClearGrid.Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve))}
+    (Cell curve.polynomial (Branches.Cuts.Ambient curve))}
       (face : RegularFace bank) (tail : FaceSplit bank cells) : FaceSplit bank (face.cell :: cells)
   /-- Prepend a retained branch hole to the exact classified cell tail. -/ | hole {cells : List
-    (Geometry.Grid.ClearGrid.Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve))}
+    (Cell curve.polynomial (Branches.Cuts.Ambient curve))}
       (face : BranchHole bank) (tail : FaceSplit bank cells) : FaceSplit bank (face.cell :: cells)
 
 constructive_injectivity FaceSplit
@@ -114,7 +116,7 @@ namespace FaceSplit
 
 open Purelib.Data.List
 
-variable {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {bank : BranchCellBank curve branches higher}
 
 /-- Convert retained analytic face models to an ordered regular-or-hole classification.
 
@@ -131,21 +133,21 @@ section
 open Purelib.Curves
 open Purelib.Polynomial
 /-- Read the regular faces from the classification spine in their original order. -/
-@[expose] def regulars : {cells : List (Geometry.Grid.ClearGrid.Cell curve.polynomial
-  (Hyperelliptic.Branches.Cuts.Ambient curve))} → FaceSplit bank cells → List (RegularFace bank)
+@[expose] def regulars : {cells : List (Cell curve.polynomial
+  (Branches.Cuts.Ambient curve))} → FaceSplit bank cells → List (RegularFace bank)
   | _, .nil => []
   | _, .regular face tail => face :: tail.regulars
   | _, .hole _ tail => tail.regulars
 
 /-- Read the branch holes from the classification spine in their original order. -/
-@[expose] def holes : {cells : List (Geometry.Grid.ClearGrid.Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient
+@[expose] def holes : {cells : List (Cell curve.polynomial (Branches.Cuts.Ambient
   curve))} → FaceSplit bank cells → List (BranchHole bank)
   | _, .nil => []
   | _, .regular _ tail => tail.holes
   | _, .hole face tail => face :: tail.holes
 
 /-- The two classified list lengths sum to the original cell-list length. -/
-theorem length_eq : ∀ {cells : List (Geometry.Grid.ClearGrid.Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient
+theorem length_eq : ∀ {cells : List (Cell curve.polynomial (Branches.Cuts.Ambient
   curve))} (split : FaceSplit bank cells),
     split.regulars.length + split.holes.length = cells.length
   | _, .nil => rfl
@@ -162,8 +164,8 @@ theorem length_eq : ∀ {cells : List (Geometry.Grid.ClearGrid.Cell curve.polyno
 
 Structural recursion retains the original regular-face occurrence and its exact source cell. Each head or tail
 membership constructor identifies that same cell in the classification spine. -/
-theorem regular_member : ∀ {cells : List (Geometry.Grid.ClearGrid.Cell curve.polynomial
-  (Hyperelliptic.Branches.Cuts.Ambient curve))} (split : FaceSplit bank cells)
+theorem regular_member : ∀ {cells : List (Cell curve.polynomial
+  (Branches.Cuts.Ambient curve))} (split : FaceSplit bank cells)
     {face : RegularFace bank}, face ∈ split.regulars → face.cell ∈ cells
   | _, .nil, _, member => (List.not_mem_nil member).elim
   | _, .regular head tail, face, member => by
@@ -176,8 +178,8 @@ theorem regular_member : ∀ {cells : List (Geometry.Grid.ClearGrid.Cell curve.p
 
 Structural recursion retains the original branch-hole occurrence and its exact source cell. Each head or tail membership
 constructor identifies that same cell in the classification spine. -/
-theorem hole_member : ∀ {cells : List (Geometry.Grid.ClearGrid.Cell curve.polynomial
-  (Hyperelliptic.Branches.Cuts.Ambient curve))} (split : FaceSplit bank cells)
+theorem hole_member : ∀ {cells : List (Cell curve.polynomial
+  (Branches.Cuts.Ambient curve))} (split : FaceSplit bank cells)
     {face : BranchHole bank}, face ∈ split.holes → face.cell ∈ cells
   | _, .nil, _, member => (List.not_mem_nil member).elim
   | _, .regular _ tail, _, member => List.mem_cons_of_mem _ (tail.hole_member member)
@@ -190,9 +192,9 @@ theorem hole_member : ∀ {cells : List (Geometry.Grid.ClearGrid.Cell curve.poly
 
 Each original cell occurrence is retained in exactly the regular or hole branch supplied by the classification spine.
 Structural recursion returns the corresponding original face and its ordered-list membership witness. -/
-theorem covers : ∀ {cells : List (Geometry.Grid.ClearGrid.Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient
+theorem covers : ∀ {cells : List (Cell curve.polynomial (Branches.Cuts.Ambient
   curve))} (split : FaceSplit bank cells)
-    {cell : Geometry.Grid.ClearGrid.Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve)}, cell ∈ cells →
+    {cell : Cell curve.polynomial (Branches.Cuts.Ambient curve)}, cell ∈ cells →
       (∃ face ∈ split.regulars, face.cell = cell) ∨ (∃ hole ∈ split.holes, hole.cell = cell)
   | _, .nil, _, member => (List.not_mem_nil member).elim
   | _, .regular face tail, cell, member => by
@@ -209,8 +211,8 @@ theorem covers : ∀ {cells : List (Geometry.Grid.ClearGrid.Cell curve.polynomia
         · exact Or.inr ⟨other, List.mem_cons_of_mem _ belongs, equal⟩
 
 /-- A proper grid cell's interior is not separated from itself. -/
-private theorem not_self_separated (cell : Geometry.Grid.ClearGrid.Cell curve.polynomial
-  (Hyperelliptic.Branches.Cuts.Ambient curve)) : ¬cell.box.InteriorSeparated cell.box := by
+private theorem not_self_separated (cell : Cell curve.polynomial
+  (Branches.Cuts.Ambient curve)) : ¬cell.box.InteriorSeparated cell.box := by
   intro separated
   rcases separated with before | after | below | above
   · exact (not_lt_of_ge before) cell.box_proper.1
@@ -219,8 +221,8 @@ private theorem not_self_separated (cell : Geometry.Grid.ClearGrid.Cell curve.po
   · exact (not_lt_of_ge above) cell.box_proper.2
 
 /-- Pairwise separated original cells give pairwise distinct retained branch-hole labels. -/
-theorem holes_pairwise : ∀ {cells : List (Geometry.Grid.ClearGrid.Cell curve.polynomial
-  (Hyperelliptic.Branches.Cuts.Ambient curve))} (split : FaceSplit bank cells),
+theorem holes_pairwise : ∀ {cells : List (Cell curve.polynomial
+  (Branches.Cuts.Ambient curve))} (split : FaceSplit bank cells),
     cells.Pairwise (fun first second => first.box.InteriorSeparated second.box) →
       split.holes.Pairwise (fun first second => first.index ≠ second.index)
   | _, .nil, _ => .nil
@@ -242,7 +244,7 @@ set_option genInjectivity false in
 /-- The exact grid classification with materialized regular-face and branch-hole lists.
 
 Readback equations bind both caches to the same classification spine over the retained grid's complete cell list. -/
-structure PuncturedFaces (bank : Hyperelliptic.Branches.BranchCellBank curve branches higher) where
+structure PuncturedFaces (bank : BranchCellBank curve branches higher) where
   /-- The classification spine indexed by the exact retained grid cell list. -/ split : FaceSplit bank bank.grid.cells
   /-- The materialized ordered regular-face cache. -/ regulars : List (RegularFace bank)
   /-- The regular-face cache equals the spine's regular readback. -/ regulars_eq : regulars = split.regulars
@@ -253,19 +255,19 @@ constructive_injectivity PuncturedFaces
 
 namespace PuncturedFaces
 
-variable {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {bank : BranchCellBank curve branches higher}
 
 section
 open Purelib.Curves
 /-- Materialize punctured faces from analytic models covering the exact original grid cells. -/
-@[expose] def ofAnalytic (bank : Hyperelliptic.Branches.BranchCellBank curve branches higher) (faces : List
+@[expose] def ofAnalytic (bank : BranchCellBank curve branches higher) (faces : List
   (AnalyticFace bank))
     (cellsEq : faces.map AnalyticFace.cell = bank.grid.cells) : PuncturedFaces bank :=
   let split := cellsEq ▸ FaceSplit.ofAnalytic faces
   ⟨split, split.regulars, rfl, split.holes, rfl⟩
 
 /-- Build and cache the regular faces and holes of the retained branch-cell bank. -/
-@[expose] def build (bank : Hyperelliptic.Branches.BranchCellBank curve branches higher) : PuncturedFaces bank :=
+@[expose] def build (bank : BranchCellBank curve branches higher) : PuncturedFaces bank :=
   ofAnalytic bank (analyticFaces bank) (analyticFaces_cells bank)
 
 end
@@ -278,12 +280,12 @@ theorem length_eq (faces : PuncturedFaces bank) : faces.regulars.length + faces.
 
 open Purelib.Curves in
 /-- Every original branch label occurs in the retained hole cache. -/
-theorem hole_complete (faces : PuncturedFaces bank) (index : Hyperelliptic.Branches.BranchIsolation.Data.Index branches)
+theorem hole_complete (faces : PuncturedFaces bank) (index : Branches.BranchIsolation.Data.Index branches)
   :
     ∃ hole ∈ faces.holes, hole.index = index := by
   rcases faces.split.covers (bank.cell_mem index) with ⟨regular, _, equal⟩ | ⟨hole, member, equal⟩
   · exact (regular.unassigned index equal).elim
-  · refine ⟨hole, ?_, Hyperelliptic.Branches.BranchFaceClassification.FaceKind.branch_unique hole.cell_eq equal⟩
+  · refine ⟨hole, ?_, branch_unique hole.cell_eq equal⟩
     rw [faces.holes_eq]
     exact member
 
@@ -292,7 +294,7 @@ open Purelib.Polynomial in
 theorem holes_pairwise (faces : PuncturedFaces bank) :
     faces.holes.Pairwise (fun first second => first.index ≠ second.index) := by
   rw [faces.holes_eq]
-  exact faces.split.holes_pairwise (Polynomial.Geometry.Grid.ClearGridCoverage.cells_pairwise bank.grid)
+  exact faces.split.holes_pairwise (Geometry.Grid.ClearGridCoverage.cells_pairwise bank.grid)
 
 end PuncturedFaces
 

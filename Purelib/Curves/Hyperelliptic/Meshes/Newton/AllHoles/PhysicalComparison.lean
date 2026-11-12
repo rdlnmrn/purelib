@@ -94,33 +94,33 @@ open Purelib
 
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
     Fraction.Rational}
 
 namespace NewtonPreparation.FamilyAreaRequest
 
-variable {request : Hyperelliptic.Meshes.Newton.AllHoles.PrimitiveComparison.NewtonPreparation.FamilyAreaRequest
+variable {request : PrimitiveComparison.NewtonPreparation.FamilyAreaRequest
   preparation target radius}
   {lifted : Meshes.LiftedPuncturedGrid request.single.grid.punctured}
-  {excision : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision request.single.grid lifted}
-  {first second : Fin genus} {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+  {excision : Excision.AllHoleExcision request.single.grid lifted}
+  {first second : Fin genus} {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
     request.single.grid.faces.regulars}
 
 namespace PairedComparison
 
 variable {stage : Nat}
-  {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
-  {left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get first) lifted.mesh}
-    {right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get second)
+  {cache : PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  {left : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get first) lifted.mesh}
+    {right : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get second)
     lifted.mesh}
   {firstSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch left.values}
   {secondSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch right.values}
 
 variable {prepared :
-  Hyperelliptic.Meshes.Newton.AllHoles.PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations excision}
+  PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations excision}
   {comparison :
   PairedComparison prepared
   first second domains}
@@ -134,27 +134,27 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.Regul
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
 
 variable {sample :
-  Hyperelliptic.Meshes.Newton.AllHoles.PairedAnnuli.NewtonPreparation.FamilyAreaRequest.PairedComparison.SewnSample
+  PairedAnnuli.NewtonPreparation.FamilyAreaRequest.PairedComparison.SewnSample
   source firstSurface secondSurface}
-  {cuts : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
-    {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+  {cuts : CommonCuts domains} {coarseDepth : Nat}
+    {fixed : (sheet : Fin 2) → Preflights domains
     sheet}
   {physicalTarget : Fraction.Rational}
-  {physicalRequest : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+  {physicalRequest : PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+    PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
     physicalTarget}
 
 /-- Remaining terms after the actual inner source chords have cancelled.
 All inputs are retained surface, side and annular numerical caches. -/
 @[expose] def remainingCorrection (entry :
-  Hyperelliptic.Meshes.Newton.AllHoles.PhysicalSides.NewtonPreparation.FamilyAreaRequest.PairedComparison.PhysicalTerm
+  PhysicalSides.NewtonPreparation.FamilyAreaRequest.PairedComparison.PhysicalTerm
   left right firstSurface secondSurface)
     (perimeters : PuncturedGrid.Matched.FacePerimeters (request := physicalRequest)
       cache.normalize first second) : Gaussian :=
   let raw := fun vertex => (⟨firstSurface.sewn.values vertex, secondSurface.sewn.values vertex⟩ :
     Topology.Polygon.Stokes.PrimitivePoint)
   Annulus.HoleSides.finePerimeter entry.sides perimeters +
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (entry.term.data.balance.inner.word.sources.entries.map (fun route =>
+    Gaussian.Norm.Sum.Basic.gaussianSum (entry.term.data.balance.inner.word.sources.entries.map (fun route =>
       Topology.Polygon.Stokes.edgeArea (raw lifted.cutPolygon.patch.cut.triangles[route.owner.position.val].first)
         ((raw route.cutEdge.finish).sub (raw route.cutEdge.start)))) +
     entry.term.data.paired.jumpSum + entry.term.data.paired.defectSum + entry.term.data.outer.correction
@@ -167,60 +167,60 @@ theorem global_correction_accurate (cached :
     (perimeters : PuncturedGrid.Matched.FacePerimeters (request := physicalRequest)
       cache.normalize first second)
     (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank request.single.grid.faces)
-    {global : Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation lifted.cutPolygon domains first
+    {global : PuncturedGrid.SewnBilinearRequest.BilinearPreparation lifted.cutPolygon domains first
       second}
     {sewingTarget : Fraction.Rational} {sewingFloor : Nat}
-    (sewing : Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation.Request global sewingTarget
+    (sewing : PuncturedGrid.SewnBilinearRequest.BilinearPreparation.Request global sewingTarget
       sewingFloor)
     (later : sewing.index ≤ stage) (bilinear : Topology.Surface.Sewing.Bilinear.Samples firstSurface
       secondSurface) :
-    Data.Gaussian.Norm.Basic.normSq (sample.correction +
-      (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter perimeters neighbors
-      - Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.physicalTriangleArea neighbors left right) -
-      (Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentCorrection.physicalComponentCorrection perimeters neighbors
+    Gaussian.Norm.Basic.normSq (sample.correction +
+      (PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter perimeters neighbors
+      - PuncturedGrid.CrossingTriangleAreas.physicalTriangleArea neighbors left right) -
+      (PuncturedGrid.PhysicalComponentCorrection.physicalComponentCorrection perimeters neighbors
         left right .exterior +
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (cached.entries.map (fun entry =>
+        Gaussian.Norm.Sum.Basic.gaussianSum (cached.entries.map (fun entry =>
           remainingCorrection
           entry perimeters)))) ≤
       (request.single.grid.faces.holes.length : Fraction.Rational) *
         ((request.single.grid.faces.holes.length : Fraction.Rational) * (8 * (8 * (sewing.budget.weight *
           sewing.budget.error)))) := by
   let residual := fun entry :
-    Hyperelliptic.Meshes.Newton.AllHoles.PhysicalSides.NewtonPreparation.FamilyAreaRequest.PairedComparison.PhysicalTerm
+    PhysicalSides.NewtonPreparation.FamilyAreaRequest.PairedComparison.PhysicalTerm
     left right firstSurface secondSurface =>
-    entry.term.data.correction + Hyperelliptic.Meshes.PuncturedGrid.HoleAreaRemainder.holeAreaRemainder perimeters
+    entry.term.data.correction + PuncturedGrid.HoleAreaRemainder.holeAreaRemainder perimeters
       entry.sides.sides -
       remainingCorrection
       entry perimeters
   have bounds : ∀ value ∈ cached.entries.map residual,
-      Data.Gaussian.Norm.Basic.normSq value ≤ 8 * (8 * (sewing.budget.weight * sewing.budget.error)) := by
+      Gaussian.Norm.Basic.normSq value ≤ 8 * (8 * (sewing.budget.weight * sewing.budget.error)) := by
     intro value member
     obtain ⟨entry, _, equal⟩ := Data.List.Map.mem_map.mp member
     rw [← equal]
-    exact Hyperelliptic.Meshes.Newton.Annulus.PhysicalRemainder.AnnularSample.correction_add_remainder_accurate
+    exact Annulus.PhysicalRemainder.AnnularSample.correction_add_remainder_accurate
       entry.term.data entry.sides perimeters sewing later bilinear
   have estimate := Gaussian.Norm.Sum.Bounds.normSq_sum_le _ _ bounds
-  simp only [Data.List.Map.length_map,
+  simp only [List.Map.length_map,
     PhysicalSides.entries_count
     cached, -eq_self, -iff_self] at estimate
-  have corrections : Data.Gaussian.Norm.Sum.Basic.gaussianSum (cached.entries.map (fun entry =>
+  have corrections : Gaussian.Norm.Sum.Basic.gaussianSum (cached.entries.map (fun entry =>
     entry.term.data.correction)) = sample.correction := by
     have terms := congrArg (List.map (fun term :
-      Hyperelliptic.Meshes.Newton.AllHoles.PairedAnnuli.NewtonPreparation.FamilyAreaRequest.PairedComparison.AnnularTerm
+      PairedAnnuli.NewtonPreparation.FamilyAreaRequest.PairedComparison.AnnularTerm
       left right firstSurface secondSurface => term.data.correction)) cached.terms_eq
-    simp only [Data.List.Map.map_map, Function.comp_def, -eq_self, -iff_self] at terms
-    exact (congrArg Data.Gaussian.Norm.Sum.Basic.gaussianSum terms).trans sample.correction_eq.symm
-  have balance : Data.Gaussian.Norm.Sum.Basic.gaussianSum (cached.entries.map residual) = sample.correction +
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (cached.entries.map (fun entry =>
-        Hyperelliptic.Meshes.PuncturedGrid.HoleAreaRemainder.holeAreaRemainder perimeters entry.sides.sides)) -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (cached.entries.map (fun entry =>
+    simp only [List.Map.map_map, Function.comp_def, -eq_self, -iff_self] at terms
+    exact (congrArg Gaussian.Norm.Sum.Basic.gaussianSum terms).trans sample.correction_eq.symm
+  have balance : Gaussian.Norm.Sum.Basic.gaussianSum (cached.entries.map residual) = sample.correction +
+      Gaussian.Norm.Sum.Basic.gaussianSum (cached.entries.map (fun entry =>
+        PuncturedGrid.HoleAreaRemainder.holeAreaRemainder perimeters entry.sides.sides)) -
+      Gaussian.Norm.Sum.Basic.gaussianSum (cached.entries.map (fun entry =>
         remainingCorrection
         entry perimeters)) := by
     rw [← corrections]
     induction cached.entries with
     | nil => change (0 : Gaussian.Basic.Canonical) = 0 + 0 - 0; ring1
     | cons entry tail ih =>
-      simp only [List.map_cons, Data.Gaussian.Norm.Sum.Basic.gaussianSum, -eq_self, -iff_self]
+      simp only [List.map_cons, Gaussian.Norm.Sum.Basic.gaussianSum, -eq_self, -iff_self]
       rw [ih]
       dsimp only [residual, -eq_self, -iff_self]
       ring1

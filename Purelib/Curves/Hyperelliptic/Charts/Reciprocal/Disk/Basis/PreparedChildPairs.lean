@@ -91,14 +91,14 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonReq
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {covers :
+    UniformReciprocalModels.Data patch count}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {covers :
     BasisSourceCovers parent}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box}
+  {index : Nat} {box : Geometry.Rational.Box}
 
 open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Algebra.FiniteSum.Fin (sumFin_zero sumFin_mul_right)
@@ -137,19 +137,19 @@ variable {areaAllowance sourceTarget coefficientTarget : Coordinate}
 
 The local request supplies both values for the same prepared children.
 This readback retains its exact row and synchronized sample indices. -/
-@[expose] def rowPairs (acquired : BasisPreparedCommonRequest.Acquisition request polynomials originals cells
+@[expose] def rowPairs (acquired : Acquisition request polynomials originals cells
   coefficients depth) (row : Fin genus) :
-    List (InverseRootPolynomial.Gaussian × InverseRootPolynomial.Gaussian) := LocalRequest.areaPairs
+    List (Gaussian × Gaussian) := LocalRequest.areaPairs
       (acquired.prepared.get row).localRequest
 
 set_option genInjectivity false in
 /-- Cached synchronized primitive/integral pairs for every original basis row.
 
 The cache retains the actual prepared children at the shared dyadic depth. -/
-structure ChildPairs (acquired : BasisPreparedCommonRequest.Acquisition request polynomials originals cells coefficients
+structure ChildPairs (acquired : Acquisition request polynomials originals cells coefficients
   depth) where
   /-- The cached list of actual child pairs for each retained basis row. -/ values : Data.Vector (List
-    (InverseRootPolynomial.Gaussian × InverseRootPolynomial.Gaussian)) genus
+    (Gaussian × Gaussian)) genus
   /-- Each row cache reads its actual prepared primitive/integral pairs. -/ values_eq : ∀ row, values row =
     rowPairs
     acquired row
@@ -160,13 +160,13 @@ constructive_injectivity ChildPairs
 
 Each row reads the supplied local request's prepared children. The vector
 caches those exact pairs and retains its dependent readback equality. -/
-@[expose] def childPairs (acquired : BasisPreparedCommonRequest.Acquisition request polynomials originals cells
+@[expose] def childPairs (acquired : Acquisition request polynomials originals cells
   coefficients depth) :
   ChildPairs
   acquired :=
   ⟨vectorOfFn
     (rowPairs
-    acquired), Data.Vector.Basic.vectorOfFn_apply _⟩
+    acquired), vectorOfFn_apply _⟩
 
 namespace ChildPairs
 
@@ -179,12 +179,12 @@ variable {acquired :
 The row cache reads the actual local request pairs. Its retained child-count
 and common-depth equations identify the exact finite list length. -/
 theorem count_eq (pairs :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
+  ChildPairs
   acquired) (row : Fin genus) :
     (pairs.values row).length = 2 ^ (common.depth + acquired.extraDepth) := by
   rw [pairs.values_eq]
   unfold
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.rowPairs
+    rowPairs
     LocalRequest.areaPairs
   rw [Map.length_map, (acquired.prepared.get row).localRequest.request.block.childCount, acquired.depths_eq]
 
@@ -193,14 +193,14 @@ theorem count_eq (pairs :
 Mapping the first projection preserves the synchronized source increments.
 The same cached row and common depth supply their original path equation. -/
 theorem source_path (pairs :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
+  ChildPairs
   acquired) (row : Fin genus) :
     (pairs.values row).map Prod.fst = DyadicPrimitivePaths.dyadicIncrements
       (fun parameter => (originals.get row).primitive.value.eval (parent.edge.point parameter))
       (common.depth + acquired.extraDepth) 0 1 := by
   rw [pairs.values_eq]
   unfold
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.rowPairs
+    rowPairs
     LocalRequest.areaPairs
   rw [Map.map_map]
   exact acquired.synchronized_primitive_path row
@@ -209,9 +209,9 @@ theorem source_path (pairs :
 
 The retained geometric factor is nonnegative at every finite depth.
 Multiplication transports the supplied initial-scale inequality. -/
-private theorem quarter_mono {first last : InverseRootPolynomial.Coordinate} (small : first ≤ last) (depth : Nat) :
-    Geometric.Basic.quarterRadius first depth ≤ Geometric.Basic.quarterRadius last depth := by
-  rw [Geometric.Basic.quarterRadius_eq_mul_pow, Geometric.Basic.quarterRadius_eq_mul_pow]
+private theorem quarter_mono {first last : Coordinate} (small : first ≤ last) (depth : Nat) :
+    quarterRadius first depth ≤ quarterRadius last depth := by
+  rw [quarterRadius_eq_mul_pow, quarterRadius_eq_mul_pow]
   exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct small (Fraction.Order.Arithmetic.pow_nonneg_direct
     (by decide) depth)
 
@@ -220,10 +220,10 @@ private theorem quarter_mono {first last : InverseRootPolynomial.Coordinate} (sm
 The actual local request error and retained source tolerance are compared
 at the same common dyadic depth and selected child pair. -/
 theorem errors (pairs :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
-  acquired) (row : Fin genus) (pair : InverseRootPolynomial.Gaussian × InverseRootPolynomial.Gaussian) (member : pair ∈
+  ChildPairs
+  acquired) (row : Fin genus) (pair : Gaussian × Gaussian) (member : pair ∈
   pairs.values row) :
-    Data.Gaussian.Norm.Basic.normSq (pair.1 - pair.2) ≤ Geometric.Basic.quarterRadius request.sourceTolerance
+    Data.Gaussian.Norm.Basic.normSq (pair.1 - pair.2) ≤ quarterRadius request.sourceTolerance
       (common.depth + acquired.extraDepth) := by
   rw [pairs.values_eq] at member
   have bounded := LocalRequest.areaPairs_errors
@@ -240,10 +240,10 @@ theorem errors (pairs :
 The retained primitive increment certificate bounds that exact first
 coordinate at the synchronized common depth. -/
 theorem source_bound (pairs :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
-  acquired) (row : Fin genus) (pair : InverseRootPolynomial.Gaussian × InverseRootPolynomial.Gaussian) (member : pair ∈
+  ChildPairs
+  acquired) (row : Fin genus) (pair : Gaussian × Gaussian) (member : pair ∈
   pairs.values row) :
-    Data.Gaussian.Norm.Basic.normSq pair.1 ≤ Geometric.Basic.quarterRadius (covers.get row).data.sourceSlope
+    Data.Gaussian.Norm.Basic.normSq pair.1 ≤ quarterRadius (covers.get row).data.sourceSlope
       (common.depth + acquired.extraDepth) := by
   have present : pair.1 ∈ (pairs.values row).map Prod.fst := Map.mem_map.mpr ⟨pair, member, rfl⟩
   rw [pairs.source_path] at present
@@ -259,9 +259,9 @@ theorem source_bound (pairs :
 The row-count equation transports the original column bound to the cached
 list length. The lookup consumes that same cache and certificate. -/
 @[expose] def read (pairs :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
+  ChildPairs
   acquired) (row : Fin genus) (column : Fin (2 ^ (common.depth + acquired.extraDepth))) :
-    InverseRootPolynomial.Gaussian × Gaussian :=
+    Gaussian × Gaussian :=
   (pairs.values row)[column.val]'((pairs.count_eq row).symm ▸ column.isLt)
 
 /-- Reading a child pair with its retained finite bound returns an actual entry in that row.
@@ -269,7 +269,7 @@ list length. The lookup consumes that same cache and certificate. -/
 The row-count equation supplies the same cached-list bound used by read.
 The original indexed occurrence certificate then identifies the retained pair. -/
 theorem read_mem (pairs :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
+  ChildPairs
   acquired) (row : Fin genus) (column : Fin (2 ^ (common.depth + acquired.extraDepth))) :
     pairs.read row column ∈ pairs.values row := List.getElem_mem ((pairs.count_eq row).symm ▸ column.isLt)
 

@@ -61,38 +61,38 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalizedCutPeriods
 
 open Purelib.Riemann.Readings.PreparedPrimitiveChargeBounds
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {source : Hyperelliptic.Differentials.Basic.Differential genus} {prepared :
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgram lifted source}
+  {lifted : Meshes.LiftedPuncturedGrid base} {source : Differentials.Basic.Differential genus} {prepared :
+    Cut.CyclePrograms.CutCycleProgram lifted source}
 
 namespace PrimitiveBank.RequestedPeriod
-variable {bank : Hyperelliptic.Meshes.PuncturedGrid.Cut.FaceBanks.FaceBank prepared} {differential : Fin genus}
-  {comparison : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential}
-    {target : Readings.PreparedPrimitiveChargeBounds.Coordinate} {minimumStage : Nat}
+variable {bank : Cut.FaceBanks.FaceBank prepared} {differential : Fin genus}
+  {comparison : Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential}
+    {target : Coordinate} {minimumStage : Nat}
 
 /-- The retained original requested-period value equals the sum of its exact normalized corner increments. -/
 theorem value_eq_normalized_corners (result :
-  Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison target
+  Cut.PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison target
   minimumStage) :
-    result.value = Data.Gaussian.Norm.Sum.Basic.gaussianSum
-      (Hyperelliptic.Meshes.PuncturedGrid.Cut.CornerRequests.AssignedSegments.cornerIncrements
+    result.value = Gaussian.Norm.Sum.Basic.gaussianSum
+      (Cut.CornerRequests.AssignedSegments.cornerIncrements
       result.locals.numerics.normalize bank.assigned) := by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.Cut.CornerRequests.AssignedSegments.cornerIncrements_normalize]
+  rw [Cut.CornerRequests.AssignedSegments.cornerIncrements_normalize]
   exact result.value_eq_corners
 
 /-- Normalizing the supplied cache preserves accuracy against the same original
 root-safe program and the same retained period sample. -/
 theorem normalized_corners_program_accurate (result :
-  Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison target
+  Cut.PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison target
   minimumStage) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum
-      (Hyperelliptic.Meshes.PuncturedGrid.Cut.CornerRequests.AssignedSegments.cornerIncrements
+    Gaussian.Norm.Basic.normSq (Gaussian.Norm.Sum.Basic.gaussianSum
+      (Cut.CornerRequests.AssignedSegments.cornerIncrements
       result.locals.numerics.normalize bank.assigned) -
       ((prepared.program differential).integral.model result.sample.stage).integralSample) < target := by
   rw [←
-    Hyperelliptic.Meshes.PuncturedGrid.NormalizedCutPeriods.PrimitiveBank.RequestedPeriod.value_eq_normalized_corners
+    RequestedPeriod.value_eq_normalized_corners
     result]
   exact result.program_accurate
 

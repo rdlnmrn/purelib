@@ -49,38 +49,38 @@ open Purelib.Data.Gaussian.Basic.Canonical
 The segment stays in the primitive's box; the squared increment is bounded by twice the coefficient ceiling times the
 direction norm and squared parameter displacement. -/
 theorem segment_increment_le {coefficient : Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box}
-    (primitive : Dense.Gaussian.Primitive.Certificate.DensePrimitive coefficient box) (origin direction :
-      Gaussian.Basic.Canonical) (interval : Data.Rat.Interval.Bounds)
+    (primitive : Certificate.DensePrimitive coefficient box) (origin direction :
+      Gaussian.Basic.Canonical) (interval : Interval.Bounds)
     (inside : ∀ parameter, interval.Contains parameter → box.Contains (Affine.line origin direction parameter))
     (bound : Fraction.Rational) (coefficientBound : ∀ parameter, interval.Contains parameter →
-      Data.Gaussian.Norm.Basic.normSq (coefficient.eval (Affine.line origin direction parameter)) ≤ bound)
+      Gaussian.Norm.Basic.normSq (coefficient.eval (Affine.line origin direction parameter)) ≤ bound)
     {first last : Fraction.Rational} (firstInside : interval.Contains first) (lastInside : interval.Contains last) :
-    Data.Gaussian.Norm.Basic.normSq (primitive.value.eval (Affine.line origin direction first) -
+    Gaussian.Norm.Basic.normSq (primitive.value.eval (Affine.line origin direction first) -
       primitive.value.eval (Affine.line origin direction last)) ≤
-        2 * bound * Data.Gaussian.Norm.Basic.normSq direction * (first - last) ^ 2 := open Purelib.Approximation in
+        2 * bound * Gaussian.Norm.Basic.normSq direction * (first - last) ^ 2 := open Purelib.Approximation in
           by
   let value := fun parameter => primitive.value.eval (Affine.line origin direction parameter)
-  let remainder := 2 * primitive.remainderBound * Data.Gaussian.Norm.Basic.normSq direction ^ 2
+  let remainder := 2 * primitive.remainderBound * Gaussian.Norm.Basic.normSq direction ^ 2
   have remainderNonnegative : 0 ≤ remainder := Fraction.Order.Arithmetic.mul_nonneg_direct
     (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) primitive.remainderBound_nonnegative)
     (Fraction.Order.Arithmetic.sq_nonneg_direct _)
   have localBound {x y : Fraction.Rational} (xInside : interval.Contains x) (yInside : interval.Contains y) :
-      Data.Gaussian.Norm.Basic.normSq (value x - value y) ≤ (2 * bound * Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq (value x - value y) ≤ (2 * bound * Gaussian.Norm.Basic.normSq
         direction) * (x - y) ^ 2 + remainder * (x - y) ^ 4 := by
     let start := Affine.line origin direction y
     let finish := Affine.line origin direction x
     let movement := finish - start
     let linear := coefficient.eval start * movement
     let error := value x - value y - linear
-    have taylor : Data.Gaussian.Norm.Basic.normSq error ≤ primitive.remainderBound *
-      Data.Gaussian.Norm.Basic.normSq movement ^ 2 :=
+    have taylor : Gaussian.Norm.Basic.normSq error ≤ primitive.remainderBound *
+      Gaussian.Norm.Basic.normSq movement ^ 2 :=
       primitive.increment_bound (inside y yInside) (inside x xInside)
-    have linearLe : Data.Gaussian.Norm.Basic.normSq linear ≤ bound * Data.Gaussian.Norm.Basic.normSq movement :=
+    have linearLe : Gaussian.Norm.Basic.normSq linear ≤ bound * Gaussian.Norm.Basic.normSq movement :=
       by
       rw [Gaussian.Norm.Basic.normSq_mul]
       exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (coefficientBound y yInside)
         (Gaussian.Norm.Basic.normSq_nonneg movement)
-    have distance : Data.Gaussian.Norm.Basic.normSq movement = Data.Gaussian.Norm.Basic.normSq direction * (x -
+    have distance : Gaussian.Norm.Basic.normSq movement = Gaussian.Norm.Basic.normSq direction * (x -
       y) ^ 2 := Affine.normSq_line_sub origin direction x y
     rw [show value x - value y = error + linear by dsimp only [error]; ring1]
     exact (Gaussian.Norm.Bounds.normSq_add_le_two error linear).trans
@@ -90,7 +90,7 @@ theorem segment_increment_le {coefficient : Basic.CanonicalCoefficients.Coeffici
         dsimp only [remainder]
         ring1))
   exact Gaussian.Segment.Increment.remove_quartic value interval
-    (2 * bound * Data.Gaussian.Norm.Basic.normSq direction) remainder remainderNonnegative localBound firstInside
+    (2 * bound * Gaussian.Norm.Basic.normSq direction) remainder remainderNonnegative localBound firstInside
       lastInside
 
 end Purelib.Polynomial.Dense.Gaussian.Primitive.Segment.Bounds.DensePrimitive

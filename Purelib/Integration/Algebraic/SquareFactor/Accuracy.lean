@@ -20,6 +20,8 @@ public import Purelib.Integration.Polynomial.Gaussian.Path.Allowance
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_antitone)
 
 public section
@@ -48,10 +50,10 @@ open Purelib.Data.Rat in
 /-- The rational carrier for weighted accuracy requests. -/
 abbrev Coordinate := Fraction.Rational
 
-variable {polynomial : Purelib.Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial} {request :
-  Purelib.Curves.Hyperelliptic.Differentials.SquareFactor.Request}
-  {prepared : Purelib.Curves.Hyperelliptic.Differentials.SquareFactor.Prepared polynomial request} {segment :
-    Purelib.Integration.Algebraic.SquareFactor.PathInput.Segment}
+variable {polynomial : GaussianPolynomial} {request :
+  Request}
+  {prepared : Prepared polynomial request} {segment :
+    Segment}
 
 open Purelib.Approximation.Rational in
 set_option genInjectivity false in
@@ -59,7 +61,7 @@ set_option genInjectivity false in
 
 The equations retain the original weight and target, allocating half the target to each of the parameter and root
 contributions. -/
-structure Resolution (data : PathInput.Data prepared segment) (weight target : Coordinate) where
+structure Resolution (data : Data prepared segment) (weight target : Coordinate) where
   /-- The original weighting factor is nonnegative. -/ weightNonnegative : 0 ≤ weight
   /-- The cached weighted parameter slope. -/ parameterScale : Coordinate
   /-- The cached parameter scale equals weight times the original parameter slope. -/ parameterScale_eq : parameterScale
@@ -90,7 +92,7 @@ open Purelib.Data.Rat in
 
 The diameter divides the target by twice the sum of the root scale and one, while the depth is the first certified
 parameter radius below half the target. -/
-@[expose] def resolve {data : PathInput.Data prepared segment} (safe : data.Safe) (weight : Coordinate)
+@[expose] def resolve {data : Data prepared segment} (safe : data.Safe) (weight : Coordinate)
     (weightNonnegative : 0 ≤ weight) (target : Coordinate)
     (positive : 0 < target) : Resolution data weight target :=
   let parameterScale := weight * CoefficientBounds.parameterSlope data
@@ -100,31 +102,31 @@ parameter radius below half the target. -/
     rootScale, rootScale_eq := rfl
     rootDiameter := diameter
     rootDiameter_eq := rfl
-    rootDiameterPositive := Fraction.Order.Field.div_pos_direct positive
-      (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-        (scale_add_one_positive (Fraction.Order.Arithmetic.mul_nonneg_direct
+    rootDiameterPositive := Field.div_pos_direct positive
+      (Arithmetic.mul_pos_direct (by decide)
+        (scale_add_one_positive (Arithmetic.mul_nonneg_direct
           weightNonnegative (CoefficientBounds.rootSlope_nonnegative safe))))
     minimumDepth := Geometric.Search.firstQuarterBelow parameterScale 0 (target / 2)
     minimumDepth_eq := rfl }
 
 namespace Resolution
 
-variable {data : Purelib.Integration.Algebraic.SquareFactor.PathInput.Data prepared segment} {weight target :
-  Purelib.Integration.Algebraic.SquareFactor.Accuracy.Coordinate}
-  (resolution : Purelib.Integration.Algebraic.SquareFactor.Accuracy.Resolution data weight target)
+variable {data : Data prepared segment} {weight target :
+  Coordinate}
+  (resolution : Resolution data weight target)
 
 section
 open Purelib.Data.Rat
 /-- Safety and the retained nonnegative weight make the cached parameter scale nonnegative. -/
 theorem parameterScale_nonnegative (safe : data.Safe) : 0 ≤ resolution.parameterScale := by
   rw [resolution.parameterScale_eq]
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct resolution.weightNonnegative
+  exact Arithmetic.mul_nonneg_direct resolution.weightNonnegative
     (CoefficientBounds.parameterSlope_nonnegative safe)
 
 /-- Safety and the retained nonnegative weight make the cached root scale nonnegative. -/
 theorem rootScale_nonnegative (safe : data.Safe) : 0 ≤ resolution.rootScale := by
   rw [resolution.rootScale_eq]
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct resolution.weightNonnegative
+  exact Arithmetic.mul_nonneg_direct resolution.weightNonnegative
     (CoefficientBounds.rootSlope_nonnegative safe)
 
 end
@@ -136,8 +138,8 @@ target. -/
 theorem parameter_error_lt (safe : data.Safe) (positive : 0 < target)
     (depth : Nat) (enough : resolution.minimumDepth ≤ depth) :
     Geometric.Basic.quarterRadius resolution.parameterScale depth < target / 2 := by
-  have halfPositive := Fraction.Order.Field.div_pos_direct positive
-    (show (0 : Accuracy.Coordinate) < 2 by decide)
+  have halfPositive := Field.div_pos_direct positive
+    (show (0 : Coordinate) < 2 by decide)
   have accurate := Geometric.Search.firstQuarterBelow_accurate resolution.parameterScale
     (resolution.parameterScale_nonnegative safe) 0 (target / 2) halfPositive
   rw [← resolution.minimumDepth_eq] at accurate
@@ -148,11 +150,11 @@ open Purelib.Data.Rat in
 /-- The retained root-scale contribution is at most half the target. -/
 theorem root_error_le (safe : data.Safe) :
     resolution.rootScale * resolution.rootDiameter ≤ target / 2 := by
-  have scalePositive := Accuracy.scale_add_one_positive (resolution.rootScale_nonnegative safe)
-  have denominatorPositive := Fraction.Order.Arithmetic.mul_pos_direct
-    (show (0 : Accuracy.Coordinate) < 2 by decide) scalePositive
+  have scalePositive := scale_add_one_positive (resolution.rootScale_nonnegative safe)
+  have denominatorPositive := Arithmetic.mul_pos_direct
+    (show (0 : Coordinate) < 2 by decide) scalePositive
   have cancellation : (resolution.rootScale + 1) * resolution.rootDiameter = target / 2 := by
-    apply Fraction.Field.mul_right_cancel_of_ne (show (2 : Accuracy.Coordinate) ≠ 0 by decide)
+    apply Fraction.Field.mul_right_cancel_of_ne (show (2 : Coordinate) ≠ 0 by decide)
     calc
       ((resolution.rootScale + 1) * resolution.rootDiameter) * 2 =
           resolution.rootDiameter * (2 * (resolution.rootScale + 1)) := by ring1
@@ -164,8 +166,8 @@ theorem root_error_le (safe : data.Safe) :
   calc
     resolution.rootScale * resolution.rootDiameter ≤
         (resolution.rootScale + 1) * resolution.rootDiameter :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-        (le_add_of_nonneg_right (show (0 : Accuracy.Coordinate) ≤ 1 by decide)) resolution.rootDiameterPositive.le
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
+        (le_add_of_nonneg_right (show (0 : Coordinate) ≤ 1 by decide)) resolution.rootDiameterPositive.le
     _ = target / 2 := cancellation
 
 open Purelib.Approximation.Rational in
@@ -192,7 +194,7 @@ theorem model_bound_lt (safe : data.Safe) (positive : 0 < target)
     calc
       target / 2 + target / 2 = (target / 2) * 2 := by ring1
       _ = target := Fraction.Field.div_mul_cancel_of_ne target 2 (by decide)
-  have firstBound := Fraction.Order.Arithmetic.add_lt_add_right_direct
+  have firstBound := Arithmetic.add_lt_add_right_direct
     (resolution.parameter_error_lt safe positive depth enough) (resolution.rootScale * resolution.rootDiameter)
   have secondBound := add_le_add (le_refl (target / 2)) (resolution.root_error_le safe)
   exact (firstBound.trans_le secondBound).trans_eq halfSum
@@ -204,10 +206,10 @@ set_option genInjectivity false in
 /-- The exact original sheet run compiled from a retained direction-weighted target resolution.
 
 The compiled owner and mesh remain indexed by that resolution's original diameter and minimum depth. -/
-structure AccurateRun {data : PathInput.Data prepared segment} (safe : data.Safe)
+structure AccurateRun {data : Data prepared segment} (safe : data.Safe)
     (sheet : Fin 2) (target : Coordinate) where
   /-- The retained target resolution weighted by the original segment direction's squared norm. -/ resolution :
-    Resolution data (Data.Gaussian.Norm.Basic.normSq segment.direction) target
+    Resolution data (Norm.Basic.normSq segment.direction) target
   /-- The exact compiled original-sheet run indexed by the retained resolution's diameter and minimum depth. -/ compiled
     : OwnedCells.CompiledRun safe sheet resolution.rootDiameter
     resolution.rootDiameterPositive resolution.minimumDepth
@@ -216,16 +218,16 @@ constructive_injectivity AccurateRun
 
 open Purelib.Data.Gaussian in
 /-- Resolve the original positive target using the segment direction norm and compile the exact selected-sheet run. -/
-@[expose] def compile {data : PathInput.Data prepared segment} (safe : data.Safe) (sheet : Fin 2)
+@[expose] def compile {data : Data prepared segment} (safe : data.Safe) (sheet : Fin 2)
     (target : Coordinate) (positive : 0 < target) : AccurateRun safe sheet target :=
-  let resolution := resolve safe (Data.Gaussian.Norm.Basic.normSq segment.direction) (Norm.Basic.normSq_nonneg
+  let resolution := resolve safe (Norm.Basic.normSq segment.direction) (Norm.Basic.normSq_nonneg
     segment.direction) target positive
   { resolution
     compiled := OwnedCells.compile sheet resolution.rootDiameter
       resolution.rootDiameterPositive resolution.minimumDepth }
 
 /-- The exact retained compiled path allowance is strictly below the original positive target. -/
-theorem aggregateAllowance_lt {data : PathInput.Data prepared segment} {safe : data.Safe}
+theorem aggregateAllowance_lt {data : Data prepared segment} {safe : data.Safe}
     {sheet : Fin 2} {target : Coordinate} (run : AccurateRun safe sheet target)
     (positive : 0 < target) : run.compiled.pathModel.aggregateAllowance < target :=
   (MeshBounds.CompiledRun.aggregateAllowance_le run.compiled).trans_lt

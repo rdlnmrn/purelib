@@ -49,21 +49,21 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrenc
 open Purelib.Riemann.Normalization
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
 open Purelib.Geometry.Rectangle.SourceIntervals (axisCoordinate)
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
-  {lifted : LiftedPuncturedGrid base} {differential : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential
+  {lifted : LiftedPuncturedGrid base} {differential : Differential
     genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
 
 /-- Height of a horizontal side, or width coordinate of a vertical side. Reversing traversal changes neither this
 coordinate nor its geometric owner. -/
 @[expose] def
   sourceConstant
-  (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential) : Coordinate :=
+  (occurrence : SurfaceOccurrence regular domains differential) : Coordinate :=
   let box :=
     (base.faces.regulars[occurrence.sideOccurrence.position.val]'occurrence.sideOccurrence.position.isLt).cell.box
   match occurrence.sideOccurrence.side with
@@ -78,7 +78,7 @@ open
 /-- Both original side endpoints retain the same fixed transverse source coordinate. -/
 theorem
   source_constant_endpoints
-  (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential) :
+  (occurrence : SurfaceOccurrence regular domains differential) :
     SourceIntervals.axisCoordinate (!SurfaceOccurrence.sourceVertical occurrence) occurrence.start =
       sourceConstant
       occurrence ∧
@@ -101,7 +101,7 @@ theorem
 /-- A horizontal occurrence's endpoints have the retained constant imaginary coordinate. -/
 theorem
   source_horizontal_endpoints
-  (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential)
+  (occurrence : SurfaceOccurrence regular domains differential)
     (axis : SurfaceOccurrence.sourceVertical occurrence = false) :
     occurrence.start.im =
       sourceConstant
@@ -117,7 +117,7 @@ theorem
 /-- A vertical occurrence's endpoints have the retained constant real coordinate. -/
 theorem
   source_vertical_endpoints
-  (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential)
+  (occurrence : SurfaceOccurrence regular domains differential)
     (axis : SurfaceOccurrence.sourceVertical occurrence = true) :
     occurrence.start.re =
       sourceConstant
@@ -133,7 +133,7 @@ theorem
 /-- The rectangle side determines the axis without an independent hypothesis. -/
 theorem
   bottom_axis
-  (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential)
+  (occurrence : SurfaceOccurrence regular domains differential)
     (side : occurrence.sideOccurrence.side = .bottom) :
       sourceVertical
       occurrence = false := by
@@ -143,7 +143,7 @@ theorem
 /-- The original top rectangle side selects the horizontal source axis. -/
 theorem
   top_axis
-  (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential)
+  (occurrence : SurfaceOccurrence regular domains differential)
     (side : occurrence.sideOccurrence.side = .top) :
       sourceVertical
       occurrence = false := by
@@ -153,7 +153,7 @@ theorem
 /-- The original left rectangle side selects the vertical source axis. -/
 theorem
   left_axis
-  (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential)
+  (occurrence : SurfaceOccurrence regular domains differential)
     (side : occurrence.sideOccurrence.side = .left) :
       sourceVertical
       occurrence = true := by
@@ -163,7 +163,7 @@ theorem
 /-- The original right rectangle side selects the vertical source axis. -/
 theorem
   right_axis
-  (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential)
+  (occurrence : SurfaceOccurrence regular domains differential)
     (side : occurrence.sideOccurrence.side = .right) :
       sourceVertical
       occurrence = true := by

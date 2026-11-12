@@ -117,7 +117,7 @@ open Purelib.Riemann.Integration.LegendreFractionalWords
 abbrev Gaussian := Data.Gaussian.Basic.Canonical
 /-- A finite two-dimensional integral matrix acting on the retained homology coordinates. -/
 abbrev IntegralMatrix :=
-  LinearAlgebra.Matrix.Basic.IntegralMatrix
+  Basic.IntegralMatrix
 /-- A Gaussian name with its retained coherent sample realization. -/
 abbrev CoherentNamed := Coherent.CoherentNamed
 /-- Operational equivalence of two retained named Gaussian quantities. -/
@@ -136,7 +136,7 @@ set_option genInjectivity false in
 /-- Normalized period data needed by dual closed-loop transport. Unlike the legacy cancellation interface, this
 structure does not demand a uniform lower bound for every coarse A-period sampler. A tail-separated scaled inverse
 already contains exactly the apartness needed to define `tau`. -/
-structure NormalizedData {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+structure NormalizedData {parameter : Gaussian}
     (frame : Paths.Frame parameter) where
   /-- The retained normalized period data for this exact original framed curve. -/ normalized :
     PeriodMatrix.NormalizedPeriodData
@@ -147,42 +147,42 @@ constructive_injectivity NormalizedData
 namespace NormalizedData
 
 /-- Forget normalized inverse data while retaining the exact underlying period programs. -/
-@[expose] def toFibreData {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def toFibreData {parameter : Gaussian}
     {frame : Paths.Frame parameter}
-    (data : Curves.Legendre.PeriodMonodromy.NormalizedData frame) :
+    (data : NormalizedData frame) :
     Fibre.FibreData frame where
   periods := data.normalized.toPeriodData
 
 /-- Read the original A-period name from the normalized base fibre. -/
-@[expose] def aPeriod {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def aPeriod {parameter : Gaussian}
     {frame : Paths.Frame parameter}
-    (data : Curves.Legendre.PeriodMonodromy.NormalizedData frame) : CoherentNamed :=
+    (data : NormalizedData frame) : CoherentNamed :=
   data.normalized.toPeriodData.aMatrix 0 0
 
 /-- Read the original B-period name from the normalized base fibre. -/
-@[expose] def bPeriod {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def bPeriod {parameter : Gaussian}
     {frame : Paths.Frame parameter}
-    (data : Curves.Legendre.PeriodMonodromy.NormalizedData frame) : CoherentNamed :=
+    (data : NormalizedData frame) : CoherentNamed :=
   data.normalized.toPeriodData.bMatrix 0 0
 
 /-- Read the normalized period ratio from the retained scaled inverse. -/
-@[expose] def ratio {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def ratio {parameter : Gaussian}
     {frame : Paths.Frame parameter}
-    (data : Curves.Legendre.PeriodMonodromy.NormalizedData frame) : CoherentNamed :=
+    (data : NormalizedData frame) : CoherentNamed :=
   data.normalized.omega 0 0
 
 /-- The normalized raw column identity requires only the scaled inverse already stored by `NormalizedPeriodData`. -/
-@[expose] def raw_normalized {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def raw_normalized {parameter : Gaussian}
     {frame : Paths.Frame parameter}
-    (data : Curves.Legendre.PeriodMonodromy.NormalizedData frame) :
-    Curves.Legendre.PeriodMonodromy.VectorEquivalent data.toFibreData.rawPeriods
-      (LegendreModularMonodromy.scaleVector data.aPeriod (LegendreModularMonodromy.fractionalVector data.ratio)) := by
+    (data : NormalizedData frame) :
+    VectorEquivalent data.toFibreData.rawPeriods
+      (scaleVector data.aPeriod (fractionalVector data.ratio)) := by
   intro coordinate
   let comparison : Fin 2 → Type := fun index =>
-    Curves.Legendre.PeriodMonodromy.NamedEquivalent
+    NamedEquivalent
       (data.toFibreData.rawPeriods index).name
-      (LegendreModularMonodromy.scaleVector data.aPeriod
-        (LegendreModularMonodromy.fractionalVector data.ratio) index).name
+      (scaleVector data.aPeriod
+        (fractionalVector data.ratio) index).name
   refine Data.Fin.casesDependent (size := 1) (motive := comparison) ?_
     (fun tail => Data.Fin.casesDependent (size := 0)
       (motive := fun index => comparison index.succ) ?_
@@ -194,162 +194,162 @@ namespace NormalizedData
         data.normalized)
 
 /-- The finite endpoint-continuation object for any certified closed path on this normalized fibre. -/
-@[expose] def continuation {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def continuation {parameter : Gaussian}
     {frame : Paths.Frame parameter}
-    (data : Curves.Legendre.PeriodMonodromy.NormalizedData frame)
+    (data : NormalizedData frame)
     (path : Paths.Path frame frame) :
-    Endpoint.EndpointContinuation path where
+    EndpointContinuation path where
   source := data.toFibreData
   target := data.toFibreData
 
 /-- Actual periods on the base fibre evaluated on the homology basis transported around an arbitrary certified finite
 loop. -/
-@[expose] def periods {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def periods {parameter : Gaussian}
     {frame : Paths.Frame parameter}
-    (data : Curves.Legendre.PeriodMonodromy.NormalizedData frame)
+    (data : NormalizedData frame)
     (path : Paths.Path frame frame) : RawPeriodVector :=
   (data.continuation path).periods
 
 /-- The arbitrary-loop period column is the original `A` scale times the exact dual matrix acting on `(1,tau)`. -/
-@[expose] def periods_normalized {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def periods_normalized {parameter : Gaussian}
     {frame : Paths.Frame parameter}
-    (data : Curves.Legendre.PeriodMonodromy.NormalizedData frame)
+    (data : NormalizedData frame)
     (path : Paths.Path frame frame) :
-    Curves.Legendre.PeriodMonodromy.VectorEquivalent (data.periods path)
-      (LegendreModularMonodromy.scaleVector data.aPeriod
+    VectorEquivalent (data.periods path)
+      (scaleVector data.aPeriod
         (Action.matrixAction
           (Dual.periodMatrix path.word)
-          (LegendreModularMonodromy.fractionalVector data.ratio))) :=
+          (fractionalVector data.ratio))) :=
   VectorEquivalent.trans
     (Action.matrixAction_respects _ data.raw_normalized)
-    (LegendreModularMonodromy.matrixAction_scale _ data.aPeriod (LegendreModularMonodromy.fractionalVector data.ratio))
+    (matrixAction_scale _ data.aPeriod (fractionalVector data.ratio))
 
 /-- Every legacy normalized fibre forgets to the smaller dual-transport interface without changing its period programs
 or ratio. -/
-@[expose] def ofLegacy {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def ofLegacy {parameter : Gaussian}
     {frame : Paths.Frame parameter}
-    (data : LegendreModularMonodromy.NormalizedFibreData frame) :
-    Curves.Legendre.PeriodMonodromy.NormalizedData frame where
+    (data : NormalizedFibreData frame) :
+    NormalizedData frame where
   normalized := data.normalized
 
 end NormalizedData
 
 set_option genInjectivity false in
 /-- The normalized base fibre used by all standard closed-loop transports. -/
-structure Data {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+structure Data {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     (loops : Monodromy.StandardLoops frame) where
   /-- The original normalized base fibre shared by the retained standard loops. -/ base :
-    Curves.Legendre.PeriodMonodromy.NormalizedData frame
+    NormalizedData frame
 
 constructive_injectivity Data
 
 namespace Data
 
 /-- The generic finite endpoint-continuation object for a closed path on the normalized base fibre. -/
-@[expose] def continuation {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def continuation {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops) (path : Paths.Path frame frame) :
-    Endpoint.EndpointContinuation path :=
+    (data : Data loops) (path : Paths.Path frame frame) :
+    EndpointContinuation path :=
   data.base.continuation path
 
 /-- Actual base-fibre periods evaluated on the basis transported around a certified closed path. -/
-@[expose] def periods {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def periods {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops) (path : Paths.Path frame frame) :
+    (data : Data loops) (path : Paths.Path frame frame) :
     RawPeriodVector :=
   data.base.periods path
 
 /-- Transporting a normalized raw column is homogeneous matrix action on `(1,tau)`, with the original `A` period
 retained as common scale. -/
-@[expose] def periods_normalized {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def periods_normalized {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops) (path : Paths.Path frame frame) :
-    Curves.Legendre.PeriodMonodromy.VectorEquivalent (data.periods path)
-      (LegendreModularMonodromy.scaleVector data.base.aPeriod
+    (data : Data loops) (path : Paths.Path frame frame) :
+    VectorEquivalent (data.periods path)
+      (scaleVector data.base.aPeriod
         (Action.matrixAction
           (Dual.periodMatrix path.word)
-          (LegendreModularMonodromy.fractionalVector data.base.ratio))) :=
+          (fractionalVector data.base.ratio))) :=
   data.base.periods_normalized path
 
 /-- Evaluate base-fibre periods on the basis transported around the retained zero loop. -/
-@[expose] def zeroPeriods {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def zeroPeriods {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops) : RawPeriodVector := data.periods loops.zeroPath
+    (data : Data loops) : RawPeriodVector := data.periods loops.zeroPath
 
 /-- Evaluate base-fibre periods on the basis transported around the retained one loop. -/
-@[expose] def onePeriods {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def onePeriods {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops) : RawPeriodVector := data.periods loops.onePath
+    (data : Data loops) : RawPeriodVector := data.periods loops.onePath
 
 /-- Evaluate base-fibre periods on the basis transported around the retained infinity loop. -/
-@[expose] def infinityPeriods {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def infinityPeriods {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops) : RawPeriodVector := data.periods loops.infinityPath
+    (data : Data loops) : RawPeriodVector := data.periods loops.infinityPath
 
 /-- Evaluate base-fibre periods on the basis transported around the retained product loop. -/
-@[expose] def productPeriods {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def productPeriods {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops) : RawPeriodVector := data.periods loops.productPath
+    (data : Data loops) : RawPeriodVector := data.periods loops.productPath
 
 /-- The zero-loop period column is the original A-period times its exact dual homogeneous action. -/
-@[expose] def zero_homogeneous {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def zero_homogeneous {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops) :
-    Curves.Legendre.PeriodMonodromy.VectorEquivalent data.zeroPeriods
-      (LegendreModularMonodromy.scaleVector data.base.aPeriod
+    (data : Data loops) :
+    VectorEquivalent data.zeroPeriods
+      (scaleVector data.base.aPeriod
         (Action.matrixAction Monodromy.zeroPeriodMatrix
-          (LegendreModularMonodromy.fractionalVector data.base.ratio))) := by
-  simpa only [Curves.Legendre.PeriodMonodromy.Data.zeroPeriods] using data.periods_normalized loops.zeroPath
+          (fractionalVector data.base.ratio))) := by
+  simpa only [zeroPeriods] using data.periods_normalized loops.zeroPath
     |>.trans (fun coordinate => by
       rw [loops.zeroPath_periodMatrix]
       exact NamedEquivalent.refl _)
 
 /-- The one-loop period column is the original A-period times its exact dual homogeneous action. -/
-@[expose] def one_homogeneous {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def one_homogeneous {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops) :
-    Curves.Legendre.PeriodMonodromy.VectorEquivalent data.onePeriods
-      (LegendreModularMonodromy.scaleVector data.base.aPeriod
+    (data : Data loops) :
+    VectorEquivalent data.onePeriods
+      (scaleVector data.base.aPeriod
         (Action.matrixAction Monodromy.onePeriodMatrix
-          (LegendreModularMonodromy.fractionalVector data.base.ratio))) := by
-  simpa only [Curves.Legendre.PeriodMonodromy.Data.onePeriods] using data.periods_normalized loops.onePath
+          (fractionalVector data.base.ratio))) := by
+  simpa only [onePeriods] using data.periods_normalized loops.onePath
     |>.trans (fun coordinate => by
       rw [loops.onePath_periodMatrix]
       exact NamedEquivalent.refl _)
 
 /-- The infinity-loop period column is the original A-period times its exact dual homogeneous action. -/
-@[expose] def infinity_homogeneous {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def infinity_homogeneous {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops) :
-    Curves.Legendre.PeriodMonodromy.VectorEquivalent data.infinityPeriods
-      (LegendreModularMonodromy.scaleVector data.base.aPeriod
+    (data : Data loops) :
+    VectorEquivalent data.infinityPeriods
+      (scaleVector data.base.aPeriod
         (Action.matrixAction Monodromy.infinityPeriodMatrix
-          (LegendreModularMonodromy.fractionalVector data.base.ratio))) := by
-  simpa only [Curves.Legendre.PeriodMonodromy.Data.infinityPeriods] using data.periods_normalized loops.infinityPath
+          (fractionalVector data.base.ratio))) := by
+  simpa only [infinityPeriods] using data.periods_normalized loops.infinityPath
     |>.trans (fun coordinate => by
       rw [loops.infinityPath_periodMatrix]
       exact NamedEquivalent.refl _)
 
 /-- The retained product loop acts as the identity on the original period column. -/
-@[expose] def product_identity {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def product_identity {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops) :
-    Curves.Legendre.PeriodMonodromy.VectorEquivalent data.productPeriods data.base.toFibreData.rawPeriods := by
-  unfold Purelib.Curves.Legendre.PeriodMonodromy.Data.productPeriods
-    Purelib.Curves.Legendre.PeriodMonodromy.Data.periods Purelib.Curves.Legendre.PeriodMonodromy.NormalizedData.periods
-    Curves.Legendre.PeriodMonodromy.NormalizedData.continuation EndpointContinuation.periods
+    (data : Data loops) :
+    VectorEquivalent data.productPeriods data.base.toFibreData.rawPeriods := by
+  unfold productPeriods
+    Data.periods NormalizedData.periods
+    NormalizedData.continuation EndpointContinuation.periods
   rw [loops.productPath_periodMatrix]
   exact Action.matrixAction_identity data.base.toFibreData.rawPeriods
 
@@ -358,56 +358,56 @@ end Data
 /-! ## Exact standard dual rows -/
 
 /-- The coherent affine transform tau minus two for the zero-loop dual action. -/
-@[expose] def zeroAffineTransform (tau : Curves.Legendre.PeriodMonodromy.CoherentNamed) : CoherentNamed :=
-  CoherentNamed.add
+@[expose] def zeroAffineTransform (tau : CoherentNamed) : CoherentNamed :=
+  add
     (Coherence.exact (-2)) tau
 
 /-- The coherent denominator one plus twice tau for the one-loop dual action. -/
-@[expose] def oneDenominator (tau : Curves.Legendre.PeriodMonodromy.CoherentNamed) : CoherentNamed :=
-  CoherentNamed.add
+@[expose] def oneDenominator (tau : CoherentNamed) : CoherentNamed :=
+  add
     (Coherence.exact 1)
-    (CoherentNamed.mul
+    (mul
       (Coherence.exact 2) tau)
 
 /-- The coherent denominator minus three minus twice tau for the infinity-loop dual action. -/
-@[expose] def infinityDenominator (tau : Curves.Legendre.PeriodMonodromy.CoherentNamed) : CoherentNamed :=
-  CoherentNamed.add
+@[expose] def infinityDenominator (tau : CoherentNamed) : CoherentNamed :=
+  add
     (Coherence.exact (-3))
-    (CoherentNamed.mul
+    (mul
       (Coherence.exact (-2)) tau)
 
 /-- The coherent numerator two plus tau for the infinity-loop dual action. -/
-@[expose] def infinityNumerator (tau : Curves.Legendre.PeriodMonodromy.CoherentNamed) : CoherentNamed :=
-  CoherentNamed.add
+@[expose] def infinityNumerator (tau : CoherentNamed) : CoherentNamed :=
+  add
     (Coherence.exact 2) tau
 
 /-- Around zero the transformed `A` coordinate is exactly the original `A`: the dual denominator is the constant unit.
 -/
-@[expose] def zero_denominator_one (tau : Curves.Legendre.PeriodMonodromy.CoherentNamed) :
-    Curves.Legendre.PeriodMonodromy.NamedEquivalent
-      (LegendreModularMonodromy.fractionalDenominator
+@[expose] def zero_denominator_one (tau : CoherentNamed) :
+    NamedEquivalent
+      (fractionalDenominator
         Monodromy.zeroPeriodMatrix tau).name
       (Coherence.exact 1).name := by
   let one := Coherence.exact 1
   let zero := Coherence.exact 0
-  have expanded := LegendreModularMonodromy.matrixAction_row_two
+  have expanded := matrixAction_row_two
     Monodromy.zeroPeriodMatrix
-    (LegendreModularMonodromy.fractionalVector tau) 0
+    (fractionalVector tau) 0
   rw [Monodromy.zeroPeriodMatrix_explicit] at expanded
-  change Curves.Legendre.PeriodMonodromy.NamedEquivalent
-    (LegendreModularMonodromy.fractionalDenominator
+  change NamedEquivalent
+    (fractionalDenominator
       Monodromy.zeroPeriodMatrix tau).name
-    (CoherentNamed.add
-      (CoherentNamed.mul one one)
-      (CoherentNamed.mul zero tau)).name at expanded
-  have simplifyTerms : Curves.Legendre.PeriodMonodromy.NamedEquivalent
-      (CoherentNamed.add
-        (CoherentNamed.mul one one)
-        (CoherentNamed.mul zero tau)).name
-      (CoherentNamed.add one zero).name :=
+    (add
+      (mul one one)
+      (mul zero tau)).name at expanded
+  have simplifyTerms : NamedEquivalent
+      (add
+        (mul one one)
+        (mul zero tau)).name
+      (add one zero).name :=
     Congruence.coherentAdd_respects
-      (CoherentNamed.mul one one) one
-      (CoherentNamed.mul zero tau) zero
+      (mul one one) one
+      (mul zero tau) zero
       (Mul.coherentMul_one_right one)
       (Mul.coherentMul_zero_left tau)
   exact NamedEquivalent.trans expanded
@@ -416,82 +416,82 @@ end Data
       (Add.coherentAdd_zero_right one))
 
 /-- The zero-loop homogeneous numerator is operationally the affine transform tau minus two. -/
-@[expose] def zero_numerator_affine (tau : Curves.Legendre.PeriodMonodromy.CoherentNamed) :
-    Curves.Legendre.PeriodMonodromy.NamedEquivalent
-      (LegendreModularMonodromy.fractionalNumerator
+@[expose] def zero_numerator_affine (tau : CoherentNamed) :
+    NamedEquivalent
+      (fractionalNumerator
         Monodromy.zeroPeriodMatrix tau).name
-      (Curves.Legendre.PeriodMonodromy.zeroAffineTransform tau).name := by
+      (zeroAffineTransform tau).name := by
   let one := Coherence.exact 1
   let minusTwo := Coherence.exact (-2)
-  have expanded := LegendreModularMonodromy.matrixAction_row_two
+  have expanded := matrixAction_row_two
     Monodromy.zeroPeriodMatrix
-    (LegendreModularMonodromy.fractionalVector tau) 1
+    (fractionalVector tau) 1
   rw [Monodromy.zeroPeriodMatrix_explicit] at expanded
-  change Curves.Legendre.PeriodMonodromy.NamedEquivalent
-    (LegendreModularMonodromy.fractionalNumerator
+  change NamedEquivalent
+    (fractionalNumerator
       Monodromy.zeroPeriodMatrix tau).name
-    (CoherentNamed.add
-      (CoherentNamed.mul minusTwo one)
-      (CoherentNamed.mul one tau)).name at expanded
+    (add
+      (mul minusTwo one)
+      (mul one tau)).name at expanded
   exact NamedEquivalent.trans expanded
     (by
-      simpa only [Curves.Legendre.PeriodMonodromy.zeroAffineTransform,
+      simpa only [zeroAffineTransform,
         CoherentNamed.add] using
         Congruence.coherentAdd_respects _ _ _ _
           (Mul.coherentMul_one_right minusTwo)
           (Mul.coherentMul_one_left tau))
 
 /-- The one-loop homogeneous denominator is operationally one plus twice tau. -/
-@[expose] def one_denominator_explicit (tau : Curves.Legendre.PeriodMonodromy.CoherentNamed) :
-    Curves.Legendre.PeriodMonodromy.NamedEquivalent
-      (LegendreModularMonodromy.fractionalDenominator
+@[expose] def one_denominator_explicit (tau : CoherentNamed) :
+    NamedEquivalent
+      (fractionalDenominator
         Monodromy.onePeriodMatrix tau).name
-      (Curves.Legendre.PeriodMonodromy.oneDenominator tau).name := by
+      (oneDenominator tau).name := by
   let one := Coherence.exact 1
   let two := Coherence.exact 2
-  have expanded := LegendreModularMonodromy.matrixAction_row_two
+  have expanded := matrixAction_row_two
     Monodromy.onePeriodMatrix
-    (LegendreModularMonodromy.fractionalVector tau) 0
+    (fractionalVector tau) 0
   rw [Monodromy.onePeriodMatrix_explicit] at expanded
-  change Curves.Legendre.PeriodMonodromy.NamedEquivalent
-    (LegendreModularMonodromy.fractionalDenominator
+  change NamedEquivalent
+    (fractionalDenominator
       Monodromy.onePeriodMatrix tau).name
-    (CoherentNamed.add
-      (CoherentNamed.mul one one)
-      (CoherentNamed.mul two tau)).name at expanded
+    (add
+      (mul one one)
+      (mul two tau)).name at expanded
   exact NamedEquivalent.trans expanded
     (by
-      simpa only [Curves.Legendre.PeriodMonodromy.oneDenominator,
+      simpa only [oneDenominator,
         CoherentNamed.add] using
         Congruence.coherentAdd_respects _ _ _ _
           (Mul.coherentMul_one_right one)
           (NamedEquivalent.refl _))
 
 /-- The one-loop homogeneous numerator is operationally the original tau name. -/
-@[expose] def one_numerator_tau (tau : Curves.Legendre.PeriodMonodromy.CoherentNamed) :
-    Curves.Legendre.PeriodMonodromy.NamedEquivalent
-      (LegendreModularMonodromy.fractionalNumerator
+@[expose] def one_numerator_tau (tau : CoherentNamed) :
+    NamedEquivalent
+      (fractionalNumerator
         Monodromy.onePeriodMatrix tau).name tau.name := by
   let one := Coherence.exact 1
   let zero := Coherence.exact 0
-  have expanded := LegendreModularMonodromy.matrixAction_row_two
+  have expanded := matrixAction_row_two
     Monodromy.onePeriodMatrix
-    (LegendreModularMonodromy.fractionalVector tau) 1
+    (fractionalVector tau) 1
   rw [Monodromy.onePeriodMatrix_explicit] at expanded
-  change Curves.Legendre.PeriodMonodromy.NamedEquivalent
-    (LegendreModularMonodromy.fractionalNumerator
+  change NamedEquivalent
+    (fractionalNumerator
       Monodromy.onePeriodMatrix tau).name
-    (CoherentNamed.add
-      (CoherentNamed.mul zero one)
-      (CoherentNamed.mul one tau)).name at expanded
-  have simplifyTerms : Curves.Legendre.PeriodMonodromy.NamedEquivalent
-      (CoherentNamed.add
-        (CoherentNamed.mul zero one)
-        (CoherentNamed.mul one tau)).name
-      (CoherentNamed.add zero tau).name :=
+    (add
+      (mul zero one)
+      (mul one tau)).name at expanded
+  have simplifyTerms : NamedEquivalent
+      (add
+        (mul zero one)
+        (mul one tau)).name
+      (add zero tau).name :=
     Congruence.coherentAdd_respects
-      (CoherentNamed.mul zero one) zero
-      (CoherentNamed.mul one tau) tau
+      (mul zero one) zero
+      (mul one tau) tau
       (Mul.coherentMul_zero_left one)
       (Mul.coherentMul_one_left tau)
   exact NamedEquivalent.trans expanded
@@ -500,53 +500,53 @@ end Data
       (Add.coherentAdd_zero_left tau))
 
 /-- The infinity-loop homogeneous denominator is operationally minus three minus twice tau. -/
-@[expose] def infinity_denominator_explicit (tau : Curves.Legendre.PeriodMonodromy.CoherentNamed) :
-    Curves.Legendre.PeriodMonodromy.NamedEquivalent
-      (LegendreModularMonodromy.fractionalDenominator
+@[expose] def infinity_denominator_explicit (tau : CoherentNamed) :
+    NamedEquivalent
+      (fractionalDenominator
         Monodromy.infinityPeriodMatrix tau).name
-      (Curves.Legendre.PeriodMonodromy.infinityDenominator tau).name := by
+      (infinityDenominator tau).name := by
   let one := Coherence.exact 1
   let minusThree := Coherence.exact (-3)
   let minusTwo := Coherence.exact (-2)
-  have expanded := LegendreModularMonodromy.matrixAction_row_two
+  have expanded := matrixAction_row_two
     Monodromy.infinityPeriodMatrix
-    (LegendreModularMonodromy.fractionalVector tau) 0
+    (fractionalVector tau) 0
   rw [Monodromy.infinityPeriodMatrix_explicit] at expanded
-  change Curves.Legendre.PeriodMonodromy.NamedEquivalent
-    (LegendreModularMonodromy.fractionalDenominator
+  change NamedEquivalent
+    (fractionalDenominator
       Monodromy.infinityPeriodMatrix tau).name
-    (CoherentNamed.add
-      (CoherentNamed.mul minusThree one)
-      (CoherentNamed.mul minusTwo tau)).name at expanded
+    (add
+      (mul minusThree one)
+      (mul minusTwo tau)).name at expanded
   exact NamedEquivalent.trans expanded
     (by
-      simpa only [Curves.Legendre.PeriodMonodromy.infinityDenominator,
+      simpa only [infinityDenominator,
         CoherentNamed.add] using
         Congruence.coherentAdd_respects _ _ _ _
           (Mul.coherentMul_one_right minusThree)
           (NamedEquivalent.refl _))
 
 /-- The infinity-loop homogeneous numerator is operationally two plus tau. -/
-@[expose] def infinity_numerator_explicit (tau : Curves.Legendre.PeriodMonodromy.CoherentNamed) :
-    Curves.Legendre.PeriodMonodromy.NamedEquivalent
-      (LegendreModularMonodromy.fractionalNumerator
+@[expose] def infinity_numerator_explicit (tau : CoherentNamed) :
+    NamedEquivalent
+      (fractionalNumerator
         Monodromy.infinityPeriodMatrix tau).name
-      (Curves.Legendre.PeriodMonodromy.infinityNumerator tau).name := by
+      (infinityNumerator tau).name := by
   let one := Coherence.exact 1
   let two := Coherence.exact 2
-  have expanded := LegendreModularMonodromy.matrixAction_row_two
+  have expanded := matrixAction_row_two
     Monodromy.infinityPeriodMatrix
-    (LegendreModularMonodromy.fractionalVector tau) 1
+    (fractionalVector tau) 1
   rw [Monodromy.infinityPeriodMatrix_explicit] at expanded
-  change Curves.Legendre.PeriodMonodromy.NamedEquivalent
-    (LegendreModularMonodromy.fractionalNumerator
+  change NamedEquivalent
+    (fractionalNumerator
       Monodromy.infinityPeriodMatrix tau).name
-    (CoherentNamed.add
-      (CoherentNamed.mul two one)
-      (CoherentNamed.mul one tau)).name at expanded
+    (add
+      (mul two one)
+      (mul one tau)).name at expanded
   exact NamedEquivalent.trans expanded
     (by
-      simpa only [Curves.Legendre.PeriodMonodromy.infinityNumerator,
+      simpa only [infinityNumerator,
         CoherentNamed.add] using
         Congruence.coherentAdd_respects _ _ _ _
           (Mul.coherentMul_one_right two)
@@ -555,11 +555,11 @@ end Data
 /-! ## Unconditional and productive headline packages -/
 
 /-- Multiplication by the same coherent scale preserves coordinatewise period equivalence. -/
-@[expose] def scaleVector_respects (scalar : Curves.Legendre.PeriodMonodromy.CoherentNamed)
-    {left right : Curves.Legendre.PeriodMonodromy.RawPeriodVector} (equivalent :
-      Curves.Legendre.PeriodMonodromy.VectorEquivalent left right) :
-    Curves.Legendre.PeriodMonodromy.VectorEquivalent (LegendreModularMonodromy.scaleVector scalar left)
-      (LegendreModularMonodromy.scaleVector scalar right) :=
+@[expose] def scaleVector_respects (scalar : CoherentNamed)
+    {left right : RawPeriodVector} (equivalent :
+      VectorEquivalent left right) :
+    VectorEquivalent (scaleVector scalar left)
+      (scaleVector scalar right) :=
   fun coordinate => Congruence.coherentMul_respects
     scalar scalar (left coordinate) (right coordinate)
     (NamedEquivalent.refl scalar.name)
@@ -567,61 +567,61 @@ end Data
 
 /-- Arbitrary finite-word dual period transport. The actual periods from `EndpointContinuation` are the original `A`
 scale times the stepwise action of the reversed transposed generator matrices on `(1,tau)`. -/
-@[expose] def NormalizedData.periodWord_homogeneous {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def NormalizedData.periodWord_homogeneous {parameter : Gaussian}
     {frame : Paths.Frame parameter}
-    (data : Curves.Legendre.PeriodMonodromy.NormalizedData frame)
+    (data : NormalizedData frame)
     (path : Paths.Path frame frame) :
-    Curves.Legendre.PeriodMonodromy.VectorEquivalent (data.periods path)
-      (LegendreModularMonodromy.scaleVector data.aPeriod
+    VectorEquivalent (data.periods path)
+      (scaleVector data.aPeriod
         (Word.blockAction (Periods.periodBraidMatrices path.word)
-          (LegendreModularMonodromy.fractionalVector data.ratio))) :=
+          (fractionalVector data.ratio))) :=
   VectorEquivalent.trans (data.periods_normalized path)
-    (Curves.Legendre.PeriodMonodromy.scaleVector_respects data.aPeriod
+    (scaleVector_respects data.aPeriod
       (Periods.periodBraidRows_word path.word data.ratio))
 
 /-- Standard-loop data inherits the arbitrary-word homogeneous theorem without adding any premise. -/
-@[expose] def Data.periodWord_homogeneous {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def Data.periodWord_homogeneous {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops) (path : Paths.Path frame frame) :
-    Curves.Legendre.PeriodMonodromy.VectorEquivalent (data.periods path)
-      (LegendreModularMonodromy.scaleVector data.base.aPeriod
+    (data : Data loops) (path : Paths.Path frame frame) :
+    VectorEquivalent (data.periods path)
+      (scaleVector data.base.aPeriod
         (Word.blockAction (Periods.periodBraidMatrices path.word)
-          (LegendreModularMonodromy.fractionalVector data.base.ratio))) :=
+          (fractionalVector data.base.ratio))) :=
   data.base.periodWord_homogeneous path
 
 /-- The zero-loop homogeneous matrix action gives the unit row and affine tau-minus-two row. -/
-@[expose] def zero_rows_affine (tau : Curves.Legendre.PeriodMonodromy.CoherentNamed) :
-    Curves.Legendre.PeriodMonodromy.VectorEquivalent
+@[expose] def zero_rows_affine (tau : CoherentNamed) :
+    VectorEquivalent
       (Action.matrixAction Monodromy.zeroPeriodMatrix
-        (LegendreModularMonodromy.fractionalVector tau))
-      (LegendreModularMonodromy.fractionalVector (Curves.Legendre.PeriodMonodromy.zeroAffineTransform tau)) := by
+        (fractionalVector tau))
+      (fractionalVector (zeroAffineTransform tau)) := by
   intro coordinate
   let comparison : Fin 2 → Type := fun index =>
-    Curves.Legendre.PeriodMonodromy.NamedEquivalent
+    NamedEquivalent
       (Action.matrixAction Monodromy.zeroPeriodMatrix
-        (LegendreModularMonodromy.fractionalVector tau) index).name
-      (LegendreModularMonodromy.fractionalVector
-        (Curves.Legendre.PeriodMonodromy.zeroAffineTransform tau) index).name
+        (fractionalVector tau) index).name
+      (fractionalVector
+        (zeroAffineTransform tau) index).name
   refine Data.Fin.casesDependent (size := 1) (motive := comparison) ?_
     (fun tail => Data.Fin.casesDependent (size := 0)
       (motive := fun index => comparison index.succ) ?_
       (fun impossible => False.elim (Nat.not_lt_zero impossible.val impossible.isLt)) tail) coordinate
-  · exact Curves.Legendre.PeriodMonodromy.zero_denominator_one tau
-  · exact Curves.Legendre.PeriodMonodromy.zero_numerator_affine tau
+  · exact zero_denominator_one tau
+  · exact zero_numerator_affine tau
 
 /-- The actual zero-loop period column equals the original A-period scale times the affine normalized column. -/
-@[expose] def Data.zero_affine {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def Data.zero_affine {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops) :
-    Curves.Legendre.PeriodMonodromy.VectorEquivalent data.zeroPeriods
-      (LegendreModularMonodromy.scaleVector data.base.aPeriod
-        (LegendreModularMonodromy.fractionalVector (Curves.Legendre.PeriodMonodromy.zeroAffineTransform
+    (data : Data loops) :
+    VectorEquivalent data.zeroPeriods
+      (scaleVector data.base.aPeriod
+        (fractionalVector (zeroAffineTransform
           data.base.ratio))) :=
   VectorEquivalent.trans data.zero_homogeneous
-    (Curves.Legendre.PeriodMonodromy.scaleVector_respects data.base.aPeriod
-      (Curves.Legendre.PeriodMonodromy.zero_rows_affine data.base.ratio))
+    (scaleVector_respects data.base.aPeriod
+      (zero_rows_affine data.base.ratio))
 
 set_option genInjectivity false in
 /-- Small carrier whose generated recursor never unfolds the large period programs appearing in the public statement
@@ -640,24 +640,24 @@ constructive_injectivity FractionFreeCertificatePayload
 
 /-- Unconditional certificate for the correct dual period action. Its zero-loop formula is already productive because
 that dual denominator is exactly one. -/
-@[expose] def FractionFreeCertificate {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def FractionFreeCertificate {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops) : Type :=
-  Curves.Legendre.PeriodMonodromy.FractionFreeCertificatePayload
-    (Curves.Legendre.PeriodMonodromy.VectorEquivalent data.zeroPeriods
-      (LegendreModularMonodromy.scaleVector data.base.aPeriod
-        (LegendreModularMonodromy.fractionalVector (Curves.Legendre.PeriodMonodromy.zeroAffineTransform
+    (data : Data loops) : Type :=
+  FractionFreeCertificatePayload
+    (VectorEquivalent data.zeroPeriods
+      (scaleVector data.base.aPeriod
+        (fractionalVector (zeroAffineTransform
           data.base.ratio))))
-    (Curves.Legendre.PeriodMonodromy.VectorEquivalent data.onePeriods
-      (LegendreModularMonodromy.scaleVector data.base.aPeriod
+    (VectorEquivalent data.onePeriods
+      (scaleVector data.base.aPeriod
         (Action.matrixAction Monodromy.onePeriodMatrix
-          (LegendreModularMonodromy.fractionalVector data.base.ratio))))
-    (Curves.Legendre.PeriodMonodromy.VectorEquivalent data.infinityPeriods
-      (LegendreModularMonodromy.scaleVector data.base.aPeriod
+          (fractionalVector data.base.ratio))))
+    (VectorEquivalent data.infinityPeriods
+      (scaleVector data.base.aPeriod
         (Action.matrixAction Monodromy.infinityPeriodMatrix
-          (LegendreModularMonodromy.fractionalVector data.base.ratio))))
-    (Curves.Legendre.PeriodMonodromy.VectorEquivalent data.productPeriods data.base.toFibreData.rawPeriods)
+          (fractionalVector data.base.ratio))))
+    (VectorEquivalent data.productPeriods data.base.toFibreData.rawPeriods)
     (Multiplication.mul
           (Multiplication.mul
             Monodromy.zeroPeriodMatrix
@@ -673,12 +673,12 @@ that dual denominator is exactly one. -/
 
 /-- Construct the fraction-free standard-loop certificate from the retained normalized fibre and exact dual matrix
 identities. -/
-@[expose] def certificate {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def certificate {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops) :
-      Purelib.Curves.Legendre.PeriodMonodromy.FractionFreeCertificate data := by
-  unfold Purelib.Curves.Legendre.PeriodMonodromy.FractionFreeCertificate
+    (data : Data loops) :
+      FractionFreeCertificate data := by
+  unfold FractionFreeCertificate
   exact
     { zero := data.zero_affine
       one := data.one_homogeneous
@@ -689,48 +689,48 @@ identities. -/
           Monodromy.explicit_period_product_right⟩ }
 
 /-- Productive denominator data for the exact one-loop dual denominator at the original tau. -/
-abbrev OnePreparation (tau : Curves.Legendre.PeriodMonodromy.CoherentNamed) :=
-  Curves.Legendre.PeriodMonodromy.DenominatorPreparation
-    (LegendreModularMonodromy.fractionalDenominator Monodromy.onePeriodMatrix tau)
+abbrev OnePreparation (tau : CoherentNamed) :=
+  DenominatorPreparation
+    (fractionalDenominator Monodromy.onePeriodMatrix tau)
 
 /-- Productive denominator data for the exact infinity-loop dual denominator at the original tau. -/
-abbrev InfinityPreparation (tau : Curves.Legendre.PeriodMonodromy.CoherentNamed) :=
-  Curves.Legendre.PeriodMonodromy.DenominatorPreparation
-    (LegendreModularMonodromy.fractionalDenominator
+abbrev InfinityPreparation (tau : CoherentNamed) :=
+  DenominatorPreparation
+    (fractionalDenominator
       Monodromy.infinityPeriodMatrix tau)
 
 /-- Form the one-loop fractional-linear value using its original retained denominator preparation. -/
-@[expose] def oneTransform {tau : Curves.Legendre.PeriodMonodromy.CoherentNamed}
-    (preparation : Curves.Legendre.PeriodMonodromy.OnePreparation tau) : CoherentNamed :=
-  LegendreModularMonodromy.fractionalLinear Monodromy.onePeriodMatrix tau
+@[expose] def oneTransform {tau : CoherentNamed}
+    (preparation : OnePreparation tau) : CoherentNamed :=
+  fractionalLinear Monodromy.onePeriodMatrix tau
     preparation
 
 /-- Form the infinity-loop fractional-linear value using its original retained denominator preparation. -/
-@[expose] def infinityTransform {tau : Curves.Legendre.PeriodMonodromy.CoherentNamed}
-    (preparation : Curves.Legendre.PeriodMonodromy.InfinityPreparation tau) : CoherentNamed :=
-  LegendreModularMonodromy.fractionalLinear Monodromy.infinityPeriodMatrix tau
+@[expose] def infinityTransform {tau : CoherentNamed}
+    (preparation : InfinityPreparation tau) : CoherentNamed :=
+  fractionalLinear Monodromy.infinityPeriodMatrix tau
     preparation
 
 /-- Convert a homogeneous transported period column and a fraction-free quotient equation into the directly useful
 statement that the productive quotient is the ratio of the two actual transported coordinates. -/
 @[expose] def productiveRatio_ofHomogeneous
-    (periods : Curves.Legendre.PeriodMonodromy.RawPeriodVector)
-    (scale denominator numerator transform : Curves.Legendre.PeriodMonodromy.CoherentNamed)
-    (denominatorTransport : Curves.Legendre.PeriodMonodromy.NamedEquivalent (periods 0).name
-      (CoherentNamed.mul scale denominator).name)
-    (numeratorTransport : Curves.Legendre.PeriodMonodromy.NamedEquivalent (periods 1).name
-      (CoherentNamed.mul scale numerator).name)
-    (quotientEquation : Curves.Legendre.PeriodMonodromy.NamedEquivalent
-      (CoherentNamed.mul denominator transform).name
+    (periods : RawPeriodVector)
+    (scale denominator numerator transform : CoherentNamed)
+    (denominatorTransport : NamedEquivalent (periods 0).name
+      (mul scale denominator).name)
+    (numeratorTransport : NamedEquivalent (periods 1).name
+      (mul scale numerator).name)
+    (quotientEquation : NamedEquivalent
+      (mul denominator transform).name
       numerator.name) :
-    Curves.Legendre.PeriodMonodromy.NamedEquivalent
-      (CoherentNamed.mul
+    NamedEquivalent
+      (mul
         (periods 0) transform).name
       (periods 1).name :=
   NamedEquivalent.trans
     (Congruence.coherentMul_respects
       (periods 0)
-      (CoherentNamed.mul scale denominator)
+      (mul scale denominator)
       transform transform denominatorTransport
       (NamedEquivalent.refl transform.name))
     (NamedEquivalent.trans
@@ -739,7 +739,7 @@ statement that the productive quotient is the ratio of the two actual transporte
       (NamedEquivalent.trans
         (Congruence.coherentMul_respects
           scale scale
-          (CoherentNamed.mul denominator transform)
+          (mul denominator transform)
           numerator
           (NamedEquivalent.refl scale.name)
           quotientEquation)
@@ -749,32 +749,32 @@ statement that the productive quotient is the ratio of the two actual transporte
 /-- Arbitrary finite-word productive dual period theorem. Given exactly the per-generator and combined denominator
 preparations for the reversed transposed generator list, the resulting stepwise value is operationally the ratio of the
 two actual period coordinates returned by endpoint continuation. -/
-@[expose] def NormalizedData.periodWord_productive_transport {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def NormalizedData.periodWord_productive_transport {parameter : Gaussian}
     {frame : Paths.Frame parameter}
-    (data : Curves.Legendre.PeriodMonodromy.NormalizedData frame)
+    (data : NormalizedData frame)
     (path : Paths.Path frame frame)
     (preparations : Periods.PeriodFoldPreparations path.word data.ratio) :
-    Curves.Legendre.PeriodMonodromy.NamedEquivalent
-      (CoherentNamed.mul
+    NamedEquivalent
+      (mul
         (data.periods path 0)
         (Fold.Basic.foldAction data.ratio (Periods.periodBraidMatrices path.word)
           preparations)).name
       (data.periods path 1).name := by
   let matrix := Dual.periodMatrix path.word
-  let denominator := LegendreModularMonodromy.fractionalDenominator matrix data.ratio
-  let numerator := LegendreModularMonodromy.fractionalNumerator matrix data.ratio
+  let denominator := fractionalDenominator matrix data.ratio
+  let numerator := fractionalNumerator matrix data.ratio
   let transform := Fold.Basic.foldAction data.ratio
     (Periods.periodBraidMatrices path.word) preparations
   have homogeneous := data.periods_normalized path
   have denominatorTransport := homogeneous 0
-  change Curves.Legendre.PeriodMonodromy.NamedEquivalent (data.periods path 0).name
-    (CoherentNamed.mul data.aPeriod
+  change NamedEquivalent (data.periods path 0).name
+    (mul data.aPeriod
       denominator).name at denominatorTransport
   have numeratorTransport := homogeneous 1
-  change Curves.Legendre.PeriodMonodromy.NamedEquivalent (data.periods path 1).name
-    (CoherentNamed.mul data.aPeriod
+  change NamedEquivalent (data.periods path 1).name
+    (mul data.aPeriod
       numerator).name at numeratorTransport
-  exact Curves.Legendre.PeriodMonodromy.productiveRatio_ofHomogeneous (data.periods path) data.aPeriod
+  exact productiveRatio_ofHomogeneous (data.periods path) data.aPeriod
     denominator numerator transform denominatorTransport numeratorTransport
     (by
       simpa only [matrix, denominator, numerator, transform] using
@@ -782,13 +782,13 @@ two actual period coordinates returned by endpoint continuation. -/
 
 /-- Standard-loop data inherits the arbitrary finite-word productive theorem for every additional certified closed path
 on its base frame. -/
-@[expose] def Data.periodWord_productive_transport {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def Data.periodWord_productive_transport {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops) (path : Paths.Path frame frame)
+    (data : Data loops) (path : Paths.Path frame frame)
     (preparations : Periods.PeriodFoldPreparations path.word data.base.ratio) :
-    Curves.Legendre.PeriodMonodromy.NamedEquivalent
-      (CoherentNamed.mul
+    NamedEquivalent
+      (mul
         (data.periods path 0)
         (Fold.Basic.foldAction data.base.ratio (Periods.periodBraidMatrices path.word)
           preparations)).name
@@ -797,95 +797,95 @@ on its base frame. -/
 
 /-- The unconditional affine zero output is the ratio of the two period coordinates transported around the actual zero
 loop. -/
-@[expose] def Data.zero_productive_transport {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def Data.zero_productive_transport {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops) :
-    Curves.Legendre.PeriodMonodromy.NamedEquivalent
-      (CoherentNamed.mul
-        (data.zeroPeriods 0) (Curves.Legendre.PeriodMonodromy.zeroAffineTransform data.base.ratio)).name
+    (data : Data loops) :
+    NamedEquivalent
+      (mul
+        (data.zeroPeriods 0) (zeroAffineTransform data.base.ratio)).name
       (data.zeroPeriods 1).name := by
   have denominatorTransport := data.zero_affine 0
-  change Curves.Legendre.PeriodMonodromy.NamedEquivalent (data.zeroPeriods 0).name
-    (CoherentNamed.mul data.base.aPeriod
+  change NamedEquivalent (data.zeroPeriods 0).name
+    (mul data.base.aPeriod
       (Coherence.exact 1)).name
       at denominatorTransport
   have numeratorTransport := data.zero_affine 1
-  change Curves.Legendre.PeriodMonodromy.NamedEquivalent (data.zeroPeriods 1).name
-    (CoherentNamed.mul data.base.aPeriod
-      (Curves.Legendre.PeriodMonodromy.zeroAffineTransform data.base.ratio)).name at numeratorTransport
-  exact Curves.Legendre.PeriodMonodromy.productiveRatio_ofHomogeneous data.zeroPeriods data.base.aPeriod
+  change NamedEquivalent (data.zeroPeriods 1).name
+    (mul data.base.aPeriod
+      (zeroAffineTransform data.base.ratio)).name at numeratorTransport
+  exact productiveRatio_ofHomogeneous data.zeroPeriods data.base.aPeriod
     (Coherence.exact 1)
-    (Curves.Legendre.PeriodMonodromy.zeroAffineTransform data.base.ratio)
-    (Curves.Legendre.PeriodMonodromy.zeroAffineTransform data.base.ratio) denominatorTransport
+    (zeroAffineTransform data.base.ratio)
+    (zeroAffineTransform data.base.ratio) denominatorTransport
     numeratorTransport
     (Mul.coherentMul_one_left
-      (Curves.Legendre.PeriodMonodromy.zeroAffineTransform data.base.ratio))
+      (zeroAffineTransform data.base.ratio))
 
 /-- The prepared one-loop output is the ratio of the two period coordinates transported around the actual one loop. -/
-@[expose] def Data.one_productive_transport {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def Data.one_productive_transport {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops) (preparation : Curves.Legendre.PeriodMonodromy.OnePreparation
+    (data : Data loops) (preparation : OnePreparation
       data.base.ratio) :
-    Curves.Legendre.PeriodMonodromy.NamedEquivalent
-      (CoherentNamed.mul
-        (data.onePeriods 0) (Curves.Legendre.PeriodMonodromy.oneTransform preparation)).name
+    NamedEquivalent
+      (mul
+        (data.onePeriods 0) (oneTransform preparation)).name
       (data.onePeriods 1).name := by
   have denominatorTransport := data.one_homogeneous 0
-  change Curves.Legendre.PeriodMonodromy.NamedEquivalent (data.onePeriods 0).name
-    (CoherentNamed.mul data.base.aPeriod
-      (LegendreModularMonodromy.fractionalDenominator Monodromy.onePeriodMatrix
+  change NamedEquivalent (data.onePeriods 0).name
+    (mul data.base.aPeriod
+      (fractionalDenominator Monodromy.onePeriodMatrix
         data.base.ratio)).name at denominatorTransport
   have numeratorTransport := data.one_homogeneous 1
-  change Curves.Legendre.PeriodMonodromy.NamedEquivalent (data.onePeriods 1).name
-    (CoherentNamed.mul data.base.aPeriod
-      (LegendreModularMonodromy.fractionalNumerator Monodromy.onePeriodMatrix
+  change NamedEquivalent (data.onePeriods 1).name
+    (mul data.base.aPeriod
+      (fractionalNumerator Monodromy.onePeriodMatrix
         data.base.ratio)).name at numeratorTransport
-  exact Curves.Legendre.PeriodMonodromy.productiveRatio_ofHomogeneous data.onePeriods data.base.aPeriod
-    (LegendreModularMonodromy.fractionalDenominator Monodromy.onePeriodMatrix
+  exact productiveRatio_ofHomogeneous data.onePeriods data.base.aPeriod
+    (fractionalDenominator Monodromy.onePeriodMatrix
       data.base.ratio)
-    (LegendreModularMonodromy.fractionalNumerator Monodromy.onePeriodMatrix
+    (fractionalNumerator Monodromy.onePeriodMatrix
       data.base.ratio)
-    (Curves.Legendre.PeriodMonodromy.oneTransform preparation) denominatorTransport numeratorTransport
+    (oneTransform preparation) denominatorTransport numeratorTransport
     (by
-      simpa only [Curves.Legendre.PeriodMonodromy.oneTransform] using
-        (LegendreModularMonodromy.denominator_mul_fractionalLinear
+      simpa only [oneTransform] using
+        (denominator_mul_fractionalLinear
           Monodromy.onePeriodMatrix data.base.ratio
           preparation))
 
 /-- The prepared infinity-loop output is the ratio of the two period coordinates transported around the actual infinity
 loop. -/
-@[expose] def Data.infinity_productive_transport {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def Data.infinity_productive_transport {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops)
-    (preparation : Curves.Legendre.PeriodMonodromy.InfinityPreparation data.base.ratio) :
-    Curves.Legendre.PeriodMonodromy.NamedEquivalent
-      (CoherentNamed.mul
-        (data.infinityPeriods 0) (Curves.Legendre.PeriodMonodromy.infinityTransform preparation)).name
+    (data : Data loops)
+    (preparation : InfinityPreparation data.base.ratio) :
+    NamedEquivalent
+      (mul
+        (data.infinityPeriods 0) (infinityTransform preparation)).name
       (data.infinityPeriods 1).name := by
   have denominatorTransport := data.infinity_homogeneous 0
-  change Curves.Legendre.PeriodMonodromy.NamedEquivalent (data.infinityPeriods 0).name
-    (CoherentNamed.mul data.base.aPeriod
-      (LegendreModularMonodromy.fractionalDenominator
+  change NamedEquivalent (data.infinityPeriods 0).name
+    (mul data.base.aPeriod
+      (fractionalDenominator
         Monodromy.infinityPeriodMatrix
         data.base.ratio)).name at denominatorTransport
   have numeratorTransport := data.infinity_homogeneous 1
-  change Curves.Legendre.PeriodMonodromy.NamedEquivalent (data.infinityPeriods 1).name
-    (CoherentNamed.mul data.base.aPeriod
-      (LegendreModularMonodromy.fractionalNumerator
+  change NamedEquivalent (data.infinityPeriods 1).name
+    (mul data.base.aPeriod
+      (fractionalNumerator
         Monodromy.infinityPeriodMatrix
         data.base.ratio)).name at numeratorTransport
-  exact Curves.Legendre.PeriodMonodromy.productiveRatio_ofHomogeneous data.infinityPeriods data.base.aPeriod
-    (LegendreModularMonodromy.fractionalDenominator
+  exact productiveRatio_ofHomogeneous data.infinityPeriods data.base.aPeriod
+    (fractionalDenominator
       Monodromy.infinityPeriodMatrix data.base.ratio)
-    (LegendreModularMonodromy.fractionalNumerator
+    (fractionalNumerator
       Monodromy.infinityPeriodMatrix data.base.ratio)
-    (Curves.Legendre.PeriodMonodromy.infinityTransform preparation) denominatorTransport numeratorTransport
+    (infinityTransform preparation) denominatorTransport numeratorTransport
     (by
-      simpa only [Curves.Legendre.PeriodMonodromy.infinityTransform] using
-        (LegendreModularMonodromy.denominator_mul_fractionalLinear
+      simpa only [infinityTransform] using
+        (denominator_mul_fractionalLinear
           Monodromy.infinityPeriodMatrix data.base.ratio
           preparation))
 
@@ -912,59 +912,59 @@ constructive_injectivity ProductiveCertificatePayload
 
 /-- Productive standard dual outputs. Only the one and infinity denominators require typed apartness; zero remains the
 direct affine name. -/
-@[expose] def ProductiveCertificate {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def ProductiveCertificate {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops)
-    (onePreparation : Curves.Legendre.PeriodMonodromy.OnePreparation data.base.ratio)
-    (infinityPreparation : Curves.Legendre.PeriodMonodromy.InfinityPreparation data.base.ratio) : Type :=
-  Curves.Legendre.PeriodMonodromy.ProductiveCertificatePayload
-    (Curves.Legendre.PeriodMonodromy.FractionFreeCertificate data)
-    (Curves.Legendre.PeriodMonodromy.NamedEquivalent
-      (CoherentNamed.mul
-        (LegendreModularMonodromy.fractionalDenominator
+    (data : Data loops)
+    (onePreparation : OnePreparation data.base.ratio)
+    (infinityPreparation : InfinityPreparation data.base.ratio) : Type :=
+  ProductiveCertificatePayload
+    (FractionFreeCertificate data)
+    (NamedEquivalent
+      (mul
+        (fractionalDenominator
           Monodromy.onePeriodMatrix data.base.ratio)
-        (Curves.Legendre.PeriodMonodromy.oneTransform onePreparation)).name
-      (LegendreModularMonodromy.fractionalNumerator
+        (oneTransform onePreparation)).name
+      (fractionalNumerator
         Monodromy.onePeriodMatrix data.base.ratio).name)
-    (Curves.Legendre.PeriodMonodromy.NamedEquivalent
-      (CoherentNamed.mul
-        (LegendreModularMonodromy.fractionalDenominator
+    (NamedEquivalent
+      (mul
+        (fractionalDenominator
           Monodromy.infinityPeriodMatrix data.base.ratio)
-        (Curves.Legendre.PeriodMonodromy.infinityTransform infinityPreparation)).name
-      (LegendreModularMonodromy.fractionalNumerator
+        (infinityTransform infinityPreparation)).name
+      (fractionalNumerator
         Monodromy.infinityPeriodMatrix data.base.ratio).name)
-    (Curves.Legendre.PeriodMonodromy.NamedEquivalent
-      (CoherentNamed.mul
-        (data.zeroPeriods 0) (Curves.Legendre.PeriodMonodromy.zeroAffineTransform data.base.ratio)).name
+    (NamedEquivalent
+      (mul
+        (data.zeroPeriods 0) (zeroAffineTransform data.base.ratio)).name
       (data.zeroPeriods 1).name)
-    (Curves.Legendre.PeriodMonodromy.NamedEquivalent
-      (CoherentNamed.mul
-        (data.onePeriods 0) (Curves.Legendre.PeriodMonodromy.oneTransform onePreparation)).name
+    (NamedEquivalent
+      (mul
+        (data.onePeriods 0) (oneTransform onePreparation)).name
       (data.onePeriods 1).name)
-    (Curves.Legendre.PeriodMonodromy.NamedEquivalent
-      (CoherentNamed.mul
+    (NamedEquivalent
+      (mul
         (data.infinityPeriods 0)
-        (Curves.Legendre.PeriodMonodromy.infinityTransform infinityPreparation)).name
+        (infinityTransform infinityPreparation)).name
       (data.infinityPeriods 1).name)
 
 /-- Combine the homogeneous standard-loop identities with the two retained denominator preparations.
 
 The result retains the original fraction-free certificate, quotient equations and transport identities for the actual
 zero, one and infinity period columns. -/
-@[expose] def productiveCertificate {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def productiveCertificate {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops)
-    (onePreparation : Curves.Legendre.PeriodMonodromy.OnePreparation data.base.ratio)
-    (infinityPreparation : Curves.Legendre.PeriodMonodromy.InfinityPreparation data.base.ratio) :
-    Purelib.Curves.Legendre.PeriodMonodromy.ProductiveCertificate data onePreparation infinityPreparation := by
-  unfold Purelib.Curves.Legendre.PeriodMonodromy.ProductiveCertificate
+    (data : Data loops)
+    (onePreparation : OnePreparation data.base.ratio)
+    (infinityPreparation : InfinityPreparation data.base.ratio) :
+    ProductiveCertificate data onePreparation infinityPreparation := by
+  unfold ProductiveCertificate
   exact
-    { fractionFree := Curves.Legendre.PeriodMonodromy.certificate data
-      oneEquation := LegendreModularMonodromy.denominator_mul_fractionalLinear _ _ onePreparation
+    { fractionFree := certificate data
+      oneEquation := denominator_mul_fractionalLinear _ _ onePreparation
       infinityEquation :=
-        LegendreModularMonodromy.denominator_mul_fractionalLinear _ _ infinityPreparation
+        denominator_mul_fractionalLinear _ _ infinityPreparation
       zeroTransport := data.zero_productive_transport
       oneTransport := data.one_productive_transport onePreparation
       infinityTransport :=
@@ -979,18 +979,18 @@ structure StandardReadyPayload (oneType infinityType : Type 1) where
 constructive_injectivity StandardReadyPayload
 
 /-- The pair of denominator preparations indexed by the exact one and infinity dual actions at the original tau. -/
-@[expose] def StandardReady (tau : Curves.Legendre.PeriodMonodromy.CoherentNamed) : Type 1 :=
-  Curves.Legendre.PeriodMonodromy.StandardReadyPayload (Curves.Legendre.PeriodMonodromy.OnePreparation tau)
-    (Curves.Legendre.PeriodMonodromy.InfinityPreparation tau)
+@[expose] def StandardReady (tau : CoherentNamed) : Type 1 :=
+  StandardReadyPayload (OnePreparation tau)
+    (InfinityPreparation tau)
 
 /-- A ready pair feeds the productive dual headline certificate directly. -/
-@[expose] def productiveCertificateOfReady {parameter : Curves.Legendre.PeriodMonodromy.Gaussian}
+@[expose] def productiveCertificateOfReady {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     {loops : Monodromy.StandardLoops frame}
-    (data : Curves.Legendre.PeriodMonodromy.Data loops) (ready : Curves.Legendre.PeriodMonodromy.StandardReady
+    (data : Data loops) (ready : StandardReady
       data.base.ratio) :
-    Curves.Legendre.PeriodMonodromy.ProductiveCertificate data ready.one ready.infinity :=
-  Curves.Legendre.PeriodMonodromy.productiveCertificate data ready.one ready.infinity
+    ProductiveCertificate data ready.one ready.infinity :=
+  productiveCertificate data ready.one ready.infinity
 
 /-! ## Retryable standard denominator acquisition -/
 
@@ -998,7 +998,7 @@ constructive_injectivity StandardReadyPayload
 
 The result retains the original tau, matrix, fuel and any unfinished acquisition state; exhaustion does not establish
 that the denominator vanishes. -/
-@[expose] def attemptStandardOne (tau : Curves.Legendre.PeriodMonodromy.CoherentNamed) (fuel : Nat) :
+@[expose] def attemptStandardOne (tau : CoherentNamed) (fuel : Nat) :
     Run.RunResult
       Monodromy.onePeriodMatrix tau
       (State.initial
@@ -1012,7 +1012,7 @@ that the denominator vanishes. -/
 
 The result retains the original tau, matrix, fuel and any unfinished acquisition state; exhaustion does not establish
 that the denominator vanishes. -/
-@[expose] def attemptStandardInfinity (tau : Curves.Legendre.PeriodMonodromy.CoherentNamed) (fuel : Nat) :
+@[expose] def attemptStandardInfinity (tau : CoherentNamed) (fuel : Nat) :
     Run.RunResult
       Monodromy.infinityPeriodMatrix tau
       (State.initial

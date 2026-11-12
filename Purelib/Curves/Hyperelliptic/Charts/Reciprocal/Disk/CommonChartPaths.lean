@@ -62,38 +62,38 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCommonCover
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels (RootModel)
 open Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility (PreparedPatch)
 open Purelib.Riemann.Periods.CenteredBilinearPath hiding Coordinate
-variable {genus count otherCount : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-  {differential other : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {otherPatch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch
-    (Purelib.Riemann.Integration.PreparedEdgeRecasting.recastCenteredEdge other parent)}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {otherData :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
-  {cover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {otherCover :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover otherData}
-  (interval : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCommonCover.CommonInterval cover
+variable {genus count otherCount : Nat} {curve : HyperellipticCurve genus}
+  {differential other : Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent}
+  {otherPatch : PreparedPatch
+    (recastCenteredEdge other parent)}
+  {data : Data patch count} {otherData :
+    Data otherPatch otherCount}
+  {cover : Cover data} {otherCover :
+    Cover otherData}
+  (interval : CommonInterval cover
     otherCover)
 
 set_option genInjectivity false in
 /-- The two actual retained differential-recast cap points at one common parameter, with their operational root join. -/
-structure ChartVertex (firstModel : UniformReciprocalRootChannels.RootModel interval.first.cell)
-    (secondModel : UniformReciprocalRootChannels.RootModel interval.second.cell) (parameter : Coordinate) where
-  /-- The actual first differential's retained cap point at this parameter. -/ first : ArcOwners.Point cap firstModel
+structure ChartVertex (firstModel : RootModel interval.first.cell)
+    (secondModel : RootModel interval.second.cell) (parameter : Coordinate) where
+  /-- The actual first differential's retained cap point at this parameter. -/ first : Point cap firstModel
     parameter
-  /-- The actual second differential's retained cap point at this parameter. -/ second : ArcOwners.Point cap secondModel
+  /-- The actual second differential's retained cap point at this parameter. -/ second : Point cap secondModel
     parameter
-  /-- The operational join between these exact two retained cap points. -/ joined : ArcOwners.Join first second
+  /-- The operational join between these exact two retained cap points. -/ joined : Join first second
 
 constructive_injectivity ChartVertex
 
 /-- The dependent vector of actual paired cap vertices on the retained indexed dyadic parameter list. -/
-@[expose] def ChartVertices (firstModel : UniformReciprocalRootChannels.RootModel interval.first.cell)
-    (secondModel : UniformReciprocalRootChannels.RootModel interval.second.cell) (tail : List Coordinate) :=
-  Data.Vector.DependentVector (fun i : Fin (tail.length + 1) =>
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPaths.ChartVertex (cap := cap) interval firstModel
+@[expose] def ChartVertices (firstModel : RootModel interval.first.cell)
+    (secondModel : RootModel interval.second.cell) (tail : List Coordinate) :=
+  DependentVector (fun i : Fin (tail.length + 1) =>
+    ChartVertex (cap := cap) interval firstModel
       secondModel
       (DyadicTrace.indexed interval.edge.left.parameter tail i))
 
@@ -104,11 +104,11 @@ structure ChartGeometry (depth : Nat) where
   /-- The parameter tail is exactly the original interval's dyadic trace at the retained depth. -/ tail_eq : tail =
     DyadicTrace.tail depth interval.edge.left.parameter interval.edge.right.parameter
   /-- The retained root model on the actual first differential's cover cell. -/ firstModel :
-    UniformReciprocalRootChannels.RootModel interval.first.cell
+    RootModel interval.first.cell
   /-- The retained root model on the actual second differential's cover cell. -/ secondModel :
-    UniformReciprocalRootChannels.RootModel interval.second.cell
+    RootModel interval.second.cell
   /-- The cached paired cap points and joins at every exact indexed parameter. -/ vertices :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPaths.ChartVertices (cap := cap) interval firstModel
+    ChartVertices (cap := cap) interval firstModel
     secondModel tail
 
 constructive_injectivity ChartGeometry
@@ -117,19 +117,19 @@ namespace ChartGeometry
 
 /-- Cache both original root models and construct every actual dyadic vertex with its automatic differential-recast root
 join. -/
-@[expose] def build (depth : Nat) : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPaths.ChartGeometry (cap :=
+@[expose] def build (depth : Nat) : ChartGeometry (cap :=
   cap) interval depth := by
   let firstModel := RootModel.build interval.first.cell
   let secondModel := RootModel.build interval.second.cell
   let tail := DyadicTrace.tail depth interval.edge.left.parameter interval.edge.right.parameter
-  let vertices : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPaths.ChartVertices (cap := cap) interval
+  let vertices : ChartVertices (cap := cap) interval
     firstModel secondModel tail :=
     DependentVector.ofFn (fun i => by
       let parameter := DyadicTrace.indexed interval.edge.left.parameter tail i
       have inside := DyadicTrace.indexed_inside depth interval.ordered i
-      let first := ArcOwners.Point.build cap firstModel parameter
+      let first := Point.build cap firstModel parameter
         ⟨interval.first.lower.trans inside.1, inside.2.trans interval.first.upper⟩
-      let second := ArcOwners.Point.build cap secondModel parameter
+      let second := Point.build cap secondModel parameter
         ⟨interval.second.lower.trans inside.1, inside.2.trans interval.second.upper⟩
       exact ⟨first, second, Join.ofRecast first second⟩)
   exact ⟨tail, rfl, firstModel, secondModel, vertices⟩
@@ -137,14 +137,14 @@ join. -/
 variable {interval} {depth : Nat}
 
 /-- Read the retained operational join at the supplied actual dyadic vertex. -/
-@[expose] def joins (geometry : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPaths.ChartGeometry (cap := cap)
+@[expose] def joins (geometry : ChartGeometry (cap := cap)
   interval depth)
     (i : Fin (geometry.tail.length + 1)) :
-    ArcOwners.Join (geometry.vertices.get i).first (geometry.vertices.get i).second :=
+    Join (geometry.vertices.get i).first (geometry.vertices.get i).second :=
   (geometry.vertices.get i).joined
 
 /-- The final retained dyadic vertex has exactly the original common interval's right parameter. -/
-theorem last_parameter (geometry : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPaths.ChartGeometry (cap :=
+theorem last_parameter (geometry : ChartGeometry (cap :=
   cap) interval depth) :
     DyadicTrace.indexed interval.edge.left.parameter geometry.tail (Fin.last geometry.tail.length) =
       interval.edge.right.parameter := by
@@ -153,47 +153,47 @@ theorem last_parameter (geometry : Curves.Hyperelliptic.Charts.Reciprocal.Disk.C
 set_option genInjectivity false in
 /-- Adjacent intervals inherit both sheets from their original parent models; no equality of independently sampled roots
 is asserted. -/
-structure Junction {nextInterval : UniformReciprocalCommonCover.CommonInterval cover otherCover} {nextDepth : Nat}
-    (geometry : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPaths.ChartGeometry (cap := cap) interval depth)
-    (next : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPaths.ChartGeometry (cap := cap) nextInterval
+structure Junction {nextInterval : CommonInterval cover otherCover} {nextDepth : Nat}
+    (geometry : ChartGeometry (cap := cap) interval depth)
+    (next : ChartGeometry (cap := cap) nextInterval
       nextDepth) where
-  /-- The retained first-differential root join across these two actual adjacent intervals. -/ first : ArcOwners.Join
+  /-- The retained first-differential root join across these two actual adjacent intervals. -/ first : Join
     (geometry.vertices.get (Fin.last geometry.tail.length)).first (next.vertices.get 0).first
-  /-- The retained second-differential root join across these two actual adjacent intervals. -/ second : ArcOwners.Join
+  /-- The retained second-differential root join across these two actual adjacent intervals. -/ second : Join
     (geometry.vertices.get (Fin.last geometry.tail.length)).second (next.vertices.get 0).second
 
 constructive_injectivity Junction
 
 /-- Join consecutive actual chart endpoints using their retained parent models and certified parameter adjacency. -/
-@[expose] def junction {nextInterval : UniformReciprocalCommonCover.CommonInterval cover otherCover} {nextDepth : Nat}
-    (geometry : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPaths.ChartGeometry (cap := cap) interval depth)
-    (next : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPaths.ChartGeometry (cap := cap) nextInterval
+@[expose] def junction {nextInterval : CommonInterval cover otherCover} {nextDepth : Nat}
+    (geometry : ChartGeometry (cap := cap) interval depth)
+    (next : ChartGeometry (cap := cap) nextInterval
       nextDepth)
     (adjacent : interval.edge.right.parameter = nextInterval.edge.left.parameter) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPaths.ChartGeometry.Junction geometry next :=
+      Junction geometry next :=
   let same := geometry.last_parameter.trans adjacent
   ⟨Join.ofSameParent _ _ same, Join.ofSameParent _ _ same⟩
 
 end ChartGeometry
 
-variable {index : Nat} {box otherBox : Purelib.Geometry.Rational.Box}
-  (sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box)
-  (otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other index otherBox)
+variable {index : Nat} {box otherBox : Geometry.Rational.Box}
+  (sample : Cap.Primitives.Sample cap differential index box)
+  (otherSample : Cap.Primitives.Sample cap other index otherBox)
 
 /-- The paired chart-reading request on the supplied original dyadic vertex owners and joins. -/
 @[expose] def ChartRequest {depth : Nat} (geometry :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPaths.ChartGeometry (cap := cap) interval depth)
+  ChartGeometry (cap := cap) interval depth)
     (target : Coordinate) (floor : Nat) :=
-  PairedChartReadings.ChartPathRequest (sample := sample) (otherSample := otherSample)
+  ChartPathRequest (sample := sample) (otherSample := otherSample)
     geometry.joins (target := target) (floor := floor)
 
 set_option genInjectivity false in
 /-- The retained common-interval geometry and a paid complete paired chart-area request. -/
 structure ChartAcquisition (depth : Nat) (target : Coordinate) (floor : Nat) where
   /-- The cached actual dyadic geometry with both original differential root owners. -/ geometry :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPaths.ChartGeometry (cap := cap) interval depth
+    ChartGeometry (cap := cap) interval depth
   /-- The retained reading request on these exact paired chart vertices. -/ request :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPaths.ChartRequest interval sample otherSample geometry
+    ChartRequest interval sample otherSample geometry
     target floor
   /-- The cached paid complete paired area evaluation for the original target. -/ area : ChartPathRequest.RequestedArea
     request target
@@ -203,9 +203,9 @@ constructive_injectivity ChartAcquisition
 /-- Build the actual dyadic owners, acquire their recast joins, and pay the full paired area discrepancy at an
 internally selected common reading stage. -/
 @[expose] def acquireChart (depth : Nat) (target : Coordinate) (positive : 0 < target) (floor : Nat) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPaths.ChartAcquisition interval sample otherSample depth
+    ChartAcquisition interval sample otherSample depth
       target floor :=
-  let geometry := Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPaths.ChartGeometry.build (cap := cap) interval
+  let geometry := ChartGeometry.build (cap := cap) interval
     depth
   let request := ChartPathRequest.build geometry.joins sample otherSample target positive floor
   ⟨geometry, request, request.acquireRequestedArea target positive⟩

@@ -53,8 +53,18 @@ variable {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient : Box} {g
 
 include reference
 
+section Anchored
+
+omit reference
+
+variable {anchor : Canonical}
+variable (anchoredReference : Riemann.Paths.OwnerLoopMonodromy.WindingOneLoop polynomial anchor)
+variable (anchorMember : FromStates.ContainsVertex grid anchor)
+
+include anchoredReference anchorMember
+
 /-- Resplitting a reversed horizontal grid walk compares to reversing its original resplitting. -/
-private theorem horizontal_reverse (start finish y : Purelib.Data.Rat.Fraction.Rational)
+private theorem horizontal_reverse_anchored (start finish y : Purelib.Data.Rat.Fraction.Rational)
     (first : start ∈ grid.vertical.map VerticalLine.coordinate)
     (last : finish ∈ grid.vertical.map VerticalLine.coordinate)
     (fixed : y ∈ grid.horizontal.map HorizontalLine.coordinate) :
@@ -71,10 +81,11 @@ private theorem horizontal_reverse (start finish y : Purelib.Data.Rat.Fraction.R
       (le_of_not_ge ordered)
     rw [AxisChainCoherence.horizontalWalk_increasing axis line,
       AxisChainCoherence.horizontalWalk_decreasing axis line]
-    exact (AxisChainCoherence.RootEdgeBank.ChainComparison.reverse_reverse reference _).symm
+    exact (AxisChainCoherence.RootEdgeBank.ChainComparison.reverse_reverse_anchored
+      anchoredReference anchorMember _).symm
 
 /-- Resplitting a reversed vertical grid walk compares to reversing its original resplitting. -/
-private theorem vertical_reverse (x start finish : Purelib.Data.Rat.Fraction.Rational)
+private theorem vertical_reverse_anchored (x start finish : Purelib.Data.Rat.Fraction.Rational)
     (fixed : x ∈ grid.vertical.map VerticalLine.coordinate)
     (first : start ∈ grid.horizontal.map HorizontalLine.coordinate)
     (last : finish ∈ grid.horizontal.map HorizontalLine.coordinate) :
@@ -92,10 +103,11 @@ private theorem vertical_reverse (x start finish : Purelib.Data.Rat.Fraction.Rat
       (le_of_not_ge ordered)
     rw [AxisChainCoherence.verticalWalk_increasing axis line,
       AxisChainCoherence.verticalWalk_decreasing axis line]
-    exact (AxisChainCoherence.RootEdgeBank.ChainComparison.reverse_reverse reference _).symm
+    exact (AxisChainCoherence.RootEdgeBank.ChainComparison.reverse_reverse_anchored
+      anchoredReference anchorMember _).symm
 
 /-- Reversing an original affine grid segment commutes with its retained coordinate split up to chain comparison. -/
-private theorem split_reverse {pathAmbient : Box} {start finish : Canonical}
+private theorem split_reverse_anchored {pathAmbient : Box} {start finish : Canonical}
     (segment : Geometry.ClearPath.ClearSegment polynomial pathAmbient start finish)
     (first : FromStates.ContainsVertex grid start) (last :
       FromStates.ContainsVertex grid finish) :
@@ -103,8 +115,8 @@ private theorem split_reverse {pathAmbient : Box} {start finish : Canonical}
       (Geometry.Grid.Walks.splitSegment grid (Purelib.Curves.Hyperelliptic.Branches.BranchCutLifts.ClearSegment.reverse
         segment) last first) (Geometry.Grid.Walks.splitSegment grid segment first last).reverse := by
   cases segment with
-  | horizontal => exact horizontal_reverse edges vertices reference _ _ _ _ _ _
-  | vertical => exact vertical_reverse edges vertices reference _ _ _ _ _ _
+  | horizontal => exact horizontal_reverse_anchored edges vertices anchoredReference anchorMember _ _ _ _ _ _
+  | vertical => exact vertical_reverse_anchored edges vertices anchoredReference anchorMember _ _ _ _ _ _
 
 namespace CoordinateInclusion
 
@@ -112,7 +124,7 @@ variable {original : ClearGrid polynomial ambient} (included :
   Geometry.Grid.Extension.CoordinateInclusion original grid)
 
 /-- Resplitting a reversed retained grid walk compares to the reverse of its original resplitting. -/
-theorem resplit_reverse {start finish : Canonical} (walk : Walk original start
+theorem resplit_reverse_anchored {start finish : Canonical} (walk : Walk original start
   finish)
     (first : FromStates.ContainsVertex original start) (last :
       FromStates.ContainsVertex original finish) :
@@ -134,12 +146,12 @@ theorem resplit_reverse {start finish : Canonical} (walk : Walk original start
           (included.resplit tail last)).reverse)
       rw [Walk.append_nil,
         Walk.reverse_append]
-      exact (ih edge.vertices.2 last).append (Geometry.Grid.Extension.split_reverse edges vertices reference
-        edge.segment
+      exact (ih edge.vertices.2 last).append (Geometry.Grid.Extension.split_reverse_anchored
+        edges vertices anchoredReference anchorMember edge.segment
         (included.vertex first) (included.vertex edge.vertices.2))
 
 /-- Resplitting a stem-based loop compares to basing the resplit loop at the resplit original stem. -/
-theorem resplit_based {start finish : Canonical} (stem : Walk original start finish)
+theorem resplit_based_anchored {start finish : Canonical} (stem : Walk original start finish)
     (loop : Walk original finish finish) (first : FromStates.ContainsVertex
       original start) (last : FromStates.ContainsVertex original finish) :
     ChainComparison edges vertices
@@ -149,8 +161,37 @@ theorem resplit_based {start finish : Canonical} (stem : Walk original start fin
     (loop.append stem.reverse)) first) _
   rw [included.resplit_append _ _ last first, included.resplit_append _ _ last first]
   exact (ChainComparison.refl _).append
-    ((ChainComparison.refl _).append (included.resplit_reverse edges
-      vertices reference stem first last))
+    ((ChainComparison.refl _).append (included.resplit_reverse_anchored edges
+      vertices anchoredReference anchorMember stem first last))
+
+end CoordinateInclusion
+
+end Anchored
+
+namespace CoordinateInclusion
+
+variable {original : ClearGrid polynomial ambient} (included :
+  Geometry.Grid.Extension.CoordinateInclusion original grid)
+
+/-- Resplitting a reversed retained grid walk compares to the reverse of its original resplitting. -/
+theorem resplit_reverse {start finish : Canonical} (walk : Walk original start
+  finish)
+    (first : FromStates.ContainsVertex original start) (last :
+      FromStates.ContainsVertex original finish) :
+    ChainComparison edges vertices
+      (included.resplit walk.reverse first) (included.resplit walk last).reverse :=
+  included.resplit_reverse_anchored edges vertices (reference start (included.vertex first))
+    (included.vertex first) walk first last
+
+/-- Resplitting a stem-based loop compares to basing the resplit loop at the resplit original stem. -/
+theorem resplit_based {start finish : Canonical} (stem : Walk original start finish)
+    (loop : Walk original finish finish) (first : FromStates.ContainsVertex
+      original start) (last : FromStates.ContainsVertex original finish) :
+    ChainComparison edges vertices
+      (included.resplit (stem.based loop) first)
+      ((included.resplit stem last).based (included.resplit loop last)) :=
+  included.resplit_based_anchored edges vertices (reference start (included.vertex first))
+    (included.vertex first) stem loop first last
 
 end CoordinateInclusion
 end Purelib.Polynomial.Geometry.Grid.Extension

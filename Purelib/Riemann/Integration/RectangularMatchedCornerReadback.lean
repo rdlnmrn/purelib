@@ -16,6 +16,8 @@ public import Purelib.Riemann.Integration.RectangularExteriorCornerOwners
 public import Purelib.Riemann.Paths.RectangularMatchedVerticalSideTrace
 import Purelib.Riemann.Readings.RectangularObservationEndpoints
 
+open Purelib.Geometry.Rectangle.Partition
+
 public section
 
 /-! Endpoint values of matched traces are the retained exterior-corner
@@ -44,7 +46,7 @@ variable {leftColumns leftRows rightColumns rightRows : Nat}
   {left : ObservationMesh leftCuts leftBox} {right : ObservationMesh rightCuts rightBox} {depth : Nat}
 
 /-- Transport through exact interval-list equality preserves the original bounded-index interval. -/
-private theorem interval_cast {first last : List Rectangle.Partition.PreparedAxisPartitions.Interval} (equal : first =
+private theorem interval_cast {first last : List PreparedAxisPartitions.Interval} (equal : first =
   last)
     (index : Fin first.length) :
     last[(Fin.cast (congrArg List.length equal) index).val]'(Fin.cast (congrArg List.length equal) index).isLt =
@@ -65,7 +67,7 @@ theorem left_corner {rightRow : Fin right.partition.y.intervals.length} {height 
     {side : MatchedHorizontalSide left right
       (Fin.cast left.boundaryRows_eq (if above then Fin.last left.boundaryRows else 0)) rightRow height}
     (trace : side.Trace depth)
-    (values : Fin (leftColumns + 1) → Fin (leftRows + 1) → Gaussian.Basic.Canonical → PrimitivePoint)
+    (values : Fin (leftColumns + 1) → Fin (leftRows + 1) → Canonical → PrimitivePoint)
     (equal : height = if above then leftBox.yUpper else leftBox.yLower) (high : Bool) :
     trace.leftValue values (trace.vertices.indexed (if high then Fin.last trace.vertices.rest.length else 0)) =
       let owner := exteriorCornerOwner left high above
@@ -77,34 +79,34 @@ theorem left_corner {rightRow : Fin right.partition.y.intervals.length} {height 
   · refine (congrArg (fun vertex => trace.leftValue values (trace.vertices.indexed vertex))
       (if_neg (by decide : false ≠ true))).trans ?_
     rw [leftValue, trace.first_point, trace.first_index, side.pieces_eq]
-    dsimp only [BoxOwner.horizontalPiece, Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [BoxOwner.horizontalPiece, PreparedRectangleCuts.intervalBox]
     rw [equal]
-    dsimp only [exteriorCornerOwner, Rectangle.Partition.PreparedRectangleCuts.corner,
-      Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [exteriorCornerOwner, PreparedRectangleCuts.corner,
+      PreparedRectangleCuts.intervalBox]
     exact congrArg (values _ _) (Gaussian.Basic.ext rfl left.y_first.symm)
   · refine (congrArg (fun vertex => trace.leftValue values (trace.vertices.indexed vertex))
       (if_neg (by decide : false ≠ true))).trans ?_
     rw [leftValue, trace.first_point, trace.first_index, side.pieces_eq]
-    dsimp only [BoxOwner.horizontalPiece, Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [BoxOwner.horizontalPiece, PreparedRectangleCuts.intervalBox]
     rw [equal]
-    dsimp only [exteriorCornerOwner, Rectangle.Partition.PreparedRectangleCuts.corner,
-      Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [exteriorCornerOwner, PreparedRectangleCuts.corner,
+      PreparedRectangleCuts.intervalBox]
     exact congrArg (values _ _) (Gaussian.Basic.ext rfl left.y_last.symm)
   · refine (congrArg (fun vertex => trace.leftValue values (trace.vertices.indexed vertex))
       (if_pos (Eq.refl true))).trans ?_
     rw [leftValue, trace.last_point, trace.last_index, side.pieces_eq]
-    dsimp only [BoxOwner.horizontalPiece, Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [BoxOwner.horizontalPiece, PreparedRectangleCuts.intervalBox]
     rw [equal]
-    dsimp only [exteriorCornerOwner, Rectangle.Partition.PreparedRectangleCuts.corner,
-      Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [exteriorCornerOwner, PreparedRectangleCuts.corner,
+      PreparedRectangleCuts.intervalBox]
     exact congrArg (values _ _) (Gaussian.Basic.ext rfl left.y_first.symm)
   · refine (congrArg (fun vertex => trace.leftValue values (trace.vertices.indexed vertex))
       (if_pos (Eq.refl true))).trans ?_
     rw [leftValue, trace.last_point, trace.last_index, side.pieces_eq]
-    dsimp only [BoxOwner.horizontalPiece, Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [BoxOwner.horizontalPiece, PreparedRectangleCuts.intervalBox]
     rw [equal]
-    dsimp only [exteriorCornerOwner, Rectangle.Partition.PreparedRectangleCuts.corner,
-      Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [exteriorCornerOwner, PreparedRectangleCuts.corner,
+      PreparedRectangleCuts.intervalBox]
     exact congrArg (values _ _) (Gaussian.Basic.ext rfl left.y_last.symm)
 
 /-- The right horizontal trace endpoint reads exactly its retained exterior-corner owner.
@@ -115,7 +117,7 @@ theorem right_corner {leftRow : Fin left.partition.y.intervals.length} {height :
     {side : MatchedHorizontalSide left right leftRow
       (Fin.cast right.boundaryRows_eq (if above then Fin.last right.boundaryRows else 0)) height}
     (trace : side.Trace depth)
-    (values : Fin (rightColumns + 1) → Fin (rightRows + 1) → Gaussian.Basic.Canonical → PrimitivePoint)
+    (values : Fin (rightColumns + 1) → Fin (rightRows + 1) → Canonical → PrimitivePoint)
     (equal : height = if above then rightBox.yUpper else rightBox.yLower) (high : Bool) :
     trace.rightValue values (trace.vertices.indexed (if high then Fin.last trace.vertices.rest.length else 0)) =
       let owner := exteriorCornerOwner right high above
@@ -125,7 +127,7 @@ theorem right_corner {leftRow : Fin left.partition.y.intervals.length} {height :
   have lastIndex : Fin.cast (congrArg List.length side.intervals_eq) (Fin.cast left.boundaryColumns_eq (Fin.last
     left.boundaryColumns)) =
       Fin.cast right.boundaryColumns_eq (Fin.last right.boundaryColumns) :=
-    Fin.ext (congrArg (fun intervals : List Rectangle.Partition.PreparedAxisPartitions.Interval => intervals.length - 1)
+    Fin.ext (congrArg (fun intervals : List PreparedAxisPartitions.Interval => intervals.length - 1)
       side.intervals_eq)
   have firstInterval := interval_cast side.intervals_eq (Fin.cast left.boundaryColumns_eq 0)
   have lastInterval := interval_cast side.intervals_eq (Fin.cast left.boundaryColumns_eq (Fin.last
@@ -139,45 +141,45 @@ theorem right_corner {leftRow : Fin left.partition.y.intervals.length} {height :
   · refine (congrArg (fun vertex => trace.rightValue values (trace.vertices.indexed vertex))
       (if_neg (by decide : false ≠ true))).trans ?_
     rw [rightValue, trace.first_point, trace.first_index, side.pieces_eq]
-    dsimp only [BoxOwner.horizontalPiece, Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [BoxOwner.horizontalPiece, PreparedRectangleCuts.intervalBox]
     rw [firstIndex]
-    dsimp only [exteriorCornerOwner, Rectangle.Partition.PreparedRectangleCuts.corner,
-      Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [exteriorCornerOwner, PreparedRectangleCuts.corner,
+      PreparedRectangleCuts.intervalBox]
     exact congrArg (values _ _) (Gaussian.Basic.ext
-      (congrArg (fun interval : Rectangle.Partition.PreparedAxisPartitions.Interval => interval.lower)
+      (congrArg (fun interval : PreparedAxisPartitions.Interval => interval.lower)
         firstInterval).symm
       (equal.trans right.y_first.symm))
   · refine (congrArg (fun vertex => trace.rightValue values (trace.vertices.indexed vertex))
       (if_neg (by decide : false ≠ true))).trans ?_
     rw [rightValue, trace.first_point, trace.first_index, side.pieces_eq]
-    dsimp only [BoxOwner.horizontalPiece, Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [BoxOwner.horizontalPiece, PreparedRectangleCuts.intervalBox]
     rw [firstIndex]
-    dsimp only [exteriorCornerOwner, Rectangle.Partition.PreparedRectangleCuts.corner,
-      Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [exteriorCornerOwner, PreparedRectangleCuts.corner,
+      PreparedRectangleCuts.intervalBox]
     exact congrArg (values _ _) (Gaussian.Basic.ext
-      (congrArg (fun interval : Rectangle.Partition.PreparedAxisPartitions.Interval => interval.lower)
+      (congrArg (fun interval : PreparedAxisPartitions.Interval => interval.lower)
         firstInterval).symm
       (equal.trans right.y_last.symm))
   · refine (congrArg (fun vertex => trace.rightValue values (trace.vertices.indexed vertex))
       (if_pos (Eq.refl true))).trans ?_
     rw [rightValue, trace.last_point, trace.last_index, side.pieces_eq]
-    dsimp only [BoxOwner.horizontalPiece, Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [BoxOwner.horizontalPiece, PreparedRectangleCuts.intervalBox]
     rw [lastIndex]
-    dsimp only [exteriorCornerOwner, Rectangle.Partition.PreparedRectangleCuts.corner,
-      Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [exteriorCornerOwner, PreparedRectangleCuts.corner,
+      PreparedRectangleCuts.intervalBox]
     exact congrArg (values _ _) (Gaussian.Basic.ext
-      (congrArg (fun interval : Rectangle.Partition.PreparedAxisPartitions.Interval => interval.upper)
+      (congrArg (fun interval : PreparedAxisPartitions.Interval => interval.upper)
         lastInterval).symm
       (equal.trans right.y_first.symm))
   · refine (congrArg (fun vertex => trace.rightValue values (trace.vertices.indexed vertex))
       (if_pos (Eq.refl true))).trans ?_
     rw [rightValue, trace.last_point, trace.last_index, side.pieces_eq]
-    dsimp only [BoxOwner.horizontalPiece, Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [BoxOwner.horizontalPiece, PreparedRectangleCuts.intervalBox]
     rw [lastIndex]
-    dsimp only [exteriorCornerOwner, Rectangle.Partition.PreparedRectangleCuts.corner,
-      Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [exteriorCornerOwner, PreparedRectangleCuts.corner,
+      PreparedRectangleCuts.intervalBox]
     exact congrArg (values _ _) (Gaussian.Basic.ext
-      (congrArg (fun interval : Rectangle.Partition.PreparedAxisPartitions.Interval => interval.upper)
+      (congrArg (fun interval : PreparedAxisPartitions.Interval => interval.upper)
         lastInterval).symm
       (equal.trans right.y_last.symm))
 
@@ -197,7 +199,7 @@ theorem left_corner {rightColumn : Fin right.partition.x.intervals.length} {hori
       (Fin.cast left.boundaryColumns_eq (if rightward then Fin.last left.boundaryColumns else 0)) rightColumn
         horizontal}
     (trace : side.Trace depth)
-    (values : Fin (leftColumns + 1) → Fin (leftRows + 1) → Gaussian.Basic.Canonical → PrimitivePoint)
+    (values : Fin (leftColumns + 1) → Fin (leftRows + 1) → Canonical → PrimitivePoint)
     (equal : horizontal = if rightward then leftBox.xUpper else leftBox.xLower) (high : Bool) :
     trace.leftValue values (trace.vertices.indexed (if high then Fin.last trace.vertices.rest.length else 0)) =
       let owner := exteriorCornerOwner left rightward high
@@ -209,34 +211,34 @@ theorem left_corner {rightColumn : Fin right.partition.x.intervals.length} {hori
   · refine (congrArg (fun vertex => trace.leftValue values (trace.vertices.indexed vertex))
       (if_neg (by decide : false ≠ true))).trans ?_
     rw [leftValue, trace.first_point, trace.first_index, side.pieces_eq]
-    dsimp only [BoxOwner.verticalPiece, Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [BoxOwner.verticalPiece, PreparedRectangleCuts.intervalBox]
     rw [equal]
-    dsimp only [exteriorCornerOwner, Rectangle.Partition.PreparedRectangleCuts.corner,
-      Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [exteriorCornerOwner, PreparedRectangleCuts.corner,
+      PreparedRectangleCuts.intervalBox]
     exact congrArg (values _ _) (Gaussian.Basic.ext left.x_first.symm rfl)
   · refine (congrArg (fun vertex => trace.leftValue values (trace.vertices.indexed vertex))
       (if_neg (by decide : false ≠ true))).trans ?_
     rw [leftValue, trace.first_point, trace.first_index, side.pieces_eq]
-    dsimp only [BoxOwner.verticalPiece, Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [BoxOwner.verticalPiece, PreparedRectangleCuts.intervalBox]
     rw [equal]
-    dsimp only [exteriorCornerOwner, Rectangle.Partition.PreparedRectangleCuts.corner,
-      Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [exteriorCornerOwner, PreparedRectangleCuts.corner,
+      PreparedRectangleCuts.intervalBox]
     exact congrArg (values _ _) (Gaussian.Basic.ext left.x_last.symm rfl)
   · refine (congrArg (fun vertex => trace.leftValue values (trace.vertices.indexed vertex))
       (if_pos (Eq.refl true))).trans ?_
     rw [leftValue, trace.last_point, trace.last_index, side.pieces_eq]
-    dsimp only [BoxOwner.verticalPiece, Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [BoxOwner.verticalPiece, PreparedRectangleCuts.intervalBox]
     rw [equal]
-    dsimp only [exteriorCornerOwner, Rectangle.Partition.PreparedRectangleCuts.corner,
-      Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [exteriorCornerOwner, PreparedRectangleCuts.corner,
+      PreparedRectangleCuts.intervalBox]
     exact congrArg (values _ _) (Gaussian.Basic.ext left.x_first.symm rfl)
   · refine (congrArg (fun vertex => trace.leftValue values (trace.vertices.indexed vertex))
       (if_pos (Eq.refl true))).trans ?_
     rw [leftValue, trace.last_point, trace.last_index, side.pieces_eq]
-    dsimp only [BoxOwner.verticalPiece, Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [BoxOwner.verticalPiece, PreparedRectangleCuts.intervalBox]
     rw [equal]
-    dsimp only [exteriorCornerOwner, Rectangle.Partition.PreparedRectangleCuts.corner,
-      Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [exteriorCornerOwner, PreparedRectangleCuts.corner,
+      PreparedRectangleCuts.intervalBox]
     exact congrArg (values _ _) (Gaussian.Basic.ext left.x_last.symm rfl)
 
 /-- The right vertical trace endpoint reads exactly its retained exterior-corner owner.
@@ -247,7 +249,7 @@ theorem right_corner {leftColumn : Fin left.partition.x.intervals.length} {horiz
     {side : MatchedVerticalSide left right leftColumn
       (Fin.cast right.boundaryColumns_eq (if rightward then Fin.last right.boundaryColumns else 0)) horizontal}
     (trace : side.Trace depth)
-    (values : Fin (rightColumns + 1) → Fin (rightRows + 1) → Gaussian.Basic.Canonical → PrimitivePoint)
+    (values : Fin (rightColumns + 1) → Fin (rightRows + 1) → Canonical → PrimitivePoint)
     (equal : horizontal = if rightward then rightBox.xUpper else rightBox.xLower) (high : Bool) :
     trace.rightValue values (trace.vertices.indexed (if high then Fin.last trace.vertices.rest.length else 0)) =
       let owner := exteriorCornerOwner right rightward high
@@ -257,7 +259,7 @@ theorem right_corner {leftColumn : Fin left.partition.x.intervals.length} {horiz
   have lastIndex : Fin.cast (congrArg List.length side.intervals_eq) (Fin.cast left.boundaryRows_eq (Fin.last
     left.boundaryRows)) =
       Fin.cast right.boundaryRows_eq (Fin.last right.boundaryRows) :=
-    Fin.ext (congrArg (fun intervals : List Rectangle.Partition.PreparedAxisPartitions.Interval => intervals.length - 1)
+    Fin.ext (congrArg (fun intervals : List PreparedAxisPartitions.Interval => intervals.length - 1)
       side.intervals_eq)
   have firstInterval := interval_cast side.intervals_eq (Fin.cast left.boundaryRows_eq 0)
   have lastInterval := interval_cast side.intervals_eq (Fin.cast left.boundaryRows_eq (Fin.last left.boundaryRows))
@@ -270,42 +272,42 @@ theorem right_corner {leftColumn : Fin left.partition.x.intervals.length} {horiz
   · refine (congrArg (fun vertex => trace.rightValue values (trace.vertices.indexed vertex))
       (if_neg (by decide : false ≠ true))).trans ?_
     rw [rightValue, trace.first_point, trace.first_index, side.pieces_eq]
-    dsimp only [BoxOwner.verticalPiece, Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [BoxOwner.verticalPiece, PreparedRectangleCuts.intervalBox]
     rw [firstIndex]
-    dsimp only [exteriorCornerOwner, Rectangle.Partition.PreparedRectangleCuts.corner,
-      Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [exteriorCornerOwner, PreparedRectangleCuts.corner,
+      PreparedRectangleCuts.intervalBox]
     exact congrArg (values _ _) (Gaussian.Basic.ext (equal.trans right.x_first.symm)
-      (congrArg (fun interval : Rectangle.Partition.PreparedAxisPartitions.Interval => interval.lower)
+      (congrArg (fun interval : PreparedAxisPartitions.Interval => interval.lower)
         firstInterval).symm)
   · refine (congrArg (fun vertex => trace.rightValue values (trace.vertices.indexed vertex))
       (if_neg (by decide : false ≠ true))).trans ?_
     rw [rightValue, trace.first_point, trace.first_index, side.pieces_eq]
-    dsimp only [BoxOwner.verticalPiece, Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [BoxOwner.verticalPiece, PreparedRectangleCuts.intervalBox]
     rw [firstIndex]
-    dsimp only [exteriorCornerOwner, Rectangle.Partition.PreparedRectangleCuts.corner,
-      Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [exteriorCornerOwner, PreparedRectangleCuts.corner,
+      PreparedRectangleCuts.intervalBox]
     exact congrArg (values _ _) (Gaussian.Basic.ext (equal.trans right.x_last.symm)
-      (congrArg (fun interval : Rectangle.Partition.PreparedAxisPartitions.Interval => interval.lower)
+      (congrArg (fun interval : PreparedAxisPartitions.Interval => interval.lower)
         firstInterval).symm)
   · refine (congrArg (fun vertex => trace.rightValue values (trace.vertices.indexed vertex))
       (if_pos (Eq.refl true))).trans ?_
     rw [rightValue, trace.last_point, trace.last_index, side.pieces_eq]
-    dsimp only [BoxOwner.verticalPiece, Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [BoxOwner.verticalPiece, PreparedRectangleCuts.intervalBox]
     rw [lastIndex]
-    dsimp only [exteriorCornerOwner, Rectangle.Partition.PreparedRectangleCuts.corner,
-      Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [exteriorCornerOwner, PreparedRectangleCuts.corner,
+      PreparedRectangleCuts.intervalBox]
     exact congrArg (values _ _) (Gaussian.Basic.ext (equal.trans right.x_first.symm)
-      (congrArg (fun interval : Rectangle.Partition.PreparedAxisPartitions.Interval => interval.upper)
+      (congrArg (fun interval : PreparedAxisPartitions.Interval => interval.upper)
         lastInterval).symm)
   · refine (congrArg (fun vertex => trace.rightValue values (trace.vertices.indexed vertex))
       (if_pos (Eq.refl true))).trans ?_
     rw [rightValue, trace.last_point, trace.last_index, side.pieces_eq]
-    dsimp only [BoxOwner.verticalPiece, Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [BoxOwner.verticalPiece, PreparedRectangleCuts.intervalBox]
     rw [lastIndex]
-    dsimp only [exteriorCornerOwner, Rectangle.Partition.PreparedRectangleCuts.corner,
-      Rectangle.Partition.PreparedRectangleCuts.intervalBox]
+    dsimp only [exteriorCornerOwner, PreparedRectangleCuts.corner,
+      PreparedRectangleCuts.intervalBox]
     exact congrArg (values _ _) (Gaussian.Basic.ext (equal.trans right.x_last.symm)
-      (congrArg (fun interval : Rectangle.Partition.PreparedAxisPartitions.Interval => interval.upper)
+      (congrArg (fun interval : PreparedAxisPartitions.Interval => interval.upper)
         lastInterval).symm)
 
 end MatchedVerticalSide.Trace

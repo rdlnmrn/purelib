@@ -18,6 +18,8 @@ import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 public section
 
@@ -68,17 +70,17 @@ original stage models. -/
   { model := fun index => (program.model index).scaleIntegrand factor
     errorScale := factor ^ 2 * program.errorScale
     errorScale_nonneg :=
-      Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Fraction.Order.Arithmetic.sq_nonneg_direct factor)
+      Arithmetic.mul_nonneg_direct
+        (Arithmetic.sq_nonneg_direct factor)
         program.errorScale_nonneg
     modelAllowance_le := by
       intro index
       rw [Basic.PathModel.aggregateAllowance_scaleIntegrand,
         Geometric.Basic.quarterRadius_eq_mul_pow]
       have scaled :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (program.modelAllowance_le index)
-            (Fraction.Order.Arithmetic.sq_nonneg_direct factor)
+            (Arithmetic.sq_nonneg_direct factor)
       rw [Geometric.Basic.quarterRadius_eq_mul_pow] at scaled
       simpa only [Fraction.Field.mul_assoc] using scaled
     later_close := by
@@ -99,23 +101,23 @@ original stage models. -/
       rw [identity, Arithmetic.canonicalNormSqScale,
         Geometric.Basic.quarterRadius_eq_mul_pow]
       have scaled :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (program.later_close order)
-            (Fraction.Order.Arithmetic.sq_nonneg_direct factor)
+            (Arithmetic.sq_nonneg_direct factor)
       rw [Geometric.Basic.quarterRadius_eq_mul_pow] at scaled
       simpa only [Fraction.Field.mul_assoc] using scaled
     centerBound := factor ^ 2 * program.centerBound
     centerBound_nonneg :=
-      Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Fraction.Order.Arithmetic.sq_nonneg_direct factor)
+      Arithmetic.mul_nonneg_direct
+        (Arithmetic.sq_nonneg_direct factor)
         program.centerBound_nonneg
     sample_bounded := by
       intro index
       rw [Basic.PathModel.integralSample_scaleIntegrand,
         Arithmetic.canonicalNormSqScale]
-      exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      exact Arithmetic.mul_le_mul_of_nonneg_left_direct
         (program.sample_bounded index)
-          (Fraction.Order.Arithmetic.sq_nonneg_direct factor) }
+          (Arithmetic.sq_nonneg_direct factor) }
 
 open Purelib.Data.Rat in
 open Purelib.Integration.Program.Rational in
@@ -175,7 +177,7 @@ scales. -/
   { model := models.model
     errorScale := 2 * (left.errorScale + right.errorScale)
     errorScale_nonneg :=
-      Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      Arithmetic.mul_nonneg_direct (by decide)
         (add_nonneg left.errorScale_nonneg right.errorScale_nonneg)
     modelAllowance_le := models.aggregate_le
     later_close := by
@@ -210,7 +212,7 @@ scales. -/
                   left.errorScale earlier +
                 Geometric.Basic.quarterRadius
                   right.errorScale earlier) :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          Arithmetic.mul_le_mul_of_nonneg_left_direct
             (add_le_add (left.later_close order) (right.later_close order))
             (by decide)
         _ = Geometric.Basic.quarterRadius
@@ -221,13 +223,13 @@ scales. -/
           ring1
     centerBound := 2 * (left.centerBound + right.centerBound)
     centerBound_nonneg :=
-      Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      Arithmetic.mul_nonneg_direct (by decide)
         (add_nonneg left.centerBound_nonneg right.centerBound_nonneg)
     sample_bounded := by
       intro index
       rw [models.integral_eq]
       exact (Arithmetic.canonicalNormSqAddLeTwo _ _).trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add (left.sample_bounded index)
             (right.sample_bounded index)) (by decide)) }
 

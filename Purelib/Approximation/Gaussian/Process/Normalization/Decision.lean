@@ -43,27 +43,27 @@ namespace LoopDomain
 
 /-- One request target which is simultaneously below the normalization and uniform redundant-output thresholds. -/
 def decisionTarget {process :
-  Approximation.Gaussian.Process} (domain : Gaussian.Process.Normalization.Basic.LoopDomain process) :
+  Process} (domain : LoopDomain process) :
     Fraction.Rational :=
   Common.commonTarget domain.normalizationTarget
     Budget.uniformRadiusSq
 
 /-- The common normalization and redundant-output request is strictly positive. -/
 theorem decisionTarget_pos {process :
-  Approximation.Gaussian.Process}
-    (domain : Gaussian.Process.Normalization.Basic.LoopDomain process) : 0 < domain.decisionTarget :=
+  Process}
+    (domain : LoopDomain process) : 0 < domain.decisionTarget :=
   Common.commonTarget_pos domain.normalizationTarget_pos
     Budget.uniformRadiusSq_pos
 
 /-- Refine the original process state once at the common loop-decision target. -/
 def refinedState {process :
-  Approximation.Gaussian.Process} (domain : Gaussian.Process.Normalization.Basic.LoopDomain process)
+  Process} (domain : LoopDomain process)
     (state : process.State) : process.State :=
   process.refine state domain.decisionTarget domain.decisionTarget_pos
 
 /-- The loop-decision refinement meets the uniform redundant-output squared-radius threshold. -/
 theorem refined_accurate {process :
-  Approximation.Gaussian.Process} (domain : Gaussian.Process.Normalization.Basic.LoopDomain process)
+  Process} (domain : LoopDomain process)
     (state : process.State) :
     (process.ball (domain.refinedState state)).radiusSq <
       Budget.uniformRadiusSq :=
@@ -73,8 +73,8 @@ theorem refined_accurate {process :
 
 /-- The loop-decision refinement has centre squared norm at least one. -/
 theorem refined_center_normalized {process
-  : Approximation.Gaussian.Process}
-    (domain : Gaussian.Process.Normalization.Basic.LoopDomain process) (state : process.State) :
+  : Process}
+    (domain : LoopDomain process) (state : process.State) :
     1 ≤ Data.Gaussian.Norm.Basic.normSq (process.ball (domain.refinedState state)).center := by
   apply domain.center_normalized_of_fine
   exact (process.accurate state _ _).trans
@@ -84,9 +84,9 @@ theorem refined_center_normalized {process
 /-- Total loop decision from the semantically natural strict lower norm, without assuming normalized rational centres at
 every prior state. -/
 def decide {process :
-  Approximation.Gaussian.Process} (domain : Gaussian.Process.Normalization.Basic.LoopDomain process)
+  Process} (domain : LoopDomain process)
     (state : process.State) :
-    Approximation.Gaussian.Enclosure.Sector.Decision
+    Decision
       (process.ball (domain.refinedState state)) :=
   Decision.decide _
     (domain.refined_center_normalized state) (domain.refined_accurate state)

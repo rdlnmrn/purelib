@@ -31,6 +31,9 @@ import Purelib.Tactic.Ring
 public import Mathlib.Algebra.Field.Defs
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+open Purelib.Data.GaussianInt.Pair
+
 /-!
 # Finite exclusion of repeated coefficient index two
 
@@ -65,31 +68,31 @@ exclusions. -/
 structure NormalizedCylinderData (coefficient : GaussianInt) where
   /-- The smaller error divided by the nonzero reference error. -/ errorRatio : Gaussian.Basic.Canonical
   /-- The lower denominator divided by the nonzero middle denominator. -/ denominatorRatio : Gaussian.Basic.Canonical
-  /-- The normalized error lies strictly inside the unit disc. -/ errorInside : Data.Gaussian.Norm.Basic.normSq
+  /-- The normalized error lies strictly inside the unit disc. -/ errorInside : Gaussian.Norm.Basic.normSq
     errorRatio < 1
   /-- The normalized error quadrance is strictly greater than one quarter. -/ factorFour : (1 : Fraction.Rational) < 4 *
-    Data.Gaussian.Norm.Basic.normSq errorRatio
+    Gaussian.Norm.Basic.normSq errorRatio
   /-- The normalized lower denominator lies strictly inside the unit disc. -/ denominatorInside :
-    Data.Gaussian.Norm.Basic.normSq denominatorRatio < 1
+    Gaussian.Norm.Basic.normSq denominatorRatio < 1
   /-- The displayed coefficient produces a strictly smaller next error quadrance. -/ errorTransition :
-    Data.Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian coefficient * errorRatio) <
-      Data.Gaussian.Norm.Basic.normSq errorRatio
+    Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian coefficient * errorRatio) <
+      Gaussian.Norm.Basic.normSq errorRatio
   /-- The displayed coefficient produces a next denominator outside the unit disc. -/ denominatorTransition :
-    1 < Data.Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian coefficient)
+    1 < Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian coefficient)
   /-- Every Gaussian unit translate escapes the current mixed cylinder.
 
 Its error quadrance or denominator quadrance is at least two in the normalized coordinates. -/ selfObstruction : ∀ unit
   : GaussianInt, GaussianInt.normNat unit = 1 →
-    (2 : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
-      2 ≤ Data.Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio)
+    (2 : Fraction.Rational) ≤ Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
+      2 ≤ Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio)
   /-- Every Gaussian unit translate escapes the next mixed cylinder.
 
 The two alternatives use twice the normalized current error quadrance or twice the next denominator quadrance,
   respectively. -/ nextObstruction : ∀ unit : GaussianInt, GaussianInt.normNat unit = 1 →
-    (2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq errorRatio ≤
-        Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
-      2 * Data.Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian coefficient) ≤
-        Data.Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio)
+    (2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq errorRatio ≤
+        Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
+      2 * Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian coefficient) ≤
+        Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio)
 
 constructive_injectivity NormalizedCylinderData
 
@@ -103,93 +106,93 @@ of a completed quotient. -/
     (lowerDenominator middleDenominator upperDenominator : Gaussian.Basic.Canonical)
     (largeErrorNonzero : largeError ≠ 0)
     (middleDenominatorNonzero : middleDenominator ≠ 0)
-    (errorOrdered : Data.Gaussian.Norm.Basic.normSq smallError < Data.Gaussian.Norm.Basic.normSq largeError)
-    (nextErrorOrdered : Data.Gaussian.Norm.Basic.normSq nextError < Data.Gaussian.Norm.Basic.normSq smallError)
-    (factorFour : Data.Gaussian.Norm.Basic.normSq largeError < 4 * Data.Gaussian.Norm.Basic.normSq smallError)
+    (errorOrdered : Gaussian.Norm.Basic.normSq smallError < Gaussian.Norm.Basic.normSq largeError)
+    (nextErrorOrdered : Gaussian.Norm.Basic.normSq nextError < Gaussian.Norm.Basic.normSq smallError)
+    (factorFour : Gaussian.Norm.Basic.normSq largeError < 4 * Gaussian.Norm.Basic.normSq smallError)
     (denominatorOrdered :
-      Data.Gaussian.Norm.Basic.normSq lowerDenominator < Data.Gaussian.Norm.Basic.normSq middleDenominator)
+      Gaussian.Norm.Basic.normSq lowerDenominator < Gaussian.Norm.Basic.normSq middleDenominator)
     (nextDenominatorOrdered :
-      Data.Gaussian.Norm.Basic.normSq middleDenominator < Data.Gaussian.Norm.Basic.normSq upperDenominator)
+      Gaussian.Norm.Basic.normSq middleDenominator < Gaussian.Norm.Basic.normSq upperDenominator)
     (errorIdentity :
       nextError = largeError + GaussianInt.toGaussian coefficient * smallError)
     (denominatorIdentity :
       upperDenominator =
         lowerDenominator + GaussianInt.toGaussian coefficient * middleDenominator)
     (selfObstruction : ∀ unit : GaussianInt, GaussianInt.normNat unit = 1 →
-      (2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq largeError ≤
-          Data.Gaussian.Norm.Basic.normSq (smallError - GaussianInt.toGaussian unit * largeError) ∨
-        2 * Data.Gaussian.Norm.Basic.normSq middleDenominator ≤
-          Data.Gaussian.Norm.Basic.normSq (middleDenominator -
+      (2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq largeError ≤
+          Gaussian.Norm.Basic.normSq (smallError - GaussianInt.toGaussian unit * largeError) ∨
+        2 * Gaussian.Norm.Basic.normSq middleDenominator ≤
+          Gaussian.Norm.Basic.normSq (middleDenominator -
             GaussianInt.toGaussian unit * lowerDenominator))
     (nextObstruction : ∀ unit : GaussianInt, GaussianInt.normNat unit = 1 →
-      (2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq smallError ≤
-          Data.Gaussian.Norm.Basic.normSq (smallError - GaussianInt.toGaussian unit * largeError) ∨
-        2 * Data.Gaussian.Norm.Basic.normSq upperDenominator ≤
-          Data.Gaussian.Norm.Basic.normSq (middleDenominator -
+      (2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq smallError ≤
+          Gaussian.Norm.Basic.normSq (smallError - GaussianInt.toGaussian unit * largeError) ∨
+        2 * Gaussian.Norm.Basic.normSq upperDenominator ≤
+          Gaussian.Norm.Basic.normSq (middleDenominator -
             GaussianInt.toGaussian unit * lowerDenominator)) :
-    Best.Consecutive.RepeatedIndex.NormalizedCylinderData coefficient := by
+    NormalizedCylinderData coefficient := by
   let errorRatio :=
-    smallError * Data.Gaussian.Field.inv largeError
+    smallError * Gaussian.Field.inv largeError
   let denominatorRatio :=
     lowerDenominator *
-      Data.Gaussian.Field.inv middleDenominator
-  have largeNormPositive : 0 < Data.Gaussian.Norm.Basic.normSq largeError := Gaussian.Norm.Basic.normSq_pos
+      Gaussian.Field.inv middleDenominator
+  have largeNormPositive : 0 < Gaussian.Norm.Basic.normSq largeError := Gaussian.Norm.Basic.normSq_pos
     largeErrorNonzero
-  have middleNormPositive : 0 < Data.Gaussian.Norm.Basic.normSq middleDenominator :=
+  have middleNormPositive : 0 < Gaussian.Norm.Basic.normSq middleDenominator :=
     Gaussian.Norm.Basic.normSq_pos middleDenominatorNonzero
-  have largeNormNonzero : Data.Gaussian.Norm.Basic.normSq largeError ≠ 0 := ne_of_gt largeNormPositive
-  have middleNormNonzero : Data.Gaussian.Norm.Basic.normSq middleDenominator ≠ 0 :=
+  have largeNormNonzero : Gaussian.Norm.Basic.normSq largeError ≠ 0 := ne_of_gt largeNormPositive
+  have middleNormNonzero : Gaussian.Norm.Basic.normSq middleDenominator ≠ 0 :=
     ne_of_gt middleNormPositive
   have errorRatioNorm :
-      Data.Gaussian.Norm.Basic.normSq errorRatio =
-        Data.Gaussian.Norm.Basic.normSq smallError * (Data.Gaussian.Norm.Basic.normSq largeError)⁻¹ := by
+      Gaussian.Norm.Basic.normSq errorRatio =
+        Gaussian.Norm.Basic.normSq smallError * (Gaussian.Norm.Basic.normSq largeError)⁻¹ := by
     dsimp only [errorRatio]
     rw [Gaussian.Norm.Basic.normSq_mul,
       Gaussian.Field.normSq_inv largeError
         largeErrorNonzero]
   have denominatorRatioNorm :
-      Data.Gaussian.Norm.Basic.normSq denominatorRatio =
-        Data.Gaussian.Norm.Basic.normSq lowerDenominator * (Data.Gaussian.Norm.Basic.normSq middleDenominator)⁻¹
+      Gaussian.Norm.Basic.normSq denominatorRatio =
+        Gaussian.Norm.Basic.normSq lowerDenominator * (Gaussian.Norm.Basic.normSq middleDenominator)⁻¹
           := by
     dsimp only [denominatorRatio]
     rw [Gaussian.Norm.Basic.normSq_mul,
       Gaussian.Field.normSq_inv middleDenominator
         middleDenominatorNonzero]
-  have errorInside : Data.Gaussian.Norm.Basic.normSq errorRatio < 1 := by
+  have errorInside : Gaussian.Norm.Basic.normSq errorRatio < 1 := by
     rw [errorRatioNorm]
-    change Data.Gaussian.Norm.Basic.normSq smallError / Data.Gaussian.Norm.Basic.normSq largeError < 1
-    exact (Fraction.Order.Field.div_lt_iff_pos largeNormPositive).mpr
+    change Gaussian.Norm.Basic.normSq smallError / Gaussian.Norm.Basic.normSq largeError < 1
+    exact (Field.div_lt_iff_pos largeNormPositive).mpr
       (by simpa only [Fraction.Field.one_mul] using errorOrdered)
   have normalizedFactorFour :
-      (1 : Fraction.Rational) < 4 * Data.Gaussian.Norm.Basic.normSq errorRatio := by
-    apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
-      (c := Data.Gaussian.Norm.Basic.normSq largeError)
+      (1 : Fraction.Rational) < 4 * Gaussian.Norm.Basic.normSq errorRatio := by
+    apply Arithmetic.lt_of_mul_lt_mul_right_direct
+      (c := Gaussian.Norm.Basic.normSq largeError)
     · calc
-        (1 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq largeError = Data.Gaussian.Norm.Basic.normSq
+        (1 : Fraction.Rational) * Gaussian.Norm.Basic.normSq largeError = Gaussian.Norm.Basic.normSq
           largeError := by ring1
-        _ < 4 * Data.Gaussian.Norm.Basic.normSq smallError := factorFour
-        _ = (4 * Data.Gaussian.Norm.Basic.normSq errorRatio) * Data.Gaussian.Norm.Basic.normSq largeError := by
+        _ < 4 * Gaussian.Norm.Basic.normSq smallError := factorFour
+        _ = (4 * Gaussian.Norm.Basic.normSq errorRatio) * Gaussian.Norm.Basic.normSq largeError := by
           rw [errorRatioNorm]
           symm
           calc
-            (4 * (Data.Gaussian.Norm.Basic.normSq smallError * (Data.Gaussian.Norm.Basic.normSq largeError)⁻¹))
+            (4 * (Gaussian.Norm.Basic.normSq smallError * (Gaussian.Norm.Basic.normSq largeError)⁻¹))
               *
-                Data.Gaussian.Norm.Basic.normSq largeError =
-                4 * (Data.Gaussian.Norm.Basic.normSq smallError *
-                  ((Data.Gaussian.Norm.Basic.normSq largeError)⁻¹ * Data.Gaussian.Norm.Basic.normSq largeError))
+                Gaussian.Norm.Basic.normSq largeError =
+                4 * (Gaussian.Norm.Basic.normSq smallError *
+                  ((Gaussian.Norm.Basic.normSq largeError)⁻¹ * Gaussian.Norm.Basic.normSq largeError))
                     := by
               rw [Fraction.Field.mul_assoc,
                 Fraction.Field.mul_assoc]
-            _ = 4 * Data.Gaussian.Norm.Basic.normSq smallError := by
+            _ = 4 * Gaussian.Norm.Basic.normSq smallError := by
               rw [Fraction.Field.inv_mul_cancel _
                 largeNormNonzero]
               ring1
     · exact largeNormPositive
-  have denominatorInside : Data.Gaussian.Norm.Basic.normSq denominatorRatio < 1 := by
+  have denominatorInside : Gaussian.Norm.Basic.normSq denominatorRatio < 1 := by
     rw [denominatorRatioNorm]
-    change Data.Gaussian.Norm.Basic.normSq lowerDenominator / Data.Gaussian.Norm.Basic.normSq middleDenominator
+    change Gaussian.Norm.Basic.normSq lowerDenominator / Gaussian.Norm.Basic.normSq middleDenominator
       < 1
-    exact (Fraction.Order.Field.div_lt_iff_pos middleNormPositive).mpr
+    exact (Field.div_lt_iff_pos middleNormPositive).mpr
       (by
         simpa only [Fraction.Field.one_mul] using
           denominatorOrdered)
@@ -202,16 +205,16 @@ of a completed quotient. -/
     rw [Gaussian.Basic.mul_assoc, Gaussian.Field.inv_mul middleDenominator middleDenominatorNonzero,
       Gaussian.Basic.mul_one]
   have normalizedErrorIdentity :
-      nextError * Data.Gaussian.Field.inv largeError =
+      nextError * Gaussian.Field.inv largeError =
         1 + GaussianInt.toGaussian coefficient * errorRatio := by
     calc
-      nextError * Data.Gaussian.Field.inv largeError =
+      nextError * Gaussian.Field.inv largeError =
           (largeError + GaussianInt.toGaussian coefficient * smallError) *
-            Data.Gaussian.Field.inv largeError := by
+            Gaussian.Field.inv largeError := by
         rw [errorIdentity]
-      _ = largeError * Data.Gaussian.Field.inv largeError +
+      _ = largeError * Gaussian.Field.inv largeError +
           (GaussianInt.toGaussian coefficient * smallError) *
-            Data.Gaussian.Field.inv largeError :=
+            Gaussian.Field.inv largeError :=
         Gaussian.Basic.right_distrib _ _ _
       _ = 1 + GaussianInt.toGaussian coefficient * errorRatio := by
         rw [Gaussian.Field.mul_inv largeError
@@ -220,19 +223,19 @@ of a completed quotient. -/
         rw [Gaussian.Basic.mul_assoc]
   have normalizedDenominatorIdentity :
       upperDenominator *
-          Data.Gaussian.Field.inv middleDenominator =
+          Gaussian.Field.inv middleDenominator =
         denominatorRatio + GaussianInt.toGaussian coefficient := by
     calc
       upperDenominator *
-          Data.Gaussian.Field.inv middleDenominator =
+          Gaussian.Field.inv middleDenominator =
           (lowerDenominator +
               GaussianInt.toGaussian coefficient * middleDenominator) *
-            Data.Gaussian.Field.inv middleDenominator := by
+            Gaussian.Field.inv middleDenominator := by
         rw [denominatorIdentity]
       _ = lowerDenominator *
-            Data.Gaussian.Field.inv middleDenominator +
+            Gaussian.Field.inv middleDenominator +
           (GaussianInt.toGaussian coefficient * middleDenominator) *
-            Data.Gaussian.Field.inv middleDenominator :=
+            Gaussian.Field.inv middleDenominator :=
         Gaussian.Basic.right_distrib _ _ _
       _ = denominatorRatio + GaussianInt.toGaussian coefficient := by
         dsimp only [denominatorRatio]
@@ -241,39 +244,39 @@ of a completed quotient. -/
             middleDenominatorNonzero,
           Gaussian.Basic.mul_one]
   have normalizedErrorTransition :
-      Data.Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian coefficient * errorRatio) <
-        Data.Gaussian.Norm.Basic.normSq errorRatio := by
+      Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian coefficient * errorRatio) <
+        Gaussian.Norm.Basic.normSq errorRatio := by
     rw [← normalizedErrorIdentity, errorRatioNorm, Gaussian.Norm.Basic.normSq_mul,
       Gaussian.Field.normSq_inv largeError
         largeErrorNonzero]
-    exact Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+    exact Arithmetic.mul_lt_mul_of_pos_right_direct
       nextErrorOrdered
-      (Fraction.Order.Field.inv_pos_direct largeNormPositive)
+      (Field.inv_pos_direct largeNormPositive)
   have normalizedDenominatorTransition :
-      1 < Data.Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian coefficient) := by
+      1 < Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian coefficient) := by
     rw [← normalizedDenominatorIdentity, Gaussian.Norm.Basic.normSq_mul,
       Gaussian.Field.normSq_inv middleDenominator
         middleDenominatorNonzero]
-    apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
-      (c := Data.Gaussian.Norm.Basic.normSq middleDenominator)
+    apply Arithmetic.lt_of_mul_lt_mul_right_direct
+      (c := Gaussian.Norm.Basic.normSq middleDenominator)
     · calc
-        (1 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq middleDenominator =
-            Data.Gaussian.Norm.Basic.normSq middleDenominator := by ring1
-        _ < Data.Gaussian.Norm.Basic.normSq upperDenominator := nextDenominatorOrdered
+        (1 : Fraction.Rational) * Gaussian.Norm.Basic.normSq middleDenominator =
+            Gaussian.Norm.Basic.normSq middleDenominator := by ring1
+        _ < Gaussian.Norm.Basic.normSq upperDenominator := nextDenominatorOrdered
         _ =
-            (Data.Gaussian.Norm.Basic.normSq upperDenominator * (Data.Gaussian.Norm.Basic.normSq
+            (Gaussian.Norm.Basic.normSq upperDenominator * (Gaussian.Norm.Basic.normSq
               middleDenominator)⁻¹) *
-              Data.Gaussian.Norm.Basic.normSq middleDenominator := by
+              Gaussian.Norm.Basic.normSq middleDenominator := by
           symm
           calc
-            (Data.Gaussian.Norm.Basic.normSq upperDenominator * (Data.Gaussian.Norm.Basic.normSq
+            (Gaussian.Norm.Basic.normSq upperDenominator * (Gaussian.Norm.Basic.normSq
               middleDenominator)⁻¹) *
-                Data.Gaussian.Norm.Basic.normSq middleDenominator =
-                Data.Gaussian.Norm.Basic.normSq upperDenominator *
-                  ((Data.Gaussian.Norm.Basic.normSq middleDenominator)⁻¹ *
-                    Data.Gaussian.Norm.Basic.normSq middleDenominator) :=
+                Gaussian.Norm.Basic.normSq middleDenominator =
+                Gaussian.Norm.Basic.normSq upperDenominator *
+                  ((Gaussian.Norm.Basic.normSq middleDenominator)⁻¹ *
+                    Gaussian.Norm.Basic.normSq middleDenominator) :=
               Fraction.Field.mul_assoc _ _ _
-            _ = Data.Gaussian.Norm.Basic.normSq upperDenominator := by
+            _ = Gaussian.Norm.Basic.normSq upperDenominator := by
               rw [Fraction.Field.inv_mul_cancel _
                 middleNormNonzero]
               ring1
@@ -308,13 +311,13 @@ of a completed quotient. -/
               ring1
           _ = smallError - GaussianInt.toGaussian unit * largeError := by
             rw [errorRatioCancel]
-      apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
-        (c := Data.Gaussian.Norm.Basic.normSq largeError)
+      apply Arithmetic.le_of_mul_le_mul_right_direct
+        (c := Gaussian.Norm.Basic.normSq largeError)
       · calc
-          (2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq largeError ≤
-              Data.Gaussian.Norm.Basic.normSq (smallError - GaussianInt.toGaussian unit * largeError) :=
+          (2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq largeError ≤
+              Gaussian.Norm.Basic.normSq (smallError - GaussianInt.toGaussian unit * largeError) :=
             errorExterior
-          _ = Data.Gaussian.Norm.Basic.normSq normalizedDifference * Data.Gaussian.Norm.Basic.normSq largeError
+          _ = Gaussian.Norm.Basic.normSq normalizedDifference * Gaussian.Norm.Basic.normSq largeError
             := by
             rw [← scaledDifference, Gaussian.Norm.Basic.normSq_mul]
       · exact largeNormPositive
@@ -340,13 +343,13 @@ of a completed quotient. -/
               ring1
           _ = middleDenominator - GaussianInt.toGaussian unit * lowerDenominator := by
             rw [denominatorRatioCancel]
-      apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
-        (c := Data.Gaussian.Norm.Basic.normSq middleDenominator)
+      apply Arithmetic.le_of_mul_le_mul_right_direct
+        (c := Gaussian.Norm.Basic.normSq middleDenominator)
       · calc
-          (2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq middleDenominator ≤
-              Data.Gaussian.Norm.Basic.normSq (middleDenominator -
+          (2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq middleDenominator ≤
+              Gaussian.Norm.Basic.normSq (middleDenominator -
                 GaussianInt.toGaussian unit * lowerDenominator) := denominatorExterior
-          _ = Data.Gaussian.Norm.Basic.normSq normalizedDifference * Data.Gaussian.Norm.Basic.normSq
+          _ = Gaussian.Norm.Basic.normSq normalizedDifference * Gaussian.Norm.Basic.normSq
             middleDenominator := by
             rw [← scaledDifference, Gaussian.Norm.Basic.normSq_mul]
       · exact middleNormPositive
@@ -370,29 +373,29 @@ of a completed quotient. -/
               ring1
           _ = smallError - GaussianInt.toGaussian unit * largeError := by
             rw [errorRatioCancel]
-      apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
-        (c := Data.Gaussian.Norm.Basic.normSq largeError)
+      apply Arithmetic.le_of_mul_le_mul_right_direct
+        (c := Gaussian.Norm.Basic.normSq largeError)
       · calc
-          ((2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq errorRatio) *
-            Data.Gaussian.Norm.Basic.normSq largeError =
-              2 * Data.Gaussian.Norm.Basic.normSq smallError := by
+          ((2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq errorRatio) *
+            Gaussian.Norm.Basic.normSq largeError =
+              2 * Gaussian.Norm.Basic.normSq smallError := by
             rw [errorRatioNorm]
             calc
-              (2 * (Data.Gaussian.Norm.Basic.normSq smallError * (Data.Gaussian.Norm.Basic.normSq
+              (2 * (Gaussian.Norm.Basic.normSq smallError * (Gaussian.Norm.Basic.normSq
                 largeError)⁻¹)) *
-                  Data.Gaussian.Norm.Basic.normSq largeError =
-                  2 * (Data.Gaussian.Norm.Basic.normSq smallError *
-                    ((Data.Gaussian.Norm.Basic.normSq largeError)⁻¹ * Data.Gaussian.Norm.Basic.normSq
+                  Gaussian.Norm.Basic.normSq largeError =
+                  2 * (Gaussian.Norm.Basic.normSq smallError *
+                    ((Gaussian.Norm.Basic.normSq largeError)⁻¹ * Gaussian.Norm.Basic.normSq
                       largeError)) := by
                 rw [Fraction.Field.mul_assoc,
                   Fraction.Field.mul_assoc]
-              _ = 2 * Data.Gaussian.Norm.Basic.normSq smallError := by
+              _ = 2 * Gaussian.Norm.Basic.normSq smallError := by
                 rw [Fraction.Field.inv_mul_cancel _
                   largeNormNonzero]
                 ring1
-          _ ≤ Data.Gaussian.Norm.Basic.normSq (smallError - GaussianInt.toGaussian unit * largeError) :=
+          _ ≤ Gaussian.Norm.Basic.normSq (smallError - GaussianInt.toGaussian unit * largeError) :=
             errorExterior
-          _ = Data.Gaussian.Norm.Basic.normSq normalizedDifference * Data.Gaussian.Norm.Basic.normSq largeError
+          _ = Gaussian.Norm.Basic.normSq normalizedDifference * Gaussian.Norm.Basic.normSq largeError
             := by
             rw [← scaledDifference, Gaussian.Norm.Basic.normSq_mul]
       · exact largeNormPositive
@@ -418,31 +421,31 @@ of a completed quotient. -/
               ring1
           _ = middleDenominator - GaussianInt.toGaussian unit * lowerDenominator := by
             rw [denominatorRatioCancel]
-      apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
-        (c := Data.Gaussian.Norm.Basic.normSq middleDenominator)
+      apply Arithmetic.le_of_mul_le_mul_right_direct
+        (c := Gaussian.Norm.Basic.normSq middleDenominator)
       · calc
-          (2 * Data.Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian coefficient)) *
-              Data.Gaussian.Norm.Basic.normSq middleDenominator =
-              2 * Data.Gaussian.Norm.Basic.normSq upperDenominator := by
+          (2 * Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian coefficient)) *
+              Gaussian.Norm.Basic.normSq middleDenominator =
+              2 * Gaussian.Norm.Basic.normSq upperDenominator := by
             rw [← normalizedDenominatorIdentity, Gaussian.Norm.Basic.normSq_mul,
               Gaussian.Field.normSq_inv middleDenominator
                 middleDenominatorNonzero]
             calc
-              (2 * (Data.Gaussian.Norm.Basic.normSq upperDenominator *
-                    (Data.Gaussian.Norm.Basic.normSq middleDenominator)⁻¹)) *
-                  Data.Gaussian.Norm.Basic.normSq middleDenominator =
-                  2 * (Data.Gaussian.Norm.Basic.normSq upperDenominator *
-                    ((Data.Gaussian.Norm.Basic.normSq middleDenominator)⁻¹ *
-                      Data.Gaussian.Norm.Basic.normSq middleDenominator)) := by
+              (2 * (Gaussian.Norm.Basic.normSq upperDenominator *
+                    (Gaussian.Norm.Basic.normSq middleDenominator)⁻¹)) *
+                  Gaussian.Norm.Basic.normSq middleDenominator =
+                  2 * (Gaussian.Norm.Basic.normSq upperDenominator *
+                    ((Gaussian.Norm.Basic.normSq middleDenominator)⁻¹ *
+                      Gaussian.Norm.Basic.normSq middleDenominator)) := by
                 rw [Fraction.Field.mul_assoc,
                   Fraction.Field.mul_assoc]
-              _ = 2 * Data.Gaussian.Norm.Basic.normSq upperDenominator := by
+              _ = 2 * Gaussian.Norm.Basic.normSq upperDenominator := by
                 rw [Fraction.Field.inv_mul_cancel _
                   middleNormNonzero]
                 ring1
-          _ ≤ Data.Gaussian.Norm.Basic.normSq (middleDenominator -
+          _ ≤ Gaussian.Norm.Basic.normSq (middleDenominator -
               GaussianInt.toGaussian unit * lowerDenominator) := denominatorExterior
-          _ = Data.Gaussian.Norm.Basic.normSq normalizedDifference * Data.Gaussian.Norm.Basic.normSq
+          _ = Gaussian.Norm.Basic.normSq normalizedDifference * Gaussian.Norm.Basic.normSq
             middleDenominator := by
             rw [← scaledDifference, Gaussian.Norm.Basic.normSq_mul]
       · exact middleNormPositive
@@ -463,24 +466,24 @@ displayed conjugate inverse; all four unit tests are merely permuted. -/
     (coefficient canonical associate : GaussianInt)
     (associateProperty : GaussianInt.Norm.Small.IsGaussianUnit associate)
     (associated : coefficient = canonical * associate)
-    (data : Best.Consecutive.RepeatedIndex.NormalizedCylinderData coefficient) :
-    Best.Consecutive.RepeatedIndex.NormalizedCylinderData canonical := by
+    (data : NormalizedCylinderData coefficient) :
+    NormalizedCylinderData canonical := by
   let inverseAssociate := GaussianInt.Norm.Basic.conjugate associate
   let associateValue := GaussianInt.toGaussian associate
   let inverseAssociateValue := GaussianInt.toGaussian inverseAssociate
   let errorRatio := associateValue * data.errorRatio
   let denominatorRatio := inverseAssociateValue * data.denominatorRatio
   have associateNorm : GaussianInt.normNat associate = 1 :=
-    Best.Consecutive.RepeatedIndex.normNat_eq_one_of_isGaussianUnit associateProperty
+    normNat_eq_one_of_isGaussianUnit associateProperty
   have inverseAssociateNorm : GaussianInt.normNat inverseAssociate = 1 := by
     dsimp only [inverseAssociate]
     rw [GaussianInt.Embedding.normNat_conjugate, associateNorm]
-  have associateQuadrance : Data.Gaussian.Norm.Basic.normSq associateValue = (1 : Fraction.Rational) := by
+  have associateQuadrance : Gaussian.Norm.Basic.normSq associateValue = (1 : Fraction.Rational) := by
     dsimp only [associateValue]
     rw [GaussianInt.normSq_toGaussian, associateNorm]
     rfl
   have inverseAssociateQuadrance :
-      Data.Gaussian.Norm.Basic.normSq inverseAssociateValue = (1 : Fraction.Rational) := by
+      Gaussian.Norm.Basic.normSq inverseAssociateValue = (1 : Fraction.Rational) := by
     dsimp only [inverseAssociateValue]
     rw [GaussianInt.normSq_toGaussian, inverseAssociateNorm]
     rfl
@@ -492,13 +495,13 @@ displayed conjugate inverse; all four unit tests are merely permuted. -/
       associateValue * inverseAssociateValue = (1 : Gaussian.Basic.Canonical) := by
     dsimp only [associateValue, inverseAssociateValue]
     rw [← GaussianInt.toGaussian_mul, associateInverseInteger, GaussianInt.toGaussian_one]
-  have errorRatioNorm : Data.Gaussian.Norm.Basic.normSq errorRatio = Data.Gaussian.Norm.Basic.normSq
+  have errorRatioNorm : Gaussian.Norm.Basic.normSq errorRatio = Gaussian.Norm.Basic.normSq
     data.errorRatio := by
     dsimp only [errorRatio]
     rw [Gaussian.Norm.Basic.normSq_mul, associateQuadrance]
     ring1
   have denominatorRatioNorm :
-      Data.Gaussian.Norm.Basic.normSq denominatorRatio = Data.Gaussian.Norm.Basic.normSq data.denominatorRatio
+      Gaussian.Norm.Basic.normSq denominatorRatio = Gaussian.Norm.Basic.normSq data.denominatorRatio
         := by
     dsimp only [denominatorRatio]
     rw [Gaussian.Norm.Basic.normSq_mul, inverseAssociateQuadrance]
@@ -534,9 +537,9 @@ displayed conjugate inverse; all four unit tests are merely permuted. -/
         rw [associateInverse, Gaussian.Basic.one_mul,
           ← coefficientValue]
   have denominatorTransitionNorm :
-      Data.Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian canonical) =
-        Data.Gaussian.Norm.Basic.normSq (data.denominatorRatio + GaussianInt.toGaussian coefficient) := by
-    have normIdentity := congrArg Data.Gaussian.Norm.Basic.normSq denominatorTransitionIdentity
+      Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian canonical) =
+        Gaussian.Norm.Basic.normSq (data.denominatorRatio + GaussianInt.toGaussian coefficient) := by
+    have normIdentity := congrArg Gaussian.Norm.Basic.normSq denominatorTransitionIdentity
     rw [Gaussian.Norm.Basic.normSq_mul, associateQuadrance] at normIdentity
     simpa only [Fraction.Field.one_mul] using normIdentity
   refine
@@ -680,11 +683,11 @@ canonical diagonal coefficient `1+i`. -/
 theorem exists_unit_associate_of_normNat_eq_two
     (coefficient : GaussianInt) (coefficientNorm : GaussianInt.normNat coefficient = 2) :
     ∃ associate, GaussianInt.Norm.Small.IsGaussianUnit associate ∧
-      coefficient = Best.Consecutive.RepeatedIndex.diagonalStep * associate := by
+      coefficient = diagonalStep * associate := by
   have coefficientDiagonal :=
     GaussianInt.Norm.Small.isDiagonal_of_normNat_eq_two coefficientNorm
   have canonicalDiagonal :
-      GaussianInt.Norm.Small.IsDiagonal Best.Consecutive.RepeatedIndex.diagonalStep := Or.inl rfl
+      GaussianInt.Norm.Small.IsDiagonal diagonalStep := Or.inl rfl
   exact GaussianInt.Norm.Small.exists_unit_right_factor_of_diagonals
     coefficientDiagonal canonicalDiagonal
 
@@ -693,7 +696,7 @@ canonical axial coefficient `2`. -/
 theorem exists_unit_associate_of_normNat_eq_four
     (coefficient : GaussianInt) (coefficientNorm : GaussianInt.normNat coefficient = 4) :
     ∃ associate, GaussianInt.Norm.Small.IsGaussianUnit associate ∧
-      coefficient = Best.Consecutive.RepeatedIndex.doubledAxisStep * associate := by
+      coefficient = doubledAxisStep * associate := by
   rcases GaussianInt.Norm.Small.axisDouble_cases_of_normNat_eq_four
       coefficientNorm with
     coefficientCase | coefficientCase | coefficientCase | coefficientCase
@@ -724,8 +727,8 @@ canonical doubled diagonal coefficient `2+2i`. -/
 theorem exists_unit_associate_of_normNat_eq_eight
     (coefficient : GaussianInt) (coefficientNorm : GaussianInt.normNat coefficient = 8) :
     ∃ associate, GaussianInt.Norm.Small.IsGaussianUnit associate ∧
-      coefficient = Best.Consecutive.RepeatedIndex.doubledDiagonalStep * associate := by
-  rcases Best.Consecutive.RepeatedIndex.doubledDiagonal_cases_of_normNat_eq_eight coefficientNorm with
+      coefficient = doubledDiagonalStep * associate := by
+  rcases doubledDiagonal_cases_of_normNat_eq_eight coefficientNorm with
     coefficientCase | coefficientCase | coefficientCase | coefficientCase
   · exact ⟨1, Or.inl rfl, coefficientCase⟩
   · exact ⟨-GaussianInt.Norm.Small.imaginaryUnit,
@@ -743,9 +746,9 @@ theorem exists_unit_associate_of_normNat_eq_eight
 /-- The parallelogram identity in the exact Gaussian-rational coordinate
 model. -/
 theorem normSq_sub_add_parallelogram (left right : Gaussian.Basic.Canonical) :
-    Data.Gaussian.Norm.Basic.normSq (left - right) + Data.Gaussian.Norm.Basic.normSq (left + right) =
-      2 * (Data.Gaussian.Norm.Basic.normSq left + Data.Gaussian.Norm.Basic.normSq right) := by
-  dsimp only [Data.Gaussian.Norm.Basic.normSq]
+    Gaussian.Norm.Basic.normSq (left - right) + Gaussian.Norm.Basic.normSq (left + right) =
+      2 * (Gaussian.Norm.Basic.normSq left + Gaussian.Norm.Basic.normSq right) := by
+  dsimp only [Gaussian.Norm.Basic.normSq]
   simp only [Gaussian.Basic.sub_re,
     Gaussian.Basic.sub_im,
     Gaussian.Basic.add_re,
@@ -757,7 +760,7 @@ larger than minus one. -/
 theorem neg_one_lt_coordinate_of_square_lt_one {value : Fraction.Rational}
     (small : value ^ 2 < 1) : -1 < value := by
   have lower : (-1 : Fraction.Rational) ≤ value :=
-    Fraction.Order.Arithmetic.neg_le_of_sq_le_sq_direct
+    Arithmetic.neg_le_of_sq_le_sq_direct
       (show (0 : Fraction.Rational) ≤ 1 by decide) small.le
   refine ⟨lower, ?_⟩
   intro reverse
@@ -769,7 +772,7 @@ theorem neg_one_lt_coordinate_of_square_lt_one {value : Fraction.Rational}
 theorem coordinate_lt_one_of_square_lt_one {value : Fraction.Rational}
     (small : value ^ 2 < 1) : value < 1 := by
   have upper : value ≤ (1 : Fraction.Rational) :=
-    Fraction.Order.Arithmetic.le_of_sq_le_sq_direct
+    Arithmetic.le_of_sq_le_sq_direct
       (show (0 : Fraction.Rational) ≤ 1 by decide) small.le
   refine ⟨upper, ?_⟩
   intro reverse
@@ -779,74 +782,74 @@ theorem coordinate_lt_one_of_square_lt_one {value : Fraction.Rational}
 
 /-- The real coordinate square is below one inside the open Gaussian unit disc. -/
 theorem real_square_lt_one_of_normSq_lt_one {value : Gaussian.Basic.Canonical}
-    (inside : Data.Gaussian.Norm.Basic.normSq value < 1) : value.re ^ 2 < 1 :=
+    (inside : Gaussian.Norm.Basic.normSq value < 1) : value.re ^ 2 < 1 :=
   (le_add_of_nonneg_right
-    (Fraction.Order.Arithmetic.sq_nonneg_direct value.im)).trans_lt inside
+    (Arithmetic.sq_nonneg_direct value.im)).trans_lt inside
 
 /-- The imaginary coordinate square is below one inside the open Gaussian unit disc. -/
 theorem imaginary_square_lt_one_of_normSq_lt_one {value : Gaussian.Basic.Canonical}
-    (inside : Data.Gaussian.Norm.Basic.normSq value < 1) : value.im ^ 2 < 1 := by
+    (inside : Gaussian.Norm.Basic.normSq value < 1) : value.im ^ 2 < 1 := by
   have reordered : value.im ^ 2 + value.re ^ 2 < 1 := by
     calc
-      value.im ^ 2 + value.re ^ 2 = Data.Gaussian.Norm.Basic.normSq value := by
-        dsimp only [Data.Gaussian.Norm.Basic.normSq]
+      value.im ^ 2 + value.re ^ 2 = Gaussian.Norm.Basic.normSq value := by
+        dsimp only [Gaussian.Norm.Basic.normSq]
         ring1
       _ < 1 := inside
   exact (le_add_of_nonneg_right
-    (Fraction.Order.Arithmetic.sq_nonneg_direct value.re)).trans_lt reordered
+    (Arithmetic.sq_nonneg_direct value.re)).trans_lt reordered
 
 /-- The real coordinate is above minus one inside the open Gaussian unit disc. -/
 theorem neg_one_lt_real_of_normSq_lt_one {value : Gaussian.Basic.Canonical}
-    (inside : Data.Gaussian.Norm.Basic.normSq value < 1) : -1 < value.re :=
-  Best.Consecutive.RepeatedIndex.neg_one_lt_coordinate_of_square_lt_one
-    (Best.Consecutive.RepeatedIndex.real_square_lt_one_of_normSq_lt_one inside)
+    (inside : Gaussian.Norm.Basic.normSq value < 1) : -1 < value.re :=
+  neg_one_lt_coordinate_of_square_lt_one
+    (real_square_lt_one_of_normSq_lt_one inside)
 
 /-- The imaginary coordinate is above minus one inside the open Gaussian unit disc. -/
 theorem neg_one_lt_imaginary_of_normSq_lt_one {value : Gaussian.Basic.Canonical}
-    (inside : Data.Gaussian.Norm.Basic.normSq value < 1) : -1 < value.im :=
-  Best.Consecutive.RepeatedIndex.neg_one_lt_coordinate_of_square_lt_one
-    (Best.Consecutive.RepeatedIndex.imaginary_square_lt_one_of_normSq_lt_one inside)
+    (inside : Gaussian.Norm.Basic.normSq value < 1) : -1 < value.im :=
+  neg_one_lt_coordinate_of_square_lt_one
+    (imaginary_square_lt_one_of_normSq_lt_one inside)
 
 /-- The real coordinate is below one inside the open Gaussian unit disc. -/
 theorem real_lt_one_of_normSq_lt_one {value : Gaussian.Basic.Canonical}
-    (inside : Data.Gaussian.Norm.Basic.normSq value < 1) : value.re < 1 :=
-  Best.Consecutive.RepeatedIndex.coordinate_lt_one_of_square_lt_one
-    (Best.Consecutive.RepeatedIndex.real_square_lt_one_of_normSq_lt_one inside)
+    (inside : Gaussian.Norm.Basic.normSq value < 1) : value.re < 1 :=
+  coordinate_lt_one_of_square_lt_one
+    (real_square_lt_one_of_normSq_lt_one inside)
 
 /-- The imaginary coordinate is below one inside the open Gaussian unit disc. -/
 theorem imaginary_lt_one_of_normSq_lt_one {value : Gaussian.Basic.Canonical}
-    (inside : Data.Gaussian.Norm.Basic.normSq value < 1) : value.im < 1 :=
-  Best.Consecutive.RepeatedIndex.coordinate_lt_one_of_square_lt_one
-    (Best.Consecutive.RepeatedIndex.imaginary_square_lt_one_of_normSq_lt_one inside)
+    (inside : Gaussian.Norm.Basic.normSq value < 1) : value.im < 1 :=
+  coordinate_lt_one_of_square_lt_one
+    (imaginary_square_lt_one_of_normSq_lt_one inside)
 
 /-- The self-cylinder alternatives for opposite units must cross: one unit
 escapes through the error coordinate and the opposite unit through the
 denominator coordinate. -/
 theorem opposite_self_obstructions_cross
     (errorRatio denominatorRatio : Gaussian.Basic.Canonical)
-    (errorInside : Data.Gaussian.Norm.Basic.normSq errorRatio < 1)
-    (denominatorInside : Data.Gaussian.Norm.Basic.normSq denominatorRatio < 1)
+    (errorInside : Gaussian.Norm.Basic.normSq errorRatio < 1)
+    (denominatorInside : Gaussian.Norm.Basic.normSq denominatorRatio < 1)
     (unit : GaussianInt) (unitNorm : GaussianInt.normNat unit = 1)
     (unitObstruction :
-      (2 : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
-        2 ≤ Data.Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio))
+      (2 : Fraction.Rational) ≤ Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
+        2 ≤ Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio))
     (oppositeObstruction :
-      (2 : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-unit)) ∨
-        2 ≤ Data.Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian (-unit) * denominatorRatio)) :
-    ((2 : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∧
-        2 ≤ Data.Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian (-unit) * denominatorRatio)) ∨
-      ((2 : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit *
+      (2 : Fraction.Rational) ≤ Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-unit)) ∨
+        2 ≤ Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian (-unit) * denominatorRatio)) :
+    ((2 : Fraction.Rational) ≤ Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∧
+        2 ≤ Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian (-unit) * denominatorRatio)) ∨
+      ((2 : Fraction.Rational) ≤ Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit *
         denominatorRatio) ∧
-        2 ≤ Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-unit))) := by
-  have unitQuadrance : Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian unit) = (1 : Fraction.Rational) := by
+        2 ≤ Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-unit))) := by
+  have unitQuadrance : Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian unit) = (1 : Fraction.Rational) := by
     rw [GaussianInt.normSq_toGaussian, unitNorm]
     rfl
   have negatedUnitIdentity : GaussianInt.toGaussian (-unit) = -GaussianInt.toGaussian unit :=
     GaussianInt.toGaussian_neg unit
   have errorParallelogram :
-      Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) +
-          Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-unit)) =
-        2 * (1 + Data.Gaussian.Norm.Basic.normSq errorRatio) := by
+      Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) +
+          Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-unit)) =
+        2 * (1 + Gaussian.Norm.Basic.normSq errorRatio) := by
     rw [negatedUnitIdentity]
     have plusIdentity :
         errorRatio - -GaussianInt.toGaussian unit = errorRatio + GaussianInt.toGaussian unit := by
@@ -858,23 +861,23 @@ theorem opposite_self_obstructions_cross
           Gaussian.Basic.neg_re,
           Gaussian.Basic.neg_im] <;>
         ring1
-    rw [plusIdentity, Best.Consecutive.RepeatedIndex.normSq_sub_add_parallelogram, unitQuadrance]
+    rw [plusIdentity, normSq_sub_add_parallelogram, unitQuadrance]
     ring1
   have errorNotBoth :
-      ¬ ((2 : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∧
-        2 ≤ Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-unit))) := by
+      ¬ ((2 : Fraction.Rational) ≤ Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∧
+        2 ≤ Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-unit))) := by
     intro both
-    exact Best.Consecutive.NormalForm.not_both_opposite_exterior errorInside
+    exact NormalForm.not_both_opposite_exterior errorInside
       both.1 both.2 errorParallelogram
   have multipliedRatioQuadrance :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian unit * denominatorRatio) =
-        Data.Gaussian.Norm.Basic.normSq denominatorRatio := by
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian unit * denominatorRatio) =
+        Gaussian.Norm.Basic.normSq denominatorRatio := by
     rw [Gaussian.Norm.Basic.normSq_mul, unitQuadrance]
     ring1
   have denominatorParallelogram :
-      Data.Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio) +
-          Data.Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian (-unit) * denominatorRatio) =
-        2 * (1 + Data.Gaussian.Norm.Basic.normSq denominatorRatio) := by
+      Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio) +
+          Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian (-unit) * denominatorRatio) =
+        2 * (1 + Gaussian.Norm.Basic.normSq denominatorRatio) := by
     rw [negatedUnitIdentity]
     have plusIdentity :
         (1 : Gaussian.Basic.Canonical) - -GaussianInt.toGaussian unit * denominatorRatio =
@@ -891,14 +894,14 @@ theorem opposite_self_obstructions_cross
           Gaussian.Basic.one_re,
           Gaussian.Basic.one_im] <;>
         ring1
-    rw [plusIdentity, Best.Consecutive.RepeatedIndex.normSq_sub_add_parallelogram,
+    rw [plusIdentity, normSq_sub_add_parallelogram,
       multipliedRatioQuadrance, Gaussian.Norm.Basic.normSq_one]
   have denominatorNotBoth :
       ¬ ((2 : Fraction.Rational) ≤
-          Data.Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio) ∧
-        2 ≤ Data.Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian (-unit) * denominatorRatio)) := by
+          Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio) ∧
+        2 ≤ Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian (-unit) * denominatorRatio)) := by
     intro both
-    exact Best.Consecutive.NormalForm.not_both_opposite_exterior
+    exact NormalForm.not_both_opposite_exterior
       denominatorInside both.1 both.2 denominatorParallelogram
   rcases unitObstruction with unitError | unitDenominator
   · rcases oppositeObstruction with oppositeError | oppositeDenominator
@@ -912,24 +915,24 @@ theorem opposite_self_obstructions_cross
 /-- For the `1+i` transition, the `-1` error translate cannot reach the
 self-cylinder boundary. -/
 theorem diagonalStep_negativeOne_error_impossible
-    (errorRatio : Gaussian.Basic.Canonical) (errorInside : Data.Gaussian.Norm.Basic.normSq errorRatio < 1)
+    (errorRatio : Gaussian.Basic.Canonical) (errorInside : Gaussian.Norm.Basic.normSq errorRatio < 1)
     (transition :
-      Data.Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian Best.Consecutive.RepeatedIndex.diagonalStep *
+      Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian diagonalStep *
         errorRatio) <
-        Data.Gaussian.Norm.Basic.normSq errorRatio) :
+        Gaussian.Norm.Basic.normSq errorRatio) :
     ¬ (2 : Fraction.Rational) ≤
-      Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-1 : GaussianInt)) := by
+      Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-1 : GaussianInt)) := by
   intro exterior
-  let quadrance := Data.Gaussian.Norm.Basic.normSq errorRatio
+  let quadrance := Gaussian.Norm.Basic.normSq errorRatio
   have transitionExpanded :
       1 + quadrance + 2 * (errorRatio.re - errorRatio.im) < 0 := by
-    have difference := Fraction.Order.Arithmetic.sub_neg_direct transition
+    have difference := Arithmetic.sub_neg_direct transition
     calc
       1 + quadrance + 2 * (errorRatio.re - errorRatio.im) =
-          Data.Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian Best.Consecutive.RepeatedIndex.diagonalStep *
+          Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian diagonalStep *
             errorRatio) -
-            Data.Gaussian.Norm.Basic.normSq errorRatio := by
-        dsimp only [quadrance, Best.Consecutive.RepeatedIndex.diagonalStep, Data.Gaussian.Norm.Basic.normSq,
+            Gaussian.Norm.Basic.normSq errorRatio := by
+        dsimp only [quadrance, diagonalStep, Gaussian.Norm.Basic.normSq,
           GaussianInt.toGaussian]
         simp only [Gaussian.Basic.add_re,
           Gaussian.Basic.add_im,
@@ -937,23 +940,23 @@ theorem diagonalStep_negativeOne_error_impossible
           Gaussian.Basic.mul_im,
           Gaussian.Basic.one_re,
           Gaussian.Basic.one_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
       _ < 0 := difference
   have exteriorExpanded :
       (2 : Fraction.Rational) ≤ 1 + quadrance + 2 * errorRatio.re := by
     calc
       (2 : Fraction.Rational) ≤
-          Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-1 : GaussianInt)) := exterior
+          Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-1 : GaussianInt)) := exterior
       _ = 1 + quadrance + 2 * errorRatio.re := by
-        dsimp only [quadrance, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian]
+        dsimp only [quadrance, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian]
         simp only [Gaussian.Basic.sub_re,
           Gaussian.Basic.sub_im,
           GaussianInt.neg_re,
           GaussianInt.neg_im,
           GaussianInt.one_re,
           GaussianInt.one_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
   have twiceGapNegative :
       2 - 2 * errorRatio.im < (0 : Fraction.Rational) := by
@@ -961,45 +964,45 @@ theorem diagonalStep_negativeOne_error_impossible
       2 - 2 * errorRatio.im ≤
           (1 + quadrance + 2 * errorRatio.re) -
             2 * errorRatio.im := by
-        convert Fraction.Order.Arithmetic.add_le_add_right_direct
+        convert Arithmetic.add_le_add_right_direct
           exteriorExpanded (-2 * errorRatio.im) using 1 <;> ring1
       _ = 1 + quadrance +
           2 * (errorRatio.re - errorRatio.im) := by ring1
       _ < 0 := transitionExpanded
   have twiceOrdered : (2 : Fraction.Rational) < 2 * errorRatio.im := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have shifted := Arithmetic.add_lt_add_right_direct
       twiceGapNegative (2 * errorRatio.im)
     convert shifted using 1
     all_goals ring1
   have imaginaryGreaterThanOne : (1 : Fraction.Rational) < errorRatio.im := by
-    apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+    apply Arithmetic.lt_of_mul_lt_mul_right_direct
       (c := 2)
     · convert twiceOrdered using 1 <;> ring1
     · decide
-  exact (not_lt_of_ge (Best.Consecutive.RepeatedIndex.imaginary_lt_one_of_normSq_lt_one errorInside).le)
+  exact (not_lt_of_ge (imaginary_lt_one_of_normSq_lt_one errorInside).le)
     imaginaryGreaterThanOne
 
 /-- For the `1+i` transition, the `i` error translate cannot reach the
 self-cylinder boundary. -/
 theorem diagonalStep_positiveImaginary_error_impossible
-    (errorRatio : Gaussian.Basic.Canonical) (errorInside : Data.Gaussian.Norm.Basic.normSq errorRatio < 1)
+    (errorRatio : Gaussian.Basic.Canonical) (errorInside : Gaussian.Norm.Basic.normSq errorRatio < 1)
     (transition :
-      Data.Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian Best.Consecutive.RepeatedIndex.diagonalStep *
+      Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian diagonalStep *
         errorRatio) <
-        Data.Gaussian.Norm.Basic.normSq errorRatio) :
-    ¬ (2 : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq
+        Gaussian.Norm.Basic.normSq errorRatio) :
+    ¬ (2 : Fraction.Rational) ≤ Gaussian.Norm.Basic.normSq
       (errorRatio - GaussianInt.toGaussian GaussianInt.Norm.Small.imaginaryUnit) := by
   intro exterior
-  let quadrance := Data.Gaussian.Norm.Basic.normSq errorRatio
+  let quadrance := Gaussian.Norm.Basic.normSq errorRatio
   have transitionExpanded :
       1 + quadrance + 2 * (errorRatio.re - errorRatio.im) < 0 := by
-    have difference := Fraction.Order.Arithmetic.sub_neg_direct transition
+    have difference := Arithmetic.sub_neg_direct transition
     calc
       1 + quadrance + 2 * (errorRatio.re - errorRatio.im) =
-          Data.Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian Best.Consecutive.RepeatedIndex.diagonalStep *
+          Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian diagonalStep *
             errorRatio) -
-            Data.Gaussian.Norm.Basic.normSq errorRatio := by
-        dsimp only [quadrance, Best.Consecutive.RepeatedIndex.diagonalStep, Data.Gaussian.Norm.Basic.normSq,
+            Gaussian.Norm.Basic.normSq errorRatio := by
+        dsimp only [quadrance, diagonalStep, Gaussian.Norm.Basic.normSq,
           GaussianInt.toGaussian]
         simp only [Gaussian.Basic.add_re,
           Gaussian.Basic.add_im,
@@ -1007,21 +1010,21 @@ theorem diagonalStep_positiveImaginary_error_impossible
           Gaussian.Basic.mul_im,
           Gaussian.Basic.one_re,
           Gaussian.Basic.one_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
       _ < 0 := difference
   have exteriorExpanded :
       (2 : Fraction.Rational) ≤ 1 + quadrance - 2 * errorRatio.im := by
     calc
-      (2 : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq
+      (2 : Fraction.Rational) ≤ Gaussian.Norm.Basic.normSq
           (errorRatio -
             GaussianInt.toGaussian GaussianInt.Norm.Small.imaginaryUnit) := exterior
       _ = 1 + quadrance - 2 * errorRatio.im := by
-        dsimp only [quadrance, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian,
+        dsimp only [quadrance, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian,
           GaussianInt.Norm.Small.imaginaryUnit]
         simp only [Gaussian.Basic.sub_re,
           Gaussian.Basic.sub_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
   have twiceSumNegative :
       2 + 2 * errorRatio.re < (0 : Fraction.Rational) := by
@@ -1029,60 +1032,60 @@ theorem diagonalStep_positiveImaginary_error_impossible
       2 + 2 * errorRatio.re ≤
           (1 + quadrance - 2 * errorRatio.im) +
             2 * errorRatio.re := by
-        exact Fraction.Order.Arithmetic.add_le_add_right_direct
+        exact Arithmetic.add_le_add_right_direct
           exteriorExpanded (2 * errorRatio.re)
       _ = 1 + quadrance +
           2 * (errorRatio.re - errorRatio.im) := by ring1
       _ < 0 := transitionExpanded
   have twiceOrdered :
       (2 : Fraction.Rational) < 2 * (-errorRatio.re) := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have shifted := Arithmetic.add_lt_add_right_direct
       twiceSumNegative (-2 * errorRatio.re)
     convert shifted using 1
     all_goals ring1
   have negativeRealGreaterThanOne :
       (1 : Fraction.Rational) < -errorRatio.re := by
-    apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+    apply Arithmetic.lt_of_mul_lt_mul_right_direct
       (c := 2)
     · convert twiceOrdered using 1 <;> ring1
     · decide
   have realLessThanNegativeOne : errorRatio.re < (-1 : Fraction.Rational) := by
-    have negated := Fraction.Order.Arithmetic.neg_lt_neg_direct
+    have negated := Arithmetic.neg_lt_neg_direct
       negativeRealGreaterThanOne
     simpa only [neg_neg] using negated
   exact (not_lt_of_ge
-    (Best.Consecutive.RepeatedIndex.neg_one_lt_real_of_normSq_lt_one errorInside).le)
+    (neg_one_lt_real_of_normSq_lt_one errorInside).le)
       realLessThanNegativeOne
 
 /-- For the `1+i` denominator transition, the `-1` centered translate is
 too small to reach twice the next denominator quadrance. -/
 theorem diagonalStep_negativeOne_nextDenominator_impossible
     (denominatorRatio : Gaussian.Basic.Canonical)
-    (denominatorInside : Data.Gaussian.Norm.Basic.normSq denominatorRatio < 1)
+    (denominatorInside : Gaussian.Norm.Basic.normSq denominatorRatio < 1)
     (nextOutside :
-      1 < Data.Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
-        Best.Consecutive.RepeatedIndex.diagonalStep)) :
+      1 < Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
+        diagonalStep)) :
     ¬ (2 : Fraction.Rational) *
-        Data.Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
-          Best.Consecutive.RepeatedIndex.diagonalStep) ≤
-      Data.Gaussian.Norm.Basic.normSq (1 -
+        Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
+          diagonalStep) ≤
+      Gaussian.Norm.Basic.normSq (1 -
         GaussianInt.toGaussian (-1 : GaussianInt) * denominatorRatio) := by
   intro exterior
-  let quadrance := Data.Gaussian.Norm.Basic.normSq denominatorRatio
+  let quadrance := Gaussian.Norm.Basic.normSq denominatorRatio
   have nextExpanded :
       0 < quadrance + 1 +
         2 * denominatorRatio.re + 2 * denominatorRatio.im := by
-    have shifted := Fraction.Order.Arithmetic.sub_pos_direct nextOutside
+    have shifted := Arithmetic.sub_pos_direct nextOutside
     calc
-      0 < Data.Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
-        Best.Consecutive.RepeatedIndex.diagonalStep) - 1 := shifted
+      0 < Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
+        diagonalStep) - 1 := shifted
       _ = quadrance + 1 +
           2 * denominatorRatio.re + 2 * denominatorRatio.im := by
-        dsimp only [quadrance, Best.Consecutive.RepeatedIndex.diagonalStep, Data.Gaussian.Norm.Basic.normSq,
+        dsimp only [quadrance, diagonalStep, Gaussian.Norm.Basic.normSq,
           GaussianInt.toGaussian]
         simp only [Gaussian.Basic.add_re,
           Gaussian.Basic.add_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
   have exteriorExpanded :
       2 * (quadrance + 2 +
@@ -1091,18 +1094,18 @@ theorem diagonalStep_negativeOne_nextDenominator_impossible
     calc
       2 * (quadrance + 2 +
           2 * denominatorRatio.re + 2 * denominatorRatio.im) =
-          2 * Data.Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
-            Best.Consecutive.RepeatedIndex.diagonalStep) := by
-        dsimp only [quadrance, Best.Consecutive.RepeatedIndex.diagonalStep, Data.Gaussian.Norm.Basic.normSq,
+          2 * Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
+            diagonalStep) := by
+        dsimp only [quadrance, diagonalStep, Gaussian.Norm.Basic.normSq,
           GaussianInt.toGaussian]
         simp only [Gaussian.Basic.add_re,
           Gaussian.Basic.add_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
-      _ ≤ Data.Gaussian.Norm.Basic.normSq (1 -
+      _ ≤ Gaussian.Norm.Basic.normSq (1 -
           GaussianInt.toGaussian (-1 : GaussianInt) * denominatorRatio) := exterior
       _ = 1 + quadrance + 2 * denominatorRatio.re := by
-        dsimp only [quadrance, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian]
+        dsimp only [quadrance, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian]
         simp only [Gaussian.Basic.sub_re,
           Gaussian.Basic.sub_im,
           Gaussian.Basic.mul_re,
@@ -1113,18 +1116,18 @@ theorem diagonalStep_negativeOne_nextDenominator_impossible
           GaussianInt.neg_im,
           GaussianInt.one_re,
           GaussianInt.one_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
   have exteriorPolynomial :
       quadrance + 3 + 2 * denominatorRatio.re +
           4 * denominatorRatio.im ≤ 0 := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       0 ≤
           (1 + quadrance + 2 * denominatorRatio.re) -
             2 * (quadrance + 2 +
               2 * denominatorRatio.re + 2 * denominatorRatio.im) :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct exteriorExpanded
+        Arithmetic.sub_nonneg_direct exteriorExpanded
       _ = 0 - (quadrance + 3 + 2 * denominatorRatio.re +
           4 * denominatorRatio.im) := by ring1
   have twiceSumNegative :
@@ -1136,59 +1139,59 @@ theorem diagonalStep_negativeOne_nextDenominator_impossible
             2 * denominatorRatio.im :=
       lt_of_le_of_lt exteriorPolynomial nextExpanded
     have negativeDifference :=
-      Fraction.Order.Arithmetic.sub_neg_direct polynomialLtNext
+      Arithmetic.sub_neg_direct polynomialLtNext
     convert negativeDifference using 1
     ring1
   have twiceOrdered :
       (2 : Fraction.Rational) < 2 * (-denominatorRatio.im) := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have shifted := Arithmetic.add_lt_add_right_direct
       twiceSumNegative (-2 * denominatorRatio.im)
     convert shifted using 1 <;> ring1
   have negativeImaginaryGreaterThanOne :
       (1 : Fraction.Rational) < -denominatorRatio.im := by
-    apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+    apply Arithmetic.lt_of_mul_lt_mul_right_direct
       (c := 2)
     · convert twiceOrdered using 1 <;> ring1
     · decide
   have imaginaryLessThanNegativeOne :
       denominatorRatio.im < (-1 : Fraction.Rational) := by
-    have negated := Fraction.Order.Arithmetic.neg_lt_neg_direct
+    have negated := Arithmetic.neg_lt_neg_direct
       negativeImaginaryGreaterThanOne
     simpa only [neg_neg] using negated
   exact (not_lt_of_ge
-    (Best.Consecutive.RepeatedIndex.neg_one_lt_imaginary_of_normSq_lt_one denominatorInside).le)
+    (neg_one_lt_imaginary_of_normSq_lt_one denominatorInside).le)
       imaginaryLessThanNegativeOne
 
 /-- The adjacent `i` centered translate is likewise too small for the next
 denominator cylinder of a `1+i` transition. -/
 theorem diagonalStep_positiveImaginary_nextDenominator_impossible
     (denominatorRatio : Gaussian.Basic.Canonical)
-    (denominatorInside : Data.Gaussian.Norm.Basic.normSq denominatorRatio < 1)
+    (denominatorInside : Gaussian.Norm.Basic.normSq denominatorRatio < 1)
     (nextOutside :
-      1 < Data.Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
-        Best.Consecutive.RepeatedIndex.diagonalStep)) :
+      1 < Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
+        diagonalStep)) :
     ¬ (2 : Fraction.Rational) *
-        Data.Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
-          Best.Consecutive.RepeatedIndex.diagonalStep) ≤
-      Data.Gaussian.Norm.Basic.normSq (1 -
+        Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
+          diagonalStep) ≤
+      Gaussian.Norm.Basic.normSq (1 -
         GaussianInt.toGaussian GaussianInt.Norm.Small.imaginaryUnit *
           denominatorRatio) := by
   intro exterior
-  let quadrance := Data.Gaussian.Norm.Basic.normSq denominatorRatio
+  let quadrance := Gaussian.Norm.Basic.normSq denominatorRatio
   have nextExpanded :
       0 < quadrance + 1 +
         2 * denominatorRatio.re + 2 * denominatorRatio.im := by
-    have shifted := Fraction.Order.Arithmetic.sub_pos_direct nextOutside
+    have shifted := Arithmetic.sub_pos_direct nextOutside
     calc
-      0 < Data.Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
-        Best.Consecutive.RepeatedIndex.diagonalStep) - 1 := shifted
+      0 < Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
+        diagonalStep) - 1 := shifted
       _ = quadrance + 1 +
           2 * denominatorRatio.re + 2 * denominatorRatio.im := by
-        dsimp only [quadrance, Best.Consecutive.RepeatedIndex.diagonalStep, Data.Gaussian.Norm.Basic.normSq,
+        dsimp only [quadrance, diagonalStep, Gaussian.Norm.Basic.normSq,
           GaussianInt.toGaussian]
         simp only [Gaussian.Basic.add_re,
           Gaussian.Basic.add_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
   have exteriorExpanded :
       2 * (quadrance + 2 +
@@ -1197,19 +1200,19 @@ theorem diagonalStep_positiveImaginary_nextDenominator_impossible
     calc
       2 * (quadrance + 2 +
           2 * denominatorRatio.re + 2 * denominatorRatio.im) =
-          2 * Data.Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
-            Best.Consecutive.RepeatedIndex.diagonalStep) := by
-        dsimp only [quadrance, Best.Consecutive.RepeatedIndex.diagonalStep, Data.Gaussian.Norm.Basic.normSq,
+          2 * Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
+            diagonalStep) := by
+        dsimp only [quadrance, diagonalStep, Gaussian.Norm.Basic.normSq,
           GaussianInt.toGaussian]
         simp only [Gaussian.Basic.add_re,
           Gaussian.Basic.add_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
-      _ ≤ Data.Gaussian.Norm.Basic.normSq (1 -
+      _ ≤ Gaussian.Norm.Basic.normSq (1 -
           GaussianInt.toGaussian GaussianInt.Norm.Small.imaginaryUnit *
             denominatorRatio) := exterior
       _ = 1 + quadrance + 2 * denominatorRatio.im := by
-        dsimp only [quadrance, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian,
+        dsimp only [quadrance, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian,
           GaussianInt.Norm.Small.imaginaryUnit]
         simp only [Gaussian.Basic.sub_re,
           Gaussian.Basic.sub_im,
@@ -1217,18 +1220,18 @@ theorem diagonalStep_positiveImaginary_nextDenominator_impossible
           Gaussian.Basic.mul_im,
           Gaussian.Basic.one_re,
           Gaussian.Basic.one_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
   have exteriorPolynomial :
       quadrance + 3 + 4 * denominatorRatio.re +
           2 * denominatorRatio.im ≤ 0 := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       0 ≤
           (1 + quadrance + 2 * denominatorRatio.im) -
             2 * (quadrance + 2 +
               2 * denominatorRatio.re + 2 * denominatorRatio.im) :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct exteriorExpanded
+        Arithmetic.sub_nonneg_direct exteriorExpanded
       _ = 0 - (quadrance + 3 + 4 * denominatorRatio.re +
           2 * denominatorRatio.im) := by ring1
   have twiceSumNegative :
@@ -1240,52 +1243,52 @@ theorem diagonalStep_positiveImaginary_nextDenominator_impossible
             2 * denominatorRatio.im :=
       lt_of_le_of_lt exteriorPolynomial nextExpanded
     have negativeDifference :=
-      Fraction.Order.Arithmetic.sub_neg_direct polynomialLtNext
+      Arithmetic.sub_neg_direct polynomialLtNext
     convert negativeDifference using 1
     ring1
   have twiceOrdered :
       (2 : Fraction.Rational) < 2 * (-denominatorRatio.re) := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have shifted := Arithmetic.add_lt_add_right_direct
       twiceSumNegative (-2 * denominatorRatio.re)
     convert shifted using 1 <;> ring1
   have negativeRealGreaterThanOne :
       (1 : Fraction.Rational) < -denominatorRatio.re := by
-    apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+    apply Arithmetic.lt_of_mul_lt_mul_right_direct
       (c := 2)
     · convert twiceOrdered using 1 <;> ring1
     · decide
   have realLessThanNegativeOne :
       denominatorRatio.re < (-1 : Fraction.Rational) := by
-    have negated := Fraction.Order.Arithmetic.neg_lt_neg_direct
+    have negated := Arithmetic.neg_lt_neg_direct
       negativeRealGreaterThanOne
     simpa only [neg_neg] using negated
   exact (not_lt_of_ge
-    (Best.Consecutive.RepeatedIndex.neg_one_lt_real_of_normSq_lt_one denominatorInside).le)
+    (neg_one_lt_real_of_normSq_lt_one denominatorInside).le)
       realLessThanNegativeOne
 
 /-- The doubled diagonal transition still excludes the `-1` error exterior;
 the factor-four error bound supplies the extra margin. -/
 theorem doubledDiagonalStep_negativeOne_error_impossible
-    (errorRatio : Gaussian.Basic.Canonical) (errorInside : Data.Gaussian.Norm.Basic.normSq errorRatio < 1)
-    (factorFour : (1 : Fraction.Rational) < 4 * Data.Gaussian.Norm.Basic.normSq errorRatio)
+    (errorRatio : Gaussian.Basic.Canonical) (errorInside : Gaussian.Norm.Basic.normSq errorRatio < 1)
+    (factorFour : (1 : Fraction.Rational) < 4 * Gaussian.Norm.Basic.normSq errorRatio)
     (transition :
-      Data.Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian Best.Consecutive.RepeatedIndex.doubledDiagonalStep
+      Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian doubledDiagonalStep
         * errorRatio) <
-        Data.Gaussian.Norm.Basic.normSq errorRatio) :
+        Gaussian.Norm.Basic.normSq errorRatio) :
     ¬ (2 : Fraction.Rational) ≤
-      Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-1 : GaussianInt)) := by
+      Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-1 : GaussianInt)) := by
   intro exterior
-  let quadrance := Data.Gaussian.Norm.Basic.normSq errorRatio
+  let quadrance := Gaussian.Norm.Basic.normSq errorRatio
   have transitionExpanded :
       1 + 7 * quadrance +
           4 * (errorRatio.re - errorRatio.im) < 0 := by
-    have difference := Fraction.Order.Arithmetic.sub_neg_direct transition
+    have difference := Arithmetic.sub_neg_direct transition
     calc
       1 + 7 * quadrance + 4 * (errorRatio.re - errorRatio.im) =
-          Data.Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian
-            Best.Consecutive.RepeatedIndex.doubledDiagonalStep * errorRatio) -
-            Data.Gaussian.Norm.Basic.normSq errorRatio := by
-        dsimp only [quadrance, Best.Consecutive.RepeatedIndex.doubledDiagonalStep, Data.Gaussian.Norm.Basic.normSq,
+          Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian
+            doubledDiagonalStep * errorRatio) -
+            Gaussian.Norm.Basic.normSq errorRatio := by
+        dsimp only [quadrance, doubledDiagonalStep, Gaussian.Norm.Basic.normSq,
           GaussianInt.toGaussian]
         simp only [Gaussian.Basic.add_re,
           Gaussian.Basic.add_im,
@@ -1293,32 +1296,32 @@ theorem doubledDiagonalStep_negativeOne_error_impossible
           Gaussian.Basic.mul_im,
           Gaussian.Basic.one_re,
           Gaussian.Basic.one_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
       _ < 0 := difference
   have exteriorExpanded :
       (2 : Fraction.Rational) ≤ 1 + quadrance + 2 * errorRatio.re := by
     calc
       (2 : Fraction.Rational) ≤
-          Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-1 : GaussianInt)) := exterior
+          Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-1 : GaussianInt)) := exterior
       _ = 1 + quadrance + 2 * errorRatio.re := by
-        dsimp only [quadrance, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian]
+        dsimp only [quadrance, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian]
         simp only [Gaussian.Basic.sub_re,
           Gaussian.Basic.sub_im,
           GaussianInt.neg_re,
           GaussianInt.neg_im,
           GaussianInt.one_re,
           GaussianInt.one_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
   have realBase : 1 - quadrance ≤ 2 * errorRatio.re := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       0 ≤ (1 + quadrance + 2 * errorRatio.re) - 2 :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct exteriorExpanded
+        Arithmetic.sub_nonneg_direct exteriorExpanded
       _ = 2 * errorRatio.re - (1 - quadrance) := by ring1
   have realScaled : 2 - 2 * quadrance ≤ 4 * errorRatio.re := by
-    have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    have scaled := Arithmetic.mul_le_mul_of_nonneg_left_direct
       realBase (show (0 : Fraction.Rational) ≤ 2 by decide)
     convert scaled using 1
     all_goals ring1
@@ -1328,10 +1331,10 @@ theorem doubledDiagonalStep_negativeOne_error_impossible
       3 + 5 * quadrance - 4 * errorRatio.im ≤
           1 + 7 * quadrance +
             4 * (errorRatio.re - errorRatio.im) := by
-        apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+        apply Arithmetic.le_of_sub_nonneg_direct
         calc
           0 ≤ 4 * errorRatio.re - (2 - 2 * quadrance) :=
-            Fraction.Order.Arithmetic.sub_nonneg_direct realScaled
+            Arithmetic.sub_nonneg_direct realScaled
           _ =
               (1 + 7 * quadrance +
                   4 * (errorRatio.re - errorRatio.im)) -
@@ -1340,20 +1343,20 @@ theorem doubledDiagonalStep_negativeOne_error_impossible
   have quadrancePositive : 0 < quadrance := by
     have fourPositive : (0 : Fraction.Rational) < 4 * quadrance :=
       (show (0 : Fraction.Rational) < 1 by decide).trans factorFour
-    apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+    apply Arithmetic.lt_of_mul_lt_mul_right_direct
       (c := 4)
     · convert fourPositive using 1 <;> ring1
     · decide
   have fourQuadranceLtFive :
       4 * quadrance < 5 * quadrance := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have shifted := Arithmetic.add_lt_add_right_direct
       quadrancePositive (4 * quadrance)
     convert shifted using 1 <;> ring1
   have oneLtFiveQuadrance : (1 : Fraction.Rational) < 5 * quadrance :=
     factorFour.trans fourQuadranceLtFive
   have fourLtThreePlusFive :
       (4 : Fraction.Rational) < 3 + 5 * quadrance := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have shifted := Arithmetic.add_lt_add_right_direct
       oneLtFiveQuadrance 3
     convert shifted using 1 <;> ring1
   have fourGapNegative :
@@ -1361,44 +1364,44 @@ theorem doubledDiagonalStep_negativeOne_error_impossible
     calc
       4 - 4 * errorRatio.im <
           3 + 5 * quadrance - 4 * errorRatio.im := by
-        convert Fraction.Order.Arithmetic.add_lt_add_right_direct
+        convert Arithmetic.add_lt_add_right_direct
           fourLtThreePlusFive (-4 * errorRatio.im) using 1 <;> ring1
       _ < 0 := lowerTransitionNegative
   have fourOrdered : (4 : Fraction.Rational) < 4 * errorRatio.im := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have shifted := Arithmetic.add_lt_add_right_direct
       fourGapNegative (4 * errorRatio.im)
     convert shifted using 1 <;> ring1
   have imaginaryGreaterThanOne : (1 : Fraction.Rational) < errorRatio.im := by
-    apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+    apply Arithmetic.lt_of_mul_lt_mul_right_direct
       (c := 4)
     · convert fourOrdered using 1 <;> ring1
     · decide
-  exact (not_lt_of_ge (Best.Consecutive.RepeatedIndex.imaginary_lt_one_of_normSq_lt_one errorInside).le)
+  exact (not_lt_of_ge (imaginary_lt_one_of_normSq_lt_one errorInside).le)
     imaginaryGreaterThanOne
 
 /-- The adjacent `i` error exterior is excluded symmetrically for the
 doubled diagonal transition. -/
 theorem doubledDiagonalStep_positiveImaginary_error_impossible
-    (errorRatio : Gaussian.Basic.Canonical) (errorInside : Data.Gaussian.Norm.Basic.normSq errorRatio < 1)
-    (factorFour : (1 : Fraction.Rational) < 4 * Data.Gaussian.Norm.Basic.normSq errorRatio)
+    (errorRatio : Gaussian.Basic.Canonical) (errorInside : Gaussian.Norm.Basic.normSq errorRatio < 1)
+    (factorFour : (1 : Fraction.Rational) < 4 * Gaussian.Norm.Basic.normSq errorRatio)
     (transition :
-      Data.Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian Best.Consecutive.RepeatedIndex.doubledDiagonalStep
+      Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian doubledDiagonalStep
         * errorRatio) <
-        Data.Gaussian.Norm.Basic.normSq errorRatio) :
-    ¬ (2 : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq
+        Gaussian.Norm.Basic.normSq errorRatio) :
+    ¬ (2 : Fraction.Rational) ≤ Gaussian.Norm.Basic.normSq
       (errorRatio - GaussianInt.toGaussian GaussianInt.Norm.Small.imaginaryUnit) := by
   intro exterior
-  let quadrance := Data.Gaussian.Norm.Basic.normSq errorRatio
+  let quadrance := Gaussian.Norm.Basic.normSq errorRatio
   have transitionExpanded :
       1 + 7 * quadrance +
           4 * (errorRatio.re - errorRatio.im) < 0 := by
-    have difference := Fraction.Order.Arithmetic.sub_neg_direct transition
+    have difference := Arithmetic.sub_neg_direct transition
     calc
       1 + 7 * quadrance + 4 * (errorRatio.re - errorRatio.im) =
-          Data.Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian
-            Best.Consecutive.RepeatedIndex.doubledDiagonalStep * errorRatio) -
-            Data.Gaussian.Norm.Basic.normSq errorRatio := by
-        dsimp only [quadrance, Best.Consecutive.RepeatedIndex.doubledDiagonalStep, Data.Gaussian.Norm.Basic.normSq,
+          Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian
+            doubledDiagonalStep * errorRatio) -
+            Gaussian.Norm.Basic.normSq errorRatio := by
+        dsimp only [quadrance, doubledDiagonalStep, Gaussian.Norm.Basic.normSq,
           GaussianInt.toGaussian]
         simp only [Gaussian.Basic.add_re,
           Gaussian.Basic.add_im,
@@ -1406,32 +1409,32 @@ theorem doubledDiagonalStep_positiveImaginary_error_impossible
           Gaussian.Basic.mul_im,
           Gaussian.Basic.one_re,
           Gaussian.Basic.one_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
       _ < 0 := difference
   have exteriorExpanded :
       (2 : Fraction.Rational) ≤ 1 + quadrance - 2 * errorRatio.im := by
     calc
-      (2 : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq
+      (2 : Fraction.Rational) ≤ Gaussian.Norm.Basic.normSq
           (errorRatio -
             GaussianInt.toGaussian GaussianInt.Norm.Small.imaginaryUnit) := exterior
       _ = 1 + quadrance - 2 * errorRatio.im := by
-        dsimp only [quadrance, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian,
+        dsimp only [quadrance, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian,
           GaussianInt.Norm.Small.imaginaryUnit]
         simp only [Gaussian.Basic.sub_re,
           Gaussian.Basic.sub_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
   have imaginaryBase :
       1 - quadrance ≤ -2 * errorRatio.im := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       0 ≤ (1 + quadrance - 2 * errorRatio.im) - 2 :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct exteriorExpanded
+        Arithmetic.sub_nonneg_direct exteriorExpanded
       _ = -2 * errorRatio.im - (1 - quadrance) := by ring1
   have imaginaryScaled :
       2 - 2 * quadrance ≤ -4 * errorRatio.im := by
-    have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    have scaled := Arithmetic.mul_le_mul_of_nonneg_left_direct
       imaginaryBase (show (0 : Fraction.Rational) ≤ 2 by decide)
     convert scaled using 1 <;> ring1
   have lowerTransitionNegative :
@@ -1440,10 +1443,10 @@ theorem doubledDiagonalStep_positiveImaginary_error_impossible
       3 + 5 * quadrance + 4 * errorRatio.re ≤
           1 + 7 * quadrance +
             4 * (errorRatio.re - errorRatio.im) := by
-        apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+        apply Arithmetic.le_of_sub_nonneg_direct
         calc
           0 ≤ -4 * errorRatio.im - (2 - 2 * quadrance) :=
-            Fraction.Order.Arithmetic.sub_nonneg_direct imaginaryScaled
+            Arithmetic.sub_nonneg_direct imaginaryScaled
           _ =
               (1 + 7 * quadrance +
                   4 * (errorRatio.re - errorRatio.im)) -
@@ -1452,20 +1455,20 @@ theorem doubledDiagonalStep_positiveImaginary_error_impossible
   have quadrancePositive : 0 < quadrance := by
     have fourPositive : (0 : Fraction.Rational) < 4 * quadrance :=
       (show (0 : Fraction.Rational) < 1 by decide).trans factorFour
-    apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+    apply Arithmetic.lt_of_mul_lt_mul_right_direct
       (c := 4)
     · convert fourPositive using 1 <;> ring1
     · decide
   have fourQuadranceLtFive :
       4 * quadrance < 5 * quadrance := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have shifted := Arithmetic.add_lt_add_right_direct
       quadrancePositive (4 * quadrance)
     convert shifted using 1 <;> ring1
   have oneLtFiveQuadrance : (1 : Fraction.Rational) < 5 * quadrance :=
     factorFour.trans fourQuadranceLtFive
   have fourLtThreePlusFive :
       (4 : Fraction.Rational) < 3 + 5 * quadrance := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have shifted := Arithmetic.add_lt_add_right_direct
       oneLtFiveQuadrance 3
     convert shifted using 1 <;> ring1
   have fourSumNegative :
@@ -1473,39 +1476,39 @@ theorem doubledDiagonalStep_positiveImaginary_error_impossible
     calc
       4 + 4 * errorRatio.re <
           3 + 5 * quadrance + 4 * errorRatio.re := by
-        exact Fraction.Order.Arithmetic.add_lt_add_right_direct
+        exact Arithmetic.add_lt_add_right_direct
           fourLtThreePlusFive (4 * errorRatio.re)
       _ < 0 := lowerTransitionNegative
   have fourOrdered : (4 : Fraction.Rational) < 4 * (-errorRatio.re) := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have shifted := Arithmetic.add_lt_add_right_direct
       fourSumNegative (-4 * errorRatio.re)
     convert shifted using 1 <;> ring1
   have negativeRealGreaterThanOne :
       (1 : Fraction.Rational) < -errorRatio.re := by
-    apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+    apply Arithmetic.lt_of_mul_lt_mul_right_direct
       (c := 4)
     · convert fourOrdered using 1 <;> ring1
     · decide
   have realLessThanNegativeOne : errorRatio.re < (-1 : Fraction.Rational) := by
-    have negated := Fraction.Order.Arithmetic.neg_lt_neg_direct
+    have negated := Arithmetic.neg_lt_neg_direct
       negativeRealGreaterThanOne
     simpa only [neg_neg] using negated
   exact (not_lt_of_ge
-    (Best.Consecutive.RepeatedIndex.neg_one_lt_real_of_normSq_lt_one errorInside).le)
+    (neg_one_lt_real_of_normSq_lt_one errorInside).le)
       realLessThanNegativeOne
 
 /-- The `-1` next-denominator exterior is impossible for the doubled
 diagonal coefficient already from the open-unit-disc bound. -/
 theorem doubledDiagonalStep_negativeOne_nextDenominator_impossible
     (denominatorRatio : Gaussian.Basic.Canonical)
-    (denominatorInside : Data.Gaussian.Norm.Basic.normSq denominatorRatio < 1) :
+    (denominatorInside : Gaussian.Norm.Basic.normSq denominatorRatio < 1) :
     ¬ (2 : Fraction.Rational) *
-        Data.Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
-          Best.Consecutive.RepeatedIndex.doubledDiagonalStep) ≤
-      Data.Gaussian.Norm.Basic.normSq (1 -
+        Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
+          doubledDiagonalStep) ≤
+      Gaussian.Norm.Basic.normSq (1 -
         GaussianInt.toGaussian (-1 : GaussianInt) * denominatorRatio) := by
   intro exterior
-  let quadrance := Data.Gaussian.Norm.Basic.normSq denominatorRatio
+  let quadrance := Gaussian.Norm.Basic.normSq denominatorRatio
   have exteriorExpanded :
       2 * (quadrance + 8 +
           4 * denominatorRatio.re + 4 * denominatorRatio.im) ≤
@@ -1513,18 +1516,18 @@ theorem doubledDiagonalStep_negativeOne_nextDenominator_impossible
     calc
       2 * (quadrance + 8 +
           4 * denominatorRatio.re + 4 * denominatorRatio.im) =
-          2 * Data.Gaussian.Norm.Basic.normSq
-            (denominatorRatio + GaussianInt.toGaussian Best.Consecutive.RepeatedIndex.doubledDiagonalStep) := by
-        dsimp only [quadrance, Best.Consecutive.RepeatedIndex.doubledDiagonalStep, Data.Gaussian.Norm.Basic.normSq,
+          2 * Gaussian.Norm.Basic.normSq
+            (denominatorRatio + GaussianInt.toGaussian doubledDiagonalStep) := by
+        dsimp only [quadrance, doubledDiagonalStep, Gaussian.Norm.Basic.normSq,
           GaussianInt.toGaussian]
         simp only [Gaussian.Basic.add_re,
           Gaussian.Basic.add_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
-      _ ≤ Data.Gaussian.Norm.Basic.normSq (1 -
+      _ ≤ Gaussian.Norm.Basic.normSq (1 -
           GaussianInt.toGaussian (-1 : GaussianInt) * denominatorRatio) := exterior
       _ = 1 + quadrance + 2 * denominatorRatio.re := by
-        dsimp only [quadrance, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian]
+        dsimp only [quadrance, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian]
         simp only [Gaussian.Basic.sub_re,
           Gaussian.Basic.sub_im,
           Gaussian.Basic.mul_re,
@@ -1535,51 +1538,51 @@ theorem doubledDiagonalStep_negativeOne_nextDenominator_impossible
           GaussianInt.neg_im,
           GaussianInt.one_re,
           GaussianInt.one_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
   have exteriorPolynomial :
       quadrance + 15 + 6 * denominatorRatio.re +
           8 * denominatorRatio.im ≤ 0 := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       0 ≤
           (1 + quadrance + 2 * denominatorRatio.re) -
             2 * (quadrance + 8 +
               4 * denominatorRatio.re + 4 * denominatorRatio.im) :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct exteriorExpanded
+        Arithmetic.sub_nonneg_direct exteriorExpanded
       _ = 0 - (quadrance + 15 + 6 * denominatorRatio.re +
           8 * denominatorRatio.im) := by ring1
   have realShiftPositive :
       0 < denominatorRatio.re + (1 : Fraction.Rational) := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
-      (Best.Consecutive.RepeatedIndex.neg_one_lt_real_of_normSq_lt_one denominatorInside) 1
+    have shifted := Arithmetic.add_lt_add_right_direct
+      (neg_one_lt_real_of_normSq_lt_one denominatorInside) 1
     convert shifted using 1
     all_goals ring1
   have imaginaryShiftPositive :
       0 < denominatorRatio.im + (1 : Fraction.Rational) := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
-      (Best.Consecutive.RepeatedIndex.neg_one_lt_imaginary_of_normSq_lt_one denominatorInside) 1
+    have shifted := Arithmetic.add_lt_add_right_direct
+      (neg_one_lt_imaginary_of_normSq_lt_one denominatorInside) 1
     convert shifted using 1
     all_goals ring1
   have sixRealPositive :
       0 < 6 * (denominatorRatio.re + 1) :=
-    Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+    Arithmetic.mul_lt_mul_of_pos_left_direct
       (by decide) realShiftPositive
   have eightImaginaryPositive :
       0 < 8 * (denominatorRatio.im + 1) :=
-    Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+    Arithmetic.mul_lt_mul_of_pos_left_direct
       (by decide) imaginaryShiftPositive
   have basePositive : 0 < quadrance + 1 := by
     calc
       (0 : Fraction.Rational) < 1 := by decide
       _ ≤ quadrance + 1 := by
-        have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+        have shifted := Arithmetic.add_le_add_right_direct
           (Gaussian.Norm.Basic.normSq_nonneg denominatorRatio) 1
         convert shifted using 1
         all_goals ring1
   have withRealPositive :
       0 < quadrance + 1 + 6 * (denominatorRatio.re + 1) := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have shifted := Arithmetic.add_lt_add_right_direct
       sixRealPositive (quadrance + 1)
     have increased :
         quadrance + 1 <
@@ -1595,7 +1598,7 @@ theorem doubledDiagonalStep_negativeOne_nextDenominator_impossible
   have polynomialPositive :
       0 < quadrance + 15 + 6 * denominatorRatio.re +
           8 * denominatorRatio.im := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have shifted := Arithmetic.add_lt_add_right_direct
       eightImaginaryPositive
         (quadrance + 1 + 6 * (denominatorRatio.re + 1))
     exact withRealPositive.trans (by
@@ -1613,15 +1616,15 @@ theorem doubledDiagonalStep_negativeOne_nextDenominator_impossible
 finite coordinate estimate. -/
 theorem doubledDiagonalStep_positiveImaginary_nextDenominator_impossible
     (denominatorRatio : Gaussian.Basic.Canonical)
-    (denominatorInside : Data.Gaussian.Norm.Basic.normSq denominatorRatio < 1) :
+    (denominatorInside : Gaussian.Norm.Basic.normSq denominatorRatio < 1) :
     ¬ (2 : Fraction.Rational) *
-        Data.Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
-          Best.Consecutive.RepeatedIndex.doubledDiagonalStep) ≤
-      Data.Gaussian.Norm.Basic.normSq (1 -
+        Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
+          doubledDiagonalStep) ≤
+      Gaussian.Norm.Basic.normSq (1 -
         GaussianInt.toGaussian GaussianInt.Norm.Small.imaginaryUnit *
           denominatorRatio) := by
   intro exterior
-  let quadrance := Data.Gaussian.Norm.Basic.normSq denominatorRatio
+  let quadrance := Gaussian.Norm.Basic.normSq denominatorRatio
   have exteriorExpanded :
       2 * (quadrance + 8 +
           4 * denominatorRatio.re + 4 * denominatorRatio.im) ≤
@@ -1629,19 +1632,19 @@ theorem doubledDiagonalStep_positiveImaginary_nextDenominator_impossible
     calc
       2 * (quadrance + 8 +
           4 * denominatorRatio.re + 4 * denominatorRatio.im) =
-          2 * Data.Gaussian.Norm.Basic.normSq
-            (denominatorRatio + GaussianInt.toGaussian Best.Consecutive.RepeatedIndex.doubledDiagonalStep) := by
-        dsimp only [quadrance, Best.Consecutive.RepeatedIndex.doubledDiagonalStep, Data.Gaussian.Norm.Basic.normSq,
+          2 * Gaussian.Norm.Basic.normSq
+            (denominatorRatio + GaussianInt.toGaussian doubledDiagonalStep) := by
+        dsimp only [quadrance, doubledDiagonalStep, Gaussian.Norm.Basic.normSq,
           GaussianInt.toGaussian]
         simp only [Gaussian.Basic.add_re,
           Gaussian.Basic.add_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
-      _ ≤ Data.Gaussian.Norm.Basic.normSq (1 -
+      _ ≤ Gaussian.Norm.Basic.normSq (1 -
           GaussianInt.toGaussian GaussianInt.Norm.Small.imaginaryUnit *
             denominatorRatio) := exterior
       _ = 1 + quadrance + 2 * denominatorRatio.im := by
-        dsimp only [quadrance, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian,
+        dsimp only [quadrance, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian,
           GaussianInt.Norm.Small.imaginaryUnit]
         simp only [Gaussian.Basic.sub_re,
           Gaussian.Basic.sub_im,
@@ -1649,51 +1652,51 @@ theorem doubledDiagonalStep_positiveImaginary_nextDenominator_impossible
           Gaussian.Basic.mul_im,
           Gaussian.Basic.one_re,
           Gaussian.Basic.one_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
   have exteriorPolynomial :
       quadrance + 15 + 8 * denominatorRatio.re +
           6 * denominatorRatio.im ≤ 0 := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       0 ≤
           (1 + quadrance + 2 * denominatorRatio.im) -
             2 * (quadrance + 8 +
               4 * denominatorRatio.re + 4 * denominatorRatio.im) :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct exteriorExpanded
+        Arithmetic.sub_nonneg_direct exteriorExpanded
       _ = 0 - (quadrance + 15 + 8 * denominatorRatio.re +
           6 * denominatorRatio.im) := by ring1
   have realShiftPositive :
       0 < denominatorRatio.re + (1 : Fraction.Rational) := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
-      (Best.Consecutive.RepeatedIndex.neg_one_lt_real_of_normSq_lt_one denominatorInside) 1
+    have shifted := Arithmetic.add_lt_add_right_direct
+      (neg_one_lt_real_of_normSq_lt_one denominatorInside) 1
     convert shifted using 1
     all_goals ring1
   have imaginaryShiftPositive :
       0 < denominatorRatio.im + (1 : Fraction.Rational) := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
-      (Best.Consecutive.RepeatedIndex.neg_one_lt_imaginary_of_normSq_lt_one denominatorInside) 1
+    have shifted := Arithmetic.add_lt_add_right_direct
+      (neg_one_lt_imaginary_of_normSq_lt_one denominatorInside) 1
     convert shifted using 1
     all_goals ring1
   have eightRealPositive :
       0 < 8 * (denominatorRatio.re + 1) :=
-    Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+    Arithmetic.mul_lt_mul_of_pos_left_direct
       (by decide) realShiftPositive
   have sixImaginaryPositive :
       0 < 6 * (denominatorRatio.im + 1) :=
-    Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+    Arithmetic.mul_lt_mul_of_pos_left_direct
       (by decide) imaginaryShiftPositive
   have basePositive : 0 < quadrance + 1 := by
     calc
       (0 : Fraction.Rational) < 1 := by decide
       _ ≤ quadrance + 1 := by
-        have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+        have shifted := Arithmetic.add_le_add_right_direct
           (Gaussian.Norm.Basic.normSq_nonneg denominatorRatio) 1
         convert shifted using 1
         all_goals ring1
   have withRealPositive :
       0 < quadrance + 1 + 8 * (denominatorRatio.re + 1) := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have shifted := Arithmetic.add_lt_add_right_direct
       eightRealPositive (quadrance + 1)
     have increased :
         quadrance + 1 <
@@ -1709,7 +1712,7 @@ theorem doubledDiagonalStep_positiveImaginary_nextDenominator_impossible
   have polynomialPositive :
       0 < quadrance + 15 + 8 * denominatorRatio.re +
           6 * denominatorRatio.im := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have shifted := Arithmetic.add_lt_add_right_direct
       sixImaginaryPositive
         (quadrance + 1 + 8 * (denominatorRatio.re + 1))
     exact withRealPositive.trans (by
@@ -1727,22 +1730,22 @@ theorem doubledDiagonalStep_positiveImaginary_nextDenominator_impossible
 theorem doubledAxisStep_negativeOne_error_impossible
     (errorRatio : Gaussian.Basic.Canonical)
     (transition :
-      Data.Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian Best.Consecutive.RepeatedIndex.doubledAxisStep *
+      Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian doubledAxisStep *
         errorRatio) <
-        Data.Gaussian.Norm.Basic.normSq errorRatio) :
+        Gaussian.Norm.Basic.normSq errorRatio) :
     ¬ (2 : Fraction.Rational) ≤
-      Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-1 : GaussianInt)) := by
+      Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-1 : GaussianInt)) := by
   intro exterior
-  let quadrance := Data.Gaussian.Norm.Basic.normSq errorRatio
+  let quadrance := Gaussian.Norm.Basic.normSq errorRatio
   have transitionExpanded :
       1 + 3 * quadrance + 4 * errorRatio.re < 0 := by
-    have difference := Fraction.Order.Arithmetic.sub_neg_direct transition
+    have difference := Arithmetic.sub_neg_direct transition
     calc
       1 + 3 * quadrance + 4 * errorRatio.re =
-          Data.Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian Best.Consecutive.RepeatedIndex.doubledAxisStep
+          Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian doubledAxisStep
             * errorRatio) -
-            Data.Gaussian.Norm.Basic.normSq errorRatio := by
-        dsimp only [quadrance, Best.Consecutive.RepeatedIndex.doubledAxisStep, Data.Gaussian.Norm.Basic.normSq,
+            Gaussian.Norm.Basic.normSq errorRatio := by
+        dsimp only [quadrance, doubledAxisStep, Gaussian.Norm.Basic.normSq,
           GaussianInt.toGaussian]
         simp only [Gaussian.Basic.add_re,
           Gaussian.Basic.add_im,
@@ -1750,48 +1753,48 @@ theorem doubledAxisStep_negativeOne_error_impossible
           Gaussian.Basic.mul_im,
           Gaussian.Basic.one_re,
           Gaussian.Basic.one_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
       _ < 0 := difference
   have exteriorExpanded :
       (2 : Fraction.Rational) ≤ 1 + quadrance + 2 * errorRatio.re := by
     calc
       (2 : Fraction.Rational) ≤
-          Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-1 : GaussianInt)) := exterior
+          Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-1 : GaussianInt)) := exterior
       _ = 1 + quadrance + 2 * errorRatio.re := by
-        dsimp only [quadrance, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian]
+        dsimp only [quadrance, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian]
         simp only [Gaussian.Basic.sub_re,
           Gaussian.Basic.sub_im,
           GaussianInt.neg_re,
           GaussianInt.neg_im,
           GaussianInt.one_re,
           GaussianInt.one_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
   have realBase : 1 - quadrance ≤ 2 * errorRatio.re := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       0 ≤ (1 + quadrance + 2 * errorRatio.re) - 2 :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct exteriorExpanded
+        Arithmetic.sub_nonneg_direct exteriorExpanded
       _ = 2 * errorRatio.re - (1 - quadrance) := by ring1
   have realScaled : 2 - 2 * quadrance ≤ 4 * errorRatio.re := by
-    have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    have scaled := Arithmetic.mul_le_mul_of_nonneg_left_direct
       realBase (show (0 : Fraction.Rational) ≤ 2 by decide)
     convert scaled using 1 <;> ring1
   have positiveLower : 0 < 3 + quadrance := by
     calc
       (0 : Fraction.Rational) < 3 := by decide
       _ ≤ 3 + quadrance := by
-        have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+        have shifted := Arithmetic.add_le_add_right_direct
           (Gaussian.Norm.Basic.normSq_nonneg errorRatio) 3
         convert shifted using 1 <;> ring1
   have lowerNegative : 3 + quadrance < (0 : Fraction.Rational) := by
     calc
       3 + quadrance ≤ 1 + 3 * quadrance + 4 * errorRatio.re := by
-        apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+        apply Arithmetic.le_of_sub_nonneg_direct
         calc
           0 ≤ 4 * errorRatio.re - (2 - 2 * quadrance) :=
-            Fraction.Order.Arithmetic.sub_nonneg_direct realScaled
+            Arithmetic.sub_nonneg_direct realScaled
           _ = (1 + 3 * quadrance + 4 * errorRatio.re) -
               (3 + quadrance) := by ring1
       _ < 0 := transitionExpanded
@@ -1801,31 +1804,31 @@ theorem doubledAxisStep_negativeOne_error_impossible
 incompatible with the open unit disc. -/
 theorem doubledAxisStep_negativeOne_nextDenominator_impossible
     (denominatorRatio : Gaussian.Basic.Canonical)
-    (denominatorInside : Data.Gaussian.Norm.Basic.normSq denominatorRatio < 1) :
+    (denominatorInside : Gaussian.Norm.Basic.normSq denominatorRatio < 1) :
     ¬ (2 : Fraction.Rational) *
-        Data.Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
-          Best.Consecutive.RepeatedIndex.doubledAxisStep) ≤
-      Data.Gaussian.Norm.Basic.normSq (1 -
+        Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
+          doubledAxisStep) ≤
+      Gaussian.Norm.Basic.normSq (1 -
         GaussianInt.toGaussian (-1 : GaussianInt) * denominatorRatio) := by
   intro exterior
-  let quadrance := Data.Gaussian.Norm.Basic.normSq denominatorRatio
+  let quadrance := Gaussian.Norm.Basic.normSq denominatorRatio
   have exteriorExpanded :
       2 * (quadrance + 4 + 4 * denominatorRatio.re) ≤
         1 + quadrance + 2 * denominatorRatio.re := by
     calc
       2 * (quadrance + 4 + 4 * denominatorRatio.re) =
-          2 * Data.Gaussian.Norm.Basic.normSq
-            (denominatorRatio + GaussianInt.toGaussian Best.Consecutive.RepeatedIndex.doubledAxisStep) := by
-        dsimp only [quadrance, Best.Consecutive.RepeatedIndex.doubledAxisStep, Data.Gaussian.Norm.Basic.normSq,
+          2 * Gaussian.Norm.Basic.normSq
+            (denominatorRatio + GaussianInt.toGaussian doubledAxisStep) := by
+        dsimp only [quadrance, doubledAxisStep, Gaussian.Norm.Basic.normSq,
           GaussianInt.toGaussian]
         simp only [Gaussian.Basic.add_re,
           Gaussian.Basic.add_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
-      _ ≤ Data.Gaussian.Norm.Basic.normSq (1 -
+      _ ≤ Gaussian.Norm.Basic.normSq (1 -
           GaussianInt.toGaussian (-1 : GaussianInt) * denominatorRatio) := exterior
       _ = 1 + quadrance + 2 * denominatorRatio.re := by
-        dsimp only [quadrance, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian]
+        dsimp only [quadrance, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian]
         simp only [Gaussian.Basic.sub_re,
           Gaussian.Basic.sub_im,
           Gaussian.Basic.mul_re,
@@ -1836,37 +1839,37 @@ theorem doubledAxisStep_negativeOne_nextDenominator_impossible
           GaussianInt.neg_im,
           GaussianInt.one_re,
           GaussianInt.one_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
   have exteriorPolynomial :
       quadrance + 7 + 6 * denominatorRatio.re ≤ 0 := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       0 ≤ (1 + quadrance + 2 * denominatorRatio.re) -
           2 * (quadrance + 4 + 4 * denominatorRatio.re) :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct exteriorExpanded
+        Arithmetic.sub_nonneg_direct exteriorExpanded
       _ = 0 - (quadrance + 7 + 6 * denominatorRatio.re) := by ring1
   have realShiftPositive :
       0 < denominatorRatio.re + (1 : Fraction.Rational) := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
-      (Best.Consecutive.RepeatedIndex.neg_one_lt_real_of_normSq_lt_one denominatorInside) 1
+    have shifted := Arithmetic.add_lt_add_right_direct
+      (neg_one_lt_real_of_normSq_lt_one denominatorInside) 1
     convert shifted using 1
     all_goals ring1
   have sixRealPositive :
       0 < 6 * (denominatorRatio.re + 1) :=
-    Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+    Arithmetic.mul_lt_mul_of_pos_left_direct
       (by decide) realShiftPositive
   have basePositive : 0 < quadrance + 1 := by
     calc
       (0 : Fraction.Rational) < 1 := by decide
       _ ≤ quadrance + 1 := by
-        have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+        have shifted := Arithmetic.add_le_add_right_direct
           (Gaussian.Norm.Basic.normSq_nonneg denominatorRatio) 1
         convert shifted using 1
         all_goals ring1
   have polynomialPositive :
       0 < quadrance + 7 + 6 * denominatorRatio.re := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have shifted := Arithmetic.add_lt_add_right_direct
       sixRealPositive (quadrance + 1)
     have increased : quadrance + 1 <
         6 * (denominatorRatio.re + 1) + (quadrance + 1) := by
@@ -1885,40 +1888,40 @@ remaining cylinder branches are exactly the irrational diagonal boundary
 pattern. -/
 theorem diagonal_obstruction_core_impossible
     (errorRatio denominatorRatio nextDenominatorRatio : Gaussian.Basic.Canonical)
-    (errorInside : Data.Gaussian.Norm.Basic.normSq errorRatio < 1)
-    (denominatorInside : Data.Gaussian.Norm.Basic.normSq denominatorRatio < 1)
+    (errorInside : Gaussian.Norm.Basic.normSq errorRatio < 1)
+    (denominatorInside : Gaussian.Norm.Basic.normSq denominatorRatio < 1)
     (selfObstruction : ∀ unit : GaussianInt, GaussianInt.normNat unit = 1 →
-      (2 : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
-        2 ≤ Data.Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio))
+      (2 : Fraction.Rational) ≤ Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
+        2 ≤ Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio))
     (nextObstruction : ∀ unit : GaussianInt, GaussianInt.normNat unit = 1 →
-      (2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq errorRatio ≤
-          Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
-        2 * Data.Gaussian.Norm.Basic.normSq nextDenominatorRatio ≤
-          Data.Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio))
+      (2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq errorRatio ≤
+          Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
+        2 * Gaussian.Norm.Basic.normSq nextDenominatorRatio ≤
+          Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio))
     (negativeOneErrorImpossible :
       ¬ (2 : Fraction.Rational) ≤
-        Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-1 : GaussianInt)))
+        Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-1 : GaussianInt)))
     (positiveImaginaryErrorImpossible :
-      ¬ (2 : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq
+      ¬ (2 : Fraction.Rational) ≤ Gaussian.Norm.Basic.normSq
         (errorRatio -
           GaussianInt.toGaussian GaussianInt.Norm.Small.imaginaryUnit))
     (negativeOneNextDenominatorImpossible :
-      ¬ (2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq nextDenominatorRatio ≤
-        Data.Gaussian.Norm.Basic.normSq (1 -
+      ¬ (2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq nextDenominatorRatio ≤
+        Gaussian.Norm.Basic.normSq (1 -
           GaussianInt.toGaussian (-1 : GaussianInt) * denominatorRatio))
     (positiveImaginaryNextDenominatorImpossible :
-      ¬ (2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq nextDenominatorRatio ≤
-        Data.Gaussian.Norm.Basic.normSq (1 -
+      ¬ (2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq nextDenominatorRatio ≤
+        Gaussian.Norm.Basic.normSq (1 -
           GaussianInt.toGaussian GaussianInt.Norm.Small.imaginaryUnit *
             denominatorRatio)) :
     False := by
-  have realCross := Best.Consecutive.RepeatedIndex.opposite_self_obstructions_cross errorRatio
+  have realCross := opposite_self_obstructions_cross errorRatio
     denominatorRatio errorInside denominatorInside 1 rfl
     (selfObstruction 1 rfl) (selfObstruction (-1) (by decide))
   obtain ⟨positiveOneError, negativeOneDenominator⟩ :=
     realCross.resolve_right (fun alternative =>
       negativeOneErrorImpossible alternative.2)
-  have imaginaryCross := Best.Consecutive.RepeatedIndex.opposite_self_obstructions_cross errorRatio
+  have imaginaryCross := opposite_self_obstructions_cross errorRatio
     denominatorRatio errorInside denominatorInside
     GaussianInt.Norm.Small.imaginaryUnit (by decide)
     (selfObstruction GaussianInt.Norm.Small.imaginaryUnit (by decide))
@@ -1966,7 +1969,7 @@ theorem diagonal_obstruction_core_impossible
   rw [positiveOneIdentity] at positiveOneError
   rw [negativeOneIdentity] at negativeOneNextError
   rw [negativeImaginaryIdentity] at negativeImaginaryError
-  exact Best.Consecutive.NormalForm.centered_diagonal_error_pattern_impossible
+  exact NormalForm.centered_diagonal_error_pattern_impossible
     1 errorRatio (by decide) positiveOneError negativeOneNextError
       positiveImaginaryNextError negativeImaginaryError
 
@@ -1974,68 +1977,68 @@ theorem diagonal_obstruction_core_impossible
 coefficient. -/
 theorem diagonalStep_obstructions_impossible
     (errorRatio denominatorRatio : Gaussian.Basic.Canonical)
-    (errorInside : Data.Gaussian.Norm.Basic.normSq errorRatio < 1)
-    (denominatorInside : Data.Gaussian.Norm.Basic.normSq denominatorRatio < 1)
+    (errorInside : Gaussian.Norm.Basic.normSq errorRatio < 1)
+    (denominatorInside : Gaussian.Norm.Basic.normSq denominatorRatio < 1)
     (errorTransition :
-      Data.Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian Best.Consecutive.RepeatedIndex.diagonalStep *
+      Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian diagonalStep *
         errorRatio) <
-        Data.Gaussian.Norm.Basic.normSq errorRatio)
+        Gaussian.Norm.Basic.normSq errorRatio)
     (denominatorTransition :
-      1 < Data.Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
-        Best.Consecutive.RepeatedIndex.diagonalStep))
+      1 < Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
+        diagonalStep))
     (selfObstruction : ∀ unit : GaussianInt, GaussianInt.normNat unit = 1 →
-      (2 : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
-        2 ≤ Data.Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio))
+      (2 : Fraction.Rational) ≤ Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
+        2 ≤ Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio))
     (nextObstruction : ∀ unit : GaussianInt, GaussianInt.normNat unit = 1 →
-      (2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq errorRatio ≤
-          Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
-        2 * Data.Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
-          Best.Consecutive.RepeatedIndex.diagonalStep) ≤
-          Data.Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio)) :
+      (2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq errorRatio ≤
+          Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
+        2 * Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
+          diagonalStep) ≤
+          Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio)) :
     False := by
-  exact Best.Consecutive.RepeatedIndex.diagonal_obstruction_core_impossible errorRatio denominatorRatio
-    (denominatorRatio + GaussianInt.toGaussian Best.Consecutive.RepeatedIndex.diagonalStep) errorInside
+  exact diagonal_obstruction_core_impossible errorRatio denominatorRatio
+    (denominatorRatio + GaussianInt.toGaussian diagonalStep) errorInside
     denominatorInside selfObstruction nextObstruction
-    (Best.Consecutive.RepeatedIndex.diagonalStep_negativeOne_error_impossible errorRatio errorInside
+    (diagonalStep_negativeOne_error_impossible errorRatio errorInside
       errorTransition)
-    (Best.Consecutive.RepeatedIndex.diagonalStep_positiveImaginary_error_impossible errorRatio errorInside
+    (diagonalStep_positiveImaginary_error_impossible errorRatio errorInside
       errorTransition)
-    (Best.Consecutive.RepeatedIndex.diagonalStep_negativeOne_nextDenominator_impossible denominatorRatio
+    (diagonalStep_negativeOne_nextDenominator_impossible denominatorRatio
       denominatorInside denominatorTransition)
-    (Best.Consecutive.RepeatedIndex.diagonalStep_positiveImaginary_nextDenominator_impossible
+    (diagonalStep_positiveImaginary_nextDenominator_impossible
       denominatorRatio denominatorInside denominatorTransition)
 
 /-- Complete finite normalized exclusion for the canonical `2+2i`
 coefficient. -/
 theorem doubledDiagonalStep_obstructions_impossible
     (errorRatio denominatorRatio : Gaussian.Basic.Canonical)
-    (errorInside : Data.Gaussian.Norm.Basic.normSq errorRatio < 1)
-    (factorFour : (1 : Fraction.Rational) < 4 * Data.Gaussian.Norm.Basic.normSq errorRatio)
-    (denominatorInside : Data.Gaussian.Norm.Basic.normSq denominatorRatio < 1)
+    (errorInside : Gaussian.Norm.Basic.normSq errorRatio < 1)
+    (factorFour : (1 : Fraction.Rational) < 4 * Gaussian.Norm.Basic.normSq errorRatio)
+    (denominatorInside : Gaussian.Norm.Basic.normSq denominatorRatio < 1)
     (errorTransition :
-      Data.Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian Best.Consecutive.RepeatedIndex.doubledDiagonalStep
+      Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian doubledDiagonalStep
         * errorRatio) <
-        Data.Gaussian.Norm.Basic.normSq errorRatio)
+        Gaussian.Norm.Basic.normSq errorRatio)
     (selfObstruction : ∀ unit : GaussianInt, GaussianInt.normNat unit = 1 →
-      (2 : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
-        2 ≤ Data.Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio))
+      (2 : Fraction.Rational) ≤ Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
+        2 ≤ Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio))
     (nextObstruction : ∀ unit : GaussianInt, GaussianInt.normNat unit = 1 →
-      (2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq errorRatio ≤
-          Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
-        2 * Data.Gaussian.Norm.Basic.normSq
-            (denominatorRatio + GaussianInt.toGaussian Best.Consecutive.RepeatedIndex.doubledDiagonalStep) ≤
-          Data.Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio)) :
+      (2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq errorRatio ≤
+          Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
+        2 * Gaussian.Norm.Basic.normSq
+            (denominatorRatio + GaussianInt.toGaussian doubledDiagonalStep) ≤
+          Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio)) :
     False := by
-  exact Best.Consecutive.RepeatedIndex.diagonal_obstruction_core_impossible errorRatio denominatorRatio
-    (denominatorRatio + GaussianInt.toGaussian Best.Consecutive.RepeatedIndex.doubledDiagonalStep) errorInside
+  exact diagonal_obstruction_core_impossible errorRatio denominatorRatio
+    (denominatorRatio + GaussianInt.toGaussian doubledDiagonalStep) errorInside
     denominatorInside selfObstruction nextObstruction
-    (Best.Consecutive.RepeatedIndex.doubledDiagonalStep_negativeOne_error_impossible errorRatio errorInside
+    (doubledDiagonalStep_negativeOne_error_impossible errorRatio errorInside
       factorFour errorTransition)
-    (Best.Consecutive.RepeatedIndex.doubledDiagonalStep_positiveImaginary_error_impossible errorRatio
+    (doubledDiagonalStep_positiveImaginary_error_impossible errorRatio
       errorInside factorFour errorTransition)
-    (Best.Consecutive.RepeatedIndex.doubledDiagonalStep_negativeOne_nextDenominator_impossible
+    (doubledDiagonalStep_negativeOne_nextDenominator_impossible
       denominatorRatio denominatorInside)
-    (Best.Consecutive.RepeatedIndex.doubledDiagonalStep_positiveImaginary_nextDenominator_impossible
+    (doubledDiagonalStep_positiveImaginary_nextDenominator_impossible
       denominatorRatio denominatorInside)
 
 /-- Complete finite normalized exclusion for the canonical axial coefficient
@@ -2043,76 +2046,76 @@ theorem doubledDiagonalStep_obstructions_impossible
 factor-four estimate then makes the axial transition inequality impossible. -/
 theorem doubledAxisStep_obstructions_impossible
     (errorRatio denominatorRatio : Gaussian.Basic.Canonical)
-    (errorInside : Data.Gaussian.Norm.Basic.normSq errorRatio < 1)
-    (factorFour : (1 : Fraction.Rational) < 4 * Data.Gaussian.Norm.Basic.normSq errorRatio)
-    (denominatorInside : Data.Gaussian.Norm.Basic.normSq denominatorRatio < 1)
+    (errorInside : Gaussian.Norm.Basic.normSq errorRatio < 1)
+    (factorFour : (1 : Fraction.Rational) < 4 * Gaussian.Norm.Basic.normSq errorRatio)
+    (denominatorInside : Gaussian.Norm.Basic.normSq denominatorRatio < 1)
     (errorTransition :
-      Data.Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian Best.Consecutive.RepeatedIndex.doubledAxisStep *
+      Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian doubledAxisStep *
         errorRatio) <
-        Data.Gaussian.Norm.Basic.normSq errorRatio)
+        Gaussian.Norm.Basic.normSq errorRatio)
     (selfObstruction : ∀ unit : GaussianInt, GaussianInt.normNat unit = 1 →
-      (2 : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
-        2 ≤ Data.Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio))
+      (2 : Fraction.Rational) ≤ Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
+        2 ≤ Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio))
     (nextObstruction : ∀ unit : GaussianInt, GaussianInt.normNat unit = 1 →
-      (2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq errorRatio ≤
-          Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
-        2 * Data.Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
-          Best.Consecutive.RepeatedIndex.doubledAxisStep) ≤
-          Data.Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio)) :
+      (2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq errorRatio ≤
+          Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian unit) ∨
+        2 * Gaussian.Norm.Basic.normSq (denominatorRatio + GaussianInt.toGaussian
+          doubledAxisStep) ≤
+          Gaussian.Norm.Basic.normSq (1 - GaussianInt.toGaussian unit * denominatorRatio)) :
     False := by
-  have realCross := Best.Consecutive.RepeatedIndex.opposite_self_obstructions_cross errorRatio
+  have realCross := opposite_self_obstructions_cross errorRatio
     denominatorRatio errorInside denominatorInside 1 rfl
     (selfObstruction 1 rfl) (selfObstruction (-1) (by decide))
   obtain ⟨positiveOneError, _⟩ := realCross.resolve_right
     (fun alternative =>
-      Best.Consecutive.RepeatedIndex.doubledAxisStep_negativeOne_error_impossible errorRatio
+      doubledAxisStep_negativeOne_error_impossible errorRatio
         errorTransition alternative.2)
   have negativeOneNext := nextObstruction (-1) (by decide)
   have negativeOneNextError := negativeOneNext.resolve_right
-    (Best.Consecutive.RepeatedIndex.doubledAxisStep_negativeOne_nextDenominator_impossible
+    (doubledAxisStep_negativeOne_nextDenominator_impossible
       denominatorRatio denominatorInside)
-  let quadrance := Data.Gaussian.Norm.Basic.normSq errorRatio
+  let quadrance := Gaussian.Norm.Basic.normSq errorRatio
   have positiveOneExpanded :
       (2 : Fraction.Rational) ≤ 1 + quadrance - 2 * errorRatio.re := by
     calc
       (2 : Fraction.Rational) ≤
-          Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (1 : GaussianInt)) :=
+          Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (1 : GaussianInt)) :=
         positiveOneError
       _ = 1 + quadrance - 2 * errorRatio.re := by
-        dsimp only [quadrance, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian]
+        dsimp only [quadrance, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian]
         simp only [Gaussian.Basic.sub_re,
           Gaussian.Basic.sub_im,
           GaussianInt.one_re,
           GaussianInt.one_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
   have negativeOneExpanded :
       2 * quadrance ≤ 1 + quadrance + 2 * errorRatio.re := by
     calc
       2 * quadrance ≤
-          Data.Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-1 : GaussianInt)) :=
+          Gaussian.Norm.Basic.normSq (errorRatio - GaussianInt.toGaussian (-1 : GaussianInt)) :=
         negativeOneNextError
       _ = 1 + quadrance + 2 * errorRatio.re := by
-        dsimp only [quadrance, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian]
+        dsimp only [quadrance, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian]
         simp only [Gaussian.Basic.sub_re,
           Gaussian.Basic.sub_im,
           GaussianInt.neg_re,
           GaussianInt.neg_im,
           GaussianInt.one_re,
           GaussianInt.one_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
   have realUpper : 2 * errorRatio.re ≤ quadrance - 1 := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       0 ≤ (1 + quadrance - 2 * errorRatio.re) - 2 :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct positiveOneExpanded
+        Arithmetic.sub_nonneg_direct positiveOneExpanded
       _ = (quadrance - 1) - 2 * errorRatio.re := by ring1
   have realLower : quadrance - 1 ≤ 2 * errorRatio.re := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       0 ≤ (1 + quadrance + 2 * errorRatio.re) - 2 * quadrance :=
-        Fraction.Order.Arithmetic.sub_nonneg_direct negativeOneExpanded
+        Arithmetic.sub_nonneg_direct negativeOneExpanded
       _ = 2 * errorRatio.re - (quadrance - 1) := by ring1
   have realIdentity : 2 * errorRatio.re = quadrance - 1 :=
     le_antisymm realUpper realLower
@@ -2124,14 +2127,14 @@ theorem doubledAxisStep_obstructions_impossible
     all_goals ring1
   have transitionExpanded :
       1 + 3 * quadrance + 4 * errorRatio.re < 0 := by
-    have difference := Fraction.Order.Arithmetic.sub_neg_direct
+    have difference := Arithmetic.sub_neg_direct
       errorTransition
     calc
       1 + 3 * quadrance + 4 * errorRatio.re =
-          Data.Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian Best.Consecutive.RepeatedIndex.doubledAxisStep
+          Gaussian.Norm.Basic.normSq (1 + GaussianInt.toGaussian doubledAxisStep
             * errorRatio) -
-            Data.Gaussian.Norm.Basic.normSq errorRatio := by
-        dsimp only [quadrance, Best.Consecutive.RepeatedIndex.doubledAxisStep, Data.Gaussian.Norm.Basic.normSq,
+            Gaussian.Norm.Basic.normSq errorRatio := by
+        dsimp only [quadrance, doubledAxisStep, Gaussian.Norm.Basic.normSq,
           GaussianInt.toGaussian]
         simp only [Gaussian.Basic.add_re,
           Gaussian.Basic.add_im,
@@ -2139,11 +2142,11 @@ theorem doubledAxisStep_obstructions_impossible
           Gaussian.Basic.mul_im,
           Gaussian.Basic.one_re,
           Gaussian.Basic.one_im]
-        simp only [-eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        simp only [-eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
         ring1
       _ < 0 := difference
   have fiveQuadranceLtOne : 5 * quadrance < (1 : Fraction.Rational) := by
-    apply Fraction.Order.Arithmetic.lt_of_sub_neg_direct
+    apply Arithmetic.lt_of_sub_neg_direct
     calc
       5 * quadrance - 1 =
           1 + 3 * quadrance + 4 * errorRatio.re := by
@@ -2153,13 +2156,13 @@ theorem doubledAxisStep_obstructions_impossible
   have quadrancePositive : 0 < quadrance := by
     have fourPositive : (0 : Fraction.Rational) < 4 * quadrance :=
       (show (0 : Fraction.Rational) < 1 by decide).trans factorFour
-    apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+    apply Arithmetic.lt_of_mul_lt_mul_right_direct
       (c := 4)
     · convert fourPositive using 1 <;> ring1
     · decide
   have fourQuadranceLtFive :
       4 * quadrance < 5 * quadrance := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have shifted := Arithmetic.add_lt_add_right_direct
       quadrancePositive (4 * quadrance)
     convert shifted using 1 <;> ring1
   exact (not_lt_of_ge fiveQuadranceLtOne.le)
@@ -2168,14 +2171,14 @@ theorem doubledAxisStep_obstructions_impossible
 /-- Normalized cylinder data with a quadrance-two transition coefficient is
 impossible, after rotating its displayed coefficient to `1+i`. -/
 theorem NormalizedCylinderData.impossible_of_coefficientNorm_eq_two
-    {coefficient : GaussianInt} (data : Best.Consecutive.RepeatedIndex.NormalizedCylinderData coefficient)
+    {coefficient : GaussianInt} (data : NormalizedCylinderData coefficient)
     (coefficientNorm : GaussianInt.normNat coefficient = 2) : False := by
   obtain ⟨associate, associateProperty, associated⟩ :=
-    Best.Consecutive.RepeatedIndex.exists_unit_associate_of_normNat_eq_two coefficient coefficientNorm
-  let canonicalData := Best.Consecutive.RepeatedIndex.transportNormalizedData coefficient
-    Best.Consecutive.RepeatedIndex.diagonalStep
+    exists_unit_associate_of_normNat_eq_two coefficient coefficientNorm
+  let canonicalData := transportNormalizedData coefficient
+    diagonalStep
     associate associateProperty associated data
-  exact Best.Consecutive.RepeatedIndex.diagonalStep_obstructions_impossible canonicalData.errorRatio
+  exact diagonalStep_obstructions_impossible canonicalData.errorRatio
     canonicalData.denominatorRatio canonicalData.errorInside
     canonicalData.denominatorInside canonicalData.errorTransition
     canonicalData.denominatorTransition canonicalData.selfObstruction
@@ -2184,14 +2187,14 @@ theorem NormalizedCylinderData.impossible_of_coefficientNorm_eq_two
 /-- Normalized cylinder data with a quadrance-four transition coefficient is
 impossible, after rotating its displayed coefficient to `2`. -/
 theorem NormalizedCylinderData.impossible_of_coefficientNorm_eq_four
-    {coefficient : GaussianInt} (data : Best.Consecutive.RepeatedIndex.NormalizedCylinderData coefficient)
+    {coefficient : GaussianInt} (data : NormalizedCylinderData coefficient)
     (coefficientNorm : GaussianInt.normNat coefficient = 4) : False := by
   obtain ⟨associate, associateProperty, associated⟩ :=
-    Best.Consecutive.RepeatedIndex.exists_unit_associate_of_normNat_eq_four coefficient coefficientNorm
-  let canonicalData := Best.Consecutive.RepeatedIndex.transportNormalizedData coefficient
-    Best.Consecutive.RepeatedIndex.doubledAxisStep
+    exists_unit_associate_of_normNat_eq_four coefficient coefficientNorm
+  let canonicalData := transportNormalizedData coefficient
+    doubledAxisStep
     associate associateProperty associated data
-  exact Best.Consecutive.RepeatedIndex.doubledAxisStep_obstructions_impossible canonicalData.errorRatio
+  exact doubledAxisStep_obstructions_impossible canonicalData.errorRatio
     canonicalData.denominatorRatio canonicalData.errorInside
     canonicalData.factorFour canonicalData.denominatorInside
     canonicalData.errorTransition canonicalData.selfObstruction
@@ -2200,13 +2203,13 @@ theorem NormalizedCylinderData.impossible_of_coefficientNorm_eq_four
 /-- Normalized cylinder data with a quadrance-eight transition coefficient is
 impossible, after rotating its displayed coefficient to `2+2i`. -/
 theorem NormalizedCylinderData.impossible_of_coefficientNorm_eq_eight
-    {coefficient : GaussianInt} (data : Best.Consecutive.RepeatedIndex.NormalizedCylinderData coefficient)
+    {coefficient : GaussianInt} (data : NormalizedCylinderData coefficient)
     (coefficientNorm : GaussianInt.normNat coefficient = 8) : False := by
   obtain ⟨associate, associateProperty, associated⟩ :=
-    Best.Consecutive.RepeatedIndex.exists_unit_associate_of_normNat_eq_eight coefficient coefficientNorm
-  let canonicalData := Best.Consecutive.RepeatedIndex.transportNormalizedData coefficient
-    Best.Consecutive.RepeatedIndex.doubledDiagonalStep associate associateProperty associated data
-  exact Best.Consecutive.RepeatedIndex.doubledDiagonalStep_obstructions_impossible canonicalData.errorRatio
+    exists_unit_associate_of_normNat_eq_eight coefficient coefficientNorm
+  let canonicalData := transportNormalizedData coefficient
+    doubledDiagonalStep associate associateProperty associated data
+  exact doubledDiagonalStep_obstructions_impossible canonicalData.errorRatio
     canonicalData.denominatorRatio canonicalData.errorInside
     canonicalData.factorFour canonicalData.denominatorInside
     canonicalData.errorTransition canonicalData.selfObstruction
@@ -2215,7 +2218,7 @@ theorem NormalizedCylinderData.impossible_of_coefficientNorm_eq_eight
 /-- The three coefficient quadrances left by the bounded repeated-index
 normal form are all impossible. -/
 theorem NormalizedCylinderData.impossible_of_coefficientNorm_cases
-    {coefficient : GaussianInt} (data : Best.Consecutive.RepeatedIndex.NormalizedCylinderData coefficient)
+    {coefficient : GaussianInt} (data : NormalizedCylinderData coefficient)
     (coefficientNorm : GaussianInt.normNat coefficient = 2 ∨
       GaussianInt.normNat coefficient = 4 ∨ GaussianInt.normNat coefficient = 8) : False := by
   rcases coefficientNorm with normTwo | normFour | normEight
@@ -2228,33 +2231,33 @@ coefficient-index quadrance two.  The proof constructs the normalized
 cylinder record directly from the finite normal form and invokes the
 three-case normalized exclusion above. -/
 theorem repeatedIndexTwo_impossible
-    {source : GaussianInt.Fraction} {lower middle upper : GaussianInt.Pair.Basic.ConvergentPair}
-    (first : Best.Consecutive.Basic.AreConsecutiveBest
+    {source : GaussianInt.Fraction} {lower middle upper : Basic.ConvergentPair}
+    (first : Basic.AreConsecutiveBest
       source.value lower middle)
-    (second : Best.Consecutive.Basic.AreConsecutiveBest
+    (second : Basic.AreConsecutiveBest
       source.value middle upper)
     (leftIndexTwo :
-      GaussianInt.Pair.LinearCombination.coefficientIndexQuadrance lower middle = 2)
+      LinearCombination.coefficientIndexQuadrance lower middle = 2)
     (rightIndexTwo :
-      GaussianInt.Pair.LinearCombination.coefficientIndexQuadrance middle upper = 2) :
+      LinearCombination.coefficientIndexQuadrance middle upper = 2) :
     False := by
   obtain ⟨lowerUnit, step, lowerUnitNorm, stepCases, transitionIdentity⟩ :=
-    (Best.Consecutive.NormalForm.AreConsecutiveBest.repeatedIndexTwo_enumeratedNormalForm first) second leftIndexTwo
+    (NormalForm.AreConsecutiveBest.repeatedIndexTwo_enumeratedNormalForm first) second leftIndexTwo
       rightIndexTwo
   let determinantValue :=
-    GaussianInt.Pair.LinearCombination.coefficientDeterminant lower middle
+    LinearCombination.coefficientDeterminant lower middle
   let coefficient := determinantValue * step
   let largeError :=
-    GaussianInt.toGaussian lowerUnit * Best.Error.error source.value lower
-  let smallError := Best.Error.error source.value middle
-  let nextError := Best.Error.error source.value upper
+    GaussianInt.toGaussian lowerUnit * Error.error source.value lower
+  let smallError := Error.error source.value middle
+  let nextError := Error.error source.value upper
   let lowerDenominator :=
     GaussianInt.toGaussian lowerUnit * GaussianInt.toGaussian lower.denominator
   let middleDenominator := GaussianInt.toGaussian middle.denominator
   let upperDenominator := GaussianInt.toGaussian upper.denominator
   have determinantNorm : GaussianInt.normNat determinantValue = 2 := by
     simpa only [determinantValue,
-      GaussianInt.Pair.LinearCombination.coefficientIndexQuadrance] using leftIndexTwo
+      LinearCombination.coefficientIndexQuadrance] using leftIndexTwo
   have coefficientNormCases :
       GaussianInt.normNat coefficient = 2 ∨ GaussianInt.normNat coefficient = 4 ∨
         GaussianInt.normNat coefficient = 8 := by
@@ -2265,57 +2268,57 @@ theorem repeatedIndexTwo_impossible
     · exact Or.inr (Or.inl (by rw [stepTwo]))
     · exact Or.inr (Or.inr (by rw [stepFour]))
   have largeErrorNorm :
-      Data.Gaussian.Norm.Basic.normSq largeError =
-        Data.Gaussian.Norm.Basic.normSq (Best.Error.error source.value lower) := by
+      Gaussian.Norm.Basic.normSq largeError =
+        Gaussian.Norm.Basic.normSq (Error.error source.value lower) := by
     dsimp only [ largeError]
     rw [Gaussian.Norm.Basic.normSq_mul, GaussianInt.normSq_toGaussian, lowerUnitNorm]
     ring1
   have lowerDenominatorNorm :
-      Data.Gaussian.Norm.Basic.normSq lowerDenominator = Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian
+      Gaussian.Norm.Basic.normSq lowerDenominator = Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian
         lower.denominator) := by
     dsimp only [ lowerDenominator]
     rw [Gaussian.Norm.Basic.normSq_mul, GaussianInt.normSq_toGaussian, lowerUnitNorm]
     ring1
   have rawErrorOrdered :
-      Data.Gaussian.Norm.Basic.normSq (Best.Error.error source.value middle) <
-        Data.Gaussian.Norm.Basic.normSq (Best.Error.error source.value lower) :=
+      Gaussian.Norm.Basic.normSq (Error.error source.value middle) <
+        Gaussian.Norm.Basic.normSq (Error.error source.value lower) :=
     first.2.1.2.1 lower first.1.1 first.2.2.1
   have largeErrorNonzero : largeError ≠ 0 := by
     intro largeErrorZero
-    have lowerNormZero := congrArg Data.Gaussian.Norm.Basic.normSq largeErrorZero
+    have lowerNormZero := congrArg Gaussian.Norm.Basic.normSq largeErrorZero
     rw [largeErrorNorm, Gaussian.Norm.Basic.normSq_zero] at lowerNormZero
     have impossible := rawErrorOrdered
     rw [lowerNormZero] at impossible
     exact (not_lt_of_ge
       (Gaussian.Norm.Basic.normSq_nonneg
-        (Best.Error.error source.value middle))) impossible
+        (Error.error source.value middle))) impossible
   have middleDenominatorNonzero : middleDenominator ≠ 0 := by
     intro middleZero
     apply first.2.1.1
     apply GaussianInt.toGaussian_eq_zero.mp
     exact middleZero
-  have errorOrdered : Data.Gaussian.Norm.Basic.normSq smallError < Data.Gaussian.Norm.Basic.normSq largeError :=
+  have errorOrdered : Gaussian.Norm.Basic.normSq smallError < Gaussian.Norm.Basic.normSq largeError :=
     by
     rw [largeErrorNorm]
     exact rawErrorOrdered
-  have nextErrorOrdered : Data.Gaussian.Norm.Basic.normSq nextError < Data.Gaussian.Norm.Basic.normSq smallError
+  have nextErrorOrdered : Gaussian.Norm.Basic.normSq nextError < Gaussian.Norm.Basic.normSq smallError
     := by
     dsimp only [ nextError, smallError]
     exact second.2.1.2.1 middle second.1.1 second.2.2.1
-  have factorFour : Data.Gaussian.Norm.Basic.normSq largeError < 4 * Data.Gaussian.Norm.Basic.normSq smallError
+  have factorFour : Gaussian.Norm.Basic.normSq largeError < 4 * Gaussian.Norm.Basic.normSq smallError
     := by
     rw [largeErrorNorm]
     dsimp only [ smallError]
-    exact (Best.Consecutive.NormalForm.AreConsecutiveBest.errorQuadrance_lower_lt_four_mul_upper_of_index_two first)
+    exact (NormalForm.AreConsecutiveBest.errorQuadrance_lower_lt_four_mul_upper_of_index_two first)
       leftIndexTwo
   have denominatorOrdered :
-      Data.Gaussian.Norm.Basic.normSq lowerDenominator < Data.Gaussian.Norm.Basic.normSq middleDenominator := by
+      Gaussian.Norm.Basic.normSq lowerDenominator < Gaussian.Norm.Basic.normSq middleDenominator := by
     rw [lowerDenominatorNorm]
     dsimp only [ middleDenominator]
     rw [GaussianInt.normSq_toGaussian, GaussianInt.normSq_toGaussian]
     exact Fraction.Cast.Order.natCast_lt_direct first.2.2.1
   have nextDenominatorOrdered :
-      Data.Gaussian.Norm.Basic.normSq middleDenominator < Data.Gaussian.Norm.Basic.normSq upperDenominator := by
+      Gaussian.Norm.Basic.normSq middleDenominator < Gaussian.Norm.Basic.normSq upperDenominator := by
     dsimp only [ middleDenominator, upperDenominator]
     rw [GaussianInt.normSq_toGaussian, GaussianInt.normSq_toGaussian]
     exact Fraction.Cast.Order.natCast_lt_direct second.2.2.1
@@ -2324,49 +2327,49 @@ theorem repeatedIndexTwo_impossible
     dsimp only [ nextError, largeError, coefficient, determinantValue,
       smallError]
     rw [transitionIdentity,
-      Best.Error.error_linearCombination]
+      Error.error_linearCombination]
   have denominatorIdentity :
       upperDenominator =
         lowerDenominator + GaussianInt.toGaussian coefficient * middleDenominator := by
     dsimp only [ upperDenominator, lowerDenominator, coefficient,
       determinantValue, middleDenominator]
     rw [transitionIdentity]
-    simp only [-eq_self, -iff_self, GaussianInt.Pair.LinearCombination.linearCombination, GaussianInt.toGaussian_add,
+    simp only [-eq_self, -iff_self, LinearCombination.linearCombination, GaussianInt.toGaussian_add,
       GaussianInt.toGaussian_mul]
     rfl
   have selfObstruction (unit : GaussianInt) (unitNorm : GaussianInt.normNat unit = 1) :
-      (2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq largeError ≤
-          Data.Gaussian.Norm.Basic.normSq (smallError - GaussianInt.toGaussian unit * largeError) ∨
-        2 * Data.Gaussian.Norm.Basic.normSq middleDenominator ≤
-          Data.Gaussian.Norm.Basic.normSq (middleDenominator -
+      (2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq largeError ≤
+          Gaussian.Norm.Basic.normSq (smallError - GaussianInt.toGaussian unit * largeError) ∨
+        2 * Gaussian.Norm.Basic.normSq middleDenominator ≤
+          Gaussian.Norm.Basic.normSq (middleDenominator -
             GaussianInt.toGaussian unit * lowerDenominator) := by
     let sourceUnit := unit * lowerUnit
     have sourceUnitNorm : GaussianInt.normNat sourceUnit = 1 := by
       dsimp only [ sourceUnit]
       rw [GaussianInt.Embedding.normNat_mul, unitNorm, lowerUnitNorm]
-    have obstruction := (Best.Consecutive.NormalForm.AreConsecutiveBest.centeredUnit_selfCoordinateObstruction first)
+    have obstruction := (NormalForm.AreConsecutiveBest.centeredUnit_selfCoordinateObstruction first)
       leftIndexTwo sourceUnit sourceUnitNorm
     rw [largeErrorNorm]
     simpa only [largeError, smallError, lowerDenominator,
       middleDenominator, sourceUnit, GaussianInt.toGaussian_mul,
       Gaussian.Basic.mul_assoc] using obstruction
   have nextObstruction (unit : GaussianInt) (unitNorm : GaussianInt.normNat unit = 1) :
-      (2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq smallError ≤
-          Data.Gaussian.Norm.Basic.normSq (smallError - GaussianInt.toGaussian unit * largeError) ∨
-        2 * Data.Gaussian.Norm.Basic.normSq upperDenominator ≤
-          Data.Gaussian.Norm.Basic.normSq (middleDenominator -
+      (2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq smallError ≤
+          Gaussian.Norm.Basic.normSq (smallError - GaussianInt.toGaussian unit * largeError) ∨
+        2 * Gaussian.Norm.Basic.normSq upperDenominator ≤
+          Gaussian.Norm.Basic.normSq (middleDenominator -
             GaussianInt.toGaussian unit * lowerDenominator) := by
     let sourceUnit := unit * lowerUnit
     have sourceUnitNorm : GaussianInt.normNat sourceUnit = 1 := by
       dsimp only [ sourceUnit]
       rw [GaussianInt.Embedding.normNat_mul, unitNorm, lowerUnitNorm]
-    have obstruction := (Best.Consecutive.NormalForm.AreConsecutiveBest.centeredUnit_nextCoordinateObstruction first)
+    have obstruction := (NormalForm.AreConsecutiveBest.centeredUnit_nextCoordinateObstruction first)
       second
       leftIndexTwo sourceUnit sourceUnitNorm
     simpa only [largeError, smallError, lowerDenominator,
       middleDenominator, upperDenominator, sourceUnit, GaussianInt.toGaussian_mul,
       Gaussian.Basic.mul_assoc] using obstruction
-  let data := Best.Consecutive.RepeatedIndex.normalizeCylinderData coefficient largeError smallError nextError
+  let data := normalizeCylinderData coefficient largeError smallError nextError
     lowerDenominator middleDenominator upperDenominator largeErrorNonzero
     middleDenominatorNonzero errorOrdered nextErrorOrdered factorFour
     denominatorOrdered nextDenominatorOrdered errorIdentity denominatorIdentity
@@ -2376,18 +2379,18 @@ theorem repeatedIndexTwo_impossible
 /-- After an index-two consecutive transition, the next consecutive
 transition has index one. -/
 theorem nextCoefficientIndexQuadrance_eq_one_of_eq_two
-    {source : GaussianInt.Fraction} {lower middle upper : GaussianInt.Pair.Basic.ConvergentPair}
-    (first : Best.Consecutive.Basic.AreConsecutiveBest
+    {source : GaussianInt.Fraction} {lower middle upper : Basic.ConvergentPair}
+    (first : Basic.AreConsecutiveBest
       source.value lower middle)
-    (second : Best.Consecutive.Basic.AreConsecutiveBest
+    (second : Basic.AreConsecutiveBest
       source.value middle upper)
     (leftIndexTwo :
-      GaussianInt.Pair.LinearCombination.coefficientIndexQuadrance lower middle = 2) :
-    GaussianInt.Pair.LinearCombination.coefficientIndexQuadrance middle upper = 1 := by
-  rcases (Best.Consecutive.Index.AreConsecutiveBest.coefficientIndexQuadrance_eq_one_or_two second) with
+      LinearCombination.coefficientIndexQuadrance lower middle = 2) :
+    LinearCombination.coefficientIndexQuadrance middle upper = 1 := by
+  rcases (Index.AreConsecutiveBest.coefficientIndexQuadrance_eq_one_or_two second) with
     rightIndexOne | rightIndexTwo
   · exact rightIndexOne
   · exact False.elim
-      (Best.Consecutive.RepeatedIndex.repeatedIndexTwo_impossible first second leftIndexTwo rightIndexTwo)
+      (repeatedIndexTwo_impossible first second leftIndexTwo rightIndexTwo)
 
 end Purelib.NumberTheory.Approximation.Best.Consecutive.RepeatedIndex

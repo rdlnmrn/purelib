@@ -64,6 +64,8 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 import Purelib.Data.Nat.Order
 
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-!
@@ -111,32 +113,32 @@ open Purelib.Riemann.Normalization.InverseRootPolynomial (Gaussian Coordinate)
 open Purelib.Data.Gaussian.Basic.Canonical
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners (Point Join)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {source :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {lastCount : Nat} {lastParent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {source :
+    UniformReciprocalModels.Data patch count}
+  {lastCount : Nat} {lastParent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve
     differential}
-  {lastPatch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch lastParent} {lastSource :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data lastPatch lastCount}
-  {firstEdge lastEdge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge}
-  {firstCell : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell source firstEdge} {lastCell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell lastSource lastEdge}
-  {firstModel : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel firstCell}
-    {lastModel : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel lastCell}
-  {firstParameter lastParameter : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {first :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap firstModel firstParameter} {last :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap lastModel lastParameter}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {lastPatch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch lastParent} {lastSource :
+    UniformReciprocalModels.Data lastPatch lastCount}
+  {firstEdge lastEdge : Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge}
+  {firstCell : UniformReciprocalCover.Cell source firstEdge} {lastCell :
+    UniformReciprocalCover.Cell lastSource lastEdge}
+  {firstModel : UniformReciprocalRootChannels.RootModel firstCell}
+    {lastModel : UniformReciprocalRootChannels.RootModel lastCell}
+  {firstParameter lastParameter : Coordinate} {first :
+    Point cap firstModel firstParameter} {last :
+    Point cap lastModel lastParameter}
+  {regular : RegularBounds.Data cap}
 
 /-- Joined original endpoints have exactly the same retained differential coefficient at a shared cap polynomial stage.
 
 Both endpoints refer to the same joined cap point and retained polynomial stage; their exact factor and coefficient
 equations identify the displayed values. -/
-theorem coefficient_eq (joined : ArcOwners.Join first last) {index : Nat} {box : Rational.Box}
+theorem coefficient_eq (joined : Join first last) {index : Nat} {box : Rational.Box}
     {capSample : Primitives.Sample cap differential index box}
     (left : Coordinates.Overlap.Endpoint first.coordinates capSample)
     (right : Coordinates.Overlap.Endpoint last.coordinates capSample) : left.coefficient = right.coefficient := by
@@ -147,16 +149,16 @@ set_option genInjectivity false in
 
 The budget independently accounts for primitive coefficient error, radial energy and the original collar coordinate
 clearance. -/
-structure Request (data : EndpointComparison.Data regular first) (joined : ArcOwners.Join first last)
-    (target : InverseRootPolynomial.Coordinate) (floor : Nat) where
+structure Request (data : EndpointComparison.Data regular first) (joined : Join first last)
+    (target : Coordinate) (floor : Nat) where
   /-- The original connector target is strictly positive. -/ positive : 0 < target
   /-- The fixed original padded-cap coefficient bounds shared by every later polynomial stage. -/ energyBounds :
-    ReciprocalPaddedInverse.UniformBounds regular.padded
-  /-- The cached squared radial-connector coefficient scale. -/ energyScale : InverseRootPolynomial.Coordinate
+    UniformBounds regular.padded
+  /-- The cached squared radial-connector coefficient scale. -/ energyScale : Coordinate
   /-- The energy scale is exactly 512 times the square of the original coefficient ceiling. -/ energyScale_eq :
     energyScale = 512 * energyBounds.coefficientUpper differential ^ 2
   /-- The retained coordinate comparison budget paying all original connector obligations. -/ budget :
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The budget is the minimum of the original coefficient, radial-energy and collar-clearance tolerances. -/ budget_eq
     : budget = min (min (target / (data.coefficientUpper + 1))
     (target / (energyScale + 1))) (collar.coordinateBound / 64)
@@ -177,33 +179,33 @@ radial-energy ceilings.
 
 The cached comparison retains the original join and budget; its common stage is the maximum of the two selected reading
 indices. -/
-@[expose] def build (data : EndpointComparison.Data regular first) (joined : ArcOwners.Join first last)
-    (target : InverseRootPolynomial.Coordinate) (positive : 0 < target) (floor : Nat) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.JunctionRequests.Request data joined target floor :=
+@[expose] def build (data : EndpointComparison.Data regular first) (joined : Join first last)
+    (target : Coordinate) (positive : 0 < target) (floor : Nat) :
+      Request data joined target floor :=
   let energyBounds := UniformBounds.build regular.padded
   let energyScale : Coordinate := 512 * energyBounds.coefficientUpper differential ^ 2
-  have scaleNonnegative : 0 ≤ energyScale := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (by decide +kernel) (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+  have scaleNonnegative : 0 ≤ energyScale := Arithmetic.mul_nonneg_direct
+    (by decide +kernel) (Arithmetic.sq_nonneg_direct _)
   let budget := min (min (target / (data.coefficientUpper + 1))
     (target / (energyScale + 1))) (collar.coordinateBound / 64)
-  have budgetPositive : 0 < budget := Basic.lt_min (Basic.lt_min (Fraction.Order.Field.div_pos_direct positive
+  have budgetPositive : 0 < budget := Basic.lt_min (Basic.lt_min (Field.div_pos_direct positive
     (Arithmetic.add_pos_of_nonneg_of_pos_direct data.coefficientUpper_nonnegative (by decide)))
-    (Fraction.Order.Field.div_pos_direct positive (Arithmetic.add_pos_of_nonneg_of_pos_direct scaleNonnegative (by
+    (Field.div_pos_direct positive (Arithmetic.add_pos_of_nonneg_of_pos_direct scaleNonnegative (by
       decide))))
-    (Fraction.Order.Field.div_pos_direct collar.coordinateBound_positive (by decide +kernel))
+    (Field.div_pos_direct collar.coordinateBound_positive (by decide +kernel))
   let comparison := joined.coordinate.compare floor floor budget budgetPositive
   ⟨positive, energyBounds, energyScale, rfl, budget, rfl, comparison, max comparison.leftIndex comparison.rightIndex,
     rfl⟩
 
-variable {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.EndpointComparison.Data regular first} {joined :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Join first last}
-  {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
+variable {data : EndpointComparison.Data regular first} {joined :
+  Join first last}
+  {target : Coordinate} {floor : Nat}
 
 /-- The cached connector reading stage respects the original caller floor.
 
 The retained comparison respects the caller floor on its left reading, and that reading lies below the cached common
 stage. -/
-theorem floor_le (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.JunctionRequests.Request data joined target
+theorem floor_le (request : Request data joined target
   floor) : floor ≤ request.index := by
   rw [request.index_eq]
   rw [Order.max_eq_natMax]
@@ -214,10 +216,10 @@ selected later reading stages.
 
 Each supplied later stage lies above both retained comparison indices. The collar component of the paid minimum bounds
 their coordinate difference. -/
-theorem coordinate_accurate (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.JunctionRequests.Request data joined
+theorem coordinate_accurate (request : Request data joined
   target floor) {leftIndex rightIndex : Nat}
     (leftLater : request.index ≤ leftIndex) (rightLater : request.index ≤ rightIndex) :
-    Data.Gaussian.Norm.Basic.normSq ((Sampling.approximation
+    Basic.normSq ((Sampling.approximation
       last.coordinates.coordinate.prepared.denominator.name).sample rightIndex -
       (Sampling.approximation first.coordinates.coordinate.prepared.denominator.name).sample leftIndex) <
       collar.coordinateBound / 64 := by
@@ -228,9 +230,9 @@ theorem coordinate_accurate (request : Curves.Hyperelliptic.Charts.Reciprocal.Di
     rw [request.index_eq, Order.max_eq_natMax]
     exact Order.le_max_right _ _
   have close := request.comparison.close (leftStage.trans leftLater) (rightStage.trans rightLater)
-  have reverse (left right : InverseRootPolynomial.Gaussian) : Data.Gaussian.Norm.Basic.normSq (right - left) =
-    Data.Gaussian.Norm.Basic.normSq (left - right) := by
-    rw [show right - left = -(left - right) by ring1, Data.Gaussian.Norm.Basic.normSq_neg]
+  have reverse (left right : Gaussian) : Basic.normSq (right - left) =
+    Basic.normSq (left - right) := by
+    rw [show right - left = -(left - right) by ring1, Basic.normSq_neg]
   rw [reverse]
   exact close.trans_le (request.budget_eq.trans_le (Basic.min_le_right _ _))
 
@@ -239,13 +241,13 @@ readings.
 
 The coefficient ceiling and the paid coefficient tolerance bound the original cached sample difference at the supplied
 later stages. -/
-theorem accurate (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.JunctionRequests.Request data joined target
+theorem accurate (request : Request data joined target
   floor) {index leftIndex rightIndex : Nat} {box : Rational.Box}
     {capSample : Primitives.Sample cap differential index box}
     (left : Coordinates.Overlap.Endpoint first.coordinates capSample)
     (right : Coordinates.Overlap.Endpoint last.coordinates capSample)
     (leftLater : request.index ≤ leftIndex) (rightLater : request.index ≤ rightIndex) :
-    Data.Gaussian.Norm.Basic.normSq (right.approximation.sample rightIndex - left.approximation.sample
+    Basic.normSq (right.approximation.sample rightIndex - left.approximation.sample
       leftIndex) < target := by
   have leftStage : request.comparison.leftIndex ≤ request.index := by
     rw [request.index_eq, Order.max_eq_natMax]
@@ -254,7 +256,7 @@ theorem accurate (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Junction
     rw [request.index_eq, Order.max_eq_natMax]
     exact Order.le_max_right _ _
   have close := request.comparison.close (leftStage.trans leftLater) (rightStage.trans rightLater)
-  rw [left.sample_eq, right.sample_eq, ← Curves.Hyperelliptic.Charts.Reciprocal.Disk.JunctionRequests.coefficient_eq
+  rw [left.sample_eq, right.sample_eq, ← coefficient_eq
     joined left right,
     show (Sampling.approximation last.coordinates.coordinate.prepared.denominator.name).sample rightIndex *
       left.coefficient -
@@ -263,7 +265,7 @@ theorem accurate (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Junction
       -((Sampling.approximation first.coordinates.coordinate.prepared.denominator.name).sample leftIndex -
         (Sampling.approximation last.coordinates.coordinate.prepared.denominator.name).sample rightIndex) *
           left.coefficient by ring1,
-    Data.Gaussian.Norm.Basic.normSq_mul, Data.Gaussian.Norm.Basic.normSq_neg]
+    Basic.normSq_mul, Basic.normSq_neg]
   have enlarged : data.coefficientUpper ≤ data.coefficientUpper + 1 := by
     have shifted := Arithmetic.add_le_add_right_direct (by decide : (0 : Coordinate) ≤ 1) data.coefficientUpper
     calc
@@ -273,14 +275,14 @@ theorem accurate (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Junction
   have positive : 0 < data.coefficientUpper + 1 := Arithmetic.add_pos_of_nonneg_of_pos_direct
     data.coefficientUpper_nonnegative (by decide)
   calc
-    _ ≤ Data.Gaussian.Norm.Basic.normSq _ * (data.coefficientUpper + 1) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      ((data.coefficient_le left).trans enlarged) (Data.Gaussian.Norm.Basic.normSq_nonneg _)
-    _ < request.budget * (data.coefficientUpper + 1) := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct close
+    _ ≤ Basic.normSq _ * (data.coefficientUpper + 1) :=
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
+      ((data.coefficient_le left).trans enlarged) (Basic.normSq_nonneg _)
+    _ < request.budget * (data.coefficientUpper + 1) := Arithmetic.mul_lt_mul_of_pos_right_direct close
       positive
     _ ≤ target := by
       rw [request.budget_eq]
-      exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct ((Basic.min_le_left _ _).trans
+      exact (Arithmetic.mul_le_mul_of_nonneg_right_direct ((Basic.min_le_left _ _).trans
         (Basic.min_le_left _ _)) positive.le).trans_eq
         (Fraction.Field.div_mul_cancel_of_ne _ _ positive.ne')
 
@@ -289,7 +291,7 @@ containment is supplied by those readings' chart certificates.
 
 The original energy ceiling and paid radial tolerance bound the connector between the two certified padded readings at
 the supplied energy depth. -/
-theorem radial_accurate (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.JunctionRequests.Request data joined
+theorem radial_accurate (request : Request data joined
   target floor)
     {index leftIndex rightIndex : Nat} {box : Rational.Box}
     {capSample : Primitives.Sample cap differential index box}
@@ -301,7 +303,7 @@ theorem radial_accurate (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.J
     (leftInside : regular.padded.Contains (leftReading.coordinate * leftReading.coordinate))
     (rightInside : regular.padded.Contains (rightReading.coordinate * rightReading.coordinate))
     (leftLater : request.index ≤ leftIndex) (rightLater : request.index ≤ rightIndex) (depth : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (RootRadialGeometry.radialArea capSample.primitive.value.eval depth
+    Basic.normSq (RootRadialGeometry.radialArea capSample.primitive.value.eval depth
       rightReading.coordinate -
       RootRadialGeometry.radialArea capSample.primitive.value.eval depth leftReading.coordinate -
       BoundaryRibbon.area (capSample.primitive.value.eval leftReading.coordinate)
@@ -314,18 +316,18 @@ theorem radial_accurate (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.J
     exact Order.le_max_right _ _
   have estimate := request.energyBounds.radial_connector_bound capSample branch leftInside rightInside depth
   rw [← request.energyScale_eq] at estimate
-  have close : Data.Gaussian.Norm.Basic.normSq (rightReading.coordinate - leftReading.coordinate) <
+  have close : Basic.normSq (rightReading.coordinate - leftReading.coordinate) <
     request.budget := by
     rw [leftReading.coordinate_eq, rightReading.coordinate_eq,
       show (Sampling.approximation last.coordinates.coordinate.prepared.denominator.name).sample rightIndex -
         (Sampling.approximation first.coordinates.coordinate.prepared.denominator.name).sample leftIndex =
         -((Sampling.approximation first.coordinates.coordinate.prepared.denominator.name).sample leftIndex -
           (Sampling.approximation last.coordinates.coordinate.prepared.denominator.name).sample rightIndex) by ring1,
-      Data.Gaussian.Norm.Basic.normSq_neg]
+      Basic.normSq_neg]
     exact request.comparison.close (leftStage.trans leftLater) (rightStage.trans rightLater)
   have scaleNonnegative : 0 ≤ request.energyScale := by
     rw [request.energyScale_eq]
-    exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+    exact Arithmetic.mul_nonneg_direct (by decide +kernel) (Arithmetic.sq_nonneg_direct _)
   have enlarged : request.energyScale ≤ request.energyScale + 1 := by
     have shifted := Arithmetic.add_le_add_right_direct (by decide : (0 : Coordinate) ≤ 1) request.energyScale
     calc
@@ -335,14 +337,14 @@ theorem radial_accurate (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.J
   have positive : 0 < request.energyScale + 1 := Arithmetic.add_pos_of_nonneg_of_pos_direct scaleNonnegative (by decide)
   apply estimate.trans_lt
   calc
-    _ ≤ (request.energyScale + 1) * Data.Gaussian.Norm.Basic.normSq (rightReading.coordinate -
+    _ ≤ (request.energyScale + 1) * Basic.normSq (rightReading.coordinate -
       leftReading.coordinate) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct enlarged (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+      Arithmetic.mul_le_mul_of_nonneg_right_direct enlarged (Basic.normSq_nonneg _)
     _ < (request.energyScale + 1) * request.budget :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct positive close
+      Arithmetic.mul_lt_mul_of_pos_left_direct positive close
     _ ≤ target := by
       rw [Fraction.Field.mul_comm, request.budget_eq]
-      exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      exact (Arithmetic.mul_le_mul_of_nonneg_right_direct
         ((Basic.min_le_left _ _).trans (Basic.min_le_right _ _)) positive.le).trans_eq
           (Fraction.Field.div_mul_cancel_of_ne _ _ positive.ne')
 

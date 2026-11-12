@@ -19,6 +19,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Polynomial.Dense.Evaluation
 
+open Purelib.Polynomial.Dense.Gaussian.Path
+
 open Purelib.Data
 
 open Purelib.Data.Rat
@@ -47,37 +49,37 @@ namespace Purelib.Polynomial.Clearance.Box.Dominance.Path
 /-- Geometric boundary dominance directly supplies quantitative clearance
 for the sum path on one displayed increasing side. -/
 def sumCertificate_of_boundaryNormDominance
-    (p q : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (box : Box)
-    (dominance : Clearance.Box.Dominance.Basic.BoundaryNormDominance p q box)
+    (p q : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (box : Box)
+    (dominance : Basic.BoundaryNormDominance p q box)
     (origin direction : Gaussian.Basic.Canonical) {a b : Fraction.Rational}
     (valid : a ≤ b)
     (onBoundary : ∀ t : Fraction.Rational,
-      Data.Rat.Interval.Bounds.Contains ⟨a, b, valid⟩ t →
+      Interval.Bounds.Contains ⟨a, b, valid⟩ t →
         Box.Boundary.OnBoxBoundary box
           (Affine.line origin direction t)) :
-    Clearance.Pair.Basic.Certificate
-      (Dense.Gaussian.Path.Components.pathReal (p + q) origin direction)
-      (Dense.Gaussian.Path.Components.pathImag (p + q) origin direction) ⟨a, b, valid⟩ := by
-  apply Clearance.Pair.Dominance.sumCertificate_of_normDominance
-    (A := Dense.Gaussian.Path.Components.pathReal p origin direction)
-    (B := Dense.Gaussian.Path.Components.pathImag p origin direction)
-    (C := Dense.Gaussian.Path.Components.pathReal q origin direction)
-    (D := Dense.Gaussian.Path.Components.pathImag q origin direction)
+    Pair.Basic.Certificate
+      (Components.pathReal (p + q) origin direction)
+      (Components.pathImag (p + q) origin direction) ⟨a, b, valid⟩ := by
+  apply Pair.Dominance.sumCertificate_of_normDominance
+    (A := Components.pathReal p origin direction)
+    (B := Components.pathImag p origin direction)
+    (C := Components.pathReal q origin direction)
+    (D := Components.pathImag q origin direction)
     dominance.margin dominance.positive
   · intro t inside
     have lower := dominance.lower (Affine.line origin direction t)
       (onBoundary t inside)
-    rw [Dense.Gaussian.Path.Components.eval_pathReal, Dense.Gaussian.Path.Components.eval_pathImag,
-      Dense.Gaussian.Path.Components.eval_pathReal, Dense.Gaussian.Path.Components.eval_pathImag]
-    simpa only [Gaussian.Norm.Basic.normSq_eq_canonical, Data.Gaussian.Norm.Basic.normSq,
+    rw [Components.eval_pathReal, Components.eval_pathImag,
+      Components.eval_pathReal, Components.eval_pathImag]
+    simpa only [Gaussian.Norm.Basic.normSq_eq_canonical, Gaussian.Norm.Basic.normSq,
       Gaussian.Basic.Canonical.normSq, pow_two] using lower
   · intro t
-    rw [Dense.Gaussian.Path.Components.eval_pathReal, Dense.Gaussian.Path.Components.eval_pathReal,
-      Dense.Gaussian.Path.Components.eval_pathReal, Dense.Basic.DensePolynomial.eval_add]
+    rw [Components.eval_pathReal, Components.eval_pathReal,
+      Components.eval_pathReal, Dense.Basic.DensePolynomial.eval_add]
     rfl
   · intro t
-    rw [Dense.Gaussian.Path.Components.eval_pathImag, Dense.Gaussian.Path.Components.eval_pathImag,
-      Dense.Gaussian.Path.Components.eval_pathImag, Dense.Basic.DensePolynomial.eval_add]
+    rw [Components.eval_pathImag, Components.eval_pathImag,
+      Components.eval_pathImag, Dense.Basic.DensePolynomial.eval_add]
     rfl
 
 /-- Exact rational bound stored by one boundary-dominance path certificate.
@@ -85,12 +87,12 @@ Exposing the finite Horner majorant separately lets downstream transport
 proofs compare one side at a time instead of reducing a complete four-side
 boundary certificate. -/
 @[simp] theorem sumCertificate_of_boundaryNormDominance_bound
-    (p q : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (box : Box)
-    (dominance : Clearance.Box.Dominance.Basic.BoundaryNormDominance p q box)
+    (p q : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (box : Box)
+    (dominance : Basic.BoundaryNormDominance p q box)
     (origin direction : Gaussian.Basic.Canonical) {a b : Fraction.Rational}
     (valid : a ≤ b)
     (onBoundary : ∀ t : Fraction.Rational,
-      Data.Rat.Interval.Bounds.Contains ⟨a, b, valid⟩ t →
+      Interval.Bounds.Contains ⟨a, b, valid⟩ t →
         Box.Boundary.OnBoxBoundary box
           (Affine.line origin direction t)) :
     (sumCertificate_of_boundaryNormDominance p q box dominance
@@ -98,9 +100,9 @@ boundary certificate. -/
       dominance.margin ^ 2 /
         (4 * max 1
           (Dense.Rational.Bounds.Horner.evalSqBound
-              (Dense.Gaussian.Path.Components.pathReal p origin direction) ⟨a, b, valid⟩ +
+              (Components.pathReal p origin direction) ⟨a, b, valid⟩ +
             Dense.Rational.Bounds.Horner.evalSqBound
-              (Dense.Gaussian.Path.Components.pathImag p origin direction) ⟨a, b, valid⟩)) := by
+              (Components.pathImag p origin direction) ⟨a, b, valid⟩)) := by
   rfl
 end Purelib.Polynomial.Clearance.Box.Dominance.Path
 

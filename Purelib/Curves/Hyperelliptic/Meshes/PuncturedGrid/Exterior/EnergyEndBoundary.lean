@@ -76,6 +76,10 @@ import Purelib.Riemann.Paths.PreparedPathParentCaches
 import Purelib.Riemann.Readings.PreparedPrimitiveSamples
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk
+
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -109,23 +113,23 @@ open Purelib.Data.Gaussian.Basic.Canonical
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {index readingIndex energyDepth : Nat} {box :
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {index readingIndex energyDepth : Nat} {box :
     Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {target :
-    Normalization.InverseRootPolynomial.Coordinate}
+  {sample : Cap.Primitives.Sample cap differential index box} {target :
+    InverseRootPolynomial.Coordinate}
 
 section EnergyEndBank
 
 /-- The original endpoint-potential jumps and joining areas, accumulated from a supplied preceding value. -/
 @[expose] def boundary : {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-  {covers : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents} →
-    {prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers} →
+  {covers : UniformReciprocalCover.ParentCovers parents} →
+    {prepared : ParentJoins.SideBank regular covers} →
       EnergyEndBank sample readingIndex energyDepth target
-      prepared → Normalization.InverseRootPolynomial.Gaussian → Normalization.InverseRootPolynomial.Gaussian
+      prepared → InverseRootPolynomial.Gaussian → InverseRootPolynomial.Gaussian
   | _, _, _, .nil, _ => 0
   | _, _, _, .cons head tail, previous =>
       head.lastPotential - head.firstPotential + Path.BoundaryRibbon.area previous head.firstValue +
@@ -133,29 +137,29 @@ section EnergyEndBank
         head.lastValue
 
 variable {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} {covers :
-  Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents}
-  {prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers}
+  UniformReciprocalCover.ParentCovers parents}
+  {prepared : ParentJoins.SideBank regular covers}
 
 /-- The retained endpoint boundary equals the final potential minus the initial potential and the exact original error
 sum. -/
 theorem boundary_identity (ends : EnergyEndBank sample
-  readingIndex energyDepth target prepared) (value potential : Normalization.InverseRootPolynomial.Gaussian) :
-    ends.boundary value = ends.lastPotential potential - potential - Data.Gaussian.Norm.Sum.Basic.gaussianSum
+  readingIndex energyDepth target prepared) (value potential : InverseRootPolynomial.Gaussian) :
+    ends.boundary value = ends.lastPotential potential - potential - Gaussian.Norm.Sum.Basic.gaussianSum
       (ends.errors value potential) := by
   induction ends generalizing value potential with
-  | nil => change (0 : Normalization.InverseRootPolynomial.Gaussian) = potential - potential - 0; ring1
+  | nil => change (0 : InverseRootPolynomial.Gaussian) = potential - potential - 0; ring1
   | cons head tail ih =>
       change head.lastPotential - head.firstPotential + Path.BoundaryRibbon.area value head.firstValue + tail.boundary
         head.lastValue =
         tail.lastPotential head.lastPotential - potential -
           ((head.firstPotential - potential - Path.BoundaryRibbon.area value head.firstValue) +
-            Data.Gaussian.Norm.Sum.Basic.gaussianSum (tail.errors head.lastValue head.lastPotential))
+            Gaussian.Norm.Sum.Basic.gaussianSum (tail.errors head.lastValue head.lastPotential))
       rw [ih head.lastValue head.lastPotential]
       ring1
 
 /-- Changing the preceding value adds exactly its area against the original first endpoint. -/
 theorem boundary_translate (ends : EnergyEndBank sample
-  readingIndex energyDepth target prepared) (previous next : Normalization.InverseRootPolynomial.Gaussian) :
+  readingIndex energyDepth target prepared) (previous next : InverseRootPolynomial.Gaussian) :
     ends.boundary previous = ends.boundary next + Path.BoundaryRibbon.area (previous - next) ends.firstValue := by
   cases ends with
   | nil =>
@@ -185,15 +189,15 @@ theorem residual_eq (ends : EnergyEndBank sample
 /-- Increasing the allowed error preserves the original first endpoint value. -/
 theorem weaken_firstValue (ends : EnergyEndBank sample
   readingIndex energyDepth target prepared)
-    {larger : Normalization.InverseRootPolynomial.Coordinate} (le : target ≤ larger) : (ends.weaken le).firstValue =
+    {larger : InverseRootPolynomial.Coordinate} (le : target ≤ larger) : (ends.weaken le).firstValue =
       ends.firstValue := by
   cases ends <;> rfl
 
 /-- Increasing the allowed error preserves the original last endpoint value. -/
 theorem weaken_lastValue (ends : EnergyEndBank sample
   readingIndex energyDepth target prepared)
-    {larger : Normalization.InverseRootPolynomial.Coordinate} (le : target ≤ larger) (previous :
-      Normalization.InverseRootPolynomial.Gaussian) :
+    {larger : InverseRootPolynomial.Coordinate} (le : target ≤ larger) (previous :
+      InverseRootPolynomial.Gaussian) :
     (ends.weaken le).lastValue previous = ends.lastValue previous := by
   induction ends generalizing previous with
   | nil => rfl
@@ -202,8 +206,8 @@ theorem weaken_lastValue (ends : EnergyEndBank sample
 /-- Increasing the allowed error preserves every original boundary value. -/
 theorem weaken_boundary (ends : EnergyEndBank sample
   readingIndex energyDepth target prepared)
-    {larger : Normalization.InverseRootPolynomial.Coordinate} (le : target ≤ larger) (previous :
-      Normalization.InverseRootPolynomial.Gaussian) :
+    {larger : InverseRootPolynomial.Coordinate} (le : target ≤ larger) (previous :
+      InverseRootPolynomial.Gaussian) :
     (ends.weaken le).boundary previous = ends.boundary previous := by
   induction ends generalizing previous with
   | nil => rfl
@@ -212,22 +216,22 @@ theorem weaken_boundary (ends : EnergyEndBank sample
 /-- A nonempty original endpoint bank has a last value independent of the supplied preceding value. -/
 theorem lastValue_independent (ends : EnergyEndBank sample
   readingIndex energyDepth target prepared)
-    (nonempty : parents ≠ []) (previous next : Normalization.InverseRootPolynomial.Gaussian) : ends.lastValue previous =
+    (nonempty : parents ≠ []) (previous next : InverseRootPolynomial.Gaussian) : ends.lastValue previous =
       ends.lastValue next := by
   cases ends with
   | nil => exact False.elim (nonempty rfl)
   | cons head tail => rfl
 
 variable {otherParents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} {otherCovers :
-  Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers otherParents}
-  {other : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular otherCovers}
+  UniformReciprocalCover.ParentCovers otherParents}
+  {other : ParentJoins.SideBank regular otherCovers}
 
 /-- The concatenated bank boundary is the first boundary plus the second boundary started at the actual retained last
 value. -/
 theorem append_boundary (left : EnergyEndBank sample
   readingIndex energyDepth target prepared)
     (right : EnergyEndBank sample readingIndex energyDepth
-      target other) (previous : Normalization.InverseRootPolynomial.Gaussian) :
+      target other) (previous : InverseRootPolynomial.Gaussian) :
     (left.append right).boundary previous = left.boundary previous + right.boundary (left.lastValue previous) := by
   induction left generalizing previous with
   | nil => change right.boundary previous = 0 + right.boundary previous; ring1
@@ -240,7 +244,7 @@ theorem append_boundary (left : EnergyEndBank sample
 theorem append_lastValue (left : EnergyEndBank sample
   readingIndex energyDepth target prepared)
     (right : EnergyEndBank sample readingIndex energyDepth
-      target other) (previous : Normalization.InverseRootPolynomial.Gaussian) :
+      target other) (previous : InverseRootPolynomial.Gaussian) :
     (left.append right).lastValue previous = right.lastValue (left.lastValue previous) := by
   induction left generalizing previous with
   | nil => rfl
@@ -261,26 +265,26 @@ end EnergyEndBank
 namespace SideBank.ChartReplacements.EnergyData
 
 variable {sourceTarget reciprocalTarget coefficientTarget totalTarget areaTarget energyTarget :
-  Normalization.InverseRootPolynomial.Coordinate}
+  InverseRootPolynomial.Coordinate}
   {minimum depth energyFloor : Nat}
   {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} {covers :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents}
-  {prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers}
-  {requests : Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Requests sourceTarget reciprocalTarget
+    UniformReciprocalCover.ParentCovers parents}
+  {prepared : ParentJoins.SideBank regular covers}
+  {requests : SideRequests.SideBank.Requests sourceTarget reciprocalTarget
     coefficientTarget totalTarget areaTarget minimum prepared}
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.ChartRequest in
 /-- The actual odd-degree endpoint bank reads exactly the original cached chart-replacement energy boundary terms. -/
-theorem endBank_boundary (evaluated : Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Evaluations sample
-  depth readingIndex requests) (charts : Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartReplacements target
+theorem endBank_boundary (evaluated : SideRequests.SideBank.Evaluations sample
+  depth readingIndex requests) (charts : SideChartRequests.ChartReplacements target
   evaluated)
-    (energies : Hyperelliptic.Charts.Reciprocal.Disk.SideEnergyRequests.EnergyData energyTarget energyFloor energyDepth
+    (energies : SideEnergyRequests.EnergyData energyTarget energyFloor energyDepth
       evaluated charts)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) (previous :
-      Normalization.InverseRootPolynomial.Gaussian) :
-    (Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.endBank branch evaluated charts
-      energies).boundary previous = Data.Gaussian.Norm.Sum.Basic.gaussianSum
-      (Hyperelliptic.Charts.Reciprocal.Disk.SideEnergy.EnergyData.boundaryTerms evaluated charts energies previous) :=
+    (branch : HyperellipticReciprocal.originOrder curve = 1) (previous :
+      InverseRootPolynomial.Gaussian) :
+    (EnergyEndReadback.ChartReplacements.EnergyData.endBank branch evaluated charts
+      energies).boundary previous = Gaussian.Norm.Sum.Basic.gaussianSum
+      (SideEnergy.EnergyData.boundaryTerms evaluated charts energies previous) :=
       by
   induction evaluated generalizing previous with
   | nil => cases charts; rfl
@@ -296,58 +300,61 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.L
 namespace Plan
 namespace Data.EnergyData
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ConnectedCharts.ChartRequest.Plan
+  renaming Evaluation -> ChartEvaluation
+
 open Purelib.Data.Gaussian.Basic.Canonical
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
     bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
   {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
   {start finish : Gaussian.Basic.Canonical} {segment : Geometry.ClearPath.ClearSegment curve.polynomial
-    (Hyperelliptic.Branches.Cuts.Ambient curve) start finish}
+    (Branches.Cuts.Ambient curve) start finish}
   {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {piece :
     Paths.PreparedPathDecomposition.CoveredSegment segment owner}
   {placement : Meshes.GridLiftedMesh.LiftedMesh.SegmentFace mesh segment} {differential :
-    Hyperelliptic.Differentials.Basic.Differential genus} {parentSheet : Fin 2}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {compared : Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison placement piece
+    Differentials.Basic.Differential genus} {parentSheet : Fin 2}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap}
+  {compared : SegmentComparison placement piece
     differential parentSheet}
-  {prepared : Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapPreparation regular
-    compared} {target areaTarget chartTarget : Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
+  {prepared : CapPreparation regular
+    compared} {target areaTarget chartTarget : InverseRootPolynomial.Coordinate} {floor : Nat}
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapRequest
+variable {request : CapRequest
   prepared target areaTarget floor} {charts :
-  Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.ChartRequest request chartTarget}
+  ChartRequest request chartTarget}
   {index depth readingIndex energyFloor energyDepth : Nat} {box : Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {plan :
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.ChartRequest.Plan charts sample}
-  {data : Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.ChartRequest.Plan.Data plan
-    depth readingIndex} {energyTarget : Normalization.InverseRootPolynomial.Coordinate}
+  {sample : Cap.Primitives.Sample cap differential index box} {plan :
+    Plan charts sample}
+  {data : Data plan
+    depth readingIndex} {energyTarget : InverseRootPolynomial.Coordinate}
 
 /-- In odd degree, retained regular-side plans can contain no original parents. -/
 private theorem regular_parents_nil
     {sourceTarget reciprocalTarget coefficientTarget totalTarget areaTarget :
-      Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
+      InverseRootPolynomial.Coordinate} {minimum : Nat}
     {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-    {covers : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents} {bank :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers}
-    {requests : Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Requests sourceTarget reciprocalTarget
+    {covers : UniformReciprocalCover.ParentCovers parents} {bank :
+      ParentJoins.SideBank regular covers}
+    {requests : SideRequests.SideBank.Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum bank}
-    (plans : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularSides.Plans requests) (branch :
-      Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) : parents = [] := by
+    (plans : RegularSides.Plans requests) (branch :
+      HyperellipticReciprocal.originOrder curve = 1) : parents = [] := by
   cases requests with
   | nil => rfl
   | cons head tail => exact Nat.noConfusion (plans.1.regular_chart.symm.trans branch)
 
 /-- The chart total is the displacement between the very same retained endpoints. -/
 theorem endBank_total (energy :
-  Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.ChartRequest.Plan.Data.EnergyData
+  EnergyData
   data energyTarget energyFloor energyDepth)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) (nonempty :
+    (branch : HyperellipticReciprocal.originOrder curve = 1) (nonempty :
       compared.entered.cache.parents ≠ []) :
     data.summary.total = (energy.endBank branch).lastValue (energy.endBank branch).firstValue -
       (energy.endBank branch).firstValue := by
@@ -361,22 +368,22 @@ theorem endBank_total (energy :
       change data.connected.summary.total = _
       rw
         [endBank,
-        Charts.Reciprocal.Disk.EnergyEndBank.weaken_firstValue,
-        Charts.Reciprocal.Disk.EnergyEndBank.weaken_lastValue,
-        Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.endBank_firstValue,
-          Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.endBank_lastValue,
-        data.total_eq, (Hyperelliptic.Charts.Reciprocal.Disk.ConnectedCharts.ChartRequest.Plan.Evaluation.original
-          data).total_eq, (Hyperelliptic.Charts.Reciprocal.Disk.ConnectedCharts.ChartRequest.Plan.Evaluation.original
+        EnergyEndBank.weaken_firstValue,
+        EnergyEndBank.weaken_lastValue,
+        EnergyEndReadback.ChartReplacements.EnergyData.endBank_firstValue,
+          EnergyEndReadback.ChartReplacements.EnergyData.endBank_lastValue,
+        data.total_eq, (ChartEvaluation.original
+          data).total_eq, (ChartEvaluation.original
           data).lastValue_eq,
-          (Hyperelliptic.Charts.Reciprocal.Disk.ConnectedCharts.ChartRequest.Plan.Evaluation.original
+          (ChartEvaluation.original
           data).firstValue_eq]
 
 /-- Read the local cached energy boundary as endpoint-bank boundary minus
 its endpoint chord. No new fan or primitive evaluation is performed. -/
 theorem endBank_boundary (energy :
-  Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.ChartRequest.Plan.Data.EnergyData
+  EnergyData
   data energyTarget energyFloor energyDepth)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) (nonempty :
+    (branch : HyperellipticReciprocal.originOrder curve = 1) (nonempty :
       compared.entered.cache.parents ≠ []) :
     energy.boundary = (energy.endBank branch).boundary (energy.endBank branch).firstValue -
       Path.BoundaryRibbon.area (energy.endBank branch).firstValue
@@ -389,21 +396,21 @@ theorem endBank_boundary (energy :
       obtain ⟨energy, sameDepth⟩ := energy
       cases sameDepth
       change -Path.BoundaryRibbon.area
-        (Hyperelliptic.Charts.Reciprocal.Disk.ConnectedCharts.ChartRequest.Plan.Evaluation.original data).firstValue
+        (ChartEvaluation.original data).firstValue
         data.connected.summary.total + energy.connected.boundary = _
       rw
         [endBank,
-        Charts.Reciprocal.Disk.EnergyEndBank.weaken_firstValue,
-        Charts.Reciprocal.Disk.EnergyEndBank.weaken_lastValue,
-        Charts.Reciprocal.Disk.EnergyEndBank.weaken_boundary,
-        Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.endBank_firstValue,
-          Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.endBank_lastValue,
-        Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndBank.SideBank.ChartReplacements.EnergyData.endBank_boundary,
+        EnergyEndBank.weaken_firstValue,
+        EnergyEndBank.weaken_lastValue,
+        EnergyEndBank.weaken_boundary,
+        EnergyEndReadback.ChartReplacements.EnergyData.endBank_firstValue,
+          EnergyEndReadback.ChartReplacements.EnergyData.endBank_lastValue,
+        EnergyEndBank.SideBank.ChartReplacements.EnergyData.endBank_boundary,
           energy.connected.boundary_eq,
-        data.total_eq, (Hyperelliptic.Charts.Reciprocal.Disk.ConnectedCharts.ChartRequest.Plan.Evaluation.original
-          data).total_eq, (Hyperelliptic.Charts.Reciprocal.Disk.ConnectedCharts.ChartRequest.Plan.Evaluation.original
+        data.total_eq, (ChartEvaluation.original
+          data).total_eq, (ChartEvaluation.original
           data).lastValue_eq,
-          (Hyperelliptic.Charts.Reciprocal.Disk.ConnectedCharts.ChartRequest.Plan.Evaluation.original
+          (ChartEvaluation.original
           data).firstValue_eq,
         Path.BoundaryRibbon.area_sub_self_right]
       ring1

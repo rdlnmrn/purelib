@@ -1,4 +1,7 @@
 module
+import Purelib.Riemann.Integration.RectangularSharedPrimitives
+
+import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Rat.Fraction
 import Purelib.Approximation.Gaussian.Equivalence
@@ -83,10 +86,14 @@ open Purelib
 
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
+
+variable {numerator : CoefficientPolynomial}
+
 variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
   Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
+  {frames : SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
       SquareRoot.Grid.LiftedVertices.VertexBank
     base.bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
   {source : Hyperelliptic.Differentials.Basic.Differential genus} {axes :
@@ -95,29 +102,33 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
     Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces}
   {count : Nat} {target : Fraction.Rational}
   {points : List Gaussian.Basic.Canonical} {tolerance : Fraction.Rational} {index : Nat}
-  {budgets : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceMeshBudgets source points tolerance domains}
-    {numerics : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank source index domains}
+  {budgets : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceMeshBudgets source points tolerance
+    (numerator := numerator) domains}
+    {numerics : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank source index
+      (numerator := numerator) domains}
+
+open Purelib.Riemann.Integration.RectangularSharedPrimitives renaming SharedPrimitiveValues -> SharedValues
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation
 
 /-- A point reading in the exact route selected for this occurrence. -/
-@[expose] def canonicalPoint (piece : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes
+@[expose] def canonicalPoint (piece : RootedWords.LiftedFragment axes
   domains mesh source count target)
-    (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) (point :
+    (shared : Face.CommonMeshes.FaceSharedMeshes budgets numerics) (point :
       Gaussian.Basic.Canonical) : Gaussian :=
-  Readings.RectangularPrimitiveBoundary.SharedPrimitiveValues.atPoint
-    ((Hyperelliptic.Meshes.PuncturedGrid.Face.MeshWords.FaceSharedMeshes.atRoute shared
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.canonicalRoute piece)).atSheet
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.canonicalRoute piece).sheet).readings point
+  SharedValues.atPoint
+    ((Face.MeshWords.FaceSharedMeshes.atRoute shared
+      (RouteWords.canonicalRoute piece)).atSheet
+      (RouteWords.canonicalRoute piece).sheet).readings point
 
 /-- The actual selected-route increment is its cached final point reading minus its cached initial reading. -/
-theorem routeValue_eq (piece : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh
+theorem routeValue_eq (piece : RootedWords.LiftedFragment axes domains mesh
   source count target)
-    (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteContacts.routeValue piece)
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.canonicalRoute piece) shared =
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint piece) shared piece.last -
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint piece) shared piece.first := rfl
+    (shared : Face.CommonMeshes.FaceSharedMeshes budgets numerics) :
+    (RouteContacts.routeValue piece)
+      (RouteWords.canonicalRoute piece) shared =
+      (RouteCancellation.canonicalPoint piece) shared piece.last -
+      (RouteCancellation.canonicalPoint piece) shared piece.first := rfl
 
 /-- Equal original lifted edges and lookup directions identify their actual cached point reading. -/
 private theorem directed_point_eq
@@ -127,17 +138,17 @@ private theorem directed_point_eq
     (rightSupported : right ∈ Topology.Polygon.Stokes.triangleEdgeOccurrences mesh.triangulation.faces ∨
       right.reverse ∈ Topology.Polygon.Stokes.triangleEdgeOccurrences mesh.triangulation.faces)
     {first last : Bool} (edgeEq : left = right) (directionEq : first = last)
-    (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) (point :
+    (shared : Face.CommonMeshes.FaceSharedMeshes budgets numerics) (point :
       Gaussian.Basic.Canonical) :
-    Readings.RectangularPrimitiveBoundary.SharedPrimitiveValues.atPoint
-      ((Hyperelliptic.Meshes.PuncturedGrid.Face.MeshWords.FaceSharedMeshes.atRoute shared
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.directedRoute mesh left leftSupported first)).atSheet
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.directedRoute mesh left leftSupported
+    SharedValues.atPoint
+      ((Face.MeshWords.FaceSharedMeshes.atRoute shared
+        (RouteWords.directedRoute mesh left leftSupported first)).atSheet
+        (RouteWords.directedRoute mesh left leftSupported
           first).sheet).readings point =
-    Readings.RectangularPrimitiveBoundary.SharedPrimitiveValues.atPoint
-      ((Hyperelliptic.Meshes.PuncturedGrid.Face.MeshWords.FaceSharedMeshes.atRoute shared
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.directedRoute mesh right rightSupported last)).atSheet
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.directedRoute mesh right rightSupported
+    SharedValues.atPoint
+      ((Face.MeshWords.FaceSharedMeshes.atRoute shared
+        (RouteWords.directedRoute mesh right rightSupported last)).atSheet
+        (RouteWords.directedRoute mesh right rightSupported
           last).sheet).readings point := by
   cases edgeEq
   cases directionEq
@@ -145,66 +156,66 @@ private theorem directed_point_eq
 
 /-- Equal lifted edges and equal lookup directions identify the actual
 cached point reading, even when the original fragment faces differ. -/
-theorem canonicalPoint_eq {left right : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes
+theorem canonicalPoint_eq {left right : RootedWords.LiftedFragment axes
   domains mesh source count target}
     (edgeEq : left.occurrence.side.edge = right.occurrence.side.edge)
-    (directionEq : (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.routeForward left) =
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.routeForward right))
-    (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) (point :
+    (directionEq : (RouteWords.routeForward left) =
+      (RouteWords.routeForward right))
+    (shared : Face.CommonMeshes.FaceSharedMeshes budgets numerics) (point :
       Gaussian.Basic.Canonical) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint left) shared point =
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint right) shared point :=
-  Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.directed_point_eq _ _ edgeEq directionEq shared point
+    (RouteCancellation.canonicalPoint left) shared point =
+      (RouteCancellation.canonicalPoint right) shared point :=
+  RouteCancellation.directed_point_eq _ _ edgeEq directionEq shared point
 
 /-- Root agreement at the original query junction identifies the lifted
 edge; matching source coordinates alone would not justify cancellation. -/
 theorem canonicalPoint_eq_of_junction {left right :
-  Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh source count target}
+  RootedWords.LiftedFragment axes domains mesh source count target}
     (joined : left.last = right.first) (roots : Gaussian.Equivalence.NamedEquivalent left.lastName right.firstName)
     (startEq : left.fragment.source.start = right.fragment.source.start)
     (finishEq : left.fragment.source.finish = right.fragment.source.finish)
-    (directionEq : (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.routeForward left) =
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.routeForward right))
-    (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) (point :
+    (directionEq : (RouteWords.routeForward left) =
+      (RouteWords.routeForward right))
+    (shared : Face.CommonMeshes.FaceSharedMeshes budgets numerics) (point :
       Gaussian.Basic.Canonical) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint left) shared point =
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint right) shared point :=
-  Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint_eq
+    (RouteCancellation.canonicalPoint left) shared point =
+      (RouteCancellation.canonicalPoint right) shared point :=
+  RouteCancellation.canonicalPoint_eq
     (left.occurrence.edge_eq_of_query_junction right.occurrence joined roots startEq finishEq)
     directionEq shared point
 
 /-- A stationary partial fragment contributes exactly zero in its own
 cached route, irrespective of which incident face was selected. -/
-theorem routeValue_stationary (piece : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes
+theorem routeValue_stationary (piece : RootedWords.LiftedFragment axes
   domains mesh source count target)
     (stationary : piece.last = piece.first) (shared :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteContacts.routeValue piece)
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.canonicalRoute piece) shared = 0 := by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.routeValue_eq, stationary]
+      Face.CommonMeshes.FaceSharedMeshes budgets numerics) :
+    (RouteContacts.routeValue piece)
+      (RouteWords.canonicalRoute piece) shared = 0 := by
+  rw [RouteCancellation.routeValue_eq, stationary]
   ring1
 
 /-- The connected remaining fragments on one original directed edge telescope to the last reading minus the retained
 previous endpoint.
 
 Each original root junction identifies the shared cache used for the cancellation. -/
-private theorem tail_telescope (previous : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes
+private theorem tail_telescope (previous : RootedWords.LiftedFragment axes
   domains mesh source count target)
-    {pieces : List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh source
+    {pieces : List (RootedWords.LiftedFragment axes domains mesh source
       count target)}
     {last : Gaussian.Basic.Canonical} {lastName : Gaussian.Name.Basic.Named}
-    (word : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.RootedWord pieces previous.last
+    (word : RootedWords.LiftedFragment.RootedWord pieces previous.last
       previous.lastName last lastName)
     (same : ∀ piece ∈ pieces, previous.fragment.source.start = piece.fragment.source.start ∧
       previous.fragment.source.finish = piece.fragment.source.finish ∧
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.routeForward previous) =
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.routeForward piece))
-    (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (pieces.map (fun piece =>
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteContacts.routeValue piece)
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.canonicalRoute piece) shared)) =
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint previous) shared last -
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint previous) shared previous.last :=
+        (RouteWords.routeForward previous) =
+        (RouteWords.routeForward piece))
+    (shared : Face.CommonMeshes.FaceSharedMeshes budgets numerics) :
+    Gaussian.Norm.Sum.Basic.gaussianSum (pieces.map (fun piece =>
+      (RouteContacts.routeValue piece)
+      (RouteWords.canonicalRoute piece) shared)) =
+      (RouteCancellation.canonicalPoint previous) shared last -
+        (RouteCancellation.canonicalPoint previous) shared previous.last :=
         by
   cases word with
   | nil coordinate root =>
@@ -214,21 +225,21 @@ private theorem tail_telescope (previous : Hyperelliptic.Meshes.PuncturedGrid.Fr
   | @cons piece rest first last firstName lastName joined roots tail =>
       obtain ⟨roots⟩ := roots
       have head := same piece List.mem_cons_self
-      have equal := Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint_eq_of_junction joined
+      have equal := RouteCancellation.canonicalPoint_eq_of_junction joined
         roots head.1 head.2.1 head.2.2 shared
-      have remaining : ∀ child : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains
+      have remaining : ∀ child : RootedWords.LiftedFragment axes domains
         mesh source count target, child ∈ rest → piece.fragment.source.start = child.fragment.source.start ∧
           piece.fragment.source.finish = child.fragment.source.finish ∧
-            (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.routeForward piece) =
-            (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.routeForward child) := by
+            (RouteWords.routeForward piece) =
+            (RouteWords.routeForward child) := by
         intro child member
         have childData := same child (List.mem_cons_of_mem _ member)
         exact ⟨head.1.symm.trans childData.1, head.2.1.symm.trans childData.2.1, head.2.2.symm.trans childData.2.2⟩
-      change (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteContacts.routeValue piece)
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.canonicalRoute piece) shared +
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum _ = _
-      rw [Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.tail_telescope piece tail
-        remaining shared, Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.routeValue_eq, ← equal, ← equal,
+      change (RouteContacts.routeValue piece)
+        (RouteWords.canonicalRoute piece) shared +
+        Gaussian.Norm.Sum.Basic.gaussianSum _ = _
+      rw [RouteCancellation.tail_telescope piece tail
+        remaining shared, RouteCancellation.routeValue_eq, ← equal, ← equal,
         ← equal, joined]
       ring1
 termination_by pieces.length
@@ -242,30 +253,30 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancel
 
 /-- A whole connected group on one original containing edge telescopes in
 its actual canonical route. Every original root junction is consumed. -/
-theorem canonical_telescope {head : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains
+theorem canonical_telescope {head : RootedWords.LiftedFragment axes domains
   mesh source count target}
-    {pieces : List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh source
+    {pieces : List (RootedWords.LiftedFragment axes domains mesh source
       count target)}
     {first last : Gaussian.Basic.Canonical} {firstName lastName : Gaussian.Name.Basic.Named}
-    (word : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment.RootedWord (head :: pieces) first
+    (word : RootedWords.LiftedFragment.RootedWord (head :: pieces) first
       firstName last lastName)
     (same : ∀ piece ∈ pieces, head.fragment.source.start = piece.fragment.source.start ∧
       head.fragment.source.finish = piece.fragment.source.finish ∧
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.routeForward head) =
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.routeForward piece))
-    (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes budgets numerics) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum ((head :: pieces).map (fun piece =>
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteContacts.routeValue piece)
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.canonicalRoute piece) shared)) =
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint head) shared last -
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.canonicalPoint head) shared first := by
+        (RouteWords.routeForward head) =
+        (RouteWords.routeForward piece))
+    (shared : Face.CommonMeshes.FaceSharedMeshes budgets numerics) :
+    Gaussian.Norm.Sum.Basic.gaussianSum ((head :: pieces).map (fun piece =>
+      (RouteContacts.routeValue piece)
+      (RouteWords.canonicalRoute piece) shared)) =
+      (RouteCancellation.canonicalPoint head) shared last -
+        (RouteCancellation.canonicalPoint head) shared first := by
   cases word with
   | cons head coordinate root tail =>
-      change (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteContacts.routeValue head)
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.canonicalRoute head) shared +
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum _ = _
-      rw [Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.tail_telescope head tail same shared,
-        Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.routeValue_eq, coordinate]
+      change (RouteContacts.routeValue head)
+        (RouteWords.canonicalRoute head) shared +
+        Gaussian.Norm.Sum.Basic.gaussianSum _ = _
+      rw [RouteCancellation.tail_telescope head tail same shared,
+        RouteCancellation.routeValue_eq, coordinate]
       ring1
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancellation.RootedWord
@@ -274,12 +285,12 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteCancel
 
 /-- Read an actual adjacent pair from a retained word, including pairs
 that occur after an arbitrary prefix. -/
-theorem at_pair {left right : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh
+theorem at_pair {left right : RootedWords.LiftedFragment axes domains mesh
   source count target}
-    (before after : List (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.LiftedFragment axes domains mesh
+    (before after : List (RootedWords.LiftedFragment axes domains mesh
       source count target))
-    (junctions : Hyperelliptic.Meshes.PuncturedGrid.Fragment.WordJunctions.Junctions (before ++ left :: right :: after))
-      : Hyperelliptic.Meshes.PuncturedGrid.Fragment.WordJunctions.Junction left right := by
+    (junctions : WordJunctions.Junctions (before ++ left :: right :: after))
+      : WordJunctions.Junction left right := by
   induction before with
   | nil => exact junctions.1
   | cons head tail ih =>

@@ -28,6 +28,8 @@ import Purelib.RootIsolation.State.WindingOne.Basic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 namespace Purelib.Riemann.RootContinuation.RootReturnBox
@@ -39,9 +41,9 @@ open Purelib.Data.Gaussian in
 /-- The canonical Gaussian rational carrier of root parameters. -/
 abbrev Gaussian := Basic.Canonical
 /-- The rational rectangle carrier of retained root boxes. -/
-abbrev Box := Purelib.Geometry.Rational.Box
+abbrev Box := Geometry.Rational.Box
 /-- The original square-root continuation owner at the fixed parameter. -/
-abbrev Owner := Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+abbrev Owner := SquareRootContinuationChain.Owner
 
 section
 open Purelib.Data.Rat
@@ -52,27 +54,27 @@ input boxes inside the result. -/
 @[expose] def enclosure (first second : Box) (proper : first.Proper) : Box :=
   let padding := first.widthX / 16
   have paddingNonnegative : 0 ≤ padding :=
-    (Fraction.Order.Field.div_pos_direct (Fraction.Order.Arithmetic.sub_pos_direct proper.1) (by decide)).le
+    (Field.div_pos_direct (Arithmetic.sub_pos_direct proper.1) (by decide)).le
   have below (value : Coordinate) : value - padding ≤ value := by
     calc
       value - padding ≤ value - 0 :=
-        Fraction.Order.Arithmetic.sub_le_sub_left_direct paddingNonnegative value
+        Arithmetic.sub_le_sub_left_direct paddingNonnegative value
       _ = value := by ring1
   have above (value : Coordinate) : value ≤ value + padding := by
     calc
       value = value + 0 := by ring1
       _ ≤ value + padding :=
-        Fraction.Order.Arithmetic.add_le_add_direct (le_refl value) paddingNonnegative
+        Arithmetic.add_le_add_direct (le_refl value) paddingNonnegative
   { xLower := min first.xLower second.xLower - padding
     xUpper := max first.xUpper second.xUpper + padding
     yLower := min first.yLower second.yLower - padding
     yUpper := max first.yUpper second.yUpper + padding
     x_valid := (below _).trans
-      ((Fraction.Order.Basic.min_le_left _ _).trans (first.x_valid.trans
-        ((Fraction.Order.Basic.le_max_left _ _).trans (above _))))
+      ((Basic.min_le_left _ _).trans (first.x_valid.trans
+        ((Basic.le_max_left _ _).trans (above _))))
     y_valid := (below _).trans
-      ((Fraction.Order.Basic.min_le_left _ _).trans (first.y_valid.trans
-        ((Fraction.Order.Basic.le_max_left _ _).trans (above _)))) }
+      ((Basic.min_le_left _ _).trans (first.y_valid.trans
+        ((Basic.le_max_left _ _).trans (above _)))) }
 
 /-- The first original box lies strictly inside the padded enclosure.
 
@@ -81,21 +83,21 @@ maximum projections to give all four strict interior inequalities. -/
 theorem first_strict (first second : Box) (proper : first.Proper) :
     first.StrictInterior (enclosure first second proper) := by
   have positive : 0 < first.widthX / 16 :=
-    Fraction.Order.Field.div_pos_direct (Fraction.Order.Arithmetic.sub_pos_direct proper.1) (by decide)
+    Field.div_pos_direct (Arithmetic.sub_pos_direct proper.1) (by decide)
   have below (value : Coordinate) : value - first.widthX / 16 < value := by
     calc
       value - first.widthX / 16 < value - 0 :=
-        Fraction.Order.Arithmetic.sub_lt_sub_left_direct positive value
+        Arithmetic.sub_lt_sub_left_direct positive value
       _ = value := by ring1
   have above (value : Coordinate) : value < value + first.widthX / 16 := by
     calc
       value = value + 0 := by ring1
       _ < value + first.widthX / 16 :=
-        Fraction.Order.Arithmetic.add_lt_add_left_direct positive value
-  exact ⟨(below _).trans_le (Fraction.Order.Basic.min_le_left _ _),
-    (Fraction.Order.Basic.le_max_left _ _).trans_lt (above _),
-    (below _).trans_le (Fraction.Order.Basic.min_le_left _ _),
-    (Fraction.Order.Basic.le_max_left _ _).trans_lt (above _)⟩
+        Arithmetic.add_lt_add_left_direct positive value
+  exact ⟨(below _).trans_le (Basic.min_le_left _ _),
+    (Basic.le_max_left _ _).trans_lt (above _),
+    (below _).trans_le (Basic.min_le_left _ _),
+    (Basic.le_max_left _ _).trans_lt (above _)⟩
 
 /-- The second original box lies strictly inside the padded enclosure.
 
@@ -104,21 +106,21 @@ minimum and maximum projections give all four strict interior inequalities. -/
 theorem second_strict (first second : Box) (proper : first.Proper) :
     second.StrictInterior (enclosure first second proper) := by
   have positive : 0 < first.widthX / 16 :=
-    Fraction.Order.Field.div_pos_direct (Fraction.Order.Arithmetic.sub_pos_direct proper.1) (by decide)
+    Field.div_pos_direct (Arithmetic.sub_pos_direct proper.1) (by decide)
   have below (value : Coordinate) : value - first.widthX / 16 < value := by
     calc
       value - first.widthX / 16 < value - 0 :=
-        Fraction.Order.Arithmetic.sub_lt_sub_left_direct positive value
+        Arithmetic.sub_lt_sub_left_direct positive value
       _ = value := by ring1
   have above (value : Coordinate) : value < value + first.widthX / 16 := by
     calc
       value = value + 0 := by ring1
       _ < value + first.widthX / 16 :=
-        Fraction.Order.Arithmetic.add_lt_add_left_direct positive value
-  exact ⟨(below _).trans_le (Fraction.Order.Basic.min_le_right _ _),
-    (Fraction.Order.Basic.le_max_right _ _).trans_lt (above _),
-    (below _).trans_le (Fraction.Order.Basic.min_le_right _ _),
-    (Fraction.Order.Basic.le_max_right _ _).trans_lt (above _)⟩
+        Arithmetic.add_lt_add_left_direct positive value
+  exact ⟨(below _).trans_le (Basic.min_le_right _ _),
+    (Basic.le_max_right _ _).trans_lt (above _),
+    (below _).trans_le (Basic.min_le_right _ _),
+    (Basic.le_max_right _ _).trans_lt (above _)⟩
 
 end
 

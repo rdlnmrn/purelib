@@ -56,11 +56,11 @@ The same coherence certificate bounds both independently retained starting
 states. One original geometric search index makes their requested allowances
 small, and all later original witness readings satisfy the displayed tolerance. -/
 @[expose] public def Coherent.namedEquivalent {process : Process} (coherent :
-  Gaussian.Process.Coherence.Basic.Coherent process)
+  Coherent process)
     (leftStart rightStart : process.State) :
-    Gaussian.Equivalence.NamedEquivalent
-      ({ process := process, state := leftStart } : Gaussian.Name.Basic.Named)
-      ({ process := process, state := rightStart } : Gaussian.Name.Basic.Named) where
+    NamedEquivalent
+      ({ process := process, state := leftStart } : Basic.Named)
+      ({ process := process, state := rightStart } : Basic.Named) where
   compare := by
     intro leftIndex rightIndex target positive
     let startIndex := max leftIndex rightIndex
@@ -73,7 +73,7 @@ small, and all later original witness readings satisfy the displayed tolerance. 
       rw [Order.max_eq_natMax]
       exact Order.le_max_right _ _
     let semanticTarget := target / 8
-    have semanticPositive : 0 < semanticTarget := Purelib.Data.Rat.Bounds.Quarter.eighth_pos positive
+    have semanticPositive : 0 < semanticTarget := Bounds.Quarter.eighth_pos positive
     let processTarget := coherent.accuracyRequest semanticTarget
     have processTargetPositive : 0 < processTarget :=
       coherent.accuracyRequest_pos semanticPositive
@@ -81,7 +81,7 @@ small, and all later original witness readings satisfy the displayed tolerance. 
       Search.firstQuarterBelow
         1 startIndex processTarget
     have comparisonRequestSmall :
-        Gaussian.Process.Sampling.refinementTarget comparisonIndex <
+        Sampling.refinementTarget comparisonIndex <
           processTarget := by
       exact Search.firstQuarterBelow_accurate
         1 (by decide) startIndex processTarget processTargetPositive
@@ -98,45 +98,45 @@ small, and all later original witness readings satisfy the displayed tolerance. 
           intro leftLater rightLater leftOrder rightOrder
           have leftAllowanceLt :
               coherent.allowance
-                  (Gaussian.Process.Sampling.stateAt process
+                  (Sampling.stateAt process
                     leftStart leftLater) < target / 8 :=
-            Gaussian.Process.Coherence.Basic.Coherent.stateAt_allowance_lt coherent leftStart leftLater semanticTarget
+            Coherent.stateAt_allowance_lt coherent leftStart leftLater semanticTarget
               semanticPositive
               ((quarterRadius_antitone (by decide)
                 leftOrder).trans_lt
                 comparisonRequestSmall)
           have rightAllowanceLt :
               coherent.allowance
-                  (Gaussian.Process.Sampling.stateAt process
+                  (Sampling.stateAt process
                     rightStart rightLater) < target / 8 :=
-            Gaussian.Process.Coherence.Basic.Coherent.stateAt_allowance_lt coherent rightStart rightLater semanticTarget
+            Coherent.stateAt_allowance_lt coherent rightStart rightLater semanticTarget
               semanticPositive
               ((quarterRadius_antitone (by decide)
                 rightOrder).trans_lt
                 comparisonRequestSmall)
           have close := coherent.possible_close
-            (Gaussian.Process.Sampling.witnessAt_possible
+            (Sampling.witnessAt_possible
               process leftStart leftLater)
-            (Gaussian.Process.Sampling.witnessAt_possible
+            (Sampling.witnessAt_possible
               process rightStart rightLater)
           calc
-            Data.Gaussian.Norm.Basic.normSq
-                (Gaussian.Process.Sampling.witnessAt process
+            Norm.Basic.normSq
+                (Sampling.witnessAt process
                     leftStart leftLater -
-                  Gaussian.Process.Sampling.witnessAt process
+                  Sampling.witnessAt process
                     rightStart rightLater) ≤
               4 *
                 (coherent.allowance
-                    (Gaussian.Process.Sampling.stateAt process
+                    (Sampling.stateAt process
                       leftStart leftLater) +
                   coherent.allowance
-                    (Gaussian.Process.Sampling.stateAt process
+                    (Sampling.stateAt process
                       rightStart rightLater)) := close
             _ < 4 * (target / 8 + target / 8) :=
               Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
                 (by decide)
                 (Fraction.Order.Arithmetic.add_lt_add_direct
                   leftAllowanceLt rightAllowanceLt)
-            _ = target := Purelib.Data.Rat.Bounds.Quarter.eight_eighths target }
+            _ = target := Bounds.Quarter.eight_eighths target }
 
 end Purelib.Approximation.Gaussian.Process.Coherence.Basic

@@ -1,6 +1,6 @@
 """Check current Lake ownership, facade reachability and publication boundaries."""
 
-from collections import defaultdict
+from collections import defaultdict, deque
 from pathlib import Path
 import sys
 import tomllib
@@ -9,7 +9,7 @@ from scripts.paths import ROOT
 from scripts.verification import modules, sources
 
 
-PROJECT_PREFIXES = {"Purelib", "Test", "scripts", "papers", "formalisations"}
+PROJECT_PREFIXES = {"Purelib", "TestPurelib", "scripts", "papers", "formalisations"}
 PUBLICATION_ROOTS = {"papers.CCL.CCL", "papers.RFAP.RFAP", "papers.RFAP.RFAP2",
                      "formalisations.DivineProportions.DivineProportions",
                      "formalisations.RationalRotations.RationalRotations",
@@ -53,6 +53,26 @@ def target_sources(target, active, root=ROOT):
     return result
 
 
+def check_test_dependencies(graph):
+    """Keep mathematical sources independent of regressions, including through tools."""
+    parents = defaultdict(set)
+    for owner, dependencies in graph.items():
+        for dependency in dependencies:
+            parents[dependency].add(owner)
+    routes = {name: [name] for name in graph if name.startswith("TestPurelib.")}
+    pending = deque(sorted(routes))
+    while pending:
+        dependency = pending.popleft()
+        for owner in sorted(parents[dependency]):
+            if owner not in routes:
+                routes[owner] = [owner, *routes[dependency]]
+                pending.append(owner)
+    violations = [" -> ".join(routes[name]) for name in sorted(routes)
+                  if name.startswith(("Purelib.", "papers.", "formalisations."))]
+    if violations:
+        raise ValueError("mathematical sources depend on regression modules: " + "; ".join(violations))
+
+
 def check(config, graph, root=ROOT):
     """Check current coverage without a historical provider or relocation ledger."""
     active = set(graph)
@@ -74,6 +94,7 @@ def check(config, graph, root=ROOT):
         raise ValueError("overlapping Lake library owners: " + str(overlapping))
     if missing := active - closure(graph, selected):
         raise ValueError("Lake targets omit active sources: " + ", ".join(sorted(missing)))
+    check_test_dependencies(graph)
     for facade in PUBLICATION_ROOTS:
         closure(graph, [facade])
     ccl = closure(graph, ["papers.CCL.CCL"])
@@ -84,7 +105,7 @@ def check(config, graph, root=ROOT):
                  "Purelib.Geometry.Rotations", "Purelib.Curves"):
         dependencies = closure(graph, [facade])
         foreign = {name for name in dependencies if name.startswith(
-            ("Purelib.Examples.", "Test.", "papers.", "formalisations.", "scripts."))}
+            ("Purelib.Examples.", "TestPurelib.", "papers.", "formalisations.", "scripts."))}
         if foreign:
             raise ValueError(f"reusable facade {facade} reaches optional/publication/tool sources: {sorted(foreign)}")
     examples = {name for name in active if name.startswith("Purelib.Examples.")}
@@ -96,9 +117,9 @@ def check(config, graph, root=ROOT):
         raise ValueError("optional example facade and library omit active examples: " + ", ".join(sorted(missing)))
     # Standalone main declarations require isolated executable import closures.
     executable_roots = [target["root"] for target in config.get("lean_exe", [])
-                        if target["root"].startswith("Test.")]
-    tests = {name for name in active if name.startswith("Test.")}
-    if missing := tests - closure(graph, ["Test.All", *executable_roots]):
+                        if target["root"].startswith("TestPurelib.")]
+    tests = {name for name in active if name.startswith("TestPurelib.")}
+    if missing := tests - closure(graph, ["TestPurelib.All", *executable_roots]):
         raise ValueError("test facade and standalone executables omit regressions: " + ", ".join(sorted(missing)))
 
 

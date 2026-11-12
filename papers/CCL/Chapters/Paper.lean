@@ -52,6 +52,7 @@ public import Purelib.Polynomial.Dense.Gaussian.Derivative.Monomial
 public import Purelib.Polynomial.Dense.Gaussian.Extensionality
 public import Purelib.Polynomial.Dense.Gaussian.Majorant
 import Purelib.Polynomial.Dense.Gaussian.UnitCircle.Rotation
+public import Purelib.Polynomial.Laurent.Secant
 import Purelib.Polynomial.Power.Gaussian
 import Purelib.Polynomial.Power.Gaussian.Bezout
 import Purelib.Polynomial.Power.Gaussian.DerivativeSeparation
@@ -575,8 +576,8 @@ editorial promises:
   `.polynomialKernel_diagonal`, `.product_kernel_factor`,
   `.composition_kernel_factor`, `.reciprocal_kernel_factor`,
   `.signedPower_sub_factor`, `.signedPowerKernel_diagonal`,
-  `.LaurentPolynomial.eval_sub_factor`,
-  `.LaurentPolynomial.kernel_diagonal`,
+  `Purelib.Polynomial.Laurent.Basic.LaurentPolynomial.eval_sub_factor`,
+  `Purelib.Polynomial.Laurent.Basic.LaurentPolynomial.kernel_diagonal`,
   `.RationalPolynomial.eval_sub_factor`, and
   `.RationalPolynomial.kernel_diagonal` construct the secant kernel before
   diagonal substitution, including negative powers and certified rational

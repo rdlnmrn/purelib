@@ -50,6 +50,46 @@ constructive_injectivity OwnerBridge
 
 namespace OwnerBridge
 
+/-- Transport only the original endpoint polynomial indices of a retained bridge along exact equalities.
+
+Equality elimination retains the complete original bridge record. Its box,
+clearances, winding certificates and Rouché connection are unchanged data
+at the transported polynomial indices. -/
+@[expose] def castPolynomials
+    {left right newLeft newRight : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    (bridge : Owner.Bridge.Basic.OwnerBridge left right) (leftSame : left = newLeft) (rightSame : right = newRight) :
+    Owner.Bridge.Basic.OwnerBridge newLeft newRight := by
+  subst newLeft
+  subst newRight
+  exact bridge
+
+/-- Transporting the endpoint polynomial indices retains the exact original bridge box. -/
+theorem castPolynomials_box
+    {left right newLeft newRight : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    (bridge : Owner.Bridge.Basic.OwnerBridge left right) (leftSame : left = newLeft) (rightSame : right = newRight) :
+    (bridge.castPolynomials leftSame rightSame).box = bridge.box := by
+  subst newLeft
+  subst newRight
+  rfl
+
+/-- Transporting the endpoint polynomial indices retains the original source clearance bound. -/
+theorem castPolynomials_leftClearance_bound
+    {left right newLeft newRight : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    (bridge : Owner.Bridge.Basic.OwnerBridge left right) (leftSame : left = newLeft) (rightSame : right = newRight) :
+    (bridge.castPolynomials leftSame rightSame).leftClearance.bound = bridge.leftClearance.bound := by
+  subst newLeft
+  subst newRight
+  rfl
+
+/-- Transporting the endpoint polynomial indices retains the original target clearance bound. -/
+theorem castPolynomials_rightClearance_bound
+    {left right newLeft newRight : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    (bridge : Owner.Bridge.Basic.OwnerBridge left right) (leftSame : left = newLeft) (rightSame : right = newRight) :
+    (bridge.castPolynomials leftSame rightSame).rightClearance.bound = bridge.rightClearance.bound := by
+  subst newLeft
+  subst newRight
+  rfl
+
 /-- Make a reflexive bridge from an existing local owner, reusing its box and clearance.
 
 The same original local owner supplies both endpoint boxes, properness, boundary clearance and winding certificates;

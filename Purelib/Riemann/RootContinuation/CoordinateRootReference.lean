@@ -23,6 +23,8 @@ import Purelib.Data.Gaussian.Norm.Basic
 import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -49,19 +51,19 @@ open Purelib.Data.Gaussian.Basic.Canonical
 section
 open Purelib.Data
 /-- A positive rational radius bounding both coordinates of the base point. -/
-public def radius (base : Gaussian.Basic.Canonical) : Rat.Fraction.Rational :=
+public def radius (base : Gaussian.Basic.Canonical) : Rational :=
   max 1 (max (max base.re (-base.re)) (max base.im (-base.im)))
 
 /-- The coordinate-reference radius is strictly positive. -/
 public theorem radius_positive (base : Gaussian.Basic.Canonical) : 0 < radius base :=
-  lt_of_lt_of_le (by decide) (Rat.Fraction.Order.Basic.le_max_left _ _)
+  lt_of_lt_of_le (by decide) (Basic.le_max_left _ _)
 
 end
 
 open Purelib.Data in
 open Purelib.Geometry in
 /-- The symmetric reference square containing the base point. -/
-public def ambient (base : Gaussian.Basic.Canonical) : Box := Rational.Box.symmetric (radius base)
+public def ambient (base : Gaussian.Basic.Canonical) : Box := Box.symmetric (radius base)
   (radius_positive base).le
 
 section
@@ -69,24 +71,24 @@ open Purelib.Data
 /-- The original base point lies in its retained symmetric reference square. -/
 public theorem base_inside (base : Gaussian.Basic.Canonical) : (ambient base).Contains base := by
   have reUpper : base.re ≤ radius base :=
-    (Rat.Fraction.Order.Basic.le_max_left _ _).trans ((Rat.Fraction.Order.Basic.le_max_left _ _).trans
-      (Rat.Fraction.Order.Basic.le_max_right _ _))
+    (Basic.le_max_left _ _).trans ((Basic.le_max_left _ _).trans
+      (Basic.le_max_right _ _))
   have reNegative : -base.re ≤ radius base :=
-    (Rat.Fraction.Order.Basic.le_max_right _ _).trans ((Rat.Fraction.Order.Basic.le_max_left _ _).trans
-      (Rat.Fraction.Order.Basic.le_max_right _ _))
+    (Basic.le_max_right _ _).trans ((Basic.le_max_left _ _).trans
+      (Basic.le_max_right _ _))
   have imUpper : base.im ≤ radius base :=
-    (Rat.Fraction.Order.Basic.le_max_left _ _).trans ((Rat.Fraction.Order.Basic.le_max_right _ _).trans
-      (Rat.Fraction.Order.Basic.le_max_right _ _))
+    (Basic.le_max_left _ _).trans ((Basic.le_max_right _ _).trans
+      (Basic.le_max_right _ _))
   have imNegative : -base.im ≤ radius base :=
-    (Rat.Fraction.Order.Basic.le_max_right _ _).trans ((Rat.Fraction.Order.Basic.le_max_right _ _).trans
-      (Rat.Fraction.Order.Basic.le_max_right _ _))
+    (Basic.le_max_right _ _).trans ((Basic.le_max_right _ _).trans
+      (Basic.le_max_right _ _))
   change -radius base ≤ base.re ∧ base.re ≤ radius base ∧ -radius base ≤ base.im ∧ base.im ≤ radius base
-  exact ⟨by simpa only [neg_neg] using Rat.Fraction.Order.Arithmetic.neg_le_neg_direct reNegative, reUpper,
-    by simpa only [neg_neg] using Rat.Fraction.Order.Arithmetic.neg_le_neg_direct imNegative, imUpper⟩
+  exact ⟨by simpa only [neg_neg] using Arithmetic.neg_le_neg_direct reNegative, reUpper,
+    by simpa only [neg_neg] using Arithmetic.neg_le_neg_direct imNegative, imUpper⟩
 
 /-- The square of a nonzero rational coordinate is strictly positive. -/
-public theorem square_positive {value : Rat.Fraction.Rational} (nonzero : value ≠ 0) : 0 < value ^ 2 := by
-  have nonnegative := Rat.Fraction.Order.Arithmetic.sq_nonneg_direct value
+public theorem square_positive {value : Rational} (nonzero : value ≠ 0) : 0 < value ^ 2 := by
+  have nonnegative := Arithmetic.sq_nonneg_direct value
   have positive : value ^ 2 ≠ 0 := by
     rw [pow_two]
     exact Rat.Fraction.Field.mul_ne_zero_direct nonzero nonzero
@@ -101,26 +103,26 @@ open Purelib.Geometry
 /-- Certify coordinate-polynomial clearance along a nonzero horizontal line.
 
 The squared imaginary coordinate gives a uniform positive lower bound for the Gaussian squared norm. -/
-public def horizontal (box : Rational.Box) (y : Rat.Fraction.Rational) (nonzero : y ≠ 0) :
-    Clearance.Box.Line.Basic.HorizontalLineClearance Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial box y where
+public def horizontal (box : Box) (y : Rational) (nonzero : y ≠ 0) :
+    Clearance.Box.Line.Basic.HorizontalLineClearance coordinatePolynomial box y where
   bound := y ^ 2
   positive := square_positive nonzero
   lower := fun x _ _ => by
-    rw [Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial_eval,
+    rw [coordinatePolynomial_eval,
       ← Gaussian.Norm.Basic.normSq_eq_canonical]
-    exact le_add_of_nonneg_left (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct x)
+    exact le_add_of_nonneg_left (Arithmetic.sq_nonneg_direct x)
 
 /-- Certify coordinate-polynomial clearance along a nonzero vertical line.
 
 The squared real coordinate gives a uniform positive lower bound for the Gaussian squared norm. -/
-public def vertical (box : Rational.Box) (x : Rat.Fraction.Rational) (nonzero : x ≠ 0) :
-    Clearance.Box.Line.Basic.VerticalLineClearance Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial box x where
+public def vertical (box : Box) (x : Rational) (nonzero : x ≠ 0) :
+    Clearance.Box.Line.Basic.VerticalLineClearance coordinatePolynomial box x where
   bound := x ^ 2
   positive := square_positive nonzero
   lower := fun y _ _ => by
-    rw [Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial_eval,
+    rw [coordinatePolynomial_eval,
       ← Gaussian.Norm.Basic.normSq_eq_canonical]
-    exact le_add_of_nonneg_right (Rat.Fraction.Order.Arithmetic.sq_nonneg_direct y)
+    exact le_add_of_nonneg_right (Arithmetic.sq_nonneg_direct y)
 
 end
 
@@ -132,32 +134,32 @@ open Purelib.Polynomial
 A decidable coordinate test selects two segments avoiding zero, with both retained inside the original symmetric square.
 -/
 public def connector (base : Gaussian.Basic.Canonical) (nonzero : base ≠ 0) :
-    { path : Polynomial.Geometry.ClearPath Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial (ambient base) base
+    { path : ClearPath coordinatePolynomial (ambient base) base
       (ambient base).anchor // path.WithinAmbient } := by
   let box := ambient base
   have inside := base_inside base
   have lowerNonzero : -(radius base) ≠ 0 := by
     intro zero
-    have recovered := congrArg (fun value : Rat.Fraction.Rational => -value) zero
+    have recovered := congrArg (fun value : Rational => -value) zero
     rw [neg_neg, neg_zero] at recovered
     exact ne_of_gt (radius_positive base) recovered
   by_cases imaginary : base.im = 0
   · have real : base.re ≠ 0 := by
       intro zero
       exact nonzero (Gaussian.Basic.ext zero imaginary)
-    let first : Geometry.ClearPath.ClearSegment Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial box base
-      (Gaussian.Components.Basic.point base.re box.yLower) :=
+    let first : ClearSegment coordinatePolynomial box base
+      (point base.re box.yLower) :=
       .vertical _ _ _ inside.2.2.1 inside.2.2.2 le_rfl box.y_valid (vertical box base.re real)
-    let last : Geometry.ClearPath.ClearSegment Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial box
-      (Gaussian.Components.Basic.point base.re box.yLower) box.anchor :=
+    let last : ClearSegment coordinatePolynomial box
+      (point base.re box.yLower) box.anchor :=
       .horizontal _ _ _ inside.1 inside.2.1 le_rfl box.x_valid (horizontal box box.yLower lowerNonzero)
     exact ⟨.cons first (.cons last (.nil _)),
       .cons ⟨inside.1, inside.2.1⟩ (.cons ⟨le_rfl, box.y_valid⟩ (.nil _))⟩
-  · let first : Geometry.ClearPath.ClearSegment Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial box base
-      (Gaussian.Components.Basic.point box.xLower base.im) :=
+  · let first : ClearSegment coordinatePolynomial box base
+      (point box.xLower base.im) :=
       .horizontal _ _ _ inside.1 inside.2.1 le_rfl box.x_valid (horizontal box base.im imaginary)
-    let last : Geometry.ClearPath.ClearSegment Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial box
-      (Gaussian.Components.Basic.point box.xLower base.im) box.anchor :=
+    let last : ClearSegment coordinatePolynomial box
+      (point box.xLower base.im) box.anchor :=
       .vertical _ _ _ inside.2.2.1 inside.2.2.2 le_rfl box.y_valid (vertical box box.xLower lowerNonzero)
     exact ⟨.cons first (.cons last (.nil _)),
       .cons ⟨inside.2.2.1, inside.2.2.2⟩ (.cons ⟨le_rfl, box.x_valid⟩ (.nil _))⟩
@@ -167,7 +169,7 @@ public def connector (base : Gaussian.Basic.Canonical) (nonzero : base ≠ 0) :
 The path starts and ends at the anchor and follows the counterclockwise boundary with coordinate-polynomial clearance.
 -/
 public def square (base : Gaussian.Basic.Canonical) :
-    Polynomial.Geometry.ClearPath Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial (ambient base) (ambient
+    ClearPath coordinatePolynomial (ambient base) (ambient
       base).anchor (ambient base).anchor :=
   let box := ambient base
   let clearance := Clearance.Box.Boundary.Coordinate.coordinate_symmetric_boundaryClearance (radius_positive base)
@@ -195,7 +197,7 @@ open Purelib.Polynomial in
 public theorem square_winding (base : Gaussian.Basic.Canonical) : Paths.PreparedPathWinding.ClearPath.rawWinding
   (square base) = 4 := by
   have equal : Paths.PreparedPathWinding.ClearPath.rawWinding (square base) = Winding.Box.Basic.quadrupledBoxWinding
-    Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial (ambient base) := by
+    coordinatePolynomial (ambient base) := by
     unfold square
     simp only [Paths.PreparedPathWinding.ClearPath.rawWinding,
       Paths.PreparedPathWinding.ClearSegment.rawWinding_eq_coordinateWinding,
@@ -213,16 +215,10 @@ open Purelib.Polynomial in
 Append the retained axis connector, counterclockwise square and reversed connector, preserving all segment clearances
 and the exact winding certificate. -/
 def build (base : Gaussian.Basic.Canonical) (nonzero : base ≠ 0) : WindingOneLoop
-  Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial base :=
+  coordinatePolynomial base :=
   let stem := connector base nonzero
-  { ambient := ambient base
-    path := (stem.val.append (square base)).append (Hyperelliptic.Branches.BranchCutLifts.ClearPath.reverse
-      stem.val)
-    within := (stem.property.append (square_within base)).append
-      (Hyperelliptic.Branches.BranchCutLifts.ClearPath.reverse_withinAmbient stem.val stem.property)
-    winding := by
-      rw [Paths.PreparedPathClosure.ClearPath.rawWinding_append, Paths.PreparedPathClosure.ClearPath.rawWinding_append,
-        Paths.PreparedPathClosure.ClearPath.rawWinding_reverse, square_winding]
-      omega }
+  let reference : WindingOneLoop coordinatePolynomial (ambient base).anchor :=
+    ⟨ambient base, square base, square_within base, square_winding base⟩
+  reference.rebase stem.val stem.property
 
 end Purelib.Riemann.RootContinuation.CoordinateRootReference

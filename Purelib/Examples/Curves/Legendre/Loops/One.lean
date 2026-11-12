@@ -1,4 +1,5 @@
 module
+import Purelib.Geometry.Rational.Box.Rotation
 import Purelib.RootIsolation.Owner.Family.Basic
 import Purelib.Data.Fin.Cases
 import Purelib.Data.Fin
@@ -61,6 +62,8 @@ import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 meta import Purelib.Elab.Deriving.Repr
 
+open Purelib.Polynomial.Clearance.Box.Boundary
+
 section
 public section
 
@@ -74,6 +77,8 @@ the uniform finite connector subdivision.
 -/
 
 namespace Purelib.Examples.Curves.Legendre.Loops.One
+
+open Purelib.Curves.Legendre.Paths (AxisSegment)
 
 open Purelib.Polynomial.Clearance.Box.Boundary.Translated
 open Purelib.Polynomial.Winding
@@ -127,7 +132,7 @@ derive_exposed_repr Position
   | .right => .oneRight
 
 /-- The Legendre parameter at the selected crossing level and endpoint. -/
-@[expose] def crossingParameter (level : Level) (position : Position) : Gaussian.Basic.Canonical :=
+@[expose] def crossingParameter (level : Level) (position : Position) : Basic.Canonical :=
   Connectors.connectorParameter (connectorSide position) (levelHeight level)
 
 /-- The crossing parameter has the real coordinate of its original connector side. -/
@@ -219,7 +224,7 @@ theorem crossingMovingBox_contains (level : Level) (position : Position) :
 @[expose] def crossingZeroFactorsClearance (level : Level) (position : Position) :
     BoundaryClearance (Legendre.Polynomial.factorsAt (crossingParameter level position))
       (Centered.connectorFixedBox 0) :=
-  Legendre.Polynomial.Clearance.factorsClearance (Clearance.Box.Boundary.Translated.centeredSquareSixteenthClearance 0)
+  Legendre.Polynomial.Clearance.factorsClearance (Translated.centeredSquareSixteenthClearance 0)
     (movingOnZeroBoxClearance level position)
     (ExplicitLegendreSegment.rightClearance 1
       Connectors.zeroFixed_before_oneRoot)
@@ -239,7 +244,7 @@ theorem crossingMovingBox_contains (level : Level) (position : Position) :
   Legendre.Polynomial.Clearance.factorsClearance
     (ExplicitLegendreSegment.leftClearance 0
     Connectors.zeroRoot_before_oneFixed)
-    (movingOnOneBoxClearance level position) (Clearance.Box.Boundary.Translated.centeredSquareSixteenthClearance 1)
+    (movingOnOneBoxClearance level position) (Translated.centeredSquareSixteenthClearance 1)
 
 /-- The Legendre polynomial has quadrupled winding four around the fixed zero-root box. -/
 theorem crossingZeroWinding (level : Level) (position : Position) :
@@ -248,7 +253,7 @@ theorem crossingZeroWinding (level : Level) (position : Position) :
       (Centered.connectorFixedBox 0) = 4 := by
   rw [Legendre.Polynomial.polynomial_eq_factorsAt]
   apply Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.connectorFixedBox_proper 0)
-    (Clearance.Box.Boundary.Translated.centeredSquareSixteenthClearance 0) (movingOnZeroBoxClearance level position)
+    (Translated.centeredSquareSixteenthClearance 0) (movingOnZeroBoxClearance level position)
     (ExplicitLegendreSegment.rightClearance 1
       Connectors.zeroFixed_before_oneRoot)
   have zero : Box.Basic.quadrupledBoxWinding
@@ -262,19 +267,19 @@ theorem crossingZeroWinding (level : Level) (position : Position) :
         (crossingParameter level position)) (Centered.connectorFixedBox 0) = 0 := by
     cases level with
     | upper =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_above _
+        exact Affine.HalfPlane.factor_winding_zero_of_above _
           (Centered.connectorFixedBox_proper 0)
           (movingOnZeroBoxClearance .upper position)
           (by cases position <;> decide)
     | lower =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_below _
+        exact Affine.HalfPlane.factor_winding_zero_of_below _
           (Centered.connectorFixedBox_proper 0)
           (movingOnZeroBoxClearance .lower position)
           (by cases position <;> decide)
   have one : Box.Basic.quadrupledBoxWinding
       (Translated.translatedCoordinate 1)
       (Centered.connectorFixedBox 0) = 0 :=
-    Winding.Affine.HalfPlane.factor_winding_zero_of_right 1 (Centered.connectorFixedBox_proper 0)
+    Affine.HalfPlane.factor_winding_zero_of_right 1 (Centered.connectorFixedBox_proper 0)
       (ExplicitLegendreSegment.rightClearance 1
         Connectors.zeroFixed_before_oneRoot) Connectors.zeroFixed_before_oneRoot
   rw [zero, moving, one]
@@ -295,11 +300,11 @@ theorem crossingMovingWinding (level : Level) (position : Position) :
       (crossingMovingBox level) = 0 := by
     cases level with
     | upper =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_below 0
+        exact Affine.HalfPlane.factor_winding_zero_of_below 0
           (crossingMovingBox_proper .upper) (zeroOnMovingBoxClearance .upper)
           (by decide)
     | lower =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_above 0
+        exact Affine.HalfPlane.factor_winding_zero_of_above 0
           (crossingMovingBox_proper .lower) (zeroOnMovingBoxClearance .lower)
           (by decide)
   have moving : Box.Basic.quadrupledBoxWinding
@@ -315,11 +320,11 @@ theorem crossingMovingWinding (level : Level) (position : Position) :
       (crossingMovingBox level) = 0 := by
     cases level with
     | upper =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_below 1
+        exact Affine.HalfPlane.factor_winding_zero_of_below 1
           (crossingMovingBox_proper .upper) (oneOnMovingBoxClearance .upper)
           (by decide)
     | lower =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_above 1
+        exact Affine.HalfPlane.factor_winding_zero_of_above 1
           (crossingMovingBox_proper .lower) (oneOnMovingBoxClearance .lower)
           (by decide)
   rw [zero, moving, one]
@@ -334,11 +339,11 @@ theorem crossingOneWinding (level : Level) (position : Position) :
   apply Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.connectorFixedBox_proper 1)
     (ExplicitLegendreSegment.leftClearance 0
       Connectors.zeroRoot_before_oneFixed)
-    (movingOnOneBoxClearance level position) (Clearance.Box.Boundary.Translated.centeredSquareSixteenthClearance 1)
+    (movingOnOneBoxClearance level position) (Translated.centeredSquareSixteenthClearance 1)
   have zero : Box.Basic.quadrupledBoxWinding
       (Translated.translatedCoordinate 0)
       (Centered.connectorFixedBox 1) = 0 :=
-    Winding.Affine.HalfPlane.factor_winding_zero_of_left 0 (Centered.connectorFixedBox_proper 1)
+    Affine.HalfPlane.factor_winding_zero_of_left 0 (Centered.connectorFixedBox_proper 1)
       (ExplicitLegendreSegment.leftClearance 0
         Connectors.zeroRoot_before_oneFixed) Connectors.zeroRoot_before_oneFixed
   have moving : Box.Basic.quadrupledBoxWinding
@@ -346,12 +351,12 @@ theorem crossingOneWinding (level : Level) (position : Position) :
         (crossingParameter level position)) (Centered.connectorFixedBox 1) = 0 := by
     cases level with
     | upper =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_above _
+        exact Affine.HalfPlane.factor_winding_zero_of_above _
           (Centered.connectorFixedBox_proper 1)
           (movingOnOneBoxClearance .upper position)
           (by cases position <;> decide)
     | lower =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_below _
+        exact Affine.HalfPlane.factor_winding_zero_of_below _
           (Centered.connectorFixedBox_proper 1)
           (movingOnOneBoxClearance .lower position)
           (by cases position <;> decide)
@@ -440,11 +445,11 @@ theorem crossingSampleMovingWinding (level : Level) (position : Position) :
       (Centered.sampleBox (crossingParameter level position)) = 0 := by
     cases level with
     | upper =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_below 0 (Centered.sampleBox_proper _)
+        exact Affine.HalfPlane.factor_winding_zero_of_below 0 (Centered.sampleBox_proper _)
           (zeroOnSampleMovingClearance .upper position)
           (by cases position <;> decide)
     | lower =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_above 0 (Centered.sampleBox_proper _)
+        exact Affine.HalfPlane.factor_winding_zero_of_above 0 (Centered.sampleBox_proper _)
           (zeroOnSampleMovingClearance .lower position)
           (by cases position <;> decide)
   have moving : Box.Basic.quadrupledBoxWinding
@@ -461,11 +466,11 @@ theorem crossingSampleMovingWinding (level : Level) (position : Position) :
       (Centered.sampleBox (crossingParameter level position)) = 0 := by
     cases level with
     | upper =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_below 1 (Centered.sampleBox_proper _)
+        exact Affine.HalfPlane.factor_winding_zero_of_below 1 (Centered.sampleBox_proper _)
           (oneOnSampleMovingClearance .upper position)
           (by cases position <;> decide)
     | lower =>
-        exact Winding.Affine.HalfPlane.factor_winding_zero_of_above 1 (Centered.sampleBox_proper _)
+        exact Affine.HalfPlane.factor_winding_zero_of_above 1 (Centered.sampleBox_proper _)
           (oneOnSampleMovingClearance .lower position)
           (by cases position <;> decide)
   rw [zero, moving, one]
@@ -566,7 +571,7 @@ theorem crossingOwner_pairwise (level : Level) (position : Position) :
     Legendre.Paths.Frame (crossingParameter level position) where
   chamber := crossingChamber level position
   polynomial_eq := rfl
-  labels := Data.Fin.Bijection.identity 3
+  labels := Bijection.identity 3
   owner_contains := by
     intro label
     rcases Cases.three label with labelZero | labelOne | labelTwo <;>
@@ -586,7 +591,8 @@ theorem crossingOwner_pairwise (level : Level) (position : Position) :
       exact ⟨by decide, by decide, by decide, by decide⟩
   projection_xOrdered := by
     intro left right ordered
-    rcases Cases.three left with leftZero | leftOne | leftTwo
+    rewrite [Rational.Box.Rotation.enclosure_zero, Rational.Box.Rotation.enclosure_zero]
+    rcases Data.Fin.Cases.three left with leftZero | leftOne | leftTwo
     · subst left
       rcases Cases.three right with rightZero | rightOne | rightTwo
       · subst right
@@ -631,6 +637,10 @@ private theorem crossingFrame_projection_order (level : Level) (position : Posit
     (crossingFrame level position).projected.ownerIndex order =
       (Connectors.connectorProjectionOrder (connectorSide position)).forward order := rfl
 
+/-- The broad crossing frame's original projection uses the zero-slope rational chart. -/
+theorem crossingFrame_projected_slope (level : Level) (position : Position) :
+    (crossingFrame level position).projected.slope = 0 := rfl
+
 /-- The crossing starts on the right at the upper level and on the left at the lower level. -/
 @[expose] def crossingSourcePosition : Level -> Position
   | .upper => .right
@@ -642,11 +652,11 @@ private theorem crossingFrame_projection_order (level : Level) (position : Posit
   | .lower => .right
 
 /-- The original parameter at the start of the directed crossing. -/
-@[expose] def crossingSourceParameter (level : Level) : Gaussian.Basic.Canonical :=
+@[expose] def crossingSourceParameter (level : Level) : Basic.Canonical :=
   crossingParameter level (crossingSourcePosition level)
 
 /-- The original parameter at the end of the directed crossing. -/
-@[expose] def crossingTargetParameter (level : Level) : Gaussian.Basic.Canonical :=
+@[expose] def crossingTargetParameter (level : Level) : Basic.Canonical :=
   crossingParameter level (crossingTargetPosition level)
 
 /-- The retained broad frame at the start of the directed crossing. -/
@@ -715,7 +725,7 @@ theorem crossingOneDisplacementSmall (level : Level) :
       (Legendre.Paths.polynomial (crossingSourceParameter level))
       (crossingPerturbation level)
       (crossingZeroOwner level (crossingSourcePosition level)).box :=
-  Legendre.Rouche.factorMoveDominanceAt _ _ (Clearance.Box.Boundary.Translated.centeredSquareSixteenthClearance 0)
+  Legendre.Rouche.factorMoveDominanceAt _ _ (Translated.centeredSquareSixteenthClearance 0)
     (movingOnZeroBoxClearance level (crossingSourcePosition level))
     (ExplicitLegendreSegment.rightClearance 1
       Connectors.zeroFixed_before_oneRoot)
@@ -741,7 +751,7 @@ theorem crossingOneDisplacementSmall (level : Level) :
   Legendre.Rouche.factorMoveDominanceAt _ _ (ExplicitLegendreSegment.leftClearance 0
     Connectors.zeroRoot_before_oneFixed)
     (movingOnOneBoxClearance level (crossingSourcePosition level))
-    (Clearance.Box.Boundary.Translated.centeredSquareSixteenthClearance 1) (crossingOneDisplacementSmall level)
+    (Translated.centeredSquareSixteenthClearance 1) (crossingOneDisplacementSmall level)
 
 /-- The forward Rouché bridge retaining the zero-root owner across the crossing. -/
 @[expose] def crossingZeroBridge (level : Level) : OwnerBridge
@@ -788,7 +798,7 @@ theorem crossingOneDisplacementSmall (level : Level) :
     Progressive.Chamber.Overlap.ChamberOverlap
       (oneCrossingSourceFrame level).chamber
       (oneCrossingTargetFrame level).chamber where
-  matching := Data.Fin.Bijection.identity 3
+  matching := Bijection.identity 3
   bridge := crossingBridgeAt level
   bridge_refines_left := by
     intro index
@@ -820,6 +830,7 @@ theorem crossingGeometry (level : Level) :
       (oneCrossingTargetFrame level).projected :=
   .crossing (crossingChamberOverlap level)
     Legendre.Conventions.upperPositive (crossingGeometry level) (by
+      refine ⟨rfl, ?_⟩
       intro order
       rcases Cases.three order with orderZero | orderOne | orderTwo <;>
         subst order <;> cases level <;> rfl)
@@ -885,20 +896,20 @@ theorem crossingSheetBound_positive (level : Level) :
 
 /-- The directed horizontal crossing segment at height two or minus two. -/
 @[expose] def crossingAxis : (level : Level) ->
-    Legendre.Paths.AxisSegment (crossingSourceParameter level)
+    AxisSegment (crossingSourceParameter level)
       (crossingTargetParameter level)
   | .upper => .horizontal (5 / 4) (3 / 4) 2
   | .lower => .horizontal (3 / 4) (5 / 4) (-2)
 
 /-- The horizontal crossing segment avoids zero and one with squared-distance lower bound one. -/
-@[expose] def crossingAxisSafe (level : Level) : Legendre.Paths.AxisSegment.Safe (crossingAxis level) := by
+@[expose] def crossingAxisSafe (level : Level) : AxisSegment.Safe (crossingAxis level) := by
   cases level
   · exact
-      { avoidsZero := { bound := 1, positive := by decide, lower := by decide }
-        avoidsOne := { bound := 1, positive := by decide, lower := by decide } }
+      { avoidsZero := AxisSegment.Clearance.ofFixedGap _ 0 1 (by decide) (by decide)
+        avoidsOne := AxisSegment.Clearance.ofFixedGap _ 1 1 (by decide) (by decide) }
   · exact
-      { avoidsZero := { bound := 1, positive := by decide, lower := by decide }
-        avoidsOne := { bound := 1, positive := by decide, lower := by decide } }
+      { avoidsZero := AxisSegment.Clearance.ofFixedGap _ 0 1 (by decide) (by decide)
+        avoidsOne := AxisSegment.Clearance.ofFixedGap _ 1 1 (by decide) (by decide) }
 
 /-- The certified crossing segment retaining its original geometry, projected overlap and sheet bound. -/
 @[expose] def crossingSegment (level : Level) :
@@ -981,7 +992,7 @@ theorem narrowBroadPolynomial_eq (level : Level) (position : Position) :
     Progressive.Chamber.Overlap.ChamberOverlap
       (Connectors.connectorChamber (connectorSide position) (levelHeight level))
       (crossingChamber level position) where
-  matching := Data.Fin.Bijection.identity 3
+  matching := Bijection.identity 3
   bridge := narrowBroadBridge level position
   bridge_refines_left := by
     intro index
@@ -1019,15 +1030,31 @@ theorem narrowBroadPolynomial_eq (level : Level) (position : Position) :
         (levelHeight level) index).clearance.bound := by
   rw [narrowBroadOverlap_bridge, narrowBroadBridge_rightClearance_bound]
 
+/-- The retained narrow-to-broad overlap matches every original chamber label to itself.
+
+The scalar readback keeps the original overlap and bridge records opaque while
+identifying the displayed matching at an arbitrary original bounded label. -/
+private theorem narrowBroadOverlap_matching (level : Level) (position : Position) (index : Fin 3) :
+    (narrowBroadOverlap level position).matching.forward index = index := rfl
+
+/-- The narrow and broad original frames retain the same side-dependent projected owner order. -/
+theorem narrowBroadOverlap_projected_order (level : Level) (position : Position) (order : Fin 3) :
+    (narrowBroadOverlap level position).matching.forward
+      ((Connectors.connectorFrame (connectorSide position) (levelHeight level)).projected.ownerIndex order) =
+        (crossingFrame level position).projected.ownerIndex order := by
+  rewrite [Connectors.connectorFrame_projection_order, crossingFrame_projection_order]
+  exact narrowBroadOverlap_matching level position
+    ((Connectors.connectorProjectionOrder (connectorSide position)).forward order)
+
 /-- The stationary projected overlap from the narrow connector frame to the broad crossing frame. -/
 @[expose] def narrowBroadProjectedOverlap (level : Level) (position : Position) :
     ProjectedOverlap
       (Connectors.connectorFrame (connectorSide position) (levelHeight level)).projected
       (crossingFrame level position).projected :=
-  .stationary (narrowBroadOverlap level position) (by
-    intro order
-    rcases Cases.three order with orderZero | orderOne | orderTwo <;>
-      subst order <;> cases position <;> rfl)
+  .stationary (narrowBroadOverlap level position)
+    ⟨(Connectors.connectorFrame_projected_slope (connectorSide position) (levelHeight level)).trans
+        (crossingFrame_projected_slope level position).symm,
+      narrowBroadOverlap_projected_order level position⟩
 
 /-- The narrow-to-broad projected overlap has the empty braid word. -/
 @[simp] theorem narrowBroadProjectedOverlap_word
@@ -1332,7 +1359,7 @@ witness. -/
 /-- The identity-matched chamber overlap from the common base to the upper-left one-loop chamber. -/
 @[expose] def approachChamberOverlap : Progressive.Chamber.Overlap.ChamberOverlap
     UpperZero.sourceChamber (crossingChamber .upper .left) where
-  matching := Data.Fin.Bijection.identity 3
+  matching := Bijection.identity 3
   bridge := approachBridgeAt
   bridge_refines_left := by
     intro index
@@ -1348,6 +1375,7 @@ witness. -/
 @[expose] def approachProjectedOverlap : ProjectedOverlap
     UpperZero.sourceFrame.projected (crossingFrame .upper .left).projected :=
   .stationary approachChamberOverlap (by
+    refine ⟨rfl, ?_⟩
     intro order
     rw [UpperZero.sourceFrame_projection_order, crossingFrame_projection_order]
     rfl)
@@ -1410,14 +1438,14 @@ theorem approachSheetBound_positive : 0 < approachSheetBound := by
             ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_right _ _))))
 
 /-- The horizontal approach segment from 1/4 + 2i to 3/4 + 2i. -/
-@[expose] def approachAxis : Legendre.Paths.AxisSegment UpperZero.sourceParameter
+@[expose] def approachAxis : AxisSegment UpperZero.sourceParameter
     (crossingParameter .upper .left) :=
   .horizontal (1 / 4) (3 / 4) 2
 
 /-- The approach segment avoids both critical parameters with squared-distance lower bound one. -/
-@[expose] def approachAxisSafe : Legendre.Paths.AxisSegment.Safe approachAxis where
-  avoidsZero := { bound := 1, positive := by decide, lower := by decide }
-  avoidsOne := { bound := 1, positive := by decide, lower := by decide }
+@[expose] def approachAxisSafe : AxisSegment.Safe approachAxis where
+  avoidsZero := AxisSegment.Clearance.ofFixedGap _ 0 1 (by decide) (by decide)
+  avoidsOne := AxisSegment.Clearance.ofFixedGap _ 1 1 (by decide) (by decide)
 
 /-- The certified approach segment retaining the original common-base bridges and clearances. -/
 @[expose] def approachSegment : Legendre.Paths.Segment UpperZero.sourceFrame (crossingFrame

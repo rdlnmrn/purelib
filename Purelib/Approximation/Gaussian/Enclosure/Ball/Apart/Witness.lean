@@ -22,6 +22,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 public import Mathlib.Algebra.Field.Defs
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-!
@@ -51,52 +53,52 @@ ball to stay at least `lowerSq/8` away from zero. -/
     (lowerPositive : 0 < lowerSq) (witness : Data.Gaussian.Basic.Canonical)
     (inside : ball.Contains witness) (witnessLower : lowerSq ≤ Data.Gaussian.Norm.Basic.normSq witness)
     (fine : ball.radiusSq < lowerSq / 12) :
-    Ball.Apart ball := by
+    Apart ball := by
   let centerNorm := Data.Gaussian.Norm.Basic.normSq ball.center
   have witnessDecomposition :
       witness = (witness - ball.center) + ball.center := by
     apply Data.Gaussian.Basic.ext <;>
-      simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-        Purelib.Data.Gaussian.Basic.add_re, Purelib.Data.Gaussian.Basic.add_im] <;> ring1
+      simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+        Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im] <;> ring1
   have witnessUpper : Data.Gaussian.Norm.Basic.normSq witness ≤
       2 * (ball.radiusSq + centerNorm) := by
     rw [witnessDecomposition]
     exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two (witness - ball.center) ball.center).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add inside le_rfl) (by decide))
   have centerLower : lowerSq / 2 - ball.radiusSq ≤ centerNorm := by
-    apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+    apply Arithmetic.le_of_mul_le_mul_right_direct
       (c := (2 : Fraction.Rational)) _ (by decide)
-    apply Fraction.Order.Arithmetic.le_of_add_le_add_right_direct
+    apply Arithmetic.le_of_add_le_add_right_direct
       (c := 2 * ball.radiusSq)
     calc
       (lowerSq / 2 - ball.radiusSq) * 2 +
           2 * ball.radiusSq = lowerSq := by
         rw [show (lowerSq / 2 - ball.radiusSq) * 2 =
             (lowerSq / 2) * 2 - ball.radiusSq * 2 by ring1,
-          Purelib.Data.Rat.Bounds.Quarter.half_mul_two]
+          Bounds.Quarter.half_mul_two]
         ring1
       _ ≤ Data.Gaussian.Norm.Basic.normSq witness := witnessLower
       _ ≤ 2 * (ball.radiusSq + centerNorm) := witnessUpper
       _ = centerNorm * 2 + 2 * ball.radiusSq := by ring1
   have twelveRadiusLt : ball.radiusSq * 12 < lowerSq :=
-    (Fraction.Order.Field.lt_div_iff_pos
+    (Field.lt_div_iff_pos
       (by decide : (0 : Fraction.Rational) < 12)).1 fine
   have sixRadiusLt : ball.radiusSq * 6 < lowerSq := by
     have radiusNonnegative := ball.radiusSq_nonneg
     have sixLeTwelve : ball.radiusSq * 6 ≤ ball.radiusSq * 12 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (by decide) radiusNonnegative
     exact sixLeTwelve.trans_lt twelveRadiusLt
   have separated : 2 * ball.radiusSq < centerNorm := by
     have beforeCenter :
         2 * ball.radiusSq < lowerSq / 2 - ball.radiusSq := by
-      apply Fraction.Order.Arithmetic.lt_of_add_lt_add_right_direct
+      apply Arithmetic.lt_of_add_lt_add_right_direct
         (c := ball.radiusSq)
       calc
         2 * ball.radiusSq + ball.radiusSq = 3 * ball.radiusSq := by ring1
         _ < lowerSq / 2 := by
-          apply (Fraction.Order.Field.lt_div_iff_pos
+          apply (Field.lt_div_iff_pos
             (by decide : (0 : Fraction.Rational) < 2)).2
           calc
             (3 * ball.radiusSq) * 2 = ball.radiusSq * 6 := by ring1
@@ -108,20 +110,20 @@ ball to stay at least `lowerSq/8` away from zero. -/
     dsimp only [raw, Residual.apartOfCenter]
     have twelveRadiusLe : ball.radiusSq * 12 ≤ lowerSq :=
       twelveRadiusLt.le
-    apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+    apply Arithmetic.le_of_mul_le_mul_right_direct
       (c := (8 : Fraction.Rational)) _ (by decide)
     calc
       (lowerSq / 8) * 8 = lowerSq :=
         Fraction.Field.div_mul_cancel_of_ne
           lowerSq 8 (by decide)
       _ ≤ 2 * lowerSq - ball.radiusSq * 12 := by
-        apply Fraction.Order.Arithmetic.le_of_add_le_add_right_direct
+        apply Arithmetic.le_of_add_le_add_right_direct
           (c := ball.radiusSq * 12)
         calc
           lowerSq + ball.radiusSq * 12 =
               ball.radiusSq * 12 + lowerSq := _root_.add_comm _ _
           _ ≤ lowerSq + lowerSq :=
-            Fraction.Order.Arithmetic.add_le_add_right_direct
+            Arithmetic.add_le_add_right_direct
               twelveRadiusLe lowerSq
           _ = (2 * lowerSq - ball.radiusSq * 12) +
               ball.radiusSq * 12 := by ring1
@@ -129,28 +131,28 @@ ball to stay at least `lowerSq/8` away from zero. -/
           ball.radiusSq * 8 := by
         rw [show (lowerSq / 2 - ball.radiusSq) * 4 =
             ((lowerSq / 2) * 2) * 2 - ball.radiusSq * 4 by ring1,
-          Purelib.Data.Rat.Bounds.Quarter.half_mul_two]
+          Bounds.Quarter.half_mul_two]
         ring1
       _ ≤ centerNorm * 4 - ball.radiusSq * 8 := by
         have scaledCenter :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          Arithmetic.mul_le_mul_of_nonneg_right_direct
             centerLower (by decide : (0 : Fraction.Rational) ≤ 4)
         calc
           (lowerSq / 2 - ball.radiusSq) * 4 - ball.radiusSq * 8 =
               (lowerSq / 2 - ball.radiusSq) * 4 +
                 -(ball.radiusSq * 8) := _root_.sub_eq_add_neg _ _
           _ ≤ centerNorm * 4 + -(ball.radiusSq * 8) :=
-            Fraction.Order.Arithmetic.add_le_add_right_direct
+            Arithmetic.add_le_add_right_direct
               scaledCenter (-(ball.radiusSq * 8))
           _ = centerNorm * 4 - ball.radiusSq * 8 :=
             (_root_.sub_eq_add_neg _ _).symm
       _ = (centerNorm / 2 - ball.radiusSq) * 8 := by
         rw [show (centerNorm / 2 - ball.radiusSq) * 8 =
             ((centerNorm / 2) * 2) * 4 - ball.radiusSq * 8 by ring1,
-          Purelib.Data.Rat.Bounds.Quarter.half_mul_two]
+          Bounds.Quarter.half_mul_two]
   exact
     { lowerSq := lowerSq / 8
-      positive := Fraction.Order.Field.div_pos_direct lowerPositive
+      positive := Field.div_pos_direct lowerPositive
         (by decide)
       lower := fun insideValue => fixedLower.trans (raw.lower insideValue) }
 

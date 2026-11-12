@@ -50,19 +50,19 @@ open Purelib.Approximation
 
 /-- The finite transition from one anchored chart to another chart over the same coherent input. -/
 @[expose] def transition {input : CoherentNamed}
-    (source target : Anchored.AnchoredChart input) : Coherent.CoherentNamed :=
+    (source target : AnchoredChart input) : CoherentNamed :=
   Difference.difference (AnchoredChart.output source) (AnchoredChart.output target)
 
 /-- Every certified finite chart transition exponentiates operationally to the exact rational unit. -/
 @[expose] def exp_transition_unit {input : CoherentNamed}
-    (source target : Anchored.AnchoredChart input) :
-    Gaussian.Equivalence.NamedEquivalent
-      (Exponential.Progressive.Range.Name.named
-        (Approximation.Gaussian.Logarithm.Chart.Transition.transition source target).name)
+    (source target : AnchoredChart input) :
+    NamedEquivalent
+      (Progressive.Range.Name.named
+        (transition source target).name)
       (Named.exact 1) := by
-  have exponentials : Gaussian.Equivalence.NamedEquivalent
-      (Exponential.Progressive.Range.Name.named target.output.name)
-      (Exponential.Progressive.Range.Name.named source.output.name) :=
+  have exponentials : NamedEquivalent
+      (Progressive.Range.Name.named target.output.name)
+      (Progressive.Range.Name.named source.output.name) :=
     NamedEquivalent.trans
       (AnchoredChart.exponential_inverse target)
       (NamedEquivalent.symm
@@ -73,9 +73,9 @@ open Purelib.Approximation
 operations. -/
 @[expose] def productBranchDiscrepancy
     (leftInput rightInput productInput : CoherentNamed)
-    (leftBranch : Anchored.AnchoredChart leftInput)
-    (rightBranch : Anchored.AnchoredChart rightInput)
-    (productBranch : Anchored.AnchoredChart productInput) : Coherent.CoherentNamed :=
+    (leftBranch : AnchoredChart leftInput)
+    (rightBranch : AnchoredChart rightInput)
+    (productBranch : AnchoredChart productInput) : CoherentNamed :=
   Difference.difference
     (CoherentNamed.add
       (AnchoredChart.output leftBranch) (AnchoredChart.output rightBranch))
@@ -87,15 +87,15 @@ the computed branch discrepancy exponentiates to exact one.
 The theorem neither chooses nor completes a branch correction. -/
 @[expose] def exp_productBranchDiscrepancy_unit
     (leftInput rightInput productInput : CoherentNamed)
-    (leftBranch : Anchored.AnchoredChart leftInput)
-    (rightBranch : Anchored.AnchoredChart rightInput)
-    (productBranch : Anchored.AnchoredChart productInput)
-    (productEquivalent : Gaussian.Equivalence.NamedEquivalent productInput.name
+    (leftBranch : AnchoredChart leftInput)
+    (rightBranch : AnchoredChart rightInput)
+    (productBranch : AnchoredChart productInput)
+    (productEquivalent : NamedEquivalent productInput.name
       (Named.mul
         leftInput.name rightInput.name)) :
-    Gaussian.Equivalence.NamedEquivalent
-      (Exponential.Progressive.Range.Name.named
-        (Approximation.Gaussian.Logarithm.Chart.Transition.productBranchDiscrepancy leftInput rightInput productInput
+    NamedEquivalent
+      (Progressive.Range.Name.named
+        (productBranchDiscrepancy leftInput rightInput productInput
           leftBranch rightBranch productBranch).name)
       (Named.exact 1) := by
   let leftLog := (AnchoredChart.output leftBranch)
@@ -103,49 +103,49 @@ The theorem neither chooses nor completes a branch correction. -/
   let sumLog :=
     CoherentNamed.add leftLog rightLog
   let productLog := (AnchoredChart.output productBranch)
-  let leftExp := Exponential.Progressive.Range.Coherent.exp leftLog.name
-  let rightExp := Exponential.Progressive.Range.Coherent.exp rightLog.name
-  have sumExponential : Gaussian.Equivalence.NamedEquivalent
-      (Exponential.Progressive.Range.Name.named sumLog.name)
+  let leftExp := Progressive.Range.Coherent.exp leftLog.name
+  let rightExp := Progressive.Range.Coherent.exp rightLog.name
+  have sumExponential : NamedEquivalent
+      (Progressive.Range.Name.named sumLog.name)
       productInput.name :=
     NamedEquivalent.trans
       (NamedEquivalent.symm
         (by
           simpa only [sumLog, leftExp, rightExp,
             CoherentNamed.add,
-            Exponential.Progressive.Range.Coherent.exp] using
-            Exponential.Progressive.Range.Addition.automaticExp_add leftLog rightLog))
+            Progressive.Range.Coherent.exp] using
+            Progressive.Range.Addition.automaticExp_add leftLog rightLog))
       (NamedEquivalent.trans
         (Congruence.coherentMul_respects leftExp leftInput rightExp rightInput
           (AnchoredChart.exponential_inverse leftBranch) (AnchoredChart.exponential_inverse rightBranch))
         (NamedEquivalent.symm
           productEquivalent))
-  have exponentials : Gaussian.Equivalence.NamedEquivalent
-      (Exponential.Progressive.Range.Name.named productLog.name)
-      (Exponential.Progressive.Range.Name.named sumLog.name) :=
+  have exponentials : NamedEquivalent
+      (Progressive.Range.Name.named productLog.name)
+      (Progressive.Range.Name.named sumLog.name) :=
     NamedEquivalent.trans
       (AnchoredChart.exponential_inverse productBranch)
       (NamedEquivalent.symm
         sumExponential)
-  simpa only [Approximation.Gaussian.Logarithm.Chart.Transition.productBranchDiscrepancy, sumLog, productLog, leftLog,
+  simpa only [productBranchDiscrepancy, sumLog, productLog, leftLog,
     rightLog] using Laws.exp_difference_unit sumLog productLog exponentials
 
 /-- A chart's transition to itself is operationally the exact zero name. -/
 @[expose] def transition_self_zero {input : CoherentNamed}
-    (branch : Anchored.AnchoredChart input) :
-    Gaussian.Equivalence.NamedEquivalent (Approximation.Gaussian.Logarithm.Chart.Transition.transition branch
+    (branch : AnchoredChart input) :
+    NamedEquivalent (transition branch
       branch).name
       (Named.exact 0) :=
   Neg.coherentAdd_neg_right (AnchoredChart.output branch)
 
 /-- Finite chart transitions compose additively. -/
 @[expose] def transition_compose {input : CoherentNamed}
-    (first second third : Anchored.AnchoredChart input) :
-    Gaussian.Equivalence.NamedEquivalent
+    (first second third : AnchoredChart input) :
+    NamedEquivalent
       (Named.add
-        (Approximation.Gaussian.Logarithm.Chart.Transition.transition first second).name
-        (Approximation.Gaussian.Logarithm.Chart.Transition.transition second third).name)
-      (Approximation.Gaussian.Logarithm.Chart.Transition.transition first third).name := by
+        (transition first second).name
+        (transition second third).name)
+      (transition first third).name := by
   let firstOutput := (AnchoredChart.output first)
   let secondOutput := (AnchoredChart.output second)
   let thirdOutput := (AnchoredChart.output third)
@@ -168,13 +168,13 @@ The theorem neither chooses nor completes a branch correction. -/
     Coherence.exact 0
   let zeroPlusFirst :=
     CoherentNamed.add zero negativeFirst
-  have swapTransitions : Gaussian.Equivalence.NamedEquivalent
+  have swapTransitions : NamedEquivalent
       (Named.add
         firstSecond.name secondThird.name)
       (Named.add
         secondThird.name firstSecond.name) :=
     Add.coherentAdd_comm firstSecond secondThird
-  have exposeThird : Gaussian.Equivalence.NamedEquivalent
+  have exposeThird : NamedEquivalent
       (Named.add
         secondThird.name firstSecond.name)
       (Named.add
@@ -184,7 +184,7 @@ The theorem neither chooses nor completes a branch correction. -/
       CoherentNamed.add,
       CoherentNamed.neg] using
       Add.coherentAdd_assoc thirdOutput negativeSecond firstSecond
-  have cancelInside : Gaussian.Equivalence.NamedEquivalent negativeSecondPlusFirstSecond.name
+  have cancelInside : NamedEquivalent negativeSecondPlusFirstSecond.name
       cancelledThenFirst.name := by
     simpa only [negativeSecondPlusFirstSecond, firstSecond, Difference.difference,
       cancelledThenFirst, cancelledSecond, negativeSecond, negativeFirst,
@@ -192,7 +192,7 @@ The theorem neither chooses nor completes a branch correction. -/
       CoherentNamed.neg] using
       NamedEquivalent.symm
         (Add.coherentAdd_assoc negativeSecond secondOutput negativeFirst)
-  have replaceInside : Gaussian.Equivalence.NamedEquivalent
+  have replaceInside : NamedEquivalent
       (Named.add
         thirdOutput.name negativeSecondPlusFirstSecond.name)
       (Named.add
@@ -202,28 +202,28 @@ The theorem neither chooses nor completes a branch correction. -/
       (NamedEquivalent.refl
         thirdOutput.name)
       cancelInside
-  have cancelSecond : Gaussian.Equivalence.NamedEquivalent cancelledSecond.name zero.name := by
+  have cancelSecond : NamedEquivalent cancelledSecond.name zero.name := by
     simpa only [cancelledSecond, negativeSecond, zero,
       CoherentNamed.add,
       CoherentNamed.neg,
       Coherence.exact] using
       Neg.coherentAdd_neg_left secondOutput
-  have reduceCancellation : Gaussian.Equivalence.NamedEquivalent cancelledThenFirst.name
+  have reduceCancellation : NamedEquivalent cancelledThenFirst.name
       zeroPlusFirst.name :=
     Congruence.coherentAdd_respects cancelledSecond zero negativeFirst negativeFirst
       cancelSecond
       (NamedEquivalent.refl
         negativeFirst.name)
-  have removeZero : Gaussian.Equivalence.NamedEquivalent zeroPlusFirst.name negativeFirst.name := by
+  have removeZero : NamedEquivalent zeroPlusFirst.name negativeFirst.name := by
     simpa only [zeroPlusFirst, zero,
       CoherentNamed.add,
       Coherence.exact] using
       Add.coherentAdd_zero_left negativeFirst
-  have reduceInside : Gaussian.Equivalence.NamedEquivalent cancelledThenFirst.name
+  have reduceInside : NamedEquivalent cancelledThenFirst.name
       negativeFirst.name :=
     NamedEquivalent.trans
       reduceCancellation removeZero
-  have finish : Gaussian.Equivalence.NamedEquivalent
+  have finish : NamedEquivalent
       (Named.add
         thirdOutput.name cancelledThenFirst.name)
       (Named.add
@@ -235,7 +235,7 @@ The theorem neither chooses nor completes a branch correction. -/
       reduceInside
   exact NamedEquivalent.trans
     (by
-      simpa only [Approximation.Gaussian.Logarithm.Chart.Transition.transition, firstSecond, secondThird] using
+      simpa only [transition, firstSecond, secondThird] using
         swapTransitions)
     (NamedEquivalent.trans exposeThird
       (NamedEquivalent.trans
@@ -245,15 +245,15 @@ The theorem neither chooses nor completes a branch correction. -/
 
 /-- Opposite chart transitions cancel operationally. -/
 @[expose] def transition_reverse_zero {input : CoherentNamed}
-    (first second : Anchored.AnchoredChart input) :
-    Gaussian.Equivalence.NamedEquivalent
+    (first second : AnchoredChart input) :
+    NamedEquivalent
       (Named.add
-        (Approximation.Gaussian.Logarithm.Chart.Transition.transition first second).name
-        (Approximation.Gaussian.Logarithm.Chart.Transition.transition second first).name)
+        (transition first second).name
+        (transition second first).name)
       (Named.exact 0) :=
   NamedEquivalent.trans
-    (Approximation.Gaussian.Logarithm.Chart.Transition.transition_compose first second first)
-    (Approximation.Gaussian.Logarithm.Chart.Transition.transition_self_zero first)
+    (transition_compose first second first)
+    (transition_self_zero first)
 
 end
 

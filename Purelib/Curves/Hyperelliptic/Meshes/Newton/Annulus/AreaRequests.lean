@@ -62,6 +62,12 @@ import Purelib.Topology.Surface.Sewing.SewnPrimitiveContacts
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison
+
+open Purelib.Riemann.RootContinuation.NewtonPuncturedGrid
+
 public section
 
 open Purelib.Curves
@@ -85,50 +91,50 @@ polygons, with no caller mesh-size or successful-refinement assumption.
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.AreaRequests
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
+  {preparation : BranchCellBank.NewtonPreparation original}
 
 namespace NewtonPreparation
 
 /-- Original line counts and branch count are all fixed before shrinking. -/
-@[expose] def outerCount (_preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original)
+@[expose] def outerCount (_preparation : BranchCellBank.NewtonPreparation original)
   : Nat :=
   4 * (original.grid.vertical.length + original.grid.horizontal.length + 4 + 4 * branches.siteCount)
 
 /-- The canonical Newton grid's line count is bounded by the fixed original preparation count. -/
-theorem build_lineCount (preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original)
+theorem build_lineCount (preparation : BranchCellBank.NewtonPreparation original)
   {target radius : Fraction.Rational}
     (positive : 0 < target) (radiusPositive : 0 < radius) :
-    4 * ((RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid.build preparation positive
+    4 * ((BranchCellBank.NewtonGrid.build preparation positive
       radiusPositive).shrunk.prepared.grid.vertical.length +
-      (RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid.build preparation positive
+      (BranchCellBank.NewtonGrid.build preparation positive
         radiusPositive).shrunk.prepared.grid.horizontal.length) ≤
-        Hyperelliptic.Meshes.Newton.Annulus.AreaRequests.NewtonPreparation.outerCount preparation := open
-        Purelib.Polynomial in by
-  let bands := RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation.Bands.build preparation positive
+        NewtonPreparation.outerCount preparation := open
+        Polynomial in by
+  let bands := BranchCellBank.NewtonPreparation.Bands.build preparation positive
     radiusPositive
   have lineCount := Polynomial.Geometry.Grid.WindowSize.withFrame_lineCount original.grid
     preparation.shrinking.clearance
     bands.neighborhoods.listed
   have stateCount : bands.neighborhoods.listed.length = branches.siteCount := by
-    rw [bands.neighborhoods.listed_eq, Purelib.Data.List.OfFn.Basic.length_ofFn]
+    rw [bands.neighborhoods.listed_eq, List.OfFn.Basic.length_ofFn]
   rw [stateCount] at lineCount
   exact Nat.mul_le_mul_left 4 lineCount
 
 set_option genInjectivity false in
 /-- The numerical budget precedes the grid. The count certificate accepts
 checked alternative grids without equating them to the canonical search. -/
-structure AreaRequest (preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original)
+structure AreaRequest (preparation : BranchCellBank.NewtonPreparation original)
   (target radius : Fraction.Rational) where
   /-- The count fixed before the grid is constructed. -/ count : Nat
   /-- The retained count equals the original preparation's outer count. -/ count_eq : count =
-    Hyperelliptic.Meshes.Newton.Annulus.AreaRequests.NewtonPreparation.outerCount preparation
+    NewtonPreparation.outerCount preparation
   /-- The original positive path budget for that exact count and target. -/ budget :
     RootContinuation.NewtonPathBudget.PathBudget count target
   /-- The Newton grid built at the original budget's scale and radius. -/ grid :
-    RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation budget.scale radius
+    BranchCellBank.NewtonGrid preparation budget.scale radius
   /-- The actual retained grid line count. -/ lineCount : Nat
   /-- The line count is exactly the sum of the retained grid dimensions. -/ lineCount_eq : lineCount =
     grid.shrunk.prepared.grid.vertical.length + grid.shrunk.prepared.grid.horizontal.length
@@ -141,127 +147,127 @@ namespace AreaRequest
 variable {target radius : Fraction.Rational}
 
 /-- Choose the original path budget before building the Newton grid at its retained scale and radius. -/
-@[expose] def build (preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original)
+@[expose] def build (preparation : BranchCellBank.NewtonPreparation original)
   (target radius : Fraction.Rational)
     (positive : 0 < target) (radiusPositive : 0 < radius) :
-      Hyperelliptic.Meshes.Newton.Annulus.AreaRequests.NewtonPreparation.AreaRequest preparation target radius :=
-  let count := Hyperelliptic.Meshes.Newton.Annulus.AreaRequests.NewtonPreparation.outerCount preparation
+      AreaRequest preparation target radius :=
+  let count := NewtonPreparation.outerCount preparation
   let budget := RootContinuation.NewtonPathBudget.PathBudget.build count target positive
-  let grid := RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid.build preparation budget.scale_positive
+  let grid := BranchCellBank.NewtonGrid.build preparation budget.scale_positive
     radiusPositive
   ⟨count, rfl, budget, grid, grid.shrunk.prepared.grid.vertical.length + grid.shrunk.prepared.grid.horizontal.length,
-    rfl, Hyperelliptic.Meshes.Newton.Annulus.AreaRequests.NewtonPreparation.build_lineCount preparation
+    rfl, NewtonPreparation.build_lineCount preparation
       budget.scale_positive radiusPositive⟩
 
-variable {request : Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.AreaRequests.NewtonPreparation.AreaRequest
-  preparation target radius} {index : Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
-  {annulus : Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces request.grid index} {lifted :
+variable {request : AreaRequest
+  preparation target radius} {index : Branches.BranchIsolation.Data.Index branches}
+  {annulus : Faces.AnnularFaces request.grid index} {lifted :
     Meshes.LiftedPuncturedGrid request.grid.punctured}
-  {region : Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted}
+  {region : LiftedBoundary.Lifted annulus lifted}
 
 /-- The actual two-lap outer boundary length is bounded by the retained request count. -/
-theorem outer_count (request : Hyperelliptic.Meshes.Newton.Annulus.AreaRequests.NewtonPreparation.AreaRequest
-  preparation target radius) {index : Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
-    {annulus : Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces request.grid index} {lifted :
+theorem outer_count (request : AreaRequest
+  preparation target radius) {index : Branches.BranchIsolation.Data.Index branches}
+    {annulus : Faces.AnnularFaces request.grid index} {lifted :
       Meshes.LiftedPuncturedGrid request.grid.punctured}
-    (region : Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted) : region.outer.length ≤
-      request.count := open Purelib.Polynomial in by
+    (region : LiftedBoundary.Lifted annulus lifted) : region.outer.length ≤
+      request.count := open Polynomial in by
   have count := Polynomial.Geometry.Grid.WindowSize.Window.boundary_edgeCount_le annulus.window
   rw [← request.lineCount_eq] at count
   have cap := request.lineCount_le
-  rw [Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted.outer_length region]
+  rw [LiftedBoundary.Lifted.outer_length region]
   change 2 * annulus.window.boundary.edgeCount ≤ request.count
   omega
 
 /-- The actual hole count is bounded by the square of the original outer count. -/
-theorem holes_count (request : Hyperelliptic.Meshes.Newton.Annulus.AreaRequests.NewtonPreparation.AreaRequest
+theorem holes_count (request : AreaRequest
   preparation target radius) :
-    request.grid.faces.holes.length ≤ Hyperelliptic.Meshes.Newton.Annulus.AreaRequests.NewtonPreparation.outerCount
-      preparation ^ 2 := open Purelib.Polynomial in by
+    request.grid.faces.holes.length ≤ NewtonPreparation.outerCount
+      preparation ^ 2 := open Polynomial in by
   have classified := request.grid.faces.length_eq
   have cells := Polynomial.Geometry.Grid.WindowSize.cells_length_le request.grid.shrunk.prepared.grid
   have lines : request.lineCount ≤ request.count := by have cap := request.lineCount_le; omega
   have cap : request.lineCount ^ 2 ≤ request.count ^ 2 := by
-    rw [Purelib.Data.Nat.Multiplication.pow_two, Purelib.Data.Nat.Multiplication.pow_two]
+    rw [Nat.Multiplication.pow_two, Nat.Multiplication.pow_two]
     exact Nat.mul_le_mul lines lines
   rw [← request.lineCount_eq] at cells
   rw [request.count_eq] at cap
   exact (Nat.le_add_left _ _).trans (classified.le.trans (cells.trans cap))
 
 /-- Reuse the actual covered outer tour, its root thread and parent bank. -/
-@[expose] def compare (request : Hyperelliptic.Meshes.Newton.Annulus.AreaRequests.NewtonPreparation.AreaRequest
+@[expose] def compare (request : AreaRequest
   preparation target radius)
-    {index : Hyperelliptic.Branches.BranchIsolation.Data.Index branches} {annulus :
-      Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces request.grid index}
+    {index : Branches.BranchIsolation.Data.Index branches} {annulus :
+      Faces.AnnularFaces request.grid index}
     {lifted : Meshes.LiftedPuncturedGrid request.grid.punctured} {region :
-      Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted}
-    (prepared : Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation region) (differential :
+      LiftedBoundary.Lifted annulus lifted}
+    (prepared : Lifted.OuterPreparation region) (differential :
       Fin genus)
-    (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+    (domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
       request.grid.faces.regulars) :
-    Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation.Comparison prepared differential
+    Lifted.OuterPreparation.Comparison prepared differential
       domains request.budget.scale :=
-  Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation.Comparison.build prepared differential
+  Lifted.OuterPreparation.Comparison.build prepared differential
     domains request.budget.scale_positive
 
 /-- The complete original source polygon area is within the target using the actual count cap and retained squared
 budget. -/
-theorem source_area_accurate (request : Hyperelliptic.Meshes.Newton.Annulus.AreaRequests.NewtonPreparation.AreaRequest
+theorem source_area_accurate (request : AreaRequest
   preparation target radius)
-    {index : Hyperelliptic.Branches.BranchIsolation.Data.Index branches} {annulus :
-      Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces request.grid index}
+    {index : Branches.BranchIsolation.Data.Index branches} {annulus :
+      Faces.AnnularFaces request.grid index}
     {lifted : Meshes.LiftedPuncturedGrid request.grid.punctured} {region :
-      Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted}
-    {prepared : Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation region} {differential :
+      LiftedBoundary.Lifted annulus lifted}
+    {prepared : Lifted.OuterPreparation region} {differential :
       Fin genus}
-    {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+    {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
       request.grid.faces.regulars}
-    (comparison : Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation.Comparison prepared
+    (comparison : Lifted.OuterPreparation.Comparison prepared
       differential domains request.budget.scale)
     {stage : Nat} (later : comparison.reference.index ≤ stage)
-    {shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    {shared : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
       (Periods.PeriodMatrix.standardDifferential differential) stage domains}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh) :
-    Data.Gaussian.Norm.Basic.normSq (Path.IncrementArea.pathArea (prepared.sources.map (fun source =>
+    (readings : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh) :
+    Gaussian.Norm.Basic.normSq (Path.IncrementArea.pathArea (prepared.sources.map (fun source =>
       source.increment readings.values))) < target := by
-  have count := Fraction.Order.Arithmetic.pow_le_pow_direct
+  have count := Arithmetic.pow_le_pow_direct
     (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le region.outer.length))
     (Fraction.Cast.Order.natCast_le_direct (request.outer_count region)) 2
   have increment := request.budget.increment_le
   have nonnegative := comparison.reference.bound_nonnegative
-  have product := Fraction.Order.Arithmetic.mul_le_mul_direct count increment nonnegative
-    (Fraction.Order.Arithmetic.sq_nonneg_direct (request.count : Fraction.Rational))
-  have square := Fraction.Order.Arithmetic.pow_le_pow_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.sq_nonneg_direct _) nonnegative) product 2
+  have product := Arithmetic.mul_le_mul_direct count increment nonnegative
+    (Arithmetic.sq_nonneg_direct (request.count : Fraction.Rational))
+  have square := Arithmetic.pow_le_pow_direct
+    (Arithmetic.mul_nonneg_direct (Arithmetic.sq_nonneg_direct _) nonnegative) product 2
   have bounded :=
-    (Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation.Comparison.source_area_bound
+    (Lifted.OuterPreparation.Comparison.source_area_bound
     comparison later readings).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct square (by decide : (0 : Fraction.Rational) ≤ 4))
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct square (by decide : (0 : Fraction.Rational) ≤ 4))
   exact bounded.trans_lt ((show 4 * ((request.count : Fraction.Rational) ^ 2 * (4 * request.budget.scale)) ^ 2 =
     64 * (request.count : Fraction.Rational) ^ 4 * request.budget.scale ^ 2 by ring1).trans_lt request.budget.area_paid)
 
 /-- The same request also pays the physical period correction; this does
 not infer small area from a small or vanishing total. -/
-theorem source_total_accurate (request : Hyperelliptic.Meshes.Newton.Annulus.AreaRequests.NewtonPreparation.AreaRequest
+theorem source_total_accurate (request : AreaRequest
   preparation target radius)
-    {index : Hyperelliptic.Branches.BranchIsolation.Data.Index branches} {annulus :
-      Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces request.grid index}
+    {index : Branches.BranchIsolation.Data.Index branches} {annulus :
+      Faces.AnnularFaces request.grid index}
     {lifted : Meshes.LiftedPuncturedGrid request.grid.punctured} {region :
-      Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted}
-    {prepared : Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation region} {differential :
+      LiftedBoundary.Lifted annulus lifted}
+    {prepared : Lifted.OuterPreparation region} {differential :
       Fin genus}
-    {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+    {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
       request.grid.faces.regulars}
-    (comparison : Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation.Comparison prepared
+    (comparison : Lifted.OuterPreparation.Comparison prepared
       differential domains request.budget.scale)
     {stage : Nat} (later : comparison.reference.index ≤ stage)
-    {shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    {shared : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
       (Periods.PeriodMatrix.standardDifferential differential) stage domains}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    (readings : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh) :
+    Gaussian.Norm.Basic.normSq (Gaussian.Norm.Sum.Basic.gaussianSum
       (prepared.sources.map (fun source => source.increment readings.values))) < target := by
   have bounded : ∀ value ∈ prepared.sources.map (fun source => source.increment readings.values),
-      Data.Gaussian.Norm.Basic.normSq value ≤ 4 * request.budget.scale := by
+      Gaussian.Norm.Basic.normSq value ≤ 4 * request.budget.scale := by
     rw [prepared.sources_eq]
     intro value member
     exact (comparison.reference.source_bound comparison.shared later readings value member).trans
@@ -269,11 +275,11 @@ theorem source_total_accurate (request : Hyperelliptic.Meshes.Newton.Annulus.Are
   have lengthEq : (prepared.sources.map (fun source => source.increment readings.values)).length = region.outer.length
     := by
     have equal := congrArg List.length
-      (Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation.sources_project prepared)
-    rw [Purelib.Data.List.Map.length_map] at equal ⊢
+      (Lifted.OuterPreparation.sources_project prepared)
+    rw [List.Map.length_map] at equal ⊢
     exact equal
   have total := Path.IncrementArea.sum_bound_of_length
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) request.budget.scale_positive.le) bounded
+    (Arithmetic.mul_nonneg_direct (by decide) request.budget.scale_positive.le) bounded
     (lengthEq.le.trans (request.outer_count region))
   exact total.trans_lt ((show (request.count : Fraction.Rational) ^ 2 * (4 * request.budget.scale) =
     4 * (request.count : Fraction.Rational) ^ 2 * request.budget.scale by ring1).trans_lt request.budget.total_paid)

@@ -130,42 +130,76 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SharedSums.Regul
   (SharedSum)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {face : RegularFace bank} {base : FramedPuncturedGrid
     curve branches higher}
-  {included : Purelib.Polynomial.Geometry.Grid.Extension.CoordinateInclusion bank.grid base.bank.grid}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {sheet : Fin 2} {source :
+  {included : Extension.CoordinateInclusion bank.grid base.bank.grid}
+  {frames : RootFrames base.bank.grid} {sheet : Fin 2} {source :
     Differential genus}
   {differential : Fin genus} {minimum : Nat} {target : Rational}
+
+namespace IncludedRequest
+
+/-- The original included period's quarter-target primitive and fragment request. -/
+@[expose] def Fragments (face : RegularFace bank)
+    (included : Extension.CoordinateInclusion bank.grid base.bank.grid)
+    (frames : RootFrames base.bank.grid) (sheet : Fin 2) (source : Differential genus)
+    (differential : Fin genus) (minimum : Nat) (target : Rational) :=
+  IncludedFragments (base := base)
+    (face.includedPeriod included frames sheet source).period differential minimum (target / 4)
+
+/-- The exact original sheet assignments to an included request's retained shared domains. -/
+@[expose] def Entries (domains : FaceDomainBank frames base.faces.regulars)
+    (fragments : Fragments face included frames sheet source differential minimum target) :=
+  Fragment.SplitSheets domains fragments.cells fragments.comparison.request.requests
+
+/-- All retained original primitive indices lie above the supplied scalar floor. -/
+@[expose] def Indices (floor : Nat)
+    (fragments : Fragments face included frames sheet source differential minimum target) : Prop :=
+  IndicesAbove floor fragments.comparison.request.requests
+
+/-- The original split and analytic mesh count is bounded by the retained piece allowance. -/
+@[expose] def Count (domains : FaceDomainBank frames base.faces.regulars)
+    (fragments : Fragments face included frames sheet source differential minimum target)
+    (pieces : Nat) : Prop :=
+  fragments.fragments.splits.count * (2 * FaceDomainBank.stepsBound domains + 5) ≤ pieces
+
+end IncludedRequest
+
+section
+
+-- Keep generated heterogeneous equality helpers from expanding retained geometric bounds.
+attribute [local irreducible] IncludedRequest.Fragments IncludedRequest.Entries
+  IncludedRequest.Indices IncludedRequest.Count
 
 set_option genInjectivity false in
 /-- The retained primitive, fragment and scalar requests for an included original regular face.
 
 The scalar floor is fixed before acquiring the original parent primitives, and the retained fragment count pays every
 shared-mesh piece. -/
-structure IncludedRequest (face : PuncturedGridFaces.RegularFace bank)
+structure IncludedRequest (face : RegularFace bank)
     (included : Extension.CoordinateInclusion bank.grid base.bank.grid) (frames :
-        RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid)
-    (sheet : Fin 2) (source : Differentials.Basic.Differential genus) (differential : Fin genus) (minimum : Nat) (target
-      : Fraction.Rational)
+        RootFrames base.bank.grid)
+    (sheet : Fin 2) (source : Differential genus) (differential : Fin genus) (minimum : Nat) (target
+      : Rational)
     (domains : DomainBanks.FaceDomainBank frames base.faces.regulars) : Type 2 where
   /-- The retained upper bound on the complete number of scalar mesh pieces. -/ pieces : Nat
-  /-- The face scalar budgets paying one quarter of the requested target. -/ scalars : BranchCellBank.FaceScalarBudgets
+  /-- The face scalar budgets paying one quarter of the requested target. -/ scalars : FaceScalarBudgets
     (PeriodMatrix.standardDifferential differential) pieces (target / 4) domains
   /-- The actual included period fragments and their retained comparison request. -/ fragments :
-    PeriodFragments.IncludedFragments (base := base)
-    (face.includedPeriod included frames sheet source).period differential minimum (target / 4)
+    IncludedRequest.Fragments face included frames sheet source differential minimum target
   /-- The assignment of the original primitive requests to the actual shared face domains. -/ entries :
-    Fragment.SplitSheets domains fragments.cells fragments.comparison.request.requests
+    IncludedRequest.Entries domains fragments
   /-- Every retained primitive request lies above the chosen scalar floor. -/ indices :
-    PreparedControlledPrimitiveRequests.IndicesAbove (FaceScalarBudgets.index scalars)
-    fragments.comparison.request.requests
+    IncludedRequest.Indices (FaceScalarBudgets.index scalars) fragments
   /-- The actual split and analytic mesh count is at most the retained piece allowance. -/ count :
-    fragments.fragments.splits.count * (2 * FaceDomainBank.stepsBound domains + 5) ≤ pieces
+    IncludedRequest.Count domains fragments pieces
 
 constructive_injectivity IncludedRequest
+
+end
 
 namespace IncludedRequest
 
@@ -175,13 +209,13 @@ variable {domains : FaceDomainBank frames
 /-- Prepare an included original-face request with positive scalar and period budgets.
 
 The retained cover fixes the piece count before its scalar floor is imposed on the acquired primitive requests. -/
-@[expose] def build (face : PuncturedGridFaces.RegularFace bank) (included : Extension.CoordinateInclusion bank.grid
+@[expose] def build (face : RegularFace bank) (included : Extension.CoordinateInclusion bank.grid
   base.bank.grid)
-    (frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid) (sheet : Fin 2) (source :
-        Differentials.Basic.Differential genus)
-    (differential : Fin genus) (minimum : Nat) (target : Fraction.Rational) (positive : 0 < target)
+    (frames : RootFrames base.bank.grid) (sheet : Fin 2) (source :
+        Differential genus)
+    (differential : Fin genus) (minimum : Nat) (target : Rational) (positive : 0 < target)
     (domains : DomainBanks.FaceDomainBank frames base.faces.regulars) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.FaceRequest.IncludedRequest face included frames sheet source
+    IncludedRequest face included frames sheet source
       differential minimum target domains := by
   let period := (face.includedPeriod included frames sheet source).period
   let cover := CoveredPeriodStage.acquire period.initial (PreparedRefinementProgramCore.standardDifferentials genus)
@@ -201,44 +235,44 @@ The retained cover fixes the piece count before its scalar floor is imposed on t
     simp only [-eq_self, -iff_self, fragments.axes.vertical_eq, fragments.axes.horizontal_eq, Data.List.Map.length_map]
       at bound
     exact Nat.mul_le_mul_right analyticCount bound
-  have indices : PreparedControlledPrimitiveRequests.IndicesAbove floor comparison.request.requests := by
+  have indices : IndicesAbove floor comparison.request.requests := by
     have equal : comparison.request.minimumIndex = floor := ControlledSumRequest.acquire_minimumIndex ..
     exact equal ▸ comparison.request.indices_ge
   exact ⟨pieces, scalars, fragments, fragments.assign domains, indices, count⟩
 
 /-- The original sheet-entry observation points followed by the supplied extra points. -/
-@[expose] def points (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.FaceRequest.IncludedRequest face
+@[expose] def points (request : IncludedRequest face
   included frames sheet source differential minimum target domains)
-    (extra : List Data.Gaussian.Basic.Canonical) : List Gaussian :=
+    (extra : List Gaussian) : List Gaussian :=
   SheetEntries.points request.entries ++ extra
 
 /-- The retained scalar mesh budgets on the original and extra observation points. -/
-@[expose] def budgets (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.FaceRequest.IncludedRequest face
+@[expose] def budgets (request : IncludedRequest face
   included frames sheet source differential minimum target domains)
-    (extra : List Data.Gaussian.Basic.Canonical) := FaceScalarBudgets.meshes (request.points extra) request.scalars
+    (extra : List Gaussian) := FaceScalarBudgets.meshes (request.points extra) request.scalars
 
 set_option genInjectivity false in
 /-- The shared meshes and actual retained primitive sum for an included original face.
 
 All meshes consume the supplied numerical bank, and the cached sum carries its paid scalar error bound. -/
-structure Readings (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.FaceRequest.IncludedRequest face
+structure Readings (request : IncludedRequest face
   included frames sheet source differential minimum target domains)
-    (extra : List Data.Gaussian.Basic.Canonical) {numericalIndex : Nat}
-    (numerics : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential differential) numericalIndex domains)
+    (extra : List Gaussian) {numericalIndex : Nat}
+    (numerics : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) numericalIndex domains)
       where
   /-- The actual shared meshes consuming the retained budgets and supplied primitive bank. -/ meshes :
-    CommonMeshes.FaceSharedMeshes (request.budgets extra) numerics
-  /-- The cached actual sum on the original retained sheet entries. -/ sum : SheetEntries.SharedSum meshes
+    FaceSharedMeshes (request.budgets extra) numerics
+  /-- The cached actual sum on the original retained sheet entries. -/ sum : SharedSum meshes
     request.entries
   /-- The retained shared-sum bound is strictly below one quarter of the target. -/ small : sum.bound < target / 4
 
 constructive_injectivity Readings
 
 /-- Build shared meshes and their cached original-entry sum from the supplied paid numerical bank. -/
-@[expose] def readWith (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.FaceRequest.IncludedRequest face
+@[expose] def readWith (request : IncludedRequest face
   included frames sheet source differential minimum target domains)
-    (positive : 0 < target) (extra : List Data.Gaussian.Basic.Canonical) {numericalIndex : Nat}
-    (numerics : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential differential) numericalIndex domains)
+    (positive : 0 < target) (extra : List Gaussian) {numericalIndex : Nat}
+    (numerics : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) numericalIndex domains)
     (later : FaceScalarBudgets.index request.scalars ≤ numericalIndex) : request.Readings extra numerics := by
   let meshes := FaceSharedMeshes.build (request.budgets extra) numerics
     ((FaceScalarBudgets.meshes_index request.scalars (request.points extra)).le.trans later)
@@ -248,10 +282,10 @@ constructive_injectivity Readings
 
 /-- The actual shared reading approximates the original included-face period program at every later paid stage. -/
 theorem Readings.accurate
-    {request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.FaceRequest.IncludedRequest face included frames
+    {request : IncludedRequest face included frames
       sheet source differential minimum target domains}
-    {extra : List Data.Gaussian.Basic.Canonical} {numericalIndex : Nat}
-    {numerics : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential differential) numericalIndex domains}
+    {extra : List Gaussian} {numericalIndex : Nat}
+    {numerics : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) numericalIndex domains}
     (readings : request.Readings extra numerics) (stage : Nat) (later : request.fragments.comparison.stage ≤ stage) :
     Data.Gaussian.Norm.Basic.normSq (readings.sum.value -
       (((face.includedPeriod included frames sheet source).period.program differential).integral.model
@@ -263,7 +297,7 @@ theorem Readings.accurate
   have last := request.fragments.comparison.accurate
     (PreparedRefinementProgramCore.standardDifferential_mem_standardDifferentials differential) stage later
   have bound := (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans_lt
-    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2)
+    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Rational) < 2)
       (Fraction.Order.Arithmetic.add_lt_add_direct first last))
   rw [sub_add_sub_cancel] at bound
   have equal : 2 * (target / 4 + target / 4) = target := by

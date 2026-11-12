@@ -86,6 +86,16 @@ inductive StrictSign (form : Hermitian.HermitianForm)
   /-- The Hermitian form is strictly positive at every point in the current box. -/ | positive (holds : ∀ value,
     current.Contains value → 0 < form.eval value)
 
+namespace StrictSign
+
+/-- Read whether the same retained uniform sign is negative. -/
+@[expose] def isNegative {form : Hermitian.HermitianForm} {current : Rational.Box} :
+    StrictSign form current → Bool
+  | .negative _ => true
+  | .positive _ => false
+
+end StrictSign
+
 /-- Read the uniform strict sign from a successful box margin certificate.
 
 An exact comparison at the retained sample selects the negative or positive result, with a proof applying to every point

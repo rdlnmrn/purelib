@@ -66,45 +66,45 @@ open Purelib
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
-    {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered}
+    PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {ordered : PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
+    {paired : PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation base.bank.toBranchCellBank}
     {target radius : Fraction.Rational}
   {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius} {current :
     Meshes.LiftedPuncturedGrid grid.punctured}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
     {firstIndex secondIndex : Fin genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap}
 
 /-- The lap and cap requests, at their common supplied readings, suffice.
 Canonical component periods and the physical terminal product are bounded
 internally from the retained cap integral allowance. -/
 theorem retained_exterior_cap_joining_accurate
-    {first : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    {first : PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential firstIndex)}
-    {second : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    {second : PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential secondIndex)}
-    {lapError : Fraction.Rational} (lap : Hyperelliptic.Meshes.PuncturedGrid.Exterior.LapRequest.ExteriorLapRequest
+    {lapError : Fraction.Rational} (lap : PuncturedGrid.Exterior.LapRequest.ExteriorLapRequest
       first second lapError)
-    {stage : Nat} {leftBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    {stage : Nat} {leftBank : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
       (Periods.PeriodMatrix.standardDifferential firstIndex) stage domains}
-    {rightBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    {rightBank : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
       (Periods.PeriodMatrix.standardDifferential secondIndex) stage domains}
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh) (right
-      : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings rightBank current.mesh)
+    (left : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh) (right
+      : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings rightBank current.mesh)
     (later : lap.index ≤ stage) (firstLater : first.index ≤ stage) (secondLater : second.index ≤ stage) (newSheet : Fin
       2)
     {capTarget : Fraction.Rational} {floor depth otherDepth readingIndex : Nat} {box : Rational.Box}
-    {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap (Periods.PeriodMatrix.standardDifferential
+    {sample : Charts.Reciprocal.Cap.Primitives.Sample cap (Periods.PeriodMatrix.standardDifferential
       firstIndex) stage box}
-    {otherSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap (Periods.PeriodMatrix.standardDifferential
+    {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap (Periods.PeriodMatrix.standardDifferential
       secondIndex) stage box}
     {allocated : PuncturedGrid.Exterior.PairedCapRequest
 
@@ -115,41 +115,41 @@ theorem retained_exterior_cap_joining_accurate
         regular domains (Periods.PeriodMatrix.standardDifferential secondIndex)) capTarget floor}
     (evaluated : PuncturedGrid.Exterior.PairedCapRequest.Evaluation allocated
       sample otherSample leftBank rightBank depth otherDepth readingIndex)
-    (attached : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment
+    (attached : PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment
       (PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.build
       regular domains (Periods.PeriodMatrix.standardDifferential firstIndex)))
     (degree : curve.polynomial.natDegree = 2 * genus + 2) :
-    Data.Gaussian.Norm.Basic.normSq (2 *
+    Gaussian.Norm.Basic.normSq (2 *
       ConjugatePhysicalRequest.exterior (paired := paired) newSheet
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh left.values)
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh right.values) -
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateChordPolygons.CapAttachment.conjugateJoiningArea attached
+      (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh left.values)
+        (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh right.values) -
+      PuncturedGrid.Exterior.ConjugateChordPolygons.CapAttachment.conjugateJoiningArea attached
         sample otherSample) <
         4 * (lapError + 16 * max
-          (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired
+          (PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired
             := paired) grid.shrunk.included first)
-          (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired
+          (PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired
             := paired) grid.shrunk.included second) * allocated.allowance +
           capTarget + 4 * allocated.allowance^2) := by
   have small :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.BuiltCapTotalBounds.PairedCapRequest.Evaluation.built_one_lap_small
+    PuncturedGrid.Exterior.BuiltCapTotalBounds.PairedCapRequest.Evaluation.built_one_lap_small
     evaluated degree left right newSheet
   have comparison := grid.shrunk.included.exterior_comparison base.bank.frame grid.punctured.bank.frame
     current.edges current.vertices (fun point member =>
-      (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt grid.punctured.bank.toBranchCellBank
+      (PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt grid.punctured.bank.toBranchCellBank
         point member).toLoop)
-  have firstRead := comparison.values (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh
+  have firstRead := comparison.values (PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh
     left.values)
-    (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation_reverse current.mesh left.values) newSheet
-  have secondRead := comparison.values (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation
+    (PuncturedGrid.CanonicalEdgeValues.edgeValuation_reverse current.mesh left.values) newSheet
+  have secondRead := comparison.values (PuncturedGrid.CanonicalEdgeValues.edgeValuation
     current.mesh right.values)
-    (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation_reverse current.mesh right.values) newSheet
-  have terminal := Hyperelliptic.Meshes.PuncturedGrid.ConjugatePhysicalExteriorProduct.conjugate_product_bound
+    (PuncturedGrid.CanonicalEdgeValues.edgeValuation_reverse current.mesh right.values) newSheet
+  have terminal := PuncturedGrid.ConjugatePhysicalExteriorProduct.conjugate_product_bound
     (paired := paired) grid.shrunk.included
     first second newSheet left right firstLater secondLater
-    ((congrArg Data.Gaussian.Norm.Basic.normSq firstRead).trans_le small.1.le) ((congrArg
-      Data.Gaussian.Norm.Basic.normSq secondRead).trans_le small.2.le)
-  have result := Hyperelliptic.Meshes.Newton.ExteriorCapJoiningComparison.exterior_cap_joining_accurate
+    ((congrArg Gaussian.Norm.Basic.normSq firstRead).trans_le small.1.le) ((congrArg
+      Gaussian.Norm.Basic.normSq secondRead).trans_le small.2.le)
+  have result := ExteriorCapJoiningComparison.exterior_cap_joining_accurate
     lap left right later newSheet terminal evaluated attached degree
 
       (PuncturedGrid.Exterior.BuiltCapTotalBounds.PairedCapRequest.Evaluation.built_component_totals_bounded

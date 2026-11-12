@@ -60,7 +60,7 @@ namespace Purelib.Approximation.Gaussian.Logarithm.Real.Progressive.Dyadic.Coher
 
 /-- The finite `log 2` stream used by dyadic range correction is coherent. -/
 def logTwoCoherent :
-    Gaussian.Process.Coherence.Basic.Coherent Name.logTwo.process :=
+    Process.Coherence.Basic.Coherent Name.logTwo.process :=
   Coherent.localLogCoherent
     (Named.exact ⟨2, 0⟩)
     (Chart.exact 2 (by decide) le_rfl)
@@ -68,21 +68,21 @@ def logTwoCoherent :
 /-- Every signed natural multiple of the finite `log 2` stream is coherent. -/
 def logCorrectionCoherent
     (direction : Dyadic.Basic.Direction) (exponent : Nat) :
-    Gaussian.Process.Coherence.Basic.Coherent
+    Process.Coherence.Basic.Coherent
       (Name.correction direction exponent).process :=
-  Gaussian.Process.Coherence.Basic.Coherent.mul
-    (Gaussian.Process.Coherence.Basic.Coherent.exact
+  Process.Coherence.Basic.Coherent.mul
+    (Process.Coherence.Basic.Coherent.exact
       (Name.correctionCoefficient
         direction exponent))
     logTwoCoherent
 
 /-- A dyadically range-reduced positive-real logarithm, including its finite correction term, is coherent. -/
 def logRangeNamedCoherent (input :
-  Gaussian.Name.Basic.Named)
+  Named)
     (chart : Domain.DyadicChart input) :
-    Gaussian.Process.Coherence.Basic.Coherent
+    Process.Coherence.Basic.Coherent
       (Name.named input chart).process :=
-  Gaussian.Process.Coherence.Basic.Coherent.add
+  Process.Coherence.Basic.Coherent.add
     (Coherent.localLogCoherent
       (DyadicScaling.scaledInput input chart.direction
         chart.exponent) chart.localChart)

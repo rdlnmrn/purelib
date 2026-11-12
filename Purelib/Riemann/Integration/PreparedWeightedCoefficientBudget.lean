@@ -28,6 +28,8 @@ import Purelib.Riemann.Topology.PreparedRefinementRootChains
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-! Pay the weighted coefficient floor before acquiring source polynomials,
@@ -48,11 +50,11 @@ open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
 open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_succ)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {source :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {source :
+  Differential genus}
   {root : Named} {target : Coordinate}
   {initial : RootClosedState curve source root} {targets : List
-    (Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus)}
+    (Differential genus)}
   {requests : (row : Fin genus) → RequestedParents count target
     (initial.state.parents.map (recastCenteredEdge (standardDifferential row)))}
 
@@ -61,13 +63,13 @@ open Purelib.Data.Rat in
 /-- A shared coefficient cap bounds the original weighted floor by genus squared times initial movement mass. -/
 theorem coefficient_floor_le (budgets : ScheduleBudgets initial targets requests) {cap : Coordinate}
     (bounded : ∀ row, coefficientMaximum (requests row) ≤ cap) :
-    (genus : Coordinate) * FiniteSum.Fin.sumFin (fun row => (budgets.get row).polynomialFloor) ≤
+    (genus : Coordinate) * sumFin (fun row => (budgets.get row).polynomialFloor) ≤
       (genus : Coordinate)^2 * movementMass initial.state.parents * cap := by
   have each (row : Fin genus) : (budgets.get row).polynomialFloor ≤ cap * movementMass initial.state.parents := by
     rw [(budgets.get row).polynomialFloor_eq, (budgets.get row).coefficient_eq,
       (budgets.get row).mass_eq, movementMass_recast]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (bounded row) (movementMass_nonnegative _)
-  have total := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct (bounded row) (movementMass_nonnegative _)
+  have total := Arithmetic.mul_le_mul_of_nonneg_left_direct
     (FiniteSum.Rational.Order.Positivity.sumFin_mono _ _ each)
     (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus))
   exact total.trans_eq (by rw [FiniteSum.Fin.Rational.sum_constant]; ring1)
@@ -83,7 +85,7 @@ open Purelib.Data.Rat in
 theorem coefficientTolerance_positive (initial : RootClosedState curve source root)
     {allowance : Coordinate} (positive : 0 < allowance) : 0 < coefficientTolerance initial allowance :=
   Budget.Weighted.allowance_positive positive
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+    (Arithmetic.mul_nonneg_direct (Arithmetic.sq_nonneg_direct _)
       (movementMass_nonnegative _))
 
 open Purelib.Algebra in
@@ -95,10 +97,10 @@ The same initial movement mass and original row maxima determine the weight used
 theorem coefficient_floor_paid (budgets : ScheduleBudgets initial targets requests) {allowance : Coordinate}
     (nonnegative : 0 ≤ allowance)
     (bounded : ∀ row, coefficientMaximum (requests row) ≤ coefficientTolerance initial allowance) :
-    (genus : Coordinate) * FiniteSum.Fin.sumFin (fun row => (budgets.get row).polynomialFloor) ≤ allowance :=
+    (genus : Coordinate) * sumFin (fun row => (budgets.get row).polynomialFloor) ≤ allowance :=
   (coefficient_floor_le budgets bounded).trans
     (Budget.Weighted.mul_allowance_le nonnegative
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+      (Arithmetic.mul_nonneg_direct (Arithmetic.sq_nonneg_direct _)
         (movementMass_nonnegative _)))
 
 end Purelib.Riemann.Integration.PreparedWeightedCoefficientBudget

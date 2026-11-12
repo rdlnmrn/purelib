@@ -67,6 +67,8 @@ import Purelib.Riemann.Branches.PreparedSheetContinuationCore
 import Purelib.Riemann.Integration.PreparedConstantModels
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Algebra
@@ -120,18 +122,18 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy (
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+    UniformReciprocalModels.Data patch count}
   {cover : Cover data} {covers :
     BasisSourceCovers parent}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {bounds :
+  {regular : RegularBounds.Data cap} {bounds :
     UniformBounds regular.padded}
   {depth floor sourceFloor : Nat} {target sourceTarget : Coordinate}
-  {index minimum stage : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {index minimum stage : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
   {polynomials : RegularBasisPolynomials cap
     index box}
   {anchorBank : PrimitiveCells data index
@@ -156,7 +158,7 @@ open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 variable {energyTarget : Coordinate} {energyFloor energyDepth : Nat}
 
 variable {originals :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+  CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
   covers index}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -176,7 +178,7 @@ variable {request :
   {plan : Plan
     request capSample polynomials minimum}
   {acquired :
-    CommonParentReadings.BasisCommonParentRequest.Plan.Acquisition
+    Plan.Acquisition
     plan anchorBank bank stage}
   {energyFloor radialDepth : Nat}
 
@@ -202,29 +204,29 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonReq
 
 /-- Four successive Gaussian discrepancies bounded by one squared radius give an endpoint bound of sixteen times that
 radius. -/
-private theorem four_steps (a b c d e : InverseRootPolynomial.Gaussian) (radius : InverseRootPolynomial.Coordinate)
-    (ab : Data.Gaussian.Norm.Basic.normSq (a - b) ≤ radius) (bc : Data.Gaussian.Norm.Basic.normSq (b -
+private theorem four_steps (a b c d e : Gaussian) (radius : Coordinate)
+    (ab : Gaussian.Norm.Basic.normSq (a - b) ≤ radius) (bc : Gaussian.Norm.Basic.normSq (b -
       c) ≤ radius)
-    (cd : Data.Gaussian.Norm.Basic.normSq (c - d) ≤ radius) (de : Data.Gaussian.Norm.Basic.normSq (d -
+    (cd : Gaussian.Norm.Basic.normSq (c - d) ≤ radius) (de : Gaussian.Norm.Basic.normSq (d -
       e) ≤ radius) :
-    Data.Gaussian.Norm.Basic.normSq (a - e) ≤ 16 * radius := by
-  have left := (Data.Gaussian.Norm.Bounds.normSq_sub_le_via a b c).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct ab bc) (by
-      decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2))
-  have right := (Data.Gaussian.Norm.Bounds.normSq_sub_le_via c d e).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct cd de) (by
-      decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2))
-  exact ((Data.Gaussian.Norm.Bounds.normSq_sub_le_via a c e).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct left right)
-      (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2))).trans_eq (by ring1)
+    Gaussian.Norm.Basic.normSq (a - e) ≤ 16 * radius := by
+  have left := (Gaussian.Norm.Bounds.normSq_sub_le_via a b c).trans
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct ab bc) (by
+      decide : (0 : Coordinate) ≤ 2))
+  have right := (Gaussian.Norm.Bounds.normSq_sub_le_via c d e).trans
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct cd de) (by
+      decide : (0 : Coordinate) ≤ 2))
+  exact ((Gaussian.Norm.Bounds.normSq_sub_le_via a c e).trans
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct left right)
+      (by decide : (0 : Coordinate) ≤ 2))).trans_eq (by ring1)
 
 /-- Auxiliary coarse blocks occur only in the proof. Executable transport uses the sample's cached chart summary and the
 retained fine integral data. -/
 theorem prepared_area_bound (sample : Acquisition.Sample acquired preparation originals coefficients radialDepth)
     (integrals : request.prepared.request.Acquisition polynomials originals bank coefficients request.arcs.depth)
     {pairs : Acquisition.ChildPairs integrals} (weighted : ChildPairs.Weighted pairs) (later : request.index ≤ index) :
-    Data.Gaussian.Norm.Basic.normSq (weighted.integral.area - sample.connection.summary.area) ≤
-      (4 * allowance)^2 * (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
+    Gaussian.Norm.Basic.normSq (weighted.integral.area - sample.connection.summary.area) ≤
+      (4 * allowance)^2 * (coefficientNormSq coefficients)^2 := by
   let comparison := request.prepared.request.comparison
   let coarse := comparison.acquire polynomials originals bank coefficients request.arcs.depth
     (request.prepared.request.comparison_le.trans (request.prepared_le.trans later))
@@ -232,27 +234,27 @@ theorem prepared_area_bound (sample : Acquisition.Sample acquired preparation or
   have refinementBound := request.refinement.acquisition_later coarse integrals.area request.refinement_le
     integrals.minimum_le
   have chartBound := request.charts.acquisition_bounded sample.paths coarse
-  have chartPaid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (Fraction.Order.Arithmetic.pow_le_pow_direct request.chart_positive.le request.chart_le 2)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct (PreparedObservationCoercivity.coefficientNormSq coefficients))
-  have small : comparison.tolerance ≤ 1 := by rw [comparison.tolerance_eq]; exact Fraction.Order.Basic.min_le_left _ _
+  have chartPaid := Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.pow_le_pow_direct request.chart_positive.le request.chart_le 2)
+      (Arithmetic.sq_nonneg_direct (coefficientNormSq coefficients))
+  have small : comparison.tolerance ≤ 1 := by rw [comparison.tolerance_eq]; exact Basic.min_le_left _ _
   have connectorBound := request.connectors.area_bounded sample.paths sample.connectors coarse.blocks small
   rw [(Paths.joinedSummary 0 sample.paths sample.connectors).area_eq, ← sample.connection.summary.area_eq]
     at connectorBound
-  have reversed : Data.Gaussian.Norm.Basic.normSq (sample.paths.chartSummary.area -
+  have reversed : Gaussian.Norm.Basic.normSq (sample.paths.chartSummary.area -
     sample.connection.summary.area) ≤
-      allowance^2 * (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
+      allowance^2 * (coefficientNormSq coefficients)^2 := by
     rw [show sample.paths.chartSummary.area - sample.connection.summary.area =
-      -(sample.connection.summary.area - sample.paths.chartSummary.area) by ring1, Data.Gaussian.Norm.Basic.normSq_neg]
+      -(sample.connection.summary.area - sample.paths.chartSummary.area) by ring1, Gaussian.Norm.Basic.normSq_neg]
     exact connectorBound
   exact
     (four_steps
     weighted.integral.area integrals.area.pullback.area coarse.pullback.area sample.paths.chartSummary.area
-    sample.connection.summary.area (allowance^2 * (PreparedObservationCoercivity.coefficientNormSq coefficients)^2)
+    sample.connection.summary.area (allowance^2 * (coefficientNormSq coefficients)^2)
     integralBound refinementBound (chartBound.trans chartPaid) reversed).trans_eq (by ring1)
 
 /-- Refining the retained original common primitive blocks preserves their exact pullback total. -/
-private theorem pullback_total_later {areaAllowance : InverseRootPolynomial.Coordinate} {coarse depth : Nat}
+private theorem pullback_total_later {areaAllowance : Coordinate} {coarse depth : Nat}
     {comparison : CommonPrimitiveRequest regular common areaAllowance floor}
     (before : comparison.Acquisition polynomials originals bank coefficients coarse)
     (after : comparison.Acquisition polynomials originals bank coefficients depth) (later : coarse ≤ depth) :
@@ -272,40 +274,40 @@ the same primitive banks. -/
 theorem prepared_total_bound (sample : Acquisition.Sample acquired preparation originals coefficients radialDepth)
     (integrals : request.prepared.request.Acquisition polynomials originals bank coefficients request.arcs.depth)
     {pairs : Acquisition.ChildPairs integrals} (weighted : ChildPairs.Weighted pairs) (later : request.index ≤ index) :
-    Data.Gaussian.Norm.Basic.normSq (weighted.integral.total - sample.connection.summary.total) ≤
-      (4 * allowance)^2 * PreparedObservationCoercivity.coefficientNormSq coefficients := by
+    Gaussian.Norm.Basic.normSq (weighted.integral.total - sample.connection.summary.total) ≤
+      (4 * allowance)^2 * coefficientNormSq coefficients := by
   let comparison := request.prepared.request.comparison
   let coarse := comparison.acquire polynomials originals bank coefficients request.arcs.depth
     (request.prepared.request.comparison_le.trans (request.prepared_le.trans later))
-  have normNonnegative : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients :=
+  have normNonnegative : 0 ≤ coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
-    (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : InverseRootPolynomial.Coordinate)) _ (fun row =>
-      Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
+    (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Coordinate)) _ (fun row =>
+      normSq_nonneg (coefficients row)))
   have integralBound := BasisPreparedAreaRequest.total_bounded request.prepared integrals weighted
-  have refinementBound : Data.Gaussian.Norm.Basic.normSq (integrals.area.pullback.total -
+  have refinementBound : Gaussian.Norm.Basic.normSq (integrals.area.pullback.total -
     coarse.pullback.total) ≤
-      allowance^2 * PreparedObservationCoercivity.coefficientNormSq coefficients := by
+      allowance^2 * coefficientNormSq coefficients := by
     rw
       [pullback_total_later
-      coarse integrals.area integrals.minimum_le, Data.Gaussian.Basic.sub_self, Data.Gaussian.Norm.Basic.normSq_zero]
-    exact Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.sq_nonneg_direct _) normNonnegative
+      coarse integrals.area integrals.minimum_le, Gaussian.Basic.sub_self, Gaussian.Norm.Basic.normSq_zero]
+    exact Arithmetic.mul_nonneg_direct (Arithmetic.sq_nonneg_direct _) normNonnegative
   have chartBound := BasisCommonChartBudget.acquisition_total_bounded request.charts sample.paths coarse
-  have chartPaid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (Fraction.Order.Arithmetic.pow_le_pow_direct request.chart_positive.le request.chart_le 2) normNonnegative
+  have chartPaid := Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.pow_le_pow_direct request.chart_positive.le request.chart_le 2) normNonnegative
   have connectorBound := request.connectors.total_bounded sample.paths sample.connectors
   rw [(Paths.joinedSummary 0 sample.paths sample.connectors).total_eq, ← sample.connection.summary.total_eq]
     at connectorBound
-  have reversed : Data.Gaussian.Norm.Basic.normSq (sample.paths.chartSummary.total -
+  have reversed : Gaussian.Norm.Basic.normSq (sample.paths.chartSummary.total -
     sample.connection.summary.total) ≤
-      allowance^2 * PreparedObservationCoercivity.coefficientNormSq coefficients := by
+      allowance^2 * coefficientNormSq coefficients := by
     rw [show sample.paths.chartSummary.total - sample.connection.summary.total =
       -(sample.connection.summary.total - sample.paths.chartSummary.total) by ring1,
-        Data.Gaussian.Norm.Basic.normSq_neg]
+        Gaussian.Norm.Basic.normSq_neg]
     exact connectorBound
   exact
     (four_steps
     weighted.integral.total integrals.area.pullback.total coarse.pullback.total sample.paths.chartSummary.total
-    sample.connection.summary.total (allowance^2 * PreparedObservationCoercivity.coefficientNormSq coefficients)
+    sample.connection.summary.total (allowance^2 * coefficientNormSq coefficients)
     integralBound refinementBound (chartBound.trans chartPaid) reversed).trans_eq (by ring1)
 
 set_option genInjectivity false in
@@ -319,19 +321,19 @@ structure PreparedComparison (sample : Acquisition.Sample acquired preparation o
   /-- The retained source/integral child pairs of that exact acquisition. -/ pairs : Acquisition.ChildPairs integrals
   /-- The cached coefficient-weighted pair list and its two summaries. -/ weighted : ChildPairs.Weighted pairs
   /-- The cached signed prepared-integral area minus the connected chart area. -/ difference :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The cached area discrepancy uses the exact retained integral and chart summaries. -/ difference_eq : difference =
     weighted.integral.area - sample.connection.summary.area
   /-- The area discrepancy satisfies its retained squared-coefficient-norm bound. -/ bounded :
-    Data.Gaussian.Norm.Basic.normSq difference ≤ (4 * allowance)^2 *
-    (PreparedObservationCoercivity.coefficientNormSq coefficients)^2
+    Gaussian.Norm.Basic.normSq difference ≤ (4 * allowance)^2 *
+    (coefficientNormSq coefficients)^2
   /-- The cached signed prepared-integral total minus the connected chart total. -/ totalDifference :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The cached total discrepancy uses the exact retained integral and chart totals. -/ totalDifference_eq :
     totalDifference = weighted.integral.total - sample.connection.summary.total
   /-- The total discrepancy satisfies its retained coefficient-norm bound. -/ total_bounded :
-    Data.Gaussian.Norm.Basic.normSq totalDifference ≤ (4 * allowance)^2 *
-    PreparedObservationCoercivity.coefficientNormSq coefficients
+    Gaussian.Norm.Basic.normSq totalDifference ≤ (4 * allowance)^2 *
+    coefficientNormSq coefficients
 
 constructive_injectivity PreparedComparison
 

@@ -38,11 +38,11 @@ open Purelib.Polynomial.Geometry.Grid.CellBoundary.EdgeValues
 open Purelib.Polynomial.Geometry.Grid.WindowBoundary (sumValues_filter)
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces (AnnularFaces)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : NewtonPreparation original} {target radius : Purelib.Data.Rat.Fraction.Rational}
+  {preparation : NewtonPreparation original} {target radius : Data.Rat.Fraction.Rational}
 
 open Purelib.Curves in
 open Purelib.Geometry in
@@ -55,7 +55,7 @@ private theorem original_hole_index (grid : NewtonGrid preparation target radius
   · exact same
   · have retained : hole.cell.box.Refines (original.cell hole.index).box := by
       rw [hole.cell_eq]
-      exact (Geometry.Rational.Box.Refinement.StrictInterior.refines (grid.shrunk.cell_strict hole.index))
+      exact (Rational.Box.Refinement.StrictInterior.refines (grid.shrunk.cell_strict hole.index))
     exact ((original.cells_separated hole.index index same).points_ne
       (retained.contains hole.cell.box.contains_anchor) (inside.contains hole.cell.box.contains_anchor) rfl).elim
 
@@ -71,7 +71,7 @@ structure OriginalAnnularFaces (grid : NewtonGrid preparation target radius) (in
     grid.shrunk.prepared.toBranchCellBank)
   /-- The retained list is exactly the original-box filter of the Newton regular faces. -/ faces_eq : faces =
     grid.faces.regulars.filter (fun face => decide (face.cell.box.Refines (original.cell index).box))
-  /-- The original cell's window in the refined Newton grid. -/ window : Polynomial.Geometry.Grid.WindowBoundary.Window
+  /-- The original cell's window in the refined Newton grid. -/ window : Geometry.Grid.WindowBoundary.Window
     grid.shrunk.prepared.grid (original.cell index).box
 
 constructive_injectivity OriginalAnnularFaces
@@ -79,7 +79,7 @@ constructive_injectivity OriginalAnnularFaces
 namespace OriginalAnnularFaces
 
 variable {grid : NewtonGrid preparation target radius} {index :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
 
 open Purelib.Curves in
 open Purelib.Data in
@@ -92,15 +92,15 @@ Reuse the Newton grid's existing classification and coordinate inclusion without
     OriginalAnnularFaces grid index := by
   let cell := original.cell index
   have intervals := Geometry.Grid.CellBoundary.Cell.intervals_mem cell (original.cell_mem index)
-  have x := Geometry.Grid.ClearGrid.Interval.endpoints_mem _ original.grid.vertical_ordered intervals.1
-  have y := Geometry.Grid.ClearGrid.Interval.endpoints_mem _ original.grid.horizontal_ordered intervals.2
+  have x := Interval.endpoints_mem _ original.grid.vertical_ordered intervals.1
+  have y := Interval.endpoints_mem _ original.grid.horizontal_ordered intervals.2
   let included := grid.shrunk.included
   exact ⟨grid.faces.regulars.filter (fun face => decide (face.cell.box.Refines cell.box)), rfl,
-    Polynomial.Geometry.Grid.WindowBoundary.Window.build _ cell.box
-      (included.vertical _ (List.Map.mem_map_of_mem x.1))
-      (included.vertical _ (List.Map.mem_map_of_mem x.2))
-      (included.horizontal _ (List.Map.mem_map_of_mem y.1))
-      (included.horizontal _ (List.Map.mem_map_of_mem y.2))⟩
+    Geometry.Grid.WindowBoundary.Window.build _ cell.box
+      (included.vertical _ (Map.mem_map_of_mem x.1))
+      (included.vertical _ (Map.mem_map_of_mem x.2))
+      (included.horizontal _ (Map.mem_map_of_mem y.1))
+      (included.horizontal _ (Map.mem_map_of_mem y.2))⟩
 
 open Purelib.Data in
 open Purelib.Polynomial in
@@ -109,20 +109,20 @@ private theorem sum_unique {Alpha : Type} {count : Nat} (key : Alpha → Fin cou
   Gaussian.Basic.Canonical) :
     ∀ (entries : List Alpha), entries.Pairwise (fun first second => key first ≠ key second) →
       (∃ entry ∈ entries, key entry = index) →
-      Geometry.Grid.CellBoundary.sumValues (fun entry => if key entry = index then value else 0) entries = value
+      sumValues (fun entry => if key entry = index then value else 0) entries = value
   | [], _, found => by obtain ⟨_, member, _⟩ := found; cases member
   | head :: tail, unique, found => by
       by_cases same : key head = index
-      · rw [Geometry.Grid.CellBoundary.sumValues, if_pos same]
-        have zero : Geometry.Grid.CellBoundary.sumValues (fun entry => if key entry = index then value else 0) tail = 0
+      · rw [sumValues, if_pos same]
+        have zero : sumValues (fun entry => if key entry = index then value else 0) tail = 0
           := by
-          rw [Geometry.Grid.CellBoundary.sumValues_congr _ (fun _ => 0) tail (by
+          rw [sumValues_congr _ (fun _ => 0) tail (by
             intro entry member
             have different : key entry ≠ index := fun equal =>
               (List.pairwise_cons.mp unique).1 entry member (same.trans equal.symm)
-            rw [if_neg different]), Geometry.Grid.CellBoundary.sumValues_zero]
+            rw [if_neg different]), sumValues_zero]
         rw [zero, add_zero]
-      · rw [Geometry.Grid.CellBoundary.sumValues, if_neg same, zero_add]
+      · rw [sumValues, if_neg same, zero_add]
         apply sum_unique key index value tail (List.pairwise_cons.mp unique).2
         obtain ⟨entry, member, equal⟩ := found
         rcases Membership.mem_cons.mp member with rfl | member
@@ -136,19 +136,19 @@ open Purelib.Geometry in
 /-- The hole contribution inside an original branch cell is exactly its retained smaller hole. -/
 private theorem hole_sum (grid : NewtonGrid preparation target radius) (index :
   Hyperelliptic.Branches.BranchIsolation.Data.Index branches)
-    (value : Geometry.Grid.ClearGrid.Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve) →
+    (value : Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve) →
       Gaussian.Basic.Canonical) :
-    Geometry.Grid.CellBoundary.sumValues (fun hole => if hole.cell.box.Refines (original.cell index).box then value
+    sumValues (fun hole => if hole.cell.box.Refines (original.cell index).box then value
       hole.cell else 0) grid.faces.holes =
       value (grid.punctured.bank.toBranchCellBank.cell index) := by
-  rw [Geometry.Grid.CellBoundary.sumValues_congr _ (fun hole => if hole.index = index then value
+  rw [sumValues_congr _ (fun hole => if hole.index = index then value
     (grid.punctured.bank.toBranchCellBank.cell index) else 0)
     grid.faces.holes (by
       intro hole _
       by_cases same : hole.index = index
       · have inside : hole.cell.box.Refines (original.cell index).box := by
           rw [hole.cell_eq, same]
-          exact (Geometry.Rational.Box.Refinement.StrictInterior.refines (grid.shrunk.cell_strict index))
+          exact (Rational.Box.Refinement.StrictInterior.refines (grid.shrunk.cell_strict index))
         rw [if_pos inside, if_pos same, hole.cell_eq, same]
         rfl
       · have outside : ¬hole.cell.box.Refines (original.cell index).box := fun inside => same (original_hole_index grid
@@ -161,13 +161,13 @@ open Purelib.Curves in
 open Purelib.Data in
 open Purelib.Polynomial in
 /-- The selected regular faces and retained hole sum to the original cell window. -/
-theorem sum_balance (annulus : OriginalAnnularFaces grid index) (value : Geometry.Grid.ClearGrid.Cell curve.polynomial
+theorem sum_balance (annulus : OriginalAnnularFaces grid index) (value : Cell curve.polynomial
   (Hyperelliptic.Branches.Cuts.Ambient curve) → Gaussian.Basic.Canonical) :
-    Geometry.Grid.CellBoundary.sumValues (fun face => value face.cell) annulus.faces + value
+    sumValues (fun face => value face.cell) annulus.faces + value
       (grid.punctured.bank.toBranchCellBank.cell index) =
-      Geometry.Grid.CellBoundary.sumValues value annulus.window.cells := by
-  rw [annulus.faces_eq, annulus.window.cells_eq, Geometry.Grid.WindowBoundary.sumValues_filter,
-    Geometry.Grid.WindowBoundary.sumValues_filter]
+      sumValues value annulus.window.cells := by
+  rw [annulus.faces_eq, annulus.window.cells_eq, sumValues_filter,
+    sumValues_filter]
   have balance := grid.faces.split.sum_eq (fun cell => if cell.box.Refines (original.cell index).box then value cell
     else 0)
   rw [← grid.faces.regulars_eq, ← grid.faces.holes_eq, hole_sum] at balance
@@ -175,17 +175,17 @@ theorem sum_balance (annulus : OriginalAnnularFaces grid index) (value : Geometr
 
 open Purelib.Polynomial in
 /-- The regular face boundaries plus the retained hole boundary equal the original window boundary. -/
-theorem boundary_balance (annulus : OriginalAnnularFaces grid index) (values : Geometry.Grid.CellBoundary.EdgeValues) :
-    Geometry.Grid.CellBoundary.sumValues (fun face => values.walk face.boundary) annulus.faces +
+theorem boundary_balance (annulus : OriginalAnnularFaces grid index) (values : EdgeValues) :
+    sumValues (fun face => values.walk face.boundary) annulus.faces +
       values.cellBoundary (grid.shrunk.prepared.toBranchCellBank.cell index) = values.walk annulus.window.boundary := by
-  have regular := Geometry.Grid.CellBoundary.sumValues_congr
+  have regular := sumValues_congr
     (fun face : RegularFace grid.shrunk.prepared.toBranchCellBank => values.walk face.boundary)
     (fun face => values.cellBoundary face.cell) annulus.faces
     (fun face _ => Geometry.Grid.CellBoundary.Cell.boundaryWalk_value face.cell face.member values)
   exact (congrArg (fun total => total + values.cellBoundary (grid.shrunk.prepared.toBranchCellBank.cell index))
     regular).trans
     ((annulus.sum_balance values.cellBoundary).trans
-      (Polynomial.Geometry.Grid.WindowBoundary.Window.sum_cells_eq_boundary annulus.window values))
+      (Geometry.Grid.WindowBoundary.Window.sum_cells_eq_boundary annulus.window values))
 
 open Purelib.Curves in
 open Purelib.Polynomial in
@@ -193,9 +193,9 @@ open Purelib.Polynomial in
 
 The difference retains the complete correction between the actual outer and inner boundary walks. -/
 theorem boundary_difference (outer : OriginalAnnularFaces grid index) (inner :
-  Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index) (values : Geometry.Grid.CellBoundary.EdgeValues) :
-    Geometry.Grid.CellBoundary.sumValues (fun face => values.walk face.boundary) outer.faces -
-      Geometry.Grid.CellBoundary.sumValues (fun face => values.walk face.boundary) inner.faces =
+  AnnularFaces grid index) (values : EdgeValues) :
+    sumValues (fun face => values.walk face.boundary) outer.faces -
+      sumValues (fun face => values.walk face.boundary) inner.faces =
         values.walk outer.window.boundary - values.walk inner.boundary := by
   rw [← outer.boundary_balance values, ← inner.boundary_balance values]
   ring1
@@ -211,18 +211,18 @@ open Purelib.Polynomial in
 open Purelib.Geometry in
 /-- The intervening faces and band faces partition the original annular sum. -/
 theorem between_partition (outer : OriginalAnnularFaces grid index) (inner :
-  Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index)
+  AnnularFaces grid index)
     (value : RegularFace grid.shrunk.prepared.toBranchCellBank → Gaussian.Basic.Canonical) :
-    Geometry.Grid.CellBoundary.sumValues value outer.between + Geometry.Grid.CellBoundary.sumValues value inner.faces =
-      Geometry.Grid.CellBoundary.sumValues value outer.faces := by
-  rw [between, Geometry.Grid.WindowBoundary.sumValues_filter, outer.faces_eq, inner.faces_eq]
-  rw [Geometry.Grid.WindowBoundary.sumValues_filter, Geometry.Grid.WindowBoundary.sumValues_filter,
-    Geometry.Grid.WindowBoundary.sumValues_filter, ← Geometry.Grid.CellBoundary.sumValues_add]
-  apply Geometry.Grid.CellBoundary.sumValues_congr
+    sumValues value outer.between + sumValues value inner.faces =
+      sumValues value outer.faces := by
+  rw [between, sumValues_filter, outer.faces_eq, inner.faces_eq]
+  rw [sumValues_filter, sumValues_filter,
+    sumValues_filter, ← sumValues_add]
+  apply sumValues_congr
   intro face _
   by_cases band : face.cell.box.Refines (grid.bands.box index)
   · have original : face.cell.box.Refines (original.cell index).box := band.trans
-      (Geometry.Rational.Box.Refinement.StrictInterior.refines (grid.bands.strict_original index))
+      (Rational.Box.Refinement.StrictInterior.refines (grid.bands.strict_original index))
     rw [if_pos original, if_neg (not_not_intro band), if_pos band, if_pos original]
     exact Gaussian.Basic.zero_add _
   · by_cases original : face.cell.box.Refines (original.cell index).box
@@ -237,8 +237,8 @@ open Purelib.Polynomial in
 
 Every intermediate cut in the actual refined grid remains part of this finite incidence identity. -/
 theorem between_boundary (outer : OriginalAnnularFaces grid index) (inner :
-  Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index) (values : Geometry.Grid.CellBoundary.EdgeValues) :
-    Geometry.Grid.CellBoundary.sumValues (fun face => values.walk face.boundary) outer.between =
+  AnnularFaces grid index) (values : EdgeValues) :
+    sumValues (fun face => values.walk face.boundary) outer.between =
       values.walk outer.window.boundary - values.walk inner.boundary := by
   have partition := outer.between_partition inner (fun face => values.walk face.boundary)
   rw [← outer.boundary_difference inner values, ← partition]

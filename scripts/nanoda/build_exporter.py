@@ -62,6 +62,9 @@ def build(cache, *, sessions=None):
             saved = json.loads(receipt.read_text())
             if saved['bindings'] != bindings or digest(binary) != saved['binary_sha256']:
                 raise ValueError(f'corrupt native exporter build: {folder}')
+            for path, expected in saved['artifacts'].items():
+                if digest(path) != expected:
+                    raise ValueError(f'corrupt native exporter artifact: {path}')
             return binary
         with tempfile.TemporaryDirectory(prefix='pending-', dir=folder) as temporary:
             pending = Path(temporary)
@@ -81,8 +84,17 @@ def build(cache, *, sessions=None):
             verify_inputs(bindings['compiled_inputs'], search)
             if any(digest(path) != expected for path, expected in bindings['compiler'].items()):
                 raise ValueError('compiler or native library changed during native build')
+            # Retain the emitted private parts for phase and helper inspection.
+            artifacts = {}
+            destination = folder / 'artifacts/scripts/nanoda'
+            destination.mkdir(parents=True, exist_ok=True)
+            for suffix in ('.olean', '.olean.server', '.olean.private', '.ir'):
+                artifact = destination / ('NativeExport' + suffix)
+                os.replace(pending / ('NativeExport' + suffix), artifact)
+                artifacts[str(artifact.resolve())] = digest(artifact)
             os.replace(pending / 'nanoda-export', binary)
-            atomic_json(receipt, {'bindings': bindings, 'binary_sha256': digest(binary)})
+            atomic_json(receipt, {'bindings': bindings, 'binary_sha256': digest(binary),
+                                  'artifacts': artifacts})
         return binary
 
 

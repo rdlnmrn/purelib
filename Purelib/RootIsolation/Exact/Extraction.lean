@@ -78,7 +78,8 @@ grid inside the same selected region. -/
     {degreeBound : Nat}
     (elimination : Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
     (selected : Clearance.Box.Region.ClearRegion p ambient)
-    (positive : 0 < Winding.Box.Basic.quadrupledBoxWinding p selected.box) :
+    (positive : 0 < Winding.Box.Basic.quadrupledBoxWinding p selected.box)
+    (request : Option Data.Rat.Fraction.Rational := none) :
     Exact.Extraction.RegionExtraction p ambient selected := by
   let raw := selected.raw (by
     intro equal
@@ -87,7 +88,7 @@ grid inside the same selected region. -/
   let onePositive : (0 : Fraction.Rational) < 1 :=
     Fraction.Cast.Order.natCast_pos_direct (n := 1) (by decide)
   let extracted := Newton.Extraction.Initial.Build.extract degreeAtLeastTwo
-    squarefree elimination raw onePositive
+    squarefree elimination raw onePositive request
   let centerState := extracted.state
   let track := Track.Newton.Build.ofInitial degreeAtLeastTwo
     squarefree elimination centerState
@@ -105,5 +106,30 @@ grid inside the same selected region. -/
       centerStrict := by
         simpa only [track, Track.Newton.Build.ofInitial,
           centerState, raw, Clearance.Box.Region.ClearRegion.raw] using extracted.strict }
+
+/-- Every extracted track retains its complete original Newton constructor and actual checked initial state. -/
+public theorem extractRegion_track_origin
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    (degreeAtLeastTwo : 2 ≤ p.natDegree)
+    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p) {degreeBound : Nat}
+    (elimination : Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
+    (selected : Clearance.Box.Region.ClearRegion p ambient)
+    (positive : 0 < Winding.Box.Basic.quadrupledBoxWinding p selected.box)
+    (request : Option Data.Rat.Fraction.Rational) :
+    Track.Newton.Build.Origin degreeAtLeastTwo squarefree elimination
+      (extractRegion degreeAtLeastTwo squarefree elimination selected positive request).track := by
+  exact ⟨(extractRegion degreeAtLeastTwo squarefree elimination selected positive request).track.initial, rfl⟩
+
+/-- The extracted original track retains the exact Newton refinement function for every state and request. -/
+public theorem extractRegion_refine
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    (degreeAtLeastTwo : 2 ≤ p.natDegree)
+    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p) {degreeBound : Nat}
+    (elimination : Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
+    (selected : Clearance.Box.Region.ClearRegion p ambient)
+    (positive : 0 < Winding.Box.Basic.quadrupledBoxWinding p selected.box)
+    (request : Option Data.Rat.Fraction.Rational := none) :
+    (extractRegion degreeAtLeastTwo squarefree elimination selected positive request).track.refine =
+      Track.Newton.Refinement.refineState degreeAtLeastTwo squarefree elimination := rfl
 
 end Purelib.RootIsolation.Exact.Extraction

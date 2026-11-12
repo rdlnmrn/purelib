@@ -7,6 +7,7 @@ import Mathlib.Algebra.Ring.Defs
 public import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Data.Rat.Fraction.Order.Arithmetic
 import Purelib.Algebra.NatCast
+public import Purelib.Algebra.FiniteSum.Fin
 import Purelib.Data.Nat.Subtraction
 import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Tactic.Ring
@@ -24,6 +25,7 @@ namespace Purelib.Algebra.FiniteSum.Prefix
 
 open Purelib.Algebra
 open Purelib.Algebra.FiniteSum
+open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_succ)
 open Purelib.Data
 open Purelib.Data.Rat
 open Purelib.Data.Nat
@@ -283,6 +285,68 @@ theorem prefixSum_pairs_and_last
         term (count + count) := by
   rw [prefixSum_succ_last, prefixSum_pairs]
 
+/-- Bounded `Fin` enumeration and the original natural prefix read identical finite entries. -/
+theorem sumFin_eq_prefixSum (count : Nat) (term : Nat → K) :
+    sumFin (fun index : Fin count => term index.val) = prefixSum count term := by
+  induction count generalizing term with
+  | zero => rfl
+  | succ count inductionHypothesis =>
+      rewrite [sumFin_succ, prefixSum_succ]
+      exact congrArg (term 0 + ·) (inductionHypothesis (fun index => term (index + 1)))
+
+/-- Split a degree-weighted convolution into the two original derivative contributions.
+
+The complementary bounded natural indices split the displayed total degree.
+Their zero endpoint weights remove the two extra summands in any commutative ring. -/
+theorem convolution_derivative_identity (left right : Nat → K) (degree : Nat) :
+    ((degree + 1 : Nat) : K) * prefixSum (degree + 2)
+      (fun index => left index * right (degree + 1 - index)) =
+      prefixSum (degree + 1) (fun index => ((index + 1 : Nat) : K) * left (index + 1) *
+        right (degree - index)) +
+      prefixSum (degree + 1) (fun index => left index * ((degree - index + 1 : Nat) : K) *
+        right (degree - index + 1)) := by
+  let full : Nat → K := fun index => left index * right (degree + 1 - index)
+  let leftWeighted : Nat → K := fun index => (index : K) * full index
+  let rightWeighted : Nat → K := fun index => ((degree + 1 - index : Nat) : K) * full index
+  have leftExpanded : prefixSum (degree + 2) leftWeighted =
+      prefixSum (degree + 1) (fun index => ((index + 1 : Nat) : K) * left (index + 1) *
+        right (degree - index)) := by
+    rewrite [prefixSum_succ]
+    have headZero : leftWeighted 0 = 0 := by
+      dsimp only [leftWeighted, full]
+      rewrite [Nat.cast_zero, zero_mul]
+      rfl
+    rewrite [headZero, zero_add]
+    apply prefixSum_congr
+    intro index _
+    dsimp only [leftWeighted, full]
+    rewrite [Nat.succ_sub_succ]
+    ring1
+  have rightExpanded : prefixSum (degree + 2) rightWeighted =
+      prefixSum (degree + 1) (fun index => left index * ((degree - index + 1 : Nat) : K) *
+        right (degree - index + 1)) := by
+    rewrite [prefixSum_succ_last]
+    have finalZero : rightWeighted (degree + 1) = 0 := by
+      dsimp only [rightWeighted, full]
+      rewrite [Nat.sub_self, Nat.cast_zero, zero_mul]
+      rfl
+    rewrite [finalZero, add_zero]
+    apply prefixSum_congr
+    intro index bound
+    dsimp only [rightWeighted, full]
+    rewrite [show degree + 1 - index = degree - index + 1 by omega0]
+    ring1
+  rewrite [← leftExpanded, ← rightExpanded, ← prefixSum_add, ← prefixSum_mul_left]
+  apply prefixSum_congr
+  intro index bound
+  dsimp only [leftWeighted, rightWeighted, full]
+  have indexLe : index ≤ degree + 1 := Nat.le_of_lt_succ bound
+  have castSplit : (index : K) + ((degree + 1 - index : Nat) : K) = ((degree + 1 : Nat) : K) := by
+    rewrite [← NatCast.add, Subtraction.add_sub_of_le indexLe]
+    rfl
+  rewrite [← castSplit]
+  ring1
+
 /-- Sum a finite prefix of canonical Gaussian values.
 
 Primitive recursion appends the entry at the current final index, starting from zero. -/
@@ -448,6 +512,17 @@ Primitive recursion appends the coordinate at the final index and starts with ze
     coordinateSum term (count + 1) =
       coordinateSum term count + term count := rfl
 
+/-- The retained rational coordinate fold agrees with the generic original finite prefix.
+
+Only the sum equality changes views; both executable folding procedures retain
+exactly their original head-first or final-entry defining equations. -/
+theorem coordinateSum_eq_prefixSum (term : Nat → Fraction.Rational) : ∀ count,
+    coordinateSum term count = prefixSum count term
+  | 0 => rfl
+  | count + 1 => by
+      rewrite [coordinateSum_succ, prefixSum_succ_last, coordinateSum_eq_prefixSum]
+      rfl
+
 /-- Split a nonempty rational prefix at its first coordinate.
 
 The remaining sum uses the shifted family over a prefix shorter by one. -/
@@ -599,6 +674,37 @@ theorem coordinateSum_nonnegative (term : Nat → Fraction.Rational)
   | count + 1 =>
       add_nonneg (coordinateSum_nonnegative term termNonnegative count)
         (termNonnegative count)
+
+/-- A finite generic prefix of nonnegative rational entries has nonnegative sum. -/
+theorem prefixSum_nonnegative (count : Nat) (term : Nat → Fraction.Rational)
+    (nonnegative : ∀ index, 0 ≤ term index) : 0 ≤ prefixSum count term := by
+  induction count generalizing term with
+  | zero => exact le_rfl
+  | succ count previous =>
+      rw [prefixSum_succ]
+      exact Fraction.Order.Arithmetic.add_le_add_direct (nonnegative 0)
+        (previous (fun index => term (index + 1)) (fun index => nonnegative (index + 1)))
+
+/-- Every nonnegative rational term is bounded by the same original finite prefix containing it. -/
+theorem term_le_prefixSum (count : Nat) (term : Nat → Fraction.Rational)
+    (nonnegative : ∀ index, 0 ≤ term index) (index : Nat) (within : index < count) :
+    term index ≤ prefixSum count term := by
+  induction count generalizing term index with
+  | zero => exact (Nat.not_lt_zero _ within).elim
+  | succ count previous =>
+      rw [prefixSum_succ]
+      cases index with
+      | zero =>
+          exact (show term 0 = term 0 + 0 from (_root_.add_zero _).symm).trans_le
+            (Fraction.Order.Arithmetic.add_le_add_direct (le_refl _)
+              (prefixSum_nonnegative count (fun index => term (index + 1))
+                (fun index => nonnegative (index + 1))))
+      | succ index =>
+          have tail := previous (fun index => term (index + 1)) (fun index => nonnegative (index + 1))
+            index (Nat.lt_of_succ_lt_succ within)
+          exact tail.trans ((show prefixSum count (fun index => term (index + 1)) =
+              0 + prefixSum count (fun index => term (index + 1)) from (_root_.zero_add _).symm).trans_le
+            (Fraction.Order.Arithmetic.add_le_add_direct (nonnegative 0) (le_refl _)))
 
 end
 

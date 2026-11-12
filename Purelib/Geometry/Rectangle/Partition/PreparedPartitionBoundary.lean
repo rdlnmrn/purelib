@@ -49,32 +49,32 @@ open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 namespace Partition.PreparedPartitionBoundary
 
 /-- The Gaussian sum is additive over concatenation. -/
-private theorem sum_append (first last : List PreparedBoxPartitions.Gaussian) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (first ++ last) = Data.Gaussian.Norm.Sum.Basic.gaussianSum first
-      + Data.Gaussian.Norm.Sum.Basic.gaussianSum last := by
+private theorem sum_append (first last : List Gaussian) :
+    gaussianSum (first ++ last) = gaussianSum first
+      + gaussianSum last := by
   induction first with
   | nil =>
-    change Data.Gaussian.Norm.Sum.Basic.gaussianSum last = 0 + Data.Gaussian.Norm.Sum.Basic.gaussianSum last;
+    change gaussianSum last = 0 + gaussianSum last;
       ring1
   | cons head tail ih =>
-      change head + Data.Gaussian.Norm.Sum.Basic.gaussianSum (tail ++ last) = (head +
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum tail) + Data.Gaussian.Norm.Sum.Basic.gaussianSum last
+      change head + gaussianSum (tail ++ last) = (head +
+        gaussianSum tail) + gaussianSum last
       rw [ih]
       ring1
 
 /-- Reindex the Cartesian rectangle-boundary sum as nested axis sums. -/
-private theorem rectangle_sum (primitive : PreparedBoxPartitions.Gaussian → Stokes.PrimitivePoint) (depth : Nat)
-    (horizontal vertical : List PreparedAxisPartitions.Interval) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum ((PreparedRectangleCuts.rectangles horizontal vertical).map
-      (PreparedBoxBoundary.rectangleBoundary primitive depth)) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (horizontal.map (fun x =>
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum
-        (vertical.map (fun y => PreparedBoxBoundary.rectangleBoundary primitive depth (PreparedRectangleCuts.intervalBox
+private theorem rectangle_sum (primitive : Gaussian → PrimitivePoint) (depth : Nat)
+    (horizontal vertical : List Interval) :
+    gaussianSum ((rectangles horizontal vertical).map
+      (rectangleBoundary primitive depth)) =
+      gaussianSum (horizontal.map (fun x =>
+        gaussianSum
+        (vertical.map (fun y => rectangleBoundary primitive depth (intervalBox
           x y))))) := by
   induction horizontal with
   | nil => rfl
   | cons x rest ih =>
-      simp only [PreparedRectangleCuts.rectangles, List.Flatten.flatMap_cons, List.Map.map_append, List.Map.map_map] at
+      simp only [rectangles, List.Flatten.flatMap_cons, List.Map.map_append, List.Map.map_map] at
         *
       rw [sum_append, ih]
       rfl
@@ -82,47 +82,47 @@ private theorem rectangle_sum (primitive : PreparedBoxPartitions.Gaussian → St
 /-- Internal horizontal sides cancel along a retained vertical walk.
 
 The remaining terms are the lower and upper horizontal sides and the two vertical side sums. -/
-private theorem row_boundary (primitive : PreparedBoxPartitions.Gaussian → Stokes.PrimitivePoint) (depth : Nat)
-    (x : PreparedAxisPartitions.Interval) {intervals : List PreparedAxisPartitions.Interval} :
-    {first last : PreparedAxisPartitions.Coordinate} → (walk : AxisWalks.IncreasingWalk intervals first last) →
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (walk.edges.map (fun y => PreparedBoxBoundary.rectangleBoundary
-      primitive depth (PreparedRectangleCuts.intervalBox x y))) =
-      PreparedBoxBoundary.horizontalBoundary primitive depth x.lower x.upper first -
-        PreparedBoxBoundary.horizontalBoundary primitive depth x.lower x.upper last +
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (walk.edges.map (fun y => PreparedBoxBoundary.verticalBoundary
+private theorem row_boundary (primitive : Gaussian → PrimitivePoint) (depth : Nat)
+    (x : Interval) {intervals : List Interval} :
+    {first last : Coordinate} → (walk : IncreasingWalk intervals first last) →
+    gaussianSum (walk.edges.map (fun y => rectangleBoundary
+      primitive depth (intervalBox x y))) =
+      horizontalBoundary primitive depth x.lower x.upper first -
+        horizontalBoundary primitive depth x.lower x.upper last +
+      gaussianSum (walk.edges.map (fun y => verticalBoundary
         primitive depth y.lower y.upper x.upper)) -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (walk.edges.map (fun y => PreparedBoxBoundary.verticalBoundary
+      gaussianSum (walk.edges.map (fun y => verticalBoundary
         primitive depth y.lower y.upper x.lower))
   | _, _, .nil _ => by
-    simp only [IncreasingWalk.edges, List.map_nil, Data.Gaussian.Norm.Sum.Basic.gaussianSum]; ring1
+    simp only [IncreasingWalk.edges, List.map_nil, gaussianSum]; ring1
   | _, _, .cons y _ tail => by
-      simp only [IncreasingWalk.edges, List.map_cons, Data.Gaussian.Norm.Sum.Basic.gaussianSum]
+      simp only [IncreasingWalk.edges, List.map_cons, gaussianSum]
       rw [row_boundary primitive depth x tail]
-      simp only [PreparedBoxBoundary.rectangleBoundary, PreparedRectangleCuts.intervalBox, id_eq]
+      simp only [rectangleBoundary, intervalBox, id_eq]
       ring1
 
 /-- Internal vertical sides cancel along a retained horizontal walk.
 
 The result preserves both original axis walks and their dyadically subdivided exterior sides. -/
-private theorem columns_boundary (primitive : PreparedBoxPartitions.Gaussian → Stokes.PrimitivePoint) (depth : Nat)
-    {vertical horizontal : List PreparedAxisPartitions.Interval} {bottom top : PreparedAxisPartitions.Coordinate}
-    (yWalk : AxisWalks.IncreasingWalk vertical bottom top) :
-    {first last : PreparedAxisPartitions.Coordinate} → (xWalk : AxisWalks.IncreasingWalk horizontal first last) →
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (xWalk.edges.map (fun x =>
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum
-      (yWalk.edges.map (fun y => PreparedBoxBoundary.rectangleBoundary primitive depth
-        (PreparedRectangleCuts.intervalBox x y))))) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (xWalk.edges.map (fun x =>
-        PreparedBoxBoundary.horizontalBoundary primitive depth x.lower x.upper bottom -
-          PreparedBoxBoundary.horizontalBoundary primitive depth x.lower x.upper top)) +
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (yWalk.edges.map (fun y => PreparedBoxBoundary.verticalBoundary
+private theorem columns_boundary (primitive : Gaussian → PrimitivePoint) (depth : Nat)
+    {vertical horizontal : List Interval} {bottom top : Coordinate}
+    (yWalk : IncreasingWalk vertical bottom top) :
+    {first last : Coordinate} → (xWalk : IncreasingWalk horizontal first last) →
+    gaussianSum (xWalk.edges.map (fun x =>
+      gaussianSum
+      (yWalk.edges.map (fun y => rectangleBoundary primitive depth
+        (intervalBox x y))))) =
+      gaussianSum (xWalk.edges.map (fun x =>
+        horizontalBoundary primitive depth x.lower x.upper bottom -
+          horizontalBoundary primitive depth x.lower x.upper top)) +
+      gaussianSum (yWalk.edges.map (fun y => verticalBoundary
         primitive depth y.lower y.upper last)) -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (yWalk.edges.map (fun y => PreparedBoxBoundary.verticalBoundary
+      gaussianSum (yWalk.edges.map (fun y => verticalBoundary
         primitive depth y.lower y.upper first))
   | _, _, .nil _ => by
-    simp only [IncreasingWalk.edges, List.map_nil, Data.Gaussian.Norm.Sum.Basic.gaussianSum]; ring1
+    simp only [IncreasingWalk.edges, List.map_nil, gaussianSum]; ring1
   | _, _, .cons x _ tail => by
-      simp only [IncreasingWalk.edges, List.map_cons, Data.Gaussian.Norm.Sum.Basic.gaussianSum]
+      simp only [IncreasingWalk.edges, List.map_cons, gaussianSum]
       rw [row_boundary primitive depth x yWalk,
         columns_boundary primitive depth yWalk tail]
       simp only [id_eq]
@@ -134,26 +134,26 @@ namespace CutPartition
 
 /-- The four exterior sides, segmented at the original partition cuts. -/
 @[expose] def boundary
-    {box : PreparedBoxPartitions.Box} {points : List PreparedBoxPartitions.Gaussian}
+    {box : Box} {points : List Gaussian}
     (partition : CutPartition box points)
-    (primitive : PreparedBoxPartitions.Gaussian → Stokes.PrimitivePoint) (depth : Nat) : Gaussian :=
-  Data.Gaussian.Norm.Sum.Basic.gaussianSum (partition.x.intervals.map (fun x =>
-    PreparedBoxBoundary.horizontalBoundary primitive depth x.lower x.upper box.yLower -
-      PreparedBoxBoundary.horizontalBoundary primitive depth x.lower x.upper box.yUpper)) +
-  Data.Gaussian.Norm.Sum.Basic.gaussianSum (partition.y.intervals.map (fun y =>
-    PreparedBoxBoundary.verticalBoundary primitive depth y.lower y.upper box.xUpper)) -
-  Data.Gaussian.Norm.Sum.Basic.gaussianSum (partition.y.intervals.map (fun y =>
-    PreparedBoxBoundary.verticalBoundary primitive depth y.lower y.upper box.xLower))
+    (primitive : Gaussian → PrimitivePoint) (depth : Nat) : Gaussian :=
+  gaussianSum (partition.x.intervals.map (fun x =>
+    horizontalBoundary primitive depth x.lower x.upper box.yLower -
+      horizontalBoundary primitive depth x.lower x.upper box.yUpper)) +
+  gaussianSum (partition.y.intervals.map (fun y =>
+    verticalBoundary primitive depth y.lower y.upper box.xUpper)) -
+  gaussianSum (partition.y.intervals.map (fun y =>
+    verticalBoundary primitive depth y.lower y.upper box.xLower))
 
 /-- The sum of cached rectangle boundaries equals the retained segmented exterior boundary. -/
 theorem boundary_eq_sum
-    {box : PreparedBoxPartitions.Box} {points : List PreparedBoxPartitions.Gaussian}
+    {box : Box} {points : List Gaussian}
     (partition : CutPartition box points)
-    (primitive : PreparedBoxPartitions.Gaussian → Stokes.PrimitivePoint) (depth : Nat) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (partition.boxes.map (PreparedBoxBoundary.rectangleBoundary primitive
+    (primitive : Gaussian → PrimitivePoint) (depth : Nat) :
+    gaussianSum (partition.boxes.map (rectangleBoundary primitive
       depth)) = partition.boundary primitive depth := by
-  rw [partition.boxes_eq, Geometry.Rectangle.Partition.PreparedPartitionBoundary.rectangle_sum]
-  have equal := Geometry.Rectangle.Partition.PreparedPartitionBoundary.columns_boundary primitive depth partition.y.walk
+  rw [partition.boxes_eq, PreparedPartitionBoundary.rectangle_sum]
+  have equal := PreparedPartitionBoundary.columns_boundary primitive depth partition.y.walk
     partition.x.walk
   rw [partition.x.walk_edges, partition.y.walk_edges] at equal
   exact equal

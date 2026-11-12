@@ -80,12 +80,12 @@ namespace Purelib.RootIsolation.Curve.Boundary.Profile.Sample
 
 section Boundary
 
-variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
   LinearAlgebra.Coordinates2.Matrix.GaussianMatrix} {current : Box}
 variable {denominatorMargin : Fraction.Rational}
 variable {marginPositive : 0 < denominatorMargin}
 variable {atom : Geometry.Projective.Hermitian.Atom}
-variable {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+variable {boundary : Analysis.CurveBoundary p reference current denominatorMargin
   marginPositive atom}
 
 /-! ## Executable sampling and ownership at the combined request -/
@@ -117,7 +117,7 @@ request.  Only the chart's displayed nondegeneracy certificate is used. -/
   let denominatorPolynomial :=
     Curve.Coordinates.denominatorNormSq curve
   have chartMember :=
-    Curve.Boundary.Event.Analysis.chart_mem_of_analysis_mem
+    Event.Analysis.chart_mem_of_analysis_mem
       boundary entry.parent.analysisMember
   have nondegenerate :=
     Geometry.Projective.Hermitian.Chart.nondegenerate_of_mem_charts
@@ -140,7 +140,7 @@ request.  Only the chart's displayed nondegeneracy certificate is used. -/
         apply specification.1
         change denominatorPolynomial.eval parameter = 0
         rw [show denominatorPolynomial.eval parameter =
-            Data.Gaussian.Norm.Basic.normSq
+            Gaussian.Norm.Basic.normSq
               (curve.denominatorAt parameter) by
               exact Curve.Coordinates.eval_denominatorNormSq
                 curve parameter,
@@ -156,12 +156,12 @@ inductive CombinedProfileSampleClassification
       (boxes : List Box)
     (pairwise : boxes.Pairwise fun left right => left.Separated right)
     (sample : NonpoleProfileRequestSample entry
-      (Curve.Boundary.Profile.Separation.combinedProfileRequestWidth
+      (Separation.combinedProfileRequestWidth
         entry boxes pairwise)) where
   /-- Retain an explicit parameter and region index witnessing a meeting of the original combined profile request. -/ |
     meeting
       (owner :
-        Curve.Boundary.Profile.Separation.CombinedProfileRequestMeeting
+        Separation.CombinedProfileRequestMeeting
           entry boxes pairwise)
   /-- The displayed sample point is outside every box in the retained finite region family. -/ | outside (proof : ∀
     index : Fin boxes.length,
@@ -178,7 +178,7 @@ request profile sample. -/
       (boxes : List Box)
     (pairwise : boxes.Pairwise fun left right => left.Separated right)
     (sample : NonpoleProfileRequestSample entry
-      (Curve.Boundary.Profile.Separation.combinedProfileRequestWidth
+      (Separation.combinedProfileRequestWidth
         entry boxes pairwise)) :
     CombinedProfileSampleClassification entry boxes pairwise sample := by
   let point :=
@@ -210,7 +210,7 @@ structure RequestedCombinedProfileSample
     (pairwise : boxes.Pairwise fun left right => left.Separated right) where
   /-- The actual bounded-search non-pole sample at the original combined request width. -/ sample :
     NonpoleProfileRequestSample entry
-    (Curve.Boundary.Profile.Separation.combinedProfileRequestWidth
+    (Separation.combinedProfileRequestWidth
       entry boxes pairwise)
   /-- The finite region classification computed for that exact retained sample. -/ classification :
     CombinedProfileSampleClassification entry boxes pairwise sample
@@ -228,7 +228,7 @@ The same bounded-search sample is used by the finite box lookup and the retained
     (pairwise : boxes.Pairwise fun left right => left.Separated right) :
     RequestedCombinedProfileSample entry boxes pairwise :=
   let sample := nonpoleProfileRequestSample entry
-    (Curve.Boundary.Profile.Separation.combinedProfileRequestWidth
+    (Separation.combinedProfileRequestWidth
       entry boxes pairwise)
   { sample := sample
     classification := classifyCombinedProfileSample entry boxes pairwise
@@ -244,14 +244,14 @@ theorem residual_le
       {boxes : List Box}
     {pairwise : boxes.Pairwise fun left right => left.Separated right}
     (meeting :
-      Curve.Boundary.Profile.Separation.CombinedProfileRequestMeeting
+      Separation.CombinedProfileRequestMeeting
         entry boxes pairwise) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         (p.eval (entry.parent.chart.parameterization.curve.point
           meeting.parameter)) ≤
-      Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.combinedAffineResidualBudget entry boxes
+      Residual.BoundaryProfileEventEntry.combinedAffineResidualBudget entry boxes
         pairwise (boxes.get meeting.index) :=
-  Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.normSq_eval_point_combined_le_of_inside entry
+  Residual.BoundaryProfileEventEntry.normSq_eval_point_combined_le_of_inside entry
     boxes pairwise (boxes.get meeting.index) meeting.parameter
       meeting.parameterInside meeting.denominatorNonzero meeting.pointInside
 

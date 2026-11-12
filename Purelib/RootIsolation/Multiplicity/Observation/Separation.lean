@@ -24,6 +24,8 @@ import Purelib.RootIsolation.FTA.Squarefree.Basic
 import Purelib.RootIsolation.State.WindingOne.Basic
 import Purelib.RootIsolation.Track.Basic
 
+open Purelib.RootIsolation.Track.Separation.Coprime
+
 open Purelib.Polynomial
 
 open Purelib.RootIsolation
@@ -47,34 +49,34 @@ namespace PositiveSideInput
 sites and higher shrinking-track sites. -/
 @[expose] def ObservationsSeparated
     {leftSource leftOpposite rightSource rightOpposite : Basic.CanonicalCoefficients.CoefficientPolynomial}
-    {leftInput : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput leftSource leftOpposite}
-    {rightInput : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput rightSource rightOpposite}
+    {leftInput : PositiveSideInput leftSource leftOpposite}
+    {rightInput : PositiveSideInput rightSource rightOpposite}
     {leftContext : Context.Basic.PositiveContext
       leftInput.entries}
     {rightContext : Context.Basic.PositiveContext
       rightInput.entries}
-    (left : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.FactorObservation leftInput leftContext)
-    (right : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.FactorObservation rightInput rightContext)
+    (left : FactorObservation leftInput leftContext)
+    (right : FactorObservation rightInput rightContext)
       : Type :=
   match left, right with
   | .exact leftRoot _ _, .exact rightRoot _ _ =>
       PLift (leftRoot.point ≠ rightRoot.point)
   | .exact leftRoot _ _, .higher rightBoxes _ =>
       ∀ index : Fin rightContext.focus.part.polynomial.natDegree,
-        Track.Separation.Coprime.Basic.ExactTrackSeparation
+        Basic.ExactTrackSeparation
           (exactPolynomial := leftContext.focus.part.polynomial)
           (rightBoxes.isolation.trackAt index)
           (rightBoxes.isolation.trackAt index).initial leftRoot.point
   | .higher leftBoxes _, .exact rightRoot _ _ =>
       ∀ index : Fin leftContext.focus.part.polynomial.natDegree,
-        Track.Separation.Coprime.Basic.ExactTrackSeparation
+        Basic.ExactTrackSeparation
           (exactPolynomial := rightContext.focus.part.polynomial)
           (leftBoxes.isolation.trackAt index)
           (leftBoxes.isolation.trackAt index).initial rightRoot.point
   | .higher leftBoxes _, .higher rightBoxes _ =>
       ∀ (leftIndex : Fin leftContext.focus.part.polynomial.natDegree)
         (rightIndex : Fin rightContext.focus.part.polynomial.natDegree),
-        Track.Separation.Coprime.Basic.TrackPairSeparation
+        Basic.TrackPairSeparation
           (leftBoxes.isolation.trackAt leftIndex)
           (leftBoxes.isolation.trackAt leftIndex).initial
           (rightBoxes.isolation.trackAt rightIndex)
@@ -86,28 +88,28 @@ Exact roots give point inequality; mixed and higher cases refine the actual orig
 separated-box outputs. -/
 @[expose] def separateObservations
     {leftSource leftOpposite rightSource rightOpposite : Basic.CanonicalCoefficients.CoefficientPolynomial}
-    {leftInput : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput leftSource leftOpposite}
-    {rightInput : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput rightSource rightOpposite}
+    {leftInput : PositiveSideInput leftSource leftOpposite}
+    {rightInput : PositiveSideInput rightSource rightOpposite}
     {leftContext : Context.Basic.PositiveContext
       leftInput.entries}
     {rightContext : Context.Basic.PositiveContext
       rightInput.entries}
-    (left : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.FactorObservation leftInput leftContext)
-    (right : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.FactorObservation rightInput rightContext)
-    (coprime : Dense.Gaussian.Coprime.Basic.CoprimeCertificate leftContext.focus.part.polynomial
+    (left : FactorObservation leftInput leftContext)
+    (right : FactorObservation rightInput rightContext)
+    (coprime : Coprime.Basic.CoprimeCertificate leftContext.focus.part.polynomial
       rightContext.focus.part.polynomial) :
-    Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.ObservationsSeparated left right := by
+    ObservationsSeparated left right := by
   cases left with
   | exact leftRoot leftDegree _ =>
       cases right with
       | exact rightRoot rightDegree _ =>
-          exact ⟨Dense.Gaussian.Coprime.Roots.exactPoints_ne coprime
+          exact ⟨Coprime.Roots.exactPoints_ne coprime
             leftRoot.root rightRoot.root⟩
       | higher rightBoxes rightDegree =>
           intro index
-          exact Track.Separation.Coprime.Build.separateExactFromTrack
+          exact Build.separateExactFromTrack
             rightContext.focus.degreePositive
-            (Dense.Gaussian.Coprime.Operations.CoprimeCertificate.symm coprime)
+            (Coprime.Operations.CoprimeCertificate.symm coprime)
             (rightBoxes.isolation.trackAt index)
             (rightBoxes.isolation.trackAt index).initial leftRoot.point
             leftRoot.root
@@ -115,14 +117,14 @@ separated-box outputs. -/
       cases right with
       | exact rightRoot rightDegree _ =>
           intro index
-          exact Track.Separation.Coprime.Build.separateExactFromTrack
+          exact Build.separateExactFromTrack
             leftContext.focus.degreePositive coprime
             (leftBoxes.isolation.trackAt index)
             (leftBoxes.isolation.trackAt index).initial rightRoot.point
             rightRoot.root
       | higher rightBoxes rightDegree =>
           intro leftIndex rightIndex
-          exact Track.Separation.Coprime.Build.separateTracks
+          exact Build.separateTracks
             leftContext.focus.degreePositive rightContext.focus.degreePositive
             coprime (leftBoxes.isolation.trackAt leftIndex)
             (leftBoxes.isolation.trackAt leftIndex).initial
@@ -134,9 +136,9 @@ has one displayed rational site, while a higher branch carries a pairwise
 separated degree-indexed family. -/
 @[expose] def ObservationInternallySeparated
     {source opposite : Basic.CanonicalCoefficients.CoefficientPolynomial}
-    {input : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput source opposite}
+    {input : PositiveSideInput source opposite}
     {context : Context.Basic.PositiveContext input.entries}
-    (observation : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.FactorObservation input context) :
+    (observation : FactorObservation input context) :
       Type :=
   match observation with
   | .exact _ _ _ => PUnit
@@ -149,10 +151,10 @@ separated degree-indexed family. -/
 /-- Read the original observation's internal site separation, retaining the exact higher-family box indices. -/
 @[expose] def observationInternallySeparated
     {source opposite : Basic.CanonicalCoefficients.CoefficientPolynomial}
-    {input : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput source opposite}
+    {input : PositiveSideInput source opposite}
     {context : Context.Basic.PositiveContext input.entries}
-    (observation : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.FactorObservation input context) :
-    Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.ObservationInternallySeparated observation := by
+    (observation : FactorObservation input context) :
+    ObservationInternallySeparated observation := by
   cases observation with
   | exact => exact PUnit.unit
   | higher boxes _ => exact ⟨boxes.isolation.trackAt_pairwiseSeparated⟩

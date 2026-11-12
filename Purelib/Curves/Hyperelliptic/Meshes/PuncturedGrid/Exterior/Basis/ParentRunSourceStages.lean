@@ -59,15 +59,15 @@ public section
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
@@ -76,10 +76,10 @@ namespace CommonBasisPreparation
 open Purelib.Data.Rat.Fraction.Compatibility
 
 namespace ParentRunSchedule
-variable {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared}
+variable {retained : Preparation.CommonBasisPreparation prepared}
   {index laterIndex : Nat} {inputs : retained.Inputs index}
   {outer : Fin prepared.occurrences.length} {capacity minimum : Nat} {requested :
-    Normalization.InverseRootPolynomial.Coordinate}
+    InverseRootPolynomial.Coordinate}
   (schedule :
     ParentRunSchedule
     retained inputs outer capacity requested minimum) (laterInputs : retained.Inputs laterIndex)
@@ -88,32 +88,32 @@ variable {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparati
 
 The dependent vector keeps each original computed request; only its source equality witness changes. -/
 @[expose] def requestsAtInputs :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentRunSchedule.CommonBasisPreparation.ParentRequests retained
+  ParentRunSchedule.CommonBasisPreparation.ParentRequests retained
   laterInputs outer capacity schedule.magnitude requested minimum :=
   Data.Vector.DependentVector.ofFn (fun position =>
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedRuns.RunRequest.castSources
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentSourceStages.parentInput_sources_eq retained inputs
+    RequestedRuns.RunRequest.castSources
+    (ParentSourceStages.parentInput_sources_eq retained inputs
       laterInputs outer position) (schedule.requests.get position))
 
 /-- Transporting retained requests to new input data preserves each source-stage threshold. -/
 theorem requestsAtInputs_sourceMinimum
-    (position : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (position : Fin (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length) :
     ((requestsAtInputs schedule laterInputs).get position).blocks.queries.sourceMinimum =
       (schedule.requests.get position).blocks.queries.sourceMinimum := by
   dsimp only [requestsAtInputs]
   rw [Data.Vector.DependentVector.ofFn_get]
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedRuns.RunRequest.castSources_sourceMinimum _ _
+  exact RequestedRuns.RunRequest.castSources_sourceMinimum _ _
 
 /-- Transporting retained requests to new input data preserves each refinement depth. -/
 theorem requestsAtInputs_depth
-    (position : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (position : Fin (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length) :
     ((requestsAtInputs schedule laterInputs).get position).refinement.depth =
       (schedule.requests.get position).refinement.depth := by
   dsimp only [requestsAtInputs]
   rw [Data.Vector.DependentVector.ofFn_get]
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedRuns.RunRequest.castSources_depth _ _
+  exact RequestedRuns.RunRequest.castSources_depth _ _
 
 /-- Transport a retained parent schedule to a certified later input stage.
 

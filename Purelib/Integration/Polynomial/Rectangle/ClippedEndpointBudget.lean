@@ -19,6 +19,8 @@ import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 public import Purelib.Topology.Surface.Cut.WordArea
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Topology.Polygon.Stokes (PrimitivePoint)
 
 public section
@@ -42,24 +44,24 @@ theorem sixteen_error_lt (budget : ClippedBilinearBudget count
   have oneLe : (1 : Coordinate) ≤ (count : Coordinate) :=
     Fraction.Cast.Order.natCast_le_direct positive
   have squareLe : (1 : Coordinate) ≤ (count : Coordinate) ^ 2 := by
-    have estimate := Fraction.Order.Arithmetic.mul_le_mul_direct oneLe oneLe
+    have estimate := Arithmetic.mul_le_mul_direct oneLe oneLe
       (by decide +kernel : (0 : Coordinate) ≤ 1) ((by decide +kernel : (0 : Coordinate) ≤ 1).trans oneLe)
     simpa only [one_mul, pow_two] using estimate
   have magnitudeLe : (1 : Coordinate) ≤ magnitude + 1 := by
     simpa only [zero_add] using
-      Fraction.Order.Arithmetic.add_le_add_direct budget.magnitude_nonnegative (le_rfl : (1 : Coordinate) ≤ 1)
+      Arithmetic.add_le_add_direct budget.magnitude_nonnegative (le_rfl : (1 : Coordinate) ≤ 1)
   have productLe : (1 : Coordinate) ≤ (count : Coordinate) ^ 2 * (magnitude + 1) := by
-    simpa only [one_mul] using Fraction.Order.Arithmetic.mul_le_mul_direct squareLe magnitudeLe
+    simpa only [one_mul] using Arithmetic.mul_le_mul_direct squareLe magnitudeLe
       (by decide +kernel : (0 : Coordinate) ≤ 1) ((by decide +kernel : (0 : Coordinate) ≤ 1).trans squareLe)
   have weightLe : (16 : Coordinate) ≤ budget.weight := by
     rw [budget.weight_eq]
-    have estimate := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct productLe
+    have estimate := Arithmetic.mul_le_mul_of_nonneg_left_direct productLe
       (by decide +kernel : (0 : Coordinate) ≤ 32)
     have rearrange : 32 * ((count : Coordinate) ^ 2 * (magnitude + 1)) =
         (count : Coordinate) ^ 2 * (32 * (magnitude + 1)) := by ring1
     rw [rearrange] at estimate
     exact (by decide +kernel : (16 : Coordinate) ≤ 32).trans (by simpa only [one_mul, mul_one] using estimate)
-  exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct weightLe budget.error_positive.le).trans_lt
+  exact (Arithmetic.mul_le_mul_of_nonneg_right_direct weightLe budget.error_positive.le).trans_lt
     budget.error_paid
 
 open Purelib.Data.Gaussian in
@@ -72,24 +74,24 @@ theorem endpoint_paid (budget : ClippedBilinearBudget count
   magnitude target)
     {leftValues rightValues : Fin (count + 1) → PrimitivePoint}
     (left : Sample leftValues) (right : Sample rightValues)
-    (bounded : Data.Gaussian.Norm.Basic.normSq (CenteredBilinearPath.Sample.endpointIncrementError left right) ≤ 16 *
+    (bounded : Norm.Basic.normSq (Sample.endpointIncrementError left right) ≤ 16 *
       budget.error) :
-    Data.Gaussian.Norm.Basic.normSq (CenteredBilinearPath.Sample.endpointIncrementError left right) < target := by
+    Norm.Basic.normSq (Sample.endpointIncrementError left right) < target := by
   cases count with
   | zero =>
       have subSelf (value : PrimitivePoint) :
-          Stokes.PrimitivePoint.sub value value = PrimitivePoint.zero := by
+          PrimitivePoint.sub value value = PrimitivePoint.zero := by
         cases value
-        change Stokes.PrimitivePoint.mk _ _ = Stokes.PrimitivePoint.mk 0 0
-        exact congrArg₂ Stokes.PrimitivePoint.mk (sub_self _) (sub_self _)
+        change PrimitivePoint.mk _ _ = PrimitivePoint.mk 0 0
+        exact congrArg₂ PrimitivePoint.mk (sub_self _) (sub_self _)
       have leftZero : left.centered (Fin.last 0) = PrimitivePoint.zero := by
         rw [left.centered_eq]
         exact subSelf _
       have rightZero : right.centered (Fin.last 0) = PrimitivePoint.zero := by
         rw [right.centered_eq]
         exact subSelf _
-      have zero : CenteredBilinearPath.Sample.endpointIncrementError left right = 0 := by
-        rw [CenteredBilinearPath.Sample.endpointIncrementError, leftZero, rightZero]
+      have zero : Sample.endpointIncrementError left right = 0 := by
+        rw [Sample.endpointIncrementError, leftZero, rightZero]
         change (rightValues 0).left * (0 - 0) - (0 - 0) * (rightValues 0).right = 0
         rewrite [sub_self, mul_zero, zero_mul, sub_self]
         exact Eq.refl _
@@ -114,23 +116,23 @@ The retained area and endpoint errors are each measured by their squared Gaussia
 the stated factor four without changing either error. -/
 theorem jump_comparison (left : Sample leftValues) (right :
   Sample rightValues) {target : Coordinate}
-    (area : Data.Gaussian.Norm.Basic.normSq ((left.originalArea - right.originalArea) - (left.endpoint -
+    (area : Norm.Basic.normSq ((left.originalArea - right.originalArea) - (left.endpoint -
       right.endpoint)) <
       target)
-    (endpoint : Data.Gaussian.Norm.Basic.normSq (CenteredBilinearPath.Sample.endpointIncrementError left right) <
+    (endpoint : Norm.Basic.normSq (endpointIncrementError left right) <
       target) :
-    Data.Gaussian.Norm.Basic.normSq ((left.originalArea - right.originalArea) -
-      CenteredBilinearPath.Sample.endpointJump left
+    Norm.Basic.normSq ((left.originalArea - right.originalArea) -
+      endpointJump left
       right) < 4 * target := by
-  have equal : (left.originalArea - right.originalArea) - CenteredBilinearPath.Sample.endpointJump left right =
+  have equal : (left.originalArea - right.originalArea) - endpointJump left right =
       ((left.originalArea - right.originalArea) - (left.endpoint - right.endpoint)) +
-        CenteredBilinearPath.Sample.endpointIncrementError left right := by
-    rw [CenteredBilinearPath.Sample.endpoint_difference left right]
+        endpointIncrementError left right := by
+    rw [endpoint_difference left right]
     ring1
   rw [equal]
   exact (Norm.Bounds.normSq_add_le_two _ _).trans_lt
-    ((Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Coordinate) < 2)
-      (Fraction.Order.Arithmetic.add_lt_add_direct area endpoint)).trans_eq (by ring1))
+    ((Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Coordinate) < 2)
+      (Arithmetic.add_lt_add_direct area endpoint)).trans_eq (by ring1))
 
 end Purelib.Riemann.Periods.CenteredBilinearPath.Sample
 

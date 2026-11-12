@@ -45,25 +45,25 @@ open Purelib.Polynomial.Ascending.Rational
 
 Its coefficients are twice the reciprocal of the positive odd degree, stored in the original ascending rational
 coefficient representation. -/
-@[expose] public def localLog : Nat → Purelib.Polynomial.Ascending.Rational.Basic.CoefficientPolynomial
-  | 0 => Purelib.Polynomial.Ascending.Rational.Monomial.monomial 1 2
+@[expose] public def localLog : Nat → Basic.CoefficientPolynomial
+  | 0 => Monomial.monomial 1 2
   | depth + 1 =>
-      Purelib.Polynomial.Ascending.Rational.Basic.add
-        (Purelib.Approximation.Gaussian.Logarithm.Local.Polynomial.localLog depth)
-        (Purelib.Polynomial.Ascending.Rational.Monomial.monomial (2 * (depth + 1) + 1)
-          (2 / (2 * ((depth + 1 : Nat) : Purelib.Data.Rat.Fraction.Rational) + 1)))
+      Basic.add
+        (Local.Polynomial.localLog depth)
+        (Monomial.monomial (2 * (depth + 1) + 1)
+          (2 / (2 * ((depth + 1 : Nat) : Fraction.Rational) + 1)))
 
 /-- The finite even geometric polynomial with coefficient two at each even degree through twice the depth. -/
-@[expose] public def evenGeometric : Nat → Purelib.Polynomial.Ascending.Rational.Basic.CoefficientPolynomial
-  | 0 => Purelib.Polynomial.Ascending.Rational.Basic.constant 2
+@[expose] public def evenGeometric : Nat → Basic.CoefficientPolynomial
+  | 0 => Basic.constant 2
   | depth + 1 =>
-      Purelib.Polynomial.Ascending.Rational.Basic.add
-        (Purelib.Approximation.Gaussian.Logarithm.Local.Polynomial.evenGeometric depth)
-        (Purelib.Polynomial.Ascending.Rational.Monomial.monomial (2 * (depth + 1)) 2)
+      Basic.add
+        (Local.Polynomial.evenGeometric depth)
+        (Monomial.monomial (2 * (depth + 1)) 2)
 
 /-- The ascending rational polynomial one minus the square of its variable. -/
-@[expose] public def oneMinusSquare : Rational.Basic.CoefficientPolynomial :=
-  Rational.Basic.add Rational.Basic.one (Monomial.monomial 2 (-1))
+@[expose] public def oneMinusSquare : Basic.CoefficientPolynomial :=
+  Basic.add Basic.one (Monomial.monomial 2 (-1))
 
 /-- Multiplying a local-logarithm coefficient by its positive odd degree gives two. -/
 theorem odd_mul_localLogCoefficient (index : Nat) :
@@ -72,7 +72,7 @@ theorem odd_mul_localLogCoefficient (index : Nat) :
   have castOdd :
       ((2 * index + 1 : Nat) : Fraction.Rational) =
         2 * (index : Fraction.Rational) + 1 := by
-    rw [Purelib.Algebra.NatCast.add, Purelib.Algebra.NatCast.mul]
+    rw [Algebra.NatCast.add, Algebra.NatCast.mul]
     rw [show ((2 : Nat) : Fraction.Rational) = 2 by decide,
       show ((1 : Nat) : Fraction.Rational) = 1 by decide]
   have denominatorPositive :
@@ -87,52 +87,52 @@ theorem odd_mul_localLogCoefficient (index : Nat) :
 /-- The coefficientwise derivative of the finite local-logarithm polynomial is its even geometric polynomial. -/
 theorem derivative_localLog : ∀ depth,
     Coefficientwise.CoefficientwiseEqual (Derivative.derivative
-      (Approximation.Gaussian.Logarithm.Local.Polynomial.localLog depth))
-      (Approximation.Gaussian.Logarithm.Local.Polynomial.evenGeometric depth)
+      (localLog depth))
+      (evenGeometric depth)
   | 0 => by
       change Coefficientwise.CoefficientwiseEqual (Derivative.derivative (Monomial.monomial 1 2))
-        (Rational.Basic.constant 2)
+        (Basic.constant 2)
       exact Coefficientwise.coefficientwise_trans
         (Derivative.derivative_monomial_succ 0 2)
         (Coefficientwise.coefficientwise_trans
           (Monomial.coefficientwise_monomial_value 0
-            (Approximation.Gaussian.Logarithm.Local.Polynomial.odd_mul_localLogCoefficient 0))
+            (odd_mul_localLogCoefficient 0))
           (Monomial.coefficientwise_monomial_zero 2))
   | depth + 1 => by
       change Coefficientwise.CoefficientwiseEqual
         (Derivative.derivative
-          (Rational.Basic.add (Approximation.Gaussian.Logarithm.Local.Polynomial.localLog depth)
+          (Basic.add (localLog depth)
             (Monomial.monomial (2 * (depth + 1) + 1)
               (2 / (2 * ((depth + 1 : Nat) : Fraction.Rational) + 1)))))
-        (Rational.Basic.add (Approximation.Gaussian.Logarithm.Local.Polynomial.evenGeometric depth) (Monomial.monomial
+        (Basic.add (evenGeometric depth) (Monomial.monomial
           (2 * (depth + 1)) 2))
       exact Coefficientwise.coefficientwise_trans
         (Derivative.derivative_add _ _)
         (Coefficientwise.coefficientwise_trans
           (Coefficientwise.coefficientwise_add
-            (Purelib.Approximation.Gaussian.Logarithm.Local.Polynomial.derivative_localLog depth)
+            (Local.Polynomial.derivative_localLog depth)
             (Derivative.derivative_monomial_succ (2 * (depth + 1)) _))
           (Coefficientwise.coefficientwise_add (Coefficientwise.coefficientwise_refl _)
             (Monomial.coefficientwise_monomial_value (2 * (depth + 1))
-              (Approximation.Gaussian.Logarithm.Local.Polynomial.odd_mul_localLogCoefficient (depth + 1)))))
+              (odd_mul_localLogCoefficient (depth + 1)))))
 
 /-- Multiplying the finite even geometric polynomial by one minus the square leaves exactly its constant term and final
 negative remainder monomial. -/
 theorem oneMinusSquare_mul_evenGeometric : ∀ depth,
-    Coefficientwise.CoefficientwiseEqual (Rational.Basic.mul
-      Approximation.Gaussian.Logarithm.Local.Polynomial.oneMinusSquare
-      (Approximation.Gaussian.Logarithm.Local.Polynomial.evenGeometric depth))
-      (Rational.Basic.add (Rational.Basic.constant 2) (Monomial.monomial (2 * depth + 2) (-2)))
+    Coefficientwise.CoefficientwiseEqual (Basic.mul
+      oneMinusSquare
+      (evenGeometric depth))
+      (Basic.add (Basic.constant 2) (Monomial.monomial (2 * depth + 2) (-2)))
   | 0 => by
       change Coefficientwise.CoefficientwiseEqual
-        (Rational.Basic.mul (Rational.Basic.add Rational.Basic.one (Monomial.monomial 2 (-1))) (Rational.Basic.constant
+        (Basic.mul (Basic.add Basic.one (Monomial.monomial 2 (-1))) (Basic.constant
           2))
-        (Rational.Basic.add (Rational.Basic.constant 2) (Monomial.monomial 2 (-2)))
+        (Basic.add (Basic.constant 2) (Monomial.monomial 2 (-2)))
       exact Coefficientwise.coefficientwise_trans
-        (Coefficientwise.coefficientwise_add_mul Rational.Basic.one (Monomial.monomial 2 (-1)) (Rational.Basic.constant
+        (Coefficientwise.coefficientwise_add_mul Basic.one (Monomial.monomial 2 (-1)) (Basic.constant
           2))
         (Coefficientwise.coefficientwise_add
-          (Coefficientwise.coefficientwise_one_mul (Rational.Basic.constant 2))
+          (Coefficientwise.coefficientwise_one_mul (Basic.constant 2))
           (Coefficientwise.coefficientwise_trans
             (Coefficientwise.coefficientwise_mul (Coefficientwise.coefficientwise_refl _)
               (Coefficientwise.coefficientwise_symm (Monomial.coefficientwise_monomial_zero 2)))
@@ -143,18 +143,18 @@ theorem oneMinusSquare_mul_evenGeometric : ∀ depth,
       let currentDegree := 2 * (depth + 1)
       let highDegree := currentDegree + 2
       change Coefficientwise.CoefficientwiseEqual
-        (Rational.Basic.mul Approximation.Gaussian.Logarithm.Local.Polynomial.oneMinusSquare
-          (Rational.Basic.add (Approximation.Gaussian.Logarithm.Local.Polynomial.evenGeometric depth) (Monomial.monomial
+        (Basic.mul oneMinusSquare
+          (Basic.add (evenGeometric depth) (Monomial.monomial
             currentDegree 2)))
-        (Rational.Basic.add (Rational.Basic.constant 2) (Monomial.monomial highDegree (-2)))
+        (Basic.add (Basic.constant 2) (Monomial.monomial highDegree (-2)))
       have currentProduct :
           Coefficientwise.CoefficientwiseEqual
-            (Rational.Basic.mul Approximation.Gaussian.Logarithm.Local.Polynomial.oneMinusSquare (Monomial.monomial
+            (Basic.mul oneMinusSquare (Monomial.monomial
               currentDegree 2))
-            (Rational.Basic.add (Monomial.monomial currentDegree 2)
+            (Basic.add (Monomial.monomial currentDegree 2)
               (Monomial.monomial highDegree (-2))) := by
         exact Coefficientwise.coefficientwise_trans
-          (Coefficientwise.coefficientwise_add_mul Rational.Basic.one (Monomial.monomial 2 (-1))
+          (Coefficientwise.coefficientwise_add_mul Basic.one (Monomial.monomial 2 (-1))
             (Monomial.monomial currentDegree 2))
           (Coefficientwise.coefficientwise_add
             (Coefficientwise.coefficientwise_one_mul (Monomial.monomial currentDegree 2))
@@ -167,41 +167,41 @@ theorem oneMinusSquare_mul_evenGeometric : ∀ depth,
                 rw [degreeEqual]
                 exact Monomial.coefficientwise_monomial_value highDegree (by decide))))
       exact Coefficientwise.coefficientwise_trans
-        (Coefficientwise.coefficientwise_mul_add Approximation.Gaussian.Logarithm.Local.Polynomial.oneMinusSquare
-          (Approximation.Gaussian.Logarithm.Local.Polynomial.evenGeometric depth)
+        (Coefficientwise.coefficientwise_mul_add oneMinusSquare
+          (evenGeometric depth)
           (Monomial.monomial currentDegree 2))
         (Coefficientwise.coefficientwise_trans
           (Coefficientwise.coefficientwise_add
-            (Purelib.Approximation.Gaussian.Logarithm.Local.Polynomial.oneMinusSquare_mul_evenGeometric depth)
+            (Local.Polynomial.oneMinusSquare_mul_evenGeometric depth)
               currentProduct)
           (Coefficientwise.coefficientwise_trans
             (Coefficientwise.coefficientwise_telescope_rearrange
-              (Rational.Basic.constant 2) (Monomial.monomial currentDegree (-2))
+              (Basic.constant 2) (Monomial.monomial currentDegree (-2))
               (Monomial.monomial currentDegree 2) (Monomial.monomial highDegree (-2)))
             (Coefficientwise.coefficientwise_trans
               (Coefficientwise.coefficientwise_add (Coefficientwise.coefficientwise_refl _)
                 (Monomial.coefficientwise_monomial_cancel currentDegree 2))
               (Coefficientwise.coefficientwise_add_zero
-                (Rational.Basic.add (Rational.Basic.constant 2) (Monomial.monomial highDegree (-2)))))))
+                (Basic.add (Basic.constant 2) (Monomial.monomial highDegree (-2)))))))
 
 /-- Gaussian evaluation of the finite local-logarithm polynomial equals the matching Horner sample. -/
-theorem eval_localLog (z : Data.Gaussian.Basic.Canonical) : ∀ depth,
-    GaussianEvaluation.eval (Approximation.Gaussian.Logarithm.Local.Polynomial.localLog depth) z =
+theorem eval_localLog (z : Basic.Canonical) : ∀ depth,
+    GaussianEvaluation.eval (localLog depth) z =
       Sample.sample z depth
   | 0 => by
-      rw [Approximation.Gaussian.Logarithm.Local.Polynomial.localLog, GaussianEvaluation.eval_monomial,
+      rw [localLog, GaussianEvaluation.eval_monomial,
         Polynomial.complexLog_sample_eq_sum,
         Prefix.sum_succ,
         Prefix.sum_zero,
-        Data.Gaussian.Basic.zero_add,
+        Basic.zero_add,
         Polynomial.localLogTerm]
       change Scale.scale 2 (z ^ 1) =
         Scale.scale (2 / (2 * (0 : Fraction.Rational) + 1))
           (z ^ (2 * 0 + 1))
       rw [show (2 / (2 * (0 : Fraction.Rational) + 1) : Fraction.Rational) = 2 by decide]
   | depth + 1 => by
-      rw [Approximation.Gaussian.Logarithm.Local.Polynomial.localLog, GaussianEvaluation.eval_add,
-        Purelib.Approximation.Gaussian.Logarithm.Local.Polynomial.eval_localLog z depth,
+      rw [localLog, GaussianEvaluation.eval_add,
+        Local.Polynomial.eval_localLog z depth,
         GaussianEvaluation.eval_monomial,
         Polynomial.complexLog_sample_eq_sum,
         Polynomial.complexLog_sample_eq_sum,
@@ -221,24 +221,24 @@ theorem eval_localLog (z : Data.Gaussian.Basic.Canonical) : ∀ depth,
 
 /-- Every finite local-logarithm polynomial has zero constant coefficient. -/
 theorem localLog_zero_constant : ∀ depth,
-    Rational.Basic.coefficient (Approximation.Gaussian.Logarithm.Local.Polynomial.localLog depth) 0 = 0
+    Basic.coefficient (localLog depth) 0 = 0
   | 0 => by
-      rw [Approximation.Gaussian.Logarithm.Local.Polynomial.localLog, Monomial.coefficient_monomial, if_neg
+      rw [localLog, Monomial.coefficient_monomial, if_neg
         Nat.zero_ne_one]
   | depth + 1 => by
-      rw [Approximation.Gaussian.Logarithm.Local.Polynomial.localLog, Rational.Basic.coefficient_add,
-        Purelib.Approximation.Gaussian.Logarithm.Local.Polynomial.localLog_zero_constant depth,
+      rw [localLog, Basic.coefficient_add,
+        Local.Polynomial.localLog_zero_constant depth,
         Monomial.coefficient_monomial,
         if_neg ((fun impossible => Nat.noConfusion impossible)),
         Fraction.Field.zero_add]
 
 /-- Every coefficient of the finite local-logarithm polynomial is nonnegative. -/
 theorem coefficientsNonnegative_localLog : ∀ depth,
-    Nonnegative.CoefficientsNonnegative (Approximation.Gaussian.Logarithm.Local.Polynomial.localLog depth)
+    Nonnegative.CoefficientsNonnegative (localLog depth)
   | 0 => Nonnegative.coefficientsNonnegative_monomial 1 (by decide)
   | depth + 1 => by
       apply Nonnegative.coefficientsNonnegative_add
-        (Purelib.Approximation.Gaussian.Logarithm.Local.Polynomial.coefficientsNonnegative_localLog depth)
+        (Local.Polynomial.coefficientsNonnegative_localLog depth)
       apply Nonnegative.coefficientsNonnegative_monomial
       exact Fraction.Order.Field.div_nonneg_direct (by decide)
         (add_nonneg

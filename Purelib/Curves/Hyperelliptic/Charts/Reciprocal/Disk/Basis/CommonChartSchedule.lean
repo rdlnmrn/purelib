@@ -65,45 +65,45 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannel
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover (BasisCommonInterval)
 open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {model :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell}
-  {parameter target sourceTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor sourceFloor :
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : ParameterEdge} {cell :
+    Cell data edge}
+  {regular : RegularBounds.Data cap} {model :
+    RootModel cell}
+  {parameter target sourceTarget : Coordinate} {floor sourceFloor :
     Nat}
-  {covers : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
+  {covers : BasisSourceCovers parent}
 
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
 
-variable {cover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data}
+variable {cover : Cover data}
 
 open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Data.Gaussian.Basic.Canonical
 
-variable {depth : Nat} {allowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+variable {depth : Nat} {allowance : Coordinate}
 
 set_option genInjectivity false in
 /-- The ordered chart-budget requests on the retained common-interval spine. -/
 inductive BasisCommonChartRequests (regular : RegularBounds.Data cap)
-    (depth : Nat) (target allowance : InverseRootPolynomial.Coordinate) (floor sourceFloor : Nat) :
-    List (CommonCover.BasisCommonInterval cover covers) → Type 2
+    (depth : Nat) (target allowance : Coordinate) (floor sourceFloor : Nat) :
+    List (BasisCommonInterval cover covers) → Type 2
   /-- The empty common-interval chart request bank. -/ | nil :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+    CommonChartSchedule.BasisCommonChartRequests regular depth
     target allowance floor sourceFloor []
   /-- Retain the first interval's paid chart budget and the request bank for the remaining intervals. -/ | cons
-    {interval : CommonCover.BasisCommonInterval cover covers} {remaining : List (CommonCover.BasisCommonInterval cover
+    {interval : BasisCommonInterval cover covers} {remaining : List (BasisCommonInterval cover
     covers)}
-      (head : IntervalChartBudget.BasisIntervalChartBudget interval regular depth target allowance floor sourceFloor)
-      (tail : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests
+      (head : BasisIntervalChartBudget interval regular depth target allowance floor sourceFloor)
+      (tail : CommonChartSchedule.BasisCommonChartRequests
         regular depth target allowance floor sourceFloor remaining) :
-      Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular
+      CommonChartSchedule.BasisCommonChartRequests regular
         depth target allowance floor sourceFloor (interval :: remaining)
 
 constructive_injectivity BasisCommonChartRequests
@@ -112,41 +112,41 @@ namespace BasisCommonChartRequests
 
 /-- Prepare the paid chart budget on every retained common interval in order. -/
 @[expose] def build (regular : RegularBounds.Data cap) (depth : Nat) (target allowance :
-  InverseRootPolynomial.Coordinate)
+  Coordinate)
     (positive : 0 < target) (allowancePositive : 0 < allowance) (floor sourceFloor : Nat) :
-    (intervals : List (CommonCover.BasisCommonInterval cover covers)) →
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+    (intervals : List (BasisCommonInterval cover covers)) →
+      BasisCommonChartRequests regular depth
       target allowance floor sourceFloor intervals
   | [] => .nil
   | interval :: remaining => .cons
       (BasisIntervalChartBudget.build interval regular depth target allowance positive allowancePositive floor
         sourceFloor)
-      (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.build
+      (BasisCommonChartRequests.build
         regular depth target allowance positive allowancePositive floor sourceFloor remaining)
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests in
 /-- The common polynomial stage paying all retained requests and both original floors. -/
-@[expose] def index : {intervals : List (CommonCover.BasisCommonInterval cover covers)} →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth target
+@[expose] def index : {intervals : List (BasisCommonInterval cover covers)} →
+    BasisCommonChartRequests regular depth target
       allowance floor sourceFloor intervals → Nat
   | _, .nil => max floor sourceFloor
   | _, .cons head tail => max head.request.index tail.index
 
-variable {index minimum : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {polynomials : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+variable {index minimum : Nat} {box : Geometry.Rational.Box}
+  {capSample : Primitives.Sample cap differential index box}
+  {polynomials : RegularBasisPolynomials cap
     index box}
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests in
 /-- The plans reuse the supplied polynomial samples on every interval. -/
 @[expose] def Plans (capSample : Primitives.Sample cap differential index box)
-    (polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box) (minimum : Nat) :
-    {intervals : List (CommonCover.BasisCommonInterval cover covers)} →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth target
+    (polynomials : RegularBasisPolynomials cap index box) (minimum : Nat) :
+    {intervals : List (BasisCommonInterval cover covers)} →
+    BasisCommonChartRequests regular depth target
       allowance floor sourceFloor intervals → Type 2
   | _, .nil => PUnit
-  | _, .cons head tail => BasisIntervalChartRequest.Plan head.request capSample polynomials minimum ×
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans
+  | _, .cons head tail => Plan head.request capSample polynomials minimum ×
+    BasisCommonChartRequests.Plans
     capSample polynomials minimum tail
 
 namespace Plans
@@ -154,26 +154,26 @@ namespace Plans
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests in
 /-- Plan every retained interval using the same supplied cap and basis polynomial samples. -/
 @[expose] def build (capSample : Primitives.Sample cap differential index box)
-    (polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box) (minimum : Nat) :
-    {intervals : List (CommonCover.BasisCommonInterval cover covers)} →
-    (requests : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular
+    (polynomials : RegularBasisPolynomials cap index box) (minimum : Nat) :
+    {intervals : List (BasisCommonInterval cover covers)} →
+    (requests : BasisCommonChartRequests regular
       depth target allowance floor sourceFloor intervals) →
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+      Plans capSample
       polynomials minimum requests
   | _, .nil => ⟨⟩
   | _, .cons head tail => ⟨Plan.build head.request capSample polynomials minimum,
-      Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans.build
+      Plans.build
         capSample polynomials minimum tail⟩
 
 /-- The maximum actual reading stage across all retained interval plans, respecting the supplied minimum. -/
-@[expose] def stage : {intervals : List (CommonCover.BasisCommonInterval cover covers)} →
-    (requests : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular
+@[expose] def stage : {intervals : List (BasisCommonInterval cover covers)} →
+    (requests : BasisCommonChartRequests regular
       depth target allowance floor sourceFloor intervals) →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    Plans capSample
       polynomials minimum requests → Nat
   | _, .nil, _ => minimum
   | _, .cons _ tail, plans => max plans.1.stage
-    (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans.stage
+    (Plans.stage
     tail plans.2)
 
 end Plans

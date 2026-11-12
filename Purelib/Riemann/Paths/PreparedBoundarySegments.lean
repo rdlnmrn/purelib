@@ -23,6 +23,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Geometry
+
 public section
 
 /-!
@@ -51,7 +53,7 @@ open Purelib.Data.Gaussian in
 /-- The exact rational Gaussian carrier. -/
 abbrev Gaussian := Basic.Canonical
 /-- The original rational Gaussian box carrier. -/
-abbrev Box := Purelib.Geometry.Rational.Box
+abbrev Box := Geometry.Rational.Box
 
 /-- Both original endpoints share one selected coordinate boundary of the retained box.
 
@@ -68,8 +70,8 @@ instance sameSideDecidable (box : Box) (first last : Gaussian) : Decidable (Same
   unfold SameSide
   infer_instance
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
 
 /-- An original centered parent edge whose endpoints lie in the retained box on the same side.
 
@@ -87,21 +89,21 @@ open Purelib.Data.Gaussian
 open Purelib.Polynomial
 open Purelib.Polynomial.Dense.Gaussian
 /-- An original segment with equal endpoint real coordinates has that real coordinate at every parameter. -/
-private theorem segment_re_eq {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    {ambient : Box} {start finish : Gaussian} (segment : Geometry.ClearPath.ClearSegment polynomial ambient start
+private theorem segment_re_eq {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {ambient : Box} {start finish : Gaussian} (segment : ClearPath.ClearSegment polynomial ambient start
       finish)
     {coordinate : Coordinate} (first : start.re = coordinate) (last : finish.re = coordinate) (fraction : Coordinate) :
     (segment.pointAt fraction).re = coordinate := by
-  simp only [Geometry.ClearPath.ClearSegment.pointAt, Basic.add_re, Basic.sub_re, Scale.scale_re, first, last]
+  simp only [ClearPath.ClearSegment.pointAt, Basic.add_re, Basic.sub_re, Scale.scale_re, first, last]
   ring1
 
 /-- An original segment with equal endpoint imaginary coordinates has that imaginary coordinate at every parameter. -/
-private theorem segment_im_eq {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    {ambient : Box} {start finish : Gaussian} (segment : Geometry.ClearPath.ClearSegment polynomial ambient start
+private theorem segment_im_eq {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {ambient : Box} {start finish : Gaussian} (segment : ClearPath.ClearSegment polynomial ambient start
       finish)
     {coordinate : Coordinate} (first : start.im = coordinate) (last : finish.im = coordinate) (fraction : Coordinate) :
     (segment.pointAt fraction).im = coordinate := by
-  simp only [Geometry.ClearPath.ClearSegment.pointAt, Basic.add_im, Basic.sub_im, Scale.scale_im, first, last]
+  simp only [ClearPath.ClearSegment.pointAt, Basic.add_im, Basic.sub_im, Scale.scale_im, first, last]
   ring1
 
 end
@@ -109,8 +111,8 @@ end
 open Purelib.Polynomial in
 open Purelib.Polynomial.Dense.Gaussian in
 /-- Any two parameters of the original same-side segment remain on that exact coordinate side. -/
-theorem SameSide.pointAt {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    {ambient box : Box} {start finish : Gaussian} (segment : Geometry.ClearPath.ClearSegment polynomial ambient start
+theorem SameSide.pointAt {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {ambient box : Box} {start finish : Gaussian} (segment : ClearPath.ClearSegment polynomial ambient start
       finish)
     (side : SameSide box start finish) (left right : Coordinate) :
     SameSide box (segment.pointAt left) (segment.pointAt right) := by
@@ -128,8 +130,8 @@ private theorem point_re_eq (parent : CenteredEdge curve differential) {coordina
     (fraction : Coordinate) : (parent.edge.point fraction).re = coordinate := by
   change (parent.edge.localSegment.pointAt 0).re = coordinate at first
   change (parent.edge.localSegment.pointAt 1).re = coordinate at last
-  rw [Geometry.ClearPath.ClearSegment.pointAt_zero] at first
-  rw [Geometry.ClearPath.ClearSegment.pointAt_one] at last
+  rw [ClearPath.ClearSegment.pointAt_zero] at first
+  rw [ClearPath.ClearSegment.pointAt_one] at last
   change (parent.edge.localSegment.pointAt fraction).re = coordinate
   exact segment_re_eq parent.edge.localSegment first last fraction
 
@@ -140,8 +142,8 @@ private theorem point_im_eq (parent : CenteredEdge curve differential) {coordina
     (fraction : Coordinate) : (parent.edge.point fraction).im = coordinate := by
   change (parent.edge.localSegment.pointAt 0).im = coordinate at first
   change (parent.edge.localSegment.pointAt 1).im = coordinate at last
-  rw [Geometry.ClearPath.ClearSegment.pointAt_zero] at first
-  rw [Geometry.ClearPath.ClearSegment.pointAt_one] at last
+  rw [ClearPath.ClearSegment.pointAt_zero] at first
+  rw [ClearPath.ClearSegment.pointAt_one] at last
   change (parent.edge.localSegment.pointAt fraction).im = coordinate
   exact segment_im_eq parent.edge.localSegment first last fraction
 
@@ -152,7 +154,7 @@ open Purelib.Geometry.Rational
 /-- Every unit-interval parameter of the original retained same-side parent lies on the box boundary. -/
 theorem ParentOnBoundary.point {parent : CenteredEdge curve differential} {box : Box}
     (boundary : ParentOnBoundary parent box) {fraction : Coordinate} (inside : 0 ≤ fraction ∧ fraction ≤ 1) :
-    Box.Boundary.OnBoxBoundary box (parent.edge.point fraction) := by
+    OnBoxBoundary box (parent.edge.point fraction) := by
   refine ⟨PreparedPrimitivePaths.point_inside_of_endpoints parent box boundary.startInside boundary.finishInside inside,
     ?_⟩
   rcases boundary.side with side | side | side | side
@@ -167,7 +169,7 @@ Each stored root-child comparison retains its parent fraction and unit-interval
 bounds. The parent boundary certificate places that exact child start on the box. -/
 theorem ParentOnBoundary.child_starts {parent : CenteredEdge curve differential} {box : Box}
     (boundary : ParentOnBoundary parent box) (block : DirectParentBlock parent) :
-    ∀ child ∈ block.children, Box.Boundary.OnBoxBoundary box (child.edge.point 0) := by
+    ∀ child ∈ block.children, OnBoxBoundary box (child.edge.point 0) := by
   have roots := block.roots
   generalize block.children = children at roots ⊢
   induction roots with

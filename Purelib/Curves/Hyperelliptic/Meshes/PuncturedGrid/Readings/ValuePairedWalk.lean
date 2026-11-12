@@ -36,6 +36,8 @@ import Purelib.Topology.Polygon.Stokes
 import Purelib.Topology.Surface.Sewing.SewnPrimitiveContacts
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -74,7 +76,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Readings.EdgeMagnitude
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus}
   {owner : OwnedPuncturedMesh curve}
   {domains : Domains owner}
 
@@ -82,42 +84,42 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
 combination of the two sides' source-increment sums. -/
 private theorem sum_increment_mix (sources : Sources owner)
     (leftValues rightValues : Fin owner.mesh.triangles.length → Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues
-      3) (coefficient : Gaussian.Basic.Canonical) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (sources.map (fun source =>
+      3) (coefficient : Basic.Canonical) :
+    Norm.Sum.Basic.gaussianSum (sources.map (fun source =>
       source.increment (EdgeMagnitude.mixValues (owner := owner) leftValues rightValues coefficient))) =
-      Gaussian.Basic.Canonical.conj (Data.Gaussian.Norm.Sum.Basic.gaussianSum (sources.map (fun source =>
+      Basic.Canonical.conj (Norm.Sum.Basic.gaussianSum (sources.map (fun source =>
         source.increment leftValues))) +
-        coefficient * Data.Gaussian.Norm.Sum.Basic.gaussianSum (sources.map (fun source => source.increment
+        coefficient * Norm.Sum.Basic.gaussianSum (sources.map (fun source => source.increment
           rightValues)) := by
   induction sources with
   | nil =>
-      change (0 : Gaussian.Basic.Canonical) = Gaussian.Basic.Canonical.conj 0 + coefficient * 0
-      rw [show Gaussian.Basic.Canonical.conj (0 : Gaussian.Basic.Canonical) = 0 from rfl,
-        Gaussian.Basic.mul_zero, Gaussian.Basic.add_zero]
+      change (0 : Basic.Canonical) = Basic.Canonical.conj 0 + coefficient * 0
+      rw [show Basic.Canonical.conj (0 : Basic.Canonical) = 0 from rfl,
+        Basic.mul_zero, Basic.add_zero]
   | cons head tail inductionHypothesis =>
-      rw [List.map_cons, List.map_cons, List.map_cons, Data.Gaussian.Norm.Sum.Basic.gaussianSum,
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum, Data.Gaussian.Norm.Sum.Basic.gaussianSum,
+      rw [List.map_cons, List.map_cons, List.map_cons, Norm.Sum.Basic.gaussianSum,
+        Norm.Sum.Basic.gaussianSum, Norm.Sum.Basic.gaussianSum,
         EdgeMagnitude.source_increment_mixValues (owner := owner), inductionHypothesis,
-          Gaussian.Basic.Canonical.conj_add]
-      rw [Gaussian.Basic.conj_eq_canonical]
+          Basic.Canonical.conj_add]
+      rw [Basic.conj_eq_canonical]
       ring1
 
 /-- The strict norm bound for a conjugate-linear combination of two strictly
 bounded terms. -/
-private theorem normSq_conj_add_mul_lt {left right coefficient : Gaussian.Basic.Canonical} {leftBound rightBound :
+private theorem normSq_conj_add_mul_lt {left right coefficient : Basic.Canonical} {leftBound rightBound :
   Fraction.Rational}
     (first : normSq left < leftBound) (second : normSq right < rightBound) :
-    normSq (Gaussian.Basic.Canonical.conj left + coefficient * right) <
+    normSq (Basic.Canonical.conj left + coefficient * right) <
       2 * (leftBound + normSq coefficient * rightBound) := by
-  have estimate : normSq (Gaussian.Basic.Canonical.conj left + coefficient * right) ≤
+  have estimate : normSq (Basic.Canonical.conj left + coefficient * right) ≤
       2 * (normSq left + normSq coefficient * normSq right) := by
-    simpa only [Gaussian.Norm.Basic.normSq_eq_canonical,
-      Gaussian.Basic.conj_eq_canonical] using
+    simpa only [Norm.Basic.normSq_eq_canonical,
+      Basic.conj_eq_canonical] using
       EdgeMagnitude.normSq_conj_add_mul left right coefficient
   refine estimate.trans_lt ?_
   have firstStep := Fraction.Order.Arithmetic.add_lt_add_right_direct first (normSq coefficient * normSq right)
   have secondStep := Fraction.Order.Arithmetic.add_le_add_right_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct second.le (Gaussian.Basic.Canonical.normSq_nonneg
+    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct second.le (Basic.Canonical.normSq_nonneg
       coefficient)) leftBound
   have step : normSq left + normSq coefficient * normSq right <
       leftBound + normSq coefficient * rightBound := by
@@ -134,10 +136,10 @@ private theorem normSq_conj_add_mul_lt {left right coefficient : Gaussian.Basic.
 set_option genInjectivity false in
 /-- The mixed paired-walk source request. It caches both single-differential
 requests at one shared target and exposes their common source list. -/
-structure ValuePairedWalkRequest (leftDifferential rightDifferential : Hyperelliptic.Differentials.Basic.Differential
+structure ValuePairedWalkRequest (leftDifferential rightDifferential : Differentials.Basic.Differential
   genus)
     (domains : Domains owner)
-    (coefficient : Gaussian.Basic.Canonical) {start finish : Gaussian.Basic.Canonical} (walk : Geometry.Grid.Walks.Walk
+    (coefficient : Basic.Canonical) {start finish : Basic.Canonical} (walk : Geometry.Grid.Walks.Walk
       owner.base.bank.grid start finish)
     (target : Fraction.Rational) where
   /-- The requested mixed source-sum target is positive. -/ positive : 0 < target
@@ -145,10 +147,10 @@ structure ValuePairedWalkRequest (leftDifferential rightDifferential : Hyperelli
   /-- The allowance is the original target divided by its conjugate-linear norm scale. -/ part_eq : part = target / (2 *
     (1 + normSq coefficient))
   /-- The actual left-differential request on the original paired walk. -/ left :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkCancellation.PairedWalkRequest (mesh := owner.mesh) domains
+    Paired.WalkCancellation.PairedWalkRequest (mesh := owner.mesh) domains
     leftDifferential walk part
   /-- The actual right-differential request on the same original paired walk. -/ right :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkCancellation.PairedWalkRequest (mesh := owner.mesh) domains
+    Paired.WalkCancellation.PairedWalkRequest (mesh := owner.mesh) domains
     rightDifferential walk part
   /-- Both retained requests use exactly the same original source list. -/ sources_eq : left.sources = right.sources
   /-- The cached common sufficient request stage. -/ index : Nat
@@ -159,26 +161,26 @@ constructive_injectivity ValuePairedWalkRequest
 
 namespace ValuePairedWalkRequest
 
-variable {leftDifferential rightDifferential : Hyperelliptic.Differentials.Basic.Differential genus} {coefficient :
-  Gaussian.Basic.Canonical}
-  {start finish : Gaussian.Basic.Canonical} {walk : Geometry.Grid.Walks.Walk owner.base.bank.grid start finish} {target
+variable {leftDifferential rightDifferential : Differentials.Basic.Differential genus} {coefficient :
+  Basic.Canonical}
+  {start finish : Basic.Canonical} {walk : Geometry.Grid.Walks.Walk owner.base.bank.grid start finish} {target
     : Fraction.Rational}
 
 /-- Construct one original paired walk and reuse it for both differential requests at the paid common allowance. -/
-@[expose] def build (leftDifferential rightDifferential : Hyperelliptic.Differentials.Basic.Differential genus)
-    (domains : Domains owner) (coefficient : Gaussian.Basic.Canonical)
+@[expose] def build (leftDifferential rightDifferential : Differentials.Basic.Differential genus)
+    (domains : Domains owner) (coefficient : Basic.Canonical)
     (walk : Geometry.Grid.Walks.Walk owner.base.bank.grid start finish) (target : Fraction.Rational) (positive : 0 <
       target) :
     ValuePairedWalkRequest (owner := owner) leftDifferential rightDifferential domains coefficient
       walk target :=
   let part := target / (2 * (1 + normSq coefficient))
   have partPositive : 0 < part :=
-    Fraction.Order.Field.div_pos_direct positive (Data.Gaussian.Basic.Canonical.double_one_add_normSq_positive
+    Fraction.Order.Field.div_pos_direct positive (Basic.Canonical.double_one_add_normSq_positive
       coefficient)
-  let paired := Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkOccurrences.PairedWalk.build owner.mesh walk
-  let left := Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkCancellation.PairedWalkRequest.ofPaired paired domains
+  let paired := Paired.WalkOccurrences.PairedWalk.build owner.mesh walk
+  let left := Paired.WalkCancellation.PairedWalkRequest.ofPaired paired domains
     leftDifferential part partPositive
-  let right := Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkCancellation.PairedWalkRequest.ofPaired paired domains
+  let right := Paired.WalkCancellation.PairedWalkRequest.ofPaired paired domains
     rightDifferential part partPositive
   ⟨positive, part, rfl, left, right, rfl, max left.index right.index, rfl⟩
 
@@ -191,27 +193,27 @@ theorem accurate (request : ValuePairedWalkRequest (owner := owner) leftDifferen
     (leftReadings : TriangleCache owner leftDifferential stage domains leftBank) (rightReadings : TriangleCache owner
       rightDifferential stage domains rightBank)
     (later : request.index ≤ stage) :
-    normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (request.left.sources.map (fun source =>
+    normSq (Norm.Sum.Basic.gaussianSum (request.left.sources.map (fun source =>
       source.increment (EdgeMagnitude.mixValues (owner := owner) leftReadings.values rightReadings.values
         coefficient)))) < target := by
   have leftLater : request.left.index ≤ stage :=
-    (Data.Nat.Order.le_max_left _ _).trans (request.index_eq ▸ later)
+    (Nat.Order.le_max_left _ _).trans (request.index_eq ▸ later)
   have rightLater : request.right.index ≤ stage :=
-    (Data.Nat.Order.le_max_right _ _).trans (request.index_eq ▸ later)
+    (Nat.Order.le_max_right _ _).trans (request.index_eq ▸ later)
   have leftBound : normSq (gaussianSum (request.left.sources.map
       (fun source => source.increment leftReadings.values))) < request.part := by
-    simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using
+    simpa only [Norm.Basic.normSq_eq_canonical] using
       request.left.accurate leftReadings leftLater
   have rightBound : normSq (gaussianSum (request.right.sources.map
       (fun source => source.increment rightReadings.values))) < request.part := by
-    simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using
+    simpa only [Norm.Basic.normSq_eq_canonical] using
       request.right.accurate rightReadings rightLater
   rw [← request.sources_eq] at rightBound
   rw [sum_increment_mix]
   have estimate := normSq_conj_add_mul_lt (coefficient := coefficient) leftBound rightBound
   have equal : 2 * (request.part + normSq coefficient * request.part) = target := by
     have nonvanishing : 2 * (1 + normSq coefficient) ≠ 0 :=
-      (Data.Gaussian.Basic.Canonical.double_one_add_normSq_positive coefficient).ne'
+      (Basic.Canonical.double_one_add_normSq_positive coefficient).ne'
     calc
       2 * (request.part + normSq coefficient * request.part) =
           2 * (1 + normSq coefficient) * request.part := by ring1

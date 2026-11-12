@@ -48,24 +48,24 @@ namespace Purelib.Polynomial.Dense.Gaussian.Coefficient.Progressive.Table.Coeffi
 `target`.  It depends only on the displayed reference reading and the
 requested allowance, not on the later process states. -/
 @[expose] def admittedExtractionCoefficientBound
-    (reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable) (target : Fraction.Rational) :
+    (reference : CoefficientTable) (target : Fraction.Rational) :
       Fraction.Rational :=
   Gaussian.List.Proximity.Bounds.admittedCoefficientBound (1 :: reference.values) target
 
 /-- Positive derivative-evaluation majorant known from the reference
 reading. -/
 @[expose] def admittedExtractionDerivative
-    (reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable) (target : Fraction.Rational) (box :
+    (reference : CoefficientTable) (target : Fraction.Rational) (box :
       Box) :
     Fraction.Rational :=
   max 1
-    (Dense.Gaussian.Bounds.Perturbation.Derivative.coefficientPerturbationBounds (reference.degree + 1)
+    (Bounds.Perturbation.Derivative.coefficientPerturbationBounds (reference.degree + 1)
       (reference.admittedExtractionCoefficientBound target)
       box.normSqBound).slope
 
 /-- The reference-computed derivative-evaluation majorant is strictly positive. -/
 theorem admittedExtractionDerivative_pos
-    (reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable) (target : Fraction.Rational) (box :
+    (reference : CoefficientTable) (target : Fraction.Rational) (box :
       Box) :
     0 < reference.admittedExtractionDerivative target box :=
   (show (0 : Fraction.Rational) < 1 by decide).trans_le (Fraction.Order.Basic.le_max_left _ _)
@@ -73,36 +73,36 @@ theorem admittedExtractionDerivative_pos
 /-- Uniform Horner/Taylor scan for every monic reading admitted at
 `target`. -/
 @[expose] def admittedExtractionTaylorBounds
-    (reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable) (target : Fraction.Rational) (box :
+    (reference : CoefficientTable) (target : Fraction.Rational) (box :
       Box) :
-    Dense.Gaussian.Bounds.Taylor.HornerTaylorNormBounds :=
-  Dense.Gaussian.Bounds.Taylor.Uniform.uniformTaylorBounds (reference.degree + 1)
+    Bounds.Taylor.HornerTaylorNormBounds :=
+  Bounds.Taylor.Uniform.uniformTaylorBounds (reference.degree + 1)
     (reference.admittedExtractionCoefficientBound target) box.normSqBound
 
 /-- Positive Lipschitz majorant known from the reference reading. -/
 @[expose] def admittedExtractionLipschitz
-    (reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable) (target : Fraction.Rational) (box :
+    (reference : CoefficientTable) (target : Fraction.Rational) (box :
       Box) :
     Fraction.Rational :=
   max 1 (reference.admittedExtractionTaylorBounds target box).slope
 
 /-- The reference-computed Lipschitz majorant is strictly positive. -/
 theorem admittedExtractionLipschitz_pos
-    (reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable) (target : Fraction.Rational) (box :
+    (reference : CoefficientTable) (target : Fraction.Rational) (box :
       Box) :
     0 < reference.admittedExtractionLipschitz target box :=
   (show (0 : Fraction.Rational) < 1 by decide).trans_le (Fraction.Order.Basic.le_max_left _ _)
 
 /-- Positive Taylor-remainder majorant known from the reference reading. -/
 @[expose] def admittedExtractionTaylor
-    (reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable) (target : Fraction.Rational) (box :
+    (reference : CoefficientTable) (target : Fraction.Rational) (box :
       Box) :
     Fraction.Rational :=
   max 1 (reference.admittedExtractionTaylorBounds target box).remainder
 
 /-- The reference-computed Taylor-remainder majorant is strictly positive. -/
 theorem admittedExtractionTaylor_pos
-    (reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable) (target : Fraction.Rational) (box :
+    (reference : CoefficientTable) (target : Fraction.Rational) (box :
       Box) :
     0 < reference.admittedExtractionTaylor target box :=
   (show (0 : Fraction.Rational) < 1 by decide).trans_le (Fraction.Order.Basic.le_max_left _ _)
@@ -110,16 +110,16 @@ theorem admittedExtractionTaylor_pos
 /-- Package the precomputed bounds as the exact majorant resource consumed
 by separated Newton extraction after the later reading has been obtained. -/
 @[expose] def admittedExtractionMajorants
-    (reference reading : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable) (target : Fraction.Rational)
+    (reference reading : CoefficientTable) (target : Fraction.Rational)
     (positive : 0 < target)
-    (same : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.SameChannels reference.entries
+    (same : SameChannels reference.entries
       reading.entries)
-    (referenceSmall : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.AllowancesLt reference.entries
+    (referenceSmall : AllowancesLt reference.entries
       target)
-    (readingSmall : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.AllowancesLt reading.entries target)
+    (readingSmall : AllowancesLt reading.entries target)
     (box : Box) :
-    Dense.Gaussian.Newton.Box.Majorants.ExtractionMajorants reading.polynomial box := by
-  have close := Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.values_close_of_sameChannels same
+    Newton.Box.Majorants.ExtractionMajorants reading.polynomial box := by
+  have close := values_close_of_sameChannels same
     referenceSmall readingSmall
   have coefficientNonnegative : 0 ≤ 8 * target :=
     Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) positive.le
@@ -131,31 +131,31 @@ by separated Newton extraction after the later reading has been obtained. -/
       0 < reference.admittedExtractionCoefficientBound target := by
     exact Gaussian.List.Proximity.Bounds.admittedCoefficientBound_pos (1 :: reference.values) positive
   have degreeEqual : reading.degree = reference.degree :=
-    (Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.degree_eq_of_sameChannels same).symm
+    (degree_eq_of_sameChannels same).symm
   have coefficientsLength : reading.polynomial.coeffs.length =
       reference.degree + 1 := by
     change (1 :: reading.values).length = reference.degree + 1
     simp only [List.length_cons, reading.values_length, degreeEqual, -eq_self, -iff_self]
     rfl
-  have taylorBounds := Dense.Gaussian.Bounds.Box.Taylor.Uniform.denseHornerTaylor_le_uniform reading.polynomial box
+  have taylorBounds := Bounds.Box.Taylor.Uniform.denseHornerTaylor_le_uniform reading.polynomial box
     bounded coefficientBoundPositive.le
   rw [coefficientsLength] at taylorBounds
-  have derivativeBound : ∀ {point : Gaussian.Basic.Canonical}, box.Contains point →
-      Data.Gaussian.Norm.Basic.normSq
-          ((Dense.Gaussian.GCD.derivative reading.polynomial).eval point) ≤
-        (Dense.Gaussian.Bounds.Perturbation.Derivative.coefficientPerturbationBounds (reference.degree + 1)
+  have derivativeBound : ∀ {point : Basic.Canonical}, box.Contains point →
+      Norm.Basic.normSq
+          ((GCD.derivative reading.polynomial).eval point) ≤
+        (Bounds.Perturbation.Derivative.coefficientPerturbationBounds (reference.degree + 1)
           (reference.admittedExtractionCoefficientBound target)
           box.normSqBound).slope := by
     intro point inside
-    have automatic := Dense.Gaussian.Bounds.Derivative.Uniform.normSq_evalDerivativeCoeffs_le_uniform
+    have automatic := Bounds.Derivative.Uniform.normSq_evalDerivativeCoeffs_le_uniform
       (1 :: reading.values) point
       (reference.admittedExtractionCoefficientBound target) box.normSqBound
       bounded (box.normSq_le_normSqBound inside)
       coefficientBoundPositive.le box.normSqBound_nonneg
-    simp only [Dense.Gaussian.GCD.derivative]
-    rw [Dense.Derivative.eval_derivative]
-    change Data.Gaussian.Norm.Basic.normSq
-        (Dense.Derivative.evalDerivativeCoeffs point
+    simp only [GCD.derivative]
+    rw [Derivative.eval_derivative]
+    change Norm.Basic.normSq
+        (Derivative.evalDerivativeCoeffs point
           (1 :: reading.values)).2 ≤ _
     simpa only [List.length_cons, reading.values_length, degreeEqual, -eq_self, -iff_self] using
       automatic
@@ -163,25 +163,25 @@ by separated Newton extraction after the later reading has been obtained. -/
     { lipschitz := reference.admittedExtractionLipschitz target box
       lipschitz_pos := reference.admittedExtractionLipschitz_pos target box
       lipschitz_upper := by
-        unfold Dense.Gaussian.Bounds.Box.denseLipschitzBound
-          Dense.Gaussian.Bounds.Box.denseEvalNormLipschitzBound
-          Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.admittedExtractionLipschitz
-        rw [Dense.Gaussian.Bounds.Box.Taylor.Uniform.denseHornerNormTaylor_slope]
+        unfold Bounds.Box.denseLipschitzBound
+          Bounds.Box.denseEvalNormLipschitzBound
+          admittedExtractionLipschitz
+        rw [Bounds.Box.Taylor.Uniform.denseHornerNormTaylor_slope]
         apply Fraction.Order.Basic.max_le
         · exact Fraction.Order.Basic.le_max_left _ _
-        · apply Data.Rat.Fraction.Order.Basic.le_trans _ _ _ ?_ (Fraction.Order.Basic.le_max_right _ _)
-          simpa only [Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.admittedExtractionTaylorBounds,
+        · apply Fraction.Order.Basic.le_trans _ _ _ ?_ (Fraction.Order.Basic.le_max_right _ _)
+          simpa only [admittedExtractionTaylorBounds,
             -eq_self, -iff_self] using taylorBounds.2.1
       taylor := reference.admittedExtractionTaylor target box
       taylor_pos := reference.admittedExtractionTaylor_pos target box
       taylor_upper := by
-        unfold Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound
-          Dense.Gaussian.Bounds.Box.Taylor.denseEvalTaylorRemainderBound
-          Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.admittedExtractionTaylor
+        unfold Bounds.Box.Taylor.denseTaylorRemainderBound
+          Bounds.Box.Taylor.denseEvalTaylorRemainderBound
+          admittedExtractionTaylor
         apply Fraction.Order.Basic.max_le
         · exact Fraction.Order.Basic.le_max_left _ _
-        · apply Data.Rat.Fraction.Order.Basic.le_trans _ _ _ ?_ (Fraction.Order.Basic.le_max_right _ _)
-          simpa only [Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.admittedExtractionTaylorBounds,
+        · apply Fraction.Order.Basic.le_trans _ _ _ ?_ (Fraction.Order.Basic.le_max_right _ _)
+          simpa only [admittedExtractionTaylorBounds,
             -eq_self, -iff_self] using taylorBounds.2.2
       derivative := reference.admittedExtractionDerivative target box
       derivative_pos := reference.admittedExtractionDerivative_pos target box

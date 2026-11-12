@@ -50,10 +50,9 @@ def coprimeCertificateOfRelation
     (left right : Squarefree.Part) (coprime :
       CoprimeRelation left right) :
     Dense.Gaussian.Coprime.Basic.CoprimeCertificate left.polynomial right.polynomial :=
+  let result := Dense.Gaussian.GCD.extendedGCD left.polynomial right.polynomial
   Dense.Gaussian.Coprime.Decision.certificateOfConstantGCD
-    left.polynomial right.polynomial
-      ((Dense.Gaussian.GCD.extendedGCD left.polynomial right.polynomial).nonzero
-        (Or.inl left.nonzero)) coprime
+    left.polynomial right.polynomial result rfl (result.nonzero (Or.inl left.nonzero)) coprime
 
 end CoprimeRelation
 

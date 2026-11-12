@@ -103,25 +103,25 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.StageReque
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.StageChartReplacement (ChartReplacement)
 open Purelib.Integration.Path.Dyadic.RadialTriangles (Parameters)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {cover :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data}
-  {prepared : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison.Preparation regular cover}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap} {cover :
+    UniformReciprocalCover.Cover data}
+  {prepared : Preparation regular cover}
     {sourceTarget reciprocalTarget coefficientTarget totalTarget areaTarget target :
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {minimum index depth readingIndex : Nat} {box : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {request : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.StageRequest prepared sourceTarget
+    Coordinate}
+  {minimum index depth readingIndex : Nat} {box : Geometry.Rational.Box}
+  {sample : Primitives.Sample cap differential index box}
+  {request : StageRequest prepared sourceTarget
     reciprocalTarget coefficientTarget totalTarget areaTarget minimum}
   {replacement : ChartReplacementRequest
     prepared target minimum}
-  {evaluated : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.StageRequest.Evaluation request sample
+  {evaluated : Evaluation request sample
     depth readingIndex}
 
 /-- Transport the retained energy-bound cache along equality of the original cap sample and its model index. -/
@@ -129,7 +129,7 @@ variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.Hyperel
     {first : Primitives.Sample cap differential firstIndex box}
     {last : Primitives.Sample cap differential lastIndex box}
     (indices : firstIndex = lastIndex) (samples : HEq first last)
-    (bounds : Cap.EnergyBounds last RootRadialGeometry.domain) : Cap.EnergyBounds first
+    (bounds : EnergyBounds last RootRadialGeometry.domain) : EnergyBounds first
       RootRadialGeometry.domain := by
   cases indices
   cases samples
@@ -138,26 +138,26 @@ variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.Hyperel
 namespace ChartReplacement
 
 /-- Reuse the shared cap-polynomial bound cache to prepare energy requests on the actual retained chart cells. -/
-@[expose] def prepareEnergy (chart : StageChartReplacement.ChartReplacement replacement evaluated)
-    (bounds : Cap.EnergyBounds sample RootRadialGeometry.domain)
-    (energyTarget : InverseRootPolynomial.Coordinate) (positive : 0 < energyTarget) (energyFloor : Nat) :
-    ParentEnergy.EnergyPreparation chart.charts evaluated.cap.polynomial.cells chart.vertices energyTarget energyFloor
+@[expose] def prepareEnergy (chart : ChartReplacement replacement evaluated)
+    (bounds : EnergyBounds sample RootRadialGeometry.domain)
+    (energyTarget : Coordinate) (positive : 0 < energyTarget) (energyFloor : Nat) :
+    EnergyPreparation chart.charts evaluated.cap.polynomial.cells chart.vertices energyTarget energyFloor
       :=
   EnergyPreparation.build chart.charts evaluated.cap.polynomial.cells chart.vertices
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.StageEnergy.transportBounds evaluated.original_index
+    (transportBounds evaluated.original_index
       evaluated.capSample_eq bounds) energyTarget positive energyFloor
 
-variable {energyTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {energyFloor energyDepth : Nat}
+variable {energyTarget : Coordinate} {energyFloor energyDepth : Nat}
 
 /-- Evaluate the original energy preparation at the supplied shared radial depth and parameters, reusing all retained
 endpoint and junction requests. -/
-@[expose] def evaluateEnergy (chart : StageChartReplacement.ChartReplacement replacement evaluated)
-    (prepared : ParentEnergy.EnergyPreparation chart.charts evaluated.cap.polynomial.cells chart.vertices energyTarget
+@[expose] def evaluateEnergy (chart : ChartReplacement replacement evaluated)
+    (prepared : EnergyPreparation chart.charts evaluated.cap.polynomial.cells chart.vertices energyTarget
       energyFloor)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
     (oriented : 0 < AffineTriangle.crossEnergy (parent.edge.point 0) (parent.edge.point 1))
-    (parameters : RadialTriangles.Parameters energyDepth) (later : prepared.requests.maximum ≤ energyDepth) :
-    RestoredParentEnergy.RequestedEnergy chart.charts evaluated.cap.polynomial.cells chart.vertices
+    (parameters : Parameters energyDepth) (later : prepared.requests.maximum ≤ energyDepth) :
+    RequestedEnergy chart.charts evaluated.cap.polynomial.cells chart.vertices
       request.cap.endpoints energyTarget energyFloor :=
   EnergyPreparation.evaluate prepared request.cap.endpoints chart.model_later chart.reading_later branch oriented
     parameters later
@@ -165,9 +165,9 @@ endpoint and junction requests. -/
     (Fraction.Order.Field.div_nonneg_direct request.cap.budget.positive.le (by decide)) (JoinedRequest.energy_join_small
       request.cap) chart.junction_later
 
-variable (chart : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.StageChartReplacement.ChartReplacement replacement
+variable (chart : ChartReplacement replacement
   evaluated)
-  (energy : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RestoredParentEnergy.RequestedEnergy chart.charts
+  (energy : RequestedEnergy chart.charts
     evaluated.cap.polynomial.cells chart.vertices request.cap.endpoints energyTarget energyFloor)
 
 /-- The actual retained energy chain starts at the same first reading as the original cap comparison. -/
@@ -178,14 +178,14 @@ theorem energy_first : energy.firstValue = evaluated.cap.firstValue := by
 theorem energy_paths :
     RestoredEnergyBlock.paths energy.blocks energy.firstValue = chart.replacement.paths := by
   rw [energy.paths_eq, chart.replacement.paths_eq, chart.readings_eq,
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.StageEnergy.ChartReplacement.energy_first chart energy]
+    energy_first chart energy]
 
 /-- The actual energy trace equals the original replacement area plus its retained first-value and total endpoint term.
 -/
 theorem energy_trace : energy.connection.trace = chart.replacement.summary.area +
     BoundaryRibbon.area evaluated.cap.firstValue chart.replacement.summary.total := by
-  rw [energy.connection.trace_eq, Curves.Hyperelliptic.Charts.Reciprocal.Disk.StageEnergy.ChartReplacement.energy_paths
-    chart energy, Curves.Hyperelliptic.Charts.Reciprocal.Disk.StageEnergy.ChartReplacement.energy_first chart energy,
+  rw [energy.connection.trace_eq, energy_paths
+    chart energy, energy_first chart energy,
     IncrementArea.traceArea_eq, ← chart.replacement.summary.area_eq, ← chart.replacement.summary.total_eq]
 
 /-- This allowance uses the original source/join request and the independent replacement request; neither is reacquired
@@ -196,16 +196,16 @@ theorem energy_boundary_close :
       RestoredEnergyBlock.terminalPotential energy.blocks energy.firstPotential - energy.firstPotential)) <
         256 * (4 * target + totalTarget / 4) := by
   have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by
-      decide +kernel : (0 : InverseRootPolynomial.Coordinate) < 256)
+      decide +kernel : (0 : Coordinate) < 256)
     (ChartReplacementRequest.energy_allowance replacement request.cap)
-  have paid : (cover.mesh.edges.length : InverseRootPolynomial.Coordinate) ^ 2 * (1024 *
+  have paid : (cover.mesh.edges.length : Coordinate) ^ 2 * (1024 *
       (replacement.localTarget + request.cap.budget.tolerance / 4)) < 256 * (4 * target + totalTarget / 4) :=
-    (show _ = 256 * (((2 * cover.mesh.edges.length : Nat) : InverseRootPolynomial.Coordinate) ^ 2 *
+    (show _ = 256 * (((2 * cover.mesh.edges.length : Nat) : Coordinate) ^ 2 *
       (replacement.localTarget + request.cap.budget.tolerance / 4)) by
           simp only [Algebra.NatCast.mul, Nat.cast_ofNat];
           ring1).trans_lt scaled
   have close := (RequestedEnergy.boundary_error energy).trans_lt paid
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.Disk.StageEnergy.ChartReplacement.energy_trace chart energy] at close
+  rw [energy_trace chart energy] at close
   refine (congrArg Data.Gaussian.Norm.Basic.normSq ?_).trans_lt close
   ring1
 

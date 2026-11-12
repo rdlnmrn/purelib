@@ -14,6 +14,7 @@ import Purelib.Polynomial.Winding.Box.Basic
 import Purelib.Polynomial.Winding.Box.Residual
 import Purelib.RootIsolation.State.WindingOne.Basic
 public import Purelib.RootIsolation.Track.Basic
+public import Purelib.RootIsolation.State.WindingOne.Coprime
 import Purelib.RootIsolation.Winding.Bounds.Residual
 import Purelib.Polynomial.Dense.Gaussian.Bounds.Box
 import Purelib.Data.Gaussian.Field
@@ -23,6 +24,12 @@ import Purelib.Geometry.Rational.Box.Boundary
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
+
+open Purelib.Polynomial.Dense.Gaussian.Coprime
+
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Polynomial.Dense.Gaussian
 
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 open Purelib.Polynomial.Dense.Gaussian.Coprime.Basic (CoprimeCertificate)
@@ -62,8 +69,8 @@ namespace Purelib.RootIsolation.Isolation.Coprime.Protection
     (track : WindingOneTrack p pAmbient)
     (current : WindingOneState p pAmbient) :
       WindingOneState p pAmbient :=
-  track.refine current (Dense.Gaussian.Coprime.Bounds.Protection.protectionRadius coprime pAmbient)
-    (Dense.Gaussian.Coprime.Bounds.Protection.protectionRadius_pos coprime pAmbient)
+  track.refine current (Bounds.Protection.protectionRadius coprime pAmbient)
+    (Bounds.Protection.protectionRadius_pos coprime pAmbient)
 
 /-- The protected refinement bounds the left polynomial's squared residual by the original coprime threshold. -/
 theorem protectedState_left_small
@@ -73,54 +80,10 @@ theorem protectedState_left_small
     (track : WindingOneTrack p pAmbient)
     (current : WindingOneState p pAmbient) {z : Gaussian.Basic.Canonical}
     (inside : (protectedState coprime track current).box.Contains z) :
-    Data.Gaussian.Norm.Basic.normSq (p.eval z) ≤ Dense.Gaussian.Coprime.Bounds.Box.leftThreshold coprime pAmbient :=
+    Gaussian.Norm.Basic.normSq (p.eval z) ≤ Bounds.Box.leftThreshold coprime pAmbient :=
       by
-  let radius := Dense.Gaussian.Coprime.Bounds.Protection.protectionRadius coprime pAmbient
-  let state := protectedState coprime track current
-  have residual := Winding.Bounds.Residual.normSq_eval_le_four_lipschitz_diagonal
-    pDegreePositive state inside
-  have diagonal := track.accurate current radius
-    (Dense.Gaussian.Coprime.Bounds.Protection.protectionRadius_pos coprime pAmbient)
-  have radiusSquare := Purelib.Polynomial.Dense.Gaussian.Coprime.Bounds.Protection.protectionRadius_sq_le coprime
-    pAmbient
-  have radiusBudget : radius ≤ Dense.Gaussian.Coprime.Bounds.Box.leftThreshold coprime pAmbient /
-      (8 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p pAmbient) :=
-    (Purelib.Data.Rat.Fraction.Order.Basic.min_le_right (1 : Fraction.Rational) _).trans
-      (Purelib.Data.Rat.Fraction.Order.Basic.min_le_left _ _)
-  have scaled : radius * (8 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p pAmbient) ≤
-      Dense.Gaussian.Coprime.Bounds.Box.leftThreshold coprime pAmbient :=
-    (Fraction.Order.Field.le_div_iff_pos
-      (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-        (Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos p pAmbient))).mp radiusBudget
-  calc
-    Data.Gaussian.Norm.Basic.normSq (p.eval z) ≤
-        4 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p pAmbient * state.box.diagonalSq := by simpa only [-eq_self,
-          -iff_self, Gaussian.Norm.Basic.normSq_eq_canonical] using residual
-    _ ≤ 4 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p pAmbient * radius ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct diagonal
-        (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-          (Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos p pAmbient)).le
-    _ ≤ 4 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p pAmbient * radius :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct radiusSquare
-        (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-          (Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos p pAmbient)).le
-    _ ≤ radius * (8 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p pAmbient) := by
-      have radiusNonnegative :=
-        (Dense.Gaussian.Coprime.Bounds.Protection.protectionRadius_pos coprime pAmbient).le
-      have coefficient :
-          4 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p pAmbient ≤
-            8 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p pAmbient :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-          (show (4 : Fraction.Rational) ≤ 8 by decide)
-          (Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos p pAmbient).le
-      calc
-        4 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p pAmbient * radius =
-            radius * (4 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p pAmbient) := by ring1
-        _ ≤ radius * (8 * Dense.Gaussian.Bounds.Box.denseLipschitzBound p pAmbient) :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-            coefficient radiusNonnegative
-    _ ≤ Dense.Gaussian.Coprime.Bounds.Box.leftThreshold coprime pAmbient := by
-      simpa only [-eq_self, -iff_self, radius] using scaled
+  exact State.WindingOne.Coprime.left_small pDegreePositive coprime
+    (protectedState coprime track current) (track.accurate current _ _) inside
 
 /-- The other coprime polynomial has a uniform positive lower bound on the
 whole protected box. -/
@@ -131,8 +94,8 @@ theorem protectedState_right_lower
     (track : WindingOneTrack p pAmbient)
     (current : WindingOneState p pAmbient) {z : Gaussian.Basic.Canonical}
     (inside : (protectedState coprime track current).box.Contains z) :
-    Dense.Gaussian.Coprime.Bounds.Box.rightMargin coprime pAmbient ≤ Data.Gaussian.Norm.Basic.normSq (q.eval z) :=
-  Dense.Gaussian.Coprime.Bounds.Box.rightMargin_le_of_left_small coprime pAmbient
+    Bounds.Box.rightMargin coprime pAmbient ≤ Gaussian.Norm.Basic.normSq (q.eval z) :=
+  Bounds.Box.rightMargin_le_of_left_small coprime pAmbient
     ((protectedState coprime track current).refinesAmbient.contains inside)
     (protectedState_left_small pDegreePositive coprime track current inside)
 
@@ -146,11 +109,11 @@ clearance certificate. -/
     (current : WindingOneState p pAmbient) :
     Clearance.Box.Boundary.Basic.BoundaryClearance q (protectedState coprime track
       current).box where
-  bound := Dense.Gaussian.Coprime.Bounds.Box.rightMargin coprime pAmbient
-  positive := Dense.Gaussian.Coprime.Bounds.Box.rightMargin_pos coprime pAmbient
+  bound := Bounds.Box.rightMargin coprime pAmbient
+  positive := Bounds.Box.rightMargin_pos coprime pAmbient
   lower := fun z boundary => by
-    have bound : Dense.Gaussian.Coprime.Bounds.Box.rightMargin coprime pAmbient ≤
-        Data.Gaussian.Norm.Basic.normSq (q.eval z) :=
+    have bound : Bounds.Box.rightMargin coprime pAmbient ≤
+        Gaussian.Norm.Basic.normSq (q.eval z) :=
       protectedState_right_lower (z := z) pDegreePositive coprime track current boundary.1
     simpa only [-eq_self, -iff_self, Gaussian.Norm.Basic.normSq_eq_canonical] using bound
 
@@ -165,53 +128,9 @@ theorem protectedState_rightWinding_zero
     (current : WindingOneState p pAmbient) :
     Winding.Box.Basic.quadrupledBoxWinding q (protectedState coprime track current).box = 0
       := by
-  let radius := Dense.Gaussian.Coprime.Bounds.Protection.protectionRadius coprime pAmbient
-  let state := protectedState coprime track current
-  have radiusSquare := Purelib.Polynomial.Dense.Gaussian.Coprime.Bounds.Protection.protectionRadius_sq_le coprime
-    pAmbient
-  have radiusBudget : radius ≤ Dense.Gaussian.Coprime.Bounds.Box.rightMargin coprime pAmbient /
-      (2 * Dense.Gaussian.Bounds.Box.denseLipschitzBound q pAmbient) :=
-    (Purelib.Data.Rat.Fraction.Order.Basic.min_le_right (1 : Fraction.Rational) _).trans
-      (Purelib.Data.Rat.Fraction.Order.Basic.min_le_right _ _)
-  have scaled : radius * (2 * Dense.Gaussian.Bounds.Box.denseLipschitzBound q pAmbient) ≤
-      Dense.Gaussian.Coprime.Bounds.Box.rightMargin coprime pAmbient :=
-    (Fraction.Order.Field.le_div_iff_pos
-      (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-        (Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos q pAmbient))).mp radiusBudget
-  have diagonal := track.accurate current radius
-    (Dense.Gaussian.Coprime.Bounds.Protection.protectionRadius_pos coprime pAmbient)
-  have variationStrict : Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound q pAmbient state.box <
-      Dense.Gaussian.Coprime.Bounds.Box.rightMargin coprime pAmbient := by
-    have radiusPositive := Dense.Gaussian.Coprime.Bounds.Protection.protectionRadius_pos coprime pAmbient
-    calc
-      Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound q pAmbient state.box =
-          Dense.Gaussian.Bounds.Box.denseLipschitzBound q pAmbient * state.box.diagonalSq := rfl
-      _ ≤ Dense.Gaussian.Bounds.Box.denseLipschitzBound q pAmbient * radius ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct diagonal
-          (Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos q pAmbient).le
-      _ ≤ Dense.Gaussian.Bounds.Box.denseLipschitzBound q pAmbient * radius :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct radiusSquare
-          (Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos q pAmbient).le
-      _ < radius * (2 * Dense.Gaussian.Bounds.Box.denseLipschitzBound q pAmbient) := by
-        have productPositive : 0 <
-            Dense.Gaussian.Bounds.Box.denseLipschitzBound q pAmbient * radius :=
-          Fraction.Order.Arithmetic.mul_pos_direct
-            (Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos q pAmbient) radiusPositive
-        calc
-          Dense.Gaussian.Bounds.Box.denseLipschitzBound q pAmbient * radius =
-              0 + Dense.Gaussian.Bounds.Box.denseLipschitzBound q pAmbient * radius := by ring1
-          _ < Dense.Gaussian.Bounds.Box.denseLipschitzBound q pAmbient * radius +
-              Dense.Gaussian.Bounds.Box.denseLipschitzBound q pAmbient * radius :=
-            Fraction.Order.Arithmetic.add_lt_add_right_direct productPositive _
-          _ = radius * (2 * Dense.Gaussian.Bounds.Box.denseLipschitzBound q pAmbient) := by ring1
-      _ ≤ Dense.Gaussian.Coprime.Bounds.Box.rightMargin coprime pAmbient := scaled
-  have anchorLower : Dense.Gaussian.Coprime.Bounds.Box.rightMargin coprime pAmbient ≤
-      Data.Gaussian.Norm.Basic.normSq (q.eval state.box.anchor) :=
-    protectedState_right_lower pDegreePositive coprime track current
-      state.box.contains_anchor
-  exact Winding.Box.Residual.quadrupledBoxWinding_eq_zero_of_anchorResidualBound_lt
-    q qDegreePositive state.refinesAmbient state.proper
-      (variationStrict.trans_le anchorLower)
+  exact State.WindingOne.Coprime.right_winding_zero pDegreePositive qDegreePositive coprime
+    (protectedState coprime track current) (track.accurate current _ _)
+
 end Purelib.RootIsolation.Isolation.Coprime.Protection
 
 end

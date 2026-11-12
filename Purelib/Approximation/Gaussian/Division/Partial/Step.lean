@@ -54,19 +54,19 @@ set_option genInjectivity false in
 exclusion constructor. -/
 inductive StepResult (numerator denominator :
   Coherent.CoherentNamed)
-    (state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator) : Type 2
+    (state : State denominator) : Type 2
   /-- Retain the computed ordinary quotient and its readiness certificate indexed by the exact denominator state. -/ |
-    ready (output : Coherent.CoherentNamed) (valid : Approximation.Gaussian.Division.Partial.Ready numerator denominator
+    ready (output : Coherent.CoherentNamed) (valid : Ready numerator denominator
         state output)
   /-- Retain the next denominator state and the certificate of one actual refinement step. -/ | progressed (next :
-    Approximation.Gaussian.Name.Coherent.Refinement.State denominator) (progress : State.Progress state next)
+    State denominator) (progress : State.Progress state next)
 
 constructive_injectivity StepResult
 
 /-- Inspect one displayed rational ball. A failed test performs exactly the canonical refinement selected by
 `nextIndex`; it never reports zero or domain exclusion. -/
 def step (numerator denominator : Coherent.CoherentNamed)
-    (state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator) :
+    (state : State denominator) :
         StepResult numerator denominator
       state :=
   if separated :
@@ -81,12 +81,12 @@ def step (numerator denominator : Coherent.CoherentNamed)
 /-- A successful rational separation test makes the automatic step ready. -/
 theorem step_is_ready_of_separated (numerator denominator :
   Coherent.CoherentNamed)
-    (state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator)
+    (state : State denominator)
     (separated :
       2 * (denominator.name.process.ball state.source).radiusSq <
         Data.Gaussian.Norm.Basic.normSq (denominator.name.process.ball state.source).center) :
     ∃ output : Coherent.CoherentNamed, ∃ valid :
-        Approximation.Gaussian.Division.Partial.Ready numerator denominator state output,
+        Ready numerator denominator state output,
       step numerator denominator state = .ready output valid := by
   rw [step, dif_pos separated]
   exact ⟨_, _, rfl⟩
@@ -94,7 +94,7 @@ theorem step_is_ready_of_separated (numerator denominator :
 /-- Failure of the sufficient separation test has exactly one meaning: one canonical certified refinement is returned.
 -/
 theorem step_eq_progressed_of_not_separated
-    (numerator denominator : Coherent.CoherentNamed) (state : Approximation.Gaussian.Name.Coherent.Refinement.State
+    (numerator denominator : Coherent.CoherentNamed) (state : State
         denominator)
     (notSeparated : ¬
       2 * (denominator.name.process.ball state.source).radiusSq <
@@ -105,8 +105,8 @@ theorem step_eq_progressed_of_not_separated
 
 /-- Satisfy the exact typed requirement explicitly, bypassing further automatic search. -/
 def resume (numerator denominator : Coherent.CoherentNamed)
-    (state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator) (requirement :
-        Approximation.Gaussian.Division.Partial.Requirement state)
+    (state : State denominator) (requirement :
+        Requirement state)
     (evidence : Requirement.Evidence requirement) :
     StepResult numerator denominator state :=
   match requirement with
@@ -118,11 +118,11 @@ def resume (numerator denominator : Coherent.CoherentNamed)
 -/
 theorem resume_is_ready (numerator denominator :
   Coherent.CoherentNamed)
-    (state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator) (requirement :
-        Approximation.Gaussian.Division.Partial.Requirement state)
+    (state : State denominator) (requirement :
+        Requirement state)
     (evidence : Requirement.Evidence requirement) :
     ∃ output : Coherent.CoherentNamed, ∃ valid :
-        Approximation.Gaussian.Division.Partial.Ready numerator denominator state output,
+        Ready numerator denominator state output,
       resume numerator denominator state requirement evidence =
         .ready output valid := by
   cases requirement

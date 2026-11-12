@@ -10,6 +10,7 @@ import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Polynomial.Geometry.ClearPath
 
 import Purelib.Polynomial.Geometry.Grid.AxisNeighbors
+import Purelib.Polynomial.Geometry.Grid.Incidence
 import Purelib.Polynomial.Geometry.Grid.ClearGrid
 public import Purelib.Polynomial.Geometry.Grid.FramedClearGrid
 public import Purelib.Polynomial.Geometry.Grid.VertexCellSteps
@@ -46,7 +47,7 @@ open Purelib
 open Purelib.Data.Gaussian.Components.Basic (point)
 
 variable {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient : Box} {grid :
-  Polynomial.Geometry.Grid.ClearGrid polynomial ambient}
+  Geometry.Grid.ClearGrid polynomial ambient}
 
 namespace Riemann.Meshes.GridLiftedDualSteps.GridSide
 
@@ -74,7 +75,7 @@ set_option genInjectivity false in
 /-- A cell side with the orientation of the requested grid edge. -/
 structure EdgeCell (grid : ClearGrid polynomial ambient) (start finish : Gaussian.Basic.Canonical)
   where
-  /-- The cell incident to the retained oriented edge. -/ cell : Geometry.Grid.ClearGrid.Cell polynomial ambient
+  /-- The cell incident to the retained oriented edge. -/ cell : ClearGrid.Cell polynomial ambient
   /-- The incident cell belongs to the original grid. -/ member : cell ∈ grid.cells
   /-- The original cell side underlying this edge. -/ side : GridSide
   /-- Whether the edge reverses the orientation of its retained cell side. -/ reversed : Bool
@@ -127,7 +128,7 @@ The same cell, grid membership and original side remain in the reversed record. 
 
 /-- Retain the starting vertex as an incident corner of the edge's cell. -/
 @[expose] def first (edge : EdgeCell grid start finish) :
-  Geometry.Grid.VertexCellSteps.IncidentCell grid start :=
+  VertexCellSteps.IncidentCell grid start :=
   ⟨edge.cell, edge.member, by
     apply Eq.mp (congrArg edge.cell.IsCorner edge.start_eq)
     cases edge.reversed
@@ -136,13 +137,13 @@ The same cell, grid membership and original side remain in the reversed record. 
 
 /-- Retain the finishing vertex as an incident corner of the edge's cell. -/
 @[expose] def last (edge : EdgeCell grid start finish) :
-  Geometry.Grid.VertexCellSteps.IncidentCell grid finish := edge.reverse.first
+  VertexCellSteps.IncidentCell grid finish := edge.reverse.first
 
 /-- Retained horizontal and vertical intervals determine a grid cell.
 
 The original grid cells enumerate the same two interval lists. Their supplied
 membership certificates identify this exact paired cell in that enumeration. -/
-theorem cell_member {cell : Geometry.Grid.ClearGrid.Cell polynomial ambient}
+theorem cell_member {cell : ClearGrid.Cell polynomial ambient}
     (horizontal : cell.horizontal ∈ grid.xIntervals) (vertical : cell.vertical ∈ grid.yIntervals) : cell ∈ grid.cells :=
   Data.List.Flatten.mem_flatMap.mpr ⟨cell.horizontal, horizontal,
     Data.List.Map.mem_map.mpr ⟨cell.vertical, vertical, rfl⟩⟩
@@ -154,7 +155,7 @@ The endpoint flag selects the bottom side or the reversed top side of the retain
     (interval : Interval (VerticalLine.coordinate (polynomial :=
       polynomial) (ambient := ambient)))
     (member : interval ∈ grid.xIntervals) (y : Fraction.Rational) (upper : Bool)
-    (neighbor : Geometry.Grid.AxisNeighbors.AtEndpoint grid.yIntervals y upper) :
+    (neighbor : AxisNeighbors.AtEndpoint grid.yIntervals y upper) :
     EdgeCell grid (point interval.lower.coordinate y) (point interval.upper.coordinate y) :=
   match upper, neighbor with
   | false, neighbor => ⟨⟨interval, neighbor.interval⟩, cell_member member neighbor.member, .bottom, false,
@@ -171,7 +172,7 @@ The endpoint flag selects the right side or the reversed left side of the retain
     (interval : Interval (HorizontalLine.coordinate (polynomial :=
       polynomial) (ambient := ambient)))
     (member : interval ∈ grid.yIntervals) (x : Fraction.Rational) (upper : Bool)
-    (neighbor : Geometry.Grid.AxisNeighbors.AtEndpoint grid.xIntervals x upper) :
+    (neighbor : AxisNeighbors.AtEndpoint grid.xIntervals x upper) :
     EdgeCell grid (point x interval.lower.coordinate) (point x interval.upper.coordinate) :=
   match upper, neighbor with
   | false, neighbor => ⟨⟨neighbor.interval, interval⟩, cell_member neighbor.member member, .left, true,
@@ -180,6 +181,50 @@ The endpoint flag selects the right side or the reversed left side of the retain
   | true, neighbor => ⟨⟨neighbor.interval, interval⟩, cell_member neighbor.member member, .right, false,
       congrArg (fun x => point x interval.lower.coordinate) neighbor.endpoint_eq,
       congrArg (fun x => point x interval.upper.coordinate) neighbor.endpoint_eq⟩
+
+/-- Attach a horizontal grid edge to the specified containing cell, retaining its actual axis intervals.
+
+The fixed retained line cannot cross the interior of an adjacent vertical
+interval. The lower boundary gives the bottom side; the upper boundary
+gives the reversed top side of this same cell. -/
+def horizontalInCell
+    (span : Interval (VerticalLine.coordinate (polynomial := polynomial) (ambient := ambient)))
+    (spanMember : span ∈ grid.xIntervals)
+    (vertical : Interval (HorizontalLine.coordinate (polynomial := polynomial) (ambient := ambient)))
+    (verticalMember : vertical ∈ grid.yIntervals)
+    (line : HorizontalLine polynomial ambient) (lineMember : line ∈ grid.horizontal)
+    (inside : vertical.lower.coordinate ≤ line.coordinate ∧ line.coordinate ≤ vertical.upper.coordinate) :
+    {geometry : EdgeCell grid (point span.lower.coordinate line.coordinate)
+        (point span.upper.coordinate line.coordinate) // geometry.cell = ⟨span, vertical⟩} :=
+  if lower : vertical.lower.coordinate = line.coordinate then
+    ⟨horizontal span spanMember line.coordinate false ⟨vertical, verticalMember, lower⟩, rfl⟩
+  else
+    have upper : vertical.upper.coordinate = line.coordinate :=
+      ((Incidence.Interval.entry_endpoint grid.horizontal grid.horizontal_ordered verticalMember lineMember
+        inside).resolve_left (fun equal => lower equal.symm)).symm
+    ⟨horizontal span spanMember line.coordinate true ⟨vertical, verticalMember, upper⟩, rfl⟩
+
+/-- Attach a vertical grid edge to the specified containing cell, retaining its actual axis intervals.
+
+The lower horizontal boundary gives the reversed left side; the upper
+boundary gives the right side of this same cell. No incident-cell lookup
+or face classification is performed. -/
+def verticalInCell
+    (span : Interval (HorizontalLine.coordinate (polynomial := polynomial) (ambient := ambient)))
+    (spanMember : span ∈ grid.yIntervals)
+    (horizontal : Interval (VerticalLine.coordinate (polynomial := polynomial) (ambient := ambient)))
+    (horizontalMember : horizontal ∈ grid.xIntervals)
+    (line : VerticalLine polynomial ambient) (lineMember : line ∈ grid.vertical)
+    (inside : horizontal.lower.coordinate ≤ line.coordinate ∧ line.coordinate ≤ horizontal.upper.coordinate) :
+    {geometry : EdgeCell grid (point line.coordinate span.lower.coordinate)
+        (point line.coordinate span.upper.coordinate) // geometry.cell = ⟨horizontal, span⟩} :=
+  if lower : horizontal.lower.coordinate = line.coordinate then
+    ⟨vertical span spanMember line.coordinate false ⟨horizontal, horizontalMember, lower⟩, rfl⟩
+  else
+    have upper : horizontal.upper.coordinate = line.coordinate :=
+      ((Incidence.Interval.entry_endpoint grid.vertical grid.vertical_ordered horizontalMember lineMember
+        inside).resolve_left (fun equal => lower equal.symm)).symm
+    ⟨vertical span spanMember line.coordinate true ⟨horizontal, horizontalMember, upper⟩, rfl⟩
 
 end Polynomial.Geometry.Grid.EdgeSides.EdgeCell
 
@@ -201,9 +246,9 @@ cells. -/
 inductive EdgeSides (grid : ClearGrid polynomial ambient) (start finish : Gaussian.Basic.Canonical)
   where
   /-- One cell meets the edge and both edge endpoints lie on the ambient frame. -/ | single (cell :
-    Geometry.Grid.EdgeSides.EdgeCell grid start finish) (firstFrame : EdgeSides.OnFrame ambient
+    EdgeSides.EdgeCell grid start finish) (firstFrame : EdgeSides.OnFrame ambient
     start) (lastFrame : EdgeSides.OnFrame ambient finish)
-  /-- Two distinct retained cells meet the edge. -/ | pair (first second : Geometry.Grid.EdgeSides.EdgeCell grid start
+  /-- Two distinct retained cells meet the edge. -/ | pair (first second : EdgeSides.EdgeCell grid start
     finish) (different : first.cell ≠ second.cell)
 
 constructive_injectivity EdgeSides
@@ -226,7 +271,7 @@ interior case without changing the coordinate or original frame bounds. -/
 theorem endpoint_of_one {Alpha : Type} {key : Alpha → Fraction.Rational} {entries : List Alpha}
     {ordered : entries.Pairwise (fun first second => key first < key second)} {coordinate lower upper :
       Fraction.Rational}
-    (found : Geometry.Grid.AxisNeighbors.Neighbors entries ordered coordinate) (one : found.intervals.length = 1)
+    (found : AxisNeighbors.Neighbors entries ordered coordinate) (one : found.intervals.length = 1)
     (lowerMember : lower ∈ entries.map key) (upperMember : upper ∈ entries.map key) (proper : lower < upper)
     (bounds : ∀ entry ∈ entries, lower ≤ key entry ∧ key entry ≤ upper) : coordinate = lower ∨ coordinate = upper := by
   rcases found.framed_size_cases lowerMember upperMember proper bounds with ⟨_, boundary⟩ | two
@@ -241,7 +286,7 @@ empty-list length certificate. -/
 theorem not_singleton {Alpha : Type} {key : Alpha → Fraction.Rational} {entries : List Alpha}
     {ordered : entries.Pairwise (fun first second => key first < key second)} {coordinate lower upper :
       Fraction.Rational}
-    (found : Geometry.Grid.AxisNeighbors.Neighbors entries ordered coordinate) (empty : found.intervals.length = 0)
+    (found : AxisNeighbors.Neighbors entries ordered coordinate) (empty : found.intervals.length = 0)
     (lowerMember : lower ∈ entries.map key) (upperMember : upper ∈ entries.map key) (proper : lower < upper)
     (bounds : ∀ entry ∈ entries, lower ≤ key entry ∧ key entry ≤ upper) : False := by
   rcases found.framed_size_cases lowerMember upperMember proper bounds with ⟨one, _⟩ | two <;> omega
@@ -256,21 +301,21 @@ The vertical-axis neighbor certificate distinguishes a frame edge from two disti
       line ∈ grid.horizontal) :
     EdgeSides grid (point interval.lower.coordinate line.coordinate) (point
       interval.upper.coordinate line.coordinate) :=
-  match Geometry.Grid.AxisNeighbors.neighbors line.coordinate grid.horizontal grid.horizontal_ordered
+  match AxisNeighbors.neighbors line.coordinate grid.horizontal grid.horizontal_ordered
     (Data.List.Map.mem_map_of_mem onAxis) with
   | .first after minimum =>
       let boundary := endpoint_of_one (.first after minimum) rfl frame.yLower frame.yUpper proper.2 (fun line _ =>
         line.inside)
-      .single (Geometry.Grid.EdgeSides.EdgeCell.horizontal interval member line.coordinate false after) (Or.inr (Or.inr
+      .single (EdgeCell.horizontal interval member line.coordinate false after) (Or.inr (Or.inr
         boundary)) (Or.inr (Or.inr boundary))
   | .last before maximum =>
       let boundary := endpoint_of_one (.last before maximum) rfl frame.yLower frame.yUpper proper.2 (fun line _ =>
         line.inside)
-      .single (Geometry.Grid.EdgeSides.EdgeCell.horizontal interval member line.coordinate true before) (Or.inr (Or.inr
+      .single (EdgeCell.horizontal interval member line.coordinate true before) (Or.inr (Or.inr
         boundary)) (Or.inr (Or.inr boundary))
   | .interior before after =>
-      .pair (Geometry.Grid.EdgeSides.EdgeCell.horizontal interval member line.coordinate true before)
-        (Geometry.Grid.EdgeSides.EdgeCell.horizontal interval member line.coordinate false after) (fun equal => by
+      .pair (EdgeCell.horizontal interval member line.coordinate true before)
+        (EdgeCell.horizontal interval member line.coordinate false after) (fun equal => by
           have lowerEq := congrArg (fun cell => cell.box.yLower) equal
           have strict := before.interval.ordered
           change before.interval.lower.coordinate = after.interval.lower.coordinate at lowerEq
@@ -291,25 +336,25 @@ The horizontal-axis neighbor certificate distinguishes a frame edge from two dis
       line ∈ grid.vertical) :
     EdgeSides grid (point line.coordinate interval.lower.coordinate) (point line.coordinate
       interval.upper.coordinate) :=
-  match Geometry.Grid.AxisNeighbors.neighbors line.coordinate grid.vertical grid.vertical_ordered
+  match AxisNeighbors.neighbors line.coordinate grid.vertical grid.vertical_ordered
     (Data.List.Map.mem_map_of_mem onAxis) with
   | .first after minimum =>
       let boundary := endpoint_of_one (.first after minimum) rfl frame.xLower frame.xUpper proper.1 (fun line _ =>
         line.inside)
       let boundaryPoint : ∀ y, OnFrame ambient (point line.coordinate y) := fun _ =>
         boundary.elim Or.inl (fun equal => Or.inr (Or.inl equal))
-      .single (Geometry.Grid.EdgeSides.EdgeCell.vertical interval member line.coordinate false after) (boundaryPoint _)
+      .single (EdgeCell.vertical interval member line.coordinate false after) (boundaryPoint _)
         (boundaryPoint _)
   | .last before maximum =>
       let boundary := endpoint_of_one (.last before maximum) rfl frame.xLower frame.xUpper proper.1 (fun line _ =>
         line.inside)
       let boundaryPoint : ∀ y, OnFrame ambient (point line.coordinate y) := fun _ =>
         boundary.elim Or.inl (fun equal => Or.inr (Or.inl equal))
-      .single (Geometry.Grid.EdgeSides.EdgeCell.vertical interval member line.coordinate true before) (boundaryPoint _)
+      .single (EdgeCell.vertical interval member line.coordinate true before) (boundaryPoint _)
         (boundaryPoint _)
   | .interior before after =>
-      .pair (Geometry.Grid.EdgeSides.EdgeCell.vertical interval member line.coordinate true before)
-        (Geometry.Grid.EdgeSides.EdgeCell.vertical interval member line.coordinate false after) (fun equal => by
+      .pair (EdgeCell.vertical interval member line.coordinate true before)
+        (EdgeCell.vertical interval member line.coordinate false after) (fun equal => by
           have lowerEq := congrArg (fun cell => cell.box.xLower) equal
           have strict := before.interval.ordered
           change before.interval.lower.coordinate = after.interval.lower.coordinate at lowerEq
@@ -325,7 +370,7 @@ The horizontal-axis neighbor certificate distinguishes a frame edge from two dis
 Horizontal and vertical cases use their original neighboring intervals; reversal transports the same retained cells. -/
 @[expose] def build (frame : FramedClearGrid.AmbientFrame grid) (proper : ambient.Proper) : {start
   finish : Gaussian.Basic.Canonical} →
-    Geometry.Grid.Walks.Edge grid start finish → EdgeSides grid start finish
+    Walks.Edge grid start finish → EdgeSides grid start finish
   | _, _, .horizontal interval adjacent line member => horizontal frame proper interval adjacent line member
   | _, _, .vertical interval adjacent line member => vertical frame proper interval adjacent line member
   | _, _, .reverse edge => (build frame proper edge).reverse

@@ -54,6 +54,10 @@ import Purelib.Riemann.Topology.NewtonObservationSurfacePartition
 import Purelib.Tactic.Ring
 public import Purelib.Riemann.Integration.RectangularClippedConjugateSeams
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Algebra
@@ -107,7 +111,7 @@ open _root_.Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.FaceDefectRequest
 open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target
@@ -123,7 +127,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {fixed : Preflights domains sheet} {error :
     Rational}
   {energy : SurfaceRequest partitions
-    (Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
+    (MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
     sheet depth) fixed error}
   {position : Fin grid.faces.regulars.length}
 
@@ -136,42 +140,42 @@ open Purelib.Integration.Path.BoundaryRibbon (Ribbon)
 variable {pieceError : Rational} {minimum : Nat}
 
 variable {base : ExteriorRequest energy pieceError
-  minimum} {traces : Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MatchedSides.SeamTraces energy position}
+  minimum} {traces : MatchedSides.SeamTraces energy position}
   {allowance : Rational} {stage : Nat} {cache :
     Numerics domains stage}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus} {assemblies :
-    ExteriorRequest.Assemblies energy cache
+    Assemblies energy cache
     coefficients}
-  {perimeters : Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.FaceAssembly.Perimeters assemblies}
+  {perimeters : Perimeters assemblies}
 
 /-- The original finite-sum allowance pays the squared norm of the actual sum with its retained nonnegative homogeneous
 factor. -/
-private theorem sum_paid {count : Nat} (values : Fin count → Data.Gaussian.Basic.Canonical) {factor target :
-  Fraction.Rational}
+private theorem sum_paid {count : Nat} (values : Fin count → Canonical) {factor target :
+  Rational}
     (nonnegative : 0 ≤ factor) (positive : 0 < target)
-    (bounded : ∀ i, Data.Gaussian.Norm.Basic.normSq (values i) ≤ factor * Aggregate.perTerm target count) :
-    Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin values) ≤ factor * target := by
+    (bounded : ∀ i, Basic.normSq (values i) ≤ factor * Aggregate.perTerm target count) :
+    Basic.normSq (FiniteSum.Fin.sumFin values) ≤ factor * target := by
   have bound := Indexed.normSq_sumFin_le values _ bounded
-  have payment : (count : Fraction.Rational) ^ 2 * Aggregate.perTerm target count ≤ target :=
+  have payment : (count : Rational) ^ 2 * Aggregate.perTerm target count ≤ target :=
     (le_of_eq (by ring1)).trans (Aggregate.count_mul_perTerm_lt positive count).le
   apply bound.trans
   calc
-    _ = factor * ((count : Fraction.Rational) ^ 2 * Aggregate.perTerm target count) := by ring1
-    _ ≤ _ := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct payment nonnegative
+    _ = factor * ((count : Rational) ^ 2 * Aggregate.perTerm target count) := by ring1
+    _ ≤ _ := Arithmetic.mul_le_mul_of_nonneg_left_direct payment nonnegative
 
 /-- The two original nested seam allowances pay the complete retained row-and-column sum within one sixteenth of the
 face allowance. -/
-private theorem double_sum_paid {columns rows : Nat} (values : Fin columns → Fin rows → Data.Gaussian.Basic.Canonical)
-    {factor allowance : Fraction.Rational} (nonnegative : 0 ≤ factor) (positive : 0 < allowance)
-    (bounded : ∀ column row, Data.Gaussian.Norm.Basic.normSq (values column row) ≤ factor *
+private theorem double_sum_paid {columns rows : Nat} (values : Fin columns → Fin rows → Canonical)
+    {factor allowance : Rational} (nonnegative : 0 ≤ factor) (positive : 0 < allowance)
+    (bounded : ∀ column row, Basic.normSq (values column row) ≤ factor *
       FaceDefectRequest.seamTarget allowance columns rows) :
-    Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun column => FiniteSum.Fin.sumFin (values column)))
+    Basic.normSq (FiniteSum.Fin.sumFin (fun column => FiniteSum.Fin.sumFin (values column)))
       ≤ factor * (allowance / 16) := by
   apply sum_paid _ nonnegative
-    (Fraction.Order.Field.div_pos_direct positive (by decide))
+    (Field.div_pos_direct positive (by decide))
   intro column
   exact sum_paid _ nonnegative
-    (Aggregate.perTerm_positive (Fraction.Order.Field.div_pos_direct positive (by decide)) _) (bounded column)
+    (Aggregate.perTerm_positive (Field.div_pos_direct positive (by decide)) _) (bounded column)
 
 namespace FaceDefectRequest
 
@@ -180,16 +184,16 @@ homogeneous allowance. -/
 theorem horizontal_bound (request : FaceDefectRequest base traces allowance) (later : request.index ≤
   stage)
     (face : FaceAssembly perimeters position) :
-    Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun column : Fin ((PieceIndices.columns
+    Basic.normSq (FiniteSum.Fin.sumFin (fun column : Fin ((PieceIndices.columns
       (partitions.get position)) + 1) => FiniteSum.Fin.sumFin (fun row : Fin (PieceIndices.rows (partitions.get
       position)) =>
       Assembly.verticalSeam (Perimeters.faceSides perimeters position) column row -
         BilinearGridBoundary.verticalEndpoint face.corners column row))) ≤
-      (genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 * (allowance /
+      (genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 * (allowance /
         16) := by
-  apply Curves.Hyperelliptic.Meshes.Newton.Surface.FaceDefectBound.double_sum_paid _
-    (Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _) (Fraction.Order.Arithmetic.sq_nonneg_direct _)) request.positive
+  apply FaceDefectBound.double_sum_paid _
+    (Arithmetic.mul_nonneg_direct
+    (Arithmetic.sq_nonneg_direct _) (Arithmetic.sq_nonneg_direct _)) request.positive
   intro column row
   let trace := (traces.horizontal.get column).get row
   let ribbons := Data.Vector.Basic.vectorOfFn fun i : Fin genus =>
@@ -204,16 +208,16 @@ homogeneous allowance. -/
 theorem vertical_bound (request : FaceDefectRequest base traces allowance) (later : request.index ≤
   stage)
     (face : FaceAssembly perimeters position) :
-    Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun column : Fin (PieceIndices.columns
+    Basic.normSq (FiniteSum.Fin.sumFin (fun column : Fin (PieceIndices.columns
       (partitions.get position)) => FiniteSum.Fin.sumFin (fun row : Fin ((PieceIndices.rows (partitions.get position)) +
       1) =>
       Assembly.horizontalSeam (Perimeters.faceSides perimeters position) column row -
         BilinearGridBoundary.horizontalEndpoint face.corners column row))) ≤
-      (genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 * (allowance /
+      (genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 * (allowance /
         16) := by
-  apply Curves.Hyperelliptic.Meshes.Newton.Surface.FaceDefectBound.double_sum_paid _
-    (Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _) (Fraction.Order.Arithmetic.sq_nonneg_direct _)) request.positive
+  apply FaceDefectBound.double_sum_paid _
+    (Arithmetic.mul_nonneg_direct
+    (Arithmetic.sq_nonneg_direct _) (Arithmetic.sq_nonneg_direct _)) request.positive
   intro column row
   let trace := (traces.vertical.get column).get row
   let ribbons := Data.Vector.Basic.vectorOfFn fun i : Fin genus =>
@@ -228,28 +232,28 @@ theorem vertical_bound (request : FaceDefectRequest base traces allowance) (late
 The bound preserves the actual genus and squared coefficient-norm factors for an arbitrary coefficient vector. -/
 theorem accurate (request : FaceDefectRequest base traces allowance) (later : request.index ≤ stage)
     (face : FaceAssembly perimeters position) :
-    Data.Gaussian.Norm.Basic.normSq (face.seams + face.cornerTotal) ≤
-      (genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 * allowance :=
+    Basic.normSq (face.seams + face.cornerTotal) ≤
+      (genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 * allowance :=
         by
   have horizontal := horizontal_bound
     request later face
   have vertical := vertical_bound request
     later face
   have corners := FaceCornerRequest.accurate request.corners (request.corners_le.trans later) face
-  have seams : Data.Gaussian.Norm.Basic.normSq face.seams ≤
-      2 * ((genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
+  have seams : Basic.normSq face.seams ≤
+      2 * ((genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
         (allowance / 16) +
-        (genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 * (allowance
+        (genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 * (allowance
           / 16)) := by
     rw [face.seams_eq, BilinearGridBoundary.correctedSeamSum]
-    exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add vertical horizontal) (by decide))
-  have estimate := (Data.Gaussian.Norm.Bounds.normSq_add_le_two face.seams face.cornerTotal).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add seams corners) (by decide))
-  have numeric : (8 : Fraction.Rational) * 16⁻¹ + 2 * 4⁻¹ = 1 := by decide
+    exact (Bounds.normSq_add_le_two _ _).trans
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add vertical horizontal) (by decide))
+  have estimate := (Bounds.normSq_add_le_two face.seams face.cornerTotal).trans
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add seams corners) (by decide))
+  have numeric : (8 : Rational) * 16⁻¹ + 2 * 4⁻¹ = 1 := by decide
   apply estimate.trans_eq
   calc
-    _ = ((genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 * allowance)
+    _ = ((genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 * allowance)
       *
         (8 * 16⁻¹ + 2 * 4⁻¹) := by simp only [-eq_self, -iff_self, Fraction.Field.div_eq_mul_inv_direct]; ring1
     _ = _ := by rw [numeric, Fraction.Field.mul_one_direct]

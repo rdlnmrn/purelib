@@ -35,7 +35,7 @@ open Purelib.Data.List
 open Purelib.Algebra
 /-- Dense polynomials with canonical rational coefficients. -/
 abbrev CoordinatePolynomial :=
-  Dense.Basic.DensePolynomial Fraction.Rational
+  Basic.DensePolynomial Fraction.Rational
 
 /-- A strictly positive natural number has nonzero rational cast. -/
 theorem rational_natCast_ne_zero {n : Nat} (positive : 0 < n) :
@@ -47,24 +47,24 @@ theorem rational_natCast_ne_zero {n : Nat} (positive : 0 < n) :
 After at least two coefficients, the value accumulator has degree one less than the processed count and the derivative
 accumulator has the expected scaled leading coefficient. -/
 private structure ScanState (leading : Fraction.Rational) (processed : Nat)
-    (state : Dense.Rational.Derivative.Degree.CoordinatePolynomial ×
-      Dense.Rational.Derivative.Degree.CoordinatePolynomial) : Prop where
+    (state : CoordinatePolynomial ×
+      CoordinatePolynomial) : Prop where
   /-- At least two coefficients have been processed. -/ processedAtLeastTwo : 2 ≤ processed
   /-- The value accumulator has the retained leading coefficient and degree `processed - 1`. -/ value :
-    Dense.Leading.LeadingTerm state.1 (processed - 1) leading
+    Leading.LeadingTerm state.1 (processed - 1) leading
   /-- The derivative accumulator has degree `processed - 2` and the scaled original leading coefficient. -/ derivative :
-    Dense.Leading.LeadingTerm state.2 (processed - 2)
+    Leading.LeadingTerm state.2 (processed - 2)
     ((processed - 1 : Nat) * leading)
 
 /-- Transport a derivative scan invariant along equal processed counts and accumulator pairs. -/
 private theorem ScanState.of_equal {leading : Fraction.Rational}
     {processed otherProcessed : Nat}
-    {state otherState : Dense.Rational.Derivative.Degree.CoordinatePolynomial ×
-      Dense.Rational.Derivative.Degree.CoordinatePolynomial}
+    {state otherState : CoordinatePolynomial ×
+      CoordinatePolynomial}
     (processedEqual : processed = otherProcessed)
     (stateEqual : state = otherState)
-    (current : Dense.Rational.Derivative.Degree.ScanState leading otherProcessed otherState) :
-    Dense.Rational.Derivative.Degree.ScanState leading processed state := by
+    (current : ScanState leading otherProcessed otherState) :
+    ScanState leading processed state := by
   cases processedEqual
   cases stateEqual
   exact current
@@ -74,10 +74,10 @@ private theorem ScanState.of_equal {leading : Fraction.Rational}
 The rational cast of the new positive degree keeps the derivative leading coefficient nonzero. -/
 private theorem coefficient_step
     {leading coefficient : Fraction.Rational} {processed : Nat}
-    {state : Dense.Rational.Derivative.Degree.CoordinatePolynomial ×
-      Dense.Rational.Derivative.Degree.CoordinatePolynomial}
-    (current : Dense.Rational.Derivative.Degree.ScanState leading processed state) :
-    Dense.Rational.Derivative.Degree.ScanState leading (processed + 1) (Dense.Derivative.derivativeStep state
+    {state : CoordinatePolynomial ×
+      CoordinatePolynomial}
+    (current : ScanState leading processed state) :
+    ScanState leading (processed + 1) (Derivative.derivativeStep state
       coefficient) := by
   have processedAtLeastTwo := current.processedAtLeastTwo
   have oneLeProcessed : 1 ≤ processed :=
@@ -95,23 +95,23 @@ private theorem coefficient_step
       rw [Subtraction.sub_sub]
     rw [subtractAgain, Nat.add_comm (processed - 1 - 1) 1]
     exact Subtraction.add_sub_of_le oneLeProcessedMinusOne
-  have shiftedValue : Dense.Leading.LeadingTerm (Dense.Basic.DensePolynomial.shift 1 state.1) processed leading :=
-    Dense.Leading.LeadingTerm.of_equal rfl processedMinusOne.symm rfl
+  have shiftedValue : Leading.LeadingTerm (Basic.DensePolynomial.shift 1 state.1) processed leading :=
+    Leading.LeadingTerm.of_equal rfl processedMinusOne.symm rfl
       (current.value.shift 1)
-  have nextValue : Dense.Leading.LeadingTerm
-      (Dense.Basic.DensePolynomial.shift 1 state.1 + Dense.Basic.DensePolynomial.constant coefficient) processed leading
+  have nextValue : Leading.LeadingTerm
+      (Basic.DensePolynomial.shift 1 state.1 + Basic.DensePolynomial.constant coefficient) processed leading
         := by
     by_cases zero : coefficient = 0
     · subst coefficient
-      rw [Dense.Basic.DensePolynomial.add_constant_zero, Dense.Basic.DensePolynomial.normalize_shift]
+      rw [Basic.DensePolynomial.add_constant_zero, Basic.DensePolynomial.normalize_shift]
       exact shiftedValue
-    · have constantLeading := Dense.Leading.LeadingTerm.constant zero
-      have constantBelow : Dense.Leading.DegreeBelow (Dense.Basic.DensePolynomial.constant coefficient) processed :=
+    · have constantLeading := Leading.LeadingTerm.constant zero
+      have constantBelow : Leading.DegreeBelow (Basic.DensePolynomial.constant coefficient) processed :=
         (constantLeading.atMost.toBelowSucc).mono oneLeProcessed
       exact shiftedValue.addBelow constantBelow
-  have shiftedDerivative : Dense.Leading.LeadingTerm (Dense.Basic.DensePolynomial.shift 1 state.2) (processed - 1)
+  have shiftedDerivative : Leading.LeadingTerm (Basic.DensePolynomial.shift 1 state.2) (processed - 1)
       (((processed - 1 : Nat) : Fraction.Rational) * leading) :=
-    Dense.Leading.LeadingTerm.of_equal rfl processedMinusTwo.symm rfl
+    Leading.LeadingTerm.of_equal rfl processedMinusTwo.symm rfl
       (current.derivative.shift 1)
   have castStep :
       ((processed - 1 : Nat) : Fraction.Rational) * leading + leading =
@@ -127,27 +127,27 @@ private theorem coefficient_step
       ((processed - 1 : Nat) : Fraction.Rational) * leading + leading ≠ 0 := by
     rw [castStep]
     exact Fraction.Field.mul_ne_zero_direct
-      (Dense.Rational.Derivative.Degree.rational_natCast_ne_zero
+      (rational_natCast_ne_zero
         ((show 0 < 2 by decide).trans_le processedAtLeastTwo))
       current.value.coefficient_ne_zero
-  have nextDerivative : Dense.Leading.LeadingTerm
-      (Dense.Basic.DensePolynomial.shift 1 state.2 + state.1) (processed - 1)
+  have nextDerivative : Leading.LeadingTerm
+      (Basic.DensePolynomial.shift 1 state.2 + state.1) (processed - 1)
         (processed * leading) := by
     have sameDegree := shiftedDerivative.add current.value coefficientNonzero
-    exact Dense.Leading.LeadingTerm.of_equal rfl rfl castStep.symm sameDegree
+    exact Leading.LeadingTerm.of_equal rfl rfl castStep.symm sameDegree
   exact
     { processedAtLeastTwo :=
         processedAtLeastTwo.trans (Nat.le_succ processed)
       value := by
-        dsimp only [Dense.Derivative.derivativeStep]
-        exact Dense.Leading.LeadingTerm.of_equal rfl (Subtraction.add_sub_cancel_right processed 1) rfl
+        dsimp only [Derivative.derivativeStep]
+        exact Leading.LeadingTerm.of_equal rfl (Subtraction.add_sub_cancel_right processed 1) rfl
           nextValue
       derivative := by
-        dsimp only [Dense.Derivative.derivativeStep]
+        dsimp only [Derivative.derivativeStep]
         have nextDegree : processed + 1 - 2 = processed - 1 := by
           change (processed + 1) - (1 + 1) = processed - 1
           rw [← Subtraction.sub_sub, Subtraction.add_sub_cancel_right]
-        exact Dense.Leading.LeadingTerm.of_equal rfl nextDegree rfl nextDerivative }
+        exact Leading.LeadingTerm.of_equal rfl nextDegree rfl nextDerivative }
 
 /-- A finite coefficient fold preserves the derivative scan invariant.
 
@@ -155,17 +155,17 @@ The processed count increases by the number of coefficients in the displayed lis
 private theorem fold_scan
     (leading : Fraction.Rational) :
     ∀ (coefficients : List Fraction.Rational) (processed : Nat)
-      (state : Dense.Rational.Derivative.Degree.CoordinatePolynomial ×
-        Dense.Rational.Derivative.Degree.CoordinatePolynomial),
-      Dense.Rational.Derivative.Degree.ScanState leading processed state →
-      Dense.Rational.Derivative.Degree.ScanState leading (processed + coefficients.length)
-        (coefficients.foldl Dense.Derivative.derivativeStep state)
+      (state : CoordinatePolynomial ×
+        CoordinatePolynomial),
+      ScanState leading processed state →
+      ScanState leading (processed + coefficients.length)
+        (coefficients.foldl Derivative.derivativeStep state)
   | [], _, _, current => current
   | coefficient :: coefficients, processed, state, current => by
-      have next := Dense.Rational.Derivative.Degree.coefficient_step current (coefficient := coefficient)
-      have result := Purelib.Polynomial.Dense.Rational.Derivative.Degree.fold_scan leading coefficients (processed + 1)
-        (Dense.Derivative.derivativeStep state coefficient) next
-      exact Dense.Rational.Derivative.Degree.ScanState.of_equal
+      have next := coefficient_step current (coefficient := coefficient)
+      have result := Degree.fold_scan leading coefficients (processed + 1)
+        (Derivative.derivativeStep state coefficient) next
+      exact ScanState.of_equal
         (by
           simp only [List.length_cons]
           calc
@@ -180,10 +180,10 @@ private theorem fold_scan
 /-- The finite automatic derivative of a positive-degree constructive-
 rational polynomial is represented nonzero. -/
 theorem derivative_isZero_false
-    {p : Dense.Rational.Derivative.Degree.CoordinatePolynomial} (nonzero : p.isZero = false)
+    {p : CoordinatePolynomial} (nonzero : p.isZero = false)
     (positive : 0 < p.natDegree) :
-    (Dense.Derivative.derivative p).isZero = false := by
-  rw [← Dense.Derivative.derivative_normalize p]
+    (Derivative.derivative p).isZero = false := by
+  rw [← Derivative.derivative_normalize p]
   cases coefficients : p.normalize.coeffs with
   | nil =>
       change p.normalize.coeffs.isEmpty = false at nonzero
@@ -192,9 +192,9 @@ theorem derivative_isZero_false
   | cons leading tail =>
       cases tail with
       | nil =>
-          have count := Dense.Basic.DensePolynomial.natDegree_add_one_eq_degreeCount nonzero
+          have count := Basic.DensePolynomial.natDegree_add_one_eq_degreeCount nonzero
           have degreeCountOne : p.degreeCount = 1 := by
-            rw [Dense.Basic.DensePolynomial.degreeCount, coefficients]
+            rw [Basic.DensePolynomial.degreeCount, coefficients]
             rfl
           rw [degreeCountOne] at count
           have degreeZero : p.natDegree = 0 :=
@@ -203,42 +203,42 @@ theorem derivative_isZero_false
           exact (Nat.not_lt_zero 0 positive).elim
       | cons second remaining =>
           have leadingNonzero : leading ≠ 0 := by
-            have canonical := Dense.Basic.DensePolynomial.leadingCoeff_ne_zero nonzero
+            have canonical := Basic.DensePolynomial.leadingCoeff_ne_zero nonzero
             change p.normalize.coeffs.headD 0 ≠ 0 at canonical
             rw [coefficients] at canonical
             exact canonical
-          let initial := Dense.Derivative.derivativeStep (Dense.Derivative.derivativeStep (0, 0) leading) second
-          have firstState : Dense.Derivative.derivativeStep (0, 0) leading =
-              (Dense.Basic.DensePolynomial.constant leading, (0 :
-                Dense.Rational.Derivative.Degree.CoordinatePolynomial)) := by
+          let initial := Derivative.derivativeStep (Derivative.derivativeStep (0, 0) leading) second
+          have firstState : Derivative.derivativeStep (0, 0) leading =
+              (Basic.DensePolynomial.constant leading, (0 :
+                CoordinatePolynomial)) := by
             apply Prod.ext
-            · dsimp only [Dense.Derivative.derivativeStep]
-              rw [Dense.Basic.DensePolynomial.shift_zero, Dense.Basic.DensePolynomial.zero_add_normalize,
-                Dense.Basic.DensePolynomial.normalize_constant_of_ne leadingNonzero]
-            · dsimp only [Dense.Derivative.derivativeStep]
-              rw [Dense.Basic.DensePolynomial.shift_zero, Dense.Basic.DensePolynomial.add_zero_normalize,
-                Dense.Basic.DensePolynomial.normalize_zero]
+            · dsimp only [Derivative.derivativeStep]
+              rw [Basic.DensePolynomial.shift_zero, Basic.DensePolynomial.zero_add_normalize,
+                Basic.DensePolynomial.normalize_constant_of_ne leadingNonzero]
+            · dsimp only [Derivative.derivativeStep]
+              rw [Basic.DensePolynomial.shift_zero, Basic.DensePolynomial.add_zero_normalize,
+                Basic.DensePolynomial.normalize_zero]
           have initialValue : initial.1 =
-              (⟨[leading, second]⟩ : Dense.Rational.Derivative.Degree.CoordinatePolynomial) := by
+              (⟨[leading, second]⟩ : CoordinatePolynomial) := by
             dsimp only [initial]
             rw [firstState]
-            dsimp only [Dense.Derivative.derivativeStep]
-            rw [Dense.Basic.DensePolynomial.shift_one_constant_of_ne leadingNonzero,
-              Dense.Basic.DensePolynomial.linear_add_constant 0 second leadingNonzero]
-            apply Dense.Basic.DensePolynomial.ext
+            dsimp only [Derivative.derivativeStep]
+            rw [Basic.DensePolynomial.shift_one_constant_of_ne leadingNonzero,
+              Basic.DensePolynomial.linear_add_constant 0 second leadingNonzero]
+            apply Basic.DensePolynomial.ext
             simp only [Fraction.Field.zero_add, -eq_self, -iff_self]
             rfl
-          have initialDerivative : initial.2 = Dense.Basic.DensePolynomial.constant leading := by
+          have initialDerivative : initial.2 = Basic.DensePolynomial.constant leading := by
             dsimp only [initial]
             rw [firstState]
-            dsimp only [Dense.Derivative.derivativeStep]
-            rw [Dense.Basic.DensePolynomial.shift_zero, Dense.Basic.DensePolynomial.zero_add_normalize,
-              Dense.Basic.DensePolynomial.normalize_constant_of_ne leadingNonzero]
+            dsimp only [Derivative.derivativeStep]
+            rw [Basic.DensePolynomial.shift_zero, Basic.DensePolynomial.zero_add_normalize,
+              Basic.DensePolynomial.normalize_constant_of_ne leadingNonzero]
           have retainedHead : decide (leading = 0) = false := decide_eq_false leadingNonzero
-          have valueLeading : Dense.Leading.LeadingTerm initial.1 1 leading := by
-            apply Dense.Leading.LeadingTerm.of_equal initialValue rfl rfl
+          have valueLeading : Leading.LeadingTerm initial.1 1 leading := by
+            apply Leading.LeadingTerm.of_equal initialValue rfl rfl
             exact
-              { normalized := Dense.Basic.DensePolynomial.normalize_linear_of_leading_ne_zero leadingNonzero
+              { normalized := Basic.DensePolynomial.normalize_linear_of_leading_ne_zero leadingNonzero
                 nonzero := by
                   change ([leading, second].dropWhile (· = 0)).isEmpty = false
                   rw [DropWhile.cons_of_false (fun coefficient => decide (coefficient = 0)) leading [second]
@@ -254,21 +254,21 @@ theorem derivative_isZero_false
                   rw [DropWhile.cons_of_false (fun coefficient => decide (coefficient = 0)) leading [second]
                     retainedHead]
                   rfl }
-          have derivativeLeading : Dense.Leading.LeadingTerm initial.2 0 leading := by
-            exact Dense.Leading.LeadingTerm.of_equal initialDerivative rfl rfl
-              (Dense.Leading.LeadingTerm.constant leadingNonzero)
-          have initialState : Dense.Rational.Derivative.Degree.ScanState leading 2 initial :=
+          have derivativeLeading : Leading.LeadingTerm initial.2 0 leading := by
+            exact Leading.LeadingTerm.of_equal initialDerivative rfl rfl
+              (Leading.LeadingTerm.constant leadingNonzero)
+          have initialState : ScanState leading 2 initial :=
             { processedAtLeastTwo := by decide
               value := valueLeading
-              derivative := Dense.Leading.LeadingTerm.of_equal rfl rfl
+              derivative := Leading.LeadingTerm.of_equal rfl rfl
                 (by
                   change ((1 : Nat) : Fraction.Rational) * leading = leading
                   rw [Nat.cast_one, one_mul]) derivativeLeading }
-          have final := Dense.Rational.Derivative.Degree.fold_scan leading remaining 2 initial initialState
+          have final := fold_scan leading remaining 2 initial initialState
           have finalNonzero := final.derivative.nonzero
-          change ((Dense.Derivative.derivativeState p.normalize.coeffs).2).isZero = false
+          change ((Derivative.derivativeState p.normalize.coeffs).2).isZero = false
           rw [coefficients]
-          simpa only [Dense.Derivative.derivativeState, List.foldl_cons] using finalNonzero
+          simpa only [Derivative.derivativeState, List.foldl_cons] using finalNonzero
 
 end Purelib.Polynomial.Dense.Rational.Derivative.Degree
 

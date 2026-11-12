@@ -1,5 +1,6 @@
 module
 public import Purelib.Data.CCL.Encoding.Parser.Semantics.Basic
+public import Purelib.Data.CCL.Encoding.Block.Semantics
 import Purelib.Data.CCL.Encoding.Parser.Syntax
 import Purelib.Data.ComplexContinuedFraction.Encoding.Sector.Basic
 import Purelib.Data.Gaussian.Basic
@@ -112,4 +113,35 @@ theorem eq_terminalBefore_of_normalized_eq
   exact equal
 end Purelib.Data.CCL.Encoding.Parser.Terminal
 
+end
+
+section
+public section
+namespace Purelib.Data.CCL.Encoding.Parser.Terminal
+
+open Purelib.Data.CCL.Encoding
+open Purelib.Data.ComplexContinuedFraction.Encoding
+open Purelib.Data.Gaussian
+open Purelib.Geometry.Projective
+
+/-- The exact completed parser block sends infinity to its same retained terminal affine tail. -/
+theorem block_terminal (kind : Syntax.BlockKind) (exponent : Nat) (sector : Sector) :
+    (Line.Matrix.act (Block.Matrix.blockMatrix kind exponent sector) Line.Proj.omega).Equivalent
+      (Line.Proj.affine (terminalBefore kind exponent sector)) := by
+  let tail : SectorBlock.Tail sector := .omega
+  have models : tail.ModelsValue sector.rep := rfl
+  cases kind with
+  | initialHigh | loop =>
+      exact Block.Semantics.Tail.regularBlock_act_equivalent exponent tail sector.rep _ models rfl
+  | initialLow =>
+      have identity : sector.rep = Power.natPow Basic.Canonical.gamma exponent *
+          terminalBefore .initialLow exponent sector := by
+        have nonzero := Power.natPow_ne_zero_direct Basic.Canonical.gamma (by decide) exponent
+        change sector.rep = _ * (_⁻¹ * sector.rep)
+        rewrite [← Basic.mul_assoc, Basic.Canonical.mul_inv_cancel _ nonzero, Basic.one_mul]
+        rfl
+      exact Block.Semantics.Tail.lowBlock_act_equivalent exponent tail sector.rep _ models identity
+
+end Purelib.Data.CCL.Encoding.Parser.Terminal
+end
 end

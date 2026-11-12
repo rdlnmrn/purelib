@@ -80,17 +80,17 @@ open Purelib.Riemann.Integration.RectangularAxisParameterRange (AxisParameterRan
 open Purelib.Geometry.Rectangle.SourceIntervals (axisCoordinate)
 open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBank (ParentBlockBank)
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential other :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential other :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters (signedAxis signedInterval)
@@ -98,7 +98,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParam
 /-- A forward block at the original occurrence's initial axis coordinate starts at retained parent zero and parameter
 zero. -/
 private theorem at_axis_start {vertical : Bool} {physical : PreparedAxisPartitions.Interval}
-    (block : ParentBlocks.ParentBlock occurrence vertical true physical) (axis : vertical = occurrence.sourceVertical)
+    (block : ParentBlock occurrence vertical true physical) (axis : vertical = occurrence.sourceVertical)
     (forward : occurrence.sourceForward = true)
     (start : physical.lower = SourceIntervals.axisCoordinate vertical occurrence.start) :
     block.index.val = 0 ∧ block.firstParameter = 0 := by
@@ -108,7 +108,7 @@ private theorem at_axis_start {vertical : Bool} {physical : PreparedAxisPartitio
 /-- A forward block at the original occurrence's terminal axis coordinate ends at the final retained parent and
 parameter one. -/
 private theorem at_axis_finish {vertical : Bool} {physical : PreparedAxisPartitions.Interval}
-    (block : ParentBlocks.ParentBlock occurrence vertical true physical) (axis : vertical = occurrence.sourceVertical)
+    (block : ParentBlock occurrence vertical true physical) (axis : vertical = occurrence.sourceVertical)
     (forward : occurrence.sourceForward = true)
     (finish : physical.upper = SourceIntervals.axisCoordinate vertical occurrence.finish) :
     block.index.val + 1 = occurrence.compared.entered.cache.parents.length ∧ block.lastParameter = 1 := by
@@ -117,10 +117,10 @@ private theorem at_axis_finish {vertical : Bool} {physical : PreparedAxisPartiti
 
 namespace ParentBlockBank
 open Purelib.Riemann.Meshes.RectangularObservationMesh (ObservationMesh)
-variable {columns rows : Nat} {geometry : Purelib.Riemann.Normalization.RectangularInverseModels.Geometry columns rows}
-  {cuts : Purelib.Riemann.Paths.RectangularSegmentSplitting.GridCuts geometry}
-  {meshBox : Purelib.Geometry.Rational.Box} {mesh :
-    Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh cuts meshBox}
+variable {columns rows : Nat} {geometry : RectangularInverseModels.Geometry columns rows}
+  {cuts : GridCuts geometry}
+  {meshBox : Geometry.Rational.Box} {mesh :
+    ObservationMesh cuts meshBox}
 
 /-- The actual face box identifies the first and last physical intervals with the occurrence span and supplies both
 terminal parent certificates. -/
@@ -137,10 +137,10 @@ theorem horizontal_endpoints (bank : ParentBank.ParentBlockBank occurrence mesh 
   simp only [SurfaceOccurrence.sourceSpan, axis, forward, SourceBlockParameters.signedAxis,
     SourceBlockParameters.signedInterval, if_pos (rfl : true = true), if_neg Bool.false_ne_true, -eq_self, -iff_self]
       at start finish
-  have initial := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.MeshEndpoints.at_axis_start (bank.get
+  have initial := MeshEndpoints.at_axis_start (bank.get
     (Fin.cast mesh.boundaryColumns_eq 0)) axis.symm forward
     (mesh.x_first.trans (by rw [boxEq]; exact start.symm))
-  have final := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.MeshEndpoints.at_axis_finish (bank.get
+  have final := MeshEndpoints.at_axis_finish (bank.get
     (Fin.cast mesh.boundaryColumns_eq (Fin.last mesh.boundaryColumns))) axis.symm forward
     (mesh.x_last.trans (by rw [boxEq]; exact finish.symm))
   exact ⟨initial.1, initial.2, final.1, final.2⟩
@@ -159,10 +159,10 @@ theorem vertical_endpoints (bank : ParentBank.ParentBlockBank occurrence mesh tr
   have finish := occurrence.source_span_endpoints.2
   simp only [SurfaceOccurrence.sourceSpan, axis, forward, SourceBlockParameters.signedAxis,
     SourceBlockParameters.signedInterval, if_pos (rfl : true = true), -eq_self, -iff_self] at start finish
-  have initial := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.MeshEndpoints.at_axis_start (bank.get
+  have initial := MeshEndpoints.at_axis_start (bank.get
     (Fin.cast mesh.boundaryRows_eq 0)) axis.symm forward
     (mesh.y_first.trans (by rw [boxEq]; exact start.symm))
-  have final := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.MeshEndpoints.at_axis_finish (bank.get
+  have final := MeshEndpoints.at_axis_finish (bank.get
     (Fin.cast mesh.boundaryRows_eq (Fin.last mesh.boundaryRows))) axis.symm forward
     (mesh.y_last.trans (by rw [boxEq]; exact finish.symm))
   exact ⟨initial.1, initial.2, final.1, final.2⟩

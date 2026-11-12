@@ -41,14 +41,14 @@ namespace Purelib.Approximation.Gaussian.Exponential.Horner.Basic
 natural denominator. -/
 def step (x : Canonical) (denominator
   : Nat) (tail : Canonical) : Canonical :=
-  Data.Gaussian.Basic.canonical (1 + Scale.scale (1 / (denominator : Fraction.Rational)) (x * tail))
+  Basic.canonical (1 + Scale.scale (1 / (denominator : Fraction.Rational)) (x * tail))
 
 /-- The canonical exponential Horner step equals its defining Gaussian scalar expression. -/
 theorem step_eq (x : Canonical)
   (denominator : Nat) (tail : Canonical) :
     step x denominator tail =
       1 + Scale.scale (1 / (denominator : Fraction.Rational)) (x * tail) :=
-  Data.Gaussian.Basic.canonical_eq _
+  Basic.canonical_eq _
 
 /-- A displayed finite Horner program. At depth zero its tail is exactly the rational value one. -/
 def horner (x : Canonical) :
@@ -80,12 +80,27 @@ theorem horner_zero_input :
       rw [horner_succ,
         step_eq,
         horner_zero_input depth (denominator + 1)]
-      apply Data.Gaussian.Basic.ext <;>
-        simp only [Purelib.Data.Gaussian.Basic.add_re, Purelib.Data.Gaussian.Basic.add_im,
-          Purelib.Data.Gaussian.Basic.one_re, Purelib.Data.Gaussian.Basic.one_im, Purelib.Data.Gaussian.Scale.scale_re,
-          Purelib.Data.Gaussian.Scale.scale_im,
-          Purelib.Data.Gaussian.Basic.mul_re, Purelib.Data.Gaussian.Basic.mul_im, Purelib.Data.Gaussian.Basic.zero_re,
-            Purelib.Data.Gaussian.Basic.zero_im] <;> ring1
+      apply Basic.ext <;>
+        simp only [Basic.add_re, Basic.add_im,
+          Basic.one_re, Basic.one_im, Scale.scale_re,
+          Scale.scale_im,
+          Basic.mul_re, Basic.mul_im, Basic.zero_re,
+            Basic.zero_im] <;> ring1
+
+/-- A Horner step at a real input and real tail has zero imaginary coordinate. -/
+theorem step_im_zero (x : Canonical) (input : x.im = 0) (denominator : Nat)
+    (tail : Canonical) (tailReal : tail.im = 0) : (step x denominator tail).im = 0 := by
+  rw [step_eq]
+  simp only [Basic.add_im, Basic.one_im, Scale.scale_im, Basic.mul_im, input, tailReal]
+  ring1
+
+/-- Every finite Horner tail at a real input has zero imaginary coordinate. -/
+theorem horner_im_zero (x : Canonical) (input : x.im = 0) :
+    ∀ depth denominator, (horner x denominator depth).im = 0
+  | 0, _ => Basic.one_im
+  | depth + 1, denominator => by
+      rw [horner_succ]
+      exact step_im_zero x input denominator _ (horner_im_zero x input depth (denominator + 1))
 
 /-- The difference of exponential Horner steps is the denominator-scaled input times the original tail difference. -/
 theorem step_sub_step (x : Canonical)
@@ -95,7 +110,7 @@ theorem step_sub_step (x : Canonical)
       step x denominator right =
       Scale.scale (1 / (denominator : Fraction.Rational)) (x * (left - right)) := by
   rw [step_eq, step_eq]
-  apply Data.Gaussian.Basic.ext <;>
+  apply Basic.ext <;>
     simp only [Scale.scale_re, Scale.scale_im, Basic.add_re, Basic.add_im, Basic.sub_re,
       Basic.sub_im, Basic.one_re, Basic.one_im, Basic.mul_re, Basic.mul_im] <;> ring1
 end Purelib.Approximation.Gaussian.Exponential.Horner.Basic

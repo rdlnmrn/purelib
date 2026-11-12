@@ -61,9 +61,9 @@ open Purelib.Data.Gaussian in
 open Purelib.Polynomial in
 open Purelib.Polynomial.Dense.Gaussian in
 /-- Reversing the original cleared segment negates its raw winding. -/
-theorem rawWinding_reverse {polynomial : Basic.GaussianPolynomial} {ambient : Purelib.Geometry.Rational.Box} {start
+theorem rawWinding_reverse {polynomial : Basic.GaussianPolynomial} {ambient : Geometry.Rational.Box} {start
   finish : Basic.Canonical}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : ClearSegment polynomial ambient start finish) :
     rawWinding (BranchCutLifts.ClearSegment.reverse segment) = -rawWinding segment := by
   rw [rawWinding_eq_coordinateWinding, rawWinding_eq_coordinateWinding]
   cases segment <;> exact Dense.Rational.CauchyIndex.Basic.cauchyIndex2_reverse _ _ _ _
@@ -86,9 +86,9 @@ open Purelib.Riemann.Paths in
 
 The original segment and tail order is unchanged. Direct integer associativity
 combines their contributions across the retained common endpoint. -/
-theorem rawWinding_append {polynomial : Basic.GaussianPolynomial} {ambient : Purelib.Geometry.Rational.Box} :
-    ∀ {start middle finish : Basic.Canonical} (first : Polynomial.Geometry.ClearPath polynomial ambient start middle)
-      (second : Polynomial.Geometry.ClearPath polynomial ambient middle finish),
+theorem rawWinding_append {polynomial : Basic.GaussianPolynomial} {ambient : Geometry.Rational.Box} :
+    ∀ {start middle finish : Basic.Canonical} (first : ClearPath polynomial ambient start middle)
+      (second : ClearPath polynomial ambient middle finish),
       PreparedPathWinding.ClearPath.rawWinding (first.append second) =
         PreparedPathWinding.ClearPath.rawWinding first +
           PreparedPathWinding.ClearPath.rawWinding second
@@ -108,8 +108,8 @@ open Purelib.Riemann.Paths in
 
 The reversed segment order and each original segment's negated winding combine through exact finite path concatenation.
 -/
-theorem rawWinding_reverse {polynomial : Basic.GaussianPolynomial} {ambient : Purelib.Geometry.Rational.Box} :
-    ∀ {start finish : Basic.Canonical} (path : Polynomial.Geometry.ClearPath polynomial ambient start finish),
+theorem rawWinding_reverse {polynomial : Basic.GaussianPolynomial} {ambient : Geometry.Rational.Box} :
+    ∀ {start finish : Basic.Canonical} (path : ClearPath polynomial ambient start finish),
       PreparedPathWinding.ClearPath.rawWinding
         (BranchCutLifts.ClearPath.reverse path) =
           -PreparedPathWinding.ClearPath.rawWinding path
@@ -124,7 +124,7 @@ theorem rawWinding_reverse {polynomial : Basic.GaussianPolynomial} {ambient : Pu
           (BranchCutLifts.ClearSegment.reverse head) + 0) =
         -(PreparedPathWinding.ClearSegment.rawWinding head +
           PreparedPathWinding.ClearPath.rawWinding tail)
-      rw [PreparedPathClosure.ClearSegment.rawWinding_reverse head]
+      rw [ClearSegment.rawWinding_reverse head]
       omega
 
 end ClearPath
@@ -150,7 +150,7 @@ name equivalence. -/
     (first last : Owner parameter)
     (equal : (SquareRootReconditioning.assignment nonzero last).owner.owner =
       (SquareRootReconditioning.assignment nonzero first).owner.owner) :
-    Equivalence.NamedEquivalent (ownerName last) (ownerName first) := by
+    NamedEquivalent (ownerName last) (ownerName first) := by
   have freshEqual : SquareRootReconditioning.freshOwner nonzero last =
       SquareRootReconditioning.freshOwner nonzero first := by
     rw [SquareRootReconditioning.freshOwner_eq_canonicalOwner,
@@ -161,7 +161,7 @@ name equivalence. -/
   let lastEquivalent := SquareRootTrackEquivalence.rootEquivalent_of_bridge nonzero last
     (SquareRootReconditioning.bridge nonzero last)
   rw [freshEqual] at lastEquivalent
-  exact Equivalence.NamedEquivalent.trans lastEquivalent firstEquivalent.symm
+  exact NamedEquivalent.trans lastEquivalent firstEquivalent.symm
 
 namespace OwnerPath
 
@@ -192,7 +192,7 @@ retained.
 
 Appending the original reference boundary would otherwise give an odd loop returning to an equivalent root,
 contradicting the finite root-trace winding certificate. -/
-private theorem not_different_of_even {polynomial : Basic.GaussianPolynomial} {ambient : Purelib.Geometry.Rational.Box}
+private theorem not_different_of_even {polynomial : Basic.GaussianPolynomial} {ambient : Box}
     (reference : State.WindingOne.Basic.WindingOneState polynomial ambient)
     {first last : Owner (polynomial.eval reference.box.anchor)}
     (path : OwnerPath polynomial reference.box.anchor first reference.box.anchor last)
@@ -220,7 +220,7 @@ private theorem not_different_of_even {polynomial : Basic.GaussianPolynomial} {a
   have odd : Winding.Polygon.Basic.closedRaw polynomial reference.box.anchor joined.vertices =
       4 * (2 * turns + 1) := by
     rw [closedRaw_eq_chainRaw joined,
-      OwnerTracePath.OwnerPath.append_vertices,
+      OwnerPath.append_vertices,
       Winding.Polygon.Basic.chainRaw_append,
       path.vertices_terminal, even, PreparedPathWinding.PreparedClearPathModels.TracedPath.winding_original boundary,
         PreparedPathWinding.BranchCutLifts.ownerBoundaryPath_rawWinding]
@@ -233,7 +233,7 @@ open Purelib.Polynomial.Dense.Gaussian in
 open Purelib.RootIsolation in
 /-- An original owner loop of even winding has equal canonical endpoint assignments relative to the retained winding-one
 reference. -/
-theorem assignment_eq_of_even {polynomial : Basic.GaussianPolynomial} {ambient : Purelib.Geometry.Rational.Box}
+theorem assignment_eq_of_even {polynomial : Basic.GaussianPolynomial} {ambient : Box}
     (reference : State.WindingOne.Basic.WindingOneState polynomial ambient)
     {first last : Owner (polynomial.eval reference.box.anchor)}
     (path : OwnerPath polynomial reference.box.anchor first reference.box.anchor last)
@@ -252,13 +252,13 @@ open Purelib.Polynomial in
 open Purelib.Polynomial.Dense.Gaussian in
 open Purelib.RootIsolation in
 /-- Construct equivalence of the original endpoint root names from even winding and a retained winding-one reference. -/
-@[expose] def rootEquivalent_of_even {polynomial : Basic.GaussianPolynomial} {ambient : Purelib.Geometry.Rational.Box}
+@[expose] def rootEquivalent_of_even {polynomial : Basic.GaussianPolynomial} {ambient : Box}
     (reference : State.WindingOne.Basic.WindingOneState polynomial ambient)
     {first last : Owner (polynomial.eval reference.box.anchor)}
     (path : OwnerPath polynomial reference.box.anchor first reference.box.anchor last)
     (turns : Int)
     (even : Winding.Polygon.Basic.chainRaw polynomial reference.box.anchor path.vertices = 8 * turns) :
-    Equivalence.NamedEquivalent (ownerName last) (ownerName first) :=
+    NamedEquivalent (ownerName last) (ownerName first) :=
   rootEquivalent_of_assignment_eq first.parameterNonzero first last
     (assignment_eq_of_even reference path turns even)
 
@@ -283,15 +283,15 @@ reference.
 The exact traced-path winding equation transfers the original path's winding to its retained owner trace before forming
 the endpoint comparison. -/
 @[expose] def rootEquivalent_of_original_even {polynomial : Basic.GaussianPolynomial} {ambient referenceAmbient :
-  Purelib.Geometry.Rational.Box}
+  Geometry.Rational.Box}
     (reference : State.WindingOne.Basic.WindingOneState polynomial referenceAmbient)
-    {path : Polynomial.Geometry.ClearPath polynomial ambient reference.box.anchor reference.box.anchor}
+    {path : Geometry.ClearPath polynomial ambient reference.box.anchor reference.box.anchor}
     {owner : Owner (polynomial.eval reference.box.anchor)} (traced : TracedPath path owner)
     (turns : Int) (even : PreparedPathWinding.ClearPath.rawWinding path = 8 * turns) :
     Equivalence.NamedEquivalent
       (OwnerTraceReadings.ownerName traced.finishOwner)
       (OwnerTraceReadings.ownerName owner) :=
-  PreparedPathClosure.SquareRootTrace.OwnerPath.rootEquivalent_of_even
+  SquareRootTrace.OwnerPath.rootEquivalent_of_even
     reference traced.trace.get turns ((PreparedPathWinding.PreparedClearPathModels.TracedPath.winding_original
       traced).trans even)
 

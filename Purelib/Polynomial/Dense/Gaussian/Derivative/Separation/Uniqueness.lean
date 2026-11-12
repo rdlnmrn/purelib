@@ -37,7 +37,7 @@ bound. The retained derivative-separation certificate supplies its positivity. -
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (ambient : Box)
     (separation : Basic.Certificate p ambient) :
       Fraction.Rational :=
-  separation.margin / (8 * Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p ambient)
+  separation.margin / (8 * Bounds.Box.Taylor.denseTaylorRemainderBound p ambient)
 
 /-- The derivative-separation diagonal threshold is positive.
 
@@ -45,29 +45,29 @@ A positive retained derivative margin is divided by a positive Taylor-remainder 
 public theorem separatedUniquenessDiagonalThreshold_pos
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (ambient : Box)
     (separation : Basic.Certificate p ambient) :
-    0 < Dense.Gaussian.Derivative.Separation.Uniqueness.separatedUniquenessDiagonalThreshold ambient separation := by
+    0 < separatedUniquenessDiagonalThreshold ambient separation := by
   exact Fraction.Order.Field.div_pos_direct separation.margin_pos
     (Fraction.Order.Arithmetic.mul_pos_direct
       (Fraction.Cast.Order.natCast_pos_direct
         (n := 8) (by decide))
-      (Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound_pos p ambient))
+      (Bounds.Box.Taylor.denseTaylorRemainderBound_pos p ambient))
 
 /-- Squarefree specialization retained for the finite-packing interface. -/
 @[expose] public def uniquenessDiagonalThreshold
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (squarefree :
-      Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
+      Squarefree.Basic.SquarefreeCertificate p)
     (ambient : Box) : Fraction.Rational :=
-  Dense.Gaussian.Derivative.Separation.Uniqueness.separatedUniquenessDiagonalThreshold
-    ambient (Dense.Gaussian.Derivative.Separation.Bezout.ofSquarefree squarefree ambient)
+  separatedUniquenessDiagonalThreshold
+    ambient (Bezout.ofSquarefree squarefree ambient)
 
 /-- The diagonal threshold computed from a squarefree certificate is positive. -/
 public theorem uniquenessDiagonalThreshold_pos
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (squarefree :
-      Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
-    (ambient : Box) : 0 < Dense.Gaussian.Derivative.Separation.Uniqueness.uniquenessDiagonalThreshold
+      Squarefree.Basic.SquarefreeCertificate p)
+    (ambient : Box) : 0 < uniquenessDiagonalThreshold
       squarefree ambient := by
-  exact Dense.Gaussian.Derivative.Separation.Uniqueness.separatedUniquenessDiagonalThreshold_pos
-    ambient (Dense.Gaussian.Derivative.Separation.Bezout.ofSquarefree squarefree ambient)
+  exact separatedUniquenessDiagonalThreshold_pos
+    ambient (Bezout.ofSquarefree squarefree ambient)
 
 /-- Compute the paired residual budget from a retained separation gap.
 
@@ -87,7 +87,7 @@ public theorem separatedPairResidualThreshold_pos
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (ambient : Box)
     (separation : Basic.Certificate p ambient)
     {gap : Fraction.Rational} (gapPositive : 0 < gap) :
-    0 < Dense.Gaussian.Derivative.Separation.Uniqueness.separatedPairResidualThreshold ambient separation gap := by
+    0 < separatedPairResidualThreshold ambient separation gap := by
   exact Fraction.Order.Basic.lt_min separation.threshold_pos
     (Fraction.Order.Arithmetic.mul_pos_direct
       (Fraction.Order.Field.div_pos_direct
@@ -101,19 +101,19 @@ public theorem separatedPairResidualThreshold_pos
 /-- Squarefree specialization of the separated residual budget. -/
 @[expose] public def pairResidualThreshold
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (squarefree :
-      Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
+      Squarefree.Basic.SquarefreeCertificate p)
     (ambient : Box) (gap : Fraction.Rational) : Fraction.Rational :=
-  Dense.Gaussian.Derivative.Separation.Uniqueness.separatedPairResidualThreshold
-    ambient (Dense.Gaussian.Derivative.Separation.Bezout.ofSquarefree squarefree ambient) gap
+  separatedPairResidualThreshold
+    ambient (Bezout.ofSquarefree squarefree ambient) gap
 
 /-- The squarefree paired residual threshold is positive for a positive gap. -/
 public theorem pairResidualThreshold_pos
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (squarefree :
-      Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
+      Squarefree.Basic.SquarefreeCertificate p)
     (ambient : Box) {gap : Fraction.Rational} (gapPositive : 0 < gap) :
-    0 < Dense.Gaussian.Derivative.Separation.Uniqueness.pairResidualThreshold squarefree ambient gap := by
-  exact Dense.Gaussian.Derivative.Separation.Uniqueness.separatedPairResidualThreshold_pos
-    ambient (Dense.Gaussian.Derivative.Separation.Bezout.ofSquarefree squarefree ambient)
+    0 < pairResidualThreshold squarefree ambient gap := by
+  exact separatedPairResidualThreshold_pos
+    ambient (Bezout.ofSquarefree squarefree ambient)
       gapPositive
 
 end Purelib.Polynomial.Dense.Gaussian.Derivative.Separation.Uniqueness

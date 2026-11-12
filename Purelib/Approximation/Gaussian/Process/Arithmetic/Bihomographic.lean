@@ -47,26 +47,26 @@ namespace Purelib.Approximation.Gaussian.Process.Arithmetic.Bihomographic
 
 /-- Progressive addition candidates have exactly the initial bihomographic semantics. -/
 theorem add_candidate
-    (left right : Approximation.Gaussian.Process) {state : ((Approximation.Gaussian.Process.add left right)).State}
-    {value : Canonical} (possible : ((Approximation.Gaussian.Process.add left right)).Possible state
+    (left right : Process) {state : ((add left right)).State}
+    {value : Canonical} (possible : ((add left right)).Possible state
         value) :
     ∃ x y : Canonical,
       left.Possible state.1 x ∧ right.Possible state.2 y ∧
-        Proj.Equivalent ((Bihomographic.Arithmetic.initial .add).affineMap x y)
+        Equivalent ((Arithmetic.initial .add).affineMap x y)
           (Proj.affine value) := by
   rcases possible with ⟨x, y, xPossible, yPossible, valueEqual⟩
   refine ⟨x, y, xPossible, yPossible, ?_⟩
-  rw [valueEqual, Bihomographic.Arithmetic.initial_add]
+  rw [valueEqual, Arithmetic.initial_add]
   exact Equivalent.refl _
 
 /-- Progressive subtraction candidates have exactly the initial bihomographic semantics. -/
 theorem sub_candidate
-    (left right : Approximation.Gaussian.Process) {state : ((Approximation.Gaussian.Process.sub left right)).State}
-    {value : Canonical} (possible : ((Approximation.Gaussian.Process.sub left right)).Possible state
+    (left right : Process) {state : ((sub left right)).State}
+    {value : Canonical} (possible : ((sub left right)).Possible state
         value) :
     ∃ x y : Canonical,
       left.Possible state.1 x ∧ right.Possible state.2 y ∧
-        Proj.Equivalent ((Bihomographic.Arithmetic.initial .sub).affineMap x y)
+        Equivalent ((Arithmetic.initial .sub).affineMap x y)
           (Proj.affine value) := by
   rcases possible with
     ⟨x, negativeY, xPossible, ⟨y, yPossible, negativeEqual⟩, valueEqual⟩
@@ -76,33 +76,33 @@ theorem sub_candidate
       simp only [Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im, Data.Gaussian.Basic.neg_re,
         Data.Gaussian.Basic.neg_im, Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im] <;> ring1
   rw [negativeEqual, subtraction] at valueEqual
-  rw [valueEqual, Bihomographic.Arithmetic.initial_sub]
+  rw [valueEqual, Arithmetic.initial_sub]
   exact Equivalent.refl _
 
 /-- Progressive multiplication candidates have exactly the initial bihomographic semantics. -/
 theorem mul_candidate
-    (left right : Approximation.Gaussian.Process) {state : ((Approximation.Gaussian.Process.mul left right)).State}
-    {value : Canonical} (possible : ((Approximation.Gaussian.Process.mul left right)).Possible state
+    (left right : Process) {state : ((mul left right)).State}
+    {value : Canonical} (possible : ((mul left right)).Possible state
         value) :
     ∃ x y : Canonical,
       left.Possible state.1 x ∧ right.Possible state.2 y ∧
-        Proj.Equivalent ((Bihomographic.Arithmetic.initial .mul).affineMap x y)
+        Equivalent ((Arithmetic.initial .mul).affineMap x y)
           (Proj.affine value) := by
   rcases possible with ⟨x, y, xPossible, yPossible, valueEqual⟩
   refine ⟨x, y, xPossible, yPossible, ?_⟩
-  rw [valueEqual, Bihomographic.Arithmetic.initial_mul]
+  rw [valueEqual, Arithmetic.initial_mul]
   exact Equivalent.refl _
 
 /-- Apartness-certified progressive division candidates have exactly the projective initial division semantics and an
 affine quotient. -/
 theorem div_candidate
-    (left right : Approximation.Gaussian.Process)
-    (apart : Approximation.Gaussian.Process.Apart right)
-    {state : ((Approximation.Gaussian.Process.div left right) apart).State} {value : Canonical}
-    (possible : ((Approximation.Gaussian.Process.div left right) apart).Possible state value) :
+    (left right : Process)
+    (apart : Apart right)
+    {state : ((div left right) apart).State} {value : Canonical}
+    (possible : ((div left right) apart).Possible state value) :
     ∃ x y : Canonical,
       left.Possible state.1 x ∧ right.Possible state.2 y ∧ y ≠ 0 ∧
-        Proj.Equivalent ((Bihomographic.Arithmetic.initial .div).affineMap x y)
+        Equivalent ((Arithmetic.initial .div).affineMap x y)
           (Proj.affine value) := by
   rcases possible with ⟨x, y, xPossible, yPossible, valueEqual⟩
   have lower := apart.lower state.2 (right.possible_inside yPossible)

@@ -22,6 +22,8 @@ import Purelib.Data.Gaussian.Field
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Polynomial.Clearance.Pair
+
 @[expose] public section
 
 /-!
@@ -42,7 +44,7 @@ namespace PreparedTraceClearance
 
 open Purelib.Data.Rat in
 /-- The exact closed rational unit interval used for the original trace parameterization. -/
-def traceParameters : Data.Rat.Interval.Bounds := ⟨0, 1, by decide⟩
+def traceParameters : Interval.Bounds := ⟨0, 1, by decide⟩
 
 open Purelib.Data.Rat in
 open Purelib.Polynomial in
@@ -53,10 +55,10 @@ Depth zero or a sufficiently small coordinate enclosure returns the original lea
 are prepared recursively and combined with the retained parent's lower bounds and split cover. -/
 def refineTraceClearance
     {realPolynomial imagPolynomial : Dense.Rational.Basic.CoordinatePolynomial}
-    {source : Clearance.Pair.Cover.Leaf.Source realPolynomial imagPolynomial}
-    {parameters : Data.Rat.Interval.Bounds}
-    (leaf : Polynomial.Clearance.Pair.Cover.Leaf source parameters) :
-    Nat → Clearance.Pair.Cover.Prepare.Prepared source parameters
+    {source : Cover.Leaf.Source realPolynomial imagPolynomial}
+    {parameters : Interval.Bounds}
+    (leaf : Cover.Leaf source parameters) :
+    Nat → Cover.Prepare.Prepared source parameters
   | 0 => .ofLeaf leaf
   | depth + 1 =>
       let upper := max
@@ -65,10 +67,10 @@ def refineTraceClearance
       if upper ≤ 2 * leaf.coordinateFloor then .ofLeaf leaf
       else
         let left := refineTraceClearance
-          (Polynomial.Clearance.Pair.Cover.Leaf.prepare source
+          (Cover.Leaf.prepare source
             (Interval.Bisection.leftHalf parameters)) depth
         let right := refineTraceClearance
-          (Polynomial.Clearance.Pair.Cover.Leaf.prepare source
+          (Cover.Leaf.prepare source
             (Interval.Bisection.rightHalf parameters)) depth
         ⟨max leaf.normFloor (min left.normFloor right.normFloor),
           max leaf.coordinateFloor (min left.coordinateFloor right.coordinateFloor),
@@ -86,26 +88,26 @@ set_option genInjectivity false in
 
 Exact equations retain the composed polynomial, prepared real/imaginary source, initial unit-interval leaf and the
 depth-eight refined cover; these remain the original executable constructions. -/
-structure PreparedTraceClearance {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient : Box}
-    {start finish : Basic.Canonical} (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) where
+structure PreparedTraceClearance {polynomial : GaussianPolynomial} {ambient : Box}
+    {start finish : Basic.Canonical} (segment : ClearSegment polynomial ambient start finish) where
   /-- The cached original polynomial composed with the exact retained segment parameterization. -/ composed :
-    Geometry.ClearPath.GaussianPolynomial
+    GaussianPolynomial
   /-- The cache equals the original segment polynomial construction. -/ composed_eq : composed =
     ClearSheetContinuation.segmentPolynomial segment
   /-- The retained clearance source for the exact cached real and imaginary polynomials. -/ source :
-    Clearance.Pair.Cover.Leaf.Source
+    Cover.Leaf.Source
     (Components.realPart composed) (Components.imagPart composed)
   /-- The source equals the exact original preparation of those cached component polynomials. -/ source_eq : source =
-    Clearance.Pair.Cover.Leaf.Source.prepare
+    Cover.Leaf.Source.prepare
     (Components.realPart composed) (Components.imagPart composed)
   /-- The retained original clearance leaf on the exact unit trace interval. -/ initial :
-    Polynomial.Clearance.Pair.Cover.Leaf
+    Cover.Leaf
     source _root_.Purelib.Riemann.Paths.PreparedTraceClearance.traceParameters
   /-- The leaf equals the exact original source preparation on the retained trace interval. -/ initial_eq : initial =
-    Polynomial.Clearance.Pair.Cover.Leaf.prepare source
+    Cover.Leaf.prepare source
       _root_.Purelib.Riemann.Paths.PreparedTraceClearance.traceParameters
   /-- The cached refined clearance cover for the exact original source and trace interval. -/ cover :
-    Clearance.Pair.Cover.Prepare.Prepared source _root_.Purelib.Riemann.Paths.PreparedTraceClearance.traceParameters
+    Cover.Prepare.Prepared source _root_.Purelib.Riemann.Paths.PreparedTraceClearance.traceParameters
   /-- The cover equals the original initial leaf refined through the fixed depth-eight procedure. -/ cover_eq : cover =
     _root_.Purelib.Riemann.Paths.PreparedTraceClearance.refineTraceClearance initial 8
 
@@ -114,19 +116,19 @@ constructive_injectivity PreparedTraceClearance
 namespace PreparedTraceClearance
 
 variable {polynomial : GaussianPolynomial} {ambient :
-  Box} {start finish : Purelib.Data.Gaussian.Basic.Canonical}
+  Box} {start finish : Data.Gaussian.Basic.Canonical}
   {segment : ClearSegment polynomial ambient start finish}
 
 open Purelib.Polynomial in
 open Purelib.Polynomial.Dense.Gaussian in
 open Purelib.Riemann.Branches in
 /-- Cache the exact segment polynomial, component source, initial leaf and depth-eight refined clearance cover. -/
-def build (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) : PreparedTraceClearance segment
+def build (segment : ClearSegment polynomial ambient start finish) : PreparedTraceClearance segment
   :=
   let composed := ClearSheetContinuation.segmentPolynomial segment
-  let source := Clearance.Pair.Cover.Leaf.Source.prepare
+  let source := Cover.Leaf.Source.prepare
     (Components.realPart composed) (Components.imagPart composed)
-  let initial := Polynomial.Clearance.Pair.Cover.Leaf.prepare source traceParameters
+  let initial := Cover.Leaf.prepare source traceParameters
   { composed, composed_eq := rfl
     source, source_eq := rfl
     initial, initial_eq := rfl
@@ -143,7 +145,7 @@ segment.
 
 The exact composed-polynomial equation identifies each retained unit-interval evaluation with the original segment
 point, preserving the cached cover witness. -/
-theorem coordinate_le (clearance : PreparedTraceClearance segment) (parameter : Fraction.Rational)
+theorem coordinate_le (clearance : PreparedTraceClearance segment) (parameter : Rational)
     (inside : 0 ≤ parameter ∧ parameter ≤ 1) :
     clearance.cover.coordinateFloor ≤
       max (Fraction.abs (polynomial.eval (segment.pointAt parameter)).re)
@@ -151,7 +153,7 @@ theorem coordinate_le (clearance : PreparedTraceClearance segment) (parameter : 
   have bound := clearance.cover.cover.coordinate_le (parameter := parameter) inside
   have evaluated : clearance.composed.eval (Cast.Path.ofCoordinate parameter) =
       polynomial.eval (segment.pointAt parameter) :=
-    (congrArg (fun p : Geometry.ClearPath.GaussianPolynomial => p.eval (Cast.Path.ofCoordinate parameter))
+    (congrArg (fun p : GaussianPolynomial => p.eval (Cast.Path.ofCoordinate parameter))
       clearance.composed_eq).trans
         (ClearSheetContinuation.segmentPolynomial_eval segment parameter)
   rw [Components.eval_realPart, Components.eval_imagPart, evaluated] at bound

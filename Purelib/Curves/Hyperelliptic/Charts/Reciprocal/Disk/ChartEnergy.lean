@@ -145,24 +145,24 @@ open Purelib.Riemann.Normalization.ReciprocalDiskCoordinateOrientation (coordina
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {owners :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.OwnedEndpoints regular cell}
-  {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell} {target :
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
+    UniformReciprocalCover.Cell data edge}
+  {regular : RegularBounds.Data cap} {owners :
+    ParentOwners.OwnedEndpoints regular cell}
+  {comparison : ArcSamples.Data regular cell} {target :
     Coordinate} {floor : Nat}
-  {index depth stage minimum : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {source : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
+  {index depth stage minimum : Nat} {box : Geometry.Rational.Box}
+  {capSample : Primitives.Sample cap differential index box}
+  {source : UniformReciprocalPrimitives.SourcePrimitive data index}
   {request : AreaRequest comparison owners target
     floor}
   {charts : ChartMesh request.mesh capSample minimum}
-  {original : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentCells.ComparedCell comparison source capSample
+  {original : ParentCells.ComparedCell comparison source capSample
     depth}
 
 namespace AreaRequest.Evaluation
@@ -177,16 +177,16 @@ set_option genInjectivity false in
 
 The segment keeps its original path membership; the radial refinement follows its retained endpoint coordinates in the
 cap orientation. -/
-structure ArcEnergy (evaluated : AreaRequest.Evaluation charts original stage)
-    (parameters : RadialTriangles.Parameters energyDepth) (radius : InverseRootPolynomial.Coordinate) where
-  /-- The actual retained chart-path segment whose radial contribution is sampled. -/ segment : VertexPaths.Segment
+structure ArcEnergy (evaluated : Evaluation charts original stage)
+    (parameters : Parameters energyDepth) (radius : Coordinate) where
+  /-- The actual retained chart-path segment whose radial contribution is sampled. -/ segment : Segment
     regular owners.model original.sample request.tolerance floor stage
   /-- This exact segment occurs in the original retained chart path. -/ member : segment ∈
     evaluated.vertices.path.segments
   /-- The cached radial refinement on the segment's actual last and first root coordinates. -/ refinement :
-    RootRadialRefinement.Refinement segment.last.root.coordinate segment.first.root.coordinate parameters
+    Refinement segment.last.root.coordinate segment.first.root.coordinate parameters
   /-- The polynomial energy sample on this exact retained radial refinement and cap sample. -/ polynomial :
-    RootRadialEnergy.PolynomialSample refinement capSample radius
+    PolynomialSample refinement capSample radius
 
 constructive_injectivity ArcEnergy
 
@@ -194,17 +194,17 @@ namespace ArcEnergy
 
 /-- Construct the radial refinement from the actual retained segment coordinates and certify its polynomial energy
 sample using their original bounds. -/
-@[expose] def build (evaluated : AreaRequest.Evaluation charts original stage)
+@[expose] def build (evaluated : Evaluation charts original stage)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
     (oriented : 0 < AffineTriangle.crossEnergy (parent.edge.point 0) (parent.edge.point 1))
-    (parameters : RadialTriangles.Parameters energyDepth) (radius : InverseRootPolynomial.Coordinate) (positive : 0 <
+    (parameters : Parameters energyDepth) (radius : Coordinate) (positive : 0 <
       radius)
-    (segment : VertexPaths.Segment regular owners.model original.sample request.tolerance floor stage)
+    (segment : Segment regular owners.model original.sample request.tolerance floor stage)
     (member : segment ∈ evaluated.vertices.path.segments) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergy.AreaRequest.Evaluation.ArcEnergy evaluated parameters
+      ArcEnergy evaluated parameters
       radius := by
-  have bounded {parameter : InverseRootPolynomial.Coordinate}
-      (reading : VertexRequests.Reading regular owners.model original.sample parameter request.tolerance floor stage) :
+  have bounded {parameter : Coordinate}
+      (reading : Reading regular owners.model original.sample parameter request.tolerance floor stage) :
         Data.Gaussian.Norm.Basic.normSq reading.root.coordinate ≤ 2 := by
     have square := reading.square
     rw [branch, pow_one, Data.Gaussian.Norm.Basic.normSq_eq_canonical] at square
@@ -212,7 +212,7 @@ sample using their original bounds. -/
       (data.boundary.point ⟨edge.left.inside.1.trans reading.prepared.inside.1,
         reading.prepared.inside.2.trans edge.right.inside.2⟩))
     rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at unit
-    have scalar := ReciprocalDiskCoordinateOrientation.coordinate_norm_upper unit request.small square
+    have scalar := coordinate_norm_upper unit request.small square
     rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
     exact scalar
   let refinement := Refinement.build (bounded segment.last) (bounded segment.first)
@@ -220,14 +220,14 @@ sample using their original bounds. -/
   exact ⟨segment, member, refinement, PolynomialSample.build refinement capSample radius positive⟩
 
 /-- Build one retained radial energy sample for every supplied original segment occurrence. -/
-@[expose] def buildMany (evaluated : AreaRequest.Evaluation charts original stage)
+@[expose] def buildMany (evaluated : Evaluation charts original stage)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
     (oriented : 0 < AffineTriangle.crossEnergy (parent.edge.point 0) (parent.edge.point 1))
-    (parameters : RadialTriangles.Parameters energyDepth) (radius : InverseRootPolynomial.Coordinate) (positive : 0 <
+    (parameters : Parameters energyDepth) (radius : Coordinate) (positive : 0 <
       radius) :
-    (segments : List (VertexPaths.Segment regular owners.model original.sample request.tolerance floor stage)) →
+    (segments : List (Segment regular owners.model original.sample request.tolerance floor stage)) →
     (∀ segment ∈ segments, segment ∈ evaluated.vertices.path.segments) → List
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergy.AreaRequest.Evaluation.ArcEnergy evaluated parameters
+      (ArcEnergy evaluated parameters
       radius)
   | [], _ => []
   | segment :: segments, within =>
@@ -238,16 +238,16 @@ sample using their original bounds. -/
           (fun other member => within other (List.mem_cons_of_mem segment member))
 
 /-- The constructed energy entries project to exactly the supplied ordered list of actual segments. -/
-theorem buildMany_segments (evaluated : AreaRequest.Evaluation charts original stage)
+theorem buildMany_segments (evaluated : Evaluation charts original stage)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
     (oriented : 0 < AffineTriangle.crossEnergy (parent.edge.point 0) (parent.edge.point 1))
-    (parameters : RadialTriangles.Parameters energyDepth) (radius : InverseRootPolynomial.Coordinate) (positive : 0 <
+    (parameters : Parameters energyDepth) (radius : Coordinate) (positive : 0 <
       radius) :
-    (segments : List (VertexPaths.Segment regular owners.model original.sample request.tolerance floor stage)) →
+    (segments : List (Segment regular owners.model original.sample request.tolerance floor stage)) →
     (within : ∀ segment ∈ segments, segment ∈ evaluated.vertices.path.segments) →
     (buildMany evaluated branch
       oriented parameters radius positive segments within).map
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergy.AreaRequest.Evaluation.ArcEnergy.segment = segments
+      ArcEnergy.segment = segments
   | [], _ => rfl
   | segment :: segments, within => congrArg (List.cons segment)
 
@@ -257,60 +257,60 @@ theorem buildMany_segments (evaluated : AreaRequest.Evaluation charts original s
 
 /-- The negative sum of retained local error budgets bounds one quarter of the imaginary total boundary area. -/
 theorem sum_lower (entries : List
-  (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergy.AreaRequest.Evaluation.ArcEnergy evaluated parameters
+  (ArcEnergy evaluated parameters
   radius)) :
-    -Squares.coordinateSum (entries.map (fun entry => entry.polynomial.surface.errorBudget)) ≤
-      (Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map (fun entry =>
+    -coordinateSum (entries.map (fun entry => entry.polynomial.surface.errorBudget)) ≤
+      (gaussianSum (entries.map (fun entry =>
         entry.polynomial.surface.boundaryArea))).im / 4 := by
   induction entries with
-  | nil => change (0 : InverseRootPolynomial.Coordinate) ≤ 0 / 4; decide
+  | nil => change (0 : Coordinate) ≤ 0 / 4; decide
   | cons head tail ih =>
       have bound := Fraction.Order.Arithmetic.add_le_add_direct head.polynomial.lower ih
-      simp only [List.map_cons, Squares.coordinateSum, Data.Gaussian.Norm.Sum.Basic.gaussianSum,
+      simp only [List.map_cons, coordinateSum, gaussianSum,
         Data.Gaussian.Basic.add_im]
-      exact (by ring1 : -(head.polynomial.surface.errorBudget + Squares.coordinateSum (tail.map (fun entry =>
+      exact (by ring1 : -(head.polynomial.surface.errorBudget + coordinateSum (tail.map (fun entry =>
         entry.polynomial.surface.errorBudget))) =
-        -head.polynomial.surface.errorBudget + -Squares.coordinateSum (tail.map (fun entry =>
+        -head.polynomial.surface.errorBudget + -coordinateSum (tail.map (fun entry =>
           entry.polynomial.surface.errorBudget))).trans_le
           (bound.trans_eq (by simp only [Fraction.Field.div_eq_mul_inv_direct]; ring1))
 
 /-- The summed actual local errors satisfy the common coefficient and epsilon ceiling multiplied by the retained entry
 count. -/
-theorem errors_le (bounds : Cap.EnergyBounds capSample RootRadialGeometry.domain)
-    {number : Nat} {energyTarget : InverseRootPolynomial.Coordinate} {energyFloor : Nat}
-    (energyRequest : Cap.EnergyRequest bounds number energyTarget energyFloor)
-    {parameters : RadialTriangles.Parameters energyRequest.depth}
-    (entries : List (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergy.AreaRequest.Evaluation.ArcEnergy evaluated
+theorem errors_le (bounds : EnergyBounds capSample domain)
+    {number : Nat} {energyTarget : Coordinate} {energyFloor : Nat}
+    (energyRequest : EnergyRequest bounds number energyTarget energyFloor)
+    {parameters : Parameters energyRequest.depth}
+    (entries : List (ArcEnergy evaluated
       parameters energyRequest.radius)) :
-    Squares.coordinateSum (entries.map (fun entry => entry.polynomial.surface.errorBudget)) ≤
-      (entries.length : InverseRootPolynomial.Coordinate) * (128 * (2 * bounds.coefficient + 4) * energyRequest.epsilon)
+    coordinateSum (entries.map (fun entry => entry.polynomial.surface.errorBudget)) ≤
+      (entries.length : Coordinate) * (128 * (2 * bounds.coefficient + 4) * energyRequest.epsilon)
         := by
   induction entries with
   | nil => change 0 ≤ 0 * _; rw [Fraction.Field.zero_mul_direct]
   | cons head tail ih =>
       have bound := Fraction.Order.Arithmetic.add_le_add_direct (head.polynomial.error_le bounds energyRequest) ih
-      simp only [List.map_cons, Squares.coordinateSum, List.length_cons, Nat.cast_succ]
+      simp only [List.map_cons, coordinateSum, List.length_cons, Nat.cast_succ]
       exact bound.trans_eq (by ring1)
 
 /-- The original coordinate chain cancels every internal radial side, even when a root's two appearances came from
 different recursive branches. -/
 theorem boundary_sum (entries : List
-  (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergy.AreaRequest.Evaluation.ArcEnergy evaluated parameters
-  radius)) {first last : InverseRootPolynomial.Gaussian}
+  (ArcEnergy evaluated parameters
+  radius)) {first last : Gaussian}
     (chain : Segment.From first (entries.map
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergy.AreaRequest.Evaluation.ArcEnergy.segment) last) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map (fun entry => entry.polynomial.surface.boundaryArea)) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map (fun entry => RootRadialGeometry.arcArea
+      ArcEnergy.segment) last) :
+    gaussianSum (entries.map (fun entry => entry.polynomial.surface.boundaryArea)) =
+      gaussianSum (entries.map (fun entry => arcArea
         capSample.primitive.value.eval energyDepth
         entry.segment.last.root.coordinate entry.segment.first.root.coordinate)) +
-      RootRadialGeometry.radialArea capSample.primitive.value.eval energyDepth last -
-      RootRadialGeometry.radialArea capSample.primitive.value.eval energyDepth first := by
+      radialArea capSample.primitive.value.eval energyDepth last -
+      radialArea capSample.primitive.value.eval energyDepth first := by
   induction entries generalizing first with
   | nil => change first = last at chain; rw [chain]; change 0 = 0 + _ - _; ring1
   | cons head tail ih =>
       change first = head.segment.first.root.coordinate ∧ Segment.From head.segment.last.root.coordinate (tail.map
-        Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergy.AreaRequest.Evaluation.ArcEnergy.segment) last at chain
-      simp only [List.map_cons, Data.Gaussian.Norm.Sum.Basic.gaussianSum]
+        ArcEnergy.segment) last at chain
+      simp only [List.map_cons, gaussianSum]
       rw [head.polynomial.boundary_eq_arcs, ih chain.2, chain.1]
       ring1
 
@@ -321,41 +321,41 @@ set_option genInjectivity false in
 
 The request retains its coefficient bounds, refinement parameters and complete entry list; exact count, area and error
 caches include the endpoint radial correction. -/
-structure RequestedEnergy (evaluated : AreaRequest.Evaluation charts original stage) (energyTarget :
-  InverseRootPolynomial.Coordinate) (energyFloor : Nat) where
-  /-- The cached coefficient and model bounds on the original cap radial domain. -/ bounds : Cap.EnergyBounds
-    capSample RootRadialGeometry.domain
+structure RequestedEnergy (evaluated : Evaluation charts original stage) (energyTarget :
+  Coordinate) (energyFloor : Nat) where
+  /-- The cached coefficient and model bounds on the original cap radial domain. -/ bounds : EnergyBounds
+    capSample domain
   /-- The retained accuracy request using the actual segment count, target and stage floor. -/ request :
-    Cap.EnergyRequest bounds evaluated.vertices.path.segments.length energyTarget energyFloor
-  /-- The cached radial-triangle parameters at the retained request depth. -/ parameters : RadialTriangles.Parameters
+    EnergyRequest bounds evaluated.vertices.path.segments.length energyTarget energyFloor
+  /-- The cached radial-triangle parameters at the retained request depth. -/ parameters : Parameters
     request.depth
   /-- The ordered cached energy samples on the actual original path segments. -/ entries : List
     (ArcEnergy evaluated parameters
     request.radius)
   /-- The retained entries project exactly to the original ordered segment list. -/ segments_eq : entries.map
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergy.AreaRequest.Evaluation.ArcEnergy.segment =
+    ArcEnergy.segment =
     evaluated.vertices.path.segments
   /-- The cached total number of retained radial triangles. -/ count : Nat
   /-- The cached count equals the actual entry count times the retained refinement leaf count. -/ count_eq : count =
     entries.length * (PreparedBoxTriangulation.boxTriangles parameters.mesh.partition.leaves).length
   /-- The cached count is the original segment count times the explicit doubled fourth-power subdivision count. -/
     count_refined : count = evaluated.vertices.path.segments.length * (2 * 4 ^ request.depth)
-  /-- The cached sum of actual retained radial boundary areas. -/ area : InverseRootPolynomial.Gaussian
+  /-- The cached sum of actual retained radial boundary areas. -/ area : Gaussian
   /-- The area cache equals the Gaussian sum of these exact entries' boundary areas. -/ area_eq : area =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map (fun entry => entry.polynomial.surface.boundaryArea))
-  /-- The cached sum of actual retained local energy errors. -/ error : InverseRootPolynomial.Coordinate
+    gaussianSum (entries.map (fun entry => entry.polynomial.surface.boundaryArea))
+  /-- The cached sum of actual retained local energy errors. -/ error : Coordinate
   /-- The error cache equals the coordinate sum of these exact local error budgets. -/ error_eq : error =
-    Squares.coordinateSum (entries.map (fun entry => entry.polynomial.surface.errorBudget))
+    coordinateSum (entries.map (fun entry => entry.polynomial.surface.errorBudget))
   /-- The actual cached error is at most the retained request's total error budget. -/ error_le : error ≤ request.total
   /-- The cached total error is strictly below the original requested energy target. -/ error_lt : error < energyTarget
   /-- The negative original energy target strictly bounds one quarter of the cached area's imaginary part. -/ lower :
     -energyTarget < area.im / 4
   /-- The cached radial boundary sum equals the actual path arc sum plus its retained last-minus-first radial
-    correction. -/ boundary : area = Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map (fun entry =>
-    RootRadialGeometry.arcArea capSample.primitive.value.eval request.depth
+    correction. -/ boundary : area = gaussianSum (entries.map (fun entry =>
+    arcArea capSample.primitive.value.eval request.depth
       entry.segment.last.root.coordinate entry.segment.first.root.coordinate)) +
-    RootRadialGeometry.radialArea capSample.primitive.value.eval request.depth evaluated.vertices.last.root.coordinate -
-    RootRadialGeometry.radialArea capSample.primitive.value.eval request.depth evaluated.vertices.first.root.coordinate
+    radialArea capSample.primitive.value.eval request.depth evaluated.vertices.last.root.coordinate -
+    radialArea capSample.primitive.value.eval request.depth evaluated.vertices.first.root.coordinate
 
 constructive_injectivity RequestedEnergy
 
@@ -363,37 +363,37 @@ namespace RequestedEnergy
 
 /-- Reuse the supplied energy bounds, paid request and refinement parameters to cache all actual segment samples and
 their exact finite sums. -/
-@[expose] def buildWithRequest (evaluated : AreaRequest.Evaluation charts original stage)
+@[expose] def buildWithRequest (evaluated : Evaluation charts original stage)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
     (oriented : 0 < AffineTriangle.crossEnergy (parent.edge.point 0) (parent.edge.point 1))
-    {energyTarget : InverseRootPolynomial.Coordinate} {energyFloor : Nat}
-    (bounds : Cap.EnergyBounds capSample RootRadialGeometry.domain)
-    (request : Cap.EnergyRequest bounds evaluated.vertices.path.segments.length energyTarget energyFloor)
-    (parameters : RadialTriangles.Parameters request.depth) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergy.AreaRequest.Evaluation.RequestedEnergy evaluated
+    {energyTarget : Coordinate} {energyFloor : Nat}
+    (bounds : EnergyBounds capSample domain)
+    (request : EnergyRequest bounds evaluated.vertices.path.segments.length energyTarget energyFloor)
+    (parameters : Parameters request.depth) :
+      RequestedEnergy evaluated
       energyTarget energyFloor := by
-  let entries := Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergy.AreaRequest.Evaluation.ArcEnergy.buildMany
+  let entries := ArcEnergy.buildMany
     evaluated branch oriented parameters request.radius request.radius_positive
     evaluated.vertices.path.segments (fun _ member => member)
   have segments :=
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergy.AreaRequest.Evaluation.ArcEnergy.buildMany_segments
+    ArcEnergy.buildMany_segments
     evaluated branch oriented parameters request.radius request.radius_positive
     evaluated.vertices.path.segments (fun _ member => member)
   have length : entries.length = evaluated.vertices.path.segments.length := by
     have same := congrArg List.length segments
     rw [Data.List.Map.length_map] at same
     exact same
-  let area := Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map (fun entry =>
+  let area := gaussianSum (entries.map (fun entry =>
     entry.polynomial.surface.boundaryArea))
-  let error := Squares.coordinateSum (entries.map (fun entry => entry.polynomial.surface.errorBudget))
+  let error := coordinateSum (entries.map (fun entry => entry.polynomial.surface.errorBudget))
   have bounded : error ≤ request.total := by
-    have estimate := Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergy.AreaRequest.Evaluation.ArcEnergy.errors_le
+    have estimate := ArcEnergy.errors_le
       bounds request entries
     rw [length] at estimate
     exact estimate.trans_eq (by rw [request.total_eq, request.scale_eq]; ring1)
   have accurate : error < energyTarget := bounded.trans_lt request.accurate
   have chain : Segment.From evaluated.vertices.first.root.coordinate (entries.map
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergy.AreaRequest.Evaluation.ArcEnergy.segment)
+    ArcEnergy.segment)
       evaluated.vertices.last.root.coordinate := segments.symm ▸ evaluated.vertices.path.chain
   have countEq : entries.length * (PreparedBoxTriangulation.boxTriangles parameters.mesh.partition.leaves).length =
       evaluated.vertices.path.segments.length * (2 * 4 ^ request.depth) := by
@@ -402,18 +402,18 @@ their exact finite sums. -/
     entries.length * (PreparedBoxTriangulation.boxTriangles parameters.mesh.partition.leaves).length, rfl, countEq,
       area, rfl, error, rfl,
     bounded, accurate, (Fraction.Order.Arithmetic.neg_lt_neg_direct accurate).trans_le
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergy.AreaRequest.Evaluation.ArcEnergy.sum_lower entries),
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergy.AreaRequest.Evaluation.ArcEnergy.boundary_sum entries chain⟩
+      (ArcEnergy.sum_lower entries),
+    ArcEnergy.boundary_sum entries chain⟩
 
 /-- Construct the radial refinement from the actual retained segment coordinates and certify its polynomial energy
 sample using their original bounds. -/
-@[expose] def build (evaluated : AreaRequest.Evaluation charts original stage)
+@[expose] def build (evaluated : Evaluation charts original stage)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
     (oriented : 0 < AffineTriangle.crossEnergy (parent.edge.point 0) (parent.edge.point 1))
-    (energyTarget : InverseRootPolynomial.Coordinate) (positive : 0 < energyTarget) (energyFloor : Nat) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergy.AreaRequest.Evaluation.RequestedEnergy evaluated
+    (energyTarget : Coordinate) (positive : 0 < energyTarget) (energyFloor : Nat) :
+      RequestedEnergy evaluated
       energyTarget energyFloor :=
-  let bounds := EnergyBounds.build capSample RootRadialGeometry.domain
+  let bounds := EnergyBounds.build capSample domain
   let request := EnergyRequest.build bounds evaluated.vertices.path.segments.length energyTarget positive energyFloor
   buildWithRequest
     evaluated branch oriented bounds request (Parameters.build request.depth)

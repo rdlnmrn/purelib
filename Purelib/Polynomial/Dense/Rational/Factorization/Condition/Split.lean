@@ -48,22 +48,22 @@ The common-divisor piece retains its factorization of the original condition.
 The complementary piece carries a finite coprimality certificate with that
 same condition; the retained pieces cover exactly the original factor's roots. -/
 @[expose] def splitAgainstCondition
-    (factor : Dense.Rational.Squarefree.Factor) (condition : BoundaryFactorization.CoefficientPolynomial) :
-    Dense.Rational.Factorization.ConditionPartition factor condition := by
+    (factor : Squarefree.Factor) (condition : BoundaryFactorization.CoefficientPolynomial) :
+    ConditionPartition factor condition := by
   by_cases conditionZero : condition.isZero = true
-  · let zeroPiece : Dense.Rational.Factorization.ConditionPiece factor condition :=
+  · let zeroPiece : ConditionPiece factor condition :=
       { factor := factor
-        cofactor := Dense.Basic.DensePolynomial.constant 1
+        cofactor := Basic.DensePolynomial.constant 1
         factorization := by
-          apply Dense.Rational.Factorization.factorizationOfEvals
+          apply factorizationOfEvals
           intro point
-          rw [Dense.Basic.DensePolynomial.eval_constant,
+          rw [Basic.DensePolynomial.eval_constant,
             Fraction.Field.mul_one_direct]
-        relation := .equality (Dense.Basic.DensePolynomial.constant 0) (by
-          apply Dense.Rational.Factorization.factorizationOfEvals
+        relation := .equality (Basic.DensePolynomial.constant 0) (by
+          apply factorizationOfEvals
           intro point
-          rw [Dense.Basic.DensePolynomial.eval_eq_zero_of_isZero conditionZero point,
-            Dense.Basic.DensePolynomial.eval_constant,
+          rw [Basic.DensePolynomial.eval_eq_zero_of_isZero conditionZero point,
+            Basic.DensePolynomial.eval_constant,
             Fraction.Field.mul_zero_direct]) }
     exact
       { pieces := [zeroPiece]
@@ -79,20 +79,20 @@ same condition; the retained pieces cover exactly the original factor's roots. -
             exact pieceZero }
   · have conditionNonzero : condition.isZero = false :=
       Decide.bool_eq_false_of_not_eq_true condition.isZero conditionZero
-    let result := Dense.GCD.extendedGCD
+    let result := GCD.extendedGCD
       factor.polynomial condition
     have gcdNonzero : result.gcd.isZero = false :=
       result.nonzero (Or.inl factor.nonzero)
     by_cases gcdDegreeZero : result.gcd.natDegree = 0
-    · let coprime := Dense.Rational.Bezout.certificateOfConstantGCD factor.polynomial condition
+    · let coprime := Bezout.certificateOfConstantGCD factor.polynomial condition
         gcdNonzero gcdDegreeZero
-      let apartPiece : Dense.Rational.Factorization.ConditionPiece factor condition :=
+      let apartPiece : ConditionPiece factor condition :=
         { factor := factor
-          cofactor := Dense.Basic.DensePolynomial.constant 1
+          cofactor := Basic.DensePolynomial.constant 1
           factorization := by
-            apply Dense.Rational.Factorization.factorizationOfEvals
+            apply factorizationOfEvals
             intro point
-            rw [Dense.Basic.DensePolynomial.eval_constant,
+            rw [Basic.DensePolynomial.eval_constant,
               Fraction.Field.mul_one_direct]
           relation := .apart coprime }
       exact
@@ -111,34 +111,34 @@ same condition; the retained pieces cover exactly the original factor's roots. -
         Nat.pos_of_ne_zero gcdDegreeZero
       have originalFactorization : Factorization factor.polynomial
           result.gcd result.pFactor := by
-        apply Dense.Rational.Factorization.factorizationOfEvals
+        apply factorizationOfEvals
         exact result.pIdentity
       have remainingNonzero : result.pFactor.isZero = false :=
-        Dense.Rational.Factorization.right_isZero_false factor.nonzero factor.normalized
+        right_isZero_false factor.nonzero factor.normalized
           originalFactorization
       have degreeBalance : result.gcd.natDegree +
           result.pFactor.natDegree = factor.polynomial.natDegree :=
-        Dense.Rational.Factorization.factor_natDegree_add factor.nonzero factor.normalized gcdNonzero
+        factor_natDegree_add factor.nonzero factor.normalized gcdNonzero
           remainingNonzero originalFactorization
-      let equalityFactor : Dense.Rational.Squarefree.Factor :=
+      let equalityFactor : Squarefree.Factor :=
         { polynomial := result.gcd
           normalized := result.normalized
           nonzero := gcdNonzero
           degreePositive := gcdDegreePositive
-          squarefree := Dense.Rational.Bezout.leftFactorSquarefree factor.squarefree gcdNonzero
+          squarefree := Bezout.leftFactorSquarefree factor.squarefree gcdNonzero
             originalFactorization }
       have conditionFactorization : Factorization condition
           result.gcd result.qFactor := by
-        apply Dense.Rational.Factorization.factorizationOfEvals
+        apply factorizationOfEvals
         exact result.qIdentity
-      let equalityPiece : Dense.Rational.Factorization.ConditionPiece factor condition :=
+      let equalityPiece : ConditionPiece factor condition :=
         { factor := equalityFactor
           cofactor := result.pFactor
           factorization := originalFactorization
           relation := .equality result.qFactor conditionFactorization }
       by_cases remainingDegreeZero : result.pFactor.natDegree = 0
       · have remainingEvalNonzero :=
-          Dense.Rational.eval_ne_zero_of_normalized_degree_zero
+          eval_ne_zero_of_normalized_degree_zero
             result.pFactorNormalized remainingNonzero remainingDegreeZero
         exact
           { pieces := [equalityPiece]
@@ -147,7 +147,7 @@ same condition; the retained pieces cover exactly the original factor's roots. -
               intro point
               constructor
               · intro factorZero
-                rw [Dense.Rational.Factorization.eval_factorization originalFactorization point] at factorZero
+                rw [eval_factorization originalFactorization point] at factorZero
                 by_cases gcdZero : result.gcd.eval point = 0
                 · refine ⟨equalityPiece, List.mem_cons_self, ?_⟩
                   change result.gcd.eval point = 0
@@ -159,37 +159,37 @@ same condition; the retained pieces cover exactly the original factor's roots. -
                   Membership.mem_singleton.mp member
                 subst piece
                 change result.gcd.eval point = 0 at pieceZero
-                rw [Dense.Rational.Factorization.eval_factorization originalFactorization point, pieceZero,
+                rw [eval_factorization originalFactorization point, pieceZero,
                   Fraction.Field.zero_mul_direct]
                 }
       · have remainingDegreePositive : 0 < result.pFactor.natDegree :=
           Nat.pos_of_ne_zero remainingDegreeZero
-        let remainingFactor : Dense.Rational.Squarefree.Factor :=
+        let remainingFactor : Squarefree.Factor :=
           { polynomial := result.pFactor
             normalized := result.pFactorNormalized
             nonzero := remainingNonzero
             degreePositive := remainingDegreePositive
-            squarefree := Dense.Rational.Bezout.rightFactorSquarefree factor.squarefree
+            squarefree := Bezout.rightFactorSquarefree factor.squarefree
               remainingNonzero originalFactorization }
         let factorCoprime :
-            Dense.Rational.Bezout.Basic.CoprimeCertificate
+            Bezout.Basic.CoprimeCertificate
               result.gcd result.pFactor :=
-          Dense.Rational.Bezout.factorsCoprime factor.squarefree gcdNonzero originalFactorization
+          Bezout.factorsCoprime factor.squarefree gcdNonzero originalFactorization
         let remainingGcdCoprime :
-            Dense.Rational.Bezout.Basic.CoprimeCertificate
+            Bezout.Basic.CoprimeCertificate
               result.pFactor result.gcd := factorCoprime.swap
         let remainingReducedCoprime :
-            Dense.Rational.Bezout.Basic.CoprimeCertificate
+            Bezout.Basic.CoprimeCertificate
               result.pFactor result.qFactor :=
           { left := result.factorLeft
             right := result.factorRight
             identity := result.factorIdentity }
-        let remainingConditionCoprime := Dense.Rational.Bezout.coprimeWithProduct
+        let remainingConditionCoprime := Bezout.coprimeWithProduct
           remainingGcdCoprime remainingReducedCoprime conditionFactorization
-        let remainingPiece : Dense.Rational.Factorization.ConditionPiece factor condition :=
+        let remainingPiece : ConditionPiece factor condition :=
           { factor := remainingFactor
             cofactor := result.gcd
-            factorization := Dense.Rational.Factorization.factorization_swap originalFactorization
+            factorization := factorization_swap originalFactorization
             relation := .apart remainingConditionCoprime }
         exact
           { pieces := [equalityPiece, remainingPiece]
@@ -200,7 +200,7 @@ same condition; the retained pieces cover exactly the original factor's roots. -
               · intro factorZero
                 have productZero : result.gcd.eval point *
                     result.pFactor.eval point = 0 := by
-                  rw [← Dense.Rational.Factorization.eval_factorization originalFactorization point]
+                  rw [← eval_factorization originalFactorization point]
                   exact factorZero
                 by_cases gcdZero : result.gcd.eval point = 0
                 · refine ⟨equalityPiece, List.mem_cons_self, ?_⟩
@@ -214,7 +214,7 @@ same condition; the retained pieces cover exactly the original factor's roots. -
                   · exact (Fraction.Field.mul_ne_zero_direct gcdZero
                       remainingZero productZero).elim
               · rintro ⟨piece, member, pieceZero⟩
-                rw [Dense.Rational.Factorization.eval_factorization originalFactorization point]
+                rw [eval_factorization originalFactorization point]
                 rcases Membership.mem_cons.mp member with equality | remaining
                 · subst piece
                   change result.gcd.eval point = 0 at pieceZero

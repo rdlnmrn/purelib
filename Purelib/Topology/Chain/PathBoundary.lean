@@ -1,6 +1,9 @@
 module
 public import Purelib.Data.Nat.Order
 import Purelib.Data.List.OfFn.Basic
+import Purelib.Data.List.Append
+import Purelib.Data.List.Map
+import Purelib.Data.List.Reverse
 
 import Purelib.Tactic.QuotientFreeOmega
 public import Purelib.Topology.BranchedCover.Double.Attachment
@@ -56,6 +59,59 @@ theorem castFinish {Vertex EdgeLabel : Type}
     PathEndpoints edgeStart edgeFinish edges start right := by
   subst right
   exact path
+
+/-- An empty original edge word has literally equal start and finish vertices. -/
+theorem nil_eq {Vertex EdgeLabel : Type} {edgeStart edgeFinish : EdgeLabel → Vertex}
+    {start finish : Vertex} (path : PathEndpoints edgeStart edgeFinish [] start finish) : start = finish := by
+  cases path
+  rfl
+
+/-- The original first edge determines the starting vertex of a nonempty exact path. -/
+theorem cons_start {Vertex EdgeLabel : Type} {edgeStart edgeFinish : EdgeLabel → Vertex}
+    {edge : EdgeLabel} {remaining : List EdgeLabel} {start finish : Vertex}
+    (path : PathEndpoints edgeStart edgeFinish (edge :: remaining) start finish) : start = edgeStart edge := by
+  cases path
+  rfl
+
+/-- Remove only the original first edge from a nonempty exact endpoint path. -/
+theorem cons_tail {Vertex EdgeLabel : Type} {edgeStart edgeFinish : EdgeLabel → Vertex}
+    {edge : EdgeLabel} {remaining : List EdgeLabel} {start finish : Vertex}
+    (path : PathEndpoints edgeStart edgeFinish (edge :: remaining) start finish) :
+    PathEndpoints edgeStart edgeFinish remaining (edgeFinish edge) finish := by
+  cases path with
+  | cons tail => exact tail
+
+/-- Concatenate the two original edge words at their retained shared endpoint. -/
+theorem append {Vertex EdgeLabel : Type}
+    {edgeStart edgeFinish : EdgeLabel → Vertex}
+    {first second : List EdgeLabel} {start middle finish : Vertex}
+    (left : PathEndpoints edgeStart edgeFinish first start middle)
+    (right : PathEndpoints edgeStart edgeFinish second middle finish) :
+    PathEndpoints edgeStart edgeFinish (first ++ second) start finish := by
+  induction left with
+  | nil => exact right
+  | cons tail previous => exact .cons (previous right)
+
+/-- Reverse the original finite path using an explicit reversal of each edge.
+
+Both reversal laws concern the original endpoint maps. The returned word
+retains the same occurrences in reverse order and exchanges its endpoints. -/
+theorem reverse {Vertex EdgeLabel : Type}
+    {edgeStart edgeFinish : EdgeLabel → Vertex}
+    (reverseEdge : EdgeLabel → EdgeLabel)
+    (reverseStart : ∀ edge, edgeStart (reverseEdge edge) = edgeFinish edge)
+    (reverseFinish : ∀ edge, edgeFinish (reverseEdge edge) = edgeStart edge)
+    {edges : List EdgeLabel} {start finish : Vertex}
+    (path : PathEndpoints edgeStart edgeFinish edges start finish) :
+    PathEndpoints edgeStart edgeFinish (edges.reverse.map reverseEdge) finish start := by
+  induction path with
+  | nil point => exact .nil point
+  | @cons edge remaining finish tail previous =>
+      rw [Purelib.Data.List.Reverse.reverse_cons, Purelib.Data.List.Map.map_append]
+      have single : PathEndpoints edgeStart edgeFinish [reverseEdge edge]
+          (edgeStart (reverseEdge edge)) (edgeFinish (reverseEdge edge)) := .cons (.nil _)
+      have aligned := (single.castStart (reverseStart edge)).castFinish (reverseFinish edge)
+      exact previous.append aligned
 
 end PathEndpoints
 
@@ -158,6 +214,54 @@ def wordBoundaryAt {Vertex EdgeLabel : Type} [DecidableEq Vertex]
   | edge :: remaining, vertex =>
       edgeBoundaryAt edgeStart edgeFinish edge vertex +
         wordBoundaryAt edgeStart edgeFinish remaining vertex
+
+/-- Concatenation adds the exact cached-bank coefficient at each retained vertex. -/
+theorem wordBoundaryAt_append {Vertex EdgeLabel : Type} [DecidableEq Vertex]
+    (edgeStart edgeFinish : EdgeLabel → Vertex) (first second : List EdgeLabel) (vertex : Vertex) :
+    wordBoundaryAt edgeStart edgeFinish (first ++ second) vertex =
+      wordBoundaryAt edgeStart edgeFinish first vertex + wordBoundaryAt edgeStart edgeFinish second vertex := by
+  induction first with
+  | nil =>
+      change wordBoundaryAt edgeStart edgeFinish second vertex = 0 + wordBoundaryAt edgeStart edgeFinish second vertex
+      ring1
+  | cons edge remaining previous =>
+      change edgeBoundaryAt edgeStart edgeFinish edge vertex +
+          wordBoundaryAt edgeStart edgeFinish (remaining ++ second) vertex =
+        (edgeBoundaryAt edgeStart edgeFinish edge vertex + wordBoundaryAt edgeStart edgeFinish remaining vertex) +
+          wordBoundaryAt edgeStart edgeFinish second vertex
+      rw [previous]
+      ring1
+
+/-- Reversing each original edge negates its signed vertex-boundary coefficient. -/
+theorem edgeBoundaryAt_reverse {Vertex EdgeLabel : Type} [DecidableEq Vertex]
+    (edgeStart edgeFinish : EdgeLabel → Vertex) (reverseEdge : EdgeLabel → EdgeLabel)
+    (reverseStart : ∀ edge, edgeStart (reverseEdge edge) = edgeFinish edge)
+    (reverseFinish : ∀ edge, edgeFinish (reverseEdge edge) = edgeStart edge)
+    (edge : EdgeLabel) (vertex : Vertex) :
+    edgeBoundaryAt edgeStart edgeFinish (reverseEdge edge) vertex =
+      -edgeBoundaryAt edgeStart edgeFinish edge vertex := by
+  unfold edgeBoundaryAt
+  rewrite [reverseStart edge, reverseFinish edge]
+  ring1
+
+/-- Reversing the original finite edge word negates each retained vertex coefficient. -/
+theorem wordBoundaryAt_reverse {Vertex EdgeLabel : Type} [DecidableEq Vertex]
+    (edgeStart edgeFinish : EdgeLabel → Vertex) (reverseEdge : EdgeLabel → EdgeLabel)
+    (reverseStart : ∀ edge, edgeStart (reverseEdge edge) = edgeFinish edge)
+    (reverseFinish : ∀ edge, edgeFinish (reverseEdge edge) = edgeStart edge)
+    (edges : List EdgeLabel) (vertex : Vertex) :
+    wordBoundaryAt edgeStart edgeFinish (edges.reverse.map reverseEdge) vertex =
+      -wordBoundaryAt edgeStart edgeFinish edges vertex := by
+  induction edges with
+  | nil => rfl
+  | cons edge remaining previous =>
+      rewrite [Purelib.Data.List.Reverse.reverse_cons, Purelib.Data.List.Map.map_append,
+        wordBoundaryAt_append, previous]
+      change -wordBoundaryAt edgeStart edgeFinish remaining vertex +
+          (edgeBoundaryAt edgeStart edgeFinish (reverseEdge edge) vertex + 0) =
+        -(edgeBoundaryAt edgeStart edgeFinish edge vertex + wordBoundaryAt edgeStart edgeFinish remaining vertex)
+      rewrite [edgeBoundaryAt_reverse edgeStart edgeFinish reverseEdge reverseStart reverseFinish edge vertex]
+      ring1
 
 /-- Finite telescoping: the boundary of a path is final vertex minus initial vertex. -/
 theorem wordBoundaryAt_eq_endpoints {Vertex EdgeLabel : Type}

@@ -14,6 +14,8 @@ public import Purelib.Riemann.Transport.PreparedDirectRefinementReplay
 import Purelib.RootIsolation.SquareRoot.Replay.QuadraticTrackReplay
 import Purelib.RootIsolation.State.WindingOne.Basic
 
+open Purelib.Curves.Hyperelliptic.Integration.Preparation.Replay.PreparedDirectRefinementReplay
+
 open Purelib
 
 open Purelib.Curves
@@ -73,7 +75,7 @@ open Purelib.Riemann.Transport.PreparedDirectRefinementReplay (AllReady)
 
 /-- Replay-ready original cycle endpoint owners make all canonical cycle parents replay-ready. -/
 theorem cycle (curve :
-  Hyperelliptic.Basic.HyperellipticCurve genus) (source : Differentials.Basic.Differential genus)
+  HyperellipticCurve genus) (source : Differential genus)
     (data : PreparedCycleModels.PreparedCycleData curve) (ready :
       CycleReady curve data) :
     AllReady (PreparedSwitchedRefinements.cycleState curve source data).parents := by
@@ -81,25 +83,25 @@ theorem cycle (curve :
   cases data with
   | bridge data =>
       change AllReady ((_ ++ ([] ++ (_ ++ []))) : List (CenteredEdge curve source))
-      simpa only [List.nil_append, Purelib.Data.List.Append.append_nil] using
-        (Preparation.Replay.PreparedDirectRefinementReplay.Readiness.bank curve source 0 data.forwardChecked
-          ready.1).append (Preparation.Replay.PreparedDirectRefinementReplay.Readiness.bank curve source 1
+      simpa only [List.nil_append, Data.List.Append.append_nil] using
+        (Readiness.bank curve source 0 data.forwardChecked
+          ready.1).append (Readiness.bank curve source 1
           data.backwardChecked ready.2)
   | finiteCut data =>
       change AllReady ((_ ++ (_ ++ ([] ++ (_ ++ (_ ++ []))))) : List (CenteredEdge curve source))
-      simpa only [List.nil_append, Purelib.Data.List.Append.append_nil] using
-        (Preparation.Replay.PreparedDirectRefinementReplay.Readiness.bank curve source 0 data.forwardChecked
+      simpa only [List.nil_append, Data.List.Append.append_nil] using
+        (Readiness.bank curve source 0 data.forwardChecked
           ready.1).append
-          ((Preparation.Replay.PreparedDirectRefinementReplay.Readiness.bank curve source 0 data.rightBoundaryChecked
+          ((Readiness.bank curve source 0 data.rightBoundaryChecked
             ready.2.1).append
-            ((Preparation.Replay.PreparedDirectRefinementReplay.Readiness.bank curve source 1 data.backwardChecked
+            ((Readiness.bank curve source 1 data.backwardChecked
               ready.2.2.1).append
-              (Preparation.Replay.PreparedDirectRefinementReplay.Readiness.bank curve source 1 data.leftBoundaryChecked
+              (Readiness.bank curve source 1 data.leftBoundaryChecked
                 ready.2.2.2)))
 
 /-- Restoring the exact cached cycle preserves replay readiness of its original parent list. -/
 theorem restored (curve :
-  Hyperelliptic.Basic.HyperellipticCurve genus) (source : Differentials.Basic.Differential genus)
+  HyperellipticCurve genus) (source : Differential genus)
     {data : PreparedCycleModels.PreparedCycleData curve} (ready :
       CycleReady curve data)
     (cached : PreparedCycleReplay.CachedCycle curve source data) : AllReady cached.restore.parents := by

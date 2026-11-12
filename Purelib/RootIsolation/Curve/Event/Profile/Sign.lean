@@ -41,6 +41,12 @@ import Purelib.RootIsolation.Sturm.Track.Basic
 import Purelib.Tactic.Ring
 import Purelib.Data.Rat.Bounds.Square
 
+open Purelib.Polynomial.Dense.Gaussian.Basic
+
+open Purelib.Polynomial.Dense.Rational.Bounds
+
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.Rat.Interval (Bounds)
 open Purelib.Data.Rat.Interval.Proper (Cell)
 open Purelib.Geometry.Projective.Hermitian.Chart (BoundedChart)
@@ -92,7 +98,7 @@ namespace Basic.ProfileEventLeaf
 /-- Coefficient of the squarefree-factor contribution in one finite Bezout
 identity. -/
 @[expose] def apartResidualCoefficient
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -107,12 +113,12 @@ identity. -/
       CoefficientPolynomial)
     (apart : CoprimeCertificate
       analysis.profile.factor.polynomial condition) : Fraction.Rational :=
-  2 * Dense.Rational.Bounds.Horner.evalSqBound apart.left
-      chart.cell.interval * ProfileEventLeaf.factorResidualCoefficient analysis
+  2 * Horner.evalSqBound apart.left
+      chart.cell.interval * factorResidualCoefficient analysis
 
 /-- The original Bézout factor-term residual coefficient is nonnegative. -/
 theorem apartResidualCoefficient_nonneg
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -128,15 +134,15 @@ theorem apartResidualCoefficient_nonneg
     (apart : CoprimeCertificate
       analysis.profile.factor.polynomial condition) :
     0 ≤ apartResidualCoefficient analysis condition apart :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      (Dense.Rational.Bounds.Horner.evalSqBound_nonneg apart.left
+  Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide)
+      (Horner.evalSqBound_nonneg apart.left
         chart.cell.interval))
-    (ProfileEventLeaf.factorResidualCoefficient_nonneg analysis)
+    (factorResidualCoefficient_nonneg analysis)
 
 /-- First width: the factor term in the Bezout identity is below `1/2`. -/
 @[expose] def apartResidualWidth
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -151,12 +157,12 @@ theorem apartResidualCoefficient_nonneg
       CoefficientPolynomial)
     (apart : CoprimeCertificate
       analysis.profile.factor.polynomial condition) : Fraction.Rational :=
-  Data.Rat.SmallWidth.shrinkingWidth
+  SmallWidth.shrinkingWidth
     (apartResidualCoefficient analysis condition apart) (1 / 2)
 
 /-- The original coefficient-computed width making the factor contribution smaller than one half is positive. -/
 theorem apartResidualWidth_pos
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -172,12 +178,12 @@ theorem apartResidualWidth_pos
     (apart : CoprimeCertificate
       analysis.profile.factor.polynomial condition) :
     0 < apartResidualWidth analysis condition apart :=
-  Data.Rat.SmallWidth.shrinkingWidth_pos
+  SmallWidth.shrinkingWidth_pos
     (apartResidualCoefficient_nonneg analysis condition apart) (by decide)
 
 /-- Uniform positive quadrance lower target for the apart condition value. -/
 @[expose] def apartConditionLower
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -193,12 +199,12 @@ theorem apartResidualWidth_pos
     (apart : CoprimeCertificate
       analysis.profile.factor.polynomial condition) : Fraction.Rational :=
   (1 / 2) / (2 *
-    (Dense.Rational.Bounds.Horner.evalSqBound apart.right
+    (Horner.evalSqBound apart.right
       chart.cell.interval + 1))
 
 /-- The original Bézout and Horner data supply a positive squared-value lower target for the apart condition. -/
 theorem apartConditionLower_pos
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -214,16 +220,16 @@ theorem apartConditionLower_pos
     (apart : CoprimeCertificate
       analysis.profile.factor.polynomial condition) :
     0 < apartConditionLower analysis condition apart :=
-  Fraction.Order.Field.div_pos_direct (by decide)
-    (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-      (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
-        (Dense.Rational.Bounds.Horner.evalSqBound_nonneg apart.right
+  Field.div_pos_direct (by decide)
+    (Arithmetic.mul_pos_direct (by decide)
+      (Arithmetic.add_pos_of_nonneg_of_pos_direct
+        (Horner.evalSqBound_nonneg apart.right
           chart.cell.interval) (by decide)))
 
 /-- Final width: additionally make condition variation smaller than its
 Bezout lower bound. -/
 @[expose] def apartSignWidth
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -239,14 +245,14 @@ Bezout lower bound. -/
     (apart : CoprimeCertificate
       analysis.profile.factor.polynomial condition) : Fraction.Rational :=
   min (apartResidualWidth analysis condition apart)
-    (Data.Rat.SmallWidth.shrinkingWidth
-      (Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound condition
+    (SmallWidth.shrinkingWidth
+      (Lipschitz.denseEvalSqLipschitzBound condition
         chart.cell.interval)
       (apartConditionLower analysis condition apart))
 
 /-- The original joint residual and variation width for an apart condition is positive. -/
 theorem apartSignWidth_pos
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -262,11 +268,11 @@ theorem apartSignWidth_pos
     (apart : CoprimeCertificate
       analysis.profile.factor.polynomial condition) :
     0 < apartSignWidth analysis condition apart :=
-  Fraction.Order.Basic.lt_min (apartResidualWidth_pos analysis condition
+  Basic.lt_min (apartResidualWidth_pos analysis condition
     apart)
-    (Data.Rat.SmallWidth.shrinkingWidth_pos
+    (SmallWidth.shrinkingWidth_pos
       (by
-        exact (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg
+        exact (Lipschitz.denseHornerSqBounds_nonneg
           condition chart.cell.interval).2)
       (apartConditionLower_pos analysis condition apart))
 
@@ -274,7 +280,7 @@ theorem apartSignWidth_pos
 term in the Bezout identity is strictly below `1/2` everywhere in the
 requested event. -/
 theorem apart_left_contribution_lt_half_of_le
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -299,34 +305,34 @@ theorem apart_left_contribution_lt_half_of_le
   let width := epsilon
   let residualWidth := apartResidualWidth analysis condition apart
   let coefficient := apartResidualCoefficient analysis condition apart
-  let leftBound := Dense.Rational.Bounds.Horner.evalSqBound apart.left
+  let leftBound := Horner.evalSqBound apart.left
     chart.cell.interval
-  let residualCoefficient := ProfileEventLeaf.factorResidualCoefficient analysis
+  let residualCoefficient := factorResidualCoefficient analysis
   have widthPositive : 0 < width := positive
   have residualWidthPositive : 0 < residualWidth :=
     apartResidualWidth_pos analysis condition apart
   have widthLe : width ≤ residualWidth :=
-    epsilonLe.trans (Fraction.Order.Basic.min_le_left _ _)
+    epsilonLe.trans (Basic.min_le_left _ _)
   have widthSqLe : width ^ 2 ≤ residualWidth ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct widthPositive.le widthLe 2
+    Arithmetic.pow_le_pow_direct widthPositive.le widthLe 2
   have coefficientNonnegative : 0 ≤ coefficient := by
     simpa only [-eq_self, -iff_self, coefficient] using
       apartResidualCoefficient_nonneg analysis condition apart
   have coefficientWidthLe : coefficient * width ^ 2 ≤
       coefficient * residualWidth ^ 2 :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct widthSqLe
+    Arithmetic.mul_le_mul_of_nonneg_left_direct widthSqLe
       coefficientNonnegative
   have coefficientResidualSmall : coefficient * residualWidth ^ 2 <
       (1 / 2 : Fraction.Rational) := by
     simpa only [-eq_self, -iff_self, residualWidth, coefficient,
       apartResidualWidth] using
-      Data.Rat.SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
+      SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
         coefficientNonnegative (show (0 : Fraction.Rational) < 1 / 2 by decide)
   have refinesChart := leaf.request_refines_chart width
   have parameterInsideChart : chart.cell.interval.Contains parameter :=
     ⟨refinesChart.1.trans inside.1, inside.2.trans refinesChart.2⟩
   have leftEvalBound : apart.left.eval parameter ^ 2 ≤ leftBound :=
-    Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound apart.left
+    Horner.eval_sq_le_evalSqBound apart.left
       chart.cell.interval parameterInsideChart
   have factorBound : analysis.profile.factor.polynomial.eval parameter ^ 2 ≤
       residualCoefficient * width ^ 2 := by
@@ -335,10 +341,10 @@ theorem apart_left_contribution_lt_half_of_le
   have productBound : apart.left.eval parameter ^ 2 *
         analysis.profile.factor.polynomial.eval parameter ^ 2 ≤
       leftBound * (residualCoefficient * width ^ 2) :=
-    Fraction.Order.Arithmetic.mul_le_mul_direct leftEvalBound factorBound
-      (Fraction.Order.Arithmetic.sq_nonneg_direct
+    Arithmetic.mul_le_mul_direct leftEvalBound factorBound
+      (Arithmetic.sq_nonneg_direct
         (analysis.profile.factor.polynomial.eval parameter))
-      (Dense.Rational.Bounds.Horner.evalSqBound_nonneg apart.left
+      (Horner.evalSqBound_nonneg apart.left
         chart.cell.interval)
   calc
     2 * (apart.left.eval parameter *
@@ -347,7 +353,7 @@ theorem apart_left_contribution_lt_half_of_le
           analysis.profile.factor.polynomial.eval parameter ^ 2) := by
       rw [Semiring.Normalization.product_pow]
     _ ≤ 2 * (leftBound * (residualCoefficient * width ^ 2)) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct productBound
+      Arithmetic.mul_le_mul_of_nonneg_left_direct productBound
         (by decide)
     _ = coefficient * width ^ 2 := by
       dsimp only [coefficient, apartResidualCoefficient, leftBound,
@@ -358,7 +364,7 @@ theorem apart_left_contribution_lt_half_of_le
 
 /-- Specialization at the computed apart-sign width. -/
 theorem apart_left_contribution_lt_half
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -387,7 +393,7 @@ theorem apart_left_contribution_lt_half
 /-- The apart condition itself is uniformly separated from zero throughout
 every request no wider than its computed apart-sign width. -/
 theorem apartConditionLower_lt_eval_sq_of_le
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -414,7 +420,7 @@ theorem apartConditionLower_lt_eval_sq_of_le
   let conditionValue := condition.eval parameter
   let leftValue := apart.left.eval parameter
   let rightValue := apart.right.eval parameter
-  let rightBound := Dense.Rational.Bounds.Horner.evalSqBound apart.right
+  let rightBound := Horner.evalSqBound apart.right
     chart.cell.interval
   let denominator := 2 * (rightBound + 1)
   have leftSmall : 2 * (leftValue * factorValue) ^ 2 < 1 / 2 := by
@@ -435,7 +441,7 @@ theorem apartConditionLower_lt_eval_sq_of_le
         decide
       _ ≤ 2 * ((leftValue * factorValue) ^ 2 +
           (rightValue * conditionValue) ^ 2) :=
-        Purelib.Data.Rat.Bounds.Square.add_sq_le_two _ _
+        Bounds.Square.add_sq_le_two _ _
       _ = 2 * (leftValue * factorValue) ^ 2 +
           2 * (rightValue * conditionValue) ^ 2 := by ring1
   have rightStrict : (1 / 2 : Fraction.Rational) <
@@ -443,9 +449,9 @@ theorem apartConditionLower_lt_eval_sq_of_le
     by_contra notStrict
     have rightLe : 2 * (rightValue * conditionValue) ^ 2 ≤ 1 / 2 :=
       le_of_not_gt notStrict
-    have firstStep := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have firstStep := Arithmetic.add_lt_add_right_direct
       leftSmall (2 * (rightValue * conditionValue) ^ 2)
-    have secondStep := Fraction.Order.Arithmetic.add_le_add_right_direct
+    have secondStep := Arithmetic.add_le_add_right_direct
       rightLe (1 / 2 : Fraction.Rational)
     have sumStrict :
         2 * (leftValue * factorValue) ^ 2 +
@@ -463,36 +469,36 @@ theorem apartConditionLower_lt_eval_sq_of_le
     ⟨refinesChart.1.trans inside.1, inside.2.trans refinesChart.2⟩
   have rightEvalBound : rightValue ^ 2 ≤ rightBound := by
     simpa only [-eq_self, -iff_self, rightValue, rightBound] using
-      Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound apart.right
+      Horner.eval_sq_le_evalSqBound apart.right
         chart.cell.interval parameterInsideChart
   have rightBoundLe : rightBound ≤ rightBound + 1 := by
-    have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+    have shifted := Arithmetic.add_le_add_right_direct
       (show (0 : Fraction.Rational) ≤ 1 by decide) rightBound
     simpa only [-eq_self, -iff_self, zero_add, Fraction.Field.add_comm] using shifted
   have conditionSquareNonnegative : 0 ≤ conditionValue ^ 2 :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct conditionValue
+    Arithmetic.sq_nonneg_direct conditionValue
   have rightProductUpper :
       2 * (rightValue * conditionValue) ^ 2 ≤
         denominator * conditionValue ^ 2 := by
     rw [Semiring.Normalization.product_pow]
     have valueBound : rightValue ^ 2 * conditionValue ^ 2 ≤
         (rightBound + 1) * conditionValue ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         (rightEvalBound.trans rightBoundLe) conditionSquareNonnegative
     calc
       2 * (rightValue ^ 2 * conditionValue ^ 2) ≤
           2 * ((rightBound + 1) * conditionValue ^ 2) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct valueBound
+        Arithmetic.mul_le_mul_of_nonneg_left_direct valueBound
           (by decide)
       _ = denominator * conditionValue ^ 2 := by
         dsimp only [denominator]
         ring1
   have denominatorPositive : 0 < denominator :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-      (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
-        (Dense.Rational.Bounds.Horner.evalSqBound_nonneg apart.right
+    Arithmetic.mul_pos_direct (by decide)
+      (Arithmetic.add_pos_of_nonneg_of_pos_direct
+        (Horner.evalSqBound_nonneg apart.right
           chart.cell.interval) (by decide))
-  apply (Fraction.Order.Field.div_lt_iff_pos denominatorPositive).2
+  apply (Field.div_lt_iff_pos denominatorPositive).2
   calc
     (1 / 2 : Fraction.Rational) <
         2 * (rightValue * conditionValue) ^ 2 := rightStrict
@@ -502,7 +508,7 @@ theorem apartConditionLower_lt_eval_sq_of_le
 
 /-- Specialization at the computed apart-sign width. -/
 theorem apartConditionLower_lt_eval_sq
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -532,7 +538,7 @@ theorem apartConditionLower_lt_eval_sq
 of the apart condition between any two event parameters is smaller than its
 uniform quadrance lower bound. -/
 theorem condition_eval_sub_sq_lt_lower_of_le
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -558,67 +564,67 @@ theorem condition_eval_sub_sq_lt_lower_of_le
   let width := epsilon
   let requested := leaf.request width
   let chartLipschitz :=
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound condition
+    Lipschitz.denseEvalSqLipschitzBound condition
       chart.cell.interval
   let variationWidth :=
-    Data.Rat.SmallWidth.shrinkingWidth
+    SmallWidth.shrinkingWidth
       chartLipschitz (apartConditionLower analysis condition apart)
   have widthPositive : 0 < width := positive
   have variationWidthPositive : 0 < variationWidth :=
-    Data.Rat.SmallWidth.shrinkingWidth_pos
+    SmallWidth.shrinkingWidth_pos
       (by
         simpa only [-eq_self, -iff_self, chartLipschitz] using
-          (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg
+          (Lipschitz.denseHornerSqBounds_nonneg
             condition chart.cell.interval).2)
       (apartConditionLower_pos analysis condition apart)
   have widthLeVariation : width ≤ variationWidth :=
-    epsilonLe.trans (Fraction.Order.Basic.min_le_right _ _)
+    epsilonLe.trans (Basic.min_le_right _ _)
   have widthSqLeVariation : width ^ 2 ≤ variationWidth ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct widthPositive.le
+    Arithmetic.pow_le_pow_direct widthPositive.le
       widthLeVariation 2
   have chartLipschitzNonnegative : 0 ≤ chartLipschitz := by
     simpa only [-eq_self, -iff_self, chartLipschitz] using
-      (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg
+      (Lipschitz.denseHornerSqBounds_nonneg
         condition chart.cell.interval).2
   have variationSmall : chartLipschitz * variationWidth ^ 2 <
       apartConditionLower analysis condition apart := by
     simpa only [-eq_self, -iff_self, variationWidth] using
-      Data.Rat.SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
+      SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
         chartLipschitzNonnegative
         (apartConditionLower_pos analysis condition apart)
-  have localVariation := Dense.Rational.Bounds.Lipschitz.eval_sub_sq_le
+  have localVariation := Lipschitz.eval_sub_sq_le
     condition requested.cell.interval leftInside rightInside
   have localLeChart :
-      Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound condition
+      Lipschitz.denseEvalSqLipschitzBound condition
           requested.cell.interval ≤ chartLipschitz := by
     simpa only [-eq_self, -iff_self, chartLipschitz, requested] using
-      Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound_le_of_refines
+      Lipschitz.denseEvalSqLipschitzBound_le_of_refines
         condition (leaf.request_refines_chart width)
   have parameterDistance : (left - right) ^ 2 ≤
       (Bounds.width requested.cell.interval) ^ 2 :=
-    Data.Rat.Interval.parameter_sub_sq_le_width_sq
+    Interval.parameter_sub_sq_le_width_sq
       requested.cell.interval leftInside rightInside
   have requestedWidth : (Bounds.width requested.cell.interval) ≤ width :=
     leaf.request_width_le width widthPositive
   have requestedWidthSq : (Bounds.width requested.cell.interval) ^ 2 ≤ width ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
+    Arithmetic.pow_le_pow_direct
       (Bounds.width_nonneg requested.cell.interval) requestedWidth 2
   have distanceLeVariation : (left - right) ^ 2 ≤ variationWidth ^ 2 :=
     parameterDistance.trans (requestedWidthSq.trans widthSqLeVariation)
   have localNonnegative :
-      0 ≤ Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound condition
+      0 ≤ Lipschitz.denseEvalSqLipschitzBound condition
         requested.cell.interval :=
-    (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg condition
+    (Lipschitz.denseHornerSqBounds_nonneg condition
       requested.cell.interval).2
   exact localVariation.trans_lt
-    ((Fraction.Order.Arithmetic.mul_le_mul_direct localLeChart
+    ((Arithmetic.mul_le_mul_direct localLeChart
       distanceLeVariation
-      (Fraction.Order.Arithmetic.sq_nonneg_direct (left - right))
+      (Arithmetic.sq_nonneg_direct (left - right))
       chartLipschitzNonnegative).trans_lt variationSmall)
 
 /-- Specialization at the computed apart-sign width. -/
 theorem condition_eval_sub_sq_lt_lower
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -650,7 +656,7 @@ theorem condition_eval_sub_sq_lt_lower
 /-- Every two values of an apart condition on any sufficiently narrow
 requested event have positive product, hence one stable strict sign. -/
 theorem condition_eval_mul_pos_of_le
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -682,12 +688,12 @@ theorem condition_eval_mul_pos_of_le
   rcases lt_or_ge (0 : Fraction.Rational)
       (condition.eval left * condition.eval right) with positive | nonpositive
   · exact positive
-  · have squareOrder := Purelib.Data.Rat.Bounds.Square.right_sq_le_sub_sq_of_mul_nonpos nonpositive
+  · have squareOrder := Bounds.Square.right_sq_le_sub_sq_of_mul_nonpos nonpositive
     exact (not_lt_of_ge squareOrder differenceSmall).elim
 
 /-- Specialization at the computed apart-sign width. -/
 theorem condition_eval_mul_pos
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -721,7 +727,7 @@ used by complete finite refinement families: callers provide chart
 containment, the requested width bound, and the already established
 profile-factor residual. -/
 theorem apartConditionControl_on_cell
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -744,7 +750,7 @@ theorem apartConditionControl_on_cell
     (factorBound : ∀ parameter : Fraction.Rational,
       cell.interval.Contains parameter →
       analysis.profile.factor.polynomial.eval parameter ^ 2 ≤
-        ProfileEventLeaf.factorResidualCoefficient analysis * epsilon ^ 2)
+        factorResidualCoefficient analysis * epsilon ^ 2)
     {left right : Fraction.Rational}
     (leftInside : cell.interval.Contains left)
     (rightInside : cell.interval.Contains right) :
@@ -753,14 +759,14 @@ theorem apartConditionControl_on_cell
         condition.eval parameter ^ 2) ∧
       0 < condition.eval left * condition.eval right := by
   let residualWidth := apartResidualWidth analysis condition apart
-  let residualCoefficient := ProfileEventLeaf.factorResidualCoefficient analysis
+  let residualCoefficient := factorResidualCoefficient analysis
   let apartCoefficient := apartResidualCoefficient analysis condition apart
-  let leftBound := Dense.Rational.Bounds.Horner.evalSqBound apart.left
+  let leftBound := Horner.evalSqBound apart.left
     chart.cell.interval
   have widthLeResidual : epsilon ≤ residualWidth :=
-    epsilonLe.trans (Fraction.Order.Basic.min_le_left _ _)
+    epsilonLe.trans (Basic.min_le_left _ _)
   have widthSqLeResidual : epsilon ^ 2 ≤ residualWidth ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct positive.le
+    Arithmetic.pow_le_pow_direct positive.le
       widthLeResidual 2
   have apartCoefficientNonnegative : 0 ≤ apartCoefficient := by
     simpa only [-eq_self, -iff_self, apartCoefficient] using
@@ -768,13 +774,13 @@ theorem apartConditionControl_on_cell
   have apartCoefficientWidthLe :
       apartCoefficient * epsilon ^ 2 ≤
         apartCoefficient * residualWidth ^ 2 :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       widthSqLeResidual apartCoefficientNonnegative
   have apartCoefficientResidualSmall :
       apartCoefficient * residualWidth ^ 2 < (1 / 2 : Fraction.Rational) := by
     simpa only [-eq_self, -iff_self, apartCoefficient, residualWidth,
       apartResidualWidth] using
-      Data.Rat.SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
+      SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
         apartCoefficientNonnegative (show (0 : Fraction.Rational) < 1 / 2 by decide)
   have factorContributionSmall : ∀ parameter : Fraction.Rational,
       cell.interval.Contains parameter →
@@ -785,16 +791,16 @@ theorem apartConditionControl_on_cell
       ⟨refinesChart.1.trans parameterInside.1,
         parameterInside.2.trans refinesChart.2⟩
     have leftEvalBound : apart.left.eval parameter ^ 2 ≤ leftBound :=
-      Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound apart.left
+      Horner.eval_sq_le_evalSqBound apart.left
         chart.cell.interval parameterInsideChart
     have profileBound := factorBound parameter parameterInside
     have productBound : apart.left.eval parameter ^ 2 *
           analysis.profile.factor.polynomial.eval parameter ^ 2 ≤
         leftBound * (residualCoefficient * epsilon ^ 2) :=
-      Fraction.Order.Arithmetic.mul_le_mul_direct leftEvalBound profileBound
-        (Fraction.Order.Arithmetic.sq_nonneg_direct
+      Arithmetic.mul_le_mul_direct leftEvalBound profileBound
+        (Arithmetic.sq_nonneg_direct
           (analysis.profile.factor.polynomial.eval parameter))
-        (Dense.Rational.Bounds.Horner.evalSqBound_nonneg apart.left
+        (Horner.evalSqBound_nonneg apart.left
           chart.cell.interval)
     calc
       2 * (apart.left.eval parameter *
@@ -803,7 +809,7 @@ theorem apartConditionControl_on_cell
             analysis.profile.factor.polynomial.eval parameter ^ 2) := by
         rw [Semiring.Normalization.product_pow]
       _ ≤ 2 * (leftBound * (residualCoefficient * epsilon ^ 2)) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct productBound
+        Arithmetic.mul_le_mul_of_nonneg_left_direct productBound
           (by decide)
       _ = apartCoefficient * epsilon ^ 2 := by
         dsimp only [apartCoefficient, apartResidualCoefficient, leftBound,
@@ -820,7 +826,7 @@ theorem apartConditionControl_on_cell
     let conditionValue := condition.eval parameter
     let leftValue := apart.left.eval parameter
     let rightValue := apart.right.eval parameter
-    let rightBound := Dense.Rational.Bounds.Horner.evalSqBound apart.right
+    let rightBound := Horner.evalSqBound apart.right
       chart.cell.interval
     let denominator := 2 * (rightBound + 1)
     have leftSmall : 2 * (leftValue * factorValue) ^ 2 < 1 / 2 := by
@@ -840,7 +846,7 @@ theorem apartConditionControl_on_cell
           decide
         _ ≤ 2 * ((leftValue * factorValue) ^ 2 +
             (rightValue * conditionValue) ^ 2) :=
-          Purelib.Data.Rat.Bounds.Square.add_sq_le_two _ _
+          Bounds.Square.add_sq_le_two _ _
         _ = 2 * (leftValue * factorValue) ^ 2 +
             2 * (rightValue * conditionValue) ^ 2 := by ring1
     have rightStrict : (1 / 2 : Fraction.Rational) <
@@ -848,9 +854,9 @@ theorem apartConditionControl_on_cell
       by_contra notStrict
       have rightLe : 2 * (rightValue * conditionValue) ^ 2 ≤ 1 / 2 :=
         le_of_not_gt notStrict
-      have firstStep := Fraction.Order.Arithmetic.add_lt_add_right_direct
+      have firstStep := Arithmetic.add_lt_add_right_direct
         leftSmall (2 * (rightValue * conditionValue) ^ 2)
-      have secondStep := Fraction.Order.Arithmetic.add_le_add_right_direct
+      have secondStep := Arithmetic.add_le_add_right_direct
         rightLe (1 / 2 : Fraction.Rational)
       have sumStrict :
           2 * (leftValue * factorValue) ^ 2 +
@@ -868,36 +874,36 @@ theorem apartConditionControl_on_cell
         parameterInside.2.trans refinesChart.2⟩
     have rightEvalBound : rightValue ^ 2 ≤ rightBound := by
       simpa only [-eq_self, -iff_self, rightValue, rightBound] using
-        Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound apart.right
+        Horner.eval_sq_le_evalSqBound apart.right
           chart.cell.interval parameterInsideChart
     have rightBoundLe : rightBound ≤ rightBound + 1 := by
-      have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+      have shifted := Arithmetic.add_le_add_right_direct
         (show (0 : Fraction.Rational) ≤ 1 by decide) rightBound
       simpa only [-eq_self, -iff_self, zero_add, Fraction.Field.add_comm] using shifted
     have conditionSquareNonnegative : 0 ≤ conditionValue ^ 2 :=
-      Fraction.Order.Arithmetic.sq_nonneg_direct conditionValue
+      Arithmetic.sq_nonneg_direct conditionValue
     have rightProductUpper :
         2 * (rightValue * conditionValue) ^ 2 ≤
           denominator * conditionValue ^ 2 := by
       rw [Semiring.Normalization.product_pow]
       have valueBound : rightValue ^ 2 * conditionValue ^ 2 ≤
           (rightBound + 1) * conditionValue ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           (rightEvalBound.trans rightBoundLe) conditionSquareNonnegative
       calc
         2 * (rightValue ^ 2 * conditionValue ^ 2) ≤
             2 * ((rightBound + 1) * conditionValue ^ 2) :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct valueBound
+          Arithmetic.mul_le_mul_of_nonneg_left_direct valueBound
             (by decide)
         _ = denominator * conditionValue ^ 2 := by
           dsimp only [denominator]
           ring1
     have denominatorPositive : 0 < denominator :=
-      Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-        (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
-          (Dense.Rational.Bounds.Horner.evalSqBound_nonneg apart.right
+      Arithmetic.mul_pos_direct (by decide)
+        (Arithmetic.add_pos_of_nonneg_of_pos_direct
+          (Horner.evalSqBound_nonneg apart.right
             chart.cell.interval) (by decide))
-    apply (Fraction.Order.Field.div_lt_iff_pos denominatorPositive).2
+    apply (Field.div_lt_iff_pos denominatorPositive).2
     calc
       (1 / 2 : Fraction.Rational) <
           2 * (rightValue * conditionValue) ^ 2 := rightStrict
@@ -905,48 +911,48 @@ theorem apartConditionControl_on_cell
       _ = conditionValue ^ 2 * denominator :=
         Fraction.Field.mul_comm _ _
   let chartLipschitz :=
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound condition
+    Lipschitz.denseEvalSqLipschitzBound condition
       chart.cell.interval
   let variationWidth :=
-    Data.Rat.SmallWidth.shrinkingWidth
+    SmallWidth.shrinkingWidth
       chartLipschitz (apartConditionLower analysis condition apart)
   have widthLeVariation : epsilon ≤ variationWidth :=
-    epsilonLe.trans (Fraction.Order.Basic.min_le_right _ _)
+    epsilonLe.trans (Basic.min_le_right _ _)
   have widthSqLeVariation : epsilon ^ 2 ≤ variationWidth ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct positive.le
+    Arithmetic.pow_le_pow_direct positive.le
       widthLeVariation 2
   have chartLipschitzNonnegative : 0 ≤ chartLipschitz := by
     simpa only [-eq_self, -iff_self, chartLipschitz] using
-      (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg
+      (Lipschitz.denseHornerSqBounds_nonneg
         condition chart.cell.interval).2
   have variationSmall : chartLipschitz * variationWidth ^ 2 <
       apartConditionLower analysis condition apart := by
     simpa only [-eq_self, -iff_self, variationWidth] using
-      Data.Rat.SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
+      SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
         chartLipschitzNonnegative
         (apartConditionLower_pos analysis condition apart)
-  have localVariation := Dense.Rational.Bounds.Lipschitz.eval_sub_sq_le
+  have localVariation := Lipschitz.eval_sub_sq_le
     condition cell.interval leftInside rightInside
   have localLeChart :
-      Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound condition
+      Lipschitz.denseEvalSqLipschitzBound condition
           cell.interval ≤ chartLipschitz := by
     simpa only [-eq_self, -iff_self, chartLipschitz] using
-      Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound_le_of_refines
+      Lipschitz.denseEvalSqLipschitzBound_le_of_refines
         condition refinesChart
   have parameterDistance : (left - right) ^ 2 ≤ (Bounds.width cell.interval) ^ 2 :=
-    Data.Rat.Interval.parameter_sub_sq_le_width_sq
+    Interval.parameter_sub_sq_le_width_sq
       cell.interval leftInside rightInside
   have cellWidthSq : (Bounds.width cell.interval) ^ 2 ≤ epsilon ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct (Bounds.width_nonneg cell.interval)
+    Arithmetic.pow_le_pow_direct (Bounds.width_nonneg cell.interval)
       widthLe 2
   have distanceLeVariation : (left - right) ^ 2 ≤ variationWidth ^ 2 :=
     parameterDistance.trans (cellWidthSq.trans widthSqLeVariation)
   have variation : (condition.eval left - condition.eval right) ^ 2 <
       apartConditionLower analysis condition apart :=
     localVariation.trans_lt
-      ((Fraction.Order.Arithmetic.mul_le_mul_direct localLeChart
+      ((Arithmetic.mul_le_mul_direct localLeChart
         distanceLeVariation
-        (Fraction.Order.Arithmetic.sq_nonneg_direct (left - right))
+        (Arithmetic.sq_nonneg_direct (left - right))
         chartLipschitzNonnegative).trans_lt variationSmall)
   have rightLower := conditionLowerAt right rightInside
   have differenceSmall :
@@ -957,13 +963,13 @@ theorem apartConditionControl_on_cell
   · rcases lt_or_ge (0 : Fraction.Rational)
         (condition.eval left * condition.eval right) with stable | nonpositive
     · exact stable
-    · have squareOrder := Purelib.Data.Rat.Bounds.Square.right_sq_le_sub_sq_of_mul_nonpos nonpositive
+    · have squareOrder := Bounds.Square.right_sq_le_sub_sq_of_mul_nonpos nonpositive
       exact (not_lt_of_ge squareOrder differenceSmall).elim
 
 /-- Uniform quadrance separation of an apart condition on an arbitrary
 complete-refinement cell. -/
 theorem apartConditionLower_lt_eval_sq_on_cell
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -986,7 +992,7 @@ theorem apartConditionLower_lt_eval_sq_on_cell
     (factorBound : ∀ parameter : Fraction.Rational,
       cell.interval.Contains parameter →
       analysis.profile.factor.polynomial.eval parameter ^ 2 ≤
-        ProfileEventLeaf.factorResidualCoefficient analysis * epsilon ^ 2)
+        factorResidualCoefficient analysis * epsilon ^ 2)
     (parameter : Fraction.Rational)
     (inside : cell.interval.Contains parameter) :
     apartConditionLower analysis condition apart <
@@ -996,7 +1002,7 @@ theorem apartConditionLower_lt_eval_sq_on_cell
 
 /-- Stable sign projection of the complete apart-condition control. -/
 theorem condition_eval_mul_pos_on_cell
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -1019,7 +1025,7 @@ theorem condition_eval_mul_pos_on_cell
     (factorBound : ∀ parameter : Fraction.Rational,
       cell.interval.Contains parameter →
       analysis.profile.factor.polynomial.eval parameter ^ 2 ≤
-        ProfileEventLeaf.factorResidualCoefficient analysis * epsilon ^ 2)
+        factorResidualCoefficient analysis * epsilon ^ 2)
     {left right : Fraction.Rational}
     (leftInside : cell.interval.Contains left)
     (rightInside : cell.interval.Contains right) :
@@ -1034,7 +1040,7 @@ end Basic.ProfileEventLeaf
 /-- Equality-owned conditions impose no shrinking requirement; an apart
 condition contributes its coefficient-computed sign width. -/
 @[expose] def Sign.relationSignWidth
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -1051,11 +1057,11 @@ condition contributes its coefficient-computed sign width. -/
         analysis.profile.factor) : Fraction.Rational :=
   match entry.2 with
   | .equality _ _ => 1
-  | .apart apart => Basic.ProfileEventLeaf.apartSignWidth analysis entry.1 apart
+  | .apart apart => ProfileEventLeaf.apartSignWidth analysis entry.1 apart
 
 /-- Each original equality or apart relation contributes a positive sign-control width. -/
 theorem Sign.relationSignWidth_pos
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -1078,11 +1084,11 @@ theorem Sign.relationSignWidth_pos
         (show (0 : Fraction.Rational) < 1 by decide)
   | apart apart =>
       simpa only [-eq_self, -iff_self, Sign.relationSignWidth] using
-        Basic.ProfileEventLeaf.apartSignWidth_pos analysis condition apart
+        ProfileEventLeaf.apartSignWidth_pos analysis condition apart
 
 /-- Compute the ordered list of sign-control widths for the original profile's retained condition relations. -/
 @[expose] def Sign.relationSignWidths
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -1100,7 +1106,7 @@ theorem Sign.relationSignWidth_pos
 /-- One displayed positive rational width satisfying all apart-condition
 requirements of the profile simultaneously. -/
 @[expose] def Sign.profileSignWidth
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -1118,7 +1124,7 @@ requirements of the profile simultaneously. -/
 
 /-- The finite minimum of the original profile's positive condition widths is positive. -/
 theorem Sign.profileSignWidth_pos
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -1140,7 +1146,7 @@ theorem Sign.profileSignWidth_pos
 
 /-- The original profile-wide sign width is no larger than any retained relation's computed width. -/
 theorem Sign.profileSignWidth_le_relation
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -1162,7 +1168,7 @@ theorem Sign.profileSignWidth_le_relation
 
 /-- The original profile-wide sign width meets the computed bound for every retained apart condition. -/
 theorem Sign.profileSignWidth_le_apart
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -1183,7 +1189,7 @@ theorem Sign.profileSignWidth_le_apart
           ConditionRelation queried
             analysis.profile.factor) ∈ analysis.profile.relations) :
     Sign.profileSignWidth analysis ≤
-      Basic.ProfileEventLeaf.apartSignWidth analysis condition apart :=
+      ProfileEventLeaf.apartSignWidth analysis condition apart :=
   Sign.profileSignWidth_le_relation analysis _ member
 
 namespace Basic.ProfileEventLeaf
@@ -1191,7 +1197,7 @@ namespace Basic.ProfileEventLeaf
 /-- At the single profile-wide request width, every two evaluations of any
 recorded apart condition have the same strict sign. -/
 theorem profile_condition_eval_mul_pos
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+    {p : CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
       HermitianForm}
     {chart : BoundedChart form}
     {data : Nontrivial p
@@ -1214,13 +1220,13 @@ theorem profile_condition_eval_mul_pos
             analysis.profile.factor) ∈ analysis.profile.relations)
     {left right : Fraction.Rational}
     (leftInside : (leaf.request
-      (Curve.Event.Profile.Sign.profileSignWidth analysis)).cell.interval.Contains left)
+      (Sign.profileSignWidth analysis)).cell.interval.Contains left)
     (rightInside : (leaf.request
-      (Curve.Event.Profile.Sign.profileSignWidth analysis)).cell.interval.Contains right) :
+      (Sign.profileSignWidth analysis)).cell.interval.Contains right) :
     0 < condition.eval left * condition.eval right :=
   leaf.condition_eval_mul_pos_of_le condition apart
-    (Curve.Event.Profile.Sign.profileSignWidth analysis) (Curve.Event.Profile.Sign.profileSignWidth_pos analysis)
-      (Curve.Event.Profile.Sign.profileSignWidth_le_apart analysis condition apart member)
+    (Sign.profileSignWidth analysis) (Sign.profileSignWidth_pos analysis)
+      (Sign.profileSignWidth_le_apart analysis condition apart member)
         leftInside rightInside
 
 end Basic.ProfileEventLeaf

@@ -78,19 +78,19 @@ open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.LiftedEntries
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.VerticalCompleteContact
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_add sumFin_sub)
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve branches
     higher}
-  {preparation : NewtonPreparation original} {target radius : Data.Rat.Fraction.Rational} {grid : NewtonGrid preparation
+  {preparation : NewtonPreparation original} {target radius : Rational} {grid : NewtonGrid preparation
     target radius}
   {observations : ProtectedObservations original} {frames : RootIsolation.SquareRoot.Grid.RootFrames
     grid.shrunk.prepared.grid}
-  {domains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars}
+  {domains : FaceDomainBank frames grid.faces.regulars}
     {partitions : SurfacePartitions observations grid}
-  {surfaceCuts : Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceCuts partitions domains}
+  {surfaceCuts : SurfaceCuts partitions domains}
   {coarse : (sheet : Fin 2) → SurfaceMeshes partitions domains sheet}
-  {fixed : (sheet : Fin 2) → Preflights domains sheet} {error : Data.Rat.Fraction.Rational}
+  {fixed : (sheet : Fin 2) → Preflights domains sheet} {error : Rational}
   {stage : Nat} {cache : Numerics domains stage} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector
     genus}
 
@@ -98,9 +98,9 @@ namespace SynchronizedSurfaceRequests.VerticalContactBank
 
 variable {depth : Nat}
   (requests : SynchronizedSurfaceRequests (fun sheet =>
-    Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts sheet
+    surfaceMeshes partitions domains surfaceCuts sheet
     depth) fixed error)
-  (compatible : Curves.Hyperelliptic.Meshes.Newton.Surface.PartitionBankCompatibility.Compatible partitions)
+  (compatible : Compatible partitions)
   {vertices : RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank grid.shrunk.prepared.grid} {edges :
     RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
   (mesh : LiftedMesh vertices edges grid.faces) (traces : PerimeterTraces requests)
@@ -119,10 +119,10 @@ open Purelib.Data.Rat in
 Keeps the source lift, its actual target sheet, the matching-side and partition-compatibility witnesses, allowance and
 numerical floor. -/
 @[expose] def Contact (first last : Fin grid.faces.regulars.length) (sheet : Fin 2)
-    (matching : Matching (grid := grid) first last) (allowance : Fraction.Rational) (floor : Nat) :=
-  Curves.Hyperelliptic.Meshes.Newton.Surface.VerticalCompleteContact.Prepared requests (mesh.locateFace first sheet)
+    (matching : Matching (grid := grid) first last) (allowance : Rational) (floor : Nat) :=
+  Prepared requests (mesh.locateFace first sheet)
     ((traces.get sheet).get first)
-    ((traces.get (Meshes.Newton.Surface.LiftedEntries.VerticalContact.next (last := last) (mesh.locateFace first
+    ((traces.get (VerticalContact.next (last := last) (mesh.locateFace first
       sheet)).sheet).get last)
     matching (compatible.vertical first last matching) allowance floor
 
@@ -132,7 +132,7 @@ set_option genInjectivity false in
 
 For a fixed face pair and source sheet, retains the prepared contact whenever the side relation holds and its exact
 numerical index. -/
-structure Entry (first last : Fin grid.faces.regulars.length) (sheet : Fin 2) (allowance : Fraction.Rational) (floor :
+structure Entry (first last : Fin grid.faces.regulars.length) (sheet : Fin 2) (allowance : Rational) (floor :
   Nat) where
   /-- Cached numerical index of the contact entry or complete bank. -/ index : Nat
   /-- Prepared contact available for every matching-side witness. -/ contact : (matching : Matching (grid := grid) first
@@ -149,14 +149,14 @@ open Purelib.Data.Rat in
 A matching right-to-left interface retains the actual prepared contact; a nonmatching pair stores index zero and
 eliminates any matching witness. -/
 @[expose] def Entry.build (first last : Fin grid.faces.regulars.length) (sheet : Fin 2)
-    (allowance : Fraction.Rational) (positive : 0 < allowance) (floor : Nat) :
+    (allowance : Rational) (positive : 0 < allowance) (floor : Nat) :
     Entry requests compatible mesh traces first last sheet allowance floor := by
   letI : Decidable (Matching (grid := grid) first last) := by unfold Matching; infer_instance
   by_cases matching : Matching (grid := grid) first last
-  · let prepared := Curves.Hyperelliptic.Meshes.Newton.Surface.VerticalCompleteContact.Prepared.build requests
+  · let prepared := Prepared.build requests
       (mesh.locateFace first sheet)
       ((traces.get sheet).get first)
-      ((traces.get (Meshes.Newton.Surface.LiftedEntries.VerticalContact.next (last := last) (mesh.locateFace first
+      ((traces.get (VerticalContact.next (last := last) (mesh.locateFace first
         sheet)).sheet).get last)
       matching (compatible.vertical first last matching) allowance positive floor
     exact ⟨prepared.request.index, fun _ => prepared, fun _ => rfl⟩
@@ -167,13 +167,13 @@ open Purelib.Data.Rat in
 /-- Dependent bank of vertical contacts indexed by face pair and sheet.
 
 Every entry retains the original surface requests, compatibility data, lifted mesh and perimeter traces. -/
-@[expose] def Entries (allowance : Fraction.Rational) (floor : Nat) :=
+@[expose] def Entries (allowance : Rational) (floor : Nat) :=
   Vector.DependentVector (fun first : Fin grid.faces.regulars.length =>
     Vector.DependentVector (fun last : Fin grid.faces.regulars.length =>
       Vector.DependentVector (fun sheet : Fin 2 => Entry requests compatible mesh traces first last sheet allowance
         floor)))
 
-variable {allowance : Data.Rat.Fraction.Rational} {floor : Nat}
+variable {allowance : Rational} {floor : Nat}
 
 /-- All cached contact indices lie below the supplied numerical index. -/
 @[expose] def Entries.IndexBound (entries : Entries requests compatible mesh traces allowance floor) (index : Nat) :
@@ -185,7 +185,7 @@ set_option genInjectivity false in
 /-- Complete vertical contact bank with a common index.
 
 Retains every face-pair and sheet entry, with an index above the entries, surface request and requested floor. -/
-structure Request (allowance : Fraction.Rational) (floor : Nat) where
+structure Request (allowance : Rational) (floor : Nat) where
   /-- Actual bank indexed by both regular faces and the source sheet. -/ entries : Entries requests compatible mesh
     traces allowance floor
   /-- Cached numerical index of the contact entry or complete bank. -/ index : Nat
@@ -202,7 +202,7 @@ open Purelib.Data.Rat in
 
 Constructs every dependent face-pair/sheet entry and takes the maximum with the retained surface index and requested
 floor. -/
-@[expose] def Request.build (allowance : Fraction.Rational) (positive : 0 < allowance) (floor : Nat) :
+@[expose] def Request.build (allowance : Rational) (positive : 0 < allowance) (floor : Nat) :
     Request requests compatible mesh traces allowance floor := by
   let entries : Entries requests compatible mesh traces allowance floor := Vector.DependentVector.ofFn fun first =>
     Vector.DependentVector.ofFn fun last => Vector.DependentVector.ofFn fun sheet =>

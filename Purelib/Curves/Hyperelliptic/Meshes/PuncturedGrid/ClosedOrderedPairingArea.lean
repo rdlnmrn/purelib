@@ -38,6 +38,8 @@ import Purelib.Tactic.Ring
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedSheetReplay
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.ClosedPairedSheets
 
+open Purelib.Topology.Mesh.RetracingWords
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -53,35 +55,35 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.ClosedOrderedPairing
 
 open Purelib.Topology.Polygon.Stokes
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+    BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
   {values : Data.Vector Gaussian.Basic.Canonical lifted.cutBoundaryWord.alphabet.count}
   (data : Cut.GeneratorValuation lifted values)
 
 /-- The original paired opposite-sheet correction areas sum to the complete retained cut-word area. -/
 private theorem opposite_correction_area (ordered :
-  Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet)
-    (first : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.Compiled
+  BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet)
+    (first : OrderedBranchCircuits.BranchCellBank.CircuitPartition.Compiled
       ordered.prepared.partition lifted.edges lifted.vertices sheet)
-    (second : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.Compiled
+    (second : OrderedBranchCircuits.BranchCellBank.CircuitPartition.Compiled
       ordered.prepared.partition lifted.edges lifted.vertices
-      (Purelib.Curves.Hyperelliptic.Branches.BranchCutLifts.otherSheet sheet)) :
-    Topology.Mesh.RetracingWords.AreaTerm.total data.value first.areaTerms + Topology.Mesh.RetracingWords.AreaTerm.total
+      (Branches.BranchCutLifts.otherSheet sheet)) :
+    AreaTerm.total data.value first.areaTerms + AreaTerm.total
       data.value second.areaTerms =
       Topology.Mesh.RetracingWords.wordArea data.value lifted.cutPolygon.patch.boundary := by
   have both (selected : Fin 2) :
-      ∀ (first : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.Compiled
+      ∀ (first : OrderedBranchCircuits.BranchCellBank.CircuitPartition.Compiled
         ordered.prepared.partition lifted.edges lifted.vertices selected)
-        (second : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.Compiled
-          ordered.prepared.partition lifted.edges lifted.vertices (Hyperelliptic.Branches.BranchCutLifts.otherSheet
+        (second : OrderedBranchCircuits.BranchCellBank.CircuitPartition.Compiled
+          ordered.prepared.partition lifted.edges lifted.vertices (Branches.BranchCutLifts.otherSheet
           selected)),
-      Topology.Mesh.RetracingWords.AreaTerm.total data.value first.areaTerms +
-        Topology.Mesh.RetracingWords.AreaTerm.total data.value second.areaTerms =
+      AreaTerm.total data.value first.areaTerms +
+        AreaTerm.total data.value second.areaTerms =
         Topology.Mesh.RetracingWords.wordArea data.value lifted.cutPolygon.patch.boundary := by
-    refine Purelib.Data.Fin.cases_induction ?_ (Purelib.Data.Fin.cases_induction ?_ (fun impossible => Fin.elim0
+    refine Fin.cases_induction ?_ (Fin.cases_induction ?_ (fun impossible => Fin.elim0
       impossible)) selected
     · intro first second
       exact
@@ -94,49 +96,49 @@ private theorem opposite_correction_area (ordered :
   exact both sheet first second
 
 namespace Paired
-variable {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank
-  sheet} (paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered)
+variable {ordered : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank
+  sheet} (paired : OrderedBranchPairs.Ordered.Paired ordered)
 
 /-- The opposite-sheet internal polygons cancel, while the corrected A/B pairing is unchanged. -/
 theorem twice_correctedArea_eq_cut_area : 2 * paired.rows.correctedArea data.value =
     Topology.Mesh.RetracingWords.wordArea data.value lifted.cutPolygon.patch.boundary := by
-  let other := paired.atSheet (Hyperelliptic.Branches.BranchCutLifts.otherSheet sheet)
+  let other := paired.atSheet (Branches.BranchCutLifts.otherSheet sheet)
   have first := paired.area_closed data
   have second := other.area_closed data
   have same := paired.rows.correctedArea_other data other.rows (by exact neg_zero.symm)
   have internal := paired.rows.internalArea_other data other.rows
   have ending := paired.ending.internalArea_other data other.ending
-  have corrections := Hyperelliptic.Meshes.PuncturedGrid.ClosedOrderedPairingArea.opposite_correction_area data ordered
+  have corrections := ClosedOrderedPairingArea.opposite_correction_area data ordered
     ordered.prepared.compiled
-    (ordered.atSheet (Hyperelliptic.Branches.BranchCutLifts.otherSheet sheet)).prepared.compiled
+    (ordered.atSheet (Branches.BranchCutLifts.otherSheet sheet)).prepared.compiled
   have secondReadback : paired.rows.correctedArea data.value =
       -paired.rows.internalArea data.value + -paired.ending.internalArea data.value +
-        Topology.Mesh.RetracingWords.AreaTerm.total data.value (ordered.atSheet
-          (Hyperelliptic.Branches.BranchCutLifts.otherSheet sheet)).prepared.compiled.areaTerms :=
-    same.symm.trans (second.trans (congrArg (· + Topology.Mesh.RetracingWords.AreaTerm.total data.value
-      (ordered.atSheet (Hyperelliptic.Branches.BranchCutLifts.otherSheet sheet)).prepared.compiled.areaTerms) (congrArg₂
+        AreaTerm.total data.value (ordered.atSheet
+          (Branches.BranchCutLifts.otherSheet sheet)).prepared.compiled.areaTerms :=
+    same.symm.trans (second.trans (congrArg (· + AreaTerm.total data.value
+      (ordered.atSheet (Branches.BranchCutLifts.otherSheet sheet)).prepared.compiled.areaTerms) (congrArg₂
         (· + ·) internal ending)))
   calc
     _ = paired.rows.correctedArea data.value + paired.rows.correctedArea data.value := by ring1
     _ = (paired.rows.internalArea data.value + paired.ending.internalArea data.value +
-          Topology.Mesh.RetracingWords.AreaTerm.total data.value ordered.prepared.compiled.areaTerms) +
+          AreaTerm.total data.value ordered.prepared.compiled.areaTerms) +
         (-paired.rows.internalArea data.value + -paired.ending.internalArea data.value +
-          Topology.Mesh.RetracingWords.AreaTerm.total data.value (ordered.atSheet
-            (Hyperelliptic.Branches.BranchCutLifts.otherSheet sheet)).prepared.compiled.areaTerms) := by
+          AreaTerm.total data.value (ordered.atSheet
+            (Branches.BranchCutLifts.otherSheet sheet)).prepared.compiled.areaTerms) := by
       exact congrArg₂ (· + ·) first secondReadback
-    _ = Topology.Mesh.RetracingWords.AreaTerm.total data.value ordered.prepared.compiled.areaTerms +
-        Topology.Mesh.RetracingWords.AreaTerm.total data.value (ordered.atSheet
-          (Hyperelliptic.Branches.BranchCutLifts.otherSheet sheet)).prepared.compiled.areaTerms := by ring1
+    _ = AreaTerm.total data.value ordered.prepared.compiled.areaTerms +
+        AreaTerm.total data.value (ordered.atSheet
+          (Branches.BranchCutLifts.otherSheet sheet)).prepared.compiled.areaTerms := by ring1
     _ = _ := corrections
 
 namespace Prepared
-variable (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+variable (prepared : Paired.PeriodPrograms.Prepared paired)
 
 /-- This reads the exact program-owning corrected A/B family, not an abstract handle model. -/
 theorem twice_pairing_eq_cut_area : 2 * prepared.pairing data.value =
     Topology.Mesh.RetracingWords.wordArea data.value lifted.cutPolygon.patch.boundary := by
   rw [prepared.pairing_eq]
-  exact Hyperelliptic.Meshes.PuncturedGrid.ClosedOrderedPairingArea.Paired.twice_correctedArea_eq_cut_area data paired
+  exact Paired.twice_correctedArea_eq_cut_area data paired
 
 end Prepared
 end Paired

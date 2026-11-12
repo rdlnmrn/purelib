@@ -40,7 +40,7 @@ Use the retained executable squarefree certificate and degree-at-least-two evide
 construction. -/
 def numeratorBoxes
     {numerator denominator : CoefficientPolynomial}
-    (input : Isolation.Squarefree.Higher.Basic.HigherSquarefreeInput numerator denominator) :
+    (input : HigherSquarefreeInput numerator denominator) :
     FTA.Squarefree.BoxResult input.reduction.numeratorReduced :=
   FTA.Squarefree.Build.BoxFTA.prove
     { squarefree := input.numeratorSquarefree
@@ -52,7 +52,7 @@ Use the retained executable squarefree certificate and degree-at-least-two evide
 construction. -/
 def denominatorBoxes
     {numerator denominator : CoefficientPolynomial}
-    (input : Isolation.Squarefree.Higher.Basic.HigherSquarefreeInput numerator denominator) :
+    (input : HigherSquarefreeInput numerator denominator) :
     FTA.Squarefree.BoxResult input.reduction.denominatorReduced :=
   FTA.Squarefree.Build.BoxFTA.prove
     { squarefree := input.denominatorSquarefree
@@ -61,7 +61,7 @@ def denominatorBoxes
 /-- Select a reduced-numerator winding-one track by its retained degree-bounded index. -/
 def numeratorTrack
     {numerator denominator : CoefficientPolynomial}
-    (input : Isolation.Squarefree.Higher.Basic.HigherSquarefreeInput numerator denominator)
+    (input : HigherSquarefreeInput numerator denominator)
     (index : Fin input.reduction.numeratorReduced.natDegree) :
     Track.Basic.WindingOneTrack input.reduction.numeratorReduced
       (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox
@@ -71,7 +71,7 @@ def numeratorTrack
 /-- Select a reduced-denominator winding-one track by its retained degree-bounded index. -/
 def denominatorTrack
     {numerator denominator : CoefficientPolynomial}
-    (input : Isolation.Squarefree.Higher.Basic.HigherSquarefreeInput numerator denominator)
+    (input : HigherSquarefreeInput numerator denominator)
     (index : Fin input.reduction.denominatorReduced.natDegree) :
     Track.Basic.WindingOneTrack input.reduction.denominatorReduced
       (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox
@@ -85,7 +85,7 @@ open Purelib.RationalFunctions in
 /-- Forget squarefreeness and higher-degree evidence while retaining the same reduction and numerator nonzeroness. -/
 def nonzeroInput
     {numerator denominator : CoefficientPolynomial}
-    (input : Isolation.Squarefree.Higher.Basic.HigherSquarefreeInput numerator denominator) :
+    (input : HigherSquarefreeInput numerator denominator) :
     NonzeroReducedInput numerator denominator where
   reduction := input.reduction
   numeratorReducedNonzero :=
@@ -98,7 +98,7 @@ open Purelib.RationalFunctions in
 /-- Read the common outer radius of the exact retained nonzero reduced pair. -/
 abbrev commonOuterRadius
     {numerator denominator : CoefficientPolynomial}
-    (input : Isolation.Squarefree.Higher.Basic.HigherSquarefreeInput numerator denominator) : Rat.Fraction.Rational :=
+    (input : HigherSquarefreeInput numerator denominator) : Rat.Fraction.Rational :=
   (NonzeroReducedInput.outerRadius input.nonzeroInput)
 
 open Purelib.Polynomial in
@@ -107,7 +107,7 @@ open Purelib.RationalFunctions in
 /-- Read the common outer square of the exact retained nonzero reduced pair. -/
 abbrev commonOuterBox
     {numerator denominator : CoefficientPolynomial}
-    (input : Isolation.Squarefree.Higher.Basic.HigherSquarefreeInput numerator denominator) :
+    (input : HigherSquarefreeInput numerator denominator) :
       Rational.Box :=
   (NonzeroReducedInput.outerBox input.nonzeroInput)
 end HigherSquarefreeInput

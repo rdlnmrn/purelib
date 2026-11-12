@@ -106,12 +106,12 @@ namespace Purelib.Curves.Hyperelliptic.Integration.Observation.PreparedFaceTrace
 theorem ofEquivalentAt
   {polynomial : ClearPath.GaussianPolynomial} {box : Rational.Box} {start finish :
   Data.Gaussian.Basic.Canonical}
-    {first : SquareRootContinuationChain.Owner (polynomial.eval start)} {last : SquareRootContinuationChain.Owner
+    {first : Owner (polynomial.eval start)} {last : Owner
       (polynomial.eval finish)}
     (equal : start = finish)
-    (equivalent : Gaussian.Equivalence.NamedEquivalent (OwnerTraceReadings.ownerName first)
+    (equivalent : NamedEquivalent (OwnerTraceReadings.ownerName first)
       (OwnerTraceReadings.ownerName last)) :
-    PreparedFaceTracePrefixes.Reached box first last := by
+    Reached box first last := by
   cases equal
   exact Reached.ofEquivalent equivalent
 
@@ -142,11 +142,11 @@ open Purelib.Riemann.Meshes.GridLiftedMesh.LiftedFaces (EdgeLocation)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks (EdgeRoute)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
+    VertexBank bank.grid} {edges :
     RootEdgeBank frames}
   {face : RegularFace bank} {sheet : Fin 2}
 
@@ -162,16 +162,16 @@ private theorem edge_reached (edge : Walks.Edge bank.grid start finish) (sheet :
 
 /-- Transport local reachability to the original vertex-bank owner using its exact coordinate and root-name identities.
 -/
-private theorem vertex_reached {base point : Data.Gaussian.Basic.Canonical} {source : SquareRootContinuationChain.Owner
+private theorem vertex_reached {base point : Data.Gaussian.Basic.Canonical} {source : Owner
   (curve.polynomial.eval base)}
-    (member : Polynomial.Geometry.Grid.FromStates.ContainsVertex bank.grid point) (sheet : Fin 2) (index : Fin
+    (member : ContainsVertex bank.grid point) (sheet : Fin 2) (index : Fin
       vertices.count)
     (reached : PreparedFaceTracePrefixes.Reached face.cell.box source ((frames.frameAt point member).owners sheet))
     (coordinate : vertices.coordinate index = point)
     (names : OwnerTraceReadings.ownerName (vertices.owner frames index) = OwnerTraceReadings.ownerName ((frames.frameAt
       point member).owners sheet)) :
     PreparedFaceTracePrefixes.Reached face.cell.box source (vertices.owner frames index) :=
-  reached.append (Purelib.Curves.Hyperelliptic.Integration.Observation.PreparedFaceTracePrefixes.Reached.ofEquivalentAt
+  reached.append (Reached.ofEquivalentAt
     coordinate.symm (by rw [names]; exact NamedEquivalent.refl _))
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshFaceEntries.BranchCellBank
@@ -181,7 +181,7 @@ namespace Purelib.Riemann.Meshes.GridLiftedFaces.BranchCellBank.LiftedFace
 /-- The actual continued corner owners, not just numerical sheet labels, are reached from the retained analytic face
 frame. -/
 theorem corners_reached (lifted :
-  BranchCellBank.LiftedFace vertices edges face sheet) (models : BranchCellBank.FaceModels frames face) :
+  LiftedFace vertices edges face sheet) (models : BranchCellBank.FaceModels frames face) :
     PreparedFaceTracePrefixes.Reached face.cell.box (models.frame.owners sheet) (vertices.owner frames
       lifted.quad.first) ∧
       PreparedFaceTracePrefixes.Reached face.cell.box (models.frame.owners sheet) (vertices.owner frames
@@ -197,30 +197,30 @@ theorem corners_reached (lifted :
   have second : PreparedFaceTracePrefixes.Reached face.cell.box (models.frame.owners sheet)
       ((frames.frameAt _ (face.cell.bottomSide face.member).vertices.2).owners lifted.lowerRight) := by
     rw [lifted.bottom_eq]
-    exact first.append (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshFaceEntries.BranchCellBank.edge_reached
+    exact first.append (MeshFaceEntries.BranchCellBank.edge_reached
       (face.cell.bottomSide face.member) sheet face.cell.box.contains_anchor
       ⟨face.cell.box.x_valid, le_rfl, le_rfl, face.cell.box.y_valid⟩)
   have third : PreparedFaceTracePrefixes.Reached face.cell.box (models.frame.owners sheet)
       ((frames.frameAt _ (face.cell.rightSide face.member).vertices.2).owners lifted.upperRight) := by
     rw [lifted.right_eq]
-    exact second.append (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshFaceEntries.BranchCellBank.edge_reached
+    exact second.append (MeshFaceEntries.BranchCellBank.edge_reached
       (face.cell.rightSide face.member) lifted.lowerRight
       ⟨face.cell.box.x_valid, le_rfl, le_rfl, face.cell.box.y_valid⟩
       ⟨face.cell.box.x_valid, le_rfl, face.cell.box.y_valid, le_rfl⟩)
   have fourth : PreparedFaceTracePrefixes.Reached face.cell.box (models.frame.owners sheet)
       ((frames.frameAt _ (face.cell.topSide face.member).vertices.2).owners lifted.upperLeft) := by
     rw [lifted.top_eq]
-    exact third.append (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshFaceEntries.BranchCellBank.edge_reached
+    exact third.append (MeshFaceEntries.BranchCellBank.edge_reached
       (face.cell.topSide face.member) lifted.upperRight
       ⟨face.cell.box.x_valid, le_rfl, face.cell.box.y_valid, le_rfl⟩
       ⟨le_rfl, face.cell.box.x_valid, face.cell.box.y_valid, le_rfl⟩)
-  refine ⟨Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshFaceEntries.BranchCellBank.vertex_reached _ _ _ first
+  refine ⟨MeshFaceEntries.BranchCellBank.vertex_reached _ _ _ first
     lifted.coordinates.1 ?_,
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshFaceEntries.BranchCellBank.vertex_reached _ _ _ second
+    MeshFaceEntries.BranchCellBank.vertex_reached _ _ _ second
       lifted.coordinates.2.1 ?_,
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshFaceEntries.BranchCellBank.vertex_reached _ _ _ third
+    MeshFaceEntries.BranchCellBank.vertex_reached _ _ _ third
       lifted.coordinates.2.2.1 ?_,
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshFaceEntries.BranchCellBank.vertex_reached _ _ _ fourth
+    MeshFaceEntries.BranchCellBank.vertex_reached _ _ _ fourth
       lifted.coordinates.2.2.2 ?_⟩
   · rw [lifted.first_eq, VertexBank.ownerName_index]
   · rw [lifted.second_eq, VertexBank.ownerName_index]
@@ -229,8 +229,8 @@ theorem corners_reached (lifted :
 
 /-- Both actual owners of an original lifted face edge are reachable from its retained analytic face frame. -/
 theorem edge_endpoints_reached (lifted :
-  BranchCellBank.LiftedFace vertices edges face sheet)
-    (models : BranchCellBank.FaceModels frames face) (kind : RectangleEdge.Kind) :
+  LiftedFace vertices edges face sheet)
+    (models : BranchCellBank.FaceModels frames face) (kind : Kind) :
     PreparedFaceTracePrefixes.Reached face.cell.box (models.frame.owners sheet) (vertices.owner frames (lifted.quad.edge
       kind).start) ∧
       PreparedFaceTracePrefixes.Reached face.cell.box (models.frame.owners sheet) (vertices.owner frames
@@ -251,14 +251,14 @@ namespace Purelib.Riemann.Meshes.GridLiftedMesh.LiftedFaces.EdgeLocation
 /-- The retained oriented edge location or route reaches both original endpoint owners from its actual selected face
 frame. -/
 theorem endpoints_reached {faces : List
-  (PuncturedGridFaces.RegularFace bank)}
-    {lifts : GridLiftedMesh.LiftedFaces vertices edges faces} {edge : Stokes.OrientedEdge vertices.count}
-    (location : LiftedFaces.EdgeLocation lifts edge) (models : BranchCellBank.FaceModels frames location.face) :
+  (RegularFace bank)}
+    {lifts : LiftedFaces vertices edges faces} {edge : OrientedEdge vertices.count}
+    (location : EdgeLocation lifts edge) (models : BranchCellBank.FaceModels frames location.face) :
     PreparedFaceTracePrefixes.Reached location.face.cell.box (models.frame.owners location.sheet) (vertices.owner frames
       edge.start) ∧
       PreparedFaceTracePrefixes.Reached location.face.cell.box (models.frame.owners location.sheet) (vertices.owner
         frames edge.finish) :=
-  (congrArg (fun edge : Stokes.OrientedEdge vertices.count =>
+  (congrArg (fun edge : OrientedEdge vertices.count =>
     PreparedFaceTracePrefixes.Reached location.face.cell.box (models.frame.owners location.sheet) (vertices.owner frames
       edge.start) ∧
       PreparedFaceTracePrefixes.Reached location.face.cell.box (models.frame.owners location.sheet) (vertices.owner
@@ -277,8 +277,8 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRo
 /-- The retained oriented edge location or route reaches both original endpoint owners from its actual selected face
 frame. -/
 theorem endpoints_reached {edge :
-  Stokes.OrientedEdge vertices.count}
-    (route : MeshPathWalks.EdgeRoute mesh edge) (models : BranchCellBank.FaceModels frames route.face) :
+  OrientedEdge vertices.count}
+    (route : EdgeRoute mesh edge) (models : BranchCellBank.FaceModels frames route.face) :
     PreparedFaceTracePrefixes.Reached route.face.cell.box (models.frame.owners route.sheet) (vertices.owner frames
       edge.start) ∧
       PreparedFaceTracePrefixes.Reached route.face.cell.box (models.frame.owners route.sheet) (vertices.owner frames
@@ -295,26 +295,26 @@ namespace Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh.SegmentFace
 by the retained path bank. -/
 def entry {ambient : Rational.Box}
   {start finish : Data.Gaussian.Basic.Canonical}
-    {segment : ClearPath.ClearSegment curve.polynomial ambient start finish} {owner : SquareRootContinuationChain.Owner
+    {segment : ClearSegment curve.polynomial ambient start finish} {owner : Owner
       (curve.polynomial.eval start)}
-    (placement : LiftedMesh.SegmentFace mesh segment) (models : BranchCellBank.FaceModels frames placement.face)
-    (aligned : Nonempty (Gaussian.Equivalence.NamedEquivalent (OwnerTraceReadings.ownerName owner)
+    (placement : SegmentFace mesh segment) (models : BranchCellBank.FaceModels frames placement.face)
+    (aligned : Nonempty (NamedEquivalent (OwnerTraceReadings.ownerName owner)
       (OwnerTraceReadings.ownerName (vertices.owner frames placement.indexed.start)))) :
     FaceModels.Entry models start owner :=
   ⟨placement.location.sheet, by
     obtain ⟨equivalent⟩ := aligned
     exact (placement.location.endpoints_reached models).1.append
-      (Purelib.Curves.Hyperelliptic.Integration.Observation.PreparedFaceTracePrefixes.Reached.ofEquivalentAt
+      (Reached.ofEquivalentAt
         placement.start_eq
       equivalent.symm)⟩
 
 /-- The analytic entry reads exactly the sheet of the original retained segment face placement. -/
 theorem entry_sheet {ambient :
   Rational.Box} {start finish : Data.Gaussian.Basic.Canonical}
-    {segment : ClearPath.ClearSegment curve.polynomial ambient start finish} {owner : SquareRootContinuationChain.Owner
+    {segment : ClearSegment curve.polynomial ambient start finish} {owner : Owner
       (curve.polynomial.eval start)}
-    (placement : LiftedMesh.SegmentFace mesh segment) (models : BranchCellBank.FaceModels frames placement.face)
-    (aligned : Nonempty (Gaussian.Equivalence.NamedEquivalent (OwnerTraceReadings.ownerName owner)
+    (placement : SegmentFace mesh segment) (models : BranchCellBank.FaceModels frames placement.face)
+    (aligned : Nonempty (NamedEquivalent (OwnerTraceReadings.ownerName owner)
       (OwnerTraceReadings.ownerName (vertices.owner frames placement.indexed.start)))) :
     (placement.entry models aligned).sheet = placement.location.sheet := rfl
 

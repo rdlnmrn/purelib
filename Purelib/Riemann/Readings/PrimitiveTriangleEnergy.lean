@@ -29,6 +29,8 @@ import Purelib.Polynomial.Dense.Evaluation
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -50,9 +52,9 @@ open Purelib.Data.Gaussian in
 private abbrev Gaussian := Basic.Canonical
 open Purelib.Polynomial.Dense.Gaussian in
 /-- The dense Gaussian polynomial carrier of the original inverse-root model. -/
-private abbrev Polynomial := Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+private abbrev Polynomial := Basic.CanonicalCoefficients.CoefficientPolynomial
 /-- The rational rectangle carrier of the original primitive neighborhood. -/
-private abbrev Box := Purelib.Geometry.Rational.Box
+private abbrev Box := Geometry.Rational.Box
 open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 open _root_.Purelib.Riemann.Integration (PrimitiveBasis)
 open _root_.Purelib.Riemann.Integration.PrimitiveBasis (PrimitiveBasisPreflight Coefficients)
@@ -97,18 +99,18 @@ and affine allowances by `(epsilon * distance * (coefficient + 1))²`.
 No sign condition is required on epsilon or distance. -/
 theorem uniform_cross {coefficient epsilon distance : Fraction.Rational} (coefficientNonnegative : 0 ≤ coefficient) :
     (2 * epsilon ^ 2 * distance) * (coefficient * distance) / 4 ≤ (epsilon * distance * (coefficient + 1)) ^ 2 := by
-  apply (Fraction.Order.Field.div_le_iff_pos (by decide)).mpr
-  apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  apply (Field.div_le_iff_pos (by decide)).mpr
+  apply Arithmetic.le_of_sub_nonneg_direct
   have identity : (epsilon * distance * (coefficient + 1)) ^ 2 * 4 -
       (2 * epsilon ^ 2 * distance) * (coefficient * distance) =
         (epsilon ^ 2 * distance ^ 2) * (4 * coefficient ^ 2 + 6 * coefficient + 4) := by ring1
   rw [identity]
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _) (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+  exact Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct
+      (Arithmetic.sq_nonneg_direct _) (Arithmetic.sq_nonneg_direct _))
     (add_nonneg (add_nonneg
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (Fraction.Order.Arithmetic.sq_nonneg_direct _))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) coefficientNonnegative)) (by decide))
+      (Arithmetic.mul_nonneg_direct (by decide) (Arithmetic.sq_nonneg_direct _))
+      (Arithmetic.mul_nonneg_direct (by decide) coefficientNonnegative)) (by decide))
 
 /-- Construct the three original product budgets with an explicit positive rational radius.
 
@@ -119,14 +121,14 @@ def build {firstAffine secondAffine firstError secondError : Fraction.Rational}
     (firstErrorNonnegative : 0 ≤ firstError) (secondErrorNonnegative : 0 ≤ secondError)
     (radius : Fraction.Rational) (positive : 0 < radius) :
     TriangleProductBudget firstAffine secondAffine firstError secondError := by
-  have firstNonnegative := Fraction.Order.Field.div_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct firstErrorNonnegative secondAffineNonnegative) (by
+  have firstNonnegative := Field.div_nonneg_direct
+    (Arithmetic.mul_nonneg_direct firstErrorNonnegative secondAffineNonnegative) (by
         decide : (0 : Fraction.Rational) ≤ 4)
-  have secondNonnegative := Fraction.Order.Field.div_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct firstAffineNonnegative secondErrorNonnegative) (by
+  have secondNonnegative := Field.div_nonneg_direct
+    (Arithmetic.mul_nonneg_direct firstAffineNonnegative secondErrorNonnegative) (by
         decide : (0 : Fraction.Rational) ≤ 4)
-  have mixedNonnegative := Fraction.Order.Field.div_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct firstErrorNonnegative secondErrorNonnegative) (by
+  have mixedNonnegative := Field.div_nonneg_direct
+    (Arithmetic.mul_nonneg_direct firstErrorNonnegative secondErrorNonnegative) (by
         decide : (0 : Fraction.Rational) ≤ 4)
   exact
     { first := squareErrorBudget (firstError * secondAffine / 4) radius
@@ -150,19 +152,19 @@ public theorem scaled_product {first second : Basic.Canonical} {scale firstBound
     (firstLe : normSq first ≤ scale * firstBound) (secondLe : normSq second ≤ scale * secondBound)
     (paid : firstBound * secondBound / 4 ≤ budget ^ 2) :
     normSq first * normSq second / 4 ≤ (scale * budget) ^ 2 := by
-  have product := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct firstLe (Basic.Canonical.normSq_nonneg
+  have product := (Arithmetic.mul_le_mul_of_nonneg_right_direct firstLe (normSq_nonneg
     second)).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct secondLe ((Basic.Canonical.normSq_nonneg first).trans
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct secondLe ((normSq_nonneg first).trans
       firstLe))
-  have divided := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct product
+  have divided := Arithmetic.mul_le_mul_of_nonneg_right_direct product
     (by decide : (0 : Fraction.Rational) ≤ (4 : Fraction.Rational)⁻¹)
   calc
     _ ≤ (scale * firstBound) * (scale * secondBound) / 4 := by
       simpa only [Field.ExplicitField.div_eq_mul_inv] using divided
     _ = scale ^ 2 * (firstBound * secondBound / 4) := by
       simp only [Field.ExplicitField.div_eq_mul_inv]; ring1
-    _ ≤ scale ^ 2 * budget ^ 2 := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct paid
-      (Fraction.Order.Arithmetic.sq_nonneg_direct scale)
+    _ ≤ scale ^ 2 * budget ^ 2 := Arithmetic.mul_le_mul_of_nonneg_left_direct paid
+      (Arithmetic.sq_nonneg_direct scale)
     _ = _ := by ring1
 
 open Purelib.Data.Gaussian in
@@ -189,9 +191,9 @@ def certificate {firstAffine secondAffine firstError secondError : Fraction.Rati
   firstBudget := scale * budget.first
   secondBudget := scale * budget.second
   mixedBudget := scale * budget.mixed
-  firstBudget_nonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct nonnegative budget.first_nonnegative
-  secondBudget_nonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct nonnegative budget.second_nonnegative
-  mixedBudget_nonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct nonnegative budget.mixed_nonnegative
+  firstBudget_nonnegative := Arithmetic.mul_nonneg_direct nonnegative budget.first_nonnegative
+  secondBudget_nonnegative := Arithmetic.mul_nonneg_direct nonnegative budget.second_nonnegative
+  mixedBudget_nonnegative := Arithmetic.mul_nonneg_direct nonnegative budget.mixed_nonnegative
   firstProductBound := by
     simpa only [Norm.Basic.normSq_eq_canonical] using scaled_product firstErrorLe secondAffineLe
       budget.first_bound
@@ -213,7 +215,7 @@ set_option genInjectivity false in
 The record keeps exact equations to both original edge increments, their separate product allowances and the sum of the
 three retained product budgets. -/
 structure PrimitiveTriangleBudget {polynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {siteCount index count : Nat}
+  Basic.CanonicalCoefficients.CoefficientPolynomial} {siteCount index count : Nat}
     {patch : ContinuedNeighborhood polynomial siteCount} (basis : PrimitiveBasis patch index count)
     (first second third : Basic.Canonical) where
   /-- The cached affine magnitude scale along the original first-to-second edge. -/ firstAffine : Fraction.Rational
@@ -241,7 +243,7 @@ namespace PrimitiveTriangleBudget
 variable {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {siteCount index
   count : Nat}
   {patch : ContinuedNeighborhood polynomial siteCount} {basis : PrimitiveBasis patch index count}
-  {first second third : Purelib.Data.Gaussian.Basic.Canonical}
+  {first second third : Data.Gaussian.Basic.Canonical}
 
 open Purelib.Data.Gaussian in
 open Purelib.Integration.Energy in
@@ -265,8 +267,8 @@ def build (basis : PrimitiveBasis patch index count) (first second third : Basic
   let firstError := basis.incrementScale first second
   let secondError := basis.incrementScale first third
   let products := TriangleProductBudget.build
-    (Fraction.Order.Arithmetic.mul_nonneg_direct basis.coefficientScale_nonnegative (Basic.Canonical.normSq_nonneg _))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct basis.coefficientScale_nonnegative (Basic.Canonical.normSq_nonneg _))
+    (Arithmetic.mul_nonneg_direct basis.coefficientScale_nonnegative (normSq_nonneg _))
+    (Arithmetic.mul_nonneg_direct basis.coefficientScale_nonnegative (normSq_nonneg _))
     (basis.incrementScale_nonnegative first second) (basis.incrementScale_nonnegative first third) radius positive
   { firstAffine := firstAffine
     firstAffine_eq := rfl
@@ -304,8 +306,8 @@ def certificate (budget : PrimitiveTriangleBudget basis first second third) (coe
         coefficients).eval first / root) first point) ≤
         coefficientNormSq coefficients * (basis.coefficientScale * normSq (point - first)) := by
     unfold AffineTriangle.affinePrimitiveIncrement
-    rw [← mul_sub, Basic.Canonical.normSq_mul]
-    exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct coefficientLe (Basic.Canonical.normSq_nonneg
+    rw [← mul_sub, normSq_mul]
+    exact (Arithmetic.mul_le_mul_of_nonneg_right_direct coefficientLe (normSq_nonneg
       _)).trans_eq (by ring1)
   refine budget.products.certificate (coefficientNormSq coefficients) (PrimitiveBasis.coefficientNorm_nonnegative
     coefficients)

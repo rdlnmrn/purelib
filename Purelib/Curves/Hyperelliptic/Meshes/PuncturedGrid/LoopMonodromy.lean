@@ -100,17 +100,17 @@ open Purelib.Approximation.Gaussian.Equivalence (NamedEquivalent)
 
 section Grid
 
-variable {polynomial : Purelib.Polynomial.Geometry.ClearPath.GaussianPolynomial} {ambient :
+variable {polynomial : Polynomial.Geometry.ClearPath.GaussianPolynomial} {ambient :
   Geometry.Rational.Box}
 
 namespace LoopMonodromy.Grid
 
 /-- A two-leg connector on retained grid lines. Both endpoint owners can be continued along these actual adjacent edges,
 not a diagonal chord. -/
-@[expose] def connect (grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient) (start finish :
+@[expose] def connect (grid : ClearGrid polynomial ambient) (start finish :
   Data.Gaussian.Basic.Canonical)
-    (first : Polynomial.Geometry.Grid.FromStates.ContainsVertex grid start) (last :
-      Polynomial.Geometry.Grid.FromStates.ContainsVertex grid finish) : Walks.Walk grid start finish :=
+    (first : ContainsVertex grid start) (last :
+      ContainsVertex grid finish) : Walks.Walk grid start finish :=
   let horizontal := Walks.horizontalWalk grid start.re finish.re start.im first.1 last.1 first.2
   let vertical := Walks.verticalWalk grid finish.re start.im finish.im last.1 first.2 last.2
   (horizontal.append vertical).castEndpoints (by rfl) (by rfl)
@@ -124,7 +124,7 @@ set_option genInjectivity false in
 
 The displayed loop remains based at the retained vertex and follows actual grid edges. Its raw winding certificate fixes
 the finite parity reference while preserving the original walk. -/
-structure WindingOneReference (grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient) (base :
+structure WindingOneReference (grid : ClearGrid polynomial ambient) (base :
   Data.Gaussian.Basic.Canonical) where
   /-- The retained actual grid loop based at the original vertex. -/ walk : Walks.Walk grid base base
   /-- The retained actual reference loop has raw winding four. -/ winding : ClearPath.rawWinding walk.path = 4
@@ -139,10 +139,10 @@ namespace LoopMonodromy.Grid.WindingOneReference
 
 The displayed loop remains based at the retained vertex and follows actual grid edges. Its raw winding certificate fixes
 the finite parity reference while preserving the original walk. -/
-@[expose] def toLoop {grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient} {base :
+@[expose] def toLoop {grid : ClearGrid polynomial ambient} {base :
   Data.Gaussian.Basic.Canonical}
-    (reference : Curves.Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.Grid.WindingOneReference grid base) :
-      OwnerLoopMonodromy.WindingOneLoop polynomial base :=
+    (reference : WindingOneReference grid base) :
+      WindingOneLoop polynomial base :=
   ⟨ambient, reference.walk.path, reference.walk.withinAmbient, reference.winding⟩
 
 end LoopMonodromy.Grid.WindingOneReference
@@ -153,9 +153,9 @@ rerunning owner classification.
 
 The cached trace and integer winding belong to the same original closed walk. The retained parity bit determines the
 exact finishing-owner sheet assignment without executing another reference path. -/
-structure LoopMonodromy {grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient} {base :
+structure LoopMonodromy {grid : Grid polynomial ambient} {base :
   Data.Gaussian.Basic.Canonical}
-    (walk : Walks.Walk grid base base) (owner : SquareRootContinuationChain.Owner (polynomial.eval base)) where
+    (walk : Walks.Walk grid base base) (owner : Owner (polynomial.eval base)) where
   /-- The cached actual continuation trace of the original closed grid walk. -/ traced : PreparedPathTrace.TracedPath
     walk.path owner
   /-- The retained integral winding of the original grid loop. -/ winding : Int
@@ -174,13 +174,13 @@ constructive_injectivity LoopMonodromy
 
 namespace LoopMonodromy
 
-variable {grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient} {base :
-  Purelib.Data.Gaussian.Basic.Canonical} {walk : Walk grid base base}
+variable {grid : ClearGrid polynomial ambient} {base :
+  Data.Gaussian.Basic.Canonical} {walk : Walk grid base base}
   {owner : Owner (polynomial.eval base)}
 
 /-- Attach the proved action to an already retained trace. The reference appears only in the erased parity proof, so no
 auxiliary path is executed. -/
-@[expose] def ofTraced (reference : Curves.Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.Grid.WindingOneReference
+@[expose] def ofTraced (reference : Grid.WindingOneReference
   grid base) (traced : PreparedPathTrace.TracedPath walk.path owner)
     (winding : Int) (raw : ClearPath.rawWinding walk.path = 4 * winding) :
       LoopMonodromy walk owner :=
@@ -207,9 +207,9 @@ auxiliary path is executed. -/
 
 /-- Canonical preparation is available, but geometry consumers with retained or generated traces use `ofTraced` without
 repeating it. -/
-@[expose] def build (reference : Curves.Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.Grid.WindingOneReference grid
+@[expose] def build (reference : Grid.WindingOneReference grid
   base) (walk : Walks.Walk grid base base)
-    (owner : SquareRootContinuationChain.Owner (polynomial.eval base)) (winding : Int) (raw : ClearPath.rawWinding
+    (owner : Owner (polynomial.eval base)) (winding : Int) (raw : ClearPath.rawWinding
       walk.path = 4 * winding) :
     LoopMonodromy walk owner :=
   ofTraced reference (TracedPath.build
@@ -224,7 +224,7 @@ repeating it. -/
 equality of attached labels. -/
 @[expose] def returned (monodromy : LoopMonodromy walk
   owner) (even : monodromy.flip = false) :
-    Gaussian.Equivalence.NamedEquivalent (OwnerTraceReadings.ownerName monodromy.traced.finishOwner)
+    NamedEquivalent (OwnerTraceReadings.ownerName monodromy.traced.finishOwner)
       (OwnerTraceReadings.ownerName owner) :=
   SquareRootTrace.rootEquivalent_of_assignment_eq
     owner.parameterNonzero owner monodromy.traced.finishOwner
@@ -236,7 +236,7 @@ equality of attached labels. -/
 /-- A retained odd loop cannot return an operationally equivalent original owner channel. -/
 theorem not_returned (monodromy : LoopMonodromy walk owner)
   (odd : monodromy.flip = true) :
-    Gaussian.Equivalence.NamedEquivalent (OwnerTraceReadings.ownerName monodromy.traced.finishOwner)
+    NamedEquivalent (OwnerTraceReadings.ownerName monodromy.traced.finishOwner)
       (OwnerTraceReadings.ownerName owner) → False := by
   have remainder : monodromy.winding % 2 ≠ 0 := of_decide_eq_true (monodromy.flip_eq.symm.trans odd)
   apply TracedPath.root_not_equivalent_of_original_odd
@@ -250,17 +250,17 @@ end Grid
 namespace LoopMonodromy.BranchCellBank
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
 
 /-- Use the first cached branch face. Positive degree supplies its index; the branch bank is not recomputed or
 re-isolated. -/
 @[expose] def referenceAt (bank : Branches.BranchCellBank curve branches higher) (base : Data.Gaussian.Basic.Canonical)
-  (member : Polynomial.Geometry.Grid.FromStates.ContainsVertex bank.grid base) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.Grid.WindingOneReference bank.grid base :=
+  (member : ContainsVertex bank.grid base) :
+    Grid.WindingOneReference bank.grid base :=
   let index : Data.Index branches := ⟨0, by have count := branches.count_eq; omega⟩
   let cell := bank.cell index
-  let connector := Curves.Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.Grid.connect bank.grid base cell.box.anchor
+  let connector := Grid.connect bank.grid base cell.box.anchor
     member
     (Cell.anchor_mem cell (bank.cell_mem index))
   let loop := Cell.boundaryWalk cell (bank.cell_mem index)
@@ -280,23 +280,23 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellB
 variable {bank : BranchCellBank curve branches higher}
 
 /-- Attach the trivial winding action to the retained trace around the original regular face. -/
-@[expose] def monodromy (face : PuncturedGridFaces.RegularFace bank) {owner : SquareRootContinuationChain.Owner
+@[expose] def monodromy (face : PuncturedGridFaces.RegularFace bank) {owner : Owner
   (curve.polynomial.eval face.cell.box.anchor)}
     (traced : PreparedPathTrace.TracedPath face.boundary.path owner) :
       LoopMonodromy face.boundary owner :=
-  .ofTraced (Curves.Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt bank _
+  .ofTraced (BranchCellBank.referenceAt bank _
     (Cell.anchor_mem face.cell face.member))
     traced 0 face.boundary_winding
 
 /-- The original regular-face loop has trivial sheet action. -/
-theorem monodromy_flip (face : PuncturedGridFaces.RegularFace bank) {owner : SquareRootContinuationChain.Owner
+theorem monodromy_flip (face : PuncturedGridFaces.RegularFace bank) {owner : Owner
   (curve.polynomial.eval face.cell.box.anchor)}
     (traced : PreparedPathTrace.TracedPath face.boundary.path owner) : (monodromy face traced).flip = false := rfl
 
 /-- Construct operational return equivalence for the actual retained regular-face trace. -/
-@[expose] def returned (face : PuncturedGridFaces.RegularFace bank) {owner : SquareRootContinuationChain.Owner
+@[expose] def returned (face : PuncturedGridFaces.RegularFace bank) {owner : Owner
   (curve.polynomial.eval face.cell.box.anchor)}
-    (traced : PreparedPathTrace.TracedPath face.boundary.path owner) : Gaussian.Equivalence.NamedEquivalent
+    (traced : PreparedPathTrace.TracedPath face.boundary.path owner) : NamedEquivalent
       (OwnerTraceReadings.ownerName traced.finishOwner) (OwnerTraceReadings.ownerName owner) :=
   (monodromy face traced).returned
     (monodromy_flip face traced)
@@ -311,23 +311,23 @@ variable {bank : BranchCellBank curve branches higher}
 
 /-- A removed hole is traversed clockwise, so its winding is minus one; parity still gives the genuine nontrivial
 two-sheet action. -/
-@[expose] def monodromy (hole : PuncturedGridFaces.BranchHole bank) {owner : SquareRootContinuationChain.Owner
+@[expose] def monodromy (hole : PuncturedGridFaces.BranchHole bank) {owner : Owner
   (curve.polynomial.eval hole.cell.box.anchor)}
     (traced : PreparedPathTrace.TracedPath hole.inwardBoundary.path owner) :
       LoopMonodromy hole.inwardBoundary owner :=
-  .ofTraced (Curves.Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt bank _
+  .ofTraced (BranchCellBank.referenceAt bank _
     (Cell.anchor_mem hole.cell hole.member)) traced (-1)
     (hole.inwardBoundary_winding.trans (by decide))
 
 /-- The original clockwise branch-hole loop exchanges the two sheets. -/
-theorem monodromy_flip (hole : PuncturedGridFaces.BranchHole bank) {owner : SquareRootContinuationChain.Owner
+theorem monodromy_flip (hole : PuncturedGridFaces.BranchHole bank) {owner : Owner
   (curve.polynomial.eval hole.cell.box.anchor)}
     (traced : PreparedPathTrace.TracedPath hole.inwardBoundary.path owner) : (monodromy hole traced).flip = true := rfl
 
 /-- A retained odd loop cannot return an operationally equivalent original owner channel. -/
-theorem not_returned (hole : PuncturedGridFaces.BranchHole bank) {owner : SquareRootContinuationChain.Owner
+theorem not_returned (hole : PuncturedGridFaces.BranchHole bank) {owner : Owner
   (curve.polynomial.eval hole.cell.box.anchor)}
-    (traced : PreparedPathTrace.TracedPath hole.inwardBoundary.path owner) : Gaussian.Equivalence.NamedEquivalent
+    (traced : PreparedPathTrace.TracedPath hole.inwardBoundary.path owner) : NamedEquivalent
       (OwnerTraceReadings.ownerName traced.finishOwner) (OwnerTraceReadings.ownerName owner) → False :=
   (monodromy hole traced).not_returned
     (monodromy_flip hole traced)
@@ -340,22 +340,22 @@ namespace LoopMonodromy.FramedBranchCellBank
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.FramedBranchCellBank
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
 
 /-- The actual ambient exterior recovers the degree-dependent monodromy at infinity, not an independently assigned
 compactification label. -/
 @[expose] def monodromy (bank : Branches.FramedBranchCellBank curve branches higher)
-    {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval (Cuts.Ambient curve).anchor)}
+    {owner : Owner (curve.polynomial.eval (Cuts.Ambient curve).anchor)}
     (traced : PreparedPathTrace.TracedPath bank.exterior.path owner) :
       LoopMonodromy bank.exterior owner :=
-  .ofTraced (Curves.Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt bank.toBranchCellBank _
+  .ofTraced (BranchCellBank.referenceAt bank.toBranchCellBank _
     ⟨bank.frame.xLower, bank.frame.yLower⟩) traced
     curve.polynomial.natDegree bank.exterior_winding
 
 /-- The original framed exterior loop flips sheets when the curve degree is twice the genus plus one. -/
 theorem monodromy_odd (bank : Branches.FramedBranchCellBank curve branches higher)
-    {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval (Cuts.Ambient curve).anchor)}
+    {owner : Owner (curve.polynomial.eval (Cuts.Ambient curve).anchor)}
     (traced : PreparedPathTrace.TracedPath bank.exterior.path owner) (degree : curve.polynomial.natDegree = 2 * genus +
       1) :
     (monodromy bank traced).flip = true := by
@@ -365,7 +365,7 @@ theorem monodromy_odd (bank : Branches.FramedBranchCellBank curve branches highe
 
 /-- The original framed exterior loop preserves sheets when the curve degree is twice the genus plus two. -/
 theorem monodromy_even (bank : Branches.FramedBranchCellBank curve branches higher)
-    {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval (Cuts.Ambient curve).anchor)}
+    {owner : Owner (curve.polynomial.eval (Cuts.Ambient curve).anchor)}
     (traced : PreparedPathTrace.TracedPath bank.exterior.path owner) (degree : curve.polynomial.natDegree = 2 * genus +
       2) :
     (monodromy bank traced).flip = false := by

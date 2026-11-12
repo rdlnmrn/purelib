@@ -733,3 +733,140 @@ public theorem sumValues_reverse {Item : Type} (value : Item → Data.Gaussian.B
 end Purelib.Polynomial.Geometry.Grid.CellBoundary
 
 end
+
+public section
+
+namespace Purelib.Polynomial.Geometry.Grid.ClearGrid.Cell
+
+variable {polynomial : ClearPath.GaussianPolynomial} {ambient :
+  Geometry.Rational.Box} {grid : ClearGrid polynomial
+  ambient}
+
+section
+open Purelib.Data.Gaussian
+open Purelib.Polynomial
+/-- The original cell's bottom grid edge, directed from lower left to lower right.
+
+The retained horizontal interval and lower vertical endpoint determine this directed edge. Their original
+grid-membership witnesses certify both original lower corners. -/
+@[expose] def bottomSide (cell : Cell polynomial ambient) (member : cell ∈ grid.cells) :
+    Walks.Edge grid cell.box.anchor (Components.Basic.point cell.box.xUpper cell.box.yLower) :=
+  let intervals := CellBoundary.Cell.intervals_mem cell member
+  .horizontal cell.horizontal intervals.1 cell.vertical.lower (Interval.endpoints_mem _
+    grid.horizontal_ordered intervals.2).1
+
+/-- The original cell's right grid edge, directed from lower right to upper right.
+
+The retained vertical interval and upper horizontal endpoint determine this directed edge. Their original
+grid-membership witnesses certify the original right-hand corners. -/
+@[expose] def rightSide (cell : Cell polynomial ambient) (member : cell ∈ grid.cells) :
+    Walks.Edge grid (Components.Basic.point cell.box.xUpper cell.box.yLower) (Components.Basic.point
+      cell.box.xUpper cell.box.yUpper) :=
+  let intervals := CellBoundary.Cell.intervals_mem cell member
+  .vertical cell.vertical intervals.2 cell.horizontal.upper (Interval.endpoints_mem _
+    grid.vertical_ordered intervals.1).2
+
+/-- The original cell's top grid edge, directed from upper right to upper left.
+
+The original horizontal edge at the upper vertical endpoint is reversed. Its retained interval and endpoint witnesses
+preserve the two upper corners and their orientation. -/
+@[expose] def topSide (cell : Cell polynomial ambient) (member : cell ∈ grid.cells) :
+    Walks.Edge grid (Components.Basic.point cell.box.xUpper cell.box.yUpper) (Components.Basic.point
+      cell.box.xLower cell.box.yUpper) :=
+  let intervals := CellBoundary.Cell.intervals_mem cell member
+  .reverse (.horizontal cell.horizontal intervals.1 cell.vertical.upper (Interval.endpoints_mem
+    _ grid.horizontal_ordered intervals.2).2)
+
+/-- The original cell's left grid edge, directed from upper left to lower left.
+
+The original vertical edge at the lower horizontal endpoint is reversed. Its retained interval and endpoint witnesses
+preserve the two left-hand corners and their orientation. -/
+@[expose] def leftSide (cell : Cell polynomial ambient) (member : cell ∈ grid.cells) :
+    Walks.Edge grid (Components.Basic.point cell.box.xLower cell.box.yUpper) cell.box.anchor :=
+  let intervals := CellBoundary.Cell.intervals_mem cell member
+  .reverse (.vertical cell.vertical intervals.2 cell.horizontal.lower (Interval.endpoints_mem _
+    grid.vertical_ordered intervals.1).1)
+
+end
+
+open Purelib.Polynomial in
+/-- The original cell boundary walk is exactly its bottom, right, top and left sides in order.
+
+The same retained cell supplies all four directed sides. Their original endpoint witnesses compose in
+bottom-right-top-left order and return to its exact anchor. -/
+theorem boundaryWalk_sides (cell : Cell polynomial ambient) (member : cell ∈ grid.cells) :
+    CellBoundary.Cell.boundaryWalk cell member = .cons (cell.bottomSide member) (.cons (cell.rightSide
+      member)
+      (.cons (cell.topSide member) (.cons (cell.leftSide member) (.nil cell.box.anchor)))) := rfl
+
+open Purelib.Data
+open Purelib.Data.Gaussian
+open Purelib.Data.List
+
+/-- Read one of the original four counterclockwise cell-corner coordinates. -/
+def cornerPoint (cell : ClearGrid.Cell polynomial ambient) : Fin 4 → Gaussian.Basic.Canonical :=
+  Fin.cases cell.box.anchor
+    (Fin.cases (Components.Basic.point cell.box.xUpper cell.box.yLower)
+      (Fin.cases (Components.Basic.point cell.box.xUpper cell.box.yUpper)
+        (Fin.cases (Components.Basic.point cell.box.xLower cell.box.yUpper) Fin.elim0)))
+
+/-- The first original corner is the lower-left anchor. -/
+theorem cornerPoint_zero (cell : ClearGrid.Cell polynomial ambient) : cell.cornerPoint 0 = cell.box.anchor := by rfl
+
+/-- The second original corner is lower right. -/
+theorem cornerPoint_one (cell : ClearGrid.Cell polynomial ambient) :
+    cell.cornerPoint 1 = Components.Basic.point cell.box.xUpper cell.box.yLower := by rfl
+
+/-- The third original corner is upper right. -/
+theorem cornerPoint_two (cell : ClearGrid.Cell polynomial ambient) :
+    cell.cornerPoint 2 = Components.Basic.point cell.box.xUpper cell.box.yUpper := by rfl
+
+/-- The fourth original corner is upper left. -/
+theorem cornerPoint_three (cell : ClearGrid.Cell polynomial ambient) :
+    cell.cornerPoint 3 = Components.Basic.point cell.box.xLower cell.box.yUpper := by rfl
+
+/-- Read the original boundary prefix at the SAME bounded corner occurrence.
+
+The retained endpoint and pure prefix metadata are the original generic
+walk-prefix result. No boundary edge, line payload or root row is rebuilt.
+-/
+@[expose] def cornerPrefix (cell : ClearGrid.Cell polynomial ambient) (member : cell ∈ grid.cells)
+    (corner : Fin 4) : (point : Gaussian.Basic.Canonical) × Walks.Walk grid cell.box.anchor point :=
+  (CellBoundary.Cell.boundaryWalk cell member).take ⟨corner.val, by
+    change corner.val < 5
+    exact Nat.lt_succ_of_lt corner.isLt⟩
+
+/-- The complete prefix is the original boundary's whole ordered prefix factory. -/
+theorem cornerPrefix_eq (cell : ClearGrid.Cell polynomial ambient) (member : cell ∈ grid.cells) (corner : Fin 4) :
+    cell.cornerPrefix member corner = (CellBoundary.Cell.boundaryWalk cell member).take
+      ⟨corner.val, by change corner.val < 5; exact Nat.lt_succ_of_lt corner.isLt⟩ := by rfl
+
+/-- The prefix endpoint is exactly its original bounded corner coordinate. -/
+theorem cornerPrefix_point (cell : ClearGrid.Cell polynomial ambient) (member : cell ∈ grid.cells) :
+    ∀ corner, (cell.cornerPrefix member corner).1 = cell.cornerPoint corner :=
+  Fin.cases
+    (by rfl)
+    (Fin.cases
+      (by rfl)
+      (Fin.cases
+        (by rfl)
+        (Fin.cases
+          (by rfl)
+          (fun index => Fin.elim0 index))))
+
+/-- Every original corner occurrence is an actual vertex of the SAME listed cell's grid. -/
+theorem corner_mem (cell : ClearGrid.Cell polynomial ambient) (member : cell ∈ grid.cells) :
+    ∀ corner, FromStates.ContainsVertex grid (cell.cornerPoint corner) := by
+  let intervals := CellBoundary.Cell.intervals_mem cell member
+  have horizontal := ClearGrid.Interval.endpoints_mem _ grid.vertical_ordered intervals.1
+  have vertical := ClearGrid.Interval.endpoints_mem _ grid.horizontal_ordered intervals.2
+  exact Fin.cases
+    ⟨Map.mem_map_of_mem horizontal.1, Map.mem_map_of_mem vertical.1⟩
+    (Fin.cases ⟨Map.mem_map_of_mem horizontal.2, Map.mem_map_of_mem vertical.1⟩
+      (Fin.cases ⟨Map.mem_map_of_mem horizontal.2, Map.mem_map_of_mem vertical.2⟩
+        (Fin.cases ⟨Map.mem_map_of_mem horizontal.1, Map.mem_map_of_mem vertical.2⟩
+          (fun index => Fin.elim0 index))))
+
+end Purelib.Polynomial.Geometry.Grid.ClearGrid.Cell
+
+end

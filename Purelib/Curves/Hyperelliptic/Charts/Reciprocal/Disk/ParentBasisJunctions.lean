@@ -35,72 +35,72 @@ open Purelib.Data.Gaussian.Basic.Canonical
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.JunctionRequests (BasisRequest)
 
-variable {genus count : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+variable {genus count : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap}
 
 /-- The dependent collection of homogeneous requests on the exact retained adjacent cell-owner links.
 
 Empty and singleton banks require no joining comparison; every longer bank retains the original head link and tail
 requests. -/
-def BasisJunctionRequests {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds
+def BasisJunctionRequests {bounds : ReciprocalPaddedInverse.UniformBounds
   regular.padded}
-    (basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds) (target :
+    (basis : ReciprocalPaddedBasisBounds.BasisBounds bounds) (target :
       Normalization.InverseRootPolynomial.Coordinate) (floor : Nat) :
     {edges : List Branches.ClearSheetContinuation.Subdivision.ParameterEdge} → {bank :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentBank.Bank regular data edges} → (owners :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank) →
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.Links owners → Type
+      ParentBank.Bank regular data edges} → (owners :
+      ParentOwners.Owners bank) →
+      ParentOwners.Owners.Links owners → Type
   | _, _, .nil, _ => PUnit
   | _, _, .cons _ .nil, _ => PUnit
-  | _, _, .cons _ (@Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.cons _ _ _ _ _ _ _ _ _ _ _ _ _
+  | _, _, .cons _ (@ParentOwners.Owners.cons _ _ _ _ _ _ _ _ _ _ _ _ _
     nextComparison _ next remaining), links =>
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.JunctionRequests.BasisRequest basis links.head target floor ×
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisJunctions.BasisJunctionRequests basis target
+      BasisRequest basis links.head target floor ×
+        ParentBasisJunctions.BasisJunctionRequests basis target
           floor (.cons (comparison := nextComparison) next remaining) links.tail
 
 namespace BasisJunctionRequests
 
-variable {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+variable {bounds : ReciprocalPaddedInverse.UniformBounds regular.padded}
 
 /-- Prepare a homogeneous comparison on every original adjacent cell-owner link using the shared positive target and
 reading floor. -/
-def build (basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds) (target :
+def build (basis : ReciprocalPaddedBasisBounds.BasisBounds bounds) (target :
   Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < target) (floor : Nat) :
     {edges : List Branches.ClearSheetContinuation.Subdivision.ParameterEdge} → {bank :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentBank.Bank regular data edges} → (owners :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank) →
-      (links : Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.Links owners) →
-        Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisJunctions.BasisJunctionRequests basis target floor owners links
+      ParentBank.Bank regular data edges} → (owners :
+      ParentOwners.Owners bank) →
+      (links : ParentOwners.Owners.Links owners) →
+        BasisJunctionRequests basis target floor owners links
   | _, _, .nil, _ => ⟨⟩
   | _, _, .cons _ .nil, _ => ⟨⟩
-  | _, _, .cons _ (@Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.cons _ _ _ _ _ _ _ _ _ _ _ _ _
+  | _, _, .cons _ (@ParentOwners.Owners.cons _ _ _ _ _ _ _ _ _ _ _ _ _
     nextComparison _ next remaining), links =>
       ⟨BasisRequest.build basis links.head target positive floor,
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisJunctions.BasisJunctionRequests.build basis
+        BasisJunctionRequests.build basis
           target positive floor (.cons (comparison := nextComparison) next remaining) links.tail⟩
 
-variable {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds} {target :
+variable {basis : ReciprocalPaddedBasisBounds.BasisBounds bounds} {target :
   Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
 
 /-- The finite maximum of all retained joining stages together with the original floor. -/
 def maximum : {edges : List Branches.ClearSheetContinuation.Subdivision.ParameterEdge} → {bank :
-  Hyperelliptic.Charts.Reciprocal.Disk.ParentBank.Bank regular data edges} → {owners :
-  Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank} →
-    {links : Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.Links owners} →
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisJunctions.BasisJunctionRequests basis target floor owners links →
+  ParentBank.Bank regular data edges} → {owners :
+  ParentOwners.Owners bank} →
+    {links : ParentOwners.Owners.Links owners} →
+      BasisJunctionRequests basis target floor owners links →
       Nat
   | _, _, .nil, _, _ => floor
   | _, _, .cons _ .nil, _, _ => floor
-  | _, _, .cons _ (@Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners.cons _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _), _,
+  | _, _, .cons _ (@ParentOwners.Owners.cons _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _), _,
     requests =>
       max requests.1.index
-        (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisJunctions.BasisJunctionRequests.maximum
+        (BasisJunctionRequests.maximum
         requests.2)
 
 end BasisJunctionRequests

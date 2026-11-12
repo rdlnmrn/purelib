@@ -1,4 +1,7 @@
 module
+import Purelib.Polynomial.Dense.Gaussian.Basic
+public import Purelib.Curves.Hyperelliptic.Differentials.OddPower.Ordinary
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContactRequests.Polynomial
 meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Gaussian.Norm.Basic
@@ -20,8 +23,8 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices
 import Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
 import Purelib.RootIsolation.SquareRoot.Grid.RootFrames
-public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContactRequests
-import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.SynchronizedPrimitives
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContactRequests
+public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.SynchronizedPrimitives
 public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshEdgeContainment
@@ -81,6 +84,7 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid
 
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
+open Purelib.Curves.Hyperelliptic.Differentials.OddPower.Basic.OddPowerDifferential (Ordinary)
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 open Purelib.Polynomial.Geometry.ClearPath (ClearSegment)
 open Purelib.Riemann.Paths.PreparedPathDecomposition (CoveredSegment)
@@ -231,6 +235,59 @@ theorem accurate (contact : Curves.Hyperelliptic.Meshes.PuncturedGrid.SegmentCon
     Data.Gaussian.Norm.Basic.normSq (first.location.sourceEdge.increment readings.values -
       last.location.sourceEdge.increment readings.values) < target :=
   contact.left.triangle_contact_accurate contact.right contact.left_domains contact.right_domains budget later readings
+
+/-- Select the genuine ordinary-polynomial face and source floors on the SAME retained contact geometry. -/
+def polynomialBudget (contact : SegmentContact first last piece differential parentSheet domains)
+    (ordinary : Ordinary curve.polynomial) (target : Coordinate) (positive : 0 < target) :
+    ContactBudget.PolynomialPreparation contact.left.entered contact.right.entered ordinary.val target positive :=
+  ContactBudget.preparePolynomial contact.left.entered contact.right.entered ordinary.val
+    ordinary.property target positive
+
+/-- The original common-model comparison consumes the two exact entries of the GIVEN shared polynomial bank. -/
+@[expose] def PolynomialComparison (contact : SegmentContact first last piece differential parentSheet domains)
+    {ordinary : Ordinary curve.polynomial} {target : Coordinate} {positive : 0 < target}
+    (retained : ContactBudget.PolynomialPreparation contact.left.entered contact.right.entered ordinary.val
+      target positive) {index : Nat}
+    (shared : FacePrimitiveBank differential index domains (numerator := ordinary.numerator)) : Type _ :=
+  ContactBudget.PolynomialComparison retained
+    (contact.left.sharedData shared contact.left_domains) (contact.right.sharedData shared contact.right_domains)
+
+/-- Construct one genuine common polynomial bank and both reading caches from the SAME supplied face primitives. -/
+def comparePolynomial (contact : SegmentContact first last piece differential parentSheet domains)
+    {ordinary : Ordinary curve.polynomial} {target : Coordinate} {positive : 0 < target}
+    (retained : ContactBudget.PolynomialPreparation contact.left.entered contact.right.entered ordinary.val
+      target positive) {index : Nat}
+    (shared : FacePrimitiveBank differential index domains (numerator := ordinary.numerator)) :
+    contact.PolynomialComparison retained shared :=
+  ContactBudget.comparePolynomial retained
+    (contact.left.sharedData shared contact.left_domains) (contact.right.sharedData shared contact.right_domains)
+
+/-- At every paid face stage the retained common polynomial comparison bounds the actual two source increments.
+
+The supplied comparison, including its common work, models, primitive constants and both entered-mesh readings, is
+consumed unchanged. Neither face geometry nor a numerical source cache is reconstructed in this proof.
+-/
+theorem polynomial_accurate (contact : SegmentContact first last piece differential parentSheet domains)
+    {ordinary : Ordinary curve.polynomial} {target : Coordinate} {positive : 0 < target}
+    (retained : ContactBudget.PolynomialPreparation contact.left.entered contact.right.entered ordinary.val
+      target positive) {index : Nat} (later : retained.budget.index ≤ index)
+    {shared : FacePrimitiveBank differential index domains (numerator := ordinary.numerator)}
+    (compared : contact.PolynomialComparison retained shared) (readings : TriangleReadings shared mesh) :
+    Data.Gaussian.Norm.Basic.normSq (first.location.sourceEdge.increment readings.values -
+      last.location.sourceEdge.increment readings.values) < target := by
+  have firstCoordinates := first.location.corner_coordinates
+  have lastCoordinates := last.location.corner_coordinates
+  have bounded := ContactBudget.PolynomialComparison.accurate
+    (retained := retained) (leftData := contact.left.sharedData shared contact.left_domains)
+    (rightData := contact.right.sharedData shared contact.right_domains) (later := later) compared
+    first.location.corners.start first.location.corners.finish last.location.corners.start last.location.corners.finish
+    ((congrArg Prod.fst firstCoordinates).trans first.start_eq)
+    ((congrArg Prod.snd firstCoordinates).trans first.finish_eq)
+    ((congrArg Prod.fst lastCoordinates).trans last.start_eq)
+    ((congrArg Prod.snd lastCoordinates).trans last.finish_eq)
+  rewrite [contact.left.sharedData_corners, contact.right.sharedData_corners] at bounded
+  rewrite [readings.route_increment, readings.route_increment]
+  exact bounded
 
 end SegmentContactRequests.SegmentContact
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid

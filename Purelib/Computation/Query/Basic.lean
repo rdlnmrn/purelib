@@ -45,6 +45,20 @@ structure Execution (Query : Type u) (Reply : Type v) (Value : Type w) where
 
 constructive_injectivity Execution
 
+namespace Execution
+
+/-- Executions agree when their original returned values and ordered traces agree separately. -/
+theorem ext {Query : Type u} {Reply : Type v} {Value : Type w}
+    {left right : Execution Query Reply Value}
+    (valueEq : left.value = right.value) (traceEq : left.trace = right.trace) : left = right := by
+  cases left
+  cases right
+  cases valueEq
+  cases traceEq
+  rfl
+
+end Execution
+
 /-- An oracle agrees with every recorded reply in a finite trace.
 
 Only query occurrences in the trace constrain the oracle. Repeated occurrences

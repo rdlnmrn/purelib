@@ -27,7 +27,7 @@ open Purelib.LinearAlgebra.Alternating.Bracket
 open scoped Purelib.Data.Nat
 attribute [local instance 2000] Purelib.Data.Nat.successorNeZero
   Purelib.Data.Nat.successorAtLeastTwo
-  Purelib.Algebra.Group.Negation.subNegZeroMonoid
+  Algebra.Group.Negation.subNegZeroMonoid
 
 section
 public section
@@ -43,7 +43,7 @@ antisymmetric product introduced for Theorem 83.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry.Triangles.Orthocenter.Formula
 
@@ -71,8 +71,8 @@ The definition computes the displayed quotients; noncollinearity certifies their
 @[expose] def orthocenterFormula (first second third : Plane.Point K) : Plane.Point K :=
   let denominator := Fin3.antisymmetricTripleProduct
     first.x second.x third.x first.y second.y third.y
-  ⟨Geometry.Triangles.Orthocenter.Formula.orthocenterXNumerator first second third / denominator,
-    Geometry.Triangles.Orthocenter.Formula.orthocenterYNumerator first second third / denominator⟩
+  ⟨orthocenterXNumerator first second third / denominator,
+    orthocenterYNumerator first second third / denominator⟩
 
 /-- The intersection-defined orthocenter equals the alternating-product coordinate formula.
 
@@ -83,24 +83,24 @@ theorem orthocenter_formula
     (firstThirdDistinct : first ≠ third)
     (secondThirdDistinct : second ≠ third)
     (notCollinear : ¬ Incidence.Collinear first second third) :
-    Orthocenter.Basic.orthocenterPoint first second third firstThirdDistinct
+    Basic.orthocenterPoint first second third firstThirdDistinct
         secondThirdDistinct notCollinear =
-      Orthocenter.Formula.orthocenterFormula first second third := by
+      orthocenterFormula first second third := by
   let determinant := Incidence.pointDeterminant first second third
-  let xNumerator := Geometry.Triangles.Orthocenter.Formula.orthocenterXNumerator first second third
-  let yNumerator := Geometry.Triangles.Orthocenter.Formula.orthocenterYNumerator first second third
+  let xNumerator := orthocenterXNumerator first second third
+  let yNumerator := orthocenterYNumerator first second third
   let firstAltitude :=
-    Orthocenter.Basic.triangleAltitudeFromFirst first second third secondThirdDistinct
+    Basic.triangleAltitudeFromFirst first second third secondThirdDistinct
   let secondAltitude :=
-    Orthocenter.Basic.triangleAltitudeFromSecond first second third firstThirdDistinct
+    Basic.triangleAltitudeFromSecond first second third firstThirdDistinct
   have determinantNonzero : determinant ≠ 0 := by
     intro determinantZero
     apply notCollinear
     exact (Incidence.collinear_iff_pointDeterminant_eq_zero first second third).2
       determinantZero
   have negativeDeterminantNonzero : -determinant ≠ 0 :=
-    (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] {value : K} (nonzero : value ≠ 0) =>
-      (Purelib.Algebra.Field.ExplicitField.neg_ne_zero_of_ne_zero (K := K) (value := value) nonzero : -value ≠ 0))
+    (fun {K : Type _} [ExplicitField K] {value : K} (nonzero : value ≠ 0) =>
+      (ExplicitField.neg_ne_zero_of_ne_zero (K := K) (value := value) nonzero : -value ≠ 0))
       determinantNonzero
   have antisymmetricDenominator :
       Fin3.antisymmetricTripleProduct
@@ -116,23 +116,23 @@ theorem orthocenter_formula
   have intersectionDenominator :
       firstAltitude.a * secondAltitude.b -
           secondAltitude.a * firstAltitude.b = -determinant := by
-    unfold firstAltitude secondAltitude Orthocenter.Basic.triangleAltitudeFromFirst
-      Orthocenter.Basic.triangleAltitudeFromSecond Construction.altitudeThrough Incidence.lineThrough determinant
+    unfold firstAltitude secondAltitude Basic.triangleAltitudeFromFirst
+      Basic.triangleAltitudeFromSecond Construction.altitudeThrough Incidence.lineThrough determinant
       Incidence.pointDeterminant
     ring1
   have intersectionXNumerator :
       firstAltitude.b * secondAltitude.c -
           secondAltitude.b * firstAltitude.c = -xNumerator := by
-    unfold firstAltitude secondAltitude Orthocenter.Basic.triangleAltitudeFromFirst
-      Orthocenter.Basic.triangleAltitudeFromSecond Construction.altitudeThrough Incidence.lineThrough xNumerator
-      Geometry.Triangles.Orthocenter.Formula.orthocenterXNumerator Fin3.antisymmetricTripleProduct
+    unfold firstAltitude secondAltitude Basic.triangleAltitudeFromFirst
+      Basic.triangleAltitudeFromSecond Construction.altitudeThrough Incidence.lineThrough xNumerator
+      orthocenterXNumerator Fin3.antisymmetricTripleProduct
     ring1
   have intersectionYNumerator :
       firstAltitude.c * secondAltitude.a -
           secondAltitude.c * firstAltitude.a = -yNumerator := by
-    unfold firstAltitude secondAltitude Orthocenter.Basic.triangleAltitudeFromFirst
-      Orthocenter.Basic.triangleAltitudeFromSecond Construction.altitudeThrough Incidence.lineThrough yNumerator
-      Geometry.Triangles.Orthocenter.Formula.orthocenterYNumerator Fin3.antisymmetricTripleProduct
+    unfold firstAltitude secondAltitude Basic.triangleAltitudeFromFirst
+      Basic.triangleAltitudeFromSecond Construction.altitudeThrough Incidence.lineThrough yNumerator
+      orthocenterYNumerator Fin3.antisymmetricTripleProduct
     ring1
   have xRatio :
       (-xNumerator) / (-determinant) =
@@ -152,17 +152,17 @@ theorem orthocenter_formula
       formulaDenominatorNonzero
     rw [antisymmetricDenominator]
     ring1
-  unfold Orthocenter.Basic.orthocenterPoint
+  unfold Basic.orthocenterPoint
   change Intersection.lineIntersection firstAltitude secondAltitude
-      (Orthocenter.Basic.triangle_altitudes_not_parallel first second third
+      (Basic.triangle_altitudes_not_parallel first second third
         firstThirdDistinct secondThirdDistinct notCollinear) =
-    Orthocenter.Formula.orthocenterFormula first second third
+    orthocenterFormula first second third
   apply Plane.Point.ext
-  · unfold Intersection.lineIntersection Orthocenter.Formula.orthocenterFormula
+  · unfold Intersection.lineIntersection orthocenterFormula
     dsimp only
     rw [intersectionXNumerator, intersectionDenominator]
     exact xRatio
-  · unfold Intersection.lineIntersection Orthocenter.Formula.orthocenterFormula
+  · unfold Intersection.lineIntersection orthocenterFormula
     dsimp only
     rw [intersectionYNumerator, intersectionDenominator]
     exact yRatio

@@ -1,4 +1,6 @@
 module
+import Purelib.Tactic.OperationalEquivalence
+public import Purelib.Polynomial.Multivariate.Gaussian.Normalization
 import Purelib.Approximation.Gaussian.Equivalence
 import Purelib.Approximation.Gaussian.Sequence.Name
 import Purelib.Approximation.Gaussian.Translation.Request
@@ -43,6 +45,7 @@ open Purelib.Data.Rat
 open Purelib.Examples.Approximation.Gaussian
 open Purelib.Data.CCL.Transducer
 open Purelib.Approximation.Gaussian.Name
+open Purelib.Approximation.Gaussian.Name.Coherent (CoherentNamed)
 
 /-! ## 2. Liouville factorial-position digits to a rational ball -/
 
@@ -110,6 +113,39 @@ def certifiedRoundTrip :
       Progressive.WorkedExamples.approximation :=
   Translation.CCL.Cursor.RoundTrip.certifiedApproximationCursorRoundTrip
     Progressive.WorkedExamples.approximation
+
+/-- The original coherent exponential input to both arithmetic comparisons. -/
+def sourceChannel : CoherentNamed :=
+  CoherentNamed.ofApproximation Progressive.WorkedExamples.approximation
+
+/-- The coherent reading of the same retained exponential cursor's sampled output. -/
+def translatedChannel : CoherentNamed :=
+  CoherentNamed.ofApproximation
+    (CCL.Cursor.Basic.CursorObservation.approximation Progressive.WorkedExamples.approximation.toNamed)
+
+/-- Doubling the original exponential agrees with doubling its retained translated channel. -/
+def sumRoundTrip : Equivalence.NamedEquivalent
+    (CoherentNamed.add sourceChannel sourceChannel).name
+    (CoherentNamed.add translatedChannel translatedChannel).name :=
+  certifiedRoundTrip.add_equivalent certifiedRoundTrip
+
+/-- Squaring the original exponential agrees with squaring its retained translated channel. -/
+def productRoundTrip : Equivalence.NamedEquivalent
+    (CoherentNamed.mul sourceChannel sourceChannel).name
+    (CoherentNamed.mul translatedChannel translatedChannel).name :=
+  certifiedRoundTrip.mul_equivalent certifiedRoundTrip
+
+/-- Expand an original exponential product through its actual retained cursor-translation comparison.
+
+The frontend consumes the original round-trip certificate and retains both
+source and translated channels, normalizing the supplied arithmetic identity
+without changing their numerical evaluators or prefix owners.
+-/
+def distributedRoundTrip : Equivalence.NamedEquivalent
+    (CoherentNamed.mul sourceChannel (CoherentNamed.add sourceChannel (CoherentNamed.Coherence.exact 1))).name
+    (CoherentNamed.add (CoherentNamed.mul translatedChannel translatedChannel) translatedChannel).name := by
+  have compared : Equivalence.NamedEquivalent sourceChannel.name translatedChannel.name := certifiedRoundTrip.named
+  ccl_equiv [compared]
 
 /-- The positive exponential cursor-translation tolerance one two-hundred-fifty-sixth. -/
 def finerRequest :

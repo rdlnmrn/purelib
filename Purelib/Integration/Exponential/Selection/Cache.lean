@@ -39,7 +39,7 @@ structure SelectionCache.Entry (policy : Policy) (schedule :
   /-- The lazy cached selection at this original stage index. -/ value : Thunk
     (Selection index)
   /-- Forcing the cache equals the canonical selection for the original policy and schedule. -/ value_eq : value.get =
-    Integration.Exponential.Selection.selection policy schedule index
+    selection policy schedule index
 
 constructive_injectivity SelectionCache.Entry
 
@@ -49,8 +49,8 @@ The thunk retains the original stage-zero geometry and depth search, with its de
 -/
 @[expose] def SelectionCache.first (policy : Policy) (schedule
   : PositiveStride) : SelectionCache.Entry policy schedule :=
-  ⟨0, ⟨fun _ => Integration.Exponential.Selection.select schedule (QuadraticWeight.Cache.Geometry.canonical
-    (Geometry.Policy.partitions policy 0)) 0 0⟩, rfl⟩
+  ⟨0, ⟨fun _ => select schedule (QuadraticWeight.Cache.Geometry.canonical
+    (Policy.partitions policy 0)) 0 0⟩, rfl⟩
 
 /-- Create the next lazy selection using the exact retained previous entry's cached depth.
 
@@ -60,13 +60,13 @@ selection. -/
   {schedule : PositiveStride}
     (entry : SelectionCache.Entry policy schedule) : SelectionCache.Entry policy schedule where
   index := entry.index + 1
-  value := ⟨fun _ => Integration.Exponential.Selection.select schedule
-    (QuadraticWeight.Cache.Geometry.canonical (Geometry.Policy.partitions policy (entry.index + 1)))
+  value := ⟨fun _ => select schedule
+    (QuadraticWeight.Cache.Geometry.canonical (Policy.partitions policy (entry.index + 1)))
     (entry.index + 1) entry.value.get.depth⟩
   value_eq := by
-    change Integration.Exponential.Selection.select schedule _ _ entry.value.get.depth =
-      Integration.Exponential.Selection.selection policy schedule (entry.index + 1)
-    rw [Integration.Exponential.Selection.selection, entry.value_eq]
+    change select schedule _ _ entry.value.get.depth =
+      selection policy schedule (entry.index + 1)
+    rw [selection, entry.value_eq]
 
 /-- Retain the requested number of consecutive lazy selection entries starting from the supplied original entry.
 
@@ -98,7 +98,7 @@ Equality transports only the index of the exact retained thunk value; the origin
 @[expose] def SelectionCache.read (policy : Policy) (schedule
   : PositiveStride) (index : Nat) :
     List (SelectionCache.Entry policy schedule) → Selection index
-  | [] => Integration.Exponential.Selection.selection policy schedule index
+  | [] => selection policy schedule index
   | entry :: rest =>
       if same : entry.index = index then same ▸ entry.value.get
       else SelectionCache.read policy schedule index rest
@@ -110,7 +110,7 @@ original tail lookup unchanged. -/
 theorem SelectionCache.read_eq (policy : Policy) (schedule :
   PositiveStride) (index : Nat)
     (entries : List (SelectionCache.Entry policy schedule)) :
-    SelectionCache.read policy schedule index entries = Integration.Exponential.Selection.selection policy
+    SelectionCache.read policy schedule index entries = selection policy
       schedule index := by
   induction entries with
   | nil => rfl

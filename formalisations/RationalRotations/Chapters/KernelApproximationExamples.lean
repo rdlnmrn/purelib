@@ -14,6 +14,10 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Geometry.Rotations.Rational.Kernel.Approximation
+open Purelib.Geometry.Rotations.Projective.Action
+open Purelib.Examples.Geometry.Rotations.QuaternionObstruction
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -40,12 +44,12 @@ abbrev Scalar := Fraction.Rational
 representative. -/
 def identitySource : Algebra.Quaternion.Projective.Basic.NonNullProportion Scalar :=
   Algebra.Quaternion.Projective.Basic.NonNullProportion.identity
-    Examples.Geometry.Rotations.QuaternionObstruction.ExampleSixtyFour.quarterTurn
+    ExampleSixtyFour.quarterTurn
 
 /-- A coordinate half-turn target. -/
 def halfTurnSource : Algebra.Quaternion.Projective.Basic.NonNullProportion Scalar where
   scalar := 0
-  vector := Examples.Geometry.Rotations.QuaternionObstruction.ExampleSixtyFour.axis
+  vector := ExampleSixtyFour.axis
   normNonzero := by
     change (1 : Scalar) ≠ 0
     decide
@@ -55,75 +59,75 @@ def genericSource : Algebra.Quaternion.Projective.Basic.NonNullProportion Scalar
 
 /-- A certified unit-kernel approximation of the identity with squared error radius 1/10. -/
 def identityTenth :=
-  Geometry.Rotations.Rational.Kernel.Approximation.KernelApproximation.kernelApproximation
-    (Geometry.Rotations.Projective.Action.NonNullProportion.rotation identitySource)
+  KernelApproximation.kernelApproximation
+    (NonNullProportion.rotation identitySource)
     ((1 : Scalar) / 10) (Fraction.Order.Field.div_pos_direct (by decide)
       (Fraction.Cast.Order.natCast_pos_direct (by decide)))
 
 /-- A certified unit-kernel approximation of the identity with squared error radius 1/100. -/
 def identityHundredth :=
-  Geometry.Rotations.Rational.Kernel.Approximation.KernelApproximation.kernelApproximation
-    (Geometry.Rotations.Projective.Action.NonNullProportion.rotation identitySource)
+  KernelApproximation.kernelApproximation
+    (NonNullProportion.rotation identitySource)
     ((1 : Scalar) / 100) (Fraction.Order.Field.div_pos_direct (by decide)
       (Fraction.Cast.Order.natCast_pos_direct (by decide)))
 
 /-- A certified unit-kernel approximation of the coordinate half-turn with squared error radius 1/10. -/
 def halfTurnTenth :=
-  Geometry.Rotations.Rational.Kernel.Approximation.KernelApproximation.kernelApproximation
-    (Geometry.Rotations.Projective.Action.NonNullProportion.rotation halfTurnSource)
+  KernelApproximation.kernelApproximation
+    (NonNullProportion.rotation halfTurnSource)
     ((1 : Scalar) / 10) (Fraction.Order.Field.div_pos_direct (by decide)
       (Fraction.Cast.Order.natCast_pos_direct (by decide)))
 
 /-- A certified unit-kernel approximation of the coordinate half-turn with squared error radius 1/100. -/
 def halfTurnHundredth :=
-  Geometry.Rotations.Rational.Kernel.Approximation.KernelApproximation.kernelApproximation
-    (Geometry.Rotations.Projective.Action.NonNullProportion.rotation halfTurnSource)
+  KernelApproximation.kernelApproximation
+    (NonNullProportion.rotation halfTurnSource)
     ((1 : Scalar) / 100) (Fraction.Order.Field.div_pos_direct (by decide)
       (Fraction.Cast.Order.natCast_pos_direct (by decide)))
 
 /-- A certified unit-kernel approximation of the quarter-turn with squared error radius 1/10. -/
 def quarterTurnTenth :=
-  Geometry.Rotations.Rational.Kernel.Approximation.KernelApproximation.kernelApproximation
-    (Geometry.Rotations.Projective.Action.NonNullProportion.rotation
-      Examples.Geometry.Rotations.QuaternionObstruction.ExampleSixtyFour.quarterTurn) ((1 : Scalar) / 10)
+  KernelApproximation.kernelApproximation
+    (NonNullProportion.rotation
+      ExampleSixtyFour.quarterTurn) ((1 : Scalar) / 10)
       (Fraction.Order.Field.div_pos_direct (by decide)
       (Fraction.Cast.Order.natCast_pos_direct (by decide)))
 
 /-- A certified unit-kernel approximation of the quarter-turn with squared error radius 1/100. -/
 def quarterTurnHundredth :=
-  Geometry.Rotations.Rational.Kernel.Approximation.KernelApproximation.kernelApproximation
-    (Geometry.Rotations.Projective.Action.NonNullProportion.rotation
-      Examples.Geometry.Rotations.QuaternionObstruction.ExampleSixtyFour.quarterTurn) ((1 : Scalar) / 100)
+  KernelApproximation.kernelApproximation
+    (NonNullProportion.rotation
+      ExampleSixtyFour.quarterTurn) ((1 : Scalar) / 100)
       (Fraction.Order.Field.div_pos_direct (by decide)
       (Fraction.Cast.Order.natCast_pos_direct (by decide)))
 
 /-- A certified unit-kernel approximation of the three-four-five rotation with squared error radius 1/10. -/
 def threeFourFiveTenth :=
-  Geometry.Rotations.Rational.Kernel.Approximation.KernelApproximation.kernelApproximation
-    (Geometry.Rotations.Projective.Action.NonNullProportion.rotation
-      Examples.Geometry.Rotations.QuaternionObstruction.ExampleSixtyFour.threeFourFive) ((1 : Scalar) / 10)
+  KernelApproximation.kernelApproximation
+    (NonNullProportion.rotation
+      ExampleSixtyFour.threeFourFive) ((1 : Scalar) / 10)
       (Fraction.Order.Field.div_pos_direct (by decide)
       (Fraction.Cast.Order.natCast_pos_direct (by decide)))
 
 /-- A certified unit-kernel approximation of the three-four-five rotation with squared error radius 1/100. -/
 def threeFourFiveHundredth :=
-  Geometry.Rotations.Rational.Kernel.Approximation.KernelApproximation.kernelApproximation
-    (Geometry.Rotations.Projective.Action.NonNullProportion.rotation
-      Examples.Geometry.Rotations.QuaternionObstruction.ExampleSixtyFour.threeFourFive) ((1 : Scalar) / 100)
+  KernelApproximation.kernelApproximation
+    (NonNullProportion.rotation
+      ExampleSixtyFour.threeFourFive) ((1 : Scalar) / 100)
       (Fraction.Order.Field.div_pos_direct (by decide)
       (Fraction.Cast.Order.natCast_pos_direct (by decide)))
 
 /-- A certified unit-kernel approximation of the rotation (2:1:2:3) with squared error radius 1/10. -/
 def genericTenth :=
-  Geometry.Rotations.Rational.Kernel.Approximation.KernelApproximation.kernelApproximation
-    (Geometry.Rotations.Projective.Action.NonNullProportion.rotation genericSource)
+  KernelApproximation.kernelApproximation
+    (NonNullProportion.rotation genericSource)
     ((1 : Scalar) / 10) (Fraction.Order.Field.div_pos_direct (by decide)
       (Fraction.Cast.Order.natCast_pos_direct (by decide)))
 
 /-- A certified unit-kernel approximation of the rotation (2:1:2:3) with squared error radius 1/100. -/
 def genericHundredth :=
-  Geometry.Rotations.Rational.Kernel.Approximation.KernelApproximation.kernelApproximation
-    (Geometry.Rotations.Projective.Action.NonNullProportion.rotation genericSource)
+  KernelApproximation.kernelApproximation
+    (NonNullProportion.rotation genericSource)
     ((1 : Scalar) / 100) (Fraction.Order.Field.div_pos_direct (by decide)
       (Fraction.Cast.Order.natCast_pos_direct (by decide)))
 

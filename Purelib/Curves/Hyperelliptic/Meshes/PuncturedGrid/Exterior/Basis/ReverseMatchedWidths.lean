@@ -92,56 +92,56 @@ open Purelib.Riemann.Paths.RectangularPairedSegments (PairedSegmentPiece)
 open Purelib.Riemann.Integration.RectangularAxisParameterRange (AxisParameterRange)
 open Purelib.Riemann.Integration.RectangularAxisParameterRange (AxisParameterRange)
 open Purelib.Data.Rat.Fraction.Compatibility
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential other :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential other :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
 
 open Purelib.Riemann.Periods.CenteredBilinearPath (Sample)
 open Purelib.Integration.Path.NoisyPathArea (LengthErrorBudget)
 open Purelib.Riemann.Paths.RectangularDyadicPairedTrace (dyadicCount)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
-variable {lc lr rc rr depth : Nat} {lg : Purelib.Riemann.Normalization.RectangularInverseModels.Geometry lc lr} {rg :
-  Purelib.Riemann.Normalization.RectangularInverseModels.Geometry rc rr}
-  {leftCuts : Purelib.Riemann.Paths.RectangularSegmentSplitting.GridCuts lg} {rightCuts :
-    Purelib.Riemann.Paths.RectangularSegmentSplitting.GridCuts rg} {leftBox rightBox :
-    Purelib.Geometry.Rational.Box}
-  {left : Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh leftCuts leftBox} {right :
-    Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh rightCuts rightBox}
+variable {lc lr rc rr depth : Nat} {lg : RectangularInverseModels.Geometry lc lr} {rg :
+  RectangularInverseModels.Geometry rc rr}
+  {leftCuts : GridCuts lg} {rightCuts :
+    GridCuts rg} {leftBox rightBox :
+    Geometry.Rational.Box}
+  {left : ObservationMesh leftCuts leftBox} {right :
+    ObservationMesh rightCuts rightBox}
 
 namespace ParentBlock
 section Horizontal
 variable {leftRow : Fin left.partition.y.intervals.length} {rightRow : Fin right.partition.y.intervals.length} {height :
-  Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {side : Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedHorizontalSide left right
+  Coordinate}
+  {side : MatchedHorizontalSide left right
     leftRow rightRow height}
   (trace : side.Trace depth) (column : Fin left.partition.x.intervals.length) {forward : Bool}
-  (block : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.ParentBlock occurrence false
+  (block : ParentBlock occurrence false
     forward (left.partition.x.intervals[column.val]'column.isLt))
 
-variable {covers : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers
-  (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent occurrence block.index)}
+variable {covers : BasisSourceCovers
+  (ParentBlocks.cacheParent occurrence block.index)}
   {sourceIndex faceIndex : Nat}
   {originals :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+    PrimitiveBank
     covers sourceIndex}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus} {data :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData occurrence faceIndex}
+    RowData occurrence faceIndex}
   (sourceFirst : occurrence.start.im = height) (sourceLast : occurrence.finish.im = height)
-  {allowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} (budget :
-    Purelib.Integration.Path.NoisyPathArea.LengthErrorBudget
-    (Purelib.Riemann.Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
+  {allowance : Coordinate} (budget :
+    LengthErrorBudget
+    (Riemann.Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
   (owners : OwnerRequest occurrence
     budget.tolerance) (later : owners.index ≤ faceIndex)
-  (original : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings data (fun
+  (original : OwnedReadings data (fun
     vertex => trace.point (trace.vertices.indexed vertex)))
 
 local notation "fragment" => block.horizontalFragment (originals := originals) (coefficients := coefficients)
@@ -149,7 +149,7 @@ local notation "fragment" => block.horizontalFragment (originals := originals) (
 
 /-- Reversal uses the same dyadic depth and the retained unit parent span. -/
 theorem horizontalFragment_reverseSourceWidth : (fragment).reverseSourceWidth ≤ (1 / 2 :
-  InverseRootPolynomial.Coordinate)^depth := by
+  Coordinate)^depth := by
   apply SourceSampleResampling.meshWidth_le _ false (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) depth)
   intro edge
   apply ParentParameters.dyadic_reverse_step_le (block.horizontalParameters trace column sourceFirst sourceLast)
@@ -164,28 +164,28 @@ theorem horizontalFragment_reverseSourceWidth : (fragment).reverseSourceWidth �
 end Horizontal
 section Vertical
 variable {leftColumn : Fin left.partition.x.intervals.length} {rightColumn : Fin right.partition.x.intervals.length}
-  {width : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {side : Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedVerticalSide left right
+  {width : Coordinate}
+  {side : MatchedVerticalSide left right
     leftColumn rightColumn width}
   (trace : side.Trace depth) (row : Fin left.partition.y.intervals.length) {forward : Bool}
-  (block : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.ParentBlock occurrence true
+  (block : ParentBlock occurrence true
     forward (left.partition.y.intervals[row.val]'row.isLt))
 
-variable {covers : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers
-  (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent occurrence block.index)}
+variable {covers : BasisSourceCovers
+  (ParentBlocks.cacheParent occurrence block.index)}
   {sourceIndex faceIndex : Nat}
   {originals :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+    PrimitiveBank
     covers sourceIndex}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus} {data :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData occurrence faceIndex}
+    RowData occurrence faceIndex}
   (sourceFirst : occurrence.start.re = width) (sourceLast : occurrence.finish.re = width)
-  {allowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} (budget :
-    Purelib.Integration.Path.NoisyPathArea.LengthErrorBudget
-    (Purelib.Riemann.Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
+  {allowance : Coordinate} (budget :
+    LengthErrorBudget
+    (Riemann.Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
   (owners : OwnerRequest occurrence
     budget.tolerance) (later : owners.index ≤ faceIndex)
-  (original : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings data (fun
+  (original : OwnedReadings data (fun
     vertex => trace.point (trace.vertices.indexed vertex)))
 
 local notation "fragment" => block.verticalFragment (originals := originals) (coefficients := coefficients)
@@ -193,7 +193,7 @@ local notation "fragment" => block.verticalFragment (originals := originals) (co
 
 /-- Reversal uses the same dyadic depth and the retained unit parent span. -/
 theorem verticalFragment_reverseSourceWidth : (fragment).reverseSourceWidth ≤ (1 / 2 :
-  InverseRootPolynomial.Coordinate)^depth := by
+  Coordinate)^depth := by
   apply SourceSampleResampling.meshWidth_le _ false (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) depth)
   intro edge
   apply ParentParameters.dyadic_reverse_step_le (block.verticalParameters trace row sourceFirst sourceLast)

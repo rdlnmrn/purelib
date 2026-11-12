@@ -25,36 +25,36 @@ open Purelib.Geometry
 theorem horizontalBoundary_add (values : Gaussian →
   PrimitivePoint) (offset : PrimitivePoint)
     (depth : Nat) (first last height : Coordinate) :
-    Rectangle.Partition.PreparedBoxBoundary.horizontalBoundary (fun point => (values point).add offset) depth first last
+    horizontalBoundary (fun point => (values point).add offset) depth first last
       height =
-      Rectangle.Partition.PreparedBoxBoundary.horizontalBoundary values depth first last height + edgeArea offset
+      horizontalBoundary values depth first last height + edgeArea offset
         (values ⟨last, height⟩) -
         edgeArea offset (values ⟨first, height⟩) := by
   induction depth generalizing first last with
-  | zero => simp only [Rectangle.Partition.PreparedBoxBoundary.horizontalBoundary, edgeArea, PrimitivePoint.add]; ring1
-  | succ depth ih => simp only [Rectangle.Partition.PreparedBoxBoundary.horizontalBoundary, ih]; ring1
+  | zero => simp only [horizontalBoundary, edgeArea, PrimitivePoint.add]; ring1
+  | succ depth ih => simp only [horizontalBoundary, ih]; ring1
 
 /-- Translating a vertical primitive boundary adds exactly the difference of its endpoint ribbons. -/
 theorem verticalBoundary_add (values : Gaussian →
   PrimitivePoint) (offset : PrimitivePoint)
     (depth : Nat) (first last horizontal : Coordinate) :
-    Rectangle.Partition.PreparedBoxBoundary.verticalBoundary (fun point => (values point).add offset) depth first last
+    verticalBoundary (fun point => (values point).add offset) depth first last
       horizontal =
-      Rectangle.Partition.PreparedBoxBoundary.verticalBoundary values depth first last horizontal + edgeArea offset
+      verticalBoundary values depth first last horizontal + edgeArea offset
         (values ⟨horizontal, last⟩) -
         edgeArea offset (values ⟨horizontal, first⟩) := by
   induction depth generalizing first last with
-  | zero => simp only [Rectangle.Partition.PreparedBoxBoundary.verticalBoundary, edgeArea, PrimitivePoint.add]; ring1
-  | succ depth ih => simp only [Rectangle.Partition.PreparedBoxBoundary.verticalBoundary, ih]; ring1
+  | zero => simp only [verticalBoundary, edgeArea, PrimitivePoint.add]; ring1
+  | succ depth ih => simp only [verticalBoundary, ih]; ring1
 
 /-- A constant primitive translation leaves the closed rectangular boundary area unchanged. -/
 theorem rectangleBoundary_add (values : Gaussian →
   PrimitivePoint) (offset : PrimitivePoint) (depth : Nat) (box : Box) :
-    Rectangle.Partition.PreparedBoxBoundary.rectangleBoundary (fun point => (values point).add offset) depth box =
-      Rectangle.Partition.PreparedBoxBoundary.rectangleBoundary values depth box := by
-  simp only [Rectangle.Partition.PreparedBoxBoundary.rectangleBoundary,
-    Rectangle.Partition.PreparedBoxBoundary.horizontalBoundary_add,
-    Rectangle.Partition.PreparedBoxBoundary.verticalBoundary_add]
+    rectangleBoundary (fun point => (values point).add offset) depth box =
+      rectangleBoundary values depth box := by
+  simp only [rectangleBoundary,
+    horizontalBoundary_add,
+    verticalBoundary_add]
   ring1
 
 /-- Pointwise equal primitive values have the same actual horizontal dyadic boundary sum.
@@ -64,14 +64,14 @@ ordered halves. -/
 theorem horizontalBoundary_congr {first last : Gaussian
   → PrimitivePoint} (equal : ∀ point, first point = last point)
     (depth : Nat) (lower upper height : Coordinate) :
-    Rectangle.Partition.PreparedBoxBoundary.horizontalBoundary first depth lower upper height =
-      Rectangle.Partition.PreparedBoxBoundary.horizontalBoundary last depth lower upper height := by
+    horizontalBoundary first depth lower upper height =
+      horizontalBoundary last depth lower upper height := by
   induction depth generalizing lower upper with
   | zero =>
-      simp only [Rectangle.Partition.PreparedBoxBoundary.horizontalBoundary, equal, -eq_self, -iff_self]
+      simp only [horizontalBoundary, equal, -eq_self, -iff_self]
       rfl
   | succ depth ih =>
-      simp only [Rectangle.Partition.PreparedBoxBoundary.horizontalBoundary, ih, -eq_self, -iff_self]
+      simp only [horizontalBoundary, ih, -eq_self, -iff_self]
       rfl
 
 /-- Pointwise equal primitive values have the same actual vertical dyadic boundary sum.
@@ -81,14 +81,14 @@ ordered halves. -/
 theorem verticalBoundary_congr {first last : Gaussian →
   PrimitivePoint} (equal : ∀ point, first point = last point)
     (depth : Nat) (lower upper horizontal : Coordinate) :
-    Rectangle.Partition.PreparedBoxBoundary.verticalBoundary first depth lower upper horizontal =
-      Rectangle.Partition.PreparedBoxBoundary.verticalBoundary last depth lower upper horizontal := by
+    verticalBoundary first depth lower upper horizontal =
+      verticalBoundary last depth lower upper horizontal := by
   induction depth generalizing lower upper with
   | zero =>
-      simp only [Rectangle.Partition.PreparedBoxBoundary.verticalBoundary, equal, -eq_self, -iff_self]
+      simp only [verticalBoundary, equal, -eq_self, -iff_self]
       rfl
   | succ depth ih =>
-      simp only [Rectangle.Partition.PreparedBoxBoundary.verticalBoundary, ih, -eq_self, -iff_self]
+      simp only [verticalBoundary, ih, -eq_self, -iff_self]
       rfl
 
 /-- Pointwise equal primitive values have the same closed dyadic rectangle boundary sum.
@@ -96,11 +96,11 @@ theorem verticalBoundary_congr {first last : Gaussian →
 The four original oriented side sums agree at the retained depth and rectangle coordinates. -/
 theorem rectangleBoundary_congr {first last : Gaussian →
   PrimitivePoint} (equal : ∀ point, first point = last point)
-    (depth : Nat) (box : Box) : Rectangle.Partition.PreparedBoxBoundary.rectangleBoundary first depth box =
-      Rectangle.Partition.PreparedBoxBoundary.rectangleBoundary last depth box := by
-  simp only [Rectangle.Partition.PreparedBoxBoundary.rectangleBoundary,
-    Rectangle.Partition.PreparedBoxBoundary.horizontalBoundary_congr equal,
-    Rectangle.Partition.PreparedBoxBoundary.verticalBoundary_congr equal, -eq_self, -iff_self]
+    (depth : Nat) (box : Box) : rectangleBoundary first depth box =
+      rectangleBoundary last depth box := by
+  simp only [rectangleBoundary,
+    horizontalBoundary_congr equal,
+    verticalBoundary_congr equal, -eq_self, -iff_self]
   rfl
 
 end Purelib.Geometry.Rectangle.Partition.PreparedBoxBoundary
@@ -131,8 +131,8 @@ theorem localBoundary_eq_of_translation
   induction pieces with
   | nil => rfl
   | cons column row refines tail ih =>
-      rw [Meshes.RectangularObservationMesh.ObservationPieces.localBoundary,
-        Meshes.RectangularObservationMesh.ObservationPieces.localBoundary,
+      rw [localBoundary,
+        localBoundary,
         Rectangle.Partition.PreparedBoxBoundary.rectangleBoundary_congr (equal column row),
         Rectangle.Partition.PreparedBoxBoundary.rectangleBoundary_add, ih]
 

@@ -57,17 +57,17 @@ the unit disk. -/
 theorem halfScaled_possible_quarter (input :
   Coherent.CoherentNamed)
     (domain : UnitDisk input.name)
-    {value : Data.Gaussian.Basic.Canonical}
+    {value : Basic.Canonical}
     (possible : (Dyadic.halfScaled input).name.process.Possible
       (Dyadic.halfScaled input).name.state value) :
-    Data.Gaussian.Norm.Basic.normSq value ≤ 1 / 4 := by
+    Norm.Basic.normSq value ≤ 1 / 4 := by
   rcases possible with ⟨scaleValue, sourceValue,
     scalePossible, sourcePossible, rfl⟩
   change scaleValue = Dyadic.dyadicHalf at scalePossible
   subst scaleValue
-  rw [Data.Gaussian.Norm.Basic.normSq_mul, Dyadic.normSq_dyadicHalf]
+  rw [Norm.Basic.normSq_mul, Dyadic.normSq_dyadicHalf]
   calc
-    (1 / 4 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq sourceValue ≤ (1 / 4 : Fraction.Rational) * 1
+    (1 / 4 : Fraction.Rational) * Norm.Basic.normSq sourceValue ≤ (1 / 4 : Fraction.Rational) * 1
       :=
       Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
         (domain.possible_unit sourcePossible) (by decide)
@@ -96,10 +96,10 @@ theorem halfScaledSelfSumUnitDisk (input :
     rcases possible with ⟨leftValue, rightValue,
       leftPossible, rightPossible, rfl⟩
     calc
-      Data.Gaussian.Norm.Basic.normSq (leftValue + rightValue) ≤
-          2 * (Data.Gaussian.Norm.Basic.normSq leftValue + Data.Gaussian.Norm.Basic.normSq rightValue)
+      Norm.Basic.normSq (leftValue + rightValue) ≤
+          2 * (Norm.Basic.normSq leftValue + Norm.Basic.normSq rightValue)
             :=
-        Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _
+        Norm.Bounds.normSq_add_le_two _ _
       _ ≤ 2 * ((1 / 4 : Fraction.Rational) + 1 / 4) :=
         Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add

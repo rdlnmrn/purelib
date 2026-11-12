@@ -20,6 +20,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data
 
 open Purelib.Data.Rat
@@ -49,22 +51,22 @@ A positive value records a strict advantage for the reference approximation. -/
 @[expose] def comparisonClearance
     (center : Gaussian.Basic.Canonical) (reference contender : GaussianInt.Pair.Basic.ConvergentPair) :
       Fraction.Rational :=
-  Best.Error.errorQuadrance center contender - Best.Error.errorQuadrance center reference
+  Error.errorQuadrance center contender - Error.errorQuadrance center reference
 
 /-- A strict reference advantage gives positive comparison clearance. -/
 theorem comparisonClearance_pos
     {center : Gaussian.Basic.Canonical} {reference contender : GaussianInt.Pair.Basic.ConvergentPair}
-    (strict : Best.Error.errorQuadrance center reference <
-      Best.Error.errorQuadrance center contender) :
+    (strict : Error.errorQuadrance center reference <
+      Error.errorQuadrance center contender) :
     0 < comparisonClearance center reference contender := by
-  exact Fraction.Order.Arithmetic.sub_pos_direct strict
+  exact Arithmetic.sub_pos_direct strict
 
 /-- A finite weight large enough to absorb the multiplicative slack in both
 weighted quadrance estimates. -/
 @[expose] def comparisonWeightNat
     (center : Gaussian.Basic.Canonical) (reference contender : GaussianInt.Pair.Basic.ConvergentPair) : Nat :=
-  Data.Rat.Rounding.Floor.ceilNat
-      (4 * (Best.Error.errorQuadrance center reference + 1) /
+  Rounding.Floor.ceilNat
+      (4 * (Error.errorQuadrance center reference + 1) /
         comparisonClearance center reference contender) + 1
 
 /-- The rational reading of the computed positive natural comparison weight.
@@ -111,34 +113,34 @@ bound. -/
 private theorem
   four_reference_lt_weight_mul_clearance
     {center : Gaussian.Basic.Canonical} {reference contender : GaussianInt.Pair.Basic.ConvergentPair}
-    (strict : Best.Error.errorQuadrance center reference <
-      Best.Error.errorQuadrance center contender) :
-    4 * (Best.Error.errorQuadrance center reference + 1) <
+    (strict : Error.errorQuadrance center reference <
+      Error.errorQuadrance center contender) :
+    4 * (Error.errorQuadrance center reference + 1) <
       comparisonWeight center reference contender *
         comparisonClearance center reference contender := by
   have clearancePositive := comparisonClearance_pos strict
   have numeratorNonnegative :
-      (0 : Fraction.Rational) ≤ 4 * (Best.Error.errorQuadrance center reference + 1) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      (0 : Fraction.Rational) ≤ 4 * (Error.errorQuadrance center reference + 1) :=
+    Arithmetic.mul_nonneg_direct (by decide)
       (add_nonneg
         (Gaussian.Norm.Basic.normSq_nonneg _)
         (by decide))
   have ratioNonnegative :
       (0 : Fraction.Rational) ≤
-        4 * (Best.Error.errorQuadrance center reference + 1) /
+        4 * (Error.errorQuadrance center reference + 1) /
           comparisonClearance center reference contender :=
-    Fraction.Order.Field.div_nonneg_direct numeratorNonnegative
+    Field.div_nonneg_direct numeratorNonnegative
       clearancePositive.le
   have ratioLeCeiling :
-      4 * (Best.Error.errorQuadrance center reference + 1) /
+      4 * (Error.errorQuadrance center reference + 1) /
           comparisonClearance center reference contender ≤
-        (Data.Rat.Rounding.Floor.ceilNat
-          (4 * (Best.Error.errorQuadrance center reference + 1) /
+        (Rounding.Floor.ceilNat
+          (4 * (Error.errorQuadrance center reference + 1) /
             comparisonClearance center reference contender) : Fraction.Rational) :=
-    Data.Rat.Rounding.Floor.le_natCast_ceilNat_of_nonneg ratioNonnegative
+    Rounding.Floor.le_natCast_ceilNat_of_nonneg ratioNonnegative
   have ceilingLtWeight :
-      (Data.Rat.Rounding.Floor.ceilNat
-          (4 * (Best.Error.errorQuadrance center reference + 1) /
+      (Rounding.Floor.ceilNat
+          (4 * (Error.errorQuadrance center reference + 1) /
             comparisonClearance center reference contender) : Fraction.Rational) <
         comparisonWeight center reference contender := by
     rewrite [comparisonWeight_eq_cast]
@@ -146,7 +148,7 @@ private theorem
     unfold comparisonWeightNat
     exact Nat.lt_add_one_iff.mpr (Nat.le_refl _)
   have ratioLtWeight := ratioLeCeiling.trans_lt ceilingLtWeight
-  exact (Fraction.Order.Field.div_lt_iff_pos clearancePositive).1
+  exact (Field.div_lt_iff_pos clearancePositive).1
     ratioLtWeight
 
 /-- Positive strictness left after compensating for the two weighted
@@ -155,20 +157,20 @@ quadrance normalizations. -/
     (center : Gaussian.Basic.Canonical) (reference contender : GaussianInt.Pair.Basic.ConvergentPair) :
       Fraction.Rational :=
   comparisonWeight center reference contender ^ 2 *
-      Best.Error.errorQuadrance center contender -
+      Error.errorQuadrance center contender -
     (1 + comparisonWeight center reference contender) ^ 2 *
-      Best.Error.errorQuadrance center reference
+      Error.errorQuadrance center reference
 
 /-- A strict center comparison gives a positive weighted comparison margin.
 
 The ceiling weight compensates for both weighted quadrance normalizations without changing either approximation pair. -/
 theorem comparisonMargin_pos
     {center : Gaussian.Basic.Canonical} {reference contender : GaussianInt.Pair.Basic.ConvergentPair}
-    (strict : Best.Error.errorQuadrance center reference <
-      Best.Error.errorQuadrance center contender) :
+    (strict : Error.errorQuadrance center reference <
+      Error.errorQuadrance center contender) :
     0 < comparisonMargin center reference contender := by
-  let referenceNorm := Best.Error.errorQuadrance center reference
-  let contenderNorm := Best.Error.errorQuadrance center contender
+  let referenceNorm := Error.errorQuadrance center reference
+  let contenderNorm := Error.errorQuadrance center contender
   let clearance := comparisonClearance center reference contender
   let weight := comparisonWeight center reference contender
   have referenceNonnegative : 0 ≤ referenceNorm :=
@@ -184,20 +186,20 @@ theorem comparisonMargin_pos
       (1 : Fraction.Rational) ≤ weight := oneLeWeight
       _ = 1 * weight := by ring1
       _ ≤ 2 * weight :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           (by decide) weightPositive.le
   have twoWeightMinusOneNonnegative : 0 ≤ 2 * weight - 1 :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct oneLeTwoWeight
+    Arithmetic.sub_nonneg_direct oneLeTwoWeight
   have shortGapPositive :
       0 < (2 * weight - 1) * referenceNorm + 4 * weight := by
-    exact Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
+    exact Arithmetic.add_pos_of_nonneg_of_pos_direct
+      (Arithmetic.mul_nonneg_direct
         twoWeightMinusOneNonnegative referenceNonnegative)
-      (Fraction.Order.Arithmetic.mul_pos_direct (by decide) weightPositive)
+      (Arithmetic.mul_pos_direct (by decide) weightPositive)
   have shortBound :
       (2 * weight + 1) * referenceNorm <
         4 * weight * (referenceNorm + 1) := by
-    apply Fraction.Order.Arithmetic.lt_of_sub_pos_direct
+    apply Arithmetic.lt_of_sub_pos_direct
     calc
       (0 : Fraction.Rational) <
           (2 * weight - 1) * referenceNorm + 4 * weight :=
@@ -207,7 +209,7 @@ theorem comparisonMargin_pos
   have weightedClearance :
       4 * weight * (referenceNorm + 1) < weight ^ 2 * clearance := by
     have scaled :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct weightPositive
+      Arithmetic.mul_lt_mul_of_pos_left_direct weightPositive
         (show 4 * (referenceNorm + 1) < weight * clearance by
           simpa only [-eq_self, -iff_self, referenceNorm, clearance, weight] using
             four_reference_lt_weight_mul_clearance strict)
@@ -224,7 +226,7 @@ theorem comparisonMargin_pos
           weight ^ 2 * referenceNorm +
             (2 * weight + 1) * referenceNorm := by ring1
       _ < weight ^ 2 * referenceNorm + weight ^ 2 * clearance :=
-        Fraction.Order.Arithmetic.add_lt_add_left_direct
+        Arithmetic.add_lt_add_left_direct
           (shortBound.trans weightedClearance) _
       _ = weight ^ 2 * contenderNorm := by
         dsimp only [clearance, comparisonClearance, referenceNorm,
@@ -232,7 +234,7 @@ theorem comparisonMargin_pos
         ring1
   unfold comparisonMargin
   simpa only [-eq_self, -iff_self, referenceNorm, contenderNorm, weight] using
-    Fraction.Order.Arithmetic.sub_pos_direct baselineStrict
+    Arithmetic.sub_pos_direct baselineStrict
 
 /-- Coefficient converting squared source displacement into the two
 weighted perturbation losses.
@@ -244,9 +246,9 @@ readings, preserving the original weight and each original denominator. -/
       Fraction.Rational :=
   let weight := comparisonWeight center reference contender
   weight * (1 + weight) ^ 2 *
-      Fraction.Cast.fromInt (Best.Error.denominatorQuadrance reference : Int) +
+      Fraction.Cast.fromInt (Error.denominatorQuadrance reference : Int) +
     weight ^ 2 * (1 + weight) *
-      Fraction.Cast.fromInt (Best.Error.denominatorQuadrance contender : Int)
+      Fraction.Cast.fromInt (Error.denominatorQuadrance contender : Int)
 
 /-- The direct coefficient equals the expression using the original natural casts. -/
 theorem comparisonCoefficient_eq_cast
@@ -254,9 +256,9 @@ theorem comparisonCoefficient_eq_cast
     comparisonCoefficient center reference contender =
       let weight := comparisonWeight center reference contender
       weight * (1 + weight) ^ 2 *
-          (Best.Error.denominatorQuadrance reference : Fraction.Rational) +
+          (Error.denominatorQuadrance reference : Fraction.Rational) +
         weight ^ 2 * (1 + weight) *
-          (Best.Error.denominatorQuadrance contender : Fraction.Rational) := by
+          (Error.denominatorQuadrance contender : Fraction.Rational) := by
   unfold comparisonCoefficient
   rewrite [Fraction.Cast.natCast_eq_fromInt, Fraction.Cast.natCast_eq_fromInt]
   rfl
@@ -273,14 +275,14 @@ theorem comparisonCoefficient_nonneg
   rewrite [comparisonCoefficient_eq_cast]
   dsimp only [weight]
   exact add_nonneg
-    (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct weightNonnegative
-        (Fraction.Order.Arithmetic.pow_nonneg_direct
+    (Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct weightNonnegative
+        (Arithmetic.pow_nonneg_direct
           onePlusWeightNonnegative 2))
       (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Fraction.Order.Arithmetic.pow_nonneg_direct weightNonnegative 2)
+    (Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct
+        (Arithmetic.pow_nonneg_direct weightNonnegative 2)
         onePlusWeightNonnegative)
       (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)))
 
@@ -295,11 +297,11 @@ error comparison. -/
 /-- A strict center comparison gives a positive computed squared-distance budget. -/
 theorem comparisonDistanceSq_pos
     {center : Gaussian.Basic.Canonical} {reference contender : GaussianInt.Pair.Basic.ConvergentPair}
-    (strict : Best.Error.errorQuadrance center reference <
-      Best.Error.errorQuadrance center contender) :
+    (strict : Error.errorQuadrance center reference <
+      Error.errorQuadrance center contender) :
     0 < comparisonDistanceSq center reference contender := by
   unfold comparisonDistanceSq
-  exact Fraction.Order.Field.div_pos_direct
+  exact Field.div_pos_direct
     (comparisonMargin_pos strict)
     ((show (0 : Fraction.Rational) < 1 by decide).trans_le
       (le_add_of_nonneg_right
@@ -308,10 +310,10 @@ theorem comparisonDistanceSq_pos
 /-- Subtracting the denominator-scaled source displacement recovers the center error. -/
 private theorem exact_error_sum_identity
     (center sample : Gaussian.Basic.Canonical) (pair : GaussianInt.Pair.Basic.ConvergentPair) :
-    Best.Error.error sample pair +
-        -((sample - center) * Purelib.Data.GaussianInt.toGaussian pair.denominator) =
-      Best.Error.error center pair := by
-  rw [Best.Error.error_perturbation_identity]
+    Error.error sample pair +
+        -((sample - center) * GaussianInt.toGaussian pair.denominator) =
+      Error.error center pair := by
+  rw [Error.error_perturbation_identity]
   apply Gaussian.Basic.ext <;>
     simp only [-eq_self, -iff_self, Gaussian.Basic.add_re,
       Gaussian.Basic.add_im,
@@ -322,10 +324,10 @@ private theorem exact_error_sum_identity
 /-- The error perturbation quadrance is source displacement quadrance times denominator quadrance. -/
 private theorem perturbation_normSq
     (center sample : Gaussian.Basic.Canonical) (pair : GaussianInt.Pair.Basic.ConvergentPair) :
-    Data.Gaussian.Norm.Basic.normSq
-        ((sample - center) * Purelib.Data.GaussianInt.toGaussian pair.denominator) =
-      Data.Gaussian.Norm.Basic.normSq (sample - center) *
-        (Best.Error.denominatorQuadrance pair : Fraction.Rational) := by
+    Gaussian.Norm.Basic.normSq
+        ((sample - center) * GaussianInt.toGaussian pair.denominator) =
+      Gaussian.Norm.Basic.normSq (sample - center) *
+        (Error.denominatorQuadrance pair : Fraction.Rational) := by
   rw [Gaussian.Norm.Basic.normSq_mul, GaussianInt.normSq_toGaussian]
   rfl
 
@@ -333,31 +335,31 @@ private theorem perturbation_normSq
 the supplied strict error comparison. -/
 theorem errorQuadrance_lt_of_distance
     {center sample : Gaussian.Basic.Canonical} {reference contender : GaussianInt.Pair.Basic.ConvergentPair}
-    (_strict : Best.Error.errorQuadrance center reference <
-      Best.Error.errorQuadrance center contender)
+    (_strict : Error.errorQuadrance center reference <
+      Error.errorQuadrance center contender)
     (distanceSmall :
-      Data.Gaussian.Norm.Basic.normSq (sample - center) <
+      Gaussian.Norm.Basic.normSq (sample - center) <
         comparisonDistanceSq center reference contender) :
-    Best.Error.errorQuadrance sample reference < Best.Error.errorQuadrance sample contender := by
+    Error.errorQuadrance sample reference < Error.errorQuadrance sample contender := by
   let weight := comparisonWeight center reference contender
-  let referenceExact := Best.Error.error center reference
-  let contenderExact := Best.Error.error center contender
-  let referenceSample := Best.Error.error sample reference
-  let contenderSample := Best.Error.error sample contender
+  let referenceExact := Error.error center reference
+  let contenderExact := Error.error center contender
+  let referenceSample := Error.error sample reference
+  let contenderSample := Error.error sample contender
   let referencePerturbation :=
     (sample - center) * GaussianInt.toGaussian reference.denominator
   let contenderPerturbation :=
     (sample - center) * GaussianInt.toGaussian contender.denominator
   let distance :=
-    Data.Gaussian.Norm.Basic.normSq (sample - center)
+    Gaussian.Norm.Basic.normSq (sample - center)
   let coefficient := comparisonCoefficient center reference contender
   let margin := comparisonMargin center reference contender
   let referenceLoss :=
     weight * (1 + weight) ^ 2 *
-      Data.Gaussian.Norm.Basic.normSq referencePerturbation
+      Gaussian.Norm.Basic.normSq referencePerturbation
   let contenderLoss :=
     weight ^ 2 * (1 + weight) *
-      Data.Gaussian.Norm.Basic.normSq contenderPerturbation
+      Gaussian.Norm.Basic.normSq contenderPerturbation
   have weightPositive : 0 < weight := by
     simpa only [-eq_self, -iff_self, weight] using
       comparisonWeight_pos center reference contender
@@ -370,12 +372,12 @@ theorem errorQuadrance_lt_of_distance
   have lossIdentity :
       referenceLoss + contenderLoss = coefficient * distance := by
     dsimp only [referenceLoss, contenderLoss]
-    rw [show Data.Gaussian.Norm.Basic.normSq referencePerturbation =
-          distance * (Best.Error.denominatorQuadrance reference : Fraction.Rational) by
+    rw [show Gaussian.Norm.Basic.normSq referencePerturbation =
+          distance * (Error.denominatorQuadrance reference : Fraction.Rational) by
         dsimp only [referencePerturbation, distance]
         exact perturbation_normSq center sample reference,
-      show Data.Gaussian.Norm.Basic.normSq contenderPerturbation =
-          distance * (Best.Error.denominatorQuadrance contender : Fraction.Rational) by
+      show Gaussian.Norm.Basic.normSq contenderPerturbation =
+          distance * (Error.denominatorQuadrance contender : Fraction.Rational) by
         dsimp only [contenderPerturbation, distance]
         exact perturbation_normSq center sample contender]
     dsimp only [coefficient, distance]
@@ -387,7 +389,7 @@ theorem errorQuadrance_lt_of_distance
       (show (0 : Fraction.Rational) < 1 by decide).trans_le
         (le_add_of_nonneg_right coefficientNonnegative)
     have scaledDistance :=
-      (Fraction.Order.Field.lt_div_iff_pos denominatorPositive).1
+      (Field.lt_div_iff_pos denominatorPositive).1
         (show distance < margin / (1 + coefficient) by
           simpa only [-eq_self, -iff_self, distance, margin, coefficient,
             comparisonDistanceSq]
@@ -395,7 +397,7 @@ theorem errorQuadrance_lt_of_distance
     rw [lossIdentity]
     calc
       coefficient * distance ≤ (1 + coefficient) * distance :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           (le_add_of_nonneg_left (by decide))
           (Gaussian.Norm.Basic.normSq_nonneg _)
       _ = distance * (1 + coefficient) := by ring1
@@ -404,115 +406,115 @@ theorem errorQuadrance_lt_of_distance
     referenceExact referencePerturbation 1 weight
   have referenceBound :
       weight * (1 + weight) *
-          Data.Gaussian.Norm.Basic.normSq referenceSample ≤
+          Gaussian.Norm.Basic.normSq referenceSample ≤
         (1 + weight) ^ 2 *
-            Data.Gaussian.Norm.Basic.normSq referenceExact +
+            Gaussian.Norm.Basic.normSq referenceExact +
           referenceLoss := by
-    rw [← Best.Error.error_perturbation_identity center sample reference] at weightedReference
+    rw [← Error.error_perturbation_identity center sample reference] at weightedReference
     have scaled :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         weightedReference onePlusWeightPositive.le
     dsimp only [referenceLoss]
     calc
       weight * (1 + weight) *
-          Data.Gaussian.Norm.Basic.normSq referenceSample =
+          Gaussian.Norm.Basic.normSq referenceSample =
         (1 + weight) *
           (1 * weight *
-            Data.Gaussian.Norm.Basic.normSq referenceSample) := by
+            Gaussian.Norm.Basic.normSq referenceSample) := by
           ring1
       _ ≤ (1 + weight) *
           (1 * (1 + weight) *
-              Data.Gaussian.Norm.Basic.normSq referenceExact +
+              Gaussian.Norm.Basic.normSq referenceExact +
             weight * (1 + weight) *
-              Data.Gaussian.Norm.Basic.normSq
+              Gaussian.Norm.Basic.normSq
                 referencePerturbation) := scaled
       _ = (1 + weight) ^ 2 *
-            Data.Gaussian.Norm.Basic.normSq referenceExact +
+            Gaussian.Norm.Basic.normSq referenceExact +
           weight * (1 + weight) ^ 2 *
-            Data.Gaussian.Norm.Basic.normSq
+            Gaussian.Norm.Basic.normSq
               referencePerturbation := by ring1
   have weightedContender := Gaussian.Norm.Weighted.weighted_normSq_add_le
     contenderSample (-contenderPerturbation) 1 weight
   have contenderBound :
       weight ^ 2 *
-          Data.Gaussian.Norm.Basic.normSq contenderExact ≤
+          Gaussian.Norm.Basic.normSq contenderExact ≤
         weight * (1 + weight) *
-            Data.Gaussian.Norm.Basic.normSq contenderSample +
+            Gaussian.Norm.Basic.normSq contenderSample +
           contenderLoss := by
     rw [exact_error_sum_identity center sample contender,
       Gaussian.Norm.Basic.normSq_neg] at weightedContender
     have scaled :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         weightedContender weightPositive.le
     dsimp only [contenderLoss]
     calc
       weight ^ 2 *
-          Data.Gaussian.Norm.Basic.normSq contenderExact =
+          Gaussian.Norm.Basic.normSq contenderExact =
         weight *
           (1 * weight *
-            Data.Gaussian.Norm.Basic.normSq contenderExact) := by
+            Gaussian.Norm.Basic.normSq contenderExact) := by
           ring1
       _ ≤ weight *
           (1 * (1 + weight) *
-              Data.Gaussian.Norm.Basic.normSq contenderSample +
+              Gaussian.Norm.Basic.normSq contenderSample +
             weight * (1 + weight) *
-              Data.Gaussian.Norm.Basic.normSq
+              Gaussian.Norm.Basic.normSq
                 contenderPerturbation) := scaled
       _ = weight * (1 + weight) *
-            Data.Gaussian.Norm.Basic.normSq contenderSample +
+            Gaussian.Norm.Basic.normSq contenderSample +
           weight ^ 2 * (1 + weight) *
-            Data.Gaussian.Norm.Basic.normSq
+            Gaussian.Norm.Basic.normSq
               contenderPerturbation := by ring1
   have referenceWithContenderLoss :
       weight * (1 + weight) *
-            Data.Gaussian.Norm.Basic.normSq referenceSample +
+            Gaussian.Norm.Basic.normSq referenceSample +
           contenderLoss <
         weight ^ 2 *
-          Data.Gaussian.Norm.Basic.normSq contenderExact := by
+          Gaussian.Norm.Basic.normSq contenderExact := by
     calc
       weight * (1 + weight) *
-            Data.Gaussian.Norm.Basic.normSq referenceSample +
+            Gaussian.Norm.Basic.normSq referenceSample +
           contenderLoss ≤
         ((1 + weight) ^ 2 *
-            Data.Gaussian.Norm.Basic.normSq referenceExact +
+            Gaussian.Norm.Basic.normSq referenceExact +
           referenceLoss) + contenderLoss :=
-        Fraction.Order.Arithmetic.add_le_add_direct referenceBound (le_refl _)
+        Arithmetic.add_le_add_direct referenceBound (le_refl _)
       _ = (1 + weight) ^ 2 *
-            Data.Gaussian.Norm.Basic.normSq referenceExact +
+            Gaussian.Norm.Basic.normSq referenceExact +
           (referenceLoss + contenderLoss) := by ring1
       _ < (1 + weight) ^ 2 *
-            Data.Gaussian.Norm.Basic.normSq referenceExact +
+            Gaussian.Norm.Basic.normSq referenceExact +
           margin :=
-        Fraction.Order.Arithmetic.add_lt_add_left_direct lossLtMargin _
+        Arithmetic.add_lt_add_left_direct lossLtMargin _
       _ = weight ^ 2 *
-          Data.Gaussian.Norm.Basic.normSq contenderExact := by
+          Gaussian.Norm.Basic.normSq contenderExact := by
         dsimp only [margin, comparisonMargin, referenceExact,
           contenderExact]
-        unfold Best.Error.errorQuadrance
+        unfold Error.errorQuadrance
         ring1
   have scaledSampleStrict :
       weight * (1 + weight) *
-          Data.Gaussian.Norm.Basic.normSq referenceSample <
+          Gaussian.Norm.Basic.normSq referenceSample <
         weight * (1 + weight) *
-          Data.Gaussian.Norm.Basic.normSq contenderSample := by
+          Gaussian.Norm.Basic.normSq contenderSample := by
     have withLoss := referenceWithContenderLoss.trans_le contenderBound
     have cancelled :=
-      Fraction.Order.Arithmetic.lt_of_add_lt_add_right_direct withLoss
+      Arithmetic.lt_of_add_lt_add_right_direct withLoss
     simpa only using cancelled
-  unfold Best.Error.errorQuadrance
-  apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+  unfold Error.errorQuadrance
+  apply Arithmetic.lt_of_mul_lt_mul_right_direct
     (c := weight * (1 + weight))
   · calc
-      Data.Gaussian.Norm.Basic.normSq referenceSample *
+      Gaussian.Norm.Basic.normSq referenceSample *
           (weight * (1 + weight)) =
         weight * (1 + weight) *
-          Data.Gaussian.Norm.Basic.normSq referenceSample := by ring1
+          Gaussian.Norm.Basic.normSq referenceSample := by ring1
       _ < weight * (1 + weight) *
-          Data.Gaussian.Norm.Basic.normSq contenderSample :=
+          Gaussian.Norm.Basic.normSq contenderSample :=
         scaledSampleStrict
-      _ = Data.Gaussian.Norm.Basic.normSq contenderSample *
+      _ = Gaussian.Norm.Basic.normSq contenderSample *
           (weight * (1 + weight)) := by ring1
-  · exact Fraction.Order.Arithmetic.mul_pos_direct weightPositive
+  · exact Arithmetic.mul_pos_direct weightPositive
       onePlusWeightPositive
 
 end Purelib.NumberTheory.Approximation.Best.Stability.ErrorComparison

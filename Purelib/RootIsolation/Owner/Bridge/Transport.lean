@@ -1,6 +1,7 @@
 module
 import Purelib.Polynomial.Dense.Gaussian.Basic
 public import Purelib.RootIsolation.Owner.Bridge.Basic
+public import Purelib.RootIsolation.Owner.Local.Transport
 import Purelib.Data.Rat.Fraction
 import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Polynomial.Clearance.Box.Boundary.Basic
@@ -51,6 +52,24 @@ def cast {left left' right right' :
     (bridge.cast leftSame rightSame).box = bridge.box := by
   subst left'
   subst right'
+  rfl
+
+/-- Reindexing an owner bridge retains its complete original left owner under the same polynomial cast. -/
+theorem cast_leftOwner {left left' right right' : CoefficientPolynomial}
+    (leftSame : left = left') (rightSame : right = right')
+    (bridge : Owner.Bridge.Basic.OwnerBridge left right) :
+    (bridge.cast leftSame rightSame).leftOwner = Owner.Local.Transport.castOwner leftSame bridge.leftOwner := by
+  cases leftSame
+  cases rightSame
+  rfl
+
+/-- Reindexing an owner bridge retains its complete original right owner under the same polynomial cast. -/
+theorem cast_rightOwner {left left' right right' : CoefficientPolynomial}
+    (leftSame : left = left') (rightSame : right = right')
+    (bridge : Owner.Bridge.Basic.OwnerBridge left right) :
+    (bridge.cast leftSame rightSame).rightOwner = Owner.Local.Transport.castOwner rightSame bridge.rightOwner := by
+  cases leftSame
+  cases rightSame
   rfl
 
 /-- Reindexing an owner bridge preserves the original left clearance bound. -/

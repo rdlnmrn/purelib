@@ -75,42 +75,42 @@ open Purelib.Data.Gaussian.Basic.Canonical
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {totalTarget areaTarget target :
-    Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
-  {entry : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapComparison.Entry regular lifted differential totalTarget
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {totalTarget areaTarget target :
+    InverseRootPolynomial.Coordinate} {minimum : Nat}
+  {entry : CapComparison.Entry regular lifted differential totalTarget
     areaTarget minimum}
-  {charts : Hyperelliptic.Charts.Reciprocal.Disk.ConnectedCharts.ChartRequest entry.request target}
-  {index : Nat} {box : Rational.Box} {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+  {charts : Charts.Reciprocal.Disk.ConnectedCharts.ChartRequest entry.request target}
+  {index : Nat} {box : Rational.Box} {sample : Charts.Reciprocal.Cap.Primitives.Sample cap
     differential index box}
-  {plan : Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartClosure.ChartPlan entry charts sample} {depth readingIndex :
+  {plan : ChartClosure.ChartPlan entry charts sample} {depth readingIndex :
     Nat}
 
 /-- Prepare energy on the actual acquired chart using the original exterior program's parent orientations and positive
 energy target. -/
-def energy (evaluated : Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartClosure.ChartPlan.Evaluation plan depth
+def energy (evaluated : ChartClosure.ChartPlan.Evaluation plan depth
   readingIndex)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
-    (energyTarget : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < energyTarget) (energyFloor : Nat) :
-    Hyperelliptic.Charts.Reciprocal.Disk.ConnectedEnergy.RequestedEnergy evaluated.chart energyTarget energyFloor :=
-  Hyperelliptic.Charts.Reciprocal.Disk.ConnectedEnergy.Evaluation.energy evaluated.chart
+    (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+    (energyTarget : InverseRootPolynomial.Coordinate) (positive : 0 < energyTarget) (energyFloor : Nat) :
+    Charts.Reciprocal.Disk.ConnectedEnergy.RequestedEnergy evaluated.chart energyTarget energyFloor :=
+  Charts.Reciprocal.Disk.ConnectedEnergy.Evaluation.energy evaluated.chart
     branch entry.prepared.program.parents_oriented energyTarget positive energyFloor
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartEnergy in
 /-- This is the actual closed polygon's area. The area of its closing
 increment vanishes; the trace-origin term still belongs to the open path
 and is retained along with the explicit parent boundary potentials. -/
-theorem energy_polygon_close (evaluated : Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartClosure.ChartPlan.Evaluation
+theorem energy_polygon_close (evaluated : ChartClosure.ChartPlan.Evaluation
   plan depth readingIndex)
-    {energyTarget : Normalization.InverseRootPolynomial.Coordinate} {energyFloor : Nat}
-    (energy : Hyperelliptic.Charts.Reciprocal.Disk.ConnectedEnergy.RequestedEnergy evaluated.chart energyTarget
+    {energyTarget : InverseRootPolynomial.Coordinate} {energyFloor : Nat}
+    (energy : Charts.Reciprocal.Disk.ConnectedEnergy.RequestedEnergy evaluated.chart energyTarget
       energyFloor) :
-    Data.Gaussian.Norm.Basic.normSq (energy.connected.energy - (-evaluated.polygon.area -
+    Gaussian.Norm.Basic.normSq (energy.connected.energy - (-evaluated.polygon.area -
       Path.BoundaryRibbon.area evaluated.chart.original.firstValue evaluated.chart.connected.summary.total +
         energy.connected.boundary)) <
         256 * (4 * target + ((((totalTarget / 4) / 4) / 4) / 4) / 4) := by

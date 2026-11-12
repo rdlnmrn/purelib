@@ -10,6 +10,11 @@ import Purelib.Data.Json.Codec
 import Purelib.Data.Json.Basic
 import Purelib.Data.String.Basic
 import scripts.checkpoint.RootState
+public import scripts.checkpoint.RawSubdivision
+public import Purelib.RootIsolation.FTA.Squarefree.Preparation
+import Purelib.RootIsolation.FTA.Squarefree.Prepare
+import Purelib.Polynomial.Elimination.Axis.Preparation
+public import Purelib.RootIsolation.Progressive.Power.Frame.Preparation
 import Purelib.Polynomial.Clearance.Box.Region.Basic
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Vector.Basic
@@ -54,7 +59,7 @@ public import Purelib.RootIsolation.Exact.LargeSquare.Replay
 public import Purelib.RootIsolation.Exact.Replay
 public import Purelib.RootIsolation.Exact.Run.Replay
 public import Purelib.RootIsolation.Exact.Step.Replay
-import Purelib.RootIsolation.Newton.Extraction.Initial.Build
+public import Purelib.RootIsolation.Newton.Extraction.Initial.Build
 
 public import Purelib.LinearAlgebra.PolynomialMatrix.Inverse.Scaled.Replay
 public import Purelib.RootIsolation.Isolation.InitialExtractionFallbackReplay
@@ -178,11 +183,11 @@ abbrev Gaussian := Data.Gaussian.Basic.Canonical
 abbrev RawMatrix := List (List (List GaussianData))
 
 /-- Serialize the retained polynomial coefficients in their original order. -/
-@[expose] def polynomialData (value : PolynomialMatrix.Basic.Polynomial Gaussian) : List GaussianData :=
+@[expose] def polynomialData (value : Basic.Polynomial Gaussian) : List GaussianData :=
   value.coeffs.map gaussianData
 
 /-- Serialize the exact square matrix in finite row and column order. -/
-@[expose] def matrixData {n : Nat} (value : PolynomialMatrix.Basic.Matrix Gaussian n) : RawMatrix :=
+@[expose] def matrixData {n : Nat} (value : Basic.Matrix Gaussian n) : RawMatrix :=
   List.ofFn fun row => List.ofFn fun column => polynomialData (value row column)
 
 set_option genInjectivity false in
@@ -199,7 +204,7 @@ deriving Json.ToJson, Json.FromJson
 constructive_injectivity RawInverse
 
 /-- Serialize the original scaled inverse without recomputing its recursive construction. -/
-@[expose] def inverseData {n : Nat} (value : Scaled.Basic.ScaledInverseData Gaussian n) : RawInverse :=
+@[expose] def inverseData {n : Nat} (value : Basic.ScaledInverseData Gaussian n) : RawInverse :=
   ⟨polynomialData value.scalar, matrixData value.inverse⟩
 
 /-- Decode a list at its exact expected length, rejecting missing or excess matrix entries. -/
@@ -210,12 +215,12 @@ constructive_injectivity RawInverse
   | n + 1, head :: tail => do return .cons head (← vectorFromList n tail)
 
 /-- Decode every exact Gaussian coefficient of the retained polynomial. -/
-@[expose] def decodePolynomial (raw : List GaussianData) : Except InvalidData (PolynomialMatrix.Basic.Polynomial
+@[expose] def decodePolynomial (raw : List GaussianData) : Except InvalidData (Basic.Polynomial
   Gaussian) := do
   return ⟨← raw.mapM decodeGaussian⟩
 
 /-- Decode a square polynomial matrix and check each row and column count. -/
-@[expose] def decodeMatrix (n : Nat) (raw : RawMatrix) : Except InvalidData (PolynomialMatrix.Basic.Matrix Gaussian n)
+@[expose] def decodeMatrix (n : Nat) (raw : RawMatrix) : Except InvalidData (Basic.Matrix Gaussian n)
   := do
   let rows ← raw.mapM fun row => do
     let entries ← row.mapM decodePolynomial
@@ -223,7 +228,7 @@ constructive_injectivity RawInverse
   vectorFromList n rows
 
 /-- Decode the retained scalar and square inverse matrix at the original dimension. -/
-@[expose] def decodeInverse (n : Nat) (raw : RawInverse) : Except InvalidData (Scaled.Basic.ScaledInverseData Gaussian
+@[expose] def decodeInverse (n : Nat) (raw : RawInverse) : Except InvalidData (Basic.ScaledInverseData Gaussian
   n) := do
   return ⟨← decodePolynomial raw.scalar, ← decodeMatrix n raw.inverse⟩
 
@@ -307,20 +312,20 @@ variable [MonadStateOf Counts m]
   if control.killAfterWrites == some counts.generated then
     (← IO.getStdout).flush
     let pid ← IO.Process.getPID
-    discard <| Purelib.System.IO.Process.output { cmd := "/bin/kill", args := #["-KILL", toString pid] }
+    discard <| System.IO.Process.output { cmd := "/bin/kill", args := #["-KILL", toString pid] }
     throw (IO.userError "SIGKILL did not terminate polynomial checkpoint writer")
 
 /-- Generate the original Schur complement with its diagnostic marker. -/
-@[expose, noinline] def generateComplement {n : Nat} (matrix : PolynomialMatrix.Basic.Matrix Gaussian (n + 1)) :
-  PolynomialMatrix.Basic.Matrix Gaussian n :=
+@[expose, noinline] def generateComplement {n : Nat} (matrix : Basic.Matrix Gaussian (n + 1)) :
+  Basic.Matrix Gaussian n :=
   dbg_trace "POLYNOMIAL_COMPLEMENT_GENERATOR_FORCED"
-  PolynomialMatrix.Basic.schur matrix
+  Basic.schur matrix
 
 /-- Generate the original scaled parent inverse from the retained child inverse. -/
-@[expose, noinline] def generateParent {n : Nat} (matrix : PolynomialMatrix.Basic.Matrix Gaussian (n + 1))
-    (child : Scaled.Basic.ScaledInverseData Gaussian n) : Scaled.Basic.ScaledInverseData Gaussian (n + 1) :=
+@[expose, noinline] def generateParent {n : Nat} (matrix : Basic.Matrix Gaussian (n + 1))
+    (child : Basic.ScaledInverseData Gaussian n) : Basic.ScaledInverseData Gaussian (n + 1) :=
   dbg_trace "POLYNOMIAL_PARENT_GENERATOR_FORCED"
-  ⟨PolynomialMatrix.Basic.head matrix * child.scalar, Block.blockInverse matrix child⟩
+  ⟨Basic.head matrix * child.scalar, Block.blockInverse matrix child⟩
 
 open Purelib.LinearAlgebra.PolynomialMatrix.Inverse.Scaled.Replay in
 /-- Restore the original recursive scaled inverse through checked local stages.
@@ -328,7 +333,7 @@ open Purelib.LinearAlgebra.PolynomialMatrix.Inverse.Scaled.Replay in
 Validate the request matrix, Schur complement and parent equations; reuse completed stages and preserve the exact
 recursive child owner. -/
 @[expose] def run (control : Control) (directory : System.FilePath) :
-    (n : Nat) → (matrix : PolynomialMatrix.Basic.Matrix Gaussian n) → m (Replay.Completed matrix)
+    (n : Nat) → (matrix : Basic.Matrix Gaussian n) → m (Completed matrix)
   | 0, matrix => pure (Replay.base matrix)
   | n + 1, matrix => do
       IO.FS.createDirAll directory
@@ -414,9 +419,9 @@ constructive_injectivity Data
 /-- The shared atomic stage policy and counters used by subdivision replay. -/
 abbrev Control := PolynomialInverseCheckpoint.Control
 
-variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
-  Purelib.Geometry.Rational.Box} {degreeBound : Nat}
-  (elimination : Purelib.Polynomial.Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
+  Geometry.Rational.Box} {degreeBound : Nat}
+  (elimination : Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p
     degreeBound)
 
 /-- Generate the original coefficient-selected safe cuts and reciprocal bounds. -/
@@ -500,29 +505,29 @@ variable {p : GaussianPolynomial} {ambient : Box} {degreeBound : Nat}
 /-- The original threshold and subdivision count determine the saved source request; the exact ownership equation is
 carried into the local extraction. -/
 @[expose] def source (control : RawSubdivisionCheckpoint.Control) (directory : System.FilePath) :
-    m {value : Newton.Extraction.Source.SourceOutput squarefree current epsilon //
-      value = Newton.Extraction.Source.selectSource squarefree elimination current positive} := do
+    m {value : Source.SourceOutput squarefree current epsilon //
+      value = Source.selectSource squarefree elimination current positive} := do
   IO.FS.createDirAll directory
   let initial := Rebase.initial current
-  let depth := Newton.Extraction.Source.Replay.depth squarefree current epsilon
+  let depth := Source.Replay.depth squarefree current epsilon
   IntegrationCheckpoint.saveJson ((Purelib.System.FilePath.join directory (System.FilePath.mk ("source-budget.json"))))
     (Json.mkObj
     [("depth", toJson depth), ("epsilon", toJson (IntegrationCheckpoint.fractionData epsilon)),
-     ("threshold", toJson (IntegrationCheckpoint.fractionData (Newton.Extraction.Source.Replay.threshold squarefree
+     ("threshold", toJson (IntegrationCheckpoint.fractionData (Source.Replay.threshold squarefree
        current epsilon)))])
   let restored ← RawSubdivisionCheckpoint.run elimination control ((Purelib.System.FilePath.join directory
     (System.FilePath.mk ("subdivision")))) depth initial
-  return ⟨Newton.Extraction.Source.Replay.source squarefree elimination current epsilon positive restored,
-    Newton.Extraction.Source.Replay.source_eq squarefree elimination current epsilon positive restored⟩
+  return ⟨Source.Replay.source squarefree elimination current epsilon positive restored,
+    Source.Replay.source_eq squarefree elimination current epsilon positive restored⟩
 
 /-- Restore the original Newton extraction from its exact coefficient-selected source. -/
 @[expose] def core (degreeAtLeastTwo : 2 ≤ p.natDegree)
     (control : RawSubdivisionCheckpoint.Control) (directory : System.FilePath) :
-    m {value : Newton.Extraction.Basic.Output squarefree current epsilon //
-      value = Newton.Extraction.Build.extract degreeAtLeastTwo squarefree elimination current positive} := do
+    m {value : Basic.Output squarefree current epsilon //
+      value = Build.extract degreeAtLeastTwo squarefree elimination current positive} := do
   let saved ← source squarefree elimination current epsilon positive control directory
-  return ⟨Newton.Extraction.Prepare.fromSource degreeAtLeastTwo squarefree current positive saved.val,
-    Newton.Extraction.Replay.fromSource_eq degreeAtLeastTwo squarefree elimination current positive saved.val
+  return ⟨Prepare.fromSource degreeAtLeastTwo squarefree current positive saved.val,
+    Replay.fromSource_eq degreeAtLeastTwo squarefree elimination current positive saved.val
       saved.property⟩
 
 /-- Restore the original Newton band from the retained exact extraction core. -/
@@ -552,6 +557,12 @@ construction. -/
 end NewtonExtractionCheckpoint
 
 namespace InitialExtractionCheckpoint
+
+open Purelib.RootIsolation.FTA.Squarefree (Input)
+
+open Purelib.Polynomial.Elimination.Axis.Preparation renaming Prepared -> AxisPreparation
+
+open Purelib.RootIsolation.Newton.Extraction
 
 variable {m : Type → Type} [Monad m] [MonadLiftT IO m] [MonadLiftT BaseIO m] [MonadExceptOf IO.Error m]
 variable [MonadStateOf RootRefinementCheckpoint.Counts m]
@@ -584,7 +595,7 @@ variable {p : GaussianPolynomial} {ambient : Box} {degreeBound : Nat}
 /-- Try original seeds in order and retain every failed trace before the first success. -/
 @[expose] def seeds (control : Control) (directory : System.FilePath) :
     (values : List Gaussian) → (index : Nat) →
-      m ((value : Option (RootIsolation.Refinement current epsilon)) ×
+      m ((value : Option (Refinement current epsilon)) ×
         InitialExtractionReplay.Trace elimination current epsilon values value)
   | [], _ => pure ⟨none, .exhausted⟩
   | seed :: rest, index => do
@@ -598,7 +609,7 @@ variable {p : GaussianPolynomial} {ambient : Box} {degreeBound : Nat}
           return ⟨tail.1, .missed trial.finished found tail.2⟩
 
 /-- Serialize every retained seed attempt in its original order. -/
-@[expose] def traceReport {values : List Gaussian} {value : Option (RootIsolation.Refinement current epsilon)} :
+@[expose] def traceReport {values : List Gaussian} {value : Option (Refinement current epsilon)} :
     InitialExtractionReplay.Trace elimination current epsilon values value → List Json
   | .exhausted => []
   | .accepted trial _ _ => [finishedReport _ _ _ _ _ trial]
@@ -627,7 +638,11 @@ explicit when finite seeds miss. -/
       saveJson ((Purelib.System.FilePath.join directory (System.FilePath.mk ("invalid-request.json")))) (saved, header)
       throw (IO.userError "initial extraction request differs; both exact requests retained")
   else
-    if control.savedOnly then throw (IO.userError "missing initial extraction request; generation forbidden")
+    if control.savedOnly then
+      saveJson (Purelib.System.FilePath.join directory "missing-request.json")
+        (Json.mkObj [("kind", toJson "missing original initial extraction request"),
+          ("expected", header)])
+      throw (IO.userError "missing initial extraction request; generation forbidden")
     saveJson path header
   let result ← seeds elimination current epsilon loader control directory values 0
   saveJson ((Purelib.System.FilePath.join directory (System.FilePath.mk ("result.json")))) (Json.mkObj
@@ -637,114 +652,432 @@ explicit when finite seeds miss. -/
      ("trials", toJson (traceReport elimination current epsilon result.2))])
   return ⟨result.1, result.2⟩
 
+/-- Serialize the actual finite event attempt without repeating its coefficient or track construction. -/
+@[expose] def sturmReport {width : Coordinate} (attempt : Initial.Search.SturmAttempt current width) : Json :=
+  match attempt with
+  | ⟨projected, .inl _⟩ => Json.mkObj
+      [("status", toJson "zero real-axis projection"),
+       ("projected", toJson (projected.val.coeffs.map fractionData))]
+  | ⟨projected, .inr ⟨_, count, outcome⟩⟩ =>
+      Json.mkObj ([("projected", toJson (projected.val.coeffs.map fractionData)),
+        ("count", toJson count.val)] ++ match outcome with
+        | .inl _ => [("status", toJson "zero finite event count")]
+        | .inr ⟨event, refined⟩ =>
+            [("status", toJson "retained finite event proposal"),
+             ("depth", toJson (Sturm.Track.Request.requestDepth event.val.current width)),
+             ("interval", toJson (fractionData refined.val.current.cell.interval.lower,
+               fractionData refined.val.current.cell.interval.upper)),
+             ("seeds", toJson ((Initial.Search.sturmSeeds attempt).map gaussianData))])
+
+/-- Bind an opt-in event request or its actual proposal to a separate checked checkpoint.
+
+The unchanged five-seed files remain usable. A different mode, width or
+proposal is rejected before the additional Newton attempt is loaded.
+-/
+@[expose] def retainSturmRequest (control : Control) (directory : System.FilePath)
+    (name : String) (header : Json) : m Unit := do
+  IO.FS.createDirAll directory
+  let path := Purelib.System.FilePath.join directory name
+  if ← path.pathExists then
+    let saved : Json ← loadJson path
+    unless saved == header do
+      saveJson (Purelib.System.FilePath.join directory ("invalid-" ++ name)) (saved, header)
+      throw (IO.userError "Sturm extraction request differs; both exact requests retained")
+  else
+    if control.savedOnly then
+      throw (IO.userError "missing Sturm extraction request; generation forbidden")
+    saveJson path header
+
 variable (degreeAtLeastTwo : 2 ≤ p.natDegree) (squarefree : SquarefreeCertificate p)
+
+/-- A loader for the same original total band after all initial extraction seeds miss.
+
+The retained raw state and elimination certificate determine the complete
+band result. A loader must identify every returned band with that original
+extraction, including its boundary and ambient-line data.
+-/
+abbrev BandLoader := (directory : System.FilePath) → (current : RawWindingState p ambient) →
+  m (InitialExtractionReplay.SavedBand degreeAtLeastTwo squarefree elimination current 1 (by decide))
+
+/-- Restore the original initial fallback using the existing complete-grid checkpoints.
+
+This preserves the established saved-only and interruption policies and
+retains the fallback's original counters next to its band witnesses.
+-/
+@[expose] def legacyBand (control : Control) :
+    BandLoader (m := m) (ambient := ambient) elimination degreeAtLeastTwo squarefree := fun directory current => do
+  let fallbackControl ← PolynomialInverseCheckpoint.Control.create control.savedOnly control.killAfterWrites
+  let action : PolynomialInverseCheckpoint.Execution
+      (InitialExtractionReplay.SavedBand degreeAtLeastTwo squarefree elimination current 1 (by decide)) :=
+    NewtonExtractionCheckpoint.band squarefree elimination current 1 (by decide)
+      degreeAtLeastTwo fallbackControl (Purelib.System.FilePath.join directory "fallback")
+  let (result, counts) ← PolynomialInverseCheckpoint.Execution.run action {}
+  let saved ← (@IO.ofExcept IO.Error _ ⟨System.IO.Error.toString⟩) result
+  recordCounts (Purelib.System.FilePath.join directory "fallback-counts.json") counts
+  return saved
 
 section Steps
 
 variable (state : IsolationState p ambient)
-  (nonnegative : ∀ region ∈ state.regions, 0 ≤ Purelib.Polynomial.Winding.Box.Basic.quadrupledBoxWinding p region.box)
-  (positive : 0 < Purelib.Polynomial.Winding.Box.Region.Sum.totalRaw state.regions)
+  (nonnegative : ∀ region ∈ state.regions, 0 ≤ Basic.quadrupledBoxWinding p region.box)
+  (positive : 0 < Region.Sum.totalRaw state.regions)
 
-/-- Restore both canonical extraction branches. The total branch reuses checked raw-subdivision stages and the original
-Newton band. -/
-@[expose] def step (control : Control) (directory : System.FilePath) :
-    m {value : Step.StepResult state // value = Step.step
-      degreeAtLeastTwo squarefree elimination state nonnegative positive} := do
+/-- Restore the exact requested extraction branch from its original ordered traces and retained band.
+
+The optional event is computed only after all five original seeds miss.
+An unavailable event or unsuccessful extra check still uses the original
+total band; no default owner or root ordering is substituted. -/
+@[expose] def stepWithBand
+    (fallback : BandLoader (m := m) (ambient := ambient) elimination degreeAtLeastTwo squarefree)
+    (control : Control) (directory : System.FilePath)
+    (request : Option Coordinate := none) :
+    m {value : StepResult state // value = Step.step
+      degreeAtLeastTwo squarefree elimination state nonnegative positive request} := do
   let selection := Selection.selectPositive state.regions nonnegative positive
   let current := selection.selected.raw (fun zero => Data.Int.Order.lt_irrefl 0 (zero ▸ selection.positive))
+  match request with
+  | none => pure ()
+  | some width => retainSturmRequest control directory "sturm-mode.json" (Json.mkObj
+      [("format", toJson "ccl-initial-extraction-sturm-v1"),
+       ("mode", toJson "canonical-five-then-real-axis-event"),
+       ("polynomial", toJson (p.coeffs.map gaussianData)),
+       ("ambient", toJson (RootStateCheckpoint.boxData ambient)),
+       ("box", toJson (RootStateCheckpoint.boxData current.box)),
+       ("epsilon", toJson (fractionData (1 : Coordinate))),
+       ("eventWidth", toJson (fractionData width)),
+       ("boundaryBound", toJson (fractionData current.clearance.bound))])
   let replay ← run elimination current 1 loader control directory
-  let value : {value : RootIsolation.Refinement current 1 //
-      value = Newton.Extraction.Initial.Build.extract degreeAtLeastTwo squarefree elimination current (by decide)} ←
+  let value : {value : Refinement current 1 //
+      value = Initial.Build.extract degreeAtLeastTwo squarefree elimination current (by decide) request} ←
     match found : replay.value with
     | some value => pure ⟨value, (InitialExtractionReplay.extract_eq elimination current 1
-        degreeAtLeastTwo squarefree (by decide) replay value found).symm⟩
-    | none => do
-        let fallbackControl ← PolynomialInverseCheckpoint.Control.create control.savedOnly control.killAfterWrites
-        let fallbackAction : PolynomialInverseCheckpoint.Execution
-            { value : Newton.Band.Basic.Output squarefree current 1 //
-              value = Newton.Band.Build.extract degreeAtLeastTwo squarefree elimination current
-                (by decide : (0 : Coordinate) < 1) } :=
-          NewtonExtractionCheckpoint.band squarefree elimination current 1 (by decide)
-            degreeAtLeastTwo fallbackControl ((Purelib.System.FilePath.join directory (System.FilePath.mk
-              ("fallback"))))
-        let (fallbackResult, fallbackCounts) ← PolynomialInverseCheckpoint.Execution.run fallbackAction {}
-        let saved ← (@IO.ofExcept IO.Error _ ⟨Purelib.System.IO.Error.toString⟩) fallbackResult
-        saveJson ((Purelib.System.FilePath.join directory (System.FilePath.mk ("fallback-counts.json")))) fallbackCounts
-        pure ⟨InitialExtractionReplay.fallback degreeAtLeastTwo squarefree elimination current 1 (by decide) saved,
-          InitialExtractionReplay.fallback_eq degreeAtLeastTwo squarefree elimination current 1
-            (by decide) replay found saved⟩
+        degreeAtLeastTwo squarefree (by decide) replay value found request).symm⟩
+    | none =>
+        match mode : request with
+        | none => do
+            let saved ← fallback directory current
+            pure ⟨InitialExtractionReplay.fallback degreeAtLeastTwo squarefree elimination current 1
+                (by decide) saved, by
+              cases mode
+              exact InitialExtractionReplay.fallback_eq degreeAtLeastTwo squarefree elimination current 1
+                (by decide) replay found saved⟩
+        | some width => do
+            let attempt := Initial.Search.sturm current width
+            let proposal : Initial.Build.SturmCache current (some width) := ⟨attempt, rfl⟩
+            retainSturmRequest control directory "sturm-proposal.json" (sturmReport current attempt)
+            let extra ← seeds elimination current 1 loader control directory (Initial.Search.sturmSeeds attempt) 5
+            saveJson (Purelib.System.FilePath.join directory "sturm-result.json") (Json.mkObj
+              [("tried", toJson extra.2.tried),
+               ("trials", toJson (traceReport elimination current 1 extra.2))])
+            match extra with
+            | ⟨some value, trace⟩ =>
+                have selected := Initial.Build.extract_sturm_eq degreeAtLeastTwo squarefree elimination current
+                  (by decide : (0 : Coordinate) < 1) width ⟨replay.value, replay.equation.symm⟩ found
+                    proposal (some value) trace.equation
+                pure ⟨value, by cases mode; exact selected.symm⟩
+            | ⟨none, trace⟩ => do
+                have selected := Initial.Build.extract_sturm_eq degreeAtLeastTwo squarefree elimination current
+                  (by decide : (0 : Coordinate) < 1) width ⟨replay.value, replay.equation.symm⟩ found
+                    proposal none trace.equation
+                let saved ← fallback directory current
+                pure ⟨InitialExtractionReplay.fallback degreeAtLeastTwo squarefree elimination current 1
+                    (by decide) saved, by
+                  cases mode
+                  exact (InitialExtractionReplay.fallback_eq degreeAtLeastTwo squarefree elimination current 1
+                    (by decide) replay found saved).trans selected.symm⟩
   let input : Replay.StepInput
-      degreeAtLeastTwo squarefree elimination state nonnegative positive :=
+      degreeAtLeastTwo squarefree elimination state nonnegative positive request :=
     { selection := selection
       selection_eq := rfl
       extracted := Replay.extraction degreeAtLeastTwo squarefree elimination
         selection.selected selection.positive value.val
       extracted_eq := Replay.extraction_eq degreeAtLeastTwo squarefree elimination
-        selection.selected selection.positive value.val value.property }
+        selection.selected selection.positive value.val request value.property }
   saveJson ((Purelib.System.FilePath.join directory (System.FilePath.mk ("extracted-state.json")))) (stateData
     value.val.state)
   saveJson ((Purelib.System.FilePath.join directory (System.FilePath.mk ("completed.json")))) (Json.mkObj
     [("kind", toJson (if replay.value.isSome then "canonical seed extraction" else
-      "canonical total Newton-band fallback")),
+      (if request.isSome then "opt-in event or original total Newton-band fallback" else
+        "canonical total Newton-band fallback"))),
      ("state", stateData value.val.state)])
   return ⟨input.restore, input.restore_eq⟩
+
+/-- Restore the original isolation step with the established complete-grid fallback loader. -/
+@[expose] def step (control : Control) (directory : System.FilePath)
+    (request : Option Coordinate := none) :
+    m {value : StepResult state // value = Step.step
+      degreeAtLeastTwo squarefree elimination state nonnegative positive request} :=
+  stepWithBand elimination loader degreeAtLeastTwo squarefree state nonnegative positive
+    (legacyBand elimination degreeAtLeastTwo squarefree control) control directory request
 
 end Steps
 
 /-- Every successful return reconstructs the complete original run. Invalid saved data still stops at its checked
 witness, and unfinished work stays on disk. -/
-@[expose] def runIsolation (control : Control) (directory : System.FilePath) :
-    (remaining : Nat) → (state : State.IsolationState p ambient) →
+@[expose] def runIsolationWithBand
+    (fallback : BandLoader (m := m) (ambient := ambient) elimination degreeAtLeastTwo squarefree)
+    (control : Control) (directory : System.FilePath) :
+    (remaining : Nat) → (state : IsolationState p ambient) →
       (total : Region.Sum.totalRaw state.regions = (4 : Int) * remaining) → (index : Nat) →
-      m {result : Run.RunResult state remaining // result =
-        Run.run degreeAtLeastTwo squarefree elimination remaining state total}
-  | 0, state, total, _ =>
+      (request : Option Coordinate := none) →
+      m {result : RunResult state remaining // result =
+        Run.run degreeAtLeastTwo squarefree elimination remaining state total request}
+  | 0, state, total, _, _ =>
       pure ⟨
         { final := state
           support_final := rfl
           totalRaw_final := by simpa only [Int.natCast_zero, mul_zero] using total
           tracks_length_final := (Nat.add_zero _).symm }, rfl⟩
-  | remaining + 1, state, total, index => do
+  | remaining + 1, state, total, index, request => do
       have positive : 0 < Region.Sum.totalRaw state.regions := by
         rw [total]
         exact Data.Int.Order.mul_pos (by decide) (Data.Int.Order.natCast_pos (Nat.zero_lt_succ remaining))
-      have nonnegative : ∀ region ∈ state.regions, 0 ≤ Winding.Box.Basic.quadrupledBoxWinding p region.box := by
+      have nonnegative : ∀ region ∈ state.regions, 0 ≤ Basic.quadrupledBoxWinding p region.box := by
         intro region _member
         exact Nonnegative.Squarefree.quadrupledBoxWinding_nonnegative degreeAtLeastTwo squarefree elimination
           region.refinesAmbient region.proper region.clearance
-      let first ← step elimination loader degreeAtLeastTwo squarefree state nonnegative positive
-        control ((Purelib.System.FilePath.join directory (System.FilePath.mk (s!"step-{index}"))))
+      let first ← stepWithBand elimination loader degreeAtLeastTwo squarefree state nonnegative positive
+        fallback control ((Purelib.System.FilePath.join directory (System.FilePath.mk (s!"step-{index}")))) request
       have nextTotal : Region.Sum.totalRaw first.val.next.regions = (4 : Int) * remaining := by
         rw [first.val.totalRaw_next, total, Nat.cast_succ]
         ring1
-      let tail ← runIsolation control directory remaining first.val.next nextTotal (index + 1)
+      let tail ← runIsolationWithBand fallback control directory remaining first.val.next nextTotal (index + 1) request
       return ⟨Replay.join first.val remaining tail.val,
         Replay.join_eq degreeAtLeastTwo squarefree elimination remaining total
-          nonnegative positive first.val first.property nextTotal tail.val tail.property⟩
+          nonnegative positive request first.val first.property nextTotal tail.val tail.property⟩
+
+/-- Restore the complete original run with the established complete-grid band loader. -/
+@[expose] def runIsolation (control : Control) (directory : System.FilePath)
+    (remaining : Nat) (state : IsolationState p ambient)
+    (total : Region.Sum.totalRaw state.regions = (4 : Int) * remaining) (index : Nat)
+    (request : Option Coordinate := none) :
+    m {result : RunResult state remaining // result =
+      Run.run degreeAtLeastTwo squarefree elimination remaining state total request} :=
+  runIsolationWithBand elimination loader degreeAtLeastTwo squarefree
+    (legacyBand elimination degreeAtLeastTwo squarefree control) control directory remaining state total index request
 
 /-- Restore the exact original root family from a certified clear region and winding count. -/
-@[expose] def isolateFromRegion (initial : Region.ClearRegion p ambient) (count : Nat)
-    (raw : Winding.Box.Basic.quadrupledBoxWinding p initial.box = (4 : Int) * count)
-    (control : Control) (directory : System.FilePath) :
+@[expose] def isolateFromRegionWithBand
+    (fallback : BandLoader (m := m) (ambient := ambient) elimination degreeAtLeastTwo squarefree)
+    (initial : Region.ClearRegion p ambient) (count : Nat)
+    (raw : Basic.quadrupledBoxWinding p initial.box = (4 : Int) * count)
+    (control : Control) (directory : System.FilePath)
+    (request : Option Coordinate := none) :
     m {result : Output p ambient count // result =
-      Build.isolateFromRegion degreeAtLeastTwo squarefree elimination initial count raw} := do
+      Build.isolateFromRegion degreeAtLeastTwo squarefree elimination initial count raw request} := do
   have total : Region.Sum.totalRaw (IsolationState.initial initial).regions = (4 : Int) * count := by
-    change Winding.Box.Basic.quadrupledBoxWinding p initial.box + 0 = _
+    change Basic.quadrupledBoxWinding p initial.box + 0 = _
     rw [raw, add_zero]
-  let result ← runIsolation elimination loader degreeAtLeastTwo squarefree control directory count
-    (IsolationState.initial initial) total 0
+  let result ← runIsolationWithBand elimination loader degreeAtLeastTwo squarefree fallback control directory count
+    (IsolationState.initial initial) total 0 request
   return ⟨Replay.output degreeAtLeastTwo squarefree elimination initial count result.val,
-    Replay.output_eq degreeAtLeastTwo squarefree elimination initial count raw total
+    Replay.output_eq degreeAtLeastTwo squarefree elimination initial count raw total request
       result.val result.property⟩
 
+/-- Restore the original region family using the established complete-grid band loader. -/
+@[expose] def isolateFromRegion (initial : Region.ClearRegion p ambient) (count : Nat)
+    (raw : Basic.quadrupledBoxWinding p initial.box = (4 : Int) * count)
+    (control : Control) (directory : System.FilePath)
+    (request : Option Coordinate := none) :
+    m {result : Output p ambient count // result =
+      Build.isolateFromRegion degreeAtLeastTwo squarefree elimination initial count raw request} :=
+  isolateFromRegionWithBand elimination loader degreeAtLeastTwo squarefree
+    (legacyBand elimination degreeAtLeastTwo squarefree control) initial count raw control directory request
+
 /-- Restore the original coefficient-selected complete root family. -/
-@[expose] def isolateLargeSquare (control : Control) (directory : System.FilePath) :
+@[expose] def isolateLargeSquareWithBand
+    (fallback : BandLoader (m := m) (ambient := RootRadius.Box.largeSquareBox p)
+      elimination degreeAtLeastTwo squarefree)
+    (control : Control) (directory : System.FilePath)
+    (request : Option Coordinate := none) :
     m {result : Output p (RootRadius.Box.largeSquareBox p) p.natDegree // result =
-      LargeSquare.isolateLargeSquare degreeAtLeastTwo squarefree elimination} := do
-  let result ← isolateFromRegion elimination loader degreeAtLeastTwo squarefree
+      LargeSquare.isolateLargeSquare degreeAtLeastTwo squarefree elimination request} := do
+  let result ← isolateFromRegionWithBand elimination loader degreeAtLeastTwo squarefree fallback
     (Region.largeSquareRegion degreeAtLeastTwo) p.natDegree
-    (Region.largeSquareRegion_winding degreeAtLeastTwo) control directory
+    (Region.largeSquareRegion_winding degreeAtLeastTwo) control directory request
   return ⟨result.val, result.property.trans
-    (Replay.largeSquare_eq degreeAtLeastTwo squarefree elimination).symm⟩
+    (Replay.largeSquare_eq degreeAtLeastTwo squarefree elimination request).symm⟩
+
+/-- Restore the coefficient-selected family using the established complete-grid fallback loader. -/
+@[expose] def isolateLargeSquare (control : Control) (directory : System.FilePath)
+    (request : Option Coordinate := none) :
+    m {result : Output p (RootRadius.Box.largeSquareBox p) p.natDegree // result =
+      LargeSquare.isolateLargeSquare degreeAtLeastTwo squarefree elimination request} :=
+  isolateLargeSquareWithBand elimination loader degreeAtLeastTwo squarefree
+    (legacyBand elimination degreeAtLeastTwo squarefree control) control directory request
+
+/-- Restore the original prepared-axis isolation using its same retained inverse and certificate.
+
+The default five seeds, exact support, ordered tracks and total Newton-band
+fallback all consume the supplied axes. Columns and winding divisions keep
+their existing independent saved-only and after-save policies. This returns
+the complete original isolation, without substituting the canonical family. -/
+@[expose] def preparedLargeSquare (input : FTA.Squarefree.Input p)
+    (axes : AxisPreparation p)
+    (columns : ClearanceCheckpoint.Control IO) (winding : WindingCheckpoint.Control IO)
+    (control : RootRefinementCheckpoint.Control) (directory : System.FilePath) :
+    IO {result : Output p (RootRadius.Box.largeSquareBox p) p.natDegree // result =
+      LargeSquare.isolateLargeSquare input.degreeAtLeastTwo input.squarefree
+        (axes.certificate input.nonzero input.degreePositive)} := do
+  let elimination := axes.certificate input.nonzero input.degreePositive
+  let cachedLoader := RootRefinementCheckpoint.ClearanceLoader.prepared columns p axes
+    input.nonzero input.degreePositive
+  let loader : ClearanceLoader elimination (.canonical elimination) RootRefinementCheckpoint.Execution :=
+    { vertical := fun directory ambient coordinate safe =>
+        RootRefinementCheckpoint.Execution.liftIO (cachedLoader.vertical directory ambient coordinate safe)
+      horizontal := fun directory ambient coordinate safe =>
+        RootRefinementCheckpoint.Execution.liftIO (cachedLoader.horizontal directory ambient coordinate safe) }
+  let fallback : BandLoader (m := RootRefinementCheckpoint.Execution)
+      (ambient := RootRadius.Box.largeSquareBox p) elimination input.degreeAtLeastTwo input.squarefree :=
+    fun directory current => RootRefinementCheckpoint.Execution.liftIO
+      (RawSubdivisionCheckpoint.bandWithLines input elimination cachedLoader winding
+        (RawSubdivisionCheckpoint.bandLinesPrepared p axes input.nonzero input.degreePositive columns)
+        (Purelib.System.FilePath.join directory "fallback") current 1 (by decide))
+  let action := isolateLargeSquareWithBand elimination loader input.degreeAtLeastTwo input.squarefree
+    fallback control directory
+  let (result, counts) ← RootRefinementCheckpoint.Execution.run action {}
+  recordCounts (Purelib.System.FilePath.join directory "proposal-counts.json") counts
+  (@IO.ofExcept IO.Error _ ⟨System.IO.Error.toString⟩) result
+
+/-- Restore the complete original prepared input family from its checked numerical checkpoints.
+
+The original two-axis preparation is computed once and passed to every seed,
+subdivision and band line loader. Ownership and maximality close around that
+same retained isolation, and the returned equality identifies the entire
+original preparation including its actual root ordering and owner callbacks. -/
+@[expose] def preparedFamily (input : FTA.Squarefree.Input p)
+    (columns : ClearanceCheckpoint.Control IO) (winding : WindingCheckpoint.Control IO)
+    (control : RootRefinementCheckpoint.Control) (directory : System.FilePath) :
+    IO {result : FTA.Squarefree.Preparation input // result = FTA.Squarefree.Preparation.ofInput input} := do
+  let axes := Elimination.Axis.Preparation.prepare p input.nonzero
+  let elimination := axes.certificate input.nonzero input.degreePositive
+  let saved ← preparedLargeSquare input axes columns winding control directory
+  have support : saved.val.support = RootRadius.Box.largeSquareBox p := by
+    rewrite [saved.property]
+    exact LargeSquare.isolateLargeSquare_support input.degreeAtLeastTwo input.squarefree elimination
+  let result := FTA.Squarefree.Preparation.fromIsolation input axes elimination rfl saved.val support
+  return ⟨result, FTA.Squarefree.Preparation.fromIsolation_eq_ofInput input axes rfl elimination rfl
+    saved.val support saved.property⟩
+
+/-- Restore a complete original isolation on the supplied clear region with the same retained elimination.
+
+The exact region and winding count determine the original run. Both canonical
+line readers and the total band fallback share its actual stored degree and
+certificate, without recomputing eliminants to recover their bound. Independent
+saved-only policies and equality of every returned field are retained.
+-/
+@[expose] def separatedFromRegionWithElimination (input : Input p)
+    (elimination : Input.Elimination input)
+    (initial : Region.ClearRegion p ambient) (count : Nat)
+    (raw : Basic.quadrupledBoxWinding p initial.box = (4 : Int) * count)
+    (columns : ClearanceCheckpoint.Control IO) (winding : WindingCheckpoint.Control IO)
+    (control : RootRefinementCheckpoint.Control) (directory : System.FilePath)
+    (request : Option Coordinate := none) :
+    IO {result : Output p ambient count // result =
+      Build.isolateFromRegion input.degreeAtLeastTwo input.squarefree elimination.original
+        initial count raw request} := do
+  let originalLoader := RootRefinementCheckpoint.ClearanceLoader.separated columns
+    p input.nonzero input.degreePositive
+  let atOriginal := RootRefinementCheckpoint.ClearanceLoader.cast elimination.original_eq.symm originalLoader
+  let reindexed := RootRefinementCheckpoint.ClearanceLoader.castDegree elimination.degree_eq.symm
+    elimination.original atOriginal
+  let cachedLoader := RootRefinementCheckpoint.ClearanceLoader.cast
+    (elimination.certificate.castDegree_inverse elimination.degree_eq) reindexed
+  let loader : ClearanceLoader elimination.certificate (.canonical elimination.certificate)
+      RootRefinementCheckpoint.Execution :=
+    { vertical := fun directory ambient coordinate safe =>
+        RootRefinementCheckpoint.Execution.liftIO (cachedLoader.vertical directory ambient coordinate safe)
+      horizontal := fun directory ambient coordinate safe =>
+        RootRefinementCheckpoint.Execution.liftIO (cachedLoader.horizontal directory ambient coordinate safe) }
+  let fallback : BandLoader (m := RootRefinementCheckpoint.Execution)
+      (ambient := ambient) elimination.certificate input.degreeAtLeastTwo input.squarefree :=
+    fun directory current => RootRefinementCheckpoint.Execution.liftIO
+      (RawSubdivisionCheckpoint.bandWithDegree input elimination.certificate elimination.degree_eq
+        elimination.certificate_eq cachedLoader columns winding
+        (Purelib.System.FilePath.join directory "fallback") current 1 (by decide))
+  let action := isolateFromRegionWithBand elimination.certificate loader input.degreeAtLeastTwo input.squarefree
+    fallback initial count raw control directory request
+  let (result, counts) ← RootRefinementCheckpoint.Execution.run action {}
+  recordCounts (Purelib.System.FilePath.join directory "proposal-counts.json") counts
+  let restored ← (@IO.ofExcept IO.Error _ ⟨System.IO.Error.toString⟩) result
+  return ⟨restored.val, restored.property.trans (by
+    rcases elimination with ⟨degree, degreeEq, certificate, same⟩
+    cases degreeEq
+    rfl)⟩
+
+/-- Restore the complete original symmetric-square isolation at the displayed sufficient radius.
+
+The actual support may enclose other input ambients. It retains the same
+coefficient clearance, original five seeds, total band fallback and root order,
+using the stored elimination degree and certificate for every numerical reader.
+-/
+def separatedSymmetricWithElimination (input : Input p)
+    (elimination : Input.Elimination input) {radius : Coordinate}
+    (radiusLe : RootRadius.denseLargeSquareRadius p ≤ radius)
+    (columns : ClearanceCheckpoint.Control IO) (winding : WindingCheckpoint.Control IO)
+    (control : RootRefinementCheckpoint.Control) (directory : System.FilePath)
+    (request : Option Coordinate := none) :
+    IO {result : Output p
+      (Box.symmetric radius ((RootRadius.denseLargeSquareRadius_pos p).trans_le radiusLe).le) p.natDegree //
+      result = LargeSquare.isolateSymmetric input.degreeAtLeastTwo input.squarefree
+        elimination.original radiusLe request} := do
+  let result ← separatedFromRegionWithElimination input elimination
+    (Region.symmetricRegion input.degreeAtLeastTwo radiusLe) p.natDegree
+    (Region.symmetricRegion_winding input.degreeAtLeastTwo radiusLe) columns winding control directory request
+  return ⟨result.val, result.property.trans
+    (Replay.symmetric_eq input.degreeAtLeastTwo input.squarefree elimination.original radiusLe request).symm⟩
+
+/-- Restore the original coefficient-selected family from independently checked columns and winding divisions.
+
+The default request keeps the ordered initial seeds and original root
+family. An explicit event width selects a distinct requested isolation,
+using its retained extra proposal only after the original five misses.
+Both paths keep the same elimination cache, exact support and checked
+raw/band fallback; no equality between their root orderings is asserted.
+-/
+@[expose] def separatedLargeSquareWithElimination (input : FTA.Squarefree.Input p)
+    (elimination : AxisEliminationCertificate p input.eliminationDegree)
+    (same : elimination = input.elimination)
+    (columns : ClearanceCheckpoint.Control IO) (winding : WindingCheckpoint.Control IO)
+    (control : RootRefinementCheckpoint.Control) (directory : System.FilePath)
+    (request : Option Coordinate := none) :
+    IO {result : Output p (RootRadius.Box.largeSquareBox p) p.natDegree // result = input.isolation request} := do
+  let retained := Input.Elimination.ofCertificate input elimination same
+  let result ← separatedFromRegionWithElimination input retained
+    (Region.largeSquareRegion input.degreeAtLeastTwo) p.natDegree
+    (Region.largeSquareRegion_winding input.degreeAtLeastTwo) columns winding control directory request
+  have original : Build.isolateFromRegion input.degreeAtLeastTwo input.squarefree retained.original
+      (Region.largeSquareRegion input.degreeAtLeastTwo) p.natDegree
+      (Region.largeSquareRegion_winding input.degreeAtLeastTwo) request = input.isolation request := by
+    rewrite [Input.Elimination.ofCertificate_original]
+    exact (Replay.largeSquare_eq input.degreeAtLeastTwo input.squarefree elimination request).symm.trans
+      (by cases same; rfl)
+  return ⟨result.val, result.property.trans original⟩
+
+/-- Restore the original coefficient-selected family with its internally computed elimination cache. -/
+@[expose] def separatedLargeSquare (input : FTA.Squarefree.Input p)
+    (columns : ClearanceCheckpoint.Control IO) (winding : WindingCheckpoint.Control IO)
+    (control : RootRefinementCheckpoint.Control) (directory : System.FilePath)
+    (request : Option Coordinate := none) :
+    IO {result : Output p (RootRadius.Box.largeSquareBox p) p.natDegree // result = input.isolation request} :=
+  separatedLargeSquareWithElimination input input.elimination rfl columns winding control directory request
+
+/-- Consume the original canonical power frame prepared from its saved complete coefficient-selected family.
+
+The callback receives the complete cached frame and its exact original-frame
+equality. The original input, track ordering and all raw/band witnesses are
+retained; completed isolation is reused for frame construction and owner
+matching instead of executing another original isolation producer.
+-/
+@[expose] def withPowerFrame {α : Type} {parameter : Data.Gaussian.Basic.Canonical}
+    (nonzero : parameter ≠ 0) (degree : Data.Nat.Positive.RootDegree) (degreeTwo : 2 ≤ degree.value)
+    (columns : ClearanceCheckpoint.Control IO) (winding : WindingCheckpoint.Control IO)
+    (control : RootRefinementCheckpoint.Control) (directory : System.FilePath)
+    (use : Progressive.Power.Frame.Preparation.Prepared nonzero degree degreeTwo → IO α) : IO α := do
+  let input := Power.Isolation.isolationInput nonzero degree degreeTwo
+  let elimination := input.elimination
+  let saved ← separatedLargeSquareWithElimination input elimination rfl columns winding control directory
+  use (Progressive.Power.Frame.Preparation.fromCachedIsolation
+    nonzero degree degreeTwo input rfl elimination rfl saved.val saved.property)
 
 end InitialExtractionCheckpoint

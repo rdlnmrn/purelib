@@ -32,7 +32,7 @@ namespace Purelib.Computation.Query
 open Purelib.Computation.Query
 open Purelib.Data.List
 
-universe u v w x
+universe u v w x z
 
 set_option genInjectivity false in
 /-- An executable finite query protocol with recording and replay laws.
@@ -81,7 +81,9 @@ variable {Query : Type u} {Reply : Type v} {Value : Type w} {Result : Type x}
 Replay checks the next recorded query using decidable equality and returns its reply. An empty or mismatched trace
 produces the corresponding concrete error. -/
 @[expose] def query [DecidableEq Query] (question : Query) : Protocol Query Reply Reply where
-  run oracle := ⟨oracle question, [⟨question, oracle question⟩]⟩
+  run oracle :=
+    let reply := oracle question
+    ⟨reply, [⟨question, reply⟩]⟩
   replay
     | [] => .error (.missing question)
     | entry :: rest =>
@@ -152,6 +154,24 @@ theorem bind_run_trace (first : Protocol Query Reply Value)
     ((first.bind next).run oracle).trace =
       (first.run oracle).trace ++ ((next (first.run oracle).value).run oracle).trace := rfl
 
+/-- Exact agreement of the preceding execution and its selected continuation preserves the complete composed run.
+
+Only the actual returned value is used to compare the continuations; no
+equality of callback functions is assumed or reconstructed.
+-/
+theorem bind_execution_eq (first second : Protocol Query Reply Value)
+    (next other : Value → Protocol Query Reply Result) (oracle : Query → Reply)
+    (before : first.run oracle = second.run oracle)
+    (after : (next (second.run oracle).value).run oracle = (other (second.run oracle).value).run oracle) :
+    (first.bind next).run oracle = (second.bind other).run oracle := by
+  change (let preceding := first.run oracle
+    ; let following := (next preceding.value).run oracle
+    ; (⟨following.value, preceding.trace ++ following.trace⟩ : Basic.Execution Query Reply Result)) = _
+  rewrite [before]
+  dsimp only
+  rewrite [after]
+  rfl
+
 /-- Apply a state-dependent query computation a displayed finite number of times.
 
 The next step uses the previous returned state. Recording and replay laws are retained through sequential composition,
@@ -171,6 +191,45 @@ theorem map_run_trace (function : Value → Result) (computation : Protocol Quer
     (oracle : Query → Reply) :
     ((computation.map function).run oracle).trace = (computation.run oracle).trace :=
   Append.append_nil _
+
+/-- Mapping equal actual executions preserves their complete transformed execution. -/
+theorem map_execution_eq (function : Value → Result) (first second : Protocol Query Reply Value)
+    (oracle : Query → Reply) (same : first.run oracle = second.run oracle) :
+    (first.map function).run oracle = (second.map function).run oracle :=
+  bind_execution_eq first second (fun value => pure (function value))
+    (fun value => pure (function value)) oracle same rfl
+
+/-- Pointwise equal transformations preserve the complete execution of a mapped protocol.
+
+Only the actual returned value is compared; the ordered trace is unchanged.
+-/
+theorem map_execution_pointwise (first second : Value → Result) (program : Protocol Query Reply Value)
+    (oracle : Query → Reply) (same : first (program.run oracle).value = second (program.run oracle).value) :
+    (program.map first).run oracle = (program.map second).run oracle := by
+  apply Basic.Execution.ext
+  · rw [map_run_value, map_run_value]
+    exact same
+  · rw [map_run_trace, map_run_trace]
+
+/-- Successive value transformations preserve the same complete execution as their composition. -/
+theorem map_map_execution {Final : Type z} (first : Value → Result) (second : Result → Final)
+    (program : Protocol Query Reply Value) (oracle : Query → Reply) :
+    ((program.map first).map second).run oracle = (program.map fun value => second (first value)).run oracle := by
+  apply Basic.Execution.ext
+  · rw [map_run_value, map_run_value, map_run_value]
+  · rw [map_run_trace, map_run_trace, map_run_trace]
+
+/-- Pointwise agreement of the executed steps preserves every finite iteration's value and ordered trace. -/
+theorem iterate_execution_eq (first second : Value → Protocol Query Reply Value)
+    (count : Nat) (state : Value) (oracle : Query → Reply)
+    (agree : ∀ value, (first value).run oracle = (second value).run oracle) :
+    (iterate first count state).run oracle = (iterate second count state).run oracle := by
+  induction count generalizing state with
+  | zero => rfl
+  | succ count induction =>
+      rewrite [iterate, iterate]
+      exact bind_execution_eq _ _ _ _ oracle (agree state)
+        (induction ((second state).run oracle).value)
 
 /-- Replay a computation and reject any unused recorded queries.
 

@@ -93,32 +93,32 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 abbrev Vector := Data.Vector
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {source :
     Differential genus} {count : Nat}
   {cycles : Vector
     (ClosedCutCycle lifted.cutPolygon.patch.cut.vertexLabels
-    (lifted.cutPolygon.patch.cut.boundary.map (Purelib.Topology.Surface.Sewing.VertexSewing.OrientedEdge.map
+    (lifted.cutPolygon.patch.cut.boundary.map (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map
       lifted.cutPolygon.patch.cut.vertexLabels))) count}
   {bank : CutCycleProgramBank lifted source cycles}
     {differential : Fin genus}
   {components : ComponentSamples bank differential}
     {matrix : IntegralMatrix count}
   {raw : List (PivotIndices count)} {normal :
-    LinearAlgebra.Alternating.NormalForm matrix raw}
+    NormalForm matrix raw}
 
 /-- Transport the original coefficient certificate across equality of its exact integer weight vectors. -/
 public def coefficientsAt {count : Nat} {first last :
   Vector Int count} (equal : first = last)
-    (coefficients : WeightedPeriods.Coefficients first) : WeightedPeriods.Coefficients last := by
+    (coefficients : Coefficients first) : Coefficients last := by
   cases equal
   exact coefficients
 
 /-- Transporting the original coefficient certificate preserves its cached mass. -/
 private theorem coefficientsAt_mass {count : Nat} {first last :
   Vector Int count} (equal : first = last)
-    (coefficients : WeightedPeriods.Coefficients first) :
+    (coefficients : Coefficients first) :
       (coefficientsAt equal coefficients).mass =
       coefficients.mass := by
   cases equal
@@ -130,7 +130,7 @@ set_option genInjectivity false in
 Every row keeps the mass of its actual retained period coefficients after exact weight-vector transport. -/
 structure Profile (periods : NormalFormPeriods components normal) where
   /-- The shared coefficient row cache for the original normal-form reduction matrix. -/ rows :
-    WeightedRowBudgets.CoefficientRows normal.reduction.cycleRows
+    CoefficientRows normal.reduction.cycleRows
   /-- Each profile row has exactly the mass of the original period's retained coefficient certificate. -/ masses_eq : ∀
     row, (rows.coefficients.get row).mass = (periods.rows row).period.coefficients.mass
 
@@ -144,17 +144,17 @@ variable {periods :
 
 /-- Collect the original retained period coefficients after exact weight transport, preserving all row masses. -/
 def build (periods : NormalFormPeriods components normal) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalFormSamples.Profile periods :=
+  Profile periods :=
   let coefficients := DependentVector.ofFn fun row =>
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalFormSamples.coefficientsAt (periods.weights_eq row)
+    NormalFormSamples.coefficientsAt (periods.weights_eq row)
     (periods.rows row).period.coefficients
   ⟨CoefficientRows.ofCoefficients coefficients, fun row => by
     change (coefficients.get row).mass = _
     rw [DependentVector.ofFn_get]
-    exact Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalFormSamples.coefficientsAt_mass _ _⟩
+    exact NormalFormSamples.coefficientsAt_mass _ _⟩
 
 /-- Every original period coefficient mass is bounded by the common cached row-profile total. -/
-theorem mass_le_total (profile : Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalFormSamples.Profile periods) (row : Fin
+theorem mass_le_total (profile : Profile periods) (row : Fin
   count) : (periods.rows row).period.coefficients.mass ≤ profile.rows.total := by
   rw [← profile.masses_eq]
   exact profile.rows.mass_le_total row
@@ -167,11 +167,11 @@ set_option genInjectivity false in
 Exact component and weighted-row readbacks preserve the original streams without evaluating them again. -/
 structure Sample (periods : NormalFormPeriods components normal) (stage : Nat) where
   /-- The already materialized original component values at the retained common stage. -/ componentValues :
-    Vector Data.Gaussian.Basic.Canonical count
+    Vector Canonical count
   /-- Each retained component equals the original stream sample at that exact stage. -/ components_eq : ∀ index,
     componentValues index = (components.streams index).sample stage
   /-- The cached original weighted row values at the common component stage. -/ rows :
-    Vector Data.Gaussian.Basic.Canonical count
+    Vector Canonical count
   /-- Each row is the original retained coefficient combination of the cached component vector. -/ rows_eq : ∀ row, rows
     row = (periods.rows row).period.coefficients.combine componentValues
 
@@ -185,26 +185,26 @@ variable {periods :
 
 /-- Evaluate all original weighted period rows from the supplied already materialized component vector. -/
 def ofComponents (periods : NormalFormPeriods components normal) (stage : Nat)
-    (values : Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalFormSamples.Vector Data.Gaussian.Basic.Canonical count)
+    (values : Vector Canonical count)
       (equal : ∀ index, values index = (components.streams index).sample stage) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalFormSamples.Sample periods stage :=
-  ⟨values, equal, Data.Vector.Basic.vectorOfFn fun row => (periods.rows row).period.coefficients.combine values,
-    Data.Vector.Basic.vectorOfFn_apply _⟩
+      Sample periods stage :=
+  ⟨values, equal, Basic.vectorOfFn fun row => (periods.rows row).period.coefficients.combine values,
+    Basic.vectorOfFn_apply _⟩
 
 /-- Each cached normal-form row is exactly its original weighted period sample at the common stage. -/
-theorem row_eq_period (sample : Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalFormSamples.Sample periods stage) (row :
+theorem row_eq_period (sample : Sample periods stage) (row :
   Fin count) :
     sample.rows row = (periods.rows row).period.approximation.sample stage := by
   rw [sample.rows_eq, (periods.rows row).period.sample_eq]
-  unfold WeightedPeriods.Coefficients.combine
+  unfold Coefficients.combine
   apply FiniteSum.Fin.sumFin_congr
   intro index
   rw [sample.components_eq]
 
 /-- The original row coefficient mass bounds the weighted primitive discrepancy from the retained componentwise bound.
 -/
-theorem row_comparison (sample : Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalFormSamples.Sample periods stage)
-    (primitive : Fin lifted.cutPolygon.patch.cut.count → Stokes.PrimitivePoint) {bound : WeightedPeriods.Coordinate}
+theorem row_comparison (sample : Sample periods stage)
+    (primitive : Fin lifted.cutPolygon.patch.cut.count → PrimitivePoint) {bound : Coordinate}
     (bounded : ∀ index, Data.Gaussian.Norm.Basic.normSq (((cycles index).increment primitive).right -
       sample.componentValues index) ≤ bound) (row : Fin count) :
     Data.Gaussian.Norm.Basic.normSq (((periods.rows row).period.chain.increment primitive).right - sample.rows

@@ -74,35 +74,35 @@ CCL arithmetic and never complete an input, logarithm, or root stream.
   | 0 => Coherence.exact 0
   | count + 1 =>
       CoherentNamed.add value
-        (Purelib.Approximation.Gaussian.Name.Coherent.Power.natSum value count)
+        (Power.natSum value count)
 
 /-- Finite repeated CCL multiplication. -/
 @[expose] def natPower (value : CoherentNamed) : Nat → CoherentNamed
   | 0 => Coherence.exact 1
   | count + 1 =>
       CoherentNamed.mul value
-        (Purelib.Approximation.Gaussian.Name.Coherent.Power.natPower value count)
+        (Power.natPower value count)
 
 /-- Multiply the original coherent name by the displayed exact Gaussian coefficient on the left. -/
-@[expose] def scale (coefficient : Data.Gaussian.Basic.Canonical) (value : CoherentNamed) :
-  Coherent.CoherentNamed :=
+@[expose] def scale (coefficient : Basic.Canonical) (value : CoherentNamed) :
+  CoherentNamed :=
   CoherentNamed.mul
     (Coherence.exact coefficient)
     value
 
 /-- Repeated addition of a scaled CCL name is operationally one multiplication by the displayed repeated coefficient. -/
-@[expose] def natSum_scale (coefficient : Data.Gaussian.Basic.Canonical) (value :
+@[expose] def natSum_scale (coefficient : Basic.Canonical) (value :
   CoherentNamed) :
     (count : Nat) →
-      Gaussian.Equivalence.NamedEquivalent
-        (Approximation.Gaussian.Name.Coherent.Power.natSum (Approximation.Gaussian.Name.Coherent.Power.scale coefficient
+      NamedEquivalent
+        (natSum (scale coefficient
           value) count).name
-        (Approximation.Gaussian.Name.Coherent.Power.scale (Natural.repeatedCoefficient coefficient count) value).name
+        (scale (Natural.repeatedCoefficient coefficient count) value).name
   | 0 =>
       NamedEquivalent.symm
         (by
-          simpa only [Approximation.Gaussian.Name.Coherent.Power.natSum,
-            Approximation.Gaussian.Name.Coherent.Power.scale, Natural.repeatedCoefficient,
+          simpa only [natSum,
+            scale, Natural.repeatedCoefficient,
             Coherence.exact,
             CoherentNamed.mul] using
             Mul.coherentMul_zero_left value)
@@ -117,10 +117,10 @@ CCL arithmetic and never complete an input, logarithm, or root stream.
       let exactCombined :=
         Coherence.exact
           combinedCoefficient
-      let scaledCurrent := Approximation.Gaussian.Name.Coherent.Power.scale coefficient value
-      let scaledPrevious := Approximation.Gaussian.Name.Coherent.Power.scale previousCoefficient value
-      let repeatedPrevious := Approximation.Gaussian.Name.Coherent.Power.natSum scaledCurrent count
-      have replacePrevious : Gaussian.Equivalence.NamedEquivalent
+      let scaledCurrent := scale coefficient value
+      let scaledPrevious := scale previousCoefficient value
+      let repeatedPrevious := natSum scaledCurrent count
+      have replacePrevious : NamedEquivalent
           (Named.add
             scaledCurrent.name repeatedPrevious.name)
           (Named.add
@@ -129,8 +129,8 @@ CCL arithmetic and never complete an input, logarithm, or root stream.
           repeatedPrevious scaledPrevious
           (NamedEquivalent.refl
             scaledCurrent.name)
-          (Purelib.Approximation.Gaussian.Name.Coherent.Power.natSum_scale coefficient value count)
-      have collectProducts : Gaussian.Equivalence.NamedEquivalent
+          (Power.natSum_scale coefficient value count)
+      have collectProducts : NamedEquivalent
           (Named.add
             scaledCurrent.name scaledPrevious.name)
           (Named.mul
@@ -139,7 +139,7 @@ CCL arithmetic and never complete an input, logarithm, or root stream.
             value.name) :=
         NamedEquivalent.symm
           (Distributive.coherentAdd_mul_right exactCoefficient exactPrevious value)
-      have exactCoefficientSum : Gaussian.Equivalence.NamedEquivalent
+      have exactCoefficientSum : NamedEquivalent
           (Named.add
             exactCoefficient.name exactPrevious.name)
           exactCombined.name := by
@@ -148,7 +148,7 @@ CCL arithmetic and never complete an input, logarithm, or root stream.
           Coherence.exact] using
           Exact.exactAdd_named_equivalent
             coefficient previousCoefficient
-      have replaceCoefficient : Gaussian.Equivalence.NamedEquivalent
+      have replaceCoefficient : NamedEquivalent
           (Named.mul
             (Named.add
               exactCoefficient.name exactPrevious.name)
@@ -162,13 +162,13 @@ CCL arithmetic and never complete an input, logarithm, or root stream.
           (NamedEquivalent.refl
             value.name)
       exact NamedEquivalent.trans
-        (by simpa only [Approximation.Gaussian.Name.Coherent.Power.natSum, scaledCurrent, repeatedPrevious,
+        (by simpa only [natSum, scaledCurrent, repeatedPrevious,
           CoherentNamed.add] using
           replacePrevious)
         (NamedEquivalent.trans
           collectProducts
           (by
-            simpa only [Approximation.Gaussian.Name.Coherent.Power.scale, Natural.repeatedCoefficient,
+            simpa only [scale, Natural.repeatedCoefficient,
               combinedCoefficient,
               exactCombined,
               CoherentNamed.mul,
@@ -190,27 +190,51 @@ These certificates are aligned cell-by-cell with the sheet-aware lifted path.
 -/
 
 /-- Finite repeated power in the operational CCL arithmetic. -/
-@[expose] def namedPower (value : Coherent.CoherentNamed) : Nat -> Coherent.CoherentNamed
+@[expose] def namedPower (value : CoherentNamed) : Nat -> CoherentNamed
   | 0 => Coherence.exact 1
   | exponent + 1 => CoherentNamed.mul
-      (Purelib.Approximation.Gaussian.Name.Coherent.Power.namedPower value exponent) value
+      (Power.namedPower value exponent) value
+
+/-- A first finite power is operationally the original coherent channel. -/
+@[expose] def namedPower_one (value : CoherentNamed) :
+    NamedEquivalent (namedPower value 1).name value.name := Mul.coherentMul_one_left value
+
+/-- Finite powers respect comparisons of their original coherent input channels. -/
+@[expose] def namedPower_respects (left right : CoherentNamed)
+    (equivalent : NamedEquivalent left.name right.name) :
+    (exponent : Nat) → NamedEquivalent (namedPower left exponent).name (namedPower right exponent).name
+  | 0 => NamedEquivalent.refl _
+  | exponent + 1 => Congruence.coherentMul_respects
+      (namedPower left exponent) (namedPower right exponent) left right
+      (namedPower_respects left right equivalent exponent) equivalent
+
+/-- Addition of finite exponents is multiplication of the retained finite power channels. -/
+@[expose] def namedPower_add (value : CoherentNamed) (first : Nat) :
+    (second : Nat) → NamedEquivalent (namedPower value (first + second)).name
+      (CoherentNamed.mul (namedPower value first) (namedPower value second)).name
+  | 0 => NamedEquivalent.symm (Mul.coherentMul_one_right (namedPower value first))
+  | second + 1 => NamedEquivalent.trans
+      (Congruence.coherentMul_respects (namedPower value (first + second))
+        (CoherentNamed.mul (namedPower value first) (namedPower value second)) value value
+        (namedPower_add value first second) (NamedEquivalent.refl value.name))
+      (Laws.coherentMul_assoc (namedPower value first) (namedPower value second) value)
 
 /-- An exact Gaussian name's finite power has the corresponding squared-norm power as center bound.
 
 The original zero power retains the exact unit name. Each successor uses the
 same operational multiplication and its original product of center bounds. -/
-@[simp] theorem namedPower_exact_centerBound (point : Data.Gaussian.Basic.Canonical)
+@[simp] theorem namedPower_exact_centerBound (point : Basic.Canonical)
     (exponent : Nat) :
-    (Approximation.Gaussian.Name.Coherent.Power.namedPower (Coherence.exact point)
+    (namedPower (Coherence.exact point)
       exponent).name.process.centerBound =
-        Data.Gaussian.Norm.Basic.normSq point ^ exponent := by
+        Norm.Basic.normSq point ^ exponent := by
   induction exponent with
   | zero =>
-      change Data.Gaussian.Norm.Basic.normSq (1 : Data.Gaussian.Basic.Canonical) =
-        Data.Gaussian.Norm.Basic.normSq point ^ 0
-      rw [pow_zero, Data.Gaussian.Norm.Basic.normSq_one]
+      change Norm.Basic.normSq (1 : Basic.Canonical) =
+        Norm.Basic.normSq point ^ 0
+      rw [pow_zero, Norm.Basic.normSq_one]
   | succ exponent inductionHypothesis =>
-      simp only [Approximation.Gaussian.Name.Coherent.Power.namedPower,
+      simp only [namedPower,
         CoherentNamed.mul,
         Named.mul,
         Process.mul, pow_succ]
@@ -219,12 +243,12 @@ same operational multiplication and its original product of center bounds. -/
 
 /-- Every possible finite reading of an exact rational power is that exact power; multiplication introduces no semantic
 branch. -/
-theorem namedPower_exact_possible_eq (point : Data.Gaussian.Basic.Canonical) (exponent : Nat)
-    (state : (Approximation.Gaussian.Name.Coherent.Power.namedPower
+theorem namedPower_exact_possible_eq (point : Basic.Canonical) (exponent : Nat)
+    (state : (namedPower
       (Coherence.exact point)
         exponent).name.process.State)
-    {candidate : Data.Gaussian.Basic.Canonical}
-    (possible : (Approximation.Gaussian.Name.Coherent.Power.namedPower
+    {candidate : Basic.Canonical}
+    (possible : (namedPower
       (Coherence.exact point)
         exponent).name.process.Possible state candidate) :
     candidate = point ^ exponent := by

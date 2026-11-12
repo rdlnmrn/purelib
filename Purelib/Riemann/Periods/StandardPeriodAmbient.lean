@@ -53,9 +53,9 @@ open Purelib.Riemann.Branches.PreparedPolynomialSheetPropagation (EndpointsIn)
 open Purelib.Riemann.RootContinuation.PreparedSubedgeRootQueries (RootSubedgeRefinement RootSubedgeBlock)
 open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {source :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {box larger : Purelib.Geometry.Rational.Box}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {source :
+  Differential genus}
+  {box larger : Geometry.Rational.Box}
 
 /-- Concatenating two parent lists preserves their common endpoint containment. -/
 theorem append {first last : List (CenteredEdge curve source)}
@@ -83,7 +83,7 @@ theorem member {parents : List (CenteredEdge curve source)} (inside : EndpointsI
 
 open Purelib.Curves in
 /-- Changing the differential preserves the original parent endpoint containment. -/
-theorem recast (target : Hyperelliptic.Differentials.Basic.Differential genus) : ∀ {parents : List (CenteredEdge curve
+theorem recast (target : Differential genus) : ∀ {parents : List (CenteredEdge curve
   source)},
     EndpointsIn box parents → EndpointsIn box (parents.map (recastCenteredEdge target))
   | [], _ => trivial
@@ -126,7 +126,7 @@ open Purelib.Riemann.Readings.PreparedBoundaryClosure (ClosedBoundaryDoublePath)
 open Purelib.Riemann.Topology.SquareRootContinuationChain (Owner)
 open Purelib.Riemann.Readings.PreparedBoundaryClosure.ClosedBoundaryDoublePath (total checkReturn_joined)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+variable {genus : Nat} {curve : HyperellipticCurve genus}
 
 open Purelib.Riemann in
 open Purelib.Curves in
@@ -134,12 +134,12 @@ open Purelib.Data in
 open Purelib.Polynomial in
 open Purelib.Geometry in
 /-- Every original dyadic bank supplies endpoint containment in its own retained ambient box. -/
-private theorem bank_endpoints (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (source :
-  Hyperelliptic.Differentials.Basic.Differential genus) (sheet : Fin 2)
+private theorem bank_endpoints (curve : HyperellipticCurve genus) (source :
+  Differential genus) (sheet : Fin 2)
     {depth : Nat} {diameter : Rat.Fraction.Rational} {positive : 0 < diameter}
     {ambient : Rational.Box} {start finish : Gaussian.Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
-    {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
+    {owner : Owner (curve.polynomial.eval start)}
     (bank : DyadicBank depth diameter positive path owner) :
     EndpointsIn ambient (CenteredPathChain.ofDyadicBank curve source sheet bank).parents := by
   cases bank with
@@ -158,7 +158,7 @@ open Purelib.Geometry in
 The connector and both boundary-box refinements transport their retained endpoint certificates through the exact initial
 schedule concatenation. -/
 theorem initial_endpoints (tour : ClosedBoundaryDoublePath curve) (source :
-  Hyperelliptic.Differentials.Basic.Differential genus)
+  Differential genus)
     (box : Rational.Box) (connector : tour.joined.data.connectorAmbient.Refines box)
     (left : tour.joined.data.leftState.box.Refines box) (right : tour.joined.data.rightState.box.Refines box) :
     EndpointsIn box (Topology.PreparedRootSafeCycleStates.ClosedBoundaryDoublePath.rootClosedInitial tour
@@ -166,16 +166,16 @@ theorem initial_endpoints (tour : ClosedBoundaryDoublePath curve) (source :
   change EndpointsIn box (Integration.PreparedOwnerClosedSchedules.ClosedBoundaryDoublePath.schedule tour
     source).toDifferential.initial.parents
   rw [Integration.PreparedOwnerClosedSchedules.ClosedBoundaryDoublePath.schedule_initial_parents]
-  exact Periods.StandardPeriodAmbient.EndpointsIn.append
-    (Periods.StandardPeriodAmbient.EndpointsIn.append
-      (Periods.StandardPeriodAmbient.EndpointsIn.append
-        (Periods.StandardPeriodAmbient.EndpointsIn.enlarge connector
+  exact EndpointsIn.append
+    (EndpointsIn.append
+      (EndpointsIn.append
+        (EndpointsIn.enlarge connector
           (bank_endpoints curve source 0 tour.joined.data.forwardChecked))
-        (Periods.StandardPeriodAmbient.EndpointsIn.enlarge right
+        (EndpointsIn.enlarge right
           (bank_endpoints curve source 0 tour.joined.data.rightBoundaryChecked)))
-      (Periods.StandardPeriodAmbient.EndpointsIn.enlarge connector
+      (EndpointsIn.enlarge connector
         (bank_endpoints curve source 1 tour.joined.data.backwardChecked)))
-    (Periods.StandardPeriodAmbient.EndpointsIn.enlarge left
+    (EndpointsIn.enlarge left
       (bank_endpoints curve source 1 tour.joined.data.leftBoundaryChecked))
 
 open Purelib.Riemann in
@@ -190,11 +190,11 @@ initial parent banks. -/
 theorem total_initial_endpoints {leftAmbient rightAmbient connectorAmbient : Rational.Box}
     (leftState : State.WindingOne.Basic.WindingOneState curve.polynomial leftAmbient)
     (rightState : State.WindingOne.Basic.WindingOneState curve.polynomial rightAmbient)
-    (connector : Polynomial.Geometry.ClearPath curve.polynomial connectorAmbient leftState.box.anchor
+    (connector : Geometry.ClearPath curve.polynomial connectorAmbient leftState.box.anchor
       rightState.box.anchor)
     (within : connector.WithinAmbient)
     (owner : Owner (curve.polynomial.eval leftState.box.anchor))
-    (source : Hyperelliptic.Differentials.Basic.Differential genus) (box : Rational.Box)
+    (source : Differential genus) (box : Rational.Box)
     (connectorInside : connectorAmbient.Refines box)
     (leftInside : leftState.box.Refines box) (rightInside : rightState.box.Refines box) :
     EndpointsIn box (Topology.PreparedRootSafeCycleStates.ClosedBoundaryDoublePath.rootClosedInitial
@@ -223,14 +223,14 @@ open Purelib.Riemann.Meshes (FramedPuncturedGrid LiftedPuncturedGrid)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourIntersection (IntersectionRow)
 open Purelib.Riemann.Periods.PreparedRootClosedPeriodBank
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
-  {base : FramedPuncturedGrid curve (Purelib.Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve
+  {base : FramedPuncturedGrid curve (Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve
     branches).branches higher}
   {lifted : LiftedPuncturedGrid base}
   {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
-  {index : Fin genus} (row : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourIntersection.IntersectionRow
+  {index : Fin genus} (row : IntersectionRow
     lifted integral index)
 
 section
@@ -248,7 +248,7 @@ theorem a_initial_ambient : EndpointsIn (Hyperelliptic.Branches.Cuts.Ambient cur
     exact equal
   rw [row.period.aInitial_eq, PreparedCycleModels.OwnerClosedCyclePair.aInitial_state]
   rw [toursEq]
-  apply Periods.StandardPeriodAmbient.ClosedBoundaryDoublePath.total_initial_endpoints
+  apply ClosedBoundaryDoublePath.total_initial_endpoints
   · exact Rational.Box.refines_refl _
   · exact State.WindingOne.Basic.WindingOneState.refinesAmbient _
   · exact State.WindingOne.Basic.WindingOneState.refinesAmbient _
@@ -263,7 +263,7 @@ theorem b_initial_ambient : EndpointsIn (Hyperelliptic.Branches.Cuts.Ambient cur
     exact equal
   rw [row.period.bInitial_eq, PreparedCycleModels.OwnerClosedCyclePair.bInitial_state]
   rw [toursEq]
-  apply Periods.StandardPeriodAmbient.ClosedBoundaryDoublePath.total_initial_endpoints
+  apply ClosedBoundaryDoublePath.total_initial_endpoints
   · exact Rational.Box.refines_refl _
   · exact State.WindingOne.Basic.WindingOneState.refinesAmbient _
   · exact State.WindingOne.Basic.WindingOneState.refinesAmbient _
@@ -275,13 +275,13 @@ open Purelib.Curves
 /-- Every actual A-period schedule stage inherits the original fixed ambient containment. -/
 theorem a_stage_ambient (stage : Nat) : EndpointsIn (Hyperelliptic.Branches.Cuts.Ambient curve) (row.period.aState
   stage).state.parents :=
-  Periods.StandardPeriodAmbient.EndpointsIn.refinement (row.period.aInitial.statesSubedges (standardDifferentials genus)
+  EndpointsIn.refinement (row.period.aInitial.statesSubedges (standardDifferentials genus)
     stage) (a_initial_ambient row)
 
 /-- Every actual B-period schedule stage inherits the original fixed ambient containment. -/
 theorem b_stage_ambient (stage : Nat) : EndpointsIn (Hyperelliptic.Branches.Cuts.Ambient curve) (row.period.bState
   stage).state.parents :=
-  Periods.StandardPeriodAmbient.EndpointsIn.refinement (row.period.bInitial.statesSubedges (standardDifferentials genus)
+  EndpointsIn.refinement (row.period.bInitial.statesSubedges (standardDifferentials genus)
     stage) (b_initial_ambient row)
 
 end Purelib.Riemann.Periods.StandardPeriodAmbient.IntersectionRow

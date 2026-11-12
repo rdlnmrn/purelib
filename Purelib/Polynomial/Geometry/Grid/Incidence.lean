@@ -92,6 +92,21 @@ public theorem contains_of_strict_inner (entries : List Alpha)
     · exact (not_lt_of_ge ((innerOrdered.trans upperInside).trans before) left).elim
     · exact after
 
+/-- A retained axis entry contained in an adjacent interval is one of its two endpoint coordinates.
+
+The exclusion of the interval interior follows from the same strictly
+ordered axis. Weak containment retains both endpoint cases. -/
+public theorem entry_endpoint (entries : List Alpha)
+    (ordered : entries.Pairwise (fun left right => key left < key right))
+    {interval : Geometry.Grid.ClearGrid.Interval key}
+    (member : interval ∈ Geometry.Grid.ClearGrid.Interval.adjacent entries ordered)
+    {entry : Alpha} (entryMember : entry ∈ entries)
+    (inside : key interval.lower ≤ key entry ∧ key entry ≤ key interval.upper) :
+    key entry = key interval.lower ∨ key entry = key interval.upper := by
+  rcases entry_side entries ordered member entryMember with before | after
+  · exact Or.inl (Fraction.Order.Basic.le_antisymm _ _ before inside.1)
+  · exact Or.inr (Fraction.Order.Basic.le_antisymm _ _ inside.2 after)
+
 end Interval
 
 section Grid

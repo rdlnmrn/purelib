@@ -15,6 +15,8 @@ import Mathlib.Order.Defs.PartialOrder
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Data
@@ -72,20 +74,20 @@ constructive_injectivity UpperProcess
 namespace LowerProcess
 
 /-- The newer lower observation contains at least the evidence in the older one. -/
-def Refines (process : Approximation.LowerProcess)
+def Refines (process : LowerProcess)
     (newer older : process.State) : Prop :=
   process.bound older ≤ process.bound newer
 
 namespace Refines
 
 /-- Each state refines itself. -/
-theorem refl (process : Approximation.LowerProcess) (state :
+theorem refl (process : LowerProcess) (state :
   process.State) :
     process.Refines state state :=
   le_rfl
 
 /-- Compose two successive refinements of one-sided evidence. -/
-theorem trans {process : Approximation.LowerProcess} {newest newer
+theorem trans {process : LowerProcess} {newest newer
   older : process.State}
     (newestNewer : process.Refines newest newer)
     (newerOlder : process.Refines newer older) :
@@ -96,26 +98,26 @@ theorem trans {process : Approximation.LowerProcess} {newest newer
 end Refines
 
 /-- Perform exactly the displayed finite number of lower refinements. -/
-def advance (process : Purelib.Approximation.LowerProcess) : Nat →
+def advance (process : LowerProcess) : Nat →
   process.State → process.State
   | 0, state => state
   | count + 1, state => process.refine (advance process count state)
 
 /-- Advancing zero steps returns the supplied state. -/
-@[simp] theorem advance_zero (process : Approximation.LowerProcess) (state :
+@[simp] theorem advance_zero (process : LowerProcess) (state :
   process.State) :
     process.advance 0 state = state :=
   rfl
 
 /-- Advancing a successor number of steps applies one refinement after the preceding advance. -/
-theorem advance_succ (process : Approximation.LowerProcess) (count : Nat)
+theorem advance_succ (process : LowerProcess) (count : Nat)
     (state : process.State) :
     process.advance (count + 1) state =
       process.refine (process.advance count state) :=
   rfl
 
 /-- Any finite advance preserves or improves the original lower bound. -/
-theorem bound_le_advance (process : Approximation.LowerProcess) :
+theorem bound_le_advance (process : LowerProcess) :
     ∀ (count : Nat) (state : process.State),
       process.bound state ≤ process.bound (process.advance count state)
   | 0, _ => le_rfl
@@ -124,18 +126,18 @@ theorem bound_le_advance (process : Approximation.LowerProcess) :
         (process.monotone (process.advance count state))
 
 /-- Split a finite advance into two successive advances of the displayed lengths. -/
-theorem advance_add (process : Approximation.LowerProcess) (left right : Nat)
+theorem advance_add (process : LowerProcess) (left right : Nat)
     (state : process.State) :
     process.advance (left + right) state =
       process.advance right (process.advance left state) := by
   induction right with
   | zero => rfl
   | succ right inductionHypothesis =>
-      rw [Nat.add_succ, Approximation.LowerProcess.advance_succ, Approximation.LowerProcess.advance_succ,
+      rw [Nat.add_succ, advance_succ, advance_succ,
         inductionHypothesis]
 
 /-- Later finite schedules return at least as strong a lower bound. -/
-theorem advance_mono (process : Approximation.LowerProcess) {earlier later :
+theorem advance_mono (process : LowerProcess) {earlier later :
   Nat}
     (order : earlier ≤ later) (state : process.State) :
     process.bound (process.advance earlier state) ≤
@@ -147,12 +149,12 @@ theorem advance_mono (process : Approximation.LowerProcess) {earlier later :
   exact process.bound_le_advance extra (process.advance earlier state)
 
 /-- A direct common finite refinement for two lower-bound schedules. -/
-def commonAdvance (process : Approximation.LowerProcess) (left right : Nat)
+def commonAdvance (process : LowerProcess) (left right : Nat)
     (state : process.State) : process.State :=
   process.advance (max left right) state
 
 /-- The common advance has a lower bound at least as strong as the left schedule. -/
-theorem left_le_commonAdvance (process : Approximation.LowerProcess) (left
+theorem left_le_commonAdvance (process : LowerProcess) (left
   right : Nat)
     (state : process.State) :
     process.bound (process.advance left state) ≤
@@ -160,7 +162,7 @@ theorem left_le_commonAdvance (process : Approximation.LowerProcess) (left
   process.advance_mono (Data.Nat.Order.le_max_left left right) state
 
 /-- The common advance has a lower bound at least as strong as the right schedule. -/
-theorem right_le_commonAdvance (process : Approximation.LowerProcess) (left
+theorem right_le_commonAdvance (process : LowerProcess) (left
   right : Nat)
     (state : process.State) :
     process.bound (process.advance right state) ≤
@@ -168,7 +170,7 @@ theorem right_le_commonAdvance (process : Approximation.LowerProcess) (left
   process.advance_mono (Data.Nat.Order.le_max_right left right) state
 
 /-- Constant exact lower evidence. -/
-def exact (value : Fraction.Rational) : Approximation.LowerProcess where
+def exact (value : Fraction.Rational) : LowerProcess where
   State := Unit
   bound _ := value
   initial := ()
@@ -177,7 +179,7 @@ def exact (value : Fraction.Rational) : Approximation.LowerProcess where
   refinesInitial _ := le_rfl
 
 /-- Pointwise addition of independently refinable lower evidence. -/
-def add (left right : Approximation.LowerProcess) : Approximation.LowerProcess
+def add (left right : LowerProcess) : LowerProcess
   where
   State := left.State × right.State
   bound state := left.bound state.1 + right.bound state.2
@@ -189,55 +191,55 @@ def add (left right : Approximation.LowerProcess) : Approximation.LowerProcess
     (right.refinesInitial state.2)
 
 /-- Scaling lower evidence by an explicitly nonnegative rational preserves its direction. -/
-def scale (process : Approximation.LowerProcess) (factor : Fraction.Rational)
-    (nonnegative : 0 ≤ factor) : Approximation.LowerProcess where
+def scale (process : LowerProcess) (factor : Fraction.Rational)
+    (nonnegative : 0 ≤ factor) : LowerProcess where
   State := process.State
   bound state := factor * process.bound state
   initial := process.initial
   refine := process.refine
   monotone state :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       (process.monotone state) nonnegative
   refinesInitial state :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       (process.refinesInitial state) nonnegative
 
 /-- Negation turns lower evidence into upper evidence. -/
-def neg (process : Approximation.LowerProcess) : Approximation.UpperProcess
+def neg (process : LowerProcess) : UpperProcess
   where
   State := process.State
   bound state := -process.bound state
   initial := process.initial
   refine := process.refine
   antitone state :=
-    Fraction.Order.Arithmetic.neg_le_neg_direct (process.monotone state)
+    Arithmetic.neg_le_neg_direct (process.monotone state)
   refinesInitial state :=
-    Fraction.Order.Arithmetic.neg_le_neg_direct
+    Arithmetic.neg_le_neg_direct
       (process.refinesInitial state)
 
 /-- A finite list of lower processes can be summed without imposing a common state type or an infinite schedule. -/
-def sum : List Purelib.Approximation.LowerProcess →
-  Purelib.Approximation.LowerProcess
+def sum : List LowerProcess →
+  LowerProcess
   | [] => exact 0
   | process :: remaining => process.add (sum remaining)
 
 /-- The sum of no one-sided processes is the exact zero process. -/
-@[simp] theorem sum_nil : Approximation.LowerProcess.sum [] =
-  Approximation.LowerProcess.exact 0 :=
+@[simp] theorem sum_nil : sum [] =
+  exact 0 :=
   rfl
 
 /-- The sum of a nonempty process list adds its first process to the sum of the remainder. -/
-@[simp] theorem sum_cons (process : Approximation.LowerProcess)
-    (remaining : List Approximation.LowerProcess) :
-    Approximation.LowerProcess.sum (process :: remaining) = process.add (Approximation.LowerProcess.sum remaining) :=
+@[simp] theorem sum_cons (process : LowerProcess)
+    (remaining : List LowerProcess) :
+    sum (process :: remaining) = process.add (sum remaining) :=
   rfl
 
 /-- Extract lower evidence from any certified two-sided refinement step. -/
-def ofBoundRefinement (State : Type) (bound : State → Rat.Interval)
+def ofBoundRefinement (State : Type) (bound : State → Interval)
     (initial : State) (refine : State → State)
     (step : ∀ state, Interval.Refines (bound (refine state)) (bound state))
     (initialRefinement : ∀ state,
-      Interval.Refines (bound state) (bound initial)) : Approximation.LowerProcess where
+      Interval.Refines (bound state) (bound initial)) : LowerProcess where
   State := State
   bound state := (bound state).lower
   initial := initial
@@ -250,20 +252,20 @@ end LowerProcess
 namespace UpperProcess
 
 /-- The newer upper observation contains at least the evidence in the older one. -/
-def Refines (process : Approximation.UpperProcess)
+def Refines (process : UpperProcess)
     (newer older : process.State) : Prop :=
   process.bound newer ≤ process.bound older
 
 namespace Refines
 
 /-- Each state refines itself. -/
-theorem refl (process : Approximation.UpperProcess) (state :
+theorem refl (process : UpperProcess) (state :
   process.State) :
     process.Refines state state :=
   le_rfl
 
 /-- Compose two successive refinements of one-sided evidence. -/
-theorem trans {process : Approximation.UpperProcess} {newest newer
+theorem trans {process : UpperProcess} {newest newer
   older : process.State}
     (newestNewer : process.Refines newest newer)
     (newerOlder : process.Refines newer older) :
@@ -274,26 +276,26 @@ theorem trans {process : Approximation.UpperProcess} {newest newer
 end Refines
 
 /-- Perform exactly the displayed finite number of upper refinements. -/
-def advance (process : Purelib.Approximation.UpperProcess) : Nat →
+def advance (process : UpperProcess) : Nat →
   process.State → process.State
   | 0, state => state
   | count + 1, state => process.refine (advance process count state)
 
 /-- Advancing zero steps returns the supplied state. -/
-@[simp] theorem advance_zero (process : Approximation.UpperProcess) (state :
+@[simp] theorem advance_zero (process : UpperProcess) (state :
   process.State) :
     process.advance 0 state = state :=
   rfl
 
 /-- Advancing a successor number of steps applies one refinement after the preceding advance. -/
-theorem advance_succ (process : Approximation.UpperProcess) (count : Nat)
+theorem advance_succ (process : UpperProcess) (count : Nat)
     (state : process.State) :
     process.advance (count + 1) state =
       process.refine (process.advance count state) :=
   rfl
 
 /-- Any finite advance preserves or improves the original upper bound. -/
-theorem advance_bound_le (process : Approximation.UpperProcess) :
+theorem advance_bound_le (process : UpperProcess) :
     ∀ (count : Nat) (state : process.State),
       process.bound (process.advance count state) ≤ process.bound state
   | 0, _ => le_rfl
@@ -302,18 +304,18 @@ theorem advance_bound_le (process : Approximation.UpperProcess) :
         (process.advance_bound_le count state)
 
 /-- Split a finite advance into two successive advances of the displayed lengths. -/
-theorem advance_add (process : Approximation.UpperProcess) (left right : Nat)
+theorem advance_add (process : UpperProcess) (left right : Nat)
     (state : process.State) :
     process.advance (left + right) state =
       process.advance right (process.advance left state) := by
   induction right with
   | zero => rfl
   | succ right inductionHypothesis =>
-      rw [Nat.add_succ, Approximation.UpperProcess.advance_succ, Approximation.UpperProcess.advance_succ,
+      rw [Nat.add_succ, advance_succ, advance_succ,
         inductionHypothesis]
 
 /-- Later finite schedules return at least as strong an upper bound. -/
-theorem advance_antitone (process : Approximation.UpperProcess) {earlier later
+theorem advance_antitone (process : UpperProcess) {earlier later
   : Nat}
     (order : earlier ≤ later) (state : process.State) :
     process.bound (process.advance later state) ≤
@@ -325,12 +327,12 @@ theorem advance_antitone (process : Approximation.UpperProcess) {earlier later
   exact process.advance_bound_le extra (process.advance earlier state)
 
 /-- A direct common finite refinement for two upper-bound schedules. -/
-def commonAdvance (process : Approximation.UpperProcess) (left right : Nat)
+def commonAdvance (process : UpperProcess) (left right : Nat)
     (state : process.State) : process.State :=
   process.advance (max left right) state
 
 /-- The common advance has an upper bound at least as strong as the left schedule. -/
-theorem commonAdvance_le_left (process : Approximation.UpperProcess) (left
+theorem commonAdvance_le_left (process : UpperProcess) (left
   right : Nat)
     (state : process.State) :
     process.bound (process.commonAdvance left right state) ≤
@@ -338,7 +340,7 @@ theorem commonAdvance_le_left (process : Approximation.UpperProcess) (left
   process.advance_antitone (Data.Nat.Order.le_max_left left right) state
 
 /-- The common advance has an upper bound at least as strong as the right schedule. -/
-theorem commonAdvance_le_right (process : Approximation.UpperProcess) (left
+theorem commonAdvance_le_right (process : UpperProcess) (left
   right : Nat)
     (state : process.State) :
     process.bound (process.commonAdvance left right state) ≤
@@ -346,7 +348,7 @@ theorem commonAdvance_le_right (process : Approximation.UpperProcess) (left
   process.advance_antitone (Data.Nat.Order.le_max_right left right) state
 
 /-- Constant exact upper evidence. -/
-def exact (value : Fraction.Rational) : Approximation.UpperProcess where
+def exact (value : Fraction.Rational) : UpperProcess where
   State := Unit
   bound _ := value
   initial := ()
@@ -355,7 +357,7 @@ def exact (value : Fraction.Rational) : Approximation.UpperProcess where
   refinesInitial _ := le_rfl
 
 /-- Pointwise addition of independently refinable upper evidence. -/
-def add (left right : Approximation.UpperProcess) : Approximation.UpperProcess
+def add (left right : UpperProcess) : UpperProcess
   where
   State := left.State × right.State
   bound state := left.bound state.1 + right.bound state.2
@@ -367,55 +369,55 @@ def add (left right : Approximation.UpperProcess) : Approximation.UpperProcess
     (right.refinesInitial state.2)
 
 /-- Scaling upper evidence by an explicitly nonnegative rational preserves its direction. -/
-def scale (process : Approximation.UpperProcess) (factor : Fraction.Rational)
-    (nonnegative : 0 ≤ factor) : Approximation.UpperProcess where
+def scale (process : UpperProcess) (factor : Fraction.Rational)
+    (nonnegative : 0 ≤ factor) : UpperProcess where
   State := process.State
   bound state := factor * process.bound state
   initial := process.initial
   refine := process.refine
   antitone state :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       (process.antitone state) nonnegative
   refinesInitial state :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       (process.refinesInitial state) nonnegative
 
 /-- Negation turns upper evidence into lower evidence. -/
-def neg (process : Approximation.UpperProcess) : Approximation.LowerProcess
+def neg (process : UpperProcess) : LowerProcess
   where
   State := process.State
   bound state := -process.bound state
   initial := process.initial
   refine := process.refine
   monotone state :=
-    Fraction.Order.Arithmetic.neg_le_neg_direct (process.antitone state)
+    Arithmetic.neg_le_neg_direct (process.antitone state)
   refinesInitial state :=
-    Fraction.Order.Arithmetic.neg_le_neg_direct
+    Arithmetic.neg_le_neg_direct
       (process.refinesInitial state)
 
 /-- A finite list of upper processes can be summed without imposing a common state type or an infinite schedule. -/
-def sum : List Purelib.Approximation.UpperProcess →
-  Purelib.Approximation.UpperProcess
+def sum : List UpperProcess →
+  UpperProcess
   | [] => exact 0
   | process :: remaining => process.add (sum remaining)
 
 /-- The sum of no one-sided processes is the exact zero process. -/
-@[simp] theorem sum_nil : Approximation.UpperProcess.sum [] =
-  Approximation.UpperProcess.exact 0 :=
+@[simp] theorem sum_nil : sum [] =
+  exact 0 :=
   rfl
 
 /-- The sum of a nonempty process list adds its first process to the sum of the remainder. -/
-@[simp] theorem sum_cons (process : Approximation.UpperProcess)
-    (remaining : List Approximation.UpperProcess) :
-    Approximation.UpperProcess.sum (process :: remaining) = process.add (Approximation.UpperProcess.sum remaining) :=
+@[simp] theorem sum_cons (process : UpperProcess)
+    (remaining : List UpperProcess) :
+    sum (process :: remaining) = process.add (sum remaining) :=
   rfl
 
 /-- Extract upper evidence from any certified two-sided refinement step. -/
-def ofBoundRefinement (State : Type) (bound : State → Rat.Interval)
+def ofBoundRefinement (State : Type) (bound : State → Interval)
     (initial : State) (refine : State → State)
     (step : ∀ state, Interval.Refines (bound (refine state)) (bound state))
     (initialRefinement : ∀ state,
-      Interval.Refines (bound state) (bound initial)) : Approximation.UpperProcess where
+      Interval.Refines (bound state) (bound initial)) : UpperProcess where
   State := State
   bound state := (bound state).upper
   initial := initial

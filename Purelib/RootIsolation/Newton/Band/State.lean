@@ -1,6 +1,7 @@
 module
 import Purelib.Data.Rat.Fraction
 public import Purelib.RootIsolation.State.WindingOne.Raw
+public import Purelib.RootIsolation.Refinement.Basic
 import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Polynomial.Dense.Gaussian.Squarefree.Basic
@@ -55,6 +56,30 @@ def stateOfOutput
     ambientRightClearance := output.ambientRightClearance
     ambientBottomClearance := output.ambientBottomClearance
     ambientTopClearance := output.ambientTopClearance }
+
+/-- Retain the full successful refinement certified by an actual Newton-band output.
+
+The same raw source and accuracy index the result. The band's retained state,
+strict source containment and diagonal bound are consumed directly, without
+another extraction or winding computation.
+-/
+def refinementOfOutput
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    {squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p}
+    {current : State.Raw.RawWindingState p ambient} {epsilon : Fraction.Rational}
+    (output : Newton.Band.Basic.Output squarefree current epsilon) : Refinement current epsilon where
+  state := stateOfOutput output
+  strict := output.strictCurrent
+  accurate := output.diagonalSq_le
+
+/-- The successful refinement retains the complete state read from that same band. -/
+theorem refinementOfOutput_state
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    {squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p}
+    {current : State.Raw.RawWindingState p ambient} {epsilon : Fraction.Rational}
+    (output : Newton.Band.Basic.Output squarefree current epsilon) :
+    (refinementOfOutput output).state = stateOfOutput output := rfl
+
 end Purelib.RootIsolation.Newton.Band.State
 
 end

@@ -32,7 +32,7 @@ open Purelib.Geometry.Plane.Point
 open scoped Purelib.Data.Nat
 attribute [local instance 2000] Purelib.Data.Nat.successorNeZero
   Purelib.Data.Nat.successorAtLeastTwo
-  Purelib.Algebra.Group.Negation.subNegZeroMonoid
+  Algebra.Group.Negation.subNegZeroMonoid
 
 section
 /-!
@@ -49,7 +49,7 @@ public section
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 section
 
@@ -58,7 +58,7 @@ namespace Purelib.Curves.Plane.Conic
 /-- The polynomial antipodal-sum identity, stated using the two coordinate equations which say that `center` is the
 midpoint of `first` and `second`. -/
 theorem antipodal_quadrance_sum
-    (first second center point : Geometry.Plane.Point K)
+    (first second center point : Plane.Point K)
     (xSum : first.x + second.x = 2 * center.x)
     (ySum : first.y + second.y = 2 * center.y) :
     Quadrance.quadrance first point + Quadrance.quadrance second point =
@@ -98,7 +98,7 @@ point's circle-power.  This form needs no non-null hypotheses or division.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 section
 
@@ -106,7 +106,7 @@ namespace Purelib.Curves.Plane.Conic
 
 /-- The quadrance from the first endpoint to a Thales point on its line. -/
 public theorem quadrance_first_thalesPoint
-    (first second : Geometry.Plane.Point K) (scale : K) :
+    (first second : Plane.Point K) (scale : K) :
     Quadrance.quadrance first (Affine.thalesPoint scale first second) =
       scale ^ 2 * Quadrance.quadrance first second := by
   unfold Quadrance.quadrance Affine.thalesPoint Affine.affineCombination
@@ -114,7 +114,7 @@ public theorem quadrance_first_thalesPoint
 
 /-- The quadrance from a Thales point to the second endpoint. -/
 public theorem quadrance_thalesPoint_second
-    (first second : Geometry.Plane.Point K) (scale : K) :
+    (first second : Plane.Point K) (scale : K) :
     Quadrance.quadrance (Affine.thalesPoint scale first second) second =
       (1 - scale) ^ 2 * Quadrance.quadrance first second := by
   unfold Quadrance.quadrance Affine.thalesPoint Affine.affineCombination
@@ -142,7 +142,7 @@ characteristic different from two.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry.Plane.Point.Affine.Quadrance
 
@@ -150,26 +150,26 @@ namespace Purelib.Geometry.Plane.Point.Affine.Quadrance
 other endpoints. -/
 theorem midpoint_segment_quadrance
     (first second common : Point K) (twoNonzero : (2 : K) ≠ 0) :
-    Quadrance.quadrance (Affine.midpoint first common) (Affine.midpoint second common) =
+    Quadrance.quadrance (midpoint first common) (midpoint second common) =
       Quadrance.quadrance first second / 4 := by
   have twoCancel : (2 : K) * (2 : K)⁻¹ = 1 :=
-    Algebra.Field.ExplicitField.mul_inv_cancel 2 twoNonzero
+    ExplicitField.mul_inv_cancel 2 twoNonzero
   have fourAsProduct : (4 : K) = 2 * 2 := by ring1
   have fourNonzero : (4 : K) ≠ 0 := by
     rw [fourAsProduct]
-    exact Algebra.Field.ExplicitField.mul_ne_zero twoNonzero twoNonzero
-  apply Algebra.Field.ExplicitField.eq_of_mul_eq_mul_right fourNonzero
+    exact ExplicitField.mul_ne_zero twoNonzero twoNonzero
+  apply ExplicitField.eq_of_mul_eq_mul_right fourNonzero
   calc
-    Quadrance.quadrance (Affine.midpoint first common) (Affine.midpoint second common) * 4 =
+    Quadrance.quadrance (midpoint first common) (midpoint second common) * 4 =
         Quadrance.quadrance first second := by
-      unfold Quadrance.quadrance Affine.midpoint
+      unfold Quadrance.quadrance midpoint
       change
         ((((second.x + common.x) / 2) -
               ((first.x + common.x) / 2)) ^ 2 +
             (((second.y + common.y) / 2) -
               ((first.y + common.y) / 2)) ^ 2) * 4 =
           (second.x - first.x) ^ 2 + (second.y - first.y) ^ 2
-      simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+      simp only [ExplicitField.div_eq_mul_inv]
       rw [fourAsProduct]
       calc
         ((((second.x + common.x) * (2 : K)⁻¹) -
@@ -182,19 +182,19 @@ theorem midpoint_segment_quadrance
         _ = (second.x - first.x) ^ 2 +
             (second.y - first.y) ^ 2 := by rw [twoCancel]; ring1
     _ = (Quadrance.quadrance first second / 4) * 4 :=
-      (Algebra.Field.ExplicitField.div_mul_cancel _ fourNonzero).symm
+      (ExplicitField.div_mul_cancel _ fourNonzero).symm
 
 /-- The common-first-endpoint form of `midpoint_segment_quadrance`. -/
 theorem midpoint_segment_quadrance_left
     (common first second : Point K) (twoNonzero : (2 : K) ≠ 0) :
-    Quadrance.quadrance (Affine.midpoint common first) (Affine.midpoint common second) =
+    Quadrance.quadrance (midpoint common first) (midpoint common second) =
       Quadrance.quadrance first second / 4 := by
   calc
-    Quadrance.quadrance (Affine.midpoint common first) (Affine.midpoint common second) =
-        Quadrance.quadrance (Affine.midpoint first common) (Affine.midpoint second common) := by
-      rw [Affine.midpoint_symm common first, Affine.midpoint_symm common second]
+    Quadrance.quadrance (midpoint common first) (midpoint common second) =
+        Quadrance.quadrance (midpoint first common) (midpoint second common) := by
+      rw [midpoint_symm common first, midpoint_symm common second]
     _ = Quadrance.quadrance first second / 4 :=
-      Geometry.Plane.Point.Affine.Quadrance.midpoint_segment_quadrance first second common twoNonzero
+      midpoint_segment_quadrance first second common twoNonzero
 
 end Purelib.Geometry.Plane.Point.Affine.Quadrance
 
@@ -215,48 +215,48 @@ stated explicitly: midpoint and Triple-quad arguments require `2 ≠ 0`.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry.Plane.Point.Affine.Quadrance
 
 /-- The displayed midpoint has equal quadrance to the two endpoints. -/
 theorem midpoint_equal_quadrance
     (first second : Point K) (twoNonzero : (2 : K) ≠ 0) :
-    Quadrance.quadrance (Affine.midpoint first second) first =
-      Quadrance.quadrance (Affine.midpoint first second) second := by
+    Quadrance.quadrance (midpoint first second) first =
+      Quadrance.quadrance (midpoint first second) second := by
   unfold Quadrance.quadrance
   change
     (first.x - (first.x + second.x) / 2) ^ 2 +
         (first.y - (first.y + second.y) / 2) ^ 2 =
       (second.x - (first.x + second.x) / 2) ^ 2 +
         (second.y - (first.y + second.y) / 2) ^ 2
-  rw [Purelib.Algebra.Field.Midpoint.left_sub_midpoint_coordinate first.x second.x twoNonzero,
-    Purelib.Algebra.Field.Midpoint.left_sub_midpoint_coordinate first.y second.y twoNonzero,
-    Purelib.Algebra.Field.Midpoint.right_sub_midpoint_coordinate first.x second.x twoNonzero,
-    Purelib.Algebra.Field.Midpoint.right_sub_midpoint_coordinate first.y second.y twoNonzero]
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  rw [Midpoint.left_sub_midpoint_coordinate first.x second.x twoNonzero,
+    Midpoint.left_sub_midpoint_coordinate first.y second.y twoNonzero,
+    Midpoint.right_sub_midpoint_coordinate first.x second.x twoNonzero,
+    Midpoint.right_sub_midpoint_coordinate first.y second.y twoNonzero]
+  simp only [ExplicitField.div_eq_mul_inv]
   ring1
 
 /-- The midpoint-to-endpoint quadrance is one quarter of the side quadrance. Only characteristic two is excluded. -/
 theorem midpoint_quadrance [DecidableEq K]
     (first second : Point K) (twoNonzero : (2 : K) ≠ 0) :
-    Quadrance.quadrance (Affine.midpoint first second) first = Quadrance.quadrance first second / 4 := by
+    Quadrance.quadrance (midpoint first second) first = Quadrance.quadrance first second / 4 := by
   have twoInverse : (2 : K) * (2 : K)⁻¹ = 1 :=
-    Algebra.Field.ExplicitField.mul_inv_cancel 2 twoNonzero
+    ExplicitField.mul_inv_cancel 2 twoNonzero
   have fourAsProduct : (4 : K) = 2 * 2 := by ring1
   have fourNonzero : (4 : K) ≠ 0 := by
     rw [fourAsProduct]
-    exact Algebra.Field.ExplicitField.mul_ne_zero twoNonzero twoNonzero
-  have scaled : Quadrance.quadrance (Affine.midpoint first second) first * (4 : K) =
+    exact ExplicitField.mul_ne_zero twoNonzero twoNonzero
+  have scaled : Quadrance.quadrance (midpoint first second) first * (4 : K) =
       Quadrance.quadrance first second := by
     unfold Quadrance.quadrance
     change
       ((first.x - (first.x + second.x) / 2) ^ 2 +
         (first.y - (first.y + second.y) / 2) ^ 2) * 4 =
         (second.x - first.x) ^ 2 + (second.y - first.y) ^ 2
-    rw [Purelib.Algebra.Field.Midpoint.left_sub_midpoint_coordinate first.x second.x twoNonzero,
-      Purelib.Algebra.Field.Midpoint.left_sub_midpoint_coordinate first.y second.y twoNonzero]
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    rw [Midpoint.left_sub_midpoint_coordinate first.x second.x twoNonzero,
+      Midpoint.left_sub_midpoint_coordinate first.y second.y twoNonzero]
+    simp only [ExplicitField.div_eq_mul_inv]
     rw [fourAsProduct]
     calc
       (((first.x - second.x) * (2 : K)⁻¹) ^ 2 +
@@ -267,12 +267,12 @@ theorem midpoint_quadrance [DecidableEq K]
         rw [twoInverse]
         ring1
   calc
-    Quadrance.quadrance (Affine.midpoint first second) first =
-        Quadrance.quadrance (Affine.midpoint first second) first * 4 * (4 : K)⁻¹ := by
-      rw [mul_assoc, Algebra.Field.ExplicitField.mul_inv_cancel 4 fourNonzero, mul_one]
+    Quadrance.quadrance (midpoint first second) first =
+        Quadrance.quadrance (midpoint first second) first * 4 * (4 : K)⁻¹ := by
+      rw [mul_assoc, ExplicitField.mul_inv_cancel 4 fourNonzero, mul_one]
     _ = Quadrance.quadrance first second * (4 : K)⁻¹ := by rw [scaled]
     _ = Quadrance.quadrance first second / 4 := by
-      rw [Algebra.Field.ExplicitField.div_eq_mul_inv]
+      rw [ExplicitField.div_eq_mul_inv]
 
 /-- The uniqueness clause of Theorem 20: on a non-null side, the midpoint is the only point of the line equidistant from
 the endpoints. -/
@@ -282,7 +282,7 @@ theorem midpoint_unique_of_equal_quadrance [DecidableEq K]
     (sideNonNull : ¬ (Incidence.lineThrough first second distinct).IsNull)
     (onLine : (Incidence.lineThrough first second distinct).Contains point)
     (equalQuadrances : Quadrance.quadrance point first = Quadrance.quadrance point second) :
-    point = Affine.midpoint first second := by
+    point = midpoint first second := by
   have sideQuadranceNonzero : Quadrance.quadrance first second ≠ 0 := by
     intro sideQuadranceZero
     exact sideNonNull
@@ -301,13 +301,13 @@ theorem midpoint_unique_of_equal_quadrance [DecidableEq K]
       rightWeight ^ 2 * Quadrance.quadrance first second := by
     rw [← combination]
     rw [leftFormula]
-    unfold Quadrance.quadrance Affine.affineCombination
+    unfold Quadrance.quadrance affineCombination
     ring1
   have fromSecond : Quadrance.quadrance point second =
       leftWeight ^ 2 * Quadrance.quadrance first second := by
     rw [← combination]
     rw [rightFormula]
-    unfold Quadrance.quadrance Affine.affineCombination
+    unfold Quadrance.quadrance affineCombination
     ring1
   have differenceTimesSide :
       (rightWeight ^ 2 - leftWeight ^ 2) * Quadrance.quadrance first second = 0 := by
@@ -319,8 +319,8 @@ theorem midpoint_unique_of_equal_quadrance [DecidableEq K]
         rw [fromFirst, fromSecond]
       _ = 0 := by rw [equalQuadrances]; ring1
   have squareDifferenceZero : rightWeight ^ 2 - leftWeight ^ 2 = 0 :=
-    (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] [DecidableEq K] {left right : K} (rightNonzero : right ≠
-      0) (productZero : left * right = 0) => (Purelib.Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_right (K := K)
+    (fun {K : Type _} [ExplicitField K] [DecidableEq K] {left right : K} (rightNonzero : right ≠
+      0) (productZero : left * right = 0) => (ExplicitField.eq_zero_of_mul_eq_zero_right (K := K)
       (left := left) (right := right) rightNonzero productZero : left = 0)) sideQuadranceNonzero differenceTimesSide
   have weightsReversed : rightWeight + leftWeight = 1 := by
     calc
@@ -350,7 +350,7 @@ theorem midpoint_unique_of_equal_quadrance [DecidableEq K]
       leftWeight * (2 : K) = (2 : K) * leftWeight := by ring1
       _ = 1 := twiceLeft
   have halfTimesTwo : ((1 : K) / 2) * 2 = 1 :=
-    Algebra.Field.ExplicitField.div_mul_cancel 1 twoNonzero
+    ExplicitField.div_mul_cancel 1 twoNonzero
   have leftIsHalf : leftWeight = (1 : K) / 2 := by
     have differenceTimesTwo : (leftWeight - (1 : K) / 2) * 2 = 0 := by
       calc
@@ -358,16 +358,16 @@ theorem midpoint_unique_of_equal_quadrance [DecidableEq K]
             leftWeight * 2 - ((1 : K) / 2) * 2 := by ring1
         _ = 0 := by rw [leftTimesTwo, halfTimesTwo]; ring1
     have differenceZero :=
-      (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] [DecidableEq K] {left right : K} (rightNonzero : right ≠
-        0) (productZero : left * right = 0) => (Purelib.Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_right (K :=
+      (fun {K : Type _} [ExplicitField K] [DecidableEq K] {left right : K} (rightNonzero : right ≠
+        0) (productZero : left * right = 0) => (ExplicitField.eq_zero_of_mul_eq_zero_right (K :=
         K) (left := left) (right := right) rightNonzero productZero : left = 0)) twoNonzero differenceTimesTwo
     calc
       leftWeight = (leftWeight - (1 : K) / 2) + (1 : K) / 2 := by ring1
       _ = (1 : K) / 2 := by rw [differenceZero]; ring1
   rw [← combination, weightsEqual, leftIsHalf]
   apply Plane.Point.ext <;>
-    simp only [Affine.affineCombination, Affine.midpoint,
-      Algebra.Field.ExplicitField.div_eq_mul_inv] <;>
+    simp only [affineCombination, midpoint,
+      ExplicitField.div_eq_mul_inv] <;>
     ring1
 
 /-- Theorem 20 (Midpoint), collecting existence, metric value, and uniqueness in one finite statement. -/
@@ -375,19 +375,19 @@ theorem midpoint_theorem [DecidableEq K]
     (first second : Point K) (distinct : first ≠ second)
     (twoNonzero : (2 : K) ≠ 0)
     (sideNonNull : ¬ (Incidence.lineThrough first second distinct).IsNull) :
-    (Incidence.lineThrough first second distinct).Contains (Affine.midpoint first second) ∧
-      Quadrance.quadrance (Affine.midpoint first second) first =
-        Quadrance.quadrance (Affine.midpoint first second) second ∧
-      Quadrance.quadrance (Affine.midpoint first second) first = Quadrance.quadrance first second / 4 ∧
+    (Incidence.lineThrough first second distinct).Contains (midpoint first second) ∧
+      Quadrance.quadrance (midpoint first second) first =
+        Quadrance.quadrance (midpoint first second) second ∧
+      Quadrance.quadrance (midpoint first second) first = Quadrance.quadrance first second / 4 ∧
       ∀ point : Point K,
         (Incidence.lineThrough first second distinct).Contains point →
         Quadrance.quadrance point first = Quadrance.quadrance point second →
-        point = Affine.midpoint first second := by
+        point = midpoint first second := by
   exact ⟨Affine.midpoint_on_line first second distinct twoNonzero,
-    Geometry.Plane.Point.Affine.Quadrance.midpoint_equal_quadrance first second twoNonzero,
-    Geometry.Plane.Point.Affine.Quadrance.midpoint_quadrance first second twoNonzero,
+    midpoint_equal_quadrance first second twoNonzero,
+    midpoint_quadrance first second twoNonzero,
     fun point onLine equalQuadrances =>
-      Geometry.Plane.Point.Affine.Quadrance.midpoint_unique_of_equal_quadrance first second point distinct
+      midpoint_unique_of_equal_quadrance first second point distinct
         twoNonzero sideNonNull onLine equalQuadrances⟩
 
 end Purelib.Geometry.Plane.Point.Affine.Quadrance
@@ -411,7 +411,7 @@ certificates.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry.Plane.Point.Affine.Quadrance
 
@@ -421,14 +421,14 @@ public theorem quadrance_affineCombination_left
     (left right : Point K) (leftWeight rightWeight : K)
     (weightsSum : leftWeight + rightWeight = 1) :
     Quadrance.quadrance left
-        (Affine.affineCombination leftWeight left rightWeight right) =
+        (affineCombination leftWeight left rightWeight right) =
       rightWeight ^ 2 * Quadrance.quadrance left right := by
   have leftWeightFormula : leftWeight = 1 - rightWeight := by
     calc
       leftWeight = (leftWeight + rightWeight) - rightWeight := by ring1
       _ = 1 - rightWeight := by rw [weightsSum]
   rw [leftWeightFormula]
-  unfold Quadrance.quadrance Affine.affineCombination
+  unfold Quadrance.quadrance affineCombination
   ring1
 
 /-- For weights summing to one, the quadrance from the combination to the second endpoint is the squared first weight
@@ -437,14 +437,14 @@ public theorem quadrance_affineCombination_right
     (left right : Point K) (leftWeight rightWeight : K)
     (weightsSum : leftWeight + rightWeight = 1) :
     Quadrance.quadrance
-        (Affine.affineCombination leftWeight left rightWeight right) right =
+        (affineCombination leftWeight left rightWeight right) right =
       leftWeight ^ 2 * Quadrance.quadrance left right := by
   have rightWeightFormula : rightWeight = 1 - leftWeight := by
     calc
       rightWeight = (leftWeight + rightWeight) - leftWeight := by ring1
       _ = 1 - leftWeight := by rw [weightsSum]
   rw [rightWeightFormula]
-  unfold Quadrance.quadrance Affine.affineCombination
+  unfold Quadrance.quadrance affineCombination
   ring1
 
 end Purelib.Geometry.Plane.Point.Affine.Quadrance

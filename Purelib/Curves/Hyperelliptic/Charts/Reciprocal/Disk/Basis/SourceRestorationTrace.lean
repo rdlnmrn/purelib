@@ -51,6 +51,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -75,20 +77,20 @@ open Purelib.Data.Rat
 
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Gaussian Coordinate)
 
-variable {genus count : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {bounds :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+variable {genus count : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {bounds :
+    ReciprocalPaddedInverse.UniformBounds regular.padded}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential} {patch :
     Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {data : Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {allowance coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor : Nat}
+  {data : UniformReciprocalModels.Data patch count}
+  {basis : ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {allowance coefficientTarget : Coordinate} {coverFloor floor : Nat}
   {index minimum readingIndex : Nat} {box : Rational.Box}
-  {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {polynomials : Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 variable {stage energyFloor radialDepth : Nat} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector
   genus}
@@ -112,34 +114,34 @@ open
 
 /-- The complete original restored/source area-error factor from block count, source slope and retained increment
 bounds. -/
-@[expose] def areaScale (count : Nat) (slope : Normalization.InverseRootPolynomial.Coordinate) : Coordinate :=
-  2 * ((count : Normalization.InverseRootPolynomial.Coordinate)^2 *
+@[expose] def areaScale (count : Nat) (slope : Coordinate) : Coordinate :=
+  2 * ((count : Coordinate)^2 *
     PreparedComparison.uniformSourceAreaError
     allowance slope +
-    16 * (count : Normalization.InverseRootPolynomial.Coordinate)^4 *
+    16 * (count : Coordinate)^4 *
       PreparedComparison.uniformSourceTotalError
-      allowance * Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.totalBound
+      allowance * totalBound
       (basis := basis) (allowance := allowance) slope)
 
 /-- The original restored/source trace-error factor including its initial-value ribbon contribution. -/
-@[expose] def traceScale (count : Nat) (slope : Normalization.InverseRootPolynomial.Coordinate) : Coordinate :=
-  2 * (Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationTrace.Samples.SourceRestoration.areaScale (basis :=
+@[expose] def traceScale (count : Nat) (slope : Coordinate) : Coordinate :=
+  2 * (areaScale (basis :=
     basis) (allowance := allowance) count slope +
-    4 * (2 + 8 * basis.coefficient) * (count : Normalization.InverseRootPolynomial.Coordinate)^2 *
+    4 * (2 + 8 * basis.coefficient) * (count : Coordinate)^2 *
       PreparedComparison.uniformSourceTotalError
       allowance)
 
 variable {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-  {anchors : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents} {sources :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisParentSourceCovers parents}
-  {bank : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentBank.BasisCommonParentBank anchors sources basis
+  {anchors : UniformReciprocalCover.ParentCovers parents} {sources :
+    SourceLocations.BasisParentSourceCovers parents}
+  {bank : CommonParentBank.BasisCommonParentBank anchors sources basis
     allowance coefficientTarget coverFloor floor}
-  {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Plans capSample polynomials minimum anchors
-    sources bank} {inputs : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.NumericalBank index anchors
+  {plans : CommonParentPlans.Plans capSample polynomials minimum anchors
+    sources bank} {inputs : CommonParentPlans.NumericalBank index anchors
     sources}
-  {readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings anchors sources bank plans inputs
+  {readings : CommonParentPlans.Readings anchors sources bank plans inputs
     stage}
-  {prepared : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.FanPreparations energyFloor anchors sources
+  {prepared : CommonParentSamples.FanPreparations energyFloor anchors sources
     bank plans inputs readings}
 
 open Purelib.Algebra in
@@ -147,101 +149,101 @@ open Purelib.Data.Rat in
 /-- The complete original restored and source polygons satisfy their coefficient-weighted area comparison after all
 retained joins are paid. -/
 theorem area_bound
-    (samples : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.Samples coefficients radialDepth anchors
+    (samples : CommonParentSamples.Samples coefficients radialDepth anchors
       sources bank plans inputs readings prepared)
-    (comparisons : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPreparedBank.Samples.PreparedComparisons anchors
+    (comparisons : CommonPreparedBank.Samples.PreparedComparisons anchors
       sources bank plans inputs readings prepared samples)
-    (joins : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.Junctions anchors
-      sources bank) (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+    (joins : CommonParentJoins.BasisCommonParentBank.Junctions anchors
+      sources bank) (branch : HyperellipticReciprocal.originOrder curve = 1)
     (later : joins.stage anchors sources bank ≤ stage) :
-    let previous := (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentConnection.Samples.firstValues anchors
+    let previous := (CommonParentConnection.Samples.firstValues anchors
       sources bank plans inputs readings prepared samples).1
-    let items := Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.pairs
+    let items := pairs
       anchors sources bank plans inputs readings prepared samples comparisons previous
-    Data.Gaussian.Norm.Basic.normSq (Path.IncrementArea.pathArea (items.map Prod.fst).flatten -
+    Gaussian.Norm.Basic.normSq (Path.IncrementArea.pathArea (items.map Prod.fst).flatten -
       Path.IncrementArea.pathArea (items.map Prod.snd).flatten) ≤
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationTrace.Samples.SourceRestoration.areaScale (basis :=
+      areaScale (basis :=
         basis) (allowance := allowance) parents.length
         (WeightedResampling.BasisCommonParentBank.Samples.weightedSourceSlopeMaximum
         anchors sources) *
         (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
   dsimp only
-  have bounds := Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.bounded
+  have bounds := bounded
     samples comparisons joins branch later
   have normNonnegative : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
     (FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 :
-      Normalization.InverseRootPolynomial.Coordinate)) _ (fun row => Gaussian.Basic.Canonical.normSq_nonneg
+      Coordinate)) _ (fun row => normSq_nonneg
       (coefficients row)))
   have errorNonnegative : 0 ≤
     PreparedComparison.uniformSourceTotalError
     allowance :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel : (0 :
-      Normalization.InverseRootPolynomial.Coordinate) ≤ 2050) (Fraction.Order.Arithmetic.sq_nonneg_direct allowance)
+    Arithmetic.mul_nonneg_direct (by decide +kernel : (0 :
+      Coordinate) ≤ 2050) (Arithmetic.sq_nonneg_direct allowance)
   have totalNonnegative : 0 ≤
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.totalBound (basis :=
+    totalBound (basis :=
     basis) (allowance := allowance)
     (WeightedResampling.BasisCommonParentBank.Samples.weightedSourceSlopeMaximum
     anchors sources) :=
 
       (WeightedResampling.BasisCommonParentBank.Samples.weightedSourceSlopeMaximum_nonnegative
-      anchors sources).trans (Fraction.Order.Basic.le_max_right _ _)
+      anchors sources).trans (Basic.le_max_right _ _)
   have estimate := Path.IncrementAreaComparison.blocks_area_difference_bound
-    (Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.pairs anchors sources
+    (pairs anchors sources
       bank plans inputs readings prepared samples comparisons
-      (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentConnection.Samples.firstValues anchors sources bank plans
+      (CommonParentConnection.Samples.firstValues anchors sources bank plans
         inputs readings prepared samples).1)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct errorNonnegative normNonnegative)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct totalNonnegative normNonnegative)
+    (Arithmetic.mul_nonneg_direct errorNonnegative normNonnegative)
+      (Arithmetic.mul_nonneg_direct totalNonnegative normNonnegative)
     (fun pair member => (bounds pair member).1) (fun pair member => (bounds pair member).2.1)
     (fun pair member => (bounds pair member).2.2.1) (fun pair member => (bounds pair member).2.2.2)
-  rw [Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.length] at estimate
+  rw [length] at estimate
   exact estimate.trans_eq (by
-    unfold Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationTrace.Samples.SourceRestoration.areaScale
+    unfold areaScale
     ring1)
 
 /-- The sum of the original block increment differences equals the difference of the flattened path totals. -/
-private theorem paired_total_sum (items : List (List Normalization.InverseRootPolynomial.Gaussian × List
-  Normalization.InverseRootPolynomial.Gaussian)) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (items.map (fun pair => Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.1 -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2)) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (items.map Prod.fst).flatten - Data.Gaussian.Norm.Sum.Basic.gaussianSum
+private theorem paired_total_sum (items : List (List Gaussian × List
+  Gaussian)) :
+    Gaussian.Norm.Sum.Basic.gaussianSum (items.map (fun pair => Gaussian.Norm.Sum.Basic.gaussianSum pair.1 -
+      Gaussian.Norm.Sum.Basic.gaussianSum pair.2)) =
+      Gaussian.Norm.Sum.Basic.gaussianSum (items.map Prod.fst).flatten - Gaussian.Norm.Sum.Basic.gaussianSum
         (items.map Prod.snd).flatten := by
   induction items with
-  | nil => change (0 : Normalization.InverseRootPolynomial.Gaussian) = 0 - 0; ring1
+  | nil => change (0 : Gaussian) = 0 - 0; ring1
   | cons pair tail ih =>
       simp only [-eq_self, -iff_self, List.map_cons, List.flatten_cons, Path.IncrementArea.sum_append,
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum, ih]
+        Gaussian.Norm.Sum.Basic.gaussianSum, ih]
       ring1
 
 /-- The original restored/source increment discrepancy is bounded by the squared retained parent count and common
 per-block allowance. -/
 theorem total_error
-    (samples : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.Samples coefficients radialDepth anchors
+    (samples : CommonParentSamples.Samples coefficients radialDepth anchors
       sources bank plans inputs readings prepared)
-    (comparisons : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPreparedBank.Samples.PreparedComparisons anchors
+    (comparisons : CommonPreparedBank.Samples.PreparedComparisons anchors
       sources bank plans inputs readings prepared samples)
-    (joins : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.Junctions anchors
-      sources bank) (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+    (joins : CommonParentJoins.BasisCommonParentBank.Junctions anchors
+      sources bank) (branch : HyperellipticReciprocal.originOrder curve = 1)
     (later : joins.stage anchors sources bank ≤ stage) :
-    let previous := (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentConnection.Samples.firstValues anchors
+    let previous := (CommonParentConnection.Samples.firstValues anchors
       sources bank plans inputs readings prepared samples).1
-    let items := Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.pairs
+    let items := pairs
       anchors sources bank plans inputs readings prepared samples comparisons previous
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (items.map Prod.fst).flatten -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (items.map Prod.snd).flatten) ≤
-      (parents.length : Normalization.InverseRootPolynomial.Coordinate)^2 *
+    Gaussian.Norm.Basic.normSq (Gaussian.Norm.Sum.Basic.gaussianSum (items.map Prod.fst).flatten -
+      Gaussian.Norm.Sum.Basic.gaussianSum (items.map Prod.snd).flatten) ≤
+      (parents.length : Coordinate)^2 *
         PreparedComparison.uniformSourceTotalError
         allowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := by
   dsimp only
-  have bounds := Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.bounded
+  have bounds := bounded
     samples comparisons joins branch later
-  let items := Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.pairs anchors
+  let items := pairs anchors
     sources bank plans inputs readings prepared samples comparisons
-    (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentConnection.Samples.firstValues anchors sources bank plans
+    (CommonParentConnection.Samples.firstValues anchors sources bank plans
       inputs readings prepared samples).1
   have estimate := Gaussian.Norm.Sum.Bounds.normSq_sum_le
-    (items.map (fun pair => Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.1 - Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    (items.map (fun pair => Gaussian.Norm.Sum.Basic.gaussianSum pair.1 - Gaussian.Norm.Sum.Basic.gaussianSum
       pair.2))
       (PreparedComparison.uniformSourceTotalError
       allowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) (by
@@ -249,10 +251,10 @@ theorem total_error
       obtain ⟨pair, inPairs, equal⟩ := Data.List.Map.mem_map.mp member
       rw [← equal]
       exact (bounds pair inPairs).2.1)
-  rw [Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationTrace.Samples.SourceRestoration.paired_total_sum,
+  rw [paired_total_sum,
     List.Map.length_map] at estimate
   dsimp only [-eq_self, -iff_self, items] at estimate
-  rw [Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.length] at estimate
+  rw [length] at estimate
   exact estimate.trans_eq (by ring1)
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration in
@@ -260,73 +262,73 @@ open Purelib.Data.Rat in
 /-- Transport complete restored traces to their literal cached source paths,
 including the initial-value ribbon against the accumulated endpoint error. -/
 theorem trace_bound
-    (samples : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.Samples coefficients radialDepth anchors
+    (samples : CommonParentSamples.Samples coefficients radialDepth anchors
       sources bank plans inputs readings prepared)
-    (comparisons : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPreparedBank.Samples.PreparedComparisons anchors
+    (comparisons : CommonPreparedBank.Samples.PreparedComparisons anchors
       sources bank plans inputs readings prepared samples)
-    (joins : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.Junctions anchors
-      sources bank) (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+    (joins : CommonParentJoins.BasisCommonParentBank.Junctions anchors
+      sources bank) (branch : HyperellipticReciprocal.originOrder curve = 1)
     (later : joins.stage anchors sources bank ≤ stage) :
-    let previous := (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentConnection.Samples.firstValues anchors
+    let previous := (CommonParentConnection.Samples.firstValues anchors
       sources bank plans inputs readings prepared samples).1
-    let items := Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.pairs
+    let items := pairs
       anchors sources bank plans inputs readings prepared samples comparisons previous
-    Data.Gaussian.Norm.Basic.normSq (Path.IncrementArea.traceArea previous (items.map Prod.fst).flatten -
+    Gaussian.Norm.Basic.normSq (Path.IncrementArea.traceArea previous (items.map Prod.fst).flatten -
       Path.IncrementArea.traceArea previous (items.map Prod.snd).flatten) ≤
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationTrace.Samples.SourceRestoration.traceScale (basis :=
+      traceScale (basis :=
         basis) (allowance := allowance) parents.length
         (WeightedResampling.BasisCommonParentBank.Samples.weightedSourceSlopeMaximum
         anchors sources) *
         (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
   dsimp only
-  let previous := (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentConnection.Samples.firstValues anchors sources
+  let previous := (CommonParentConnection.Samples.firstValues anchors sources
     bank plans inputs readings prepared samples).1
-  let items := Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.pairs anchors
+  let items := pairs anchors
     sources bank plans inputs readings prepared samples comparisons previous
   let left := (items.map Prod.fst).flatten
   let right := (items.map Prod.snd).flatten
-  have first := Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPreparedConcatenation.Samples.firstValue_bound branch
+  have first := CommonPreparedConcatenation.Samples.firstValue_bound branch
     anchors sources bank plans inputs readings prepared samples comparisons
-  have total := Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationTrace.Samples.SourceRestoration.total_error
+  have total := total_error
     samples comparisons joins branch later
-  have area := Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationTrace.Samples.SourceRestoration.area_bound
+  have area := area_bound
     samples comparisons joins branch later
-  have product := Fraction.Order.Arithmetic.mul_le_mul_direct first total (Gaussian.Norm.Basic.normSq_nonneg _)
+  have product := Arithmetic.mul_le_mul_direct first total (Gaussian.Norm.Basic.normSq_nonneg _)
     ((Gaussian.Norm.Basic.normSq_nonneg _).trans first)
-  have ribbon : Data.Gaussian.Norm.Basic.normSq (Path.BoundaryRibbon.area previous
-    (Data.Gaussian.Norm.Sum.Basic.gaussianSum left - Data.Gaussian.Norm.Sum.Basic.gaussianSum right)) ≤
-      4 * (2 + 8 * basis.coefficient) * (parents.length : Normalization.InverseRootPolynomial.Coordinate)^2 *
+  have ribbon : Gaussian.Norm.Basic.normSq (Path.BoundaryRibbon.area previous
+    (Gaussian.Norm.Sum.Basic.gaussianSum left - Gaussian.Norm.Sum.Basic.gaussianSum right)) ≤
+      4 * (2 + 8 * basis.coefficient) * (parents.length : Coordinate)^2 *
         PreparedComparison.uniformSourceTotalError
         allowance * (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
     calc
-      _ ≤ 4 * Data.Gaussian.Norm.Basic.normSq previous * Data.Gaussian.Norm.Basic.normSq
-        (Data.Gaussian.Norm.Sum.Basic.gaussianSum left - Data.Gaussian.Norm.Sum.Basic.gaussianSum right) :=
+      _ ≤ 4 * Gaussian.Norm.Basic.normSq previous * Gaussian.Norm.Basic.normSq
+        (Gaussian.Norm.Sum.Basic.gaussianSum left - Gaussian.Norm.Sum.Basic.gaussianSum right) :=
         Path.BoundaryRibbon.area_bound _ _
-      _ = 4 * (Data.Gaussian.Norm.Basic.normSq previous * Data.Gaussian.Norm.Basic.normSq
-        (Data.Gaussian.Norm.Sum.Basic.gaussianSum left - Data.Gaussian.Norm.Sum.Basic.gaussianSum right)) := by
+      _ = 4 * (Gaussian.Norm.Basic.normSq previous * Gaussian.Norm.Basic.normSq
+        (Gaussian.Norm.Sum.Basic.gaussianSum left - Gaussian.Norm.Sum.Basic.gaussianSum right)) := by
         ring1
       _ ≤ 4 * ((2 + 8 * basis.coefficient) * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients *
-          ((parents.length : Normalization.InverseRootPolynomial.Coordinate)^2 *
+          ((parents.length : Coordinate)^2 *
             PreparedComparison.uniformSourceTotalError
             allowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct product (by
-            decide : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤ 4)
+        Arithmetic.mul_le_mul_of_nonneg_left_direct product (by
+            decide : (0 : Coordinate) ≤ 4)
       _ = _ := by ring1
   have identity : Path.IncrementArea.traceArea previous left - Path.IncrementArea.traceArea previous right =
       (Path.IncrementArea.pathArea left - Path.IncrementArea.pathArea right) + Path.BoundaryRibbon.area previous
-        (Data.Gaussian.Norm.Sum.Basic.gaussianSum left - Data.Gaussian.Norm.Sum.Basic.gaussianSum right) := by
+        (Gaussian.Norm.Sum.Basic.gaussianSum left - Gaussian.Norm.Sum.Basic.gaussianSum right) := by
     rw [Path.IncrementArea.traceArea_eq, Path.IncrementArea.traceArea_eq]
-    apply Gaussian.Basic.ext <;> simp only [-eq_self, -iff_self, Path.BoundaryRibbon.area, Data.Gaussian.Basic.conj,
+    apply Gaussian.Basic.ext <;> simp only [-eq_self, -iff_self, Path.BoundaryRibbon.area, Gaussian.Basic.conj,
       Gaussian.Basic.add_re, Gaussian.Basic.add_im, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im, Gaussian.Basic.mul_re,
       Gaussian.Basic.mul_im] <;> ring1
-  change Data.Gaussian.Norm.Basic.normSq (Path.IncrementArea.traceArea previous left - Path.IncrementArea.traceArea
+  change Gaussian.Norm.Basic.normSq (Path.IncrementArea.traceArea previous left - Path.IncrementArea.traceArea
     previous right) ≤ _
   rw [identity]
   exact (Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct area
-      ribbon) (by decide : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤ 2)).trans_eq
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct area
+      ribbon) (by decide : (0 : Coordinate) ≤ 2)).trans_eq
       (by
-        unfold Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationTrace.Samples.SourceRestoration.traceScale
+        unfold traceScale
         ring1))
 
 end SourceRestoration

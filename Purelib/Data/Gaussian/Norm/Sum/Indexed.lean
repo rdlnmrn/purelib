@@ -68,7 +68,7 @@ theorem normSq_sumFin_le {count : Nat} (values : Fin count → Basic.Canonical) 
   exact estimate.trans_eq (by ring1)
 
 /-- The norm-square sum of a finite-index list readback equals the original finite sum of pointwise squared norms. -/
-private theorem gaussianNormSqSum_ofFn {count : Nat} (values : Fin count → Basic.Canonical) :
+theorem gaussianNormSqSum_ofFn {count : Nat} (values : Fin count → Basic.Canonical) :
     Norm.Sum.Basic.gaussianNormSqSum (List.ofFn values) =
       FiniteSum.Fin.sumFin (fun index => Basic.normSq (values index)) := by
   induction count with
@@ -189,3 +189,35 @@ public theorem sumFin_map {Item : Type u} (entries : List Item) (value : Item �
     exact congrArg (value head + ·) ih
 
 end Purelib.Data.Gaussian.Norm.Sum.Indexed
+
+public section
+
+namespace Purelib.Data.Gaussian.Norm.Sum.Indexed
+
+open Purelib.Algebra.FiniteSum
+open Purelib.Data.Rat
+
+/-- The original three-term Gaussian sum has squared norm bounded by three times its three input quadrances. -/
+theorem normSq_add_add_le (first second third : Basic.Canonical) :
+    Basic.normSq (first + second + third) ≤
+      3 * (Basic.normSq first + Basic.normSq second + Basic.normSq third) := by
+  let values : Fin 3 → Basic.Canonical :=
+    Fin.cases first (Fin.cases second (Fin.cases third Fin.elim0))
+  have estimate := normSq_sumFin_le_sum values
+  have originalSum : Fin.sumFin values = first + second + third := by
+    rewrite [Fin.sumFin_succ, Fin.sumFin_succ, Fin.sumFin_succ]
+    change first + (second + (third + 0)) = first + second + third
+    rewrite [add_zero, add_assoc]
+    rfl
+  have originalNormSum : Fin.sumFin (fun index => Basic.normSq (values index)) =
+      Basic.normSq first + Basic.normSq second + Basic.normSq third := by
+    rewrite [Fin.sumFin_succ, Fin.sumFin_succ, Fin.sumFin_succ]
+    change Basic.normSq first + (Basic.normSq second + (Basic.normSq third + 0)) = _
+    rewrite [add_zero, add_assoc]
+    rfl
+  rewrite [originalSum, originalNormSum] at estimate
+  exact estimate
+
+end Purelib.Data.Gaussian.Norm.Sum.Indexed
+
+end

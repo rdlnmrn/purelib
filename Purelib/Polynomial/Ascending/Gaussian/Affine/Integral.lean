@@ -32,31 +32,31 @@ open Purelib.Data.Gaussian.Basic.Canonical
 /-- Finite substitution, including slope zero: no division by the affine
 slope and no supplied change-of-variables certificate. -/
 theorem definiteIntegral_affine (polynomial :
-  Polynomial.Ascending.Gaussian.CoefficientPolynomial)
+  CoefficientPolynomial)
     (offset slope start finish : Gaussian.Basic.Canonical) :
-    slope * Ascending.Gaussian.Integral.definiteIntegral (Ascending.Gaussian.Affine.affine polynomial offset slope)
+    slope * Integral.definiteIntegral (affine polynomial offset slope)
       start finish =
-      Ascending.Gaussian.Integral.definiteIntegral polynomial (offset + slope * start) (offset + slope * finish) := by
-  have primitiveDerivative := Ascending.Gaussian.Affine.Derivative.derivative_affine
-    (Ascending.Gaussian.Antiderivative.antiderivative polynomial) offset slope
-  rw [Ascending.Gaussian.Antiderivative.derivative_antiderivative] at primitiveDerivative
+      Integral.definiteIntegral polynomial (offset + slope * start) (offset + slope * finish) := by
+  have primitiveDerivative := Derivative.derivative_affine
+    (Antiderivative.antiderivative polynomial) offset slope
+  rw [Antiderivative.derivative_antiderivative] at primitiveDerivative
   calc
-    slope * Ascending.Gaussian.Integral.definiteIntegral (Ascending.Gaussian.Affine.affine polynomial offset slope)
+    slope * Integral.definiteIntegral (affine polynomial offset slope)
       start finish =
-        Ascending.Gaussian.Integral.definiteIntegral (Ascending.Gaussian.Arithmetic.scale slope
-          (Ascending.Gaussian.Affine.affine polynomial offset slope)) start finish :=
-      (Ascending.Gaussian.Integral.definiteIntegral_scale slope _ start finish).symm
-    _ = Ascending.Gaussian.Integral.definiteIntegral (Ascending.Gaussian.Derivative.derivative
-      (Ascending.Gaussian.Affine.affine (Ascending.Gaussian.Antiderivative.antiderivative polynomial) offset slope))
+        Integral.definiteIntegral (Arithmetic.scale slope
+          (affine polynomial offset slope)) start finish :=
+      (Integral.definiteIntegral_scale slope _ start finish).symm
+    _ = Integral.definiteIntegral (Derivative.derivative
+      (affine (Antiderivative.antiderivative polynomial) offset slope))
         start finish :=
-      (Ascending.Gaussian.Integral.definiteIntegral_eq_of_coefficientwise primitiveDerivative start finish).symm
-    _ = Ascending.Gaussian.Evaluation.eval (Ascending.Gaussian.Affine.affine
-      (Ascending.Gaussian.Antiderivative.antiderivative polynomial) offset slope) finish -
-        Ascending.Gaussian.Evaluation.eval (Ascending.Gaussian.Affine.affine
-          (Ascending.Gaussian.Antiderivative.antiderivative polynomial) offset slope) start :=
-      Ascending.Gaussian.Integral.definiteIntegral_derivative _ start finish
-    _ = Ascending.Gaussian.Integral.definiteIntegral polynomial (offset + slope * start) (offset + slope * finish) := by
-      rw [Ascending.Gaussian.Affine.eval_affine, Ascending.Gaussian.Affine.eval_affine]
+      (Integral.definiteIntegral_eq_of_coefficientwise primitiveDerivative start finish).symm
+    _ = Evaluation.eval (affine
+      (Antiderivative.antiderivative polynomial) offset slope) finish -
+        Evaluation.eval (affine
+          (Antiderivative.antiderivative polynomial) offset slope) start :=
+      Integral.definiteIntegral_derivative _ start finish
+    _ = Integral.definiteIntegral polynomial (offset + slope * start) (offset + slope * finish) := by
+      rw [eval_affine, eval_affine]
       rfl
 section
 end

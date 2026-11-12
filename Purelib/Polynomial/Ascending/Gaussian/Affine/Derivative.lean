@@ -33,21 +33,21 @@ open Purelib.Data.Gaussian.Basic.Canonical
 The coefficientwise product rule gives slope times the polynomial plus the affine factor times its derivative. -/
 theorem derivative_affineMul (offset slope : Gaussian.Basic.Canonical) (polynomial :
   CoefficientPolynomial) :
-    Ascending.Gaussian.Coefficient.CoefficientwiseEqual (Ascending.Gaussian.Derivative.derivative
-      (Ascending.Gaussian.Affine.affineMul offset slope polynomial))
-      (Ascending.Gaussian.Arithmetic.add (Ascending.Gaussian.Arithmetic.scale slope polynomial)
-        (Ascending.Gaussian.Affine.affineMul offset slope (Ascending.Gaussian.Derivative.derivative polynomial))) := by
+    Coefficient.CoefficientwiseEqual (Derivative.derivative
+      (affineMul offset slope polynomial))
+      (Arithmetic.add (Arithmetic.scale slope polynomial)
+        (affineMul offset slope (Derivative.derivative polynomial))) := by
   intro degree
-  rw [Ascending.Gaussian.Derivative.coefficient_derivative, Ascending.Gaussian.Affine.coefficient_affineMul_succ,
-    Ascending.Gaussian.Arithmetic.coefficient_add, Ascending.Gaussian.Arithmetic.coefficient_scale]
+  rw [Derivative.coefficient_derivative, coefficient_affineMul_succ,
+    Arithmetic.coefficient_add, Arithmetic.coefficient_scale]
   cases degree with
   | zero =>
-      simp only [Ascending.Gaussian.Affine.coefficient_affineMul_zero,
-        Ascending.Gaussian.Derivative.coefficient_derivative, Nat.zero_add, Nat.cast_one]
+      simp only [coefficient_affineMul_zero,
+        Derivative.coefficient_derivative, Nat.zero_add, Nat.cast_one]
       ring1
   | succ degree =>
-      simp only [Ascending.Gaussian.Affine.coefficient_affineMul_succ,
-        Ascending.Gaussian.Derivative.coefficient_derivative, NatCast.add, Nat.cast_one]
+      simp only [coefficient_affineMul_succ,
+        Derivative.coefficient_derivative, NatCast.add, Nat.cast_one]
       ring1
 
 /-- Increasing every natural degree weight adds the same original coefficient table.
@@ -55,14 +55,14 @@ theorem derivative_affineMul (offset slope : Gaussian.Basic.Canonical) (polynomi
 A successor weight splits into its preceding weight and one at each retained
 entry. The recursive list identity preserves the original head and tail order. -/
 theorem derivativeFrom_succ (factor : Nat) : ∀ coefficients,
-    Ascending.Gaussian.Derivative.derivativeFrom (factor + 1) coefficients =
-      Data.List.Gaussian.Arithmetic.addCoefficients (Ascending.Gaussian.Derivative.derivativeFrom factor coefficients)
+    Derivative.derivativeFrom (factor + 1) coefficients =
+      Data.List.Gaussian.Arithmetic.addCoefficients (Derivative.derivativeFrom factor coefficients)
         coefficients
   | [] => rfl
   | head :: tail => by
-      rw [Ascending.Gaussian.Derivative.derivativeFrom, Ascending.Gaussian.Derivative.derivativeFrom,
+      rw [Derivative.derivativeFrom, Derivative.derivativeFrom,
         Data.List.Gaussian.Arithmetic.addCoefficients,
-        Purelib.Polynomial.Ascending.Gaussian.Affine.Derivative.derivativeFrom_succ (factor + 1) tail]
+        Derivative.derivativeFrom_succ (factor + 1) tail]
       congr 1
       rw [NatCast.add, Nat.cast_one]
       ring1
@@ -72,95 +72,95 @@ theorem derivativeFrom_succ (factor : Nat) : ∀ coefficients,
 The coefficientwise identity separates the retained table from the affine factor
 multiplying its derivative. It includes the empty table and uses exact successor weights. -/
 theorem affine_derivativeTail (offset slope : Gaussian.Basic.Canonical) : ∀ tail,
-    Ascending.Gaussian.Coefficient.CoefficientwiseEqual (Ascending.Gaussian.Affine.affineCoefficients offset slope
-      (Ascending.Gaussian.Derivative.derivativeFrom 1 tail))
-      (Ascending.Gaussian.Arithmetic.add (Ascending.Gaussian.Affine.affineCoefficients offset slope tail)
-        (Ascending.Gaussian.Affine.affineMul offset slope (Ascending.Gaussian.Affine.affine
-          (Ascending.Gaussian.Derivative.derivative ⟨tail⟩) offset slope)))
+    Coefficient.CoefficientwiseEqual (affineCoefficients offset slope
+      (Derivative.derivativeFrom 1 tail))
+      (Arithmetic.add (affineCoefficients offset slope tail)
+        (affineMul offset slope (affine
+          (Derivative.derivative ⟨tail⟩) offset slope)))
   | [] => by
       intro degree
-      change Ascending.Gaussian.Coefficient.coefficient Ascending.Gaussian.Basic.zero degree =
-        Ascending.Gaussian.Coefficient.coefficient (Ascending.Gaussian.Arithmetic.add Ascending.Gaussian.Basic.zero
-          (Ascending.Gaussian.Affine.affineMul offset slope Ascending.Gaussian.Basic.zero)) degree
-      rw [Ascending.Gaussian.Arithmetic.coefficient_add]
+      change Coefficient.coefficient Basic.zero degree =
+        Coefficient.coefficient (Arithmetic.add Basic.zero
+          (affineMul offset slope Basic.zero)) degree
+      rw [Arithmetic.coefficient_add]
       change (0 : Gaussian.Basic.Canonical) = 0 +
-        Ascending.Gaussian.Coefficient.coefficient (Ascending.Gaussian.Affine.affineMul offset slope
-          Ascending.Gaussian.Basic.zero) degree
+        Coefficient.coefficient (affineMul offset slope
+          Basic.zero) degree
       cases degree with
       | zero =>
-          rw [Ascending.Gaussian.Affine.coefficient_affineMul_zero]
+          rw [coefficient_affineMul_zero]
           change (0 : Gaussian.Basic.Canonical) = 0 + offset * 0
           ring1
       | succ degree =>
-          rw [Ascending.Gaussian.Affine.coefficient_affineMul_succ]
+          rw [coefficient_affineMul_succ]
           change (0 : Gaussian.Basic.Canonical) = 0 + (offset * 0 + slope * 0)
           ring1
   | head :: tail => by
-      change Ascending.Gaussian.Coefficient.CoefficientwiseEqual
-        (Ascending.Gaussian.Arithmetic.add (Ascending.Gaussian.Basic.constant ((1 : Gaussian.Basic.Canonical) * head))
-          (Ascending.Gaussian.Affine.affineMul offset slope (Ascending.Gaussian.Affine.affineCoefficients offset slope
-            (Ascending.Gaussian.Derivative.derivativeFrom 2 tail))))
-        (Ascending.Gaussian.Arithmetic.add (Ascending.Gaussian.Arithmetic.add (Ascending.Gaussian.Basic.constant head)
-          (Ascending.Gaussian.Affine.affineMul offset slope (Ascending.Gaussian.Affine.affineCoefficients offset slope
+      change Coefficient.CoefficientwiseEqual
+        (Arithmetic.add (Basic.constant ((1 : Gaussian.Basic.Canonical) * head))
+          (affineMul offset slope (affineCoefficients offset slope
+            (Derivative.derivativeFrom 2 tail))))
+        (Arithmetic.add (Arithmetic.add (Basic.constant head)
+          (affineMul offset slope (affineCoefficients offset slope
           tail)))
-          (Ascending.Gaussian.Affine.affineMul offset slope (Ascending.Gaussian.Affine.affineCoefficients offset slope
-            (Ascending.Gaussian.Derivative.derivativeFrom 1 tail))))
+          (affineMul offset slope (affineCoefficients offset slope
+            (Derivative.derivativeFrom 1 tail))))
       rw [Gaussian.Basic.one_mul, show 2 = 1 + 1 from rfl, derivativeFrom_succ]
-      have transported := Ascending.Gaussian.Affine.coefficientwise_affineMul offset slope
-        (Ascending.Gaussian.Affine.affineCoefficients_add offset slope (Ascending.Gaussian.Derivative.derivativeFrom 1
+      have transported := coefficientwise_affineMul offset slope
+        (affineCoefficients_add offset slope (Derivative.derivativeFrom 1
           tail) tail)
-      have distributed := Ascending.Gaussian.Affine.affineMul_add offset slope
-        (Ascending.Gaussian.Affine.affineCoefficients offset slope (Ascending.Gaussian.Derivative.derivativeFrom 1
+      have distributed := affineMul_add offset slope
+        (affineCoefficients offset slope (Derivative.derivativeFrom 1
           tail))
-        (Ascending.Gaussian.Affine.affineCoefficients offset slope tail)
+        (affineCoefficients offset slope tail)
       intro degree
-      rw [Ascending.Gaussian.Arithmetic.coefficient_add, transported degree, distributed degree]
-      simp only [Ascending.Gaussian.Arithmetic.coefficient_add]
+      rw [Arithmetic.coefficient_add, transported degree, distributed degree]
+      simp only [Arithmetic.coefficient_add]
       ring1
 
 /-- Affine Horner substitution satisfies the coefficientwise chain rule.
 
 The derivative of the substituted table equals the slope times the affine substitution of the original derivative. -/
 theorem derivative_affineCoefficients (offset slope : Gaussian.Basic.Canonical) : ∀ coefficients,
-    Ascending.Gaussian.Coefficient.CoefficientwiseEqual (Ascending.Gaussian.Derivative.derivative
-      (Ascending.Gaussian.Affine.affineCoefficients offset slope coefficients))
-      (Ascending.Gaussian.Arithmetic.scale slope (Ascending.Gaussian.Affine.affine
-        (Ascending.Gaussian.Derivative.derivative ⟨coefficients⟩) offset slope))
+    Coefficient.CoefficientwiseEqual (Derivative.derivative
+      (affineCoefficients offset slope coefficients))
+      (Arithmetic.scale slope (affine
+        (Derivative.derivative ⟨coefficients⟩) offset slope))
   | [] => by
       intro degree
-      change Ascending.Gaussian.Coefficient.coefficient (Ascending.Gaussian.Derivative.derivative
-        Ascending.Gaussian.Basic.zero) degree = Ascending.Gaussian.Coefficient.coefficient
-        (Ascending.Gaussian.Arithmetic.scale slope Ascending.Gaussian.Basic.zero) degree
-      rw [Ascending.Gaussian.Derivative.derivative_zero, Ascending.Gaussian.Arithmetic.coefficient_scale,
-        Ascending.Gaussian.Coefficient.coefficient_zero, Gaussian.Basic.mul_zero]
+      change Coefficient.coefficient (Derivative.derivative
+        Basic.zero) degree = Coefficient.coefficient
+        (Arithmetic.scale slope Basic.zero) degree
+      rw [Derivative.derivative_zero, Arithmetic.coefficient_scale,
+        Coefficient.coefficient_zero, Gaussian.Basic.mul_zero]
   | head :: tail => by
-      have transported := Ascending.Gaussian.Affine.coefficientwise_affineMul offset slope
-        (Purelib.Polynomial.Ascending.Gaussian.Affine.Derivative.derivative_affineCoefficients offset slope tail)
-      have scaled := Ascending.Gaussian.Affine.affineMul_scale offset slope slope
-        (Ascending.Gaussian.Affine.affine (Ascending.Gaussian.Derivative.derivative ⟨tail⟩) offset slope)
+      have transported := coefficientwise_affineMul offset slope
+        (Derivative.derivative_affineCoefficients offset slope tail)
+      have scaled := affineMul_scale offset slope slope
+        (affine (Derivative.derivative ⟨tail⟩) offset slope)
       intro degree
-      change Ascending.Gaussian.Coefficient.coefficient (Ascending.Gaussian.Derivative.derivative
-          (Ascending.Gaussian.Arithmetic.add (Ascending.Gaussian.Basic.constant head)
-            (Ascending.Gaussian.Affine.affineMul offset slope (Ascending.Gaussian.Affine.affineCoefficients offset slope
+      change Coefficient.coefficient (Derivative.derivative
+          (Arithmetic.add (Basic.constant head)
+            (affineMul offset slope (affineCoefficients offset slope
             tail))))
           degree =
-        Ascending.Gaussian.Coefficient.coefficient (Ascending.Gaussian.Arithmetic.scale slope
-          (Ascending.Gaussian.Affine.affineCoefficients offset slope (Ascending.Gaussian.Derivative.derivativeFrom 1
+        Coefficient.coefficient (Arithmetic.scale slope
+          (affineCoefficients offset slope (Derivative.derivativeFrom 1
           tail))) degree
-      rw [Ascending.Gaussian.Derivative.derivative_add _ _ degree, Ascending.Gaussian.Arithmetic.coefficient_add,
-        Ascending.Gaussian.Derivative.derivative_constant,
-        Ascending.Gaussian.Coefficient.coefficient_zero, Gaussian.Basic.zero_add, derivative_affineMul _ _ _ degree,
-        Ascending.Gaussian.Arithmetic.coefficient_add, transported degree, scaled degree]
-      simp only [Ascending.Gaussian.Arithmetic.coefficient_scale]
-      rw [affine_derivativeTail offset slope tail degree, Ascending.Gaussian.Arithmetic.coefficient_add]
+      rw [Derivative.derivative_add _ _ degree, Arithmetic.coefficient_add,
+        Derivative.derivative_constant,
+        Coefficient.coefficient_zero, Gaussian.Basic.zero_add, derivative_affineMul _ _ _ degree,
+        Arithmetic.coefficient_add, transported degree, scaled degree]
+      simp only [Arithmetic.coefficient_scale]
+      rw [affine_derivativeTail offset slope tail degree, Arithmetic.coefficient_add]
       ring1
 
 /-- The chain rule is an identity of finite coefficient tables. -/
 theorem derivative_affine (polynomial : CoefficientPolynomial) (offset slope : Gaussian.Basic.Canonical) :
-    Ascending.Gaussian.Coefficient.CoefficientwiseEqual (Ascending.Gaussian.Derivative.derivative
-      (Ascending.Gaussian.Affine.affine polynomial offset slope))
-      (Ascending.Gaussian.Arithmetic.scale slope (Ascending.Gaussian.Affine.affine
-        (Ascending.Gaussian.Derivative.derivative polynomial) offset slope)) :=
+    Coefficient.CoefficientwiseEqual (Derivative.derivative
+      (affine polynomial offset slope))
+      (Arithmetic.scale slope (affine
+        (Derivative.derivative polynomial) offset slope)) :=
   derivative_affineCoefficients offset slope polynomial.coefficients
 
 end

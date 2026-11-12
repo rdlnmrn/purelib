@@ -61,8 +61,8 @@ open Purelib.Curves.Hyperelliptic.Branches (BranchCellBank)
 open Purelib.Riemann.Meshes.PuncturedGridFaces (BranchHole)
 open Purelib.Riemann.Meshes.GridLiftedDualSteps (GridSide)
 
-variable {polynomial : Purelib.Polynomial.Geometry.ClearPath.GaussianPolynomial} {ambient :
-  Purelib.Geometry.Rational.Box} {grid : Polynomial.Geometry.Grid.ClearGrid polynomial
+variable {polynomial : Polynomial.Geometry.ClearPath.GaussianPolynomial} {ambient :
+  Geometry.Rational.Box} {grid : Polynomial.Geometry.Grid.ClearGrid polynomial
   ambient}
 
 section
@@ -73,13 +73,13 @@ namespace Purelib.Polynomial.Geometry.Grid.Walks.Walk
 
 /-- List the starting coordinate of every edge in a grid walk. -/
 def startCoordinates : {start finish : Gaussian.Basic.Canonical} →
-  Geometry.Grid.Walks.Walk grid start finish → List Gaussian.Basic.Canonical
+  Walk grid start finish → List Gaussian.Basic.Canonical
   | _, _, .nil _ => []
   | start, _, .cons _ tail => start :: startCoordinates tail
 
 /-- List the finishing coordinate of every edge in a grid walk. -/
 def finishCoordinates : {start finish : Gaussian.Basic.Canonical} →
-  Geometry.Grid.Walks.Walk grid start finish → List Gaussian.Basic.Canonical
+  Walk grid start finish → List Gaussian.Basic.Canonical
   | _, _, .nil _ => []
   | _, _, .cons (middle := middle) _ tail => middle :: finishCoordinates tail
 
@@ -98,7 +98,7 @@ namespace Purelib.Polynomial.Geometry.Grid.Walks.Walk
 /-- Concatenating grid walks concatenates their lists of starting coordinates. -/
 theorem startCoordinates_append : ∀ {start middle finish :
   Gaussian.Basic.Canonical}
-    (first : Geometry.Grid.Walks.Walk grid start middle) (last : Geometry.Grid.Walks.Walk grid middle finish),
+    (first : Walk grid start middle) (last : Walk grid middle finish),
     (first.append last).startCoordinates = first.startCoordinates ++ last.startCoordinates
   | _, _, _, .nil _, _ => rfl
   | _, _, _, .cons _ tail, last => congrArg (List.cons _) (tail.startCoordinates_append last)
@@ -110,13 +110,13 @@ Structural list certificates preserve their displayed reversal, concatenation
 and membership witnesses without changing the retained vertices. -/
 theorem startCoordinates_reverseOnto : ∀ {start middle finish :
   Gaussian.Basic.Canonical}
-    (first : Geometry.Grid.Walks.Walk grid start middle) (last : Geometry.Grid.Walks.Walk grid start finish),
+    (first : Walk grid start middle) (last : Walk grid start finish),
     (first.reverseOnto last).startCoordinates = first.finishCoordinates.reverse ++ last.startCoordinates
   | _, _, _, .nil _, _ => rfl
   | _, _, _, .cons edge tail, last => by
-      rw [Geometry.Grid.Walks.Walk.reverseOnto, tail.startCoordinates_reverseOnto]
-      simp only [Geometry.Grid.Walks.Walk.finishCoordinates, Reverse.reverse_cons,
-        Geometry.Grid.Walks.Walk.startCoordinates, Append.append_assoc,
+      rw [reverseOnto, tail.startCoordinates_reverseOnto]
+      simp only [finishCoordinates, Reverse.reverse_cons,
+        startCoordinates, Append.append_assoc,
         List.cons_append, List.nil_append, -eq_self, -iff_self]
       rfl
 
@@ -126,14 +126,14 @@ The original walk retains the same ordered coordinates and sheet transports.
 Structural list certificates preserve their displayed reversal, concatenation
 and membership witnesses without changing the retained vertices. -/
 theorem startCoordinates_reverse {start finish :
-  Gaussian.Basic.Canonical} (walk : Geometry.Grid.Walks.Walk grid start finish) :
+  Gaussian.Basic.Canonical} (walk : Walk grid start finish) :
     walk.reverse.startCoordinates = walk.finishCoordinates.reverse := by
-  rw [Geometry.Grid.Walks.Walk.reverse, walk.startCoordinates_reverseOnto]
+  rw [reverse, walk.startCoordinates_reverseOnto]
   exact Append.append_nil _
 
 /-- Transporting endpoint equalities preserves the starting-coordinate list. -/
 theorem startCoordinates_castEndpoints {start finish first last :
-  Gaussian.Basic.Canonical} (walk : Geometry.Grid.Walks.Walk grid start finish)
+  Gaussian.Basic.Canonical} (walk : Walk grid start finish)
     (startEq : start = first) (finishEq : finish = last) :
     (walk.castEndpoints startEq finishEq).startCoordinates = walk.startCoordinates := by
   cases startEq
@@ -144,9 +144,9 @@ end Purelib.Polynomial.Geometry.Grid.Walks.Walk
 
 end
 
-variable {polynomial : Purelib.Polynomial.Geometry.ClearPath.GaussianPolynomial} {ambient :
-  Purelib.Geometry.Rational.Box} {grid : Polynomial.Geometry.Grid.ClearGrid polynomial
-  ambient} {frames : RootIsolation.SquareRoot.Grid.RootFrames grid}
+variable {polynomial : Polynomial.Geometry.ClearPath.GaussianPolynomial} {ambient :
+  Geometry.Rational.Box} {grid : Polynomial.Geometry.Grid.ClearGrid polynomial
+  ambient} {frames : RootFrames grid}
 
 section
 open Purelib.Data
@@ -157,29 +157,29 @@ namespace Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
 
 /-- Projecting indexed lifted edge starts gives the base walk's starting coordinates. -/
 theorem indexedStarts_coordinates (edges :
-  SquareRoot.Grid.RootEdgeBank frames) (vertices : SquareRoot.Grid.LiftedVertices.VertexBank grid) :
-    ∀ {start finish : Gaussian.Basic.Canonical} (walk : Geometry.Grid.Walks.Walk grid start finish) (sheet : Fin 2),
+  RootEdgeBank frames) (vertices : VertexBank grid) :
+    ∀ {start finish : Gaussian.Basic.Canonical} (walk : Walk grid start finish) (sheet : Fin 2),
       ((edges.indexedEdges vertices walk sheet).map OrientedEdge.start).map vertices.coordinate = walk.startCoordinates
   | _, _, .nil _, _ => rfl
   | _, _, .cons edge tail, sheet => by
-      simp only [SquareRoot.Grid.RootEdgeBank.indexedEdges, List.map_cons,
-        SquareRoot.Grid.RootEdgeBank.indexedEdge, vertices.coordinate_index,
-        Geometry.Grid.Walks.Walk.startCoordinates]
+      simp only [indexedEdges, List.map_cons,
+        indexedEdge, vertices.coordinate_index,
+        startCoordinates]
       exact congrArg (List.cons _) (edges.indexedStarts_coordinates vertices tail _)
 
 /-- The coordinate of an indexed lifted start belongs to the base walk's starting-coordinate list. -/
 theorem indexedStart_coordinate_mem (edges :
-  SquareRoot.Grid.RootEdgeBank frames) (vertices : SquareRoot.Grid.LiftedVertices.VertexBank grid)
-    {start finish : Gaussian.Basic.Canonical} (walk : Geometry.Grid.Walks.Walk grid start finish) (sheet : Fin 2)
+  RootEdgeBank frames) (vertices : VertexBank grid)
+    {start finish : Gaussian.Basic.Canonical} (walk : Walk grid start finish) (sheet : Fin 2)
     {vertex : Fin vertices.count} (member : vertex ∈ (edges.indexedEdges vertices walk sheet).map OrientedEdge.start) :
     vertices.coordinate vertex ∈ walk.startCoordinates := by
   rw [← edges.indexedStarts_coordinates vertices walk sheet]
-  exact List.Map.mem_map_of_mem member
+  exact Map.mem_map_of_mem member
 
 /-- Distinct starting coordinates imply distinct starting vertices in a fixed-sheet lift. -/
 theorem indexedStarts_nodup (edges :
-  SquareRoot.Grid.RootEdgeBank frames) (vertices : SquareRoot.Grid.LiftedVertices.VertexBank grid)
-    {start finish : Gaussian.Basic.Canonical} (walk : Geometry.Grid.Walks.Walk grid start finish) (sheet : Fin 2)
+  RootEdgeBank frames) (vertices : VertexBank grid)
+    {start finish : Gaussian.Basic.Canonical} (walk : Walk grid start finish) (sheet : Fin 2)
       (simple : walk.startCoordinates.Nodup) :
     ((edges.indexedEdges vertices walk sheet).map OrientedEdge.start).Nodup := by
   rw [← edges.indexedStarts_coordinates vertices walk sheet] at simple
@@ -203,10 +203,10 @@ namespace Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
 The starting coordinates are distinct, and the actual retained edge transports are injective using the supplied
 winding-one reference loops. -/
 theorem indexedStarts_disjoint (edges :
-  SquareRoot.Grid.RootEdgeBank frames) (vertices : SquareRoot.Grid.LiftedVertices.VertexBank grid)
-    (reference : ∀ point, Polynomial.Geometry.Grid.FromStates.ContainsVertex grid point →
+  RootEdgeBank frames) (vertices : VertexBank grid)
+    (reference : ∀ point, Geometry.Grid.FromStates.ContainsVertex grid point →
       Paths.OwnerLoopMonodromy.WindingOneLoop polynomial point) :
-    ∀ {start finish : Gaussian.Basic.Canonical} (walk : Geometry.Grid.Walks.Walk grid start finish) (_ :
+    ∀ {start finish : Gaussian.Basic.Canonical} (walk : Walk grid start finish) (_ :
       walk.startCoordinates.Nodup)
       (first last : Fin 2), first ≠ last →
       ∀ left ∈ (edges.indexedEdges vertices walk first).map OrientedEdge.start,
@@ -244,14 +244,14 @@ The original walk retains the same ordered coordinates and sheet transports.
 Structural list certificates preserve their displayed reversal, concatenation
 and membership witnesses without changing the retained vertices. -/
 theorem twoSheetStarts_nodup (edges :
-  SquareRoot.Grid.RootEdgeBank frames) (vertices : SquareRoot.Grid.LiftedVertices.VertexBank grid)
-    (reference : ∀ point, Polynomial.Geometry.Grid.FromStates.ContainsVertex grid point →
+  RootEdgeBank frames) (vertices : VertexBank grid)
+    (reference : ∀ point, Geometry.Grid.FromStates.ContainsVertex grid point →
       Paths.OwnerLoopMonodromy.WindingOneLoop polynomial point)
-    {start finish : Gaussian.Basic.Canonical} (walk : Geometry.Grid.Walks.Walk grid start finish) (simple :
+    {start finish : Gaussian.Basic.Canonical} (walk : Walk grid start finish) (simple :
       walk.startCoordinates.Nodup) :
     (((edges.indexedEdges vertices walk 0) ++ (edges.indexedEdges vertices walk 1)).map OrientedEdge.start).Nodup := by
   rw [Map.map_append]
-  exact List.Nodup.nodup_append (edges.indexedStarts_nodup vertices walk 0 simple)
+  exact Nodup.nodup_append (edges.indexedStarts_nodup vertices walk 0 simple)
     (edges.indexedStarts_nodup vertices walk 1 simple)
     (edges.indexedStarts_disjoint vertices reference walk simple 0 1 (by decide))
 
@@ -260,9 +260,9 @@ end Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
 end
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
-    higher} {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid}
+    higher} {frames : RootFrames bank.grid}
 
 namespace Purelib.Riemann.Meshes.PuncturedGridFaces.BranchHole
 
@@ -278,7 +278,7 @@ theorem inwardBoundary_simple (hole : BranchHole bank) :
   hole.inwardBoundary.startCoordinates.Nodup := by
   rw [hole.inwardBoundary_starts]
   change ([GridSide.bottom, .left, .top, .right].map (fun side => side.start hole.cell.box)).Nodup
-  exact Data.List.Nodup.nodup_map_of_injective
+  exact Nodup.nodup_map_of_injective
     (fun _ _ equal => GridSide.start_injective hole.cell.box_proper equal) (by decide)
 
 open Purelib.Curves in
@@ -287,8 +287,8 @@ open Purelib.RootIsolation in
 
 The simple rectangular base walk and winding-one reference transports separate the two lifted sheets. -/
 theorem liftedBoundary_simple (hole : BranchHole bank)
-  (vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid)
-    (edges : SquareRoot.Grid.RootEdgeBank frames) : ((hole.liftedBoundary vertices edges).map
+  (vertices : VertexBank bank.grid)
+    (edges : RootEdgeBank frames) : ((hole.liftedBoundary vertices edges).map
       OrientedEdge.start).Nodup := by
   rw [hole.liftedBoundary_eq]
   exact edges.twoSheetStarts_nodup vertices (fun point member =>
@@ -302,8 +302,8 @@ The original walk retains the same ordered coordinates and sheet transports.
 Structural list certificates preserve their displayed reversal, concatenation
 and membership witnesses without changing the retained vertices. -/
 theorem liftedBoundary_start_inside (hole : BranchHole bank)
-  (vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid)
-    (edges : SquareRoot.Grid.RootEdgeBank frames) {vertex : Fin vertices.count}
+  (vertices : VertexBank bank.grid)
+    (edges : RootEdgeBank frames) {vertex : Fin vertices.count}
     (member : vertex ∈ (hole.liftedBoundary vertices edges).map OrientedEdge.start) :
     hole.cell.box.Contains (vertices.coordinate vertex) := by
   rw [hole.liftedBoundary_eq, Map.map_append] at member

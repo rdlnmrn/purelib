@@ -22,6 +22,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Geometry.Projective.Hermitian.Basic
 import Purelib.Geometry.Rational.Box.Refinement
 
+open Purelib.Geometry.Projective
+
 open Purelib.Data.Gaussian.Basic (Canonical)
 open Purelib.Geometry.Projective.Hermitian (Atom)
 open Purelib.Geometry.Projective.Hermitian.Boundary (BoundaryDescription)
@@ -56,6 +58,8 @@ different unresolved atom.
 
 namespace Purelib.RootIsolation.Curve.Boundary
 
+open Purelib.Data.List.Membership (mem_append)
+
 /-! ## Structural owner inspection -/
 
 set_option genInjectivity false in
@@ -69,13 +73,13 @@ inductive RemainingBoundary
     Atom → Type where
   /-- An unresolved parameterized atom boundary with its exact retained bounded chart analyses. -/ | curve (atom :
     Atom)
-      (source : Geometry.Projective.Hermitian.Chart.CurveSource
+      (source : Hermitian.Chart.CurveSource
         reference atom.form)
       (analyses : List (Sigma fun chart :
-        Geometry.Projective.Hermitian.Chart.BoundedChart atom.form =>
-          Curve.Chart.BoundedAnalysis p current chart))
+        Hermitian.Chart.BoundedChart atom.form =>
+          Chart.BoundedAnalysis p current chart))
       (analyses_eq : analyses =
-        Curve.Chart.analyzeCharts p source current
+        Chart.analyzeCharts p source current
           denominatorMargin marginPositive) :
       RemainingBoundary p reference current denominatorMargin marginPositive
         atom
@@ -103,10 +107,10 @@ inductive OwnerInspection
     (refines : current.Refines bounding)
     (sample : Canonical) (sampleInside : current.Contains sample)
     (formOverrides : List
-      (Geometry.Projective.Hermitian.Formula.Box.FormOverride current)) :
+      (Hermitian.Formula.Box.FormOverride current)) :
     BoundaryFormula → Type where
   /-- The original formula has a retained stability certificate on the current box. -/ | stable {formula :
-    BoundaryFormula} (result : Geometry.Projective.Hermitian.Formula.Box.Stable
+    BoundaryFormula} (result : Hermitian.Formula.Box.Stable
     bounding current formula) :
       OwnerInspection p reference bounding current denominatorMargin
         marginPositive refines sample sampleInside formOverrides formula
@@ -114,9 +118,9 @@ inductive OwnerInspection
     curve analysis. -/ | boundary {formula : BoundaryFormula} (atom :
     Atom)
       (member : atom ∈ formula.atoms)
-      (notResolved : Geometry.Projective.Hermitian.Formula.Box.findFormOverride
+      (notResolved : Hermitian.Formula.Box.findFormOverride
         formOverrides atom.form = none)
-      (failure : Geometry.Projective.Hermitian.Box.certificate?
+      (failure : Hermitian.Box.certificate?
         atom.form bounding current refines sample sampleInside = none)
       (remaining : RemainingBoundary p reference current denominatorMargin
         marginPositive atom) :
@@ -135,9 +139,9 @@ bounded analysis. -/
     (bounding current : Box) (denominatorMargin : Fraction.Rational)
     (marginPositive : 0 < denominatorMargin)
     (overrides : List
-      (Geometry.Projective.Hermitian.Formula.Box.Override bounding current))
+      (Hermitian.Formula.Box.Override bounding current))
     (formOverrides : List
-      (Geometry.Projective.Hermitian.Formula.Box.FormOverride current))
+      (Hermitian.Formula.Box.FormOverride current))
     (formula : BoundaryFormula)
     (description : ∀ atom, atom ∈ formula.atoms →
       BoundaryDescription reference atom.form)
@@ -151,16 +155,16 @@ bounded analysis. -/
   | .atom value =>
       have member : value ∈ (BoundaryFormula.atom value).atoms := by
         exact List.Mem.head []
-      match found : Geometry.Projective.Hermitian.Formula.Box.findFormOverride
+      match found : Hermitian.Formula.Box.findFormOverride
           formOverrides value.form with
       | some formStability =>
           exact .stable (.atom value formStability.toAtom)
       | none =>
-          match Geometry.Projective.Hermitian.Formula.Box.findOverride overrides
+          match Hermitian.Formula.Box.findOverride overrides
               value with
           | some stability => exact .stable (.atom value stability)
           | none =>
-              match failure : Geometry.Projective.Hermitian.Box.certificate?
+              match failure : Hermitian.Box.certificate?
                   value.form bounding current refines sample sampleInside with
               | some certificate =>
                   exact .stable (.atom value (.strict certificate))
@@ -169,7 +173,7 @@ bounded analysis. -/
                   | .curve source =>
                       exact .boundary value member found failure
                         (.curve value source
-                        (Curve.Chart.analyzeCharts p
+                        (Chart.analyzeCharts p
                           source current denominatorMargin marginPositive) rfl)
                   | .finite points complete nonnegative =>
                       exact .boundary value member found failure
@@ -183,50 +187,50 @@ bounded analysis. -/
       let leftDescription : ∀ atom, atom ∈ left.atoms →
           BoundaryDescription reference atom.form := fun atom member =>
         description atom (by
-          exact Purelib.Data.List.Membership.mem_append.mpr (Or.inl member))
+          exact mem_append.mpr (Or.inl member))
       match inspectOwnerWith p reference bounding current denominatorMargin
           marginPositive overrides formOverrides left leftDescription refines
           sample sampleInside with
       | .boundary atom member notResolved failure remaining =>
           exact .boundary atom (by
-            exact Purelib.Data.List.Membership.mem_append.mpr (Or.inl member)) notResolved failure remaining
+            exact mem_append.mpr (Or.inl member)) notResolved failure remaining
       | .stable leftStable =>
           let rightDescription : ∀ atom, atom ∈ right.atoms →
               BoundaryDescription reference atom.form := fun atom member =>
             description atom (by
-              exact Purelib.Data.List.Membership.mem_append.mpr (Or.inr member))
+              exact mem_append.mpr (Or.inr member))
           match inspectOwnerWith p reference bounding current
               denominatorMargin marginPositive overrides formOverrides right
               rightDescription refines sample
               sampleInside with
           | .boundary atom member notResolved failure remaining =>
               exact .boundary atom (by
-                exact Purelib.Data.List.Membership.mem_append.mpr (Or.inr member)) notResolved failure remaining
+                exact mem_append.mpr (Or.inr member)) notResolved failure remaining
           | .stable rightStable =>
               exact .stable (.and leftStable rightStable)
   | .or left right =>
       let leftDescription : ∀ atom, atom ∈ left.atoms →
           BoundaryDescription reference atom.form := fun atom member =>
         description atom (by
-          exact Purelib.Data.List.Membership.mem_append.mpr (Or.inl member))
+          exact mem_append.mpr (Or.inl member))
       match inspectOwnerWith p reference bounding current denominatorMargin
           marginPositive overrides formOverrides left leftDescription refines
           sample sampleInside with
       | .boundary atom member notResolved failure remaining =>
           exact .boundary atom (by
-            exact Purelib.Data.List.Membership.mem_append.mpr (Or.inl member)) notResolved failure remaining
+            exact mem_append.mpr (Or.inl member)) notResolved failure remaining
       | .stable leftStable =>
           let rightDescription : ∀ atom, atom ∈ right.atoms →
               BoundaryDescription reference atom.form := fun atom member =>
             description atom (by
-              exact Purelib.Data.List.Membership.mem_append.mpr (Or.inr member))
+              exact mem_append.mpr (Or.inr member))
           match inspectOwnerWith p reference bounding current
               denominatorMargin marginPositive overrides formOverrides right
               rightDescription refines sample
               sampleInside with
           | .boundary atom member notResolved failure remaining =>
               exact .boundary atom (by
-                exact Purelib.Data.List.Membership.mem_append.mpr (Or.inr member)) notResolved failure remaining
+                exact mem_append.mpr (Or.inr member)) notResolved failure remaining
           | .stable rightStable =>
               exact .stable (.or leftStable rightStable)
 
@@ -254,7 +258,7 @@ parser formula. -/
     (bounding current : Box) (denominatorMargin : Fraction.Rational)
     (marginPositive : 0 < denominatorMargin)
     (formula : BoundaryFormula)
-    (descriptions : Geometry.Projective.Hermitian.Formula.Descriptions
+    (descriptions : Hermitian.Formula.Descriptions
       reference formula)
     (refines : current.Refines bounding)
     (sample : Canonical) (sampleInside : current.Contains sample) :

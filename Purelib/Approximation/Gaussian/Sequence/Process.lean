@@ -57,6 +57,11 @@ def toProcess (approximation :
   centerBound_nonneg := approximation.centerBound_nonneg
   center_bounded := approximation.sample_bounded
 
+/-- The original finite sequence index has executable equality as a process state. -/
+instance stateDecidableEq (approximation : ApproximationData) : DecidableEq approximation.toProcess.State := by
+  change DecidableEq Nat
+  infer_instance
+
 /-- The sequence-backed process ball retains the original sample centre and indexed squared-error allowance. -/
 @[simp] theorem toProcess_ball (approximation :
   Gaussian.Sequence.ApproximationData) (index : Nat) :

@@ -50,7 +50,7 @@ open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 open _root_.Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients renaming CoefficientPolynomial -> Dense
 
 open Purelib.Polynomial.Geometry.ClearPath (ClearSegment)
-open Purelib.Riemann.Branches.PreparedSheetContinuation (Endpoint Subdivision)
+open Purelib.Riemann.Branches.PreparedSheetContinuation (Endpoint Subdivision StepRequest)
 
 /-- The original rational Gaussian box carrier. -/
 abbrev Box := Purelib.Geometry.Rational.Box
@@ -99,6 +99,25 @@ def ownerPath (budget : PreparedTraceBudget segment left right)
           (.cons (OwnerLink.stationary polynomial (segment.pointAt request.endpoint.parameter) targetJoin)
             (ownerPath budget remaining fits.2.2)))
 
+/-- The retained trace has exactly three original links for every stored subdivision step.
+
+The count includes both same-point owner joins and the actual moving link;
+it is separate from the geometric subdivision's edge and payment counts.
+-/
+theorem ownerPath_length (budget : PreparedTraceBudget segment left right)
+    {within : segment.WithinAmbient} {current : Endpoint}
+    {owner : Owner (polynomial.eval (segment.pointAt current.parameter))}
+    (subdivision : Subdivision segment within current owner)
+    (fits : budget.RequestsFit current subdivision.requests) :
+    (ownerPath budget subdivision fits).vertices.length = 3 * subdivision.stepCount := by
+  induction subdivision with
+  | stop => rfl
+  | next current owner request cached ordered small remaining ih =>
+      change (((ownerPath budget remaining fits.2.2).vertices.length + 1) + 1) + 1 =
+        3 * (remaining.stepCount + 1)
+      rewrite [ih fits.2.2, Nat.mul_succ]
+      rfl
+
 open Purelib.Data.Gaussian in
 open Purelib.Polynomial in
 open Purelib.Riemann.Branches in
@@ -110,6 +129,28 @@ def traceVertices (segment : Geometry.ClearPath.ClearSegment polynomial ambient 
   | current, request :: remaining =>
       segment.pointAt current.parameter :: segment.pointAt request.endpoint.parameter ::
         segment.pointAt request.endpoint.parameter :: traceVertices segment request.endpoint remaining
+
+/-- Every actual subdivision trace vertex stays in a box containing the original segment endpoints.
+
+The ordered request cache includes repeated source and target handoffs.
+Each occurrence uses its actual retained endpoint parameter and intrinsic
+unit-interval certificate, including stationary subdivisions.
+-/
+theorem traceVertices_inBox (enclosure : Box) (first : enclosure.Contains start)
+    (last : enclosure.Contains finish) :
+    ∀ (current : Endpoint) (requests : List StepRequest)
+      (point : Gaussian), point ∈ traceVertices segment current requests → enclosure.Contains point
+  | _, [], _, member => by cases member
+  | current, request :: remaining, point, member => by
+      cases member with
+      | head => exact segment.pointAt_contains_of_endpoints first last _ current.inside
+      | tail _ member =>
+          cases member with
+          | head => exact segment.pointAt_contains_of_endpoints first last _ request.endpoint.inside
+          | tail _ member =>
+              cases member with
+              | head => exact segment.pointAt_contains_of_endpoints first last _ request.endpoint.inside
+              | tail _ member => exact traceVertices_inBox enclosure first last request.endpoint remaining point member
 
 /-- The retained subdivision owner path has exactly the original request-derived trace vertex list. -/
 theorem ownerPath_vertices (budget : PreparedTraceBudget segment left right)

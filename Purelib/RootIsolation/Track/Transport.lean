@@ -64,3 +64,42 @@ def castWindingOneTrack
 end Purelib.RootIsolation.Track.Transport
 
 end
+
+public section
+
+namespace Purelib.RootIsolation.Track.Basic.WindingOneTrack
+
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
+open Purelib.Data.Rat.Fraction (Rational)
+
+/-- Start the original refinement program at a supplied certified state of the same polynomial and ambient box.
+
+Only the initial state changes. The original refine, nesting, strictness and
+accuracy functions are retained unchanged, allowing the new track to keep its
+source refinement procedure rather than running isolation again.
+-/
+@[expose] def atState
+    {polynomial : CoefficientPolynomial}
+    {ambient : Box} (track : WindingOneTrack polynomial ambient)
+    (current : State.WindingOne.Basic.WindingOneState polynomial ambient) :
+    WindingOneTrack polynomial ambient :=
+  { track with initial := current }
+
+/-- The new track retains the supplied original state literally as its initial state. -/
+theorem atState_initial
+    {polynomial : CoefficientPolynomial}
+    {ambient : Box} (track : WindingOneTrack polynomial ambient)
+    (current : State.WindingOne.Basic.WindingOneState polynomial ambient) :
+    (track.atState current).initial = current := rfl
+
+/-- Refinement after changing the initial state is the exact original refinement operation. -/
+theorem atState_refine
+    {polynomial : CoefficientPolynomial}
+    {ambient : Box} (track : WindingOneTrack polynomial ambient)
+    (initial current : State.WindingOne.Basic.WindingOneState polynomial ambient)
+    (target : Rational) (positive : 0 < target) :
+    (track.atState initial).refine current target positive = track.refine current target positive := rfl
+
+end Purelib.RootIsolation.Track.Basic.WindingOneTrack
+
+end

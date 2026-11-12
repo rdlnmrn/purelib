@@ -1,4 +1,5 @@
 module
+import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Data.List.Map
 import Purelib.Data.List.Append
 import Purelib.RootIsolation.SquareRoot.Grid.Walk
@@ -46,6 +47,8 @@ import Purelib.Riemann.Meshes.PuncturedGridFaces
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
+
+open Purelib.Data.Gaussian.Norm.Sum
 
 public section
 
@@ -95,12 +98,16 @@ open Purelib.Approximation.Gaussian.Name.Basic (Named)
 open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 open Purelib.Riemann.Paths.PreparedSegmentSources (SegmentSource)
 
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
+
+variable {numerator : CoefficientPolynomial}
+
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
   {source : Differential genus} {axes :
     PrimitiveAxes base.bank.grid}
   {domains : FaceDomainBank frames
@@ -112,25 +119,25 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment
 /-- Exact nonempty fragment blocks on the retained grid-walk edges, with original segment ancestry and root names at
 every group boundary. -/
 inductive WalkGroups : {first last : Data.Gaussian.Basic.Canonical} → Walks.Walk base.bank.grid first last →
-  Gaussian.Name.Basic.Named → Gaussian.Name.Basic.Named →
-    List (RootedWords.LiftedFragment axes domains mesh source count target) → Prop
+  Named → Named →
+    List (LiftedFragment axes domains mesh source count target) → Prop
   /-- An empty original walk retains root equivalence between its two endpoint names. -/ | nil {point :
-    Data.Gaussian.Basic.Canonical} {firstName lastName : Gaussian.Name.Basic.Named} (root : Nonempty
-    (Gaussian.Equivalence.NamedEquivalent firstName lastName)) :
+    Data.Gaussian.Basic.Canonical} {firstName lastName : Named} (root : Nonempty
+    (NamedEquivalent firstName lastName)) :
       WalkGroups (.nil point) firstName lastName
         []
   /-- Append one actual nonempty rooted source group on the retained grid edge, preserving source ancestry, movement,
     geometry and the outgoing root. -/ | cons {first middle last : Data.Gaussian.Basic.Canonical} {edge : Walks.Edge
     base.bank.grid first middle}
-      {tail : Walks.Walk base.bank.grid middle last} {firstName middleName lastName : Gaussian.Name.Basic.Named}
-      {head : RootedWords.LiftedFragment axes domains mesh source count target}
-      {block pieces : List (RootedWords.LiftedFragment axes domains mesh source count target)}
+      {tail : Walks.Walk base.bank.grid middle last} {firstName middleName lastName : Named}
+      {head : LiftedFragment axes domains mesh source count target}
+      {block pieces : List (LiftedFragment axes domains mesh source count target)}
       {ambient : Rational.Box} {start finish : Data.Gaussian.Basic.Canonical} {segment :
-        ClearPath.ClearSegment curve.polynomial ambient start finish}
+        ClearSegment curve.polynomial ambient start finish}
       (word : LiftedFragment.RootedWord (head :: block) first firstName middle middleName)
-      (original : ∀ piece ∈ head :: block, PreparedSegmentSources.SegmentSource segment piece.parent)
+      (original : ∀ piece ∈ head :: block, SegmentSource segment piece.parent)
       (moving : ∀ piece ∈ head :: block, piece.last ≠ piece.first)
-      (geometry : ∀ piece ∈ head :: block, SourceGeometry.Presents piece first middle)
+      (geometry : ∀ piece ∈ head :: block, Presents piece first middle)
       (remaining : WalkGroups tail middleName
         lastName pieces) :
       WalkGroups (.cons edge tail) firstName
@@ -142,8 +149,8 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.WalkGroups
 
 /-- Preserve actual group order and the original intermediate root when joining segment or tour legs. -/
 theorem append {first middle last : Data.Gaussian.Basic.Canonical} {left : Walks.Walk base.bank.grid first middle}
-    {right : Walks.Walk base.bank.grid middle last} {firstName middleName lastName : Gaussian.Name.Basic.Named}
-    {before after : List (RootedWords.LiftedFragment axes domains mesh source count target)}
+    {right : Walks.Walk base.bank.grid middle last} {firstName middleName lastName : Named}
+    {before after : List (LiftedFragment axes domains mesh source count target)}
     (leftGroups : WalkGroups left firstName middleName
       before) (rightGroups : WalkGroups right middleName
       lastName after) :
@@ -164,23 +171,23 @@ theorem append {first middle last : Data.Gaussian.Basic.Canonical} {left : Walks
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.WalkGroups
 
-variable {points : List Purelib.Data.Gaussian.Basic.Canonical} {tolerance : Rational} {index :
+variable {points : List Data.Gaussian.Basic.Canonical} {tolerance : Rational} {index :
   Nat}
-  {budgets : FaceMeshBudgets source points tolerance
+  {budgets : FaceMeshBudgets source points tolerance (numerator := numerator)
     domains} {numerics : FacePrimitiveBank source
-    index domains}
+    index (numerator := numerator) domains}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.WalkGroups
 
 /-- The finite Gaussian sum of an appended original list is the sum of its two retained list totals. -/
 private theorem sum_append (first last : List Data.Gaussian.Basic.Canonical) :
-  Data.Gaussian.Norm.Sum.Basic.gaussianSum (first ++ last) = Data.Gaussian.Norm.Sum.Basic.gaussianSum first +
-  Data.Gaussian.Norm.Sum.Basic.gaussianSum last := by
+  Basic.gaussianSum (first ++ last) = Basic.gaussianSum first +
+  Basic.gaussianSum last := by
   induction first with
   | nil => exact (zero_add _).symm
   | cons head tail ih =>
-    change head + Data.Gaussian.Norm.Sum.Basic.gaussianSum (tail ++ last) = (head +
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum tail) + Data.Gaussian.Norm.Sum.Basic.gaussianSum last; rw [ih];
+    change head + Basic.gaussianSum (tail ++ last) = (head +
+      Basic.gaussianSum tail) + Basic.gaussianSum last; rw [ih];
       ring1
 
 /-- The actual retained walk-face values split into their first original edge increment and the remaining walk values.
@@ -198,20 +205,20 @@ private theorem walk_values_cons {first middle last : Data.Gaussian.Basic.Canoni
 /-- The full value fold and its outgoing root use the same cached edge transitions as the actual standard walk-face
 assignment. -/
 theorem read {first last : Data.Gaussian.Basic.Canonical} {walk : Walks.Walk base.bank.grid first last}
-    {firstName lastName : Gaussian.Name.Basic.Named} {pieces : List (RootedWords.LiftedFragment axes domains mesh source
+    {firstName lastName : Named} {pieces : List (LiftedFragment axes domains mesh source
       count target)}
     (groups : WalkGroups walk firstName lastName pieces)
     (vertex : Fin vertices.count) (coordinate : vertices.coordinate vertex = first)
-    (root : Gaussian.Equivalence.NamedEquivalent (OwnerTraceReadings.ownerName (vertices.owner frames vertex))
+    (root : NamedEquivalent (OwnerTraceReadings.ownerName (vertices.owner frames vertex))
       firstName)
     (shared : CommonMeshes.FaceSharedMeshes budgets numerics) :
     ∃ finalVertex : Fin vertices.count, vertices.coordinate finalVertex = last ∧
       vertices.sheet finalVertex = RootEdgeBank.target edges walk (vertices.sheet vertex) ∧
-      Nonempty (Gaussian.Equivalence.NamedEquivalent (OwnerTraceReadings.ownerName (vertices.owner frames finalVertex))
+      Nonempty (NamedEquivalent (OwnerTraceReadings.ownerName (vertices.owner frames finalVertex))
         lastName) ∧
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (pieces.map (fun piece => RouteContacts.routeValue piece
+      Basic.gaussianSum (pieces.map (fun piece => RouteContacts.routeValue piece
         (RouteWords.canonicalRoute piece) shared)) =
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum ((SkeletonFaceAssignments.walkFaces mesh walk (vertices.sheet
+        Basic.gaussianSum ((SkeletonFaceAssignments.walkFaces mesh walk (vertices.sheet
           vertex)).values
           (fun _ route => FaceSharedMeshes.edgeIncrement shared route)) := by
   induction groups generalizing vertex with

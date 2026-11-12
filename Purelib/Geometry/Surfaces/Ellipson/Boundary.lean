@@ -39,7 +39,7 @@ namespace Purelib.Geometry
 
 namespace Surfaces.Ellipson.Boundary
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 /-- The six edges of the tetrahedron printed in Appendix B. -/
 def OnTetrahedronEdge (x y z : K) : Prop :=
@@ -157,25 +157,25 @@ theorem cube_boundary_intersection [DecidableEq K] (x y z :
     rcases boundary with xZero | xOne | yZero | yOne | zZero | zOne
     · apply Or.inl
       refine ⟨xZero, ?_⟩
-      apply Purelib.Algebra.Field.Squares.eq_of_sub_square_eq_zero y z
+      apply Squares.eq_of_sub_square_eq_zero y z
       exact (x_zero_face_square y z).mp (by simpa [xZero] using onEllipson)
     · apply Or.inr
       apply Or.inl
       refine ⟨xOne, ?_⟩
-      apply Purelib.Algebra.Field.Squares.sum_eq_one_of_square_zero y z
+      apply Squares.sum_eq_one_of_square_zero y z
       exact (x_one_face_square y z).mp (by simpa [xOne] using onEllipson)
     · apply Or.inr
       apply Or.inr
       apply Or.inl
       refine ⟨yZero, ?_⟩
-      apply Purelib.Algebra.Field.Squares.eq_of_sub_square_eq_zero x z
+      apply Squares.eq_of_sub_square_eq_zero x z
       exact (y_zero_face_square x z).mp (by simpa [yZero] using onEllipson)
     · apply Or.inr
       apply Or.inr
       apply Or.inr
       apply Or.inl
       refine ⟨yOne, ?_⟩
-      apply Purelib.Algebra.Field.Squares.sum_eq_one_of_square_zero x z
+      apply Squares.sum_eq_one_of_square_zero x z
       exact (y_one_face_square x z).mp (by simpa [yOne] using onEllipson)
     · apply Or.inr
       apply Or.inr
@@ -183,7 +183,7 @@ theorem cube_boundary_intersection [DecidableEq K] (x y z :
       apply Or.inr
       apply Or.inl
       refine ⟨zZero, ?_⟩
-      apply Purelib.Algebra.Field.Squares.eq_of_sub_square_eq_zero x y
+      apply Squares.eq_of_sub_square_eq_zero x y
       exact (z_zero_face_square x y).mp (by simpa [zZero] using onEllipson)
     · apply Or.inr
       apply Or.inr
@@ -191,7 +191,7 @@ theorem cube_boundary_intersection [DecidableEq K] (x y z :
       apply Or.inr
       apply Or.inr
       refine ⟨zOne, ?_⟩
-      apply Purelib.Algebra.Field.Squares.sum_eq_one_of_square_zero x y
+      apply Squares.sum_eq_one_of_square_zero x y
       exact (z_one_face_square x y).mp (by simpa [zOne] using onEllipson)
   · intro edge
     rcases edge with xEdge | xOpposite | yEdge | yOpposite | zEdge | zOpposite

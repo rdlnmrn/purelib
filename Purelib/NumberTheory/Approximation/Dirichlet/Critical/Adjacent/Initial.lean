@@ -29,6 +29,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data
 
 open Purelib.Data.Rat
@@ -54,98 +56,98 @@ namespace Purelib.NumberTheory.Approximation.Dirichlet.Critical.Adjacent.Initial
 
 /-- The normalized signed fraction representing one half. -/
 private def oneHalf : Fraction.Rational :=
-  Data.Rat.SignedFraction.Normalization.ofFraction ⟨1, 2, by decide⟩
+  SignedFraction.Normalization.ofFraction ⟨1, 2, by decide⟩
 
 /-- The normalized signed fraction representing one eighth. -/
 private def oneEighth : Fraction.Rational
   :=
-  Data.Rat.SignedFraction.Normalization.ofFraction ⟨1, 8, by decide⟩
+  SignedFraction.Normalization.ofFraction ⟨1, 8, by decide⟩
 
 /-- The normalized signed fraction representing `15/112`. -/
 private def fifteenOverOneHundredTwelve :
   Fraction.Rational :=
-  Data.Rat.SignedFraction.Normalization.ofFraction ⟨15, 112, by decide⟩
+  SignedFraction.Normalization.ofFraction ⟨15, 112, by decide⟩
 
 /-- The normalized signed fraction representing `15/56`. -/
 private def fifteenOverFiftySix :
   Fraction.Rational :=
-  Data.Rat.SignedFraction.Normalization.ofFraction ⟨15, 56, by decide⟩
+  SignedFraction.Normalization.ofFraction ⟨15, 56, by decide⟩
 
 /-- Multiplication by 56 clears the retained `15/56` fraction denominator. -/
 private theorem
   fifteenOverFiftySix_mul_denominator :
-    Dirichlet.Critical.Adjacent.Initial.fifteenOverFiftySix * 56 = 15 := by
-  unfold Dirichlet.Critical.Adjacent.Initial.fifteenOverFiftySix
-  have clearance := Data.Rat.SignedFraction.Arithmetic.ofFraction_mul_den
+    fifteenOverFiftySix * 56 = 15 := by
+  unfold fifteenOverFiftySix
+  have clearance := SignedFraction.Arithmetic.ofFraction_mul_den
     ({ num := 15, den := 56, den_pos := by decide } :
-      Data.Rat.SignedFraction)
+      SignedFraction)
   simpa only [Int.cast_ofNat] using clearance
 
 /-- The normalized signed fraction representing `4/15`. -/
 private def fourOverFifteen :
   Fraction.Rational :=
-  Data.Rat.SignedFraction.Normalization.ofFraction ⟨4, 15, by decide⟩
+  SignedFraction.Normalization.ofFraction ⟨4, 15, by decide⟩
 
 /-- The normalized signed fraction representing `2/15`. -/
 private def twoOverFifteen :
   Fraction.Rational :=
-  Data.Rat.SignedFraction.Normalization.ofFraction ⟨2, 15, by decide⟩
+  SignedFraction.Normalization.ofFraction ⟨2, 15, by decide⟩
 
 /-- The normalized stage-two error ratio `(1/2, 1/8)` at the stage-one source. -/
 private def errorRatio :
   Gaussian.Basic.Canonical :=
-  ⟨Dirichlet.Critical.Adjacent.Initial.oneHalf, Dirichlet.Critical.Adjacent.Initial.oneEighth⟩
+  ⟨oneHalf, oneEighth⟩
 
 /-- The normalized stage-two denominator ratio `(15/112, -1/2)`. -/
 private def denominatorRatio :
   Gaussian.Basic.Canonical :=
-  ⟨Dirichlet.Critical.Adjacent.Initial.fifteenOverOneHundredTwelve, -Dirichlet.Critical.Adjacent.Initial.oneHalf⟩
+  ⟨fifteenOverOneHundredTwelve, -oneHalf⟩
 
 /-- The error coordinate of an integral coefficient pair in the normalized stage-two basis. -/
 private def normalizedError
     (left right : GaussianInt) : Gaussian.Basic.Canonical :=
-  GaussianInt.toGaussian left + GaussianInt.toGaussian right * Dirichlet.Critical.Adjacent.Initial.errorRatio
+  GaussianInt.toGaussian left + GaussianInt.toGaussian right * errorRatio
 
 /-- The denominator coordinate of an integral coefficient pair in the normalized stage-two basis. -/
 private def normalizedDenominator
     (left right : GaussianInt) : Gaussian.Basic.Canonical :=
-  GaussianInt.toGaussian left * Dirichlet.Critical.Adjacent.Initial.denominatorRatio + GaussianInt.toGaussian right
+  GaussianInt.toGaussian left * denominatorRatio + GaussianInt.toGaussian right
 
 /-- The determinant factor `1 - denominatorRatio * errorRatio` of the normalized basis. -/
 private def gapVector :
-  Gaussian.Basic.Canonical := 1 - Dirichlet.Critical.Adjacent.Initial.denominatorRatio *
-  Dirichlet.Critical.Adjacent.Initial.errorRatio
+  Gaussian.Basic.Canonical := 1 - denominatorRatio *
+  errorRatio
 
 /-- The quadrance of the normalized stage-two determinant factor. -/
 private def gap : Fraction.Rational :=
-  Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.gapVector
+  Gaussian.Norm.Basic.normSq gapVector
 
 /-- The displayed normalized determinant gap is positive. -/
 private theorem gap_pos : 0 <
-  Dirichlet.Critical.Adjacent.Initial.gap := by decide
+  gap := by decide
 
 /-- The displayed error ratio has strict slack in the coefficient quadrance estimate. -/
 private theorem error_margin :
-    2 * (1 + Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.errorRatio) <
-      4 * Dirichlet.Critical.Adjacent.Initial.gap := by
+    2 * (1 + Gaussian.Norm.Basic.normSq errorRatio) <
+      4 * gap := by
   decide
 
 /-- The displayed denominator ratio has strict slack in the coefficient quadrance estimate. -/
 private theorem denominator_margin :
-    2 * (1 + Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.denominatorRatio) <
-      4 * Dirichlet.Critical.Adjacent.Initial.gap := by
+    2 * (1 + Gaussian.Norm.Basic.normSq denominatorRatio) <
+      4 * gap := by
   decide
 
 /-- Eliminating the trailing coefficient recovers the leading coefficient times the normalized determinant factor. -/
 private theorem left_gap_identity
     (left right : GaussianInt) :
-    GaussianInt.toGaussian left * Dirichlet.Critical.Adjacent.Initial.gapVector =
-      Dirichlet.Critical.Adjacent.Initial.normalizedError left right -
-        Dirichlet.Critical.Adjacent.Initial.normalizedDenominator left right *
-          Dirichlet.Critical.Adjacent.Initial.errorRatio := by
+    GaussianInt.toGaussian left * gapVector =
+      normalizedError left right -
+        normalizedDenominator left right *
+          errorRatio := by
   apply Gaussian.Basic.ext <;>
-    simp only [Dirichlet.Critical.Adjacent.Initial.gapVector, Dirichlet.Critical.Adjacent.Initial.normalizedError,
-      Dirichlet.Critical.Adjacent.Initial.normalizedDenominator,
+    simp only [gapVector, normalizedError,
+      normalizedDenominator,
       Gaussian.Basic.sub_re,
       Gaussian.Basic.sub_im,
       Gaussian.Basic.add_re,
@@ -159,13 +161,13 @@ private theorem left_gap_identity
 /-- Eliminating the leading coefficient recovers the trailing coefficient times the normalized determinant factor. -/
 private theorem right_gap_identity
     (left right : GaussianInt) :
-    GaussianInt.toGaussian right * Dirichlet.Critical.Adjacent.Initial.gapVector =
-      Dirichlet.Critical.Adjacent.Initial.normalizedDenominator left right -
-        Dirichlet.Critical.Adjacent.Initial.denominatorRatio * Dirichlet.Critical.Adjacent.Initial.normalizedError left
+    GaussianInt.toGaussian right * gapVector =
+      normalizedDenominator left right -
+        denominatorRatio * normalizedError left
           right := by
   apply Gaussian.Basic.ext <;>
-    simp only [Dirichlet.Critical.Adjacent.Initial.gapVector, Dirichlet.Critical.Adjacent.Initial.normalizedError,
-      Dirichlet.Critical.Adjacent.Initial.normalizedDenominator,
+    simp only [gapVector, normalizedError,
+      normalizedDenominator,
       Gaussian.Basic.sub_re,
       Gaussian.Basic.sub_im,
       Gaussian.Basic.add_re,
@@ -184,132 +186,132 @@ private theorem
   coefficient_normNat_lt_four
     (left right : GaussianInt)
     (errorBound :
-      Data.Gaussian.Norm.Basic.normSq
-        (Dirichlet.Critical.Adjacent.Initial.normalizedError left right) ≤ 1)
+      Gaussian.Norm.Basic.normSq
+        (normalizedError left right) ≤ 1)
     (denominatorBound :
-      Data.Gaussian.Norm.Basic.normSq
-        (Dirichlet.Critical.Adjacent.Initial.normalizedDenominator left right) ≤ 1) :
-    Purelib.Data.GaussianInt.normNat left < 4 ∧ Purelib.Data.GaussianInt.normNat right < 4 := by
+      Gaussian.Norm.Basic.normSq
+        (normalizedDenominator left right) ≤ 1) :
+    Data.GaussianInt.normNat left < 4 ∧ Data.GaussianInt.normNat right < 4 := by
   have errorNormNonnegative :
       (0 : Fraction.Rational) ≤
-        Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.errorRatio :=
+        Gaussian.Norm.Basic.normSq errorRatio :=
     Gaussian.Norm.Basic.normSq_nonneg _
   have denominatorNormNonnegative :
       (0 : Fraction.Rational) ≤
-        Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.denominatorRatio :=
+        Gaussian.Norm.Basic.normSq denominatorRatio :=
     Gaussian.Norm.Basic.normSq_nonneg _
   have denominatorScaledLe :
-      Data.Gaussian.Norm.Basic.normSq
-            (Dirichlet.Critical.Adjacent.Initial.normalizedDenominator left right) *
-          Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.errorRatio ≤
-        Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.errorRatio := by
+      Gaussian.Norm.Basic.normSq
+            (normalizedDenominator left right) *
+          Gaussian.Norm.Basic.normSq errorRatio ≤
+        Gaussian.Norm.Basic.normSq errorRatio := by
     calc
       _ ≤ (1 : Fraction.Rational) *
-          Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.errorRatio :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          Gaussian.Norm.Basic.normSq Initial.errorRatio :=
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           denominatorBound errorNormNonnegative
       _ = _ := by ring1
   have errorScaledLe :
-      Data.Gaussian.Norm.Basic.normSq
-            (Dirichlet.Critical.Adjacent.Initial.normalizedError left right) *
-          Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.denominatorRatio ≤
-        Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.denominatorRatio := by
+      Gaussian.Norm.Basic.normSq
+            (normalizedError left right) *
+          Gaussian.Norm.Basic.normSq denominatorRatio ≤
+        Gaussian.Norm.Basic.normSq denominatorRatio := by
     calc
       _ ≤ (1 : Fraction.Rational) *
-          Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.denominatorRatio :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          Gaussian.Norm.Basic.normSq Initial.denominatorRatio :=
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           errorBound denominatorNormNonnegative
       _ = _ := by ring1
   have leftSumBound :
-      Data.Gaussian.Norm.Basic.normSq
-            (Dirichlet.Critical.Adjacent.Initial.normalizedError left right) +
-          Data.Gaussian.Norm.Basic.normSq
-            (Dirichlet.Critical.Adjacent.Initial.normalizedDenominator left right *
-              Dirichlet.Critical.Adjacent.Initial.errorRatio) ≤
-        1 + Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.errorRatio := by
+      Gaussian.Norm.Basic.normSq
+            (normalizedError left right) +
+          Gaussian.Norm.Basic.normSq
+            (normalizedDenominator left right *
+              errorRatio) ≤
+        1 + Gaussian.Norm.Basic.normSq errorRatio := by
     rw [Gaussian.Norm.Basic.normSq_mul]
-    exact Fraction.Order.Arithmetic.add_le_add_direct
+    exact Arithmetic.add_le_add_direct
       errorBound denominatorScaledLe
   have rightSumBound :
-      Data.Gaussian.Norm.Basic.normSq
-            (Dirichlet.Critical.Adjacent.Initial.normalizedDenominator left right) +
-          Data.Gaussian.Norm.Basic.normSq
-            (Dirichlet.Critical.Adjacent.Initial.denominatorRatio * Dirichlet.Critical.Adjacent.Initial.normalizedError
+      Gaussian.Norm.Basic.normSq
+            (normalizedDenominator left right) +
+          Gaussian.Norm.Basic.normSq
+            (denominatorRatio * normalizedError
               left right) ≤
-        1 + Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.denominatorRatio := by
+        1 + Gaussian.Norm.Basic.normSq denominatorRatio := by
     rw [Gaussian.Norm.Basic.normSq_mul]
-    apply Fraction.Order.Arithmetic.add_le_add_direct denominatorBound
+    apply Arithmetic.add_le_add_direct denominatorBound
     calc
-      Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.denominatorRatio *
-          Data.Gaussian.Norm.Basic.normSq
-            (Dirichlet.Critical.Adjacent.Initial.normalizedError left right) =
-        Data.Gaussian.Norm.Basic.normSq
-            (Dirichlet.Critical.Adjacent.Initial.normalizedError left right) *
-          Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.denominatorRatio := by
+      Gaussian.Norm.Basic.normSq denominatorRatio *
+          Gaussian.Norm.Basic.normSq
+            (normalizedError left right) =
+        Gaussian.Norm.Basic.normSq
+            (normalizedError left right) *
+          Gaussian.Norm.Basic.normSq Initial.denominatorRatio := by
         ring1
-      _ ≤ Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.denominatorRatio :=
+      _ ≤ Gaussian.Norm.Basic.normSq Initial.denominatorRatio :=
         errorScaledLe
   have leftProductStrict :
-      (GaussianInt.normNat left : Fraction.Rational) * Dirichlet.Critical.Adjacent.Initial.gap < 4 *
-        Dirichlet.Critical.Adjacent.Initial.gap := by
+      (GaussianInt.normNat left : Fraction.Rational) * gap < 4 *
+        gap := by
     calc
-      (GaussianInt.normNat left : Fraction.Rational) * Dirichlet.Critical.Adjacent.Initial.gap =
-          Data.Gaussian.Norm.Basic.normSq
-            (GaussianInt.toGaussian left * Dirichlet.Critical.Adjacent.Initial.gapVector) := by
-        unfold Dirichlet.Critical.Adjacent.Initial.gap
+      (GaussianInt.normNat left : Fraction.Rational) * gap =
+          Gaussian.Norm.Basic.normSq
+            (GaussianInt.toGaussian left * gapVector) := by
+        unfold gap
         rw [Gaussian.Norm.Basic.normSq_mul,
           GaussianInt.normSq_toGaussian]
-      _ = Data.Gaussian.Norm.Basic.normSq
-          (Dirichlet.Critical.Adjacent.Initial.normalizedError left right -
-            Dirichlet.Critical.Adjacent.Initial.normalizedDenominator left right *
-              Dirichlet.Critical.Adjacent.Initial.errorRatio) := by
-        rw [Dirichlet.Critical.Adjacent.Initial.left_gap_identity]
+      _ = Gaussian.Norm.Basic.normSq
+          (normalizedError left right -
+            normalizedDenominator left right *
+              errorRatio) := by
+        rw [left_gap_identity]
       _ ≤ 2 *
-          (Data.Gaussian.Norm.Basic.normSq
-              (Dirichlet.Critical.Adjacent.Initial.normalizedError left right) +
-            Data.Gaussian.Norm.Basic.normSq
-              (Dirichlet.Critical.Adjacent.Initial.normalizedDenominator left right *
-                Dirichlet.Critical.Adjacent.Initial.errorRatio)) :=
+          (Gaussian.Norm.Basic.normSq
+              (normalizedError left right) +
+            Gaussian.Norm.Basic.normSq
+              (normalizedDenominator left right *
+                errorRatio)) :=
         Gaussian.Norm.Bounds.normSq_sub_le_two _ _
       _ ≤ 2 *
-          (1 + Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.errorRatio) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (1 + Gaussian.Norm.Basic.normSq errorRatio) :=
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           leftSumBound (by decide)
-      _ < 4 * Dirichlet.Critical.Adjacent.Initial.gap := Dirichlet.Critical.Adjacent.Initial.error_margin
+      _ < 4 * Initial.gap := error_margin
   have rightProductStrict :
-      (GaussianInt.normNat right : Fraction.Rational) * Dirichlet.Critical.Adjacent.Initial.gap < 4 *
-        Dirichlet.Critical.Adjacent.Initial.gap := by
+      (GaussianInt.normNat right : Fraction.Rational) * gap < 4 *
+        gap := by
     calc
-      (GaussianInt.normNat right : Fraction.Rational) * Dirichlet.Critical.Adjacent.Initial.gap =
-          Data.Gaussian.Norm.Basic.normSq
-            (GaussianInt.toGaussian right * Dirichlet.Critical.Adjacent.Initial.gapVector) := by
-        unfold Dirichlet.Critical.Adjacent.Initial.gap
+      (GaussianInt.normNat right : Fraction.Rational) * gap =
+          Gaussian.Norm.Basic.normSq
+            (GaussianInt.toGaussian right * gapVector) := by
+        unfold gap
         rw [Gaussian.Norm.Basic.normSq_mul,
           GaussianInt.normSq_toGaussian]
-      _ = Data.Gaussian.Norm.Basic.normSq
-          (Dirichlet.Critical.Adjacent.Initial.normalizedDenominator left right -
-            Dirichlet.Critical.Adjacent.Initial.denominatorRatio * Dirichlet.Critical.Adjacent.Initial.normalizedError
+      _ = Gaussian.Norm.Basic.normSq
+          (normalizedDenominator left right -
+            denominatorRatio * normalizedError
               left right) := by
-        rw [Dirichlet.Critical.Adjacent.Initial.right_gap_identity]
+        rw [right_gap_identity]
       _ ≤ 2 *
-          (Data.Gaussian.Norm.Basic.normSq
-              (Dirichlet.Critical.Adjacent.Initial.normalizedDenominator left right) +
-            Data.Gaussian.Norm.Basic.normSq
-              (Dirichlet.Critical.Adjacent.Initial.denominatorRatio *
-                Dirichlet.Critical.Adjacent.Initial.normalizedError left right)) :=
+          (Gaussian.Norm.Basic.normSq
+              (normalizedDenominator left right) +
+            Gaussian.Norm.Basic.normSq
+              (denominatorRatio *
+                normalizedError left right)) :=
         Gaussian.Norm.Bounds.normSq_sub_le_two _ _
       _ ≤ 2 *
-          (1 + Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.denominatorRatio) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (1 + Gaussian.Norm.Basic.normSq denominatorRatio) :=
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           rightSumBound (by decide)
-      _ < 4 * Dirichlet.Critical.Adjacent.Initial.gap := Dirichlet.Critical.Adjacent.Initial.denominator_margin
+      _ < 4 * Initial.gap := denominator_margin
   constructor
   · apply (Fraction.Cast.Order.natCast_lt_iff_direct).1
-    exact Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
-      leftProductStrict Dirichlet.Critical.Adjacent.Initial.gap_pos
+    exact Arithmetic.lt_of_mul_lt_mul_right_direct
+      leftProductStrict gap_pos
   · apply (Fraction.Cast.Order.natCast_lt_iff_direct).1
-    exact Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
-      rightProductStrict Dirichlet.Critical.Adjacent.Initial.gap_pos
+    exact Arithmetic.lt_of_mul_lt_mul_right_direct
+      rightProductStrict gap_pos
 
 /-- Two nonzero coefficients of quadrance below four give a strict normalized cylinder exterior.
 
@@ -317,13 +319,13 @@ Unit and diagonal classification reduces the assertion to finitely many exact ra
 private theorem
   small_nonzero_strictly_exterior
     (left right : GaussianInt) (leftNonzero : left ≠ 0)
-    (rightNonzero : right ≠ 0) (leftSmall : Purelib.Data.GaussianInt.normNat left < 4)
-    (rightSmall : Purelib.Data.GaussianInt.normNat right < 4) :
+    (rightNonzero : right ≠ 0) (leftSmall : Data.GaussianInt.normNat left < 4)
+    (rightSmall : Data.GaussianInt.normNat right < 4) :
     (1 : Fraction.Rational) <
-        Data.Gaussian.Norm.Basic.normSq
-          (Dirichlet.Critical.Adjacent.Initial.normalizedError left right) ∨
-      1 < Data.Gaussian.Norm.Basic.normSq
-        (Dirichlet.Critical.Adjacent.Initial.normalizedDenominator left right) := by
+        Gaussian.Norm.Basic.normSq
+          (normalizedError left right) ∨
+      1 < Gaussian.Norm.Basic.normSq
+        (normalizedDenominator left right) := by
   have leftShape :
       GaussianInt.Norm.Small.IsGaussianUnit left ∨
         GaussianInt.Norm.Small.IsDiagonal left := by
@@ -364,93 +366,93 @@ theorem normalized_strictExterior
     (left right : GaussianInt) (leftNonzero : left ≠ 0)
     (rightNonzero : right ≠ 0) :
     (1 : Fraction.Rational) <
-        Data.Gaussian.Norm.Basic.normSq
+        Gaussian.Norm.Basic.normSq
           (GaussianInt.toGaussian left + GaussianInt.toGaussian right *
-            (⟨Data.Rat.SignedFraction.Normalization.ofFraction ⟨1, 2, by decide⟩,
-              Data.Rat.SignedFraction.Normalization.ofFraction ⟨1, 8, by decide⟩⟩ :
+            (⟨SignedFraction.Normalization.ofFraction ⟨1, 2, by decide⟩,
+              SignedFraction.Normalization.ofFraction ⟨1, 8, by decide⟩⟩ :
               Gaussian.Basic.Canonical)) ∨
-      1 < Data.Gaussian.Norm.Basic.normSq
+      1 < Gaussian.Norm.Basic.normSq
         (GaussianInt.toGaussian left *
-            (⟨Data.Rat.SignedFraction.Normalization.ofFraction ⟨15, 112, by decide⟩,
-              -Data.Rat.SignedFraction.Normalization.ofFraction ⟨1, 2, by decide⟩⟩ :
+            (⟨SignedFraction.Normalization.ofFraction ⟨15, 112, by decide⟩,
+              -SignedFraction.Normalization.ofFraction ⟨1, 2, by decide⟩⟩ :
               Gaussian.Basic.Canonical) + GaussianInt.toGaussian right) := by
-  change (1 : Fraction.Rational) < Data.Gaussian.Norm.Basic.normSq
-      (Dirichlet.Critical.Adjacent.Initial.normalizedError left right) ∨
-    1 < Data.Gaussian.Norm.Basic.normSq (Dirichlet.Critical.Adjacent.Initial.normalizedDenominator left right)
+  change (1 : Fraction.Rational) < Gaussian.Norm.Basic.normSq
+      (normalizedError left right) ∨
+    1 < Gaussian.Norm.Basic.normSq (normalizedDenominator left right)
   by_cases errorExterior :
       (1 : Fraction.Rational) <
-        Data.Gaussian.Norm.Basic.normSq
-          (Dirichlet.Critical.Adjacent.Initial.normalizedError left right)
+        Gaussian.Norm.Basic.normSq
+          (normalizedError left right)
   · exact Or.inl errorExterior
   · by_cases denominatorExterior :
         (1 : Fraction.Rational) <
-          Data.Gaussian.Norm.Basic.normSq
-            (Dirichlet.Critical.Adjacent.Initial.normalizedDenominator left right)
+          Gaussian.Norm.Basic.normSq
+            (normalizedDenominator left right)
     · exact Or.inr denominatorExterior
-    · have small := Dirichlet.Critical.Adjacent.Initial.coefficient_normNat_lt_four left right
+    · have small := coefficient_normNat_lt_four left right
         (le_of_not_gt errorExterior) (le_of_not_gt denominatorExterior)
-      exact Dirichlet.Critical.Adjacent.Initial.small_nonzero_strictly_exterior left right leftNonzero
+      exact small_nonzero_strictly_exterior left right leftNonzero
         rightNonzero small.1 small.2
 
 /-- The finite Pell parameter at stage one is `4/15`. -/
 private theorem pellParameter_one :
-    Purelib.NumberTheory.Approximation.Dirichlet.Critical.Parameter.pellParameter 1 =
-      Dirichlet.Critical.Adjacent.Initial.fourOverFifteen := by
+    Parameter.pellParameter 1 =
+      fourOverFifteen := by
   decide
 
 /-- The critical error ratio at stage one is `(1/2, 2/15)`. -/
 private theorem criticalErrorRatio_one :
-    Purelib.NumberTheory.Approximation.Dirichlet.Critical.Cylinder.Basic.criticalErrorRatio
-        (Purelib.NumberTheory.Approximation.Dirichlet.Critical.Parameter.pellParameter 1) =
-      ⟨Dirichlet.Critical.Adjacent.Initial.oneHalf, Dirichlet.Critical.Adjacent.Initial.twoOverFifteen⟩ := by
-  rw [Dirichlet.Critical.Adjacent.Initial.pellParameter_one]
+    Cylinder.Basic.criticalErrorRatio
+        (Parameter.pellParameter 1) =
+      ⟨oneHalf, twoOverFifteen⟩ := by
+  rw [pellParameter_one]
   apply Gaussian.Basic.ext <;> decide
 
 /-- The real Gaussian factor `4/15` scaling the lower error after the initial transition. -/
 private def lowerErrorScale :
-  Gaussian.Basic.Canonical := ⟨Dirichlet.Critical.Adjacent.Initial.fourOverFifteen, 0⟩
+  Gaussian.Basic.Canonical := ⟨fourOverFifteen, 0⟩
 
 /-- The lower transition coefficients produce the retained lower-error scale. -/
 private theorem lowerCombinationFactor :
-    GaussianInt.toGaussian Purelib.NumberTheory.Approximation.Dirichlet.Critical.Transition.lowerFromLower +
-        GaussianInt.toGaussian Purelib.NumberTheory.Approximation.Dirichlet.Critical.Transition.lowerFromUpper *
-          (⟨Dirichlet.Critical.Adjacent.Initial.oneHalf, Dirichlet.Critical.Adjacent.Initial.twoOverFifteen⟩ :
+    GaussianInt.toGaussian Transition.lowerFromLower +
+        GaussianInt.toGaussian Transition.lowerFromUpper *
+          (⟨oneHalf, twoOverFifteen⟩ :
             Gaussian.Basic.Canonical) =
-      Dirichlet.Critical.Adjacent.Initial.lowerErrorScale := by
+      lowerErrorScale := by
   apply Gaussian.Basic.ext <;> decide
 
 /-- The upper transition coefficients produce the lower-error scale times the new error ratio. -/
 private theorem upperCombinationFactor :
-    GaussianInt.toGaussian Purelib.NumberTheory.Approximation.Dirichlet.Critical.Transition.upperFromLower +
-        GaussianInt.toGaussian Purelib.NumberTheory.Approximation.Dirichlet.Critical.Transition.upperFromUpper *
-          (⟨Dirichlet.Critical.Adjacent.Initial.oneHalf, Dirichlet.Critical.Adjacent.Initial.twoOverFifteen⟩ :
+    GaussianInt.toGaussian Transition.upperFromLower +
+        GaussianInt.toGaussian Transition.upperFromUpper *
+          (⟨oneHalf, twoOverFifteen⟩ :
             Gaussian.Basic.Canonical) =
-      Dirichlet.Critical.Adjacent.Initial.lowerErrorScale * Dirichlet.Critical.Adjacent.Initial.errorRatio := by
+      lowerErrorScale * errorRatio := by
   apply Gaussian.Basic.ext <;> decide
 
 /-- The lower stage-two error at the stage-one source is the old lower error times `4/15`. -/
 private theorem stageTwo_error_lower :
     Best.Error.error
-        (Dirichlet.Critical.Pair.criticalSource 1).value
-        (Dirichlet.Critical.Pair.criticalLowerPair 2) =
-      Dirichlet.Critical.Pair.criticalLowerError 1 * Dirichlet.Critical.Adjacent.Initial.lowerErrorScale := by
+        (Pair.criticalSource 1).value
+        (Pair.criticalLowerPair 2) =
+      Pair.criticalLowerError 1 * lowerErrorScale := by
   rw [show (2 : Nat) = 1 + 1 by rfl,
-    Dirichlet.Critical.Transition.criticalLowerPair_succ,
+    Transition.criticalLowerPair_succ,
     Best.Error.error_linearCombination,
-    Dirichlet.Critical.Pair.criticalSource_error_lower,
-    Dirichlet.Critical.Pair.criticalSource_error_upper,
-    Dirichlet.Critical.Adjacent.Initial.criticalErrorRatio_one]
+    Pair.criticalSource_error_lower,
+    Pair.criticalSource_error_upper,
+    criticalErrorRatio_one]
   calc
-    GaussianInt.toGaussian Dirichlet.Critical.Transition.lowerFromLower *
-          Dirichlet.Critical.Pair.criticalLowerError 1 +
-        GaussianInt.toGaussian Dirichlet.Critical.Transition.lowerFromUpper *
-          (Dirichlet.Critical.Pair.criticalLowerError 1 *
-            (⟨Dirichlet.Critical.Adjacent.Initial.oneHalf, Dirichlet.Critical.Adjacent.Initial.twoOverFifteen⟩ :
+    GaussianInt.toGaussian Transition.lowerFromLower *
+          Pair.criticalLowerError 1 +
+        GaussianInt.toGaussian Transition.lowerFromUpper *
+          (Pair.criticalLowerError 1 *
+            (⟨oneHalf, twoOverFifteen⟩ :
               Gaussian.Basic.Canonical)) =
-      Dirichlet.Critical.Pair.criticalLowerError 1 *
-        (GaussianInt.toGaussian Dirichlet.Critical.Transition.lowerFromLower +
-          GaussianInt.toGaussian Dirichlet.Critical.Transition.lowerFromUpper *
-            (⟨Dirichlet.Critical.Adjacent.Initial.oneHalf, Dirichlet.Critical.Adjacent.Initial.twoOverFifteen⟩ :
+      Pair.criticalLowerError 1 *
+        (GaussianInt.toGaussian Transition.lowerFromLower +
+          GaussianInt.toGaussian Transition.lowerFromUpper *
+            (⟨oneHalf, twoOverFifteen⟩ :
               Gaussian.Basic.Canonical)) := by
       apply Gaussian.Basic.ext <;>
         simp only [Gaussian.Basic.add_re,
@@ -458,34 +460,34 @@ private theorem stageTwo_error_lower :
           Gaussian.Basic.mul_re,
           Gaussian.Basic.mul_im] <;>
         ring1
-    _ = Dirichlet.Critical.Pair.criticalLowerError 1 *
-        Dirichlet.Critical.Adjacent.Initial.lowerErrorScale := by rw
-          [Dirichlet.Critical.Adjacent.Initial.lowerCombinationFactor]
+    _ = Pair.criticalLowerError 1 *
+        Initial.lowerErrorScale := by rw
+          [lowerCombinationFactor]
 
 /-- The upper stage-two error at the stage-one source is the scaled lower error times the new error ratio. -/
 private theorem stageTwo_error_upper :
     Best.Error.error
-        (Dirichlet.Critical.Pair.criticalSource 1).value
-        (Dirichlet.Critical.Pair.criticalUpperPair 2) =
-      (Dirichlet.Critical.Pair.criticalLowerError 1 * Dirichlet.Critical.Adjacent.Initial.lowerErrorScale) *
-        Dirichlet.Critical.Adjacent.Initial.errorRatio := by
+        (Pair.criticalSource 1).value
+        (Pair.criticalUpperPair 2) =
+      (Pair.criticalLowerError 1 * lowerErrorScale) *
+        errorRatio := by
   rw [show (2 : Nat) = 1 + 1 by rfl,
-    Dirichlet.Critical.Transition.criticalUpperPair_succ,
+    Transition.criticalUpperPair_succ,
     Best.Error.error_linearCombination,
-    Dirichlet.Critical.Pair.criticalSource_error_lower,
-    Dirichlet.Critical.Pair.criticalSource_error_upper,
-    Dirichlet.Critical.Adjacent.Initial.criticalErrorRatio_one]
+    Pair.criticalSource_error_lower,
+    Pair.criticalSource_error_upper,
+    criticalErrorRatio_one]
   calc
-    GaussianInt.toGaussian Dirichlet.Critical.Transition.upperFromLower *
-          Dirichlet.Critical.Pair.criticalLowerError 1 +
-        GaussianInt.toGaussian Dirichlet.Critical.Transition.upperFromUpper *
-          (Dirichlet.Critical.Pair.criticalLowerError 1 *
-            (⟨Dirichlet.Critical.Adjacent.Initial.oneHalf, Dirichlet.Critical.Adjacent.Initial.twoOverFifteen⟩ :
+    GaussianInt.toGaussian Transition.upperFromLower *
+          Pair.criticalLowerError 1 +
+        GaussianInt.toGaussian Transition.upperFromUpper *
+          (Pair.criticalLowerError 1 *
+            (⟨oneHalf, twoOverFifteen⟩ :
               Gaussian.Basic.Canonical)) =
-      Dirichlet.Critical.Pair.criticalLowerError 1 *
-        (GaussianInt.toGaussian Dirichlet.Critical.Transition.upperFromLower +
-          GaussianInt.toGaussian Dirichlet.Critical.Transition.upperFromUpper *
-            (⟨Dirichlet.Critical.Adjacent.Initial.oneHalf, Dirichlet.Critical.Adjacent.Initial.twoOverFifteen⟩ :
+      Pair.criticalLowerError 1 *
+        (GaussianInt.toGaussian Transition.upperFromLower +
+          GaussianInt.toGaussian Transition.upperFromUpper *
+            (⟨oneHalf, twoOverFifteen⟩ :
               Gaussian.Basic.Canonical)) := by
       apply Gaussian.Basic.ext <;>
         simp only [Gaussian.Basic.add_re,
@@ -493,72 +495,72 @@ private theorem stageTwo_error_upper :
           Gaussian.Basic.mul_re,
           Gaussian.Basic.mul_im] <;>
         ring1
-    _ = Dirichlet.Critical.Pair.criticalLowerError 1 *
-        (Dirichlet.Critical.Adjacent.Initial.lowerErrorScale * Dirichlet.Critical.Adjacent.Initial.errorRatio) := by rw
-          [Dirichlet.Critical.Adjacent.Initial.upperCombinationFactor]
-    _ = (Dirichlet.Critical.Pair.criticalLowerError 1 *
-          Dirichlet.Critical.Adjacent.Initial.lowerErrorScale) * Dirichlet.Critical.Adjacent.Initial.errorRatio := by
+    _ = Pair.criticalLowerError 1 *
+        (lowerErrorScale * errorRatio) := by rw
+          [upperCombinationFactor]
+    _ = (Pair.criticalLowerError 1 *
+          lowerErrorScale) * Initial.errorRatio := by
       rw [Gaussian.Basic.mul_assoc]
 
 /-- The lower stage-two denominator is the upper one multiplied by the retained normalized denominator ratio. -/
 private theorem stageTwo_denominator_lower
   :
     GaussianInt.toGaussian
-        (Dirichlet.Critical.Pair.criticalLowerPair 2).denominator =
+        (Pair.criticalLowerPair 2).denominator =
       GaussianInt.toGaussian
-          (Dirichlet.Critical.Pair.criticalUpperPair 2).denominator *
-        Dirichlet.Critical.Adjacent.Initial.denominatorRatio := open Purelib.NumberTheory in by
+          (Pair.criticalUpperPair 2).denominator *
+        denominatorRatio := open Purelib.NumberTheory in by
   have parameterTwo :
-      Dirichlet.Critical.Parameter.pellParameter 2 =
-        Dirichlet.Critical.Adjacent.Initial.fifteenOverFiftySix := by
+      Parameter.pellParameter 2 =
+        fifteenOverFiftySix := by
     have fiftySixPositive : (0 : Fraction.Rational) < (56 : Fraction.Rational) :=
       Fraction.Cast.Order.natCast_pos_direct (by decide)
     apply Fraction.Field.mul_right_cancel_of_ne
       (c := (56 : Fraction.Rational)) fiftySixPositive.ne'
     calc
-      Dirichlet.Critical.Parameter.pellParameter 2 * (56 : Fraction.Rational) =
+      Parameter.pellParameter 2 * (56 : Fraction.Rational) =
           (15 : Fraction.Rational) := by
-        rewrite [Dirichlet.Critical.Parameter.pellParameter_eq_castRatio]
+        rewrite [Parameter.pellParameter_eq_castRatio]
         rw [show Pell.FiniteBranch.pellNumerator 2 = 15 by decide,
           show Pell.FiniteBranch.pellDenominator 2 = 56 by decide]
         exact Fraction.Field.div_mul_cancel_of_ne _ _
           fiftySixPositive.ne'
-      _ = Dirichlet.Critical.Adjacent.Initial.fifteenOverFiftySix * (56 : Fraction.Rational) :=
-        Dirichlet.Critical.Adjacent.Initial.fifteenOverFiftySix_mul_denominator.symm
+      _ = fifteenOverFiftySix * (56 : Fraction.Rational) :=
+        fifteenOverFiftySix_mul_denominator.symm
   have ratioTwo :
-      Dirichlet.Critical.Cylinder.Basic.criticalDenominatorRatio
-          (Dirichlet.Critical.Parameter.pellParameter 2) =
-        Dirichlet.Critical.Adjacent.Initial.denominatorRatio := by
+      Cylinder.Basic.criticalDenominatorRatio
+          (Parameter.pellParameter 2) =
+        denominatorRatio := by
     rw [parameterTwo]
     apply Gaussian.Basic.ext <;> decide
   have upperNonzero :
       GaussianInt.toGaussian
-          (Dirichlet.Critical.Pair.criticalUpperPair 2).denominator ≠ 0 := by
+          (Pair.criticalUpperPair 2).denominator ≠ 0 := by
     intro zero
-    exact Dirichlet.Critical.Pair.criticalUpper_denominator_ne_zero 2
+    exact Pair.criticalUpper_denominator_ne_zero 2
       (GaussianInt.toGaussian_eq_zero.mp zero)
   have ratioIdentity :=
-    Dirichlet.Critical.Pair.criticalPair_denominatorRatio 2
+    Pair.criticalPair_denominatorRatio 2
   rw [ratioTwo] at ratioIdentity
   calc
     GaussianInt.toGaussian
-          (Dirichlet.Critical.Pair.criticalLowerPair 2).denominator =
-        Dirichlet.Window.Basic.denominatorRatio
-            (Dirichlet.Critical.Pair.criticalLowerPair 2)
-            (Dirichlet.Critical.Pair.criticalUpperPair 2) *
+          (Pair.criticalLowerPair 2).denominator =
+        Window.Basic.denominatorRatio
+            (Pair.criticalLowerPair 2)
+            (Pair.criticalUpperPair 2) *
           GaussianInt.toGaussian
-            (Dirichlet.Critical.Pair.criticalUpperPair 2).denominator := by
-      unfold Dirichlet.Window.Basic.denominatorRatio
+            (Pair.criticalUpperPair 2).denominator := by
+      unfold Window.Basic.denominatorRatio
       rw [Gaussian.Basic.mul_assoc,
         Gaussian.Field.inv_mul _ upperNonzero,
         Gaussian.Basic.mul_one]
-    _ = Dirichlet.Critical.Adjacent.Initial.denominatorRatio *
+    _ = denominatorRatio *
           GaussianInt.toGaussian
-            (Dirichlet.Critical.Pair.criticalUpperPair 2).denominator := by
+            (Pair.criticalUpperPair 2).denominator := by
       rw [ratioIdentity]
     _ = GaussianInt.toGaussian
-          (Dirichlet.Critical.Pair.criticalUpperPair 2).denominator *
-        Dirichlet.Critical.Adjacent.Initial.denominatorRatio := by
+          (Pair.criticalUpperPair 2).denominator *
+        Initial.denominatorRatio := by
       rw [Gaussian.Basic.mul_comm]
 
 /-- A stage-two coefficient combination factors its error into the retained scale and normalized error coordinate. -/
@@ -566,15 +568,15 @@ private theorem
   stageTwo_error_linearCombination
     (left right : GaussianInt) :
     Best.Error.error
-        (Dirichlet.Critical.Pair.criticalSource 1).value
-        (Purelib.Data.GaussianInt.Pair.LinearCombination.linearCombination
-          (Dirichlet.Critical.Pair.criticalLowerPair 2)
-          (Dirichlet.Critical.Pair.criticalUpperPair 2) left right) =
-      (Dirichlet.Critical.Pair.criticalLowerError 1 * Dirichlet.Critical.Adjacent.Initial.lowerErrorScale) *
-        Dirichlet.Critical.Adjacent.Initial.normalizedError left right := by
-  rw [Best.Error.error_linearCombination, Dirichlet.Critical.Adjacent.Initial.stageTwo_error_lower,
-    Dirichlet.Critical.Adjacent.Initial.stageTwo_error_upper]
-  unfold Dirichlet.Critical.Adjacent.Initial.normalizedError
+        (Pair.criticalSource 1).value
+        (Data.GaussianInt.Pair.LinearCombination.linearCombination
+          (Pair.criticalLowerPair 2)
+          (Pair.criticalUpperPair 2) left right) =
+      (Pair.criticalLowerError 1 * lowerErrorScale) *
+        normalizedError left right := by
+  rw [Best.Error.error_linearCombination, stageTwo_error_lower,
+    stageTwo_error_upper]
+  unfold normalizedError
   apply Gaussian.Basic.ext <;>
     simp only [Gaussian.Basic.add_re,
       Gaussian.Basic.add_im,
@@ -587,17 +589,17 @@ private theorem
   stageTwo_denominator_linearCombination
     (left right : GaussianInt) :
     GaussianInt.toGaussian
-        (Purelib.Data.GaussianInt.Pair.LinearCombination.linearCombination
-          (Dirichlet.Critical.Pair.criticalLowerPair 2)
-          (Dirichlet.Critical.Pair.criticalUpperPair 2)
+        (Data.GaussianInt.Pair.LinearCombination.linearCombination
+          (Pair.criticalLowerPair 2)
+          (Pair.criticalUpperPair 2)
           left right).denominator =
       GaussianInt.toGaussian
-          (Dirichlet.Critical.Pair.criticalUpperPair 2).denominator *
-        Dirichlet.Critical.Adjacent.Initial.normalizedDenominator left right := by
+          (Pair.criticalUpperPair 2).denominator *
+        normalizedDenominator left right := by
   simp only [GaussianInt.Pair.LinearCombination.linearCombination, GaussianInt.toGaussian_add,
     GaussianInt.toGaussian_mul]
-  rw [Dirichlet.Critical.Adjacent.Initial.stageTwo_denominator_lower]
-  unfold Dirichlet.Critical.Adjacent.Initial.normalizedDenominator
+  rw [stageTwo_denominator_lower]
+  unfold normalizedDenominator
   apply Gaussian.Basic.ext <;>
     simp only [Gaussian.Basic.add_re,
       Gaussian.Basic.add_im,
@@ -608,40 +610,40 @@ private theorem
 /-- The scaled lower stage-two error at the stage-one source has positive quadrance. -/
 private theorem
   stageTwo_lowerError_normSq_pos :
-    0 < Data.Gaussian.Norm.Basic.normSq
-      (Dirichlet.Critical.Pair.criticalLowerError 1 *
-        Dirichlet.Critical.Adjacent.Initial.lowerErrorScale) := by
+    0 < Gaussian.Norm.Basic.normSq
+      (Pair.criticalLowerError 1 *
+        lowerErrorScale) := by
   have firstWindow :=
-    Dirichlet.Critical.Pair.criticalPairs_areConsecutiveBest 1
+    Pair.criticalPairs_areConsecutiveBest 1
   have nativeErrorOrder :
       Best.Error.errorQuadrance
-          (Dirichlet.Critical.Pair.criticalSource 1).value
-          (Dirichlet.Critical.Pair.criticalUpperPair 1) <
+          (Pair.criticalSource 1).value
+          (Pair.criticalUpperPair 1) <
         Best.Error.errorQuadrance
-          (Dirichlet.Critical.Pair.criticalSource 1).value
-          (Dirichlet.Critical.Pair.criticalLowerPair 1) :=
+          (Pair.criticalSource 1).value
+          (Pair.criticalLowerPair 1) :=
     firstWindow.2.1.2.1 _ firstWindow.1.1 firstWindow.2.2.1
   have oldLowerPositive :
-      0 < Data.Gaussian.Norm.Basic.normSq
-        (Dirichlet.Critical.Pair.criticalLowerError 1) := by
-    rw [← Dirichlet.Critical.Pair.criticalSource_error_lower]
+      0 < Gaussian.Norm.Basic.normSq
+        (Pair.criticalLowerError 1) := by
+    rw [← Pair.criticalSource_error_lower]
     exact (Gaussian.Norm.Basic.normSq_nonneg _).trans_lt
       nativeErrorOrder
   have scalePositive :
-      0 < Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.lowerErrorScale := by
+      0 < Gaussian.Norm.Basic.normSq lowerErrorScale := by
     decide
   rw [Gaussian.Norm.Basic.normSq_mul]
-  exact Fraction.Order.Arithmetic.mul_pos_direct oldLowerPositive scalePositive
+  exact Arithmetic.mul_pos_direct oldLowerPositive scalePositive
 
 /-- The embedded upper stage-two denominator has positive quadrance. -/
 private theorem
   stageTwo_upperDenominator_normSq_pos :
-    0 < Data.Gaussian.Norm.Basic.normSq
+    0 < Gaussian.Norm.Basic.normSq
       (GaussianInt.toGaussian
-        (Dirichlet.Critical.Pair.criticalUpperPair 2).denominator) := by
+        (Pair.criticalUpperPair 2).denominator) := by
   apply Gaussian.Norm.Basic.normSq_pos
   intro zero
-  exact Dirichlet.Critical.Pair.criticalUpper_denominator_ne_zero 2
+  exact Pair.criticalUpper_denominator_ne_zero 2
     (GaussianInt.toGaussian_eq_zero.mp zero)
 
 /-- The exact strict-basis certificate for the second window at the fixed
@@ -649,96 +651,96 @@ stage-one rational source. -/
 theorem stageTwoStrictExteriorCertificate
   :
     Best.Cylinder.Basis.StrictExteriorCertificate
-      (Dirichlet.Critical.Pair.criticalSource 1).value
-      (Dirichlet.Critical.Pair.criticalLowerPair 2)
-      (Dirichlet.Critical.Pair.criticalUpperPair 2) := by
+      (Pair.criticalSource 1).value
+      (Pair.criticalLowerPair 2)
+      (Pair.criticalUpperPair 2) := by
   refine
-    { indexOne := Dirichlet.Critical.Pair.criticalPair_indexOne 2
+    { indexOne := Pair.criticalPair_indexOne 2
       lowerDenominatorNonzero :=
-        Dirichlet.Critical.Pair.criticalLower_denominator_ne_zero 2
+        Pair.criticalLower_denominator_ne_zero 2
       upperDenominatorNonzero :=
-        Dirichlet.Critical.Pair.criticalUpper_denominator_ne_zero 2
+        Pair.criticalUpper_denominator_ne_zero 2
       errorOrder := ?_
       denominatorOrder :=
-        Dirichlet.Critical.Pair.critical_denominatorQuadrance_ordered 2
+        Pair.critical_denominatorQuadrance_ordered 2
       bothNonzeroExterior := ?_ }
   · unfold Best.Error.errorQuadrance
-    rw [Dirichlet.Critical.Adjacent.Initial.stageTwo_error_lower,
-      Dirichlet.Critical.Adjacent.Initial.stageTwo_error_upper]
+    rw [stageTwo_error_lower,
+      stageTwo_error_upper]
     have ratioStrict :
-        Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.errorRatio < 1 := by
+        Gaussian.Norm.Basic.normSq errorRatio < 1 := by
       decide
     calc
-      Data.Gaussian.Norm.Basic.normSq
-          ((Dirichlet.Critical.Pair.criticalLowerError 1 *
-            Dirichlet.Critical.Adjacent.Initial.lowerErrorScale) * Dirichlet.Critical.Adjacent.Initial.errorRatio) =
-        Data.Gaussian.Norm.Basic.normSq
-            (Dirichlet.Critical.Pair.criticalLowerError 1 *
-              Dirichlet.Critical.Adjacent.Initial.lowerErrorScale) *
-          Data.Gaussian.Norm.Basic.normSq Dirichlet.Critical.Adjacent.Initial.errorRatio := by
+      Gaussian.Norm.Basic.normSq
+          ((Pair.criticalLowerError 1 *
+            lowerErrorScale) * errorRatio) =
+        Gaussian.Norm.Basic.normSq
+            (Pair.criticalLowerError 1 *
+              lowerErrorScale) *
+          Gaussian.Norm.Basic.normSq Initial.errorRatio := by
         rw [Gaussian.Norm.Basic.normSq_mul]
-      _ < Data.Gaussian.Norm.Basic.normSq
-            (Dirichlet.Critical.Pair.criticalLowerError 1 *
-              Dirichlet.Critical.Adjacent.Initial.lowerErrorScale) * 1 :=
-        Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
-          Dirichlet.Critical.Adjacent.Initial.stageTwo_lowerError_normSq_pos ratioStrict
-      _ = Data.Gaussian.Norm.Basic.normSq
-          (Dirichlet.Critical.Pair.criticalLowerError 1 *
-            Dirichlet.Critical.Adjacent.Initial.lowerErrorScale) := by ring1
+      _ < Gaussian.Norm.Basic.normSq
+            (Pair.criticalLowerError 1 *
+              lowerErrorScale) * 1 :=
+        Arithmetic.mul_lt_mul_of_pos_left_direct
+          stageTwo_lowerError_normSq_pos ratioStrict
+      _ = Gaussian.Norm.Basic.normSq
+          (Pair.criticalLowerError 1 *
+            lowerErrorScale) := by ring1
   · intro left right leftNonzero rightNonzero
-    rcases Dirichlet.Critical.Adjacent.Initial.normalized_strictExterior left right leftNonzero rightNonzero with
+    rcases normalized_strictExterior left right leftNonzero rightNonzero with
       errorExterior | denominatorExterior
     · left
       unfold Best.Error.errorQuadrance
-      rw [Dirichlet.Critical.Adjacent.Initial.stageTwo_error_lower,
-        Dirichlet.Critical.Adjacent.Initial.stageTwo_error_linearCombination]
+      rw [stageTwo_error_lower,
+        stageTwo_error_linearCombination]
       calc
-        Data.Gaussian.Norm.Basic.normSq
-            (Dirichlet.Critical.Pair.criticalLowerError 1 *
-              Dirichlet.Critical.Adjacent.Initial.lowerErrorScale) =
-          Data.Gaussian.Norm.Basic.normSq
-              (Dirichlet.Critical.Pair.criticalLowerError 1 *
-                Dirichlet.Critical.Adjacent.Initial.lowerErrorScale) * 1 := by ring1
-        _ < Data.Gaussian.Norm.Basic.normSq
-              (Dirichlet.Critical.Pair.criticalLowerError 1 *
-                Dirichlet.Critical.Adjacent.Initial.lowerErrorScale) *
-            Data.Gaussian.Norm.Basic.normSq
-              (Dirichlet.Critical.Adjacent.Initial.normalizedError left right) :=
-          Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
-            Dirichlet.Critical.Adjacent.Initial.stageTwo_lowerError_normSq_pos errorExterior
-        _ = Data.Gaussian.Norm.Basic.normSq
-            ((Dirichlet.Critical.Pair.criticalLowerError 1 *
-              Dirichlet.Critical.Adjacent.Initial.lowerErrorScale) * Dirichlet.Critical.Adjacent.Initial.normalizedError
+        Gaussian.Norm.Basic.normSq
+            (Pair.criticalLowerError 1 *
+              lowerErrorScale) =
+          Gaussian.Norm.Basic.normSq
+              (Pair.criticalLowerError 1 *
+                lowerErrorScale) * 1 := by ring1
+        _ < Gaussian.Norm.Basic.normSq
+              (Pair.criticalLowerError 1 *
+                lowerErrorScale) *
+            Gaussian.Norm.Basic.normSq
+              (normalizedError left right) :=
+          Arithmetic.mul_lt_mul_of_pos_left_direct
+            stageTwo_lowerError_normSq_pos errorExterior
+        _ = Gaussian.Norm.Basic.normSq
+            ((Pair.criticalLowerError 1 *
+              lowerErrorScale) * normalizedError
                 left right) := by
           exact
             (Gaussian.Norm.Basic.normSq_mul
-              (Dirichlet.Critical.Pair.criticalLowerError 1 *
-                Dirichlet.Critical.Adjacent.Initial.lowerErrorScale)
-                  (Dirichlet.Critical.Adjacent.Initial.normalizedError left right)).symm
+              (Pair.criticalLowerError 1 *
+                lowerErrorScale)
+                  (normalizedError left right)).symm
     · right
       apply (Fraction.Cast.Order.natCast_lt_iff_direct).1
       unfold Best.Error.denominatorQuadrance
       rw [← GaussianInt.normSq_toGaussian, ← GaussianInt.normSq_toGaussian,
-        Dirichlet.Critical.Adjacent.Initial.stageTwo_denominator_linearCombination]
+        stageTwo_denominator_linearCombination]
       calc
-        Data.Gaussian.Norm.Basic.normSq
+        Gaussian.Norm.Basic.normSq
             (GaussianInt.toGaussian
-              (Dirichlet.Critical.Pair.criticalUpperPair 2).denominator) =
-          Data.Gaussian.Norm.Basic.normSq
+              (Pair.criticalUpperPair 2).denominator) =
+          Gaussian.Norm.Basic.normSq
               (GaussianInt.toGaussian
-                (Dirichlet.Critical.Pair.criticalUpperPair 2).denominator) *
+                (Pair.criticalUpperPair 2).denominator) *
             1 := by ring1
-        _ < Data.Gaussian.Norm.Basic.normSq
+        _ < Gaussian.Norm.Basic.normSq
               (GaussianInt.toGaussian
-                (Dirichlet.Critical.Pair.criticalUpperPair 2).denominator) *
-            Data.Gaussian.Norm.Basic.normSq
-              (Dirichlet.Critical.Adjacent.Initial.normalizedDenominator left right) :=
-          Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
-            Dirichlet.Critical.Adjacent.Initial.stageTwo_upperDenominator_normSq_pos denominatorExterior
-        _ = Data.Gaussian.Norm.Basic.normSq
+                (Pair.criticalUpperPair 2).denominator) *
+            Gaussian.Norm.Basic.normSq
+              (normalizedDenominator left right) :=
+          Arithmetic.mul_lt_mul_of_pos_left_direct
+            stageTwo_upperDenominator_normSq_pos denominatorExterior
+        _ = Gaussian.Norm.Basic.normSq
             (GaussianInt.toGaussian
-                (Dirichlet.Critical.Pair.criticalUpperPair 2).denominator *
-              Dirichlet.Critical.Adjacent.Initial.normalizedDenominator left right) := by
+                (Pair.criticalUpperPair 2).denominator *
+              normalizedDenominator left right) := by
           rw [Gaussian.Norm.Basic.normSq_mul]
 
 /-- The next Pell pair basis is a genuine consecutive-best window for the
@@ -747,10 +749,10 @@ theorem
   stageTwo_areConsecutiveBest_at_stageOneSource
   :
     Best.Consecutive.Basic.AreConsecutiveBest
-      (Dirichlet.Critical.Pair.criticalSource 1).value
-      (Dirichlet.Critical.Pair.criticalLowerPair 2)
-      (Dirichlet.Critical.Pair.criticalUpperPair 2) :=
-  Dirichlet.Critical.Adjacent.Initial.stageTwoStrictExteriorCertificate.areConsecutiveBest
+      (Pair.criticalSource 1).value
+      (Pair.criticalLowerPair 2)
+      (Pair.criticalUpperPair 2) :=
+  Initial.stageTwoStrictExteriorCertificate.areConsecutiveBest
 
 /-- Constructive two-window feasibility: one displayed rational source
 supports two strictly scale-separated critical Pell windows. -/
@@ -758,20 +760,20 @@ theorem
   criticalSource_one_supports_two_windows
   :
     Best.Consecutive.Basic.AreConsecutiveBest
-        (Dirichlet.Critical.Pair.criticalSource 1).value
-        (Dirichlet.Critical.Pair.criticalLowerPair 1)
-        (Dirichlet.Critical.Pair.criticalUpperPair 1) ∧
+        (Pair.criticalSource 1).value
+        (Pair.criticalLowerPair 1)
+        (Pair.criticalUpperPair 1) ∧
       Best.Consecutive.Basic.AreConsecutiveBest
-        (Dirichlet.Critical.Pair.criticalSource 1).value
-        (Dirichlet.Critical.Pair.criticalLowerPair 2)
-        (Dirichlet.Critical.Pair.criticalUpperPair 2) ∧
+        (Pair.criticalSource 1).value
+        (Pair.criticalLowerPair 2)
+        (Pair.criticalUpperPair 2) ∧
       Best.Error.denominatorQuadrance
-          (Dirichlet.Critical.Pair.criticalUpperPair 1) <
+          (Pair.criticalUpperPair 1) <
         Best.Error.denominatorQuadrance
-          (Dirichlet.Critical.Pair.criticalLowerPair 2) :=
-  ⟨Dirichlet.Critical.Pair.criticalPairs_areConsecutiveBest 1,
-    Dirichlet.Critical.Adjacent.Initial.stageTwo_areConsecutiveBest_at_stageOneSource,
-    Dirichlet.Critical.Transition.criticalUpper_lt_nextLower_denominatorQuadrance 1⟩
+          (Pair.criticalLowerPair 2) :=
+  ⟨Pair.criticalPairs_areConsecutiveBest 1,
+    stageTwo_areConsecutiveBest_at_stageOneSource,
+    Transition.criticalUpper_lt_nextLower_denominatorQuadrance 1⟩
 
 end Purelib.NumberTheory.Approximation.Dirichlet.Critical.Adjacent.Initial
 

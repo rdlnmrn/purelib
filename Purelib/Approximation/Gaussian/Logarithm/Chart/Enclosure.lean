@@ -52,72 +52,72 @@ namespace Purelib.Approximation.Gaussian.Logarithm.Chart.Enclosure
 
 /-- Conservative enclosure of `factor * z`. -/
 def scaledBall (factor : Canonical)
-  (input : Approximation.Gaussian.Enclosure.Ball) : Approximation.Gaussian.Enclosure.Ball :=
+  (input : Ball) : Ball :=
   (Ball.point factor).mul input
 
 /-- Conservative enclosure of `factor * z - 1`. -/
 def numeratorBall (factor :
-  Canonical) (input : Approximation.Gaussian.Enclosure.Ball) : Approximation.Gaussian.Enclosure.Ball
+  Canonical) (input : Ball) : Ball
       :=
   (scaledBall factor input).sub (Ball.point 1)
 
 /-- Conservative enclosure of `factor * z + 1`. -/
 def denominatorBall (factor :
-  Canonical) (input : Approximation.Gaussian.Enclosure.Ball) : Approximation.Gaussian.Enclosure.Ball
+  Canonical) (input : Ball) : Ball
       :=
   (scaledBall factor input).add (Ball.point 1)
 
 /-- The scaled chart ball admits the factor times every reading of the original input ball. -/
 theorem scaledBall_contains {factor value :
-  Canonical} {input : Approximation.Gaussian.Enclosure.Ball}
+  Canonical} {input : Ball}
     (inside : input.Contains value) :
     (scaledBall factor input).Contains (factor * value) :=
-  Approximation.Gaussian.Enclosure.Ball.contains_mul
+  Ball.contains_mul
     (Ball.contains_point factor) inside
 
 /-- The chart numerator ball admits the transformed reading factor times value minus one. -/
 theorem numeratorBall_contains {factor value :
-  Canonical} {input : Approximation.Gaussian.Enclosure.Ball}
+  Canonical} {input : Ball}
     (inside : input.Contains value) :
     (numeratorBall factor input).Contains (factor * value - 1) :=
-  Approximation.Gaussian.Enclosure.Ball.contains_sub
+  Ball.contains_sub
     (scaledBall_contains inside) (Ball.contains_point 1)
 
 /-- The chart denominator ball admits the transformed reading factor times value plus one. -/
 theorem denominatorBall_contains {factor value :
-  Canonical} {input : Approximation.Gaussian.Enclosure.Ball}
+  Canonical} {input : Ball}
     (inside : input.Contains value) :
     (denominatorBall factor input).Contains (factor * value + 1) :=
-  Approximation.Gaussian.Enclosure.Ball.contains_add
+  Ball.contains_add
     (scaledBall_contains inside) (Ball.contains_point 1)
 
 /-- Exact rational sufficient test for separating every transformed denominator candidate from zero. -/
 def DenominatorSeparated (factor :
-  Canonical) (input : Approximation.Gaussian.Enclosure.Ball) : Prop :=
+  Canonical) (input : Ball) : Prop :=
   2 * (denominatorBall factor input).radiusSq <
     Data.Gaussian.Norm.Basic.normSq (denominatorBall factor
       input).center
 
 /-- Decide the finite sufficient denominator-separation test by exact rational comparison. -/
 instance denominatorSeparatedDecidable (factor :
-  Canonical) (input : Approximation.Gaussian.Enclosure.Ball) :
+  Canonical) (input : Ball) :
     Decidable (DenominatorSeparated factor input) := by
   unfold DenominatorSeparated
   infer_instance
 
 /-- The finite denominator certificate obtained from the rational separation test. -/
 def denominatorApart {factor :
-  Canonical} {input : Approximation.Gaussian.Enclosure.Ball}
+  Canonical} {input : Ball}
     (separated : DenominatorSeparated factor input) :
-    Ball.Apart (denominatorBall factor input) :=
+    Apart (denominatorBall factor input) :=
   Residual.apartOfCenter
     (denominatorBall factor input) separated
 
 /-- Conservative enclosure of the reduced chart argument. -/
 def reducedBall {factor : Canonical}
-  {input : Approximation.Gaussian.Enclosure.Ball}
+  {input : Ball}
     (separated : DenominatorSeparated factor input) :
-        Approximation.Gaussian.Enclosure.Ball
+        Ball
       :=
   (numeratorBall factor input).div
     (denominatorBall factor input)

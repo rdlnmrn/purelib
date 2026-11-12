@@ -34,7 +34,7 @@ power of `-4s`. -/
 def spreadCoefficientExpansion
     {R : Type*} [CommRing R] (row : Nat) (value : R) : R :=
   FiniteSum.Prefix.prefixSum row (fun index =>
-    (Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient row (index + 1) : R) * value *
+    (Coefficients.Array.spreadArrayCoefficient row (index + 1) : R) * value *
       (-4 * value) ^ index)
 
 /-- The empty spread-coefficient expansion is zero. -/
@@ -48,9 +48,9 @@ def spreadCoefficientExpansion
     spreadCoefficientExpansion 1 value = value := by
   unfold spreadCoefficientExpansion
   rw [FiniteSum.Prefix.prefixSum_succ, FiniteSum.Prefix.prefixSum_zero, add_zero]
-  change ((Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient 1 1 : Nat) : R) * value *
+  change ((Coefficients.Array.spreadArrayCoefficient 1 1 : Nat) : R) * value *
     (-4 * value) ^ 0 = value
-  have coefficient : Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient 1 1 = 1 := rfl
+  have coefficient : Coefficients.Array.spreadArrayCoefficient 1 1 = 1 := rfl
   rw [coefficient, Nat.cast_one, one_mul, pow_zero, mul_one]
 
 /-- The spread-array sum obeys the same second-order recurrence as the
@@ -62,7 +62,7 @@ theorem spreadCoefficientExpansion_recurrence
           spreadCoefficientExpansion (row + 1) value -
         spreadCoefficientExpansion row value + 2 * value := by
   let term : Nat → Nat → R := fun current index =>
-    (Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient current (index + 1) : R) * value *
+    (Coefficients.Array.spreadArrayCoefficient current (index + 1) : R) * value *
       (-4 * value) ^ index
   let shifted : Nat → R := fun index =>
     match index with
@@ -73,7 +73,7 @@ theorem spreadCoefficientExpansion_recurrence
         2 * term (row + 1) index + shifted index := by
     intro index
     have coefficientRecurrence :=
-      Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient_recurrence row index
+      Coefficients.Array.spreadArrayCoefficient_recurrence row index
     have castRecurrence := congrArg
       (fun coefficient : Nat => (coefficient : R)) coefficientRecurrence
     simp only [NatCast.add, NatCast.mul, Nat.cast_ofNat] at castRecurrence
@@ -81,46 +81,46 @@ theorem spreadCoefficientExpansion_recurrence
     | zero =>
         simp only [term, shifted, pow_zero]
         calc
-          (Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient (row + 2) (0 + 1) : R) * value * 1 +
-                (Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient row (0 + 1) : R) * value * 1 =
-              ((Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient (row + 2) (0 + 1) : R) +
-                (Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient row (0 + 1) : R)) * value := by
+          (Coefficients.Array.spreadArrayCoefficient (row + 2) (0 + 1) : R) * value * 1 +
+                (Coefficients.Array.spreadArrayCoefficient row (0 + 1) : R) * value * 1 =
+              ((Coefficients.Array.spreadArrayCoefficient (row + 2) (0 + 1) : R) +
+                (Coefficients.Array.spreadArrayCoefficient row (0 + 1) : R)) * value := by
             ring1
-          _ = (2 * (Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient (row + 1) (0 + 1) : R) +
-                (Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient (row + 1) 0 : R)) * value := by
+          _ = (2 * (Coefficients.Array.spreadArrayCoefficient (row + 1) (0 + 1) : R) +
+                (Coefficients.Array.spreadArrayCoefficient (row + 1) 0 : R)) * value := by
             rw [castRecurrence]
           _ = 2 *
-                ((Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient (row + 1) (0 + 1) : R) *
+                ((Coefficients.Array.spreadArrayCoefficient (row + 1) (0 + 1) : R) *
                   value * 1) +
               2 * value := by
-            rw [Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient_zero]
+            rw [Coefficients.Array.spreadArrayCoefficient_zero]
             simp only [Nat.cast_ofNat]
             ring1
     | succ previous =>
         simp only [term, shifted, pow_succ]
         calc
-          (Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient (row + 2) (previous + 1 + 1) : R) *
+          (Coefficients.Array.spreadArrayCoefficient (row + 2) (previous + 1 + 1) : R) *
                   value * ((-4 * value) ^ previous * (-4 * value)) +
-                (Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient row (previous + 1 + 1) : R) *
+                (Coefficients.Array.spreadArrayCoefficient row (previous + 1 + 1) : R) *
                   value * ((-4 * value) ^ previous * (-4 * value)) =
-              ((Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient (row + 2)
+              ((Coefficients.Array.spreadArrayCoefficient (row + 2)
                     (previous + 1 + 1) : R) +
-                (Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient row
+                (Coefficients.Array.spreadArrayCoefficient row
                     (previous + 1 + 1) : R)) *
                   value * ((-4 * value) ^ previous * (-4 * value)) := by
             ring1
-          _ = (2 * (Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient (row + 1)
+          _ = (2 * (Coefficients.Array.spreadArrayCoefficient (row + 1)
                     (previous + 1 + 1) : R) +
-                (Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient (row + 1)
+                (Coefficients.Array.spreadArrayCoefficient (row + 1)
                     (previous + 1) : R)) *
                   value * ((-4 * value) ^ previous * (-4 * value)) := by
             rw [castRecurrence]
           _ = 2 *
-                ((Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient (row + 1)
+                ((Coefficients.Array.spreadArrayCoefficient (row + 1)
                     (previous + 1 + 1) : R) * value *
                       ((-4 * value) ^ previous * (-4 * value))) +
               (-4 * value) *
-                ((Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient (row + 1)
+                ((Coefficients.Array.spreadArrayCoefficient (row + 1)
                     (previous + 1) : R) * value *
                       (-4 * value) ^ previous) := by
             ring1
@@ -131,8 +131,8 @@ theorem spreadCoefficientExpansion_recurrence
       FiniteSum.Prefix.prefixSum_succ_last,
       FiniteSum.Prefix.prefixSum_succ_last]
     dsimp only [term]
-    rw [Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient_eq_zero_of_lt (by omega0 : row < row + 1),
-      Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient_eq_zero_of_lt (by omega0 : row < row + 2)]
+    rw [Coefficients.Array.spreadArrayCoefficient_eq_zero_of_lt (by omega0 : row < row + 1),
+      Coefficients.Array.spreadArrayCoefficient_eq_zero_of_lt (by omega0 : row < row + 2)]
     simp only [Nat.cast_zero, zero_mul, add_zero, -eq_self, -iff_self]
     rfl
   have currentPadding :
@@ -141,7 +141,7 @@ theorem spreadCoefficientExpansion_recurrence
     rw [show row + 2 = (row + 1) + 1 by omega0,
       FiniteSum.Prefix.prefixSum_succ_last]
     dsimp only [term]
-    rw [Recurrence.Spread.Coefficients.Array.spreadArrayCoefficient_eq_zero_of_lt
+    rw [Coefficients.Array.spreadArrayCoefficient_eq_zero_of_lt
       (by omega0 : row + 1 < row + 2)]
     simp only [Nat.cast_zero, zero_mul, add_zero, -eq_self, -iff_self]
     rfl
@@ -208,10 +208,10 @@ Each coefficient is cast into the supplied commutative ring; the equality holds 
 by a field element. -/
 theorem exercise_8_9_integer_coefficients
     {R : Type*} [CommRing R] (row : Nat) (value : R) :
-    Recurrence.Spread.Basic.spreadPolynomial row value =
+    Basic.spreadPolynomial row value =
       spreadCoefficientExpansion row value := by
   let agreesAt := fun current : Nat =>
-    Recurrence.Spread.Basic.spreadPolynomial current value =
+    Basic.spreadPolynomial current value =
       spreadCoefficientExpansion current value
   have allPairs : ∀ current : Nat,
       agreesAt current ∧ agreesAt (current + 1) := by
@@ -221,7 +221,7 @@ theorem exercise_8_9_integer_coefficients
         constructor
         · rfl
         · unfold agreesAt
-          simp only [Nat.zero_add, Recurrence.Spread.Basic.spreadPolynomial_one,
+          simp only [Nat.zero_add, Basic.spreadPolynomial_one,
             spreadCoefficientExpansion_one,
             -eq_self, -iff_self]
           rfl
@@ -230,7 +230,7 @@ theorem exercise_8_9_integer_coefficients
         · simpa only [Nat.succ_eq_add_one] using inductionHypothesis.2
         · unfold agreesAt
           rw [show Nat.succ current + 1 = current + 2 by omega0,
-            Recurrence.Spread.Basic.spreadPolynomial_succ_succ,
+            Basic.spreadPolynomial_succ_succ,
             spreadCoefficientExpansion_recurrence,
             inductionHypothesis.1, inductionHypothesis.2]
   exact (allPairs row).1

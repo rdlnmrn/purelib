@@ -53,6 +53,8 @@ import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Topology.Surface.Sewing.SewnPrimitiveContacts
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation.Rational.Budget
@@ -112,25 +114,25 @@ open Purelib.Data.Rat.Fraction.Order.Arithmetic (mul_nonneg_direct mul_le_mul_of
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues (edgeValuation)
 open Purelib.Integration.Path.IncrementArea (pathArea)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+variable {genus : Nat} {curve : HyperellipticCurve genus}
   {owner : OwnedPuncturedMesh curve}
   {domains : Domains owner}
 
 set_option genInjectivity false in
 /-- The mixed chart request caches both single-differential source requests at one allowance and pays their
 conjugate-linear combination. -/
-structure MixedChartAreaRequest (leftDifferential rightDifferential : Differentials.Basic.Differential genus)
+structure MixedChartAreaRequest (leftDifferential rightDifferential : Differential genus)
     (domains : Domains owner)
     (leftFixed : MagnitudeBank owner domains leftDifferential)
     (rightFixed : MagnitudeBank owner domains rightDifferential)
-    (coefficient : Data.Gaussian.Basic.Canonical) (sources : Sources owner) (target : Fraction.Rational) where
+    (coefficient : Gaussian) (sources : Sources owner) (target : Rational) where
   /-- The original requested complete mixed area tolerance is strictly positive. -/ positive : 0 < target
-  /-- The cached complete occurrence-count and mixed-magnitude error weight. -/ weight : Fraction.Rational
+  /-- The cached complete occurrence-count and mixed-magnitude error weight. -/ weight : Rational
   /-- The weight is exactly the original fourth-power occurrence expression with the retained mixing coefficient. -/
-    weight_eq : weight = 32 * (1 + normSq coefficient) * (sources.length : Fraction.Rational) ^ 4 *
+    weight_eq : weight = 32 * (1 + normSq coefficient) * (sources.length : Rational) ^ 4 *
     (8 * EdgeMagnitude.mixBound leftFixed.bound rightFixed.bound coefficient + 2)
   /-- The cached common positive allowance for both original single-differential requests. -/ allowance :
-    Fraction.Rational
+    Rational
   /-- The allowance is the minimum of the mixed-error unit ceiling and the original weighted target budget. -/
     allowance_eq : allowance = min (1 / (2 * (1 + normSq coefficient)))
     (Weighted.allowance target weight)
@@ -147,45 +149,45 @@ constructive_injectivity MixedChartAreaRequest
 
 namespace MixedChartAreaRequest
 
-variable {leftDifferential rightDifferential : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+variable {leftDifferential rightDifferential : Differential genus}
   {leftFixed : MagnitudeBank owner domains leftDifferential}
   {rightFixed : MagnitudeBank owner domains rightDifferential}
-  {coefficient : Purelib.Data.Gaussian.Basic.Canonical} {sources : Sources owner} {target :
-    Purelib.Data.Rat.Fraction.Rational}
+  {coefficient : Gaussian} {sources : Sources owner} {target :
+    Rational}
 
 /-- The complete mixed area weight is nonnegative for the original magnitude banks and occurrence count. -/
 public theorem weight_nonnegative (leftFixed : MagnitudeBank owner domains leftDifferential)
-    (rightFixed : MagnitudeBank owner domains rightDifferential) (coefficient : Data.Gaussian.Basic.Canonical)
+    (rightFixed : MagnitudeBank owner domains rightDifferential) (coefficient : Gaussian)
     (sources : Sources owner) :
-    0 ≤ 32 * (1 + normSq coefficient) * (sources.length : Fraction.Rational) ^ 4 *
+    0 ≤ 32 * (1 + normSq coefficient) * (sources.length : Rational) ^ 4 *
       (8 * EdgeMagnitude.mixBound leftFixed.bound rightFixed.bound coefficient + 2) :=
-   Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct
-     (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Fraction.Rational) ≤ 32)
-    (add_nonneg (by decide) (Data.Gaussian.Basic.Canonical.normSq_nonneg coefficient)))
-    (Fraction.Order.Arithmetic.pow_nonneg_direct
+   Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct
+     (Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Rational) ≤ 32)
+    (add_nonneg (by decide) (Gaussian.normSq_nonneg coefficient)))
+    (Arithmetic.pow_nonneg_direct
       (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 4))
-    (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    (add_nonneg (Arithmetic.mul_nonneg_direct (by decide)
       (EdgeMagnitude.mixBound_nonnegative leftFixed.nonnegative rightFixed.nonnegative coefficient))
       (by decide))
 
 /-- Prepare both original differential requests at one paid allowance and cache the complete common stage. -/
-@[expose] def build (leftDifferential rightDifferential : Differentials.Basic.Differential genus)
+@[expose] def build (leftDifferential rightDifferential : Differential genus)
     (domains : Domains owner)
     (leftFixed : MagnitudeBank owner domains leftDifferential)
     (rightFixed : MagnitudeBank owner domains rightDifferential)
-    (coefficient : Data.Gaussian.Basic.Canonical) (sources : Sources owner)
+    (coefficient : Gaussian) (sources : Sources owner)
     (nonloop : Nonloop owner sources)
-    (target : Fraction.Rational) (positive : 0 < target) :
+    (target : Rational) (positive : 0 < target) :
     MixedChartAreaRequest (owner := owner) leftDifferential rightDifferential domains leftFixed rightFixed coefficient
       sources target :=
-  let weight := 32 * (1 + normSq coefficient) * (sources.length : Fraction.Rational) ^ 4 *
+  let weight := 32 * (1 + normSq coefficient) * (sources.length : Rational) ^ 4 *
     (8 * EdgeMagnitude.mixBound leftFixed.bound rightFixed.bound coefficient + 2)
   let allowance := min (1 / (2 * (1 + normSq coefficient)))
     (Weighted.allowance target weight)
   have weightNonnegative : 0 ≤ weight :=
     weight_nonnegative leftFixed rightFixed coefficient sources
-  have allowancePositive : 0 < allowance := Fraction.Order.Basic.lt_min
-    (Fraction.Order.Field.div_pos_direct (by decide) (Data.Gaussian.Basic.Canonical.double_one_add_normSq_positive
+  have allowancePositive : 0 < allowance := Basic.lt_min
+    (Field.div_pos_direct (by decide) (Gaussian.double_one_add_normSq_positive
       coefficient))
     (Weighted.allowance_positive positive weightNonnegative)
   let left := SourceChartRequests.build leftDifferential domains allowance allowancePositive sources nonloop
@@ -219,10 +221,10 @@ theorem right_chart_le (request : MixedChartAreaRequest (owner := owner) leftDif
 private theorem allowance_small (request : MixedChartAreaRequest (owner := owner) leftDifferential rightDifferential
     domains leftFixed rightFixed coefficient sources target) :
     2 * (1 + normSq coefficient) * request.allowance ≤ 1 := by
-  have scalePositive := Data.Gaussian.Basic.Canonical.double_one_add_normSq_positive coefficient
+  have scalePositive := Gaussian.double_one_add_normSq_positive coefficient
   have small : request.allowance ≤ 1 / (2 * (1 + normSq coefficient)) :=
-    request.allowance_eq ▸ Fraction.Order.Basic.min_le_left _ _
-  have bound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct small scalePositive.le
+    request.allowance_eq ▸ Basic.min_le_left _ _
+  have bound := Arithmetic.mul_le_mul_of_nonneg_left_direct small scalePositive.le
   refine bound.trans_eq ?_
   rw [Fraction.Field.mul_comm, Fraction.Field.div_mul_cancel_of_ne _ _
     scalePositive.ne']
@@ -292,27 +294,27 @@ private theorem source_errors (request : MixedChartAreaRequest (owner := owner) 
         CanonicalEdgeValues.edgeValuation owner.mesh rightReadings.values (source.project
           owner.mesh.triangulation.faces)) ≤
       request.allowance + normSq coefficient * request.allowance :=
-    Fraction.Order.Arithmetic.add_le_add_direct leftBound (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      rightBound (Data.Gaussian.Basic.Canonical.normSq_nonneg coefficient))
-  have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct inner (by
-      decide : (0 : Fraction.Rational) ≤ 2)
+    Arithmetic.add_le_add_direct leftBound (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      rightBound (Gaussian.normSq_nonneg coefficient))
+  have scaled := Arithmetic.mul_le_mul_of_nonneg_left_direct inner (by
+      decide : (0 : Rational) ≤ 2)
   exact scaled.trans_eq (by ring1)
 
 /-- The actual combined per-source error budget from the retained common allowance and mixing coefficient. -/
 @[expose] def ErrorBudget (request : MixedChartAreaRequest (owner := owner) leftDifferential rightDifferential
-    domains leftFixed rightFixed coefficient sources target) : Fraction.Rational :=
+    domains leftFixed rightFixed coefficient sources target) : Rational :=
   2 * (1 + normSq coefficient) * request.allowance
 
 /-- The complete mixed increment magnitude budget from both original retained magnitude banks. -/
 @[expose, reducible] def MagnitudeBudget (leftFixed : MagnitudeBank owner domains leftDifferential)
-    (rightFixed : MagnitudeBank owner domains rightDifferential) (coefficient : Data.Gaussian.Basic.Canonical) :
-      Fraction.Rational :=
+    (rightFixed : MagnitudeBank owner domains rightDifferential) (coefficient : Gaussian) :
+      Rational :=
   8 * EdgeMagnitude.mixBound leftFixed.bound rightFixed.bound coefficient + 2
 
 /-- The exact pair of original triangle reading banks at their shared stage with the retained mixing coefficient. -/
 @[expose, reducible] def Sample (domains : Domains owner)
-    (leftDifferential rightDifferential : Differentials.Basic.Differential genus) (coefficient :
-      Data.Gaussian.Basic.Canonical) :=
+    (leftDifferential rightDifferential : Differential genus) (coefficient :
+      Gaussian) :=
   SourceChartComparison.MixedReadings (owner := owner) domains leftDifferential rightDifferential coefficient
 
 /-- The cached original source observations on the exact mixed reading sample and retained occurrence list. -/
@@ -363,8 +365,8 @@ this executable constructor. -/
   let magnitude := sample.magnitude leftFixed rightFixed
     (request.left_magnitude_le.trans later) (request.right_magnitude_le.trans later)
   have errorNonnegative : 0 ≤ ErrorBudget request :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      (add_nonneg (by decide) (Data.Gaussian.Basic.Canonical.normSq_nonneg coefficient))) request.allowance_positive.le
+    Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide)
+      (add_nonneg (by decide) (Gaussian.normSq_nonneg coefficient))) request.allowance_positive.le
   let comparison := SourceChartComparison.realizeSupplied source magnitude (ErrorBudget request)
     errorNonnegative (by exact allowance_small request)
     (by exact source_errors request sample.leftReadings sample.rightReadings leftLater rightLater)
@@ -380,7 +382,7 @@ variable {request : MixedChartAreaRequest (owner := owner) leftDifferential righ
 /-- The cached actual source-area minus chart-area residual. -/
 @[expose] def residual (realization : Realization request sample source) : Gaussian := realization.comparison.residual
 /-- The cached squared-norm bound for the actual mixed source/chart residual. -/
-@[expose] def areaBound (realization : Realization request sample source) : Fraction.Rational :=
+@[expose] def areaBound (realization : Realization request sample source) : Rational :=
   realization.comparison.areaBound
 /-- The cached area of the acquired canonical chart increment summary. -/
 @[expose] def chartArea (realization : Realization request sample source) : Gaussian :=
@@ -389,13 +391,13 @@ variable {request : MixedChartAreaRequest (owner := owner) leftDifferential righ
 /-- Retrieve each original forward/backward chart witness at the actual ordered occurrence. The bound is retained
 explicitly, including for repeated sources. -/
 @[expose] def leftRequestAt (realization : Realization request sample source) (occurrence : Fin sources.length) :
-    SignedSourceChartRequests.SignedSourceChartRequest
+    SignedSourceChartRequest
       (sources[occurrence.val]'occurrence.isLt) leftDifferential domains realization.selection.allowance :=
   realization.selection.left.at occurrence
 
 /-- Retrieve the original right-differential signed chart request at the exact bounded source occurrence. -/
 @[expose] def rightRequestAt (realization : Realization request sample source) (occurrence : Fin sources.length) :
-    SignedSourceChartRequests.SignedSourceChartRequest
+    SignedSourceChartRequest
       (sources[occurrence.val]'occurrence.isLt) rightDifferential domains realization.selection.allowance :=
   realization.selection.right.at occurrence
 
@@ -446,7 +448,7 @@ theorem residual_cached (realization : Realization request sample source) :
 
 /-- The retained chart area reads the canonical projected source word in original occurrence order. -/
 theorem chart_readback (realization : Realization request sample source) :
-    realization.chartArea = Purelib.Topology.Mesh.RetracingWords.wordArea (CanonicalEdgeValues.edgeValuation owner.mesh
+    realization.chartArea = RetracingWords.wordArea (CanonicalEdgeValues.edgeValuation owner.mesh
       sample.values)
       (sources.map (fun occurrence => occurrence.project owner.mesh.triangulation.faces)) := by
   change realization.comparison.chartSummary.area = _
@@ -476,9 +478,9 @@ theorem budget (realization : Realization request sample source) : realization.a
   calc
     request.weight * request.allowance ≤
         request.weight * Weighted.allowance target request.weight := by
-      apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct _ weightNonnegative
+      apply Arithmetic.mul_le_mul_of_nonneg_left_direct _ weightNonnegative
       rw [request.allowance_eq]
-      exact Fraction.Order.Basic.min_le_right _ _
+      exact Basic.min_le_right _ _
     _ ≤ target := Weighted.mul_allowance_le request.positive.le weightNonnegative
 
 /-- The squared norm of the actual retained mixed source/chart residual is bounded by its cached area bound. -/

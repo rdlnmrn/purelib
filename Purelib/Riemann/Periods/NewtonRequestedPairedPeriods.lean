@@ -31,6 +31,8 @@ public import Purelib.Riemann.Periods.NewtonPairedPeriodFragments
 public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.ScalarSums
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets
+
 public section
 
 /-! Requested shared-face readings of the fixed original corrected periods.
@@ -65,7 +67,7 @@ open Purelib.Riemann.Periods.NewtonPairedPeriodFragments (NewtonFragments)
 open Purelib.Riemann.Periods.PeriodMatrix (standardDifferential)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -87,37 +89,37 @@ set_option genInjectivity false in
 
 The scalar floor precedes both original polynomial requests. Sheet assignments, index bounds and complete split counts
 remain tied to their original prepared periods and Newton grid. -/
-structure NewtonPeriodRequest (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+structure NewtonPeriodRequest (prepared : Prepared paired)
   (grid : NewtonGrid preparation bandTarget radius)
-    (differential index : Fin genus) (minimum : Nat) (target : Rat.Fraction.Rational)
-    {frames : RootIsolation.SquareRoot.Grid.RootFrames grid.punctured.bank.grid}
-    (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.punctured.faces.regulars)
+    (differential index : Fin genus) (minimum : Nat) (target : Rational)
+    {frames : SquareRoot.Grid.RootFrames grid.punctured.bank.grid}
+    (domains : FaceDomainBank frames grid.punctured.faces.regulars)
       : Type 2 where
   /-- The retained common upper bound on all analytic fragment pieces. -/ pieces : Nat
   /-- The original face-domain scalar budgets at one quarter of the target. -/ scalars :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets (standardDifferential
+    FaceScalarBudgets (standardDifferential
     differential) pieces (target / 4) domains
   /-- The original A and B period fragments on the retained Newton grid. -/ fragments : NewtonFragments prepared grid
     differential index minimum (target / 4)
   /-- The actual A-fragment sheet assignments and requests in the original face domains. -/ aEntries :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SplitSheets domains
+    Hyperelliptic.Meshes.PuncturedGrid.Fragment.SplitSheets domains
     fragments.a.cells fragments.a.comparison.request.requests
   /-- The actual B-fragment sheet assignments and requests in the original face domains. -/ bEntries :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SplitSheets domains
+    Hyperelliptic.Meshes.PuncturedGrid.Fragment.SplitSheets domains
     fragments.b.cells fragments.b.comparison.request.requests
   /-- Every original A-fragment request respects the scalar floor. -/ a_indices : IndicesAbove
-    (Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets.index scalars)
+    (FaceScalarBudgets.index scalars)
     fragments.a.comparison.request.requests
   /-- Every original B-fragment request respects the scalar floor. -/ b_indices : IndicesAbove
-    (Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets.index scalars)
+    (FaceScalarBudgets.index scalars)
     fragments.b.comparison.request.requests
   /-- The complete A split count with analytic expansion fits the retained piece bound. -/ a_count :
     fragments.a.fragments.splits.count * (2 *
-    (Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceDomainBank.stepsBound domains) + 5) ≤
+    (BranchCellBank.FaceDomainBank.stepsBound domains) + 5) ≤
     pieces
   /-- The complete B split count with analytic expansion fits the retained piece bound. -/ b_count :
     fragments.b.fragments.splits.count * (2 *
-    (Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceDomainBank.stepsBound domains) + 5) ≤
+    (BranchCellBank.FaceDomainBank.stepsBound domains) + 5) ≤
     pieces
 
 constructive_injectivity NewtonPeriodRequest
@@ -138,7 +140,7 @@ theorem ofCover_indices {source : Hyperelliptic.Differentials.Basic.Differential
     {targets : List (Hyperelliptic.Differentials.Basic.Differential genus)} {count minimum : Nat}
     (cover : CoveredPeriodStage initial targets count minimum) (differential :
       Hyperelliptic.Differentials.Basic.Differential genus)
-    (target : Rat.Fraction.Rational) (positive : 0 < target) (floor : Nat) :
+    (target : Rational) (positive : 0 < target) (floor : Nat) :
     IndicesAbove floor (CoveredPeriodRequest.ofCover cover differential target positive floor).request.requests := by
   let requested := CoveredPeriodRequest.ofCover cover differential target positive floor
   have equal : requested.request.minimumIndex = floor := ControlledSumRequest.acquire_minimumIndex ..
@@ -156,11 +158,11 @@ open Purelib.RootIsolation in
 
 The original covers determine a common piece count, which selects the scalar floor before either polynomial request is
 acquired. Both assignments retain their original owners and count evidence. -/
-@[expose] def build (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired) (grid :
+@[expose] def build (prepared : Prepared paired) (grid :
   NewtonGrid preparation bandTarget radius)
-    (differential index : Fin genus) (minimum : Nat) (target : Rat.Fraction.Rational) (positive : 0 < target)
-    {frames : RootIsolation.SquareRoot.Grid.RootFrames grid.punctured.bank.grid}
-    (domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.punctured.faces.regulars)
+    (differential index : Fin genus) (minimum : Nat) (target : Rational) (positive : 0 < target)
+    {frames : SquareRoot.Grid.RootFrames grid.punctured.bank.grid}
+    (domains : FaceDomainBank frames grid.punctured.faces.regulars)
       :
     NewtonPeriodRequest prepared grid differential index minimum target domains := by
   let aCover := CoveredPeriodStage.acquire (prepared.aWalk index).initial (standardDifferentials genus) genus minimum
@@ -168,12 +170,12 @@ acquired. Both assignments retain their original owners and count evidence. -/
   let parents := aCover.retained.current.state.parents.length + bCover.retained.current.state.parents.length
   let gridCount := grid.punctured.bank.grid.vertical.length + grid.punctured.bank.grid.horizontal.length + 1
   let analyticCount := 2 *
-    (Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceDomainBank.stepsBound domains) + 5
+    (BranchCellBank.FaceDomainBank.stepsBound domains) + 5
   let pieces := parents * gridCount * analyticCount
   have smallPositive : 0 < target / 4 := Rat.Fraction.Order.Field.div_pos_direct positive (by decide)
-  let scalars := Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets.build
+  let scalars := FaceScalarBudgets.build
     (standardDifferential differential) pieces (target / 4) smallPositive domains
-  let floor := Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets.index scalars
+  let floor := FaceScalarBudgets.index scalars
   let a := CoveredPeriodRequest.ofCover aCover (standardDifferential differential) (target / 4) smallPositive floor
   let b := CoveredPeriodRequest.ofCover bCover (standardDifferential differential) (target / 4) smallPositive floor
   let fragments := NewtonFragments.ofRequests prepared grid a b
@@ -202,7 +204,7 @@ open Purelib.Data
 /-- The retained face scalar budgets specialized to the combined point list. -/
 @[expose] def budgets (request : NewtonPeriodRequest prepared grid differential index minimum target domains)
     (extra : List Gaussian.Basic.Canonical) :=
-      Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets.meshes (request.points
+      FaceScalarBudgets.meshes (request.points
       extra) request.scalars
 
 end
@@ -216,15 +218,15 @@ Each sum retains its actual sheet entries and a strict quarter-target bound; bot
 owners. -/
 structure Readings (request : NewtonPeriodRequest prepared grid differential index minimum target domains)
     (extra : List Gaussian.Basic.Canonical) {numericalIndex : Nat}
-    (numerics : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank (standardDifferential
+    (numerics : FacePrimitiveBank (standardDifferential
       differential) numericalIndex domains) where
   /-- The shared point meshes on the exact supplied face-primitive bank. -/ meshes :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes (request.budgets extra) numerics
+    FaceSharedMeshes (request.budgets extra) numerics
   /-- The retained A-fragment sum on the shared mesh. -/ a :
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.SharedSums.RegularPrimitiveSplits.SheetEntries.SharedSum meshes
+    SharedSum meshes
     request.aEntries
   /-- The retained B-fragment sum on the shared mesh. -/ b :
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.SharedSums.RegularPrimitiveSplits.SheetEntries.SharedSum meshes
+    SharedSum meshes
     request.bEntries
   /-- The A-fragment comparison bound is strictly below one quarter of the target. -/ a_small : a.bound < target / 4
   /-- The B-fragment comparison bound is strictly below one quarter of the target. -/ b_small : b.bound < target / 4
@@ -239,18 +241,18 @@ One shared point mesh supplies both retained sums, and the original index and co
 quarter-target bounds. -/
 @[expose] def readWith (request : NewtonPeriodRequest prepared grid differential index minimum target domains)
     (positive : 0 < target) (extra : List Gaussian.Basic.Canonical) {numericalIndex : Nat}
-    (numerics : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank (standardDifferential
+    (numerics : FacePrimitiveBank (standardDifferential
       differential) numericalIndex domains)
-    (later : Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets.index
+    (later : FaceScalarBudgets.index
       request.scalars ≤ numericalIndex) : request.Readings extra numerics := by
-  let meshes := Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes.build (request.budgets extra)
+  let meshes := FaceSharedMeshes.build (request.budgets extra)
     numerics
-    ((Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets.meshes_index
+    ((FaceScalarBudgets.meshes_index
       request.scalars (request.points extra)).le.trans later)
-  let a := Hyperelliptic.Meshes.PuncturedGrid.Fragment.SharedSums.RegularPrimitiveSplits.SheetEntries.SharedSum.build
+  let a := SharedSum.build
     meshes request.aEntries
     (fun _ member => List.mem_append_left _ (List.mem_append_left _ member))
-  let b := Hyperelliptic.Meshes.PuncturedGrid.Fragment.SharedSums.RegularPrimitiveSplits.SheetEntries.SharedSum.build
+  let b := SharedSum.build
     meshes request.bEntries
     (fun _ member => List.mem_append_left _ (List.mem_append_right _ member))
   have smallPositive : 0 < target / 4 := Rat.Fraction.Order.Field.div_pos_direct positive (by decide)
@@ -259,17 +261,17 @@ quarter-target bounds. -/
 
 open Purelib.Data in
 /-- Two successive squared-error comparisons below quarter-target allowances pay the full target. -/
-private theorem pay {x y z : Gaussian.Basic.Canonical} {target bound : Rat.Fraction.Rational}
-    (mesh : Data.Gaussian.Norm.Basic.normSq (x - y) ≤ bound) (small : bound < target / 4)
-    (period : Data.Gaussian.Norm.Basic.normSq (y - z) < target / 4) : Data.Gaussian.Norm.Basic.normSq (x - z) <
+private theorem pay {x y z : Gaussian.Basic.Canonical} {target bound : Rational}
+    (mesh : normSq (x - y) ≤ bound) (small : bound < target / 4)
+    (period : normSq (y - z) < target / 4) : normSq (x - z) <
       target := by
   rw [show x - z = (x - y) + (y - z) by ring1]
   have first := mesh.trans_lt small
-  have sum := (Rat.Fraction.Order.Arithmetic.add_lt_add_right_direct first (Data.Gaussian.Norm.Basic.normSq (y -
+  have sum := (Rat.Fraction.Order.Arithmetic.add_lt_add_right_direct first (normSq (y -
     z))).trans
     (Rat.Fraction.Order.Arithmetic.add_lt_add_left_direct period (target / 4))
   exact (Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans_lt
-    ((Rat.Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Rat.Fraction.Rational) < 2)
+    ((Rat.Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Rational) < 2)
       sum).trans_eq (by
       rw [show 2 * (target / 4 + target / 4) = (target / 4) * 4 by ring1]
       exact Rat.Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)))
@@ -277,7 +279,7 @@ private theorem pay {x y z : Gaussian.Basic.Canonical} {target bound : Rat.Fract
 namespace Readings
 
 variable {request : NewtonPeriodRequest prepared grid differential index minimum target domains}
-  {extra : List Purelib.Data.Gaussian.Basic.Canonical} {numericalIndex : Nat}
+  {extra : List Data.Gaussian.Basic.Canonical} {numericalIndex : Nat}
   {numerics : FacePrimitiveBank
     (standardDifferential differential) numericalIndex domains}
 
@@ -286,7 +288,7 @@ open Purelib.Data
 stage. -/
 theorem a_accurate (readings : request.Readings extra numerics)
     (stage : Nat) (later : request.fragments.stage ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (readings.a.value -
+    normSq (readings.a.value -
       ((prepared.periodData.aProgram differential index).integral.model stage).integralSample) < target := by
   have mesh := readings.a.accurate
   rw [← request.fragments.a.comparison.request.increments_eq,
@@ -299,7 +301,7 @@ theorem a_accurate (readings : request.Readings extra numerics)
 stage. -/
 theorem b_accurate (readings : request.Readings extra numerics)
     (stage : Nat) (later : request.fragments.stage ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (readings.b.value -
+    normSq (readings.b.value -
       ((prepared.periodData.bProgram differential index).integral.model stage).integralSample) < target := by
   have mesh := readings.b.accurate
   rw [← request.fragments.b.comparison.request.increments_eq,

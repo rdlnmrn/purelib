@@ -137,6 +137,40 @@ public theorem flatMap_congr_direct
         flatMap_congr_direct first second tail (fun value member =>
           equal value (List.mem_cons_of_mem head member))]
 
+/-- Equal uniform row lengths and identical flattening identify the same whole ordered list of rows.
+
+The original row count and width include empty or repeated rows. Prefix and
+suffix readbacks recover each actual head and literal tail without choosing
+new chunks or re-enumerating bounded list positions.
+-/
+public theorem eq_of_uniform_lengths {Alpha : Type u} (width : Nat) :
+    (first second : List (List Alpha)) → first.length = second.length →
+      (∀ row ∈ first, row.length = width) → (∀ row ∈ second, row.length = width) →
+      first.flatten = second.flatten → first = second
+  | [], [], _, _, _, _ => rfl
+  | [], _ :: _, impossible, _, _, _ => nomatch impossible
+  | _ :: _, [], impossible, _, _, _ => nomatch impossible
+  | first :: remaining, second :: rest, counts, firstLengths, secondLengths, flattened => by
+      have sameLength : first.length = second.length :=
+        (firstLengths first (List.Mem.head _)).trans (secondLengths second (List.Mem.head _)).symm
+      change first ++ remaining.flatten = second ++ rest.flatten at flattened
+      have leftPrefix : (first ++ remaining.flatten).take first.length = first := List.take_left
+      have rightPrefix : (second ++ rest.flatten).take first.length = second := by
+        rewrite [sameLength]
+        exact List.take_left
+      have sameHead : first = second := leftPrefix.symm.trans
+        ((congrArg (fun values => values.take first.length) flattened).trans rightPrefix)
+      have leftSuffix : (first ++ remaining.flatten).drop first.length = remaining.flatten := List.drop_left
+      have rightSuffix : (second ++ rest.flatten).drop first.length = rest.flatten := by
+        rewrite [sameLength]
+        exact List.drop_left
+      have sameTail : remaining.flatten = rest.flatten := leftSuffix.symm.trans
+        ((congrArg (fun values => values.drop first.length) flattened).trans rightSuffix)
+      exact congrArg₂ List.cons sameHead
+        (eq_of_uniform_lengths width remaining rest (Nat.succ.inj counts)
+          (fun row member => firstLengths row (List.Mem.tail first member))
+          (fun row member => secondLengths row (List.Mem.tail second member)) sameTail)
+
 /-- Membership in a finite flat-map is equivalent to a displayed source and inner
 membership.
 

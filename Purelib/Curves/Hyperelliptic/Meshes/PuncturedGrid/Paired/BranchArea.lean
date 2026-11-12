@@ -144,7 +144,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_succ)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base}
 
@@ -157,13 +157,13 @@ set_option genInjectivity false in
 /-- The actual consecutive-branch A pair and reference B pair with its retained earlier-A prefix.
 
 The corrected B walk is exactly the original reference pair followed by that supplied prefix. -/
-structure PairedRow (bank : LiftedPuncturedGrid.BasedBranchBank lifted) (reference : BranchIsolation.Data.Index
+structure PairedRow (bank : BasedBranchBank lifted) (reference : BranchIsolation.Data.Index
   branches) (sheet : Fin 2)
     (labels : BranchIsolation.Data.Index branches × BranchIsolation.Data.Index branches) (prior :
       CommonLoop lifted sheet) where
-  /-- The retained original A pair, preparation or face assignments. -/ a : BasedBranchBank.Pair bank labels.1 labels.2
+  /-- The retained original A pair, preparation or face assignments. -/ a : Pair bank labels.1 labels.2
     sheet
-  /-- The retained original B pair, prepared walk or face assignments. -/ b : BasedBranchBank.Pair bank labels.1
+  /-- The retained original B pair, prepared walk or face assignments. -/ b : Pair bank labels.1
     reference sheet
   /-- The actual root-closed B walk with the retained earlier-A prefix. -/ corrected :
     CommonLoop lifted sheet
@@ -175,39 +175,39 @@ constructive_injectivity PairedRow
 namespace PairedRow
 
 variable {bank : BasedBranchBank
-  lifted} {reference : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches} {sheet : Fin 2}
-  {labels : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches ×
-    Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches} {prior :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.CommonLoop lifted sheet}
+  lifted} {reference : BranchIsolation.Data.Index branches} {sheet : Fin 2}
+  {labels : BranchIsolation.Data.Index branches ×
+    BranchIsolation.Data.Index branches} {prior :
+    CommonLoop lifted sheet}
 
 /-- Cache the actual consecutive-branch and reference pairs, appending the supplied original prior A prefix to the
 corrected B walk. -/
-@[expose] def build (bank : LiftedPuncturedGrid.BasedBranchBank lifted) (reference : BranchIsolation.Data.Index
+@[expose] def build (bank : BasedBranchBank lifted) (reference : BranchIsolation.Data.Index
   branches) (sheet : Fin 2)
     (labels : BranchIsolation.Data.Index branches × BranchIsolation.Data.Index branches) (prior :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.CommonLoop lifted sheet) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRow bank reference sheet labels prior :=
+      CommonLoop lifted sheet) :
+    PairedRow bank reference sheet labels prior :=
   let a := bank.pair labels.1 labels.2 sheet
   let b := bank.pair labels.1 reference sheet
   ⟨a, b, b.closed.append prior, rfl⟩
 
 /-- Read the actual outward and returning leg values of the retained A pair. -/
-@[expose] def reading (row : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRow bank reference sheet
-  labels prior) (value : Stokes.OrientedEdge lifted.vertices.count → Gaussian) :
+@[expose] def reading (row : PairedRow bank reference sheet
+  labels prior) (value : OrientedEdge lifted.vertices.count → Gaussian) :
     Gaussian × Gaussian := (SewingRetraction.wordValue value row.a.outward.indexed, SewingRetraction.wordValue value
       row.a.returning.indexed)
 
 /-- The retained A-pair value is the sum of its exact outward and returning leg values. -/
-theorem a_value (row : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRow bank reference sheet labels
-  prior) (value : Stokes.OrientedEdge lifted.vertices.count → Gaussian) :
+theorem a_value (row : PairedRow bank reference sheet labels
+  prior) (value : OrientedEdge lifted.vertices.count → Gaussian) :
     SewingRetraction.wordValue value row.a.closed.indexed = (row.reading value).1 + (row.reading value).2 := by
   rw [row.a.closed_eq]
   exact SewingRetraction.wordValue_append value _ _
 
 /-- The corrected B value retains the first actual branch leg, reference leg on the exchanged sheet and complete prior A
 prefix. -/
-theorem b_value (row : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRow bank reference sheet labels
-  prior) (value : Stokes.OrientedEdge lifted.vertices.count → Gaussian) :
+theorem b_value (row : PairedRow bank reference sheet labels
+  prior) (value : OrientedEdge lifted.vertices.count → Gaussian) :
     SewingRetraction.wordValue value row.corrected.indexed = (row.reading value).1 +
       SewingRetraction.wordValue value (lifted.edges.indexedEdges lifted.vertices (bank.rows.get
         reference).reference.walk (BranchCutLifts.otherSheet sheet)) +
@@ -219,8 +219,8 @@ theorem b_value (row : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchAr
   rw [row.a.outward_eq, BasedBranchBank.liftedLoop_indexed]
 
 /-- The actual A-pair area retains both original leg areas and their exact cross term. -/
-theorem a_area (row : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRow bank reference sheet labels
-  prior) (value : Stokes.OrientedEdge lifted.vertices.count → Gaussian) :
+theorem a_area (row : PairedRow bank reference sheet labels
+  prior) (value : OrientedEdge lifted.vertices.count → Gaussian) :
     RetracingWords.wordArea value row.a.closed.indexed = RetracingWords.wordArea value row.a.outward.indexed +
       RetracingWords.wordArea value row.a.returning.indexed +
       BoundaryRibbon.area (row.reading value).1 (row.reading value).2 := by
@@ -230,10 +230,10 @@ theorem a_area (row : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchAre
 set_option genInjectivity false in
 /-- The A and corrected B programs both consume their original certified root-closed walks. No new branch isolation or
 sheet choice is performed. -/
-structure Prepared (row : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRow bank reference sheet
-  labels prior) (source : Differentials.Basic.Differential genus) where
+structure Prepared (row : PairedRow bank reference sheet
+  labels prior) (source : Differential genus) where
   /-- The retained original A pair, preparation or face assignments. -/ a : row.a.Prepared source
-  /-- The retained original B pair, prepared walk or face assignments. -/ b : PreparedGridPeriodPrograms.PeriodWalk
+  /-- The retained original B pair, prepared walk or face assignments. -/ b : PeriodWalk
     base.bank.grid (lifted.vertices.coordinate (BasedBranchBank.anchor lifted sheet))
     (lifted.vertices.owner lifted.frames (BasedBranchBank.anchor lifted sheet)) source
   /-- The prepared B program consumes exactly the original corrected root-closed walk. -/ b_walk_eq : b.closed.walk =
@@ -242,8 +242,8 @@ structure Prepared (row : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.Branc
 constructive_injectivity Prepared
 
 /-- Prepare the actual A and corrected B walks on their original retained root owners. -/
-@[expose] def prepare (row : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRow bank reference sheet
-  labels prior) (source : Differentials.Basic.Differential genus) :
+@[expose] def prepare (row : PairedRow bank reference sheet
+  labels prior) (source : Differential genus) :
   Prepared row source :=
   let reference := (BranchCellBank.referenceAt base.bank.toBranchCellBank _ (lifted.vertices.coordinate_onGrid
     (BasedBranchBank.anchor lifted sheet))).toLoop
@@ -251,17 +251,17 @@ constructive_injectivity Prepared
 
 namespace Prepared
 
-variable {row : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRow bank reference sheet
+variable {row : PairedRow bank reference sheet
   labels prior} {source : Differential genus}
 
 set_option genInjectivity false in
 /-- The actual A and corrected-B face assignments with the original B segment cache and indexed-word readback. -/
-structure Faces (prepared : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRow.Prepared row source)
+structure Faces (prepared : Prepared row source)
   where
   /-- The retained original A pair, preparation or face assignments. -/ a : prepared.a.Faces
   /-- The cached actual covered-segment bank of the original corrected B program. -/ bSegments :
-    PeriodSegmentBanks.SegmentBank prepared.b
-  /-- The retained original B pair, prepared walk or face assignments. -/ b : FramedPuncturedGrid.OwnerWalkFaces
+    SegmentBank prepared.b
+  /-- The retained original B pair, prepared walk or face assignments. -/ b : OwnerWalkFaces
     lifted.mesh prepared.b.closed.walk
     (lifted.vertices.owner lifted.frames (BasedBranchBank.anchor lifted sheet))
   /-- The retained B face assignments have exactly the corrected walk's original indexed edge word. -/ b_indexed :
@@ -270,7 +270,7 @@ structure Faces (prepared : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.Bra
 constructive_injectivity Faces
 
 /-- Cache the original corrected-B covered segments and attach face geometry on its retained starting owner. -/
-@[expose] def faces (prepared : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRow.Prepared row
+@[expose] def faces (prepared : Prepared row
   source) : Faces prepared :=
   let segments := SegmentBank.build prepared.b
   let geometry := OwnerWalkFaces.ofSheet lifted.mesh prepared.b.closed.walk
@@ -285,18 +285,18 @@ constructive_injectivity Faces
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRow.Prepared
 /-- Build face-domain comparisons using the exact original corrected-B segment and parent caches. -/
 @[expose] def Faces.bComparisons {prepared :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRow.Prepared row source} (faces :
+  Prepared row source} (faces :
   Faces prepared)
     (domains : DomainBanks.FaceDomainBank lifted.frames base.faces.regulars) (differential :
-      Differentials.Basic.Differential genus) :=
+      Differential genus) :=
   faces.b.comparisons faces.bSegments.pieces domains differential 0 (faces.bSegments.parentCaches differential)
 
 /-- The retained B comparisons use exactly the original prepared program's ordered parent list recast to the supplied
 differential. -/
-theorem Faces.b_parents {prepared : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRow.Prepared row
+theorem Faces.b_parents {prepared : Prepared row
   source} (faces : Faces prepared)
     (domains : DomainBanks.FaceDomainBank lifted.frames base.faces.regulars) (differential :
-      Differentials.Basic.Differential genus) :
+      Differential genus) :
     Comparisons.parents differential 0
       (faces.b.assign faces.bSegments.pieces) (faces.bComparisons domains differential) =
       prepared.b.initial.state.parents.map (PreparedEdgeRecasting.recastCenteredEdge differential) :=
@@ -311,7 +311,7 @@ end PairedRow
 set_option genInjectivity false in
 /-- Prefixes are indexed by the actual concatenation of earlier A walks. The recursive row cache therefore carries every
 B shear certificate. -/
-inductive PairedRows (bank : LiftedPuncturedGrid.BasedBranchBank lifted) (reference : BranchIsolation.Data.Index
+inductive PairedRows (bank : BasedBranchBank lifted) (reference : BranchIsolation.Data.Index
   branches) (sheet : Fin 2) :
     List (BranchIsolation.Data.Index branches × BranchIsolation.Data.Index branches) →
       CommonLoop lifted sheet → Type
@@ -330,32 +330,32 @@ constructive_injectivity PairedRows
 namespace PairedRows
 
 variable {bank : BasedBranchBank
-  lifted} {reference : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches} {sheet : Fin 2}
-  {labels : List (Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches ×
-    Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches)} {prior :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.CommonLoop lifted sheet}
+  lifted} {reference : BranchIsolation.Data.Index branches} {sheet : Fin 2}
+  {labels : List (BranchIsolation.Data.Index branches ×
+    BranchIsolation.Data.Index branches)} {prior :
+    CommonLoop lifted sheet}
 
 set_option genInjectivity false in
 /-- An indexed retained paired row together with its exact earlier-A prefix. -/
-structure Entry (bank : LiftedPuncturedGrid.BasedBranchBank lifted) (reference : BranchIsolation.Data.Index branches)
+structure Entry (bank : BasedBranchBank lifted) (reference : BranchIsolation.Data.Index branches)
   (sheet : Fin 2)
     (labels : BranchIsolation.Data.Index branches × BranchIsolation.Data.Index branches) where
   /-- The actual retained concatenation of all earlier A walks. -/ prior :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.CommonLoop lifted sheet
+    CommonLoop lifted sheet
   /-- The original paired row indexed by this exact retained prefix. -/ row :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRow bank reference sheet labels prior
+    PairedRow bank reference sheet labels prior
 
 constructive_injectivity Entry
 
 /-- Read the actual paired row and its retained earlier-A prefix at the supplied bounded label index. -/
 @[expose] def get : {labels : List (BranchIsolation.Data.Index branches × BranchIsolation.Data.Index branches)} →
-    {prior : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.CommonLoop lifted sheet} →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRows bank reference sheet labels prior →
+    {prior : CommonLoop lifted sheet} →
+      PairedRows bank reference sheet labels prior →
     (index : Fin labels.length) → Entry bank
       reference sheet labels[index.val]
   | _, _, .nil _, index => Fin.elim0 index
   | first :: rest, prior, .cons row tail, index =>
-      Purelib.Data.Fin.casesDependent
+      Data.Fin.casesDependent
         (motive := fun position : Fin ((first :: rest).length) =>
           Entry bank reference sheet
             ((first :: rest)[position.val]'position.isLt))
@@ -364,24 +364,24 @@ constructive_injectivity Entry
           position) index
 
 /-- Construct the ordered paired-row bank while retaining the exact cumulative original A prefix at each row. -/
-@[expose] def build (bank : LiftedPuncturedGrid.BasedBranchBank lifted) (reference : BranchIsolation.Data.Index
+@[expose] def build (bank : BasedBranchBank lifted) (reference : BranchIsolation.Data.Index
   branches) (sheet : Fin 2) :
     (labels : List (BranchIsolation.Data.Index branches × BranchIsolation.Data.Index branches)) →
-    (prior : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.CommonLoop lifted sheet) →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRows bank reference sheet labels prior
+    (prior : CommonLoop lifted sheet) →
+      PairedRows bank reference sheet labels prior
   | [], prior => .nil prior
   | labels :: rest, prior =>
-      let row := Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRow.build bank reference sheet labels
+      let row := PairedRow.build bank reference sheet labels
         prior
       .cons row (build bank reference
         sheet rest (prior.append row.a.closed))
 termination_by structural labels _ => labels
 
 /-- Read the ordered actual outward and returning leg values of every retained paired row. -/
-@[expose] def readings (value : Stokes.OrientedEdge lifted.vertices.count → Gaussian) :
+@[expose] def readings (value : OrientedEdge lifted.vertices.count → Gaussian) :
     {labels : List (BranchIsolation.Data.Index branches × BranchIsolation.Data.Index branches)} → {prior :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.CommonLoop lifted sheet} →
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRows bank reference sheet labels prior → List
+      CommonLoop lifted sheet} →
+    PairedRows bank reference sheet labels prior → List
       (Gaussian × Gaussian)
   | _, _, .nil _ => []
   | _, _, .cons row tail => row.reading value ::
@@ -389,36 +389,36 @@ termination_by structural labels _ => labels
 
 /-- Concatenate the actual original closed A words in retained row order. -/
 @[expose] def word : {labels : List (BranchIsolation.Data.Index branches × BranchIsolation.Data.Index branches)} →
-    {prior : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.CommonLoop lifted sheet} →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRows bank reference sheet labels prior → List
-      (Stokes.OrientedEdge lifted.vertices.count)
+    {prior : CommonLoop lifted sheet} →
+      PairedRows bank reference sheet labels prior → List
+      (OrientedEdge lifted.vertices.count)
   | _, _, .nil _ => []
   | _, _, .cons row tail => row.a.closed.indexed ++
     word tail
 
 /-- Sum both actual one-branch leg areas in every retained A row. -/
-@[expose] def internalArea (value : Stokes.OrientedEdge lifted.vertices.count → Gaussian) :
+@[expose] def internalArea (value : OrientedEdge lifted.vertices.count → Gaussian) :
     {labels : List (BranchIsolation.Data.Index branches × BranchIsolation.Data.Index branches)} → {prior :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.CommonLoop lifted sheet} →
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRows bank reference sheet labels prior → Gaussian
+      CommonLoop lifted sheet} →
+    PairedRows bank reference sheet labels prior → Gaussian
   | _, _, .nil _ => 0
   | _, _, .cons row tail => RetracingWords.wordArea value row.a.outward.indexed + RetracingWords.wordArea value
     row.a.returning.indexed +
     internalArea value tail
 
 /-- Sum the actual bilinear areas of each original A value with its corrected B value. -/
-@[expose] def correctedArea (value : Stokes.OrientedEdge lifted.vertices.count → Gaussian) :
+@[expose] def correctedArea (value : OrientedEdge lifted.vertices.count → Gaussian) :
     {labels : List (BranchIsolation.Data.Index branches × BranchIsolation.Data.Index branches)} → {prior :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.CommonLoop lifted sheet} →
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRows bank reference sheet labels prior → Gaussian
+      CommonLoop lifted sheet} →
+    PairedRows bank reference sheet labels prior → Gaussian
   | _, _, .nil _ => 0
   | _, _, .cons row tail => BoundaryRibbon.area (SewingRetraction.wordValue value row.a.closed.indexed)
     (SewingRetraction.wordValue value row.corrected.indexed) +
     correctedArea value tail
 
 /-- The complete retained A-word value equals the total of its actual paired leg readings. -/
-theorem word_value (rows : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRows bank reference sheet
-  labels prior) (value : Stokes.OrientedEdge lifted.vertices.count → Gaussian) :
+theorem word_value (rows : PairedRows bank reference sheet
+  labels prior) (value : OrientedEdge lifted.vertices.count → Gaussian) :
     SewingRetraction.wordValue value rows.word = Increments.total (rows.readings value) := by
   induction rows with
   | nil => rfl
@@ -428,8 +428,8 @@ theorem word_value (rows : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.Bran
 
 /-- The actual corrected-pair area reads back the finite paired-increment formula with the retained reference and
 prior-prefix values. -/
-theorem correctedArea_eq (rows : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRows bank reference
-  sheet labels prior) (value : Stokes.OrientedEdge lifted.vertices.count → Gaussian) :
+theorem correctedArea_eq (rows : PairedRows bank reference
+  sheet labels prior) (value : OrientedEdge lifted.vertices.count → Gaussian) :
     rows.correctedArea value = Increments.correctedArea
       (SewingRetraction.wordValue value (lifted.edges.indexedEdges lifted.vertices (bank.rows.get
         reference).reference.walk (BranchCutLifts.otherSheet sheet)))
@@ -445,8 +445,8 @@ theorem correctedArea_eq (rows : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paire
       rfl
 
 /-- The retained corrected-pair area equals the complete finite indexed sum over its actual rows. -/
-theorem correctedArea_sum (rows : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRows bank reference
-  sheet labels prior) (value : Stokes.OrientedEdge lifted.vertices.count → Gaussian) :
+theorem correctedArea_sum (rows : PairedRows bank reference
+  sheet labels prior) (value : OrientedEdge lifted.vertices.count → Gaussian) :
     rows.correctedArea value = FiniteSum.Fin.sumFin (fun index : Fin labels.length =>
       BoundaryRibbon.area (SewingRetraction.wordValue value (rows.get index).row.a.closed.indexed)
         (SewingRetraction.wordValue value (rows.get index).row.corrected.indexed)) := by
@@ -460,8 +460,8 @@ theorem correctedArea_sum (rows : Curves.Hyperelliptic.Meshes.PuncturedGrid.Pair
 
 /-- The original complete A-word area splits into actual internal leg areas and the polygon area of their ordered
 totals. -/
-theorem word_area (rows : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRows bank reference sheet
-  labels prior) (value : Stokes.OrientedEdge lifted.vertices.count → Gaussian) :
+theorem word_area (rows : PairedRows bank reference sheet
+  labels prior) (value : OrientedEdge lifted.vertices.count → Gaussian) :
     RetracingWords.wordArea value rows.word = rows.internalArea value + IncrementArea.pathArea (Increments.values
       (rows.readings value)) := by
   induction rows with
@@ -476,19 +476,19 @@ theorem word_area (rows : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.Branc
       ring1
 
 /-- The concatenated retained A words are exactly the original ordered branch-loop product on its actual sheet. -/
-theorem word_eq (rows : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRows bank reference sheet
+theorem word_eq (rows : PairedRows bank reference sheet
   labels prior) :
     rows.word = lifted.edges.indexedEdges lifted.vertices (bank.loopProduct (labels.flatMap (fun pair => [pair.1,
       pair.2]))) sheet := by
   induction rows with
   | nil => rfl
   | cons row tail ih =>
-      simp only [Purelib.Data.List.Flatten.flatMap_cons, List.cons_append, List.nil_append, -eq_self, -iff_self]
+      simp only [Data.List.Flatten.flatMap_cons, List.cons_append, List.nil_append, -eq_self, -iff_self]
       rw [bank.loopProduct_pair_indexed _ _ _ sheet row.a]
       exact congrArg (row.a.closed.indexed ++ ·) ih
 
 /-- Appending remaining original branch labels preserves the exact retained A prefix word and arriving sheet. -/
-theorem word_eq_append (rows : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRows bank reference
+theorem word_eq_append (rows : PairedRows bank reference
   sheet labels prior) (ending : List (BranchIsolation.Data.Index branches)) :
     lifted.edges.indexedEdges lifted.vertices (bank.loopProduct (labels.flatMap (fun pair => [pair.1, pair.2]) ++
       ending)) sheet =
@@ -496,19 +496,19 @@ theorem word_eq_append (rows : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.
   induction rows with
   | nil => rfl
   | cons row tail ih =>
-      simp only [Purelib.Data.List.Flatten.flatMap_cons, List.cons_append, List.nil_append, -eq_self, -iff_self]
+      simp only [Data.List.Flatten.flatMap_cons, List.cons_append, List.nil_append, -eq_self, -iff_self]
       rw [bank.loopProduct_pair_indexed _ _ _ sheet row.a, ih,
         word,
-        Purelib.Data.List.Append.append_assoc]
+        Data.List.Append.append_assoc]
 
-variable (rows : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRows bank reference sheet
-  labels (Purelib.RootIsolation.SquareRoot.Grid.Walk.Vertex.VertexWalk.nil lifted.vertices lifted.edges
+variable (rows : PairedRows bank reference sheet
+  labels (Vertex.VertexWalk.nil lifted.vertices lifted.edges
   (BasedBranchBank.anchor lifted
   sheet)))
 
 /-- The odd-ending complete word and corrected pairing retain every internal branch area and the exact terminal cross
 term. -/
-theorem odd_area (value : Stokes.OrientedEdge lifted.vertices.count → Gaussian) (ending : List (Stokes.OrientedEdge
+theorem odd_area (value : OrientedEdge lifted.vertices.count → Gaussian) (ending : List (OrientedEdge
   lifted.vertices.count)) :
     RetracingWords.wordArea value (rows.word ++ ending) + rows.correctedArea value = rows.internalArea value +
       RetracingWords.wordArea value ending +
@@ -530,8 +530,8 @@ theorem odd_area (value : Stokes.OrientedEdge lifted.vertices.count → Gaussian
     _ = _ := by rw [polygon]
 
 /-- The two-leg ending and corrected pairing retain all original internal, terminal and cross-area terms. -/
-theorem even_area (value : Stokes.OrientedEdge lifted.vertices.count → Gaussian)
-    (forward returning : List (Stokes.OrientedEdge lifted.vertices.count)) :
+theorem even_area (value : OrientedEdge lifted.vertices.count → Gaussian)
+    (forward returning : List (OrientedEdge lifted.vertices.count)) :
     RetracingWords.wordArea value (rows.word ++ (forward ++ returning)) + rows.correctedArea value =
       rows.internalArea value + RetracingWords.wordArea value forward + RetracingWords.wordArea value returning +
         BoundaryRibbon.area (Increments.total (rows.readings value)) (SewingRetraction.wordValue value forward +

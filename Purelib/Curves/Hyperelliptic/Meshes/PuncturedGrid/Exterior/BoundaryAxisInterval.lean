@@ -67,14 +67,14 @@ open Purelib.Riemann.Normalization
 open Purelib.Geometry.Rectangle.Partition.PreparedSegmentCuts
 
 open Purelib.Data.Rat.Fraction.Compatibility
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {occurrences : List
     (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
     regular domains differential)}
@@ -95,16 +95,16 @@ correspondence. -/
 The retained traversal orientation determines which endpoint identities and strict direction certify the correspondence.
 -/
 @[expose] def intervalOfRange (vertical forward : Bool) (physical : Rectangle.Partition.PreparedAxisPartitions.Interval)
-    (ordered : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward
-      (parent.edge.point 0) < Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical
+    (ordered : SourceBlockParameters.signedAxis vertical forward
+      (parent.edge.point 0) < SourceBlockParameters.signedAxis vertical
       forward (parent.edge.point 1))
     (range : Integration.RectangularAxisParameterRange.AxisParameterRange
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward (parent.edge.point
+      (SourceBlockParameters.signedAxis vertical forward (parent.edge.point
       0))
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward (parent.edge.point
-        1)) (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward physical)) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.BoundaryAxisInterval.ParentInterval parent vertical physical := open
-      Purelib.Data.Rat in by
+      (SourceBlockParameters.signedAxis vertical forward (parent.edge.point
+        1)) (SourceBlockParameters.signedInterval forward physical)) :
+    ParentInterval parent vertical physical := open
+      Data.Rat in by
   refine ⟨range.range, range.within, ?_⟩
   cases forward with
   | true => exact Or.inl ⟨Fraction.Order.Arithmetic.sub_pos_direct ordered, range.first_eq, range.last_eq⟩
@@ -122,26 +122,26 @@ open Purelib.Geometry.Rectangle.Partition.PreparedSegmentCuts in
 /-- A midpoint crossing plus retained endpoints computes the entire interval
 assignment. Both orientations use the same cached split and physical mesh. -/
 @[expose] def LocatedParent.locateInterval (located :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.BoundaryParentLocation.LocatedParent occurrences parent)
-    {columns rows : Nat} {geometry : Normalization.RectangularInverseModels.Geometry columns rows}
+  BoundaryParentLocation.LocatedParent occurrences parent)
+    {columns rows : Nat} {geometry : RectangularInverseModels.Geometry columns rows}
     {cuts : Paths.RectangularSegmentSplitting.GridCuts geometry} {box : Rational.Box}
     (mesh : Meshes.RectangularObservationMesh.ObservationMesh cuts box)
     (retained : ∀ point ∈ located.selected.split.points, point ∈ mesh.points)
     (vertical forward : Bool) (physical : Rectangle.Partition.PreparedAxisPartitions.Interval)
     (present : physical ∈ Rectangle.SourceIntervals.axisIntervals mesh vertical)
-    (lower : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward
-      (parent.edge.point 0) ≤ Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.blockMidpoint forward
+    (lower : SourceBlockParameters.signedAxis vertical forward
+      (parent.edge.point 0) ≤ SourceBlockParameters.blockMidpoint forward
       physical)
-    (upper : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.blockMidpoint forward physical <
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward (parent.edge.point
+    (upper : SourceBlockParameters.blockMidpoint forward physical <
+      SourceBlockParameters.signedAxis vertical forward (parent.edge.point
       1)) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.BoundaryAxisInterval.ParentInterval parent vertical physical := open
-      Purelib.Data.Rat in by
-  have outside {point : Normalization.InverseRootPolynomial.Gaussian} (member : point ∈ mesh.points) :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward point ≤
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward physical).lower ∨
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward physical).upper ≤
-          Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward point := by
+    ParentInterval parent vertical physical := open
+      Data.Rat in by
+  have outside {point : InverseRootPolynomial.Gaussian} (member : point ∈ mesh.points) :
+      SourceBlockParameters.signedAxis vertical forward point ≤
+        (SourceBlockParameters.signedInterval forward physical).lower ∨
+        (SourceBlockParameters.signedInterval forward physical).upper ≤
+          SourceBlockParameters.signedAxis vertical forward point := by
     have bound := Rectangle.SourceIntervals.axis_cut_outside mesh vertical present member
     cases forward with
     | true => exact bound
@@ -156,21 +156,21 @@ assignment. Both orientations use the same cached split and physical mesh. -/
   have firstOutside := outside (retained _ first)
   have lastOutside := outside (retained _ last)
   have midpoint := Rectangle.Partition.PreparedSegmentCuts.midpoint_bounds
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward physical)
-  have firstBound : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward
-    (parent.edge.point 0) ≤ (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward
+    (SourceBlockParameters.signedInterval forward physical)
+  have firstBound : SourceBlockParameters.signedAxis vertical forward
+    (parent.edge.point 0) ≤ (SourceBlockParameters.signedInterval forward
     physical).lower := by
     rcases firstOutside with bound | bound
     · exact bound
     · exact (not_lt_of_ge (bound.trans lower) midpoint.2).elim
-  have lastBound : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward
-    physical).upper ≤ Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward
+  have lastBound : (SourceBlockParameters.signedInterval forward
+    physical).upper ≤ SourceBlockParameters.signedAxis vertical forward
     (parent.edge.point 1) := by
     rcases lastOutside with bound | bound
     · exact (not_lt_of_ge (bound.trans midpoint.1.le) upper).elim
     · exact bound
   let ordered := lower.trans_lt upper
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.BoundaryAxisInterval.intervalOfRange vertical forward physical
+  exact BoundaryAxisInterval.intervalOfRange vertical forward physical
     ordered
     (Integration.RectangularAxisParameterRange.AxisParameterRange.build _ _ _ ordered ⟨firstBound, lastBound⟩)
 

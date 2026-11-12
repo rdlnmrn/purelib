@@ -26,9 +26,11 @@ import Purelib.RootIsolation.Residual.Global.Assignment
 import Purelib.RootIsolation.Residual.Global.Bounds
 
 public import Purelib.Riemann.RootContinuation.SquareRootProvenance
+public import Purelib.Data.Gaussian.Norm.SquareResidual
 public import Purelib.Riemann.RootContinuation.SquareRootReconditioning
 import Purelib.Approximation.Gaussian.Process.Apart
 import Purelib.Geometry.Rational.Box.Basic
+import Purelib.Geometry.Rational.Box.Bounds
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Approximation.Gaussian.Name.Coherent.Arithmetic
 import Purelib.Data.Gaussian.Field
@@ -39,6 +41,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Mathlib.Order.Basic
 import Mathlib.Data.Nat.Basic
 import Purelib.Tactic.Ring
+
+open Purelib.Data.Rat.Fraction.Order
 
 @[expose] public section
 
@@ -64,16 +68,16 @@ open Purelib.Data.Rat in
 /-- The rational coordinate carrier of the root ownership bounds. -/
 abbrev Coordinate := Fraction.Rational
 /-- The original coherent executable Gaussian channel carrier. -/
-abbrev CoherentNamed := Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed
+abbrev CoherentNamed := Approximation.Gaussian.Name.Coherent.CoherentNamed
 /-- Equivalence of the original executable Gaussian names. -/
-abbrev NamedEquivalent := Purelib.Approximation.Gaussian.Equivalence.NamedEquivalent
+abbrev NamedEquivalent := Approximation.Gaussian.Equivalence.NamedEquivalent
 open Purelib.Approximation.Gaussian in
 /-- The original executable Gaussian approximation carrier. -/
 abbrev Approximation := Sequence.ApproximationData
 /-- The retained executable apartness evidence for an original Gaussian name. -/
-abbrev Apart := Purelib.Approximation.Gaussian.Name.Basic.Named.Apart
+abbrev Apart := Approximation.Gaussian.Name.Basic.Named.Apart
 /-- The original square-root continuation owner at its exact parameter. -/
-abbrev Owner := Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+abbrev Owner := Topology.SquareRootContinuationChain.Owner
 
 open Purelib.Data.Gaussian.Basic.Canonical
 open Purelib.Riemann.RootContinuation.SquareRootProvenance (SquareIdentity sampled_square)
@@ -88,7 +92,7 @@ theorem parameter_nonzero {parameter : Gaussian} (source : CertifiedSquareRoot.C
   have square : SquareIdentity source.value 0 := by
     simpa only [SquareIdentity, Name.Coherent.CoherentNamed.Coherence.exact, zero] using source.square
   exact Division.Obstruction.Zero.ZeroIdentity.incompatible_apart
-    (SquareRootProvenance.zero_of_square square) source.apart
+    (zero_of_square square) source.apart
 
 section
 open Purelib.Data.Gaussian
@@ -107,8 +111,8 @@ private theorem sum_lower {left right : Gaussian} {lower : Coordinate}
   calc
     lower = 2 * lower - lower := by ring1
     _ ≤ 2 * normSq left - normSq (left - right) :=
-      Fraction.Order.Arithmetic.sub_le_sub_direct
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct rootLower (by decide)) near
+      Arithmetic.sub_le_sub_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct rootLower (by decide)) near
     _ = 4 * normSq left / 2 - normSq (left - right) := by
       have half : 4 * normSq left / 2 = 2 * normSq left := by
         apply Fraction.Field.mul_right_cancel_of_ne (show (2 : Coordinate) ≠ 0 by decide)
@@ -126,54 +130,37 @@ theorem root_distance {left right parameter : Gaussian} {lower target : Coordina
     (near : normSq (left - right) ≤ lower)
     (leftResidual : normSq (left * left - parameter) < target * lower / 4)
     (rightResidual : normSq (right * right - parameter) < target * lower / 4) :
-    normSq (left - right) < target := by
-  have sumLower := sum_lower rootLower near
-  have residualBound : normSq (left * left - right * right) < target * lower := by
-    have identity : left * left - right * right =
-        (left * left - parameter) - (right * right - parameter) := by ring1
-    rw [identity]
-    calc
-      _ ≤ 2 * (normSq (left * left - parameter) + normSq (right * right - parameter)) :=
-        by
-          have scalar := Norm.Bounds.normSq_sub_le_two
-            (left * left - parameter) (right * right - parameter)
-          simpa only [Norm.Basic.normSq_eq_canonical] using scalar
-      _ < 2 * (target * lower / 4 + target * lower / 4) :=
-        Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide)
-          (Fraction.Order.Arithmetic.add_lt_add_direct leftResidual rightResidual)
-      _ = (target * lower / 4) * 4 := by ring1
-      _ = _ := Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
-  apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct (c := lower) _ lowerPositive
-  calc
-    normSq (left - right) * lower ≤ normSq (left - right) * normSq (left + right) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct sumLower (Basic.Canonical.normSq_nonneg _)
-    _ = normSq (left * left - right * right) := by
-      rw [← Basic.Canonical.normSq_mul, show (left - right) * (left + right) = left * left - right * right by ring1]
-    _ < _ := residualBound
+    normSq (left - right) < target :=
+  Norm.SquareResidual.distance_lt_of_sum_lower lowerPositive (sum_lower rootLower near)
+    leftResidual rightResidual
 
 end
 
-open Purelib.Approximation.Gaussian in
-open Purelib.Data.Gaussian in
-open Purelib.Data.Rat in
-open Purelib.Data in
-/-- Compare original square-root channels using retained square identities, apartness and eventual proximity.
+section
+open Purelib.Approximation.Gaussian
+open Purelib.Data.Gaussian
+open Purelib.Data.Rat
+open Purelib.Data
+/-- Compare original square-root channels from their actual positive sum floor and independent tail floors.
 
-The returned comparison preserves both requested index floors and derives its residual target from the original
-apartness lower bound. -/
-def equivalent_of_near {left right : CoherentNamed} {parameter : Gaussian}
+Both supplied square identities keep their original coherent channels.
+Their same square-residual requests pay the chosen target with the retained
+positive sum bound. Separate left/right floors preserve each requested
+start, including the original literal-zero right-floor branch.
+-/
+def equivalent_of_sum_lower {left right : CoherentNamed} {parameter : Gaussian}
     (leftSquare : SquareIdentity left parameter) (rightSquare : SquareIdentity right parameter)
-    (apart : Apart left.name) (base : Nat)
-    (near : ∀ leftIndex rightIndex, base ≤ leftIndex →
-      normSq ((Name.Sampling.approximation left.name).sample leftIndex -
-        (Name.Sampling.approximation right.name).sample rightIndex) ≤ apart.certificate.lowerSq) :
+    (lower : Coordinate) (lowerPositive : 0 < lower) (base rightBase : Nat)
+    (sumLower : ∀ leftIndex rightIndex, base ≤ leftIndex → rightBase ≤ rightIndex →
+      lower ≤ normSq ((Name.Sampling.approximation left.name).sample leftIndex +
+        (Name.Sampling.approximation right.name).sample rightIndex)) :
     NamedEquivalent left.name right.name where
   compare := by
     intro leftStart rightStart target positive
-    let residualTarget := target * apart.certificate.lowerSq / 4
+    let residualTarget := target * lower / 4
     have residualPositive : 0 < residualTarget :=
-      Fraction.Order.Field.div_pos_direct
-        (Fraction.Order.Arithmetic.mul_pos_direct positive apart.certificate.positive) (by decide)
+      Field.div_pos_direct
+        (Arithmetic.mul_pos_direct positive lowerPositive) (by decide)
     have baseBound : base ≤ max base leftStart := by
       rw [Nat.Order.max_eq_natMax]
       exact Nat.Order.le_max_left _ _
@@ -181,12 +168,29 @@ def equivalent_of_near {left right : CoherentNamed} {parameter : Gaussian}
       rw [Nat.Order.max_eq_natMax]
       exact Nat.Order.le_max_right _ _
     let first := (sampled_square leftSquare).compare (max base leftStart) 0 residualTarget residualPositive
-    let second := (sampled_square rightSquare).compare rightStart 0 residualTarget residualPositive
+    let rightFloor := match rightBase with
+      | 0 => rightStart
+      | _ + 1 => max rightBase rightStart
+    have rightBaseBound : rightBase ≤ rightFloor := by
+      cases rightBase with
+      | zero => exact Nat.zero_le _
+      | succ rightBase =>
+          change rightBase + 1 ≤ max (rightBase + 1) rightStart
+          rewrite [Nat.Order.max_eq_natMax]
+          exact Nat.Order.le_max_left _ _
+    have rightStartBound : rightStart ≤ rightFloor := by
+      cases rightBase with
+      | zero => exact Nat.le_refl _
+      | succ rightBase =>
+          change rightStart ≤ max (rightBase + 1) rightStart
+          rewrite [Nat.Order.max_eq_natMax]
+          exact Nat.Order.le_max_right _ _
+    let second := (sampled_square rightSquare).compare rightFloor 0 residualTarget residualPositive
     refine
       { leftIndex := first.leftIndex
         rightIndex := second.leftIndex
         left_ge := startBound.trans first.left_ge
-        right_ge := second.left_ge
+        right_ge := rightStartBound.trans second.left_ge
         close := ?_ }
     intro leftLater rightLater leftOrder rightOrder
     have leftResidual := first.close leftOrder (Nat.le_refl first.rightIndex)
@@ -196,12 +200,162 @@ def equivalent_of_near {left right : CoherentNamed} {parameter : Gaussian}
       (Name.Sampling.approximation left.name).sample leftLater - parameter) < residualTarget at leftResidual
     change normSq ((Name.Sampling.approximation right.name).sample rightLater *
       (Name.Sampling.approximation right.name).sample rightLater - parameter) < residualTarget at rightResidual
-    have rootLower := Name.Apart.Sampling.sampled_lower left apart leftLater
-    rw [Norm.Basic.normSq_eq_canonical] at rootLower
     rw [Norm.Basic.normSq_eq_canonical]
-    exact root_distance apart.certificate.positive rootLower
-      (near leftLater rightLater (baseBound.trans (first.left_ge.trans leftOrder)))
+    exact Norm.SquareResidual.distance_lt_of_sum_lower lowerPositive
+      (sumLower leftLater rightLater (baseBound.trans (first.left_ge.trans leftOrder))
+        (rightBaseBound.trans (second.left_ge.trans rightOrder)))
       leftResidual rightResidual
+
+/-- Compare the same original square-root channels from two independently retained finite tail floors.
+
+The returned comparison preserves both requested index floors and derives its residual target from the original
+apartness lower bound. -/
+def equivalent_of_near_tails {left right : CoherentNamed} {parameter : Gaussian}
+    (leftSquare : SquareIdentity left parameter) (rightSquare : SquareIdentity right parameter)
+    (apart : Apart left.name) (base rightBase : Nat)
+    (near : ∀ leftIndex rightIndex, base ≤ leftIndex → rightBase ≤ rightIndex →
+      normSq ((Name.Sampling.approximation left.name).sample leftIndex -
+        (Name.Sampling.approximation right.name).sample rightIndex) ≤ apart.certificate.lowerSq) :
+    NamedEquivalent left.name right.name where
+  compare := fun leftStart rightStart target positive =>
+    (equivalent_of_sum_lower leftSquare rightSquare apart.certificate.lowerSq apart.certificate.positive base rightBase
+      (fun leftIndex rightIndex leftLater rightLater => by
+        have rootLower := Name.Apart.Sampling.sampled_lower left apart leftIndex
+        rewrite [Norm.Basic.normSq_eq_canonical] at rootLower
+        exact sum_lower rootLower (near leftIndex rightIndex leftLater rightLater))).compare
+      leftStart rightStart target positive
+
+/-- Compare original square-root channels with one left floor and unrestricted original right samples.
+
+The two-floor procedure's literal zero branch forwards the original requested
+right start unchanged. Thus existing clients retain their original square
+comparison calls and selected indices; both original names remain inputs.
+-/
+def equivalent_of_near {left right : CoherentNamed} {parameter : Gaussian}
+    (leftSquare : SquareIdentity left parameter) (rightSquare : SquareIdentity right parameter)
+    (apart : Apart left.name) (base : Nat)
+    (near : ∀ leftIndex rightIndex, base ≤ leftIndex →
+      normSq ((Name.Sampling.approximation left.name).sample leftIndex -
+        (Name.Sampling.approximation right.name).sample rightIndex) ≤ apart.certificate.lowerSq) :
+    NamedEquivalent left.name right.name :=
+  equivalent_of_near_tails leftSquare rightSquare apart base 0
+    (fun leftIndex rightIndex leftLater _ => near leftIndex rightIndex leftLater)
+
+/-- A fixed paid source box transfers a signed product-tail bound to the actual continued target owner.
+
+Both owners remain the supplied original owners. The target's retained
+initial box refines this one fixed source box; arbitrary later accuracy
+requests do not prepare either owner again. One actual source alignment and
+the quantitative cross-product tail bound select the sign constructively.
+-/
+theorem near_in_refining_box {sourceParameter targetParameter : Gaussian}
+    (sourceOwner : Owner sourceParameter) (targetOwner : Owner targetParameter)
+    (source target : CoherentNamed) (sourceFloor targetFloor : Nat)
+    (alignment : Equivalence.Comparison
+      (Name.Sampling.approximation (sourceOwner.certificate sourceOwner.parameterNonzero).value.name)
+      (Name.Sampling.approximation source.name) 0 sourceFloor
+      ((targetOwner.certificate targetOwner.parameterNonzero).apart.certificate.lowerSq / 64))
+    (refines : targetOwner.track.initial.box.Refines sourceOwner.track.initial.box)
+    (small : sourceOwner.track.initial.box.diagonalSq ≤
+      (targetOwner.certificate targetOwner.parameterNonzero).apart.certificate.lowerSq / 16)
+    (paid : ∀ first last, sourceFloor ≤ first → targetFloor ≤ last →
+      normSq ((Name.Sampling.approximation source.name).sample first -
+        (Name.Sampling.approximation target.name).sample last) ≤
+          (targetOwner.certificate targetOwner.parameterNonzero).apart.certificate.lowerSq / 64) :
+    ∀ first last, targetFloor ≤ last →
+      normSq ((Name.Sampling.approximation
+          (targetOwner.certificate targetOwner.parameterNonzero).value.name).sample first -
+        (Name.Sampling.approximation target.name).sample last) ≤
+          (targetOwner.certificate targetOwner.parameterNonzero).apart.certificate.lowerSq := by
+  intro first last lastOrder
+  let lower := (targetOwner.certificate targetOwner.parameterNonzero).apart.certificate.lowerSq
+  let sourceName := (sourceOwner.certificate sourceOwner.parameterNonzero).value.name
+  let targetName := (targetOwner.certificate targetOwner.parameterNonzero).value.name
+  let sourceRoot := (Name.Sampling.approximation sourceName).sample alignment.leftIndex
+  let sourceValue := (Name.Sampling.approximation source.name).sample alignment.rightIndex
+  let targetRoot := (Name.Sampling.approximation targetName).sample first
+  let targetValue := (Name.Sampling.approximation target.name).sample last
+  have sourceInside : sourceOwner.track.initial.box.Contains sourceRoot :=
+    sourceOwner.certificate_candidate_in_initial_box sourceOwner.parameterNonzero _
+      (Process.Sampling.witnessAt_possible sourceName.process sourceName.state alignment.leftIndex)
+  have targetInside : sourceOwner.track.initial.box.Contains targetRoot :=
+    refines.contains (targetOwner.certificate_candidate_in_initial_box targetOwner.parameterNonzero _
+      (Process.Sampling.witnessAt_possible targetName.process targetName.state first))
+  have boxBound : normSq (targetRoot - sourceRoot) ≤ lower / 16 := by
+    have scalar := (Geometry.Rational.Box.normSq_sub_le_diagonalSq targetInside sourceInside).trans small
+    rewrite [Norm.Basic.normSq_eq_canonical] at scalar
+    exact scalar
+  have aligned : normSq (sourceRoot - sourceValue) ≤ lower / 64 := by
+    have retained := alignment.close (Nat.le_refl alignment.leftIndex) (Nat.le_refl alignment.rightIndex)
+    rewrite [Norm.Basic.normSq_eq_canonical] at retained
+    exact retained.le
+  have productBound : normSq (sourceValue - targetValue) ≤ lower / 64 :=
+    paid alignment.rightIndex last alignment.right_ge lastOrder
+  have insideTriangle : normSq (sourceRoot - targetValue) ≤
+      2 * (normSq (sourceRoot - sourceValue) + normSq (sourceValue - targetValue)) := by
+    have scalar := Norm.Bounds.normSq_sub_le_via sourceRoot sourceValue targetValue
+    simp only [Norm.Basic.normSq_eq_canonical] at scalar
+    exact scalar
+  have insideBound : normSq (sourceRoot - targetValue) ≤ 2 * (lower / 64 + lower / 64) :=
+    insideTriangle.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct aligned productBound) (by decide +kernel))
+  calc
+    _ ≤ 2 * (normSq (targetRoot - sourceRoot) + normSq (sourceRoot - targetValue)) := by
+      have scalar := Norm.Bounds.normSq_sub_le_via targetRoot sourceRoot targetValue
+      simp only [Norm.Basic.normSq_eq_canonical] at scalar
+      exact scalar
+    _ ≤ 2 * (lower / 16 + 2 * (lower / 64 + lower / 64)) :=
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.add_le_add_direct boxBound insideBound) (by decide +kernel)
+    _ = (1 / 4 : Coordinate) * lower := by
+      simp only [Fraction.Field.div_eq_mul_inv_direct]
+      calc
+        _ = (2 * ((16 : Coordinate)⁻¹ + 2 * ((64 : Coordinate)⁻¹ + (64 : Coordinate)⁻¹))) * lower := by
+          ring1
+        _ = _ := congrArg (fun coefficient : Coordinate => coefficient * lower)
+          (by decide +kernel : (2 : Coordinate) * (16⁻¹ + 2 * (64⁻¹ + 64⁻¹)) = 1 / 4)
+    _ ≤ 1 * lower := Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel)
+      (targetOwner.certificate targetOwner.parameterNonzero).apart.certificate.positive.le
+    _ = _ := by ring1
+
+/-- Retain the actual source alignment and construct the target comparison using the same fixed paid owner boxes.
+
+The exact subtype caches the original source comparison, including its
+selected indices and requested floor. The second component uses the original
+two-tail comparison procedure, square identities and actual target apartness.
+The paid product bound is numerical; no target agreement is an input.
+-/
+def equivalent_in_refining_box {sourceParameter targetParameter : Gaussian}
+    (sourceOwner : Owner sourceParameter) (targetOwner : Owner targetParameter)
+    (source target : CoherentNamed)
+    (sourceAgreement : NamedEquivalent (sourceOwner.certificate sourceOwner.parameterNonzero).value.name source.name)
+    (targetSquare : SquareIdentity target targetParameter) (sourceFloor targetFloor : Nat)
+    (refines : targetOwner.track.initial.box.Refines sourceOwner.track.initial.box)
+    (small : sourceOwner.track.initial.box.diagonalSq ≤
+      (targetOwner.certificate targetOwner.parameterNonzero).apart.certificate.lowerSq / 16)
+    (paid : ∀ first last, sourceFloor ≤ first → targetFloor ≤ last →
+      normSq ((Name.Sampling.approximation source.name).sample first -
+        (Name.Sampling.approximation target.name).sample last) ≤
+          (targetOwner.certificate targetOwner.parameterNonzero).apart.certificate.lowerSq / 64) :
+    Σ _alignment : {retained : Equivalence.Comparison
+        (Name.Sampling.approximation (sourceOwner.certificate sourceOwner.parameterNonzero).value.name)
+        (Name.Sampling.approximation source.name) 0 sourceFloor
+        ((targetOwner.certificate targetOwner.parameterNonzero).apart.certificate.lowerSq / 64) //
+      retained = sourceAgreement.compare 0 sourceFloor
+        ((targetOwner.certificate targetOwner.parameterNonzero).apart.certificate.lowerSq / 64)
+        (Field.div_pos_direct
+          (targetOwner.certificate targetOwner.parameterNonzero).apart.certificate.positive (by decide +kernel))},
+      NamedEquivalent (targetOwner.certificate targetOwner.parameterNonzero).value.name target.name :=
+  let certificate := targetOwner.certificate targetOwner.parameterNonzero
+  let alignment := sourceAgreement.compare 0 sourceFloor (certificate.apart.certificate.lowerSq / 64)
+    (Field.div_pos_direct certificate.apart.certificate.positive (by decide +kernel))
+  let agreement := equivalent_of_near_tails certificate.square targetSquare certificate.apart 0 targetFloor
+    (fun first last _ lastOrder =>
+      near_in_refining_box sourceOwner targetOwner source target sourceFloor targetFloor alignment
+        refines small paid first last lastOrder)
+  ⟨⟨alignment, rfl⟩, agreement⟩
+
+end
 
 open Purelib.Approximation.Gaussian in
 open Purelib.Polynomial.Dense.Gaussian in
@@ -255,16 +409,16 @@ def Anchor.build {parameter : Gaussian} (source : CertifiedSquareRoot.Certificat
   have radiusPositive : 0 < radius := SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius_positive _
   let target := min (Global.Bounds.outsideResidualThreshold (rootPolynomial parameter))
     (Global.Assignment.insideResidualTarget input radius)
-  have targetPositive : 0 < target := Fraction.Order.Basic.lt_min
+  have targetPositive : 0 < target := Basic.lt_min
     (Global.Bounds.outsideResidualThreshold_pos input.degreePositive)
     (Global.Assignment.insideResidualTarget_pos input radiusPositive)
   let comparison := (sampled_square source.square).compare 0 0 target targetPositive
   let approximation := Name.Sampling.approximation source.value.name
-  have nearPositive : 0 < lower / 8 := Fraction.Order.Field.div_pos_direct lowerPositive (by decide)
+  have nearPositive : 0 < lower / 8 := Field.div_pos_direct lowerPositive (by decide)
   let index := approximation.refineIndex comparison.leftIndex (lower / 8) nearPositive
   let value := approximation.sample index
   have residual : normSq ((rootPolynomial parameter).eval value) < target := by
-    rw [rootPolynomial, Purelib.Polynomial.Power.Gaussian.rootPolynomial_eval]
+    rw [rootPolynomial, Gaussian.rootPolynomial_eval]
     change normSq (value ^ 2 - parameter) < target
     rw [pow_two]
     have scalar := comparison.close (approximation.refineIndex_ge comparison.leftIndex (lower / 8) nearPositive)
@@ -277,7 +431,7 @@ def Anchor.build {parameter : Gaussian} (source : CertifiedSquareRoot.Certificat
     · exact contains
     · have outside := Global.Bounds.outsideResidualThreshold_le input.degreeAtLeastTwo value contains
       rw [Norm.Basic.normSq_eq_canonical] at outside
-      exact ((not_lt_of_ge outside) (residual.trans_le (Fraction.Order.Basic.min_le_left _ _))).elim
+      exact ((not_lt_of_ge outside) (residual.trans_le (Basic.min_le_left _ _))).elim
   exact
     { nonzero := nonzero
       lower := lower
@@ -285,7 +439,7 @@ def Anchor.build {parameter : Gaussian} (source : CertifiedSquareRoot.Certificat
       radius := radius
       radiusPositive := radiusPositive
       radiusSmall := SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius_sq_lt
-        (Fraction.Order.Field.div_pos_direct lowerPositive (by decide +kernel))
+        (Field.div_pos_direct lowerPositive (by decide +kernel))
       index := index
       value := value
       value_eq := rfl
@@ -294,7 +448,7 @@ def Anchor.build {parameter : Gaussian} (source : CertifiedSquareRoot.Certificat
           (approximation.refineIndex_accurate comparison.leftIndex (lower / 8) nearPositive).le
         simpa only [Norm.Basic.normSq_eq_canonical] using scalar
       inside := inside
-      residual := residual.trans_le (Fraction.Order.Basic.min_le_right _ _) }
+      residual := residual.trans_le (Basic.min_le_right _ _) }
 
 open Purelib.Data.Rat in
 /-- A radius squared below lower-bound divided by 1024 pays the retained eighteen-times-radius band bound.
@@ -305,12 +459,12 @@ theorem band_small {lower radius : Coordinate} (positive : 0 < lower)
     (small : radius ^ 2 < lower / 1024) : 18 * radius ^ 2 ≤ lower / 8 := by
   calc
     _ ≤ 18 * (lower / 1024) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct small.le (by decide)
+      Arithmetic.mul_le_mul_of_nonneg_left_direct small.le (by decide)
     _ = (18 / 1024 : Coordinate) * lower := by
       simp only [Fraction.Field.div_eq_mul_inv_direct]
       ring1
     _ ≤ (1 / 8 : Coordinate) * lower :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel) positive.le
+      Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel) positive.le
     _ = _ := by simp only [Fraction.Field.div_eq_mul_inv_direct]; ring1
 
 open Purelib.Approximation.Gaussian in
@@ -363,20 +517,20 @@ def attach {parameter : Gaussian} (source : CertifiedSquareRoot.Certificate para
     rw [assigned.trackInitial] at inside
     exact inside
   have rightNear : normSq (anchor.value - right) ≤ anchor.lower / 8 := by
-    rw [show anchor.value - right = -(right - anchor.value) by ring1, Basic.Canonical.normSq_neg]
+    rw [show anchor.value - right = -(right - anchor.value) by ring1, normSq_neg]
     have scalar := assigned.bandNearSample right contained
     rw [Norm.Basic.normSq_eq_canonical] at scalar
     exact scalar.trans
-      ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.pow_le_pow_direct assigned.radiusPositive.le assigned.radiusLeRequested 2)
+      ((Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.pow_le_pow_direct assigned.radiusPositive.le assigned.radiusLeRequested 2)
         (by decide)).trans (band_small anchor.positive anchor.radiusSmall))
   calc
     _ ≤ 2 * (normSq (left - anchor.value) + normSq (anchor.value - right)) := by
       have scalar := Norm.Bounds.normSq_sub_le_via left anchor.value right
       simpa only [Norm.Basic.normSq_eq_canonical] using scalar
     _ ≤ 2 * (anchor.lower / 8 + anchor.lower / 8) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.add_le_add_direct (anchor.tailNear leftIndex order) rightNear) (by decide)
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.add_le_add_direct (anchor.tailNear leftIndex order) rightNear) (by decide)
     _ = (1 / 2 : Coordinate) * anchor.lower := by
       apply Fraction.Field.mul_right_cancel_of_ne (show (8 : Coordinate) ≠ 0 by decide)
       calc
@@ -390,7 +544,7 @@ def attach {parameter : Gaussian} (source : CertifiedSquareRoot.Certificate para
             _ = ((1 / 2 : Coordinate) * 8) * anchor.lower := by rw [cancel]; ring1
             _ = _ := by ring1
     _ ≤ 1 * anchor.lower :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide) anchor.positive.le
+      Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide) anchor.positive.le
     _ = source.apart.certificate.lowerSq := by rw [Fraction.Field.one_mul]; rfl
 
 end Purelib.Riemann.RootContinuation.SquareRootChannelOwnership

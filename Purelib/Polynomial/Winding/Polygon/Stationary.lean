@@ -24,6 +24,8 @@ import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Polynomial.Dense.Rational.CauchyIndex.Path
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian.Path
+
 open Purelib.Data
 
 open Purelib.Polynomial
@@ -49,36 +51,36 @@ open Purelib.Polynomial.Path
 nonzero.  This includes values on either coordinate axis. -/
 theorem segment_self_doubledWinding (polynomial : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
     (point : Gaussian.Basic.Canonical) (nonzero : polynomial.eval point ≠ 0) :
-    (Dense.Gaussian.Path.Segment.segment polynomial point point).doubledWinding = 0 := open Purelib in open
+    (Segment.segment polynomial point point).doubledWinding = 0 := open Purelib in open
       Purelib.Geometry.Rational in by
   let value := polynomial.eval point
   let coordinate := Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
-  let A := Dense.Gaussian.Path.Components.pathReal coordinate value (value - value)
-  let B := Dense.Gaussian.Path.Components.pathImag coordinate value (value - value)
-  let U := Dense.Gaussian.Path.Components.pathReal polynomial point (point - point)
-  let V := Dense.Gaussian.Path.Components.pathImag polynomial point (point - point)
+  let A := Components.pathReal coordinate value (value - value)
+  let B := Components.pathImag coordinate value (value - value)
+  let U := Components.pathReal polynomial point (point - point)
+  let V := Components.pathImag polynomial point (point - point)
   let interval : Data.Rat.Interval.Bounds := ⟨0, 1, by decide⟩
   let clearance : Clearance.Pair.Basic.Certificate A B interval :=
-    { bound := Data.Gaussian.Norm.Basic.normSq value
+    { bound := Gaussian.Norm.Basic.normSq value
       positive := Gaussian.Norm.Basic.normSq_pos nonzero
       lower := by
         intro time _inside
-        simp only [A, B, Dense.Gaussian.Path.Components.eval_pathReal, Dense.Gaussian.Path.Components.eval_pathImag,
+        simp only [A, B, Components.eval_pathReal, Components.eval_pathImag,
           Affine.Segment.line_self,
-          coordinate, Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial_eval, Data.Gaussian.Norm.Basic.normSq]
+          coordinate, Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial_eval, Gaussian.Norm.Basic.normSq]
         exact le_rfl }
-  have formula : Winding.Polygon.Comparison.SegmentHomotopyFormula coordinate polynomial value value point point := by
+  have formula : Comparison.SegmentHomotopyFormula coordinate polynomial value value point point := by
     refine ⟨?_, ?_, ?_⟩
     · simpa only [coordinate, Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial_eval] using nonzero
     · simpa only [coordinate, Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial_eval] using nonzero
     apply Dense.Rational.CauchyIndex.Comparison.Dominance.lineData_of_normDominance
       (C := U - A) (D := V - B) (root := interval)
-      (by decide) clearance (Data.Gaussian.Norm.Basic.normSq value) (Gaussian.Norm.Basic.normSq_pos nonzero)
+      (by decide) clearance (Gaussian.Norm.Basic.normSq value) (Gaussian.Norm.Basic.normSq_pos nonzero)
     · intro time _inside
-      simp only [U, V, A, B, Dense.Basic.DensePolynomial.eval_sub, Dense.Gaussian.Path.Components.eval_pathReal,
-        Dense.Gaussian.Path.Components.eval_pathImag,
+      simp only [U, V, A, B, Dense.Basic.DensePolynomial.eval_sub, Components.eval_pathReal,
+        Components.eval_pathImag,
         Affine.Segment.line_self, coordinate, Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial_eval, value,
-          Data.Gaussian.Norm.Basic.normSq]
+          Gaussian.Norm.Basic.normSq]
       apply le_of_eq
       ring1
     · intro time
@@ -87,8 +89,8 @@ theorem segment_self_doubledWinding (polynomial : Dense.Gaussian.Basic.Canonical
     · intro time
       rw [Dense.Basic.DensePolynomial.eval_sub]
       ring1
-  have equality := Winding.Polygon.Comparison.segmentRaw_eq_of_homotopy formula
-  rw [Winding.Polygon.Coordinate.coordinate_segment_self_doubledWinding] at equality
+  have equality := Comparison.segmentRaw_eq_of_homotopy formula
+  rw [Coordinate.coordinate_segment_self_doubledWinding] at equality
   exact equality.trans (by ring1)
 
 /-- Removing a repeated initial vertex preserves the chain winding when the polynomial value there is nonzero.
@@ -98,9 +100,9 @@ ordered tail vertices and polynomial values. -/
 theorem chainRaw_cons_self (polynomial : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (point :
   Gaussian.Basic.Canonical)
     (nonzero : polynomial.eval point ≠ 0) (remaining : List Gaussian.Basic.Canonical) :
-    Winding.Polygon.Basic.chainRaw polynomial point (point :: remaining) = Winding.Polygon.Basic.chainRaw polynomial
+    Basic.chainRaw polynomial point (point :: remaining) = Basic.chainRaw polynomial
       point remaining := by
-  rw [Winding.Polygon.Basic.chainRaw, Winding.Polygon.Stationary.segment_self_doubledWinding polynomial point nonzero,
+  rw [Basic.chainRaw, segment_self_doubledWinding polynomial point nonzero,
     Data.Int.Arithmetic.zero_add]
 
 end Purelib.Polynomial.Winding.Polygon.Stationary

@@ -37,6 +37,8 @@ import Purelib.Riemann.Meshes.ShrinkingPuncturedGrid
 import Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices
 import Purelib.Topology.Polygon.Stokes
 
+open Purelib.Riemann.Topology.NewtonGlobalSurfaceBoundary
+
 open Purelib.Riemann.RootContinuation.NewtonGlobalTriangleEnergyReadback.SynchronizedSurfaceRequests
 
 open Purelib.Algebra
@@ -62,14 +64,14 @@ open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.OuterCornerReadback
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
     Fraction.Rational} {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
   {lifted : Meshes.LiftedPuncturedGrid grid.punctured}
   {observations : RootContinuation.NewtonProtectedObservations.ProtectedObservations original}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
     {partitions : Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid}
   {coarse : (sheet : Fin 2) → Topology.NewtonRequestedSurfaceEnergy.SurfaceMeshes partitions domains sheet}
   {fixed : (sheet : Fin 2) → RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet} {error :
@@ -80,31 +82,31 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
 namespace SynchronizedSurfaceRequests.PerimeterSamples
 
 variable {requests : Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests coarse fixed error} {traces
-  : Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.PerimeterTraces requests}
-  (excision : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted)
+  : SynchronizedSurfaceRequests.PerimeterTraces requests}
+  (excision : AllHoles.Excision.AllHoleExcision grid lifted)
 
 /-- Sum the original cached corner areas over both sheets on the exact retained complement face mask. -/
 def remainingCachedCornerBoundary (cache : RootContinuation.NewtonObservationLocalEnergy.LocalMeshes.Numerics domains
   stage) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) : Gaussian :=
-  FiniteSum.Fin.sumFin (fun position => Hyperelliptic.Meshes.PuncturedGrid.SelectedPerimeterIdentity.SelectedSides.value
-    (Hyperelliptic.Meshes.Newton.Complement.ObservationLower.remainingFaceMask excision position) (FiniteSum.Fin.sumFin
+  FiniteSum.Fin.sumFin (fun position => PuncturedGrid.SelectedPerimeterIdentity.SelectedSides.value
+    (ObservationLower.remainingFaceMask excision position) (FiniteSum.Fin.sumFin
     (fun sheet : Fin 2 =>
     Periods.BilinearGridBoundary.cornerArea
-      (Hyperelliptic.Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.cachedValue cache coefficients position
+      (OuterCorners.cachedValue cache coefficients position
         sheet 0)
-      (Hyperelliptic.Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.cachedValue cache coefficients position
+      (OuterCorners.cachedValue cache coefficients position
         sheet 1)
-      (Hyperelliptic.Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.cachedValue cache coefficients position
+      (OuterCorners.cachedValue cache coefficients position
         sheet 2)
-      (Hyperelliptic.Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.cachedValue cache coefficients position
+      (OuterCorners.cachedValue cache coefficients position
         sheet 3))))
 
 /-- The original retained complement corner boundary equals the sum of its cached corner readings. -/
 theorem remaining_cornerBoundary_cached {assemblies :
-  Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.SheetAssemblies requests (cache := cache)
+  SynchronizedSurfaceRequests.SheetAssemblies requests (cache := cache)
   (coefficients := coefficients)}
-    {perimeters : Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.SheetPerimeters requests assemblies}
-      (faces : Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.SheetFaces requests perimeters) :
+    {perimeters : SynchronizedSurfaceRequests.SheetPerimeters requests assemblies}
+      (faces : SynchronizedSurfaceRequests.SheetFaces requests perimeters) :
 
       CenteredBoundary.SynchronizedSurfaceRequests.PerimeterSamples.remainingCornerBoundary
       excision faces =
@@ -115,20 +117,20 @@ theorem remaining_cornerBoundary_cached {assemblies :
     remainingCachedCornerBoundary
   apply FiniteSum.Fin.sumFin_congr
   intro position
-  apply congrArg (Hyperelliptic.Meshes.PuncturedGrid.SelectedPerimeterIdentity.SelectedSides.value
-    (Hyperelliptic.Meshes.Newton.Complement.ObservationLower.remainingFaceMask excision position))
+  apply congrArg (PuncturedGrid.SelectedPerimeterIdentity.SelectedSides.value
+    (ObservationLower.remainingFaceMask excision position))
   apply FiniteSum.Fin.sumFin_congr
   intro sheet
   let face := (faces.get sheet).get position
   change Periods.BilinearGridBoundary.cornerArea
-    (Hyperelliptic.Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value face false false)
-      (Hyperelliptic.Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value face true false)
-    (Hyperelliptic.Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value face true true)
-      (Hyperelliptic.Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value face false true) = _
-  rw [Hyperelliptic.Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value_eq_cached,
-    Hyperelliptic.Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value_eq_cached,
-    Hyperelliptic.Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value_eq_cached,
-    Hyperelliptic.Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value_eq_cached]
+    (OuterCorners.value face false false)
+      (OuterCorners.value face true false)
+    (OuterCorners.value face true true)
+      (OuterCorners.value face false true) = _
+  rw [OuterCorners.value_eq_cached,
+    OuterCorners.value_eq_cached,
+    OuterCorners.value_eq_cached,
+    OuterCorners.value_eq_cached]
   rfl
 
 variable (readings :
@@ -139,16 +141,16 @@ variable (readings :
 def remainingTriangleEnergy (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) : Gaussian :=
   FiniteSum.Fin.sumFin (fun source => if !(excision.entries.any (fun entry =>
     Topology.NewtonSewnExcision.AllHoleExcision.sourceMask entry source)) then
-    RootContinuation.NewtonGlobalTriangleEnergyReadback.SynchronizedSurfaceRequests.PerimeterSamples.triangleEnergy
+    PerimeterSamples.triangleEnergy
       readings coefficients source else 0)
 
 /-- The original complement corner boundary reads exactly the triangle-energy cache selected by the same retained source
 mask. -/
 theorem remaining_cornerBoundary_triangles
-    {assemblies : Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.SheetAssemblies requests (cache :=
+    {assemblies : SynchronizedSurfaceRequests.SheetAssemblies requests (cache :=
       cache) (coefficients := coefficients)}
-    {perimeters : Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.SheetPerimeters requests assemblies}
-      (faces : Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.SheetFaces requests perimeters) :
+    {perimeters : SynchronizedSurfaceRequests.SheetPerimeters requests assemblies}
+      (faces : SynchronizedSurfaceRequests.SheetFaces requests perimeters) :
 
       CenteredBoundary.SynchronizedSurfaceRequests.PerimeterSamples.remainingCornerBoundary
       excision faces =
@@ -159,18 +161,18 @@ theorem remaining_cornerBoundary_triangles
   unfold
     remainingCachedCornerBoundary
     remainingTriangleEnergy
-  erw [Hyperelliptic.Meshes.PuncturedGrid.TriangleSums.LiftedMesh.triangle_sum lifted.mesh]
+  erw [PuncturedGrid.TriangleSums.LiftedMesh.triangle_sum lifted.mesh]
   apply FiniteSum.Fin.sumFin_congr
   intro position
-  rw [Hyperelliptic.Meshes.PuncturedGrid.SelectedPerimeterIdentity.SelectedSides.value_sum]
+  rw [PuncturedGrid.SelectedPerimeterIdentity.SelectedSides.value_sum]
   apply FiniteSum.Fin.sumFin_congr
   intro sheet
-  rw [Hyperelliptic.Meshes.Newton.Complement.ObservationLower.remainingFaceMask_triangleIndex,
-    Hyperelliptic.Meshes.Newton.Complement.ObservationLower.remainingFaceMask_triangleIndex]
+  rw [ObservationLower.remainingFaceMask_triangleIndex,
+    ObservationLower.remainingFaceMask_triangleIndex]
   rw [←
-    RootContinuation.NewtonGlobalTriangleEnergyReadback.SynchronizedSurfaceRequests.PerimeterSamples.triangleEnergy_pair
+    PerimeterSamples.triangleEnergy_pair
     readings position sheet]
-  cases Hyperelliptic.Meshes.Newton.Complement.ObservationLower.remainingFaceMask excision position with
+  cases ObservationLower.remainingFaceMask excision position with
   | false => exact (add_zero (0 : Gaussian.Basic.Canonical)).symm
   | true => rfl
 

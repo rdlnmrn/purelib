@@ -44,9 +44,9 @@ endpoint-divisor bounds. Their product keeps the original coordinate pairing. -/
   Data.Nat.Positive.RootDegree)
     (radius : Fraction.Rational) : Nat :=
   coordinateCandidateSearchSize
-      (Power.Gaussian.Candidates.realCoordinatePolynomial input degree radius) *
+      (realCoordinatePolynomial input degree radius) *
     coordinateCandidateSearchSize
-      (Power.Gaussian.Candidates.imaginaryCoordinatePolynomial input degree radius)
+      (imaginaryCoordinatePolynomial input degree radius)
 
 /-- A bound on the Gaussian candidates reaching deduplication and the exact
 power test: the finite sum of coordinate-product charges over the actually
@@ -57,21 +57,21 @@ search sizes. The sum counts every original radius occurrence separately. -/
 @[expose] public def automaticCandidateSearchSize (input : Gaussian.Basic.Canonical) (degree :
   Data.Nat.Positive.RootDegree) :
     Nat :=
-  ((Power.Gaussian.Candidates.radiusCandidates input degree).map
+  ((radiusCandidates input degree).map
     (radiusCandidateSearchSize input degree)).sum
 
 /-- The candidates at one radius fit the product of the two coordinate search bounds. -/
 public theorem candidatesAtRadius_length_le (input : Gaussian.Basic.Canonical) (degree : Data.Nat.Positive.RootDegree)
     (radius : Fraction.Rational) :
-    (Power.Gaussian.Candidates.candidatesAtRadius input degree radius).length ≤
+    (candidatesAtRadius input degree radius).length ≤
       radiusCandidateSearchSize input degree radius := by
-  rw [Power.Gaussian.Candidates.candidatesAtRadius,
+  rw [candidatesAtRadius,
     Cartesian.cartesianCandidates_length]
   exact Nat.mul_le_mul
     (Dense.Rational.RootCandidates.candidates_length_le
-      (Power.Gaussian.Candidates.realCoordinatePolynomial input degree radius))
+      (realCoordinatePolynomial input degree radius))
     (Dense.Rational.RootCandidates.candidates_length_le
-      (Power.Gaussian.Candidates.imaginaryCoordinatePolynomial input degree radius))
+      (imaginaryCoordinatePolynomial input degree radius))
 
 /-- A finite union of radius candidates fits the sum of its coordinate-product bounds.
 
@@ -79,7 +79,7 @@ The original head fiber contributes its retained product bound. Scalar addition
 combines that bound with the bound of the unchanged radius tail. -/
 private theorem candidateRadii_length_le (input : Gaussian.Basic.Canonical)
     (degree : Data.Nat.Positive.RootDegree) : ∀ radii : List Fraction.Rational,
-    (radii.flatMap (Power.Gaussian.Candidates.candidatesAtRadius input degree)).length ≤
+    (radii.flatMap (candidatesAtRadius input degree)).length ≤
       (radii.map (radiusCandidateSearchSize input degree)).sum
   | [] => Nat.le_refl 0
   | radius :: remaining => by
@@ -93,31 +93,31 @@ private theorem candidateRadii_length_le (input : Gaussian.Basic.Canonical)
 endpoint-divisor bound. -/
 public theorem rawDerivedCandidates_length_le (input : Gaussian.Basic.Canonical)
     (degree : Data.Nat.Positive.RootDegree) :
-    (Power.Gaussian.Candidates.rawDerivedCandidates input degree).length ≤
+    (rawDerivedCandidates input degree).length ≤
       automaticCandidateSearchSize input degree := by
-  exact candidateRadii_length_le input degree (Power.Gaussian.Candidates.radiusCandidates input degree)
+  exact candidateRadii_length_le input degree (radiusCandidates input degree)
 
 /-- Deduplicated candidates fit the summed coordinate-product search bound.
 
 Deduplication cannot increase the size of the actual finite union over the derived radius list. -/
 public theorem derivedCandidates_length_le (input : Gaussian.Basic.Canonical) (degree : Data.Nat.Positive.RootDegree) :
-    (Power.Gaussian.Candidates.derivedCandidates input degree).length ≤
+    (derivedCandidates input degree).length ≤
       automaticCandidateSearchSize input degree := by
   calc
-    (Power.Gaussian.Candidates.derivedCandidates input degree).length ≤
-        (Power.Gaussian.Candidates.rawDerivedCandidates input degree).length := by
-      exact Data.List.Deduplicate.deduplicateCandidates_length_le _
+    (derivedCandidates input degree).length ≤
+        (rawDerivedCandidates input degree).length := by
+      exact Deduplicate.deduplicateCandidates_length_le _
     _ ≤ automaticCandidateSearchSize input degree :=
       rawDerivedCandidates_length_le input degree
 
 /-- Exact promotion cannot exceed the finite Cartesian candidate bound. -/
 public theorem automaticExactRoots_length_le
     (input : Gaussian.Basic.Canonical) (degree : Data.Nat.Positive.RootDegree) :
-    (Power.Gaussian.Candidates.automaticExactRoots input degree).length ≤
+    (automaticExactRoots input degree).length ≤
       automaticCandidateSearchSize input degree := by
   have promotedSublist :=
     Algebra.Power.Gaussian.ExactRoot.Check.promoteCandidates_points_sublist input degree
-      (Power.Gaussian.Candidates.derivedCandidates input degree)
+      (derivedCandidates input degree)
   have promotedLength := promotedSublist.length_le
   rewrite [Map.length_map] at promotedLength
   exact promotedLength.trans (derivedCandidates_length_le input degree)

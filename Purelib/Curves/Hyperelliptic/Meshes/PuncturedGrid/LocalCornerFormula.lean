@@ -54,41 +54,41 @@ open Purelib.Riemann
 open Purelib.RootIsolation
 open Purelib
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
     bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
   {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
-  {cuts : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
-    {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+    Face.DomainBanks.FaceDomainBank frames faces.regulars}
+  {cuts : RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
+    {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet} {target : Fraction.Rational}
   {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
   {firstPosition : Fin faces.regulars.length} {firstSheet : Fin 2}
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+variable {request : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+  RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
   target}
 
 variable {i j : Fin genus} {firstParent secondParent : Fin 2} {tolerance : Fraction.Rational} {floor stage : Nat}
   {first : mesh.LocatedFace firstPosition firstSheet} {nextPosition : Fin faces.regulars.length}
 
-variable {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+variable {cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage}
 
 namespace CrossingRequests
 
 /-- The retained original local-total sum differs from physical perimeters and fixed corner jumps by the paid local and
 corner errors. -/
 theorem TotalRequest.local_physical_corner_bound {localTarget cornerTarget : Fraction.Rational}
-    (exterior : Hyperelliptic.Meshes.PuncturedGrid.RegularExteriorRequest.ExteriorBoundaryRequest (fun sheet =>
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+    (exterior : RegularExteriorRequest.ExteriorBoundaryRequest (fun sheet =>
+      RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
       (localTarget / 4))
     {retained : Matched.CrossingBank exterior.prepared.energy mesh}
-    (total : Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingTotal.CrossingRequests.TotalRequest retained i j
+    (total : Matched.CrossingTotal.CrossingRequests.TotalRequest retained i j
       firstParent secondParent ((localTarget / 4) / 4) floor)
-    (corner : Hyperelliptic.Meshes.PuncturedGrid.CrossingCornerBudget.CornerRequest fixed i j cornerTarget)
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.CrossingRequests.Samples total.allocated
+    (corner : CrossingCornerBudget.CornerRequest fixed i j cornerTarget)
+    (samples : Matched.CrossingSamples.CrossingRequests.Samples total.allocated
       cache.normalize)
     (original : Matched.FacePerimeters (request :=
       exterior.prepared.energy) cache i j)
@@ -96,20 +96,20 @@ theorem TotalRequest.local_physical_corner_bound {localTarget cornerTarget : Fra
       exterior.prepared.energy) cache.normalize i j)
     (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank faces) (positive : 0 < localTarget)
     (later : total.allocated.index ≤ stage) (cornerLater : corner.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.localTotalSum original -
-      Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors -
+    Gaussian.Norm.Basic.normSq
+      (NormalizedFaceAreas.FacePerimeters.localTotalSum original -
+      GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors -
       retained.cornerJump cache.normalize i j) ≤ 2 * (localTarget + cornerTarget) := by
   have localBound :=
-    Hyperelliptic.Meshes.PuncturedGrid.NormalizedSeamBudget.CrossingRequests.TotalRequest.local_physical_jump_paid
+    NormalizedSeamBudget.CrossingRequests.TotalRequest.local_physical_jump_paid
     exterior total samples original normalized neighbors positive later
-  have cornerBound := Hyperelliptic.Meshes.PuncturedGrid.CrossingCornerBudget.CornerRequest.bound corner cornerLater
+  have cornerBound := CrossingCornerBudget.CornerRequest.bound corner cornerLater
     samples
-  have equal : Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.localTotalSum original -
-      Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors -
+  have equal : NormalizedFaceAreas.FacePerimeters.localTotalSum original -
+      GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors -
         retained.cornerJump cache.normalize i j =
-      (Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.localTotalSum original -
-        Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors
+      (NormalizedFaceAreas.FacePerimeters.localTotalSum original -
+        GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors
           - samples.endpointJump) +
         (samples.endpointJump - retained.cornerJump cache.normalize i j) := by ring1
   rw [equal]
@@ -119,14 +119,14 @@ theorem TotalRequest.local_physical_corner_bound {localTarget cornerTarget : Fra
 /-- The common quarter-target allocations pay the complete original local-total versus physical-perimeter and
 corner-jump comparison. -/
 theorem TotalRequest.local_physical_corner_paid
-    (exterior : Hyperelliptic.Meshes.PuncturedGrid.RegularExteriorRequest.ExteriorBoundaryRequest (fun sheet =>
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+    (exterior : RegularExteriorRequest.ExteriorBoundaryRequest (fun sheet =>
+      RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
       ((target / 4) / 4))
     {retained : Matched.CrossingBank exterior.prepared.energy mesh}
-    (total : Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingTotal.CrossingRequests.TotalRequest retained i j
+    (total : Matched.CrossingTotal.CrossingRequests.TotalRequest retained i j
       firstParent secondParent (((target / 4) / 4) / 4) floor)
-    (corner : Hyperelliptic.Meshes.PuncturedGrid.CrossingCornerBudget.CornerRequest fixed i j (target / 4))
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.CrossingRequests.Samples total.allocated
+    (corner : CrossingCornerBudget.CornerRequest fixed i j (target / 4))
+    (samples : Matched.CrossingSamples.CrossingRequests.Samples total.allocated
       cache.normalize)
     (original : Matched.FacePerimeters (request :=
       exterior.prepared.energy) cache i j)
@@ -134,9 +134,9 @@ theorem TotalRequest.local_physical_corner_paid
       exterior.prepared.energy) cache.normalize i j)
     (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank faces) (positive : 0 < target)
     (later : total.allocated.index ≤ stage) (cornerLater : corner.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Hyperelliptic.Meshes.PuncturedGrid.NormalizedFaceAreas.FacePerimeters.localTotalSum original -
-      Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors -
+    Gaussian.Norm.Basic.normSq
+      (NormalizedFaceAreas.FacePerimeters.localTotalSum original -
+      GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors -
       retained.cornerJump cache.normalize i j) ≤ target := by
   have estimate := local_physical_corner_bound exterior total corner samples original normalized neighbors
     (Fraction.Order.Field.div_pos_direct positive (by decide)) later cornerLater

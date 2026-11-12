@@ -14,6 +14,8 @@ import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Tactic.Ring
 import Purelib.Data.Gaussian.Field
 
+open Purelib.Data.Gaussian.Resource
+
 open Purelib.Data
 
 open Purelib
@@ -74,7 +76,7 @@ before charging the tail. -/
   | [] => 0
   | coefficient :: remaining =>
       stepEnvelope current point (Gaussian.Resource.componentMagnitude coefficient) +
-        Purelib.Polynomial.Dense.Gaussian.Evaluation.Resource.arithmeticEnvelopeFrom point
+        Resource.arithmeticEnvelopeFrom point
           (stepMagnitudeEnvelope current point
             (Gaussian.Resource.componentMagnitude coefficient)) remaining
 end Purelib.Polynomial.Dense.Gaussian.Evaluation.Resource
@@ -121,7 +123,7 @@ Each step keeps the preceding magnitude bound as well as bounding the new accumu
     List Gaussian.Basic.Canonical → Nat
   | [] => current
   | coefficient :: remaining =>
-      Purelib.Polynomial.Dense.Gaussian.Evaluation.Resource.magnitudeEnvelopeFrom point
+      Resource.magnitudeEnvelopeFrom point
         (stepMagnitudeEnvelope current point (Gaussian.Resource.componentMagnitude coefficient))
         remaining
 end Purelib.Polynomial.Dense.Gaussian.Evaluation.Resource
@@ -187,12 +189,12 @@ The displayed point, accumulator and coefficient magnitudes must lie within thei
 theorem step_magnitude_le
     {point accumulator : Gaussian.Basic.Number} {coefficient : Gaussian.Basic.Canonical}
     {pointBound accumulatorBound coefficientBound : Nat}
-    (pointLe : Gaussian.Resource.GaussianNormalized.componentMagnitude point ≤ pointBound)
+    (pointLe : GaussianNormalized.componentMagnitude point ≤ pointBound)
     (accumulatorLe :
-      Gaussian.Resource.GaussianNormalized.componentMagnitude accumulator ≤ accumulatorBound)
+      GaussianNormalized.componentMagnitude accumulator ≤ accumulatorBound)
     (coefficientLe : Gaussian.Resource.componentMagnitude coefficient ≤ coefficientBound) :
-    Gaussian.Resource.GaussianNormalized.componentMagnitude
-        (Dense.Evaluation.step point accumulator coefficient) ≤
+    GaussianNormalized.componentMagnitude
+        (Evaluation.step point accumulator coefficient) ≤
       stepMagnitudeEnvelope accumulatorBound pointBound coefficientBound := by
   have product := (Gaussian.Resource.componentMagnitude_mul_le
     accumulator point).trans
@@ -218,16 +220,16 @@ The point and starting accumulator must satisfy the retained source bounds. -/
 theorem evalCoeffsFrom_magnitude_le
     {point accumulator : Gaussian.Basic.Number} {coefficients : List Gaussian.Basic.Canonical}
     {pointBound currentBound : Nat}
-    (pointLe : Gaussian.Resource.GaussianNormalized.componentMagnitude point ≤ pointBound)
+    (pointLe : GaussianNormalized.componentMagnitude point ≤ pointBound)
     (currentLe :
-      Gaussian.Resource.GaussianNormalized.componentMagnitude accumulator ≤ currentBound) :
-    Gaussian.Resource.GaussianNormalized.componentMagnitude
-        (Dense.Evaluation.evalCoeffsFrom point accumulator coefficients) ≤
+      GaussianNormalized.componentMagnitude accumulator ≤ currentBound) :
+    GaussianNormalized.componentMagnitude
+        (Evaluation.evalCoeffsFrom point accumulator coefficients) ≤
       magnitudeEnvelopeFrom pointBound currentBound coefficients := by
   induction coefficients generalizing accumulator currentBound with
   | nil => exact currentLe
   | cons coefficient remaining inductionHypothesis =>
-      rw [Dense.Evaluation.evalCoeffsFrom, List.foldl_cons, magnitudeEnvelopeFrom]
+      rw [Evaluation.evalCoeffsFrom, List.foldl_cons, magnitudeEnvelopeFrom]
       exact inductionHypothesis
         (step_magnitude_le (coefficient := coefficient)
           pointLe currentLe (le_refl _))
@@ -243,7 +245,7 @@ namespace Purelib.Polynomial.Dense.Gaussian.Evaluation.Resource
 /-- Polynomial evaluation lies within its coefficient-computed magnitude envelope. -/
 theorem eval_magnitude_le_envelope (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (point : Gaussian.Basic.Canonical) :
-    Gaussian.Resource.GaussianNormalized.componentMagnitude (Dense.Basic.DensePolynomial.eval polynomial point) ≤
+    GaussianNormalized.componentMagnitude (Basic.DensePolynomial.eval polynomial point) ≤
       magnitudeEnvelope point polynomial.coeffs := by
   exact evalCoeffsFrom_magnitude_le (le_refl _) (le_refl _)
 end Purelib.Polynomial.Dense.Gaussian.Evaluation.Resource
@@ -258,7 +260,7 @@ namespace Purelib.Polynomial.Dense.Gaussian.Evaluation.Resource
 /-- The final normalized polynomial value fits within the computed bit-width budget. -/
 theorem normalizedEvaluation_width_le_budget
     (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial) (point : Gaussian.Basic.Canonical) :
-    Gaussian.Resource.workingGaussianWidth (Dense.Basic.DensePolynomial.eval polynomial point) ≤
+    Gaussian.Resource.workingGaussianWidth (Basic.DensePolynomial.eval polynomial point) ≤
       normalizedEvaluationBitBudget polynomial point :=
   Data.Nat.BitWidth.natWidth_mono (eval_magnitude_le_envelope
     polynomial point)
@@ -275,9 +277,9 @@ namespace Purelib.Polynomial.Dense.Gaussian.Evaluation.Resource
 theorem step_steps_le
     {point accumulator : Gaussian.Basic.Number} {coefficient : Gaussian.Basic.Canonical}
     {pointBound accumulatorBound coefficientBound : Nat}
-    (pointLe : Gaussian.Resource.GaussianNormalized.componentMagnitude point ≤ pointBound)
+    (pointLe : GaussianNormalized.componentMagnitude point ≤ pointBound)
     (accumulatorLe :
-      Gaussian.Resource.GaussianNormalized.componentMagnitude accumulator ≤ accumulatorBound)
+      GaussianNormalized.componentMagnitude accumulator ≤ accumulatorBound)
     (coefficientLe : Gaussian.Resource.componentMagnitude coefficient ≤ coefficientBound) :
     Gaussian.Resource.mulSteps accumulator point +
         Gaussian.Resource.addSteps
@@ -313,15 +315,15 @@ The source point and initial accumulator must satisfy the supplied magnitude bou
 theorem stepsFrom_le_envelope
     {point accumulator : Gaussian.Basic.Number} {coefficients : List Gaussian.Basic.Canonical}
     {pointBound currentBound : Nat}
-    (pointLe : Gaussian.Resource.GaussianNormalized.componentMagnitude point ≤ pointBound)
+    (pointLe : GaussianNormalized.componentMagnitude point ≤ pointBound)
     (currentLe :
-      Gaussian.Resource.GaussianNormalized.componentMagnitude accumulator ≤ currentBound) :
-    Dense.Gaussian.Evaluation.Trace.stepsFrom point accumulator coefficients ≤
+      GaussianNormalized.componentMagnitude accumulator ≤ currentBound) :
+    Trace.stepsFrom point accumulator coefficients ≤
       arithmeticEnvelopeFrom pointBound currentBound coefficients := by
   induction coefficients generalizing accumulator currentBound with
   | nil => exact le_refl 0
   | cons coefficient remaining inductionHypothesis =>
-      rw [Dense.Gaussian.Evaluation.Trace.stepsFrom, arithmeticEnvelopeFrom]
+      rw [Trace.stepsFrom, arithmeticEnvelopeFrom]
       have clause := step_steps_le (coefficient := coefficient)
         pointLe currentLe (le_refl _)
       have nextMagnitude := step_magnitude_le (coefficient := coefficient)
@@ -340,7 +342,7 @@ namespace Purelib.Polynomial.Dense.Gaussian.Evaluation.Resource
 /-- The executed Horner count from zero is bounded by the coefficient-computed envelope. -/
 theorem steps_le_envelope (point : Gaussian.Basic.Canonical)
     (coefficients : List Gaussian.Basic.Canonical) :
-    Dense.Gaussian.Evaluation.Trace.steps point coefficients ≤ arithmeticEnvelope point coefficients :=
+    Trace.steps point coefficients ≤ arithmeticEnvelope point coefficients :=
   stepsFrom_le_envelope (le_refl _) (le_refl _)
 end Purelib.Polynomial.Dense.Gaussian.Evaluation.Resource
 
@@ -354,7 +356,7 @@ namespace Purelib.Polynomial.Dense.Gaussian.Evaluation.Resource
 /-- Normalized polynomial evaluation satisfies its declared arithmetic-step budget. -/
 theorem normalizedEvaluation_steps_le_budget
     (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial) (point : Gaussian.Basic.Canonical) :
-    Dense.Gaussian.Evaluation.Trace.steps point polynomial.coeffs ≤
+    Trace.steps point polynomial.coeffs ≤
       normalizedEvaluationStepBudget polynomial point :=
   steps_le_envelope point polynomial.coeffs
 end Purelib.Polynomial.Dense.Gaussian.Evaluation.Resource
@@ -373,12 +375,12 @@ The proof includes the initial accumulator and every later state, under the supp
 theorem traceFrom_magnitude_le
     {point accumulator : Gaussian.Basic.Number} {coefficients : List Gaussian.Basic.Canonical}
     {pointBound currentBound : Nat}
-    (pointLe : Gaussian.Resource.GaussianNormalized.componentMagnitude point ≤ pointBound)
+    (pointLe : GaussianNormalized.componentMagnitude point ≤ pointBound)
     (currentLe :
-      Gaussian.Resource.GaussianNormalized.componentMagnitude accumulator ≤ currentBound)
+      GaussianNormalized.componentMagnitude accumulator ≤ currentBound)
     {candidate : Gaussian.Basic.Number}
-    (member : candidate ∈ Dense.Gaussian.Evaluation.Trace.traceFrom point accumulator coefficients) :
-    Gaussian.Resource.GaussianNormalized.componentMagnitude candidate ≤
+    (member : candidate ∈ Trace.traceFrom point accumulator coefficients) :
+    GaussianNormalized.componentMagnitude candidate ≤
       magnitudeEnvelopeFrom pointBound currentBound coefficients := by
   induction coefficients generalizing accumulator currentBound with
   | nil =>
@@ -388,8 +390,8 @@ theorem traceFrom_magnitude_le
       exact currentLe
   | cons coefficient remaining inductionHypothesis =>
       change candidate ∈ accumulator ::
-        Dense.Gaussian.Evaluation.Trace.traceFrom point
-          (Dense.Evaluation.step point accumulator coefficient) remaining at member
+        Trace.traceFrom point
+          (Evaluation.step point accumulator coefficient) remaining at member
       have originalOccurrence := Data.List.Membership.mem_cons.mp member
       rewrite [magnitudeEnvelopeFrom]
       rcases originalOccurrence with head | tail
@@ -412,8 +414,8 @@ namespace Purelib.Polynomial.Dense.Gaussian.Evaluation.Resource
 /-- Every accumulator in the zero-start Horner trace satisfies the computed magnitude envelope. -/
 theorem trace_magnitude_le_envelope (point : Gaussian.Basic.Canonical)
     (coefficients : List Gaussian.Basic.Canonical) {candidate : Gaussian.Basic.Number}
-    (member : candidate ∈ Dense.Gaussian.Evaluation.Trace.trace point coefficients) :
-    Gaussian.Resource.GaussianNormalized.componentMagnitude candidate ≤
+    (member : candidate ∈ Trace.trace point coefficients) :
+    GaussianNormalized.componentMagnitude candidate ≤
       magnitudeEnvelope point coefficients :=
   traceFrom_magnitude_le (le_refl _) (le_refl _) member
 end Purelib.Polynomial.Dense.Gaussian.Evaluation.Resource
@@ -430,7 +432,7 @@ theorem normalizedEvaluation_trace_width_le_budget
     (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial) (point : Gaussian.Basic.Canonical)
     {candidate : Gaussian.Basic.Number}
     (member : candidate ∈
-      Dense.Gaussian.Evaluation.Trace.trace point polynomial.coeffs) :
+      Trace.trace point polynomial.coeffs) :
     Gaussian.Resource.workingGaussianWidth candidate ≤
       normalizedEvaluationBitBudget polynomial point :=
   Data.Nat.BitWidth.natWidth_mono (trace_magnitude_le_envelope

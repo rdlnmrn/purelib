@@ -51,7 +51,7 @@ inductive SuffixMode : Data.CCL.Transducer.Mode → Prop where
 /-- The next mode of every loop emission remains a loop-or-residual suffix mode. -/
 theorem loopStep_next_suffix (current : Mode.Basic.LoopState) :
     SuffixMode (Emission.Loop.loopStep current).next := by
-  unfold Emission.Loop.loopStep
+  rewrite [Emission.Loop.loopStep_eq]
   split
   · exact .loop _
   · exact .residual _
@@ -61,7 +61,8 @@ theorem residualStep_next_suffix (current :
   Mode.Basic.ResidualState) :
     SuffixMode (Emission.Step.step (.residual current)).next := by
   change SuffixMode (Emission.Residual.residualStep current).next
-  simp only [Emission.Residual.residualStep]
+  rewrite [Emission.Residual.residualStep_eq]
+  dsimp only
   split
   · exact .residual _
   · exact loopStep_next_suffix (Emission.Residual.residualApartLoopState current _)

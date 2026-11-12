@@ -69,33 +69,33 @@ def unitMoveBridge
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
-    (index : (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+    (index : (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one
       sourceUnit)
       sourceUnit degree degreeAtLeastTwo).Index) :
     OwnerBridge
-      (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
+      (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
         sourceUnit
         degree degreeAtLeastTwo).polynomial
-      (Progressive.Power.Unit.Move.Frame.unitTransportedFrame sourceUnit targetUnit degree degreeAtLeastTwo
+      (Frame.unitTransportedFrame sourceUnit targetUnit degree degreeAtLeastTwo
         small).polynomial := by
   let owner := Owner.Local.Transport.castOwner
-    (Progressive.Power.Unit.Frame.robustChamberFrame_polynomial (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+    (Frame.robustChamberFrame_polynomial (Norm.Nonzero.nonzero_of_normSq_eq_one
       sourceUnit)
       sourceUnit degree degreeAtLeastTwo)
-    ((Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
+    ((Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
       sourceUnit degree
       degreeAtLeastTwo).owner index)
   let raw := OwnerBridge.ofForward owner
-    (Progressive.Power.Owner.Transport.ownerMoveRouche (target := target) degree owner (by
+    (Owner.Transport.ownerMoveRouche (target := target) degree owner (by
       dsimp only [owner]
       rw [Owner.Local.Transport.castOwner_clearance_bound,
-        Progressive.Power.Unit.Frame.robustChamberFrame_owner_clearance_bound]
+        Frame.robustChamberFrame_owner_clearance_bound]
       exact small.owner _))
   exact raw.cast
-    (Progressive.Power.Unit.Frame.robustChamberFrame_polynomial (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+    (Frame.robustChamberFrame_polynomial (Norm.Nonzero.nonzero_of_normSq_eq_one
       sourceUnit)
       sourceUnit degree degreeAtLeastTwo).symm
-    (Progressive.Power.Unit.Move.Frame.unitTransportedFrame_polynomial sourceUnit targetUnit degree
+    (Frame.unitTransportedFrame_polynomial sourceUnit targetUnit degree
       degreeAtLeastTwo small).symm
 end Purelib.RootIsolation.Progressive.Power.Unit.Move.Overlap
 
@@ -129,12 +129,12 @@ open Purelib.Data.Gaussian
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
-    (index : (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+    (index : (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one
       sourceUnit)
       sourceUnit degree degreeAtLeastTwo).Index) :
     (unitMoveBridge sourceUnit targetUnit degree degreeAtLeastTwo small
       index).box =
-      ((Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
+      ((Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
         sourceUnit
         degree degreeAtLeastTwo).owner index).box := by
   rw [unitMoveBridge, OwnerBridge.cast_box]
@@ -171,14 +171,14 @@ def unitMoveOverlap
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo) :
-    Progressive.Chamber.Overlap.ChamberOverlap
-      (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
+    Chamber.Overlap.ChamberOverlap
+      (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
         sourceUnit
         degree degreeAtLeastTwo)
-      (Progressive.Power.Unit.Move.Frame.unitTransportedFrame sourceUnit targetUnit degree degreeAtLeastTwo
+      (Frame.unitTransportedFrame sourceUnit targetUnit degree degreeAtLeastTwo
         small) where
   matching := Data.Fin.Bijection.cast
-    (Progressive.Power.Unit.Move.Frame.unitMoveCountEq sourceUnit targetUnit degree degreeAtLeastTwo)
+    (Frame.unitMoveCountEq sourceUnit targetUnit degree degreeAtLeastTwo)
   bridge := unitMoveBridge sourceUnit targetUnit degree degreeAtLeastTwo small
   bridge_refines_left := by
     intro index
@@ -188,7 +188,7 @@ def unitMoveOverlap
     intro index
     rw [unitMoveBridge_box,
       Data.Fin.Bijection.cast_forward,
-      Progressive.Power.Unit.Move.Frame.unitTransportedFrame_owner_box]
+      Frame.unitTransportedFrame_owner_box]
     exact Box.refines_refl _
 end Purelib.RootIsolation.Progressive.Power.Unit.Move.Overlap
 

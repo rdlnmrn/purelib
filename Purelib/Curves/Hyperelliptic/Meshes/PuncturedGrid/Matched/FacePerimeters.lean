@@ -101,7 +101,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingRequests 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.HorizontalPrepared
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.VerticalPrepared
 
-attribute [local congr] Purelib.Algebra.FiniteSum.Fin.sumFin_congr
+attribute [local congr] FiniteSum.Fin.sumFin_congr
 
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Data.Rat.Fraction (Rational)
@@ -109,7 +109,7 @@ open Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh
   MatchedVerticalSide)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
@@ -137,12 +137,12 @@ variable {i j : Fin genus} {firstParent secondParent : Fin 2} {tolerance : Ratio
 namespace FacePerimeters
 
 /-- The aligned paired differential values on the actual observation cells of one retained face and sheet. -/
-@[expose] def faceValues (cache : RegularMeshes.Numerics domains stage) (i j : Fin genus)
+@[expose] def faceValues (cache : Numerics domains stage) (i j : Fin genus)
     (position : Fin faces.regulars.length) (sheet : Fin 2) :=
   fun column row point => (⟨(cache.atDomain position sheet i).anchors.alignedValue
       (cache.atDomain position sheet i).offsets column row point,
     (cache.atDomain position sheet j).anchors.alignedValue
-      (cache.atDomain position sheet j).offsets column row point⟩ : Stokes.PrimitivePoint)
+      (cache.atDomain position sheet j).offsets column row point⟩ : PrimitivePoint)
 
 end FacePerimeters
 
@@ -150,22 +150,22 @@ set_option genInjectivity false in
 /-- One cached perimeter assembly per retained regular face and sheet.
 
 Every crossing reads these same assemblies and perimeters on the supplied numerical bank. -/
-structure FacePerimeters (cache : RegularMeshes.Numerics domains stage) (i j : Fin genus) where
+structure FacePerimeters (cache : Numerics domains stage) (i j : Fin genus) where
   /-- The actual clipped observation assemblies on each original face and sheet. -/ assemblies :
-    Data.Vector.DependentVector (fun position : Fin faces.regulars.length =>
-    Data.Vector.DependentVector (fun sheet : Fin 2 => ObservationMesh.ClippedAssembly
+    DependentVector (fun position : Fin faces.regulars.length =>
+    DependentVector (fun sheet : Fin 2 => ClippedAssembly
       ((request.entries.get sheet).meshes.entries.get position)
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.faceValues cache i j position sheet)))
-  /-- The retained perimeters of those exact clipped assemblies. -/ perimeters : Data.Vector.DependentVector (fun
+        (FacePerimeters.faceValues cache i j position sheet)))
+  /-- The retained perimeters of those exact clipped assemblies. -/ perimeters : DependentVector (fun
     position : Fin faces.regulars.length =>
-    Data.Vector.DependentVector (fun sheet : Fin 2 => ((assemblies.get position).get sheet).Perimeter))
+    DependentVector (fun sheet : Fin 2 => ((assemblies.get position).get sheet).Perimeter))
 
 constructive_injectivity FacePerimeters
 
 namespace FacePerimeters
 
 /-- Build each retained face-and-sheet assembly once and cache its perimeter. -/
-@[expose] def build (cache : RegularMeshes.Numerics domains stage) (i j : Fin genus) :
+@[expose] def build (cache : Numerics domains stage) (i j : Fin genus) :
   FacePerimeters (request := request) cache i j := by
   let assemblies := DependentVector.ofFn (fun position : Fin faces.regulars.length =>
     DependentVector.ofFn (fun sheet : Fin 2 => ClippedAssembly.build
@@ -199,9 +199,9 @@ theorem areaDifference_eq_cache
       firstParent secondParent tolerance floor outcome}
     (perimeters : FacePerimeters (request := request)
       cache i j)
-    (sample : HorizontalPrepared.Sample prepared cache) :
+    (sample : Sample prepared cache) :
     HorizontalPrepared.Sample.areaDifference sample =
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.HorizontalOutcome.perimeterDifference perimeters
+      HorizontalOutcome.perimeterDifference perimeters
         outcome := by
   cases prepared with
   | matched allocated =>
@@ -235,9 +235,9 @@ theorem areaDifference_eq_cache
       firstParent secondParent tolerance floor outcome}
     (perimeters : FacePerimeters (request := request)
       cache i j)
-    (sample : VerticalPrepared.Sample prepared cache) :
+    (sample : Sample prepared cache) :
     VerticalPrepared.Sample.areaDifference sample =
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.VerticalOutcome.perimeterDifference perimeters
+      VerticalOutcome.perimeterDifference perimeters
         outcome := by
   cases prepared with
   | matched allocated =>
@@ -251,8 +251,8 @@ end FacePerimeters.VerticalPrepared.Sample
 section CrossingRequests
 variable {retained : CrossingBank request mesh}
   {allocated : CrossingRequests
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential i)
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential j)
+    (PeriodMatrix.standardDifferential i)
+    (PeriodMatrix.standardDifferential j)
     firstParent secondParent tolerance floor retained}
   {cache : Numerics domains stage}
 
@@ -266,10 +266,10 @@ namespace FacePerimeters.CrossingRequests
   FacePerimeters (request := request) cache i j) :
   Data.Gaussian.Basic.Canonical :=
   FiniteSum.Fin.sumFin (fun a => FiniteSum.Fin.sumFin (fun b => FiniteSum.Fin.sumFin (fun c =>
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.VerticalOutcome.perimeterDifference perimeters
+    VerticalOutcome.perimeterDifference perimeters
       (((retained.vertical.get a).get b).get c)))) -
   FiniteSum.Fin.sumFin (fun a => FiniteSum.Fin.sumFin (fun b => FiniteSum.Fin.sumFin (fun c =>
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.HorizontalOutcome.perimeterDifference perimeters
+    HorizontalOutcome.perimeterDifference perimeters
       (((retained.horizontal.get a).get b).get c))))
 
 end FacePerimeters.CrossingRequests
@@ -279,18 +279,18 @@ namespace CrossingSamples.CrossingRequests.Samples
 /-- The actual crossing-area difference equals the signed perimeter sum from the shared cache. -/
 theorem
   areaDifference_eq_pairedPerimeter
-    (samples : CrossingRequests.Samples allocated cache)
+    (samples : Samples allocated cache)
     (perimeters : FacePerimeters (request := request)
       cache i j) :
     samples.areaDifference =
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.CrossingRequests.pairedPerimeter retained
+      FacePerimeters.CrossingRequests.pairedPerimeter retained
       perimeters := by
-  unfold CrossingRequests.Samples.areaDifference
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.CrossingRequests.pairedPerimeter
+  unfold Samples.areaDifference
+    FacePerimeters.CrossingRequests.pairedPerimeter
   simp only
-    [Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.HorizontalPrepared.Sample.areaDifference_eq_cache
+    [FacePerimeters.HorizontalPrepared.Sample.areaDifference_eq_cache
     perimeters,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.VerticalPrepared.Sample.areaDifference_eq_cache
+    FacePerimeters.VerticalPrepared.Sample.areaDifference_eq_cache
       perimeters, -eq_self, -iff_self]
   rfl
 
@@ -302,19 +302,19 @@ namespace CrossingTotal.CrossingRequests.TotalRequest
 aggregate target. -/
 theorem
   pairedPerimeter_bound
-    {target : Fraction.Rational}
-    (total : CrossingRequests.TotalRequest
+    {target : Rational}
+    (total : TotalRequest
       retained i j firstParent secondParent target floor)
     {samples : CrossingRequests.Samples total.allocated cache}
-    (accounting : CrossingRequests.Accounting samples)
+    (accounting : Accounting samples)
     (perimeters : FacePerimeters (request := request)
       cache i j)
     (later : total.allocated.index ≤ stage) :
     Data.Gaussian.Norm.Basic.normSq
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.FacePerimeters.CrossingRequests.pairedPerimeter retained
+      (FacePerimeters.CrossingRequests.pairedPerimeter retained
       perimeters - accounting.endpoints) ≤ target := by
   rw [←
-    CrossingSamples.CrossingRequests.Samples.areaDifference_eq_pairedPerimeter
+    CrossingRequests.Samples.areaDifference_eq_pairedPerimeter
     samples perimeters,
     ← accounting.area_eq]
   exact TotalRequest.accounting_bound total accounting later

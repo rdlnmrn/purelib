@@ -18,6 +18,8 @@ import Purelib.Polynomial.Dense.Gaussian.Multiplicity.Decomposition
 import Purelib.Polynomial.Dense.Gaussian.Squarefree.Part
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data
 
 open Purelib.Data.Rat
@@ -58,30 +60,30 @@ theorem
   chordalPow_le_integerPowerConstant_mul_sourceResidual
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (decomposition :
       Squarefree.Decomposition p)
-    (before after : List Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry) (entry :
-      Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry)
+    (before after : List Basis.Positive.PositiveEntry) (entry :
+      Basis.Positive.PositiveEntry)
     (split : decomposition.positiveMultiplicityEntries =
       before ++ entry :: after) (point : Gaussian.Basic.Canonical)
-    (cofactor : Dense.Gaussian.Multiplicity.Residual.Cofactor.CofactorLower decomposition before after point)
+    (cofactor : Cofactor.CofactorLower decomposition before after point)
     {chordal localConstant : Fraction.Rational}
     (chordalNonnegative : 0 ≤ chordal)
     (localConstantNonnegative : 0 ≤ localConstant)
     (localBound : chordal ≤ localConstant *
-      Data.Gaussian.Norm.Basic.normSq (entry.part.polynomial.eval point)) :
+      Gaussian.Norm.Basic.normSq (entry.part.polynomial.eval point)) :
     chordal ^ entry.multiplicity ≤
-      Dense.Gaussian.Multiplicity.Residual.Power.integerPowerConstant localConstant cofactor.bound ^ entry.multiplicity
+      integerPowerConstant localConstant cofactor.bound ^ entry.multiplicity
         *
-        Data.Gaussian.Norm.Basic.normSq (p.eval point) := by
-  let residual := Data.Gaussian.Norm.Basic.normSq (entry.part.polynomial.eval point)
+        Gaussian.Norm.Basic.normSq (p.eval point) := by
+  let residual := Gaussian.Norm.Basic.normSq (entry.part.polynomial.eval point)
   let inverseScale := max 1 cofactor.bound⁻¹
   have inversePositive : 0 < cofactor.bound⁻¹ :=
-    Fraction.Order.Field.inv_pos_direct cofactor.positive
+    Field.inv_pos_direct cofactor.positive
   have inverseScaleOne : (1 : Fraction.Rational) ≤ inverseScale :=
-    Fraction.Order.Basic.le_max_left _ _
+    Basic.le_max_left _ _
   have inverseScalePositive : 0 < inverseScale :=
     (by decide : (0 : Fraction.Rational) < 1).trans_le inverseScaleOne
   have inverseLeScale : cofactor.bound⁻¹ ≤ inverseScale :=
-    Fraction.Order.Basic.le_max_right _ _
+    Basic.le_max_right _ _
   have scaleLePower : inverseScale ≤
       inverseScale ^ entry.multiplicity := by
     obtain ⟨tail, multiplicityEq⟩ := Nat.exists_eq_succ_of_ne_zero
@@ -89,30 +91,30 @@ theorem
     rw [multiplicityEq, pow_succ]
     have oneLeTailPower : (1 : Fraction.Rational) ≤ inverseScale ^ tail := by
       have onePower : (1 : Fraction.Rational) ^ tail ≤ inverseScale ^ tail :=
-        Fraction.Order.Arithmetic.pow_le_pow_direct (by decide)
+        Arithmetic.pow_le_pow_direct (by decide)
           inverseScaleOne tail
       simpa only [one_pow] using onePower
     calc
       inverseScale = 1 * inverseScale := by ring1
       _ ≤ inverseScale ^ tail * inverseScale :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           oneLeTailPower inverseScalePositive.le
   have inverseLePower : cofactor.bound⁻¹ ≤
       inverseScale ^ entry.multiplicity :=
     inverseLeScale.trans scaleLePower
   have localPower : chordal ^ entry.multiplicity ≤
       localConstant ^ entry.multiplicity * residual ^ entry.multiplicity := by
-    have powered := Fraction.Order.Arithmetic.pow_le_pow_direct
+    have powered := Arithmetic.pow_le_pow_direct
       chordalNonnegative localBound entry.multiplicity
     simpa only [Fraction.Field.mul_pow_direct, residual] using powered
   have cofactorTransfer :=
-    Dense.Gaussian.Multiplicity.Residual.Cofactor.cofactor_mul_factorResidualPow_le_sourceResidual decomposition before
+    Cofactor.cofactor_mul_factorResidualPow_le_sourceResidual decomposition before
       after entry split point cofactor
   have residualPowerBound : residual ^ entry.multiplicity ≤
-      cofactor.bound⁻¹ * Data.Gaussian.Norm.Basic.normSq (p.eval point) := by
-    have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      cofactor.bound⁻¹ * Gaussian.Norm.Basic.normSq (p.eval point) := by
+    have scaled := Arithmetic.mul_le_mul_of_nonneg_left_direct
       cofactorTransfer
-      (Fraction.Order.Field.inv_pos_direct cofactor.positive).le
+      (Field.inv_pos_direct cofactor.positive).le
     calc
       residual ^ entry.multiplicity =
           cofactor.bound⁻¹ *
@@ -121,24 +123,24 @@ theorem
           Fraction.Field.inv_mul_cancel cofactor.bound
             cofactor.positive.ne',
           Fraction.Field.one_mul]
-      _ ≤ cofactor.bound⁻¹ * Data.Gaussian.Norm.Basic.normSq (p.eval point) := scaled
+      _ ≤ cofactor.bound⁻¹ * Gaussian.Norm.Basic.normSq (p.eval point) := scaled
   have absorbed : residual ^ entry.multiplicity ≤
-      inverseScale ^ entry.multiplicity * Data.Gaussian.Norm.Basic.normSq (p.eval point) :=
+      inverseScale ^ entry.multiplicity * Gaussian.Norm.Basic.normSq (p.eval point) :=
     residualPowerBound.trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (Arithmetic.mul_le_mul_of_nonneg_right_direct
         inverseLePower (Gaussian.Norm.Basic.normSq_nonneg (p.eval point)))
   calc
     chordal ^ entry.multiplicity ≤
         localConstant ^ entry.multiplicity *
           residual ^ entry.multiplicity := localPower
     _ ≤ localConstant ^ entry.multiplicity *
-          (inverseScale ^ entry.multiplicity * Data.Gaussian.Norm.Basic.normSq (p.eval point)) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct absorbed
-        (Fraction.Order.Arithmetic.pow_nonneg_direct localConstantNonnegative
+          (inverseScale ^ entry.multiplicity * Gaussian.Norm.Basic.normSq (p.eval point)) :=
+      Arithmetic.mul_le_mul_of_nonneg_left_direct absorbed
+        (Arithmetic.pow_nonneg_direct localConstantNonnegative
           entry.multiplicity)
-    _ = Dense.Gaussian.Multiplicity.Residual.Power.integerPowerConstant localConstant cofactor.bound ^
-          entry.multiplicity * Data.Gaussian.Norm.Basic.normSq (p.eval point) := by
-      dsimp only [Dense.Gaussian.Multiplicity.Residual.Power.integerPowerConstant, inverseScale]
+    _ = integerPowerConstant localConstant cofactor.bound ^
+          entry.multiplicity * Gaussian.Norm.Basic.normSq (p.eval point) := by
+      dsimp only [integerPowerConstant, inverseScale]
       rw [Fraction.Field.mul_pow_direct]
       ring1
 

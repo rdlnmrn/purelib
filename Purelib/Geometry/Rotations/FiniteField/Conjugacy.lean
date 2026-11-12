@@ -79,7 +79,7 @@ set_option genInjectivity false in
 /-- A displayed special-orthogonal transformation carrying one nonzero null vector to another. -/
 structure NullVectorTransport (source target :
   Coordinates3.Vector K) where
-  /-- The retained special-orthogonal transport rotation. -/ rotation : Rotations.Basic.Rotation K
+  /-- The retained special-orthogonal transport rotation. -/ rotation : Rotation K
   /-- Right multiplication by the retained rotation sends the source vector to the target. -/ maps : Matrix3.rowMul
     source rotation.matrix = target
 
@@ -218,7 +218,7 @@ its negative. -/
 /-- The displayed cross-product transformation law for an arbitrary matrix. The adjugate transpose is the
 denominator-free inverse-transpose factor. -/
 theorem cross_rowMul_matrix (left right : Coordinates3.Vector K)
-  (matrix : Coordinates3.Matrix3 K) :
+  (matrix : Matrix3 K) :
     Coordinates3.Vector.cross (Matrix3.rowMul left matrix)
         (Matrix3.rowMul right matrix) =
       Matrix3.rowMul (Coordinates3.Vector.cross left right)
@@ -228,7 +228,7 @@ theorem cross_rowMul_matrix (left right : Coordinates3.Vector K)
 
 /-- Proper orthogonal matrices preserve the displayed cross product. -/
 theorem cross_rowMul_rotation (rotation :
-  Rotations.Basic.Rotation K)
+  Rotation K)
     (left right : Coordinates3.Vector K) :
     Coordinates3.Vector.cross (Matrix3.rowMul left rotation.matrix)
         (Matrix3.rowMul right rotation.matrix) =
@@ -238,7 +238,7 @@ theorem cross_rowMul_rotation (rotation :
 
 /-- Conjugating an anchor by a displayed rotation transports its vector by that rotation. -/
 theorem anchor_conjugate_rotation (rotation :
-  Rotations.Basic.Rotation K)
+  Rotation K)
     (vector : Coordinates3.Vector K) :
     Matrix3.mul
         (Matrix3.mul (Matrix3.transpose rotation.matrix) (Antisymmetric.anchor vector))
@@ -277,7 +277,7 @@ theorem anchor_conjugate_rotation (rotation :
 
 /-- The cap denominator is invariant under a displayed rotation. -/
 theorem capDenominator_rowMul_rotation (rotation :
-  Rotations.Basic.Rotation K)
+  Rotation K)
     (vector : Coordinates3.Vector K) :
     Cap.capDenominator (Matrix3.rowMul vector rotation.matrix) =
       Cap.capDenominator vector := by
@@ -286,7 +286,7 @@ theorem capDenominator_rowMul_rotation (rotation :
 
 /-- Cayley caps are equivariant under displayed rotation conjugation. -/
 theorem cap_conjugate_rotation (rotation :
-  Rotations.Basic.Rotation K)
+  Rotation K)
     (vector : Coordinates3.Vector K) (defined : Cap.capDenominator vector ≠ 0)
     (transformedDefined :
       Cap.capDenominator (Matrix3.rowMul vector rotation.matrix) ≠ 0) :
@@ -388,13 +388,13 @@ end Purelib.Geometry.Rotations.FiniteField.Conjugacy
 
 section
 
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : Presentation.FiniteOddFieldPresentation K)
 
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation
 
 /-- One is nonzero in the displayed odd finite field. -/
 private theorem oneNonzero
-    (presentation : Presentation.FiniteOddFieldPresentation K) : (1 : K) ≠ 0 := by
+    (presentation : FiniteOddFieldPresentation K) : (1 : K) ≠ 0 := by
   intro oneZero
   apply presentation.twoNonzero
   calc
@@ -403,16 +403,16 @@ private theorem oneNonzero
 
 /-- One is nonzero in the displayed odd finite field. -/
 theorem oneNonzeroPublic
-    (presentation : Presentation.FiniteOddFieldPresentation K) : (1 : K) ≠ 0 := by
+    (presentation : FiniteOddFieldPresentation K) : (1 : K) ≠ 0 := by
   exact oneNonzero presentation
 
 set_option genInjectivity false in
 /-- Cached conjugator between two specified rotations. The equation uses the paper's row-vector convention, so the
 displayed conjugate is `gᵀ * left * g`. -/
 structure ParabolicConjugacyWitness
-    (presentation : Presentation.FiniteOddFieldPresentation K)
-    (left right : Rotations.Basic.Rotation K) where
-  /-- The retained rotation implementing conjugacy. -/ conjugator : Rotations.Basic.Rotation K
+    (presentation : FiniteOddFieldPresentation K)
+    (left right : Rotation K) where
+  /-- The retained rotation implementing conjugacy. -/ conjugator : Rotation K
   /-- Transposed-conjugator times left times conjugator equals the right rotation matrix. -/ conjugates :
     Matrix3.mul
         (Matrix3.mul (Matrix3.transpose conjugator.matrix) left.matrix)
@@ -424,7 +424,7 @@ constructive_injectivity ParabolicConjugacyWitness
 Their unique affine null anchors are recovered first; the two-reflection null-vector transport then supplies the
 displayed conjugator. -/
 @[expose] def parabolicConjugacyWitness
-    (left right : Rotations.Basic.Rotation K)
+    (left right : Rotation K)
     (leftSpreadZero : Spread.halfSpread left = 0)
     (leftNonidentity : left.matrix ≠ Matrix3.identity)
     (rightSpreadZero : Spread.halfSpread right = 0)
@@ -465,19 +465,19 @@ displayed conjugator. -/
           Coordinates3.Vector.zero := anchorZero
       _ = Coordinates3.Vector.scale 0 rightCoordinates.direction :=
         (Coordinates3.Vector.zero_scale rightCoordinates.direction).symm
-  let transport := Purelib.Geometry.Rotations.FiniteField.Conjugacy.nullVectorTransport leftAnchor rightAnchor
+  let transport := FiniteField.Conjugacy.nullVectorTransport leftAnchor rightAnchor
     leftCoordinates.scaledNull leftAnchorNonzero
     rightCoordinates.scaledNull rightAnchorNonzero presentation.twoNonzero
-  have leftDefined : Purelib.Geometry.Rotations.Cayley.Cap.capDenominator leftAnchor ≠ 0 := by
-    unfold Purelib.Geometry.Rotations.Cayley.Cap.capDenominator
+  have leftDefined : Cap.capDenominator leftAnchor ≠ 0 := by
+    unfold Cap.capDenominator
     rw [leftCoordinates.scaledNull]
     simpa only [add_zero] using presentation.oneNonzeroPublic
-  have rightDefined : Purelib.Geometry.Rotations.Cayley.Cap.capDenominator rightAnchor ≠ 0 := by
-    unfold Purelib.Geometry.Rotations.Cayley.Cap.capDenominator
+  have rightDefined : Cap.capDenominator rightAnchor ≠ 0 := by
+    unfold Cap.capDenominator
     rw [rightCoordinates.scaledNull]
     simpa only [add_zero] using presentation.oneNonzeroPublic
   have transportedDefined :
-      Purelib.Geometry.Rotations.Cayley.Cap.capDenominator
+      Cap.capDenominator
         (Matrix3.rowMul leftAnchor transport.rotation.matrix) ≠ 0 := by
     rw [transport.maps]
     exact rightDefined
@@ -497,7 +497,7 @@ displayed conjugator. -/
           (Cap.cap leftAnchor leftDefined)) transport.rotation.matrix =
       Cap.cap (Matrix3.rowMul leftAnchor transport.rotation.matrix)
         transportedDefined :=
-      Purelib.Geometry.Rotations.FiniteField.Conjugacy.cap_conjugate_rotation transport.rotation leftAnchor leftDefined
+      FiniteField.Conjugacy.cap_conjugate_rotation transport.rotation leftAnchor leftDefined
         transportedDefined
     _ = Cap.cap rightAnchor rightDefined :=
       FiniteField.Conjugacy.cap_eq_of_vector_eq transport.maps transportedDefined rightDefined
@@ -505,13 +505,13 @@ displayed conjugator. -/
 /-- The propositional conjugacy-orbit statement extracted from the executable classifier. -/
 theorem
   all_nonidentity_parabolics_conjugate
-    (presentation : Presentation.FiniteOddFieldPresentation K)
-    (left right : Rotations.Basic.Rotation K)
+    (presentation : FiniteOddFieldPresentation K)
+    (left right : Rotation K)
     (leftSpreadZero : Spread.halfSpread left = 0)
     (leftNonidentity : left.matrix ≠ Matrix3.identity)
     (rightSpreadZero : Spread.halfSpread right = 0)
     (rightNonidentity : right.matrix ≠ Matrix3.identity) :
-    ∃ conjugator : Rotations.Basic.Rotation K,
+    ∃ conjugator : Rotation K,
       Matrix3.mul
           (Matrix3.mul (Matrix3.transpose conjugator.matrix) left.matrix)
           conjugator.matrix = right.matrix := by
@@ -528,7 +528,7 @@ structure
   /-- The complete retained finite rotation counting and fiber classification package. -/ counting :
     presentation.ProblemSixtyNineSolution
   /-- Construct a conjugator between any two nonidentity zero-half-spread rotations. -/ parabolicConjugacy : ∀ left
-    right : Rotations.Basic.Rotation K,
+    right : Rotation K,
     Spread.halfSpread left = 0 → left.matrix ≠ Matrix3.identity →
     Spread.halfSpread right = 0 → right.matrix ≠ Matrix3.identity →
       presentation.ParabolicConjugacyWitness left right

@@ -20,6 +20,8 @@ import Mathlib.Algebra.Ring.Defs
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.Polynomial.Dense.Multiplication
 
+open Purelib.Polynomial.Dense.Rational.AscendingInteger
+
 open Purelib.Algebra.Field
 
 open Purelib
@@ -73,7 +75,7 @@ def
   | 0 => [1]
   | 1 => [0, 1]
   | index + 2 =>
-      Cyclotomic.Substitution.ExerciseEightThirteen.IntegerPolynomial.spreadRealFactorCoefficients
+      Substitution.ExerciseEightThirteen.IntegerPolynomial.spreadRealFactorCoefficients
         (Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.normCoefficients
           (Cyclotomic.Integer.cyclotomicCoefficients (index + 2)))
 
@@ -81,14 +83,14 @@ def
 @[simp] theorem
   spreadCyclotomicFactorCoefficients_zero
   :
-    Cyclotomic.Coefficients.ExerciseEightThirteen.IntegerPolynomial.spreadCyclotomicFactorCoefficients
+    spreadCyclotomicFactorCoefficients
       0 = [1] := rfl
 
 /-- The first spread-cyclotomic factor is the coordinate polynomial. -/
 @[simp] theorem
   spreadCyclotomicFactorCoefficients_one
   :
-    Cyclotomic.Coefficients.ExerciseEightThirteen.IntegerPolynomial.spreadCyclotomicFactorCoefficients
+    spreadCyclotomicFactorCoefficients
       1 = [0, 1] := rfl
 
 /-- Away from the endpoint, the displayed spread factor is exactly the
@@ -97,7 +99,7 @@ theorem
   eval_spreadCyclotomicFactorCoefficients_of_two_le
     (number : Nat) (twoLe : 2 ≤ number) (value : K) :
     Ascending.Integer.Basic.eval
-      (ExerciseEightThirteen.IntegerPolynomial.spreadCyclotomicFactorCoefficients
+      (spreadCyclotomicFactorCoefficients
       number) value =
       Ascending.Integer.Basic.eval
         (Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.normCoefficients
@@ -111,16 +113,16 @@ theorem
       | succ index =>
           change
             Ascending.Integer.Basic.eval
-              (ExerciseEightThirteen.IntegerPolynomial.spreadCyclotomicFactorCoefficients
+              (spreadCyclotomicFactorCoefficients
               (index + 2)) value =
               Ascending.Integer.Basic.eval
                 (Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.normCoefficients
                   (Cyclotomic.Integer.cyclotomicCoefficients
                     (index + 2))) (2 - 4 * value)
           rw
-            [ExerciseEightThirteen.IntegerPolynomial.spreadCyclotomicFactorCoefficients,
+            [spreadCyclotomicFactorCoefficients,
 
-              Cyclotomic.Substitution.ExerciseEightThirteen.IntegerPolynomial.eval_spreadRealFactorCoefficients]
+              Substitution.ExerciseEightThirteen.IntegerPolynomial.eval_spreadRealFactorCoefficients]
 
 /-- A quotient-coordinate slot for all proper non-endpoint divisors.  The
 coordinate range is `0,...,n-1`; hence the exceptional quotient `1`, which
@@ -130,7 +132,7 @@ def
   (number : Nat)
     (divisor : Fin number) : List Int :=
   if _selected : 2 ≤ divisor.val ∧ divisor.val ∣ number then
-    Cyclotomic.Coefficients.ExerciseEightThirteen.IntegerPolynomial.spreadCyclotomicFactorCoefficients
+    spreadCyclotomicFactorCoefficients
       (number / divisor.val)
   else [1]
 
@@ -140,7 +142,7 @@ def
   (number : Nat) : List Int :=
   Dense.Rational.FiniteProduct.Integer.coefficientProductFin number
 
-      (ExerciseEightThirteen.IntegerPolynomial.properSpreadCyclotomicFactorCoefficients
+      (properSpreadCyclotomicFactorCoefficients
       number)
 
 /-- Totient degrees in the same proper non-endpoint quotient-coordinate
@@ -159,7 +161,7 @@ theorem
   endpoint_add_properTotient_add_current
     (number : Nat) (twoLe : 2 ≤ number) :
     1 +
-      Cyclotomic.Coefficients.ExerciseEightThirteen.IntegerPolynomial.properSpreadCyclotomicTotientSum
+      properSpreadCyclotomicTotientSum
       number +
         Totient.Basic.totient number = number := by
   let whole : Nat → Nat := fun divisor =>
@@ -246,7 +248,7 @@ theorem
   rw [finalDivides, if_pos rfl, Data.Nat.Division.div_self (by omega0),
     Totient.Basic.totient_one] at total
   unfold
-    Cyclotomic.Coefficients.ExerciseEightThirteen.IntegerPolynomial.properSpreadCyclotomicTotientSum
+    properSpreadCyclotomicTotientSum
   change 1 + Data.Nat.FiniteSum.sumFinNat number proper +
       Totient.Basic.totient number = number
   omega0
@@ -261,28 +263,28 @@ def
       Ascending.Integer.Basic.Certificate.mul
         (Ascending.Integer.Basic.Certificate.mul [0, 1]
 
-            (ExerciseEightThirteen.IntegerPolynomial.properSpreadCyclotomicProductCoefficients
+            (properSpreadCyclotomicProductCoefficients
             (number + 2)))
 
-          (ExerciseEightThirteen.IntegerPolynomial.spreadCyclotomicFactorCoefficients
+          (spreadCyclotomicFactorCoefficients
           (number + 2))
 
 /-- Canonical constructive-rational polynomial represented by `C_n`. -/
 def
   spreadCyclotomicFactorPolynomial
   (number : Nat) : CoefficientPolynomial :=
-  Dense.Rational.AscendingInteger.Basic.ofAscending
+  Basic.ofAscending
 
-      (ExerciseEightThirteen.IntegerPolynomial.spreadCyclotomicFactorCoefficients
+      (spreadCyclotomicFactorCoefficients
       number)
 
 /-- Canonical polynomial for the proper non-endpoint product. -/
 def
   properSpreadCyclotomicProductPolynomial
   (number : Nat) : CoefficientPolynomial :=
-  Dense.Rational.AscendingInteger.Basic.ofAscending
+  Basic.ofAscending
 
-      (ExerciseEightThirteen.IntegerPolynomial.properSpreadCyclotomicProductCoefficients
+      (properSpreadCyclotomicProductCoefficients
       number)
 
 /-- The proper coefficient program is the corresponding finite polynomial
@@ -291,17 +293,17 @@ theorem
   properSpreadCyclotomicProductPolynomial_eq_productFin
     (number : Nat) :
 
-      ExerciseEightThirteen.IntegerPolynomial.properSpreadCyclotomicProductPolynomial
+      properSpreadCyclotomicProductPolynomial
       number =
       Dense.Rational.FiniteProduct.productFin number fun divisor =>
-        Dense.Rational.AscendingInteger.Basic.ofAscending
+        Basic.ofAscending
 
-            (ExerciseEightThirteen.IntegerPolynomial.properSpreadCyclotomicFactorCoefficients
+            (properSpreadCyclotomicFactorCoefficients
             number divisor) := by
   unfold
-    ExerciseEightThirteen.IntegerPolynomial.properSpreadCyclotomicProductPolynomial
+    properSpreadCyclotomicProductPolynomial
 
-      ExerciseEightThirteen.IntegerPolynomial.properSpreadCyclotomicProductCoefficients
+      properSpreadCyclotomicProductCoefficients
   exact Dense.Rational.FiniteProduct.Integer.ofAscending_coefficientProductFin _ _
 
 /-- For `n >= 2`, the complete coefficient program visibly consists of the
@@ -309,16 +311,16 @@ endpoint, the proper non-endpoint product, and the current factor. -/
 theorem
   ofAscending_divisorProduct_eq_endpoint_mul_proper_mul_current
     (number : Nat) (twoLe : 2 ≤ number) :
-    Dense.Rational.AscendingInteger.Basic.ofAscending
+    Basic.ofAscending
 
-          (ExerciseEightThirteen.IntegerPolynomial.spreadCyclotomicDivisorProductCoefficients
+          (spreadCyclotomicDivisorProductCoefficients
           number) =
-      (Dense.Rational.AscendingInteger.Basic.ofAscending [0, 1] *
+      (Basic.ofAscending [0, 1] *
 
-            ExerciseEightThirteen.IntegerPolynomial.properSpreadCyclotomicProductPolynomial
+            properSpreadCyclotomicProductPolynomial
             number) *
 
-          ExerciseEightThirteen.IntegerPolynomial.spreadCyclotomicFactorPolynomial
+          spreadCyclotomicFactorPolynomial
           number := by
   cases number with
   | zero => exact False.elim (by omega0)
@@ -327,27 +329,27 @@ theorem
       | zero => exact False.elim (by omega0)
       | succ index =>
           change
-            Dense.Rational.AscendingInteger.Basic.ofAscending
+            Basic.ofAscending
                 (Ascending.Integer.Basic.Certificate.mul
                   (Ascending.Integer.Basic.Certificate.mul [0, 1]
 
-                      (ExerciseEightThirteen.IntegerPolynomial.properSpreadCyclotomicProductCoefficients
+                      (properSpreadCyclotomicProductCoefficients
                       (index + 2)))
 
-                    (ExerciseEightThirteen.IntegerPolynomial.spreadCyclotomicFactorCoefficients
+                    (spreadCyclotomicFactorCoefficients
                     (index + 2))) =
-              (Dense.Rational.AscendingInteger.Basic.ofAscending
+              (Basic.ofAscending
                     [0, 1] *
-                  Dense.Rational.AscendingInteger.Basic.ofAscending
+                  Basic.ofAscending
 
-                      (ExerciseEightThirteen.IntegerPolynomial.properSpreadCyclotomicProductCoefficients
+                      (properSpreadCyclotomicProductCoefficients
                       (index + 2))) *
-                Dense.Rational.AscendingInteger.Basic.ofAscending
+                Basic.ofAscending
 
-                    (ExerciseEightThirteen.IntegerPolynomial.spreadCyclotomicFactorCoefficients
+                    (spreadCyclotomicFactorCoefficients
                     (index + 2))
-          rw [Dense.Rational.AscendingInteger.Basic.ofAscending_mul,
-            Dense.Rational.AscendingInteger.Basic.ofAscending_mul]
+          rw [Basic.ofAscending_mul,
+            Basic.ofAscending_mul]
 end IntegerPolynomial
 end ExerciseEightThirteen
 end Purelib.Polynomial.Recurrence.Spread.Cyclotomic.Coefficients.ExerciseEightThirteen.IntegerPolynomial

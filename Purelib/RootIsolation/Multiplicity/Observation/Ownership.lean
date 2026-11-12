@@ -45,10 +45,10 @@ winding-one track supported by the isolation partition is constructively
 refined into a deterministically selected output owner. -/
 def
   ObservationAtomicMaximality
-    {source opposite : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    {input : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput source opposite}
-    {context : Dense.Gaussian.Multiplicity.Basis.Context.Basic.PositiveContext input.entries}
-    (observation : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.FactorObservation input context) :
+    {source opposite : Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {input : PositiveSideInput source opposite}
+    {context : Context.Basic.PositiveContext input.entries}
+    (observation : FactorObservation input context) :
       Type :=
   match observation with
   | .exact root _ _ =>
@@ -56,7 +56,7 @@ def
   | .higher boxes _ =>
       ∀ (track : Track.Basic.WindingOneTrack
           context.focus.part.polynomial
-          (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox
+          (Bounds.RootRadius.Box.largeSquareBox
             context.focus.part.polynomial)),
         track.initial.box.Refines boxes.isolation.support →
           Exact.Ownership.Basic.OwnerSelection boxes.isolation track
@@ -64,10 +64,10 @@ def
 /-- Read the retained factor observation's exact-root certificate or original deterministic ownership operation. -/
 def
   observationAtomicMaximality
-    {source opposite : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    {input : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput source opposite}
-    {context : Dense.Gaussian.Multiplicity.Basis.Context.Basic.PositiveContext input.entries}
-    (observation : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.FactorObservation input context) :
+    {source opposite : Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {input : PositiveSideInput source opposite}
+    {context : Context.Basic.PositiveContext input.entries}
+    (observation : FactorObservation input context) :
     ObservationAtomicMaximality observation := by
   cases observation with
   | exact root => exact ⟨root.root⟩

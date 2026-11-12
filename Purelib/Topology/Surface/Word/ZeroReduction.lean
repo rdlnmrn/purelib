@@ -47,7 +47,7 @@ variable {count : Nat}
 namespace ChordWord
 
 /-- The outside chord segment inherits the original signed occurrence bound. -/
-theorem outside_counts_le (chord : Selection.ChordWord count)
+theorem outside_counts_le (chord : ChordWord count)
     (counts : ∀ index reversed, SignedGenerator.occurrences ⟨index, reversed⟩ chord.word ≤ 1)
     (index : Fin count) (reversed : Bool) : SignedGenerator.occurrences ⟨index, reversed⟩ chord.outside ≤ 1 := by
   have bounded := counts index reversed
@@ -55,7 +55,7 @@ theorem outside_counts_le (chord : Selection.ChordWord count)
   omega
 
 /-- A chord interval in a unique zero-pairing word has zero total coefficients. -/
-theorem inside_closed_of_zero (chord : Selection.ChordWord count)
+theorem inside_closed_of_zero (chord : ChordWord count)
     (counts : ∀ index reversed, SignedGenerator.occurrences ⟨index, reversed⟩ chord.word ≤ 1)
     (zero : ∀ row column, Pairing.pairingAt (chord.word.map SignedGenerator.coefficients) row column = 0)
     (column : Fin count) : Pairing.totalAt (chord.inside.map SignedGenerator.coefficients) column = 0 := by
@@ -72,13 +72,13 @@ theorem inside_closed_of_zero (chord : Selection.ChordWord count)
     omega
 
 /-- The outside segment is balanced when the original unique balanced chord word has zero pairing. -/
-theorem outside_closed_of_zero (chord : Selection.ChordWord count)
+theorem outside_closed_of_zero (chord : ChordWord count)
     (counts : ∀ index reversed, SignedGenerator.occurrences ⟨index, reversed⟩ chord.word ≤ 1)
     (closed : ∀ column, Pairing.totalAt (chord.word.map SignedGenerator.coefficients) column = 0)
     (zero : ∀ row column, Pairing.pairingAt (chord.word.map SignedGenerator.coefficients) row column = 0)
     (column : Fin count) : Pairing.totalAt (chord.outside.map SignedGenerator.coefficients) column = 0 := by
   have total := (chord.tail_total column).trans (closed column)
-  rw [ChordWord.tail, Map.map_append, Surgery.totalAt_append, ChordWord.inside_closed_of_zero chord counts zero,
+  rw [ChordWord.tail, Map.map_append, Surgery.totalAt_append, inside_closed_of_zero chord counts zero,
     zero_add]
     at total
   exact total
@@ -94,7 +94,7 @@ private theorem opposite_coefficient (index column : Fin count) :
   · rw [if_neg same, if_neg same, neg_zero]
 
 /-- Balanced inside and outside segments split the original chord pairing into their two pairing matrices. -/
-theorem pairing_split (chord : Selection.ChordWord count)
+theorem pairing_split (chord : ChordWord count)
     (insideClosed : ∀ column, Pairing.totalAt (chord.inside.map SignedGenerator.coefficients) column = 0)
     (outsideClosed : ∀ column, Pairing.totalAt (chord.outside.map SignedGenerator.coefficients) column = 0)
     (row column : Fin count) :
@@ -102,11 +102,11 @@ theorem pairing_split (chord : Selection.ChordWord count)
       Pairing.pairingAt (chord.inside.map SignedGenerator.coefficients) row column +
         Pairing.pairingAt (chord.outside.map SignedGenerator.coefficients) row column := by
   simp only [ChordWord.word, List.map_cons, Map.map_append, Pairing.pairingAt, Pairing.totalAt,
-    Surgery.pairingAt_append, Surgery.totalAt_append, insideClosed, outsideClosed, ChordWord.opposite_coefficient]
+    Surgery.pairingAt_append, Surgery.totalAt_append, insideClosed, outsideClosed, opposite_coefficient]
   ring1
 
 /-- Inside balance and original signed uniqueness exclude every inside generator from the outside segment. -/
-private theorem counts_disjoint (chord : Selection.ChordWord count)
+private theorem counts_disjoint (chord : ChordWord count)
     (counts : ∀ index reversed, SignedGenerator.occurrences ⟨index, reversed⟩ chord.word ≤ 1)
     (insideClosed : ∀ column, Pairing.totalAt (chord.inside.map SignedGenerator.coefficients) column = 0)
     (row : Fin count) (present : 0 < SignedGenerator.occurrences ⟨row, false⟩ chord.inside)
@@ -118,14 +118,14 @@ private theorem counts_disjoint (chord : Selection.ChordWord count)
   cases reversed <;> omega
 
 /-- The inside segment inherits zero pairing from a unique balanced zero-pairing chord word. -/
-theorem inside_pairing_zero (chord : Selection.ChordWord count)
+theorem inside_pairing_zero (chord : ChordWord count)
     (counts : ∀ index reversed, SignedGenerator.occurrences ⟨index, reversed⟩ chord.word ≤ 1)
     (closed : ∀ column, Pairing.totalAt (chord.word.map SignedGenerator.coefficients) column = 0)
     (zero : ∀ row column, Pairing.pairingAt (chord.word.map SignedGenerator.coefficients) row column = 0)
     (row column : Fin count) : Pairing.pairingAt (chord.inside.map SignedGenerator.coefficients) row column = 0 := by
-  have insideClosed := ChordWord.inside_closed_of_zero chord counts zero
-  have outsideClosed := ChordWord.outside_closed_of_zero chord counts closed zero
-  have split := ChordWord.pairing_split chord insideClosed outsideClosed row column
+  have insideClosed := inside_closed_of_zero chord counts zero
+  have outsideClosed := outside_closed_of_zero chord counts closed zero
+  have split := pairing_split chord insideClosed outsideClosed row column
   rw [zero] at split
   by_cases absent : SignedGenerator.occurrences ⟨row, false⟩ chord.inside = 0
   · have total := insideClosed row
@@ -142,19 +142,19 @@ theorem inside_pairing_zero (chord : Selection.ChordWord count)
       rcases Map.mem_map.mp member with ⟨letter, inOutside, equal⟩
       rw [← equal]
       exact SignedGenerator.coefficient_zero_of_counts chord.outside row
-        (ChordWord.counts_disjoint chord counts insideClosed row (by omega) false)
-        (ChordWord.counts_disjoint chord counts insideClosed row (by omega) true) letter inOutside
+        (counts_disjoint chord counts insideClosed row (by omega) false)
+        (counts_disjoint chord counts insideClosed row (by omega) true) letter inOutside
     omega
 
 /-- The outside segment inherits zero pairing from a unique balanced zero-pairing chord word. -/
-theorem outside_pairing_zero (chord : Selection.ChordWord count)
+theorem outside_pairing_zero (chord : ChordWord count)
     (counts : ∀ index reversed, SignedGenerator.occurrences ⟨index, reversed⟩ chord.word ≤ 1)
     (closed : ∀ column, Pairing.totalAt (chord.word.map SignedGenerator.coefficients) column = 0)
     (zero : ∀ row column, Pairing.pairingAt (chord.word.map SignedGenerator.coefficients) row column = 0)
     (row column : Fin count) : Pairing.pairingAt (chord.outside.map SignedGenerator.coefficients) row column = 0 := by
-  have split := ChordWord.pairing_split chord (ChordWord.inside_closed_of_zero chord counts zero)
-    (ChordWord.outside_closed_of_zero chord counts closed zero) row column
-  rw [zero, ChordWord.inside_pairing_zero chord counts closed zero] at split
+  have split := pairing_split chord (inside_closed_of_zero chord counts zero)
+    (outside_closed_of_zero chord counts closed zero) row column
+  rw [zero, inside_pairing_zero chord counts closed zero] at split
   omega
 
 end ChordWord
@@ -166,38 +166,38 @@ constructors.
 
 The tree retains the actual cyclic split at every cancelled opposite pair. Its inside and outside subtrees refer to the
 original selected segments. -/
-inductive WordCancellation : List (SignedWord.SignedGenerator count) → Type
+inductive WordCancellation : List (SignedGenerator count) → Type
   /-- The empty signed word has an empty cancellation tree. -/ | nil :
-    Purelib.Topology.Surface.Word.ZeroReduction.WordCancellation []
+    ZeroReduction.WordCancellation []
   /-- Cancel one retained opposite pair after retaining cancellation trees for its actual inside and outside segments.
   -/
-  | pair {word} (selected : Selection.ChordAt word index)
-      (inside : Purelib.Topology.Surface.Word.ZeroReduction.WordCancellation selected.chord.inside)
-      (outside : Purelib.Topology.Surface.Word.ZeroReduction.WordCancellation selected.chord.outside) :
-        Purelib.Topology.Surface.Word.ZeroReduction.WordCancellation word
+  | pair {word} (selected : ChordAt word index)
+      (inside : ZeroReduction.WordCancellation selected.chord.inside)
+      (outside : ZeroReduction.WordCancellation selected.chord.outside) :
+        ZeroReduction.WordCancellation word
 
 constructive_injectivity Purelib.Topology.Surface.Word.ZeroReduction.WordCancellation
 
 namespace WordCancellation
 
 /-- Count the actual opposite pairs retained in the cancellation tree. -/
-@[expose] def pairs : {word : List (SignedWord.SignedGenerator count)} → ZeroReduction.WordCancellation word → Nat
+@[expose] def pairs : {word : List (SignedGenerator count)} → WordCancellation word → Nat
   | _, .nil => 0
   | _, .pair _ inside outside => inside.pairs + outside.pairs + 1
 
 /-- The original word has exactly two occurrences for each retained cancelling pair. -/
-theorem length_eq {word : List (SignedWord.SignedGenerator count)} (reduction : ZeroReduction.WordCancellation word) :
+theorem length_eq {word : List (SignedGenerator count)} (reduction : WordCancellation word) :
     word.length = 2 * reduction.pairs := by
   induction reduction with
   | nil => rfl
   | pair selected inside outside insideEq outsideEq =>
       have rotated := WordRotation.length selected.rotation
       simp only [ChordWord.word, List.length_cons, Append.length_append] at rotated
-      simp only [WordCancellation.pairs]
+      simp only [pairs]
       omega
 
 /-- A certified cancellation tree makes every original total coefficient zero. -/
-theorem closed {word : List (SignedWord.SignedGenerator count)} (reduction : ZeroReduction.WordCancellation word) (index
+theorem closed {word : List (SignedGenerator count)} (reduction : WordCancellation word) (index
   : Fin count) :
     Pairing.totalAt (word.map SignedGenerator.coefficients) index = 0 := by
   induction reduction with
@@ -207,24 +207,24 @@ theorem closed {word : List (SignedWord.SignedGenerator count)} (reduction : Zer
         Map.map_append, Surgery.totalAt_append, insideClosed, outsideClosed, zero_add]
 
 /-- A certified cancellation tree makes every original alternating pairing entry zero. -/
-theorem pairing_zero {word : List (SignedWord.SignedGenerator count)} (reduction : ZeroReduction.WordCancellation word)
+theorem pairing_zero {word : List (SignedGenerator count)} (reduction : WordCancellation word)
   (row column : Fin count) :
     Pairing.pairingAt (word.map SignedGenerator.coefficients) row column = 0 := by
   induction reduction with
   | nil => rfl
   | pair selected inside outside insideZero outsideZero =>
-      rw [← selected.rotation.pairing (ZeroReduction.WordCancellation.pair selected inside outside).closed,
-        ZeroReduction.ChordWord.pairing_split selected.chord inside.closed outside.closed, insideZero, outsideZero,
+      rw [← selected.rotation.pairing (pair selected inside outside).closed,
+        ChordWord.pairing_split selected.chord inside.closed outside.closed, insideZero, outsideZero,
           zero_add]
 
 open Purelib.Topology.Surface.Word.ZeroReduction.WordCancellation in
 /-- The zero block is not accepted on faith: construct all cancelling chord intervals, recursively, from its proved
 exact entries. -/
-@[expose] def ofZero (word : List (SignedWord.SignedGenerator count))
+@[expose] def ofZero (word : List (SignedGenerator count))
     (unique : ∀ index reversed, SignedGenerator.occurrences ⟨index, reversed⟩ word ≤ 1)
     (closed : ∀ index, Pairing.totalAt (word.map SignedGenerator.coefficients) index = 0)
     (zero : ∀ row column, Pairing.pairingAt (word.map SignedGenerator.coefficients) row column = 0) :
-    ZeroReduction.WordCancellation word :=
+    WordCancellation word :=
   match word with
   | [] => .nil
   | head :: remaining =>
@@ -239,15 +239,15 @@ exact entries. -/
       have balanced := fun index => (selected.rotation.total index).trans (closed index)
       have entries := fun row column => (selected.rotation.pairing closed row column).trans (zero row column)
       .pair selected
-        (Purelib.Topology.Surface.Word.ZeroReduction.WordCancellation.ofZero selected.chord.inside
+        (WordCancellation.ofZero selected.chord.inside
           (selected.chord.inside_counts_le counts)
-          (Purelib.Topology.Surface.Word.ZeroReduction.ChordWord.inside_closed_of_zero selected.chord counts entries)
-            (Purelib.Topology.Surface.Word.ZeroReduction.ChordWord.inside_pairing_zero selected.chord counts balanced
+          (ChordWord.inside_closed_of_zero selected.chord counts entries)
+            (ChordWord.inside_pairing_zero selected.chord counts balanced
             entries))
-        (Purelib.Topology.Surface.Word.ZeroReduction.WordCancellation.ofZero selected.chord.outside
-          (Purelib.Topology.Surface.Word.ZeroReduction.ChordWord.outside_counts_le selected.chord counts)
-          (Purelib.Topology.Surface.Word.ZeroReduction.ChordWord.outside_closed_of_zero selected.chord counts balanced
-            entries) (Purelib.Topology.Surface.Word.ZeroReduction.ChordWord.outside_pairing_zero selected.chord counts
+        (WordCancellation.ofZero selected.chord.outside
+          (ChordWord.outside_counts_le selected.chord counts)
+          (ChordWord.outside_closed_of_zero selected.chord counts balanced
+            entries) (ChordWord.outside_pairing_zero selected.chord counts
             balanced entries))
 termination_by word.length
 decreasing_by
@@ -262,8 +262,8 @@ end WordCancellation
 namespace WordSurgeryTrace
 
 /-- The actual terminal residual inherits the original signed occurrence bounds. -/
-theorem terminal_unique {word : List (SignedWord.SignedGenerator count)} {integral : Surgery.IntegralWordSignature word}
-    {pivots : List (Handle.Basic.PivotIndices count)} (trace : NormalForm.WordSurgeryTrace word integral pivots)
+theorem terminal_unique {word : List (SignedGenerator count)} {integral : IntegralWordSignature word}
+    {pivots : List (Handle.Basic.PivotIndices count)} (trace : WordSurgeryTrace word integral pivots)
     (unique : ∀ index reversed, SignedGenerator.occurrences ⟨index, reversed⟩ word ≤ 1) :
     ∀ index reversed, SignedGenerator.occurrences ⟨index, reversed⟩ trace.terminalWord ≤ 1 := by
   induction trace with
@@ -271,8 +271,8 @@ theorem terminal_unique {word : List (SignedWord.SignedGenerator count)} {integr
   | handle selected counts _ _ _ ih => exact ih (selected.cut.after_counts_le (selected.counts counts))
 
 /-- The actual terminal residual inherits the original zero total coefficients. -/
-theorem terminal_closed {word : List (SignedWord.SignedGenerator count)} {integral : Surgery.IntegralWordSignature word}
-    {pivots : List (Handle.Basic.PivotIndices count)} (trace : NormalForm.WordSurgeryTrace word integral pivots)
+theorem terminal_closed {word : List (SignedGenerator count)} {integral : IntegralWordSignature word}
+    {pivots : List (Handle.Basic.PivotIndices count)} (trace : WordSurgeryTrace word integral pivots)
     (closed : ∀ index, Pairing.totalAt (word.map SignedGenerator.coefficients) index = 0) :
     ∀ index, Pairing.totalAt (trace.terminalWord.map SignedGenerator.coefficients) index = 0 := by
   induction trace with
@@ -284,13 +284,13 @@ theorem terminal_closed {word : List (SignedWord.SignedGenerator count)} {integr
 
 Original signed uniqueness and balance supply the finite chord recursion's conditions without replacing the retained
 residual word. -/
-@[expose] def terminalCancellation {word : List (SignedWord.SignedGenerator count)} {integral :
-  Surgery.IntegralWordSignature word}
-    {pivots : List (Handle.Basic.PivotIndices count)} (trace : NormalForm.WordSurgeryTrace word integral pivots)
+@[expose] def terminalCancellation {word : List (SignedGenerator count)} {integral :
+  IntegralWordSignature word}
+    {pivots : List (Handle.Basic.PivotIndices count)} (trace : WordSurgeryTrace word integral pivots)
     (unique : ∀ index reversed, SignedGenerator.occurrences ⟨index, reversed⟩ word ≤ 1)
     (closed : ∀ index, Pairing.totalAt (word.map SignedGenerator.coefficients) index = 0) :
-    ZeroReduction.WordCancellation trace.terminalWord :=
-  .ofZero trace.terminalWord (WordSurgeryTrace.terminal_unique trace unique) (WordSurgeryTrace.terminal_closed trace
+    WordCancellation trace.terminalWord :=
+  .ofZero trace.terminalWord (terminal_unique trace unique) (terminal_closed trace
     closed) (fun row column => by
     rw [← trace.terminalIntegral.spec, trace.terminal_zero, mul_zero])
 

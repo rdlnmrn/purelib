@@ -44,6 +44,8 @@ import Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices
 import Purelib.RootIsolation.SquareRoot.Grid.Walk.ChainComparison
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-! The conjugated terminal product has the same quantitative bound as the
@@ -87,22 +89,22 @@ open _root_.Purelib.Data.Gaussian.Basic (conj)
 open Purelib.Data.Gaussian.Norm.Basic (normSq_conj)
 open Purelib.Topology.Surface.Sewing.SewingRetraction (wordValue)
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base next : Riemann.Meshes.FramedPuncturedGrid curve branches higher}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base next : FramedPuncturedGrid curve branches higher}
   {lifted : Riemann.Meshes.LiftedPuncturedGrid base} {bank :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin
+    BasedBranchBank lifted} {sheet : Fin
     2}
-  {ordered : Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank
-    sheet} {paired : Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered} {current :
+  {ordered : Ordered bank
+    sheet} {paired : OrderedBranchPairs.Ordered.Paired ordered} {current :
     Riemann.Meshes.LiftedPuncturedGrid next}
   (included : Polynomial.Geometry.Grid.Extension.CoordinateInclusion base.bank.grid next.bank.grid)
-  {domains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames
+  {domains : FaceDomainBank current.frames
     next.faces.regulars}
 
 /-- Conjugation commutes with the finite Gaussian edge-word value. -/
-private theorem word_conj {count : Nat} (value : Stokes.OrientedEdge count → Data.Gaussian.Basic.Canonical)
-    (word : List (Stokes.OrientedEdge count)) :
+private theorem word_conj {count : Nat} (value : OrientedEdge count → Canonical)
+    (word : List (OrientedEdge count)) :
     SewingRetraction.wordValue (fun edge => Data.Gaussian.Basic.conj (value edge)) word =
       Data.Gaussian.Basic.conj (SewingRetraction.wordValue value word) := by
   induction word with
@@ -114,12 +116,12 @@ private theorem word_conj {count : Nat} (value : Stokes.OrientedEdge count → D
 
 /-- Conjugation commutes with the retained resplit exterior factor for either branch-ending parity. -/
 private theorem factor_conj (newSheet : Fin 2)
-    (value : Stokes.OrientedEdge current.vertices.count → Data.Gaussian.Basic.Canonical) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitExteriorFactor (paired := paired) included
+    (value : OrientedEdge current.vertices.count → Canonical) :
+    ExteriorTotal.resplitExteriorFactor (paired := paired) included
       current.edges current.vertices newSheet
         (fun edge => Data.Gaussian.Basic.conj (value edge)) =
       Data.Gaussian.Basic.conj
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitExteriorFactor (paired := paired)
+        (ExteriorTotal.resplitExteriorFactor (paired := paired)
         included current.edges current.vertices newSheet value) := by
   unfold ExteriorTotal.resplitExteriorFactor
   cases paired.split.ending with
@@ -137,22 +139,22 @@ private theorem factor_conj (newSheet : Fin 2)
 Both differential readings use the supplied paid magnitude banks; conjugation preserves the first component's
 squared-norm estimate. -/
 theorem conjugate_product_bound {i j : Fin genus}
-    (first : MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential i))
-    (second : MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential j))
+    (first : FaceMagnitudeBank domains (PeriodMatrix.standardDifferential i))
+    (second : FaceMagnitudeBank domains (PeriodMatrix.standardDifferential j))
     (newSheet : Fin 2) {stage : Nat}
-    {leftBank : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential i) stage domains}
-    {rightBank : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential j) stage domains}
-    (left : TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh) (right :
-      TrianglePrimitiveReadings.TriangleReadings rightBank current.mesh)
+    {leftBank : FacePrimitiveBank (PeriodMatrix.standardDifferential i) stage domains}
+    {rightBank : FacePrimitiveBank (PeriodMatrix.standardDifferential j) stage domains}
+    (left : TriangleReadings leftBank current.mesh) (right :
+      TriangleReadings rightBank current.mesh)
     (firstLater : first.index ≤ stage) (secondLater : second.index ≤ stage)
-    {tolerance : Fraction.Rational}
-    (leftSmall : Data.Gaussian.Norm.Basic.normSq (current.edges.chainValue current.vertices
+    {tolerance : Rational}
+    (leftSmall : Basic.normSq (current.edges.chainValue current.vertices
       (CanonicalEdgeValues.edgeValuation current.mesh left.values)
       (included.resplit base.bank.exterior (FramedBranchCellBank.baseMember base.bank)) newSheet) ≤ tolerance)
-    (rightSmall : Data.Gaussian.Norm.Basic.normSq (current.edges.chainValue current.vertices
+    (rightSmall : Basic.normSq (current.edges.chainValue current.vertices
       (CanonicalEdgeValues.edgeValuation current.mesh right.values)
       (included.resplit base.bank.exterior (FramedBranchCellBank.baseMember base.bank)) newSheet) ≤ tolerance) :
-    Data.Gaussian.Norm.Basic.normSq (BilinearPolarization.extract (fun coefficient =>
+    Basic.normSq (BilinearPolarization.extract (fun coefficient =>
       ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
       included current.edges current.vertices newSheet
       (BilinearPolarization.mix (fun edge => Data.Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation
@@ -166,22 +168,22 @@ theorem conjugate_product_bound {i j : Fin genus}
     (CanonicalEdgeValues.edgeValuation current.mesh left.values)
     (current.edges.indexedEdges current.vertices (included.resplit base.bank.exterior (FramedBranchCellBank.baseMember
       base.bank)) newSheet)
-  have canonicalBound {point : Data.Gaussian.Basic.Canonical} {limit : Fraction.Rational}
-      (h : Data.Gaussian.Norm.Basic.normSq point ≤ limit) :
-      Data.Gaussian.Basic.Canonical.normSq point ≤ limit := by
+  have canonicalBound {point : Canonical} {limit : Rational}
+      (h : Basic.normSq point ≤ limit) :
+      Canonical.normSq point ≤ limit := by
     change Fraction.Order.Basic.LessEqual _ _ at h ⊢
-    rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+    rw [← Basic.normSq_eq_canonical]
     exact h
-  rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+  rw [Basic.normSq_eq_canonical]
   exact PrimitivePoint.area_bound
-    ⟨canonicalBound (((Data.Gaussian.Norm.Basic.normSq_conj _).trans_le (PolarizedExteriorRequest.factor_bounded
+    ⟨canonicalBound (((Basic.normSq_conj _).trans_le (PolarizedExteriorRequest.factor_bounded
       included first newSheet left firstLater)).trans (Fraction.Order.Basic.le_max_left
       (PolarizedExteriorRequest.factorBound (paired := paired) included first) (PolarizedExteriorRequest.factorBound
       (paired := paired) included second))),
       canonicalBound ((PolarizedExteriorRequest.factor_bounded included second newSheet right secondLater).trans
         (Fraction.Order.Basic.le_max_right (PolarizedExteriorRequest.factorBound (paired := paired) included first)
         (PolarizedExteriorRequest.factorBound (paired := paired) included second)))⟩
-    ⟨canonicalBound ((congrArg Data.Gaussian.Norm.Basic.normSq conjugateTotal).trans_le
-      ((Data.Gaussian.Norm.Basic.normSq_conj _).trans_le leftSmall)), canonicalBound rightSmall⟩
+    ⟨canonicalBound ((congrArg Basic.normSq conjugateTotal).trans_le
+      ((Basic.normSq_conj _).trans_le leftSmall)), canonicalBound rightSmall⟩
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.ConjugatePhysicalExteriorProduct

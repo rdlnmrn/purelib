@@ -23,6 +23,10 @@ import Purelib.Polynomial.Clearance.Box.Boundary.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian.Derivative.Separation
+
+open Purelib.Polynomial.Dense.Gaussian
+
 /-!
 # Comparison of uniform and anchored Newton budgets
 
@@ -50,17 +54,17 @@ contained rational point meeting the clearance-quarter residual test.
 The clearance-quarter residual test supplies four uniform side margins.
 Their scaled bounds and the common Newton caps bound every anchored-radius entry. -/
 public theorem uniformAnchoredRadius_le_anchoredRadius
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
+    {p : Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    (squarefree : Squarefree.Basic.SquarefreeCertificate p)
     (current : Clearance.Box.Region.ProtectedAmbient p ambient)
     (point : Gaussian.Basic.Canonical) (contains : current.box.Contains point)
-    (cap : Fraction.Rational)
-    (residualSmall : Data.Gaussian.Norm.Basic.normSq (p.eval point) < current.clearance.bound / 4) :
-    Newton.Restart.Uniform.Budget.uniformAnchoredRadius squarefree current cap ≤
-      Newton.Restart.Anchored.Budget.anchoredRadius squarefree current point cap := by
-  let uniform := Newton.Restart.Uniform.Budget.uniformAnchoredRadius squarefree current cap
+    (cap : Rational)
+    (residualSmall : Gaussian.Norm.Basic.normSq (p.eval point) < current.clearance.bound / 4) :
+    Budget.uniformAnchoredRadius squarefree current cap ≤
+      Anchored.Budget.anchoredRadius squarefree current point cap := by
+  let uniform := Budget.uniformAnchoredRadius squarefree current cap
   let interior := current.clearance.residualInteriorRadius
-  have bounds := Newton.Restart.Uniform.Budget.uniformAnchoredRadius_bounds squarefree current cap
+  have bounds := Budget.uniformAnchoredRadius_bounds squarefree current cap
   have margins := current.clearance.residualInteriorMargins contains
     residualSmall
   have leftGap : interior ≤ point.re - current.box.xLower := by
@@ -85,7 +89,7 @@ public theorem uniformAnchoredRadius_le_anchoredRadius
       interior = (point.im + interior) - point.im := by ring1
       _ ≤ current.box.yUpper - point.im :=
         Order.Arithmetic.sub_le_sub_right_direct margins.2.2.2.le point.im
-  apply Minimum.le_positiveMinimum (Newton.Restart.Anchored.Budget.anchoredRadiusValues squarefree current point cap)
+  apply Minimum.le_positiveMinimum (Anchored.Budget.anchoredRadiusValues squarefree current point cap)
     bounds.1
   intro value member
   cases member with
@@ -129,17 +133,17 @@ clearance-quarter test.
 The uniform reference radius bounds the corresponding point-specific
 reference radius from below. The supplied cap therefore remains its selected minimum. -/
 public theorem anchoredRadius_eq_cap_of_le_uniformReference
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
+    {p : Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    (squarefree : Squarefree.Basic.SquarefreeCertificate p)
     (current : Clearance.Box.Region.ProtectedAmbient p ambient)
     (point : Gaussian.Basic.Canonical) (contains : current.box.Contains point)
-    {cap : Fraction.Rational}
+    {cap : Rational}
     (capLeReference :
-      cap ≤ Newton.Restart.Uniform.Budget.uniformAnchoredRadius squarefree current 1)
+      cap ≤ Budget.uniformAnchoredRadius squarefree current 1)
     (residualSmall :
-      Data.Gaussian.Norm.Basic.normSq (p.eval point) < current.clearance.bound / 4) :
-    Newton.Restart.Anchored.Budget.anchoredRadius squarefree current point cap = cap := by
-  apply Newton.Restart.Anchored.Budget.anchoredRadius_eq_cap_of_le_reference
+      Gaussian.Norm.Basic.normSq (p.eval point) < current.clearance.bound / 4) :
+    Anchored.Budget.anchoredRadius squarefree current point cap = cap := by
+  apply Anchored.Budget.anchoredRadius_eq_cap_of_le_reference
   exact capLeReference.trans
     (uniformAnchoredRadius_le_anchoredRadius squarefree current point contains
       1 residualSmall)
@@ -149,27 +153,27 @@ public theorem anchoredRadius_eq_cap_of_le_uniformReference
 The retained clearance-quarter budget gives strict containment. Monotonicity
 of the two squared-radius budgets then gives the corresponding anchored residual bound. -/
 public theorem uniform_residual_strict_and_anchored
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
+    {p : Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    (squarefree : Squarefree.Basic.SquarefreeCertificate p)
     (current : Clearance.Box.Region.ProtectedAmbient p ambient)
     (point : Gaussian.Basic.Canonical) (contains : current.box.Contains point)
-    {cap : Fraction.Rational} (capPositive : 0 < cap)
-    (residual : Data.Gaussian.Norm.Basic.normSq (p.eval point) <
-      Newton.Restart.Uniform.Budget.uniformAnchoredResidualTarget squarefree current cap) :
+    {cap : Rational} (capPositive : 0 < cap)
+    (residual : Gaussian.Norm.Basic.normSq (p.eval point) <
+      Budget.uniformAnchoredResidualTarget squarefree current cap) :
     current.box.StrictContains point ∧
-      Data.Gaussian.Norm.Basic.normSq (p.eval point) <
-        Newton.Restart.Anchored.Budget.anchoredResidualTarget squarefree current point cap := open Purelib.Algebra.Field
+      Gaussian.Norm.Basic.normSq (p.eval point) <
+        Anchored.Budget.anchoredResidualTarget squarefree current point cap := open Purelib.Algebra.Field
           in by
-  let uniform := Newton.Restart.Uniform.Budget.uniformAnchoredRadius squarefree current cap
-  let anchored := Newton.Restart.Anchored.Budget.anchoredRadius squarefree current point cap
-  have residualQuarter : Data.Gaussian.Norm.Basic.normSq (p.eval point) <
+  let uniform := Budget.uniformAnchoredRadius squarefree current cap
+  let anchored := Anchored.Budget.anchoredRadius squarefree current point cap
+  have residualQuarter : Gaussian.Norm.Basic.normSq (p.eval point) <
       current.clearance.bound / 4 :=
     residual.trans_le (Order.Basic.min_le_left _ _)
   have quarterLtBound : current.clearance.bound / 4 <
       current.clearance.bound := by
     simp only [ExplicitField.div_eq_mul_inv]
     calc
-      current.clearance.bound * (4 : Fraction.Rational)⁻¹ <
+      current.clearance.bound * (4 : Rational)⁻¹ <
           current.clearance.bound * 1 :=
         Order.Arithmetic.mul_lt_mul_of_pos_left_direct
           current.clearance.positive (by decide)
@@ -182,39 +186,39 @@ public theorem uniform_residual_strict_and_anchored
         cap residualQuarter
   have radiusSquareOrder : uniform ^ 2 ≤ anchored ^ 2 :=
     Order.Arithmetic.pow_le_pow_direct
-      (Newton.Restart.Uniform.Budget.uniformAnchoredRadius_pos squarefree current capPositive).le radiusOrder 2
+      (Budget.uniformAnchoredRadius_pos squarefree current capPositive).le radiusOrder 2
   have sourceOrder :
-      Dense.Gaussian.Bounds.Box.denseLipschitzBound p current.box * (2 * uniform ^ 2) ≤
-        Dense.Gaussian.Bounds.Box.denseLipschitzBound p current.box * (2 * anchored ^ 2) := by
+      Bounds.Box.denseLipschitzBound p current.box * (2 * uniform ^ 2) ≤
+        Bounds.Box.denseLipschitzBound p current.box * (2 * anchored ^ 2) := by
     have doubled :=
       Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        radiusSquareOrder (show (0 : Fraction.Rational) ≤ 2 by decide)
+        radiusSquareOrder (show (0 : Rational) ≤ 2 by decide)
     exact Order.Arithmetic.mul_le_mul_of_nonneg_left_direct doubled
-      (Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos p current.box).le
+      (Bounds.Box.denseLipschitzBound_pos p current.box).le
   have displacementOrder :
-      Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin squarefree current.box * uniform ^ 2 ≤
-        Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin squarefree current.box * anchored ^ 2 :=
+      Squarefree.derivativeMargin squarefree current.box * uniform ^ 2 ≤
+        Squarefree.derivativeMargin squarefree current.box * anchored ^ 2 :=
     Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      radiusSquareOrder (Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin_pos squarefree current.box).le
-  have residualUniform : Data.Gaussian.Norm.Basic.normSq (p.eval point) <
+      radiusSquareOrder (Squarefree.derivativeMargin_pos squarefree current.box).le
+  have residualUniform : Gaussian.Norm.Basic.normSq (p.eval point) <
       min
-        (Dense.Gaussian.Bounds.Box.denseLipschitzBound p current.box * (2 * uniform ^ 2))
-        (Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin squarefree current.box * uniform ^ 2) := by
+        (Bounds.Box.denseLipschitzBound p current.box * (2 * uniform ^ 2))
+        (Squarefree.derivativeMargin squarefree current.box * uniform ^ 2) := by
     exact residual.trans_le (Order.Basic.min_le_right _ _)
   have uniformLeAnchored :
       min
-          (Dense.Gaussian.Bounds.Box.denseLipschitzBound p current.box * (2 * uniform ^ 2))
-          (Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin squarefree current.box * uniform ^ 2) ≤
+          (Bounds.Box.denseLipschitzBound p current.box * (2 * uniform ^ 2))
+          (Squarefree.derivativeMargin squarefree current.box * uniform ^ 2) ≤
         min
-          (Dense.Gaussian.Bounds.Box.denseLipschitzBound p current.box * (2 * anchored ^ 2))
-          (Dense.Gaussian.Derivative.Separation.Squarefree.derivativeMargin squarefree current.box * anchored ^ 2) :=
+          (Bounds.Box.denseLipschitzBound p current.box * (2 * anchored ^ 2))
+          (Squarefree.derivativeMargin squarefree current.box * anchored ^ 2) :=
     le_min
-      (Data.Rat.Fraction.Order.Basic.le_trans _ _ _
+      (Order.Basic.le_trans _ _ _
         (Order.Basic.min_le_left _ _) sourceOrder)
-      (Data.Rat.Fraction.Order.Basic.le_trans _ _ _
+      (Order.Basic.le_trans _ _ _
         (Order.Basic.min_le_right _ _) displacementOrder)
   exact ⟨strict, by
-    simpa only [Newton.Restart.Anchored.Budget.anchoredResidualTarget, uniform, anchored] using
+    simpa only [Anchored.Budget.anchoredResidualTarget, uniform, anchored] using
       residualUniform.trans_le uniformLeAnchored⟩
 
 end Purelib.RootIsolation.Newton.Restart.Uniform.Anchored

@@ -92,16 +92,16 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSa
   (comparisonLocations PrimitiveRequest)
 open Purelib.Riemann.Readings.AffineBasisEnergy (WeightedNormBudget)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {covers :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {covers :
+    BasisSourceCovers parent}
+  {index : Nat} {box : Geometry.Rational.Box}
 
 open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Algebra.FiniteSum.Fin (sumFin_zero sumFin_mul_right)
@@ -109,85 +109,85 @@ open Purelib.Algebra.FiniteSum.Fin (sumFin_zero sumFin_mul_right)
 namespace BasisSourceCovers
 
 /-- This slope is selected from the original cover data before any sampling. -/
-@[expose] def primitiveSlope (covers : SourceLocations.BasisSourceCovers parent) : Coordinate :=
-  (genus : InverseRootPolynomial.Coordinate) * FiniteSum.Fin.sumFin (fun row => (covers.get row).data.sourceSlope)
+@[expose] def primitiveSlope (covers : BasisSourceCovers parent) : Coordinate :=
+  (genus : Coordinate) * sumFin (fun row => (covers.get row).data.sourceSlope)
 
 /-- The complete original cover's homogeneous primitive slope is nonnegative. -/
-theorem primitiveSlope_nonnegative (covers : SourceLocations.BasisSourceCovers parent) : 0 ≤
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope covers :=
+theorem primitiveSlope_nonnegative (covers : BasisSourceCovers parent) : 0 ≤
+  primitiveSlope covers :=
   Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus))
     (FiniteSum.Fin.sumFin_zero.symm.trans_le (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 :
-      InverseRootPolynomial.Coordinate)) _
+      Coordinate)) _
       (fun row => (covers.get row).data.sourceSlope_nonnegative)))
 
 end BasisSourceCovers
 
 namespace BasisCommonInterval.PrimitiveSample
 
-variable {cover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {interval :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers}
-  {polynomials : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+variable {cover : Cover data} {interval :
+  BasisCommonInterval cover covers}
+  {polynomials : RegularBasisPolynomials cap
     index box}
 
 /-- Every original source primitive increment has the retained cover slope bound times squared parameter width and
 coefficient norm. -/
-theorem source_increment_bound (sample : BasisCommonInterval.PrimitiveSample interval regular polynomials)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) {first last : InverseRootPolynomial.Coordinate}
+theorem source_increment_bound (sample : PrimitiveSample interval regular polynomials)
+    (coefficients : GaussianVector genus) {first last : Coordinate}
     (firstInside : 0 ≤ first ∧ first ≤ 1) (lastInside : 0 ≤ last ∧ last ≤ 1) :
     Data.Gaussian.Norm.Basic.normSq (sample.sourceValue coefficients last - sample.sourceValue coefficients
       first) ≤
-      Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope
-        covers * (last - first)^2 * PreparedObservationCoercivity.coefficientNormSq coefficients := by
+      BasisSourceCovers.primitiveSlope
+        covers * (last - first)^2 * coefficientNormSq coefficients := by
   let values := fun row => (sample.originals.get row).primitive.value.eval
-      (((BasisCommonInterval.comparisonLocations interval regular).owners.get row).parent.edge.point last) -
+      (((comparisonLocations interval regular).owners.get row).parent.edge.point last) -
     (sample.originals.get row).primitive.value.eval
-      (((BasisCommonInterval.comparisonLocations interval regular).owners.get row).parent.edge.point first)
+      (((comparisonLocations interval regular).owners.get row).parent.edge.point first)
   let budget := WeightedNormBudget.build values
   have each (row : Fin genus) : Data.Gaussian.Norm.Basic.normSq (values row) ≤ (covers.get
     row).data.sourceSlope * (last - first)^2 := by
     have bound := (sample.originals.get row).increment_bound firstInside lastInside
-    have scale : ((BasisCommonInterval.comparisonLocations interval regular).owners.get row).data.sourceSlope =
+    have scale : ((comparisonLocations interval regular).owners.get row).data.sourceSlope =
         (covers.get row).data.sourceSlope := by
       rw [BasisSourceLocations.owners_get]
       rfl
     rw [scale] at bound
     exact bound
   have paid : budget.scale ≤
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope covers *
+    BasisSourceCovers.primitiveSlope covers *
     (last - first)^2 := by
     rw [budget.scale_eq]
     have bound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Order.Positivity.sumFin_mono _ _ each)
       (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus))
-    rw [FiniteSum.Fin.sumFin_mul_right] at bound
+    rw [sumFin_mul_right] at bound
     exact bound.trans_eq (by
-        unfold Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope;
+        unfold BasisSourceCovers.primitiveSlope;
         ring1)
-  have nonnegative : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients :=
+  have nonnegative : 0 ≤ coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
-    (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : InverseRootPolynomial.Coordinate)) _ (fun row =>
-      Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
+    (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Coordinate)) _ (fun row =>
+      normSq_nonneg (coefficients row)))
   have equal : sample.sourceValue coefficients last - sample.sourceValue coefficients first =
-      FiniteSum.Fin.sumFin (fun row => coefficients row * values row) := by
-    unfold BasisCommonInterval.PrimitiveSample.sourceValue
-    rw [← FiniteSum.Fin.sumFin_sub]
-    exact FiniteSum.Fin.sumFin_congr (fun row => by dsimp only [values]; ring1)
+      sumFin (fun row => coefficients row * values row) := by
+    unfold PrimitiveSample.sourceValue
+    rw [← sumFin_sub]
+    exact sumFin_congr (fun row => by dsimp only [values]; ring1)
   rw [equal]
   exact (budget.bound coefficients).trans
     ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct paid nonnegative).trans_eq (by ring1))
 
 /-- The actual reciprocal pullback increment satisfies the homogeneous original-source slope bound enlarged by the paid
 comparison target. -/
-theorem pullback_increment_bound (sample : BasisCommonInterval.PrimitiveSample interval regular polynomials)
-    {target : InverseRootPolynomial.Coordinate} {floor : Nat} (request : BasisCommonInterval.PrimitiveRequest interval
+theorem pullback_increment_bound (sample : PrimitiveSample interval regular polynomials)
+    {target : Coordinate} {floor : Nat} (request : PrimitiveRequest interval
       regular target floor)
-    (later : request.index ≤ index) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) {first last :
-      InverseRootPolynomial.Coordinate}
+    (later : request.index ≤ index) (coefficients : GaussianVector genus) {first last :
+      Coordinate}
     (firstInside : interval.edge.left.parameter ≤ first ∧ first ≤ interval.edge.right.parameter)
     (lastInside : interval.edge.left.parameter ≤ last ∧ last ≤ interval.edge.right.parameter) :
     Data.Gaussian.Norm.Basic.normSq (sample.pullbackValue coefficients last - sample.pullbackValue coefficients
       first) ≤
-      2 * (Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope
-        covers + target) * (last - first)^2 * PreparedObservationCoercivity.coefficientNormSq coefficients := by
+      2 * (BasisSourceCovers.primitiveSlope
+        covers + target) * (last - first)^2 * coefficientNormSq coefficients := by
   have source :=
     source_increment_bound
     sample coefficients

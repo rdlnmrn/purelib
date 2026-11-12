@@ -19,6 +19,12 @@ import Purelib.Riemann.Topology.PreparedCycleModels
 
 public import Purelib.Riemann.Integration.PreparedSwitchedRefinements
 
+open Purelib.Riemann.Integration
+
+open Purelib.Integration.Polynomial.Gaussian.Path.Basic
+
+open Purelib.Riemann.Integration.PreparedDirectDyadicRefinements
+
 open Purelib.Data
 
 public section
@@ -48,17 +54,17 @@ private theorem ofPreparedPath_parent_center {genus : Nat}
     (differential : Hyperelliptic.Differentials.Basic.Differential genus) (sheet : Fin 2)
     {ambient : Rational.Box} :
     forall {start finish : Gaussian.Basic.Canonical}
-      {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+      {path : Geometry.ClearPath curve.polynomial ambient start finish}
       {owner : Owner (curve.polynomial.eval start)}
       (prepared :
         Paths.PreparedClearPathModels.PreparedPath path owner)
-      (centered : Integration.PreparedSubdivisionModelCore.CenteredEdge
+      (centered : PreparedSubdivisionModelCore.CenteredEdge
         curve differential),
       centered ∈
-          (Integration.PreparedDirectDyadicRefinements.CenteredPathChain.ofPreparedPath
+          (CenteredPathChain.ofPreparedPath
             curve differential sheet prepared).parents →
         centered.center =
-          Integration.PreparedConstantModels.PreparedEdge.CenterState.canonical
+          PreparedConstantModels.PreparedEdge.CenterState.canonical
             centered.edge
   | _, _, .nil _point, _, .nil _ _owner, centered, membership => by
       change centered ∈ [] at membership
@@ -68,12 +74,12 @@ private theorem ofPreparedPath_parent_center {genus : Nat}
       centered, membership => by
       rcases List.Membership.mem_append.mp membership with
         headMembership | tailMembership
-      · rw [Integration.PreparedDirectDyadicRefinements.CenteredPathChain.dataOfCompleteSegment_parents]
+      · rw [CenteredPathChain.dataOfCompleteSegment_parents]
           at headMembership
         unfold Paths.PreparedClearPathModels.CompleteSegment.centeredEdges
           at headMembership
         exact
-          Integration.PreparedSubdivisionAutomaticModels.centeredEdges_canonical_center
+          PreparedSubdivisionAutomaticModels.centeredEdges_canonical_center
             curve differential sheet preparedHead.subdivision centered
               headMembership
       · exact ofPreparedPath_parent_center curve differential sheet
@@ -86,17 +92,17 @@ private theorem ofDyadicBank_parent_center {genus : Nat}
     {depth : Nat} {rootDiameter : Rat.Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Rational.Box} {start finish : Gaussian.Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : Paths.PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner)
-    (centered : Integration.PreparedSubdivisionModelCore.CenteredEdge
+    (centered : PreparedSubdivisionModelCore.CenteredEdge
       curve differential)
     (membership : centered ∈
-      (Integration.PreparedDirectDyadicRefinements.CenteredPathChain.ofDyadicBank
+      (CenteredPathChain.ofDyadicBank
         curve differential sheet bank).parents) :
     centered.center =
-      Integration.PreparedConstantModels.PreparedEdge.CenterState.canonical
+      PreparedConstantModels.PreparedEdge.CenterState.canonical
         centered.edge := by
   cases bank with
   | safe checked =>
@@ -107,10 +113,10 @@ private theorem ofDyadicBank_parent_center {genus : Nat}
         prepared centered membership
   | executedCertified checked =>
       change centered ∈
-        (Integration.PreparedDirectDyadicRefinements.CenteredPathChain.ofExecutedCheckedDyadic
+        (CenteredPathChain.ofExecutedCheckedDyadic
           curve differential sheet checked).parents at membership
       rw
-        [Integration.PreparedDirectDyadicRefinements.CenteredPathChain.ofExecutedCheckedDyadic_parents_eq_ofPreparedPath
+        [CenteredPathChain.ofExecutedCheckedDyadic_parents_eq_ofPreparedPath
         curve differential sheet checked] at membership
       exact ofPreparedPath_parent_center curve differential sheet
         checked.prepared centered membership
@@ -135,21 +141,21 @@ theorem ofDyadicBank_tailMappedIntegralSample_recast_self {genus : Nat}
     {depth : Nat} {rootDiameter : Rat.Fraction.Rational}
     {rootDiameterPositive : 0 < rootDiameter}
     {ambient : Rational.Box} {start finish : Gaussian.Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    {path : Geometry.ClearPath curve.polynomial ambient start finish}
     {owner : Owner (curve.polynomial.eval start)}
     (bank : Paths.PreparedClearPathModels.PreparedPath.DyadicBank depth
       rootDiameter rootDiameterPositive path owner) :
-    Polynomial.Gaussian.Path.Basic.PathModel.tailMappedIntegralSample
-        (Integration.PreparedDirectDyadicRefinements.CenteredPathChain.ofDyadicBank
+    PathModel.tailMappedIntegralSample
+        (CenteredPathChain.ofDyadicBank
           curve differential sheet bank).parents
         (fun centered =>
-          (Integration.PreparedEdgeRecasting.recastCenteredEdge
+          (PreparedEdgeRecasting.recastCenteredEdge
             differential centered).model) =
-      Polynomial.Gaussian.Path.Basic.PathModel.tailMappedIntegralSample
-        (Integration.PreparedDirectDyadicRefinements.CenteredPathChain.ofDyadicBank
+      PathModel.tailMappedIntegralSample
+        (CenteredPathChain.ofDyadicBank
           curve differential sheet bank).parents
-        Integration.PreparedSubdivisionModelCore.CenteredEdge.model := by
-  apply Integration.Polynomial.Gaussian.Path.Basic.PathModel.tailMappedIntegralSample_congr
+        PreparedSubdivisionModelCore.CenteredEdge.model := by
+  apply PathModel.tailMappedIntegralSample_congr
   intro centered membership
   have canonical := ofDyadicBank_parent_center curve differential sheet
     bank centered membership
@@ -169,58 +175,58 @@ boundary in their original order, with self-recasts eliminated by canonical-cent
 theorem cycleState_tailMappedCanonicalIntegralSample {genus : Nat}
     {curve : Hyperelliptic.Basic.HyperellipticCurve genus} (source : Hyperelliptic.Differentials.Basic.Differential
       genus) :
-    forall (data : Topology.PreparedCycleModels.PreparedCycleData curve),
-    Polynomial.Gaussian.Path.Basic.PathModel.tailMappedIntegralSample
-        (Integration.PreparedSwitchedRefinements.cycleState curve source data).parents
+    forall (data : PreparedCycleModels.PreparedCycleData curve),
+    PathModel.tailMappedIntegralSample
+        (PreparedSwitchedRefinements.cycleState curve source data).parents
         (fun centered =>
-          (Integration.PreparedEdgeRecasting.recastCenteredEdge
+          (PreparedEdgeRecasting.recastCenteredEdge
             source centered).model) =
       match data with
       | .bridge bridge =>
           let forward :=
-            Integration.PreparedDirectDyadicRefinements.CenteredPathChain.ofDyadicBank
+            CenteredPathChain.ofDyadicBank
               curve source 0 bridge.forwardChecked
           let backward :=
-            Integration.PreparedDirectDyadicRefinements.CenteredPathChain.ofDyadicBank
+            CenteredPathChain.ofDyadicBank
               curve source 1 bridge.backwardChecked
-          Polynomial.Gaussian.Path.Basic.PathModel.tailMappedIntegralSample
+          PathModel.tailMappedIntegralSample
               forward.parents
-              Integration.PreparedSubdivisionModelCore.CenteredEdge.model +
-            Polynomial.Gaussian.Path.Basic.PathModel.tailMappedIntegralSample
+              PreparedSubdivisionModelCore.CenteredEdge.model +
+            PathModel.tailMappedIntegralSample
               backward.parents
-              Integration.PreparedSubdivisionModelCore.CenteredEdge.model
+              PreparedSubdivisionModelCore.CenteredEdge.model
       | .finiteCut boundary =>
           let forward :=
-            Integration.PreparedDirectDyadicRefinements.CenteredPathChain.ofDyadicBank
+            CenteredPathChain.ofDyadicBank
               curve source 0 boundary.forwardChecked
           let rightBoundary :=
-            Integration.PreparedDirectDyadicRefinements.CenteredPathChain.ofDyadicBank
+            CenteredPathChain.ofDyadicBank
               curve source 0 boundary.rightBoundaryChecked
           let backward :=
-            Integration.PreparedDirectDyadicRefinements.CenteredPathChain.ofDyadicBank
+            CenteredPathChain.ofDyadicBank
               curve source 1 boundary.backwardChecked
           let leftBoundary :=
-            Integration.PreparedDirectDyadicRefinements.CenteredPathChain.ofDyadicBank
+            CenteredPathChain.ofDyadicBank
               curve source 1 boundary.leftBoundaryChecked
-          Polynomial.Gaussian.Path.Basic.PathModel.tailMappedIntegralSample
+          PathModel.tailMappedIntegralSample
               forward.parents
-              Integration.PreparedSubdivisionModelCore.CenteredEdge.model +
-            Polynomial.Gaussian.Path.Basic.PathModel.tailMappedIntegralSample
+              PreparedSubdivisionModelCore.CenteredEdge.model +
+            PathModel.tailMappedIntegralSample
                 rightBoundary.parents
-                Integration.PreparedSubdivisionModelCore.CenteredEdge.model +
-              Polynomial.Gaussian.Path.Basic.PathModel.tailMappedIntegralSample
+                PreparedSubdivisionModelCore.CenteredEdge.model +
+              PathModel.tailMappedIntegralSample
                   backward.parents
-                  Integration.PreparedSubdivisionModelCore.CenteredEdge.model +
-                Polynomial.Gaussian.Path.Basic.PathModel.tailMappedIntegralSample
+                  PreparedSubdivisionModelCore.CenteredEdge.model +
+                PathModel.tailMappedIntegralSample
                   leftBoundary.parents
-                  Integration.PreparedSubdivisionModelCore.CenteredEdge.model
+                  PreparedSubdivisionModelCore.CenteredEdge.model
   | .bridge bridge => by
-      rw [Integration.PreparedSwitchedRefinements.cycleState_tailMappedIntegralSample]
+      rw [PreparedSwitchedRefinements.cycleState_tailMappedIntegralSample]
       simp only
       rw [ofDyadicBank_tailMappedIntegralSample_recast_self,
         ofDyadicBank_tailMappedIntegralSample_recast_self]
   | .finiteCut boundary => by
-      rw [Integration.PreparedSwitchedRefinements.cycleState_tailMappedIntegralSample]
+      rw [PreparedSwitchedRefinements.cycleState_tailMappedIntegralSample]
       simp only
       rw [ofDyadicBank_tailMappedIntegralSample_recast_self,
         ofDyadicBank_tailMappedIntegralSample_recast_self,

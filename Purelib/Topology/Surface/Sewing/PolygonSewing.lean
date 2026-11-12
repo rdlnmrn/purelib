@@ -36,15 +36,6 @@ open Purelib.Data.List
 open Purelib.Topology.Chain.PathBoundary (PathEndpoints)
 variable {Vertex Edge : Type} {edgeStart edgeFinish : Edge → Vertex}
 
-/-- Concatenate certified original paths sharing their middle vertex. -/
-theorem append {left right : List Edge} {start middle finish : Vertex}
-    (first : PathBoundary.PathEndpoints edgeStart edgeFinish left start middle)
-    (second : PathBoundary.PathEndpoints edgeStart edgeFinish right middle finish) :
-    PathBoundary.PathEndpoints edgeStart edgeFinish (left ++ right) start finish := by
-  induction first with
-  | nil => exact second
-  | cons tail ih => exact .cons (ih second)
-
 /-- Split a certified concatenated path at its original list boundary and retain the intermediate vertex. -/
 theorem split_append (left right : List Edge) {start finish : Vertex}
     (path : PathBoundary.PathEndpoints edgeStart edgeFinish (left ++ right) start finish) :
@@ -159,7 +150,7 @@ theorem rest_path (split : BoundarySplit boundary) {anchor : Fin count}
   rcases PolygonSewing.PathEndpoints.split_append split.before (split.edge :: split.after) closed with ⟨middle, first,
     last⟩
   cases last with
-  | cons remaining => exact PolygonSewing.PathEndpoints.append remaining first
+  | cons remaining => exact PathBoundary.PathEndpoints.append remaining first
 
 set_option genInjectivity false in
 /-- A selected occurrence retains its exact requested position.
@@ -229,6 +220,6 @@ theorem sew_closed {count : Nat} {left right : List (Stokes.OrientedEdge count)}
       first.edge.finish := by
   have secondPath := second.rest_path rightClosed
   rw [opposite] at secondPath
-  exact PolygonSewing.PathEndpoints.append (first.rest_path leftClosed) secondPath
+  exact PathBoundary.PathEndpoints.append (first.rest_path leftClosed) secondPath
 
 end Purelib.Topology.Surface.Sewing.PolygonSewing.PolygonStokes

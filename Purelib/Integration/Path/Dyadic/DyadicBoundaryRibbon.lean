@@ -204,17 +204,17 @@ and is independent of subdivision depth. -/
 theorem dyadicDifference_bound (left right : Fraction.Rational → Basic.Canonical) {lower upper error slope drift :
   Fraction.Rational}
     (errorNonnegative : 0 ≤ error)
-    (errorLe : ∀ parameter, lower ≤ parameter ∧ parameter ≤ upper → Data.Gaussian.Norm.Basic.normSq (left parameter -
+    (errorLe : ∀ parameter, lower ≤ parameter ∧ parameter ≤ upper → Norm.Basic.normSq (left parameter -
       right
       parameter) ≤ error)
     (rightLe : ∀ first last, lower ≤ first ∧ first ≤ upper → lower ≤ last ∧ last ≤ upper →
-      Data.Gaussian.Norm.Basic.normSq (right last - right first) ≤ slope * (last - first) ^ 2)
+      Norm.Basic.normSq (right last - right first) ≤ slope * (last - first) ^ 2)
     (driftLe : ∀ first last, lower ≤ first ∧ first ≤ upper → lower ≤ last ∧ last ≤ upper →
-      Data.Gaussian.Norm.Basic.normSq ((left last - right last) - (left first - right first)) ≤ drift * (last - first)
+      Norm.Basic.normSq ((left last - right last) - (left first - right first)) ≤ drift * (last - first)
         ^ 2)
     (depth : Nat) {first last : Fraction.Rational} (firstInside : lower ≤ first ∧ first ≤ upper)
     (lastInside : lower ≤ last ∧ last ≤ upper) (ordered : first ≤ last) :
-    Data.Gaussian.Norm.Basic.normSq (dyadicDifference left right depth first last) ≤ 8 *
+    Norm.Basic.normSq (dyadicDifference left right depth first last) ≤ 8 *
       error *
       (4 * slope + drift) * (last - first) ^ 2 := by
   induction depth generalizing first last with
@@ -239,9 +239,9 @@ theorem dyadicDifference_bound (left right : Fraction.Rational → Basic.Canonic
           _ = _ := by ring1
       rw [dyadicDifference_succ]
       calc
-        _ ≤ 2 * (Data.Gaussian.Norm.Basic.normSq (dyadicDifference left right depth first
+        _ ≤ 2 * (Norm.Basic.normSq (dyadicDifference left right depth first
           (PreparedBoxPartitions.midpoint first last)) +
-            Data.Gaussian.Norm.Basic.normSq (dyadicDifference left right depth
+            Norm.Basic.normSq (dyadicDifference left right depth
               (PreparedBoxPartitions.midpoint first last) last)) := Norm.Bounds.normSq_add_le_two _ _
         _ ≤ 2 * (8 * error * (4 * slope + drift) * (PreparedBoxPartitions.midpoint first last - first) ^ 2 +
             8 * error * (4 * slope + drift) * (last - PreparedBoxPartitions.midpoint first last) ^ 2) :=

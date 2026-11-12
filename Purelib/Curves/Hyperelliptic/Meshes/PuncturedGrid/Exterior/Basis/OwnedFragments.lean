@@ -75,6 +75,14 @@ import Purelib.Riemann.Paths.PreparedPathParentCaches
 import Purelib.Topology.Surface.Cut.PrimitiveJumps
 import Purelib.Tactic.Ring
 
+open Purelib.Riemann.Readings
+
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Integration.Path.CenteredPathIncrements
+
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -101,38 +109,38 @@ open Purelib.Riemann.Normalization
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest (OwnedReadings
   ownedValue)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
     regular domains differential}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {count : Nat} {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {sourceData : Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover sourceData}
-  {covers : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent} {minimum floor index
+  {sourceData : Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
+    Charts.Reciprocal.UniformReciprocalCover.Cover sourceData}
+  {covers : SourceLocations.BasisSourceCovers parent} {minimum floor index
     depth : Nat}
-  {common : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonCover cover covers minimum}
-  {areaAllowance sourceTarget coefficientTarget : Normalization.InverseRootPolynomial.Coordinate}
-  {request : Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest regular common
+  {common : CommonCover.BasisCommonCover cover covers minimum}
+  {areaAllowance sourceTarget coefficientTarget : Coordinate}
+  {request : PreparedCommonRequest.BasisPreparedCommonRequest regular common
     areaAllowance sourceTarget coefficientTarget floor}
   {box : Rational.Box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
-  {originals : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {originals : CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
     covers index}
-  {cells : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers index}
+  {cells : SourceLocations.BasisSourceLocations.SampleBank covers index}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable (acquired :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition request
+  PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition request
   polynomials originals cells coefficients depth)
 
 open Purelib.Topology.Polygon.Stokes (PrimitivePoint)
@@ -141,7 +149,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerReque
 set_option genInjectivity false in
 /-- Geometry and existing readings only; area and total estimates are derived. -/
 structure OwnedFragment {faceIndex : Nat} (data :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData occurrence faceIndex) where
+  FragmentQueries.RowData occurrence faceIndex) where
   /-- The selected original parent belongs to the occurrence's retained cache. -/ member : parent ∈
     occurrence.compared.entered.cache.parents
   /-- The original common geometric fragment of that retained parent. -/ piece :
@@ -149,226 +157,226 @@ structure OwnedFragment {faceIndex : Nat} (data :
     (parent.edge.point 0) (parent.edge.point 1)
   /-- The actual retained number of sampled increments. -/ vertices : Nat
   /-- The complete original parameter sample, including repeated coordinates. -/ parameters : Fin (vertices + 1) →
-    Normalization.InverseRootPolynomial.Coordinate
+    Coordinate
   /-- Every retained parameter lies inside the original fragment interval. -/ inside : ∀ vertex, piece.interval.lower ≤
     parameters vertex ∧ parameters vertex ≤ piece.interval.upper
   /-- The retained source traversal orientation. -/ forward : Bool
   /-- The original parameter sample follows its retained orientation. -/ ordered : ∀ edge : Fin vertices, if forward
     then parameters edge.castSucc ≤ parameters edge.succ
     else parameters edge.succ ≤ parameters edge.castSucc
-  /-- The original finite length-error allowance. -/ allowance : Normalization.InverseRootPolynomial.Coordinate
+  /-- The original finite length-error allowance. -/ allowance : Coordinate
   /-- The retained length-error budget for the actual increment count. -/ budget : Path.NoisyPathArea.LengthErrorBudget
     vertices allowance
   /-- The original basis-row owner requests at the retained budget tolerance. -/ owners :
     OwnerRequest occurrence budget.tolerance
   /-- The shared face stage pays the retained owner requests. -/ later : owners.index ≤ faceIndex
   /-- The actual original point-owner readings for every basis row and retained vertex. -/ readings :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings data (fun vertex => parent.edge.point
+    OwnedReadings data (fun vertex => parent.edge.point
     (parameters vertex))
   /-- The retained conjugate sample of the coefficient-weighted owned values. -/ owned :
     Periods.CenteredBilinearPath.Sample (fun vertex => Path.ConjugateIncrementComparison.conjugateFirst
     (⟨ownedValue readings coefficients vertex, ownedValue readings coefficients vertex⟩ :
-      Topology.Polygon.Stokes.PrimitivePoint))
+      PrimitivePoint))
   /-- The retained conjugate sample of the same coefficient-weighted source primitives. -/ source :
     Periods.CenteredBilinearPath.Sample (fun vertex => Path.ConjugateIncrementComparison.conjugateFirst
-    (⟨Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+    (⟨CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
       originals coefficients (parameters vertex),
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
-      originals coefficients (parameters vertex)⟩ : Topology.Polygon.Stokes.PrimitivePoint))
+      CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+      originals coefficients (parameters vertex)⟩ : PrimitivePoint))
 
 constructive_injectivity OwnedFragment
 
 namespace OwnedFragment
-variable {acquired} {faceIndex : Nat} {data : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
+variable {acquired} {faceIndex : Nat} {data : FragmentQueries.RowData
   occurrence faceIndex}
 
 /-- Both increment lists are retained by their original area samples. -/
-@[expose] def pair (fragment : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment (originals
+@[expose] def pair (fragment : OwnedFragment (originals
   := originals) (coefficients := coefficients) data) :
-    List Topology.Polygon.Stokes.PrimitivePoint × List PrimitivePoint := ((Path.CenteredPathIncrements.Sample.increments
-      fragment.owned), (Path.CenteredPathIncrements.Sample.increments fragment.source))
+    List PrimitivePoint × List PrimitivePoint := ((Sample.increments
+      fragment.owned), (Sample.increments fragment.source))
 
 /-- The coefficient-independent complete owner and source-query area error for this retained fragment. -/
-@[expose] def areaError (fragment : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment
+@[expose] def areaError (fragment : OwnedFragment
   (originals := originals) (coefficients := coefficients) data) : Coordinate :=
-  2 * (40 * fragment.budget.tolerance * (4 * Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentArea.traceDensity
+  2 * (40 * fragment.budget.tolerance * (4 * FragmentArea.traceDensity
     acquired fragment.piece faceIndex + 3) *
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentArea.parameterStep fragment.forward
+      (PairedFragmentArea.parameterStep fragment.forward
         (fragment.parameters 0) (fragment.parameters (Fin.last fragment.vertices)) + fragment.allowance)^2 +
-    40 * (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentArea.queryScale acquired fragment.piece faceIndex *
+    40 * (FragmentArea.queryScale acquired fragment.piece faceIndex *
       (occurrence.compared.entered.domain.geometry.box fragment.piece.column fragment.piece.row).diagonalSq) *
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentArea.traceDensity acquired fragment.piece faceIndex *
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentArea.parameterStep fragment.forward
+      FragmentArea.traceDensity acquired fragment.piece faceIndex *
+      (PairedFragmentArea.parameterStep fragment.forward
         (fragment.parameters 0) (fragment.parameters (Fin.last fragment.vertices)))^2)
 
 /-- The coefficient-independent endpoint-total discrepancy from original owner tolerance and query displacement. -/
-@[expose] def totalError (fragment : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment
+@[expose] def totalError (fragment : OwnedFragment
   (originals := originals) (coefficients := coefficients) data) : Coordinate :=
-  2 * (fragment.budget.tolerance + Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentArea.queryScale acquired
-    fragment.piece faceIndex * Data.Gaussian.Norm.Basic.normSq
+  2 * (fragment.budget.tolerance + FragmentArea.queryScale acquired
+    fragment.piece faceIndex * Gaussian.Norm.Basic.normSq
     (parent.edge.point (fragment.parameters (Fin.last fragment.vertices)) - parent.edge.point (fragment.parameters 0)))
 
 /-- The retained conjugate owned and source areas differ by the computed error times the squared coefficient norm. -/
-theorem area_accurate (fragment : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment
+theorem area_accurate (fragment : OwnedFragment
   (originals := originals) (coefficients := coefficients) data) :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area fragment.pair.1 - Path.PairedIncrementArea.area
+    Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area fragment.pair.1 - Path.PairedIncrementArea.area
       fragment.pair.2) ≤
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.areaError (acquired := acquired)
-        fragment * (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
-  change Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area
-    (Path.CenteredPathIncrements.Sample.increments fragment.owned) -
-    Path.PairedIncrementArea.area (Path.CenteredPathIncrements.Sample.increments fragment.source)) ≤ _
-  rw [Path.CenteredPathIncrements.Sample.increments_area fragment.owned,
-    Path.CenteredPathIncrements.Sample.increments_area fragment.source]
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedArea.owned_conjugate_area_bound acquired fragment.piece
+      OwnedFragment.areaError (acquired := acquired)
+        fragment * (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
+  change Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area
+    (Sample.increments fragment.owned) -
+    Path.PairedIncrementArea.area (Sample.increments fragment.source)) ≤ _
+  rw [Sample.increments_area fragment.owned,
+    Sample.increments_area fragment.source]
+  exact OwnedArea.owned_conjugate_area_bound acquired fragment.piece
     fragment.member data fragment.parameters fragment.inside
     fragment.forward fragment.ordered fragment.budget fragment.owners fragment.later fragment.readings fragment.owned
       fragment.source
 
 /-- Both retained conjugate totals differ by the computed endpoint error times the coefficient norm. -/
-theorem total_accurate (fragment : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment
+theorem total_accurate (fragment : OwnedFragment
   (originals := originals) (coefficients := coefficients) data) :
-    Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded ((Path.PairedIncrementArea.total fragment.pair.1).sub
+    PrimitiveAreaBounds.PrimitivePoint.Bounded ((Path.PairedIncrementArea.total fragment.pair.1).sub
       (Path.PairedIncrementArea.total fragment.pair.2))
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.totalError (acquired := acquired)
-        fragment * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) := by
-  change Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded ((Path.PairedIncrementArea.total
-    (Path.CenteredPathIncrements.Sample.increments fragment.owned)).sub
-    (Path.PairedIncrementArea.total (Path.CenteredPathIncrements.Sample.increments fragment.source))) _
-  rw [Path.CenteredPathIncrements.Sample.increments_total fragment.owned,
-    Path.CenteredPathIncrements.Sample.increments_total fragment.source, ←
+      (OwnedFragment.totalError (acquired := acquired)
+        fragment * PreparedObservationCoercivity.coefficientNormSq coefficients) := by
+  change PrimitiveAreaBounds.PrimitivePoint.Bounded ((Path.PairedIncrementArea.total
+    (Sample.increments fragment.owned)).sub
+    (Path.PairedIncrementArea.total (Sample.increments fragment.source))) _
+  rw [Sample.increments_total fragment.owned,
+    Sample.increments_total fragment.source, ←
     Path.DyadicConjugateIncrementComparison.PairedIncrementArea.conjugateFirst_sub, ←
     Path.DyadicConjugateIncrementComparison.PairedIncrementArea.conjugateFirst_sub]
   apply Path.ConjugateIncrementComparison.conjugateFirst_error
-  have bound := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentEndpoints.owned_increment_error acquired
+  have bound := FragmentEndpoints.owned_increment_error acquired
     fragment.piece fragment.member data fragment.parameters fragment.inside
     fragment.owners fragment.budget.tolerance_positive fragment.later fragment.readings 0 (Fin.last fragment.vertices)
-  change Fraction.Order.Basic.LessEqual _ _ at bound
+  change Basic.LessEqual _ _ at bound
   simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at bound
   exact ⟨by
-    change Fraction.Order.Basic.LessEqual _ _
+    change Basic.LessEqual _ _
     convert bound using 1
     · rfl
-    · unfold Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.totalError
+    · unfold OwnedFragment.totalError
       rw [Gaussian.Norm.Basic.normSq_eq_canonical],
     by
-    change Fraction.Order.Basic.LessEqual _ _
+    change Basic.LessEqual _ _
     convert bound using 1
     · rfl
-    · unfold Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.totalError
+    · unfold OwnedFragment.totalError
       rw [Gaussian.Norm.Basic.normSq_eq_canonical]⟩
 
 /-- The original basis-source slope weighted by the squared retained endpoint displacement. -/
-@[expose] def sourceBound (fragment : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment
+@[expose] def sourceBound (fragment : OwnedFragment
   (originals := originals) (coefficients := coefficients) data) : Coordinate :=
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope covers *
+  CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope covers *
     (fragment.parameters (Fin.last fragment.vertices) - fragment.parameters 0)^2
 
 /-- The common coefficient-independent magnitude bound for the owned and source totals. -/
-@[expose] def totalBound (fragment : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment
+@[expose] def totalBound (fragment : OwnedFragment
   (originals := originals) (coefficients := coefficients) data) : Coordinate :=
-  2 * (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.totalError (acquired := acquired)
+  2 * (OwnedFragment.totalError (acquired := acquired)
     fragment + fragment.sourceBound)
 
 /-- Both original retained source totals meet the source slope bound times the coefficient norm. -/
 private theorem source_raw_bound (fragment :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment (originals := originals) (coefficients
+  OwnedFragment (originals := originals) (coefficients
   := coefficients) data) :
-    Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (Path.PairedIncrementArea.total fragment.pair.2)
-      (fragment.sourceBound * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) := by
-  change Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (Path.PairedIncrementArea.total
-    (Path.CenteredPathIncrements.Sample.increments fragment.source)) _
-  rw [Path.CenteredPathIncrements.Sample.increments_total fragment.source, ←
+    PrimitiveAreaBounds.PrimitivePoint.Bounded (Path.PairedIncrementArea.total fragment.pair.2)
+      (fragment.sourceBound * PreparedObservationCoercivity.coefficientNormSq coefficients) := by
+  change PrimitiveAreaBounds.PrimitivePoint.Bounded (Path.PairedIncrementArea.total
+    (Sample.increments fragment.source)) _
+  rw [Sample.increments_total fragment.source, ←
     Path.DyadicConjugateIncrementComparison.PairedIncrementArea.conjugateFirst_sub]
   apply Path.ConjugateIncrementComparison.conjugateFirst_bounded
   have unit (vertex : Fin (fragment.vertices + 1)) : 0 ≤ fragment.parameters vertex ∧ fragment.parameters vertex ≤ 1 :=
     ⟨fragment.piece.within.1.trans (fragment.inside vertex).1, (fragment.inside vertex).2.trans fragment.piece.within.2⟩
-  have bounded := Hyperelliptic.Charts.Reciprocal.Disk.Basis.WeightedResampling.ReciprocalDiskArcOwners.increment_bound
+  have bounded := WeightedResampling.ReciprocalDiskArcOwners.increment_bound
     originals coefficients (unit 0) (unit (Fin.last fragment.vertices))
-  have bound : Data.Gaussian.Norm.Basic.normSq
-    (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+  have bound : Gaussian.Norm.Basic.normSq
+    (CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
     originals coefficients (fragment.parameters (Fin.last fragment.vertices)) -
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+      CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
         originals coefficients (fragment.parameters 0)) ≤ fragment.sourceBound *
-        Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
+        PreparedObservationCoercivity.coefficientNormSq coefficients :=
     bounded.trans_eq (by
-        unfold Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.sourceBound;
+        unfold OwnedFragment.sourceBound;
         ring1)
-  change Fraction.Order.Basic.LessEqual _ _ at bound
+  change Basic.LessEqual _ _ at bound
   simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at bound
   exact ⟨by
-    change Fraction.Order.Basic.LessEqual _ _
+    change Basic.LessEqual _ _
     convert bound using 1; rfl,
     by
-    change Fraction.Order.Basic.LessEqual _ _
+    change Basic.LessEqual _ _
     convert bound using 1; rfl⟩
 
 /-- Both original retained source totals meet the common total bound times the coefficient norm. -/
-theorem source_bounded (fragment : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment
+theorem source_bounded (fragment : OwnedFragment
   (originals := originals) (coefficients := coefficients) data) :
-    Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (Path.PairedIncrementArea.total fragment.pair.2)
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.totalBound (acquired := acquired)
-        fragment * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) := open Purelib.Algebra in by
-  have errorNN : 0 ≤ Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.totalError (acquired
+    PrimitiveAreaBounds.PrimitivePoint.Bounded (Path.PairedIncrementArea.total fragment.pair.2)
+      (OwnedFragment.totalBound (acquired := acquired)
+        fragment * PreparedObservationCoercivity.coefficientNormSq coefficients) := open Algebra in by
+  have errorNN : 0 ≤ OwnedFragment.totalError (acquired
     := acquired) fragment :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤ 2)
+    Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 2)
       (add_nonneg fragment.budget.tolerance_positive.le
-        (Fraction.Order.Arithmetic.mul_nonneg_direct
-          (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentArea.queryScale_nonnegative acquired fragment.piece
+        (Arithmetic.mul_nonneg_direct
+          (FragmentArea.queryScale_nonnegative acquired fragment.piece
           faceIndex) (Gaussian.Norm.Basic.normSq_nonneg _)))
   have sourceNN : 0 ≤ fragment.sourceBound :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope_nonnegative
-      covers) (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+    Arithmetic.mul_nonneg_direct
+      (CommonPrimitiveBounds.BasisSourceCovers.primitiveSlope_nonnegative
+      covers) (Arithmetic.sq_nonneg_direct _)
   have paid : fragment.sourceBound ≤
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.totalBound (acquired := acquired)
+    OwnedFragment.totalBound (acquired := acquired)
     fragment :=
     (le_add_of_nonneg_left errorNN).trans
       ((le_add_of_nonneg_right (add_nonneg errorNN sourceNN)).trans_eq (by
-          unfold Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.totalBound;
+          unfold OwnedFragment.totalBound;
           ring1))
-  have massNN : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
+  have massNN : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
     (FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 :
-      Normalization.InverseRootPolynomial.Coordinate)) _ (fun row => Gaussian.Basic.Canonical.normSq_nonneg
+      Coordinate)) _ (fun row => Gaussian.Basic.Canonical.normSq_nonneg
       (coefficients row)))
   have raw := fragment.source_raw_bound
-  have upper := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct paid massNN
+  have upper := Arithmetic.mul_le_mul_of_nonneg_right_direct paid massNN
   exact ⟨raw.1.trans upper, raw.2.trans upper⟩
 
 /-- Both actual retained owned totals meet that same homogeneous common total bound. -/
-theorem owned_bounded (fragment : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment
+theorem owned_bounded (fragment : OwnedFragment
   (originals := originals) (coefficients := coefficients) data) :
-    Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (Path.PairedIncrementArea.total fragment.pair.1)
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.totalBound (acquired := acquired)
-        fragment * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) := by
-  have errors := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.total_accurate (acquired
+    PrimitiveAreaBounds.PrimitivePoint.Bounded (Path.PairedIncrementArea.total fragment.pair.1)
+      (OwnedFragment.totalBound (acquired := acquired)
+        fragment * PreparedObservationCoercivity.coefficientNormSq coefficients) := by
+  have errors := OwnedFragment.total_accurate (acquired
     := acquired) fragment
   have source := fragment.source_raw_bound
-  have scalar {a b : Normalization.InverseRootPolynomial.Gaussian} (error : Data.Gaussian.Norm.Basic.normSq (a - b)
-    ≤ Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.totalError (acquired := acquired)
-    fragment * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)
-      (bounded : Data.Gaussian.Norm.Basic.normSq b ≤ fragment.sourceBound *
-        Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) :
-      Data.Gaussian.Norm.Basic.normSq a ≤
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.totalBound (acquired := acquired)
-        fragment * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := by
+  have scalar {a b : InverseRootPolynomial.Gaussian} (error : Gaussian.Norm.Basic.normSq (a - b)
+    ≤ OwnedFragment.totalError (acquired := acquired)
+    fragment * PreparedObservationCoercivity.coefficientNormSq coefficients)
+      (bounded : Gaussian.Norm.Basic.normSq b ≤ fragment.sourceBound *
+        PreparedObservationCoercivity.coefficientNormSq coefficients) :
+      Gaussian.Norm.Basic.normSq a ≤
+        OwnedFragment.totalBound (acquired := acquired)
+        fragment * PreparedObservationCoercivity.coefficientNormSq coefficients := by
     have result := (Gaussian.Norm.Bounds.normSq_add_le_two (a - b) b).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct error
-        bounded) (by decide : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤ 2))
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct error
+        bounded) (by decide : (0 : Coordinate) ≤ 2))
     rw [sub_add_cancel] at result
     exact result.trans_eq (by
-        unfold Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.totalBound;
+        unfold OwnedFragment.totalBound;
         ring1)
-  have oldBound {value : Gaussian.Basic.Canonical} {limit : Normalization.InverseRootPolynomial.Coordinate}
+  have oldBound {value : Gaussian.Basic.Canonical} {limit : Coordinate}
       (bound : Gaussian.Basic.Canonical.normSq value ≤ limit) :
-      Data.Gaussian.Norm.Basic.normSq value ≤ limit := by
-    change Fraction.Order.Basic.LessEqual _ _ at bound ⊢
+      Gaussian.Norm.Basic.normSq value ≤ limit := by
+    change Basic.LessEqual _ _ at bound ⊢
     simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using bound
-  have canonicalBound {value : Gaussian.Basic.Canonical} {limit : Normalization.InverseRootPolynomial.Coordinate}
-      (bound : Data.Gaussian.Norm.Basic.normSq value ≤ limit) :
+  have canonicalBound {value : Gaussian.Basic.Canonical} {limit : Coordinate}
+      (bound : Gaussian.Norm.Basic.normSq value ≤ limit) :
       Gaussian.Basic.Canonical.normSq value ≤ limit := by
-    change Fraction.Order.Basic.LessEqual _ _ at bound ⊢
+    change Basic.LessEqual _ _ at bound ⊢
     simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using bound
   exact ⟨canonicalBound (scalar (oldBound errors.1) (oldBound source.1)),
     canonicalBound (scalar (oldBound errors.2) (oldBound source.2))⟩

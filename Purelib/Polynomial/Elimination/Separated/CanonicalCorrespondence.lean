@@ -70,17 +70,18 @@ namespace Purelib.Polynomial.Elimination.Separated.CanonicalCorrespondence
 /-- The normalized rational eliminant is exactly the original selected scalar coordinate polynomial. -/
 theorem erase_normalizedEliminant (polynomial :
   Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) :
-    id (Elimination.Separated.Scalar.normalizedEliminant polynomial) =
-      Elimination.Separated.Scalar.scalarEliminant polynomial := by
+    id (Scalar.normalizedEliminant polynomial) =
+      Scalar.scalarEliminant polynomial := by
   have normalized :=
     Purelib.LinearAlgebra.PolynomialMatrix.Inverse.Scaled.Gaussian.Normalization.scaledInverseScalar_normalized
     (polynomial.natDegree + polynomial.natDegree)
-    (Elimination.Separated.Sylvester.separatedSylvester polynomial)
-  change (Elimination.Separated.Bezout.separatedData polynomial).scalar.normalize =
-    (Elimination.Separated.Bezout.separatedData polynomial).scalar at normalized
-  unfold Elimination.Separated.Scalar.normalizedEliminant Elimination.Separated.Scalar.normalizedScalar
-    Elimination.Separated.Scalar.scalarEliminant
-    Dense.Gaussian.Components.Selection.selectedCoordinate
+    (Sylvester.separatedSylvester polynomial)
+  change (Bezout.separatedData polynomial).scalar.normalize =
+    (Bezout.separatedData polynomial).scalar at normalized
+  unfold Scalar.normalizedEliminant
+  rewrite [Scalar.normalizedScalar_eq,
+    Scalar.scalarEliminant_eq]
+  unfold Dense.Gaussian.Components.Selection.selectedCoordinate
   rw [normalized]
   rfl
 end Purelib.Polynomial.Elimination.Separated.CanonicalCorrespondence
@@ -105,9 +106,9 @@ namespace Purelib.Polynomial.Elimination.Separated.CanonicalCorrespondence
 the existing separated-Sylvester Bézout development. -/
 theorem erase_normalizedScalar (polynomial :
   Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) :
-    id (Elimination.Separated.Scalar.normalizedScalar polynomial) =
-      (Elimination.Separated.Bezout.separatedData polynomial).scalar := by
-  rfl
+    id (Scalar.normalizedScalar polynomial) =
+      (Bezout.separatedData polynomial).scalar :=
+  Scalar.normalizedScalar_eq polynomial
 
 end Purelib.Polynomial.Elimination.Separated.CanonicalCorrespondence
 
@@ -157,8 +158,8 @@ namespace Purelib.Polynomial.Elimination.Separated.CanonicalCorrespondence
 /-- Identity erasure preserves the scalar returned by the separated scaled-inverse construction. -/
 theorem erase_separatedScalar (polynomial :
   NormalizedPolynomial) :
-    id (Elimination.Separated.Bezout.separatedData polynomial).scalar =
-      (Elimination.Separated.Bezout.separatedData
+    id (Bezout.separatedData polynomial).scalar =
+      (Bezout.separatedData
         (id polynomial)).scalar := by
   rfl
 end Purelib.Polynomial.Elimination.Separated.CanonicalCorrespondence
@@ -183,16 +184,16 @@ namespace Purelib.Polynomial.Elimination.Separated.CanonicalCorrespondence
 theorem erase_separatedSylvester (polynomial :
   NormalizedPolynomial) :
     PolynomialMatrix.Map.mapMatrix Dense.Gaussian.Map.Identity.eraseEmbedding
-        (Elimination.Separated.Sylvester.separatedSylvester polynomial) =
-      Elimination.Separated.Sylvester.separatedSylvester
+        (Sylvester.separatedSylvester polynomial) =
+      Sylvester.separatedSylvester
         (id polynomial) := open Purelib in open Purelib.LinearAlgebra renaming Matrix ->
           SquareMatrix in by
   apply SquareMatrix.matrix_ext
   intro row column
   rw [PolynomialMatrix.Map.mapMatrix_apply]
   apply Dense.Basic.DensePolynomial.ext
-  change ((Elimination.Separated.Sylvester.separatedSylvester polynomial row column).coeffs.map id) =
-    (Elimination.Separated.Sylvester.separatedSylvester polynomial row column).coeffs
+  change ((Sylvester.separatedSylvester polynomial row column).coeffs.map id) =
+    (Sylvester.separatedSylvester polynomial row column).coeffs
   exact Data.List.Map.map_id _
 end Purelib.Polynomial.Elimination.Separated.CanonicalCorrespondence
 

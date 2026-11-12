@@ -42,7 +42,7 @@ section
 open Purelib.Data
 
 /-- The rational coordinate type for finite continuation bounds. -/
-public abbrev Coordinate := Rat.Fraction.Rational
+public abbrev Coordinate := Fraction.Rational
 /-- The executable Gaussian rational parameter type. -/
 public abbrev Gaussian := Gaussian.Basic.Canonical
 
@@ -101,13 +101,13 @@ Both original source and computed target boxes determine the four retained extre
 bounds for the same source state and target polynomial. -/
 @[expose] public def commonAmbient {source : Gaussian} {ambient : Box}
     (_sourceState : WindingOneState
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-        RootContinuation.SquareRootDegree.degreeTwo) ambient)
+      (Power.Gaussian.rootPolynomial source
+        SquareRootDegree.degreeTwo) ambient)
     (target : Gaussian) : Box :=
   hull ambient
     (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial target
-        RootContinuation.SquareRootDegree.degreeTwo))
+      (Power.Gaussian.rootPolynomial target
+        SquareRootDegree.degreeTwo))
 
 section
 
@@ -122,15 +122,15 @@ The parameter displacement quadrance is below the source state's retained cleara
 preserves the local root occurrence. -/
 @[expose] public def transportedOwner {source target : Gaussian} {ambient : Box}
     (sourceState : WindingOneState
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-        RootContinuation.SquareRootDegree.degreeTwo) ambient)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+      (Power.Gaussian.rootPolynomial source
+        SquareRootDegree.degreeTwo) ambient)
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       sourceState.clearance.bound) :
     Owner.Local.Basic.LocalOwner
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial target
-        RootContinuation.SquareRootDegree.degreeTwo) :=
+      (Power.Gaussian.rootPolynomial target
+        SquareRootDegree.degreeTwo) :=
   Progressive.Power.Owner.Transport.transportedOwner
-    RootContinuation.SquareRootDegree.degreeTwo
+    SquareRootDegree.degreeTwo
     { box := sourceState.box
       proper := sourceState.proper
       clearance := sourceState.clearance
@@ -143,13 +143,13 @@ Its actual box is the source box, while the hull containment and retained windin
 -/
 @[expose] public def transportedRawState {source target : Gaussian} {ambient : Box}
     (sourceState : WindingOneState
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-        RootContinuation.SquareRootDegree.degreeTwo) ambient)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+      (Power.Gaussian.rootPolynomial source
+        SquareRootDegree.degreeTwo) ambient)
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       sourceState.clearance.bound) :
     State.Raw.RawWindingState
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial target
-        RootContinuation.SquareRootDegree.degreeTwo)
+      (Power.Gaussian.rootPolynomial target
+        SquareRootDegree.degreeTwo)
       (commonAmbient sourceState target) := by
   let owner := transportedOwner sourceState small
   exact
@@ -157,8 +157,8 @@ Its actual box is the source box, while the hull containment and retained windin
       refinesAmbient := by
         change sourceState.box.Refines (hull ambient
           (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox
-            (Purelib.Polynomial.Power.Gaussian.rootPolynomial target
-              RootContinuation.SquareRootDegree.degreeTwo)))
+            (Power.Gaussian.rootPolynomial target
+              SquareRootDegree.degreeTwo)))
         exact sourceState.refinesAmbient.trans
           (left_refines_hull ambient _)
       proper := owner.proper
@@ -180,9 +180,9 @@ open Purelib.Polynomial
 @[simp] public theorem transportedRawState_box {source target : Gaussian}
     {ambient : Box}
     (sourceState : WindingOneState
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-        RootContinuation.SquareRootDegree.degreeTwo) ambient)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+      (Power.Gaussian.rootPolynomial source
+        SquareRootDegree.degreeTwo) ambient)
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       sourceState.clearance.bound) :
     (transportedRawState sourceState small).box = sourceState.box := rfl
 
@@ -194,16 +194,16 @@ finite extraction data and fallback. -/
 @[expose] public def extraction {source target : Gaussian} {ambient : Box}
     (targetNonzero : target ≠ 0)
     (sourceState : WindingOneState
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-        RootContinuation.SquareRootDegree.degreeTwo) ambient)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+      (Power.Gaussian.rootPolynomial source
+        SquareRootDegree.degreeTwo) ambient)
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       sourceState.clearance.bound) :=
   Newton.Search.Extraction.extract
     (by
-      rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]
-      exact RootContinuation.SquareRootDegree.degreeTwo_atLeastTwo)
+      rw [Power.Gaussian.rootPolynomial_degree]
+      exact SquareRootDegree.degreeTwo_atLeastTwo)
     (Power.Gaussian.Squarefree.squarefree targetNonzero
-      RootContinuation.SquareRootDegree.degreeTwo)
+      SquareRootDegree.degreeTwo)
     (SquareRoot.Clearance.QuadraticAxisElimination.quadraticAxisElimination target)
     (transportedRawState sourceState small) (epsilon := (1 : Coordinate))
     (by decide)
@@ -216,13 +216,13 @@ owner. Reading its state preserves those same witnesses and clearances. -/
 @[expose] public def continuedState {source target : Gaussian} {ambient : Box}
     (targetNonzero : target ≠ 0)
     (sourceState : WindingOneState
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-        RootContinuation.SquareRootDegree.degreeTwo) ambient)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+      (Power.Gaussian.rootPolynomial source
+        SquareRootDegree.degreeTwo) ambient)
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       sourceState.clearance.bound) :
     WindingOneState
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial target
-        RootContinuation.SquareRootDegree.degreeTwo)
+      (Power.Gaussian.rootPolynomial target
+        SquareRootDegree.degreeTwo)
       (commonAmbient sourceState target) :=
   (extraction targetNonzero sourceState small).state
 
@@ -234,15 +234,15 @@ box, so the retained target state refines it. -/
 public theorem continuedState_refines_source {source target : Gaussian}
     {ambient : Box} (targetNonzero : target ≠ 0)
     (sourceState : WindingOneState
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-        RootContinuation.SquareRootDegree.degreeTwo) ambient)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+      (Power.Gaussian.rootPolynomial source
+        SquareRootDegree.degreeTwo) ambient)
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       sourceState.clearance.bound) :
     (continuedState targetNonzero sourceState small).box.Refines
       sourceState.box := by
   change (extraction targetNonzero sourceState small).state.box.Refines sourceState.box
   rw [← transportedRawState_box sourceState small]
-  exact (Geometry.Rational.Box.Refinement.StrictInterior.refines (extraction targetNonzero sourceState small).strict)
+  exact (Rational.Box.Refinement.StrictInterior.refines (extraction targetNonzero sourceState small).strict)
 
 open Purelib.RootIsolation in
 /-- Build the deterministic shrinking target track after a certified small parameter move.
@@ -252,21 +252,21 @@ refinements. -/
 @[expose] public def continuedTrack {source target : Gaussian} {ambient : Box}
     (targetNonzero : target ≠ 0)
     (sourceState : WindingOneState
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-        RootContinuation.SquareRootDegree.degreeTwo) ambient)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+      (Power.Gaussian.rootPolynomial source
+        SquareRootDegree.degreeTwo) ambient)
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       sourceState.clearance.bound) :
     WindingOneTrack
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial target
-        RootContinuation.SquareRootDegree.degreeTwo)
+      (Power.Gaussian.rootPolynomial target
+        SquareRootDegree.degreeTwo)
       (commonAmbient sourceState target) :=
   SquareRoot.Clearance.QuadraticLineClearance.Owner.accelerateTrack target
   (Track.Newton.Build.ofInitial
     (by
-      rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]
-      exact RootContinuation.SquareRootDegree.degreeTwo_atLeastTwo)
+      rw [Power.Gaussian.rootPolynomial_degree]
+      exact SquareRootDegree.degreeTwo_atLeastTwo)
     (Power.Gaussian.Squarefree.squarefree targetNonzero
-      RootContinuation.SquareRootDegree.degreeTwo)
+      SquareRootDegree.degreeTwo)
     (SquareRoot.Clearance.QuadraticAxisElimination.quadraticAxisElimination target)
     (continuedState targetNonzero sourceState small))
 
@@ -285,9 +285,9 @@ containment in the same source box. -/
 public theorem continuedTrack_initial_refines_source {source target : Gaussian}
     {ambient : Box} (targetNonzero : target ≠ 0)
     (sourceState : WindingOneState
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-        RootContinuation.SquareRootDegree.degreeTwo) ambient)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+      (Power.Gaussian.rootPolynomial source
+        SquareRootDegree.degreeTwo) ambient)
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       sourceState.clearance.bound) :
     (continuedTrack targetNonzero sourceState small).initial.box.Refines
       sourceState.box :=
@@ -300,9 +300,9 @@ refers to the same transported source box. -/
 public theorem continuedTrack_initial_strict_source {source target : Gaussian}
     {ambient : Box} (targetNonzero : target ≠ 0)
     (sourceState : WindingOneState
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial source
-        RootContinuation.SquareRootDegree.degreeTwo) ambient)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+      (Power.Gaussian.rootPolynomial source
+        SquareRootDegree.degreeTwo) ambient)
+    (small : Gaussian.Norm.Basic.normSq (source - target) <
       sourceState.clearance.bound) :
     (continuedTrack targetNonzero sourceState small).initial.box.StrictInterior
       sourceState.box := by

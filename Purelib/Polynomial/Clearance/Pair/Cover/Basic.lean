@@ -37,18 +37,18 @@ tree.  A split retains its baseline proposal as well as both child covers.
 The indexed tree retains its baseline leaf and both child intervals. Its aggregate floors and ordered regions are
 computed from those same nodes. -/
 public inductive Cover {realPolynomial imagPolynomial : Dense.Rational.Basic.CoordinatePolynomial} (source :
-  Clearance.Pair.Cover.Leaf.Source realPolynomial imagPolynomial) :
-    (parameters : Data.Rat.Interval.Bounds) → Fraction.Rational → Fraction.Rational → Type where
+  Cover.Leaf.Source realPolynomial imagPolynomial) :
+    (parameters : Interval.Bounds) → Fraction.Rational → Fraction.Rational → Type where
   /-- A single cached leaf supplies its exact quadrance and coordinate floor indices. -/ | leaf {parameters :
-    Data.Rat.Interval.Bounds} (data : Cover.Leaf source parameters) :
+    Interval.Bounds} (data : Cover.Leaf source parameters) :
       Cover source parameters data.normFloor data.coordinateFloor
   /-- Retain the baseline leaf and both half-interval covers, combining each floor by the maximum of the baseline and
-    child minimum. -/ | split {parameters : Data.Rat.Interval.Bounds} (baseline : Cover.Leaf
+    child minimum. -/ | split {parameters : Interval.Bounds} (baseline : Cover.Leaf
     source parameters)
       {leftNorm leftCoordinate rightNorm rightCoordinate : Fraction.Rational}
-      (left : Cover source (Data.Rat.Interval.Bisection.leftHalf parameters) leftNorm
+      (left : Cover source (Interval.Bisection.leftHalf parameters) leftNorm
         leftCoordinate)
-      (right : Cover source (Data.Rat.Interval.Bisection.rightHalf parameters) rightNorm
+      (right : Cover source (Interval.Bisection.rightHalf parameters) rightNorm
         rightCoordinate) :
       Cover source parameters (max baseline.normFloor (min leftNorm rightNorm))
         (max baseline.coordinateFloor (min leftCoordinate rightCoordinate))
@@ -66,8 +66,8 @@ end Cover.split
 namespace Cover
 
 variable {realPolynomial imagPolynomial : Dense.Rational.Basic.CoordinatePolynomial} {source :
-  Clearance.Pair.Cover.Leaf.Source realPolynomial imagPolynomial}
-  {parameters : Data.Rat.Interval.Bounds} {normFloor coordinateFloor : Fraction.Rational}
+  Leaf.Source realPolynomial imagPolynomial}
+  {parameters : Interval.Bounds} {normFloor coordinateFloor : Fraction.Rational}
 
 /-- The indexed quadrance floor of every finite cover is nonnegative.
 
@@ -101,7 +101,7 @@ public theorem norm_le (cover : Cover source parameters normFloor coordinateFloo
   | leaf data => exact data.normFloor_le inside
   | split baseline left right leftBound rightBound =>
       apply Fraction.Order.Basic.max_le (baseline.normFloor_le inside)
-      rcases Data.Rat.Interval.Bisection.inside_half inside with leftInside | rightInside
+      rcases Interval.Bisection.inside_half inside with leftInside | rightInside
       · exact (Fraction.Order.Basic.min_le_left _ _).trans (leftBound leftInside)
       · exact (Fraction.Order.Basic.min_le_right _ _).trans (rightBound rightInside)
 
@@ -118,7 +118,7 @@ public theorem coordinate_le (cover : Cover source parameters normFloor coordina
   | leaf data => exact data.coordinateFloor_le inside
   | split baseline left right leftBound rightBound =>
       apply Fraction.Order.Basic.max_le (baseline.coordinateFloor_le inside)
-      rcases Data.Rat.Interval.Bisection.inside_half inside with leftInside | rightInside
+      rcases Interval.Bisection.inside_half inside with leftInside | rightInside
       · exact (Fraction.Order.Basic.min_le_left _ _).trans (leftBound leftInside)
       · exact (Fraction.Order.Basic.min_le_right _ _).trans (rightBound rightInside)
 
@@ -126,9 +126,9 @@ public theorem coordinate_le (cover : Cover source parameters normFloor coordina
 
 A leaf contributes its indexed interval once. A split concatenates the left child regions before the right child
 regions, retaining tree order. -/
-@[expose] public def regions : {parameters : Data.Rat.Interval.Bounds} → {normFloor coordinateFloor :
+@[expose] public def regions : {parameters : Interval.Bounds} → {normFloor coordinateFloor :
   Fraction.Rational} →
-    Cover source parameters normFloor coordinateFloor → List Data.Rat.Interval.Bounds
+    Cover source parameters normFloor coordinateFloor → List Interval.Bounds
   | parameters, _, _, .leaf _ => [parameters]
   | _, _, _, .split _ left right => left.regions ++ right.regions
 
@@ -144,7 +144,7 @@ public theorem covers (cover : Cover source parameters normFloor coordinateFloor
   induction cover with
   | leaf data => exact ⟨_, List.mem_cons_self, inside⟩
   | split baseline left right leftCover rightCover =>
-      rcases Data.Rat.Interval.Bisection.inside_half inside with leftInside | rightInside
+      rcases Interval.Bisection.inside_half inside with leftInside | rightInside
       · obtain ⟨region, member, covered⟩ := leftCover leftInside
         exact ⟨region, Data.List.Membership.mem_append.mpr (Or.inl member), covered⟩
       · obtain ⟨region, member, covered⟩ := rightCover rightInside
@@ -155,7 +155,7 @@ public theorem covers (cover : Cover source parameters normFloor coordinateFloor
 Every listed leaf descends through the retained half-interval refinements. Containment therefore transports back to the
 original indexed interval. -/
 public theorem regions_subset (cover : Cover source parameters normFloor coordinateFloor)
-  {region : Data.Rat.Interval.Bounds}
+  {region : Interval.Bounds}
     (member : region ∈ cover.regions) {parameter : Fraction.Rational} (inside : region.Contains parameter) :
     parameters.Contains parameter := by
   induction cover with
@@ -164,14 +164,14 @@ public theorem regions_subset (cover : Cover source parameters normFloor coordin
       exact equal ▸ inside
   | split baseline left right leftSubset rightSubset =>
       rcases Data.List.Membership.mem_append.mp member with leftMember | rightMember
-      · exact Data.Rat.Interval.Bisection.leftHalf_subset (leftSubset leftMember)
-      · exact Data.Rat.Interval.Bisection.rightHalf_subset (rightSubset rightMember)
+      · exact Interval.Bisection.leftHalf_subset (leftSubset leftMember)
+      · exact Interval.Bisection.rightHalf_subset (rightSubset rightMember)
 
 /-- Every retained leaf has a strictly positive quadrance floor.
 
 A leaf requires its cached quadrance floor to be positive. A split retains the conjunction of both child requirements.
 -/
-@[expose] public def AllPositive : {parameters : Data.Rat.Interval.Bounds} → {normFloor coordinateFloor :
+@[expose] public def AllPositive : {parameters : Interval.Bounds} → {normFloor coordinateFloor :
   Fraction.Rational} →
     Cover source parameters normFloor coordinateFloor → Prop
   | _, _, _, .leaf data => 0 < data.normFloor

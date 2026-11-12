@@ -171,7 +171,7 @@ theorem no_reverse {word : List (Stokes.OrientedEdge count)} {anchor : Fin count
   rcases Membership.split_of_mem member with ⟨before, after, rfl⟩
   obtain ⟨middle, initial, final⟩ :=
     PathEndpoints.split_append before (edge :: after) closed
-  have rotated := PathEndpoints.append final initial
+  have rotated := PathBoundary.PathEndpoints.append final initial
   have rotatedSimple := SimpleBoundaryCycles.rotate_simple simple
   have rotatedLength : 3 ≤ (edge :: after ++ before).length := by
     simp only [Append.length_append, List.length_cons] at long ⊢

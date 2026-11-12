@@ -1,4 +1,5 @@
 module
+import Purelib.LinearAlgebra.Matrix.Permutation
 import Purelib.Algebra.NatCast
 import Purelib.Data.Rat.Fraction
 import Purelib.Data.Gaussian.Norm.Basic
@@ -14,6 +15,7 @@ import Purelib.LinearAlgebra.Matrix.Blocks
 import Purelib.LinearAlgebra.Matrix.Multiplication
 
 import Purelib.Data.Rat.Fraction.Compatibility
+import Purelib.Data.Fin.Permutation
 import Purelib.LinearAlgebra.Matrix.Inverse.PivotedScaledInverse
 public import Purelib.Riemann.Readings.PreparedObservationCoercivity
 import Purelib.LinearAlgebra.Matrix.Inverse.SchurActionLower
@@ -21,6 +23,8 @@ import Mathlib.Algebra.Ring.Defs
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
+
+open Purelib.Data.Gaussian
 
 public section
 
@@ -62,14 +66,14 @@ private theorem entry_or_sum_lt (threshold : Fraction.Rational) : ∀ {count : N
         · apply Or.inr
           rw [FiniteSum.Fin.sumFin_succ]
           apply (Fraction.Order.Arithmetic.add_lt_add_direct (lt_of_not_ge large) small).trans_eq
-          simp only [Purelib.Algebra.NatCast.add, Nat.cast_one]
+          simp only [NatCast.add, Nat.cast_one]
           ring1
 
 /-- A lower bound on a nonempty finite sum yields an entry at least that bound divided by the count. -/
 theorem exists_entry_ge_mean {count : Nat} (values : Fin (count + 1) → Fraction.Rational) (lower : Fraction.Rational)
     (bounded : lower ≤ FiniteSum.Fin.sumFin values) : ∃ index, lower / ((count + 1 : Nat) : Fraction.Rational) ≤ values
       index := by
-  rcases LinearAlgebra.Matrix.Inverse.ActionPivot.entry_or_sum_lt (lower / ((count + 1 : Nat) :
+  rcases entry_or_sum_lt (lower / ((count + 1 : Nat) :
     Fraction.Rational)) values with found | small
   · exact found
   · have positive := Fraction.Cast.Order.natCast_pos_direct (Nat.zero_lt_succ count)
@@ -81,122 +85,122 @@ theorem exists_entry_ge_mean {count : Nat} (values : Fin (count + 1) → Fractio
 /-- An action lower bound bounds the squared norm of the first matrix row.
 
 The estimate is obtained by evaluating the supplied coefficient inequality on the first coordinate unit. -/
-theorem first_row_norm_lower {size : Nat} (matrix : LinearAlgebra.Gaussian.Energy.GaussianMatrix (size + 1)) (lower :
+theorem first_row_norm_lower {size : Nat} (matrix : Gaussian.Energy.GaussianMatrix (size + 1)) (lower :
   Fraction.Rational)
     (coercive : ∀ coefficients, lower * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ≤
-      Readings.PreparedObservationCoercivity.coefficientNormSq (LinearAlgebra.Gaussian.Energy.periodCombination
+      Readings.PreparedObservationCoercivity.coefficientNormSq (Gaussian.Energy.periodCombination
       coefficients matrix)) :
-    lower ≤ FiniteSum.Fin.sumFin (fun column => Data.Gaussian.Norm.Basic.normSq (matrix 0 column)) := by
+    lower ≤ FiniteSum.Fin.sumFin (fun column => Norm.Basic.normSq (matrix 0 column)) := by
   let unit : Gaussian.Energy.GaussianVector (size + 1) := .cons 1 (Data.Vector.Basic.vectorOfFn fun
     _ => 0)
   have norm : Readings.PreparedObservationCoercivity.coefficientNormSq unit = 1 := by
     unfold Readings.PreparedObservationCoercivity.coefficientNormSq
     rw [FiniteSum.Fin.sumFin_succ]
-    change Data.Gaussian.Basic.Canonical.normSq 1 + FiniteSum.Fin.sumFin (fun index : Fin size =>
-      Data.Gaussian.Basic.Canonical.normSq (Data.Vector.Basic.vectorOfFn (fun _ : Fin size => (0 :
-      Data.Gaussian.Basic.Canonical)) index)) = 1
-    have zero : FiniteSum.Fin.sumFin (fun index : Fin size => Data.Gaussian.Basic.Canonical.normSq
-      (Data.Vector.Basic.vectorOfFn (fun _ : Fin size => (0 : Data.Gaussian.Basic.Canonical)) index)) = 0 := by
+    change Basic.Canonical.normSq 1 + FiniteSum.Fin.sumFin (fun index : Fin size =>
+      Basic.Canonical.normSq (Data.Vector.Basic.vectorOfFn (fun _ : Fin size => (0 :
+      Basic.Canonical)) index)) = 1
+    have zero : FiniteSum.Fin.sumFin (fun index : Fin size => Basic.Canonical.normSq
+      (Data.Vector.Basic.vectorOfFn (fun _ : Fin size => (0 : Basic.Canonical)) index)) = 0 := by
       apply (FiniteSum.Fin.sumFin_congr (fun index => ?_)).trans FiniteSum.Fin.sumFin_zero
       rw [Data.Vector.Basic.vectorOfFn_apply]
       rfl
     rw [zero]
     decide
-  have read (column : Fin (size + 1)) : LinearAlgebra.Gaussian.Energy.periodCombination unit matrix column = matrix 0
+  have read (column : Fin (size + 1)) : Gaussian.Energy.periodCombination unit matrix column = matrix 0
     column := by
-    unfold LinearAlgebra.Gaussian.Energy.periodCombination
-    rw [SquareMatrix.Multiplication.vectorMatrix_apply, FiniteSum.Fin.sumFin_succ]
+    unfold Gaussian.Energy.periodCombination
+    rw [Multiplication.vectorMatrix_apply, FiniteSum.Fin.sumFin_succ]
     change 1 * matrix 0 column + FiniteSum.Fin.sumFin (fun index : Fin size => Data.Vector.Basic.vectorOfFn (fun _ : Fin
-      size => (0 : Data.Gaussian.Basic.Canonical)) index * matrix index.succ column) = _
+      size => (0 : Basic.Canonical)) index * matrix index.succ column) = _
     have zero : FiniteSum.Fin.sumFin (fun index : Fin size => Data.Vector.Basic.vectorOfFn (fun _ : Fin size => (0 :
-      Data.Gaussian.Basic.Canonical)) index * matrix index.succ column) = 0 := by
+      Basic.Canonical)) index * matrix index.succ column) = 0 := by
       apply (FiniteSum.Fin.sumFin_congr (fun index => ?_)).trans FiniteSum.Fin.sumFin_zero
       rw [Data.Vector.Basic.vectorOfFn_apply, zero_mul]
-    rw [zero, Data.Gaussian.Basic.one_mul, Data.Gaussian.Basic.add_zero]
+    rw [zero, Basic.one_mul, Basic.add_zero]
   have bound := coercive unit
   rw [norm, mul_one] at bound
   exact bound.trans_eq (FiniteSum.Fin.sumFin_congr (fun column =>
-    (congrArg Data.Gaussian.Basic.Canonical.normSq (read column)).trans
-      (Data.Gaussian.Norm.Basic.normSq_eq_canonical (matrix 0 column)).symm))
+    (congrArg Basic.Canonical.normSq (read column)).trans
+      (Norm.Basic.normSq_eq_canonical (matrix 0 column)).symm))
 
 /-- An action lower bound yields a first-row entry with a quantitative squared-norm bound.
 
 The bound is divided by the exact positive matrix dimension. -/
-theorem exists_first_row_pivot {size : Nat} (matrix : LinearAlgebra.Gaussian.Energy.GaussianMatrix (size + 1)) (lower :
+theorem exists_first_row_pivot {size : Nat} (matrix : Gaussian.Energy.GaussianMatrix (size + 1)) (lower :
   Fraction.Rational)
     (coercive : ∀ coefficients, lower * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ≤
-      Readings.PreparedObservationCoercivity.coefficientNormSq (LinearAlgebra.Gaussian.Energy.periodCombination
+      Readings.PreparedObservationCoercivity.coefficientNormSq (Gaussian.Energy.periodCombination
       coefficients matrix)) :
-    ∃ column, lower / ((size + 1 : Nat) : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq (matrix 0
+    ∃ column, lower / ((size + 1 : Nat) : Fraction.Rational) ≤ Norm.Basic.normSq (matrix 0
       column) :=
-  SquareMatrix.Inverse.ActionPivot.exists_entry_ge_mean _ _ (SquareMatrix.Inverse.ActionPivot.first_row_norm_lower
+  exists_entry_ge_mean _ _ (first_row_norm_lower
     matrix lower coercive)
 
 /-- Swapping matrix columns permutes the coordinates of its row-vector action. -/
-theorem swapColumns_action {size : Nat} (matrix : LinearAlgebra.Gaussian.Energy.GaussianMatrix (size + 1)) (pivot : Fin
+theorem swapColumns_action {size : Nat} (matrix : Gaussian.Energy.GaussianMatrix (size + 1)) (pivot : Fin
   (size + 1))
     (coefficients : Gaussian.Energy.GaussianVector (size + 1)) (column : Fin (size + 1)) :
-    LinearAlgebra.Gaussian.Energy.periodCombination coefficients (SquareMatrix.Inverse.PivotedScaledInverse.swapColumns
-      matrix pivot) column = LinearAlgebra.Gaussian.Energy.periodCombination coefficients matrix
-      (SquareMatrix.Inverse.PivotedScaledInverse.swapZero pivot column) := by
-  unfold LinearAlgebra.Gaussian.Energy.periodCombination
-  rw [SquareMatrix.Multiplication.vectorMatrix_apply, SquareMatrix.Multiplication.vectorMatrix_apply]
-  exact FiniteSum.Fin.sumFin_congr (fun row => congrArg (fun value : Data.Gaussian.Basic.Canonical => coefficients row *
+    Gaussian.Energy.periodCombination coefficients (SquareMatrix.Permutation.swapColumns
+      matrix pivot) column = Gaussian.Energy.periodCombination coefficients matrix
+      (Data.Fin.swapZero pivot column) := by
+  unfold Gaussian.Energy.periodCombination
+  rw [Multiplication.vectorMatrix_apply, Multiplication.vectorMatrix_apply]
+  exact FiniteSum.Fin.sumFin_congr (fun row => congrArg (fun value : Basic.Canonical => coefficients row *
     value)
-    (SquareMatrix.Inverse.PivotedScaledInverse.swapColumns_apply matrix pivot row column))
+    (SquareMatrix.Permutation.swapColumns_apply matrix pivot row column))
 
 /-- A column pivot preserves the squared norm of every row-vector action. -/
-theorem swapColumns_action_norm {size : Nat} (matrix : LinearAlgebra.Gaussian.Energy.GaussianMatrix (size + 1)) (pivot :
+theorem swapColumns_action_norm {size : Nat} (matrix : Gaussian.Energy.GaussianMatrix (size + 1)) (pivot :
   Fin (size + 1))
     (coefficients : Gaussian.Energy.GaussianVector (size + 1)) :
-    Readings.PreparedObservationCoercivity.coefficientNormSq (LinearAlgebra.Gaussian.Energy.periodCombination
-      coefficients (SquareMatrix.Inverse.PivotedScaledInverse.swapColumns matrix pivot)) =
-      Readings.PreparedObservationCoercivity.coefficientNormSq (LinearAlgebra.Gaussian.Energy.periodCombination
+    Readings.PreparedObservationCoercivity.coefficientNormSq (Gaussian.Energy.periodCombination
+      coefficients (SquareMatrix.Permutation.swapColumns matrix pivot)) =
+      Readings.PreparedObservationCoercivity.coefficientNormSq (Gaussian.Energy.periodCombination
       coefficients matrix) := by
-  apply (FiniteSum.Fin.sumFin_congr (fun column => congrArg Data.Gaussian.Basic.Canonical.normSq
-    (SquareMatrix.Inverse.ActionPivot.swapColumns_action matrix pivot coefficients column))).trans
-    (SquareMatrix.Inverse.PivotedScaledInverse.sumFin_swapZero pivot (fun column => Data.Gaussian.Basic.Canonical.normSq
-      (LinearAlgebra.Gaussian.Energy.periodCombination coefficients matrix column)))
+  apply (FiniteSum.Fin.sumFin_congr (fun column => congrArg Basic.Canonical.normSq
+    (swapColumns_action matrix pivot coefficients column))).trans
+    (Data.Fin.sumFin_swapZero pivot (fun column => Basic.Canonical.normSq
+      (Gaussian.Energy.periodCombination coefficients matrix column)))
 
 /-- A pivot using the first row only swaps the selected column with the first column. -/
-theorem pivotMatrix_zero {size : Nat} (matrix : LinearAlgebra.Gaussian.Energy.GaussianMatrix (size + 1)) (pivot : Fin
+theorem pivotMatrix_zero {size : Nat} (matrix : Gaussian.Energy.GaussianMatrix (size + 1)) (pivot : Fin
   (size + 1)) :
-    SquareMatrix.Inverse.PivotedScaledInverse.pivotMatrix matrix 0 pivot =
-      SquareMatrix.Inverse.PivotedScaledInverse.swapColumns matrix pivot := by
-  apply SquareMatrix.matrix_ext
+    SquareMatrix.Permutation.pivotMatrix matrix 0 pivot =
+      SquareMatrix.Permutation.swapColumns matrix pivot := by
+  apply matrix_ext
   intro row column
-  unfold SquareMatrix.Inverse.PivotedScaledInverse.pivotMatrix
-  rw [SquareMatrix.Inverse.PivotedScaledInverse.swapColumns_apply,
-    SquareMatrix.Inverse.PivotedScaledInverse.swapRows_apply,
-    SquareMatrix.Inverse.PivotedScaledInverse.swapColumns_apply]
-  have fixed : SquareMatrix.Inverse.PivotedScaledInverse.swapZero 0 row = row := by
+  unfold SquareMatrix.Permutation.pivotMatrix
+  rw [SquareMatrix.Permutation.swapColumns_apply,
+    SquareMatrix.Permutation.swapRows_apply,
+    SquareMatrix.Permutation.swapColumns_apply]
+  have fixed : Data.Fin.swapZero 0 row = row := by
     by_cases zero : row = 0
     · cases zero
       rfl
-    · rw [SquareMatrix.Inverse.PivotedScaledInverse.swapZero, if_neg zero, if_neg zero]
+    · rw [Data.Fin.swapZero, if_neg zero, if_neg zero]
   rw [fixed]
 
 /-- Read the leading entry after pivoting a selected first-row column. -/
-theorem pivotMatrix_zero_head {size : Nat} (matrix : LinearAlgebra.Gaussian.Energy.GaussianMatrix (size + 1)) (pivot :
+theorem pivotMatrix_zero_head {size : Nat} (matrix : Gaussian.Energy.GaussianMatrix (size + 1)) (pivot :
   Fin (size + 1)) :
-    SquareMatrix.Blocks.head (SquareMatrix.Inverse.PivotedScaledInverse.pivotMatrix matrix 0 pivot) = matrix 0 pivot :=
+    Blocks.head (SquareMatrix.Permutation.pivotMatrix matrix 0 pivot) = matrix 0 pivot :=
       by
-  rw [SquareMatrix.Inverse.ActionPivot.pivotMatrix_zero]
-  change SquareMatrix.Inverse.PivotedScaledInverse.swapColumns matrix pivot 0 0 = _
-  rw [SquareMatrix.Inverse.PivotedScaledInverse.swapColumns_apply,
-    SquareMatrix.Inverse.PivotedScaledInverse.swapZero_zero]
+  rw [pivotMatrix_zero]
+  change SquareMatrix.Permutation.swapColumns matrix pivot 0 0 = _
+  rw [SquareMatrix.Permutation.swapColumns_apply,
+    Data.Fin.swapZero_zero]
 
 /-- A first-row column pivot preserves the supplied action lower bound. -/
-theorem pivotMatrix_zero_action_lower {size : Nat} (matrix : LinearAlgebra.Gaussian.Energy.GaussianMatrix (size + 1))
+theorem pivotMatrix_zero_action_lower {size : Nat} (matrix : Gaussian.Energy.GaussianMatrix (size + 1))
   (pivot : Fin (size + 1)) (lower : Fraction.Rational)
     (coercive : ∀ coefficients, lower * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ≤
-      Readings.PreparedObservationCoercivity.coefficientNormSq (LinearAlgebra.Gaussian.Energy.periodCombination
+      Readings.PreparedObservationCoercivity.coefficientNormSq (Gaussian.Energy.periodCombination
       coefficients matrix))
     (coefficients : Gaussian.Energy.GaussianVector (size + 1)) :
     lower * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ≤
-      Readings.PreparedObservationCoercivity.coefficientNormSq (LinearAlgebra.Gaussian.Energy.periodCombination
-      coefficients (SquareMatrix.Inverse.PivotedScaledInverse.pivotMatrix matrix 0 pivot)) := by
-  rw [SquareMatrix.Inverse.ActionPivot.pivotMatrix_zero, SquareMatrix.Inverse.ActionPivot.swapColumns_action_norm]
+      Readings.PreparedObservationCoercivity.coefficientNormSq (Gaussian.Energy.periodCombination
+      coefficients (SquareMatrix.Permutation.pivotMatrix matrix 0 pivot)) := by
+  rw [pivotMatrix_zero, swapColumns_action_norm]
   exact coercive coefficients
 
 end Purelib.LinearAlgebra.Matrix.Inverse.ActionPivot

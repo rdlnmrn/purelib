@@ -72,26 +72,26 @@ All hypotheses are discharged by the common unit-parameter estimates rather
 than by inspecting an individual owner's boundary clearance. -/
 def unitRobustNewton
     {parameter : Canonical} (parameterNonzero : parameter ≠ 0)
-    (parameterUnit : Data.Gaussian.Norm.Basic.normSq parameter = 1)
+    (parameterUnit : Norm.Basic.normSq parameter = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (index : Fin degree.value) :
     Dense.Gaussian.Newton.Box.Certificate.SeparatedNewtonCenterCertificate
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Power.Gaussian.rootPolynomial parameter degree)
+      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Power.Gaussian.rootPolynomial parameter
         degree))
-      (Power.Unit.Source.unitRobustSourceState parameterNonzero parameterUnit degree
+      (Source.unitRobustSourceState parameterNonzero parameterUnit degree
         degreeAtLeastTwo index).box
       (Power.Gaussian.DerivativeSeparation.unitParameterDerivativeSeparation parameterUnit degree degreeAtLeastTwo
         (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox
-          (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree))) :=
-  let source := Power.Unit.Source.unitRobustSourceState parameterNonzero parameterUnit degree
+          (Power.Gaussian.rootPolynomial parameter degree))) :=
+  let source := Source.unitRobustSourceState parameterNonzero parameterUnit degree
     degreeAtLeastTwo index
   Winding.Box.Newton.Prepare.computeNewtonCenterOfRawWindingSeparated
-    (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree)
-    (by rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]; exact degree.positive)
+    (Power.Gaussian.rootPolynomial parameter degree)
+    (by rw [Power.Gaussian.rootPolynomial_degree]; exact degree.positive)
     (Power.Gaussian.DerivativeSeparation.unitParameterDerivativeSeparation parameterUnit degree degreeAtLeastTwo _)
     source.refinesAmbient source.proper source.raw.rawWinding_ne
-    (Power.Unit.Source.unitRobustSourceState_anchorResidual_le_threshold parameterNonzero
+    (Source.unitRobustSourceState_anchorResidual_le_threshold parameterNonzero
       parameterUnit degree degreeAtLeastTwo index)
 end Purelib.RootIsolation.Power.Unit.Newton
 
@@ -123,31 +123,31 @@ open Purelib.Data.Gaussian
 squared norm. -/
 theorem unitRobustNewton_displacement_le_quarterRadius_sq
     {parameter : Canonical} (parameterNonzero : parameter ≠ 0)
-    (parameterUnit : Data.Gaussian.Norm.Basic.normSq parameter = 1)
+    (parameterUnit : Norm.Basic.normSq parameter = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (index : Fin degree.value) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((unitRobustNewton parameterNonzero parameterUnit degree
             degreeAtLeastTwo index).point -
-          (Power.Unit.Source.unitRobustSourceState parameterNonzero parameterUnit degree
+          (Source.unitRobustSourceState parameterNonzero parameterUnit degree
             degreeAtLeastTwo index).box.anchor) ≤
-      (Power.Unit.Radius.unitRobustRadius parameterUnit degree degreeAtLeastTwo / 4) ^ 2 := by
-  let p := Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree
+      (Radius.unitRobustRadius parameterUnit degree degreeAtLeastTwo / 4) ^ 2 := by
+  let p := Power.Gaussian.rootPolynomial parameter degree
   let ambient := Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox p
-  let source := Power.Unit.Source.unitRobustSourceState parameterNonzero parameterUnit degree
+  let source := Source.unitRobustSourceState parameterNonzero parameterUnit degree
     degreeAtLeastTwo index
   let separation := Power.Gaussian.DerivativeSeparation.unitParameterDerivativeSeparation parameterUnit degree
     degreeAtLeastTwo ambient
   let newton := unitRobustNewton parameterNonzero parameterUnit degree
     degreeAtLeastTwo index
-  let q := Power.Unit.Radius.unitRobustRadius parameterUnit degree degreeAtLeastTwo / 4
+  let q := Radius.unitRobustRadius parameterUnit degree degreeAtLeastTwo / 4
   have budget :=
-    Power.Unit.Source.unitRobustSourceState_anchorResidual_le_displacementBudget
+    Source.unitRobustSourceState_anchorResidual_le_displacementBudget
       parameterNonzero parameterUnit degree degreeAtLeastTwo index
   have marginPositive : 0 < separation.margin := separation.margin_pos
   calc
-    Data.Gaussian.Norm.Basic.normSq (newton.point - source.box.anchor) =
-        Data.Gaussian.Norm.Basic.normSq (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source.box -
+    Norm.Basic.normSq (newton.point - source.box.anchor) =
+        Norm.Basic.normSq (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source.box -
           source.box.anchor) := by rw [newton.point_eq]
     _ ≤ Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound p ambient source.box /
           separation.margin := newton.displacementMargin
@@ -188,17 +188,17 @@ open Purelib.Data.Gaussian
 /-- Dividing the already small robust radius by four gives the coordinate
 budget used to place the Newton centre. -/
 theorem unitRobustQuarterRadius_le_quarter
-    {parameter : Canonical} (parameterUnit : Data.Gaussian.Norm.Basic.normSq parameter = 1)
+    {parameter : Canonical} (parameterUnit : Norm.Basic.normSq parameter = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value) :
-    Power.Unit.Radius.unitRobustRadius parameterUnit degree degreeAtLeastTwo / 4 ≤
+    Radius.unitRobustRadius parameterUnit degree degreeAtLeastTwo / 4 ≤
       (1 / 4 : Fraction.Rational) := by
   apply (Fraction.Order.Field.div_le_iff_pos
     (show (0 : Fraction.Rational) < 4 by
       exact Fraction.Cast.Order.natCast_pos_direct (by decide))).mpr
   calc
-    Power.Unit.Radius.unitRobustRadius parameterUnit degree degreeAtLeastTwo ≤
+    Radius.unitRobustRadius parameterUnit degree degreeAtLeastTwo ≤
         (1 / 8 : Fraction.Rational) :=
-      Power.Unit.Radius.unitRobustRadius_le_eighth parameterUnit degree degreeAtLeastTwo
+      Radius.unitRobustRadius_le_eighth parameterUnit degree degreeAtLeastTwo
     _ ≤ 1 := by decide
     _ = (1 / 4 : Fraction.Rational) * 4 := by decide
 end Purelib.RootIsolation.Power.Unit.Newton
@@ -231,22 +231,22 @@ open Purelib.Data.Gaussian
 coarse rational radial envelope. -/
 theorem unitRobustSourceState_anchor_normSq_le
     {parameter : Canonical} (parameterNonzero : parameter ≠ 0)
-    (parameterUnit : Data.Gaussian.Norm.Basic.normSq parameter = 1)
+    (parameterUnit : Norm.Basic.normSq parameter = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (index : Fin degree.value) :
-    Data.Gaussian.Norm.Basic.normSq
-        (Power.Unit.Source.unitRobustSourceState parameterNonzero parameterUnit degree
+    Norm.Basic.normSq
+        (Source.unitRobustSourceState parameterNonzero parameterUnit degree
           degreeAtLeastTwo index).box.anchor ≤ (5 / 2 : Fraction.Rational) := by
-  let source := Power.Unit.Source.unitRobustSourceState parameterNonzero parameterUnit degree
+  let source := Source.unitRobustSourceState parameterNonzero parameterUnit degree
     degreeAtLeastTwo index
   let newton := unitRobustNewton parameterNonzero parameterUnit degree
     degreeAtLeastTwo index
   have residualSmall :
-      Data.Gaussian.Norm.Basic.normSq (source.box.anchor ^ degree.value - parameter) ≤
+      Norm.Basic.normSq (source.box.anchor ^ degree.value - parameter) ≤
         (1 / 4 : Fraction.Rational) := by
-    rw [← Purelib.Polynomial.Power.Gaussian.rootPolynomial_eval parameter source.box.anchor degree]
+    rw [← Power.Gaussian.rootPolynomial_eval parameter source.box.anchor degree]
     exact newton.residual.trans
-      (Power.Unit.Source.unitRobustSourceState_anchorResidual_le_threshold parameterNonzero
+      (Source.unitRobustSourceState_anchorResidual_le_threshold parameterNonzero
         parameterUnit degree degreeAtLeastTwo index)
   exact Gaussian.Power.Residual.Bounds.normSq_le_five_halves_of_power_residual degree.positive parameterUnit
     residualSmall

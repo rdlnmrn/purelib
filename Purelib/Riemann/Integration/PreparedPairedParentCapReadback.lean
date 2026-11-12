@@ -32,6 +32,8 @@ import Purelib.Integration.Path.PairedIncrementArea
 import Purelib.Curves.Hyperelliptic.Charts.Reciprocal.PreparedPairedReciprocalArc
 public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedUniformPaths
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
+
 public section
 
 /-! Synchronized parent meshes identify the requested unsigned cap path
@@ -58,14 +60,14 @@ open Purelib.Integration in
 /-- Identify the bank's paired paths with dyadic inverse-polynomial paths on its ordered parents.
 
 The identity retains the exact parent order and requested common depth. -/
-theorem pairedUniformPaths_eq_parents {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Hyperelliptic.Differentials.Basic.Differential genus} {collar :
-      Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-    {cap : Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {regular :
-      Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+theorem pairedUniformPaths_eq_parents {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} {collar :
+      ReciprocalExteriorCollar.Data curve}
+    {cap : ReciprocalInnerInverse.Data curve collar} {regular :
+      Disk.RegularBounds.Data cap}
     {parents : List (CenteredEdge curve differential)} {covers :
-      Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents}
-    (bank : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers) (left right : Polynomial) (depth :
+      ParentCovers parents}
+    (bank : SideBank regular covers) (left right : Polynomial) (depth :
       Nat) :
     bank.pairedUniformPaths left right depth = parents.map (fun parent =>
       Path.Dyadic.DyadicPairedPrimitivePaths.increments (fun parameter =>
@@ -92,26 +94,26 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.Comm
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {differential other :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {parents : List (CenteredEdge
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap} {parents : List (CenteredEdge
     curve differential)}
-  {target : Coordinate} {minimum stage fine : Nat} {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {target : Coordinate} {minimum stage fine : Nat} {box otherBox : Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Cap.Primitives.Sample cap other stage otherBox}
   {request : Request regular other parents
     target minimum}
 
 open Purelib.Curves in
 open Purelib.Integration in
 /-- The entry's source path uses its two certified source readings at the retained request depth. -/
-theorem Entry.source_path (entry : Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request.Entry request sample
+theorem Entry.source_path (entry : Entry request sample
   otherSample fine) :
     entry.pair.1 = Path.Dyadic.DyadicPairedPrimitivePaths.increments
-      (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues entry.certified.source
+      (sourceValues entry.certified.source
         entry.certified.otherSource) (request.depth + fine) 0 1 := by
   change entry.certified.compared.firstPath = _
-  rw [Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.AreaRequest.Certified.source_path
+  rw [Disk.CommonRibbonFamily.CommonRibbonRequest.AreaRequest.Certified.source_path
     entry.certified, entry.depth_eq]
 
 open Purelib.Riemann in
@@ -120,22 +122,22 @@ open Purelib.Integration in
 /-- Read the evaluated cap paths as the side bank's ordered paired uniform paths.
 
 The common depth is the retained request depth plus the supplied refinement level. -/
-theorem Evaluation.cap_paths (evaluated : Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request.Evaluation
+theorem Evaluation.cap_paths (evaluated : Evaluation
   request sample otherSample fine)
-    {covers : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents}
-    (bank : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers) :
+    {covers : ParentCovers parents}
+    (bank : SideBank regular covers) :
     evaluated.pairs.map Prod.snd =
       bank.pairedUniformPaths sample.primitive.value otherSample.primitive.value (request.depth + fine) := by
-  rw [Integration.PreparedPairedParentCapReadback.SideBank.pairedUniformPaths_eq_parents bank, evaluated.pairs_eq,
+  rw [SideBank.pairedUniformPaths_eq_parents bank, evaluated.pairs_eq,
     Data.List.Map.map_map]
-  have parentsEq := (congrArg (List.map Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Plan.parent)
+  have parentsEq := (congrArg (List.map Disk.PairedParentRequest.Plan.parent)
     evaluated.plans_eq).trans request.parents_eq
   have paths := congrArg (List.map (fun parent => Path.Dyadic.DyadicPairedPrimitivePaths.increments
     (fun parameter => (⟨sample.primitive.value.eval (parent.edge.point parameter)⁻¹,
       otherSample.primitive.value.eval (parent.edge.point parameter)⁻¹⟩ : PrimitivePoint)) (request.depth + fine) 0 1))
         parentsEq
-  unfold Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request.Entry.pair
-    Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.capValues
+  unfold Entry.pair
+    Disk.CommonRibbonFamily.CommonRibbonRequest.capValues
   have compositionResult := paths
   simp only [Data.List.Map.map_map, -eq_self, -iff_self] at compositionResult ⊢
   dsimp only [Function.comp_def] at compositionResult ⊢
@@ -156,18 +158,18 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest (Re
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request (Evaluation)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {target : Rational} {minimum stage fine : Nat} {box otherBox :
-    Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+    Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Cap.Primitives.Sample cap other stage otherBox}
 
 open Purelib.Riemann in
 open Purelib.Curves in
@@ -178,21 +180,21 @@ open Purelib.Topology in
 The exact subdivision depth combines the occurrence mesh depth and paired request depth, preserving both polynomial
 readings and endpoints. -/
 theorem paired_cap_area_arc (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  SurfaceOccurrence
   regular domains differential)
-    {request : Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request regular other
+    {request : Request regular other
       occurrence.compared.entered.cache.parents target minimum}
-    (evaluated : Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request.Evaluation request sample otherSample
+    (evaluated : Evaluation request sample otherSample
       fine) :
     Path.PairedIncrementArea.area (evaluated.pairs.map Prod.snd).flatten =
-      Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.Bilinear.arcArea
+      ReciprocalRadialGeometry.Bilinear.arcArea
         (fun point => ⟨sample.primitive.value.eval point, otherSample.primitive.value.eval point⟩)
         (occurrence.piece.mesh.depth + (request.depth + fine)) occurrence.start occurrence.finish -
       Polygon.Stokes.edgeArea
         ⟨sample.primitive.value.eval occurrence.start⁻¹, otherSample.primitive.value.eval occurrence.start⁻¹⟩
         ⟨sample.primitive.value.eval occurrence.finish⁻¹, otherSample.primitive.value.eval occurrence.finish⁻¹⟩ := by
-  rw [Integration.PreparedPairedParentCapReadback.Request.Evaluation.cap_paths evaluated occurrence.cap.path.bank]
-  exact Hyperelliptic.Charts.Reciprocal.PreparedPairedReciprocalArc.pairedUniformPaths_area_eq_arc
+  rw [Request.Evaluation.cap_paths evaluated occurrence.cap.path.bank]
+  exact PreparedPairedReciprocalArc.pairedUniformPaths_area_eq_arc
     occurrence.compared.entered.cache occurrence.cap.path.bank
     sample.primitive.value otherSample.primitive.value (request.depth + fine)
 
@@ -204,14 +206,14 @@ open Purelib.Data in
 
 The correction retains the inverse endpoint chord and the evaluation's exact common subdivision depth. -/
 @[expose] def PairedArcError (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  SurfaceOccurrence
   regular domains differential)
-    {request : Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request regular other
+    {request : Request regular other
       occurrence.compared.entered.cache.parents target minimum}
-    (evaluated : Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request.Evaluation request sample otherSample
+    (evaluated : Evaluation request sample otherSample
       fine) : Prop :=
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area (evaluated.pairs.map Prod.fst).flatten -
-      (Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.Bilinear.arcArea
+    normSq (Path.PairedIncrementArea.area (evaluated.pairs.map Prod.fst).flatten -
+      (ReciprocalRadialGeometry.Bilinear.arcArea
         (fun point => ⟨sample.primitive.value.eval point, otherSample.primitive.value.eval point⟩)
         (occurrence.piece.mesh.depth + (request.depth + fine)) occurrence.start occurrence.finish -
       Polygon.Stokes.edgeArea
@@ -224,17 +226,17 @@ open Purelib.Curves in
 
 Transport the retained paired area bound through the exact cap-path readback identity. -/
 theorem paired_arc_error (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  SurfaceOccurrence
   regular domains differential)
-    {request : Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request regular other
+    {request : Request regular other
       occurrence.compared.entered.cache.parents target minimum}
-    (evaluated : Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request.Evaluation request sample otherSample
+    (evaluated : Evaluation request sample otherSample
       fine) :
     PairedArcError occurrence evaluated := by
   have bound :=
     SurfaceOccurrence.paired_area_error
     occurrence evaluated
-  unfold Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request.Evaluation.FullAreaError at bound
+  unfold Evaluation.FullAreaError at bound
   rw [paired_cap_area_arc occurrence evaluated] at bound
   exact bound
 

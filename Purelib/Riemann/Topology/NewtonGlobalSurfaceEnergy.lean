@@ -75,7 +75,7 @@ open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_swap sumFin_succ)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target radius : Rational} {grid : NewtonGrid
@@ -95,20 +95,20 @@ set_option genInjectivity false in
 
 Retains positive ownership, exterior and face allowances, with the exterior request following ownership and the defect
 request retaining that exterior owner. -/
-structure PaidFaceRequest (energy : SurfaceRequest partitions (Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes
+structure PaidFaceRequest (energy : SurfaceRequest partitions (surfaceMeshes
   partitions domains surfaceCuts sheet depth) fixed error)
-    (ownershipAllowance exteriorAllowance faceAllowance : Fraction.Rational) where
+    (ownershipAllowance exteriorAllowance faceAllowance : Rational) where
   /-- Strict positivity of the ownership allowance. -/ ownership_positive : 0 < ownershipAllowance
   /-- Strict positivity of the exterior allowance. -/ exterior_positive : 0 < exteriorAllowance
   /-- Strict positivity of the face allowance. -/ face_positive : 0 < faceAllowance
   /-- Ownership comparison for the exact retained energy request. -/ ownership :
-    Curves.Hyperelliptic.Meshes.Newton.Surface.ConjugateRequest energy
+    ConjugateRequest energy
     (Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus ownershipAllowance)
   /-- Exterior comparison following the retained ownership index. -/ exterior :
-    Curves.Hyperelliptic.Meshes.Newton.Surface.ExteriorRequest energy
+    ExteriorRequest energy
     (Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus exteriorAllowance) ownership.index
   /-- Face defect comparison retaining that exterior request. -/ faces :
-    Curves.Hyperelliptic.Meshes.Newton.Surface.DefectRequest exterior
+    DefectRequest exterior
     (Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus faceAllowance)
 
 constructive_injectivity PaidFaceRequest
@@ -120,23 +120,23 @@ open Purelib.Data.Rat in
 Builds ownership first, uses its index as the exterior floor, then retains that exterior request in the face defect
 request. -/
 @[expose] def PaidFaceRequest.build (energy : SurfaceRequest partitions
-  (Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts sheet depth) fixed error)
-    (ownershipAllowance exteriorAllowance faceAllowance : Fraction.Rational)
+  (surfaceMeshes partitions domains surfaceCuts sheet depth) fixed error)
+    (ownershipAllowance exteriorAllowance faceAllowance : Rational)
     (ownershipPositive : 0 < ownershipAllowance) (exteriorPositive : 0 < exteriorAllowance) (facePositive : 0 <
       faceAllowance) :
     PaidFaceRequest energy ownershipAllowance exteriorAllowance faceAllowance :=
-  let ownership := Curves.Hyperelliptic.Meshes.Newton.Surface.ConjugateRequest.build energy _
+  let ownership := ConjugateRequest.build energy _
     (Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget_positive ownershipPositive)
-  let exterior := Curves.Hyperelliptic.Meshes.Newton.Surface.ExteriorRequest.forEnergyAllowance energy exteriorAllowance
+  let exterior := ExteriorRequest.forEnergyAllowance energy exteriorAllowance
     exteriorPositive ownership.index
   ⟨ownershipPositive, exteriorPositive, facePositive, ownership, exterior,
-    Curves.Hyperelliptic.Meshes.Newton.Surface.DefectRequest.forEnergyAllowance exterior faceAllowance facePositive⟩
+    DefectRequest.forEnergyAllowance exterior faceAllowance facePositive⟩
 
 namespace SynchronizedSurfaceRequests
 
 variable {fixedSheets : (sheet : Fin 2) → Preflights domains sheet}
   (requests : SynchronizedSurfaceRequests (fun sheet =>
-    Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
+    surfaceMeshes partitions domains surfaceCuts
     sheet depth) fixedSheets error)
 
 open Purelib.Data in
@@ -146,7 +146,7 @@ set_option genInjectivity false in
 
 Keeps each sheet-specific paid request and a common index after both the surface request and all retained face requests.
 -/
-structure GlobalEnergyRequest (ownershipAllowance exteriorAllowance faceAllowance : Fraction.Rational) where
+structure GlobalEnergyRequest (ownershipAllowance exteriorAllowance faceAllowance : Rational) where
   /-- Sheet-indexed bank of paid face requests. -/ entries : Vector.DependentVector (fun sheet : Fin 2 =>
     PaidFaceRequest (requests.entries.get sheet) ownershipAllowance exteriorAllowance faceAllowance)
   /-- Common numerical index for the surface and both face requests. -/ index : Nat
@@ -167,8 +167,8 @@ open Purelib.Data.Rat in
 
 Builds the dependent bank of paid requests and takes the maximum of the surface index and all face-request indices. -/
 @[expose] def build (requests : SynchronizedSurfaceRequests (fun sheet =>
-  Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts sheet depth) fixedSheets error)
-    (ownershipAllowance exteriorAllowance faceAllowance : Fraction.Rational)
+  surfaceMeshes partitions domains surfaceCuts sheet depth) fixedSheets error)
+    (ownershipAllowance exteriorAllowance faceAllowance : Rational)
     (ownershipPositive : 0 < ownershipAllowance) (exteriorPositive : 0 < exteriorAllowance) (facePositive : 0 <
       faceAllowance) :
     GlobalEnergyRequest requests ownershipAllowance exteriorAllowance faceAllowance := by
@@ -181,8 +181,8 @@ Builds the dependent bank of paid requests and takes the maximum of the surface 
 open Purelib.Algebra in
 open Purelib.Data.Gaussian in
 /-- A Gaussian sum over two indices is the sum of its two entries. -/
-private theorem sum_two (values : Fin 2 → Basic.Canonical) : FiniteSum.Fin.sumFin values = values 0 + values 1 := by
-  rw [FiniteSum.Fin.sumFin_succ, FiniteSum.Fin.sumFin_succ]
+private theorem sum_two (values : Fin 2 → Canonical) : sumFin values = values 0 + values 1 := by
+  rw [sumFin_succ, sumFin_succ]
   change values 0 + (values 1 + 0) = _
   rw [add_zero]
 
@@ -199,7 +199,7 @@ open Purelib.Riemann.Topology in
 Combines the two sheet coercivity estimates, retaining separate ownership, exterior and face deductions and the exact
 exterior readback through the neighbor bank. -/
 theorem energy_lower (request : GlobalEnergyRequest requests ownershipAllowance exteriorAllowance faceAllowance)
-    {stage : Nat} {cache : Numerics domains stage} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
+    {stage : Nat} {cache : Numerics domains stage} {coefficients : Energy.GaussianVector genus}
     (later : request.index ≤ stage)
     (readings : Vector.DependentVector (fun sheet : Fin 2 => (requests.entries.get sheet).Readings cache))
     (observationFace : Topology.BranchedCover.Double.Attachment.Face)
@@ -210,13 +210,13 @@ theorem energy_lower (request : GlobalEnergyRequest requests ownershipAllowance 
     2 * (NewtonObservationSurfaceLower.surfaceLowerConstant observations - error - ownershipAllowance -
       exteriorAllowance - faceAllowance) *
       coefficientNormSq coefficients ≤ (samples.paired + samples.physical neighbors).im / 4 := by
-  have lower (sheet : Fin 2) := Curves.Hyperelliptic.Meshes.Newton.Surface.DefectRequest.energy_lower
+  have lower (sheet : Fin 2) := DefectRequest.energy_lower
     (request.entries.get sheet).ownership (request.entries.get sheet).exterior (request.entries.get sheet).faces
     (request.entries.get sheet).ownership_positive (request.entries.get sheet).exterior_positive
     (request.entries.get sheet).face_positive ((request.index_ge sheet).trans later)
     (readings.get sheet) observationFace (faces.get sheet)
   have total : samples.exterior = (faces.get 0).exterior + (faces.get 1).exterior := by
-    rw [← samples.exterior_readback faces, FiniteSum.Fin.sumFin_swap, sum_two]
+    rw [← samples.exterior_readback faces, sumFin_swap, sum_two]
     rfl
   rw [← samples.exterior_eq_paired_add_physical neighbors, total, Basic.add_im]
   have bound := Fraction.Order.Arithmetic.add_le_add_direct (lower 0) (lower 1)

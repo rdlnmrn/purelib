@@ -116,39 +116,39 @@ open
   (Data firstValue secondValue)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalArcAggregation (physicalArcError)
 open Purelib.Riemann.Paths.RectangularDyadicPairedTrace (dyadicCount)
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
-  {lifted : LiftedPuncturedGrid base} {differential other : Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : LiftedPuncturedGrid base} {differential other : Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential} {target : Coordinate} {minimum stage fine index : Nat}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
-  {plan : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan occurrence other
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {plan : PairedSourcePlan occurrence other
     target minimum}
 
-variable {data : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.FirstData occurrence index}
-  {otherData : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.SecondData occurrence other
+variable {data : FirstData occurrence index}
+  {otherData : SecondData occurrence other
   index}
 
 open Purelib.Riemann.Normalization.RectangularInverseModels (Geometry)
 open Purelib.Integration.Path.ConjugateIncrementComparison (conjugateFirst)
 variable {cuts : GridCuts ((domains.get occurrence.sideOccurrence.position).domain
-  occurrence.sideOccurrence.sheet).geometry} {meshBox : Purelib.Geometry.Rational.Box}
+  occurrence.sideOccurrence.sheet).geometry} {meshBox : Geometry.Rational.Box}
   {mesh : ObservationMesh cuts meshBox} {depth : Nat}
 
 namespace SharedPhysicalHorizontalReadings.Data
 variable {firstRow secondRow : Fin mesh.partition.y.intervals.length}
   {height : Coordinate} {side : MatchedHorizontalSide mesh mesh firstRow secondRow height}
   {trace : side.Trace depth}
-  {firstBank : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index
-    domains} {secondBank : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank other index
+  {firstBank : FacePrimitiveBank differential index
+    domains} {secondBank : FacePrimitiveBank other index
     domains}
 
 /-- The retained shared horizontal readings meet the requested oriented cap-arc comparison.
@@ -157,13 +157,13 @@ The selected original owner budget pays the physical error, while the supplied s
 retain their separate stage and width obligations. -/
 theorem
   cap_accurate
-    (readings : SharedPhysicalHorizontalReadings.Data trace firstBank secondBank) {requested : Coordinate} (positive : 0
+    (readings : Data trace firstBank secondBank) {requested : Coordinate} (positive : 0
       < requested)
-    (ownerBudget : PhysicalOwnerRequest.PhysicalOwnerBudget plan mesh.boundaryColumns (requested / 8))
+    (ownerBudget : PhysicalOwnerBudget plan mesh.boundaryColumns (requested / 8))
     (selected : ownerBudget.Owners (dyadicCount depth))
     (later : selected.index ≤ index) (prepared : ownerBudget.Prepared)
-    {evaluated : PairedSourcePlan.ParentEvaluation prepared.plan sample otherSample fine} {forward : Bool}
-    (sources : FragmentFamilies.AxisSourceBank evaluated mesh false forward)
+    {evaluated : ParentEvaluation prepared.plan sample otherSample fine} {forward : Bool}
+    (sources : AxisSourceBank evaluated mesh false forward)
     (sourceFirst : occurrence.start.im = height) (sourceLast : occurrence.finish.im = height)
     (axis : false = occurrence.sourceVertical) (direction : occurrence.sourceForward = forward)
     (start : meshBox.xLower = if forward then occurrence.start.re else occurrence.finish.re)
@@ -211,8 +211,8 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SharedPhysicalSi
 variable {firstColumn secondColumn : Fin mesh.partition.x.intervals.length}
   {horizontal : Coordinate} {side : MatchedVerticalSide mesh mesh firstColumn secondColumn horizontal}
   {trace : side.Trace depth}
-  {firstBank : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index
-    domains} {secondBank : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank other index
+  {firstBank : FacePrimitiveBank differential index
+    domains} {secondBank : FacePrimitiveBank other index
     domains}
 
 /-- The retained shared vertical readings meet the requested oriented cap-arc comparison.
@@ -222,11 +222,11 @@ retain their separate stage and width obligations. -/
 theorem
   cap_accurate
     (readings : Data trace firstBank secondBank) {requested : Coordinate} (positive : 0 < requested)
-    (ownerBudget : PhysicalOwnerRequest.PhysicalOwnerBudget plan mesh.boundaryRows (requested / 8))
+    (ownerBudget : PhysicalOwnerBudget plan mesh.boundaryRows (requested / 8))
     (selected : ownerBudget.Owners (dyadicCount depth))
     (later : selected.index ≤ index) (prepared : ownerBudget.Prepared)
-    {evaluated : PairedSourcePlan.ParentEvaluation prepared.plan sample otherSample fine} {forward : Bool}
-    (sources : FragmentFamilies.AxisSourceBank evaluated mesh true forward)
+    {evaluated : ParentEvaluation prepared.plan sample otherSample fine} {forward : Bool}
+    (sources : AxisSourceBank evaluated mesh true forward)
     (sourceFirst : occurrence.start.re = horizontal) (sourceLast : occurrence.finish.re = horizontal)
     (axis : true = occurrence.sourceVertical) (direction : occurrence.sourceForward = forward)
     (start : meshBox.yLower = if forward then occurrence.start.im else occurrence.finish.im)

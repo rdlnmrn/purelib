@@ -74,26 +74,26 @@ open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap (Endpoint)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners (Point)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {model : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell} {parameter :
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {index stage : Nat} {box : Purelib.Geometry.Rational.Box} {sample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
+    UniformReciprocalCover.Cell data edge}
+  {model : UniformReciprocalRootChannels.RootModel cell} {parameter :
+    Coordinate}
+  {index stage : Nat} {box : Geometry.Rational.Box} {sample :
+    Primitives.Sample cap differential index box}
 
 set_option genInjectivity false in
 /-- An endpoint reading of the actual retained cap point at the supplied polynomial sample and reading stage. -/
-structure ReadingView (point : ArcOwners.Point cap model parameter)
+structure ReadingView (point : Point cap model parameter)
     (sample : Primitives.Sample cap differential index box) (stage : Nat) where
   /-- The actual endpoint determined by this retained point and cap polynomial sample. -/ endpoint :
-    Coordinates.Overlap.Endpoint point.coordinates sample
+    Endpoint point.coordinates sample
   /-- The cached coordinate and primitive reading on this exact endpoint at the supplied stage. -/ reading :
     ChartReadings.Endpoint.Reading endpoint stage
 
@@ -101,26 +101,26 @@ constructive_injectivity ReadingView
 
 namespace ReadingView
 
-variable {first last : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap model parameter}
-  {endpoint : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap.Endpoint first.coordinates sample}
+variable {first last : Point cap model parameter}
+  {endpoint : Endpoint first.coordinates sample}
 
 /-- Transport the retained endpoint reading along equality of its actual point owner without evaluating a second
 reading. -/
 @[expose] def ofEqual (equal : first = last) (reading : ChartReadings.Endpoint.Reading endpoint stage) :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEndpointReadings.Point.ReadingView last sample stage := by
+  ReadingView last sample stage := by
   cases equal
   exact ⟨endpoint, reading⟩
 
 /-- Transport along equal point owners preserves the exact cached primitive value. -/
 theorem value_eq (equal : first = last) (reading : ChartReadings.Endpoint.Reading endpoint stage) :
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEndpointReadings.Point.ReadingView.ofEqual equal
+    (ofEqual equal
       reading).reading.value = reading.value := by
   cases equal
   rfl
 
 /-- Transport along equal point owners preserves the exact cached coordinate value. -/
 theorem coordinate_eq (equal : first = last) (reading : ChartReadings.Endpoint.Reading endpoint stage) :
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEndpointReadings.Point.ReadingView.ofEqual equal
+    (ofEqual equal
       reading).reading.coordinate = reading.coordinate := by
   cases equal
   rfl
@@ -139,26 +139,26 @@ open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEndpointReadings.Point (ReadingView)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.EndpointPairs (PairRequest)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {owners :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.OwnedEndpoints regular cell}
-  {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell} {target pairTarget :
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor pairFloor : Nat}
-  {index depth stage minimum : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {source : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
-  {request : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartAreaRequest.AreaRequest comparison owners target
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
+    UniformReciprocalCover.Cell data edge}
+  {regular : RegularBounds.Data cap} {owners :
+    ParentOwners.OwnedEndpoints regular cell}
+  {comparison : ArcSamples.Data regular cell} {target pairTarget :
+    Coordinate} {floor pairFloor : Nat}
+  {index depth stage minimum : Nat} {box : Geometry.Rational.Box}
+  {capSample : Primitives.Sample cap differential index box}
+  {source : UniformReciprocalPrimitives.SourcePrimitive data index}
+  {request : AreaRequest comparison owners target
     floor}
-  {charts : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexTree.ChartMesh request.mesh capSample minimum}
-  {original : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentCells.ComparedCell comparison source capSample
+  {charts : ChartMesh request.mesh capSample minimum}
+  {original : ParentCells.ComparedCell comparison source capSample
     depth}
 
 set_option genInjectivity false in
@@ -166,8 +166,8 @@ set_option genInjectivity false in
 
 Coordinate and primitive-value equalities identify both retained endpoint readings with the complete chart path, without
 replacing either owner. -/
-structure EndpointPair (evaluated : AreaRequest.Evaluation charts original stage) (pairRequest :
-  EndpointPairs.PairRequest owners.bounds pairTarget pairFloor) where
+structure EndpointPair (evaluated : Evaluation charts original stage) (pairRequest :
+  PairRequest owners.bounds pairTarget pairFloor) where
   /-- The cached evaluation of the original pair request at this retained sample and stage. -/ pair :
     PairRequest.Evaluation pairRequest original.sample stage
   /-- The first retained pair coordinate is exactly the original chart path's first root coordinate. -/ first_coordinate
@@ -183,19 +183,19 @@ constructive_injectivity EndpointPair
 
 /-- Evaluate the original endpoint-pair request using the chart's exact cached first and last readings and their
 point-owner equalities. -/
-@[expose] def endpointPair (evaluated : AreaRequest.Evaluation charts original stage) (pairRequest :
-  EndpointPairs.PairRequest owners.bounds pairTarget pairFloor)
+@[expose] def endpointPair (evaluated : Evaluation charts original stage) (pairRequest :
+  PairRequest owners.bounds pairTarget pairFloor)
     (modelLater : pairRequest.index ≤ index) (readingLater : pairRequest.readingIndex ≤ stage) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEndpointReadings.Evaluation.EndpointPair evaluated pairRequest :=
+      EndpointPair evaluated pairRequest :=
       by
-  let first := Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEndpointReadings.Point.ReadingView.ofEqual
+  let first := ReadingView.ofEqual
     evaluated.first_owner evaluated.vertices.first.root
-  let last := Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEndpointReadings.Point.ReadingView.ofEqual
+  let last := ReadingView.ofEqual
     evaluated.last_owner evaluated.vertices.last.root
   let pair := pairRequest.evaluateWithReadings original.sample first.reading last.reading modelLater readingLater
-  exact ⟨pair, Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEndpointReadings.Point.ReadingView.coordinate_eq _ _,
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEndpointReadings.Point.ReadingView.coordinate_eq _ _,
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEndpointReadings.Point.ReadingView.value_eq _ _,
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEndpointReadings.Point.ReadingView.value_eq _ _⟩
+  exact ⟨pair, ReadingView.coordinate_eq _ _,
+    ReadingView.coordinate_eq _ _,
+    ReadingView.value_eq _ _,
+    ReadingView.value_eq _ _⟩
 
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEndpointReadings.Evaluation

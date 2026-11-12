@@ -60,11 +60,11 @@ norm vanishes are removed by a finite test.
 
 namespace Purelib.Algebra.Field.Finite.Odd.Presentation
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace FiniteOddFieldPresentation
 
-variable (presentation : Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation K)
+variable (presentation : FiniteOddFieldPresentation K)
 
 /-- The affine cap-domain quadric excluded by `1 + Q(v) = 0`. -/
 def excludedAnchorQuadric : List
@@ -95,7 +95,7 @@ theorem mem_nonzeroNullVectors_iff
       vector ∈ presentation.vectors ∧
         vector.quadrance = 0 ∧ vector ≠ Coordinates3.Vector.zero := by
   letI : DecidableEq K := presentation.eqDecidable
-  unfold FiniteOddFieldPresentation.nonzeroNullVectors
+  unfold nonzeroNullVectors
   constructor
   · intro member
     rcases Filter.mem_filter.mp member with ⟨source, accepted⟩
@@ -128,15 +128,15 @@ def nullDirectionRepresentatives : List
 theorem
   nullDirectionRepresentatives_nodup :
     presentation.nullDirectionRepresentatives.Nodup := by
-  unfold FiniteOddFieldPresentation.nullDirectionRepresentatives
+  unfold nullDirectionRepresentatives
   apply Nodup.nodup_append
-  · apply Data.List.Nodup.nodup_map_of_injective
+  · apply Nodup.nodup_map_of_injective
     · intro left right equal
       apply Quadratic.Pair.ext
       · exact congrArg Coordinates3.Vector.r equal
       · exact congrArg Coordinates3.Vector.s equal
     · exact presentation.twoSquareFiber_nodup (-1)
-  · apply Data.List.Nodup.nodup_map_of_injective
+  · apply Nodup.nodup_map_of_injective
     · intro left right equal
       exact congrArg Coordinates3.Vector.s equal
     · exact presentation.squareRootFiber_nodup (-1)
@@ -145,7 +145,7 @@ theorem
       ⟨pair, _, leftEqual⟩
     rcases Map.mem_map.mp rightMember with
       ⟨root, _, rightEqual⟩
-    apply FiniteOddFieldPresentation.one_ne_zero presentation
+    apply one_ne_zero presentation
     calc
       (1 : K) = left.t := congrArg Coordinates3.Vector.t leftEqual
       _ = right.t := congrArg Coordinates3.Vector.t equal
@@ -156,14 +156,14 @@ theorem nullDirectionRepresentative_null
   {direction : Coordinates3.Vector K}
     (member : direction ∈ presentation.nullDirectionRepresentatives) :
     direction.quadrance = 0 := by
-  unfold FiniteOddFieldPresentation.nullDirectionRepresentatives at member
+  unfold nullDirectionRepresentatives at member
   rcases Membership.mem_append.mp member with firstChart | secondChart
   · rcases Map.mem_map.mp firstChart with
       ⟨pair, pairMember, equal⟩
     have pairQuadrance :=
       (presentation.mem_twoSquareFiber_iff (-1) pair).1 pairMember
     rw [← equal]
-    unfold Coordinates3.Vector.quadrance Coordinates3.Vector.dot Quadratic.Pair.quadrance at *
+    unfold Coordinates3.Vector.quadrance Coordinates3.Vector.dot Pair.quadrance at *
     change (1 : K) * 1 + pair.re * pair.re +
       pair.im * pair.im = 0
     have pairQuadranceMul :
@@ -192,12 +192,12 @@ theorem
   {direction : Coordinates3.Vector K}
     (member : direction ∈ presentation.nullDirectionRepresentatives) :
     direction ≠ Coordinates3.Vector.zero := by
-  unfold FiniteOddFieldPresentation.nullDirectionRepresentatives at member
+  unfold nullDirectionRepresentatives at member
   rcases Membership.mem_append.mp member with firstChart | secondChart
   · rcases Map.mem_map.mp firstChart with
       ⟨pair, _, equal⟩
     intro directionZero
-    apply FiniteOddFieldPresentation.one_ne_zero presentation
+    apply one_ne_zero presentation
     calc
       (1 : K) = direction.t := congrArg Coordinates3.Vector.t equal
       _ = Coordinates3.Vector.zero.t := congrArg Coordinates3.Vector.t directionZero
@@ -205,7 +205,7 @@ theorem
   · rcases Map.mem_map.mp secondChart with
       ⟨root, _, equal⟩
     intro directionZero
-    apply FiniteOddFieldPresentation.one_ne_zero presentation
+    apply one_ne_zero presentation
     calc
       (1 : K) = direction.r := congrArg Coordinates3.Vector.r equal
       _ = Coordinates3.Vector.zero.r := congrArg Coordinates3.Vector.r directionZero
@@ -216,9 +216,9 @@ theorem
   nullDirectionRepresentative_projectiveMember
     {direction : Coordinates3.Vector K}
     (member : direction ∈ presentation.nullDirectionRepresentatives) :
-    (⟨0, direction⟩ : Projective.Basic.Proportion K) ∈
+    (⟨0, direction⟩ : Proportion K) ∈
       presentation.projectiveRepresentatives := by
-  unfold FiniteOddFieldPresentation.nullDirectionRepresentatives at member
+  unfold nullDirectionRepresentatives at member
   rcases Membership.mem_append.mp member with firstChart | secondChart
   · rcases Map.mem_map.mp firstChart with
       ⟨pair, _, equal⟩
@@ -254,19 +254,19 @@ def normalizeNullDirection (source :
   letI : DecidableEq K := presentation.eqDecidable
   if tNonzero : source.t ≠ 0 then
     let inverse := source.t⁻¹
-    let pair : Quadratic.Pair K (1 : K) :=
+    let pair : Pair K (1 : K) :=
       ⟨inverse * source.r, inverse * source.s⟩
     let representative : Coordinates3.Vector K := ⟨1, pair.re, pair.im⟩
-    have tCancel := Algebra.Field.ExplicitField.mul_inv_cancel source.t tNonzero
+    have tCancel := ExplicitField.mul_inv_cancel source.t tNonzero
     have residual : source.r ^ 2 + source.s ^ 2 = -(source.t ^ 2) := by
       calc
         source.r ^ 2 + source.s ^ 2 =
             source.quadrance - source.t ^ 2 := by
-          unfold Purelib.LinearAlgebra.Coordinates3.Vector.quadrance Purelib.LinearAlgebra.Coordinates3.Vector.dot
+          unfold Coordinates3.Vector.quadrance Coordinates3.Vector.dot
           ring1
         _ = -(source.t ^ 2) := by rw [sourceNull]; ring1
     have pairQuadrance : pair.quadrance = -1 := by
-      unfold pair Quadratic.Pair.quadrance inverse
+      unfold pair Pair.quadrance inverse
       calc
         (source.t⁻¹ * source.r) ^ 2 +
             (source.t⁻¹ * source.s) ^ 2 =
@@ -282,7 +282,7 @@ def normalizeNullDirection (source :
         parameter := source.t
         parameterNonzero := tNonzero
         source_eq_scale := ?_ }
-    · unfold Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.nullDirectionRepresentatives
+    · unfold nullDirectionRepresentatives
       apply Membership.mem_append.mpr
       left
       exact Map.mem_map.mpr ⟨pair, pairMember, rfl⟩
@@ -303,12 +303,12 @@ def normalizeNullDirection (source :
     let inverse := source.r⁻¹
     let root := inverse * source.s
     let representative : Coordinates3.Vector K := ⟨0, 1, root⟩
-    have tZero := FiniteOddFieldPresentation.eq_zero_of_not_ne presentation.eqDecidable tNonzero
-    have rCancel := Algebra.Field.ExplicitField.mul_inv_cancel source.r rNonzero
+    have tZero := eq_zero_of_not_ne presentation.eqDecidable tNonzero
+    have rCancel := ExplicitField.mul_inv_cancel source.r rNonzero
     have residual : source.s ^ 2 = -(source.r ^ 2) := by
       calc
         source.s ^ 2 = source.quadrance - source.r ^ 2 := by
-          unfold Purelib.LinearAlgebra.Coordinates3.Vector.quadrance Purelib.LinearAlgebra.Coordinates3.Vector.dot
+          unfold Coordinates3.Vector.quadrance Coordinates3.Vector.dot
           rw [tZero]
           ring1
         _ = -(source.r ^ 2) := by rw [sourceNull]; ring1
@@ -328,7 +328,7 @@ def normalizeNullDirection (source :
         parameter := source.r
         parameterNonzero := rNonzero
         source_eq_scale := ?_ }
-    · unfold Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.nullDirectionRepresentatives
+    · unfold nullDirectionRepresentatives
       apply Membership.mem_append.mpr
       right
       exact Map.mem_map.mpr ⟨root, rootMember, rfl⟩
@@ -344,12 +344,12 @@ def normalizeNullDirection (source :
           _ = (source.r * source.r⁻¹) * source.s := by rw [rCancel]
           _ = source.r * (source.r⁻¹ * source.s) := by ring1
   else
-    have tZero := FiniteOddFieldPresentation.eq_zero_of_not_ne presentation.eqDecidable tNonzero
-    have rZero := FiniteOddFieldPresentation.eq_zero_of_not_ne presentation.eqDecidable rNonzero
+    have tZero := eq_zero_of_not_ne presentation.eqDecidable tNonzero
+    have rZero := eq_zero_of_not_ne presentation.eqDecidable rNonzero
     have sSquareZero : source.s * source.s = 0 := by
       calc
         source.s * source.s = source.quadrance := by
-          unfold Purelib.LinearAlgebra.Coordinates3.Vector.quadrance Purelib.LinearAlgebra.Coordinates3.Vector.dot
+          unfold Coordinates3.Vector.quadrance Coordinates3.Vector.dot
           rw [tZero, rZero]
           ring1
         _ = 0 := sourceNull
@@ -358,7 +358,7 @@ def normalizeNullDirection (source :
       | isTrue equal => exact equal
       | isFalse sNonzero =>
           exact False.elim
-            (Algebra.Field.ExplicitField.mul_ne_zero sNonzero sNonzero sSquareZero)
+            (ExplicitField.mul_ne_zero sNonzero sNonzero sSquareZero)
     apply False.elim
     apply sourceNonzero
     apply Coordinates3.Vector.ext
@@ -375,7 +375,7 @@ theorem
     {factor : K} (factorNonzero : factor ≠ 0)
     (scaled : right = Coordinates3.Vector.scale factor left) : left = right := by
   have equivalent :
-      (⟨0, left⟩ : Projective.Basic.Proportion K).Equivalent (⟨0, right⟩ : Projective.Basic.Proportion K) := by
+      (⟨0, left⟩ : Proportion K).Equivalent (⟨0, right⟩ : Proportion K) := by
     refine ⟨factor, factorNonzero, ?_⟩
     apply Proportion.ext
     · unfold Proportion.scale
@@ -393,7 +393,7 @@ theorem nullDirection_scale_injective
     (member : direction ∈ presentation.nullDirectionRepresentatives) :
     Function.Injective (fun parameter : K => Coordinates3.Vector.scale parameter direction) := by
   intro left right equal
-  unfold FiniteOddFieldPresentation.nullDirectionRepresentatives at member
+  unfold nullDirectionRepresentatives at member
   rcases Membership.mem_append.mp member with firstChart | secondChart
   · rcases Map.mem_map.mp firstChart with
       ⟨pair, _, directionEqual⟩
@@ -425,17 +425,17 @@ open Purelib.Geometry.Rotations.Cayley
 open Purelib.Algebra.Field.Finite.Odd
 open Purelib.Algebra.Field.Finite.Odd.Presentation
 namespace Purelib.Geometry.Rotations.Cayley.Cap
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 /-- A null anchor has nonzero cap denominator in the displayed odd field. -/
 public theorem
   capDenominator_ne_zero_of_null_presentation
-    (presentation : Presentation.FiniteOddFieldPresentation K)
+    (presentation : FiniteOddFieldPresentation K)
     (vector : Coordinates3.Vector K) (null : vector.quadrance = 0) :
-    Cap.capDenominator vector ≠ 0 := by
-  unfold Cap.capDenominator
+    capDenominator vector ≠ 0 := by
+  unfold capDenominator
   rw [null, add_zero]
-  exact Purelib.Algebra.Field.Finite.Odd.Presentation.FiniteOddFieldPresentation.one_ne_zero presentation
+  exact FiniteOddFieldPresentation.one_ne_zero presentation
 
 end Purelib.Geometry.Rotations.Cayley.Cap
 end

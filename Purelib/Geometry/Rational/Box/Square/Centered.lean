@@ -57,22 +57,22 @@ The original centre coordinates and nonnegative half-width determine
 the four rational endpoints. Their retained ordering proofs compare
 those same endpoints; no coordinate or radius observation is replaced. -/
 @[expose] public def centeredBox (center : Data.Gaussian.Basic.Canonical) (radius : Fraction.Rational)
-    (radiusNonnegative : 0 ≤ radius) : Rational.Box where
+    (radiusNonnegative : 0 ≤ radius) : Box where
   xLower := center.re - radius
   xUpper := center.re + radius
   yLower := center.im - radius
   yUpper := center.im + radius
   x_valid := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       0 ≤ 2 * radius :=
-        Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) radiusNonnegative
+        Arithmetic.mul_nonneg_direct (by decide) radiusNonnegative
       _ = (center.re + radius) - (center.re - radius) := by ring1
   y_valid := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       0 ≤ 2 * radius :=
-        Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) radiusNonnegative
+        Arithmetic.mul_nonneg_direct (by decide) radiusNonnegative
       _ = (center.im + radius) - (center.im - radius) := by ring1
 
 end Purelib.Geometry.Rational.Box.Square.Centered.BoxTransport
@@ -88,14 +88,14 @@ public theorem centeredBox_contains_of_normSq_sub_le
     {center value : Data.Gaussian.Basic.Canonical} {radius : Fraction.Rational}
     (radiusNonnegative : 0 ≤ radius)
     (distanceBound : Data.Gaussian.Norm.Basic.normSq (value - center) ≤ radius ^ 2) :
-    (Box.Square.Centered.BoxTransport.centeredBox center radius radiusNonnegative).Contains value :=
+    (BoxTransport.centeredBox center radius radiusNonnegative).Contains value :=
       by
   have realSquare : (value.re - center.re) ^ 2 ≤ radius ^ 2 :=
     calc
       (value.re - center.re) ^ 2 ≤
           (value.re - center.re) ^ 2 + (value.im - center.im) ^ 2 :=
         le_add_of_nonneg_right
-          (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+          (Arithmetic.sq_nonneg_direct _)
       _ = Data.Gaussian.Norm.Basic.normSq (value - center) := rfl
       _ ≤ radius ^ 2 := distanceBound
   have imaginarySquare : (value.im - center.im) ^ 2 ≤ radius ^ 2 :=
@@ -103,7 +103,7 @@ public theorem centeredBox_contains_of_normSq_sub_le
       (value.im - center.im) ^ 2 ≤
           (value.re - center.re) ^ 2 + (value.im - center.im) ^ 2 :=
         le_add_of_nonneg_left
-          (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+          (Arithmetic.sq_nonneg_direct _)
       _ = Data.Gaussian.Norm.Basic.normSq (value - center) := rfl
       _ ≤ radius ^ 2 := distanceBound
   have realBounds := Bounds.Square.signed_bounds_of_sq_le_sq radiusNonnegative realSquare
@@ -148,7 +148,7 @@ public theorem centeredBox_diagonalSq
     (radiusNonnegative : 0 ≤ radius) :
     (centeredBox center radius radiusNonnegative).diagonalSq =
       8 * radius ^ 2 := by
-  simp only [Rational.Box.diagonalSq, centeredBox]
+  simp only [diagonalSq_eq_original, centeredBox]
   ring1
 
 end Purelib.Geometry.Rational.Box.Square.Centered.BoxTransport
@@ -161,9 +161,9 @@ The original positive rational accuracy parameter determines the
 half-width epsilon divided by four. The same centre and positive
 quotient construct the retained centred box. -/
 @[expose] public def epsilonBox (center : Data.Gaussian.Basic.Canonical) (epsilon : Fraction.Rational)
-    (epsilonPositive : 0 < epsilon) : Rational.Box :=
-  Box.Square.Centered.BoxTransport.centeredBox center (epsilon / 4)
-    (Fraction.Order.Field.div_nonneg_direct epsilonPositive.le (by decide))
+    (epsilonPositive : 0 < epsilon) : Box :=
+  BoxTransport.centeredBox center (epsilon / 4)
+    (Field.div_nonneg_direct epsilonPositive.le (by decide))
 
 /-- The square of half-width epsilon divided by four has squared diagonal epsilon squared divided by two.
 
@@ -175,7 +175,7 @@ public theorem epsilonBox_diagonalSq
     (epsilonPositive : 0 < epsilon) :
     (epsilonBox center epsilon epsilonPositive).diagonalSq = epsilon ^ 2 / 2 := by
   unfold epsilonBox
-  rw [Box.Square.Centered.BoxTransport.centeredBox_diagonalSq]
+  rw [BoxTransport.centeredBox_diagonalSq]
   rw [pow_two]
   have squareQuotient :
       (epsilon / 4) * (epsilon / 4) =
@@ -213,31 +213,31 @@ public theorem epsilonBox_diagonalSq_le
     (epsilonPositive : 0 < epsilon) :
     (epsilonBox center epsilon epsilonPositive).diagonalSq ≤ epsilon ^ 2 := by
   rw [epsilonBox_diagonalSq]
-  apply (Fraction.Order.Field.div_le_iff_pos
+  apply (Field.div_le_iff_pos
     (show (0 : Fraction.Rational) < 2 by decide)).2
   calc
     epsilon ^ 2 = epsilon ^ 2 * 1 := by ring1
     _ ≤ epsilon ^ 2 * 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (by decide) (Fraction.Order.Arithmetic.sq_nonneg_direct epsilon)
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (by decide) (Arithmetic.sq_nonneg_direct epsilon)
 
 /-- The rational square of half-width one sixteenth around the displayed Gaussian centre.
 
 The original Gaussian centre determines all four displayed endpoints
 using the same fixed half-width one sixteenth. Direct rational order
 certificates retain those original endpoints as their indices. -/
-@[expose] public def connectorFixedBox (root : Data.Gaussian.Basic.Canonical) : Rational.Box where
+@[expose] public def connectorFixedBox (root : Data.Gaussian.Basic.Canonical) : Box where
   xLower := root.re - 1 / 16
   xUpper := root.re + 1 / 16
   yLower := root.im - 1 / 16
   yUpper := root.im + 1 / 16
   x_valid := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       0 ≤ 2 * (1 / 16 : Fraction.Rational) := by decide
       _ = (root.re + 1 / 16) - (root.re - 1 / 16) := by ring1
   y_valid := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       0 ≤ 2 * (1 / 16 : Fraction.Rational) := by decide
       _ = (root.im + 1 / 16) - (root.im - 1 / 16) := by ring1
@@ -340,13 +340,13 @@ public theorem connectorFixedBox_contains (root : Data.Gaussian.Basic.Canonical)
 The original real coordinate fixes the horizontal centre and zero
 fixes the imaginary centre. The positive half-width one sixteenth
 determines the same four displayed endpoints and ordering proofs. -/
-@[expose] public def realAxisSquareSixteenth (x : Fraction.Rational) : Rational.Box where
+@[expose] public def realAxisSquareSixteenth (x : Fraction.Rational) : Box where
   xLower := x - 1 / 16
   xUpper := x + 1 / 16
   yLower := -(1 / 16)
   yUpper := 1 / 16
   x_valid := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       0 ≤ 2 * (1 / 16 : Fraction.Rational) := by decide
       _ = (x + 1 / 16) - (x - 1 / 16) := by ring1
@@ -357,18 +357,18 @@ determines the same four displayed endpoints and ordering proofs. -/
 The original Gaussian point determines the centre of the retained
 square. Both coordinate intervals use the same positive half-width
 one sixteenth and retain their endpoint ordering certificates. -/
-@[expose] public def sampleBox (root : Data.Gaussian.Basic.Canonical) : Rational.Box where
+@[expose] public def sampleBox (root : Data.Gaussian.Basic.Canonical) : Box where
   xLower := root.re - 1 / 16
   xUpper := root.re + 1 / 16
   yLower := root.im - 1 / 16
   yUpper := root.im + 1 / 16
   x_valid := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       0 ≤ 2 * (1 / 16 : Fraction.Rational) := by decide
       _ = (root.re + 1 / 16) - (root.re - 1 / 16) := by ring1
   y_valid := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       0 ≤ 2 * (1 / 16 : Fraction.Rational) := by decide
       _ = (root.im + 1 / 16) - (root.im - 1 / 16) := by ring1
@@ -432,35 +432,35 @@ The original centre and nonnegative radius determine four rational
 endpoints. The retained ordering certificates compare those same
 endpoint values through their nonnegative twice-radius differences. -/
 @[expose] public def centeredSquare (c : Data.Gaussian.Basic.Canonical) (r : Fraction.Rational)
-    (nonnegative : 0 ≤ r) : Rational.Box where
+    (nonnegative : 0 ≤ r) : Box where
   xLower := c.re - r
   xUpper := c.re + r
   yLower := c.im - r
   yUpper := c.im + r
   x_valid := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       0 ≤ 2 * r :=
-        Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) nonnegative
+        Arithmetic.mul_nonneg_direct (by decide) nonnegative
       _ = (c.re + r) - (c.re - r) := by ring1
   y_valid := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    apply Arithmetic.le_of_sub_nonneg_direct
     calc
       0 ≤ 2 * r :=
-        Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) nonnegative
+        Arithmetic.mul_nonneg_direct (by decide) nonnegative
       _ = (c.im + r) - (c.im - r) := by ring1
 
 end Purelib.Geometry.Rational.Box.Square.Centered.Affine
 
 namespace Purelib.Geometry.Rational.Box.Square.Centered
 
-/-- A centered square with positive radius has positive side lengths.
+/-- Every positive centered square strictly contains its original center.
 
 The original radius is strictly positive. Subtracting and adding
 that same radius places the retained centre strictly between both
 pairs of square endpoints. -/
-public theorem centeredSquare_proper (c : Data.Gaussian.Basic.Canonical) {r : Fraction.Rational}
-    (positive : 0 < r) : (Box.Square.Centered.Affine.centeredSquare c r positive.le).Proper := by
+public theorem centeredSquare_strictContains_center (c : Data.Gaussian.Basic.Canonical) {r : Fraction.Rational}
+    (positive : 0 < r) : (Affine.centeredSquare c r positive.le).StrictContains c := by
   have realLower : c.re - r < c.re := by
     calc
       c.re - r < c.re - 0 :=
@@ -481,7 +481,33 @@ public theorem centeredSquare_proper (c : Data.Gaussian.Basic.Canonical) {r : Fr
       c.im = c.im + 0 := by ring1
       _ < c.im + r :=
         Arithmetic.add_lt_add_left_direct positive c.im
-  exact ⟨realLower.trans realUpper, imaginaryLower.trans imaginaryUpper⟩
+  exact ⟨realLower, realUpper, imaginaryLower, imaginaryUpper⟩
+
+/-- A centered square with positive radius has positive side lengths.
+
+The original center lies strictly between each pair of endpoints. Those
+same coordinate bounds give the retained square's strict properness. -/
+public theorem centeredSquare_proper (c : Data.Gaussian.Basic.Canonical) {r : Fraction.Rational}
+    (positive : 0 < r) : (Affine.centeredSquare c r positive.le).Proper := by
+  have inside := centeredSquare_strictContains_center c positive
+  exact ⟨inside.1.trans inside.2.1, inside.2.2.1.trans inside.2.2.2⟩
+
+/-- Every nonnegative centered square contains its original center.
+
+The same nonnegative radius bounds the center between both pairs of
+retained endpoints, including a zero radius. -/
+public theorem centeredSquare_contains_center (c : Data.Gaussian.Basic.Canonical)
+    (r : Fraction.Rational) (nonnegative : 0 ≤ r) :
+    (Affine.centeredSquare c r nonnegative).Contains c := by
+  have lower (value : Fraction.Rational) : value - r ≤ value := by
+    calc
+      value - r ≤ value - 0 := Arithmetic.sub_le_sub_left_direct nonnegative value
+      _ = value := by ring1
+  have upper (value : Fraction.Rational) : value ≤ value + r := by
+    calc
+      value = value + 0 := by ring1
+      _ ≤ value + r := Arithmetic.add_le_add_direct le_rfl nonnegative
+  exact ⟨lower c.re, upper c.re, lower c.im, upper c.im⟩
 
 /-- A smaller concentric positive square lies strictly inside a larger one.
 
@@ -492,29 +518,29 @@ public theorem centeredSquare_strictInterior_of_lt
     (c : Data.Gaussian.Basic.Canonical) {inner outer : Fraction.Rational}
     (innerNonnegative : 0 <= inner) (outerNonnegative : 0 <= outer)
     (strict : inner < outer) :
-    (Box.Square.Centered.Affine.centeredSquare c inner innerNonnegative).StrictInterior
-      (Box.Square.Centered.Affine.centeredSquare c outer outerNonnegative) := by
+    (Affine.centeredSquare c inner innerNonnegative).StrictInterior
+      (Affine.centeredSquare c outer outerNonnegative) := by
   constructor
   · change c.re - outer < c.re - inner
-    have negated := Fraction.Order.Arithmetic.neg_lt_neg_direct strict
+    have negated := Arithmetic.neg_lt_neg_direct strict
     calc
       c.re - outer = -outer + c.re := by ring1
       _ < -inner + c.re :=
-        Fraction.Order.Arithmetic.add_lt_add_right_direct negated c.re
+        Arithmetic.add_lt_add_right_direct negated c.re
       _ = c.re - inner := by ring1
   · change c.re + inner < c.re + outer
     simpa only [Fraction.Field.add_comm] using
-      Fraction.Order.Arithmetic.add_lt_add_right_direct strict c.re
+      Arithmetic.add_lt_add_right_direct strict c.re
   · change c.im - outer < c.im - inner
-    have negated := Fraction.Order.Arithmetic.neg_lt_neg_direct strict
+    have negated := Arithmetic.neg_lt_neg_direct strict
     calc
       c.im - outer = -outer + c.im := by ring1
       _ < -inner + c.im :=
-        Fraction.Order.Arithmetic.add_lt_add_right_direct negated c.im
+        Arithmetic.add_lt_add_right_direct negated c.im
       _ = c.im - inner := by ring1
   · change c.im + inner < c.im + outer
     simpa only [Fraction.Field.add_comm] using
-      Fraction.Order.Arithmetic.add_lt_add_right_direct strict c.im
+      Arithmetic.add_lt_add_right_direct strict c.im
 
 end Purelib.Geometry.Rational.Box.Square.Centered
 
@@ -528,7 +554,8 @@ lengths gives exactly eight times its square. -/
 public theorem centeredSquare_diagonalSq (c : Data.Gaussian.Basic.Canonical) {r : Fraction.Rational}
     (nonnegative : 0 ≤ r) :
     (centeredSquare c r nonnegative).diagonalSq = 8 * r ^ 2 := by
-  dsimp only [centeredSquare, Rational.Box.diagonalSq]
+  rewrite [diagonalSq_eq_original]
+  dsimp only [centeredSquare]
   ring1
 
 end Purelib.Geometry.Rational.Box.Square.Centered.Affine
@@ -542,35 +569,35 @@ between the signed radius endpoints. Their two square bounds add
 to at most twice the same radius square. -/
 public theorem centeredSquare_normSq_sub_center_le
     (c : Data.Gaussian.Basic.Canonical) {r : Fraction.Rational} (nonnegative : 0 ≤ r)
-    {z : Data.Gaussian.Basic.Canonical} (inside : (Box.Square.Centered.Affine.centeredSquare c r
+    {z : Data.Gaussian.Basic.Canonical} (inside : (Affine.centeredSquare c r
       nonnegative).Contains z) :
     Data.Gaussian.Norm.Basic.normSq (z - c) ≤ 2 * r ^ 2 := by
   have xLower : -r ≤ z.re - c.re := by
-    have shifted := Fraction.Order.Arithmetic.sub_le_sub_right_direct inside.1 c.re
+    have shifted := Arithmetic.sub_le_sub_right_direct inside.1 c.re
     calc
       -r = c.re - r - c.re := by ring1
       _ ≤ z.re - c.re := shifted
   have xUpper : z.re - c.re ≤ r := by
-    have shifted := Fraction.Order.Arithmetic.sub_le_sub_right_direct inside.2.1 c.re
+    have shifted := Arithmetic.sub_le_sub_right_direct inside.2.1 c.re
     calc
       z.re - c.re ≤ c.re + r - c.re := shifted
       _ = r := by ring1
   have yLower : -r ≤ z.im - c.im := by
-    have shifted := Fraction.Order.Arithmetic.sub_le_sub_right_direct inside.2.2.1 c.im
+    have shifted := Arithmetic.sub_le_sub_right_direct inside.2.2.1 c.im
     calc
       -r = c.im - r - c.im := by ring1
       _ ≤ z.im - c.im := shifted
   have yUpper : z.im - c.im ≤ r := by
-    have shifted := Fraction.Order.Arithmetic.sub_le_sub_right_direct inside.2.2.2 c.im
+    have shifted := Arithmetic.sub_le_sub_right_direct inside.2.2.2 c.im
     calc
       z.im - c.im ≤ c.im + r - c.im := shifted
       _ = r := by ring1
-  have xSquare := Rational.Box.sq_le_endpoint_max
+  have xSquare := sq_le_endpoint_max
     xLower xUpper
-  have ySquare := Rational.Box.sq_le_endpoint_max
+  have ySquare := sq_le_endpoint_max
     yLower yUpper
   have negSquare : (-r) ^ 2 = r ^ 2 := by ring1
-  rw [negSquare, Fraction.Order.Basic.max_self] at xSquare ySquare
+  rw [negSquare, Basic.max_self] at xSquare ySquare
   calc
     Data.Gaussian.Norm.Basic.normSq (z - c) = (z.re - c.re) ^ 2 + (z.im - c.im) ^ 2 := rfl
     _ ≤ r ^ 2 + r ^ 2 := add_le_add xSquare ySquare

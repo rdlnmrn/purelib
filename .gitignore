@@ -1,5 +1,6 @@
 /.elan/
 /.lake/
+/.worktrees/
 # Expanded cache of the committed compressed Part-2 compiled survey receipt.
 /docs/plans/purelib/p2-compiled-pilots.json
 /.venv/

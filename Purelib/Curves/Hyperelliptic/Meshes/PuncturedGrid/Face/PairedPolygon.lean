@@ -88,21 +88,21 @@ open Purelib.Topology.Polygon.Stokes
 open Purelib.LinearAlgebra.Gaussian.QuadraticForm (GaussianMatrix)
 open Purelib.Topology.Surface.Sewing.SewnPrimitiveContacts (SourceEdge)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {faces : Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces bank}
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+  {faces : PuncturedFaces bank}
 
 namespace LiftedMesh
 
 /-- Select the actual retained triangle source edge for one original face side and sheet. -/
 @[expose]
 def faceSource (mesh : GridLiftedMesh.LiftedMesh vertices edges faces) (position : Fin faces.regulars.length)
-    (sheet : Fin 2) (kind : RectangleEdge.Kind) : SewnPrimitiveContacts.SourceEdge mesh.triangles.length :=
+    (sheet : Fin 2) (kind : RectangleEdge.Kind) : SourceEdge mesh.triangles.length :=
   ⟨mesh.triangleIndex position sheet (QuadOccurrence.upperSide kind),
     FaceCorners.firstCorner kind, FaceCorners.lastCorner kind⟩
 
@@ -110,35 +110,35 @@ def faceSource (mesh : GridLiftedMesh.LiftedMesh vertices edges faces) (position
 theorem faceSource_project (mesh : GridLiftedMesh.LiftedMesh vertices edges faces) (position : Fin
   faces.regulars.length)
     (sheet : Fin 2) (kind : RectangleEdge.Kind) :
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.LiftedMesh.faceSource mesh position sheet
+    (LiftedMesh.faceSource mesh position sheet
       kind).project mesh.triangulation.faces =
       (mesh.locateFace position sheet).lifted.quad.edge kind := by
-  unfold Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.LiftedMesh.faceSource
-    SewnPrimitiveContacts.SourceEdge.project
+  unfold LiftedMesh.faceSource
+    SourceEdge.project
   rw [mesh.triangleIndex_face, FaceCorners.source_edge]
 
 /-- Read the four actual face sources in bottom, right, top and left boundary order. -/
 @[expose]
 def faceSources (mesh : GridLiftedMesh.LiftedMesh vertices edges faces) (position : Fin faces.regulars.length) (sheet :
   Fin 2) :
-    List (SewnPrimitiveContacts.SourceEdge mesh.triangles.length) :=
-  [Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.LiftedMesh.faceSource mesh position sheet .bottom,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.LiftedMesh.faceSource mesh position sheet .right,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.LiftedMesh.faceSource mesh position sheet .top,
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.LiftedMesh.faceSource mesh position sheet .left]
+    List (SourceEdge mesh.triangles.length) :=
+  [LiftedMesh.faceSource mesh position sheet .bottom,
+    LiftedMesh.faceSource mesh position sheet .right,
+    LiftedMesh.faceSource mesh position sheet .top,
+      LiftedMesh.faceSource mesh position sheet .left]
 
 /-- The four retained source occurrences project exactly to the original indexed face boundary on its actual sheet. -/
 theorem faceSources_project (mesh : GridLiftedMesh.LiftedMesh vertices edges faces) (position : Fin
   faces.regulars.length) (sheet : Fin 2) :
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.LiftedMesh.faceSources mesh position
+    (LiftedMesh.faceSources mesh position
       sheet).map (fun source => source.project mesh.triangulation.faces) =
       edges.indexedEdges vertices (faces.regulars[position.val]'position.isLt).boundary sheet := by
-  unfold Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.LiftedMesh.faceSources
+  unfold LiftedMesh.faceSources
   rw [List.map_cons, List.map_cons, List.map_cons, List.map_cons, List.map_nil,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.LiftedMesh.faceSource_project mesh,
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.LiftedMesh.faceSource_project mesh,
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.LiftedMesh.faceSource_project mesh,
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.LiftedMesh.faceSource_project mesh]
+    LiftedMesh.faceSource_project mesh,
+      LiftedMesh.faceSource_project mesh,
+      LiftedMesh.faceSource_project mesh,
+      LiftedMesh.faceSource_project mesh]
   exact (mesh.locateFace position sheet).lifted.boundary_eq
 
 /-- Every actual retained face source has distinct original endpoint corners.
@@ -147,13 +147,13 @@ The proof follows membership in the retained list through its original head, tai
 supplied occurrence witness. -/
 theorem faceSources_nonloop (mesh : GridLiftedMesh.LiftedMesh vertices edges faces) (position : Fin
   faces.regulars.length) (sheet : Fin 2) :
-    ∀ source ∈ Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.LiftedMesh.faceSources mesh position sheet,
+    ∀ source ∈ LiftedMesh.faceSources mesh position sheet,
       source.first ≠ source.last := by
   intro source member
   have each (kind : RectangleEdge.Kind) :
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.LiftedMesh.faceSource mesh position sheet kind).first
+    (LiftedMesh.faceSource mesh position sheet kind).first
     ≠
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.LiftedMesh.faceSource mesh position sheet kind).last
+      (LiftedMesh.faceSource mesh position sheet kind).last
         := by
     change FaceCorners.firstCorner kind ≠ FaceCorners.lastCorner kind
     cases kind <;> decide
@@ -169,26 +169,26 @@ theorem faceSources_nonloop (mesh : GridLiftedMesh.LiftedMesh vertices edges fac
 
 end LiftedMesh
 
-variable {mesh : Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges faces} {domains :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
-  {stage : Nat} {differential : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} {shared :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential stage domains}
+variable {mesh : GridLiftedMesh.LiftedMesh vertices edges faces} {domains :
+  FaceDomainBank frames faces.regulars}
+  {stage : Nat} {differential : Differential genus} {shared :
+    FacePrimitiveBank differential stage domains}
 
 namespace TriangleReadings
 
 /-- The actual triangle source increment is exactly the difference of its retained cached face-corner readings. -/
 theorem faceSource_increment (readings : TrianglePrimitiveReadings.TriangleReadings shared mesh)
     (position : Fin faces.regulars.length) (sheet : Fin 2) (kind : RectangleEdge.Kind) :
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.LiftedMesh.faceSource mesh position sheet
+    (LiftedMesh.faceSource mesh position sheet
       kind).increment readings.values =
       ((shared.get position).atSheet sheet).corners.values (FaceCorners.quad.edge kind).finish -
         ((shared.get position).atSheet sheet).corners.values (FaceCorners.quad.edge kind).start := by
-  unfold Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.LiftedMesh.faceSource
-    SewnPrimitiveContacts.SourceEdge.increment
+  unfold LiftedMesh.faceSource
+    SourceEdge.increment
   rw [readings.values_eq, FaceCorners.triangle_increment]
 
 /-- The paired increment area around four actual corner values equals the sum of their two original triangle wedges. -/
-private theorem quadrilateral_area (a b c d : Stokes.PrimitivePoint) :
+private theorem quadrilateral_area (a b c d : PrimitivePoint) :
     PairedIncrementArea.area [b.sub a, c.sub b, d.sub c, a.sub d] =
       Stokes.triangleWedgeArea a b c + Stokes.triangleWedgeArea a c d := by
   simp only [PairedIncrementArea.area, PairedIncrementArea.terms, PairedIncrementArea.total,
@@ -202,17 +202,17 @@ theorem faceSources_area {cache : RegularMeshes.Numerics domains stage} {i j : F
     (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
     (position : Fin faces.regulars.length) (sheet : Fin 2) :
-    PairedIncrementArea.area ((Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.LiftedMesh.faceSources mesh
+    PairedIncrementArea.area ((LiftedMesh.faceSources mesh
       position sheet).map (fun source =>
-      (⟨source.increment left.values, source.increment right.values⟩ : Stokes.PrimitivePoint))) =
+      (⟨source.increment left.values, source.increment right.values⟩ : PrimitivePoint))) =
       TriangleReadings.bilinearArea left right (mesh.triangleIndex position sheet false) +
         TriangleReadings.bilinearArea left right (mesh.triangleIndex position sheet true) := by
-  simp only [Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.LiftedMesh.faceSources, List.map_cons,
+  simp only [LiftedMesh.faceSources, List.map_cons,
     List.map_nil,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.TriangleReadings.faceSource_increment left,
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.TriangleReadings.faceSource_increment right]
+    TriangleReadings.faceSource_increment left,
+      TriangleReadings.faceSource_increment right]
   rw [TriangleReadings.bilinearArea_eq_corners left right, TriangleReadings.bilinearArea_eq_corners left right]
-  exact Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PairedPolygon.TriangleReadings.quadrilateral_area
+  exact TriangleReadings.quadrilateral_area
     (Numerics.cornerPair cache i j position sheet 0) (Numerics.cornerPair cache i j position sheet 1)
     (Numerics.cornerPair cache i j position sheet 2) (Numerics.cornerPair cache i j position sheet 3)
 

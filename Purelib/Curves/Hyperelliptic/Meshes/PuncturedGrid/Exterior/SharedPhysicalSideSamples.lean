@@ -102,21 +102,21 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Gaussian.Norm.Basic (normSq_nonneg)
 open Purelib.Data.Rat.Fraction.Compatibility
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential} {target : Coordinate} {minimum
     stage fine index : Nat}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
   {plan : PairedSourcePlan occurrence
     other target minimum}
 
@@ -130,12 +130,12 @@ open Purelib.Integration.Path.ConjugateIncrementComparison (conjugateFirst)
 namespace SharedPhysicalSide
 
 /-- Read the original first-differential face data using its retained occurrence-domain alignment. -/
-def firstData (firstBank : PrimitiveData.FacePrimitiveBank differential index domains) : PairedFragmentValues.FirstData
+def firstData (firstBank : FacePrimitiveBank differential index domains) : FirstData
   occurrence index :=
   occurrence.compared.sharedData firstBank occurrence.aligned
 
 /-- Read the original second-differential face data using its retained recast occurrence alignment. -/
-def secondData (secondBank : PrimitiveData.FacePrimitiveBank other index domains) : PairedFragmentValues.SecondData
+def secondData (secondBank : FacePrimitiveBank other index domains) : SecondData
   occurrence other index :=
   (occurrence.recastComparison other).sharedData secondBank (occurrence.recastComparison_aligned other)
 
@@ -144,7 +144,7 @@ end SharedPhysicalSide
 open Purelib.Riemann.Normalization.RectangularInverseModels (Geometry)
 variable {cuts : GridCuts ((domains.get
   occurrence.sideOccurrence.position).domain occurrence.sideOccurrence.sheet).geometry}
-  {meshBox : Purelib.Geometry.Rational.Box} {mesh :
+  {meshBox : Geometry.Rational.Box} {mesh :
     ObservationMesh cuts meshBox} {depth : Nat}
 
 namespace SharedPhysicalHorizontalReadings
@@ -154,26 +154,26 @@ variable {firstRow secondRow : Fin mesh.partition.y.intervals.length}
     secondRow height}
 
 /-- Read the first differential's original cached aligned primitive value at the retained side-piece vertex. -/
-def firstValue (trace : side.Trace depth) (firstBank : PrimitiveData.FacePrimitiveBank differential index domains)
+def firstValue (trace : side.Trace depth) (firstBank : FacePrimitiveBank differential index domains)
     (vertex : side.Vertex depth) : Gaussian :=
   let cached := (firstBank.get occurrence.sideOccurrence.position).atSheet occurrence.sideOccurrence.sheet
   cached.anchors.alignedValue cached.offsets (side.pieces vertex.1).leftColumn
     (side.pieces vertex.1).leftRow (trace.point vertex)
 
 /-- Read the second differential's original cached aligned primitive value at the same retained side-piece vertex. -/
-def secondValue (trace : side.Trace depth) (secondBank : PrimitiveData.FacePrimitiveBank other index domains)
+def secondValue (trace : side.Trace depth) (secondBank : FacePrimitiveBank other index domains)
     (vertex : side.Vertex depth) : Gaussian :=
   let cached := (secondBank.get occurrence.sideOccurrence.position).atSheet occurrence.sideOccurrence.sheet
   cached.anchors.alignedValue cached.offsets (side.pieces vertex.1).leftColumn
     (side.pieces vertex.1).leftRow (trace.point vertex)
 
 /-- A conjugate physical sample on the original horizontal side retaining both shared face-bank value readbacks. -/
-def Data (trace : side.Trace depth) (firstBank : PrimitiveData.FacePrimitiveBank differential index domains)
-    (secondBank : PrimitiveData.FacePrimitiveBank other index domains) :=
+def Data (trace : side.Trace depth) (firstBank : FacePrimitiveBank differential index domains)
+    (secondBank : FacePrimitiveBank other index domains) :=
   PhysicalReadingSample (occurrence := occurrence)
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SharedPhysicalSideSamples.SharedPhysicalSide.firstData
+    (SharedPhysicalSide.firstData
       (occurrence := occurrence) firstBank)
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SharedPhysicalSideSamples.SharedPhysicalSide.secondData
+    (SharedPhysicalSide.secondData
       (occurrence := occurrence) secondBank)
     (fun vertex => trace.point (trace.vertices.indexed vertex))
     (fun vertex => ⟨firstValue trace firstBank (trace.vertices.indexed vertex),
@@ -183,8 +183,8 @@ def Data (trace : side.Trace depth) (firstBank : PrimitiveData.FacePrimitiveBank
 
 /-- Read and transport both original shared horizontal side banks, preserving their cached values when constructing the
 conjugate centered sample. -/
-def build (trace : side.Trace depth) (firstBank : PrimitiveData.FacePrimitiveBank differential index domains)
-    (secondBank : PrimitiveData.FacePrimitiveBank other index domains) :
+def build (trace : side.Trace depth) (firstBank : FacePrimitiveBank differential index domains)
+    (secondBank : FacePrimitiveBank other index domains) :
       Data
       trace firstBank secondBank := by
   let firstCached := (firstBank.get occurrence.sideOccurrence.position).atSheet occurrence.sideOccurrence.sheet
@@ -211,26 +211,26 @@ variable {firstColumn secondColumn : Fin mesh.partition.x.intervals.length}
     firstColumn secondColumn horizontal}
 
 /-- Read the first differential's original cached aligned primitive value at the retained side-piece vertex. -/
-def firstValue (trace : side.Trace depth) (firstBank : PrimitiveData.FacePrimitiveBank differential index domains)
+def firstValue (trace : side.Trace depth) (firstBank : FacePrimitiveBank differential index domains)
     (vertex : side.Vertex depth) : Gaussian :=
   let cached := (firstBank.get occurrence.sideOccurrence.position).atSheet occurrence.sideOccurrence.sheet
   cached.anchors.alignedValue cached.offsets (side.pieces vertex.1).leftColumn
     (side.pieces vertex.1).leftRow (trace.point vertex)
 
 /-- Read the second differential's original cached aligned primitive value at the same retained side-piece vertex. -/
-def secondValue (trace : side.Trace depth) (secondBank : PrimitiveData.FacePrimitiveBank other index domains)
+def secondValue (trace : side.Trace depth) (secondBank : FacePrimitiveBank other index domains)
     (vertex : side.Vertex depth) : Gaussian :=
   let cached := (secondBank.get occurrence.sideOccurrence.position).atSheet occurrence.sideOccurrence.sheet
   cached.anchors.alignedValue cached.offsets (side.pieces vertex.1).leftColumn
     (side.pieces vertex.1).leftRow (trace.point vertex)
 
 /-- A conjugate physical sample on the original vertical side retaining both shared face-bank value readbacks. -/
-def Data (trace : side.Trace depth) (firstBank : PrimitiveData.FacePrimitiveBank differential index domains)
-    (secondBank : PrimitiveData.FacePrimitiveBank other index domains) :=
+def Data (trace : side.Trace depth) (firstBank : FacePrimitiveBank differential index domains)
+    (secondBank : FacePrimitiveBank other index domains) :=
   PhysicalReadingSample (occurrence := occurrence)
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SharedPhysicalSideSamples.SharedPhysicalSide.firstData
+    (SharedPhysicalSide.firstData
       (occurrence := occurrence) firstBank)
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SharedPhysicalSideSamples.SharedPhysicalSide.secondData
+    (SharedPhysicalSide.secondData
       (occurrence := occurrence) secondBank)
     (fun vertex => trace.point (trace.vertices.indexed vertex))
     (fun vertex => ⟨firstValue trace firstBank (trace.vertices.indexed vertex),
@@ -240,8 +240,8 @@ def Data (trace : side.Trace depth) (firstBank : PrimitiveData.FacePrimitiveBank
 
 /-- Read and transport both original shared vertical side banks, preserving their cached values when constructing the
 conjugate centered sample. -/
-def build (trace : side.Trace depth) (firstBank : PrimitiveData.FacePrimitiveBank differential index domains)
-    (secondBank : PrimitiveData.FacePrimitiveBank other index domains) :
+def build (trace : side.Trace depth) (firstBank : FacePrimitiveBank differential index domains)
+    (secondBank : FacePrimitiveBank other index domains) :
       Data
       trace firstBank secondBank := by
   let firstCached := (firstBank.get occurrence.sideOccurrence.position).atSheet occurrence.sideOccurrence.sheet

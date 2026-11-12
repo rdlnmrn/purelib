@@ -53,9 +53,9 @@ set_option genInjectivity false in
 The record retains its membership in the original sorted axis and both weak containment inequalities. -/
 public structure Located (entries : List Alpha) (ordered : entries.Pairwise (fun left right => key left < key right))
     (point : Fraction.Rational) where
-  /-- The original adjacent interval selected by the scan. -/ interval : Geometry.Grid.ClearGrid.Interval key
+  /-- The original adjacent interval selected by the scan. -/ interval : ClearGrid.Interval key
   /-- The selected interval belongs to the adjacent intervals of the original axis. -/ member : interval ∈
-    Geometry.Grid.ClearGrid.Interval.adjacent entries ordered
+    ClearGrid.Interval.adjacent entries ordered
   /-- The query lies weakly between the selected interval's endpoints. -/ contains : key interval.lower ≤ point ∧ point
     ≤ key interval.upper
 
@@ -93,7 +93,7 @@ The lower spanning entry is either the head or a later retained entry. Strict pa
 composes with its weak query bound. -/
 public theorem head_le_query {head : Alpha} {rest : List Alpha} {point : Fraction.Rational}
     (ordered : (head :: rest).Pairwise (fun left right => key left < key right))
-    (spanned : Geometry.Grid.ClearGridCoverage.Interval.Spanned (key := key) (head :: rest) point) : key head ≤ point :=
+    (spanned : Spanned (key := key) (head :: rest) point) : key head ≤ point :=
       by
   rcases spanned with ⟨lower, member, _, _, _, lowerBound, _⟩
   rcases Membership.mem_cons.mp member with equal | member
@@ -108,9 +108,9 @@ The original upper spanning entry cannot be the removed head. The second coordin
 the new span with the same query and strict order. -/
 public theorem tail_spanned {lower upper : Alpha} {rest : List Alpha} {point : Fraction.Rational}
     (ordered : (lower :: upper :: rest).Pairwise (fun left right => key left < key right))
-    (spanned : Geometry.Grid.ClearGridCoverage.Interval.Spanned (key := key) (lower :: upper :: rest) point) (after :
+    (spanned : Spanned (key := key) (lower :: upper :: rest) point) (after :
       key upper < point) :
-    Geometry.Grid.ClearGridCoverage.Interval.Spanned (key := key) (upper :: rest) point := by
+    Spanned (key := key) (upper :: rest) point := by
   rcases spanned with ⟨_, _, last, member, _, _, lastBound⟩
   have lastMember : last ∈ upper :: rest := by
     rcases Membership.mem_cons.mp member with equal | member
@@ -127,35 +127,35 @@ The first interval whose upper key bounds the query is retained. Its endpoints, 
 inequalities certify the selected finite occurrence. -/
 @[expose] public def locate : (entries : List Alpha) →
     (ordered : entries.Pairwise (fun left right => key left < key right)) →
-    (point : Fraction.Rational) → Geometry.Grid.ClearGridCoverage.Interval.Spanned (key := key) entries point →
-      Geometry.Grid.ClearGridCoverage.Interval.Located entries ordered point
-  | [], _, point, spanned => (Geometry.Grid.ClearGridCoverage.Interval.not_spanned_nil point spanned).elim
+    (point : Fraction.Rational) → Spanned (key := key) entries point →
+      Located entries ordered point
+  | [], _, point, spanned => (not_spanned_nil point spanned).elim
   | [entry], _, point, spanned =>
-    (Geometry.Grid.ClearGridCoverage.Interval.not_spanned_singleton entry point spanned).elim
+    (not_spanned_singleton entry point spanned).elim
   | lower :: upper :: rest, ordered, point, spanned =>
       if before : point ≤ key upper then
         ⟨⟨lower, upper, (List.pairwise_cons.mp ordered).1 upper List.mem_cons_self⟩,
-          List.mem_cons_self, Geometry.Grid.ClearGridCoverage.Interval.head_le_query ordered spanned, before⟩
+          List.mem_cons_self, head_le_query ordered spanned, before⟩
       else
-        let found := Purelib.Polynomial.Geometry.Grid.ClearGridCoverage.Interval.locate (upper :: rest)
+        let found := Interval.locate (upper :: rest)
           (List.pairwise_cons.mp ordered).2 point
-          (Geometry.Grid.ClearGridCoverage.Interval.tail_spanned ordered spanned (lt_of_not_ge before))
+          (tail_spanned ordered spanned (lt_of_not_ge before))
         ⟨found.interval, List.mem_cons_of_mem _ found.member, found.contains⟩
 
 end Interval
 
 section Grid
 
-variable {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient : Box}
+variable {polynomial : ClearPath.GaussianPolynomial} {ambient : Box}
 
 /-- Cells sharing one horizontal interval have pairwise disjoint interiors when their vertical intervals are ordered. -/
 private theorem column_pairwise
-    (horizontal : Geometry.Grid.ClearGrid.Interval (Geometry.Grid.ClearGrid.VerticalLine.coordinate (polynomial :=
+    (horizontal : ClearGrid.Interval (ClearGrid.VerticalLine.coordinate (polynomial :=
       polynomial) (ambient := ambient)))
-    (verticals : List (Geometry.Grid.ClearGrid.Interval (Geometry.Grid.ClearGrid.HorizontalLine.coordinate (polynomial
+    (verticals : List (ClearGrid.Interval (ClearGrid.HorizontalLine.coordinate (polynomial
       := polynomial) (ambient := ambient))))
-    (ordered : verticals.Pairwise Geometry.Grid.ClearGrid.Interval.Before) :
-    (verticals.map (fun vertical => (⟨horizontal, vertical⟩ : Geometry.Grid.ClearGrid.Cell polynomial
+    (ordered : verticals.Pairwise ClearGrid.Interval.Before) :
+    (verticals.map (fun vertical => (⟨horizontal, vertical⟩ : ClearGrid.Cell polynomial
       ambient))).Pairwise
       (fun first second => first.box.InteriorSeparated second.box) := open Purelib in by
   induction verticals with
@@ -165,21 +165,21 @@ private theorem column_pairwise
       intro cell member
       rcases Map.mem_map.mp member with ⟨next, nextMember, equal⟩
       rw [← equal]
-      exact Geometry.Grid.ClearGrid.Cell.vertical_separated _ _ ((List.pairwise_cons.mp ordered).1 next nextMember)
+      exact ClearGrid.Cell.vertical_separated _ _ ((List.pairwise_cons.mp ordered).1 next nextMember)
 
 /-- The Cartesian cells from two ordered interval lists have pairwise disjoint interiors.
 
 Within a column the vertical intervals separate interiors. Across columns the horizontal interval ordering separates
 them, preserving the original column-major cell list. -/
 private theorem product_pairwise
-    (horizontals : List (Geometry.Grid.ClearGrid.Interval (Geometry.Grid.ClearGrid.VerticalLine.coordinate (polynomial
+    (horizontals : List (ClearGrid.Interval (ClearGrid.VerticalLine.coordinate (polynomial
       := polynomial) (ambient := ambient))))
-    (verticals : List (Geometry.Grid.ClearGrid.Interval (Geometry.Grid.ClearGrid.HorizontalLine.coordinate (polynomial
+    (verticals : List (ClearGrid.Interval (ClearGrid.HorizontalLine.coordinate (polynomial
       := polynomial) (ambient := ambient))))
-    (horizontalOrdered : horizontals.Pairwise Geometry.Grid.ClearGrid.Interval.Before) (verticalOrdered :
-      verticals.Pairwise Geometry.Grid.ClearGrid.Interval.Before) :
+    (horizontalOrdered : horizontals.Pairwise ClearGrid.Interval.Before) (verticalOrdered :
+      verticals.Pairwise ClearGrid.Interval.Before) :
     (horizontals.flatMap fun horizontal => verticals.map fun vertical => (⟨horizontal, vertical⟩ :
-      Geometry.Grid.ClearGrid.Cell polynomial ambient)).Pairwise
+      ClearGrid.Cell polynomial ambient)).Pairwise
       (fun first second => first.box.InteriorSeparated second.box) := open Purelib in by
   induction horizontals with
   | nil => exact List.Pairwise.nil
@@ -193,14 +193,14 @@ private theorem product_pairwise
       rcases Flatten.mem_flatMap.mp secondMember with ⟨secondHorizontal, secondHorizontalMember, secondMember⟩
       rcases Map.mem_map.mp secondMember with ⟨secondVertical, _, secondEq⟩
       rw [← firstEq, ← secondEq]
-      exact Geometry.Grid.ClearGrid.Cell.horizontal_separated _ _ ((List.pairwise_cons.mp horizontalOrdered).1
+      exact ClearGrid.Cell.horizontal_separated _ _ ((List.pairwise_cons.mp horizontalOrdered).1
         secondHorizontal secondHorizontalMember)
 
 /-- Shared sides are allowed; no two emitted face interiors overlap. -/
 public theorem cells_pairwise (grid : ClearGrid polynomial ambient) :
     grid.cells.Pairwise (fun first second => first.box.InteriorSeparated second.box) :=
   product_pairwise grid.xIntervals grid.yIntervals
-    (Geometry.Grid.ClearGrid.Interval.adjacent_pairwise _ _) (Geometry.Grid.ClearGrid.Interval.adjacent_pairwise _ _)
+    (ClearGrid.Interval.adjacent_pairwise _ _) (ClearGrid.Interval.adjacent_pairwise _ _)
 
 set_option genInjectivity false in
 /-- An actual cell of the retained grid containing a displayed Gaussian point.
@@ -208,7 +208,7 @@ set_option genInjectivity false in
 The result stores the cell, membership in the original Cartesian cell list and all four coordinate inequalities. -/
 public structure Located (grid : ClearGrid polynomial ambient) (point : Gaussian.Basic.Canonical)
   where
-  /-- The original Cartesian cell selected by the two axis scans. -/ cell : Geometry.Grid.ClearGrid.Cell polynomial
+  /-- The original Cartesian cell selected by the two axis scans. -/ cell : ClearGrid.Cell polynomial
     ambient
   /-- The selected cell belongs to the original grid's cell list. -/ member : cell ∈ grid.cells
   /-- The selected cell contains the displayed query point. -/ contains : cell.box.Contains point
@@ -225,14 +225,14 @@ end Located.mk
 
 /-- Locate one actual grid cell using two one-dimensional finite scans. -/
 @[expose] public def locate (grid : ClearGrid polynomial ambient) (point : Gaussian.Basic.Canonical)
-    (horizontal : Geometry.Grid.ClearGridCoverage.Interval.Spanned (key :=
-      Geometry.Grid.ClearGrid.VerticalLine.coordinate) grid.vertical point.re)
-    (vertical : Geometry.Grid.ClearGridCoverage.Interval.Spanned (key :=
-      Geometry.Grid.ClearGrid.HorizontalLine.coordinate) grid.horizontal point.im) :
+    (horizontal : Interval.Spanned (key :=
+      ClearGrid.VerticalLine.coordinate) grid.vertical point.re)
+    (vertical : Interval.Spanned (key :=
+      ClearGrid.HorizontalLine.coordinate) grid.horizontal point.im) :
       Located grid point :=
   open Purelib in
-    let x := Geometry.Grid.ClearGridCoverage.Interval.locate grid.vertical grid.vertical_ordered point.re horizontal
-    let y := Geometry.Grid.ClearGridCoverage.Interval.locate grid.horizontal grid.horizontal_ordered point.im vertical
+    let x := Interval.locate grid.vertical grid.vertical_ordered point.re horizontal
+    let y := Interval.locate grid.horizontal grid.horizontal_ordered point.im vertical
     { cell := ⟨x.interval, y.interval⟩
       member := Flatten.mem_flatMap.mpr ⟨x.interval, x.member, Map.mem_map.mpr ⟨y.interval, y.member, rfl⟩⟩
       contains := ⟨x.contains.1, x.contains.2, y.contains.1, y.contains.2⟩ }

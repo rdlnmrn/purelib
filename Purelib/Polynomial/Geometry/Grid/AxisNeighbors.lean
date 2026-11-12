@@ -33,9 +33,9 @@ are the same retained interval.
 Both membership witnesses refer to the same ordered retained interval list.
 Proper widths and pairwise endpoint order identify equal lower or upper
 endpoints with the same interval. -/
-private theorem same_endpoint {intervals : List (Geometry.Grid.ClearGrid.Interval key)}
-    (ordered : intervals.Pairwise Geometry.Grid.ClearGrid.Interval.Before) {first second :
-      Geometry.Grid.ClearGrid.Interval key}
+private theorem same_endpoint {intervals : List (ClearGrid.Interval key)}
+    (ordered : intervals.Pairwise ClearGrid.Interval.Before) {first second :
+      ClearGrid.Interval key}
     (firstMember : first ∈ intervals) (secondMember : second ∈ intervals)
     (same : key first.lower = key second.lower ∨ key first.upper = key second.upper) : first = second := by
   induction intervals with
@@ -64,11 +64,11 @@ Both intervals occur in the adjacent list of one strictly ordered axis. Equal
 lower readings identify their original retained interval payloads. -/
 public theorem eq_of_lower {entries : List Alpha} (ordered : entries.Pairwise (fun first second => key first < key
   second))
-    {first second : Geometry.Grid.ClearGrid.Interval key} (firstMember : first ∈
-      Geometry.Grid.ClearGrid.Interval.adjacent entries ordered)
-    (secondMember : second ∈ Geometry.Grid.ClearGrid.Interval.adjacent entries ordered) (same : key first.lower = key
+    {first second : ClearGrid.Interval key} (firstMember : first ∈
+      ClearGrid.Interval.adjacent entries ordered)
+    (secondMember : second ∈ ClearGrid.Interval.adjacent entries ordered) (same : key first.lower = key
       second.lower) : first = second :=
-  AxisNeighbors.same_endpoint (Geometry.Grid.ClearGrid.Interval.adjacent_pairwise entries ordered) firstMember
+  same_endpoint (ClearGrid.Interval.adjacent_pairwise entries ordered) firstMember
     secondMember (Or.inl same)
 
 /-- Adjacent intervals of a strictly ordered axis are equal if their upper
@@ -78,11 +78,11 @@ Both intervals occur in the adjacent list of one strictly ordered axis. Equal
 upper readings identify their original retained interval payloads. -/
 public theorem eq_of_upper {entries : List Alpha} (ordered : entries.Pairwise (fun first second => key first < key
   second))
-    {first second : Geometry.Grid.ClearGrid.Interval key} (firstMember : first ∈
-      Geometry.Grid.ClearGrid.Interval.adjacent entries ordered)
-    (secondMember : second ∈ Geometry.Grid.ClearGrid.Interval.adjacent entries ordered) (same : key first.upper = key
+    {first second : ClearGrid.Interval key} (firstMember : first ∈
+      ClearGrid.Interval.adjacent entries ordered)
+    (secondMember : second ∈ ClearGrid.Interval.adjacent entries ordered) (same : key first.upper = key
       second.upper) : first = second :=
-  AxisNeighbors.same_endpoint (Geometry.Grid.ClearGrid.Interval.adjacent_pairwise entries ordered) firstMember
+  same_endpoint (ClearGrid.Interval.adjacent_pairwise entries ordered) firstMember
     secondMember (Or.inr same)
 
 set_option genInjectivity false in
@@ -90,9 +90,9 @@ set_option genInjectivity false in
 
 The Boolean chooses the upper endpoint when true and the lower endpoint
 otherwise; membership belongs to the original interval bank. -/
-public structure AtEndpoint (intervals : List (Geometry.Grid.ClearGrid.Interval key)) (coordinate : Fraction.Rational)
+public structure AtEndpoint (intervals : List (ClearGrid.Interval key)) (coordinate : Fraction.Rational)
   (upper : Bool) where
-  /-- The original interval whose chosen endpoint matches the query. -/ interval : Geometry.Grid.ClearGrid.Interval key
+  /-- The original interval whose chosen endpoint matches the query. -/ interval : ClearGrid.Interval key
   /-- The retained interval belongs to the displayed interval bank. -/ member : interval ∈ intervals
   /-- The selected lower or upper endpoint has the queried coordinate. -/ endpoint_eq : (if upper then key
     interval.upper else key interval.lower) = coordinate
@@ -104,11 +104,11 @@ interval or endpoint equality.
 
 The inclusion supplies membership in the target bank for every original bank
 entry. The selected interval and its exact endpoint reading are unchanged. -/
-@[expose] public def AtEndpoint.include {intervals larger : List (Geometry.Grid.ClearGrid.Interval key)} {coordinate :
+@[expose] public def AtEndpoint.include {intervals larger : List (ClearGrid.Interval key)} {coordinate :
   Fraction.Rational} {upper : Bool}
-    (endpoint : Geometry.Grid.AxisNeighbors.AtEndpoint intervals coordinate upper) (included : ∀ interval ∈ intervals,
+    (endpoint : AtEndpoint intervals coordinate upper) (included : ∀ interval ∈ intervals,
       interval ∈ larger) :
-    Geometry.Grid.AxisNeighbors.AtEndpoint larger coordinate upper := ⟨endpoint.interval, included _ endpoint.member,
+    AtEndpoint larger coordinate upper := ⟨endpoint.interval, included _ endpoint.member,
       endpoint.endpoint_eq⟩
 
 set_option genInjectivity false in
@@ -120,16 +120,16 @@ coordinate. -/
 public inductive Neighbors (entries : List Alpha)
     (ordered : entries.Pairwise (fun first second => key first < key second)) (coordinate : Fraction.Rational) where
   /-- Retain the following interval and evidence that the query is a minimum axis
-coordinate. -/ | first (after : Geometry.Grid.AxisNeighbors.AtEndpoint (Geometry.Grid.ClearGrid.Interval.adjacent
+coordinate. -/ | first (after : AtEndpoint (ClearGrid.Interval.adjacent
   entries ordered) coordinate false)
       (minimum : ∀ entry ∈ entries, coordinate ≤ key entry)
   /-- Retain the preceding interval and evidence that the query is a maximum axis
-coordinate. -/ | last (before : Geometry.Grid.AxisNeighbors.AtEndpoint (Geometry.Grid.ClearGrid.Interval.adjacent
+coordinate. -/ | last (before : AtEndpoint (ClearGrid.Interval.adjacent
   entries ordered) coordinate true)
       (maximum : ∀ entry ∈ entries, key entry ≤ coordinate)
   /-- Retain the preceding and following intervals at an interior coordinate. -/ | interior (before :
-    Geometry.Grid.AxisNeighbors.AtEndpoint (Geometry.Grid.ClearGrid.Interval.adjacent entries ordered) coordinate true)
-      (after : Geometry.Grid.AxisNeighbors.AtEndpoint (Geometry.Grid.ClearGrid.Interval.adjacent entries ordered)
+    AtEndpoint (ClearGrid.Interval.adjacent entries ordered) coordinate true)
+      (after : AtEndpoint (ClearGrid.Interval.adjacent entries ordered)
         coordinate false)
   /-- Retain evidence that all entries have the query coordinate, so no adjacent
 interval is present. -/ | singleton (only : ∀ entry ∈ entries, key entry = coordinate)
@@ -146,7 +146,7 @@ public theorem head_le {head : Alpha} {tail : List Alpha}
     (ordered : (head :: tail).Pairwise (fun first second => key first < key second))
     {coordinate : Fraction.Rational} (member : coordinate ∈ (head :: tail).map key) : key head ≤ coordinate := open
       Purelib in by
-  obtain ⟨entry, entryMember, equal⟩ := Data.List.Map.mem_map.mp member
+  obtain ⟨entry, entryMember, equal⟩ := Map.mem_map.mp member
   rcases Membership.mem_cons.mp entryMember with same | entryMember
   · subst entry
     exact equal.le
@@ -170,14 +170,14 @@ The result preserves original interval payloads and records exact extremality
 or singleton evidence when one or both neighbors are absent. -/
 @[expose] public def neighbors (coordinate : Fraction.Rational) : (entries : List Alpha) →
     (ordered : entries.Pairwise (fun first second => key first < key second)) →
-    coordinate ∈ entries.map key → Geometry.Grid.AxisNeighbors.Neighbors entries ordered coordinate
+    coordinate ∈ entries.map key → Neighbors entries ordered coordinate
   | [], _, member => (List.not_mem_nil member).elim
   | [head], _, member => .singleton (fun entry entryMember => by
       rw [Membership.mem_singleton.mp entryMember]
       exact (Membership.mem_singleton.mp member).symm)
   | head :: next :: tail, ordered, member =>
       let headBefore := (List.pairwise_cons.mp ordered).1 next List.mem_cons_self
-      let interval : Geometry.Grid.ClearGrid.Interval key := ⟨head, next, headBefore⟩
+      let interval : ClearGrid.Interval key := ⟨head, next, headBefore⟩
       if equal : coordinate = key head then
         .first ⟨interval, List.mem_cons_self, equal.symm⟩ (fun entry entryMember => by
           rw [equal]
@@ -187,7 +187,7 @@ or singleton evidence when one or both neighbors are absent. -/
       else
         let memberTail := tail_member member equal
         let tailOrdered := (List.pairwise_cons.mp ordered).2
-        match Purelib.Polynomial.Geometry.Grid.AxisNeighbors.neighbors coordinate (next :: tail) tailOrdered memberTail
+        match AxisNeighbors.neighbors coordinate (next :: tail) tailOrdered memberTail
           with
         | .first after minimum =>
             .interior ⟨interval, List.mem_cons_self, le_antisymm (head_le tailOrdered memberTail) (minimum next
@@ -220,8 +220,8 @@ neighbors.
 First and last cases retain their single existing interval. The interior case
 lists the preceding interval before the following interval, while singleton
 evidence contributes no interval. -/
-@[expose] public def intervals : Geometry.Grid.AxisNeighbors.Neighbors entries ordered coordinate → List
-  (Geometry.Grid.ClearGrid.Interval key)
+@[expose] public def intervals : Neighbors entries ordered coordinate → List
+  (ClearGrid.Interval key)
   | .first after _ => [after.interval]
   | .last before _ => [before.interval]
   | .interior before after => [before.interval, after.interval]
@@ -231,7 +231,7 @@ evidence contributes no interval. -/
 
 The first and last alternatives retain one interval and the interior
 alternative retains two. The singleton alternative records their absence. -/
-public theorem length_le_two (found : AxisNeighbors.Neighbors entries ordered coordinate) : found.intervals.length ≤ 2
+public theorem length_le_two (found : Neighbors entries ordered coordinate) : found.intervals.length ≤ 2
   := by
   cases found <;> simp only [intervals, List.length_cons, List.length_nil] <;> decide
 
@@ -241,23 +241,23 @@ two neighbors, or one neighbor with evidence that it is a frame endpoint.
 Both frame endpoints occur in the original coordinate bank. Their strict
 inequality excludes a singleton axis and identifies each missing neighbor with
 an actual frame endpoint. -/
-public theorem framed_size_cases (found : AxisNeighbors.Neighbors entries ordered coordinate)
+public theorem framed_size_cases (found : Neighbors entries ordered coordinate)
     {lower upper : Fraction.Rational} (lowerMember : lower ∈ entries.map key)
     (upperMember : upper ∈ entries.map key) (proper : lower < upper)
     (bounds : ∀ entry ∈ entries, lower ≤ key entry ∧ key entry ≤ upper) :
     (found.intervals.length = 1 ∧ (coordinate = lower ∨ coordinate = upper)) ∨
       found.intervals.length = 2 := open Purelib in by
-  obtain ⟨first, firstMember, firstEq⟩ := Data.List.Map.mem_map.mp lowerMember
-  obtain ⟨last, lastMember, lastEq⟩ := Data.List.Map.mem_map.mp upperMember
+  obtain ⟨first, firstMember, firstEq⟩ := Map.mem_map.mp lowerMember
+  obtain ⟨last, lastMember, lastEq⟩ := Map.mem_map.mp upperMember
   cases found with
   | first after minimum =>
       refine Or.inl ⟨rfl, Or.inl (le_antisymm ((minimum first firstMember).trans_eq firstEq) ?_)⟩
-      exact ((bounds after.interval.lower (Geometry.Grid.ClearGrid.Interval.endpoints_mem _ _
+      exact ((bounds after.interval.lower (ClearGrid.Interval.endpoints_mem _ _
         after.member).1).1).trans_eq after.endpoint_eq
   | last before maximum =>
       refine Or.inl ⟨rfl, Or.inr (le_antisymm ?_ (lastEq.symm.trans_le (maximum last lastMember)))⟩
       exact before.endpoint_eq.symm.trans_le (bounds before.interval.upper
-        (Geometry.Grid.ClearGrid.Interval.endpoints_mem _ _ before.member).2).2
+        (ClearGrid.Interval.endpoints_mem _ _ before.member).2).2
   | interior _ _ => exact Or.inr rfl
   | singleton only =>
       have equal := firstEq.symm.trans ((only first firstMember).trans ((only last lastMember).symm.trans lastEq))
@@ -268,9 +268,9 @@ public theorem framed_size_cases (found : AxisNeighbors.Neighbors entries ordere
 Interior neighbors meet at the same retained query coordinate. The remaining
 alternatives have at most one retained interval and require no cross-pair
 comparison. -/
-public theorem pairwise (found : AxisNeighbors.Neighbors entries ordered coordinate) : found.intervals.Pairwise
+public theorem pairwise (found : Neighbors entries ordered coordinate) : found.intervals.Pairwise
   ClearGrid.Interval.Before := by
-  have single (interval : Geometry.Grid.ClearGrid.Interval key) : [interval].Pairwise ClearGrid.Interval.Before :=
+  have single (interval : ClearGrid.Interval key) : [interval].Pairwise ClearGrid.Interval.Before :=
     .cons (fun _ member => (List.not_mem_nil member).elim) .nil
   cases found with
   | first after _ => exact single after.interval
@@ -287,9 +287,9 @@ public theorem pairwise (found : AxisNeighbors.Neighbors entries ordered coordin
 Each nonempty alternative stores membership of its original intervals. The
 displayed finite neighbor-list membership selects one of those stored
 certificates. -/
-public theorem member (found : AxisNeighbors.Neighbors entries ordered coordinate) {interval :
-  Geometry.Grid.ClearGrid.Interval key}
-    (member : interval ∈ found.intervals) : interval ∈ Geometry.Grid.ClearGrid.Interval.adjacent entries ordered := by
+public theorem member (found : Neighbors entries ordered coordinate) {interval :
+  ClearGrid.Interval key}
+    (member : interval ∈ found.intervals) : interval ∈ ClearGrid.Interval.adjacent entries ordered := by
   cases found with
   | first after _ => exact (Membership.mem_singleton.mp member) ▸ after.member
   | last before _ => exact (Membership.mem_singleton.mp member) ▸ before.member
@@ -303,8 +303,8 @@ public theorem member (found : AxisNeighbors.Neighbors entries ordered coordinat
 
 Each nonempty alternative retains the exact lower or upper endpoint equality.
 Finite membership determines the corresponding original endpoint certificate. -/
-public theorem endpoint (found : AxisNeighbors.Neighbors entries ordered coordinate) {interval :
-  Geometry.Grid.ClearGrid.Interval key}
+public theorem endpoint (found : Neighbors entries ordered coordinate) {interval :
+  ClearGrid.Interval key}
     (member : interval ∈ found.intervals) : key interval.lower = coordinate ∨ key interval.upper = coordinate := by
   cases found with
   | first after _ => rw [Membership.mem_singleton.mp member]; exact Or.inl after.endpoint_eq
@@ -321,27 +321,27 @@ among its retained neighbors.
 The input interval belongs to the original adjacent bank and has the queried
 endpoint. Ordered uniqueness or the retained extremality evidence identifies
 its matching neighbor. -/
-public theorem covers (found : AxisNeighbors.Neighbors entries ordered coordinate) {interval :
-  Geometry.Grid.ClearGrid.Interval key}
-    (member : interval ∈ Geometry.Grid.ClearGrid.Interval.adjacent entries ordered)
+public theorem covers (found : Neighbors entries ordered coordinate) {interval :
+  ClearGrid.Interval key}
+    (member : interval ∈ ClearGrid.Interval.adjacent entries ordered)
     (endpoint : key interval.lower = coordinate ∨ key interval.upper = coordinate) : interval ∈ found.intervals := by
-  have endpoints := Geometry.Grid.ClearGrid.Interval.endpoints_mem entries ordered member
+  have endpoints := ClearGrid.Interval.endpoints_mem entries ordered member
   cases found with
   | first after minimum =>
       rcases endpoint with lowerEq | upperEq
-      · exact Membership.mem_singleton.mpr (AxisNeighbors.eq_of_lower ordered member after.member (lowerEq.trans
+      · exact Membership.mem_singleton.mpr (eq_of_lower ordered member after.member (lowerEq.trans
           after.endpoint_eq.symm))
       · exact (not_lt_of_ge (minimum interval.lower endpoints.1) (interval.ordered.trans_eq upperEq)).elim
   | last before maximum =>
       rcases endpoint with lowerEq | upperEq
       · exact (not_lt_of_ge (maximum interval.upper endpoints.2) (lowerEq.symm.trans_lt interval.ordered)).elim
-      · exact Membership.mem_singleton.mpr (AxisNeighbors.eq_of_upper ordered member before.member (upperEq.trans
+      · exact Membership.mem_singleton.mpr (eq_of_upper ordered member before.member (upperEq.trans
           before.endpoint_eq.symm))
   | interior before after =>
       rcases endpoint with lowerEq | upperEq
-      · exact List.mem_cons_of_mem _ (Membership.mem_singleton.mpr (AxisNeighbors.eq_of_lower ordered member
+      · exact List.mem_cons_of_mem _ (Membership.mem_singleton.mpr (eq_of_lower ordered member
           after.member (lowerEq.trans after.endpoint_eq.symm)))
-      · exact Membership.mem_cons.mpr (Or.inl (AxisNeighbors.eq_of_upper ordered member before.member (upperEq.trans
+      · exact Membership.mem_cons.mpr (Or.inl (eq_of_upper ordered member before.member (upperEq.trans
           before.endpoint_eq.symm)))
   | singleton only =>
       have strict := interval.ordered

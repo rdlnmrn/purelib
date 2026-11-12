@@ -62,12 +62,12 @@ inside the fully robust box.  A background state carries no such claim. -/
 inductive RobustSourceState
     {threshold : Fraction.Rational}
     (certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold)
+      Critical.Sharpness.IsSharperWindowThreshold threshold)
     (requestedScale count : Nat) where
   /-- A rational source with its retained certificate of membership in the common robust box. -/ | critical (source :
     GaussianInt.Fraction)
       (inside :
-        (Dirichlet.Critical.Robust.Run.robustRunBox certificate requestedScale count).Contains
+        (Critical.Robust.Run.robustRunBox certificate requestedScale count).Contains
           source.value)
   /-- A retained rational source without a robust-box membership certificate. -/ | background (source :
     GaussianInt.Fraction)
@@ -80,9 +80,9 @@ namespace RobustSourceState
 @[expose] def source
     {threshold : Fraction.Rational}
     {certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold}
+      Critical.Sharpness.IsSharperWindowThreshold threshold}
     {requestedScale count : Nat} :
-    Dirichlet.Sharpness.BoxDynamics.RobustSourceState certificate requestedScale count → GaussianInt.Fraction
+    RobustSourceState certificate requestedScale count → GaussianInt.Fraction
   | .critical value _ => value
   | .background value => value
 
@@ -90,9 +90,9 @@ namespace RobustSourceState
 @[expose] def criticalEvent
     {threshold : Fraction.Rational}
     {certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold}
+      Critical.Sharpness.IsSharperWindowThreshold threshold}
     {requestedScale count : Nat} :
-    Dirichlet.Sharpness.BoxDynamics.RobustSourceState certificate requestedScale count → Bool
+    RobustSourceState certificate requestedScale count → Bool
   | .critical _ _ => true
   | .background _ => false
 
@@ -103,18 +103,18 @@ bad window for that state's own displayed rational source. -/
 @[expose] def robustBadWindowRegionAtOffset
     {threshold : Fraction.Rational}
     (certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold)
+      Critical.Sharpness.IsSharperWindowThreshold threshold)
     (requestedScale count : Nat) (offset : Fin count) :
-    Dirichlet.Sharpness.FiniteDynamics.BadWindowRegion
-      (Dirichlet.Sharpness.BoxDynamics.RobustSourceState certificate requestedScale count)
+    FiniteDynamics.BadWindowRegion
+      (RobustSourceState certificate requestedScale count)
       threshold requestedScale where
-  event := Dirichlet.Sharpness.BoxDynamics.RobustSourceState.criticalEvent
+  event := RobustSourceState.criticalEvent
   realize := by
     intro state selected
     cases state with
     | critical source inside =>
         let exactWindow :=
-          (Dirichlet.Critical.Run.badWindowAtOffset
+          (Critical.Run.badWindowAtOffset
             certificate requestedScale count offset).1
         exact
           { source := source
@@ -122,62 +122,62 @@ bad window for that state's own displayed rational source. -/
             upper := exactWindow.upper
             beyondScale := exactWindow.beyondScale
             consecutive :=
-              Dirichlet.Critical.Robust.Run.robustRunBox_consecutiveAtOffset
+              Critical.Robust.Run.robustRunBox_consecutiveAtOffset
                 certificate requestedScale count source.value inside offset
             violates :=
-              Dirichlet.Critical.Robust.Run.robustRunBox_violationAtOffset
+              Critical.Robust.Run.robustRunBox_violationAtOffset
                 certificate requestedScale count source.value inside offset }
     | background source =>
-        simp only [Dirichlet.Sharpness.BoxDynamics.RobustSourceState.criticalEvent] at selected
+        simp only [RobustSourceState.criticalEvent] at selected
         cases selected
 
 /-- The region event at every bounded offset is exactly the critical-state tag test. -/
 @[simp] theorem robustBadWindowRegionAtOffset_event
     {threshold : Fraction.Rational}
     (certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold)
+      Critical.Sharpness.IsSharperWindowThreshold threshold)
     (requestedScale count : Nat) (offset : Fin count) :
-    (Dirichlet.Sharpness.BoxDynamics.robustBadWindowRegionAtOffset
+    (robustBadWindowRegionAtOffset
       certificate requestedScale count offset).event =
-      Dirichlet.Sharpness.BoxDynamics.RobustSourceState.criticalEvent := by
+      RobustSourceState.criticalEvent := by
   rfl
 
 /-- Exact area-calibrated mass assigned to the critical state. -/
 @[expose] def criticalRate
     {threshold : Fraction.Rational}
     (certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold)
+      Critical.Sharpness.IsSharperWindowThreshold threshold)
     (requestedScale count : Nat) : Fraction.Rational :=
   let area := Geometry.Rational.Box.Content.boxContent
-    (Dirichlet.Critical.Robust.Run.robustRunBox certificate requestedScale count)
+    (Critical.Robust.Run.robustRunBox certificate requestedScale count)
   area / (1 + area)
 
 /-- The proper robust run box has positive exact rational area. -/
 theorem robustRunBox_content_pos
     {threshold : Fraction.Rational}
     (certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold)
+      Critical.Sharpness.IsSharperWindowThreshold threshold)
     (requestedScale count : Nat) :
     0 < Geometry.Rational.Box.Content.boxContent
-      (Dirichlet.Critical.Robust.Run.robustRunBox
+      (Critical.Robust.Run.robustRunBox
         certificate requestedScale count) :=
   Geometry.Rational.Box.Content.boxContent_pos_of_proper
-    (Dirichlet.Critical.Robust.Run.robustRunBox_proper
+    (Critical.Robust.Run.robustRunBox_proper
       certificate requestedScale count)
 
 /-- The area-calibrated critical-state probability is positive. -/
 theorem criticalRate_pos
     {threshold : Fraction.Rational}
     (certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold)
+      Critical.Sharpness.IsSharperWindowThreshold threshold)
     (requestedScale count : Nat) :
-    0 < Dirichlet.Sharpness.BoxDynamics.criticalRate certificate requestedScale count := by
-  unfold Dirichlet.Sharpness.BoxDynamics.criticalRate
+    0 < criticalRate certificate requestedScale count := by
+  unfold criticalRate
   let area := Geometry.Rational.Box.Content.boxContent
-    (Dirichlet.Critical.Robust.Run.robustRunBox certificate requestedScale count)
+    (Critical.Robust.Run.robustRunBox certificate requestedScale count)
   have areaPositive : 0 < area := by
     simpa only [area] using
-      Dirichlet.Sharpness.BoxDynamics.robustRunBox_content_pos certificate requestedScale count
+      robustRunBox_content_pos certificate requestedScale count
   exact Fraction.Order.Field.div_pos_direct areaPositive
     ((show (0 : Fraction.Rational) < 1 by decide).trans_le
       (le_add_of_nonneg_right areaPositive.le))
@@ -186,15 +186,15 @@ theorem criticalRate_pos
 theorem criticalRate_le_one
     {threshold : Fraction.Rational}
     (certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold)
+      Critical.Sharpness.IsSharperWindowThreshold threshold)
     (requestedScale count : Nat) :
-    Dirichlet.Sharpness.BoxDynamics.criticalRate certificate requestedScale count ≤ 1 := by
-  unfold Dirichlet.Sharpness.BoxDynamics.criticalRate
+    criticalRate certificate requestedScale count ≤ 1 := by
+  unfold criticalRate
   let area := Geometry.Rational.Box.Content.boxContent
-    (Dirichlet.Critical.Robust.Run.robustRunBox certificate requestedScale count)
+    (Critical.Robust.Run.robustRunBox certificate requestedScale count)
   have areaPositive : 0 < area := by
     simpa only [area] using
-      Dirichlet.Sharpness.BoxDynamics.robustRunBox_content_pos certificate requestedScale count
+      robustRunBox_content_pos certificate requestedScale count
   apply (Fraction.Order.Field.div_le_iff_pos
     ((show (0 : Fraction.Rational) < 1 by decide).trans_le
       (le_add_of_nonneg_right areaPositive.le))).2
@@ -206,25 +206,25 @@ theorem criticalRate_le_one
 private theorem exactSource_inside_robustRunBox
     {threshold : Fraction.Rational}
     (certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold)
+      Critical.Sharpness.IsSharperWindowThreshold threshold)
     (requestedScale count : Nat) :
-    (Dirichlet.Critical.Robust.Run.robustRunBox certificate requestedScale count).Contains
-      (Dirichlet.Critical.Run.criticalBadWindowRun
+    (Critical.Robust.Run.robustRunBox certificate requestedScale count).Contains
+      (Critical.Run.criticalBadWindowRun
         certificate requestedScale count).source.value := by
-  rw [← Dirichlet.Critical.Robust.Run.robustRunBox_anchor]
-  exact (Dirichlet.Critical.Robust.Run.robustRunBox
+  rw [← Critical.Robust.Run.robustRunBox_anchor]
+  exact (Critical.Robust.Run.robustRunBox
     certificate requestedScale count).contains_anchor
 
 /-- The exact common run source belongs to the displayed robust box. -/
 theorem exactSource_inside_runBox
     {threshold : Fraction.Rational}
     (certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold)
+      Critical.Sharpness.IsSharperWindowThreshold threshold)
     (requestedScale count : Nat) :
-    (Dirichlet.Critical.Robust.Run.robustRunBox certificate requestedScale count).Contains
-      (Dirichlet.Critical.Run.criticalBadWindowRun
+    (Critical.Robust.Run.robustRunBox certificate requestedScale count).Contains
+      (Critical.Run.criticalBadWindowRun
         certificate requestedScale count).source.value :=
-  Dirichlet.Sharpness.BoxDynamics.exactSource_inside_robustRunBox certificate requestedScale count
+  exactSource_inside_robustRunBox certificate requestedScale count
 
 /-- Two-atom rational law: the exact critical source receives the
 area-calibrated rate and the supplied background source receives the
@@ -232,23 +232,23 @@ complementary mass. -/
 @[expose] def criticalAreaLaw
     {threshold : Fraction.Rational}
     (certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold)
+      Critical.Sharpness.IsSharperWindowThreshold threshold)
     (requestedScale count : Nat) (background : GaussianInt.Fraction) :
     Measure.Distribution
-      (Dirichlet.Sharpness.BoxDynamics.RobustSourceState certificate requestedScale count) :=
-  let rate := Dirichlet.Sharpness.BoxDynamics.criticalRate certificate requestedScale count
+      (RobustSourceState certificate requestedScale count) :=
+  let rate := criticalRate certificate requestedScale count
   { atoms :=
       [{ item := .critical
-          (Dirichlet.Critical.Run.criticalBadWindowRun
+          (Critical.Run.criticalBadWindowRun
             certificate requestedScale count).source
-          (Dirichlet.Sharpness.BoxDynamics.exactSource_inside_runBox certificate requestedScale count)
+          (exactSource_inside_runBox certificate requestedScale count)
          weight := rate
          nonnegative :=
-          (Dirichlet.Sharpness.BoxDynamics.criticalRate_pos certificate requestedScale count).le },
+          (criticalRate_pos certificate requestedScale count).le },
        { item := .background background
          weight := 1 - rate
          nonnegative := Fraction.Order.Arithmetic.sub_nonneg_direct
-          (Dirichlet.Sharpness.BoxDynamics.criticalRate_le_one certificate requestedScale count) }]
+          (criticalRate_le_one certificate requestedScale count) }]
     total_one := by
       simp only [Measure.totalWeight_cons,
         Measure.totalWeight_nil]
@@ -258,15 +258,15 @@ complementary mass. -/
 theorem criticalAreaLaw_probability_criticalEvent
     {threshold : Fraction.Rational}
     (certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold)
+      Critical.Sharpness.IsSharperWindowThreshold threshold)
     (requestedScale count : Nat) (background : GaussianInt.Fraction) :
-    (Dirichlet.Sharpness.BoxDynamics.criticalAreaLaw certificate requestedScale count background).probability
-        Dirichlet.Sharpness.BoxDynamics.RobustSourceState.criticalEvent =
-      Dirichlet.Sharpness.BoxDynamics.criticalRate certificate requestedScale count := by
-  unfold Dirichlet.Sharpness.BoxDynamics.criticalAreaLaw Measure.Distribution.probability
+    (criticalAreaLaw certificate requestedScale count background).probability
+        RobustSourceState.criticalEvent =
+      criticalRate certificate requestedScale count := by
+  unfold criticalAreaLaw Measure.Distribution.probability
     Measure.eventWeight
-  change Dirichlet.Sharpness.BoxDynamics.criticalRate certificate requestedScale count + (0 + 0) =
-    Dirichlet.Sharpness.BoxDynamics.criticalRate certificate requestedScale count
+  change criticalRate certificate requestedScale count + (0 + 0) =
+    criticalRate certificate requestedScale count
   ring1
 
 /-- The critical event in the area-calibrated law has strictly positive
@@ -274,12 +274,12 @@ rational probability. -/
 theorem criticalAreaLaw_regionPositive
     {threshold : Fraction.Rational}
     (certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold)
+      Critical.Sharpness.IsSharperWindowThreshold threshold)
     (requestedScale count : Nat) (background : GaussianInt.Fraction) :
-    0 < (Dirichlet.Sharpness.BoxDynamics.criticalAreaLaw certificate requestedScale count background).probability
-      Dirichlet.Sharpness.BoxDynamics.RobustSourceState.criticalEvent := by
-  rw [Dirichlet.Sharpness.BoxDynamics.criticalAreaLaw_probability_criticalEvent]
-  exact Dirichlet.Sharpness.BoxDynamics.criticalRate_pos certificate requestedScale count
+    0 < (criticalAreaLaw certificate requestedScale count background).probability
+      RobustSourceState.criticalEvent := by
+  rw [criticalAreaLaw_probability_criticalEvent]
+  exact criticalRate_pos certificate requestedScale count
 
 /-- Fully instantiated finite dynamical Chevallier analogue: after any
 supplied burn-in, independent area-calibrated resampling hits a sound bad
@@ -287,16 +287,16 @@ window region with the displayed geometric probability lower bound. -/
 theorem criticalArea_resampling_pathHit_probability_lower
     {threshold : Fraction.Rational}
     (certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold)
+      Critical.Sharpness.IsSharperWindowThreshold threshold)
     (requestedScale count : Nat) (offset : Fin count)
     (background : GaussianInt.Fraction)
     (initial : Measure.Distribution
-      (Dirichlet.Sharpness.BoxDynamics.RobustSourceState certificate requestedScale count))
+      (RobustSourceState certificate requestedScale count))
     (burnIn blockCount : Nat) :
-    let law := Dirichlet.Sharpness.BoxDynamics.criticalAreaLaw certificate requestedScale count background
-    let region := Dirichlet.Sharpness.BoxDynamics.robustBadWindowRegionAtOffset
+    let law := criticalAreaLaw certificate requestedScale count background
+    let region := robustBadWindowRegionAtOffset
       certificate requestedScale count offset
-    1 - (1 - Dirichlet.Sharpness.BoxDynamics.criticalRate certificate requestedScale count) ^ blockCount ≤
+    1 - (1 - criticalRate certificate requestedScale count) ^ blockCount ≤
       (Measure.markovPaths
         (Measure.Distribution.blockTransition
           (Measure.Distribution.resamplingTransition law) 1)
@@ -308,14 +308,14 @@ theorem criticalArea_resampling_pathHit_probability_lower
   dsimp only
   have lower :=
     Measure.Distribution.resampling_pathHit_probability_lower
-      (Dirichlet.Sharpness.BoxDynamics.criticalAreaLaw certificate requestedScale count background)
-      (Dirichlet.Sharpness.BoxDynamics.robustBadWindowRegionAtOffset
+      (criticalAreaLaw certificate requestedScale count background)
+      (robustBadWindowRegionAtOffset
         certificate requestedScale count offset).event
-      (Dirichlet.Sharpness.BoxDynamics.criticalAreaLaw_regionPositive certificate requestedScale count
+      (criticalAreaLaw_regionPositive certificate requestedScale count
         background)
       initial burnIn blockCount
-  rw [Dirichlet.Sharpness.BoxDynamics.robustBadWindowRegionAtOffset_event,
-    Dirichlet.Sharpness.BoxDynamics.criticalAreaLaw_probability_criticalEvent] at lower
+  rw [robustBadWindowRegionAtOffset_event,
+    criticalAreaLaw_probability_criticalEvent] at lower
   exact lower
 
 /-- Soundness of the probabilistic event remains constructive: a displayed
@@ -323,14 +323,14 @@ hit path returns the bad-window record itself. -/
 @[expose] def badWindow_of_criticalArea_pathHits
     {threshold : Fraction.Rational}
     (certificate :
-      Dirichlet.Critical.Sharpness.IsSharperWindowThreshold threshold)
+      Critical.Sharpness.IsSharperWindowThreshold threshold)
     (requestedScale count : Nat) (offset : Fin count)
-    (path : List (Dirichlet.Sharpness.BoxDynamics.RobustSourceState certificate requestedScale count))
+    (path : List (RobustSourceState certificate requestedScale count))
     (hits : Data.List.pathHits
-      (Dirichlet.Sharpness.BoxDynamics.robustBadWindowRegionAtOffset
+      (robustBadWindowRegionAtOffset
         certificate requestedScale count offset).event path = true) :
     BadWindow threshold requestedScale :=
-  (Dirichlet.Sharpness.BoxDynamics.robustBadWindowRegionAtOffset certificate requestedScale count
+  (robustBadWindowRegionAtOffset certificate requestedScale count
     offset).badWindow_of_pathHits
     path hits
 

@@ -415,11 +415,23 @@ theorem reducedAddRaw_equivalent (left right : Rational) :
     rw [← numeratorReconstruct]
   ring1
 
+/-- Execute canonical addition with a direct denominator-one integer branch.
+
+The remaining inputs use the original reduced addition display. Both branches
+return the same complete canonical fraction as the logical addition operation.
+-/
+private def addExecutable (left right : Rational) : Rational :=
+  if left.den = 1 ∧ right.den = 1 then
+    Cast.fromInt (left.num + right.num)
+  else
+    let raw := reducedAddRaw left right
+    ⟨raw.num, raw.den, raw.den_pos, reducedAddRaw_reduced left right⟩
+
 /-- Compute reduction-aware canonical addition on the retained reduced carrier.
 
 The original arithmetic removes the denominator gcd before assembling the sum, then removes only the remaining
 common-factor gcd. The readback alias retains that same operation. -/
-def add (left right : Rational) : Rational :=
+@[implemented_by addExecutable] def add (left right : Rational) : Rational :=
   let raw := reducedAddRaw left right
   ⟨raw.num, raw.den, raw.den_pos, reducedAddRaw_reduced left right⟩
 
@@ -428,11 +440,23 @@ def neg (source : Rational) : Rational :=
   ⟨-source.num, source.den, source.den_pos, by
     simpa only [Reduced, Int.natAbs_neg] using source.reduced⟩
 
+/-- Execute canonical multiplication with a direct denominator-one integer branch.
+
+The remaining inputs use the original cross-cancelled product display. Both
+branches return the same complete canonical fraction as logical multiplication.
+-/
+private def mulExecutable (left right : Rational) : Rational :=
+  if left.den = 1 ∧ right.den = 1 then
+    Cast.fromInt (left.num * right.num)
+  else
+    let raw := mulRaw left right
+    ⟨raw.num, raw.den, raw.den_pos, mulRaw_reduced left right⟩
+
 /-- Compute cross-cancelled canonical multiplication on the retained reduced carrier.
 
 The original arithmetic cancels each numerator against the opposite denominator before forming products. The resulting
 record is already reduced, and the readback alias retains that operation. -/
-def mul (left right : Rational) : Rational :=
+@[implemented_by mulExecutable] def mul (left right : Rational) : Rational :=
   let raw := mulRaw left right
   ⟨raw.num, raw.den, raw.den_pos, mulRaw_reduced left right⟩
 
@@ -448,6 +472,61 @@ theorem mul_eq_normalize (left right : Rational) :
     mul left right = normalize (mulRaw left right) := by
   apply eq_of_cross
   exact equivalent_symm (normalize_equivalent (mulRaw left right))
+
+/-- The executable addition returns the complete original canonical fraction.
+
+The equality holds for every input pair, including mixed denominators; it
+identifies the numerator, denominator and retained reducedness certificates.
+-/
+private theorem addExecutable_eq_add (left right : Rational) :
+    addExecutable left right = add left right := by
+  have normalized : addExecutable left right = normalize (addRaw left right) := by
+    by_cases integral : left.den = 1 ∧ right.den = 1
+    · rewrite [addExecutable, if_pos integral]
+      apply eq_of_cross
+      have reference : Equivalent (Cast.fromInt (left.num + right.num)).toRaw
+          (referenceAddRaw left right) := by
+        change (left.num + right.num) * ((left.den * right.den : Nat) : Int) =
+          (left.num * (right.den : Int) + right.num * (left.den : Int)) * (1 : Int)
+        rewrite [integral.1, integral.2]
+        change (left.num + right.num) * (1 : Int) =
+          (left.num * (1 : Int) + right.num * (1 : Int)) * (1 : Int)
+        exact congrArg (fun numerator : Int => numerator * (1 : Int))
+          (congrArg₂ (· + ·) (Int.Arithmetic.mul_one left.num)
+            (Int.Arithmetic.mul_one right.num)).symm
+      exact equivalent_trans reference
+        (equivalent_trans (equivalent_symm (addRaw_equivalent left right))
+          (equivalent_symm (normalize_equivalent (addRaw left right))))
+    · rewrite [addExecutable, if_neg integral]
+      apply eq_of_cross
+      exact equivalent_trans (reducedAddRaw_equivalent left right)
+        (equivalent_symm (normalize_equivalent (addRaw left right)))
+  exact normalized.trans (add_eq_normalize left right).symm
+
+/-- The executable product returns the complete original canonical fraction.
+
+The equality holds for every input pair, including mixed denominators; it
+identifies the numerator, denominator and retained reducedness certificates.
+-/
+private theorem mulExecutable_eq_mul (left right : Rational) :
+    mulExecutable left right = mul left right := by
+  have normalized : mulExecutable left right = normalize (mulRaw left right) := by
+    by_cases integral : left.den = 1 ∧ right.den = 1
+    · rewrite [mulExecutable, if_pos integral]
+      apply eq_of_cross
+      have reference : Equivalent (Cast.fromInt (left.num * right.num)).toRaw
+          (referenceMulRaw left right) := by
+        change (left.num * right.num) * ((left.den * right.den : Nat) : Int) =
+          (left.num * right.num) * (1 : Int)
+        rewrite [integral.1, integral.2]
+        rfl
+      exact equivalent_trans reference
+        (equivalent_trans (equivalent_symm (mulRaw_equivalent left right))
+          (equivalent_symm (normalize_equivalent (mulRaw left right))))
+    · rewrite [mulExecutable, if_neg integral]
+      apply eq_of_cross
+      exact equivalent_symm (normalize_equivalent (mulRaw left right))
+  exact normalized.trans (mul_eq_normalize left right).symm
 
 /-- Compute the sign-canonical total reciprocal of a reduced rational.
 
@@ -502,14 +581,17 @@ instance : Div Rational := ⟨div⟩
 
 /-- Canonical addition has the ordinary common-denominator meaning. -/
 theorem add_equivalent (left right : Rational) :
-    Equivalent (add left right).toRaw (referenceAddRaw left right) :=
-  equivalent_trans (reducedAddRaw_equivalent left right)
+    Equivalent (add left right).toRaw (referenceAddRaw left right) := by
+  rewrite [add_eq_normalize]
+  exact equivalent_trans (normalize_equivalent (addRaw left right))
     (addRaw_equivalent left right)
 
 /-- Canonical multiplication has the ordinary product meaning. -/
 theorem mul_equivalent (left right : Rational) :
-    Equivalent (mul left right).toRaw (referenceMulRaw left right) :=
-  mulRaw_equivalent left right
+    Equivalent (mul left right).toRaw (referenceMulRaw left right) := by
+  rewrite [mul_eq_normalize]
+  exact equivalent_trans (normalize_equivalent (mulRaw left right))
+    (mulRaw_equivalent left right)
 
 /-- Canonical addition computes one half plus one third as five sixths. -/
 theorem add_one_half_one_third :

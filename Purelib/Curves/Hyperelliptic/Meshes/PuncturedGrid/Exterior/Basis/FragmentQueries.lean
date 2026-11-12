@@ -82,6 +82,10 @@ import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
+
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations
+
 section
 
 open Purelib.Algebra
@@ -107,60 +111,60 @@ open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate Gaussian)
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
     regular domains differential}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {count : Nat} {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {sourceData : Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover sourceData}
-  {covers : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent} {minimum floor index
+  {sourceData : UniformReciprocalModels.Data patch count} {cover :
+    UniformReciprocalCover.Cover sourceData}
+  {covers : Disk.Basis.SourceLocations.BasisSourceCovers parent} {minimum floor index
     depth : Nat}
-  {common : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonCover cover covers minimum}
-  {areaAllowance sourceTarget coefficientTarget : Normalization.InverseRootPolynomial.Coordinate}
-  {request : Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest regular common
+  {common : Disk.Basis.CommonCover.BasisCommonCover cover covers minimum}
+  {areaAllowance sourceTarget coefficientTarget : Coordinate}
+  {request : Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest regular common
     areaAllowance sourceTarget coefficientTarget floor}
   {box : Rational.Box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
-  {originals : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {originals : Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
     covers index}
-  {cells : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers index}
+  {cells : Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers index}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable (acquired :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition request
+  Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition request
   polynomials originals cells coefficients depth)
   (piece : Paths.RectangularSegmentSplitting.SegmentPiece occurrence.compared.entered.domain.geometry
     (parent.edge.point 0) (parent.edge.point 1))
 
 /-- The density is computed from the actual retained row request. -/
 @[expose] def rowDensity (row : Fin genus) (faceIndex : Nat) : Coordinate :=
-  Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentQueries.queryDensity
+  Face.FragmentQueries.queryDensity
     (occurrence.recastComparison (Periods.PeriodMatrix.standardDifferential row)).entered.bounds
     piece.column piece.row (acquired.prepared.get row).localRequest faceIndex
 
 /-- The retained domain primitive data for every original basis differential at one shared face index. -/
 @[expose] def RowData (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
   regular domains differential) (faceIndex : Nat) :=
-  (row : Fin genus) → Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives
+  (row : Fin genus) → Face.PrimitiveData.DomainPrimitives
     (occurrence.recastComparison (Periods.PeriodMatrix.standardDifferential row)).entered.domain
     (Periods.PeriodMatrix.standardDifferential row) faceIndex
 
 /-- Read the common coefficient-weighted grid primitive at a parameter point of the original retained parent segment. -/
 @[expose] def gridValue {faceIndex : Nat} (data :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData occurrence faceIndex) (parameter :
-  Normalization.InverseRootPolynomial.Coordinate) : Gaussian :=
+  RowData occurrence faceIndex) (parameter :
+  Coordinate) : Gaussian :=
   FiniteSum.Fin.sumFin fun row => coefficients row *
     (data row).anchors.alignedValue (data row).offsets piece.column piece.row (parent.edge.point parameter)
 
@@ -168,32 +172,32 @@ variable (acquired :
 cache; source readback uses the existing acquisition's exact polynomial. -/
 theorem row_increment_error (member : parent ∈ occurrence.compared.entered.cache.parents)
     (row : Fin genus) {faceIndex : Nat} (data :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData occurrence faceIndex)
-    (first last : Normalization.InverseRootPolynomial.Coordinate)
+      RowData occurrence faceIndex)
+    (first last : Coordinate)
     (firstInside : piece.interval.lower ≤ first ∧ first ≤ piece.interval.upper)
     (lastInside : piece.interval.lower ≤ last ∧ last ≤ piece.interval.upper) :
-    Data.Gaussian.Norm.Basic.normSq (((data row).anchors.alignedValue (data row).offsets piece.column piece.row
+    Gaussian.Norm.Basic.normSq (((data row).anchors.alignedValue (data row).offsets piece.column piece.row
       (parent.edge.point last) -
         (data row).anchors.alignedValue (data row).offsets piece.column piece.row (parent.edge.point first)) -
       ((originals.get row).primitive.value.eval (parent.edge.point last) -
         (originals.get row).primitive.value.eval (parent.edge.point first))) ≤
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.rowDensity acquired piece row faceIndex *
-        Data.Gaussian.Norm.Basic.normSq (parent.edge.point last - parent.edge.point first) := by
+      FragmentQueries.rowDensity acquired piece row faceIndex *
+        Gaussian.Norm.Basic.normSq (parent.edge.point last - parent.edge.point first) := by
   have present : Integration.PreparedEdgeRecasting.recastCenteredEdge (Periods.PeriodMatrix.standardDifferential row)
     parent ∈
       occurrence.compared.entered.cache.parents.map (Integration.PreparedEdgeRecasting.recastCenteredEdge
         (Periods.PeriodMatrix.standardDifferential row)) :=
-    Data.List.Map.mem_map_of_mem member
+    List.Map.mem_map_of_mem member
   have reached := (occurrence.recastComparison (Periods.PeriodMatrix.standardDifferential row)).entered.reached _
     present
-  have bounded := Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentQueries.query_increment_le
+  have bounded := Face.FragmentQueries.query_increment_le
     (occurrence.recastComparison (Periods.PeriodMatrix.standardDifferential row)).entered.bounds
     (parent := Integration.PreparedEdgeRecasting.recastCenteredEdge (Periods.PeriodMatrix.standardDifferential row)
       parent)
     (count := (covers.get row).count) (target := request.sourceTolerance)
     piece (data row).primitives reached (acquired.prepared.get row).localRequest first last firstInside lastInside
   rw [acquired.primitive_eq row] at bounded
-  have point_eq (parameter : Normalization.InverseRootPolynomial.Coordinate) :
+  have point_eq (parameter : Coordinate) :
       (Integration.PreparedEdgeRecasting.recastCenteredEdge (Periods.PeriodMatrix.standardDifferential row)
         parent).edge.point parameter = parent.edge.point parameter := rfl
   rw [point_eq first, point_eq last] at bounded
@@ -209,55 +213,55 @@ theorem row_increment_error (member : parent ∈ occurrence.compared.entered.cac
 /-- The grid/source error remains homogeneous in the one coefficient vector
 used by the common source-area certificate. -/
 theorem weighted_increment_error (member : parent ∈ occurrence.compared.entered.cache.parents)
-    {faceIndex : Nat} (data : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData occurrence
-      faceIndex) (first last : Normalization.InverseRootPolynomial.Coordinate)
+    {faceIndex : Nat} (data : RowData occurrence
+      faceIndex) (first last : Coordinate)
     (firstInside : piece.interval.lower ≤ first ∧ first ≤ piece.interval.upper)
     (lastInside : piece.interval.lower ≤ last ∧ last ≤ piece.interval.upper) :
-    Data.Gaussian.Norm.Basic.normSq ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.gridValue
+    Gaussian.Norm.Basic.normSq ((FragmentQueries.gridValue
       (coefficients := coefficients) piece data last -
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.gridValue (coefficients := coefficients) piece
+      FragmentQueries.gridValue (coefficients := coefficients) piece
       data first) -
-      (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+      (PrimitiveBank.value
         originals coefficients last -
-        Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+        PrimitiveBank.value
         originals coefficients first)) ≤
-      (genus : Normalization.InverseRootPolynomial.Coordinate) * FiniteSum.Fin.sumFin (fun row =>
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.rowDensity acquired piece row faceIndex) *
-        Readings.PreparedObservationCoercivity.coefficientNormSq coefficients * Data.Gaussian.Norm.Basic.normSq
-          (parent.edge.point last - parent.edge.point first) := open Purelib.Data.Rat in by
+      (genus : Coordinate) * FiniteSum.Fin.sumFin (fun row =>
+        FragmentQueries.rowDensity acquired piece row faceIndex) *
+        Readings.PreparedObservationCoercivity.coefficientNormSq coefficients * Gaussian.Norm.Basic.normSq
+          (parent.edge.point last - parent.edge.point first) := open Rat in by
   let errors := fun row =>
     ((data row).anchors.alignedValue (data row).offsets piece.column piece.row (parent.edge.point last) -
       (data row).anchors.alignedValue (data row).offsets piece.column piece.row (parent.edge.point first)) -
     ((originals.get row).primitive.value.eval (parent.edge.point last) -
       (originals.get row).primitive.value.eval (parent.edge.point first))
   let budget := Readings.AffineBasisEnergy.WeightedNormBudget.build errors
-  have paid : budget.scale ≤ (genus : Normalization.InverseRootPolynomial.Coordinate) * FiniteSum.Fin.sumFin (fun row =>
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.rowDensity acquired piece row faceIndex) *
-      Data.Gaussian.Norm.Basic.normSq (parent.edge.point last - parent.edge.point first) := by
+  have paid : budget.scale ≤ (genus : Coordinate) * FiniteSum.Fin.sumFin (fun row =>
+    FragmentQueries.rowDensity acquired piece row faceIndex) *
+      Gaussian.Norm.Basic.normSq (parent.edge.point last - parent.edge.point first) := by
     rw [budget.scale_eq]
     have bound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
       (FiniteSum.Rational.Order.Positivity.sumFin_mono _ _ (fun row =>
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.row_increment_error acquired piece member row
+        FragmentQueries.row_increment_error acquired piece member row
         data first last firstInside lastInside))
       (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus))
     rw [FiniteSum.Fin.sumFin_mul_right] at bound
     exact bound.trans_eq (by ring1)
-  have equal : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.gridValue (coefficients :=
-    coefficients) piece data last - Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.gridValue
+  have equal : (FragmentQueries.gridValue (coefficients :=
+    coefficients) piece data last - FragmentQueries.gridValue
     (coefficients := coefficients) piece data first) -
-      (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+      (PrimitiveBank.value
         originals coefficients last -
-        Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+        PrimitiveBank.value
         originals coefficients first) =
       FiniteSum.Fin.sumFin (fun row => coefficients row * errors row) := by
-    unfold Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.gridValue
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+    unfold FragmentQueries.gridValue
+      PrimitiveBank.value
     rw [← FiniteSum.Fin.sumFin_sub, ← FiniteSum.Fin.sumFin_sub, ← FiniteSum.Fin.sumFin_sub]
     exact FiniteSum.Fin.sumFin_congr (fun row => by dsimp only [errors]; ring1)
   have nonnegative : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
     (FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 :
-      Normalization.InverseRootPolynomial.Coordinate)) _ (fun row => Gaussian.Basic.Canonical.normSq_nonneg
+      Coordinate)) _ (fun row => Gaussian.Basic.Canonical.normSq_nonneg
       (coefficients row)))
   rw [equal]
   exact (budget.bound coefficients).trans

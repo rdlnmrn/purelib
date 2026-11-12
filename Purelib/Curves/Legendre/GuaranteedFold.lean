@@ -100,34 +100,34 @@ open Purelib.Riemann.Integration.LegendreModularMonodromy
 /-- A Gaussian name retaining its coherent sample realization. -/
 abbrev CoherentNamed := Coherent.CoherentNamed
 /-- A finite two-dimensional integral matrix for the original period action. -/
-abbrev IntegralMatrix := LinearAlgebra.Matrix.Basic.IntegralMatrix
+abbrev IntegralMatrix := Basic.IntegralMatrix
 /-- Exact Gaussian rational curve parameters. -/
 abbrev Gaussian := Data.Gaussian.Basic.Canonical
 /-- Operational equivalence of retained Gaussian names. -/
 abbrev NamedEquivalent := Gaussian.Equivalence.NamedEquivalent
 
 /-- An ordered retained right-inverse certificate for each matrix in the original finite list. -/
-def Inverses : List Curves.Legendre.GuaranteedFold.IntegralMatrix → Type
+def Inverses : List IntegralMatrix → Type
   | [] => Unit
-  | matrix :: remaining => Right.RightInverse matrix × Purelib.Curves.Legendre.GuaranteedFold.Inverses remaining
+  | matrix :: remaining => Right.RightInverse matrix × GuaranteedFold.Inverses remaining
 
 /-- Concatenate the retained inverse certificates in the same order as the original matrix lists. -/
-def appendInverses (first second : List Curves.Legendre.GuaranteedFold.IntegralMatrix)
-    (left : Curves.Legendre.GuaranteedFold.Inverses first) (right : Curves.Legendre.GuaranteedFold.Inverses second) :
-      Curves.Legendre.GuaranteedFold.Inverses (first ++ second) :=
+def appendInverses (first second : List IntegralMatrix)
+    (left : Inverses first) (right : Inverses second) :
+      Inverses (first ++ second) :=
   match first with
   | [] => right
-  | _ :: remaining => ⟨left.1, Purelib.Curves.Legendre.GuaranteedFold.appendInverses remaining second left.2 right⟩
+  | _ :: remaining => ⟨left.1, GuaranteedFold.appendInverses remaining second left.2 right⟩
 
 /-- Compose the retained right inverses for the original ordered matrix product. -/
-def productInverse : (matrices : List Curves.Legendre.GuaranteedFold.IntegralMatrix) →
-    Curves.Legendre.GuaranteedFold.Inverses matrices → Right.RightInverse (Word.matrixProduct matrices)
+def productInverse : (matrices : List IntegralMatrix) →
+    Inverses matrices → Right.RightInverse (Word.matrixProduct matrices)
   | [], _ => Right.identityInverse
-  | _ :: remaining, ⟨head, tail⟩ => Right.mulInverse (Purelib.Curves.Legendre.GuaranteedFold.productInverse remaining
+  | _ :: remaining, ⟨head, tail⟩ => Right.mulInverse (GuaranteedFold.productInverse remaining
     tail) head
 
 /-- Transpose the reversed generator matrix to obtain a right inverse of the original dual generator. -/
-def dualGeneratorInverse (generator : Braid.Generator 3) :
+def dualGeneratorInverse (generator : Generator 3) :
     Right.RightInverse (Transpose.transpose
       (Generators.generatorMatrix generator)) where
   inverse := Transpose.transpose
@@ -138,115 +138,115 @@ def dualGeneratorInverse (generator : Braid.Generator 3) :
       Transpose.transpose_identity]
 
 /-- Construct the inverse spine for the exact reversed transposed generator list of the original braid word. -/
-def periodInverses : (word : Braid.Word 3) →
-    Curves.Legendre.GuaranteedFold.Inverses (Periods.periodBraidMatrices word)
+def periodInverses : (word : Word 3) →
+    Inverses (Periods.periodBraidMatrices word)
   | [] => ()
   | generator :: remaining =>
-      Curves.Legendre.GuaranteedFold.appendInverses (Periods.periodBraidMatrices remaining)
+      appendInverses (Periods.periodBraidMatrices remaining)
         [Transpose.transpose
           (Generators.generatorMatrix generator)]
-        (Purelib.Curves.Legendre.GuaranteedFold.periodInverses remaining) ⟨dualGeneratorInverse generator, ()⟩
+        (GuaranteedFold.periodInverses remaining) ⟨dualGeneratorInverse generator, ()⟩
 
 /-- Retain both the complete preparation and the provider for the actual final output, allowing further words to
 continue without new positivity. -/
-def Prepared (tau : Curves.Legendre.GuaranteedFold.CoherentNamed) (matrices : List
-  Curves.Legendre.GuaranteedFold.IntegralMatrix) :=
-  Sigma fun preparations : Fold.Basic.FoldPreparations tau matrices =>
-    Preparation.Basic.Provider (Fold.Basic.foldAction tau matrices preparations)
+def Prepared (tau : CoherentNamed) (matrices : List
+  IntegralMatrix) :=
+  Sigma fun preparations : FoldPreparations tau matrices =>
+    Basic.Provider (foldAction tau matrices preparations)
 
 /-- A structurally recursive, search-free construction of the complete stepwise preparation. All local and combined
 denominators are generated. -/
-def prepare (tau : Curves.Legendre.GuaranteedFold.CoherentNamed) (provider : Preparation.Basic.Provider tau) :
-    (matrices : List Curves.Legendre.GuaranteedFold.IntegralMatrix) → Curves.Legendre.GuaranteedFold.Inverses matrices →
-      Curves.Legendre.GuaranteedFold.Prepared tau matrices
+def prepare (tau : CoherentNamed) (provider : Basic.Provider tau) :
+    (matrices : List IntegralMatrix) → Inverses matrices →
+      Prepared tau matrices
   | [], _ => ⟨provider Multiplication.identity Right.identityInverse, provider⟩
   | matrix :: remaining, inverses =>
       let head := provider matrix inverses.1
-      let tail := Purelib.Curves.Legendre.GuaranteedFold.prepare (LegendreModularMonodromy.fractionalLinear matrix tau
+      let tail := GuaranteedFold.prepare (fractionalLinear matrix tau
         head)
         (Closure.after provider matrix inverses.1 head) remaining inverses.2
       let combined := provider (Word.matrixProduct (matrix :: remaining))
-        (Curves.Legendre.GuaranteedFold.productInverse (matrix :: remaining) inverses)
+        (productInverse (matrix :: remaining) inverses)
       ⟨⟨head, tail.1, combined⟩, tail.2⟩
 
 /-- Every finite dual word is fully prepared from one initial positive enclosure. The caller supplies no intermediate
 denominator certificates. -/
-def prepareWord {tau : Curves.Legendre.GuaranteedFold.CoherentNamed}
+def prepareWord {tau : CoherentNamed}
     (positive : Positive.Basic.PositiveEnclosure tau)
-    (word : Braid.Word 3) : Curves.Legendre.GuaranteedFold.Prepared tau (Periods.periodBraidMatrices word) :=
-  Curves.Legendre.GuaranteedFold.prepare tau (Positive.ofPositiveEnclosure positive) (Periods.periodBraidMatrices word)
-    (Curves.Legendre.GuaranteedFold.periodInverses word)
+    (word : Word 3) : Prepared tau (Periods.periodBraidMatrices word) :=
+  prepare tau (Positive.ofPositiveEnclosure positive) (Periods.periodBraidMatrices word)
+    (periodInverses word)
 
 /-- The default single-matrix evaluator and the guaranteed stepwise evaluator produce operationally equivalent outputs
 without supplied preparations. -/
-def equivalent_single {tau : Curves.Legendre.GuaranteedFold.CoherentNamed}
+def equivalent_single {tau : CoherentNamed}
     (positive : Positive.Basic.PositiveEnclosure tau)
-    (word : Braid.Word 3) :
-    Curves.Legendre.GuaranteedFold.NamedEquivalent
+    (word : Word 3) :
+    NamedEquivalent
       (Positive.guaranteed positive word).output.name
-      (Fold.Basic.foldAction tau (Periods.periodBraidMatrices word) (Curves.Legendre.GuaranteedFold.prepareWord positive
+      (foldAction tau (Periods.periodBraidMatrices word) (prepareWord positive
         word).1).name :=
   Ready.equivalent_fold
     (Positive.guaranteed positive word)
-    (Curves.Legendre.GuaranteedFold.prepareWord positive word).1
+    (prepareWord positive word).1
 
 /-- Equal finite period matrices give equivalent automatically prepared stepwise outputs, independently of the initial
 positivity witnesses. -/
-def equivalent_words {tau : Curves.Legendre.GuaranteedFold.CoherentNamed}
+def equivalent_words {tau : CoherentNamed}
     (firstPositive secondPositive :
       Positive.Basic.PositiveEnclosure tau)
-    (firstWord secondWord : Braid.Word 3)
+    (firstWord secondWord : Word 3)
     (equal : Dual.periodMatrix firstWord =
       Dual.periodMatrix secondWord) :
-    Curves.Legendre.GuaranteedFold.NamedEquivalent
-      (Fold.Basic.foldAction tau (Periods.periodBraidMatrices firstWord) (Curves.Legendre.GuaranteedFold.prepareWord
+    NamedEquivalent
+      (foldAction tau (Periods.periodBraidMatrices firstWord) (prepareWord
         firstPositive firstWord).1).name
-      (Fold.Basic.foldAction tau (Periods.periodBraidMatrices secondWord) (Curves.Legendre.GuaranteedFold.prepareWord
+      (foldAction tau (Periods.periodBraidMatrices secondWord) (prepareWord
         secondPositive secondWord).1).name :=
   NamedEquivalent.trans
     (NamedEquivalent.symm
-      (Curves.Legendre.GuaranteedFold.equivalent_single firstPositive firstWord))
+      (equivalent_single firstPositive firstWord))
     (NamedEquivalent.trans
       (Ready.respects_matrix
         (Positive.guaranteed firstPositive firstWord)
         (Positive.guaranteed secondPositive secondWord) equal)
-      (Curves.Legendre.GuaranteedFold.equivalent_single secondPositive secondWord))
+      (equivalent_single secondPositive secondWord))
 
 /-- The fully prepared stepwise computations respect finite Artin equivalence and may use independently discovered
 initial positive enclosures. -/
-def equivalent_braids {tau : Curves.Legendre.GuaranteedFold.CoherentNamed}
+def equivalent_braids {tau : CoherentNamed}
     (firstPositive secondPositive :
       Positive.Basic.PositiveEnclosure tau)
-    (firstWord secondWord : Braid.Word 3)
+    (firstWord secondWord : Word 3)
     (relation : Artin.Equivalent firstWord secondWord) :
-    Curves.Legendre.GuaranteedFold.NamedEquivalent
-      (Fold.Basic.foldAction tau (Periods.periodBraidMatrices firstWord) (Curves.Legendre.GuaranteedFold.prepareWord
+    NamedEquivalent
+      (foldAction tau (Periods.periodBraidMatrices firstWord) (prepareWord
         firstPositive firstWord).1).name
-      (Fold.Basic.foldAction tau (Periods.periodBraidMatrices secondWord) (Curves.Legendre.GuaranteedFold.prepareWord
+      (foldAction tau (Periods.periodBraidMatrices secondWord) (prepareWord
         secondPositive secondWord).1).name :=
-  Curves.Legendre.GuaranteedFold.equivalent_words firstPositive secondPositive firstWord secondWord
+  equivalent_words firstPositive secondPositive firstWord secondWord
     (Dual.equivalent_periodMatrix_eq relation)
 
 /-- Prepare both executions and the finite composition comparison, reusing the provider at the actual forward output for
 the reverse execution. -/
-def prepareReversal {tau : Curves.Legendre.GuaranteedFold.CoherentNamed}
+def prepareReversal {tau : CoherentNamed}
     (positive : Positive.Basic.PositiveEnclosure tau)
-    (word : Braid.Word 3) :
+    (word : Word 3) :
     Reversal.FoldReversalPreparations (Periods.periodBraidMatrices word)
       (Periods.periodBraidMatrices word.inverse) tau :=
   let provider := Positive.ofPositiveEnclosure positive
-  let forward := Curves.Legendre.GuaranteedFold.prepareWord positive word
+  let forward := prepareWord positive word
   let first := Word.matrixProduct (Periods.periodBraidMatrices word)
   let second := Word.matrixProduct (Periods.periodBraidMatrices word.inverse)
-  let firstInverse := Curves.Legendre.GuaranteedFold.productInverse (Periods.periodBraidMatrices word)
-    (Curves.Legendre.GuaranteedFold.periodInverses word)
-  let secondInverse := Curves.Legendre.GuaranteedFold.productInverse (Periods.periodBraidMatrices word.inverse)
-    (Curves.Legendre.GuaranteedFold.periodInverses word.inverse)
+  let firstInverse := productInverse (Periods.periodBraidMatrices word)
+    (periodInverses word)
+  let secondInverse := productInverse (Periods.periodBraidMatrices word.inverse)
+    (periodInverses word.inverse)
   let inner := FoldPreparations.combined (Periods.periodBraidMatrices word) forward.1
   { forward := forward.1
-    reverse := (Curves.Legendre.GuaranteedFold.prepare (Fold.Basic.foldAction tau (Periods.periodBraidMatrices word)
+    reverse := (prepare (foldAction tau (Periods.periodBraidMatrices word)
       forward.1)
-      forward.2 (Periods.periodBraidMatrices word.inverse) (Curves.Legendre.GuaranteedFold.periodInverses
+      forward.2 (Periods.periodBraidMatrices word.inverse) (periodInverses
         word.inverse)).1
     composition :=
       { inner := inner
@@ -256,29 +256,29 @@ def prepareReversal {tau : Curves.Legendre.GuaranteedFold.CoherentNamed}
 
 /-- A fully automatically prepared word followed by its inverse returns the original ratio. The same initial positivity
 enclosure prepares both legs. -/
-def reversal {tau : Curves.Legendre.GuaranteedFold.CoherentNamed}
+def reversal {tau : CoherentNamed}
     (positive : Positive.Basic.PositiveEnclosure tau)
-    (word : Braid.Word 3) :
-    Curves.Legendre.GuaranteedFold.NamedEquivalent
-      (Fold.Basic.foldAction
-        (Fold.Basic.foldAction tau (Periods.periodBraidMatrices word) (Curves.Legendre.GuaranteedFold.prepareReversal
+    (word : Word 3) :
+    NamedEquivalent
+      (foldAction
+        (foldAction tau (Periods.periodBraidMatrices word) (prepareReversal
           positive word).forward)
-        (Periods.periodBraidMatrices word.inverse) (Curves.Legendre.GuaranteedFold.prepareReversal positive
+        (Periods.periodBraidMatrices word.inverse) (prepareReversal positive
           word).reverse).name
       tau.name :=
-  Periods.periodBraidWord_foldReversal word tau (Curves.Legendre.GuaranteedFold.prepareReversal positive word)
+  Periods.periodBraidWord_foldReversal word tau (prepareReversal positive word)
 
 /-- The fully automatic stepwise output satisfies the arbitrary closed-path dual period theorem. -/
-def transport {parameter : Curves.Legendre.GuaranteedFold.Gaussian}
+def transport {parameter : Gaussian}
     {frame : Paths.Frame parameter}
     (data : PeriodMonodromy.NormalizedData frame)
     (positive : Positive.Basic.PositiveEnclosure data.ratio)
     (path : Paths.Path frame frame) :
-    Curves.Legendre.GuaranteedFold.NamedEquivalent
+    NamedEquivalent
       (CoherentNamed.mul (data.periods path 0)
-        (Fold.Basic.foldAction data.ratio (Periods.periodBraidMatrices path.word)
-          (Curves.Legendre.GuaranteedFold.prepareWord positive path.word).1)).name
+        (foldAction data.ratio (Periods.periodBraidMatrices path.word)
+          (prepareWord positive path.word).1)).name
       (data.periods path 1).name :=
-  data.periodWord_productive_transport path (Curves.Legendre.GuaranteedFold.prepareWord positive path.word).1
+  data.periodWord_productive_transport path (prepareWord positive path.word).1
 
 end Purelib.Curves.Legendre.GuaranteedFold

@@ -65,6 +65,8 @@ import Purelib.Riemann.RootContinuation.SquareRootChannelOwnership
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartPaths.BasisCommonChartRequests
+
 open Purelib.Curves
 
 open Purelib.Geometry
@@ -79,24 +81,26 @@ public section
 Their uniform estimates come from the already paid interval requests. -/
 namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEndpointValues
 
-variable {genus count : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+open Purelib.Data.Rat.Fraction.Order
+
+variable {genus count : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {cover : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {covers :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {bounds :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+    UniformReciprocalModels.Data patch count}
+  {cover : UniformReciprocalCover.Cover data} {covers :
+    SourceLocations.BasisSourceCovers parent}
+  {regular : RegularBounds.Data cap} {bounds :
+    ReciprocalPaddedInverse.UniformBounds regular.padded}
   {depth floor sourceFloor : Nat} {target sourceTarget : Normalization.InverseRootPolynomial.Coordinate}
   {index minimum stage : Nat} {box : Rational.Box}
-  {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
-  {anchorBank : Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.PrimitiveCells data index cover.mesh.edges}
-  {bank : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers index}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {polynomials : Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {anchorBank : UniformReciprocalPrimitives.PrimitiveCells data index cover.mesh.edges}
+  {bank : SourceLocations.BasisSourceLocations.SampleBank covers index}
+  {basis : ReciprocalPaddedBasisBounds.BasisBounds bounds}
   {joinTarget : Normalization.InverseRootPolynomial.Coordinate} {joinFloor : Nat}
 
 open Purelib.Data.Rat.Fraction.Compatibility
@@ -105,21 +109,21 @@ open Purelib.Data.Gaussian.Basic.Canonical
 variable {energyTarget : Normalization.InverseRootPolynomial.Coordinate} {energyFloor energyDepth : Nat}
 
 variable {originals :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank covers index}
+  CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank covers index}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 namespace Paths
 
 /-- The first original source/direct endpoint combination, or the zero pair for an empty common interval list. -/
 @[expose] def firstValues : {intervals : List
-  (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers)} →
-    (requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+  (CommonCover.BasisCommonInterval cover covers)} →
+    (requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target sourceTarget floor sourceFloor intervals) →
-    {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    {plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests} → {readings :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
       bank stage requests plans} →
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
+    Plans.Paths originals
       coefficients requests plans readings → Normalization.InverseRootPolynomial.Gaussian ×
       Normalization.InverseRootPolynomial.Gaussian
   | _, .nil, _, _, _ => (0, 0)
@@ -130,15 +134,15 @@ namespace Paths
       (combined.sourceValue, combined.directValue)
 
 /-- The last original source/direct endpoint combination on the retained common traversal. -/
-@[expose] def lastValues : {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval
+@[expose] def lastValues : {intervals : List (CommonCover.BasisCommonInterval
   cover covers)} →
-    (requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+    (requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target sourceTarget floor sourceFloor intervals) →
-    {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    {plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests} → {readings :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
       bank stage requests plans} →
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
+    Plans.Paths originals
       coefficients requests plans readings → Normalization.InverseRootPolynomial.Gaussian ×
       Normalization.InverseRootPolynomial.Gaussian
   | _, .nil, _, _, _ => (0, 0)
@@ -155,25 +159,25 @@ namespace Paths
 private theorem estimate_mono {firstTarget lastTarget : Normalization.InverseRootPolynomial.Coordinate} {chart :
   Normalization.InverseRootPolynomial.Gaussian} {values : Normalization.InverseRootPolynomial.Gaussian ×
   Normalization.InverseRootPolynomial.Gaussian}
-    (estimate : Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisEndpointValues.EndpointEstimate coefficients firstTarget
+    (estimate : ParentBasisEndpointValues.EndpointEstimate coefficients firstTarget
       chart values) (less : firstTarget ≤ lastTarget) :
-    Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisEndpointValues.EndpointEstimate coefficients lastTarget chart values
+    ParentBasisEndpointValues.EndpointEstimate coefficients lastTarget chart values
       := open Purelib.Algebra in open Purelib.Data in open Purelib.Data.Rat in by
   have normNonnegative : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
     (FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 :
       Normalization.InverseRootPolynomial.Coordinate)) _ (fun row => Gaussian.Basic.Canonical.normSq_nonneg
       (coefficients row)))
-  exact ⟨estimate.source_close.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct less (by
+  exact ⟨estimate.source_close.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct less (by
           decide : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤ 4)) normNonnegative),
-    estimate.chart_close.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct less (by
+    estimate.chart_close.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct less (by
           decide : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤ 10)) normNonnegative),
-    estimate.direct_close.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct less normNonnegative)⟩
+    estimate.direct_close.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct less normNonnegative)⟩
 
 /-- The zero endpoint pair satisfies the original coefficient-weighted squared-target estimate. -/
-private theorem zero_estimate : Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisEndpointValues.EndpointEstimate
+private theorem zero_estimate : ParentBasisEndpointValues.EndpointEstimate
   coefficients (sourceTarget^2) 0 (0, 0) := open Purelib.Algebra in open Purelib.Data in open Purelib.Data.Rat in by
   have normNonnegative : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
@@ -181,89 +185,89 @@ private theorem zero_estimate : Hyperelliptic.Charts.Reciprocal.Disk.ParentBasis
       Normalization.InverseRootPolynomial.Coordinate)) _ (fun row => Gaussian.Basic.Canonical.normSq_nonneg
       (coefficients row)))
   have bounded : 0 ≤ sourceTarget^2 * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.sq_nonneg_direct _) normNonnegative
+    Arithmetic.mul_nonneg_direct (Arithmetic.sq_nonneg_direct _) normNonnegative
   refine ⟨?_, ?_, ?_⟩
   all_goals simp only [_root_.sub_self, Gaussian.Norm.Basic.normSq_zero]
-  · exact (Fraction.Order.Arithmetic.mul_nonneg_direct (by
+  · exact (Arithmetic.mul_nonneg_direct (by
       decide : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤ 4) bounded).trans_eq (by ring1)
-  · exact (Fraction.Order.Arithmetic.mul_nonneg_direct (by
+  · exact (Arithmetic.mul_nonneg_direct (by
       decide : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤ 10) bounded).trans_eq (by ring1)
   · exact bounded
 
 /-- The paid original interval source allocation is bounded by the common squared source target. -/
-private theorem source_le {interval : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover
+private theorem source_le {interval : CommonCover.BasisCommonInterval cover
   covers}
-    (budget : Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartBudget.BasisIntervalChartBudget interval regular
+    (budget : IntervalChartBudget.BasisIntervalChartBudget interval regular
       depth target sourceTarget floor sourceFloor) :
     budget.sourceTarget ≤ sourceTarget^2 :=
   open Purelib.Data.Rat in (show budget.sourceTarget = 1 * budget.sourceTarget by ring1).trans_le
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by
+    ((Arithmetic.mul_le_mul_of_nonneg_right_direct (by
         decide +kernel : (1 : Normalization.InverseRootPolynomial.Coordinate) ≤ 40)
       budget.request.source_positive.le).trans budget.total_paid)
 
 /-- The first original source/direct combination satisfies its common coefficient-weighted endpoint estimate. -/
-theorem first_bounded : {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval
+theorem first_bounded : {intervals : List (CommonCover.BasisCommonInterval
   cover covers)} →
-    (requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+    (requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target sourceTarget floor sourceFloor intervals) →
-    {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    {plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests} → {readings :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
       bank stage requests plans} →
-    (paths : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
+    (paths : Plans.Paths originals
       coefficients requests plans readings) →
-    Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisEndpointValues.EndpointEstimate coefficients (sourceTarget^2)
-      (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.Readings.firstChartValue coefficients requests
-      readings) (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEndpointValues.Paths.firstValues requests paths)
-  | _, .nil, _, _, _ => Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEndpointValues.Paths.zero_estimate
+    ParentBasisEndpointValues.EndpointEstimate coefficients (sourceTarget^2)
+      (CommonTraceReadback.Readings.firstChartValue coefficients requests
+      readings) (firstValues requests paths)
+  | _, .nil, _, _, _ => zero_estimate
   | _, .cons head _, _, readings, paths => by
       let combined :=
         IntervalChartEndpointValues.BasisIntervalChartRequest.Plan.Evaluation.PathData.firstCombination
         readings.1.evaluated paths.1
-      have estimate : Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisEndpointValues.EndpointEstimate coefficients
+      have estimate : ParentBasisEndpointValues.EndpointEstimate coefficients
         head.sourceTarget
           (polynomials.value coefficients readings.1.evaluated.first.root.coordinate) (combined.sourceValue,
             combined.directValue) :=
         ⟨combined.source_close, combined.chart_close, combined.direct_close⟩
-      exact Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEndpointValues.Paths.estimate_mono estimate
-        (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEndpointValues.Paths.source_le head)
+      exact estimate_mono estimate
+        (source_le head)
 
 /-- The last original source/direct combination satisfies its common coefficient-weighted endpoint estimate. -/
-theorem last_bounded : {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval
+theorem last_bounded : {intervals : List (CommonCover.BasisCommonInterval
   cover covers)} →
-    (requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+    (requests : CommonChartSchedule.BasisCommonChartRequests regular depth
       target sourceTarget floor sourceFloor intervals) →
-    {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+    {plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
       polynomials minimum requests} → {readings :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+      CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
       bank stage requests plans} →
-    (paths : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
+    (paths : Plans.Paths originals
       coefficients requests plans readings) →
-    Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisEndpointValues.EndpointEstimate coefficients (sourceTarget^2)
-      (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.Readings.lastChartValue coefficients requests
-      readings) (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEndpointValues.Paths.lastValues requests paths)
-  | _, .nil, _, _, _ => Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEndpointValues.Paths.zero_estimate
+    ParentBasisEndpointValues.EndpointEstimate coefficients (sourceTarget^2)
+      (CommonTraceReadback.Readings.lastChartValue coefficients requests
+      readings) (lastValues requests paths)
+  | _, .nil, _, _, _ => zero_estimate
   | _, .cons head .nil, _, readings, paths => by
       let combined :=
         IntervalChartEndpointValues.BasisIntervalChartRequest.Plan.Evaluation.PathData.lastCombination
         readings.1.evaluated paths.1
-      have estimate : Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisEndpointValues.EndpointEstimate coefficients
+      have estimate : ParentBasisEndpointValues.EndpointEstimate coefficients
         head.sourceTarget
           (polynomials.value coefficients readings.1.evaluated.last.root.coordinate) (combined.sourceValue,
             combined.directValue) :=
         ⟨combined.source_close, combined.chart_close, combined.direct_close⟩
-      exact Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEndpointValues.Paths.estimate_mono estimate
-        (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEndpointValues.Paths.source_le head)
+      exact estimate_mono estimate
+        (source_le head)
   | _, .cons _ (.cons next remaining), _, _, paths =>
     last_bounded (.cons next
     remaining) paths.2
 
-variable {intervals : List (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers)}
-  {requests : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests regular depth
+variable {intervals : List (CommonCover.BasisCommonInterval cover covers)}
+  {requests : CommonChartSchedule.BasisCommonChartRequests regular depth
     target sourceTarget floor sourceFloor intervals}
-  {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartSchedule.BasisCommonChartRequests.Plans capSample
+  {plans : CommonChartSchedule.BasisCommonChartRequests.Plans capSample
     polynomials minimum requests} {readings :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
+    CommonChartReadings.BasisCommonChartRequests.Plans.Readings anchorBank
     bank stage requests plans}
 
 set_option genInjectivity false in
@@ -272,36 +276,36 @@ set_option genInjectivity false in
 Both pairs retain exact readbacks and their original coefficient-weighted estimates against the corresponding chart
 endpoint. -/
 structure Extremes (paths :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
+  Plans.Paths originals
   coefficients requests plans readings) where
   /-- The cached first original source/direct endpoint pair. -/ first : Normalization.InverseRootPolynomial.Gaussian ×
     Normalization.InverseRootPolynomial.Gaussian
   /-- The cached first pair is the original first path combination. -/ first_eq : first =
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEndpointValues.Paths.firstValues requests paths
+    firstValues requests paths
   /-- The cached last original source/direct endpoint pair. -/ last : Normalization.InverseRootPolynomial.Gaussian ×
     Normalization.InverseRootPolynomial.Gaussian
   /-- The cached last pair is the original last path combination. -/ last_eq : last =
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEndpointValues.Paths.lastValues requests paths
+    lastValues requests paths
   /-- The retained first pair meets the common endpoint estimate. -/ first_bounded :
-    Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisEndpointValues.EndpointEstimate coefficients (sourceTarget^2)
-    (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.Readings.firstChartValue coefficients requests
+    ParentBasisEndpointValues.EndpointEstimate coefficients (sourceTarget^2)
+    (CommonTraceReadback.Readings.firstChartValue coefficients requests
     readings) first
   /-- The retained last pair meets the common endpoint estimate. -/ last_bounded :
-    Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisEndpointValues.EndpointEstimate coefficients (sourceTarget^2)
-    (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonTraceReadback.Readings.lastChartValue coefficients requests
+    ParentBasisEndpointValues.EndpointEstimate coefficients (sourceTarget^2)
+    (CommonTraceReadback.Readings.lastChartValue coefficients requests
     readings) last
 
 constructive_injectivity Extremes
 
 /-- Cache both original endpoint combinations together with their exact readbacks and paid estimates. -/
 @[expose] def extremes (paths :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartPaths.BasisCommonChartRequests.Plans.Paths originals
-  coefficients requests plans readings) : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEndpointValues.Paths.Extremes
+  Plans.Paths originals
+  coefficients requests plans readings) : Extremes
   paths :=
-  let first := Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEndpointValues.Paths.firstValues requests paths
-  let last := Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEndpointValues.Paths.lastValues requests paths
-  ⟨first, rfl, last, rfl, Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEndpointValues.Paths.first_bounded requests
-    paths, Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEndpointValues.Paths.last_bounded requests paths⟩
+  let first := firstValues requests paths
+  let last := lastValues requests paths
+  ⟨first, rfl, last, rfl, first_bounded requests
+    paths, last_bounded requests paths⟩
 
 end Paths
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEndpointValues

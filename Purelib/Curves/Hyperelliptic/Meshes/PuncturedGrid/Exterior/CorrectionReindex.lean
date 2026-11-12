@@ -63,6 +63,12 @@ import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BoundaryComponents
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalSelection
 
+open Purelib.Riemann.Meshes
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh
+
 public section
 
 /-! Reindex the actual exterior occurrence sum onto the original face,
@@ -86,22 +92,22 @@ open Purelib.Topology.Polygon.Stokes
 open Purelib.Riemann.Normalization
 
 attribute [local congr] FiniteSum.Fin.sumFin_congr
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
 
 /-- Every original located regular side is a positively oriented source of its retained triangle. -/
 private theorem CorrectionReindex.source_positive (position : Fin base.faces.regulars.length) (sheet : Fin 2) (side :
-  Meshes.GridLiftedDualSteps.GridSide) :
+  GridLiftedDualSteps.GridSide) :
     Topology.Mesh.TriangleSourceUniqueness.SourceEdge.Positive
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+      (LocatedFace.sideSource
       (lifted.mesh.locateFace position sheet) side) lifted.mesh.triangulation.faces := by
-  unfold Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+  unfold LocatedFace.sideSource
     Topology.Mesh.TriangleSourceUniqueness.SourceEdge.Positive
     Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge.project
   rw [lifted.mesh.triangleIndex_face]
@@ -112,11 +118,11 @@ private theorem CorrectionReindex.source_positive (position : Fin base.faces.reg
 
 /-- Equal retained side sources identify the same regular position, sheet and rectangle side. -/
 private theorem CorrectionReindex.source_injective
-    (p q : Fin base.faces.regulars.length) (s t : Fin 2) (side next : Meshes.GridLiftedDualSteps.GridSide)
+    (p q : Fin base.faces.regulars.length) (s t : Fin 2) (side next : GridLiftedDualSteps.GridSide)
     (equal :
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+      (LocatedFace.sideSource
       (lifted.mesh.locateFace p s) side) =
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+      (LocatedFace.sideSource
       (lifted.mesh.locateFace q t) next)) :
     p = q ∧ s = t ∧ side = next := by
   have indices := congrArg (fun source : Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge
@@ -128,11 +134,11 @@ private theorem CorrectionReindex.source_injective
   have sb := s.isLt
   have tb := t.isLt
   cases side <;> cases next <;>
-    dsimp only [Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource,
-      Meshes.GridLiftedMesh.LiftedMesh.triangleIndex, Meshes.GridLiftedDualSteps.GridSide.kind,
+    dsimp only [LocatedFace.sideSource,
+      GridLiftedMesh.LiftedMesh.triangleIndex, GridLiftedDualSteps.GridSide.kind,
       Topology.Mesh.QuadrilateralDual.QuadOccurrence.upperSide,
-        Hyperelliptic.Meshes.PuncturedGrid.Face.Corners.FaceCorners.firstCorner,
-        Hyperelliptic.Meshes.PuncturedGrid.Face.Corners.FaceCorners.lastCorner,
+        Face.Corners.FaceCorners.firstCorner,
+        Face.Corners.FaceCorners.lastCorner,
         -eq_self, -iff_self] at indices first last
   all_goals first
     | change (0 : Nat) = 0 at first
@@ -162,85 +168,85 @@ private theorem CorrectionReindex.source_injective
 
 /-- Every original exterior cap occurrence has forward side-source orientation. -/
 private theorem CorrectionReindex.occurrence_forward (prepared :
-  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
   regular domains differential)
     (occurrence :
-      SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+      SurfaceOccurrence
       regular domains differential) (member : occurrence ∈ prepared.occurrences) :
     occurrence.sideOccurrence.backward = false := by
   have projected := (congrArg (fun source => source.project lifted.mesh.triangulation.faces)
     occurrence.side_source).trans
     occurrence.placement.location.sourceEdge_project
   have indexed : occurrence.placement.indexed ∈ lifted.exteriorBoundaries.flatten :=
-    prepared.indexed_eq ▸ Data.List.Map.mem_map_of_mem member
+    prepared.indexed_eq ▸ List.Map.mem_map_of_mem member
   have actual : occurrence.sideOccurrence.source.project lifted.mesh.triangulation.faces ∈ lifted.boundaryLoops.flatten
     := by
-    rw [projected, Meshes.LiftedPuncturedGrid.boundaryLoops, Data.List.Flatten.flatten_append]
+    rw [projected, LiftedPuncturedGrid.boundaryLoops, List.Flatten.flatten_append]
     exact Data.List.Membership.mem_append.mpr (Or.inl indexed)
   have canonical := lifted.exterior_side_member occurrence.sideOccurrence.position occurrence.sideOccurrence.sheet
     occurrence.sideOccurrence.side (prepared.occurrence_exterior occurrence member)
-  have physical : ((Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+  have physical : ((LocatedFace.sideSource
     (lifted.mesh.locateFace occurrence.sideOccurrence.position occurrence.sideOccurrence.sheet)
     occurrence.sideOccurrence.side)).project lifted.mesh.triangulation.faces ∈ lifted.boundaryLoops.flatten := by
-    rw [Meshes.LiftedPuncturedGrid.boundaryLoops, Data.List.Flatten.flatten_append]
+    rw [LiftedPuncturedGrid.boundaryLoops, List.Flatten.flatten_append]
     exact Data.List.Membership.mem_append.mpr (Or.inl canonical)
   have noReverse := ((lifted.boundaryLoops_edge_iff _).mp physical).2
   cases backward : occurrence.sideOccurrence.backward with
   | false => rfl
   | true =>
     have reverse : occurrence.sideOccurrence.source.project lifted.mesh.triangulation.faces =
-        (((Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+        (((LocatedFace.sideSource
           (lifted.mesh.locateFace occurrence.sideOccurrence.position occurrence.sideOccurrence.sheet)
           occurrence.sideOccurrence.side)).project lifted.mesh.triangulation.faces).reverse := by
-      simp only [Hyperelliptic.Meshes.PuncturedGrid.SegmentSideSources.LiftedMesh.SideOccurrence.source, backward,
+      simp only [SegmentSideSources.LiftedMesh.SideOccurrence.source, backward,
         if_pos (rfl : true = true), -eq_self, -iff_self]
       rfl
     exact (noReverse (reverse ▸ Topology.Mesh.TriangleSourceUniqueness.SourceEdge.member
-      (Hyperelliptic.Meshes.PuncturedGrid.BranchHoleSourceComparison.physicalSource_positive lifted _ actual))).elim
+      (BranchHoleSourceComparison.physicalSource_positive lifted _ actual))).elim
 
 /-- The original exterior occurrence edge is the projection of its same positioned and sheeted regular-cell side. -/
 private theorem CorrectionReindex.occurrence_edge (prepared :
-  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
   regular domains differential)
     (occurrence :
-      SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+      SurfaceOccurrence
       regular domains differential) (member : occurrence ∈ prepared.occurrences) :
     occurrence.placement.indexed =
-      ((Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+      ((LocatedFace.sideSource
         (lifted.mesh.locateFace occurrence.sideOccurrence.position occurrence.sideOccurrence.sheet)
         occurrence.sideOccurrence.side)).project lifted.mesh.triangulation.faces := by
   have projected := (congrArg (fun source => source.project lifted.mesh.triangulation.faces)
     occurrence.side_source).trans
     occurrence.placement.location.sourceEdge_project
   have equal : occurrence.sideOccurrence.source =
-      (Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+      (LocatedFace.sideSource
         (lifted.mesh.locateFace occurrence.sideOccurrence.position occurrence.sideOccurrence.sheet)
         occurrence.sideOccurrence.side) := by
-    simp only [Hyperelliptic.Meshes.PuncturedGrid.SegmentSideSources.LiftedMesh.SideOccurrence.source,
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.occurrence_forward prepared occurrence member,
+    simp only [SegmentSideSources.LiftedMesh.SideOccurrence.source,
+      CorrectionReindex.occurrence_forward prepared occurrence member,
       if_neg (by decide : false ≠ true), -eq_self, -iff_self]
     rfl
   exact projected.symm.trans (congrArg (fun source => source.project lifted.mesh.triangulation.faces) equal)
 
 /-- Sum Gaussian values over bottom, right, top and left in that retained order. -/
-private def CorrectionReindex.sideSum (values : Meshes.GridLiftedDualSteps.GridSide → Gaussian.Basic.Canonical) :
+private def CorrectionReindex.sideSum (values : GridLiftedDualSteps.GridSide → Gaussian.Basic.Canonical) :
   Gaussian :=
   values .bottom + values .right + values .top + values .left
 
 /-- Sum the four original side values over every regular position and both sheets. -/
 private def CorrectionReindex.gridSum (values : Fin base.faces.regulars.length → Fin 2 →
-  Meshes.GridLiftedDualSteps.GridSide →
+  GridLiftedDualSteps.GridSide →
   Gaussian.Basic.Canonical) : Gaussian :=
   FiniteSum.Fin.sumFin (fun p => FiniteSum.Fin.sumFin (fun sheet =>
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.sideSum (values p sheet)))
+    CorrectionReindex.sideSum (values p sheet)))
 
 /-- Pointwise equal retained side values have equal complete grid sums. -/
 private theorem CorrectionReindex.grid_congr (first last : Fin base.faces.regulars.length → Fin 2 →
-  Meshes.GridLiftedDualSteps.GridSide →
+  GridLiftedDualSteps.GridSide →
   Gaussian.Basic.Canonical)
     (equal : ∀ p sheet side, first p sheet side = last p sheet side) :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.gridSum first =
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.gridSum last := by
+      CorrectionReindex.gridSum first =
+      CorrectionReindex.gridSum last := by
   apply FiniteSum.Fin.sumFin_congr
   intro p
   apply FiniteSum.Fin.sumFin_congr
@@ -250,38 +256,38 @@ private theorem CorrectionReindex.grid_congr (first last : Fin base.faces.regula
 
 /-- Interchange the finite auxiliary-index sum with the original face, sheet and side sum. -/
 private theorem CorrectionReindex.grid_swap {count : Nat}
-    (values : Fin base.faces.regulars.length → Fin 2 → Meshes.GridLiftedDualSteps.GridSide → Fin count →
+    (values : Fin base.faces.regulars.length → Fin 2 → GridLiftedDualSteps.GridSide → Fin count →
       Gaussian.Basic.Canonical) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.gridSum (fun p sheet side => FiniteSum.Fin.sumFin
+    CorrectionReindex.gridSum (fun p sheet side => FiniteSum.Fin.sumFin
       (values p sheet side)) =
-      FiniteSum.Fin.sumFin (fun i => Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.gridSum (fun p sheet
+      FiniteSum.Fin.sumFin (fun i => CorrectionReindex.gridSum (fun p sheet
         side => values p sheet side i)) := by
   have sides (p : Fin base.faces.regulars.length) (sheet : Fin 2) :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.sideSum (fun side => FiniteSum.Fin.sumFin (values p
+      CorrectionReindex.sideSum (fun side => FiniteSum.Fin.sumFin (values p
         sheet side)) = FiniteSum.Fin.sumFin (fun i =>
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.sideSum (fun side => values p sheet side i)) := by
-    simp only [Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.sideSum, FiniteSum.Fin.sumFin_add,
+        CorrectionReindex.sideSum (fun side => values p sheet side i)) := by
+    simp only [CorrectionReindex.sideSum, FiniteSum.Fin.sumFin_add,
       -eq_self, -iff_self]
     rfl
-  unfold Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.gridSum
+  unfold CorrectionReindex.gridSum
   rw [FiniteSum.Fin.sumFin_congr (fun p => FiniteSum.Fin.sumFin_congr (sides p))]
   rw [FiniteSum.Fin.sumFin_congr (fun p => FiniteSum.Fin.sumFin_swap (fun sheet i =>
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.sideSum (fun side => values p sheet side i)))]
+    CorrectionReindex.sideSum (fun side => values p sheet side i)))]
   exact FiniteSum.Fin.sumFin_swap _
 
 /-- A grid sum supported at one original position, sheet and side returns exactly that value. -/
 private theorem CorrectionReindex.grid_delta (p : Fin base.faces.regulars.length) (sheet : Fin 2) (side :
-  Meshes.GridLiftedDualSteps.GridSide)
-    (values : Fin base.faces.regulars.length → Fin 2 → Meshes.GridLiftedDualSteps.GridSide → Gaussian.Basic.Canonical) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.gridSum (fun q t next => if q = p ∧ t = sheet ∧ next =
+  GridLiftedDualSteps.GridSide)
+    (values : Fin base.faces.regulars.length → Fin 2 → GridLiftedDualSteps.GridSide → Gaussian.Basic.Canonical) :
+    CorrectionReindex.gridSum (fun q t next => if q = p ∧ t = sheet ∧ next =
       side then values q t next else 0) = values p sheet side := by
   have sides (q : Fin base.faces.regulars.length) (t : Fin 2) :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.sideSum (fun next => if q = p ∧ t = sheet ∧ next =
+      CorrectionReindex.sideSum (fun next => if q = p ∧ t = sheet ∧ next =
         side then values q t next else 0) =
         if q = p then (if t = sheet then values q t side else 0) else 0 := by
     by_cases qp : q = p
     · by_cases ts : t = sheet
-      · dsimp only [Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.sideSum]
+      · dsimp only [CorrectionReindex.sideSum]
         rewrite [if_pos qp, if_pos ts]
         cases side with
         | bottom =>
@@ -304,21 +310,21 @@ private theorem CorrectionReindex.grid_delta (p : Fin base.faces.regulars.length
             intro same; cases same.2.2), if_pos ⟨qp, ts, rfl⟩]
           simp only [Gaussian.Basic.add_zero, Gaussian.Basic.zero_add, -eq_self, -iff_self]
           rfl
-      · have empty (next : Meshes.GridLiftedDualSteps.GridSide) :
+      · have empty (next : GridLiftedDualSteps.GridSide) :
             (if q = p ∧ t = sheet ∧ next = side then values q t next else 0) = 0 :=
           if_neg (fun same => ts same.2.1)
-        dsimp only [Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.sideSum]
+        dsimp only [CorrectionReindex.sideSum]
         rewrite [empty .bottom, empty .right, empty .top, empty .left, if_pos qp, if_neg ts]
         simp only [Gaussian.Basic.zero_add, -eq_self, -iff_self]
         rfl
-    · have empty (next : Meshes.GridLiftedDualSteps.GridSide) :
+    · have empty (next : GridLiftedDualSteps.GridSide) :
           (if q = p ∧ t = sheet ∧ next = side then values q t next else 0) = 0 :=
         if_neg (fun same => qp same.1)
-      dsimp only [Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.sideSum]
+      dsimp only [CorrectionReindex.sideSum]
       rewrite [empty .bottom, empty .right, empty .top, empty .left, if_neg qp]
       simp only [Gaussian.Basic.zero_add, -eq_self, -iff_self]
       rfl
-  unfold Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.gridSum
+  unfold CorrectionReindex.gridSum
   rw [FiniteSum.Fin.sumFin_congr (fun q => FiniteSum.Fin.sumFin_congr (sides q))]
   have rows (q : Fin base.faces.regulars.length) :
       FiniteSum.Fin.sumFin (fun t => if q = p then (if t = sheet then values q t side else 0) else 0) =
@@ -337,95 +343,95 @@ private theorem CorrectionReindex.grid_delta (p : Fin base.faces.regulars.length
   exact (FiniteSum.Fin.sumFin_congr rows).trans (FiniteSum.Fin.sumFin_ite_eq p _)
 
 /-- Read a retained side value only when its original neighbor classification selects the exterior component. -/
-private def CorrectionReindex.selectedValue (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank
+private def CorrectionReindex.selectedValue (neighbors : PuncturedGridFaces.PuncturedFaces.NeighborBank
   base.faces)
-    (values : Fin base.faces.regulars.length → Fin 2 → Meshes.GridLiftedDualSteps.GridSide → Gaussian.Basic.Canonical)
-    (p : Fin base.faces.regulars.length) (sheet : Fin 2) (side : Meshes.GridLiftedDualSteps.GridSide) : Gaussian :=
-  (Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue
-    (Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+    (values : Fin base.faces.regulars.length → Fin 2 → GridLiftedDualSteps.GridSide → Gaussian.Basic.Canonical)
+    (p : Fin base.faces.regulars.length) (sheet : Fin 2) (side : GridLiftedDualSteps.GridSide) : Gaussian :=
+  (PhysicalComponentValues.SideNeighbor.componentValue
+    (FaceNeighbors.at
     (neighbors.entries.get p) side)) .exterior (values p sheet side)
 
 /-- Selection by one retained exterior occurrence returns exactly its original positioned and sheeted side value. -/
 private theorem CorrectionReindex.selected_at_occurrence (prepared :
-  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
   regular domains differential)
-    (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank base.faces)
-    (values : Fin base.faces.regulars.length → Fin 2 → Meshes.GridLiftedDualSteps.GridSide → Gaussian.Basic.Canonical)
+    (neighbors : PuncturedGridFaces.PuncturedFaces.NeighborBank base.faces)
+    (values : Fin base.faces.regulars.length → Fin 2 → GridLiftedDualSteps.GridSide → Gaussian.Basic.Canonical)
     (index : Fin prepared.occurrences.length) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.gridSum (fun p sheet side => if
+    CorrectionReindex.gridSum (fun p sheet side => if
       (prepared.occurrences[index.val]'index.isLt).placement.indexed =
-      ((Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+      ((LocatedFace.sideSource
         (lifted.mesh.locateFace p sheet) side)).project lifted.mesh.triangulation.faces
-      then Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.selectedValue neighbors values p sheet side
+      then CorrectionReindex.selectedValue neighbors values p sheet side
         else 0) =
     let occurrence := prepared.occurrences[index.val]'index.isLt
     values occurrence.sideOccurrence.position occurrence.sideOccurrence.sheet occurrence.sideOccurrence.side := by
   let occurrence := prepared.occurrences[index.val]'index.isLt
   have member : occurrence ∈ prepared.occurrences := List.getElem_mem index.isLt
-  have edgeEq := Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.occurrence_edge prepared occurrence
+  have edgeEq := CorrectionReindex.occurrence_edge prepared occurrence
     member
-  have terms (p : Fin base.faces.regulars.length) (sheet : Fin 2) (side : Meshes.GridLiftedDualSteps.GridSide) :
+  have terms (p : Fin base.faces.regulars.length) (sheet : Fin 2) (side : GridLiftedDualSteps.GridSide) :
       (if occurrence.placement.indexed =
-        ((Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+        ((LocatedFace.sideSource
         (lifted.mesh.locateFace p sheet) side)).project lifted.mesh.triangulation.faces
-        then Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.selectedValue neighbors values p sheet side
+        then CorrectionReindex.selectedValue neighbors values p sheet side
           else 0) =
       if p = occurrence.sideOccurrence.position ∧ sheet = occurrence.sideOccurrence.sheet ∧ side =
         occurrence.sideOccurrence.side
-        then Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.selectedValue neighbors values p sheet side
+        then CorrectionReindex.selectedValue neighbors values p sheet side
           else 0 := by
     by_cases same : p = occurrence.sideOccurrence.position ∧ sheet = occurrence.sideOccurrence.sheet ∧ side =
       occurrence.sideOccurrence.side
     · rcases same with ⟨rfl, rfl, rfl⟩
       rw [if_pos edgeEq, if_pos ⟨rfl, rfl, rfl⟩]
     · have different : occurrence.placement.indexed ≠
-          ((Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+          ((LocatedFace.sideSource
             (lifted.mesh.locateFace p sheet) side)).project lifted.mesh.triangulation.faces := by
         intro equal
-        have sources := Hyperelliptic.Meshes.PuncturedGrid.TriangleSourceUniqueness.LiftedMesh.source_eq_of_project_eq
-          lifted.mesh (Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.source_positive _ _ _)
-            (Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.source_positive _ _ _)
+        have sources := TriangleSourceUniqueness.LiftedMesh.source_eq_of_project_eq
+          lifted.mesh (CorrectionReindex.source_positive _ _ _)
+            (CorrectionReindex.source_positive _ _ _)
           (edgeEq.symm.trans equal)
-        have slots := Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.source_injective _ _ _ _ _ _ sources
+        have slots := CorrectionReindex.source_injective _ _ _ _ _ _ sources
         exact same ⟨slots.1.symm, slots.2.1.symm, slots.2.2.symm⟩
       rw [if_neg different, if_neg same]
-  exact (Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.grid_congr _ _ terms).trans
-    ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.grid_delta _ _ _ _).trans
+  exact (CorrectionReindex.grid_congr _ _ terms).trans
+    ((CorrectionReindex.grid_delta _ _ _ _).trans
     (prepared.occurrence_selected neighbors occurrence member _))
 
 /-- Exact unsigned reindexing for arbitrary retained side weights. Signs are
 supplied by the caller's actual side valuation, not inferred from totals. -/
 private theorem CorrectionReindex.selected_sum_eq (prepared :
-  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
   regular domains differential)
-    (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank base.faces)
-    (values : Fin base.faces.regulars.length → Fin 2 → Meshes.GridLiftedDualSteps.GridSide → Gaussian.Basic.Canonical) :
+    (neighbors : PuncturedGridFaces.PuncturedFaces.NeighborBank base.faces)
+    (values : Fin base.faces.regulars.length → Fin 2 → GridLiftedDualSteps.GridSide → Gaussian.Basic.Canonical) :
     FiniteSum.Fin.sumFin (fun p => FiniteSum.Fin.sumFin (fun sheet =>
-      (Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+      (PhysicalComponentValues.SideNeighbor.componentValue
+        (FaceNeighbors.at
         (neighbors.entries.get p) .bottom)) .exterior (values p sheet .bottom) +
-      (Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+      (PhysicalComponentValues.SideNeighbor.componentValue
+        (FaceNeighbors.at
         (neighbors.entries.get p) .right)) .exterior (values p sheet .right) +
-      (Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+      (PhysicalComponentValues.SideNeighbor.componentValue
+        (FaceNeighbors.at
         (neighbors.entries.get p) .top)) .exterior (values p sheet .top) +
-      (Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+      (PhysicalComponentValues.SideNeighbor.componentValue
+        (FaceNeighbors.at
         (neighbors.entries.get p) .left)) .exterior (values p sheet .left))) =
     FiniteSum.Fin.sumFin (fun index : Fin prepared.occurrences.length =>
       let occurrence := prepared.occurrences[index.val]'index.isLt
       values occurrence.sideOccurrence.position occurrence.sideOccurrence.sheet occurrence.sideOccurrence.side) := by
   let terms := fun p sheet side (index : Fin prepared.occurrences.length) =>
     if (prepared.occurrences[index.val]'index.isLt).placement.indexed =
-      ((Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+      ((LocatedFace.sideSource
         (lifted.mesh.locateFace p sheet) side)).project lifted.mesh.triangulation.faces
-      then Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.selectedValue neighbors values p sheet side
+      then CorrectionReindex.selectedValue neighbors values p sheet side
         else 0
-  have each (p : Fin base.faces.regulars.length) (sheet : Fin 2) (side : Meshes.GridLiftedDualSteps.GridSide) :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.selectedValue neighbors values p sheet side =
+  have each (p : Fin base.faces.regulars.length) (sheet : Fin 2) (side : GridLiftedDualSteps.GridSide) :
+      CorrectionReindex.selectedValue neighbors values p sheet side =
         FiniteSum.Fin.sumFin (terms p sheet side) := by
-    by_cases zero : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.selectedValue neighbors values p sheet
+    by_cases zero : CorrectionReindex.selectedValue neighbors values p sheet
       side = 0
     · have zeros (index : Fin prepared.occurrences.length) : terms p sheet side index = 0 := by
         dsimp only [terms, -eq_self, -iff_self]
@@ -433,78 +439,78 @@ private theorem CorrectionReindex.selected_sum_eq (prepared :
         exact ite_self _
       exact zero.trans ((FiniteSum.Fin.sumFin_congr zeros).trans FiniteSum.Fin.sumFin_zero).symm
     · obtain ⟨_, _, weighted⟩ := prepared.selected_side_weight neighbors p sheet side (values p sheet side) zero
-      exact (weighted (fun _ => Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.selectedValue neighbors
+      exact (weighted (fun _ => CorrectionReindex.selectedValue neighbors
         values p sheet side)).symm
-  exact (Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.grid_congr _ _ each).trans
-    ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.grid_swap terms).trans
+  exact (CorrectionReindex.grid_congr _ _ each).trans
+    ((CorrectionReindex.grid_swap terms).trans
     (FiniteSum.Fin.sumFin_congr (fun index =>
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.selected_at_occurrence prepared neighbors values
+      CorrectionReindex.selected_at_occurrence prepared neighbors values
       index)))
 
 /-- The original exterior-component selector preserves Gaussian negation. -/
-private theorem CorrectionReindex.selected_neg {face : Meshes.PuncturedGridFaces.RegularFace base.bank.toBranchCellBank}
+private theorem CorrectionReindex.selected_neg {face : PuncturedGridFaces.RegularFace base.bank.toBranchCellBank}
   {side :
-  Meshes.GridLiftedDualSteps.GridSide}
-    (neighbor : Meshes.PuncturedGridFaces.PuncturedFaces.SideNeighbor base.faces face side) (value :
+  GridLiftedDualSteps.GridSide}
+    (neighbor : PuncturedGridFaces.PuncturedFaces.SideNeighbor base.faces face side) (value :
       Gaussian.Basic.Canonical) :
-    Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue neighbor .exterior (-value) =
-      -Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue neighbor .exterior value
+    PhysicalComponentValues.SideNeighbor.componentValue neighbor .exterior (-value) =
+      -PhysicalComponentValues.SideNeighbor.componentValue neighbor .exterior value
       := by
   cases neighbor with
   | exterior _ => rfl
   | neighbor _ _ _ location => cases location <;> exact (neg_zero).symm
 
 /-- The original exterior selector commutes with the finite two-sheet sum. -/
-private theorem CorrectionReindex.selected_sum {face : Meshes.PuncturedGridFaces.RegularFace base.bank.toBranchCellBank}
+private theorem CorrectionReindex.selected_sum {face : PuncturedGridFaces.RegularFace base.bank.toBranchCellBank}
   {side :
-  Meshes.GridLiftedDualSteps.GridSide}
-    (neighbor : Meshes.PuncturedGridFaces.PuncturedFaces.SideNeighbor base.faces face side) (values : Fin 2 →
+  GridLiftedDualSteps.GridSide}
+    (neighbor : PuncturedGridFaces.PuncturedFaces.SideNeighbor base.faces face side) (values : Fin 2 →
       Gaussian.Basic.Canonical) :
-    Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue neighbor .exterior
+    PhysicalComponentValues.SideNeighbor.componentValue neighbor .exterior
       (FiniteSum.Fin.sumFin values) = FiniteSum.Fin.sumFin (fun sheet =>
-      Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue neighbor .exterior (values
+      PhysicalComponentValues.SideNeighbor.componentValue neighbor .exterior (values
       sheet)) := by
   cases neighbor with
   | exterior _ => rfl
   | neighbor _ _ _ location => cases location <;> exact FiniteSum.Fin.sumFin_zero.symm
 
 /-- Apply the original negative orientation to top and left sides, retaining bottom and right values. -/
-private def CorrectionReindex.signed (side : Meshes.GridLiftedDualSteps.GridSide) (value : Gaussian.Basic.Canonical) :
+private def CorrectionReindex.signed (side : GridLiftedDualSteps.GridSide) (value : Gaussian.Basic.Canonical) :
   Gaussian :=
   if side = .top ∨ side = .left then -value else value
 
 /-- The complete signed exterior side sum equals the original normal-form component evaluation. -/
-private theorem CorrectionReindex.signed_grid (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank
+private theorem CorrectionReindex.signed_grid (neighbors : PuncturedGridFaces.PuncturedFaces.NeighborBank
   base.faces)
-    (values : Fin base.faces.regulars.length → Fin 2 → Meshes.GridLiftedDualSteps.GridSide → Gaussian.Basic.Canonical) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.gridSum (fun p sheet side =>
-      (Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
-      (neighbors.entries.get p) side)) .exterior (Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.signed
+    (values : Fin base.faces.regulars.length → Fin 2 → GridLiftedDualSteps.GridSide → Gaussian.Basic.Canonical) :
+    CorrectionReindex.gridSum (fun p sheet side =>
+      (PhysicalComponentValues.SideNeighbor.componentValue
+      (FaceNeighbors.at
+      (neighbors.entries.get p) side)) .exterior (CorrectionReindex.signed
       side (values p sheet side))) =
-      Hyperelliptic.Meshes.PuncturedGrid.SelectedPhysicalComponents.componentEvaluation neighbors (fun _ => true) (fun
+      SelectedPhysicalComponents.componentEvaluation neighbors (fun _ => true) (fun
         side p => FiniteSum.Fin.sumFin (fun sheet => values p sheet side)) .exterior := by
   have bottom (value : Gaussian.Basic.Canonical) :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.signed .bottom value = value := by
+      CorrectionReindex.signed .bottom value = value := by
     exact if_neg (by intro same; rcases same with same | same <;> cases same)
   have right (value : Gaussian.Basic.Canonical) :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.signed .right value = value := by
+      CorrectionReindex.signed .right value = value := by
     exact if_neg (by intro same; rcases same with same | same <;> cases same)
   have top (value : Gaussian.Basic.Canonical) :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.signed .top value = -value :=
+      CorrectionReindex.signed .top value = -value :=
     if_pos (Or.inl rfl)
   have left (value : Gaussian.Basic.Canonical) :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.signed .left value = -value :=
+      CorrectionReindex.signed .left value = -value :=
     if_pos (Or.inr rfl)
-  simp only [Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.gridSum,
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.sideSum, bottom, right, top, left, if_pos (rfl : true
+  simp only [CorrectionReindex.gridSum,
+    CorrectionReindex.sideSum, bottom, right, top, left, if_pos (rfl : true
     = true),
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.selected_neg, FiniteSum.Fin.sumFin_add,
+    CorrectionReindex.selected_neg, FiniteSum.Fin.sumFin_add,
       FiniteSum.Fin.sumFin_neg,
-    Hyperelliptic.Meshes.PuncturedGrid.SelectedPhysicalComponents.componentEvaluation,
-      Hyperelliptic.Meshes.PuncturedGrid.SelectedPerimeterIdentity.SelectedSides.value,
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.selected_sum,
-      Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at, -eq_self,
+    SelectedPhysicalComponents.componentEvaluation,
+      SelectedPerimeterIdentity.SelectedSides.value,
+    CorrectionReindex.selected_sum,
+      FaceNeighbors.at, -eq_self,
       -iff_self]
   ring1
 
@@ -513,44 +519,44 @@ This also applies to conjugated energy values and retained endpoint chords. -/
 theorem
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.oriented_sum_eq_component
   (prepared :
-  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
   regular domains differential)
-    (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank base.faces)
-    (values : Fin base.faces.regulars.length → Fin 2 → Meshes.GridLiftedDualSteps.GridSide → Gaussian.Basic.Canonical) :
+    (neighbors : PuncturedGridFaces.PuncturedFaces.NeighborBank base.faces)
+    (values : Fin base.faces.regulars.length → Fin 2 → GridLiftedDualSteps.GridSide → Gaussian.Basic.Canonical) :
     FiniteSum.Fin.sumFin (fun index : Fin prepared.occurrences.length =>
       let occurrence := prepared.occurrences[index.val]'index.isLt
-      Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence.oriented
+      SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence.oriented
         occurrence.sideOccurrence
         (values occurrence.sideOccurrence.position occurrence.sideOccurrence.sheet occurrence.sideOccurrence.side)) =
-      Hyperelliptic.Meshes.PuncturedGrid.SelectedPhysicalComponents.componentEvaluation neighbors (fun _ => true)
+      SelectedPhysicalComponents.componentEvaluation neighbors (fun _ => true)
         (fun side position => FiniteSum.Fin.sumFin (fun sheet => values position sheet side)) .exterior := by
-  have reindexed := Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.selected_sum_eq prepared neighbors
-    (fun p sheet side => Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.signed side (values p sheet
+  have reindexed := CorrectionReindex.selected_sum_eq prepared neighbors
+    (fun p sheet side => CorrectionReindex.signed side (values p sheet
     side))
   have each (index : Fin prepared.occurrences.length) :
       let occurrence := prepared.occurrences[index.val]'index.isLt
-      Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence.oriented
+      SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence.oriented
         occurrence.sideOccurrence
         (values occurrence.sideOccurrence.position occurrence.sideOccurrence.sheet occurrence.sideOccurrence.side) =
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.signed occurrence.sideOccurrence.side
+      CorrectionReindex.signed occurrence.sideOccurrence.side
         (values occurrence.sideOccurrence.position occurrence.sideOccurrence.sheet occurrence.sideOccurrence.side) := by
     intro occurrence
-    have forward := Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.occurrence_forward prepared occurrence
+    have forward := CorrectionReindex.occurrence_forward prepared occurrence
       (List.getElem_mem index.isLt)
     simp only
-      [Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence.oriented,
+      [SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence.oriented,
       forward, if_neg (by decide : false ≠ true), -eq_self, -iff_self]
     rfl
   exact (FiniteSum.Fin.sumFin_congr each).trans (reindexed.symm.trans
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.CorrectionReindex.signed_grid neighbors values))
+    (CorrectionReindex.signed_grid neighbors values))
 
-variable {cuts : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth :
-  Nat} {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights
+variable {cuts : RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth :
+  Nat} {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights
   domains sheet}
   {meshTarget : Fraction.Rational} {i j : Fin genus} {stage : Nat} {cache :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
-  {request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+    RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  {request : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+    RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
     meshTarget}
 
 /-- The original cap occurrence remainder is exactly the exterior component
@@ -559,25 +565,25 @@ and triangle readings. No transport equality is supplied by the caller. -/
 theorem
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.fineRemainder_eq_physical
   (prepared :
-  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
   regular domains differential)
-    (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank base.faces)
+    (neighbors : PuncturedGridFaces.PuncturedFaces.NeighborBank base.faces)
     (perimeters : Matched.FacePerimeters (request := request)
       cache.normalize i j)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh)
-      (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh)
+      (right : TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
       :
     prepared.fineRemainder perimeters left right =
-      Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentCorrection.physicalComponentCorrection perimeters neighbors
+      PhysicalComponentCorrection.physicalComponentCorrection perimeters neighbors
         left right .exterior := by
   have readback := FiniteSum.Fin.sumFin_congr (fun index : Fin prepared.occurrences.length =>
     ((prepared.occurrences[index.val]'index.isLt).fineRemainder_eq perimeters left right).symm)
-  exact (Data.Gaussian.Norm.Sum.Indexed.sumFin_map prepared.occurrences
+  exact (Gaussian.Norm.Sum.Indexed.sumFin_map prepared.occurrences
     (fun occurrence => occurrence.fineRemainder perimeters left right)).symm.trans
       (readback.symm.trans ((prepared.oriented_sum_eq_component neighbors
-        (fun p sheet side => Hyperelliptic.Meshes.PuncturedGrid.HoleAreaRemainder.sideAreaRemainder perimeters p sheet
+        (fun p sheet side => HoleAreaRemainder.sideAreaRemainder perimeters p sheet
           side)).trans
-          (Hyperelliptic.Meshes.PuncturedGrid.FullHoleRemainder.component_remainder perimeters neighbors left right
+          (FullHoleRemainder.component_remainder perimeters neighbors left right
             .exterior)))
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior

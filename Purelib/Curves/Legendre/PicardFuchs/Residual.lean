@@ -3,6 +3,7 @@ meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Data.Gaussian.Basic
 import Purelib.Curves.Legendre.Paths
 public import Purelib.Curves.Legendre.PicardFuchs.Polynomials
+public import Purelib.Algebra.Quadratic.Pair.Polynomial.Derivative
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Polynomial.Dense.Gaussian.GCD
@@ -118,6 +119,68 @@ def picardFuchsReduction (parameter : Data.Gaussian.Basic.Canonical)
       ← Polynomials.spatialDerivativePolynomial_matches_automatic parameter point,
       Polynomials.spatialDerivativePolynomial_eval]
     exact picardFuchsResidual_cleared parameter point
+
+namespace PicardFuchsReduction
+
+open Purelib.Algebra.Quadratic.Pair.Polynomial (Expression)
+open Purelib.Polynomial.Dense
+open Purelib.Polynomial.Dense.Basic.DensePolynomial
+
+/-- The exact scalar residual retains its original numerator over the original sheet's fifth power. -/
+def residualExpression {parameter : Data.Gaussian.Basic.Canonical}
+    (reduction : PicardFuchsReduction parameter) : Expression (Paths.polynomial parameter) :=
+  Expression.oddReciprocal (Paths.polynomial parameter) 2 reduction.residualNumerator
+
+/-- The exact scalar primitive retains its original numerator over the original sheet's cube. -/
+def primitiveExpression {parameter : Data.Gaussian.Basic.Canonical}
+    (reduction : PicardFuchsReduction parameter) : Expression (Paths.polynomial parameter) :=
+  Expression.oddReciprocal (Paths.polynomial parameter) 1 reduction.primitiveNumerator
+
+/-- Construct the original scalar primitive differential through the shared odd-power calculus. -/
+def primitiveDifferential {parameter : Data.Gaussian.Basic.Canonical}
+    (reduction : PicardFuchsReduction parameter) : Expression (Paths.polynomial parameter) :=
+  Expression.oddPrimitiveDerivative (Paths.polynomial parameter) 1 reduction.primitiveNumerator
+
+/-- Formal differentiation gives the constructed scalar primitive differential. -/
+theorem primitive_derivative {parameter : Data.Gaussian.Basic.Canonical}
+    (reduction : PicardFuchsReduction parameter) :
+    reduction.primitiveExpression.derivative.Equal reduction.primitiveDifferential :=
+  Expression.derivative_oddReciprocal _ _ _
+
+/-- A scalar cleared primitive identity survives multiplication by its retained cubic denominator. -/
+private theorem residual_cross {E P R dR dP : Data.Gaussian.Basic.Canonical}
+    (cleared : 2 * E = 2 * dR * P - 3 * R * dP) :
+    E * (2 * P ^ 3) = (2 * (P * dR) - 3 * (R * dP)) * P ^ 3 := by
+  calc
+    _ = (2 * E) * P ^ 3 := by ring1
+    _ = (2 * dR * P - 3 * R * dP) * P ^ 3 := congrArg (fun value => value * P ^ 3) cleared
+    _ = _ := by ring1
+
+/-- The original scalar residual is the exact spatial primitive differential as finite coefficient data.
+
+The original stored numerators and the shared odd-power rule construct the
+certificate internally, without a period program or caller-supplied
+coefficient or numerical relation. -/
+theorem differential_identity {parameter : Data.Gaussian.Basic.Canonical}
+    (reduction : PicardFuchsReduction parameter) :
+    reduction.residualExpression.Equal reduction.primitiveDifferential := by
+  apply Expression.equal_of_cross_eval
+  · intro point
+    simp only [residualExpression, primitiveDifferential, Expression.oddReciprocal,
+      Expression.oddPrimitiveDerivative, eval_zero]
+    ring1
+  · intro point
+    have cleared := reduction.clearedIdentity point
+    rw [GCD.derivative, GCD.derivative] at cleared
+    simp only [residualExpression, primitiveDifferential, Expression.oddReciprocal,
+      Expression.oddPrimitiveDerivative, Expression.oddPrimitiveNumerator,
+      eval_mul, eval_sub, eval_scale, Power.eval_power, Nat.cast_one]
+    have three : 2 * (1 : Data.Gaussian.Basic.Canonical) + 1 = 3 := by decide
+    rw [three]
+    exact residual_cross cleared
+
+
+end PicardFuchsReduction
 
 end Purelib.Curves.Legendre.PicardFuchs.Residual
 

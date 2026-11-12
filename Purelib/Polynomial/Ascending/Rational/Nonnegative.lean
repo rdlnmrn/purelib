@@ -37,15 +37,15 @@ namespace Purelib.Polynomial.Ascending.Rational.Nonnegative
 /-- Every zero-extended rational coefficient of the finite polynomial is nonnegative. -/
 def CoefficientsNonnegative (polynomial :
   CoefficientPolynomial) : Prop :=
-  ∀ degree, 0 ≤ Ascending.Rational.Basic.coefficient polynomial degree
+  ∀ degree, 0 ≤ Basic.coefficient polynomial degree
 
 /-- A nonnegative rational constant gives a polynomial with nonnegative coefficients. -/
 theorem coefficientsNonnegative_constant {value :
   Fraction.Rational}
     (nonnegative : 0 ≤ value) : CoefficientsNonnegative
-      (Ascending.Rational.Basic.constant value) := by
+      (Basic.constant value) := by
   intro degree
-  rw [Ascending.Rational.Coefficientwise.coefficient_constant]
+  rw [Coefficientwise.coefficient_constant]
   split
   · exact nonnegative
   · exact le_rfl
@@ -55,9 +55,9 @@ theorem coefficientsNonnegative_add {left right :
   CoefficientPolynomial}
     (leftNonnegative : CoefficientsNonnegative left)
     (rightNonnegative : CoefficientsNonnegative right) :
-    CoefficientsNonnegative (Ascending.Rational.Basic.add left right) := by
+    CoefficientsNonnegative (Basic.add left right) := by
   intro degree
-  rw [Ascending.Rational.Basic.coefficient_add]
+  rw [Basic.coefficient_add]
   exact add_nonneg (leftNonnegative degree) (rightNonnegative degree)
 
 /-- Scaling by a nonnegative rational preserves nonnegative coefficients. -/
@@ -65,9 +65,9 @@ theorem coefficientsNonnegative_scale {factor :
   Fraction.Rational}
     (factorNonnegative : 0 ≤ factor) {polynomial : CoefficientPolynomial}
     (nonnegative : CoefficientsNonnegative polynomial) :
-    CoefficientsNonnegative (Ascending.Rational.Basic.scale factor polynomial) := by
+    CoefficientsNonnegative (Basic.scale factor polynomial) := by
   intro degree
-  rw [Ascending.Rational.Basic.coefficient_scale]
+  rw [Basic.coefficient_scale]
   exact Fraction.Order.Arithmetic.mul_nonneg_direct factorNonnegative
     (nonnegative degree)
 
@@ -78,10 +78,10 @@ theorem coefficientsNonnegative_mul {left right :
   CoefficientPolynomial}
     (leftNonnegative : CoefficientsNonnegative left)
     (rightNonnegative : CoefficientsNonnegative right) :
-    CoefficientsNonnegative (Ascending.Rational.Basic.mul left right) := open
+    CoefficientsNonnegative (Basic.mul left right) := open
       Purelib.Algebra in by
   intro degree
-  rw [Ascending.Rational.Convolution.coefficient_mul]
+  rw [Convolution.coefficient_mul]
   exact FiniteSum.Prefix.coordinateSum_nonnegative _ (by
     intro index
     exact Fraction.Order.Arithmetic.mul_nonneg_direct
@@ -91,7 +91,7 @@ theorem coefficientsNonnegative_mul {left right :
 theorem coefficientsNonnegative_pow {polynomial :
   CoefficientPolynomial}
     (nonnegative : CoefficientsNonnegative polynomial) : ∀ exponent,
-    CoefficientsNonnegative (Ascending.Rational.Basic.pow polynomial exponent)
+    CoefficientsNonnegative (Basic.pow polynomial exponent)
   | 0 => coefficientsNonnegative_constant (by decide)
   | exponent + 1 =>
       coefficientsNonnegative_mul
@@ -100,9 +100,9 @@ theorem coefficientsNonnegative_pow {polynomial :
 /-- A monomial with nonnegative value has nonnegative coefficients at all degrees. -/
 theorem coefficientsNonnegative_monomial (degree : Nat)
     {value : Fraction.Rational} (nonnegative : 0 ≤ value) :
-    CoefficientsNonnegative (Ascending.Rational.Monomial.monomial degree value) := by
+    CoefficientsNonnegative (Monomial.monomial degree value) := by
   intro outputDegree
-  rw [Ascending.Rational.Monomial.coefficient_monomial]
+  rw [Monomial.coefficient_monomial]
   split
   · exact nonnegative
   · exact le_rfl
@@ -114,8 +114,8 @@ theorem coefficientsNonnegative_composeCoefficients
     {inner : CoefficientPolynomial} (innerNonnegative :
       CoefficientsNonnegative inner) :
     ∀ coefficients,
-      (∀ degree, 0 ≤ Ascending.Rational.Basic.coefficientCoefficients coefficients degree) →
-        CoefficientsNonnegative (Ascending.Rational.Composition.composeCoefficients
+      (∀ degree, 0 ≤ Basic.coefficientCoefficients coefficients degree) →
+        CoefficientsNonnegative (Composition.composeCoefficients
           coefficients inner)
   | [], outerNonnegative => fun degree => by
       change 0 ≤ 0
@@ -134,7 +134,7 @@ theorem coefficientsNonnegative_compose {outer inner :
   CoefficientPolynomial}
     (outerNonnegative : CoefficientsNonnegative outer)
     (innerNonnegative : CoefficientsNonnegative inner) :
-    CoefficientsNonnegative (Ascending.Rational.Composition.compose outer inner) :=
+    CoefficientsNonnegative (Composition.compose outer inner) :=
   coefficientsNonnegative_composeCoefficients innerNonnegative
     outer.coefficients outerNonnegative
 end Purelib.Polynomial.Ascending.Rational.Nonnegative

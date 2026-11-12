@@ -18,27 +18,27 @@ namespace Purelib.Data.Rat.Fraction.Order
 open Purelib.Data.Rat
 
 /-- The sum of two quarters of a rational is half of that rational. -/
-public theorem quarter_add_quarter_eq_half (target : Fraction.Rational) :
+public theorem quarter_add_quarter_eq_half (target : Rational) :
     target / 4 + target / 4 = target / 2 := by
-  apply Fraction.Field.mul_right_cancel_of_ne
-    (show (4 : Fraction.Rational) ≠ 0 by decide)
+  apply Field.mul_right_cancel_of_ne
+    (show (4 : Rational) ≠ 0 by decide)
   calc
     (target / 4 + target / 4) * 4 =
         (target / 4) * 4 + (target / 4) * 4 := by rw [add_mul]
     _ = target + target := by
       rw [show target / 4 * 4 = target from
-        Fraction.Field.div_mul_cancel_of_ne target 4 (by decide)]
+        Field.div_mul_cancel_of_ne target 4 (by decide)]
     _ = target * 2 := by ring1
     _ = ((target / 2) * 2) * 2 := by
       rw [show target / 2 * 2 = target from
-        Fraction.Field.div_mul_cancel_of_ne target 2 (by decide)]
+        Field.div_mul_cancel_of_ne target 2 (by decide)]
     _ = (target / 2) * (2 * 2) :=
-      Fraction.Field.mul_assoc (target / 2) 2 2
+      Field.mul_assoc (target / 2) 2 2
     _ = (target / 2) * 4 := by
-      rw [show (2 : Fraction.Rational) * 2 = 4 by decide]
+      rw [show (2 : Rational) * 2 = 4 by decide]
 
 /-- Twice one quarter of a rational is half of that rational. -/
-public theorem two_mul_quarter_eq_half (target : Fraction.Rational) :
+public theorem two_mul_quarter_eq_half (target : Rational) :
     2 * (target / 4) = target / 2 := by
   calc
     2 * (target / 4) = target / 4 + target / 4 := by ring1
@@ -46,7 +46,7 @@ public theorem two_mul_quarter_eq_half (target : Fraction.Rational) :
 
 /-- A nonnegative rational is at most twice its sum with any nonnegative rational. -/
 public theorem le_twice_sum_of_nonneg
-    (left right : Fraction.Rational) (leftNonnegative : 0 ≤ left)
+    (left right : Rational) (leftNonnegative : 0 ≤ left)
     (rightNonnegative : 0 ≤ right) :
     left ≤ 2 * (left + right) := by
   have sumNonnegative : 0 ≤ left + right :=
@@ -56,12 +56,12 @@ public theorem le_twice_sum_of_nonneg
     _ = 1 * (left + right) :=
       (_root_.one_mul _).symm
     _ ≤ 2 * (left + right) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         (by decide) sumNonnegative
 
 /-- Successive division by two fixed positive rational denominators preserves weak comparison. -/
 public theorem div_div_le_div_div_of_le
-    {left right firstDenominator secondDenominator : Fraction.Rational}
+    {left right firstDenominator secondDenominator : Rational}
     (order : left ≤ right)
     (firstPositive : 0 < firstDenominator)
     (secondPositive : 0 < secondDenominator) :
@@ -69,10 +69,10 @@ public theorem div_div_le_div_div_of_le
       (right / firstDenominator) / secondDenominator := by
   change (left * firstDenominator⁻¹) * secondDenominator⁻¹ ≤
     (right * firstDenominator⁻¹) * secondDenominator⁻¹
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct order
-      (Fraction.Order.Field.inv_pos_direct firstPositive).le)
-    (Fraction.Order.Field.inv_pos_direct secondPositive).le
+  exact Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct order
+      (Field.inv_pos_direct firstPositive).le)
+    (Field.inv_pos_direct secondPositive).le
 
 end Purelib.Data.Rat.Fraction.Order
 
@@ -99,20 +99,20 @@ namespace Purelib.Data.Rat.Fraction.Order
 open Purelib.Data.Rat in
 /-- One over 128 is at most one over 32 in the canonical rational order. -/
 private theorem one_over_one_twenty_eight_le_one_over_thirty_two :
-    (1 / 128 : Fraction.Rational) ≤ 1 / 32 := by
-  have denominatorPositive : (0 : Fraction.Rational) < 128 :=
-    Fraction.Cast.Order.natCast_pos_direct (n := 128) (by decide)
-  apply (Fraction.Order.Field.div_le_iff_pos denominatorPositive).2
-  have thirtyTwoNonzero : (32 : Fraction.Rational) ≠ 0 :=
-    (Fraction.Cast.Order.natCast_pos_direct
+    (1 / 128 : Rational) ≤ 1 / 32 := by
+  have denominatorPositive : (0 : Rational) < 128 :=
+    Cast.Order.natCast_pos_direct (n := 128) (by decide)
+  apply (Field.div_le_iff_pos denominatorPositive).2
+  have thirtyTwoNonzero : (32 : Rational) ≠ 0 :=
+    (Cast.Order.natCast_pos_direct
       (n := 32) (by decide)).ne'
-  have inverseThirtyTwo : (1 / 32 : Fraction.Rational) * 32 = 1 :=
-    Fraction.Field.div_mul_cancel_of_ne 1 32 thirtyTwoNonzero
+  have inverseThirtyTwo : (1 / 32 : Rational) * 32 = 1 :=
+    Field.div_mul_cancel_of_ne 1 32 thirtyTwoNonzero
   calc
-    (1 : Fraction.Rational) ≤ 4 := by decide
+    (1 : Rational) ≤ 4 := by decide
     _ = 1 * 4 := by ring1
-    _ = ((1 / 32 : Fraction.Rational) * 32) * 4 := by rw [inverseThirtyTwo]
-    _ = (1 / 32 : Fraction.Rational) * 128 := by ring1
+    _ = ((1 / 32 : Rational) * 32) * 4 := by rw [inverseThirtyTwo]
+    _ = (1 / 32 : Rational) * 128 := by ring1
 end Purelib.Data.Rat.Fraction.Order
 
 end
@@ -140,20 +140,20 @@ namespace Purelib.Data.Rat.Fraction.Order
 open Purelib.Data.Rat in
 /-- One over 32 is at most one quarter in the canonical rational order. -/
 private theorem one_over_thirty_two_le_one_over_four :
-    (1 / 32 : Fraction.Rational) ≤ 1 / 4 := by
-  have denominatorPositive : (0 : Fraction.Rational) < 32 :=
-    Fraction.Cast.Order.natCast_pos_direct (n := 32) (by decide)
-  apply (Fraction.Order.Field.div_le_iff_pos denominatorPositive).2
-  have fourNonzero : (4 : Fraction.Rational) ≠ 0 :=
-    (Fraction.Cast.Order.natCast_pos_direct
+    (1 / 32 : Rational) ≤ 1 / 4 := by
+  have denominatorPositive : (0 : Rational) < 32 :=
+    Cast.Order.natCast_pos_direct (n := 32) (by decide)
+  apply (Field.div_le_iff_pos denominatorPositive).2
+  have fourNonzero : (4 : Rational) ≠ 0 :=
+    (Cast.Order.natCast_pos_direct
       (n := 4) (by decide)).ne'
-  have inverseFour : (1 / 4 : Fraction.Rational) * 4 = 1 :=
-    Fraction.Field.div_mul_cancel_of_ne 1 4 fourNonzero
+  have inverseFour : (1 / 4 : Rational) * 4 = 1 :=
+    Field.div_mul_cancel_of_ne 1 4 fourNonzero
   calc
-    (1 : Fraction.Rational) ≤ 8 := by decide
+    (1 : Rational) ≤ 8 := by decide
     _ = 1 * 8 := by ring1
-    _ = ((1 / 4 : Fraction.Rational) * 4) * 8 := by rw [inverseFour]
-    _ = (1 / 4 : Fraction.Rational) * 32 := by ring1
+    _ = ((1 / 4 : Rational) * 4) * 8 := by rw [inverseFour]
+    _ = (1 / 4 : Rational) * 32 := by ring1
 end Purelib.Data.Rat.Fraction.Order
 
 end
@@ -181,34 +181,34 @@ namespace Purelib.Data.Rat.Fraction.Order
 open Purelib.Data.Rat in
 /-- Twice the sum of two one-over-32 terms is one eighth. -/
 private theorem twice_two_thirty_seconds_eq_eighth :
-    2 * ((1 / 32 : Fraction.Rational) + 1 / 32) = 1 / 8 := by
-  have eightNonzero : (8 : Fraction.Rational) ≠ 0 :=
-    (Fraction.Cast.Order.natCast_pos_direct
+    2 * ((1 / 32 : Rational) + 1 / 32) = 1 / 8 := by
+  have eightNonzero : (8 : Rational) ≠ 0 :=
+    (Cast.Order.natCast_pos_direct
       (n := 8) (by decide)).ne'
-  have inverseEighth : (8 : Fraction.Rational) * (1 / 8) = 1 := by
+  have inverseEighth : (8 : Rational) * (1 / 8) = 1 := by
     calc
-      (8 : Fraction.Rational) * (1 / 8) = (1 / 8) * 8 := by ring1
-      _ = 1 := Fraction.Field.div_mul_cancel_of_ne
+      (8 : Rational) * (1 / 8) = (1 / 8) * 8 := by ring1
+      _ = 1 := Field.div_mul_cancel_of_ne
         1 8 eightNonzero
-  have thirtyTwoNonzero : (32 : Fraction.Rational) ≠ 0 :=
-    (Fraction.Cast.Order.natCast_pos_direct
+  have thirtyTwoNonzero : (32 : Rational) ≠ 0 :=
+    (Cast.Order.natCast_pos_direct
       (n := 32) (by decide)).ne'
-  have inverseThirtyTwo : (1 / 32 : Fraction.Rational) * 32 = 1 :=
-    Fraction.Field.div_mul_cancel_of_ne 1 32 thirtyTwoNonzero
-  have thirtySecond : (1 / 32 : Fraction.Rational) =
-      2 * (1 / 8 : Fraction.Rational) ^ 2 := by
-    apply Fraction.Field.mul_right_cancel_of_ne thirtyTwoNonzero
+  have inverseThirtyTwo : (1 / 32 : Rational) * 32 = 1 :=
+    Field.div_mul_cancel_of_ne 1 32 thirtyTwoNonzero
+  have thirtySecond : (1 / 32 : Rational) =
+      2 * (1 / 8 : Rational) ^ 2 := by
+    apply Field.mul_right_cancel_of_ne thirtyTwoNonzero
     calc
-      (1 / 32 : Fraction.Rational) * 32 = 1 := inverseThirtyTwo
-      _ = (8 * (1 / 8 : Fraction.Rational)) *
-          (8 * (1 / 8 : Fraction.Rational)) := by rw [inverseEighth]; ring1
-      _ = (2 * (1 / 8 : Fraction.Rational) ^ 2) * 32 := by ring1
+      (1 / 32 : Rational) * 32 = 1 := inverseThirtyTwo
+      _ = (8 * (1 / 8 : Rational)) *
+          (8 * (1 / 8 : Rational)) := by rw [inverseEighth]; ring1
+      _ = (2 * (1 / 8 : Rational) ^ 2) * 32 := by ring1
   rw [thirtySecond]
   calc
-    2 * (2 * (1 / 8 : Fraction.Rational) ^ 2 +
-        2 * (1 / 8 : Fraction.Rational) ^ 2) =
-      (8 * (1 / 8 : Fraction.Rational)) * (1 / 8 : Fraction.Rational) := by ring1
-    _ = 1 * (1 / 8 : Fraction.Rational) := by rw [inverseEighth]
+    2 * (2 * (1 / 8 : Rational) ^ 2 +
+        2 * (1 / 8 : Rational) ^ 2) =
+      (8 * (1 / 8 : Rational)) * (1 / 8 : Rational) := by ring1
+    _ = 1 * (1 / 8 : Rational) := by rw [inverseEighth]
     _ = 1 / 8 := by ring1
 end Purelib.Data.Rat.Fraction.Order
 
@@ -2358,12 +2358,12 @@ namespace Purelib.Data.Rat.Fraction.Order
 open Purelib.Data.Rat in
 /-- The sum of two nonnegative rationals is nonnegative. -/
 public theorem add_nonnegative
-    {left right : Fraction.Rational} (leftNonnegative : 0 ≤ left)
+    {left right : Rational} (leftNonnegative : 0 ≤ left)
     (rightNonnegative : 0 ≤ right) : 0 ≤ left + right := by
   calc
     0 = 0 + 0 := by ring1
     _ ≤ left + right :=
-      Fraction.Order.Arithmetic.add_le_add_direct leftNonnegative
+      Arithmetic.add_le_add_direct leftNonnegative
         rightNonnegative
 
 end Purelib.Data.Rat.Fraction.Order
@@ -2546,7 +2546,7 @@ section TriangleSpreadRules
 
 open Purelib.Data.Rat in
 /-- A strictly positive rational is nonzero. -/
-theorem rational_ne_zero_of_positive {value : Fraction.Rational}
+theorem rational_ne_zero_of_positive {value : Rational}
     (positive : 0 < value) : value ≠ 0 := by
   intro valueZero
   apply positive.2
@@ -2587,12 +2587,12 @@ namespace Purelib.Data.Rat.Fraction
 
 open Purelib.Data.Rat in
 /-- The sum of two halves of a rational is the original rational. -/
-public theorem half_add_half (epsilon : Fraction.Rational) :
+public theorem half_add_half (epsilon : Rational) :
     epsilon / 2 + epsilon / 2 = epsilon := by
   calc
     epsilon / 2 + epsilon / 2 = (epsilon / 2) * 2 := by ring1
     _ = epsilon :=
-      Fraction.Field.div_mul_cancel_of_ne epsilon 2 (by decide)
+      Field.div_mul_cancel_of_ne epsilon 2 (by decide)
 
 end Purelib.Data.Rat.Fraction
 
@@ -2751,7 +2751,7 @@ namespace Purelib.Data.Rat.Fraction
 
 open Purelib.Data.Rat in
 /-- Half of a positive rational is positive. -/
-public theorem half_positive {epsilon : Fraction.Rational} (positive : 0 < epsilon) :
+public theorem half_positive {epsilon : Rational} (positive : 0 < epsilon) :
     0 < epsilon / 2 :=
   Fraction.Order.Field.div_pos_direct positive (by decide)
 
@@ -2961,7 +2961,7 @@ namespace Purelib.Data.Rat.Fraction
 open Purelib.Data.Rat in
 /-- For two rationals summing to one, a lower bound on the right complement gives the strict upper bound on the left. -/
 theorem left_lt_of_add_eq_one_of_one_sub_lt_right
-    (left right level : Fraction.Rational) (sum : left + right = 1)
+    (left right level : Rational) (sum : left + right = 1)
     (rightLarge : 1 - level < right) : left < level := by
   calc
     left = 1 - right := by
@@ -3099,9 +3099,9 @@ namespace Purelib.Data.Rat.Fraction
 open Purelib in
 open Purelib.Data.Rat in
 /-- One quarter of a positive rational is strictly smaller than half of it. -/
-public theorem quarter_lt_half {target : Fraction.Rational} (positive : 0 < target) :
+public theorem quarter_lt_half {target : Rational} (positive : 0 < target) :
     target / 4 < target / 2 := by
-  have quarterPositive : (0 : Fraction.Rational) < target / 4 :=
+  have quarterPositive : (0 : Rational) < target / 4 :=
     Fraction.Order.Field.div_pos_direct positive (by decide)
   calc
     target / 4 = target / 4 + 0 := by ring1

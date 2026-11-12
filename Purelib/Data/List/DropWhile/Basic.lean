@@ -59,6 +59,16 @@ public theorem length_le {α : Type u} (predicate : α → Bool) :
           rw [cons_of_true predicate head tail selected]
           exact Nat.le.step (length_le predicate tail)
 
+/-- Dropping a replicated selected prefix retains precisely the original suffix scan. -/
+public theorem replicate_append {Alpha : Type u} (predicate : Alpha → Bool)
+    (entry : Alpha) (selected : predicate entry = true) (count : Nat) (suffix : List Alpha) :
+    (List.replicate count entry ++ suffix).dropWhile predicate = suffix.dropWhile predicate := by
+  induction count with
+  | zero => rfl
+  | succ count previous =>
+      rw [List.replicate_succ, List.cons_append, cons_of_true predicate entry _ selected]
+      exact previous
+
 /-- A member retained by a leading-prefix scan belonged to the original list.
 
 The scan either retains the entire original tail or discards a selected head.

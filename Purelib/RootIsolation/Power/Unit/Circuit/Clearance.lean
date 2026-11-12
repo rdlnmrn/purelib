@@ -28,6 +28,10 @@ import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Geometry.Gaussian.UnitCircle
+
+open Purelib.Polynomial.Dense.Gaussian
+
 open Purelib.Data.Nat.Positive (RootDegree)
 open Purelib.Geometry.Gaussian.UnitCircle.Quarter (UnitCircuitQuarter)
 open Purelib.Polynomial.Clearance.Pair.Basic (Certificate)
@@ -70,31 +74,31 @@ open Purelib.Data.Gaussian
 theorem unitCircuitRotatedLine_real_ge_one
     (quarter : UnitCircuitQuarter) (degree : RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) {index : Nat}
-    (indexBound : index < Power.Unit.Circuit.Subdivision.unitCircuitStepCount degree degreeAtLeastTwo)
+    (indexBound : index < Subdivision.unitCircuitStepCount degree degreeAtLeastTwo)
     {time : Fraction.Rational} (timeInside : (0 : Fraction.Rational) ≤ time ∧ time ≤ 1) :
-    1 ≤ ((Dense.Gaussian.UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter).eval
+    1 ≤ ((UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter).eval
       (Affine.line
-        (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
-        (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
-          Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index) time)).re := by
-  let source := Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index
-  let target := Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1)
-  have sourceBound : 1 ≤ (Geometry.Gaussian.UnitCircle.Quarter.unitCircuitRotation quarter * source).re :=
-    Power.Unit.Circuit.Point.unitCircuitRotatedPoint_real_ge_one quarter degree degreeAtLeastTwo
+        (Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
+        (Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
+          Point.unitCircuitPoint quarter degree degreeAtLeastTwo index) time)).re := by
+  let source := Point.unitCircuitPoint quarter degree degreeAtLeastTwo index
+  let target := Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1)
+  have sourceBound : 1 ≤ (Quarter.unitCircuitRotation quarter * source).re :=
+    Point.unitCircuitRotatedPoint_real_ge_one quarter degree degreeAtLeastTwo
       (Nat.le_of_lt indexBound)
-  have targetBound : 1 ≤ (Geometry.Gaussian.UnitCircle.Quarter.unitCircuitRotation quarter * target).re :=
-    Power.Unit.Circuit.Point.unitCircuitRotatedPoint_real_ge_one quarter degree degreeAtLeastTwo
+  have targetBound : 1 ≤ (Quarter.unitCircuitRotation quarter * target).re :=
+    Point.unitCircuitRotatedPoint_real_ge_one quarter degree degreeAtLeastTwo
       (by omega)
   have oneMinusNonnegative : 0 ≤ 1 - time :=
     Fraction.Order.Arithmetic.sub_nonneg_direct timeInside.2
-  rw [Dense.Gaussian.UnitCircle.Rotation.unitCircuitRotatedCoordinate_eval,
-    Geometry.Rational.Affine.Segment.rotated_line_real_eq_convex]
-  change 1 ≤ (1 - time) * (Geometry.Gaussian.UnitCircle.Quarter.unitCircuitRotation quarter * source).re +
-    time * (Geometry.Gaussian.UnitCircle.Quarter.unitCircuitRotation quarter * target).re
+  rw [UnitCircle.Rotation.unitCircuitRotatedCoordinate_eval,
+    Affine.Segment.rotated_line_real_eq_convex]
+  change 1 ≤ (1 - time) * (Quarter.unitCircuitRotation quarter * source).re +
+    time * (Quarter.unitCircuitRotation quarter * target).re
   calc
     1 = (1 - time) * 1 + time * 1 := by ring1
-    _ ≤ (1 - time) * (Geometry.Gaussian.UnitCircle.Quarter.unitCircuitRotation quarter * source).re +
-        time * (Geometry.Gaussian.UnitCircle.Quarter.unitCircuitRotation quarter * target).re :=
+    _ ≤ (1 - time) * (Quarter.unitCircuitRotation quarter * source).re +
+        time * (Quarter.unitCircuitRotation quarter * target).re :=
       add_le_add
         (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
           sourceBound oneMinusNonnegative)
@@ -130,18 +134,18 @@ open Purelib.Data.Gaussian
 theorem unitCircuitRotatedLine_normSq_ge_one
     (quarter : UnitCircuitQuarter) (degree : RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) {index : Nat}
-    (indexBound : index < Power.Unit.Circuit.Subdivision.unitCircuitStepCount degree degreeAtLeastTwo)
+    (indexBound : index < Subdivision.unitCircuitStepCount degree degreeAtLeastTwo)
     {time : Fraction.Rational} (timeInside : (0 : Fraction.Rational) ≤ time ∧ time ≤ 1) :
-    1 ≤ normSq ((Dense.Gaussian.UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter).eval
+    1 ≤ normSq ((UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter).eval
       (Affine.line
-        (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
-        (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
-          Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index) time)) := by
-  let value := (Dense.Gaussian.UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter).eval
+        (Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
+        (Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
+          Point.unitCircuitPoint quarter degree degreeAtLeastTwo index) time)) := by
+  let value := (UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter).eval
     (Affine.line
-      (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
-      (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
-        Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index) time)
+      (Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
+      (Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
+        Point.unitCircuitPoint quarter degree degreeAtLeastTwo index) time)
   have realLower : (1 : Fraction.Rational) ≤ value.re :=
     unitCircuitRotatedLine_real_ge_one quarter degree degreeAtLeastTwo
       indexBound timeInside
@@ -182,20 +186,20 @@ open Purelib.Data.Gaussian.Norm.Basic (normSq_mul)
 theorem unitCircuitCoordinateLine_normSq_ge_half
     (quarter : UnitCircuitQuarter) (degree : RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) {index : Nat}
-    (indexBound : index < Power.Unit.Circuit.Subdivision.unitCircuitStepCount degree degreeAtLeastTwo)
+    (indexBound : index < Subdivision.unitCircuitStepCount degree degreeAtLeastTwo)
     {time : Fraction.Rational} (timeInside : (0 : Fraction.Rational) ≤ time ∧ time ≤ 1) :
     (1 / 2 : Fraction.Rational) ≤ normSq (Affine.line
-      (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
-      (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
-        Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index) time) := by
+      (Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
+      (Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
+        Point.unitCircuitPoint quarter degree degreeAtLeastTwo index) time) := by
   let point := Affine.line
-    (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
-    (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
-      Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index) time
+    (Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
+    (Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
+      Point.unitCircuitPoint quarter degree degreeAtLeastTwo index) time
   have rotatedLower := unitCircuitRotatedLine_normSq_ge_one quarter degree
     degreeAtLeastTwo indexBound timeInside
-  rw [Dense.Gaussian.UnitCircle.Rotation.unitCircuitRotatedCoordinate_eval, normSq_mul,
-    Geometry.Gaussian.UnitCircle.Quarter.unitCircuitRotation_normSq] at rotatedLower
+  rw [UnitCircle.Rotation.unitCircuitRotatedCoordinate_eval, normSq_mul,
+    Quarter.unitCircuitRotation_normSq] at rotatedLower
   apply (Fraction.Order.Field.div_le_iff_pos
     (show (0 : Fraction.Rational) < 2 by decide)).2
   calc
@@ -232,26 +236,26 @@ rotated real-coordinate bound and the exact norm two of the rotation. -/
 def unitCircuitCoordinateEdgeCertificate
     (quarter : UnitCircuitQuarter) (degree : RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) {index : Nat}
-    (indexBound : index < Power.Unit.Circuit.Subdivision.unitCircuitStepCount degree degreeAtLeastTwo) :
+    (indexBound : index < Subdivision.unitCircuitStepCount degree degreeAtLeastTwo) :
     Certificate
-      (Dense.Gaussian.Path.Components.pathReal
-        Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
-        (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
-        (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
-          Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index))
-      (Dense.Gaussian.Path.Components.pathImag
-        Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
-        (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
-        (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
-          Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index))
+      (Path.Components.pathReal
+        Monomial.Coordinate.coordinatePolynomial
+        (Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
+        (Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
+          Point.unitCircuitPoint quarter degree degreeAtLeastTwo index))
+      (Path.Components.pathImag
+        Monomial.Coordinate.coordinatePolynomial
+        (Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
+        (Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
+          Point.unitCircuitPoint quarter degree degreeAtLeastTwo index))
       { lower := 0, upper := 1, valid := by decide } where
   bound := 1 / 2
   positive := by decide
   lower := by
     intro time timeInside
-    simpa only [Dense.Gaussian.Path.Components.eval_pathReal,
-      Dense.Gaussian.Path.Components.eval_pathImag,
-      Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial_eval, normSq] using
+    simpa only [Path.Components.eval_pathReal,
+      Path.Components.eval_pathImag,
+      Monomial.Coordinate.coordinatePolynomial_eval, normSq] using
       unitCircuitCoordinateLine_normSq_ge_half quarter degree degreeAtLeastTwo
         indexBound timeInside
 end Purelib.RootIsolation.Power.Unit.Circuit.Clearance
@@ -284,23 +288,23 @@ open Purelib.Data.Gaussian
 def unitCircuitRotatedEdgeCertificate
     (quarter : UnitCircuitQuarter) (degree : RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) {index : Nat}
-    (indexBound : index < Power.Unit.Circuit.Subdivision.unitCircuitStepCount degree degreeAtLeastTwo) :
+    (indexBound : index < Subdivision.unitCircuitStepCount degree degreeAtLeastTwo) :
     Certificate
-      (Dense.Gaussian.Path.Components.pathReal (Dense.Gaussian.UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter)
-        (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
-        (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
-          Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index))
-      (Dense.Gaussian.Path.Components.pathImag (Dense.Gaussian.UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter)
-        (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
-        (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
-          Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index))
+      (Path.Components.pathReal (UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter)
+        (Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
+        (Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
+          Point.unitCircuitPoint quarter degree degreeAtLeastTwo index))
+      (Path.Components.pathImag (UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter)
+        (Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
+        (Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
+          Point.unitCircuitPoint quarter degree degreeAtLeastTwo index))
       { lower := 0, upper := 1, valid := by decide } where
   bound := 1
   positive := by decide
   lower := by
     intro time timeInside
-    simpa only [Dense.Gaussian.Path.Components.eval_pathReal,
-      Dense.Gaussian.Path.Components.eval_pathImag, normSq] using
+    simpa only [Path.Components.eval_pathReal,
+      Path.Components.eval_pathImag, normSq] using
       unitCircuitRotatedLine_normSq_ge_one quarter degree degreeAtLeastTwo
         indexBound timeInside
 end Purelib.RootIsolation.Power.Unit.Circuit.Clearance
@@ -334,24 +338,24 @@ edge. -/
 theorem unitCircuitRotatedEdgeHalfPlaneFormula
     (quarter : UnitCircuitQuarter) (degree : RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) {index : Nat}
-    (indexBound : index < Power.Unit.Circuit.Subdivision.unitCircuitStepCount degree degreeAtLeastTwo) :
+    (indexBound : index < Subdivision.unitCircuitStepCount degree degreeAtLeastTwo) :
     Dense.Rational.CauchyIndex.HalfPlane.Formula
-      (Dense.Gaussian.Path.Components.pathReal (Dense.Gaussian.UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter)
-        (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
-        (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
-          Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index))
-      (Dense.Gaussian.Path.Components.pathImag (Dense.Gaussian.UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter)
-        (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
-        (Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
-          Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)) 0 1 := by
-  let source := Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo index
+      (Path.Components.pathReal (UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter)
+        (Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
+        (Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
+          Point.unitCircuitPoint quarter degree degreeAtLeastTwo index))
+      (Path.Components.pathImag (UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter)
+        (Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)
+        (Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) -
+          Point.unitCircuitPoint quarter degree degreeAtLeastTwo index)) 0 1 := by
+  let source := Point.unitCircuitPoint quarter degree degreeAtLeastTwo index
   let direction :=
-    Power.Unit.Circuit.Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) - source
-  let A := Dense.Gaussian.Path.Components.pathReal
-    (Dense.Gaussian.UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter) source direction
-  let B := Dense.Gaussian.Path.Components.pathImag
-    (Dense.Gaussian.UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter) source direction
-  let interval : Data.Rat.Interval.Bounds :=
+    Point.unitCircuitPoint quarter degree degreeAtLeastTwo (index + 1) - source
+  let A := Path.Components.pathReal
+    (UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter) source direction
+  let B := Path.Components.pathImag
+    (UnitCircle.Rotation.unitCircuitRotatedCoordinate quarter) source direction
+  let interval : Interval.Bounds :=
     { lower := 0, upper := 1, valid := by decide }
   let certificate : Certificate A B interval := by
     simpa only [A, B, interval, source, direction] using
@@ -361,12 +365,12 @@ theorem unitCircuitRotatedEdgeHalfPlaneFormula
       0 < A.eval time := by
     intro time timeInside
     have inside : (0 : Fraction.Rational) ≤ time ∧ time ≤ 1 := by
-      simpa only [interval, Data.Rat.Interval.Bounds.Contains] using
+      simpa only [interval, Interval.Bounds.Contains] using
         timeInside
     have lower := unitCircuitRotatedLine_real_ge_one quarter degree
       degreeAtLeastTwo indexBound inside
     have strict := (show (0 : Fraction.Rational) < 1 by decide).trans_le lower
-    simpa only [A, source, direction, Dense.Gaussian.Path.Components.eval_pathReal] using
+    simpa only [A, source, direction, Path.Components.eval_pathReal] using
       strict
   have formula := Dense.Rational.CauchyIndex.HalfPlane.formula_of_positive_real certificate
     (show interval.lower < interval.upper by

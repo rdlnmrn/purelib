@@ -51,19 +51,19 @@ exceeds the ceiling of `coefficient / target`. -/
 
 /-- The computed quadratic-request denominator is a positive natural number. -/
 theorem targetDenominator_pos (coefficient target : Fraction.Rational) :
-    0 < Approximation.Rational.QuadraticTarget.Basic.targetDenominator coefficient target := by
+    0 < targetDenominator coefficient target := by
   exact SquareThreshold.Basic.squareThreshold_pos _
 
 /-- Rational request whose denominator grows at the square-root rate forced by a quadratic residual estimate. -/
 @[expose] def targetEpsilon (coefficient target : Fraction.Rational) : Fraction.Rational :=
-  1 / (Approximation.Rational.QuadraticTarget.Basic.targetDenominator coefficient target : Fraction.Rational)
+  1 / (targetDenominator coefficient target : Fraction.Rational)
 
 /-- The reciprocal quadratic-request tolerance is strictly positive. -/
 theorem targetEpsilon_pos (coefficient target : Fraction.Rational) :
-    0 < Approximation.Rational.QuadraticTarget.Basic.targetEpsilon coefficient target := by
+    0 < targetEpsilon coefficient target := by
   exact Fraction.Order.Field.div_pos_direct (by decide)
     (Fraction.Cast.Order.natCast_pos_direct
-      (Approximation.Rational.QuadraticTarget.Basic.targetDenominator_pos coefficient target))
+      (targetDenominator_pos coefficient target))
 
 /-- The displayed ratio is strictly below the square of its computed least square threshold.
 
@@ -73,7 +73,7 @@ theorem ratio_lt_targetDenominator_sq
     {coefficient target : Fraction.Rational} (coefficientPositive : 0 < coefficient)
     (targetPositive : 0 < target) :
     coefficient / target <
-      (Approximation.Rational.QuadraticTarget.Basic.targetDenominator coefficient target : Fraction.Rational) ^ 2 := by
+      (targetDenominator coefficient target : Fraction.Rational) ^ 2 := by
   let ceiling := Floor.ceilNat (coefficient / target)
   have ratioNonnegative : (0 : Fraction.Rational) ≤ coefficient / target :=
     (Fraction.Order.Field.div_pos_direct coefficientPositive
@@ -99,30 +99,30 @@ theorem coefficient_le_target_mul_targetDenominator_sq
     {coefficient target : Fraction.Rational} (coefficientPositive : 0 < coefficient)
     (targetPositive : 0 < target) :
     coefficient ≤ target *
-      (Approximation.Rational.QuadraticTarget.Basic.targetDenominator coefficient target : Fraction.Rational) ^ 2 := by
-  have ratioStrict := Approximation.Rational.QuadraticTarget.Basic.ratio_lt_targetDenominator_sq coefficientPositive
+      (targetDenominator coefficient target : Fraction.Rational) ^ 2 := by
+  have ratioStrict := ratio_lt_targetDenominator_sq coefficientPositive
     targetPositive
   have scaledStrict : coefficient <
-      (Approximation.Rational.QuadraticTarget.Basic.targetDenominator coefficient target : Fraction.Rational) ^ 2 *
+      (targetDenominator coefficient target : Fraction.Rational) ^ 2 *
         target :=
     (Fraction.Order.Field.div_lt_iff_pos targetPositive).mp ratioStrict
   calc
     coefficient ≤
-        (Approximation.Rational.QuadraticTarget.Basic.targetDenominator coefficient target : Fraction.Rational) ^ 2 *
+        (targetDenominator coefficient target : Fraction.Rational) ^ 2 *
           target :=
       scaledStrict.le
     _ = target *
-        (Approximation.Rational.QuadraticTarget.Basic.targetDenominator coefficient target : Fraction.Rational) ^ 2 :=
+        (targetDenominator coefficient target : Fraction.Rational) ^ 2 :=
           by ring1
 
 /-- Exact algebraic form of the reciprocal-square request. -/
 theorem coefficient_mul_targetEpsilon_sq_eq_div
     (coefficient target : Fraction.Rational) :
-    coefficient * Approximation.Rational.QuadraticTarget.Basic.targetEpsilon coefficient target ^ 2 =
+    coefficient * targetEpsilon coefficient target ^ 2 =
       coefficient /
-        (Approximation.Rational.QuadraticTarget.Basic.targetDenominator coefficient target : Fraction.Rational) ^ 2 :=
+        (targetDenominator coefficient target : Fraction.Rational) ^ 2 :=
           by
-  let denominator : Fraction.Rational := Approximation.Rational.QuadraticTarget.Basic.targetDenominator coefficient
+  let denominator : Fraction.Rational := targetDenominator coefficient
     target
   have oneDiv : (1 : Fraction.Rational) / denominator = denominator⁻¹ := by
     rw [Fraction.Field.div_eq_mul_inv_direct]
@@ -136,17 +136,17 @@ theorem coefficient_mul_targetEpsilon_sq_eq_div
 theorem coefficient_mul_targetEpsilon_sq_le
     {coefficient target : Fraction.Rational} (coefficientPositive : 0 < coefficient)
     (targetPositive : 0 < target) :
-    coefficient * Approximation.Rational.QuadraticTarget.Basic.targetEpsilon coefficient target ^ 2 ≤ target := by
+    coefficient * targetEpsilon coefficient target ^ 2 ≤ target := by
   have denominatorPositive : (0 : Fraction.Rational) <
-      (Approximation.Rational.QuadraticTarget.Basic.targetDenominator coefficient target : Fraction.Rational) :=
+      (targetDenominator coefficient target : Fraction.Rational) :=
     Fraction.Cast.Order.natCast_pos_direct
-      (Approximation.Rational.QuadraticTarget.Basic.targetDenominator_pos coefficient target)
+      (targetDenominator_pos coefficient target)
   have squarePositive :
-      0 < (Approximation.Rational.QuadraticTarget.Basic.targetDenominator coefficient target : Fraction.Rational) ^ 2 :=
+      0 < (targetDenominator coefficient target : Fraction.Rational) ^ 2 :=
     Fraction.Order.Arithmetic.pow_pos_direct denominatorPositive 2
-  rw [Approximation.Rational.QuadraticTarget.Basic.coefficient_mul_targetEpsilon_sq_eq_div]
+  rw [coefficient_mul_targetEpsilon_sq_eq_div]
   exact (Fraction.Order.Field.div_le_iff_pos squarePositive).mpr
-    (Approximation.Rational.QuadraticTarget.Basic.coefficient_le_target_mul_targetDenominator_sq coefficientPositive
+    (coefficient_le_target_mul_targetDenominator_sq coefficientPositive
       targetPositive)
 end Purelib.Approximation.Rational.QuadraticTarget.Basic
 

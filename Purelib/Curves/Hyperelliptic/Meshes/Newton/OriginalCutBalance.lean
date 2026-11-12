@@ -154,18 +154,18 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.StemRequests (IncludedStemRequest)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.HoleRequests (IncludedHoleRequest)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted}
-  {preparation : NewtonPreparation base.bank.toBranchCellBank} {target radius : Purelib.Data.Rat.Fraction.Rational}
+    BasedBranchBank lifted}
+  {preparation : NewtonPreparation base.bank.toBranchCellBank} {target radius : Fraction.Rational}
   {grid : NewtonGrid preparation target radius} {current : LiftedPuncturedGrid grid.punctured}
-  {index : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames
-    grid.faces.regulars} {differential : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {localValues : Fin current.mesh.triangles.length → Purelib.Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues 3}
-  {surface : Purelib.Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch localValues}
+  {index : Branches.BranchIsolation.Data.Index branches}
+  {domains : FaceDomainBank current.frames
+    grid.faces.regulars} {differential : Differential genus}
+  {localValues : Fin current.mesh.triangles.length → PrimitiveValues 3}
+  {surface : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch localValues}
 
 namespace OriginalCutBalance
 
@@ -210,19 +210,19 @@ set_option genInjectivity false in
 The selected triangles, inner cut occurrences and doubled enclosing word retain a complete projected pairing, including
 jumps and endpoint defects. -/
 structure OriginalCutBalance (outer : OriginalAnnularFaces grid index)
-    {annulus : Faces.AnnularFaces grid index} (region : LiftedBoundary.Lifted annulus current)
+    {annulus : AnnularFaces grid index} (region : Lifted annulus current)
     (geometry : IncludedHoleSewing bank grid.shrunk.included index domains differential)
     (surface : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch localValues) where
   /-- The actual sewn triangles whose source faces refine the original enclosing cell. -/ selected :
-    CachedSample.FaceSelection surface (fun source => decide
+    FaceSelection surface (fun source => decide
     ((AllHoleExcision.sourceFace current source).cell.box.Refines (base.bank.cell index).box))
-  /-- The retained inner-boundary cut occurrences on the lifted annulus. -/ inner : CutBalance.InnerOccurrences region
+  /-- The retained inner-boundary cut occurrences on the lifted annulus. -/ inner : InnerOccurrences region
   /-- The cached ordered edge list for the complete original-cell balance. -/ edges : List (OrientedEdge
     current.cutPolygon.patch.cut.count)
   /-- The balance edges retain all selected triangle boundaries and both reversed boundary words. -/ edges_eq : edges =
     selected.triangles.flatMap OrientedTriangle.boundary ++
     (geometry.word.edges ++ inner.word.edges).map OrientedEdge.reverse
-  /-- The complete projected pairing of the actual retained balance edges. -/ complete : ProjectedEdgePairing.Complete
+  /-- The complete projected pairing of the actual retained balance edges. -/ complete : Complete
     current.cutPolygon.patch.cut.vertexLabels edges
 
 constructive_injectivity OriginalCutBalance
@@ -231,8 +231,8 @@ namespace OriginalCutBalance
 
 /-- Select the original-cell cut triangles and construct their complete projected pairing with the retained outer and
 inner cut words. -/
-@[expose] def build (outer : OriginalAnnularFaces grid index) {annulus : Faces.AnnularFaces grid index}
-    (region : LiftedBoundary.Lifted annulus current)
+@[expose] def build (outer : OriginalAnnularFaces grid index) {annulus : AnnularFaces grid index}
+    (region : Lifted annulus current)
     (geometry : IncludedHoleSewing bank grid.shrunk.included index domains differential)
     (surface : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch localValues) : OriginalCutBalance outer region
       geometry surface := by
@@ -276,13 +276,13 @@ inner cut words. -/
   exact ⟨selected, inner, edges, rfl, Complete.build _ edges nonloop zero⟩
 
 variable {outer : OriginalAnnularFaces grid index} {annulus :
-  Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index}
-  {region : Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus current}
+  AnnularFaces grid index}
+  {region : Lifted annulus current}
   {geometry : IncludedHoleSewing bank grid.shrunk.included index domains differential}
 
 /-- All actual cut corrections remain in the original-cell region balance. -/
 theorem area_balance (balance : OriginalCutBalance outer region geometry surface)
-    (sample : ProjectedEdgePairing.PrimitiveSample balance.complete.pairing surface.energyValues) :
+    (sample : PrimitiveSample balance.complete.pairing surface.energyValues) :
     balance.selected.area = edgeListArea surface.energyValues geometry.word.edges +
       edgeListArea surface.energyValues balance.inner.word.edges + sample.jumpSum + sample.defectSum := by
   have equal := (congrArg (edgeListArea surface.energyValues) balance.edges_eq).symm.trans
@@ -298,8 +298,8 @@ theorem area_balance (balance : OriginalCutBalance outer region geometry surface
 /-- Subtracting the retained inner area, cut jumps, endpoint defects and occurrence correction gives the exact corrected
 enclosing-word readback. -/
 theorem corrected_area (balance : OriginalCutBalance outer region geometry surface)
-    (sample : ProjectedEdgePairing.PrimitiveSample balance.complete.pairing surface.energyValues)
-    (readback : CutSourceWord.AreaReadback geometry.word surface.sewn.values) :
+    (sample : PrimitiveSample balance.complete.pairing surface.energyValues)
+    (readback : AreaReadback geometry.word surface.sewn.values) :
     balance.selected.area - edgeListArea surface.energyValues balance.inner.word.edges -
       sample.jumpSum - sample.defectSum - readback.correction = readback.raw - readback.correction := by
   have raw : readback.raw = edgeListArea surface.energyValues geometry.word.edges := by
@@ -318,12 +318,12 @@ theorem corrected_area (balance : OriginalCutBalance outer region geometry surfa
 and occurrence offsets all remain explicit; none is silently declared negligible. -/
 theorem canonical_accurate {fixed : FaceMagnitudeBank domains differential} {error : Fraction.Rational} {floor : Nat}
     (request : IncludedHoleSewing.Request geometry fixed error floor)
-    {stage : Nat} {shared : PrimitiveData.FacePrimitiveBank differential stage domains} (readings :
-      TrianglePrimitiveReadings.TriangleReadings shared current.mesh)
+    {stage : Nat} {shared : FacePrimitiveBank differential stage domains} (readings :
+      TriangleReadings shared current.mesh)
     (surface : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch readings.values)
     (balance : OriginalCutBalance outer region geometry surface)
-    (sample : ProjectedEdgePairing.PrimitiveSample balance.complete.pairing surface.energyValues)
-    (readback : CutSourceWord.AreaReadback geometry.word surface.sewn.values)
+    (sample : PrimitiveSample balance.complete.pairing surface.energyValues)
+    (readback : AreaReadback geometry.word surface.sewn.values)
     (later : request.index ≤ stage) :
     let walk := grid.shrunk.included.resplit (bank.rows.get index).boundary
       ((base.bank.cell index).anchor_mem (base.bank.cell_mem index))
@@ -343,8 +343,8 @@ namespace OriginalCutBalance
 /-- The actual original-cell cut triangles approximate twice the original based branch excursion. All requests are
 computed from the existing banks; the inner boundary, jumps, endpoint defects and offsets remain explicit. -/
 theorem original_branch_area_accurate
-    (outer : OriginalAnnularFaces grid index) {annulus : Faces.AnnularFaces grid index}
-    (region : LiftedBoundary.Lifted annulus current)
+    (outer : OriginalAnnularFaces grid index) {annulus : AnnularFaces grid index}
+    (region : Lifted annulus current)
     (fixed : FaceMagnitudeBank domains differential) (sheet : Fin 2)
     (error : Fraction.Rational) (positive : 0 < error) (floor : Nat) :
     let part := error / 4
@@ -354,8 +354,8 @@ theorem original_branch_area_accurate
     let holes := IncludedHoleRequest.build bank grid.shrunk.included fixed index (part / 10) innerPositive
     let geometry := IncludedHoleSewing.build bank grid.shrunk.included index domains differential
     let sewing := IncludedHoleSewing.Request.build geometry fixed part partPositive floor
-    ∀ stage (shared : PrimitiveData.FacePrimitiveBank differential stage domains) (readings :
-      TrianglePrimitiveReadings.TriangleReadings shared current.mesh)
+    ∀ stage (shared : FacePrimitiveBank differential stage domains) (readings :
+      TriangleReadings shared current.mesh)
       (surface : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch readings.values),
       max (max stems.index holes.index) sewing.index ≤ stage →
       let balance := OriginalCutBalance.build outer region geometry surface

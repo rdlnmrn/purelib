@@ -43,8 +43,8 @@ set_option genInjectivity false in
 The record contains data only; the replay checker verifies normalization, strict remainder degree and the exact
 coefficient identity. -/
 structure Witness where
-  /-- The supplied quotient polynomial. -/ quotient : Dense.Rational.Basic.CoordinatePolynomial
-  /-- The supplied remainder polynomial. -/ remainder : Dense.Rational.Basic.CoordinatePolynomial
+  /-- The supplied quotient polynomial. -/ quotient : Basic.CoordinatePolynomial
+  /-- The supplied remainder polynomial. -/ remainder : Basic.CoordinatePolynomial
 
 constructive_injectivity Witness
 
@@ -53,14 +53,14 @@ set_option genInjectivity false in
 
 Each branch retains evidence of a normalization, degree or coefficient-identity failure for the original inputs and
 witness. -/
-inductive Invalid (p q : Dense.Rational.Basic.CoordinatePolynomial) (witness : Dense.Rational.Division.Replay.Witness)
+inductive Invalid (p q : Basic.CoordinatePolynomial) (witness : Witness)
   where
   /-- The supplied remainder is not normalized. -/ | normalization (failed : witness.remainder.normalize ≠
     witness.remainder)
   /-- The remainder coefficient count is not strictly below the divisor count. -/ | degree (failed : ¬
     witness.remainder.degreeCount < q.degreeCount)
   /-- The retained reconstructed polynomial differs from the normalized dividend. -/ | identity (actual :
-    Dense.Rational.Basic.CoordinatePolynomial)
+    Basic.CoordinatePolynomial)
       (actual_eq : actual = witness.remainder + q * witness.quotient)
       (failed : actual ≠ p.normalize)
 
@@ -69,10 +69,10 @@ constructive_injectivity Invalid
 set_option genInjectivity false in
 /-- Retain the supplied data and the equality to the original remainder.
 The quotient identity remains available independently of that equality. -/
-structure Step (p q : Dense.Rational.Basic.CoordinatePolynomial) where
-  /-- The exact supplied or generated quotient and remainder. -/ witness : Dense.Rational.Division.Replay.Witness
+structure Step (p q : Basic.CoordinatePolynomial) where
+  /-- The exact supplied or generated quotient and remainder. -/ witness : Witness
   /-- The retained remainder equals the original long-division remainder. -/ equation : witness.remainder =
-    (Dense.Basic.DensePolynomial.divMod p q).remainder
+    (Basic.DensePolynomial.divMod p q).remainder
   /-- The retained remainder and quotient reconstruct the dividend at every rational point. -/ identity : ∀ point :
     Fraction.Rational,
     witness.remainder.eval point + q.eval point * witness.quotient.eval point = p.eval point
@@ -83,9 +83,9 @@ constructive_injectivity Step
 
 For a nonzero divisor, return either a specific failed condition or the retained witness certified to have the original
 division remainder and evaluation identity. -/
-def check (p q : Dense.Rational.Basic.CoordinatePolynomial) (nonzero : q.isZero = false) (witness :
-  Dense.Rational.Division.Replay.Witness) :
-    Except (Dense.Rational.Division.Replay.Invalid p q witness) (Dense.Rational.Division.Replay.Step p q) :=
+def check (p q : Basic.CoordinatePolynomial) (nonzero : q.isZero = false) (witness :
+  Witness) :
+    Except (Invalid p q witness) (Step p q) :=
   if normalized : witness.remainder.normalize = witness.remainder then
     if small : witness.remainder.degreeCount < q.degreeCount then
       let actual := witness.remainder + q * witness.quotient
@@ -94,11 +94,11 @@ def check (p q : Dense.Rational.Basic.CoordinatePolynomial) (nonzero : q.isZero 
             witness.remainder.eval point + q.eval point * witness.quotient.eval point =
               p.eval point := by
           intro point
-          have values := congrArg (fun polynomial : Dense.Rational.Basic.CoordinatePolynomial => polynomial.eval point)
+          have values := congrArg (fun polynomial : Basic.CoordinatePolynomial => polynomial.eval point)
             same
-          simpa only [actual, Dense.Basic.DensePolynomial.eval_add, Dense.Basic.DensePolynomial.eval_mul,
-            Dense.Basic.DensePolynomial.eval_normalize] using values
-        .ok ⟨witness, Dense.Rational.Division.remainder_unique p q
+          simpa only [actual, Basic.DensePolynomial.eval_add, Basic.DensePolynomial.eval_mul,
+            Basic.DensePolynomial.eval_normalize] using values
+        .ok ⟨witness, remainder_unique p q
           witness.quotient witness.remainder nonzero normalized small identity, identity⟩
       else .error (.identity actual rfl same)
     else .error (.degree small)
@@ -106,9 +106,9 @@ def check (p q : Dense.Rational.Basic.CoordinatePolynomial) (nonzero : q.isZero 
 
 /-- Fresh generation executes one division only. Its result is ready to save
 before the next member is requested. -/
-def generate (p q : Dense.Rational.Basic.CoordinatePolynomial) : Dense.Rational.Division.Replay.Step p q :=
-  let result := Dense.Basic.DensePolynomial.divMod p q
-  ⟨⟨result.quotient, result.remainder⟩, rfl, Dense.Basic.DensePolynomial.divMod_eval_equation p q⟩
+def generate (p q : Basic.CoordinatePolynomial) : Step p q :=
+  let result := Basic.DensePolynomial.divMod p q
+  ⟨⟨result.quotient, result.remainder⟩, rfl, Basic.DensePolynomial.divMod_eval_equation p q⟩
 end Purelib.Polynomial.Dense.Rational.Division.Replay
 
 end

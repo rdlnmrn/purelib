@@ -1,4 +1,5 @@
 module
+public import Purelib.Data.Fin
 import Purelib.Algebra.Ring.IntCast
 import Purelib.Tactic.Ring
 import Purelib.Data.List.Fold
@@ -82,6 +83,29 @@ theorem sumFin_succ (values : Fin (n + 1) → K) :
   rw [foldl_add_eq_accumulator_add]
   ring1
 
+/-- Successive differences of one retained finite endpoint family telescope to its last value minus its first.
+
+The same bounded endpoint occurs in both incident differences. Finite
+induction uses only the original successor decomposition of sumFin; no
+geometric relation or equality of endpoint-producing functions is assumed.
+-/
+theorem sumFin_successive_differences {n : Nat} (values : Fin (n + 1) → K) :
+    sumFin (fun index : Fin n => values index.succ - values index.castSucc) =
+      values (Fin.last n) - values 0 := by
+  induction n with
+  | zero =>
+      change (0 : K) = values 0 - values 0
+      ring1
+  | succ n previous =>
+      rewrite [sumFin_succ]
+      change (values ((0 : Fin (n + 1)).succ) - values 0) +
+          sumFin (fun index : Fin n => values index.succ.succ - values index.castSucc.succ) =
+        values (Fin.last (n + 1)) - values 0
+      rewrite [previous (fun index => values index.succ)]
+      have last : (Fin.last n).succ = Fin.last (n + 1) := rfl
+      rewrite [last]
+      ring1
+
 /-- Pointwise equal finite families have equal sums.
 
 Only equality at each explicit index is required; equality of the functions themselves is unnecessary. -/
@@ -93,6 +117,33 @@ theorem sumFin_congr {n : Nat} {left right : Fin n → K}
   | succ n inductionHypothesis =>
       rw [sumFin_succ, sumFin_succ, equal 0,
         inductionHypothesis (fun index => equal index.succ)]
+
+/-- Equal finite sizes and pointwise scalar readings retain the same finite sum.
+
+The two index families may carry different proofs of their common size. Only
+their original natural coordinates are compared; no function equality is used.
+-/
+theorem sumFin_congr_size {leftSize rightSize : Nat} (size : leftSize = rightSize)
+    (left : Fin leftSize → K) (right : Fin rightSize → K)
+    (entries : ∀ first second, first.val = second.val → left first = right second) :
+    sumFin left = sumFin right := by
+  cases size
+  exact sumFin_congr fun index => entries index index rfl
+
+/-- A zero-preserving additive scalar reading preserves the same original finite sum.
+
+The scalar reading need not preserve products, and the original explicit
+index table is used on both sides.
+-/
+theorem map_sumFin {L : Type*} [CommRing L] (function : K → L) (mapZero : function 0 = 0)
+    (mapAdd : ∀ left right, function (left + right) = function left + function right)
+    {count : Nat} (values : Fin count → K) :
+    function (sumFin values) = sumFin (fun index => function (values index)) := by
+  induction count with
+  | zero => exact mapZero
+  | succ count previous =>
+      rewrite [sumFin_succ, sumFin_succ, mapAdd, previous]
+      rfl
 
 /-- Finite summation preserves pointwise addition.
 
@@ -222,6 +273,58 @@ theorem sumFin_split {left right : Nat} (values : Fin (left + right) → K) :
   unfold sumFin
   rw [OfFn.Basic.ofFn_add, Fold.foldl_append, foldl_add_eq_accumulator_add]
   rfl
+
+/-- Transport a finite sum along an exact equality of its original bounded dimensions. -/
+theorem sumFin_cast {leftSize rightSize : Nat} (same : leftSize = rightSize)
+    (values : Fin rightSize → K) :
+    sumFin (fun index : Fin leftSize => values (_root_.Fin.cast same index)) = sumFin values := by
+  cases same
+  rfl
+
+/-- A row-major finite product sum equals its nested sum over the same original bounded components.
+
+The original `Fin.mkDivMod` indices retain the right component as the fastest
+coordinate. Structural recursion splits each first-component block without
+choosing an enumeration or identifying the supplied reading functions.
+-/
+theorem sumFin_product : ∀ (leftSize rightSize : Nat) (values : Fin (leftSize * rightSize) → K),
+    sumFin values = sumFin (fun left : Fin leftSize =>
+      sumFin (fun right : Fin rightSize => values (_root_.Fin.mkDivMod left right)))
+  | 0, rightSize, values => by
+      change sumFin values = 0
+      exact (sumFin_cast (Nat.zero_mul rightSize).symm values).symm
+  | leftSize + 1, rightSize, values => by
+      have dimension : rightSize + leftSize * rightSize = (leftSize + 1) * rightSize :=
+        (Nat.add_comm _ _).trans (Nat.succ_mul _ _).symm
+      let original : Fin (rightSize + leftSize * rightSize) → K :=
+        fun index => values (_root_.Fin.cast dimension index)
+      calc
+        _ = sumFin original := (sumFin_cast dimension values).symm
+        _ = sumFin (fun right : Fin rightSize => original (_root_.Fin.castAdd (leftSize * rightSize) right)) +
+            sumFin (fun remaining : Fin (leftSize * rightSize) => original (_root_.Fin.natAdd rightSize remaining)) :=
+          sumFin_split original
+        _ = sumFin (fun right : Fin rightSize => values (_root_.Fin.mkDivMod 0 right)) +
+            sumFin (fun left : Fin leftSize => sumFin (fun right : Fin rightSize =>
+              values (_root_.Fin.mkDivMod left.succ right))) := by
+          apply congrArg₂ (· + ·)
+          · apply sumFin_congr
+            intro right
+            apply congrArg values
+            apply _root_.Fin.ext
+            exact (Nat.zero_add right.val).symm
+          · rewrite [sumFin_product leftSize rightSize]
+            apply sumFin_congr
+            intro left
+            apply sumFin_congr
+            intro right
+            apply congrArg values
+            apply _root_.Fin.ext
+            change rightSize + (rightSize * left.val + right.val) = rightSize * (left.val + 1) + right.val
+            exact ((Nat.add_assoc _ _ _).symm.trans
+              (congrArg (· + right.val) (Nat.add_comm _ _))).trans
+              (congrArg (· + right.val) (Nat.mul_succ _ _).symm)
+        _ = _ := (sumFin_succ (fun left : Fin (leftSize + 1) =>
+          sumFin (fun right : Fin rightSize => values (_root_.Fin.mkDivMod left right)))).symm
 
 section
 /-- An integer family indexed by the empty finite type has sum zero.

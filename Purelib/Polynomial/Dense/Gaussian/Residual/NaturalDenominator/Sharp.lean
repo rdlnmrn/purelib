@@ -25,6 +25,7 @@ import Purelib.Tactic.QuotientFreeOmega
 import Mathlib.Algebra.Ring.Defs
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Basic
+import Purelib.Data.Rat.Fraction.Cast
 import Purelib.Tactic.Ring
 
 open Purelib.Data
@@ -63,7 +64,7 @@ theorem leadingCoefficient_ne_zero (scale : Nat) (positive : 0 < scale) :
 
 /-- Degree-`degree` monomial `(1 / scale) Z^degree`. -/
 @[expose] def sharpPolynomial (degree scale : Nat) (scalePositive : 0 < scale) :
-    (Dense.Basic.DensePolynomial Gaussian.Basic.Canonical) :=
+    (Basic.DensePolynomial Gaussian.Basic.Canonical) :=
   ⟨leadingCoefficient scale scalePositive :: List.replicate degree 0⟩
 
 /-- The reciprocal-scale monomial already has a normalized coefficient table. -/
@@ -71,7 +72,7 @@ theorem leadingCoefficient_ne_zero (scale : Nat) (positive : 0 < scale) :
     (scalePositive : 0 < scale) :
     (sharpPolynomial degree scale scalePositive).normalize =
       sharpPolynomial degree scale scalePositive := by
-  apply Dense.Basic.DensePolynomial.ext
+  apply Basic.DensePolynomial.ext
   change (leadingCoefficient scale scalePositive :: List.replicate degree 0).dropWhile
       (fun value => decide (value = 0)) = _
   exact Data.List.DropWhile.cons_of_false _ _ _
@@ -90,7 +91,7 @@ theorem leadingCoefficient_ne_zero (scale : Nat) (positive : 0 < scale) :
 @[simp] theorem sharpPolynomial_natDegree (degree scale : Nat)
     (scalePositive : 0 < scale) :
     (sharpPolynomial degree scale scalePositive).natDegree = degree := by
-  unfold Dense.Basic.DensePolynomial.natDegree Dense.Basic.DensePolynomial.degreeCount
+  unfold Basic.DensePolynomial.natDegree Basic.DensePolynomial.degreeCount
   rw [sharpPolynomial_normalize]
   simp only [sharpPolynomial, List.length_cons, Data.List.Replicate.length_replicate]
   omega
@@ -100,12 +101,12 @@ theorem sharpPolynomial_eval (degree scale : Nat)
     (scalePositive : 0 < scale) (point : Gaussian.Basic.Canonical) :
     (sharpPolynomial degree scale scalePositive).eval point =
       leadingCoefficient scale scalePositive * point ^ degree := by
-  unfold sharpPolynomial Dense.Basic.DensePolynomial.eval
+  unfold sharpPolynomial Basic.DensePolynomial.eval
   rw [show leadingCoefficient scale scalePositive :: List.replicate degree 0 =
       [leadingCoefficient scale scalePositive] ++ List.replicate degree 0
     from rfl]
-  rw [Dense.Basic.DensePolynomial.evalCoeffs_append_replicate_zero]
-  simp only [Dense.Basic.DensePolynomial.evalCoeffs, List.foldl_cons, List.foldl_nil, Gaussian.Basic.zero_mul,
+  rw [Basic.DensePolynomial.evalCoeffs_append_replicate_zero]
+  simp only [Basic.DensePolynomial.evalCoeffs, List.foldl_cons, List.foldl_nil, Gaussian.Basic.zero_mul,
     Gaussian.Basic.zero_add, -eq_self, -iff_self]
   rfl
 
@@ -122,13 +123,13 @@ private theorem coefficientDenominator_leading (scale : Nat)
   exact Data.Nat.LCM.lcm_one_right scale
 /-- An all-zero coefficient table has least-common-multiple clearance scale one. -/
 private theorem lcmScale_replicate_zero (count : Nat) :
-    Dense.Gaussian.Denominator.Clearing.LCM.lcmScale
+    Denominator.Clearing.LCM.lcmScale
       (List.replicate count (0 : Gaussian.Basic.Canonical)) = 1 := by
   induction count with
   | zero => rfl
   | succ count inductionHypothesis =>
-      rw [List.replicate_succ, Dense.Gaussian.Denominator.Clearing.LCM.lcmScale,
-        Purelib.Data.Gaussian.Fraction.NaturalDenominator.LeastDenominator.coefficientDenominator_zero,
+      rw [List.replicate_succ, Denominator.Clearing.LCM.lcmScale,
+        Gaussian.Fraction.NaturalDenominator.LeastDenominator.coefficientDenominator_zero,
           inductionHypothesis]
       exact Data.Nat.LCM.lcm_one_right 1
 end
@@ -140,12 +141,12 @@ end
       (sharpPolynomial degree scale scalePositive) = scale := by
   unfold Denominator.Clearing.coefficientScale
   rw [sharpPolynomial_normalize]
-  change Dense.Gaussian.Denominator.Clearing.LCM.lcmScale
+  change Denominator.Clearing.LCM.lcmScale
     (leadingCoefficient scale scalePositive :: List.replicate degree 0) = scale
-  rw [Dense.Gaussian.Denominator.Clearing.LCM.lcmScale,
-    Purelib.Polynomial.Dense.Gaussian.Residual.NaturalDenominator.Sharp.coefficientDenominator_leading scale
+  rw [Denominator.Clearing.LCM.lcmScale,
+    coefficientDenominator_leading scale
       scalePositive,
-    Purelib.Polynomial.Dense.Gaussian.Residual.NaturalDenominator.Sharp.lcmScale_replicate_zero]
+    lcmScale_replicate_zero]
   exact Data.Nat.LCM.lcm_one_right scale
 
 /-- Displayed sample `1 / denominator` with a real positive common
@@ -159,15 +160,15 @@ section
 private theorem sharpFraction_norm_identity (denominator : Nat)
     (positive : 0 < denominator) :
     ((sharpFraction denominator positive).height : Fraction.Rational) *
-        Data.Gaussian.Norm.Basic.normSq (sharpFraction denominator positive).value = 1 := by
+        Gaussian.Norm.Basic.normSq (sharpFraction denominator positive).value = 1 := by
   have clearance :=
     (sharpFraction denominator positive).value_mul_denominator
-  have normClearance := congrArg Data.Gaussian.Norm.Basic.normSq clearance
+  have normClearance := congrArg Gaussian.Norm.Basic.normSq clearance
   rw [Gaussian.Norm.Basic.normSq_mul,
     GaussianInt.normSq_toGaussian,
     GaussianInt.normSq_toGaussian] at normClearance
   change
-    Data.Gaussian.Norm.Basic.normSq (sharpFraction denominator positive).value *
+    Gaussian.Norm.Basic.normSq (sharpFraction denominator positive).value *
         (GaussianInt.normNat
           (GaussianInt.ofNat denominator) :
             Fraction.Rational) =
@@ -176,18 +177,21 @@ private theorem sharpFraction_norm_identity (denominator : Nat)
     at normClearance
   rw [GaussianInt.normNat_ofNat,
     GaussianInt.normNat_ofNat] at normClearance
-  change
-    Data.Gaussian.Norm.Basic.normSq (sharpFraction denominator positive).value *
-        (denominator ^ 2 : Nat) = 1 at normClearance
+  have castOne : ((1 ^ 2 : Nat) : Fraction.Rational) = 1 := by
+    rewrite [Fraction.Cast.natCast_eq_fromInt]
+    decide +kernel
+  have height : (sharpFraction denominator positive).height = denominator ^ 2 :=
+    Gaussian.Basic.Canonical.Fraction.NaturalDenominator.grid_height 1 0 denominator positive
   calc
     ((sharpFraction denominator positive).height : Fraction.Rational) *
-        Data.Gaussian.Norm.Basic.normSq (sharpFraction denominator positive).value =
-        Data.Gaussian.Norm.Basic.normSq (sharpFraction denominator positive).value *
-          (denominator ^ 2 : Nat) := by
-      change (denominator ^ 2 : Nat) *
-          Data.Gaussian.Norm.Basic.normSq (sharpFraction denominator positive).value = _
-      ring1
-    _ = 1 := normClearance
+        Gaussian.Norm.Basic.normSq (sharpFraction denominator positive).value =
+        ((denominator ^ 2 : Nat) : Fraction.Rational) *
+          Gaussian.Norm.Basic.normSq (sharpFraction denominator positive).value :=
+      congrArg (fun retained : Nat => (retained : Fraction.Rational) *
+        Gaussian.Norm.Basic.normSq (sharpFraction denominator positive).value) height
+    _ = Gaussian.Norm.Basic.normSq (sharpFraction denominator positive).value *
+        ((denominator ^ 2 : Nat) : Fraction.Rational) := Fraction.Field.mul_comm _ _
+    _ = 1 := normClearance.trans castOne
 end
 
 /-- The reciprocal-denominator sharpness sample is nonzero. -/
@@ -195,7 +199,7 @@ theorem sharpFraction_value_ne_zero (denominator : Nat)
     (positive : 0 < denominator) :
     (sharpFraction denominator positive).value ≠ 0 := by
   intro zero
-  have identity := Purelib.Polynomial.Dense.Gaussian.Residual.NaturalDenominator.Sharp.sharpFraction_norm_identity
+  have identity := sharpFraction_norm_identity
     denominator positive
   rw [zero, Gaussian.Norm.Basic.normSq_zero, Fraction.Field.mul_zero_direct] at identity
   exact Fraction.Field.zero_ne_one identity
@@ -205,11 +209,11 @@ section
 private theorem leadingCoefficient_norm_identity (scale : Nat)
     (positive : 0 < scale) :
     (scale : Fraction.Rational) ^ 2 *
-        Data.Gaussian.Norm.Basic.normSq (leadingCoefficient scale positive) = 1 := by
+        Gaussian.Norm.Basic.normSq (leadingCoefficient scale positive) = 1 := by
   have clearance := Fraction.UnitNumerator.unitCoordinate_mul_scale scale positive
   calc
     (scale : Fraction.Rational) ^ 2 *
-        Data.Gaussian.Norm.Basic.normSq (leadingCoefficient scale positive) =
+        Gaussian.Norm.Basic.normSq (leadingCoefficient scale positive) =
         (Fraction.UnitNumerator.unitCoordinate scale positive * (scale : Fraction.Rational)) ^ 2 := by
       change (scale : Fraction.Rational) ^ 2 *
         (Fraction.UnitNumerator.unitCoordinate scale positive ^ 2 + 0 ^ 2) = _
@@ -240,14 +244,14 @@ theorem scaled_height_mul_residual_eq_one
           ((sharpFraction denominator denominatorPositive).height :
             Fraction.Rational) ^
             (sharpPolynomial degree scale scalePositive).natDegree *
-        Data.Gaussian.Norm.Basic.normSq ((sharpPolynomial degree scale scalePositive).eval
+        Gaussian.Norm.Basic.normSq ((sharpPolynomial degree scale scalePositive).eval
           (sharpFraction denominator denominatorPositive).value) = 1 := by
   rw [sharpPolynomial_coefficientScale, sharpPolynomial_natDegree,
     sharpPolynomial_eval, Gaussian.Norm.Basic.normSq_mul, Gaussian.Power.normSq_pow]
   have coefficientIdentity :=
-    Purelib.Polynomial.Dense.Gaussian.Residual.NaturalDenominator.Sharp.leadingCoefficient_norm_identity scale
+    leadingCoefficient_norm_identity scale
       scalePositive
-  have sampleIdentity := Purelib.Polynomial.Dense.Gaussian.Residual.NaturalDenominator.Sharp.sharpFraction_norm_identity
+  have sampleIdentity := sharpFraction_norm_identity
     denominator denominatorPositive
   induction degree with
   | zero =>
@@ -255,20 +259,20 @@ theorem scaled_height_mul_residual_eq_one
       exact coefficientIdentity
   | succ degree inductionHypothesis =>
       rw [pow_succ ((sharpFraction denominator denominatorPositive).height : Fraction.Rational) degree,
-        pow_succ (Data.Gaussian.Norm.Basic.normSq (sharpFraction denominator denominatorPositive).value) degree]
+        pow_succ (Gaussian.Norm.Basic.normSq (sharpFraction denominator denominatorPositive).value) degree]
       calc
         (scale : Fraction.Rational) ^ 2 *
             (((sharpFraction denominator denominatorPositive).height : Fraction.Rational) ^ degree *
               ((sharpFraction denominator denominatorPositive).height : Fraction.Rational)) *
-            (Data.Gaussian.Norm.Basic.normSq (leadingCoefficient scale scalePositive) *
-              (Data.Gaussian.Norm.Basic.normSq (sharpFraction denominator denominatorPositive).value ^ degree *
-                Data.Gaussian.Norm.Basic.normSq (sharpFraction denominator denominatorPositive).value)) =
+            (Gaussian.Norm.Basic.normSq (leadingCoefficient scale scalePositive) *
+              (Gaussian.Norm.Basic.normSq (sharpFraction denominator denominatorPositive).value ^ degree *
+                Gaussian.Norm.Basic.normSq (sharpFraction denominator denominatorPositive).value)) =
             ((scale : Fraction.Rational) ^ 2 *
               ((sharpFraction denominator denominatorPositive).height : Fraction.Rational) ^ degree *
-              (Data.Gaussian.Norm.Basic.normSq (leadingCoefficient scale scalePositive) *
-                Data.Gaussian.Norm.Basic.normSq (sharpFraction denominator denominatorPositive).value ^ degree)) *
+              (Gaussian.Norm.Basic.normSq (leadingCoefficient scale scalePositive) *
+                Gaussian.Norm.Basic.normSq (sharpFraction denominator denominatorPositive).value ^ degree)) *
               (((sharpFraction denominator denominatorPositive).height : Fraction.Rational) *
-                Data.Gaussian.Norm.Basic.normSq (sharpFraction denominator denominatorPositive).value) := by
+                Gaussian.Norm.Basic.normSq (sharpFraction denominator denominatorPositive).value) := by
           ring1
         _ = 1 := by
           rewrite [inductionHypothesis, sampleIdentity]

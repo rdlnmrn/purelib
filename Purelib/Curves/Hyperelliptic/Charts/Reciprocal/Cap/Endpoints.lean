@@ -92,25 +92,25 @@ open Purelib.Approximation.Gaussian.Name.Coherent.Arithmetic.Product.Congruence 
 open Purelib.Polynomial.Approximation.Gaussian.Evaluation.Horner (polynomialEval)
 open Purelib.Data.Gaussian.Basic.Canonical
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {collar :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {point :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalRootNames.Gaussian}
-  {owner : Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
-    ((Purelib.Curves.Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.polynomial curve).eval point)}
-  {differential : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} {index : Nat} {box :
-    Purelib.Geometry.Rational.Box}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {collar :
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {point :
+    Gaussian}
+  {owner : Riemann.Topology.SquareRootContinuationChain.Owner
+    ((HyperellipticReciprocal.polynomial curve).eval point)}
+  {differential : Differential genus} {index : Nat} {box :
+    Geometry.Rational.Box}
 
 /-- Evaluate a cap primitive in its intrinsic coordinate chart.
 
 The even chart retains the quotient as its sheet sign, while the odd chart
 uses that same channel as its coordinate for the cached primitive polynomial. -/
-@[expose] def chartPrimitive (overlap : RootCoordinates.Overlap cap point owner)
+@[expose] def chartPrimitive (overlap : Overlap cap point owner)
     (sample : Primitives.Sample cap differential index box) : CoherentNamed :=
   if HyperellipticReciprocal.originOrder curve = 0 then
-    CoherentNamed.mul overlap.coordinate.prepared.denominator
-      (Horner.polynomialEval sample.primitive.value (Coherence.exact point))
-  else Horner.polynomialEval sample.primitive.value overlap.coordinate.prepared.denominator
+    mul overlap.coordinate.prepared.denominator
+      (polynomialEval sample.primitive.value (exact point))
+  else polynomialEval sample.primitive.value overlap.coordinate.prepared.denominator
 
 set_option genInjectivity false in
 /-- Cache a cap endpoint value and its exact coefficient provenance.
@@ -118,23 +118,23 @@ set_option genInjectivity false in
 The factor, parity-dependent coefficient and operational value retain the
 supplied primitive sample and quotient-coordinate occurrence. Their readbacks
 identify that same cached value with the intrinsic cap chart evaluation. -/
-structure Endpoint (overlap : RootCoordinates.Overlap cap point owner)
+structure Endpoint (overlap : Overlap cap point owner)
     (sample : Primitives.Sample cap differential index box) where
   /-- The cached rational factor of the original cap primitive at the retained collar point. -/ factor :
-    ReciprocalRootNames.Gaussian
+    Gaussian
   /-- The cached factor equals the original retained sample factor polynomial evaluation. -/ factor_eq : factor =
     sample.factor.eval point
   /-- The cached rational endpoint coefficient including the original reciprocal parity power. -/ coefficient :
-    ReciprocalRootNames.Gaussian
+    Gaussian
   /-- The coefficient is exactly the original point parity power times the cached primitive factor. -/ coefficient_eq :
     coefficient = point ^
     (1 - HyperellipticReciprocal.originOrder curve) * factor
   /-- The cached operational endpoint value on the original retained coordinate channel. -/ value :
-    Coherent.CoherentNamed
+    CoherentNamed
   /-- The endpoint value is exactly the retained coordinate channel times its cached exact coefficient. -/ value_eq :
-    value = CoherentNamed.mul overlap.coordinate.prepared.denominator (Coherence.exact coefficient)
+    value = mul overlap.coordinate.prepared.denominator (exact coefficient)
   /-- The actual original cap primitive evaluator is operationally equivalent to the cached endpoint value. -/ agrees :
-    Gaussian.Equivalence.NamedEquivalent (overlap.chartPrimitive sample).name value.name
+    NamedEquivalent (overlap.chartPrimitive sample).name value.name
 
 constructive_injectivity Endpoint
 
@@ -143,12 +143,12 @@ namespace Endpoint
 /-- Cache the original primitive factor and endpoint coefficient and certify their actual cap-coordinate evaluation.
 
 The degree branch preserves the original quotient root coordinate, using its square law in the ramified case. -/
-@[expose] def build (overlap : RootCoordinates.Overlap cap point owner)
+@[expose] def build (overlap : Overlap cap point owner)
     (sample : Primitives.Sample cap differential index box) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.RootCoordinates.Overlap.Endpoint overlap sample := by
+      Endpoint overlap sample := by
   let factor := sample.factor.eval point
   let coefficient := point ^ (1 - HyperellipticReciprocal.originOrder curve) * factor
-  let value := CoherentNamed.mul overlap.coordinate.prepared.denominator (Coherence.exact coefficient)
+  let value := mul overlap.coordinate.prepared.denominator (exact coefficient)
   refine ⟨factor, rfl, coefficient, rfl, value, rfl, ?_⟩
   by_cases regular : HyperellipticReciprocal.originOrder curve = 0
   · have primitiveAt : sample.primitive.value.eval point =
@@ -160,12 +160,12 @@ The degree branch preserves the original quotient root coordinate, using its squ
       dsimp only [coefficient]
       rw [regular, Nat.sub_zero, pow_one, primitiveAt]
     rw [chartPrimitive, if_pos regular]
-    change Gaussian.Equivalence.NamedEquivalent
-      (CoherentNamed.mul overlap.coordinate.prepared.denominator
-        (Horner.polynomialEval sample.primitive.value (Coherence.exact point))).name
-      (CoherentNamed.mul overlap.coordinate.prepared.denominator (Coherence.exact coefficient)).name
+    change NamedEquivalent
+      (mul overlap.coordinate.prepared.denominator
+        (polynomialEval sample.primitive.value (exact point))).name
+      (mul overlap.coordinate.prepared.denominator (exact coefficient)).name
     rw [coefficient_eq]
-    exact Congruence.coherentMul_respects _ _ _ _ (NamedEquivalent.refl _)
+    exact coherentMul_respects _ _ _ _ (NamedEquivalent.refl _)
       (Horner.polynomialEval_exact sample.primitive.value point)
   · have branch := (HyperellipticReciprocal.origin_factor curve).2.resolve_left regular
     have coefficients : sample.primitive.value.coeffs =
@@ -173,16 +173,16 @@ The degree branch preserves the original quotient root coordinate, using its squ
       have retained := sample.primitive_coeffs
       rw [branch] at retained
       exact retained
-    have square : Gaussian.Equivalence.NamedEquivalent
-        (CoherentNamed.mul overlap.coordinate.prepared.denominator overlap.coordinate.prepared.denominator).name
-        (Coherence.exact point).name := by
+    have square : NamedEquivalent
+        (mul overlap.coordinate.prepared.denominator overlap.coordinate.prepared.denominator).name
+        (exact point).name := by
       have retained := overlap.coordinate.square
-      change Gaussian.Equivalence.NamedEquivalent
-        (CoherentNamed.mul overlap.coordinate.prepared.denominator overlap.coordinate.prepared.denominator).name
-        (Coherence.exact (point ^ HyperellipticReciprocal.originOrder curve)).name at retained
+      change NamedEquivalent
+        (mul overlap.coordinate.prepared.denominator overlap.coordinate.prepared.denominator).name
+        (exact (point ^ HyperellipticReciprocal.originOrder curve)).name at retained
       have parameter : point ^ HyperellipticReciprocal.originOrder curve = point := by
         rw [branch, pow_one]
-      have names := congrArg (fun scalar => (Coherence.exact scalar).name) parameter
+      have names := congrArg (fun scalar => (exact scalar).name) parameter
       exact names ▸ retained
     have evaluated := Parity.square coefficients
       overlap.coordinate.prepared.denominator point square
@@ -198,30 +198,30 @@ The degree branch preserves the original quotient root coordinate, using its squ
 
 The supplied owner keeps the same root occurrence and cached coefficient;
 its operational comparison identifies the two coordinate presentations. -/
-@[expose] def attached_value {overlap : RootCoordinates.Overlap cap point owner}
+@[expose] def attached_value {overlap : Overlap cap point owner}
     {sample : Primitives.Sample cap differential index box} (endpoint :
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.RootCoordinates.Overlap.Endpoint overlap sample) :
+      Endpoint overlap sample) :
     let root := overlap.attached.owner.certificate overlap.attached.owner.parameterNonzero
-    Gaussian.Equivalence.NamedEquivalent (CoherentNamed.mul root.value (Coherence.exact endpoint.coefficient)).name
+    NamedEquivalent (mul root.value (exact endpoint.coefficient)).name
       endpoint.value.name := by
   rw [endpoint.value_eq]
-  exact Congruence.coherentMul_respects _ _ _ _ overlap.attached.equivalent.symm (NamedEquivalent.refl _)
+  exact coherentMul_respects _ _ _ _ overlap.attached.equivalent.symm (NamedEquivalent.refl _)
 
-variable {overlap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.RootCoordinates.Overlap cap point owner}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+variable {overlap : Overlap cap point owner}
+  {sample : Primitives.Sample cap differential index box}
 
 /-- Read the retained coordinate and multiply by its cached coefficient.
 
 The approximation uses the supplied coordinate channel and endpoint cache,
 without evaluating the polynomial or preparing another root. -/
-@[expose] def approximation (endpoint : Curves.Hyperelliptic.Charts.Reciprocal.Cap.RootCoordinates.Overlap.Endpoint
+@[expose] def approximation (endpoint : Endpoint
   overlap sample) : Gaussian.Sequence.ApproximationData :=
   Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation
-    overlap.coordinate.prepared.denominator.name (Coherence.exact endpoint.coefficient).name
+    overlap.coordinate.prepared.denominator.name (exact endpoint.coefficient).name
 
 /-- Every endpoint approximation sample is the original retained coordinate reading times the cached exact coefficient.
 -/
-theorem sample_eq (endpoint : Curves.Hyperelliptic.Charts.Reciprocal.Cap.RootCoordinates.Overlap.Endpoint overlap
+theorem sample_eq (endpoint : Endpoint overlap
   sample) (stage : Nat) :
     endpoint.approximation.sample stage =
       (Sampling.approximation overlap.coordinate.prepared.denominator.name).sample stage *
@@ -231,14 +231,14 @@ theorem sample_eq (endpoint : Curves.Hyperelliptic.Charts.Reciprocal.Cap.RootCoo
 
 The operational endpoint identity transports the retained coefficient program
 through the sampled-product bridge, preserving independent reading indices. -/
-@[expose] def sampled_agreement (endpoint : Curves.Hyperelliptic.Charts.Reciprocal.Cap.RootCoordinates.Overlap.Endpoint
+@[expose] def sampled_agreement (endpoint : Endpoint
   overlap sample) :
-    Gaussian.Equivalence.Equivalent
+    Equivalent
       (Sampling.approximation (overlap.chartPrimitive sample).name) endpoint.approximation := by
-  have bridge : Gaussian.Equivalence.NamedEquivalent endpoint.value.name endpoint.approximation.toNamed := by
+  have bridge : NamedEquivalent endpoint.value.name endpoint.approximation.toNamed := by
     rw [endpoint.value_eq]
     exact Bridge.coherentMul_toNamed
-      overlap.coordinate.prepared.denominator (Coherence.exact endpoint.coefficient)
+      overlap.coordinate.prepared.denominator (exact endpoint.coefficient)
   exact Equivalent.trans (endpoint.agrees.trans bridge)
     (Equivalent.toNamed_sampling endpoint.approximation)
 

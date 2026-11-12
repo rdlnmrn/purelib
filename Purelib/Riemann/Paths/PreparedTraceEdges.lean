@@ -63,7 +63,7 @@ open Purelib.Polynomial.Geometry.ClearPath (ClearSegment)
 open Purelib.Riemann.Branches.PreparedSheetContinuation (Endpoint StepRequest parameterAt)
 
 /-- The original rational Gaussian box carrier. -/
-public abbrev Box := Purelib.Geometry.Rational.Box
+public abbrev Box := Geometry.Rational.Box
 
 open Purelib.Data.Rat in
 /-- Division by the positive rational 1024 preserves the original weak inequality. -/
@@ -83,16 +83,16 @@ open Purelib.Polynomial.Dense.Gaussian in
 open Purelib.Riemann.Branches in
 /-- The affine line between the original requested segment endpoints equals the exact prepared request parameterization.
 -/
-private theorem line_pointAt {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+private theorem line_pointAt {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
   {ambient : Box}
-    {start finish : Basic.Canonical} (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    {start finish : Basic.Canonical} (segment : ClearSegment polynomial ambient start finish)
     (current : Endpoint) (request : StepRequest) (time : Fraction.Rational) :
     Affine.line (segment.pointAt current.parameter)
       (segment.pointAt request.endpoint.parameter - segment.pointAt current.parameter) time =
         segment.pointAt (parameterAt current request time) := by
   apply Basic.ext <;>
     simp only [PreparedSheetContinuation.parameterAt_eq_affine,
-      Affine.line, Geometry.ClearPath.ClearSegment.pointAt, Scale.scale_re, Scale.scale_im,
+      Affine.line, ClearSegment.pointAt, Scale.scale_re, Scale.scale_im,
       Cast.ofCoordinate_re, Cast.ofCoordinate_im, Basic.add_re, Basic.add_im, Basic.sub_re, Basic.sub_im, Basic.mul_re,
         Basic.mul_im] <;>
     ring1
@@ -101,7 +101,7 @@ namespace PreparedTraceBudget
 
 variable {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
   {start finish :
-  Purelib.Data.Gaussian.Basic.Canonical}
+  Data.Gaussian.Basic.Canonical}
   {segment : ClearSegment polynomial ambient start finish} {left right : Endpoint}
 
 open Purelib.Data.Gaussian in
@@ -153,7 +153,7 @@ def edge (budget : PreparedTraceBudget segment left right)
   let base := segment.pointAt current.parameter
   let finish := segment.pointAt request.endpoint.parameter
   let variation := (Substitution.Affine.composeLine polynomial base (finish - base) -
-    Dense.Basic.DensePolynomial.constant (polynomial.eval base)).normalize
+    constant (polynomial.eval base)).normalize
   let data : EdgeData polynomial first.value second.value base finish :=
     { rootNorm := first.norm
       rootNorm_eq := first.norm_eq
@@ -164,13 +164,13 @@ def edge (budget : PreparedTraceBudget segment left right)
       variation := variation
       variation_eq := by
         intro time
-        rw [Dense.Basic.DensePolynomial.eval_normalize, Dense.Basic.DensePolynomial.eval_sub,
-          Dense.Basic.DensePolynomial.eval_constant, Substitution.Affine.eval_composeLine]
+        rw [eval_normalize, eval_sub,
+          eval_constant, Substitution.Affine.eval_composeLine]
       movementBound := budget.movementBudget
       movementBound_valid := by
         intro time inside
-        rw [Dense.Basic.DensePolynomial.eval_normalize, Dense.Basic.DensePolynomial.eval_sub,
-          Dense.Basic.DensePolynomial.eval_constant, Substitution.Affine.eval_composeLine]
+        rw [eval_normalize, eval_sub,
+          eval_constant, Substitution.Affine.eval_composeLine]
         change normSq (polynomial.eval (Affine.line (segment.pointAt current.parameter)
           (segment.pointAt request.endpoint.parameter - segment.pointAt current.parameter) time) -
             polynomial.eval (segment.pointAt current.parameter)) ≤ budget.movementBudget

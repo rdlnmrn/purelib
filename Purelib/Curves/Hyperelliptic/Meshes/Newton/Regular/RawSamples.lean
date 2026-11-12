@@ -74,26 +74,26 @@ open Purelib
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
-    {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered}
-  (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+    PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {ordered : PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
+    {paired : PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered}
+  (prepared : PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
   (observations : RootContinuation.NewtonProtectedObservations.ProtectedObservations base.bank.toBranchCellBank)
   (preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation base.bank.toBranchCellBank)
     (radius : Fraction.Rational)
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  (regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap)
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  (regular : Charts.Reciprocal.Disk.RegularBounds.Data cap)
 
 variable {newSheet : Fin 2} {floor stage : Nat} {box : Rational.Box}
-  (raw : Hyperelliptic.Meshes.Newton.Regular.RawRequest.RegularRawRequest prepared observations preparation radius
+  (raw : RawRequest.RegularRawRequest prepared observations preparation radius
     regular newSheet floor)
-  (polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box)
-  (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics raw.grid.domains stage) (first
+  (polynomials : PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box)
+  (cache : PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics raw.grid.domains stage) (first
     : Fin genus)
 
 set_option genInjectivity false in
@@ -120,17 +120,17 @@ namespace RegularRawSamples
 
 The even degree certificate gives order zero at the reciprocal origin, and every cache retains its original owner. -/
 @[expose] def build (degree : curve.polynomial.natDegree = 2 * genus + 2) (later : raw.index ≤ stage) :
-    Hyperelliptic.Meshes.Newton.Regular.RawSamples.RegularRawSamples prepared observations preparation radius regular
+    RegularRawSamples prepared observations preparation radius regular
       raw polynomials cache first := by
   have joinedLater := raw.boundary.joining_le.trans (raw.boundary_le.trans later)
   have surfaceLater := raw.joining.surface_le.trans joinedLater
   have basisLater := raw.surface.schedule.physical.basis_le.trans
     (raw.surface.schedule.physical_le.trans (raw.surface.schedule_le.trans surfaceLater))
-  have balance := Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.degree_balance curve
+  have balance := Charts.Reciprocal.HyperellipticReciprocal.degree_balance curve
   rw [degree] at balance
-  have chart : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 0 :=
+  have chart : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 0 :=
     Data.Nat.Addition.add_left_cancel (balance :
-    (2 * genus + 2) + Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = (2 * genus + 2) + 0)
+    (2 * genus + 2) + Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = (2 * genus + 2) + 0)
   let period := Periods.NewtonRawPeriodSamples.Request.RawPeriodSamples.build prepared raw.sewing raw.period cache
   let joining := RootContinuation.NewtonRawJoiningSamples.RawJoiningSamples.build raw.surface raw.sewing raw.joining
     polynomials cache

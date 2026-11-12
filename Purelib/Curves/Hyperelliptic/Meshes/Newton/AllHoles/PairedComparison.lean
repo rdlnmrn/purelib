@@ -117,7 +117,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings
 open Purelib.Riemann.Periods.PeriodMatrix (standardDifferential)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target
@@ -140,13 +140,13 @@ set_option genInjectivity false in
 /-- An original prepared annulus and its common sewing request for two standard differentials.
 
 The request uses the same retained face domains and the original outer preparation. -/
-structure PairedAnnulus (request : NewtonPreparation.FamilyAreaRequest preparation target radius)
-    (lifted : Meshes.LiftedPuncturedGrid request.single.grid.punctured) (first second : Fin genus)
-    (domains : DomainBanks.FaceDomainBank lifted.frames request.single.grid.faces.regulars) where
+structure PairedAnnulus (request : FamilyAreaRequest preparation target radius)
+    (lifted : LiftedPuncturedGrid request.single.grid.punctured) (first second : Fin genus)
+    (domains : FaceDomainBank lifted.frames request.single.grid.faces.regulars) where
   /-- The original annular entry and its retained outer preparation. -/ source : AnnularEntry.Prepared
     request.single.grid lifted
   /-- The common sewing request for the two original standard differentials. -/ sewn :
-    NewtonPairedSewnAreaRequests.PairedSewnRequest request.single source.outer first second domains 0
+    PairedSewnRequest request.single source.outer first second domains 0
 
 constructive_injectivity PairedAnnulus
 
@@ -156,14 +156,14 @@ namespace PairedComparison.NewtonPreparation.FamilyAreaRequest.PairedAnnulus
 
 /-- Attach the common paired sewing request to the supplied original annular preparation. -/
 @[expose] def build (source : AnnularEntry.Prepared request.single.grid lifted)
-    (first second : Fin genus) (domains : DomainBanks.FaceDomainBank lifted.frames request.single.grid.faces.regulars) :
-    Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison.NewtonPreparation.FamilyAreaRequest.PairedAnnulus
+    (first second : Fin genus) (domains : FaceDomainBank lifted.frames request.single.grid.faces.regulars) :
+    PairedAnnulus
       request lifted first second domains :=
   ⟨source, PairedSewnRequest.build source.outer first second domains 0⟩
 
 /-- The maximum sewing stage of the retained annular entries, with zero for the empty list. -/
 @[expose] def index : List
-  (Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison.NewtonPreparation.FamilyAreaRequest.PairedAnnulus
+  (PairedAnnulus
   request lifted first second domains) → Nat
   | [] => 0
   | entry :: tail => max entry.sewn.sewing.stage
@@ -172,7 +172,7 @@ namespace PairedComparison.NewtonPreparation.FamilyAreaRequest.PairedAnnulus
 
 /-- Every retained annulus has sewing stage below the actual list maximum. -/
 theorem index_le : ∀ (entries : List
-  (Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison.NewtonPreparation.FamilyAreaRequest.PairedAnnulus
+  (PairedAnnulus
   request lifted first second domains)) (entry),
     entry ∈ entries → entry.sewn.sewing.stage ≤
       index
@@ -193,16 +193,16 @@ set_option genInjectivity false in
 The ordered source readback identifies the exact original preparation list; the stage is the maximum of the retained
 sewing stages. -/
 structure PairedComparison (prepared : (AllHoleExcision.OuterPreparations excision)) (first second : Fin genus)
-    (domains : DomainBanks.FaceDomainBank lifted.frames request.single.grid.faces.regulars) where
+    (domains : FaceDomainBank lifted.frames request.single.grid.faces.regulars) where
   /-- The ordered paired annular requests on the original common domain bank. -/ entries : List
-    (Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison.NewtonPreparation.FamilyAreaRequest.PairedAnnulus
+    (PairedComparison.NewtonPreparation.FamilyAreaRequest.PairedAnnulus
     request lifted first second domains)
   /-- The paired entries project to exactly the original retained annular preparations. -/ entries_eq : entries.map
     PairedComparison.NewtonPreparation.FamilyAreaRequest.PairedAnnulus.source
     = prepared.entries
   /-- The cached common maximum stage of all retained paired annuli. -/ index : Nat
   /-- The cached common stage is the maximum stage of the actual retained paired entries. -/ index_eq : index =
-    Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison.NewtonPreparation.FamilyAreaRequest.PairedAnnulus.index
+    PairedComparison.NewtonPreparation.FamilyAreaRequest.PairedAnnulus.index
     entries
 
 constructive_injectivity PairedComparison
@@ -210,23 +210,23 @@ constructive_injectivity PairedComparison
 namespace PairedComparison
 
 variable {prepared :
-  (Purelib.Curves.Hyperelliptic.Meshes.Newton.AllHoles.PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations
+  (AllHoleExcision.OuterPreparations
   excision)}
 
 /-- Prepare both differentials on every original annular entry and cache their exact common stage. -/
 @[expose] def build (prepared : (AllHoleExcision.OuterPreparations excision)) (first second : Fin genus)
-    (domains : DomainBanks.FaceDomainBank lifted.frames request.single.grid.faces.regulars) :
+    (domains : FaceDomainBank lifted.frames request.single.grid.faces.regulars) :
     PairedComparison
       prepared first second domains :=
   let entries := prepared.entries.map (fun source =>
-    Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison.NewtonPreparation.FamilyAreaRequest.PairedAnnulus.build
+    NewtonPreparation.FamilyAreaRequest.PairedAnnulus.build
     source first second domains)
   ⟨entries, by
     dsimp only [entries]
     induction prepared.entries with
     | nil => rfl
     | cons source tail ih => exact congrArg (List.cons source) ih,
-    Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison.NewtonPreparation.FamilyAreaRequest.PairedAnnulus.index
+    NewtonPreparation.FamilyAreaRequest.PairedAnnulus.index
       entries, rfl⟩
 
 /-- The actual paired entry count is bounded by the original all-hole request count. -/
@@ -236,7 +236,7 @@ theorem entries_count (comparison :
     comparison.entries.length ≤ request.count := by
   have count := congrArg List.length comparison.entries_eq
   have original := congrArg List.length prepared.entries_eq
-  rw [List.Map.length_map] at count original
+  rw [Map.length_map] at count original
   exact count.le.trans (original.le.trans (request.entries_count excision))
 
 /-- Every retained annulus is ready at a stage above the cached common maximum. -/
@@ -245,7 +245,7 @@ theorem later (comparison :
   prepared first second domains)
     {stage : Nat} (late : comparison.index ≤ stage)
     (entry :
-      Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison.NewtonPreparation.FamilyAreaRequest.PairedAnnulus
+      NewtonPreparation.FamilyAreaRequest.PairedAnnulus
       request lifted first second domains) (member : entry ∈ comparison.entries) :
     entry.sewn.sewing.stage ≤ stage :=
 
@@ -259,16 +259,16 @@ set_option genInjectivity false in
 
 Both components use the supplied triangle reading banks on the original retained source edges. -/
 structure Term {stage : Nat}
-    {firstBank : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential first) stage domains}
-    {secondBank : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential second) stage domains}
-    (left : TrianglePrimitiveReadings.TriangleReadings firstBank lifted.mesh) (right :
-      TrianglePrimitiveReadings.TriangleReadings secondBank lifted.mesh) where
+    {firstBank : FacePrimitiveBank (PeriodMatrix.standardDifferential first) stage domains}
+    {secondBank : FacePrimitiveBank (PeriodMatrix.standardDifferential second) stage domains}
+    (left : TriangleReadings firstBank lifted.mesh) (right :
+      TriangleReadings secondBank lifted.mesh) where
   /-- The actual paired annular request whose original source word is summarized. -/ source :
-    Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison.NewtonPreparation.FamilyAreaRequest.PairedAnnulus
+    NewtonPreparation.FamilyAreaRequest.PairedAnnulus
     request lifted first second domains
   /-- The cached paired area summary on the exact original ordered outer source increments. -/ data :
-    PairedIncrementArea.Summary (source.source.outer.sources.map (fun edge =>
-    (⟨SourceEdge.increment edge left.values, SourceEdge.increment edge right.values⟩ : Stokes.PrimitivePoint)))
+    Summary (source.source.outer.sources.map (fun edge =>
+    (⟨SourceEdge.increment edge left.values, SourceEdge.increment edge right.values⟩ : PrimitivePoint)))
 
 constructive_injectivity Term
 
@@ -276,23 +276,23 @@ namespace Term
 
 variable {stage : Nat}
   {firstBank : FacePrimitiveBank
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential first) stage domains}
+    (PeriodMatrix.standardDifferential first) stage domains}
   {secondBank : FacePrimitiveBank
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential second) stage domains}
+    (PeriodMatrix.standardDifferential second) stage domains}
   {left : TriangleReadings firstBank
     lifted.mesh} {right : TriangleReadings
     secondBank lifted.mesh}
 
 /-- Summarize the paired increments of the supplied reading banks on the original annular outer word. -/
-@[expose] def build (left : TrianglePrimitiveReadings.TriangleReadings firstBank lifted.mesh) (right :
-  TrianglePrimitiveReadings.TriangleReadings secondBank lifted.mesh)
+@[expose] def build (left : TriangleReadings firstBank lifted.mesh) (right :
+  TriangleReadings secondBank lifted.mesh)
     (source :
-      Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison.NewtonPreparation.FamilyAreaRequest.PairedAnnulus
+      NewtonPreparation.FamilyAreaRequest.PairedAnnulus
       request lifted first second domains) :
-      PairedComparison.Term
+      Term
       left right :=
   ⟨source, Summary.build (source.source.outer.sources.map (fun edge =>
-    (⟨SourceEdge.increment edge left.values, SourceEdge.increment edge right.values⟩ : Stokes.PrimitivePoint)))⟩
+    (⟨SourceEdge.increment edge left.values, SourceEdge.increment edge right.values⟩ : PrimitivePoint)))⟩
 
 open
   Purelib.Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison
@@ -301,7 +301,7 @@ open
 theorem area_bound (term :
   Term
   left right) (later : term.source.sewn.sewing.stage ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq term.data.areaValue < request.perHole := by
+    Gaussian.Norm.Basic.normSq term.data.areaValue < request.perHole := by
   rw [term.data.area_eq]
   have references := PairedCutRequest.references_later term.source.sewn.sewing later
   exact (AreaRequest.paired_source_area_accurate request.single term.source.sewn.comparison.left
@@ -316,22 +316,22 @@ Each term keeps its source owner and exact area readback; the aggregate is the s
 structure Sample (comparison :
   PairedComparison
   prepared first second domains) {stage : Nat}
-    {firstBank : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential first) stage domains}
-    {secondBank : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential second) stage domains}
-    (left : TrianglePrimitiveReadings.TriangleReadings firstBank lifted.mesh) (right :
-      TrianglePrimitiveReadings.TriangleReadings secondBank lifted.mesh) where
+    {firstBank : FacePrimitiveBank (PeriodMatrix.standardDifferential first) stage domains}
+    {secondBank : FacePrimitiveBank (PeriodMatrix.standardDifferential second) stage domains}
+    (left : TriangleReadings firstBank lifted.mesh) (right :
+      TriangleReadings secondBank lifted.mesh) where
   /-- The actual paired annular summaries evaluated on the supplied two triangle reading banks. -/ terms : List
     (Term
     left right)
   /-- The evaluated terms project to exactly the original paired request entries. -/ terms_eq : terms.map
     Term.source
     = comparison.entries
-  /-- The cached ordered list of actual annular area values. -/ areas : List Data.Gaussian.Basic.Canonical
+  /-- The cached ordered list of actual annular area values. -/ areas : List Gaussian.Basic.Canonical
   /-- The area list is exactly the list of retained term summaries' area values. -/ areas_eq : areas = terms.map (fun
     term => term.data.areaValue)
-  /-- The cached complete sum of the original annular area values. -/ area : Data.Gaussian.Basic.Canonical
+  /-- The cached complete sum of the original annular area values. -/ area : Gaussian.Basic.Canonical
   /-- The complete area is the Gaussian sum of its retained original area list. -/ area_eq : area =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum areas
+    Gaussian.Norm.Sum.Basic.gaussianSum areas
 
 constructive_injectivity Sample
 
@@ -341,9 +341,9 @@ variable {comparison :
   PairedComparison
   prepared first second domains} {stage : Nat}
   {firstBank : FacePrimitiveBank
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential first) stage domains}
+    (PeriodMatrix.standardDifferential first) stage domains}
   {secondBank : FacePrimitiveBank
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential second) stage domains}
+    (PeriodMatrix.standardDifferential second) stage domains}
   {left : TriangleReadings firstBank
     lifted.mesh} {right : TriangleReadings
     secondBank lifted.mesh}
@@ -352,10 +352,10 @@ variable {comparison :
 @[expose] def build (comparison :
   PairedComparison
   prepared first second domains)
-    (left : TrianglePrimitiveReadings.TriangleReadings firstBank lifted.mesh) (right :
-      TrianglePrimitiveReadings.TriangleReadings secondBank lifted.mesh) :
+    (left : TriangleReadings firstBank lifted.mesh) (right :
+      TriangleReadings secondBank lifted.mesh) :
 
-      PairedComparison.Sample
+      Sample
       comparison left right :=
   let terms := comparison.entries.map
     (Term.build
@@ -366,22 +366,22 @@ variable {comparison :
     induction comparison.entries with
     | nil => rfl
     | cons source tail ih => exact congrArg (List.cons source) ih,
-    areas, rfl, Data.Gaussian.Norm.Sum.Basic.gaussianSum areas, rfl⟩
+    areas, rfl, Gaussian.Norm.Sum.Basic.gaussianSum areas, rfl⟩
 
 open
   Purelib.Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison
   in
 /-- Every retained hole pays its full polygon; no polygon of totals replaces it. -/
 theorem area_accurate (sample :
-  PairedComparison.Sample
+  Sample
   comparison left right) (later : comparison.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq sample.area < target := by
+    Gaussian.Norm.Basic.normSq sample.area < target := by
   have count := congrArg List.length sample.terms_eq
-  rw [List.Map.length_map] at count
+  rw [Map.length_map] at count
   have areaCount : sample.areas.length ≤ request.count := by
-    rw [sample.areas_eq, List.Map.length_map]
+    rw [sample.areas_eq, Map.length_map]
     exact count.le.trans comparison.entries_count
-  have bounds : ∀ value ∈ sample.areas, Data.Gaussian.Norm.Basic.normSq value ≤ request.perHole := by
+  have bounds : ∀ value ∈ sample.areas, Gaussian.Norm.Basic.normSq value ≤ request.perHole := by
     intro value member
     rw [sample.areas_eq] at member
     obtain ⟨term, inTerms, equal⟩ := Map.mem_map.mp member
@@ -391,39 +391,39 @@ theorem area_accurate (sample :
   have estimate := IncrementArea.sum_bound_of_length request.perHole_positive.le bounds areaCount
   rw [request.perHole_eq] at estimate
   rw [sample.area_eq]
-  exact estimate.trans_lt ((show (request.count : Fraction.Rational)^2 * Aggregate.perTerm target request.count =
-    (request.count : Fraction.Rational) * ((request.count : Fraction.Rational) * Aggregate.perTerm target request.count)
+  exact estimate.trans_lt ((show (request.count : Rational)^2 * Aggregate.perTerm target request.count =
+    (request.count : Rational) * ((request.count : Rational) * Aggregate.perTerm target request.count)
       by ring1).trans_lt
       (Aggregate.count_mul_perTerm_lt request.positive request.count))
 
 /-- The complete cached area equals the sum of the actual original outer source polygons, retaining both increment
 coordinates. -/
 theorem area_eq_source_polygons (sample :
-  PairedComparison.Sample
+  Sample
   comparison left right) :
-    sample.area = Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.entries.map (fun entry =>
+    sample.area = Gaussian.Norm.Sum.Basic.gaussianSum (prepared.entries.map (fun entry =>
       PairedIncrementArea.area (entry.outer.sources.map (fun edge =>
-        (⟨SourceEdge.increment edge left.values, SourceEdge.increment edge right.values⟩ : Stokes.PrimitivePoint))))) :=
+        (⟨SourceEdge.increment edge left.values, SourceEdge.increment edge right.values⟩ : PrimitivePoint))))) :=
           by
   have first := congrArg (List.map (fun source :
-    Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison.NewtonPreparation.FamilyAreaRequest.PairedAnnulus
+    NewtonPreparation.FamilyAreaRequest.PairedAnnulus
     request lifted first second domains =>
     PairedIncrementArea.area (source.source.outer.sources.map (fun edge =>
-        (⟨SourceEdge.increment edge left.values, SourceEdge.increment edge right.values⟩ : Stokes.PrimitivePoint)))))
+        (⟨SourceEdge.increment edge left.values, SourceEdge.increment edge right.values⟩ : PrimitivePoint)))))
           sample.terms_eq
   have second := congrArg (List.map (fun source : AnnularEntry.Prepared request.single.grid lifted =>
     PairedIncrementArea.area (source.outer.sources.map (fun edge =>
-        (⟨SourceEdge.increment edge left.values, SourceEdge.increment edge right.values⟩ : Stokes.PrimitivePoint)))))
+        (⟨SourceEdge.increment edge left.values, SourceEdge.increment edge right.values⟩ : PrimitivePoint)))))
           comparison.entries_eq
-  simp only [-eq_self, -iff_self, List.Map.map_map, Function.comp_def] at first second
+  simp only [-eq_self, -iff_self, Map.map_map, Function.comp_def] at first second
   have values : sample.terms.map (fun term => term.data.areaValue) = sample.terms.map (fun term =>
       PairedIncrementArea.area (term.source.source.outer.sources.map (fun edge =>
-        (⟨SourceEdge.increment edge left.values, SourceEdge.increment edge right.values⟩ : Stokes.PrimitivePoint)))) :=
+        (⟨SourceEdge.increment edge left.values, SourceEdge.increment edge right.values⟩ : PrimitivePoint)))) :=
           by
     induction sample.terms with
     | nil => rfl
     | cons term tail ih => exact congrArg₂ List.cons term.data.area_eq ih
-  exact sample.area_eq.trans (congrArg Data.Gaussian.Norm.Sum.Basic.gaussianSum (sample.areas_eq.trans
+  exact sample.area_eq.trans (congrArg Gaussian.Norm.Sum.Basic.gaussianSum (sample.areas_eq.trans
     (values.trans (first.trans second))))
 
 end Sample

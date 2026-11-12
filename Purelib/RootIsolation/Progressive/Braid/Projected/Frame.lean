@@ -8,13 +8,9 @@ import Purelib.Data.Rat.Fraction
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Geometry.Rational.Box.Refinement
+public import Purelib.Geometry.Rational.Box.Rotation
 import Purelib.Tactic.QuotientFreeOmega
 
-open Purelib
-
-open Purelib.RootIsolation
-
-section
 public section
 
 /-!
@@ -36,11 +32,16 @@ transport, expressed in the endpoint projection orders.
 
 namespace Purelib.RootIsolation.Progressive.Braid.Projected.Frame
 
+open Purelib
+open Purelib.RootIsolation
+open Purelib.Geometry.Rational
+
+
 /-! ## Projection-ordered chamber frames -/
 
 set_option genInjectivity false in
 /-- A chamber frame equipped with a rationally certified left-to-right root
-order.  `orderToOwner` deliberately remains separate from the chamber's
+order in one rational rotation chart. `orderToOwner` deliberately remains separate from the chamber's
 internal owner numbering.  The sampled local owners may be strict refinements
 of the chamber owners and hence can resolve a projection even when the
 original owner boxes are too coarse to do so. -/
@@ -55,11 +56,19 @@ structure ProjectedFrame (strands : Nat) where
     strands,
     (sampleOwner position).box.Refines
       (chamber.owner (orderToOwner.forward position)).box
-  /-- The sample-owner boxes are strictly ordered by their horizontal coordinates. -/ xOrdered : ∀ left right : Fin
+  /-- The shared exact rotation slope; zero preserves the original horizontal chart. -/ slope :
+    Data.Rat.Fraction.Rational := 0
+  /-- The rotated enclosures of sample-owner boxes are strictly ordered by their horizontal coordinates. -/
+    xOrdered : ∀ left right : Fin
     strands, left.val < right.val →
-    (sampleOwner left).box.xUpper < (sampleOwner right).box.xLower
+    (Box.Rotation.enclosure slope (sampleOwner left).box).xUpper <
+      (Box.Rotation.enclosure slope (sampleOwner right).box).xLower
 
 constructive_injectivity ProjectedFrame
+
+
+
+
 
 namespace ProjectedFrame
 
@@ -79,8 +88,8 @@ theorem ownerIndex_injective {strands :
 theorem adjacent_x_gap {strands : Nat}
   (frame : Progressive.Braid.Projected.Frame.ProjectedFrame strands)
     (generator : Topology.Knot.Braid.Generator strands) :
-    (frame.sampleOwner generator.left).box.xUpper <
-      (frame.sampleOwner generator.right).box.xLower := by
+    (Box.Rotation.enclosure frame.slope (frame.sampleOwner generator.left).box).xUpper <
+      (Box.Rotation.enclosure frame.slope (frame.sampleOwner generator.right).box).xLower := by
   apply frame.xOrdered
   change generator.index.val < generator.index.val + 1
   omega
@@ -88,5 +97,3 @@ theorem adjacent_x_gap {strands : Nat}
 end ProjectedFrame
 
 end Purelib.RootIsolation.Progressive.Braid.Projected.Frame
-
-end

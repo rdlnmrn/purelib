@@ -38,6 +38,8 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.RootIsolation.State.WindingOne.Basic
 import Purelib.Data.Rat.Fraction.Arithmetic
 
+open Purelib.RootIsolation.SquareRoot.Replay
+
 public section
 
 /-! Exact deferred-refiner provenance through preparation. These proofs do
@@ -52,7 +54,7 @@ open Purelib.Riemann.Integration Purelib.Riemann.RootContinuation Purelib.Rieman
 open Purelib.RootIsolation in
 /-- The quadratic sample recipe marks the given owner as deferred. -/
 abbrev Deferred {parameter : Gaussian} (owner : Owner parameter) : Prop :=
-  SquareRoot.Replay.QuadraticSampleReplay.Recipe.Matches .deferred owner
+  QuadraticSampleReplay.Recipe.Matches .deferred owner
 
 section
 open Purelib.RootIsolation
@@ -60,7 +62,7 @@ open Purelib.RootIsolation.SquareRoot.Clearance
 /-- Coefficient-based strengthening produces an owner matching the deferred recipe. -/
 private theorem coefficient {parameter : Gaussian} (owner : Owner parameter) :
     Deferred (QuadraticCoefficientClearance.strengthen owner) :=
-  SquareRoot.Replay.QuadraticSampleReplay.matches_strengthen owner
+  QuadraticSampleReplay.matches_strengthen owner
 
 /-- Exact quadratic strengthening preserves a deferred owner recipe.
 
@@ -69,7 +71,7 @@ private theorem strengthened {parameter : Gaussian} (owner : Owner parameter) (r
     Deferred (ExactQuadraticOwnerClearance.strengthenQuadraticOwner owner) := by
   rcases ExactQuadraticOwnerClearance.strengthenQuadraticOwner_source_or_deferred owner with same | ⟨_, _, same⟩
   · rw [same]; exact ready
-  · rw [same]; exact SquareRoot.Replay.QuadraticSampleReplay.matches_ownerOfState _ _
+  · rw [same]; exact QuadraticSampleReplay.matches_ownerOfState _ _
 
 end
 
@@ -84,12 +86,12 @@ private theorem recentered {parameter : Gaussian} (owner : Owner parameter) (rea
   · exact ready
   · rename_i reset _
     rw [reset.deferred]
-    exact SquareRoot.Replay.QuadraticSampleReplay.matches_ownerOfState _ _
+    exact QuadraticSampleReplay.matches_ownerOfState _ _
 
 section Preparation
 
 variable {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
-  {start finish : Gaussian} (segment : Purelib.Polynomial.Geometry.ClearPath.ClearSegment polynomial ambient start
+  {start finish : Gaussian} (segment : Polynomial.Geometry.ClearPath.ClearSegment polynomial ambient start
     finish)
   (current : PreparedSheetContinuation.Endpoint)
   (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
@@ -114,7 +116,7 @@ private theorem baseline (ready : Deferred owner) :
     · exact strengthened _ ready
   · split
     · rename_i accepted found
-      exact SquareRoot.Replay.QuadraticSampleReplay.matches_checkedPreparation _ _ _ _ accepted found
+      exact QuadraticSampleReplay.matches_checkedPreparation _ _ _ _ accepted found
     · exact uniform segment current owner request
 
 section
@@ -186,17 +188,17 @@ open Purelib.RootIsolation in
 
 Retains the checked displacement, reserve and boundary-clearance identities of the actual carried state. -/
 theorem carried {source target : Gaussian} {ambient : Box}
-    {state : SquareRoot.Replay.PreparedOwnerTransportReplay.State source ambient} {reserve : Coordinate}
-    (result : SquareRoot.Replay.PreparedOwnerTransportReplay.Checked state target reserve) : Deferred result.value := by
+    {state : PreparedOwnerTransportReplay.State source ambient} {reserve : Coordinate}
+    (result : PreparedOwnerTransportReplay.Checked state target reserve) : Deferred result.value := by
   rw [result.value_eq]
-  rw [← SquareRoot.Replay.PreparedOwnerTransportReplay.carriedState_owner_eq_reservedTransport state
+  rw [← PreparedOwnerTransportReplay.carriedState_owner_eq_reservedTransport state
     result.sourceNonzero result.targetNonzero result.different result.small
     (by rw [← result.displacement_eq]; exact result.leftSmall)
     (by rw [← result.displacement_eq]; exact result.rightSmall)
     (by rw [← result.displacement_eq]; exact result.bottomSmall)
     (by rw [← result.displacement_eq]; exact result.topSmall)
     reserve (by rw [← result.carried_eq]; exact result.reserveSmall)]
-  exact SquareRoot.Replay.QuadraticSampleReplay.matches_ownerOfState _ _
+  exact QuadraticSampleReplay.matches_ownerOfState _ _
 
 open Purelib.RootIsolation in
 set_option genInjectivity false in
@@ -209,8 +211,8 @@ inductive Issue where
     Owner parameter)
   /-- Original transport state, target and reserve together with the exact failed check. -/ | transport {source :
     Gaussian} {ambient : Box}
-      (state : SquareRoot.Replay.PreparedOwnerTransportReplay.State source ambient) (target : Gaussian)
-      (reserve : Coordinate) (failure : SquareRoot.Replay.PreparedOwnerTransportReplay.Failure state target reserve)
+      (state : PreparedOwnerTransportReplay.State source ambient) (target : Gaussian)
+      (reserve : Coordinate) (failure : PreparedOwnerTransportReplay.Failure state target reserve)
 
 constructive_injectivity Issue
 
@@ -239,18 +241,18 @@ Reuses the supplied owner's captured initial state. Stationary transport consult
 retain the exact check witness and successful transport yields its deferred certificate. -/
 @[expose] def transport {source target : Gaussian} (owner : Owner source) (history : History owner)
     (nonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) < owner.track.initial.clearance.bound)
+    (small : Norm.Basic.normSq (source - target) < owner.track.initial.clearance.bound)
     (reserve : Coordinate) :
     Outcome (ExactQuadraticOwnerClearance.reservedTransport owner nonzero small reserve) := by
-  let restored : SquareRoot.Replay.PreparedRootStateReplay.Checked _ owner.ambient
-      (SquareRoot.Replay.PreparedRootStateReplay.capture owner.track.initial) := ⟨owner.track.initial, rfl⟩
-  match SquareRoot.Replay.PreparedOwnerTransportReplay.check restored.state target reserve with
+  let restored : PreparedRootStateReplay.Checked _ owner.ambient
+      (PreparedRootStateReplay.capture owner.track.initial) := ⟨owner.track.initial, rfl⟩
+  match PreparedOwnerTransportReplay.check restored.state target reserve with
   | .error failure =>
       cases failure with
       | stationary same =>
           exact match history.get with
           | .error issue => .error issue
-          | .ok retained => .ok ⟨SquareRoot.Replay.QuadraticSampleReplay.matches_stationaryTransport
+          | .ok retained => .ok ⟨QuadraticSampleReplay.matches_stationaryTransport
               .deferred owner retained.down nonzero small reserve same⟩
       | sourceZero zero => exact .error (.transport restored.state target reserve (.sourceZero zero))
       | targetZero zero => exact .error (.transport restored.state target reserve (.targetZero zero))
@@ -270,8 +272,8 @@ open Purelib.Curves.Hyperelliptic in
 /-- Check the recipe outcome for an exact direct query of a prepared edge.
 
 Uses the cached prepared owner's history and the original query position, clearance and reserve data. -/
-@[expose] def query {genus : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
-  Differentials.Basic.Differential genus}
+@[expose] def query {genus : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
     (parent : PreparedEdge curve differential) (history : History parent.cached.preparedOwner)
     (fraction : Coordinate) (inside : 0 ≤ fraction ∧ fraction ≤ 1) :
     Outcome (parent.directQueryOwner fraction inside) :=
@@ -291,8 +293,8 @@ open Purelib.Riemann.Integration
 /-- The exact direct-query owner transport preserves a deferred recipe.
 
 Uses the retained parent-position equation to cast the original owner without replacing its mathematical identity. -/
-private theorem queryOwnerAt_deferred {genus : Nat} {curve : Basic.HyperellipticCurve genus}
-    {differential : Differentials.Basic.Differential genus} (parent : PreparedEdge curve differential)
+private theorem queryOwnerAt_deferred {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} (parent : PreparedEdge curve differential)
     (current : PreparedSheetContinuation.Endpoint)
     (position : PreparedSubdivisionModelCore.ParentPosition parent current)
     (ready : Deferred (parent.directQueryOwner position.fraction position.inside)) :
@@ -305,8 +307,8 @@ private theorem queryOwnerAt_deferred {genus : Nat} {curve : Basic.Hyperelliptic
 
 Checks the parent's original direct query and transports its certificate through the leaf's owner identity and cached
 preparation; check failures retain their original issue. -/
-@[expose] def leafHistory {genus : Nat} {curve : Basic.HyperellipticCurve genus}
-    {differential : Differentials.Basic.Differential genus} {parent : PreparedEdge curve differential}
+@[expose] def leafHistory {genus : Nat} {curve : HyperellipticCurve genus}
+    {differential : Differential genus} {parent : PreparedEdge curve differential}
     {diameter : Coordinate} {left right : PreparedSheetContinuation.Endpoint}
     (history : History parent.cached.preparedOwner)
     (leaf : CheckedDirectGeometry.Leaf parent left right diameter) :
@@ -330,8 +332,8 @@ open Purelib.Curves.Hyperelliptic in
 /-- Owner-indexed recipe histories for an ordered list of centered parents.
 
 Stores one deferred outcome for each parent's actual cached prepared owner. -/
-@[expose] def Histories {genus : Nat} {curve : Basic.HyperellipticCurve genus} {source :
-  Differentials.Basic.Differential genus} :
+@[expose] def Histories {genus : Nat} {curve : HyperellipticCurve genus} {source :
+  Differential genus} :
     List (CenteredEdge curve source) → Type
   | [] => Unit
   | parent :: parents => History parent.edge.cached.preparedOwner × Histories parents
@@ -340,15 +342,15 @@ open Purelib.Curves.Hyperelliptic
 /-- Build inherited histories for every original centered parent.
 
 The ordered history bank retains each parent's exact cached prepared owner as an uncertified inherited issue. -/
-@[expose] def Histories.inherited {genus : Nat} {curve : Basic.HyperellipticCurve genus} {source :
-  Differentials.Basic.Differential genus} :
+@[expose] def Histories.inherited {genus : Nat} {curve : HyperellipticCurve genus} {source :
+  Differential genus} :
     (parents : List (CenteredEdge curve source)) → Histories parents
   | [] => ()
   | parent :: parents => ⟨History.inherited parent.edge.cached.preparedOwner, inherited parents⟩
 
 /-- Append two ordered banks of owner-indexed recipe histories. -/
-@[expose] def Histories.append {genus : Nat} {curve : Basic.HyperellipticCurve genus} {source :
-  Differentials.Basic.Differential genus} :
+@[expose] def Histories.append {genus : Nat} {curve : HyperellipticCurve genus} {source :
+  Differential genus} :
     {first second : List (CenteredEdge curve source)} →
     Histories first → Histories second → Histories (first ++ second)
   | [], _, _, second => second
@@ -358,8 +360,8 @@ The ordered history bank retains each parent's exact cached prepared owner as an
 
 Leaf histories use the exact retained parent queries; split histories follow the same first/last child order and
 supplied center witnesses. -/
-@[expose] def Histories.toLocal {genus : Nat} {curve : Basic.HyperellipticCurve genus} {source :
-  Differentials.Basic.Differential genus}
+@[expose] def Histories.toLocal {genus : Nat} {curve : HyperellipticCurve genus} {source :
+  Differential genus}
     (parent : CenteredEdge curve source) (history : History parent.edge.cached.preparedOwner)
     {diameter : Coordinate} : {depth : Nat} → {left right : PreparedSheetContinuation.Endpoint} →
     (mesh : CheckedDirectGeometry.Mesh parent.edge diameter depth left right) →
@@ -374,8 +376,8 @@ supplied center witnesses. -/
 
 Pairs each original parent history with its actual mesh and center witnesses, preserving the resulting child-block
 order. -/
-@[expose] def Histories.blocks {genus : Nat} {curve : Basic.HyperellipticCurve genus} {source :
-  Differentials.Basic.Differential genus}
+@[expose] def Histories.blocks {genus : Nat} {curve : HyperellipticCurve genus} {source :
+  Differential genus}
     {diameter : Coordinate} {depth : Nat} : {parents : List (CenteredEdge curve source)} →
     (meshes : PreparedDirectDyadicRefinements.CheckedDirectMeshes depth diameter parents) →
     (centers : BankCenters meshes) → Histories parents →

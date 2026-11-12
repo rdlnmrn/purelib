@@ -75,6 +75,14 @@ import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Gaussian.Power.Bounds
+
+open Purelib.Approximation.Gaussian.Name.Coherent
+
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Curves.Hyperelliptic
+
 open Purelib.Integration.Polynomial.Gaussian
 
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_antitone)
@@ -102,17 +110,17 @@ open Purelib.Data.Gaussian in
 /-- The canonical Gaussian rational carrier. -/
 abbrev Gaussian := Basic.Canonical
 /-- The original rational box retaining its coordinate bounds. -/
-abbrev Box := Purelib.Geometry.Rational.Box
+abbrev Box := Geometry.Rational.Box
 /-- The original square-root owner indexed by its exact radicand. -/
-abbrev Owner := Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+abbrev Owner := Topology.SquareRootContinuationChain.Owner
 /-- The retained unit-interval endpoint of a cleared segment. -/
-abbrev Endpoint := Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.Endpoint
+abbrev Endpoint := Branches.ClearSheetContinuation.Subdivision.Endpoint
 /-- The exact endpoint and positive root-diameter request for preparation. -/
-abbrev StepRequest := Purelib.Riemann.Branches.PreparedSheetContinuation.StepRequest
+abbrev StepRequest := Branches.PreparedSheetContinuation.StepRequest
 /-- The original polynomial cell model retaining endpoints, allowance, and observations. -/
-abbrev CellModel := Purelib.Integration.Polynomial.Gaussian.Cell.Basic.CellModel
+abbrev CellModel := Cell.Basic.CellModel
 /-- The original coherent Gaussian name with its executable approximation process. -/
-abbrev CoherentNamed := Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed
+abbrev CoherentNamed := Approximation.Gaussian.Name.Coherent.CoherentNamed
 
 /-- Sixteen is nonnegative in the rational coordinate carrier. -/
 theorem sixteen_nonnegative :
@@ -145,9 +153,9 @@ private theorem intervalSqLower_nonnegative (lower upper : Coordinate) :
     0 <= intervalSqLower lower upper := by
   unfold intervalSqLower
   split
-  · exact Fraction.Order.Arithmetic.sq_nonneg_direct lower
+  · exact Arithmetic.sq_nonneg_direct lower
   · split
-    · exact Fraction.Order.Arithmetic.sq_nonneg_direct upper
+    · exact Arithmetic.sq_nonneg_direct upper
     · exact le_rfl
 
 /-- An interval's computed lower bound is no greater than the square of any contained coordinate.
@@ -161,29 +169,29 @@ private theorem intervalSqLower_le_sq {lower value upper : Coordinate}
   by_cases lowerPositive : 0 < lower
   · rw [if_pos lowerPositive]
     rw [pow_two, pow_two]
-    exact Fraction.Order.Arithmetic.mul_le_mul_direct lowerLe lowerLe
+    exact Arithmetic.mul_le_mul_direct lowerLe lowerLe
       lowerPositive.le (lowerPositive.le.trans lowerLe)
   · rw [if_neg lowerPositive]
     by_cases upperNegative : upper < 0
     · rw [if_pos upperNegative]
       have negOrder : -upper <= -value :=
-        Fraction.Order.Arithmetic.neg_le_neg_direct valueLe
+        Arithmetic.neg_le_neg_direct valueLe
       have negUpperNonnegative : 0 <= -upper := by
-        have reversed := Fraction.Order.Arithmetic.neg_le_neg_direct upperNegative.le
+        have reversed := Arithmetic.neg_le_neg_direct upperNegative.le
         simpa only [neg_zero] using reversed
       have negValueNonnegative : 0 <= -value :=
         by
-          have reversed := Fraction.Order.Arithmetic.neg_le_neg_direct (valueLe.trans upperNegative.le)
+          have reversed := Arithmetic.neg_le_neg_direct (valueLe.trans upperNegative.le)
           simpa only [neg_zero] using reversed
       rw [pow_two, pow_two]
       calc
         upper * upper = (-upper) * (-upper) := by ring1
         _ <= (-value) * (-value) :=
-          Fraction.Order.Arithmetic.mul_le_mul_direct negOrder negOrder
+          Arithmetic.mul_le_mul_direct negOrder negOrder
             negUpperNonnegative negValueNonnegative
         _ = value * value := by ring1
     · rw [if_neg upperNegative]
-      exact Fraction.Order.Arithmetic.sq_nonneg_direct value
+      exact Arithmetic.sq_nonneg_direct value
 
 end
 
@@ -206,7 +214,7 @@ open Purelib.Data.Gaussian in
 private theorem boxNormSqLower_le_of_contains {box : Box}
     {candidate : Gaussian} (inside : box.Contains candidate) :
     boxNormSqLower box <=
-      Data.Gaussian.Norm.Basic.normSq candidate := by
+      Norm.Basic.normSq candidate := by
   exact add_le_add
     (intervalSqLower_le_sq inside.1 inside.2.1)
     (intervalSqLower_le_sq inside.2.2.1 inside.2.2.2)
@@ -231,7 +239,7 @@ private theorem boxSumNormSqLower_le_of_contains {box : Box}
     {left right : Gaussian} (leftInside : box.Contains left)
     (rightInside : box.Contains right) :
     boxSumNormSqLower box <=
-      Data.Gaussian.Norm.Basic.normSq (left + right) := by
+      Norm.Basic.normSq (left + right) := by
   apply add_le_add
   · apply intervalSqLower_le_sq
     · calc
@@ -262,17 +270,17 @@ theorem normSq_root_sub_le_of_residuals
     {sumLower leftResidual parameterMovement rightResidual : Coordinate}
     (sumPositive : 0 < sumLower)
     (sumBound : sumLower <=
-      Data.Gaussian.Norm.Basic.normSq (leftRoot + rightRoot))
+      Norm.Basic.normSq (leftRoot + rightRoot))
     (leftResidualBound :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (leftRoot * leftRoot - leftParameter) <= leftResidual)
     (parameterMovementBound :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (leftParameter - rightParameter) <= parameterMovement)
     (rightResidualBound :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (rightRoot * rightRoot - rightParameter) <= rightResidual) :
-    Data.Gaussian.Norm.Basic.normSq (leftRoot - rightRoot) <=
+    Norm.Basic.normSq (leftRoot - rightRoot) <=
       4 * (leftResidual + parameterMovement + rightResidual) / sumLower := by
   have identity :
       (leftRoot - rightRoot) * (leftRoot + rightRoot) =
@@ -290,37 +298,37 @@ theorem normSq_root_sub_le_of_residuals
     (Norm.Basic.normSq_nonneg _).trans
       rightResidualBound
   have firstTwo :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           ((leftRoot * leftRoot - leftParameter) +
             (leftParameter - rightParameter)) <=
         2 * (leftResidual + parameterMovement) := by
     exact (Norm.Bounds.normSq_add_le_two _ _).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add leftResidualBound parameterMovementBound) (by decide))
   have residualBound :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           ((leftRoot * leftRoot - leftParameter) +
               (leftParameter - rightParameter) -
             (rightRoot * rightRoot - rightParameter)) <=
         4 * (leftResidual + parameterMovement + rightResidual) := by
     calc
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           ((leftRoot * leftRoot - leftParameter) +
               (leftParameter - rightParameter) -
             (rightRoot * rightRoot - rightParameter)) <=
           2 *
-            (Data.Gaussian.Norm.Basic.normSq
+            (Norm.Basic.normSq
                 ((leftRoot * leftRoot - leftParameter) +
                   (leftParameter - rightParameter)) +
-              Data.Gaussian.Norm.Basic.normSq
+              Norm.Basic.normSq
                 (rightRoot * rightRoot - rightParameter)) :=
         Norm.Bounds.normSq_sub_le_two _ _
       _ <= 2 * (2 * (leftResidual + parameterMovement) + rightResidual) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add firstTwo rightResidualBound) (by decide)
       _ <= 4 * (leftResidual + parameterMovement + rightResidual) := by
         have twiceLeFour : 2 * rightResidual <= 4 * rightResidual :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          Arithmetic.mul_le_mul_of_nonneg_right_direct
             (show (2 : Coordinate) <= 4 by decide) rightResidualNonnegative
         calc
           2 * (2 * (leftResidual + parameterMovement) + rightResidual) =
@@ -330,18 +338,18 @@ theorem normSq_root_sub_le_of_residuals
             add_le_add le_rfl twiceLeFour
           _ = 4 * (leftResidual + parameterMovement + rightResidual) := by
             ring1
-  apply (Fraction.Order.Field.le_div_iff_pos sumPositive).2
+  apply (Field.le_div_iff_pos sumPositive).2
   calc
-    Data.Gaussian.Norm.Basic.normSq (leftRoot - rightRoot) *
+    Norm.Basic.normSq (leftRoot - rightRoot) *
         sumLower <=
-      Data.Gaussian.Norm.Basic.normSq (leftRoot - rightRoot) *
-        Data.Gaussian.Norm.Basic.normSq (leftRoot + rightRoot) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct sumBound
+      Norm.Basic.normSq (leftRoot - rightRoot) *
+        Norm.Basic.normSq (leftRoot + rightRoot) :=
+      Arithmetic.mul_le_mul_of_nonneg_left_direct sumBound
         (Norm.Basic.normSq_nonneg _)
-    _ = Data.Gaussian.Norm.Basic.normSq
+    _ = Norm.Basic.normSq
         ((leftRoot - rightRoot) * (leftRoot + rightRoot)) := by
       rw [Norm.Basic.normSq_mul]
-    _ = Data.Gaussian.Norm.Basic.normSq
+    _ = Norm.Basic.normSq
         ((leftRoot * leftRoot - leftParameter) +
             (leftParameter - rightParameter) -
           (rightRoot * rightRoot - rightParameter)) := by rw [identity]
@@ -358,7 +366,7 @@ set_option genInjectivity false in
 The certificate retains ambient containment, ordered endpoints, and enough prepared clearance for the whole requested
 variation. It is indexed by the original curve and differential. -/
 structure PreparedEdge {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus) where
   /-- The original ambient box of the cleared segment. -/ ambient : Box
   /-- The original start point of the cleared segment. -/ start : Gaussian
@@ -390,20 +398,20 @@ open Purelib
 open Purelib.Curves.Hyperelliptic.Differentials
 
 /-- The local source parameter zero lies in the unit interval. -/
-theorem baseInside {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+theorem baseInside {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (_prepared : PreparedEdge curve differential) :
     (0 : Coordinate) <= 0 ∧ (0 : Coordinate) <= 1 := by decide
 
 /-- Restrict the original cleared segment to the retained source and request endpoints. -/
-def localSegment {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def localSegment {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :=
   PreparedModels.edge curve prepared.segment
     prepared.within prepared.left prepared.request
 
 /-- Read the exact affine point on the retained local segment at a rational fraction. -/
-def point {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def point {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate) :
     Gaussian :=
@@ -413,7 +421,7 @@ section
 open Purelib.Riemann.Branches
 /-- The local source point is exactly the original segment point at the retained left endpoint. -/
 @[simp] theorem point_zero_eq_source {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     prepared.point 0 =
@@ -424,7 +432,7 @@ open Purelib.Riemann.Branches
       prepared.segment prepared.within prepared.left prepared.request 0).symm
 
 /-- The local source point is exactly the original segment point at the retained left endpoint. -/
-@[simp] theorem point_zero {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+@[simp] theorem point_zero {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     prepared.point 0 =
@@ -435,7 +443,7 @@ open Purelib.Riemann.Branches
       prepared.segment prepared.within prepared.left prepared.request 0).symm
 
 /-- The local target point is exactly the original segment point at the request endpoint. -/
-@[simp] theorem point_one {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+@[simp] theorem point_one {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     prepared.point 1 =
@@ -448,7 +456,7 @@ open Purelib.Riemann.Branches
 end
 
 /-- Read the certified nonzero sheet value using the exact prepared-owner cache at the requested fraction. -/
-def sheetValue {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def sheetValue {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :=
@@ -458,7 +466,7 @@ def sheetValue {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCu
         prepared.sheet fraction inside
 
 /-- Read the coherent differential coefficient from the cached sheet value at the exact local point. -/
-def coefficient {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def coefficient {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) : CoherentNamed :=
@@ -469,7 +477,7 @@ def coefficient {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticC
 
 open Purelib.Approximation.Gaussian in
 /-- Read the coherent root name from the cached direct query owner at the requested fraction. -/
-@[irreducible] def rootName {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+@[irreducible] def rootName {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :
@@ -482,7 +490,7 @@ section
 open Purelib.Approximation.Gaussian
 open Purelib.Riemann.Branches
 /-- Read the root name of canonical preparation at the original source endpoint. -/
-@[irreducible] def preparedRootName {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+@[irreducible] def preparedRootName {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     Name.Basic.Named :=
@@ -490,7 +498,7 @@ open Purelib.Riemann.Branches
     prepared.left prepared.owner prepared.request
 
 /-- Read the transported root name at the retained request endpoint. -/
-@[irreducible] def transportedRootName {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+@[irreducible] def transportedRootName {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     Name.Basic.Named :=
@@ -505,7 +513,7 @@ open Purelib.RootIsolation.SquareRoot.Clearance in
 
 The supplied fraction and interval evidence determine the exact target, and the cache equality transfers the original
 squared-displacement certificate. -/
-def directQueryOwner {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def directQueryOwner {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :
@@ -532,7 +540,7 @@ open Purelib.Riemann.Branches
 open Purelib.Riemann.RootContinuation
 /-- The root-name query reads exactly the retained direct query owner's name. -/
 theorem rootName_eq_directQueryOwnerRootName {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :
@@ -550,7 +558,7 @@ theorem rootName_eq_directQueryOwnerRootName {genus : Nat}
 
 /-- The sheet-value query reads exactly the retained direct query owner's name. -/
 theorem sheetValue_name_eq_directQueryOwnerRootName {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :
@@ -577,7 +585,7 @@ open Purelib.Riemann.Branches
 open Purelib.Riemann.RootContinuation
 /-- The prepared source root and its exact zero-fraction query name equivalent roots. -/
 def preparedRootEquivalent_baseQuery {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     Equivalence.NamedEquivalent prepared.preparedRootName
@@ -585,7 +593,7 @@ def preparedRootEquivalent_baseQuery {genus : Nat}
   let source := PreparedSheetContinuation.prepared
     prepared.segment prepared.left prepared.owner prepared.request
   have sameSmall :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (curve.polynomial.eval
               (prepared.segment.pointAt prepared.left.parameter) -
             curve.polynomial.eval
@@ -608,7 +616,7 @@ def preparedRootEquivalent_baseQuery {genus : Nat}
         prepared.left prepared.request)
   have equivalent := Equivalence.NamedEquivalent.trans
     preparedToGeneric genericToDirect
-  unfold PreparedEdge.preparedRootName PreparedEdge.rootName
+  unfold preparedRootName rootName
   rw [PreparedModels.rootAtCached_zero_name_eq_zeroMoveRootName]
   unfold PreparedSheetContinuation.preparedRootName
     PreparedSheetContinuation.zeroMoveRootName
@@ -616,7 +624,7 @@ def preparedRootEquivalent_baseQuery {genus : Nat}
 
 /-- The original source owner and the cached zero-fraction query name equivalent roots. -/
 def ownerRootEquivalent_baseQuery {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     Equivalence.NamedEquivalent
@@ -643,13 +651,13 @@ def ownerRootEquivalent_baseQuery {genus : Nat}
         prepared.cached.preparedOwner)
     rw [prepared.cached.preparedOwner_eq]
     exact sourceToPrepared
-  let moveSmall : Data.Gaussian.Norm.Basic.normSq
+  let moveSmall : Norm.Basic.normSq
       (curve.polynomial.eval
           (prepared.segment.pointAt prepared.left.parameter) -
         curve.polynomial.eval
           (prepared.segment.pointAt prepared.left.parameter)) <
         source.track.initial.clearance.bound := by
-    change Data.Gaussian.Norm.Basic.normSq
+    change Norm.Basic.normSq
       (curve.polynomial.eval
           (prepared.segment.pointAt prepared.left.parameter) -
         curve.polynomial.eval
@@ -685,7 +693,7 @@ open Purelib.Approximation.Gaussian in
 The comparison keeps both prepared edges and their original root witnesses, including the nonzero certificates used by
 division. -/
 def coefficientEquivalent_of_rootEquivalent {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent child : PreparedEdge curve differential)
     (fraction : Coordinate)
@@ -723,14 +731,14 @@ def coefficientEquivalent_of_rootEquivalent {genus : Nat}
 
 open Purelib.Data.Gaussian in
 /-- The squared displacement between the retained local segment's target and source points. -/
-def pointMovement {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def pointMovement {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Coordinate :=
-  Data.Gaussian.Norm.Basic.normSq
+  Norm.Basic.normSq
     (prepared.point 1 - prepared.point 0)
 
 /-- The squared diagonal of the initial box read from the exact prepared-owner cache. -/
-def preparedRootDiameter {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def preparedRootDiameter {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Coordinate :=
   prepared.cached.preparedOwner.track.initial.box.diagonalSq
@@ -738,7 +746,7 @@ def preparedRootDiameter {genus : Nat} {curve : Curves.Hyperelliptic.Basic.Hyper
 open Purelib.Riemann.Branches in
 /-- The cached prepared diameter equals the diameter of canonical preparation. -/
 theorem preparedRootDiameter_eq_canonical {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     prepared.preparedRootDiameter =
@@ -751,7 +759,7 @@ theorem preparedRootDiameter_eq_canonical {genus : Nat}
 open Purelib.Riemann.RootContinuation in
 /-- The actual prepared root box has positive squared diameter. -/
 theorem preparedRootDiameter_positive {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     0 < prepared.preparedRootDiameter := by
@@ -761,7 +769,7 @@ theorem preparedRootDiameter_positive {genus : Nat}
 open Purelib.Riemann.Branches in
 /-- The actual prepared squared diameter is strictly below the original request. -/
 theorem preparedRootDiameter_lt_requested {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     prepared.preparedRootDiameter < prepared.request.rootDiameter := by
@@ -773,15 +781,15 @@ open Purelib.Data.Gaussian in
 open Purelib.Riemann.Branches in
 /-- The local point displacement equals the displacement along the original retained parameter edge. -/
 theorem pointMovement_eq_parameterEdge {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     prepared.pointMovement =
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
         (prepared.segment.pointAt prepared.request.endpoint.parameter -
           prepared.segment.pointAt prepared.left.parameter) := by
   unfold pointMovement
-  change Data.Gaussian.Norm.Basic.normSq
+  change Norm.Basic.normSq
       (prepared.localSegment.pointAt 1 - prepared.localSegment.pointAt 0) = _
   simp only [localSegment, PreparedModels.edge]
   rw [← PreparedSheetContinuation.pointAt_parameterAt
@@ -792,28 +800,28 @@ theorem pointMovement_eq_parameterEdge {genus : Nat}
     PreparedSheetContinuation.parameterAt_zero]
 
 /-- Read the squared diagonal directly from the retained prepared-owner cache. -/
-def cachedRootDiameter {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def cachedRootDiameter {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Coordinate :=
   prepared.cached.preparedOwner.track.initial.box.diagonalSq
 
 /-- Read the box-derived squared-norm lower bound from the exact cached root box. -/
 def cachedGeometricDenominatorLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Coordinate :=
   PreparedConstantModels.boxNormSqLower prepared.cached.preparedOwner.track.initial.box
 
 /-- Read the squared-norm lower bound for sums of two values in the exact cached root box. -/
 def cachedRootSumLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Coordinate :=
   boxSumNormSqLower prepared.cached.preparedOwner.track.initial.box
 
 /-- A strictly positive real lower endpoint contributes its square to the cached geometric denominator lower bound. -/
 theorem xLower_sq_le_cachedGeometricDenominatorLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (positive :
@@ -830,7 +838,7 @@ theorem xLower_sq_le_cachedGeometricDenominatorLower {genus : Nat}
 
 /-- A strictly negative real upper endpoint contributes its square to the cached geometric denominator lower bound. -/
 theorem xUpper_sq_le_cachedGeometricDenominatorLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (negative :
@@ -857,7 +865,7 @@ open Purelib.Data.Rat
 /-- A strictly positive real lower endpoint contributes the square of twice that endpoint to the cached root-sum lower
 bound. -/
 theorem two_xLower_sq_le_cachedRootSumLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (positive :
@@ -866,7 +874,7 @@ theorem two_xLower_sq_le_cachedRootSumLower {genus : Nat}
       prepared.cachedRootSumLower := by
   have doubledPositive :
       0 < 2 * prepared.cached.preparedOwner.track.initial.box.xLower :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide) positive
+    Arithmetic.mul_pos_direct (by decide) positive
   unfold cachedRootSumLower boxSumNormSqLower intervalSqLower
   rw [if_pos doubledPositive]
   exact le_add_of_nonneg_right
@@ -877,7 +885,7 @@ theorem two_xLower_sq_le_cachedRootSumLower {genus : Nat}
 /-- A strictly negative real upper endpoint contributes the square of twice that endpoint to the cached root-sum lower
 bound. -/
 theorem two_xUpper_sq_le_cachedRootSumLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (negative :
@@ -889,11 +897,11 @@ theorem two_xUpper_sq_le_cachedRootSumLower {genus : Nat}
     prepared.cached.preparedOwner.track.initial.box.x_valid.trans_lt negative
   have doubledLowerNegative :
       2 * prepared.cached.preparedOwner.track.initial.box.xLower < 0 :=
-    Fraction.Order.Arithmetic.mul_neg_of_pos_of_neg_direct
+    Arithmetic.mul_neg_of_pos_of_neg_direct
       (by decide) lowerNegative
   have doubledUpperNegative :
       2 * prepared.cached.preparedOwner.track.initial.box.xUpper < 0 :=
-    Fraction.Order.Arithmetic.mul_neg_of_pos_of_neg_direct
+    Arithmetic.mul_neg_of_pos_of_neg_direct
       (by decide) negative
   unfold cachedRootSumLower boxSumNormSqLower intervalSqLower
   rw [if_neg (not_lt_of_ge doubledLowerNegative.le),
@@ -908,7 +916,7 @@ end
 /-- A strictly positive imaginary lower endpoint contributes its square to the cached geometric denominator lower bound.
 -/
 theorem yLower_sq_le_cachedGeometricDenominatorLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (positive :
@@ -932,7 +940,7 @@ theorem yLower_sq_le_cachedGeometricDenominatorLower {genus : Nat}
 /-- A strictly negative imaginary upper endpoint contributes its square to the cached geometric denominator lower bound.
 -/
 theorem yUpper_sq_le_cachedGeometricDenominatorLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (negative :
@@ -966,7 +974,7 @@ open Purelib.Data.Rat
 /-- A strictly positive imaginary lower endpoint contributes the square of twice that endpoint to the cached root-sum
 lower bound. -/
 theorem two_yLower_sq_le_cachedRootSumLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (positive :
@@ -975,7 +983,7 @@ theorem two_yLower_sq_le_cachedRootSumLower {genus : Nat}
       prepared.cachedRootSumLower := by
   have doubledPositive :
       0 < 2 * prepared.cached.preparedOwner.track.initial.box.yLower :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide) positive
+    Arithmetic.mul_pos_direct (by decide) positive
   unfold cachedRootSumLower boxSumNormSqLower
   have imaginaryLower :
       intervalSqLower
@@ -993,7 +1001,7 @@ theorem two_yLower_sq_le_cachedRootSumLower {genus : Nat}
 /-- A strictly negative imaginary upper endpoint contributes the square of twice that endpoint to the cached root-sum
 lower bound. -/
 theorem two_yUpper_sq_le_cachedRootSumLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (negative :
@@ -1005,11 +1013,11 @@ theorem two_yUpper_sq_le_cachedRootSumLower {genus : Nat}
     prepared.cached.preparedOwner.track.initial.box.y_valid.trans_lt negative
   have doubledLowerNegative :
       2 * prepared.cached.preparedOwner.track.initial.box.yLower < 0 :=
-    Fraction.Order.Arithmetic.mul_neg_of_pos_of_neg_direct
+    Arithmetic.mul_neg_of_pos_of_neg_direct
       (by decide) lowerNegative
   have doubledUpperNegative :
       2 * prepared.cached.preparedOwner.track.initial.box.yUpper < 0 :=
-    Fraction.Order.Arithmetic.mul_neg_of_pos_of_neg_direct
+    Arithmetic.mul_neg_of_pos_of_neg_direct
       (by decide) negative
   unfold cachedRootSumLower boxSumNormSqLower
   have imaginaryLower :
@@ -1032,7 +1040,7 @@ square.
 The selected coordinate side remains separated from zero by the supplied
 positive amount. Its original cached squared interval floor bounds that square. -/
 theorem separation_sq_le_cachedGeometricDenominatorLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (separation : Coordinate)
     (separationPositive : 0 < separation)
@@ -1043,10 +1051,10 @@ theorem separation_sq_le_cachedGeometricDenominatorLower {genus : Nat}
       prepared.cached.preparedOwner.track.initial.box.yUpper <= -separation) :
     separation ^ 2 <= prepared.cachedGeometricDenominatorLower := by
   have separationNegative : -separation < (0 : Coordinate) := by
-    have reversed := Fraction.Order.Arithmetic.neg_lt_neg_direct separationPositive
+    have reversed := Arithmetic.neg_lt_neg_direct separationPositive
     simpa only [neg_zero] using reversed
   rcases separated with xLower | xUpper | yLower | yUpper
-  · exact (Fraction.Order.Arithmetic.pow_le_pow_direct separationPositive.le
+  · exact (Arithmetic.pow_le_pow_direct separationPositive.le
       xLower 2).trans
         (prepared.xLower_sq_le_cachedGeometricDenominatorLower
           (separationPositive.trans_le xLower))
@@ -1057,16 +1065,16 @@ theorem separation_sq_le_cachedGeometricDenominatorLower {genus : Nat}
         separation <=
           -prepared.cached.preparedOwner.track.initial.box.xUpper := by
       have reversed :=
-        Fraction.Order.Arithmetic.neg_le_neg_direct xUpper
+        Arithmetic.neg_le_neg_direct xUpper
       simpa only [neg_neg] using reversed
-    have powers := Fraction.Order.Arithmetic.pow_le_pow_direct
+    have powers := Arithmetic.pow_le_pow_direct
       separationPositive.le separationLeNegUpper 2
     rw [show (-prepared.cached.preparedOwner.track.initial.box.xUpper) ^ 2 =
         prepared.cached.preparedOwner.track.initial.box.xUpper ^ 2 by ring1]
       at powers
     exact powers.trans
       (prepared.xUpper_sq_le_cachedGeometricDenominatorLower upperNegative)
-  · exact (Fraction.Order.Arithmetic.pow_le_pow_direct separationPositive.le
+  · exact (Arithmetic.pow_le_pow_direct separationPositive.le
       yLower 2).trans
         (prepared.yLower_sq_le_cachedGeometricDenominatorLower
           (separationPositive.trans_le yLower))
@@ -1077,9 +1085,9 @@ theorem separation_sq_le_cachedGeometricDenominatorLower {genus : Nat}
         separation <=
           -prepared.cached.preparedOwner.track.initial.box.yUpper := by
       have reversed :=
-        Fraction.Order.Arithmetic.neg_le_neg_direct yUpper
+        Arithmetic.neg_le_neg_direct yUpper
       simpa only [neg_neg] using reversed
-    have powers := Fraction.Order.Arithmetic.pow_le_pow_direct
+    have powers := Arithmetic.pow_le_pow_direct
       separationPositive.le separationLeNegUpper 2
     rw [show (-prepared.cached.preparedOwner.track.initial.box.yUpper) ^ 2 =
         prepared.cached.preparedOwner.track.initial.box.yUpper ^ 2 by ring1]
@@ -1091,7 +1099,7 @@ end
 
 /-- Positive coordinate-side separation gives the equivalent product lower bound for the cached denominator estimate. -/
 theorem separation_mul_self_le_cachedGeometricDenominatorLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (separation : Coordinate)
     (separationPositive : 0 < separation)
@@ -1112,7 +1120,7 @@ box.
 The supplied positive separation doubles in the original sum-coordinate
 interval. Its unchanged squared interval floor bounds the same doubled square. -/
 theorem two_separation_sq_le_cachedRootSumLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (separation : Coordinate)
     (separationPositive : 0 < separation)
@@ -1124,15 +1132,15 @@ theorem two_separation_sq_le_cachedRootSumLower {genus : Nat}
     (2 * separation) ^ 2 <= prepared.cachedRootSumLower := by
   have twoPositive : (0 : Coordinate) < 2 := by decide
   have doubledSeparationPositive : 0 < 2 * separation :=
-    Fraction.Order.Arithmetic.mul_pos_direct twoPositive separationPositive
+    Arithmetic.mul_pos_direct twoPositive separationPositive
   have separationNegative : -separation < (0 : Coordinate) := by
-    have reversed := Fraction.Order.Arithmetic.neg_lt_neg_direct separationPositive
+    have reversed := Arithmetic.neg_lt_neg_direct separationPositive
     simpa only [neg_zero] using reversed
   rcases separated with xLower | xUpper | yLower | yUpper
   · have doubled :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct xLower
+      Arithmetic.mul_le_mul_of_nonneg_left_direct xLower
         twoPositive.le
-    exact (Fraction.Order.Arithmetic.pow_le_pow_direct
+    exact (Arithmetic.pow_le_pow_direct
       doubledSeparationPositive.le doubled 2).trans
         (prepared.two_xLower_sq_le_cachedRootSumLower
           (separationPositive.trans_le xLower))
@@ -1143,12 +1151,12 @@ theorem two_separation_sq_le_cachedRootSumLower {genus : Nat}
         separation <=
           -prepared.cached.preparedOwner.track.initial.box.xUpper := by
       have reversed :=
-        Fraction.Order.Arithmetic.neg_le_neg_direct xUpper
+        Arithmetic.neg_le_neg_direct xUpper
       simpa only [neg_neg] using reversed
     have doubled :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         separationLeNegUpper twoPositive.le
-    have powers := Fraction.Order.Arithmetic.pow_le_pow_direct
+    have powers := Arithmetic.pow_le_pow_direct
       doubledSeparationPositive.le doubled 2
     rw [show (2 * -prepared.cached.preparedOwner.track.initial.box.xUpper) ^ 2 =
         (2 * prepared.cached.preparedOwner.track.initial.box.xUpper) ^ 2 by
@@ -1156,9 +1164,9 @@ theorem two_separation_sq_le_cachedRootSumLower {genus : Nat}
     exact powers.trans
       (prepared.two_xUpper_sq_le_cachedRootSumLower upperNegative)
   · have doubled :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct yLower
+      Arithmetic.mul_le_mul_of_nonneg_left_direct yLower
         twoPositive.le
-    exact (Fraction.Order.Arithmetic.pow_le_pow_direct
+    exact (Arithmetic.pow_le_pow_direct
       doubledSeparationPositive.le doubled 2).trans
         (prepared.two_yLower_sq_le_cachedRootSumLower
           (separationPositive.trans_le yLower))
@@ -1169,12 +1177,12 @@ theorem two_separation_sq_le_cachedRootSumLower {genus : Nat}
         separation <=
           -prepared.cached.preparedOwner.track.initial.box.yUpper := by
       have reversed :=
-        Fraction.Order.Arithmetic.neg_le_neg_direct yUpper
+        Arithmetic.neg_le_neg_direct yUpper
       simpa only [neg_neg] using reversed
     have doubled :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         separationLeNegUpper twoPositive.le
-    have powers := Fraction.Order.Arithmetic.pow_le_pow_direct
+    have powers := Arithmetic.pow_le_pow_direct
       doubledSeparationPositive.le doubled 2
     rw [show (2 * -prepared.cached.preparedOwner.track.initial.box.yUpper) ^ 2 =
         (2 * prepared.cached.preparedOwner.track.initial.box.yUpper) ^ 2 by
@@ -1184,7 +1192,7 @@ theorem two_separation_sq_le_cachedRootSumLower {genus : Nat}
 
 /-- The cached root-sum lower bound is nonnegative. -/
 theorem cachedRootSumLower_nonnegative {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     0 <= prepared.cachedRootSumLower :=
@@ -1193,7 +1201,7 @@ theorem cachedRootSumLower_nonnegative {genus : Nat}
 open Purelib.Data.Gaussian in
 /-- The cached root-sum lower bound bounds the squared norm of any two values from the retained box. -/
 theorem cachedRootSumLower_le_of_contains {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) {leftRoot rightRoot : Gaussian}
     (leftInside : prepared.cached.preparedOwner.track.initial.box.Contains
@@ -1201,7 +1209,7 @@ theorem cachedRootSumLower_le_of_contains {genus : Nat}
     (rightInside : prepared.cached.preparedOwner.track.initial.box.Contains
       rightRoot) :
     prepared.cachedRootSumLower <=
-      Data.Gaussian.Norm.Basic.normSq (leftRoot + rightRoot) := by
+      Norm.Basic.normSq (leftRoot + rightRoot) := by
   exact boxSumNormSqLower_le_of_contains leftInside rightInside
 
 /-- Choose the smaller of the prepared diameter and the movement-plus-cached-diameter budget divided by two to the
@@ -1209,7 +1217,7 @@ twentieth power.
 
 This positive tolerance controls the squared residual of root candidates used by coefficient readings. -/
 def rootResidualTarget {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Coordinate :=
   min ((prepared.pointMovement + prepared.cachedRootDiameter) / (2 ^ 20)) prepared.preparedRootDiameter
@@ -1222,14 +1230,14 @@ open Purelib.Riemann.RootContinuation in
 Both original target branches are positive: the movement-plus-diameter
 quotient and the prepared root diameter. Their unchanged minimum retains positivity. -/
 theorem rootResidualTarget_positive {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential : Basic.Differential genus}
+    {curve : Basic.HyperellipticCurve genus} {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     0 < prepared.rootResidualTarget := by
-  apply Fraction.Order.Basic.lt_min
-  · exact Fraction.Order.Field.div_pos_direct
-      (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct (Norm.Basic.normSq_nonneg _)
+  apply Basic.lt_min
+  · exact Field.div_pos_direct
+      (Arithmetic.add_pos_of_nonneg_of_pos_direct (Norm.Basic.normSq_nonneg _)
         (CoherentRoot.scale_positive prepared.cached.preparedOwner.track))
-      (Fraction.Order.Arithmetic.pow_pos_direct (by decide) 20)
+      (Arithmetic.pow_pos_direct (by decide) 20)
   · exact prepared.preparedRootDiameter_positive
 
 open Purelib.Algebra in
@@ -1241,21 +1249,21 @@ The original target minimum is bounded by its movement-plus-diameter
 quotient. The supplied bound and unchanged powers of two give the stated floor. -/
 theorem rootResidualTarget_le_one_div_two_pow_twelve_of_add_le_two_pow_eight
     {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (bounded : prepared.pointMovement + prepared.cachedRootDiameter <= 2 ^ 8) :
     prepared.rootResidualTarget <= 1 / (2 ^ 12) := by
-  apply (Fraction.Order.Basic.min_le_left _ _).trans
-  apply (Fraction.Order.Field.div_le_iff_pos
-    (Fraction.Order.Arithmetic.pow_pos_direct (by decide) 20)).2
+  apply (Basic.min_le_left _ _).trans
+  apply (Field.div_le_iff_pos
+    (Arithmetic.pow_pos_direct (by decide) 20)).2
   calc
     prepared.pointMovement + prepared.cachedRootDiameter <= 2 ^ 8 := bounded
     _ = 1 * (2 ^ 8 : Coordinate) := by ring1
     _ = ((1 / (2 ^ 12 : Coordinate)) * (2 ^ 12 : Coordinate)) *
           (2 ^ 8 : Coordinate) := by
       rw [Field.ExplicitField.div_mul_cancel]
-      exact (Fraction.Order.Arithmetic.pow_pos_direct (by decide) 12).ne'
+      exact (Arithmetic.pow_pos_direct (by decide) 12).ne'
     _ = (1 / (2 ^ 12 : Coordinate)) *
           ((2 ^ 12 : Coordinate) * (2 ^ 8 : Coordinate)) := by
       rw [Fraction.Field.mul_assoc]
@@ -1266,7 +1274,7 @@ section
 open Purelib.Riemann.Branches
 /-- The original cleared segment's variation bound over the retained requested parameter edge. -/
 def radicandMovementBound {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Coordinate :=
   ClearSheetContinuation.variationBound prepared.segment
@@ -1274,7 +1282,7 @@ def radicandMovementBound {genus : Nat}
 
 /-- The retained radicand variation bound is nonnegative. -/
 theorem radicandMovementBound_nonnegative {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     0 <= prepared.radicandMovementBound := by
@@ -1290,7 +1298,7 @@ movement.
 The denominator is the cached root-sum lower bound; its use as a distance estimate requires that lower bound to be
 positive. -/
 def residualRootMovement {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Coordinate :=
   4 * (prepared.rootResidualTarget + prepared.radicandMovementBound +
@@ -1299,12 +1307,12 @@ def residualRootMovement {genus : Nat}
 open Purelib.Data.Rat in
 /-- The computed residual root-movement expression is nonnegative. -/
 theorem residualRootMovement_nonnegative {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     0 <= prepared.residualRootMovement := by
-  exact Fraction.Order.Field.div_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  exact Field.div_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide)
       (add_nonneg
         (add_nonneg prepared.rootResidualTarget_positive.le
           prepared.radicandMovementBound_nonnegative)
@@ -1314,7 +1322,7 @@ theorem residualRootMovement_nonnegative {genus : Nat}
 /-- Use the smaller cached-diameter and residual bound when the root-sum lower bound is positive, otherwise retain the
 cached diameter. -/
 def rootMovementBound {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Coordinate :=
   if 0 < prepared.cachedRootSumLower then
@@ -1326,13 +1334,13 @@ open Purelib.Riemann.RootContinuation in
 open Purelib.Data.Rat in
 /-- The selected squared root-movement bound is nonnegative. -/
 theorem rootMovementBound_nonnegative {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     0 <= prepared.rootMovementBound := by
   unfold rootMovementBound
   split
-  · exact Fraction.Order.Basic.le_min
+  · exact Basic.le_min
       (CoherentRoot.scale_positive
         prepared.cached.preparedOwner.track).le
       prepared.residualRootMovement_nonnegative
@@ -1345,13 +1353,13 @@ open Purelib.Data.Rat in
 The retained movement minimum includes the original cached root diameter.
 Its selected value is therefore bounded by that same diameter. -/
 theorem rootMovementBound_le_cachedRootDiameter {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     prepared.rootMovementBound <= prepared.cachedRootDiameter := by
   unfold rootMovementBound
   split
-  · exact Fraction.Order.Basic.min_le_left _ _
+  · exact Basic.min_le_left _ _
   · exact le_rfl
 
 open Purelib.Riemann.Branches in
@@ -1360,7 +1368,7 @@ open Purelib.Riemann.RootContinuation in
 
 The resulting state belongs to the original sheet-value process via its exact direct-owner name equality. -/
 def residualRootState {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :
@@ -1385,7 +1393,7 @@ open Purelib.Riemann.RootContinuation in
 /-- Every possible candidate at the retained residual state has squared polynomial residual below the selected target.
 -/
 theorem residualRootState_candidate_residual_lt {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1)
@@ -1393,7 +1401,7 @@ theorem residualRootState_candidate_residual_lt {genus : Nat}
     (possible :
       (prepared.sheetValue fraction inside).value.name.process.Possible
         (prepared.residualRootState fraction inside) candidate) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (candidate * candidate - curve.polynomial.eval
           (prepared.point fraction)) < prepared.rootResidualTarget := by
   let parameter := curve.polynomial.eval (prepared.segment.pointAt
@@ -1416,7 +1424,7 @@ theorem residualRootState_candidate_residual_lt {genus : Nat}
   simpa only [Norm.Basic.normSq_eq_canonical] using residual
 
 /-- Take the maximum of the segment denominator estimate and the cached box's squared-norm lower bound. -/
-def cachedDenominatorLower {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def cachedDenominatorLower {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Coordinate :=
   max (PreparedModels.denominatorLower
@@ -1428,16 +1436,16 @@ open Purelib.Data.Rat in
 The original nested maxima retain the same denominator lower bound.
 Their cached value therefore bounds it through its two exact maximum inclusions. -/
 theorem denominatorLower_le_cachedDenominatorLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     PreparedModels.denominatorLower
         prepared.segment <= prepared.cachedDenominatorLower := by
-  exact Fraction.Order.Basic.le_max_left _ _
+  exact Basic.le_max_left _ _
 
 /-- The combined cached denominator lower bound is strictly positive. -/
 theorem cachedDenominatorLower_positive {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     0 < prepared.cachedDenominatorLower :=
@@ -1447,13 +1455,13 @@ theorem cachedDenominatorLower_positive {genus : Nat}
 open Purelib.Data.Gaussian in
 /-- The cached geometric lower bound bounds every value contained in the exact prepared box. -/
 theorem cachedGeometricDenominatorLower_le_of_contains {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) {candidate : Gaussian}
     (inside : prepared.cached.preparedOwner.track.initial.box.Contains
       candidate) :
     prepared.cachedGeometricDenominatorLower <=
-      Data.Gaussian.Norm.Basic.normSq candidate := by
+      Norm.Basic.normSq candidate := by
   unfold cachedGeometricDenominatorLower
   exact boxNormSqLower_le_of_contains inside
 
@@ -1464,7 +1472,7 @@ open Purelib.Data.Rat in
 Each original cached interval floor bounds the quadrance of the same
 contained root. Their unchanged maximum retains that common bound. -/
 theorem cachedDenominatorLower_le_of_contains {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) {candidate : Gaussian}
     (inside : prepared.cached.preparedOwner.track.initial.box.Contains
@@ -1472,16 +1480,16 @@ theorem cachedDenominatorLower_le_of_contains {genus : Nat}
     (globalLower :
       PreparedModels.denominatorLower
           prepared.segment <=
-        Data.Gaussian.Norm.Basic.normSq candidate) :
+        Norm.Basic.normSq candidate) :
     prepared.cachedDenominatorLower <=
-      Data.Gaussian.Norm.Basic.normSq candidate := by
-  exact Fraction.Order.Basic.max_le globalLower
+      Norm.Basic.normSq candidate := by
+  exact Basic.max_le globalLower
     (prepared.cachedGeometricDenominatorLower_le_of_contains inside)
 
 open Purelib.Riemann.RootContinuation in
 /-- The squared diagonal read from the cached root box is positive. -/
 theorem cachedRootDiameter_positive {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     0 < prepared.cachedRootDiameter := by
@@ -1492,7 +1500,7 @@ section
 open Purelib.Riemann.Branches
 /-- The cached root diameter is strictly below the retained request. -/
 theorem cachedRootDiameter_lt_request {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     prepared.cachedRootDiameter < prepared.request.rootDiameter := by
@@ -1503,7 +1511,7 @@ theorem cachedRootDiameter_lt_request {genus : Nat}
 
 /-- Canonical preparation's squared diagonal equals the exact cached root diameter. -/
 theorem preparedRootDiameter_eq_cachedRootDiameter {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     (PreparedSheetContinuation.prepared prepared.segment
@@ -1529,9 +1537,9 @@ theorem intervalNormSqLower_nonnegative (lower upper : Coordinate) :
     0 <= intervalNormSqLower lower upper := by
   unfold intervalNormSqLower
   split <;> rename_i first
-  · exact Fraction.Order.Arithmetic.sq_nonneg_direct lower
+  · exact Arithmetic.sq_nonneg_direct lower
   · split <;> rename_i second
-    · exact Fraction.Order.Arithmetic.sq_nonneg_direct upper
+    · exact Arithmetic.sq_nonneg_direct upper
     · exact le_rfl
 
 /-- Every coordinate in the original interval has square at least its computed lower bound.
@@ -1544,21 +1552,21 @@ theorem intervalNormSqLower_le {lower value upper : Coordinate}
   unfold intervalNormSqLower
   split
   · rename_i lowerNonnegative
-    exact Fraction.Order.Arithmetic.pow_le_pow_direct lowerNonnegative lowerLe 2
+    exact Arithmetic.pow_le_pow_direct lowerNonnegative lowerLe 2
   · rename_i lowerNegative
     split
     · rename_i upperNonpositive
       have negOrder : -upper <= -value :=
-        Fraction.Order.Arithmetic.neg_le_neg_direct valueLe
+        Arithmetic.neg_le_neg_direct valueLe
       have negUpperNonnegative : 0 <= -upper :=
         by
-          have reversed := Fraction.Order.Arithmetic.neg_le_neg_direct upperNonpositive
+          have reversed := Arithmetic.neg_le_neg_direct upperNonpositive
           simpa only [neg_zero] using reversed
-      have squares := Fraction.Order.Arithmetic.pow_le_pow_direct
+      have squares := Arithmetic.pow_le_pow_direct
         negUpperNonnegative negOrder 2
       simpa only [show (-upper) ^ 2 = upper ^ 2 by ring1,
         show (-value) ^ 2 = value ^ 2 by ring1] using squares
-    · exact Fraction.Order.Arithmetic.sq_nonneg_direct value
+    · exact Arithmetic.sq_nonneg_direct value
 
 end
 
@@ -1579,15 +1587,15 @@ open Purelib.Data.Gaussian in
 theorem boxNormSqLower_le {box : Box} {value : Gaussian}
     (inside : box.Contains value) :
     boxNormSqLower box <=
-      Data.Gaussian.Norm.Basic.normSq value := by
-  unfold boxNormSqLower Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq value := by
+  unfold boxNormSqLower Norm.Basic.normSq
   exact add_le_add
     (intervalNormSqLower_le inside.1 inside.2.1)
     (intervalNormSqLower_le inside.2.2.1 inside.2.2.2)
 
 /-- Strengthen the segment denominator floor with the squared-norm lower bound of the actual cached root box. -/
 def preparedDenominatorLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Coordinate :=
   max
@@ -1601,12 +1609,12 @@ open Purelib.Data.Rat in
 The original maximum retains the positive segment denominator floor
 alongside its cached root-box norm estimate. -/
 theorem preparedDenominatorLower_positive {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     0 < prepared.preparedDenominatorLower :=
   (PreparedModels.segmentDenominatorLower_positive
-    prepared.segment).trans_le (Fraction.Order.Basic.le_max_left _ _)
+    prepared.segment).trans_le (Basic.le_max_left _ _)
 
 open Purelib.Approximation.Rational in
 open Purelib.Data.Gaussian in
@@ -1616,11 +1624,11 @@ prepared denominator floor.
 
 The original differential exponent controls the numerator slope; the denominator estimate belongs to the same retained
 prepared edge. -/
-def rawVariation {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def rawVariation {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Coordinate :=
   Budget.Quotient.quotientBound
-    (Power.Bounds.IntegrationQuotientVariation.powerSlope
+    (IntegrationQuotientVariation.powerSlope
       prepared.ambient.normSqBound differential.exponent)
     (prepared.ambient.normSqBound ^ differential.exponent)
     (UniformSquareRootPreparation.rootAmbient
@@ -1629,7 +1637,7 @@ def rawVariation {genus : Nat} {curve : Curves.Hyperelliptic.Basic.Hyperelliptic
     prepared.pointMovement prepared.preparedRootDiameter
 
 /-- Add the prepared root diameter to the raw quotient-variation allowance. -/
-def modelErrorAllowance {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def modelErrorAllowance {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Coordinate :=
   prepared.rawVariation + prepared.preparedRootDiameter
@@ -1640,14 +1648,14 @@ open Purelib.Data.Rat in
 open Purelib.Riemann.RootContinuation in
 /-- The raw quotient-variation allowance is nonnegative. -/
 theorem rawVariation_nonnegative {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     0 <= prepared.rawVariation := by
   apply Budget.Quotient.IntegrationQuotientVariation.quotientBound_nonnegative
-  · exact Power.Bounds.IntegrationQuotientVariation.powerSlope_nonnegative
+  · exact IntegrationQuotientVariation.powerSlope_nonnegative
       prepared.ambient.normSqBound_nonneg differential.exponent
-  · exact Fraction.Order.Arithmetic.pow_nonneg_direct
+  · exact Arithmetic.pow_nonneg_direct
       prepared.ambient.normSqBound_nonneg differential.exponent
   · exact (UniformSquareRootPreparation.rootAmbient
       prepared.segment).normSqBound_nonneg
@@ -1663,11 +1671,11 @@ open Purelib.Data.Rat
 The original nonnegative variation and positive prepared root diameter
 are the two retained summands of this allowance. -/
 theorem modelErrorAllowance_positive {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
   0 < prepared.modelErrorAllowance :=
-  Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct prepared.rawVariation_nonnegative
+  Arithmetic.add_pos_of_nonneg_of_pos_direct prepared.rawVariation_nonnegative
     prepared.preparedRootDiameter_positive
 
 /-- The root-residual target is no larger than the model-error allowance.
@@ -1675,10 +1683,10 @@ theorem modelErrorAllowance_positive {genus : Nat}
 The retained target minimum is bounded by the original prepared root
 diameter, which is one nonnegative summand of the model allowance. -/
 theorem rootResidualTarget_le_modelErrorAllowance {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential : Basic.Differential genus}
+    {curve : Basic.HyperellipticCurve genus} {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     prepared.rootResidualTarget ≤ prepared.modelErrorAllowance :=
-  (Fraction.Order.Basic.min_le_right _ _).trans (le_add_of_nonneg_left prepared.rawVariation_nonnegative)
+  (Basic.min_le_right _ _).trans (le_add_of_nonneg_left prepared.rawVariation_nonnegative)
 
 end
 
@@ -1687,13 +1695,13 @@ open Purelib.Polynomial in
 open Purelib.Riemann.RootContinuation in
 /-- The point-movement coefficient using the original segment denominator floor and ambient numerator slope. -/
 def pointErrorCoefficient {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish) :
     Coordinate :=
   (2 *
-      (Power.Bounds.IntegrationQuotientVariation.powerSlope ambient.normSqBound
+      (IntegrationQuotientVariation.powerSlope ambient.normSqBound
           differential.exponent *
         (UniformSquareRootPreparation.rootAmbient
           segment).normSqBound)) /
@@ -1703,7 +1711,7 @@ def pointErrorCoefficient {genus : Nat}
 open Purelib.Polynomial in
 /-- The root-movement coefficient using the original segment denominator floor, including the added unit allowance. -/
 def rootErrorCoefficient {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish) :
@@ -1717,11 +1725,11 @@ open Purelib.Data.Gaussian in
 open Purelib.Riemann.RootContinuation in
 /-- The point-movement coefficient strengthened by the actual prepared denominator floor. -/
 def preparedPointErrorCoefficient {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Coordinate :=
   (2 *
-      (Power.Bounds.IntegrationQuotientVariation.powerSlope
+      (IntegrationQuotientVariation.powerSlope
           prepared.ambient.normSqBound differential.exponent *
         (UniformSquareRootPreparation.rootAmbient
           prepared.segment).normSqBound)) /
@@ -1730,7 +1738,7 @@ def preparedPointErrorCoefficient {genus : Nat}
 /-- The root-movement coefficient strengthened by the actual prepared denominator floor, including the unit allowance.
 -/
 def preparedRootErrorCoefficient {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Coordinate :=
   (2 * prepared.ambient.normSqBound ^ differential.exponent) /
@@ -1740,17 +1748,17 @@ def preparedRootErrorCoefficient {genus : Nat}
 open Purelib.Data.Rat in
 /-- The prepared root-movement coefficient is nonnegative. -/
 theorem preparedRootErrorCoefficient_nonnegative {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     0 <= prepared.preparedRootErrorCoefficient := by
   unfold preparedRootErrorCoefficient
   exact add_nonneg
-    (Fraction.Order.Field.div_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-        (Fraction.Order.Arithmetic.pow_nonneg_direct
+    (Field.div_nonneg_direct
+      (Arithmetic.mul_nonneg_direct (by decide)
+        (Arithmetic.pow_nonneg_direct
           prepared.ambient.normSqBound_nonneg differential.exponent))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct
         prepared.preparedDenominatorLower_positive.le
         prepared.preparedDenominatorLower_positive.le))
     (by decide)
@@ -1761,20 +1769,20 @@ open Purelib.Polynomial in
 open Purelib.Riemann.RootContinuation in
 /-- The segment point-movement coefficient is nonnegative. -/
 theorem pointErrorCoefficient_nonnegative {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish) :
     0 <= pointErrorCoefficient differential segment := by
   unfold pointErrorCoefficient
-  exact Fraction.Order.Field.div_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Power.Bounds.IntegrationQuotientVariation.powerSlope_nonnegative
+  exact Field.div_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.mul_nonneg_direct
+        (IntegrationQuotientVariation.powerSlope_nonnegative
           ambient.normSqBound_nonneg differential.exponent)
         (UniformSquareRootPreparation.rootAmbient
           segment).normSqBound_nonneg))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct
       (PreparedModels.segmentDenominatorLower_positive
         segment).le
       (PreparedModels.segmentDenominatorLower_positive
@@ -1784,18 +1792,18 @@ open Purelib.Data.Rat in
 open Purelib.Polynomial in
 /-- The segment root-movement coefficient is nonnegative. -/
 theorem rootErrorCoefficient_nonnegative {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish) :
     0 <= rootErrorCoefficient differential segment := by
   unfold rootErrorCoefficient
   exact add_nonneg
-    (Fraction.Order.Field.div_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-        (Fraction.Order.Arithmetic.pow_nonneg_direct
+    (Field.div_nonneg_direct
+      (Arithmetic.mul_nonneg_direct (by decide)
+        (Arithmetic.pow_nonneg_direct
           ambient.normSqBound_nonneg differential.exponent))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct
         (PreparedModels.segmentDenominatorLower_positive
           segment).le
         (PreparedModels.segmentDenominatorLower_positive
@@ -1810,22 +1818,22 @@ open Purelib.Riemann.RootContinuation in
 The retained maximum keeps the same point-error coefficient as an input.
 Its unchanged value therefore bounds that coefficient weakly. -/
 theorem preparedPointErrorCoefficient_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     prepared.preparedPointErrorCoefficient <=
       pointErrorCoefficient differential prepared.segment := by
-  apply Fraction.Order.Field.scaled_div_square_antitone
-  · exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Power.Bounds.IntegrationQuotientVariation.powerSlope_nonnegative
+  apply Field.scaled_div_square_antitone
+  · exact Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.mul_nonneg_direct
+        (IntegrationQuotientVariation.powerSlope_nonnegative
           prepared.ambient.normSqBound_nonneg differential.exponent)
         (UniformSquareRootPreparation.rootAmbient
           prepared.segment).normSqBound_nonneg)
   · exact
       PreparedModels.segmentDenominatorLower_positive
         prepared.segment
-  · exact Fraction.Order.Basic.le_max_left _ _
+  · exact Basic.le_max_left _ _
 
 open Purelib.Data.Rat in
 /-- The prepared denominator floor can only decrease the root-movement coefficient.
@@ -1833,21 +1841,21 @@ open Purelib.Data.Rat in
 The retained maximum keeps the same root-error coefficient as an input.
 Its unchanged value therefore bounds that coefficient weakly. -/
 theorem preparedRootErrorCoefficient_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     prepared.preparedRootErrorCoefficient <=
       rootErrorCoefficient differential prepared.segment := by
   unfold preparedRootErrorCoefficient rootErrorCoefficient
   apply add_le_add
-  · apply Fraction.Order.Field.scaled_div_square_antitone
-    · exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-        (Fraction.Order.Arithmetic.pow_nonneg_direct
+  · apply Field.scaled_div_square_antitone
+    · exact Arithmetic.mul_nonneg_direct (by decide)
+        (Arithmetic.pow_nonneg_direct
           prepared.ambient.normSqBound_nonneg differential.exponent)
     · exact
         PreparedModels.segmentDenominatorLower_positive
           prepared.segment
-    · exact Fraction.Order.Basic.le_max_left _ _
+    · exact Basic.le_max_left _ _
   · exact le_rfl
 
 open Purelib.Approximation.Rational in
@@ -1856,7 +1864,7 @@ open Purelib.Riemann.RootContinuation in
 /-- The model-error allowance equals the sum of the prepared point and root coefficients times their respective
 movements. -/
 theorem modelErrorAllowance_eq_preparedLinear {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     prepared.modelErrorAllowance =
@@ -1866,7 +1874,7 @@ theorem modelErrorAllowance_eq_preparedLinear {genus : Nat}
   simpa only [modelErrorAllowance, rawVariation,
     preparedPointErrorCoefficient, preparedRootErrorCoefficient] using
     Budget.Quotient.quotientBound_add_rootMovement_eq_linear
-      (Power.Bounds.IntegrationQuotientVariation.powerSlope
+      (IntegrationQuotientVariation.powerSlope
         prepared.ambient.normSqBound differential.exponent)
       (prepared.ambient.normSqBound ^ differential.exponent)
       (UniformSquareRootPreparation.rootAmbient
@@ -1878,7 +1886,7 @@ open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
 /-- The segment's point and root coefficients give an upper bound for the actual model-error allowance. -/
 theorem modelErrorAllowance_le_linear {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     prepared.modelErrorAllowance <=
@@ -1888,17 +1896,17 @@ theorem modelErrorAllowance_le_linear {genus : Nat}
           prepared.preparedRootDiameter := by
   rw [prepared.modelErrorAllowance_eq_preparedLinear]
   exact add_le_add
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct
       prepared.preparedPointErrorCoefficient_le
       (Norm.Basic.normSq_nonneg _))
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct
       prepared.preparedRootErrorCoefficient_le
       prepared.preparedRootDiameter_positive.le)
 
 open Purelib.Data.Rat in
 /-- Separate upper bounds for point movement and root diameter give the corresponding weighted model-error bound. -/
 theorem modelErrorAllowance_le_of_separate_targets {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (pointTarget rootTarget : Coordinate)
@@ -1909,15 +1917,15 @@ theorem modelErrorAllowance_le_of_separate_targets {genus : Nat}
         rootErrorCoefficient differential prepared.segment * rootTarget := by
   exact prepared.modelErrorAllowance_le_linear.trans
     (add_le_add
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct pointLe
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct pointLe
         (pointErrorCoefficient_nonnegative differential prepared.segment))
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct rootLe
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct rootLe
         (rootErrorCoefficient_nonnegative differential prepared.segment)))
 
 /-- A common target for point movement and the requested root diameter bounds the model allowance by the sum of its
 coefficients times that target. -/
 theorem modelErrorAllowance_le_of_targets {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (target : Coordinate)
@@ -1938,7 +1946,7 @@ theorem modelErrorAllowance_le_of_targets {genus : Nat}
       ring1
 
 /-- Allocate one eighth of the model-error allowance to the coefficient reading's squared radius. -/
-def readingTarget {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def readingTarget {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Coordinate :=
   prepared.modelErrorAllowance / 8
@@ -1946,31 +1954,31 @@ def readingTarget {genus : Nat} {curve : Curves.Hyperelliptic.Basic.Hyperellipti
 open Purelib.Data.Rat in
 /-- The allocated coefficient-reading target is strictly positive. -/
 theorem readingTarget_positive {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     0 < prepared.readingTarget :=
-  Fraction.Order.Field.div_pos_direct
+  Field.div_pos_direct
     prepared.modelErrorAllowance_positive (by decide)
 
 open Purelib.Approximation.Gaussian in
 /-- Pair the coefficient's original numerator state with the residual-certified root state at the exact query point. -/
 def residualCoefficientState {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :
     (prepared.coefficient fraction inside).name.process.State := by
   change
-    (Name.Coherent.Power.namedPower
-      (Name.Coherent.CoherentNamed.Coherence.exact (prepared.point fraction))
+    (Power.namedPower
+      (CoherentNamed.Coherence.exact (prepared.point fraction))
         differential.exponent).name.process.State ×
       (prepared.sheetValue fraction inside).value.name.process.State
   exact ((prepared.coefficient fraction inside).name.state.1,
     prepared.residualRootState fraction inside)
 
 /-- Refine the retained residual coefficient state to the positive reading target. -/
-def readingState {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def readingState {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :
@@ -1980,7 +1988,7 @@ def readingState {genus : Nat} {curve : Curves.Hyperelliptic.Basic.Hyperelliptic
       prepared.readingTarget_positive
 
 /-- Read the exact witness of the refined coefficient state at the requested fraction. -/
-def reading {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def reading {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) : Gaussian :=
@@ -1989,7 +1997,7 @@ def reading {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve
 
 /-- The coefficient reading is possible in the exact refined state from which it is read. -/
 theorem reading_possible {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :
@@ -2001,7 +2009,7 @@ theorem reading_possible {genus : Nat}
 
 /-- The refined coefficient state's squared ball radius is strictly below its allocated reading target. -/
 theorem reading_radius_lt {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :
@@ -2013,7 +2021,7 @@ theorem reading_radius_lt {genus : Nat}
       prepared.readingTarget_positive
 
 /-- Read the coefficient witness at the original local source point. -/
-def baseReading {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def baseReading {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Gaussian :=
   prepared.reading 0 prepared.baseInside
@@ -2024,7 +2032,7 @@ certificates.
 
 The thunks preserve the chosen witnesses. Possibility, persistence to the original reading state, and the squared-radius
 bound all concern this same retained state. -/
-structure CenterState {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+structure CenterState {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) where
   /-- The exact retained coefficient process state. -/ state : (prepared.coefficient 0
@@ -2056,7 +2064,7 @@ constructive_injectivity CenterState
 namespace CenterState
 
 /-- Retain the exact coefficient witness of a supplied base state in a thunk. -/
-def valueThunk {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def valueThunk {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (state :
@@ -2067,7 +2075,7 @@ def valueThunk {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCu
       state).val⟩
 
 /-- Retain the exact denominator witness of a supplied base coefficient state in a thunk. -/
-def denominatorThunk {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def denominatorThunk {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (state :
@@ -2083,7 +2091,7 @@ open Purelib.Approximation.Gaussian
 
 Both witness thunks are constructed from that exact state, and the cached coefficient is certified as the original point
 power divided by its cached denominator. -/
-def ofState {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def ofState {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (state :
@@ -2120,8 +2128,8 @@ def ofState {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve
           prepared.baseInside).value.name.process.witness state.2).property
       cachedValue_eq_power_div_denominator := by
         change
-          ((Name.Coherent.Power.namedPower
-            (Name.Coherent.CoherentNamed.Coherence.exact
+          ((Power.namedPower
+            (CoherentNamed.Coherence.exact
               (prepared.point 0)) differential.exponent).name.process.witness
                 state.1).val /
               ((prepared.sheetValue 0
@@ -2129,10 +2137,10 @@ def ofState {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve
             prepared.point 0 ^ differential.exponent /
               ((prepared.sheetValue 0
                 prepared.baseInside).value.name.process.witness state.2).val
-        rw [Name.Coherent.Power.namedPower_exact_possible_eq (prepared.point 0)
+        rw [Power.namedPower_exact_possible_eq (prepared.point 0)
           differential.exponent state.1
-            ((Name.Coherent.Power.namedPower
-              (Name.Coherent.CoherentNamed.Coherence.exact
+            ((Power.namedPower
+              (CoherentNamed.Coherence.exact
                 (prepared.point 0)) differential.exponent).name.process.witness
                   state.1).property]
       persists := persists
@@ -2142,7 +2150,7 @@ def ofState {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve
 
 The denominator must be possible at the retained state, and the supplied value must equal the original point power
 divided by that same denominator; persistence and accuracy are retained unchanged. -/
-def ofCertified {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def ofCertified {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (state :
@@ -2163,13 +2171,13 @@ def ofCertified {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticC
       ((prepared.coefficient 0 prepared.baseInside).name.process.ball
         state).radiusSq < prepared.readingTarget) :
     CenterState prepared := by
-  let numerator := Name.Coherent.Power.namedPower
-    (Name.Coherent.CoherentNamed.Coherence.exact (prepared.point 0))
+  let numerator := Power.namedPower
+    (CoherentNamed.Coherence.exact (prepared.point 0))
       differential.exponent
   let numeratorWitness := numerator.name.process.witness state.1
   have numeratorEq : numeratorWitness.val =
       prepared.point 0 ^ differential.exponent :=
-    Name.Coherent.Power.namedPower_exact_possible_eq (prepared.point 0) differential.exponent
+    Power.namedPower_exact_possible_eq (prepared.point 0) differential.exponent
       state.1 numeratorWitness.property
   exact
     { state := state
@@ -2192,7 +2200,7 @@ end
 
 /-- Build a center cache from a certified denominator, computing the coefficient with that exact retained denominator.
 -/
-def ofCertifiedDenominator {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def ofCertifiedDenominator {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (state :
@@ -2216,7 +2224,7 @@ def ofCertifiedDenominator {genus : Nat} {curve : Curves.Hyperelliptic.Basic.Hyp
 
 /-- Replace the cached value and denominator witnesses at the same retained center state using certified possibilities
 and quotient equality. -/
-def recache {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def recache {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared)
@@ -2232,7 +2240,7 @@ def recache {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve
 
 /-- Recaching witnesses preserves the exact original center state. -/
 @[simp] theorem recache_state {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared)
@@ -2247,7 +2255,7 @@ def recache {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve
 
 open Purelib.Approximation.Gaussian in
 /-- Construct a center state at a later sampling index whose refinement target fits the reading tolerance. -/
-def atIndex {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def atIndex {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (index : Nat)
     (accurate : Process.Sampling.refinementTarget index <
@@ -2268,13 +2276,13 @@ def atIndex {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve
 
 open Purelib.Approximation.Rational in
 /-- Search from zero for a geometric sampling target strictly below the original reading tolerance. -/
-def canonicalIndex {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def canonicalIndex {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Nat :=
   Geometric.Search.firstQuarterBelow 1 0 prepared.readingTarget
 
 /-- Cache the exact base reading state and its witnesses with its retained accuracy proof. -/
-def canonical {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def canonical {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : CenterState prepared := by
   let state := prepared.readingState 0 prepared.baseInside
@@ -2282,14 +2290,14 @@ def canonical {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCur
     (prepared.reading_radius_lt 0 prepared.baseInside)
 
 /-- Read the retained cached coefficient witness. -/
-def value {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def value {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) : Gaussian :=
   center.cachedValue.get
 
 /-- The retained cached coefficient witness is possible at the indexed state. -/
-theorem value_possible {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+theorem value_possible {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) :
@@ -2299,7 +2307,7 @@ theorem value_possible {genus : Nat} {curve : Curves.Hyperelliptic.Basic.Hyperel
 
 /-- The retained coefficient witness remains possible at the original reading state. -/
 theorem value_possible_at_readingState {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) :
@@ -2308,7 +2316,7 @@ theorem value_possible_at_readingState {genus : Nat}
   center.persists center.value_possible
 
 /-- Read the exact cached denominator witness. -/
-def denominator {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def denominator {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) : Gaussian :=
@@ -2316,7 +2324,7 @@ def denominator {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticC
 
 /-- The cached denominator is possible in the denominator component of the retained coefficient state. -/
 theorem denominator_possible {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) :
@@ -2326,7 +2334,7 @@ theorem denominator_possible {genus : Nat}
 
 /-- The cached coefficient equals the original base-point power divided by its retained denominator. -/
 theorem value_eq_power_div_denominator {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) :
@@ -2336,7 +2344,7 @@ theorem value_eq_power_div_denominator {genus : Nat}
 
 /-- Recaching reads back the exact supplied coefficient value. -/
 @[simp] theorem recache_value {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared)
@@ -2351,7 +2359,7 @@ theorem value_eq_power_div_denominator {genus : Nat}
 
 /-- Recaching reads back the exact supplied denominator. -/
 @[simp] theorem recache_denominator {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared)
@@ -2366,7 +2374,7 @@ theorem value_eq_power_div_denominator {genus : Nat}
 
 /-- For exponent zero, the cached coefficient equals the reciprocal of its retained denominator. -/
 theorem value_eq_one_div_denominator_of_exponent_zero {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (exponentZero : differential.exponent = 0) :
@@ -2376,7 +2384,7 @@ theorem value_eq_one_div_denominator_of_exponent_zero {genus : Nat}
 open Purelib.Riemann.Branches in
 /-- The cached denominator lies in the original canonical prepared root box. -/
 theorem denominator_in_prepared_box {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) :
@@ -2392,7 +2400,7 @@ theorem denominator_in_prepared_box {genus : Nat}
 
 /-- The cached denominator lies in the exact retained prepared-owner box. -/
 theorem denominator_in_cached_prepared_box {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) :
@@ -2404,16 +2412,16 @@ theorem denominator_in_cached_prepared_box {genus : Nat}
 open Purelib.Approximation.Gaussian in
 /-- Read the ball of the retained denominator state. -/
 def denominatorBall {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
-    (center : CenterState prepared) : Approximation.Gaussian.Enclosure.Ball :=
+    (center : CenterState prepared) : Enclosure.Ball :=
   (prepared.sheetValue 0 prepared.baseInside).value.name.process.ball
     center.state.2
 
 /-- The retained denominator witness lies in its own process ball. -/
 theorem denominator_in_ball {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) :
@@ -2432,7 +2440,7 @@ theorem denominatorSectorRadius_nonnegative :
 open Purelib.Geometry.Rational in
 /-- Use the one-tenth square about a sufficiently small denominator ball, otherwise the original cached prepared box. -/
 def denominatorProjectionBox {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) : Box :=
@@ -2446,7 +2454,7 @@ def denominatorProjectionBox {genus : Nat}
 open Purelib.Data.Gaussian in
 /-- The retained denominator witness lies in whichever projection box was selected. -/
 theorem denominator_in_projection_box {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) :
@@ -2456,7 +2464,7 @@ theorem denominator_in_projection_box {genus : Nat}
   split
   · rename_i radiusSmall
     have distanceBound :
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
             (center.denominator - center.denominatorBall.center) <=
           denominatorSectorRadius ^ 2 :=
       center.denominator_in_ball.trans radiusSmall
@@ -2527,7 +2535,7 @@ theorem mul_one_div_re (displacement denominator : Gaussian) :
     (displacement * (1 / denominator)).re =
       (displacement.re * denominator.re +
         displacement.im * denominator.im) /
-          Data.Gaussian.Norm.Basic.normSq denominator := by
+          Norm.Basic.normSq denominator := by
   have oneDiv : (1 / denominator : Gaussian) = denominator⁻¹ := by
     change 1 * denominator⁻¹ = denominator⁻¹
     exact Basic.one_mul _
@@ -2535,10 +2543,10 @@ theorem mul_one_div_re (displacement denominator : Gaussian) :
   rw [Field.inv_eq]
   change displacement.re *
           (denominator.re /
-            Data.Gaussian.Norm.Basic.normSq denominator) -
+            Norm.Basic.normSq denominator) -
         displacement.im *
           (-denominator.im /
-            Data.Gaussian.Norm.Basic.normSq denominator) = _
+            Norm.Basic.normSq denominator) = _
   rw [Fraction.Field.div_eq_mul_inv_direct,
     Fraction.Field.div_eq_mul_inv_direct,
     Fraction.Field.div_eq_mul_inv_direct]
@@ -2546,7 +2554,7 @@ theorem mul_one_div_re (displacement denominator : Gaussian) :
 
 open Purelib.Approximation.Gaussian
 /-- Rebase the original coefficient process at the retained state. -/
-def named {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def named {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) : Name.Basic.Named :=
@@ -2554,17 +2562,17 @@ def named {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve g
     state := center.state }
 
 /-- The original coefficient name is operationally equivalent to its rebasing at the retained state. -/
-def equivalent {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def equivalent {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) :
     Equivalence.NamedEquivalent
       (prepared.coefficient 0 prepared.baseInside).name center.named :=
-  Name.Coherent.CoherentNamed.rebaseEquivalent
+  CoherentNamed.rebaseEquivalent
     (prepared.coefficient 0 prepared.baseInside) center.state
 
 /-- Rebase the original base coefficient process at its canonical reading state. -/
-def baseNamed {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def baseNamed {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     Name.Basic.Named :=
@@ -2572,13 +2580,13 @@ def baseNamed {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCur
     state := prepared.readingState 0 prepared.baseInside }
 
 /-- The original base coefficient name is equivalent to its canonical reading-state rebasing. -/
-def baseEquivalent {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def baseEquivalent {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     Equivalence.NamedEquivalent
       (prepared.coefficient 0 prepared.baseInside).name
       (baseNamed prepared) :=
-  Name.Coherent.CoherentNamed.rebaseEquivalent
+  CoherentNamed.rebaseEquivalent
     (prepared.coefficient 0 prepared.baseInside)
       (prepared.readingState 0 prepared.baseInside)
 
@@ -2600,19 +2608,19 @@ theorem signedCoordinateLower_le (coefficient lower value upper : Coordinate)
     signedCoordinateLower coefficient lower upper <= coefficient * value := by
   by_cases nonnegative : 0 <= coefficient
   · rw [signedCoordinateLower, if_pos nonnegative]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_left_direct
       lowerLe nonnegative
   · rw [signedCoordinateLower, if_neg nonnegative]
     have nonpositive : coefficient <= 0 := le_of_not_ge nonnegative
     have negNonnegative : 0 <= -coefficient := by
-      have reversed := Fraction.Order.Arithmetic.neg_le_neg_direct nonpositive
+      have reversed := Arithmetic.neg_le_neg_direct nonpositive
       simpa only [neg_zero] using reversed
-    have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    have scaled := Arithmetic.mul_le_mul_of_nonneg_left_direct
       valueLe negNonnegative
     calc
       coefficient * upper = -((-coefficient) * upper) := by ring1
       _ <= -((-coefficient) * value) :=
-        Fraction.Order.Arithmetic.neg_le_neg_direct scaled
+        Arithmetic.neg_le_neg_direct scaled
       _ = coefficient * value := by ring1
 
 /-- Sum the two sign-selected coordinate lower bounds for projection of a box onto a displacement. -/
@@ -2651,18 +2659,18 @@ theorem signedQuotientLower_le (numerator denominatorLower denominator
       numerator / denominator := by
   by_cases numeratorNonnegative : 0 <= numerator
   · rw [signedQuotientLower, if_pos numeratorNonnegative]
-    exact Fraction.Order.Field.div_le_div_of_nonneg_left_direct
+    exact Field.div_le_div_of_nonneg_left_direct
       numeratorNonnegative (denominatorLowerPositive.trans_le lowerLe) upperLe
   · rw [signedQuotientLower, if_neg numeratorNonnegative]
     have numeratorNonpositive : numerator <= 0 := le_of_not_ge numeratorNonnegative
     have negNumeratorNonnegative : 0 <= -numerator :=
       by
-        have reversed := Fraction.Order.Arithmetic.neg_le_neg_direct numeratorNonpositive
+        have reversed := Arithmetic.neg_le_neg_direct numeratorNonpositive
         simpa only [neg_zero] using reversed
     have positiveDivision :
         (-numerator) / denominator <=
           (-numerator) / denominatorLower :=
-      Fraction.Order.Field.div_le_div_of_nonneg_left_direct
+      Field.div_le_div_of_nonneg_left_direct
         negNumeratorNonnegative denominatorLowerPositive lowerLe
     calc
       numerator / denominatorLower =
@@ -2671,7 +2679,7 @@ theorem signedQuotientLower_le (numerator denominatorLower denominator
           Fraction.Field.div_eq_mul_inv_direct]
         ring1
       _ <= -((-numerator) / denominator) :=
-        Fraction.Order.Arithmetic.neg_le_neg_direct positiveDivision
+        Arithmetic.neg_le_neg_direct positiveDivision
       _ = numerator / denominator := by
         rw [Fraction.Field.div_eq_mul_inv_direct,
           Fraction.Field.div_eq_mul_inv_direct]
@@ -2696,7 +2704,7 @@ def dyadicRealLower (source : Coordinate) : Coordinate :=
 private theorem realLowerDyadicScale_positive :
     (0 : Coordinate) < realLowerDyadicScale := by
   unfold realLowerDyadicScale
-  exact Fraction.Order.Arithmetic.pow_pos_direct (by decide)
+  exact Arithmetic.pow_pos_direct (by decide)
     realLowerDyadicPrecision
 
 /-- Downward dyadic rounding never exceeds the original rational value.
@@ -2706,7 +2714,7 @@ Its direct rational floor certificate survives division by that positive scale. 
 theorem dyadicRealLower_le (source : Coordinate) :
     dyadicRealLower source <= source := by
   unfold dyadicRealLower
-  apply (Fraction.Order.Field.div_le_iff_pos
+  apply (Field.div_le_iff_pos
     realLowerDyadicScale_positive).2
   have floorBound := Rounding.Floor.intCast_floor_le
     (source * realLowerDyadicScale)
@@ -2729,7 +2737,7 @@ open Purelib.Polynomial in
 open Purelib.Polynomial.Dense.Gaussian in
 /-- Read the original cleared segment's magnitude-based denominator floor. -/
 def cellDenominatorLower
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient start
       finish) : Coordinate :=
@@ -2741,15 +2749,15 @@ open Purelib.Polynomial in
 open Purelib.Polynomial.Dense.Gaussian in
 /-- The segment's magnitude-based denominator floor is strictly positive. -/
 theorem cellDenominatorLower_positive
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient start
       finish) :
     0 < cellDenominatorLower segment := by
   unfold cellDenominatorLower
     PreparedModels.magnitudeDenominatorLower
-  exact Fraction.Order.Field.div_pos_direct
-    (Fraction.Order.Field.div_pos_direct
+  exact Field.div_pos_direct
+    (Field.div_pos_direct
     (SquareRoot.Radius.Dyadic.Geometric.dyadicSquareRadius_positive _) (by decide))
     (by decide)
 
@@ -2757,7 +2765,7 @@ open Purelib.Polynomial in
 open Purelib.Polynomial.Dense.Gaussian in
 /-- Combine the segment magnitude floor with the squared-norm lower bound of the supplied original box. -/
 def geometricDenominatorLower
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient start
       finish) (box : Box) : Coordinate :=
@@ -2771,17 +2779,17 @@ open Purelib.Data.Rat in
 The unchanged maximum includes the original positive geometric
 denominator floor from the retained clear segment. -/
 theorem geometricDenominatorLower_positive
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient start
       finish) (box : Box) :
     0 < geometricDenominatorLower segment box :=
-  (cellDenominatorLower_positive segment).trans_le (Fraction.Order.Basic.le_max_left _ _)
+  (cellDenominatorLower_positive segment).trans_le (Basic.le_max_left _ _)
 
 open Purelib.Data.Rat in
 /-- Twice the sum of two reading targets equals half the model-error allowance. -/
 private theorem twice_readingTarget_sum_eq_half {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     2 * (prepared.readingTarget + prepared.readingTarget) =
@@ -2806,7 +2814,7 @@ section
 open Purelib.Approximation.Gaussian
 /-- Read a later sampling witness from the original base reading state. -/
 def laterBaseValue {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (index : Nat) : Gaussian :=
   Process.Sampling.witnessAt
@@ -2815,7 +2823,7 @@ def laterBaseValue {genus : Nat}
 
 /-- Every later base sample remains possible at the original base reading state. -/
 theorem laterBaseValue_possible_at_state {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (index : Nat) :
     (prepared.coefficient 0 prepared.baseInside).name.process.Possible
@@ -2832,10 +2840,10 @@ open Purelib.Data.Gaussian
 open Purelib.Data.Rat
 /-- Every later base sample is within the model-error allowance in squared distance of the original base reading. -/
 theorem laterBaseValue_sub_baseReading_lt {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (prepared.laterBaseValue index - prepared.baseReading) <
       prepared.modelErrorAllowance := by
   let process := (prepared.coefficient 0 prepared.baseInside).name.process
@@ -2854,7 +2862,7 @@ theorem laterBaseValue_sub_baseReading_lt {genus : Nat}
         Basic.add_re,
         Basic.add_im] <;> ring1
   have baseReverse :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (ball.center - prepared.baseReading) <= ball.radiusSq := by
     have reverse : ball.center - prepared.baseReading =
         -(prepared.baseReading - ball.center) := by
@@ -2867,28 +2875,28 @@ theorem laterBaseValue_sub_baseReading_lt {genus : Nat}
     exact baseInside
   rw [identity]
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((prepared.laterBaseValue index - ball.center) +
           (ball.center - prepared.baseReading)) <=
       2 * (ball.radiusSq + ball.radiusSq) :=
       (Norm.Bounds.normSq_add_le_two _ _).trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add laterInside baseReverse) (by decide))
     _ < 2 * (prepared.readingTarget + prepared.readingTarget) :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+      Arithmetic.mul_lt_mul_of_pos_left_direct
         (by decide)
-        (Fraction.Order.Arithmetic.add_lt_add_direct
+        (Arithmetic.add_lt_add_direct
           (prepared.reading_radius_lt 0 prepared.baseInside)
           (prepared.reading_radius_lt 0 prepared.baseInside))
     _ = prepared.modelErrorAllowance / 2 :=
       twice_readingTarget_sum_eq_half prepared
     _ < prepared.modelErrorAllowance :=
-      Purelib.Data.Rat.Fraction.Order.Field.half_lt_self prepared.modelErrorAllowance_positive
+      Field.half_lt_self prepared.modelErrorAllowance_positive
 
 /-- A certified replacement witness at the same center state differs from the original cached value by less than the
 model allowance in squared norm. -/
 theorem CenterState.recache_value_sub_value_lt {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared)
@@ -2898,7 +2906,7 @@ theorem CenterState.recache_value_sub_value_lt {genus : Nat}
         center.state.2 denominator)
     (valueEq :
       value = prepared.point 0 ^ differential.exponent / denominator) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((center.recache value denominator denominatorPossible valueEq).value -
           center.value) < prepared.modelErrorAllowance := by
   let replacement :=
@@ -2919,7 +2927,7 @@ theorem CenterState.recache_value_sub_value_lt {genus : Nat}
         Basic.add_re,
         Basic.add_im] <;> ring1
   have centerReverse :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (ball.center - center.value) <= ball.radiusSq := by
     have reverse : ball.center - center.value =
         -(center.value - ball.center) := by
@@ -2930,27 +2938,27 @@ theorem CenterState.recache_value_sub_value_lt {genus : Nat}
           Basic.neg_im] <;> ring1
     rw [reverse, Norm.Basic.normSq_neg]
     exact centerInside
-  change Data.Gaussian.Norm.Basic.normSq
+  change Norm.Basic.normSq
       (replacement.value - center.value) < prepared.modelErrorAllowance
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (replacement.value - center.value) =
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
         ((replacement.value - ball.center) +
           (ball.center - center.value)) := by rw [identity]
     _ <= 2 * (ball.radiusSq + ball.radiusSq) :=
       (Norm.Bounds.normSq_add_le_two _ _).trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add replacementInside centerReverse) (by decide))
     _ < 2 * (prepared.readingTarget + prepared.readingTarget) :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+      Arithmetic.mul_lt_mul_of_pos_left_direct
         (by decide)
-        (Fraction.Order.Arithmetic.add_lt_add_direct
+        (Arithmetic.add_lt_add_direct
           replacement.radius_lt center.radius_lt)
     _ = prepared.modelErrorAllowance / 2 :=
       twice_readingTarget_sum_eq_half prepared
     _ < prepared.modelErrorAllowance :=
-      Purelib.Data.Rat.Fraction.Order.Field.half_lt_self prepared.modelErrorAllowance_positive
+      Field.half_lt_self prepared.modelErrorAllowance_positive
 
 end
 
@@ -2958,7 +2966,7 @@ section
 open Purelib.Approximation.Gaussian
 /-- Read a later sampling witness from the exact retained coefficient state. -/
 def CenterState.laterValue {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (index : Nat) : Gaussian :=
@@ -2968,7 +2976,7 @@ def CenterState.laterValue {genus : Nat}
 
 /-- A later sampling witness remains possible at the retained starting state. -/
 theorem CenterState.laterValue_possible_at_state {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (index : Nat) :
@@ -2984,11 +2992,11 @@ open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
 /-- A later witness differs from the retained value by less than the model-error allowance in squared norm. -/
 theorem CenterState.laterValue_sub_value_lt {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (center.laterValue index - center.value) <
       prepared.modelErrorAllowance := by
   let process := (prepared.coefficient 0 prepared.baseInside).name.process
@@ -3006,7 +3014,7 @@ theorem CenterState.laterValue_sub_value_lt {genus : Nat}
         Basic.add_re,
         Basic.add_im] <;> ring1
   have centerReverse :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (ball.center - center.value) <= ball.radiusSq := by
     have reverse : ball.center - center.value =
         -(center.value - ball.center) := by
@@ -3018,24 +3026,24 @@ theorem CenterState.laterValue_sub_value_lt {genus : Nat}
     rw [reverse, Norm.Basic.normSq_neg]
     exact centerInside
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (center.laterValue index - center.value) =
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
         ((center.laterValue index - ball.center) +
           (ball.center - center.value)) := by rw [identity]
     _ <= 2 * (ball.radiusSq + ball.radiusSq) :=
       (Norm.Bounds.normSq_add_le_two _ _).trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add laterInside centerReverse) (by decide))
     _ < 2 * (prepared.readingTarget + prepared.readingTarget) :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+      Arithmetic.mul_lt_mul_of_pos_left_direct
         (by decide)
-        (Fraction.Order.Arithmetic.add_lt_add_direct
+        (Arithmetic.add_lt_add_direct
           center.radius_lt center.radius_lt)
     _ = prepared.modelErrorAllowance / 2 :=
       twice_readingTarget_sum_eq_half prepared
     _ < prepared.modelErrorAllowance :=
-      Purelib.Data.Rat.Fraction.Order.Field.half_lt_self prepared.modelErrorAllowance_positive
+      Field.half_lt_self prepared.modelErrorAllowance_positive
 
 open Purelib.Data.Gaussian in
 set_option genInjectivity false in
@@ -3044,14 +3052,14 @@ set_option genInjectivity false in
 The squared difference is below twice the sum of the requested comparison tolerance and the parent's model-error
 allowance. -/
 structure CenterAlignment {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent child : PreparedEdge curve differential)
     (parentCenter : CenterState parent) (target : Coordinate) where
   /-- The exact selected center state of the original child edge. -/ childCenter : CenterState child
   /-- The actual child-to-parent value difference is bounded in squared norm by twice the sum of the comparison target
     and the parent model allowance. -/ close :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (childCenter.value - parentCenter.value) <
       2 * (target + parent.modelErrorAllowance)
 
@@ -3067,7 +3075,7 @@ tolerance.
 The operational name comparison chooses actual later indices; the resulting child center retains that state and its own
 reading accuracy. -/
 def alignRight {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent child : PreparedEdge curve differential)
     (parentCenter : CenterState parent)
@@ -3119,7 +3127,7 @@ def alignRight {genus : Nat}
           (Nat.le_refl comparison.leftIndex)
           (Nat.le_refl comparison.rightIndex)
         have alignedCloseReverse :
-            Data.Gaussian.Norm.Basic.normSq
+            Norm.Basic.normSq
                 (childCenter.value - parentLater) < target := by
           have reverse : childCenter.value - parentLater =
               -(parentLater - childCenter.value) := by
@@ -3143,9 +3151,9 @@ def alignRight {genus : Nat}
         rw [identity]
         exact
           (Norm.Bounds.normSq_add_le_two _ _).trans_lt
-            (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+            (Arithmetic.mul_lt_mul_of_pos_left_direct
               (by decide)
-              (Fraction.Order.Arithmetic.add_lt_add_direct
+              (Arithmetic.add_lt_add_direct
                 alignedCloseReverse parentTail)) }
 
 open Purelib.Data.Gaussian in
@@ -3153,11 +3161,11 @@ open Purelib.Data.Rat in
 /-- The retained center value differs from the original base reading by less than the model allowance in squared norm.
 -/
 theorem CenterState.value_sub_baseReading_lt {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (center.value - prepared.baseReading) <
       prepared.modelErrorAllowance := by
   let process := (prepared.coefficient 0 prepared.baseInside).name.process
@@ -3178,7 +3186,7 @@ theorem CenterState.value_sub_baseReading_lt {genus : Nat}
         Basic.add_re,
         Basic.add_im] <;> ring1
   have centerToBaseCenter :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (ball.center - prepared.baseReading) <= ball.radiusSq := by
     have identity : ball.center - prepared.baseReading =
         -(prepared.baseReading - ball.center) := by
@@ -3192,32 +3200,32 @@ theorem CenterState.value_sub_baseReading_lt {genus : Nat}
   have radiusSmall : ball.radiusSq < prepared.readingTarget :=
     prepared.reading_radius_lt 0 prepared.baseInside
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (center.value - prepared.baseReading) =
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
         ((center.value - ball.center) +
           (ball.center - prepared.baseReading)) := by rw [centerDifference]
     _ <= 2 *
-        (Data.Gaussian.Norm.Basic.normSq
+        (Norm.Basic.normSq
             (center.value - ball.center) +
-          Data.Gaussian.Norm.Basic.normSq
+          Norm.Basic.normSq
             (ball.center - prepared.baseReading)) :=
       Norm.Bounds.normSq_add_le_two _ _
     _ <= 2 * (ball.radiusSq + ball.radiusSq) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add centerInside centerToBaseCenter) (by decide)
     _ < 2 * (prepared.readingTarget + prepared.readingTarget) :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+      Arithmetic.mul_lt_mul_of_pos_left_direct
         (by decide)
-        (Fraction.Order.Arithmetic.add_lt_add_direct radiusSmall radiusSmall)
+        (Arithmetic.add_lt_add_direct radiusSmall radiusSmall)
     _ = prepared.modelErrorAllowance / 2 :=
       twice_readingTarget_sum_eq_half prepared
     _ < prepared.modelErrorAllowance :=
-      Purelib.Data.Rat.Fraction.Order.Field.half_lt_self prepared.modelErrorAllowance_positive
+      Field.half_lt_self prepared.modelErrorAllowance_positive
 
 open Purelib.Riemann.Branches in
 /-- Every unit-interval point on the retained local segment lies in the original ambient box. -/
-theorem point_contains {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+theorem point_contains {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :
@@ -3236,7 +3244,7 @@ open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
 /-- The squared endpoint displacement is at most four times the ambient squared-norm bound. -/
 theorem pointMovement_le_four_ambient {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     prepared.pointMovement <= 4 * prepared.ambient.normSqBound := by
@@ -3246,12 +3254,12 @@ theorem pointMovement_le_four_ambient {genus : Nat}
     (prepared.point_contains 0 prepared.baseInside)
   calc
     prepared.pointMovement <=
-        2 * (Data.Gaussian.Norm.Basic.normSq (prepared.point 1) +
-          Data.Gaussian.Norm.Basic.normSq (prepared.point 0)) :=
+        2 * (Norm.Basic.normSq (prepared.point 1) +
+          Norm.Basic.normSq (prepared.point 0)) :=
       Norm.Bounds.normSq_sub_le_two _ _
     _ <= 2 * (prepared.ambient.normSqBound +
           prepared.ambient.normSqBound) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add first second) (by decide)
     _ = 4 * prepared.ambient.normSqBound := by ring1
 
@@ -3259,15 +3267,15 @@ open Purelib.Data.Gaussian in
 open Purelib.Riemann.Branches in
 /-- The squared polynomial-value change from the source to any local point is bounded by the retained edge variation. -/
 theorem radicandDifference_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (curve.polynomial.eval (prepared.point 0) -
           curve.polynomial.eval (prepared.point fraction)) <=
       prepared.radicandMovementBound := by
-  change Data.Gaussian.Norm.Basic.normSq
+  change Norm.Basic.normSq
       (curve.polynomial.eval (prepared.localSegment.pointAt 0) -
         curve.polynomial.eval (prepared.localSegment.pointAt fraction)) <= _
   simp only [localSegment, PreparedModels.edge]
@@ -3294,7 +3302,7 @@ theorem radicandDifference_le {genus : Nat}
 /-- Every coefficient reading has a possible denominator witness and the exact original point-power quotient
 decomposition. -/
 theorem reading_components {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :
@@ -3312,7 +3320,7 @@ theorem reading_components {genus : Nat}
 open Purelib.Riemann.Branches in
 /-- Every possible query denominator lies in the canonical prepared source box. -/
 theorem denominator_candidate_in_source {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1)
@@ -3330,7 +3338,7 @@ theorem denominator_candidate_in_source {genus : Nat}
 
 /-- Every possible query denominator lies in the exact cached prepared source box. -/
 theorem denominator_candidate_in_cached_source {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1)
@@ -3346,7 +3354,7 @@ open Purelib.Data.Gaussian in
 open Purelib.Riemann.Branches in
 /-- Every possible query denominator meets the original segment's squared-norm lower bound. -/
 theorem denominator_candidate_lower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1)
@@ -3356,7 +3364,7 @@ theorem denominator_candidate_lower {genus : Nat}
       state candidate) :
     PreparedModels.segmentDenominatorLower
         prepared.segment <=
-      Data.Gaussian.Norm.Basic.normSq candidate := by
+      Norm.Basic.normSq candidate := by
   have pointwiseLower :
       PreparedModels.segmentDenominatorLower
           prepared.segment <=
@@ -3388,7 +3396,7 @@ open Purelib.Data.Rat in
 Both original denominator floors bound the same retained root candidate.
 Their unchanged maximum retains this common lower bound. -/
 theorem preparedDenominator_candidate_lower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1)
@@ -3397,8 +3405,8 @@ theorem preparedDenominator_candidate_lower {genus : Nat}
     (possible : (prepared.sheetValue fraction inside).value.name.process.Possible
       state candidate) :
     prepared.preparedDenominatorLower <=
-      Data.Gaussian.Norm.Basic.normSq candidate := by
-  apply Fraction.Order.Basic.max_le
+      Norm.Basic.normSq candidate := by
+  apply Basic.max_le
   · exact prepared.denominator_candidate_lower fraction inside state possible
   · have candidateInside :=
       prepared.denominator_candidate_in_source fraction inside state possible
@@ -3413,7 +3421,7 @@ open Purelib.Riemann.Branches in
 The retained automatic coefficient maximum includes this same process
 center bound at the displayed query. -/
 theorem coefficient_centerBound_le_automatic {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :
@@ -3421,15 +3429,15 @@ theorem coefficient_centerBound_le_automatic {genus : Nat}
       PreparedModels.automaticBoundValue differential
         prepared.segment := by
   have pointNormBound :
-      Data.Gaussian.Norm.Basic.normSq (prepared.point fraction) <=
+      Norm.Basic.normSq (prepared.point fraction) <=
         prepared.ambient.normSqBound :=
     prepared.ambient.normSq_le_normSqBound
       (prepared.point_contains fraction inside)
   have numeratorBound :
-      Data.Gaussian.Norm.Basic.normSq (prepared.point fraction) ^
+      Norm.Basic.normSq (prepared.point fraction) ^
           differential.exponent <=
         prepared.ambient.normSqBound ^ differential.exponent :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
+    Arithmetic.pow_le_pow_direct
       (Norm.Basic.normSq_nonneg _)
       pointNormBound differential.exponent
   have segmentLower :
@@ -3437,7 +3445,7 @@ theorem coefficient_centerBound_le_automatic {genus : Nat}
           prepared.segment <=
         PreparedModels.segmentDenominatorLower
           prepared.segment :=
-    (Fraction.Order.Basic.le_max_left _ _).trans (Fraction.Order.Basic.le_max_left _ _)
+    (Basic.le_max_left _ _).trans (Basic.le_max_left _ _)
   have pointwiseLower :
       PreparedModels.segmentDenominatorLower
           prepared.segment <=
@@ -3470,21 +3478,21 @@ theorem coefficient_centerBound_le_automatic {genus : Nat}
   rw [Value.differentialValue_centerBound]
   unfold PreparedModels.automaticBoundValue
   calc
-    Data.Gaussian.Norm.Basic.normSq (prepared.point fraction) ^
+    Norm.Basic.normSq (prepared.point fraction) ^
           differential.exponent /
           (prepared.sheetValue fraction inside).apart.certificate.lowerSq <=
         prepared.ambient.normSqBound ^ differential.exponent /
           (prepared.sheetValue fraction inside).apart.certificate.lowerSq := by
       rw [Fraction.Field.div_eq_mul_inv_direct,
         Fraction.Field.div_eq_mul_inv_direct]
-      exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      exact Arithmetic.mul_le_mul_of_nonneg_right_direct
         numeratorBound
-        (Fraction.Order.Field.inv_pos_direct actualPositive).le
+        (Field.inv_pos_direct actualPositive).le
     _ <= prepared.ambient.normSqBound ^ differential.exponent /
           PreparedModels.denominatorLower
             prepared.segment :=
-      Fraction.Order.Field.div_le_div_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.pow_nonneg_direct
+      Field.div_le_div_of_nonneg_left_direct
+        (Arithmetic.pow_nonneg_direct
           prepared.ambient.normSqBound_nonneg differential.exponent)
         (PreparedModels.denominatorLower_positive
           prepared.segment)
@@ -3495,7 +3503,7 @@ open Purelib.Polynomial.Dense.Gaussian in
 /-- Bound a center value by twice the reading-radius allowance plus the segment's automatic coefficient bound. -/
 def centerValueNormSqBound {genus : Nat}
     (differential : Basic.Differential genus)
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
     (errorBound : Coordinate) : Coordinate :=
@@ -3509,15 +3517,15 @@ open Purelib.Polynomial.Dense.Gaussian in
 /-- The center-value squared-norm bound is nonnegative for a nonnegative error allowance. -/
 theorem centerValueNormSqBound_nonnegative {genus : Nat}
     (differential : Basic.Differential genus)
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
     {errorBound : Coordinate} (errorBoundNonnegative : 0 <= errorBound) :
     0 <= centerValueNormSqBound differential segment errorBound := by
   unfold centerValueNormSqBound
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  exact Arithmetic.mul_nonneg_direct (by decide)
     (add_nonneg
-      (Fraction.Order.Field.div_nonneg_direct errorBoundNonnegative
+      (Field.div_nonneg_direct errorBoundNonnegative
         (by decide))
       (PreparedModels.automaticBoundValue_nonnegative
         differential segment))
@@ -3527,7 +3535,7 @@ open Purelib.Polynomial.Dense.Gaussian in
 /-- Bound coefficient magnitude using the ambient numerator power and the segment's residual denominator floor. -/
 def residualAutomaticBoundValue {genus : Nat}
     (differential : Basic.Differential genus)
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) : Coordinate :=
   ambient.normSqBound ^ differential.exponent /
@@ -3539,15 +3547,15 @@ open Purelib.Polynomial
 open Purelib.Polynomial.Dense.Gaussian
 /-- The original cleared segment's residual denominator floor is strictly positive. -/
 private theorem residualDenominatorLower_positive
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
     0 < PreparedModels.residualDenominatorLower
       segment := by
   unfold PreparedModels.residualDenominatorLower
-  exact Fraction.Order.Field.div_pos_direct
-    (Fraction.Order.Basic.lt_min (by decide)
-      (Fraction.Order.Field.div_pos_direct
+  exact Field.div_pos_direct
+    (Basic.lt_min (by decide)
+      (Field.div_pos_direct
         segment.clearanceBound_positive (by decide)))
     (by decide)
 
@@ -3557,7 +3565,7 @@ The retained maximum includes the original residual-based bound.
 Its same cached automatic value therefore bounds that term. -/
 theorem automaticBoundValue_le_residual {genus : Nat}
     (differential : Basic.Differential genus)
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
     PreparedModels.automaticBoundValue differential
@@ -3565,22 +3573,22 @@ theorem automaticBoundValue_le_residual {genus : Nat}
       residualAutomaticBoundValue differential segment := by
   unfold PreparedModels.automaticBoundValue
     residualAutomaticBoundValue
-  apply Fraction.Order.Field.div_le_div_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.pow_nonneg_direct
+  apply Field.div_le_div_of_nonneg_left_direct
+    (Arithmetic.pow_nonneg_direct
       ambient.normSqBound_nonneg differential.exponent)
     (residualDenominatorLower_positive segment)
   unfold PreparedModels.denominatorLower
-  exact Fraction.Order.Basic.le_max_left _ _
+  exact Basic.le_max_left _ _
 
 /-- The residual-only automatic coefficient bound is nonnegative. -/
 theorem residualAutomaticBoundValue_nonnegative {genus : Nat}
     (differential : Basic.Differential genus)
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
     0 <= residualAutomaticBoundValue differential segment :=
-  Fraction.Order.Field.div_nonneg_direct
-    (Fraction.Order.Arithmetic.pow_nonneg_direct
+  Field.div_nonneg_direct
+    (Arithmetic.pow_nonneg_direct
       ambient.normSqBound_nonneg differential.exponent)
     (residualDenominatorLower_positive segment).le
 
@@ -3591,7 +3599,7 @@ open Purelib.Polynomial.Dense.Gaussian in
 /-- Bound a center value using its reading-radius allowance and the residual-only automatic coefficient estimate. -/
 def centerValueNormSqResidualBound {genus : Nat}
     (differential : Basic.Differential genus)
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
     (errorBound : Coordinate) : Coordinate :=
@@ -3604,7 +3612,7 @@ open Purelib.Polynomial.Dense.Gaussian
 /-- The residual-only center estimate dominates the original automatic center estimate. -/
 theorem centerValueNormSqBound_le_residual {genus : Nat}
     (differential : Basic.Differential genus)
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
     (errorBound : Coordinate) :
@@ -3616,23 +3624,23 @@ theorem centerValueNormSqBound_le_residual {genus : Nat}
           PreparedModels.automaticBoundValue
             differential segment <=
         errorBound / 8 + residualAutomaticBoundValue differential segment :=
-    Fraction.Order.Arithmetic.add_le_add_direct (le_refl _)
+    Arithmetic.add_le_add_direct (le_refl _)
       (automaticBoundValue_le_residual differential segment)
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  exact Arithmetic.mul_le_mul_of_nonneg_left_direct
     sumOrder (by decide)
 
 /-- The residual-only center estimate is nonnegative for a nonnegative error allowance. -/
 theorem centerValueNormSqResidualBound_nonnegative {genus : Nat}
     (differential : Basic.Differential genus)
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
     {errorBound : Coordinate} (errorBoundNonnegative : 0 <= errorBound) :
     0 <= centerValueNormSqResidualBound differential segment errorBound := by
   unfold centerValueNormSqResidualBound
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  exact Arithmetic.mul_nonneg_direct (by decide)
     (add_nonneg
-      (Fraction.Order.Field.div_nonneg_direct errorBoundNonnegative
+      (Field.div_nonneg_direct errorBoundNonnegative
         (by decide))
       (residualAutomaticBoundValue_nonnegative differential segment))
 
@@ -3643,21 +3651,21 @@ open Purelib.Data.Rat in
 /-- The retained center value meets the automatic squared-norm bound whenever the supplied error budget covers the model
 allowance. -/
 theorem CenterState.value_normSq_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (errorBound : Coordinate)
     (errorLe : prepared.modelErrorAllowance <= errorBound) :
-    Data.Gaussian.Norm.Basic.normSq center.value <=
+    Norm.Basic.normSq center.value <=
       centerValueNormSqBound differential prepared.segment errorBound := by
   let process := (prepared.coefficient 0 prepared.baseInside).name.process
   let ball := process.ball center.state
   have centerInside :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (center.value - ball.center) <= ball.radiusSq :=
     process.possible_inside center.value_possible
   have ballCenterBound :
-      Data.Gaussian.Norm.Basic.normSq ball.center <=
+      Norm.Basic.normSq ball.center <=
         process.centerBound :=
     process.center_bounded center.state
   have processBound : process.centerBound <=
@@ -3668,9 +3676,9 @@ theorem CenterState.value_normSq_le {genus : Nat}
     center.radius_lt.le.trans (by
       unfold readingTarget
       rw [Fraction.Field.div_eq_mul_inv_direct]
-      exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      exact Arithmetic.mul_le_mul_of_nonneg_right_direct
         errorLe
-        (Fraction.Order.Field.inv_pos_direct
+        (Field.inv_pos_direct
           (show (0 : Coordinate) < 8 by decide)).le)
   have identity : center.value =
       (center.value - ball.center) + ball.center := by
@@ -3682,7 +3690,7 @@ theorem CenterState.value_normSq_le {genus : Nat}
   rw [identity]
   exact
     (Norm.Bounds.normSq_add_le_two _ _).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add (centerInside.trans radiusBound)
           (ballCenterBound.trans processBound)) (by decide))
 
@@ -3696,11 +3704,11 @@ squared norm.
 The quotient estimate uses the exact denominator witnesses in the common prepared box and the original point and
 root-movement bounds. -/
 theorem reading_difference_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (prepared.reading fraction inside - prepared.baseReading) <=
       prepared.modelErrorAllowance := by
   rcases prepared.reading_components fraction inside with
@@ -3722,40 +3730,40 @@ theorem reading_difference_le {genus : Nat}
   have basePointBound := prepared.ambient.normSq_le_normSqBound
     (prepared.point_contains 0 prepared.baseInside)
   have pointDifference :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (prepared.point fraction - prepared.point 0) <=
         prepared.pointMovement := by
-    change Data.Gaussian.Norm.Basic.normSq
+    change Norm.Basic.normSq
         (prepared.localSegment.pointAt fraction -
           prepared.localSegment.pointAt 0) <= _
     unfold pointMovement
-    change _ <= Data.Gaussian.Norm.Basic.normSq
+    change _ <= Norm.Basic.normSq
       (prepared.localSegment.pointAt 1 - prepared.localSegment.pointAt 0)
     exact prepared.localSegment.normSq_pointAt_sub_zero_le_full fraction inside
   have numeratorDifference :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (prepared.point fraction ^ differential.exponent -
             prepared.point 0 ^ differential.exponent) <=
-        Power.Bounds.IntegrationQuotientVariation.powerSlope
+        IntegrationQuotientVariation.powerSlope
             prepared.ambient.normSqBound differential.exponent *
           prepared.pointMovement :=
-    (Power.Bounds.IntegrationQuotientVariation.normSq_pow_sub_pow_le
+    (IntegrationQuotientVariation.normSq_pow_sub_pow_le
       prepared.ambient.normSqBound_nonneg differential.exponent
       queryPointBound basePointBound).trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
           pointDifference
-          (Power.Bounds.IntegrationQuotientVariation.powerSlope_nonnegative
+          (IntegrationQuotientVariation.powerSlope_nonnegative
             prepared.ambient.normSqBound_nonneg differential.exponent))
   have baseNumeratorBound :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (prepared.point 0 ^ differential.exponent) <=
         prepared.ambient.normSqBound ^ differential.exponent := by
     rw [Power.normSq_pow]
-    exact Fraction.Order.Arithmetic.pow_le_pow_direct
+    exact Arithmetic.pow_le_pow_direct
       (Norm.Basic.normSq_nonneg (prepared.point 0))
       basePointBound differential.exponent
   have baseRootBound :
-      Data.Gaussian.Norm.Basic.normSq baseRoot <=
+      Norm.Basic.normSq baseRoot <=
         (UniformSquareRootPreparation.rootAmbient
           prepared.segment).normSqBound := by
     apply (UniformSquareRootPreparation.rootAmbient
@@ -3771,7 +3779,7 @@ theorem reading_difference_le {genus : Nat}
           prepared.segment prepared.left prepared.owner prepared.request
     exact refines.contains baseRootInside
   have rootDifference :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (baseRoot - queryRoot) <= prepared.preparedRootDiameter := by
     rw [prepared.preparedRootDiameter_eq_canonical]
     exact (PreparedSheetContinuation.prepared prepared.segment
@@ -3784,7 +3792,7 @@ theorem reading_difference_le {genus : Nat}
       numeratorDifference baseNumeratorBound baseRootBound rootDifference
         queryRootLower baseRootLower
   have rawBound :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (prepared.reading fraction inside - prepared.baseReading) <=
         prepared.rawVariation := by
     rw [queryReadingEqual]
@@ -3795,7 +3803,7 @@ theorem reading_difference_le {genus : Nat}
     (le_add_of_nonneg_right prepared.preparedRootDiameter_positive.le)
 
 /-- Read the canonical center state's retained denominator witness. -/
-def residualRootCenter {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def residualRootCenter {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Gaussian :=
   (CenterState.canonical prepared).denominator
@@ -3803,7 +3811,7 @@ def residualRootCenter {genus : Nat} {curve : Curves.Hyperelliptic.Basic.Hyperel
 open Purelib.Approximation.Gaussian in
 /-- The retained canonical denominator is possible at the original residual-certified root state. -/
 theorem residualRootCenter_possible {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential : Basic.Differential genus}
+    {curve : Basic.HyperellipticCurve genus} {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     (prepared.sheetValue 0 prepared.baseInside).value.name.process.Possible
       (prepared.residualRootState 0 prepared.baseInside) prepared.residualRootCenter := by
@@ -3815,7 +3823,7 @@ theorem residualRootCenter_possible {genus : Nat}
 
 /-- The residual root center lies in the exact cached root box. -/
 theorem residualRootCenter_in_cachedBox {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     prepared.cached.preparedOwner.track.initial.box.Contains
@@ -3833,11 +3841,11 @@ open Purelib.Data.Rat in
 The retained root-center norm floor includes the original residual
 component in its unchanged maximum. -/
 theorem residualRootCenter_normSq_lower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential : Basic.Differential genus}
+    {curve : Basic.HyperellipticCurve genus} {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
-    prepared.cachedDenominatorLower ≤ Data.Gaussian.Norm.Basic.normSq prepared.residualRootCenter := by
+    prepared.cachedDenominatorLower ≤ Norm.Basic.normSq prepared.residualRootCenter := by
   apply prepared.cachedDenominatorLower_le_of_contains prepared.residualRootCenter_in_cachedBox
-  exact ((Fraction.Order.Basic.le_max_left _ _).trans (Fraction.Order.Basic.le_max_left _ _)).trans
+  exact ((Basic.le_max_left _ _).trans (Basic.le_max_left _ _)).trans
     (prepared.denominator_candidate_lower 0 prepared.baseInside
       (prepared.residualRootState 0 prepared.baseInside) prepared.residualRootCenter_possible)
 
@@ -3846,18 +3854,18 @@ open Purelib.Data.Gaussian
 /-- A positive lower bound for the sum norm turns a candidate residual into a squared-distance bound from the retained
 root center. -/
 theorem residualRootCenter_sub_candidate_le_of_sumBound {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) {candidate : Gaussian}
     {sumLower : Coordinate} (sumPositive : 0 < sumLower)
     (sumBound : sumLower <=
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
         (prepared.residualRootCenter + candidate)) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (prepared.residualRootCenter - candidate) <=
       4 *
           (prepared.rootResidualTarget +
-              Data.Gaussian.Norm.Basic.normSq
+              Norm.Basic.normSq
                 (candidate * candidate -
                   curve.polynomial.eval (prepared.point 0))) /
         sumLower := by
@@ -3865,7 +3873,7 @@ theorem residualRootCenter_sub_candidate_le_of_sumBound {genus : Nat}
     (prepared.residualRootState_candidate_residual_lt 0
       prepared.baseInside prepared.residualRootCenter_possible).le
   have zeroMovement :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (curve.polynomial.eval (prepared.point 0) -
             curve.polynomial.eval (prepared.point 0)) <= 0 := by
     rw [Basic.sub_self,
@@ -3877,17 +3885,17 @@ theorem residualRootCenter_sub_candidate_le_of_sumBound {genus : Nat}
 /-- A candidate in the cached box satisfies the residual distance estimate when the cached root-sum lower bound is
 positive. -/
 theorem residualRootCenter_sub_candidate_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) {candidate : Gaussian}
     (candidateInside :
       prepared.cached.preparedOwner.track.initial.box.Contains candidate)
     (sumPositive : 0 < prepared.cachedRootSumLower) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (prepared.residualRootCenter - candidate) <=
       4 *
           (prepared.rootResidualTarget +
-              Data.Gaussian.Norm.Basic.normSq
+              Norm.Basic.normSq
                 (candidate * candidate -
                   curve.polynomial.eval (prepared.point 0))) /
         prepared.cachedRootSumLower := by
@@ -3899,14 +3907,14 @@ end
 
 /-- Divide the original base-point power by the retained residual root center. -/
 def residualCoefficientCenter {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Gaussian :=
   prepared.point 0 ^ differential.exponent / prepared.residualRootCenter
 
 /-- The canonical cached coefficient is exactly the residual coefficient center. -/
 theorem canonical_value_eq_residualCoefficientCenter {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential : Basic.Differential genus}
+    {curve : Basic.HyperellipticCurve genus} {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
     (CenterState.canonical prepared).value = prepared.residualCoefficientCenter :=
   (CenterState.canonical prepared).value_eq_power_div_denominator
@@ -3914,12 +3922,12 @@ theorem canonical_value_eq_residualCoefficientCenter {genus : Nat}
 open Purelib.Data.Gaussian in
 /-- The residual coefficient center differs from the canonical base reading by at most the raw variation allowance. -/
 theorem residualCoefficientCenter_sub_baseReading_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential : Basic.Differential genus}
+    {curve : Basic.HyperellipticCurve genus} {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
       (prepared.residualCoefficientCenter - prepared.baseReading) ≤ prepared.rawVariation := by
   rw [← prepared.canonical_value_eq_residualCoefficientCenter]
-  change Data.Gaussian.Norm.Basic.normSq (prepared.baseReading - prepared.baseReading) ≤ _
+  change Norm.Basic.normSq (prepared.baseReading - prepared.baseReading) ≤ _
   rw [Basic.sub_self, Norm.Basic.normSq_zero]
   exact prepared.rawVariation_nonnegative
 
@@ -3928,7 +3936,7 @@ open Purelib.Data.Gaussian in
 /-- At exponent zero, a common positive squared-norm floor bounds the inverse-coefficient error by twice the root error
 over its square. -/
 theorem residualCoefficientCenter_sub_candidateInverse_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (exponentZero : differential.exponent = 0)
@@ -3936,19 +3944,19 @@ theorem residualCoefficientCenter_sub_candidateInverse_le {genus : Nat}
     (lowerPositive : 0 < lowerSq)
     (centerLower : lowerSq <= prepared.cachedDenominatorLower)
     (candidateLower : lowerSq <=
-      Data.Gaussian.Norm.Basic.normSq candidate)
+      Norm.Basic.normSq candidate)
     (rootClose :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
         (prepared.residualRootCenter - candidate) <= rootMovement) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (prepared.residualCoefficientCenter - 1 / candidate) <=
       (2 * rootMovement) / (lowerSq * lowerSq) := by
   have residualRootLower : lowerSq <=
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
         prepared.residualRootCenter := by
     exact centerLower.trans prepared.residualRootCenter_normSq_lower
   have reversedRootClose :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (candidate - prepared.residualRootCenter) <= rootMovement := by
     have reverse : candidate - prepared.residualRootCenter =
         -(prepared.residualRootCenter - candidate) := by
@@ -3968,7 +3976,7 @@ theorem residualCoefficientCenter_sub_candidateInverse_le {genus : Nat}
       (numeratorSlope := (0 : Coordinate))
       (numeratorBound := (1 : Coordinate))
       (denominatorBound :=
-        Data.Gaussian.Norm.Basic.normSq candidate)
+        Norm.Basic.normSq candidate)
       (lowerSq := lowerSq) (pointMovement := (0 : Coordinate))
       (rootMovement := rootMovement) lowerPositive
       (by
@@ -3991,7 +3999,7 @@ open Purelib.Data.Rat
 their product. -/
 theorem residualCoefficientCenter_sub_candidateInverse_le_separate
     {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (exponentZero : differential.exponent = 0)
@@ -4001,23 +4009,23 @@ theorem residualCoefficientCenter_sub_candidateInverse_le_separate
     (candidateLowerPositive : 0 < candidateLowerSq)
     (centerLower : centerLowerSq <= prepared.cachedDenominatorLower)
     (candidateLower : candidateLowerSq <=
-      Data.Gaussian.Norm.Basic.normSq candidate)
+      Norm.Basic.normSq candidate)
     (rootClose :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
         (prepared.residualRootCenter - candidate) <= rootMovement) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (prepared.residualCoefficientCenter - 1 / candidate) <=
       rootMovement / (centerLowerSq * candidateLowerSq) := by
   have residualRootLower : centerLowerSq <=
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
         prepared.residualRootCenter := by
     exact centerLower.trans prepared.residualRootCenter_normSq_lower
   have centerNormPositive : 0 <
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
         prepared.residualRootCenter :=
     centerLowerPositive.trans_le residualRootLower
   have candidateNormPositive : 0 <
-      Data.Gaussian.Norm.Basic.normSq candidate :=
+      Norm.Basic.normSq candidate :=
     candidateLowerPositive.trans_le candidateLower
   have centerNonzero : prepared.residualRootCenter ≠ 0 := by
     intro equal
@@ -4036,7 +4044,7 @@ theorem residualCoefficientCenter_sub_candidateInverse_le_separate
     Field.mul_ne_zero_direct centerNonzero
       candidateNonzero
   have reversedRootClose :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (candidate - prepared.residualRootCenter) <= rootMovement := by
     have reverse : candidate - prepared.residualRootCenter =
         -(prepared.residualRootCenter - candidate) := by
@@ -4054,22 +4062,22 @@ theorem residualCoefficientCenter_sub_candidateInverse_le_separate
     unfold residualCoefficientCenter
     rw [exponentZero, pow_zero]
     simpa only [Basic.one_mul] using
-      Purelib.Data.Gaussian.Field.div_sub_div 1 1
+      Field.div_sub_div 1 1
         prepared.residualRootCenter candidate centerNonzero candidateNonzero
   have actualProductPositive : 0 <
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           prepared.residualRootCenter *
-        Data.Gaussian.Norm.Basic.normSq candidate :=
-    Fraction.Order.Arithmetic.mul_pos_direct centerNormPositive
+        Norm.Basic.normSq candidate :=
+    Arithmetic.mul_pos_direct centerNormPositive
       candidateNormPositive
   have lowerProductPositive : 0 < centerLowerSq * candidateLowerSq :=
-    Fraction.Order.Arithmetic.mul_pos_direct centerLowerPositive
+    Arithmetic.mul_pos_direct centerLowerPositive
       candidateLowerPositive
   have productLower : centerLowerSq * candidateLowerSq <=
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           prepared.residualRootCenter *
-        Data.Gaussian.Norm.Basic.normSq candidate :=
-    Fraction.Order.Arithmetic.mul_le_mul_direct residualRootLower candidateLower
+        Norm.Basic.normSq candidate :=
+    Arithmetic.mul_le_mul_direct residualRootLower candidateLower
       candidateLowerPositive.le centerNormPositive.le
   have rootMovementNonnegative : 0 <= rootMovement :=
     (Norm.Basic.normSq_nonneg
@@ -4078,9 +4086,9 @@ theorem residualCoefficientCenter_sub_candidateInverse_le_separate
     Field.normSq_div _ _ productNonzero,
     Norm.Basic.normSq_mul,
     ← Fraction.Field.div_eq_mul_inv_direct]
-  apply (Fraction.Order.Field.div_le_iff_pos actualProductPositive).2
+  apply (Field.div_le_iff_pos actualProductPositive).2
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (candidate - prepared.residualRootCenter) <= rootMovement :=
       reversedRootClose
     _ = (rootMovement / (centerLowerSq * candidateLowerSq)) *
@@ -4088,21 +4096,21 @@ theorem residualCoefficientCenter_sub_candidateInverse_le_separate
       (Fraction.Field.div_mul_cancel_of_ne _ _
         lowerProductPositive.ne').symm
     _ <= (rootMovement / (centerLowerSq * candidateLowerSq)) *
-        (Data.Gaussian.Norm.Basic.normSq
+        (Norm.Basic.normSq
             prepared.residualRootCenter *
-          Data.Gaussian.Norm.Basic.normSq candidate) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct productLower
-        (Fraction.Order.Field.div_nonneg_direct rootMovementNonnegative
+          Norm.Basic.normSq candidate) :=
+      Arithmetic.mul_le_mul_of_nonneg_left_direct productLower
+        (Field.div_nonneg_direct rootMovementNonnegative
           lowerProductPositive.le)
 
 /-- Every query reading differs from the retained center value by at most four model allowances in squared norm. -/
 theorem CenterState.reading_sub_value_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (prepared.reading fraction inside - center.value) <=
       4 * prepared.modelErrorAllowance := by
   have identity :
@@ -4115,7 +4123,7 @@ theorem CenterState.reading_sub_value_le {genus : Nat}
         Basic.add_re,
         Basic.add_im] <;> ring1
   have reversedCenter :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (prepared.baseReading - center.value) <=
         prepared.modelErrorAllowance := by
     have reversed : prepared.baseReading - center.value =
@@ -4129,18 +4137,18 @@ theorem CenterState.reading_sub_value_le {genus : Nat}
     exact center.value_sub_baseReading_lt.le
   rw [identity]
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((prepared.reading fraction inside - prepared.baseReading) +
           (prepared.baseReading - center.value)) <=
       2 *
-        (Data.Gaussian.Norm.Basic.normSq
+        (Norm.Basic.normSq
             (prepared.reading fraction inside - prepared.baseReading) +
-          Data.Gaussian.Norm.Basic.normSq
+          Norm.Basic.normSq
             (prepared.baseReading - center.value)) :=
       Norm.Bounds.normSq_add_le_two _ _
     _ <= 2 * (prepared.modelErrorAllowance +
         prepared.modelErrorAllowance) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add (prepared.reading_difference_le fraction inside)
           reversedCenter) (by decide)
     _ = 4 * prepared.modelErrorAllowance := by ring1
@@ -4152,7 +4160,7 @@ set_option genInjectivity false in
 
 The original prepared edge and interval witness remain indices; every possible value is certified against the same
 original reading state. -/
-structure QueryState {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+structure QueryState {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) where
@@ -4171,7 +4179,7 @@ constructive_injectivity QueryState
 namespace QueryState
 
 /-- Retain the exact canonical reading state at the indexed fraction and its persistence and accuracy proofs. -/
-def canonical {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def canonical {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :
@@ -4183,7 +4191,7 @@ def canonical {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCur
   radius_lt := prepared.reading_radius_lt fraction inside
 
 /-- Read the exact witness of the retained query state. -/
-def value {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def value {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential} {fraction : Coordinate}
     {inside : (0 : Coordinate) <= fraction ∧ fraction <= 1}
@@ -4191,7 +4199,7 @@ def value {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve g
   ((prepared.coefficient fraction inside).name.process.witness query.state).val
 
 /-- The query witness is possible at the exact retained query state. -/
-theorem value_possible {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+theorem value_possible {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential} {fraction : Coordinate}
     {inside : (0 : Coordinate) <= fraction ∧ fraction <= 1}
@@ -4203,7 +4211,7 @@ theorem value_possible {genus : Nat} {curve : Curves.Hyperelliptic.Basic.Hyperel
 
 /-- The query witness remains possible at the original reading state for that fraction. -/
 theorem value_possible_at_readingState {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential} {fraction : Coordinate}
     {inside : (0 : Coordinate) <= fraction ∧ fraction <= 1}
@@ -4214,7 +4222,7 @@ theorem value_possible_at_readingState {genus : Nat}
 
 open Purelib.Approximation.Gaussian
 /-- Rebase the original coefficient process at the retained state. -/
-def named {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def named {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential} {fraction : Coordinate}
     {inside : (0 : Coordinate) <= fraction ∧ fraction <= 1}
@@ -4224,18 +4232,18 @@ def named {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve g
     state := query.state }
 
 /-- The original coefficient name is operationally equivalent to its rebasing at the retained state. -/
-def equivalent {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def equivalent {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential} {fraction : Coordinate}
     {inside : (0 : Coordinate) <= fraction ∧ fraction <= 1}
     (query : QueryState prepared fraction inside) :
     Equivalence.NamedEquivalent
       (prepared.coefficient fraction inside).name query.named :=
-  Name.Coherent.CoherentNamed.rebaseEquivalent
+  CoherentNamed.rebaseEquivalent
     (prepared.coefficient fraction inside) query.state
 
 /-- Read a later sampling witness from the exact retained coefficient state. -/
-def laterValue {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def laterValue {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential} {fraction : Coordinate}
     {inside : (0 : Coordinate) <= fraction ∧ fraction <= 1}
@@ -4245,7 +4253,7 @@ def laterValue {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCu
 
 /-- A later sampling witness remains possible at the retained starting state. -/
 theorem laterValue_possible_at_state {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential} {fraction : Coordinate}
     {inside : (0 : Coordinate) <= fraction ∧ fraction <= 1}
@@ -4263,7 +4271,7 @@ set_option genInjectivity false in
 The exact original parent and displayed indices identify every retained
 field and certificate. The record preserves their original cache and witness ownership. -/
 structure TargetedQueryState {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1)
@@ -4285,7 +4293,7 @@ open Purelib.Data.Rat in
 
 A geometric index search supplies the retained state; both accuracy requirements and persistence to the original reading
 state are preserved. -/
-def atTarget {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def atTarget {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1)
@@ -4293,7 +4301,7 @@ def atTarget {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurv
     TargetedQueryState prepared fraction inside target := by
   let accuracy := min target prepared.readingTarget
   have accuracyPositive : 0 < accuracy :=
-    Fraction.Order.Basic.lt_min targetPositive prepared.readingTarget_positive
+    Basic.lt_min targetPositive prepared.readingTarget_positive
   let index := Geometric.Search.firstQuarterBelow 1 0 accuracy
   let state := Process.Sampling.stateAt
     (prepared.coefficient fraction inside).name.process
@@ -4314,8 +4322,8 @@ def atTarget {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurv
             exact Process.Sampling.stateAt_possible_at_start
               (prepared.coefficient fraction inside).name.process
                 (prepared.readingState fraction inside) index possible
-          radius_lt := stateAccurate.trans_le (Fraction.Order.Basic.min_le_right _ _) }
-      radius_lt_target := stateAccurate.trans_le (Fraction.Order.Basic.min_le_left _ _) }
+          radius_lt := stateAccurate.trans_le (Basic.min_le_right _ _) }
+      radius_lt_target := stateAccurate.trans_le (Basic.min_le_left _ _) }
 
 end TargetedQueryState
 
@@ -4324,12 +4332,12 @@ open Purelib.Data.Gaussian
 open Purelib.Data.Rat
 /-- Every later query witness is within four retained ball squared radii of the current query witness. -/
 theorem QueryState.laterValue_sub_value_le_radius {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential} {fraction : Coordinate}
     {inside : (0 : Coordinate) <= fraction ∧ fraction <= 1}
     (query : QueryState prepared fraction inside) (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (query.laterValue index - query.value) <=
       4 * ((prepared.coefficient fraction inside).name.process.ball
         query.state).radiusSq := by
@@ -4348,7 +4356,7 @@ theorem QueryState.laterValue_sub_value_le_radius {genus : Nat}
         Basic.add_re,
         Basic.add_im] <;> ring1
   have queryReverse :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (ball.center - query.value) <= ball.radiusSq := by
     have reverse : ball.center - query.value =
         -(query.value - ball.center) := by
@@ -4361,23 +4369,23 @@ theorem QueryState.laterValue_sub_value_le_radius {genus : Nat}
     exact queryInside
   rw [identity]
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((query.laterValue index - ball.center) +
           (ball.center - query.value)) <=
-      2 * (Data.Gaussian.Norm.Basic.normSq
+      2 * (Norm.Basic.normSq
           (query.laterValue index - ball.center) +
-        Data.Gaussian.Norm.Basic.normSq
+        Norm.Basic.normSq
           (ball.center - query.value)) :=
       Norm.Bounds.normSq_add_le_two _ _
     _ <= 2 * (ball.radiusSq + ball.radiusSq) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add laterInside queryReverse) (by decide)
     _ = 4 * ball.radiusSq := by ring1
 
 /-- Two values possible at a sufficiently accurate coefficient state differ by less than the model allowance in squared
 norm. -/
 private theorem coefficientCandidates_sub_lt {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1)
@@ -4390,7 +4398,7 @@ private theorem coefficientCandidates_sub_lt {genus : Nat}
       (prepared.coefficient fraction inside).name.process.Possible state left)
     (rightPossible :
       (prepared.coefficient fraction inside).name.process.Possible state right) :
-    Data.Gaussian.Norm.Basic.normSq (left - right) <
+    Norm.Basic.normSq (left - right) <
       prepared.modelErrorAllowance := by
   let process := (prepared.coefficient fraction inside).name.process
   let ball := process.ball state
@@ -4406,7 +4414,7 @@ private theorem coefficientCandidates_sub_lt {genus : Nat}
         Basic.add_re,
         Basic.add_im] <;> ring1
   have rightReverse :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (ball.center - right) <= ball.radiusSq := by
     have reverse : ball.center - right = -(right - ball.center) := by
       apply Basic.ext <;>
@@ -4418,20 +4426,20 @@ private theorem coefficientCandidates_sub_lt {genus : Nat}
     exact rightInside
   rw [identity]
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((left - ball.center) + (ball.center - right)) <=
       2 * (ball.radiusSq + ball.radiusSq) :=
       (Norm.Bounds.normSq_add_le_two _ _).trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add leftInside rightReverse) (by decide))
     _ < 2 * (prepared.readingTarget + prepared.readingTarget) :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+      Arithmetic.mul_lt_mul_of_pos_left_direct
         (by decide)
-        (Fraction.Order.Arithmetic.add_lt_add_direct radiusSmall radiusSmall)
+        (Arithmetic.add_lt_add_direct radiusSmall radiusSmall)
     _ = prepared.modelErrorAllowance / 2 :=
       twice_readingTarget_sum_eq_half prepared
     _ < prepared.modelErrorAllowance :=
-      Purelib.Data.Rat.Fraction.Order.Field.half_lt_self prepared.modelErrorAllowance_positive
+      Field.half_lt_self prepared.modelErrorAllowance_positive
 
 end
 
@@ -4439,12 +4447,12 @@ section
 open Purelib.Data.Gaussian
 /-- A later witness differs from the retained value by less than the model-error allowance in squared norm. -/
 theorem QueryState.laterValue_sub_value_lt {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential} {fraction : Coordinate}
     {inside : (0 : Coordinate) <= fraction ∧ fraction <= 1}
     (query : QueryState prepared fraction inside) (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (query.laterValue index - query.value) <
       prepared.modelErrorAllowance :=
   coefficientCandidates_sub_lt prepared fraction inside query.state
@@ -4454,12 +4462,12 @@ theorem QueryState.laterValue_sub_value_lt {genus : Nat}
 /-- The retained query value differs from its original canonical reading by less than the model allowance in squared
 norm. -/
 theorem QueryState.value_sub_reading_lt {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential} {fraction : Coordinate}
     {inside : (0 : Coordinate) <= fraction ∧ fraction <= 1}
     (query : QueryState prepared fraction inside) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (query.value - prepared.reading fraction inside) <
       prepared.modelErrorAllowance :=
   coefficientCandidates_sub_lt prepared fraction inside
@@ -4474,13 +4482,13 @@ open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
 /-- The retained query value differs from the retained base center by less than ten model allowances in squared norm. -/
 theorem QueryState.value_sub_center_lt {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential} {fraction : Coordinate}
     {inside : (0 : Coordinate) <= fraction ∧ fraction <= 1}
     (query : QueryState prepared fraction inside)
     (center : CenterState prepared) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (query.value - center.value) <
       10 * prepared.modelErrorAllowance := by
   have identity : query.value - center.value =
@@ -4493,24 +4501,24 @@ theorem QueryState.value_sub_center_lt {genus : Nat}
         Basic.add_im] <;> ring1
   rw [identity]
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((query.value - prepared.reading fraction inside) +
           (prepared.reading fraction inside - center.value)) <=
       2 *
-        (Data.Gaussian.Norm.Basic.normSq
+        (Norm.Basic.normSq
             (query.value - prepared.reading fraction inside) +
-          Data.Gaussian.Norm.Basic.normSq
+          Norm.Basic.normSq
             (prepared.reading fraction inside - center.value)) :=
       Norm.Bounds.normSq_add_le_two _ _
     _ < 2 * (prepared.modelErrorAllowance +
         4 * prepared.modelErrorAllowance) :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+      Arithmetic.mul_lt_mul_of_pos_left_direct
         (by decide)
-        ((Fraction.Order.Arithmetic.add_lt_add_right_direct
+        ((Arithmetic.add_lt_add_right_direct
             query.value_sub_reading_lt
-            (Data.Gaussian.Norm.Basic.normSq
+            (Norm.Basic.normSq
               (prepared.reading fraction inside - center.value))).trans_le
-          (Fraction.Order.Arithmetic.add_le_add_direct le_rfl
+          (Arithmetic.add_le_add_direct le_rfl
             (center.reading_sub_value_le fraction inside)))
     _ = 10 * prepared.modelErrorAllowance := by ring1
 
@@ -4520,7 +4528,7 @@ set_option genInjectivity false in
 
 Both certificates concern the same retained child center and original query value. -/
 structure QueryCenterAlignment {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent child : PreparedEdge curve differential)
     {fraction : Coordinate}
@@ -4529,14 +4537,14 @@ structure QueryCenterAlignment {genus : Nat}
   /-- The exact selected center state of the original child edge. -/ childCenter : CenterState child
   /-- The actual child-to-query difference is below twice the sum of the target and four times the retained query
     squared radius. -/ close_radius :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (childCenter.value - query.value) <
       2 * (target +
         4 * ((parent.coefficient fraction inside).name.process.ball
           query.state).radiusSq)
   /-- The actual child-to-parent value difference is bounded in squared norm by twice the sum of the comparison target
     and the parent model allowance. -/ close :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (childCenter.value - query.value) <
       2 * (target + parent.modelErrorAllowance)
 
@@ -4552,7 +4560,7 @@ tolerance.
 The actual comparison indices determine the retained child state; both its distance bounds preserve the parent query's
 exact radius and model allowance. -/
 def alignQueryRight {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent child : PreparedEdge curve differential)
     {fraction : Coordinate}
@@ -4605,7 +4613,7 @@ def alignQueryRight {genus : Nat}
           (Nat.le_refl comparison.leftIndex)
           (Nat.le_refl comparison.rightIndex)
         have alignedCloseReverse :
-            Data.Gaussian.Norm.Basic.normSq
+            Norm.Basic.normSq
                 (childCenter.value - queryLater) < target := by
           have reverse : childCenter.value - queryLater =
               -(queryLater - childCenter.value) := by
@@ -4628,11 +4636,11 @@ def alignQueryRight {genus : Nat}
               Basic.add_im] <;> ring1
         rw [identity]
         exact (Norm.Bounds.normSq_add_le_two _ _).trans_lt
-          (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+          (Arithmetic.mul_lt_mul_of_pos_left_direct
             (by decide)
-            ((Fraction.Order.Arithmetic.add_lt_add_right_direct
+            ((Arithmetic.add_lt_add_right_direct
               alignedCloseReverse
-                (Data.Gaussian.Norm.Basic.normSq
+                (Norm.Basic.normSq
                   (queryLater - query.value))).trans_le
               (add_le_add le_rfl queryTail)))
       close := by
@@ -4641,7 +4649,7 @@ def alignQueryRight {genus : Nat}
           (Nat.le_refl comparison.leftIndex)
           (Nat.le_refl comparison.rightIndex)
         have alignedCloseReverse :
-            Data.Gaussian.Norm.Basic.normSq
+            Norm.Basic.normSq
                 (childCenter.value - queryLater) < target := by
           have reverse : childCenter.value - queryLater =
               -(queryLater - childCenter.value) := by
@@ -4664,15 +4672,15 @@ def alignQueryRight {genus : Nat}
         rw [identity]
         exact
           (Norm.Bounds.normSq_add_le_two _ _).trans_lt
-            (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+            (Arithmetic.mul_lt_mul_of_pos_left_direct
               (by decide)
-              (Fraction.Order.Arithmetic.add_lt_add_direct
+              (Arithmetic.add_lt_add_direct
                 alignedCloseReverse queryTail)) }
 
 open Purelib.Approximation.Gaussian in
 /-- Select the child center aligned to the retained query using the parent's model allowance as tolerance. -/
 def alignedChildAt {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent child : PreparedEdge curve differential)
     {fraction : Coordinate}
@@ -4693,7 +4701,7 @@ open Purelib.Polynomial
 
 The exact local endpoints are retained, and the initial observation list is empty; the uniform certificate supplies
 certified queries separately. -/
-def model {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def model {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : CellModel :=
   { start := prepared.point 0
@@ -4701,7 +4709,7 @@ def model {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve g
     polynomial := Ascending.Gaussian.Basic.constant prepared.baseReading
     localAllowance := 4 * prepared.modelErrorAllowance
     localAllowance_nonneg :=
-      Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      Arithmetic.mul_nonneg_direct (by decide)
         prepared.modelErrorAllowance_positive.le
     observations := [] }
 
@@ -4709,7 +4717,7 @@ def model {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve g
 
 The original endpoints and exact cached value are retained; changing the center requires its explicit comparison
 certificate. -/
-def centeredModel {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def centeredModel {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (center : CenterState prepared) : CellModel :=
@@ -4718,7 +4726,7 @@ def centeredModel {genus : Nat} {curve : Curves.Hyperelliptic.Basic.Hyperellipti
     polynomial := Ascending.Gaussian.Basic.constant center.value
     localAllowance := 16 * prepared.modelErrorAllowance
     localAllowance_nonneg :=
-      Fraction.Order.Arithmetic.mul_nonneg_direct
+      Arithmetic.mul_nonneg_direct
         sixteen_nonnegative
         prepared.modelErrorAllowance_positive.le
     observations := [] }
@@ -4734,7 +4742,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 The certificate retains both original cell models, the actual value difference, its bound, and equality of their total
 displacement. -/
 def centeredModelRecachePartitionCertificate
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared)
@@ -4752,7 +4760,7 @@ def centeredModelRecachePartitionCertificate
   let replacement :=
     center.recache value denominator denominatorPossible valueEq
   let error := replacement.value - center.value
-  have errorLe : Data.Gaussian.Norm.Basic.normSq error <=
+  have errorLe : Norm.Basic.normSq error <=
       (prepared.centeredModel replacement).localAllowance := by
     have localBound := center.recache_value_sub_value_lt value denominator
       denominatorPossible valueEq
@@ -4763,7 +4771,7 @@ def centeredModelRecachePartitionCertificate
       prepared.modelErrorAllowance = 1 * prepared.modelErrorAllowance := by
         ring1
       _ <= 16 * prepared.modelErrorAllowance :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           (by decide) prepared.modelErrorAllowance_positive.le
   exact
     { reference := center.value
@@ -4787,7 +4795,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- At exponent zero, the centered integral sample is the original displacement times the reciprocal cached denominator.
 -/
 theorem centeredModel_integralSample_eq_mul_one_div_denominator_of_exponent_zero
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (exponentZero : differential.exponent = 0) :
@@ -4802,7 +4810,7 @@ open Purelib.Data.Rat in
 open Purelib.Riemann.Branches in
 /-- A positive denominator projection lower bound gives a real integral-sample lower bound for exponent zero. -/
 theorem centeredModel_integralSample_re_lower_of_projection
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (exponentZero : differential.exponent = 0)
@@ -4831,35 +4839,35 @@ theorem centeredModel_integralSample_re_lower_of_projection
       Fraction.Field.zero_add] at projectionLe
     exact (not_lt_of_ge projectionLe) projectionPositive
   have normPositive : 0 <
-      Data.Gaussian.Norm.Basic.normSq denominator :=
+      Norm.Basic.normSq denominator :=
     Norm.Basic.normSq_pos denominatorNonzero
   have normLe :
-      Data.Gaussian.Norm.Basic.normSq denominator <= box.normSqBound :=
+      Norm.Basic.normSq denominator <= box.normSqBound :=
     box.normSq_le_normSqBound inside
   have lowerToSameNumerator :
       projectionLower / box.normSqBound <=
         projectionLower /
-          Data.Gaussian.Norm.Basic.normSq denominator :=
-    Fraction.Order.Field.div_le_div_of_nonneg_left_direct
+          Norm.Basic.normSq denominator :=
+    Field.div_le_div_of_nonneg_left_direct
       projectionPositive.le normPositive normLe
   have sameDenominator :
       projectionLower /
-          Data.Gaussian.Norm.Basic.normSq denominator <=
+          Norm.Basic.normSq denominator <=
         (displacement.re * denominator.re +
           displacement.im * denominator.im) /
-            Data.Gaussian.Norm.Basic.normSq denominator := by
+            Norm.Basic.normSq denominator := by
     rw [Fraction.Field.div_eq_mul_inv_direct,
       Fraction.Field.div_eq_mul_inv_direct]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
       projectionLe
-      (Fraction.Order.Field.inv_pos_direct normPositive).le
+      (Field.inv_pos_direct normPositive).le
   rw [centeredModel_integralSample_eq_mul_one_div_denominator_of_exponent_zero
     center exponentZero, CenterState.mul_one_div_re]
   exact lowerToSameNumerator.trans sameDenominator
 
 /-- The exact target-minus-source displacement of the retained local segment. -/
 def integralDisplacement
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Gaussian :=
   prepared.point 1 - prepared.point 0
@@ -4869,7 +4877,7 @@ def integralDisplacement
 The numerator projection is rounded downward, and its sign selects the certified denominator endpoint before division.
 -/
 def geometricIntegralProjectionLower
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (displacement : Gaussian) : Coordinate :=
@@ -4882,7 +4890,7 @@ def geometricIntegralProjectionLower
 
 /-- Round the cached-box reciprocal projection bound downward to the fixed dyadic grid. -/
 def geometricIntegralProjectionDyadicLower
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (displacement : Gaussian) : Coordinate :=
@@ -4891,14 +4899,14 @@ def geometricIntegralProjectionDyadicLower
 
 /-- Evaluate the cached-box reciprocal projection bound on the original integral displacement. -/
 def geometricIntegralRealLower
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Coordinate :=
   prepared.geometricIntegralProjectionLower prepared.integralDisplacement
 
 /-- Read the center-independent geometric real lower bound associated with the original prepared edge. -/
 def centeredModelIntegralRealLower
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (_center : CenterState prepared) : Coordinate :=
@@ -4906,7 +4914,7 @@ def centeredModelIntegralRealLower
 
 /-- Read the downward dyadic real lower bound for the original integral displacement. -/
 def geometricIntegralRealDyadicLower
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Coordinate :=
   prepared.geometricIntegralProjectionDyadicLower
@@ -4914,7 +4922,7 @@ def geometricIntegralRealDyadicLower
 
 /-- Read the downward dyadic real lower bound for the negated original integral displacement. -/
 def geometricNegatedIntegralRealDyadicLower
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) : Coordinate :=
   prepared.geometricIntegralProjectionDyadicLower
@@ -4922,7 +4930,7 @@ def geometricNegatedIntegralRealDyadicLower
 
 /-- Read the downward dyadic projection bound using the conjugate direction times the original displacement. -/
 def geometricDirectionalIntegralDyadicLower
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (direction : Gaussian) : Coordinate :=
@@ -4931,7 +4939,7 @@ def geometricDirectionalIntegralDyadicLower
 
 /-- Combine the segment magnitude floor with the retained center's denominator projection box. -/
 def centeredBallDenominatorLower
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) : Coordinate :=
@@ -4939,7 +4947,7 @@ def centeredBallDenominatorLower
 
 /-- The center-specific projection-box denominator floor is strictly positive. -/
 theorem centeredBallDenominatorLower_positive
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) :
@@ -4949,7 +4957,7 @@ theorem centeredBallDenominatorLower_positive
 
 /-- Compute the signed reciprocal projection bound using the retained center's denominator projection box. -/
 def centeredBallIntegralProjectionLower
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (displacement : Gaussian) : Coordinate :=
@@ -4963,7 +4971,7 @@ def centeredBallIntegralProjectionLower
 
 /-- Round the center-specific reciprocal projection bound downward to the fixed dyadic grid. -/
 def centeredBallIntegralProjectionDyadicLower
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (displacement : Gaussian) : Coordinate :=
@@ -4972,7 +4980,7 @@ def centeredBallIntegralProjectionDyadicLower
 
 /-- Read the center-specific dyadic lower bound on the original integral displacement. -/
 def centeredBallIntegralRealDyadicLower
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) : Coordinate :=
@@ -4981,7 +4989,7 @@ def centeredBallIntegralRealDyadicLower
 
 /-- Read the center-specific dyadic lower bound on the negated original displacement. -/
 def centeredBallNegatedIntegralRealDyadicLower
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) : Coordinate :=
@@ -4990,7 +4998,7 @@ def centeredBallNegatedIntegralRealDyadicLower
 
 /-- Read the center-specific dyadic lower bound on the displacement projected in a supplied Gaussian direction. -/
 def centeredBallDirectionalIntegralDyadicLower
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (direction : Gaussian) : Coordinate :=
@@ -5004,14 +5012,14 @@ open Purelib.Data.Rat in
 The original centered-ball and geometric projection estimates bound
 the same retained quotient. Their unchanged maxima combine those bounds. -/
 theorem centeredBallIntegralProjectionLower_le_quotient
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (displacement : Gaussian) :
     centeredBallIntegralProjectionLower center displacement <=
       (displacement.re * center.denominator.re +
         displacement.im * center.denominator.im) /
-          Data.Gaussian.Norm.Basic.normSq center.denominator := by
+          Norm.Basic.normSq center.denominator := by
   let box := center.denominatorProjectionBox
   let denominator := center.denominator
   let projection := boxProjectionLower box displacement
@@ -5023,27 +5031,27 @@ theorem centeredBallIntegralProjectionLower_le_quotient
   have lowerPositive : 0 < lowerSq :=
     centeredBallDenominatorLower_positive center
   have cellLowerLeNorm : cellDenominatorLower prepared.segment <=
-        Data.Gaussian.Norm.Basic.normSq denominator :=
-    ((Fraction.Order.Basic.le_max_right
+        Norm.Basic.normSq denominator :=
+    ((Basic.le_max_right
         (PreparedModels.residualDenominatorLower
           prepared.segment)
         (PreparedModels.magnitudeDenominatorLower
           prepared.segment)).trans
-      ((Fraction.Order.Basic.le_max_left _ _).trans (Fraction.Order.Basic.le_max_left _ _))).trans
+      ((Basic.le_max_left _ _).trans (Basic.le_max_left _ _))).trans
       (prepared.denominator_candidate_lower 0 prepared.baseInside center.state.2
         center.denominator_possible)
   have boxLowerLeNorm : boxNormSqLower box <=
-      Data.Gaussian.Norm.Basic.normSq denominator :=
+      Norm.Basic.normSq denominator :=
     boxNormSqLower_le denominatorInsideBox
   have lowerLeNorm : lowerSq <=
-      Data.Gaussian.Norm.Basic.normSq denominator :=
-    Fraction.Order.Basic.max_le cellLowerLeNorm boxLowerLeNorm
+      Norm.Basic.normSq denominator :=
+    Basic.max_le cellLowerLeNorm boxLowerLeNorm
   have normLeUpper :
-      Data.Gaussian.Norm.Basic.normSq denominator <= upperSq :=
+      Norm.Basic.normSq denominator <= upperSq :=
     (box.normSq_le_normSqBound denominatorInsideBox).trans
       (normSqBound_le_boxNormSqCeil box)
   have signedLower := signedQuotientLower_le roundedProjection lowerSq
-    (Data.Gaussian.Norm.Basic.normSq denominator) upperSq
+    (Norm.Basic.normSq denominator) upperSq
       lowerPositive lowerLeNorm normLeUpper
   have projectionLe : projection <=
       displacement.re * denominator.re + displacement.im * denominator.im :=
@@ -5052,39 +5060,39 @@ theorem centeredBallIntegralProjectionLower_le_quotient
       displacement.re * denominator.re + displacement.im * denominator.im :=
     (dyadicRealLower_le projection).trans projectionLe
   have normPositive : 0 <
-      Data.Gaussian.Norm.Basic.normSq denominator :=
+      Norm.Basic.normSq denominator :=
     lowerPositive.trans_le lowerLeNorm
   have quotientProjectionLe :
       roundedProjection /
-          Data.Gaussian.Norm.Basic.normSq denominator <=
+          Norm.Basic.normSq denominator <=
         (displacement.re * denominator.re +
           displacement.im * denominator.im) /
-            Data.Gaussian.Norm.Basic.normSq denominator := by
+            Norm.Basic.normSq denominator := by
     rw [Fraction.Field.div_eq_mul_inv_direct,
       Fraction.Field.div_eq_mul_inv_direct]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
       roundedProjectionLe
-        (Fraction.Order.Field.inv_pos_direct normPositive).le
+        (Field.inv_pos_direct normPositive).le
   change signedQuotientLower roundedProjection lowerSq upperSq <= _
   exact signedLower.trans quotientProjectionLe
 
 open Purelib.Data.Gaussian in
 /-- The rounded center-specific projection estimate bounds the exact retained-denominator quotient. -/
 theorem centeredBallIntegralProjectionDyadicLower_le_quotient
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (displacement : Gaussian) :
     centeredBallIntegralProjectionDyadicLower center displacement <=
       (displacement.re * center.denominator.re +
         displacement.im * center.denominator.im) /
-          Data.Gaussian.Norm.Basic.normSq center.denominator :=
+          Norm.Basic.normSq center.denominator :=
   (dyadicRealLower_le _).trans
     (centeredBallIntegralProjectionLower_le_quotient center displacement)
 
 /-- For exponent zero, the center-specific dyadic bound is below the actual integral sample's real part. -/
 theorem centeredBallIntegralRealDyadicLower_le
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (exponentZero : differential.exponent = 0) :
@@ -5099,7 +5107,7 @@ open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
 /-- For exponent zero, the center-specific negative-displacement bound is below the negative real integral sample. -/
 theorem centeredBallNegatedIntegralRealDyadicLower_le
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (exponentZero : differential.exponent = 0) :
@@ -5110,7 +5118,7 @@ theorem centeredBallNegatedIntegralRealDyadicLower_le
   change centeredBallNegatedIntegralRealDyadicLower center <=
     -((prepared.integralDisplacement.re * center.denominator.re +
       prepared.integralDisplacement.im * center.denominator.im) /
-        Data.Gaussian.Norm.Basic.normSq center.denominator)
+        Norm.Basic.normSq center.denominator)
   have bound := centeredBallIntegralProjectionDyadicLower_le_quotient
     center (-prepared.integralDisplacement)
   convert bound using 1
@@ -5125,7 +5133,7 @@ open Purelib.Integration.Polynomial.Gaussian.Cell in
 /-- For exponent zero, the center-specific directional bound is below the actual integral sample's coordinate
 projection. -/
 theorem centeredBallDirectionalIntegralDyadicLower_le
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (direction : Gaussian)
@@ -5148,7 +5156,7 @@ theorem centeredBallDirectionalIntegralDyadicLower_le
 
 /-- Read the center-independent dyadic real bound of the original prepared edge. -/
 def centeredModelIntegralRealDyadicLower
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (_center : CenterState prepared) : Coordinate :=
@@ -5162,14 +5170,14 @@ open Purelib.Riemann.Branches in
 The original line and box projection estimates bound the same retained
 quotient. Their unchanged maximum retains both estimates. -/
 theorem geometricIntegralProjectionLower_le_quotient
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (displacement : Gaussian) :
     prepared.geometricIntegralProjectionLower displacement <=
       (displacement.re * center.denominator.re +
         displacement.im * center.denominator.im) /
-          Data.Gaussian.Norm.Basic.normSq center.denominator := by
+          Norm.Basic.normSq center.denominator := by
   let box := prepared.cached.preparedOwner.track.initial.box
   let denominator := center.denominator
   let projection := boxProjectionLower box displacement
@@ -5195,7 +5203,7 @@ theorem geometricIntegralProjectionLower_le_quotient
             prepared.small prepared.sheet 0
               prepared.baseInside).apart.certificate.lowerSq
     rw [PreparedModels.sheetValueAtCached_apart_lowerSq]
-    exact (Fraction.Order.Basic.le_max_right _ _).trans
+    exact (Basic.le_max_right _ _).trans
       (PreparedModels.denominatorLower_le_point
         prepared.segment
           (prepared.segment.pointAt_onCertifiedLine
@@ -5205,23 +5213,23 @@ theorem geometricIntegralProjectionLower_le_quotient
               prepared.left prepared.request prepared.ordered 0
                 prepared.baseInside)))
   have segmentLowerLeNorm : cellDenominatorLower prepared.segment <=
-      Data.Gaussian.Norm.Basic.normSq denominator :=
+      Norm.Basic.normSq denominator :=
     segmentLowerLeApart.trans
       ((prepared.sheetValue 0 prepared.baseInside).apart.certificate.lower
         center.state.2 denominatorInsideBall)
   have boxLowerLeNorm : boxNormSqLower box <=
-      Data.Gaussian.Norm.Basic.normSq denominator :=
+      Norm.Basic.normSq denominator :=
     boxNormSqLower_le denominatorInsideBox
   have lowerLeNorm : lowerSq <=
-      Data.Gaussian.Norm.Basic.normSq denominator :=
-    Fraction.Order.Basic.max_le segmentLowerLeNorm boxLowerLeNorm
+      Norm.Basic.normSq denominator :=
+    Basic.max_le segmentLowerLeNorm boxLowerLeNorm
   have normLeUpper :
-      Data.Gaussian.Norm.Basic.normSq denominator <= upperSq :=
+      Norm.Basic.normSq denominator <= upperSq :=
     (box.normSq_le_normSqBound denominatorInsideBox).trans
       (normSqBound_le_boxNormSqCeil box)
   have signedLower := signedQuotientLower_le
     roundedProjection lowerSq
-      (Data.Gaussian.Norm.Basic.normSq denominator) upperSq
+      (Norm.Basic.normSq denominator) upperSq
         lowerPositive lowerLeNorm normLeUpper
   have projectionLe : projection <=
       displacement.re * denominator.re + displacement.im * denominator.im :=
@@ -5230,33 +5238,33 @@ theorem geometricIntegralProjectionLower_le_quotient
       displacement.re * denominator.re + displacement.im * denominator.im :=
     (dyadicRealLower_le projection).trans projectionLe
   have normPositive : 0 <
-      Data.Gaussian.Norm.Basic.normSq denominator :=
+      Norm.Basic.normSq denominator :=
     lowerPositive.trans_le lowerLeNorm
   have quotientProjectionLe :
       roundedProjection /
-          Data.Gaussian.Norm.Basic.normSq denominator <=
+          Norm.Basic.normSq denominator <=
         (displacement.re * denominator.re +
           displacement.im * denominator.im) /
-            Data.Gaussian.Norm.Basic.normSq denominator := by
+            Norm.Basic.normSq denominator := by
     rw [Fraction.Field.div_eq_mul_inv_direct,
       Fraction.Field.div_eq_mul_inv_direct]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
       roundedProjectionLe
-        (Fraction.Order.Field.inv_pos_direct normPositive).le
+        (Field.inv_pos_direct normPositive).le
   change signedQuotientLower roundedProjection lowerSq upperSq <= _
   exact signedLower.trans quotientProjectionLe
 
 open Purelib.Data.Gaussian in
 /-- The rounded cached-box projection bound is below the exact retained-denominator quotient. -/
 theorem geometricIntegralProjectionDyadicLower_le_quotient
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (displacement : Gaussian) :
     prepared.geometricIntegralProjectionDyadicLower displacement <=
       (displacement.re * center.denominator.re +
         displacement.im * center.denominator.im) /
-          Data.Gaussian.Norm.Basic.normSq center.denominator :=
+          Norm.Basic.normSq center.denominator :=
   (dyadicRealLower_le _).trans
     (prepared.geometricIntegralProjectionLower_le_quotient center displacement)
 
@@ -5264,7 +5272,7 @@ open Purelib.Data.Gaussian in
 open Purelib.Integration.Polynomial.Gaussian.Cell in
 /-- For exponent zero, the cached-box directional bound is below the actual centered integral sample's projection. -/
 theorem geometricDirectionalIntegralDyadicLower_le
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (center : CenterState prepared)
@@ -5288,7 +5296,7 @@ theorem geometricDirectionalIntegralDyadicLower_le
 
 /-- For exponent zero, the geometric real bound is below the actual centered integral sample's real part. -/
 theorem centeredModelIntegralRealLower_le
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (exponentZero : differential.exponent = 0) :
@@ -5301,7 +5309,7 @@ theorem centeredModelIntegralRealLower_le
 
 /-- For exponent zero, the rounded geometric bound is below the centered integral sample's real part. -/
 theorem centeredModelIntegralRealDyadicLower_le
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (exponentZero : differential.exponent = 0) :
@@ -5312,7 +5320,7 @@ theorem centeredModelIntegralRealDyadicLower_le
 
 /-- For exponent zero, the retained edge's dyadic real bound is below its centered integral sample. -/
 theorem geometricIntegralRealDyadicLower_le
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (center : CenterState prepared)
@@ -5325,7 +5333,7 @@ open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
 /-- For exponent zero, the negative-displacement dyadic bound is below the negative real integral sample. -/
 theorem geometricNegatedIntegralRealDyadicLower_le
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (center : CenterState prepared)
@@ -5337,7 +5345,7 @@ theorem geometricNegatedIntegralRealDyadicLower_le
   change prepared.geometricNegatedIntegralRealDyadicLower <=
     -((prepared.integralDisplacement.re * center.denominator.re +
       prepared.integralDisplacement.im * center.denominator.im) /
-        Data.Gaussian.Norm.Basic.normSq center.denominator)
+        Norm.Basic.normSq center.denominator)
   have bound := prepared.geometricIntegralProjectionDyadicLower_le_quotient
     center (-prepared.integralDisplacement)
   convert bound using 1
@@ -5350,7 +5358,7 @@ theorem geometricNegatedIntegralRealDyadicLower_le
 open Purelib.Riemann.Branches in
 /-- A positive cached-box projection yields its quotient lower bound for the real integral sample at exponent zero. -/
 theorem centeredModel_integralSample_re_lower
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {prepared : PreparedEdge curve differential}
     (center : CenterState prepared) (exponentZero : differential.exponent = 0)
@@ -5373,7 +5381,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- At exponent zero, the canonical centered integral sample is displacement divided by the retained residual root
 center. -/
 theorem canonicalCenteredModel_integralSample_eq_residualRootCenter
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (exponentZero : differential.exponent = 0) :
@@ -5394,7 +5402,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path
 /-- At exponent zero, a common positive denominator floor bounds integral-sample error by point movement times the
 inverse-root error allowance. -/
 theorem canonicalCenteredModel_integralSample_sub_candidate_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (exponentZero : differential.exponent = 0)
@@ -5402,11 +5410,11 @@ theorem canonicalCenteredModel_integralSample_sub_candidate_le {genus : Nat}
     (lowerPositive : 0 < lowerSq)
     (centerLower : lowerSq <= prepared.cachedDenominatorLower)
     (candidateLower : lowerSq <=
-      Data.Gaussian.Norm.Basic.normSq candidate)
+      Norm.Basic.normSq candidate)
     (rootClose :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
         (prepared.residualRootCenter - candidate) <= rootMovement) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((prepared.centeredModel (CenterState.canonical prepared)).integralSample -
           (prepared.point 1 - prepared.point 0) * (1 / candidate)) <=
       prepared.pointMovement *
@@ -5414,7 +5422,7 @@ theorem canonicalCenteredModel_integralSample_sub_candidate_le {genus : Nat}
   rw [Cell.Basic.CellModel.integralSample_constant
     (prepared.centeredModel (CenterState.canonical prepared))
       (CenterState.canonical prepared).value rfl, prepared.canonical_value_eq_residualCoefficientCenter]
-  change Data.Gaussian.Norm.Basic.normSq
+  change Norm.Basic.normSq
       ((prepared.point 1 - prepared.point 0) *
           prepared.residualCoefficientCenter -
         (prepared.point 1 - prepared.point 0) * (1 / candidate)) <= _
@@ -5430,7 +5438,7 @@ theorem canonicalCenteredModel_integralSample_sub_candidate_le {genus : Nat}
         Basic.mul_re,
         Basic.mul_im] <;> ring1
   rw [identity, Norm.Basic.normSq_mul]
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  exact Arithmetic.mul_le_mul_of_nonneg_left_direct
     (prepared.residualCoefficientCenter_sub_candidateInverse_le exponentZero
       lowerPositive centerLower candidateLower rootClose)
     (Norm.Basic.normSq_nonneg _)
@@ -5438,7 +5446,7 @@ theorem canonicalCenteredModel_integralSample_sub_candidate_le {genus : Nat}
 /-- At exponent zero, separate positive center and candidate floors give the product-denominator integral-sample error
 bound. -/
 theorem canonicalCenteredModel_integralSample_sub_candidate_le_separate
-    {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (exponentZero : differential.exponent = 0)
@@ -5448,11 +5456,11 @@ theorem canonicalCenteredModel_integralSample_sub_candidate_le_separate
     (candidateLowerPositive : 0 < candidateLowerSq)
     (centerLower : centerLowerSq <= prepared.cachedDenominatorLower)
     (candidateLower : candidateLowerSq <=
-      Data.Gaussian.Norm.Basic.normSq candidate)
+      Norm.Basic.normSq candidate)
     (rootClose :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
         (prepared.residualRootCenter - candidate) <= rootMovement) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((prepared.centeredModel (CenterState.canonical prepared)).integralSample -
           (prepared.point 1 - prepared.point 0) * (1 / candidate)) <=
       prepared.pointMovement *
@@ -5460,7 +5468,7 @@ theorem canonicalCenteredModel_integralSample_sub_candidate_le_separate
   rw [Cell.Basic.CellModel.integralSample_constant
     (prepared.centeredModel (CenterState.canonical prepared))
       (CenterState.canonical prepared).value rfl, prepared.canonical_value_eq_residualCoefficientCenter]
-  change Data.Gaussian.Norm.Basic.normSq
+  change Norm.Basic.normSq
       ((prepared.point 1 - prepared.point 0) *
           prepared.residualCoefficientCenter -
         (prepared.point 1 - prepared.point 0) * (1 / candidate)) <= _
@@ -5476,7 +5484,7 @@ theorem canonicalCenteredModel_integralSample_sub_candidate_le_separate
         Basic.mul_re,
         Basic.mul_im] <;> ring1
   rw [identity, Norm.Basic.normSq_mul]
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  exact Arithmetic.mul_le_mul_of_nonneg_left_direct
     (prepared.residualCoefficientCenter_sub_candidateInverse_le_separate
       exponentZero centerLowerPositive candidateLowerPositive centerLower
         candidateLower rootClose)
@@ -5487,7 +5495,7 @@ end
 open Purelib.Approximation.Gaussian in
 /-- Select the child center aligned with the retained parent center at the parent's model-error tolerance. -/
 def alignedChildCenter {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent child : PreparedEdge curve differential)
     (parentCenter : CenterState parent)
@@ -5506,7 +5514,7 @@ open Purelib.Data.Rat
 open Purelib.Integration.Polynomial.Gaussian.Path
 /-- The aligned child's actual center difference is paid by the original parent-child model allowance. -/
 theorem alignedChildCenter_error_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent child : PreparedEdge curve differential)
     (parentCenter : CenterState parent)
@@ -5514,7 +5522,7 @@ theorem alignedChildCenter_error_le {genus : Nat}
       Equivalence.NamedEquivalent
         (parent.coefficient 0 parent.baseInside).name
         (child.coefficient 0 child.baseInside).name) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((alignedChildCenter parent child parentCenter coefficientEquivalent).value -
           parentCenter.value) <=
       Basic.PathModel.parentChildAllowance
@@ -5525,24 +5533,24 @@ theorem alignedChildCenter_error_le {genus : Nat}
   let alignment := alignRight parent child parentCenter coefficientEquivalent
     parent.modelErrorAllowance parent.modelErrorAllowance_positive
   have close :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (alignment.childCenter.value - parentCenter.value) <
         4 * parent.modelErrorAllowance := by
     exact alignment.close.trans_eq (by ring1)
-  change Data.Gaussian.Norm.Basic.normSq
+  change Norm.Basic.normSq
       (alignment.childCenter.value - parentCenter.value) <= _
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (alignment.childCenter.value - parentCenter.value) <=
       4 * parent.modelErrorAllowance := close.le
     _ <= 16 * parent.modelErrorAllowance :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         four_le_sixteen
           parent.modelErrorAllowance_positive.le
     _ <= 16 * parent.modelErrorAllowance +
         16 * parent.modelErrorAllowance :=
       le_add_of_nonneg_right
-        (Fraction.Order.Arithmetic.mul_nonneg_direct
+        (Arithmetic.mul_nonneg_direct
           sixteen_nonnegative parent.modelErrorAllowance_positive.le)
     _ <= (16 * parent.modelErrorAllowance +
           16 * parent.modelErrorAllowance) +
@@ -5550,9 +5558,9 @@ theorem alignedChildCenter_error_le {genus : Nat}
           16 * child.modelErrorAllowance) :=
       le_add_of_nonneg_right
         (add_nonneg
-          (Fraction.Order.Arithmetic.mul_nonneg_direct
+          (Arithmetic.mul_nonneg_direct
             sixteen_nonnegative child.modelErrorAllowance_positive.le)
-          (Fraction.Order.Arithmetic.mul_nonneg_direct
+          (Arithmetic.mul_nonneg_direct
             sixteen_nonnegative child.modelErrorAllowance_positive.le))
     _ = Basic.PathModel.parentChildAllowance
         (parent.centeredModel parentCenter)
@@ -5569,7 +5577,7 @@ theorem alignedChildCenter_error_le {genus : Nat}
 /-- Alignment through a retained parent query pays the actual child-to-parent center difference from the original model
 allowances. -/
 theorem alignedChildAt_error_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent child : PreparedEdge curve differential)
     {fraction : Coordinate}
@@ -5580,7 +5588,7 @@ theorem alignedChildAt_error_le {genus : Nat}
       Equivalence.NamedEquivalent
         (parent.coefficient fraction inside).name
         (child.coefficient 0 child.baseInside).name) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((alignedChildAt parent child query coefficientEquivalent).value -
           parentCenter.value) <=
       Basic.PathModel.parentChildAllowance
@@ -5590,12 +5598,12 @@ theorem alignedChildAt_error_le {genus : Nat}
   let alignment := alignQueryRight parent child query coefficientEquivalent
     parent.modelErrorAllowance parent.modelErrorAllowance_positive
   have childQuery :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (alignment.childCenter.value - query.value) <=
         4 * parent.modelErrorAllowance :=
     alignment.close.trans_eq (by ring1) |>.le
   have queryParent :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (query.value - parentCenter.value) <=
         10 * parent.modelErrorAllowance :=
     (query.value_sub_center_lt parentCenter).le
@@ -5607,34 +5615,34 @@ theorem alignedChildAt_error_le {genus : Nat}
         Basic.sub_im,
         Basic.add_re,
         Basic.add_im] <;> ring1
-  change Data.Gaussian.Norm.Basic.normSq
+  change Norm.Basic.normSq
       (alignment.childCenter.value - parentCenter.value) <= _
   rw [identity]
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         ((alignment.childCenter.value - query.value) +
           (query.value - parentCenter.value)) <=
       2 *
-        (Data.Gaussian.Norm.Basic.normSq
+        (Norm.Basic.normSq
             (alignment.childCenter.value - query.value) +
-          Data.Gaussian.Norm.Basic.normSq
+          Norm.Basic.normSq
             (query.value - parentCenter.value)) :=
       Norm.Bounds.normSq_add_le_two _ _
     _ <= 2 * (4 * parent.modelErrorAllowance +
         10 * parent.modelErrorAllowance) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add childQuery queryParent) (by decide)
     _ = 2 * (14 * parent.modelErrorAllowance) := by ring1
     _ <= 2 * (16 * parent.modelErrorAllowance) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.mul_le_mul_of_nonneg_right_direct
           fourteen_le_sixteen parent.modelErrorAllowance_positive.le)
         (by decide)
     _ <= 2 * (16 * parent.modelErrorAllowance +
         16 * child.modelErrorAllowance) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (le_add_of_nonneg_right
-          (Fraction.Order.Arithmetic.mul_nonneg_direct sixteen_nonnegative
+          (Arithmetic.mul_nonneg_direct sixteen_nonnegative
             child.modelErrorAllowance_positive.le)) (by decide)
     _ = Basic.PathModel.parentChildAllowance
         (parent.centeredModel parentCenter)
@@ -5648,7 +5656,7 @@ allowance.
 The proof compares actual later witnesses and both retained centers; the allowance retains separate contributions from
 the parent and child models. -/
 theorem arbitraryChildAt_error_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent child : PreparedEdge curve differential)
     {fraction : Coordinate}
@@ -5660,14 +5668,14 @@ theorem arbitraryChildAt_error_le {genus : Nat}
       Equivalence.NamedEquivalent
         (parent.coefficient fraction inside).name
         (child.coefficient 0 child.baseInside).name) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (childCenter.value - parentCenter.value) <=
       Basic.PathModel.parentChildAllowance
         (parent.centeredModel parentCenter)
         (child.centeredModel childCenter) := by
   let target := parent.modelErrorAllowance + child.modelErrorAllowance
   have targetPositive : 0 < target :=
-    Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct
+    Arithmetic.add_pos_of_pos_of_nonneg_direct
       parent.modelErrorAllowance_positive child.modelErrorAllowance_positive.le
   let centerEquivalent : Equivalence.NamedEquivalent
       query.named childCenter.named :=
@@ -5678,7 +5686,7 @@ theorem arbitraryChildAt_error_le {genus : Nat}
   let queryLater := query.laterValue comparison.leftIndex
   let childLater := childCenter.laterValue comparison.rightIndex
   have laterClose :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (childLater - queryLater) < target := by
     have forward := comparison.close
       (Nat.le_refl comparison.leftIndex)
@@ -5692,7 +5700,7 @@ theorem arbitraryChildAt_error_le {genus : Nat}
     rw [reverse, Norm.Basic.normSq_neg]
     exact forward
   have childTail :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (childCenter.value - childLater) < child.modelErrorAllowance := by
     have forward := childCenter.laterValue_sub_value_lt comparison.rightIndex
     have reverse : childCenter.value - childLater =
@@ -5705,7 +5713,7 @@ theorem arbitraryChildAt_error_le {genus : Nat}
     rw [reverse, Norm.Basic.normSq_neg]
     exact forward
   have childToQueryLater :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (childCenter.value - queryLater) <
         2 * (child.modelErrorAllowance + target) := by
     have identity : childCenter.value - queryLater =
@@ -5718,12 +5726,12 @@ theorem arbitraryChildAt_error_le {genus : Nat}
     rw [identity]
     exact
       (Norm.Bounds.normSq_add_le_two _ _).trans_lt
-        (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+        (Arithmetic.mul_lt_mul_of_pos_left_direct
           (by decide)
-          (Fraction.Order.Arithmetic.add_lt_add_direct childTail laterClose))
+          (Arithmetic.add_lt_add_direct childTail laterClose))
   have queryTail := query.laterValue_sub_value_lt comparison.leftIndex
   have childToQuery :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (childCenter.value - query.value) <
         2 * (2 * (child.modelErrorAllowance + target) +
           parent.modelErrorAllowance) := by
@@ -5737,9 +5745,9 @@ theorem arbitraryChildAt_error_le {genus : Nat}
     rw [identity]
     exact
       (Norm.Bounds.normSq_add_le_two _ _).trans_lt
-        (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+        (Arithmetic.mul_lt_mul_of_pos_left_direct
           (by decide)
-          (Fraction.Order.Arithmetic.add_lt_add_direct childToQueryLater
+          (Arithmetic.add_lt_add_direct childToQueryLater
             queryTail))
   have queryToParent := query.value_sub_center_lt parentCenter
   have identity : childCenter.value - parentCenter.value =
@@ -5754,7 +5762,7 @@ theorem arbitraryChildAt_error_le {genus : Nat}
   apply le_trans
     (Norm.Bounds.normSq_add_le_two _ _)
   apply le_trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
       (add_le_add childToQuery.le queryToParent.le) (by decide))
   unfold target
   change
@@ -5787,7 +5795,7 @@ theorem arbitraryChildAt_error_le {genus : Nat}
           16 * child.modelErrorAllowance +
             16 * child.modelErrorAllowance :=
         le_add_of_nonneg_right
-          (Fraction.Order.Arithmetic.mul_nonneg_direct sixteen_nonnegative
+          (Arithmetic.mul_nonneg_direct sixteen_nonnegative
             child.modelErrorAllowance_positive.le)
       _ = 32 * child.modelErrorAllowance := by ring1
   calc
@@ -5814,7 +5822,7 @@ set_option genInjectivity false in
 The parent center remains an index, and the child center is supplied explicitly; this certificate preserves both
 original model owners. -/
 structure CenteredChildAt {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedEdge curve differential)
     (parentCenter : CenterState parent) where
@@ -5838,7 +5846,7 @@ open Purelib.Approximation.Gaussian in
 /-- Construct the child comparison from equal points and equivalent root names, retaining the supplied parent and child
 centers. -/
 def ofRootEquivalent {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent child : PreparedEdge curve differential)
     (parentCenter : CenterState parent)
@@ -5862,7 +5870,7 @@ def ofRootEquivalent {genus : Nat}
 
 /-- Read the exact constant cell model of the retained child edge and its supplied center. -/
 def model {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parent : PreparedEdge curve differential}
     {parentCenter : CenterState parent}
@@ -5871,7 +5879,7 @@ def model {genus : Nat}
 
 /-- The actual child-center coefficient minus the retained parent-center coefficient. -/
 def error {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parent : PreparedEdge curve differential}
     {parentCenter : CenterState parent}
@@ -5883,12 +5891,12 @@ open Purelib.Integration.Polynomial.Gaussian.Cell in
 open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- The actual child-center error is bounded by the comparison cell's retained allowance. -/
 theorem error_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parent : PreparedEdge curve differential}
     {parentCenter : CenterState parent}
     (child : CenteredChildAt parent parentCenter) :
-    Data.Gaussian.Norm.Basic.normSq child.error <=
+    Norm.Basic.normSq child.error <=
       (Basic.PathModel.comparisonCell
         (parent.centeredModel parentCenter) child.model).localAllowance := by
   simpa only [error, model,
@@ -5901,7 +5909,7 @@ open Purelib.Data.Gaussian in
 open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- Construct the ordered constant-comparison certificate for the exact list of retained child models and errors. -/
 def comparison {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parent : PreparedEdge curve differential}
     {parentCenter : CenterState parent} :
@@ -5922,7 +5930,7 @@ section
 open Purelib.Integration.Polynomial.Gaussian.Path
 /-- Replacing allowances by comparison allowances preserves the exact child models' total displacement. -/
 theorem displacementSum_comparison {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parent : PreparedEdge curve differential}
     {parentCenter : CenterState parent} :
@@ -5955,7 +5963,7 @@ theorem displacementSum_comparison {genus : Nat}
 The certificate retains the parent reference value, each original child model, the actual ordered error list, and its
 comparison bounds. -/
 def partitionCertificate {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parent : PreparedEdge curve differential}
     {parentCenter : CenterState parent}
@@ -5988,7 +5996,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 The path's source and target coordinate equalities identify the original parent endpoints; the same children and
 comparison certificates are retained. -/
 def partitionCertificateOfFollowedBy {genus sheets : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parent : PreparedEdge curve differential}
     {parentCenter : CenterState parent}
@@ -6020,7 +6028,7 @@ set_option genInjectivity false in
 Each block carries its exact displacement equality and parent-centered comparison data, preserving the original ordered
 model lists. -/
 inductive CenteredPathRefinement {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus} :
     List CellModel -> List CellModel -> Type
   /-- Retain the empty centered refinement between empty model lists. -/ | nil : CenteredPathRefinement [] []
@@ -6049,7 +6057,7 @@ set_option backward.match.sparseCases false in
 /-- Convert the retained centered refinement to compatible constant-path refinement using each exact child-block
 certificate. -/
 def toCompatible {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus} :
     forall {parents children : List CellModel},
       CenteredPathRefinement
@@ -6071,7 +6079,7 @@ open Purelib.Integration.Polynomial.Gaussian.Cell
 open Purelib.Polynomial
 /-- Certify the actual coefficient reading against the original base-reading constant model at the exact local fraction.
 -/
-def observation {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+def observation {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential) (fraction : Coordinate)
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) :
@@ -6095,13 +6103,13 @@ def observation {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticC
         change prepared.modelErrorAllowance <=
           4 * prepared.modelErrorAllowance
         simpa only [Fraction.Field.one_mul] using
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          Arithmetic.mul_le_mul_of_nonneg_right_direct
             (show (1 : Coordinate) <= 4 by decide)
             prepared.modelErrorAllowance_positive.le)
 
 /-- Certify the actual coefficient reading against the retained center's constant model at the exact local fraction. -/
 def centeredObservation {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (prepared : PreparedEdge curve differential)
     (center : CenterState prepared) (fraction : Coordinate)
@@ -6127,7 +6135,7 @@ def centeredObservation {genus : Nat}
         change 4 * prepared.modelErrorAllowance <=
           16 * prepared.modelErrorAllowance
         exact
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          Arithmetic.mul_le_mul_of_nonneg_right_direct
             four_le_sixteen
               prepared.modelErrorAllowance_positive.le)
 
@@ -6142,10 +6150,10 @@ open Purelib.Polynomial in
 
 Each query retains the original sheet value, refined reading state and witness, local observation, and semantic error
 bound paid by four model allowances. -/
-def uniformCertificate {genus : Nat} (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+def uniformCertificate {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     (prepared : PreparedEdge curve differential) :
-    Curves.Hyperelliptic.Integration.Algebraic.Uniform.Basis.UniformCellCertificate curve differential
+    Integration.Algebraic.Uniform.Basis.UniformCellCertificate curve differential
       (ClearSegment.liftOnSheet prepared.sheet prepared.localSegment)
       prepared.model where
   query := by
@@ -6157,13 +6165,13 @@ def uniformCertificate {genus : Nat} (curve : Curves.Hyperelliptic.Basic.Hyperel
     let localCoefficient := prepared.coefficient fraction inside
     let localState := prepared.readingState fraction inside
     let localReading := prepared.reading fraction inside
-    let algebraic : Curves.Hyperelliptic.Integration.Algebraic.Observation.Basis.AlgebraicObservation curve differential
+    let algebraic : Integration.Algebraic.Observation.Basis.AlgebraicObservation curve differential
         (ClearSegment.liftOnSheet prepared.sheet prepared.localSegment)
         prepared.model localObservation :=
       { point := prepared.point fraction
         point_eq := by
           apply Basic.ext <;>
-            simp only [Cell.Basic.CellModel.observationPoint, localObservation, observation, model,
+            simp only [Basic.CellModel.observationPoint, localObservation, observation, model,
               Basic.CellModel.displacement,
               point, Geometry.ClearPath.ClearSegment.pointAt,
               Scale.scale_re, Scale.scale_im,
@@ -6184,23 +6192,23 @@ def uniformCertificate {genus : Nat} (curve : Curves.Hyperelliptic.Basic.Hyperel
           have radiusSmall : ball.radiusSq < prepared.readingTarget :=
             prepared.reading_radius_lt fraction inside
           have errorBound :
-              Data.Gaussian.Norm.Basic.normSq
+              Norm.Basic.normSq
                   (localReading - prepared.baseReading) <=
                 prepared.modelErrorAllowance :=
             prepared.reading_difference_le fraction inside
           change 2 * (4 * ball.radiusSq +
-              Data.Gaussian.Norm.Basic.normSq
+              Norm.Basic.normSq
                 (localReading - prepared.baseReading)) <=
             4 * prepared.modelErrorAllowance
           calc
             2 * (4 * ball.radiusSq +
-                Data.Gaussian.Norm.Basic.normSq
+                Norm.Basic.normSq
                   (localReading - prepared.baseReading)) <=
               2 * (4 * prepared.readingTarget +
                 prepared.modelErrorAllowance) :=
-              Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+              Arithmetic.mul_le_mul_of_nonneg_left_direct
                 (add_le_add
-                  (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                  (Arithmetic.mul_le_mul_of_nonneg_left_direct
                     radiusSmall.le (by decide)) errorBound) (by decide)
             _ = 3 * prepared.modelErrorAllowance := by
               unfold readingTarget
@@ -6215,7 +6223,7 @@ def uniformCertificate {genus : Nat} (curve : Curves.Hyperelliptic.Basic.Hyperel
                     (by decide)]
                 _ = 3 * prepared.modelErrorAllowance := by ring1
             _ <= 4 * prepared.modelErrorAllowance :=
-              Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+              Arithmetic.mul_le_mul_of_nonneg_right_direct
                 (by decide) prepared.modelErrorAllowance_positive.le }
 
 open Purelib.Data.Gaussian in
@@ -6226,11 +6234,11 @@ open Purelib.Polynomial in
 Queries retain their actual reading states and sheet values; their semantic errors are paid by the sixteenfold allowance
 of this exact centered model. -/
 def centeredUniformCertificate {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     (prepared : PreparedEdge curve differential)
     (center : CenterState prepared) :
-    Curves.Hyperelliptic.Integration.Algebraic.Uniform.Basis.UniformCellCertificate curve differential
+    Integration.Algebraic.Uniform.Basis.UniformCellCertificate curve differential
       (ClearSegment.liftOnSheet prepared.sheet prepared.localSegment)
       (prepared.centeredModel center) where
   query := by
@@ -6243,7 +6251,7 @@ def centeredUniformCertificate {genus : Nat}
     let localCoefficient := prepared.coefficient fraction inside
     let localState := prepared.readingState fraction inside
     let localReading := prepared.reading fraction inside
-    let algebraic : Curves.Hyperelliptic.Integration.Algebraic.Observation.Basis.AlgebraicObservation curve differential
+    let algebraic : Integration.Algebraic.Observation.Basis.AlgebraicObservation curve differential
         (ClearSegment.liftOnSheet prepared.sheet prepared.localSegment)
         (prepared.centeredModel center) localObservation :=
       { point := prepared.point fraction
@@ -6272,23 +6280,23 @@ def centeredUniformCertificate {genus : Nat}
           have radiusSmall : ball.radiusSq < prepared.readingTarget :=
             prepared.reading_radius_lt fraction inside
           have errorBound :
-              Data.Gaussian.Norm.Basic.normSq
+              Norm.Basic.normSq
                   (localReading - center.value) <=
                 4 * prepared.modelErrorAllowance :=
             center.reading_sub_value_le fraction inside
           change 2 * (4 * ball.radiusSq +
-              Data.Gaussian.Norm.Basic.normSq
+              Norm.Basic.normSq
                 (localReading - center.value)) <=
             16 * prepared.modelErrorAllowance
           calc
             2 * (4 * ball.radiusSq +
-                Data.Gaussian.Norm.Basic.normSq
+                Norm.Basic.normSq
                   (localReading - center.value)) <=
               2 * (4 * prepared.readingTarget +
                 4 * prepared.modelErrorAllowance) :=
-              Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+              Arithmetic.mul_le_mul_of_nonneg_left_direct
                 (add_le_add
-                  (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                  (Arithmetic.mul_le_mul_of_nonneg_left_direct
                     radiusSmall.le (by decide)) errorBound) (by decide)
             _ = 9 * prepared.modelErrorAllowance := by
               unfold readingTarget
@@ -6303,15 +6311,15 @@ def centeredUniformCertificate {genus : Nat}
                     (by decide)]
                 _ = 9 * prepared.modelErrorAllowance := by ring1
             _ <= 16 * prepared.modelErrorAllowance :=
-              Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+              Arithmetic.mul_le_mul_of_nonneg_right_direct
                 nine_le_sixteen
                   prepared.modelErrorAllowance_positive.le }
 
 /-- Package the original model's uniform certificate as a valid cell certificate on its retained lifted segment. -/
-def validCertificate {genus : Nat} (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+def validCertificate {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     (prepared : PreparedEdge curve differential) :
-    Curves.Hyperelliptic.Integration.Algebraic.Uniform.Basis.ValidCellCertificate curve differential
+    Integration.Algebraic.Uniform.Basis.ValidCellCertificate curve differential
       (ClearSegment.liftOnSheet prepared.sheet prepared.localSegment)
       prepared.model :=
   .uniform (uniformCertificate curve differential prepared)
@@ -6319,11 +6327,11 @@ def validCertificate {genus : Nat} (curve : Curves.Hyperelliptic.Basic.Hyperelli
 /-- Package the retained centered model's uniform certificate as its valid cell certificate on the original lifted
 segment. -/
 def centeredValidCertificate {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     (prepared : PreparedEdge curve differential)
     (center : CenterState prepared) :
-    Curves.Hyperelliptic.Integration.Algebraic.Uniform.Basis.ValidCellCertificate curve differential
+    Integration.Algebraic.Uniform.Basis.ValidCellCertificate curve differential
       (ClearSegment.liftOnSheet prepared.sheet prepared.localSegment)
       (prepared.centeredModel center) :=
   .uniform (centeredUniformCertificate curve differential prepared center)

@@ -58,7 +58,7 @@ whose strictly smaller degrees bound the two recursive constructions. -/
     (p : Basic.CanonicalCoefficients.CoefficientPolynomial) (pNormalized : p.normalize = p)
     (pNonzero : p.isZero = false) (pPositive : 0 < p.natDegree) :
     Decomposition p := by
-  match outcome : Dense.Gaussian.Squarefree.Decision.squarefreeOutcome p pNonzero with
+  match outcome : Decision.squarefreeOutcome p pNonzero with
   | .coprime certificate =>
       exact
         { factors :=
@@ -70,32 +70,32 @@ whose strictly smaller degrees bound the two recursive constructions. -/
           factorsNonempty := by intro impossible; cases impossible
           evalIdentity := by
             intro point
-            simp only [Dense.Gaussian.Squarefree.Decomposition.Basic.factorProduct,
-              Dense.Basic.DensePolynomial.eval_mul, Dense.Basic.DensePolynomial.eval_constant,
-              Purelib.Data.Gaussian.Basic.mul_one, -eq_self]
+            simp only [Basic.factorProduct,
+              Basic.DensePolynomial.eval_mul, Basic.DensePolynomial.eval_constant,
+              Data.Gaussian.Basic.mul_one, -eq_self]
             rfl
           degreeSum := by change p.natDegree + 0 = p.natDegree; rfl }
   | .commonDivisor common =>
       let divisor := common.divisor
       let cofactor := common.leftFactor
       have derivativeNonzero :
-          (Dense.Gaussian.GCD.derivative p).isZero = false :=
-        Dense.Gaussian.Derivative.Degree.derivative_isZero_false pNonzero
+          (GCD.derivative p).isZero = false :=
+        Derivative.Degree.derivative_isZero_false pNonzero
           pPositive
       have derivativeDegree :
-          (Dense.Gaussian.GCD.derivative p).natDegree < p.natDegree := by
-        exact Dense.Derivative.derivative_natDegree_lt pNonzero pPositive
+          (GCD.derivative p).natDegree < p.natDegree := by
+        exact Derivative.derivative_natDegree_lt pNonzero pPositive
       have divisorProper : divisor.natDegree < p.natDegree :=
         (common.result.degreeLeRight derivativeNonzero).trans_lt derivativeDegree
-      have factorization : Dense.Gaussian.Factorization.Identity.ProductIdentity p divisor cofactor := by
-        apply Dense.Gaussian.Factorization.Identity.factorizationOfCandidateEvals
+      have factorization : Factorization.Identity.ProductIdentity p divisor cofactor := by
+        apply Factorization.Identity.factorizationOfCandidateEvals
         intro point _
         exact common.leftIdentity point
       have cofactorNonzero : cofactor.isZero = false :=
-        Dense.Gaussian.Factorization.Identity.right_isZero_false pNonzero pNormalized factorization
+        Factorization.Identity.right_isZero_false pNonzero pNormalized factorization
       have degreeBalance :
           divisor.natDegree + cofactor.natDegree = p.natDegree :=
-        Dense.Gaussian.Factorization.Identity.factor_natDegree_add pNonzero pNormalized common.nonzero
+        Factorization.Identity.factor_natDegree_add pNonzero pNormalized common.nonzero
           cofactorNonzero factorization
       have divisorPositive : 0 < divisor.natDegree := by
         exact common.positiveDegree
@@ -109,10 +109,10 @@ whose strictly smaller degrees bound the two recursive constructions. -/
           cofactor.natDegree < divisor.natDegree + cofactor.natDegree :=
             Nat.lt_add_of_pos_left divisorPositive
           _ = p.natDegree := degreeBalance
-      let leftDecomposition := Purelib.Polynomial.Dense.Gaussian.Squarefree.Decomposition.Compute.decomposeNormalized
+      let leftDecomposition := Compute.decomposeNormalized
         divisor
         common.result.normalized common.nonzero common.positiveDegree
-      let rightDecomposition := Purelib.Polynomial.Dense.Gaussian.Squarefree.Decomposition.Compute.decomposeNormalized
+      let rightDecomposition := Compute.decomposeNormalized
         cofactor
         common.result.pFactorNormalized cofactorNonzero cofactorPositive
       exact
@@ -129,15 +129,15 @@ whose strictly smaller degrees bound the two recursive constructions. -/
             calc
               p.eval point = divisor.eval point * cofactor.eval point :=
                 common.leftIdentity point
-              _ = (Dense.Gaussian.Squarefree.Decomposition.Basic.factorProduct leftDecomposition.factors).eval point *
-                    (Dense.Gaussian.Squarefree.Decomposition.Basic.factorProduct rightDecomposition.factors).eval point
+              _ = (Basic.factorProduct leftDecomposition.factors).eval point *
+                    (Basic.factorProduct rightDecomposition.factors).eval point
                       := by
                   rw [← leftDecomposition.evalIdentity,
                     ← rightDecomposition.evalIdentity]
-              _ = (Dense.Gaussian.Squarefree.Decomposition.Basic.factorProduct
+              _ = (Basic.factorProduct
                     (leftDecomposition.factors ++
                       rightDecomposition.factors)).eval point :=
-                (Dense.Gaussian.Squarefree.Decomposition.Basic.factorProduct_append_eval _ _ point).symm
+                (Basic.factorProduct_append_eval _ _ point).symm
           degreeSum := by
             rw [Map.map_append,
               Fold.sum_append Nat.zero_add Nat.add_assoc,
@@ -193,11 +193,11 @@ decomposes it using derivative-gcd certificates. -/
         { nonzero := nonzero
           degreePositive := degreePositive
           decomposition := decomposeNormalized p.normalize
-            (Dense.Basic.DensePolynomial.normalize_normalize p)
+            (Basic.DensePolynomial.normalize_normalize p)
             (by
-              rw [Dense.Basic.DensePolynomial.isZero_normalize]; exact nonzero)
+              rw [Basic.DensePolynomial.isZero_normalize]; exact nonzero)
             (by
-              rw [Dense.Basic.DensePolynomial.natDegree_normalize]; exact degreePositive) }
+              rw [Basic.DensePolynomial.natDegree_normalize]; exact degreePositive) }
 end Purelib.Polynomial.Dense.Gaussian.Squarefree.Decomposition.Compute
 
 end

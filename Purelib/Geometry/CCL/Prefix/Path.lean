@@ -45,6 +45,40 @@ def build (previous : Encoding.Prefix.Enclosure) (count : Nat) : Path previous c
       .cons step (build step.next count)
 termination_by structural count
 
+/-- Count the actual retained geometric bit constructions, without rerunning them. -/
+@[expose] def stepCount {previous : Encoding.Prefix.Enclosure} {count : Nat} (path : Path previous count) : Nat :=
+  match path with
+  | .nil _ => 0
+  | .cons _ remaining => remaining.stepCount + 1
+
+/-- The actual geometric step count is exactly the original additional-bit request. -/
+theorem stepCount_eq {previous : Encoding.Prefix.Enclosure} {count : Nat} (path : Path previous count) :
+    path.stepCount = count := by
+  induction path with
+  | nil _ => rfl
+  | cons _ _ retained => exact congrArg (fun n => n + 1) retained
+
+/-- Count the polynomial candidate evaluations actually cached by every retained geometric step. -/
+@[expose] def evaluationCount {previous : Encoding.Prefix.Enclosure} {count : Nat}
+    (path : Path previous count) : Nat :=
+  match path with
+  | .nil _ => 0
+  | .cons step remaining => step.signs.sample.search.evaluations.length + remaining.evaluationCount
+
+/-- Sum the original degree-plus-one candidate bounds for those same actual geometric steps. -/
+@[expose] def evaluationBound {previous : Encoding.Prefix.Enclosure} {count : Nat}
+    (path : Path previous count) : Nat :=
+  match path with
+  | .nil _ => 0
+  | .cons step remaining => step.signs.sample.product.natDegree + 1 + remaining.evaluationBound
+
+/-- The cached actual candidate-evaluation count pays the sum of the original finite search bounds. -/
+theorem evaluationCount_le {previous : Encoding.Prefix.Enclosure} {count : Nat} (path : Path previous count) :
+    path.evaluationCount ≤ path.evaluationBound := by
+  induction path with
+  | nil _ => exact Nat.le_refl _
+  | cons step _ retained => exact Nat.add_le_add step.signs.sample.evaluationCount_le retained
+
 /-- Read the actual last retained enclosure without repeating any geometric step. -/
 @[expose] def result {previous : Encoding.Prefix.Enclosure} {count : Nat} (path : Path previous count) :
     Encoding.Prefix.Enclosure :=

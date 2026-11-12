@@ -62,6 +62,8 @@ import Purelib.Riemann.RootContinuation.CertifiedSquareRoot
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Riemann.Normalization.ContinuedInverseRootOverlap
 
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-!
@@ -134,29 +136,29 @@ open Purelib.Riemann.RootContinuation.RootOwnerFrames (OwnerFrame)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face :
     RegularFace bank} {models :
     FaceModels frames face}
-  {sheet : Fin 2} {inner : Purelib.Riemann.Normalization.InverseRootPolynomial.Box} {ambient :
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Box}
-  {path : Polynomial.Geometry.ClearPath curve.polynomial ambient face.cell.box.anchor inner.anchor}
+  {sheet : Fin 2} {inner : InverseRootPolynomial.Box} {ambient :
+    InverseRootPolynomial.Box}
+  {path : ClearPath curve.polynomial ambient face.cell.box.anchor inner.anchor}
 
 /-- The transported cell and a retained trace neighborhood agree nearest at the anchor.
 
 Contained traces and their owner frame supply the root agreement. The two
 Newton indices are independent and the polynomial values remain unflipped. -/
-theorem anchor_nearest (cell : TransportedFaceInverseModels.TransportedCell models.bounds (models.frame.owners sheet)
+theorem anchor_nearest (cell : TransportedCell models.bounds (models.frame.owners sheet)
   inner)
-    (traced : PreparedPathTrace.TracedPath path (models.frame.owners sheet)) (inside : ClearPath.InBox face.cell.box
+    (traced : TracedPath path (models.frame.owners sheet)) (inside : InBox face.cell.box
       path)
-    (frame : RootOwnerFrames.OwnerFrame (curve.polynomial.eval inner.anchor)) {count : Nat}
+    (frame : OwnerFrame (curve.polynomial.eval inner.anchor)) {count : Nat}
     (neighborhood : TracedPrimitiveNeighborhood.Neighborhood traced count) (leftIndex rightIndex : Nat) :
-    Data.Gaussian.Norm.Basic.normSq ((cell.model.refine leftIndex).value.eval inner.anchor -
+    Basic.normSq ((cell.model.refine leftIndex).value.eval inner.anchor -
       (neighborhood.patch.base.refine rightIndex).value.eval inner.anchor) ≤
-    Data.Gaussian.Norm.Basic.normSq ((cell.model.refine leftIndex).value.eval inner.anchor +
+    Basic.normSq ((cell.model.refine leftIndex).value.eval inner.anchor +
       (neighborhood.patch.base.refine rightIndex).value.eval inner.anchor) := by
   let sample := ContinuedNeighborhood.Point.acquire neighborhood.patch inner.anchor neighborhood.center_inside
   exact cell.anchor_nearest sample neighborhood.center_inside
@@ -168,13 +170,13 @@ theorem anchor_nearest (cell : TransportedFaceInverseModels.TransportedCell mode
 The supplied cache equalities identify both values at the shared anchor.
 The transition retains the endpoint containment witnesses and evaluates each
 cache once; root agreement certifies nearestness. -/
-@[expose] def anchorTransition (cell : TransportedFaceInverseModels.TransportedCell models.bounds (models.frame.owners
+@[expose] def anchorTransition (cell : TransportedCell models.bounds (models.frame.owners
   sheet) inner)
-    (traced : PreparedPathTrace.TracedPath path (models.frame.owners sheet)) (inside : ClearPath.InBox face.cell.box
+    (traced : TracedPath path (models.frame.owners sheet)) (inside : InBox face.cell.box
       path)
-    (frame : RootOwnerFrames.OwnerFrame (curve.polynomial.eval inner.anchor)) {count : Nat}
+    (frame : OwnerFrame (curve.polynomial.eval inner.anchor)) {count : Nat}
     (neighborhood : TracedPrimitiveNeighborhood.Neighborhood traced count) (leftIndex rightIndex : Nat)
-    (left : InverseRootPolynomial.Model curve.polynomial inner) (right : InverseRootPolynomial.Model curve.polynomial
+    (left : Model curve.polynomial inner) (right : Model curve.polynomial
       neighborhood.patch.base.box)
     (leftEq : left.value.eval inner.anchor = (cell.model.refine leftIndex).value.eval inner.anchor)
     (rightEq : right.value.eval inner.anchor = (neighborhood.patch.base.refine rightIndex).value.eval inner.anchor)
@@ -193,92 +195,75 @@ cache once; root agreement certifies nearestness. -/
       rw [leftEq, rightEq]
       have scalar := anchor_nearest cell
         traced inside frame neighborhood leftIndex rightIndex
-      simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using scalar⟩⟩
-
-/-- Read a dense primitive on the retained inverse model's base box.
-
-The primitive value and derivative identity are retained, and its Taylor
-remainder bound certifies increments between contained points. -/
-@[expose] def primitiveOnBase {polynomial numerator : InverseRootPolynomial.Polynomial} {count index : Nat}
-    {patch : ContinuedInverseRoot.ContinuedNeighborhood polynomial count} (model : InverseRootPrimitive.PrimitiveModel
-      patch index numerator) :
-    PrimitiveEdgeComparison.DensePrimitive model.coefficient patch.base.box where
-  value := model.primitive.value
-  derivative_eq := model.primitive.derivative_eq
-  remainderBound := Taylor.denseTaylorRemainderBound model.primitive.value patch.base.box
-  remainderBound_nonnegative := (Taylor.denseTaylorRemainderBound_pos _ _).le
-  increment_bound := by
-    intro first last firstInside lastInside
-    have estimate := Taylor.normSq_dense_taylor_remainder_le_denseTaylorRemainderBound
-      model.primitive.value lastInside firstInside
-    rw [model.primitive.derivative_eq] at estimate
-    exact estimate
+      simpa only [Basic.normSq_eq_canonical] using scalar⟩⟩
 
 /-- Bound the difference of two retained primitive increments by their residual budgets.
 
 The supplied coefficient identity, contained trace and overlap bounds fix
 the same unflipped edge. The bound retains both refinement indices and the
 squared endpoint displacement. -/
-theorem primitive_increment_le (cell : TransportedFaceInverseModels.TransportedCell models.bounds (models.frame.owners
+theorem primitive_increment_le (cell : TransportedCell models.bounds (models.frame.owners
   sheet) inner)
-    (traced : PreparedPathTrace.TracedPath path (models.frame.owners sheet)) (inside : ClearPath.InBox face.cell.box
+    (traced : TracedPath path (models.frame.owners sheet)) (inside : InBox face.cell.box
       path)
-    (frame : RootOwnerFrames.OwnerFrame (curve.polynomial.eval inner.anchor)) {count : Nat}
+    (frame : OwnerFrame (curve.polynomial.eval inner.anchor)) {count : Nat}
     (neighborhood : TracedPrimitiveNeighborhood.Neighborhood traced count) (leftIndex rightIndex : Nat)
-    {numerator coefficient : InverseRootPolynomial.Polynomial} (first : PrimitiveEdgeComparison.DensePrimitive
+    {numerator coefficient : InverseRootPolynomial.Polynomial} (first : DensePrimitive
       coefficient inner)
     (firstEq : ∀ point, coefficient.eval point = numerator.eval point * (cell.model.refine leftIndex).value.eval point)
-    (second : InverseRootPrimitive.PrimitiveModel neighborhood.patch rightIndex numerator)
-    (bounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds (face.clearance.restrict cell.geometry.refines) numerator)
+    (second : PrimitiveModel neighborhood.patch rightIndex numerator)
+    (bounds : PrimitiveOverlapBounds (face.clearance.restrict cell.geometry.refines) numerator)
     (finish : InverseRootPolynomial.Gaussian) (leftFinish : inner.Contains finish) (rightFinish :
       neighborhood.patch.box.Contains finish) :
-    Data.Gaussian.Norm.Basic.normSq ((first.value.eval finish - first.value.eval inner.anchor) -
+    Basic.normSq ((first.value.eval finish - first.value.eval inner.anchor) -
       (second.primitive.value.eval finish - second.primitive.value.eval inner.anchor)) ≤
       12 * ((cell.model.refine leftIndex).bound + (neighborhood.patch.base.refine rightIndex).bound) *
-        (bounds.numeratorUpper * bounds.inverseUpper) * Data.Gaussian.Norm.Basic.normSq (finish - inner.anchor)
+        (bounds.numeratorUpper * bounds.inverseUpper) * Basic.normSq (finish - inner.anchor)
           := by
   let edge := anchorTransition cell traced
     inside frame neighborhood leftIndex rightIndex
     (cell.model.refine leftIndex) (neighborhood.patch.base.refine rightIndex) rfl rfl finish leftFinish rightFinish
-  have estimate := EdgeTransition.primitive_increment_le edge bounds first
-    (primitiveOnBase second) firstEq
+  have estimate := EdgeTransition.primitive_increment_le (pairs := 0)
+    edge bounds first
+    (second.primitive.onBox neighborhood.patch.base.box) firstEq
     second.coefficient_eq
     (first := 1) (last := 0) ⟨by decide, le_rfl⟩ ⟨le_rfl, by decide⟩
+  rewrite [PrimitiveOverlapBounds.weight_zero] at estimate
   have sign : edge.sign = 1 := rfl
   rw [sign, Data.Gaussian.Basic.one_mul, InverseModelEdgeTransition.line_one, InverseModelEdgeTransition.line_zero]
     at estimate
   have unitDifference : (1 - 0 : Fraction.Rational) = 1 := by decide
   have scalar := estimate.trans_eq (by rw [unitDifference, one_pow, Fraction.Field.mul_one_direct])
-  simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical,
-    primitiveOnBase] using scalar
+  simpa only [Basic.normSq_eq_canonical,
+    Polynomial.Dense.Gaussian.Primitive.Certificate.DensePrimitive.onBox] using scalar
 
 /-- The retained edge accuracy request pays the difference of primitive increments.
 
 Both primitives use the request index. Its certified residual scale bounds
 their unflipped increments strictly below the requested target. -/
-theorem primitive_increment_lt (cell : TransportedFaceInverseModels.TransportedCell models.bounds (models.frame.owners
+theorem primitive_increment_lt (cell : TransportedCell models.bounds (models.frame.owners
   sheet) inner)
-    (traced : PreparedPathTrace.TracedPath path (models.frame.owners sheet)) (inside : ClearPath.InBox face.cell.box
+    (traced : TracedPath path (models.frame.owners sheet)) (inside : InBox face.cell.box
       path)
-    (frame : RootOwnerFrames.OwnerFrame (curve.polynomial.eval inner.anchor)) {count : Nat}
+    (frame : OwnerFrame (curve.polynomial.eval inner.anchor)) {count : Nat}
     (neighborhood : TracedPrimitiveNeighborhood.Neighborhood traced count) {numerator coefficient :
       InverseRootPolynomial.Polynomial}
-    {bounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds (face.clearance.restrict cell.geometry.refines) numerator}
+    {bounds : PrimitiveOverlapBounds (face.clearance.restrict cell.geometry.refines) numerator}
     {finish : InverseRootPolynomial.Gaussian} {target : InverseRootPolynomial.Coordinate}
-    (request : PrimitiveEdgeComparison.PrimitiveEdgeAccuracy bounds cell.model neighborhood.patch.base.model
+    (request : PrimitiveEdgeAccuracy bounds cell.model neighborhood.patch.base.model
       inner.anchor finish target)
-    (first : PrimitiveEdgeComparison.DensePrimitive coefficient inner)
+    (first : DensePrimitive coefficient inner)
     (firstEq : ∀ point, coefficient.eval point = numerator.eval point * (cell.model.refine request.index).value.eval
       point)
-    (second : InverseRootPrimitive.PrimitiveModel neighborhood.patch request.index numerator)
+    (second : PrimitiveModel neighborhood.patch request.index numerator)
     (leftFinish : inner.Contains finish) (rightFinish : neighborhood.patch.box.Contains finish) :
-    Data.Gaussian.Norm.Basic.normSq ((first.value.eval finish - first.value.eval inner.anchor) -
+    Basic.normSq ((first.value.eval finish - first.value.eval inner.anchor) -
       (second.primitive.value.eval finish - second.primitive.value.eval inner.anchor)) < target := by
   have paid := request.refined_scale_lt
   have paid : 12 * ((cell.model.refine request.index).bound + (neighborhood.patch.base.refine request.index).bound) *
-      (bounds.numeratorUpper * bounds.inverseUpper) * Data.Gaussian.Norm.Basic.normSq (finish - inner.anchor) <
+      (bounds.numeratorUpper * bounds.inverseUpper) * Basic.normSq (finish - inner.anchor) <
         target := by
-    simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical, SeededNeighborhood.refine] using paid
+    simpa only [Basic.normSq_eq_canonical, SeededNeighborhood.refine, PrimitiveOverlapBounds.weight_zero] using paid
   exact (primitive_increment_le cell
     traced inside frame neighborhood request.index request.index
     first firstEq second bounds finish leftFinish rightFinish).trans_lt paid

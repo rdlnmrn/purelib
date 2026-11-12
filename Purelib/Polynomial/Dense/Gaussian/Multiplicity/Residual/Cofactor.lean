@@ -49,29 +49,29 @@ namespace Purelib.Polynomial.Dense.Gaussian.Multiplicity.Residual.Cofactor
 /-- The remaining positive-factor value after exposing one selected entry in
 a displayed list split. -/
 @[expose] def cofactorValue (before after : List
-  Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry)
+  Basis.Positive.PositiveEntry)
     (point : Gaussian.Basic.Canonical) : Gaussian.Basic.Canonical :=
-  Dense.Gaussian.Multiplicity.Basis.Positive.positiveValue before point *
-    Dense.Gaussian.Multiplicity.Basis.Positive.positiveValue after point
+  Basis.Positive.positiveValue before point *
+    Basis.Positive.positiveValue after point
 
 /-- A displayed list split factors the weighted value into the focused power and the remaining product. -/
 theorem positiveValue_split
-    (before after : List Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry) (entry :
-      Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry)
+    (before after : List Basis.Positive.PositiveEntry) (entry :
+      Basis.Positive.PositiveEntry)
     (point : Gaussian.Basic.Canonical) :
-    Dense.Gaussian.Multiplicity.Basis.Positive.positiveValue (before ++ entry :: after) point =
+    Basis.Positive.positiveValue (before ++ entry :: after) point =
       entry.part.polynomial.eval point ^ entry.multiplicity *
-        Dense.Gaussian.Multiplicity.Residual.Cofactor.cofactorValue before after point := by
+        cofactorValue before after point := by
   induction before with
   | nil =>
-      simp only [List.nil_append, Dense.Gaussian.Multiplicity.Basis.Positive.positiveValue,
-        Dense.Gaussian.Multiplicity.Residual.Cofactor.cofactorValue]
+      simp only [List.nil_append, Basis.Positive.positiveValue,
+        cofactorValue]
       rw [Gaussian.Basic.one_mul]
   | cons head before inductionHypothesis =>
-      simp only [List.cons_append, Dense.Gaussian.Multiplicity.Basis.Positive.positiveValue]
+      simp only [List.cons_append, Basis.Positive.positiveValue]
       rw [inductionHypothesis]
-      dsimp only [Dense.Gaussian.Multiplicity.Residual.Cofactor.cofactorValue]
-      rw [Dense.Gaussian.Multiplicity.Basis.Positive.positiveValue]
+      dsimp only [cofactorValue]
+      rw [Basis.Positive.positiveValue]
       ring1
 
 set_option genInjectivity false in
@@ -80,13 +80,13 @@ factor values at one displayed sample. -/
 structure CofactorLower
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (decomposition :
       Squarefree.Decomposition p)
-    (before after : List Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry) (point : Gaussian.Basic.Canonical)
+    (before after : List Basis.Positive.PositiveEntry) (point : Gaussian.Basic.Canonical)
       where
   /-- The retained rational lower bound for the omitted unit and cofactor quadrance. -/ bound : Fraction.Rational
   /-- The retained lower bound is strictly positive. -/ positive : 0 < bound
   /-- The bound lies below the exact unit quadrance times the cofactor squared norm. -/ lower : bound ≤
-    Dense.Gaussian.Multiplicity.Residual.Basic.unitQuadrance decomposition *
-    Data.Gaussian.Norm.Basic.normSq (Dense.Gaussian.Multiplicity.Residual.Cofactor.cofactorValue before after point)
+    Basic.unitQuadrance decomposition *
+    Gaussian.Norm.Basic.normSq (cofactorValue before after point)
 
 constructive_injectivity CofactorLower
 
@@ -94,17 +94,17 @@ constructive_injectivity CofactorLower
 theorem selected_residual_identity
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (decomposition :
       Squarefree.Decomposition p)
-    (before after : List Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry) (entry :
-      Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry)
+    (before after : List Basis.Positive.PositiveEntry) (entry :
+      Basis.Positive.PositiveEntry)
     (split : decomposition.positiveMultiplicityEntries =
       before ++ entry :: after) (point : Gaussian.Basic.Canonical) :
-    Data.Gaussian.Norm.Basic.normSq (p.eval point) =
-      (Dense.Gaussian.Multiplicity.Residual.Basic.unitQuadrance decomposition *
-        Data.Gaussian.Norm.Basic.normSq (Dense.Gaussian.Multiplicity.Residual.Cofactor.cofactorValue before after
+    Gaussian.Norm.Basic.normSq (p.eval point) =
+      (Basic.unitQuadrance decomposition *
+        Gaussian.Norm.Basic.normSq (cofactorValue before after
           point)) *
-      Data.Gaussian.Norm.Basic.normSq (entry.part.polynomial.eval point) ^ entry.multiplicity := by
-  rw [Dense.Gaussian.Multiplicity.Residual.Basic.residual_product_identity decomposition point, split,
-    Dense.Gaussian.Multiplicity.Residual.Cofactor.positiveValue_split, Gaussian.Norm.Basic.normSq_mul,
+      Gaussian.Norm.Basic.normSq (entry.part.polynomial.eval point) ^ entry.multiplicity := by
+  rw [Basic.residual_product_identity decomposition point, split,
+    positiveValue_split, Gaussian.Norm.Basic.normSq_mul,
       Gaussian.Power.normSq_pow]
   ring1
 
@@ -114,15 +114,15 @@ theorem
   cofactor_mul_factorResidualPow_le_sourceResidual
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (decomposition :
       Squarefree.Decomposition p)
-    (before after : List Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry) (entry :
-      Dense.Gaussian.Multiplicity.Basis.Positive.PositiveEntry)
+    (before after : List Basis.Positive.PositiveEntry) (entry :
+      Basis.Positive.PositiveEntry)
     (split : decomposition.positiveMultiplicityEntries =
       before ++ entry :: after) (point : Gaussian.Basic.Canonical)
-    (cofactor : Dense.Gaussian.Multiplicity.Residual.Cofactor.CofactorLower decomposition before after point) :
+    (cofactor : CofactorLower decomposition before after point) :
     cofactor.bound *
-        Data.Gaussian.Norm.Basic.normSq (entry.part.polynomial.eval point) ^ entry.multiplicity ≤
-      Data.Gaussian.Norm.Basic.normSq (p.eval point) := by
-  rw [Dense.Gaussian.Multiplicity.Residual.Cofactor.selected_residual_identity decomposition before after entry split
+        Gaussian.Norm.Basic.normSq (entry.part.polynomial.eval point) ^ entry.multiplicity ≤
+      Gaussian.Norm.Basic.normSq (p.eval point) := by
+  rw [selected_residual_identity decomposition before after entry split
     point]
   exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
     cofactor.lower

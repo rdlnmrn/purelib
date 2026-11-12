@@ -45,8 +45,8 @@ assert that a completed exponential or logarithm value has been selected.
 
 /-- Actual multiplication of coherent CCL names is operationally commutative. The proof compares their common
 equal-index product samples. -/
-@[expose] def coherentMul_comm (left right : Coherent.CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
+@[expose] def coherentMul_comm (left right : CoherentNamed) :
+    NamedEquivalent
       (Named.mul
         left.name right.name)
       (Named.mul
@@ -56,12 +56,12 @@ equal-index product samples. -/
     (NamedEquivalent.trans
       (Equivalence.approximationEquivalent_toNamed
         (Equivalence.approximationEquivalentOfSamplesEq
-          (Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation left.name right.name)
-          (Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation right.name left.name)
+          (Arithmetic.Product.sampledProductApproximation left.name right.name)
+          (Arithmetic.Product.sampledProductApproximation right.name left.name)
           (by
             intro index
-            rw [Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation_sample,
-              Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation_sample]
+            rw [Arithmetic.Product.sampledProductApproximation_sample,
+              Arithmetic.Product.sampledProductApproximation_sample]
             exact Data.Gaussian.Basic.mul_comm _ _)))
       (NamedEquivalent.symm
         (Bridge.coherentMul_toNamed right left)))
@@ -69,8 +69,8 @@ equal-index product samples. -/
 /-- Actual multiplication of three coherent CCL names is operationally associative.
 
 Both process trees are reduced, by finite congruence, to the same equal-index triple-product approximation. -/
-@[expose] def coherentMul_assoc (left middle right : Coherent.CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
+@[expose] def coherentMul_assoc (left middle right : CoherentNamed) :
+    NamedEquivalent
       (Named.mul
         (Named.mul
           left.name middle.name)
@@ -84,23 +84,23 @@ Both process trees are reduced, by finite congruence, to the same equal-index tr
     Sampling.approximation middle.name
   let rightSource :=
     Sampling.approximation right.name
-  let leftMiddle := Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation left.name middle.name
-  let middleRight := Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation middle.name right.name
-  let triple := Gaussian.Sequence.Arithmetic.Product.sampledTripleApproximation left.name middle.name right.name
-  let sampledLeft : Coherent.CoherentNamed :=
+  let leftMiddle := Arithmetic.Product.sampledProductApproximation left.name middle.name
+  let middleRight := Arithmetic.Product.sampledProductApproximation middle.name right.name
+  let triple := Arithmetic.Product.sampledTripleApproximation left.name middle.name right.name
+  let sampledLeft : CoherentNamed :=
     CoherentNamed.ofApproximation
       leftSource
-  let sampledRight : Coherent.CoherentNamed :=
+  let sampledRight : CoherentNamed :=
     CoherentNamed.ofApproximation
       rightSource
-  let canonicalLeftMiddle : Coherent.CoherentNamed :=
+  let canonicalLeftMiddle : CoherentNamed :=
     CoherentNamed.ofApproximation
       leftMiddle
-  let canonicalMiddleRight : Coherent.CoherentNamed :=
+  let canonicalMiddleRight : CoherentNamed :=
     CoherentNamed.ofApproximation
       middleRight
   have normalizeLeft :
-      Gaussian.Equivalence.NamedEquivalent
+      NamedEquivalent
         (Named.mul
           (Named.mul
             left.name middle.name)
@@ -113,14 +113,14 @@ Both process trees are reduced, by finite congruence, to the same equal-index tr
       (Bridge.coherentMul_toNamed left middle)
       (Equivalence.named_toSamplingNamed right.name)
   have leftPointwise :
-      Gaussian.Equivalence.NamedEquivalent
+      NamedEquivalent
         (Named.mul
           canonicalLeftMiddle.name sampledRight.name)
         triple.toNamed :=
     Bridge.mulToNamed_equivalent_pointwise leftMiddle rightSource triple
       (by intro index; rfl)
   have normalizeRight :
-      Gaussian.Equivalence.NamedEquivalent
+      NamedEquivalent
         (Named.mul
           left.name
           (Named.mul
@@ -133,14 +133,14 @@ Both process trees are reduced, by finite congruence, to the same equal-index tr
       (Equivalence.named_toSamplingNamed left.name)
       (Bridge.coherentMul_toNamed middle right)
   have rightPointwise :
-      Gaussian.Equivalence.NamedEquivalent
+      NamedEquivalent
         (Named.mul
           sampledLeft.name canonicalMiddleRight.name)
         triple.toNamed :=
     Bridge.mulToNamed_equivalent_pointwise leftSource middleRight triple (by
       intro index
-      rw [Gaussian.Sequence.Arithmetic.Product.sampledTripleApproximation_sample,
-        Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation_sample]
+      rw [Arithmetic.Product.sampledTripleApproximation_sample,
+        Arithmetic.Product.sampledProductApproximation_sample]
       exact Data.Gaussian.Basic.mul_assoc _ _ _)
   exact NamedEquivalent.trans
     normalizeLeft
@@ -152,10 +152,31 @@ Both process trees are reduced, by finite congruence, to the same equal-index tr
         (NamedEquivalent.symm
           normalizeRight)))
 
+/-- Interchange four retained factors through operational associativity and commutativity.
+
+The two product trees retain the same original four channels; their finite
+comparison certificate accounts for the different association of refinements. -/
+@[expose] def coherentMul_interchange (first second third fourth : CoherentNamed) :
+    NamedEquivalent
+      (CoherentNamed.mul (CoherentNamed.mul first second) (CoherentNamed.mul third fourth)).name
+      (CoherentNamed.mul (CoherentNamed.mul first third) (CoherentNamed.mul second fourth)).name :=
+  NamedEquivalent.trans (coherentMul_assoc first second (CoherentNamed.mul third fourth))
+    (NamedEquivalent.trans
+      (Congruence.coherentMul_respects first first
+        (CoherentNamed.mul second (CoherentNamed.mul third fourth))
+        (CoherentNamed.mul third (CoherentNamed.mul second fourth))
+        (NamedEquivalent.refl first.name)
+        (NamedEquivalent.trans (NamedEquivalent.symm (coherentMul_assoc second third fourth))
+          (NamedEquivalent.trans
+            (Congruence.coherentMul_respects (CoherentNamed.mul second third) (CoherentNamed.mul third second)
+              fourth fourth (coherentMul_comm second third) (NamedEquivalent.refl fourth.name))
+            (coherentMul_assoc third second fourth))))
+      (NamedEquivalent.symm (coherentMul_assoc first third (CoherentNamed.mul second fourth))))
+
 /-- The two square trees can be interleaved constructively: `(left*left)*(right*right)` and `(left*right)*(left*right)`
 are operationally equivalent for coherent CCL names. -/
-@[expose] def coherentMul_squares_interchange (left right : Coherent.CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
+@[expose] def coherentMul_squares_interchange (left right : CoherentNamed) :
+    NamedEquivalent
       (Named.mul
         (Named.mul
           left.name left.name)
@@ -182,12 +203,12 @@ are operationally equivalent for coherent CCL names. -/
     CoherentNamed.mul rightLeft right
   let rightLeftRightAssociated :=
     CoherentNamed.mul right leftRight
-  have first := Approximation.Gaussian.Name.Coherent.Arithmetic.Product.Laws.coherentMul_assoc left left rightSquare
-  have innerSecond : Gaussian.Equivalence.NamedEquivalent leftRightSquare.name leftRightRight.name :=
+  have first := coherentMul_assoc left left rightSquare
+  have innerSecond : NamedEquivalent leftRightSquare.name leftRightRight.name :=
     NamedEquivalent.symm
-      (Approximation.Gaussian.Name.Coherent.Arithmetic.Product.Laws.coherentMul_assoc left right right)
+      (coherentMul_assoc left right right)
   have second :
-      Gaussian.Equivalence.NamedEquivalent
+      NamedEquivalent
         (Named.mul
           left.name leftRightSquare.name)
         (Named.mul
@@ -195,12 +216,12 @@ are operationally equivalent for coherent CCL names. -/
     Congruence.coherentMul_respects left left leftRightSquare leftRightRight
       (NamedEquivalent.refl left.name)
       innerSecond
-  have innerThird : Gaussian.Equivalence.NamedEquivalent leftRightRight.name rightLeftRight.name :=
+  have innerThird : NamedEquivalent leftRightRight.name rightLeftRight.name :=
     Congruence.coherentMul_respects leftRight rightLeft right right
-      (Approximation.Gaussian.Name.Coherent.Arithmetic.Product.Laws.coherentMul_comm left right)
+      (coherentMul_comm left right)
       (NamedEquivalent.refl right.name)
   have third :
-      Gaussian.Equivalence.NamedEquivalent
+      NamedEquivalent
         (Named.mul
           left.name leftRightRight.name)
         (Named.mul
@@ -209,10 +230,10 @@ are operationally equivalent for coherent CCL names. -/
       (NamedEquivalent.refl left.name)
       innerThird
   have innerFourth :
-      Gaussian.Equivalence.NamedEquivalent rightLeftProduct.name rightLeftRightAssociated.name :=
-    Approximation.Gaussian.Name.Coherent.Arithmetic.Product.Laws.coherentMul_assoc right left right
+      NamedEquivalent rightLeftProduct.name rightLeftRightAssociated.name :=
+    coherentMul_assoc right left right
   have fourth :
-      Gaussian.Equivalence.NamedEquivalent
+      NamedEquivalent
         (Named.mul
           left.name rightLeftProduct.name)
         (Named.mul
@@ -221,13 +242,13 @@ are operationally equivalent for coherent CCL names. -/
       (NamedEquivalent.refl left.name)
       innerFourth
   have fifth :
-      Gaussian.Equivalence.NamedEquivalent
+      NamedEquivalent
         (Named.mul
           left.name rightLeftRightAssociated.name)
         (Named.mul
           leftRight.name leftRight.name) :=
     NamedEquivalent.symm
-      (Approximation.Gaussian.Name.Coherent.Arithmetic.Product.Laws.coherentMul_assoc left right leftRight)
+      (coherentMul_assoc left right leftRight)
   exact NamedEquivalent.trans first
     (NamedEquivalent.trans second
       (NamedEquivalent.trans third
@@ -236,35 +257,35 @@ are operationally equivalent for coherent CCL names. -/
 
 /-- Move a coherent scalar past a coefficient in a nested product up to named equivalence. -/
 @[expose] public def coherentMul_left_comm
-    (coefficient scalar value : Coherent.CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
-      (Name.Coherent.CoherentNamed.mul coefficient
-        (Name.Coherent.CoherentNamed.mul scalar value)).name
-      (Name.Coherent.CoherentNamed.mul scalar
-        (Name.Coherent.CoherentNamed.mul coefficient value)).name := by
+    (coefficient scalar value : CoherentNamed) :
+    NamedEquivalent
+      (CoherentNamed.mul coefficient
+        (CoherentNamed.mul scalar value)).name
+      (CoherentNamed.mul scalar
+        (CoherentNamed.mul coefficient value)).name := by
   let coefficientScalar :=
-    Name.Coherent.CoherentNamed.mul coefficient scalar
+    CoherentNamed.mul coefficient scalar
   let scalarCoefficient :=
-    Name.Coherent.CoherentNamed.mul scalar coefficient
-  apply Equivalence.NamedEquivalent.trans
-    (middle := Name.Basic.Named.mul
-      (Name.Basic.Named.mul coefficient.name scalar.name) value.name)
-  · exact Equivalence.NamedEquivalent.symm (by
+    CoherentNamed.mul scalar coefficient
+  apply NamedEquivalent.trans
+    (middle := Named.mul
+      (Named.mul coefficient.name scalar.name) value.name)
+  · exact NamedEquivalent.symm (by
       simpa only [coefficientScalar,
-        Name.Coherent.CoherentNamed.mul] using
-        Name.Coherent.Arithmetic.Product.Laws.coherentMul_assoc
+        CoherentNamed.mul] using
+        coherentMul_assoc
           coefficient scalar value)
-  · apply Equivalence.NamedEquivalent.trans
-    · exact Name.Coherent.Arithmetic.Product.Congruence.coherentMul_respects
+  · apply NamedEquivalent.trans
+    · exact Congruence.coherentMul_respects
         coefficientScalar scalarCoefficient value value
         (by
-            simpa only [coefficientScalar, scalarCoefficient, Name.Coherent.CoherentNamed.mul]
-              using Name.Coherent.Arithmetic.Product.Laws.coherentMul_comm coefficient scalar)
-        (Equivalence.NamedEquivalent.refl value.name)
+            simpa only [coefficientScalar, scalarCoefficient, CoherentNamed.mul]
+              using coherentMul_comm coefficient scalar)
+        (NamedEquivalent.refl value.name)
     · exact (by
         simpa only [scalarCoefficient,
-          Name.Coherent.CoherentNamed.mul] using
-          Name.Coherent.Arithmetic.Product.Laws.coherentMul_assoc
+          CoherentNamed.mul] using
+          coherentMul_assoc
             scalar coefficient value)
 
 end

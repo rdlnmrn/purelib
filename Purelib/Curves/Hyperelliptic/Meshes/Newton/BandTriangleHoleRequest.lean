@@ -144,14 +144,14 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target
     radius : Rational}
   {request : AreaRequest preparation
     target radius}
-  {index : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches} {annulus :
+  {index : Branches.BranchIsolation.Data.Index branches} {annulus :
     AnnularFaces request.grid index}
   {lifted : LiftedPuncturedGrid request.grid.punctured} {region :
     Lifted annulus lifted}
@@ -163,20 +163,20 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 
 The original outer-lap, selected-triangle and hole-polygon requests share the supplied magnitude banks and pay the bound
 of forty times the outer target. -/
-@[expose] def triangleHoleRequest (comparison : AreaRequest.PairedComparison request prepared i j domains)
-    (first : MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential i))
-    (second : MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential j)) (floor : Nat) :
+@[expose] def triangleHoleRequest (comparison : PairedComparison request prepared i j domains)
+    (first : FaceMagnitudeBank domains (PeriodMatrix.standardDifferential i))
+    (second : FaceMagnitudeBank domains (PeriodMatrix.standardDifferential j)) (floor : Nat) :
     {threshold : Nat // floor ≤ threshold ∧
-      ∀ stage (cache : RegularMeshes.Numerics domains stage)
-        (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh) (right :
-          TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh),
+      ∀ stage (cache : Numerics domains stage)
+        (left : TriangleReadings (cache.get i) lifted.mesh) (right :
+          TriangleReadings (cache.get j) lifted.mesh),
         threshold ≤ stage →
         let value := fun edge => (⟨edgeValuation lifted.mesh left.values edge,
-          CanonicalEdgeValues.edgeValuation lifted.mesh right.values edge⟩ : Stokes.PrimitivePoint)
+          CanonicalEdgeValues.edgeValuation lifted.mesh right.values edge⟩ : PrimitivePoint)
         let physical := fun sheet => PairedIncrementArea.area
           ((lifted.edges.indexedEdges lifted.vertices (NewtonBandWindowHole.fineHole annulus (current :=
             lifted)).hole.boundary sheet).map value)
-        Data.Gaussian.Norm.Basic.normSq (SelectedTrianglePartition.selectedFullTriangleArea left right (fun
+        Gaussian.Norm.Basic.normSq (SelectedTrianglePartition.selectedFullTriangleArea left right (fun
           position =>
           decide ((request.grid.faces.regulars[position.val]'position.isLt).cell.box.Refines
             (request.grid.bands.box index))) + (physical 0 + physical 1)) ≤ 40 * target } := by
@@ -198,7 +198,7 @@ of forty times the outer target. -/
   let selected := SelectedTrianglePartition.selectedFullTriangleArea left right (fun position =>
     decide ((request.grid.faces.regulars[position.val]'position.isLt).cell.box.Refines (request.grid.bands.box index)))
   have readback (sheet : Fin 2) :
-      Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun
+      BilinearPolarization.extract (fun
         coefficient => lifted.edges.chainArea lifted.vertices
         (BilinearPolarization.mix (CanonicalEdgeValues.edgeValuation lifted.mesh left.values)
           (CanonicalEdgeValues.edgeValuation lifted.mesh right.values) coefficient)
@@ -206,26 +206,26 @@ of forty times the outer target. -/
           (BilinearPolarization.mix (CanonicalEdgeValues.edgeValuation lifted.mesh left.values)
             (CanonicalEdgeValues.edgeValuation lifted.mesh right.values) coefficient)
           (NewtonBandWindowCircuits.fineCompiler annulus (current := lifted) sheet).word) = lap sheet - kept sheet := by
-    have distribute (a b : Data.Gaussian.Basic.Canonical → Data.Gaussian.Basic.Canonical) :
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun
+    have distribute (a b : Gaussian.Basic.Canonical → Gaussian.Basic.Canonical) :
+        BilinearPolarization.extract (fun
           coefficient => a coefficient - b coefficient) =
-          Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract a -
-          Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract b := by
-      unfold Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract
+          BilinearPolarization.extract a -
+          BilinearPolarization.extract b := by
+      unfold BilinearPolarization.extract
       ring1
     exact (distribute _ _).trans (congrArg₂ (· - ·)
       (BilinearPolarization.extract_wordArea_mix _ _ _) (BilinearPolarization.extract_wordArea_mix _ _ _))
   dsimp only at triangleBound
   rw [readback 0, readback 1] at triangleBound
-  change Data.Gaussian.Norm.Basic.normSq ((lap 0 - kept 0) + (lap 1 - kept 1) - selected) < target at triangleBound
-  change Data.Gaussian.Norm.Basic.normSq ((kept 0 + kept 1) - (physical 0 + physical 1)) ≤ target at holeBound
-  change Data.Gaussian.Norm.Basic.normSq (lap 0 + lap 1) ≤ 16 * target at outerBound
-  have defects := (Data.Gaussian.Norm.Bounds.normSq_add_le_two
+  change Gaussian.Norm.Basic.normSq ((lap 0 - kept 0) + (lap 1 - kept 1) - selected) < target at triangleBound
+  change Gaussian.Norm.Basic.normSq ((kept 0 + kept 1) - (physical 0 + physical 1)) ≤ target at holeBound
+  change Gaussian.Norm.Basic.normSq (lap 0 + lap 1) ≤ 16 * target at outerBound
+  have defects := (Gaussian.Norm.Bounds.normSq_add_le_two
       ((lap 0 - kept 0) + (lap 1 - kept 1) - selected)
       ((kept 0 + kept 1) - (physical 0 + physical 1))).trans
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
       triangleBound.le holeBound) (by decide))
-  have estimate := (Data.Gaussian.Norm.Bounds.normSq_sub_le_two (lap 0 + lap 1)
+  have estimate := (Gaussian.Norm.Bounds.normSq_sub_le_two (lap 0 + lap 1)
       (((lap 0 - kept 0) + (lap 1 - kept 1) - selected) +
         ((kept 0 + kept 1) - (physical 0 + physical 1)))).trans
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct outerBound

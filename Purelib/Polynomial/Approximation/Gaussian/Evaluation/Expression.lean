@@ -33,67 +33,67 @@ open Purelib.Approximation
 /-- Expression-tree form of polynomial Horner evaluation. -/
 @[expose] def polynomialExpression (polynomial :
   Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
-    (input : Approximation.Gaussian.Expression) : Approximation.Gaussian.Expression :=
+    (input : Expression) : Expression :=
   polynomial.coeffs.foldl
     (fun accumulator coefficient =>
-      Approximation.Gaussian.Expression.add
-        (Approximation.Gaussian.Expression.mul accumulator input)
-        (Approximation.Gaussian.Expression.exact coefficient))
-    (Approximation.Gaussian.Expression.exact 0)
+      Expression.add
+        (Expression.mul accumulator input)
+        (Expression.exact coefficient))
+    (Expression.exact 0)
 
 section
 /-- Reading the output of a finite expression Horner fold gives the same coherent Horner fold. -/
 private theorem expressionHorner_output (input accumulator :
-  Approximation.Gaussian.Expression) :
+  Expression) :
     (coefficients : List Gaussian.Basic.Canonical) →
       (coefficients.foldl
         (fun current coefficient =>
-          Approximation.Gaussian.Expression.add
-            (Approximation.Gaussian.Expression.mul current input)
-            (Approximation.Gaussian.Expression.exact coefficient))
+          Expression.add
+            (Expression.mul current input)
+            (Expression.exact coefficient))
         accumulator).output =
-      Approximation.Gaussian.Evaluation.Horner.horner input.output accumulator.output coefficients
+      Horner.horner input.output accumulator.output coefficients
   | [] => rfl
   | coefficient :: coefficients => by
-      simpa only [List.foldl_cons, Approximation.Gaussian.Evaluation.Horner.horner,
-        Approximation.Gaussian.Expression.add,
-        Approximation.Gaussian.Expression.mul,
-        Approximation.Gaussian.Expression.exact,
-        Approximation.Gaussian.Expression.leaf] using
+      simpa only [List.foldl_cons, Horner.horner_cons,
+        Expression.add,
+        Expression.mul,
+        Expression.exact,
+        Expression.leaf] using
 
-          Purelib.Polynomial.Approximation.Gaussian.Evaluation.Expression.expressionHorner_output
+          Expression.expressionHorner_output
           input
-          (Approximation.Gaussian.Expression.add
-            (Approximation.Gaussian.Expression.mul
+          (Expression.add
+            (Expression.mul
               accumulator input)
-            (Approximation.Gaussian.Expression.exact coefficient))
+            (Expression.exact coefficient))
           coefficients
 end
 
 /-- The polynomial expression's output is exactly its coherent Horner evaluation. -/
 theorem polynomialExpression_output (polynomial :
   Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
-    (input : Approximation.Gaussian.Expression) :
-    (Approximation.Gaussian.Evaluation.Expression.polynomialExpression polynomial input).output =
-      Approximation.Gaussian.Evaluation.Horner.polynomialEval polynomial input.output := by
-  exact Purelib.Polynomial.Approximation.Gaussian.Evaluation.Expression.expressionHorner_output
+    (input : Expression) :
+    (polynomialExpression polynomial input).output =
+      Horner.polynomialEval polynomial input.output := by
+  exact expressionHorner_output
     input
-    (Approximation.Gaussian.Expression.exact 0)
+    (Expression.exact 0)
     polynomial.coeffs
 
 /-- Exact rational specialization of the public expression-tree evaluator. -/
 @[expose] def polynomialExpression_exact (polynomial :
   Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
     (input : Gaussian.Basic.Canonical) :
-    Gaussian.Equivalence.NamedEquivalent
-      (Approximation.Gaussian.Evaluation.Expression.polynomialExpression polynomial
-        (Approximation.Gaussian.Expression.exact input)).output.name
+    Equivalence.NamedEquivalent
+      (polynomialExpression polynomial
+        (Expression.exact input)).output.name
       (Name.Basic.Named.exact
         (polynomial.eval input)) := by
-  rw [Approximation.Gaussian.Evaluation.Expression.polynomialExpression_output]
-  simpa only [Approximation.Gaussian.Expression.exact,
-    Approximation.Gaussian.Expression.leaf] using
-    Approximation.Gaussian.Evaluation.Horner.polynomialEval_exact polynomial input
+  rw [polynomialExpression_output]
+  simpa only [Expression.exact,
+    Expression.leaf] using
+    Horner.polynomialEval_exact polynomial input
 
 end
 

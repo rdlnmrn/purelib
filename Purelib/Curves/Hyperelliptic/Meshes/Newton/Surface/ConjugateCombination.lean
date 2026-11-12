@@ -64,6 +64,8 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Topology.Mesh.CoordinateTriangulation
 import Purelib.Tactic.Ring
 
+open Purelib.LinearAlgebra.Gaussian
+
 open Purelib.Algebra
 
 open Purelib.Curves
@@ -96,14 +98,14 @@ open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
 attribute [local congr] FiniteSum.Fin.sumFin_congr
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
     Fraction.Rational} {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
   {observations : RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
-    RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars} {sheet : Fin
+    SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars} {sheet : Fin
     2}
   {partitions : Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid} {coarse :
     Topology.NewtonRequestedSurfaceEnergy.SurfaceMeshes partitions domains sheet}
@@ -115,7 +117,7 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
 /-- The actual coefficient-combined energy boundary minus the retained local-owner side sum for one original surface
 piece. -/
 @[expose] def combinedError (samples : energy.Readings cache) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+  Energy.GaussianVector genus)
     (position : Fin grid.faces.regulars.length) (piece : Fin (partitions.get position).cuts.boxes.length) : Gaussian :=
   let mesh := (energy.meshes.get position).entries.get piece
   let readings := (samples.get position).readings.get piece
@@ -129,14 +131,14 @@ piece. -/
 
 /-- The original piece discrepancy equals its complete conjugated basis-pair expansion. -/
 theorem combinedError_eq (samples : energy.Readings cache) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+  Energy.GaussianVector genus)
     (position : Fin grid.faces.regulars.length) (piece : Fin (partitions.get position).cuts.boxes.length) :
-    Hyperelliptic.Meshes.Newton.Surface.ConjugateCombination.combinedError samples coefficients position piece =
-      FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => Data.Gaussian.Basic.conj (coefficients
+    ConjugateCombination.combinedError samples coefficients position piece =
+      FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => Gaussian.Basic.conj (coefficients
         first) * coefficients second *
         ConjugateRequest.pairError samples first second position
           piece)) := by
-  unfold Hyperelliptic.Meshes.Newton.Surface.ConjugateCombination.combinedError
+  unfold ConjugateCombination.combinedError
   dsimp only
   rw [Polynomial.Rectangle.ClippedEnergyCombination.PolygonStokes.edgeListArea_energy_combination,
     Polynomial.Rectangle.ClippedEnergyCombination.ObservationPieces.localBoundary_energy_combination]
@@ -146,34 +148,34 @@ theorem combinedError_eq (samples : energy.Readings cache) (coefficients :
 
 /-- The complete original face-piece discrepancy sum equals the basis-pair combination of the retained paired errors. -/
 theorem total_combinedError_eq (samples : energy.Readings cache) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
+  Energy.GaussianVector genus) :
     FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
-      Hyperelliptic.Meshes.Newton.Surface.ConjugateCombination.combinedError samples coefficients position piece)) =
-      FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => Data.Gaussian.Basic.conj (coefficients
+      ConjugateCombination.combinedError samples coefficients position piece)) =
+      FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => Gaussian.Basic.conj (coefficients
         first) * coefficients second *
         FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
           ConjugateRequest.pairError samples first second position
           piece)))) := by
   rw [FiniteSum.Fin.sumFin_congr (fun position => FiniteSum.Fin.sumFin_congr (fun piece =>
-    Hyperelliptic.Meshes.Newton.Surface.ConjugateCombination.combinedError_eq samples coefficients position piece))]
+    ConjugateCombination.combinedError_eq samples coefficients position piece))]
   rw [FiniteSum.Fin.sumFin_congr (fun position => Periods.BilinearCombination.sumFin_combination
-    (fun row => Data.Gaussian.Basic.conj (coefficients row)) coefficients (fun piece first second =>
+    (fun row => Gaussian.Basic.conj (coefficients row)) coefficients (fun piece first second =>
       ConjugateRequest.pairError samples first second position
       piece))]
-  exact Periods.BilinearCombination.sumFin_combination (fun row => Data.Gaussian.Basic.conj (coefficients row))
+  exact Periods.BilinearCombination.sumFin_combination (fun row => Gaussian.Basic.conj (coefficients row))
     coefficients _
 
 /-- The original complete combined discrepancy has squared norm at most genus squared times coefficient norm squared
 times the retained request error. -/
 theorem combinedError_bound (request : ConjugateRequest energy
   error) (later : request.index ≤ stage)
-    (samples : energy.Readings cache) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
-      Hyperelliptic.Meshes.Newton.Surface.ConjugateCombination.combinedError samples coefficients position piece))) ≤
+    (samples : energy.Readings cache) (coefficients : Energy.GaussianVector genus) :
+    Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
+      ConjugateCombination.combinedError samples coefficients position piece))) ≤
       (genus : Fraction.Rational) ^ 2 * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
         error := by
-  rw [Hyperelliptic.Meshes.Newton.Surface.ConjugateCombination.total_combinedError_eq]
-  have estimate := Periods.BilinearCombination.combination_bound (fun row => Data.Gaussian.Basic.conj (coefficients
+  rw [ConjugateCombination.total_combinedError_eq]
+  have estimate := Periods.BilinearCombination.combination_bound (fun row => Gaussian.Basic.conj (coefficients
     row)) coefficients
     (fun first second => FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
       ConjugateRequest.pairError samples first second position
@@ -202,7 +204,7 @@ private theorem edgeListArea_pointwise {vertices : Nat}
 separately integrated linear combination or a replacement mesh. -/
 theorem sample_error_eq (samples : energy.Readings cache) (budget :
   Topology.NewtonRequestedSurfaceEnergy.SurfaceRequest.Budget energy samples)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (position : Fin
+    (coefficients : Energy.GaussianVector genus) (position : Fin
       grid.faces.regulars.length)
     (piece : Fin (partitions.get position).cuts.boxes.length) :
     (((budget.entries.get position).get piece).sample coefficients).boundaryArea -
@@ -211,14 +213,14 @@ theorem sample_error_eq (samples : energy.Readings cache) (budget :
           (FiniteSum.Fin.sumFin (fun rowIndex => coefficients rowIndex * (cache.atDomain position sheet
             rowIndex).primitives.value column row point)))
         ((energy.meshes.get position).entries.get piece).depth =
-          Hyperelliptic.Meshes.Newton.Surface.ConjugateCombination.combinedError samples coefficients position piece :=
+          ConjugateCombination.combinedError samples coefficients position piece :=
           by
   apply congrArg (fun boundary => boundary - _)
   change Topology.Polygon.Stokes.edgeListArea
     (fun vertex => Energy.Polygon.energyPrimitivePoint ((((budget.entries.get position).get piece).sample
       coefficients).primitiveValue vertex))
     ((energy.meshes.get position).entries.get piece).surface.mesh.triangulation.boundary = _
-  apply Hyperelliptic.Meshes.Newton.Surface.ConjugateCombination.edgeListArea_pointwise
+  apply ConjugateCombination.edgeListArea_pointwise
   intro vertex
   apply congrArg Energy.Polygon.energyPrimitivePoint
   rw [Readings.AffineBasisEnergy.AffineBasis.SurfaceBudget.sample_value]
@@ -231,8 +233,8 @@ original local side sums. -/
 theorem boundary_error_bound (request : ConjugateRequest energy
   error) (later : request.index ≤ stage)
     (samples : energy.Readings cache) (budget : Topology.NewtonRequestedSurfaceEnergy.SurfaceRequest.Budget energy
-      samples) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
+      samples) (coefficients : Energy.GaussianVector genus) :
+    Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
       (((budget.entries.get position).get piece).sample coefficients).boundaryArea -
         ((energy.meshes.get position).entries.get piece).pieces.localBoundary
           (fun column row point => Energy.Polygon.energyPrimitivePoint (FiniteSum.Fin.sumFin (fun rowIndex =>
@@ -241,8 +243,8 @@ theorem boundary_error_bound (request : ConjugateRequest energy
       (genus : Fraction.Rational) ^ 2 * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
         error := by
   rw [FiniteSum.Fin.sumFin_congr (fun position => FiniteSum.Fin.sumFin_congr (fun piece =>
-    Hyperelliptic.Meshes.Newton.Surface.ConjugateCombination.sample_error_eq samples budget coefficients position
+    ConjugateCombination.sample_error_eq samples budget coefficients position
     piece))]
-  exact Hyperelliptic.Meshes.Newton.Surface.ConjugateCombination.combinedError_bound request later samples coefficients
+  exact ConjugateCombination.combinedError_bound request later samples coefficients
 
 end Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.ConjugateCombination

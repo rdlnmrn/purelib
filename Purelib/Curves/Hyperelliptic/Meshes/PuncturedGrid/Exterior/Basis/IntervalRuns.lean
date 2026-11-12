@@ -38,6 +38,8 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Geometry.Grid.ClearGrid
 import Purelib.Riemann.Meshes.PuncturedGridFaces
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
+
 open Purelib.Curves
 
 open Purelib.Geometry
@@ -55,76 +57,76 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Inter
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
     regular domains differential}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {count : Nat} {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {sourceData : Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover sourceData}
-  {covers : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent} {minimum floor index
+  {sourceData : UniformReciprocalModels.Data patch count} {cover :
+    UniformReciprocalCover.Cover sourceData}
+  {covers : Disk.Basis.SourceLocations.BasisSourceCovers parent} {minimum floor index
     depth : Nat}
-  {common : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonCover cover covers minimum}
-  {areaAllowance sourceTarget coefficientTarget : Normalization.InverseRootPolynomial.Coordinate}
-  {request : Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest regular common
+  {common : Disk.Basis.CommonCover.BasisCommonCover cover covers minimum}
+  {areaAllowance sourceTarget coefficientTarget : InverseRootPolynomial.Coordinate}
+  {request : Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest regular common
     areaAllowance sourceTarget coefficientTarget floor}
   {box : Rational.Box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
-  {originals : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {originals : Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
     covers index}
-  {cells : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers index}
+  {cells : Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers index}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {acquired :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition request
+  Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition request
   polynomials originals cells coefficients depth}
 
-variable {faceIndex : Nat} {data : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData occurrence
+variable {faceIndex : Nat} {data : FragmentQueries.RowData occurrence
   faceIndex}
 
 namespace SourceRun
 variable {intervals : List Rectangle.Partition.PreparedAxisPartitions.Interval}
   (piece : (interval : Rectangle.Partition.PreparedAxisPartitions.Interval) → interval ∈ intervals →
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment (originals := originals)
+    OwnedFragments.OwnedFragment (originals := originals)
       (coefficients := coefficients) data)
   (junction : (before after : Rectangle.Partition.PreparedAxisPartitions.Interval) → before ∈ intervals → after ∈
     intervals →
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment (originals := originals)
+    OwnedFragments.OwnedFragment (originals := originals)
       (coefficients := coefficients) data)
 
 /-- Retain the one original junction to the next physical interval, or an empty list at the terminal interval. -/
 public def leadingJunction (before : Rectangle.Partition.PreparedAxisPartitions.Interval) (member : before ∈ intervals)
   :
-    {first last : Normalization.InverseRootPolynomial.Coordinate} → Geometry.Grid.AxisWalks.IncreasingWalk intervals
+    {first last : InverseRootPolynomial.Coordinate} → Geometry.Grid.AxisWalks.IncreasingWalk intervals
       first last →
-      List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment (originals := originals)
+      List (OwnedFragments.OwnedFragment (originals := originals)
         (coefficients := coefficients) data)
   | _, _, .nil _ => []
   | _, _, .cons after present _ => [junction before after member present]
 
 /-- Follow the retained physical interval walk, inserting exactly one owner
 junction between adjacent pieces and none after the final piece. -/
-def intervalFragments : {first last : Normalization.InverseRootPolynomial.Coordinate} →
+def intervalFragments : {first last : InverseRootPolynomial.Coordinate} →
   Geometry.Grid.AxisWalks.IncreasingWalk intervals first last →
-    List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment (originals := originals)
+    List (OwnedFragments.OwnedFragment (originals := originals)
       (coefficients := coefficients) data)
   | _, _, .nil _ => []
   | _, _, .cons interval member tail => piece interval member ::
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IntervalRuns.SourceRun.leadingJunction junction interval
+      (SourceRun.leadingJunction junction interval
         member tail ++
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IntervalRuns.SourceRun.intervalFragments tail)
+        SourceRun.intervalFragments tail)
 
-variable (parameter : Normalization.InverseRootPolynomial.Coordinate → Normalization.InverseRootPolynomial.Coordinate)
+variable (parameter : InverseRootPolynomial.Coordinate → InverseRootPolynomial.Coordinate)
   (pieceFirst : ∀ interval member, (piece interval member).parameters 0 = parameter interval.lower)
   (pieceLast : ∀ interval member,
     (piece interval member).parameters (Fin.last (piece interval member).vertices) = parameter interval.upper)
@@ -142,55 +144,55 @@ include pieceFirst pieceLast pieceOrdered junctionFirst junctionLast junctionOrd
 
 /-- Adjacency comes from the retained interval walk; no separate global
 fragment-chain certificate is an input. -/
-theorem intervalFragments_chain {first last : Normalization.InverseRootPolynomial.Coordinate} (walk :
+theorem intervalFragments_chain {first last : InverseRootPolynomial.Coordinate} (walk :
   Geometry.Grid.AxisWalks.IncreasingWalk intervals first last) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains.SourceChain
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IntervalRuns.SourceRun.intervalFragments piece junction walk)
+    SourceChains.SourceChain
+      (SourceRun.intervalFragments piece junction walk)
       (parameter first) (parameter last) := by
   induction walk with
   | nil point => exact .nil _
   | cons interval member tail ih =>
-    change Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains.SourceChain (piece interval member ::
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IntervalRuns.SourceRun.leadingJunction junction interval
-        member tail ++ Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IntervalRuns.SourceRun.intervalFragments piece
+    change SourceChains.SourceChain (piece interval member ::
+      (SourceRun.leadingJunction junction interval
+        member tail ++ SourceRun.intervalFragments piece
         junction tail))
       (parameter interval.lower) _
     generalize middleEq : id interval.upper = middle at tail ih
     cases tail with
     | nil =>
-      change Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains.SourceChain [piece interval member]
+      change SourceChains.SourceChain [piece interval member]
         (parameter interval.lower) _
       rw [← middleEq]
-      change Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains.SourceChain [piece interval member]
+      change SourceChains.SourceChain [piece interval member]
         (parameter interval.lower) (parameter interval.upper)
       rw [← pieceFirst interval member, ← pieceLast interval member]
       exact .cons _ (pieceOrdered interval member) (.nil _)
     | cons next present rest =>
-      change Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains.SourceChain (piece interval member ::
+      change SourceChains.SourceChain (piece interval member ::
         junction interval next member present ::
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IntervalRuns.SourceRun.intervalFragments piece junction (.cons
+        SourceRun.intervalFragments piece junction (.cons
           next present rest)) (parameter interval.lower) _
       rw [← pieceFirst interval member]
-      apply Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains.SourceChain.cons _ (pieceOrdered interval
+      apply SourceChains.SourceChain.cons _ (pieceOrdered interval
         member)
       rw [pieceLast interval member, ← junctionFirst interval next member present middleEq.symm]
-      apply Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains.SourceChain.cons _ (junctionOrdered interval
+      apply SourceChains.SourceChain.cons _ (junctionOrdered interval
         next member present middleEq.symm)
       rw [junctionLast interval next member present middleEq.symm]
       exact ih
 
 /-- Build a complete cached run from the physical interval walk and local
 piece/junction readbacks. The walk enforces order and includes every piece. -/
-def ofIntervalWalk {first last : Normalization.InverseRootPolynomial.Coordinate} (walk :
+def ofIntervalWalk {first last : InverseRootPolynomial.Coordinate} (walk :
   Geometry.Grid.AxisWalks.IncreasingWalk intervals first last)
     (firstEq : parameter first = 0) (lastEq : parameter last = 1) :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceRuns.SourceRun acquired data := by
-  have chain := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IntervalRuns.SourceRun.intervalFragments_chain piece
+      SourceRuns.SourceRun acquired data := by
+  have chain := SourceRun.intervalFragments_chain piece
     junction parameter pieceFirst pieceLast pieceOrdered
     junctionFirst junctionLast junctionOrdered walk
   rw [firstEq, lastEq] at chain
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains.SourceRun.ofChain
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IntervalRuns.SourceRun.intervalFragments piece junction walk)
+  exact SourceChains.SourceRun.ofChain
+    (SourceRun.intervalFragments piece junction walk)
     chain
 
 end SourceRun

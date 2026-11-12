@@ -88,6 +88,8 @@ import Purelib.Riemann.Readings.RectangularObservationAssembly
 import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 
+open Purelib.Riemann.Readings.RectangularMatchedObservationSides
+
 open Purelib.Curves
 
 open Purelib
@@ -106,26 +108,26 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.MatchedSour
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-    regular domains differential} {target : Normalization.InverseRootPolynomial.Coordinate} {minimum stage fine : Nat}
+    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    regular domains differential} {target : InverseRootPolynomial.Coordinate} {minimum stage fine : Nat}
   {box otherBox : Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
-  {plan : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan occurrence other target
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {plan : PairedSourceReferences.PairedSourcePlan occurrence other target
     minimum}
-  {evaluated : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan
+  {evaluated : PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan
     sample otherSample fine}
-  {lc lr rc rr : Nat} {lg : Normalization.RectangularInverseModels.Geometry lc lr} {rg :
-    Normalization.RectangularInverseModels.Geometry rc rr}
+  {lc lr rc rr : Nat} {lg : RectangularInverseModels.Geometry lc lr} {rg :
+    RectangularInverseModels.Geometry rc rr}
   {leftCuts : Paths.RectangularSegmentSplitting.GridCuts lg} {rightCuts : Paths.RectangularSegmentSplitting.GridCuts rg}
     {leftBox rightBox : Rational.Box}
   {left : Meshes.RectangularObservationMesh.ObservationMesh leftCuts leftBox} {right :
@@ -146,8 +148,8 @@ private theorem dyadic_ordered (piece : Paths.RectangularPairedSegments.PairedSe
 namespace SourceBlockParameters
 section Horizontal
 variable {leftRow : Fin left.partition.y.intervals.length} {rightRow : Fin right.partition.y.intervals.length}
-  {height : Normalization.InverseRootPolynomial.Coordinate} {side :
-    Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedHorizontalSide left right leftRow rightRow
+  {height : InverseRootPolynomial.Coordinate} {side :
+    ObservationMesh.MatchedHorizontalSide left right leftRow rightRow
     height}
 
 /-- Transport a matched horizontal trace piece to the original source parent parameters.
@@ -158,7 +160,7 @@ def horizontalParameters (trace : side.Trace depth) (column : Fin left.partition
       forward (left.partition.x.intervals[column.val]'column.isLt))
     (sourceFirst : occurrence.start.im = height) (sourceLast : occurrence.finish.im = height) :
     Paths.RectangularTraceParameterReadings.ParentParameters (trace.segments.get column)
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated block.index).plan.parent
+      (IndexedSourceSplits.indexedEntry evaluated block.index).plan.parent
       (SourceBlockParameters.firstParameter block)
         (SourceBlockParameters.lastParameter block) :=
   SourceBlockParameters.traceParameters block height
@@ -175,36 +177,36 @@ def horizontalFragment (trace : side.Trace depth) (column : Fin left.partition.x
     (block : SourceBlockParameters evaluated false
       forward (left.partition.x.intervals[column.val]'column.isLt))
     (located : Paths.RectangularSegmentRefinement.Subinterval
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.sourceSplit evaluated block.index).split
+      (IndexedSourceSplits.sourceSplit evaluated block.index).split
       block.parameters.range)
     (sourceFirst : occurrence.start.im = height) (sourceLast : occurrence.finish.im = height)
-    {index : Nat} {data : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.FirstData occurrence index}
-      {otherData : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.SecondData occurrence other index}
-    {allowance : Normalization.InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
+    {index : Nat} {data : PairedFragmentValues.FirstData occurrence index}
+      {otherData : PairedFragmentValues.SecondData occurrence other index}
+    {allowance : InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
       (Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
-    (owners : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest occurrence other
+    (owners : PairedOwnerRequest.OwnerRequest occurrence other
       budget.tolerance) (later : owners.index ≤ index)
     (originalFirst : Readings.RectangularPointReadings.PointReadings data.anchors data.offsets (fun vertex =>
       trace.point (trace.vertices.indexed vertex)))
     (originalSecond : Readings.RectangularPointReadings.PointReadings otherData.anchors otherData.offsets (fun vertex =>
       trace.point (trace.vertices.indexed vertex))) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.OwnedFragment evaluated data otherData :=
+    PairedFragmentBlocks.OwnedFragment evaluated data otherData :=
   let first := Paths.RectangularTraceIncrementBlocks.MatchedHorizontalSide.Trace.pieceReadings trace (Fin.cast
     left.boundaryColumns_eq.symm column) originalFirst
   let second := Paths.RectangularTraceIncrementBlocks.MatchedHorizontalSide.Trace.pieceReadings trace (Fin.cast
     left.boundaryColumns_eq.symm column) originalSecond
   let transport :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.MatchedSourceFragments.SourceBlockParameters.horizontalParameters trace
+    SourceBlockParameters.horizontalParameters trace
     column block sourceFirst sourceLast
   let owned := Periods.CenteredBilinearPath.Sample.build (fun vertex => (⟨first.values vertex, second.values vertex⟩ :
     Topology.Polygon.Stokes.PrimitivePoint))
   let source := Periods.CenteredBilinearPath.Sample.build (fun vertex =>
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.sourceValues
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated block.index)
+    PairedFragmentValues.sourceValues
+    (IndexedSourceSplits.indexedEntry evaluated block.index)
     (transport.parameters vertex))
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.OwnedFragment.ofTrace
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated block.index)
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry_member evaluated block.index) located
+  PairedFragmentBlocks.OwnedFragment.ofTrace
+    (IndexedSourceSplits.indexedEntry evaluated block.index)
+    (IndexedSourceSplits.indexedEntry_member evaluated block.index) located
     forward
     transport
     (by intro edge; rw [trace.segments_eq]; exact dyadic_ordered _ depth edge)
@@ -216,41 +218,41 @@ theorem horizontalFragment_values (trace : side.Trace depth) (column : Fin left.
     (block : SourceBlockParameters evaluated false
       forward (left.partition.x.intervals[column.val]'column.isLt))
     (located : Paths.RectangularSegmentRefinement.Subinterval
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.sourceSplit evaluated block.index).split
+      (IndexedSourceSplits.sourceSplit evaluated block.index).split
       block.parameters.range)
     (sourceFirst : occurrence.start.im = height) (sourceLast : occurrence.finish.im = height)
-    {index : Nat} {data : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.FirstData occurrence index}
-      {otherData : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.SecondData occurrence other index}
-    {allowance : Normalization.InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
+    {index : Nat} {data : PairedFragmentValues.FirstData occurrence index}
+      {otherData : PairedFragmentValues.SecondData occurrence other index}
+    {allowance : InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
       (Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
-    (owners : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest occurrence other
+    (owners : PairedOwnerRequest.OwnerRequest occurrence other
       budget.tolerance) (later : owners.index ≤ index)
     (first : Readings.RectangularPointReadings.PointReadings data.anchors data.offsets (fun vertex => trace.point
       (trace.vertices.indexed vertex)))
     (second : Readings.RectangularPointReadings.PointReadings otherData.anchors otherData.offsets (fun vertex =>
       trace.point (trace.vertices.indexed vertex)))
-    (leftValues rightValues : side.Vertex depth → Normalization.InverseRootPolynomial.Gaussian)
+    (leftValues rightValues : side.Vertex depth → InverseRootPolynomial.Gaussian)
     (leftEq : ∀ vertex, first.values vertex = leftValues (trace.vertices.indexed vertex))
     (rightEq : ∀ vertex, second.values vertex = rightValues (trace.vertices.indexed vertex)) :
     let fragment :=
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.MatchedSourceFragments.SourceBlockParameters.horizontalFragment trace
+      SourceBlockParameters.horizontalFragment trace
       column block located sourceFirst sourceLast budget owners later first second
     ∀ vertex : Fin (Paths.RectangularDyadicPairedTrace.dyadicCount depth + 1),
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnedFragments.ownedValues fragment.first fragment.second vertex
+      PairedOwnedFragments.ownedValues fragment.first fragment.second vertex
       =
       (⟨leftValues (column, vertex), rightValues (column, vertex)⟩ : Topology.Polygon.Stokes.PrimitivePoint) := by
   intro fragment vertex
   exact congrArg₂ Topology.Polygon.Stokes.PrimitivePoint.mk
-    (Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedHorizontalSide.Trace.pieceReadings_spec trace
+    (ObservationMesh.MatchedHorizontalSide.Trace.pieceReadings_spec trace
       (Fin.cast left.boundaryColumns_eq.symm column) first leftValues leftEq vertex)
-    (Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedHorizontalSide.Trace.pieceReadings_spec trace
+    (ObservationMesh.MatchedHorizontalSide.Trace.pieceReadings_spec trace
       (Fin.cast left.boundaryColumns_eq.symm column) second rightValues rightEq vertex)
 
 end Horizontal
 section Vertical
 variable {leftColumn : Fin left.partition.x.intervals.length} {rightColumn : Fin right.partition.x.intervals.length}
-  {horizontal : Normalization.InverseRootPolynomial.Coordinate} {side :
-    Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedVerticalSide left right leftColumn rightColumn
+  {horizontal : InverseRootPolynomial.Coordinate} {side :
+    ObservationMesh.MatchedVerticalSide left right leftColumn rightColumn
     horizontal}
 
 /-- Transport a matched vertical trace piece to the original source parent parameters.
@@ -261,7 +263,7 @@ def verticalParameters (trace : side.Trace depth) (row : Fin left.partition.y.in
       forward (left.partition.y.intervals[row.val]'row.isLt))
     (sourceFirst : occurrence.start.re = horizontal) (sourceLast : occurrence.finish.re = horizontal) :
     Paths.RectangularTraceParameterReadings.ParentParameters (trace.segments.get row)
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated block.index).plan.parent
+      (IndexedSourceSplits.indexedEntry evaluated block.index).plan.parent
       (SourceBlockParameters.firstParameter block)
         (SourceBlockParameters.lastParameter block) :=
   SourceBlockParameters.traceParameters block
@@ -278,36 +280,36 @@ def verticalFragment (trace : side.Trace depth) (row : Fin left.partition.y.inte
     (block : SourceBlockParameters evaluated true
       forward (left.partition.y.intervals[row.val]'row.isLt))
     (located : Paths.RectangularSegmentRefinement.Subinterval
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.sourceSplit evaluated block.index).split
+      (IndexedSourceSplits.sourceSplit evaluated block.index).split
       block.parameters.range)
     (sourceFirst : occurrence.start.re = horizontal) (sourceLast : occurrence.finish.re = horizontal)
-    {index : Nat} {data : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.FirstData occurrence index}
-      {otherData : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.SecondData occurrence other index}
-    {allowance : Normalization.InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
+    {index : Nat} {data : PairedFragmentValues.FirstData occurrence index}
+      {otherData : PairedFragmentValues.SecondData occurrence other index}
+    {allowance : InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
       (Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
-    (owners : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest occurrence other
+    (owners : PairedOwnerRequest.OwnerRequest occurrence other
       budget.tolerance) (later : owners.index ≤ index)
     (originalFirst : Readings.RectangularPointReadings.PointReadings data.anchors data.offsets (fun vertex =>
       trace.point (trace.vertices.indexed vertex)))
     (originalSecond : Readings.RectangularPointReadings.PointReadings otherData.anchors otherData.offsets (fun vertex =>
       trace.point (trace.vertices.indexed vertex))) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.OwnedFragment evaluated data otherData :=
+    PairedFragmentBlocks.OwnedFragment evaluated data otherData :=
   let first := Paths.RectangularTraceIncrementBlocks.MatchedVerticalSide.Trace.pieceReadings trace (Fin.cast
     left.boundaryRows_eq.symm row) originalFirst
   let second := Paths.RectangularTraceIncrementBlocks.MatchedVerticalSide.Trace.pieceReadings trace (Fin.cast
     left.boundaryRows_eq.symm row) originalSecond
   let transport :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.MatchedSourceFragments.SourceBlockParameters.verticalParameters trace
+    SourceBlockParameters.verticalParameters trace
     row block sourceFirst sourceLast
   let owned := Periods.CenteredBilinearPath.Sample.build (fun vertex => (⟨first.values vertex, second.values vertex⟩ :
     Topology.Polygon.Stokes.PrimitivePoint))
   let source := Periods.CenteredBilinearPath.Sample.build (fun vertex =>
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.sourceValues
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated block.index)
+    PairedFragmentValues.sourceValues
+    (IndexedSourceSplits.indexedEntry evaluated block.index)
     (transport.parameters vertex))
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.OwnedFragment.ofTrace
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated block.index)
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry_member evaluated block.index) located
+  PairedFragmentBlocks.OwnedFragment.ofTrace
+    (IndexedSourceSplits.indexedEntry evaluated block.index)
+    (IndexedSourceSplits.indexedEntry_member evaluated block.index) located
     forward
     transport
     (by intro edge; rw [trace.segments_eq]; exact dyadic_ordered _ depth edge)
@@ -319,34 +321,34 @@ theorem verticalFragment_values (trace : side.Trace depth) (row : Fin left.parti
     (block : SourceBlockParameters evaluated true
       forward (left.partition.y.intervals[row.val]'row.isLt))
     (located : Paths.RectangularSegmentRefinement.Subinterval
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.sourceSplit evaluated block.index).split
+      (IndexedSourceSplits.sourceSplit evaluated block.index).split
       block.parameters.range)
     (sourceFirst : occurrence.start.re = horizontal) (sourceLast : occurrence.finish.re = horizontal)
-    {index : Nat} {data : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.FirstData occurrence index}
-      {otherData : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.SecondData occurrence other index}
-    {allowance : Normalization.InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
+    {index : Nat} {data : PairedFragmentValues.FirstData occurrence index}
+      {otherData : PairedFragmentValues.SecondData occurrence other index}
+    {allowance : InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
       (Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
-    (owners : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest occurrence other
+    (owners : PairedOwnerRequest.OwnerRequest occurrence other
       budget.tolerance) (later : owners.index ≤ index)
     (first : Readings.RectangularPointReadings.PointReadings data.anchors data.offsets (fun vertex => trace.point
       (trace.vertices.indexed vertex)))
     (second : Readings.RectangularPointReadings.PointReadings otherData.anchors otherData.offsets (fun vertex =>
       trace.point (trace.vertices.indexed vertex)))
-    (leftValues rightValues : side.Vertex depth → Normalization.InverseRootPolynomial.Gaussian)
+    (leftValues rightValues : side.Vertex depth → InverseRootPolynomial.Gaussian)
     (leftEq : ∀ vertex, first.values vertex = leftValues (trace.vertices.indexed vertex))
     (rightEq : ∀ vertex, second.values vertex = rightValues (trace.vertices.indexed vertex)) :
     let fragment :=
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.MatchedSourceFragments.SourceBlockParameters.verticalFragment trace
+      SourceBlockParameters.verticalFragment trace
       row block located sourceFirst sourceLast budget owners later first second
     ∀ vertex : Fin (Paths.RectangularDyadicPairedTrace.dyadicCount depth + 1),
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnedFragments.ownedValues fragment.first fragment.second vertex
+      PairedOwnedFragments.ownedValues fragment.first fragment.second vertex
       =
       (⟨leftValues (row, vertex), rightValues (row, vertex)⟩ : Topology.Polygon.Stokes.PrimitivePoint) := by
   intro fragment vertex
   exact congrArg₂ Topology.Polygon.Stokes.PrimitivePoint.mk
-    (Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedVerticalSide.Trace.pieceReadings_spec trace
+    (ObservationMesh.MatchedVerticalSide.Trace.pieceReadings_spec trace
       (Fin.cast left.boundaryRows_eq.symm row) first leftValues leftEq vertex)
-    (Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedVerticalSide.Trace.pieceReadings_spec trace
+    (ObservationMesh.MatchedVerticalSide.Trace.pieceReadings_spec trace
       (Fin.cast left.boundaryRows_eq.symm row) second rightValues rightEq vertex)
 
 end Vertical

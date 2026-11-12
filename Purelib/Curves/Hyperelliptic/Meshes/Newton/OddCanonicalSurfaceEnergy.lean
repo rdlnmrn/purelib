@@ -82,43 +82,43 @@ open Purelib.Data.Rat.Fraction.Compatibility
 
 attribute [local congr] FiniteSum.Fin.sumFin_congr
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
-    {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered} {prepared :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired}
+    PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {ordered : PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
+    {paired : PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered} {prepared :
+    PuncturedGrid.Paired.PeriodPrograms.Prepared paired}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation base.bank.toBranchCellBank}
     {target radius : Fraction.Rational}
   {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius} {current :
     Meshes.LiftedPuncturedGrid grid.punctured}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
-  {newSheet : Fin 2} {excision : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid current}
-  {magnitudes : Data.Vector.DependentVector (fun basis : Fin genus =>
-    Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
+  {newSheet : Fin 2} {excision : AllHoles.Excision.AllHoleExcision grid current}
+  {magnitudes : Vector.DependentVector (fun basis : Fin genus =>
+    PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
     (Periods.PeriodMatrix.standardDifferential basis))}
   {error : Fraction.Rational} {floor stage : Nat}
-  {cache : Data.Vector.DependentVector (fun basis : Fin genus =>
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank (Periods.PeriodMatrix.standardDifferential
+  {cache : Vector.DependentVector (fun basis : Fin genus =>
+    PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank (Periods.PeriodMatrix.standardDifferential
     basis) stage domains)}
-  {triangles : Data.Vector.DependentVector (fun basis : Fin genus =>
-    Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get basis) current.mesh)}
+  {triangles : Vector.DependentVector (fun basis : Fin genus =>
+    PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get basis) current.mesh)}
   {surfaces : Topology.Surface.Sewing.SewnEnergyCombination.EnergySurfaces current.cutPolygon.patch (fun basis =>
     (triangles.get basis).values)}
   {pairs : Topology.Surface.Sewing.SewnEnergyCombination.EnergyPairs surfaces}
-  {request : Hyperelliptic.Meshes.Newton.HomogeneousPhysicalComparison.Request prepared newSheet excision magnitudes
+  {request : HomogeneousPhysicalComparison.Request prepared newSheet excision magnitudes
     error floor}
 
-variable {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-  Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {differential :
-    Hyperelliptic.Differentials.Basic.Differential genus}
+variable {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+  Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {differential :
+    Differentials.Basic.Differential genus}
 
 /-- The odd Newton exterior consumes the summed bounds of the actual canonical surface components. -/
 theorem Samples.odd_component_surface_energy_upper (samples :
-  Hyperelliptic.Meshes.Newton.HomogeneousPhysicalComparison.Request.Samples triangles surfaces pairs request)
+  HomogeneousPhysicalComparison.Request.Samples triangles surfaces pairs request)
     {allowance componentAllowance : Fraction.Rational} {joiningFloor : Nat}
     (joining :
       OddCanonicalExteriorRequest
@@ -126,26 +126,26 @@ theorem Samples.odd_component_surface_energy_upper (samples :
     (later : joining.index ≤ stage) (degree : curve.polynomial.natDegree = 2 * genus + 1)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
     (remaining :
-      PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceComponent
+      ExteriorProgram.SurfaceComponent
       regular domains differential → Gaussian.Basic.Canonical)
     (bounded : ∀ component ∈
-      (PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.build
+      (ExteriorProgram.AllSurfacePreparation.build
       (lifted := current) regular domains differential).components,
       (remaining component + Path.PairedIncrementArea.area (component.program.indexed.map
         (fun edge => Path.ConjugatePathReadback.conjugateDiagonal (FiniteSum.Fin.sumFin fun row => coefficients row *
-          Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh (triangles.get row).values
+          PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh (triangles.get row).values
             edge)))).im / 4 ≤
         componentAllowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) :
-    (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    (Gaussian.Norm.Sum.Basic.gaussianSum
 
-        ((PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.build
+        ((ExteriorProgram.AllSurfacePreparation.build
         regular domains differential).components.map remaining) +
         2 * samples.exterior coefficients).im / 4 ≤
 
-        (((PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.build
+        (((ExteriorProgram.AllSurfacePreparation.build
         (lifted := current) regular domains differential).components.length : Fraction.Rational) *
         componentAllowance + allowance) * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := by
-  exact Hyperelliptic.Meshes.Newton.OddCanonicalExteriorEnergy.Samples.remaining_odd_exterior_energy_upper
+  exact OddCanonicalExteriorEnergy.Samples.remaining_odd_exterior_energy_upper
     samples joining later degree coefficients _
 
       (ExteriorProgram.AllSurfacePreparation.built_canonical_energy_upper

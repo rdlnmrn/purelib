@@ -34,14 +34,16 @@ import Purelib.Integration.Polynomial.Gaussian.Path.Basic
 import Purelib.Integration.Polynomial.Gaussian.Segment.Basic
 import Purelib.Integration.Program.Gaussian.Cached.Basic
 
+open Purelib.Integration.Exponential.Geometry
+
 @[expose] public section
 
 /-!
-# Automatically deepened exponential integration regressions
+Exponential integration under fixed and varying partition policies.
 
-The coefficient tables are generated and integrated by the shared partition
-kernel.  These examples exercise the degree selector and the actual CCL
-output/replay path, not a constant cell containing the expected answer.
+The retained programs demonstrate automatic depth selection, quantitative
+comparison of independently advanced readings and agreement with the
+existing exponential-minus-one construction.
 -/
 
 namespace Purelib.Examples.Integration.Exponential.Program.WorkedExamples
@@ -63,12 +65,12 @@ def offsetStride :
   PositiveStride := ⟨2, 1⟩
 /-- The fixed exponential partition policy cut at one third. -/
 def fixedPolicy :
-  Exponential.Geometry.Policy := Exponential.Geometry.Policy.fixedCuts
+  Policy := Policy.fixedCuts
   [1 / 3]
 /-- The alternating exponential partition policy combining a growing uniform partition with a fixed quarter cut. -/
 def varyingPolicy :
-  Exponential.Geometry.Policy := .alternating (.uniform 1 1)
-  (Exponential.Geometry.Policy.fixedCuts [1 / 4])
+  Policy := .alternating (.uniform 1 1)
+  (Policy.fixedCuts [1 / 4])
 
 /-- The automatically deepened exponential integration program with fixed third cut and unit stride. -/
 def fixedProgram := Exponential.Program.program
@@ -122,8 +124,8 @@ theorem actual_model_allowances (stage : Nat) :
 /-- Six tiny intervals and one interval 1,018 times as wide force the
 selector to absorb an amplification greater than four. -/
 def highlyUnevenPolicy :
-  Exponential.Geometry.Policy :=
-  Exponential.Geometry.Policy.fixedCuts [1 / 1024, 2 / 1024, 3 / 1024, 4 / 1024, 5 / 1024, 6 / 1024]
+  Policy :=
+  Policy.fixedCuts [1 / 1024, 2 / 1024, 3 / 1024, 4 / 1024, 5 / 1024, 6 / 1024]
 
 /-- The automatically deepened program retaining the seven-cell highly unequal partition policy. -/
 def highlyUnevenProgram :=
@@ -133,7 +135,7 @@ def highlyUnevenProgram :=
 /-- The highly unequal partition has exact amplification 3627155/524288. -/
 theorem highly_uneven_amplification :
     Partition.QuadraticWeight.amplification
-      (Exponential.Geometry.Policy.partitions highlyUnevenPolicy 0) =
+      (Policy.partitions highlyUnevenPolicy 0) =
         Fraction.Cast.fromInt 3627155 /
           Fraction.Cast.fromInt 524288 := by
   decide +kernel
@@ -150,7 +152,7 @@ theorem highly_uneven_one_increment_insufficient
   :
     Rational.Geometric.Basic.quarterRadius 10 0 <
       (Exponential.Cached.compile 1
-        (Exponential.Geometry.Policy.partitions highlyUnevenPolicy 0)
+        (Policy.partitions highlyUnevenPolicy 0)
           0).allowance := by
   rw [Exponential.Cached.compile_allowance,
     highly_uneven_amplification]
@@ -210,7 +212,7 @@ theorem independently_later_integrals {leftLater
   rightLater : Nat}
     (leftOrder : compareHundredth.leftIndex ≤ leftLater)
     (rightOrder : compareHundredth.rightIndex ≤ rightLater) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
       (fixedProgram.approximation.sample leftLater -
         varyingProgram.approximation.sample rightLater) < 1 / 100 :=
   compareHundredth.close leftOrder rightOrder
@@ -233,15 +235,10 @@ def existing_exponential_minus_one_agreement :
   Exponential.Equivalence.Existing.output_equivalent_existing fixedPolicy
     unitStride 0
 
-/-- The first two reference subtraction samples use source indices three and four. -/
-theorem existing_subtraction_sampler_indices :
-    [Exponential.Equivalence.Reference.referenceSourceIndex 0,
-      Exponential.Equivalence.Reference.referenceSourceIndex 1] = [3, 4] := by decide +kernel
-
 /-- Every stage of every displayed uniform policy has quadratic-weight amplification one. -/
 theorem arbitrary_uniform_policy_factor
   (initialExtra growth stage : Nat) :
-    Partition.QuadraticWeight.amplification (Exponential.Geometry.Policy.partitions (.uniform initialExtra growth)
+    Partition.QuadraticWeight.amplification (Policy.partitions (.uniform initialExtra growth)
       stage) = 1 :=
   Exponential.Uniform.uniform_policy_amplification initialExtra growth stage
 

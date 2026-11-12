@@ -91,7 +91,6 @@ public import Purelib.Riemann.Integration.PreparedLiteralCenters
 import Purelib.Riemann.Integration.PreparedOwnerClosedSchedules
 public import Purelib.Riemann.Integration.PreparedSubdivisionModels
 public import Purelib.Riemann.Integration.PreparedSubedgePrimitiveContacts
-public import Purelib.Riemann.Integration.QuarticPreparedBankCertificateVerifier
 import Purelib.Riemann.Meshes.GridLiftedDualSteps
 import Purelib.Riemann.Meshes.GridLiftedVertexConnections
 import Purelib.Riemann.Normalization.RegularFaceInverseModels

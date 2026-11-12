@@ -66,6 +66,8 @@ import Purelib.Riemann.Readings.UniformPreparedRequests
 import Purelib.Riemann.RootContinuation.PreparedGridRootClosure
 import Purelib.Topology.Polygon.Stokes
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -85,22 +87,22 @@ open Purelib.Riemann.Normalization
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} (prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} (prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program)
 
 /-- Recover the original program's parent covers from its retained surface occurrences. -/
 @[expose] def
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation.sourceCovers
-  : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers program.cache.parents :=
+  : UniformReciprocalCover.ParentCovers program.cache.parents :=
   prepared.parents_eq ▸
     (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence.capSpine
     prepared.occurrences).covers
@@ -109,41 +111,41 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
 @[expose] def
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation.otherSourceCovers
   (_prepared :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
-  regular domains program) (other : Hyperelliptic.Differentials.Basic.Differential genus) :
-  Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers
+  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+  regular domains program) (other : Differentials.Basic.Differential genus) :
+  UniformReciprocalCover.ParentCovers
     (program.cache.parents.map (Integration.PreparedEdgeRecasting.recastCenteredEdge other)) :=
   let otherCache := Integration.PreparedParentCacheRecasting.recast program.cache other
-  Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers.build otherCache.parents otherCache.covered
+  UniformReciprocalCover.ParentCovers.build otherCache.parents otherCache.covered
     (Paths.PreparedExteriorPathGeometry.ParentCache.onBoundary otherCache
       (by
-        rw [program.walk_eq]; exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.exteriorWalk_sides base))
+        rw [program.walk_eq]; exact PeriodPrograms.exteriorWalk_sides base))
 
-variable {other : Hyperelliptic.Differentials.Basic.Differential genus} {requested :
-  Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
+variable {other : Differentials.Basic.Differential genus} {requested :
+  InverseRootPolynomial.Coordinate} {minimum : Nat}
 
 set_option genInjectivity false in
 /-- The two original source primitives and controlled references at one paired parent index.
 
 Both polynomial identities, the finite reference depth and its paid dyadic error are retained together. -/
 structure SourceComparison.SourceReferenceEntry
-    (original : Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request regular other program.cache.parents
+    (original : Disk.PairedParentRequest.Request regular other program.cache.parents
       (requested / 128) minimum)
     (i : Fin original.plans.length) where
   /-- The shared original source-model stage. -/ index : Nat
   /-- The retained first source primitive at that stage. -/ source :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive
-    (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent original i).data index
+    UniformReciprocalPrimitives.SourcePrimitive
+    (Disk.PairedParentCharts.ChartParent original i).data index
   /-- The retained second source primitive at the same stage. -/ otherSource :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive
-    (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent original i).otherData index
+    UniformReciprocalPrimitives.SourcePrimitive
+    (Disk.PairedParentCharts.ChartParent original i).otherData index
   /-- The first controlled request on the original parent. -/ first :
-    Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request.SourceRequest
-    (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent original i).parent original.allowance minimum
+    Disk.PairedParentRequest.Request.SourceRequest
+    (Disk.PairedParentCharts.ChartParent original i).parent original.allowance minimum
   /-- The second controlled request on the same parent with its differential recast. -/ second :
-    Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request.SourceRequest
+    Disk.PairedParentRequest.Request.SourceRequest
     (Integration.PreparedEdgeRecasting.recastCenteredEdge other
-      (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent original i).parent) original.allowance
+      (Disk.PairedParentCharts.ChartParent original i).parent) original.allowance
         minimum
   /-- The first controlled request retains exactly the first source polynomial. -/ first_eq :
     first.localRequest.request.model.primitive.value = source.primitive.value
@@ -151,28 +153,28 @@ structure SourceComparison.SourceReferenceEntry
     second.localRequest.request.model.primitive.value = otherSource.primitive.value
   /-- The retained dyadic source-reference depth. -/ depth : Nat
   /-- The retained upper bound for the dyadic reference error. -/ referenceError :
-    Normalization.InverseRootPolynomial.Coordinate
+    InverseRootPolynomial.Coordinate
   /-- The paired source-slope scale at the retained depth is bounded by the reference error. -/ reference_rate : 16 *
-    (max (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent original i).data.sourceSlope
-    (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent original i).otherData.sourceSlope)^2 *
-      ((1 / 2 : Normalization.InverseRootPolynomial.Coordinate)^depth)^2 ≤ referenceError
+    (max (Disk.PairedParentCharts.ChartParent original i).data.sourceSlope
+    (Disk.PairedParentCharts.ChartParent original i).otherData.sourceSlope)^2 *
+      ((1 / 2 : InverseRootPolynomial.Coordinate)^depth)^2 ≤ referenceError
 
 constructive_injectivity SourceComparison.SourceReferenceEntry
 
 /-- The dependent bank of source-reference data for every original paired parent index. -/
 @[expose] def SourceComparison.SourceReferenceEntries
-    (original : Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request regular other program.cache.parents
+    (original : Disk.PairedParentRequest.Request regular other program.cache.parents
       (requested / 128) minimum) :=
-  Data.Vector.DependentVector (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceComparison.SourceReferenceEntry
+  Vector.DependentVector (SourceComparison.SourceReferenceEntry
     original)
 
 /-- Read the retained dyadic source-reference paths in their original paired parent order. -/
 @[expose] def SourceComparison.sourceReferencePaths
-    {original : Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request regular other program.cache.parents
+    {original : Disk.PairedParentRequest.Request regular other program.cache.parents
       (requested / 128) minimum}
-    (entries : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceComparison.SourceReferenceEntries original) :=
+    (entries : SourceComparison.SourceReferenceEntries original) :=
   List.ofFn (fun i : Fin original.plans.length => Path.Dyadic.DyadicPairedPrimitivePaths.increments
-    (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues (entries.get i).source
+    (Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues (entries.get i).source
       (entries.get i).otherSource)
     (entries.get i).depth 0 1)
 
@@ -181,27 +183,27 @@ set_option genInjectivity false in
 reference depths, independently of the chart certificate used to bound it. -/
 structure
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation.ClosedBoundaryComparison
-  (other : Hyperelliptic.Differentials.Basic.Differential genus) (requested :
-  Normalization.InverseRootPolynomial.Coordinate) (minimum : Nat) where
+  (other : Differentials.Basic.Differential genus) (requested :
+  InverseRootPolynomial.Coordinate) (minimum : Nat) where
   /-- The original paired request on the complete program parent cache. -/ original :
-    Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request regular other program.cache.parents (requested /
+    Disk.PairedParentRequest.Request regular other program.cache.parents (requested /
     128) minimum
   /-- The original first covers are exactly the surface preparation's retained source covers. -/ original_left :
     original.left = prepared.sourceCovers
   /-- The dependent source-reference bank on these exact original parent plans. -/ entries :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceComparison.SourceReferenceEntries original
+    SourceComparison.SourceReferenceEntries original
   /-- The common allowance for all retained dyadic reference errors. -/ referenceAllowance :
-    Normalization.InverseRootPolynomial.Coordinate
+    InverseRootPolynomial.Coordinate
   /-- The common reference allowance is strictly positive. -/ reference_positive : 0 < referenceAllowance
   /-- Every original parent's retained reference error meets the common allowance. -/ reference_le : ∀ i, (entries.get
     i).referenceError ≤ referenceAllowance
   /-- The complete parent-count scaling of the reference allowance is paid by the allocated target fraction. -/
-    reference_paid : (original.plans.length : Normalization.InverseRootPolynomial.Coordinate) * ((original.plans.length
-    : Normalization.InverseRootPolynomial.Coordinate) * referenceAllowance) < requested / 128
+    reference_paid : (original.plans.length : InverseRootPolynomial.Coordinate) * ((original.plans.length
+    : InverseRootPolynomial.Coordinate) * referenceAllowance) < requested / 128
   /-- The cached total and area of the complete retained source-reference path. -/ path :
-    Path.PairedIncrementArea.Summary (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceComparison.sourceReferencePaths
+    Path.PairedIncrementArea.Summary (SourceComparison.sourceReferencePaths
     entries).flatten
-  /-- The cached source-path area meets the requested tolerance. -/ source_bounded : Data.Gaussian.Norm.Basic.normSq
+  /-- The cached source-path area meets the requested tolerance. -/ source_bounded : Gaussian.Norm.Basic.normSq
     path.areaValue < requested
   /-- Both cached source-path totals meet the requested component bound. -/ source_total_bounded :
     Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded path.totalValue requested
@@ -213,13 +215,13 @@ constructive_injectivity
 @[expose] def
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation.ClosedBoundaryComparison.sourcePaths
   (comparison : prepared.ClosedBoundaryComparison other requested minimum) :=
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceComparison.sourceReferencePaths comparison.entries
+  SourceComparison.sourceReferencePaths comparison.entries
 
 /-- The actual flattened retained source-reference path meets the requested area bound. -/
 theorem
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation.ClosedBoundaryComparison.path_bounded
   (comparison : prepared.ClosedBoundaryComparison other requested minimum) :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area comparison.sourcePaths.flatten) < requested :=
+    Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area comparison.sourcePaths.flatten) < requested :=
   comparison.path.area_eq ▸ comparison.source_bounded
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior

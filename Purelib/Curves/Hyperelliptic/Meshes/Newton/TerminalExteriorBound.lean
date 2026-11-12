@@ -77,13 +77,13 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.Newton.TerminalExteriorBound
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
-    {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered}
+    PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {ordered : PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
+    {paired : PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation base.bank.toBranchCellBank}
   {target radius : Fraction.Rational} {i j : Fin genus} {floor : Nat}
 
@@ -95,9 +95,9 @@ theorem terminal_exterior_bound (newSheet : Fin 2)
     (boundary : RootContinuation.NewtonRequestedBoundary.BoundaryPreparation preparation i j target radius floor)
     (canonical : boundary.exterior.prepared.components.map (fun component => component.program.indexed) =
       boundary.lifted.exteriorBoundaries)
-    (first : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank boundary.domains
+    (first : PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank boundary.domains
       (Periods.PeriodMatrix.standardDifferential i))
-    (second : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank boundary.domains
+    (second : PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank boundary.domains
       (Periods.PeriodMatrix.standardDifferential j))
     {requested : Fraction.Rational} {referenceFloor : Nat} (result :
       RootContinuation.NewtonRequestedExteriorDepth.ExteriorSourceRequest boundary requested referenceFloor)
@@ -107,49 +107,49 @@ theorem terminal_exterior_bound (newSheet : Fin 2)
       (RootContinuation.NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth boundary
         result.depth).exterior.prepared (RootContinuation.NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth
         boundary result.depth).paid.cut.fixed i j endpointTarget)
-    {stage : Nat} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+    {stage : Nat} {cache : PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
       boundary.domains stage}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings
+    (readings : PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings
       (RootContinuation.NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth boundary result.depth).paid.cut cache)
     (later : result.index ≤ stage) (endpointLater : endpoints.endpoints.index ≤ stage)
     (firstLater : first.index ≤ stage) (secondLater : second.index ≤ stage) :
     let refined := RootContinuation.NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth boundary result.depth
-    Data.Gaussian.Norm.Basic.normSq
-      (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-      Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
+    Gaussian.Norm.Basic.normSq
+      (PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
+      PuncturedGrid.Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
       refined.fine.family.single.grid.shrunk.included refined.lifted.edges refined.lifted.vertices newSheet
-      (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation refined.lifted.mesh readings.left.values)
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation refined.lifted.mesh readings.right.values)
+      (PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix
+        (PuncturedGrid.CanonicalEdgeValues.edgeValuation refined.lifted.mesh readings.left.values)
+        (PuncturedGrid.CanonicalEdgeValues.edgeValuation refined.lifted.mesh readings.right.values)
           coefficient))) ≤
-      4 * max (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound
+      4 * max (PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound
         (paired := paired) boundary.fine.family.single.grid.shrunk.included first)
-        (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
+        (PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
           paired) boundary.fine.family.single.grid.shrunk.included second) *
           (2 * (requested + endpointTarget)) := by
   intro refined
   cases curve.degreeShape with
   | odd degree =>
-      have zero := Hyperelliptic.Meshes.PuncturedGrid.PhysicalExteriorProduct.product_zero_of_odd (paired := paired)
+      have zero := PuncturedGrid.PhysicalExteriorProduct.product_zero_of_odd (paired := paired)
         refined.fine.family.single.grid.shrunk.included degree newSheet
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation refined.lifted.mesh readings.left.values)
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation refined.lifted.mesh readings.right.values)
+        (PuncturedGrid.CanonicalEdgeValues.edgeValuation refined.lifted.mesh readings.left.values)
+        (PuncturedGrid.CanonicalEdgeValues.edgeValuation refined.lifted.mesh readings.right.values)
       have magnitude : 0 ≤ max
-          (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired
+          (PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired
             := paired) boundary.fine.family.single.grid.shrunk.included first)
-          (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired
+          (PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired
             := paired) boundary.fine.family.single.grid.shrunk.included second) :=
             (PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound_nonnegative
             (paired := paired)
         boundary.fine.family.single.grid.shrunk.included first).trans (Fraction.Order.Basic.le_max_left _ _)
       have positive : 0 < requested := (Gaussian.Norm.Basic.normSq_nonneg _).trans_lt result.bounded
-      exact ((congrArg Data.Gaussian.Norm.Basic.normSq zero).trans Gaussian.Norm.Basic.normSq_zero).trans_le
+      exact ((congrArg Gaussian.Norm.Basic.normSq zero).trans Gaussian.Norm.Basic.normSq_zero).trans_le
         (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) magnitude)
           (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg positive.le endpoints.positive.le)))
   | even degree =>
       have totals := Periods.NewtonOriginalExteriorPeriods.original_exterior_periods_bound boundary canonical degree
         newSheet result endpoints readings later endpointLater
-      exact Hyperelliptic.Meshes.PuncturedGrid.PhysicalExteriorProduct.product_bound (paired := paired)
+      exact PuncturedGrid.PhysicalExteriorProduct.product_bound (paired := paired)
         refined.fine.family.single.grid.shrunk.included
         first second newSheet readings.left readings.right firstLater secondLater totals.1 totals.2
 

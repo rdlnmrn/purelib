@@ -120,33 +120,33 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover (Basi
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartRequest (BasisIntervalChartRequest)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartRequest.BasisIntervalChartRequest (Model)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {model :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell}
-  {parameter target sourceTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor sourceFloor :
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : ParameterEdge} {cell :
+    Cell data edge}
+  {regular : RegularBounds.Data cap} {model :
+    RootModel cell}
+  {parameter target sourceTarget : Coordinate} {floor sourceFloor :
     Nat}
-  {covers : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
+  {covers : BasisSourceCovers parent}
 
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
 
-variable {cover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data}
+variable {cover : Cover data}
 
 namespace BasisIntervalChartRequest
 
-variable {interval : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover
-  covers} {depth index minimum : Nat} {box : Purelib.Geometry.Rational.Box}
-  {request : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartRequest.BasisIntervalChartRequest
+variable {interval : BasisCommonInterval cover
+  covers} {depth index minimum : Nat} {box : Geometry.Rational.Box}
+  {request : BasisIntervalChartRequest
     interval regular depth target sourceTarget floor sourceFloor}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {polynomials : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+  {capSample : Primitives.Sample cap differential index box}
+  {polynomials : RegularBasisPolynomials cap
     index box}
 
 set_option genInjectivity false in
@@ -154,22 +154,22 @@ set_option genInjectivity false in
 
 One shared cap and basis polynomial bank supply all endpoint and midpoint plans before their common root-reading stage
 is chosen. -/
-structure Plan (request : IntervalChartRequest.BasisIntervalChartRequest interval regular depth target sourceTarget
+structure Plan (request : BasisIntervalChartRequest interval regular depth target sourceTarget
   floor sourceFloor)
     (capSample : Primitives.Sample cap differential index box)
-    (polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box) (minimum : Nat) where
-  /-- The original first endpoint chart plan on the supplied retained cap sample. -/ first : VertexRequests.Chart
+    (polynomials : RegularBasisPolynomials cap index box) (minimum : Nat) where
+  /-- The original first endpoint chart plan on the supplied retained cap sample. -/ first : Chart
     request.first capSample minimum
-  /-- The original last endpoint chart plan on that same retained cap sample. -/ last : VertexRequests.Chart
+  /-- The original last endpoint chart plan on that same retained cap sample. -/ last : Chart
     request.last capSample minimum
-  /-- The original midpoint chart plans on the retained request tree. -/ tree : VertexTree.ChartTree capSample minimum
+  /-- The original midpoint chart plans on the retained request tree. -/ tree : ChartTree capSample minimum
     request.tree
   /-- The original first endpoint basis-source transport plans on the supplied polynomial bank. -/ firstSources :
-    BasisSourceRequest.ChartRequest request.firstSources.request polynomials minimum
+    ChartRequest request.firstSources.request polynomials minimum
   /-- The original last endpoint basis-source transport plans on that same polynomial bank. -/ lastSources :
-    BasisSourceRequest.ChartRequest request.lastSources.request polynomials minimum
+    ChartRequest request.lastSources.request polynomials minimum
   /-- The original midpoint basis-source transport plans on the retained chart tree. -/ treeSources :
-    BasisTreeSources.Plans polynomials minimum request.tree request.treeSources
+    Plans polynomials minimum request.tree request.treeSources
   /-- The cached common reading stage paying every original chart and source transport plan. -/ stage : Nat
   /-- The common stage is exactly the maximum of the retained original endpoint, midpoint and source stages. -/ stage_eq
     : stage = max (max first.stage (max last.stage tree.stage))
@@ -181,11 +181,11 @@ namespace Plan
 
 /-- Prepare all original chart and source transports on the supplied polynomial banks and cache their shared paid
 reading stage. -/
-@[expose] def build (request : IntervalChartRequest.BasisIntervalChartRequest interval regular depth target sourceTarget
+@[expose] def build (request : BasisIntervalChartRequest interval regular depth target sourceTarget
   floor sourceFloor)
     (capSample : Primitives.Sample cap differential index box)
-    (polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box) (minimum : Nat) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartAcquisition.BasisIntervalChartRequest.Plan request
+    (polynomials : RegularBasisPolynomials cap index box) (minimum : Nat) :
+      Plan request
       capSample polynomials minimum :=
   let first := Chart.build request.first capSample minimum
   let last := Chart.build request.last capSample minimum
@@ -197,30 +197,30 @@ reading stage. -/
     (max firstSources.stage (max lastSources.stage (Plans.stage request.tree request.treeSources treeSources)))
   ⟨first, last, tree, firstSources, lastSources, treeSources, stage, rfl⟩
 
-variable {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular interval.anchor.cell}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample comparison capSample}
-  {bank : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank
+variable {comparison : ArcSamples.Data regular interval.anchor.cell}
+  {sample : ArcSamples.Sample comparison capSample}
+  {bank : BasisSourceLocations.SampleBank
     covers index} {stage : Nat}
 
 /-- The actual chart reading type at the retained original common interval's first endpoint. -/
-@[expose] def FirstReading (_request : IntervalChartRequest.BasisIntervalChartRequest interval regular depth target
+@[expose] def FirstReading (_request : BasisIntervalChartRequest interval regular depth target
   sourceTarget floor sourceFloor)
     (sample : ArcSamples.Sample comparison capSample) (stage : Nat) :=
-  VertexRequests.Reading regular (BasisIntervalChartRequest.Model interval) sample interval.edge.left.parameter target
+  Reading regular (Model interval) sample interval.edge.left.parameter target
     floor stage
 
 /-- The actual chart reading type at the retained original common interval's last endpoint. -/
-@[expose] def LastReading (_request : IntervalChartRequest.BasisIntervalChartRequest interval regular depth target
+@[expose] def LastReading (_request : BasisIntervalChartRequest interval regular depth target
   sourceTarget floor sourceFloor)
     (sample : ArcSamples.Sample comparison capSample) (stage : Nat) :=
-  VertexRequests.Reading regular (BasisIntervalChartRequest.Model interval) sample interval.edge.right.parameter target
+  Reading regular (Model interval) sample interval.edge.right.parameter target
     floor stage
 
 set_option genInjectivity false in
 /-- The actual original endpoint and midpoint root readings with every basis transport attached to those same readings.
 -/
 structure Evaluation (plan :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartAcquisition.BasisIntervalChartRequest.Plan request
+  Plan request
   capSample polynomials minimum)
     (sample : ArcSamples.Sample comparison capSample)
     (bank : BasisSourceLocations.SampleBank covers index) (stage : Nat) where
@@ -235,7 +235,7 @@ structure Evaluation (plan :
   /-- The last actual reading retains exactly the original last prepared chart request. -/ last_owner : last.prepared =
     request.last
   /-- The complete actual midpoint root readings on the original retained request tree. -/ readings :
-    VertexPaths.TreeReadings sample stage request.tree
+    TreeReadings sample stage request.tree
   /-- The original first endpoint basis transports consuming that exact retained root reading. -/ firstSources :
     EndpointSources.Evaluation request.firstSources plan.firstSources bank first
   /-- The original last endpoint basis transports consuming that exact retained root reading. -/ lastSources :
@@ -248,31 +248,31 @@ constructive_injectivity Evaluation
 /-- All basis comparisons consume the root readings already retained by the chart path. The caller can raise the shared
 stage without changing ownership. -/
 @[expose] def evaluate (plan :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartAcquisition.BasisIntervalChartRequest.Plan request
+  Plan request
   capSample polynomials minimum)
     (sample : ArcSamples.Sample comparison capSample)
     (bank : BasisSourceLocations.SampleBank covers index)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
     (modelLater : request.index ≤ index) (stage : Nat) (readingLater : plan.stage ≤ stage) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartAcquisition.BasisIntervalChartRequest.Plan.Evaluation
+    Evaluation
       plan sample bank stage := by
   have stages := plan.stage_eq ▸ readingLater
-  have geometry := (Purelib.Data.Nat.Order.le_max_left ..).trans stages
-  have sources := (Purelib.Data.Nat.Order.le_max_right ..).trans stages
-  let first := plan.first.evaluate sample (request.first_le.trans modelLater) stage ((Purelib.Data.Nat.Order.le_max_left
+  have geometry := (Data.Nat.Order.le_max_left ..).trans stages
+  have sources := (Data.Nat.Order.le_max_right ..).trans stages
+  let first := plan.first.evaluate sample (request.first_le.trans modelLater) stage ((Data.Nat.Order.le_max_left
     ..).trans geometry)
   let last := plan.last.evaluate sample (request.last_le.trans modelLater) stage
-    ((Purelib.Data.Nat.Order.le_max_left ..).trans ((Purelib.Data.Nat.Order.le_max_right ..).trans geometry))
+    ((Data.Nat.Order.le_max_left ..).trans ((Data.Nat.Order.le_max_right ..).trans geometry))
   let readings := ChartTree.read sample stage plan.tree (request.tree_le.trans modelLater)
-    ((Purelib.Data.Nat.Order.le_max_right ..).trans ((Purelib.Data.Nat.Order.le_max_right ..).trans geometry))
+    ((Data.Nat.Order.le_max_right ..).trans ((Data.Nat.Order.le_max_right ..).trans geometry))
   let firstSources := request.firstSources.evaluate plan.firstSources bank first rfl branch
-    (request.firstSources_le.trans modelLater) ((Purelib.Data.Nat.Order.le_max_left ..).trans sources)
+    (request.firstSources_le.trans modelLater) ((Data.Nat.Order.le_max_left ..).trans sources)
   let lastSources := request.lastSources.evaluate plan.lastSources bank last rfl branch
-    (request.lastSources_le.trans modelLater) ((Purelib.Data.Nat.Order.le_max_left ..).trans
-      ((Purelib.Data.Nat.Order.le_max_right ..).trans sources))
+    (request.lastSources_le.trans modelLater) ((Data.Nat.Order.le_max_left ..).trans
+      ((Data.Nat.Order.le_max_right ..).trans sources))
   let treeSources := Plans.evaluate bank branch request.tree request.treeSources plan.treeSources readings
-    (request.treeSources_le.trans modelLater) ((Purelib.Data.Nat.Order.le_max_right ..).trans
-      ((Purelib.Data.Nat.Order.le_max_right ..).trans sources))
+    (request.treeSources_le.trans modelLater) ((Data.Nat.Order.le_max_right ..).trans
+      ((Data.Nat.Order.le_max_right ..).trans sources))
   exact ⟨first, last, rfl, rfl, readings, firstSources, lastSources, treeSources⟩
 
 end Plan

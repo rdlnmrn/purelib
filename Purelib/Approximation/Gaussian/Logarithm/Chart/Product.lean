@@ -57,7 +57,7 @@ product, and the selected product branch must have zero discrepancy from the sel
     (leftBranch : Anchored.AnchoredChart leftInput)
     (rightBranch : Anchored.AnchoredChart rightInput)
     (productBranch : Anchored.AnchoredChart productInput) : Type :=
-  Gaussian.Equivalence.NamedEquivalent productInput.name
+  NamedEquivalent productInput.name
       (Named.mul
         leftInput.name rightInput.name) ×
     Difference.LocalAlignment
@@ -72,9 +72,9 @@ namespace ProductAlignment
     {leftBranch : Anchored.AnchoredChart leftInput}
     {rightBranch : Anchored.AnchoredChart rightInput}
     {productBranch : Anchored.AnchoredChart productInput}
-    (alignment : Approximation.Gaussian.Logarithm.Chart.Product.ProductAlignment leftInput rightInput productInput
+    (alignment : ProductAlignment leftInput rightInput productInput
       leftBranch rightBranch productBranch) :
-    Gaussian.Equivalence.NamedEquivalent productInput.name
+    NamedEquivalent productInput.name
       (Named.mul
         leftInput.name rightInput.name) :=
   alignment.1
@@ -85,7 +85,7 @@ namespace ProductAlignment
     {leftBranch : Anchored.AnchoredChart leftInput}
     {rightBranch : Anchored.AnchoredChart rightInput}
     {productBranch : Anchored.AnchoredChart productInput}
-    (alignment : Approximation.Gaussian.Logarithm.Chart.Product.ProductAlignment leftInput rightInput productInput
+    (alignment : ProductAlignment leftInput rightInput productInput
       leftBranch rightBranch productBranch) :
     Difference.LocalAlignment
       (CoherentNamed.add
@@ -101,9 +101,9 @@ exponentiates to one. -/
     (leftBranch : Anchored.AnchoredChart leftInput)
     (rightBranch : Anchored.AnchoredChart rightInput)
     (productBranch : Anchored.AnchoredChart productInput)
-    (alignment : Approximation.Gaussian.Logarithm.Chart.Product.ProductAlignment leftInput rightInput productInput
+    (alignment : ProductAlignment leftInput rightInput productInput
       leftBranch rightBranch productBranch) :
-    Gaussian.Equivalence.NamedEquivalent
+    NamedEquivalent
       (Exponential.Progressive.Range.Name.named
         (Transition.productBranchDiscrepancy
           leftInput rightInput productInput leftBranch rightBranch
@@ -120,9 +120,9 @@ CCLs. -/
     (leftBranch : Anchored.AnchoredChart leftInput)
     (rightBranch : Anchored.AnchoredChart rightInput)
     (productBranch : Anchored.AnchoredChart productInput)
-    (alignment : Approximation.Gaussian.Logarithm.Chart.Product.ProductAlignment leftInput rightInput productInput
+    (alignment : ProductAlignment leftInput rightInput productInput
       leftBranch rightBranch productBranch) :
-    Gaussian.Equivalence.NamedEquivalent productBranch.output.name
+    NamedEquivalent productBranch.output.name
       (CoherentNamed.add
         leftBranch.output rightBranch.output).name :=
   Difference.equivalent_of_difference_zero _ _ alignment.zeroDiscrepancy
@@ -133,13 +133,13 @@ CCLs. -/
     (leftBranch : Anchored.AnchoredChart leftInput)
     (rightBranch : Anchored.AnchoredChart rightInput)
     (productBranch : Anchored.AnchoredChart productInput)
-    (alignment : Approximation.Gaussian.Logarithm.Chart.Product.ProductAlignment leftInput rightInput productInput
+    (alignment : ProductAlignment leftInput rightInput productInput
       leftBranch rightBranch productBranch) :
-    Law.Basic.BitLaw productBranch.output
+    BitLaw productBranch.output
       (CoherentNamed.add
         leftBranch.output rightBranch.output) :=
   BitLaw.ofEquivalent
-    (Approximation.Gaussian.Logarithm.Chart.Product.logarithm_product_of_alignment leftInput rightInput productInput
+    (logarithm_product_of_alignment leftInput rightInput productInput
       leftBranch rightBranch productBranch alignment)
 
 end

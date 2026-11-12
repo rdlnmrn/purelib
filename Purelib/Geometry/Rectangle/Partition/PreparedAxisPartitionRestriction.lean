@@ -30,12 +30,12 @@ open _root_.Purelib.Geometry.Rectangle renaming AxisPartition -> Partition
 open _root_.Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions (Coordinate Interval)
 open Purelib.Polynomial.Geometry.Grid.AxisWalks (IncreasingWalk)
 
-variable {lower upper first last : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate} {cuts : List
-  Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate}
+variable {lower upper first last : Coordinate} {cuts : List
+  Coordinate}
 
 /-- An increasing walk with no retained coordinate inside its endpoints is one actual retained interval. -/
 private theorem retained_edge (outer : AxisPartition lower upper cuts)
-    {start finish : PreparedAxisPartitions.Coordinate} (walk : AxisWalks.IncreasingWalk outer.intervals start finish)
+    {start finish : Coordinate} (walk : IncreasingWalk outer.intervals start finish)
     (proper : start < finish)
     (outside : ∀ point ∈ outer.coordinates, point ≤ start ∨ finish ≤ point) :
     ∃ interval ∈ outer.intervals, interval.lower = start ∧ interval.upper = finish := by
@@ -54,9 +54,9 @@ theorem interval_mem_of_restriction (outer : AxisPartition lower upper cuts) (in
   AxisPartition first last cuts)
     (firstInside : lower ≤ first) (lastInside : last ≤ upper)
     (firstRetained : first ∈ outer.coordinates) (lastRetained : last ∈ outer.coordinates)
-    {interval : PreparedAxisPartitions.Interval} (member : interval ∈ inner.intervals) : interval ∈ outer.intervals :=
+    {interval : Interval} (member : interval ∈ inner.intervals) : interval ∈ outer.intervals :=
       by
-  have included (point : PreparedAxisPartitions.Coordinate) (present : point ∈ inner.coordinates) : point ∈
+  have included (point : Coordinate) (present : point ∈ inner.coordinates) : point ∈
     outer.coordinates := by
     rcases (inner.coordinates_spec point).mp present with rfl | rfl | present
     · exact firstRetained
@@ -70,9 +70,9 @@ theorem interval_mem_of_restriction (outer : AxisPartition lower upper cuts) (in
     Map.mem_map_of_mem (included _ endpoints.2)
   let walk := AxisWalks.increasing interval.lower interval.upper outer.coordinates outer.ordered
     firstMember lastMember interval.ordered.le
-  have outerWalk : AxisWalks.IncreasingWalk outer.intervals interval.lower interval.upper := outer.intervals_eq.symm ▸
+  have outerWalk : IncreasingWalk outer.intervals interval.lower interval.upper := outer.intervals_eq.symm ▸
     walk
-  have outside (point : PreparedAxisPartitions.Coordinate) (present : point ∈ outer.coordinates) :
+  have outside (point : Coordinate) (present : point ∈ outer.coordinates) :
       point ≤ interval.lower ∨ interval.upper ≤ point := by
     rcases (outer.coordinates_spec point).mp present with rfl | rfl | present
     · exact Or.inl (firstInside.trans (inner.interval_bounds member).1)
@@ -89,19 +89,19 @@ theorem interval_mem_of_restriction (outer : AxisPartition lower upper cuts) (in
   exact equal ▸ retainedMember
 
 /-- Transport an increasing walk into a larger interval bank while preserving its edges. -/
-private def includeWalk {small large : List Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval}
+private def includeWalk {small large : List Interval}
   (included : ∀ interval ∈ small, interval ∈ large) :
-    {start finish : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate} →
-      Purelib.Polynomial.Geometry.Grid.AxisWalks.IncreasingWalk small start finish →
-      Purelib.Polynomial.Geometry.Grid.AxisWalks.IncreasingWalk large start finish
+    {start finish : Coordinate} →
+      IncreasingWalk small start finish →
+      IncreasingWalk large start finish
   | _, _, .nil point => .nil point
   | _, _, .cons interval member tail => .cons interval (included interval member)
     (includeWalk included tail)
 
 /-- Transporting interval membership leaves the walk's edge list unchanged. -/
-private theorem includeWalk_edges {small large : List PreparedAxisPartitions.Interval} (included : ∀ interval ∈ small,
+private theorem includeWalk_edges {small large : List Interval} (included : ∀ interval ∈ small,
   interval ∈ large) :
-    {start finish : PreparedAxisPartitions.Coordinate} → (walk : AxisWalks.IncreasingWalk small start finish) →
+    {start finish : Coordinate} → (walk : IncreasingWalk small start finish) →
       (includeWalk included walk).edges = walk.edges
   | _, _, .nil _ => rfl
   | _, _, .cons interval _ tail => congrArg (List.cons interval)
@@ -124,20 +124,20 @@ theorem intervals_restriction (outer : AxisPartition lower upper cuts) (inner :
     (IncreasingWalk.edges_eq_filter outer.separated walk))
 
 /-- Concatenate increasing walks whose joining endpoints agree. -/
-private def appendWalk {intervals : List Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval} :
-    {start middle finish : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate} →
-      Purelib.Polynomial.Geometry.Grid.AxisWalks.IncreasingWalk intervals start middle →
-      Purelib.Polynomial.Geometry.Grid.AxisWalks.IncreasingWalk intervals middle finish →
-        Purelib.Polynomial.Geometry.Grid.AxisWalks.IncreasingWalk intervals start finish
+private def appendWalk {intervals : List Interval} :
+    {start middle finish : Coordinate} →
+      IncreasingWalk intervals start middle →
+      IncreasingWalk intervals middle finish →
+        IncreasingWalk intervals start finish
   | _, _, _, .nil _, last => last
   | _, _, _, .cons interval member tail, last => .cons interval member
     (appendWalk tail last)
 
 /-- The concatenated walk traverses the concatenated edge lists. -/
-private theorem appendWalk_edges {intervals : List PreparedAxisPartitions.Interval} :
-    {start middle finish : PreparedAxisPartitions.Coordinate} → (first : AxisWalks.IncreasingWalk intervals start
+private theorem appendWalk_edges {intervals : List Interval} :
+    {start middle finish : Coordinate} → (first : IncreasingWalk intervals start
       middle) →
-      (last : AxisWalks.IncreasingWalk intervals middle finish) →
+      (last : IncreasingWalk intervals middle finish) →
       (appendWalk first last).edges = first.edges ++
         last.edges
   | _, _, _, .nil _, _ => rfl
@@ -146,7 +146,7 @@ private theorem appendWalk_edges {intervals : List PreparedAxisPartitions.Interv
 
 /-- Splitting at a retained cut preserves the complete interval spine. This is the concatenation identity needed for
 subdivided perimeter traces. -/
-theorem intervals_split {middle : PreparedAxisPartitions.Coordinate} (outer : AxisPartition lower
+theorem intervals_split {middle : Coordinate} (outer : AxisPartition lower
   upper cuts)
     (left : AxisPartition lower middle cuts) (right : AxisPartition middle upper
       cuts)
@@ -174,9 +174,9 @@ theorem intervals_split {middle : PreparedAxisPartitions.Coordinate} (outer : Ax
 
 /-- Construct the increasing retained walk between two ordered cached coordinates. -/
 private def between (outer : AxisPartition lower upper cuts) (start finish :
-  PreparedAxisPartitions.Coordinate)
+  Coordinate)
     (firstMember : start ∈ outer.coordinates) (lastMember : finish ∈ outer.coordinates)
-    (forward : start ≤ finish) : AxisWalks.IncreasingWalk outer.intervals start finish :=
+    (forward : start ≤ finish) : IncreasingWalk outer.intervals start finish :=
   outer.intervals_eq.symm ▸ AxisWalks.increasing start finish outer.coordinates outer.ordered
     (Map.mem_map_of_mem firstMember) (Map.mem_map_of_mem lastMember) forward
 
@@ -184,11 +184,11 @@ private def between (outer : AxisPartition lower upper cuts) (start finish :
 
 Every coarse endpoint must belong to the original fine coordinate bank. -/
 private def refineWalk (outer : AxisPartition lower upper cuts)
-  {coarse : List Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval}
+  {coarse : List Interval}
     (retained : ∀ interval ∈ coarse, interval.lower ∈ outer.coordinates ∧ interval.upper ∈ outer.coordinates) :
-    {start finish : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Coordinate} →
-      Purelib.Polynomial.Geometry.Grid.AxisWalks.IncreasingWalk coarse start finish →
-      Purelib.Polynomial.Geometry.Grid.AxisWalks.IncreasingWalk outer.intervals start finish
+    {start finish : Coordinate} →
+      IncreasingWalk coarse start finish →
+      IncreasingWalk outer.intervals start finish
   | _, _, .nil point => .nil point
   | _, _, .cons interval member tail => appendWalk
       (between outer interval.lower interval.upper
@@ -197,9 +197,9 @@ private def refineWalk (outer : AxisPartition lower upper cuts)
 
 /-- The refined walk lists the fine intervals contained in each coarse edge, in traversal order. -/
 private theorem refineWalk_edges (outer : AxisPartition lower upper cuts) {coarse : List
-  PreparedAxisPartitions.Interval}
+  Interval}
     (retained : ∀ interval ∈ coarse, interval.lower ∈ outer.coordinates ∧ interval.upper ∈ outer.coordinates) :
-    {start finish : PreparedAxisPartitions.Coordinate} → (walk : AxisWalks.IncreasingWalk coarse start finish) →
+    {start finish : Coordinate} → (walk : IncreasingWalk coarse start finish) →
       (refineWalk outer retained walk).edges =
         walk.edges.flatMap (fun interval =>
         outer.intervals.filter (fun fine => decide (interval.lower ≤ fine.lower ∧ fine.upper ≤ interval.upper)))
@@ -216,7 +216,7 @@ private theorem refineWalk_edges (outer : AxisPartition lower upper cuts) {coars
 
 /-- Any finite coarse partition refines to the full ordered fine bank when all its endpoints are retained. No piece is
 omitted or counted twice. -/
-theorem intervals_flatMap {coarseCuts : List PreparedAxisPartitions.Coordinate} (outer :
+theorem intervals_flatMap {coarseCuts : List Coordinate} (outer :
   AxisPartition lower upper cuts)
     (coarse : AxisPartition lower upper coarseCuts)
     (retained : ∀ interval ∈ coarse.intervals,

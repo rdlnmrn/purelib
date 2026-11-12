@@ -39,7 +39,7 @@ open Purelib.Polynomial.Ascending in
 The constructed cell has an empty observation list; equality of both original endpoint pairs is required separately for
 the integral-sample addition theorem. -/
 def addIntegrand (left right :
-  Rational.Cell.Basic.CellModel) : Rational.Cell.Basic.CellModel :=
+  CellModel) : CellModel :=
   { start := left.start
     finish := left.finish
     polynomial := Rational.Basic.add
@@ -55,13 +55,13 @@ open Purelib.Integration.Polynomial in
 open Purelib.Polynomial.Ascending in
 /-- Adding cell integrands with equal original endpoints adds their exact integral samples. -/
 theorem addIntegrand_integralSample (left right :
-  Rational.Cell.Basic.CellModel)
+  CellModel)
     (sameStart : right.start = left.start)
     (sameFinish : right.finish = left.finish) :
     (left.addIntegrand right).integralSample =
       left.integralSample + right.integralSample := by
-  unfold addIntegrand Rational.Cell.Basic.CellModel.integralSample
-    Rational.Cell.Basic.CellModel.displacement
+  unfold addIntegrand integralSample
+    displacement
   rw [Rational.Integral.definiteIntegral_add,
     sameStart, sameFinish]
   apply Basic.ext <;>
@@ -74,7 +74,7 @@ open Purelib.Polynomial.Ascending in
 
 The original endpoints remain fixed and the constructed cell starts with an empty observation list. -/
 def scaleIntegrand (factor : Fraction.Rational)
-  (cell : Rational.Cell.Basic.CellModel) : Rational.Cell.Basic.CellModel :=
+  (cell : CellModel) : CellModel :=
   { start := cell.start
     finish := cell.finish
     polynomial := Rational.Basic.scale factor cell.polynomial
@@ -92,11 +92,11 @@ open Purelib.Polynomial.Ascending in
 /-- Scaling the integrand scales its exact Gaussian integral sample by the same rational factor. -/
 theorem scaleIntegrand_integralSample (factor :
   Fraction.Rational)
-    (cell : Rational.Cell.Basic.CellModel) :
+    (cell : CellModel) :
     (cell.scaleIntegrand factor).integralSample =
       Scale.scale factor cell.integralSample := by
-  unfold scaleIntegrand Rational.Cell.Basic.CellModel.integralSample
-    Rational.Cell.Basic.CellModel.displacement
+  unfold scaleIntegrand integralSample
+    displacement
   rw [Rational.Integral.definiteIntegral_scale]
   apply Basic.ext <;>
     simp only [Scale.scale_re,
@@ -107,11 +107,11 @@ open Purelib.Integration.Polynomial in
 /-- Scaling the integrand multiplies its exact weighted allowance by the factor squared. -/
 theorem scaleIntegrand_weightedAllowance (factor :
   Fraction.Rational)
-    (cell : Rational.Cell.Basic.CellModel) :
+    (cell : CellModel) :
     (cell.scaleIntegrand factor).weightedAllowance =
       factor ^ 2 * cell.weightedAllowance := by
-  unfold scaleIntegrand Rational.Cell.Basic.CellModel.weightedAllowance
-    Rational.Cell.Basic.CellModel.displacement
+  unfold scaleIntegrand weightedAllowance
+    displacement
   ring1
 
 end CellModel

@@ -37,6 +37,9 @@ explicit positive rational polynomials, retaining the original coefficient data.
 
 namespace Purelib.NumberTheory.Approximation.Dirichlet.Critical.Cylinder.Basic
 
+section
+open Purelib.Data.Rat.Fraction.Order
+
 /-- The scalar boundary polynomial used by the critical rational family. -/
 @[expose] def parameterPolynomial (value :
   Fraction.Rational) : Fraction.Rational :=
@@ -122,25 +125,25 @@ open Purelib.NumberTheory.Approximation
 /-- The normalized determinant gap of the critical rational family. -/
 @[expose] def criticalGap (value :
   Fraction.Rational) : Fraction.Rational :=
-  Data.Gaussian.Norm.Basic.normSq (1 - criticalDenominatorRatio value *
+  Gaussian.Norm.Basic.normSq (1 - criticalDenominatorRatio value *
     criticalErrorRatio value)
 
 /-- The critical error ratio has the displayed common coordinate quadrance. -/
 theorem normSq_criticalErrorRatio (value :
   Fraction.Rational) :
-    Data.Gaussian.Norm.Basic.normSq (criticalErrorRatio value) =
+    Gaussian.Norm.Basic.normSq (criticalErrorRatio value) =
       criticalCoordinateNorm value := by
   unfold criticalErrorRatio criticalCoordinateNorm
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
   rfl
 
 /-- The critical denominator ratio has the displayed common coordinate quadrance. -/
 theorem normSq_criticalDenominatorRatio
   (value : Fraction.Rational) :
-    Data.Gaussian.Norm.Basic.normSq (criticalDenominatorRatio value) =
+    Gaussian.Norm.Basic.normSq (criticalDenominatorRatio value) =
       criticalCoordinateNorm value := by
   unfold criticalDenominatorRatio
-    criticalCoordinateNorm Data.Gaussian.Norm.Basic.normSq
+    criticalCoordinateNorm Gaussian.Norm.Basic.normSq
   change (half * value) ^ 2 + (-half) ^ 2 =
     half ^ 2 + (half * value) ^ 2
   ring1
@@ -152,7 +155,7 @@ theorem criticalGap_eq (value :
       (1 - 2 * (1 / 2 : Fraction.Rational) ^ 2 * value) ^ 2 +
         ((1 / 2 : Fraction.Rational) ^ 2 - ((1 / 2 : Fraction.Rational) * value) ^ 2) ^ 2 := by
   unfold criticalGap criticalErrorRatio
-    criticalDenominatorRatio Data.Gaussian.Norm.Basic.normSq
+    criticalDenominatorRatio Gaussian.Norm.Basic.normSq
   simp only [Gaussian.Basic.sub_re,
     Gaussian.Basic.sub_im,
     Gaussian.Basic.mul_re,
@@ -197,14 +200,14 @@ theorem criticalCoordinateNorm_lt_one
   have valueNonnegative := criticalParameter_nonnegative certificate
   have scaledBound : half * value ≤ half * (1 / 3 :
     Fraction.Rational) :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       (criticalParameter_le_oneThird certificate)
       (show (0 : Fraction.Rational) ≤ half by
         unfold half; decide)
   have squareBound : (half * value) ^ 2 ≤
       (half * (1 / 3 : Fraction.Rational)) ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
+    Arithmetic.pow_le_pow_direct
+      (Arithmetic.mul_nonneg_direct
         (show (0 : Fraction.Rational) ≤ half by
           unfold half; decide)
         valueNonnegative)
@@ -228,8 +231,8 @@ private theorem
     0 ≤ criticalCoordinateNorm value := by
   unfold criticalCoordinateNorm
   exact add_nonneg
-    (Fraction.Order.Arithmetic.sq_nonneg_direct half)
-    (Fraction.Order.Arithmetic.sq_nonneg_direct (half * value))
+    (Arithmetic.sq_nonneg_direct half)
+    (Arithmetic.sq_nonneg_direct (half * value))
 
 /-- The common critical coordinate quadrance is positive for every rational parameter. -/
 private theorem criticalCoordinateNorm_pos
@@ -240,7 +243,7 @@ private theorem criticalCoordinateNorm_pos
       rw [half_sq]; decide
     _ ≤ half ^ 2 + (half * value) ^ 2 :=
       le_add_of_nonneg_right
-        (Fraction.Order.Arithmetic.sq_nonneg_direct (half * value))
+        (Arithmetic.sq_nonneg_direct (half * value))
     _ = criticalCoordinateNorm value := rfl
 
 /-- The elementary coefficient estimate below has genuine slack throughout
@@ -252,19 +255,19 @@ private theorem
     2 * (1 + criticalCoordinateNorm value) < 4 *
       criticalGap value := by
   have scaledParameter : 16 * value < 16 * (1 / 3 : Fraction.Rational) :=
-    Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+    Arithmetic.mul_lt_mul_of_pos_left_direct
       (show (0 : Fraction.Rational) < 16 by decide) certificate.2.1
   have sixteenValueLtSeven : 16 * value < (7 : Fraction.Rational) :=
     scaledParameter.trans (by decide)
   have linearMargin : 0 < 7 - 16 * value :=
-    Fraction.Order.Arithmetic.sub_pos_direct sixteenValueLtSeven
+    Arithmetic.sub_pos_direct sixteenValueLtSeven
   have quarticNonnegative : 0 ≤ value ^ 4 :=
-    Fraction.Order.Arithmetic.pow_nonneg_direct
+    Arithmetic.pow_nonneg_direct
       (criticalParameter_nonnegative certificate) 4
   have quarticMargin : 0 < 7 - 16 * value + value ^ 4 :=
     linearMargin.trans_le (le_add_of_nonneg_right quarticNonnegative)
-  apply Fraction.Order.Arithmetic.lt_of_sub_pos_direct
-  apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct (c := 4)
+  apply Arithmetic.lt_of_sub_pos_direct
+  apply Arithmetic.lt_of_mul_lt_mul_right_direct (c := 4)
   · calc
       (0 : Fraction.Rational) * 4 = 0 := by ring1
       _ < 7 - 16 * value + value ^ 4 := quarticMargin
@@ -302,11 +305,11 @@ theorem criticalGap_pos
         (0 : Fraction.Rational) < 1 + criticalCoordinateNorm value :=
       (show (0 : Fraction.Rational) < 1 by decide).trans_le
         (le_add_of_nonneg_right (criticalCoordinateNorm_nonnegative value))
-    exact Fraction.Order.Arithmetic.mul_pos_direct (by decide) onePositive
+    exact Arithmetic.mul_pos_direct (by decide) onePositive
   have positiveScaled : 0 < 4 * criticalGap value :=
     positiveLeft.trans
       (twice_one_add_coordinateNorm_lt_four_gap certificate)
-  apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct (c := 4)
+  apply Arithmetic.lt_of_mul_lt_mul_right_direct (c := 4)
   · calc
       (0 : Fraction.Rational) * 4 = 0 := by ring1
       _ < 4 * criticalGap value := positiveScaled
@@ -350,7 +353,7 @@ private theorem two_mul_error_real
         scaledErrorReal left right value := by
   simp only [criticalErrorRatio,
     Gaussian.Basic.add_re,
-    Gaussian.Basic.mul_re, GaussianInt.toGaussian, -eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+    Gaussian.Basic.mul_re, GaussianInt.toGaussian, -eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
   calc
     2 * ((left.re : Fraction.Rational) +
         ((right.re : Fraction.Rational) * half -
@@ -371,7 +374,7 @@ private theorem two_mul_error_imaginary
         scaledErrorImaginary left right value := by
   simp only [criticalErrorRatio,
     Gaussian.Basic.add_im,
-    Gaussian.Basic.mul_im, GaussianInt.toGaussian, -eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+    Gaussian.Basic.mul_im, GaussianInt.toGaussian, -eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
   calc
     2 * ((left.im : Fraction.Rational) +
         ((right.re : Fraction.Rational) * (half * value) +
@@ -391,7 +394,7 @@ private theorem two_mul_denominator_real
       GaussianInt.toGaussian right).re = scaledDenominatorReal left right value := by
   simp only [criticalDenominatorRatio,
     Gaussian.Basic.add_re,
-    Gaussian.Basic.mul_re, GaussianInt.toGaussian, -eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+    Gaussian.Basic.mul_re, GaussianInt.toGaussian, -eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
   calc
     2 * (((left.re : Fraction.Rational) * (half * value) -
         (left.im : Fraction.Rational) * -half) + (right.re : Fraction.Rational)) =
@@ -412,7 +415,7 @@ private theorem
         scaledDenominatorImaginary left right value := by
   simp only [criticalDenominatorRatio,
     Gaussian.Basic.add_im,
-    Gaussian.Basic.mul_im, GaussianInt.toGaussian, -eq_self, -iff_self, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+    Gaussian.Basic.mul_im, GaussianInt.toGaussian, -eq_self, -iff_self, ← Fraction.Cast.intCast_eq_fromInt]
   calc
     2 * (((left.re : Fraction.Rational) * -half +
         (left.im : Fraction.Rational) * (half * value)) +
@@ -428,11 +431,11 @@ private theorem
 /-- Four times the error quadrance excess over one is the scaled coordinate square sum minus four. -/
 private theorem error_difference_mul_four
     (left right : GaussianInt) (value : Fraction.Rational) :
-    (Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+    (Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
       GaussianInt.toGaussian right * criticalErrorRatio value) - 1) * 4 =
         scaledErrorReal left right value ^ 2 +
           scaledErrorImaginary left right value ^ 2 - 4 := by
-  unfold Data.Gaussian.Norm.Basic.normSq
+  unfold Gaussian.Norm.Basic.normSq
   calc
     (((GaussianInt.toGaussian left +
           GaussianInt.toGaussian right * criticalErrorRatio value).re ^ 2 +
@@ -452,12 +455,12 @@ private theorem error_difference_mul_four
 private theorem
   denominator_difference_mul_four
     (left right : GaussianInt) (value : Fraction.Rational) :
-    (Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+    (Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
       criticalDenominatorRatio value +
       GaussianInt.toGaussian right) - 1) * 4 =
         scaledDenominatorReal left right value ^ 2 +
           scaledDenominatorImaginary left right value ^ 2 - 4 := by
-  unfold Data.Gaussian.Norm.Basic.normSq
+  unfold Gaussian.Norm.Basic.normSq
   calc
     (((GaussianInt.toGaussian left * criticalDenominatorRatio value +
           GaussianInt.toGaussian right).re ^ 2 +
@@ -479,7 +482,7 @@ private theorem
   positive_of_mul_four_positive {value :
   Fraction.Rational}
     (scaledPositive : 0 < value * 4) : 0 < value := by
-  apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct (c := 4)
+  apply Arithmetic.lt_of_mul_lt_mul_right_direct (c := 4)
   · calc
       (0 : Fraction.Rational) * 4 = 0 := by ring1
       _ < value * 4 := scaledPositive
@@ -492,9 +495,9 @@ private theorem scaledPlus_pos
     0 < 1 + 4 * value + value ^ 2 := by
   have tailNonnegative : 0 ≤ 4 * value + value ^ 2 :=
     add_nonneg
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.mul_nonneg_direct (by decide)
         (criticalParameter_nonnegative certificate))
-      (Fraction.Order.Arithmetic.sq_nonneg_direct value)
+      (Arithmetic.sq_nonneg_direct value)
   exact (show (0 : Fraction.Rational) < 1 by decide).trans_le
     (by
       calc
@@ -508,7 +511,7 @@ private theorem scaledFive_pos {value :
     0 < 5 + value ^ 2 :=
   (show (0 : Fraction.Rational) < 5 by decide).trans_le
     (le_add_of_nonneg_right
-      (Fraction.Order.Arithmetic.sq_nonneg_direct value))
+      (Arithmetic.sq_nonneg_direct value))
 
 section
 open Purelib.NumberTheory.Approximation
@@ -518,10 +521,10 @@ private theorem scaledSixPlusFour_pos
     0 < 6 + 4 * value + 2 * value ^ 2 := by
   have tailNonnegative : 0 ≤ 4 * value + 2 * value ^ 2 :=
     add_nonneg
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.mul_nonneg_direct (by decide)
         (criticalParameter_nonnegative certificate))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct value))
+      (Arithmetic.mul_nonneg_direct (by decide)
+        (Arithmetic.sq_nonneg_direct value))
   exact (show (0 : Fraction.Rational) < 6 by decide).trans_le
     (by
       calc
@@ -548,8 +551,8 @@ private theorem scaledFourteen_pos {value :
   Fraction.Rational} :
     0 < 14 + 2 * value ^ 2 := by
   have tailNonnegative : 0 ≤ 2 * value ^ 2 :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct value)
+    Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.sq_nonneg_direct value)
   exact (show (0 : Fraction.Rational) < 14 by decide).trans_le
     (le_add_of_nonneg_right tailNonnegative)
 
@@ -560,7 +563,7 @@ private theorem scaledSixMinusEight_pos
     {value : Fraction.Rational} (certificate : IsCriticalParameter value) :
     0 < 6 - 8 * value + 2 * value ^ 2 := by
   have doubledNonnegative : 0 ≤ 2 * parameterPolynomial value :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    Arithmetic.mul_nonneg_direct (by decide)
       certificate.2.2.le
   calc
     (0 : Fraction.Rational) < 4 + 2 * parameterPolynomial value :=
@@ -576,10 +579,10 @@ private theorem scaledSixPlusEight_pos
     0 < 6 + 8 * value + 2 * value ^ 2 := by
   have tailNonnegative : 0 ≤ 8 * value + 2 * value ^ 2 :=
     add_nonneg
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.mul_nonneg_direct (by decide)
         (criticalParameter_nonnegative certificate))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct value))
+      (Arithmetic.mul_nonneg_direct (by decide)
+        (Arithmetic.sq_nonneg_direct value))
   exact (show (0 : Fraction.Rational) < 6 by decide).trans_le
     (by
       calc
@@ -596,6 +599,8 @@ private theorem scaledMinus_pos
     _ = 1 - 4 * value + value ^ 2 := by
       unfold parameterPolynomial
       ring1
+
+end
 
 end
 
@@ -645,6 +650,9 @@ macro "critical_denominator" positive:term : tactic =>
       rw [Purelib.NumberTheory.Approximation.Dirichlet.Critical.Cylinder.Basic.denominator_difference_mul_four]
       convert ($positive) using 1 <;> scaled_ring)
 
+section
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.NumberTheory.Approximation
 /-- Two Gaussian unit coefficients give a strict error or denominator exterior.
 
@@ -656,9 +664,9 @@ private theorem
     (leftUnit : GaussianInt.Norm.Small.IsGaussianUnit left)
     (rightUnit : GaussianInt.Norm.Small.IsGaussianUnit right) :
     (1 : Fraction.Rational) <
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
           GaussianInt.toGaussian right * criticalErrorRatio value) ∨
-      1 < Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+      1 < Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
         criticalDenominatorRatio value +
         GaussianInt.toGaussian right) := by
   rcases leftUnit with rfl | rfl | rfl | rfl <;>
@@ -690,9 +698,9 @@ private theorem
     (leftUnit : GaussianInt.Norm.Small.IsGaussianUnit left)
     (rightDiagonal : GaussianInt.Norm.Small.IsDiagonal right) :
     (1 : Fraction.Rational) <
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
           GaussianInt.toGaussian right * criticalErrorRatio value) ∨
-      1 < Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+      1 < Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
         criticalDenominatorRatio value +
         GaussianInt.toGaussian right) := by
   rcases leftUnit with rfl | rfl | rfl | rfl <;>
@@ -724,9 +732,9 @@ private theorem
     (leftDiagonal : GaussianInt.Norm.Small.IsDiagonal left)
     (rightUnit : GaussianInt.Norm.Small.IsGaussianUnit right) :
     (1 : Fraction.Rational) <
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
           GaussianInt.toGaussian right * criticalErrorRatio value) ∨
-      1 < Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+      1 < Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
         criticalDenominatorRatio value +
         GaussianInt.toGaussian right) := by
   rcases leftDiagonal with rfl | rfl | rfl | rfl <;>
@@ -755,9 +763,9 @@ private theorem
     {right : GaussianInt}
     (rightDiagonal : GaussianInt.Norm.Small.IsDiagonal right) :
     (1 : Fraction.Rational) <
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (⟨1, 1⟩ : GaussianInt) +
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (⟨1, 1⟩ : GaussianInt) +
           GaussianInt.toGaussian right * criticalErrorRatio value) ∨
-      1 < Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (⟨1, 1⟩ : GaussianInt) *
+      1 < Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (⟨1, 1⟩ : GaussianInt) *
         criticalDenominatorRatio value +
         GaussianInt.toGaussian right)  := by
   rcases rightDiagonal with rfl | rfl | rfl | rfl
@@ -773,9 +781,9 @@ private theorem
     {right : GaussianInt}
     (rightDiagonal : GaussianInt.Norm.Small.IsDiagonal right) :
     (1 : Fraction.Rational) <
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (⟨1, -1⟩ : GaussianInt) +
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (⟨1, -1⟩ : GaussianInt) +
           GaussianInt.toGaussian right * criticalErrorRatio value) ∨
-      1 < Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (⟨1, -1⟩ : GaussianInt) *
+      1 < Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (⟨1, -1⟩ : GaussianInt) *
         criticalDenominatorRatio value +
         GaussianInt.toGaussian right)  := by
   rcases rightDiagonal with rfl | rfl | rfl | rfl
@@ -791,9 +799,9 @@ private theorem
     {right : GaussianInt}
     (rightDiagonal : GaussianInt.Norm.Small.IsDiagonal right) :
     (1 : Fraction.Rational) <
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (⟨-1, 1⟩ : GaussianInt) +
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (⟨-1, 1⟩ : GaussianInt) +
           GaussianInt.toGaussian right * criticalErrorRatio value) ∨
-      1 < Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (⟨-1, 1⟩ : GaussianInt) *
+      1 < Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (⟨-1, 1⟩ : GaussianInt) *
         criticalDenominatorRatio value +
         GaussianInt.toGaussian right)  := by
   rcases rightDiagonal with rfl | rfl | rfl | rfl
@@ -809,9 +817,9 @@ private theorem
     {right : GaussianInt}
     (rightDiagonal : GaussianInt.Norm.Small.IsDiagonal right) :
     (1 : Fraction.Rational) <
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (⟨-1, -1⟩ : GaussianInt) +
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (⟨-1, -1⟩ : GaussianInt) +
           GaussianInt.toGaussian right * criticalErrorRatio value) ∨
-      1 < Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (⟨-1, -1⟩ : GaussianInt) *
+      1 < Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian (⟨-1, -1⟩ : GaussianInt) *
         criticalDenominatorRatio value +
         GaussianInt.toGaussian right)  := by
   rcases rightDiagonal with rfl | rfl | rfl | rfl
@@ -828,9 +836,9 @@ private theorem
     (leftDiagonal : GaussianInt.Norm.Small.IsDiagonal left)
     (rightDiagonal : GaussianInt.Norm.Small.IsDiagonal right) :
     (1 : Fraction.Rational) <
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
           GaussianInt.toGaussian right * criticalErrorRatio value) ∨
-      1 < Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+      1 < Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
         criticalDenominatorRatio value +
         GaussianInt.toGaussian right) := by
   rcases leftDiagonal with rfl | rfl | rfl | rfl
@@ -853,9 +861,9 @@ theorem
     (leftNonzero : left ≠ 0) (rightNonzero : right ≠ 0)
     (leftSmall : GaussianInt.normNat left < 4) (rightSmall : GaussianInt.normNat right < 4) :
     (1 : Fraction.Rational) <
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
           GaussianInt.toGaussian right * criticalErrorRatio value) ∨
-      1 < Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+      1 < Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
         criticalDenominatorRatio value +
         GaussianInt.toGaussian right) := by
   have leftShape :
@@ -946,10 +954,10 @@ theorem
     {value : Fraction.Rational} (certificate : IsCriticalParameter value)
     (left right : GaussianInt)
     (errorBound :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
         GaussianInt.toGaussian right * criticalErrorRatio value) ≤ 1)
     (denominatorBound :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
         criticalDenominatorRatio value +
         GaussianInt.toGaussian right) ≤ 1) :
     GaussianInt.normNat left < 4 ∧ GaussianInt.normNat right < 4 := by
@@ -957,104 +965,104 @@ theorem
   have gapPositive := criticalGap_pos certificate
   have margin := twice_one_add_coordinateNorm_lt_four_gap certificate
   have denominatorScaledLe :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
         criticalDenominatorRatio value +
           GaussianInt.toGaussian right) * criticalCoordinateNorm value ≤
         criticalCoordinateNorm value := by
     calc
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
         criticalDenominatorRatio value +
             GaussianInt.toGaussian right) * criticalCoordinateNorm value ≤
           (1 : Fraction.Rational) * criticalCoordinateNorm value :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           denominatorBound coordinateNonnegative
       _ = criticalCoordinateNorm value := by ring1
   have errorScaledLe :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
           GaussianInt.toGaussian right * criticalErrorRatio value) *
           criticalCoordinateNorm value ≤
             criticalCoordinateNorm value := by
     calc
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
             GaussianInt.toGaussian right * criticalErrorRatio value) *
             criticalCoordinateNorm value ≤
           (1 : Fraction.Rational) * criticalCoordinateNorm value :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           errorBound coordinateNonnegative
       _ = criticalCoordinateNorm value := by ring1
   have leftSumBound :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
           GaussianInt.toGaussian right * criticalErrorRatio value) +
-        Data.Gaussian.Norm.Basic.normSq ((GaussianInt.toGaussian left *
+        Gaussian.Norm.Basic.normSq ((GaussianInt.toGaussian left *
           criticalDenominatorRatio value +
           GaussianInt.toGaussian right) * criticalErrorRatio value) ≤
         1 + criticalCoordinateNorm value := by
     calc
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
             GaussianInt.toGaussian right * criticalErrorRatio value) +
-          Data.Gaussian.Norm.Basic.normSq ((GaussianInt.toGaussian left *
+          Gaussian.Norm.Basic.normSq ((GaussianInt.toGaussian left *
             criticalDenominatorRatio value +
             GaussianInt.toGaussian right) * criticalErrorRatio value) =
-          Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+          Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
               GaussianInt.toGaussian right * criticalErrorRatio value) +
-            Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+            Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
               criticalDenominatorRatio value +
               GaussianInt.toGaussian right) * criticalCoordinateNorm value := by
         rw [Gaussian.Norm.Basic.normSq_mul, normSq_criticalErrorRatio]
       _ ≤ 1 + criticalCoordinateNorm value :=
-        Fraction.Order.Arithmetic.add_le_add_direct
+        Arithmetic.add_le_add_direct
           errorBound denominatorScaledLe
   have rightSumBound :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
         criticalDenominatorRatio value +
           GaussianInt.toGaussian right) +
-        Data.Gaussian.Norm.Basic.normSq (criticalDenominatorRatio value *
+        Gaussian.Norm.Basic.normSq (criticalDenominatorRatio value *
           (GaussianInt.toGaussian left +
             GaussianInt.toGaussian right * criticalErrorRatio value)) ≤
         1 + criticalCoordinateNorm value := by
     calc
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
         criticalDenominatorRatio value +
             GaussianInt.toGaussian right) +
-          Data.Gaussian.Norm.Basic.normSq (criticalDenominatorRatio value *
+          Gaussian.Norm.Basic.normSq (criticalDenominatorRatio value *
             (GaussianInt.toGaussian left +
               GaussianInt.toGaussian right * criticalErrorRatio value)) =
-          Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+          Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
             criticalDenominatorRatio value +
               GaussianInt.toGaussian right) +
-            Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+            Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
                 GaussianInt.toGaussian right * criticalErrorRatio value) *
               criticalCoordinateNorm value := by
         rw [Gaussian.Norm.Basic.normSq_mul, normSq_criticalDenominatorRatio]
         ring1
       _ ≤ 1 + criticalCoordinateNorm value :=
-        Fraction.Order.Arithmetic.add_le_add_direct
+        Arithmetic.add_le_add_direct
           denominatorBound errorScaledLe
   have leftProductStrict :
       (GaussianInt.normNat left : Fraction.Rational) * criticalGap value <
         4 * criticalGap value := by
     calc
       (GaussianInt.normNat left : Fraction.Rational) * criticalGap value =
-          Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+          Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
             (1 - criticalDenominatorRatio value *
               criticalErrorRatio value)) := by
         unfold criticalGap
         rw [Gaussian.Norm.Basic.normSq_mul, GaussianInt.normSq_toGaussian]
-      _ = Data.Gaussian.Norm.Basic.normSq
+      _ = Gaussian.Norm.Basic.normSq
           ((GaussianInt.toGaussian left +
               GaussianInt.toGaussian right * criticalErrorRatio value) -
             (GaussianInt.toGaussian left * criticalDenominatorRatio value +
               GaussianInt.toGaussian right) * criticalErrorRatio value) := by
         rw [left_coefficient_gap_identity]
       _ ≤ 2 *
-          (Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+          (Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
               GaussianInt.toGaussian right * criticalErrorRatio value) +
-            Data.Gaussian.Norm.Basic.normSq ((GaussianInt.toGaussian left *
+            Gaussian.Norm.Basic.normSq ((GaussianInt.toGaussian left *
               criticalDenominatorRatio value +
               GaussianInt.toGaussian right) * criticalErrorRatio value)) :=
         Gaussian.Norm.Bounds.normSq_sub_le_two _ _
       _ ≤ 2 * (1 + criticalCoordinateNorm value) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           leftSumBound (by decide)
       _ < 4 * criticalGap value := margin
   have rightProductStrict :
@@ -1062,12 +1070,12 @@ theorem
         4 * criticalGap value := by
     calc
       (GaussianInt.normNat right : Fraction.Rational) * criticalGap value =
-          Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian right *
+          Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian right *
             (1 - criticalDenominatorRatio value *
               criticalErrorRatio value)) := by
         unfold criticalGap
         rw [Gaussian.Norm.Basic.normSq_mul, GaussianInt.normSq_toGaussian]
-      _ = Data.Gaussian.Norm.Basic.normSq
+      _ = Gaussian.Norm.Basic.normSq
           ((GaussianInt.toGaussian left * criticalDenominatorRatio value +
               GaussianInt.toGaussian right) -
             criticalDenominatorRatio value *
@@ -1075,23 +1083,23 @@ theorem
                 GaussianInt.toGaussian right * criticalErrorRatio value)) := by
         rw [right_coefficient_gap_identity]
       _ ≤ 2 *
-          (Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+          (Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
             criticalDenominatorRatio value +
               GaussianInt.toGaussian right) +
-            Data.Gaussian.Norm.Basic.normSq (criticalDenominatorRatio value *
+            Gaussian.Norm.Basic.normSq (criticalDenominatorRatio value *
               (GaussianInt.toGaussian left +
                 GaussianInt.toGaussian right * criticalErrorRatio value))) :=
         Gaussian.Norm.Bounds.normSq_sub_le_two _ _
       _ ≤ 2 * (1 + criticalCoordinateNorm value) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           rightSumBound (by decide)
       _ < 4 * criticalGap value := margin
   refine ⟨?_, ?_⟩
   · apply (Fraction.Cast.Order.natCast_lt_iff_direct).1
-    exact Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+    exact Arithmetic.lt_of_mul_lt_mul_right_direct
       leftProductStrict gapPositive
   · apply (Fraction.Cast.Order.natCast_lt_iff_direct).1
-    exact Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+    exact Arithmetic.lt_of_mul_lt_mul_right_direct
       rightProductStrict gapPositive
 
 /-- Every nonzero integral coefficient pair leaves the open normalized
@@ -1102,16 +1110,16 @@ theorem criticalCylinderExterior
     {value : Fraction.Rational} (certificate : IsCriticalParameter value)
     (left right : GaussianInt) (coefficientNonzero : left ≠ 0 ∨ right ≠ 0) :
     (1 : Fraction.Rational) ≤
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
           GaussianInt.toGaussian right * criticalErrorRatio value) ∨
-      1 ≤ Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+      1 ≤ Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
         criticalDenominatorRatio value +
         GaussianInt.toGaussian right) := by
   by_cases errorInside :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
         GaussianInt.toGaussian right * criticalErrorRatio value) < 1
   · by_cases denominatorInside :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
         criticalDenominatorRatio value +
           GaussianInt.toGaussian right) < 1
     · have small := coefficient_normNat_lt_four_of_critical_inside
@@ -1127,7 +1135,7 @@ theorem criticalCylinderExterior
           Fraction.Cast.Order.natCast_le_direct oneLeRight
         have denominatorOneLe :
             (1 : Fraction.Rational) ≤
-              Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
+              Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left *
                 criticalDenominatorRatio value +
                 GaussianInt.toGaussian right) := by
           rw [leftZero, GaussianInt.toGaussian_zero,
@@ -1143,7 +1151,7 @@ theorem criticalCylinderExterior
             Fraction.Cast.Order.natCast_le_direct oneLeLeft
           have errorOneLe :
               (1 : Fraction.Rational) ≤
-                Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
+                Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian left +
                   GaussianInt.toGaussian right * criticalErrorRatio value) := by
             rw [rightZero, GaussianInt.toGaussian_zero,
               Gaussian.Basic.zero_mul,
@@ -1158,6 +1166,8 @@ theorem criticalCylinderExterior
               denominatorExterior).elim
     · exact Or.inr (le_of_not_gt denominatorInside)
   · exact Or.inl (le_of_not_gt errorInside)
+end
+
 end Purelib.NumberTheory.Approximation.Dirichlet.Critical.Cylinder.Basic
 
 end

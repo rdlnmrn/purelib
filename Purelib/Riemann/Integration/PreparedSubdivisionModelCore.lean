@@ -54,6 +54,10 @@ import Purelib.RootIsolation.State.WindingOne.Basic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Curves.Hyperelliptic
+
 public section
 
 /-!
@@ -81,31 +85,31 @@ open Purelib.Data.Gaussian in
 /-- The canonical Gaussian rational carrier. -/
 abbrev Gaussian := Basic.Canonical
 /-- The original rational box type. -/
-abbrev Box := Purelib.Geometry.Rational.Box
+abbrev Box := Geometry.Rational.Box
 /-- The retained square-root continuation owner at its original radicand. -/
-abbrev Owner := Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+abbrev Owner := Topology.SquareRootContinuationChain.Owner
 /-- A subdivision parameter carrying its unit-interval bounds. -/
-abbrev Endpoint := Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.Endpoint
+abbrev Endpoint := Branches.ClearSheetContinuation.Subdivision.Endpoint
 /-- The original prepared continuation request. -/
-abbrev StepRequest := Purelib.Riemann.Branches.PreparedSheetContinuation.StepRequest
+abbrev StepRequest := Branches.PreparedSheetContinuation.StepRequest
 /-- A polynomial cell model retaining its endpoints, observations and local error allowance. -/
-abbrev CellModel := Purelib.Integration.Polynomial.Gaussian.Cell.Basic.CellModel
+abbrev CellModel := Integration.Polynomial.Gaussian.Cell.Basic.CellModel
 /-- An ordered finite list of polynomial cell models. -/
-abbrev PathModel := Purelib.Integration.Polynomial.Gaussian.Path.Basic.PathModel
+abbrev PathModel := Integration.Polynomial.Gaussian.Path.Basic.PathModel
 /-- Operational equivalence between the original Gaussian names. -/
-abbrev NamedEquivalent := Purelib.Approximation.Gaussian.Equivalence.NamedEquivalent
+abbrev NamedEquivalent := Approximation.Gaussian.Equivalence.NamedEquivalent
 /-- A coherent Gaussian name retaining its executable process and starting state. -/
-abbrev CoherentNamed := Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed
+abbrev CoherentNamed := Approximation.Gaussian.Name.Coherent.CoherentNamed
 /-- A differential edge retaining its original segment, owner, request, cache and sheet. -/
-abbrev PreparedEdge {genus : Nat} (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+abbrev PreparedEdge {genus : Nat} (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus) :=
-  Purelib.Riemann.Integration.PreparedConstantModels.PreparedEdge curve differential
+  PreparedConstantModels.PreparedEdge curve differential
 open Purelib.Polynomial in
 open Purelib.Polynomial.Dense.Gaussian in
 open Purelib.Riemann.Branches in
 /-- The dependent continuation subdivision retaining its source segment and starting owner. -/
 abbrev PreparedSubdivision {polynomial :
-    Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
@@ -122,7 +126,7 @@ least the first real coordinate minus that radius. -/
 theorem real_sub_radius_le_of_normSq_sub_le
     {left right : Gaussian} {radius : Coordinate}
     (radiusNonnegative : 0 <= radius)
-    (bounded : Data.Gaussian.Norm.Basic.normSq (left - right) <=
+    (bounded : Norm.Basic.normSq (left - right) <=
       radius ^ 2) :
     left.re - radius <= right.re := by
   have realSquare : (left - right).re ^ 2 <= radius ^ 2 := by
@@ -130,15 +134,15 @@ theorem real_sub_radius_le_of_normSq_sub_le
       (left - right).re ^ 2 <=
           (left - right).re ^ 2 + (left - right).im ^ 2 :=
         le_add_of_nonneg_right
-          (Fraction.Order.Arithmetic.sq_nonneg_direct (left - right).im)
-      _ = Data.Gaussian.Norm.Basic.normSq (left - right) := rfl
+          (Arithmetic.sq_nonneg_direct (left - right).im)
+      _ = Norm.Basic.normSq (left - right) := rfl
       _ <= radius ^ 2 := bounded
   have realUpper : (left - right).re <= radius :=
-    Fraction.Order.Arithmetic.le_of_sq_le_sq_direct radiusNonnegative
+    Arithmetic.le_of_sq_le_sq_direct radiusNonnegative
       realSquare
   calc
     left.re - radius <= left.re - (left - right).re :=
-      Fraction.Order.Arithmetic.sub_le_sub_left_direct realUpper left.re
+      Arithmetic.sub_le_sub_left_direct realUpper left.re
     _ = right.re := by
       simp only [Basic.sub_re]
       ring1
@@ -148,7 +152,7 @@ open Purelib.Data.Gaussian in
 theorem real_sub_radius_le_of_normSq_reverse_sub_le
     {left right : Gaussian} {radius : Coordinate}
     (radiusNonnegative : 0 <= radius)
-    (bounded : Data.Gaussian.Norm.Basic.normSq (right - left) <=
+    (bounded : Norm.Basic.normSq (right - left) <=
       radius ^ 2) :
     left.re - radius <= right.re := by
   apply real_sub_radius_le_of_normSq_sub_le radiusNonnegative
@@ -172,7 +176,7 @@ open Purelib.Riemann.Branches in
 The constructor retains the supplied segment, source owner, request, cache, ordering and clearance proof, together with
 the selected sheet. -/
 @[expose] def edgeOfStep {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish)
@@ -207,7 +211,7 @@ open Purelib.Riemann.Branches
 open Purelib.Riemann.Integration
 /-- The constructed edge starts at the original segment's left subdivision parameter. -/
 @[simp] theorem edgeOfStep_point_zero {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish)
@@ -229,7 +233,7 @@ open Purelib.Riemann.Integration
 
 /-- The constructed edge finishes at the request's original endpoint parameter. -/
 @[simp] theorem edgeOfStep_point_one {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish)
@@ -250,13 +254,35 @@ open Purelib.Riemann.Integration
         segment.pointAt request.endpoint.parameter :=
   PreparedConstantModels.PreparedEdge.point_one _
 
+/-- Every original fraction of the constructed edge reads the same original segment and request parameter.
+
+The source Owner, cached preparation and complete request remain the
+constructor inputs. Only the exact affine fraction is read through the
+original parameterAt operation; no endpoint or query is reconstructed.
+-/
+theorem edgeOfStep_point {genus : Nat}
+    (curve : Basic.HyperellipticCurve genus)
+    (differential : Basic.Differential genus)
+    {ambient : Box} {start finish : Gaussian}
+    (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish)
+    (within : segment.WithinAmbient) (left : Endpoint)
+    (owner : Owner (curve.polynomial.eval (segment.pointAt left.parameter)))
+    (request : StepRequest) (cached : PreparedSheetContinuation.CachedSource segment left owner request)
+    (ordered : left.parameter ≤ request.endpoint.parameter)
+    (small : ClearSheetContinuation.variationBound segment left.parameter request.endpoint.parameter <
+      (PreparedSheetContinuation.prepared segment left owner request).track.initial.clearance.bound)
+    (sheet : Fin 2) (fraction : Coordinate) :
+    (edgeOfStep curve differential segment within left owner request cached ordered small sheet).point fraction =
+      segment.pointAt (PreparedSheetContinuation.parameterAt left request fraction) := by
+  exact (PreparedSheetContinuation.pointAt_parameterAt segment within left request fraction).symm
+
 end
 
 open Purelib.Polynomial in
 open Purelib.Riemann.Branches in
 /-- The constructed edge retains the exact cached prepared-owner box. -/
 @[simp] theorem edgeOfStep_cached_prepared_box {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish)
@@ -281,7 +307,7 @@ open Purelib.Polynomial in
 
 Each step retains its original request, cache and proofs; the terminal constructor contributes no edge. -/
 @[expose] def preparedEdges {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -317,7 +343,7 @@ open Purelib.Approximation.Gaussian in
 The chart is indexed by the curve and the two differentials; each query retains its unit-interval proof and its actual
 coefficient name. -/
 structure WedgeChart {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (leftDifferential rightDifferential : Basic.Differential genus) where
   /-- The actual coherent wedge coefficient at each bounded parameter. -/ coefficient : (fraction : Coordinate) ->
     (inside : (0 : Coordinate) <= fraction ∧ fraction <= 1) -> CoherentNamed
@@ -334,7 +360,7 @@ open Purelib.Riemann.Branches in
 
 The original segment, owner and request determine every coefficient query and its equivalence to the exact zero name. -/
 @[expose] public def wedgeChartOfStep {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (leftDifferential rightDifferential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish)
@@ -362,7 +388,7 @@ section
 open Purelib.Polynomial
 /-- Read the wedge charts of the original prepared subdivision in step order. -/
 @[expose] def wedgeCharts {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (leftDifferential rightDifferential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -380,7 +406,7 @@ open Purelib.Polynomial
 
 /-- There is exactly one wedge chart for each actual subdivision step. -/
 @[simp] theorem wedgeCharts_length {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (leftDifferential rightDifferential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -407,7 +433,7 @@ open Purelib.Riemann.Branches in
 The certificates retain the exact lifted clear path and the supplied differential, tying every model cell to its
 corresponding path segment. -/
 structure CertifiedSubdivision {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -418,7 +444,7 @@ structure CertifiedSubdivision {genus : Nat}
     (subdivision : PreparedSubdivision segment within left owner) where
   /-- The ordered cell models of the certified subdivision. -/ cells : List CellModel
   /-- Uniform algebraic certificates along the original subdivision's sheet lift. -/ certificates :
-    Curves.Hyperelliptic.Integration.Algebraic.Path.Basis.UniformPathCertificates curve differential cells
+    Integration.Algebraic.Path.Basis.UniformPathCertificates curve differential cells
     (ClearPath.liftOnSheet sheet subdivision.toClearPath)
 
 constructive_injectivity CertifiedSubdivision
@@ -431,7 +457,7 @@ open Purelib.Riemann.Integration in
 The terminal subdivision carries `Unit`; each nonterminal step carries its exact edge center and the remaining
 subdivision's center family. -/
 @[expose] def CenterStates {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -454,7 +480,7 @@ open Purelib.Riemann.Integration in
 The center state is indexed by the stored edge, so its coefficient cache and
 root observations belong to that edge and its original preparation. -/
 structure CenteredEdge {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus) where
   /-- The original prepared differential edge. -/ edge : PreparedEdge curve differential
   /-- The exact retained center state of that edge. -/ center : PreparedConstantModels.PreparedEdge.CenterState edge
@@ -465,7 +491,7 @@ namespace CenteredEdge
 
 /-- The constant cell model using the edge's retained center value. -/
 @[expose] def model {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (centered : CenteredEdge curve differential) : CellModel :=
   centered.edge.centeredModel centered.center
@@ -476,7 +502,7 @@ set_option genInjectivity false in
 The denominator remains possible at that exact state, and the coefficient value is the original numerator divided by the
 retained denominator. -/
 structure RecacheCertificate {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (centered : CenteredEdge curve differential) where
   /-- The supplied replacement cached coefficient value. -/ value : Gaussian
@@ -494,7 +520,7 @@ namespace RecacheCertificate
 
 /-- Recache the original center state with the certificate's actual value and denominator. -/
 @[expose] def center {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {centered : CenteredEdge curve differential}
     (certificate : RecacheCertificate centered) :=
@@ -503,7 +529,7 @@ namespace RecacheCertificate
 
 /-- The constant cell model using the certificate's recached center value. -/
 @[expose] def model {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {centered : CenteredEdge curve differential}
     (certificate : RecacheCertificate centered) : CellModel :=
@@ -511,7 +537,7 @@ namespace RecacheCertificate
 
 /-- Recaching preserves the cell's original weighted error allowance. -/
 @[simp] theorem model_weightedAllowance {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {centered : CenteredEdge curve differential}
     (certificate : RecacheCertificate centered) :
@@ -523,7 +549,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 
 The comparison retains the actual change in cached values and the exact unchanged displacement. -/
 @[expose] def partitionCertificate {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {centered : CenteredEdge curve differential}
     (certificate : RecacheCertificate centered) :
@@ -538,7 +564,7 @@ end RecacheCertificate
 
 /-- The dyadic geometric lower estimate for the real coordinate of the centered integral sample. -/
 @[expose] def integralRealLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (centered : CenteredEdge curve differential) : Coordinate :=
   centered.edge.centeredModelIntegralRealDyadicLower centered.center
@@ -546,7 +572,7 @@ end RecacheCertificate
 /-- For exponent zero, the retained geometric estimate is below the real coordinate of the actual centered integral
 sample. -/
 theorem integralRealLower_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (centered : CenteredEdge curve differential)
     (exponentZero : differential.exponent = 0) :
@@ -556,7 +582,7 @@ theorem integralRealLower_le {genus : Nat}
 
 /-- The dyadic geometric lower estimate for the negated real coordinate of the centered integral sample. -/
 @[expose] def negatedIntegralRealLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (centered : CenteredEdge curve differential) : Coordinate :=
   centered.edge.geometricNegatedIntegralRealDyadicLower
@@ -564,7 +590,7 @@ theorem integralRealLower_le {genus : Nat}
 /-- For exponent zero, the retained geometric estimate is below the negated real coordinate of the actual centered
 integral sample. -/
 theorem negatedIntegralRealLower_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (centered : CenteredEdge curve differential)
     (exponentZero : differential.exponent = 0) :
@@ -575,7 +601,7 @@ theorem negatedIntegralRealLower_le {genus : Nat}
 /-- The dyadic geometric lower estimate for the scalar projection onto the supplied Gaussian direction of the centered
 integral sample. -/
 @[expose] def directionalIntegralLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (centered : CenteredEdge curve differential)
     (direction : Gaussian) : Coordinate :=
@@ -584,7 +610,7 @@ integral sample. -/
 /-- For exponent zero, the retained geometric estimate is below the scalar projection onto the supplied Gaussian
 direction of the actual centered integral sample. -/
 theorem directionalIntegralLower_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (centered : CenteredEdge curve differential)
     (direction : Gaussian)
@@ -598,7 +624,7 @@ theorem directionalIntegralLower_le {genus : Nat}
 /-- The dyadic lower estimate from the retained denominator projection box for the real coordinate of the centered
 integral sample. -/
 @[expose] def ballIntegralRealLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (centered : CenteredEdge curve differential) : Coordinate :=
   centered.edge.centeredBallIntegralRealDyadicLower centered.center
@@ -606,7 +632,7 @@ integral sample. -/
 /-- For exponent zero, the retained denominator projection-box estimate is below the real coordinate of the actual
 integral sample. -/
 theorem ballIntegralRealLower_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (centered : CenteredEdge curve differential)
     (exponentZero : differential.exponent = 0) :
@@ -617,7 +643,7 @@ theorem ballIntegralRealLower_le {genus : Nat}
 /-- The dyadic lower estimate from the retained denominator projection box for the negated real coordinate of the
 centered integral sample. -/
 @[expose] def ballNegatedIntegralRealLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (centered : CenteredEdge curve differential) : Coordinate :=
   centered.edge.centeredBallNegatedIntegralRealDyadicLower centered.center
@@ -625,7 +651,7 @@ centered integral sample. -/
 /-- For exponent zero, the retained denominator projection-box estimate is below the negated real coordinate of the
 actual integral sample. -/
 theorem ballNegatedIntegralRealLower_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (centered : CenteredEdge curve differential)
     (exponentZero : differential.exponent = 0) :
@@ -637,7 +663,7 @@ theorem ballNegatedIntegralRealLower_le {genus : Nat}
 /-- The dyadic lower estimate from the retained denominator projection box for the scalar projection onto the supplied
 Gaussian direction of the centered integral sample. -/
 @[expose] def ballDirectionalIntegralLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (centered : CenteredEdge curve differential)
     (direction : Gaussian) : Coordinate :=
@@ -647,7 +673,7 @@ Gaussian direction of the centered integral sample. -/
 /-- For exponent zero, the retained denominator projection-box estimate is below the scalar projection onto the supplied
 Gaussian direction of the actual integral sample. -/
 theorem ballDirectionalIntegralLower_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (centered : CenteredEdge curve differential)
     (direction : Gaussian)
@@ -661,7 +687,7 @@ theorem ballDirectionalIntegralLower_le {genus : Nat}
 open Purelib.Riemann.Branches in
 /-- The original left and request endpoint of the centered edge. -/
 @[expose] def parameterEdge {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (centered : CenteredEdge curve differential) :
     ClearSheetContinuation.Subdivision.ParameterEdge :=
@@ -673,7 +699,7 @@ open Purelib.Riemann.Branches in
 open Purelib.Riemann.Integration in
 /-- The centered model displacement is the original segment's endpoint difference. -/
 theorem model_displacement {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (centered : CenteredEdge curve differential) :
     centered.model.displacement =
@@ -715,7 +741,7 @@ set_option genInjectivity false in
 Each constructor retains the exact head certificate and the remaining original edge list, so recaching cannot reorder or
 replace the edge owners. -/
 inductive CenteredPathRecache {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus} :
     List (CenteredEdge curve differential) -> Type
   /-- The empty recache certificate for the empty original edge list. -/ | nil : CenteredPathRecache []
@@ -732,7 +758,7 @@ namespace CenteredPathRecache
 
 /-- Append recache certificates along the concatenation of their original edge lists. -/
 @[expose] def append {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus} :
     {first second : List (CenteredEdge curve differential)} ->
       CenteredPathRecache first -> CenteredPathRecache second ->
@@ -743,7 +769,7 @@ namespace CenteredPathRecache
 
 /-- Read the ordered recached cell models from their retained certificates. -/
 @[expose] def models {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus} :
     {edges : List (CenteredEdge curve differential)} ->
       CenteredPathRecache edges -> List CellModel
@@ -753,7 +779,7 @@ namespace CenteredPathRecache
 
 /-- Reading recached models commutes with concatenating their certificates. -/
 @[simp] theorem models_append {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus} :
     forall {first second : List (CenteredEdge curve differential)}
       (left : CenteredPathRecache first)
@@ -767,7 +793,7 @@ namespace CenteredPathRecache
 open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- Compose the retained one-cell recache certificates into a constant path refinement. -/
 @[expose] def toConstantPathRefinement {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus} :
     {edges : List (CenteredEdge curve differential)} ->
       (recache : CenteredPathRecache edges) ->
@@ -780,7 +806,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 
 /-- The path model made from the actual recached cells. -/
 @[expose] def literalModel {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {edges : List (CenteredEdge curve differential)}
     (recache : CenteredPathRecache edges) : PathModel :=
@@ -788,14 +814,14 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 
 /-- The path model made from the original centered edges, in order. -/
 @[expose] def canonicalModel {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (edges : List (CenteredEdge curve differential)) : PathModel :=
   ⟨edges.map CenteredEdge.model⟩
 
 /-- Recaching retains exactly one cell per original centered edge. -/
 @[simp] theorem models_length {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus} :
     forall {edges : List (CenteredEdge curve differential)}
       (recache : CenteredPathRecache edges),
@@ -807,7 +833,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 
 /-- Recaching preserves the total of the original cells' weighted error allowances. -/
 theorem totalWeightedAllowance_eq {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus} :
     forall {edges : List (CenteredEdge curve differential)}
       (recache : CenteredPathRecache edges),
@@ -828,7 +854,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 The recache keeps one model per retained edge and preserves total weighted
 allowance. Those two scalar equalities identify the aggregate allowance. -/
 theorem aggregateAllowance_eq {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {edges : List (CenteredEdge curve differential)}
     (recache : CenteredPathRecache edges) :
@@ -850,11 +876,11 @@ open Purelib.Data.Gaussian in
 The estimate uses the retained constant path refinement, preserving the exact ordered cells and their individual recache
 comparisons. -/
 theorem integralDifference_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {edges : List (CenteredEdge curve differential)}
     (recache : CenteredPathRecache edges) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (recache.literalModel.integralSample -
           (canonicalModel edges).integralSample) <=
       recache.literalModel.aggregateAllowance := by
@@ -867,7 +893,7 @@ theorem integralDifference_le {genus : Nat}
 The recached aggregate allowance must be at most the square of that movement bound; the movement is subtracted from the
 actual recached real reading. -/
 theorem literalRealLower_le_canonical {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {edges : List (CenteredEdge curve differential)}
     (recache : CenteredPathRecache edges)
@@ -880,7 +906,7 @@ theorem literalRealLower_le_canonical {genus : Nat}
 
 /-- Transfer the recached real reading using a squared movement bound on the original aggregate allowance. -/
 theorem literalRealLower_le_canonical_of_canonicalAllowance {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {edges : List (CenteredEdge curve differential)}
     (recache : CenteredPathRecache edges)
@@ -898,7 +924,7 @@ set_option genInjectivity false in
 The original aggregate allowance is bounded by the square of a nonnegative movement; the stated positive lower bound
 lies below the recached real integral after that movement is subtracted. -/
 structure PositiveLiteralRealLowerCertificate {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (edges : List (CenteredEdge curve differential)) where
   /-- The actual recache certificates for the original ordered edge list. -/ recache : CenteredPathRecache edges
@@ -917,7 +943,7 @@ namespace PositiveLiteralRealLowerCertificate
 
 /-- The retained positive lower bound is below the original path integral's real coordinate. -/
 theorem lower_le_canonical {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {edges : List (CenteredEdge curve differential)}
     (certificate : PositiveLiteralRealLowerCertificate edges) :
@@ -929,7 +955,7 @@ theorem lower_le_canonical {genus : Nat}
 
 /-- The original path integral's real coordinate is positive under the retained recache certificate. -/
 theorem canonical_positive {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {edges : List (CenteredEdge curve differential)}
     (certificate : PositiveLiteralRealLowerCertificate edges) :
@@ -942,7 +968,7 @@ end CenteredPathRecache
 
 /-- Sum the geometric lower estimates for the real coordinate over the original ordered centered edges. -/
 @[expose] def centeredEdgesIntegralRealLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (edges : List (CenteredEdge curve differential)) : Coordinate :=
   edges.foldr (fun edge total => edge.integralRealLower + total) 0
@@ -953,7 +979,7 @@ open Purelib.Data.Rat in
 Structural recursion follows the left edge list and preserves each geometric
 lower estimate. Associativity separates the ordered sums for the two lists. -/
 theorem centeredEdgesIntegralRealLower_append {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (first second : List (CenteredEdge curve differential)) :
     centeredEdgesIntegralRealLower (first ++ second) =
@@ -976,7 +1002,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- For exponent zero, the sum of the retained geometric estimates is below the real coordinate of the path integral
 sample. -/
 theorem centeredEdgesIntegralRealLower_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (exponentZero : differential.exponent = 0) :
     forall edges : List (CenteredEdge curve differential),
@@ -996,7 +1022,7 @@ theorem centeredEdgesIntegralRealLower_le {genus : Nat}
 
 /-- Sum the geometric lower estimates for the negated real coordinate over the original ordered centered edges. -/
 @[expose] def centeredEdgesNegatedIntegralRealLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (edges : List (CenteredEdge curve differential)) : Coordinate :=
   edges.foldr (fun edge total => edge.negatedIntegralRealLower + total) 0
@@ -1006,7 +1032,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- For exponent zero, the sum of the retained geometric estimates is below the negated real coordinate of the path
 integral sample. -/
 theorem centeredEdgesNegatedIntegralRealLower_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (exponentZero : differential.exponent = 0) :
     forall edges : List (CenteredEdge curve differential),
@@ -1032,7 +1058,7 @@ theorem centeredEdgesNegatedIntegralRealLower_le {genus : Nat}
 /-- Sum the geometric lower estimates for the scalar projection onto the supplied Gaussian direction over the original
 ordered centered edges. -/
 @[expose] def centeredEdgesDirectionalIntegralLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (direction : Gaussian)
     (edges : List (CenteredEdge curve differential)) : Coordinate :=
@@ -1046,7 +1072,7 @@ concatenated edge lists.
 The direction is fixed throughout both edge lists. Structural recursion and
 scalar associativity split the sum without changing any directional estimate. -/
 theorem centeredEdgesDirectionalIntegralLower_append {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (direction : Gaussian)
     (first second : List (CenteredEdge curve differential)) :
@@ -1073,7 +1099,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- For exponent zero, the sum of the retained geometric estimates is below the scalar projection onto the supplied
 Gaussian direction of the path integral sample. -/
 theorem centeredEdgesDirectionalIntegralLower_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (direction : Gaussian)
     (exponentZero : differential.exponent = 0) :
@@ -1110,7 +1136,7 @@ theorem centeredEdgesDirectionalIntegralLower_le {genus : Nat}
 /-- Sum the retained denominator projection-box lower estimates for the real coordinate over the original ordered
 centered edges. -/
 @[expose] def centeredEdgesBallIntegralRealLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (edges : List (CenteredEdge curve differential)) : Coordinate :=
   edges.foldr (fun edge total => edge.ballIntegralRealLower + total) 0
@@ -1119,7 +1145,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- For exponent zero, the sum of the retained retained denominator projection-box estimates is below the real
 coordinate of the path integral sample. -/
 theorem centeredEdgesBallIntegralRealLower_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (exponentZero : differential.exponent = 0) :
     forall edges : List (CenteredEdge curve differential),
@@ -1140,7 +1166,7 @@ theorem centeredEdgesBallIntegralRealLower_le {genus : Nat}
 /-- Sum the retained denominator projection-box lower estimates for the negated real coordinate over the original
 ordered centered edges. -/
 @[expose] def centeredEdgesBallNegatedIntegralRealLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (edges : List (CenteredEdge curve differential)) : Coordinate :=
   edges.foldr (fun edge total => edge.ballNegatedIntegralRealLower + total) 0
@@ -1150,7 +1176,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- For exponent zero, the sum of the retained retained denominator projection-box estimates is below the negated real
 coordinate of the path integral sample. -/
 theorem centeredEdgesBallNegatedIntegralRealLower_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (exponentZero : differential.exponent = 0) :
     forall edges : List (CenteredEdge curve differential),
@@ -1176,7 +1202,7 @@ theorem centeredEdgesBallNegatedIntegralRealLower_le {genus : Nat}
 /-- Sum the retained denominator projection-box lower estimates for the scalar projection onto the supplied Gaussian
 direction over the original ordered centered edges. -/
 @[expose] def centeredEdgesBallDirectionalIntegralLower {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (direction : Gaussian)
     (edges : List (CenteredEdge curve differential)) : Coordinate :=
@@ -1189,7 +1215,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- For exponent zero, the sum of the retained retained denominator projection-box estimates is below the scalar
 projection onto the supplied Gaussian direction of the path integral sample. -/
 theorem centeredEdgesBallDirectionalIntegralLower_le {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (direction : Gaussian)
     (exponentZero : differential.exponent = 0) :
@@ -1230,7 +1256,7 @@ open Purelib.Polynomial
 The recursion uses the exact cached step geometry and the original remaining subdivision; no center-state selection is
 required. -/
 @[expose] def preparedSubdivisionIntegralRealLower {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -1251,7 +1277,7 @@ required. -/
 The recursion uses the exact cached step geometry and the original remaining subdivision; no center-state selection is
 required. -/
 @[expose] def preparedSubdivisionNegatedIntegralRealLower {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -1274,7 +1300,7 @@ prepared subdivision.
 The recursion uses the exact cached step geometry and the original remaining subdivision; no center-state selection is
 required. -/
 @[expose] def preparedSubdivisionDirectionalIntegralLower {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -1300,7 +1326,7 @@ open Purelib.Riemann.Branches in
 The affine parameter equation retains the current endpoint rather than replacing it with a newly constructed coordinate.
 -/
 structure ParentPosition {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : PreparedEdge curve differential) (current : Endpoint) where
   /-- The exact parent-edge query fraction. -/ fraction : Coordinate
@@ -1324,7 +1350,7 @@ open Purelib.RootIsolation.SquareRoot.Clearance in
 The supplied direct-move clearance and position equation identify the radicand; cached query equations and reserved
 transport preserve the original root identity. -/
 @[expose] def directRootEquivalent {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parent : PreparedEdge curve differential} {current : Endpoint}
     (position : ParentPosition parent current)
@@ -1400,7 +1426,7 @@ transport preserve the original root identity. -/
 open Purelib.Riemann.Branches in
 /-- A retained parent position supplies the original direct-move clearance certificate. -/
 theorem directMoveSmall {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parent : PreparedEdge curve differential} {current : Endpoint}
     (position : ParentPosition parent current) :
@@ -1426,7 +1452,7 @@ open Purelib.Riemann.Branches in
 The fraction is the original offset divided by the positive parent width, with explicit unit-interval bounds and its
 affine parameter equation. -/
 @[expose] def ofBetween {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parent : PreparedEdge curve differential} {current : Endpoint}
     (proper : parent.left.parameter < parent.request.endpoint.parameter)
@@ -1436,18 +1462,18 @@ affine parameter equation. -/
   let width := parent.request.endpoint.parameter - parent.left.parameter
   let offset := current.parameter - parent.left.parameter
   have widthPositive : 0 < width :=
-    Fraction.Order.Arithmetic.sub_pos_direct proper
+    Arithmetic.sub_pos_direct proper
   have offsetNonnegative : 0 <= offset :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct between.1
+    Arithmetic.sub_nonneg_direct between.1
   let fraction := offset / width
   have fractionNonnegative : 0 <= fraction :=
-    Fraction.Order.Field.div_nonneg_direct offsetNonnegative
+    Field.div_nonneg_direct offsetNonnegative
       widthPositive.le
   have offsetLeWidth : offset <= width :=
-    Fraction.Order.Arithmetic.sub_le_sub_right_direct between.2
+    Arithmetic.sub_le_sub_right_direct between.2
       parent.left.parameter
   have fractionLeOne : fraction <= 1 := by
-    apply (Fraction.Order.Field.div_le_iff_pos widthPositive).2
+    apply (Field.div_le_iff_pos widthPositive).2
     simpa only [Fraction.Field.one_mul] using offsetLeWidth
   exact
     { fraction := fraction
@@ -1468,7 +1494,7 @@ set_option genInjectivity false in
 The relation preserves both centered edges, the actual parent fraction and its bounds, and the child center already
 supplied by the caller. -/
 structure RootChildAt {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent child : CenteredEdge curve differential) where
   /-- The exact parent-edge query fraction. -/ fraction : Coordinate
@@ -1488,7 +1514,7 @@ namespace RootChildAt
 open Purelib.Riemann.Integration in
 /-- Transfer retained root equivalence to the exact child coefficient comparison, preserving both centers. -/
 @[expose] def toCenteredChildAt {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parent child : CenteredEdge curve differential}
     (relation : RootChildAt parent child) :
@@ -1500,7 +1526,7 @@ open Purelib.Riemann.Integration in
 
 /-- The transferred child comparison retains the original child's centered model. -/
 @[simp] theorem toCenteredChildAt_model {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parent child : CenteredEdge curve differential}
     (relation : RootChildAt parent child) :
@@ -1516,7 +1542,7 @@ open Purelib.Riemann.Integration in
 The constructor retains the child center and cache. The position equation identifies the coordinates, while
 direct-query, owner and base-query equivalences identify the original root names. -/
 @[expose] def rootChildAtOfDirectStep {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : CenteredEdge curve differential)
     (current : Endpoint)
@@ -1599,7 +1625,7 @@ set_option genInjectivity false in
 Each nonempty block stores the comparison for its displayed head and the
 remaining comparisons. Every entry refers to the same original parent. -/
 inductive RootChildBlock {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : CenteredEdge curve differential) :
     List (CenteredEdge curve differential) -> Type
@@ -1619,7 +1645,7 @@ section
 open Purelib.Riemann.Integration
 /-- Read coefficient-level child comparisons from the retained root comparison block. -/
 @[expose] def childAts {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parent : CenteredEdge curve differential} :
     forall {children : List (CenteredEdge curve differential)},
@@ -1635,7 +1661,7 @@ open Purelib.Riemann.Integration
 Each transferred head has the same model as its retained child edge. Scalar
 list-constructor congruence preserves the ordered tail of those models. -/
 @[simp] theorem childAts_models {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parent : CenteredEdge curve differential} :
     forall {children : List (CenteredEdge curve differential)}
@@ -1657,7 +1683,7 @@ open Purelib.Riemann.Integration in
 The supplied displacement equality and the original root comparisons produce the constant partition certificate without
 replacing any child model. -/
 @[expose] def partitionCertificate {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     {parent : CenteredEdge curve differential}
     {children : List (CenteredEdge curve differential)}
@@ -1688,7 +1714,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 Each constructor keeps the actual child block, its parent and its displacement equality before appending the remaining
 refinement. -/
 inductive CenteredEdgeRefinement {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus} :
     List (CenteredEdge curve differential) ->
       List (CenteredEdge curve differential) -> Type
@@ -1716,7 +1742,7 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 Each parent retains its original partition certificate and ordered child block.
 Their model lists are concatenated in the same order as the edge refinement. -/
 @[expose] def toCompatible {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus} :
     forall {parents children : List (CenteredEdge curve differential)},
       CenteredEdgeRefinement parents children ->
@@ -1736,7 +1762,7 @@ open Purelib.Riemann.Branches in
 
 The resulting ordered edges retain the original owners, caches, requests and selected sheet. -/
 @[expose] def centeredEdges {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -1760,7 +1786,7 @@ open Purelib.Riemann.Integration in
 retained center family. -/
 theorem preparedSubdivisionIntegralRealLower_eq_centeredEdges
     {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -1788,7 +1814,7 @@ open Purelib.Polynomial in
 /-- For exponent zero, the geometric subdivision estimate is below the real coordinate of the path integral with the
 supplied centers. -/
 theorem preparedSubdivisionIntegralRealLower_le {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -1812,7 +1838,7 @@ open Purelib.Polynomial in
 corresponding centered-edge sum for every retained center family. -/
 theorem preparedSubdivisionDirectionalIntegralLower_eq_centeredEdges
     {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -1840,7 +1866,7 @@ open Purelib.Polynomial in
 /-- For exponent zero, the geometric subdivision estimate is below the scalar projection onto the supplied Gaussian
 direction of the path integral with the supplied centers. -/
 theorem preparedSubdivisionDirectionalIntegralLower_le {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -1870,7 +1896,7 @@ open Purelib.Polynomial in
 every retained center family. -/
 theorem preparedSubdivisionNegatedIntegralRealLower_eq_centeredEdges
     {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -1898,7 +1924,7 @@ open Purelib.Polynomial in
 /-- For exponent zero, the geometric subdivision estimate is below the negated real coordinate of the path integral with
 the supplied centers. -/
 theorem preparedSubdivisionNegatedIntegralRealLower_le {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -1923,7 +1949,7 @@ open Purelib.Polynomial
 open Purelib.Riemann.Branches
 /-- The centered edge list has exactly the original subdivision's step count. -/
 @[simp] theorem centeredEdges_length {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -1941,12 +1967,68 @@ open Purelib.Riemann.Branches
         PreparedSheetContinuation.Subdivision.stepCount_next]
       rw [centeredEdges_length curve differential sheet remaining centers.2]
 
+section ChildReadbacks
+
+open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
+open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
+open Purelib.Riemann.Branches.PreparedSheetContinuation (Subdivision)
+
+/-- Every actual centered child reads its original segment at its own exact retained affine request fraction.
+
+Structural proof follows only the original subdivision and unchanged center
+family. Each head uses its original edgeOfStep_point readback; repeated
+child values remain their original membership occurrences.
+-/
+theorem centeredEdges_point {genus : Nat} (curve : HyperellipticCurve genus) (differential : Differential genus)
+    {ambient : Box} {start finish : Gaussian}
+    {segment : Polynomial.Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
+    {within : segment.WithinAmbient} {left : Endpoint}
+    {owner : Owner (curve.polynomial.eval (segment.pointAt left.parameter))} (sheet : Fin 2) :
+    (subdivision : Subdivision segment within left owner) →
+    (centers : CenterStates curve differential sheet subdivision) →
+    ∀ centered ∈ centeredEdges curve differential sheet subdivision centers, ∀ fraction : Coordinate,
+      centered.edge.point fraction =
+        segment.pointAt (PreparedSheetContinuation.parameterAt centered.edge.left centered.edge.request fraction)
+  | .stop _ _, _, _, member, _ => by cases member
+  | .next current inherited request cached ordered small remaining, centers, centered, member, fraction => by
+      change centered ∈ _ :: _ at member
+      rcases Membership.mem_cons.mp member with equal | member
+      · subst centered
+        exact edgeOfStep_point curve differential segment within current inherited request cached ordered small
+          sheet fraction
+      · exact centeredEdges_point curve differential sheet remaining centers.2 centered member fraction
+termination_by structural subdivision _ _ _ _ => subdivision
+
+/-- Every actual centered child retains the original supplied sheet occurrence.
+
+The proof follows the same original subdivision and unchanged center family.
+No new edge, owner, request, center state or sheet selection is constructed.
+-/
+theorem centeredEdges_sheet {genus : Nat} (curve : HyperellipticCurve genus) (differential : Differential genus)
+    {ambient : Box} {start finish : Gaussian}
+    {segment : Polynomial.Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
+    {within : segment.WithinAmbient} {left : Endpoint}
+    {owner : Owner (curve.polynomial.eval (segment.pointAt left.parameter))} (sheet : Fin 2) :
+    (subdivision : Subdivision segment within left owner) →
+    (centers : CenterStates curve differential sheet subdivision) →
+    ∀ centered ∈ centeredEdges curve differential sheet subdivision centers, centered.edge.sheet = sheet
+  | .stop _ _, _, _, member => by cases member
+  | .next current inherited request cached ordered small remaining, centers, centered, member => by
+      change centered ∈ _ :: _ at member
+      rcases Membership.mem_cons.mp member with equal | member
+      · subst centered
+        rfl
+      · exact centeredEdges_sheet curve differential sheet remaining centers.2 centered member
+termination_by structural subdivision _ _ _ => subdivision
+
+end ChildReadbacks
+
 /-- Every centered edge retains the original segment, including its dependent indices.
 
 The subdivision constructor retains its segment as a dependent index. Each
 head has that segment, and the same statement follows for the retained tail. -/
 theorem centeredEdges_segment_heq {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -1970,12 +2052,44 @@ theorem centeredEdges_segment_heq {genus : Nat}
         rfl
       · exact induction centers.2 centered membership
 
+/-- Every fraction of each actual centered edge lies in the identical original segment ambient box.
+
+Structural induction consumes the supplied center cache and the same
+original subdivision tail. The head uses its original point containment;
+no segment, owner, center state or advancement is prepared again.
+-/
+theorem centeredEdges_point_contains {genus : Nat}
+    (curve : Basic.HyperellipticCurve genus)
+    (differential : Basic.Differential genus)
+    {ambient : Box} {start finish : Gaussian}
+    {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
+    {within : segment.WithinAmbient}
+    {left : ClearSheetContinuation.Subdivision.Endpoint}
+    {owner : Owner (curve.polynomial.eval (segment.pointAt left.parameter))}
+    (sheet : Fin 2) (subdivision : PreparedSubdivision segment within left owner)
+    (centers : CenterStates curve differential sheet subdivision) :
+    ∀ centered ∈ centeredEdges curve differential sheet subdivision centers,
+      ∀ fraction : Coordinate, 0 ≤ fraction ∧ fraction ≤ 1 → ambient.Contains (centered.edge.point fraction) := by
+  induction subdivision with
+  | stop endpoint owner =>
+      intro centered membership
+      change centered ∈ [] at membership
+      cases membership
+  | @next left owner request cached ordered small remaining induction =>
+      intro centered membership fraction inside
+      change centered ∈ _ :: _ at membership
+      rcases Membership.mem_cons.mp membership with equal | membership
+      · subst centered
+        exact PreparedConstantModels.PreparedEdge.point_contains
+          (edgeOfStep curve differential segment within left owner request cached ordered small sheet) fraction inside
+      · exact induction centers.2 centered membership fraction inside
+
 /-- Each centered edge starts at its retained left parameter on the original segment.
 
 Every step stores its left parameter in the centered edge. The head endpoint
 equation and the corresponding retained-tail equation identify each start. -/
 theorem centeredEdges_point_zero {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -2006,7 +2120,7 @@ theorem centeredEdges_point_zero {genus : Nat}
 Every step stores its requested endpoint in the centered edge. The head
 endpoint equation and the retained-tail equation identify each finish. -/
 theorem centeredEdges_point_one {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -2034,7 +2148,7 @@ theorem centeredEdges_point_one {genus : Nat}
 
 /-- Reading cached boxes from centered edges reproduces the original subdivision's prepared-box list. -/
 theorem centeredEdges_preparedBoxes {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -2058,7 +2172,7 @@ theorem centeredEdges_preparedBoxes {genus : Nat}
 
 /-- Reading centered parameter edges reproduces the original subdivision's ordered parameter-edge list. -/
 theorem centeredEdges_parameterEdges {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -2087,7 +2201,7 @@ open Purelib.Polynomial in
 open Purelib.Riemann.Branches in
 /-- The centered model displacements telescope to the original subdivision's endpoint difference. -/
 theorem centeredEdges_displacementSum {genus : Nat}
-    (curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus)
+    (curve : Basic.HyperellipticCurve genus)
     (differential : Basic.Differential genus)
     {ambient : Box} {start finish : Gaussian}
     {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
@@ -2133,7 +2247,7 @@ theorem centeredEdges_displacementSum {genus : Nat}
 open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- A subdivision ending at the parent's request endpoint has the parent's exact model displacement. -/
 theorem centeredEdges_displacement_eq_parent {genus : Nat}
-    {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+    {curve : Basic.HyperellipticCurve genus}
     {differential : Basic.Differential genus}
     (parent : CenteredEdge curve differential)
     (subdivision : PreparedSubdivision parent.edge.segment parent.edge.within

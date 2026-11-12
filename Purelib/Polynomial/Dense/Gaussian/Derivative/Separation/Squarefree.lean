@@ -13,6 +13,7 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Polynomial.Dense.Gaussian.Derivative.Separation.Basic
 
+open Purelib.Polynomial.Dense.Gaussian.Derivative.Separation
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 open Purelib.Polynomial.Dense.Gaussian.Squarefree.Basic (SquarefreeCertificate)
 
@@ -45,7 +46,7 @@ def derivativeThreshold {p :
   CoefficientPolynomial}
     (squarefree : SquarefreeCertificate p) (ambient :
       Box) : Fraction.Rational :=
-  (Dense.Gaussian.Derivative.Separation.Bezout.ofSquarefree squarefree ambient).threshold
+  Bezout.approximateThreshold squarefree.left ambient
 
 /-- A uniform positive derivative lower bound computed from the right
 Bézout coefficient.  It is used only after the residual has crossed
@@ -54,7 +55,19 @@ def derivativeMargin {p :
   CoefficientPolynomial}
     (squarefree : SquarefreeCertificate p) (ambient :
       Box) : Fraction.Rational :=
-  (Dense.Gaussian.Derivative.Separation.Bezout.ofSquarefree squarefree ambient).margin
+  Bezout.approximateMargin squarefree.right ambient
+
+/-- The direct threshold reader equals the same field of the original complete derivative-separation record. -/
+theorem derivativeThreshold_eq_ofSquarefree {p : CoefficientPolynomial}
+    (squarefree : SquarefreeCertificate p) (ambient : Box) :
+    derivativeThreshold squarefree ambient =
+      (Bezout.ofSquarefree squarefree ambient).threshold := rfl
+
+/-- The direct margin reader equals the same field of the original complete derivative-separation record. -/
+theorem derivativeMargin_eq_ofSquarefree {p : CoefficientPolynomial}
+    (squarefree : SquarefreeCertificate p) (ambient : Box) :
+    derivativeMargin squarefree ambient =
+      (Bezout.ofSquarefree squarefree ambient).margin := rfl
 
 /-- The squarefree residual threshold is positive. -/
 theorem derivativeThreshold_pos {p :
@@ -62,7 +75,7 @@ theorem derivativeThreshold_pos {p :
     (squarefree : SquarefreeCertificate p) (ambient :
       Box) :
     0 < derivativeThreshold squarefree ambient :=
-  (Dense.Gaussian.Derivative.Separation.Bezout.ofSquarefree squarefree ambient).threshold_pos
+  (Bezout.ofSquarefree squarefree ambient).threshold_pos
 
 /-- The derivative margin extracted from the squarefree Bézout certificate is positive. -/
 theorem derivativeMargin_pos {p :
@@ -70,7 +83,7 @@ theorem derivativeMargin_pos {p :
     (squarefree : SquarefreeCertificate p) (ambient :
       Box) :
     0 < derivativeMargin squarefree ambient :=
-  (Dense.Gaussian.Derivative.Separation.Bezout.ofSquarefree squarefree ambient).margin_pos
+  (Bezout.ofSquarefree squarefree ambient).margin_pos
 
 /-- The finite Bézout identity supplies a uniform positive lower bound for
 the derivative once the residual is below the left-coefficient threshold. -/
@@ -83,7 +96,7 @@ theorem derivativeMargin_le_of_small_residual
       derivativeThreshold squarefree ambient) :
     derivativeMargin squarefree ambient ≤
       Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.GCD.derivative p).eval z) :=
-  (Dense.Gaussian.Derivative.Separation.Bezout.ofSquarefree squarefree ambient).lower inside small
+  (Bezout.ofSquarefree squarefree ambient).lower inside small
 
 /-- The finite Bézout identity forces the derivative to be nonzero whenever
 the displayed residual is below the fixed threshold. -/

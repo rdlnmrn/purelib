@@ -40,12 +40,12 @@ open Purelib.RootIsolation
 
 public section
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face : Meshes.PuncturedGridFaces.RegularFace bank}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {face : Meshes.PuncturedGridFaces.RegularFace bank}
       {models
-    : Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames face}
+    : InverseModels.BranchCellBank.FaceModels frames face}
   {count : Nat} {points : Fin (count + 1) → Gaussian.Basic.Canonical}
 
 set_option genInjectivity false in
@@ -53,7 +53,7 @@ set_option genInjectivity false in
 
 The original indexed points retain their face containment and their clear
 segments. Every displayed segment remains inside the same face box. -/
-structure SideGeometry (models : Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames
+structure SideGeometry (models : InverseModels.BranchCellBank.FaceModels frames
   face) (points : Fin (count + 1) → Gaussian.Basic.Canonical) where
   /-- Every original indexed trace point lies in the retained face cell. -/ inside : ∀ vertex, face.cell.box.Contains
     (points vertex)
@@ -70,11 +70,11 @@ namespace SideGeometry
 
 The supplied containment and common imaginary coordinate certify each original segment. Both endpoint indices and the
 original face owner are retained. -/
-@[expose] def horizontal (models : Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels
+@[expose] def horizontal (models : InverseModels.BranchCellBank.FaceModels
   frames face) (points : Fin (count + 1) → Gaussian.Basic.Canonical)
     (inside : ∀ vertex, face.cell.box.Contains (points vertex))
     {height : Fraction.Rational} (heightEq : ∀ vertex, (points vertex).im = height) :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry models points :=
+      SideGeometry models points :=
   ⟨inside, fun first last =>
     SegmentPreparation.horizontalSegment models _ _ (inside
     first) (inside last)
@@ -89,11 +89,11 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.Side
 
 The supplied containment and common real coordinate certify each original segment. Both endpoint indices and the
 original face owner are retained. -/
-@[expose] def vertical (models : Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames
+@[expose] def vertical (models : InverseModels.BranchCellBank.FaceModels frames
   face) (points : Fin (count + 1) → Gaussian.Basic.Canonical)
     (inside : ∀ vertex, face.cell.box.Contains (points vertex))
     {horizontal : Fraction.Rational} (horizontalEq : ∀ vertex, (points vertex).re = horizontal) :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry models points :=
+      SideGeometry models points :=
   ⟨inside, fun first last =>
     SegmentPreparation.verticalSegment models _ _ (inside
     first) (inside last)
@@ -103,24 +103,24 @@ original face owner are retained. -/
       (inside first) (inside last)
       ((horizontalEq first).trans (horizontalEq last).symm)⟩
 
-variable {geometry : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry models points}
-  {sheet : Fin 2} {domain : Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain models sheet}
-  {left right : Hyperelliptic.Differentials.Basic.Differential genus} {tolerance : Fraction.Rational}
+variable {geometry : SideGeometry models points}
+  {sheet : Fin 2} {domain : Periods.PeriodDomain models sheet}
+  {left right : Differentials.Basic.Differential genus} {tolerance : Fraction.Rational}
 
 set_option genInjectivity false in
 /-- One original segment preparation and paired differential reference between retained trace indices.
 
 The original prepared segment retains its incoming root owner. Both
 differential references belong to that same segment and retained domain. -/
-structure PairRequest (geometry : Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry models points)
-  (domain : Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain models sheet)
-    (left right : Hyperelliptic.Differentials.Basic.Differential genus) (tolerance : Fraction.Rational) (first last :
+structure PairRequest (geometry : SideGeometry models points)
+  (domain : Periods.PeriodDomain models sheet)
+    (left right : Differentials.Basic.Differential genus) (tolerance : Fraction.Rational) (first last :
       Fin (count + 1)) where
   /-- The actual original segment preparation with its retained incoming root owner. -/ prepared :
     SegmentPreparation models sheet (geometry.segment first
     last)
   /-- Both original differential references on that exact retained segment and domain. -/ reference :
-    Hyperelliptic.Meshes.PuncturedGrid.NewtonPairedSegmentReferences.PairedReference prepared domain left right
+    NewtonPairedSegmentReferences.PairedReference prepared domain left right
     tolerance
 
 constructive_injectivity PairRequest
@@ -131,18 +131,18 @@ namespace PairRequest
 
 The supplied incoming root owner and geometric segment determine one cached preparation. Both original differential
 references use that same prepared segment and domain. -/
-@[expose] def build (geometry : Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry models points)
-  (domain : Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain models sheet)
-    (left right : Hyperelliptic.Differentials.Basic.Differential genus) (tolerance : Fraction.Rational) (positive : 0 <
+@[expose] def build (geometry : SideGeometry models points)
+  (domain : Periods.PeriodDomain models sheet)
+    (left right : Differentials.Basic.Differential genus) (tolerance : Fraction.Rational) (positive : 0 <
       tolerance)
-    (first last : Fin (count + 1)) (incoming : Hyperelliptic.Meshes.PuncturedGrid.Face.SegmentPreparation.ForwardOwner
+    (first last : Fin (count + 1)) (incoming : SegmentPreparation.ForwardOwner
       models sheet (points first)) :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.PairRequest geometry domain left right
+    PairRequest geometry domain left right
       tolerance first last :=
   let prepared := SegmentPreparation.ofOwner incoming
     (geometry.segment first last) (geometry.within first last)
     (geometry.inside first) (geometry.inside last)
-  ⟨prepared, Hyperelliptic.Meshes.PuncturedGrid.NewtonPairedSegmentReferences.PairedReference.build prepared domain left
+  ⟨prepared, NewtonPairedSegmentReferences.PairedReference.build prepared domain left
     right tolerance positive⟩
 
 end PairRequest
@@ -152,16 +152,16 @@ set_option genInjectivity false in
 
 Original prefix and adjacent-edge comparisons share their retained maximum
 stage. Their indexed owners and cached references are not replaced. -/
-structure Request (geometry : Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry models points)
-  (domain : Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain models sheet)
-    (left right : Hyperelliptic.Differentials.Basic.Differential genus) (tolerance : Fraction.Rational) where
+structure Request (geometry : SideGeometry models points)
+  (domain : Periods.PeriodDomain models sheet)
+    (left right : Differentials.Basic.Differential genus) (tolerance : Fraction.Rational) where
   /-- The original comparisons from the retained zero vertex to every indexed trace point. -/ prefixes :
-    Data.Vector.DependentVector (fun vertex =>
-    Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.PairRequest geometry domain left right
+    Vector.DependentVector (fun vertex =>
+    PairRequest geometry domain left right
     tolerance 0 vertex)
-  /-- The original comparisons along every retained adjacent indexed edge. -/ edges : Data.Vector.DependentVector (fun
+  /-- The original comparisons along every retained adjacent indexed edge. -/ edges : Vector.DependentVector (fun
     edge : Fin count =>
-    Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.PairRequest geometry domain left right
+    PairRequest geometry domain left right
       tolerance edge.castSucc edge.succ)
   /-- The shared sufficient original stage for all retained prefix and edge references. -/ index : Nat
   /-- Every original retained prefix reference is ready at the common stage. -/ prefixes_later : ∀ vertex, (prefixes.get
@@ -177,19 +177,19 @@ namespace Request
 
 The complete prefix and adjacent-edge banks cache the same original vertex owners. Their reference maxima determine one
 sufficient stage without replacing or reevaluating the comparisons. -/
-@[expose] def build (geometry : Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry models points)
-  (domain : Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain models sheet)
-    (left right : Hyperelliptic.Differentials.Basic.Differential genus) (tolerance : Fraction.Rational) (positive : 0 <
+@[expose] def build (geometry : SideGeometry models points)
+  (domain : Periods.PeriodDomain models sheet)
+    (left right : Differentials.Basic.Differential genus) (tolerance : Fraction.Rational) (positive : 0 <
       tolerance) :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.Request geometry domain left right tolerance :=
-  let owners := Data.Vector.DependentVector.ofFn fun vertex =>
-    Hyperelliptic.Meshes.PuncturedGrid.Face.SegmentPreparation.ForwardOwner.build models sheet (points vertex)
+    Request geometry domain left right tolerance :=
+  let owners := Vector.DependentVector.ofFn fun vertex =>
+    SegmentPreparation.ForwardOwner.build models sheet (points vertex)
     (geometry.inside vertex)
-  let prefixes := Data.Vector.DependentVector.ofFn fun vertex =>
-    Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.PairRequest.build geometry domain left right
+  let prefixes := Vector.DependentVector.ofFn fun vertex =>
+    PairRequest.build geometry domain left right
     tolerance positive 0 vertex (owners.get 0)
-  let edges := Data.Vector.DependentVector.ofFn fun edge : Fin count =>
-    Hyperelliptic.Meshes.PuncturedGrid.Face.SidePreparation.SideGeometry.PairRequest.build geometry domain left right
+  let edges := Vector.DependentVector.ofFn fun edge : Fin count =>
+    PairRequest.build geometry domain left right
       tolerance positive edge.castSucc edge.succ (owners.get edge.castSucc)
   let prefixIndex := prefixes.maximum (fun _ request => request.reference.index)
   let edgeIndex := edges.maximum (fun _ request => request.reference.index)

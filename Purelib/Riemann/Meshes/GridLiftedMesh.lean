@@ -75,18 +75,18 @@ private theorem triangleList_ofFn {count : Nat} : (triangles : List (OrientedTri
       exact congrArg (List.cons triangle) (triangleList_ofFn triangles)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid}
+  {frames : RootFrames bank.grid}
 
 open Purelib.RootIsolation in
 set_option genInjectivity false in
 /-- Both retained sheet lifts for each original regular face in list order.
 
 Each step keeps the original zero-sheet and one-sheet quadrilaterals and the exact tail of regular faces. -/
-inductive LiftedFaces (vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid) (edges :
-  SquareRoot.Grid.RootEdgeBank frames) :
+inductive LiftedFaces (vertices : VertexBank bank.grid) (edges :
+  RootEdgeBank frames) :
     List (RegularFace bank) → Type
   /-- The empty original regular-face list has no retained sheet lifts. -/ | nil : LiftedFaces vertices edges []
   /-- Retain both exact sheet lifts of the original head face and the lifted tail. -/ | cons {face : RegularFace bank}
@@ -103,8 +103,8 @@ variable {vertices : VertexBank bank.grid} {edges :
 
 open Purelib.RootIsolation in
 /-- Construct both original sheet lifts of each regular face in the retained list. -/
-@[expose] def build (vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid) (edges :
-  SquareRoot.Grid.RootEdgeBank frames) :
+@[expose] def build (vertices : VertexBank bank.grid) (edges :
+  RootEdgeBank frames) :
     (faces : List (RegularFace bank)) → LiftedFaces vertices edges faces
   | [] => .nil
   | face :: faces => .cons (LiftedFace.build vertices edges face 0) (LiftedFace.build vertices edges face 1) (build
@@ -125,8 +125,8 @@ open Purelib.RootIsolation in
 
 open Purelib.RootIsolation in
 /-- Concatenate the exact root-edge-bank lifts of both sheet boundary walks in original face order. -/
-@[expose] def actualBoundaries (vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid) (edges :
-  SquareRoot.Grid.RootEdgeBank frames) :
+@[expose] def actualBoundaries (vertices : VertexBank bank.grid) (edges :
+  RootEdgeBank frames) :
     List (RegularFace bank) → List (OrientedEdge vertices.count)
   | [] => []
   | face :: faces => edges.indexedEdges vertices face.boundary 0 ++ edges.indexedEdges vertices face.boundary 1 ++
@@ -148,7 +148,7 @@ open Purelib.Data.Rat in
 open Purelib.Integration.Energy in
 open Purelib.RootIsolation in
 /-- The coordinate area of a retained indexed triangle using the original vertex bank. -/
-@[expose] def triangleArea (vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid) (triangle : OrientedTriangle
+@[expose] def triangleArea (vertices : VertexBank bank.grid) (triangle : OrientedTriangle
   vertices.count) : Fraction.Rational :=
   AffineTriangle.coordinateTriangleArea (vertices.coordinate triangle.first)
     (vertices.coordinate triangle.second) (vertices.coordinate triangle.third)
@@ -156,7 +156,7 @@ open Purelib.RootIsolation in
 open Purelib.Data.Rat in
 open Purelib.RootIsolation in
 /-- Sum coordinate areas in the original retained triangle-list order. -/
-@[expose] def areaSum (vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid) : List (OrientedTriangle
+@[expose] def areaSum (vertices : VertexBank bank.grid) : List (OrientedTriangle
   vertices.count) → Fraction.Rational
   | [] => 0
   | triangle :: triangles => triangleArea vertices triangle + areaSum vertices triangles
@@ -164,9 +164,9 @@ open Purelib.RootIsolation in
 open Purelib.Algebra in
 open Purelib.RootIsolation in
 /-- The original triangle-list area sum equals its exact bounded-index finite sum. -/
-theorem areaSum_eq_sumFin (vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid) (triangles : List
+theorem areaSum_eq_sumFin (vertices : VertexBank bank.grid) (triangles : List
   (OrientedTriangle vertices.count)) :
-    areaSum vertices triangles = FiniteSum.Fin.sumFin (fun index : Fin triangles.length => triangleArea vertices
+    areaSum vertices triangles = sumFin (fun index : Fin triangles.length => triangleArea vertices
       triangles[index.val]) := by
   induction triangles with
   | nil => rfl
@@ -188,8 +188,8 @@ theorem area_eq : {faces : List (RegularFace bank)} → (lifts : LiftedFaces ver
   | _, .nil => by change (0 : Fraction.Rational) = 2 * 0; ring1
   | _, .cons zero one tail => by
       simp only [triangles, areaSum, triangleArea,
-        Topology.Mesh.IndexedQuadrilaterals.IndexedQuadrilateral.firstTriangle,
-        Topology.Mesh.IndexedQuadrilaterals.IndexedQuadrilateral.secondTriangle]
+        firstTriangle,
+        secondTriangle]
       rw [zero.firstTriangle_area, zero.secondTriangle_area, one.firstTriangle_area, one.secondTriangle_area,
         tail.area_eq]
       have halves (area : Fraction.Rational) : area / 2 + area / 2 = area := by
@@ -238,8 +238,8 @@ theorem triangleEdges_area (primitive : Fin vertices.count → PrimitivePoint) :
       have oneArea := one.wedge_eq_boundary primitive
       rw [← triangleBoundaryArea_eq_wedgeArea, ← triangleBoundaryArea_eq_wedgeArea] at zeroArea oneArea
       simp only [triangles, Flatten.flatMap_cons, OrientedTriangle.boundary,
-        Topology.Mesh.IndexedQuadrilaterals.IndexedQuadrilateral.firstTriangle,
-        Topology.Mesh.IndexedQuadrilaterals.IndexedQuadrilateral.secondTriangle, List.cons_append, List.nil_append,
+        firstTriangle,
+        secondTriangle, List.cons_append, List.nil_append,
           edgeListArea] at zeroArea oneArea ⊢
       change _ = edgeListArea primitive (edges.indexedEdges vertices _ 0 ++ edges.indexedEdges vertices _ 1 ++ _)
       rw [edgeListArea_append, edgeListArea_append]
@@ -260,8 +260,8 @@ set_option genInjectivity false in
 
 The triangulation is indexed by the stored list length, and its face equation preserves the original triangle at every
 bounded index. -/
-structure LiftedMesh (vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid) (edges :
-  SquareRoot.Grid.RootEdgeBank frames) (faces : PuncturedFaces bank) where
+structure LiftedMesh (vertices : VertexBank bank.grid) (edges :
+  RootEdgeBank frames) (faces : PuncturedFaces bank) where
   /-- Both retained original sheet lifts of the exact regular-face list. -/ lifts : LiftedFaces vertices edges
     faces.regulars
   /-- The cached original ordered lifted triangle list. -/ triangles : List (OrientedTriangle vertices.count)
@@ -291,12 +291,12 @@ A vector of the stored triangles drives triangulation, while the area cache reta
 original regular cells. -/
 @[expose] def ofLifts (lifts : LiftedFaces vertices edges faces.regulars) : LiftedMesh vertices edges faces :=
   let triangles := lifts.triangles
-  let indexed := Vector.Basic.vectorOfFn fun index : Fin triangles.length => triangles[index.val]
+  let indexed := vectorOfFn fun index : Fin triangles.length => triangles[index.val]
   { lifts := lifts
     triangles := triangles
     triangles_eq := rfl
-    triangulation := Topology.Mesh.EdgeCancellation.triangulateFaces indexed
-    faces_eq := fun index => Vector.Basic.vectorOfFn_apply _ index
+    triangulation := triangulateFaces indexed
+    faces_eq := fun index => vectorOfFn_apply _ index
     area := 2 * PreparedBoxPartitions.sumCells Box.Content.boxContent (faces.regulars.map fun face => face.cell.box)
     area_eq := rfl }
 
@@ -305,8 +305,8 @@ open Purelib.RootIsolation in
 
 The original vertex bank, root-edge bank and punctured-face owner are preserved through the exact lifted-face
 construction. -/
-@[expose] def build (vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid) (edges :
-  SquareRoot.Grid.RootEdgeBank frames) (faces : PuncturedFaces bank) :
+@[expose] def build (vertices : VertexBank bank.grid) (edges :
+  RootEdgeBank frames) (faces : PuncturedFaces bank) :
     LiftedMesh vertices edges faces :=
   ofLifts (LiftedFaces.build vertices edges faces.regulars)
 
@@ -326,10 +326,10 @@ theorem face_positive (mesh : LiftedMesh vertices edges faces) (index : Fin mesh
 open Purelib.Algebra in
 /-- The original indexed triangulation area sum equals the retained doubled-cell-area cache. -/
 theorem areaSum_eq (mesh : LiftedMesh vertices edges faces) :
-    FiniteSum.Fin.sumFin (fun index => LiftedFaces.triangleArea vertices (mesh.triangulation.faces index)) = mesh.area
+    sumFin (fun index => LiftedFaces.triangleArea vertices (mesh.triangulation.faces index)) = mesh.area
       := by
   calc
-    _ = FiniteSum.Fin.sumFin (fun index : Fin mesh.triangles.length => LiftedFaces.triangleArea vertices
+    _ = sumFin (fun index : Fin mesh.triangles.length => LiftedFaces.triangleArea vertices
       mesh.triangles[index.val]) :=
       FiniteSum.Fin.sumFin_congr (fun index => congrArg (LiftedFaces.triangleArea vertices) (mesh.faces_eq index))
     _ = LiftedFaces.areaSum vertices mesh.triangles := (LiftedFaces.areaSum_eq_sumFin _ _).symm

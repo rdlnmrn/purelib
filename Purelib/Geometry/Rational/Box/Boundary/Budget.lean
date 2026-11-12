@@ -13,6 +13,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Protected-boundary scalar thresholds
 
@@ -42,8 +44,8 @@ public theorem protectedBoundaryScale_pos :
   unfold protectedBoundaryScale
   have eightPositive : (0 : Fraction.Rational) < 8 :=
     Fraction.Cast.Order.natCast_pos_direct (by decide)
-  exact Fraction.Order.Arithmetic.mul_pos_direct
-    (Fraction.Order.Arithmetic.mul_pos_direct eightPositive eightPositive)
+  exact Arithmetic.mul_pos_direct
+    (Arithmetic.mul_pos_direct eightPositive eightPositive)
     eightPositive
 
 /-- The radius threshold determined by a box, clearance and Lipschitz value.
@@ -69,19 +71,19 @@ public theorem predictedProtectedRadiusData_pos
     0 < predictedProtectedRadiusData ambient clearanceBound lipschitz := by
   have scalePositive : 0 < protectedBoundaryScale := by
     unfold protectedBoundaryScale
-    exact Fraction.Order.Arithmetic.mul_pos_direct
-      (Fraction.Order.Arithmetic.mul_pos_direct (by decide) (by decide))
+    exact Arithmetic.mul_pos_direct
+      (Arithmetic.mul_pos_direct (by decide) (by decide))
       (by decide)
-  exact Fraction.Order.Basic.lt_min
-    (Fraction.Order.Field.div_pos_direct (by decide) scalePositive)
-    (Fraction.Order.Basic.lt_min
-      (Fraction.Order.Field.div_pos_direct clearancePositive
-        (Fraction.Order.Arithmetic.mul_pos_direct
+  exact Basic.lt_min
+    (Field.div_pos_direct (by decide) scalePositive)
+    (Basic.lt_min
+      (Field.div_pos_direct clearancePositive
+        (Arithmetic.mul_pos_direct
           (by decide) lipschitzPositive))
-      (Fraction.Order.Basic.lt_min
-        (Fraction.Order.Field.div_pos_direct
-          (Fraction.Order.Arithmetic.sub_pos_direct proper.1) (by decide))
-        (Fraction.Order.Field.div_pos_direct
-          (Fraction.Order.Arithmetic.sub_pos_direct proper.2) (by decide))))
+      (Basic.lt_min
+        (Field.div_pos_direct
+          (Arithmetic.sub_pos_direct proper.1) (by decide))
+        (Field.div_pos_direct
+          (Arithmetic.sub_pos_direct proper.2) (by decide))))
 
 end Purelib.Geometry.Rational.Box.Boundary.Budget

@@ -13,6 +13,8 @@ import Purelib.Data.List.Nodup
 import Purelib.LinearAlgebra.Coordinates2.Invertible
 import Purelib.LinearAlgebra.Coordinates3.Vector
 
+open Purelib.Geometry.Projective.Matrix
+
 /-!
 # Finite Lorentz rotation enumeration
 
@@ -47,14 +49,14 @@ original finite list order is retained, and each output is the original
 Lorentz Clifford action of its decoded non-null matrix.
 -/
 @[expose] def finiteRotations : List (Form.lorentz oneNonzero).SpecialOrthogonal :=
-  (Matrix.Finite.representatives presentation split).map (matrixRotation oneNonzero presentation.twoNonzero)
+  (Finite.representatives presentation split).map (matrixRotation oneNonzero presentation.twoNonzero)
 
 /-- The transported finite Lorentz rotation list contains no duplicate rotations. -/
 theorem finiteRotations_nodup : (finiteRotations oneNonzero presentation split).Nodup := by
   apply Pairwise.pairwise_map.mpr
-  apply List.Pairwise.imp_of_mem _ (Matrix.Finite.representatives_nodup presentation split)
+  apply List.Pairwise.imp_of_mem _ (Finite.representatives_nodup presentation split)
   intro left right leftMember rightMember distinct equal
-  exact distinct (Matrix.Finite.eq_of_equivalent presentation split leftMember rightMember
+  exact distinct (Finite.eq_of_equivalent presentation split leftMember rightMember
     ((matrixRotation_eq_iff_equivalent oneNonzero presentation.twoNonzero left right).mp equal))
 
 /-- Every displayed Lorentz rotation occurs in the transported finite list.
@@ -67,14 +69,14 @@ theorem finiteRotations_complete (value : (Form.lorentz oneNonzero).SpecialOrtho
     value ∈ finiteRotations oneNonzero presentation split := by
   letI : DecidableEq K := presentation.eqDecidable
   let representative := rotationMatrixRepresentative oneNonzero presentation.twoNonzero value
-  let normalized := Matrix.Finite.normalize presentation split representative
+  let normalized := Finite.normalize presentation split representative
   apply Map.mem_map.mpr
-  refine ⟨normalized, Matrix.Finite.normalize_mem presentation split representative, ?_⟩
+  refine ⟨normalized, Finite.normalize_mem presentation split representative, ?_⟩
   calc
     matrixRotation oneNonzero presentation.twoNonzero normalized =
         matrixRotation oneNonzero presentation.twoNonzero representative :=
       (matrixRotation_eq_iff_equivalent oneNonzero presentation.twoNonzero normalized representative).mpr
-        (Matrix.Finite.equivalent_normalize presentation split representative).symm
+        (Finite.equivalent_normalize presentation split representative).symm
     _ = value := matrixRotation_rotationMatrixRepresentative oneNonzero presentation.twoNonzero value
 
 /-- The complete duplicate-free Lorentz rotation list has order `q(q²-1)`.
@@ -86,7 +88,7 @@ count for the displayed odd finite field and original Lorentz form.
 theorem finiteRotations_length :
     (finiteRotations oneNonzero presentation split).length = presentation.carrier.length *
       (presentation.carrier.length * presentation.carrier.length - 1) :=
-  (Map.length_map _ _).trans (Matrix.Finite.representatives_length presentation split)
+  (Map.length_map _ _).trans (Finite.representatives_length presentation split)
 
 /-- Decode the canonical singular matrices into original null Lorentz dihedrons.
 
@@ -95,13 +97,13 @@ class. Each original matrix is decoded by its retained half-sums and
 differences, with the same time-first Lorentz form owner.
 -/
 @[expose] def finiteNullProportions : List (Form.lorentz oneNonzero).EvenClifford :=
-  (Geometry.Projective.Matrix.Finite.singularRepresentatives presentation).map (Matrix.fromMatrix oneNonzero)
+  (Finite.singularRepresentatives presentation).map (Matrix.fromMatrix oneNonzero)
 
 /-- The listed null dihedrons have exactly `(q+1)²` distinct representatives. -/
 theorem finiteNullProportions_length :
     (finiteNullProportions oneNonzero presentation).length =
       (presentation.carrier.length + 1) * (presentation.carrier.length + 1) :=
-  (Map.length_map _ _).trans (Geometry.Projective.Matrix.Finite.singularRepresentatives_length presentation)
+  (Map.length_map _ _).trans (Finite.singularRepresentatives_length presentation)
 
 /-- The null-dihedron chart list has no repeated original Clifford records. -/
 theorem finiteNullProportions_nodup : (finiteNullProportions oneNonzero presentation).Nodup := by
@@ -113,7 +115,7 @@ theorem finiteNullProportions_nodup : (finiteNullProportions oneNonzero presenta
       _ = Matrix.toMatrix oneNonzero (Matrix.fromMatrix oneNonzero right) :=
         congrArg (Matrix.toMatrix oneNonzero) equal
       _ = right := Matrix.toMatrix_fromMatrix oneNonzero presentation.twoNonzero right
-  · exact Geometry.Projective.Matrix.Finite.singularRepresentatives_nodup presentation
+  · exact Finite.singularRepresentatives_nodup presentation
 
 /-- Every listed null proportion is nonzero and has zero original Clifford norm.
 
@@ -126,7 +128,7 @@ theorem finiteNullProportions_nonzero_null {value : (Form.lorentz oneNonzero).Ev
     value ≠ ⟨0, Vector3.zero⟩ ∧ EvenClifford.norm value = 0 := by
   letI : DecidableEq K := presentation.eqDecidable
   rcases Map.mem_map.mp member with ⟨matrix, matrixMember, equal⟩
-  have properties := Geometry.Projective.Matrix.Finite.singularRepresentatives_nonzero_singular
+  have properties := Finite.singularRepresentatives_nonzero_singular
     presentation matrixMember
   have readback : Matrix.toMatrix oneNonzero value = matrix :=
     (congrArg (Matrix.toMatrix oneNonzero) equal.symm).trans
@@ -160,7 +162,7 @@ recovery to the same original Lorentz Clifford parent.
       representative ∈ finiteNullProportions oneNonzero presentation ∧
       representative = EvenClifford.scale factor value := by
   letI : DecidableEq K := presentation.eqDecidable
-  let normalized := Geometry.Projective.Matrix.Finite.singularNormalize presentation
+  let normalized := Finite.singularNormalize presentation
     (Matrix.toMatrix oneNonzero value)
     (Matrix.toMatrix_nonzero oneNonzero presentation.twoNonzero value nonzero)
     ((Matrix.determinant_toMatrix oneNonzero value).trans null)
@@ -188,7 +190,7 @@ theorem finiteNullProportions_eq_of_scale {left right : (Form.lorentz oneNonzero
   have rightReadback : Matrix.toMatrix oneNonzero right = rightMatrix :=
     (congrArg (Matrix.toMatrix oneNonzero) rightEqual.symm).trans
       (Matrix.toMatrix_fromMatrix oneNonzero presentation.twoNonzero rightMatrix)
-  have matricesEqual := Geometry.Projective.Matrix.Finite.singularRepresentatives_eq_of_scale
+  have matricesEqual := Finite.singularRepresentatives_eq_of_scale
     presentation leftMatrixMember rightMatrixMember factor nonzero (by
       calc
         rightMatrix = Matrix.toMatrix oneNonzero right := rightReadback.symm

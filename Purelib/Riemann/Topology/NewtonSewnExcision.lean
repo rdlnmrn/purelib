@@ -42,6 +42,8 @@ import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Integration.Surface.Sewn.Selection.Basic
+
 public section
 
 /-!
@@ -69,11 +71,11 @@ open Purelib.Riemann.Meshes (LiftedPuncturedGrid)
 open Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank (NewtonPreparation NewtonGrid)
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.AllHoles.Excision (AnnularEntry)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : NewtonPreparation original} {target radius : Purelib.Data.Rat.Fraction.Rational}
+  {preparation : NewtonPreparation original} {target radius : Data.Rat.Fraction.Rational}
   {grid : NewtonGrid preparation target radius} {lifted : LiftedPuncturedGrid grid.punctured}
 
 namespace AllHoleExcision
@@ -93,11 +95,11 @@ theorem sourcePosition_triangleIndex (lifted : LiftedPuncturedGrid grid.puncture
   have := sheet.isLt
   cases upper with
   | false =>
-      dsimp only [sourcePosition, LiftedMesh.triangleIndex]
+      dsimp only [sourcePosition, triangleIndex]
       rw [if_neg (show ¬ (false = true) from fun impossible => nomatch impossible)]
       omega0
   | true =>
-      dsimp only [sourcePosition, LiftedMesh.triangleIndex]
+      dsimp only [sourcePosition, triangleIndex]
       rw [if_pos rfl]
       omega0
 
@@ -108,12 +110,12 @@ theorem sourcePosition_triangleIndex (lifted : LiftedPuncturedGrid grid.puncture
 section
 open Purelib.Curves.Hyperelliptic
 /-- Whether the original source face lies in the retained annular entry's selected region. -/
-@[expose] def sourceMask (entry : Meshes.Newton.AllHoles.Excision.AnnularEntry grid lifted) (source : Fin
+@[expose] def sourceMask (entry : AnnularEntry grid lifted) (source : Fin
   lifted.mesh.triangles.length) : Bool :=
   entry.keep (sourceFace lifted source)
 
 /-- The retained source-triangle mask equals its original face predicate at the exact face index. -/
-theorem sourceMask_triangleIndex (entry : Meshes.Newton.AllHoles.Excision.AnnularEntry grid lifted)
+theorem sourceMask_triangleIndex (entry : AnnularEntry grid lifted)
     (position : Fin grid.faces.regulars.length) (sheet : Fin 2) (upper : Bool) :
     sourceMask entry (lifted.mesh.triangleIndex position sheet upper) = entry.keep grid.faces.regulars[position.val] :=
       by
@@ -123,7 +125,7 @@ theorem sourceMask_triangleIndex (entry : Meshes.Newton.AllHoles.Excision.Annula
 end
 
 variable {localValues : Fin lifted.mesh.triangles.length →
-  Purelib.Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues 3}
+  PrimitiveValues 3}
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Integration in
@@ -132,10 +134,10 @@ set_option genInjectivity false in
 /-- An original annular excision entry together with its retained selection from a sewn primitive sample.
 
 The selection mask is defined by the exact original source face of each retained sewn triangle. -/
-structure SewnAnnulus (sample : Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch localValues) where
-  /-- The original retained annular excision entry. -/ source : Meshes.Newton.AllHoles.Excision.AnnularEntry grid lifted
+structure SewnAnnulus (sample : CachedSample lifted.cutPolygon.patch localValues) where
+  /-- The original retained annular excision entry. -/ source : AnnularEntry grid lifted
   /-- The retained original sewn-face selection using the entry's exact source mask. -/ selected :
-    Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection
+    SewnPrimitiveFaces.CachedSample.FaceSelection
     sample (sourceMask source)
 
 constructive_injectivity SewnAnnulus
@@ -146,17 +148,17 @@ open Purelib.Curves.Hyperelliptic in
 open Purelib.Integration in
 open Purelib.Topology.Surface in
 /-- Select the original annulus's sewn primitive faces using its exact retained source-face mask. -/
-@[expose] def build (sample : Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch localValues) (source :
-  Meshes.Newton.AllHoles.Excision.AnnularEntry grid lifted) :
+@[expose] def build (sample : CachedSample lifted.cutPolygon.patch localValues) (source :
+  AnnularEntry grid lifted) :
     SewnAnnulus sample := ⟨source,
-      Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection.build
+      SewnPrimitiveFaces.CachedSample.FaceSelection.build
         sample (sourceMask source)⟩
 
 open Purelib.Topology.Surface in
 /-- Every selected sewn trace originates from a face of the retained original annulus. -/
-theorem source_face_mem {sample : Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch localValues} (annulus
+theorem source_face_mem {sample : CachedSample lifted.cutPolygon.patch localValues} (annulus
   : SewnAnnulus sample)
-    (trace : Sewing.SewnPrimitiveFaces.FaceTrace localValues sample.sewn.values) (member : trace ∈
+    (trace : FaceTrace localValues sample.sewn.values) (member : trace ∈
       annulus.selected.traces) :
     sourceFace lifted trace.source ∈ annulus.source.annulus.faces := by
   rw [annulus.source.annulus.faces_eq]
@@ -174,24 +176,24 @@ set_option genInjectivity false in
 
 The annulus list maps exactly to the original excision entries, and the remainder uses the complement of their original
 source masks. -/
-structure Sewn (excision : Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted) (sample :
-  Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch localValues) where
+structure Sewn (excision : AllHoleExcision grid lifted) (sample :
+  CachedSample lifted.cutPolygon.patch localValues) where
   /-- The ordered retained sewn selections of the original annular entries. -/ annuli : List (SewnAnnulus sample)
   /-- The stored annuli project to exactly the original excision entry list. -/ sources_eq : annuli.map
     SewnAnnulus.source = excision.entries
   /-- The retained original sample faces outside all annular source masks. -/ remaining :
-    Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection
+    SewnPrimitiveFaces.CachedSample.FaceSelection
     sample (fun index => !(excision.entries.any (fun entry => sourceMask entry index)))
   /-- The cached Gaussian area sum of the retained annular selections. -/ annularArea : Basic.Canonical
   /-- The annular area cache equals the exact stored annulus area sum. -/ annularArea_eq : annularArea =
-    Geometry.Grid.CellBoundary.sumValues (fun annulus => annulus.selected.area) annuli
+    sumValues (fun annulus => annulus.selected.area) annuli
 
 constructive_injectivity Sewn
 
 namespace Sewn
 
-variable {excision : Purelib.Curves.Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted} {sample :
-  Purelib.Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch localValues}
+variable {excision : AllHoleExcision grid lifted} {sample :
+  CachedSample lifted.cutPolygon.patch localValues}
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Integration in
@@ -201,8 +203,8 @@ open Purelib.Topology.Surface in
 
 The original entry order determines the stored annuli and cached area sum; the complement mask retains all other
 original sample traces. -/
-@[expose] def build (excision : Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted) (sample :
-  Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch localValues) :
+@[expose] def build (excision : AllHoleExcision grid lifted) (sample :
+  CachedSample lifted.cutPolygon.patch localValues) :
     Sewn excision sample :=
   let annuli := excision.entries.map (SewnAnnulus.build sample)
   { annuli := annuli
@@ -211,9 +213,9 @@ original sample traces. -/
       induction excision.entries with
       | nil => rfl
       | cons entry tail ih => exact congrArg (List.cons entry) ih
-    remaining := Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection.build
+    remaining := SewnPrimitiveFaces.CachedSample.FaceSelection.build
       sample (fun index => !(excision.entries.any (fun entry => sourceMask entry index)))
-    annularArea := Geometry.Grid.CellBoundary.sumValues (fun annulus => annulus.selected.area) annuli
+    annularArea := sumValues (fun annulus => annulus.selected.area) annuli
     annularArea_eq := rfl }
 
 /-- A Boolean search over an original mapped list equals the search using the composed test. -/
@@ -239,15 +241,15 @@ theorem partition (sewn : Sewn excision sample) :
   have masks : sewn.annuli.Pairwise (fun first second => ∀ index,
       sourceMask first.source index = true → sourceMask second.source index = true → False) :=
     disjoint.imp (fun separated index => separated (sourceFace lifted index))
-  let remaining : Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection
+  let remaining : SewnPrimitiveFaces.CachedSample.FaceSelection
       sample (fun index => !(sewn.annuli.any (fun annulus => sourceMask annulus.source index))) :=
     { traces := sewn.remaining.traces
       traces_eq := sewn.remaining.traces_eq.trans
-        (Purelib.Data.List.Filter.filter_congr (Item := Sewing.SewnPrimitiveFaces.FaceTrace localValues
+        (Filter.filter_congr (Item := FaceTrace localValues
           sample.sewn.values) _ _ (fun trace => congrArg Bool.not
-          ((congrArg (fun entries : List (Meshes.Newton.AllHoles.Excision.AnnularEntry grid lifted) =>
+          ((congrArg (fun entries : List (AnnularEntry grid lifted) =>
             entries.any (fun entry => sourceMask entry trace.source)) sewn.sources_eq.symm).trans
-              (any_map (Item := SewnAnnulus sample) (Label := Meshes.Newton.AllHoles.Excision.AnnularEntry grid lifted)
+              (any_map (Item := SewnAnnulus sample) (Label := AnnularEntry grid lifted)
                 (fun annulus : SewnAnnulus sample => annulus.source)
                 (fun entry => sourceMask entry trace.source) sewn.annuli))) sample.faces.entries)
       triangles := sewn.remaining.triangles
@@ -255,7 +257,7 @@ theorem partition (sewn : Sewn excision sample) :
       area := sewn.remaining.area
       area_eq := sewn.remaining.area_eq }
   exact (congrArg (fun value => value + sewn.remaining.area) sewn.annularArea_eq).trans
-    (Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection.family_partition
+    (SewnPrimitiveFaces.CachedSample.FaceSelection.family_partition
       sewn.annuli (fun annulus => sourceMask annulus.source)
       masks (fun annulus => annulus.selected) remaining)
 
@@ -268,7 +270,7 @@ theorem remaining_area (sewn : Sewn excision sample) :
 open Purelib.Integration in
 /-- Package the original retained remainder and annular area as an exact sewn area-excision certificate. -/
 @[expose] def areaExcision (sewn : Sewn excision sample) :
-    Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.AreaExcision sample :=
+    SewnPrimitiveFaces.CachedSample.AreaExcision sample :=
   ⟨_, sewn.remaining, sewn.annularArea, sewn.partition⟩
 
 open Purelib.Data.Gaussian in
@@ -278,7 +280,7 @@ open Purelib.Topology.Surface in
 The original annular membership masks would force that point into one of the excluded bands, so every such mask is
 false. -/
 theorem trace_survives (sewn : Sewn excision sample)
-    (trace : Sewing.SewnPrimitiveFaces.FaceTrace localValues sample.sewn.values) (member : trace ∈ sample.faces.entries)
+    (trace : FaceTrace localValues sample.sewn.values) (member : trace ∈ sample.faces.entries)
     (point : Basic.Canonical) (inside : (sourceFace lifted trace.source).cell.box.Contains point)
     (outside : ∀ index, ¬(grid.bands.box index).Contains point) : trace ∈ sewn.remaining.traces := by
   rw [sewn.remaining.traces_eq]

@@ -117,6 +117,36 @@ inductive PointResolution
 
 constructive_injectivity PointResolution
 
+namespace PointResolution
+
+/-- Read the retained state after a point resolution, keeping the original current state for an exact-root outcome. -/
+@[expose] def nextState {p : CoefficientPolynomial} {ambient : Box} {point : Gaussian.Basic.Canonical}
+    (current : State p ambient) : PointResolution current point → State p ambient
+  | .exact _ => current
+  | .excluded next _ _ _ => next
+
+end PointResolution
+
+/-- Resolve a nonroot using the retained output of its original point-exclusion refinement.
+
+The current state, raw word and actual numerical refinement are preserved.
+The constructor transports the original exclusion laws and performs no
+track callback or polynomial evaluation.
+-/
+@[expose] def ofRefinement {p : CoefficientPolynomial} {ambient : Box}
+    (degreePositive : 0 < p.natDegree) (track : Track.Basic.WindingOneTrack p ambient)
+    (current : State p ambient) (point : Gaussian.Basic.Canonical) (nonroot : p.eval point ≠ 0)
+    (numerical : State.WindingOne.Basic.WindingOneState p ambient)
+    (numericalEq : numerical = Track.Exclusion.Point.refinePastPoint track current.numerical point nonroot) :
+    PointResolution current point := by
+  have nested : numerical.box.Refines current.numerical.box := by
+    rewrite [numericalEq]
+    exact Track.Exclusion.Point.refinePastPoint_refines track current.numerical point nonroot
+  exact .excluded (current.refine numerical nested) nested rfl (by
+    change ¬numerical.box.Contains point
+    rewrite [numericalEq]
+    exact Track.Exclusion.Point.refinePastPoint_excludes degreePositive track current.numerical point nonroot)
+
 /-- Decide a fixed candidate.  A nonroot is excluded by one
 coefficient-computed track refinement; an already-outside exact root needs no
 refinement. -/
@@ -136,13 +166,20 @@ refinement. -/
     let numerical :=
       Track.Exclusion.Point.refinePastPoint
         track current.numerical point root
-    let boxRefines :=
-      Track.Exclusion.Point.refinePastPoint_refines
-        track current.numerical point root
-    let state := current.refine numerical boxRefines
-    exact .excluded state boxRefines rfl
-      (Track.Exclusion.Point.refinePastPoint_excludes
-        degreePositive track current.numerical point root)
+    exact ofRefinement degreePositive track current point root numerical rfl
+
+/-- Retaining the original nonroot refinement output gives exactly the original fixed-point resolution. -/
+theorem ofRefinement_eq_resolvePoint {p : CoefficientPolynomial} {ambient : Box}
+    (degreePositive : 0 < p.natDegree) (track : Track.Basic.WindingOneTrack p ambient)
+    (current : State p ambient) (point : Gaussian.Basic.Canonical) (nonroot : p.eval point ≠ 0)
+    (numerical : State.WindingOne.Basic.WindingOneState p ambient)
+    (numericalEq : numerical = Track.Exclusion.Point.refinePastPoint track current.numerical point nonroot) :
+    ofRefinement degreePositive track current point nonroot numerical numericalEq =
+      resolvePoint degreePositive track current point := by
+  cases numericalEq
+  unfold resolvePoint
+  rewrite [dif_neg nonroot]
+  rfl
 end Purelib.RootIsolation.CCL.Persistent.Terminal.Point
 
 end

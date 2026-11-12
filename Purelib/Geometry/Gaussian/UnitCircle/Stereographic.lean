@@ -17,6 +17,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -45,7 +47,7 @@ open Purelib.Data.Gaussian
 
 /-- The real Gaussian denominator `t² + 1` of the stereographic chart. -/
 def unitCircleDenominator (parameter : Fraction.Rational) :
-  Data.Gaussian.Basic.Canonical :=
+  Basic.Canonical :=
   ⟨parameter ^ 2 + 1, 0⟩
 end Purelib.Geometry.Gaussian.UnitCircle.Stereographic
 
@@ -76,11 +78,11 @@ open Purelib.Data.Gaussian
 /-- The stereographic denominator has squared norm `(t² + 1)²`. -/
 private theorem unitCircleDenominator_normSq (parameter :
   Fraction.Rational) :
-    Data.Gaussian.Norm.Basic.normSq (unitCircleDenominator
+    Norm.Basic.normSq (unitCircleDenominator
       parameter) =
       (parameter ^ 2 + 1) ^ 2 := by
   dsimp only [unitCircleDenominator,
-    Data.Gaussian.Norm.Basic.normSq]
+    Norm.Basic.normSq]
   ring1
 end Purelib.Geometry.Gaussian.UnitCircle.Stereographic
 
@@ -112,7 +114,7 @@ open Purelib.Data.Gaussian
 
 /-- The Gaussian stereographic numerator `(1 - t²) + 2ti`. -/
 def unitCircleDirection (parameter : Fraction.Rational) :
-  Data.Gaussian.Basic.Canonical :=
+  Basic.Canonical :=
   ⟨1 - parameter ^ 2, 2 * parameter⟩
 end Purelib.Geometry.Gaussian.UnitCircle.Stereographic
 
@@ -143,16 +145,16 @@ open Purelib.Data.Gaussian
 /-- The cleared difference of two stereographic numerators has squared norm `4(s-t)²(s²+1)(t²+1)`. -/
 private theorem unitCircleCrossDifference_normSq
     (source target : Fraction.Rational) :
-    Data.Gaussian.Norm.Basic.normSq (unitCircleDirection source *
+    Norm.Basic.normSq (unitCircleDirection source *
       unitCircleDenominator target -
       unitCircleDirection target *
         unitCircleDenominator source) =
       4 * (source - target) ^ 2 *
         ((source ^ 2 + 1) * (target ^ 2 + 1)) := by
   dsimp only [unitCircleDirection,
-    unitCircleDenominator, Data.Gaussian.Norm.Basic.normSq,
-    Data.Gaussian.Basic.mul_re,
-    Data.Gaussian.Basic.mul_im, Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im]
+    unitCircleDenominator, Norm.Basic.normSq,
+    Basic.mul_re,
+    Basic.mul_im, Basic.sub_re, Basic.sub_im]
   ring1
 end Purelib.Geometry.Gaussian.UnitCircle.Stereographic
 
@@ -183,17 +185,17 @@ open Purelib.Data.Gaussian
 /-- The stereographic numerator has squared norm `(t² + 1)²`. -/
 private theorem unitCircleDirection_normSq (parameter :
   Fraction.Rational) :
-    Data.Gaussian.Norm.Basic.normSq (unitCircleDirection parameter)
+    Norm.Basic.normSq (unitCircleDirection parameter)
       =
       (parameter ^ 2 + 1) ^ 2 := by
-  dsimp only [unitCircleDirection, Data.Gaussian.Norm.Basic.normSq]
+  dsimp only [unitCircleDirection, Norm.Basic.normSq]
   ring1
 end Purelib.Geometry.Gaussian.UnitCircle.Stereographic
 
 end
 
 section
-@[expose] public section
+public section
 
 /-!
 # Finite monodromy for `Z^d - w`
@@ -215,13 +217,13 @@ open Purelib.Algebra.Polynomial.DensePolynomial
 open Purelib.Data.Gaussian
 
 /-- The rational stereographic scalar denominator `t² + 1` is positive. -/
-private theorem unitCircleScalar_pos (parameter :
+theorem unitCircleScalar_pos (parameter :
   Fraction.Rational) :
     0 < parameter ^ 2 + 1 := by
   exact lt_of_le_of_lt
-    (Fraction.Order.Arithmetic.sq_nonneg_direct parameter)
+    (Arithmetic.sq_nonneg_direct parameter)
     (by
-      have shifted := Fraction.Order.Arithmetic.add_lt_add_left_direct
+      have shifted := Arithmetic.add_lt_add_left_direct
         (show (0 : Fraction.Rational) < 1 by decide) (parameter ^ 2)
       calc
         parameter ^ 2 = parameter ^ 2 + 0 := by ring1
@@ -257,7 +259,7 @@ private theorem unitCircleDenominator_nonzero (parameter :
   Fraction.Rational) :
     unitCircleDenominator parameter ≠ 0 := by
   intro zero
-  have realZero := congrArg Data.Gaussian.Basic.re zero
+  have realZero := congrArg Basic.re zero
   change parameter ^ 2 + 1 = 0 at realZero
   have positive := unitCircleScalar_pos parameter
   rw [realZero] at positive
@@ -290,9 +292,9 @@ open Purelib.Data.Gaussian
 
 /-- Primary rational stereographic quarter-circle chart, from `1` at parameter zero to `i` at parameter one. -/
 def unitQuarterPoint (parameter : Fraction.Rational) :
-  Data.Gaussian.Basic.Canonical :=
+  Basic.Canonical :=
   unitCircleDirection parameter *
-    Data.Gaussian.Field.inv (unitCircleDenominator parameter)
+    Field.inv (unitCircleDenominator parameter)
 end Purelib.Geometry.Gaussian.UnitCircle.Stereographic
 
 end
@@ -335,67 +337,67 @@ public theorem unitQuarterPoint_cross_difference
   congr 1
   · calc
       (unitCircleDirection source *
-            Data.Gaussian.Field.inv
+            Field.inv
               (unitCircleDenominator source)) *
           (unitCircleDenominator source *
             unitCircleDenominator target) =
         unitCircleDirection source *
-          (Data.Gaussian.Field.inv
+          (Field.inv
               (unitCircleDenominator source) *
             (unitCircleDenominator source *
               unitCircleDenominator target)) :=
-          Data.Gaussian.Basic.mul_assoc _ _ _
+          Basic.mul_assoc _ _ _
       _ = unitCircleDirection source *
-          ((Data.Gaussian.Field.inv
+          ((Field.inv
               (unitCircleDenominator source) *
             unitCircleDenominator source) *
               unitCircleDenominator target) := by
-          rw [Data.Gaussian.Basic.mul_assoc]
+          rw [Basic.mul_assoc]
       _ =
         unitCircleDirection source *
-          (Data.Gaussian.Field.inv
+          (Field.inv
               (unitCircleDenominator source) *
             unitCircleDenominator source) *
               unitCircleDenominator target := by
-          exact (Data.Gaussian.Basic.mul_assoc
+          exact (Basic.mul_assoc
             (unitCircleDirection source)
-            (Data.Gaussian.Field.inv
+            (Field.inv
               (unitCircleDenominator source) *
                 unitCircleDenominator source)
             (unitCircleDenominator target)).symm
       _ = unitCircleDirection source *
         unitCircleDenominator target := by
-        rw [Data.Gaussian.Field.inv_mul
+        rw [Field.inv_mul
             (unitCircleDenominator source)
             (unitCircleDenominator_nonzero source),
-          Data.Gaussian.Basic.mul_one]
+          Basic.mul_one]
   · calc
       (unitCircleDirection target *
-            Data.Gaussian.Field.inv
+            Field.inv
               (unitCircleDenominator target)) *
           (unitCircleDenominator source *
             unitCircleDenominator target) =
         unitCircleDirection target *
-          (Data.Gaussian.Field.inv
+          (Field.inv
               (unitCircleDenominator target) *
             (unitCircleDenominator target *
               unitCircleDenominator source)) := by
-          rw [Data.Gaussian.Basic.mul_comm
+          rw [Basic.mul_comm
               (unitCircleDenominator source)
                 (unitCircleDenominator target),
-            Data.Gaussian.Basic.mul_assoc]
+            Basic.mul_assoc]
       _ = unitCircleDirection target *
-          ((Data.Gaussian.Field.inv
+          ((Field.inv
               (unitCircleDenominator target) *
             unitCircleDenominator target) *
               unitCircleDenominator source) := by
-          rw [Data.Gaussian.Basic.mul_assoc]
+          rw [Basic.mul_assoc]
       _ = unitCircleDirection target *
         unitCircleDenominator source := by
-        rw [Data.Gaussian.Field.inv_mul
+        rw [Field.inv_mul
             (unitCircleDenominator target)
             (unitCircleDenominator_nonzero target),
-          Data.Gaussian.Basic.one_mul]
+          Basic.one_mul]
 
 end Purelib.Geometry.Gaussian.UnitCircle.Stereographic
 
@@ -427,47 +429,47 @@ open Purelib.Data.Gaussian
 and cancellation of the positive displayed denominator product. -/
 theorem unitQuarterPoint_distance_le (source target :
   Fraction.Rational) :
-    Data.Gaussian.Norm.Basic.normSq (unitQuarterPoint source -
+    Norm.Basic.normSq (unitQuarterPoint source -
       unitQuarterPoint target) ≤
       4 * (source - target) ^ 2 := by
   let sourceScalar := source ^ 2 + 1
   let targetScalar := target ^ 2 + 1
   let product := sourceScalar * targetScalar
   have productPositive : 0 < product :=
-    Fraction.Order.Arithmetic.mul_pos_direct
+    Arithmetic.mul_pos_direct
       (unitCircleScalar_pos source)
         (unitCircleScalar_pos target)
-  have cross := congrArg Data.Gaussian.Norm.Basic.normSq
+  have cross := congrArg Norm.Basic.normSq
     (unitQuarterPoint_cross_difference source target)
   have productEquation :
-      Data.Gaussian.Norm.Basic.normSq (unitQuarterPoint source -
+      Norm.Basic.normSq (unitQuarterPoint source -
         unitQuarterPoint target) * product ^ 2 =
         (4 * (source - target) ^ 2) * product := by
-    rw [Data.Gaussian.Norm.Basic.normSq_mul, Data.Gaussian.Norm.Basic.normSq_mul,
+    rw [Norm.Basic.normSq_mul, Norm.Basic.normSq_mul,
       unitCircleDenominator_normSq source,
       unitCircleDenominator_normSq target,
       unitCircleCrossDifference_normSq source target] at cross
     simpa only [sourceScalar, targetScalar, product] using (by
       calc
-        Data.Gaussian.Norm.Basic.normSq (unitQuarterPoint source -
+        Norm.Basic.normSq (unitQuarterPoint source -
           unitQuarterPoint target) *
             product ^ 2 =
-          Data.Gaussian.Norm.Basic.normSq (unitQuarterPoint source -
+          Norm.Basic.normSq (unitQuarterPoint source -
             unitQuarterPoint target) *
             (sourceScalar ^ 2 * targetScalar ^ 2) := by ring1
         _ = 4 * (source - target) ^ 2 * product := cross)
   have canceled :
-      Data.Gaussian.Norm.Basic.normSq (unitQuarterPoint source -
+      Norm.Basic.normSq (unitQuarterPoint source -
         unitQuarterPoint target) * product =
         4 * (source - target) ^ 2 := by
     apply Fraction.mul_left_cancel_of_nonzero
       productPositive.ne'
     calc
       product *
-          (Data.Gaussian.Norm.Basic.normSq (unitQuarterPoint source
+          (Norm.Basic.normSq (unitQuarterPoint source
             - unitQuarterPoint target) *
             product) =
-        Data.Gaussian.Norm.Basic.normSq (unitQuarterPoint source -
+        Norm.Basic.normSq (unitQuarterPoint source -
           unitQuarterPoint target) *
           product ^ 2 := by ring1
       _ = (4 * (source - target) ^ 2) * product := productEquation
@@ -476,24 +478,24 @@ theorem unitQuarterPoint_distance_le (source target :
     have sourceOne : (1 : Fraction.Rational) ≤ sourceScalar := by
       dsimp only [sourceScalar]
       exact le_add_of_nonneg_left
-        (Fraction.Order.Arithmetic.sq_nonneg_direct source)
+        (Arithmetic.sq_nonneg_direct source)
     have targetOne : (1 : Fraction.Rational) ≤ targetScalar := by
       dsimp only [targetScalar]
       exact le_add_of_nonneg_left
-        (Fraction.Order.Arithmetic.sq_nonneg_direct target)
+        (Arithmetic.sq_nonneg_direct target)
     exact (show (1 : Fraction.Rational) = 1 * 1 by ring1) ▸
-      Fraction.Order.Arithmetic.mul_le_mul_direct sourceOne targetOne
+      Arithmetic.mul_le_mul_direct sourceOne targetOne
         (by decide) (unitCircleScalar_pos source).le
   calc
-    Data.Gaussian.Norm.Basic.normSq (unitQuarterPoint source -
+    Norm.Basic.normSq (unitQuarterPoint source -
       unitQuarterPoint target) =
-        Data.Gaussian.Norm.Basic.normSq (unitQuarterPoint source -
+        Norm.Basic.normSq (unitQuarterPoint source -
           unitQuarterPoint target) * 1 := by
       ring1
-    _ ≤ Data.Gaussian.Norm.Basic.normSq (unitQuarterPoint source -
+    _ ≤ Norm.Basic.normSq (unitQuarterPoint source -
       unitQuarterPoint target) * product :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct oneLeProduct
-        (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+      Arithmetic.mul_le_mul_of_nonneg_left_direct oneLeProduct
+        (Norm.Basic.normSq_nonneg _)
     _ = 4 * (source - target) ^ 2 := canceled
 end Purelib.Geometry.Gaussian.UnitCircle.Stereographic
 
@@ -528,11 +530,11 @@ public theorem unitQuarterPoint_mul_denominator
       unitCircleDenominator parameter =
       unitCircleDirection parameter := by
   unfold unitQuarterPoint
-  rw [Data.Gaussian.Basic.mul_assoc,
-    Data.Gaussian.Field.inv_mul
+  rw [Basic.mul_assoc,
+    Field.inv_mul
       (unitCircleDenominator parameter)
       (unitCircleDenominator_nonzero parameter),
-    Data.Gaussian.Basic.mul_one]
+    Basic.mul_one]
 
 end Purelib.Geometry.Gaussian.UnitCircle.Stereographic
 
@@ -567,9 +569,9 @@ open Purelib.Data.Gaussian
       (2 * parameter) * (parameter ^ 2 + 1)⁻¹ := by
   let scalar := parameter ^ 2 + 1
   have scalarNonzero : scalar ≠ 0 := (unitCircleScalar_pos parameter).ne'
-  have imaginaryProduct := congrArg Data.Gaussian.Basic.im
+  have imaginaryProduct := congrArg Basic.im
     (unitQuarterPoint_mul_denominator parameter)
-  simp only [Data.Gaussian.Basic.mul_im] at imaginaryProduct
+  simp only [Basic.mul_im] at imaginaryProduct
   change (unitQuarterPoint parameter).re * 0 +
       (unitQuarterPoint parameter).im * (parameter ^ 2 + 1) =
         2 * parameter at imaginaryProduct
@@ -652,9 +654,9 @@ open Purelib.Data.Gaussian
       (1 - parameter ^ 2) * (parameter ^ 2 + 1)⁻¹ := by
   let scalar := parameter ^ 2 + 1
   have scalarNonzero : scalar ≠ 0 := (unitCircleScalar_pos parameter).ne'
-  have realProduct := congrArg Data.Gaussian.Basic.re
+  have realProduct := congrArg Basic.re
     (unitQuarterPoint_mul_denominator parameter)
-  simp only [Data.Gaussian.Basic.mul_re] at realProduct
+  simp only [Basic.mul_re] at realProduct
   change (unitQuarterPoint parameter).re * (parameter ^ 2 + 1) -
       (unitQuarterPoint parameter).im * 0 = 1 - parameter ^ 2 at realProduct
   have realProduct' : (unitQuarterPoint parameter).re * scalar =
@@ -709,17 +711,17 @@ theorem unitQuarterPoint_re_add_im_ge_one
   let scalar := parameter ^ 2 + 1
   have scalarPositive : 0 < scalar := unitCircleScalar_pos parameter
   have oneMinusNonnegative : 0 ≤ 1 - parameter :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct atMostOne
+    Arithmetic.sub_nonneg_direct atMostOne
   have extraNonnegative : 0 ≤ 2 * parameter * (1 - parameter) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) nonnegative)
+    Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct (by decide) nonnegative)
       oneMinusNonnegative
   have numeratorBound : scalar ≤
       1 - parameter ^ 2 + 2 * parameter := by
     calc
       scalar = 0 + scalar := by ring1
       _ ≤ 2 * parameter * (1 - parameter) + scalar :=
-        Fraction.Order.Arithmetic.add_le_add_right_direct
+        Arithmetic.add_le_add_right_direct
           extraNonnegative scalar
       _ = scalar + 2 * parameter * (1 - parameter) := by ring1
       _ = 1 - parameter ^ 2 + 2 * parameter := by
@@ -734,7 +736,7 @@ theorem unitQuarterPoint_re_add_im_ge_one
     rw [Algebra.Field.ExplicitField.div_eq_mul_inv]
     ring1
   rw [combined]
-  apply (Fraction.Order.Field.le_div_iff_pos scalarPositive).2
+  apply (Field.le_div_iff_pos scalarPositive).2
   simpa only [Fraction.Field.one_mul] using numeratorBound
 end Purelib.Geometry.Gaussian.UnitCircle.Stereographic
 
@@ -765,16 +767,16 @@ open Purelib.Data.Gaussian
 /-- Every rational stereographic point has squared norm one. -/
 theorem unitQuarterPoint_unit (parameter : Fraction.Rational)
   :
-    Data.Gaussian.Norm.Basic.normSq (unitQuarterPoint parameter) = 1
+    Norm.Basic.normSq (unitQuarterPoint parameter) = 1
       := by
   unfold unitQuarterPoint
-  rw [Data.Gaussian.Norm.Basic.normSq_mul,
-    Data.Gaussian.Field.normSq_inv _ (unitCircleDenominator_nonzero
+  rw [Norm.Basic.normSq_mul,
+    Field.normSq_inv _ (unitCircleDenominator_nonzero
       parameter),
     unitCircleDirection_normSq,
       unitCircleDenominator_normSq]
   exact Fraction.Field.mul_inv_cancel _
-    (Fraction.Order.Arithmetic.pow_pos_direct
+    (Arithmetic.pow_pos_direct
       (unitCircleScalar_pos parameter) 2).ne'
 end Purelib.Geometry.Gaussian.UnitCircle.Stereographic
 

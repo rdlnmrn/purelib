@@ -88,5 +88,5 @@ to have degree zero, supplying the existing constant-gcd constructor. -/
       ((Nat.le_add_right result.gcd.natDegree cofactor.natDegree).trans_eq
         degreeBalance)
   exact Decision.certificateOfConstantGCD
-    p q gcdNonzero gcdDegreeZero
+    p q result rfl gcdNonzero gcdDegreeZero
 end Purelib.Polynomial.Dense.Gaussian.Coprime.Evaluation

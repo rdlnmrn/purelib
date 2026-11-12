@@ -53,6 +53,10 @@ import Purelib.RootIsolation.Sturm.Track.Basic
 import Purelib.Tactic.Ring
 import Purelib.Polynomial.Dense.Rational.CauchyIndex.Events.Residual
 
+open Purelib.Polynomial.Dense.Rational
+
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data
 
 open Purelib.Data.Rat
@@ -89,10 +93,10 @@ namespace Purelib.RootIsolation.Curve.Event.Profile.Complete.Basic.CompleteReque
 open Purelib.Algebra
 section Profile
 
-variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box} {form :
   Geometry.Projective.Hermitian.HermitianForm}
 variable {chart : Geometry.Projective.Hermitian.Chart.BoundedChart form}
-variable {data : Curve.Event.Nontrivial p
+variable {data : Nontrivial p
   chart.parameterization.curve}
 variable {gcdDegreePositive : 0 <
   (Curve.Substitution.gcdPolynomial p
@@ -106,103 +110,103 @@ section CompleteRequestLeaf
 /-- The reduced profile polynomial remains uniformly small on every later
 deterministic request from this retained child. -/
 theorem request_reduced_eval_sq_le
-    {leaf : Curve.Event.Profile.Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
+    {leaf : Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
       Fraction.Rational}
-    (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational)
+    (entry : CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational)
     (positive : 0 < target) (parameter : Fraction.Rational)
     (inside : (entry.request target).cell.interval.Contains parameter) :
-    (Dense.Rational.Pair.Reduction.reducedDenominator
+    (Pair.Reduction.reducedDenominator
         (Dense.Derivative.derivative
           analysis.profile.factor.polynomial)
         analysis.profile.factor.polynomial).eval parameter ^ 2 ≤
-      Curve.Event.Profile.Basic.ProfileEventLeaf.reducedResidualCoefficient
+      Basic.ProfileEventLeaf.reducedResidualCoefficient
         analysis * target ^ 2 := by
   let event := analysis.profile.factor.polynomial
-  let reduced := Dense.Rational.Pair.Reduction.reducedDenominator
+  let reduced := Pair.Reduction.reducedDenominator
     (Dense.Derivative.derivative event) event
   let localLipschitz :=
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound reduced
+    Bounds.Lipschitz.denseEvalSqLipschitzBound reduced
       (entry.request target).cell.interval
   let chartLipschitz :=
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound reduced
+    Bounds.Lipschitz.denseEvalSqLipschitzBound reduced
       chart.cell.interval
   have localBound :=
     (entry.requestResolution target).denominator_eval_sq_le
       (entry.request target).countNonzero parameter inside
   have lipschitzLe : localLipschitz ≤ chartLipschitz := by
     simpa only [-eq_self, -iff_self, localLipschitz, chartLipschitz, reduced] using
-      Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound_le_of_refines
+      Bounds.Lipschitz.denseEvalSqLipschitzBound_le_of_refines
         reduced (entry.request_refines_chart target)
   have chartNonnegative : 0 ≤ chartLipschitz := by
     simpa only [-eq_self, -iff_self, chartLipschitz] using
-      (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg reduced
+      (Bounds.Lipschitz.denseHornerSqBounds_nonneg reduced
         chart.cell.interval).2
   have coefficientLe : 4 * localLipschitz ≤ 4 * chartLipschitz :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct lipschitzLe
+    Arithmetic.mul_le_mul_of_nonneg_left_direct lipschitzLe
       (show (0 : Fraction.Rational) ≤ 4 by decide)
-  have widthSqLe : (Data.Rat.Interval.Bounds.width (entry.request target).cell.interval) ^ 2 ≤
+  have widthSqLe : (Interval.Bounds.width (entry.request target).cell.interval) ^ 2 ≤
       target ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
-      (Data.Rat.Interval.Bounds.width_nonneg (entry.request target).cell.interval)
+    Arithmetic.pow_le_pow_direct
+      (Interval.Bounds.width_nonneg (entry.request target).cell.interval)
         (entry.request_width_le target positive) 2
   change reduced.eval parameter ^ 2 ≤
     (4 * chartLipschitz) * target ^ 2
   exact localBound.trans
-    (Fraction.Order.Arithmetic.mul_le_mul_direct coefficientLe widthSqLe
-      (Fraction.Order.Arithmetic.sq_nonneg_direct
-        (Data.Rat.Interval.Bounds.width (entry.request target).cell.interval))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    (Arithmetic.mul_le_mul_direct coefficientLe widthSqLe
+      (Arithmetic.sq_nonneg_direct
+        (Interval.Bounds.width (entry.request target).cell.interval))
+      (Arithmetic.mul_nonneg_direct (by decide)
         chartNonnegative))
 
 /-- The profile factor itself stays uniformly small along the selected
 descendant event branch. -/
 theorem request_factor_eval_sq_le
-    {leaf : Curve.Event.Profile.Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
+    {leaf : Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
       Fraction.Rational}
-    (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational)
+    (entry : CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational)
     (positive : 0 < target) (parameter : Fraction.Rational)
     (inside : (entry.request target).cell.interval.Contains parameter) :
     analysis.profile.factor.polynomial.eval parameter ^ 2 ≤
-      Curve.Event.Profile.Basic.ProfileEventLeaf.factorResidualCoefficient
+      Basic.ProfileEventLeaf.factorResidualCoefficient
         analysis * target ^ 2 := by
   let event := analysis.profile.factor.polynomial
   let common := Dense.GCD.gcd
     (Dense.Derivative.derivative event) event
-  let reduced := Dense.Rational.Pair.Reduction.reducedDenominator
+  let reduced := Pair.Reduction.reducedDenominator
     (Dense.Derivative.derivative event) event
-  let commonBound := Dense.Rational.Bounds.Horner.evalSqBound common
+  let commonBound := Bounds.Horner.evalSqBound common
     chart.cell.interval
   have parameterInsideChart : chart.cell.interval.Contains parameter :=
     ⟨(entry.request_refines_chart target).1.trans inside.1,
       inside.2.trans (entry.request_refines_chart target).2⟩
   have commonEvalBound : common.eval parameter ^ 2 ≤ commonBound :=
-    Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound common
+    Bounds.Horner.eval_sq_le_evalSqBound common
       chart.cell.interval parameterInsideChart
   have reducedEvalBound : reduced.eval parameter ^ 2 ≤
-      Curve.Event.Profile.Basic.ProfileEventLeaf.reducedResidualCoefficient
+      Basic.ProfileEventLeaf.reducedResidualCoefficient
         analysis * target ^ 2 := by
     simpa only [-eq_self, -iff_self, event, reduced] using
       entry.request_reduced_eval_sq_le target positive parameter inside
   have productBound :
       common.eval parameter ^ 2 * reduced.eval parameter ^ 2 ≤
         commonBound *
-          (Curve.Event.Profile.Basic.ProfileEventLeaf.reducedResidualCoefficient
+          (Basic.ProfileEventLeaf.reducedResidualCoefficient
             analysis * target ^ 2) :=
-    Fraction.Order.Arithmetic.mul_le_mul_direct commonEvalBound
+    Arithmetic.mul_le_mul_direct commonEvalBound
       reducedEvalBound
-      (Fraction.Order.Arithmetic.sq_nonneg_direct (reduced.eval parameter))
-      (Dense.Rational.Bounds.Horner.evalSqBound_nonneg common
+      (Arithmetic.sq_nonneg_direct (reduced.eval parameter))
+      (Bounds.Horner.evalSqBound_nonneg common
         chart.cell.interval)
   have identity : event.eval parameter =
       common.eval parameter * reduced.eval parameter := by
     simpa only [-eq_self, -iff_self, event, common, reduced,
-      Dense.Rational.Pair.Reduction.reducedDenominator] using
+      Pair.Reduction.reducedDenominator] using
       Dense.GCD.rightFactor_eval_identity
         (Dense.Derivative.derivative event) event parameter
   rw [identity, Semiring.Normalization.product_pow]
   change common.eval parameter ^ 2 * reduced.eval parameter ^ 2 ≤
     (commonBound *
-      Curve.Event.Profile.Basic.ProfileEventLeaf.reducedResidualCoefficient
+      Basic.ProfileEventLeaf.reducedResidualCoefficient
         analysis) * target ^ 2
   exact productBound.trans_eq (by ring1)
 
@@ -210,15 +214,15 @@ theorem request_factor_eval_sq_le
 cofactor to the source squarefree curve factor. -/
 theorem
   request_source_factor_eval_sq_le
-    {leaf : Curve.Event.Profile.Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
+    {leaf : Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
       Fraction.Rational}
-    (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational)
+    (entry : CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational)
     (positive : 0 < target) (parameter : Fraction.Rational)
     (inside : (entry.request target).cell.interval.Contains parameter) :
     factorAnalysis.factor.polynomial.eval parameter ^ 2 ≤
-      Curve.Event.Profile.Residual.Lift.sourceFactorResidualCoefficient
+      Residual.Lift.sourceFactorResidualCoefficient
         analysis * target ^ 2 := by
-  let cofactorBound := Dense.Rational.Bounds.Horner.evalSqBound
+  let cofactorBound := Bounds.Horner.evalSqBound
     analysis.profile.cofactor chart.cell.interval
   have parameterInsideChart : chart.cell.interval.Contains parameter :=
     ⟨(entry.request_refines_chart target).1.trans inside.1,
@@ -227,51 +231,51 @@ theorem
     entry.request_factor_eval_sq_le target positive parameter inside
   have cofactorEvalBound : analysis.profile.cofactor.eval parameter ^ 2 ≤
       cofactorBound :=
-    Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound
+    Bounds.Horner.eval_sq_le_evalSqBound
       analysis.profile.cofactor chart.cell.interval parameterInsideChart
   have productBound :
       analysis.profile.factor.polynomial.eval parameter ^ 2 *
           analysis.profile.cofactor.eval parameter ^ 2 ≤
-        (Curve.Event.Profile.Basic.ProfileEventLeaf.factorResidualCoefficient
+        (Basic.ProfileEventLeaf.factorResidualCoefficient
             analysis * target ^ 2) * cofactorBound :=
-    Fraction.Order.Arithmetic.mul_le_mul_direct profileBound
+    Arithmetic.mul_le_mul_direct profileBound
       cofactorEvalBound
-      (Fraction.Order.Arithmetic.sq_nonneg_direct
+      (Arithmetic.sq_nonneg_direct
         (analysis.profile.cofactor.eval parameter))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Curve.Event.Profile.Basic.ProfileEventLeaf.factorResidualCoefficient_nonneg
+      (Arithmetic.mul_nonneg_direct
+        (Basic.ProfileEventLeaf.factorResidualCoefficient_nonneg
           analysis)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct target))
+        (Arithmetic.sq_nonneg_direct target))
   have identity : factorAnalysis.factor.polynomial.eval parameter =
       analysis.profile.factor.polynomial.eval parameter *
         analysis.profile.cofactor.eval parameter :=
-    Dense.Rational.Factorization.eval_factorization
+    Factorization.eval_factorization
       analysis.profile.factorization parameter
   rw [identity, Semiring.Normalization.product_pow]
   change analysis.profile.factor.polynomial.eval parameter ^ 2 *
       analysis.profile.cofactor.eval parameter ^ 2 ≤
-    (Curve.Event.Profile.Basic.ProfileEventLeaf.factorResidualCoefficient
+    (Basic.ProfileEventLeaf.factorResidualCoefficient
         analysis * cofactorBound) * target ^ 2
   exact productBound.trans_eq (by ring1)
 
 /-- Lift the selected descendant through the remaining finite curve-gcd
 factors. -/
 theorem request_gcd_eval_sq_le
-    {leaf : Curve.Event.Profile.Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
+    {leaf : Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
       Fraction.Rational}
-    (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational)
+    (entry : CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational)
     (positive : 0 < target) (parameter : Fraction.Rational)
     (inside : (entry.request target).cell.interval.Contains parameter) :
     (Curve.Substitution.gcdPolynomial p
         chart.parameterization.curve).eval parameter ^ 2 ≤
-      Curve.Event.Profile.Residual.Lift.profileGCDResidualCoefficient
+      Residual.Lift.profileGCDResidualCoefficient
         analysis * target ^ 2 := by
-  let decomposition := Curve.Event.eventDecomposition data
+  let decomposition := eventDecomposition data
     gcdDegreePositive
   let cofactor :=
-    Curve.Event.Basic.EventLeaf.curveGCDCofactor
+    Basic.EventLeaf.curveGCDCofactor
       factorAnalysis
-  let cofactorBound := Dense.Rational.Bounds.Horner.evalSqBound cofactor
+  let cofactorBound := Bounds.Horner.evalSqBound cofactor
     chart.cell.interval
   have parameterInsideChart : chart.cell.interval.Contains parameter :=
     ⟨(entry.request_refines_chart target).1.trans inside.1,
@@ -279,20 +283,20 @@ theorem request_gcd_eval_sq_le
   have sourceBound :=
     entry.request_source_factor_eval_sq_le target positive parameter inside
   have cofactorEvalBound : cofactor.eval parameter ^ 2 ≤ cofactorBound :=
-    Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound cofactor
+    Bounds.Horner.eval_sq_le_evalSqBound cofactor
       chart.cell.interval parameterInsideChart
   have productBound :
       factorAnalysis.factor.polynomial.eval parameter ^ 2 *
           cofactor.eval parameter ^ 2 ≤
-        (Curve.Event.Profile.Residual.Lift.sourceFactorResidualCoefficient
+        (Residual.Lift.sourceFactorResidualCoefficient
             analysis * target ^ 2) * cofactorBound :=
-    Fraction.Order.Arithmetic.mul_le_mul_direct sourceBound
+    Arithmetic.mul_le_mul_direct sourceBound
       cofactorEvalBound
-      (Fraction.Order.Arithmetic.sq_nonneg_direct (cofactor.eval parameter))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Curve.Event.Profile.Residual.Lift.sourceFactorResidualCoefficient_nonneg
+      (Arithmetic.sq_nonneg_direct (cofactor.eval parameter))
+      (Arithmetic.mul_nonneg_direct
+        (Residual.Lift.sourceFactorResidualCoefficient_nonneg
           analysis)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct target))
+        (Arithmetic.sq_nonneg_direct target))
   have identity :
       (Curve.Substitution.gcdPolynomial p
           chart.parameterization.curve).eval parameter =
@@ -301,14 +305,14 @@ theorem request_gcd_eval_sq_le
     calc
       (Curve.Substitution.gcdPolynomial p
           chart.parameterization.curve).eval parameter =
-          (Dense.Rational.Squarefree.factorProduct
+          (Squarefree.factorProduct
             decomposition.factors).eval parameter :=
         decomposition.evalIdentity parameter
       _ = factorAnalysis.factor.polynomial.eval parameter *
-          (Dense.Rational.Squarefree.factorCofactor
+          (Squarefree.factorCofactor
             factorAnalysis.factor.polynomial decomposition.factors).eval
               parameter :=
-        Dense.Rational.Squarefree.factorProduct_eval_eq_factor_mul_cofactor
+        Squarefree.factorProduct_eval_eq_factor_mul_cofactor
           factorAnalysis.factor decomposition.factors factorAnalysis.member
             parameter
       _ = factorAnalysis.factor.polynomial.eval parameter *
@@ -316,7 +320,7 @@ theorem request_gcd_eval_sq_le
   rw [identity, Semiring.Normalization.product_pow]
   change factorAnalysis.factor.polynomial.eval parameter ^ 2 *
       cofactor.eval parameter ^ 2 ≤
-    (Curve.Event.Profile.Residual.Lift.sourceFactorResidualCoefficient
+    (Residual.Lift.sourceFactorResidualCoefficient
       analysis * cofactorBound) * target ^ 2
   exact productBound.trans_eq (by ring1)
 
@@ -324,16 +328,16 @@ theorem request_gcd_eval_sq_le
 denominator-cleared rational curve. -/
 theorem
   request_cleared_coordinate_norm_sq_le
-    {leaf : Curve.Event.Profile.Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
+    {leaf : Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
       Fraction.Rational}
-    (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational)
+    (entry : CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational)
     (positive : 0 < target) (parameter : Fraction.Rational)
     (inside : (entry.request target).cell.interval.Contains parameter) :
     (Curve.Substitution.realPolynomial p
         chart.parameterization.curve).eval parameter ^ 2 +
       (Curve.Substitution.imaginaryPolynomial p
         chart.parameterization.curve).eval parameter ^ 2 ≤
-      Curve.Event.Profile.Residual.Lift.clearedProfileResidualCoefficient
+      Residual.Lift.clearedProfileResidualCoefficient
         analysis * target ^ 2 := by
   let real := Curve.Substitution.realPolynomial p
     chart.parameterization.curve
@@ -344,43 +348,43 @@ theorem
   let left := Dense.GCD.leftFactor real imaginary
   let right := Dense.GCD.rightFactor real imaginary
   let liftBound :=
-    Curve.Event.Basic.EventLeaf.curveGCDLiftCoefficient
+    Basic.EventLeaf.curveGCDLiftCoefficient
       p chart
   have parameterInsideChart : chart.cell.interval.Contains parameter :=
     ⟨(entry.request_refines_chart target).1.trans inside.1,
       inside.2.trans (entry.request_refines_chart target).2⟩
   have commonEvalBound : common.eval parameter ^ 2 ≤
-      Curve.Event.Profile.Residual.Lift.profileGCDResidualCoefficient
+      Residual.Lift.profileGCDResidualCoefficient
         analysis * target ^ 2 := by
     simpa only [-eq_self, -iff_self, common] using
       entry.request_gcd_eval_sq_le target positive parameter inside
   have leftEvalBound : left.eval parameter ^ 2 ≤
-      Dense.Rational.Bounds.Horner.evalSqBound left chart.cell.interval :=
-    Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound left
+      Bounds.Horner.evalSqBound left chart.cell.interval :=
+    Bounds.Horner.eval_sq_le_evalSqBound left
       chart.cell.interval parameterInsideChart
   have rightEvalBound : right.eval parameter ^ 2 ≤
-      Dense.Rational.Bounds.Horner.evalSqBound right chart.cell.interval :=
-    Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound right
+      Bounds.Horner.evalSqBound right chart.cell.interval :=
+    Bounds.Horner.eval_sq_le_evalSqBound right
       chart.cell.interval parameterInsideChart
   have cofactorSumBound :
       left.eval parameter ^ 2 + right.eval parameter ^ 2 ≤ liftBound := by
     simpa only [-eq_self, -iff_self, left, right, real, imaginary, liftBound,
-      Curve.Event.Basic.EventLeaf.curveGCDLiftCoefficient] using
-        Fraction.Order.Arithmetic.add_le_add_direct leftEvalBound rightEvalBound
+      Basic.EventLeaf.curveGCDLiftCoefficient] using
+        Arithmetic.add_le_add_direct leftEvalBound rightEvalBound
   have productBound :
       common.eval parameter ^ 2 *
           (left.eval parameter ^ 2 + right.eval parameter ^ 2) ≤
-        (Curve.Event.Profile.Residual.Lift.profileGCDResidualCoefficient
+        (Residual.Lift.profileGCDResidualCoefficient
             analysis * target ^ 2) * liftBound :=
-    Fraction.Order.Arithmetic.mul_le_mul_direct commonEvalBound
+    Arithmetic.mul_le_mul_direct commonEvalBound
       cofactorSumBound
       (add_nonneg
-        (Fraction.Order.Arithmetic.sq_nonneg_direct (left.eval parameter))
-        (Fraction.Order.Arithmetic.sq_nonneg_direct (right.eval parameter)))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Curve.Event.Profile.Residual.Lift.profileGCDResidualCoefficient_nonneg
+        (Arithmetic.sq_nonneg_direct (left.eval parameter))
+        (Arithmetic.sq_nonneg_direct (right.eval parameter)))
+      (Arithmetic.mul_nonneg_direct
+        (Residual.Lift.profileGCDResidualCoefficient_nonneg
           analysis)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct target))
+        (Arithmetic.sq_nonneg_direct target))
   have realIdentity : real.eval parameter =
       common.eval parameter * left.eval parameter := by
     simpa only [-eq_self, -iff_self, real, imaginary, common, left,
@@ -392,7 +396,7 @@ theorem
       Curve.Substitution.gcdPolynomial] using
       Dense.GCD.rightFactor_eval_identity real imaginary parameter
   change real.eval parameter ^ 2 + imaginary.eval parameter ^ 2 ≤
-    (Curve.Event.Profile.Residual.Lift.profileGCDResidualCoefficient
+    (Residual.Lift.profileGCDResidualCoefficient
       analysis * liftBound) * target ^ 2
   rw [realIdentity, imaginaryIdentity, Semiring.Normalization.product_pow, Semiring.Normalization.product_pow]
   calc
@@ -400,24 +404,24 @@ theorem
         common.eval parameter ^ 2 * right.eval parameter ^ 2 =
       common.eval parameter ^ 2 *
         (left.eval parameter ^ 2 + right.eval parameter ^ 2) := by ring1
-    _ ≤ (Curve.Event.Profile.Residual.Lift.profileGCDResidualCoefficient
+    _ ≤ (Residual.Lift.profileGCDResidualCoefficient
         analysis * target ^ 2) * liftBound := productBound
-    _ = (Curve.Event.Profile.Residual.Lift.profileGCDResidualCoefficient
+    _ = (Residual.Lift.profileGCDResidualCoefficient
         analysis * liftBound) * target ^ 2 := by ring1
 
 /-- Gaussian form of the descendant's cleared-coordinate residual. -/
 theorem
   request_normSq_clearedEval_le
-    {leaf : Curve.Event.Profile.Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
+    {leaf : Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
       Fraction.Rational}
-    (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational)
+    (entry : CompleteRequestLeaf leaf epsilon) (target : Fraction.Rational)
     (positive : 0 < target) (parameter : Fraction.Rational)
     (inside : (entry.request target).cell.interval.Contains parameter) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         ((Curve.clearedEval p
           chart.parameterization.curve).eval
             (Gaussian.Cast.Path.ofCoordinate parameter)) ≤
-      Curve.Event.Profile.Residual.Lift.clearedProfileResidualCoefficient
+      Residual.Lift.clearedProfileResidualCoefficient
         analysis * target ^ 2 := by
   simpa only [-eq_self, -iff_self, Curve.Substitution.realPolynomial,
     Curve.Substitution.imaginaryPolynomial,
@@ -425,7 +429,7 @@ theorem
     Curve.clearedImag,
     Dense.Gaussian.Components.eval_realPart,
     Dense.Gaussian.Components.eval_imagPart,
-    Data.Gaussian.Norm.Basic.normSq] using
+    Gaussian.Norm.Basic.normSq] using
       entry.request_cleared_coordinate_norm_sq_le target positive parameter
         inside
 
@@ -434,8 +438,8 @@ displayed target box has original-polynomial residual of order `target²`. -/
 theorem
   request_normSq_eval_point_le_of_inside
     {targetBox : Box} {leaf :
-      Curve.Event.Profile.Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis}
-    {epsilon : Fraction.Rational} (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon)
+      Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis}
+    {epsilon : Fraction.Rational} (entry : CompleteRequestLeaf leaf epsilon)
     (target : Fraction.Rational) (positive : 0 < target) (parameter : Fraction.Rational)
     (parameterInside :
       (entry.request target).cell.interval.Contains parameter)
@@ -443,22 +447,22 @@ theorem
       chart.parameterization.curve.denominatorAt parameter ≠ 0)
     (pointInside : targetBox.Contains
       (chart.parameterization.curve.point parameter)) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         (p.eval (chart.parameterization.curve.point parameter)) ≤
-      Curve.Event.Profile.Residual.Lift.affineProfileResidualCoefficient
+      Residual.Lift.affineProfileResidualCoefficient
           (targetBox := targetBox) analysis * target ^ 2 := open Purelib.Algebra.Field in by
   let curve := chart.parameterization.curve
   let power :=
     (Curve.clearingState p curve).denominatorPower.eval
       (Gaussian.Cast.Path.ofCoordinate parameter)
   let lower := chart.affineDenominatorPowerNormSqLower p targetBox
-  let residual := Data.Gaussian.Norm.Basic.normSq
+  let residual := Gaussian.Norm.Basic.normSq
     (p.eval (curve.point parameter))
   have lowerPositive : 0 < lower := by
     simpa only [-eq_self, -iff_self, lower, curve] using
       chart.affineDenominatorPowerNormSqLower_pos p targetBox
   have powerLower : lower ≤
-      Data.Gaussian.Norm.Basic.normSq power := by
+      Gaussian.Norm.Basic.normSq power := by
     simpa only [-eq_self, -iff_self, lower, power, curve] using
       chart.affineDenominatorPowerNormSqLower_le p targetBox parameter
         denominatorNonzero pointInside
@@ -467,32 +471,32 @@ theorem
   have semantics := Curve.eval_clearedEval p curve
     parameter denominatorNonzero
   have clearedProductBound :
-      Data.Gaussian.Norm.Basic.normSq power * residual ≤
-        Curve.Event.Profile.Residual.Lift.clearedProfileResidualCoefficient
+      Gaussian.Norm.Basic.normSq power * residual ≤
+        Residual.Lift.clearedProfileResidualCoefficient
           analysis * target ^ 2 := by
     simpa only [-eq_self, -iff_self, curve, power, residual, semantics,
       Gaussian.Norm.Basic.normSq_mul] using clearedBound
   have lowerProductBound : lower * residual ≤
-      Data.Gaussian.Norm.Basic.normSq power * residual :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct powerLower
+      Gaussian.Norm.Basic.normSq power * residual :=
+    Arithmetic.mul_le_mul_of_nonneg_right_direct powerLower
       (Gaussian.Norm.Basic.normSq_nonneg _)
   change residual ≤
-    (Curve.Event.Profile.Residual.Lift.clearedProfileResidualCoefficient
+    (Residual.Lift.clearedProfileResidualCoefficient
       analysis / lower) * target ^ 2
   calc
     residual ≤
-        (Curve.Event.Profile.Residual.Lift.clearedProfileResidualCoefficient
+        (Residual.Lift.clearedProfileResidualCoefficient
           analysis * target ^ 2) / lower := by
-      apply (Fraction.Order.Field.le_div_iff_pos lowerPositive).2
+      apply (Field.le_div_iff_pos lowerPositive).2
       calc
         residual * lower = lower * residual :=
           Fraction.Field.mul_comm _ _
-        _ ≤ Data.Gaussian.Norm.Basic.normSq power * residual :=
+        _ ≤ Gaussian.Norm.Basic.normSq power * residual :=
           lowerProductBound
-        _ ≤ Curve.Event.Profile.Residual.Lift.clearedProfileResidualCoefficient
+        _ ≤ Residual.Lift.clearedProfileResidualCoefficient
           analysis * target ^ 2 := clearedProductBound
     _ =
-        (Curve.Event.Profile.Residual.Lift.clearedProfileResidualCoefficient
+        (Residual.Lift.clearedProfileResidualCoefficient
           analysis / lower) * target ^ 2 := by
       simp only [-eq_self, -iff_self, ExplicitField.div_eq_mul_inv]
       rw [Fraction.Field.mul_assoc,
@@ -502,116 +506,116 @@ theorem
 /-- The gcd-reduced profile polynomial is uniformly small throughout every
 retained child, not only along the formerly selected request path. -/
 theorem reduced_eval_sq_le
-    {leaf : Curve.Event.Profile.Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
+    {leaf : Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
       Fraction.Rational}
-    (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) (positive : 0 < epsilon)
+    (entry : CompleteRequestLeaf leaf epsilon) (positive : 0 < epsilon)
     (parameter : Fraction.Rational)
     (inside : entry.cell.interval.Contains parameter) :
-    (Dense.Rational.Pair.Reduction.reducedDenominator
+    (Pair.Reduction.reducedDenominator
         (Dense.Derivative.derivative
           analysis.profile.factor.polynomial)
         analysis.profile.factor.polynomial).eval parameter ^ 2 ≤
-      Curve.Event.Profile.Basic.ProfileEventLeaf.reducedResidualCoefficient
+      Basic.ProfileEventLeaf.reducedResidualCoefficient
         analysis * epsilon ^ 2 := by
   let event := analysis.profile.factor.polynomial
-  let reduced := Dense.Rational.Pair.Reduction.reducedDenominator
+  let reduced := Pair.Reduction.reducedDenominator
     (Dense.Derivative.derivative event) event
   let localLipschitz :=
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound reduced
+    Bounds.Lipschitz.denseEvalSqLipschitzBound reduced
       entry.cell.interval
   let chartLipschitz :=
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound reduced
+    Bounds.Lipschitz.denseEvalSqLipschitzBound reduced
       chart.cell.interval
   have localBound :=
-    (Curve.Event.Profile.Complete.Basic.completeRequestResolution leaf epsilon entry.cell
+    (completeRequestResolution leaf epsilon entry.cell
       entry.member).denominator_eval_sq_le
       entry.countNonzero parameter inside
   have lipschitzLe : localLipschitz ≤ chartLipschitz := by
     simpa only [-eq_self, -iff_self, localLipschitz, chartLipschitz, reduced] using
-      Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound_le_of_refines
+      Bounds.Lipschitz.denseEvalSqLipschitzBound_le_of_refines
         reduced entry.refines_chart
   have chartNonnegative : 0 ≤ chartLipschitz := by
     simpa only [-eq_self, -iff_self, chartLipschitz] using
-      (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg reduced
+      (Bounds.Lipschitz.denseHornerSqBounds_nonneg reduced
         chart.cell.interval).2
   have coefficientLe : 4 * localLipschitz ≤ 4 * chartLipschitz :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct lipschitzLe
+    Arithmetic.mul_le_mul_of_nonneg_left_direct lipschitzLe
       (show (0 : Fraction.Rational) ≤ 4 by decide)
-  have widthSqLe : (Data.Rat.Interval.Bounds.width entry.cell.interval) ^ 2 ≤ epsilon ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
-      (Data.Rat.Interval.Bounds.width_nonneg entry.cell.interval) (entry.width_le positive) 2
+  have widthSqLe : (Interval.Bounds.width entry.cell.interval) ^ 2 ≤ epsilon ^ 2 :=
+    Arithmetic.pow_le_pow_direct
+      (Interval.Bounds.width_nonneg entry.cell.interval) (entry.width_le positive) 2
   change reduced.eval parameter ^ 2 ≤
     (4 * chartLipschitz) * epsilon ^ 2
   exact localBound.trans
-    (Fraction.Order.Arithmetic.mul_le_mul_direct coefficientLe widthSqLe
-      (Fraction.Order.Arithmetic.sq_nonneg_direct (Data.Rat.Interval.Bounds.width entry.cell.interval))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    (Arithmetic.mul_le_mul_direct coefficientLe widthSqLe
+      (Arithmetic.sq_nonneg_direct (Interval.Bounds.width entry.cell.interval))
+      (Arithmetic.mul_nonneg_direct (by decide)
         chartNonnegative))
 
 /-- The profile factor itself is uniformly small throughout every retained
 child. -/
 theorem factor_eval_sq_le
-    {leaf : Curve.Event.Profile.Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
+    {leaf : Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
       Fraction.Rational}
-    (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) (positive : 0 < epsilon)
+    (entry : CompleteRequestLeaf leaf epsilon) (positive : 0 < epsilon)
     (parameter : Fraction.Rational)
     (inside : entry.cell.interval.Contains parameter) :
     analysis.profile.factor.polynomial.eval parameter ^ 2 ≤
-      Curve.Event.Profile.Basic.ProfileEventLeaf.factorResidualCoefficient
+      Basic.ProfileEventLeaf.factorResidualCoefficient
         analysis * epsilon ^ 2 := by
   let event := analysis.profile.factor.polynomial
   let common := Dense.GCD.gcd
     (Dense.Derivative.derivative event) event
-  let reduced := Dense.Rational.Pair.Reduction.reducedDenominator
+  let reduced := Pair.Reduction.reducedDenominator
     (Dense.Derivative.derivative event) event
-  let commonBound := Dense.Rational.Bounds.Horner.evalSqBound common
+  let commonBound := Bounds.Horner.evalSqBound common
     chart.cell.interval
   have parameterInsideChart : chart.cell.interval.Contains parameter :=
     ⟨entry.refines_chart.1.trans inside.1,
       inside.2.trans entry.refines_chart.2⟩
   have commonEvalBound : common.eval parameter ^ 2 ≤ commonBound :=
-    Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound common
+    Bounds.Horner.eval_sq_le_evalSqBound common
       chart.cell.interval parameterInsideChart
   have reducedEvalBound : reduced.eval parameter ^ 2 ≤
-      Curve.Event.Profile.Basic.ProfileEventLeaf.reducedResidualCoefficient
+      Basic.ProfileEventLeaf.reducedResidualCoefficient
         analysis * epsilon ^ 2 := by
     simpa only [-eq_self, -iff_self, event, reduced] using
       entry.reduced_eval_sq_le positive parameter inside
   have productBound :
       common.eval parameter ^ 2 * reduced.eval parameter ^ 2 ≤
         commonBound *
-          (Curve.Event.Profile.Basic.ProfileEventLeaf.reducedResidualCoefficient
+          (Basic.ProfileEventLeaf.reducedResidualCoefficient
             analysis * epsilon ^ 2) :=
-    Fraction.Order.Arithmetic.mul_le_mul_direct commonEvalBound
+    Arithmetic.mul_le_mul_direct commonEvalBound
       reducedEvalBound
-      (Fraction.Order.Arithmetic.sq_nonneg_direct (reduced.eval parameter))
-      (Dense.Rational.Bounds.Horner.evalSqBound_nonneg common
+      (Arithmetic.sq_nonneg_direct (reduced.eval parameter))
+      (Bounds.Horner.evalSqBound_nonneg common
         chart.cell.interval)
   have identity : event.eval parameter =
       common.eval parameter * reduced.eval parameter := by
     simpa only [-eq_self, -iff_self, event, common, reduced,
-      Dense.Rational.Pair.Reduction.reducedDenominator] using
+      Pair.Reduction.reducedDenominator] using
       Dense.GCD.rightFactor_eval_identity
         (Dense.Derivative.derivative event) event parameter
   rw [identity, Semiring.Normalization.product_pow]
   change common.eval parameter ^ 2 * reduced.eval parameter ^ 2 ≤
     (commonBound *
-      Curve.Event.Profile.Basic.ProfileEventLeaf.reducedResidualCoefficient
+      Basic.ProfileEventLeaf.reducedResidualCoefficient
         analysis) * epsilon ^ 2
   exact productBound.trans_eq (by ring1)
 
 /-- The source squarefree factor containing the profile is uniformly small
 throughout every retained child. -/
 theorem source_factor_eval_sq_le
-    {leaf : Curve.Event.Profile.Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
+    {leaf : Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
       Fraction.Rational}
-    (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) (positive : 0 < epsilon)
+    (entry : CompleteRequestLeaf leaf epsilon) (positive : 0 < epsilon)
     (parameter : Fraction.Rational)
     (inside : entry.cell.interval.Contains parameter) :
     factorAnalysis.factor.polynomial.eval parameter ^ 2 ≤
-      Curve.Event.Profile.Residual.Lift.sourceFactorResidualCoefficient
+      Residual.Lift.sourceFactorResidualCoefficient
         analysis * epsilon ^ 2 := by
-  let cofactorBound := Dense.Rational.Bounds.Horner.evalSqBound
+  let cofactorBound := Bounds.Horner.evalSqBound
     analysis.profile.cofactor chart.cell.interval
   have parameterInsideChart : chart.cell.interval.Contains parameter :=
     ⟨entry.refines_chart.1.trans inside.1,
@@ -619,71 +623,71 @@ theorem source_factor_eval_sq_le
   have profileBound := entry.factor_eval_sq_le positive parameter inside
   have cofactorEvalBound : analysis.profile.cofactor.eval parameter ^ 2 ≤
       cofactorBound :=
-    Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound
+    Bounds.Horner.eval_sq_le_evalSqBound
       analysis.profile.cofactor chart.cell.interval parameterInsideChart
   have productBound :
       analysis.profile.factor.polynomial.eval parameter ^ 2 *
           analysis.profile.cofactor.eval parameter ^ 2 ≤
-        (Curve.Event.Profile.Basic.ProfileEventLeaf.factorResidualCoefficient
+        (Basic.ProfileEventLeaf.factorResidualCoefficient
             analysis * epsilon ^ 2) * cofactorBound :=
-    Fraction.Order.Arithmetic.mul_le_mul_direct profileBound
+    Arithmetic.mul_le_mul_direct profileBound
       cofactorEvalBound
-      (Fraction.Order.Arithmetic.sq_nonneg_direct
+      (Arithmetic.sq_nonneg_direct
         (analysis.profile.cofactor.eval parameter))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Curve.Event.Profile.Basic.ProfileEventLeaf.factorResidualCoefficient_nonneg
+      (Arithmetic.mul_nonneg_direct
+        (Basic.ProfileEventLeaf.factorResidualCoefficient_nonneg
           analysis)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct epsilon))
+        (Arithmetic.sq_nonneg_direct epsilon))
   have identity : factorAnalysis.factor.polynomial.eval parameter =
       analysis.profile.factor.polynomial.eval parameter *
         analysis.profile.cofactor.eval parameter :=
-    Dense.Rational.Factorization.eval_factorization
+    Factorization.eval_factorization
       analysis.profile.factorization parameter
   rw [identity, Semiring.Normalization.product_pow]
   change analysis.profile.factor.polynomial.eval parameter ^ 2 *
       analysis.profile.cofactor.eval parameter ^ 2 ≤
-    (Curve.Event.Profile.Basic.ProfileEventLeaf.factorResidualCoefficient
+    (Basic.ProfileEventLeaf.factorResidualCoefficient
         analysis * cofactorBound) * epsilon ^ 2
   exact productBound.trans_eq (by ring1)
 
 /-- The complete curve gcd is uniformly small throughout every retained
 profile child. -/
 theorem gcd_eval_sq_le
-    {leaf : Curve.Event.Profile.Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
+    {leaf : Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
       Fraction.Rational}
-    (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) (positive : 0 < epsilon)
+    (entry : CompleteRequestLeaf leaf epsilon) (positive : 0 < epsilon)
     (parameter : Fraction.Rational)
     (inside : entry.cell.interval.Contains parameter) :
     (Curve.Substitution.gcdPolynomial p
         chart.parameterization.curve).eval parameter ^ 2 ≤
-      Curve.Event.Profile.Residual.Lift.profileGCDResidualCoefficient
+      Residual.Lift.profileGCDResidualCoefficient
         analysis * epsilon ^ 2 := by
-  let decomposition := Curve.Event.eventDecomposition data
+  let decomposition := eventDecomposition data
     gcdDegreePositive
   let cofactor :=
-    Curve.Event.Basic.EventLeaf.curveGCDCofactor
+    Basic.EventLeaf.curveGCDCofactor
       factorAnalysis
-  let cofactorBound := Dense.Rational.Bounds.Horner.evalSqBound cofactor
+  let cofactorBound := Bounds.Horner.evalSqBound cofactor
     chart.cell.interval
   have parameterInsideChart : chart.cell.interval.Contains parameter :=
     ⟨entry.refines_chart.1.trans inside.1,
       inside.2.trans entry.refines_chart.2⟩
   have sourceBound := entry.source_factor_eval_sq_le positive parameter inside
   have cofactorEvalBound : cofactor.eval parameter ^ 2 ≤ cofactorBound :=
-    Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound cofactor
+    Bounds.Horner.eval_sq_le_evalSqBound cofactor
       chart.cell.interval parameterInsideChart
   have productBound :
       factorAnalysis.factor.polynomial.eval parameter ^ 2 *
           cofactor.eval parameter ^ 2 ≤
-        (Curve.Event.Profile.Residual.Lift.sourceFactorResidualCoefficient
+        (Residual.Lift.sourceFactorResidualCoefficient
             analysis * epsilon ^ 2) * cofactorBound :=
-    Fraction.Order.Arithmetic.mul_le_mul_direct sourceBound
+    Arithmetic.mul_le_mul_direct sourceBound
       cofactorEvalBound
-      (Fraction.Order.Arithmetic.sq_nonneg_direct (cofactor.eval parameter))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Curve.Event.Profile.Residual.Lift.sourceFactorResidualCoefficient_nonneg
+      (Arithmetic.sq_nonneg_direct (cofactor.eval parameter))
+      (Arithmetic.mul_nonneg_direct
+        (Residual.Lift.sourceFactorResidualCoefficient_nonneg
           analysis)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct epsilon))
+        (Arithmetic.sq_nonneg_direct epsilon))
   have identity :
       (Curve.Substitution.gcdPolynomial p
           chart.parameterization.curve).eval parameter =
@@ -692,14 +696,14 @@ theorem gcd_eval_sq_le
     calc
       (Curve.Substitution.gcdPolynomial p
           chart.parameterization.curve).eval parameter =
-          (Dense.Rational.Squarefree.factorProduct
+          (Squarefree.factorProduct
             decomposition.factors).eval parameter :=
         decomposition.evalIdentity parameter
       _ = factorAnalysis.factor.polynomial.eval parameter *
-          (Dense.Rational.Squarefree.factorCofactor
+          (Squarefree.factorCofactor
             factorAnalysis.factor.polynomial decomposition.factors).eval
               parameter :=
-        Dense.Rational.Squarefree.factorProduct_eval_eq_factor_mul_cofactor
+        Squarefree.factorProduct_eval_eq_factor_mul_cofactor
           factorAnalysis.factor decomposition.factors factorAnalysis.member
             parameter
       _ = factorAnalysis.factor.polynomial.eval parameter *
@@ -707,7 +711,7 @@ theorem gcd_eval_sq_le
   rw [identity, Semiring.Normalization.product_pow]
   change factorAnalysis.factor.polynomial.eval parameter ^ 2 *
       cofactor.eval parameter ^ 2 ≤
-    (Curve.Event.Profile.Residual.Lift.sourceFactorResidualCoefficient
+    (Residual.Lift.sourceFactorResidualCoefficient
       analysis * cofactorBound) * epsilon ^ 2
   exact productBound.trans_eq (by ring1)
 
@@ -715,16 +719,16 @@ theorem gcd_eval_sq_le
 uniformly small throughout every retained profile child. -/
 theorem
   cleared_coordinate_norm_sq_le
-    {leaf : Curve.Event.Profile.Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
+    {leaf : Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
       Fraction.Rational}
-    (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) (positive : 0 < epsilon)
+    (entry : CompleteRequestLeaf leaf epsilon) (positive : 0 < epsilon)
     (parameter : Fraction.Rational)
     (inside : entry.cell.interval.Contains parameter) :
     (Curve.Substitution.realPolynomial p
         chart.parameterization.curve).eval parameter ^ 2 +
       (Curve.Substitution.imaginaryPolynomial p
         chart.parameterization.curve).eval parameter ^ 2 ≤
-      Curve.Event.Profile.Residual.Lift.clearedProfileResidualCoefficient
+      Residual.Lift.clearedProfileResidualCoefficient
         analysis * epsilon ^ 2 := by
   let real := Curve.Substitution.realPolynomial p
     chart.parameterization.curve
@@ -735,42 +739,42 @@ theorem
   let left := Dense.GCD.leftFactor real imaginary
   let right := Dense.GCD.rightFactor real imaginary
   let liftBound :=
-    Curve.Event.Basic.EventLeaf.curveGCDLiftCoefficient
+    Basic.EventLeaf.curveGCDLiftCoefficient
       p chart
   have parameterInsideChart : chart.cell.interval.Contains parameter :=
     ⟨entry.refines_chart.1.trans inside.1,
       inside.2.trans entry.refines_chart.2⟩
   have commonEvalBound : common.eval parameter ^ 2 ≤
-      Curve.Event.Profile.Residual.Lift.profileGCDResidualCoefficient
+      Residual.Lift.profileGCDResidualCoefficient
         analysis * epsilon ^ 2 := by
     simpa only [-eq_self, -iff_self, common] using entry.gcd_eval_sq_le positive parameter inside
   have leftEvalBound : left.eval parameter ^ 2 ≤
-      Dense.Rational.Bounds.Horner.evalSqBound left chart.cell.interval :=
-    Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound left
+      Bounds.Horner.evalSqBound left chart.cell.interval :=
+    Bounds.Horner.eval_sq_le_evalSqBound left
       chart.cell.interval parameterInsideChart
   have rightEvalBound : right.eval parameter ^ 2 ≤
-      Dense.Rational.Bounds.Horner.evalSqBound right chart.cell.interval :=
-    Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound right
+      Bounds.Horner.evalSqBound right chart.cell.interval :=
+    Bounds.Horner.eval_sq_le_evalSqBound right
       chart.cell.interval parameterInsideChart
   have cofactorSumBound :
       left.eval parameter ^ 2 + right.eval parameter ^ 2 ≤ liftBound := by
     simpa only [-eq_self, -iff_self, left, right, real, imaginary, liftBound,
-      Curve.Event.Basic.EventLeaf.curveGCDLiftCoefficient] using
-        Fraction.Order.Arithmetic.add_le_add_direct leftEvalBound rightEvalBound
+      Basic.EventLeaf.curveGCDLiftCoefficient] using
+        Arithmetic.add_le_add_direct leftEvalBound rightEvalBound
   have productBound :
       common.eval parameter ^ 2 *
           (left.eval parameter ^ 2 + right.eval parameter ^ 2) ≤
-        (Curve.Event.Profile.Residual.Lift.profileGCDResidualCoefficient
+        (Residual.Lift.profileGCDResidualCoefficient
             analysis * epsilon ^ 2) * liftBound :=
-    Fraction.Order.Arithmetic.mul_le_mul_direct commonEvalBound
+    Arithmetic.mul_le_mul_direct commonEvalBound
       cofactorSumBound
       (add_nonneg
-        (Fraction.Order.Arithmetic.sq_nonneg_direct (left.eval parameter))
-        (Fraction.Order.Arithmetic.sq_nonneg_direct (right.eval parameter)))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Curve.Event.Profile.Residual.Lift.profileGCDResidualCoefficient_nonneg
+        (Arithmetic.sq_nonneg_direct (left.eval parameter))
+        (Arithmetic.sq_nonneg_direct (right.eval parameter)))
+      (Arithmetic.mul_nonneg_direct
+        (Residual.Lift.profileGCDResidualCoefficient_nonneg
           analysis)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct epsilon))
+        (Arithmetic.sq_nonneg_direct epsilon))
   have realIdentity : real.eval parameter =
       common.eval parameter * left.eval parameter := by
     simpa only [-eq_self, -iff_self, real, imaginary, common, left,
@@ -782,7 +786,7 @@ theorem
       Curve.Substitution.gcdPolynomial] using
       Dense.GCD.rightFactor_eval_identity real imaginary parameter
   change real.eval parameter ^ 2 + imaginary.eval parameter ^ 2 ≤
-    (Curve.Event.Profile.Residual.Lift.profileGCDResidualCoefficient
+    (Residual.Lift.profileGCDResidualCoefficient
       analysis * liftBound) * epsilon ^ 2
   rw [realIdentity, imaginaryIdentity, Semiring.Normalization.product_pow, Semiring.Normalization.product_pow]
   calc
@@ -790,23 +794,23 @@ theorem
         common.eval parameter ^ 2 * right.eval parameter ^ 2 =
       common.eval parameter ^ 2 *
         (left.eval parameter ^ 2 + right.eval parameter ^ 2) := by ring1
-    _ ≤ (Curve.Event.Profile.Residual.Lift.profileGCDResidualCoefficient
+    _ ≤ (Residual.Lift.profileGCDResidualCoefficient
         analysis * epsilon ^ 2) * liftBound := productBound
-    _ = (Curve.Event.Profile.Residual.Lift.profileGCDResidualCoefficient
+    _ = (Residual.Lift.profileGCDResidualCoefficient
         analysis * liftBound) * epsilon ^ 2 := by ring1
 
 /-- Gaussian form of the retained child's cleared-coordinate residual. -/
 theorem normSq_clearedEval_le
-    {leaf : Curve.Event.Profile.Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
+    {leaf : Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
       Fraction.Rational}
-    (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) (positive : 0 < epsilon)
+    (entry : CompleteRequestLeaf leaf epsilon) (positive : 0 < epsilon)
     (parameter : Fraction.Rational)
     (inside : entry.cell.interval.Contains parameter) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         ((Curve.clearedEval p
           chart.parameterization.curve).eval
             (Gaussian.Cast.Path.ofCoordinate parameter)) ≤
-      Curve.Event.Profile.Residual.Lift.clearedProfileResidualCoefficient
+      Residual.Lift.clearedProfileResidualCoefficient
         analysis * epsilon ^ 2 := by
   simpa only [-eq_self, -iff_self, Curve.Substitution.realPolynomial,
     Curve.Substitution.imaginaryPolynomial,
@@ -814,7 +818,7 @@ theorem normSq_clearedEval_le
     Curve.clearedImag,
     Dense.Gaussian.Components.eval_realPart,
     Dense.Gaussian.Components.eval_imagPart,
-    Data.Gaussian.Norm.Basic.normSq] using
+    Gaussian.Norm.Basic.normSq] using
       entry.cleared_coordinate_norm_sq_le positive parameter inside
 
 /-- Every affine point where a retained child meets a displayed box has a
@@ -822,30 +826,30 @@ uniformly small original-polynomial residual. -/
 theorem
   normSq_eval_point_le_of_inside
     {targetBox : Box} {leaf :
-      Curve.Event.Profile.Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis}
-    {epsilon : Fraction.Rational} (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon)
+      Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis}
+    {epsilon : Fraction.Rational} (entry : CompleteRequestLeaf leaf epsilon)
     (positive : 0 < epsilon) (parameter : Fraction.Rational)
     (parameterInside : entry.cell.interval.Contains parameter)
     (denominatorNonzero :
       chart.parameterization.curve.denominatorAt parameter ≠ 0)
     (pointInside : targetBox.Contains
       (chart.parameterization.curve.point parameter)) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         (p.eval (chart.parameterization.curve.point parameter)) ≤
-      Curve.Event.Profile.Residual.Lift.affineProfileResidualCoefficient
+      Residual.Lift.affineProfileResidualCoefficient
           (targetBox := targetBox) analysis * epsilon ^ 2 := open Purelib.Algebra.Field in by
   let curve := chart.parameterization.curve
   let power :=
     (Curve.clearingState p curve).denominatorPower.eval
       (Gaussian.Cast.Path.ofCoordinate parameter)
   let lower := chart.affineDenominatorPowerNormSqLower p targetBox
-  let residual := Data.Gaussian.Norm.Basic.normSq
+  let residual := Gaussian.Norm.Basic.normSq
     (p.eval (curve.point parameter))
   have lowerPositive : 0 < lower := by
     simpa only [-eq_self, -iff_self, lower, curve] using
       chart.affineDenominatorPowerNormSqLower_pos p targetBox
   have powerLower : lower ≤
-      Data.Gaussian.Norm.Basic.normSq power := by
+      Gaussian.Norm.Basic.normSq power := by
     simpa only [-eq_self, -iff_self, lower, power, curve] using
       chart.affineDenominatorPowerNormSqLower_le p targetBox parameter
         denominatorNonzero pointInside
@@ -854,32 +858,32 @@ theorem
   have semantics := Curve.eval_clearedEval p curve
     parameter denominatorNonzero
   have clearedProductBound :
-      Data.Gaussian.Norm.Basic.normSq power * residual ≤
-        Curve.Event.Profile.Residual.Lift.clearedProfileResidualCoefficient
+      Gaussian.Norm.Basic.normSq power * residual ≤
+        Residual.Lift.clearedProfileResidualCoefficient
           analysis * epsilon ^ 2 := by
     simpa only [-eq_self, -iff_self, curve, power, residual, semantics,
       Gaussian.Norm.Basic.normSq_mul] using clearedBound
   have lowerProductBound : lower * residual ≤
-      Data.Gaussian.Norm.Basic.normSq power * residual :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct powerLower
+      Gaussian.Norm.Basic.normSq power * residual :=
+    Arithmetic.mul_le_mul_of_nonneg_right_direct powerLower
       (Gaussian.Norm.Basic.normSq_nonneg _)
   change residual ≤
-    (Curve.Event.Profile.Residual.Lift.clearedProfileResidualCoefficient
+    (Residual.Lift.clearedProfileResidualCoefficient
       analysis / lower) * epsilon ^ 2
   calc
     residual ≤
-        (Curve.Event.Profile.Residual.Lift.clearedProfileResidualCoefficient
+        (Residual.Lift.clearedProfileResidualCoefficient
           analysis * epsilon ^ 2) / lower := by
-      apply (Fraction.Order.Field.le_div_iff_pos lowerPositive).2
+      apply (Field.le_div_iff_pos lowerPositive).2
       calc
         residual * lower = lower * residual :=
           Fraction.Field.mul_comm _ _
-        _ ≤ Data.Gaussian.Norm.Basic.normSq power * residual :=
+        _ ≤ Gaussian.Norm.Basic.normSq power * residual :=
           lowerProductBound
-        _ ≤ Curve.Event.Profile.Residual.Lift.clearedProfileResidualCoefficient
+        _ ≤ Residual.Lift.clearedProfileResidualCoefficient
           analysis * epsilon ^ 2 := clearedProductBound
     _ =
-        (Curve.Event.Profile.Residual.Lift.clearedProfileResidualCoefficient
+        (Residual.Lift.clearedProfileResidualCoefficient
           analysis / lower) * epsilon ^ 2 := by
       simp only [-eq_self, -iff_self, ExplicitField.div_eq_mul_inv]
       rw [Fraction.Field.mul_assoc,
@@ -889,9 +893,9 @@ theorem
 /-- Homogeneous chordal diameter bound for every retained child,
 independently of affine poles. -/
 theorem chordalSq_le
-    {leaf : Curve.Event.Profile.Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
+    {leaf : Basic.SourcePersistentProfileRequestFamilyProfileEventLeafAlias analysis} {epsilon :
       Fraction.Rational}
-    (entry : Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf leaf epsilon) (positive : 0 < epsilon)
+    (entry : CompleteRequestLeaf leaf epsilon) (positive : 0 < epsilon)
     {left right : Fraction.Rational}
     (leftInside : entry.cell.interval.Contains left)
     (rightInside : entry.cell.interval.Contains right) :
@@ -905,13 +909,13 @@ theorem chordalSq_le
     ⟨entry.refines_chart.1.trans rightInside.1,
       rightInside.2.trans entry.refines_chart.2⟩
   have parameterBound :=
-    Data.Rat.Interval.parameter_sub_sq_le_width_sq
+    Interval.parameter_sub_sq_le_width_sq
       entry.cell.interval leftInside rightInside
-  have widthSquare : (Data.Rat.Interval.Bounds.width entry.cell.interval) ^ 2 ≤ epsilon ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
-      (Data.Rat.Interval.Bounds.width_nonneg entry.cell.interval) (entry.width_le positive) 2
+  have widthSquare : (Interval.Bounds.width entry.cell.interval) ^ 2 ≤ epsilon ^ 2 :=
+    Arithmetic.pow_le_pow_direct
+      (Interval.Bounds.width_nonneg entry.cell.interval) (entry.width_le positive) 2
   exact (chart.chordalSq_le_uniform leftChart rightChart).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
       (parameterBound.trans widthSquare)
       chart.uniformChordalVariationCoefficient_nonneg)
 

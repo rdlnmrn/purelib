@@ -50,20 +50,20 @@ open Purelib.Riemann.Integration.CheckedDirectGeometry (Leaf Mesh)
 open Purelib.Riemann.Branches
 open Purelib.Riemann.Readings
 open Purelib.Riemann.Integration
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
 
 /-- A proper prepared parent edge has a unique retained position at a fixed endpoint.
 
 Strict increase of the parent parameter makes its affine position fraction unique; the endpoint indices then identify
 the full position record. -/
-theorem position_eq {parent : PreparedSubdivisionModelCore.PreparedEdge curve differential} {current :
-  PreparedSheetContinuation.Endpoint}
+theorem position_eq {parent : PreparedEdge curve differential} {current :
+  Endpoint}
     (proper : parent.left.parameter < parent.request.endpoint.parameter)
-    (first second : PreparedSubdivisionModelCore.ParentPosition parent current) : first = second := by
+    (first second : ParentPosition parent current) : first = second := by
   have parameters := first.parameter_eq.trans second.parameter_eq.symm
-  rw [PreparedSheetContinuation.parameterAt_eq_affine,
-    PreparedSheetContinuation.parameterAt_eq_affine] at parameters
+  rw [parameterAt_eq_affine,
+    parameterAt_eq_affine] at parameters
   have products : first.fraction * (parent.request.endpoint.parameter - parent.left.parameter) =
       second.fraction * (parent.request.endpoint.parameter - parent.left.parameter) := by
     calc
@@ -83,13 +83,13 @@ theorem position_eq {parent : PreparedSubdivisionModelCore.PreparedEdge curve di
 /-- Accepted prepared-source certificates for the same exact request are equal.
 
 Their retained cached owners agree with the same canonical owner, which identifies the complete dependent records. -/
-theorem accepted_eq {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient
+theorem accepted_eq {polynomial : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient
   : Rational.Box}
     {start finish : Data.Gaussian.Basic.Canonical}
     {segment : ClearPath.ClearSegment polynomial ambient start finish}
-    {current : PreparedSheetContinuation.Endpoint} {owner : PreparedSheetContinuation.Owner (polynomial.eval
+    {current : Endpoint} {owner : Owner (polynomial.eval
       (segment.pointAt current.parameter))}
-    {request : PreparedSheetContinuation.StepRequest}
+    {request : StepRequest}
     (first second : BoundedPreparedSource.Accepted segment current owner request) : first = second := by
   have same := first.cached.eq_canonical.trans second.cached.eq_canonical.symm
   cases first
@@ -98,20 +98,20 @@ theorem accepted_eq {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoeff
   rfl
 
 /-- A proper parent edge has a unique checked direct leaf at the fixed endpoints and diameter. -/
-theorem leaf_eq {parent : PreparedSubdivisionModelCore.PreparedEdge curve differential} {left right :
-  PreparedSheetContinuation.Endpoint} {diameter : PreparedSheetContinuation.Coordinate}
+theorem leaf_eq {parent : PreparedEdge curve differential} {left right :
+  Endpoint} {diameter : Coordinate}
     (proper : parent.left.parameter < parent.request.endpoint.parameter)
-    (first second : CheckedDirectGeometry.Leaf parent left right diameter) : first = second := by
+    (first second : Leaf parent left right diameter) : first = second := by
   cases first with
   | mk firstPosition firstOwner firstEq firstPositive firstOrdered firstPrepared =>
     cases second with
     | mk secondPosition secondOwner secondEq secondPositive secondOrdered secondPrepared =>
-      have positions := Curves.Hyperelliptic.Integration.Observation.PreparedDirectMeshEquality.position_eq proper
+      have positions := position_eq proper
         firstPosition secondPosition
       cases positions
       cases firstEq
       cases secondEq
-      have prepared := Curves.Hyperelliptic.Integration.Observation.PreparedDirectMeshEquality.accepted_eq firstPrepared
+      have prepared := accepted_eq firstPrepared
         secondPrepared
       cases prepared
       rfl
@@ -121,12 +121,12 @@ theorem leaf_eq {parent : PreparedSubdivisionModelCore.PreparedEdge curve differ
 The comparison eliminates each mesh at its original depth. Unequal depths
 are rejected directly by natural-constructor disjointness, while equal split
 depths compare their actual midpoint submeshes recursively. -/
-private theorem mesh_heq {parent : PreparedSubdivisionModelCore.PreparedEdge curve differential}
-    {diameter : PreparedSheetContinuation.Coordinate} {firstDepth secondDepth : Nat}
-    {left right : PreparedSheetContinuation.Endpoint}
+private theorem mesh_heq {parent : PreparedEdge curve differential}
+    {diameter : Coordinate} {firstDepth secondDepth : Nat}
+    {left right : Endpoint}
     (proper : parent.left.parameter < parent.request.endpoint.parameter)
-    (first : CheckedDirectGeometry.Mesh parent diameter firstDepth left right)
-    (second : CheckedDirectGeometry.Mesh parent diameter secondDepth left right)
+    (first : Mesh parent diameter firstDepth left right)
+    (second : Mesh parent diameter secondDepth left right)
     (depths : firstDepth = secondDepth) : HEq first second := by
   induction first generalizing secondDepth with
   | leaf data localProper =>
@@ -152,35 +152,35 @@ private theorem mesh_heq {parent : PreparedSubdivisionModelCore.PreparedEdge cur
 
 Each leaf has the unique retained parent position and preparation certificate;
 each split compares the original left and right midpoint submeshes. -/
-theorem mesh_eq {parent : PreparedSubdivisionModelCore.PreparedEdge curve differential} {left right :
-  PreparedSheetContinuation.Endpoint} {diameter : PreparedSheetContinuation.Coordinate}
+theorem mesh_eq {parent : PreparedEdge curve differential} {left right :
+  Endpoint} {diameter : Coordinate}
     {depth : Nat} (proper : parent.left.parameter < parent.request.endpoint.parameter)
-    (first second : CheckedDirectGeometry.Mesh parent diameter depth left right) : first = second :=
+    (first second : Mesh parent diameter depth left right) : first = second :=
   eq_of_heq (mesh_heq proper first second rfl)
 
 /-- Every checked direct mesh with the prescribed depth and diameter equals the computed uniform mesh. -/
 theorem uniform_eq {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential}
     (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter)
-    {diameter : PreparedSheetContinuation.Coordinate} (positive : 0 < diameter) {depth : Nat}
+    {diameter : Coordinate} (positive : 0 < diameter) {depth : Nat}
     (enough : Subdivision.sufficientDyadicDepth
       parent.edge.segment parent.edge.left parent.edge.request.endpoint diameter ≤ depth)
-    (mesh : CheckedDirectGeometry.Mesh parent.edge diameter depth parent.edge.left parent.edge.request.endpoint) :
+    (mesh : Mesh parent.edge diameter depth parent.edge.left parent.edge.request.endpoint) :
     mesh = PreparedDirectDyadicRefinements.uniformParentMesh parent proper diameter positive depth enough :=
-  Curves.Hyperelliptic.Integration.Observation.PreparedDirectMeshEquality.mesh_eq proper _ _
+  mesh_eq proper _ _
 
 open Purelib.Riemann.Integration.PreparedDirectDyadicRefinements
 
 /-- For proper parent edges, a checked mesh family is uniquely determined by its common depth and diameter. -/
-theorem meshes_eq {diameter : PreparedSheetContinuation.Coordinate} {depth : Nat}
+theorem meshes_eq {diameter : Coordinate} {depth : Nat}
     {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)}
     (proper : PreparedDyadicRefinements.AllParentsProper parents)
-    (first second : PreparedDirectDyadicRefinements.CheckedDirectMeshes depth diameter parents) : first = second := by
+    (first second : CheckedDirectMeshes depth diameter parents) : first = second := by
   induction first with
   | nil => cases second; rfl
   | cons mesh tail ih =>
       cases second with
       | cons other rest =>
-          have same := Curves.Hyperelliptic.Integration.Observation.PreparedDirectMeshEquality.mesh_eq proper.1 mesh
+          have same := mesh_eq proper.1 mesh
             other
           cases same
           have remaining := ih proper.2 rest
@@ -188,12 +188,12 @@ theorem meshes_eq {diameter : PreparedSheetContinuation.Coordinate} {depth : Nat
           rfl
 
 /-- Allowance-check records for the same meshes, target and differential list are equal. -/
-theorem allowances_eq {diameter : PreparedSheetContinuation.Coordinate} {depth : Nat}
+theorem allowances_eq {diameter : Coordinate} {depth : Nat}
     {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-    {meshes : PreparedDirectDyadicRefinements.CheckedDirectMeshes depth diameter parents} {target :
-      PreparedSheetContinuation.Coordinate}
-    {targets : List (Differentials.Basic.Differential genus)}
-    (first second : PreparedDirectDyadicRefinements.MeshAllowanceChecks meshes target targets) : first = second := by
+    {meshes : CheckedDirectMeshes depth diameter parents} {target :
+      Coordinate}
+    {targets : List (Differential genus)}
+    (first second : MeshAllowanceChecks meshes target targets) : first = second := by
   induction first with
   | nil => cases second; rfl
   | cons value valueEq enough tail ih =>
@@ -211,8 +211,8 @@ Proper parent edges determine the same mesh family, and the retained allowance c
 targets. -/
 theorem selection_eq {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)}
     (proper : PreparedDyadicRefinements.AllParentsProper parents)
-    {targets : List (Differentials.Basic.Differential genus)} {target : PreparedSheetContinuation.Coordinate}
-    (first second : PreparedDirectDyadicRefinements.CheckedSelection parents targets target)
+    {targets : List (Differential genus)} {target : Coordinate}
+    (first second : CheckedSelection parents targets target)
     (diameter : first.rootDiameter = second.rootDiameter) (depth : first.depth = second.depth) : first = second := by
   cases first with
   | mk firstDiameter firstPositive firstDepth firstMeshes firstAllowances =>
@@ -221,10 +221,10 @@ theorem selection_eq {parents : List (PreparedSubdivisionModelCore.CenteredEdge 
           dsimp only at diameter depth
           cases diameter
           cases depth
-          have meshes := Curves.Hyperelliptic.Integration.Observation.PreparedDirectMeshEquality.meshes_eq proper
+          have meshes := meshes_eq proper
             firstMeshes secondMeshes
           cases meshes
-          have allowances := Curves.Hyperelliptic.Integration.Observation.PreparedDirectMeshEquality.allowances_eq
+          have allowances := allowances_eq
             firstAllowances secondAllowances
           cases allowances
           rfl

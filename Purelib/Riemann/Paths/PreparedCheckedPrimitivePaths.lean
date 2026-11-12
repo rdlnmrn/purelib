@@ -42,7 +42,7 @@ open Purelib.Integration in
 open Purelib.Data in
 open Purelib.Geometry in
 /-- The continuation midpoint equals the dyadic partition midpoint. -/
-private theorem midpoint_eq (first last : Path.BoundaryRibbon.Coordinate) :
+private theorem midpoint_eq (first last : Coordinate) :
     Branches.ClearSheetContinuation.midpoint first last = Rectangle.Partition.PreparedBoxPartitions.midpoint first last
       := by
   unfold Branches.ClearSheetContinuation.midpoint Rectangle.Partition.PreparedBoxPartitions.midpoint
@@ -65,10 +65,10 @@ open Purelib.Integration in
 /-- Read the checked midpoint tree as the exact ordered dyadic primitive increments.
 
 The original segment parameterization and retained endpoint parameters determine every child increment. -/
-theorem primitive_increments (mesh : Mesh parent diameter depth left right) (value : Path.BoundaryRibbon.Gaussian →
-  Path.BoundaryRibbon.Gaussian) :
+theorem primitive_increments (mesh : Mesh parent diameter depth left right) (value : Gaussian →
+  Gaussian) :
     mesh.children.map (fun child => value (child.edge.point 1) - value (child.edge.point 0)) =
-      Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements (fun parameter => value (parent.segment.pointAt parameter))
+      dyadicIncrements (fun parameter => value (parent.segment.pointAt parameter))
         depth left.parameter right.parameter := by
   induction mesh with
   | leaf leaf _ =>
@@ -76,8 +76,8 @@ theorem primitive_increments (mesh : Mesh parent diameter depth left right) (val
       rw [PreparedEdge.point_one, PreparedEdge.point_zero]
       rfl
   | split first second firstEq secondEq =>
-      rw [Mesh.children, Purelib.Data.List.Map.map_append, firstEq, secondEq,
-        Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements]
+      rw [Mesh.children, Data.List.Map.map_append, firstEq, secondEq,
+        dyadicIncrements]
       dsimp only [Integration.CheckedDirectGeometry.midpoint]
       rw [midpoint_eq]
 
@@ -86,28 +86,28 @@ end CheckedDirectGeometry.Mesh
 section
 open Purelib.Integration
 /-- Pointwise equality of sampled functions preserves every finite dyadic increment. -/
-private theorem increments_congr {firstValue lastValue : Path.BoundaryRibbon.Coordinate → Path.BoundaryRibbon.Gaussian}
+private theorem increments_congr {firstValue lastValue : Coordinate → Gaussian}
     (equal : ∀ parameter, firstValue parameter = lastValue parameter) (depth : Nat) (first last :
-      Path.BoundaryRibbon.Coordinate) :
-    Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements firstValue depth first last =
-      Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements lastValue depth first last := by
+      Coordinate) :
+    dyadicIncrements firstValue depth first last =
+      dyadicIncrements lastValue depth first last := by
   induction depth generalizing first last with
   | zero => change [firstValue last - firstValue first] = [lastValue last - lastValue first]; rw [equal, equal]
   | succ depth ih =>
-    rw [Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements, Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements, ih, ih]
+    rw [dyadicIncrements, dyadicIncrements, ih, ih]
 
 /-- An affine parameter change commutes with the complete dyadic increment list. -/
-private theorem increments_affine (value : Path.BoundaryRibbon.Coordinate → Path.BoundaryRibbon.Gaussian) (origin slope
-  : Path.BoundaryRibbon.Coordinate)
-    (depth : Nat) (first last : Path.BoundaryRibbon.Coordinate) :
-    Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements (fun parameter => value (origin + slope * parameter)) depth first
+private theorem increments_affine (value : Coordinate → Gaussian) (origin slope
+  : Coordinate)
+    (depth : Nat) (first last : Coordinate) :
+    dyadicIncrements (fun parameter => value (origin + slope * parameter)) depth first
       last =
-      Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements value depth (origin + slope * first) (origin + slope * last) :=
+      dyadicIncrements value depth (origin + slope * first) (origin + slope * last) :=
         by
   induction depth generalizing first last with
   | zero => rfl
   | succ depth ih =>
-    rw [Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements, Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements, ih, ih,
+    rw [dyadicIncrements, dyadicIncrements, ih, ih,
       Path.Dyadic.DyadicBoundaryRibbon.midpoint_affine]
 
 end
@@ -121,15 +121,15 @@ open Purelib.Data in
 The equality uses the exact left and requested right endpoint parameters without identifying functions by
 extensionality. -/
 theorem PreparedConstantModels.PreparedEdge.primitive_dyadic_increments
-    {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-      Hyperelliptic.Differentials.Basic.Differential genus}
-    (parent : PreparedEdge curve differential) (value : Path.BoundaryRibbon.Gaussian → Path.BoundaryRibbon.Gaussian)
+    {genus : Nat} {curve : HyperellipticCurve genus} {differential :
+      Differential genus}
+    (parent : PreparedEdge curve differential) (value : Gaussian → Gaussian)
       (depth : Nat) :
-    Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements (fun parameter => value (parent.point parameter)) depth 0 1 =
-      Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements (fun parameter => value (parent.segment.pointAt parameter))
+    dyadicIncrements (fun parameter => value (parent.point parameter)) depth 0 1 =
+      dyadicIncrements (fun parameter => value (parent.segment.pointAt parameter))
         depth
         parent.left.parameter parent.request.endpoint.parameter := by
-  have parameter (fraction : Path.BoundaryRibbon.Coordinate) : value (parent.point fraction) =
+  have parameter (fraction : Coordinate) : value (parent.point fraction) =
       value (parent.segment.pointAt (parent.left.parameter +
         (parent.request.endpoint.parameter - parent.left.parameter) * fraction)) := by
     have equal := Branches.PreparedSheetContinuation.pointAt_parameterAt parent.segment parent.within
@@ -157,28 +157,28 @@ open Purelib.Integration in
 
 The equality preserves the entire ordered increment list and all intermediate points. -/
 theorem primitive_refined_increments
-    {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-      Hyperelliptic.Differentials.Basic.Differential genus}
-    {parent : PreparedEdge curve differential} {diameter : Path.BoundaryRibbon.Coordinate} {depth : Nat} {left right :
+    {genus : Nat} {curve : HyperellipticCurve genus} {differential :
+      Differential genus}
+    {parent : PreparedEdge curve differential} {diameter : Coordinate} {depth : Nat} {left right :
       Endpoint}
-    (mesh : Mesh parent diameter depth left right) (value : Path.BoundaryRibbon.Gaussian → Path.BoundaryRibbon.Gaussian)
+    (mesh : Mesh parent diameter depth left right) (value : Gaussian → Gaussian)
       (fine : Nat) :
     (mesh.children.map (fun child =>
-      Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements (fun parameter => value (child.edge.point parameter)) fine 0
+      dyadicIncrements (fun parameter => value (child.edge.point parameter)) fine 0
         1)).flatten =
-      Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements (fun parameter => value (parent.segment.pointAt parameter))
+      dyadicIncrements (fun parameter => value (parent.segment.pointAt parameter))
         (depth + fine) left.parameter right.parameter := by
   induction mesh with
   | leaf leaf _ =>
-      change (Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements (fun parameter => value (leaf.edge.point parameter))
+      change (dyadicIncrements (fun parameter => value (leaf.edge.point parameter))
         fine 0 1) ++ [] = _
-      rw [Purelib.Data.List.Append.append_nil,
-        Paths.PreparedCheckedPrimitivePaths.PreparedConstantModels.PreparedEdge.primitive_dyadic_increments leaf.edge,
+      rw [Data.List.Append.append_nil,
+        PreparedConstantModels.PreparedEdge.primitive_dyadic_increments leaf.edge,
         Nat.zero_add]
       rfl
   | split first second firstEq secondEq =>
-      rw [Mesh.children, Purelib.Data.List.Map.map_append, Purelib.Data.List.Flatten.flatten_append, firstEq, secondEq,
-        Nat.succ_add, Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements]
+      rw [Mesh.children, Data.List.Map.map_append, Data.List.Flatten.flatten_append, firstEq, secondEq,
+        Nat.succ_add, dyadicIncrements]
       dsimp only [Integration.CheckedDirectGeometry.midpoint]
       rw [midpoint_eq]
 
@@ -194,32 +194,32 @@ open Purelib.Riemann
 open Purelib.Integration
 /-- Read a checked parent block as its exact primitive path on the parent's unit interval. -/
 theorem checkedParentBlock_primitive_increments (parent : CenteredEdge curve differential)
-    {diameter : Path.BoundaryRibbon.Coordinate} {depth : Nat}
-    (mesh : Integration.CheckedDirectGeometry.Mesh parent.edge diameter depth parent.edge.left
+    {diameter : Coordinate} {depth : Nat}
+    (mesh : Mesh parent.edge diameter depth parent.edge.left
       parent.edge.request.endpoint)
-    (value : Path.BoundaryRibbon.Gaussian → Path.BoundaryRibbon.Gaussian) :
+    (value : Gaussian → Gaussian) :
     (Integration.PreparedDirectDyadicRefinements.checkedParentBlock parent mesh).children.map (fun child => value
       (child.edge.point 1) - value (child.edge.point 0)) =
-      Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements (fun parameter => value (parent.edge.point parameter)) depth 0 1
+      dyadicIncrements (fun parameter => value (parent.edge.point parameter)) depth 0 1
         := by
   rw [Integration.PreparedDirectDyadicRefinements.checkedParentBlock_children,
-    Paths.PreparedCheckedPrimitivePaths.CheckedDirectGeometry.Mesh.primitive_increments mesh,
-    Paths.PreparedCheckedPrimitivePaths.PreparedConstantModels.PreparedEdge.primitive_dyadic_increments parent.edge]
+    CheckedDirectGeometry.Mesh.primitive_increments mesh,
+    PreparedConstantModels.PreparedEdge.primitive_dyadic_increments parent.edge]
 
 /-- Nested child refinement preserves the parent's complete primitive path at the combined depth. -/
 theorem checkedParentBlock_primitive_refined_increments (parent : CenteredEdge curve differential)
-    {diameter : Path.BoundaryRibbon.Coordinate} {depth : Nat}
-    (mesh : Integration.CheckedDirectGeometry.Mesh parent.edge diameter depth parent.edge.left
+    {diameter : Coordinate} {depth : Nat}
+    (mesh : Mesh parent.edge diameter depth parent.edge.left
       parent.edge.request.endpoint)
-    (value : Path.BoundaryRibbon.Gaussian → Path.BoundaryRibbon.Gaussian) (fine : Nat) :
+    (value : Gaussian → Gaussian) (fine : Nat) :
     ((Integration.PreparedDirectDyadicRefinements.checkedParentBlock parent mesh).children.map (fun child =>
-      Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements (fun parameter => value (child.edge.point parameter)) fine 0
+      dyadicIncrements (fun parameter => value (child.edge.point parameter)) fine 0
         1)).flatten =
-      Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements (fun parameter => value (parent.edge.point parameter)) (depth +
+      dyadicIncrements (fun parameter => value (parent.edge.point parameter)) (depth +
         fine) 0 1 := by
   rw [Integration.PreparedDirectDyadicRefinements.checkedParentBlock_children,
-    Paths.PreparedCheckedPrimitivePaths.CheckedDirectGeometry.Mesh.primitive_refined_increments mesh,
-    Paths.PreparedCheckedPrimitivePaths.PreparedConstantModels.PreparedEdge.primitive_dyadic_increments parent.edge]
+    CheckedDirectGeometry.Mesh.primitive_refined_increments mesh,
+    PreparedConstantModels.PreparedEdge.primitive_dyadic_increments parent.edge]
 
 end
 
@@ -230,20 +230,20 @@ open Purelib.Integration in
 Refining each retained child again equals refining each original parent at the summed depth and concatenating those
 paths. -/
 theorem CheckedDirectMeshes.primitive_refined_increments
-    {depth : Nat} {diameter : Path.BoundaryRibbon.Coordinate} {parents : List (CenteredEdge curve differential)}
+    {depth : Nat} {diameter : Coordinate} {parents : List (CenteredEdge curve differential)}
     (meshes : Integration.PreparedDirectDyadicRefinements.CheckedDirectMeshes depth diameter parents) (value :
-      Path.BoundaryRibbon.Gaussian → Path.BoundaryRibbon.Gaussian) (fine : Nat) :
+      Gaussian → Gaussian) (fine : Nat) :
     (meshes.toBlocks.children.map (fun child =>
-      Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements (fun parameter => value (child.edge.point parameter)) fine 0
+      dyadicIncrements (fun parameter => value (child.edge.point parameter)) fine 0
         1)).flatten =
       (parents.map (fun parent =>
-        Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements (fun parameter => value (parent.edge.point parameter)) (depth
+        dyadicIncrements (fun parameter => value (parent.edge.point parameter)) (depth
           + fine) 0 1)).flatten := by
   induction meshes with
   | nil => rfl
   | @cons parent remaining mesh tail ih =>
       rw [Integration.PreparedDirectDyadicRefinements.CheckedDirectMeshes.toBlocks_cons_children,
-        Purelib.Data.List.Map.map_append, Purelib.Data.List.Flatten.flatten_append]
+        Data.List.Map.map_append, Data.List.Flatten.flatten_append]
       have head := checkedParentBlock_primitive_refined_increments parent mesh value fine
       rw [Integration.PreparedDirectDyadicRefinements.checkedParentBlock_children] at head
       exact congrArg₂ List.append head ih

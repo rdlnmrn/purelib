@@ -63,6 +63,8 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Topology.Mesh.CoordinateTriangulation
 import Purelib.Tactic.Ring
 
+open Purelib.Approximation.Rational.Budget
+
 open Purelib.Algebra
 
 open Purelib.Approximation
@@ -97,14 +99,14 @@ open _root_.Purelib.Data.Gaussian.Basic (conj)
 
 open Purelib.Data.Nat
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
     Fraction.Rational} {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
   {observations : RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
-    RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars} {sheet : Fin
+    SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars} {sheet : Fin
     2}
   {partitions : Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid} {coarse :
     Topology.NewtonRequestedSurfaceEnergy.SurfaceMeshes partitions domains sheet}
@@ -117,10 +119,10 @@ namespace ConjugateRequest
 @[expose] def ConjugatePieces (energy : Topology.NewtonRequestedSurfaceEnergy.SurfaceRequest partitions coarse fixed
   energyTarget)
     (perFace : Fraction.Rational) (position : Fin grid.faces.regulars.length) :=
-  Data.Vector.DependentVector (fun piece : Fin (partitions.get position).cuts.boxes.length =>
-    Hyperelliptic.Meshes.PuncturedGrid.DomainClippedRequest.ClippedBasisRequest (fixed.get position).get
+  Vector.DependentVector (fun piece : Fin (partitions.get position).cuts.boxes.length =>
+    PuncturedGrid.DomainClippedRequest.ClippedBasisRequest (fixed.get position).get
       ((energy.meshes.get position).entries.get piece)
-      (Rational.Budget.Aggregate.perTerm perFace (partitions.get position).cuts.boxes.length))
+      (Aggregate.perTerm perFace (partitions.get position).cuts.boxes.length))
 
 end ConjugateRequest
 
@@ -133,9 +135,9 @@ structure ConjugateRequest (energy : Topology.NewtonRequestedSurfaceEnergy.Surfa
   /-- The requested total squared-norm error is strictly positive. -/ positive : 0 < error
   /-- The retained count-paid error allowance for each original regular face. -/ perFace : Fraction.Rational
   /-- The per-face allowance is exactly the original request divided by its finite aggregate payment. -/ perFace_eq :
-    perFace = Rational.Budget.Aggregate.perTerm error grid.faces.regulars.length
+    perFace = Aggregate.perTerm error grid.faces.regulars.length
   /-- The original dependent bank of clipped requests for every retained face and piece. -/ entries :
-    Data.Vector.DependentVector (Hyperelliptic.Meshes.Newton.Surface.ConjugateRequest.ConjugatePieces energy perFace)
+    Vector.DependentVector (ConjugateRequest.ConjugatePieces energy perFace)
   /-- The shared sufficient stage for energy and all retained piece comparisons. -/ index : Nat
   /-- The shared stage is at least the original energy-request stage. -/ energy_le : energy.index ≤ index
   /-- Every original retained piece request is ready by the shared stage. -/ index_ge : ∀ position piece, ((entries.get
@@ -153,15 +155,15 @@ local request. -/
 @[expose] def build (energy : Topology.NewtonRequestedSurfaceEnergy.SurfaceRequest partitions coarse fixed energyTarget)
   (error : Fraction.Rational) (positive : 0 < error) :
     ConjugateRequest energy error :=
-  let perFace := Rational.Budget.Aggregate.perTerm error grid.faces.regulars.length
-  let entries : Data.Vector.DependentVector (Hyperelliptic.Meshes.Newton.Surface.ConjugateRequest.ConjugatePieces energy
+  let perFace := Aggregate.perTerm error grid.faces.regulars.length
+  let entries : Vector.DependentVector (ConjugatePieces energy
     perFace) :=
-    Data.Vector.DependentVector.ofFn fun position => Data.Vector.DependentVector.ofFn fun piece =>
-      Hyperelliptic.Meshes.PuncturedGrid.DomainClippedRequest.ClippedBasisRequest.build (fixed.get position).get
+    Vector.DependentVector.ofFn fun position => Vector.DependentVector.ofFn fun piece =>
+      PuncturedGrid.DomainClippedRequest.ClippedBasisRequest.build (fixed.get position).get
         ((energy.meshes.get position).entries.get piece)
-        (Rational.Budget.Aggregate.perTerm perFace (partitions.get position).cuts.boxes.length)
-        (Rational.Budget.Aggregate.perTerm_positive
-          (Rational.Budget.Aggregate.perTerm_positive positive _) _)
+        (Aggregate.perTerm perFace (partitions.get position).cuts.boxes.length)
+        (Aggregate.perTerm_positive
+          (Aggregate.perTerm_positive positive _) _)
   let floor := entries.maximum fun _ row => row.maximum fun _ request => request.index
   ⟨positive, perFace, rfl, entries, max energy.index floor, Order.le_max_left _ _, fun position piece =>
     (((entries.get position).get_le_maximum (fun _ request => request.index) piece).trans
@@ -188,10 +190,10 @@ theorem pairError_bound (request : ConjugateRequest energy error)
   (later : request.index ≤ stage)
     (samples : energy.Readings cache) (first second : Fin genus)
     (position : Fin grid.faces.regulars.length) (piece : Fin (partitions.get position).cuts.boxes.length) :
-    Data.Gaussian.Norm.Basic.normSq (pairError
+    Gaussian.Norm.Basic.normSq (pairError
       samples first second position piece) <
-      Rational.Budget.Aggregate.perTerm request.perFace (partitions.get position).cuts.boxes.length :=
-  Hyperelliptic.Meshes.PuncturedGrid.DomainConjugateClippedRequest.ClippedBasisRequest.conjugate_accurate
+      Aggregate.perTerm request.perFace (partitions.get position).cuts.boxes.length :=
+  PuncturedGrid.DomainConjugateClippedRequest.ClippedBasisRequest.conjugate_accurate
     ((request.entries.get position).get piece) ((request.index_ge position piece).trans later)
     (cache.atDomain position sheet) ((samples.get position).readings.get piece) first second
 
@@ -199,33 +201,33 @@ theorem pairError_bound (request : ConjugateRequest energy error)
 theorem total_pairError_bound (request : ConjugateRequest energy
   error) (later : request.index ≤ stage)
     (samples : energy.Readings cache) (first second : Fin genus) :
-    Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
+    Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
       pairError samples first second position
       piece))) < error := by
   have perFacePositive : 0 < request.perFace := by
     rw [request.perFace_eq]
-    exact Rational.Budget.Aggregate.perTerm_positive request.positive _
+    exact Aggregate.perTerm_positive request.positive _
   have faceBound (position : Fin grid.faces.regulars.length) :
-      Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun piece =>
+      Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun piece =>
         pairError samples first second position
         piece)) ≤ request.perFace := by
     have estimate := Gaussian.Norm.Sum.Indexed.normSq_sumFin_le _
-      (Rational.Budget.Aggregate.perTerm request.perFace (partitions.get position).cuts.boxes.length)
+      (Aggregate.perTerm request.perFace (partitions.get position).cuts.boxes.length)
       (fun piece => (pairError_bound request later
         samples first second position piece).le)
-    have payment := Rational.Budget.Aggregate.count_mul_perTerm_lt perFacePositive (partitions.get
+    have payment := Aggregate.count_mul_perTerm_lt perFacePositive (partitions.get
       position).cuts.boxes.length
     have equal : ((partitions.get position).cuts.boxes.length : Fraction.Rational) ^ 2 *
-        Rational.Budget.Aggregate.perTerm request.perFace (partitions.get position).cuts.boxes.length =
+        Aggregate.perTerm request.perFace (partitions.get position).cuts.boxes.length =
         ((partitions.get position).cuts.boxes.length : Fraction.Rational) *
           (((partitions.get position).cuts.boxes.length : Fraction.Rational) *
-            Rational.Budget.Aggregate.perTerm request.perFace (partitions.get position).cuts.boxes.length) := by ring1
+            Aggregate.perTerm request.perFace (partitions.get position).cuts.boxes.length) := by ring1
     exact (estimate.trans_lt (equal.trans_lt payment)).le
   have estimate := Gaussian.Norm.Sum.Indexed.normSq_sumFin_le _ request.perFace faceBound
-  have payment := Rational.Budget.Aggregate.count_mul_perTerm_lt request.positive grid.faces.regulars.length
+  have payment := Aggregate.count_mul_perTerm_lt request.positive grid.faces.regulars.length
   have equal : (grid.faces.regulars.length : Fraction.Rational) ^ 2 * request.perFace =
       (grid.faces.regulars.length : Fraction.Rational) * ((grid.faces.regulars.length : Fraction.Rational) *
-        Rational.Budget.Aggregate.perTerm error grid.faces.regulars.length) := by rw [request.perFace_eq]; ring1
+        Aggregate.perTerm error grid.faces.regulars.length) := by rw [request.perFace_eq]; ring1
   exact estimate.trans_lt (equal.trans_lt payment)
 
 end ConjugateRequest

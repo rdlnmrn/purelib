@@ -150,6 +150,52 @@ theorem scaledInverseData_scalar_nonzero :
       · exact scaledInverseData_scalar_nonzero
           (schur_preserves leading)
 
+/-- The scalar degree of the fixed Schur recursion from uniform monic column degrees.
+
+Each pivot contributes its current degree, and the remaining Schur columns
+double that degree. The structural dimension recursion retains the resulting
+finite degree without an infinite sum or asymptotic bound.
+-/
+@[expose] def scalarDegree : Nat → Nat → Nat
+  | 0, _ => 0
+  | count + 1, degree => degree + scalarDegree count (degree + degree)
+
+/-- A nonempty Schur dimension with positive initial degree gives a positive scalar degree. -/
+theorem scalarDegree_pos {count degree : Nat} (nonempty : 0 < count) (positive : 0 < degree) :
+    0 < scalarDegree count degree := by
+  cases count with
+  | zero => exact False.elim (Nat.not_lt_zero _ nonempty)
+  | succ count => exact Nat.lt_of_lt_of_le positive (Nat.le_add_right _ _)
+
+/-- Uniform monic leading columns give a monic scalar at the exact recursively computed degree.
+
+The original fixed Schur recursion and every retained polynomial pivot are
+used. Its scalar is nonzero even when some scalar specializations or
+intermediate evaluated pivots vanish.
+-/
+theorem scaledInverseData_scalar_leading :
+    ∀ (count : Nat) (degree : Nat) (matrix : Matrix K count),
+      UpperTriangularLeading matrix (fun _ => degree) (fun _ => 1) →
+      LeadingTerm (PolynomialMatrix.Inverse.Scaled.Compute.scaledInverseData count matrix).scalar
+        (scalarDegree count degree) 1
+  | 0, _, _, _ => LeadingTerm.constant one_ne_zero
+  | count + 1, degree, matrix, leading => by
+      have reduced := schur_preserves leading
+      have next : UpperTriangularLeading (PolynomialMatrix.Basic.schur matrix)
+          (fun _ => degree + degree) (fun _ => 1) := by
+        refine ⟨reduced.atMost, reduced.below, ?_⟩
+        intro index
+        have diagonal := reduced.diagonalLeading index
+        change LeadingTerm _ (degree + degree) (1 * 1) at diagonal
+        rewrite [mul_one] at diagonal
+        exact diagonal
+      have tail := scaledInverseData_scalar_leading count (degree + degree)
+        (PolynomialMatrix.Basic.schur matrix) next
+      have result := LeadingTerm.mul (leading.diagonalLeading 0) tail
+      change LeadingTerm _ (scalarDegree (count + 1) degree) (1 * 1) at result
+      rewrite [mul_one] at result
+      exact result
+
 end Purelib.LinearAlgebra.PolynomialMatrix.Leading.Triangular
 
 end

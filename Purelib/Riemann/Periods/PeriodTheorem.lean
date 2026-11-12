@@ -151,11 +151,11 @@ structure AnalyticCertificate {genus : Nat}
     PreparedRefinementPrograms.SymplecticCycleRealization curve
       periodData.cycles basis.cycles
   /-- The bilinear relation before normalization for the same period-data owner. -/ preBilinear :
-    Riemann.BilinearRelations.Certificate.PreNormalizationCertificate periodData
+    BilinearRelations.Certificate.PreNormalizationCertificate periodData
   /-- The scaled inverse certificate for the original A-period matrix. -/ aInverse : ScaledInverseCertificate
     periodData.aMatrix
   /-- Energy positivity indexed by the exact retained inverse normalization. -/
-  energy : Curves.Hyperelliptic.Integration.Energy.Certificate
+  energy : Energy.Certificate
     (NormalizedPeriodData.ofScaledInverse periodData aInverse)
 
 constructive_injectivity AnalyticCertificate
@@ -187,7 +187,7 @@ open Purelib.Riemann.Integration in
 @[expose] def normalizedEnergy {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     {basis : PreparedRefinementPrograms.PeriodCycleBasis curve}
     (analytic : AnalyticCertificate curve basis) :
-    Curves.Hyperelliptic.Integration.Energy.Certificate analytic.normalized := by
+    Energy.Certificate analytic.normalized := by
   simpa only [normalized, inverse] using analytic.energy
 
 open Purelib in
@@ -269,9 +269,9 @@ The bilinear relation, determinant tail separation and energy certificate all re
 inverse normalization. -/
 @[expose] def riemann_period_theorem_of_retained_bank {genus : Nat} {curve : Basic.HyperellipticCurve genus}
     (bank : Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve)
-    (preBilinear : Riemann.BilinearRelations.Certificate.PreNormalizationCertificate bank.periodData)
+    (preBilinear : BilinearRelations.Certificate.PreNormalizationCertificate bank.periodData)
     (inverseTail : ScalarTailSeparationCertificate bank.periodData.aMatrix)
-    (energy : Curves.Hyperelliptic.Integration.Energy.Certificate
+    (energy : Energy.Certificate
       (NormalizedPeriodData.ofScaledInverse bank.periodData inverseTail.toScaledInverseCertificate)) :
     Result curve :=
   riemann_period_theorem_of_basis_certificates curve
@@ -284,12 +284,12 @@ inverse normalization. -/
 -/
 @[expose] def riemann_period_theorem_of_automatic_standard_tail
     {genus : Nat} (curve : Basic.HyperellipticCurve genus)
-    (preBilinear : Riemann.BilinearRelations.Certificate.PreNormalizationCertificate
+    (preBilinear : BilinearRelations.Certificate.PreNormalizationCertificate
       (PreparedRefinementPrograms.automaticStandardPeriodData curve))
     (inverseTail : ScalarTailSeparationCertificate
       (PreparedRefinementPrograms.automaticStandardPeriodData
         curve).aMatrix)
-    (energy : Curves.Hyperelliptic.Integration.Energy.Certificate
+    (energy : Energy.Certificate
       (NormalizedPeriodData.ofScaledInverse
         (PreparedRefinementPrograms.automaticStandardPeriodData curve)
         inverseTail.toScaledInverseCertificate)) :
@@ -391,7 +391,7 @@ open Purelib.Geometry.Path.Gaussian in
   sample_lower := by
     intro index
     change (1 : Coordinate) <=
-      Data.Gaussian.Norm.Basic.normSq 1
+      Norm.Basic.normSq 1
     rw [Norm.Basic.normSq_one]
 
 section
@@ -477,7 +477,7 @@ open Purelib.Curves.Hyperelliptic in
 open Purelib.Curves.Hyperelliptic.Integration in
 /-- The energy certificate type at the result's retained normalized owner. -/
 @[expose, reducible] def CachedEnergy {genus : Nat} {curve : Basic.HyperellipticCurve genus} (result : Result curve) :=
-  Curves.Hyperelliptic.Integration.Energy.Certificate result.normalized
+  Energy.Certificate result.normalized
 
 open Purelib in
 open Purelib.Curves.Hyperelliptic in
@@ -491,7 +491,7 @@ open Purelib.Curves.Hyperelliptic.Integration in
 /-- Transport the analytic energy certificate to the retained normalized cache by its exact readback identity. -/
 @[expose] def cachedEnergy {genus : Nat} {curve : Basic.HyperellipticCurve genus} (result : Result curve) :
     CachedEnergy result := by
-  change Curves.Hyperelliptic.Integration.Energy.Certificate result.normalized
+  change Energy.Certificate result.normalized
   exact result.normalized_readback.symm ▸ result.analytic.normalizedEnergy
 
 open Purelib in

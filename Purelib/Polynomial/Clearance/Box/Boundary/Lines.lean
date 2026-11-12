@@ -13,6 +13,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Geometry.Rational.Box.Boundary
 import Purelib.Polynomial.Dense.Evaluation
 
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients
+
 open Purelib.Data
 
 open Purelib.Geometry.Rational
@@ -36,9 +38,9 @@ open Purelib.Data.Rat.Fraction
 The original polynomial and box remain, and the exact boundary bound and positivity witness are reused for points on the
 left vertical side. -/
 @[expose] public def leftOfBoundary
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box}
-    (clearance : Clearance.Box.Boundary.Basic.BoundaryClearance p box) :
-    Clearance.Box.Line.Basic.VerticalLineClearance p box box.xLower where
+    {p : CoefficientPolynomial} {box : Box}
+    (clearance : Basic.BoundaryClearance p box) :
+    Line.Basic.VerticalLineClearance p box box.xLower where
   bound := clearance.bound
   positive := clearance.positive
   lower := by
@@ -51,9 +53,9 @@ left vertical side. -/
 The original polynomial and box remain, and the exact boundary bound and positivity witness are reused for points on the
 right vertical side. -/
 @[expose] public def rightOfBoundary
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box}
-    (clearance : Clearance.Box.Boundary.Basic.BoundaryClearance p box) :
-    Clearance.Box.Line.Basic.VerticalLineClearance p box box.xUpper where
+    {p : CoefficientPolynomial} {box : Box}
+    (clearance : Basic.BoundaryClearance p box) :
+    Line.Basic.VerticalLineClearance p box box.xUpper where
   bound := clearance.bound
   positive := clearance.positive
   lower := by
@@ -67,9 +69,9 @@ right vertical side. -/
 The original polynomial and box remain, and the exact boundary bound and positivity witness are reused for points on the
 bottom horizontal side. -/
 @[expose] public def bottomOfBoundary
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box}
-    (clearance : Clearance.Box.Boundary.Basic.BoundaryClearance p box) :
-    Clearance.Box.Line.Basic.HorizontalLineClearance p box box.yLower where
+    {p : CoefficientPolynomial} {box : Box}
+    (clearance : Basic.BoundaryClearance p box) :
+    Line.Basic.HorizontalLineClearance p box box.yLower where
   bound := clearance.bound
   positive := clearance.positive
   lower := by
@@ -83,9 +85,9 @@ bottom horizontal side. -/
 The original polynomial and box remain, and the exact boundary bound and positivity witness are reused for points on the
 top horizontal side. -/
 @[expose] public def topOfBoundary
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box}
-    (clearance : Clearance.Box.Boundary.Basic.BoundaryClearance p box) :
-    Clearance.Box.Line.Basic.HorizontalLineClearance p box box.yUpper where
+    {p : CoefficientPolynomial} {box : Box}
+    (clearance : Basic.BoundaryClearance p box) :
+    Line.Basic.HorizontalLineClearance p box box.yUpper where
   bound := clearance.bound
   positive := clearance.positive
   lower := by
@@ -99,12 +101,12 @@ top horizontal side. -/
 The retained bound is the nested minimum in left, right, bottom and top order. Each boundary point uses its side
 certificate to bound the same polynomial squared norm. -/
 @[expose] public def boundaryOfLines
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box}
-    (left : Clearance.Box.Line.Basic.VerticalLineClearance p box box.xLower)
-    (right : Clearance.Box.Line.Basic.VerticalLineClearance p box box.xUpper)
-    (bottom : Clearance.Box.Line.Basic.HorizontalLineClearance p box box.yLower)
-    (top : Clearance.Box.Line.Basic.HorizontalLineClearance p box box.yUpper) :
-    Clearance.Box.Boundary.Basic.BoundaryClearance p box := by
+    {p : CoefficientPolynomial} {box : Box}
+    (left : Line.Basic.VerticalLineClearance p box box.xLower)
+    (right : Line.Basic.VerticalLineClearance p box box.xUpper)
+    (bottom : Line.Basic.HorizontalLineClearance p box box.yLower)
+    (top : Line.Basic.HorizontalLineClearance p box box.yUpper) :
+    Basic.BoundaryClearance p box := by
   let bound := min left.bound (min right.bound (min bottom.bound top.bound))
   exact
     { bound := bound
@@ -161,12 +163,12 @@ certificate to bound the same polynomial squared norm. -/
 
 The constructor stores the nested minimum in left, right, bottom and top order without changing any side bound. -/
 @[simp] public theorem boundaryOfLines_bound
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box}
-    (left : Clearance.Box.Line.Basic.VerticalLineClearance p box box.xLower)
-    (right : Clearance.Box.Line.Basic.VerticalLineClearance p box box.xUpper)
-    (bottom : Clearance.Box.Line.Basic.HorizontalLineClearance p box box.yLower)
-    (top : Clearance.Box.Line.Basic.HorizontalLineClearance p box box.yUpper) :
-    (Clearance.Box.Boundary.Lines.boundaryOfLines left right bottom top).bound =
+    {p : CoefficientPolynomial} {box : Box}
+    (left : Line.Basic.VerticalLineClearance p box box.xLower)
+    (right : Line.Basic.VerticalLineClearance p box box.xUpper)
+    (bottom : Line.Basic.HorizontalLineClearance p box box.yLower)
+    (top : Line.Basic.HorizontalLineClearance p box box.yUpper) :
+    (boundaryOfLines left right bottom top).bound =
       min left.bound (min right.bound (min bottom.bound top.bound)) := rfl
 
 /-- The combined boundary clearance bound is no larger than the retained left-side bound.
@@ -174,13 +176,13 @@ The constructor stores the nested minimum in left, right, bottom and top order w
 The first minimum is at most its retained left operand, giving this scalar comparison for the constructed boundary
 certificate. -/
 public theorem boundaryOfLines_bound_le_left
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box}
-    (left : Clearance.Box.Line.Basic.VerticalLineClearance p box box.xLower)
-    (right : Clearance.Box.Line.Basic.VerticalLineClearance p box box.xUpper)
-    (bottom : Clearance.Box.Line.Basic.HorizontalLineClearance p box box.yLower)
-    (top : Clearance.Box.Line.Basic.HorizontalLineClearance p box box.yUpper) :
-    (Clearance.Box.Boundary.Lines.boundaryOfLines left right bottom top).bound <= left.bound := by
-  unfold Clearance.Box.Boundary.Lines.boundaryOfLines
+    {p : CoefficientPolynomial} {box : Box}
+    (left : Line.Basic.VerticalLineClearance p box box.xLower)
+    (right : Line.Basic.VerticalLineClearance p box box.xUpper)
+    (bottom : Line.Basic.HorizontalLineClearance p box box.yLower)
+    (top : Line.Basic.HorizontalLineClearance p box box.yUpper) :
+    (boundaryOfLines left right bottom top).bound <= left.bound := by
+  unfold boundaryOfLines
   exact Order.Basic.min_le_left _ _
 
 /-- The combined boundary clearance bound is no larger than the retained right-side bound.
@@ -188,13 +190,13 @@ public theorem boundaryOfLines_bound_le_left
 The comparison follows through the outer minimum and the right operand of the next minimum, keeping the original four
 side certificates. -/
 public theorem boundaryOfLines_bound_le_right
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box}
-    (left : Clearance.Box.Line.Basic.VerticalLineClearance p box box.xLower)
-    (right : Clearance.Box.Line.Basic.VerticalLineClearance p box box.xUpper)
-    (bottom : Clearance.Box.Line.Basic.HorizontalLineClearance p box box.yLower)
-    (top : Clearance.Box.Line.Basic.HorizontalLineClearance p box box.yUpper) :
-    (Clearance.Box.Boundary.Lines.boundaryOfLines left right bottom top).bound <= right.bound := by
-  unfold Clearance.Box.Boundary.Lines.boundaryOfLines
+    {p : CoefficientPolynomial} {box : Box}
+    (left : Line.Basic.VerticalLineClearance p box box.xLower)
+    (right : Line.Basic.VerticalLineClearance p box box.xUpper)
+    (bottom : Line.Basic.HorizontalLineClearance p box box.yLower)
+    (top : Line.Basic.HorizontalLineClearance p box box.yUpper) :
+    (boundaryOfLines left right bottom top).bound <= right.bound := by
+  unfold boundaryOfLines
   exact (Order.Basic.min_le_right _ _).trans (Order.Basic.min_le_left _ _)
 
 /-- The combined boundary clearance bound is no larger than the retained bottom-side bound.
@@ -202,13 +204,13 @@ public theorem boundaryOfLines_bound_le_right
 The comparison follows through the first two right operands and the bottom operand of the innermost minimum, with all
 original side bounds retained. -/
 public theorem boundaryOfLines_bound_le_bottom
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box}
-    (left : Clearance.Box.Line.Basic.VerticalLineClearance p box box.xLower)
-    (right : Clearance.Box.Line.Basic.VerticalLineClearance p box box.xUpper)
-    (bottom : Clearance.Box.Line.Basic.HorizontalLineClearance p box box.yLower)
-    (top : Clearance.Box.Line.Basic.HorizontalLineClearance p box box.yUpper) :
-    (Clearance.Box.Boundary.Lines.boundaryOfLines left right bottom top).bound <= bottom.bound := by
-  unfold Clearance.Box.Boundary.Lines.boundaryOfLines
+    {p : CoefficientPolynomial} {box : Box}
+    (left : Line.Basic.VerticalLineClearance p box box.xLower)
+    (right : Line.Basic.VerticalLineClearance p box box.xUpper)
+    (bottom : Line.Basic.HorizontalLineClearance p box box.yLower)
+    (top : Line.Basic.HorizontalLineClearance p box box.yUpper) :
+    (boundaryOfLines left right bottom top).bound <= bottom.bound := by
+  unfold boundaryOfLines
   exact (Order.Basic.min_le_right _ _).trans
     ((Order.Basic.min_le_right _ _).trans (Order.Basic.min_le_left _ _))
 
@@ -217,13 +219,13 @@ public theorem boundaryOfLines_bound_le_bottom
 The comparison follows through all three right operands of the nested minimum, retaining the top certificate and its
 original bound. -/
 public theorem boundaryOfLines_bound_le_top
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {box : Box}
-    (left : Clearance.Box.Line.Basic.VerticalLineClearance p box box.xLower)
-    (right : Clearance.Box.Line.Basic.VerticalLineClearance p box box.xUpper)
-    (bottom : Clearance.Box.Line.Basic.HorizontalLineClearance p box box.yLower)
-    (top : Clearance.Box.Line.Basic.HorizontalLineClearance p box box.yUpper) :
-    (Clearance.Box.Boundary.Lines.boundaryOfLines left right bottom top).bound <= top.bound := by
-  unfold Clearance.Box.Boundary.Lines.boundaryOfLines
+    {p : CoefficientPolynomial} {box : Box}
+    (left : Line.Basic.VerticalLineClearance p box box.xLower)
+    (right : Line.Basic.VerticalLineClearance p box box.xUpper)
+    (bottom : Line.Basic.HorizontalLineClearance p box box.yLower)
+    (top : Line.Basic.HorizontalLineClearance p box box.yUpper) :
+    (boundaryOfLines left right bottom top).bound <= top.bound := by
+  unfold boundaryOfLines
   exact (Order.Basic.min_le_right _ _).trans
     ((Order.Basic.min_le_right _ _).trans (Order.Basic.min_le_right _ _))
 

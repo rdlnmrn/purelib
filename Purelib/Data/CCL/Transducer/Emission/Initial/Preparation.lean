@@ -19,6 +19,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 @[expose] public section
 
@@ -42,24 +44,24 @@ open Purelib.Approximation.Gaussian
 open Purelib.Data.CCL.Transducer
 /-- Request the fixed positive initial radius-squared budget from the exact supplied process state. -/
 def initialRefinedState (process :
-  Approximation.Gaussian.Process) (state : process.State) :
+  Process) (state : process.State) :
     process.State :=
-  process.refine state Emission.Initial.Budget.initialRadiusSq Emission.Initial.Budget.initialRadiusSq_pos
+  process.refine state Budget.initialRadiusSq Budget.initialRadiusSq_pos
 
 /-- The retained initial refinement has radius squared strictly below its exact initial budget. -/
 theorem initialRefined_accurate (process :
-  Approximation.Gaussian.Process) (state : process.State) :
+  Process) (state : process.State) :
     (process.ball (initialRefinedState process state)).radiusSq <
-      Emission.Initial.Budget.initialRadiusSq :=
-  process.accurate state Emission.Initial.Budget.initialRadiusSq Emission.Initial.Budget.initialRadiusSq_pos
+      Budget.initialRadiusSq :=
+  process.accurate state Budget.initialRadiusSq Budget.initialRadiusSq_pos
 
 /-- The retained initial refinement meets the larger uniform sector radius-squared budget. -/
 theorem initialRefined_uniform (process :
-  Approximation.Gaussian.Process) (state : process.State) :
+  Process) (state : process.State) :
     (process.ball (initialRefinedState process state)).radiusSq <
       Enclosure.Sector.Budget.uniformRadiusSq :=
   (initialRefined_accurate process state).trans
-    Emission.Initial.Budget.initialRadiusSq_lt_uniform
+    Budget.initialRadiusSq_lt_uniform
 
 open Purelib.Data.Gaussian
 open Purelib.Data.Rat
@@ -68,11 +70,11 @@ open Purelib.Data.Rat
 The bound applies to the same process state and its retained ball. A weighted norm estimate combines that center
 condition with the exact radius-squared budget. -/
 theorem candidate_norm_lt_low_unary_bound
-    {process : Approximation.Gaussian.Process} {state : process.State}
-    (accurate : (process.ball state).radiusSq < Emission.Initial.Budget.initialRadiusSq)
-    (centerSmall : Data.Gaussian.Norm.Basic.normSq (process.ball state).center < 1)
+    {process : Process} {state : process.State}
+    (accurate : (process.ball state).radiusSq < Budget.initialRadiusSq)
+    (centerSmall : Norm.Basic.normSq (process.ball state).center < 1)
     {value : Basic.Canonical} (possible : process.Possible state value) :
-    Data.Gaussian.Norm.Basic.normSq value < 43 / 40 := by
+    Norm.Basic.normSq value < 43 / 40 := by
   have decomposition :
       value = (value - (process.ball state).center) +
         (process.ball state).center := by
@@ -82,38 +84,38 @@ theorem candidate_norm_lt_low_unary_bound
     (value - (process.ball state).center) (process.ball state).center
   have radiusScaled : 16 * (process.ball state).radiusSq <
       Enclosure.Sector.Budget.allowance / 10 :=
-    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
-      (by decide) accurate).trans Emission.Initial.Budget.sixteen_mul_initial_lt_allowance_tenth
+    (Arithmetic.mul_lt_mul_of_pos_left_direct
+      (by decide) accurate).trans Budget.sixteen_mul_initial_lt_allowance_tenth
   have centerScaled : (16 / 15 : Fraction.Rational) *
-      Data.Gaussian.Norm.Basic.normSq (process.ball state).center < (16 / 15) * 1 :=
-    Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+      Norm.Basic.normSq (process.ball state).center < (16 / 15) * 1 :=
+    Arithmetic.mul_lt_mul_of_pos_left_direct
       (by decide) centerSmall
   rw [decomposition]
   exact weighted.trans_lt (calc
-    16 * Data.Gaussian.Norm.Basic.normSq (value - (process.ball state).center) +
-          (16 / 15) * Data.Gaussian.Norm.Basic.normSq (process.ball state).center ≤
+    16 * Norm.Basic.normSq (value - (process.ball state).center) +
+          (16 / 15) * Norm.Basic.normSq (process.ball state).center ≤
         16 * (process.ball state).radiusSq +
-          (16 / 15) * Data.Gaussian.Norm.Basic.normSq (process.ball state).center :=
+          (16 / 15) * Norm.Basic.normSq (process.ball state).center :=
       add_le_add
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
           (process.possible_inside possible) (by decide)) le_rfl
     _ < Enclosure.Sector.Budget.allowance / 10 +
         (16 / 15) * 1 :=
-      Fraction.Order.Arithmetic.add_lt_add_direct radiusScaled centerScaled
-    _ < Emission.Low.Budget.lowCenterSlack + (16 / 15) * 1 :=
-      Fraction.Order.Arithmetic.add_lt_add_right_direct
-        Emission.Low.Budget.allowance_tenth_lt_lowCenterSlack _
-    _ < 43 / 40 := Emission.Low.Budget.lowUnary_budget)
+      Arithmetic.add_lt_add_direct radiusScaled centerScaled
+    _ < Low.Budget.lowCenterSlack + (16 / 15) * 1 :=
+      Arithmetic.add_lt_add_right_direct
+        Low.Budget.allowance_tenth_lt_lowCenterSlack _
+    _ < 43 / 40 := Low.Budget.lowUnary_budget)
 
 /-- Gamma scaling sends every possible value of the retained accurate small-center ball below squared norm 43/20. -/
 theorem scaled_candidate_norm_lt_low_upper
-    {process : Approximation.Gaussian.Process} {state : process.State}
-    (accurate : (process.ball state).radiusSq < Emission.Initial.Budget.initialRadiusSq)
-    (centerSmall : Data.Gaussian.Norm.Basic.normSq (process.ball state).center < 1)
+    {process : Process} {state : process.State}
+    (accurate : (process.ball state).radiusSq < Budget.initialRadiusSq)
+    (centerSmall : Norm.Basic.normSq (process.ball state).center < 1)
     {value : Basic.Canonical} (possible : process.Possible state value) :
-    Data.Gaussian.Norm.Basic.normSq (Basic.Canonical.gamma * value) < 43 / 20 := by
+    Norm.Basic.normSq (Basic.Canonical.gamma * value) < 43 / 20 := by
   rw [Norm.Basic.normSq_mul, Constants.normSq_gamma]
-  have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+  have scaled := Arithmetic.mul_lt_mul_of_pos_left_direct
     (by decide : (0 : Fraction.Rational) < 2)
     (candidate_norm_lt_low_unary_bound accurate centerSmall possible)
   have scaledIdentity : 2 * (43 / 40 : Fraction.Rational) = 43 / 20 := by

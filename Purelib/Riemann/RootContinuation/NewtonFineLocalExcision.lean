@@ -79,7 +79,7 @@ open _root_.Purelib.Topology.Surface.Sewing.Bilinear renaming Samples -> Bilinea
 open Purelib.Topology.Surface.Sewing.SewnPrimitiveSamples (CachedSample)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target radius : Rational}
@@ -109,12 +109,12 @@ variable {stage : Nat}
 open Purelib.Riemann.Topology.NewtonSewnExcision.AllHoleExcision (SewnAnnulus)
 
 variable {prepared :
-  Purelib.Curves.Hyperelliptic.Meshes.Newton.AllHoles.PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations
+  PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations
   excision} {comparison :
   PairedComparison
   prepared first second domains}
   {source :
-    PairedComparison.Sample
+    Sample
     comparison left right}
 
 namespace SewnSample.Excision
@@ -140,44 +140,44 @@ plus physical and annular corrections by quadrance below twice four local target
 theorem
   fine_local_accurate
   (cached :
-  PairedRemaining.NewtonPreparation.FamilyAreaRequest.PairedComparison.SewnSample.Excision
+  Excision
   sample)
-    (exterior : Hyperelliptic.Meshes.PuncturedGrid.RegularExteriorRequest.ExteriorBoundaryRequest (fun sheet =>
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth)
+    (exterior : ExteriorBoundaryRequest (fun sheet =>
+      RegularMeshes.build domains cuts sheet coarseDepth)
       fixed ((localTarget / 4) / 4))
-    {retained : PuncturedGrid.Matched.CrossingBank exterior.prepared.energy
+    {retained : CrossingBank exterior.prepared.energy
       lifted.mesh}
-    (total : Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingTotal.CrossingRequests.TotalRequest retained first
+    (total : TotalRequest retained first
       second firstParent secondParent
       (((localTarget / 4) / 4) / 4) floor)
-    (corner : Hyperelliptic.Meshes.PuncturedGrid.CrossingCornerBudget.CornerRequest fixed first second (localTarget /
+    (corner : CornerRequest fixed first second (localTarget /
       4))
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.CrossingRequests.Samples total.allocated
+    (samples : Samples total.allocated
       cache.normalize)
-    (perimeters : PuncturedGrid.Matched.FacePerimeters (request :=
+    (perimeters : FacePerimeters (request :=
       exterior.prepared.energy) cache first second)
-    (normalized : PuncturedGrid.Matched.FacePerimeters (request :=
+    (normalized : FacePerimeters (request :=
       exterior.prepared.energy) cache.normalize first second)
-    {global : Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation lifted.cutPolygon domains first
+    {global : BilinearPreparation lifted.cutPolygon domains first
       second}
-    (sewing : Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation.Request global localTarget
+    (sewing : BilinearPreparation.Request global localTarget
       floor)
-    (bilinear : Topology.Surface.Sewing.Bilinear.Samples firstSurface secondSurface)
+    (bilinear : Surface.Sewing.Bilinear.Samples firstSurface secondSurface)
     (neighbors : PuncturedFaces.NeighborBank request.single.grid.faces) (positive : 0 < localTarget)
     (sewingLater : sewing.index ≤ stage) (later : total.allocated.index ≤ stage)
     (cornerLater : corner.index ≤ stage) (annularLater : comparison.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (perimeters.localTotalSum - cached.remainingArea -
-      ((Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors
-        - Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.physicalTriangleArea neighbors left right) +
+    normSq (perimeters.localTotalSum - cached.remainingArea -
+      ((PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors
+        - PuncturedGrid.CrossingTriangleAreas.physicalTriangleArea neighbors left right) +
         sample.correction)) <
       2 * (4 * localTarget + target) := by
   have localBound := total.local_sewn_boundary_bound exterior corner left right samples perimeters normalized
     sewing bilinear sewingLater neighbors positive later cornerLater
   exact
-    PairedRemaining.NewtonPreparation.FamilyAreaRequest.PairedComparison.SewnSample.Excision.local_boundary_transfer
+    local_boundary_transfer
     cached bilinear perimeters.localTotalSum
-    (Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors -
-      Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.physicalTriangleArea neighbors left right) localBound
+    (PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors -
+      PuncturedGrid.CrossingTriangleAreas.physicalTriangleArea neighbors left right) localBound
       annularLater
 
 /-- Bound the retained excision's remaining area together with its physical and annular corrections.
@@ -187,44 +187,44 @@ estimate retains the displayed exterior and annular budgets. -/
 theorem
   corrected_remaining_small
   (cached :
-  PairedRemaining.NewtonPreparation.FamilyAreaRequest.PairedComparison.SewnSample.Excision
+  Excision
   sample)
-    (exterior : Hyperelliptic.Meshes.PuncturedGrid.RegularExteriorRequest.ExteriorBoundaryRequest (fun sheet =>
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth)
+    (exterior : ExteriorBoundaryRequest (fun sheet =>
+      RegularMeshes.build domains cuts sheet coarseDepth)
       fixed ((localTarget / 4) / 4))
-    {retained : PuncturedGrid.Matched.CrossingBank exterior.prepared.energy
+    {retained : CrossingBank exterior.prepared.energy
       lifted.mesh}
-    (total : Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingTotal.CrossingRequests.TotalRequest retained first
+    (total : TotalRequest retained first
       second firstParent secondParent
       (((localTarget / 4) / 4) / 4) floor)
-    (corner : Hyperelliptic.Meshes.PuncturedGrid.CrossingCornerBudget.CornerRequest fixed first second (localTarget /
+    (corner : CornerRequest fixed first second (localTarget /
       4))
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.CrossingRequests.Samples total.allocated
+    (samples : Samples total.allocated
       cache.normalize)
-    (perimeters : PuncturedGrid.Matched.FacePerimeters (request :=
+    (perimeters : FacePerimeters (request :=
       exterior.prepared.energy) cache first second)
-    (normalized : PuncturedGrid.Matched.FacePerimeters (request :=
+    (normalized : FacePerimeters (request :=
       exterior.prepared.energy) cache.normalize first second)
-    {global : Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation lifted.cutPolygon domains first
+    {global : BilinearPreparation lifted.cutPolygon domains first
       second}
-    (sewing : Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation.Request global localTarget
+    (sewing : BilinearPreparation.Request global localTarget
       floor)
-    (bilinear : Topology.Surface.Sewing.Bilinear.Samples firstSurface secondSurface)
+    (bilinear : Surface.Sewing.Bilinear.Samples firstSurface secondSurface)
     (neighbors : PuncturedFaces.NeighborBank request.single.grid.faces) (positive : 0 < localTarget)
     (sewingLater : sewing.index ≤ stage) (later : total.allocated.index ≤ stage)
     (cornerLater : corner.index ≤ stage) (annularLater : comparison.index ≤ stage)
     (ownershipLater : exterior.prepared.ownership.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (cached.remainingArea +
-      ((Hyperelliptic.Meshes.PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors
-        - Hyperelliptic.Meshes.PuncturedGrid.CrossingTriangleAreas.physicalTriangleArea neighbors left right) +
+    normSq (cached.remainingArea +
+      ((PuncturedGrid.GlobalPerimeterIdentity.FacePerimeters.physicalPerimeter normalized neighbors
+        - PuncturedGrid.CrossingTriangleAreas.physicalTriangleArea neighbors left right) +
         sample.correction)) <
       2 * (exterior.localTarget + 2 * (4 * localTarget + target)) := by
-  have localBound := Hyperelliptic.Meshes.PuncturedGrid.LocalPairBound.FacePerimeters.local_bound exterior.prepared
+  have localBound := PuncturedGrid.LocalPairBound.FacePerimeters.local_bound exterior.prepared
     perimeters ownershipLater
   have difference := cached.fine_local_accurate exterior total corner samples perimeters normalized sewing bilinear
     neighbors positive sewingLater later cornerLater annularLater
   have estimate := (Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans_lt
-    (Rat.Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Rat.Fraction.Rational) < 2)
+    (Rat.Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Rational) < 2)
       ((Rat.Fraction.Order.Arithmetic.add_le_add_right_direct localBound _).trans_lt
         (Rat.Fraction.Order.Arithmetic.add_lt_add_left_direct difference _)))
   have equal : ∀ a b c : Gaussian.Basic.Canonical, a - (a - b - c) = b + c := by intros; ring1

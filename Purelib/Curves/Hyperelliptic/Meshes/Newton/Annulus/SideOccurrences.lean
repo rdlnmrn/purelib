@@ -57,48 +57,48 @@ open Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary (Lifted d
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted (OuterPreparation)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SegmentSideSources.LiftedMesh (SideOccurrence)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target
-    radius : Purelib.Data.Rat.Fraction.Rational}
-  {grid : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-    {index : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
-  {annulus : Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index} {lifted :
-    Purelib.Riemann.Meshes.LiftedPuncturedGrid grid.punctured} {region :
-    Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted}
+  {preparation : NewtonPreparation original} {target
+    radius : Rational}
+  {grid : NewtonGrid preparation target radius}
+    {index : Branches.BranchIsolation.Data.Index branches}
+  {annulus : AnnularFaces grid index} {lifted :
+    LiftedPuncturedGrid grid.punctured} {region :
+    LiftedBoundary.Lifted annulus lifted}
 
 /-- Consume the cached assignments; numerical banks can reuse this finite list without replaying owner continuation or
 selecting source triangles. -/
-@[expose] def sideOccurrences (prepared : Lifted.OuterPreparation region) : List (LiftedMesh.SideOccurrence lifted.mesh)
+@[expose] def sideOccurrences (prepared : OuterPreparation region) : List (LiftedMesh.SideOccurrence lifted.mesh)
   :=
   AssignedSegments.sideOccurrences prepared.assigned
 
 /-- The retained annular side occurrences have exactly the cached original source-edge list. -/
-theorem sideOccurrences_sources (prepared : Lifted.OuterPreparation region) :
-    (Curves.Hyperelliptic.Meshes.Newton.Annulus.SideOccurrences.sideOccurrences prepared).map SideOccurrence.source =
+theorem sideOccurrences_sources (prepared : OuterPreparation region) :
+    (SideOccurrences.sideOccurrences prepared).map SideOccurrence.source =
       prepared.sources :=
   (AssignedSegments.sideOccurrences_sources prepared.assigned).trans prepared.sources_eq.symm
 
 /-- The retained annular side occurrences project to the exact original outer boundary word. -/
-theorem sideOccurrences_project (prepared : Lifted.OuterPreparation region) :
-    (Curves.Hyperelliptic.Meshes.Newton.Annulus.SideOccurrences.sideOccurrences prepared).map (fun occurrence =>
+theorem sideOccurrences_project (prepared : OuterPreparation region) :
+    (SideOccurrences.sideOccurrences prepared).map (fun occurrence =>
       occurrence.source.project lifted.mesh.triangulation.faces) = region.outer :=
   (AssignedSegments.sideOccurrences_project prepared.assigned).trans prepared.indexed_eq
 
 /-- There is exactly one retained side occurrence per original annular outer-boundary edge. -/
-theorem sideOccurrences_count (prepared : Lifted.OuterPreparation region) :
-    (Curves.Hyperelliptic.Meshes.Newton.Annulus.SideOccurrences.sideOccurrences prepared).length = region.outer.length
+theorem sideOccurrences_count (prepared : OuterPreparation region) :
+    (SideOccurrences.sideOccurrences prepared).length = region.outer.length
       := by
-  have count := congrArg List.length (Curves.Hyperelliptic.Meshes.Newton.Annulus.SideOccurrences.sideOccurrences_project
+  have count := congrArg List.length (SideOccurrences.sideOccurrences_project
     prepared)
-  rw [Purelib.Data.List.Map.length_map] at count
+  rw [Data.List.Map.length_map] at count
   exact count
 
 /-- Every retained annular side occurrence lies on a common side of its original Newton band box. -/
-theorem sideOccurrences_onBoundary (prepared : Lifted.OuterPreparation region) :
-    ∀ occurrence ∈ Curves.Hyperelliptic.Meshes.Newton.Annulus.SideOccurrences.sideOccurrences prepared,
+theorem sideOccurrences_onBoundary (prepared : OuterPreparation region) :
+    ∀ occurrence ∈ SideOccurrences.sideOccurrences prepared,
       SideOccurrence.OnBoundary occurrence (grid.bands.box index) :=
   AssignedSegments.sideOccurrences_onBoundary prepared.assigned (PrimitiveComparison.doubleBoundary_segments annulus)
 

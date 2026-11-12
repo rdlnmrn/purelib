@@ -22,6 +22,8 @@ public import Purelib.Polynomial.Winding.Polygon.Comparison
 import Purelib.Riemann.RootContinuation.SquareRootTraceBounds
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian
+
 @[expose] public section
 
 /-!
@@ -42,15 +44,15 @@ open Purelib.Riemann.RootContinuation.SquareRootTraceBounds
 section
 open Purelib.Riemann
 /-- The rational scalar type used by the finite root-chord estimates. -/
-private abbrev Coordinate := RootContinuation.SquareRootTraceBounds.Coordinate
+private abbrev Coordinate := SquareRootTraceBounds.Coordinate
 /-- The executable Gaussian rational root and base-point type. -/
-private abbrev Gaussian := RootContinuation.SquareRootTraceBounds.Gaussian
+private abbrev Gaussian := SquareRootTraceBounds.Gaussian
 
 end
 
 open Purelib.Polynomial in
 /-- The dense Gaussian polynomial type for the compared base path. -/
-abbrev GaussianPolynomial := Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+abbrev GaussianPolynomial := Basic.CanonicalCoefficients.CoefficientPolynomial
 
 open Purelib.Data.Gaussian.Basic.Canonical
 open Purelib.Polynomial.Dense.Basic.DensePolynomial
@@ -70,19 +72,19 @@ quarter of the starting quadrance bounds the whole chord. -/
 def chordClearance {start finish : Gaussian.Basic.Canonical} (nonzero : start ≠ 0)
     (distance : normSq (finish - start) ≤ normSq start / 1024) :
     Clearance.Pair.Basic.Certificate
-      (Dense.Gaussian.Path.Components.pathReal Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial start (finish -
+      (Path.Components.pathReal Monomial.Coordinate.coordinatePolynomial start (finish -
         start))
-      (Dense.Gaussian.Path.Components.pathImag Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial start (finish -
+      (Path.Components.pathImag Monomial.Coordinate.coordinatePolynomial start (finish -
         start))
       parameterInterval where
   bound := normSq start / 4
-  positive := Rat.Fraction.Order.Field.div_pos_direct (show 0 < Gaussian.Basic.Canonical.normSq start from by
+  positive := Rat.Fraction.Order.Field.div_pos_direct (show 0 < normSq start from by
     simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using Gaussian.Norm.Basic.normSq_pos nonzero) (by decide)
   lower := by
     intro time inside
     have scalarBound := (chord_norm_bounds distance inside).1
-    simpa only [Dense.Gaussian.Path.Components.eval_pathReal, Dense.Gaussian.Path.Components.eval_pathImag,
-      Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial_eval, normSq, pow_two] using scalarBound
+    simpa only [Path.Components.eval_pathReal, Path.Components.eval_pathImag,
+      Monomial.Coordinate.coordinatePolynomial_eval, normSq, pow_two] using scalarBound
 
 open Purelib.Data in
 open Purelib.Geometry in
@@ -93,7 +95,7 @@ theorem chord_nonzero {start finish : Gaussian.Basic.Canonical} (nonzero : start
     Rational.Affine.line start (finish - start) time ≠ 0 := by
   intro zero
   have bound := (chord_norm_bounds distance inside).1
-  rw [zero, Gaussian.Basic.Canonical.normSq_zero] at bound
+  rw [zero, normSq_zero] at bound
   exact (not_lt_of_ge bound) (chordClearance nonzero distance).positive
 
 open Purelib.Algebra in
@@ -105,7 +107,7 @@ theorem chord_square_lower {start finish : Gaussian.Basic.Canonical} {time : Rat
     (inside : parameterInterval.Contains time) :
     normSq start ^ 2 / 16 ≤ normSq ((Rational.Affine.line start (finish - start) time) ^ 2) := by
   have lower := Rat.Fraction.Order.Arithmetic.pow_le_pow_direct
-    (Rat.Fraction.Order.Field.div_nonneg_direct (Gaussian.Basic.Canonical.normSq_nonneg start)
+    (Rat.Fraction.Order.Field.div_nonneg_direct (normSq_nonneg start)
       (by decide : (0 : Rat.Fraction.Rational) ≤ 4))
     (chord_norm_bounds distance inside).1 2
   have quarterSquare : (normSq start / 4) ^ 2 = normSq start ^ 2 / 16 := by
@@ -133,21 +135,21 @@ open Purelib.Geometry
 def squaredChordClearance {start finish : Gaussian.Basic.Canonical} (nonzero : start ≠ 0)
     (distance : normSq (finish - start) ≤ normSq start / 1024) :
     Clearance.Pair.Basic.Certificate
-      (Dense.Gaussian.Path.Components.pathReal (Dense.Gaussian.Power.Coordinate.coordinatePositivePower 1) start (finish
+      (Path.Components.pathReal (Power.Coordinate.coordinatePositivePower 1) start (finish
         - start))
-      (Dense.Gaussian.Path.Components.pathImag (Dense.Gaussian.Power.Coordinate.coordinatePositivePower 1) start (finish
+      (Path.Components.pathImag (Power.Coordinate.coordinatePositivePower 1) start (finish
         - start))
       parameterInterval where
   bound := normSq start ^ 2 / 16
   positive := Rat.Fraction.Order.Field.div_pos_direct
-    (Rat.Fraction.Order.Arithmetic.pow_pos_direct (show 0 < Gaussian.Basic.Canonical.normSq start from by
+    (Rat.Fraction.Order.Arithmetic.pow_pos_direct (show 0 < normSq start from by
       simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using Gaussian.Norm.Basic.normSq_pos nonzero) 2) (by decide)
   lower := by
     intro time inside
     have scalarBound := chord_square_lower distance inside
-    simp only [Dense.Gaussian.Path.Components.eval_pathReal,
-      Dense.Gaussian.Path.Components.eval_pathImag,
-      Dense.Gaussian.Power.Coordinate.coordinatePositivePower_eval]
+    simp only [Path.Components.eval_pathReal,
+      Path.Components.eval_pathImag,
+      Power.Coordinate.coordinatePositivePower_eval]
     change normSq start ^ 2 / 16 ≤
       ((Rational.Affine.line start (finish - start) time) ^ 2).re ^ 2 +
         ((Rational.Affine.line start (finish - start) time) ^ 2).im ^ 2
@@ -157,15 +159,15 @@ def squaredChordClearance {start finish : Gaussian.Basic.Canonical} (nonzero : s
 theorem chord_product_formula {start finish : Gaussian.Basic.Canonical} (nonzero : start ≠ 0)
     (distance : normSq (finish - start) ≤ normSq start / 1024) :
     Winding.Edge.Product.LineProductFormula
-      Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
+      Monomial.Coordinate.coordinatePolynomial Monomial.Coordinate.coordinatePolynomial
       start (finish - start) 0 1 := by
   have atZero : Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial.eval
       (Rational.Affine.line start (finish - start) 0) ≠ 0 := by
-    simpa only [Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial_eval] using
+    simpa only [Monomial.Coordinate.coordinatePolynomial_eval] using
       chord_nonzero nonzero distance (time := 0) ⟨le_rfl, by decide⟩
   have atOne : Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial.eval
       (Rational.Affine.line start (finish - start) 1) ≠ 0 := by
-    simpa only [Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial_eval] using
+    simpa only [Monomial.Coordinate.coordinatePolynomial_eval] using
       chord_nonzero nonzero distance (time := 1) ⟨by decide, le_rfl⟩
   exact Winding.Edge.Product.lineProductFormula_of_clearances _ _ _ _ (by decide)
     (chordClearance nonzero distance) (chordClearance nonzero distance)
@@ -189,22 +191,22 @@ theorem segmentHomotopy (polynomial : GaussianPolynomial)
       normSq (polynomial.eval (Rational.Affine.line baseStart (baseFinish - baseStart) time) -
         polynomial.eval baseStart) ≤ normSq start ^ 2 / 1024) :
     Winding.Polygon.Comparison.SegmentHomotopyFormula
-      (Dense.Gaussian.Power.Coordinate.coordinatePositivePower 1) polynomial
+      (Power.Coordinate.coordinatePositivePower 1) polynomial
       start finish baseStart baseFinish := by
-  let power := Dense.Gaussian.Power.Coordinate.coordinatePositivePower 1
-  let A := Dense.Gaussian.Path.Components.pathReal power start (finish - start)
-  let B := Dense.Gaussian.Path.Components.pathImag power start (finish - start)
-  let U := Dense.Gaussian.Path.Components.pathReal polynomial baseStart (baseFinish - baseStart)
-  let V := Dense.Gaussian.Path.Components.pathImag polynomial baseStart (baseFinish - baseStart)
+  let power := Power.Coordinate.coordinatePositivePower 1
+  let A := Path.Components.pathReal power start (finish - start)
+  let B := Path.Components.pathImag power start (finish - start)
+  let U := Path.Components.pathReal polynomial baseStart (baseFinish - baseStart)
+  let V := Path.Components.pathImag polynomial baseStart (baseFinish - baseStart)
   let C := U - A
   let D := V - B
   have startNonzero : power.eval start ≠ 0 := by
-    rw [Dense.Gaussian.Power.Coordinate.coordinatePositivePower_eval]
+    rw [Power.Coordinate.coordinatePositivePower_eval]
     exact Gaussian.Power.pow_ne_zero_direct _ nonzero _
   have finishNonzero : power.eval finish ≠ 0 := by
     have finishRoot := chord_nonzero nonzero distance (time := 1) ⟨by decide, le_rfl⟩
     rw [Rational.Affine.Segment.line_segment_one] at finishRoot
-    rw [Dense.Gaussian.Power.Coordinate.coordinatePositivePower_eval]
+    rw [Power.Coordinate.coordinatePositivePower_eval]
     exact Gaussian.Power.pow_ne_zero_direct _ finishRoot _
   refine ⟨startNonzero, finishNonzero, ?_⟩
   apply Dense.Rational.CauchyIndex.Comparison.Dominance.lineData_of_normDominance
@@ -212,7 +214,7 @@ theorem segmentHomotopy (polynomial : GaussianPolynomial)
     (root := parameterInterval) (by decide) (squaredChordClearance nonzero distance)
     (normSq start ^ 2 / 32)
     (Rat.Fraction.Order.Field.div_pos_direct
-      (Rat.Fraction.Order.Arithmetic.pow_pos_direct (show 0 < Gaussian.Basic.Canonical.normSq start from by
+      (Rat.Fraction.Order.Arithmetic.pow_pos_direct (show 0 < normSq start from by
         simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using Gaussian.Norm.Basic.normSq_pos nonzero)
         2) (by decide +kernel))
   · intro time inside
@@ -222,9 +224,9 @@ theorem segmentHomotopy (polynomial : GaussianPolynomial)
       calc
         _ = normSq ((Rational.Affine.line start (finish - start) time) ^ 2 -
             polynomial.eval (Rational.Affine.line baseStart (baseFinish - baseStart) time)) := by
-          simp only [C, D, U, V, A, B, power, Dense.Basic.DensePolynomial.eval_sub,
-            Dense.Gaussian.Path.Components.eval_pathReal,
-            Dense.Gaussian.Path.Components.eval_pathImag, Dense.Gaussian.Power.Coordinate.coordinatePositivePower_eval,
+          simp only [C, D, U, V, A, B, power, eval_sub,
+            Path.Components.eval_pathReal,
+            Path.Components.eval_pathImag, Power.Coordinate.coordinatePositivePower_eval,
             normSq, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im]
           ring1
         _ ≤ _ := chord_square_residual distance residual (movement time inside) inside
@@ -235,10 +237,10 @@ theorem segmentHomotopy (polynomial : GaussianPolynomial)
         ring1
       _ ≤ _ := Rat.Fraction.Order.Arithmetic.sub_le_sub_direct powerLower errorUpper
   · intro time
-    simp only [C, Dense.Basic.DensePolynomial.eval_sub]
+    simp only [C, eval_sub]
     ring1
   · intro time
-    simp only [D, Dense.Basic.DensePolynomial.eval_sub]
+    simp only [D, eval_sub]
     ring1
 
 end Purelib.Riemann.RootContinuation.SquareRootTraceHomotopy

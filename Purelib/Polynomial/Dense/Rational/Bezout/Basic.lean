@@ -6,12 +6,14 @@ public import Purelib.Polynomial.Dense.Rational.Basic
 
 import Purelib.Tactic.QuotientFreeOmega
 public import Purelib.Polynomial.Dense.Evaluation
+public import Purelib.Polynomial.Dense.Multiplication.Basic
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
 open Purelib.Polynomial.Dense.Rational.Basic (CoordinatePolynomial)
+open Purelib.Polynomial.Dense.Basic (DensePolynomial)
 
 open Purelib.Data.Rat
 
@@ -78,6 +80,62 @@ theorem eval_ne_zero {p q :
     exact Fraction.Field.zero_ne_one contradiction.symm
   · exact Or.inl hp
 end CoprimeCertificate
+
+set_option genInjectivity false in
+/-- Two untrusted finite cofactors proposed for a coordinate-polynomial unit identity. -/
+structure Proposal where
+  /-- The proposed coefficient of the first polynomial. -/ left : CoordinatePolynomial
+  /-- The proposed coefficient of the second polynomial. -/ right : CoordinatePolynomial
+
+constructive_injectivity Proposal
+
+namespace Proposal
+
+/-- Read the exact cofactors of an existing certificate as separately checkable finite data. -/
+def ofCertificate {p q : CoordinatePolynomial} (certificate : CoprimeCertificate p q) : Proposal :=
+  ⟨certificate.left, certificate.right⟩
+
+/-- Compute the normalized coefficient table of this proposed unit combination. -/
+def combination (proposal : Proposal) (p q : CoordinatePolynomial) : CoordinatePolynomial :=
+  (proposal.left * p + proposal.right * q).normalize
+
+set_option genInjectivity false in
+/-- A proposed cofactor identity fails its exact finite coefficient comparison.
+
+The retained product is the actual normalized combination. This rejects the
+submitted certificate, not the existence of another valid certificate.
+-/
+structure Invalid (proposal : Proposal) (p q : CoordinatePolynomial) where
+  /-- The actual normalized proposed unit combination. -/ actual : CoordinatePolynomial
+  /-- The product belongs to this same proposal and original pair. -/ actual_eq : actual = proposal.combination p q
+  /-- Its coefficient table differs from the normalized unit polynomial. -/ failed :
+    actual ≠ (DensePolynomial.constant 1).normalize
+
+constructive_injectivity Invalid
+
+/-- Check finite cofactor coefficients before constructing their all-input unit identity.
+
+Only exact coefficient equality admits the original proposed cofactors. The
+checker neither samples an identity nor invokes a cofactor producer.
+-/
+def check (proposal : Proposal) (p q : CoordinatePolynomial) :
+    Except (Invalid proposal p q) (CoprimeCertificate p q) :=
+  let actual := proposal.combination p q
+  if same : actual = (DensePolynomial.constant 1).normalize then
+    .ok
+      { left := proposal.left
+        right := proposal.right
+        identity := by
+          intro point
+          have evaluated := congrArg (fun polynomial : CoordinatePolynomial => polynomial.eval point) same
+          change ((proposal.left * p + proposal.right * q).normalize).eval point = _ at evaluated
+          rewrite [DensePolynomial.eval_normalize, DensePolynomial.eval_add,
+            DensePolynomial.eval_mul, DensePolynomial.eval_mul, DensePolynomial.eval_normalize,
+            DensePolynomial.eval_constant] at evaluated
+          exact evaluated.symm }
+  else .error ⟨actual, rfl, same⟩
+
+end Proposal
 end Purelib.Polynomial.Dense.Rational.Bezout.Basic
 
 end

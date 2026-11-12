@@ -79,19 +79,19 @@ open Purelib.Topology.Surface.Sewing.SewnEnergyCombination (EnergySurfaces Energ
 open Purelib.Topology.Surface.Sewing.SewnSelectedEnergy (SelectedEnergySamples)
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.HomogeneousBoundaryComparison.Request (HoleSamples)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted}
+    BasedBranchBank lifted}
     {sheet : Fin 2}
   {ordered :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank
-    sheet} {paired : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered}
-  {preparation : NewtonPreparation base.bank.toBranchCellBank} {radius : Purelib.Data.Rat.Fraction.Rational}
+    Ordered bank
+    sheet} {paired : Paired ordered}
+  {preparation : NewtonPreparation base.bank.toBranchCellBank} {radius : Rational}
   {observations : ProtectedObservations base.bank.toBranchCellBank}
   {gridData : RawEnergyGrid observations preparation radius}
-  (prepared : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired) {sewingFloor :
+  (prepared : Prepared paired) {sewingFloor :
     Nat}
   (sewingData : SewingSchedule gridData sewingFloor)
 
@@ -101,7 +101,7 @@ open Purelib.Riemann.Topology.NewtonSewnExcision.AllHoleExcision (sourceMask)
 
 variable {newSheet : Fin 2} {floor minimum stage : Nat}
   (periodData : RawPeriodSchedule prepared sewingData newSheet floor minimum)
-  (cache : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics gridData.domains
+  (cache : Numerics gridData.domains
     stage)
 
 open Purelib.Curves.Hyperelliptic in
@@ -115,21 +115,21 @@ Retains basis-indexed triangle readings and shared energy surfaces and pairs, to
 selected-complement and hole samples built from those exact owners. -/
 structure RawPeriodSamples where
   /-- Basis-indexed triangle readings from the retained numerical cache. -/ triangles : Vector.DependentVector (fun
-    basis : Fin genus => Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get basis)
+    basis : Fin genus => TriangleReadings (cache.get basis)
     gridData.lifted.mesh)
-  /-- Energy surfaces using those exact triangle values. -/ surfaces : Sewing.SewnEnergyCombination.EnergySurfaces
+  /-- Energy surfaces using those exact triangle values. -/ surfaces : EnergySurfaces
     gridData.lifted.cutPolygon.patch (fun basis => (triangles.get basis).values)
-  /-- Paired energy surfaces over the retained surface family. -/ pairs : Sewing.SewnEnergyCombination.EnergyPairs
+  /-- Paired energy surfaces over the retained surface family. -/ pairs : EnergyPairs
     surfaces
   /-- Physical period samples for the actual scheduled request. -/ periods :
-    Meshes.Newton.HomogeneousPhysicalComparison.Request.Samples triangles surfaces pairs periodData.request
+    Samples triangles surfaces pairs periodData.request
   /-- Annular samples for the sewing schedule and shared surfaces. -/ annular :
     NewtonHomogeneousAnnularRequest.HomogeneousAnnularRequest.Samples triangles surfaces pairs sewingData.annular
-  /-- Samples of sources outside every retained hole mask. -/ selected : Sewing.SewnSelectedEnergy.SelectedEnergySamples
+  /-- Samples of sources outside every retained hole mask. -/ selected : SelectedEnergySamples
     surfaces pairs
     (fun source => !(gridData.excision.entries.any (fun entry => sourceMask entry source)))
   /-- Hole readings indexed by the original excision. -/ holes :
-    Meshes.Newton.HomogeneousBoundaryComparison.Request.HoleSamples triangles gridData.excision
+    HoleSamples triangles gridData.excision
 
 constructive_injectivity RawPeriodSamples
 
@@ -145,17 +145,17 @@ Constructs the triangle bank once, derives shared energy surfaces and pairs, the
 and selected readings; hole samples retain the original excision. -/
 @[expose] def build : RawPeriodSamples prepared sewingData periodData cache :=
   let triangles := Vector.DependentVector.ofFn fun basis : Fin genus =>
-    Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings.build (cache.get basis) gridData.lifted.mesh
-  let surfaces := Sewing.SewnEnergyCombination.EnergySurfaces.build gridData.lifted.cutPolygon.patch (fun basis =>
+    TriangleReadings.build (cache.get basis) gridData.lifted.mesh
+  let surfaces := EnergySurfaces.build gridData.lifted.cutPolygon.patch (fun basis =>
     (triangles.get basis).values)
-  let pairs := Sewing.SewnEnergyCombination.EnergyPairs.build surfaces
-  let periods := Meshes.Newton.HomogeneousPhysicalComparison.Request.Samples.build triangles surfaces pairs
+  let pairs := EnergyPairs.build surfaces
+  let periods := Samples.build triangles surfaces pairs
     periodData.request
   let annular := NewtonHomogeneousAnnularRequest.HomogeneousAnnularRequest.Samples.build triangles surfaces pairs
     sewingData.annular
-  let selected := Sewing.SewnSelectedEnergy.SelectedEnergySamples.build surfaces pairs
+  let selected := SelectedEnergySamples.build surfaces pairs
     (fun source => !(gridData.excision.entries.any (fun entry => sourceMask entry source)))
-  let holes := Meshes.Newton.HomogeneousBoundaryComparison.Request.HoleSamples.build triangles gridData.excision
+  let holes := HoleSamples.build triangles gridData.excision
   ⟨triangles, surfaces, pairs, periods, annular, selected, holes⟩
 
 end RawPeriodSamples

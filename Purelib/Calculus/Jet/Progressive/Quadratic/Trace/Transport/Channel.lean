@@ -131,30 +131,30 @@ private theorem component_le_totalScale
     (slopeField : Channel (fun index => (certificates index).slope))
     (remainderField : Channel (fun index => (certificates index).remainder)) :
     incrementField.errorScale ≤
-      Transport.Channel.AutomaticQuadraticTrace.totalScalePublic
+      Channel.AutomaticQuadraticTrace.totalScalePublic
       incrementField baseField
       outputField
         slopeField remainderField ∧
       baseField.errorScale ≤
-        Transport.Channel.AutomaticQuadraticTrace.totalScalePublic
+        Channel.AutomaticQuadraticTrace.totalScalePublic
         incrementField baseField outputField
         slopeField remainderField ∧
       outputField.errorScale ≤
-        Transport.Channel.AutomaticQuadraticTrace.totalScalePublic
+        Channel.AutomaticQuadraticTrace.totalScalePublic
         incrementField baseField
         outputField
         slopeField remainderField ∧
       slopeField.errorScale ≤
-        Transport.Channel.AutomaticQuadraticTrace.totalScalePublic
+        Channel.AutomaticQuadraticTrace.totalScalePublic
         incrementField baseField
         outputField
         slopeField remainderField ∧
       remainderField.errorScale ≤
-        Transport.Channel.AutomaticQuadraticTrace.totalScalePublic
+        Channel.AutomaticQuadraticTrace.totalScalePublic
         incrementField baseField
         outputField
         slopeField remainderField := by
-  unfold Transport.Channel.AutomaticQuadraticTrace.totalScalePublic
+  unfold Channel.AutomaticQuadraticTrace.totalScalePublic
   constructor
   · calc
       incrementField.errorScale ≤ incrementField.errorScale +
@@ -292,31 +292,31 @@ private theorem component_le_totalBound
     (slopeField : Channel (fun index => (certificates index).slope))
     (remainderField : Channel (fun index => (certificates index).remainder)) :
     incrementField.centerBound ≤
-      Transport.Channel.AutomaticQuadraticTrace.totalBoundPublic
+      Channel.AutomaticQuadraticTrace.totalBoundPublic
       incrementField baseField
       outputField
         slopeField remainderField ∧
       baseField.centerBound ≤
-        Transport.Channel.AutomaticQuadraticTrace.totalBoundPublic
+        Channel.AutomaticQuadraticTrace.totalBoundPublic
         incrementField baseField
         outputField
         slopeField remainderField ∧
       outputField.centerBound ≤
-        Transport.Channel.AutomaticQuadraticTrace.totalBoundPublic
+        Channel.AutomaticQuadraticTrace.totalBoundPublic
         incrementField baseField
         outputField
         slopeField remainderField ∧
       slopeField.centerBound ≤
-        Transport.Channel.AutomaticQuadraticTrace.totalBoundPublic
+        Channel.AutomaticQuadraticTrace.totalBoundPublic
         incrementField baseField
         outputField
         slopeField remainderField ∧
       remainderField.centerBound ≤
-        Transport.Channel.AutomaticQuadraticTrace.totalBoundPublic
+        Channel.AutomaticQuadraticTrace.totalBoundPublic
         incrementField baseField
         outputField
         slopeField remainderField := by
-  unfold Transport.Channel.AutomaticQuadraticTrace.totalBoundPublic
+  unfold Channel.AutomaticQuadraticTrace.totalBoundPublic
   constructor
   · calc
       incrementField.centerBound ≤ incrementField.centerBound +
@@ -462,7 +462,7 @@ def transportOfChannels {increment : Nat
     (outputField : Channel (fun index => (certificates index).output))
     (slopeField : Channel (fun index => (certificates index).slope))
     (remainderField : Channel (fun index => (certificates index).remainder)) :
-    Trace.Transport
+    Transport
       increment certificates := by
   let scale := AutomaticQuadraticTrace.totalScalePublic incrementField baseField outputField slopeField
     remainderField

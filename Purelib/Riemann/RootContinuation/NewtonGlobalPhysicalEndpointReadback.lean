@@ -31,6 +31,8 @@ import Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy
 import Purelib.Data.Gaussian.Basic
 import Purelib.Riemann.RootContinuation.NewtonGlobalCenteredBoundary
 
+open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.OuterCornerReadback
+
 public section
 
 /-! Physical endpoint corrections use the original corner cache shared by
@@ -58,18 +60,18 @@ open Purelib.Riemann.Meshes.PuncturedGridFaces (PuncturedFaces)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues (PhysicalComponent)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_add sumFin_sub)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : NewtonPreparation original} {target radius : Purelib.Data.Rat.Fraction.Rational} {grid : NewtonGrid
+  {preparation : NewtonPreparation original} {target radius : Rational} {grid : NewtonGrid
     preparation target radius}
   {observations : ProtectedObservations original} {frames : RootIsolation.SquareRoot.Grid.RootFrames
     grid.shrunk.prepared.grid}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
+  {domains : FaceDomainBank frames
     grid.faces.regulars} {partitions : SurfacePartitions observations grid}
   {coarse : (sheet : Fin 2) → SurfaceMeshes partitions domains sheet}
-  {fixed : (sheet : Fin 2) → Preflights domains sheet} {error : Purelib.Data.Rat.Fraction.Rational}
+  {fixed : (sheet : Fin 2) → Preflights domains sheet} {error : Rational}
   {stage : Nat} {cache : Numerics domains stage} {coefficients :
     LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -89,9 +91,9 @@ open Purelib.LinearAlgebra.Gaussian in
 Reads the original four corner values in bottom, right, top or left order, retaining the forward coordinate orientation
 of each side. -/
 @[expose] def cachedSideEndpoint (cache : Numerics domains stage) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+  Energy.GaussianVector genus)
     (position : Fin grid.faces.regulars.length) (sheet : Fin 2) (side : GridSide) : Gaussian :=
-  let value := Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.cachedValue cache coefficients position sheet
+  let value := OuterCorners.cachedValue cache coefficients position sheet
   match side with
   | .bottom => edgeArea (value 0) (value 1)
   | .right => edgeArea (value 1) (value 2)
@@ -104,9 +106,9 @@ open Purelib.LinearAlgebra.Gaussian in
 
 Uses the same numerical cache, coefficient vector, regular face and side for both retained readings. -/
 @[expose] def cachedEndpointSideSum (cache : Numerics domains stage) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+  Energy.GaussianVector genus)
     (side : GridSide) (position : Fin grid.faces.regulars.length) : Gaussian :=
-  FiniteSum.Fin.sumFin fun sheet => cachedSideEndpoint cache coefficients position sheet side
+  sumFin fun sheet => cachedSideEndpoint cache coefficients position sheet side
 
 open Purelib.Algebra in
 open Purelib.Curves.Hyperelliptic in
@@ -119,7 +121,7 @@ theorem endpointSideSum_cached
     (side : GridSide) (position : Fin grid.faces.regulars.length) :
     endpointSideSum samples side position = cachedEndpointSideSum cache coefficients side position := by
   unfold endpointSideSum cachedEndpointSideSum
-  apply FiniteSum.Fin.sumFin_congr
+  apply sumFin_congr
   intro sheet
   let face := (faces.get sheet).get position
   let reading := (samples.get sheet).get position
@@ -127,37 +129,37 @@ theorem endpointSideSum_cached
   | bottom =>
       change reading.bottom.endpoint = _
       rw [Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.Centered.bottom_endpoint reading face]
-      change edgeArea (Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value face false false)
-        (Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value face true false) = _
-      rw [Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value_eq_cached,
-        Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value_eq_cached]
+      change edgeArea (OuterCorners.value face false false)
+        (OuterCorners.value face true false) = _
+      rw [OuterCorners.value_eq_cached,
+        OuterCorners.value_eq_cached]
       rfl
   | right =>
       change reading.right.endpoint = _
       rw [Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.Centered.right_endpoint reading face]
-      change edgeArea (Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value face true false)
-        (Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value face true true) = _
-      rw [Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value_eq_cached,
-        Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value_eq_cached]
+      change edgeArea (OuterCorners.value face true false)
+        (OuterCorners.value face true true) = _
+      rw [OuterCorners.value_eq_cached,
+        OuterCorners.value_eq_cached]
       rfl
   | top =>
       change reading.top.endpoint = _
       rw [Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.Centered.top_endpoint reading face]
-      change edgeArea (Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value face false true)
-        (Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value face true true) = _
-      rw [Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value_eq_cached,
-        Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value_eq_cached]
+      change edgeArea (OuterCorners.value face false true)
+        (OuterCorners.value face true true) = _
+      rw [OuterCorners.value_eq_cached,
+        OuterCorners.value_eq_cached]
       rfl
   | left =>
       change reading.left.endpoint = _
       rw [Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.Centered.left_endpoint reading face]
-      change edgeArea (Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value face false false)
-        (Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value face false true) = _
-      rw [Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value_eq_cached,
-        Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value_eq_cached]
+      change edgeArea (OuterCorners.value face false false)
+        (OuterCorners.value face false true) = _
+      rw [OuterCorners.value_eq_cached,
+        OuterCorners.value_eq_cached]
       rfl
 
-attribute [local congr] Purelib.Algebra.FiniteSum.Fin.sumFin_congr
+attribute [local congr] sumFin_congr
 
 open Purelib.Curves.Hyperelliptic in
 /-- Read one physical component's endpoints from the cached side sums.
@@ -168,7 +170,7 @@ theorem componentEndpoints_cached
     {assemblies : SheetAssemblies requests (cache := cache) (coefficients := coefficients)}
     {perimeters : SheetPerimeters requests assemblies} (faces : SheetFaces requests perimeters)
     (neighbors : PuncturedFaces.NeighborBank grid.faces) (component :
-      Meshes.PuncturedGrid.PhysicalComponentValues.PhysicalComponent grid.faces) :
+      PhysicalComponent grid.faces) :
     componentEndpoints samples neighbors component =
       componentSum neighbors component (cachedEndpointSideSum cache coefficients) := by
   simp only [-eq_self, -iff_self, componentEndpoints, componentSum, endpointSideSum_cached samples faces]
@@ -185,7 +187,7 @@ theorem physicalCentered_cached_boundaries
     physicalCentered samples neighbors =
       (componentBoundary samples neighbors .exterior -
         componentSum neighbors .exterior (cachedEndpointSideSum cache coefficients)) +
-      FiniteSum.Fin.sumFin (fun hole => componentBoundary samples neighbors (.hole hole) -
+      sumFin (fun hole => componentBoundary samples neighbors (.hole hole) -
         componentSum neighbors (.hole hole) (cachedEndpointSideSum cache coefficients)) := by
   rw [physicalCentered_boundaries samples neighbors]
   simp only [-eq_self, -iff_self, componentEndpoints_cached samples faces]

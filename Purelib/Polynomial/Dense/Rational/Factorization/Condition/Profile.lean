@@ -46,16 +46,16 @@ processed.
 
 The original factor, cofactor and ordered condition relations retain their exact source factorization and condition
 readback. -/
-structure ConditionProfile (source : Dense.Rational.Squarefree.Factor) (conditions : List
+structure ConditionProfile (source : Squarefree.Factor) (conditions : List
   BoundaryFactorization.CoefficientPolynomial)
     where
-  /-- The retained normalized squarefree factor. -/ factor : Dense.Rational.Squarefree.Factor
+  /-- The retained normalized squarefree factor. -/ factor : Squarefree.Factor
   /-- The displayed cofactor in the original source factor. -/ cofactor : BoundaryFactorization.CoefficientPolynomial
   /-- The source factor is the product of the retained factor and cofactor. -/ factorization :
     Factorization source.polynomial factor.polynomial cofactor
   /-- Exact equality or coprimality evidence for each processed condition, retaining the condition itself. -/ relations
     : List (Sigma fun condition : BoundaryFactorization.CoefficientPolynomial =>
-    Dense.Rational.Factorization.ConditionRelation condition factor)
+    ConditionRelation condition factor)
   /-- The relation entries list exactly the original ordered conditions. -/ conditions_eq : relations.map Sigma.fst =
     conditions
 
@@ -69,18 +69,18 @@ and prepend the new condition relation.
 The same computed condition piece refines the retained source factorization and prepends its relation before descending
 the original remaining relations. -/
 @[expose] def extendPiece
-    {source : Dense.Rational.Squarefree.Factor} {conditions : List BoundaryFactorization.CoefficientPolynomial}
-    (profile : Dense.Rational.Factorization.ConditionProfile source conditions)
+    {source : Squarefree.Factor} {conditions : List BoundaryFactorization.CoefficientPolynomial}
+    (profile : ConditionProfile source conditions)
     (condition : BoundaryFactorization.CoefficientPolynomial)
-    (piece : Dense.Rational.Factorization.ConditionPiece profile.factor condition) :
-    Dense.Rational.Factorization.ConditionProfile source (condition :: conditions) where
+    (piece : ConditionPiece profile.factor condition) :
+    ConditionProfile source (condition :: conditions) where
   factor := piece.factor
   cofactor := piece.cofactor * profile.cofactor
   factorization := by
-    apply Dense.Rational.Factorization.factorizationOfEvals
+    apply factorizationOfEvals
     intro point
-    rw [Dense.Rational.Factorization.eval_factorization profile.factorization point,
-      Dense.Rational.Factorization.eval_factorization piece.factorization point, Dense.Basic.DensePolynomial.eval_mul]
+    rw [eval_factorization profile.factorization point,
+      eval_factorization piece.factorization point, Basic.DensePolynomial.eval_mul]
     ring1
   relations := ⟨condition, piece.relation⟩ ::
     profile.relations.map fun entry =>
@@ -90,7 +90,7 @@ the original remaining relations. -/
         (profile.relations.map fun entry =>
           (⟨entry.1, entry.2.descend piece⟩ :
             Sigma fun queried : BoundaryFactorization.CoefficientPolynomial =>
-              Dense.Rational.Factorization.ConditionRelation queried piece.factor)).map Sigma.fst =
+              ConditionRelation queried piece.factor)).map Sigma.fst =
           profile.relations.map Sigma.fst := by
       induction profile.relations with
       | nil => rfl
@@ -104,11 +104,11 @@ the original remaining relations. -/
 
 The original gcd split is computed once, and its ordered pieces become profiles with the same source owner. -/
 @[expose] def extend
-    {source : Dense.Rational.Squarefree.Factor} {conditions : List BoundaryFactorization.CoefficientPolynomial}
-    (profile : Dense.Rational.Factorization.ConditionProfile source conditions)
+    {source : Squarefree.Factor} {conditions : List BoundaryFactorization.CoefficientPolynomial}
+    (profile : ConditionProfile source conditions)
     (condition : BoundaryFactorization.CoefficientPolynomial) :
-    List (Dense.Rational.Factorization.ConditionProfile source (condition :: conditions)) :=
-  let partition := Dense.Rational.Factorization.splitAgainstCondition profile.factor condition
+    List (ConditionProfile source (condition :: conditions)) :=
+  let partition := splitAgainstCondition profile.factor condition
   partition.pieces.map fun piece => profile.extendPiece condition piece
 
 /-- Splitting a retained condition profile against another condition produces at least one profile.
@@ -116,10 +116,10 @@ The original gcd split is computed once, and its ordered pieces become profiles 
 The computed condition partition retains at least one piece; mapping the original profile extension preserves that
 nonempty list. -/
 theorem extend_nonempty
-    {source : Dense.Rational.Squarefree.Factor} {conditions : List BoundaryFactorization.CoefficientPolynomial}
-    (profile : Dense.Rational.Factorization.ConditionProfile source conditions)
+    {source : Squarefree.Factor} {conditions : List BoundaryFactorization.CoefficientPolynomial}
+    (profile : ConditionProfile source conditions)
     (condition : BoundaryFactorization.CoefficientPolynomial) : profile.extend condition ≠ [] := by
-  let partition := Dense.Rational.Factorization.splitAgainstCondition profile.factor condition
+  let partition := splitAgainstCondition profile.factor condition
   intro empty
   have piecesEmpty : partition.pieces = [] := by
     have mappedEmpty : partition.pieces.map
@@ -136,13 +136,13 @@ theorem extend_nonempty
 Both directions retain the original condition-partition piece and its membership witness, preserving exactly the
 rational root set. -/
 theorem extend_rootCoverage
-    {source : Dense.Rational.Squarefree.Factor} {conditions : List BoundaryFactorization.CoefficientPolynomial}
-    (profile : Dense.Rational.Factorization.ConditionProfile source conditions)
+    {source : Squarefree.Factor} {conditions : List BoundaryFactorization.CoefficientPolynomial}
+    (profile : ConditionProfile source conditions)
     (condition : BoundaryFactorization.CoefficientPolynomial) (point : Fraction.Rational) :
     profile.factor.polynomial.eval point = 0 ↔
       ∃ next ∈ profile.extend condition,
         next.factor.polynomial.eval point = 0 := by
-  let partition := Dense.Rational.Factorization.splitAgainstCondition profile.factor condition
+  let partition := splitAgainstCondition profile.factor condition
   constructor
   · intro profileZero
     rcases (partition.rootCoverage point).mp profileZero with
@@ -165,11 +165,11 @@ conditions.
 
 The retained nonempty family carries the original factor and condition indices and covers exactly that factor's rational
 roots. -/
-structure ConditionProfiles (factor : Dense.Rational.Squarefree.Factor) (conditions : List
+structure ConditionProfiles (factor : Squarefree.Factor) (conditions : List
   BoundaryFactorization.CoefficientPolynomial)
     where
   /-- The finite family of refined factors and their condition relations. -/ profiles : List
-    (Dense.Rational.Factorization.ConditionProfile factor conditions)
+    (ConditionProfile factor conditions)
   /-- The retained profile family is nonempty. -/ nonempty : profiles ≠ []
   /-- The family covers exactly the rational roots of the original squarefree factor. -/ rootCoverage : ∀ point :
     Fraction.Rational,
@@ -184,18 +184,18 @@ condition, and the finite family has exactly the original roots.
 
 The original finite recursion splits each retained prior factor against the next condition, preserving its ordered
 profiles and source-root coverage. -/
-@[expose] def classifyConditions (factor : Dense.Rational.Squarefree.Factor) :
-    (conditions : List BoundaryFactorization.CoefficientPolynomial) → Dense.Rational.Factorization.ConditionProfiles
+@[expose] def classifyConditions (factor : Squarefree.Factor) :
+    (conditions : List BoundaryFactorization.CoefficientPolynomial) → ConditionProfiles
       factor
       conditions
   | [] => by
-      let baseProfile : Dense.Rational.Factorization.ConditionProfile factor [] :=
+      let baseProfile : ConditionProfile factor [] :=
         { factor := factor
-          cofactor := Dense.Basic.DensePolynomial.constant 1
+          cofactor := Basic.DensePolynomial.constant 1
           factorization := by
-            apply Dense.Rational.Factorization.factorizationOfEvals
+            apply factorizationOfEvals
             intro point
-            simp only [Dense.Basic.DensePolynomial.eval_constant,
+            simp only [Basic.DensePolynomial.eval_constant,
               Fraction.Field.mul_one_direct, -eq_self, -iff_self]
             rfl
           relations := []
@@ -214,7 +214,7 @@ profiles and source-root coverage. -/
               subst profile
               exact profileZero }
   | condition :: remaining => by
-      let prior := Purelib.Polynomial.Dense.Rational.Factorization.classifyConditions factor remaining
+      let prior := Factorization.classifyConditions factor remaining
       let profiles := prior.profiles.flatMap fun profile =>
         profile.extend condition
       have profilesNonempty : profiles ≠ [] := by

@@ -30,6 +30,8 @@ import Purelib.Polynomial.Power.Gaussian
 import Purelib.RootIsolation.Progressive.Chamber.Frame
 import Purelib.RootIsolation.State.WindingOne.Basic
 
+open Purelib.Polynomial.Dense.Gaussian
+
 open Purelib.Data.Gaussian.Basic (Canonical)
 open Purelib.Data.Nat.Positive (RootDegree)
 open Purelib.Polynomial.Clearance.Pair.Basic (Certificate)
@@ -75,50 +77,50 @@ theorem unitMoveLiftHomotopy
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
-    (index : (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+    (index : (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one
       sourceUnit)
       sourceUnit degree degreeAtLeastTwo).Index) :
     Winding.Polygon.Comparison.ChainHomotopyFormula
-      (Dense.Gaussian.Power.Coordinate.coordinatePositivePower (degree.value - 1))
-      Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
-      (Progressive.Power.Unit.Lift.Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index)
-      (Progressive.Power.Unit.Lift.Vertices.unitMoveLiftVertices sourceUnit targetUnit degree degreeAtLeastTwo small
+      (Power.Coordinate.coordinatePositivePower (degree.value - 1))
+      Monomial.Coordinate.coordinatePolynomial
+      (Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index)
+      (Vertices.unitMoveLiftVertices sourceUnit targetUnit degree degreeAtLeastTwo small
         index)
-      source (Progressive.Power.Unit.Lift.Vertices.unitMoveParameterVertices target) := by
-  let sourceIndex := Progressive.Power.Unit.Rebase.Geometry.unitMoveSourceDegreeIndexFromFrame sourceUnit targetUnit
+      source (Vertices.unitMoveParameterVertices target) := by
+  let sourceIndex := Rebase.Geometry.unitMoveSourceDegreeIndexFromFrame sourceUnit targetUnit
     degree degreeAtLeastTwo index
-  let targetIndex := Progressive.Power.Unit.Rebase.Geometry.unitMoveTargetDegreeIndexFromSource sourceUnit targetUnit
+  let targetIndex := Rebase.Geometry.unitMoveTargetDegreeIndexFromSource sourceUnit targetUnit
     degree degreeAtLeastTwo small index
-  let bridgeAnchor := (Progressive.Power.Unit.Rebase.Geometry.unitMoveBridgeState sourceUnit targetUnit degree
+  let bridgeAnchor := (Rebase.Geometry.unitMoveBridgeState sourceUnit targetUnit degree
     degreeAtLeastTwo small index).box.anchor
-  let overlap := Progressive.Power.Unit.Rebase.Geometry.unitMoveOverlapPoint sourceUnit targetUnit degree
+  let overlap := Rebase.Geometry.unitMoveOverlapPoint sourceUnit targetUnit degree
     degreeAtLeastTwo small index
-  let targetAnchor := (Power.Unit.Box.unitRobustBox (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit)
+  let targetAnchor := (Power.Unit.Box.unitRobustBox (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit)
     targetUnit degree degreeAtLeastTwo targetIndex).anchor
   change Winding.Polygon.Comparison.ChainHomotopyFormula _ _
-    (Progressive.Power.Unit.Lift.Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index)
+    (Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index)
     [bridgeAnchor, overlap, targetAnchor] source [target, target, target]
   exact .cons
     (Power.Unit.Segment.Homotopy.unitRobustSegmentHomotopy sourceUnit targetUnit degree degreeAtLeastTwo
       small sourceIndex
-      (Progressive.Power.Unit.Lift.Vertices.unitMoveLiftBase_inside_sourceRobustBox sourceUnit targetUnit degree
+      (Vertices.unitMoveLiftBase_inside_sourceRobustBox sourceUnit targetUnit degree
         degreeAtLeastTwo index)
-      (Progressive.Power.Unit.Lift.Vertices.unitMoveBridgeAnchor_inside_sourceRobustBox sourceUnit targetUnit degree
+      (Vertices.unitMoveBridgeAnchor_inside_sourceRobustBox sourceUnit targetUnit degree
         degreeAtLeastTwo small index))
     (.cons
       (Power.Unit.Segment.Homotopy.unitRobustSegmentConstantTargetHomotopy sourceUnit targetUnit degree
         degreeAtLeastTwo small sourceIndex
-        (Progressive.Power.Unit.Lift.Vertices.unitMoveBridgeAnchor_inside_sourceRobustBox sourceUnit targetUnit degree
+        (Vertices.unitMoveBridgeAnchor_inside_sourceRobustBox sourceUnit targetUnit degree
           degreeAtLeastTwo small index)
-        (Progressive.Power.Unit.Lift.Vertices.unitMoveOverlapPoint_inside_sourceRobustBox sourceUnit targetUnit degree
+        (Vertices.unitMoveOverlapPoint_inside_sourceRobustBox sourceUnit targetUnit degree
           degreeAtLeastTwo small index))
       (.cons
         (Power.Unit.Segment.Homotopy.unitRobustSegmentConstantTargetHomotopy targetUnit targetUnit degree
           degreeAtLeastTwo (UnitMoveSmall.reflexive targetUnit degree
             degreeAtLeastTwo) targetIndex
-          (Progressive.Power.Unit.Rebase.Geometry.unitMoveOverlapPoint_inside_targetRobustBox sourceUnit targetUnit
+          (Rebase.Geometry.unitMoveOverlapPoint_inside_targetRobustBox sourceUnit targetUnit
             degree degreeAtLeastTwo small index)
-          (Progressive.Power.Unit.Lift.Vertices.unitMoveTargetAnchor_inside_targetRobustBox sourceUnit targetUnit
+          (Vertices.unitMoveTargetAnchor_inside_targetRobustBox sourceUnit targetUnit
             degree degreeAtLeastTwo small index))
         (.nil targetAnchor target)))
 end Purelib.RootIsolation.Progressive.Power.Unit.Lift.Formulas
@@ -154,82 +156,82 @@ def unitMoveLiftPhaseFormula
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
-    (index : (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+    (index : (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one
       sourceUnit)
       sourceUnit degree degreeAtLeastTwo).Index) :
     ChainPhaseFormula
-      Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
-      (Progressive.Power.Unit.Lift.Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index)
-      (Progressive.Power.Unit.Lift.Vertices.unitMoveLiftVertices sourceUnit targetUnit degree degreeAtLeastTwo small
+      Monomial.Coordinate.coordinatePolynomial
+      (Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index)
+      (Vertices.unitMoveLiftVertices sourceUnit targetUnit degree degreeAtLeastTwo small
         index) := by
-  let sourceIndex := Progressive.Power.Unit.Rebase.Geometry.unitMoveSourceDegreeIndexFromFrame sourceUnit targetUnit
+  let sourceIndex := Rebase.Geometry.unitMoveSourceDegreeIndexFromFrame sourceUnit targetUnit
     degree degreeAtLeastTwo index
-  let targetIndex := Progressive.Power.Unit.Rebase.Geometry.unitMoveTargetDegreeIndexFromSource sourceUnit targetUnit
+  let targetIndex := Rebase.Geometry.unitMoveTargetDegreeIndexFromSource sourceUnit targetUnit
     degree degreeAtLeastTwo small index
-  let bridgeAnchor := (Progressive.Power.Unit.Rebase.Geometry.unitMoveBridgeState sourceUnit targetUnit degree
+  let bridgeAnchor := (Rebase.Geometry.unitMoveBridgeState sourceUnit targetUnit degree
     degreeAtLeastTwo small index).box.anchor
-  let overlap := Progressive.Power.Unit.Rebase.Geometry.unitMoveOverlapPoint sourceUnit targetUnit degree
+  let overlap := Rebase.Geometry.unitMoveOverlapPoint sourceUnit targetUnit degree
     degreeAtLeastTwo small index
-  let targetAnchor := (Power.Unit.Box.unitRobustBox (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit)
+  let targetAnchor := (Power.Unit.Box.unitRobustBox (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit)
     targetUnit degree degreeAtLeastTwo targetIndex).anchor
   have firstCertificate : Certificate
-      (Dense.Gaussian.Path.Components.pathReal Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
-        (Progressive.Power.Unit.Lift.Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index)
+      (Path.Components.pathReal Monomial.Coordinate.coordinatePolynomial
+        (Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index)
         (bridgeAnchor -
-          Progressive.Power.Unit.Lift.Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index))
-      (Dense.Gaussian.Path.Components.pathImag Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
-        (Progressive.Power.Unit.Lift.Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index)
+          Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index))
+      (Path.Components.pathImag Monomial.Coordinate.coordinatePolynomial
+        (Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index)
         (bridgeAnchor -
-          Progressive.Power.Unit.Lift.Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index))
+          Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index))
       { lower := 0, upper := 1, valid := by decide } := by
-    simpa only [show Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial =
-        Dense.Gaussian.Power.Coordinate.coordinatePositivePower 0 from rfl] using
+    simpa only [show Monomial.Coordinate.coordinatePolynomial =
+        Power.Coordinate.coordinatePositivePower 0 from rfl] using
       Power.Unit.Segment.Clearance.unitRobustSegmentCoordinatePowerCertificate
-        (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree degreeAtLeastTwo
+        (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree degreeAtLeastTwo
         sourceIndex
-        (Progressive.Power.Unit.Lift.Vertices.unitMoveLiftBase_inside_sourceRobustBox sourceUnit targetUnit degree
+        (Vertices.unitMoveLiftBase_inside_sourceRobustBox sourceUnit targetUnit degree
           degreeAtLeastTwo index)
-        (Progressive.Power.Unit.Lift.Vertices.unitMoveBridgeAnchor_inside_sourceRobustBox sourceUnit targetUnit degree
+        (Vertices.unitMoveBridgeAnchor_inside_sourceRobustBox sourceUnit targetUnit degree
           degreeAtLeastTwo small index) 0
   have secondCertificate : Certificate
-      (Dense.Gaussian.Path.Components.pathReal Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
+      (Path.Components.pathReal Monomial.Coordinate.coordinatePolynomial
         bridgeAnchor (overlap - bridgeAnchor))
-      (Dense.Gaussian.Path.Components.pathImag Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
+      (Path.Components.pathImag Monomial.Coordinate.coordinatePolynomial
         bridgeAnchor (overlap - bridgeAnchor))
       { lower := 0, upper := 1, valid := by decide } := by
-    simpa only [show Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial =
-        Dense.Gaussian.Power.Coordinate.coordinatePositivePower 0 from rfl] using
+    simpa only [show Monomial.Coordinate.coordinatePolynomial =
+        Power.Coordinate.coordinatePositivePower 0 from rfl] using
       Power.Unit.Segment.Clearance.unitRobustSegmentCoordinatePowerCertificate
-        (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree degreeAtLeastTwo
+        (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree degreeAtLeastTwo
         sourceIndex
-        (Progressive.Power.Unit.Lift.Vertices.unitMoveBridgeAnchor_inside_sourceRobustBox sourceUnit targetUnit degree
+        (Vertices.unitMoveBridgeAnchor_inside_sourceRobustBox sourceUnit targetUnit degree
           degreeAtLeastTwo small index)
-        (Progressive.Power.Unit.Lift.Vertices.unitMoveOverlapPoint_inside_sourceRobustBox sourceUnit targetUnit degree
+        (Vertices.unitMoveOverlapPoint_inside_sourceRobustBox sourceUnit targetUnit degree
           degreeAtLeastTwo small index) 0
   have thirdCertificate : Certificate
-      (Dense.Gaussian.Path.Components.pathReal Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
+      (Path.Components.pathReal Monomial.Coordinate.coordinatePolynomial
         overlap (targetAnchor - overlap))
-      (Dense.Gaussian.Path.Components.pathImag Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
+      (Path.Components.pathImag Monomial.Coordinate.coordinatePolynomial
         overlap (targetAnchor - overlap))
       { lower := 0, upper := 1, valid := by decide } := by
-    simpa only [show Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial =
-        Dense.Gaussian.Power.Coordinate.coordinatePositivePower 0 from rfl] using
+    simpa only [show Monomial.Coordinate.coordinatePolynomial =
+        Power.Coordinate.coordinatePositivePower 0 from rfl] using
       Power.Unit.Segment.Clearance.unitRobustSegmentCoordinatePowerCertificate
-        (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) targetUnit degree degreeAtLeastTwo
+        (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) targetUnit degree degreeAtLeastTwo
         targetIndex
-        (Progressive.Power.Unit.Rebase.Geometry.unitMoveOverlapPoint_inside_targetRobustBox sourceUnit targetUnit degree
+        (Rebase.Geometry.unitMoveOverlapPoint_inside_targetRobustBox sourceUnit targetUnit degree
           degreeAtLeastTwo small index)
-        (Progressive.Power.Unit.Lift.Vertices.unitMoveTargetAnchor_inside_targetRobustBox sourceUnit targetUnit degree
+        (Vertices.unitMoveTargetAnchor_inside_targetRobustBox sourceUnit targetUnit degree
           degreeAtLeastTwo small index) 0
   change ChainPhaseFormula
-    Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
-    (Progressive.Power.Unit.Lift.Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index)
+    Monomial.Coordinate.coordinatePolynomial
+    (Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index)
     [bridgeAnchor, overlap, targetAnchor]
   exact ChainPhaseFormula.consOfClearance firstCertificate
     (ChainPhaseFormula.consOfClearance secondCertificate
       (ChainPhaseFormula.consOfClearance thirdCertificate
         (ChainPhaseFormula.nil
-          Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial targetAnchor)))
+          Monomial.Coordinate.coordinatePolynomial targetAnchor)))
 end Purelib.RootIsolation.Progressive.Power.Unit.Lift.Formulas
 
 end
@@ -263,52 +265,52 @@ theorem unitMoveLiftProductFormula
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
-    (index : (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+    (index : (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one
       sourceUnit)
       sourceUnit degree degreeAtLeastTwo).Index)
     (exponent : Nat) :
     Winding.Polygon.Product.ChainProductFormula
-      (Dense.Gaussian.Power.Coordinate.coordinatePositivePower exponent)
-      Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
-      (Progressive.Power.Unit.Lift.Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index)
-      (Progressive.Power.Unit.Lift.Vertices.unitMoveLiftVertices sourceUnit targetUnit degree degreeAtLeastTwo small
+      (Power.Coordinate.coordinatePositivePower exponent)
+      Monomial.Coordinate.coordinatePolynomial
+      (Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index)
+      (Vertices.unitMoveLiftVertices sourceUnit targetUnit degree degreeAtLeastTwo small
         index) := by
-  let sourceIndex := Progressive.Power.Unit.Rebase.Geometry.unitMoveSourceDegreeIndexFromFrame sourceUnit targetUnit
+  let sourceIndex := Rebase.Geometry.unitMoveSourceDegreeIndexFromFrame sourceUnit targetUnit
     degree degreeAtLeastTwo index
-  let targetIndex := Progressive.Power.Unit.Rebase.Geometry.unitMoveTargetDegreeIndexFromSource sourceUnit targetUnit
+  let targetIndex := Rebase.Geometry.unitMoveTargetDegreeIndexFromSource sourceUnit targetUnit
     degree degreeAtLeastTwo small index
-  let bridgeAnchor := (Progressive.Power.Unit.Rebase.Geometry.unitMoveBridgeState sourceUnit targetUnit degree
+  let bridgeAnchor := (Rebase.Geometry.unitMoveBridgeState sourceUnit targetUnit degree
     degreeAtLeastTwo small index).box.anchor
-  let overlap := Progressive.Power.Unit.Rebase.Geometry.unitMoveOverlapPoint sourceUnit targetUnit degree
+  let overlap := Rebase.Geometry.unitMoveOverlapPoint sourceUnit targetUnit degree
     degreeAtLeastTwo small index
-  let targetAnchor := (Power.Unit.Box.unitRobustBox (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit)
+  let targetAnchor := (Power.Unit.Box.unitRobustBox (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit)
     targetUnit degree degreeAtLeastTwo targetIndex).anchor
   change Winding.Polygon.Product.ChainProductFormula _ _
-    (Progressive.Power.Unit.Lift.Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index)
+    (Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index)
     [bridgeAnchor, overlap, targetAnchor]
   exact .cons
     (Power.Unit.Segment.Product.unitRobustSegmentProductFormula
-      (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree degreeAtLeastTwo
+      (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree degreeAtLeastTwo
       sourceIndex
-      (Progressive.Power.Unit.Lift.Vertices.unitMoveLiftBase_inside_sourceRobustBox sourceUnit targetUnit degree
+      (Vertices.unitMoveLiftBase_inside_sourceRobustBox sourceUnit targetUnit degree
         degreeAtLeastTwo index)
-      (Progressive.Power.Unit.Lift.Vertices.unitMoveBridgeAnchor_inside_sourceRobustBox sourceUnit targetUnit degree
+      (Vertices.unitMoveBridgeAnchor_inside_sourceRobustBox sourceUnit targetUnit degree
         degreeAtLeastTwo small index) exponent)
     (.cons
       (Power.Unit.Segment.Product.unitRobustSegmentProductFormula
-        (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree degreeAtLeastTwo
+        (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree degreeAtLeastTwo
         sourceIndex
-        (Progressive.Power.Unit.Lift.Vertices.unitMoveBridgeAnchor_inside_sourceRobustBox sourceUnit targetUnit degree
+        (Vertices.unitMoveBridgeAnchor_inside_sourceRobustBox sourceUnit targetUnit degree
           degreeAtLeastTwo small index)
-        (Progressive.Power.Unit.Lift.Vertices.unitMoveOverlapPoint_inside_sourceRobustBox sourceUnit targetUnit degree
+        (Vertices.unitMoveOverlapPoint_inside_sourceRobustBox sourceUnit targetUnit degree
           degreeAtLeastTwo small index) exponent)
       (.cons
         (Power.Unit.Segment.Product.unitRobustSegmentProductFormula
-          (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) targetUnit degree degreeAtLeastTwo
+          (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) targetUnit degree degreeAtLeastTwo
           targetIndex
-          (Progressive.Power.Unit.Rebase.Geometry.unitMoveOverlapPoint_inside_targetRobustBox sourceUnit targetUnit
+          (Rebase.Geometry.unitMoveOverlapPoint_inside_targetRobustBox sourceUnit targetUnit
             degree degreeAtLeastTwo small index)
-          (Progressive.Power.Unit.Lift.Vertices.unitMoveTargetAnchor_inside_targetRobustBox sourceUnit targetUnit
+          (Vertices.unitMoveTargetAnchor_inside_targetRobustBox sourceUnit targetUnit
             degree degreeAtLeastTwo small index) exponent)
         (.nil targetAnchor)))
 end Purelib.RootIsolation.Progressive.Power.Unit.Lift.Formulas

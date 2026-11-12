@@ -51,7 +51,7 @@ namespace Purelib.Approximation.Gaussian.Name.Coherent.CCL.Table
 set_option genInjectivity false in
 /-- Running cursors for one explicitly displayed finite channel table. -/
 structure TableCursor where
-  /-- The displayed finite list of persistent coherent channel cursors. -/ entries : List Cursor.Basic.ChannelCursor
+  /-- The displayed finite list of persistent coherent channel cursors. -/ entries : List ChannelCursor
 
 constructive_injectivity TableCursor
 
@@ -59,27 +59,27 @@ namespace TableCursor
 
 /-- Read the original coherent channel from each retained table entry. -/
 def channels (state :
-  Approximation.Gaussian.Name.Coherent.CCL.Table.TableCursor) : List Coherent.CoherentNamed :=
+  TableCursor) : List CoherentNamed :=
   state.entries.map ChannelCursor.channel
 
 /-- Start one persistent cursor at the original state of every displayed coherent channel. -/
 def initial (channels : List
-  CoherentNamed) : Approximation.Gaussian.Name.Coherent.CCL.Table.TableCursor :=
+  CoherentNamed) : TableCursor :=
   ⟨channels.map ChannelCursor.initial⟩
 
 /-- Make the same finite accuracy and bit-growth request of every displayed table entry. -/
 def request (state :
-  Approximation.Gaussian.Name.Coherent.CCL.Table.TableCursor) (epsilonSq : Fraction.Rational)
-    (positive : 0 < epsilonSq) (count : Nat) : Approximation.Gaussian.Name.Coherent.CCL.Table.TableCursor :=
+  TableCursor) (epsilonSq : Fraction.Rational)
+    (positive : 0 < epsilonSq) (count : Nat) : TableCursor :=
   ⟨state.entries.map
     (fun entry => entry.request epsilonSq positive count)⟩
 
 /-- Starting a table of cursors preserves the exact original channel list. -/
 @[simp] theorem initial_channels (source :
   List CoherentNamed) :
-    (Approximation.Gaussian.Name.Coherent.CCL.Table.TableCursor.initial source).channels = source := by
-  simp only [Approximation.Gaussian.Name.Coherent.CCL.Table.TableCursor.initial,
-    Approximation.Gaussian.Name.Coherent.CCL.Table.TableCursor.channels, Map.map_map, Function.comp_def,
+    (initial source).channels = source := by
+  simp only [initial,
+    TableCursor.channels, Map.map_map, Function.comp_def,
     ChannelCursor.initial, -eq_self, -iff_self]
   induction source with
   | nil => rfl
@@ -88,26 +88,26 @@ def request (state :
 
 /-- A shared finite table request preserves the exact original channel list. -/
 @[simp] theorem request_channels (state :
-  Approximation.Gaussian.Name.Coherent.CCL.Table.TableCursor)
+  TableCursor)
     (epsilonSq : Fraction.Rational) (positive : 0 < epsilonSq) (count : Nat) :
     (state.request epsilonSq positive count).channels = state.channels := by
-  unfold Approximation.Gaussian.Name.Coherent.CCL.Table.TableCursor.request
-    Approximation.Gaussian.Name.Coherent.CCL.Table.TableCursor.channels
+  unfold request
+    TableCursor.channels
   simp only [Map.map_map, Function.comp_def, ChannelCursor.request, -eq_self, -iff_self]
   rfl
 
 /-- A shared finite table request preserves the number of retained cursor entries. -/
 @[simp] theorem request_length (state :
-  Approximation.Gaussian.Name.Coherent.CCL.Table.TableCursor)
+  TableCursor)
     (epsilonSq : Fraction.Rational) (positive : 0 < epsilonSq) (count : Nat) :
     (state.request epsilonSq positive count).entries.length =
       state.entries.length := by
-  simp only [Approximation.Gaussian.Name.Coherent.CCL.Table.TableCursor.request, Map.length_map, -eq_self, -iff_self]
+  simp only [request, Map.length_map, -eq_self, -iff_self]
   rfl
 
 /-- The exact updated entry corresponding to every old displayed member is present in the returned finite table. -/
 theorem requested_entry_mem (state :
-  Approximation.Gaussian.Name.Coherent.CCL.Table.TableCursor) {entry : Cursor.Basic.ChannelCursor}
+  TableCursor) {entry : ChannelCursor}
     (member : entry ∈ state.entries) (epsilonSq : Fraction.Rational)
     (positive : 0 < epsilonSq) (count : Nat) :
     entry.request epsilonSq positive count ∈
@@ -116,8 +116,8 @@ theorem requested_entry_mem (state :
 
 /-- Per-entry persistent output contract for a finite table request. -/
 theorem member_word_extends_and_grows (state :
-  Approximation.Gaussian.Name.Coherent.CCL.Table.TableCursor)
-    {entry : Cursor.Basic.ChannelCursor} (member : entry ∈ state.entries)
+  TableCursor)
+    {entry : ChannelCursor} (member : entry ∈ state.entries)
     (epsilonSq : Fraction.Rational) (positive : 0 < epsilonSq) (count : Nat) :
     entry.request epsilonSq positive count ∈
         (state.request epsilonSq positive count).entries ∧
@@ -135,8 +135,8 @@ theorem member_word_extends_and_grows (state :
 
 /-- Successive table requests preserve all old channels and extend the already-emitted word of every current entry. -/
 theorem successive_member_extends (state :
-  Approximation.Gaussian.Name.Coherent.CCL.Table.TableCursor)
-    {entry : Cursor.Basic.ChannelCursor} (member : entry ∈ state.entries)
+  TableCursor)
+    {entry : ChannelCursor} (member : entry ∈ state.entries)
     (firstTarget : Fraction.Rational) (firstPositive : 0 < firstTarget)
     (firstCount : Nat) (secondTarget : Fraction.Rational)
     (secondPositive : 0 < secondTarget) (secondCount : Nat) :

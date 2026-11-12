@@ -78,28 +78,28 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBa
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments (IndexedFragment ParentFragment)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping (IndexedRun IndexedGrouping)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains (SourceChain)
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
+  {program : ExteriorProgram lifted
     differential} {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+    SurfacePreparation
     regular domains program}
 
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
-variable (retained : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation
+variable (retained : CommonBasisPreparation
   prepared) {index : Nat} (inputs : retained.Inputs index)
   (outer : Fin prepared.occurrences.length) {faceIndex : Nat}
-  (data : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (data : RowData
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) faceIndex)
-  (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+  (coefficients : GaussianVector genus)
 
 variable {retained inputs outer data coefficients}
 
@@ -108,11 +108,11 @@ open Purelib.Topology.Polygon.Stokes (PrimitivePoint)
 set_option genInjectivity false in
 /-- A finite run bank indexed by source position, not by equality of parent payloads. Its list already has the exact
 original parent order. -/
-structure ParentOrderedRuns (retained : Preparation.CommonBasisPreparation prepared) (inputs : retained.Inputs index)
-    (outer : Fin prepared.occurrences.length) (data : FragmentQueries.RowData (ParentIndices.occurrenceAt
+structure ParentOrderedRuns (retained : CommonBasisPreparation prepared) (inputs : retained.Inputs index)
+    (outer : Fin prepared.occurrences.length) (data : RowData (ParentIndices.occurrenceAt
       prepared.occurrences outer) faceIndex)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) where
-  /-- The original fragment runs retained in complete source-parent order. -/ runs : List (FragmentGrouping.IndexedRun
+    (coefficients : GaussianVector genus) where
+  /-- The original fragment runs retained in complete source-parent order. -/ runs : List (IndexedRun
     retained inputs outer data coefficients)
   /-- The retained run parents enumerate every original bounded source position exactly once in ascending order. -/
     indices : runs.map IndexedRun.parent =
@@ -123,13 +123,13 @@ constructive_injectivity ParentOrderedRuns
 
 namespace IndexedGrouping
 variable {items : List
-  (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment retained inputs
+  (IndexedFragments.IndexedFragment retained inputs
   outer data coefficients)}
 
 /-- Retain the original grouped forward runs with their exact ascending source-parent certificate. -/
 @[expose] def inSourceOrder (grouped : FragmentGrouping.IndexedGrouping retained inputs outer data coefficients items)
     (word : IndexedFragment.ParentWord items) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentOrderedRuns retained inputs outer
+      ParentOrderedRuns retained inputs outer
       data coefficients :=
   ⟨grouped.runs, IndexedGrouping.parent_indices grouped word⟩
 
@@ -137,26 +137,26 @@ variable {items : List
 @[expose] def reverseInSourceOrder (grouped : FragmentGrouping.IndexedGrouping retained inputs outer data coefficients
   items)
     (word : IndexedFragment.ReverseParentWord items) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentOrderedRuns retained inputs outer
+      ParentOrderedRuns retained inputs outer
       data coefficients :=
   ⟨grouped.runs.reverse, IndexedGrouping.reverse_parent_indices grouped word⟩
 
 end IndexedGrouping
 namespace ParentOrderedRuns
-variable (ordered : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentOrderedRuns
+variable (ordered : ParentOrderedRuns
   retained inputs outer data coefficients)
 
 /-- The retained run list has exactly the original source-parent count. -/
 theorem length_eq : ordered.runs.length =
     (ParentIndices.occurrenceAt prepared.occurrences outer).compared.entered.cache.parents.length := by
   have equal := congrArg List.length ordered.indices
-  simpa only [Data.List.Map.length_map, Data.List.OfFn.Basic.length_ofFn, -eq_self, -iff_self] using equal
+  simpa only [Map.length_map, OfFn.Basic.length_ofFn, -eq_self, -iff_self] using equal
 
 /-- The stored length certificate supplies the bound; no search or payload comparison is involved in selecting the
 retained run. -/
 @[expose] def runAt (position : Fin (ParentIndices.occurrenceAt prepared.occurrences
   outer).compared.entered.cache.parents.length) :
-    FragmentGrouping.IndexedRun retained inputs outer data coefficients :=
+    IndexedRun retained inputs outer data coefficients :=
   ordered.runs[position.val]'(position.isLt.trans_eq ordered.length_eq.symm)
 
 /-- The selected retained run has exactly the requested original parent position. -/
@@ -165,16 +165,16 @@ theorem runAt_parent (position : Fin (ParentIndices.occurrenceAt prepared.occurr
     (ordered.runAt position).parent = position := by
   have bound := position.isLt.trans_eq ordered.length_eq.symm
   have equal := (Data.List.at_cast ordered.indices
-    ⟨position.val, by rw [Data.List.Map.length_map]; exact bound⟩).symm
-  rw [Data.List.Map.getElem_map] at equal
+    ⟨position.val, by rw [Map.length_map]; exact bound⟩).symm
+  rw [Map.getElem_map] at equal
   have tableBound : position.val < (List.ofFn (fun current : Fin (ParentIndices.occurrenceAt prepared.occurrences
     outer).compared.entered.cache.parents.length => current)).length := by
-    rewrite [Data.List.OfFn.Basic.length_ofFn]
+    rewrite [OfFn.Basic.length_ofFn]
     exact position.isLt
   change (ordered.runAt position).parent =
     (List.ofFn (fun current : Fin (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length => current))[position.val]'tableBound at equal
-  rewrite [Data.List.OfFn.Basic.getElem_ofFn _ position tableBound] at equal
+  rewrite [OfFn.Basic.getElem_ofFn _ position tableBound] at equal
   exact equal
 
 /-- The bounded selection is a member of the original cached run list. -/
@@ -188,7 +188,7 @@ theorem runAt_all : List.ofFn ordered.runAt = ordered.runs := by
   exact Eq.rec (motive := fun count equal =>
     List.ofFn (fun position : Fin count => ordered.runs[position.val]'(position.isLt.trans_eq equal.symm)) =
       ordered.runs)
-    (Data.List.OfFn.Basic.ofFn_getElem ordered.runs) ordered.length_eq
+    (OfFn.Basic.ofFn_getElem ordered.runs) ordered.length_eq
 
 /-- Read the complete physical increment block of the retained run at its original source-parent position. -/
 @[expose] def physical (position : Fin (ParentIndices.occurrenceAt prepared.occurrences
@@ -198,7 +198,7 @@ theorem runAt_all : List.ofFn ordered.runAt = ordered.runs := by
 /-- Reindexing retains each whole physical block, including its junctions. -/
 theorem physical_all : List.ofFn ordered.physical = ordered.runs.map (fun run =>
     ((run.fragments.map OwnedFragment.pair).map Prod.fst).flatten) := by
-  have equal := congrArg (List.map (fun run : FragmentGrouping.IndexedRun retained inputs outer data coefficients =>
+  have equal := congrArg (List.map (fun run : IndexedRun retained inputs outer data coefficients =>
     ((run.fragments.map OwnedFragment.pair).map Prod.fst).flatten)) ordered.runAt_all
   rw [OfFn.Basic.map_ofFn] at equal
   exact equal

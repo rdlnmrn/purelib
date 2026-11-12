@@ -68,7 +68,7 @@ open Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh
   MatchedVerticalSide)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
@@ -120,7 +120,7 @@ theorem regular_iff_matched (outcome : CrossingBank.HorizontalOutcome request fi
     exact HorizontalOutcome.complete request outcome matching.1 matching.2.1 matching.2.2
   · rintro ⟨joined, rfl⟩
     exact neighbor.regular_of_matches nextPosition
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborCrossingAgreement.HorizontalCrossing.physical_match joined)
+      (HorizontalCrossing.physical_match joined)
 
 end HorizontalOutcome
 
@@ -157,7 +157,7 @@ theorem regular_iff_matched (outcome : CrossingBank.VerticalOutcome request firs
     exact VerticalOutcome.complete request outcome matching.1 matching.2.1 matching.2.2
   · rintro ⟨joined, rfl⟩
     exact neighbor.regular_of_matches nextPosition
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborCrossingAgreement.VerticalCrossing.physical_match joined)
+      (VerticalCrossing.physical_match joined)
 
 end VerticalOutcome
 
@@ -167,7 +167,7 @@ theorem CrossingBank.horizontal_neighbor_iff (retained : Matched.CrossingBank re
     (firstPosition nextPosition : Fin faces.regulars.length) (sheet : Fin 2) :
     (neighbors.entries.get firstPosition).top.RegularAt nextPosition ↔
       ∃ joined, ((retained.horizontal.get firstPosition).get sheet).get nextPosition = .matched joined :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborCrossingAgreement.HorizontalOutcome.regular_iff_matched _ _
+  HorizontalOutcome.regular_iff_matched _ _
 
 /-- The destination's original bottom-neighbor classification agrees with the same retained horizontal crossing in
 reverse. -/
@@ -178,13 +178,13 @@ theorem CrossingBank.horizontal_reverse_neighbor_iff (retained : Matched.Crossin
       ∃ joined, ((retained.horizontal.get firstPosition).get sheet).get nextPosition = .matched joined := by
   constructor
   · intro regular
-    apply (Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborCrossingAgreement.CrossingBank.horizontal_neighbor_iff
+    apply (CrossingBank.horizontal_neighbor_iff
       retained neighbors firstPosition nextPosition sheet).mp
     exact (neighbors.entries.get firstPosition).top.regular_of_matches nextPosition
       ((neighbors.entries.get nextPosition).bottom.matches_of_regular firstPosition regular).reverse
   · intro matched
     have regular :=
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborCrossingAgreement.CrossingBank.horizontal_neighbor_iff
+      (CrossingBank.horizontal_neighbor_iff
       retained neighbors firstPosition nextPosition sheet).mpr matched
     exact (neighbors.entries.get nextPosition).bottom.regular_of_matches firstPosition
       ((neighbors.entries.get firstPosition).top.matches_of_regular nextPosition regular).reverse
@@ -195,7 +195,7 @@ theorem CrossingBank.vertical_neighbor_iff (retained : Matched.CrossingBank requ
     (firstPosition nextPosition : Fin faces.regulars.length) (sheet : Fin 2) :
     (neighbors.entries.get firstPosition).right.RegularAt nextPosition ↔
       ∃ joined, ((retained.vertical.get firstPosition).get sheet).get nextPosition = .matched joined :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborCrossingAgreement.VerticalOutcome.regular_iff_matched _ _
+  VerticalOutcome.regular_iff_matched _ _
 
 /-- The destination's original left-neighbor classification agrees with the same retained vertical crossing in reverse.
 -/
@@ -206,16 +206,15 @@ theorem CrossingBank.vertical_reverse_neighbor_iff (retained : Matched.CrossingB
       ∃ joined, ((retained.vertical.get firstPosition).get sheet).get nextPosition = .matched joined := by
   constructor
   · intro regular
-    apply (Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborCrossingAgreement.CrossingBank.vertical_neighbor_iff
+    apply (CrossingBank.vertical_neighbor_iff
       retained neighbors firstPosition nextPosition sheet).mp
     exact (neighbors.entries.get firstPosition).right.regular_of_matches nextPosition
       ((neighbors.entries.get nextPosition).left.matches_of_regular firstPosition regular).reverse
   · intro matched
     have regular :=
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborCrossingAgreement.CrossingBank.vertical_neighbor_iff
+      (CrossingBank.vertical_neighbor_iff
       retained neighbors firstPosition nextPosition sheet).mpr matched
     exact (neighbors.entries.get nextPosition).left.regular_of_matches firstPosition
       ((neighbors.entries.get firstPosition).right.matches_of_regular nextPosition regular).reverse
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborCrossingAgreement
-

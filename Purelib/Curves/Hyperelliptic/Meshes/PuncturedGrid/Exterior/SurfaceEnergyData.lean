@@ -88,18 +88,18 @@ open Purelib.Riemann.Meshes (FramedPuncturedGrid LiftedPuncturedGrid)
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
-  {lifted : LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {localTarget localArea chartTarget : Coordinate} {floor index depth readingIndex : Nat} {box :
     Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
+    Face.PrimitiveData.FacePrimitiveBank differential index domains}
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison (CapRequest
   ChartRequest)
@@ -128,15 +128,15 @@ namespace ChartSamples.ChartedEntry
 
 /-- The coarse polygon retains every cross-occurrence term. -/
 theorem summary_area (values
-  : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample shared depth
+  : List (ChartedEntry (regular := regular) sample shared depth
   readingIndex localTarget localArea chartTarget floor)) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.summary values).area =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (values.map (fun value => value.chart.summary.area)) +
+    (ChartedEntry.summary values).area =
+      Gaussian.Norm.Sum.Basic.gaussianSum (values.map (fun value => value.chart.summary.area)) +
       Path.IncrementArea.pathArea (values.map (fun value => value.chart.summary.total)) := by
-  have total : ∀ values : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular :=
+  have total : ∀ values : List (ChartedEntry (regular :=
     regular) sample shared depth readingIndex localTarget localArea chartTarget floor),
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.summary values).total =
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (values.map (fun value => value.chart.summary.total)) := by
+      (ChartedEntry.summary values).total =
+        Gaussian.Norm.Sum.Basic.gaussianSum (values.map (fun value => value.chart.summary.total)) := by
     intro values
     induction values with
     | nil => rfl
@@ -144,24 +144,24 @@ theorem summary_area (values
   induction values with
   | nil => change (0 : Gaussian) = 0 + 0; ring1
   | cons head tail ih =>
-      change head.chart.summary.area + (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.summary
+      change head.chart.summary.area + (ChartedEntry.summary
         tail).area + Path.BoundaryRibbon.area head.chart.summary.total
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.summary tail).total = _
+        (ChartedEntry.summary tail).total = _
       rw [ih, total]
-      simp only [List.map_cons, Data.Gaussian.Norm.Sum.Basic.gaussianSum, Path.IncrementArea.pathArea_cons]
+      simp only [List.map_cons, Gaussian.Norm.Sum.Basic.gaussianSum, Path.IncrementArea.pathArea_cons]
       ring1
 
 /-- The ordered energy preparations for the exact retained exterior chart entries. -/
 @[expose] def
   EnergyPreparations
   (energyTarget : Coordinate) (energyFloor : Nat) :
-    List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample shared depth
+    List (ChartedEntry (regular := regular) sample shared depth
       readingIndex localTarget localArea chartTarget floor) → Type 1
   | [] => PUnit
   | head :: tail =>
-    Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.ChartRequest.Plan.Data.EnergyPreparation
+    ChartRequest.Plan.Data.EnergyPreparation
     head.chart.data energyTarget energyFloor ×
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyPreparations energyTarget
+    EnergyPreparations energyTarget
     energyFloor tail
 
 /-- Prepare every original chart entry using the same cap bound, positive target and stage floor. -/
@@ -169,25 +169,25 @@ theorem summary_area (values
   (bounds : Charts.Reciprocal.Cap.EnergyBounds sample
   RootContinuation.RootRadialGeometry.domain)
     (energyTarget : Coordinate) (positive : 0 < energyTarget) (energyFloor : Nat) :
-    (values : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+    (values : List (ChartedEntry (regular := regular) sample
       shared depth readingIndex localTarget localArea chartTarget floor)) →
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyPreparations energyTarget energyFloor
+      EnergyPreparations energyTarget energyFloor
       values
   | [] => ⟨⟩
   | head :: tail => ⟨ChartRequest.Plan.Data.prepareEnergy head.chart.data bounds energyTarget positive energyFloor,
-      Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.prepareEnergy bounds
+      ChartedEntry.prepareEnergy bounds
         energyTarget positive energyFloor tail⟩
 
 /-- The ordered evaluated energy data on the exact original chart entries at one shared depth. -/
 @[expose] def EnergyData
   (energyTarget : Coordinate) (energyFloor energyDepth : Nat) :
-    List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample shared depth
+    List (ChartedEntry (regular := regular) sample shared depth
       readingIndex localTarget localArea chartTarget floor) → Type 1
   | [] => PUnit
   | head :: tail =>
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.ChartRequest.Plan.Data.EnergyData
+    ChartRequest.Plan.Data.EnergyData
     head.chart.data energyTarget energyFloor energyDepth ×
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData energyTarget
+    EnergyData energyTarget
     energyFloor energyDepth tail
 
 variable {energyTarget : Coordinate} {energyFloor energyDepth : Nat}
@@ -196,9 +196,9 @@ variable {energyTarget : Coordinate} {energyFloor energyDepth : Nat}
 @[expose] def
   EnergyPreparations.maximum
   :
-    (values : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+    (values : List (ChartedEntry (regular := regular) sample
       shared depth readingIndex localTarget localArea chartTarget floor)) →
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyPreparations energyTarget energyFloor
+      EnergyPreparations energyTarget energyFloor
       values → Nat
   | [], _ => energyFloor
   | _ :: tail, preparations => max preparations.1.minimum (maximum tail preparations.2)
@@ -207,105 +207,105 @@ variable {energyTarget : Coordinate} {energyFloor energyDepth : Nat}
 parent-orientation certificates. -/
 @[expose] def
   EnergyPreparations.evaluate
-  (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+  (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
     (parameters : Path.Dyadic.RadialTriangles.Parameters energyDepth) :
-    (values : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+    (values : List (ChartedEntry (regular := regular) sample
       shared depth readingIndex localTarget localArea chartTarget floor)) →
-    (preparations : Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyPreparations
+    (preparations : EnergyPreparations
       energyTarget energyFloor values) →
     (∀ entry ∈ values, ∀ parent ∈ entry.entry.occurrence.compared.entered.cache.parents,
       0 < Energy.AffineTriangle.crossEnergy (parent.edge.point 0) (parent.edge.point 1)) →
     preparations.maximum values ≤ energyDepth →
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData energyTarget energyFloor
+      EnergyData energyTarget energyFloor
       energyDepth values
   | [], _, _, _ => ⟨⟩
   | head :: tail, preparations, oriented, later =>
-      ⟨preparations.1.evaluate branch (oriented head (List.mem_cons_self)) parameters ((Data.Nat.Order.le_max_left _
+      ⟨preparations.1.evaluate branch (oriented head (List.mem_cons_self)) parameters ((Nat.Order.le_max_left _
         _).trans later),
         evaluate branch parameters tail preparations.2 (fun entry member => oriented entry (List.mem_cons_of_mem _
           member))
-          ((Data.Nat.Order.le_max_right _ _).trans later)⟩
+          ((Nat.Order.le_max_right _ _).trans later)⟩
 
 namespace EnergyData
 
 /-- The actual energy readings in the original exterior occurrence order. -/
 @[expose] def
   values :
-  (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+  (entries : List (ChartedEntry (regular := regular) sample
   shared depth readingIndex localTarget localArea chartTarget floor)) →
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData energyTarget energyFloor
+    EnergyData energyTarget energyFloor
       energyDepth entries → List Gaussian
   | [], _ => []
   | _ :: tail, energies => energies.1.value ::
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData.values tail
+    EnergyData.values tail
     energies.2
 
 /-- The actual signed boundary-potential readings in the original exterior occurrence order. -/
 @[expose] def
   boundaries :
-  (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+  (entries : List (ChartedEntry (regular := regular) sample
   shared depth readingIndex localTarget localArea chartTarget floor)) →
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData energyTarget energyFloor
+    EnergyData energyTarget energyFloor
       energyDepth entries → List Gaussian
   | [], _ => []
   | _ :: tail, energies => energies.1.boundary ::
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData.boundaries tail
+    EnergyData.boundaries tail
     energies.2
 
 /-- The energy-minus-boundary comparison errors retaining each original chart area and boundary potential. -/
 @[expose] def
   errors :
-  (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+  (entries : List (ChartedEntry (regular := regular) sample
   shared depth readingIndex localTarget localArea chartTarget floor)) →
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData energyTarget energyFloor
+    EnergyData energyTarget energyFloor
       energyDepth entries → List Gaussian
   | [], _ => []
   | head :: tail, energies => (energies.1.value - (-head.chart.summary.area + energies.1.boundary)) ::
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData.errors tail
+    EnergyData.errors tail
     energies.2
 
 /-- There is one retained comparison error per original exterior chart entry. -/
 theorem
   errors_count :
-  (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+  (entries : List (ChartedEntry (regular := regular) sample
   shared depth readingIndex localTarget localArea chartTarget floor)) →
-    (energies : Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData energyTarget
+    (energies : EnergyData energyTarget
       energyFloor energyDepth entries) → (energies.errors entries).length = entries.length
   | [], _ => rfl
   | _ :: tail, energies => congrArg Nat.succ
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData.errors_count tail
+    (EnergyData.errors_count tail
     energies.2)
 
 /-- The sum of the original comparison errors is total energy plus chart area minus boundary potential. -/
 theorem
   errors_sum :
-  (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+  (entries : List (ChartedEntry (regular := regular) sample
   shared depth readingIndex localTarget localArea chartTarget floor)) →
-    (energies : Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData energyTarget
+    (energies : EnergyData energyTarget
       energyFloor energyDepth entries) →
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (energies.errors entries) = Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    Gaussian.Norm.Sum.Basic.gaussianSum (energies.errors entries) = Gaussian.Norm.Sum.Basic.gaussianSum
       (energies.values entries) +
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map (fun entry => entry.chart.summary.area)) -
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (energies.boundaries entries)
+      Gaussian.Norm.Sum.Basic.gaussianSum (entries.map (fun entry => entry.chart.summary.area)) -
+        Gaussian.Norm.Sum.Basic.gaussianSum (energies.boundaries entries)
   | [], _ => by change (0 : Gaussian) = 0 + 0 - 0; ring1
   | head :: tail, energies => by
       change (energies.1.value - (-head.chart.summary.area + energies.1.boundary)) +
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (energies.2.errors tail) =
-        (energies.1.value + Data.Gaussian.Norm.Sum.Basic.gaussianSum (energies.2.values tail)) +
-          (head.chart.summary.area + Data.Gaussian.Norm.Sum.Basic.gaussianSum _) -
-          (energies.1.boundary + Data.Gaussian.Norm.Sum.Basic.gaussianSum (energies.2.boundaries tail))
-      rw [Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData.errors_sum
+        Gaussian.Norm.Sum.Basic.gaussianSum (energies.2.errors tail) =
+        (energies.1.value + Gaussian.Norm.Sum.Basic.gaussianSum (energies.2.values tail)) +
+          (head.chart.summary.area + Gaussian.Norm.Sum.Basic.gaussianSum _) -
+          (energies.1.boundary + Gaussian.Norm.Sum.Basic.gaussianSum (energies.2.boundaries tail))
+      rw [EnergyData.errors_sum
         tail energies.2]
       ring1
 
 /-- Every retained ramified-chart error satisfies the original chart and local target bound. -/
 theorem
   errors_bounded
-  (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) (positive : 0 < chartTarget)
+  (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) (positive : 0 < chartTarget)
   :
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+    (entries : List (ChartedEntry (regular := regular) sample
       shared depth readingIndex localTarget localArea chartTarget floor)) →
-    (energies : Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData energyTarget
+    (energies : EnergyData energyTarget
       energyFloor energyDepth entries) →
     ∀ error ∈ energies.errors entries, normSq error ≤ 256 * (4 * chartTarget + localTarget)
   | [], _, _, member => by cases member
@@ -317,28 +317,28 @@ theorem
         rw [Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
         exact scalar
       · exact
-          Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData.errors_bounded
+          EnergyData.errors_bounded
           branch positive tail energies.2 error member
 
 /-- The total retained chart energy is bounded below by minus the original occurrence count times the energy target. -/
 theorem lower
   (positive : 0 < energyTarget) :
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+    (entries : List (ChartedEntry (regular := regular) sample
       shared depth readingIndex localTarget localArea chartTarget floor)) →
-    (energies : Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData energyTarget
+    (energies : EnergyData energyTarget
       energyFloor energyDepth entries) →
-    -((entries.length : Coordinate) * energyTarget) ≤ (Data.Gaussian.Norm.Sum.Basic.gaussianSum (energies.values
+    -((entries.length : Coordinate) * energyTarget) ≤ (Gaussian.Norm.Sum.Basic.gaussianSum (energies.values
       entries)).im / 4
   | [], _ => by
     change -((0 : Coordinate) * energyTarget) ≤ (0 : Coordinate) / 4; rw [show -((0 : Coordinate) * energyTarget) = 0 by
       ring1]; decide
   | head :: tail, energies => by
       have combined := Fraction.Order.Arithmetic.add_le_add_direct (energies.1.lower positive).le
-        (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData.lower positive
+        (EnergyData.lower positive
         tail energies.2)
       simp only [List.length_cons, Nat.cast_succ]
       change -(((tail.length : Coordinate) + 1) * energyTarget) ≤ (energies.1.value +
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (energies.2.values tail)).im / 4
+        Gaussian.Norm.Sum.Basic.gaussianSum (energies.2.values tail)).im / 4
       exact (show -(((tail.length : Coordinate) + 1) * energyTarget) = -energyTarget + -((tail.length : Coordinate) *
         energyTarget) by ring1).trans_le
         (combined.trans_eq (by simp only [Gaussian.Basic.add_im, Fraction.Field.div_eq_mul_inv_direct]; ring1))

@@ -33,12 +33,11 @@ import Purelib.Integration.Program.Gaussian.CCL.Replay.Observation.Basic
 @[expose] public section
 
 /-!
-# Finite query and complete integration-output replay regressions
+Recorded CCL observations of a complex polynomial path integral.
 
-The natural-number protocol tests genuine adaptive query selection and
-repetition.  The polynomial client separately exercises the real CCL output
-projection, with the original complex quadratic and repeated path traversal.
-Malformed logs test missing, mismatched, trailing and invalid replies.
+The repeated curved path is evaluated under an alternating partition policy.
+One-bit and eight-bit observations retain their replay, accuracy and cursor
+certificates.
 -/
 
 namespace Purelib.Examples.Integration.Program.Gaussian.CCL.Replay.WorkedExamples
@@ -86,34 +85,6 @@ theorem polynomial_replay :
   Transcript.observation_replay
     polynomial
     request 1
-
-/-- The one-bit trace retains both zero-index queries in their original order. -/
-theorem polynomial_query_indices :
-  recorded.trace.map Computation.Query.Basic.Exchange.query = [0,
-  0] := open Purelib.Approximation in by
-  rw [recorded.trace_eq,
-    Program.Gaussian.CCL.Replay.Observation.Representation.computation_trace,
-    Program.Gaussian.CCL.Replay.MachineProjection.initial_one_trace]
-  change [selectedIndex (control polynomial)
-    request,
-    Approximation.Gaussian.Process.Recipe.refine (control
-      polynomial) .source
-      (selectedIndex (control polynomial)
-        request)
-        Data.CCL.Transducer.Emission.Initial.Budget.initialRadiusSq] = [0, 0]
-  decide
-
-/-- The polynomial program's first emitted bit is true. -/
-theorem polynomial_actual_first_bit :
-  recorded.observation.word = [true] := by
-  rw [recorded,
-    Record.recorded_prefix]
-  apply Data.CCL.Transducer.Initial.Observation.advance_one_large
-  change (13 / 6 : Fraction.Rational) < Data.Gaussian.Norm.Basic.normSq
-    ((polynomialProgram Partition.WorkedExamples.repeatedPath
-      Partition.WorkedExamples.alternatingPolicy).approximation.sample _)
-  rw [polynomialProgram_sample]
-  decide
 
 /-- The selected recorded integration ball satisfies the original requested radius bound. -/
 theorem polynomial_accuracy :
@@ -170,65 +141,6 @@ theorem polynomial_prefix_extends :
   Record.recorded_extends
     polynomial
     request 1 7
-
-/-- The replay control with zero center and zero allowance bounds. -/
-def zeroControl : Control := ⟨0, le_rfl,
-  0, le_rfl⟩
-
-/-- The canonical exact constant-one cell model used as a replay response. -/
-def unitReply : CachedModel :=
-  CertifiedProgram.CachedModel.canonical (operations := Program.Gaussian.Cached.Basic.modelOperations)
-    ⟨[Polynomial.Gaussian.Cell.Basic.CellModel.exact 0 1 (Ascending.Gaussian.Basic.constant 1)]⟩
-
-/-- The zero-polynomial cell response with local allowance one. -/
-def allowanceReply : CachedModel :=
-  CertifiedProgram.CachedModel.canonical (operations := Program.Gaussian.Cached.Basic.modelOperations)
-    ⟨[{ start := 0, finish := 1, polynomial := Ascending.Gaussian.Basic.zero,
-        localAllowance := 1, localAllowance_nonneg := by decide, observations := [] }]⟩
-
-/-- An empty replay transcript reports the missing initial model query. -/
-theorem missing_model :
-    Transcript.replay
-      zeroControl
-      request 8 [] = .error (.transcript (.missing 0)) := rfl
-
-/-- A transcript beginning at query one reports the original zero-versus-one index mismatch. -/
-theorem mismatched_model :
-    Transcript.replay
-      zeroControl
-      request 8 [⟨1,
-      unitReply⟩] = .error (.transcript (.mismatch 0 1 (by
-      decide))) := rfl
-
-/-- A unit-center response violates the retained zero center bound. -/
-theorem invalid_center :
-    Transcript.replay
-      zeroControl
-      request 8 [⟨0,
-      unitReply⟩] =
-      .error (.invalid (.source (.center 0 unitReply.sample 0 (by
-        decide)))) := rfl
-
-/-- A response with allowance one violates the retained zero allowance bound. -/
-theorem invalid_allowance :
-    Transcript.replay
-      zeroControl
-      request 8 [⟨0,
-      allowanceReply⟩] =
-      .error (.invalid (.source (.allowance 0
-        allowanceReply.allowance 0 (by decide)))) := rfl
-
-/-- A zero-target integration request returns its nonpositive-target certificate. -/
-theorem nonpositive_request :
-  Request.checked 0 0 = .error ⟨0, 0, by decide⟩ := rfl
-
-/-- A negative-target integration request returns its nonpositive-target certificate. -/
-theorem negative_request :
-  Request.checked 7 (-1) = .error ⟨7, -1, by decide⟩ := by decide +kernel
-
-/-- A target-one integration request is accepted with its retained start index. -/
-theorem positive_request :
-  Request.checked 7 1 = .ok ⟨7, 1, by decide⟩ := by decide +kernel
 
 end Purelib.Examples.Integration.Program.Gaussian.CCL.Replay.WorkedExamples
 

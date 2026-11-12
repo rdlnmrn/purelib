@@ -108,10 +108,10 @@ boundary still requires the pathwise comparison, not just equal totals.
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NewtonPrimitiveComparison
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
     bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
   {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
     {ambient : Rational.Box}
@@ -120,7 +120,7 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
   {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {piece :
     Paths.PreparedPathDecomposition.CoveredSegment segment owner}
   {placement : Meshes.GridLiftedMesh.LiftedMesh.SegmentFace mesh segment} {differential :
-    Hyperelliptic.Differentials.Basic.Differential genus} {parentSheet : Fin 2}
+    Differentials.Basic.Differential genus} {parentSheet : Fin 2}
   {bandAmbient : Rational.Box} {current : State.Raw.RawWindingState curve.polynomial bandAmbient}
   {profile : RootContinuation.NewtonBandBounds.Profile curve.squarefree current.box}
   {fixed : RootContinuation.NewtonBandDifferentials.DifferentialProfile profile differential.exponent}
@@ -129,7 +129,7 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
 set_option genInjectivity false in
 /-- Both the original face reference and its boundary-controlled sample are
 cached. Geometry is attached to the original occurrence, not a new segment. -/
-structure NewtonReference (compared : Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison
+structure NewtonReference (compared : Cut.PrimitiveBanks.LiftedMesh.SegmentComparison
   placement piece differential parentSheet)
     (band : RootContinuation.PreparedNewtonBandSamples.PreparedBandRequest fixed target) (tolerance : Fraction.Rational)
       where
@@ -140,7 +140,7 @@ structure NewtonReference (compared : Hyperelliptic.Meshes.PuncturedGrid.Cut.Pri
   /-- The original endpoints occupy the same retained Newton-box side. -/ side : Paths.PreparedBoundarySegments.SameSide
     band.sample.output.box start finish
   /-- The cached original face primitive reference with its retained target and entered owner. -/ reference :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveReferences.Reference compared.entered tolerance
+    Face.PrimitiveReferences.Reference compared.entered tolerance
   /-- The original reference request sampled under the retained Newton-band error ceiling. -/ sampled :
     RootContinuation.PreparedNewtonPrimitiveComparison.PrimitiveSample band reference.request.toPrimitiveSumRequest
   /-- The cached complete original polynomial area trace on the actual resampled children. -/ area :
@@ -150,23 +150,23 @@ constructive_injectivity NewtonReference
 
 namespace NewtonReference
 
-variable {compared : Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison placement piece
+variable {compared : Cut.PrimitiveBanks.LiftedMesh.SegmentComparison placement piece
   differential parentSheet} {band : RootContinuation.PreparedNewtonBandSamples.PreparedBandRequest fixed target}
 
 /-- The original domain-primitive bank for the retained entered segment and selected numerical stage. -/
-abbrev PointDomain (compared : Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison
+abbrev PointDomain (compared : Cut.PrimitiveBanks.LiftedMesh.SegmentComparison
   placement piece differential parentSheet) (index : Nat) :=
-  Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives compared.entered.domain differential index
+  Face.PrimitiveData.DomainPrimitives compared.entered.domain differential index
 
 /-- Reuse a reference already shared with period consumers. All numerical
 and parent-boundary obligations are discharged by retained certificates. -/
-@[expose] def ofReference (compared : Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison
+@[expose] def ofReference (compared : Cut.PrimitiveBanks.LiftedMesh.SegmentComparison
   placement piece differential parentSheet)
     (band : RootContinuation.PreparedNewtonBandSamples.PreparedBandRequest fixed target)
-    (reference : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveReferences.Reference compared.entered tolerance)
+    (reference : Face.PrimitiveReferences.Reference compared.entered tolerance)
     (first : band.sample.output.box.Contains start) (last : band.sample.output.box.Contains finish)
     (side : Paths.PreparedBoundarySegments.SameSide band.sample.output.box start finish) :
-      Hyperelliptic.Meshes.PuncturedGrid.NewtonPrimitiveComparison.NewtonReference compared band tolerance :=
+      NewtonReference compared band tolerance :=
   let sampled := RootContinuation.PreparedNewtonPrimitiveComparison.PrimitiveSample.build band
     reference.request.toPrimitiveSumRequest
     compared.entered.cache.proper (fun _ member => Paths.PreparedSegmentBoundaryGeometry.segment_parent_boundary
@@ -175,69 +175,69 @@ and parent-boundary obligations are discharged by retained certificates. -/
     RootContinuation.PreparedNewtonPrimitiveArea.PrimitiveSample.areaSample sampled⟩
 
 /-- Prepare the original face reference and cache its Newton-band sample and complete resampled area trace. -/
-@[expose] def build (compared : Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison
+@[expose] def build (compared : Cut.PrimitiveBanks.LiftedMesh.SegmentComparison
   placement piece differential parentSheet) (band : RootContinuation.PreparedNewtonBandSamples.PreparedBandRequest fixed
   target)
     (positive : 0 < tolerance) (first : band.sample.output.box.Contains start) (last : band.sample.output.box.Contains
       finish)
     (side : Paths.PreparedBoundarySegments.SameSide band.sample.output.box start finish) :
-      Hyperelliptic.Meshes.PuncturedGrid.NewtonPrimitiveComparison.NewtonReference compared band tolerance :=
-  Hyperelliptic.Meshes.PuncturedGrid.NewtonPrimitiveComparison.NewtonReference.ofReference compared band
-    (Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveReferences.Reference.build compared.entered tolerance positive)
+      NewtonReference compared band tolerance :=
+  NewtonReference.ofReference compared band
+    (Face.PrimitiveReferences.Reference.build compared.entered tolerance positive)
     first last side
 
 /-- The original segment displacement is bounded by thirty-two times the retained Newton radius squared. -/
-private theorem movement_le (bounded : Hyperelliptic.Meshes.PuncturedGrid.NewtonPrimitiveComparison.NewtonReference
+private theorem movement_le (bounded : NewtonReference
   compared band tolerance) :
-    Data.Gaussian.Norm.Basic.normSq (finish - start) ≤ 32 * band.sample.output.radius ^ 2 :=
+    Gaussian.Norm.Basic.normSq (finish - start) ≤ 32 * band.sample.output.radius ^ 2 :=
   (band.sample.output.box.normSq_sub_le_diagonalSq bounded.lastInside bounded.firstInside).trans
     (band.sample.output.band.diagonalSq_le band.sample.output.radiusPositive)
 
 /-- The retained original Newton-band integral sample satisfies its target squared-norm bound. -/
-theorem sample_bound (bounded : Hyperelliptic.Meshes.PuncturedGrid.NewtonPrimitiveComparison.NewtonReference compared
+theorem sample_bound (bounded : NewtonReference compared
   band tolerance) :
-    Data.Gaussian.Norm.Basic.normSq bounded.sampled.sample.integralSample ≤ target :=
-  bounded.sampled.integral_bound (Data.Gaussian.Norm.Basic.normSq (finish - start)) piece.mesh.depth
+    Gaussian.Norm.Basic.normSq bounded.sampled.sample.integralSample ≤ target :=
+  bounded.sampled.integral_bound (Gaussian.Norm.Basic.normSq (finish - start)) piece.mesh.depth
     (Paths.PreparedSegmentBoundaryGeometry.segment_parentCount compared.entered.cache)
     bounded.movement_le (fun _ member => (Paths.PreparedSegmentBoundaryGeometry.segment_parent_movement
       compared.entered.cache member).le)
 
 /-- The cached original reference sum is bounded by twice its quarter tolerance plus Newton target. -/
-theorem reference_bound (bounded : Hyperelliptic.Meshes.PuncturedGrid.NewtonPrimitiveComparison.NewtonReference compared
+theorem reference_bound (bounded : NewtonReference compared
   band tolerance) :
-    Data.Gaussian.Norm.Basic.normSq bounded.reference.value ≤ 2 * (tolerance / 4 + target) := by
+    Gaussian.Norm.Basic.normSq bounded.reference.value ≤ 2 * (tolerance / 4 + target) := by
   rw [bounded.reference.value_eq]
-  exact bounded.sampled.primitive_bound (Data.Gaussian.Norm.Basic.normSq (finish - start)) piece.mesh.depth
+  exact bounded.sampled.primitive_bound (Gaussian.Norm.Basic.normSq (finish - start)) piece.mesh.depth
     (Paths.PreparedSegmentBoundaryGeometry.segment_parentCount compared.entered.cache)
     bounded.movement_le (fun _ member => (Paths.PreparedSegmentBoundaryGeometry.segment_parent_movement
       compared.entered.cache member).le)
 
 /-- The complete retained resampled area trace has the exact original reference sum as its total. -/
-theorem area_total (bounded : Hyperelliptic.Meshes.PuncturedGrid.NewtonPrimitiveComparison.NewtonReference compared band
+theorem area_total (bounded : NewtonReference compared band
   tolerance) :
     bounded.area.source.total = bounded.reference.value := bounded.area.source_total.trans
       bounded.reference.value_eq.symm
 
 /-- The full fine trace uses the retained reference's polynomial bank on
 the actual resampled children. Both subdivision levels have disappeared. -/
-theorem primitive_area_bound (bounded : Hyperelliptic.Meshes.PuncturedGrid.NewtonPrimitiveComparison.NewtonReference
+theorem primitive_area_bound (bounded : NewtonReference
   compared band tolerance) :
-    Data.Gaussian.Norm.Basic.normSq bounded.area.source.area ≤ 256 * (tolerance / 4) * (tolerance / 4 + target) + 32
+    Gaussian.Norm.Basic.normSq bounded.area.source.area ≤ 256 * (tolerance / 4) * (tolerance / 4 + target) + 32
       * target ^ 2 :=
-  bounded.area.paid (Data.Gaussian.Norm.Basic.normSq (finish - start)) piece.mesh.depth
+  bounded.area.paid (Gaussian.Norm.Basic.normSq (finish - start)) piece.mesh.depth
     (Gaussian.Norm.Basic.normSq_nonneg _)
     (Paths.PreparedSegmentBoundaryGeometry.segment_parentCount compared.entered.cache) bounded.movement_le
     (fun _ member => (Paths.PreparedSegmentBoundaryGeometry.segment_parent_movement compared.entered.cache member).le)
 
 /-- The actual retained fine trace satisfies the paid area bound including its supplied nonzero anchor contribution. -/
-theorem primitive_trace_bound (bounded : Hyperelliptic.Meshes.PuncturedGrid.NewtonPrimitiveComparison.NewtonReference
+theorem primitive_trace_bound (bounded : NewtonReference
   compared band tolerance) (anchor : Gaussian.Basic.Canonical) :
-    Data.Gaussian.Norm.Basic.normSq (Path.IncrementArea.traceArea anchor
+    Gaussian.Norm.Basic.normSq (Path.IncrementArea.traceArea anchor
       (Readings.PreparedPrimitiveSideArea.areaBlocks bounded.sampled.sample.requests |>.map Prod.fst).flatten) ≤
-      512 * (tolerance / 4) * (tolerance / 4 + target) + 64 * target ^ 2 + 16 * Data.Gaussian.Norm.Basic.normSq
+      512 * (tolerance / 4) * (tolerance / 4 + target) + 64 * target ^ 2 + 16 * Gaussian.Norm.Basic.normSq
         anchor * (tolerance / 4 + target) := by
   rw [bounded.area.trace_eq]
-  exact bounded.area.trace_bound anchor (Data.Gaussian.Norm.Basic.normSq (finish - start)) piece.mesh.depth
+  exact bounded.area.trace_bound anchor (Gaussian.Norm.Basic.normSq (finish - start)) piece.mesh.depth
     (Gaussian.Norm.Basic.normSq_nonneg _)
     (Paths.PreparedSegmentBoundaryGeometry.segment_parentCount compared.entered.cache) bounded.movement_le
     (fun _ member => (Paths.PreparedSegmentBoundaryGeometry.segment_parent_movement compared.entered.cache member).le)
@@ -245,29 +245,29 @@ theorem primitive_trace_bound (bounded : Hyperelliptic.Meshes.PuncturedGrid.Newt
 /-- The Newton reference also controls arbitrary retained boundary readings.
 The endpoint equalities identify coordinates only; the supplied domain data
 and fixed reference retain the actual sheet and path ownership. -/
-theorem point_bound (bounded : Hyperelliptic.Meshes.PuncturedGrid.NewtonPrimitiveComparison.NewtonReference compared
+theorem point_bound (bounded : NewtonReference compared
   band tolerance)
     {index : Nat} (later : bounded.reference.budget.grid.index ≤ index)
-    (data : Hyperelliptic.Meshes.PuncturedGrid.NewtonPrimitiveComparison.NewtonReference.PointDomain compared index)
+    (data : PointDomain compared index)
     {count : Nat} {points : Fin count → Gaussian.Basic.Canonical}
     (readings : Readings.RectangularPointReadings.PointReadings data.anchors data.offsets points)
     (first last : Fin count) (firstEq : points first = start) (lastEq : points last = finish) :
-    Data.Gaussian.Norm.Basic.normSq (readings.values last - readings.values first) ≤ 3 * tolerance + 4 * target :=
+    Gaussian.Norm.Basic.normSq (readings.values last - readings.values first) ≤ 3 * tolerance + 4 * target :=
       by
-  exact Hyperelliptic.Meshes.PuncturedGrid.NewtonPointReferences.newton_point_bound bounded.reference band
+  exact NewtonPointReferences.newton_point_bound bounded.reference band
     bounded.firstInside bounded.lastInside bounded.side
     later data readings first last firstEq lastEq
 
 /-- The actual selected face/sheet corner increment tends to zero with the
 band budget and reference tolerance. No fine parent or child count remains. -/
-theorem corner_bound (bounded : Hyperelliptic.Meshes.PuncturedGrid.NewtonPrimitiveComparison.NewtonReference compared
+theorem corner_bound (bounded : NewtonReference compared
   band tolerance)
-    {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars} (aligned :
+    {domains : Face.DomainBanks.FaceDomainBank frames faces.regulars} (aligned :
       compared.domains = domains.atRoute placement.location)
     {index : Nat} (later : bounded.reference.budget.grid.index ≤ index) (shared :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains) :
-    Data.Gaussian.Norm.Basic.normSq (shared.edgeIncrement placement.location) ≤ 3 * tolerance + 4 * target := by
-  have coordinates := Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute.corner_coordinates placement.location
+      Face.PrimitiveData.FacePrimitiveBank differential index domains) :
+    Gaussian.Norm.Basic.normSq (shared.edgeIncrement placement.location) ≤ 3 * tolerance + 4 * target := by
+  have coordinates := MeshPathWalks.EdgeRoute.corner_coordinates placement.location
   have bounded := bounded.point_bound later (compared.sharedData shared aligned)
     (compared.sharedData shared aligned).corners
     placement.location.corners.start placement.location.corners.finish
@@ -278,14 +278,14 @@ theorem corner_bound (bounded : Hyperelliptic.Meshes.PuncturedGrid.NewtonPrimiti
 
 /-- Sewing sees these very triangle-source values, including orientation,
 root-sheet choice and the shared corner bank's paid ownership errors. -/
-theorem triangle_bound (bounded : Hyperelliptic.Meshes.PuncturedGrid.NewtonPrimitiveComparison.NewtonReference compared
+theorem triangle_bound (bounded : NewtonReference compared
   band tolerance)
-    {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars} (aligned :
+    {domains : Face.DomainBanks.FaceDomainBank frames faces.regulars} (aligned :
       compared.domains = domains.atRoute placement.location)
     {index : Nat} (later : bounded.reference.budget.grid.index ≤ index) {shared :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared mesh) :
-    Data.Gaussian.Norm.Basic.normSq (placement.location.sourceEdge.increment readings.values) ≤ 3 * tolerance + 4 *
+      Face.PrimitiveData.FacePrimitiveBank differential index domains}
+    (readings : TrianglePrimitiveReadings.TriangleReadings shared mesh) :
+    Gaussian.Norm.Basic.normSq (placement.location.sourceEdge.increment readings.values) ≤ 3 * tolerance + 4 *
       target := by
   rw [readings.route_increment]
   exact bounded.corner_bound aligned later shared

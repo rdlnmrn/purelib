@@ -46,24 +46,24 @@ namespace Purelib.Geometry.CCL.Parser.Formula
 
 /-- Proposed child formula expressed in the original input coordinate by pulling it back through the explicit adjugate
 chart. -/
-@[expose] def inputAdvanceFormula (state : Data.CCL.Encoding.Parser.State)
+@[expose] def inputAdvanceFormula (state : State)
   (bit : Bool) :
-  Formula.BoundaryFormula :=
-  (Formula.advanceFormula state bit).pullback
+  BoundaryFormula :=
+  (advanceFormula state bit).pullback
     (BoundaryAdjugate.adjugate state.matrix)
 
 /-- History-free child formula in the original input coordinate. -/
 @[expose] def inputIncrementalAdvanceFormula (state :
-  Data.CCL.Encoding.Parser.State) (bit :
-  Bool) : Formula.BoundaryFormula :=
-  (Formula.incrementalAdvanceFormula state bit).pullback
+  State) (bit :
+  Bool) : BoundaryFormula :=
+  (incrementalAdvanceFormula state bit).pullback
     (BoundaryAdjugate.adjugate state.matrix)
 
 /-- The input-coordinate formula expresses next-bit admissibility at the inverse homographic tail.
 
 The adjugate denominator must be nonzero at the supplied input. -/
 theorem inputAdvanceFormula_iff
-    (state : Data.CCL.Encoding.Parser.State) (bit : Bool) (input : Data.Gaussian.Basic.Canonical)
+    (state : State) (bit : Bool) (input : Data.Gaussian.Basic.Canonical)
     (inverseDenominator : Homography.Basic.denominator
       (BoundaryAdjugate.adjugate state.matrix) input ≠ 0) :
     (inputAdvanceFormula state bit).Holds input ↔
@@ -72,12 +72,12 @@ theorem inputAdvanceFormula_iff
           input) := by
   exact (BoundaryFormula.pullback_iff
     (BoundaryAdjugate.adjugate state.matrix)
-    (Formula.advanceFormula state bit) input inverseDenominator).trans
-    (Formula.advanceFormula_iff _ _ _)
+    (advanceFormula state bit) input inverseDenominator).trans
+    (advanceFormula_iff _ _ _)
 
 /-- At a represented state, the original-coordinate child formula is exactly semantic possibility of that bit. -/
 theorem inputAdvanceFormula_canStep_iff
-    (state : Data.CCL.Encoding.Parser.State) (input tail : Data.Gaussian.Basic.Canonical)
+    (state : State) (input tail : Data.Gaussian.Basic.Canonical)
     (determinantNonzero :
       BoundaryAdjugate.determinant state.matrix ≠ 0)
     (represented : State.Represents state input tail)
@@ -99,7 +99,7 @@ only the newly introduced child conditions, with the same terminal residual
 and half-open boundary tests as the complete local decision.
 -/
 theorem inputIncrementalAdvanceFormula_canStep_iff
-    (state : Data.CCL.Encoding.Parser.State) (input tail : Data.Gaussian.Basic.Canonical)
+    (state : State) (input tail : Data.Gaussian.Basic.Canonical)
     (determinantNonzero : BoundaryAdjugate.determinant state.matrix ≠ 0)
     (represented : State.Represents state input tail) (bit : Bool) :
     (inputIncrementalAdvanceFormula state bit).Holds input ↔ Prefix.CanStep state input bit := by
@@ -118,7 +118,7 @@ theorem inputIncrementalAdvanceFormula_canStep_iff
 
 /-- The two input-coordinate child regions are disjoint at every represented rational input. -/
 theorem inputAdvanceFormula_unique
-    (state : Data.CCL.Encoding.Parser.State) (input tail : Data.Gaussian.Basic.Canonical)
+    (state : State) (input tail : Data.Gaussian.Basic.Canonical)
     (determinantNonzero :
       BoundaryAdjugate.determinant state.matrix ≠ 0)
     (represented : State.Represents state input tail)
@@ -134,20 +134,20 @@ theorem inputAdvanceFormula_unique
 
 set_option genInjectivity false in
 /-- Formula-facing result of the total local semantic decision. -/
-inductive Decision (state : Data.CCL.Encoding.Parser.State) (input before :
+inductive Decision (state : State) (input before :
   Data.Gaussian.Basic.Canonical) where
   /-- Neither proposed bit satisfies the affine next-step formula. -/ | terminal
-      (none : ∀ bit, ¬(Formula.advanceFormula state bit).Holds before)
+      (none : ∀ bit, ¬(advanceFormula state bit).Holds before)
   /-- A displayed bit satisfies the affine next-step formula and every other satisfying bit equals it. -/ | next (bit :
-    Bool) (holds : (Formula.advanceFormula state bit).Holds before)
-      (unique : ∀ other, (Formula.advanceFormula state other).Holds before →
+    Bool) (holds : (advanceFormula state bit).Holds before)
+      (unique : ∀ other, (advanceFormula state other).Holds before →
         other = bit)
 
 constructive_injectivity Decision
 
 /-- Evaluate the two finite formulas and return their unique bit or the affine-terminal outcome. -/
 @[expose] def decide
-    (state : Data.CCL.Encoding.Parser.State) (input before : Data.Gaussian.Basic.Canonical)
+    (state : State) (input before : Data.Gaussian.Basic.Canonical)
     (determinantNonzero :
       Matrix2.determinant state.matrix ≠ 0)
     (represented : State.Represents state input before) :
@@ -159,17 +159,17 @@ constructive_injectivity Decision
         apply none bit
         apply (Next.canStep_iff_canAdvanceAt state input before determinantNonzero
           represented bit).2
-        exact (Formula.advanceFormula_iff state bit before).1 holds)
+        exact (advanceFormula_iff state bit before).1 holds)
   | next bit possible unique =>
       refine .next bit ?_ ?_
-      · apply (Formula.advanceFormula_iff state bit before).2
+      · apply (advanceFormula_iff state bit before).2
         exact (Next.canStep_iff_canAdvanceAt state input before determinantNonzero
           represented bit).1 possible
       · intro other holds
         apply unique other
         apply (Next.canStep_iff_canAdvanceAt state input before determinantNonzero
           represented other).2
-        exact (Formula.advanceFormula_iff state other before).1 holds
+        exact (advanceFormula_iff state other before).1 holds
 
 end Purelib.Geometry.CCL.Parser.Formula
 

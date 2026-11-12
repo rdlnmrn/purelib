@@ -32,7 +32,7 @@ Assuming two is nonzero, coincident centers require an explicit square witness; 
 separation equal to four times the radius parameter. -/
 theorem exercise_2_9 [DecidableEq K]
     (p₁ p₂ q : K) (twoNonzero : (2 : K) ≠ 0) :
-    Quadratic.CommonRoot.Centered.QuadraticsCompatible p₁ q p₂ q ↔
+    Centered.QuadraticsCompatible p₁ q p₂ q ↔
       (p₁ = p₂ ∧ ∃ root : K, root ^ 2 = q) ∨
         (p₁ ≠ p₂ ∧ (p₁ - p₂) ^ 2 = 4 * q) := by
   constructor
@@ -43,7 +43,7 @@ theorem exercise_2_9 [DecidableEq K]
       exact ⟨centersEqual, ⟨root - p₁, firstEquation⟩⟩
     · right
       have identity :=
-        Quadratic.CommonRoot.Centered.quadraticCompatibilityIdentity_of_compatible compatible
+        Centered.quadraticCompatibilityIdentity_of_compatible compatible
       have differenceNonzero : p₁ - p₂ ≠ 0 := by
         intro differenceZero
         apply centersEqual
@@ -54,7 +54,7 @@ theorem exercise_2_9 [DecidableEq K]
         ExplicitField.square_nonzero_of_nonzero differenceNonzero
       have productZero :
           (p₁ - p₂) ^ 2 * ((p₁ - p₂) ^ 2 - 4 * q) = 0 := by
-        unfold Quadratic.CommonRoot.Centered.quadraticCompatibilityIdentity at identity
+        unfold Centered.quadraticCompatibilityIdentity at identity
         calc
           (p₁ - p₂) ^ 2 * ((p₁ - p₂) ^ 2 - 4 * q) =
               (((p₁ - p₂) ^ 2 - (q + q)) ^ 2) - 4 * q * q := by
@@ -75,9 +75,9 @@ theorem exercise_2_9 [DecidableEq K]
         rootSquare], by rw [show p₁ + root - p₁ = root by ring1,
         rootSquare]⟩
     · rcases distinct with ⟨centersDistinct, separation⟩
-      apply (Quadratic.CommonRoot.Centered.quadraticCompatibility_of_distinct_centres
+      apply (Centered.quadraticCompatibility_of_distinct_centres
         twoNonzero centersDistinct).2
-      unfold Quadratic.CommonRoot.Centered.quadraticCompatibilityIdentity
+      unfold Centered.quadraticCompatibilityIdentity
       rw [separation]
       ring1
 
@@ -88,12 +88,12 @@ theorem exercise_2_9_commonRoot_unique
     (firstEquation : (x - p₁) ^ 2 = q)
     (secondEquation : (x - p₂) ^ 2 = q) :
     x = (p₁ + p₂) / 2 := by
-  have unique := Quadratic.CommonRoot.Centered.quadraticCommonRoot_unique twoNonzero centersDistinct
+  have unique := Centered.quadraticCommonRoot_unique twoNonzero centersDistinct
     firstEquation secondEquation
   calc
-    x = Quadratic.CommonRoot.Centered.quadraticCommonRoot p₁ q p₂ q := unique
+    x = Centered.quadraticCommonRoot p₁ q p₂ q := unique
     _ = (p₁ + p₂) / 2 := by
-      unfold Quadratic.CommonRoot.Centered.quadraticCommonRoot
+      unfold Centered.quadraticCommonRoot
       simp only [ExplicitField.div_eq_mul_inv]
       ring1
 end Purelib.Polynomial.Quadratic.CommonRoot.EqualRadius

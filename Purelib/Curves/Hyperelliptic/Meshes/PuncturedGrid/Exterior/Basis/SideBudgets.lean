@@ -77,6 +77,8 @@ import Purelib.Riemann.Readings.RectangularPointReadings
 import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 
+open Purelib.Integration.Path
+
 public section
 
 /-! The actual side groups inherit the selected piece and junction budgets. -/
@@ -84,67 +86,67 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SideB
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : Riemann.Meshes.FramedPuncturedGrid curve branches higher}
+  {lifted : Riemann.Meshes.LiftedPuncturedGrid base} {differential :
+    Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted
     differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
 open Purelib.Riemann.Normalization.RectangularInverseModels
 
-variable (retained : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation
+variable (retained : Preparation.CommonBasisPreparation
   prepared) {index : Nat} (inputs : retained.Inputs index)
   (outer : Fin prepared.occurrences.length)
-  {lc lr rc rr depth faceIndex : Nat} {lg : Purelib.Riemann.Normalization.RectangularInverseModels.Geometry lc lr} {rg :
-    Purelib.Riemann.Normalization.RectangularInverseModels.Geometry rc rr}
-  {leftCuts : Purelib.Riemann.Paths.RectangularSegmentSplitting.GridCuts lg} {rightCuts :
-    Purelib.Riemann.Paths.RectangularSegmentSplitting.GridCuts rg} {leftBox rightBox :
-    Purelib.Geometry.Rational.Box}
-  {left : Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh leftCuts leftBox} {right :
-    Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh rightCuts rightBox}
-  {data : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  {lc lr rc rr depth faceIndex : Nat} {lg : RectangularInverseModels.Geometry lc lr} {rg :
+    RectangularInverseModels.Geometry rc rr}
+  {leftCuts : Riemann.Paths.RectangularSegmentSplitting.GridCuts lg} {rightCuts :
+    Riemann.Paths.RectangularSegmentSplitting.GridCuts rg} {leftBox rightBox :
+    Geometry.Rational.Box}
+  {left : Riemann.Meshes.RectangularObservationMesh.ObservationMesh leftCuts leftBox} {right :
+    Riemann.Meshes.RectangularObservationMesh.ObservationMesh rightCuts rightBox}
+  {data : FragmentQueries.RowData
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) faceIndex}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 section Horizontal
 variable {leftRow : Fin left.partition.y.intervals.length} {rightRow : Fin right.partition.y.intervals.length} {height :
-  Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {side : Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedHorizontalSide left right
+  InverseRootPolynomial.Coordinate}
+  {side : Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedHorizontalSide left right
     leftRow rightRow height}
   (trace : side.Trace depth)
-  (blocks : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBank.ParentBlockBank
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (blocks : ParentBank.ParentBlockBank
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) left false true)
-  (sourceFirst : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (sourceFirst : (ParentIndices.occurrenceAt
     prepared.occurrences outer).start.im = height)
-  (sourceLast : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (sourceLast : (ParentIndices.occurrenceAt
     prepared.occurrences outer).finish.im = height)
 
-variable {allowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} (budget :
-  Purelib.Integration.Path.NoisyPathArea.LengthErrorBudget
-  (Purelib.Riemann.Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
+variable {allowance : InverseRootPolynomial.Coordinate} (budget :
+  NoisyPathArea.LengthErrorBudget
+  (Riemann.Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
     (owners : OwnerRequest
-      (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      (ParentIndices.occurrenceAt prepared.occurrences
       outer) budget.tolerance)
     (later : owners.index ≤ faceIndex)
-    (original : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings data (fun
+    (original : OwnerRequest.OwnedReadings data (fun
       vertex => trace.point (trace.vertices.indexed vertex)))
-    (values : Fin genus → side.Vertex depth → Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian)
+    (values : Fin genus → side.Vertex depth → InverseRootPolynomial.Gaussian)
     (readback : ∀ basisRow vertex, (original basisRow).values vertex = values basisRow (trace.vertices.indexed vertex))
 
-variable {junctionAllowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} (junctionBudget :
-  Purelib.Integration.Path.NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
+variable {junctionAllowance : InverseRootPolynomial.Coordinate} (junctionBudget :
+  NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
   (junctionOwners : OwnerRequest
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) junctionBudget.tolerance)
   (junctionLater : junctionOwners.index ≤ faceIndex)
 
@@ -153,7 +155,7 @@ local notation "items" =>
   (coefficients := coefficients) inputs outer trace blocks
   sourceFirst sourceLast budget owners later original values readback junctionBudget junctionOwners junctionLater
 
-variable {allowanceBound toleranceBound : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+variable {allowanceBound toleranceBound : InverseRootPolynomial.Coordinate}
   (pieceAllowance : allowance ≤ allowanceBound) (junctionAllowanceBound : junctionAllowance ≤ allowanceBound)
   (pieceTolerance : budget.tolerance ≤ toleranceBound) (junctionTolerance : junctionBudget.tolerance ≤ toleranceBound)
 
@@ -163,19 +165,19 @@ include pieceAllowance junctionAllowanceBound pieceTolerance junctionTolerance
 bounds. -/
 theorem horizontal_items_budget : ∀ item ∈ items,
     item.fragment.allowance ≤ allowanceBound ∧ item.fragment.budget.tolerance ≤ toleranceBound := by
-  apply Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedBudgets.indexedSideFragments_budget
+  apply GroupedBudgets.indexedSideFragments_budget
   · intro position
-    exact ⟨(Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBudgetReadback.horizontalPieces_allowance retained
+    exact ⟨(PhysicalBudgetReadback.horizontalPieces_allowance retained
       inputs outer trace blocks sourceFirst sourceLast
         budget owners later original values readback position).trans_le pieceAllowance,
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBudgetReadback.horizontalPieces_tolerance retained
+      (PhysicalBudgetReadback.horizontalPieces_tolerance retained
         inputs outer trace blocks sourceFirst sourceLast
         budget owners later original values readback position).trans_le pieceTolerance⟩
   · intro position
-    exact ⟨(Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBudgetReadback.horizontalJunctions_allowance
+    exact ⟨(PhysicalBudgetReadback.horizontalJunctions_allowance
       retained inputs outer trace blocks sourceFirst sourceLast
         junctionBudget junctionOwners junctionLater original values readback position).trans_le junctionAllowanceBound,
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBudgetReadback.horizontalJunctions_tolerance retained
+      (PhysicalBudgetReadback.horizontalJunctions_tolerance retained
         inputs outer trace blocks sourceFirst sourceLast
         junctionBudget junctionOwners junctionLater original values readback position).trans_le junctionTolerance⟩
 
@@ -187,12 +189,12 @@ open Purelib.Riemann in
 /-- Grouping the forward horizontal word by its original parents preserves both budget bounds for every retained
 fragment. -/
 theorem horizontal_grouped_budget : ∀ run ∈
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedGrouping.build items).runs,
+  (FragmentGrouping.IndexedGrouping.build items).runs,
     ∀ fragment ∈ run.fragments,
       fragment.allowance ≤ allowanceBound ∧ fragment.budget.tolerance ≤ toleranceBound :=
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedBudgets.IndexedGrouping.run_budget
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedGrouping.build items)
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SideBudgets.horizontal_items_budget retained inputs outer trace
+  GroupedBudgets.IndexedGrouping.run_budget
+    (FragmentGrouping.IndexedGrouping.build items)
+    (SideBudgets.horizontal_items_budget retained inputs outer trace
       blocks sourceFirst sourceLast
       budget owners later original values readback junctionBudget junctionOwners junctionLater
       pieceAllowance junctionAllowanceBound pieceTolerance junctionTolerance)
@@ -200,34 +202,34 @@ theorem horizontal_grouped_budget : ∀ run ∈
 end Horizontal
 section Horizontal
 variable {leftRow : Fin left.partition.y.intervals.length} {rightRow : Fin right.partition.y.intervals.length} {height :
-  Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {side : Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedHorizontalSide left right
+  InverseRootPolynomial.Coordinate}
+  {side : Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedHorizontalSide left right
     leftRow rightRow height}
   (trace : side.Trace depth)
-  (blocks : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBank.ParentBlockBank
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (blocks : ParentBank.ParentBlockBank
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) left false false)
-  (sourceFirst : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (sourceFirst : (ParentIndices.occurrenceAt
     prepared.occurrences outer).start.im = height)
-  (sourceLast : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (sourceLast : (ParentIndices.occurrenceAt
     prepared.occurrences outer).finish.im = height)
 
-variable {allowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} (budget :
-  Purelib.Integration.Path.NoisyPathArea.LengthErrorBudget
-  (Purelib.Riemann.Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
+variable {allowance : InverseRootPolynomial.Coordinate} (budget :
+  NoisyPathArea.LengthErrorBudget
+  (Riemann.Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
     (owners : OwnerRequest
-      (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      (ParentIndices.occurrenceAt prepared.occurrences
       outer) budget.tolerance)
     (later : owners.index ≤ faceIndex)
-    (original : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings data (fun
+    (original : OwnerRequest.OwnedReadings data (fun
       vertex => trace.point (trace.vertices.indexed vertex)))
-    (values : Fin genus → side.Vertex depth → Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian)
+    (values : Fin genus → side.Vertex depth → InverseRootPolynomial.Gaussian)
     (readback : ∀ basisRow vertex, (original basisRow).values vertex = values basisRow (trace.vertices.indexed vertex))
 
-variable {junctionAllowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} (junctionBudget :
-  Purelib.Integration.Path.NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
+variable {junctionAllowance : InverseRootPolynomial.Coordinate} (junctionBudget :
+  NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
   (junctionOwners : OwnerRequest
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) junctionBudget.tolerance)
   (junctionLater : junctionOwners.index ≤ faceIndex)
 
@@ -236,7 +238,7 @@ local notation "items" =>
   retained (coefficients := coefficients) inputs outer trace blocks
   sourceFirst sourceLast budget owners later original values readback junctionBudget junctionOwners junctionLater
 
-variable {allowanceBound toleranceBound : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+variable {allowanceBound toleranceBound : InverseRootPolynomial.Coordinate}
   (pieceAllowance : allowance ≤ allowanceBound) (junctionAllowanceBound : junctionAllowance ≤ allowanceBound)
   (pieceTolerance : budget.tolerance ≤ toleranceBound) (junctionTolerance : junctionBudget.tolerance ≤ toleranceBound)
 
@@ -246,19 +248,19 @@ include pieceAllowance junctionAllowanceBound pieceTolerance junctionTolerance
 bounds. -/
 theorem horizontal_reverse_items_budget : ∀ item ∈ items,
     item.fragment.allowance ≤ allowanceBound ∧ item.fragment.budget.tolerance ≤ toleranceBound := by
-  apply Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedBudgets.indexedSideFragments_budget
+  apply GroupedBudgets.indexedSideFragments_budget
   · intro position
-    exact ⟨(Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBudgetReadback.horizontalPieces_allowance retained
+    exact ⟨(PhysicalBudgetReadback.horizontalPieces_allowance retained
       inputs outer trace blocks sourceFirst sourceLast
         budget owners later original values readback position).trans_le pieceAllowance,
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBudgetReadback.horizontalPieces_tolerance retained
+      (PhysicalBudgetReadback.horizontalPieces_tolerance retained
         inputs outer trace blocks sourceFirst sourceLast
         budget owners later original values readback position).trans_le pieceTolerance⟩
   · intro position
-    exact ⟨(Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBudgetReadback.horizontalJunctions_allowance
+    exact ⟨(PhysicalBudgetReadback.horizontalJunctions_allowance
       retained inputs outer trace blocks sourceFirst sourceLast
         junctionBudget junctionOwners junctionLater original values readback position).trans_le junctionAllowanceBound,
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBudgetReadback.horizontalJunctions_tolerance retained
+      (PhysicalBudgetReadback.horizontalJunctions_tolerance retained
         inputs outer trace blocks sourceFirst sourceLast
         junctionBudget junctionOwners junctionLater original values readback position).trans_le junctionTolerance⟩
 
@@ -270,12 +272,12 @@ open Purelib.Riemann in
 /-- Grouping the reversed horizontal word by its original parents preserves both budget bounds for every retained
 fragment. -/
 theorem horizontal_reverse_grouped_budget : ∀ run ∈
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedGrouping.build items).runs,
+  (FragmentGrouping.IndexedGrouping.build items).runs,
     ∀ fragment ∈ run.fragments,
       fragment.allowance ≤ allowanceBound ∧ fragment.budget.tolerance ≤ toleranceBound :=
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedBudgets.IndexedGrouping.run_budget
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedGrouping.build items)
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SideBudgets.horizontal_reverse_items_budget retained inputs outer
+  GroupedBudgets.IndexedGrouping.run_budget
+    (FragmentGrouping.IndexedGrouping.build items)
+    (SideBudgets.horizontal_reverse_items_budget retained inputs outer
       trace blocks sourceFirst sourceLast
       budget owners later original values readback junctionBudget junctionOwners junctionLater
       pieceAllowance junctionAllowanceBound pieceTolerance junctionTolerance)
@@ -283,34 +285,34 @@ theorem horizontal_reverse_grouped_budget : ∀ run ∈
 end Horizontal
 section Vertical
 variable {leftColumn : Fin left.partition.x.intervals.length} {rightColumn : Fin right.partition.x.intervals.length}
-  {width : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {side : Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedVerticalSide left right
+  {width : InverseRootPolynomial.Coordinate}
+  {side : Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedVerticalSide left right
     leftColumn rightColumn width}
   (trace : side.Trace depth)
-  (blocks : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBank.ParentBlockBank
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (blocks : ParentBank.ParentBlockBank
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) left true true)
-  (sourceFirst : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (sourceFirst : (ParentIndices.occurrenceAt
     prepared.occurrences outer).start.re = width)
-  (sourceLast : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (sourceLast : (ParentIndices.occurrenceAt
     prepared.occurrences outer).finish.re = width)
 
-variable {allowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} (budget :
-  Purelib.Integration.Path.NoisyPathArea.LengthErrorBudget
-  (Purelib.Riemann.Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
+variable {allowance : InverseRootPolynomial.Coordinate} (budget :
+  NoisyPathArea.LengthErrorBudget
+  (Riemann.Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
     (owners : OwnerRequest
-      (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      (ParentIndices.occurrenceAt prepared.occurrences
       outer) budget.tolerance)
     (later : owners.index ≤ faceIndex)
-    (original : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings data (fun
+    (original : OwnerRequest.OwnedReadings data (fun
       vertex => trace.point (trace.vertices.indexed vertex)))
-    (values : Fin genus → side.Vertex depth → Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian)
+    (values : Fin genus → side.Vertex depth → InverseRootPolynomial.Gaussian)
     (readback : ∀ basisRow vertex, (original basisRow).values vertex = values basisRow (trace.vertices.indexed vertex))
 
-variable {junctionAllowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} (junctionBudget :
-  Purelib.Integration.Path.NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
+variable {junctionAllowance : InverseRootPolynomial.Coordinate} (junctionBudget :
+  NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
   (junctionOwners : OwnerRequest
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) junctionBudget.tolerance)
   (junctionLater : junctionOwners.index ≤ faceIndex)
 
@@ -318,7 +320,7 @@ local notation "items" => Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exte
   retained (coefficients := coefficients) inputs outer trace blocks
   sourceFirst sourceLast budget owners later original values readback junctionBudget junctionOwners junctionLater
 
-variable {allowanceBound toleranceBound : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+variable {allowanceBound toleranceBound : InverseRootPolynomial.Coordinate}
   (pieceAllowance : allowance ≤ allowanceBound) (junctionAllowanceBound : junctionAllowance ≤ allowanceBound)
   (pieceTolerance : budget.tolerance ≤ toleranceBound) (junctionTolerance : junctionBudget.tolerance ≤ toleranceBound)
 
@@ -328,19 +330,19 @@ include pieceAllowance junctionAllowanceBound pieceTolerance junctionTolerance
 bounds. -/
 theorem vertical_items_budget : ∀ item ∈ items,
     item.fragment.allowance ≤ allowanceBound ∧ item.fragment.budget.tolerance ≤ toleranceBound := by
-  apply Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedBudgets.indexedSideFragments_budget
+  apply GroupedBudgets.indexedSideFragments_budget
   · intro position
-    exact ⟨(Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBudgetReadback.verticalPieces_allowance retained
+    exact ⟨(PhysicalBudgetReadback.verticalPieces_allowance retained
       inputs outer trace blocks sourceFirst sourceLast
         budget owners later original values readback position).trans_le pieceAllowance,
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBudgetReadback.verticalPieces_tolerance retained inputs
+      (PhysicalBudgetReadback.verticalPieces_tolerance retained inputs
         outer trace blocks sourceFirst sourceLast
         budget owners later original values readback position).trans_le pieceTolerance⟩
   · intro position
-    exact ⟨(Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBudgetReadback.verticalJunctions_allowance
+    exact ⟨(PhysicalBudgetReadback.verticalJunctions_allowance
       retained inputs outer trace blocks sourceFirst sourceLast
         junctionBudget junctionOwners junctionLater original values readback position).trans_le junctionAllowanceBound,
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBudgetReadback.verticalJunctions_tolerance retained
+      (PhysicalBudgetReadback.verticalJunctions_tolerance retained
         inputs outer trace blocks sourceFirst sourceLast
         junctionBudget junctionOwners junctionLater original values readback position).trans_le junctionTolerance⟩
 
@@ -352,12 +354,12 @@ open Purelib.Riemann in
 /-- Grouping the forward vertical word by its original parents preserves both budget bounds for every retained fragment.
 -/
 theorem vertical_grouped_budget : ∀ run ∈
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedGrouping.build items).runs,
+  (FragmentGrouping.IndexedGrouping.build items).runs,
     ∀ fragment ∈ run.fragments,
       fragment.allowance ≤ allowanceBound ∧ fragment.budget.tolerance ≤ toleranceBound :=
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedBudgets.IndexedGrouping.run_budget
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedGrouping.build items)
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SideBudgets.vertical_items_budget retained inputs outer trace
+  GroupedBudgets.IndexedGrouping.run_budget
+    (FragmentGrouping.IndexedGrouping.build items)
+    (SideBudgets.vertical_items_budget retained inputs outer trace
       blocks sourceFirst sourceLast
       budget owners later original values readback junctionBudget junctionOwners junctionLater
       pieceAllowance junctionAllowanceBound pieceTolerance junctionTolerance)
@@ -365,34 +367,34 @@ theorem vertical_grouped_budget : ∀ run ∈
 end Vertical
 section Vertical
 variable {leftColumn : Fin left.partition.x.intervals.length} {rightColumn : Fin right.partition.x.intervals.length}
-  {width : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {side : Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedVerticalSide left right
+  {width : InverseRootPolynomial.Coordinate}
+  {side : Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedVerticalSide left right
     leftColumn rightColumn width}
   (trace : side.Trace depth)
-  (blocks : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBank.ParentBlockBank
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (blocks : ParentBank.ParentBlockBank
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) left true false)
-  (sourceFirst : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (sourceFirst : (ParentIndices.occurrenceAt
     prepared.occurrences outer).start.re = width)
-  (sourceLast : (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (sourceLast : (ParentIndices.occurrenceAt
     prepared.occurrences outer).finish.re = width)
 
-variable {allowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} (budget :
-  Purelib.Integration.Path.NoisyPathArea.LengthErrorBudget
-  (Purelib.Riemann.Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
+variable {allowance : InverseRootPolynomial.Coordinate} (budget :
+  NoisyPathArea.LengthErrorBudget
+  (Riemann.Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
     (owners : OwnerRequest
-      (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      (ParentIndices.occurrenceAt prepared.occurrences
       outer) budget.tolerance)
     (later : owners.index ≤ faceIndex)
-    (original : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings data (fun
+    (original : OwnerRequest.OwnedReadings data (fun
       vertex => trace.point (trace.vertices.indexed vertex)))
-    (values : Fin genus → side.Vertex depth → Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian)
+    (values : Fin genus → side.Vertex depth → InverseRootPolynomial.Gaussian)
     (readback : ∀ basisRow vertex, (original basisRow).values vertex = values basisRow (trace.vertices.indexed vertex))
 
-variable {junctionAllowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} (junctionBudget :
-  Purelib.Integration.Path.NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
+variable {junctionAllowance : InverseRootPolynomial.Coordinate} (junctionBudget :
+  NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
   (junctionOwners : OwnerRequest
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) junctionBudget.tolerance)
   (junctionLater : junctionOwners.index ≤ faceIndex)
 
@@ -401,7 +403,7 @@ local notation "items" =>
   (coefficients := coefficients) inputs outer trace blocks
   sourceFirst sourceLast budget owners later original values readback junctionBudget junctionOwners junctionLater
 
-variable {allowanceBound toleranceBound : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+variable {allowanceBound toleranceBound : InverseRootPolynomial.Coordinate}
   (pieceAllowance : allowance ≤ allowanceBound) (junctionAllowanceBound : junctionAllowance ≤ allowanceBound)
   (pieceTolerance : budget.tolerance ≤ toleranceBound) (junctionTolerance : junctionBudget.tolerance ≤ toleranceBound)
 
@@ -411,19 +413,19 @@ include pieceAllowance junctionAllowanceBound pieceTolerance junctionTolerance
 bounds. -/
 theorem vertical_reverse_items_budget : ∀ item ∈ items,
     item.fragment.allowance ≤ allowanceBound ∧ item.fragment.budget.tolerance ≤ toleranceBound := by
-  apply Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedBudgets.indexedSideFragments_budget
+  apply GroupedBudgets.indexedSideFragments_budget
   · intro position
-    exact ⟨(Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBudgetReadback.verticalPieces_allowance retained
+    exact ⟨(PhysicalBudgetReadback.verticalPieces_allowance retained
       inputs outer trace blocks sourceFirst sourceLast
         budget owners later original values readback position).trans_le pieceAllowance,
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBudgetReadback.verticalPieces_tolerance retained inputs
+      (PhysicalBudgetReadback.verticalPieces_tolerance retained inputs
         outer trace blocks sourceFirst sourceLast
         budget owners later original values readback position).trans_le pieceTolerance⟩
   · intro position
-    exact ⟨(Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBudgetReadback.verticalJunctions_allowance
+    exact ⟨(PhysicalBudgetReadback.verticalJunctions_allowance
       retained inputs outer trace blocks sourceFirst sourceLast
         junctionBudget junctionOwners junctionLater original values readback position).trans_le junctionAllowanceBound,
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PhysicalBudgetReadback.verticalJunctions_tolerance retained
+      (PhysicalBudgetReadback.verticalJunctions_tolerance retained
         inputs outer trace blocks sourceFirst sourceLast
         junctionBudget junctionOwners junctionLater original values readback position).trans_le junctionTolerance⟩
 
@@ -435,12 +437,12 @@ open Purelib.Riemann in
 /-- Grouping the reversed vertical word by its original parents preserves both budget bounds for every retained
 fragment. -/
 theorem vertical_reverse_grouped_budget : ∀ run ∈
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedGrouping.build items).runs,
+  (FragmentGrouping.IndexedGrouping.build items).runs,
     ∀ fragment ∈ run.fragments,
       fragment.allowance ≤ allowanceBound ∧ fragment.budget.tolerance ≤ toleranceBound :=
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedBudgets.IndexedGrouping.run_budget
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedGrouping.build items)
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SideBudgets.vertical_reverse_items_budget retained inputs outer
+  GroupedBudgets.IndexedGrouping.run_budget
+    (FragmentGrouping.IndexedGrouping.build items)
+    (SideBudgets.vertical_reverse_items_budget retained inputs outer
       trace blocks sourceFirst sourceLast
       budget owners later original values readback junctionBudget junctionOwners junctionLater
       pieceAllowance junctionAllowanceBound pieceTolerance junctionTolerance)

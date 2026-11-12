@@ -53,6 +53,8 @@ import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 
+open Purelib.LinearAlgebra.Gaussian
+
 open Purelib.Algebra
 
 open Purelib.Curves
@@ -80,14 +82,14 @@ open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularLocalBoundaryRequest.LocalBoundaryRequest (bound)
 open Purelib.Riemann.Readings.RectangularObservationAssembly.ObservationMesh.ClippedAssembly
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {faces : List (Meshes.PuncturedGridFaces.RegularFace
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {faces : List (Meshes.PuncturedGridFaces.RegularFace
       bank)}
-    {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces}
-  {coarse : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains sheet}
-  {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+    {domains : Face.DomainBanks.FaceDomainBank frames faces}
+  {coarse : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes domains sheet}
+  {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet} {target : Fraction.Rational}
 
 namespace TwoSheetRequest
@@ -95,10 +97,10 @@ namespace TwoSheetRequest
 variable {energyTarget : Fraction.Rational}
 
 /-- The actual clipped assembly of homogeneous primitive readings on one original sheet and face observation mesh. -/
-abbrev FaceAssembly (energy : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest coarse fixed
-  energyTarget) {stage : Nat} (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+abbrev FaceAssembly (energy : TwoSheetBilinearRequest.TwoSheetRequest coarse fixed
+  energyTarget) {stage : Nat} (cache : RegularDomainMeshes.RegularMeshes.Numerics
   domains stage)
-    (left right : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (sheet : Fin 2) (position : Fin
+    (left right : Energy.GaussianVector genus) (sheet : Fin 2) (position : Fin
       faces.length) :=
   Readings.RectangularObservationAssembly.ObservationMesh.ClippedAssembly ((energy.entries.get sheet).meshes.entries.get
     position)
@@ -109,21 +111,21 @@ abbrev FaceAssembly (energy : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinea
           position sheet j).offsets column row point)⟩)
 
 /-- The retained clipped assemblies for every original face on both sheets. -/
-abbrev Assemblies (energy : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest coarse fixed
-  energyTarget) {stage : Nat} (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+abbrev Assemblies (energy : TwoSheetBilinearRequest.TwoSheetRequest coarse fixed
+  energyTarget) {stage : Nat} (cache : RegularDomainMeshes.RegularMeshes.Numerics
   domains stage)
-    (left right : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :=
-  Data.Vector.DependentVector (fun sheet : Fin 2 => Data.Vector.DependentVector (fun position : Fin faces.length =>
-    Hyperelliptic.Meshes.PuncturedGrid.RegularClippedAssembly.TwoSheetRequest.FaceAssembly energy cache left right sheet
+    (left right : Energy.GaussianVector genus) :=
+  Vector.DependentVector (fun sheet : Fin 2 => Vector.DependentVector (fun position : Fin faces.length =>
+    FaceAssembly energy cache left right sheet
       position))
 
 /-- Build the actual clipped assemblies from the shared original primitive cache and coefficient vectors. -/
-def assemblies (energy : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest coarse fixed
-  energyTarget) {stage : Nat} (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+def assemblies (energy : TwoSheetBilinearRequest.TwoSheetRequest coarse fixed
+  energyTarget) {stage : Nat} (cache : RegularDomainMeshes.RegularMeshes.Numerics
   domains stage)
-    (left right : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-      Hyperelliptic.Meshes.PuncturedGrid.RegularClippedAssembly.TwoSheetRequest.Assemblies energy cache left right :=
-  Data.Vector.DependentVector.ofFn fun sheet : Fin 2 => Data.Vector.DependentVector.ofFn fun position : Fin faces.length
+    (left right : Energy.GaussianVector genus) :
+      Assemblies energy cache left right :=
+  Vector.DependentVector.ofFn fun sheet : Fin 2 => Vector.DependentVector.ofFn fun position : Fin faces.length
     =>
     Readings.RectangularObservationAssembly.ObservationMesh.ClippedAssembly.build
       ((energy.entries.get sheet).meshes.entries.get position)
@@ -135,24 +137,24 @@ def assemblies (energy : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequ
 
 /-- The same energy request controls the actual weighted corner polygons on
 both sheets, with all basis pairs and clipped junctions included. -/
-theorem FaceAssembly.corner_bound {energy : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
+theorem FaceAssembly.corner_bound {energy : TwoSheetBilinearRequest.TwoSheetRequest
   coarse fixed energyTarget}
-    {stage : Nat} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
-    {left right : LinearAlgebra.Gaussian.Energy.GaussianVector genus} {sheet : Fin 2} {position : Fin
+    {stage : Nat} {cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+    {left right : Energy.GaussianVector genus} {sheet : Fin 2} {position : Fin
       faces.length}
     (later : energy.index ≤ stage) (assembly :
-      Hyperelliptic.Meshes.PuncturedGrid.RegularClippedAssembly.TwoSheetRequest.FaceAssembly energy cache left right
+      FaceAssembly energy cache left right
       sheet position) :
     let mesh := (energy.entries.get sheet).meshes.entries.get position
     let entry := (energy.entries.get sheet).entries.get position
-    Data.Gaussian.Norm.Basic.normSq assembly.cornerTotal ≤
+    Gaussian.Norm.Basic.normSq assembly.cornerTotal ≤
       ((genus : Fraction.Rational) * (genus : Fraction.Rational)) *
         Readings.PreparedObservationCoercivity.coefficientNormSq left *
           Readings.PreparedObservationCoercivity.coefficientNormSq right *
         (256 * ((mesh.boundaryColumns : Fraction.Rational) * (mesh.boundaryRows : Fraction.Rational)) ^ 2 *
           entry.readingTarget ^ 2) := by
   have scalar :=
-    Hyperelliptic.Meshes.PuncturedGrid.DomainBilinearAssembly.EnergyPreflight.Request.weighted_clipped_cornerTotal_bound
+    DomainBilinearAssembly.EnergyPreflight.Request.weighted_clipped_cornerTotal_bound
     ((energy.entries.get sheet).entries.get position).modelRequest
     (((energy.entries.get sheet).index_ge position).trans ((energy.index_ge sheet).trans later))
     (cache.atDomain position sheet) left right assembly
@@ -165,14 +167,14 @@ theorem FaceAssembly.corner_bound {energy : Hyperelliptic.Meshes.PuncturedGrid.T
 
 /-- The original local boundary equals its actual clipped exterior, seam and corner contributions, including the
 retained primitive translations. -/
-theorem FaceAssembly.local_eq {energy : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
+theorem FaceAssembly.local_eq {energy : TwoSheetBilinearRequest.TwoSheetRequest
   coarse fixed energyTarget} {stage : Nat} {cache :
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
-    {left right : LinearAlgebra.Gaussian.Energy.GaussianVector genus} {sheet : Fin 2} {position : Fin
+  RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+    {left right : Energy.GaussianVector genus} {sheet : Fin 2} {position : Fin
       faces.length}
-    (assembly : Hyperelliptic.Meshes.PuncturedGrid.RegularClippedAssembly.TwoSheetRequest.FaceAssembly energy cache left
+    (assembly : FaceAssembly energy cache left
       right sheet position) :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularLocalBoundaryBound.localBoundary (energy := energy)
+    RegularLocalBoundaryBound.localBoundary (energy := energy)
       cache left right sheet position = assembly.exterior + assembly.seams + assembly.cornerTotal :=
 by
   let mesh := (energy.entries.get sheet).meshes.entries.get position
@@ -205,25 +207,25 @@ namespace LocalBoundaryRequest
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularLocalBoundaryRequest.LocalBoundaryRequest in
 /-- The retained local-boundary request bounds the sum of the actual exterior, seam and corner contributions on both
 sheets with the original coefficient factor. -/
-theorem assembled_bound (request : Hyperelliptic.Meshes.PuncturedGrid.RegularLocalBoundaryRequest.LocalBoundaryRequest
+theorem assembled_bound (request : RegularLocalBoundaryRequest.LocalBoundaryRequest
   coarse fixed target) {stage : Nat} {cache :
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  RegularDomainMeshes.RegularMeshes.Numerics domains stage}
     (later : request.ownership.index ≤ stage) (samples :
-      Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest.Samples request.energy cache)
-    (left right : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (assemblies :
-      Hyperelliptic.Meshes.PuncturedGrid.RegularClippedAssembly.TwoSheetRequest.Assemblies request.energy cache left
+      TwoSheetBilinearRequest.TwoSheetRequest.Samples request.energy cache)
+    (left right : Energy.GaussianVector genus) (assemblies :
+      TwoSheetRequest.Assemblies request.energy cache left
       right) :
-    Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun sheet : Fin 2 => FiniteSum.Fin.sumFin (fun position :
+    Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun sheet : Fin 2 => FiniteSum.Fin.sumFin (fun position :
       Fin faces.length =>
       ((assemblies.get sheet).get position).exterior + ((assemblies.get sheet).get position).seams +
         ((assemblies.get sheet).get position).cornerTotal))) ≤
       Readings.PreparedObservationCoercivity.coefficientNormSq left *
         Readings.PreparedObservationCoercivity.coefficientNormSq right * target := by
-  have bound := Hyperelliptic.Meshes.PuncturedGrid.RegularLocalBoundaryRequest.LocalBoundaryRequest.bound
+  have bound := RegularLocalBoundaryRequest.LocalBoundaryRequest.bound
     request later samples left right
   have equal := FiniteSum.Fin.sumFin_congr (fun sheet : Fin 2 => FiniteSum.Fin.sumFin_congr (fun position : Fin
     faces.length =>
-    Hyperelliptic.Meshes.PuncturedGrid.RegularClippedAssembly.TwoSheetRequest.FaceAssembly.local_eq ((assemblies.get
+    TwoSheetRequest.FaceAssembly.local_eq ((assemblies.get
       sheet).get position)))
   rw [equal] at bound
   exact bound

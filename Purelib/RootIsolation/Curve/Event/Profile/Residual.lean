@@ -34,6 +34,10 @@ import Purelib.RootIsolation.Curve.Chart.Analysis
 import Purelib.RootIsolation.Sturm.Track.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Polynomial.Dense.Rational
+
 open Purelib.Data.Rat.Interval (Bounds)
 open Purelib.Geometry.Projective.Hermitian.Chart (BoundedChart)
 open Purelib.Geometry.Projective.Hermitian (HermitianForm)
@@ -91,8 +95,8 @@ namespace ProfileEventLeaf
       gcdDegreePositive}
     (analysis : SourcePersistentConditionProfilesProfileAnalysisAlias factorAnalysis) :
       Fraction.Rational :=
-  4 * Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound
-    (Dense.Rational.Pair.Reduction.reducedDenominator
+  4 * Bounds.Lipschitz.denseEvalSqLipschitzBound
+    (Pair.Reduction.reducedDenominator
       (Dense.Derivative.derivative analysis.profile.factor.polynomial)
       analysis.profile.factor.polynomial) chart.cell.interval
 
@@ -111,9 +115,9 @@ theorem reducedResidualCoefficient_nonneg
       gcdDegreePositive}
     (analysis : SourcePersistentConditionProfilesProfileAnalysisAlias factorAnalysis) :
     0 ≤ reducedResidualCoefficient analysis :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-    (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg
-      (Dense.Rational.Pair.Reduction.reducedDenominator
+  Arithmetic.mul_nonneg_direct (by decide)
+    (Bounds.Lipschitz.denseHornerSqBounds_nonneg
+      (Pair.Reduction.reducedDenominator
         (Dense.Derivative.derivative
           analysis.profile.factor.polynomial)
         analysis.profile.factor.polynomial) chart.cell.interval).2
@@ -136,49 +140,49 @@ theorem reduced_eval_sq_request_le
       data
       gcdDegreePositive}
     {analysis : SourcePersistentConditionProfilesProfileAnalysisAlias factorAnalysis}
-    (leaf : Curve.Event.Profile.Basic.ProfileEventLeaf analysis) (epsilon : Fraction.Rational)
+    (leaf : ProfileEventLeaf analysis) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (parameter : Fraction.Rational)
     (inside : (leaf.request epsilon).cell.interval.Contains parameter) :
-    (Dense.Rational.Pair.Reduction.reducedDenominator
+    (Pair.Reduction.reducedDenominator
         (Dense.Derivative.derivative
           analysis.profile.factor.polynomial)
         analysis.profile.factor.polynomial).eval parameter ^ 2 ≤
       reducedResidualCoefficient analysis * epsilon ^ 2 := by
   let event := analysis.profile.factor.polynomial
-  let reduced := Dense.Rational.Pair.Reduction.reducedDenominator
+  let reduced := Pair.Reduction.reducedDenominator
     (Dense.Derivative.derivative event) event
   let requested := leaf.request epsilon
   let localLipschitz :=
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound reduced
+    Bounds.Lipschitz.denseEvalSqLipschitzBound reduced
       requested.cell.interval
   let chartLipschitz :=
-    Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound reduced
+    Bounds.Lipschitz.denseEvalSqLipschitzBound reduced
       chart.cell.interval
   have localBound :=
     (leaf.requestResolution epsilon).denominator_eval_sq_le
       requested.countNonzero parameter inside
   have lipschitzLe : localLipschitz ≤ chartLipschitz := by
     simpa only [-eq_self, -iff_self, localLipschitz, chartLipschitz, requested, reduced] using
-      Dense.Rational.Bounds.Lipschitz.denseEvalSqLipschitzBound_le_of_refines
+      Bounds.Lipschitz.denseEvalSqLipschitzBound_le_of_refines
         reduced (leaf.request_refines_chart epsilon)
   have chartNonnegative : 0 ≤ chartLipschitz := by
     simpa only [-eq_self, -iff_self, chartLipschitz] using
-      (Dense.Rational.Bounds.Lipschitz.denseHornerSqBounds_nonneg reduced
+      (Bounds.Lipschitz.denseHornerSqBounds_nonneg reduced
         chart.cell.interval).2
   have coefficientLe : 4 * localLipschitz ≤ 4 * chartLipschitz :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct lipschitzLe
+    Arithmetic.mul_le_mul_of_nonneg_left_direct lipschitzLe
       (show (0 : Fraction.Rational) ≤ 4 by decide)
   have widthSqLe : (Bounds.width requested.cell.interval) ^ 2 ≤ epsilon ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
+    Arithmetic.pow_le_pow_direct
       (Bounds.width_nonneg requested.cell.interval)
       (leaf.request_width_le epsilon positive) 2
   change reduced.eval parameter ^ 2 ≤
     (4 * chartLipschitz) * epsilon ^ 2
   exact localBound.trans
-    (Fraction.Order.Arithmetic.mul_le_mul_direct coefficientLe widthSqLe
-      (Fraction.Order.Arithmetic.sq_nonneg_direct
+    (Arithmetic.mul_le_mul_direct coefficientLe widthSqLe
+      (Arithmetic.sq_nonneg_direct
         (Bounds.width requested.cell.interval))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.mul_nonneg_direct (by decide)
         chartNonnegative))
 
 /-- Fixed coefficient for the final squarefree profile factor itself. -/
@@ -196,7 +200,7 @@ theorem reduced_eval_sq_request_le
       gcdDegreePositive}
     (analysis : SourcePersistentConditionProfilesProfileAnalysisAlias factorAnalysis) :
       Fraction.Rational :=
-  Dense.Rational.Bounds.Horner.evalSqBound
+  Bounds.Horner.evalSqBound
       (Dense.GCD.gcd
         (Dense.Derivative.derivative
           analysis.profile.factor.polynomial)
@@ -218,8 +222,8 @@ theorem factorResidualCoefficient_nonneg
       gcdDegreePositive}
     (analysis : SourcePersistentConditionProfilesProfileAnalysisAlias factorAnalysis) :
     0 ≤ factorResidualCoefficient analysis :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Dense.Rational.Bounds.Horner.evalSqBound_nonneg
+  Arithmetic.mul_nonneg_direct
+    (Bounds.Horner.evalSqBound_nonneg
       (Dense.GCD.gcd
         (Dense.Derivative.derivative
           analysis.profile.factor.polynomial)
@@ -243,7 +247,7 @@ theorem factor_eval_sq_request_le
       data
       gcdDegreePositive}
     {analysis : SourcePersistentConditionProfilesProfileAnalysisAlias factorAnalysis}
-    (leaf : Curve.Event.Profile.Basic.ProfileEventLeaf analysis) (epsilon : Fraction.Rational)
+    (leaf : ProfileEventLeaf analysis) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) (parameter : Fraction.Rational)
     (inside : (leaf.request epsilon).cell.interval.Contains parameter) :
     analysis.profile.factor.polynomial.eval parameter ^ 2 ≤
@@ -251,15 +255,15 @@ theorem factor_eval_sq_request_le
   let event := analysis.profile.factor.polynomial
   let common := Dense.GCD.gcd
     (Dense.Derivative.derivative event) event
-  let reduced := Dense.Rational.Pair.Reduction.reducedDenominator
+  let reduced := Pair.Reduction.reducedDenominator
     (Dense.Derivative.derivative event) event
-  let commonBound := Dense.Rational.Bounds.Horner.evalSqBound common
+  let commonBound := Bounds.Horner.evalSqBound common
     chart.cell.interval
   have refinesChart := leaf.request_refines_chart epsilon
   have parameterInsideChart : chart.cell.interval.Contains parameter :=
     ⟨refinesChart.1.trans inside.1, inside.2.trans refinesChart.2⟩
   have commonEvalBound : common.eval parameter ^ 2 ≤ commonBound :=
-    Dense.Rational.Bounds.Horner.eval_sq_le_evalSqBound common
+    Bounds.Horner.eval_sq_le_evalSqBound common
       chart.cell.interval parameterInsideChart
   have reducedEvalBound : reduced.eval parameter ^ 2 ≤
       reducedResidualCoefficient analysis * epsilon ^ 2 := by
@@ -269,15 +273,15 @@ theorem factor_eval_sq_request_le
       common.eval parameter ^ 2 * reduced.eval parameter ^ 2 ≤
         commonBound *
           (reducedResidualCoefficient analysis * epsilon ^ 2) :=
-    Fraction.Order.Arithmetic.mul_le_mul_direct commonEvalBound
+    Arithmetic.mul_le_mul_direct commonEvalBound
       reducedEvalBound
-      (Fraction.Order.Arithmetic.sq_nonneg_direct (reduced.eval parameter))
-      (Dense.Rational.Bounds.Horner.evalSqBound_nonneg common
+      (Arithmetic.sq_nonneg_direct (reduced.eval parameter))
+      (Bounds.Horner.evalSqBound_nonneg common
         chart.cell.interval)
   have identity : event.eval parameter =
       common.eval parameter * reduced.eval parameter := by
     simpa only [-eq_self, -iff_self, event, common, reduced,
-      Dense.Rational.Pair.Reduction.reducedDenominator] using
+      Pair.Reduction.reducedDenominator] using
       Dense.GCD.rightFactor_eval_identity
         (Dense.Derivative.derivative event) event parameter
   rw [identity, Semiring.Normalization.product_pow]

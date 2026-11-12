@@ -64,6 +64,10 @@ import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Tactic.Ring
 
+open Purelib.Approximation.Rational.Budget
+
+open Purelib.Riemann.RootContinuation.NewtonPuncturedGrid
+
 open Purelib.Approximation
 
 open Purelib.Curves
@@ -83,47 +87,47 @@ double-loop and compiler connectors. Only physical/sewn terms remain. -/
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.Newton.PhysicalPeriodComparison
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
-    {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered} (prepared :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
-  {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation base.bank.toBranchCellBank}
+    PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {ordered : PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
+    {paired : PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered} (prepared :
+    PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+  {preparation : BranchCellBank.NewtonPreparation base.bank.toBranchCellBank}
     {target radius : Fraction.Rational}
-  {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius} {current :
+  {grid : BranchCellBank.NewtonGrid preparation target radius} {current :
     Meshes.LiftedPuncturedGrid grid.punctured}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
     {differential : Fin genus}
 
 /-- The Newton grid built from the checked branch cell bank. -/
-def newtonGrid (original : Hyperelliptic.Branches.BranchCellBank curve branches higher)
+def newtonGrid (original : Branches.BranchCellBank curve branches higher)
     {target radius : Fraction.Rational} (positive : 0 < target) (radiusPositive : 0 < radius) :
-    RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid
-      (RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation.build original) target radius :=
-  RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid.build
-    (RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation.build original) positive radiusPositive
+    BranchCellBank.NewtonGrid
+      (BranchCellBank.NewtonPreparation.build original) target radius :=
+  BranchCellBank.NewtonGrid.build
+    (BranchCellBank.NewtonPreparation.build original) positive radiusPositive
 
 /-- The lifted punctured grid of the automatically built Newton grid. -/
-def newtonCurrent (original : Hyperelliptic.Branches.BranchCellBank curve branches higher)
+def newtonCurrent (original : Branches.BranchCellBank curve branches higher)
     {target radius : Fraction.Rational} (positive : 0 < target) (radiusPositive : 0 < radius) :
-    Meshes.LiftedPuncturedGrid (Hyperelliptic.Meshes.Newton.PhysicalPeriodComparison.newtonGrid original positive
+    Meshes.LiftedPuncturedGrid (PhysicalPeriodComparison.newtonGrid original positive
       radiusPositive).punctured :=
-  Meshes.LiftedPuncturedGrid.build (Hyperelliptic.Meshes.Newton.PhysicalPeriodComparison.newtonGrid original positive
+  Meshes.LiftedPuncturedGrid.build (PhysicalPeriodComparison.newtonGrid original positive
     radiusPositive).punctured
 
 /-- The face domain bank over the automatically built Newton grid. -/
-def newtonDomains (original : Hyperelliptic.Branches.BranchCellBank curve branches higher)
+def newtonDomains (original : Branches.BranchCellBank curve branches higher)
     {target radius : Fraction.Rational} (positive : 0 < target) (radiusPositive : 0 < radius) :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank
-      (Hyperelliptic.Meshes.Newton.PhysicalPeriodComparison.newtonCurrent original positive radiusPositive).frames
-      (Hyperelliptic.Meshes.Newton.PhysicalPeriodComparison.newtonGrid original positive radiusPositive).faces.regulars
+    PuncturedGrid.Face.DomainBanks.FaceDomainBank
+      (PhysicalPeriodComparison.newtonCurrent original positive radiusPositive).frames
+      (PhysicalPeriodComparison.newtonGrid original positive radiusPositive).faces.regulars
         :=
-  Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank.build
-    (Hyperelliptic.Meshes.Newton.PhysicalPeriodComparison.newtonCurrent original positive radiusPositive).frames
-    (Hyperelliptic.Meshes.Newton.PhysicalPeriodComparison.newtonGrid original positive radiusPositive).faces.regulars
+  PuncturedGrid.Face.DomainBanks.FaceDomainBank.build
+    (PhysicalPeriodComparison.newtonCurrent original positive radiusPositive).frames
+    (PhysicalPeriodComparison.newtonGrid original positive radiusPositive).faces.regulars
 
 /-- All nonphysical terminal and compiler corrections are paid by the
 computed shared stage. The even exterior-total cross now reads the actual
@@ -131,90 +135,90 @@ fixed exterior. Its full polygon area is transported to the refined grid's
 literal exterior, preserving the individual sheet and all excursions.
 Its contribution remains with the sewn corrections. -/
 theorem original_physical_period_comparison (newSheet : Fin 2) (excision :
-  Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid current)
-    (fixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+  AllHoles.Excision.AllHoleExcision grid current)
+    (fixed : PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential differential))
-    (source : Hyperelliptic.Differentials.Basic.Differential genus) (error : Fraction.Rational) (positive : 0 < error)
+    (source : Differentials.Basic.Differential genus) (error : Fraction.Rational) (positive : 0 < error)
       (floor : Nat) :
-    let reference := fun point member => (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
+    let reference := fun point member => (PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
       grid.punctured.bank.toBranchCellBank point member).toLoop
     let compiled :=
-      Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.compileResplit
+      PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.compileResplit
       grid.shrunk.included current.edges current.vertices
-      reference (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
+      reference (PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
         ordered.prepared.partition newSheet
-    let comparisonError := Rational.Budget.Aggregate.perTerm error 5
-    let comparisonPositive := Rational.Budget.Aggregate.perTerm_positive positive 5
-    let localError := Rational.Budget.Aggregate.perTerm comparisonError 3
-    let localPositive := Rational.Budget.Aggregate.perTerm_positive comparisonPositive 3
-    let part := Rational.Budget.Aggregate.perTerm localError 2
-    let partPositive := Rational.Budget.Aggregate.perTerm_positive localPositive 2
-    let regular := Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.build fixed
-      (Rational.Budget.Aggregate.perTerm part compiled.regulars.length)
-      (Rational.Budget.Aggregate.perTerm_positive partPositive _) floor compiled.regulars
-    let branch := Hyperelliptic.Meshes.Newton.Branch.RegionAggregate.BranchRegionRequests.build bank
-      (Hyperelliptic.Meshes.Newton.OrderedBranchPolygons.branchSheet ordered newSheet) fixed
-      (Rational.Budget.Aggregate.perTerm part excision.entries.length)
-      (Rational.Budget.Aggregate.perTerm_positive partPositive _) floor excision.entries
+    let comparisonError := Aggregate.perTerm error 5
+    let comparisonPositive := Aggregate.perTerm_positive positive 5
+    let localError := Aggregate.perTerm comparisonError 3
+    let localPositive := Aggregate.perTerm_positive comparisonPositive 3
+    let part := Aggregate.perTerm localError 2
+    let partPositive := Aggregate.perTerm_positive localPositive 2
+    let regular := Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.build fixed
+      (Aggregate.perTerm part compiled.regulars.length)
+      (Aggregate.perTerm_positive partPositive _) floor compiled.regulars
+    let branch := Branch.RegionAggregate.BranchRegionRequests.build bank
+      (OrderedBranchPolygons.branchSheet ordered newSheet) fixed
+      (Aggregate.perTerm part excision.entries.length)
+      (Aggregate.perTerm_positive partPositive _) floor excision.entries
     let connectors := compiled.connectorRequest current.mesh fixed source localError localPositive floor
     let referenceRequest := PuncturedGrid.Inclusion.ReferenceAreaRequest.build
       (paired := paired) grid.shrunk.included fixed newSheet comparisonError comparisonPositive
-    let exteriorRequest := Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotalRequest.exteriorTotalRequest
+    let exteriorRequest := PuncturedGrid.Inclusion.ExteriorTotalRequest.exteriorTotalRequest
       (paired := paired) grid.shrunk.included reference compiled fixed source
       comparisonError comparisonPositive floor
-    ∀ stage (shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    ∀ stage (shared : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
       (Periods.PeriodMatrix.standardDifferential differential) stage domains)
-      (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared current.mesh)
+      (readings : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared current.mesh)
         (surface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch readings.values),
       max (max (max (max regular.index branch.index) connectors.val) referenceRequest.index) exteriorRequest.val ≤ stage
         →
       let regularSamples :=
-        Hyperelliptic.Meshes.Newton.Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples.build readings
+        Regular.RegionAggregate.NewtonGrid.RegularRegionRequests.Samples.build readings
         surface regular
-      let branchSamples := Hyperelliptic.Meshes.Newton.Branch.RegionAggregate.BranchRegionRequests.Samples.build
+      let branchSamples := Branch.RegionAggregate.BranchRegionRequests.Samples.build
         readings surface branch
-      let value := Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.values
+      let value := PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.values
       let physical := current.edges.chainArea current.vertices value grid.punctured.bank.exterior newSheet +
-        Hyperelliptic.Meshes.Newton.OriginalPeriodArea.resplitPeriodArea prepared grid.shrunk.included current.edges
+        OriginalPeriodArea.resplitPeriodArea prepared grid.shrunk.included current.edges
           current.vertices newSheet value -
-        Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
+        PuncturedGrid.Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
           grid.shrunk.included current.edges current.vertices newSheet value
-      Data.Gaussian.Norm.Basic.normSq (surface.boundaryArea - (regularSamples.corrections +
+      Gaussian.Norm.Basic.normSq (surface.boundaryArea - (regularSamples.corrections +
         branchSamples.corrections) - (physical + physical)) < error := by
   intro reference compiled comparisonError comparisonPositive localError localPositive part partPositive regular branch
     connectors
     referenceRequest exteriorRequest stage shared readings surface later regularSamples branchSamples value physical
-  have region := Hyperelliptic.Meshes.Newton.OriginalPeriodComparison.original_period_comparison prepared newSheet
+  have region := OriginalPeriodComparison.original_period_comparison prepared newSheet
     excision fixed source comparisonError comparisonPositive floor
-    stage shared readings surface ((Data.Nat.Order.le_max_left _ _).trans ((Data.Nat.Order.le_max_left _ _).trans
+    stage shared readings surface ((Nat.Order.le_max_left _ _).trans ((Nat.Order.le_max_left _ _).trans
       later))
   let oldPhysical := current.edges.chainArea current.vertices value
     (grid.shrunk.included.resplit base.bank.exterior
-      (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet +
-    Hyperelliptic.Meshes.Newton.OriginalPeriodArea.resplitPeriodArea prepared grid.shrunk.included current.edges
+      (PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet +
+    OriginalPeriodArea.resplitPeriodArea prepared grid.shrunk.included current.edges
       current.vertices newSheet value -
-    Hyperelliptic.Meshes.Newton.OriginalPeriodArea.resplitEndCorrection (paired := paired) grid.shrunk.included
+    OriginalPeriodArea.resplitEndCorrection (paired := paired) grid.shrunk.included
       current.edges current.vertices newSheet value
   let residual := surface.boundaryArea - (regularSamples.corrections + branchSamples.corrections) - (oldPhysical +
     oldPhysical)
-  let correction := Hyperelliptic.Meshes.Newton.OriginalPeriodArea.resplitEndCorrection (paired := paired)
+  let correction := OriginalPeriodArea.resplitEndCorrection (paired := paired)
     grid.shrunk.included current.edges current.vertices newSheet value -
-    Hyperelliptic.Meshes.PuncturedGrid.Inclusion.TerminalCorrection.resplitExteriorCorrection (paired := paired)
+    PuncturedGrid.Inclusion.TerminalCorrection.resplitExteriorCorrection (paired := paired)
       grid.shrunk.included current.edges current.vertices newSheet value
-  let exteriorError := Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection
+  let exteriorError := PuncturedGrid.Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection
     (paired := paired) grid.shrunk.included current.edges current.vertices newSheet value -
-    Hyperelliptic.Meshes.PuncturedGrid.Inclusion.TerminalCorrection.resplitExteriorCorrection (paired := paired)
+    PuncturedGrid.Inclusion.TerminalCorrection.resplitExteriorCorrection (paired := paired)
       grid.shrunk.included current.edges current.vertices newSheet value
-  have referenceBound : Data.Gaussian.Norm.Basic.normSq (-correction) ≤ comparisonError := by
+  have referenceBound : Gaussian.Norm.Basic.normSq (-correction) ≤ comparisonError := by
     rw [Gaussian.Norm.Basic.normSq_neg]
-    exact referenceRequest.end_accurate readings ((Data.Nat.Order.le_max_right _ _).trans ((Data.Nat.Order.le_max_left _
+    exact referenceRequest.end_accurate readings ((Nat.Order.le_max_right _ _).trans ((Nat.Order.le_max_left _
       _).trans later))
-  have exteriorBound : Data.Gaussian.Norm.Basic.normSq exteriorError ≤ comparisonError :=
-    exteriorRequest.property stage shared readings ((Data.Nat.Order.le_max_right _ _).trans later)
-  have regionBound : Data.Gaussian.Norm.Basic.normSq residual ≤ comparisonError := region.le
+  have exteriorBound : Gaussian.Norm.Basic.normSq exteriorError ≤ comparisonError :=
+    exteriorRequest.property stage shared readings ((Nat.Order.le_max_right _ _).trans later)
+  have regionBound : Gaussian.Norm.Basic.normSq residual ≤ comparisonError := region.le
   have exteriorArea := (grid.shrunk.included.exterior_comparison base.bank.frame grid.punctured.bank.frame
     current.edges current.vertices reference).areas value
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation_reverse current.mesh readings.values)
+      (PuncturedGrid.CanonicalEdgeValues.edgeValuation_reverse current.mesh readings.values)
       newSheet
   have estimate := Gaussian.Budget.Aggregate.normSq_sum_lt [residual, -correction, -correction, exteriorError,
     exteriorError] positive (by
@@ -230,7 +234,7 @@ theorem original_physical_period_comparison (newSheet : Fin 2) (excision :
           · rcases Data.List.Membership.mem_cons.mp member with rfl | member
             · exact exteriorBound
             · exact (List.not_mem_nil member).elim)
-  change Data.Gaussian.Norm.Basic.normSq (residual + (-correction + (-correction + (exteriorError + (exteriorError +
+  change Gaussian.Norm.Basic.normSq (residual + (-correction + (-correction + (exteriorError + (exteriorError +
     0))))) < error at estimate
   have equal : surface.boundaryArea - (regularSamples.corrections + branchSamples.corrections) - (physical + physical) =
       residual + (-correction + (-correction + (exteriorError + (exteriorError + 0)))) := by
@@ -243,6 +247,6 @@ theorem original_physical_period_comparison (newSheet : Fin 2) (excision :
       rw [same]
       ring1
     exact scalar _ _ _ _ _ _ _ _ _ exteriorArea
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq equal).trans_lt estimate
+  exact (congrArg Gaussian.Norm.Basic.normSq equal).trans_lt estimate
 
 end Purelib.Curves.Hyperelliptic.Meshes.Newton.PhysicalPeriodComparison

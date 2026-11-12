@@ -80,6 +80,8 @@ import Purelib.Topology.Surface.Sewing.SewingTree
 import Purelib.Topology.Surface.Sewing.VertexSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Approximation.Budget
@@ -174,7 +176,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {source :
     Differential genus} {prepared :
@@ -185,17 +187,17 @@ set_option genInjectivity false in
 /-- Geometry and expensive mass calculations are shared by all later accuracy and minimum-stage requests for this
 differential. -/
 structure PrimitiveBank (bank : FaceBanks.FaceBank prepared) (differential : Fin genus) where
-  /-- The original shared regular face-domain bank. -/ domains : DomainBanks.FaceDomainBank lifted.frames
+  /-- The original shared regular face-domain bank. -/ domains : FaceDomainBank lifted.frames
     base.faces.regulars
   /-- The actual segment comparisons for the retained standard differential and original assigned segments. -/ compared
     : AssignedSegments.Comparisons (PeriodMatrix.standardDifferential differential) 0 bank.assigned
   /-- Every actual segment comparison uses the retained original shared face-domain bank. -/ sharedDomains :
-    Comparisons.UsesDomains domains (PeriodMatrix.standardDifferential differential) 0 bank.assigned compared
+    UsesDomains domains (PeriodMatrix.standardDifferential differential) 0 bank.assigned compared
   /-- The cached original comparison-parent list recast to the retained differential. -/ parents : List
-    (PreparedSubdivisionModelCore.CenteredEdge curve (PeriodMatrix.standardDifferential differential))
+    (CenteredEdge curve (PeriodMatrix.standardDifferential differential))
   /-- The cached parents are exactly the actual assigned-segment comparison parents. -/ parents_eq : parents =
     Comparisons.parents (PeriodMatrix.standardDifferential differential) 0 bank.assigned compared
-  /-- The cached movement mass of the original retained parents. -/ mass : PreparedPrimitiveChargeBounds.Coordinate
+  /-- The cached movement mass of the original retained parents. -/ mass : Coordinate
   /-- The mass cache is exactly the original movement-mass calculation on these retained parents. -/ mass_eq : mass =
     PreparedRefinementMovement.movementMass parents
 
@@ -209,9 +211,9 @@ variable {bank : FaceBank prepared} {differential : Fin
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons in
 /-- Cache the actual shared-domain comparisons, original recast parents and their movement mass once for this standard
 differential. -/
-@[expose] def build (bank : FaceBanks.FaceBank prepared) (domains : DomainBanks.FaceDomainBank lifted.frames
+@[expose] def build (bank : FaceBanks.FaceBank prepared) (domains : FaceDomainBank lifted.frames
   base.faces.regulars)
-    (differential : Fin genus) : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank
+    (differential : Fin genus) : PrimitiveBank
       bank differential :=
   let compared := FaceBank.comparisons bank domains (PeriodMatrix.standardDifferential differential)
   let parents := Comparisons.parents (PeriodMatrix.standardDifferential differential) 0 bank.assigned compared
@@ -220,14 +222,14 @@ differential. -/
 
 /-- The comparison parents are exactly the original period initial parents recast to this standard differential. -/
 theorem original_parents (comparison :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential) :
+  PrimitiveBank bank differential) :
     comparison.parents = prepared.period.initial.state.parents.map (PreparedEdgeRecasting.recastCenteredEdge
       (PeriodMatrix.standardDifferential differential)) :=
   comparison.parents_eq.trans ((Comparisons.parents_eq _ _ _ _).trans (bank.parents_eq _))
 
 /-- The retained segment bank's original parent count equals the actual comparison-parent list length. -/
 theorem parentCount_eq (comparison :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential) :
+  PrimitiveBank bank differential) :
     bank.segments.parentCount = comparison.parents.length := by
   rw [comparison.original_parents, Data.List.Map.length_map]
   exact bank.parentCount_eq_initial
@@ -235,35 +237,35 @@ theorem parentCount_eq (comparison :
 /-- Retain both the per-segment numerical witnesses and the assembled request. Its sample is indexed by the original
 cut-period initial state. -/
 @[expose] def RequestedAllocation (comparison :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential) (target :
-  PreparedPrimitiveChargeBounds.Coordinate) :=
-  PreparedPrimitiveBatchBudget.BatchAllocation target bank.segments.parentCount bank.segments.count comparison.mass
+  PrimitiveBank bank differential) (target :
+  Coordinate) :=
+  BatchAllocation target bank.segments.parentCount bank.segments.count comparison.mass
 
 /-- Synchronized actual local primitives on the retained shared face-domain bank at the allocation's piece target. -/
 @[expose] def RequestedLocals (comparison :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential) {target :
-  PreparedPrimitiveChargeBounds.Coordinate}
+  PrimitiveBank bank differential) {target :
+  Coordinate}
     (allocation :
       RequestedAllocation
       comparison target) :=
-  Comparisons.Synchronized comparison.domains (PeriodMatrix.standardDifferential differential) 0
+  Synchronized comparison.domains (PeriodMatrix.standardDifferential differential) 0
     bank.assigned comparison.compared comparison.sharedDomains allocation.pieceTarget
 
 /-- The original finite request-part list with the allocation's retained local, coefficient and error bounds. -/
 @[expose] def RequestedParts (comparison :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential) {target :
-  PreparedPrimitiveChargeBounds.Coordinate}
+  PrimitiveBank bank differential) {target :
+  Coordinate}
     (allocation :
       RequestedAllocation
       comparison target) :=
-  List (PreparedPrimitiveRequestBatches.RequestPart curve (PeriodMatrix.standardDifferential differential) genus
+  List (RequestPart curve (PeriodMatrix.standardDifferential differential) genus
     allocation.localTarget allocation.coefficientTarget allocation.errorBound)
 
 /-- The retained parts are exactly those assembled from the supplied synchronized local primitives and original assigned
 segments. -/
 @[expose] def RequestedPartsEq (comparison :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential) {target :
-  PreparedPrimitiveChargeBounds.Coordinate}
+  PrimitiveBank bank differential) {target :
+  Coordinate}
     (allocation :
       RequestedAllocation
       comparison target)
@@ -277,8 +279,8 @@ segments. -/
 
 /-- The controlled sum request on the original period initial parents recast to the retained standard differential. -/
 @[expose] def RequestedSumRequest (comparison :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential) {target :
-  PreparedPrimitiveChargeBounds.Coordinate}
+  PrimitiveBank bank differential) {target :
+  Coordinate}
     (allocation :
       RequestedAllocation
       comparison target) :=
@@ -291,8 +293,8 @@ section
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank
 /-- The assembled request's primitive sum is exactly the sum of the retained actual request parts. -/
 @[expose] def RequestedPrimitiveSumEq (comparison :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential) {target :
-  PreparedPrimitiveChargeBounds.Coordinate}
+  PrimitiveBank bank differential) {target :
+  Coordinate}
     (allocation :
       RequestedAllocation
       comparison target)
@@ -304,14 +306,14 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveCompar
 
 /-- A sufficiently late sample of the original root-safe cut-period program for this exact retained sum request. -/
 @[expose] def RequestedSample (comparison :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential) {target :
-  PreparedPrimitiveChargeBounds.Coordinate}
+  PrimitiveBank bank differential) {target :
+  Coordinate}
     (allocation :
       RequestedAllocation
       comparison target)
     (request : RequestedSumRequest
       comparison allocation) (minimumStage : Nat) :=
-  PreparedPeriodPrimitiveRequests.PeriodSample prepared.period.initial
+  PeriodSample prepared.period.initial
     (PreparedRefinementProgramCore.standardDifferentials genus)
     (PeriodMatrix.standardDifferential differential) request minimumStage
 
@@ -323,8 +325,8 @@ set_option genInjectivity false in
 
 All allocations, parts, numerical values and ownership equations remain tied to the original parent and domain banks. -/
 structure RequestedPeriod (comparison :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential) (target :
-  PreparedPrimitiveChargeBounds.Coordinate) (minimumStage : Nat) where
+  PrimitiveBank bank differential) (target :
+  Coordinate) (minimumStage : Nat) where
   /-- The cached scalar allocation for the original target, counts and movement mass. -/ allocation :
     RequestedAllocation comparison
     target
@@ -345,12 +347,12 @@ structure RequestedPeriod (comparison :
     comparison allocation parts request
   /-- The cached Gaussian sum of actual retained local primitive readings. -/ value : Data.Gaussian.Basic.Canonical
   /-- The value cache is exactly the sum of the original request-part readings. -/ value_eq : value =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (RequestBatch.values parts)
+    Sum.Basic.gaussianSum (RequestBatch.values parts)
   /-- The retained sufficiently late sample of the actual original root-safe period program. -/ sample :
     RequestedSample comparison
     allocation request minimumStage
   /-- The cached local value and original period sample satisfy the requested squared-norm target. -/ accurate :
-    Data.Gaussian.Norm.Basic.normSq (value - sample.sample) < target
+    Basic.normSq (value - sample.sample) < target
 
 constructive_injectivity RequestedPeriod
 
@@ -358,12 +360,12 @@ set_option genInjectivity false in
 /-- All scalar allocations and the polynomial floor are cached before any numerical primitive is constructed. A larger
 finite bank can select their common maximum, including a separately computed surface-refinement floor. -/
 structure ScalarRequest (comparison :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential) (target :
-  PreparedPrimitiveChargeBounds.Coordinate) where
+  PrimitiveBank bank differential) (target :
+  Coordinate) where
   /-- The cached scalar allocation for the original target, counts and movement mass. -/ allocation :
-    PreparedPrimitiveBatchBudget.BatchAllocation target bank.segments.parentCount bank.segments.count comparison.mass
+    BatchAllocation target bank.segments.parentCount bank.segments.count comparison.mass
   /-- The cached scalar piece budgets on every original assigned segment comparison. -/ budgets :
-    PrimitiveBudgets.Budgets (PeriodMatrix.standardDifferential differential) 0 allocation.pieceTarget bank.assigned
+    Budgets (PeriodMatrix.standardDifferential differential) 0 allocation.pieceTarget bank.assigned
     comparison.compared
   /-- The retained common sufficient polynomial stage selected before constructing local numerics. -/ minimum : Nat
   /-- The cached stage is exactly the maximum of the original segment budgets. -/ minimum_eq : minimum = Budgets.maximum
@@ -375,9 +377,9 @@ namespace ScalarRequest
 
 /-- Allocate the original target using the cached parent mass and counts, then cache every scalar segment budget and its
 exact common polynomial floor. -/
-@[expose] def build (comparison : Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank
-  bank differential) (target : PreparedPrimitiveChargeBounds.Coordinate) (positive : 0 < target) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank.ScalarRequest comparison target
+@[expose] def build (comparison : PrimitiveBank
+  bank differential) (target : Coordinate) (positive : 0 < target) :
+  ScalarRequest comparison target
   :=
   let allocation := BatchAllocation.build target positive bank.segments.parentCount bank.segments.count comparison.mass
     (comparison.mass_eq ▸ PreparedRefinementMovement.movementMass_nonnegative comparison.parents)
@@ -389,13 +391,13 @@ exact common polynomial floor. -/
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank in
 /-- Reuse the supplied shared face-primitive bank at a sufficient stage to satisfy every original segment budget. -/
 @[expose] def synchronize {comparison :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential} {target :
-  PreparedPrimitiveChargeBounds.Coordinate} (request :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank.ScalarRequest comparison target)
+  PrimitiveBank bank differential} {target :
+  Coordinate} (request :
+  ScalarRequest comparison target)
     {index : Nat} (later : request.minimum ≤ index)
-    (numerics : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index
+    (numerics : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index
       comparison.domains) :
-    Comparisons.Synchronized comparison.domains (PeriodMatrix.standardDifferential differential) 0 bank.assigned
+    Synchronized comparison.domains (PeriodMatrix.standardDifferential differential) 0 bank.assigned
       comparison.compared
       comparison.sharedDomains request.allocation.pieceTarget :=
   Synchronized.ofShared _ _ bank.assigned comparison.compared comparison.sharedDomains request.budgets
@@ -408,26 +410,26 @@ section
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank
 /-- Substitute the root name already retained by the period preparation. Using its type-level grid-vertex expression
 here would reexecute the cut polygon calculation just to recover the same root-name argument. -/
-@[expose] def sampleAtCachedRoot {count : Nat} {root : PreparedRefinementRootChains.Named} (cachedRoot :
-  PreparedRefinementRootChains.Named) (rootEq : cachedRoot = root)
+@[expose] def sampleAtCachedRoot {count : Nat} {root : Named} (cachedRoot :
+  Named) (rootEq : cachedRoot = root)
     (initial : PreparedRefinementRootEndpoints.RootClosedState curve source root) (targets : List
-      (Differentials.Basic.Differential genus)) (differential : Differentials.Basic.Differential genus)
-    (member : differential ∈ targets) {target : PreparedPrimitiveChargeBounds.Coordinate}
+      (Differential genus)) (differential : Differential genus)
+    (member : differential ∈ targets) {target : Coordinate}
     (request : PreparedControlledPrimitiveRequests.ControlledSumRequest (initial.state.parents.map
       (PreparedEdgeRecasting.recastCenteredEdge differential)) count target) (minimumStage : Nat) :
-    PreparedPeriodPrimitiveRequests.PeriodSample initial targets differential request minimumStage := by
+    PeriodSample initial targets differential request minimumStage := by
   subst root
   exact PeriodSample.acquire initial targets differential member request minimumStage
 
 /-- Acquire the original period sample using its already cached root owner and owner equality. -/
-@[expose] def sampleAtCachedRoot_for_request {count : Nat} {root : PreparedRefinementRootChains.Named} (cachedRoot :
-  PreparedRefinementRootChains.Named) (rootEq : cachedRoot = root)
+@[expose] def sampleAtCachedRoot_for_request {count : Nat} {root : Named} (cachedRoot :
+  Named) (rootEq : cachedRoot = root)
     (initial : PreparedRefinementRootEndpoints.RootClosedState curve source root) (targets : List
-      (Differentials.Basic.Differential genus)) (differential : Differentials.Basic.Differential genus)
-    (member : differential ∈ targets) {target : PreparedPrimitiveChargeBounds.Coordinate}
+      (Differential genus)) (differential : Differential genus)
+    (member : differential ∈ targets) {target : Coordinate}
     (request : PreparedControlledPrimitiveRequests.ControlledSumRequest (initial.state.parents.map
       (PreparedEdgeRecasting.recastCenteredEdge differential)) count target) (minimumStage : Nat) :
-    PreparedPeriodPrimitiveRequests.PeriodSample initial targets differential request minimumStage := by
+    PeriodSample initial targets differential request minimumStage := by
   subst root
   exact PeriodSample.acquire initial targets differential member request minimumStage
 
@@ -436,11 +438,11 @@ end
 /-- Assemble an already synchronized request. A larger caller may supply one shared numerical bank for several cycles
 and a surface without this constructor choosing a new index or rebuilding any local primitive. -/
 @[expose] def ofSynchronized (comparison :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential) {target :
-  PreparedPrimitiveChargeBounds.Coordinate}
-    (allocation : PreparedPrimitiveBatchBudget.BatchAllocation target bank.segments.parentCount bank.segments.count
+  PrimitiveBank bank differential) {target :
+  Coordinate}
+    (allocation : BatchAllocation target bank.segments.parentCount bank.segments.count
       comparison.mass)
-    (locals : Comparisons.Synchronized comparison.domains (PeriodMatrix.standardDifferential differential) 0
+    (locals : Synchronized comparison.domains (PeriodMatrix.standardDifferential differential) 0
       bank.assigned comparison.compared
       comparison.sharedDomains allocation.pieceTarget) (minimumStage : Nat) :
     RequestedPeriod comparison
@@ -464,8 +466,8 @@ and a surface without this constructor choosing a new index or rebuilding any lo
     assembled (parentsEq.trans comparison.original_parents)
   have primitiveEq : combined.primitiveSum = RequestBatch.primitiveSum parts :=
     ControlledSumRequest.castParents_primitiveSum assembled _
-  let value := Data.Gaussian.Norm.Sum.Basic.gaussianSum (RequestBatch.values parts)
-  have localError : Data.Gaussian.Norm.Basic.normSq (value - combined.primitiveSum) < allocation.periodTarget
+  let value := Sum.Basic.gaussianSum (RequestBatch.values parts)
+  have localError : Basic.normSq (value - combined.primitiveSum) < allocation.periodTarget
     := by
     rw [primitiveEq]
     have bounded := RequestBatch.error_le parts
@@ -476,40 +478,40 @@ and a surface without this constructor choosing a new index or rebuilding any lo
     prepared.period.closed.firstRoot prepared.period.closed.firstRoot_eq prepared.period.initial
     (PreparedRefinementProgramCore.standardDifferentials genus) (PeriodMatrix.standardDifferential differential)
     (PreparedRefinementProgramCore.standardDifferential_mem_standardDifferentials differential) combined minimumStage
-  have accurate : Data.Gaussian.Norm.Basic.normSq (value - sample.sample) < target := by
+  have accurate : Basic.normSq (value - sample.sample) < target := by
     have split : value - sample.sample = (value - combined.primitiveSum) + (combined.primitiveSum - sample.sample) := by
       ring1
     rw [split]
-    have bounded := Data.Gaussian.Norm.Bounds.normSq_add_le_two (value - combined.primitiveSum) (combined.primitiveSum -
+    have bounded := Bounds.normSq_add_le_two (value - combined.primitiveSum) (combined.primitiveSum -
       sample.sample)
     have sampleAccurate := sample.accurate
-    rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at sampleAccurate
+    rw [← Basic.normSq_eq_canonical] at sampleAccurate
     have paid := Fraction.Order.Arithmetic.add_lt_add_direct
       (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by
-          decide : (0 : PreparedPrimitiveChargeBounds.Coordinate) < 2) localError)
+          decide : (0 : Coordinate) < 2) localError)
       (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by
-          decide : (0 : PreparedPrimitiveChargeBounds.Coordinate) < 2) sampleAccurate)
+          decide : (0 : Coordinate) < 2) sampleAccurate)
     have total : 2 * allocation.periodTarget + 2 * allocation.periodTarget = target := by
       rw [allocation.periodTarget_eq]
       rw [show 2 * (target / 4) + 2 * (target / 4) = (target / 4) * 4 by ring1]
       exact Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
     apply bounded.trans_lt
     calc
-      2 * (Data.Gaussian.Norm.Basic.normSq (value - combined.primitiveSum) +
-        Data.Gaussian.Norm.Basic.normSq (combined.primitiveSum - sample.sample)) =
-          2 * Data.Gaussian.Norm.Basic.normSq (value - combined.primitiveSum) + 2 *
-            Data.Gaussian.Norm.Basic.normSq (combined.primitiveSum - sample.sample) := by ring1
+      2 * (Basic.normSq (value - combined.primitiveSum) +
+        Basic.normSq (combined.primitiveSum - sample.sample)) =
+          2 * Basic.normSq (value - combined.primitiveSum) + 2 *
+            Basic.normSq (combined.primitiveSum - sample.sample) := by ring1
       _ < target := paid.trans_eq total
   exact ⟨allocation, locals, parts, rfl, combined, primitiveEq, value, rfl, sample, accurate⟩
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank in
 /-- Supplied numerical data are retained exactly, not replaced by a new bank at an independently selected index. -/
 @[expose] def ScalarRequest.requestWith {comparison :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential} {target :
-  PreparedPrimitiveChargeBounds.Coordinate}
+  PrimitiveBank bank differential} {target :
+  Coordinate}
     (request : ScalarRequest
       comparison target) {index : Nat} (later : request.minimum ≤ index)
-    (numerics : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index
+    (numerics : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index
       comparison.domains)
     (minimumStage : Nat) :
       RequestedPeriod comparison
@@ -518,12 +520,12 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveCompar
 
 /-- The assembled controlled sum request on the actual original period parents. -/
 @[expose] def request (comparison :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential) (target :
-  PreparedPrimitiveChargeBounds.Coordinate) (positive : 0 < target) (minimumStage : Nat) :
+  PrimitiveBank bank differential) (target :
+  Coordinate) (positive : 0 < target) (minimumStage : Nat) :
     RequestedPeriod comparison
       target minimumStage :=
   let scalar :=
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank.ScalarRequest.build comparison
+    ScalarRequest.build comparison
     target positive
   let numerics := FacePrimitiveBank.build (PeriodMatrix.standardDifferential differential) scalar.minimum
     comparison.domains
@@ -533,21 +535,21 @@ section
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank
 /-- Assembly preserves the exact polynomial index of the supplied shared numerical bank. -/
 theorem ScalarRequest.requestWith_index {comparison :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential} {target :
-  PreparedPrimitiveChargeBounds.Coordinate}
+  PrimitiveBank bank differential} {target :
+  Coordinate}
     (request : ScalarRequest
       comparison target) {index : Nat} (later : request.minimum ≤ index)
-    (numerics : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index
+    (numerics : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index
       comparison.domains)
     (minimumStage : Nat) : (request.requestWith later numerics minimumStage).locals.index = index := rfl
 
 /-- Assembly retains the supplied shared numerical bank itself under erased dependent transport. -/
 theorem ScalarRequest.requestWith_numerics {comparison :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential} {target :
-  PreparedPrimitiveChargeBounds.Coordinate}
+  PrimitiveBank bank differential} {target :
+  Coordinate}
     (request : ScalarRequest
       comparison target) {index : Nat} (later : request.minimum ≤ index)
-    (numerics : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index
+    (numerics : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) index
       comparison.domains)
     (minimumStage : Nat) : HEq (request.requestWith later numerics minimumStage).locals.numerics numerics := HEq.rfl
 
@@ -555,32 +557,32 @@ end
 
 /-- Assembly retains the supplied synchronized local certificate exactly. -/
 theorem ofSynchronized_locals (comparison :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank bank differential) {target :
-  PreparedPrimitiveChargeBounds.Coordinate}
-    (allocation : PreparedPrimitiveBatchBudget.BatchAllocation target bank.segments.parentCount bank.segments.count
+  PrimitiveBank bank differential) {target :
+  Coordinate}
+    (allocation : BatchAllocation target bank.segments.parentCount bank.segments.count
       comparison.mass)
-    (locals : Comparisons.Synchronized comparison.domains (PeriodMatrix.standardDifferential differential) 0
+    (locals : Synchronized comparison.domains (PeriodMatrix.standardDifferential differential) 0
       bank.assigned comparison.compared
       comparison.sharedDomains allocation.pieceTarget) (minimumStage : Nat) :
     (comparison.ofSynchronized allocation locals minimumStage).locals = locals := rfl
 
 namespace RequestedPeriod
 
-variable {comparison : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank
-  bank differential} {target : Purelib.Riemann.Readings.PreparedPrimitiveChargeBounds.Coordinate} {minimumStage : Nat}
+variable {comparison : PrimitiveBank
+  bank differential} {target : Coordinate} {minimumStage : Nat}
 
 /-- The comparison uses one fixed four-value bank on each face/sheet, including every repeated occurrence and its
 original orientation. -/
 theorem value_eq_corners (result :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison
+  RequestedPeriod comparison
   target minimumStage) :
-    result.value = Data.Gaussian.Norm.Sum.Basic.gaussianSum (AssignedSegments.cornerIncrements
+    result.value = Sum.Basic.gaussianSum (AssignedSegments.cornerIncrements
       result.locals.numerics bank.assigned) := by
   rw [result.value_eq, result.parts_eq, CornerRequests.parts_values]
 
 /-- The retained sample is exactly the integral sample of the original prepared period program at its selected stage. -/
 theorem sample_eq_program (result :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison
+  RequestedPeriod comparison
   target minimumStage) :
     result.sample.sample = ((prepared.program differential).integral.model result.sample.stage).integralSample := by
   rw [result.sample.sample_eq]
@@ -590,9 +592,9 @@ theorem sample_eq_program (result :
 
 /-- No independently chosen surrogate period is used in the final bound. -/
 theorem program_accurate (result :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison
+  RequestedPeriod comparison
   target minimumStage) :
-    Data.Gaussian.Norm.Basic.normSq (result.value - ((prepared.program differential).integral.model
+    Basic.normSq (result.value - ((prepared.program differential).integral.model
       result.sample.stage).integralSample) < target := by
   rw [← result.sample_eq_program]
   exact result.accurate

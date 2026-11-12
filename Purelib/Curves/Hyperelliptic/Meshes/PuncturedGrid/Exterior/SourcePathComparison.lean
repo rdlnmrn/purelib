@@ -66,6 +66,10 @@ import Purelib.Riemann.Periods.PreparedGridPeriodPrograms
 import Purelib.Riemann.RootContinuation.PreparedGridRootClosure
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-! Compare retained physical runs with the same closed bank's source paths.
@@ -137,7 +141,7 @@ private theorem reverse_total (values : List Stokes.PrimitivePoint) : PairedIncr
   induction values with
   | nil => rfl
   | cons first rest ih =>
-    rw [Data.List.Reverse.reverse_cons, PairedAreaBlocks.total_append,
+    rw [Reverse.reverse_cons, PairedAreaBlocks.total_append,
       singleton_total,
       ih]
     apply congrArg₂ PrimitivePoint.mk <;> exact add_comm _ _
@@ -182,7 +186,7 @@ private theorem reverse_area (values : List Stokes.PrimitivePoint) : PairedIncre
   induction values with
   | nil => change (0 : InverseRootPolynomial.Gaussian) = -0; ring1
   | cons first rest ih =>
-    rw [Data.List.Reverse.reverse_cons, PairedAreaBlocks.area_append,
+    rw [Reverse.reverse_cons, PairedAreaBlocks.area_append,
       reverse_total,
       singleton_total,
       ih]
@@ -193,8 +197,8 @@ private theorem reverse_area (values : List Stokes.PrimitivePoint) : PairedIncre
     ring1
 
 /-- Reversing the dyadic sample interval negates its original bilinear area. -/
-private theorem dyadic_area_reverse (values : InverseRootPolynomial.Coordinate → Stokes.PrimitivePoint) (depth : Nat)
-  (first last : InverseRootPolynomial.Coordinate) :
+private theorem dyadic_area_reverse (values : Coordinate → Stokes.PrimitivePoint) (depth : Nat)
+  (first last : Coordinate) :
     DyadicBilinearBoundaryRibbon.dyadicArea values depth last first =
       -DyadicBilinearBoundaryRibbon.dyadicArea values depth first last := by
   induction depth generalizing first last with
@@ -202,7 +206,7 @@ private theorem dyadic_area_reverse (values : InverseRootPolynomial.Coordinate �
   | succ depth ih =>
     have middle : PreparedBoxPartitions.midpoint last first = PreparedBoxPartitions.midpoint first last := by
       dsimp only [PreparedBoxPartitions.midpoint, -eq_self, -iff_self]
-      apply Fraction.Field.mul_right_cancel_of_ne (by decide : (2 : InverseRootPolynomial.Coordinate) ≠ 0)
+      apply Fraction.Field.mul_right_cancel_of_ne (by decide : (2 : Coordinate) ≠ 0)
       rw [add_mul, add_mul, Fraction.Field.div_mul_cancel_of_ne _ _ (by decide),
         Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)]
       ring1
@@ -211,7 +215,7 @@ private theorem dyadic_area_reverse (values : InverseRootPolynomial.Coordinate �
     ring1
 
 /-- Normalizing the original source parameter to the retained orientation gives the corresponding signed dyadic area. -/
-private theorem normalized_source_area (values : InverseRootPolynomial.Coordinate → Stokes.PrimitivePoint) (forward :
+private theorem normalized_source_area (values : Coordinate → Stokes.PrimitivePoint) (forward :
   Bool) (depth : Nat) :
     PairedIncrementArea.area (DyadicPairedPrimitivePaths.increments (fun parameter => values
       (OrientedBounds.orientParameter forward parameter)) depth 0 1) =
@@ -225,7 +229,7 @@ private theorem normalized_source_area (values : InverseRootPolynomial.Coordinat
     have affine := (DyadicBilinearBoundaryRibbon.dyadicArea_congr
       (fun parameter => congrArg values (show 1 - parameter = 1 + (-1) * parameter by ring1)) depth 0 1).trans
       (DyadicBilinearBoundaryRibbon.dyadicArea_affine values 1 (-1) depth 0 1)
-    simp only [mul_zero, mul_one, add_zero, show (1 : InverseRootPolynomial.Coordinate) + -1 = 0 by ring1, -eq_self,
+    simp only [mul_zero, mul_one, add_zero, show (1 : Coordinate) + -1 = 0 by ring1, -eq_self,
       -iff_self] at affine
     rw [DyadicPairedPrimitivePaths.increments_area, DyadicPairedPrimitivePaths.increments_area,
       affine,
@@ -245,34 +249,34 @@ private theorem orient_blocks (blocks : List (List Stokes.PrimitivePoint)) :
   induction blocks with
   | nil => rfl
   | cons block rest ih =>
-    rw [Data.List.Reverse.reverse_cons, Data.List.Map.map_append, Data.List.Flatten.flatten_append]
-    rw [List.map_cons, List.map_nil, List.flatten_cons, List.flatten_nil, Data.List.Append.append_nil,
+    rw [Reverse.reverse_cons, Map.map_append, Flatten.flatten_append]
+    rw [List.map_cons, List.map_nil, List.flatten_cons, List.flatten_nil, Append.append_nil,
       List.flatten_cons]
     rw [ih]
     simp only
       [orientIncrements,
-      if_neg Bool.false_ne_true, Data.List.Reverse.reverse_append, Data.List.Map.map_append, -eq_self, -iff_self]
+      if_neg Bool.false_ne_true, Reverse.reverse_append, Map.map_append, -eq_self, -iff_self]
     rfl
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {program : ExteriorProgram lifted
     differential} {prepared :
-    ExteriorProgram.SurfacePreparation
+    SurfacePreparation
     regular domains program}
   {requested : Coordinate} {minimum : Nat}
 
 /-- The retained source-path cache contains exactly one path per original parent plan. -/
 theorem sourcePaths_length (comparison : prepared.ClosedBoundaryComparison other requested minimum) :
     comparison.sourcePaths.length = comparison.original.plans.length :=
-  Data.List.OfFn.Basic.length_ofFn
+  OfFn.Basic.length_ofFn
 
 /-- Read the original retained parent reference sample's actual dyadic depth. -/
 @[expose] def sourceReferenceDepth (comparison : prepared.ClosedBoundaryComparison other requested minimum)
@@ -299,7 +303,7 @@ private theorem source_reference_area (comparison : prepared.ClosedBoundaryCompa
       DyadicPairedPrimitivePaths.increments (comparison.sourceValues index) (comparison.sourceReferenceDepth index) 0 1
         := by
     dsimp only [ClosedBoundaryComparison.sourcePaths, SourceComparison.sourceReferencePaths, -eq_self, -iff_self]
-    rw [Data.List.OfFn.Basic.getElem_ofFn]
+    rw [OfFn.Basic.getElem_ofFn]
     rfl
   exact
     (normalized_source_area
@@ -308,18 +312,18 @@ private theorem source_reference_area (comparison : prepared.ClosedBoundaryCompa
       readback).symm
 
 /-- Changing the source orientation preserves the closed unit parameter interval. -/
-private theorem orient_unit (forward : Bool) {parameter : InverseRootPolynomial.Coordinate} (inside : 0 ≤ parameter ∧
+private theorem orient_unit (forward : Bool) {parameter : Coordinate} (inside : 0 ≤ parameter ∧
   parameter ≤ 1) :
     0 ≤ OrientedBounds.orientParameter forward parameter ∧ OrientedBounds.orientParameter forward parameter ≤ 1 := by
   cases forward with
   | true => exact inside
-  | false => exact ⟨Fraction.Order.Arithmetic.sub_nonneg_direct inside.2,
-      (Fraction.Order.Arithmetic.sub_le_sub_direct le_rfl inside.1).trans_eq ((show ∀ x : Fraction.Rational, x - 0 = x
+  | false => exact ⟨Arithmetic.sub_nonneg_direct inside.2,
+      (Arithmetic.sub_le_sub_direct le_rfl inside.1).trans_eq ((show ∀ x : Fraction.Rational, x - 0 = x
         by intro x; ring1) _)⟩
 
 /-- The original paired source-density bound controls increments in either retained orientation. -/
 private theorem source_oriented_increment (comparison : prepared.ClosedBoundaryComparison other requested minimum)
-    (forward : Bool) (index : Fin comparison.original.plans.length) (a b : InverseRootPolynomial.Coordinate)
+    (forward : Bool) (index : Fin comparison.original.plans.length) (a b : Coordinate)
     (al : 0 ≤ a) (au : a ≤ 1) (bl : 0 ≤ b) (bu : b ≤ 1) :
     PrimitivePoint.Bounded
       ((comparison.sourceValues index (OrientedBounds.orientParameter forward b)).sub
@@ -342,23 +346,23 @@ private theorem source_oriented_increment (comparison : prepared.ClosedBoundaryC
     | true => rfl
     | false => change ((1 - b) - (1 - a))^2 = _; ring1
   rw [step] at left right
-  have leftBound := left.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (Fraction.Order.Basic.le_max_left (PairedParentCharts.ChartParent comparison.original index).data.sourceSlope
+  have leftBound := left.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Basic.le_max_left (PairedParentCharts.ChartParent comparison.original index).data.sourceSlope
       (PairedParentCharts.ChartParent comparison.original index).otherData.sourceSlope)
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _))
-  have rightBound := right.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (Fraction.Order.Basic.le_max_right (PairedParentCharts.ChartParent comparison.original index).data.sourceSlope
+    (Arithmetic.sq_nonneg_direct _))
+  have rightBound := right.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Basic.le_max_right (PairedParentCharts.ChartParent comparison.original index).data.sourceSlope
       (PairedParentCharts.ChartParent comparison.original index).otherData.sourceSlope)
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+    (Arithmetic.sq_nonneg_direct _))
   constructor
-  · change Fraction.Order.Basic.LessEqual _ _ at leftBound ⊢
-    simp only [Data.Gaussian.Norm.Basic.normSq_eq_canonical, -eq_self, -iff_self] at leftBound
+  · change Basic.LessEqual _ _ at leftBound ⊢
+    simp only [Basic.normSq_eq_canonical, -eq_self, -iff_self] at leftBound
     convert leftBound using 1
     rfl
     simp only [ClosedBoundaryComparison.sourceDensity, -eq_self, -iff_self]
     rfl
-  · change Fraction.Order.Basic.LessEqual _ _ at rightBound ⊢
-    simp only [Data.Gaussian.Norm.Basic.normSq_eq_canonical, -eq_self, -iff_self] at rightBound
+  · change Basic.LessEqual _ _ at rightBound ⊢
+    simp only [Basic.normSq_eq_canonical, -eq_self, -iff_self] at rightBound
     convert rightBound using 1
     rfl
     simp only [ClosedBoundaryComparison.sourceDensity, -eq_self, -iff_self]
@@ -368,38 +372,38 @@ private theorem source_oriented_increment (comparison : prepared.ClosedBoundaryC
 private theorem source_reference_rate (comparison : prepared.ClosedBoundaryComparison other requested minimum)
     (index : Fin comparison.original.plans.length) :
     16 * (comparison.sourceDensity index)^2 * ((1 / 2 :
-      InverseRootPolynomial.Coordinate)^(comparison.sourceReferenceDepth index))^2 ≤
+      Coordinate)^(comparison.sourceReferenceDepth index))^2 ≤
       (comparison.entries.get index).referenceError :=
   (comparison.entries.get index).reference_rate
 
 /-- Pay one full parent resampling against the actual original-bank path. The original reference request already pays
 its sampling error; only the physical mesh width remains to be selected by the retained surface. -/
 theorem source_run_resampling (comparison : prepared.ClosedBoundaryComparison other requested minimum)
-    (forward : Bool) (index : Fin comparison.original.plans.length) {points : List InverseRootPolynomial.Coordinate}
-      {width : InverseRootPolynomial.Coordinate}
+    (forward : Bool) (index : Fin comparison.original.plans.length) {points : List Coordinate}
+      {width : Coordinate}
     (actual : List Stokes.PrimitivePoint)
     (readback : actual = SourceListResampling.increments
       (fun parameter => comparison.sourceValues index (OrientedBounds.orientParameter forward parameter)) 0 points)
     (chain : SourceResampling.Chain 0 points 1) (steps : SourceResampling.widths 0 points width) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area actual - comparison.sourceReferenceArea forward
+    Basic.normSq (PairedIncrementArea.area actual - comparison.sourceReferenceArea forward
       index) ≤
       max (16 * (comparison.sourceDensity index)^2 * width^2) (comparison.entries.get index).referenceError := by
   have estimate := SourceDyadicResampling.dyadic_resampling_bound _
 
       (source_oriented_increment
       comparison forward index) chain steps (comparison.sourceReferenceDepth index)
-  have actualBound := (congrArg₂ (fun left right => Data.Gaussian.Norm.Basic.normSq (left - right))
+  have actualBound := (congrArg₂ (fun left right => Basic.normSq (left - right))
     (congrArg PairedIncrementArea.area readback)
       (source_reference_area
       comparison forward index).symm).trans_le estimate
-  rcases le_total width ((1 / 2 : InverseRootPolynomial.Coordinate)^(comparison.sourceReferenceDepth index)) with
+  rcases le_total width ((1 / 2 : Coordinate)^(comparison.sourceReferenceDepth index)) with
     smaller | larger
-  · rw [Fraction.Order.Basic.max_eq_right smaller] at actualBound
+  · rw [Basic.max_eq_right smaller] at actualBound
     exact actualBound.trans
       ((source_reference_rate
-      comparison index).trans (Fraction.Order.Basic.le_max_right _ _))
-  · rw [Fraction.Order.Basic.max_eq_left larger] at actualBound
-    exact actualBound.trans (Fraction.Order.Basic.le_max_left _ _)
+      comparison index).trans (Basic.le_max_right _ _))
+  · rw [Basic.max_eq_left larger] at actualBound
+    exact actualBound.trans (Basic.le_max_left _ _)
 
 /-- The retained original source path's total is its complete forward parent endpoint increment. -/
 private theorem sourcePath_total (comparison : prepared.ClosedBoundaryComparison other requested minimum)
@@ -409,7 +413,7 @@ private theorem sourcePath_total (comparison : prepared.ClosedBoundaryComparison
       comparison).symm)) =
       SourceChordRuns.sourceParentIncrement comparison true index := by
   dsimp only [ClosedBoundaryComparison.sourcePaths, SourceComparison.sourceReferencePaths, -eq_self, -iff_self]
-  rw [Data.List.OfFn.Basic.getElem_ofFn]
+  rw [OfFn.Basic.getElem_ofFn]
   exact DyadicPairedPrimitivePaths.increments_total _ _ 0 1
 
 /-- The oriented retained source path's total is its original parent endpoint increment in the same direction. -/
@@ -460,7 +464,7 @@ private theorem sourceOccurrenceBlocks_areas (comparison : prepared.ClosedBounda
         (comparison.sourceReferenceArea forward) := by
   rw
     [sourceOccurrenceBlocks,
-    Data.List.Map.map_map]
+    Map.map_map]
   apply Map.map_congr_left
   intro index _
   cases forward with
@@ -470,8 +474,8 @@ private theorem sourceOccurrenceBlocks_areas (comparison : prepared.ClosedBounda
 
 /-- The finite sum of the original scalar differences is the difference of their finite sums. -/
 private theorem sum_differences {α : Type} (entries : List α) (left right : α → InverseRootPolynomial.Gaussian) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map (fun entry => left entry - right entry)) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map left) - Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    Sum.Basic.gaussianSum (entries.map (fun entry => left entry - right entry)) =
+      Sum.Basic.gaussianSum (entries.map left) - Sum.Basic.gaussianSum
         (entries.map right) := by
   induction entries with
   | nil => change (0 : InverseRootPolynomial.Gaussian) = 0 - 0; ring1
@@ -484,46 +488,46 @@ private theorem sum_differences {α : Type} (entries : List α) (left right : α
 only once. -/
 theorem source_runs_resampling_eq (comparison : prepared.ClosedBoundaryComparison other requested minimum)
     (outer : Fin prepared.occurrences.length) (forward : Bool) {vertical : Bool}
-    (runs : List (SourceChordRuns.SourceChordRun comparison vertical))
+    (runs : List (SourceChordRun comparison vertical))
     (ordered : runs.map SourceChordRun.parent =
       if forward then comparison.parentIndices outer else (comparison.parentIndices outer).reverse) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (runs.map (fun run => PairedIncrementArea.area run.values -
+    Sum.Basic.gaussianSum (runs.map (fun run => PairedIncrementArea.area run.values -
       comparison.sourceReferenceArea forward run.parent)) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum ((runs.map SourceChordRun.values).map PairedIncrementArea.area) -
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum ((comparison.sourceOccurrenceBlocks outer forward).map
+      Sum.Basic.gaussianSum ((runs.map SourceChordRun.values).map PairedIncrementArea.area) -
+        Sum.Basic.gaussianSum ((comparison.sourceOccurrenceBlocks outer forward).map
           PairedIncrementArea.area) := by
   have references := congrArg (List.map (comparison.sourceReferenceArea forward)) ordered
-  rw [Data.List.Map.map_map] at references
+  rw [Map.map_map] at references
   change runs.map (fun run => comparison.sourceReferenceArea forward run.parent) = _ at references
   rw
     [sum_differences,
     references, ←
     sourceOccurrenceBlocks_areas,
-    Data.List.Map.map_map]
+    Map.map_map]
   rfl
 
 /-- The exact original-parent order identifies the reference sum. Only the fixed parent-run count is paid, never the
 number of fine trace vertices. -/
 theorem source_runs_resampling_bound (comparison : prepared.ClosedBoundaryComparison other requested minimum)
     (outer : Fin prepared.occurrences.length) (forward : Bool) {vertical : Bool}
-    (runs : List (SourceChordRuns.SourceChordRun comparison vertical))
+    (runs : List (SourceChordRun comparison vertical))
     (ordered : runs.map SourceChordRun.parent =
       if forward then comparison.parentIndices outer else (comparison.parentIndices outer).reverse)
-    {error : InverseRootPolynomial.Coordinate}
-    (bounds : ∀ run ∈ runs, Data.Gaussian.Norm.Basic.normSq
+    {error : Coordinate}
+    (bounds : ∀ run ∈ runs, Basic.normSq
       (PairedIncrementArea.area run.values - comparison.sourceReferenceArea forward run.parent) ≤ error) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Data.Gaussian.Norm.Sum.Basic.gaussianSum ((runs.map SourceChordRun.values).map PairedIncrementArea.area) -
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum ((comparison.sourceOccurrenceBlocks outer forward).map
+    Basic.normSq
+      (Sum.Basic.gaussianSum ((runs.map SourceChordRun.values).map PairedIncrementArea.area) -
+        Sum.Basic.gaussianSum ((comparison.sourceOccurrenceBlocks outer forward).map
           PairedIncrementArea.area)) ≤
-      (runs.length : InverseRootPolynomial.Coordinate)^2 * error := by
-  have estimate := Data.Gaussian.Norm.Sum.Bounds.normSq_sum_le
+      (runs.length : Coordinate)^2 * error := by
+  have estimate := Sum.Bounds.normSq_sum_le
     (runs.map (fun run => PairedIncrementArea.area run.values - comparison.sourceReferenceArea forward run.parent))
       error (by
       intro value member
       obtain ⟨run, present, rfl⟩ := Map.mem_map.mp member
       exact bounds run present)
-  rw [comparison.source_runs_resampling_eq outer forward runs ordered, Data.List.Map.length_map] at estimate
+  rw [comparison.source_runs_resampling_eq outer forward runs ordered, Map.length_map] at estimate
   exact estimate.trans_eq (by ring1)
 
 /-- The retained occurrence blocks have exactly the original parent endpoint totals in their oriented order. -/
@@ -534,7 +538,7 @@ theorem sourceOccurrenceBlocks_totals (comparison : prepared.ClosedBoundaryCompa
         (SourceChordRuns.sourceParentIncrement comparison forward) := by
   rw
     [sourceOccurrenceBlocks,
-    Data.List.Map.map_map]
+    Map.map_map]
   exact Map.map_congr_left (fun index _ =>
     sourcePath_oriented_total
     comparison forward index)
@@ -556,7 +560,7 @@ private theorem sourceOccurrenceBlocks_reverse
       ((comparison.parentIndices outer).map read).reverse.map
         (orientIncrements
         false) := by
-    rw [← Data.List.Reverse.map_reverse, Data.List.Map.map_map]
+    rw [← Reverse.map_reverse, Map.map_map]
     rfl
   exact (congrArg List.flatten reversed).trans
     (orient_blocks
@@ -607,8 +611,8 @@ need not be equal. -/
 theorem source_total_ofFn
     (comparison : prepared.ClosedBoundaryComparison other requested minimum)
     (outer : Fin prepared.occurrences.length) (forward : Bool)
-    {vertical : Bool} {count : Nat} {source : Fin count → SourceChordRuns.StoredSourceChord comparison vertical}
-    (grouped : SourceChordRuns.SourceChordGrouping comparison vertical (List.ofFn source))
+    {vertical : Bool} {count : Nat} {source : Fin count → StoredSourceChord comparison vertical}
+    (grouped : SourceChordGrouping comparison vertical (List.ofFn source))
     (totals : (grouped.runs.map SourceChordRun.values).map PairedIncrementArea.total =
       (if forward then comparison.parentIndices outer else (comparison.parentIndices outer).reverse).map
         (SourceChordRuns.sourceParentIncrement comparison forward)) :
@@ -627,13 +631,13 @@ parent totals. -/
 theorem sourceOccurrenceBlocks_area (comparison : prepared.ClosedBoundaryComparison other requested minimum)
     (outer : Fin prepared.occurrences.length) (forward : Bool) :
     PairedIncrementArea.area (comparison.sourceOccurrenceBlocks outer forward).flatten =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum ((comparison.sourceOccurrenceBlocks outer forward).map
+      Sum.Basic.gaussianSum ((comparison.sourceOccurrenceBlocks outer forward).map
         PairedIncrementArea.area) +
         PairedIncrementArea.area ((if forward then comparison.parentIndices outer else (comparison.parentIndices
           outer).reverse).map
           (SourceChordRuns.sourceParentIncrement comparison forward)) :=
   (PairedAreaBlocks.area_flatten _).trans
-    (congrArg (fun totals => Data.Gaussian.Norm.Sum.Basic.gaussianSum ((comparison.sourceOccurrenceBlocks outer
+    (congrArg (fun totals => Sum.Basic.gaussianSum ((comparison.sourceOccurrenceBlocks outer
       forward).map PairedIncrementArea.area) + PairedIncrementArea.area totals)
       (comparison.sourceOccurrenceBlocks_totals outer forward))
 
@@ -641,15 +645,15 @@ theorem sourceOccurrenceBlocks_area (comparison : prepared.ClosedBoundaryCompari
 theorem source_area_difference (comparison : prepared.ClosedBoundaryComparison other requested minimum)
     (outer : Fin prepared.occurrences.length) (forward : Bool) (blocks : List (List Stokes.PrimitivePoint)) (source :
       List Stokes.PrimitivePoint)
-    (regrouped : PairedIncrementArea.area source = Data.Gaussian.Norm.Sum.Basic.gaussianSum (blocks.map
+    (regrouped : PairedIncrementArea.area source = Sum.Basic.gaussianSum (blocks.map
       PairedIncrementArea.area) +
       PairedIncrementArea.area ((if forward then comparison.parentIndices outer else (comparison.parentIndices
         outer).reverse).map
         (SourceChordRuns.sourceParentIncrement comparison forward))) :
     PairedIncrementArea.area source - PairedIncrementArea.area (comparison.sourceOccurrenceBlocks outer forward).flatten
       =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (blocks.map PairedIncrementArea.area) -
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum ((comparison.sourceOccurrenceBlocks outer forward).map
+      Sum.Basic.gaussianSum (blocks.map PairedIncrementArea.area) -
+        Sum.Basic.gaussianSum ((comparison.sourceOccurrenceBlocks outer forward).map
         PairedIncrementArea.area) := by
   rw [regrouped, comparison.sourceOccurrenceBlocks_area outer forward]
   ring1

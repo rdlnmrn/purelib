@@ -35,8 +35,8 @@ same displayed lifted cycle and exposed through one finite request table.
 
 namespace Purelib.Curves.Legendre.Periods.Jets.Basic.SynchronizedPeriodJet
 
-/-- The six actual productive channels, in value/first/second and then `a`/`b` order. -/
-def channels {parameter :
+/-- The six productive channels in value/first/second order, each with differential indices zero and one. -/
+def _root_.Purelib.Curves.Legendre.Periods.Jets.Basic.SynchronizedPeriodJet.channels {parameter :
   Data.Gaussian.Basic.Canonical}
     {frame : Paths.Frame parameter}
     (jet : Jets.Basic.SynchronizedPeriodJet frame) : List Coherent.CoherentNamed :=

@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "sources": [
+    {
+      "module": "Lean.Meta.AbstractNestedProofs",
+      "source": "src/lean/Lean/Meta/AbstractNestedProofs.lean",
+      "original_source_sha256": "0c15c160c399770e90c209bfd23944855dd888811ab7cf4aa0a3e81ec7bf92df",
+      "patch": "frontend/Lean/Meta/AbstractNestedProofs.patch",
+      "patch_sha256": "c28b8bf60d8361ab2b0ea2b641a8975dc08be5fb5ac6d42cef08d0996a3105ed",
+      "candidate_source_sha256": "ce2989c1e07f3c333d7eb3e9eaba2f6423088652e9a1689c3cba5bcd8b003121",
+      "archive_member": "AbstractNestedProofs.c.o.export",
+      "archive_instance": 1,
+      "archive_member_count": 1,
+      "initializer": "initialize_Lean_Meta_AbstractNestedProofs",
+      "original_member_sha256": "42834899256b0023b24f9065edb404bd64d3e4a6832c1d015e70b18ce3d4ff55"
+    },
+    {
+      "module": "Lean.Compiler.LCNF.Types",
+      "source": "src/lean/Lean/Compiler/LCNF/Types.lean",
+      "original_source_sha256": "66faec7a6974d2ab29b302a06ceed44d5af1c40f009ac700a088eec6c1f8d0ae",
+      "patch": "frontend/Lean/Compiler/LCNF/Types.patch",
+      "patch_sha256": "c11e582e6d680ff2dec629aed76f70e665bcda465be5260e6e67a57dc33f69e1",
+      "candidate_source_sha256": "7ad5a9ff2f326a112dccb902671193c1ec9e8fc3bff2cfb877930907b9e57ab8",
+      "archive_member": "Types.c.o.export",
+      "archive_instance": 6,
+      "archive_member_count": 17,
+      "initializer": "initialize_Lean_Compiler_LCNF_Types",
+      "original_member_sha256": "10b7d0cbad210496a3e5f226e45d90ed975f9c3b5c0db67272fde710e89130a7"
+    }
+  ],
+  "driver": "core-toolchain/PrivateLeanCLI.lean.in",
+  "driver_sha256": "062df7edd859021669f8a41b02351a344bb9ef54e08fdec9018ddd18916e7a6b"
+}

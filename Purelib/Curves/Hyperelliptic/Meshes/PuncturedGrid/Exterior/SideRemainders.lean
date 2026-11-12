@@ -71,96 +71,96 @@ open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {cuts : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
-    {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {cuts : RegularDomainMeshes.RegularMeshes.CommonCuts domains} {coarseDepth : Nat}
+    {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet}
   {meshTarget : Fraction.Rational} {i j : Fin genus} {stage : Nat} {cache :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
-  {request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
+    RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  {request : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+    RegularDomainMeshes.RegularMeshes.build domains cuts sheet coarseDepth) fixed
     meshTarget}
 
 namespace SurfaceOccurrence
 
 /-- The actual oriented mesh side retained by this original exterior surface occurrence. -/
 @[expose] def sideOccurrence (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-  regular domains differential) : Hyperelliptic.Meshes.PuncturedGrid.SegmentSideSources.LiftedMesh.SideOccurrence
+  SurfaceOccurrence
+  regular domains differential) : SegmentSideSources.LiftedMesh.SideOccurrence
   lifted.mesh :=
-  (Hyperelliptic.Meshes.PuncturedGrid.SegmentSideSources.LiftedMesh.SegmentFace.sideOccurrence occurrence.placement).val
+  (SegmentSideSources.LiftedMesh.SegmentFace.sideOccurrence occurrence.placement).val
 
 /-- The retained mesh side has the exact source edge of the original exterior placement. -/
 theorem side_source (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  SurfaceOccurrence
   regular domains differential) :
     occurrence.sideOccurrence.source = occurrence.placement.location.sourceEdge :=
-  (Hyperelliptic.Meshes.PuncturedGrid.SegmentSideSources.LiftedMesh.SegmentFace.sideOccurrence
+  (SegmentSideSources.LiftedMesh.SegmentFace.sideOccurrence
     occurrence.placement).property
 
 /-- The original oriented fine-side area minus its retained source-chord contribution. -/
 @[expose] def fineRemainder (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  SurfaceOccurrence
   regular domains differential)
     (perimeters : Matched.FacePerimeters (request := request)
       cache.normalize i j)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh)
-      (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh)
+      (right : TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
       : Gaussian :=
-  Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.occurrenceFineArea perimeters
+  SideOccurrenceReadings.LiftedPuncturedGrid.occurrenceFineArea perimeters
     occurrence.sideOccurrence -
-    Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left right
+    HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left right
     occurrence.placement.location.sourceEdge
 
 /-- The exterior fine remainder equals the side remainder with its original retained orientation. -/
 theorem fineRemainder_eq (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  SurfaceOccurrence
   regular domains differential)
     (perimeters : Matched.FacePerimeters (request := request)
       cache.normalize i j)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh)
-      (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh)
+      (right : TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
       :
     occurrence.fineRemainder perimeters left right =
-      Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence.oriented
+      SideOccurrenceReadings.BranchCellBank.LiftedMesh.SideOccurrence.oriented
       occurrence.sideOccurrence
-      (Hyperelliptic.Meshes.PuncturedGrid.HoleAreaRemainder.sideAreaRemainder perimeters
+      (HoleAreaRemainder.sideAreaRemainder perimeters
         occurrence.sideOccurrence.position occurrence.sideOccurrence.sheet occurrence.sideOccurrence.side) := by
   unfold
     fineRemainder
   rw [← occurrence.side_source]
-  exact Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.occurrence_remainder perimeters
+  exact SideOccurrenceReadings.LiftedPuncturedGrid.occurrence_remainder perimeters
     occurrence.sideOccurrence left right
 
 /-- The paid endpoint request bounds the original fine remainder against the centered area on the same side occurrence.
 -/
 theorem centered_error (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  SurfaceOccurrence
   regular domains differential)
     {error : Fraction.Rational} (endpoints :
       PerimeterEndpointRequest fixed i j error) (later :
       endpoints.index ≤ stage)
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.RequestedHoleCentering.CenteredPerimeters request cache i j)
+    (samples : RequestedHoleCentering.CenteredPerimeters request cache i j)
     (perimeters : Matched.FacePerimeters (request := request)
       cache.normalize i j)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh)
-      (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh)
+      (right : TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
       :
-    Data.Gaussian.Norm.Basic.normSq (occurrence.fineRemainder perimeters left right -
-      Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.CenteredPerimeters.occurrenceArea
+    Gaussian.Norm.Basic.normSq (occurrence.fineRemainder perimeters left right -
+      SideOccurrenceReadings.LiftedPuncturedGrid.CenteredPerimeters.occurrenceArea
       samples occurrence.sideOccurrence) ≤ error := by
-  have transport := congrArg (fun source => Data.Gaussian.Norm.Basic.normSq
-    (Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.occurrenceFineArea perimeters
+  have transport := congrArg (fun source => Gaussian.Norm.Basic.normSq
+    (SideOccurrenceReadings.LiftedPuncturedGrid.occurrenceFineArea perimeters
     occurrence.sideOccurrence -
-    Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left right source -
-      Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.CenteredPerimeters.occurrenceArea
+    HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left right source -
+      SideOccurrenceReadings.LiftedPuncturedGrid.CenteredPerimeters.occurrenceArea
       samples occurrence.sideOccurrence)) occurrence.side_source
   exact transport.symm.trans_le
     (SideOccurrenceReadings.LiftedPuncturedGrid.PerimeterEndpointRequest.occurrence_bound
@@ -172,7 +172,7 @@ namespace AllSurfacePreparation
 /-- The side sources project to the literal original exterior word, preserving
 both laps, component order and every retained occurrence. -/
 theorem sideSources_project (prepared :
-  ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
   regular domains differential) :
     prepared.occurrences.map (fun occurrence => occurrence.sideOccurrence.source.project
       lifted.mesh.triangulation.faces) =
@@ -180,7 +180,7 @@ theorem sideSources_project (prepared :
   have equal : prepared.occurrences.map (fun occurrence => occurrence.sideOccurrence.source.project
     lifted.mesh.triangulation.faces) =
       prepared.occurrences.map (fun occurrence => occurrence.placement.indexed) := by
-    apply Data.List.Map.map_congr_left
+    apply List.Map.map_congr_left
     intro occurrence _
     exact (congrArg (fun source => source.project lifted.mesh.triangulation.faces) occurrence.side_source).trans
       occurrence.placement.location.sourceEdge_project
@@ -188,32 +188,32 @@ theorem sideSources_project (prepared :
 
 /-- Sum the original fine-side remainders in the retained exterior occurrence order. -/
 @[expose] def fineRemainder (prepared :
-  ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
   regular domains differential)
     (perimeters : Matched.FacePerimeters (request := request)
       cache.normalize i j)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh)
-      (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh)
+      (right : TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
       : Gaussian :=
-  Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.occurrences.map (fun occurrence => occurrence.fineRemainder
+  Gaussian.Norm.Sum.Basic.gaussianSum (prepared.occurrences.map (fun occurrence => occurrence.fineRemainder
     perimeters left right))
 
 /-- Sum the centered original side areas over the exact retained exterior occurrences. -/
 @[expose] def centeredSideArea (prepared :
-  ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
   regular domains differential)
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.RequestedHoleCentering.CenteredPerimeters request cache i j) :
+    (samples : RequestedHoleCentering.CenteredPerimeters request cache i j) :
       Gaussian :=
-  Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.occurrences.map (fun occurrence =>
-    Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.CenteredPerimeters.occurrenceArea
+  Gaussian.Norm.Sum.Basic.gaussianSum (prepared.occurrences.map (fun occurrence =>
+    SideOccurrenceReadings.LiftedPuncturedGrid.CenteredPerimeters.occurrenceArea
     samples occurrence.sideOccurrence))
 
 set_option genInjectivity false in
 /-- Count and allowance depend only on the original cap occurrence list. -/
 structure SideRemainderRequest (prepared :
-  ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
   regular domains differential)
-    (fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+    (fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
       sheet) (i j : Fin genus) (target : Fraction.Rational) where
   /-- The requested complete exterior remainder target is positive. -/ positive : 0 < target
   /-- The cached original exterior occurrence count. -/ count : Nat
@@ -228,17 +228,17 @@ constructive_injectivity SideRemainderRequest
 
 namespace SideRemainderRequest
 variable {prepared :
-  ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
   regular domains differential} {target : Fraction.Rational}
 
 /-- Allocate one endpoint allowance from the complete original exterior occurrence count. -/
 @[expose] def build (prepared :
-  ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
   regular domains differential)
-    (fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+    (fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
       sheet) (i j : Fin genus) (target : Fraction.Rational) (positive : 0 < target) :
 
-      AllSurfacePreparation.SideRemainderRequest
+      SideRemainderRequest
       prepared fixed i j target :=
   let count := prepared.occurrences.length
   let allowance := Rational.Budget.Aggregate.perTerm target count
@@ -248,8 +248,8 @@ variable {prepared :
 
 /-- The Gaussian sum of pointwise differences is the difference of the original two list sums. -/
 private theorem sum_difference {Item : Type u} (items : List Item) (first last : Item → Gaussian.Basic.Canonical) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (items.map (fun item => first item - last item)) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (items.map first) - Data.Gaussian.Norm.Sum.Basic.gaussianSum (items.map
+    Gaussian.Norm.Sum.Basic.gaussianSum (items.map (fun item => first item - last item)) =
+      Gaussian.Norm.Sum.Basic.gaussianSum (items.map first) - Gaussian.Norm.Sum.Basic.gaussianSum (items.map
       last) := by
   induction items with
   | nil => exact (sub_self _).symm
@@ -261,30 +261,30 @@ private theorem sum_difference {Item : Type u} (items : List Item) (first last :
 /-- Full fine-side remainders and centered values use the same occurrence
 owners, and the requested estimate pays every retained repetition. -/
 theorem accurate (allocated :
-  AllSurfacePreparation.SideRemainderRequest
+  SideRemainderRequest
   prepared fixed i j target)
     (later : allocated.endpoints.index ≤ stage) (samples :
-      Hyperelliptic.Meshes.PuncturedGrid.RequestedHoleCentering.CenteredPerimeters request cache i j)
+      RequestedHoleCentering.CenteredPerimeters request cache i j)
     (perimeters : Matched.FacePerimeters (request := request)
       cache.normalize i j)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh)
-      (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
+    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh)
+      (right : TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
       :
-    Data.Gaussian.Norm.Basic.normSq (prepared.fineRemainder perimeters left right - prepared.centeredSideArea
+    Gaussian.Norm.Basic.normSq (prepared.fineRemainder perimeters left right - prepared.centeredSideArea
       samples) < target := open Purelib in by
   let errors := prepared.occurrences.map (fun occurrence => occurrence.fineRemainder perimeters left right -
-    Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.CenteredPerimeters.occurrenceArea
+    SideOccurrenceReadings.LiftedPuncturedGrid.CenteredPerimeters.occurrenceArea
     samples occurrence.sideOccurrence)
-  have bounded : ∀ value ∈ errors, Data.Gaussian.Norm.Basic.normSq value ≤ allocated.allowance := by
+  have bounded : ∀ value ∈ errors, Gaussian.Norm.Basic.normSq value ≤ allocated.allowance := by
     intro value member
     obtain ⟨occurrence, _, equal⟩ := Data.List.Map.mem_map.mp member
-    exact (congrArg Data.Gaussian.Norm.Basic.normSq equal).symm.trans_le (occurrence.centered_error
+    exact (congrArg Gaussian.Norm.Basic.normSq equal).symm.trans_le (occurrence.centered_error
       allocated.endpoints later samples perimeters left right)
   have estimate := Gaussian.Norm.Sum.Bounds.normSq_sum_le errors allocated.allowance bounded
-  have count : errors.length = allocated.count := (Data.List.Map.length_map ..).trans allocated.count_eq.symm
+  have count : errors.length = allocated.count := (List.Map.length_map ..).trans allocated.count_eq.symm
   rw [count, allocated.allowance_eq] at estimate
   have paid := estimate.trans_lt (Rational.Budget.Aggregate.count_mul_perTerm_lt allocated.positive allocated.count)
-  have equal : Data.Gaussian.Norm.Sum.Basic.gaussianSum errors = prepared.fineRemainder perimeters left right -
+  have equal : Gaussian.Norm.Sum.Basic.gaussianSum errors = prepared.fineRemainder perimeters left right -
     prepared.centeredSideArea samples := by
     dsimp only
       [fineRemainder,
@@ -300,9 +300,9 @@ theorem accurate (allocated :
       (fun occurrence :
         SurfaceOccurrence
         regular domains differential =>
-        Hyperelliptic.Meshes.PuncturedGrid.SideOccurrenceReadings.LiftedPuncturedGrid.CenteredPerimeters.occurrenceArea
+        SideOccurrenceReadings.LiftedPuncturedGrid.CenteredPerimeters.occurrenceArea
         samples occurrence.sideOccurrence)
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq equal).symm.trans_lt paid
+  exact (congrArg Gaussian.Norm.Basic.normSq equal).symm.trans_lt paid
 
 end SideRemainderRequest
 end AllSurfacePreparation

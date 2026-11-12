@@ -59,6 +59,12 @@ import Purelib.Riemann.Readings.PreparedPrimitiveRequests
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Approximation.Rational.Budget
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank
+
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_antitone)
 
 public section
@@ -90,79 +96,79 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.BankReadings (me
 
 open Purelib.Riemann.Normalization.InverseRootPolynomial
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {source :
-    Hyperelliptic.Differentials.Basic.Differential genus}
-  {axes : Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveAxes base.bank.grid} {parent :
+  {frames : SquareRoot.Grid.RootFrames base.bank.grid} {source :
+    Differentials.Basic.Differential genus}
+  {axes : PreparedPrimitiveSplits.PrimitiveAxes base.bank.grid} {parent :
     Integration.PreparedSubdivisionModelCore.CenteredEdge curve source}
-  {partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)} {interval :
+  {partition : Rectangle.AxisPartition 0 1 (axes.parameters parent)} {interval :
     Rectangle.Partition.PreparedAxisPartitions.Interval}
-  {fragment : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.RegularPrimitiveFragment axes parent partition
+  {fragment : RegularFaces.RegularPrimitiveFragment axes parent partition
     interval}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames base.faces.regulars}
-  {count : Nat} {target : Normalization.InverseRootPolynomial.Coordinate} {request :
+  {domains : Face.DomainBanks.FaceDomainBank frames base.faces.regulars}
+  {count : Nat} {target : Coordinate} {request :
     Readings.UniformPreparedRequests.LocalRequest parent count target}
-  {fragments : Nat} {tolerance : Normalization.InverseRootPolynomial.Coordinate}
+  {fragments : Nat} {tolerance : Coordinate}
 
 /-- Read the original fragment's scalar budget through its retained face, sheet and domain equalities. -/
 @[expose] def scalarBudget (assigned :
-  Hyperelliptic.Meshes.PuncturedGrid.Fragment.SheetEntries.RegularPrimitiveFragment.SheetEntry fragment domains request)
-    (budgets : Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets source fragments
-      tolerance domains) : Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.DomainScalarBudget
+  SheetEntries.RegularPrimitiveFragment.SheetEntry fragment domains request)
+    (budgets : FaceScalarBudgets source fragments
+      tolerance domains) : DomainScalarBudget
       assigned.domain source fragments tolerance :=
-  (((Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets.get budgets
+  (((FaceScalarBudgets.get budgets
     fragment.face.located.index).castFace fragment.face.located.indexed).atSheet
     assigned.entry.sheet).castDomain assigned.domain_eq.symm
 
 /-- The original fragment mesh budget is exactly the mesh constructed from its retained scalar budget. -/
 theorem meshBudget_scalar (assigned :
-  Hyperelliptic.Meshes.PuncturedGrid.Fragment.SheetEntries.RegularPrimitiveFragment.SheetEntry fragment domains request)
-    (budgets : Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets source fragments
+  SheetEntries.RegularPrimitiveFragment.SheetEntry fragment domains request)
+    (budgets : FaceScalarBudgets source fragments
       tolerance domains) (points : List Normalization.InverseRootPolynomial.Gaussian) :
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.BankReadings.meshBudget assigned
-      (Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets.meshes points budgets) =
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.ScalarAccuracy.scalarBudget assigned budgets).meshBudget points := by
-  unfold Hyperelliptic.Meshes.PuncturedGrid.Fragment.BankReadings.meshBudget
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.ScalarAccuracy.scalarBudget
-  rw [Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets.meshes_get, ←
-    Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudget.castFace_meshes,
-    Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudget.meshes_atSheet,
-      Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.DomainScalarBudget.castDomain_meshBudget]
+    BankReadings.meshBudget assigned
+      (FaceScalarBudgets.meshes points budgets) =
+      (ScalarAccuracy.scalarBudget assigned budgets).meshBudget points := by
+  unfold BankReadings.meshBudget
+    ScalarAccuracy.scalarBudget
+  rw [FaceScalarBudgets.meshes_get, ←
+    FaceScalarBudget.castFace_meshes,
+    FaceScalarBudget.meshes_atSheet,
+      DomainScalarBudget.castDomain_meshBudget]
   rfl
 
 /-- The original fragment's minimum comparison stage is below the retained common face-budget stage. -/
 theorem scalarBudget_minimum_le (assigned :
-  Hyperelliptic.Meshes.PuncturedGrid.Fragment.SheetEntries.RegularPrimitiveFragment.SheetEntry fragment domains request)
-    (budgets : Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets source fragments
+  SheetEntries.RegularPrimitiveFragment.SheetEntry fragment domains request)
+    (budgets : FaceScalarBudgets source fragments
       tolerance domains) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Fragment.ScalarAccuracy.scalarBudget assigned budgets).certificate.minimumIndex
-      ≤ Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets.index budgets := by
-  unfold Hyperelliptic.Meshes.PuncturedGrid.Fragment.ScalarAccuracy.scalarBudget
-  rw [Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.DomainScalarBudget.castDomain_minimumIndex]
-  exact ((Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudget.atSheet _
+    (ScalarAccuracy.scalarBudget assigned budgets).certificate.minimumIndex
+      ≤ FaceScalarBudgets.index budgets := by
+  unfold ScalarAccuracy.scalarBudget
+  rw [DomainScalarBudget.castDomain_minimumIndex]
+  exact ((FaceScalarBudget.atSheet _
     _).certificate.grid_ge.trans
-    (Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudget.atSheet_le _ _)).trans
-    ((Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudget.castFace_index _ _).trans_le
-      (Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets.get_le budgets _))
+    (FaceScalarBudget.atSheet_le _ _)).trans
+    ((FaceScalarBudget.castFace_index _ _).trans_le
+      (FaceScalarBudgets.get_le budgets _))
 
 /-- Every original inverse model's residual at a later index is below the common one-sixteenth geometric residual. -/
 private theorem uniform_residual {polynomial : Normalization.InverseRootPolynomial.Polynomial} {box :
-  Normalization.InverseRootPolynomial.Box} (model : Normalization.InverseRootPolynomial.Model polynomial box)
+  Normalization.InverseRootPolynomial.Box} (model : Model polynomial box)
     {minimum index : Nat} (later : minimum ≤ index) :
-    Purelib.Approximation.Rational.Geometric.Basic.quarterRadius model.bound index ≤
-      Purelib.Approximation.Rational.Geometric.Basic.quarterRadius (1 / 16) minimum :=
+    Rational.Geometric.Basic.quarterRadius model.bound index ≤
+      Rational.Geometric.Basic.quarterRadius (1 / 16) minimum :=
   (quarterRadius_antitone model.bound_nonnegative later).trans (by
     simp only [Rational.Geometric.Basic.quarterRadius_eq_mul_pow]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct model.bound_small
-      (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) minimum))
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct model.bound_small
+      (Arithmetic.pow_nonneg_direct (by decide) minimum))
 
 /-- Both sufficiently late original polynomial readings make twice the analytic piece charge smaller than half its
 retained fragment allowance. -/
 theorem pieceCharge_accurate (assigned :
-  Hyperelliptic.Meshes.PuncturedGrid.Fragment.SheetEntries.RegularPrimitiveFragment.SheetEntry fragment domains request)
-    (bounds : Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentReadings.FragmentBounds assigned.domain.patch source)
+  SheetEntries.RegularPrimitiveFragment.SheetEntry fragment domains request)
+    (bounds : Face.FragmentReadings.FragmentBounds assigned.domain.patch source)
     {globalBounds : Comparison.PrimitiveEdgeComparison.PrimitiveOverlapBounds fragment.face.located.face.clearance
       (Readings.PreparedPrimitiveSamples.differentialNumerator source)}
     (budget : Polynomial.Rectangle.Accuracy.Fragment.FragmentAccuracy globalBounds assigned.domain.steps fragments
@@ -170,41 +176,41 @@ theorem pieceCharge_accurate (assigned :
     (piece : Paths.RectangularSegmentSplitting.SegmentPiece assigned.domain.geometry fragment.located.first
       fragment.located.last) (index : Nat)
     (leftLater : budget.minimumIndex ≤ index) (rightLater : budget.minimumIndex ≤ request.request.index) :
-    2 * Hyperelliptic.Meshes.PuncturedGrid.Fragment.AnalyticComparison.pieceCharge assigned bounds piece index <
-      budget.perFragment / 2 := open Purelib.Data in by
+    2 * AnalyticComparison.pieceCharge assigned bounds piece index <
+      budget.perFragment / 2 := open Data in by
   let residual := Rational.Geometric.Basic.quarterRadius (1 / 16) budget.minimumIndex
   have residualNonnegative : 0 ≤ residual := Rational.Geometric.Basic.quarterRadius_nonneg (by decide +kernel) _
-  have left := Hyperelliptic.Meshes.PuncturedGrid.Fragment.ScalarAccuracy.uniform_residual
+  have left := ScalarAccuracy.uniform_residual
     (assigned.domain.patch.transported.cell piece.column piece.row).model
     (leftLater.trans (Nat.le_add_right _ 2))
-  have right := Hyperelliptic.Meshes.PuncturedGrid.Fragment.ScalarAccuracy.uniform_residual
+  have right := ScalarAccuracy.uniform_residual
     request.neighborhood.base.model rightLater
   have productNonnegative : 0 ≤ bounds.numerator piece.column piece.row * bounds.inverse :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (bounds.atCell piece.column piece.row).numeratorUpper_nonnegative
+    Arithmetic.mul_nonneg_direct (bounds.atCell piece.column piece.row).numeratorUpper_nonnegative
       (bounds.atCell piece.column piece.row).inverseUpper_positive.le
-  have globalNonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct
+  have globalNonnegative := Arithmetic.mul_nonneg_direct
     globalBounds.numeratorUpper_nonnegative globalBounds.inverseUpper_positive.le
   have movement := Rational.Box.normSq_sub_le_diagonalSq
     ((assigned.domain.patch.cell_refines piece.column piece.row).contains piece.last_inside)
     ((assigned.domain.patch.cell_refines piece.column piece.row).contains piece.first_inside)
-  have weightBound := Fraction.Order.Arithmetic.mul_le_mul_direct (bounds.product_le globalBounds piece.column
+  have weightBound := Arithmetic.mul_le_mul_direct (bounds.product_le globalBounds piece.column
     piece.row)
     movement (Gaussian.Norm.Basic.normSq_nonneg _) globalNonnegative
-  have factorBound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add left right)
-    (by decide : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤ 12)
-  have bound := Fraction.Order.Arithmetic.mul_le_mul_direct factorBound weightBound
-    (Fraction.Order.Arithmetic.mul_nonneg_direct productNonnegative (Gaussian.Norm.Basic.normSq_nonneg _))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg residualNonnegative residualNonnegative))
-  have charged : Hyperelliptic.Meshes.PuncturedGrid.Fragment.AnalyticComparison.pieceCharge assigned bounds piece index
+  have factorBound := Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add left right)
+    (by decide : (0 : Coordinate) ≤ 12)
+  have bound := Arithmetic.mul_le_mul_direct factorBound weightBound
+    (Arithmetic.mul_nonneg_direct productNonnegative (Gaussian.Norm.Basic.normSq_nonneg _))
+    (Arithmetic.mul_nonneg_direct (by decide) (add_nonneg residualNonnegative residualNonnegative))
+  have charged : AnalyticComparison.pieceCharge assigned bounds piece index
     ≤
       24 * residual * (globalBounds.numeratorUpper * globalBounds.inverseUpper) *
         fragment.face.located.face.cell.box.diagonalSq := by
-    exact (by unfold Hyperelliptic.Meshes.PuncturedGrid.Fragment.AnalyticComparison.pieceCharge; ring1 :
-      Hyperelliptic.Meshes.PuncturedGrid.Fragment.AnalyticComparison.pieceCharge assigned bounds piece index =
+    exact (by unfold AnalyticComparison.pieceCharge; ring1 :
+      AnalyticComparison.pieceCharge assigned bounds piece index =
       _).trans_le
       (bound.trans_eq (by change 12 * (residual + residual) * _ = _; ring1))
-  exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct charged (by
-      decide : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤ 2)).trans_lt
+  exact (Arithmetic.mul_le_mul_of_nonneg_left_direct charged (by
+      decide : (0 : Coordinate) ≤ 2)).trans_lt
     ((by ring1 : 2 * (24 * residual * (globalBounds.numeratorUpper * globalBounds.inverseUpper) *
       fragment.face.located.face.cell.box.diagonalSq) =
       48 * residual * (globalBounds.numeratorUpper * globalBounds.inverseUpper) *
@@ -212,7 +218,7 @@ theorem pieceCharge_accurate (assigned :
 
 /-- Transporting the retained face owner preserves the original selected domain step count. -/
 private theorem castFace_steps {first last : Meshes.PuncturedGridFaces.RegularFace base.bank.toBranchCellBank}
-    (equal : first = last) (cached : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomains frames first)
+    (equal : first = last) (cached : Face.DomainBanks.FaceDomains frames first)
       (sheet : Fin 2) :
     ((cached.castFace equal).domain sheet).steps = (cached.domain sheet).steps := by
   cases equal
@@ -220,21 +226,21 @@ private theorem castFace_steps {first last : Meshes.PuncturedGridFaces.RegularFa
 
 /-- The original fragment's selected domain steps are bounded by the retained whole-bank maximum. -/
 theorem domain_steps_le (assigned :
-  Hyperelliptic.Meshes.PuncturedGrid.Fragment.SheetEntries.RegularPrimitiveFragment.SheetEntry fragment domains request)
+  SheetEntries.RegularPrimitiveFragment.SheetEntry fragment domains request)
   : assigned.domain.steps ≤
-  (Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceDomainBank.stepsBound domains) := by
+  (FaceDomainBank.stepsBound domains) := by
   rw [assigned.domain_eq]
-  unfold Hyperelliptic.Meshes.PuncturedGrid.Fragment.SheetEntries.RegularPrimitiveFragment.domainCache
-  rw [Hyperelliptic.Meshes.PuncturedGrid.Fragment.ScalarAccuracy.castFace_steps]
-  exact Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceDomainBank.get_steps_le domains _ _
+  unfold SheetEntries.RegularPrimitiveFragment.domainCache Face.DomainBanks.FaceDomainBank.atLocation
+  rw [ScalarAccuracy.castFace_steps]
+  exact FaceDomainBank.get_steps_le domains _ _
 
 /-- The original fragment split count is at most twice the retained maximum domain steps plus five. -/
 theorem split_count_le (assigned :
-  Hyperelliptic.Meshes.PuncturedGrid.Fragment.SheetEntries.RegularPrimitiveFragment.SheetEntry fragment domains request)
+  SheetEntries.RegularPrimitiveFragment.SheetEntry fragment domains request)
   : assigned.split.count ≤ 2 *
-  (Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceDomainBank.stepsBound domains) + 5 := by
+  (FaceDomainBank.stepsBound domains) + 5 := by
   have bound := assigned.split.count_le
-  have domainBound := Hyperelliptic.Meshes.PuncturedGrid.Fragment.ScalarAccuracy.domain_steps_le assigned
+  have domainBound := ScalarAccuracy.domain_steps_le assigned
   omega
 
 open Purelib.Algebra.FiniteSum.Rational in
@@ -242,13 +248,13 @@ open Purelib.Algebra.FiniteSum.Rational in
 
 The fixed ownership and analytic factors charge each original occurrence.
 Structural summation preserves those factors and the supplied per-entry allowance. -/
-private theorem charges_le {α : Type} (items : List α) (charges : α → Normalization.InverseRootPolynomial.Coordinate)
-  (ownership allowance : Normalization.InverseRootPolynomial.Coordinate)
+private theorem charges_le {α : Type} (items : List α) (charges : α → Coordinate)
+  (ownership allowance : Coordinate)
     (bounded : ∀ item ∈ items, 32 * ownership + 2 * charges item ≤ allowance) :
-    32 * Rational.Budget.Aggregate.countCoordinate items.length * ownership +
-      2 * Purelib.Algebra.FiniteSum.Rational.Squares.coordinateSum (items.map charges) ≤
-        Rational.Budget.Aggregate.countCoordinate items.length * allowance := by
-  simp only [Rational.Budget.Aggregate.countCoordinate_eq]
+    32 * Aggregate.countCoordinate items.length * ownership +
+      2 * Squares.coordinateSum (items.map charges) ≤
+        Aggregate.countCoordinate items.length * allowance := by
+  simp only [Aggregate.countCoordinate_eq]
   induction items with
   | nil => change 32 * 0 * ownership + 2 * 0 ≤ 0 * allowance; exact (by ring1 : _ = _).le
   | cons first rest ih =>
@@ -260,67 +266,67 @@ private theorem charges_le {α : Type} (items : List α) (charges : α → Norma
 /-- The retained fragment comparison bound is at most its actual split count squared times the original paid fragment
 allowance. -/
 theorem BankReading.bound_le (assigned :
-  Hyperelliptic.Meshes.PuncturedGrid.Fragment.SheetEntries.RegularPrimitiveFragment.SheetEntry fragment domains request)
-    (scalars : Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets source fragments
+  SheetEntries.RegularPrimitiveFragment.SheetEntry fragment domains request)
+    (scalars : FaceScalarBudgets source fragments
       tolerance domains) {points : List Normalization.InverseRootPolynomial.Gaussian} {index : Nat}
-    {numerics : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank source index domains}
-    {shared : Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes.FaceSharedMeshes
-      (Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets.meshes points scalars)
+    {numerics : Face.PrimitiveData.FacePrimitiveBank source index domains}
+    {shared : Face.CommonMeshes.FaceSharedMeshes
+      (FaceScalarBudgets.meshes points scalars)
       numerics}
-    (reading : Hyperelliptic.Meshes.PuncturedGrid.Fragment.BankReadings.BankReading assigned shared)
-    (leftLater : Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets.index scalars ≤
+    (reading : BankReadings.BankReading assigned shared)
+    (leftLater : FaceScalarBudgets.index scalars ≤
       index)
-    (rightLater : Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets.index scalars ≤
+    (rightLater : FaceScalarBudgets.index scalars ≤
       request.request.index) :
-    reading.bound ≤ Rational.Budget.Aggregate.countCoordinate assigned.split.count *
-      (Rational.Budget.Aggregate.countCoordinate assigned.split.count * Rational.Budget.Aggregate.perTerm tolerance
+    reading.bound ≤ Aggregate.countCoordinate assigned.split.count *
+      (Aggregate.countCoordinate assigned.split.count * Aggregate.perTerm tolerance
         fragments) := by
-  let scalar := Hyperelliptic.Meshes.PuncturedGrid.Fragment.ScalarAccuracy.scalarBudget assigned scalars
+  let scalar := ScalarAccuracy.scalarBudget assigned scalars
   let accuracy := Polynomial.Rectangle.Accuracy.FragmentIndex.GridPrimitiveAccuracy.atIndex
-    (Hyperelliptic.Meshes.PuncturedGrid.Fragment.BankReadings.meshBudget assigned
-      (Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets.meshes points
+    (BankReadings.meshBudget assigned
+      (FaceScalarBudgets.meshes points
         scalars)).accuracy index
-    (Hyperelliptic.Meshes.PuncturedGrid.Fragment.BankReadings.meshReadings assigned shared).later
-  have left := (Hyperelliptic.Meshes.PuncturedGrid.Fragment.ScalarAccuracy.scalarBudget_minimum_le assigned
+    (BankReadings.meshReadings assigned shared).later
+  have left := (ScalarAccuracy.scalarBudget_minimum_le assigned
     scalars).trans leftLater
-  have right := (Hyperelliptic.Meshes.PuncturedGrid.Fragment.ScalarAccuracy.scalarBudget_minimum_le assigned
+  have right := (ScalarAccuracy.scalarBudget_minimum_le assigned
     scalars).trans rightLater
-  have ownership : 32 * accuracy.globalBound < Rational.Budget.Aggregate.perTerm tolerance fragments / 2 := by
-    have estimate := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
-      (by decide +kernel : (0 : Normalization.InverseRootPolynomial.Coordinate) < 32) accuracy.accurate
+  have ownership : 32 * accuracy.globalBound < Aggregate.perTerm tolerance fragments / 2 := by
+    have estimate := Arithmetic.mul_lt_mul_of_pos_left_direct
+      (by decide +kernel : (0 : Coordinate) < 32) accuracy.accurate
     exact estimate.trans_eq (by
-      change 32 * (Rational.Budget.Aggregate.perTerm tolerance fragments / 64) = Rational.Budget.Aggregate.perTerm
+      change 32 * (Aggregate.perTerm tolerance fragments / 64) = Aggregate.perTerm
         tolerance fragments / 2
       simp only [Fraction.Field.div_eq_mul_inv_direct]
       calc
-        _ = Rational.Budget.Aggregate.perTerm tolerance fragments * (32 * (64 :
-          Normalization.InverseRootPolynomial.Coordinate)⁻¹) := by
+        _ = Aggregate.perTerm tolerance fragments * (32 * (64 :
+          Coordinate)⁻¹) := by
           ring1
-        _ = _ := by rw [show (32 : Normalization.InverseRootPolynomial.Coordinate) * (64 :
-          Normalization.InverseRootPolynomial.Coordinate)⁻¹ = (2 : Normalization.InverseRootPolynomial.Coordinate)⁻¹ by
+        _ = _ := by rw [show (32 : Coordinate) * (64 :
+          Coordinate)⁻¹ = (2 : Coordinate)⁻¹ by
           decide +kernel])
   have pieceBound : ∀ piece ∈ assigned.split.pieces,
-      32 * accuracy.globalBound + 2 * Hyperelliptic.Meshes.PuncturedGrid.Fragment.AnalyticComparison.pieceCharge
+      32 * accuracy.globalBound + 2 * AnalyticComparison.pieceCharge
         assigned
-        (Hyperelliptic.Meshes.PuncturedGrid.Fragment.BankReadings.meshBudget assigned
-          (Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets.meshes points
-          scalars)).bounds piece index ≤ Rational.Budget.Aggregate.perTerm tolerance fragments := by
+        (BankReadings.meshBudget assigned
+          (FaceScalarBudgets.meshes points
+          scalars)).bounds piece index ≤ Aggregate.perTerm tolerance fragments := by
     intro piece _
-    have analytic := Hyperelliptic.Meshes.PuncturedGrid.Fragment.ScalarAccuracy.pieceCharge_accurate assigned
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.BankReadings.meshBudget assigned
-        (Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets.meshes points
+    have analytic := ScalarAccuracy.pieceCharge_accurate assigned
+      (BankReadings.meshBudget assigned
+        (FaceScalarBudgets.meshes points
         scalars)).bounds scalar.certificate piece index left right
     rw [scalar.certificate.perFragment_eq] at analytic
-    exact ((Fraction.Order.Arithmetic.add_lt_add_direct ownership analytic).trans_eq (by
-      rw [show Rational.Budget.Aggregate.perTerm tolerance fragments / 2 + Rational.Budget.Aggregate.perTerm tolerance
-        fragments / 2 = (Rational.Budget.Aggregate.perTerm tolerance fragments / 2) * 2 by ring1]
+    exact ((Arithmetic.add_lt_add_direct ownership analytic).trans_eq (by
+      rw [show Aggregate.perTerm tolerance fragments / 2 + Aggregate.perTerm tolerance
+        fragments / 2 = (Aggregate.perTerm tolerance fragments / 2) * 2 by ring1]
       exact Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))).le
   rw [reading.bound_eq, reading.analyticCharge_eq]
-  apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct _
-    ((Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)).trans_eq (Rational.Budget.Aggregate.countCoordinate_eq
+  apply Arithmetic.mul_le_mul_of_nonneg_left_direct _
+    ((Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)).trans_eq (Aggregate.countCoordinate_eq
       _).symm)
-  have paid := Hyperelliptic.Meshes.PuncturedGrid.Fragment.ScalarAccuracy.charges_le assigned.split.pieces _
-    accuracy.globalBound (Rational.Budget.Aggregate.perTerm tolerance fragments) pieceBound
+  have paid := ScalarAccuracy.charges_le assigned.split.pieces _
+    accuracy.globalBound (Aggregate.perTerm tolerance fragments) pieceBound
   rw [← assigned.split.count_eq] at paid
   exact paid
 

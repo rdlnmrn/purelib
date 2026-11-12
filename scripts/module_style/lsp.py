@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""Query Lean's language server for evidence when reviewing module style plans."""
+"""Query Lean's language server for source-bound API and module-style evidence."""
 from __future__ import annotations
 
 import argparse
 import asyncio
 from bisect import bisect_right
+import json
+import os
 from pathlib import Path
+import subprocess
 import sys
 
 from scripts.module_style.core import ROOT, atomic_write, digest, encoded, lex, name, require
@@ -23,7 +26,28 @@ async def query(args, path: Path, text: str) -> tuple[dict, bool]:
     from leanclient.aio.convert import range_from_utf16
 
     relative = path.relative_to(ROOT).as_posix()
-    client = AsyncLeanLSPClient(str(ROOT), max_workers=1)
+    prefix = ROOT / '.lake/core-toolchain'
+    receipt = prefix / 'CORE-PREFIX.json'
+    server_command = None
+    if receipt.is_file():
+        # The audited private CLI emits artifacts; the matching upstream
+        # executable supplies the language server and its worker protocol.
+        upstream = Path(json.loads(receipt.read_text())['base_sysroot']) / 'bin/lean'
+        require(upstream.is_file(), 'missing language server for the accepted Core toolchain')
+        runner = ROOT / 'scripts/run-lake.sh'
+        search_path = subprocess.check_output([str(runner), 'env', 'printenv', 'LEAN_PATH'],
+                                              cwd=ROOT, text=True).strip()
+        source_path = subprocess.check_output([str(runner), 'env', 'printenv', 'LEAN_SRC_PATH'],
+                                              cwd=ROOT, text=True).strip()
+        os.environ['LEAN_SYSROOT'] = str(prefix)
+        os.environ['LEAN_PATH'] = str(prefix / 'lib/lean') + ':' + search_path
+        # The reference loader silently skips modules whose source URI cannot
+        # be found, even after a successful waitForILeans barrier.
+        os.environ['LEAN_SRC_PATH'] = source_path
+        os.environ['LEAN_WORKER_PATH'] = str(upstream)
+        os.environ['LAKE'] = str(runner)
+        server_command = [str(upstream), '--server', '-Dserver.reportDelayMs=0']
+    client = AsyncLeanLSPClient(str(ROOT), max_workers=1, server_command=server_command)
 
     async def definition_at(line: int, column: int) -> list[dict]:
         """Normalize the origin range left untouched by leanclient's target conversion."""
@@ -35,7 +59,15 @@ async def query(args, path: Path, text: str) -> tuple[dict, bool]:
 
     try:
         await client.start()
-        doc = await client.open(relative, wait=True, dependency_build_mode='never')
+        if args.mode == 'references':
+            await client.wait_for_ileans()
+            # leanclient's convenience barrier suppresses transport errors.
+            # Require a successful server reply before retaining references.
+            await client._transport.request('$/lean/waitForILeans', {}, timeout=client.request_timeout)
+        doc = await client.open(relative, wait=False, dependency_build_mode='never')
+        # The client's ordinary barrier retries stale imports with builds
+        # enabled. A read-only query must report that condition instead.
+        await client._barrier_once(relative)
         require(doc.text == text, 'source changed while opening it; run the query again')
         report = await client.diagnostics(relative, fresh=False)
         if args.mode == 'symbols':
@@ -44,6 +76,8 @@ async def query(args, path: Path, text: str) -> tuple[dict, bool]:
             result = await client.hover(relative, args.line - 1, args.column - 1, fresh=False)
         elif args.mode == 'definition':
             result = await definition_at(args.line, args.column)
+        elif args.mode == 'references':
+            result = await client.references(relative, args.line - 1, args.column - 1, fresh=False)
         else:
             result = []
             starts = [0] + [i + 1 for i, char in enumerate(text) if char == '\n']
@@ -61,13 +95,14 @@ async def query(args, path: Path, text: str) -> tuple[dict, bool]:
                 'source changed during query; run it again')
         return {'schema': 1, 'path': relative, 'source_sha256': digest(text), 'mode': args.mode,
                 'request_position': ({'line': args.line, 'column': args.column}
-                                     if args.mode in {'hover', 'definition'} else None),
+                                     if args.mode in {'hover', 'definition', 'references'} else None),
                 'positions': {'request_and_snapshot': 'one-based lines and Unicode codepoint columns',
                               'result': ('zero-based lines and UTF-16 columns' if args.mode == 'symbols'
                                          else 'zero-based lines and Unicode codepoint columns'),
                               'diagnostics': 'zero-based lines and Unicode codepoint columns'},
                 'diagnostics': report.items, 'fatal_error': report.fatal_error,
-                'stale_imports': doc.stale_imports, 'result': result}, (
+                'stale_imports': doc.stale_imports,
+                'reference_index_ready': args.mode == 'references', 'result': result}, (
                     report.has_errors or report.fatal_error or doc.stale_imports)
     finally:
         await client.close()
@@ -76,7 +111,7 @@ async def query(args, path: Path, text: str) -> tuple[dict, bool]:
 def main(argv=None) -> int:
     """Validate query arguments, then print or atomically save the review evidence."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('mode', choices=['symbols', 'hover', 'definition', 'snapshot'])
+    parser.add_argument('mode', choices=['symbols', 'hover', 'definition', 'references', 'snapshot'])
     parser.add_argument('--file', required=True, type=Path, help='Lean file relative to the repository root')
     parser.add_argument('--line', type=int, help='one-based source line for hover/definition')
     parser.add_argument('--column', type=int, help='one-based Unicode codepoint column')
@@ -90,7 +125,7 @@ def main(argv=None) -> int:
         require(args.output is None or args.output.resolve() != path, '--output must not overwrite the Lean source')
         require(args.output is None or args.output.suffix == '.json', '--output must have a .json extension')
         text = path.read_text(encoding='utf-8')
-        if args.mode in {'hover', 'definition'}:
+        if args.mode in {'hover', 'definition', 'references'}:
             lines = text.splitlines()
             require(args.line is not None and 1 <= args.line <= len(lines), '--line is required and must be within the source')
             require(args.column is not None and 1 <= args.column <= len(lines[args.line - 1]) + 1,

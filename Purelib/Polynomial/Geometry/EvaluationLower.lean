@@ -32,6 +32,9 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+open Purelib.Polynomial.Dense.Gaussian.Bounds
+
 open Purelib.LinearAlgebra.Gaussian.Energy (NonzeroGaussianVector)
 
 open Purelib
@@ -69,7 +72,7 @@ namespace Purelib.Polynomial.Geometry.EvaluationLower
 
 /-- The original finite dense Gaussian polynomial representation. -/
 abbrev GaussianPolynomial :=
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+  Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
 /-- A finite indexed Gaussian coefficient vector. -/
 abbrev GaussianVector (size : Nat) :=
   LinearAlgebra.Gaussian.Energy.GaussianVector size
@@ -200,8 +203,8 @@ fixed lower-left anchor and the finite Horner Lipschitz scan. -/
 def uniformNormLower (polynomial :
   GaussianPolynomial) (box : Box) :
     Fraction.Rational :=
-  Data.Gaussian.Norm.Basic.normSq (polynomial.eval box.anchor) / 2 -
-    Dense.Gaussian.Bounds.Box.denseLipschitzBound polynomial box * box.diagonalSq
+  Gaussian.Norm.Basic.normSq (polynomial.eval box.anchor) / 2 -
+    Box.denseLipschitzBound polynomial box * box.diagonalSq
 
 /-- The computed anchor-minus-oscillation quantity bounds the norm throughout the rational box.
 
@@ -212,10 +215,10 @@ theorem uniformNormLower_le (polynomial :
   GaussianPolynomial) {box : Box}
     {point : Gaussian.Basic.Canonical} (inside : box.Contains point) :
     uniformNormLower polynomial box <=
-      Data.Gaussian.Norm.Basic.normSq (polynomial.eval point) := by
+      Gaussian.Norm.Basic.normSq (polynomial.eval point) := by
   have anchorInside : box.Contains box.anchor := box.contains_anchor
   have distance :
-      Data.Gaussian.Norm.Basic.normSq (box.anchor - point) <=
+      Gaussian.Norm.Basic.normSq (box.anchor - point) <=
         box.diagonalSq := by
     have reverseDistance := box.normSq_sub_anchor_le inside
     have reverse : box.anchor - point = -(point - box.anchor) := by
@@ -227,33 +230,33 @@ theorem uniformNormLower_le (polynomial :
     rw [reverse, Gaussian.Norm.Basic.normSq_neg]
     exact reverseDistance
   have differenceBound :
-      Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq
           (polynomial.eval box.anchor - polynomial.eval point) <=
-        Dense.Gaussian.Bounds.Box.denseLipschitzBound polynomial box *
+        Box.denseLipschitzBound polynomial box *
           box.diagonalSq :=
-    (Dense.Gaussian.Bounds.Box.normSq_eval_sub_eval_le_denseLipschitzBound
+    (Box.normSq_eval_sub_eval_le_denseLipschitzBound
       polynomial anchorInside inside).trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct distance
-          (Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos polynomial box).le)
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct distance
+          (Box.denseLipschitzBound_pos polynomial box).le)
   have triangle :=
     Gaussian.Norm.Bounds.half_normSq_sub_le_normSq_sub
       (polynomial.eval box.anchor) (polynomial.eval point)
-  have rearranged : Data.Gaussian.Norm.Basic.normSq (polynomial.eval box.anchor) / 2 -
-      Data.Gaussian.Norm.Basic.normSq (polynomial.eval box.anchor - polynomial.eval point) ≤
-      Data.Gaussian.Norm.Basic.normSq (polynomial.eval point) := by
+  have rearranged : Gaussian.Norm.Basic.normSq (polynomial.eval box.anchor) / 2 -
+      Gaussian.Norm.Basic.normSq (polynomial.eval box.anchor - polynomial.eval point) ≤
+      Gaussian.Norm.Basic.normSq (polynomial.eval point) := by
     calc
-      _ = (Data.Gaussian.Norm.Basic.normSq (polynomial.eval box.anchor) / 2 -
-          Data.Gaussian.Norm.Basic.normSq (polynomial.eval point)) +
-          (Data.Gaussian.Norm.Basic.normSq (polynomial.eval point) -
-            Data.Gaussian.Norm.Basic.normSq (polynomial.eval box.anchor - polynomial.eval point)) := by ring1
-      _ ≤ Data.Gaussian.Norm.Basic.normSq (polynomial.eval box.anchor - polynomial.eval point) +
-          (Data.Gaussian.Norm.Basic.normSq (polynomial.eval point) -
-            Data.Gaussian.Norm.Basic.normSq (polynomial.eval box.anchor - polynomial.eval point)) :=
-        Fraction.Order.Arithmetic.add_le_add_direct triangle le_rfl
-      _ = Data.Gaussian.Norm.Basic.normSq (polynomial.eval point) := by ring1
+      _ = (Gaussian.Norm.Basic.normSq (polynomial.eval box.anchor) / 2 -
+          Gaussian.Norm.Basic.normSq (polynomial.eval point)) +
+          (Gaussian.Norm.Basic.normSq (polynomial.eval point) -
+            Gaussian.Norm.Basic.normSq (polynomial.eval box.anchor - polynomial.eval point)) := by ring1
+      _ ≤ Gaussian.Norm.Basic.normSq (polynomial.eval box.anchor - polynomial.eval point) +
+          (Gaussian.Norm.Basic.normSq (polynomial.eval point) -
+            Gaussian.Norm.Basic.normSq (polynomial.eval box.anchor - polynomial.eval point)) :=
+        Arithmetic.add_le_add_direct triangle le_rfl
+      _ = Gaussian.Norm.Basic.normSq (polynomial.eval point) := by ring1
   unfold uniformNormLower
-  exact (Fraction.Order.Arithmetic.sub_le_sub_left_direct differenceBound
-    (Data.Gaussian.Norm.Basic.normSq (polynomial.eval box.anchor) / 2)).trans rearranged
+  exact (Arithmetic.sub_le_sub_left_direct differenceBound
+    (Gaussian.Norm.Basic.normSq (polynomial.eval box.anchor) / 2)).trans rearranged
 
 /-- Uniform norm lower bound based on an arbitrary displayed sample and an
 ambient box.  This form supports constructing a smaller positive box while
@@ -261,8 +264,8 @@ reusing one finite Lipschitz scan of its ambient box. -/
 def sampledNormLower (polynomial :
   GaussianPolynomial) (sample : Gaussian.Basic.Canonical)
     (ambient cell : Box) : Fraction.Rational :=
-  Data.Gaussian.Norm.Basic.normSq (polynomial.eval sample) / 2 -
-    Dense.Gaussian.Bounds.Box.denseLipschitzBound polynomial ambient *
+  Gaussian.Norm.Basic.normSq (polynomial.eval sample) / 2 -
+    Box.denseLipschitzBound polynomial ambient *
       cell.diagonalSq
 
 /-- The sample-based lower bound is valid throughout the refined cell.
@@ -276,39 +279,39 @@ theorem sampledNormLower_le (polynomial :
     (sampleInside : cell.Contains sample) (refines : cell.Refines ambient)
     {point : Gaussian.Basic.Canonical} (inside : cell.Contains point) :
     sampledNormLower polynomial sample ambient cell <=
-      Data.Gaussian.Norm.Basic.normSq (polynomial.eval point) := by
+      Gaussian.Norm.Basic.normSq (polynomial.eval point) := by
   have sampleAmbient := refines.contains sampleInside
   have pointAmbient := refines.contains inside
   have differenceBound :
-      Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq
           (polynomial.eval sample - polynomial.eval point) <=
-        Dense.Gaussian.Bounds.Box.denseLipschitzBound polynomial ambient *
+        Box.denseLipschitzBound polynomial ambient *
           cell.diagonalSq :=
-    (Dense.Gaussian.Bounds.Box.normSq_eval_sub_eval_le_denseLipschitzBound
+    (Box.normSq_eval_sub_eval_le_denseLipschitzBound
       polynomial sampleAmbient pointAmbient).trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
           (cell.normSq_sub_le_diagonalSq sampleInside inside)
-          (Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos
+          (Box.denseLipschitzBound_pos
             polynomial ambient).le)
   have triangle :=
     Gaussian.Norm.Bounds.half_normSq_sub_le_normSq_sub
       (polynomial.eval sample) (polynomial.eval point)
-  have rearranged : Data.Gaussian.Norm.Basic.normSq (polynomial.eval sample) / 2 -
-      Data.Gaussian.Norm.Basic.normSq (polynomial.eval sample - polynomial.eval point) ≤
-      Data.Gaussian.Norm.Basic.normSq (polynomial.eval point) := by
+  have rearranged : Gaussian.Norm.Basic.normSq (polynomial.eval sample) / 2 -
+      Gaussian.Norm.Basic.normSq (polynomial.eval sample - polynomial.eval point) ≤
+      Gaussian.Norm.Basic.normSq (polynomial.eval point) := by
     calc
-      _ = (Data.Gaussian.Norm.Basic.normSq (polynomial.eval sample) / 2 -
-          Data.Gaussian.Norm.Basic.normSq (polynomial.eval point)) +
-          (Data.Gaussian.Norm.Basic.normSq (polynomial.eval point) -
-            Data.Gaussian.Norm.Basic.normSq (polynomial.eval sample - polynomial.eval point)) := by ring1
-      _ ≤ Data.Gaussian.Norm.Basic.normSq (polynomial.eval sample - polynomial.eval point) +
-          (Data.Gaussian.Norm.Basic.normSq (polynomial.eval point) -
-            Data.Gaussian.Norm.Basic.normSq (polynomial.eval sample - polynomial.eval point)) :=
-        Fraction.Order.Arithmetic.add_le_add_direct triangle le_rfl
-      _ = Data.Gaussian.Norm.Basic.normSq (polynomial.eval point) := by ring1
+      _ = (Gaussian.Norm.Basic.normSq (polynomial.eval sample) / 2 -
+          Gaussian.Norm.Basic.normSq (polynomial.eval point)) +
+          (Gaussian.Norm.Basic.normSq (polynomial.eval point) -
+            Gaussian.Norm.Basic.normSq (polynomial.eval sample - polynomial.eval point)) := by ring1
+      _ ≤ Gaussian.Norm.Basic.normSq (polynomial.eval sample - polynomial.eval point) +
+          (Gaussian.Norm.Basic.normSq (polynomial.eval point) -
+            Gaussian.Norm.Basic.normSq (polynomial.eval sample - polynomial.eval point)) :=
+        Arithmetic.add_le_add_direct triangle le_rfl
+      _ = Gaussian.Norm.Basic.normSq (polynomial.eval point) := by ring1
   unfold sampledNormLower
-  exact (Fraction.Order.Arithmetic.sub_le_sub_left_direct differenceBound
-    (Data.Gaussian.Norm.Basic.normSq (polynomial.eval sample) / 2)).trans rearranged
+  exact (Arithmetic.sub_le_sub_left_direct differenceBound
+    (Gaussian.Norm.Basic.normSq (polynomial.eval sample) / 2)).trans rearranged
 
 /-- Positive radius threshold used for a sampled polynomial norm. -/
 def sampledSafeRadius (valueNorm lipschitz : Fraction.Rational) :
@@ -327,21 +330,21 @@ public theorem sampledNormLower_positive_of_radius
     rw [pow_two]
     calc
       radius * radius <= radius * 1 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           radius_le_one radiusPositive.le
       _ = radius := by ring1
   have eightLipschitzPositive : 0 < 8 * lipschitz :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide) lipschitzPositive
+    Arithmetic.mul_pos_direct (by decide) lipschitzPositive
   have error_le_quarter :
       lipschitz * (8 * radius ^ 2) <= valueNorm / 4 := by
     calc
       lipschitz * (8 * radius ^ 2) =
           (8 * lipschitz) * radius ^ 2 := by ring1
       _ <= (8 * lipschitz) * radius :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           radiusSq_le_radius eightLipschitzPositive.le
       _ <= (8 * lipschitz) * sampledSafeRadius valueNorm lipschitz :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           radius_le_safe eightLipschitzPositive.le
       _ = valueNorm / 4 := by
         unfold sampledSafeRadius
@@ -354,12 +357,12 @@ public theorem sampledNormLower_positive_of_radius
             rw [ExplicitField.div_mul_cancel valueNorm
               (ne_of_gt eightLipschitzPositive)]
   have quarter_lt_half : valueNorm / 4 < valueNorm / 2 := by
-    apply (Fraction.Order.Field.div_lt_iff_pos
+    apply (Field.div_lt_iff_pos
       (by decide : (0 : Fraction.Rational) < 4)).2
     calc
       valueNorm = valueNorm * 1 := by ring1
       _ < valueNorm * 2 :=
-        Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+        Arithmetic.mul_lt_mul_of_pos_left_direct
           valuePositive (by decide)
       _ = (valueNorm / 2) * 4 := by
         calc
@@ -368,7 +371,7 @@ public theorem sampledNormLower_positive_of_radius
             rw [ExplicitField.div_mul_cancel valueNorm
               (by decide : (2 : Fraction.Rational) ≠ 0)]
           _ = (valueNorm / 2) * 4 := by ring1
-  exact Fraction.Order.Arithmetic.sub_pos_direct
+  exact Arithmetic.sub_pos_direct
     (error_le_quarter.trans_lt quarter_lt_half)
 
 end Purelib.Polynomial.Geometry.EvaluationLower

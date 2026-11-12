@@ -11,6 +11,8 @@ import Purelib.RationalFunctions.Curve.Basic
 public import Purelib.RationalFunctions.Curve.Canonical.Circle.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.Gaussian.Basic (Canonical)
 open Purelib.Data.Rat.Fraction (Rational)
 
@@ -41,13 +43,13 @@ theorem primaryUnitCircle_covers
     (realNonnegative : 0 ≤ unit.re) :
     let parameter := unit.im / (1 + unit.re)
     (-1 : Rational) ≤ parameter ∧ parameter ≤ 1 ∧
-      (Curve.Canonical.Circle.circle 1).point parameter = unit := by
+      (circle 1).point parameter = unit := by
   let x := unit.re
   let y := unit.im
   let scale : Rational := 1 + x
   let parameter : Rational := y / scale
   have xLessScale : x < scale := by
-    have added := Rat.Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have added := Arithmetic.add_lt_add_right_direct
       (show (0 : Rational) < 1 by decide) x
     dsimp only [scale]
     calc
@@ -56,8 +58,8 @@ theorem primaryUnitCircle_covers
   have scalePositive : 0 < scale := realNonnegative.trans_lt xLessScale
   have imaginarySquare : y ^ 2 ≤ 1 := by
     have realSquareNonnegative :=
-      Rat.Fraction.Order.Arithmetic.sq_nonneg_direct x
-    have added := Rat.Fraction.Order.Arithmetic.add_le_add_right_direct
+      Arithmetic.sq_nonneg_direct x
+    have added := Arithmetic.add_le_add_right_direct
       realSquareNonnegative (y ^ 2)
     have squareLeNorm : y ^ 2 ≤ Gaussian.Norm.Basic.normSq unit := by
       dsimp only [x, y]
@@ -72,7 +74,7 @@ theorem primaryUnitCircle_covers
   have imaginaryUpper : y ≤ (1 : Rational) :=
     Rat.Quadratic.le_one_of_sq_le_one imaginarySquare
   have oneLeScale : (1 : Rational) ≤ scale := by
-    have added := Rat.Fraction.Order.Arithmetic.add_le_add_right_direct
+    have added := Arithmetic.add_le_add_right_direct
       realNonnegative 1
     dsimp only [scale]
     calc
@@ -80,16 +82,16 @@ theorem primaryUnitCircle_covers
       _ ≤ x + 1 := added
       _ = 1 + x := Rat.Fraction.Field.add_comm _ _
   have negScaleLe : -scale ≤ y :=
-    (Rat.Fraction.Order.Arithmetic.neg_le_neg_direct oneLeScale).trans
+    (Arithmetic.neg_le_neg_direct oneLeScale).trans
       imaginaryLower
   have yLeScale : y ≤ scale := imaginaryUpper.trans oneLeScale
   have parameterLower : (-1 : Rational) ≤ parameter := by
-    apply (Rat.Fraction.Order.Field.le_div_iff_pos scalePositive).2
+    apply (Field.le_div_iff_pos scalePositive).2
     calc
       (-1 : Rational) * scale = -scale := by ring1
       _ ≤ y := negScaleLe
   have parameterUpper : parameter ≤ (1 : Rational) := by
-    apply (Rat.Fraction.Order.Field.div_le_iff_pos scalePositive).2
+    apply (Field.div_le_iff_pos scalePositive).2
     calc
       y ≤ scale := yLeScale
       _ = (1 : Rational) * scale :=
@@ -150,27 +152,27 @@ theorem primaryUnitCircle_covers
       simpa only [Rat.Fraction.Field.mul_zero_direct,
         Rat.Fraction.Field.zero_add] using imaginaryIdentity
   have pointIdentity :
-      (Curve.Canonical.Circle.circle 1).point parameter = unit := by
+      (circle 1).point parameter = unit := by
     have denominatorNonzero :=
-      Curve.Canonical.Circle.circle_denominator_ne 1 parameter
+      circle_denominator_ne 1 parameter
     apply Gaussian.Field.mul_right_cancel_of_ne
       denominatorNonzero
     calc
-      (Curve.Canonical.Circle.circle 1).point parameter *
-          (Curve.Canonical.Circle.circle 1).denominatorAt parameter =
-          (Curve.Canonical.Circle.circle 1).numeratorAt parameter :=
-        (Curve.RationalCurve.numeratorAt_eq_point_mul_denominatorAt
-          (Curve.Canonical.Circle.circle 1) parameter
+      (circle 1).point parameter *
+          (circle 1).denominatorAt parameter =
+          (circle 1).numeratorAt parameter :=
+        (RationalCurve.numeratorAt_eq_point_mul_denominatorAt
+          (circle 1) parameter
             denominatorNonzero).symm
       _ = (1 : Canonical) *
           ⟨1 - parameter ^ 2, 2 * parameter⟩ :=
-        Curve.Canonical.Circle.circle_numeratorAt 1 parameter
+        circle_numeratorAt 1 parameter
       _ = ⟨1 - parameter ^ 2, 2 * parameter⟩ :=
         Gaussian.Basic.one_mul _
       _ = unit * ⟨parameter ^ 2 + 1, 0⟩ := directionIdentity
       _ = unit *
-          (Curve.Canonical.Circle.circle 1).denominatorAt parameter := by
-        rw [Curve.Canonical.Circle.circle_denominatorAt]
+          (circle 1).denominatorAt parameter := by
+        rw [circle_denominatorAt]
   exact ⟨parameterLower, parameterUpper, pointIdentity⟩
 
 /-- The reciprocal chart covers every unit-quadrance point with nonpositive real coordinate.
@@ -182,7 +184,7 @@ theorem reciprocalUnitCircle_covers
     (realNonpositive : unit.re ≤ 0) :
     let parameter := unit.im / (1 - unit.re)
     (-1 : Rational) ≤ parameter ∧ parameter ≤ 1 ∧
-      (Curve.Canonical.Circle.reciprocalCircle 1).point parameter =
+      (reciprocalCircle 1).point parameter =
         unit := by
   let x := unit.re
   let y := unit.im
@@ -192,11 +194,11 @@ theorem reciprocalUnitCircle_covers
     realNonpositive.trans_lt (show (0 : Rational) < 1 by decide)
   have scalePositive : 0 < scale := by
     dsimp only [scale]
-    exact Rat.Fraction.Order.Arithmetic.sub_pos_direct xLessOne
+    exact Arithmetic.sub_pos_direct xLessOne
   have imaginarySquare : y ^ 2 ≤ 1 := by
     have realSquareNonnegative :=
-      Rat.Fraction.Order.Arithmetic.sq_nonneg_direct x
-    have added := Rat.Fraction.Order.Arithmetic.add_le_add_right_direct
+      Arithmetic.sq_nonneg_direct x
+    have added := Arithmetic.add_le_add_right_direct
       realSquareNonnegative (y ^ 2)
     have squareLeNorm : y ^ 2 ≤ Gaussian.Norm.Basic.normSq unit := by
       dsimp only [x, y]
@@ -211,10 +213,10 @@ theorem reciprocalUnitCircle_covers
   have imaginaryUpper : y ≤ (1 : Rational) :=
     Rat.Quadratic.le_one_of_sq_le_one imaginarySquare
   have negXNonnegative : 0 ≤ -x := by
-    have negated := Rat.Fraction.Order.Arithmetic.neg_le_neg_direct realNonpositive
+    have negated := Arithmetic.neg_le_neg_direct realNonpositive
     simpa only [_root_.neg_zero] using negated
   have oneLeScale : (1 : Rational) ≤ scale := by
-    have added := Rat.Fraction.Order.Arithmetic.add_le_add_right_direct
+    have added := Arithmetic.add_le_add_right_direct
       negXNonnegative 1
     dsimp only [scale]
     calc
@@ -222,16 +224,16 @@ theorem reciprocalUnitCircle_covers
       _ ≤ -x + 1 := added
       _ = 1 - x := by ring1
   have negScaleLe : -scale ≤ y :=
-    (Rat.Fraction.Order.Arithmetic.neg_le_neg_direct oneLeScale).trans
+    (Arithmetic.neg_le_neg_direct oneLeScale).trans
       imaginaryLower
   have yLeScale : y ≤ scale := imaginaryUpper.trans oneLeScale
   have parameterLower : (-1 : Rational) ≤ parameter := by
-    apply (Rat.Fraction.Order.Field.le_div_iff_pos scalePositive).2
+    apply (Field.le_div_iff_pos scalePositive).2
     calc
       (-1 : Rational) * scale = -scale := by ring1
       _ ≤ y := negScaleLe
   have parameterUpper : parameter ≤ (1 : Rational) := by
-    apply (Rat.Fraction.Order.Field.div_le_iff_pos scalePositive).2
+    apply (Field.div_le_iff_pos scalePositive).2
     calc
       y ≤ scale := yLeScale
       _ = (1 : Rational) * scale :=
@@ -290,32 +292,32 @@ theorem reciprocalUnitCircle_covers
       simpa only [Rat.Fraction.Field.mul_zero_direct,
         Rat.Fraction.Field.zero_add] using imaginaryIdentity
   have pointIdentity :
-      (Curve.Canonical.Circle.reciprocalCircle 1).point parameter =
+      (reciprocalCircle 1).point parameter =
         unit := by
     have denominatorNonzero :=
-      Curve.Canonical.Circle.reciprocalCircle_denominator_ne
+      reciprocalCircle_denominator_ne
         1 parameter
     apply Gaussian.Field.mul_right_cancel_of_ne
       denominatorNonzero
     calc
-      (Curve.Canonical.Circle.reciprocalCircle 1).point parameter *
-          (Curve.Canonical.Circle.reciprocalCircle 1).denominatorAt
+      (reciprocalCircle 1).point parameter *
+          (reciprocalCircle 1).denominatorAt
             parameter =
-          (Curve.Canonical.Circle.reciprocalCircle 1).numeratorAt
+          (reciprocalCircle 1).numeratorAt
             parameter :=
-        (Curve.RationalCurve.numeratorAt_eq_point_mul_denominatorAt
-          (Curve.Canonical.Circle.reciprocalCircle 1) parameter
+        (RationalCurve.numeratorAt_eq_point_mul_denominatorAt
+          (reciprocalCircle 1) parameter
             denominatorNonzero).symm
       _ = (1 : Canonical) *
           ⟨parameter ^ 2 - 1, 2 * parameter⟩ :=
-        Curve.Canonical.Circle.reciprocalCircle_numeratorAt 1 parameter
+        reciprocalCircle_numeratorAt 1 parameter
       _ = ⟨parameter ^ 2 - 1, 2 * parameter⟩ :=
         Gaussian.Basic.one_mul _
       _ = unit * ⟨parameter ^ 2 + 1, 0⟩ := directionIdentity
       _ = unit *
-          (Curve.Canonical.Circle.reciprocalCircle 1).denominatorAt
+          (reciprocalCircle 1).denominatorAt
             parameter := by
-        rw [Curve.Canonical.Circle.reciprocalCircle_denominatorAt]
+        rw [reciprocalCircle_denominatorAt]
   exact ⟨parameterLower, parameterUpper, pointIdentity⟩
 end Purelib.RationalFunctions.Curve.Canonical.Circle
 

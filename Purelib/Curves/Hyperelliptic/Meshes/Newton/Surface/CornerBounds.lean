@@ -52,6 +52,10 @@ import Purelib.Tactic.Ring
 import Purelib.Riemann.Integration.RectangularPrimitiveOverlap
 import Purelib.Riemann.Periods.RectangularBilinearCorners
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Algebra
@@ -118,7 +122,7 @@ open Purelib.Riemann.Readings.PrimitiveAreaBounds.PrimitivePoint (Bounded Conjug
 open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target
@@ -135,13 +139,13 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {energy : SurfaceRequest partitions coarse fixed error} {stage :
     Nat} {cache : Numerics domains stage}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus} {assemblies :
-    ExteriorRequest.Assemblies energy cache
+    Assemblies energy cache
     coefficients}
   {perimeters : Perimeters assemblies} {position : Fin
     grid.faces.regulars.length} {cap : Rational}
 
 /-- Conjugating the finite original coefficient sum conjugates each coefficient and retained basis value. -/
-private theorem conjugate_combination {count : Nat} (coefficients values : Fin count → Data.Gaussian.Basic.Canonical) :
+private theorem conjugate_combination {count : Nat} (coefficients values : Fin count → Canonical) :
     Data.Gaussian.Basic.conj (FiniteSum.Fin.sumFin (fun row => coefficients row * values row)) =
       FiniteSum.Fin.sumFin (fun row => Data.Gaussian.Basic.conj (coefficients row) *
       Data.Gaussian.Basic.conj (values row)) := by
@@ -152,20 +156,20 @@ private theorem conjugate_combination {count : Nat} (coefficients values : Fin c
 
 /-- The actual aligned coefficient pair at an original model owner has conjugate components. -/
 private theorem value_conjugate (column row : Fin (((domains.get position).domain sheet).steps + 1)) (point :
-  Data.Gaussian.Basic.Canonical) :
-    PrimitivePoint.Conjugate (SeamAreas.seamValues (sheet := sheet) cache coefficients position column row point) :=
+  Canonical) :
+    Conjugate (SeamAreas.seamValues (sheet := sheet) cache coefficients position column row point) :=
   (conjugate_combination (fun row => coefficients row) _).symm
 
 /-- Two original model owners at the same physical point have the retained homogeneous overlap bound on their actual
 coefficient readings. -/
 private theorem owner_difference_bound
     (request : EnergyPreflight.Request (fixed.get position).get cap) (later : request.index ≤ stage)
-    (first last : RectangularOwnedTriangulation.OwnedVertex ((domains.get position).domain sheet).geometry)
+    (first last : OwnedVertex ((domains.get position).domain sheet).geometry)
     (same : first.point = last.point) :
-    PrimitivePoint.Bounded ((SeamAreas.seamValues (sheet := sheet) cache coefficients position first.column first.row
+    Bounded ((SeamAreas.seamValues (sheet := sheet) cache coefficients position first.column first.row
       first.point).sub
       (SeamAreas.seamValues (sheet := sheet) cache coefficients position last.column last.row last.point))
-      (4 * (genus : Fraction.Rational) * Purelib.Riemann.Readings.PreparedObservationCoercivity.coefficientNormSq
+      (4 * (genus : Fraction.Rational) * PreparedObservationCoercivity.coefficientNormSq
         coefficients * cap) := by
   apply PrimitivePoint.bounded_of_conjugate (PrimitivePoint.sub_conjugate
     (value_conjugate _ _ _)
@@ -174,17 +178,17 @@ private theorem owner_difference_bound
       (cache.atDomain position sheet row).offsets first.column first.row first.point -
     (cache.atDomain position sheet row).anchors.alignedValue
       (cache.atDomain position sheet row).offsets last.column last.row last.point
-  have gaps (row : Fin genus) : Data.Gaussian.Norm.Basic.normSq (gap row) ≤ 4 * cap := by
+  have gaps (row : Fin genus) : Basic.normSq (gap row) ≤ 4 * cap := by
     let accuracy := request.rowAtStage stage later row
     dsimp only [gap]
     rw [same]
     have firstInside := first.contains
     rw [same] at firstInside
-    rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+    rw [Basic.normSq_eq_canonical]
     exact (accuracy.overlap_bound (cache.atDomain position sheet row).anchors (cache.atDomain position sheet
       row).offsets
       ((domains.get position).domain sheet).patch.cell_refines _ _ _ _ firstInside last.contains).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct accuracy.accurate.le (by decide))
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct accuracy.accurate.le (by decide))
   have readback : ((SeamAreas.seamValues (sheet := sheet) cache coefficients position first.column first.row
     first.point).sub
       (SeamAreas.seamValues (sheet := sheet) cache coefficients position last.column last.row last.point)).right =
@@ -197,19 +201,19 @@ private theorem owner_difference_bound
     ring1
   rw [readback]
   have bound := Indexed.normSq_sumFin_le_count_mul_sumFin
-    (fun row => coefficients row * gap row) (fun row => Data.Gaussian.Norm.Basic.normSq (coefficients row) * (4
+    (fun row => coefficients row * gap row) (fun row => Basic.normSq (coefficients row) * (4
       * cap)) (fun row => by
-      rw [Data.Gaussian.Norm.Basic.normSq_mul]
-      exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (gaps row)
-        (Data.Gaussian.Norm.Basic.normSq_nonneg _))
+      rw [Basic.normSq_mul]
+      exact Arithmetic.mul_le_mul_of_nonneg_left_direct (gaps row)
+        (Basic.normSq_nonneg _))
   rw [FiniteSum.Fin.sumFin_mul_right] at bound
   have coefficientReadback : FiniteSum.Fin.sumFin
-      (fun row => Data.Gaussian.Norm.Basic.normSq (coefficients row)) =
+      (fun row => Basic.normSq (coefficients row)) =
       PreparedObservationCoercivity.coefficientNormSq coefficients := by
     unfold PreparedObservationCoercivity.coefficientNormSq
     exact FiniteSum.Fin.sumFin_congr
-      (fun row => Data.Gaussian.Norm.Basic.normSq_eq_canonical (coefficients row))
-  rw [coefficientReadback, Data.Gaussian.Norm.Basic.normSq_eq_canonical] at bound
+      (fun row => Basic.normSq_eq_canonical (coefficients row))
+  rw [coefficientReadback, Basic.normSq_eq_canonical] at bound
   exact bound.trans_eq (by ring1)
 
 /-- The actual four-owner interior corner polygon satisfies the original homogeneous squared overlap bound. -/
@@ -217,13 +221,13 @@ theorem FaceAssembly.corner_bound (face : FaceAssembly perimeters position)
     (request : EnergyPreflight.Request (fixed.get position).get cap) (later : request.index ≤ stage)
     (column : Fin (PieceIndices.columns (partitions.get position))) (row : Fin (PieceIndices.rows (partitions.get
       position))) :
-    Data.Gaussian.Norm.Basic.normSq (BilinearGridBoundary.interiorCorner face.corners column row) ≤
+    Basic.normSq (BilinearGridBoundary.interiorCorner face.corners column row) ≤
       256 * (genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 * cap ^ 2
         := by
   let value := fun right above =>
     let owner := SurfaceRequest.junctionOwner energy position column row right above
     SeamAreas.seamValues (sheet := sheet) cache coefficients position owner.column owner.row owner.point
-  have bounded (right above : Bool) : PrimitivePoint.Bounded ((value right above).sub (value false false))
+  have bounded (right above : Bool) : Bounded ((value right above).sub (value false false))
       (4 * (genus : Fraction.Rational) * PreparedObservationCoercivity.coefficientNormSq coefficients * cap) :=
     owner_difference_bound request later _ _
       ((SurfaceRequest.junctionOwner_point energy position column row right above).trans
@@ -236,7 +240,7 @@ theorem FaceAssembly.corner_bound (face : FaceAssembly perimeters position)
 /-- The complete retained sum of interior corner polygons has the homogeneous column-count and row-count bound. -/
 theorem FaceAssembly.cornerTotal_bound (face : FaceAssembly perimeters position)
     (request : EnergyPreflight.Request (fixed.get position).get cap) (later : request.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq face.cornerTotal ≤ (genus : Fraction.Rational) ^ 2 *
+    Basic.normSq face.cornerTotal ≤ (genus : Fraction.Rational) ^ 2 *
       PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
       (256 * ((PieceIndices.columns (partitions.get position)) : Fraction.Rational) ^ 2 * ((PieceIndices.rows
         (partitions.get position)) : Fraction.Rational) ^ 2 * cap ^ 2) := by
@@ -249,17 +253,17 @@ theorem FaceAssembly.cornerTotal_bound (face : FaceAssembly perimeters position)
       (256 * (genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 * cap ^
         2))
     (fun column => Indexed.normSq_sumFin_le _ _
-      (Curves.Hyperelliptic.Meshes.Newton.Surface.CornerBounds.FaceAssembly.corner_bound face request later column))
+      (FaceAssembly.corner_bound face request later column))
   exact bound.trans_eq (by ring1)
 
 set_option genInjectivity false in
 /-- A numerical request for all interior observation-cut corners in one whole face. The existing finite corner budget is
 reused with zero seam slope; no coefficient vector is needed to select the stage. -/
-structure FaceCornerRequest (partitions : NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid)
-    (fixed : NewtonRequestedObservationEnergy.Preflights domains sheet) (position : Fin grid.faces.regulars.length)
+structure FaceCornerRequest (partitions : SurfacePartitions observations grid)
+    (fixed : Preflights domains sheet) (position : Fin grid.faces.regulars.length)
       (allowance : Fraction.Rational) where
   /-- The retained finite corner budget on the original partition dimensions with zero seam slope. -/ budget :
-    Rectangle.ClippedExteriorTolerance
+    ClippedExteriorTolerance
     (PieceIndices.columns (partitions.get position)) (PieceIndices.rows (partitions.get position)) 0 allowance
   /-- The original basis model accuracy request at that exact retained corner budget cap. -/ models :
     EnergyPreflight.Request (fixed.get position).get budget.cap
@@ -269,10 +273,10 @@ constructive_injectivity FaceCornerRequest
 namespace FaceCornerRequest
 
 /-- Reuse the original finite corner budget to prepare coefficient-independent model accuracy on the retained face. -/
-@[expose] def build (partitions : NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid) (fixed :
-  NewtonRequestedObservationEnergy.Preflights domains sheet)
+@[expose] def build (partitions : SurfacePartitions observations grid) (fixed :
+  Preflights domains sheet)
     (position : Fin grid.faces.regulars.length) (allowance : Fraction.Rational) (positive : 0 < allowance) :
-    Curves.Hyperelliptic.Meshes.Newton.Surface.CornerBounds.FaceCornerRequest partitions fixed position allowance :=
+    FaceCornerRequest partitions fixed position allowance :=
   let budget := ClippedExteriorTolerance.build
     (PieceIndices.columns (partitions.get position)) (PieceIndices.rows (partitions.get position)) 0 allowance (by
       decide) positive
@@ -280,27 +284,27 @@ namespace FaceCornerRequest
 
 /-- Every later actual face corner sum satisfies the requested homogeneous corner allowance. -/
 theorem accurate {allowance : Fraction.Rational} (request :
-  Curves.Hyperelliptic.Meshes.Newton.Surface.CornerBounds.FaceCornerRequest partitions fixed position allowance)
+  FaceCornerRequest partitions fixed position allowance)
     (later : request.models.index ≤ stage) (face : FaceAssembly perimeters position) :
-    Data.Gaussian.Norm.Basic.normSq face.cornerTotal ≤ (genus : Fraction.Rational) ^ 2 *
+    Basic.normSq face.cornerTotal ≤ (genus : Fraction.Rational) ^ 2 *
       PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 * allowance := by
   have paid := request.budget.pair_bound
     (firstError := request.budget.cap) (secondError := request.budget.cap) (firstSlope := 0) (secondSlope := 0)
     request.budget.positive.le le_rfl le_rfl (by decide) le_rfl le_rfl
-  simp only [-eq_self, -iff_self, Fraction.Order.Basic.max_self, mul_zero, zero_add, add_zero] at paid
+  simp only [-eq_self, -iff_self, Basic.max_self, mul_zero, zero_add, add_zero] at paid
   let amount := 256 * ((PieceIndices.columns (partitions.get position)) : Fraction.Rational) ^ 2 *
     ((PieceIndices.rows (partitions.get position)) : Fraction.Rational) ^ 2 * request.budget.cap ^ 2
-  have nonnegative : 0 ≤ amount := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) (Fraction.Order.Arithmetic.sq_nonneg_direct _))
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _)) (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+  have nonnegative : 0 ≤ amount := Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct (by decide +kernel) (Arithmetic.sq_nonneg_direct _))
+      (Arithmetic.sq_nonneg_direct _)) (Arithmetic.sq_nonneg_direct _)
   have bound : amount ≤ allowance :=
     (le_add_of_nonneg_right nonnegative).trans ((le_of_eq (by dsimp only [amount]; ring1)).trans paid)
-  exact (Curves.Hyperelliptic.Meshes.Newton.Surface.CornerBounds.FaceAssembly.cornerTotal_bound face request.models
+  exact (FaceAssembly.cornerTotal_bound face request.models
     later).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct bound
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _)))
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct bound
+      (Arithmetic.mul_nonneg_direct (Arithmetic.sq_nonneg_direct _)
+        (Arithmetic.sq_nonneg_direct _)))
 
 end FaceCornerRequest
 

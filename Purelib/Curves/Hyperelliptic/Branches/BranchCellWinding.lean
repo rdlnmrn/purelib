@@ -92,39 +92,39 @@ open Purelib.RootIsolation.Track.Basic (WindingOneTrack)
 open Purelib.Polynomial.Winding.Box.Basic (quadrupledBoxWinding)
 open Purelib.Polynomial.Geometry.Grid.ClearGrid (Cell)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Data curve}
   {higher : 1 < curve.polynomial.natDegree}
 
 /-- Reuse the retained small branch state, not a fresh extraction. -/
-@[expose] def state (bank : Branches.BranchCellBank curve branches higher) (index : Data.Index branches) :
-    WindingOne.Basic.WindingOneState curve.polynomial (Cuts.Ambient curve) := (bank.rows index).location.state
+@[expose] def state (bank : BranchCellBank curve branches higher) (index : Data.Index branches) :
+    WindingOneState curve.polynomial (Cuts.Ambient curve) := (bank.rows index).location.state
 
 /-- The retained original branch state lies strictly inside its selected grid cell. -/
-theorem state_strict_cell (bank : Branches.BranchCellBank curve branches higher) (index : Data.Index branches) :
-    (Curves.Hyperelliptic.Branches.BranchCellWinding.state bank index).box.StrictInterior (bank.cell index).box :=
+theorem state_strict_cell (bank : BranchCellBank curve branches higher) (index : Data.Index branches) :
+    (state bank index).box.StrictInterior (bank.cell index).box :=
       (bank.rows index).location.strict
 
 /-- The retained original branch anchor lies strictly inside its selected grid cell. -/
-theorem anchor_strict_cell (bank : Branches.BranchCellBank curve branches higher) (index : Data.Index branches) :
-    (bank.cell index).box.StrictContains (Curves.Hyperelliptic.Branches.BranchCellWinding.state bank index).box.anchor
+theorem anchor_strict_cell (bank : BranchCellBank curve branches higher) (index : Data.Index branches) :
+    (bank.cell index).box.StrictContains (state bank index).box.anchor
       :=
-  ⟨(Curves.Hyperelliptic.Branches.BranchCellWinding.state_strict_cell bank index).left,
-    (Curves.Hyperelliptic.Branches.BranchCellWinding.state bank index).box.x_valid.trans_lt
-    (Curves.Hyperelliptic.Branches.BranchCellWinding.state_strict_cell bank index).right,
-    (Curves.Hyperelliptic.Branches.BranchCellWinding.state_strict_cell bank index).bottom,
-      (Curves.Hyperelliptic.Branches.BranchCellWinding.state bank index).box.y_valid.trans_lt
-      (Curves.Hyperelliptic.Branches.BranchCellWinding.state_strict_cell bank index).top⟩
+  ⟨(state_strict_cell bank index).left,
+    (state bank index).box.x_valid.trans_lt
+    (state_strict_cell bank index).right,
+    (state_strict_cell bank index).bottom,
+      (state bank index).box.y_valid.trans_lt
+      (state_strict_cell bank index).top⟩
 
 /-- Distinct original branch indices retain positively separated branch-state boxes. -/
-theorem states_separated (bank : Branches.BranchCellBank curve branches higher) (first second : Data.Index branches)
-    (different : first ≠ second) : (Curves.Hyperelliptic.Branches.BranchCellWinding.state bank first).box.Separated
-      (Curves.Hyperelliptic.Branches.BranchCellWinding.state bank second).box :=
+theorem states_separated (bank : BranchCellBank curve branches higher) (first second : Data.Index branches)
+    (different : first ≠ second) : (state bank first).box.Separated
+      (state bank second).box :=
   (bank.cells_separated first second different).of_refines
-    (Geometry.Rational.Box.Refinement.StrictInterior.refines
-        (Curves.Hyperelliptic.Branches.BranchCellWinding.state_strict_cell bank
-      first)) (Geometry.Rational.Box.Refinement.StrictInterior.refines
-          (Curves.Hyperelliptic.Branches.BranchCellWinding.state_strict_cell
+    (Refinement.StrictInterior.refines
+        (state_strict_cell bank
+      first)) (Refinement.StrictInterior.refines
+          (state_strict_cell
       bank second))
 
 /-- Degree-sharp finite maximality rules out any additional state separated from the entire retained branch bank. The
@@ -133,32 +133,32 @@ auxiliary tracks are proof-only.
 The original degree-complete bank is extended by the displayed separated state using an explicit successor-index split.
 Finite cardinality of those same retained states contradicts the original degree count; no new branch state is selected.
 -/
-theorem no_additional_state (bank : Branches.BranchCellBank curve branches higher)
-    (extra : WindingOne.Basic.WindingOneState curve.polynomial (Cuts.Ambient curve))
-    (separated : ∀ index, extra.box.Separated (Curves.Hyperelliptic.Branches.BranchCellWinding.state bank index).box) :
+theorem no_additional_state (bank : BranchCellBank curve branches higher)
+    (extra : WindingOneState curve.polynomial (Cuts.Ambient curve))
+    (separated : ∀ index, extra.box.Separated (state bank index).box) :
       False := by
   let elimination := Separated.separatedAxisEliminationCertificate curve.polynomial curve.nonzero
-    (BranchIsolation.degreePositive curve)
-  let states : Fin (branches.siteCount + 1) → WindingOne.Basic.WindingOneState curve.polynomial (Cuts.Ambient curve) :=
-    Purelib.Data.Fin.cases extra (Curves.Hyperelliptic.Branches.BranchCellWinding.state bank)
-  let family : Fin (branches.siteCount + 1) → Track.Basic.WindingOneTrack curve.polynomial (Cuts.Ambient curve) :=
+    (degreePositive curve)
+  let states : Fin (branches.siteCount + 1) → WindingOneState curve.polynomial (Cuts.Ambient curve) :=
+    Data.Fin.cases extra (state bank)
+  let family : Fin (branches.siteCount + 1) → WindingOneTrack curve.polynomial (Cuts.Ambient curve) :=
     fun index => Build.ofInitial higher curve.squarefree elimination (states index)
   have pairwise : ∀ first second, first ≠ second → (family first).initial.box.Separated (family second).initial.box :=
     by
     intro first
-    refine Purelib.Data.Fin.cases_induction ?_ (fun first => ?_) first
+    refine Data.Fin.cases_induction ?_ (fun first => ?_) first
     · intro second
-      refine Purelib.Data.Fin.cases_induction ?_ (fun second => ?_) second
+      refine Data.Fin.cases_induction ?_ (fun second => ?_) second
       · intro different
         exact (different rfl).elim
       · intro _
         exact separated second
     · intro second
-      refine Purelib.Data.Fin.cases_induction ?_ (fun second => ?_) second
+      refine Data.Fin.cases_induction ?_ (fun second => ?_) second
       · intro _
-        exact Rational.Box.separated_symm (separated first)
+        exact separated_symm (separated first)
       · intro different
-        exact Curves.Hyperelliptic.Branches.BranchCellWinding.states_separated bank first second (fun equal => different
+        exact states_separated bank first second (fun equal => different
           (congrArg Fin.succ equal))
   have bound := Cardinality.family_card_le_natDegree higher curve.squarefree elimination family pairwise
   have count := branches.count_eq
@@ -168,56 +168,56 @@ theorem no_additional_state (bank : Branches.BranchCellBank curve branches highe
 
 The original box, ambient refinement, properness and boundary-clearance fields are retained exactly. This view performs
 no extraction, clearance search or branch classification. -/
-@[expose] def region (cell : ClearGrid.Cell curve.polynomial (Cuts.Ambient curve)) : Region.ClearRegion curve.polynomial
+@[expose] def region (cell : Cell curve.polynomial (Cuts.Ambient curve)) : Region.ClearRegion curve.polynomial
   (Cuts.Ambient curve) :=
   ⟨cell.box, cell.box_refines, cell.box_proper, cell.boundaryClearance⟩
 
 include higher in
 /-- Every original clear grid cell has nonnegative raw winding for the squarefree curve polynomial. -/
-theorem winding_nonnegative (cell : ClearGrid.Cell curve.polynomial (Cuts.Ambient curve)) : 0 ≤
-  Winding.Box.Basic.quadrupledBoxWinding curve.polynomial cell.box :=
+theorem winding_nonnegative (cell : Cell curve.polynomial (Cuts.Ambient curve)) : 0 ≤
+  quadrupledBoxWinding curve.polynomial cell.box :=
   Nonnegative.Squarefree.quadrupledBoxWinding_nonnegative higher curve.squarefree
-    (Separated.separatedAxisEliminationCertificate curve.polynomial curve.nonzero (BranchIsolation.degreePositive
+    (Separated.separatedAxisEliminationCertificate curve.polynomial curve.nonzero (degreePositive
       curve))
     cell.box_refines cell.box_proper cell.boundaryClearance
 
 section
 open Purelib.Curves.Hyperelliptic.Branches.BranchCellWinding
 /-- A cell retaining its original strict interior winding-one state has raw winding at least four. -/
-theorem selected_winding_ge_four (bank : Branches.BranchCellBank curve branches higher) (index : Data.Index branches) :
-    4 ≤ Winding.Box.Basic.quadrupledBoxWinding curve.polynomial (bank.cell index).box :=
+theorem selected_winding_ge_four (bank : BranchCellBank curve branches higher) (index : Data.Index branches) :
+    4 ≤ quadrupledBoxWinding curve.polynomial (bank.cell index).box :=
   Count.region_rawWinding_ge_four_of_strictInterior higher curve.squarefree
-    (Separated.separatedAxisEliminationCertificate curve.polynomial curve.nonzero (BranchIsolation.degreePositive
+    (Separated.separatedAxisEliminationCertificate curve.polynomial curve.nonzero (degreePositive
       curve))
-    (Curves.Hyperelliptic.Branches.BranchCellWinding.state bank index) (region (bank.cell index))
-      (Curves.Hyperelliptic.Branches.BranchCellWinding.state_strict_cell bank index)
+    (state bank index) (region (bank.cell index))
+      (state_strict_cell bank index)
 
 /-- A face containing no selected branch has exactly zero winding. -/
-theorem unassigned_winding_zero (bank : Branches.BranchCellBank curve branches higher) (cell : ClearGrid.Cell
+theorem unassigned_winding_zero (bank : BranchCellBank curve branches higher) (cell : Cell
   curve.polynomial (Cuts.Ambient curve))
     (member : cell ∈ bank.grid.cells) (unassigned : ∀ index, cell ≠ bank.cell index) :
-    Winding.Box.Basic.quadrupledBoxWinding curve.polynomial cell.box = 0 := by
-  by_cases zero : Winding.Box.Basic.quadrupledBoxWinding curve.polynomial cell.box = 0
+    quadrupledBoxWinding curve.polynomial cell.box = 0 := by
+  by_cases zero : quadrupledBoxWinding curve.polynomial cell.box = 0
   · exact zero
   · let raw := (region cell).raw zero
-    let extra := BranchIsolation.trackOfRaw curve higher raw
-    have strict : extra.initial.box.StrictInterior cell.box := BranchIsolation.trackOfRaw_initial_strict curve higher
+    let extra := trackOfRaw curve higher raw
+    have strict : extra.initial.box.StrictInterior cell.box := trackOfRaw_initial_strict curve higher
       raw
-    exact (Curves.Hyperelliptic.Branches.BranchCellWinding.no_additional_state bank extra.initial (fun index =>
+    exact (no_additional_state bank extra.initial (fun index =>
       (CellSeparation.cells_interiorSeparated bank.grid member (bank.cell_mem index) (unassigned
         index)).strict_refinements
-        strict (Curves.Hyperelliptic.Branches.BranchCellWinding.state_strict_cell bank index))).elim
+        strict (state_strict_cell bank index))).elim
 
 /-- Each selected face has exactly one branch in the raw normalization. Any positive remainder would extract a forbidden
 additional separated state. -/
-theorem selected_winding_four (bank : Branches.BranchCellBank curve branches higher) (index : Data.Index branches) :
-    Winding.Box.Basic.quadrupledBoxWinding curve.polynomial (bank.cell index).box = 4 := by
-  by_cases four : Winding.Box.Basic.quadrupledBoxWinding curve.polynomial (bank.cell index).box = 4
+theorem selected_winding_four (bank : BranchCellBank curve branches higher) (index : Data.Index branches) :
+    quadrupledBoxWinding curve.polynomial (bank.cell index).box = 4 := by
+  by_cases four : quadrupledBoxWinding curve.polynomial (bank.cell index).box = 4
   · exact four
-  · let original := Curves.Hyperelliptic.Branches.BranchCellWinding.state bank index
+  · let original := state bank index
     let cell := bank.cell index
     let complement := Build.build cell.boundaryClearance original.proper
-      (Curves.Hyperelliptic.Branches.BranchCellWinding.state_strict_cell bank index)
+      (state_strict_cell bank index)
       (original.ambientLeftClearance.restrict cell.box_refines) (original.ambientRightClearance.restrict
         cell.box_refines)
       (original.ambientBottomClearance.restrict cell.box_refines) (original.ambientTopClearance.restrict
@@ -225,14 +225,14 @@ theorem selected_winding_four (bank : Branches.BranchCellBank curve branches hig
     let regions := Complement.complementRegions complement cell.box_refines
     have totalPositive : 0 < Region.Sum.totalRaw regions := by
       have additive := Complement.totalRaw_complementRegions complement cell.box_refines
-      have lower := Curves.Hyperelliptic.Branches.BranchCellWinding.selected_winding_ge_four bank index
+      have lower := selected_winding_ge_four bank index
       rw [original.rawWindingFour] at additive
-      change Region.Sum.totalRaw regions = Winding.Box.Basic.quadrupledBoxWinding curve.polynomial (bank.cell index).box
+      change Region.Sum.totalRaw regions = quadrupledBoxWinding curve.polynomial (bank.cell index).box
         - 4 at additive
       omega
     let elimination := Separated.separatedAxisEliminationCertificate curve.polynomial curve.nonzero
-      (BranchIsolation.degreePositive curve)
-    have nonnegative : ∀ candidateRegion ∈ regions, 0 ≤ Winding.Box.Basic.quadrupledBoxWinding curve.polynomial
+      (degreePositive curve)
+    have nonnegative : ∀ candidateRegion ∈ regions, 0 ≤ quadrupledBoxWinding curve.polynomial
       candidateRegion.box := by
       intro candidateRegion _
       exact Nonnegative.Squarefree.quadrupledBoxWinding_nonnegative higher curve.squarefree elimination
@@ -243,47 +243,47 @@ theorem selected_winding_four (bank : Branches.BranchCellBank curve branches hig
       exact List.mem_append_right _ List.mem_cons_self
     let extra := Extraction.extractRegion higher curve.squarefree elimination selected.selected selected.positive
     have strict : extra.track.initial.box.StrictInterior cell.box :=
-        Geometry.Rational.Box.Refinement.StrictInterior.Boxes.trans_refines
+        Refinement.StrictInterior.Boxes.trans_refines
       extra.centerStrict
       (Complement.complementRegions_refine_outer complement cell.box_refines selectedMember)
-    apply (Curves.Hyperelliptic.Branches.BranchCellWinding.no_additional_state bank extra.track.initial ?_).elim
+    apply (no_additional_state bank extra.track.initial ?_).elim
     intro other
     by_cases same : index = other
     · subst other
-      exact Rational.Box.separated_symm
+      exact separated_symm
         (Complement.center_separated_from_complement_strictInterior complement cell.box_refines selectedMember
           extra.centerStrict)
     · exact (CellSeparation.cells_interiorSeparated bank.grid (bank.cell_mem index) (bank.cell_mem other)
         (bank.cells_ne index other same)).strict_refinements strict
-          (Curves.Hyperelliptic.Branches.BranchCellWinding.state_strict_cell bank other)
+          (state_strict_cell bank other)
 
 end
 
 /-- Promote the actual grid face to a winding-one state using its retained four line certificates. This performs no root
 extraction or new clearance search, and retains the strictly enclosed original branch witness. -/
-@[expose] def ramifiedState (bank : Branches.BranchCellBank curve branches higher) (index : Data.Index branches) :
-    WindingOne.Basic.WindingOneState curve.polynomial (Cuts.Ambient curve) :=
+@[expose] def ramifiedState (bank : BranchCellBank curve branches higher) (index : Data.Index branches) :
+    WindingOneState curve.polynomial (Cuts.Ambient curve) :=
   let cell := bank.cell index
   { box := cell.box
     refinesAmbient := cell.box_refines
     proper := cell.box_proper
     clearance := cell.boundaryClearance
-    rawWindingFour := Curves.Hyperelliptic.Branches.BranchCellWinding.selected_winding_four bank index
+    rawWindingFour := selected_winding_four bank index
     ambientLeftClearance := cell.horizontal.lower.clearance
     ambientRightClearance := cell.horizontal.upper.clearance
     ambientBottomClearance := cell.vertical.lower.clearance
     ambientTopClearance := cell.vertical.upper.clearance }
 
 /-- The original retained branch state remains strictly inside the promoted ramified grid state. -/
-theorem ramifiedState_owns (bank : Branches.BranchCellBank curve branches higher) (index : Data.Index branches) :
-    (Curves.Hyperelliptic.Branches.BranchCellWinding.state bank index).box.StrictInterior
-      (Curves.Hyperelliptic.Branches.BranchCellWinding.ramifiedState bank index).box :=
-      Curves.Hyperelliptic.Branches.BranchCellWinding.state_strict_cell bank index
+theorem ramifiedState_owns (bank : BranchCellBank curve branches higher) (index : Data.Index branches) :
+    (state bank index).box.StrictInterior
+      (ramifiedState bank index).box :=
+      state_strict_cell bank index
 
 /-- The promoted ramified grid state lies within its original isolated branch box. -/
-theorem ramifiedState_refines_original (bank : Branches.BranchCellBank curve branches higher) (index : Data.Index
+theorem ramifiedState_refines_original (bank : BranchCellBank curve branches higher) (index : Data.Index
   branches) :
-    (Curves.Hyperelliptic.Branches.BranchCellWinding.ramifiedState bank index).box.Refines (branches.track higher
+    (ramifiedState bank index).box.Refines (branches.track higher
       index).initial.box := bank.cell_refines_original index
 
 end Purelib.Curves.Hyperelliptic.Branches.BranchCellWinding

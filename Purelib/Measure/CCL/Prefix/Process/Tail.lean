@@ -50,7 +50,7 @@ power. -/
 theorem probe_tailProbability_le_currentPoweredLpUpper_div {ι :
   Type}
     (process : Cylinder.PrefixFamilyProcess ι)
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (probe : Line.GaussianLine → Fraction.Rational) (exponent : Nat)
     (factor : Fraction.Rational) (factorPositive : 0 < factor)
     (sensitive : ∀ left right,
@@ -64,16 +64,16 @@ theorem probe_tailProbability_le_currentPoweredLpUpper_div {ι :
       Realizes (process.blocks state atom.item)
         (points atom.item)) :
     distribution.probability
-        (Measure.separationAtLeast threshold
+        (separationAtLeast threshold
           (fun item => probe (points item)) (fun _ => 0)) ≤
-      (((CCL.Prefix.PrefixFamilyProcess.toProbePoweredLpProcess process) distribution probe exponent factor
+      (((toProbePoweredLpProcess process) distribution probe exponent factor
         factorPositive sensitive).bound state).upper /
         threshold ^ exponent := by
   exact Distribution.tailProbability_le_upper_div_of_poweredLp_mem distribution
-    (((CCL.Prefix.PrefixFamilyProcess.toProbePoweredLpProcess process) distribution probe exponent factor
+    (((toProbePoweredLpProcess process) distribution probe exponent factor
       factorPositive sensitive).bound state)
     exponent threshold thresholdPositive (fun item => probe (points item))
-    ((CCL.Prefix.PrefixFamilyProcess.poweredLp_mem_toProbePoweredLpProcess_bound process) distribution
+    ((poweredLp_mem_toProbePoweredLpProcess_bound process) distribution
       probe exponent factor factorPositive sensitive state points
       pointsRealize)
 
@@ -82,7 +82,7 @@ by the threshold's power. -/
 theorem
   probe_deviationProbability_le_currentPoweredDeviationUpper_div
     {ι : Type} (process : Cylinder.PrefixFamilyProcess ι)
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (probe : Line.GaussianLine → Fraction.Rational) (center : Fraction.Rational) (exponent
       : Nat)
     (factor : Fraction.Rational) (factorPositive : 0 < factor)
@@ -97,7 +97,7 @@ theorem
       Realizes (process.blocks state atom.item)
         (points atom.item)) :
     distribution.probability
-        (Measure.separationAtLeast threshold
+        (separationAtLeast threshold
           (fun item => probe (points item)) (fun _ => center)) ≤
       ((process.toProbePoweredDeviationProcess distribution probe center
         exponent factor factorPositive sensitive).bound state).upper /
@@ -117,7 +117,7 @@ The original finite law and positive threshold are retained; the guarantee conce
 before division by the threshold power. -/
 theorem request_probeTail_bound_and_numerator_close {ι : Type}
     (process : Cylinder.PrefixFamilyProcess ι)
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (probe : Line.GaussianLine → Fraction.Rational) (exponent : Nat)
     (factor : Fraction.Rational) (factorPositive : 0 < factor)
     (sensitive : ∀ left right,
@@ -131,27 +131,27 @@ theorem request_probeTail_bound_and_numerator_close {ι : Type}
     (pointsRealize : ∀ atom, atom ∈ distribution.atoms →
       Realizes
         (process.blocks
-          (((CCL.Prefix.PrefixFamilyProcess.toProbePoweredLpProcess process) distribution probe exponent factor
+          (((toProbePoweredLpProcess process) distribution probe exponent factor
             factorPositive sensitive).request state epsilon positive)
           atom.item)
         (points atom.item)) :
-    let poweredProcess := (CCL.Prefix.PrefixFamilyProcess.toProbePoweredLpProcess process) distribution probe
+    let poweredProcess := (toProbePoweredLpProcess process) distribution probe
       exponent factor factorPositive sensitive
     let requested := poweredProcess.request state epsilon positive
     distribution.probability
-        (Measure.separationAtLeast threshold
+        (separationAtLeast threshold
           (fun item => probe (points item)) (fun _ => 0)) ≤
         (poweredProcess.bound requested).upper / threshold ^ exponent ∧
       (poweredProcess.bound requested).upper -
           distribution.poweredLp exponent (fun item => probe (points item)) <
         epsilon := by
   dsimp only
-  let poweredProcess := (CCL.Prefix.PrefixFamilyProcess.toProbePoweredLpProcess process) distribution probe
+  let poweredProcess := (toProbePoweredLpProcess process) distribution probe
     exponent factor factorPositive sensitive
   let requested := poweredProcess.request state epsilon positive
   have actualInside : (poweredProcess.bound requested).Contains
       (distribution.poweredLp exponent fun item => probe (points item)) := by
-    exact (CCL.Prefix.PrefixFamilyProcess.poweredLp_mem_toProbePoweredLpProcess_bound process) distribution
+    exact (poweredLp_mem_toProbePoweredLpProcess_bound process) distribution
       probe exponent factor factorPositive sensitive requested points
       pointsRealize
   constructor

@@ -225,6 +225,24 @@ and the finite edge-cancellation incidence certificate. -/
     triangulation := EdgeCancellation.triangulateFaces faces
     faces_eq := fun _ => rfl }
 
+/-- The whole original mesh factory fixes the actual shared lookup indices of each cached face.
+
+The membership certificates may come from the retained face readbacks.
+The complete indexed triangle is the original lookup result on that SAME
+vertex bank. Coordinate realization without this factory does not imply it.
+-/
+public theorem faces_eq_indexTriangle {triangles : List CoordinateTriangulation.CoordinateTriangle}
+    (mesh : CoordinateTriangulation triangles) (factory : mesh = build triangles) (index : Fin triangles.length)
+    (members : (triangles[index.val]'index.isLt).first ∈ mesh.vertices ∧
+      (triangles[index.val]'index.isLt).second ∈ mesh.vertices ∧
+      (triangles[index.val]'index.isLt).third ∈ mesh.vertices) :
+    mesh.faces index = indexTriangle mesh.vertices (triangles[index.val]'index.isLt) members := by
+  cases factory
+  change indexedFaces triangles index = _
+  unfold indexedFaces
+  rewrite [Data.Vector.Basic.vectorOfFn_apply]
+  rfl
+
 /-- Read the Gaussian rational coordinate of a retained mesh vertex. -/
 @[expose] public def coordinate (mesh : CoordinateTriangulation triangles) (index : Fin
   mesh.vertices.length) : Gaussian.Basic.Canonical :=

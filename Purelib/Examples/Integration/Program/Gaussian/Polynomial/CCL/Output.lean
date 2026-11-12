@@ -16,11 +16,7 @@ import Purelib.Integration.Program.Gaussian.Cached.Basic
 @[expose] public section
 
 /-!
-# Generated polynomial partition regressions
-
-All data are small; arithmetic examples use kernel decision at ordinary Lean
-limits.  The symbolic results use the generic transport and partition proofs,
-not a normalization of large concrete coefficient banks.
+Productive CCL output for the partitioned polynomial path integral.
 -/
 
 namespace Purelib.Examples.Integration.Program.Gaussian.Polynomial.CCL.Output

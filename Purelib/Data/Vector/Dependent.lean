@@ -55,6 +55,24 @@ recursive tail materializes the successor-index entries of that family. -/
   | 0, _, _ => .nil
   | _ + 1, _, entries => .cons (entries 0) (ofFn fun index => entries index.succ)
 
+/-- Materialize checked entries once in increasing index order through a monadic reader.
+
+Each actual returned entry identifies its complete original producer value.
+The continuation receives the same stored spine and its whole defining
+identity, without raising the reader's entry universe or rerunning a producer.
+-/
+def ofFnM {m : Type u → Type v} [Monad m] {α : Type u} :
+    {size : Nat} → {family : Fin size → Type u} → (entries : (index : Fin size) → family index) →
+    ((index : Fin size) → m {entry : family index // entry = entries index}) →
+    ({stored : DependentVector family // stored = ofFn entries} → m α) → m α
+  | 0, _, _, _, use => use ⟨.nil, rfl⟩
+  | _ + 1, _, entries, load, use => do
+      let first ← load 0
+      ofFnM (fun index => entries index.succ) (fun index => load index.succ) fun remaining =>
+        use ⟨.cons first.val remaining.val,
+          (congrArg (fun entry => DependentVector.cons entry remaining.val) first.property).trans
+            (congrArg (fun tail => DependentVector.cons (entries 0) tail) remaining.property)⟩
+
 /-- Reading a materialized dependent vector recovers its original entry. -/
 theorem ofFn_get {size : Nat} {family : Fin size → Type u} (entries : (index : Fin size) → family index) (index : Fin
   size) :
@@ -68,6 +86,24 @@ theorem ofFn_get {size : Nat} {family : Fin size → Type u} (entries : (index :
       | succ index =>
           exact ih (fun index => entries index.succ)
             ⟨index, Nat.lt_of_succ_lt_succ bound⟩
+
+/-- Pointwise equal retained constructors give the same whole materialized dependent vector.
+
+Structural recursion compares each actual head and the original shifted
+tail. It requires no equality between functions or reconstruction of an
+entry from a proposition.
+-/
+theorem ofFn_congr : ∀ {size : Nat} {family : Fin size → Type u}
+    (first second : (index : Fin size) → family index),
+    (∀ index, first index = second index) → ofFn first = ofFn second
+  | 0, _, _first, _second, _equal => rfl
+  | size + 1, family, first, second, equal =>
+      (congrArg (fun head : family 0 =>
+        (DependentVector.cons head (ofFn fun index => first index.succ) : DependentVector family)) (equal 0)).trans
+        (congrArg (fun tail : DependentVector (fun index : Fin size => family index.succ) =>
+          (DependentVector.cons (second 0) tail : DependentVector family))
+          (ofFn_congr (fun index => first index.succ) (fun index => second index.succ)
+            (fun index => equal index.succ)))
 
 /-- Fold the maximum natural weight over retained dependent entries.
 

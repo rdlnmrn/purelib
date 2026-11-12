@@ -14,6 +14,7 @@ import Purelib.Riemann.Integration.PreparedDirectDyadicRefinements
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Riemann.Paths.PreparedClearPathModels
 import Purelib.Riemann.Paths.PreparedPathPrimitiveCover
+import Purelib.Riemann.Paths.PreparedPathSources
 public import Purelib.Riemann.Paths.PreparedPathParentCaches
 import Purelib.Riemann.Integration.PreparedSubdivisionAutomaticModels
 
@@ -73,6 +74,23 @@ private theorem prepared_parent_endpoints (curve : Hyperelliptic.Basic.Hyperelli
       | inr member => exact prepared_parent_endpoints curve differential sheet rest parent member
 
 namespace ParentCache
+
+/-- Both endpoints of every retained parent belong to any box containing the original path vertices.
+
+The exact cached-parent identity transports the original source grouping in
+the proof only. The parent list, root owners and primitive patches are read
+from the supplied cache without extracting or preparing them again.
+-/
+theorem endpoints_inBox {genus : Nat} {curve : HyperellipticCurve genus} {differential : Differential genus}
+    {ambient enclosure : Geometry.Rational.Box} {first last : Gaussian}
+    {path : ClearPath curve.polynomial ambient first last} {owner : Owner (curve.polynomial.eval first)}
+    {prepared : CoveredTracedPath path owner} {sheet : Fin 2}
+    (cache : ParentCache prepared differential sheet) (inside : ClearPath.InBox enclosure path)
+    (parent : CenteredEdge curve differential) (member : parent ∈ cache.parents) :
+    enclosure.Contains (parent.edge.point 0) ∧ enclosure.Contains (parent.edge.point 1) := by
+  rewrite [cache.parents_eq] at member
+  exact PreparedPathSources.PathSources.endpoints_inBox
+    (PreparedPathSources.PathSources.ofPreparedPath differential sheet prepared.traced.prepared) inside parent member
 
 open Purelib.Curves in
 open Purelib.Data in

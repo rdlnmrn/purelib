@@ -31,6 +31,10 @@ import Mathlib.Order.Basic
 import Mathlib.Order.MinMax
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.RootIsolation.SquareRoot.Owner
+
+open Purelib.Polynomial.Geometry
+
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_antitone)
 
 namespace Purelib.Riemann.Branches.PreparedSheetContinuation
@@ -50,7 +54,7 @@ Each step retains its exact request and prepared cache, endpoint ordering, stric
 the actual advanced owner. -/
 public inductive Subdivision {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) :
     (left : Endpoint) ->
       Owner (polynomial.eval (segment.pointAt left.parameter)) -> Type
@@ -79,7 +83,7 @@ open Purelib.Polynomial
 /-- Transport a subdivision along equality of its exact initial owner. -/
 @[expose] public def castOwner {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {first second : Owner
       (polynomial.eval (segment.pointAt left.parameter))}
@@ -92,7 +96,7 @@ open Purelib.Polynomial
 /-- Changing the owner index by equality preserves the original subdivision heterogeneously. -/
 public theorem castOwner_heq {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {first second : Owner
       (polynomial.eval (segment.pointAt left.parameter))}
@@ -112,7 +116,7 @@ The cached-to-canonical owner equality transports the existing tail to the const
 preparation is retained in the resulting step. -/
 @[expose] public def nextCached {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -143,7 +147,7 @@ Each request retains equality at both endpoints, ordering, readiness, and enough
 public inductive StationaryMesh
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish base : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (baseOwner : Owner base) :
     (current : Endpoint) → List StepRequest → Type
   /-- Finish the stationary mesh with equality of the current polynomial value to the retained base radicand. -/ | stop
@@ -158,10 +162,10 @@ public inductive StationaryMesh
         polynomial.eval (segment.pointAt request.endpoint.parameter) = base)
       (ordered : current.parameter ≤ request.endpoint.parameter)
       (ready : AlreadyPrepared segment current
-        (SquareRoot.Owner.Transport.castOwnerParameter currentEq.symm baseOwner) request)
+        (Transport.castOwnerParameter currentEq.symm baseOwner) request)
       (carries : ClearSheetContinuation.variationBound segment
           current.parameter request.endpoint.parameter <
-        (SquareRoot.Owner.Transport.castOwnerParameter currentEq.symm
+        (Transport.castOwnerParameter currentEq.symm
           baseOwner).track.initial.clearance.bound)
       (tail : StationaryMesh segment baseOwner request.endpoint remaining) :
       StationaryMesh segment baseOwner current (request :: remaining)
@@ -173,7 +177,7 @@ open Purelib.Polynomial in
 public theorem StationaryMesh.currentEq
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish base : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {baseOwner : Owner base} {current : Endpoint}
     {requests : List StepRequest}
     (mesh : StationaryMesh segment baseOwner current requests) :
@@ -192,18 +196,18 @@ root selection. -/
 @[expose] public def stationarySubdivision
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish base : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (baseOwner : Owner base)
     {current : Endpoint} {requests : List StepRequest}
     (mesh : StationaryMesh segment baseOwner current requests) :
     Subdivision segment within current
-      (SquareRoot.Owner.Transport.castOwnerParameter mesh.currentEq.symm baseOwner) := by
+      (Transport.castOwnerParameter mesh.currentEq.symm baseOwner) := by
   cases mesh with
   | stop current currentEq =>
-      exact .stop current (SquareRoot.Owner.Transport.castOwnerParameter currentEq.symm baseOwner)
+      exact .stop current (Transport.castOwnerParameter currentEq.symm baseOwner)
   | next current request remaining currentEq targetEq ordered ready carries
       tail =>
-      let currentOwner := SquareRoot.Owner.Transport.castOwnerParameter currentEq.symm baseOwner
+      let currentOwner := Transport.castOwnerParameter currentEq.symm baseOwner
       have preparedEq : prepared segment current currentOwner request =
           currentOwner :=
         prepared_eq_self_of_ready segment current currentOwner request ready
@@ -223,7 +227,7 @@ root selection. -/
         canonicalSmall
       let nextOwner := advanceCached segment within current currentOwner request
         cached cachedSmall
-      let targetOwner := SquareRoot.Owner.Transport.castOwnerParameter targetEq.symm baseOwner
+      let targetOwner := Transport.castOwnerParameter targetEq.symm baseOwner
       have nextOwnerEq : nextOwner = targetOwner := by
         apply eq_of_heq
         have nextPrepared : HEq nextOwner cached.preparedOwner := by
@@ -243,10 +247,10 @@ root selection. -/
         have nextCurrent : HEq nextOwner currentOwner :=
           nextPrepared.trans preparedCurrent
         have currentTarget : HEq currentOwner targetOwner := by
-          exact (SquareRoot.Owner.Transport.castOwnerParameter_heq currentEq.symm baseOwner).trans
-            (SquareRoot.Owner.Transport.castOwnerParameter_heq targetEq.symm baseOwner).symm
+          exact (Transport.castOwnerParameter_heq currentEq.symm baseOwner).trans
+            (Transport.castOwnerParameter_heq targetEq.symm baseOwner).symm
         exact nextCurrent.trans currentTarget
-      exact Subdivision.nextCached segment within current currentOwner request
+      exact nextCached segment within current currentOwner request
         cached ordered cachedSmall canonicalSmall
           ((stationarySubdivision segment within baseOwner tail).castOwner
             nextOwnerEq.symm)
@@ -256,17 +260,42 @@ dependent pattern matching can compile these projections to replaying
 `advance` solely to reconstruct recursive indices.  The public operations
 directly use the stored-data implementations; no extensional function equality
 or compiler-rewrite proof is required. -/
+section StoredSourceProjection
+
+variable {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
+  {segment : ClearPath.ClearSegment polynomial ambient start finish} {within : segment.WithinAmbient}
+  {left : Endpoint} {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
+
+/-- Read the literal source Owner stored in the original subdivision constructor.
+
+The direct constructor eliminator reads the stored Owner data, independently
+of the recursive tail index. In particular, reading a tail's source does
+not reconstruct the advance that originally produced that tail Owner.
+-/
+@[expose] public def sourceOwner (subdivision : Subdivision segment within left owner) :
+    Owner (polynomial.eval (segment.pointAt left.parameter)) :=
+  casesOn (motive := fun current _ _ => Owner (polynomial.eval (segment.pointAt current.parameter))) subdivision
+    (fun _ stored => stored)
+    (fun _ stored _ _ _ _ _ => stored)
+
+/-- The stored source Owner equals the exact original dependent source index, without replacing its data. -/
+public theorem sourceOwner_eq (subdivision : Subdivision segment within left owner) :
+    subdivision.sourceOwner = owner := by
+  cases subdivision <;> rfl
+
+end StoredSourceProjection
+
 section StoredEndpointProjections
 
 variable {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
-  {segment : Purelib.Polynomial.Geometry.ClearPath.ClearSegment polynomial ambient start finish} {within :
+  {segment : ClearPath.ClearSegment polynomial ambient start finish} {within :
     segment.WithinAmbient}
 
 /-- Follow the finite subdivision spine to its retained terminal endpoint. -/
 @[expose] public def endpointStored {left : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     (subdivision : Subdivision segment within left owner) : Endpoint :=
-  Subdivision.casesOn (motive := fun _ _ _ => Endpoint) subdivision
+  casesOn (motive := fun _ _ _ => Endpoint) subdivision
     (fun endpoint _ => endpoint)
     (fun _ _ _ _ _ _ remaining => endpointStored remaining)
 termination_by structural subdivision
@@ -274,7 +303,7 @@ termination_by structural subdivision
 open Purelib.Polynomial in
 /-- Read the retained terminal endpoint of the subdivision. -/
 @[inline, expose] public def endpoint {polynomial : GaussianPolynomial} {ambient : Box}
-    {start finish : Gaussian} {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {start finish : Gaussian} {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     (subdivision : Subdivision segment within left owner) : Endpoint := endpointStored subdivision
@@ -284,7 +313,7 @@ open Purelib.Polynomial in
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     (subdivision : Subdivision segment within left owner) :
     Owner (polynomial.eval (segment.pointAt subdivision.endpoint.parameter)) :=
-  Subdivision.casesOn
+  casesOn
     (motive := fun _ _ spine => Owner (polynomial.eval (segment.pointAt spine.endpoint.parameter))) subdivision
     (fun _ owner => owner)
     (fun _ _ _ _ _ _ remaining => terminalOwnerStored remaining)
@@ -293,7 +322,7 @@ termination_by structural subdivision
 open Purelib.Polynomial in
 /-- Read the exact terminal owner indexed by the subdivision's retained endpoint. -/
 @[inline, expose] public def terminalOwner {polynomial : GaussianPolynomial} {ambient : Box}
-    {start finish : Gaussian} {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {start finish : Gaussian} {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     (subdivision : Subdivision segment within left owner) :
@@ -303,7 +332,7 @@ open Purelib.Polynomial in
 @[expose] public def stepCountStored {left : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     (subdivision : Subdivision segment within left owner) : Nat :=
-  Subdivision.casesOn (motive := fun _ _ _ => Nat) subdivision
+  casesOn (motive := fun _ _ _ => Nat) subdivision
     (fun _ _ => 0)
     (fun _ _ _ _ _ _ remaining => stepCountStored remaining + 1)
 termination_by structural subdivision
@@ -311,7 +340,7 @@ termination_by structural subdivision
 open Purelib.Polynomial in
 /-- Read the number of retained continuation steps. -/
 @[inline, expose] public def stepCount {polynomial : GaussianPolynomial} {ambient : Box}
-    {start finish : Gaussian} {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {start finish : Gaussian} {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     (subdivision : Subdivision segment within left owner) : Nat := stepCountStored subdivision
@@ -323,7 +352,7 @@ stored-data helpers under an unknown tail is deliberately unnecessary. -/
 section EndpointProjectionEquations
 
 variable {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
-  {segment : Purelib.Polynomial.Geometry.ClearPath.ClearSegment polynomial ambient start finish} {within :
+  {segment : ClearPath.ClearSegment polynomial ambient start finish} {within :
     segment.WithinAmbient}
   (left : Endpoint) (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
 
@@ -341,7 +370,7 @@ variable {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gauss
 
 variable (request : StepRequest) (cached : CachedSource segment left owner request)
   (ordered : left.parameter ≤ request.endpoint.parameter)
-  (small : Purelib.Riemann.Branches.ClearSheetContinuation.variationBound segment
+  (small : ClearSheetContinuation.variationBound segment
     left.parameter request.endpoint.parameter <
       (prepared segment left owner request).track.initial.clearance.bound)
   (remaining : Subdivision segment within request.endpoint
@@ -372,13 +401,13 @@ The bound is measured against the original source owner's clearance, so every di
 public structure DirectMoveSmall
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (origin : Endpoint)
     (source : Owner
       (polynomial.eval (segment.pointAt origin.parameter)))
     (current : Endpoint) : Prop where
   /-- The strict squared-displacement bound against the fixed original source owner's clearance. -/ proof :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
     (polynomial.eval (segment.pointAt origin.parameter) -
       polynomial.eval (segment.pointAt current.parameter)) <
     source.track.initial.clearance.bound
@@ -388,7 +417,7 @@ open Purelib.Polynomial in
 -/
 @[expose] public def directOwnerAt {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     (origin : Endpoint)
     (source : Owner
       (polynomial.eval (segment.pointAt origin.parameter)))
@@ -408,7 +437,7 @@ owner. -/
 public structure RootEquivalentAt
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (current : Endpoint)
     (first second : Owner
       (polynomial.eval (segment.pointAt current.parameter))) where
@@ -432,7 +461,7 @@ open Purelib.Riemann.RootContinuation in
 @[expose] public def toNamedEquivalent
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {current : Endpoint}
     {first second : Owner
       (polynomial.eval (segment.pointAt current.parameter))}
@@ -453,7 +482,7 @@ open Purelib.Polynomial in
 public theorem sameDirectMoveSmall
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     (origin : Endpoint)
     (source : Owner
       (polynomial.eval (segment.pointAt origin.parameter))) :
@@ -468,7 +497,7 @@ open Purelib.Riemann.RootContinuation in
 @[expose] public def initialDirectRootEquivalent
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     (origin : Endpoint)
     (source owner : Owner
       (polynomial.eval (segment.pointAt origin.parameter)))
@@ -499,7 +528,7 @@ identifying the current direct owner. -/
 public structure DirectStepSmall
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (origin : Endpoint)
     (source : Owner
       (polynomial.eval (segment.pointAt origin.parameter)))
@@ -519,7 +548,7 @@ public structure DirectStepSmall
 public instance directStepSmallDecidable
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (origin : Endpoint)
     (source : Owner
       (polynomial.eval (segment.pointAt origin.parameter)))
@@ -551,7 +580,7 @@ certificate. -/
 @[expose] public def directNextRootEquivalent
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (origin : Endpoint)
     (source : Owner
@@ -597,7 +626,7 @@ equivalence used by the tail. -/
 public inductive DirectlyCoherent
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (origin : Endpoint)
     (source : Owner
@@ -652,7 +681,7 @@ constructive_injectivity DirectlyCoherent
 section StoredGeometryProjections
 
 variable {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
-  {segment : Purelib.Polynomial.Geometry.ClearPath.ClearSegment polynomial ambient start finish} {within :
+  {segment : ClearPath.ClearSegment polynomial ambient start finish} {within :
     segment.WithinAmbient}
 
 open Purelib.Riemann.Branches in
@@ -661,7 +690,7 @@ open Purelib.Riemann.Branches in
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     (subdivision : Subdivision segment within left owner) :
     List ClearSheetContinuation.Subdivision.ParameterEdge :=
-  Subdivision.casesOn
+  casesOn
     (motive := fun _ _ _ => List ClearSheetContinuation.Subdivision.ParameterEdge) subdivision
     (fun _ _ => [])
     (fun left _ request _ _ _ remaining =>
@@ -672,7 +701,7 @@ open Purelib.Polynomial in
 open Purelib.Riemann.Branches in
 /-- Read the original ordered parameter-edge occurrences of the subdivision. -/
 @[inline, expose] public def parameterEdges {polynomial : GaussianPolynomial} {ambient : Box}
-    {start finish : Gaussian} {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {start finish : Gaussian} {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     (subdivision : Subdivision segment within left owner) :
@@ -682,7 +711,7 @@ open Purelib.Riemann.Branches in
 @[expose] public def preparedBoxesStored {left : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     (subdivision : Subdivision segment within left owner) : List Box :=
-  Subdivision.casesOn (motive := fun _ _ _ => List Box) subdivision
+  casesOn (motive := fun _ _ _ => List Box) subdivision
     (fun _ _ => [])
     (fun _ _ _ cached _ _ remaining =>
       cached.preparedOwner.track.initial.box :: preparedBoxesStored remaining)
@@ -691,7 +720,7 @@ termination_by structural subdivision
 open Purelib.Polynomial in
 /-- Read the ordered boxes of the actual cached prepared owners. -/
 @[inline, expose] public def preparedBoxes {polynomial : GaussianPolynomial} {ambient : Box}
-    {start finish : Gaussian} {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {start finish : Gaussian} {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     (subdivision : Subdivision segment within left owner) : List Box := preparedBoxesStored subdivision
@@ -703,7 +732,7 @@ stored-data helpers under an unknown tail is deliberately unnecessary. -/
 section GeometryProjectionEquations
 
 variable {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
-  {segment : Purelib.Polynomial.Geometry.ClearPath.ClearSegment polynomial ambient start finish} {within :
+  {segment : ClearPath.ClearSegment polynomial ambient start finish} {within :
     segment.WithinAmbient}
   (left : Endpoint) (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
 
@@ -717,7 +746,7 @@ variable {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gauss
 
 variable (request : StepRequest) (cached : CachedSource segment left owner request)
   (ordered : left.parameter ≤ request.endpoint.parameter)
-  (small : Purelib.Riemann.Branches.ClearSheetContinuation.variationBound segment
+  (small : ClearSheetContinuation.variationBound segment
     left.parameter request.endpoint.parameter <
       (prepared segment left owner request).track.initial.clearance.bound)
   (remaining : Subdivision segment within request.endpoint
@@ -741,7 +770,7 @@ open Purelib.Polynomial
 @[simp] public theorem preparedBoxes_length
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     (subdivision : Subdivision segment within left owner) :
@@ -756,18 +785,18 @@ open Purelib.Polynomial
 
 /-- Read the original requests in their subdivision order. -/
 @[expose] public def requestsStored {polynomial : GaussianPolynomial} {ambient : Box}
-    {start finish : Gaussian} {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {start finish : Gaussian} {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     (subdivision : Subdivision segment within left owner) : List StepRequest :=
-  Subdivision.casesOn (motive := fun _ _ _ => List StepRequest) subdivision
+  casesOn (motive := fun _ _ _ => List StepRequest) subdivision
     (fun _ _ => [])
     (fun _ _ request _ _ _ remaining => request :: requestsStored remaining)
 termination_by structural subdivision
 
 /-- Read the exact original request list retained by the subdivision. -/
 @[inline, expose] public def requests {polynomial : GaussianPolynomial} {ambient : Box}
-    {start finish : Gaussian} {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {start finish : Gaussian} {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     (subdivision : Subdivision segment within left owner) : List StepRequest := requestsStored subdivision
@@ -779,7 +808,7 @@ end
 section RequestProjectionEquations
 
 variable {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
-  {segment : Purelib.Polynomial.Geometry.ClearPath.ClearSegment polynomial ambient start finish} {within :
+  {segment : ClearPath.ClearSegment polynomial ambient start finish} {within :
     segment.WithinAmbient}
   (left : Endpoint) (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
 
@@ -789,7 +818,7 @@ variable {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gauss
 
 variable (request : StepRequest) (cached : CachedSource segment left owner request)
   (ordered : left.parameter ≤ request.endpoint.parameter)
-  (small : Purelib.Riemann.Branches.ClearSheetContinuation.variationBound segment
+  (small : ClearSheetContinuation.variationBound segment
     left.parameter request.endpoint.parameter <
       (prepared segment left owner request).track.initial.clearance.bound)
   (remaining : Subdivision segment within request.endpoint
@@ -808,7 +837,7 @@ open Purelib.Polynomial
 @[simp] public theorem parameterEdges_length
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     (subdivision : Subdivision segment within left owner) :
@@ -825,7 +854,7 @@ open Purelib.Polynomial
 @[simp] public theorem requests_length
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     (subdivision : Subdivision segment within left owner) :
@@ -841,7 +870,7 @@ open Purelib.Polynomial
 @[simp] public theorem castOwner_endpoint
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {first second : Owner
       (polynomial.eval (segment.pointAt left.parameter))}
@@ -859,7 +888,7 @@ open Purelib.Riemann.Branches in
 @[simp] public theorem nextCached_endpoint
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -885,7 +914,7 @@ open Purelib.Polynomial
 @[simp] public theorem castOwner_stepCount
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {first second : Owner
       (polynomial.eval (segment.pointAt left.parameter))}
@@ -899,7 +928,7 @@ open Purelib.Polynomial
 @[simp] public theorem castOwner_parameterEdges
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {first second : Owner
       (polynomial.eval (segment.pointAt left.parameter))}
@@ -914,7 +943,7 @@ open Purelib.Polynomial
 @[simp] public theorem castOwner_preparedBoxes
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {first second : Owner
       (polynomial.eval (segment.pointAt left.parameter))}
@@ -929,7 +958,7 @@ open Purelib.Polynomial
 @[simp] public theorem castOwner_requests
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {first second : Owner
       (polynomial.eval (segment.pointAt left.parameter))}
@@ -948,7 +977,7 @@ open Purelib.Riemann.Branches
 @[simp] public theorem nextCached_stepCount
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -972,7 +1001,7 @@ open Purelib.Riemann.Branches
 @[simp] public theorem nextCached_parameterEdges
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -998,7 +1027,7 @@ open Purelib.Riemann.Branches
 @[simp] public theorem nextCached_preparedBoxes
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -1027,7 +1056,7 @@ open Purelib.Polynomial in
 @[expose] public def StationaryMesh.endpoint
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish base : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {baseOwner : Owner base} {current : Endpoint} :
     {requests : List StepRequest} →
       StationaryMesh segment baseOwner current requests → Endpoint
@@ -1040,7 +1069,7 @@ open Purelib.Riemann.Branches in
 @[expose] public def StationaryMesh.parameterEdges
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish base : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {baseOwner : Owner base} {current : Endpoint} :
     {requests : List StepRequest} →
       StationaryMesh segment baseOwner current requests →
@@ -1055,7 +1084,7 @@ open Purelib.Polynomial
 @[simp] public theorem stationarySubdivision_endpoint
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish base : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (baseOwner : Owner base)
     {current : Endpoint} {requests : List StepRequest}
     (mesh : StationaryMesh segment baseOwner current requests) :
@@ -1066,7 +1095,7 @@ open Purelib.Polynomial
   | next current request remaining currentEq targetEq ordered ready carries
       tail inductionHypothesis =>
       rw [stationarySubdivision]
-      rw [Subdivision.nextCached_endpoint, Subdivision.castOwner_endpoint,
+      rw [nextCached_endpoint, castOwner_endpoint,
         inductionHypothesis]
       rfl
 
@@ -1074,7 +1103,7 @@ open Purelib.Polynomial
 @[simp] public theorem stationarySubdivision_parameterEdges
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish base : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (baseOwner : Owner base)
     {current : Endpoint} {requests : List StepRequest}
     (mesh : StationaryMesh segment baseOwner current requests) :
@@ -1085,8 +1114,8 @@ open Purelib.Polynomial
   | next current request remaining currentEq targetEq ordered ready carries
       tail inductionHypothesis =>
       rw [stationarySubdivision]
-      rw [Subdivision.nextCached_parameterEdges,
-        Subdivision.castOwner_parameterEdges, inductionHypothesis]
+      rw [nextCached_parameterEdges,
+        castOwner_parameterEdges, inductionHypothesis]
       rfl
 
 end
@@ -1098,7 +1127,7 @@ open Purelib.Riemann.Branches
 @[simp] public theorem nextCached_requests
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -1124,7 +1153,7 @@ A successful result retains those caches and advances from their actual owners. 
 subdivision and asserts no global obstruction to continuation. -/
 @[expose] public def trySteps {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter))) :
@@ -1159,7 +1188,7 @@ The recursive condition uses the exact computed next owner, retaining the execut
 clearance estimate. -/
 @[expose] public def ExecutedMeshSafe {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) :
     (current : Endpoint) ->
       (owner : Owner
@@ -1185,7 +1214,7 @@ open Purelib.Riemann.Branches in
 public instance executedMeshSafeDecidable
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) :
     (current : Endpoint) ->
       (owner : Owner
@@ -1255,7 +1284,7 @@ Each retained prepared cache supplies the next actual owner, and the remaining s
 -/
 @[expose] public def ofExecutedMeshSafe {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) :
     (current : Endpoint) ->
       (owner : Owner
@@ -1311,7 +1340,7 @@ Each retained prepared cache supplies the next actual owner, and the remaining s
 public theorem trySteps_eq_some_ofExecutedMeshSafe
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient)
     {current : Endpoint}
     {owner : Owner
@@ -1397,7 +1426,7 @@ The construction retains the original source and computes each next step from it
 bounds certify every encountered owner. -/
 @[expose] public def ofFreshMeshSafe {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (current : Endpoint)
     (prior : Owner
       (polynomial.eval (segment.pointAt current.parameter))) :
@@ -1425,7 +1454,7 @@ bounds certify every encountered owner. -/
 /-- Construct continuation from the initial owner's clearance check and uniform safety of the remaining mesh. -/
 @[expose] public def ofMeshSafe {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (current : Endpoint)
     (owner : Owner
       (polynomial.eval (segment.pointAt current.parameter))) :
@@ -1447,7 +1476,7 @@ bounds certify every encountered owner. -/
 public theorem trySteps_eq_some_ofFreshMeshSafe
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (current : Endpoint)
     (prior : Owner
       (polynomial.eval (segment.pointAt current.parameter)))
@@ -1485,7 +1514,7 @@ public theorem trySteps_eq_some_ofFreshMeshSafe
 public theorem trySteps_eq_some_ofMeshSafe
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (current : Endpoint)
     (owner : Owner
       (polynomial.eval (segment.pointAt current.parameter)))
@@ -1519,7 +1548,7 @@ open Purelib.Polynomial in
 /-- A successful request attempt retains exactly one continuation step per input request. -/
 public theorem trySteps_stepCount {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (requests : List StepRequest)
@@ -1566,7 +1595,7 @@ open Purelib.Riemann.Branches in
 /-- A successful attempt retains exactly the parameter edges determined by the original requests. -/
 public theorem trySteps_parameterEdges {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (requests : List StepRequest)
@@ -1609,7 +1638,7 @@ open Purelib.Polynomial
 /-- A successful attempt retains the exact original request list. -/
 public theorem trySteps_requests {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (requests : List StepRequest)
@@ -1643,7 +1672,7 @@ public theorem trySteps_requests {polynomial : GaussianPolynomial}
 /-- Take the minimum of one and the predicted canonical clearance floors along the exact request list. -/
 @[expose] public def FreshMeshClearanceFloor {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : ClearPath.ClearSegment polynomial ambient start finish) :
     Endpoint -> List StepRequest -> Coordinate
   | _current, [] => 1
   | current, request :: remaining =>
@@ -1653,7 +1682,7 @@ public theorem trySteps_requests {polynomial : GaussianPolynomial}
 /-- Combine the first actual prepared clearance with the predicted floors for the remaining requests. -/
 @[expose] public def MeshClearanceFloor {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter))) :
     List StepRequest -> Coordinate
@@ -1666,7 +1695,7 @@ public theorem trySteps_requests {polynomial : GaussianPolynomial}
 @[expose] public def FreshMeshPredictedClearanceFloor
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : ClearPath.ClearSegment polynomial ambient start finish) :
     Endpoint -> List StepRequest -> Coordinate
   | _current, [] => 1
   | current, request :: remaining =>
@@ -1677,7 +1706,7 @@ public theorem trySteps_requests {polynomial : GaussianPolynomial}
 @[expose] public def MeshPredictedClearanceFloor
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (current : Endpoint)
     (_owner : Owner (polynomial.eval (segment.pointAt current.parameter))) :
     List StepRequest -> Coordinate
@@ -1690,7 +1719,7 @@ public theorem trySteps_requests {polynomial : GaussianPolynomial}
 public theorem freshMeshPredictedClearanceFloor_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : ClearPath.ClearSegment polynomial ambient start finish) :
     forall (current : Endpoint) (requests : List StepRequest),
       0 < FreshMeshPredictedClearanceFloor segment current requests
   | _current, [] => by
@@ -1706,7 +1735,7 @@ public theorem freshMeshPredictedClearanceFloor_positive
 public theorem meshPredictedClearanceFloor_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter))) :
     forall requests : List StepRequest,
@@ -1724,7 +1753,7 @@ public theorem meshPredictedClearanceFloor_positive
 public theorem freshMeshPredictedClearanceFloor_le_actual
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : ClearPath.ClearSegment polynomial ambient start finish) :
     forall (current : Endpoint) (requests : List StepRequest),
       FreshMeshPredictedClearanceFloor segment current requests ≤
         FreshMeshClearanceFloor segment current requests
@@ -1739,7 +1768,7 @@ public theorem freshMeshPredictedClearanceFloor_le_actual
 public theorem meshPredictedClearanceFloor_le_actual
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter))) :
     forall requests : List StepRequest,
@@ -1755,7 +1784,7 @@ public theorem meshPredictedClearanceFloor_le_actual
 public theorem freshMeshClearanceFloor_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : ClearPath.ClearSegment polynomial ambient start finish) :
     forall (current : Endpoint) (requests : List StepRequest),
       0 < FreshMeshClearanceFloor segment current requests
   | current, [] => by
@@ -1771,7 +1800,7 @@ public theorem freshMeshClearanceFloor_positive
 public theorem meshClearanceFloor_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter))) :
     forall requests : List StepRequest,
@@ -1794,7 +1823,7 @@ open Purelib.Riemann.Branches
 public theorem freshMeshSafe_of_edgeVariationBound
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) :
+    (segment : ClearPath.ClearSegment polynomial ambient start finish) :
     forall (current : Endpoint) (requests : List StepRequest)
       (bound : Coordinate),
       ClearSheetContinuation.Subdivision.EdgeVariationBound
@@ -1822,7 +1851,7 @@ public theorem freshMeshSafe_of_edgeVariationBound
 public theorem meshSafe_of_edgeVariationBound
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (requests : List StepRequest) (bound : Coordinate)
@@ -1856,7 +1885,7 @@ open Purelib.Polynomial
 /-- A successful attempt ends at the original request list's final target. -/
 public theorem trySteps_endpoint {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (requests : List StepRequest)
@@ -1887,7 +1916,7 @@ public theorem trySteps_endpoint {polynomial : GaussianPolynomial}
 /-- A successful attempt's terminal parameter is the final target parameter of the original requests. -/
 public theorem trySteps_endpoint_parameter {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (requests : List StepRequest)
@@ -1952,7 +1981,7 @@ open Purelib.Polynomial
 public theorem uniformPreparedClearanceFloor_le_freshRequests
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (rootDiameter : Coordinate) (rootDiameterPositive : 0 < rootDiameter) :
     forall (current : Endpoint) (endpoints : List Endpoint),
       uniformPreparedClearanceFloor segment rootDiameter <=
@@ -1973,7 +2002,7 @@ public theorem uniformPreparedClearanceFloor_le_freshRequests
 public theorem uniformPreparedClearanceFloor_le_meshRequests
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (current : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt current.parameter)))
     (rootDiameter : Coordinate) (rootDiameterPositive : 0 < rootDiameter) :
@@ -2019,7 +2048,7 @@ open Purelib.Polynomial
 /-- Read the clearance floor of the exact dyadic request mesh, using the original owner's first preparation. -/
 @[expose] public def dyadicMeshClearanceFloor {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2031,7 +2060,7 @@ open Purelib.Polynomial
 public theorem dyadicMeshClearanceFloor_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2044,7 +2073,7 @@ public theorem dyadicMeshClearanceFloor_positive
 @[expose] public def dyadicMeshPredictedClearanceFloor
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2056,7 +2085,7 @@ public theorem dyadicMeshClearanceFloor_positive
 public theorem dyadicMeshPredictedClearanceFloor_positive
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2069,7 +2098,7 @@ public theorem dyadicMeshPredictedClearanceFloor_positive
 public theorem uniformPreparedClearanceFloor_le_dyadicPredicted
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2085,7 +2114,7 @@ public theorem uniformPreparedClearanceFloor_le_dyadicPredicted
 public theorem dyadicMeshPredictedClearanceFloor_le_actual
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2099,7 +2128,7 @@ public theorem dyadicMeshPredictedClearanceFloor_le_actual
 /-- Attempt continuation along the exact depth-indexed dyadic requests with a fixed positive root diameter. -/
 @[expose] public def tryDyadic {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2112,7 +2141,7 @@ public theorem dyadicMeshPredictedClearanceFloor_le_actual
 @[expose] public def ExecutedDyadicMeshSafe
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2127,7 +2156,7 @@ open Purelib.Polynomial in
 public instance executedDyadicMeshSafeDecidable
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2143,7 +2172,7 @@ open Purelib.Polynomial
 @[expose] public def ofExecutedDyadicMeshSafe
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2158,7 +2187,7 @@ open Purelib.Polynomial
 public theorem tryDyadic_eq_some_ofExecutedDyadicMeshSafe
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2180,7 +2209,7 @@ open Purelib.Riemann.Branches in
 public theorem tryDyadic_parameterEdges
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2204,7 +2233,7 @@ open Purelib.Polynomial
 public theorem tryDyadic_requests
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2220,7 +2249,7 @@ public theorem tryDyadic_requests
 /-- The dyadic mesh fits the first actual prepared clearance and all remaining uniform predicted floors. -/
 @[expose] public def DyadicMeshSafe {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2238,7 +2267,7 @@ open Purelib.Riemann.Branches
 public theorem dyadicMeshSafe_of_variation_lt_clearanceFloor
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2264,7 +2293,7 @@ public theorem dyadicMeshSafe_of_variation_lt_clearanceFloor
 public theorem dyadicMeshSafe_of_variation_lt_predictedClearanceFloor
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2291,7 +2320,7 @@ original segment endpoints. -/
 @[expose] public def sufficientDyadicDepth
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (left right : Endpoint) (rootDiameter : Coordinate) : Nat :=
   Geometric.Search.firstQuarterBelow
     (ClearSheetContinuation.variationBound segment
@@ -2302,7 +2331,7 @@ original segment endpoints. -/
 public theorem sufficientDyadicDepth_variation_lt
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (left right : Endpoint) {rootDiameter : Coordinate}
     (rootDiameterPositive : 0 < rootDiameter) :
     Geometric.Basic.quarterRadius
@@ -2322,7 +2351,7 @@ open Purelib.Polynomial in
 public theorem sufficientDyadicMeshSafe
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (rootDiameter : Coordinate) (rootDiameterPositive : 0 < rootDiameter)
@@ -2346,7 +2375,7 @@ open Purelib.Riemann.Branches in
 public theorem dyadicMeshSafe_of_sufficientDepth_le
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2371,7 +2400,7 @@ open Purelib.Polynomial in
 public instance dyadicMeshSafeDecidable
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2386,7 +2415,7 @@ open Purelib.Polynomial
 /-- Compute the Boolean result of the exact dyadic mesh-safety decision. -/
 @[expose] public def dyadicMeshAccepted {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2398,7 +2427,7 @@ open Purelib.Polynomial
 public theorem dyadicMeshSafe_of_accepted
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2412,7 +2441,7 @@ public theorem dyadicMeshSafe_of_accepted
 /-- Construct continuation along the exact dyadic requests from their retained mesh-safety certificate. -/
 @[expose] public def checkedDyadic {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2429,7 +2458,7 @@ finite continuation. -/
 @[expose] public def sufficientDyadic
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (rootDiameter : Coordinate) (rootDiameterPositive : 0 < rootDiameter)
@@ -2445,7 +2474,7 @@ finite continuation. -/
 public theorem tryDyadic_eq_some_checkedDyadic
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2462,7 +2491,7 @@ public theorem tryDyadic_eq_some_checkedDyadic
 public theorem tryDyadic_sufficient_eq_some
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (rootDiameter : Coordinate) (rootDiameterPositive : 0 < rootDiameter)
@@ -2486,7 +2515,7 @@ open Purelib.Riemann.Branches
 /-- A successful depth-indexed dyadic attempt has exactly two to that depth continuation steps. -/
 public theorem tryDyadic_stepCount {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2503,7 +2532,7 @@ public theorem tryDyadic_stepCount {polynomial : GaussianPolynomial}
 /-- A successful dyadic attempt ends at the exact original right endpoint. -/
 public theorem tryDyadic_endpoint {polynomial : GaussianPolynomial}
     {ambient : Box} {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2534,14 +2563,14 @@ section
 open Purelib.Polynomial
 /-- Build the geometric path by restricting the original cleared segment along each retained parameter edge. -/
 @[expose] public def toClearPathStored {polynomial : GaussianPolynomial} {ambient : Box}
-    {start finish : Gaussian} {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {start finish : Gaussian} {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     (subdivision : Subdivision segment within left owner) :
-    Polynomial.Geometry.ClearPath polynomial ambient (segment.pointAt left.parameter)
+    Geometry.ClearPath polynomial ambient (segment.pointAt left.parameter)
       (segment.pointAt subdivision.endpoint.parameter) :=
-  Subdivision.casesOn
-    (motive := fun left _ spine => Polynomial.Geometry.ClearPath polynomial ambient (segment.pointAt left.parameter)
+  casesOn
+    (motive := fun left _ spine => Geometry.ClearPath polynomial ambient (segment.pointAt left.parameter)
       (segment.pointAt spine.endpoint.parameter)) subdivision
     (fun left _ => .nil (segment.pointAt left.parameter))
     (fun left _ request _ _ _ remaining =>
@@ -2551,11 +2580,11 @@ termination_by structural subdivision
 
 /-- Read the cleared geometric path determined by the subdivision's exact parameter edges. -/
 @[inline, expose] public def toClearPath {polynomial : GaussianPolynomial} {ambient : Box}
-    {start finish : Gaussian} {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {start finish : Gaussian} {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     (subdivision : Subdivision segment within left owner) :
-    Polynomial.Geometry.ClearPath polynomial ambient (segment.pointAt left.parameter)
+    Geometry.ClearPath polynomial ambient (segment.pointAt left.parameter)
       (segment.pointAt subdivision.endpoint.parameter) := toClearPathStored subdivision
 
 /- Constructor equations are the proof interface; unfolding the recursive
@@ -2565,19 +2594,19 @@ end
 section ClearPathProjectionEquations
 
 variable {polynomial : GaussianPolynomial} {ambient : Box} {start finish : Gaussian}
-  {segment : Purelib.Polynomial.Geometry.ClearPath.ClearSegment polynomial ambient start finish} {within :
+  {segment : ClearPath.ClearSegment polynomial ambient start finish} {within :
     segment.WithinAmbient}
   (left : Endpoint) (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
 
 open Purelib.Polynomial in
 /-- A stopped subdivision gives the empty path at its original segment point. -/
 @[simp] public theorem toClearPath_stop :
-    (stop (segment := segment) (within := within) left owner).toClearPath = Polynomial.Geometry.ClearPath.nil
+    (stop (segment := segment) (within := within) left owner).toClearPath = ClearPath.nil
       (segment.pointAt left.parameter) := rfl
 
 variable (request : StepRequest) (cached : CachedSource segment left owner request)
   (ordered : left.parameter ≤ request.endpoint.parameter)
-  (small : Purelib.Riemann.Branches.ClearSheetContinuation.variationBound segment
+  (small : ClearSheetContinuation.variationBound segment
     left.parameter request.endpoint.parameter <
       (prepared segment left owner request).track.initial.clearance.bound)
   (remaining : Subdivision segment within request.endpoint
@@ -2587,7 +2616,7 @@ open Purelib.Polynomial in
 /-- Prepending a step prepends the corresponding restriction of the original cleared segment. -/
 @[simp] public theorem toClearPath_next :
     (next left owner request cached ordered small remaining).toClearPath =
-      Polynomial.Geometry.ClearPath.cons
+      ClearPath.cons
         (segment.restrict within left.parameter request.endpoint.parameter
           left.inside request.endpoint.inside) remaining.toClearPath := rfl
 
@@ -2600,7 +2629,7 @@ open Purelib.Riemann.Branches
 public theorem endpoint_eq_finalTarget_parameterEdges
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     (subdivision : Subdivision segment within left owner) :
@@ -2620,7 +2649,7 @@ transport. -/
 public theorem toClearPath_eq_geometricPath_parameterEdges
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     (subdivision : Subdivision segment within left owner) :
@@ -2637,9 +2666,9 @@ public theorem toClearPath_eq_geometricPath_parameterEdges
       inductionHypothesis =>
       simp only [toClearPath_next, endpoint_next, parameterEdges_next, List.map_cons,
         ClearSheetContinuation.Subdivision.geometricPath,
-        Polynomial.Geometry.ClearPath.castFinish_cons]
+        ClearPath.castFinish_cons]
       exact congrArg
-        (Polynomial.Geometry.ClearPath.cons
+        (ClearPath.cons
           (segment.restrict within current.parameter
             request.endpoint.parameter current.inside
               request.endpoint.inside)) inductionHypothesis
@@ -2651,7 +2680,7 @@ open Purelib.Polynomial in
 public theorem castOwner_toClearPath
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {first second : Owner
       (polynomial.eval (segment.pointAt left.parameter))}
@@ -2672,7 +2701,7 @@ open Purelib.Riemann.Branches
 @[simp] public theorem nextCached_toClearPath
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (request : StepRequest)
@@ -2698,8 +2727,8 @@ open Purelib.Riemann.Branches
             left.inside request.endpoint.inside)
           remaining.toClearPath := by
   unfold nextCached
-  simp only [toClearPath_next, endpoint_next, Polynomial.Geometry.ClearPath.castFinish_cons]
-  apply congrArg (Polynomial.Geometry.ClearPath.cons
+  simp only [toClearPath_next, endpoint_next, ClearPath.castFinish_cons]
+  apply congrArg (ClearPath.cons
     (segment.restrict within left.parameter request.endpoint.parameter
       left.inside request.endpoint.inside))
   exact castOwner_toClearPath
@@ -2710,7 +2739,7 @@ open Purelib.Riemann.Branches
 public theorem trySteps_toClearPath_eq_geometricPath
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (requests : List StepRequest)
@@ -2769,21 +2798,21 @@ public theorem trySteps_toClearPath_eq_geometricPath
                     (endpointEqual.trans tailEqual) =
                   (computed.toClearPath.castFinish endpointEqual).castFinish
                     tailEqual :=
-                (Polynomial.Geometry.ClearPath.castFinish_castFinish computed.toClearPath
+                (ClearPath.castFinish_castFinish computed.toClearPath
                   endpointEqual tailEqual).symm
-              _ = (Polynomial.Geometry.ClearPath.cons head tail.toClearPath).castFinish
+              _ = (ClearPath.cons head tail.toClearPath).castFinish
                     tailEqual := by
                 exact congrArg (fun path => path.castFinish tailEqual)
                   (nextCached_toClearPath segment within left owner request
                     cached ordered small canonicalSmall tail)
-              _ = Polynomial.Geometry.ClearPath.cons head
+              _ = ClearPath.cons head
                     (tail.toClearPath.castFinish tailEqual) :=
-                Polynomial.Geometry.ClearPath.castFinish_cons head tail.toClearPath tailEqual
-              _ = Polynomial.Geometry.ClearPath.cons head
+                ClearPath.castFinish_cons head tail.toClearPath tailEqual
+              _ = ClearPath.cons head
                     (ClearSheetContinuation.Subdivision.geometricPath
                       segment within request.endpoint
                         (requestEndpoints remaining)) := by
-                exact congrArg (Polynomial.Geometry.ClearPath.cons head)
+                exact congrArg (ClearPath.cons head)
                   (inductionHypothesis request.endpoint nextOwner
                     (subdivision := tail) recursiveSuccess)
               _ = ClearSheetContinuation.Subdivision.geometricPath
@@ -2796,7 +2825,7 @@ public theorem trySteps_toClearPath_eq_geometricPath
 public theorem tryDyadic_toClearPath_eq_dyadicPath
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
+    (segment : ClearPath.ClearSegment polynomial ambient start finish)
     (within : segment.WithinAmbient) (left right : Endpoint)
     (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
     (depth : Nat) (rootDiameter : Coordinate)
@@ -2865,8 +2894,8 @@ public theorem tryDyadic_toClearPath_eq_dyadicPath
                 success).trans
                   (finalTarget_requestEndpoints left requests).symm))).castFinish
             requestsFinishEqual).castFinish targetsFinishEqual := by
-      rewrite [Polynomial.Geometry.ClearPath.castFinish_castFinish,
-        Polynomial.Geometry.ClearPath.castFinish_castFinish]
+      rewrite [ClearPath.castFinish_castFinish,
+        ClearPath.castFinish_castFinish]
       exact Eq.refl _
     _ = ((ClearSheetContinuation.Subdivision.geometricPath segment
           within left (requestEndpoints requests)).castFinish
@@ -2887,7 +2916,7 @@ open Purelib.Polynomial in
 @[simp] public theorem toClearPath_segmentCount
     {polynomial : GaussianPolynomial} {ambient : Box}
     {start finish : Gaussian}
-    {segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish}
+    {segment : ClearPath.ClearSegment polynomial ambient start finish}
     {within : segment.WithinAmbient} {left : Endpoint}
     {owner : Owner (polynomial.eval (segment.pointAt left.parameter))}
     (subdivision : Subdivision segment within left owner) :

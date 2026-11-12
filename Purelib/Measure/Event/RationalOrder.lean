@@ -15,6 +15,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Mathlib.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 public section
 
@@ -45,9 +47,9 @@ theorem atLeastDecision_eq_of_margin
       witness + margin ≤ threshold) :
     decide (threshold ≤ value) = decide (threshold ≤ witness) := by
   have valueMinusWitnessSmall : value - witness < margin :=
-    (Fraction.Order.Basic.le_max_left (value - witness) (witness - value)).trans_lt close
+    (Basic.le_max_left (value - witness) (witness - value)).trans_lt close
   have witnessMinusValueSmall : witness - value < margin :=
-    (Fraction.Order.Basic.le_max_right (value - witness) (witness - value)).trans_lt close
+    (Basic.le_max_right (value - witness) (witness - value)).trans_lt close
   rcases separated with above | below
   · have witnessInside : threshold ≤ witness := by
       calc
@@ -55,7 +57,7 @@ theorem atLeastDecision_eq_of_margin
           le_add_of_nonneg_right marginPositive.le
         _ ≤ witness := above
     have witnessLtValuePlusMargin : witness < value + margin := by
-      have moved := Fraction.Order.Arithmetic.add_lt_add_right_direct
+      have moved := Arithmetic.add_lt_add_right_direct
         witnessMinusValueSmall value
       calc
         witness = (witness - value) + value := by ring1
@@ -64,12 +66,12 @@ theorem atLeastDecision_eq_of_margin
     have thresholdMarginLt : threshold + margin < value + margin :=
       above.trans_lt witnessLtValuePlusMargin
     have valueInside : threshold ≤ value :=
-      (Fraction.Order.Arithmetic.lt_of_add_lt_add_right_direct
+      (Arithmetic.lt_of_add_lt_add_right_direct
         thresholdMarginLt).le
     rw [decide_eq_true valueInside,
       decide_eq_true witnessInside]
   · have valueLtWitnessPlusMargin : value < witness + margin := by
-      have moved := Fraction.Order.Arithmetic.add_lt_add_right_direct
+      have moved := Arithmetic.add_lt_add_right_direct
         valueMinusWitnessSmall witness
       calc
         value = (value - witness) + witness := by ring1
@@ -79,7 +81,7 @@ theorem atLeastDecision_eq_of_margin
       valueLtWitnessPlusMargin.trans_le below
     have witnessLtWitnessPlusMargin : witness < witness + margin := by
       have moved :=
-        Fraction.Order.Arithmetic.add_lt_add_left_direct marginPositive witness
+        Arithmetic.add_lt_add_left_direct marginPositive witness
       simpa only [-eq_self, -iff_self, add_zero] using moved
     have witnessBelow : witness < threshold :=
       witnessLtWitnessPlusMargin.trans_le below
@@ -136,7 +138,7 @@ theorem atMost_union_interval
       decide_eq_false notAbove, Bool.true_or]
     rfl
   · have lowerLtValue :=
-      Fraction.Order.Arithmetic.lt_of_not_ge_direct valueLeLower
+      Arithmetic.lt_of_not_ge_direct valueLeLower
     by_cases valueLeUpper : value ≤ upper
     · simp only [-eq_self, -iff_self, unionEvent, atMostEvent, openClosedIntervalEvent,
         decide_eq_false valueLeLower, decide_eq_true lowerLtValue,
@@ -171,7 +173,7 @@ namespace Purelib.Measure
 open Purelib in
 open Purelib.Data.Rat in
 /-- Decide whether the observable lies in the exact retained rational interval. -/
-@[expose] def withinBoundEvent {α : Type} (target : Data.Rat.Interval)
+@[expose] def withinBoundEvent {α : Type} (target : Interval)
     (value : α → Fraction.Rational) : α → Bool :=
   fun item => decide (target.Contains (value item))
 
@@ -225,18 +227,18 @@ open Purelib.Data.Rat in
 /-- The Boolean complement of a strict lower-threshold event equals the corresponding weak upper-threshold event. -/
 theorem complement_strictlyBelowProbe
     {α : Type} (value : α → Fraction.Rational) (threshold : Fraction.Rational) (item : α) :
-    Measure.complementEvent
+    complementEvent
         (fun candidate => decide (value candidate < threshold)) item =
-      Measure.atLeastEvent threshold value item := by
+      atLeastEvent threshold value item := by
   by_cases below : value item < threshold
   · have notAtLeast : ¬threshold ≤ value item := below.2
-    simp only [-eq_self, -iff_self, Measure.complementEvent,
-      Measure.atLeastEvent, decide_eq_true below, decide_eq_false notAtLeast, Bool.not_true]
+    simp only [-eq_self, -iff_self, complementEvent,
+      atLeastEvent, decide_eq_true below, decide_eq_false notAtLeast, Bool.not_true]
     rfl
   · have atLeast : threshold ≤ value item :=
-      Fraction.Order.Arithmetic.le_of_not_gt_direct below
-    simp only [-eq_self, -iff_self, Measure.complementEvent,
-      Measure.atLeastEvent, decide_eq_false below, decide_eq_true atLeast, Bool.not_false]
+      Arithmetic.le_of_not_gt_direct below
+    simp only [-eq_self, -iff_self, complementEvent,
+      atLeastEvent, decide_eq_false below, decide_eq_true atLeast, Bool.not_false]
     rfl
 
 open Purelib in
@@ -248,20 +250,20 @@ theorem atLeast_negProbe_negThreshold
     {α : Type} (probe : Line.GaussianLine → Fraction.Rational) (points : α →
       Line.GaussianLine)
     (threshold : Fraction.Rational) (item : α) :
-    Measure.atLeastEvent (-threshold)
+    atLeastEvent (-threshold)
         (fun candidate => Function.Rat.negProbe probe (points candidate)) item =
       decide (probe (points item) ≤ threshold) := by
   by_cases order : probe (points item) ≤ threshold
   · have negated : -threshold ≤ -probe (points item) :=
-      Fraction.Order.Arithmetic.neg_le_neg_direct order
-    simp only [-eq_self, -iff_self, Measure.atLeastEvent, Function.Rat.negProbe, decide_eq_true order]
+      Arithmetic.neg_le_neg_direct order
+    simp only [-eq_self, -iff_self, atLeastEvent, Function.Rat.negProbe, decide_eq_true order]
     exact decide_eq_true negated
   · have notNegated : ¬(-threshold ≤ -probe (points item)) := by
       intro negated
       apply order
-      have reversed := Fraction.Order.Arithmetic.neg_le_neg_direct negated
+      have reversed := Arithmetic.neg_le_neg_direct negated
       simpa only [-eq_self, -iff_self, neg_neg] using reversed
-    simp only [-eq_self, -iff_self, Measure.atLeastEvent, Function.Rat.negProbe, decide_eq_false order]
+    simp only [-eq_self, -iff_self, atLeastEvent, Function.Rat.negProbe, decide_eq_false order]
     exact decide_eq_false notNegated
 end Purelib.Measure.Event
 
@@ -305,7 +307,7 @@ theorem complement_strictlyBelowEvent
       decide_eq_true below, decide_eq_false notAtLeast, Bool.not_true]
     rfl
   · have atLeast : threshold ≤ value :=
-      Fraction.Order.Arithmetic.le_of_not_gt_direct below
+      Arithmetic.le_of_not_gt_direct below
     simp only [-eq_self, -iff_self, complementEvent, strictlyBelowEvent, atLeastCoordinateEvent,
       decide_eq_false below, decide_eq_true atLeast, Bool.not_false]
     rfl

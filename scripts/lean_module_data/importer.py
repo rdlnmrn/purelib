@@ -29,8 +29,8 @@ class Ref:
     def eq(self, idx): return self.d.eq_ids[idx]
 
 class Module:
-    def __init__(self, name, path, equal, payloads, data=True):
-        self.name=name;self.path=path;self.d=TypedDecoder([])
+    def __init__(self, name, path, equal, payloads, data=True, nodes=None):
+        self.name=name;self.path=path;self.d=TypedDecoder([],shared=nodes)
         self.d.eq_identities=equal;self.d.name_payloads=payloads
         first=self.d.parts.add(path);r,s,f=self.d.parts.ctor(first.root,0,5,1)
         flag=r.bytes(s,1)[0]
@@ -61,14 +61,18 @@ class Module:
 class Graph:
     def __init__(self, search):
         self.search=search;self.equal={};self.payloads={};self.modules={};self.ir={}
+        # Module pointers have separate address spaces. Only fully decoded,
+        # structurally identical nodes share storage; import and owner order do not.
+        self.nodes=TypedDecoder([])
+        self.nodes.eq_identities=self.equal;self.nodes.name_payloads=self.payloads
     def load(self,name):
         if name not in self.modules:
-            self.modules[name]=Module(name,find_olean(name,self.search),self.equal,self.payloads)
+            self.modules[name]=Module(name,find_olean(name,self.search),self.equal,self.payloads,nodes=self.nodes)
         return self.modules[name]
     def load_ir(self,name):
         if name not in self.ir:
             path=find_olean(name,self.search).with_suffix('.ir')
-            self.ir[name]=Module(name,path,self.equal,self.payloads,False) if path.exists() else None
+            self.ir[name]=Module(name,path,self.equal,self.payloads,False,nodes=self.nodes) if path.exists() else None
         return self.ir[name]
     def imports(self, roots, private):
         state={};order=[];active=set()

@@ -49,12 +49,12 @@ section
 The identity is denominator-free and holds at every pair of natural indices over the supplied explicit field. -/
 theorem centered_product_cleared
     (firstIndex secondIndex : Nat) (value : K) :
-    (2 * Recurrence.Spread.Basic.spreadPolynomial firstIndex value - 1) *
-        (2 * Recurrence.Spread.Basic.spreadPolynomial secondIndex value - 1) =
-      Recurrence.Chebyshev.First.Basic.chebyshevFirst firstIndex (1 - 2 * value) *
-        Recurrence.Chebyshev.First.Basic.chebyshevFirst secondIndex (1 - 2 * value) := by
-  rw [Recurrence.Spread.Chebyshev.exercise_8_4_cleared firstIndex value,
-    Recurrence.Spread.Chebyshev.exercise_8_4_cleared secondIndex value]
+    (2 * Basic.spreadPolynomial firstIndex value - 1) *
+        (2 * Basic.spreadPolynomial secondIndex value - 1) =
+      Chebyshev.First.Basic.chebyshevFirst firstIndex (1 - 2 * value) *
+        Chebyshev.First.Basic.chebyshevFirst secondIndex (1 - 2 * value) := by
+  rw [exercise_8_4_cleared firstIndex value,
+    exercise_8_4_cleared secondIndex value]
   ring1
 
 /-- Four times the product of spread values centered at one half equals a Chebyshev product.
@@ -64,40 +64,40 @@ theorem centered_product
     (firstIndex secondIndex : Nat) (value : K)
     (twoNonzero : (2 : K) ≠ 0) :
     4 *
-        (Recurrence.Spread.Basic.spreadPolynomial firstIndex value - 1 / 2) *
-        (Recurrence.Spread.Basic.spreadPolynomial secondIndex value - 1 / 2) =
-      Recurrence.Chebyshev.First.Basic.chebyshevFirst firstIndex (1 - 2 * value) *
-        Recurrence.Chebyshev.First.Basic.chebyshevFirst secondIndex (1 - 2 * value) := by
+        (Basic.spreadPolynomial firstIndex value - 1 / 2) *
+        (Basic.spreadPolynomial secondIndex value - 1 / 2) =
+      Chebyshev.First.Basic.chebyshevFirst firstIndex (1 - 2 * value) *
+        Chebyshev.First.Basic.chebyshevFirst secondIndex (1 - 2 * value) := by
   have twoCancel : (2 : K) * (2 : K)⁻¹ = 1 :=
     ExplicitField.mul_inv_cancel 2 twoNonzero
   have firstCentered :
-      2 * (Recurrence.Spread.Basic.spreadPolynomial firstIndex value - 1 / 2) =
-        2 * Recurrence.Spread.Basic.spreadPolynomial firstIndex value - 1 := by
+      2 * (Basic.spreadPolynomial firstIndex value - 1 / 2) =
+        2 * Basic.spreadPolynomial firstIndex value - 1 := by
     simp only [ExplicitField.div_eq_mul_inv]
     calc
-      2 * (Recurrence.Spread.Basic.spreadPolynomial firstIndex value - 1 * (2 : K)⁻¹) =
-          2 * Recurrence.Spread.Basic.spreadPolynomial firstIndex value -
+      2 * (Basic.spreadPolynomial firstIndex value - 1 * (2 : K)⁻¹) =
+          2 * Basic.spreadPolynomial firstIndex value -
             (2 : K) * (2 : K)⁻¹ := by ring1
-      _ = 2 * Recurrence.Spread.Basic.spreadPolynomial firstIndex value - 1 := by rw [twoCancel]
+      _ = 2 * Basic.spreadPolynomial firstIndex value - 1 := by rw [twoCancel]
   have secondCentered :
-      2 * (Recurrence.Spread.Basic.spreadPolynomial secondIndex value - 1 / 2) =
-        2 * Recurrence.Spread.Basic.spreadPolynomial secondIndex value - 1 := by
+      2 * (Basic.spreadPolynomial secondIndex value - 1 / 2) =
+        2 * Basic.spreadPolynomial secondIndex value - 1 := by
     simp only [ExplicitField.div_eq_mul_inv]
     calc
-      2 * (Recurrence.Spread.Basic.spreadPolynomial secondIndex value - 1 * (2 : K)⁻¹) =
-          2 * Recurrence.Spread.Basic.spreadPolynomial secondIndex value -
+      2 * (Basic.spreadPolynomial secondIndex value - 1 * (2 : K)⁻¹) =
+          2 * Basic.spreadPolynomial secondIndex value -
             (2 : K) * (2 : K)⁻¹ := by ring1
-      _ = 2 * Recurrence.Spread.Basic.spreadPolynomial secondIndex value - 1 := by rw [twoCancel]
+      _ = 2 * Basic.spreadPolynomial secondIndex value - 1 := by rw [twoCancel]
   calc
-    4 * (Recurrence.Spread.Basic.spreadPolynomial firstIndex value - 1 / 2) *
-          (Recurrence.Spread.Basic.spreadPolynomial secondIndex value - 1 / 2) =
-        (2 * (Recurrence.Spread.Basic.spreadPolynomial firstIndex value - 1 / 2)) *
-          (2 * (Recurrence.Spread.Basic.spreadPolynomial secondIndex value - 1 / 2)) := by ring1
-    _ = (2 * Recurrence.Spread.Basic.spreadPolynomial firstIndex value - 1) *
-          (2 * Recurrence.Spread.Basic.spreadPolynomial secondIndex value - 1) := by
+    4 * (Basic.spreadPolynomial firstIndex value - 1 / 2) *
+          (Basic.spreadPolynomial secondIndex value - 1 / 2) =
+        (2 * (Basic.spreadPolynomial firstIndex value - 1 / 2)) *
+          (2 * (Basic.spreadPolynomial secondIndex value - 1 / 2)) := by ring1
+    _ = (2 * Basic.spreadPolynomial firstIndex value - 1) *
+          (2 * Basic.spreadPolynomial secondIndex value - 1) := by
       rw [firstCentered, secondCentered]
-    _ = Recurrence.Chebyshev.First.Basic.chebyshevFirst firstIndex (1 - 2 * value) *
-          Recurrence.Chebyshev.First.Basic.chebyshevFirst secondIndex (1 - 2 * value) :=
+    _ = Chebyshev.First.Basic.chebyshevFirst firstIndex (1 - 2 * value) *
+          Chebyshev.First.Basic.chebyshevFirst secondIndex (1 - 2 * value) :=
       centered_product_cleared firstIndex secondIndex value
 
 end

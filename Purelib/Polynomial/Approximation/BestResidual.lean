@@ -11,6 +11,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 public import Purelib.Polynomial.Dense.Evaluation
 import Mathlib.Order.Basic
 
+open Purelib.Data.Gaussian.Fraction.NaturalDenominator
+
 open Purelib.Data.Gaussian.Basic.Canonical.Fraction (NaturalDenominator)
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 
@@ -38,7 +40,7 @@ namespace Purelib.Polynomial.Approximation.BestResidual
 def score (p :
   CoefficientPolynomial) (fraction :
   NaturalDenominator) : Fraction.Rational :=
-  Data.Gaussian.Norm.Basic.normSq (p.eval fraction.value)
+  Gaussian.Norm.Basic.normSq (p.eval fraction.value)
 
 /-- Return a least-scoring element of a finite list, or `none` for the empty
 list.  Ties retain the earlier displayed candidate. -/
@@ -160,7 +162,7 @@ def best (p :
   CoefficientPolynomial) (numeratorBound
   denominatorBound : Nat) :
     Option NaturalDenominator :=
-  selectMinimum p (Gaussian.Fraction.NaturalDenominator.Enumeration.candidates numeratorBound
+  selectMinimum p (Enumeration.candidates numeratorBound
     denominatorBound)
 
 /-- A positive denominator bound makes the finite search nonempty and yields a selected sample. -/
@@ -171,17 +173,17 @@ theorem best_exists (p :
     ∃ selected, best p numeratorBound denominatorBound = some selected := by
   let zeroFraction := NaturalDenominator.grid 0 0 1
     (by decide)
-  have zeroMember : zeroFraction ∈ Gaussian.Fraction.NaturalDenominator.Enumeration.candidates numeratorBound
+  have zeroMember : zeroFraction ∈ Enumeration.candidates numeratorBound
     denominatorBound := by
-    apply Gaussian.Fraction.NaturalDenominator.Enumeration.mem_candidates
+    apply Enumeration.mem_candidates
     · exact Nat.zero_le _
     · exact Nat.zero_le _
     · exact Nat.succ_le_iff.mpr positive
   cases selection : selectMinimum p
-      (Gaussian.Fraction.NaturalDenominator.Enumeration.candidates numeratorBound denominatorBound) with
+      (Enumeration.candidates numeratorBound denominatorBound) with
   | none =>
       have empty := (selectMinimum_eq_none_iff p
-        (Gaussian.Fraction.NaturalDenominator.Enumeration.candidates numeratorBound denominatorBound)).mp selection
+        (Enumeration.candidates numeratorBound denominatorBound)).mp selection
       rw [empty] at zeroMember
       exact (List.not_mem_nil zeroMember).elim
   | some selected =>
@@ -199,7 +201,7 @@ theorem best_is_optimal
     (denominatorBounded : candidate.denominator ≤ denominatorBound) :
     score p selected ≤ score p candidate := by
   exact selectMinimum_le_of_mem selection
-    (Gaussian.Fraction.NaturalDenominator.Enumeration.mem_candidates realBound imaginaryBound denominatorBounded)
+    (Enumeration.mem_candidates realBound imaginaryBound denominatorBounded)
 
 end Purelib.Polynomial.Approximation.BestResidual
 

@@ -49,9 +49,9 @@ open Purelib.Riemann.Integration.PuncturedVertexStars (StarEntry VertexStar)
 open Purelib.Polynomial.Geometry.Grid.VertexCellSteps (IncidentCell)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
-  {point : Purelib.Data.Gaussian.Basic.Canonical}
+  {point : Data.Gaussian.Basic.Canonical}
 
 namespace PuncturedVertexStars.StarEntry
 
@@ -71,7 +71,7 @@ set_option genInjectivity false in
 
 The entry and its list membership are stored with an exact cell equality, preserving the original classification owner.
 -/
-structure LocatedIn (entries : List (StarEntry base point)) (cell : Geometry.Grid.ClearGrid.Cell curve.polynomial
+structure LocatedIn (entries : List (StarEntry base point)) (cell : Cell curve.polynomial
   (Cuts.Ambient curve)) where
   /-- The actual retained star entry for the specified cell. -/ entry : StarEntry base point
   /-- The entry belongs to the original star-entry list. -/ member : entry ∈ entries
@@ -85,13 +85,13 @@ open Purelib.Polynomial in
 
 The finite search retains the selected entry and its original list membership; grid anchor uniqueness supplies the exact
 cell readback. -/
-@[expose] def locate (cell : Geometry.Grid.ClearGrid.Cell curve.polynomial (Cuts.Ambient curve)) (onGrid : cell ∈
+@[expose] def locate (cell : Cell curve.polynomial (Cuts.Ambient curve)) (onGrid : cell ∈
   base.bank.grid.cells) :
-    (entries : List (StarEntry base point)) → (∃ entry ∈ entries, entry.cell = cell) → StarEntry.LocatedIn entries cell
+    (entries : List (StarEntry base point)) → (∃ entry ∈ entries, entry.cell = cell) → LocatedIn entries cell
   | [], covered => (by obtain ⟨_, member, _⟩ := covered; exact List.not_mem_nil member : False).elim
   | head :: tail, covered =>
       if same : head.cell.box.anchor = cell.box.anchor then
-        ⟨head, List.mem_cons_self, Polynomial.Geometry.Grid.ClearGrid.cell_eq_of_anchor head.onGrid onGrid same⟩
+        ⟨head, List.mem_cons_self, Geometry.Grid.ClearGrid.cell_eq_of_anchor head.onGrid onGrid same⟩
       else
         let found := locate cell onGrid tail (by
           obtain ⟨entry, member, equal⟩ := covered
@@ -110,7 +110,7 @@ open Purelib.Polynomial in
 
 Anchor lookup returns an entry from the original star list. Its exact cell equality transports that retained
 classification to the supplied incident cell. -/
-@[expose] def classify (star : VertexStar base point) (cell : Geometry.Grid.VertexCellSteps.IncidentCell base.bank.grid
+@[expose] def classify (star : VertexStar base point) (cell : IncidentCell base.bank.grid
   point) :
     LocatedCell base.faces.regulars base.faces.holes cell.cell :=
   let found := StarEntry.locate cell.cell cell.member star.entries (star.covers cell.member cell.corner.contains)
@@ -127,7 +127,7 @@ set_option genInjectivity false in
 
 The retained corner and regular-list index refer to the same original cell at the specified vertex. -/
 structure RegularIncident (base : FramedPuncturedGrid curve branches higher) (point : Basic.Canonical) where
-  /-- The original cell and corner incident at this vertex. -/ incident : Geometry.Grid.VertexCellSteps.IncidentCell
+  /-- The original cell and corner incident at this vertex. -/ incident : IncidentCell
     base.bank.grid point
   /-- The retained regular-list location of that exact incident cell. -/ located : RegularLocation base.faces.regulars
     incident.cell
@@ -146,7 +146,7 @@ certificate keep that selected entry and its original cell unchanged. -/
 @[expose] def regularIncident (star : VertexStar base point) : PuncturedVertexConnections.RegularIncident base point :=
   let selected := star.regularFace
   ⟨⟨selected.entry.cell, selected.entry.onGrid,
-      Polynomial.Geometry.Grid.ClearGrid.corner_of_contains selected.entry.onGrid star.geometry.onGrid
+      Geometry.Grid.ClearGrid.corner_of_contains selected.entry.onGrid star.geometry.onGrid
         selected.entry.contains⟩,
     selected.located⟩
 
@@ -162,10 +162,10 @@ The retained position supplies the actual cell, while the point and containment 
 incidence. -/
 @[expose] def ofPosition (base : FramedPuncturedGrid curve branches higher)
     (position : Fin base.faces.regulars.length) (point : Basic.Canonical) (onGrid :
-      Polynomial.Geometry.Grid.FromStates.ContainsVertex base.bank.grid point)
+      Geometry.Grid.FromStates.ContainsVertex base.bank.grid point)
     (inside : base.faces.regulars[position.val].cell.box.Contains point) : RegularIncident base point :=
   let face := base.faces.regulars[position.val]
-  ⟨⟨face.cell, face.member, Polynomial.Geometry.Grid.ClearGrid.corner_of_contains face.member onGrid inside⟩,
+  ⟨⟨face.cell, face.member, Geometry.Grid.ClearGrid.corner_of_contains face.member onGrid inside⟩,
     ⟨position, face,
     rfl, rfl⟩⟩
 
@@ -178,7 +178,7 @@ private theorem regular_index_eq (first last : RegularIncident base point)
   have cellsEqual : base.faces.regulars[first.located.index.val].cell = base.faces.regulars[last.located.index.val].cell
     := by
     rw [first.located.indexed, last.located.indexed, first.located.cell_eq, last.located.cell_eq, equal]
-  have noSeparation (cell : Geometry.Grid.ClearGrid.Cell curve.polynomial (Cuts.Ambient curve)) (apart :
+  have noSeparation (cell : Cell curve.polynomial (Cuts.Ambient curve)) (apart :
     cell.box.InteriorSeparated cell.box) : False := by
     rcases apart with left | right | below | above
     · exact not_lt_of_ge left cell.box_proper.1
@@ -218,9 +218,9 @@ Both ordered steps use the actual incident-cell owners at the same vertex. -/
 structure Connection (first last : RegularIncident base point) where
   /-- The retained regular middle incident of the connection. -/ middle : RegularIncident base point
   /-- The original ordered incident step to the middle cell. -/ firstStep :
-    Geometry.Grid.VertexCellSteps.IncidentCell.Step first.incident middle.incident
+    IncidentCell.Step first.incident middle.incident
   /-- The original ordered incident step from the middle cell. -/ lastStep :
-    Geometry.Grid.VertexCellSteps.IncidentCell.Step middle.incident last.incident
+    IncidentCell.Step middle.incident last.incident
 
 constructive_injectivity Connection
 
@@ -237,8 +237,8 @@ theorem mixed_holes_impossible (first last : RegularIncident base point)
   have equal := StarEntry.hole_cells_equal
     (⟨firstMix.cell, .hole firstHole, firstMix.corner.contains⟩ : StarEntry base point)
     (⟨lastMix.cell, .hole lastHole, lastMix.corner.contains⟩ : StarEntry base point) firstHole lastHole
-  have horizontal := congrArg Geometry.Grid.ClearGrid.Cell.horizontal equal
-  have mixedEq : firstMix.cell = last.incident.cell := congrArg₂ Geometry.Grid.ClearGrid.Cell.mk horizontal rfl
+  have horizontal := congrArg Cell.horizontal equal
+  have mixedEq : firstMix.cell = last.incident.cell := congrArg₂ Cell.mk horizontal rfl
   exact last.located.face.unassigned firstHole.hole.index
     (last.located.cell_eq.trans (mixedEq.symm.trans (firstHole.cell_eq.symm.trans firstHole.hole.cell_eq)))
 
@@ -252,14 +252,14 @@ exclusion proves these original alternatives cover the construction. -/
   let firstMix := first.incident.mix last.incident
   match star.classify firstMix with
   | .regular located =>
-      ⟨⟨firstMix, located⟩, Geometry.Grid.VertexCellSteps.IncidentCell.alongColumn first.incident firstMix rfl,
-        Geometry.Grid.VertexCellSteps.IncidentCell.alongRow firstMix last.incident rfl⟩
+      ⟨⟨firstMix, located⟩, IncidentCell.alongColumn first.incident firstMix rfl,
+        IncidentCell.alongRow firstMix last.incident rfl⟩
   | .hole firstHole =>
       let lastMix := last.incident.mix first.incident
       match star.classify lastMix with
       | .regular located =>
-          ⟨⟨lastMix, located⟩, Geometry.Grid.VertexCellSteps.IncidentCell.alongRow first.incident lastMix rfl,
-            Geometry.Grid.VertexCellSteps.IncidentCell.alongColumn lastMix last.incident rfl⟩
+          ⟨⟨lastMix, located⟩, IncidentCell.alongRow first.incident lastMix rfl,
+            IncidentCell.alongColumn lastMix last.incident rfl⟩
       | .hole lastHole => (mixed_holes_impossible first last firstHole lastHole).elim
 
 end PuncturedVertexConnections.RegularIncident

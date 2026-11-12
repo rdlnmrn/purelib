@@ -16,6 +16,8 @@ import Purelib.Geometry.Rational.Box.Separation
 import Purelib.Polynomial.Clearance.Box.Boundary.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients
+
 open Purelib.Geometry.Rational
 open Purelib.Polynomial
 
@@ -33,7 +35,7 @@ namespace Purelib.Polynomial.Winding.Box.Region.Complement
 Compose its existing outer refinement with the supplied ambient refinement, retaining the exact cell box, properness and
 clearance certificate. -/
 @[expose] public def cellToRegion
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient outer center : Box}
+    {p : CoefficientPolynomial} {ambient outer center : Box}
     (cell : Clearance.Box.Grid.Central.Cell.ClearCell p outer center) (outerRefines : outer.Refines ambient) :
     Clearance.Box.Region.ClearRegion p ambient where
   box := cell.box
@@ -45,22 +47,22 @@ clearance certificate. -/
 
 The original grid order and individual cell certificates are preserved. -/
 @[expose] public def complementRegions
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient outer center : Box}
+    {p : CoefficientPolynomial} {ambient outer center : Box}
     (grid : Grid.Central.Basic.Arrangement p outer center) (outerRefines : outer.Refines ambient) :
     List (Clearance.Box.Region.ClearRegion p ambient) :=
-  grid.complements.map fun cell => Winding.Box.Region.Complement.cellToRegion cell outerRefines
+  grid.complements.map fun cell => cellToRegion cell outerRefines
 
 /-- The retained complement regions have pairwise separated interiors.
 
 Each original grid cell supplies its own box and separation certificate.
 Mapping those cells to regions changes neither box nor the ordered relation. -/
 public theorem complementRegions_pairwise
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient outer center : Box}
+    {p : CoefficientPolynomial} {ambient outer center : Box}
     (grid : Grid.Central.Basic.Arrangement p outer center) (outerRefines : outer.Refines ambient) :
-    (Winding.Box.Region.Complement.complementRegions grid outerRefines).Pairwise
+    (complementRegions grid outerRefines).Pairwise
       Clearance.Box.Region.Basic.regionInteriorSeparated := open Purelib in by
   change (grid.complements.map fun cell =>
-    Winding.Box.Region.Complement.cellToRegion cell outerRefines).Pairwise
+    cellToRegion cell outerRefines).Pairwise
       Clearance.Box.Region.Basic.regionInteriorSeparated
   exact Data.List.Pairwise.pairwise_map.mpr grid.complements_pairwise
 
@@ -69,13 +71,13 @@ public theorem complementRegions_pairwise
 Finite membership provides the actual source cell in the displayed grid.
 Its existing outer-refinement certificate concerns that same region box. -/
 public theorem complementRegions_refine_outer
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient outer center : Box}
+    {p : CoefficientPolynomial} {ambient outer center : Box}
     (grid : Grid.Central.Basic.Arrangement p outer center) (outerRefines : outer.Refines ambient)
     {region : Clearance.Box.Region.ClearRegion p ambient}
-    (member : region ∈ Winding.Box.Region.Complement.complementRegions grid outerRefines) :
+    (member : region ∈ complementRegions grid outerRefines) :
     region.box.Refines outer := open Purelib in by
   change region ∈ grid.complements.map (fun cell =>
-    Winding.Box.Region.Complement.cellToRegion cell outerRefines) at member
+    cellToRegion cell outerRefines) at member
   rcases Data.List.Map.mem_map.mp member with ⟨cell, _cellMember, rfl⟩
   exact cell.refines
 
@@ -84,27 +86,27 @@ public theorem complementRegions_refine_outer
 Membership retains its original source cell. That cell's coordinate contact
 and the supplied strict interior witness give the same positive separation. -/
 public theorem center_separated_from_complement_strictInterior
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient outer center : Box}
+    {p : CoefficientPolynomial} {ambient outer center : Box}
     (grid : Grid.Central.Basic.Arrangement p outer center) (outerRefines : outer.Refines ambient)
     {region : Clearance.Box.Region.ClearRegion p ambient}
-    (member : region ∈ Winding.Box.Region.Complement.complementRegions grid outerRefines)
+    (member : region ∈ complementRegions grid outerRefines)
     {small : Box} (strict : small.StrictInterior region.box) :
     center.Separated small := open Purelib in by
   change region ∈ grid.complements.map (fun cell =>
-    Winding.Box.Region.Complement.cellToRegion cell outerRefines) at member
+    cellToRegion cell outerRefines) at member
   rcases Data.List.Map.mem_map.mp member with ⟨cell, _cellMember, rfl⟩
   exact Clearance.Box.Grid.Central.Cell.ClearCell.center_separated_from_strictInterior cell strict
 
 /-- The total complement raw winding equals the outer winding minus the central winding. -/
 public theorem totalRaw_complementRegions
-    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient outer center : Box}
+    {p : CoefficientPolynomial} {ambient outer center : Box}
     (grid : Grid.Central.Basic.Arrangement p outer center) (outerRefines : outer.Refines ambient) :
-    Winding.Box.Region.Sum.totalRaw (Winding.Box.Region.Complement.complementRegions grid outerRefines) =
-      Winding.Box.Basic.quadrupledBoxWinding p outer - Winding.Box.Basic.quadrupledBoxWinding p center := by
+    Region.Sum.totalRaw (complementRegions grid outerRefines) =
+      Basic.quadrupledBoxWinding p outer - Basic.quadrupledBoxWinding p center := by
   have additive := grid.additive
-  simp only [Winding.Box.Region.Complement.complementRegions, Grid.Central.Basic.Arrangement.complements, List.map,
-    Winding.Box.Region.Complement.cellToRegion,
-    Winding.Box.Region.Sum.totalRaw, List.sum_cons, List.sum_nil] at *
+  simp only [complementRegions, Grid.Central.Basic.Arrangement.complements, List.map,
+    cellToRegion,
+    Region.Sum.totalRaw, List.sum_cons, List.sum_nil] at *
   rw [additive]
   ring1
 

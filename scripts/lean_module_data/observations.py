@@ -112,6 +112,7 @@ AXIOM_TAG = '_private.Lean.Util.CollectAxioms.0.Lean.exportedAxiomsExt'
 
 class Observations:
     """One selected compiled module with complete private/IR import identity."""
+    axiom_name_cmp = staticmethod(name_cmp)
     def __init__(self, module, search, trace_environment=False):
         """Load original private imports and the trace template's Core owners."""
         self.module_text = module; self.module = render_name(parse_name(module))
@@ -159,6 +160,17 @@ class Observations:
         elif ref.kind == 6: names.add(name_observer(ref.d, ref.name))
         return names
 
+    def axiom_dependencies(self, ref):
+        """Direct collectAxioms edges, preserving constructor-specific order."""
+        deps = []
+        if ref.kind != 4: deps.extend(self.expression_names(ref, ref.type()))
+        body = self.body(ref)
+        if body is not None: deps.extend(self.expression_names(ref, body))
+        if ref.kind == 5:
+            idx = ref.d.decode('List:Name', ref.fields[4])
+            deps.extend(name_observer(ref.d, n) for n in ref.d.list_items(idx))
+        return deps
+
     def persisted_axioms(self, name):
         """Imported precomputed entries selected by original first owner."""
         owner = self.owners.get(name)
@@ -187,7 +199,7 @@ class Observations:
         while tasks:
             task = tasks.pop(); name = task[1]
             if task[0] == 'finish':
-                seen[name] = sorted(current, key=cmp_to_key(name_cmp))
+                seen[name] = sorted(current, key=cmp_to_key(self.axiom_name_cmp))
                 current = task[2] | current
                 continue
             imported = self.persisted_axioms(name)
@@ -197,14 +209,8 @@ class Observations:
             saved = current; current = set(); seen[name] = []
             tasks.append(('finish', name, saved)); ref = self.by_name.get(name)
             if ref is None: continue
-            deps = []
             if ref.kind == 0: current.add(name)
-            if ref.kind != 4: deps.extend(self.expression_names(ref, ref.type()))
-            body = self.body(ref)
-            if body is not None: deps.extend(self.expression_names(ref, body))
-            if ref.kind == 5:
-                idx = ref.d.decode('List:Name', ref.fields[4])
-                deps.extend(name_observer(ref.d, n) for n in ref.d.list_items(idx))
+            deps = self.axiom_dependencies(ref)
             tasks.extend(('visit', n) for n in reversed(deps))
         return seen[root]
 
@@ -258,7 +264,7 @@ class Observations:
             todo.extend(reversed({5:c,6:c[1:],7:c[1:],8:c[1:],10:c[1:],11:c[2:]}.get(tag, ())))
 
     def trace(self, mode, target_text, declaration_text):
-        """Exact compiled tracing fields; types use serialized Expr Repr."""
+        """Trace complete dependencies with bounded diagnostic expression previews."""
         target = query_observer(target_text); declaration = query_observer(declaration_text)
         ref = self.by_name.get(declaration)
         if ref is None: raise InvalidArtifact('unknown declaration '+render_name(declaration[1]))
@@ -273,12 +279,11 @@ class Observations:
                     any_ = True
                     yield f'{name} {location} directly applies {target_name} at occurrence {index} with {len(args)} arguments'
                     for i, arg in enumerate(args, 1):
-                        text = renderer.repr(arg)
-                        yield f'  argument {i}: '+(text if len(text) <= 600 else text[:600]+'…')
+                        yield f'  argument {i}: '+renderer.repr(arg,max_chars=600)
                 if not any_: yield f'{name} {location} contains no direct application of {target_name}'
             return
         if target not in self.by_name: raise InvalidArtifact('unknown target axiom or declaration '+target_name)
-        yield name+' type (serialized Expr Repr): '+Renderer(ref.d).repr(ref.type())
+        yield name+' type (serialized Expr Repr; preview): '+Renderer(ref.d).repr(ref.type(),max_chars=6000)
         closure = self.axioms(declaration)
         names = lambda ns:'['+', '.join(render_name(n[1]) for n in ns)+']'
         yield name+' closure axioms: '+names(sorted(closure,key=cmp_to_key(name_cmp)))

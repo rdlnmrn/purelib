@@ -74,41 +74,41 @@ open Purelib.Riemann.Readings.RectangularPairedEndpointReadings (PairedEndpointR
 open Purelib.Topology.Polygon.Stokes (PrimitivePoint)
 open Purelib.Riemann.Paths.RectangularOwnedPerimeterTraces
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target
-    radius : Purelib.Data.Rat.Fraction.Rational} {grid :
-    Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-  {observations : Purelib.Riemann.RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
+  {preparation : NewtonPreparation original} {target
+    radius : Rational} {grid :
+    NewtonGrid preparation target radius}
+  {observations : ProtectedObservations original} {frames :
     RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
-    grid.faces.regulars} {partitions : Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions
+  {domains : FaceDomainBank frames
+    grid.faces.regulars} {partitions : SurfacePartitions
     observations grid}
-  {surfaceCuts : Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceCuts partitions domains}
+  {surfaceCuts : SurfaceCuts partitions domains}
   {firstSheet lastSheet : Fin 2} {firstDepth lastDepth : Nat}
-  {firstFixed : Purelib.Riemann.RootContinuation.NewtonRequestedObservationEnergy.Preflights domains firstSheet}
-    {lastFixed : Purelib.Riemann.RootContinuation.NewtonRequestedObservationEnergy.Preflights domains lastSheet}
-  {firstError lastError : Purelib.Data.Rat.Fraction.Rational}
+  {firstFixed : Preflights domains firstSheet}
+    {lastFixed : Preflights domains lastSheet}
+  {firstError lastError : Rational}
 
-variable {firstRequest : Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfaceRequest partitions
-  (Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
+variable {firstRequest : SurfaceRequest partitions
+  (MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
   firstSheet firstDepth) firstFixed firstError}
-  {lastRequest : Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfaceRequest partitions
-    (Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
+  {lastRequest : SurfaceRequest partitions
+    (MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
     lastSheet lastDepth) lastFixed lastError}
   {first last : Fin grid.faces.regulars.length}
-  (firstTraces : Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.PiecePerimeterTraces firstRequest
-    first) (lastTraces : Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.PiecePerimeterTraces
+  (firstTraces : PiecePerimeterTraces firstRequest
+    first) (lastTraces : PiecePerimeterTraces
     lastRequest last)
 
 section EndpointGeometry
 
 /-- Pair the actual top and bottom piece-trace endpoints using the original matching horizontal cut coordinates. -/
 def horizontalPieces {count : Nat}
-    (pieces : Fin (count + 1) → BoundaryPieces.HorizontalPieces (partitions.get first) (partitions.get last)) :
-    RectangularPairedEndpointReadings.PairedEndpointReadingsGeometry
+    (pieces : Fin (count + 1) → HorizontalPieces (partitions.get first) (partitions.get last)) :
+    PairedEndpointReadingsGeometry
       (fun index => (RectangularOwnedPerimeterTraces.topOwned (firstTraces.get (pieces index).firstPiece)))
       (fun index => (RectangularOwnedPerimeterTraces.bottomOwned (lastTraces.get (pieces index).lastPiece))) := by
   apply PairedEndpointReadingsGeometry.build
@@ -141,8 +141,8 @@ def horizontalPieces {count : Nat}
 
 /-- Pair the actual right and left piece-trace endpoints using the original matching vertical cut coordinates. -/
 def verticalPieces {count : Nat}
-    (pieces : Fin (count + 1) → BoundaryPieces.VerticalPieces (partitions.get first) (partitions.get last)) :
-    RectangularPairedEndpointReadings.PairedEndpointReadingsGeometry
+    (pieces : Fin (count + 1) → VerticalPieces (partitions.get first) (partitions.get last)) :
+    PairedEndpointReadingsGeometry
       (fun index => (RectangularOwnedPerimeterTraces.rightOwned (firstTraces.get (pieces index).firstPiece)))
       (fun index => (RectangularOwnedPerimeterTraces.leftOwned (lastTraces.get (pieces index).lastPiece))) := by
   apply PairedEndpointReadingsGeometry.build

@@ -54,36 +54,62 @@ open Purelib.Data.Rat
 
 open Purelib.Data.Nat
 
-/-- Prepare a candidate-apart coherent name for whole-ball division using one explicit finite starting-state refinement.
+/-- Select the supplied original apart state, or perform the unchanged original starting refinement.
 
-The original persistent name supplies the process and starting state. Its
-candidate-apart certificate determines the same retained preparation and
-coherence data. -/
-@[expose] public def apartify (value : Coherent.CoherentNamed)
+The optional state has the same original process and candidate-apartness
+certificate. The supplied branch consumes that complete state literally.
+-/
+@[expose] public def apartState (value : CoherentNamed)
+    (apart : Possible.PossibleApart value.name.process)
+    (cached : Option (Preparation.ApartState value.name.process apart) := none) :
+    Preparation.ApartState value.name.process apart :=
+  match cached with
+  | some state => state
+  | none => Preparation.prepareApartState apart value.name.state
+
+/-- An actual supplied apart state bypasses the default refinement completely. -/
+public theorem apartState_some (value : CoherentNamed)
+    (apart : Possible.PossibleApart value.name.process)
+    (cached : Preparation.ApartState value.name.process apart) :
+    value.apartState apart (some cached) = cached := rfl
+
+/-- No supplied apart state retains the complete original finite refinement. -/
+public theorem apartState_none (value : CoherentNamed)
+    (apart : Possible.PossibleApart value.name.process) :
+    value.apartState apart none = Preparation.prepareApartState apart value.name.state := rfl
+
+/-- Prepare a candidate-apart coherent name using a supplied apart state or the original finite starting refinement.
+
+The original name supplies the process and coherence data. A supplied state
+belongs to that same apartified process; without one the original starting
+state is refined by the same positive candidate bound.
+-/
+@[expose] public def apartify (value : CoherentNamed)
     (apart : Possible.PossibleApart
-      value.name.process) : Coherent.CoherentNamed :=
+      value.name.process)
+    (cached : Option (Preparation.ApartState value.name.process apart) := none) : CoherentNamed :=
   { name :=
       { process := Preparation.apartify apart
-        state := Preparation.prepareApartState apart
-          value.name.state }
-    coherent := Gaussian.Process.Coherence.Basic.Coherent.apartify value.coherent apart }
+        state := value.apartState apart cached }
+    coherent := Process.Coherence.Basic.Coherent.apartify value.coherent apart }
 
 /-- Preparing a candidate-apart coherent name preserves its finite operational value.
 
 The original and prepared names retain their own states and refinement
 requests. The original coherence certificate compares their sampled candidates
 at the same computed comparison index and displayed target. -/
-@[expose] public def apartifyEquivalent (value : Coherent.CoherentNamed)
-    (apart : Possible.PossibleApart value.name.process) :
-    Gaussian.Equivalence.NamedEquivalent value.name (Approximation.Gaussian.Name.Coherent.CoherentNamed.apartify value
-      apart).name where
+@[expose] public def apartifyEquivalent (value : CoherentNamed)
+    (apart : Possible.PossibleApart value.name.process)
+    (cached : Option (Preparation.ApartState value.name.process apart) := none) :
+    NamedEquivalent value.name (apartify value apart cached).name where
   compare := by
     intro leftIndex rightIndex target positive
+    let retained := value.apartState apart cached
     let startIndex := max leftIndex rightIndex
     let semanticTarget := target / 8
-    have semanticPositive : 0 < semanticTarget := Purelib.Data.Rat.Bounds.Quarter.eighth_pos positive
+    have semanticPositive : 0 < semanticTarget := Bounds.Quarter.eighth_pos positive
     let leftRequest := value.coherent.accuracyRequest semanticTarget
-    let preparedCoherent := Gaussian.Process.Coherence.Basic.Coherent.apartify value.coherent apart
+    let preparedCoherent := Process.Coherence.Basic.Coherent.apartify value.coherent apart
     let rightRequest := preparedCoherent.accuracyRequest semanticTarget
     let processRequest := Common.commonTarget
       leftRequest rightRequest
@@ -97,18 +123,18 @@ at the same computed comparison index and displayed target. -/
     let comparisonIndex := Search.firstQuarterBelow
       1 startIndex processRequest
     have comparisonRequestSmall :
-        Gaussian.Process.Sampling.refinementTarget comparisonIndex <
+        Process.Sampling.refinementTarget comparisonIndex <
           processRequest :=
       Search.firstQuarterBelow_accurate
         1 (by decide) startIndex processRequest processRequestPositive
     have comparisonLeftSmall :
-        Gaussian.Process.Sampling.refinementTarget comparisonIndex <
+        Process.Sampling.refinementTarget comparisonIndex <
           leftRequest :=
       comparisonRequestSmall.trans
         (Common.commonTarget_lt_left
           leftRequestPositive rightRequestPositive)
     have comparisonRightSmall :
-        Gaussian.Process.Sampling.refinementTarget comparisonIndex <
+        Process.Sampling.refinementTarget comparisonIndex <
           rightRequest :=
       comparisonRequestSmall.trans
         (Common.commonTarget_lt_right
@@ -130,59 +156,76 @@ at the same computed comparison index and displayed target. -/
           intro leftLater rightLater leftOrder rightOrder
           have leftAllowanceLt :
               value.coherent.allowance
-                  (Gaussian.Process.Sampling.stateAt value.name.process
+                  (Process.Sampling.stateAt value.name.process
                     value.name.state leftLater) < target / 8 :=
-            Gaussian.Process.Coherence.Basic.Coherent.stateAt_allowance_lt value.coherent value.name.state
+            Process.Coherence.Basic.Coherent.stateAt_allowance_lt value.coherent value.name.state
               leftLater semanticTarget semanticPositive
               ((quarterRadius_antitone (by decide)
                 leftOrder).trans_lt comparisonLeftSmall)
           have rightAllowanceLt :
               preparedCoherent.allowance
-                  (Gaussian.Process.Sampling.stateAt
+                  (Process.Sampling.stateAt
                     (Preparation.apartify apart)
-                    (Preparation.prepareApartState apart
-                      value.name.state) rightLater) < target / 8 :=
-            Gaussian.Process.Coherence.Basic.Coherent.stateAt_allowance_lt preparedCoherent
-              (Preparation.prepareApartState apart value.name.state)
+                    retained rightLater) < target / 8 :=
+            Process.Coherence.Basic.Coherent.stateAt_allowance_lt preparedCoherent
+              retained
               rightLater semanticTarget semanticPositive
               ((quarterRadius_antitone (by decide)
                 rightOrder).trans_lt comparisonRightSmall)
           have close := value.coherent.possible_close
-            (Gaussian.Process.Sampling.witnessAt_possible value.name.process
+            (Process.Sampling.witnessAt_possible value.name.process
               value.name.state leftLater)
             (show value.name.process.Possible
-                (Gaussian.Process.Sampling.stateAt
+                (Process.Sampling.stateAt
                   (Preparation.apartify apart)
-                  (Preparation.prepareApartState apart
-                    value.name.state) rightLater).source
-                (Gaussian.Process.Sampling.witnessAt
+                  retained rightLater).source
+                (Process.Sampling.witnessAt
                   (Preparation.apartify apart)
-                  (Preparation.prepareApartState apart
-                    value.name.state) rightLater) from
-              Gaussian.Process.Sampling.witnessAt_possible
+                  retained rightLater) from
+              Process.Sampling.witnessAt_possible
                 (Preparation.apartify apart)
-                (Preparation.prepareApartState apart
-                  value.name.state) rightLater)
+                retained rightLater)
           calc
             Data.Gaussian.Norm.Basic.normSq
                 ((Sampling.approximation value.name).sample
                     leftLater -
                   (Sampling.approximation
-                    (Approximation.Gaussian.Name.Coherent.CoherentNamed.apartify value apart).name).sample rightLater)
+                    (apartify value apart cached).name).sample rightLater)
                       <=
               4 *
                 (value.coherent.allowance
-                    (Gaussian.Process.Sampling.stateAt value.name.process
+                    (Process.Sampling.stateAt value.name.process
                       value.name.state leftLater) +
                   value.coherent.allowance
-                    (Gaussian.Process.Sampling.stateAt
+                    (Process.Sampling.stateAt
                       (Preparation.apartify apart)
-                      (Preparation.prepareApartState apart
-                        value.name.state) rightLater).source) := close
+                      retained rightLater).source) := close
             _ < 4 * (target / 8 + target / 8) :=
               Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
                 (by decide)
                 (Fraction.Order.Arithmetic.add_lt_add_direct
                   leftAllowanceLt rightAllowanceLt)
-            _ = target := Purelib.Data.Rat.Bounds.Quarter.eight_eighths target }
+            _ = target := Bounds.Quarter.eight_eighths target }
+
+/-- No supplied apart state preserves the complete original prepared name and starting refinement. -/
+public theorem apartify_none (value : CoherentNamed)
+    (apart : Possible.PossibleApart value.name.process) :
+    value.apartify apart none =
+      { name :=
+          { process := Preparation.apartify apart
+            state := Preparation.prepareApartState apart value.name.state }
+        coherent := Process.Coherence.Basic.Coherent.apartify value.coherent apart } := rfl
+
+/-- Supplying the original computed state preserves the entire default apartified name. -/
+public theorem apartify_canonical (value : CoherentNamed)
+    (apart : Possible.PossibleApart value.name.process) :
+    value.apartify apart (some (Preparation.prepareApartState apart value.name.state)) =
+      value.apartify apart none := rfl
+
+/-- Supplying the original computed state preserves the entire default operational comparison. -/
+public theorem apartifyEquivalent_canonical (value : CoherentNamed)
+    (apart : Possible.PossibleApart value.name.process) :
+    value.apartifyEquivalent apart (some (Preparation.prepareApartState apart value.name.state)) =
+      value.apartifyEquivalent apart none := rfl
+
 end Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed

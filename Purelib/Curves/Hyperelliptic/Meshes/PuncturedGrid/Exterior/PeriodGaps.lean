@@ -46,6 +46,8 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Riemann.Meshes.PuncturedGridFaces
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
@@ -87,24 +89,24 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.OddRootEnergy.Re
 open Purelib.Riemann.Normalization
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {localTarget localArea chartTarget : Coordinate} {floor index
-    depth readingIndex : Nat} {box : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
+    depth readingIndex : Nat} {box : Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential index box} {shared :
     FacePrimitiveBank differential index domains}
 
 /-- The retained chart summary total is exactly the Gaussian sum of its original entry summary totals. -/
 private theorem chart_totals
-    (values : List (ChartSamples.ChartedEntry (regular := regular) sample shared depth readingIndex localTarget
+    (values : List (ChartedEntry (regular := regular) sample shared depth readingIndex localTarget
       localArea chartTarget floor)) :
-    (ChartedEntry.summary values).total = Data.Gaussian.Norm.Sum.Basic.gaussianSum (values.map (fun entry =>
+    (ChartedEntry.summary values).total = Sum.Basic.gaussianSum (values.map (fun entry =>
       entry.chart.summary.total)) := by
   induction values with
   | nil => rfl
@@ -132,43 +134,43 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.OddRootEnergy.Re
 open Purelib.Riemann.Normalization
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {localTarget localArea chartTarget : Coordinate} {floor index
-    depth readingIndex : Nat} {box : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
+    depth readingIndex : Nat} {box : Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential index box} {shared :
     FacePrimitiveBank differential index domains}
 
 variable {prepared :
-  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+  AllSurfacePreparation
   regular domains differential} {target areaTarget : Coordinate}
   {request : Request
     prepared target areaTarget floor} {charts :
     SurfaceRequests.AllSurfacePreparation.Request.ChartRequest
     request chartTarget}
   {component :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceComponent
+    SurfaceComponent
     regular domains differential} {joining energyTarget :
     Coordinate}
   {depthFloor energyFloor : Nat}
 
 /-- The cached chart total is controlled by the actual closing root requests. This uses the original odd-degree exterior
 component, not a substituted loop. -/
-theorem period_total_bound (acquired : ChartRequest.RootEnergyAcquisition charts component joining energyTarget
+theorem period_total_bound (acquired : RootEnergyAcquisition charts component joining energyTarget
   depthFloor energyFloor)
     (branch : HyperellipticReciprocal.originOrder curve = 1) :
-    Data.Gaussian.Norm.Basic.normSq acquired.evaluated.summary.total ≤
-      (request.count : InverseRootPolynomial.Coordinate) * ((request.count : InverseRootPolynomial.Coordinate) *
+    Basic.normSq acquired.evaluated.summary.total ≤
+      (request.count : Coordinate) * ((request.count : Coordinate) *
         acquired.roots.allowance) := by
   have gaps := RootEnergyAcquisition.segment_gaps (curve := curve) acquired branch
   have bounded := SegmentGapPeriods.closed_total_bound _ gaps
-  rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at bounded
+  rw [← Basic.normSq_eq_canonical] at bounded
   have totals := acquired.energy.data.segments_totals branch acquired.evaluated.samples.values
     acquired.energy.occurrences_nonempty
   have count : (acquired.energy.data.segments branch acquired.evaluated.samples.values).length = request.count :=
@@ -176,34 +178,34 @@ theorem period_total_bound (acquired : ChartRequest.RootEnergyAcquisition charts
       (acquired.evaluated.samples.count_eq.trans request.count_entries)
   have totalEq := acquired.evaluated.summary.total_eq.trans
     (ChartedEntry.summary acquired.evaluated.samples.values).total_eq.symm
-  have equal := totalEq.trans (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodGaps.chart_totals
+  have equal := totalEq.trans (PeriodGaps.chart_totals
     acquired.evaluated.samples.values)
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq equal).trans_le
-    ((congrArg (fun values => Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+  exact (congrArg Basic.normSq equal).trans_le
+    ((congrArg (fun values => Basic.normSq (Sum.Basic.gaussianSum
       values)) totals).symm.trans_le
       (bounded.trans_eq (congrArg (fun size : Nat =>
-        (size : InverseRootPolynomial.Coordinate) * ((size : InverseRootPolynomial.Coordinate) *
+        (size : Coordinate) * ((size : Coordinate) *
           acquired.roots.allowance)) count)))
 
 /-- The same surface source integral used by the reciprocal comparison is small with a computed bound from its local
 request and closing allowance. -/
-theorem source_period_bound (acquired : ChartRequest.RootEnergyAcquisition charts component joining energyTarget
+theorem source_period_bound (acquired : RootEnergyAcquisition charts component joining energyTarget
   depthFloor energyFloor)
     (branch : HyperellipticReciprocal.originOrder curve = 1) :
-    Data.Gaussian.Norm.Basic.normSq acquired.evaluated.original.integral <
-      2 * (target + (request.count : InverseRootPolynomial.Coordinate) * ((request.count :
-        InverseRootPolynomial.Coordinate) * acquired.roots.allowance)) := by
+    Basic.normSq acquired.evaluated.original.integral <
+      2 * (target + (request.count : Coordinate) * ((request.count :
+        Coordinate) * acquired.roots.allowance)) := by
   have total := acquired.period_total_bound branch
   have integralClose := acquired.evaluated.integral_close
-  rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at integralClose
-  have bound := (Data.Gaussian.Norm.Bounds.normSq_add_le_two
+  rw [← Basic.normSq_eq_canonical] at integralClose
+  have bound := (Bounds.normSq_add_le_two
     (acquired.evaluated.original.integral - acquired.evaluated.summary.total) acquired.evaluated.summary.total).trans_lt
-    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : InverseRootPolynomial.Coordinate) < 2)
+    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Coordinate) < 2)
       ((add_le_add le_rfl total).trans_lt
         (Fraction.Order.Arithmetic.add_lt_add_right_direct integralClose _)))
   have same : acquired.evaluated.original.integral - acquired.evaluated.summary.total + acquired.evaluated.summary.total
     =
       acquired.evaluated.original.integral := by ring1
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq same).symm.trans_lt bound
+  exact (congrArg Basic.normSq same).symm.trans_lt bound
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.OddRootEnergy.Request.ChartRequest.RootEnergyAcquisition

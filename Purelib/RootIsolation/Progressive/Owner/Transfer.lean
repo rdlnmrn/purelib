@@ -68,7 +68,7 @@ structure GuardedFamilyTransfer
     (left right : CoefficientTable) (target : Fraction.Rational)
     (positive : 0 < target) where
   /-- The two retained coefficient readings come from the same ordered channels. -/ same :
-    Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.SameChannels left.entries right.entries
+    CoefficientTable.SameChannels left.entries right.entries
   /-- Every original reading allowance is below the common positive target. -/ leftSmall :
     AllowancesLt left.entries target
   /-- Every later reading allowance is below the same common target. -/ rightSmall :
@@ -114,18 +114,18 @@ namespace GuardedFamilyTransfer
 computed from every current owner boundary. -/
 def ofComputedTarget
     (left right : CoefficientTable)
-    (same : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable.SameChannels left.entries right.entries)
+    (same : CoefficientTable.SameChannels left.entries right.entries)
     (degreeAtLeastTwo : 2 ≤ left.degree)
     (family : OwnerFamily left.polynomial left.degree)
     (leftSmall : AllowancesLt left.entries
-      (Progressive.Owner.Stability.ownerFamilyStabilityTarget left family))
+      (Stability.ownerFamilyStabilityTarget left family))
     (rightSmall : AllowancesLt right.entries
-      (Progressive.Owner.Stability.ownerFamilyStabilityTarget left family))
+      (Stability.ownerFamilyStabilityTarget left family))
     (rightSquarefree : SquarefreeCertificate
       right.polynomial) :
-    Progressive.Owner.Transfer.GuardedFamilyTransfer left right
-      (Progressive.Owner.Stability.ownerFamilyStabilityTarget left family)
-      (Progressive.Owner.Stability.ownerFamilyStabilityTarget_pos left family) where
+    GuardedFamilyTransfer left right
+      (Stability.ownerFamilyStabilityTarget left family)
+      (Stability.ownerFamilyStabilityTarget_pos left family) where
   same := same
   leftSmall := leftSmall
   rightSmall := rightSmall
@@ -133,14 +133,14 @@ def ofComputedTarget
   family := family
   stable := by
     intro index
-    have commonLe := Progressive.Owner.Stability.ownerFamilyStabilityTarget_le left family index
+    have commonLe := Stability.ownerFamilyStabilityTarget_le left family index
     have scaleNonnegative :
         0 ≤ left.refinementEvaluationScale (family.owner index).box :=
       (left.refinementEvaluationScale_pos (family.owner index).box).le
     have localBudget := left.refinementEvaluationBound_stabilityTarget_lt
       (family.owner index).box (family.owner index).clearance
     rw [left.refinementEvaluationBound_eq_target_mul_scale] at localBudget ⊢
-    exact (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
       commonLe scaleNonnegative).trans_lt localBudget
   rightSquarefree := rightSquarefree
 end GuardedFamilyTransfer
@@ -174,7 +174,7 @@ namespace GuardedFamilyTransfer
 def ownerTransferAt
     {left right : CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
-    (transfer : Progressive.Owner.Transfer.GuardedFamilyTransfer left right target positive)
+    (transfer : GuardedFamilyTransfer left right target positive)
     (index : Fin left.degree) :
     Dense.Gaussian.Coefficient.Progressive.Transport.StableChannelReadings left right target positive
       (transfer.family.owner index).box where
@@ -218,23 +218,23 @@ def refineAtComputedTarget
     (table : CoefficientTable) (degreeAtLeastTwo : 2 ≤ table.degree)
     (family : OwnerFamily table.polynomial table.degree)
     (currentSmall : AllowancesLt table.entries
-      (Progressive.Owner.Stability.ownerFamilyStabilityTarget table family))
+      (Stability.ownerFamilyStabilityTarget table family))
     (nextSquarefree : SquarefreeCertificate
-      (table.refine (Progressive.Owner.Stability.ownerFamilyStabilityTarget table family)
-        (Progressive.Owner.Stability.ownerFamilyStabilityTarget_pos table family)).polynomial) :
-    Progressive.Owner.Transfer.GuardedFamilyTransfer table
-      (table.refine (Progressive.Owner.Stability.ownerFamilyStabilityTarget table family)
-        (Progressive.Owner.Stability.ownerFamilyStabilityTarget_pos table family))
-      (Progressive.Owner.Stability.ownerFamilyStabilityTarget table family)
-      (Progressive.Owner.Stability.ownerFamilyStabilityTarget_pos table family) :=
-  Progressive.Owner.Transfer.GuardedFamilyTransfer.ofComputedTarget table
-    (table.refine (Progressive.Owner.Stability.ownerFamilyStabilityTarget table family)
-      (Progressive.Owner.Stability.ownerFamilyStabilityTarget_pos table family))
-    (table.sameChannels_refine (Progressive.Owner.Stability.ownerFamilyStabilityTarget table family)
-      (Progressive.Owner.Stability.ownerFamilyStabilityTarget_pos table family))
+      (table.refine (Stability.ownerFamilyStabilityTarget table family)
+        (Stability.ownerFamilyStabilityTarget_pos table family)).polynomial) :
+    GuardedFamilyTransfer table
+      (table.refine (Stability.ownerFamilyStabilityTarget table family)
+        (Stability.ownerFamilyStabilityTarget_pos table family))
+      (Stability.ownerFamilyStabilityTarget table family)
+      (Stability.ownerFamilyStabilityTarget_pos table family) :=
+  ofComputedTarget table
+    (table.refine (Stability.ownerFamilyStabilityTarget table family)
+      (Stability.ownerFamilyStabilityTarget_pos table family))
+    (table.sameChannels_refine (Stability.ownerFamilyStabilityTarget table family)
+      (Stability.ownerFamilyStabilityTarget_pos table family))
     degreeAtLeastTwo family currentSmall
-    (table.refine_allowances_lt (Progressive.Owner.Stability.ownerFamilyStabilityTarget table family)
-      (Progressive.Owner.Stability.ownerFamilyStabilityTarget_pos table family))
+    (table.refine_allowances_lt (Stability.ownerFamilyStabilityTarget table family)
+      (Stability.ownerFamilyStabilityTarget_pos table family))
     nextSquarefree
 end GuardedFamilyTransfer
 
@@ -267,7 +267,7 @@ namespace GuardedFamilyTransfer
 theorem rightDegreeAtLeastTwo
     {left right : CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
-    (transfer : Progressive.Owner.Transfer.GuardedFamilyTransfer left right target positive) :
+    (transfer : GuardedFamilyTransfer left right target positive) :
     2 ≤ right.polynomial.natDegree := by
   rw [right.polynomial_natDegree,
     ← left.degree_eq_of_sameChannels transfer.same]
@@ -304,7 +304,7 @@ the later coefficient reading. -/
 def transportedFamily
     {left right : CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
-    (transfer : Progressive.Owner.Transfer.GuardedFamilyTransfer left right target positive) :
+    (transfer : GuardedFamilyTransfer left right target positive) :
     OwnerFamily right.polynomial left.degree where
   owner index :=
     { box := (transfer.family.owner index).box
@@ -345,7 +345,7 @@ rational polynomial. -/
 def refinedFamily
     {left right : CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
-    (transfer : Progressive.Owner.Transfer.GuardedFamilyTransfer left right target positive)
+    (transfer : GuardedFamilyTransfer left right target positive)
     (epsilon : Fraction.Rational) (epsilonPositive : 0 < epsilon) :
     OwnerFamily right.polynomial left.degree :=
   transfer.transportedFamily.refine transfer.rightDegreeAtLeastTwo
@@ -381,7 +381,7 @@ namespace GuardedFamilyTransfer
 theorem refinedFamily_accurate
     {left right : CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
-    (transfer : Progressive.Owner.Transfer.GuardedFamilyTransfer left right target positive)
+    (transfer : GuardedFamilyTransfer left right target positive)
     (epsilon : Fraction.Rational) (epsilonPositive : 0 < epsilon)
     (index : Fin left.degree) :
     ((transfer.refinedFamily epsilon epsilonPositive).owner index).box.diagonalSq ≤
@@ -420,7 +420,7 @@ namespace GuardedFamilyTransfer
 theorem refinedFamily_nested
     {left right : CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
-    (transfer : Progressive.Owner.Transfer.GuardedFamilyTransfer left right target positive)
+    (transfer : GuardedFamilyTransfer left right target positive)
     (epsilon : Fraction.Rational) (epsilonPositive : 0 < epsilon)
     (index : Fin left.degree) :
     ((transfer.refinedFamily epsilon epsilonPositive).owner index).box.Refines
@@ -458,7 +458,7 @@ namespace GuardedFamilyTransfer
 theorem refinedFamily_strict
     {left right : CoefficientTable} {target : Fraction.Rational}
     {positive : 0 < target}
-    (transfer : Progressive.Owner.Transfer.GuardedFamilyTransfer left right target positive)
+    (transfer : GuardedFamilyTransfer left right target positive)
     (epsilon : Fraction.Rational) (epsilonPositive : 0 < epsilon)
     (index : Fin left.degree) :
     ((transfer.refinedFamily epsilon epsilonPositive).owner index).box.StrictInterior

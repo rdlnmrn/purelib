@@ -130,6 +130,23 @@ constructive_injectivity History
 
 namespace History
 
+/-- Prepend one actual refinement to a history while retaining every later refinement certificate.
+
+The new initial observation is the outer parent of the supplied first
+refinement. Structural recursion rebuilds only the chronological history
+constructors; the original observations, witnesses and certificates remain
+the same retained data.
+-/
+def prepend
+    {α : Type} {distance : α → α → Fraction.Rational}
+    {initial middle latest : Approximation.Observation α distance}
+    (history : Approximation.Observation.History middle latest)
+    (refines : Approximation.Observation.Refines middle initial) :
+    Approximation.Observation.History initial latest :=
+  match history with
+  | .start => .step .start refines
+  | .step earlier refinement => .step (earlier.prepend refines) refinement
+
 /-- The end of a finite history refines its beginning. -/
 theorem refines_initial
     {α : Type} {distance : α → α → Fraction.Rational}

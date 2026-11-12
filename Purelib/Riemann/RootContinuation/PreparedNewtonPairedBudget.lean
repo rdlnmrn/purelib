@@ -30,6 +30,8 @@ import Purelib.Curves.Hyperelliptic.Integration.Observation.UniformPreparedMesh
 import Purelib.Riemann.RootContinuation.PreparedNewtonPairedBank
 import Mathlib.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-! One selected Newton band pays both differential densities together. -/
@@ -48,7 +50,7 @@ open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {first other :
   Differential genus}
-  {ambient : Purelib.Geometry.Rational.Box} {current : Purelib.RootIsolation.State.Raw.RawWindingState
+  {ambient : Geometry.Rational.Box} {current : RootIsolation.State.Raw.RawWindingState
     curve.polynomial ambient}
   {profile : Profile curve.squarefree current.box}
 
@@ -62,7 +64,7 @@ abbrev PairedBandSelection (left : DifferentialProfile profile first.exponent)
 
 namespace PairedBandSelection
 variable {left : DifferentialProfile profile first.exponent} {right : DifferentialProfile profile other.exponent}
-  {target radius : Purelib.Data.Rat.Fraction.Rational}
+  {target radius : Data.Rat.Fraction.Rational}
 
 open Purelib.Data.Rat in
 open Purelib.Polynomial in
@@ -77,8 +79,8 @@ def build (left : DifferentialProfile profile first.exponent) (right : Different
     (positive : 0 < target) (radiusPositive : 0 < radius) : PairedBandSelection left right target radius :=
   PreparedNewtonBandSamples.Profile.requestPreparation profile higher elimination _
     (add_nonneg
-      (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) left.rate_nonnegative) (by decide +kernel))
-      (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) right.rate_nonnegative) (by decide +kernel)))
+      (add_nonneg (Arithmetic.mul_nonneg_direct (by decide) left.rate_nonnegative) (by decide +kernel))
+      (add_nonneg (Arithmetic.mul_nonneg_direct (by decide) right.rate_nonnegative) (by decide +kernel)))
         positive radiusPositive
 
 open Purelib.Data.Rat in
@@ -87,7 +89,7 @@ open Purelib.Data.Rat in
 Uses nonnegativity of the second rate weight without changing the selected sample or target. -/
 def sourceRequest (selection : PairedBandSelection left right target radius) : PreparedBandRequest left target :=
   selection.forDifferential left (le_add_of_nonneg_right
-    (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) right.rate_nonnegative) (by decide +kernel)))
+    (add_nonneg (Arithmetic.mul_nonneg_direct (by decide) right.rate_nonnegative) (by decide +kernel)))
 
 /-- The two retained differential densities jointly fit the requested target.
 
@@ -116,7 +118,7 @@ theorem side_area_bound (selection : PairedBandSelection left right target radiu
     {within : segment.WithinAmbient}
     {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {sheet : Fin 2}
     (side : PairedBoundarySide selection.sourceRequest other segment within owner sheet) :
-    Data.Gaussian.Norm.Basic.normSq side.summary.areaValue ≤ 16 * target^2 := by
+    normSq side.summary.areaValue ≤ 16 * target^2 := by
   have firstInside : selection.sample.output.box.Contains start := by
     simpa only [Geometry.ClearPath.ClearSegment.pointAt_zero] using segment.pointAt_contains within 0 (by decide)
   have lastInside : selection.sample.output.box.Contains finish := by
@@ -127,11 +129,11 @@ theorem side_area_bound (selection : PairedBandSelection left right target radiu
   have nonnegative := add_nonneg
     (preparedDensity_nonnegative selection.sample left selection.errorPositive.le)
     (preparedDensity_nonnegative selection.sample right selection.errorPositive.le)
-  have paid := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct movement nonnegative).trans
+  have paid := (Arithmetic.mul_le_mul_of_nonneg_left_direct movement nonnegative).trans
     selection.densities_paid
   have scalar := (side.area_density_bound right).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.pow_le_pow_direct (Fraction.Order.Arithmetic.mul_nonneg_direct nonnegative
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.pow_le_pow_direct (Arithmetic.mul_nonneg_direct nonnegative
         (Basic.Canonical.normSq_nonneg (finish - start))) paid 2) (by decide))
   rw [← Norm.Basic.normSq_eq_canonical] at scalar
   exact scalar

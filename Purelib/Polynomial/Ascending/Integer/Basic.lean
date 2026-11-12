@@ -17,7 +17,7 @@ import Purelib.Tactic.Ring
 Integer coefficient lists are stored in ascending degree order.  The
 primitive-recursive operations below let a literal finite Bezout identity be
 checked by kernel reduction over `Int`, then evaluated in any constructive
-explicit field.  This is useful for prime-field exclusions without listing
+commutative ring.  This is useful for prime-field exclusions without listing
 or searching an ambient carrier.
 -/
 
@@ -33,19 +33,19 @@ attribute [local instance high] Negation.subNegZeroMonoid
 /-- Evaluate an ascending finite integer coefficient list by Horner's rule.
 
 Each displayed integer coefficient uses its original cast into the supplied
-explicit field. The original ascending Horner recursion retains the tail and
+commutative ring. The original ascending Horner recursion retains the tail and
 evaluation argument at every scalar step. -/
-@[expose] public def eval {K : Type*} [ExplicitField K] : List Int → K → K
+@[expose] public def eval {K : Type*} [CommRing K] : List Int → K → K
   | [], _ => 0
   | coefficient :: remaining, value =>
-      (coefficient : K) + value * Purelib.Polynomial.Ascending.Integer.Basic.eval remaining value
+      (coefficient : K) + value * Basic.eval remaining value
 
-/-- The empty integer coefficient table evaluates to zero in the explicit field. -/
-@[simp] public theorem eval_nil {K : Type*} [ExplicitField K] (value : K) :
+/-- The empty integer coefficient table evaluates to zero in the commutative ring. -/
+@[simp] public theorem eval_nil {K : Type*} [CommRing K] (value : K) :
     eval [] value = 0 := rfl
 
 /-- A nonempty integer table evaluates as its cast head plus the argument times its tail value. -/
-@[simp] public theorem eval_cons {K : Type*} [ExplicitField K]
+@[simp] public theorem eval_cons {K : Type*} [CommRing K]
     (coefficient : Int) (remaining : List Int) (value : K) :
     eval (coefficient :: remaining) value =
       (coefficient : K) + value * eval remaining value := rfl
@@ -59,7 +59,7 @@ original spine is exhausted, the unmatched higher-degree tail is retained unchan
 @[expose] public def add : List Int → List Int → List Int
   | [], right => right
   | left, [] => left
-  | left :: lefts, right :: rights => (left + right) :: Purelib.Polynomial.Ascending.Integer.Basic.Certificate.add lefts
+  | left :: lefts, right :: rights => (left + right) :: Certificate.add lefts
     rights
 
 end Certificate
@@ -73,7 +73,7 @@ The retained recursive tail preserves the original coefficient positions. -/
 @[expose] public def scale (factor : Int) : List Int → List Int
   | [] => []
   | coefficient :: remaining =>
-      factor * coefficient :: Purelib.Polynomial.Ascending.Integer.Basic.Certificate.scale factor remaining
+      factor * coefficient :: Certificate.scale factor remaining
 
 end Certificate
 
@@ -86,8 +86,8 @@ completed tail product is shifted by one degree before the same padded addition.
 @[expose] public def mul : List Int → List Int → List Int
   | [], _ => []
   | coefficient :: remaining, right =>
-      Certificate.add (Certificate.scale coefficient right) (0 ::
-        Purelib.Polynomial.Ascending.Integer.Basic.Certificate.mul remaining right)
+      add (scale coefficient right) (0 ::
+        Certificate.mul remaining right)
 
 end Certificate
 
@@ -95,8 +95,8 @@ end Certificate
 
 The shorter original coefficient tail is retained by padded addition. Each
 paired head uses the integer addition cast equation before the unchanged tails
-are compared by scalar field arithmetic. -/
-public theorem eval_add {K : Type*} [ExplicitField K]
+are compared by scalar ring arithmetic. -/
+public theorem eval_add {K : Type*} [CommRing K]
     (left right : List Int) (value : K) :
     eval (Certificate.add left right) value = eval left value + eval right value := by
   induction left generalizing right with
@@ -120,7 +120,7 @@ public theorem eval_add {K : Type*} [ExplicitField K]
 Each original coefficient is multiplied by the same retained integer factor.
 The multiplication cast equation transports each scalar step into the supplied
 field without changing its operations. -/
-public theorem eval_scale {K : Type*} [ExplicitField K]
+public theorem eval_scale {K : Type*} [CommRing K]
     (factor : Int) (coefficients : List Int) (value : K) :
     eval (Certificate.scale factor coefficients) value =
       (factor : K) * eval coefficients value := by
@@ -134,12 +134,12 @@ public theorem eval_scale {K : Type*} [ExplicitField K]
         IntCast.intCast_mul, inductionHypothesis, eval_cons]
       ring1
 
-/-- Evaluation turns finite integer coefficient convolution into multiplication in the explicit field.
+/-- Evaluation turns finite integer coefficient convolution into multiplication in the commutative ring.
 
 The original convolution retains its scaled right list and shifted tail product.
 Their evaluation certificates combine the same coefficients and scalar field
 operations along the original finite recursion. -/
-public theorem eval_mul {K : Type*} [ExplicitField K]
+public theorem eval_mul {K : Type*} [CommRing K]
     (left right : List Int) (value : K) :
     eval (Certificate.mul left right) value = eval left value * eval right value := by
   induction left with
@@ -168,7 +168,7 @@ table. The same padded addition preserves every unmatched high-degree entry. -/
 
 The original coefficient operation scales by the integer negative unit. Its
 retained cast and scalar field law identify the negated original evaluation. -/
-public theorem eval_neg {K : Type*} [ExplicitField K]
+public theorem eval_neg {K : Type*} [CommRing K]
     (coefficients : List Int) (value : K) :
     eval (neg coefficients) value = -eval coefficients value := by
   rw [neg, eval_scale]
@@ -181,7 +181,7 @@ public theorem eval_neg {K : Type*} [ExplicitField K]
 
 The original subtraction adds the left table to the original negated right
 table. Their retained evaluations use the same field subtraction operation. -/
-public theorem eval_sub {K : Type*} [ExplicitField K]
+public theorem eval_sub {K : Type*} [CommRing K]
     (left right : List Int) (value : K) :
     eval (sub left right) value = eval left value - eval right value := by
   rw [sub, eval_add, eval_neg]
@@ -195,7 +195,7 @@ degree. -/
 
 The retained zero coefficient has field cast zero. Its original Horner step
 therefore multiplies the unchanged tail evaluation by the supplied point. -/
-public theorem eval_shift {K : Type*} [ExplicitField K]
+public theorem eval_shift {K : Type*} [CommRing K]
     (coefficients : List Int) (value : K) :
     eval (shift coefficients) value = value * eval coefficients value := by
   unfold shift
@@ -340,7 +340,7 @@ adding each pair of displayed coefficient heads. -/
   | [], right => right
   | left, [] => left
   | left :: leftTail, right :: rightTail =>
-      (left + right) :: Purelib.Polynomial.Ascending.Integer.Basic.TorusInvariants.add leftTail rightTail
+      (left + right) :: TorusInvariants.add leftTail rightTail
 
 end TorusInvariants
 
@@ -364,8 +364,8 @@ addition. -/
 @[expose] public def mul : CoefficientList → CoefficientList → CoefficientList
   | [], _ => []
   | left :: leftTail, right =>
-      TorusInvariants.add (TorusInvariants.scale left right) (0 ::
-        Purelib.Polynomial.Ascending.Integer.Basic.TorusInvariants.mul leftTail right)
+      add (scale left right) (0 ::
+        TorusInvariants.mul leftTail right)
 
 end TorusInvariants
 

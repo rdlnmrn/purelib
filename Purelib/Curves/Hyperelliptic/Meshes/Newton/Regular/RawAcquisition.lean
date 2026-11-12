@@ -71,23 +71,23 @@ open Purelib.Riemann
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
-    {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered}
-  (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+    PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {ordered : PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
+    {paired : PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered}
+  (prepared : PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
   (observations : RootContinuation.NewtonProtectedObservations.ProtectedObservations base.bank.toBranchCellBank)
   (preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation base.bank.toBranchCellBank)
     (radius : Fraction.Rational)
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  (regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap)
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  (regular : Charts.Reciprocal.Disk.RegularBounds.Data cap)
 
 variable {newSheet : Fin 2} {floor : Nat}
-  (raw : Hyperelliptic.Meshes.Newton.Regular.RawRequest.RegularRawRequest prepared observations preparation radius
+  (raw : RawRequest.RegularRawRequest prepared observations preparation radius
     regular newSheet floor)
 
 set_option genInjectivity false in
@@ -96,11 +96,11 @@ set_option genInjectivity false in
 The polynomial bank and primitive cache are stored together with the sample package indexed by those exact banks. -/
 structure RegularRawAcquisition (stage : Nat) (first : Fin genus) where
   /-- The reciprocal basis polynomials acquired at the retained stage on the original collar box. -/ polynomials :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage collar.box
+    PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage collar.box
   /-- The primitive numerical bank on the original retained raw grid domains at that same stage. -/ cache :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics raw.grid.domains stage
+    PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics raw.grid.domains stage
   /-- The regular raw sample package built from these exact acquired polynomial and primitive banks. -/ samples :
-    Hyperelliptic.Meshes.Newton.Regular.RawSamples.RegularRawSamples prepared observations preparation radius regular
+    RawSamples.RegularRawSamples prepared observations preparation radius regular
     raw polynomials cache first
 
 constructive_injectivity RegularRawAcquisition
@@ -111,28 +111,28 @@ namespace RegularRawAcquisition
 
 The degree equality selects the regular even-degree case; all sample certificates retain these same acquired banks. -/
 @[expose] def build (stage : Nat) (first : Fin genus) (degree : curve.polynomial.natDegree = 2 * genus + 2)
-    (later : raw.index ≤ stage) : Hyperelliptic.Meshes.Newton.Regular.RawAcquisition.RegularRawAcquisition prepared
+    (later : raw.index ≤ stage) : RegularRawAcquisition prepared
       observations preparation radius regular raw stage first :=
-  let polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage
+  let polynomials : PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage
     collar.box := Data.Vector.DependentVector.ofFn fun row =>
-    Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample.build cap (Periods.PeriodMatrix.standardDifferential row)
+    Charts.Reciprocal.Cap.Primitives.Sample.build cap (Periods.PeriodMatrix.standardDifferential row)
       stage collar.box
-  let cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics raw.grid.domains stage :=
+  let cache : PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics raw.grid.domains stage :=
     Data.Vector.DependentVector.ofFn fun row =>
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank.build
+    PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank.build
       (Periods.PeriodMatrix.standardDifferential row) stage raw.grid.domains
-  let samples := Hyperelliptic.Meshes.Newton.Regular.RawSamples.RegularRawSamples.build prepared observations
+  let samples := RawSamples.RegularRawSamples.build prepared observations
     preparation radius regular raw polynomials cache first degree later
   ⟨polynomials, cache, samples⟩
 
 variable {prepared observations preparation radius regular raw} {stage : Nat} {first : Fin genus}
 
 /-- The acquired finite samples have the positive homogeneous observation margin. -/
-theorem raw_lower (acquired : Hyperelliptic.Meshes.Newton.Regular.RawAcquisition.RegularRawAcquisition prepared
+theorem raw_lower (acquired : RegularRawAcquisition prepared
   observations preparation radius regular raw stage first)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (later : raw.index ≤ stage)
     (degree : curve.polynomial.natDegree = 2 * genus + 2) :
-    let values := fun basis => Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation raw.grid.lifted.mesh
+    let values := fun basis => PuncturedGrid.CanonicalEdgeValues.edgeValuation raw.grid.lifted.mesh
       (acquired.samples.period.triangles.get basis).values
     let aMatrix := Periods.NewtonCombinedPeriodArea.resplitPeriodMatrix prepared
       raw.grid.allocated.family.single.grid.shrunk.included raw.grid.lifted.edges raw.grid.lifted.vertices newSheet
@@ -143,8 +143,8 @@ theorem raw_lower (acquired : Hyperelliptic.Meshes.Newton.Regular.RawAcquisition
     Topology.NewtonObservationSurfaceLower.surfaceLowerConstant observations *
       Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ≤
       LinearAlgebra.Gaussian.Energy.unnormalizedEnergyForm coefficients aMatrix bMatrix :=
-  Hyperelliptic.Meshes.Newton.Regular.RawSamples.RegularRawSamples.remaining_regular_raw_lower
-    acquired.samples coefficients later degree Hyperelliptic.Integration.Energy.Prepared.canonicalSurfaceFace
+  RawSamples.RegularRawSamples.remaining_regular_raw_lower
+    acquired.samples coefficients later degree Integration.Energy.Prepared.canonicalSurfaceFace
 
 end RegularRawAcquisition
 end Purelib.Curves.Hyperelliptic.Meshes.Newton.Regular.RawAcquisition

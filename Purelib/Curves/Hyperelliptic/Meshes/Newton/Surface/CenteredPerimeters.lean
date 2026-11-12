@@ -116,7 +116,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.SeamAreas (seamValues)
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces (FacePerimeterTraces)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target
@@ -132,8 +132,8 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     Rational}
   {energy : SurfaceRequest partitions coarse fixed error}
   {stage : Nat} {cache : Numerics domains
-    stage} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
-  {assemblies : ExteriorRequest.Assemblies energy
+    stage} {coefficients : GaussianVector genus}
+  {assemblies : Assemblies energy
     cache coefficients} {perimeters : Perimeters
     assemblies}
   {position : Fin grid.faces.regulars.length}
@@ -146,23 +146,23 @@ open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_sub)
 namespace FacePerimeterTraces
 
 /-- The same aligned coefficient combination used by the complete face. -/
-def ownerValues (cache : LocalMeshes.Numerics domains stage) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector genus)
-    (position : Fin grid.faces.regulars.length) (owner : RectangularOwnedTriangulation.OwnedVertex ((domains.get
+def ownerValues (cache : Numerics domains stage) (coefficients :
+  GaussianVector genus)
+    (position : Fin grid.faces.regulars.length) (owner : OwnedVertex ((domains.get
       position).domain sheet).geometry) :=
   SeamAreas.seamValues (sheet := sheet) cache coefficients position owner.column owner.row owner.point
 
 /-- The original aligned coefficient pair read at each actual retained trace vertex owner. -/
-def traceValues (cache : LocalMeshes.Numerics domains stage) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector genus)
-    (trace : JoinedTrace.VertexTrace (RectangularOwnedTriangulation.OwnedVertex ((domains.get position).domain
+def traceValues (cache : Numerics domains stage) (coefficients :
+  GaussianVector genus)
+    (trace : JoinedTrace.VertexTrace (OwnedVertex ((domains.get position).domain
       sheet).geometry)) :=
   fun vertex => ownerValues cache
     coefficients position (trace.indexed vertex)
 
 /-- Basis values at the identical retained owner, before coefficient combination. -/
-def basisValue (cache : LocalMeshes.Numerics domains stage)
-    (trace : JoinedTrace.VertexTrace (RectangularOwnedTriangulation.OwnedVertex ((domains.get position).domain
+def basisValue (cache : Numerics domains stage)
+    (trace : JoinedTrace.VertexTrace (OwnedVertex ((domains.get position).domain
       sheet).geometry))
     (row : Fin genus) (vertex : Fin (trace.rest.length + 1)) : Gaussian :=
   let owner := trace.indexed vertex
@@ -170,30 +170,30 @@ def basisValue (cache : LocalMeshes.Numerics domains stage)
     owner.column owner.row owner.point
 
 /-- The conjugate/direct basis pair read at the identical original retained trace vertex. -/
-def pairValues (cache : LocalMeshes.Numerics domains stage)
-    (trace : JoinedTrace.VertexTrace (RectangularOwnedTriangulation.OwnedVertex ((domains.get position).domain
+def pairValues (cache : Numerics domains stage)
+    (trace : JoinedTrace.VertexTrace (OwnedVertex ((domains.get position).domain
       sheet).geometry))
     (first second : Fin genus) :=
   fun vertex => (⟨Data.Gaussian.Basic.conj
     (basisValue cache trace first
     vertex),
     basisValue cache trace second
-      vertex⟩ : Stokes.PrimitivePoint)
+      vertex⟩ : PrimitivePoint)
 
 /-- A common pairwise bound controls arbitrary coefficient vectors on this actual owned trace. The coefficients do not
 enter the refinement request. -/
 theorem centered_combination_bound
-    (trace : JoinedTrace.VertexTrace (RectangularOwnedTriangulation.OwnedVertex ((domains.get position).domain
+    (trace : JoinedTrace.VertexTrace (OwnedVertex ((domains.get position).domain
       sheet).geometry))
     (combined : CenteredBilinearPath.Sample
       (traceValues cache coefficients
       trace))
     (pairs : (i j : Fin genus) → CenteredBilinearPath.Sample
       (pairValues cache trace i j))
-    {allowance : Fraction.Rational}
+    {allowance : Rational}
     (bounded : ∀ i j, Data.Gaussian.Norm.Basic.normSq (pairs i j).centeredArea ≤ allowance) :
     Data.Gaussian.Norm.Basic.normSq combined.centeredArea ≤
-      (genus : Fraction.Rational) ^ 2 * Purelib.Riemann.Readings.PreparedObservationCoercivity.coefficientNormSq
+      (genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq
         coefficients ^ 2 * allowance := by
   have estimate := CenteredAreaCombination.Sample.centeredArea_combination_bound
     (fun row => Data.Gaussian.Basic.conj (coefficients row)) (fun row => coefficients row)
@@ -214,9 +214,9 @@ set_option genInjectivity false in
 /-- The four cached centered samples on the complete original face boundary.
 
 Every sample retains its actual owned trace and endpoint correction alongside the centered area. -/
-structure Centered (traces : PerimeterTraces.FacePerimeterTraces energy position) (cache : LocalMeshes.Numerics domains
+structure Centered (traces : PerimeterTraces.FacePerimeterTraces energy position) (cache : Numerics domains
   stage)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) where
+    (coefficients : GaussianVector genus) where
   /-- The cached centered sample on the complete original bottom trace. -/ bottom : CenteredBilinearPath.Sample
     (traceValues cache coefficients
     traces.bottom)
@@ -239,61 +239,61 @@ variable {traces : FacePerimeterTraces energy
 
 /-- Acquire the four original complete owned boundary traces as centered samples, retaining their actual endpoint terms.
 -/
-def build (traces : PerimeterTraces.FacePerimeterTraces energy position) (cache : LocalMeshes.Numerics domains stage)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-      Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.Centered traces cache
+def build (traces : PerimeterTraces.FacePerimeterTraces energy position) (cache : Numerics domains stage)
+    (coefficients : GaussianVector genus) :
+      Centered traces cache
       coefficients :=
   ⟨CenteredBilinearPath.Sample.build
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.traceValues cache coefficients
+    (FacePerimeterTraces.traceValues cache coefficients
     traces.bottom),
     CenteredBilinearPath.Sample.build
-      (Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.traceValues cache coefficients
+      (FacePerimeterTraces.traceValues cache coefficients
       traces.right),
     CenteredBilinearPath.Sample.build
-      (Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.traceValues cache coefficients
+      (FacePerimeterTraces.traceValues cache coefficients
       traces.top),
     CenteredBilinearPath.Sample.build
-      (Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.traceValues cache coefficients
+      (FacePerimeterTraces.traceValues cache coefficients
       traces.left)⟩
 
 /-- The actual original bottom trace area splits into its cached centered area and retained endpoint term. -/
 theorem bottom_area (samples :
-  Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.Centered traces cache coefficients)
+  Centered traces cache coefficients)
   :
-    traces.bottom.area (Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.ownerValues
+    traces.bottom.area (FacePerimeterTraces.ownerValues
       cache coefficients position) = samples.bottom.centeredArea + samples.bottom.endpoint :=
   (traces.bottom.indexed_area _).symm.trans (samples.bottom.originalArea_eq.symm.trans samples.bottom.decomposition)
 
 /-- The actual original right trace area splits into its cached centered area and retained endpoint term. -/
-theorem right_area (samples : Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.Centered
+theorem right_area (samples : Centered
   traces cache coefficients) :
-    traces.right.area (Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.ownerValues
+    traces.right.area (FacePerimeterTraces.ownerValues
       cache coefficients position) = samples.right.centeredArea + samples.right.endpoint :=
   (traces.right.indexed_area _).symm.trans (samples.right.originalArea_eq.symm.trans samples.right.decomposition)
 
 /-- The actual original top trace area splits into its cached centered area and retained endpoint term. -/
-theorem top_area (samples : Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.Centered
+theorem top_area (samples : Centered
   traces cache coefficients) :
-    traces.top.area (Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.ownerValues cache
+    traces.top.area (FacePerimeterTraces.ownerValues cache
       coefficients position) = samples.top.centeredArea + samples.top.endpoint :=
   (traces.top.indexed_area _).symm.trans (samples.top.originalArea_eq.symm.trans samples.top.decomposition)
 
 /-- The actual original left trace area splits into its cached centered area and retained endpoint term. -/
-theorem left_area (samples : Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.Centered
+theorem left_area (samples : Centered
   traces cache coefficients) :
-    traces.left.area (Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.ownerValues
+    traces.left.area (FacePerimeterTraces.ownerValues
       cache coefficients position) = samples.left.centeredArea + samples.left.endpoint :=
   (traces.left.indexed_area _).symm.trans (samples.left.originalArea_eq.symm.trans samples.left.decomposition)
 
 /-- The retained bottom endpoint term is the actual edge area between the original outer face corners. -/
 theorem bottom_endpoint (samples :
-  Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.Centered traces cache coefficients)
+  Centered traces cache coefficients)
   (face : FaceAssembly perimeters position) :
     samples.bottom.endpoint = Stokes.edgeArea (face.corners 0 0).lowerLeft (face.corners (Fin.last (PieceIndices.columns
       (partitions.get position))) 0).lowerRight := by
   rw [samples.bottom.endpoint_eq]
-  dsimp only [Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.traceValues,
-    Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.ownerValues]
+  dsimp only [FacePerimeterTraces.traceValues,
+    FacePerimeterTraces.ownerValues]
   rw [show traces.bottom.indexed (Fin.last traces.bottom.rest.length) = traces.bottom.last from
     DyadicTrace.indexed_last _ _]
   rw [show traces.bottom.indexed 0 = traces.bottom.first from rfl,
@@ -303,14 +303,14 @@ theorem bottom_endpoint (samples :
 
 /-- The retained right endpoint term is the actual edge area between the original outer face corners. -/
 theorem right_endpoint (samples :
-  Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.Centered traces cache coefficients)
+  Centered traces cache coefficients)
   (face : FaceAssembly perimeters position) :
     samples.right.endpoint = Stokes.edgeArea (face.corners (Fin.last (PieceIndices.columns (partitions.get position)))
       0).lowerRight (face.corners (Fin.last (PieceIndices.columns (partitions.get position))) (Fin.last
       (PieceIndices.rows (partitions.get position)))).upperRight := by
   rw [samples.right.endpoint_eq]
-  dsimp only [Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.traceValues,
-    Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.ownerValues]
+  dsimp only [FacePerimeterTraces.traceValues,
+    FacePerimeterTraces.ownerValues]
   rw [show traces.right.indexed (Fin.last traces.right.rest.length) = traces.right.last from
     DyadicTrace.indexed_last _ _]
   rw [show traces.right.indexed 0 = traces.right.first from rfl,
@@ -320,14 +320,14 @@ theorem right_endpoint (samples :
 
 /-- The retained top endpoint term is the actual edge area between the original outer face corners. -/
 theorem top_endpoint (samples :
-  Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.Centered traces cache coefficients)
+  Centered traces cache coefficients)
   (face : FaceAssembly perimeters position) :
     samples.top.endpoint = Stokes.edgeArea (face.corners 0 (Fin.last (PieceIndices.rows (partitions.get
       position)))).upperLeft (face.corners (Fin.last (PieceIndices.columns (partitions.get position))) (Fin.last
       (PieceIndices.rows (partitions.get position)))).upperRight := by
   rw [samples.top.endpoint_eq]
-  dsimp only [Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.traceValues,
-    Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.ownerValues]
+  dsimp only [FacePerimeterTraces.traceValues,
+    FacePerimeterTraces.ownerValues]
   rw [show traces.top.indexed (Fin.last traces.top.rest.length) = traces.top.last from
     DyadicTrace.indexed_last _ _]
   rw [show traces.top.indexed 0 = traces.top.first from rfl,
@@ -337,13 +337,13 @@ theorem top_endpoint (samples :
 
 /-- The retained left endpoint term is the actual edge area between the original outer face corners. -/
 theorem left_endpoint (samples :
-  Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.Centered traces cache coefficients)
+  Centered traces cache coefficients)
   (face : FaceAssembly perimeters position) :
     samples.left.endpoint = Stokes.edgeArea (face.corners 0 0).lowerLeft (face.corners 0 (Fin.last (PieceIndices.rows
       (partitions.get position)))).upperLeft := by
   rw [samples.left.endpoint_eq]
-  dsimp only [Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.traceValues,
-    Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.ownerValues]
+  dsimp only [FacePerimeterTraces.traceValues,
+    FacePerimeterTraces.ownerValues]
   rw [show traces.left.indexed (Fin.last traces.left.rest.length) = traces.left.last from
     DyadicTrace.indexed_last _ _]
   rw [show traces.left.indexed 0 = traces.left.first from rfl,
@@ -353,7 +353,7 @@ theorem left_endpoint (samples :
 
 /-- The four endpoint terms form the actual outer corner polygon. -/
 theorem endpoint_total (samples :
-  Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.Centered traces cache coefficients)
+  Centered traces cache coefficients)
   (face : FaceAssembly perimeters position) :
     samples.bottom.endpoint + samples.right.endpoint - samples.top.endpoint - samples.left.endpoint =
       BilinearGridBoundary.cornerArea (face.corners 0 0).lowerLeft
@@ -368,7 +368,7 @@ theorem endpoint_total (samples :
 /-- No centered side area or corner term is dropped in passing to the coarse face boundary. These are the terms the
 global comparison must pay. -/
 theorem exterior_eq (samples :
-  Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.Centered traces cache coefficients)
+  Centered traces cache coefficients)
   (face : FaceAssembly perimeters position) :
     face.exterior = samples.bottom.centeredArea + samples.right.centeredArea -
       samples.top.centeredArea - samples.left.centeredArea +
@@ -379,13 +379,13 @@ theorem exterior_eq (samples :
         (face.corners 0 (Fin.last (PieceIndices.rows (partitions.get position)))).upperLeft := by
   have boundary := traces.exterior_eq face
   change face.exterior = traces.bottom.area
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.ownerValues cache coefficients
+    (FacePerimeterTraces.ownerValues cache coefficients
     position) +
-    traces.right.area (Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.ownerValues
+    traces.right.area (FacePerimeterTraces.ownerValues
       cache coefficients position) - traces.top.area
-      (Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.ownerValues cache coefficients
+      (FacePerimeterTraces.ownerValues cache coefficients
       position) -
-    traces.left.area (Curves.Hyperelliptic.Meshes.Newton.Surface.CenteredPerimeters.FacePerimeterTraces.ownerValues
+    traces.left.area (FacePerimeterTraces.ownerValues
       cache coefficients position) at boundary
   rw [samples.bottom_area, samples.right_area, samples.top_area, samples.left_area] at boundary
   rw [← samples.endpoint_total face]

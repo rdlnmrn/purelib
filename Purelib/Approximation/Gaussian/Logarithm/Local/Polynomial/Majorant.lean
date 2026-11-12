@@ -17,6 +17,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 public section
 
@@ -38,51 +40,51 @@ theorem localLogCoefficient_le_two (index : Nat) :
       (Nat.zero_le index)
     simpa only [Nat.cast_zero] using castBound
   have denominatorPositive : 0 < 2 * (index : Fraction.Rational) + 1 :=
-    Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    Arithmetic.add_pos_of_nonneg_of_pos_direct
+      (Arithmetic.mul_nonneg_direct (by decide)
         indexNonnegative)
       (by decide)
-  apply (Fraction.Order.Field.div_le_iff_pos denominatorPositive).mpr
+  apply (Field.div_le_iff_pos denominatorPositive).mpr
   have denominatorAtLeastOne :
       (1 : Fraction.Rational) ≤ 2 * (index : Fraction.Rational) + 1 := by
     calc
       (1 : Fraction.Rational) = 0 + 1 := by ring1
       _ ≤ 2 * (index : Fraction.Rational) + 1 :=
-        Fraction.Order.Arithmetic.add_le_add_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-          indexNonnegative) (Fraction.Order.Basic.le_refl _)
+        Arithmetic.add_le_add_direct (Arithmetic.mul_nonneg_direct (by decide)
+          indexNonnegative) (Basic.le_refl _)
   calc
     (2 : Fraction.Rational) ≤ 2 * 1 := by
       rw [Fraction.Field.mul_one_direct]
     _ ≤ 2 * (2 * (index : Fraction.Rational) + 1) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         denominatorAtLeastOne (by decide)
 
 /-- The finite local logarithm polynomial at one half is bounded by the matching quarter-geometric sum. -/
 theorem scalarEval_localLog_half_le_quarterSum : ∀ depth,
-    Evaluation.scalarEval (1 / 2) (Polynomial.localLog depth) ≤ Quarter.quarterSum (depth + 1)
+    Evaluation.scalarEval (1 / 2) (localLog depth) ≤ Quarter.quarterSum (depth + 1)
   | 0 => by
-      rw [Polynomial.localLog, Evaluation.scalarEval_monomial, Quarter.quarterSum, Quarter.quarterSum]
+      rw [localLog, Evaluation.scalarEval_monomial, Quarter.quarterSum, Quarter.quarterSum]
       decide
   | depth + 1 => by
-      rw [Polynomial.localLog, Evaluation.scalarEval_add, Evaluation.scalarEval_monomial,
+      rw [localLog, Evaluation.scalarEval_add, Evaluation.scalarEval_monomial,
         Quarter.quarterSum]
-      apply Fraction.Order.Arithmetic.add_le_add_direct
-        (Purelib.Approximation.Gaussian.Logarithm.Local.Polynomial.Majorant.scalarEval_localLog_half_le_quarterSum
+      apply Arithmetic.add_le_add_direct
+        (Majorant.scalarEval_localLog_half_le_quarterSum
         depth)
       calc
         (2 / (2 * ((depth + 1 : Nat) : Fraction.Rational) + 1)) *
             (1 / 2 : Fraction.Rational) ^ (2 * (depth + 1) + 1) ≤
             2 * (1 / 2 : Fraction.Rational) ^ (2 * (depth + 1) + 1) :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-            (Approximation.Gaussian.Logarithm.Local.Polynomial.Majorant.localLogCoefficient_le_two (depth + 1))
-            (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) _)
+          Arithmetic.mul_le_mul_of_nonneg_right_direct
+            (localLogCoefficient_le_two (depth + 1))
+            (Arithmetic.pow_nonneg_direct (by decide) _)
         _ = (1 / 4 : Fraction.Rational) ^ (depth + 1) :=
           Quarter.twice_half_odd_power (depth + 1)
 
 /-- Every finite local logarithm polynomial at one half is at most four thirds. -/
 theorem scalarEval_localLog_half_le (depth : Nat) :
-    Evaluation.scalarEval (1 / 2) (Polynomial.localLog depth) ≤ 4 / 3 :=
-  (Approximation.Gaussian.Logarithm.Local.Polynomial.Majorant.scalarEval_localLog_half_le_quarterSum depth).trans
+    Evaluation.scalarEval (1 / 2) (localLog depth) ≤ 4 / 3 :=
+  (scalarEval_localLog_half_le_quarterSum depth).trans
     (Quarter.quarterSum_le (depth + 1))
 end Purelib.Approximation.Gaussian.Logarithm.Local.Polynomial.Majorant
 

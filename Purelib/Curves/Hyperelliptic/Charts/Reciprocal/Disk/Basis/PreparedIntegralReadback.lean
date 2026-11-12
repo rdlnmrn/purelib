@@ -71,45 +71,45 @@ namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedInte
 
 open Purelib.Data.Gaussian.Basic.Canonical
 
-variable {genus count : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
+variable {genus count : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {covers :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
+    UniformReciprocalModels.Data patch count}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {covers :
+    SourceLocations.BasisSourceCovers parent}
   {index : Nat} {box : Rational.Box}
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {cover : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {target :
+variable {cover : UniformReciprocalCover.Cover data} {target :
   Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
 
-variable {minimum : Nat} {common : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonCover cover covers
+variable {minimum : Nat} {common : CommonCover.BasisCommonCover cover covers
   minimum}
 
 namespace BasisPreparedCommonRequest.Acquisition
 
 variable {areaAllowance sourceTarget coefficientTarget : Normalization.InverseRootPolynomial.Coordinate}
-  {request : Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest regular common
+  {request : PreparedCommonRequest.BasisPreparedCommonRequest regular common
     areaAllowance sourceTarget coefficientTarget floor}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
-    {originals : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+  {polynomials : Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+    {originals : CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
     covers index}
-  {cells : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers index}
+  {cells : SourceLocations.BasisSourceLocations.SampleBank covers index}
     {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus} {depth : Nat}
 
 namespace ChildPairs
 
 variable {acquired :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition request
+  PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition request
   polynomials originals cells coefficients depth}
 
 /-- The Gaussian sum of a finite function's ordered list equals its finite indexed sum. -/
 private theorem sum_ofFn {size : Nat} (values : Fin size → Normalization.InverseRootPolynomial.Gaussian) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn values) = FiniteSum.Fin.sumFin values := by
+    Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn values) = FiniteSum.Fin.sumFin values := by
   induction size with
   | zero => rfl
   | succ size ih =>
@@ -125,7 +125,7 @@ private theorem ofFn_readback (values : List (Normalization.InverseRootPolynomia
 
 /-- Each row reads the actual retained child integrals in their original order. -/
 theorem integral_path (pairs :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
+  PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
   acquired) (row : Fin genus) :
     List.ofFn (fun column : Fin (2 ^ (common.depth + acquired.extraDepth)) => (pairs.read row column).2) =
       Paths.PathArea.increments (Polynomial.Gaussian.Path.Basic.PathModel.mk
@@ -142,7 +142,7 @@ theorem integral_path (pairs :
 
 /-- The combined path retains one weighted integral for each spatial child. -/
 theorem Weighted.integral_path {pairs :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
+  PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
   acquired} (weighted :
   PreparedWeightedPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs.Weighted
   pairs) :
@@ -153,7 +153,7 @@ theorem Weighted.integral_path {pairs :
 
 /-- The cached weighted integral total equals the original acquisition's retained integral value. -/
 theorem Weighted.integral_total {pairs :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
+  PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
   acquired} (weighted :
   PreparedWeightedPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs.Weighted
   pairs) :
@@ -176,14 +176,14 @@ theorem Weighted.integral_total {pairs :
 
 /-- The cached weighted source total is exactly the original primitive bank's endpoint difference. -/
 theorem Weighted.source_total {pairs :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
+  PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
   acquired} (weighted :
   PreparedWeightedPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs.Weighted
   pairs) :
     weighted.source.total =
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+      CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
       originals coefficients 1 -
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+      CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
         originals coefficients 0 := by
   rw [weighted.source.total_eq,
 
@@ -193,11 +193,11 @@ theorem Weighted.source_total {pairs :
 
 /-- The area and endpoint comparisons refer to the same pair of cached paths. -/
 theorem Weighted.total_error {pairs :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
+  PreparedChildPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs
   acquired} (weighted :
   PreparedWeightedPairs.BasisPreparedCommonRequest.Acquisition.ChildPairs.Weighted
   pairs) :
-    Data.Gaussian.Norm.Basic.normSq (weighted.source.total - weighted.integral.total) ≤ sourceTarget *
+    Gaussian.Norm.Basic.normSq (weighted.source.total - weighted.integral.total) ≤ sourceTarget *
       Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := by
   rw
     [Weighted.source_total

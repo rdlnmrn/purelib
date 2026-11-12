@@ -82,39 +82,41 @@ public section
 /-! Automatic homogeneous radial requests on the actual retained root joins. -/
 namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.JunctionRequests
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.Gaussian.Basic.Canonical
 
 open Purelib.Riemann.RootContinuation
 
-variable {genus count : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+variable {genus count : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {source :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+    UniformReciprocalModels.Data patch count}
   {lastCount : Nat} {lastParent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {lastPatch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch lastParent} {lastSource :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data lastPatch lastCount}
+    UniformReciprocalModels.Data lastPatch lastCount}
   {firstEdge lastEdge : Branches.ClearSheetContinuation.Subdivision.ParameterEdge}
-  {firstCell : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell source firstEdge} {lastCell :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell lastSource lastEdge}
-  {firstModel : Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel firstCell} {lastModel :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel lastCell}
+  {firstCell : UniformReciprocalCover.Cell source firstEdge} {lastCell :
+    UniformReciprocalCover.Cell lastSource lastEdge}
+  {firstModel : UniformReciprocalRootChannels.RootModel firstCell} {lastModel :
+    UniformReciprocalRootChannels.RootModel lastCell}
   {firstParameter lastParameter : Normalization.InverseRootPolynomial.Coordinate} {first :
-    Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap firstModel firstParameter} {last :
-    Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Point cap lastModel lastParameter}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+    ArcOwners.Point cap firstModel firstParameter} {last :
+    ArcOwners.Point cap lastModel lastParameter}
+  {regular : RegularBounds.Data cap}
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+variable {bounds : ReciprocalPaddedInverse.UniformBounds regular.padded}
 
 set_option genInjectivity false in
 /-- One coordinate request pays every homogeneous primitive connector.
 It reuses the original root owners and the shared uniform basis cache. -/
-structure BasisRequest (basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds) (joined
-  : Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Join first last)
+structure BasisRequest (basis : ReciprocalPaddedBasisBounds.BasisBounds bounds) (joined
+  : ArcOwners.Join first last)
     (target : Normalization.InverseRootPolynomial.Coordinate) (floor : Nat) where
   /-- The coefficient-independent radial and primitive comparison scale. -/ scale :
     Normalization.InverseRootPolynomial.Coordinate
@@ -136,42 +138,42 @@ namespace BasisRequest
 
 /-- Allocate the fixed basis scale and retain the original joined-coordinate comparison with a common sufficient stage.
 -/
-@[expose] def build (basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds) (joined :
-  Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Join first last)
+@[expose] def build (basis : ReciprocalPaddedBasisBounds.BasisBounds bounds) (joined :
+  ArcOwners.Join first last)
     (target : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < target) (floor : Nat) :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.JunctionRequests.BasisRequest basis joined target floor := open
+      BasisRequest basis joined target floor := open
       Purelib.Data.Rat in by
   let scale := 512 * basis.coefficient^2 + 2 * basis.coefficient
   have nonnegative : 0 ≤ scale := add_nonneg
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) (Fraction.Order.Arithmetic.sq_nonneg_direct _))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) basis.coefficient_nonnegative)
+    (Arithmetic.mul_nonneg_direct (by decide +kernel) (Arithmetic.sq_nonneg_direct _))
+    (Arithmetic.mul_nonneg_direct (by decide +kernel) basis.coefficient_nonnegative)
   let budget := Rational.Budget.Weighted.allowance target scale
   have budgetPositive : 0 < budget := Rational.Budget.Weighted.allowance_positive positive nonnegative
   let comparison := joined.coordinate.compare floor floor budget budgetPositive
   exact ⟨scale, rfl, budget, budgetPositive, Rational.Budget.Weighted.mul_allowance_le positive.le nonnegative,
     comparison, max comparison.leftIndex comparison.rightIndex, rfl⟩
 
-variable {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds} {joined :
-  Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Join first last} {target :
+variable {basis : ReciprocalPaddedBasisBounds.BasisBounds bounds} {joined :
+  ArcOwners.Join first last} {target :
   Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
 
 /-- The retained sufficient index is at least the original reading floor. -/
-theorem floor_le (request : Hyperelliptic.Charts.Reciprocal.Disk.Basis.JunctionRequests.BasisRequest basis joined target
+theorem floor_le (request : BasisRequest basis joined target
   floor) : floor ≤ request.index := by
   rw [request.index_eq]
-  exact request.comparison.left_ge.trans (Purelib.Data.Nat.Order.le_max_left _ _)
+  exact request.comparison.left_ge.trans (Data.Nat.Order.le_max_left _ _)
 
 /-- The actual endpoint coordinates at any sufficient left and right stages meet the retained coordinate allowance. -/
-theorem coordinate_accurate (request : Hyperelliptic.Charts.Reciprocal.Disk.Basis.JunctionRequests.BasisRequest basis
+theorem coordinate_accurate (request : BasisRequest basis
   joined target floor)
     {index leftIndex rightIndex : Nat} {box : Rational.Box}
-    {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-    {left : Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap.Endpoint first.coordinates capSample}
-    {right : Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap.Endpoint last.coordinates capSample}
-    (leftReading : Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.Endpoint.Reading left leftIndex)
-    (rightReading : Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.Endpoint.Reading right rightIndex)
+    {capSample : Cap.Primitives.Sample cap differential index box}
+    {left : Coordinates.Overlap.Endpoint first.coordinates capSample}
+    {right : Coordinates.Overlap.Endpoint last.coordinates capSample}
+    (leftReading : ChartReadings.Endpoint.Reading left leftIndex)
+    (rightReading : ChartReadings.Endpoint.Reading right rightIndex)
     (leftLater : request.index ≤ leftIndex) (rightLater : request.index ≤ rightIndex) :
-    Data.Gaussian.Norm.Basic.normSq (rightReading.coordinate - leftReading.coordinate) < request.budget := by
+    Gaussian.Norm.Basic.normSq (rightReading.coordinate - leftReading.coordinate) < request.budget := by
   rw [leftReading.coordinate_eq, rightReading.coordinate_eq,
     show (Gaussian.Name.Sampling.approximation last.coordinates.coordinate.prepared.denominator.name).sample rightIndex
       -
@@ -181,95 +183,95 @@ theorem coordinate_accurate (request : Hyperelliptic.Charts.Reciprocal.Disk.Basi
           by ring1,
     Gaussian.Norm.Basic.normSq_neg]
   exact request.comparison.close
-    ((Purelib.Data.Nat.Order.le_max_left _ _).trans (request.index_eq.ge.trans leftLater))
-    ((Purelib.Data.Nat.Order.le_max_right _ _).trans (request.index_eq.ge.trans rightLater))
+    ((Data.Nat.Order.le_max_left _ _).trans (request.index_eq.ge.trans leftLater))
+    ((Data.Nat.Order.le_max_right _ _).trans (request.index_eq.ge.trans rightLater))
 
 /-- Original endpoint readings may have different later indices. The
 requested error is uniform in both their shared polynomial stage and depth. -/
-theorem radial_accurate (request : Hyperelliptic.Charts.Reciprocal.Disk.Basis.JunctionRequests.BasisRequest basis joined
+theorem radial_accurate (request : BasisRequest basis joined
   target floor)
     {index leftIndex rightIndex : Nat} {box : Rational.Box}
-    {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-    (polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box)
+    {capSample : Cap.Primitives.Sample cap differential index box}
+    (polynomials : Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box)
       (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
-    {left : Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap.Endpoint first.coordinates capSample}
-    {right : Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap.Endpoint last.coordinates capSample}
-    (leftReading : Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.Endpoint.Reading left leftIndex)
-    (rightReading : Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.Endpoint.Reading right rightIndex)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+    {left : Coordinates.Overlap.Endpoint first.coordinates capSample}
+    {right : Coordinates.Overlap.Endpoint last.coordinates capSample}
+    (leftReading : ChartReadings.Endpoint.Reading left leftIndex)
+    (rightReading : ChartReadings.Endpoint.Reading right rightIndex)
+    (branch : HyperellipticReciprocal.originOrder curve = 1)
     (leftInside : regular.padded.Contains (leftReading.coordinate * leftReading.coordinate))
     (rightInside : regular.padded.Contains (rightReading.coordinate * rightReading.coordinate))
     (leftLater : request.index ≤ leftIndex) (rightLater : request.index ≤ rightIndex) (depth : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (RootContinuation.RootRadialGeometry.radialArea (polynomials.value coefficients)
+    Gaussian.Norm.Basic.normSq (RootRadialGeometry.radialArea (polynomials.value coefficients)
       depth rightReading.coordinate -
-      RootContinuation.RootRadialGeometry.radialArea (polynomials.value coefficients) depth leftReading.coordinate -
+      RootRadialGeometry.radialArea (polynomials.value coefficients) depth leftReading.coordinate -
       Path.BoundaryRibbon.area (polynomials.value coefficients leftReading.coordinate)
         (polynomials.value coefficients rightReading.coordinate)) ≤ target *
           (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := open Purelib.Data.Rat in by
-  have estimate := Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisRadialRibbon.radial_connector_bound basis
+  have estimate := ReciprocalPaddedBasisRadialRibbon.radial_connector_bound basis
     polynomials coefficients branch leftInside rightInside depth
   have close := request.coordinate_accurate leftReading rightReading leftLater rightLater
   have coefficientLe : 512 * basis.coefficient^2 ≤ request.scale := by
     rw [request.scale_eq]
-    exact le_add_of_nonneg_right (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
+    exact le_add_of_nonneg_right (Arithmetic.mul_nonneg_direct (by decide +kernel)
       basis.coefficient_nonnegative)
-  have paid := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct coefficientLe
+  have paid := (Arithmetic.mul_le_mul_of_nonneg_right_direct coefficientLe
     request.budget_positive.le).trans request.paid
-  exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct close.le
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel : (0 :
-        Normalization.InverseRootPolynomial.Coordinate) ≤ 512) (Fraction.Order.Arithmetic.sq_nonneg_direct _))).trans
+  exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct close.le
+      (Arithmetic.mul_nonneg_direct (by decide +kernel : (0 :
+        Normalization.InverseRootPolynomial.Coordinate) ≤ 512) (Arithmetic.sq_nonneg_direct _))).trans
         paid)
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+    (Arithmetic.sq_nonneg_direct _))
 
 /-- The same coordinate request also pays the actual primitive increment. -/
-theorem increment_accurate (request : Hyperelliptic.Charts.Reciprocal.Disk.Basis.JunctionRequests.BasisRequest basis
+theorem increment_accurate (request : BasisRequest basis
   joined target floor)
     {index leftIndex rightIndex : Nat} {box : Rational.Box}
-    {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-    (polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box)
+    {capSample : Cap.Primitives.Sample cap differential index box}
+    (polynomials : Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box)
       (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
-    {left : Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap.Endpoint first.coordinates capSample}
-    {right : Hyperelliptic.Charts.Reciprocal.Disk.Coordinates.Overlap.Endpoint last.coordinates capSample}
-    (leftReading : Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.Endpoint.Reading left leftIndex)
-    (rightReading : Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.Endpoint.Reading right rightIndex)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+    {left : Coordinates.Overlap.Endpoint first.coordinates capSample}
+    {right : Coordinates.Overlap.Endpoint last.coordinates capSample}
+    (leftReading : ChartReadings.Endpoint.Reading left leftIndex)
+    (rightReading : ChartReadings.Endpoint.Reading right rightIndex)
+    (branch : HyperellipticReciprocal.originOrder curve = 1)
     (leftInside : regular.padded.Contains (leftReading.coordinate * leftReading.coordinate))
     (rightInside : regular.padded.Contains (rightReading.coordinate * rightReading.coordinate))
     (leftLater : request.index ≤ leftIndex) (rightLater : request.index ≤ rightIndex) :
-    Data.Gaussian.Norm.Basic.normSq (polynomials.value coefficients rightReading.coordinate -
+    Gaussian.Norm.Basic.normSq (polynomials.value coefficients rightReading.coordinate -
       polynomials.value coefficients leftReading.coordinate) ≤ target *
         Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := open Purelib.Algebra in open
         Purelib.Data.Rat in by
-  have estimate := Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisArcs.BasisBounds.chord_increment basis
+  have estimate := ReciprocalPaddedBasisArcs.BasisBounds.chord_increment basis
     polynomials coefficients branch leftInside rightInside
     (left := 0) (right := 1) (by decide +kernel) (by decide +kernel)
-  have atZero : RootContinuation.RootRadialGeometry.chord leftReading.coordinate rightReading.coordinate 0 =
+  have atZero : RootRadialGeometry.chord leftReading.coordinate rightReading.coordinate 0 =
     leftReading.coordinate := by
-    apply Gaussian.Basic.ext <;> simp only [-eq_self, -iff_self, RootContinuation.RootRadialGeometry.chord,
+    apply Gaussian.Basic.ext <;> simp only [-eq_self, -iff_self, RootRadialGeometry.chord,
       Gaussian.Scale.scale_re, Gaussian.Scale.scale_im, Gaussian.Basic.add_re, Gaussian.Basic.add_im] <;> ring1
-  have atOne : RootContinuation.RootRadialGeometry.chord leftReading.coordinate rightReading.coordinate 1 =
+  have atOne : RootRadialGeometry.chord leftReading.coordinate rightReading.coordinate 1 =
     rightReading.coordinate := by
-    apply Gaussian.Basic.ext <;> simp only [-eq_self, -iff_self, RootContinuation.RootRadialGeometry.chord,
+    apply Gaussian.Basic.ext <;> simp only [-eq_self, -iff_self, RootRadialGeometry.chord,
       Gaussian.Scale.scale_re, Gaussian.Scale.scale_im, Gaussian.Basic.add_re, Gaussian.Basic.add_im] <;> ring1
   rw [atZero, atOne] at estimate
   have close := request.coordinate_accurate leftReading rightReading leftLater rightLater
   have coefficientLe : 2 * basis.coefficient ≤ request.scale := by
     rw [request.scale_eq]
-    exact le_add_of_nonneg_left (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _))
-  have paid := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct coefficientLe
+    exact le_add_of_nonneg_left (Arithmetic.mul_nonneg_direct (by decide +kernel)
+      (Arithmetic.sq_nonneg_direct _))
+  have paid := (Arithmetic.mul_le_mul_of_nonneg_right_direct coefficientLe
     request.budget_positive.le).trans request.paid
-  have scalar := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct close.le
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel : (0 :
+  have scalar := (Arithmetic.mul_le_mul_of_nonneg_left_direct close.le
+    (Arithmetic.mul_nonneg_direct (by decide +kernel : (0 :
       Normalization.InverseRootPolynomial.Coordinate) ≤ 2) basis.coefficient_nonnegative)).trans paid
   have nonnegative : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
     (FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 :
-      Normalization.InverseRootPolynomial.Coordinate)) _ (fun row => Gaussian.Basic.Canonical.normSq_nonneg
+      Normalization.InverseRootPolynomial.Coordinate)) _ (fun row => normSq_nonneg
       (coefficients row)))
   exact (estimate.trans_eq (by ring1)).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct scalar nonnegative)
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct scalar nonnegative)
 
 end BasisRequest
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.JunctionRequests

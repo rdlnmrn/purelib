@@ -39,11 +39,11 @@ open Purelib.Data.Rat in
 
 The first traversal compares the original denominators. The second compares the absolute raw sum numerator with their
 retained common divisor, matching the original two-stage reduction arithmetic. -/
-def addGcdClauses (left right : Fraction.Basic.ReducedFraction) : Nat
+def addGcdClauses (left right : Basic.ReducedFraction) : Nat
   :=
   GCD.Resource.Clauses.gcdClauses left.den right.den +
     GCD.Resource.Clauses.gcdClauses (SignedFraction.Arithmetic.addRaw left right).num.natAbs
-      (Fraction.Arithmetic.additionCommon left right)
+      (Arithmetic.additionCommon left right)
 end Purelib.Data.Rat.Fraction.Resource.Clauses
 
 end
@@ -77,13 +77,13 @@ open Purelib.Data
 
 The first scan bounds the common denominator factor by the original positive
 left denominator. The second scan retains that common factor as its bound. -/
-theorem addGcdClauses_le (left right : Fraction.Basic.ReducedFraction)
+theorem addGcdClauses_le (left right : Basic.ReducedFraction)
   :
     addGcdClauses left right ≤ left.den + right.den + 2 := by
-  have commonLe : Fraction.Arithmetic.additionCommon left right ≤ left.den :=
+  have commonLe : Arithmetic.additionCommon left right ≤ left.den :=
     Nat.Divisibility.le_of_dvd left.den_pos (Nat.GCD.Scalar.gcd_dvd left.den right.den).1
   have final := (Nat.GCD.Resource.Clauses.gcdClauses_le (SignedFraction.Arithmetic.addRaw left right).num.natAbs
-    (Fraction.Arithmetic.additionCommon left right)).trans (Nat.add_le_add_right commonLe 1)
+    (Arithmetic.additionCommon left right)).trans (Nat.add_le_add_right commonLe 1)
   have total := Nat.add_le_add (Nat.GCD.Resource.Clauses.gcdClauses_le left.den right.den) final
   simpa only [addGcdClauses, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using total
 end Purelib.Data.Rat.Fraction.Resource.Clauses
@@ -182,7 +182,7 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 
 open Purelib.Data.Rat in
 /-- Count the addition GCD clauses together with eight scalar operation steps. -/
-def addSteps (left right : Fraction.Basic.ReducedFraction) : Nat :=
+def addSteps (left right : Basic.ReducedFraction) : Nat :=
   addGcdClauses left right + 8
 end Purelib.Data.Rat.Fraction.Resource.Clauses
 
@@ -214,14 +214,14 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 open Purelib.Data.Rat in
 /-- The counted addition steps are bounded by the envelope of the retained reduced-fraction component magnitudes. -/
 theorem addSteps_le_envelope (left right :
-  Fraction.Basic.ReducedFraction) :
+  Basic.ReducedFraction) :
     addSteps left right ≤
-      addStepEnvelope (Fraction.Resource.Components.NormalizedFraction.componentMagnitude
+      addStepEnvelope (Components.NormalizedFraction.componentMagnitude
         left)
-        (Fraction.Resource.Components.NormalizedFraction.componentMagnitude right) := by
-  have components := Nat.add_le_add (Fraction.Resource.Components.NormalizedFraction.denominator_le_componentMagnitude
+        (Components.NormalizedFraction.componentMagnitude right) := by
+  have components := Nat.add_le_add (Components.NormalizedFraction.denominator_le_componentMagnitude
     left)
-    (Fraction.Resource.Components.NormalizedFraction.denominator_le_componentMagnitude right)
+    (Components.NormalizedFraction.denominator_le_componentMagnitude right)
   have total := Nat.add_le_add_right
     ((addGcdClauses_le left right).trans (Nat.add_le_add_right components 2)) 8
   simpa only [addSteps, addStepEnvelope, Nat.add_assoc] using total
@@ -316,7 +316,7 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 
 open Purelib.Data.Rat in
 /-- Count two scalar steps for inversion of a reduced fraction. -/
-def invSteps (_source : Fraction.Basic.ReducedFraction) : Nat := 2
+def invSteps (_source : Basic.ReducedFraction) : Nat := 2
 end Purelib.Data.Rat.Fraction.Resource.Clauses
 
 end
@@ -346,10 +346,10 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 
 open Purelib.Data.Rat in
 /-- The counted inversion steps are bounded by the envelope of the retained reduced-fraction component magnitudes. -/
-theorem invSteps_le_envelope (source : Fraction.Basic.ReducedFraction)
+theorem invSteps_le_envelope (source : Basic.ReducedFraction)
   :
     invSteps source ≤ invStepEnvelope
-      (Fraction.Resource.Components.NormalizedFraction.componentMagnitude source) :=
+      (Components.NormalizedFraction.componentMagnitude source) :=
   Nat.le_refl 2
 end Purelib.Data.Rat.Fraction.Resource.Clauses
 
@@ -384,7 +384,7 @@ open Purelib.Data.Rat in
 
 Count cancellation of the left numerator against the right denominator and of the right numerator against the left
 denominator. Both counts use the original retained fraction components. -/
-def mulGcdClauses (left right : Fraction.Basic.ReducedFraction) : Nat
+def mulGcdClauses (left right : Basic.ReducedFraction) : Nat
   :=
   GCD.Resource.Clauses.gcdClauses left.num.natAbs right.den +
     GCD.Resource.Clauses.gcdClauses right.num.natAbs left.den
@@ -418,7 +418,7 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 open Purelib.Data.Nat in
 open Purelib.Data.Rat in
 /-- The multiplication GCD clause count is at most the sum of the two denominators plus two. -/
-theorem mulGcdClauses_le (left right : Fraction.Basic.ReducedFraction)
+theorem mulGcdClauses_le (left right : Basic.ReducedFraction)
   :
     mulGcdClauses left right ≤ left.den + right.den + 2 := by
   have total := Nat.add_le_add (GCD.Resource.Clauses.gcdClauses_le left.num.natAbs right.den)
@@ -586,7 +586,7 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 
 open Purelib.Data.Rat in
 /-- Count the multiplication cross-cancellation GCD clauses together with eight scalar steps. -/
-def mulSteps (left right : Fraction.Basic.ReducedFraction) : Nat :=
+def mulSteps (left right : Basic.ReducedFraction) : Nat :=
   mulGcdClauses left right + 8
 end Purelib.Data.Rat.Fraction.Resource.Clauses
 
@@ -620,8 +620,8 @@ open Purelib.Data.Rat in
 
 The multiplication count receives the exact computed inverse of the right reduced fraction. Its envelope proof
 transports the inverse component bound without replacing the counted inputs. -/
-def divSteps (left right : Fraction.Basic.ReducedFraction) : Nat :=
-  invSteps right + mulSteps left (Fraction.Arithmetic.inv right)
+def divSteps (left right : Basic.ReducedFraction) : Nat :=
+  invSteps right + mulSteps left (Arithmetic.inv right)
 end Purelib.Data.Rat.Fraction.Resource.Clauses
 
 end
@@ -653,14 +653,14 @@ open Purelib.Data.Rat in
 /-- The counted multiplication steps are bounded by the envelope of the retained reduced-fraction component magnitudes.
 -/
 theorem mulSteps_le_envelope (left right :
-  Fraction.Basic.ReducedFraction) :
+  Basic.ReducedFraction) :
     mulSteps left right ≤
-      mulStepEnvelope (Fraction.Resource.Components.NormalizedFraction.componentMagnitude
+      mulStepEnvelope (Components.NormalizedFraction.componentMagnitude
         left)
-        (Fraction.Resource.Components.NormalizedFraction.componentMagnitude right) := by
-  have components := Nat.add_le_add (Fraction.Resource.Components.NormalizedFraction.denominator_le_componentMagnitude
+        (Components.NormalizedFraction.componentMagnitude right) := by
+  have components := Nat.add_le_add (Components.NormalizedFraction.denominator_le_componentMagnitude
     left)
-    (Fraction.Resource.Components.NormalizedFraction.denominator_le_componentMagnitude right)
+    (Components.NormalizedFraction.denominator_le_componentMagnitude right)
   have total := Nat.add_le_add_right
     ((mulGcdClauses_le left right).trans (Nat.add_le_add_right components 2)) 8
   simpa only [mulSteps, mulStepEnvelope, Nat.add_assoc] using total
@@ -694,19 +694,19 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 open Purelib.Data.Rat in
 /-- The counted division steps are bounded by the envelope of the retained reduced-fraction component magnitudes. -/
 theorem divSteps_le_envelope (left right :
-  Fraction.Basic.ReducedFraction) :
+  Basic.ReducedFraction) :
     divSteps left right ≤
-      divStepEnvelope (Fraction.Resource.Components.NormalizedFraction.componentMagnitude
+      divStepEnvelope (Components.NormalizedFraction.componentMagnitude
         left)
-        (Fraction.Resource.Components.NormalizedFraction.componentMagnitude right) := by
+        (Components.NormalizedFraction.componentMagnitude right) := by
   have invBound := invSteps_le_envelope right
-  have mulBound := mulSteps_le_envelope left (Fraction.Arithmetic.inv right)
+  have mulBound := mulSteps_le_envelope left (Arithmetic.inv right)
   have mulEnvelopeBound := mulStepEnvelope_mono
-    (left := Fraction.Resource.Components.NormalizedFraction.componentMagnitude left)
-    (right := Fraction.Resource.Components.NormalizedFraction.componentMagnitude (Fraction.Arithmetic.inv right))
-    (leftBound := Fraction.Resource.Components.NormalizedFraction.componentMagnitude left)
-    (rightBound := Fraction.Resource.Components.NormalizedFraction.componentMagnitude right)
-    (le_refl _) (Fraction.Resource.Components.NormalizedFraction.componentMagnitude_inv_le right)
+    (left := Components.NormalizedFraction.componentMagnitude left)
+    (right := Components.NormalizedFraction.componentMagnitude (Arithmetic.inv right))
+    (leftBound := Components.NormalizedFraction.componentMagnitude left)
+    (rightBound := Components.NormalizedFraction.componentMagnitude right)
+    (le_refl _) (Components.NormalizedFraction.componentMagnitude_inv_le right)
   unfold divSteps divStepEnvelope
   exact Nat.add_le_add invBound (mulBound.trans mulEnvelopeBound)
 end Purelib.Data.Rat.Fraction.Resource.Clauses
@@ -800,7 +800,7 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 
 open Purelib.Data.Rat in
 /-- Count one scalar step for negation of a reduced fraction. -/
-def negSteps (_source : Fraction.Basic.ReducedFraction) : Nat := 1
+def negSteps (_source : Basic.ReducedFraction) : Nat := 1
 end Purelib.Data.Rat.Fraction.Resource.Clauses
 
 end
@@ -830,10 +830,10 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 
 open Purelib.Data.Rat in
 /-- The counted negation steps are bounded by the envelope of the retained reduced-fraction component magnitudes. -/
-theorem negSteps_le_envelope (source : Fraction.Basic.ReducedFraction)
+theorem negSteps_le_envelope (source : Basic.ReducedFraction)
   :
     negSteps source ≤ negStepEnvelope
-      (Fraction.Resource.Components.NormalizedFraction.componentMagnitude source) :=
+      (Components.NormalizedFraction.componentMagnitude source) :=
   Nat.le_refl 1
 end Purelib.Data.Rat.Fraction.Resource.Clauses
 
@@ -935,8 +935,8 @@ open Purelib.Data.Rat in
 
 The addition count receives the exact computed negation of the right reduced fraction. Its envelope proof retains the
 corresponding component-magnitude bound. -/
-def subSteps (left right : Fraction.Basic.ReducedFraction) : Nat :=
-  negSteps right + addSteps left (Fraction.Arithmetic.neg right)
+def subSteps (left right : Basic.ReducedFraction) : Nat :=
+  negSteps right + addSteps left (Arithmetic.neg right)
 end Purelib.Data.Rat.Fraction.Resource.Clauses
 
 end
@@ -967,19 +967,19 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 open Purelib.Data.Rat in
 /-- The counted subtraction steps are bounded by the envelope of the retained reduced-fraction component magnitudes. -/
 theorem subSteps_le_envelope (left right :
-  Fraction.Basic.ReducedFraction) :
+  Basic.ReducedFraction) :
     subSteps left right ≤
-      subStepEnvelope (Fraction.Resource.Components.NormalizedFraction.componentMagnitude
+      subStepEnvelope (Components.NormalizedFraction.componentMagnitude
         left)
-        (Fraction.Resource.Components.NormalizedFraction.componentMagnitude right) := by
+        (Components.NormalizedFraction.componentMagnitude right) := by
   have negBound := negSteps_le_envelope right
-  have addBound := addSteps_le_envelope left (Fraction.Arithmetic.neg right)
+  have addBound := addSteps_le_envelope left (Arithmetic.neg right)
   have addEnvelopeBound := addStepEnvelope_mono
-    (left := Fraction.Resource.Components.NormalizedFraction.componentMagnitude left)
-    (right := Fraction.Resource.Components.NormalizedFraction.componentMagnitude (Fraction.Arithmetic.neg right))
-    (leftBound := Fraction.Resource.Components.NormalizedFraction.componentMagnitude left)
-    (rightBound := Fraction.Resource.Components.NormalizedFraction.componentMagnitude right)
-    (le_refl _) (Fraction.Resource.Components.componentMagnitude_neg_le right)
+    (left := Components.NormalizedFraction.componentMagnitude left)
+    (right := Components.NormalizedFraction.componentMagnitude (Arithmetic.neg right))
+    (leftBound := Components.NormalizedFraction.componentMagnitude left)
+    (rightBound := Components.NormalizedFraction.componentMagnitude right)
+    (le_refl _) (Components.componentMagnitude_neg_le right)
   unfold subSteps subStepEnvelope
   exact Nat.add_le_add negBound (addBound.trans addEnvelopeBound)
 end Purelib.Data.Rat.Fraction.Resource.Clauses
@@ -1005,10 +1005,10 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 
 open Purelib.Data.Rat in
 /-- Count the addition GCD clauses on the actual reduced representatives of the canonical rational inputs. -/
-def normalizedAddGcdClauses (left right : Fraction.Rational) : Nat :=
+def normalizedAddGcdClauses (left right : Rational) : Nat :=
   addGcdClauses
-    (Fraction.Basic.ofRational left)
-    (Fraction.Basic.ofRational right)
+    (Basic.ofRational left)
+    (Basic.ofRational right)
 end Purelib.Data.Rat.Fraction.Resource.Clauses
 
 end
@@ -1030,12 +1030,12 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 
 open Purelib.Data.Rat in
 /-- Compute the addition step budget from the actual reduced representatives of the canonical rational inputs. -/
-def normalizedAddStepBudget (left right : Fraction.Rational) : Nat :=
+def normalizedAddStepBudget (left right : Rational) : Nat :=
   addStepEnvelope
-    (Fraction.Resource.Components.NormalizedFraction.componentMagnitude
-      (Fraction.Basic.ofRational left))
-    (Fraction.Resource.Components.NormalizedFraction.componentMagnitude
-      (Fraction.Basic.ofRational right))
+    (Components.NormalizedFraction.componentMagnitude
+      (Basic.ofRational left))
+    (Components.NormalizedFraction.componentMagnitude
+      (Basic.ofRational right))
 end Purelib.Data.Rat.Fraction.Resource.Clauses
 
 end
@@ -1057,11 +1057,11 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 
 open Purelib.Data.Rat in
 /-- The addition step count on the original rational representatives is at most the computed budget. -/
-theorem normalizedAdd_steps_le_budget (left right : Fraction.Rational)
+theorem normalizedAdd_steps_le_budget (left right : Rational)
   :
     addSteps
-        (Fraction.Basic.ofRational left)
-        (Fraction.Basic.ofRational right) ≤
+        (Basic.ofRational left)
+        (Basic.ofRational right) ≤
       normalizedAddStepBudget left right :=
   addSteps_le_envelope _ _
 end Purelib.Data.Rat.Fraction.Resource.Clauses
@@ -1085,12 +1085,12 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 
 open Purelib.Data.Rat in
 /-- Compute the division step budget from the actual reduced representatives of the canonical rational inputs. -/
-def normalizedDivStepBudget (left right : Fraction.Rational) : Nat :=
+def normalizedDivStepBudget (left right : Rational) : Nat :=
   divStepEnvelope
-    (Fraction.Resource.Components.NormalizedFraction.componentMagnitude
-      (Fraction.Basic.ofRational left))
-    (Fraction.Resource.Components.NormalizedFraction.componentMagnitude
-      (Fraction.Basic.ofRational right))
+    (Components.NormalizedFraction.componentMagnitude
+      (Basic.ofRational left))
+    (Components.NormalizedFraction.componentMagnitude
+      (Basic.ofRational right))
 end Purelib.Data.Rat.Fraction.Resource.Clauses
 
 end
@@ -1112,11 +1112,11 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 
 open Purelib.Data.Rat in
 /-- The division step count on the original rational representatives is at most the computed budget. -/
-theorem normalizedDiv_steps_le_budget (left right : Fraction.Rational)
+theorem normalizedDiv_steps_le_budget (left right : Rational)
   :
     divSteps
-        (Fraction.Basic.ofRational left)
-        (Fraction.Basic.ofRational right) ≤
+        (Basic.ofRational left)
+        (Basic.ofRational right) ≤
       normalizedDivStepBudget left right :=
   divSteps_le_envelope _ _
 end Purelib.Data.Rat.Fraction.Resource.Clauses
@@ -1140,10 +1140,10 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 
 open Purelib.Data.Rat in
 /-- Compute the inversion step budget from the actual reduced representatives of the canonical rational inputs. -/
-def normalizedInvStepBudget (source : Fraction.Rational) : Nat :=
+def normalizedInvStepBudget (source : Rational) : Nat :=
   invStepEnvelope
-    (Fraction.Resource.Components.NormalizedFraction.componentMagnitude
-      (Fraction.Basic.ofRational source))
+    (Components.NormalizedFraction.componentMagnitude
+      (Basic.ofRational source))
 end Purelib.Data.Rat.Fraction.Resource.Clauses
 
 end
@@ -1165,9 +1165,9 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 
 open Purelib.Data.Rat in
 /-- The inversion step count on the original rational representatives is at most the computed budget. -/
-theorem normalizedInv_steps_le_budget (source : Fraction.Rational) :
+theorem normalizedInv_steps_le_budget (source : Rational) :
     invSteps
-        (Fraction.Basic.ofRational source) ≤
+        (Basic.ofRational source) ≤
       normalizedInvStepBudget source :=
   invSteps_le_envelope _
 end Purelib.Data.Rat.Fraction.Resource.Clauses
@@ -1191,10 +1191,10 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 
 open Purelib.Data.Rat in
 /-- Count the multiplication GCD clauses on the actual reduced representatives of the canonical rational inputs. -/
-def normalizedMulGcdClauses (left right : Fraction.Rational) : Nat :=
+def normalizedMulGcdClauses (left right : Rational) : Nat :=
   mulGcdClauses
-    (Fraction.Basic.ofRational left)
-    (Fraction.Basic.ofRational right)
+    (Basic.ofRational left)
+    (Basic.ofRational right)
 end Purelib.Data.Rat.Fraction.Resource.Clauses
 
 end
@@ -1216,12 +1216,12 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 
 open Purelib.Data.Rat in
 /-- Compute the multiplication step budget from the actual reduced representatives of the canonical rational inputs. -/
-def normalizedMulStepBudget (left right : Fraction.Rational) : Nat :=
+def normalizedMulStepBudget (left right : Rational) : Nat :=
   mulStepEnvelope
-    (Fraction.Resource.Components.NormalizedFraction.componentMagnitude
-      (Fraction.Basic.ofRational left))
-    (Fraction.Resource.Components.NormalizedFraction.componentMagnitude
-      (Fraction.Basic.ofRational right))
+    (Components.NormalizedFraction.componentMagnitude
+      (Basic.ofRational left))
+    (Components.NormalizedFraction.componentMagnitude
+      (Basic.ofRational right))
 end Purelib.Data.Rat.Fraction.Resource.Clauses
 
 end
@@ -1243,11 +1243,11 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 
 open Purelib.Data.Rat in
 /-- The multiplication step count on the original rational representatives is at most the computed budget. -/
-theorem normalizedMul_steps_le_budget (left right : Fraction.Rational)
+theorem normalizedMul_steps_le_budget (left right : Rational)
   :
     mulSteps
-        (Fraction.Basic.ofRational left)
-        (Fraction.Basic.ofRational right) ≤
+        (Basic.ofRational left)
+        (Basic.ofRational right) ≤
       normalizedMulStepBudget left right :=
   mulSteps_le_envelope _ _
 end Purelib.Data.Rat.Fraction.Resource.Clauses
@@ -1271,10 +1271,10 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 
 open Purelib.Data.Rat in
 /-- Compute the negation step budget from the actual reduced representatives of the canonical rational inputs. -/
-def normalizedNegStepBudget (source : Fraction.Rational) : Nat :=
+def normalizedNegStepBudget (source : Rational) : Nat :=
   negStepEnvelope
-    (Fraction.Resource.Components.NormalizedFraction.componentMagnitude
-      (Fraction.Basic.ofRational source))
+    (Components.NormalizedFraction.componentMagnitude
+      (Basic.ofRational source))
 end Purelib.Data.Rat.Fraction.Resource.Clauses
 
 end
@@ -1296,9 +1296,9 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 
 open Purelib.Data.Rat in
 /-- The negation step count on the original rational representatives is at most the computed budget. -/
-theorem normalizedNeg_steps_le_budget (source : Fraction.Rational) :
+theorem normalizedNeg_steps_le_budget (source : Rational) :
     negSteps
-        (Fraction.Basic.ofRational source) ≤
+        (Basic.ofRational source) ≤
       normalizedNegStepBudget source :=
   negSteps_le_envelope _
 end Purelib.Data.Rat.Fraction.Resource.Clauses
@@ -1322,12 +1322,12 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 
 open Purelib.Data.Rat in
 /-- Compute the subtraction step budget from the actual reduced representatives of the canonical rational inputs. -/
-def normalizedSubStepBudget (left right : Fraction.Rational) : Nat :=
+def normalizedSubStepBudget (left right : Rational) : Nat :=
   subStepEnvelope
-    (Fraction.Resource.Components.NormalizedFraction.componentMagnitude
-      (Fraction.Basic.ofRational left))
-    (Fraction.Resource.Components.NormalizedFraction.componentMagnitude
-      (Fraction.Basic.ofRational right))
+    (Components.NormalizedFraction.componentMagnitude
+      (Basic.ofRational left))
+    (Components.NormalizedFraction.componentMagnitude
+      (Basic.ofRational right))
 end Purelib.Data.Rat.Fraction.Resource.Clauses
 
 end
@@ -1349,11 +1349,11 @@ namespace Purelib.Data.Rat.Fraction.Resource.Clauses
 
 open Purelib.Data.Rat in
 /-- The subtraction step count on the original rational representatives is at most the computed budget. -/
-theorem normalizedSub_steps_le_budget (left right : Fraction.Rational)
+theorem normalizedSub_steps_le_budget (left right : Rational)
   :
     subSteps
-        (Fraction.Basic.ofRational left)
-        (Fraction.Basic.ofRational right) ≤
+        (Basic.ofRational left)
+        (Basic.ofRational right) ≤
       normalizedSubStepBudget left right :=
   subSteps_le_envelope _ _
 end Purelib.Data.Rat.Fraction.Resource.Clauses

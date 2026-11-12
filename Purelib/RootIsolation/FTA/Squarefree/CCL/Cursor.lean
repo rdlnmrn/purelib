@@ -31,6 +31,10 @@ import Purelib.Geometry.Rational.Box.Bounds
 import Purelib.Polynomial.Dense.Basic
 import Purelib.RootIsolation.Track.Basic
 
+open Purelib.Data.CCL.Transducer.Mode.Semantics
+
+open Purelib.Geometry.Projective
+
 open Purelib.Data.CCL.Transducer (Machine Mode)
 open Purelib.Data.Gaussian.Basic (Canonical)
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
@@ -82,7 +86,7 @@ theorem arithmeticNameAt_grammar
     {p : CoefficientPolynomial} (result :
       AdapterResult p)
     (index : Fin p.natDegree) (count : Nat) :
-    Data.CCL.Transducer.Machine.Grammar.Invariant
+    Machine.Grammar.Invariant
       (Machine.Advance.advance
         (result.arithmeticNameAt index).machine count) :=
   Track.CCL.Productivity.initial_grammar (result.trackAt index) count
@@ -93,7 +97,7 @@ theorem arithmeticNameAt_exact
     {p : CoefficientPolynomial} (result :
       AdapterResult p)
     (index : Fin p.natDegree) (count : Nat) :
-    Data.CCL.Transducer.Machine.Semantics.Basic.ExactCursor
+    Machine.Semantics.Basic.ExactCursor
       (Track.Approximation.Process.toProcess (result.trackAt index))
       (result.trackAt index).initial
       (Machine.Advance.advance
@@ -109,20 +113,20 @@ theorem arithmeticNameAt_candidate_exact
     (index : Fin p.natDegree) (count : Nat)
     {tail : Canonical}
     (possible :
-      Mode.Semantics.SemanticMode.possible
+      SemanticMode.possible
         (Machine.Advance.advance
           (result.arithmeticNameAt index).machine count).mode tail) :
     ∃ value : Canonical,
       (result.trackAt index).initial.box.Contains value ∧
-        (Geometry.Projective.Line.Matrix.act
-          (Data.CCL.Encoding.Parser.State.parse
+        (Line.Matrix.act
+          (CCL.Encoding.Parser.State.parse
             (Machine.committed
               (Machine.Advance.advance
                 (result.arithmeticNameAt index).machine count))).matrix
-          (Mode.Semantics.SemanticMode.parserTail
+          (SemanticMode.parserTail
             (Machine.Advance.advance
               (result.arithmeticNameAt index).machine count).mode tail)).Equivalent
-                (Geometry.Projective.Line.Proj.affine value) :=
+                (Line.Proj.affine value) :=
   Track.CCL.Semantics.toNamedAt_candidate_exact
     (result.trackAt index) (result.trackAt index).initial count possible
 
@@ -134,23 +138,23 @@ theorem arithmeticNameAt_cursor_chordalSq_le_box_diagonal
     (index : Fin p.natDegree) (count : Nat)
     {leftTail rightTail : Canonical}
     (leftPossible :
-      Mode.Semantics.SemanticMode.possible
+      SemanticMode.possible
         (Machine.Advance.advance
           (result.arithmeticNameAt index).machine count).mode leftTail)
     (rightPossible :
-      Mode.Semantics.SemanticMode.possible
+      SemanticMode.possible
         (Machine.Advance.advance
           (result.arithmeticNameAt index).machine count).mode rightTail) :
     let machine := Machine.Advance.advance
       (result.arithmeticNameAt index).machine count
-    let parser := Data.CCL.Encoding.Parser.State.parse
+    let parser := CCL.Encoding.Parser.State.parse
       (Machine.committed machine)
-    Geometry.Projective.Chordal.Basic.chordalSq
-        (Geometry.Projective.Line.Matrix.act parser.matrix
-          (Mode.Semantics.SemanticMode.parserTail
+    Chordal.Basic.chordalSq
+        (Line.Matrix.act parser.matrix
+          (SemanticMode.parserTail
             machine.mode leftTail))
-        (Geometry.Projective.Line.Matrix.act parser.matrix
-          (Mode.Semantics.SemanticMode.parserTail
+        (Line.Matrix.act parser.matrix
+          (SemanticMode.parserTail
             machine.mode rightTail)) ≤
       (result.trackAt index).initial.box.diagonalSq :=
   Track.CCL.Chordal.toNamedAt_cursor_chordalSq_le_box_diagonal
@@ -168,26 +172,26 @@ theorem refinedArithmeticNameAt_cursor_chordalSq_le_requested
     (epsilon : Fraction.Rational) (positive : 0 < epsilon) (count : Nat)
     {leftTail rightTail : Canonical}
     (leftPossible :
-      Mode.Semantics.SemanticMode.possible
+      SemanticMode.possible
         (Machine.Advance.advance
           (result.refinedArithmeticNameAt index current epsilon positive).machine
           count).mode leftTail)
     (rightPossible :
-      Mode.Semantics.SemanticMode.possible
+      SemanticMode.possible
         (Machine.Advance.advance
           (result.refinedArithmeticNameAt index current epsilon positive).machine
           count).mode rightTail) :
     let machine := Machine.Advance.advance
       (result.refinedArithmeticNameAt index current epsilon positive).machine
       count
-    let parser := Data.CCL.Encoding.Parser.State.parse
+    let parser := CCL.Encoding.Parser.State.parse
       (Machine.committed machine)
-    Geometry.Projective.Chordal.Basic.chordalSq
-        (Geometry.Projective.Line.Matrix.act parser.matrix
-          (Mode.Semantics.SemanticMode.parserTail
+    Chordal.Basic.chordalSq
+        (Line.Matrix.act parser.matrix
+          (SemanticMode.parserTail
             machine.mode leftTail))
-        (Geometry.Projective.Line.Matrix.act parser.matrix
-          (Mode.Semantics.SemanticMode.parserTail
+        (Line.Matrix.act parser.matrix
+          (SemanticMode.parserTail
             machine.mode rightTail)) ≤ epsilon ^ 2 :=
   Track.CCL.Chordal.refinedNamed_cursor_chordalSq_le_requested
     (result.trackAt index) current epsilon positive count

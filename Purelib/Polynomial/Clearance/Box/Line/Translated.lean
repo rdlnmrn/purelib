@@ -18,6 +18,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Polynomial.Dense.Evaluation
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data
 
 open Purelib.Data.Rat
@@ -49,7 +51,7 @@ ambient vertical interval. The polynomial and line retain their original coordin
 @[expose] def translatedCoordinate_verticalLineClearance
     (c : Gaussian.Basic.Canonical) (ambient : Box) (x : Fraction.Rational)
     (apart : x ≠ c.re) :
-    Clearance.Box.Line.Basic.VerticalLineClearance
+    Basic.VerticalLineClearance
       (Dense.Gaussian.Linear.Translated.translatedCoordinate c) ambient x where
   bound := (x - c.re) ^ 2
   positive := by
@@ -62,9 +64,9 @@ ambient vertical interval. The polynomial and line retain their original coordin
         _ = c.re := by ring1
     have squareNonzero : (x - c.re) ^ 2 ≠ 0 := by
       intro zero
-      exact nonzero ((Purelib.Data.Rat.Fraction.Order.Arithmetic.sq_eq_zero_direct _).mp zero)
+      exact nonzero ((Arithmetic.sq_eq_zero_direct _).mp zero)
     exact lt_of_le_of_ne
-      (Purelib.Data.Rat.Fraction.Order.Arithmetic.sq_nonneg_direct _) (Ne.symm squareNonzero)
+      (Arithmetic.sq_nonneg_direct _) (Ne.symm squareNonzero)
   lower := by
     intro y lower upper
     rw [Dense.Gaussian.Linear.Translated.translatedCoordinate_eval]
@@ -72,7 +74,7 @@ ambient vertical interval. The polynomial and line retain their original coordin
     change (x - c.re) ^ 2 <=
       (x - c.re) ^ 2 + (y - c.im) ^ 2
     exact le_add_of_nonneg_right
-      (Purelib.Data.Rat.Fraction.Order.Arithmetic.sq_nonneg_direct _)
+      (Arithmetic.sq_nonneg_direct _)
 
 /-- Quantitative clearance of the original translated coordinate on a displayed horizontal line.
 
@@ -81,7 +83,7 @@ original ambient horizontal interval. The polynomial and line retain their origi
 @[expose] def translatedCoordinate_horizontalLineClearance
     (c : Gaussian.Basic.Canonical) (ambient : Box) (y : Fraction.Rational)
     (apart : y ≠ c.im) :
-    Clearance.Box.Line.Basic.HorizontalLineClearance
+    Basic.HorizontalLineClearance
       (Dense.Gaussian.Linear.Translated.translatedCoordinate c) ambient y where
   bound := (y - c.im) ^ 2
   positive := by
@@ -94,9 +96,9 @@ original ambient horizontal interval. The polynomial and line retain their origi
         _ = c.im := by ring1
     have squareNonzero : (y - c.im) ^ 2 ≠ 0 := by
       intro zero
-      exact nonzero ((Purelib.Data.Rat.Fraction.Order.Arithmetic.sq_eq_zero_direct _).mp zero)
+      exact nonzero ((Arithmetic.sq_eq_zero_direct _).mp zero)
     exact lt_of_le_of_ne
-      (Purelib.Data.Rat.Fraction.Order.Arithmetic.sq_nonneg_direct _) (Ne.symm squareNonzero)
+      (Arithmetic.sq_nonneg_direct _) (Ne.symm squareNonzero)
   lower := by
     intro x lower upper
     rw [Dense.Gaussian.Linear.Translated.translatedCoordinate_eval]
@@ -104,5 +106,5 @@ original ambient horizontal interval. The polynomial and line retain their origi
     change (y - c.im) ^ 2 <=
       (x - c.re) ^ 2 + (y - c.im) ^ 2
     exact le_add_of_nonneg_left
-      (Purelib.Data.Rat.Fraction.Order.Arithmetic.sq_nonneg_direct _)
+      (Arithmetic.sq_nonneg_direct _)
 end Purelib.Polynomial.Clearance.Box.Line.Translated

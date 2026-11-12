@@ -32,6 +32,15 @@ def matrix₂ (topLeft topRight bottomLeft
       if column = 0 then topLeft else topRight
     else if column = 0 then bottomLeft else bottomRight
 
+/-- The four retained entries reconstruct the same structural two-by-two integral matrix. -/
+theorem matrix₂_entries (matrix : LinearAlgebra.Matrix.Basic.IntegralMatrix) :
+    matrix₂ (matrix 0 0) (matrix 0 1) (matrix 1 0) (matrix 1 1) = matrix := by
+  apply SquareMatrix.matrix_ext
+  intro row column
+  rcases Purelib.Data.Fin.Two.finTwo_cases row with first | second <;>
+    rcases Purelib.Data.Fin.Two.finTwo_cases column with firstColumn | secondColumn <;>
+    subst row <;> subst column <;> rfl
+
 open Purelib.LinearAlgebra renaming Matrix -> SquareMatrix in
 /-- Multiply two displayed two-by-two integral matrices by the explicit four entry formulas. -/
 theorem mul_matrix₂ (a b c d e f g h : Int) :

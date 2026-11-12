@@ -46,7 +46,7 @@ does not repeat those calculations or recover an inverse by choice.
 
 namespace Purelib.Algebra.Quadratic.Ternary.Basic.TernaryForm
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Field.ExplicitField K]
 section
 
 set_option genInjectivity false in
@@ -54,49 +54,49 @@ set_option genInjectivity false in
 displacement determines a reflection which sends its image back to the seed; composing on the right therefore produces
 an orientation-reversing isometry fixing that seed. -/
 structure DisplacementReflectionReduction (form :
-  Ternary.Basic.TernaryForm K)
+  TernaryForm K)
     (rotation : form.SpecialOrthogonal) where
   /-- The retained vector used for the first reflection reduction. -/ seed : Coordinates3.Vector K
   /-- The retained seed has nonzero form quadrance. -/ seedNonNull : form.quadrance seed ≠ 0
   /-- The retained reflection normal. -/ mirror : Coordinates3.Vector K
   /-- The normal is exactly the displacement of the seed under the input rotation. -/ mirror_eq : mirror =
-    Coordinates3.Vector.sub ((Algebra.Quadratic.Ternary.Basic.TernaryForm.Isometry.act rotation.toIsometry) seed) seed
+    Coordinates3.Vector.sub ((Isometry.act rotation.toIsometry) seed) seed
   /-- The displacement normal has nonzero form quadrance. -/ mirrorNonNull : form.quadrance mirror ≠ 0
   /-- The cached isometry after composing the input rotation with the displacement reflection. -/ reduced :
     form.Isometry
   /-- The cached result is the stated row-order product with the retained reflection. -/ reduced_eq : reduced =
-    Algebra.Quadratic.Ternary.Basic.TernaryForm.Isometry.mul rotation.toIsometry
+    Isometry.mul rotation.toIsometry
     (form.reflectionIsometry mirror mirrorNonNull)
   /-- The reduced isometry fixes the original seed. -/
-  seedFixed : Algebra.Quadratic.Ternary.Basic.TernaryForm.Isometry.act reduced seed = seed
+  seedFixed : Isometry.act reduced seed = seed
   /-- The reduced isometry has determinant minus one. -/ determinantMinusOne : Matrix3.determinant reduced.matrix = -1
 
 constructive_injectivity DisplacementReflectionReduction
 
 /-- Execute the first reflection reduction from the supplied finite denominator certificates. -/
 def displacementReflectionReduction (form :
-  Ternary.Basic.TernaryForm K)
+  TernaryForm K)
     (rotation : form.SpecialOrthogonal) (seed : Coordinates3.Vector K)
     (seedNonNull : form.quadrance seed ≠ 0)
     (displacementNonNull :
-      form.quadrance (Coordinates3.Vector.sub ((Algebra.Quadratic.Ternary.Basic.TernaryForm.Isometry.act
+      form.quadrance (Coordinates3.Vector.sub ((Isometry.act
           rotation.toIsometry) seed) seed) ≠ 0) :
     DisplacementReflectionReduction form rotation where
   seed := seed
   seedNonNull := seedNonNull
-  mirror := Coordinates3.Vector.sub ((Algebra.Quadratic.Ternary.Basic.TernaryForm.Isometry.act rotation.toIsometry)
+  mirror := Coordinates3.Vector.sub ((Isometry.act rotation.toIsometry)
       seed) seed
   mirror_eq := rfl
   mirrorNonNull := displacementNonNull
-  reduced := Algebra.Quadratic.Ternary.Basic.TernaryForm.Isometry.mul rotation.toIsometry
-    (form.reflectionIsometry (Coordinates3.Vector.sub ((Algebra.Quadratic.Ternary.Basic.TernaryForm.Isometry.act
+  reduced := Isometry.mul rotation.toIsometry
+    (form.reflectionIsometry (Coordinates3.Vector.sub ((Isometry.act
         rotation.toIsometry) seed) seed)
       displacementNonNull)
   reduced_eq := rfl
   seedFixed := by
-    rw [Algebra.Quadratic.Ternary.Basic.TernaryForm.Isometry.act_mul]
-    change Matrix3.rowMul ((Algebra.Quadratic.Ternary.Basic.TernaryForm.Isometry.act rotation.toIsometry) seed)
-      (form.reflection (Coordinates3.Vector.sub ((Algebra.Quadratic.Ternary.Basic.TernaryForm.Isometry.act
+    rw [Isometry.act_mul]
+    change Matrix3.rowMul ((Isometry.act rotation.toIsometry) seed)
+      (form.reflection (Coordinates3.Vector.sub ((Isometry.act
           rotation.toIsometry) seed) seed)
         displacementNonNull) = seed
     apply form.rowMul_reflection_difference
@@ -104,35 +104,35 @@ def displacementReflectionReduction (form :
   determinantMinusOne := by
     change Matrix3.determinant
       (Matrix3.mul rotation.matrix
-        (form.reflection (Coordinates3.Vector.sub ((Algebra.Quadratic.Ternary.Basic.TernaryForm.Isometry.act
+        (form.reflection (Coordinates3.Vector.sub ((Isometry.act
             rotation.toIsometry) seed) seed)
           displacementNonNull)) = -1
     rw [Matrix3.determinant_mul, rotation.determinantOne,
       form.determinant_reflection, one_mul]
 
 /-- Form-relative half turn about a non-null axis. -/
-def halfTurn (form : Ternary.Basic.TernaryForm K) (vector :
+def halfTurn (form : TernaryForm K) (vector :
   Coordinates3.Vector K)
-    (nonNull : form.quadrance vector ≠ 0) : Coordinates3.Matrix3 K :=
+    (nonNull : form.quadrance vector ≠ 0) : Matrix3 K :=
   Matrix3.neg (form.reflection vector nonNull)
 
 /-- The form-relative half turn squares to the identity matrix. -/
-theorem halfTurn_square (form : Ternary.Basic.TernaryForm K)
+theorem halfTurn_square (form : TernaryForm K)
   (vector : Coordinates3.Vector K)
     (nonNull : form.quadrance vector ≠ 0) :
     Matrix3.mul (form.halfTurn vector nonNull)
       (form.halfTurn vector nonNull) = Matrix3.identity := by
-  unfold TernaryForm.halfTurn
+  unfold halfTurn
   rw [Matrix3.mul_neg_neg, form.reflection_square]
 
 /-- The form-relative half turn preserves the displayed ternary form. -/
 theorem halfTurn_preservesMatrix (form :
-  Ternary.Basic.TernaryForm K)
+  TernaryForm K)
     (vector : Coordinates3.Vector K) (nonNull : form.quadrance vector ≠ 0) :
     Matrix3.mul (Matrix3.mul (form.halfTurn vector nonNull) form.matrix)
         (Matrix3.transpose (form.halfTurn vector nonNull)) =
       form.matrix := by
-  unfold TernaryForm.halfTurn
+  unfold halfTurn
   rw [Matrix3.transpose_neg]
   calc
     Matrix3.mul
@@ -147,15 +147,15 @@ theorem halfTurn_preservesMatrix (form :
 
 /-- The form-relative half turn has determinant one. -/
 theorem determinant_halfTurn (form :
-  Ternary.Basic.TernaryForm K) (vector : Coordinates3.Vector K)
+  TernaryForm K) (vector : Coordinates3.Vector K)
     (nonNull : form.quadrance vector ≠ 0) :
     Matrix3.determinant (form.halfTurn vector nonNull) = 1 := by
-  unfold TernaryForm.halfTurn
+  unfold halfTurn
   rw [Matrix3.determinant_neg, form.determinant_reflection]
   ring1
 
 /-- The form-relative half turn packaged as a determinant-one isometry. -/
-def halfTurnRotation (form : Ternary.Basic.TernaryForm K)
+def halfTurnRotation (form : TernaryForm K)
   (vector : Coordinates3.Vector K)
     (nonNull : form.quadrance vector ≠ 0) : form.SpecialOrthogonal where
   matrix := form.halfTurn vector nonNull
@@ -168,32 +168,32 @@ def halfTurnRotation (form : Ternary.Basic.TernaryForm K)
 /-- Exact coordinate evaluation of a Minkowski half turn. -/
 theorem minkowski_coordinate_halfTurn (oneNonzero : (1 : K) ≠
   0) :
-    (TernaryForm.minkowski oneNonzero).halfTurn (⟨1, 0, 0⟩ : Coordinates3.Vector K) (by
+    (minkowski oneNonzero).halfTurn (⟨1, 0, 0⟩ : Coordinates3.Vector K) (by
       intro quadranceZero
       apply oneNonzero
       calc
         (1 : K) =
-            (TernaryForm.minkowski oneNonzero).quadrance (⟨1, 0, 0⟩ : Coordinates3.Vector K) := by
-          rw [TernaryForm.quadrance_minkowski]
+            (minkowski oneNonzero).quadrance (⟨1, 0, 0⟩ : Coordinates3.Vector K) := by
+          rw [quadrance_minkowski]
           ring1
         _ = 0 := quadranceZero) =
-      (⟨1, 0, 0, 0, -1, 0, 0, 0, -1⟩ : Coordinates3.Matrix3 K) := by
+      (⟨1, 0, 0, 0, -1, 0, 0, 0, -1⟩ : Matrix3 K) := by
   let axis : Coordinates3.Vector K := ⟨1, 0, 0⟩
   have axisQuadrance :
-      (TernaryForm.minkowski oneNonzero).quadrance axis = (1 : K) := by
-    rw [TernaryForm.quadrance_minkowski]
+      (minkowski oneNonzero).quadrance axis = (1 : K) := by
+    rw [quadrance_minkowski]
     unfold axis
     ring1
   have oneInverse : ((1 : K)⁻¹) = 1 := by
     calc
       (1 : K)⁻¹ = 1 * (1 : K)⁻¹ := by rw [one_mul]
-      _ = 1 := Algebra.Field.ExplicitField.mul_inv_cancel 1 oneNonzero
-  change (TernaryForm.minkowski oneNonzero).halfTurn axis _ = _
-  unfold TernaryForm.halfTurn TernaryForm.reflection
+      _ = 1 := Field.ExplicitField.mul_inv_cancel 1 oneNonzero
+  change (minkowski oneNonzero).halfTurn axis _ = _
+  unfold halfTurn reflection
   rw [axisQuadrance]
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  simp only [Field.ExplicitField.div_eq_mul_inv]
   rw [oneInverse]
-  ext <;> unfold TernaryForm.dual TernaryForm.minkowski TernaryForm.ofMatrix Matrix3.neg Matrix3.sub
+  ext <;> unfold dual minkowski ofMatrix Matrix3.neg Matrix3.sub
     Matrix3.identity Matrix3.scale Matrix3.outer Matrix3.rowMul axis <;> ring1
 
 end
@@ -442,9 +442,9 @@ theorem halfTurnRotation_neg (form : TernaryForm K) (axis : Vector3 K)
     (nonNull : form.quadrance axis ≠ 0) :
     form.halfTurnRotation (Vector3.neg axis) (by rw [form.quadrance_neg]; exact nonNull) =
       form.halfTurnRotation axis nonNull := by
-  apply Purelib.Geometry.Rotations.Ternary.Basic.TernaryForm.SpecialOrthogonal.eq_of_matrix_eq
+  apply SpecialOrthogonal.eq_of_matrix_eq
   change form.halfTurn (Vector3.neg axis) _ = form.halfTurn axis nonNull
-  unfold TernaryForm.halfTurn
+  unfold halfTurn
   rw [form.reflection_neg]
 
 /-- The row space of identity plus a half turn consists of explicit scalar multiples of its original axis. -/

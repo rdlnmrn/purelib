@@ -18,6 +18,8 @@ public import Purelib.Polynomial.Dense.Gaussian.Newton.Basic
 import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Resource
+
 open Purelib.Data
 
 open Purelib
@@ -42,8 +44,8 @@ namespace Purelib.Polynomial.Dense.Gaussian.Newton.Resource
 @[expose] def normalizedNewtonQuotient (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (point : Gaussian.Basic.Canonical) : Gaussian.Basic.Number :=
   Gaussian.Field.div
-    (Dense.Basic.DensePolynomial.eval polynomial point)
-    (Dense.Gaussian.Derivative.Evaluation.derivativeEval polynomial point)
+    (Basic.DensePolynomial.eval polynomial point)
+    (Derivative.Evaluation.derivativeEval polynomial point)
 end Purelib.Polynomial.Dense.Gaussian.Newton.Resource
 
 end
@@ -59,9 +61,9 @@ It combines the source and derivative evaluation envelopes, their quotient envel
 retained point. -/
 @[expose] def newtonMagnitudeEnvelope (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (point : Gaussian.Basic.Canonical) : Nat :=
-  let sourceBound := Dense.Gaussian.Evaluation.Resource.magnitudeEnvelope point polynomial.coeffs
-  let derivativeBound := Dense.Gaussian.Evaluation.Resource.magnitudeEnvelope point
-    (Dense.Derivative.derivative polynomial).coeffs
+  let sourceBound := Evaluation.Resource.magnitudeEnvelope point polynomial.coeffs
+  let derivativeBound := Evaluation.Resource.magnitudeEnvelope point
+    (Derivative.derivative polynomial).coeffs
   let quotientBound := Gaussian.Resource.divMagnitudeEnvelope
     sourceBound derivativeBound
   Gaussian.Resource.addMagnitudeEnvelope
@@ -79,10 +81,10 @@ namespace Purelib.Polynomial.Dense.Gaussian.Newton.Resource
 quotient, and returned Newton centre. -/
 @[expose] def normalizedNewtonWorkingEnvelope (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (point : Gaussian.Basic.Canonical) : Nat :=
-  let source := Dense.Gaussian.Evaluation.Resource.magnitudeEnvelope point
+  let source := Evaluation.Resource.magnitudeEnvelope point
     polynomial.coeffs
-  let derivative := Dense.Gaussian.Evaluation.Resource.magnitudeEnvelope point
-    (Dense.Derivative.derivative polynomial).coeffs
+  let derivative := Evaluation.Resource.magnitudeEnvelope point
+    (Derivative.derivative polynomial).coeffs
   let quotient := Gaussian.Resource.divMagnitudeEnvelope source derivative
   max source (max derivative
     (max quotient
@@ -115,10 +117,10 @@ theorem normalizedNewtonQuotient_width_le_budget
     Gaussian.Resource.workingGaussianWidth (normalizedNewtonQuotient polynomial point) ≤
       normalizedNewtonBitBudget polynomial point := by
   apply Data.Nat.BitWidth.natWidth_mono
-  have source := Dense.Gaussian.Evaluation.Resource.eval_magnitude_le_envelope
+  have source := Evaluation.Resource.eval_magnitude_le_envelope
     polynomial point
-  have derivative := Dense.Gaussian.Evaluation.Resource.eval_magnitude_le_envelope
-    (Dense.Derivative.derivative polynomial) point
+  have derivative := Evaluation.Resource.eval_magnitude_le_envelope
+    (Derivative.derivative polynomial) point
   refine (Gaussian.Resource.componentMagnitude_div_le _ _).trans
     ((Gaussian.Resource.divMagnitudeEnvelope_mono source derivative).trans
       ?_)
@@ -138,13 +140,13 @@ namespace Purelib.Polynomial.Dense.Gaussian.Newton.Resource
 theorem normalizedNewton_derivativeTrace_width_le_budget
     (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial) (point : Gaussian.Basic.Canonical)
     {candidate : Gaussian.Basic.Number}
-    (member : candidate ∈ Dense.Gaussian.Evaluation.Trace.trace point
-      (Dense.Derivative.derivative polynomial).coeffs) :
+    (member : candidate ∈ Evaluation.Trace.trace point
+      (Derivative.derivative polynomial).coeffs) :
     Gaussian.Resource.workingGaussianWidth candidate ≤
       normalizedNewtonBitBudget polynomial point := by
   apply Data.Nat.BitWidth.natWidth_mono
-  refine (Dense.Gaussian.Evaluation.Resource.trace_magnitude_le_envelope point
-    (Dense.Derivative.derivative polynomial).coeffs member).trans ?_
+  refine (Evaluation.Resource.trace_magnitude_le_envelope point
+    (Derivative.derivative polynomial).coeffs member).trans ?_
   unfold normalizedNewtonWorkingEnvelope
   exact (Data.Nat.Order.le_max_left _ _).trans (Data.Nat.Order.le_max_right _ _)
 end Purelib.Polynomial.Dense.Gaussian.Newton.Resource
@@ -161,11 +163,11 @@ theorem normalizedNewton_sourceTrace_width_le_budget
     (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial) (point : Gaussian.Basic.Canonical)
     {candidate : Gaussian.Basic.Number}
     (member : candidate ∈
-      Dense.Gaussian.Evaluation.Trace.trace point polynomial.coeffs) :
+      Evaluation.Trace.trace point polynomial.coeffs) :
     Gaussian.Resource.workingGaussianWidth candidate ≤
       normalizedNewtonBitBudget polynomial point := by
   apply Data.Nat.BitWidth.natWidth_mono
-  refine (Dense.Gaussian.Evaluation.Resource.trace_magnitude_le_envelope
+  refine (Evaluation.Resource.trace_magnitude_le_envelope
     point polynomial.coeffs member).trans ?_
   unfold normalizedNewtonWorkingEnvelope
   exact Data.Nat.Order.le_max_left _ _
@@ -181,34 +183,34 @@ namespace Purelib.Polynomial.Dense.Gaussian.Newton.Resource
 /-- The exact Newton center is bounded by the computed Newton magnitude envelope. -/
 theorem newtonCenter_magnitude_le (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (point : Gaussian.Basic.Canonical) :
-    Gaussian.Resource.GaussianNormalized.componentMagnitude
-        (Dense.Gaussian.Newton.Basic.newtonCenter polynomial point) ≤
+    GaussianNormalized.componentMagnitude
+        (Basic.newtonCenter polynomial point) ≤
       newtonMagnitudeEnvelope polynomial point := by
-  let sourceBound := Dense.Gaussian.Evaluation.Resource.magnitudeEnvelope point polynomial.coeffs
-  let derivativeBound := Dense.Gaussian.Evaluation.Resource.magnitudeEnvelope point
-    (Dense.Derivative.derivative polynomial).coeffs
+  let sourceBound := Evaluation.Resource.magnitudeEnvelope point polynomial.coeffs
+  let derivativeBound := Evaluation.Resource.magnitudeEnvelope point
+    (Derivative.derivative polynomial).coeffs
   let quotientBound := Gaussian.Resource.divMagnitudeEnvelope
     sourceBound derivativeBound
-  have sourceMagnitude : Gaussian.Resource.GaussianNormalized.componentMagnitude
-      (Dense.Basic.DensePolynomial.eval polynomial point) ≤ sourceBound :=
-    Dense.Gaussian.Evaluation.Resource.eval_magnitude_le_envelope polynomial point
-  have derivativeMagnitude : Gaussian.Resource.GaussianNormalized.componentMagnitude
-      (Dense.Gaussian.Derivative.Evaluation.derivativeEval polynomial point) ≤ derivativeBound :=
-    Dense.Gaussian.Evaluation.Resource.eval_magnitude_le_envelope
-      (Dense.Derivative.derivative polynomial) point
-  have quotientMagnitude : Gaussian.Resource.GaussianNormalized.componentMagnitude
-      (Gaussian.Field.div (Dense.Basic.DensePolynomial.eval polynomial point)
-        (Dense.Gaussian.Derivative.Evaluation.derivativeEval polynomial point)) ≤ quotientBound :=
+  have sourceMagnitude : GaussianNormalized.componentMagnitude
+      (Basic.DensePolynomial.eval polynomial point) ≤ sourceBound :=
+    Evaluation.Resource.eval_magnitude_le_envelope polynomial point
+  have derivativeMagnitude : GaussianNormalized.componentMagnitude
+      (Derivative.Evaluation.derivativeEval polynomial point) ≤ derivativeBound :=
+    Evaluation.Resource.eval_magnitude_le_envelope
+      (Derivative.derivative polynomial) point
+  have quotientMagnitude : GaussianNormalized.componentMagnitude
+      (Gaussian.Field.div (Basic.DensePolynomial.eval polynomial point)
+        (Derivative.Evaluation.derivativeEval polynomial point)) ≤ quotientBound :=
     (Gaussian.Resource.componentMagnitude_div_le _ _).trans
       (Gaussian.Resource.divMagnitudeEnvelope_mono
         sourceMagnitude derivativeMagnitude)
   have result := (Gaussian.Resource.componentMagnitude_sub_le
     (Gaussian.Basic.ofGaussian point)
-    (Gaussian.Field.div (Dense.Basic.DensePolynomial.eval polynomial point)
-      (Dense.Gaussian.Derivative.Evaluation.derivativeEval polynomial point))).trans
+    (Gaussian.Field.div (Basic.DensePolynomial.eval polynomial point)
+      (Derivative.Evaluation.derivativeEval polynomial point))).trans
         (Gaussian.Resource.addMagnitudeEnvelope_mono
           (le_refl _) quotientMagnitude)
-  simpa only [Dense.Gaussian.Newton.Basic.newtonCenter, newtonMagnitudeEnvelope, Gaussian.Resource.componentMagnitude,
+  simpa only [Basic.newtonCenter, newtonMagnitudeEnvelope, Gaussian.Resource.componentMagnitude,
     sourceBound,
     derivativeBound, quotientBound] using result
 end Purelib.Polynomial.Dense.Gaussian.Newton.Resource
@@ -224,7 +226,7 @@ namespace Purelib.Polynomial.Dense.Gaussian.Newton.Resource
 theorem normalizedNewtonCenter_width_le_budget
     (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial) (point : Gaussian.Basic.Canonical) :
     Gaussian.Resource.workingGaussianWidth
-        (Dense.Gaussian.Newton.Basic.newtonCenter polynomial point) ≤
+        (Basic.newtonCenter polynomial point) ≤
       normalizedNewtonBitBudget polynomial point := by
   apply Data.Nat.BitWidth.natWidth_mono
   refine (newtonCenter_magnitude_le
@@ -244,14 +246,14 @@ namespace Purelib.Polynomial.Dense.Gaussian.Newton.Resource
 /-- An arithmetic-step envelope for source evaluation, derivative evaluation, quotient and Newton subtraction. -/
 @[expose] def newtonStepEnvelope (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (point : Gaussian.Basic.Canonical) : Nat :=
-  let sourceBound := Dense.Gaussian.Evaluation.Resource.magnitudeEnvelope point polynomial.coeffs
-  let derivativeBound := Dense.Gaussian.Evaluation.Resource.magnitudeEnvelope point
-    (Dense.Derivative.derivative polynomial).coeffs
+  let sourceBound := Evaluation.Resource.magnitudeEnvelope point polynomial.coeffs
+  let derivativeBound := Evaluation.Resource.magnitudeEnvelope point
+    (Derivative.derivative polynomial).coeffs
   let quotientBound := Gaussian.Resource.divMagnitudeEnvelope
     sourceBound derivativeBound
-  Dense.Gaussian.Evaluation.Resource.arithmeticEnvelope point polynomial.coeffs +
-    Dense.Gaussian.Evaluation.Resource.arithmeticEnvelope point
-      (Dense.Derivative.derivative polynomial).coeffs +
+  Evaluation.Resource.arithmeticEnvelope point polynomial.coeffs +
+    Evaluation.Resource.arithmeticEnvelope point
+      (Derivative.derivative polynomial).coeffs +
     Gaussian.Resource.divStepEnvelope sourceBound derivativeBound +
     Gaussian.Resource.subStepEnvelope
       (Gaussian.Resource.componentMagnitude point) quotientBound
@@ -282,11 +284,11 @@ namespace Purelib.Polynomial.Dense.Gaussian.Newton.Resource
 The quotient and subtraction costs use the actual evaluated source and derivative values. -/
 @[expose] def newtonSteps (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (point : Gaussian.Basic.Canonical) : Nat :=
-  let sourceValue := Dense.Basic.DensePolynomial.eval polynomial point
-  let derivativeValue := Dense.Gaussian.Derivative.Evaluation.derivativeEval polynomial point
+  let sourceValue := Basic.DensePolynomial.eval polynomial point
+  let derivativeValue := Derivative.Evaluation.derivativeEval polynomial point
   let quotient := Gaussian.Field.div sourceValue derivativeValue
-  Dense.Gaussian.Evaluation.Trace.steps point polynomial.coeffs +
-    Dense.Gaussian.Evaluation.Trace.steps point (Dense.Derivative.derivative polynomial).coeffs +
+  Evaluation.Trace.steps point polynomial.coeffs +
+    Evaluation.Trace.steps point (Derivative.derivative polynomial).coeffs +
     Gaussian.Resource.divSteps sourceValue derivativeValue +
     Gaussian.Resource.subSteps
       (Gaussian.Basic.ofGaussian point) quotient
@@ -303,28 +305,28 @@ namespace Purelib.Polynomial.Dense.Gaussian.Newton.Resource
 theorem newtonSteps_le_envelope (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (point : Gaussian.Basic.Canonical) :
     newtonSteps polynomial point ≤ newtonStepEnvelope polynomial point := by
-  let sourceValue := Dense.Basic.DensePolynomial.eval polynomial point
-  let derivativeValue := Dense.Gaussian.Derivative.Evaluation.derivativeEval polynomial point
+  let sourceValue := Basic.DensePolynomial.eval polynomial point
+  let derivativeValue := Derivative.Evaluation.derivativeEval polynomial point
   let quotient := Gaussian.Field.div sourceValue derivativeValue
-  let sourceBound := Dense.Gaussian.Evaluation.Resource.magnitudeEnvelope point polynomial.coeffs
-  let derivativeBound := Dense.Gaussian.Evaluation.Resource.magnitudeEnvelope point
-    (Dense.Derivative.derivative polynomial).coeffs
+  let sourceBound := Evaluation.Resource.magnitudeEnvelope point polynomial.coeffs
+  let derivativeBound := Evaluation.Resource.magnitudeEnvelope point
+    (Derivative.derivative polynomial).coeffs
   let quotientBound := Gaussian.Resource.divMagnitudeEnvelope
     sourceBound derivativeBound
-  have sourceMagnitude : Gaussian.Resource.GaussianNormalized.componentMagnitude
-      sourceValue ≤ sourceBound := Dense.Gaussian.Evaluation.Resource.eval_magnitude_le_envelope polynomial point
-  have derivativeMagnitude : Gaussian.Resource.GaussianNormalized.componentMagnitude
+  have sourceMagnitude : GaussianNormalized.componentMagnitude
+      sourceValue ≤ sourceBound := Evaluation.Resource.eval_magnitude_le_envelope polynomial point
+  have derivativeMagnitude : GaussianNormalized.componentMagnitude
       derivativeValue ≤ derivativeBound :=
-    Dense.Gaussian.Evaluation.Resource.eval_magnitude_le_envelope
-      (Dense.Derivative.derivative polynomial) point
-  have quotientMagnitude : Gaussian.Resource.GaussianNormalized.componentMagnitude
+    Evaluation.Resource.eval_magnitude_le_envelope
+      (Derivative.derivative polynomial) point
+  have quotientMagnitude : GaussianNormalized.componentMagnitude
       quotient ≤ quotientBound :=
     (Gaussian.Resource.componentMagnitude_div_le _ _).trans
       (Gaussian.Resource.divMagnitudeEnvelope_mono
         sourceMagnitude derivativeMagnitude)
-  have sourceSteps := Dense.Gaussian.Evaluation.Resource.steps_le_envelope point polynomial.coeffs
-  have derivativeSteps := Dense.Gaussian.Evaluation.Resource.steps_le_envelope point
-    (Dense.Derivative.derivative polynomial).coeffs
+  have sourceSteps := Evaluation.Resource.steps_le_envelope point polynomial.coeffs
+  have derivativeSteps := Evaluation.Resource.steps_le_envelope point
+    (Derivative.derivative polynomial).coeffs
   have divisionSteps := (Gaussian.Resource.divSteps_le_envelope
     sourceValue derivativeValue).trans
       (Gaussian.Resource.divStepEnvelope_mono

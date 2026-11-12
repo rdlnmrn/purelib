@@ -20,6 +20,9 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 import Purelib.Data.Rat.Bounds.Square
 
+open Purelib.Data.Rat.Fraction.Order
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 open Purelib
@@ -45,65 +48,67 @@ namespace Purelib.Geometry.Rational.Box
 
 /-- The squared real-coordinate difference of two box members is bounded by the squared diagonal. -/
 theorem real_sub_sq_le_diagonalSq
-    {current : Rational.Box} {left right : Data.Gaussian.Basic.Canonical}
+    {current : Box} {left right : Data.Gaussian.Basic.Canonical}
     (leftInside : current.Contains left)
     (rightInside : current.Contains right) :
     (left.re - right.re) ^ 2 ≤ current.diagonalSq := by
   have distance := current.normSq_sub_le_diagonalSq leftInside rightInside
   have imaginaryNonnegative :
       0 ≤ (left.im - right.im) ^ 2 :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct _
+    Arithmetic.sq_nonneg_direct _
   calc
     (left.re - right.re) ^ 2 =
         (left.re - right.re) ^ 2 + 0 := by ring1
     _ ≤ (left.re - right.re) ^ 2 +
         (left.im - right.im) ^ 2 :=
       add_le_add le_rfl imaginaryNonnegative
-    _ = Data.Gaussian.Norm.Basic.normSq (left - right) := by
-      simp only [Data.Gaussian.Norm.Basic.normSq, Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+    _ = Basic.normSq (left - right) := by
+      simp only [Basic.normSq, Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
         -eq_self, -iff_self]
       rfl
     _ ≤ current.diagonalSq := distance
 
 /-- The squared imaginary-coordinate difference of two box members is bounded by the squared diagonal. -/
 theorem imag_sub_sq_le_diagonalSq
-    {current : Rational.Box} {left right : Data.Gaussian.Basic.Canonical}
+    {current : Box} {left right : Data.Gaussian.Basic.Canonical}
     (leftInside : current.Contains left)
     (rightInside : current.Contains right) :
     (left.im - right.im) ^ 2 ≤ current.diagonalSq := by
   have distance := current.normSq_sub_le_diagonalSq leftInside rightInside
   have realNonnegative :
       0 ≤ (left.re - right.re) ^ 2 :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct _
+    Arithmetic.sq_nonneg_direct _
   calc
     (left.im - right.im) ^ 2 =
         0 + (left.im - right.im) ^ 2 := by ring1
     _ ≤ (left.re - right.re) ^ 2 +
         (left.im - right.im) ^ 2 :=
       add_le_add realNonnegative le_rfl
-    _ = Data.Gaussian.Norm.Basic.normSq (left - right) := by
-      simp only [Data.Gaussian.Norm.Basic.normSq, Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+    _ = Basic.normSq (left - right) := by
+      simp only [Basic.normSq, Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
         -eq_self, -iff_self]
       rfl
     _ ≤ current.diagonalSq := distance
 
 /-- The squared sum of two real coordinates is at most four times the enclosing endpoint-square bound. -/
 private theorem real_add_sq_le_coordinateSqBound
-    {bounding current : Rational.Box} {left right : Data.Gaussian.Basic.Canonical}
+    {bounding current : Box} {left right : Data.Gaussian.Basic.Canonical}
     (refines : current.Refines bounding)
     (leftInside : current.Contains left)
     (rightInside : current.Contains right) :
     (left.re + right.re) ^ 2 ≤ 4 * bounding.coordinateSqBound := by
   have leftBounding := refines.contains leftInside
   have rightBounding := refines.contains rightInside
-  have leftSquare : left.re ^ 2 ≤ bounding.coordinateSqBound :=
-    (Rational.Box.sq_le_endpoint_max
+  have leftSquare : left.re ^ 2 ≤ bounding.coordinateSqBound := by
+    rewrite [coordinateSqBound_eq_original]
+    exact (sq_le_endpoint_max
       leftBounding.1 leftBounding.2.1).trans
-      (Purelib.Data.Rat.Fraction.Order.Basic.le_max_left _ _)
-  have rightSquare : right.re ^ 2 ≤ bounding.coordinateSqBound :=
-    (Rational.Box.sq_le_endpoint_max
+      (Basic.le_max_left _ _)
+  have rightSquare : right.re ^ 2 ≤ bounding.coordinateSqBound := by
+    rewrite [coordinateSqBound_eq_original]
+    exact (sq_le_endpoint_max
       rightBounding.1 rightBounding.2.1).trans
-      (Purelib.Data.Rat.Fraction.Order.Basic.le_max_left _ _)
+      (Basic.le_max_left _ _)
   have sumSquares :
       left.re ^ 2 + right.re ^ 2 ≤
         bounding.coordinateSqBound + bounding.coordinateSqBound :=
@@ -112,30 +117,32 @@ private theorem real_add_sq_le_coordinateSqBound
   calc
     (left.re + right.re) ^ 2 ≤
         2 * (left.re ^ 2 + right.re ^ 2) :=
-      Purelib.Data.Rat.Bounds.Square.add_sq_le_two _ _
+      Bounds.Square.add_sq_le_two _ _
     _ ≤ 2 * (bounding.coordinateSqBound +
         bounding.coordinateSqBound) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         sumSquares twoNonnegative
     _ = 4 * bounding.coordinateSqBound := by ring1
 
 /-- The squared sum of two imaginary coordinates is at most four times the enclosing endpoint-square bound. -/
 private theorem imag_add_sq_le_coordinateSqBound
-    {bounding current : Rational.Box} {left right : Data.Gaussian.Basic.Canonical}
+    {bounding current : Box} {left right : Data.Gaussian.Basic.Canonical}
     (refines : current.Refines bounding)
     (leftInside : current.Contains left)
     (rightInside : current.Contains right) :
     (left.im + right.im) ^ 2 ≤ 4 * bounding.coordinateSqBound := by
   have leftBounding := refines.contains leftInside
   have rightBounding := refines.contains rightInside
-  have leftSquare : left.im ^ 2 ≤ bounding.coordinateSqBound :=
-    (Rational.Box.sq_le_endpoint_max
+  have leftSquare : left.im ^ 2 ≤ bounding.coordinateSqBound := by
+    rewrite [coordinateSqBound_eq_original]
+    exact (sq_le_endpoint_max
       leftBounding.2.2.1 leftBounding.2.2.2).trans
-      (Purelib.Data.Rat.Fraction.Order.Basic.le_max_right _ _)
-  have rightSquare : right.im ^ 2 ≤ bounding.coordinateSqBound :=
-    (Rational.Box.sq_le_endpoint_max
+      (Basic.le_max_right _ _)
+  have rightSquare : right.im ^ 2 ≤ bounding.coordinateSqBound := by
+    rewrite [coordinateSqBound_eq_original]
+    exact (sq_le_endpoint_max
       rightBounding.2.2.1 rightBounding.2.2.2).trans
-      (Purelib.Data.Rat.Fraction.Order.Basic.le_max_right _ _)
+      (Basic.le_max_right _ _)
   have sumSquares :
       left.im ^ 2 + right.im ^ 2 ≤
         bounding.coordinateSqBound + bounding.coordinateSqBound :=
@@ -144,10 +151,10 @@ private theorem imag_add_sq_le_coordinateSqBound
   calc
     (left.im + right.im) ^ 2 ≤
         2 * (left.im ^ 2 + right.im ^ 2) :=
-      Purelib.Data.Rat.Bounds.Square.add_sq_le_two _ _
+      Bounds.Square.add_sq_le_two _ _
     _ ≤ 2 * (bounding.coordinateSqBound +
         bounding.coordinateSqBound) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         sumSquares twoNonnegative
     _ = 4 * bounding.coordinateSqBound := by ring1
 
@@ -156,11 +163,11 @@ squared diagonal.
 
 Both points belong to the same current box, which retains its coordinatewise refinement of the bounding box. -/
 theorem normSq_sub_sq_le
-    {bounding current : Rational.Box} {left right : Data.Gaussian.Basic.Canonical}
+    {bounding current : Box} {left right : Data.Gaussian.Basic.Canonical}
     (refines : current.Refines bounding)
     (leftInside : current.Contains left)
     (rightInside : current.Contains right) :
-    (Data.Gaussian.Norm.Basic.normSq left - Data.Gaussian.Norm.Basic.normSq right) ^ 2 ≤
+    (Basic.normSq left - Basic.normSq right) ^ 2 ≤
       16 * bounding.coordinateSqBound * current.diagonalSq := by
   have realDifference := real_sub_sq_le_diagonalSq leftInside rightInside
   have imaginaryDifference := imag_sub_sq_le_diagonalSq leftInside rightInside
@@ -171,18 +178,18 @@ theorem normSq_sub_sq_le
   have realProduct :
       ((left.re - right.re) * (left.re + right.re)) ^ 2 ≤
         current.diagonalSq * (4 * bounding.coordinateSqBound) := by
-    rw [Purelib.Algebra.Semiring.Normalization.product_pow]
-    exact Fraction.Order.Arithmetic.mul_le_mul_direct
+    rw [Algebra.Semiring.Normalization.product_pow]
+    exact Arithmetic.mul_le_mul_direct
       realDifference realSum
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+      (Arithmetic.sq_nonneg_direct _)
       current.diagonalSq_nonneg
   have imaginaryProduct :
       ((left.im - right.im) * (left.im + right.im)) ^ 2 ≤
         current.diagonalSq * (4 * bounding.coordinateSqBound) := by
-    rw [Purelib.Algebra.Semiring.Normalization.product_pow]
-    exact Fraction.Order.Arithmetic.mul_le_mul_direct
+    rw [Algebra.Semiring.Normalization.product_pow]
+    exact Arithmetic.mul_le_mul_direct
       imaginaryDifference imaginarySum
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+      (Arithmetic.sq_nonneg_direct _)
       current.diagonalSq_nonneg
   have productSum :
       ((left.re - right.re) * (left.re + right.re)) ^ 2 +
@@ -192,19 +199,19 @@ theorem normSq_sub_sq_le
     add_le_add realProduct imaginaryProduct
   have twoNonnegative : (0 : Fraction.Rational) ≤ 2 := by decide
   calc
-    (Data.Gaussian.Norm.Basic.normSq left - Data.Gaussian.Norm.Basic.normSq right) ^ 2 =
+    (Basic.normSq left - Basic.normSq right) ^ 2 =
         ((left.re - right.re) * (left.re + right.re) +
           (left.im - right.im) * (left.im + right.im)) ^ 2 := by
-      simp only [Data.Gaussian.Norm.Basic.normSq, -eq_self, -iff_self]
+      simp only [Basic.normSq, -eq_self, -iff_self]
       ring1
     _ ≤ 2 *
         (((left.re - right.re) * (left.re + right.re)) ^ 2 +
           ((left.im - right.im) * (left.im + right.im)) ^ 2) :=
-      Purelib.Data.Rat.Bounds.Square.add_sq_le_two _ _
+      Bounds.Square.add_sq_le_two _ _
     _ ≤ 2 *
         (current.diagonalSq * (4 * bounding.coordinateSqBound) +
           current.diagonalSq * (4 * bounding.coordinateSqBound)) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         productSum twoNonnegative
     _ = 16 * bounding.coordinateSqBound * current.diagonalSq := by
       ring1

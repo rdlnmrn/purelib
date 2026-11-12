@@ -38,6 +38,8 @@ import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Polynomial.Dense.Multiplication
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Clearance.Box.Line
+
 section
 public section
 
@@ -115,11 +117,11 @@ theorem baseCurve_degree :
       (Box.largeSquareBox baseCurve.polynomial) x :=
   VerticalLineClearance.mul
     (VerticalLineClearance.mul
-      (Clearance.Box.Line.Translated.translatedCoordinate_verticalLineClearance
+      (Translated.translatedCoordinate_verticalLineClearance
         0 _ x apartZero)
-      (Clearance.Box.Line.Translated.translatedCoordinate_verticalLineClearance
+      (Translated.translatedCoordinate_verticalLineClearance
         baseParameter _ x apartMoving))
-    (Clearance.Box.Line.Translated.translatedCoordinate_verticalLineClearance
+    (Translated.translatedCoordinate_verticalLineClearance
       1 _ x apartOne)
 
 /-- Transport the factorwise vertical clearance to the exact loop-base polynomial. -/
@@ -144,11 +146,11 @@ theorem baseCurve_degree :
       (Box.largeSquareBox baseCurve.polynomial) y :=
   HorizontalLineClearance.mul
     (HorizontalLineClearance.mul
-      (Clearance.Box.Line.Translated.translatedCoordinate_horizontalLineClearance
+      (Translated.translatedCoordinate_horizontalLineClearance
         0 _ y apartZero)
-      (Clearance.Box.Line.Translated.translatedCoordinate_horizontalLineClearance
+      (Translated.translatedCoordinate_horizontalLineClearance
         baseParameter _ y apartMoving))
-    (Clearance.Box.Line.Translated.translatedCoordinate_horizontalLineClearance
+    (Translated.translatedCoordinate_horizontalLineClearance
       1 _ y apartZero)
 
 /-- Transport the factorwise horizontal clearance to the exact loop-base polynomial. -/
@@ -349,7 +351,7 @@ theorem periodClearanceFloor_positive :
 @[expose] def boundaryClearanceWithFloor
     {polynomial : CoefficientPolynomial}
     {box : Rational.Box}
-    (lower : ∀ value : Gaussian.Basic.Canonical,
+    (lower : ∀ value : Gaussian,
       Rational.Box.Boundary.OnBoxBoundary box value →
         periodClearanceFloor <=
           Norm.Basic.normSq
@@ -371,7 +373,7 @@ interval. -/
     (lower : ∀ y : Fraction.Rational, ambient.yLower <= y →
       y <= ambient.yUpper → periodClearanceFloor <=
         Norm.Basic.normSq
-          (polynomial.eval (Gaussian.Components.Basic.point x y))) :
+          (polynomial.eval (Components.Basic.point x y))) :
     VerticalLineClearance polynomial ambient x where
   bound := periodClearanceFloor
   positive := periodClearanceFloor_positive
@@ -389,7 +391,7 @@ interval. -/
     (lower : ∀ x : Fraction.Rational, ambient.xLower <= x →
       x <= ambient.xUpper → periodClearanceFloor <=
         Norm.Basic.normSq
-          (polynomial.eval (Gaussian.Components.Basic.point x y))) :
+          (polynomial.eval (Components.Basic.point x y))) :
     HorizontalLineClearance polynomial ambient y where
   bound := periodClearanceFloor
   positive := periodClearanceFloor_positive
@@ -479,8 +481,8 @@ needed for total shrinking refinement. -/
   box := baseBranchBox index
   refinesAmbient := by
     unfold Rational.Box.Refines Box.largeSquareBox
-      Purelib.Geometry.Rational.Box.symmetric
-    rcases Purelib.Data.Fin.Cases.three index with indexZero | indexOne | indexTwo <;>
+      Rational.Box.symmetric
+    rcases Data.Fin.Cases.three index with indexZero | indexOne | indexTwo <;>
       subst index <;> decide
   proper := baseBranchBox_proper index
   clearance := boundaryClearanceWithFloor (fun value boundary =>

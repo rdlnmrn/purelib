@@ -101,18 +101,18 @@ open Purelib.Data.Gaussian.Basic.Canonical
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap}
 
 /-- Read dyadic increments of the supplied polynomial along this original parent's inverse source path at its retained
 coarse depth plus the supplied fine depth. -/
-@[expose] def Preparation.regularPrimitivePath {count : Nat} {parent : PreparedSubdivisionModelCore.CenteredEdge curve
+@[expose] def Preparation.regularPrimitivePath {count : Nat} {parent : CenteredEdge curve
   differential}
     {patch : UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data : UniformReciprocalModels.Data patch count}
-    {cover : UniformReciprocalCover.Cover data} (_prepared : ParentComparison.Preparation regular cover) (value :
-      InverseRootPolynomial.Polynomial) (depth : Nat) : List Gaussian :=
-  DyadicPrimitivePaths.dyadicIncrements (fun parameter => value.eval (parent.edge.point parameter)⁻¹) (cover.mesh.depth
+    {cover : UniformReciprocalCover.Cover data} (_prepared : Preparation regular cover) (value :
+      Polynomial) (depth : Nat) : List Gaussian :=
+  dyadicIncrements (fun parameter => value.eval (parent.edge.point parameter)⁻¹) (cover.mesh.depth
     + depth) 0 1
 
 namespace SideBank
@@ -121,11 +121,11 @@ namespace SideBank
 
 The two ordered midpoint halves retain the same supplied values; scalar negation changes each original increment without
 selecting new endpoints. -/
-private theorem increments_neg {firstValues lastValues : InverseRootPolynomial.Coordinate →
-  InverseRootPolynomial.Gaussian}
+private theorem increments_neg {firstValues lastValues : Coordinate →
+  Gaussian}
     (opposite : ∀ parameter, firstValues parameter = -lastValues parameter)
-    (depth : Nat) (first last : InverseRootPolynomial.Coordinate) :
-    DyadicPrimitivePaths.dyadicIncrements firstValues depth first last = (DyadicPrimitivePaths.dyadicIncrements
+    (depth : Nat) (first last : Coordinate) :
+    dyadicIncrements firstValues depth first last = (dyadicIncrements
       lastValues depth first last).map Neg.neg := by
   induction depth generalizing first last with
   | zero =>
@@ -133,24 +133,24 @@ private theorem increments_neg {firstValues lastValues : InverseRootPolynomial.C
       rw [opposite, opposite, show -lastValues last - -lastValues first = -(lastValues last - lastValues first) by
         ring1]
   | succ depth ih =>
-    rw [DyadicPrimitivePaths.dyadicIncrements, DyadicPrimitivePaths.dyadicIncrements, Map.map_append, ih, ih]
+    rw [dyadicIncrements, dyadicIncrements, Map.map_append, ih, ih]
 
 /-- Read each original parent's dyadic primitive path using one supplied polynomial and the same fine depth. -/
-@[expose] def regularPrimitivePaths (value : InverseRootPolynomial.Polynomial) (depth : Nat) :
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
+@[expose] def regularPrimitivePaths (value : Polynomial) (depth : Nat) :
+    {parents : List (CenteredEdge curve differential)} → {covers :
       UniformReciprocalCover.ParentCovers parents} →
-    ParentJoins.SideBank regular covers → List (List InverseRootPolynomial.Gaussian)
+    SideBank regular covers → List (List Gaussian)
   | _, _, .nil => []
   | _, _, .cons head tail =>
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularSidePrimitive.Preparation.regularPrimitivePath head value depth
+    Preparation.regularPrimitivePath head value depth
     :: regularPrimitivePaths value
     depth tail
 
 /-- Negating the shared polynomial negates every actual retained parent increment. -/
-private theorem primitivePaths_neg (value : InverseRootPolynomial.Polynomial) (depth : Nat)
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} {covers :
+private theorem primitivePaths_neg (value : Polynomial) (depth : Nat)
+    {parents : List (CenteredEdge curve differential)} {covers :
       UniformReciprocalCover.ParentCovers parents}
-    (prepared : ParentJoins.SideBank regular covers) :
+    (prepared : SideBank regular covers) :
     regularPrimitivePaths (-value) depth
       prepared =
       (regularPrimitivePaths value depth
@@ -158,11 +158,11 @@ private theorem primitivePaths_neg (value : InverseRootPolynomial.Polynomial) (d
   induction prepared with
   | nil => rfl
   | cons head tail ih =>
-      change Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularSidePrimitive.Preparation.regularPrimitivePath head
+      change Preparation.regularPrimitivePath head
         (-value) depth ::
         regularPrimitivePaths (-value) depth
         tail =
-        (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularSidePrimitive.Preparation.regularPrimitivePath head value
+        (Preparation.regularPrimitivePath head value
           depth).map Neg.neg ::
           (regularPrimitivePaths value depth
           tail).map (fun path => path.map Neg.neg)
@@ -174,21 +174,21 @@ private theorem primitivePaths_neg (value : InverseRootPolynomial.Polynomial) (d
 
 Each original path keeps its occurrence order, and negating the flattened entries agrees with negating each retained
 path. -/
-private theorem flatten_neg (paths : List (List InverseRootPolynomial.Gaussian)) :
+private theorem flatten_neg (paths : List (List Gaussian)) :
     (paths.map (fun path => path.map Neg.neg)).flatten = paths.flatten.map Neg.neg := by
   induction paths with
   | nil => rfl
   | cons head tail ih => rw [List.map_cons, List.flatten_cons, List.flatten_cons, Map.map_append, ih]
 
 /-- Simultaneously negating the actual origin and every increment preserves the complete trace area. -/
-private theorem traceArea_neg (path : List InverseRootPolynomial.Gaussian) (start : InverseRootPolynomial.Gaussian) :
+private theorem traceArea_neg (path : List Gaussian) (start : Gaussian) :
     IncrementArea.traceArea (-start) (path.map Neg.neg) = IncrementArea.traceArea start path := by
   induction path generalizing start with
   | nil => rfl
   | cons head tail ih =>
       rw [List.map_cons, IncrementArea.traceArea, IncrementArea.traceArea,
         show -start + -head = -(start + head) by ring1, ih]
-      have opposite (first last : InverseRootPolynomial.Gaussian) : BoundaryRibbon.area (-first) (-last) =
+      have opposite (first last : Gaussian) : BoundaryRibbon.area (-first) (-last) =
         BoundaryRibbon.area first last := by
         apply Data.Gaussian.Basic.ext <;> simp only [BoundaryRibbon.area, Data.Gaussian.Basic.conj,
           Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im, Data.Gaussian.Basic.mul_re,
@@ -196,17 +196,17 @@ private theorem traceArea_neg (path : List InverseRootPolynomial.Gaussian) (star
       rw [opposite]
 
 /-- Negating every actual path increment preserves its zero-origin area. -/
-private theorem pathArea_neg (path : List InverseRootPolynomial.Gaussian) :
+private theorem pathArea_neg (path : List Gaussian) :
     IncrementArea.pathArea (path.map Neg.neg) = IncrementArea.pathArea path := by
   have same := traceArea_neg path 0
   rw [neg_zero] at same
   exact same
 
 /-- One common sign choice on the shared polynomial preserves the complete retained parent-path area. -/
-theorem primitivePaths_signed (value : InverseRootPolynomial.Polynomial) (bit : Bool) (depth : Nat)
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} {covers :
+theorem primitivePaths_signed (value : Polynomial) (bit : Bool) (depth : Nat)
+    {parents : List (CenteredEdge curve differential)} {covers :
       UniformReciprocalCover.ParentCovers parents}
-    (prepared : ParentJoins.SideBank regular covers) :
+    (prepared : SideBank regular covers) :
     IncrementArea.pathArea
       (regularPrimitivePaths (if bit then
       -value else value) depth prepared).flatten =
@@ -227,36 +227,36 @@ namespace Regular.Results
 
 variable {sourceTarget reciprocalTarget coefficientTarget totalTarget areaTarget :
   Coordinate} {minimum index depth readingIndex : Nat}
-  {box : Purelib.Geometry.Rational.Box} {sample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {box : Geometry.Rational.Box} {sample :
+    Primitives.Sample cap differential index box}
 
 /-- Read the first actual retained regular primitive, using the original sample primitive for an empty bank. -/
-@[expose] def primitive : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
+@[expose] def primitive : {parents : List (CenteredEdge curve differential)} → {covers :
   UniformReciprocalCover.ParentCovers parents} →
-    {prepared : ParentJoins.SideBank regular covers} →
-    {requests : SideBank.Requests sourceTarget reciprocalTarget coefficientTarget totalTarget areaTarget minimum
+    {prepared : SideBank regular covers} →
+    {requests : Requests sourceTarget reciprocalTarget coefficientTarget totalTarget areaTarget minimum
       prepared} →
-    {plans : RegularSides.Plans requests} → {evaluated : SideBank.Evaluations sample depth readingIndex requests} →
-    RegularSides.Results plans evaluated → InverseRootPolynomial.Polynomial
+    {plans : Plans requests} → {evaluated : Evaluations sample depth readingIndex requests} →
+    Results plans evaluated → Polynomial
   | _, _, _, _, _, .nil, _ => sample.primitive.value
   | _, _, _, _, _, .cons _ _, results => results.1.primitive
 
 /-- Every actual retained regular parent result uses this exact supplied polynomial primitive. -/
-@[expose] def WithPrimitive (value : InverseRootPolynomial.Polynomial) : {parents : List
-  (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers : UniformReciprocalCover.ParentCovers
+@[expose] def WithPrimitive (value : Polynomial) : {parents : List
+  (CenteredEdge curve differential)} → {covers : UniformReciprocalCover.ParentCovers
   parents} →
-    {prepared : ParentJoins.SideBank regular covers} →
-    {requests : SideBank.Requests sourceTarget reciprocalTarget coefficientTarget totalTarget areaTarget minimum
+    {prepared : SideBank regular covers} →
+    {requests : Requests sourceTarget reciprocalTarget coefficientTarget totalTarget areaTarget minimum
       prepared} →
-    {plans : RegularSides.Plans requests} → {evaluated : SideBank.Evaluations sample depth readingIndex requests} →
-    RegularSides.Results plans evaluated → Prop
+    {plans : Plans requests} → {evaluated : Evaluations sample depth readingIndex requests} →
+    Results plans evaluated → Prop
   | _, _, _, _, _, .nil, _ => True
   | _, _, _, _, _, .cons _ _, results => results.1.primitive = value ∧
     WithPrimitive
     value results.2
 
 variable {parents : List (CenteredEdge curve differential)}
-  {covers : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents}
+  {covers : UniformReciprocalCover.ParentCovers parents}
   {prepared : SideBank regular covers} {requests :
     Requests sourceTarget reciprocalTarget
     coefficientTarget totalTarget areaTarget minimum prepared}
@@ -265,7 +265,7 @@ variable {parents : List (CenteredEdge curve differential)}
     requests}
 
 /-- Actual original root joins identify all retained regular parent primitives with the first one. -/
-theorem shared (results : RegularSides.Results plans evaluated) (links : SideBank.Links prepared) :
+theorem shared (results : Results plans evaluated) (links : Links prepared) :
   WithPrimitive
   (primitive results) results
   := by
@@ -290,11 +290,11 @@ theorem shared (results : RegularSides.Results plans evaluated) (links : SideBan
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularSidePrimitive.SideBank.Regular.Results in
 /-- The complete retained cap-path bank is exactly the actual parent subdivision evaluated with its shared polynomial.
 -/
-theorem cap_paths (results : RegularSides.Results plans evaluated) (value : InverseRootPolynomial.Polynomial) (shared :
+theorem cap_paths (results : Results plans evaluated) (value : Polynomial) (shared :
   WithPrimitive value results)
   :
     results.pairs.map Prod.snd =
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularSidePrimitive.SideBank.regularPrimitivePaths value depth
+      regularPrimitivePaths value depth
       prepared := by
   induction evaluated with
   | nil => rfl
@@ -305,13 +305,13 @@ theorem cap_paths (results : RegularSides.Results plans evaluated) (value : Inve
       exact congrArg₂ List.cons path (ih results.2 shared.2)
 
 /-- Read the first actual retained parent's sign bit, using false for an empty bank. -/
-@[expose] def flip : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
+@[expose] def flip : {parents : List (CenteredEdge curve differential)} → {covers :
   UniformReciprocalCover.ParentCovers parents} →
-    {prepared : ParentJoins.SideBank regular covers} →
-    {requests : SideBank.Requests sourceTarget reciprocalTarget coefficientTarget totalTarget areaTarget minimum
+    {prepared : SideBank regular covers} →
+    {requests : Requests sourceTarget reciprocalTarget coefficientTarget totalTarget areaTarget minimum
       prepared} →
-    {plans : RegularSides.Plans requests} → {evaluated : SideBank.Evaluations sample depth readingIndex requests} →
-    RegularSides.Results plans evaluated → Bool
+    {plans : Plans requests} → {evaluated : Evaluations sample depth readingIndex requests} →
+    Results plans evaluated → Bool
   | _, _, _, _, _, .nil, _ => false
   | _, _, _, _, _, .cons _ _, results => RegularCells.flip results.1.cells
 
@@ -325,7 +325,7 @@ private theorem sample_primitive_eq {leftIndex rightIndex : Nat}
   rfl
 
 /-- The actual shared regular primitive is the original sample primitive with its retained common sign bit. -/
-theorem primitive_signed (results : RegularSides.Results plans evaluated) :
+theorem primitive_signed (results : Results plans evaluated) :
     primitive results = if
       flip results then
       -sample.primitive.value else sample.primitive.value := by
@@ -342,16 +342,16 @@ theorem primitive_signed (results : RegularSides.Results plans evaluated) :
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularSidePrimitive.SideBank.Regular.Results in
 /-- Every parent and cross term now uses the same cap polynomial as the energy construction, while retaining its actual
 nonuniform subdivision. -/
-theorem cap_area_unsigned (results : RegularSides.Results plans evaluated) (links : SideBank.Links prepared) :
+theorem cap_area_unsigned (results : Results plans evaluated) (links : Links prepared) :
     results.capSummary.area = IncrementArea.pathArea
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularSidePrimitive.SideBank.regularPrimitivePaths
+      (regularPrimitivePaths
       sample.primitive.value depth prepared).flatten := by
   rw [results.capSummary.area_eq,
     cap_paths results
     (primitive results)
     (shared results links),
     primitive_signed results]
-  exact Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularSidePrimitive.SideBank.primitivePaths_signed _ _ _ _
+  exact primitivePaths_signed _ _ _ _
 
 end Regular.Results
 end SideBank

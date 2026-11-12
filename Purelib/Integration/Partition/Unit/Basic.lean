@@ -93,6 +93,22 @@ Sortedness, interior bounds and the chain identity refer to those same retained 
     intervals := Interval.intervalsBetween 0 1 cuts
     intervals_eq := rfl }
 
+/-- Normalized partitions with the same cuts have the same retained interval cache.
+
+The two `intervals_eq` certificates identify each cache with the adjacent
+interval chain of the common cuts. Proposition-valued certificates do not
+change the identity of the resulting partition. -/
+theorem ext_cuts {left right : Normalized} (cuts : left.cuts = right.cuts) :
+    left = right := by
+  cases left with
+  | mk leftCuts leftSorted leftInside leftIntervals leftEq =>
+    cases right with
+    | mk rightCuts rightSorted rightInside rightIntervals rightEq =>
+      cases cuts
+      have intervals : leftIntervals = rightIntervals := leftEq.trans rightEq.symm
+      cases intervals
+      rfl
+
 end Normalized
 
 namespace Normalized

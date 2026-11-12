@@ -64,6 +64,8 @@ import Purelib.Topology.Polygon.Stokes
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Topology.Surface.Sewing.SewingConnected
 
+open Purelib.Curves.Hyperelliptic.Meshes.Newton.Complement.TriangleEnergy.SynchronizedSurfaceRequests
+
 open Purelib.Riemann.RootContinuation.NewtonGlobalTriangleEnergyReadback.SynchronizedSurfaceRequests
 
 public section
@@ -78,16 +80,16 @@ open Purelib.Data.Rat
 open Purelib
 open Purelib.Riemann
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
     Fraction.Rational} {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
   {lifted : Meshes.LiftedPuncturedGrid grid.punctured}
   {observations : RootContinuation.NewtonProtectedObservations.ProtectedObservations original}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
     {partitions : Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid}
-  {surfaceCuts : Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceCuts partitions domains}
+  {surfaceCuts : Surface.MeshCompatibility.SurfaceCuts partitions domains}
   {coarse : (sheet : Fin 2) → Topology.NewtonRequestedSurfaceEnergy.SurfaceMeshes partitions domains sheet}
   {fixed : (sheet : Fin 2) → RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet} {error :
     Fraction.Rational}
@@ -100,24 +102,24 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {depth : Nat}
   {requests : Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests (fun sheet =>
-    Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts sheet depth)
+    Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts sheet depth)
     fixed error}
   {ownershipAllowance exteriorAllowance faceAllowance contactAllowance sewingAllowance : Fraction.Rational}
-  {prepared : Hyperelliptic.Meshes.PuncturedGrid.SewnEnergyRequest.EnergyPreparation lifted.cutPolygon domains} {floor
+  {prepared : PuncturedGrid.SewnEnergyRequest.EnergyPreparation lifted.cutPolygon domains} {floor
     contactFloor : Nat}
-  {compatible : Hyperelliptic.Meshes.Newton.Surface.PartitionBankCompatibility.Compatible partitions}
+  {compatible : Surface.PartitionBankCompatibility.Compatible partitions}
 
 /-- The independent observation lower bound holds for the actual sewn Newton complement after paying contacts and
 sewing.
 
 The original selected triangle mask, cached coefficient readings and retained complement boundary are shared throughout
 the comparison. -/
-theorem remaining_sewn_energy_lower (excision : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid
+theorem remaining_sewn_energy_lower (excision : AllHoles.Excision.AllHoleExcision grid
   lifted)
     (request : Topology.NewtonGlobalSurfaceEnergy.SynchronizedSurfaceRequests.GlobalEnergyRequest requests
       ownershipAllowance exteriorAllowance faceAllowance)
-    (sewing : Hyperelliptic.Meshes.PuncturedGrid.SewnEnergyRequest.EnergyPreparation.Request prepared
-      (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus sewingAllowance)
+    (sewing : PuncturedGrid.SewnEnergyRequest.EnergyPreparation.Request prepared
+      (Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus sewingAllowance)
       floor)
     (surfaceLater : request.index ≤ stage) (sewingLater : sewing.index ≤ stage)
     (surfaceReadings : Data.Vector.DependentVector (fun sheet : Fin 2 => (requests.entries.get sheet).Readings cache))
@@ -149,7 +151,7 @@ theorem remaining_sewn_energy_lower (excision : Hyperelliptic.Meshes.Newton.AllH
       contactAllowance - sewingAllowance) * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ≤
         (selected.energy coefficients +
           CenteredBoundary.SynchronizedSurfaceRequests.PerimeterSamples.remainingBoundaryCentered
-          excision samples neighbors).im / 4 := open Purelib.Algebra in open Purelib.Data in by
+          excision samples neighbors).im / 4 := open Algebra in open Data in by
   have normNonnegative : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := by
     have bound := FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Fraction.Rational)) _
       (fun row => Gaussian.Norm.Basic.normSq_nonneg (coefficients row))
@@ -158,18 +160,18 @@ theorem remaining_sewn_energy_lower (excision : Hyperelliptic.Meshes.Newton.AllH
     change 0 ≤ FiniteSum.Fin.sumFin (fun row => (coefficients row).normSq)
     rw [← same]
     exact FiniteSum.Fin.sumFin_zero.symm.trans_le bound
-  have close := Hyperelliptic.Meshes.PuncturedGrid.SelectedSewnEnergyRequest.EnergyPreparation.Request.selected_accurate
+  have close := PuncturedGrid.SelectedSewnEnergyRequest.EnergyPreparation.Request.selected_accurate
     sewing sewingLater readings selected coefficients
   have close' : Gaussian.Norm.Basic.normSq (selected.energy coefficients -
-    TriangleEnergy.SynchronizedSurfaceRequests.PerimeterSamples.remainingTriangleEnergy
+    PerimeterSamples.remainingTriangleEnergy
     excision readings coefficients) ≤
       (genus : Fraction.Rational)^2 * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients^2 *
-        Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus sewingAllowance :=
+        Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus sewingAllowance :=
         by
     convert close using 1
     · apply congrArg (fun value => Gaussian.Norm.Basic.normSq (selected.energy coefficients - value))
       unfold
-        TriangleEnergy.SynchronizedSurfaceRequests.PerimeterSamples.remainingTriangleEnergy
+        PerimeterSamples.remainingTriangleEnergy
       apply FiniteSum.Fin.sumFin_congr
       intro source
       split <;> rfl
@@ -182,21 +184,21 @@ theorem remaining_sewn_energy_lower (excision : Hyperelliptic.Meshes.Newton.AllH
               (fun row => (Gaussian.Norm.Basic.normSq_eq_canonical (coefficients row)).symm)
       rw [coefficientIdentity]
   have squared : Gaussian.Norm.Basic.normSq (selected.energy coefficients -
-    TriangleEnergy.SynchronizedSurfaceRequests.PerimeterSamples.remainingTriangleEnergy
+    PerimeterSamples.remainingTriangleEnergy
     excision readings coefficients) ≤
       (4 * (sewingAllowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients))^2 := by
     apply close'.trans
     calc
       _ = ((genus : Fraction.Rational)^2 *
-        Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus sewingAllowance) *
+        Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus sewingAllowance) *
         Readings.PreparedObservationCoercivity.coefficientNormSq coefficients^2 := by ring0
       _ ≤ (4 * sewingAllowance)^2 * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients^2 :=
         Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-          (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget_paid sewingPositive)
+          (Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget_paid sewingPositive)
           (Fraction.Order.Arithmetic.sq_nonneg_direct _)
       _ = _ := by ring0
   have difference :
-    (TriangleEnergy.SynchronizedSurfaceRequests.PerimeterSamples.remainingTriangleEnergy
+    (PerimeterSamples.remainingTriangleEnergy
     excision readings coefficients +
     CenteredBoundary.SynchronizedSurfaceRequests.PerimeterSamples.remainingBoundaryCentered
     excision samples neighbors) -
@@ -204,12 +206,12 @@ theorem remaining_sewn_energy_lower (excision : Hyperelliptic.Meshes.Newton.AllH
         CenteredBoundary.SynchronizedSurfaceRequests.PerimeterSamples.remainingBoundaryCentered
         excision samples neighbors) =
       -(selected.energy coefficients -
-        TriangleEnergy.SynchronizedSurfaceRequests.PerimeterSamples.remainingTriangleEnergy
+        PerimeterSamples.remainingTriangleEnergy
         excision readings coefficients) := by
     ring0
   have comparison := Topology.PreparedSurfaceCoercivity.boundaryEnergy_sub_budget_le
 
-      (TriangleEnergy.SynchronizedSurfaceRequests.PerimeterSamples.remainingTriangleEnergy
+      (PerimeterSamples.remainingTriangleEnergy
       excision readings coefficients +
       CenteredBoundary.SynchronizedSurfaceRequests.PerimeterSamples.remainingBoundaryCentered
       excision samples neighbors)
@@ -224,7 +226,7 @@ theorem remaining_sewn_energy_lower (excision : Hyperelliptic.Meshes.Newton.AllH
     excision request surfaceLater
     surfaceReadings observationFace faces samples neighbors contactPositive contacts contactLater
   rw
-    [TriangleEnergy.SynchronizedSurfaceRequests.PerimeterSamples.remaining_cornerBoundary_triangles
+    [PerimeterSamples.remaining_cornerBoundary_triangles
     excision readings faces] at lower
   have paid := (Fraction.Order.Arithmetic.sub_le_sub_direct lower
     (le_rfl (a := sewingAllowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients))).trans

@@ -80,6 +80,8 @@ import Purelib.Riemann.Readings.RectangularObservationAssembly
 import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 
+open Purelib.Integration.Polynomial.Rectangle
+
 public section
 
 open Purelib.Curves
@@ -94,29 +96,29 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CertifiedSi
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-    regular domains differential} {target : Normalization.InverseRootPolynomial.Coordinate} {minimum stage fine index :
+    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    regular domains differential} {target : InverseRootPolynomial.Coordinate} {minimum stage fine index :
     Nat}
   {box otherBox : Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
-  {plan : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan occurrence other target
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {plan : PairedSourceReferences.PairedSourcePlan occurrence other target
     minimum}
-  {evaluated : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan
+  {evaluated : PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan
     sample otherSample fine}
-  {data : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.FirstData occurrence index} {otherData :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.SecondData occurrence other index}
-  {lc lr rc rr depth : Nat} {lg : Normalization.RectangularInverseModels.Geometry lc lr} {rg :
-    Normalization.RectangularInverseModels.Geometry rc rr}
+  {data : PairedFragmentValues.FirstData occurrence index} {otherData :
+    PairedFragmentValues.SecondData occurrence other index}
+  {lc lr rc rr depth : Nat} {lg : RectangularInverseModels.Geometry lc lr} {rg :
+    RectangularInverseModels.Geometry rc rr}
   {leftCuts : Paths.RectangularSegmentSplitting.GridCuts lg} {rightCuts : Paths.RectangularSegmentSplitting.GridCuts rg}
     {leftBox rightBox : Rational.Box}
   {left : Meshes.RectangularObservationMesh.ObservationMesh leftCuts leftBox} {right :
@@ -125,7 +127,7 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
 namespace SourceBlockParameters
 section Horizontal
 variable {leftRow : Fin left.partition.y.intervals.length} {rightRow : Fin right.partition.y.intervals.length}
-  {height : Normalization.InverseRootPolynomial.Coordinate} {side :
+  {height : InverseRootPolynomial.Coordinate} {side :
     Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedHorizontalSide left right leftRow rightRow
     height}
 
@@ -138,31 +140,31 @@ The retained source location, owner readings and cached sample pass through exac
       (left.partition.x.intervals[(Fin.cast left.boundaryColumns_eq column).val]'(Fin.cast left.boundaryColumns_eq
         column).isLt))
     (located : Paths.RectangularSegmentRefinement.Subinterval
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.sourceSplit evaluated block.index).split
+      (IndexedSourceSplits.sourceSplit evaluated block.index).split
       block.parameters.range)
     (sourceFirst : occurrence.start.im = height) (sourceLast : occurrence.finish.im = height)
-    {allowance : Normalization.InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
+    {allowance : InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
       (Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
-    (owners : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest occurrence other
+    (owners : PairedOwnerRequest.OwnerRequest occurrence other
       budget.tolerance) (later : owners.index ≤ index)
     (first : Readings.RectangularPointReadings.PointReadings data.anchors data.offsets (fun vertex => trace.point
       (trace.vertices.indexed vertex)))
     (second : Readings.RectangularPointReadings.PointReadings otherData.anchors otherData.offsets (fun vertex =>
       trace.point (trace.vertices.indexed vertex)))
-    (leftValues rightValues : side.Vertex depth → Normalization.InverseRootPolynomial.Gaussian)
+    (leftValues rightValues : side.Vertex depth → InverseRootPolynomial.Gaussian)
     (leftEq : ∀ vertex, first.values vertex = leftValues (trace.vertices.indexed vertex))
     (rightEq : ∀ vertex, second.values vertex = rightValues (trace.vertices.indexed vertex)) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.JoinedFragmentComparison.SampledFragment (evaluated := evaluated) (data
+    JoinedFragmentComparison.SampledFragment (evaluated := evaluated) (data
       := data) (otherData := otherData)
       (fun vertex => (⟨leftValues ((side.pieceVertices depth column).indexed vertex),
         rightValues ((side.pieceVertices depth column).indexed vertex)⟩ : Topology.Polygon.Stokes.PrimitivePoint)) :=
   let fragment :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.MatchedSourceFragments.SourceBlockParameters.horizontalFragment trace
+    MatchedSourceFragments.SourceBlockParameters.horizontalFragment trace
     (Fin.cast left.boundaryColumns_eq column) block located sourceFirst sourceLast budget owners later first second
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.JoinedFragmentComparison.SampledFragment.ofIndexed (fun vertex =>
+  JoinedFragmentComparison.SampledFragment.ofIndexed (fun vertex =>
     (Fin.cast left.boundaryColumns_eq column, vertex))
     (fun vertex => (⟨leftValues vertex, rightValues vertex⟩ : Topology.Polygon.Stokes.PrimitivePoint))
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.JoinedFragmentComparison.SampledFragment.ofReadback fragment rfl _
+    (JoinedFragmentComparison.SampledFragment.ofReadback fragment rfl _
 
         (MatchedSourceFragments.SourceBlockParameters.horizontalFragment_values
         trace (Fin.cast left.boundaryColumns_eq column) block located sourceFirst sourceLast budget owners later
@@ -177,47 +179,47 @@ The original cached junction sample is retained through exact readback. -/
       (left.partition.x.intervals[(Fin.cast
         left.boundaryColumns_eq column.castSucc).val]'(Fin.cast left.boundaryColumns_eq column.castSucc).isLt))
     (located : Paths.RectangularSegmentRefinement.Subinterval
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.sourceSplit evaluated block.index).split
+      (IndexedSourceSplits.sourceSplit evaluated block.index).split
       block.parameters.range)
     (sourceFirst : occurrence.start.im = height) (sourceLast : occurrence.finish.im = height)
-    {allowance : Normalization.InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget 1
+    {allowance : InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget 1
       allowance)
-    (owners : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest occurrence other
+    (owners : PairedOwnerRequest.OwnerRequest occurrence other
       budget.tolerance) (later : owners.index ≤ index)
     (first : Readings.RectangularPointReadings.PointReadings data.anchors data.offsets (fun vertex => trace.point
       (trace.vertices.indexed vertex)))
     (second : Readings.RectangularPointReadings.PointReadings otherData.anchors otherData.offsets (fun vertex =>
       trace.point (trace.vertices.indexed vertex)))
-    (leftValues rightValues : side.Vertex depth → Normalization.InverseRootPolynomial.Gaussian)
+    (leftValues rightValues : side.Vertex depth → InverseRootPolynomial.Gaussian)
     (leftEq : ∀ vertex, first.values vertex = leftValues (trace.vertices.indexed vertex))
     (rightEq : ∀ vertex, second.values vertex = rightValues (trace.vertices.indexed vertex)) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.JoinedFragmentComparison.SampledFragment (evaluated := evaluated) (data
+    JoinedFragmentComparison.SampledFragment (evaluated := evaluated) (data
       := data) (otherData := otherData)
-      (Polynomial.Rectangle.JoinedSampleBlocks.JunctionValues (fun vertex => (⟨leftValues vertex, rightValues vertex⟩ :
+      (JoinedSampleBlocks.JunctionValues (fun vertex => (⟨leftValues vertex, rightValues vertex⟩ :
         Topology.Polygon.Stokes.PrimitivePoint))
         (side.pieceVertices depth column.castSucc) (side.pieceVertices depth column.succ)) :=
   let fragment :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.MatchedSourceJunctions.SourceBlockParameters.horizontalJunction trace
+    MatchedSourceJunctions.SourceBlockParameters.horizontalJunction trace
     column block located sourceFirst sourceLast budget owners later first second
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.JoinedFragmentComparison.SampledFragment.ofReadback fragment rfl _ (by
+  JoinedFragmentComparison.SampledFragment.ofReadback fragment rfl _ (by
     intro vertex
     have equal :=
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.MatchedSourceJunctions.SourceBlockParameters.horizontalJunction_values
+      MatchedSourceJunctions.SourceBlockParameters.horizontalJunction_values
       trace column block located sourceFirst sourceLast budget owners later
       first second leftValues rightValues leftEq rightEq vertex
     refine equal.trans ?_
     by_cases zero : vertex.val = 0
-    · dsimp only [Polynomial.Rectangle.JoinedSampleBlocks.JunctionValues]
+    · dsimp only [JoinedSampleBlocks.JunctionValues]
       rewrite [if_pos zero, if_pos zero]
       rfl
-    · dsimp only [Polynomial.Rectangle.JoinedSampleBlocks.JunctionValues]
+    · dsimp only [JoinedSampleBlocks.JunctionValues]
       rewrite [if_neg zero, if_neg zero]
       rfl)
 
 end Horizontal
 section Vertical
 variable {leftColumn : Fin left.partition.x.intervals.length} {rightColumn : Fin right.partition.x.intervals.length}
-  {horizontal : Normalization.InverseRootPolynomial.Coordinate} {side :
+  {horizontal : InverseRootPolynomial.Coordinate} {side :
     Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedVerticalSide left right leftColumn rightColumn
     horizontal}
 
@@ -229,32 +231,32 @@ The retained source location, owner readings and cached sample pass through exac
       forward
       (left.partition.y.intervals[(Fin.cast left.boundaryRows_eq row).val]'(Fin.cast left.boundaryRows_eq row).isLt))
     (located : Paths.RectangularSegmentRefinement.Subinterval
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.sourceSplit evaluated block.index).split
+      (IndexedSourceSplits.sourceSplit evaluated block.index).split
       block.parameters.range)
     (sourceFirst : occurrence.start.re = horizontal) (sourceLast : occurrence.finish.re = horizontal)
-    {allowance : Normalization.InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
+    {allowance : InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
       (Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
-    (owners : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest occurrence other
+    (owners : PairedOwnerRequest.OwnerRequest occurrence other
       budget.tolerance) (later : owners.index ≤ index)
     (first : Readings.RectangularPointReadings.PointReadings data.anchors data.offsets (fun vertex => trace.point
       (trace.vertices.indexed vertex)))
     (second : Readings.RectangularPointReadings.PointReadings otherData.anchors otherData.offsets (fun vertex =>
       trace.point (trace.vertices.indexed vertex)))
-    (leftValues rightValues : side.Vertex depth → Normalization.InverseRootPolynomial.Gaussian)
+    (leftValues rightValues : side.Vertex depth → InverseRootPolynomial.Gaussian)
     (leftEq : ∀ vertex, first.values vertex = leftValues (trace.vertices.indexed vertex))
     (rightEq : ∀ vertex, second.values vertex = rightValues (trace.vertices.indexed vertex)) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.JoinedFragmentComparison.SampledFragment (evaluated := evaluated) (data
+    JoinedFragmentComparison.SampledFragment (evaluated := evaluated) (data
       := data) (otherData := otherData)
       (fun vertex => (⟨leftValues ((side.pieceVertices depth row).indexed vertex),
         rightValues ((side.pieceVertices depth row).indexed vertex)⟩ : Topology.Polygon.Stokes.PrimitivePoint)) :=
   let fragment :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.MatchedSourceFragments.SourceBlockParameters.verticalFragment trace
+    MatchedSourceFragments.SourceBlockParameters.verticalFragment trace
     (Fin.cast left.boundaryRows_eq row) block located sourceFirst sourceLast budget owners later first second
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.JoinedFragmentComparison.SampledFragment.ofIndexed (fun vertex =>
+  JoinedFragmentComparison.SampledFragment.ofIndexed (fun vertex =>
     (Fin.cast left.boundaryRows_eq row, vertex))
     (fun vertex => (⟨leftValues vertex, rightValues vertex⟩ : Topology.Polygon.Stokes.PrimitivePoint))
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.JoinedFragmentComparison.SampledFragment.ofReadback fragment rfl _
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.MatchedSourceFragments.SourceBlockParameters.verticalFragment_values
+    (JoinedFragmentComparison.SampledFragment.ofReadback fragment rfl _
+      (MatchedSourceFragments.SourceBlockParameters.verticalFragment_values
         trace (Fin.cast left.boundaryRows_eq row) block located sourceFirst sourceLast budget owners later
         first second leftValues rightValues leftEq rightEq))
 
@@ -267,40 +269,40 @@ The original cached junction sample is retained through exact readback. -/
       (left.partition.y.intervals[(Fin.cast
         left.boundaryRows_eq row.castSucc).val]'(Fin.cast left.boundaryRows_eq row.castSucc).isLt))
     (located : Paths.RectangularSegmentRefinement.Subinterval
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.sourceSplit evaluated block.index).split
+      (IndexedSourceSplits.sourceSplit evaluated block.index).split
       block.parameters.range)
     (sourceFirst : occurrence.start.re = horizontal) (sourceLast : occurrence.finish.re = horizontal)
-    {allowance : Normalization.InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget 1
+    {allowance : InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget 1
       allowance)
-    (owners : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest occurrence other
+    (owners : PairedOwnerRequest.OwnerRequest occurrence other
       budget.tolerance) (later : owners.index ≤ index)
     (first : Readings.RectangularPointReadings.PointReadings data.anchors data.offsets (fun vertex => trace.point
       (trace.vertices.indexed vertex)))
     (second : Readings.RectangularPointReadings.PointReadings otherData.anchors otherData.offsets (fun vertex =>
       trace.point (trace.vertices.indexed vertex)))
-    (leftValues rightValues : side.Vertex depth → Normalization.InverseRootPolynomial.Gaussian)
+    (leftValues rightValues : side.Vertex depth → InverseRootPolynomial.Gaussian)
     (leftEq : ∀ vertex, first.values vertex = leftValues (trace.vertices.indexed vertex))
     (rightEq : ∀ vertex, second.values vertex = rightValues (trace.vertices.indexed vertex)) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.JoinedFragmentComparison.SampledFragment (evaluated := evaluated) (data
+    JoinedFragmentComparison.SampledFragment (evaluated := evaluated) (data
       := data) (otherData := otherData)
-      (Polynomial.Rectangle.JoinedSampleBlocks.JunctionValues (fun vertex => (⟨leftValues vertex, rightValues vertex⟩ :
+      (JoinedSampleBlocks.JunctionValues (fun vertex => (⟨leftValues vertex, rightValues vertex⟩ :
         Topology.Polygon.Stokes.PrimitivePoint))
         (side.pieceVertices depth row.castSucc) (side.pieceVertices depth row.succ)) :=
   let fragment :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.MatchedSourceJunctions.SourceBlockParameters.verticalJunction trace row
+    MatchedSourceJunctions.SourceBlockParameters.verticalJunction trace row
     block located sourceFirst sourceLast budget owners later first second
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.JoinedFragmentComparison.SampledFragment.ofReadback fragment rfl _ (by
+  JoinedFragmentComparison.SampledFragment.ofReadback fragment rfl _ (by
     intro vertex
     have equal :=
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.MatchedSourceJunctions.SourceBlockParameters.verticalJunction_values
+      MatchedSourceJunctions.SourceBlockParameters.verticalJunction_values
       trace row block located sourceFirst sourceLast budget owners later
       first second leftValues rightValues leftEq rightEq vertex
     refine equal.trans ?_
     by_cases zero : vertex.val = 0
-    · dsimp only [Polynomial.Rectangle.JoinedSampleBlocks.JunctionValues]
+    · dsimp only [JoinedSampleBlocks.JunctionValues]
       rewrite [if_pos zero, if_pos zero]
       rfl
-    · dsimp only [Polynomial.Rectangle.JoinedSampleBlocks.JunctionValues]
+    · dsimp only [JoinedSampleBlocks.JunctionValues]
       rewrite [if_neg zero, if_neg zero]
       rfl)
 

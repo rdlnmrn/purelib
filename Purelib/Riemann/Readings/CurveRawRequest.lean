@@ -47,14 +47,14 @@ open Purelib.Curves.Hyperelliptic in
 
 Genus zero uses the unit payload; a positive-genus retained period bank stores either the actual odd or regular
 construction, while an empty positive-genus bank is impossible. -/
-@[expose] def RawPayload : {genus : Nat} → {curve : Basic.HyperellipticCurve genus} →
-  Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve → Nat → Type _
+@[expose] def RawPayload : {genus : Nat} → {curve : HyperellipticCurve genus} →
+  PairedPeriodBank curve → Nat → Type _
   | 0, _, _, _ => PUnit
   | _ + 1, _, .empty _, _ => PEmpty
   | genus + 1, _, .retained prepared, floor =>
       Sum (AutomaticOddRaw prepared ⟨0, Nat.zero_lt_succ genus⟩ floor) (AutomaticRegularRaw prepared floor)
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+variable {genus : Nat} {curve : HyperellipticCurve genus}
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Rat in
@@ -64,11 +64,11 @@ open Purelib.Riemann.Readings in
 
 The positive lower constant multiplies the coefficient squared-norm sum and bounds the original sampled A/B energy at
 every later stage. -/
-@[expose] def RawAccuracy (bank : Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve) (lower :
-  Fraction.Rational) (index : Nat) : Prop :=
-  ∀ stage, index ≤ stage → ∀ coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus,
+@[expose] def RawAccuracy (bank : PairedPeriodBank curve) (lower :
+  Rational) (index : Nat) : Prop :=
+  ∀ stage, index ≤ stage → ∀ coefficients : Energy.GaussianVector genus,
     lower * PreparedObservationCoercivity.coefficientNormSq coefficients ≤
-      Energy.unnormalizedEnergyForm coefficients
+      unnormalizedEnergyForm coefficients
         (sampledMatrix bank.periodData.aMatrix stage) (sampledMatrix bank.periodData.bMatrix stage)
 
 open Purelib.Curves.Hyperelliptic in
@@ -78,9 +78,9 @@ set_option genInjectivity false in
 
 Keeps the actual degree-dependent construction, lower constant and numerical index, with the requested floor and uniform
 later-stage accuracy certificate. -/
-structure RawRequest (bank : Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve) (floor : Nat) where
+structure RawRequest (bank : PairedPeriodBank curve) (floor : Nat) where
   /-- Actual genus- and degree-dependent retained construction. -/ payload : RawPayload bank floor
-  /-- Positive rational energy lower constant. -/ lower : Fraction.Rational
+  /-- Positive rational energy lower constant. -/ lower : Rational
   /-- Strict positivity of the retained lower constant. -/ lower_positive : 0 < lower
   /-- Numerical index after which the energy certificate holds. -/ index : Nat
   /-- The retained index respects the requested floor. -/ floor_le : floor ≤ index
@@ -94,12 +94,12 @@ open Purelib.Data.Rat in
 
 Handles genus zero directly, eliminates the impossible empty positive-genus case, and retains the original odd or even
 degree construction with its exact bound and index. -/
-@[expose] def rawRequest : {genus : Nat} → {curve : Basic.HyperellipticCurve genus} → (bank :
-  Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve) →
+@[expose] def rawRequest : {genus : Nat} → {curve : HyperellipticCurve genus} → (bank :
+  PairedPeriodBank curve) →
     (floor : Nat) → RawRequest bank floor
   | 0, _, _, floor =>
       ⟨PUnit.unit, 1, by decide, floor, Nat.le_refl _, fun _ _ _ => by
-        change (1 : Fraction.Rational) * 0 ≤ 0 / 2
+        change (1 : Rational) * 0 ≤ 0 / 2
         decide⟩
   | genus + 1, _, .empty zero, _ => Fin.elim0 (Fin.cast zero (⟨0, Nat.zero_lt_succ genus⟩ : Fin (genus + 1)))
   | genus + 1, curve, .retained prepared, floor =>
@@ -128,8 +128,8 @@ open Purelib.Curves.Hyperelliptic in
 
 Uses the curve's actual constructed paired period bank and retains its degree-sensitive request payload and uniform
 energy bound. -/
-@[expose] def curveRawRequest {genus : Nat} (curve : Basic.HyperellipticCurve genus) (floor : Nat) :
-    RawRequest (Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank.ofCurve curve) floor :=
-  rawRequest (Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank.ofCurve curve) floor
+@[expose] def curveRawRequest {genus : Nat} (curve : HyperellipticCurve genus) (floor : Nat) :
+    RawRequest (PairedPeriodBank.ofCurve curve) floor :=
+  rawRequest (PairedPeriodBank.ofCurve curve) floor
 
 end Purelib.Riemann.Readings.CurveRawRequest.ClearGrid

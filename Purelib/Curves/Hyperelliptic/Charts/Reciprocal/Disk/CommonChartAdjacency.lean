@@ -47,42 +47,42 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover (Cove
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCommonCover (CommonCover CommonInterval)
 
 /-- Concatenate the original endpoint-certified parameter paths through their retained common endpoint. -/
-private theorem path_append {first last : List Subdivision.ParameterEdge} {start middle finish :
+private theorem path_append {first last : List ParameterEdge} {start middle finish :
   InverseRootPolynomial.Coordinate}
-    (before : PathBoundary.PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) first
+    (before : PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) first
       start middle)
-    (after : PathBoundary.PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) last middle
+    (after : PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) last middle
       finish) :
-    PathBoundary.PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) (first ++ last)
+    PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) (first ++ last)
       start finish := by
   induction before with
   | nil => exact after
   | cons tail ih => exact .cons (ih after)
 
 /-- The original complete dyadic edge spine has the exact supplied first and last parameters. -/
-private theorem dyadic_path (depth : Nat) (first last : Subdivision.Endpoint) :
-    PathBoundary.PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter)
-      (Subdivision.dyadicEdges depth first last) first.parameter last.parameter := by
+private theorem dyadic_path (depth : Nat) (first last : Endpoint) :
+    PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter)
+      (dyadicEdges depth first last) first.parameter last.parameter := by
   induction depth generalizing first last with
   | zero => exact .cons (.nil _)
   | succ depth ih =>
-    exact Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCommonCover.path_append (ih _ _) (ih _ _)
+    exact path_append (ih _ _) (ih _ _)
 
 /-- Every dyadic interval subdivision contains an edge.
 
 The unsplit interval supplies the base edge, and concatenating the two
 retained subinterval spines preserves a strictly positive length. -/
-private theorem dyadic_nonempty (depth : Nat) (first last : Subdivision.Endpoint) :
-    0 < (Subdivision.dyadicEdges depth first last).length := by
+private theorem dyadic_nonempty (depth : Nat) (first last : Endpoint) :
+    0 < (dyadicEdges depth first last).length := by
   induction depth generalizing first last with
   | zero => exact Nat.zero_lt_succ _
   | succ depth ih =>
-      rw [Subdivision.dyadicEdges, Append.length_append]
+      rw [dyadicEdges, Append.length_append]
       exact Nat.lt_of_lt_of_le (ih _ _) (Nat.le_add_right _ _)
 
 /-- The first retained edge of a nonempty original parameter path begins at its exact initial parameter. -/
-private theorem path_first {edges : List Subdivision.ParameterEdge} {start finish : InverseRootPolynomial.Coordinate}
-    (path : PathBoundary.PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) edges start
+private theorem path_first {edges : List ParameterEdge} {start finish : InverseRootPolynomial.Coordinate}
+    (path : PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) edges start
       finish)
     (nonempty : 0 < edges.length) : (edges[0]'nonempty).left.parameter = start := by
   cases path with
@@ -90,8 +90,8 @@ private theorem path_first {edges : List Subdivision.ParameterEdge} {start finis
   | cons tail => rfl
 
 /-- The last retained edge of a nonempty original parameter path ends at its exact final parameter. -/
-private theorem path_last {edges : List Subdivision.ParameterEdge} {start finish : InverseRootPolynomial.Coordinate}
-    (path : PathBoundary.PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) edges start
+private theorem path_last {edges : List ParameterEdge} {start finish : InverseRootPolynomial.Coordinate}
+    (path : PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) edges start
       finish)
     (nonempty : 0 < edges.length) : (edges[edges.length - 1]'(by omega0)).right.parameter = finish := by
   induction path with
@@ -102,17 +102,17 @@ private theorem path_last {edges : List Subdivision.ParameterEdge} {start finish
       | cons next rest => exact ih (Nat.zero_lt_succ _)
 
 /-- The original nonempty parameter path begins at its retained head edge's left parameter. -/
-private theorem path_start {edge : Subdivision.ParameterEdge} {tail : List Subdivision.ParameterEdge} {start finish :
+private theorem path_start {edge : ParameterEdge} {tail : List ParameterEdge} {start finish :
   InverseRootPolynomial.Coordinate}
-    (path : PathBoundary.PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) (edge ::
+    (path : PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) (edge ::
       tail) start finish) :
     start = edge.left.parameter := by
   cases path
   rfl
 
 /-- Consecutive retained original parameter edges have exactly equal joining parameters. -/
-private theorem path_adjacent {edges : List Subdivision.ParameterEdge} {start finish : InverseRootPolynomial.Coordinate}
-    (path : PathBoundary.PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) edges start
+private theorem path_adjacent {edges : List ParameterEdge} {start finish : InverseRootPolynomial.Coordinate}
+    (path : PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter) edges start
       finish)
     (i : Nat) (bound : i + 1 < edges.length) :
     (edges[i]'(by omega0)).right.parameter = (edges[i + 1]'bound).left.parameter := by
@@ -123,36 +123,36 @@ private theorem path_adjacent {edges : List Subdivision.ParameterEdge} {start fi
       | zero =>
           cases remaining with
           | nil => exact False.elim (Nat.lt_irrefl 1 bound)
-          | cons next rest => exact Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCommonCover.path_start tail
+          | cons next rest => exact path_start tail
       | succ i => exact ih i (Nat.lt_of_succ_lt_succ bound)
 
-variable {genus count otherCount : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-  {differential other : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {otherParent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve other}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {otherPatch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch otherParent}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {otherData :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
-  {cover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {otherCover :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover otherData}
+variable {genus count otherCount : Nat} {curve : Basic.HyperellipticCurve genus}
+  {differential other : Differentials.Basic.Differential genus}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {otherParent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve other}
+  {patch : PreparedPatch parent}
+  {otherPatch : PreparedPatch otherParent}
+  {data : Data patch count} {otherData :
+    Data otherPatch otherCount}
+  {cover : Cover data} {otherCover :
+    Cover otherData}
 
 /-- The complete common dyadic cover has at least one interval.
 
 Its cached interval edges equal the nonempty dyadic subdivision, so the
 map length identifies the same positive interval count. -/
-theorem CommonCover.nonempty (common : UniformReciprocalCommonCover.CommonCover cover otherCover) : 0 <
+theorem CommonCover.nonempty (common : CommonCover cover otherCover) : 0 <
   common.intervals.length := by
   have same := congrArg List.length common.edges_eq
   rw [Map.length_map] at same
-  exact same.symm ▸ Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCommonCover.dyadic_nonempty common.depth
-    UniformPrimitiveMesh.firstEndpoint UniformPrimitiveMesh.lastEndpoint
+  exact same.symm ▸ dyadic_nonempty common.depth
+    firstEndpoint lastEndpoint
 
 /-- The exact bounded index of the first original common-cover interval. -/
-@[expose] def CommonCover.firstIndex (common : UniformReciprocalCommonCover.CommonCover cover otherCover) : Fin
+@[expose] def CommonCover.firstIndex (common : CommonCover cover otherCover) : Fin
   common.intervals.length := ⟨0, common.nonempty⟩
 /-- The exact bounded index of the last original common-cover interval. -/
-@[expose] def CommonCover.lastIndex (common : UniformReciprocalCommonCover.CommonCover cover otherCover) : Fin
+@[expose] def CommonCover.lastIndex (common : CommonCover cover otherCover) : Fin
   common.intervals.length :=
   ⟨common.intervals.length - 1, by have positive := common.nonempty; omega0⟩
 
@@ -160,30 +160,30 @@ theorem CommonCover.nonempty (common : UniformReciprocalCommonCover.CommonCover 
 
 The explicit first-index bound reads the cached interval and its mapped
 edge, whose supplied path relation certifies that initial parameter. -/
-theorem CommonCover.first_parameter (common : UniformReciprocalCommonCover.CommonCover cover otherCover) :
+theorem CommonCover.first_parameter (common : CommonCover cover otherCover) :
     (common.intervals[0]'common.nonempty).edge.left.parameter = 0 := by
-  have path := common.edges_eq.symm ▸ Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCommonCover.dyadic_path
+  have path := common.edges_eq.symm ▸ dyadic_path
     common.depth
-    UniformPrimitiveMesh.firstEndpoint UniformPrimitiveMesh.lastEndpoint
+    firstEndpoint lastEndpoint
   have positive : 0 < (common.intervals.map CommonInterval.edge).length := by
     rw [Map.length_map]; exact common.nonempty
   exact (show (common.intervals[0]'common.nonempty).edge.left.parameter =
       ((common.intervals.map CommonInterval.edge)[0]'positive).left.parameter by
           rw [Map.getElem_map CommonInterval.edge common.intervals 0 common.nonempty positive]).trans
-    (Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCommonCover.path_first path positive)
+    (path_first path positive)
 
 /-- The last common-cover interval ends at parameter one.
 
 The cached last-index bound is transported through the edge-map length
 before reading that same interval's certified final path parameter. -/
-theorem CommonCover.last_parameter (common : UniformReciprocalCommonCover.CommonCover cover otherCover) :
+theorem CommonCover.last_parameter (common : CommonCover cover otherCover) :
     (common.intervals[common.lastIndex.val]'common.lastIndex.isLt).edge.right.parameter = 1 := by
-  have path := common.edges_eq.symm ▸ Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCommonCover.dyadic_path
+  have path := common.edges_eq.symm ▸ dyadic_path
     common.depth
-    UniformPrimitiveMesh.firstEndpoint UniformPrimitiveMesh.lastEndpoint
+    firstEndpoint lastEndpoint
   have positive : 0 < (common.intervals.map CommonInterval.edge).length := by
     rw [Map.length_map]; exact common.nonempty
-  have last := Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCommonCover.path_last path positive
+  have last := path_last path positive
   have mapLength := Map.length_map CommonInterval.edge common.intervals
   have retainedBound : common.intervals.length - 1 < common.intervals.length :=
     common.lastIndex.isLt
@@ -208,16 +208,16 @@ theorem CommonCover.last_parameter (common : UniformReciprocalCommonCover.Common
 
 Both explicit interval bounds read their mapped edges; the retained path
 relation certifies the right-to-left junction of those same occurrences. -/
-theorem CommonCover.adjacent (common : UniformReciprocalCommonCover.CommonCover cover otherCover)
+theorem CommonCover.adjacent (common : CommonCover cover otherCover)
     (i : Nat) (bound : i + 1 < common.intervals.length) :
     (common.intervals[i]'(by omega0)).edge.right.parameter =
       (common.intervals[i + 1]'bound).edge.left.parameter := by
-  have path := common.edges_eq.symm ▸ Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCommonCover.dyadic_path
+  have path := common.edges_eq.symm ▸ dyadic_path
     common.depth
-    UniformPrimitiveMesh.firstEndpoint UniformPrimitiveMesh.lastEndpoint
+    firstEndpoint lastEndpoint
   have bound' : i + 1 < (common.intervals.map CommonInterval.edge).length := by
     simpa only [Map.length_map] using bound
-  have joined := Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCommonCover.path_adjacent path i bound'
+  have joined := path_adjacent path i bound'
   have originalBound : i < common.intervals.length := Nat.lt_trans
     (Nat.lt_succ_self i) bound
   have mappedBound : i < (common.intervals.map CommonInterval.edge).length :=

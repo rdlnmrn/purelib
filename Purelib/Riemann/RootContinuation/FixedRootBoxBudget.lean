@@ -233,6 +233,42 @@ The target satisfies the original movement budget, and both retained names refer
   PreparedPrimitiveSheets.rootEquivalent_of_initial_refines nonzero
     (budget.ownerAt nonzero movement).track reading.track refines
 
+open Purelib.Riemann.Branches in
+/-- Compare two retained target Owners through one common fixed-box budget Owner.
+
+Both original target Owners refine the identical source box and keep their
+own root names. The computed common target Owner is retained once; the two
+original refinement comparisons compose through its same track and preserve
+both requested sampling starts.
+-/
+def retainedOwnersEquivalent (budget : Budget owner) {target : Gaussian} (nonzero : target ≠ 0)
+    (movement : normSq (source - target) ≤ budget.movement) (first last : Owner target)
+    (firstRefines : first.track.initial.box.Refines owner.track.initial.box)
+    (lastRefines : last.track.initial.box.Refines owner.track.initial.box) :
+    NamedEquivalent (ownerRootName first.parameterNonzero first) (ownerRootName last.parameterNonzero last) :=
+  let common := budget.ownerAt nonzero movement
+  let firstCompared := PreparedPrimitiveSheets.rootEquivalent_of_initial_refines nonzero
+    common.track first.track firstRefines
+  let lastCompared := PreparedPrimitiveSheets.rootEquivalent_of_initial_refines nonzero
+    common.track last.track lastRefines
+  firstCompared.symm.trans lastCompared
+
+/-- Compare retained Owners at exactly equal parameters through one original fixed-box budget.
+
+The exact equality transports the parameter index while preserving both
+complete original Owners and their box refinements. The shared comparison
+then computes one common target Owner and retains both sampling procedures.
+-/
+def retainedOwnersEquivalentOfEq (budget : Budget owner) {firstParameter lastParameter : Gaussian}
+    (equal : firstParameter = lastParameter) (nonzero : firstParameter ≠ 0)
+    (movement : normSq (source - firstParameter) ≤ budget.movement)
+    (first : Owner firstParameter) (last : Owner lastParameter)
+    (firstRefines : first.track.initial.box.Refines owner.track.initial.box)
+    (lastRefines : last.track.initial.box.Refines owner.track.initial.box) :
+    NamedEquivalent (ownerRootName first.parameterNonzero first) (ownerRootName last.parameterNonzero last) := by
+  cases equal
+  exact budget.retainedOwnersEquivalent nonzero movement first last firstRefines lastRefines
+
 end Budget
 
 end Purelib.Riemann.RootContinuation.FixedRootBoxBudget

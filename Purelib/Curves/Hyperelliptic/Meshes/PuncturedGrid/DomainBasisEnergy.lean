@@ -136,7 +136,7 @@ open Purelib.Data.Vector.Basic (vectorOfFn vectorOfFn_apply)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face :
@@ -149,14 +149,14 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 set_option genInjectivity false in
 /-- The row function selects existing cached domain primitives. The materialized readings and coefficients retain exact
 readbacks to those particular caches. -/
-structure BasisReadings (cached : (row : Fin genus) → PrimitiveData.DomainPrimitives domain
+structure BasisReadings (cached : (row : Fin genus) → DomainPrimitives domain
   (PeriodMatrix.standardDifferential row) stage)
-    (surface : RectangularOwnedTriangulation.OwnedTriangulation triangles) where
+    (surface : OwnedTriangulation triangles) where
   /-- The cached standard-differential readings on the supplied exact primitive banks. -/ rows :
-    Data.Vector.DependentVector (fun row => RectangularSharedPrimitives.SharedPrimitiveValues (cached row).anchors
+    DependentVector (fun row => SharedPrimitiveValues (cached row).anchors
     (cached row).offsets surface)
   /-- The retained finite affine basis on the same owned surface triangulation. -/ affine :
-    AffineBasisEnergy.AffineBasis surface.mesh.triangulation surface.mesh.coordinate genus
+    AffineBasis surface.mesh.triangulation surface.mesh.coordinate genus
   /-- Every affine-basis vertex value reads back its actual cached primitive row. -/ values_eq : ∀ row vertex,
     affine.values row vertex = (rows.get row).values vertex
   /-- Every affine-basis face coefficient reads back its actual cached primitive row. -/ coefficients_eq : ∀ row face,
@@ -168,30 +168,30 @@ namespace BasisReadings
 
 variable {cached : (row : Fin genus) →
   DomainPrimitives domain
-  (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential row) stage}
+  (PeriodMatrix.standardDifferential row) stage}
   {surface : OwnedTriangulation triangles}
 
 /-- Materialize all standard-differential rows from the supplied primitive caches and retain exact affine-basis
 readbacks. -/
-def build (cached : (row : Fin genus) → PrimitiveData.DomainPrimitives domain (PeriodMatrix.standardDifferential row)
+def build (cached : (row : Fin genus) → DomainPrimitives domain (PeriodMatrix.standardDifferential row)
   stage)
-    (surface : RectangularOwnedTriangulation.OwnedTriangulation triangles) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisEnergy.BasisReadings cached surface :=
+    (surface : OwnedTriangulation triangles) :
+      BasisReadings cached surface :=
   let rows := DependentVector.ofFn fun row => SharedPrimitiveValues.build (cached row).anchors (cached row).offsets
     surface
   { rows := rows
-    affine := ⟨vectorOfFn (fun row => (rows.get row).values), Data.Vector.Basic.vectorOfFn (fun row => (rows.get
+    affine := ⟨vectorOfFn (fun row => (rows.get row).values), Basic.vectorOfFn (fun row => (rows.get
       row).faceCoefficients)⟩
     values_eq := fun row vertex => by
-      change (Data.Vector.Basic.vectorOfFn (fun row => (rows.get row).values) row) vertex = _
-      rw [Data.Vector.Basic.vectorOfFn_apply]
+      change (Basic.vectorOfFn (fun row => (rows.get row).values) row) vertex = _
+      rw [Basic.vectorOfFn_apply]
     coefficients_eq := fun row face => by
-      change (Data.Vector.Basic.vectorOfFn (fun row => (rows.get row).faceCoefficients) row) face = _
-      rw [Data.Vector.Basic.vectorOfFn_apply] }
+      change (Basic.vectorOfFn (fun row => (rows.get row).faceCoefficients) row) face = _
+      rw [Basic.vectorOfFn_apply] }
 
 /-- The affine combination evaluates the exact retained aligned primitives with the supplied coefficients. -/
-theorem value_eq (readings : Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisEnergy.BasisReadings cached surface)
-  (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+theorem value_eq (readings : BasisReadings cached surface)
+  (coefficients : GaussianVector genus)
     (vertex : Fin surface.mesh.vertices.length) :
     readings.affine.value coefficients vertex = FiniteSum.Fin.sumFin (fun row => coefficients row *
       (cached row).anchors.alignedValue (cached row).offsets
@@ -201,8 +201,8 @@ theorem value_eq (readings : Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBas
   rw [readings.values_eq, (readings.rows.get row).value_eq, surface.point_eq]
 
 /-- Equal actual surface coordinates give equal retained affine-combination readings. -/
-theorem coordinate_consistent (readings : Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisEnergy.BasisReadings
-  cached surface) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+theorem coordinate_consistent (readings : BasisReadings
+  cached surface) (coefficients : GaussianVector genus)
     (first last : Fin surface.mesh.vertices.length) (equal : surface.mesh.coordinate first = surface.mesh.coordinate
       last) :
     readings.affine.value coefficients first = readings.affine.value coefficients last := by
@@ -212,8 +212,8 @@ theorem coordinate_consistent (readings : Curves.Hyperelliptic.Meshes.PuncturedG
 
 /-- All rows share the same retained inverse model; the finite monomial sum is exactly the requested coefficient
 polynomial, including the empty basis. -/
-theorem coefficient_eq (readings : Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisEnergy.BasisReadings cached
-  surface) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+theorem coefficient_eq (readings : BasisReadings cached
+  surface) (coefficients : GaussianVector genus)
     (index : Fin (triangles.map ModelTriangle.triangle).length) :
     readings.affine.coefficient coefficients index =
       (EvaluationLower.coefficientPolynomial coefficients).eval (surface.mesh.coordinate
@@ -224,7 +224,7 @@ theorem coefficient_eq (readings : Curves.Hyperelliptic.Meshes.PuncturedGrid.Dom
             (surface.mesh.coordinate (surface.mesh.triangulation.faces index).first) := by
   unfold AffineBasis.coefficient
   rw [FiniteSum.Fin.sumFin_congr (fun row => by
-    rw [readings.coefficients_eq, SharedPrimitiveValues.faceCoefficients, Data.Vector.Basic.vectorOfFn_apply,
+    rw [readings.coefficients_eq, SharedPrimitiveValues.faceCoefficients, Basic.vectorOfFn_apply,
       (cached row).primitives.coefficient_eq, PreparedPrimitiveSamples.differentialNumerator_eval])]
   change FiniteSum.Fin.sumFin (fun row => coefficients row * (_ ^ row.val * _)) = _
   rw [FiniteSum.Fin.sumFin_congr (fun _ => mul_assoc _ _ _ |>.symm), FiniteSum.Fin.sumFin_mul_right]
@@ -235,9 +235,9 @@ variable {box : Box} {mesh :
   ObservationMesh domain.cuts box}
 
 /-- The retained energy-cell density lower bound applies to every actual affine-basis face coefficient. -/
-theorem coefficient_lower (readings : Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisEnergy.BasisReadings cached
+theorem coefficient_lower (readings : BasisReadings cached
   mesh.surface)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (cell : PreparedEnergy.SurfaceCell curve
+    (coefficients : GaussianVector genus) (cell : PreparedEnergy.SurfaceCell curve
       coefficients)
     (box_eq : cell.box = box) (index : Fin (mesh.triangles.map ModelTriangle.triangle).length) :
     cell.densityLower / 4 ≤ Data.Gaussian.Norm.Basic.normSq (readings.affine.coefficient coefficients index) :=
@@ -252,9 +252,9 @@ theorem coefficient_lower (readings : Curves.Hyperelliptic.Meshes.PuncturedGrid.
   exact lower
 
 /-- The retained finite affine energy bounds the original energy-cell area times its density lower bound. -/
-theorem affineEnergy_lower (readings : Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisEnergy.BasisReadings cached
+theorem affineEnergy_lower (readings : BasisReadings cached
   mesh.surface)
-    (budget : AffineBasis.SurfaceBudget readings.affine) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector
+    (budget : SurfaceBudget readings.affine) (coefficients : GaussianVector
       genus)
     (cell : PreparedEnergy.SurfaceCell curve coefficients) (box_eq : cell.box = box) :
     Content.boxContent cell.box * (cell.densityLower / 4) ≤ (budget.sample coefficients).affineEnergy := by
@@ -272,8 +272,8 @@ theorem affineEnergy_lower (readings : Curves.Hyperelliptic.Meshes.PuncturedGrid
 /-- The original energy-cell contribution minus the paid coefficient-scaled error bounds the actual retained boundary
 energy. -/
 theorem contribution_sub_error_le_boundaryEnergy (readings :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.DomainBasisEnergy.BasisReadings cached mesh.surface)
-    (budget : AffineBasis.SurfaceBudget readings.affine) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector
+  BasisReadings cached mesh.surface)
+    (budget : SurfaceBudget readings.affine) (coefficients : GaussianVector
       genus)
     (cell : PreparedEnergy.SurfaceCell curve coefficients) (box_eq : cell.box = box) :
     cell.toEnergyCell.contribution / 4 - PreparedObservationCoercivity.coefficientNormSq coefficients * budget.total ≤

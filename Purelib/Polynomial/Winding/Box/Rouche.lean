@@ -33,6 +33,9 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Polynomial.Dense.Rational.Pair.Path.Basic
 
+open Purelib.Polynomial.Clearance.Box.Boundary
+open Purelib.Polynomial.Dense.Rational.CauchyIndex.Product
+
 open Purelib.Polynomial.Clearance.Box.Boundary.Basic (BoundaryClearance)
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 open Purelib.Polynomial.Winding.Edge.Rouche (PolynomialLineData)
@@ -110,33 +113,33 @@ theorem boxData_of_boundaryNormDominance
     (pClearance : BoundaryClearance p box)
     (dominance : Clearance.Box.Dominance.Basic.BoundaryNormDominance p q box) :
     BoxData p q box := by
-  have bottom := Winding.Edge.Rouche.lineData_of_boundaryNormDominance p q box dominance
+  have bottom := Edge.Rouche.lineData_of_boundaryNormDominance p q box dominance
     (Gaussian.Cast.Imaginary.horizontalBase box.yLower) Gaussian.Constants.horizontalDirection proper.1
-    (Clearance.Box.Boundary.Lines.bottomOfBoundary
+    (Lines.bottomOfBoundary
       pClearance).toPathCertificate (by
         intro t inside
         rw [Affine.Axis.line_horizontal]
         exact ⟨⟨inside.1, inside.2, le_rfl, box.y_valid⟩,
           Or.inr (Or.inr (Or.inl rfl))⟩)
-  have right := Winding.Edge.Rouche.lineData_of_boundaryNormDominance p q box dominance
+  have right := Edge.Rouche.lineData_of_boundaryNormDominance p q box dominance
     (Gaussian.Cast.Winding.verticalBase box.xUpper) Gaussian.Constants.imaginaryUnit proper.2
-    (Clearance.Box.Boundary.Lines.rightOfBoundary
+    (Lines.rightOfBoundary
       pClearance).toPathCertificate (by
         intro t inside
         rw [Affine.Axis.line_vertical]
         exact ⟨⟨box.x_valid, le_rfl, inside.1, inside.2⟩,
           Or.inr (Or.inl rfl)⟩)
-  have topIncreasing := Winding.Edge.Rouche.lineData_of_boundaryNormDominance p q box dominance
+  have topIncreasing := Edge.Rouche.lineData_of_boundaryNormDominance p q box dominance
     (Gaussian.Cast.Imaginary.horizontalBase box.yUpper) Gaussian.Constants.horizontalDirection proper.1
-    (Clearance.Box.Boundary.Lines.topOfBoundary
+    (Lines.topOfBoundary
       pClearance).toPathCertificate (by
         intro t inside
         rw [Affine.Axis.line_horizontal]
         exact ⟨⟨inside.1, inside.2, box.y_valid, le_rfl⟩,
           Or.inr (Or.inr (Or.inr rfl))⟩)
-  have leftIncreasing := Winding.Edge.Rouche.lineData_of_boundaryNormDominance p q box dominance
+  have leftIncreasing := Edge.Rouche.lineData_of_boundaryNormDominance p q box dominance
     (Gaussian.Cast.Winding.verticalBase box.xLower) Gaussian.Constants.imaginaryUnit proper.2
-    (Clearance.Box.Boundary.Lines.leftOfBoundary
+    (Lines.leftOfBoundary
       pClearance).toPathCertificate (by
         intro t inside
         rw [Affine.Axis.line_vertical]
@@ -174,19 +177,19 @@ theorem quadrupledBoxWinding_add_of_data
     (p q : CoefficientPolynomial) (box : Box)
     (pClearance : BoundaryClearance p box)
     (data : BoxData p q box) :
-    Winding.Box.Basic.quadrupledBoxWinding (p + q) box = Winding.Box.Basic.quadrupledBoxWinding p box := open Purelib in
+    Basic.quadrupledBoxWinding (p + q) box = Basic.quadrupledBoxWinding p box := open Purelib in
       by
   let bottomClearance :=
-    (Clearance.Box.Boundary.Lines.bottomOfBoundary
+    (Lines.bottomOfBoundary
       pClearance).toPathCertificate
   let rightClearance :=
-    (Clearance.Box.Boundary.Lines.rightOfBoundary
+    (Lines.rightOfBoundary
       pClearance).toPathCertificate
   let topClearance :=
-    (Clearance.Box.Boundary.Lines.topOfBoundary
+    (Lines.topOfBoundary
       pClearance).toPathCertificate
   let leftClearance :=
-    (Clearance.Box.Boundary.Lines.leftOfBoundary
+    (Lines.leftOfBoundary
       pClearance).toPathCertificate
   have bottomStart := bottomClearance.eval_ne_zero
     (x := box.xLower) ⟨le_rfl, box.x_valid⟩
@@ -221,8 +224,8 @@ theorem quadrupledBoxWinding_add_of_data
   have topProduct := data.top.product
   have leftProduct := data.left.product
   unfold Dense.Rational.CauchyIndex.HalfPlane.Formula at bottomHalf rightHalf topHalf leftHalf
-  unfold Dense.Rational.CauchyIndex.Product.Basic.AuxiliaryProductFormula
-    Dense.Rational.CauchyIndex.Product.Basic.auxiliaryEndpointCorrection2
+  unfold Basic.AuxiliaryProductFormula
+    Basic.auxiliaryEndpointCorrection2
     at bottomProduct rightProduct topProduct leftProduct
   simp only [Dense.Rational.Pair.ConjugateProduct.eval_roucheReal, Dense.Rational.Pair.ConjugateProduct.eval_roucheImag,
     Dense.Basic.DensePolynomial.eval_neg,
@@ -236,10 +239,10 @@ theorem quadrupledBoxWinding_add_of_data
   rw [rightConjugate] at rightProduct
   rw [topConjugate] at topProduct
   rw [leftConjugate] at leftProduct
-  rw [Winding.Box.Basic.quadrupledBoxWinding_eq, Winding.Box.Basic.quadrupledBoxWinding_eq]
+  rw [Basic.quadrupledBoxWinding_eq, Basic.quadrupledBoxWinding_eq]
   simp only [Dense.Gaussian.Path.Box.Sides.horizontalEdge, Dense.Gaussian.Path.Box.Sides.verticalEdge,
     Dense.Rational.Pair.Path.Basic.PolynomialEdge.doubledWinding, Dense.Rational.Pair.Path.Basic.PolynomialEdge.ofLine]
-  exact Purelib.Data.Int.Telescope.Four.fourEdgeRoucheTelescope bottomProduct rightProduct topProduct
+  exact Data.Int.Telescope.Four.fourEdgeRoucheTelescope bottomProduct rightProduct topProduct
     leftProduct bottomHalf rightHalf topHalf leftHalf
 end Purelib.Polynomial.Winding.Box.Rouche
 
@@ -269,7 +272,7 @@ theorem quadrupledBoxWinding_add_of_boundaryNormDominance
       box.Proper)
     (pClearance : BoundaryClearance p box)
     (dominance : Clearance.Box.Dominance.Basic.BoundaryNormDominance p q box) :
-    Winding.Box.Basic.quadrupledBoxWinding (p + q) box = Winding.Box.Basic.quadrupledBoxWinding p box :=
+    Basic.quadrupledBoxWinding (p + q) box = Basic.quadrupledBoxWinding p box :=
   quadrupledBoxWinding_add_of_data p q box pClearance
     (boxData_of_boundaryNormDominance p q box proper
       pClearance dominance)
@@ -308,10 +311,10 @@ theorem quadrupledBoxWinding_add_eq_of_uniformBound
     (clearance : BoundaryClearance base box)
     (bound : Fraction.Rational)
     (strict : bound < clearance.bound)
-    (uniform : ∀ z : Gaussian.Basic.Canonical, Box.Boundary.OnBoxBoundary box z →
-      Gaussian.Basic.Canonical.normSq (perturbation.eval z) ≤ bound) :
-    Winding.Box.Basic.quadrupledBoxWinding (base + perturbation) box =
-      Winding.Box.Basic.quadrupledBoxWinding base box :=
+    (uniform : ∀ z : Basic.Canonical, Box.Boundary.OnBoxBoundary box z →
+      Basic.Canonical.normSq (perturbation.eval z) ≤ bound) :
+    Basic.quadrupledBoxWinding (base + perturbation) box =
+      Basic.quadrupledBoxWinding base box :=
   quadrupledBoxWinding_add_of_boundaryNormDominance
     base perturbation box proper clearance
     (Clearance.Box.Dominance.Uniform.boundaryNormDominanceOfUniformBound base perturbation box clearance

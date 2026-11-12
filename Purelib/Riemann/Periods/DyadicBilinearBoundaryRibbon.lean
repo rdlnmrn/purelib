@@ -47,8 +47,8 @@ open Purelib.Data in
 open Purelib.Geometry in
 /-- Compute paired primitive area along a dyadically subdivided rational parameter interval. -/
 def dyadicArea (values : Rat.Fraction.Rational → PrimitivePoint) (depth : Nat) (first last : Rat.Fraction.Rational) :
-  Gaussian.Basic.Canonical :=
-  Rectangle.Partition.PreparedBoxBoundary.horizontalBoundary (fun point => values point.re) depth first last 0
+  Canonical :=
+  horizontalBoundary (fun point => values point.re) depth first last 0
 
 open Purelib.Data in
 /-- At depth zero the dyadic area is the single endpoint pairing. -/
@@ -62,26 +62,26 @@ open Purelib.Geometry
 theorem dyadicArea_succ (values : Rat.Fraction.Rational → PrimitivePoint) (depth : Nat) (first last :
   Rat.Fraction.Rational) :
     dyadicArea values (depth + 1) first last = dyadicArea values depth first
-      (Rectangle.Partition.PreparedBoxPartitions.midpoint first last) +
-      dyadicArea values depth (Rectangle.Partition.PreparedBoxPartitions.midpoint first last) last := rfl
+      (midpoint first last) +
+      dyadicArea values depth (midpoint first last) last := rfl
 
 /-- Read a horizontal boundary area through its rational coordinate parameter. -/
-theorem horizontalBoundary_eq_dyadicArea (values : Gaussian.Basic.Canonical → PrimitivePoint)
+theorem horizontalBoundary_eq_dyadicArea (values : Canonical → PrimitivePoint)
     (depth : Nat) (first last height : Rat.Fraction.Rational) :
-    Rectangle.Partition.PreparedBoxBoundary.horizontalBoundary values depth first last height =
+    horizontalBoundary values depth first last height =
       dyadicArea (fun coordinate => values ⟨coordinate, height⟩) depth first last := by
   induction depth generalizing first last with
   | zero => rfl
-  | succ depth ih => rw [Rectangle.Partition.PreparedBoxBoundary.horizontalBoundary, dyadicArea_succ, ih, ih]
+  | succ depth ih => rw [horizontalBoundary, dyadicArea_succ, ih, ih]
 
 /-- Read a vertical boundary area through its rational coordinate parameter. -/
-theorem verticalBoundary_eq_dyadicArea (values : Gaussian.Basic.Canonical → PrimitivePoint)
+theorem verticalBoundary_eq_dyadicArea (values : Canonical → PrimitivePoint)
     (depth : Nat) (first last horizontal : Rat.Fraction.Rational) :
-    Rectangle.Partition.PreparedBoxBoundary.verticalBoundary values depth first last horizontal =
+    verticalBoundary values depth first last horizontal =
       dyadicArea (fun coordinate => values ⟨horizontal, coordinate⟩) depth first last := by
   induction depth generalizing first last with
   | zero => rfl
-  | succ depth ih => rw [Rectangle.Partition.PreparedBoxBoundary.verticalBoundary, dyadicArea_succ, ih, ih]
+  | succ depth ih => rw [verticalBoundary, dyadicArea_succ, ih, ih]
 
 end
 
@@ -104,15 +104,15 @@ theorem dyadicArea_affine (values : Rat.Fraction.Rational → PrimitivePoint) (o
       dyadicArea values depth (origin + slope * first) (origin + slope * last) := by
   induction depth generalizing first last with
   | zero => rfl
-  | succ depth ih => rw [dyadicArea_succ, dyadicArea_succ, ih, ih, Path.Dyadic.DyadicBoundaryRibbon.midpoint_affine]
+  | succ depth ih => rw [dyadicArea_succ, dyadicArea_succ, ih, ih, midpoint_affine]
 
 section
 open Purelib.Data
 open Purelib.Geometry
 /-- A horizontal boundary reads as the same dyadic area on its unit-interval affine segment. -/
-theorem horizontalBoundary_eq_lineArea (values : Gaussian.Basic.Canonical → PrimitivePoint)
+theorem horizontalBoundary_eq_lineArea (values : Canonical → PrimitivePoint)
     (depth : Nat) (first last height : Rat.Fraction.Rational) :
-    Rectangle.Partition.PreparedBoxBoundary.horizontalBoundary values depth first last height =
+    horizontalBoundary values depth first last height =
       dyadicArea (fun parameter => values (Rational.Affine.line ⟨first, height⟩
         (⟨last, height⟩ - ⟨first, height⟩) parameter)) depth 0 1 := by
   have lineEq (parameter : Rat.Fraction.Rational) :
@@ -130,9 +130,9 @@ theorem horizontalBoundary_eq_lineArea (values : Gaussian.Basic.Canonical → Pr
     (affine.symm.trans (dyadicArea_congr (fun parameter => congrArg values (lineEq parameter).symm) depth 0 1))
 
 /-- A vertical boundary reads as the same dyadic area on its unit-interval affine segment. -/
-theorem verticalBoundary_eq_lineArea (values : Gaussian.Basic.Canonical → PrimitivePoint)
+theorem verticalBoundary_eq_lineArea (values : Canonical → PrimitivePoint)
     (depth : Nat) (first last horizontal : Rat.Fraction.Rational) :
-    Rectangle.Partition.PreparedBoxBoundary.verticalBoundary values depth first last horizontal =
+    verticalBoundary values depth first last horizontal =
       dyadicArea (fun parameter => values (Rational.Affine.line ⟨horizontal, first⟩
         (⟨horizontal, last⟩ - ⟨horizontal, first⟩) parameter)) depth 0 1 := by
   have lineEq (parameter : Rat.Fraction.Rational) :
@@ -155,10 +155,10 @@ open Purelib.Topology in
 open Purelib.Data in
 /-- Subtract the two dyadic areas and their exact endpoint error contribution. -/
 def dyadicDifference (left right : Rat.Fraction.Rational → PrimitivePoint) (depth : Nat) (first last :
-  Rat.Fraction.Rational) : Gaussian.Basic.Canonical :=
+  Rat.Fraction.Rational) : Canonical :=
   dyadicArea left depth first last - dyadicArea right depth first last -
-    (edgeArea (right last) (Polygon.Stokes.PrimitivePoint.sub (left last) (right last)) - edgeArea (right first)
-      (Polygon.Stokes.PrimitivePoint.sub (left first) (right first)))
+    (edgeArea (right last) (sub (left last) (right last)) - edgeArea (right first)
+      (sub (left first) (right first)))
 
 open Purelib.Data in
 open Purelib.Geometry in
@@ -166,8 +166,8 @@ open Purelib.Geometry in
 theorem dyadicDifference_succ (left right : Rat.Fraction.Rational → PrimitivePoint) (depth : Nat) (first last :
   Rat.Fraction.Rational) :
     dyadicDifference left right (depth + 1) first last =
-      dyadicDifference left right depth first (Rectangle.Partition.PreparedBoxPartitions.midpoint first last) +
-        dyadicDifference left right depth (Rectangle.Partition.PreparedBoxPartitions.midpoint first last) last := by
+      dyadicDifference left right depth first (midpoint first last) +
+        dyadicDifference left right depth (midpoint first last) last := by
   simp only [dyadicDifference, dyadicArea_succ]
   ring1
 
@@ -183,17 +183,17 @@ squared. -/
 theorem dyadicDifference_bound (left right : Rat.Fraction.Rational → PrimitivePoint) {lower upper error slope drift :
   Rat.Fraction.Rational}
     (errorLe : ∀ parameter, lower ≤ parameter ∧ parameter ≤ upper → Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded
-      (Polygon.Stokes.PrimitivePoint.sub (left parameter) (right parameter)) error)
+      (sub (left parameter) (right parameter)) error)
     (rightLe : ∀ first last, lower ≤ first ∧ first ≤ upper → lower ≤ last ∧ last ≤ upper →
-      Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (Polygon.Stokes.PrimitivePoint.sub (right last) (right first))
+      Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (sub (right last) (right first))
         (slope * (last - first) ^ 2))
     (driftLe : ∀ first last, lower ≤ first ∧ first ≤ upper → lower ≤ last ∧ last ≤ upper →
-      Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (Polygon.Stokes.PrimitivePoint.sub
-        (Polygon.Stokes.PrimitivePoint.sub (left last) (right last)) (Polygon.Stokes.PrimitivePoint.sub (left first)
+      Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (sub
+        (sub (left last) (right last)) (sub (left first)
         (right first))) (drift * (last - first) ^ 2))
     (depth : Nat) {first last : Rat.Fraction.Rational} (firstInside : lower ≤ first ∧ first ≤ upper)
     (lastInside : lower ≤ last ∧ last ≤ upper) (ordered : first ≤ last) :
-    Data.Gaussian.Norm.Basic.normSq (dyadicDifference left right depth first last) ≤ 8 * error * (4 * slope + drift)
+    normSq (dyadicDifference left right depth first last) ≤ 8 * error * (4 * slope + drift)
       * (last - first) ^ 2 := by
   induction depth generalizing first last with
   | zero =>
@@ -201,29 +201,29 @@ theorem dyadicDifference_bound (left right : Rat.Fraction.Rational → Primitive
       exact correction_bound (errorLe first firstInside) (errorLe last lastInside)
         (rightLe first last firstInside lastInside) (driftLe first last firstInside lastInside)
   | succ depth ih =>
-      have between := Rectangle.Partition.PreparedBoxPartitions.midpoint_between ordered
+      have between := midpoint_between ordered
       have middleInside := And.intro (firstInside.1.trans between.1) (between.2.trans lastInside.2)
       have firstBound := ih firstInside middleInside between.1
       have lastBound := ih middleInside lastInside between.2
       have twiceHalf : ((last - first) / 2) * 2 = last - first :=
         Rat.Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
-      have leftHalf : Rectangle.Partition.PreparedBoxPartitions.midpoint first last - first = (last - first) / 2 := by
-        unfold Rectangle.Partition.PreparedBoxPartitions.midpoint; ring1
-      have rightHalf : last - Rectangle.Partition.PreparedBoxPartitions.midpoint first last = (last - first) / 2 := by
+      have leftHalf : midpoint first last - first = (last - first) / 2 := by
+        unfold midpoint; ring1
+      have rightHalf : last - midpoint first last = (last - first) / 2 := by
         calc
-          _ = (last - first) - (last - first) / 2 := by unfold Rectangle.Partition.PreparedBoxPartitions.midpoint; ring1
+          _ = (last - first) - (last - first) / 2 := by unfold midpoint; ring1
           _ = ((last - first) / 2) * 2 - (last - first) / 2 := by rw [twiceHalf]
           _ = _ := by ring1
       rw [dyadicDifference_succ]
       calc
-        _ ≤ 2 * (Data.Gaussian.Norm.Basic.normSq (dyadicDifference left right depth first
-          (Rectangle.Partition.PreparedBoxPartitions.midpoint first last)) +
-            Data.Gaussian.Norm.Basic.normSq (dyadicDifference left right depth
-              (Rectangle.Partition.PreparedBoxPartitions.midpoint first last) last)) :=
+        _ ≤ 2 * (normSq (dyadicDifference left right depth first
+          (midpoint first last)) +
+            normSq (dyadicDifference left right depth
+              (midpoint first last) last)) :=
               Gaussian.Norm.Bounds.normSq_add_le_two _ _
-        _ ≤ 2 * (8 * error * (4 * slope + drift) * (Rectangle.Partition.PreparedBoxPartitions.midpoint first last -
+        _ ≤ 2 * (8 * error * (4 * slope + drift) * (midpoint first last -
           first) ^ 2 +
-            8 * error * (4 * slope + drift) * (last - Rectangle.Partition.PreparedBoxPartitions.midpoint first last) ^
+            8 * error * (4 * slope + drift) * (last - midpoint first last) ^
               2) :=
           Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add firstBound lastBound) (by decide)
         _ = 8 * error * (4 * slope + drift) * (((last - first) / 2) * 2) ^ 2 := by rw [leftHalf, rightHalf]; ring1

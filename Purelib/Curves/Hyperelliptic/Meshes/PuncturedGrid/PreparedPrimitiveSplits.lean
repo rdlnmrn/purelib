@@ -1,4 +1,6 @@
 module
+
+import Purelib.Polynomial.Geometry.Grid.AxisWalks.Gaussian
 meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Data.List.Append
 import Purelib.Data.List.Map
@@ -38,6 +40,8 @@ import Purelib.Riemann.Normalization.InverseRootPrimitive
 import Purelib.Riemann.Readings.PreparedPrimitiveRequests
 import Purelib.Riemann.Readings.PreparedPrimitiveSamples
 import Purelib.Tactic.Ring
+
+open Purelib.Data.Gaussian.Norm.Sum
 
 public section
 
@@ -86,16 +90,16 @@ open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {source :
   Differential genus}
-  {ambient : Purelib.Geometry.Rational.Box} {grid : Polynomial.Geometry.Grid.ClearGrid
+  {ambient : Geometry.Rational.Box} {grid : ClearGrid
     curve.polynomial ambient}
 
 set_option genInjectivity false in
 /-- Extract the actual retained axes once for the whole parent bank. -/
-structure PrimitiveAxes (grid : Polynomial.Geometry.Grid.ClearGrid curve.polynomial ambient) where
-  /-- The retained coordinates of the actual vertical grid lines. -/ vertical : List Fraction.Rational
+structure PrimitiveAxes (grid : ClearGrid curve.polynomial ambient) where
+  /-- The retained coordinates of the actual vertical grid lines. -/ vertical : List Rational
   /-- The cached vertical coordinates are exactly the coordinates of the retained grid lines. -/ vertical_eq : vertical
     = grid.vertical.map VerticalLine.coordinate
-  /-- The retained coordinates of the actual horizontal grid lines. -/ horizontal : List Fraction.Rational
+  /-- The retained coordinates of the actual horizontal grid lines. -/ horizontal : List Rational
   /-- The cached horizontal coordinates are exactly the coordinates of the retained grid lines. -/ horizontal_eq :
     horizontal = grid.horizontal.map HorizontalLine.coordinate
 
@@ -104,34 +108,34 @@ constructive_injectivity PrimitiveAxes
 namespace PrimitiveAxes
 
 /-- Extract and cache both coordinate lists from the actual retained grid. -/
-@[expose] def build (grid : Polynomial.Geometry.Grid.ClearGrid curve.polynomial ambient) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveAxes grid :=
+@[expose] def build (grid : ClearGrid curve.polynomial ambient) :
+  PrimitiveAxes grid :=
   ⟨grid.vertical.map VerticalLine.coordinate, rfl, grid.horizontal.map HorizontalLine.coordinate, rfl⟩
 
 /-- Compute the real- and imaginary-coordinate crossing parameters of an original parent edge against the retained grid
 axes. -/
-@[expose] def parameters (axes : Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveAxes grid)
-  (parent : PreparedSubdivisionModelCore.CenteredEdge curve source) : List Fraction.Rational :=
+@[expose] def parameters (axes : PrimitiveAxes grid)
+  (parent : CenteredEdge curve source) : List Rational :=
   PreparedSegmentCuts.crossings (parent.edge.point 0).re ((parent.edge.point 1).re - (parent.edge.point 0).re)
     axes.vertical ++
     PreparedSegmentCuts.crossings (parent.edge.point 0).im ((parent.edge.point 1).im - (parent.edge.point 0).im)
       axes.horizontal
 
 /-- The number of crossing parameters is bounded by the total number of retained axis lines. -/
-theorem parameters_length (axes : Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveAxes grid)
-  (parent : PreparedSubdivisionModelCore.CenteredEdge curve source) :
+theorem parameters_length (axes : PrimitiveAxes grid)
+  (parent : CenteredEdge curve source) :
     (axes.parameters parent).length ≤ axes.vertical.length + axes.horizontal.length := by
   rw [parameters,
-    Data.List.Append.length_append]
+    Append.length_append]
   exact Nat.add_le_add (PreparedSegmentCuts.crossings_length _ _ _) (PreparedSegmentCuts.crossings_length _ _ _)
 
 /-- A moving coordinate cannot cross an actual grid line inside a emitted fragment. Stationary coordinates need no cut
 and remain on their fixed line. -/
-theorem vertical_outside (axes : Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveAxes grid)
-  (parent : PreparedSubdivisionModelCore.CenteredEdge curve source)
-    (partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)) {interval :
+theorem vertical_outside (axes : PrimitiveAxes grid)
+  (parent : CenteredEdge curve source)
+    (partition : Partition 0 1 (axes.parameters parent)) {interval :
       PreparedAxisPartitions.Interval}
-    (member : interval ∈ partition.intervals) {line : ClearGrid.VerticalLine curve.polynomial ambient} (present : line ∈
+    (member : interval ∈ partition.intervals) {line : VerticalLine curve.polynomial ambient} (present : line ∈
       grid.vertical)
     (moving : (parent.edge.point 1).re - (parent.edge.point 0).re ≠ 0) :
     (line.coordinate - (parent.edge.point 0).re) / ((parent.edge.point 1).re - (parent.edge.point 0).re) ≤
@@ -148,11 +152,11 @@ theorem vertical_outside (axes : Curves.Hyperelliptic.Meshes.PuncturedGrid.Prepa
 
 /-- For a moving imaginary coordinate, every actual horizontal grid crossing lies outside the interior of each emitted
 fragment. -/
-theorem horizontal_outside (axes : Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveAxes grid)
-  (parent : PreparedSubdivisionModelCore.CenteredEdge curve source)
-    (partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)) {interval :
+theorem horizontal_outside (axes : PrimitiveAxes grid)
+  (parent : CenteredEdge curve source)
+    (partition : Partition 0 1 (axes.parameters parent)) {interval :
       PreparedAxisPartitions.Interval}
-    (member : interval ∈ partition.intervals) {line : ClearGrid.HorizontalLine curve.polynomial ambient} (present : line
+    (member : interval ∈ partition.intervals) {line : HorizontalLine curve.polynomial ambient} (present : line
       ∈ grid.horizontal)
     (moving : (parent.edge.point 1).im - (parent.edge.point 0).im ≠ 0) :
     (line.coordinate - (parent.edge.point 0).im) / ((parent.edge.point 1).im - (parent.edge.point 0).im) ≤
@@ -172,13 +176,13 @@ end PrimitiveAxes
 set_option genInjectivity false in
 /-- An ordered splitting spine indexed by the exact original parents. -/
 inductive PrimitiveSplits (axes : PrimitiveAxes grid)
-  : List (PreparedSubdivisionModelCore.CenteredEdge curve source) → Type
+  : List (CenteredEdge curve source) → Type
   /-- The empty original parent list has no splitting data. -/ | nil :
     PrimitiveSplits axes []
   /-- Retain the head parent partition and the ordered splitting data for its exact tail. -/ | cons {parent :
-    PreparedSubdivisionModelCore.CenteredEdge curve source} {parents : List (PreparedSubdivisionModelCore.CenteredEdge
+    CenteredEdge curve source} {parents : List (CenteredEdge
     curve source)}
-      (partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)) (tail :
+      (partition : Partition 0 1 (axes.parameters parent)) (tail :
         PrimitiveSplits axes parents) :
       PrimitiveSplits axes (parent :: parents)
 
@@ -186,27 +190,27 @@ constructive_injectivity PrimitiveSplits
 
 namespace PrimitiveSplits
 
-variable {axes : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveAxes grid}
+variable {axes : PrimitiveAxes grid}
 
 /-- Partition each original parent parameter interval at all retained grid-axis crossings. -/
-@[expose] def build (axes : Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveAxes grid) :
-  (parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)) →
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveSplits axes parents
+@[expose] def build (axes : PrimitiveAxes grid) :
+  (parents : List (CenteredEdge curve source)) →
+  PrimitiveSplits axes parents
   | [] => .nil
   | parent :: parents => .cons (Partition.build 0 1 (by decide) (axes.parameters parent))
     (build axes parents)
 
 /-- Count all fragments in the ordered original-parent splitting spine. -/
-@[expose] def count : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)} →
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveSplits axes parents → Nat
+@[expose] def count : {parents : List (CenteredEdge curve source)} →
+  PrimitiveSplits axes parents → Nat
   | _, .nil => 0
   | _, .cons partition tail => partition.count + tail.count
 
 section
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveSplits
 /-- Each original parent contributes at most one more fragment than the total number of retained grid axes. -/
-theorem count_le : ∀ {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)} (splits :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveSplits axes parents),
+theorem count_le : ∀ {parents : List (CenteredEdge curve source)} (splits :
+  PrimitiveSplits axes parents),
     splits.count ≤ parents.length * (axes.vertical.length + axes.horizontal.length + 1)
   | _, .nil => Nat.zero_le _
   | _, .cons (parent := parent) partition tail => by
@@ -215,10 +219,10 @@ theorem count_le : ∀ {parents : List (PreparedSubdivisionModelCore.CenteredEdg
       simpa only [count, List.length_cons, Data.Nat.Multiplication.right_distrib, Nat.one_mul, Nat.add_comm] using total
 
 /-- Evaluate each original requested primitive on its retained parameter fragments, preserving parent order. -/
-@[expose] def increments {count : Nat} {target : Fraction.Rational} :
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)} →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveSplits axes parents →
-      UniformPreparedRequests.RequestedParents count target parents → List Data.Gaussian.Basic.Canonical
+@[expose] def increments {count : Nat} {target : Rational} :
+    {parents : List (CenteredEdge curve source)} →
+      PrimitiveSplits axes parents →
+      RequestedParents count target parents → List Data.Gaussian.Basic.Canonical
   | _, .nil, .nil => []
   | _, .cons (parent := parent) partition tail, .cons request requests =>
       partition.intervals.map (fun interval =>
@@ -227,59 +231,45 @@ theorem count_le : ∀ {parents : List (PreparedSubdivisionModelCore.CenteredEdg
 
 end
 
-/-- Primitive increments telescope along an increasing finite interval walk. -/
-private theorem telescope (value : Fraction.Rational → Data.Gaussian.Basic.Canonical) {intervals : List
-  PreparedAxisPartitions.Interval} :
-    {first last : Fraction.Rational} → (walk : AxisWalks.IncreasingWalk intervals first last) →
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (walk.edges.map fun interval => value interval.upper - value
-        interval.lower) = value last - value first
-  | _, _, .nil _ => by change (0 : Data.Gaussian.Basic.Canonical) = _ - _; ring1
-  | _, _, .cons interval _ tail => by
-      change (value interval.upper - value interval.lower) + Data.Gaussian.Norm.Sum.Basic.gaussianSum _ = _
-      rw [telescope value
-        tail]
-      simp only [id_eq]
-      ring1
-
 /-- The Gaussian sum of two concatenated lists is the sum of their separate finite sums. -/
 private theorem sum_append (first last : List Data.Gaussian.Basic.Canonical) :
-  Data.Gaussian.Norm.Sum.Basic.gaussianSum (first ++ last) = Data.Gaussian.Norm.Sum.Basic.gaussianSum first +
-  Data.Gaussian.Norm.Sum.Basic.gaussianSum last := by
+  Basic.gaussianSum (first ++ last) = Basic.gaussianSum first +
+  Basic.gaussianSum last := by
   induction first with
   | nil =>
-    change Data.Gaussian.Norm.Sum.Basic.gaussianSum last = 0 + Data.Gaussian.Norm.Sum.Basic.gaussianSum last;
+    change Basic.gaussianSum last = 0 + Basic.gaussianSum last;
       ring1
   | cons head tail ih =>
-    change head + Data.Gaussian.Norm.Sum.Basic.gaussianSum (tail ++ last) = (head +
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum tail) + Data.Gaussian.Norm.Sum.Basic.gaussianSum last; rw [ih];
+    change head + Basic.gaussianSum (tail ++ last) = (head +
+      Basic.gaussianSum tail) + Basic.gaussianSum last; rw [ih];
       ring1
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveSplits
 /-- Summing all retained fragment increments equals the original parent-request increment sum. -/
-theorem sum_eq {count : Nat} {target : Fraction.Rational} :
-    ∀ {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)} (splits :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveSplits axes parents) (requests :
-      UniformPreparedRequests.RequestedParents count target parents),
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (splits.increments requests) =
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum requests.increments
+theorem sum_eq {count : Nat} {target : Rational} :
+    ∀ {parents : List (CenteredEdge curve source)} (splits :
+      PrimitiveSplits axes parents) (requests :
+      RequestedParents count target parents),
+      Basic.gaussianSum (splits.increments requests) =
+        Basic.gaussianSum requests.increments
   | _, .nil, .nil => rfl
   | _, .cons (parent := parent) partition tail, .cons request requests => by
       rw [increments, sum_append, ←
         partition.walk_edges,
-        telescope (fun parameter =>
+        AxisWalks.IncreasingWalk.telescope (fun parameter =>
           request.request.model.primitive.value.eval (parent.edge.point parameter)) partition.walk,
         sum_eq tail requests]
       rfl
 
 /-- There is one primitive increment for each retained fragment. -/
-theorem increments_length {count : Nat} {target : Fraction.Rational} :
-    ∀ {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)} (splits :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveSplits axes parents) (requests :
-      UniformPreparedRequests.RequestedParents count target parents),
+theorem increments_length {count : Nat} {target : Rational} :
+    ∀ {parents : List (CenteredEdge curve source)} (splits :
+      PrimitiveSplits axes parents) (requests :
+      RequestedParents count target parents),
       (splits.increments requests).length = splits.count
   | _, .nil, .nil => rfl
   | _, .cons partition tail, .cons request requests => by
-      rw [increments, Data.List.Append.length_append, Data.List.Map.length_map,
+      rw [increments, Append.length_append, Map.length_map,
         increments_length tail
         requests, ← partition.count_eq]
       rfl
@@ -287,10 +277,10 @@ theorem increments_length {count : Nat} {target : Fraction.Rational} :
 /-- Each emitted fragment endpoint lies in its original parent primitive neighborhood.
 
 The retained partition bounds and endpoint cover certify containment using the same parent root and primitive patch. -/
-theorem endpoints_inside {parent : PreparedSubdivisionModelCore.CenteredEdge curve source} (partition :
-  Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent))
+theorem endpoints_inside {parent : CenteredEdge curve source} {cuts : List Rational} (partition :
+  Partition 0 1 cuts)
     {interval : PreparedAxisPartitions.Interval} (member : interval ∈ partition.intervals)
-    {count : Nat} {target : Fraction.Rational} (request : UniformPreparedRequests.LocalRequest parent count target) :
+    {count : Nat} {target : Rational} (request : LocalRequest parent count target) :
     request.neighborhood.box.Contains (parent.edge.point interval.lower) ∧
       request.neighborhood.box.Contains (parent.edge.point interval.upper) := by
   have ends := partition.interval_bounds member
@@ -308,8 +298,8 @@ set_option genInjectivity false in
 /-- Cache the original primitive evaluations on actual grid fragments. There is no new integrator or numerical root
 selection in this construction. -/
 structure SplitPrimitiveRequest (axes : PrimitiveAxes
-  grid) {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve source)}
-    {count : Nat} {target : Fraction.Rational} (request : PreparedControlledPrimitiveRequests.ControlledSumRequest
+  grid) {parents : List (CenteredEdge curve source)}
+    {count : Nat} {target : Rational} (request : ControlledSumRequest
       parents count target) where
   /-- The ordered parameter partitions indexed by the original integration parents. -/ splits :
     PrimitiveSplits axes parents
@@ -321,13 +311,13 @@ structure SplitPrimitiveRequest (axes : PrimitiveAxes
   /-- The cached fragment count equals the retained splitting count. -/ count_eq : count = splits.count
   /-- The cached Gaussian sum of all retained fragment increments. -/ sum : Data.Gaussian.Basic.Canonical
   /-- The cached total equals the finite Gaussian sum of the retained increments. -/ sum_eq : sum =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum increments
+    Basic.gaussianSum increments
 
 constructive_injectivity SplitPrimitiveRequest
 
 namespace SplitPrimitiveRequest
 
-variable {axes : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveAxes grid} {parents
+variable {axes : PrimitiveAxes grid} {parents
   : List (CenteredEdge curve source)} {count : Nat} {target :
   Rational}
   {request : ControlledSumRequest parents count target}
@@ -336,25 +326,25 @@ variable {axes : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimi
 
 Each parent partition, fragment increment and final sum is computed once and retained with its exact defining equality.
 -/
-@[expose] def build (axes : Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveAxes grid)
-  (request : PreparedControlledPrimitiveRequests.ControlledSumRequest parents count target) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.SplitPrimitiveRequest axes request :=
-  let splits := Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveSplits.build axes parents
+@[expose] def build (axes : PrimitiveAxes grid)
+  (request : ControlledSumRequest parents count target) :
+  SplitPrimitiveRequest axes request :=
+  let splits := PrimitiveSplits.build axes parents
   let increments := splits.increments request.requests
-  ⟨splits, increments, rfl, splits.count, rfl, Data.Gaussian.Norm.Sum.Basic.gaussianSum increments, rfl⟩
+  ⟨splits, increments, rfl, splits.count, rfl, Basic.gaussianSum increments, rfl⟩
 
 /-- The cached split total equals the original controlled primitive request sum. -/
-theorem original_sum (split : Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.SplitPrimitiveRequest
+theorem original_sum (split : SplitPrimitiveRequest
   axes request) : split.sum = request.primitiveSum := by
   rw [split.sum_eq, split.increments_eq, split.splits.sum_eq, request.primitiveSum_eq, request.increments_eq]
 
 /-- The cached increment list has exactly the retained fragment count. -/
-theorem length_eq (split : Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.SplitPrimitiveRequest axes
+theorem length_eq (split : SplitPrimitiveRequest axes
   request) : split.increments.length = split.count := by
   rw [split.increments_eq, split.splits.increments_length, split.count_eq]
 
 /-- The cached fragment count is bounded by the original parent count times one plus the number of grid axes. -/
-theorem count_le (split : Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.SplitPrimitiveRequest axes
+theorem count_le (split : SplitPrimitiveRequest axes
   request) :
     split.count ≤ parents.length * (axes.vertical.length + axes.horizontal.length + 1) := by
   rw [split.count_eq]

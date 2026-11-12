@@ -125,31 +125,31 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PreparedFaceSegments (Ass
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms (CutCycleProgram)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
   {faces : PuncturedFaces bank} {mesh :
     LiftedMesh vertices edges faces} {ambient :
-    Purelib.Geometry.Rational.Box}
+    Geometry.Rational.Box}
 
 set_option genInjectivity false in
 /-- The local primitive comparison of one actual retained cut-cycle segment.
 
 The original face-domain cache, selected sheet, incoming owner and integration parents remain attached to this exact
 segment occurrence. -/
-structure SegmentComparison {start finish : Data.Gaussian.Basic.Canonical} {segment : ClearPath.ClearSegment
+structure SegmentComparison {start finish : Data.Gaussian.Basic.Canonical} {segment : ClearSegment
   curve.polynomial ambient start finish}
-    {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)} (placement : LiftedMesh.SegmentFace mesh
+    {owner : Owner (curve.polynomial.eval start)} (placement : SegmentFace mesh
       segment)
-    (piece : PreparedPathDecomposition.CoveredSegment segment owner) (differential : Differentials.Basic.Differential
+    (piece : CoveredSegment segment owner) (differential : Differential
       genus) (parentSheet : Fin 2) where
   /-- The cached analytic domains for the actual face containing this segment occurrence. -/ domains :
-    DomainBanks.FaceDomains frames placement.face
+    FaceDomains frames placement.face
   /-- The retained local comparison using the original covered segment and integration cache. -/ entered :
-    EnteredPaths.EnteredPath domains.models piece.path differential parentSheet
+    EnteredPath domains.models piece.path differential parentSheet
   /-- The comparison uses exactly the cached domain selected by its retained entry sheet. -/ domain_eq : entered.domain
     = domains.domain entered.entry.sheet
   /-- The selected analytic sheet is the actual sheet of the retained lifted face occurrence. -/ sheet_eq :
@@ -160,23 +160,23 @@ constructive_injectivity SegmentComparison
 namespace SegmentComparison
 
 /-- Construct the local comparisons by reusing each original segment parent cache and its retained owner alignment. -/
-def build {start finish : Data.Gaussian.Basic.Canonical} {segment : ClearPath.ClearSegment curve.polynomial ambient
+def build {start finish : Data.Gaussian.Basic.Canonical} {segment : ClearSegment curve.polynomial ambient
   start finish}
-    {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)} (placement : LiftedMesh.SegmentFace mesh
+    {owner : Owner (curve.polynomial.eval start)} (placement : SegmentFace mesh
       segment)
-    (piece : PreparedPathDecomposition.CoveredSegment segment owner) (differential : Differentials.Basic.Differential
+    (piece : CoveredSegment segment owner) (differential : Differential
       genus) (parentSheet : Fin 2)
-    (domains : DomainBanks.FaceDomainBank frames faces.regulars) (cache : PreparedClearPathModels.ParentCache piece.path
+    (domains : FaceDomainBank frames faces.regulars) (cache : ParentCache piece.path
       differential parentSheet)
     (aligned : Nonempty (Gaussian.Equivalence.NamedEquivalent
       (OwnerTraceReadings.ownerName owner) (OwnerTraceReadings.ownerName (vertices.owner frames
         placement.indexed.start)))) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison placement piece
+    SegmentComparison placement piece
       differential parentSheet :=
   let localDomains := domains.atRoute placement.location
   let entry : FaceModels.Entry localDomains.models start owner :=
     placement.entry localDomains.models aligned
-  let entered : EnteredPaths.EnteredPath localDomains.models piece.path differential parentSheet :=
+  let entered : EnteredPath localDomains.models piece.path differential parentSheet :=
     EnteredPath.ofEntry entry (localDomains.domain entry.sheet) piece.path placement.inside differential parentSheet
       cache
   ⟨localDomains, entered, rfl, rfl⟩
@@ -186,31 +186,31 @@ end SegmentComparison
 namespace AssignedSegments
 
 /-- A dependent bank of local primitive comparisons in exact retained segment-occurrence order. -/
-def Comparisons (differential : Differentials.Basic.Differential genus) (parentSheet : Fin 2)
-    {start finish : Data.Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start
+def Comparisons (differential : Differential genus) (parentSheet : Fin 2)
+    {start finish : Data.Gaussian.Basic.Canonical} {path : ClearPath curve.polynomial ambient start
       finish}
-    {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
+    {owner : Owner (curve.polynomial.eval start)} {prepared :
       PreparedClearPathModels.PreparedPath path owner} {pieces : PreparedPath.CoveredSegments prepared}
     (assigned : PreparedFaceSegments.AssignedSegments mesh pieces) : Type 2 := by
   induction assigned with
   | nil => exact PUnit
   | @cons start middle finish head tail owner first rest pieces placement remaining ih =>
-      exact Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison placement first
+      exact SegmentComparison placement first
         differential parentSheet × ih
 
 namespace Comparisons
 
 /-- Construct the local comparisons by reusing each original segment parent cache and its retained owner alignment. -/
-def build (domains : DomainBanks.FaceDomainBank frames faces.regulars) (differential : Differentials.Basic.Differential
+def build (domains : FaceDomainBank frames faces.regulars) (differential : Differential
   genus) (parentSheet : Fin 2) :
-    ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient
+    ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : ClearPath curve.polynomial ambient
       start finish}
-      {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
+      {owner : Owner (curve.polynomial.eval start)} {prepared :
         PreparedClearPathModels.PreparedPath path owner} {pieces : PreparedPath.CoveredSegments prepared}
       (assigned : PreparedFaceSegments.AssignedSegments mesh pieces), CoveredSegments.ParentCaches differential
         parentSheet pieces →
       assigned.OwnersAligned →
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons
+        Comparisons
         differential parentSheet assigned
   | _, _, _, _, _, _, .nil _ _, _, _ => ⟨⟩
   | _, _, _, _, _, _, .cons placement remaining, caches, aligned =>
@@ -219,16 +219,57 @@ def build (domains : DomainBanks.FaceDomainBank frames faces.regulars) (differen
           build
           domains differential parentSheet remaining caches.2 aligned.2⟩
 
+/-- Read the complete original parent caches from the retained segment comparisons in occurrence order.
+
+Each returned entry is the whole cache stored by its original entered
+path, including its parent list, cover and prepared-path provenance.
+Only the product spine is constructed; no parent or source is acquired.
+-/
+def parentCaches (differential : Differential genus) (parentSheet : Fin 2) :
+    ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : ClearPath curve.polynomial ambient start finish}
+      {owner : Owner (curve.polynomial.eval start)} {prepared : PreparedPath path owner}
+      {pieces : CoveredSegments prepared} (assigned : AssignedSegments mesh pieces),
+      Comparisons differential parentSheet assigned → CoveredSegments.ParentCaches differential parentSheet pieces
+  | _, _, _, _, _, _, .nil _ _, _ => PUnit.unit
+  | _, _, _, _, _, _, .cons _ remaining, compared =>
+      ⟨compared.1.entered.cache, parentCaches differential parentSheet remaining compared.2⟩
+termination_by structural _ _ _ _ _ _ assigned _ => assigned
+
+/-- Constructed comparisons retain the whole supplied original parent-cache product.
+
+The equality preserves every original cover and prepared-path witness,
+including repeated segments. It identifies the actual cache values rather
+than only their flattened parent-list readback.
+-/
+theorem parentCaches_build (domains : FaceDomainBank frames faces.regulars)
+    (differential : Differential genus) (parentSheet : Fin 2) :
+    ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : ClearPath curve.polynomial ambient start finish}
+      {owner : Owner (curve.polynomial.eval start)} {prepared : PreparedPath path owner}
+      {pieces : CoveredSegments prepared} (assigned : AssignedSegments mesh pieces)
+      (retained : CoveredSegments.ParentCaches differential parentSheet pieces) (aligned : assigned.OwnersAligned),
+      parentCaches differential parentSheet assigned
+        (build domains differential parentSheet assigned retained aligned) =
+        retained
+  | _, _, _, _, _, _, .nil _ _, retained, _ => by
+      cases retained
+      rfl
+  | _, _, _, _, _, _, .cons _ remaining, retained, aligned => by
+      change (retained.1, parentCaches differential parentSheet remaining
+        (build domains differential parentSheet remaining retained.2 aligned.2)) = retained
+      exact congrArg (Prod.mk retained.1)
+        (parentCaches_build domains differential parentSheet remaining retained.2 aligned.2)
+termination_by structural _ _ _ _ _ _ assigned _ _ => assigned
+
 /-- Repeated occurrences really share the supplied finite domain bank. This is stronger than separately valid local
 models on the same face. -/
-def UsesDomains (domains : DomainBanks.FaceDomainBank frames faces.regulars) (differential :
-  Differentials.Basic.Differential genus) (parentSheet : Fin 2) :
-    ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient
+def UsesDomains (domains : FaceDomainBank frames faces.regulars) (differential :
+  Differential genus) (parentSheet : Fin 2) :
+    ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : ClearPath curve.polynomial ambient
       start finish}
-      {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
+      {owner : Owner (curve.polynomial.eval start)} {prepared :
         PreparedClearPathModels.PreparedPath path owner} {pieces : PreparedPath.CoveredSegments prepared}
       (assigned : PreparedFaceSegments.AssignedSegments mesh pieces),
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons
+        Comparisons
         differential parentSheet assigned → Prop
   | _, _, _, _, _, _, .nil _ _, _ => True
   | _, _, _, _, _, _, .cons placement remaining, compared =>
@@ -237,11 +278,11 @@ def UsesDomains (domains : DomainBanks.FaceDomainBank frames faces.regulars) (di
         domains differential parentSheet remaining compared.2
 
 /-- Every constructed segment comparison uses the exact entry of the supplied shared face-domain bank. -/
-theorem build_usesDomains (domains : DomainBanks.FaceDomainBank frames faces.regulars) (differential :
-  Differentials.Basic.Differential genus) (parentSheet : Fin 2) :
-    ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient
+theorem build_usesDomains (domains : FaceDomainBank frames faces.regulars) (differential :
+  Differential genus) (parentSheet : Fin 2) :
+    ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : ClearPath curve.polynomial ambient
       start finish}
-      {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
+      {owner : Owner (curve.polynomial.eval start)} {prepared :
         PreparedClearPathModels.PreparedPath path owner} {pieces : PreparedPath.CoveredSegments prepared}
       (assigned : PreparedFaceSegments.AssignedSegments mesh pieces) (caches : CoveredSegments.ParentCaches differential
         parentSheet pieces)
@@ -257,13 +298,13 @@ theorem build_usesDomains (domains : DomainBanks.FaceDomainBank frames faces.reg
         domains differential parentSheet remaining caches.2 aligned.2⟩
 
 /-- Read the actual retained integration parents in segment-occurrence order. -/
-def parents (differential : Differentials.Basic.Differential genus) (parentSheet : Fin 2) :
-    ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient
+def parents (differential : Differential genus) (parentSheet : Fin 2) :
+    ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : ClearPath curve.polynomial ambient
       start finish}
-      {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
+      {owner : Owner (curve.polynomial.eval start)} {prepared :
         PreparedClearPathModels.PreparedPath path owner} {pieces : PreparedPath.CoveredSegments prepared}
       (assigned : PreparedFaceSegments.AssignedSegments mesh pieces),
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons
+        Comparisons
         differential parentSheet assigned →
         List (PreparedSubdivisionModelCore.CenteredEdge curve differential)
   | _, _, _, _, _, _, .nil _ _, _ => []
@@ -273,13 +314,13 @@ def parents (differential : Differentials.Basic.Differential genus) (parentSheet
         differential parentSheet remaining compared.2
 
 /-- The local comparison parents equal the exact ordered parent list of the original covered segments. -/
-theorem parents_eq (differential : Differentials.Basic.Differential genus) (parentSheet : Fin 2) :
-    ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient
+theorem parents_eq (differential : Differential genus) (parentSheet : Fin 2) :
+    ∀ {start finish : Data.Gaussian.Basic.Canonical} {path : ClearPath curve.polynomial ambient
       start finish}
-      {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {prepared :
+      {owner : Owner (curve.polynomial.eval start)} {prepared :
         PreparedClearPathModels.PreparedPath path owner} {pieces : PreparedPath.CoveredSegments prepared}
       (assigned : PreparedFaceSegments.AssignedSegments mesh pieces) (compared :
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons
+        Comparisons
         differential parentSheet assigned),
       parents
         differential parentSheet assigned compared = CoveredSegments.parents differential parentSheet pieces
@@ -306,7 +347,7 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks (FaceDom
 open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {source :
     Differential genus} {prepared :
@@ -314,34 +355,42 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 
 /-- The complete per-segment local comparison bank is constructed from the actual cut program; no incoming-owner
 agreement or local preparation is an input. -/
-def comparisons (bank : FaceBanks.FaceBank prepared) (domains : DomainBanks.FaceDomainBank lifted.frames
+def comparisons (bank : FaceBanks.FaceBank prepared) (domains : FaceDomainBank lifted.frames
   base.faces.regulars)
-    (differential : Differentials.Basic.Differential genus) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons differential
+    (differential : Differential genus) :
+      Comparisons differential
       0 bank.assigned :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons.build domains
+  Comparisons.build domains
     differential 0 bank.assigned (bank.segments.parentCaches differential) bank.ownersAligned
 
 /-- Every comparison in the retained cut-cycle face bank uses the supplied shared finite domain cache. -/
-theorem comparisons_sharedDomains (bank : FaceBanks.FaceBank prepared) (domains : DomainBanks.FaceDomainBank
+theorem comparisons_sharedDomains (bank : FaceBanks.FaceBank prepared) (domains : FaceDomainBank
   lifted.frames base.faces.regulars)
-    (differential : Differentials.Basic.Differential genus) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons.UsesDomains
+    (differential : Differential genus) :
+    Comparisons.UsesDomains
       domains differential 0 bank.assigned
       (comparisons bank domains differential) :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons.build_usesDomains
+  Comparisons.build_usesDomains
     domains differential 0 bank.assigned (bank.segments.parentCaches differential) bank.ownersAligned
+
+/-- The cut-cycle comparisons retain the complete original parent caches supplied by the segment bank. -/
+theorem comparisons_parentCaches (bank : FaceBanks.FaceBank prepared)
+    (domains : FaceDomainBank lifted.frames base.faces.regulars) (differential : Differential genus) :
+    Comparisons.parentCaches differential 0 bank.assigned (comparisons bank domains differential) =
+      bank.segments.parentCaches differential :=
+  Comparisons.parentCaches_build domains differential 0 bank.assigned
+    (bank.segments.parentCaches differential) bank.ownersAligned
 
 /-- Local comparisons retain the exact ordered integration parents consumed by the original period program, including
 repeated segment occurrences. -/
-theorem comparisons_parents (bank : FaceBanks.FaceBank prepared) (domains : DomainBanks.FaceDomainBank lifted.frames
+theorem comparisons_parents (bank : FaceBanks.FaceBank prepared) (domains : FaceDomainBank lifted.frames
   base.faces.regulars)
-    (differential : Differentials.Basic.Differential genus) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons.parents
+    (differential : Differential genus) :
+    Comparisons.parents
       differential 0 bank.assigned
       (comparisons bank domains differential) =
       prepared.period.initial.state.parents.map (PreparedEdgeRecasting.recastCenteredEdge differential) :=
-  (Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.AssignedSegments.Comparisons.parents_eq
+  (Comparisons.parents_eq
     differential 0 bank.assigned _).trans (bank.parents_eq differential)
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.FaceBank

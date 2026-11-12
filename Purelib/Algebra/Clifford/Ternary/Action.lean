@@ -177,15 +177,6 @@ theorem rowMul_actionNumeratorMatrix {form : Form
     Matrix3.rowMul_scale, Matrix3.rowMul_outer,
     ← form.bilinear_eq_dot_dual,
     Matrix3.rowMul_scale, form.rowMul_actionSkew]
-  change Vector3.add
-    (Vector3.add
-      (Vector3.scale
-        (value.scalar ^ 2 -
-          form.determinant * form.quadrance value.vector) vector)
-      (Vector3.scale (2 * form.determinant)
-        (Vector3.scale (form.bilinear vector value.vector) value.vector)))
-    (Vector3.scale (2 * value.scalar)
-      (form.cliffordCross value.vector vector)) = _
   rw [form.cliffordCross_anticomm value.vector vector]
   ext <;> unfold Vector3.add Vector3.scale Vector3.neg <;> ring1
 

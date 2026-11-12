@@ -1,28 +1,107 @@
 #!/usr/bin/env python3
 """Private, commit-pinned import-inventory prototype; no Lean process or pointer dereference."""
 import argparse
+from collections import OrderedDict
 import hashlib
 import json
 import os
 from pathlib import Path
 import struct
+import threading
 
 PIN = b'f3b06c705e6c85f5314019d5d3baab0fec5b580c'
 VERSION = b'4.32.2'
+PAGE_BYTES = 64 * 1024
+PAGE_CACHE_BYTES = 128 * 1024 * 1024
+_pages = OrderedDict()
+_page_bytes = 0
+_page_lock = threading.RLock()
 
 class InvalidArtifact(ValueError):
     pass
+
+def file_identity(stat):
+    """Identify the exact file incarnation and detect writes during observation."""
+    return stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns
+
+
+class ArtifactBytes:
+    """Read checked file slices through a process-wide bounded page cache.
+
+    Cached pages retain their original bytes. A cache miss verifies that the
+    original file still exists unchanged before and after reading; eviction
+    can cause a failed read, but cannot silently substitute a newer artifact.
+    No file descriptors or complete serialized files are retained.
+    """
+
+    def __init__(self, path, identity):
+        self.path = Path(path).absolute()
+        self.identity = identity
+        self.cache_key = str(self.path), identity
+
+    def __len__(self):
+        return self.identity[2]
+
+    def page(self, number):
+        global _page_bytes
+        key = self.cache_key + (PAGE_BYTES, number)
+        with _page_lock:
+            if key in _pages:
+                _pages.move_to_end(key)
+                return _pages[key]
+            try:
+                with self.path.open('rb') as source:
+                    if file_identity(os.fstat(source.fileno())) != self.identity:
+                        raise InvalidArtifact(f'changed while reading: {self.path}')
+                    source.seek(number * PAGE_BYTES)
+                    data = source.read(min(PAGE_BYTES, len(self) - number * PAGE_BYTES))
+                    if (file_identity(os.fstat(source.fileno())) != self.identity or
+                            file_identity(self.path.stat()) != self.identity):
+                        raise InvalidArtifact(f'changed while reading: {self.path}')
+            except OSError as error:
+                raise InvalidArtifact(f'cannot reread artifact: {self.path}: {error}') from error
+            if len(data) != min(PAGE_BYTES, len(self) - number * PAGE_BYTES):
+                raise InvalidArtifact(f'truncated while reading: {self.path}')
+            while _pages and _page_bytes + len(data) > PAGE_CACHE_BYTES:
+                _, old = _pages.popitem(last=False)
+                _page_bytes -= len(old)
+            if len(data) <= PAGE_CACHE_BYTES:
+                _pages[key] = data
+                _page_bytes += len(data)
+            return data
+
+    def __getitem__(self, index):
+        if isinstance(index, int):
+            index = index + len(self) if index < 0 else index
+            if not 0 <= index < len(self):
+                raise IndexError(index)
+            return self.page(index // PAGE_BYTES)[index % PAGE_BYTES]
+        start, stop, step = index.indices(len(self))
+        if step != 1:
+            return bytes(self[i] for i in range(start, stop, step))
+        if start >= stop:
+            return b''
+        if start // PAGE_BYTES == (stop - 1) // PAGE_BYTES:
+            return self.page(start // PAGE_BYTES)[start % PAGE_BYTES:start % PAGE_BYTES + stop - start]
+        pieces = []
+        while start < stop:
+            page = self.page(start // PAGE_BYTES)
+            end = min(stop, (start // PAGE_BYTES + 1) * PAGE_BYTES)
+            pieces.append(page[start % PAGE_BYTES:start % PAGE_BYTES + end - start])
+            start = end
+        return b''.join(pieces)
+
 
 class Region:
     def __init__(self, path):
         self.path = Path(path)
         with self.path.open('rb') as f:
             before = os.fstat(f.fileno())
-            self.data = f.read()
+            self.sha256 = hashlib.file_digest(f, 'sha256').hexdigest()
             after = os.fstat(f.fileno())
-        if (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns) != (
-                after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns):
+        if file_identity(before) != file_identity(after) or file_identity(self.path.stat()) != file_identity(after):
             raise InvalidArtifact(f'changed while reading: {path}')
+        self.data = ArtifactBytes(self.path, file_identity(after))
         if len(self.data) < 96 or self.data[:7] != b'olean\x02\x01':
             raise InvalidArtifact(f'not pinned v2/GMP ModuleData: {path}')
         if self.data[7:40] != VERSION.ljust(33, b'\0') or self.data[40:80] != PIN:
@@ -31,11 +110,14 @@ class Region:
         if self.base % 65536 or len(self.data) > (1 << 64) - self.base:
             raise InvalidArtifact(f'invalid region bounds: {path}')
         self.root = self.u64(88)
-        self.sha256 = hashlib.sha256(self.data).hexdigest()
 
-    def bytes(self, off, size):
+    def check(self, off, size):
+        """Validate a saved range without allocating a copy of its payload."""
         if off < 0 or size < 0 or off > len(self.data) - size:
             raise InvalidArtifact(f'out-of-bounds bytes in {self.path}: {off}+{size}')
+
+    def bytes(self, off, size):
+        self.check(off, size)
         return self.data[off:off+size]
 
     def u64(self, off):
@@ -70,7 +152,7 @@ class ModuleParts:
         expected_size = (8 + 8 * count + scalar_size + 7) // 8 * 8
         if rc != 0 or size != expected_size or fields != count or tag != actual_tag:
             raise InvalidArtifact(f'wrong constructor shape at {region.path}:{off}')
-        region.bytes(off, size)
+        region.check(off, size)
         fields = tuple(region.u64(off + 8 + i * 8) for i in range(count))
         return region, off + 8 + count * 8, fields
 
@@ -81,7 +163,7 @@ class ModuleParts:
         size, capacity = region.u64(off+8), region.u64(off+16)
         if capacity != size:
             raise InvalidArtifact('compacted array capacity mismatch')
-        region.bytes(off+24, size*8)
+        region.check(off+24, size*8)
         return tuple(region.u64(off+24+i*8) for i in range(size))
 
     def string(self, ptr):

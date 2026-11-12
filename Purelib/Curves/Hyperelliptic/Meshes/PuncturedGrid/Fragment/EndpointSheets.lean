@@ -9,12 +9,11 @@ import Purelib.Curves.Hyperelliptic.Branches.BranchCellBank
 import Purelib.Curves.Hyperelliptic.Branches.BranchCutLifts
 import Purelib.Curves.Hyperelliptic.Branches.BranchIsolation
 import Purelib.Curves.Hyperelliptic.Integration.Observation.PreparedFaceTracePrefixes
-import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContinuedComparison
+import Purelib.Riemann.Branches.ContainedPreparedPolynomialSheets
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.EnteredPaths
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Entries
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels
-import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.SheetGauge
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.SplitSigns
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.PrimitiveComparison
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces
@@ -67,6 +66,8 @@ import Purelib.Riemann.Normalization.OwnerSeededInverseRoot
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
+
+open Purelib.Data.Gaussian.Norm
 
 section
 
@@ -126,6 +127,8 @@ open Purelib.Riemann.RootContinuation.RootOwnerFrames
 
 public section
 
+open Purelib.Polynomial.Geometry (ClearPath)
+
 /-!
 # Original fragment owners remain on their assigned sheet at the endpoint
 
@@ -157,44 +160,42 @@ open Purelib.Riemann.Normalization.TransportedFaceInverseModels (TransportedCell
 open Purelib.Riemann.Normalization.ContinuedInverseRoot (ContinuedNeighborhood)
 open Purelib.Riemann.Branches.PreparedPolynomialSheetPropagation.InverseRootPolynomial (RootAligned)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.SplitSigns (piece_neighborhood)
-open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.SheetGauge (cells_nearest)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.CellNegation (opposite_cells_nearest)
 open Purelib.Riemann.Normalization.InverseModelOverlap (SignAlignment)
-open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContinuedComparison (trace_aligned)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+  BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face :
     RegularFace bank} {models :
     FaceModels frames face}
   {sheet : Fin 2} {columns rows : Nat} {geometry : Geometry
     columns rows}
-  {first last : Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian} {count : Nat}
+  {first last : InverseRootPolynomial.Gaussian} {count : Nat}
 
 section
 open Purelib.Geometry.Rectangle.Partition.PreparedSegmentCuts
 /-- Every retained cell containing the actual endpoint agrees in nearest sign with the supplied original continuation
 neighborhood. -/
-private def EndpointNearest (patch : RectangularFaceModels.RectangularPatch models.bounds (models.frame.owners sheet)
+private def EndpointNearest (patch : RectangularPatch models.bounds (models.frame.owners sheet)
   geometry)
-    (neighborhood : ContinuedInverseRoot.ContinuedNeighborhood curve.polynomial count) (point :
+    (neighborhood : ContinuedNeighborhood curve.polynomial count) (point :
       InverseRootPolynomial.Gaussian) : Prop :=
   ∀ column row, (geometry.box column row).Contains point →
-    Data.Gaussian.Norm.Basic.normSq (((patch.transported.cell column row).model.refine 2).value.eval point -
+    Basic.normSq (((patch.transported.cell column row).model.refine 2).value.eval point -
       (neighborhood.base.refine 2).value.eval point) ≤
-    Data.Gaussian.Norm.Basic.normSq (((patch.transported.cell column row).model.refine 2).value.eval point +
+    Basic.normSq (((patch.transported.cell column row).model.refine 2).value.eval point +
       (neighborhood.base.refine 2).value.eval point)
 
 /-- Propagate nearest-sign agreement through every interval of the exact retained increasing segment walk. -/
-private theorem endpoint_walk (patch : RectangularFaceModels.RectangularPatch models.bounds (models.frame.owners sheet)
+private theorem endpoint_walk (patch : RectangularPatch models.bounds (models.frame.owners sheet)
   geometry)
-    (differential : Differentials.Basic.Differential genus) (neighborhood : ContinuedInverseRoot.ContinuedNeighborhood
+    (differential : Differential genus) (neighborhood : ContinuedNeighborhood
       curve.polynomial count)
     (firstInside : neighborhood.box.Contains first) (lastInside : neighborhood.box.Contains last)
     {available : List PreparedAxisPartitions.Interval} :
-    ∀ (pieces : List (RectangularSegmentSplitting.SegmentPiece geometry first last)) {lower upper :
+    ∀ (pieces : List (SegmentPiece geometry first last)) {lower upper :
       InverseRootPolynomial.Coordinate}
       (walk : AxisWalks.IncreasingWalk available lower upper),
       pieces.map SegmentPiece.interval = walk.edges →
@@ -224,27 +225,32 @@ private theorem endpoint_walk (patch : RectangularFaceModels.RectangularPatch mo
           ((Model.overlapRefine (patch.transported.cell head.column head.row).model) 0)
           ((Model.overlapRefine neighborhood.base.model) 0) inside head.last_inside
           (neighborhood.box_refines.contains contained.2)
-          (SheetGauge.cells_nearest _ _ differential inside head.last_inside 0 0) atLast
+          (TransportedCell.cells_nearest _ _ (entered := TracedPath.build
+      (ClearPath.nil (polynomial := curve.polynomial) (ambient := face.cell.box) face.cell.box.anchor)
+      (.nil face.cell.box.anchor) (models.frame.owners sheet))
+    face.cell.box.contains_anchor differential (BranchIsolation.degreePositive curve)
+    (LoopMonodromy.BranchCellBank.referenceAt bank _ (face.cell.anchor_mem face.member)).toLoop
+      inside head.last_inside 0 0) atLast
       exact endpoint_walk patch
         differential neighborhood firstInside lastInside tail walk equations.2 next
 
 /-- Nearest-sign agreement at the actual split start extends to every retained cell containing its actual final
 endpoint. -/
-theorem split_finish_nearest (patch : RectangularFaceModels.RectangularPatch models.bounds (models.frame.owners sheet)
+theorem split_finish_nearest (patch : RectangularPatch models.bounds (models.frame.owners sheet)
   geometry)
-    (differential : Differentials.Basic.Differential genus) {cuts : RectangularSegmentSplitting.GridCuts geometry}
-      (split : RectangularSegmentSplitting.SegmentSplit cuts first last)
-    (neighborhood : ContinuedInverseRoot.ContinuedNeighborhood curve.polynomial count)
+    (differential : Differential genus) {cuts : GridCuts geometry}
+      (split : SegmentSplit cuts first last)
+    (neighborhood : ContinuedNeighborhood curve.polynomial count)
     (firstInside : neighborhood.box.Contains first) (lastInside : neighborhood.box.Contains last)
     (initial : ∀ column row, (geometry.box column row).Contains first →
-      Data.Gaussian.Norm.Basic.normSq (((patch.transported.cell column row).model.refine 2).value.eval first -
+      Basic.normSq (((patch.transported.cell column row).model.refine 2).value.eval first -
         (neighborhood.base.refine 2).value.eval first) ≤
-      Data.Gaussian.Norm.Basic.normSq (((patch.transported.cell column row).model.refine 2).value.eval first +
+      Basic.normSq (((patch.transported.cell column row).model.refine 2).value.eval first +
         (neighborhood.base.refine 2).value.eval first))
     (column : Fin (columns + 1)) (row : Fin (rows + 1)) (inside : (geometry.box column row).Contains last) :
-    Data.Gaussian.Norm.Basic.normSq (((patch.transported.cell column row).model.refine 2).value.eval last -
+    Basic.normSq (((patch.transported.cell column row).model.refine 2).value.eval last -
       (neighborhood.base.refine 2).value.eval last) ≤
-    Data.Gaussian.Norm.Basic.normSq (((patch.transported.cell column row).model.refine 2).value.eval last +
+    Basic.normSq (((patch.transported.cell column row).model.refine 2).value.eval last +
       (neighborhood.base.refine 2).value.eval last) := by
   have started : EndpointNearest patch
     neighborhood (point first last 0) := by
@@ -261,15 +267,15 @@ end
 open Purelib.Geometry.Rectangle.Partition.PreparedSegmentCuts
 /-- A reached actual owner fixes the sign of any retained containing cell. -/
 theorem Entry.point_nearest {point : InverseRootPolynomial.Gaussian} {neighborhood :
-  ContinuedInverseRoot.ContinuedNeighborhood curve.polynomial count}
-    (sample : ContinuedNeighborhood.Point neighborhood point) (entry : FaceModels.Entry models point sample.owner)
-    {inner : InverseRootPolynomial.Box} (cell : TransportedFaceInverseModels.TransportedCell models.bounds
+  ContinuedNeighborhood curve.polynomial count}
+    (sample : ContinuedNeighborhood.Point neighborhood point) (entry : Entry models point sample.owner)
+    {inner : InverseRootPolynomial.Box} (cell : TransportedCell models.bounds
       (models.frame.owners entry.sheet) inner)
-    (differential : Differentials.Basic.Differential genus) (inside : inner.Contains point) (pointInside :
+    (differential : Differential genus) (inside : inner.Contains point) (pointInside :
       neighborhood.box.Contains point) :
-    Data.Gaussian.Norm.Basic.normSq ((cell.model.refine 2).value.eval point - (neighborhood.base.refine
+    Basic.normSq ((cell.model.refine 2).value.eval point - (neighborhood.base.refine
       2).value.eval point) ≤
-      Data.Gaussian.Norm.Basic.normSq ((cell.model.refine 2).value.eval point + (neighborhood.base.refine
+      Basic.normSq ((cell.model.refine 2).value.eval point + (neighborhood.base.refine
         2).value.eval point) := by
   obtain ⟨ownerTrace, winding⟩ := entry.reached
   let route := Route.build face.clearance face.cell.box.anchor point face.cell.box.contains_anchor
@@ -281,9 +287,16 @@ theorem Entry.point_nearest {point : InverseRootPolynomial.Gaussian} {neighborho
     (frame.select traced.finishOwner) (frame.select sample.owner)
     ((Route.winding face.clearance (BranchIsolation.degreePositive curve) route face.cell.box.contains_anchor).trans
       winding.symm)
-  have aligned : InverseRootPolynomial.RootAligned ((Model.overlapRefine cell.model) 0) point
+  have aligned : RootAligned ((Model.overlapRefine cell.model) 0) point
     (OwnerTraceReadings.ownerName traced.finishOwner) :=
-    ContinuedComparison.trace_aligned cell differential traced (Polynomial.Geometry.ClearPath.InBox.ofWithin route.path
+    cell.trace_aligned (entered := TracedPath.build
+      (Polynomial.Geometry.ClearPath.nil (polynomial := curve.polynomial) (ambient := face.cell.box)
+        face.cell.box.anchor) (.nil face.cell.box.anchor) (models.frame.owners entry.sheet))
+    face.cell.box.contains_anchor differential
+    (BranchIsolation.degreePositive curve)
+    (LoopMonodromy.BranchCellBank.referenceAt bank _ (face.cell.anchor_mem face.member)).toLoop
+      traced
+      (InBox.ofWithin route.path
       route.within
       face.cell.box.contains_anchor)
       frame inside 0
@@ -292,13 +305,13 @@ theorem Entry.point_nearest {point : InverseRootPolynomial.Gaussian} {neighborho
 /-- The two possible face sheets are distinguished by finite residual and nearest-sign certificates at one common point.
 -/
 theorem sheet_eq_of_nearest {leftSheet rightSheet : Fin 2} {leftBox rightBox : InverseRootPolynomial.Box}
-    (left : TransportedFaceInverseModels.TransportedCell models.bounds (models.frame.owners leftSheet) leftBox)
-    (right : TransportedFaceInverseModels.TransportedCell models.bounds (models.frame.owners rightSheet) rightBox)
-    (differential : Differentials.Basic.Differential genus) {point : InverseRootPolynomial.Gaussian}
+    (left : TransportedCell models.bounds (models.frame.owners leftSheet) leftBox)
+    (right : TransportedCell models.bounds (models.frame.owners rightSheet) rightBox)
+    (differential : Differential genus) {point : InverseRootPolynomial.Gaussian}
     (leftInside : leftBox.Contains point) (rightInside : rightBox.Contains point)
-    (nearest : Data.Gaussian.Norm.Basic.normSq ((left.model.refine 2).value.eval point - (right.model.refine
+    (nearest : Basic.normSq ((left.model.refine 2).value.eval point - (right.model.refine
       2).value.eval point) ≤
-      Data.Gaussian.Norm.Basic.normSq ((left.model.refine 2).value.eval point + (right.model.refine
+      Basic.normSq ((left.model.refine 2).value.eval point + (right.model.refine
         2).value.eval point)) : leftSheet = rightSheet := by
   have cases : rightSheet = leftSheet ∨ rightSheet = BranchCutLifts.otherSheet leftSheet := by
     have firstBound := leftSheet.isLt
@@ -309,17 +322,17 @@ theorem sheet_eq_of_nearest {leftSheet rightSheet : Fin 2} {leftBox rightBox : I
   · exact equal.symm
   · subst rightSheet
     have opposite := CellNegation.opposite_cells_nearest left right differential leftInside rightInside 0 0
-    let positive : InverseModelOverlap.SignAlignment ((left.model.refine 2).value.eval point) ((right.model.refine
+    let positive : SignAlignment ((left.model.refine 2).value.eval point) ((right.model.refine
       2).value.eval point) :=
       ⟨false, _, rfl, by
-        simp only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at nearest
+        simp only [Basic.normSq_eq_canonical] at nearest
         exact nearest⟩
-    let negative : InverseModelOverlap.SignAlignment ((left.model.refine 2).value.eval point) ((right.model.refine
+    let negative : SignAlignment ((left.model.refine 2).value.eval point) ((right.model.refine
       2).value.eval point) :=
       ⟨true, -((right.model.refine 2).value.eval point), rfl, by
         rw [show (left.model.refine 2).value.eval point - -((right.model.refine 2).value.eval point) =
           (left.model.refine 2).value.eval point + (right.model.refine 2).value.eval point by ring1]
-        simpa only [← Data.Gaussian.Basic.sub_eq_add_neg, Data.Gaussian.Norm.Basic.normSq_eq_canonical] using opposite⟩
+        simpa only [← Data.Gaussian.Basic.sub_eq_add_neg, Basic.normSq_eq_canonical] using opposite⟩
     have leftResidual : Data.Gaussian.Basic.Canonical.normSq (1 - curve.polynomial.eval point * ((left.model.refine
       2).value.eval point) ^ 2) ≤
         (left.model.refine 2).bound := by
@@ -357,19 +370,19 @@ open Purelib.Riemann.Normalization.InverseModelOverlap (SignAlignment)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {source :
     Differential genus}
   {axes : PrimitiveAxes base.bank.grid}
     {parent : CenteredEdge curve source}
-  {partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)}
-    {interval : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval}
+  {cuts : List Data.Rat.Fraction.Rational} {partition : Partition 0 1 cuts}
+    {interval : PreparedAxisPartitions.Interval}
   {fragment : RegularPrimitiveFragment axes
     parent partition interval}
   {domains : FaceDomainBank frames
     base.faces.regulars}
-  {count : Nat} {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {request :
+  {count : Nat} {target : InverseRootPolynomial.Coordinate} {request :
     LocalRequest parent count target}
 
 /-- The endpoint classification is confined to this proof. Its sheet is forced to agree with the already retained
@@ -386,21 +399,21 @@ theorem finish_point_reached (assigned : RegularPrimitiveFragment.SheetEntry fra
   let finalDomain := (RegularPrimitiveFragment.domainCache fragment domains).domain finalEntry.sheet
   let firstCell := PeriodDomain.locate assigned.domain fragment.located.last lastInside
   let lastCell := PeriodDomain.locate finalDomain fragment.located.last lastInside
-  have firstNearest := Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.EndpointSheets.FaceModels.split_finish_nearest
+  have firstNearest := FaceModels.split_finish_nearest
     assigned.domain.patch source assigned.split request.neighborhood
     (AnalyticComparison.neighborhood_endpoints assigned).1 (AnalyticComparison.neighborhood_endpoints assigned).2
     (fun column row inside => PrimitiveComparison.nearest assigned (assigned.domain.patch.transported.cell column row)
       inside 0 2)
     firstCell.column firstCell.row firstCell.inside
-  have lastNearest := Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.EndpointSheets.FaceModels.Entry.point_nearest
+  have lastNearest := FaceModels.Entry.point_nearest
     sample finalEntry
     (finalDomain.patch.transported.cell lastCell.column lastCell.row) source lastCell.inside
       (AnalyticComparison.neighborhood_endpoints assigned).2
-  have reverseNearest : Data.Gaussian.Norm.Basic.normSq ((request.neighborhood.base.refine 2).value.eval
+  have reverseNearest : Basic.normSq ((request.neighborhood.base.refine 2).value.eval
     fragment.located.last -
       ((finalDomain.patch.transported.cell lastCell.column lastCell.row).model.refine 2).value.eval
         fragment.located.last) ≤
-      Data.Gaussian.Norm.Basic.normSq ((request.neighborhood.base.refine 2).value.eval fragment.located.last +
+      Basic.normSq ((request.neighborhood.base.refine 2).value.eval fragment.located.last +
         ((finalDomain.patch.transported.cell lastCell.column lastCell.row).model.refine 2).value.eval
           fragment.located.last) := by
     rw [show (request.neighborhood.base.refine 2).value.eval fragment.located.last -
@@ -409,7 +422,7 @@ theorem finish_point_reached (assigned : RegularPrimitiveFragment.SheetEntry fra
       -(((finalDomain.patch.transported.cell lastCell.column lastCell.row).model.refine 2).value.eval
         fragment.located.last -
         (request.neighborhood.base.refine 2).value.eval fragment.located.last) by ring1,
-      Data.Gaussian.Norm.Basic.normSq_neg,
+      Basic.normSq_neg,
       show (request.neighborhood.base.refine 2).value.eval fragment.located.last +
         ((finalDomain.patch.transported.cell lastCell.column lastCell.row).model.refine 2).value.eval
           fragment.located.last =
@@ -424,7 +437,7 @@ theorem finish_point_reached (assigned : RegularPrimitiveFragment.SheetEntry fra
     firstCell.inside (request.neighborhood.box_refines.contains (AnalyticComparison.neighborhood_endpoints assigned).2)
       lastCell.inside
     firstNearest reverseNearest
-  have same := Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.EndpointSheets.FaceModels.sheet_eq_of_nearest
+  have same := FaceModels.sheet_eq_of_nearest
     (assigned.domain.patch.transported.cell firstCell.column firstCell.row)
     (finalDomain.patch.transported.cell lastCell.column lastCell.row) source firstCell.inside lastCell.inside common
   exact same.symm ▸ finalEntry.reached
@@ -459,7 +472,7 @@ theorem first_query_reached (assigned : RegularPrimitiveFragment.SheetEntry frag
       ((RegularPrimitiveFragment.domainCache fragment domains).models.frame.owners assigned.entry.sheet)
       (PreparedEdge.ownerAtPoint parent.edge interval.lower assigned.fractionInside fragment.located.first
         fragment.located.first_eq.symm) := by
-  obtain ⟨equivalent⟩ := assigned.original
+  let equivalent := assigned.original
   have joined : Gaussian.Equivalence.NamedEquivalent
       (OwnerTraceReadings.ownerName
         (PreparedEdge.ownerAtPoint parent.edge interval.lower assigned.fractionInside fragment.located.first

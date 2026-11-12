@@ -11,6 +11,8 @@ public import Purelib.Polynomial.Dense.Gaussian.Basic
 public import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients
+
 /-!
 # Ascending Gaussian bivariate coefficient tables
 
@@ -35,7 +37,7 @@ The table is reversed once and evaluated by the original left Horner fold.
 Every inner coefficient polynomial is evaluated at the supplied parameter,
 while the supplied outer argument controls the same retained accumulator. -/
 @[expose] def evalLow
-    (coefficients : List Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+    (coefficients : List CoefficientPolynomial)
     (outer parameter : Gaussian.Basic.Canonical) : Gaussian.Basic.Canonical :=
   coefficients.reverse.foldl
     (fun value coefficient => value * outer + coefficient.eval parameter) 0
@@ -46,8 +48,8 @@ Reversing the original cons appends its head after the same reversed tail.
 The last Horner step therefore adds that coefficient's evaluation to the outer
 argument times the unchanged tail value. -/
 theorem evalLow_cons
-    (coefficient : Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
-    (remaining : List Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+    (coefficient : CoefficientPolynomial)
+    (remaining : List CoefficientPolynomial)
     (outer parameter : Gaussian.Basic.Canonical) :
     evalLow (coefficient :: remaining) outer parameter =
       coefficient.eval parameter + outer * evalLow remaining outer parameter := by
@@ -67,7 +69,7 @@ Each in-range row reads its retained natural coordinate with the zero polynomial
 as fallback. Extra rows contribute zero, and structural recursion separates the
 original first coefficient from the unchanged successor rows. -/
 private theorem sumPrefix_evalLow (outer parameter : Gaussian.Basic.Canonical) :
-    ∀ (coefficients : List Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+    ∀ (coefficients : List CoefficientPolynomial)
       (extra : Nat),
       FiniteSum.Fin.sumFin
         (fun row : Fin (coefficients.length + extra) =>
@@ -80,7 +82,7 @@ private theorem sumPrefix_evalLow (outer parameter : Gaussian.Basic.Canonical) :
             (fun row : Fin (0 + extra) =>
               if (row : Nat) < 0 then
                 (Data.List.getD [] (row : Nat) 0 :
-                  Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial).eval parameter *
+                  CoefficientPolynomial).eval parameter *
                     outer ^ (row : Nat)
               else 0) =
             FiniteSum.Fin.sumFin
@@ -146,7 +148,7 @@ coordinate after subtracting the offset; no coefficient or power is recomputed
 through a replacement table. -/
 theorem sumShifted_evalLow (outer parameter : Gaussian.Basic.Canonical) :
     ∀ (offset : Nat)
-      (coefficients : List Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+      (coefficients : List CoefficientPolynomial)
       (suffix : Nat),
       FiniteSum.Fin.sumFin
         (fun row : Fin (offset + coefficients.length + suffix) =>

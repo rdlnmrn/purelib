@@ -65,6 +65,8 @@ import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Regular
@@ -125,7 +127,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target
@@ -138,21 +140,21 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 
 /-- The request controls the cached correction on any two sewn samples at a common later stage; no vanishing correction
 is assumed. -/
-@[expose] def correctionRequest (region : NewtonOriginalRegularFaces.OriginalRegularFaces grid face) (words :
-  CutBalance.BoundaryWords face current)
-    (prepared : SewnBilinearRequest.BilinearPreparation current.cutPolygon domains i j)
+@[expose] def correctionRequest (region : OriginalRegularFaces grid face) (words :
+  BoundaryWords face current)
+    (prepared : BilinearPreparation current.cutPolygon domains i j)
     (error : Rational) (positive : 0 < error) (floor : Nat) :
     { threshold : Nat // floor ≤ threshold ∧
-      ∀ stage (cache : RegularMeshes.Numerics domains stage)
-        (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) current.mesh) (right :
-          TrianglePrimitiveReadings.TriangleReadings (cache.get j) current.mesh)
-        (leftSurface : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch left.values)
-        (rightSurface : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch right.values)
+      ∀ stage (cache : Numerics domains stage)
+        (left : TriangleReadings (cache.get i) current.mesh) (right :
+          TriangleReadings (cache.get j) current.mesh)
+        (leftSurface : CachedSample current.cutPolygon.patch left.values)
+        (rightSurface : CachedSample current.cutPolygon.patch right.values)
         (sample : PairedRegion.PairedRegionSample region words leftSurface rightSurface),
-        threshold ≤ stage → Data.Gaussian.Norm.Basic.normSq sample.correction ≤ error } := by
+        threshold ≤ stage → Gaussian.Norm.Basic.normSq sample.correction ≤ error } := by
   let part := error / 16
-  have partPositive : 0 < part := Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Rational) < 16)
-  have sheetPositive : 0 < part / 4 := Fraction.Order.Field.div_pos_direct partPositive (by decide : (0 : Rational) < 4)
+  have partPositive : 0 < part := Field.div_pos_direct positive (by decide : (0 : Rational) < 16)
+  have sheetPositive : 0 < part / 4 := Field.div_pos_direct partPositive (by decide : (0 : Rational) < 4)
   let geometry := WindowSelectedRequest.selectedTriangleRequest region prepared.leftMagnitude prepared.rightMagnitude
     part partPositive floor
   let sewing := BilinearPreparation.Request.build prepared part partPositive floor
@@ -177,19 +179,19 @@ is assumed. -/
   have polygonEq (sheet : Fin 2) : boundary sheet = polygon sheet :=
     BilinearPolarization.extract_wordArea_mix _ _ _
   have geometryBound := geometry.property.2 stage cache left right geometryLater
-  change Data.Gaussian.Norm.Basic.normSq (boundary 0 + boundary 1 - triangles) < part at geometryBound
+  change Gaussian.Norm.Basic.normSq (boundary 0 + boundary 1 - triangles) < part at geometryBound
   rw [polygonEq 0, polygonEq 1] at geometryBound
   have areaBound := PairedRegionSample.selected_accurate left right sample sewing sewingLater
-  change Data.Gaussian.Norm.Basic.normSq (sample.area - triangles) < part at areaBound
+  change Gaussian.Norm.Basic.normSq (sample.area - triangles) < part at areaBound
   let readings :=
     SourceChartComparison.PairedReadings.ofReadings
     (owner := SourceChartComparison.ownerFromMesh
       current.mesh) left right
   have zero := zeroRequest.corrected_accurate readings leftSurface rightSurface zeroLater sample.zero
   have one := oneRequest.corrected_accurate readings leftSurface rightSurface oneLater sample.one
-  change Data.Gaussian.Norm.Basic.normSq ((sample.zero.raw - sample.zero.correction) - polygon 0) ≤ part / 4 at zero
-  change Data.Gaussian.Norm.Basic.normSq ((sample.one.raw - sample.one.correction) - polygon 1) ≤ part / 4 at one
-  have corrected : Data.Gaussian.Norm.Basic.normSq (sample.area - sample.correction - (polygon 0 + polygon 1))
+  change Gaussian.Norm.Basic.normSq ((sample.zero.raw - sample.zero.correction) - polygon 0) ≤ part / 4 at zero
+  change Gaussian.Norm.Basic.normSq ((sample.one.raw - sample.one.correction) - polygon 1) ≤ part / 4 at one
+  have corrected : Gaussian.Norm.Basic.normSq (sample.area - sample.correction - (polygon 0 + polygon 1))
     ≤ part := by
     have equal : sample.area - sample.correction - (polygon 0 + polygon 1) =
         ((sample.zero.raw - sample.zero.correction) - polygon 0) +
@@ -197,27 +199,27 @@ is assumed. -/
       rw [sample.corrected_area]
       ring1
     rw [equal]
-    exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-      ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct zero
+    exact (Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
+      ((Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct zero
         one) (by decide)).trans_eq
         ((by ring1 : 2 * (part / 4 + part / 4) = part / 4 * 4).trans
           (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))))
-  have towardTriangles : Data.Gaussian.Norm.Basic.normSq (sample.area - sample.correction - triangles) ≤ 2 *
+  have towardTriangles : Gaussian.Norm.Basic.normSq (sample.area - sample.correction - triangles) ≤ 2 *
     (part + part) := by
     have equal : sample.area - sample.correction - triangles =
         (sample.area - sample.correction - (polygon 0 + polygon 1)) + (polygon 0 + polygon 1 - triangles) := by ring1
     rw [equal]
-    exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct corrected
+    exact (Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct corrected
         geometryBound.le) (by decide))
   have equal : sample.correction = (sample.area - triangles) - (sample.area - sample.correction - triangles) := by ring1
   rw [equal]
-  exact (Data.Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
+  exact (Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
       areaBound.le towardTriangles) (by decide)).trans
       (calc
         2 * (part + 2 * (part + part)) = 10 * part := by ring1
-        _ ≤ 16 * part := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide) partPositive.le
+        _ ≤ 16 * part := Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide) partPositive.le
         _ = error := (Fraction.Field.mul_comm _ _).trans (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))))
 
 end Purelib.Curves.Hyperelliptic.Meshes.Newton.Regular.CorrectionRequest

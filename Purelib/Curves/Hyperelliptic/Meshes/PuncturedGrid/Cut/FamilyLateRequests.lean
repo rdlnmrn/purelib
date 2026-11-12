@@ -43,27 +43,27 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies (Primi
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily (Budget)
 open Purelib.Riemann.Readings.PreparedPrimitiveChargeBounds (Coordinate)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {source :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} {count : Nat}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {source :
+    Differential genus} {count : Nat}
   {programs : Data.Vector
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgram lifted source) count}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+    (CutCycleProgram lifted source) count}
+  {domains : FaceDomainBank lifted.frames
     base.faces.regulars} {differential : Fin genus}
-  {family : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily programs domains
+  {family : PrimitiveFamily programs domains
     differential}
-  {targets : Data.Vector Purelib.Riemann.Readings.PreparedPrimitiveChargeBounds.Coordinate count}
+  {targets : Data.Vector Coordinate count}
   {floor : Nat}
 
 /-- Raise the retained period-family budget to a supplied sufficient index while reusing its original component requests
 and cached maximum.
 
 The retained requests and maximum remain fixed while the supplied later index replaces the original floor. -/
-@[expose] def atIndex (budget : PrimitiveFamily.Budget family targets floor) (index : Nat) (later : budget.index ≤
+@[expose] def atIndex (budget : Budget family targets floor) (index : Nat) (later : budget.index ≤
   index) :
-    PrimitiveFamily.Budget family targets index where
+    Budget family targets index where
   requests := budget.requests
   maximum := budget.maximum
   maximum_eq := budget.maximum_eq
@@ -77,12 +77,12 @@ The retained requests and maximum remain fixed while the supplied later index re
       (Data.Nat.Order.le_max_left index budget.maximum)).symm
 
 /-- Raising the common index preserves the exact original component request bank. -/
-theorem atIndex_requests (budget : PrimitiveFamily.Budget family targets floor) (index : Nat) (later : budget.index ≤
+theorem atIndex_requests (budget : Budget family targets floor) (index : Nat) (later : budget.index ≤
   index) :
     (FamilyLateRequests.atIndex budget index later).requests = budget.requests := rfl
 
 /-- The raised budget has exactly the supplied retained common index. -/
-theorem atIndex_index (budget : PrimitiveFamily.Budget family targets floor) (index : Nat) (later : budget.index ≤
+theorem atIndex_index (budget : Budget family targets floor) (index : Nat) (later : budget.index ≤
   index) :
     (FamilyLateRequests.atIndex budget index later).index = index := rfl
 

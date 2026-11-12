@@ -128,34 +128,34 @@ open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Topology.Polygon.Stokes (edgeArea)
 open Purelib.Topology.Surface.Sewing.SewnPrimitiveContacts (SourceEdge)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {faces : Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces bank} {mesh :
-    Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
-    {stage : Nat} {cache : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+  {faces : PuncturedFaces bank} {mesh :
+    GridLiftedMesh.LiftedMesh vertices edges faces}
+  {domains : FaceDomainBank frames faces.regulars}
+    {stage : Nat} {cache : RegularMeshes.Numerics
     domains stage}
   {i j : Fin genus} {position : Fin faces.regulars.length} {sheet : Fin 2}
 
 namespace LiftedMesh.LocatedFace
 
 /-- The original oriented triangle source for a side of the retained located face. -/
-def sideSource (_located : mesh.LocatedFace position sheet) (side : GridLiftedDualSteps.GridSide) :
-  SewnPrimitiveContacts.SourceEdge mesh.triangles.length :=
+def sideSource (_located : mesh.LocatedFace position sheet) (side : GridSide) :
+  SourceEdge mesh.triangles.length :=
   ⟨mesh.triangleIndex position sheet (QuadOccurrence.upperSide side.kind),
     FaceCorners.firstCorner side.kind, FaceCorners.lastCorner side.kind⟩
 
 /-- The retained side source projects to that actual lifted face edge. -/
-theorem sideSource_project (located : mesh.LocatedFace position sheet) (side : GridLiftedDualSteps.GridSide) :
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+theorem sideSource_project (located : mesh.LocatedFace position sheet) (side : GridSide) :
+    (LocatedFace.sideSource
       located side).project mesh.triangulation.faces = located.lifted.quad.edge side.kind := by
-  unfold Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
-    SewnPrimitiveContacts.SourceEdge.project
+  unfold LocatedFace.sideSource
+    SourceEdge.project
   rw [mesh.triangleIndex_face, FaceCorners.source_edge,
     (mesh.locateFace position sheet).lifted.quad_eq located.lifted]
 
@@ -167,7 +167,7 @@ namespace TriangleReadings
 triangles of a rectangle. -/
 def sourceChord (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
   TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
-    (source : SewnPrimitiveContacts.SourceEdge mesh.triangles.length) : Data.Gaussian.Basic.Canonical :=
+    (source : SourceEdge mesh.triangles.length) : Data.Gaussian.Basic.Canonical :=
   Stokes.edgeArea
     ⟨left.values source.source source.first - left.values source.source 0,
       right.values source.source source.first - right.values source.source 0⟩
@@ -181,15 +181,15 @@ four side orientations select the displayed sign directly, preserving the
 cached normalized readings and actual perimeter remainder. -/
 theorem sourceChord_side (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh)
     (right : TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
-    (located : mesh.LocatedFace position sheet) (side : GridLiftedDualSteps.GridSide) :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left
+    (located : mesh.LocatedFace position sheet) (side : GridSide) :
+    TriangleReadings.sourceChord left
       right
       (LiftedMesh.LocatedFace.sideSource
       located side) =
       if side = .top ∨ side = .left then -Numerics.sideChord cache.normalize i j position sheet side
       else Numerics.sideChord cache.normalize i j position sheet side := by
-  unfold Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+  unfold TriangleReadings.sourceChord
+    LiftedMesh.LocatedFace.sideSource
   rw [left.values_eq, right.values_eq]
   cases side
   all_goals
@@ -217,6 +217,8 @@ end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCel
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.LiftedPuncturedGrid
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh
+
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks (FaceDomainBank)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes (RegularMeshes)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes (CommonCuts Preflights
@@ -231,49 +233,49 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleLiftedSides.FramedPun
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_sub)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {cuts : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : Riemann.Meshes.FramedPuncturedGrid curve branches higher}
+  {lifted : Riemann.Meshes.LiftedPuncturedGrid base} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
+  {cuts : CommonCuts domains}
     {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
-  {target : Purelib.Data.Rat.Fraction.Rational} {i j : Fin genus} {stage : Nat} {cache :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
-  {request : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet
+    Preflights domains sheet}
+  {target : Data.Rat.Fraction.Rational} {i j : Fin genus} {stage : Nat} {cache :
+    RegularMeshes.Numerics domains stage}
+  {request : TwoSheetRequest (fun sheet =>
+    RegularMeshes.build domains cuts sheet
     coarseDepth) fixed target}
   {hole : Fin base.faces.holes.length}
   {adjacent : HoleAdjacentFaces
     base (base.faces.holes[hole.val]'hole.isLt)}
 
 /-- Each selected adjacent-face source is the original inward hole edge, including its root-sheet transport. -/
-theorem holeSideSource_project {side : GridLiftedDualSteps.GridSide} {sheet : Fin 2}
+theorem holeSideSource_project {side : GridSide} {sheet : Fin 2}
     {adjacent : FramedPuncturedGrid.HoleAdjacentFace base (base.faces.holes[hole.val]'hole.isLt) side}
-    (selected : HoleAdjacentFace.LiftedSide adjacent lifted sheet) :
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+    (selected : LiftedSide adjacent lifted sheet) :
+    (LocatedFace.sideSource
       selected.selected.located side.opposite).project lifted.mesh.triangulation.faces =
       lifted.edges.indexedEdge lifted.vertices ((base.faces.holes[hole.val]'hole.isLt).side side).reverse sheet :=
-  (Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource_project
+  (LocatedFace.sideSource_project
     selected.selected.located side.opposite).trans selected.edge_eq
 
 /-- All eight inward-oriented source chords, retaining the actual face sheet selected by each original hole side. -/
-def holeSourceChords (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh)
-    (right : TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh) (sides :
-      HoleRootedCorrection.HoleSideLifts lifted adjacent) : Data.Gaussian.Basic.Canonical :=
+def holeSourceChords (left : TriangleReadings (cache.get i) lifted.mesh)
+    (right : TriangleReadings (cache.get j) lifted.mesh) (sides :
+      HoleSideLifts lifted adjacent) : Data.Gaussian.Basic.Canonical :=
   FiniteSum.Fin.sumFin (fun sheet =>
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left right
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+    BranchCellBank.TriangleReadings.sourceChord left right
+      (LocatedFace.sideSource
       (sides.left.get sheet).selected.located .right) +
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left right
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+    BranchCellBank.TriangleReadings.sourceChord left right
+      (LocatedFace.sideSource
       (sides.top.get sheet).selected.located .bottom) +
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left right
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+    BranchCellBank.TriangleReadings.sourceChord left right
+      (LocatedFace.sideSource
       (sides.right.get sheet).selected.located .left) +
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord left right
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+    BranchCellBank.TriangleReadings.sourceChord left right
+      (LocatedFace.sideSource
       (sides.bottom.get sheet).selected.located .top))
 
 /-- The fine hole remainder subtracts the actual original source chords; all fine side excursions remain in the
@@ -283,24 +285,24 @@ Every source keeps its original triangle and bounded corner indices. The
 four side orientations select the displayed sign directly, preserving the
 cached normalized readings and actual perimeter remainder. -/
 theorem holeAreaRemainder_eq_sourceChords
-    (perimeters : Matched.FacePerimeters (request := request) cache.normalize i j)
-    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh)
-    (right : TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh) (sides :
-      HoleRootedCorrection.HoleSideLifts lifted adjacent) :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleAreaRemainder.holeAreaRemainder perimeters sides =
+    (perimeters : FacePerimeters (request := request) cache.normalize i j)
+    (left : TriangleReadings (cache.get i) lifted.mesh)
+    (right : TriangleReadings (cache.get j) lifted.mesh) (sides :
+      HoleSideLifts lifted adjacent) :
+    HoleAreaRemainder.holeAreaRemainder perimeters sides =
       FiniteSum.Fin.sumFin (fun sheet =>
         ((perimeters.perimeters.get adjacent.left.position).get (sides.left.get sheet).selected.sheet).right -
         ((perimeters.perimeters.get adjacent.right.position).get (sides.right.get sheet).selected.sheet).left -
         (((perimeters.perimeters.get adjacent.bottom.position).get (sides.bottom.get sheet).selected.sheet).top -
           ((perimeters.perimeters.get adjacent.top.position).get (sides.top.get sheet).selected.sheet).bottom)) -
-      Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.LiftedPuncturedGrid.holeSourceChords left right
+      LiftedPuncturedGrid.holeSourceChords left right
         sides := by
-  unfold HoleAreaRemainder.holeAreaRemainder HoleSourceChords.LiftedPuncturedGrid.holeSourceChords
+  unfold HoleAreaRemainder.holeAreaRemainder LiftedPuncturedGrid.holeSourceChords
   rw [← FiniteSum.Fin.sumFin_sub]
   apply FiniteSum.Fin.sumFin_congr
   intro sheet
   simp only [HoleAreaRemainder.sideAreaRemainder,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.TriangleReadings.sourceChord_side left
+    BranchCellBank.TriangleReadings.sourceChord_side left
     right, -eq_self, -iff_self]
   have bottomRejected : ¬ (GridSide.bottom = .top ∨ GridSide.bottom = .left) := by
     intro impossible; rcases impossible with impossible | impossible <;> nomatch impossible

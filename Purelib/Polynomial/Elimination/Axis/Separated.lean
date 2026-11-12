@@ -2,7 +2,7 @@ module
 public import Purelib.Polynomial.Elimination.Axis.Certificate
 import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Polynomial.Dense.Gaussian.Path.Axis
-public import Purelib.Polynomial.Elimination.Axis.Separated.Bezout
+public import Purelib.Polynomial.Elimination.Axis.Separated.Replay
 import Purelib.Polynomial.Elimination.Axis.Separated.Eliminant
 import Purelib.Polynomial.Elimination.Separated.Scalar
 import Mathlib.Data.Nat.Basic
@@ -42,47 +42,84 @@ eliminants.
 The maximum retains the two actual natural degrees as its arguments and
 bounds both coordinate eliminants. -/
 @[expose] def separatedEliminationDegree (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) : Nat :=
-  max (Elimination.Separated.Scalar.scalarEliminant p).natDegree
-    (Elimination.Axis.Separated.Eliminant.horizontalEliminant p).natDegree
+  max (Separated.Scalar.scalarEliminant p).natDegree
+    (Eliminant.horizontalEliminant p).natDegree
 
-/-- Closed constructive axis-elimination data from the two fraction-free
-separated Sylvester inverses.
+/-- Assemble original axis callbacks from retained scalar polynomials with their exact canonical readbacks.
 
-The original nonzero positive-degree source supplies both nonzero
-coordinate eliminants. Their same finite cofactors certify coprimality
-whenever the corresponding scalar value is nonzero. -/
-@[expose] def separatedAxisEliminationCertificate (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
-    (nonzero : p.isZero = false) (degreePositive : 0 < p.natDegree) :
-    Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p
-      (Elimination.Axis.Separated.separatedEliminationDegree p) where
-  vertical := Elimination.Separated.Scalar.scalarEliminant p
-  horizontal := Elimination.Axis.Separated.Eliminant.horizontalEliminant p
-  vertical_nonzero :=
-    Elimination.Separated.Scalar.scalarEliminant_nonzero p nonzero
-  horizontal_nonzero :=
-    Elimination.Axis.Separated.Eliminant.horizontalEliminant_nonzero p nonzero
+Both actual polynomials and their maximum degree are consumed directly. Each
+nonzero-evaluation hypothesis is transported to the original checked-column
+callback, retaining its canonical cofactors and total fallback procedure.
+-/
+@[expose] def certificateFromPolynomials
+    (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+    (nonzero : p.isZero = false) (degreePositive : 0 < p.natDegree)
+    (vertical horizontal : Dense.Rational.Basic.CoordinatePolynomial)
+    (verticalSame : vertical = Separated.Scalar.scalarEliminant p)
+    (horizontalSame : horizontal = Eliminant.horizontalEliminant p) :
+    Certificate.AxisSafeCuts.AxisEliminationCertificate p
+      (max vertical.natDegree horizontal.natDegree) where
+  vertical := vertical
+  horizontal := horizontal
+  vertical_nonzero := by
+    rewrite [verticalSame]
+    exact Separated.Scalar.scalarEliminant_nonzero p nonzero
+  horizontal_nonzero := by
+    rewrite [horizontalSame]
+    exact Eliminant.horizontalEliminant_nonzero p nonzero
   vertical_degree := by
-    change (Elimination.Separated.Scalar.scalarEliminant p).natDegree ≤
-      max (Elimination.Separated.Scalar.scalarEliminant p).natDegree
-        (Elimination.Axis.Separated.Eliminant.horizontalEliminant p).natDegree
-    rw [Data.Nat.Order.max_eq_natMax]
+    rewrite [Data.Nat.Order.max_eq_natMax]
     exact Data.Nat.Order.le_max_left _ _
   horizontal_degree := by
-    change (Elimination.Axis.Separated.Eliminant.horizontalEliminant p).natDegree ≤
-      max (Elimination.Separated.Scalar.scalarEliminant p).natDegree
-        (Elimination.Axis.Separated.Eliminant.horizontalEliminant p).natDegree
-    rw [Data.Nat.Order.max_eq_natMax]
+    rewrite [Data.Nat.Order.max_eq_natMax]
     exact Data.Nat.Order.le_max_right _ _
-  vertical_coprime := by
-    intro x eliminantNonzero
-    simpa only [Dense.Gaussian.Path.Axis.verticalPathReal, Dense.Gaussian.Path.Axis.verticalPathImag] using
-      Elimination.Axis.Separated.Bezout.verticalCoprimeCertificate p nonzero
-        degreePositive x eliminantNonzero
-  horizontal_coprime := by
-    intro y eliminantNonzero
-    simpa only [Dense.Gaussian.Path.Axis.horizontalPathReal, Dense.Gaussian.Path.Axis.horizontalPathImag] using
-      Elimination.Axis.Separated.Bezout.horizontalCoprimeCertificate p nonzero
-        degreePositive y eliminantNonzero
+  vertical_coprime := fun coordinate safe =>
+    (Replay.computeVertical p nonzero degreePositive coordinate
+      (fun zero => safe ((congrArg (fun polynomial => polynomial.eval coordinate) verticalSame).trans zero))).val
+  horizontal_coprime := fun coordinate safe =>
+    (Replay.computeHorizontal p nonzero degreePositive coordinate
+      (fun zero => safe ((congrArg (fun polynomial => polynomial.eval coordinate) horizontalSame).trans zero))).val
+
+/-- Closed constructive axis-elimination data from the two fraction-free separated Sylvester inverses.
+
+The original nonzero positive-degree source supplies both nonzero coordinate
+eliminants. Their retained scalar polynomials and the original checked-column
+callbacks certify the same coordinate lines.
+-/
+@[expose] def separatedAxisEliminationCertificate
+    (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+    (nonzero : p.isZero = false) (degreePositive : 0 < p.natDegree) :
+    Certificate.AxisSafeCuts.AxisEliminationCertificate p (separatedEliminationDegree p) :=
+  certificateFromPolynomials p nonzero degreePositive
+    (Separated.Scalar.scalarEliminant p) (Eliminant.horizontalEliminant p) rfl rfl
+
+/-- Exact scalar readbacks identify the retained maximum degree with the canonical search bound. -/
+theorem certificateFromPolynomials_degree
+    (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+    (vertical horizontal : Dense.Rational.Basic.CoordinatePolynomial)
+    (verticalSame : vertical = Separated.Scalar.scalarEliminant p)
+    (horizontalSame : horizontal = Eliminant.horizontalEliminant p) :
+    max vertical.natDegree horizontal.natDegree = separatedEliminationDegree p :=
+  congrArg₂ (fun left right : Dense.Rational.Basic.CoordinatePolynomial =>
+    max left.natDegree right.natDegree) verticalSame horizontalSame
+
+/-- The retained-polynomial constructor transports to the complete canonical certificate.
+
+The original scalar identities identify the maximum degree and both callback
+domains. Equality elimination preserves the same executable callback bodies.
+-/
+theorem certificateFromPolynomials_eq
+    (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+    (nonzero : p.isZero = false) (positive : 0 < p.natDegree)
+    (vertical horizontal : Dense.Rational.Basic.CoordinatePolynomial)
+    (verticalSame : vertical = Separated.Scalar.scalarEliminant p)
+    (horizontalSame : horizontal = Eliminant.horizontalEliminant p) :
+    (certificateFromPolynomials_degree p vertical horizontal verticalSame horizontalSame) ▸
+        certificateFromPolynomials p nonzero positive vertical horizontal verticalSame horizontalSame =
+      separatedAxisEliminationCertificate p nonzero positive := by
+  cases verticalSame
+  cases horizontalSame
+  rfl
 
 end Purelib.Polynomial.Elimination.Axis.Separated
 

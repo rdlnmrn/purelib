@@ -4,6 +4,9 @@ import Purelib.Riemann.Normalization.InverseModelOverlapCocycle
 import Purelib.Riemann.Normalization.InverseRootPolynomial
 import Purelib.Riemann.Normalization.RectangularInverseModels
 import Purelib.Riemann.Normalization.RegularFaceInverseModels
+import Purelib.Riemann.Paths.ClearBoxPaths
+import Purelib.Riemann.Paths.PreparedPathTrace
+import Purelib.Geometry.Rational.Box.Sample
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Data.Gaussian.Norm.Basic
 import Purelib.Approximation.Rational.Geometric.Basic
@@ -46,6 +49,8 @@ open Purelib.Riemann.Normalization.RegularFaceInverseModels
 open Purelib.Riemann.Normalization.TransportedFaceInverseModels (TransportedCell)
 open Purelib.Riemann.Normalization.InverseModelOverlapCocycle.InverseRootPolynomial (OverlapReady)
 open Purelib.Riemann.Topology.SquareRootContinuationChain (Owner)
+open Purelib.Riemann.Paths
+open Purelib.Riemann.Paths.PreparedPathTrace (TracedPath)
 open Purelib.Geometry.Rectangle.Partition.RectangularUniformGeometry
 open Purelib.Riemann.Integration.RectangularRefinementSigns (SheetCache)
 open _root_.Purelib.Data (Vector)
@@ -251,6 +256,37 @@ theorem origin_mismatch (patch : RectangularPatch bounds source geometry)
   change Data.Gaussian.Norm.Basic.normSq (1 - root * ((patch.models.refine index).ready 0 0).model.value.eval _) ≤ _
   rw [patch.refine_value, Nat.add_comm index 2]
   exact (patch.transported.cell 0 0).refine_anchor_mismatch root inside nonnegative small residual (2 + index)
+
+/-- Acquire a source-anchored rectangular model cover from an actual original owner anywhere in its clear box.
+
+The actual source-to-anchor route, its full traced result and ending Owner
+are retained before the spatial budget and cell bank are acquired. The
+actual rectangular axes are retained once with their exact factory. Every
+small cell is then transported from that same ending Owner. The original
+source is never replaced by an independently attached root at the anchor.
+-/
+def acquireAt (clearance : Clearance polynomial box) (proper : box.Proper)
+    (point : Gaussian) (inside : box.Contains point) (source : Owner (polynomial.eval point)) :
+    Σ route : { actual : ClearBoxPaths.Route polynomial box point box.anchor //
+      actual = ClearBoxPaths.Route.build clearance point box.anchor inside box.contains_anchor },
+    Σ traced : { actual : TracedPath route.val.path source //
+      actual = TracedPath.build route.val.path route.val.within source },
+    Σ bounds : { actual : Bounds clearance // actual = Bounds.build clearance },
+    Σ mesh : { actual : Mesh bounds.val // actual = Mesh.build bounds.val },
+    Σ geometry : { actual : Geometry (dyadicSteps mesh.val.depth) (dyadicSteps mesh.val.depth) //
+      actual = uniform box proper (dyadicSteps mesh.val.depth) },
+    { patch : RectangularPatch bounds.val traced.val.finishOwner geometry.val //
+      patch = acquire
+        (Eq.mp (congrArg (RectangularLayout bounds.val) geometry.property.symm)
+          (RectangularLayout.ofMesh mesh.val proper)) traced.val.finishOwner } :=
+  let route := ClearBoxPaths.Route.build clearance point box.anchor inside box.contains_anchor
+  let traced := TracedPath.build route.path route.within source
+  let bounds := Bounds.build clearance
+  let mesh := Mesh.build bounds
+  let geometry := uniform box proper (dyadicSteps mesh.depth)
+  let layout : RectangularLayout bounds geometry := RectangularLayout.ofMesh mesh proper
+  let patch := acquire layout traced.finishOwner
+  ⟨⟨route, rfl⟩, ⟨traced, rfl⟩, ⟨bounds, rfl⟩, ⟨mesh, rfl⟩, ⟨geometry, rfl⟩, ⟨patch, rfl⟩⟩
 
 end RectangularPatch
 

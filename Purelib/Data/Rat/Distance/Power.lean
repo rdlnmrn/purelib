@@ -11,6 +11,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 @[expose] public section
 
@@ -84,47 +86,47 @@ theorem pow_le_two_pow_mul_add
     add_nonneg leftNonnegative rightNonnegative
   have sumLe : left + right ≤ 2 * max left right := by
     by_cases order : left ≤ right
-    · rw [Fraction.Order.Basic.max_eq_right order]
+    · rw [Basic.max_eq_right order]
       calc
         left + right ≤ right + right :=
-          Fraction.Order.Arithmetic.add_le_add_direct order le_rfl
+          Arithmetic.add_le_add_direct order le_rfl
         _ = 2 * right := by ring1
     · have reverse : right ≤ left :=
-        (Fraction.Order.Arithmetic.lt_of_not_ge_direct order).le
-      rw [Fraction.Order.Basic.max_eq_left reverse]
+        (Arithmetic.lt_of_not_ge_direct order).le
+      rw [Basic.max_eq_left reverse]
       calc
         left + right ≤ left + left :=
-          Fraction.Order.Arithmetic.add_le_add_direct le_rfl reverse
+          Arithmetic.add_le_add_direct le_rfl reverse
         _ = 2 * left := by ring1
   have valueLeTwice : value ≤ 2 * max left right :=
     bound.trans sumLe
   have valuePowerLe : value ^ exponent ≤
       (2 * max left right) ^ exponent :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
+    Arithmetic.pow_le_pow_direct
       valueNonnegative valueLeTwice exponent
   have maximumPowerLe : (max left right) ^ exponent ≤
       left ^ exponent + right ^ exponent := by
     by_cases order : left ≤ right
-    · rw [Fraction.Order.Basic.max_eq_right order]
+    · rw [Basic.max_eq_right order]
       calc
         right ^ exponent = 0 + right ^ exponent := by ring1
         _ ≤ left ^ exponent + right ^ exponent :=
-          Fraction.Order.Arithmetic.add_le_add_direct
-            (Fraction.Order.Arithmetic.pow_nonneg_direct
+          Arithmetic.add_le_add_direct
+            (Arithmetic.pow_nonneg_direct
               leftNonnegative exponent) le_rfl
     · have reverse : right ≤ left :=
-        (Fraction.Order.Arithmetic.lt_of_not_ge_direct order).le
-      rw [Fraction.Order.Basic.max_eq_left reverse]
+        (Arithmetic.lt_of_not_ge_direct order).le
+      rw [Basic.max_eq_left reverse]
       calc
         left ^ exponent = left ^ exponent + 0 := by ring1
         _ ≤ left ^ exponent + right ^ exponent :=
-          Fraction.Order.Arithmetic.add_le_add_direct le_rfl
-            (Fraction.Order.Arithmetic.pow_nonneg_direct
+          Arithmetic.add_le_add_direct le_rfl
+            (Arithmetic.pow_nonneg_direct
               rightNonnegative exponent)
   have scaledMaximumPowerLe :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       maximumPowerLe
-      (Fraction.Order.Arithmetic.pow_nonneg_direct
+      (Arithmetic.pow_nonneg_direct
         (by decide : (0 : Fraction.Rational) ≤ 2) exponent)
   calc
     value ^ exponent ≤ (2 * max left right) ^ exponent := valuePowerLe
@@ -142,33 +144,33 @@ theorem pow_le_two_pow_mul_add
 distance powers. -/
 theorem rationalSeparation_add_pow_le_two_pow_mul
     (exponent : Nat) (left right : Fraction.Rational) :
-    Distance.rationalSeparation (left + right) 0 ^ exponent ≤
+    rationalSeparation (left + right) 0 ^ exponent ≤
       (2 : Fraction.Rational) ^ exponent *
-        (Distance.rationalSeparation left 0 ^ exponent +
-          Distance.rationalSeparation right 0 ^ exponent) :=
+        (rationalSeparation left 0 ^ exponent +
+          rationalSeparation right 0 ^ exponent) :=
   pow_le_two_pow_mul_add exponent
-    (Distance.rationalSeparation (left + right) 0)
-    (Distance.rationalSeparation left 0) (Distance.rationalSeparation right 0)
-    (Distance.rationalSeparation_nonneg _ _)
-    (Distance.rationalSeparation_nonneg _ _)
-    (Distance.rationalSeparation_nonneg _ _)
-    (Distance.rationalSeparation_add_zero_le left right)
+    (rationalSeparation (left + right) 0)
+    (rationalSeparation left 0) (rationalSeparation right 0)
+    (rationalSeparation_nonneg _ _)
+    (rationalSeparation_nonneg _ _)
+    (rationalSeparation_nonneg _ _)
+    (rationalSeparation_add_zero_le left right)
 
 /-- The natural power of an endpoint separation is bounded by two to that power times the sum of the two separations
 through a middle point. -/
 theorem rationalSeparation_pow_triangle_le_two_pow_mul
     (exponent : Nat) (left middle right : Fraction.Rational) :
-    Distance.rationalSeparation left right ^ exponent ≤
+    rationalSeparation left right ^ exponent ≤
       (2 : Fraction.Rational) ^ exponent *
-        (Distance.rationalSeparation left middle ^ exponent +
-          Distance.rationalSeparation middle right ^ exponent) :=
+        (rationalSeparation left middle ^ exponent +
+          rationalSeparation middle right ^ exponent) :=
   pow_le_two_pow_mul_add exponent
-    (Distance.rationalSeparation left right)
-    (Distance.rationalSeparation left middle) (Distance.rationalSeparation middle right)
-    (Distance.rationalSeparation_nonneg _ _)
-    (Distance.rationalSeparation_nonneg _ _)
-    (Distance.rationalSeparation_nonneg _ _)
-    (Distance.rationalSeparation_triangle left middle right)
+    (rationalSeparation left right)
+    (rationalSeparation left middle) (rationalSeparation middle right)
+    (rationalSeparation_nonneg _ _)
+    (rationalSeparation_nonneg _ _)
+    (rationalSeparation_nonneg _ _)
+    (rationalSeparation_triangle left middle right)
 
 end
 
@@ -200,37 +202,37 @@ namespace Purelib.Data.Rat.Distance
 open Purelib.Data.Rat
 /-- The square of rational separation equals the square of the endpoint difference. -/
 theorem NaturalLp.rationalSeparation_sq (left right : Fraction.Rational) :
-    Distance.rationalSeparation left right ^ 2 = (left - right) ^ 2 := by
-  have separationSub : Distance.rationalSeparation left right =
-      Distance.rationalSeparation (left - right) 0 := by
-    unfold Distance.rationalSeparation
+    rationalSeparation left right ^ 2 = (left - right) ^ 2 := by
+  have separationSub : rationalSeparation left right =
+      rationalSeparation (left - right) 0 := by
+    unfold rationalSeparation
     congr 1 <;> ring1
   rw [separationSub]
   calc
-    Distance.rationalSeparation (left - right) 0 ^ 2 =
-        Distance.rationalSeparation (left - right) 0 *
-          Distance.rationalSeparation (left - right) 0 := by
+    rationalSeparation (left - right) 0 ^ 2 =
+        rationalSeparation (left - right) 0 *
+          rationalSeparation (left - right) 0 := by
       ring1
-    _ = Distance.rationalSeparation ((left - right) * (left - right)) 0 :=
-      (Distance.rationalSeparation_mul_zero (left - right) (left - right)).symm
+    _ = rationalSeparation ((left - right) * (left - right)) 0 :=
+      (rationalSeparation_mul_zero (left - right) (left - right)).symm
     _ = (left - right) * (left - right) := by
-      apply Distance.rationalSeparation_zero_of_nonneg
+      apply rationalSeparation_zero_of_nonneg
       have squareNonnegative :=
-        Fraction.Order.Arithmetic.sq_nonneg_direct (left - right)
+        Arithmetic.sq_nonneg_direct (left - right)
       simpa only [pow_two] using squareNonnegative
     _ = (left - right) ^ 2 := by ring1
 
 /-- A squared separation below a positive tolerance square gives separation below that tolerance. -/
 theorem rationalSeparation_lt_of_sq_lt_sq
     {left right tolerance : Fraction.Rational} (positive : 0 < tolerance)
-    (small : Distance.rationalSeparation left right ^ 2 < tolerance ^ 2) :
-    Distance.rationalSeparation left right < tolerance := by
-  rcases lt_trichotomy (Distance.rationalSeparation left right) tolerance with
+    (small : rationalSeparation left right ^ 2 < tolerance ^ 2) :
+    rationalSeparation left right < tolerance := by
+  rcases lt_trichotomy (rationalSeparation left right) tolerance with
     less | equal | greater
   · exact less
   · subst tolerance
     exact (lt_irrefl _ small).elim
-  · have squareOrder := Fraction.Order.Arithmetic.pow_le_pow_direct
+  · have squareOrder := Arithmetic.pow_le_pow_direct
       positive.le greater.le 2
     exact ((not_lt_of_ge squareOrder) small).elim
 
@@ -259,12 +261,12 @@ namespace Purelib.Data.Rat.Distance
 open Purelib.Data.Rat in
 /-- The square of a rational's separation from zero equals the rational square. -/
 theorem rationalSeparation_zero_sq (value : Fraction.Rational) :
-    Distance.rationalSeparation value 0 ^ 2 = value ^ 2 := by
-  have multiplicative := Distance.rationalSeparation_mul_zero value value
+    rationalSeparation value 0 ^ 2 = value ^ 2 := by
+  have multiplicative := rationalSeparation_mul_zero value value
   have squareNonnegative : 0 ≤ value * value := by
     simpa only [pow_two] using
-      Fraction.Order.Arithmetic.sq_nonneg_direct value
-  rw [Distance.rationalSeparation_zero_of_nonneg squareNonnegative] at multiplicative
+      Arithmetic.sq_nonneg_direct value
+  rw [rationalSeparation_zero_of_nonneg squareNonnegative] at multiplicative
   simpa only [pow_two] using multiplicative.symm
 
 end Purelib.Data.Rat.Distance
@@ -290,34 +292,34 @@ theorem rationalSeparation_sq_le_two_mul
     {left right : Fraction.Rational}
     (leftNonnegative : 0 ≤ left) (leftLeOne : left ≤ 1)
     (rightNonnegative : 0 ≤ right) (rightLeOne : right ≤ 1) :
-    Distance.rationalSeparation (left ^ 2) (right ^ 2) ≤
-      2 * Distance.rationalSeparation left right := by
+    rationalSeparation (left ^ 2) (right ^ 2) ≤
+      2 * rationalSeparation left right := by
   have sumNonnegative : 0 ≤ left + right :=
     add_nonneg leftNonnegative rightNonnegative
   have sumLeTwo : left + right ≤ 2 := by
     calc
       left + right ≤ 1 + 1 :=
-        Fraction.Order.Arithmetic.add_le_add_direct leftLeOne rightLeOne
+        Arithmetic.add_le_add_direct leftLeOne rightLeOne
       _ = 2 := by ring1
-  have separationNonnegative := Distance.rationalSeparation_nonneg left right
-  unfold Distance.rationalSeparation
-  apply Fraction.Order.Basic.max_le
+  have separationNonnegative := rationalSeparation_nonneg left right
+  unfold rationalSeparation
+  apply Basic.max_le
   · calc
       left ^ 2 - right ^ 2 = (left - right) * (left + right) := by ring1
       _ ≤ max (left - right) (right - left) * (left + right) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-          (Fraction.Order.Basic.le_max_left _ _) sumNonnegative
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
+          (Basic.le_max_left _ _) sumNonnegative
       _ ≤ max (left - right) (right - left) * 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           sumLeTwo separationNonnegative
       _ = 2 * max (left - right) (right - left) := by ring1
   · calc
       right ^ 2 - left ^ 2 = (right - left) * (left + right) := by ring1
       _ ≤ max (left - right) (right - left) * (left + right) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-          (Fraction.Order.Basic.le_max_right _ _) sumNonnegative
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
+          (Basic.le_max_right _ _) sumNonnegative
       _ ≤ max (left - right) (right - left) * 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           sumLeTwo separationNonnegative
       _ = 2 * max (left - right) (right - left) := by ring1
 
@@ -342,12 +344,12 @@ namespace Purelib.Data.Rat.Distance.VitaliL2
 open Purelib.Data.Rat in
 /-- The square of rational separation equals the square of the endpoint difference. -/
 theorem rationalSeparation_sq_eq_sub_sq (left right : Fraction.Rational) :
-    Distance.rationalSeparation left right ^ 2 = (left - right) ^ 2 := by
-  have same : Distance.rationalSeparation left right =
-      Distance.rationalSeparation (left - right) 0 := by
-    unfold Distance.rationalSeparation
+    rationalSeparation left right ^ 2 = (left - right) ^ 2 := by
+  have same : rationalSeparation left right =
+      rationalSeparation (left - right) 0 := by
+    unfold rationalSeparation
     congr 1 <;> ring1
-  rw [same, Distance.rationalSeparation_zero_sq]
+  rw [same, rationalSeparation_zero_sq]
 
 end Purelib.Data.Rat.Distance.VitaliL2
 

@@ -104,6 +104,8 @@ import Mathlib.Order.Basic
 import Mathlib.Data.Nat.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_antitone)
 
 public section
@@ -137,11 +139,11 @@ open Purelib.Riemann.Normalization
 open Purelib.Riemann.Periods
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {first second : Fin genus}
-  {target radius : Fraction.Rational} {floor : Nat}
+  {target radius : Rational} {floor : Nat}
 
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
@@ -153,36 +155,36 @@ preparation and retained source reading. -/
 @[expose] def ComponentDepthPlan
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {requested : Fraction.Rational} {minimum : Nat}
+    {requested : Rational} {minimum : Nat}
     (comparison :
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.ClosedBoundaryComparison
       (PeriodMatrix.standardDifferential second) (requested / 4) minimum) :=
   { depth : Nat // ∀ later, depth ≤ later →
-    Data.Gaussian.Norm.Basic.normSq (ComponentSourceArea (NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth
+    normSq (ComponentSourceArea (NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth
       prepared
       later) componentIndex comparison) < requested }
 
 open Purelib.Approximation.Rational in
 open Purelib.Data.Rat in
 /-- The original squared dyadic mesh rate equals the corresponding quarter-radius sequence. -/
-theorem physical_rate (count : Nat) (magnitude : Fraction.Rational) (depth : Nat) :
-    (count : Fraction.Rational)^2 * (16 * magnitude^2 * ((1 / 2 : Fraction.Rational)^depth)^2) =
-      Geometric.Basic.quarterRadius ((count : Fraction.Rational)^2 * (16 * magnitude^2)) depth := by
-  rw [← pow_mul, Nat.mul_comm depth 2, pow_mul, show (1 / 2 : Fraction.Rational)^2 = 1 / 4 by decide,
+theorem physical_rate (count : Nat) (magnitude : Rational) (depth : Nat) :
+    (count : Rational)^2 * (16 * magnitude^2 * ((1 / 2 : Rational)^depth)^2) =
+      Geometric.Basic.quarterRadius ((count : Rational)^2 * (16 * magnitude^2)) depth := by
+  rw [← pow_mul, Nat.mul_comm depth 2, pow_mul, show (1 / 2 : Rational)^2 = 1 / 4 by decide,
     Geometric.Basic.quarterRadius_eq_mul_pow]
   ring1
 
 open Purelib.Algebra in
 open Purelib.Data.Rat in
 /-- The quarter-target source budget and one-sixteenth mesh error fit strictly within the original positive request. -/
-theorem pay {requested error : Fraction.Rational} (positive : 0 < requested) (small : error ≤ requested / 16) :
+theorem pay {requested error : Rational} (positive : 0 < requested) (small : error ≤ requested / 16) :
     2 * (requested / 4 + error + (requested / 4) / 128) < requested := by
-  have bounded := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.add_le_add_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct (le_refl (requested / 4)) small)
-      (le_refl ((requested / 4) / 128))) (by decide : (0 : Fraction.Rational) ≤ 2)
-  have coefficient : (2 : Fraction.Rational) * (1 / 4 + 1 / 16 + (1 / 4) / 128) < 1 := by decide +kernel
-  have paid := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct coefficient positive
+  have bounded := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_direct
+      (Arithmetic.add_le_add_direct (le_refl (requested / 4)) small)
+      (le_refl ((requested / 4) / 128))) (by decide : (0 : Rational) ≤ 2)
+  have coefficient : (2 : Rational) * (1 / 4 + 1 / 16 + (1 / 4) / 128) < 1 := by decide +kernel
+  have paid := Arithmetic.mul_lt_mul_of_pos_right_direct coefficient positive
   have scalar : 2 * (requested / 4 + requested / 16 + (requested / 4) / 128) =
       (2 * (1 / 4 + 1 / 16 + (1 / 4) / 128)) * requested := by
     simp only [Field.ExplicitField.div_eq_mul_inv, -eq_self, -iff_self]
@@ -199,20 +201,20 @@ count and closed comparison. -/
 @[expose] def componentDepthPlan
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length)
-    {requested : Fraction.Rational} {minimum : Nat}
+    {requested : Rational} {minimum : Nat}
     (comparison :
       (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.ClosedBoundaryComparison
       (PeriodMatrix.standardDifferential second) (requested / 4) minimum)
     (positive : 0 < requested) : ComponentDepthPlan prepared componentIndex comparison := by
-  let scale := (comparison.original.plans.length : Fraction.Rational)^2 * (16 * comparison.sourceMagnitude^2)
-  have nonnegative : 0 ≤ scale := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+  let scale := (comparison.original.plans.length : Rational)^2 * (16 * comparison.sourceMagnitude^2)
+  have nonnegative : 0 ≤ scale := Arithmetic.mul_nonneg_direct
+    (Arithmetic.sq_nonneg_direct _)
+    (Arithmetic.mul_nonneg_direct (by decide) (Arithmetic.sq_nonneg_direct _))
   let depth := Geometric.Search.firstQuarterBelow scale prepared.paid.cut.exterior.prepared.energy.depth (requested /
     16)
   have accurate := Geometric.Search.firstQuarterBelow_accurate scale nonnegative
     prepared.paid.cut.exterior.prepared.energy.depth (requested / 16)
-    (Fraction.Order.Field.div_pos_direct positive (by decide +kernel : (0 : Fraction.Rational) < 16))
+    (Field.div_pos_direct positive (by decide +kernel : (0 : Rational) < 16))
   refine ⟨depth, fun later order => ?_⟩
   let refined := NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared later
   have decreasing := quarterRadius_antitone nonnegative (order.trans
@@ -227,7 +229,7 @@ open Purelib.Data.Rat in
 /-- The exact original component's closed comparison at one quarter of the local target and retained source floor. -/
 @[expose] def SourceReferenceAt
     (prepared : BoundaryPreparation preparation first second target radius floor)
-    (localTarget : Fraction.Rational) (minimum : Nat) (componentIndex : Fin
+    (localTarget : Rational) (minimum : Nat) (componentIndex : Fin
       prepared.exterior.prepared.components.length) :=
   (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared.ClosedBoundaryComparison
     (PeriodMatrix.standardDifferential second) (localTarget / 4) minimum
@@ -239,7 +241,7 @@ open Purelib.Riemann.RootContinuation in
 /-- Read the original component source areas after refining the retained preparation to the requested depth. -/
 @[expose] def SourceAreasAtDepth
     (prepared : BoundaryPreparation preparation first second target radius floor)
-    {localTarget : Fraction.Rational} {minimum : Nat}
+    {localTarget : Rational} {minimum : Nat}
     (references : Vector.DependentVector (SourceReferenceAt prepared localTarget minimum)) (depth : Nat) : List
       Basic.Canonical :=
   let refined := NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared depth
@@ -250,7 +252,7 @@ open Purelib.Curves.Hyperelliptic in
 @[expose] def SourceGeometryAt
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (componentIndex : Fin prepared.exterior.prepared.components.length) :=
-  Meshes.PuncturedGrid.Exterior.BoundaryQueryBounds.SurfacePreparation.SourceGeometry
+  BoundaryQueryBounds.SurfacePreparation.SourceGeometry
     (prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt).prepared
     (PeriodMatrix.standardDifferential second)
 
@@ -260,7 +262,7 @@ open Purelib.Data.Rat in
 @[expose] def SourceReferenceGeometry
     (prepared : BoundaryPreparation preparation first second target radius floor)
     (geometry : Vector.DependentVector (SourceGeometryAt prepared))
-    {localTarget : Fraction.Rational} {minimum : Nat}
+    {localTarget : Rational} {minimum : Nat}
     (references : Vector.DependentVector (SourceReferenceAt prepared localTarget minimum)) : Prop :=
   ∀ i, (references.get i).original.right = (geometry.get i).right ∧
     (references.get i).original.slope = (geometry.get i).slope
@@ -271,11 +273,11 @@ open Purelib.Data.Rat in
 /-- Dependent source-owner queries indexed by the original component's boundary occurrences. -/
 @[expose] def ComponentQueriesAt
     (prepared : BoundaryPreparation preparation first second target radius floor)
-    (localTarget : Fraction.Rational) (componentIndex : Fin prepared.exterior.prepared.components.length) :=
+    (localTarget : Rational) (componentIndex : Fin prepared.exterior.prepared.components.length) :=
   let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
   Vector.DependentVector (fun outer : Fin component.prepared.occurrences.length =>
-    Meshes.PuncturedGrid.Exterior.FamilyBounds.PreOwnerQueries
-      (Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences outer)
+    PreOwnerQueries
+      (occurrenceAt component.prepared.occurrences outer)
       (PeriodMatrix.standardDifferential second) localTarget)
 
 open Purelib.Data in
@@ -287,7 +289,7 @@ The dependent rows preserve component and occurrence indices, while the source f
 respective original query requirements. -/
 structure SourceQueryRequests
     (prepared : BoundaryPreparation preparation first second target radius floor)
-    (localTarget : Fraction.Rational) (minimum : Nat) where
+    (localTarget : Rational) (minimum : Nat) where
   /-- The dependent cached request rows at the original component and occurrence indices. -/ rows :
     Vector.DependentVector (ComponentQueriesAt prepared localTarget)
   /-- The retained source-reference floor covering the requested minimum and every source query. -/ sourceMinimum : Nat
@@ -308,11 +310,11 @@ open Purelib.Data.Rat
 /-- Acquire the original occurrence queries and retain their exact source-floor and face-index maxima. -/
 @[expose] def sourceQueryRequests
     (prepared : BoundaryPreparation preparation first second target radius floor)
-    (localTarget : Fraction.Rational) (minimum : Nat) : SourceQueryRequests prepared localTarget minimum :=
+    (localTarget : Rational) (minimum : Nat) : SourceQueryRequests prepared localTarget minimum :=
   let rows : Vector.DependentVector (ComponentQueriesAt prepared localTarget) := Vector.DependentVector.ofFn (fun i =>
     let component := prepared.exterior.prepared.components[i.val]'i.isLt
-    Vector.DependentVector.ofFn (fun outer => Meshes.PuncturedGrid.Exterior.FamilyBounds.PreOwnerQueries.build
-      (Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences outer)
+    Vector.DependentVector.ofFn (fun outer => PreOwnerQueries.build
+      (occurrenceAt component.prepared.occurrences outer)
       (PeriodMatrix.standardDifferential second) localTarget))
   let sourceMinimum := max minimum (rows.maximum (fun _ row => row.maximum (fun _ query => query.sourceMinimum)))
   let faceIndex := rows.maximum (fun _ row => row.maximum (fun _ query => query.faceIndex))
@@ -330,16 +332,16 @@ Every bound retains the exact occurrence, parent piece and reference owner; area
 unit-length and tolerance conditions. -/
 @[expose] def SourceTraceBounds
     (prepared : BoundaryPreparation preparation first second target radius floor)
-    {localTarget : Fraction.Rational} {minimum : Nat}
+    {localTarget : Rational} {minimum : Nat}
     (references : Vector.DependentVector (SourceReferenceAt prepared localTarget minimum)) {density fragmentTarget :
-      Fraction.Rational}
-    (budget : Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.FragmentAreaBudget density fragmentTarget) (faceIndex :
+      Rational}
+    (budget : FragmentAreaBudget density fragmentTarget) (faceIndex :
       Nat) : Prop :=
   ∀ componentIndex : Fin prepared.exterior.prepared.components.length,
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
     let comparison := references.get componentIndex
     ∀ outer : Fin component.prepared.occurrences.length,
-      let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+      let occurrence := occurrenceAt component.prepared.occurrences
         outer
       ∀ (i : Fin comparison.original.plans.length)
         (piece :
@@ -356,11 +358,11 @@ unit-length and tolerance conditions. -/
 /-- Dependent paired-owner requests indexed by the original component's boundary occurrences. -/
 @[expose] def ComponentOwnersAt
     (prepared : BoundaryPreparation preparation first second target radius floor)
-    (tolerance : Fraction.Rational) (componentIndex : Fin prepared.exterior.prepared.components.length) :=
+    (tolerance : Rational) (componentIndex : Fin prepared.exterior.prepared.components.length) :=
   let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
   Vector.DependentVector (fun outer : Fin component.prepared.occurrences.length =>
-    Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest
-      (Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences outer)
+    OwnerRequest
+      (occurrenceAt component.prepared.occurrences outer)
       (PeriodMatrix.standardDifferential second) tolerance)
 
 end
@@ -370,7 +372,7 @@ open Purelib.Data.Rat in
 set_option genInjectivity false in
 /-- Original paired-owner request rows with a common retained reading stage. -/
 structure SourceOwnerRequests
-    (prepared : BoundaryPreparation preparation first second target radius floor) (tolerance : Fraction.Rational) where
+    (prepared : BoundaryPreparation preparation first second target radius floor) (tolerance : Rational) where
   /-- The dependent cached request rows at the original component and occurrence indices. -/ rows :
     Vector.DependentVector (ComponentOwnersAt prepared tolerance)
   /-- The retained common stage covering the exact cached requests. -/ index : Nat
@@ -385,11 +387,11 @@ open Purelib.Data.Rat in
 /-- Acquire the exact original paired-owner requests and retain their maximum reading stage. -/
 @[expose] def sourceOwnerRequests
     (prepared : BoundaryPreparation preparation first second target radius floor)
-    (tolerance : Fraction.Rational) (positive : 0 < tolerance) : SourceOwnerRequests prepared tolerance :=
+    (tolerance : Rational) (positive : 0 < tolerance) : SourceOwnerRequests prepared tolerance :=
   let rows : Vector.DependentVector (ComponentOwnersAt prepared tolerance) := Vector.DependentVector.ofFn (fun i =>
     let component := prepared.exterior.prepared.components[i.val]'i.isLt
-    Vector.DependentVector.ofFn (fun outer => Meshes.PuncturedGrid.Exterior.PairedOwnerRequest.OwnerRequest.build
-      (Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences outer)
+    Vector.DependentVector.ofFn (fun outer => OwnerRequest.build
+      (occurrenceAt component.prepared.occurrences outer)
       (PeriodMatrix.standardDifferential second) tolerance positive))
   ⟨rows, rows.maximum (fun _ row => row.maximum (fun _ owner => owner.index)), fun component outer =>
     ((rows.get component).get_le_maximum (fun _ owner => owner.index) outer).trans
@@ -400,16 +402,16 @@ open Purelib.Integration.Path in
 open Purelib.Riemann.Paths in
 /-- The length-error budget at the retained preparation's original physical dyadic count. -/
 @[expose] def SourceReadingBudget
-    (refined : BoundaryPreparation preparation first second target radius floor) (allowance : Fraction.Rational) :=
-  NoisyPathArea.LengthErrorBudget
+    (refined : BoundaryPreparation preparation first second target radius floor) (allowance : Rational) :=
+  LengthErrorBudget
     (RectangularDyadicPairedTrace.dyadicCount refined.paid.cut.exterior.prepared.energy.depth) allowance
 
 open Purelib.Data.Rat in
 open Purelib.Integration.Path in
 /-- Transport a length-error budget across an exact count equality while retaining padding and tolerance. -/
-@[expose] def reindexReadingBudget {count otherCount : Nat} {allowance : Fraction.Rational}
-    (budget : NoisyPathArea.LengthErrorBudget count allowance) (equal : count = otherCount) :
-    NoisyPathArea.LengthErrorBudget otherCount allowance :=
+@[expose] def reindexReadingBudget {count otherCount : Nat} {allowance : Rational}
+    (budget : LengthErrorBudget count allowance) (equal : count = otherCount) :
+    LengthErrorBudget otherCount allowance :=
   { padding := budget.padding
     padding_positive := budget.padding_positive
     paid := equal ▸ budget.paid
@@ -424,13 +426,13 @@ open Purelib.Riemann.RootContinuation in
 /-- Every original side satisfies its retained area and total estimate at all later reading stages. -/
 @[expose] def SourceSideBounds
     (prepared : BoundaryPreparation preparation first second target radius floor)
-    {localTarget : Fraction.Rational} {minimum : Nat}
+    {localTarget : Rational} {minimum : Nat}
     (references : Vector.DependentVector (SourceReferenceAt prepared localTarget minimum))
-    (depth : Nat) (tolerance : Fraction.Rational) (readingIndex : Nat) : Prop :=
+    (depth : Nat) (tolerance : Rational) (readingIndex : Nat) : Prop :=
   ∀ componentIndex : Fin prepared.exterior.prepared.components.length,
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
     ∀ (outer : Fin component.prepared.occurrences.length) {index : Nat} (cache :
-      Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index),
+      Numerics prepared.domains index),
       readingIndex ≤ index → RetainedExteriorSideEstimate (NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth
         prepared depth) componentIndex
         (references.get componentIndex) outer cache localTarget tolerance
@@ -441,9 +443,9 @@ open Purelib.Riemann.RootContinuation in
 /-- Every original physical piece meets the separate retained area and total targets at later stages. -/
 @[expose] def SourcePieceBounds
     (prepared : BoundaryPreparation preparation first second target radius floor)
-    {localTarget : Fraction.Rational} {minimum : Nat}
+    {localTarget : Rational} {minimum : Nat}
     (references : Vector.DependentVector (SourceReferenceAt prepared localTarget minimum))
-    (depth : Nat) (tolerance areaTarget totalTarget : Fraction.Rational) (readingIndex : Nat) : Prop :=
+    (depth : Nat) (tolerance areaTarget totalTarget : Rational) (readingIndex : Nat) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length) (index : Nat), readingIndex ≤ index →
     RetainedExteriorPieceEstimate (NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared depth)
       componentIndex (references.get componentIndex)
@@ -456,11 +458,11 @@ open Purelib.Riemann.RootContinuation in
 /-- Every original component satisfies its retained physical-versus-source area estimate at later stages. -/
 @[expose] def SourceComponentBounds
     (prepared : BoundaryPreparation preparation first second target radius floor)
-    {localTarget : Fraction.Rational} {minimum : Nat}
+    {localTarget : Rational} {minimum : Nat}
     (references : Vector.DependentVector (SourceReferenceAt prepared localTarget minimum))
-    (depth : Nat) (tolerance : Fraction.Rational) (readingIndex : Nat) : Prop :=
+    (depth : Nat) (tolerance : Rational) (readingIndex : Nat) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length) {index : Nat}
-    (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index), readingIndex ≤
+    (cache : Numerics prepared.domains index), readingIndex ≤
       index →
       RetainedExteriorComponentEstimate (NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared depth)
         componentIndex
@@ -477,16 +479,16 @@ The same refined preparation and cache determine every physical component, while
 target pay the finite-sum estimate. -/
 @[expose] def SourcePhysicalBounds
     (prepared : BoundaryPreparation preparation first second target radius floor)
-    (localTarget sourceMagnitude : Fraction.Rational)
-    (depth : Nat) (areaTarget totalTarget : Fraction.Rational) (readingIndex : Nat) : Prop :=
-  ∀ {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index),
+    (localTarget sourceMagnitude : Rational)
+    (depth : Nat) (areaTarget totalTarget : Rational) (readingIndex : Nat) : Prop :=
+  ∀ {index : Nat} (cache : Numerics prepared.domains index),
     readingIndex ≤ index →
     let refined := NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared depth
     let errors := List.ofFn (fun componentIndex => ComponentCountError prepared componentIndex
       sourceMagnitude areaTarget totalTarget)
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    normSq (Norm.Sum.Basic.gaussianSum
       (List.ofFn (fun componentIndex => ComponentPhysicalArea refined componentIndex cache))) ≤
-      (prepared.exterior.prepared.components.length : Fraction.Rational)^2 *
+      (prepared.exterior.prepared.components.length : Rational)^2 *
         (2 * (maximum id errors + localTarget))
 
 open Purelib.Curves.Hyperelliptic in
@@ -496,88 +498,88 @@ open Purelib.Riemann.RootContinuation in
 /-- Every original retained physical junction meets one quarter of the owner tolerance at later reading stages. -/
 @[expose] def SourceJunctionBounds
     (prepared : BoundaryPreparation preparation first second target radius floor)
-    (depth : Nat) (tolerance : Fraction.Rational) (readingIndex : Nat) : Prop :=
+    (depth : Nat) (tolerance : Rational) (readingIndex : Nat) : Prop :=
   ∀ componentIndex : Fin prepared.exterior.prepared.components.length,
     let component := prepared.exterior.prepared.components[componentIndex.val]'componentIndex.isLt
     ∀ outer : Fin component.prepared.occurrences.length,
-      let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+      let occurrence := occurrenceAt component.prepared.occurrences
         outer
       let refined := NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared depth
       let position := occurrence.sideOccurrence.position
       let sheet := occurrence.sideOccurrence.sheet
       let side := occurrence.sideOccurrence.side
       let mesh := (refined.paid.cut.exterior.prepared.energy.entries.get sheet).meshes.entries.get position
-      ∀ (junction : Fin (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junctionCount mesh
+      ∀ (junction : Fin (junctionCount mesh
         side)) {index : Nat}
-        (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index), readingIndex ≤
+        (cache : Numerics prepared.domains index), readingIndex ≤
           index →
         let samples := ((refined.traces.samples cache first second).samples.get position).get sheet
         PrimitiveAreaBounds.PrimitivePoint.Bounded
-          (Meshes.PuncturedGrid.Exterior.RetainedJunctions.RetainedPerimeterPiece.junction samples side junction)
+          (RetainedJunctions.RetainedPerimeterPiece.junction samples side junction)
           (tolerance / 4)
 
 open Purelib.Approximation.Rational in
 open Purelib.Data.Rat in
 /-- A nonnegative weighted allowance is bounded by its original target. -/
-private theorem allowance_le_target {target weight : Fraction.Rational} (nonnegative : 0 ≤ target) (weightNonnegative :
+private theorem allowance_le_target {target weight : Rational} (nonnegative : 0 ≤ target) (weightNonnegative :
   0 ≤ weight) :
     Budget.Weighted.allowance target weight ≤ target := by
-  apply (Fraction.Order.Field.div_le_iff_pos (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
-    weightNonnegative (by decide : (0 : Fraction.Rational) < 1))).mpr
-  exact (le_add_of_nonneg_right (Fraction.Order.Arithmetic.mul_nonneg_direct nonnegative weightNonnegative)).trans_eq
+  apply (Field.div_le_iff_pos (Arithmetic.add_pos_of_nonneg_of_pos_direct
+    weightNonnegative (by decide : (0 : Rational) < 1))).mpr
+  exact (le_add_of_nonneg_right (Arithmetic.mul_nonneg_direct nonnegative weightNonnegative)).trans_eq
     (by ring1)
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Rat in
 /-- The retained fragment budget's tolerance is bounded by its nonnegative target. -/
-theorem fragment_tolerance_le {density target : Fraction.Rational}
-    (budget : Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.FragmentAreaBudget density target) (nonnegative : 0 ≤
+theorem fragment_tolerance_le {density target : Rational}
+    (budget : FragmentAreaBudget density target) (nonnegative : 0 ≤
       target) :
     budget.tolerance ≤ target := by
   have weight : 0 ≤ 320 * (4 * density + 3) + 80 * density := add_nonneg
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Fraction.Rational) ≤ 320)
-      (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) budget.density_nonnegative) (by decide)))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Fraction.Rational) ≤ 80)
+    (Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Rational) ≤ 320)
+      (add_nonneg (Arithmetic.mul_nonneg_direct (by decide) budget.density_nonnegative) (by decide)))
+    (Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Rational) ≤ 80)
       budget.density_nonnegative)
   exact budget.tolerance_eq.trans_le (allowance_le_target nonnegative weight)
 
 open Purelib.Data.Rat in
 /-- One quarter of a positive rational request is strictly below that request. -/
-theorem quarter_lt {requested : Fraction.Rational} (positive : 0 < requested) : requested / 4 < requested := by
-  apply (Fraction.Order.Field.div_lt_iff_pos (by decide : (0 : Fraction.Rational) < 4)).mpr
+theorem quarter_lt {requested : Rational} (positive : 0 < requested) : requested / 4 < requested := by
+  apply (Field.div_lt_iff_pos (by decide : (0 : Rational) < 4)).mpr
   exact (show requested = 1 * requested by ring1).trans_lt
-    ((Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct (by decide : (1 : Fraction.Rational) < 4)
+    ((Arithmetic.mul_lt_mul_of_pos_right_direct (by decide : (1 : Rational) < 4)
       positive).trans_eq (by ring1))
 
 open Purelib.Approximation.Rational in
 open Purelib.Data.Rat in
 /-- The original per-term quarter-target allowance pays four times the squared finite count. -/
-theorem count_payment {requested localTarget : Fraction.Rational} (positive : 0 < requested) (count : Nat)
+theorem count_payment {requested localTarget : Rational} (positive : 0 < requested) (count : Nat)
     (localLe : localTarget ≤ Budget.Aggregate.perTerm (requested / 4) count) :
-    4 * (count : Fraction.Rational)^2 * localTarget < requested := by
+    4 * (count : Rational)^2 * localTarget < requested := by
   have countNonnegative := Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count)
-  have smaller := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct localLe countNonnegative) countNonnegative
+  have smaller := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct localLe countNonnegative) countNonnegative
   have paid := smaller.trans_lt (Budget.Aggregate.count_mul_perTerm_lt
-    (Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Fraction.Rational) < 4)) count)
-  have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 4) paid
+    (Field.div_pos_direct positive (by decide : (0 : Rational) < 4)) count)
+  have scaled := Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Rational) < 4) paid
   have cancel : 4 * (requested / 4) = requested := by
     rw [mul_comm]
     exact Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
-  exact (show 4 * (count : Fraction.Rational)^2 * localTarget = 4 * ((count : Fraction.Rational) * ((count :
-    Fraction.Rational) * localTarget)) by ring1).trans_lt
+  exact (show 4 * (count : Rational)^2 * localTarget = 4 * ((count : Rational) * ((count :
+    Rational) * localTarget)) by ring1).trans_lt
     (scaled.trans_eq cancel)
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks in
 open Purelib.Data.Rat in
 /-- A nonnegative common bound controls the finite maximum, including the empty list. -/
-theorem maximum_le {Item : Type} (value : Item → Fraction.Rational) (items : List Item)
-    {bound : Fraction.Rational} (nonnegative : 0 ≤ bound) (bounded : ∀ item ∈ items, value item ≤ bound) :
+theorem maximum_le {Item : Type} (value : Item → Rational) (items : List Item)
+    {bound : Rational} (nonnegative : 0 ≤ bound) (bounded : ∀ item ∈ items, value item ≤ bound) :
     maximum value items ≤ bound := by
   induction items with
   | nil => exact nonnegative
   | cons first rest ih =>
-      exact Fraction.Order.Basic.max_le (bounded first List.mem_cons_self) (ih (fun item member => bounded item
+      exact Basic.max_le (bounded first List.mem_cons_self) (ih (fun item member => bounded item
         (List.mem_cons_of_mem _ member)))
 
 open Purelib.Curves.Hyperelliptic in
@@ -586,10 +588,10 @@ open Purelib.Data.Rat in
 open Purelib.Riemann.RootContinuation in
 /-- The retained refined physical-area sum meets the original requested bound at every later reading stage. -/
 @[expose] def RequestedPhysicalBound (prepared : BoundaryPreparation preparation first second target radius floor)
-    (requested : Fraction.Rational) (depth readingIndex : Nat) : Prop :=
-  ∀ {index : Nat} (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index),
+    (requested : Rational) (depth readingIndex : Nat) : Prop :=
+  ∀ {index : Nat} (cache : Numerics prepared.domains index),
     readingIndex ≤ index →
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    normSq (Norm.Sum.Basic.gaussianSum
       (List.ofFn (fun componentIndex => ComponentPhysicalArea (NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth
         prepared depth) componentIndex cache))) < requested
 
@@ -600,11 +602,11 @@ open Purelib.Riemann.RootContinuation in
 /-- Each original component's retained total-comparison error is paid by the local target at later stages. -/
 @[expose] def SourceTotalErrorsPaid
     (prepared : BoundaryPreparation preparation first second target radius floor)
-    {localTarget : Fraction.Rational} {minimum : Nat}
+    {localTarget : Rational} {minimum : Nat}
     (references : Vector.DependentVector (SourceReferenceAt prepared localTarget minimum))
-    (depth : Nat) (tolerance : Fraction.Rational) (readingIndex : Nat) : Prop :=
+    (depth : Nat) (tolerance : Rational) (readingIndex : Nat) : Prop :=
   ∀ (componentIndex : Fin prepared.exterior.prepared.components.length) {index : Nat}
-    (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics prepared.domains index), readingIndex ≤
+    (cache : Numerics prepared.domains index), readingIndex ≤
       index →
       ComponentTotalError (NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared depth) componentIndex
         (references.get componentIndex)
@@ -624,29 +626,29 @@ The package retains exact cache equations and common stage bounds, preserving th
 junction, side, component, physical and total-error certificates. -/
 structure ExteriorSourceRequest
     (prepared : BoundaryPreparation preparation first second target radius floor)
-    (requested : Fraction.Rational) (minimum : Nat) where
-  /-- The cached per-component target for the original aggregate request. -/ localTarget : Fraction.Rational
+    (requested : Rational) (minimum : Nat) where
+  /-- The cached per-component target for the original aggregate request. -/ localTarget : Rational
   /-- The local target is the minimum of one and the exact quarter-target per-term allowance. -/ localTarget_eq :
     localTarget = min 1 (Budget.Aggregate.perTerm (requested / 4) prepared.exterior.prepared.components.length)
   /-- The exact cached source geometry for each original component. -/ geometry : Vector.DependentVector
     (SourceGeometryAt prepared)
-  /-- The cached common source density. -/ density : Fraction.Rational
+  /-- The cached common source density. -/ density : Rational
   /-- The density equals the finite maximum of the original component-geometry densities. -/ density_eq : density =
     maximum id
     (List.ofFn (fun i => (geometry.get i).density))
-  /-- The cached count-error list at unit area target and total target four. -/ unitErrors : List Fraction.Rational
+  /-- The cached count-error list at unit area target and total target four. -/ unitErrors : List Rational
   /-- The unit-error cache equals the original component count-error readback. -/ unitErrors_eq : unitErrors = List.ofFn
     (fun i => ComponentCountError prepared i density 1 4)
-  /-- The retained maximum unit count-error coefficient. -/ coefficient : Fraction.Rational
+  /-- The retained maximum unit count-error coefficient. -/ coefficient : Rational
   /-- The coefficient equals the finite maximum of the exact unit-error cache. -/ coefficient_eq : coefficient = maximum
     id unitErrors
-  /-- The retained weighted target for original physical fragments. -/ fragmentTarget : Fraction.Rational
+  /-- The retained weighted target for original physical fragments. -/ fragmentTarget : Rational
   /-- The fragment target is the minimum of one and the exact coefficient-weighted local allowance. -/ fragmentTarget_eq
     : fragmentTarget = min 1 (Budget.Weighted.allowance localTarget coefficient)
   /-- The retained coefficient times the fragment target is paid by the original local target. -/ fragment_paid :
     coefficient * fragmentTarget ≤ localTarget
   /-- The exact density-dependent fragment-area budget. -/ fragmentBudget :
-    Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.FragmentAreaBudget density fragmentTarget
+    FragmentAreaBudget density fragmentTarget
   /-- The retained original source and face queries at the fragment tolerance. -/ queries : SourceQueryRequests prepared
     fragmentBudget.tolerance minimum
   /-- The dependent original source references at the retained query floor. -/ references : Vector.DependentVector
@@ -693,7 +695,7 @@ structure ExteriorSourceRequest
   /-- The area cache equals the exact source-reference readback at the retained depth. -/ areas_eq : areas =
     SourceAreasAtDepth prepared references depth
   /-- The squared norm of the exact cached source-area sum meets the original request. -/ bounded :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum areas) < requested
+    normSq (Norm.Sum.Basic.gaussianSum areas) < requested
 
 constructive_injectivity ExteriorSourceRequest
 
@@ -712,29 +714,29 @@ The exact component geometry determines the density and weighted fragment allowa
 share one later reading index, and the same references supply both source and physical area bounds. -/
 @[expose] def prepareExteriorSources
     (prepared : BoundaryPreparation preparation first second target radius floor)
-    (requested : Fraction.Rational) (positive : 0 < requested) (minimum : Nat) :
+    (requested : Rational) (positive : 0 < requested) (minimum : Nat) :
     ExteriorSourceRequest prepared requested minimum := by
-  have quarterPositive := Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Fraction.Rational) < 4)
+  have quarterPositive := Field.div_pos_direct positive (by decide : (0 : Rational) < 4)
   let localTarget := min 1 (Budget.Aggregate.perTerm (requested / 4) prepared.exterior.prepared.components.length)
-  have localPositive : 0 < localTarget := Fraction.Order.Basic.lt_min (by decide)
+  have localPositive : 0 < localTarget := Basic.lt_min (by decide)
     (Budget.Aggregate.perTerm_positive quarterPositive prepared.exterior.prepared.components.length)
   let geometry : Vector.DependentVector (SourceGeometryAt prepared) := Vector.DependentVector.ofFn (fun i =>
-    Meshes.PuncturedGrid.Exterior.BoundaryQueryBounds.SurfacePreparation.SourceGeometry.build
+    BoundaryQueryBounds.SurfacePreparation.SourceGeometry.build
       (prepared.exterior.prepared.components[i.val]'i.isLt).prepared (PeriodMatrix.standardDifferential second))
   let density := maximum id (List.ofFn (fun i => (geometry.get i).density))
-  have densityNonnegative : 0 ≤ density := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative _ _
+  have densityNonnegative : 0 ≤ density := maximum_nonnegative _ _
   let unitErrors := List.ofFn (fun i => ComponentCountError prepared i density 1 4)
   let coefficient := maximum id unitErrors
   have coefficientNonnegative : 0 ≤ coefficient :=
-    Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum_nonnegative _ _
+    maximum_nonnegative _ _
   let fragmentTarget := min 1 (Budget.Weighted.allowance localTarget coefficient)
-  have fragmentPositive : 0 < fragmentTarget := Fraction.Order.Basic.lt_min (by decide)
+  have fragmentPositive : 0 < fragmentTarget := Basic.lt_min (by decide)
     (Budget.Weighted.allowance_positive localPositive coefficientNonnegative)
   have fragmentPaid : coefficient * fragmentTarget ≤ localTarget :=
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Basic.min_le_right _ _)
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Basic.min_le_right _ _)
       coefficientNonnegative).trans
       (Budget.Weighted.mul_allowance_le localPositive.le coefficientNonnegative)
-  let fragmentBudget := Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.FragmentAreaBudget.build density
+  let fragmentBudget := FragmentAreaBudget.build density
     fragmentTarget
     densityNonnegative fragmentPositive
   have toleranceSmall := fragment_tolerance_le fragmentBudget
@@ -745,52 +747,52 @@ share one later reading index, and the same references supply both source and ph
     Vector.DependentVector.ofFn (fun i =>
       let component := prepared.exterior.prepared.components[i.val]'i.isLt
       component.prepared.closedBoundaryComparison (PeriodMatrix.standardDifferential second) (geometry.get i).right
-        (localTarget / 4) (Fraction.Order.Field.div_pos_direct localPositive (by decide : (0 : Fraction.Rational) < 4))
+        (localTarget / 4) (Field.div_pos_direct localPositive (by decide : (0 : Rational) < 4))
           queries.sourceMinimum)
   have referenceGeometry : SourceReferenceGeometry prepared geometry references := by
     intro i
     have referenceEq : references.get i =
         (prepared.exterior.prepared.components[i.val]'i.isLt).prepared.closedBoundaryComparison
           (PeriodMatrix.standardDifferential second) (geometry.get i).right (localTarget / 4)
-          (Fraction.Order.Field.div_pos_direct localPositive (by decide)) queries.sourceMinimum :=
+          (Field.div_pos_direct localPositive (by decide)) queries.sourceMinimum :=
       Vector.DependentVector.ofFn_get _ i
     constructor
     · exact (congrArg (fun comparison => comparison.original.right) referenceEq).trans
         ((prepared.exterior.prepared.components[i.val]'i.isLt).prepared.closedBoundaryComparison_right
           (PeriodMatrix.standardDifferential second) (geometry.get i).right (localTarget / 4)
-          (Fraction.Order.Field.div_pos_direct localPositive (by decide)) queries.sourceMinimum)
+          (Field.div_pos_direct localPositive (by decide)) queries.sourceMinimum)
     · exact (congrArg (fun comparison => comparison.original.slope) referenceEq).trans
         (((prepared.exterior.prepared.components[i.val]'i.isLt).prepared.closedBoundaryComparison_slope
         (PeriodMatrix.standardDifferential second) (geometry.get i).right (localTarget / 4)
-        (Fraction.Order.Field.div_pos_direct localPositive (by decide)) queries.sourceMinimum).trans
+        (Field.div_pos_direct localPositive (by decide)) queries.sourceMinimum).trans
         (geometry.get i).slope_eq.symm)
   have sourceMagnitudeBound (i : Fin prepared.exterior.prepared.components.length) : (references.get i).sourceMagnitude
     ≤ density := by
     have densityLe : (geometry.get i).density ≤ density :=
-      Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.le_maximum id (Data.List.OfFn.Basic.mem_ofFn.mpr ⟨i, rfl⟩)
+      le_maximum id (Data.List.OfFn.Basic.mem_ofFn.mpr ⟨i, rfl⟩)
     exact ((NewtonRequestedExteriorSides.component_source_magnitude_le_slope prepared i (references.get i)).trans_eq
       (referenceGeometry i).2).trans
       ((geometry.get i).slope_le_density.trans densityLe)
   have traceBound : SourceTraceBounds prepared references fragmentBudget queries.faceIndex := by
     intro componentIndex component comparison outer occurrence i piece index later
-    have trace := Meshes.PuncturedGrid.Exterior.BoundaryQueryBounds.ClosedBoundaryComparison.requested_trace_error
+    have trace := BoundaryQueryBounds.ClosedBoundaryComparison.requested_trace_error
       comparison occurrence i piece ((queries.rows.get componentIndex).get outer) fragmentBudget.tolerance_positive
       (queries.source_le componentIndex outer) ((queries.face_le componentIndex outer).trans later)
     have densityLe : (geometry.get componentIndex).density ≤ density :=
-      Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.le_maximum id (Data.List.OfFn.Basic.mem_ofFn.mpr
+      le_maximum id (Data.List.OfFn.Basic.mem_ofFn.mpr
         ⟨componentIndex, rfl⟩)
     have densityBound := ((geometry.get componentIndex).density_bound comparison (referenceGeometry componentIndex).2
       occurrence (List.getElem_mem outer.isLt) i piece index).trans densityLe
     refine ⟨trace, densityBound, ?_, ?_⟩
     · intro length tolerance
-      exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.add_le_add_direct (le_refl tolerance) ((Fraction.Order.Basic.min_le_right _ _).trans
+      exact Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.add_le_add_direct (le_refl tolerance) ((Basic.min_le_right _ _).trans
           trace))
-        (by decide : (0 : Fraction.Rational) ≤ 2)
+        (by decide : (0 : Rational) ≤ 2)
     · intro length tolerance lengthBound ownerNonnegative ownerBound
-      exact Meshes.PuncturedGrid.Exterior.BoundaryQueryBounds.ClosedBoundaryComparison.ownedAreaError_paid comparison
+      exact BoundaryQueryBounds.ClosedBoundaryComparison.ownedAreaError_paid comparison
         occurrence i piece index fragmentBudget densityBound trace
-        ownerNonnegative ownerBound lengthBound ⟨localPositive.le, Fraction.Order.Basic.min_le_left _ _⟩
+        ownerNonnegative ownerBound lengthBound ⟨localPositive.le, Basic.min_le_left _ _⟩
   let plans := Vector.DependentVector.ofFn (fun i =>
     componentDepthPlan prepared i (references.get i)
     localPositive)
@@ -817,19 +819,19 @@ share one later reading index, and the same references supply both source and ph
     refine ⟨scalar.2.2.2 length readingBudget.tolerance lengthBound readingBudget.tolerance_positive.le
       reading.tolerance_le, ?_⟩
     have total := (scalar.2.2.1 length readingBudget.tolerance).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.add_le_add_direct reading.tolerance_le (le_refl fragmentBudget.tolerance)) (by
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.add_le_add_direct reading.tolerance_le (le_refl fragmentBudget.tolerance)) (by
           decide))
     exact total.trans_eq (by ring1)
   have junctionBound : SourceJunctionBounds prepared depth readingBudget.tolerance index := by
     intro componentIndex component outer occurrence surface position sheet side mesh junction stage cache later samples
-    exact Meshes.PuncturedGrid.Exterior.JunctionOwnerBounds.SurfaceOccurrence.retained_junction_bound occurrence
+    exact JunctionOwnerBounds.SurfaceOccurrence.retained_junction_bound occurrence
       ((surface.traces.get position).get sheet)
       (cache.normalize.get first) (cache.normalize.get second) samples side junction
       ((owners.rows.get componentIndex).get outer) (((owners.later componentIndex outer).trans ownersLe).trans later)
   have sideBound : SourceSideBounds prepared references depth readingBudget.tolerance index := by
     intro componentIndex component outer stage cache later
-    let occurrence := Meshes.PuncturedGrid.Exterior.BoundaryAxisLocation.occurrenceAt component.prepared.occurrences
+    let occurrence := occurrenceAt component.prepared.occurrences
       outer
     have meshDepth := refined.paid.cut.exterior.prepared.energy.mesh_depth
       occurrence.sideOccurrence.sheet occurrence.sideOccurrence.position
@@ -845,7 +847,7 @@ share one later reading index, and the same references supply both source and ph
       componentIndex) cache
       (fun outer => sideBound componentIndex outer cache later)
   have each (i : Fin prepared.exterior.prepared.components.length) :
-      Data.Gaussian.Norm.Basic.normSq (ComponentSourceArea refined i (references.get i)) ≤ localTarget := by
+      normSq (ComponentSourceArea refined i (references.get i)) ≤ localTarget := by
     have later := plans.get_le_maximum (fun _ plan => plan.val) i
     have paid := (plans.get i).property depth later
     exact paid.le
@@ -854,59 +856,59 @@ share one later reading index, and the same references supply both source and ph
     intro stage cache later surface errors
     let maximum := maximum id errors
     have physicalEach (i : Fin prepared.exterior.prepared.components.length) :
-        Data.Gaussian.Norm.Basic.normSq (ComponentPhysicalArea refined i cache) ≤ 2 * (maximum + localTarget) := by
+        normSq (ComponentPhysicalArea refined i cache) ≤ 2 * (maximum + localTarget) := by
       have bound := NewtonRequestedExteriorSides.retained_exterior_component_physical_bound refined i (references.get i)
         cache
         (componentBound i cache later) (each i)
-      have totalNonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 4)
+      have totalNonnegative := Arithmetic.mul_nonneg_direct (by decide : (0 : Rational) ≤ 4)
         fragmentBudget.tolerance_positive.le
       have toleranceLe : readingBudget.tolerance ≤ 4 * fragmentBudget.tolerance :=
         reading.tolerance_le.trans ((le_add_of_nonneg_right
-          (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 3)
+          (Arithmetic.mul_nonneg_direct (by decide : (0 : Rational) ≤ 3)
             fragmentBudget.tolerance_positive.le)).trans_eq (by ring1))
       have paidError := NewtonRequestedExteriorSides.component_comparison_error_paid refined i (references.get i) cache
         fragmentPositive.le
         totalNonnegative toleranceLe (sourceMagnitudeBound i) (pieceBound i stage later)
       have countLe : ComponentCountError prepared i density fragmentTarget (4 * fragmentBudget.tolerance) ≤ maximum :=
-        Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.le_maximum id (Data.List.OfFn.Basic.mem_ofFn.mpr ⟨i, rfl⟩)
+        le_maximum id (Data.List.OfFn.Basic.mem_ofFn.mpr ⟨i, rfl⟩)
       have errorLe := paidError.trans ((NewtonRequestedExteriorSides.component_count_error_atDepth prepared i density
         depth
         fragmentTarget (4 * fragmentBudget.tolerance)).trans_le countLe)
-      exact bound.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.add_le_add_direct errorLe (le_refl localTarget)) (by decide))
+      exact bound.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.add_le_add_direct errorLe (le_refl localTarget)) (by decide))
     have aggregate := Norm.Sum.Bounds.normSq_sum_le
       (List.ofFn (fun i => ComponentPhysicalArea refined i cache)) (2 * (maximum + localTarget)) (by
         intro value member; obtain ⟨i, rfl⟩ := Data.List.OfFn.Basic.mem_ofFn.mp member; exact physicalEach i)
     rw [Data.List.OfFn.Basic.length_ofFn] at aggregate
-    change _ ≤ (prepared.exterior.prepared.components.length : Fraction.Rational) *
-      ((prepared.exterior.prepared.components.length : Fraction.Rational) * (2 * (maximum + localTarget))) at aggregate
+    change _ ≤ (prepared.exterior.prepared.components.length : Rational) *
+      ((prepared.exterior.prepared.components.length : Rational) * (2 * (maximum + localTarget))) at aggregate
     exact aggregate.trans_eq (by ring1)
   have countErrorPaid (i : Fin prepared.exterior.prepared.components.length) :
       ComponentCountError prepared i density fragmentTarget (4 * fragmentBudget.tolerance) ≤ localTarget := by
     have scaled := NewtonRequestedExteriorSides.component_count_error_scale prepared i density fragmentTarget (4 *
       fragmentBudget.tolerance)
-      densityNonnegative fragmentPositive.le (Fraction.Order.Basic.min_le_left _ _)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 4)
+      densityNonnegative fragmentPositive.le (Basic.min_le_left _ _)
+      (Arithmetic.mul_nonneg_direct (by decide : (0 : Rational) ≤ 4)
         fragmentBudget.tolerance_positive.le)
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct toleranceSmall (by
-          decide : (0 : Fraction.Rational) ≤ 4))
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct toleranceSmall (by
+          decide : (0 : Rational) ≤ 4))
     have unitLe : ComponentCountError prepared i density 1 4 ≤ coefficient :=
-      Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.le_maximum id (Data.List.OfFn.Basic.mem_ofFn.mpr ⟨i, rfl⟩)
-    exact scaled.trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct unitLe fragmentPositive.le).trans
+      le_maximum id (Data.List.OfFn.Basic.mem_ofFn.mpr ⟨i, rfl⟩)
+    exact scaled.trans ((Arithmetic.mul_le_mul_of_nonneg_left_direct unitLe fragmentPositive.le).trans
       ((mul_comm fragmentTarget coefficient).trans_le fragmentPaid))
   have totalErrorsPaid : SourceTotalErrorsPaid prepared references depth readingBudget.tolerance index := by
     intro i stage cache later
-    have totalNonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 4)
+    have totalNonnegative := Arithmetic.mul_nonneg_direct (by decide : (0 : Rational) ≤ 4)
       fragmentBudget.tolerance_positive.le
     have toleranceLe : readingBudget.tolerance ≤ 4 * fragmentBudget.tolerance :=
       reading.tolerance_le.trans ((le_add_of_nonneg_right
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 3)
+        (Arithmetic.mul_nonneg_direct (by decide : (0 : Rational) ≤ 3)
           fragmentBudget.tolerance_positive.le)).trans_eq (by ring1))
     have bound := NewtonRequestedExteriorSides.component_total_error_paid refined i (references.get i) cache
       fragmentPositive.le
       totalNonnegative densityNonnegative toleranceLe
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct toleranceSmall (by
-          decide : (0 : Fraction.Rational) ≤ 4))
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct toleranceSmall (by
+          decide : (0 : Rational) ≤ 4))
       (sourceMagnitudeBound i) (pieceBound i stage later)
     exact bound.trans ((NewtonRequestedExteriorSides.component_count_error_atDepth prepared i density depth
       fragmentTarget
@@ -919,21 +921,21 @@ share one later reading index, and the same references supply both source and ph
       maximum_le _ _ localPositive.le (by
         intro value member; obtain ⟨i, rfl⟩ := Data.List.OfFn.Basic.mem_ofFn.mp member; exact countErrorPaid i)
     have bounded := (physicalBound cache later).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Fraction.Order.Arithmetic.add_le_add_direct errorsPaid (le_refl localTarget)) (by
-              decide : (0 : Fraction.Rational) ≤ 2))
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.add_le_add_direct errorsPaid (le_refl localTarget)) (by
+              decide : (0 : Rational) ≤ 2))
+        (Arithmetic.sq_nonneg_direct _))
     have paid := count_payment positive
-      prepared.exterior.prepared.components.length (Fraction.Order.Basic.min_le_right _ _ : localTarget ≤ _)
-    exact bounded.trans_lt ((show (prepared.exterior.prepared.components.length : Fraction.Rational)^2 * (2 *
+      prepared.exterior.prepared.components.length (Basic.min_le_right _ _ : localTarget ≤ _)
+    exact bounded.trans_lt ((show (prepared.exterior.prepared.components.length : Rational)^2 * (2 *
       (localTarget + localTarget)) =
-      4 * (prepared.exterior.prepared.components.length : Fraction.Rational)^2 * localTarget by ring1).trans_lt paid)
+      4 * (prepared.exterior.prepared.components.length : Rational)^2 * localTarget by ring1).trans_lt paid)
   have aggregate := Norm.Sum.Bounds.normSq_sum_le areas
     (Budget.Aggregate.perTerm (requested / 4) prepared.exterior.prepared.components.length) (by
     intro value member
     obtain ⟨i, rfl⟩ := Data.List.OfFn.Basic.mem_ofFn.mp member
-    exact (each i).trans (Fraction.Order.Basic.min_le_right _ _))
+    exact (each i).trans (Basic.min_le_right _ _))
   rw [Data.List.OfFn.Basic.length_ofFn] at aggregate
   exact ⟨localTarget, rfl, geometry, density, rfl, unitErrors, rfl, coefficient, rfl, fragmentTarget, rfl, fragmentPaid,
     fragmentBudget, queries, references, referenceGeometry, sourceMagnitudeBound, traceBound, depth, refined, rfl,

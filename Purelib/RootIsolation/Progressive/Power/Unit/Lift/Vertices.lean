@@ -56,24 +56,24 @@ open Purelib.Data.Gaussian
 
 /-- The original move bridge anchor lies strictly inside its source robust box. -/
 theorem unitMoveBridgeAnchor_inside_sourceRobustBox
-    {source target : Gaussian.Basic.Canonical}
+    {source target : Basic.Canonical}
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
-    (index : (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+    (index : (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one
       sourceUnit)
       sourceUnit degree degreeAtLeastTwo).Index) :
-    (Power.Unit.Box.unitRobustBox (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree
+    (Power.Unit.Box.unitRobustBox (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree
       degreeAtLeastTwo
-      (Progressive.Power.Unit.Rebase.Geometry.unitMoveSourceDegreeIndexFromFrame sourceUnit targetUnit degree
+      (Rebase.Geometry.unitMoveSourceDegreeIndexFromFrame sourceUnit targetUnit degree
         degreeAtLeastTwo index)).Contains
-      (Progressive.Power.Unit.Rebase.Geometry.unitMoveBridgeState sourceUnit targetUnit degree degreeAtLeastTwo small
+      (Rebase.Geometry.unitMoveBridgeState sourceUnit targetUnit degree degreeAtLeastTwo small
         index).box.anchor := by
-  have inside := (Progressive.Power.Unit.Rebase.Geometry.unitMoveBridgeState_refines_sourceOwner sourceUnit targetUnit
+  have inside := (Rebase.Geometry.unitMoveBridgeState_refines_sourceOwner sourceUnit targetUnit
     degree degreeAtLeastTwo small index).contains
-      (Progressive.Power.Unit.Rebase.Geometry.unitMoveBridgeState sourceUnit targetUnit degree degreeAtLeastTwo small
+      (Rebase.Geometry.unitMoveBridgeState sourceUnit targetUnit degree degreeAtLeastTwo small
         index).box.contains_anchor
-  rw [Progressive.Power.Unit.Frame.robustChamberFrame_owner_box] at inside
+  rw [Frame.robustChamberFrame_owner_box] at inside
   exact inside
 end Purelib.RootIsolation.Progressive.Power.Unit.Lift.Vertices
 
@@ -104,13 +104,13 @@ open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
 /-- Read the exact source robust owner anchor used as the lifted move's base point. -/
 def unitMoveLiftBase
-    {source target : Gaussian.Basic.Canonical}
+    {source target : Basic.Canonical}
     (sourceUnit : normSq source = 1) (_targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
-    (index : (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+    (index : (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one
       sourceUnit)
       sourceUnit degree degreeAtLeastTwo).Index) : Gaussian :=
-  ((Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
+  ((Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
     sourceUnit degree
     degreeAtLeastTwo).owner index).box.anchor
 end Purelib.RootIsolation.Progressive.Power.Unit.Lift.Vertices
@@ -141,20 +141,20 @@ open Purelib.Data.Gaussian
 
 /-- The lifted move's retained base anchor lies strictly inside its source robust box. -/
 theorem unitMoveLiftBase_inside_sourceRobustBox
-    {source target : Gaussian.Basic.Canonical}
+    {source target : Basic.Canonical}
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
-    (index : (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+    (index : (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one
       sourceUnit)
       sourceUnit degree degreeAtLeastTwo).Index) :
-    (Power.Unit.Box.unitRobustBox (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree
+    (Power.Unit.Box.unitRobustBox (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree
       degreeAtLeastTwo
-      (Progressive.Power.Unit.Rebase.Geometry.unitMoveSourceDegreeIndexFromFrame sourceUnit targetUnit degree
+      (Rebase.Geometry.unitMoveSourceDegreeIndexFromFrame sourceUnit targetUnit degree
         degreeAtLeastTwo index)).Contains
       (unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index) := by
   unfold unitMoveLiftBase
-    Progressive.Power.Unit.Rebase.Geometry.unitMoveSourceDegreeIndexFromFrame
-  rw [Progressive.Power.Unit.Frame.robustChamberFrame_owner_box]
+    Rebase.Geometry.unitMoveSourceDegreeIndexFromFrame
+  rw [Frame.robustChamberFrame_owner_box]
   exact Box.contains_anchor _
 end Purelib.RootIsolation.Progressive.Power.Unit.Lift.Vertices
 
@@ -185,20 +185,20 @@ open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
 /-- List the original bridge anchor, overlap point and target anchor in lifted path order. -/
 def unitMoveLiftVertices
-    {source target : Gaussian.Basic.Canonical}
+    {source target : Basic.Canonical}
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
-    (index : (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+    (index : (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one
       sourceUnit)
       sourceUnit degree degreeAtLeastTwo).Index) : List Gaussian :=
-  [(Progressive.Power.Unit.Rebase.Geometry.unitMoveBridgeState sourceUnit targetUnit degree degreeAtLeastTwo small
+  [(Rebase.Geometry.unitMoveBridgeState sourceUnit targetUnit degree degreeAtLeastTwo small
       index).box.anchor,
-    Progressive.Power.Unit.Rebase.Geometry.unitMoveOverlapPoint sourceUnit targetUnit degree degreeAtLeastTwo small
+    Rebase.Geometry.unitMoveOverlapPoint sourceUnit targetUnit degree degreeAtLeastTwo small
       index,
-    (Power.Unit.Box.unitRobustBox (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) targetUnit degree
+    (Power.Unit.Box.unitRobustBox (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) targetUnit degree
       degreeAtLeastTwo
-      (Progressive.Power.Unit.Rebase.Geometry.unitMoveTargetDegreeIndexFromSource sourceUnit targetUnit degree
+      (Rebase.Geometry.unitMoveTargetDegreeIndexFromSource sourceUnit targetUnit degree
         degreeAtLeastTwo small index)).anchor]
 end Purelib.RootIsolation.Progressive.Power.Unit.Lift.Vertices
 
@@ -228,22 +228,22 @@ open Purelib.Data.Gaussian
 
 /-- The retained overlap point lies strictly inside the source robust box used by the lifted move. -/
 theorem unitMoveOverlapPoint_inside_sourceRobustBox
-    {source target : Gaussian.Basic.Canonical}
+    {source target : Basic.Canonical}
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
-    (index : (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+    (index : (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one
       sourceUnit)
       sourceUnit degree degreeAtLeastTwo).Index) :
-    (Power.Unit.Box.unitRobustBox (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree
+    (Power.Unit.Box.unitRobustBox (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit) sourceUnit degree
       degreeAtLeastTwo
-      (Progressive.Power.Unit.Rebase.Geometry.unitMoveSourceDegreeIndexFromFrame sourceUnit targetUnit degree
+      (Rebase.Geometry.unitMoveSourceDegreeIndexFromFrame sourceUnit targetUnit degree
         degreeAtLeastTwo index)).Contains
-      (Progressive.Power.Unit.Rebase.Geometry.unitMoveOverlapPoint sourceUnit targetUnit degree degreeAtLeastTwo small
+      (Rebase.Geometry.unitMoveOverlapPoint sourceUnit targetUnit degree degreeAtLeastTwo small
         index) := by
-  have inside := Progressive.Power.Unit.Rebase.Geometry.unitMoveOverlapPoint_inside_sourceOwner sourceUnit targetUnit
+  have inside := Rebase.Geometry.unitMoveOverlapPoint_inside_sourceOwner sourceUnit targetUnit
     degree degreeAtLeastTwo small index
-  rw [Progressive.Power.Unit.Frame.robustChamberFrame_owner_box] at inside
+  rw [Frame.robustChamberFrame_owner_box] at inside
   exact inside
 end Purelib.RootIsolation.Progressive.Power.Unit.Lift.Vertices
 
@@ -274,7 +274,7 @@ open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
 /-- List the three retained target-parameter vertices paired with the lifted move edges. -/
 def unitMoveParameterVertices (target :
-  Gaussian.Basic.Canonical) : List Gaussian :=
+  Basic.Canonical) : List Gaussian :=
   [target, target, target]
 end Purelib.RootIsolation.Progressive.Power.Unit.Lift.Vertices
 
@@ -304,20 +304,20 @@ open Purelib.Data.Gaussian
 
 /-- The retained target anchor lies strictly inside its assigned target robust box. -/
 theorem unitMoveTargetAnchor_inside_targetRobustBox
-    {source target : Gaussian.Basic.Canonical}
+    {source target : Basic.Canonical}
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
-    (index : (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+    (index : (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one
       sourceUnit)
       sourceUnit degree degreeAtLeastTwo).Index) :
-    (Power.Unit.Box.unitRobustBox (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) targetUnit degree
+    (Power.Unit.Box.unitRobustBox (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) targetUnit degree
       degreeAtLeastTwo
-      (Progressive.Power.Unit.Rebase.Geometry.unitMoveTargetDegreeIndexFromSource sourceUnit targetUnit degree
+      (Rebase.Geometry.unitMoveTargetDegreeIndexFromSource sourceUnit targetUnit degree
         degreeAtLeastTwo small index)).Contains
-      (Power.Unit.Box.unitRobustBox (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) targetUnit degree
+      (Power.Unit.Box.unitRobustBox (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) targetUnit degree
         degreeAtLeastTwo
-        (Progressive.Power.Unit.Rebase.Geometry.unitMoveTargetDegreeIndexFromSource sourceUnit targetUnit degree
+        (Rebase.Geometry.unitMoveTargetDegreeIndexFromSource sourceUnit targetUnit degree
           degreeAtLeastTwo small index)).anchor :=
   Box.contains_anchor _
 end Purelib.RootIsolation.Progressive.Power.Unit.Lift.Vertices

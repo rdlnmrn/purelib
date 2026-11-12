@@ -31,6 +31,8 @@ import Purelib.Polynomial.Dense.Basic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -113,7 +115,7 @@ def ofSeed {parameter : Gaussian} {source : Owner parameter} (seed : Seed parame
   aligned := fun root inside => (seed.mismatch_le inside).trans (by
     calc
       _ <= 2 * ((1 / 1024 : Coordinate) + 1 / 1024) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add residualSmall boxSmall) (by decide)
       _ = 1 / 256 := by decide +kernel)
 
@@ -135,7 +137,7 @@ def fromSmallOwner {parameter : Gaussian} (source prepared : Owner parameter)
     calc
       _ <= (1 / 1024 : Coordinate) * normSq parameter := sample.residualBound
       _ <= (1 / 64 : Coordinate) * normSq parameter :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel) (Basic.Canonical.normSq_nonneg
+        Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide +kernel) (normSq_nonneg
           _)
       _ = normSq parameter / 64 := by
         simp only [Fraction.Field.div_eq_mul_inv_direct, Fraction.Field.one_mul]
@@ -143,18 +145,18 @@ def fromSmallOwner {parameter : Gaussian} (source prepared : Owner parameter)
   let seed := Seed.ofSample prepared sample.value sample.inside sampleCoarse
   have seedNorm : normSq seed.value <= upper := by
     change normSq (sample.value * inv parameter) <= upper
-    rw [Basic.Canonical.normSq_mul, upper_eq]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    rw [normSq_mul, upper_eq]
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
       (by simpa only [Norm.Basic.normSq_eq_canonical] using Box.normSq_le_normSqBound (refines.contains
-        sample.inside)) (Basic.Canonical.normSq_nonneg _)
+        sample.inside)) (normSq_nonneg _)
   let target : Coordinate := (1 / 1024) / (upper + 1)
   have targetPositive : 0 < target :=
-    Fraction.Order.Field.div_pos_direct (by decide +kernel) upperPositive
+    Field.div_pos_direct (by decide +kernel) upperPositive
   have boxSmall : seed.owner.track.initial.box.diagonalSq * normSq seed.value <= 1 / 1024 := by
     calc
-      _ <= target * upper := Fraction.Order.Arithmetic.mul_le_mul_direct
-        small seedNorm (Basic.Canonical.normSq_nonneg _) targetPositive.le
-      _ <= target * (upper + 1) := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      _ <= target * upper := Arithmetic.mul_le_mul_direct
+        small seedNorm (normSq_nonneg _) targetPositive.le
+      _ <= target * (upper + 1) := Arithmetic.mul_le_mul_of_nonneg_left_direct
         (le_add_of_nonneg_right (by decide)) targetPositive.le
       _ = 1 / 1024 := Fraction.Field.div_mul_cancel_of_ne _ _ upperPositive.ne'
   exact ofSeed seed refines
@@ -168,19 +170,19 @@ The source box and parameter determine a positive diameter target and relative r
 belongs to the retained prepared owner. -/
 def ofOwner {parameter : Gaussian} (source : Owner parameter) : AlignedSeed source := by
   let upper := source.track.initial.box.normSqBound * normSq (inv parameter)
-  have upperNonnegative : 0 <= upper := Fraction.Order.Arithmetic.mul_nonneg_direct
-    source.track.initial.box.normSqBound_nonneg (Basic.Canonical.normSq_nonneg _)
+  have upperNonnegative : 0 <= upper := Arithmetic.mul_nonneg_direct
+    source.track.initial.box.normSqBound_nonneg (normSq_nonneg _)
   have upperPositive : 0 < upper + 1 :=
-    Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct upperNonnegative (by decide)
+    Arithmetic.add_pos_of_nonneg_of_pos_direct upperNonnegative (by decide)
   let target : Coordinate := (1 / 1024) / (upper + 1)
   have targetPositive : 0 < target :=
-    Fraction.Order.Field.div_pos_direct (by decide +kernel) upperPositive
+    Field.div_pos_direct (by decide +kernel) upperPositive
   let prepared := smallOwner source target targetPositive
   let sample := OwnerSample.acquire prepared.owner ((1 / 1024) * normSq parameter)
     (by
       have positive := Norm.Basic.normSq_pos source.parameterNonzero
       rw [Norm.Basic.normSq_eq_canonical] at positive
-      exact Fraction.Order.Arithmetic.mul_pos_direct (by decide +kernel) positive)
+      exact Arithmetic.mul_pos_direct (by decide +kernel) positive)
   exact fromSmallOwner source prepared.owner prepared.refines upper rfl upperPositive prepared.small sample
 
 open Purelib.Approximation.Rational in
@@ -217,7 +219,7 @@ theorem refine_mismatch_bound {polynomial : Polynomial} {count : Nat}
       Dense.Basic.DensePolynomial.eval_constant] using aligned.aligned root rootInside
   · calc
       _ <= (1 / 256 : Coordinate) + 16 * (1 / 4096) := add_le_add le_rfl
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct rootErrorSmall (by decide))
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct rootErrorSmall (by decide))
       _ <= 1 / 64 := by decide +kernel
 
 end AlignedSeed

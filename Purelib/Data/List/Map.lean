@@ -221,7 +221,7 @@ namespace Purelib.Data.List.Map
 
 Both lists discard the same original heads and map the same remaining tail;
 the original map and drop operations are unchanged. -/
-public theorem map_drop {Alpha Beta : Type} (function : Alpha → Beta)
+public theorem map_drop {Alpha : Type u} {Beta : Type v} (function : Alpha → Beta)
     (values : List Alpha) (count : Nat) :
     (values.drop count).map function = (values.map function).drop count := by
   induction count generalizing values with

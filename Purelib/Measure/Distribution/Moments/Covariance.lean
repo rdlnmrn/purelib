@@ -11,6 +11,8 @@ import Purelib.Data.Rat.Fraction.Order.Arithmetic
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -197,20 +199,20 @@ theorem covariance_sq_le_variance_mul {α : Type}
       have mixedNonnegative : 0 ≤ mixed := by
         have doubledNonnegative : 0 ≤ 2 * mixed := by
           simpa only [zero_add] using plusNonnegative
-        apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+        apply Arithmetic.le_of_mul_le_mul_right_direct
           (c := (2 : Fraction.Rational))
         · simpa only [zero_mul, mul_comm] using doubledNonnegative
         · decide
       have mixedNonpositive : mixed ≤ 0 := by
-        apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+        apply Arithmetic.le_of_mul_le_mul_right_direct
           (c := (2 : Fraction.Rational))
         · have doubledNonpositive : 2 * mixed ≤ 0 := by
-            exact Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+            exact Arithmetic.le_of_sub_nonneg_direct
               minusNonnegative
           simpa only [zero_mul, mul_comm] using doubledNonpositive
         · decide
       have mixedZero : mixed = 0 :=
-        Fraction.Order.Basic.Compatibility.le_antisymm _ _
+        Basic.Compatibility.le_antisymm _ _
           mixedNonpositive mixedNonnegative
       change mixed ^ 2 ≤ leftVariance * rightVariance
       rw [mixedZero, leftZero, rightZero]
@@ -251,12 +253,12 @@ theorem covariance_sq_le_variance_mul {α : Type}
       rw [factored] at combinationNonnegative
       have differenceNonnegative :
           0 ≤ leftVariance * rightVariance - mixed ^ 2 := by
-        apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+        apply Arithmetic.le_of_mul_le_mul_right_direct
           (c := leftVariance)
         · simpa only [zero_mul] using combinationNonnegative
         · exact leftPositive
       change mixed ^ 2 ≤ leftVariance * rightVariance
-      exact Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+      exact Arithmetic.le_of_sub_nonneg_direct
         differenceNonnegative
   · have rightPositive : 0 < rightVariance :=
       lt_of_le_of_ne rightNonnegative (Ne.symm rightZero)
@@ -293,12 +295,12 @@ theorem covariance_sq_le_variance_mul {α : Type}
     rw [factored] at combinationNonnegative
     have differenceNonnegative :
         0 ≤ leftVariance * rightVariance - mixed ^ 2 := by
-      apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
+      apply Arithmetic.le_of_mul_le_mul_right_direct
         (c := rightVariance)
       · simpa only [zero_mul] using combinationNonnegative
       · exact rightPositive
     change mixed ^ 2 ≤ leftVariance * rightVariance
-    exact Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+    exact Arithmetic.le_of_sub_nonneg_direct
       differenceNonnegative
 
 /-- Covariance is additive in the left observable. -/
@@ -464,7 +466,7 @@ theorem two_mul_covariance_le_variance_add {α : Type}
   have nonnegative := distribution.variance_nonneg
     (fun item => left item - right item)
   rw [distribution.variance_sub] at nonnegative
-  exact Fraction.Order.Arithmetic.le_of_sub_nonneg_direct nonnegative
+  exact Arithmetic.le_of_sub_nonneg_direct nonnegative
 
 /-- The negative sum of the original variances is at most twice covariance. -/
 theorem neg_variance_add_le_two_mul_covariance {α : Type}
@@ -474,7 +476,7 @@ theorem neg_variance_add_le_two_mul_covariance {α : Type}
   have nonnegative := distribution.variance_nonneg
     (fun item => left item + right item)
   rw [distribution.variance_add] at nonnegative
-  apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+  apply Arithmetic.le_of_sub_nonneg_direct
   calc
     2 * distribution.covariance left right -
           -(distribution.variance left + distribution.variance right) =

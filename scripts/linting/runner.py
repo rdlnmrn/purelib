@@ -361,7 +361,35 @@ class Workers:
         return code, output.read_bytes(), False
 
 
+def lint_sources(modules: list[str]) -> int:
+    """Check current authored sources in the requested lint scope before building."""
+    from scripts.verification import namespace_prefixes
+
+    if not modules:
+        raise ValueError("source lint requires a nonempty module inventory")
+    sources = []
+    project_roots = {"Purelib", "TestPurelib", "scripts", "papers", "formalisations"}
+    for module in modules:
+        parts = parse_name(module)
+        if not parts or any(tag != 1 for tag, _ in parts):
+            raise ValueError(f"invalid source lint module: {module}")
+        source = Path(str(ROOT.joinpath(*(value for _, value in parts))) + ".lean")
+        if source.is_file():
+            sources.append(str(source))
+        elif parts[0][1] in project_roots:
+            raise ValueError(f"missing source for namespace lint: {module}")
+    # Explicit dependency-only lint requests have no authored project sources.
+    if not sources:
+        return 0
+    return namespace_prefixes.main([
+        "--check", "--min-uses", "6", "--min-components", "3",
+        "--min-prefix-chars", "24", "--min-lines", "3", *sources])
+
+
 def lint(lake: str, options: list[str], modules: list[str], config: dict) -> int:
+    source_code = lint_sources(modules)
+    if source_code:
+        return source_code
     jobs = min(worker_count(), len(modules))
     start = time.monotonic()
     print(f"Builtin lint: {len(modules)} modules, {jobs} workers; checking build inputs.", file=sys.stderr)

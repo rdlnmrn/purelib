@@ -74,20 +74,20 @@ open Purelib.Topology.Polygon.Stokes
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
     regular domains differential} {attached :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared}
-  {geometry : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
-    attached} {coarse : Topology.Polygon.Stokes.OrientedTriangle (lifted.vertices.count + attached.words.length)}
+    Caps.AllSurfacePreparation.CapAttachment prepared}
+  {geometry : Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
+    attached} {coarse : OrientedTriangle (lifted.vertices.count + attached.words.length)}
   {depth : Nat} {parameters : Path.Dyadic.RadialTriangles.Parameters depth}
   {index : Nat} {box : Rational.Box}
 
@@ -95,40 +95,40 @@ open Purelib.Data.Rat.Fraction.Compatibility
 
 namespace RegularBasisRequest
 
-variable {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index
+variable {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index
   box}
-  {bounds : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisBounds.RegularBasisBounds polynomials
-    Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.boundingBox}
+  {bounds : CapBasisBounds.RegularBasisBounds polynomials
+    Charts.Reciprocal.Disk.RegularBounds.boundingBox}
   {count minimum : Nat} {target : Fraction.Rational}
-  (request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisRequest.RegularBasisRequest bounds count target
+  (request : RegularBasisRequest bounds count target
     minimum)
   {parameters : Path.Dyadic.RadialTriangles.Parameters request.depth}
-  {refinement : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapRefinement.Refinement geometry coarse parameters}
+  {refinement : CapRefinement.Refinement geometry coarse parameters}
 
 /-- The actual retained basis values and derivatives satisfy the uniform
 triangle budget at the selected geometric depth. -/
-def triangleBudget (sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisSample refinement
+def triangleBudget (sample : CapBasisEnergy.RegularBasisSample refinement
   polynomials) (member : coarse ∈ attached.caps)
     (face : Fin (Rectangle.Partition.PreparedBoxTriangulation.boxTriangles parameters.mesh.partition.leaves).length) :
     Readings.AffineBasisEnergy.AffineBasis.TriangleBudget sample.basis face := by
   have movement (last) (which : last = (parameters.mesh.mesh.triangulation.faces face).second ∨
       last = (parameters.mesh.mesh.triangulation.faces face).third) :
-      Data.Gaussian.Norm.Basic.normSq (refinement.coordinates last - refinement.coordinates
+      Gaussian.Norm.Basic.normSq (refinement.coordinates last - refinement.coordinates
         (parameters.mesh.mesh.triangulation.faces face).first) ≤ request.distance := by
     rw [request.distance_eq]
     rcases which with rfl | rfl
     · exact (refinement.distances member face).1
     · exact (refinement.distances member face).2
-  have firstInside := Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.boundingBox_contains (refinement.inside face).1
+  have firstInside := Charts.Reciprocal.Disk.RegularBounds.boundingBox_contains (refinement.inside face).1
   refine Integration.AffineBasisUniformBudget.AffineBasis.TriangleBudget.uniform sample.basis face bounds.coefficient
     request.tolerance.epsilon request.distance
     bounds.coefficient_nonnegative request.tolerance.positive.le request.tolerance.le_one request.distance_positive.le
       ?_ ?_
   · intro last which
-    have equal : FiniteSum.Fin.sumFin (fun row => Data.Gaussian.Norm.Basic.normSq
+    have equal : FiniteSum.Fin.sumFin (fun row => Gaussian.Norm.Basic.normSq
       (Energy.AffineTriangle.affinePrimitiveIncrement (sample.basis.coefficients row face)
         (refinement.coordinates (parameters.mesh.mesh.triangulation.faces face).first) (refinement.coordinates last))) =
-        FiniteSum.Fin.sumFin (fun row => Data.Gaussian.Norm.Basic.normSq
+        FiniteSum.Fin.sumFin (fun row => Gaussian.Norm.Basic.normSq
           (Energy.AffineTriangle.affinePrimitiveIncrement ((polynomials.get row).coefficient.eval
           (refinement.coordinates (parameters.mesh.mesh.triangulation.faces face).first))
           (refinement.coordinates (parameters.mesh.mesh.triangulation.faces face).first) (refinement.coordinates last)))
@@ -142,14 +142,14 @@ def triangleBudget (sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasi
     have lastInside : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.boundingBox.Contains (refinement.coordinates
       last) := by
       rcases which with rfl | rfl
-      · exact Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.boundingBox_contains (refinement.inside face).2.1
-      · exact Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.boundingBox_contains (refinement.inside face).2.2
-    have equal : FiniteSum.Fin.sumFin (fun row => Data.Gaussian.Norm.Basic.normSq
+      · exact Charts.Reciprocal.Disk.RegularBounds.boundingBox_contains (refinement.inside face).2.1
+      · exact Charts.Reciprocal.Disk.RegularBounds.boundingBox_contains (refinement.inside face).2.2
+    have equal : FiniteSum.Fin.sumFin (fun row => Gaussian.Norm.Basic.normSq
       (Energy.AffineTriangle.affinePrimitiveIncrementError (sample.basis.coefficients row face)
         (refinement.coordinates (parameters.mesh.mesh.triangulation.faces face).first) (refinement.coordinates last)
         (sample.basis.values row (parameters.mesh.mesh.triangulation.faces face).first) (sample.basis.values row last)))
           =
-        FiniteSum.Fin.sumFin (fun row => Data.Gaussian.Norm.Basic.normSq
+        FiniteSum.Fin.sumFin (fun row => Gaussian.Norm.Basic.normSq
           (Energy.AffineTriangle.affinePrimitiveIncrementError ((polynomials.get row).coefficient.eval
           (refinement.coordinates (parameters.mesh.mesh.triangulation.faces face).first))
           (refinement.coordinates (parameters.mesh.mesh.triangulation.faces face).first) (refinement.coordinates last)
@@ -172,11 +172,11 @@ def triangleBudget (sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasi
       (request.tolerance.epsilon^2 * request.distance) * 1 by ring1).trans_le (doubled.trans_eq (by ring1)))
 
 /-- Assemble the actual retained uniform triangle budgets and cache their complete finite sum. -/
-def surfaceBudget (sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisSample refinement
+def surfaceBudget (sample : CapBasisEnergy.RegularBasisSample refinement
   polynomials) (member : coarse ∈ attached.caps) :
     Readings.AffineBasisEnergy.AffineBasis.SurfaceBudget sample.basis :=
-  let triangles := Data.Vector.DependentVector.ofFn
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisRequest.RegularBasisRequest.triangleBudget request sample
+  let triangles := Vector.DependentVector.ofFn
+    (RegularBasisRequest.triangleBudget request sample
     member)
   ⟨triangles, FiniteSum.Fin.sumFin (fun face => (triangles.get face).total), rfl⟩
 
@@ -189,22 +189,22 @@ private theorem sum_constant (size : Nat) (value : Fraction.Rational) :
 
 /-- The actual retained surface budget has the exact fixed coefficient-and-tolerance total after cancellation of the
 original face count. -/
-theorem surfaceBudget_total (sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisSample
+theorem surfaceBudget_total (sample : CapBasisEnergy.RegularBasisSample
   refinement polynomials) (member : coarse ∈ attached.caps) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisRequest.RegularBasisRequest.surfaceBudget request sample
+    (RegularBasisRequest.surfaceBudget request sample
       member).total = 128 * (2 * bounds.coefficient + 3) * request.tolerance.epsilon := by
-  rw [(Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisRequest.RegularBasisRequest.surfaceBudget request sample
+  rw [(RegularBasisRequest.surfaceBudget request sample
     member).total_eq]
   have terms (face : Fin (Rectangle.Partition.PreparedBoxTriangulation.boxTriangles
     parameters.mesh.partition.leaves).length) :
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisRequest.RegularBasisRequest.surfaceBudget request sample
+      ((RegularBasisRequest.surfaceBudget request sample
         member).triangles.get face).total =
         request.tolerance.epsilon * request.distance * (2 * bounds.coefficient + 3) := by
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisRequest.RegularBasisRequest.surfaceBudget,
-      Data.Vector.DependentVector.ofFn_get]
+    rw [RegularBasisRequest.surfaceBudget,
+      Vector.DependentVector.ofFn_get]
     rfl
   rw [FiniteSum.Fin.sumFin_congr terms,
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisRequest.RegularBasisRequest.sum_constant,
+    RegularBasisRequest.sum_constant,
     parameters.mesh.faceCount_eq]
   calc
     _ = (((2 * 4^request.depth : Nat) : Fraction.Rational) * request.distance) *

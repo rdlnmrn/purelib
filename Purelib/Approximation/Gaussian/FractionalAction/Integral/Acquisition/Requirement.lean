@@ -43,7 +43,7 @@ namespace Purelib.Approximation.Gaussian.FractionalAction.Integral.Acquisition
 abbrev Requirement {matrix :
   IntegralMatrix} {tau : Coherent.CoherentNamed}
     (state : State matrix tau) :=
-  Approximation.Gaussian.Division.Partial.Requirement state
+  Division.Partial.Requirement state
 
 namespace Requirement
 
@@ -52,7 +52,7 @@ abbrev Evidence {matrix :
   IntegralMatrix} {tau : Coherent.CoherentNamed}
     {state : State matrix tau} (requirement :
       Requirement state) :=
-  Approximation.Gaussian.Division.Partial.Requirement.Evidence requirement
+  Division.Partial.Requirement.Evidence requirement
 
 /-- Expose the unique candidate-apartness requirement without performing another refinement. -/
 def currentRequirement {matrix :
@@ -66,7 +66,7 @@ def resume (matrix :
   IntegralMatrix) (tau : Coherent.CoherentNamed)
     (state : State matrix tau) (requirement :
       Requirement state)
-    (evidence : Approximation.Gaussian.FractionalAction.Integral.Acquisition.Requirement.Evidence requirement) :
+    (evidence : Evidence requirement) :
       Step.StepResult matrix tau state :=
   match requirement with
   | .candidateApartness => .ready (FromSearch.preparationAt matrix tau state evidence)
@@ -75,23 +75,23 @@ def resume (matrix :
 abbrev Exclusion {matrix :
   IntegralMatrix} {tau : Coherent.CoherentNamed}
     (state : State matrix tau) :=
-  Approximation.Gaussian.Division.Partial.Requirement.Exclusion state
+  Division.Partial.Requirement.Exclusion state
 
 /-- The fractional-denominator preflight has no exclusion constructor. -/
 theorem exclusion_impossible
   {matrix : IntegralMatrix} {tau : Coherent.CoherentNamed}
     {state : State matrix tau} (excluded :
-      Approximation.Gaussian.FractionalAction.Integral.Acquisition.Requirement.Exclusion state) : False := by
+      Exclusion state) : False := by
   exact nomatch excluded
 
 /-- Supplying the current apartness requirement returns the corresponding prepared denominator immediately. -/
 @[simp] theorem resume_is_ready
   (matrix : IntegralMatrix)
     (tau : Coherent.CoherentNamed) (state : State matrix tau)
-    (evidence : Approximation.Gaussian.FractionalAction.Integral.Acquisition.Requirement.Evidence
-      (Approximation.Gaussian.FractionalAction.Integral.Acquisition.Requirement.currentRequirement state)) :
-    Approximation.Gaussian.FractionalAction.Integral.Acquisition.Requirement.resume matrix tau state
-      (Approximation.Gaussian.FractionalAction.Integral.Acquisition.Requirement.currentRequirement state) evidence =
+    (evidence : Evidence
+      (currentRequirement state)) :
+    resume matrix tau state
+      (currentRequirement state) evidence =
       .ready (FromSearch.preparationAt matrix tau state evidence) := rfl
 
 end Requirement

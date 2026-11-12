@@ -51,7 +51,7 @@ theorem loopStep_exact (current : Mode.Basic.LoopState) :
     Emission.Semantics.Basic.ExactEmission (.loop current) (Emission.Loop.loopStep current) := by
   unfold Emission.Semantics.Basic.ExactEmission
   intro parser _determinant phase
-  unfold Emission.Loop.loopStep
+  rewrite [Emission.Loop.loopStep_eq]
   split
   · intro tail possible
     simp only [Mode.Semantics.SemanticMode.possible] at possible

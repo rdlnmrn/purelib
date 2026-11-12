@@ -67,13 +67,13 @@ theorem exteriorCornerOwner_point (mesh : ObservationMesh cuts box) (right above
     (exteriorCornerOwner mesh right above).point = Rectangle.Partition.PreparedRectangleCuts.corner box right above :=
       by
   cases right <;> cases above
-  · change Gaussian.Basic.Canonical.mk _ _ = Gaussian.Basic.Canonical.mk _ _
+  · change Canonical.mk _ _ = Canonical.mk _ _
     exact Gaussian.Basic.ext mesh.x_first mesh.y_first
-  · change Gaussian.Basic.Canonical.mk _ _ = Gaussian.Basic.Canonical.mk _ _
+  · change Canonical.mk _ _ = Canonical.mk _ _
     exact Gaussian.Basic.ext mesh.x_first mesh.y_last
-  · change Gaussian.Basic.Canonical.mk _ _ = Gaussian.Basic.Canonical.mk _ _
+  · change Canonical.mk _ _ = Canonical.mk _ _
     exact Gaussian.Basic.ext mesh.x_last mesh.y_first
-  · change Gaussian.Basic.Canonical.mk _ _ = Gaussian.Basic.Canonical.mk _ _
+  · change Canonical.mk _ _ = Canonical.mk _ _
     exact Gaussian.Basic.ext mesh.x_last mesh.y_last
 
 open Purelib.Data in
@@ -81,7 +81,7 @@ open Purelib.Data in
 
 The equalities use the actual boundary indices and preserve ownership when cuts meet model-grid boundaries. -/
 theorem ClippedAssembly.exterior_corners {mesh : ObservationMesh cuts box}
-    {values : Fin (columns + 1) → Fin (rows + 1) → Gaussian.Basic.Canonical → PrimitivePoint} (assembly :
+    {values : Fin (columns + 1) → Fin (rows + 1) → Canonical → PrimitivePoint} (assembly :
       ClippedAssembly mesh values) :
     let value := fun right above =>
       let owner := exteriorCornerOwner mesh right above

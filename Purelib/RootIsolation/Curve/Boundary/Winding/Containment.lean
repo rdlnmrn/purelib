@@ -66,11 +66,11 @@ is outside it.  Neither alternative asserts that a factor zero exists.
 namespace Purelib.RootIsolation.Curve.Boundary.Winding.Containment
 section Boundary
 
-variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
 variable {denominatorMargin : Fraction.Rational}
 variable {marginPositive : 0 < denominatorMargin}
 variable {atom : Geometry.Projective.Hermitian.Atom}
-variable {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+variable {boundary : Analysis.CurveBoundary p reference current denominatorMargin
   marginPositive atom}
 
 /-- Once an initial rational sample selects a winding state with the common
@@ -80,11 +80,11 @@ residual margin with the child's direct projective diameter bound. -/
 theorem controlledChild_inside_owner
     (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
     (family : State.WindingOne.Family.Basic.WindingFamily p ambient)
-    (classified : Curve.Boundary.Winding.Budget.ClassifiedChild (boundary := boundary) squarefree family)
+    (classified : Budget.ClassifiedChild (boundary := boundary) squarefree family)
     (owner :
-      Curve.Boundary.Complete.Ownership.ControlledCompleteRequestMeeting
+      Complete.Ownership.ControlledCompleteRequestMeeting
         family.boxes family.boxes_pairwise
-          (Curve.Boundary.Winding.Budget.windingTarget (boundary := boundary) squarefree family)
+          (Budget.windingTarget (boundary := boundary) squarefree family)
           classified.entry)
     {parameter : Fraction.Rational}
     (parameterInside :
@@ -104,20 +104,20 @@ theorem controlledChild_inside_owner
   have residualSmall : Data.Gaussian.Norm.Basic.normSq
       (p.eval point) < state.clearance.bound / 4 :=
     (owner.residual_lt
-      (Curve.Boundary.Winding.Budget.windingTarget_pos (boundary := boundary) squarefree family)).trans_le
-      ((Curve.Boundary.Winding.Budget.windingTarget_le_clearanceQuarter
+      (Budget.windingTarget_pos (boundary := boundary) squarefree family)).trans_le
+      ((Budget.windingTarget_le_clearanceQuarter
           (boundary := boundary) squarefree family).trans
         (family.clearanceTarget_quarter_le_stateAt owner.index))
   have margins := state.clearance.residualInteriorMargins pointInside
     residualSmall
   exact
-    Curve.Boundary.Event.Ownership.controlled_event_contains_of_uniform_strip
-      (Curve.Boundary.Winding.Budget.windingTarget_pos (boundary := boundary) squarefree family)
+    Event.Ownership.controlled_event_contains_of_uniform_strip
+      (Budget.windingTarget_pos (boundary := boundary) squarefree family)
       classified.entry state.box
       state.clearance.residualInteriorRadius_pos owner.parameter
       owner.parameterInside owner.denominatorNonzero pointInside margins.1
       margins.2.1 margins.2.2.1 margins.2.2.2
-      ((Curve.Boundary.Winding.Budget.windingTarget_le_interiorGap
+      ((Budget.windingTarget_le_interiorGap
           (boundary := boundary) squarefree family).trans
         (family.interiorGapTarget_le_stateAt owner.index))
       parameterInside denominatorNonzero

@@ -17,6 +17,8 @@ import Mathlib.Data.Nat.Cast.Defs
 import Mathlib.Data.Nat.Init
 import Purelib.Tactic.Ring
 
+open Purelib.Algebra.Field
+
 open Purelib
 
 open Purelib.LinearAlgebra
@@ -31,7 +33,7 @@ open Purelib.LinearAlgebra.Coordinates3
 open Purelib.Geometry.Rotations.Basic
 open Purelib.LinearAlgebra.Coordinates3.Antisymmetric
 namespace Purelib.Geometry.Rotations.Reflection
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 /-- The non-null reflection coefficient satisfies the scalar identity giving involutivity. -/
 private theorem reflection_coefficient (vector : Vector K)
@@ -39,8 +41,8 @@ private theorem reflection_coefficient (vector : Vector K)
     (2 / vector.quadrance) ^ 2 * vector.quadrance =
       2 * (2 / vector.quadrance) := by
   have cancel : vector.quadrance * vector.quadrance⁻¹ = (1 : K) :=
-    Algebra.Field.ExplicitField.mul_inv_cancel vector.quadrance nonNull
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    ExplicitField.mul_inv_cancel vector.quadrance nonNull
+  simp only [ExplicitField.div_eq_mul_inv]
   calc
     (2 * vector.quadrance⁻¹) ^ 2 * vector.quadrance =
         4 * (vector.quadrance * vector.quadrance⁻¹) *
@@ -56,7 +58,7 @@ open Purelib.LinearAlgebra.Coordinates3
 open Purelib.LinearAlgebra.Coordinates3.Antisymmetric
 open Purelib.Geometry.Rotations.Basic
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 /-- Definition 14: reflection in the plane perpendicular to a non-null vector. -/
 def reflection (vector : Vector K) (_nonNull : vector.quadrance ≠ 0) :
@@ -73,7 +75,7 @@ theorem rowMul_reflection (vector : Vector K)
   ext <;> unfold Matrix3.rowMul reflection Matrix3.sub Matrix3.identity
     Matrix3.scale Matrix3.outer Coordinates3.Vector.sub Coordinates3.Vector.scale Coordinates3.Vector.dot
     Coordinates3.Vector.quadrance <;>
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv] <;> ring1
+    simp only [ExplicitField.div_eq_mul_inv] <;> ring1
 
 /-- The reflection is symmetric. -/
 theorem reflection_transpose (vector : Vector K)
@@ -91,7 +93,7 @@ theorem reflection_square (vector : Vector K)
   have coefficientZero :
       (2 / vector.quadrance) ^ 2 * vector.quadrance -
         2 * (2 / vector.quadrance) = 0 := by
-    rw [Purelib.Geometry.Rotations.Reflection.reflection_coefficient vector nonNull]
+    rw [reflection_coefficient vector nonNull]
     ring1
   calc
     Matrix3.mul (reflection vector nonNull) (reflection vector nonNull) =
@@ -113,11 +115,11 @@ theorem rowMul_self_reflection (vector : Vector K)
     (nonNull : vector.quadrance ≠ 0) :
     Matrix3.rowMul vector (reflection vector nonNull) = Coordinates3.Vector.neg vector := by
   have cancel : vector.quadrance * vector.quadrance⁻¹ = (1 : K) :=
-    Algebra.Field.ExplicitField.mul_inv_cancel vector.quadrance nonNull
+    ExplicitField.mul_inv_cancel vector.quadrance nonNull
   have factor :
       2 * Coordinates3.Vector.dot vector vector / vector.quadrance = (2 : K) := by
     change 2 * vector.quadrance / vector.quadrance = (2 : K)
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    simp only [ExplicitField.div_eq_mul_inv]
     calc
       2 * vector.quadrance * vector.quadrance⁻¹ =
           2 * (vector.quadrance * vector.quadrance⁻¹) := by ring1
@@ -132,7 +134,7 @@ theorem rowMul_reflection_eq_iff_perpendicular (vector : Vector K)
     Matrix3.rowMul other (reflection vector nonNull) = other ↔
       Coordinates3.Vector.Perpendicular other vector := by
   have cancel : vector.quadrance * vector.quadrance⁻¹ = (1 : K) :=
-    Algebra.Field.ExplicitField.mul_inv_cancel vector.quadrance nonNull
+    ExplicitField.mul_inv_cancel vector.quadrance nonNull
   have reflectedDot :
       Coordinates3.Vector.dot (Matrix3.rowMul other (reflection vector nonNull)) vector =
         -Coordinates3.Vector.dot other vector := by
@@ -152,15 +154,15 @@ theorem rowMul_reflection_eq_iff_perpendicular (vector : Vector K)
       _ = Coordinates3.Vector.dot other vector -
           2 * Coordinates3.Vector.dot other vector *
             (vector.quadrance * vector.quadrance⁻¹) := by
-            simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+            simp only [ExplicitField.div_eq_mul_inv]
             ring1
       _ = -Coordinates3.Vector.dot other vector := by rw [cancel]; ring1
   constructor
   · intro fixed
     have equalDots := congrArg (fun value => Coordinates3.Vector.dot value vector) fixed
     rw [reflectedDot] at equalDots
-    apply (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] (twoNonzero : (2 : K) ≠ 0) (value : K) (twiceZero :
-      2 * value = 0) => (Purelib.Algebra.Field.Characteristic.Nonzero.eq_zero_of_two_mul_eq_zero (K := K) twoNonzero
+    apply (fun {K : Type _} [ExplicitField K] (twoNonzero : (2 : K) ≠ 0) (value : K) (twiceZero :
+      2 * value = 0) => (Characteristic.Nonzero.eq_zero_of_two_mul_eq_zero (K := K) twoNonzero
       value twiceZero : value = 0)) twoNonzero
     calc
       2 * Coordinates3.Vector.dot other vector =
@@ -169,7 +171,7 @@ theorem rowMul_reflection_eq_iff_perpendicular (vector : Vector K)
   · intro perpendicular
     unfold Coordinates3.Vector.Perpendicular at perpendicular
     rw [rowMul_reflection, perpendicular, mul_zero,
-      Algebra.Field.ExplicitField.zero_div]
+      ExplicitField.zero_div]
     unfold Coordinates3.Vector.sub Coordinates3.Vector.scale
     ext <;> ring1
 
@@ -186,7 +188,7 @@ theorem dot_rowMul_reflection (vector : Vector K)
     Coordinates3.Vector.dot (Matrix3.rowMul first (reflection vector nonNull))
         (Matrix3.rowMul second (reflection vector nonNull)) =
       Coordinates3.Vector.dot first second := by
-  have coefficient := Purelib.Geometry.Rotations.Reflection.reflection_coefficient vector nonNull
+  have coefficient := reflection_coefficient vector nonNull
   rw [rowMul_reflection, rowMul_reflection]
   calc
     Coordinates3.Vector.dot
@@ -202,7 +204,7 @@ theorem dot_rowMul_reflection (vector : Vector K)
           Coordinates3.Vector.dot first vector * Coordinates3.Vector.dot second vector := by
             unfold Coordinates3.Vector.quadrance Coordinates3.Vector.dot Coordinates3.Vector.sub
               Coordinates3.Vector.scale
-            simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+            simp only [ExplicitField.div_eq_mul_inv]
             ring1
     _ = Coordinates3.Vector.dot first second := by rw [coefficient]; ring1
 
@@ -212,10 +214,10 @@ theorem determinant_reflection (vector : Vector K)
     (nonNull : vector.quadrance ≠ 0) :
     Matrix3.determinant (reflection vector nonNull) = -1 := by
   have cancel : vector.quadrance * vector.quadrance⁻¹ = (1 : K) :=
-    Algebra.Field.ExplicitField.mul_inv_cancel vector.quadrance nonNull
+    ExplicitField.mul_inv_cancel vector.quadrance nonNull
   unfold Matrix3.determinant reflection Matrix3.sub Matrix3.identity
     Matrix3.scale Matrix3.outer Coordinates3.Vector.quadrance Coordinates3.Vector.dot
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  simp only [ExplicitField.div_eq_mul_inv]
   calc
     _ = 1 - 2 * (vector.quadrance * vector.quadrance⁻¹) := by
       unfold Coordinates3.Vector.quadrance Coordinates3.Vector.dot
@@ -230,17 +232,17 @@ theorem reflection_scale (scalar : K) (vector : Vector K)
       reflection vector nonNull := by
   have scalarSquareNonzero : scalar ^ 2 ≠ 0 := by
     simpa only [pow_two] using
-      Algebra.Field.ExplicitField.mul_ne_zero scalarNonzero scalarNonzero
+      ExplicitField.mul_ne_zero scalarNonzero scalarNonzero
   have scaledDenominatorNonzero :
       scalar ^ 2 * vector.quadrance ≠ 0 :=
-    Algebra.Field.ExplicitField.mul_ne_zero scalarSquareNonzero nonNull
+    ExplicitField.mul_ne_zero scalarSquareNonzero nonNull
   have ratio :
       (2 * scalar ^ 2) / (scalar ^ 2 * vector.quadrance) =
         2 / vector.quadrance := by
-    apply (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] {leftNumerator rightNumerator leftDenominator
+    apply (fun {K : Type _} [ExplicitField K] {leftNumerator rightNumerator leftDenominator
       rightDenominator : K} (leftNonzero : leftDenominator ≠ 0) (rightNonzero : rightDenominator ≠ 0) (crossProduct :
       leftNumerator * rightDenominator = rightNumerator * leftDenominator) =>
-      (Purelib.Algebra.Field.Inverse.div_eq_div_of_cross_mul (K := K) (leftNumerator := leftNumerator) (rightNumerator
+      (Inverse.div_eq_div_of_cross_mul (K := K) (leftNumerator := leftNumerator) (rightNumerator
       := rightNumerator) (leftDenominator := leftDenominator) (rightDenominator := rightDenominator) leftNonzero
       rightNonzero crossProduct : leftNumerator / leftDenominator = rightNumerator / rightDenominator))
       scaledDenominatorNonzero nonNull
@@ -251,7 +253,7 @@ theorem reflection_scale (scalar : K) (vector : Vector K)
     calc
       2 / (scalar ^ 2 * vector.quadrance) * scalar ^ 2 =
           (2 * scalar ^ 2) / (scalar ^ 2 * vector.quadrance) := by
-            simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+            simp only [ExplicitField.div_eq_mul_inv]
             ring1
       _ = 2 / vector.quadrance := ratio
   unfold reflection

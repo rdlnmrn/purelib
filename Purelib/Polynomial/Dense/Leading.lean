@@ -14,6 +14,7 @@ import Purelib.Data.List.Append
 import Purelib.Data.List.Replicate
 import Purelib.Data.List.Zip
 import Purelib.Data.List.DropWhile.Basic
+import Purelib.Data.List.DropWhile.Bounds
 import Purelib.Data.Nat.Subtraction
 import Purelib.Data.Nat.Addition
 import Purelib.Data.Nat.Order
@@ -484,6 +485,44 @@ public theorem sub {p q : CoefficientPolynomial K} {degree : Nat}
 end DegreeBelow
 
 namespace LeadingTerm
+
+/-- Equal displayed leading terms cancel to a polynomial strictly below their common degree.
+
+Both original normalized coefficient lists have the same length and head.
+Their retained subtraction therefore drops the first zero difference before
+normalizing the same paired tails.
+-/
+public theorem sub_same {p q : CoefficientPolynomial K} {degree : Nat} {coefficient : K}
+    (left : LeadingTerm p degree coefficient) (right : LeadingTerm q degree coefficient) :
+    DegreeBelow (p - q) degree := by
+  obtain ⟨leftTail, leftCoefficients, leftLength⟩ :=
+    Basic.DensePolynomial.normalized_coeffs_shape left.nonzero
+  obtain ⟨rightTail, rightCoefficients, rightLength⟩ :=
+    Basic.DensePolynomial.normalized_coeffs_shape right.nonzero
+  rw [left.normalized, left.coefficient_eq] at leftCoefficients
+  rw [right.normalized, right.coefficient_eq] at rightCoefficients
+  have leftTailLength : leftTail.length = degree := leftLength.trans left.degree_eq
+  have rightTailLength : rightTail.length = degree := rightLength.trans right.degree_eq
+  have negCoefficients : (-q).coeffs = -coefficient :: rightTail.map (-·) := by
+    rw [Basic.DensePolynomial.neg_coeffs, right.normalized, rightCoefficients]
+    rfl
+  have maximum : max (degree + 1) (degree + 1) = degree + 1 := by
+    change (if degree + 1 ≤ degree + 1 then degree + 1 else degree + 1) = degree + 1
+    rewrite [if_pos (Nat.le_refl _)]
+    rfl
+  refine ⟨Basic.DensePolynomial.normalize_sub p q, ?_⟩
+  change (p - q).normalize.coeffs.length ≤ degree
+  rw [Basic.DensePolynomial.normalize_sub]
+  change (Basic.DensePolynomial.add p (-q)).coeffs.length ≤ degree
+  simp only [Basic.DensePolynomial.add, leftCoefficients, negCoefficients,
+    List.length_cons, Map.length_map, leftTailLength, rightTailLength, maximum, Nat.sub_self,
+    Basic.DensePolynomial.padLeft, List.replicate_zero, List.nil_append, List.zipWith_cons_cons]
+  change (((coefficient + -coefficient) :: List.zipWith (· + ·) leftTail (rightTail.map (-·))).dropWhile
+    (fun value : K => decide (value = 0))).length ≤ degree
+  rw [add_neg_cancel, DropWhile.cons_of_true (fun value : K => decide (value = 0))
+    0 _ (decide_eq_true (Eq.refl (0 : K)))]
+  exact (DropWhile.Bounds.length_dropWhile_zero_le _).trans
+    ((Zip.length_zipWith_le_left (· + ·) leftTail (rightTail.map (-·))).trans_eq leftTailLength)
 
 /-- Equal-degree leading terms add with their nonzero displayed coefficient sum.
 

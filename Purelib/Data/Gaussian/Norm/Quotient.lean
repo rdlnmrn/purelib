@@ -13,6 +13,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -40,40 +42,40 @@ theorem normSq_div_sub_div_le
       rootMovement : Fraction.Rational}
     (lowerPositive : 0 < lowerSq)
     (numeratorDifference :
-      Data.Gaussian.Norm.Basic.normSq (leftNumerator - rightNumerator) <=
+      Basic.normSq (leftNumerator - rightNumerator) <=
         numeratorSlope * pointMovement)
-    (rightNumeratorBound : Data.Gaussian.Norm.Basic.normSq rightNumerator <= numeratorBound)
-    (rightDenominatorBound : Data.Gaussian.Norm.Basic.normSq rightDenominator <= denominatorBound)
-    (rootDifference : Data.Gaussian.Norm.Basic.normSq (rightDenominator - leftDenominator) <=
+    (rightNumeratorBound : Basic.normSq rightNumerator <= numeratorBound)
+    (rightDenominatorBound : Basic.normSq rightDenominator <= denominatorBound)
+    (rootDifference : Basic.normSq (rightDenominator - leftDenominator) <=
       rootMovement)
-    (leftLower : lowerSq <= Data.Gaussian.Norm.Basic.normSq leftDenominator)
-    (rightLower : lowerSq <= Data.Gaussian.Norm.Basic.normSq rightDenominator) :
-    Data.Gaussian.Norm.Basic.normSq (leftNumerator / leftDenominator -
+    (leftLower : lowerSq <= Basic.normSq leftDenominator)
+    (rightLower : lowerSq <= Basic.normSq rightDenominator) :
+    Basic.normSq (leftNumerator / leftDenominator -
         rightNumerator / rightDenominator) <=
       Budget.Quotient.quotientBound numeratorSlope numeratorBound denominatorBound lowerSq
         pointMovement rootMovement := by
-  have leftNormPositive : 0 < Data.Gaussian.Norm.Basic.normSq leftDenominator :=
+  have leftNormPositive : 0 < Basic.normSq leftDenominator :=
     lowerPositive.trans_le leftLower
-  have rightNormPositive : 0 < Data.Gaussian.Norm.Basic.normSq rightDenominator :=
+  have rightNormPositive : 0 < Basic.normSq rightDenominator :=
     lowerPositive.trans_le rightLower
   have leftNonzero : leftDenominator ≠ 0 := by
     intro zero
-    rw [zero, Norm.Basic.normSq_zero] at leftNormPositive
+    rw [zero, Basic.normSq_zero] at leftNormPositive
     exact (lt_irrefl _ leftNormPositive).elim
   have rightNonzero : rightDenominator ≠ 0 := by
     intro zero
-    rw [zero, Norm.Basic.normSq_zero] at rightNormPositive
+    rw [zero, Basic.normSq_zero] at rightNormPositive
     exact (lt_irrefl _ rightNormPositive).elim
   have slopeMovementNonnegative :
       0 <= numeratorSlope * pointMovement :=
-    (Norm.Basic.normSq_nonneg (leftNumerator - rightNumerator)).trans
+    (Basic.normSq_nonneg (leftNumerator - rightNumerator)).trans
       numeratorDifference
   have numeratorBoundNonnegative : 0 <= numeratorBound :=
-    (Norm.Basic.normSq_nonneg rightNumerator).trans rightNumeratorBound
+    (Basic.normSq_nonneg rightNumerator).trans rightNumeratorBound
   have denominatorBoundNonnegative : 0 <= denominatorBound :=
-    (Norm.Basic.normSq_nonneg rightDenominator).trans rightDenominatorBound
+    (Basic.normSq_nonneg rightDenominator).trans rightDenominatorBound
   have rootMovementNonnegative : 0 <= rootMovement :=
-    (Norm.Basic.normSq_nonneg (rightDenominator - leftDenominator)).trans
+    (Basic.normSq_nonneg (rightDenominator - leftDenominator)).trans
       rootDifference
   have numeratorIdentity :
       leftNumerator * rightDenominator -
@@ -83,77 +85,77 @@ theorem normSq_div_sub_div_le
     apply Basic.ext <;>
       simp only [Basic.sub_re, Basic.sub_im, Basic.add_re, Basic.add_im, Basic.mul_re, Basic.mul_im] <;> ring1
   have numeratorEstimate :
-      Data.Gaussian.Norm.Basic.normSq (leftNumerator * rightDenominator -
+      Basic.normSq (leftNumerator * rightDenominator -
           rightNumerator * leftDenominator) <=
         2 * (numeratorSlope * pointMovement * denominatorBound +
           numeratorBound * rootMovement) := by
     rw [numeratorIdentity]
     calc
-      Data.Gaussian.Norm.Basic.normSq ((leftNumerator - rightNumerator) * rightDenominator +
+      Basic.normSq ((leftNumerator - rightNumerator) * rightDenominator +
           rightNumerator * (rightDenominator - leftDenominator)) <=
         2 *
-          (Data.Gaussian.Norm.Basic.normSq ((leftNumerator - rightNumerator) * rightDenominator) +
-            Data.Gaussian.Norm.Basic.normSq (rightNumerator *
+          (Basic.normSq ((leftNumerator - rightNumerator) * rightDenominator) +
+            Basic.normSq (rightNumerator *
               (rightDenominator - leftDenominator))) :=
-        Norm.Bounds.normSq_add_le_two _ _
+        Bounds.normSq_add_le_two _ _
       _ = 2 *
-          (Data.Gaussian.Norm.Basic.normSq (leftNumerator - rightNumerator) *
-              Data.Gaussian.Norm.Basic.normSq rightDenominator +
-            Data.Gaussian.Norm.Basic.normSq rightNumerator *
-              Data.Gaussian.Norm.Basic.normSq (rightDenominator - leftDenominator)) := by
-        rw [Norm.Basic.normSq_mul, Norm.Basic.normSq_mul]
+          (Basic.normSq (leftNumerator - rightNumerator) *
+              Basic.normSq rightDenominator +
+            Basic.normSq rightNumerator *
+              Basic.normSq (rightDenominator - leftDenominator)) := by
+        rw [Basic.normSq_mul, Basic.normSq_mul]
       _ <= 2 * (numeratorSlope * pointMovement * denominatorBound +
           numeratorBound * rootMovement) := by
-        apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        apply Arithmetic.mul_le_mul_of_nonneg_left_direct
         · exact add_le_add
-            (Fraction.Order.Arithmetic.mul_le_mul_direct
+            (Arithmetic.mul_le_mul_direct
               numeratorDifference rightDenominatorBound
-              (Norm.Basic.normSq_nonneg rightDenominator)
+              (Basic.normSq_nonneg rightDenominator)
               slopeMovementNonnegative)
-            (Fraction.Order.Arithmetic.mul_le_mul_direct
+            (Arithmetic.mul_le_mul_direct
               rightNumeratorBound rootDifference
-              (Norm.Basic.normSq_nonneg (rightDenominator - leftDenominator))
+              (Basic.normSq_nonneg (rightDenominator - leftDenominator))
               numeratorBoundNonnegative)
         · decide
   have denominatorLower : lowerSq * lowerSq <=
-      Data.Gaussian.Norm.Basic.normSq leftDenominator * Data.Gaussian.Norm.Basic.normSq rightDenominator :=
-    Fraction.Order.Arithmetic.mul_le_mul_direct leftLower rightLower
-      lowerPositive.le (Norm.Basic.normSq_nonneg leftDenominator)
+      Basic.normSq leftDenominator * Basic.normSq rightDenominator :=
+    Arithmetic.mul_le_mul_direct leftLower rightLower
+      lowerPositive.le (Basic.normSq_nonneg leftDenominator)
   have denominatorPositive :
-      0 < Data.Gaussian.Norm.Basic.normSq leftDenominator * Data.Gaussian.Norm.Basic.normSq rightDenominator :=
-    Fraction.Order.Arithmetic.mul_pos_direct leftNormPositive
+      0 < Basic.normSq leftDenominator * Basic.normSq rightDenominator :=
+    Arithmetic.mul_pos_direct leftNormPositive
       rightNormPositive
-  rw [Purelib.Data.Gaussian.Field.div_sub_div leftNumerator rightNumerator leftDenominator
+  rw [Field.div_sub_div leftNumerator rightNumerator leftDenominator
       rightDenominator leftNonzero rightNonzero,
     Field.normSq_div _ _ (Field.mul_ne_zero_direct leftNonzero rightNonzero),
-    Norm.Basic.normSq_mul]
+    Basic.normSq_mul]
   change
-    Data.Gaussian.Norm.Basic.normSq (leftNumerator * rightDenominator -
+    Basic.normSq (leftNumerator * rightDenominator -
         rightNumerator * leftDenominator) /
-      (Data.Gaussian.Norm.Basic.normSq leftDenominator * Data.Gaussian.Norm.Basic.normSq rightDenominator) <= _
+      (Basic.normSq leftDenominator * Basic.normSq rightDenominator) <= _
   calc
-    Data.Gaussian.Norm.Basic.normSq (leftNumerator * rightDenominator -
+    Basic.normSq (leftNumerator * rightDenominator -
           rightNumerator * leftDenominator) /
-        (Data.Gaussian.Norm.Basic.normSq leftDenominator * Data.Gaussian.Norm.Basic.normSq rightDenominator) <=
+        (Basic.normSq leftDenominator * Basic.normSq rightDenominator) <=
       (2 * (numeratorSlope * pointMovement * denominatorBound +
           numeratorBound * rootMovement)) /
-        (Data.Gaussian.Norm.Basic.normSq leftDenominator * Data.Gaussian.Norm.Basic.normSq rightDenominator) := by
-      apply (Fraction.Order.Field.div_le_iff_pos
+        (Basic.normSq leftDenominator * Basic.normSq rightDenominator) := by
+      apply (Field.div_le_iff_pos
         denominatorPositive).2
       exact numeratorEstimate.trans_eq
         (Fraction.Field.div_mul_cancel_of_ne _ _
           denominatorPositive.ne').symm
     _ <= (2 * (numeratorSlope * pointMovement * denominatorBound +
           numeratorBound * rootMovement)) / (lowerSq * lowerSq) :=
-      Fraction.Order.Field.div_le_div_of_nonneg_left_direct
+      Field.div_le_div_of_nonneg_left_direct
         (by
-          exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+          exact Arithmetic.mul_nonneg_direct (by decide)
             (add_nonneg
-              (Fraction.Order.Arithmetic.mul_nonneg_direct
+              (Arithmetic.mul_nonneg_direct
                 slopeMovementNonnegative denominatorBoundNonnegative)
-              (Fraction.Order.Arithmetic.mul_nonneg_direct
+              (Arithmetic.mul_nonneg_direct
                 numeratorBoundNonnegative rootMovementNonnegative)))
-        (Fraction.Order.Arithmetic.mul_pos_direct lowerPositive lowerPositive)
+        (Arithmetic.mul_pos_direct lowerPositive lowerPositive)
         denominatorLower
 
 end Purelib.Data.Gaussian.Norm.Quotient.ApproximationQuotientVariation
@@ -188,19 +190,19 @@ theorem normSq_div_sub_div_le
       rootMovement : Fraction.Rational}
     (lowerPositive : 0 < lowerSq)
     (numeratorDifference :
-      Data.Gaussian.Norm.Basic.normSq (leftNumerator - rightNumerator) <=
+      Basic.normSq (leftNumerator - rightNumerator) <=
         numeratorSlope * pointMovement)
-    (rightNumeratorBound : Data.Gaussian.Norm.Basic.normSq rightNumerator <= numeratorBound)
-    (rightDenominatorBound : Data.Gaussian.Norm.Basic.normSq rightDenominator <= denominatorBound)
-    (rootDifference : Data.Gaussian.Norm.Basic.normSq (rightDenominator - leftDenominator) <=
+    (rightNumeratorBound : Basic.normSq rightNumerator <= numeratorBound)
+    (rightDenominatorBound : Basic.normSq rightDenominator <= denominatorBound)
+    (rootDifference : Basic.normSq (rightDenominator - leftDenominator) <=
       rootMovement)
-    (leftLower : lowerSq <= Data.Gaussian.Norm.Basic.normSq leftDenominator)
-    (rightLower : lowerSq <= Data.Gaussian.Norm.Basic.normSq rightDenominator) :
-    Data.Gaussian.Norm.Basic.normSq (leftNumerator / leftDenominator -
+    (leftLower : lowerSq <= Basic.normSq leftDenominator)
+    (rightLower : lowerSq <= Basic.normSq rightDenominator) :
+    Basic.normSq (leftNumerator / leftDenominator -
         rightNumerator / rightDenominator) <=
       Budget.Quotient.quotientBound numeratorSlope numeratorBound denominatorBound lowerSq
         pointMovement rootMovement :=
-  Norm.Quotient.ApproximationQuotientVariation.normSq_div_sub_div_le
+  ApproximationQuotientVariation.normSq_div_sub_div_le
     lowerPositive numeratorDifference rightNumeratorBound
     rightDenominatorBound rootDifference leftLower rightLower
 

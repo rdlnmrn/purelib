@@ -17,6 +17,10 @@ import Purelib.Data.Gaussian.Field
 import Purelib.LinearAlgebra.PolynomialMatrix.Inverse.Scaled.Basic
 import Purelib.Polynomial.Dense.Basic
 
+open Purelib.Polynomial.Dense
+open Purelib.Polynomial.Dense.Bivariate.Gaussian
+open Purelib.Polynomial.Dense.Bivariate.Gaussian.Reflection.Basic
+
 /-!
 # Separated Gaussian Sylvester matrices
 
@@ -38,17 +42,17 @@ open Purelib.Polynomial
 
 The reflected and lifted coefficient blocks occupy the original finite
 row and column positions at the same displayed source degree. -/
-@[expose] def separatedSylvester (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) :
+@[expose] def separatedSylvester (p : Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) :
     PolynomialMatrix.Basic.GaussianMatrix (p.natDegree + p.natDegree) :=
-  Dense.Bivariate.Resultant.sylvester
-    (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.lifted p)
-      (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected p) p.natDegree p.natDegree
+  Bivariate.Resultant.sylvester
+    (Lift.SeparatedVariables.lifted p)
+      (SeparatedVariables.reflected p) p.natDegree p.natDegree
 
 /-- Assign the original polynomial degree to reflected-block columns and degree zero to lifted-block columns.
 
 The first block retains the original source degree; the second retains
 zero. The splitter uses the same bounded column and block boundary. -/
-@[expose] def separatedDegrees (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) :
+@[expose] def separatedDegrees (p : Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) :
     Fin (p.natDegree + p.natDegree) → Nat :=
   fun column => Data.Fin.addCases
     (fun _ => p.natDegree) (fun _ => 0) column
@@ -58,10 +62,10 @@ blocks.
 
 The reflected block retains its computed leading coefficient, and the
 lifted block retains the original polynomial leader at the same columns. -/
-@[expose] def separatedDiagonal (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) :
+@[expose] def separatedDiagonal (p : Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) :
     Fin (p.natDegree + p.natDegree) → Gaussian.Basic.Canonical :=
   fun column => Data.Fin.addCases
-    (fun _ => Dense.Bivariate.Gaussian.Reflection.Basic.reflectedLeading p) (fun _ => p.leadingCoeff) column
+    (fun _ => Reflection.Basic.reflectedLeading p) (fun _ => p.leadingCoeff) column
 
 /-- The top parameter coefficient matrix of the separated Sylvester matrix is
 upper triangular.  This is a finite coefficient-list fact: the reflected
@@ -70,81 +74,81 @@ its leading coefficient on the second diagonal.
 
 Each bounded column retains its original block and degree. The displayed
 diagonal leaders certify the same fraction-free scalar construction. -/
-theorem separatedSylvester_leading (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+theorem separatedSylvester_leading (p : Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
     (nonzero : p.isZero = false) :
     PolynomialMatrix.Leading.Triangular.UpperTriangularLeading
-      (Elimination.Separated.Sylvester.separatedSylvester p) (Elimination.Separated.Sylvester.separatedDegrees p)
-        (Elimination.Separated.Sylvester.separatedDiagonal p) where
+      (separatedSylvester p) (separatedDegrees p)
+        (separatedDiagonal p) where
   atMost := by
     intro row column
     rcases Data.Fin.addCases_split column with
       ⟨left, rfl⟩ | ⟨right, rfl⟩
     · have entryEqual :
-          Elimination.Separated.Sylvester.separatedSylvester p row (Fin.castAdd p.natDegree left) =
+          separatedSylvester p row (Fin.castAdd p.natDegree left) =
             if (left : Nat) ≤ (row : Nat) ∧
                 (row : Nat) ≤ (left : Nat) + p.natDegree then
-              Dense.Bivariate.Resultant.outerCoeff
-                (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected p) ((row : Nat) - left)
+              Bivariate.Resultant.outerCoeff
+                (SeparatedVariables.reflected p) ((row : Nat) - left)
             else 0 :=
-        Dense.Bivariate.Resultant.sylvester_left_apply
-          (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.lifted p)
-            (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected p) p.natDegree p.natDegree row left
+        Bivariate.Resultant.sylvester_left_apply
+          (Lift.SeparatedVariables.lifted p)
+            (SeparatedVariables.reflected p) p.natDegree p.natDegree row left
       have degreeEqual :
-          Elimination.Separated.Sylvester.separatedDegrees p (Fin.castAdd p.natDegree left) =
+          separatedDegrees p (Fin.castAdd p.natDegree left) =
             p.natDegree := by
-        unfold Elimination.Separated.Sylvester.separatedDegrees
+        unfold separatedDegrees
         exact Data.Fin.addCases_left _ _ _
-      apply Dense.Leading.DegreeAtMost.of_equal entryEqual degreeEqual
+      apply Leading.DegreeAtMost.of_equal entryEqual degreeEqual
       by_cases included : (left : Nat) ≤ (row : Nat) ∧
           (row : Nat) ≤ (left : Nat) + p.natDegree
-      · exact Dense.Leading.DegreeAtMost.of_equal (if_pos included) rfl
-          (Dense.Bivariate.Gaussian.Reflection.Shape.reflectedCoeff_atMost p nonzero _)
-      · exact Dense.Leading.DegreeAtMost.of_equal (if_neg included) rfl
-          (Dense.Leading.DegreeAtMost.zero p.natDegree)
+      · exact Leading.DegreeAtMost.of_equal (if_pos included) rfl
+          (Reflection.Shape.reflectedCoeff_atMost p nonzero _)
+      · exact Leading.DegreeAtMost.of_equal (if_neg included) rfl
+          (Leading.DegreeAtMost.zero p.natDegree)
     · have entryEqual :
-          Elimination.Separated.Sylvester.separatedSylvester p row (Fin.natAdd p.natDegree right) =
+          separatedSylvester p row (Fin.natAdd p.natDegree right) =
             if (right : Nat) ≤ (row : Nat) ∧
                 (row : Nat) ≤ (right : Nat) + p.natDegree then
-              Dense.Bivariate.Resultant.outerCoeff
-                (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.lifted p) ((row : Nat) - right)
+              Bivariate.Resultant.outerCoeff
+                (Lift.SeparatedVariables.lifted p) ((row : Nat) - right)
             else 0 :=
-        Dense.Bivariate.Resultant.sylvester_right_apply
-          (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.lifted p)
-            (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected p) p.natDegree p.natDegree row right
+        Bivariate.Resultant.sylvester_right_apply
+          (Lift.SeparatedVariables.lifted p)
+            (SeparatedVariables.reflected p) p.natDegree p.natDegree row right
       have degreeEqual :
-          Elimination.Separated.Sylvester.separatedDegrees p (Fin.natAdd p.natDegree right) = 0 := by
-        unfold Elimination.Separated.Sylvester.separatedDegrees
+          separatedDegrees p (Fin.natAdd p.natDegree right) = 0 := by
+        unfold separatedDegrees
         exact Data.Fin.addCases_right _ _ _
-      apply Dense.Leading.DegreeAtMost.of_equal entryEqual degreeEqual
+      apply Leading.DegreeAtMost.of_equal entryEqual degreeEqual
       by_cases included : (right : Nat) ≤ (row : Nat) ∧
           (row : Nat) ≤ (right : Nat) + p.natDegree
-      · exact Dense.Leading.DegreeAtMost.of_equal (if_pos included) rfl
-          (Dense.Bivariate.Gaussian.Lift.liftedCoeff_atMost p _)
-      · exact Dense.Leading.DegreeAtMost.of_equal (if_neg included) rfl
-          (Dense.Leading.DegreeAtMost.zero 0)
+      · exact Leading.DegreeAtMost.of_equal (if_pos included) rfl
+          (Lift.liftedCoeff_atMost p _)
+      · exact Leading.DegreeAtMost.of_equal (if_neg included) rfl
+          (Leading.DegreeAtMost.zero 0)
   below := by
     intro row column belowDiagonal
     rcases Data.Fin.addCases_split column with
       ⟨left, rfl⟩ | ⟨right, rfl⟩
     · have entryEqual :
-          Elimination.Separated.Sylvester.separatedSylvester p row (Fin.castAdd p.natDegree left) =
+          separatedSylvester p row (Fin.castAdd p.natDegree left) =
             if (left : Nat) ≤ (row : Nat) ∧
                 (row : Nat) ≤ (left : Nat) + p.natDegree then
-              Dense.Bivariate.Resultant.outerCoeff
-                (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected p) ((row : Nat) - left)
+              Bivariate.Resultant.outerCoeff
+                (SeparatedVariables.reflected p) ((row : Nat) - left)
             else 0 :=
-        Dense.Bivariate.Resultant.sylvester_left_apply
-          (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.lifted p)
-            (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected p) p.natDegree p.natDegree row left
+        Bivariate.Resultant.sylvester_left_apply
+          (Lift.SeparatedVariables.lifted p)
+            (SeparatedVariables.reflected p) p.natDegree p.natDegree row left
       have degreeEqual :
-          Elimination.Separated.Sylvester.separatedDegrees p (Fin.castAdd p.natDegree left) =
+          separatedDegrees p (Fin.castAdd p.natDegree left) =
             p.natDegree := by
-        unfold Elimination.Separated.Sylvester.separatedDegrees
+        unfold separatedDegrees
         exact Data.Fin.addCases_left _ _ _
-      apply Dense.Leading.DegreeBelow.of_equal entryEqual degreeEqual
+      apply Leading.DegreeBelow.of_equal entryEqual degreeEqual
       by_cases included : (left : Nat) ≤ (row : Nat) ∧
           (row : Nat) ≤ (left : Nat) + p.natDegree
-      · apply Dense.Leading.DegreeBelow.of_equal (if_pos included) rfl
+      · apply Leading.DegreeBelow.of_equal (if_pos included) rfl
         have positive : 0 < (row : Nat) - (left : Nat) := by
           have leftLt : (left : Nat) < (row : Nat) := belowDiagonal
           omega0
@@ -154,107 +158,107 @@ theorem separatedSylvester_leading (p : Dense.Gaussian.Basic.CanonicalCoefficien
           have reconstructed := Data.Nat.Subtraction.add_sub_of_le
             (Nat.succ_le_of_lt positive)
           exact reconstructed.symm.trans (Nat.add_comm _ _)
-        exact Dense.Leading.DegreeBelow.of_equal
+        exact Leading.DegreeBelow.of_equal
           (congrArg
-            (Dense.Bivariate.Resultant.outerCoeff
-              (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected p))
+            (Bivariate.Resultant.outerCoeff
+              (SeparatedVariables.reflected p))
             successorIdentity)
-          rfl (Dense.Bivariate.Gaussian.Reflection.Shape.reflectedCoeff_below_of_pos p nonzero _)
-      · exact Dense.Leading.DegreeBelow.of_equal (if_neg included) rfl
-          (Dense.Leading.DegreeBelow.zero p.natDegree)
+          rfl (Reflection.Shape.reflectedCoeff_below_of_pos p nonzero _)
+      · exact Leading.DegreeBelow.of_equal (if_neg included) rfl
+          (Leading.DegreeBelow.zero p.natDegree)
     · have entryEqual :
-          Elimination.Separated.Sylvester.separatedSylvester p row (Fin.natAdd p.natDegree right) =
+          separatedSylvester p row (Fin.natAdd p.natDegree right) =
             if (right : Nat) ≤ (row : Nat) ∧
                 (row : Nat) ≤ (right : Nat) + p.natDegree then
-              Dense.Bivariate.Resultant.outerCoeff
-                (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.lifted p) ((row : Nat) - right)
+              Bivariate.Resultant.outerCoeff
+                (Lift.SeparatedVariables.lifted p) ((row : Nat) - right)
             else 0 :=
-        Dense.Bivariate.Resultant.sylvester_right_apply
-          (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.lifted p)
-            (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected p) p.natDegree p.natDegree row right
+        Bivariate.Resultant.sylvester_right_apply
+          (Lift.SeparatedVariables.lifted p)
+            (SeparatedVariables.reflected p) p.natDegree p.natDegree row right
       have degreeEqual :
-          Elimination.Separated.Sylvester.separatedDegrees p (Fin.natAdd p.natDegree right) = 0 := by
-        unfold Elimination.Separated.Sylvester.separatedDegrees
+          separatedDegrees p (Fin.natAdd p.natDegree right) = 0 := by
+        unfold separatedDegrees
         exact Data.Fin.addCases_right _ _ _
-      apply Dense.Leading.DegreeBelow.of_equal entryEqual degreeEqual
+      apply Leading.DegreeBelow.of_equal entryEqual degreeEqual
       by_cases included : (right : Nat) ≤ (row : Nat) ∧
           (row : Nat) ≤ (right : Nat) + p.natDegree
-      · apply Dense.Leading.DegreeBelow.of_equal (if_pos included) rfl
+      · apply Leading.DegreeBelow.of_equal (if_pos included) rfl
         have beyond :
             p.natDegree < (row : Nat) - (right : Nat) := by
           have rightBelow :
               p.natDegree + (right : Nat) < (row : Nat) := belowDiagonal
           omega0
-        exact Dense.Leading.DegreeBelow.of_equal
-          (Dense.Bivariate.Gaussian.Lift.liftedCoeff_eq_zero_of_degree_lt p nonzero beyond)
-          rfl (Dense.Leading.DegreeBelow.zero 0)
-      · exact Dense.Leading.DegreeBelow.of_equal (if_neg included) rfl
-          (Dense.Leading.DegreeBelow.zero 0)
+        exact Leading.DegreeBelow.of_equal
+          (Lift.liftedCoeff_eq_zero_of_degree_lt p nonzero beyond)
+          rfl (Leading.DegreeBelow.zero 0)
+      · exact Leading.DegreeBelow.of_equal (if_neg included) rfl
+          (Leading.DegreeBelow.zero 0)
   diagonalLeading := by
     intro index
     rcases Data.Fin.addCases_split index with
       ⟨left, rfl⟩ | ⟨right, rfl⟩
     · have entryEqual :
-          Elimination.Separated.Sylvester.separatedSylvester p
+          separatedSylvester p
               (Fin.castAdd p.natDegree left)
               (Fin.castAdd p.natDegree left) =
-            Dense.Bivariate.Resultant.outerCoeff (Dense.Bivariate.Gaussian.Reflection.Basic.SeparatedVariables.reflected
+            Bivariate.Resultant.outerCoeff (SeparatedVariables.reflected
               p) 0 := by
-        rw [Elimination.Separated.Sylvester.separatedSylvester,
-          Dense.Bivariate.Resultant.sylvester_left_apply,
+        rw [separatedSylvester,
+          Bivariate.Resultant.sylvester_left_apply,
           Fin.val_castAdd,
           if_pos ⟨le_rfl, Nat.le_add_right _ _⟩,
           Nat.sub_self]
       have degreeEqual :
-          Elimination.Separated.Sylvester.separatedDegrees p (Fin.castAdd p.natDegree left) =
+          separatedDegrees p (Fin.castAdd p.natDegree left) =
             p.natDegree := by
-        unfold Elimination.Separated.Sylvester.separatedDegrees
+        unfold separatedDegrees
         exact Data.Fin.addCases_left _ _ _
       have diagonalEqual :
-          Elimination.Separated.Sylvester.separatedDiagonal p (Fin.castAdd p.natDegree left) =
-            Dense.Bivariate.Gaussian.Reflection.Basic.reflectedLeading p := by
-        unfold Elimination.Separated.Sylvester.separatedDiagonal
+          separatedDiagonal p (Fin.castAdd p.natDegree left) =
+            Reflection.Basic.reflectedLeading p := by
+        unfold separatedDiagonal
         exact Data.Fin.addCases_left _ _ _
-      exact Dense.Leading.LeadingTerm.of_equal entryEqual degreeEqual diagonalEqual
-        (Dense.Bivariate.Gaussian.Reflection.Shape.reflectedCoeff_zero_leading p nonzero)
+      exact Leading.LeadingTerm.of_equal entryEqual degreeEqual diagonalEqual
+        (Reflection.Shape.reflectedCoeff_zero_leading p nonzero)
     · have difference :
           p.natDegree + (right : Nat) - (right : Nat) =
             p.natDegree := Data.Nat.Subtraction.add_sub_cancel_right _ _
       have entryEqual :
-          Elimination.Separated.Sylvester.separatedSylvester p
+          separatedSylvester p
               (Fin.natAdd p.natDegree right)
               (Fin.natAdd p.natDegree right) =
-            Dense.Bivariate.Resultant.outerCoeff (Dense.Bivariate.Gaussian.Lift.SeparatedVariables.lifted p) p.natDegree
+            Bivariate.Resultant.outerCoeff (Lift.SeparatedVariables.lifted p) p.natDegree
               := by
-        rw [Elimination.Separated.Sylvester.separatedSylvester,
-          Dense.Bivariate.Resultant.sylvester_right_apply,
+        rw [separatedSylvester,
+          Bivariate.Resultant.sylvester_right_apply,
           Fin.val_natAdd,
           if_pos ⟨Nat.le_add_left _ _, (Nat.add_comm _ _).le⟩,
           difference]
       have degreeEqual :
-          Elimination.Separated.Sylvester.separatedDegrees p (Fin.natAdd p.natDegree right) = 0 := by
-        unfold Elimination.Separated.Sylvester.separatedDegrees
+          separatedDegrees p (Fin.natAdd p.natDegree right) = 0 := by
+        unfold separatedDegrees
         exact Data.Fin.addCases_right _ _ _
       have diagonalEqual :
-          Elimination.Separated.Sylvester.separatedDiagonal p (Fin.natAdd p.natDegree right) =
+          separatedDiagonal p (Fin.natAdd p.natDegree right) =
             p.leadingCoeff := by
-        unfold Elimination.Separated.Sylvester.separatedDiagonal
+        unfold separatedDiagonal
         exact Data.Fin.addCases_right _ _ _
-      exact Dense.Leading.LeadingTerm.of_equal entryEqual degreeEqual diagonalEqual
-        (Dense.Bivariate.Gaussian.Lift.liftedCoeff_degree_leading p nonzero)
+      exact Leading.LeadingTerm.of_equal entryEqual degreeEqual diagonalEqual
+        (Lift.liftedCoeff_degree_leading p nonzero)
 
 /-- The fraction-free scaled inverse of the separated Sylvester matrix has a
 nonzero scalar polynomial.
 
 The upper-triangular top-coefficient certificate supplies all nonzero
 diagonal leaders to the same fixed fraction-free scaled inverse. -/
-theorem separatedScalar_nonzero (p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+theorem separatedScalar_nonzero (p : Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
     (nonzero : p.isZero = false) :
     (PolynomialMatrix.Inverse.Scaled.Compute.scaledInverseData
-      (p.natDegree + p.natDegree) (Elimination.Separated.Sylvester.separatedSylvester p)).scalar.isZero =
+      (p.natDegree + p.natDegree) (separatedSylvester p)).scalar.isZero =
         false :=
   PolynomialMatrix.Leading.Triangular.scaledInverseData_scalar_nonzero
-    (Elimination.Separated.Sylvester.separatedSylvester_leading p nonzero)
+    (separatedSylvester_leading p nonzero)
 
 end Purelib.Polynomial.Elimination.Separated.Sylvester
 

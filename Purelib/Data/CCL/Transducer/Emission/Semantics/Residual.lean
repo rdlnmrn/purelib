@@ -27,6 +27,8 @@ import Purelib.Data.Rat.Fraction
 import Purelib.Data.CCL.Transducer.Emission.Basic
 public import Purelib.Data.CCL.Transducer.Mode.Parser
 
+open Purelib.Data.CCL.Transducer.Mode.Semantics
+
 section
 @[expose] public section
 
@@ -53,33 +55,33 @@ Padding keeps the same projective residual tail. The apart branch composes the e
 normalized-inverse chart relation and the original nonsingular parser action. -/
 theorem residualStep_exact (current :
   Mode.Basic.ResidualState) :
-    Emission.Semantics.Basic.ExactEmission (.residual current) (Emission.Step.step (.residual current)) := by
-  change Emission.Semantics.Basic.ExactEmission (.residual current) (Emission.Residual.residualStep current)
-  generalize hStep : Emission.Residual.residualStep current = emission
-  unfold Emission.Semantics.Basic.ExactEmission
+    Basic.ExactEmission (.residual current) (Step.step (.residual current)) := by
+  change Basic.ExactEmission (.residual current) (Residual.residualStep current)
+  generalize hStep : Residual.residualStep current = emission
+  unfold Basic.ExactEmission
   intro parser determinant phase tail possible
-  unfold Emission.Residual.residualStep at hStep
+  rewrite [Residual.residualStep_eq] at hStep
   simp only at hStep
   split at hStep
   · cases hStep
-    simp only [Mode.Semantics.SemanticMode.possible] at possible
+    simp only [SemanticMode.possible] at possible
     have previousPossible :
         current.process.Possible current.state tail :=
       current.process.refine_persists current.state _ _ possible
     refine ⟨tail, previousPossible, ?_⟩
     rw [Parser.Matrix.Chunks.fold_residual_unary_matrix parser current.count phase]
-    simp only [Mode.Semantics.SemanticMode.parserTail]
+    simp only [SemanticMode.parserTail]
     exact Line.Proj.Equivalent.refl _
   · rename_i certificate decisionEqual
     cases hStep
-    simp only [Mode.Semantics.SemanticMode.possible] at possible
+    simp only [SemanticMode.possible] at possible
     let requestedCount := current.count + 1
     let refined :=
       Padding.Process.residualState
         current.process current.state requestedCount
     have upperBoundAtRefined : ∀ {value : Basic.Canonical},
         current.process.Possible refined value →
-          Data.Gaussian.Norm.Basic.normSq value ≤ current.upper := by
+          Norm.Basic.normSq value ≤ current.upper := by
       intro value valuePossible
       exact current.upperBound
         (current.process.refine_persists current.state _ _ valuePossible)
@@ -98,7 +100,7 @@ theorem residualStep_exact (current :
         domain := nextDomain }
     have nextPhase : parser.phase = Mode.Grammar.modeRawPhase (.loop next) := by
       simpa [Mode.Grammar.modeRawPhase, Mode.Grammar.regularRawPhase, next] using phase
-    rcases Emission.Semantics.Loop.loopStep_exact next parser determinant nextPhase possible with
+    rcases Loop.loopStep_exact next parser determinant nextPhase possible with
       ⟨inverseTail, inversePossible, loopExact⟩
     have inversePossible' :
         (Process.Gamma.Inverse.Scale.normalizedInverseProcess current.process refined certificate
@@ -114,17 +116,17 @@ theorem residualStep_exact (current :
       current.process.refine_persists current.state _ _ residualAtRefined
     refine ⟨residual, residualAtCurrent, ?_⟩
     have chartEquivalent' :
-        (Mode.Semantics.SemanticMode.parserTail (.loop next) inverseTail).Equivalent
-          (Mode.Semantics.SemanticMode.parserTail (.residual current) residual) := by
-      simpa only [Mode.Semantics.SemanticMode.parserTail, next] using chartEquivalent
+        (SemanticMode.parserTail (.loop next) inverseTail).Equivalent
+          (SemanticMode.parserTail (.residual current) residual) := by
+      simpa only [SemanticMode.parserTail, next] using chartEquivalent
     have actedChartEquivalent :=
       Line.Matrix.act_respects_equivalent parser.matrix chartEquivalent'
     exact Line.Gaussian.Proj.equivalent_trans
       loopExact actedChartEquivalent
       (Line.Matrix.Gaussian.Mat2.act_hasNonzeroCoordinate determinant
-        (Mode.Semantics.SemanticMode.parserTail_valid (.loop next) inverseTail))
+        (SemanticMode.parserTail_valid (.loop next) inverseTail))
       (Line.Matrix.Gaussian.Mat2.act_hasNonzeroCoordinate determinant
-        (Mode.Semantics.SemanticMode.parserTail_valid (.residual current) residual))
+        (SemanticMode.parserTail_valid (.residual current) residual))
 
 end Purelib.Data.CCL.Transducer.Emission.Semantics.Residual
 

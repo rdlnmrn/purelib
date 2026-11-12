@@ -31,7 +31,7 @@ open Purelib.LinearAlgebra.Alternating.Bracket
 open scoped Purelib.Data.Nat
 attribute [local instance 2000] Purelib.Data.Nat.successorNeZero
   Purelib.Data.Nat.successorAtLeastTwo
-  Purelib.Algebra.Group.Negation.subNegZeroMonoid
+  Algebra.Group.Negation.subNegZeroMonoid
 
 section
 public section
@@ -47,7 +47,7 @@ with the explicit intersection of two perpendicular bisectors.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry.Triangles.Circumcenter.Formula
 
@@ -76,8 +76,8 @@ is nonzero. -/
 @[expose] def circumcenterFormula (first second third : Plane.Point K) : Plane.Point K :=
   let denominator := 2 * Fin3.antisymmetricTripleProduct
     first.x second.x third.x first.y second.y third.y
-  ⟨Geometry.Triangles.Circumcenter.Formula.circumcenterXNumerator first second third / denominator,
-    Geometry.Triangles.Circumcenter.Formula.circumcenterYNumerator first second third / denominator⟩
+  ⟨circumcenterXNumerator first second third / denominator,
+    circumcenterYNumerator first second third / denominator⟩
 
 /-- The intersection-defined circumcenter equals its alternating-product coordinate formula.
 
@@ -89,12 +89,12 @@ theorem circumcenter_formula
     (secondThirdDistinct : second ≠ third)
     (notCollinear : ¬ Incidence.Collinear first second third)
     (twoNonzero : (2 : K) ≠ 0) :
-    Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+    Basic.circumcenterPoint first second third firstThirdDistinct
         secondThirdDistinct notCollinear =
-      Circumcenter.Formula.circumcenterFormula first second third := by
+      circumcenterFormula first second third := by
   let determinant := Incidence.pointDeterminant first second third
-  let xNumerator := Geometry.Triangles.Circumcenter.Formula.circumcenterXNumerator first second third
-  let yNumerator := Geometry.Triangles.Circumcenter.Formula.circumcenterYNumerator first second third
+  let xNumerator := circumcenterXNumerator first second third
+  let yNumerator := circumcenterYNumerator first second third
   let firstBisector := PerpendicularBisector.perpendicularBisector second third secondThirdDistinct
   let secondBisector := PerpendicularBisector.perpendicularBisector first third firstThirdDistinct
   have determinantNonzero : determinant ≠ 0 := by
@@ -103,8 +103,8 @@ theorem circumcenter_formula
     exact (Incidence.collinear_iff_pointDeterminant_eq_zero first second third).2
       determinantZero
   have negativeDeterminantNonzero : -determinant ≠ 0 :=
-    (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] {value : K} (nonzero : value ≠ 0) =>
-      (Purelib.Algebra.Field.ExplicitField.neg_ne_zero_of_ne_zero (K := K) (value := value) nonzero : -value ≠ 0))
+    (fun {K : Type _} [ExplicitField K] {value : K} (nonzero : value ≠ 0) =>
+      (ExplicitField.neg_ne_zero_of_ne_zero (K := K) (value := value) nonzero : -value ≠ 0))
       determinantNonzero
   have antisymmetricDenominator :
       Fin3.antisymmetricTripleProduct
@@ -116,9 +116,9 @@ theorem circumcenter_formula
       2 * Fin3.antisymmetricTripleProduct
           first.x second.x third.x first.y second.y third.y ≠ 0 := by
     rw [antisymmetricDenominator]
-    exact Algebra.Field.ExplicitField.mul_ne_zero twoNonzero determinantNonzero
+    exact ExplicitField.mul_ne_zero twoNonzero determinantNonzero
   have twoCancel : (2 : K) * (2 : K)⁻¹ = 1 :=
-    Algebra.Field.ExplicitField.mul_inv_cancel 2 twoNonzero
+    ExplicitField.mul_inv_cancel 2 twoNonzero
   have intersectionDenominator :
       firstBisector.a * secondBisector.b -
           secondBisector.a * firstBisector.b = -determinant := by
@@ -129,15 +129,15 @@ theorem circumcenter_formula
       firstBisector.b * secondBisector.c -
           secondBisector.b * firstBisector.c = -xNumerator / 2 := by
     unfold firstBisector secondBisector PerpendicularBisector.perpendicularBisector xNumerator
-      Geometry.Triangles.Circumcenter.Formula.circumcenterXNumerator Fin3.antisymmetricTripleProduct
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+      circumcenterXNumerator Fin3.antisymmetricTripleProduct
+    simp only [ExplicitField.div_eq_mul_inv]
     ring1
   have intersectionYNumerator :
       firstBisector.c * secondBisector.a -
           secondBisector.c * firstBisector.a = -yNumerator / 2 := by
     unfold firstBisector secondBisector PerpendicularBisector.perpendicularBisector yNumerator
-      Geometry.Triangles.Circumcenter.Formula.circumcenterYNumerator Fin3.antisymmetricTripleProduct
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+      circumcenterYNumerator Fin3.antisymmetricTripleProduct
+    simp only [ExplicitField.div_eq_mul_inv]
     ring1
   have xRatio :
       (-xNumerator / 2) / (-determinant) =
@@ -147,7 +147,7 @@ theorem circumcenter_formula
     apply Ratio.ratio_eq_of_cross_product negativeDeterminantNonzero
       formulaDenominatorNonzero
     rw [antisymmetricDenominator]
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    simp only [ExplicitField.div_eq_mul_inv]
     calc
       (-xNumerator * (2 : K)⁻¹) * (2 * determinant) =
           -xNumerator * ((2 : K) * (2 : K)⁻¹) * determinant := by ring1
@@ -160,22 +160,22 @@ theorem circumcenter_formula
     apply Ratio.ratio_eq_of_cross_product negativeDeterminantNonzero
       formulaDenominatorNonzero
     rw [antisymmetricDenominator]
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    simp only [ExplicitField.div_eq_mul_inv]
     calc
       (-yNumerator * (2 : K)⁻¹) * (2 * determinant) =
           -yNumerator * ((2 : K) * (2 : K)⁻¹) * determinant := by ring1
       _ = yNumerator * -determinant := by rw [twoCancel]; ring1
-  unfold Circumcenter.Basic.circumcenterPoint
+  unfold Basic.circumcenterPoint
   change Intersection.lineIntersection firstBisector secondBisector
-      (Circumcenter.Basic.circumcenter_bisectors_not_parallel first second third
+      (Basic.circumcenter_bisectors_not_parallel first second third
         firstThirdDistinct secondThirdDistinct notCollinear) =
-    Circumcenter.Formula.circumcenterFormula first second third
+    circumcenterFormula first second third
   apply Plane.Point.ext
-  · unfold Intersection.lineIntersection Circumcenter.Formula.circumcenterFormula
+  · unfold Intersection.lineIntersection circumcenterFormula
     dsimp only
     rw [intersectionXNumerator, intersectionDenominator]
     exact xRatio
-  · unfold Intersection.lineIntersection Circumcenter.Formula.circumcenterFormula
+  · unfold Intersection.lineIntersection circumcenterFormula
     dsimp only
     rw [intersectionYNumerator, intersectionDenominator]
     exact yRatio

@@ -6,9 +6,12 @@ import os
 import shutil
 import subprocess
 import tempfile
+from types import SimpleNamespace
 import unittest
 
 from scripts.paths import ROOT
+from scripts.lean_module_data import format as F
+from scripts.lean_module_data.render import Renderer
 
 
 class TraceCliTests(unittest.TestCase):
@@ -37,6 +40,35 @@ class TraceCliTests(unittest.TestCase):
                 self.assertTrue(result.stderr)
                 self.assertFalse(capture.exists())
             self.assertFalse(list(root.glob('ccl-axiom-trace.*')))
+
+
+class TracePreviewTests(unittest.TestCase):
+    def test_small_previews_preserve_the_exact_original_observer(self):
+        value = F.bracket('(', F.join([F.text('first'), F.text('second')], F.LINE), ')')
+        for width in (5, 120):
+            original = F.pretty(value, width=width)
+            self.assertEqual(F.pretty(value, width=width, max_chars=len(original)), original)
+            for limit in range(1, len(original)):
+                self.assertEqual(F.pretty(value, width=width, max_chars=limit),
+                                 original[:limit - 1] + '…')
+
+    def test_shared_expression_preview_does_not_expand_the_whole_tree(self):
+        nodes = [dict(kind='Nat', tag=0, children=(), scalars=b'', value=0),
+                 dict(kind='Expr', tag=0, children=(0,), scalars=b'', value=None)]
+        for _ in range(80):
+            previous = len(nodes) - 1
+            nodes.append(dict(kind='Expr', tag=5, children=(previous, previous),
+                              scalars=b'', value=None))
+        preview = Renderer(SimpleNamespace(nodes=nodes)).repr(len(nodes) - 1, max_chars=6000)
+        self.assertEqual(len(preview), 6000)
+        self.assertTrue(preview.startswith('Lean.Expr.app'))
+        self.assertTrue(preview.endswith('…'))
+
+    def test_large_indentation_is_bounded_before_allocating_spaces(self):
+        preview = F.pretty(('nest', 10**9, F.LINE), max_chars=20)
+        self.assertEqual(preview, '\n' + ' ' * 18 + '…')
+        with self.assertRaises(ValueError):
+            F.pretty(F.text('value'), max_chars=0)
 
 
 if __name__ == '__main__':

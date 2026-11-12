@@ -45,18 +45,18 @@ set_option genInjectivity false in
 /-- Cell-for-cell uniform algebraic certification of an integration model. Unlike `PathCertificates`, this relation
 rules out the one-point and empty-list loopholes on every nonstationary segment. -/
 inductive UniformPathCertificates {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (differential : Differentials.Basic.Differential genus) :
-    List Cell.Basic.CellModel -> {start finish : Lifted.Basic.LiftedPoint 2} ->
-      Lifted.Basic.LiftedPath 2 start finish -> Type 2
+    (curve : Basic.HyperellipticCurve genus) (differential : Basic.Differential genus) :
+    List Cell.Basic.CellModel -> {start finish : LiftedPoint 2} ->
+      LiftedPath 2 start finish -> Type 2
   /-- The empty integration-cell list uniformly certifies the constant empty lifted path. -/ | nil (point :
-    Lifted.Basic.LiftedPoint 2) :
+    LiftedPoint 2) :
       UniformPathCertificates curve differential [] (.nil
         point)
   /-- Attach the valid original head-cell certificate and endpoint identities to the matching certified lifted tail. -/
-    | cons {start middle finish : Lifted.Basic.LiftedPoint 2}
+    | cons {start middle finish : LiftedPoint 2}
       {cell : Cell.Basic.CellModel} {cells : List Cell.Basic.CellModel}
-      {liftedCell : Lifted.Basic.LiftedCell start middle}
-      {remaining : Lifted.Basic.LiftedPath 2 middle finish}
+      {liftedCell : LiftedCell start middle}
+      {remaining : LiftedPath 2 middle finish}
       (start_eq : cell.start = start.coordinate)
       (finish_eq : cell.finish = middle.coordinate)
       (valid : Basis.ValidCellCertificate curve differential liftedCell cell)
@@ -66,18 +66,18 @@ inductive UniformPathCertificates {genus : Nat}
         cells)
         (.cons liftedCell remaining)
 
-constructive_injectivity Purelib.Curves.Hyperelliptic.Integration.Algebraic.Path.Basis.UniformPathCertificates
+constructive_injectivity Basis.UniformPathCertificates
 
 namespace UniformPathCertificates
 
 /-- Transport uniform certificates across an equality of starting lifted points. -/
 def castStart {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential : Differentials.Basic.Differential genus}
-    {cells : List Cell.Basic.CellModel} {left right finish : Lifted.Basic.LiftedPoint 2}
-    {path : Lifted.Basic.LiftedPath 2 left finish} (equal : left = right)
-    (certificates : Curves.Hyperelliptic.Integration.Algebraic.Path.Basis.UniformPathCertificates curve differential
+    {curve : Basic.HyperellipticCurve genus} {differential : Basic.Differential genus}
+    {cells : List Cell.Basic.CellModel} {left right finish : LiftedPoint 2}
+    {path : LiftedPath 2 left finish} (equal : left = right)
+    (certificates : UniformPathCertificates curve differential
       cells path) :
-    Curves.Hyperelliptic.Integration.Algebraic.Path.Basis.UniformPathCertificates curve differential cells
+    UniformPathCertificates curve differential cells
       (path.castStart equal) := by
   subst right
   exact certificates
@@ -85,12 +85,12 @@ def castStart {genus : Nat}
 /-- Transport uniform certificates across an equality of finishing lifted points. -/
 def castFinish {genus :
   Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential : Differentials.Basic.Differential genus}
-    {cells : List Cell.Basic.CellModel} {start left right : Lifted.Basic.LiftedPoint 2}
-    {path : Lifted.Basic.LiftedPath 2 start left} (equal : left = right)
-    (certificates : Curves.Hyperelliptic.Integration.Algebraic.Path.Basis.UniformPathCertificates curve differential
+    {curve : Basic.HyperellipticCurve genus} {differential : Basic.Differential genus}
+    {cells : List Cell.Basic.CellModel} {start left right : LiftedPoint 2}
+    {path : LiftedPath 2 start left} (equal : left = right)
+    (certificates : UniformPathCertificates curve differential
       cells path) :
-    Curves.Hyperelliptic.Integration.Algebraic.Path.Basis.UniformPathCertificates curve differential cells
+    UniformPathCertificates curve differential cells
       (path.castFinish equal) := by
   subst right
   exact certificates
@@ -98,16 +98,16 @@ def castFinish {genus :
 /-- Concatenate two uniformly certified finite algebraic paths meeting at the same lifted point. Recursion follows the
 executable lifted path; the indexed certificate argument supplies the matching cell certificate at each step. -/
 def append {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential : Differentials.Basic.Differential genus}
+    {curve : Basic.HyperellipticCurve genus} {differential : Basic.Differential genus}
     {firstCells secondCells : List Cell.Basic.CellModel}
-    {start middle finish : Lifted.Basic.LiftedPoint 2}
-    {second : Lifted.Basic.LiftedPath 2 middle finish} :
-    (first : Lifted.Basic.LiftedPath 2 start middle) ->
-      Curves.Hyperelliptic.Integration.Algebraic.Path.Basis.UniformPathCertificates curve differential firstCells first
+    {start middle finish : LiftedPoint 2}
+    {second : LiftedPath 2 middle finish} :
+    (first : LiftedPath 2 start middle) ->
+      UniformPathCertificates curve differential firstCells first
         ->
-        Curves.Hyperelliptic.Integration.Algebraic.Path.Basis.UniformPathCertificates curve differential secondCells
+        UniformPathCertificates curve differential secondCells
           second ->
-          Curves.Hyperelliptic.Integration.Algebraic.Path.Basis.UniformPathCertificates curve differential
+          UniformPathCertificates curve differential
             (firstCells ++ secondCells) (first.append second)
   | .nil _, .nil _, secondCertificates => secondCertificates
   | .cons _ remaining, .cons start_eq finish_eq valid tail,
@@ -120,11 +120,11 @@ def append {genus : Nat}
 path. -/
 theorem toFollowedBy {genus
   : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential : Differentials.Basic.Differential genus}
-    {cells : List Cell.Basic.CellModel} {start finish : Lifted.Basic.LiftedPoint 2}
-    {path : Lifted.Basic.LiftedPath 2 start finish}
+    {curve : Basic.HyperellipticCurve genus} {differential : Basic.Differential genus}
+    {cells : List Cell.Basic.CellModel} {start finish : LiftedPoint 2}
+    {path : LiftedPath 2 start finish}
     (certificates :
-      Curves.Hyperelliptic.Integration.Algebraic.Path.Basis.UniformPathCertificates curve differential cells path) :
+      UniformPathCertificates curve differential cells path) :
     LiftedPath.FollowedBy cells path :=
   match certificates with
   | .nil point => .nil point
@@ -160,19 +160,19 @@ namespace Purelib.Curves.Hyperelliptic.Integration.Algebraic.Path.Jets
 set_option genInjectivity false in
 /-- Cell-for-cell uniform certification against one displayed lifted path. -/
 inductive UniformPathCertificates {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
-    (differential : OddPower.Basic.OddPowerDifferential) :
-    List Cell.Basic.CellModel -> {start finish : Lifted.Basic.LiftedPoint 2} ->
-      Lifted.Basic.LiftedPath 2 start finish -> Type 2
+    (curve : Basic.HyperellipticCurve genus)
+    (differential : OddPower.Basic.OddPowerDifferential curve.polynomial) :
+    List Cell.Basic.CellModel -> {start finish : LiftedPoint 2} ->
+      LiftedPath 2 start finish -> Type 2
   /-- The empty integration-cell list uniformly certifies the constant empty lifted path. -/ | nil (point :
-    Lifted.Basic.LiftedPoint 2) :
+    LiftedPoint 2) :
       UniformPathCertificates curve differential [] (.nil
         point)
   /-- Attach the valid original head-cell certificate and endpoint identities to the matching certified lifted tail. -/
-    | cons {start middle finish : Lifted.Basic.LiftedPoint 2}
+    | cons {start middle finish : LiftedPoint 2}
       {cell : Cell.Basic.CellModel} {cells : List Cell.Basic.CellModel}
-      {liftedCell : Lifted.Basic.LiftedCell start middle}
-      {remaining : Lifted.Basic.LiftedPath 2 middle finish}
+      {liftedCell : LiftedCell start middle}
+      {remaining : LiftedPath 2 middle finish}
       (start_eq : cell.start = start.coordinate)
       (finish_eq : cell.finish = middle.coordinate)
       (valid : Jets.ValidCellCertificate curve differential liftedCell cell)
@@ -182,19 +182,75 @@ inductive UniformPathCertificates {genus : Nat}
         cells)
         (.cons liftedCell remaining)
 
-constructive_injectivity Purelib.Curves.Hyperelliptic.Integration.Algebraic.Path.Jets.UniformPathCertificates
+constructive_injectivity Jets.UniformPathCertificates
 
 namespace UniformPathCertificates
+
+/-- Concatenate the original odd-power uniform certificates in their retained lifted-cell order. -/
+def append {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    {differential : OddPower.Basic.OddPowerDifferential curve.polynomial}
+    {firstCells secondCells : List Cell.Basic.CellModel} {start middle finish : LiftedPoint 2}
+    {second : LiftedPath 2 middle finish} :
+    (first : LiftedPath 2 start middle) → UniformPathCertificates curve differential firstCells first →
+      UniformPathCertificates curve differential secondCells second →
+        UniformPathCertificates curve differential (firstCells ++ secondCells) (first.append second)
+  | .nil _, .nil _, secondCertificates => secondCertificates
+  | .cons _ remaining, .cons start_eq finish_eq valid tail, secondCertificates =>
+      .cons start_eq finish_eq valid (append remaining tail secondCertificates)
+
+/-- The certified head-rotation result on an exactly closed original lifted path.
+
+An empty path has no head to move. A nonempty path retains the original
+closing equality and the cyclically ordered original cell certificates.
+-/
+def HeadRotation {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    {differential : OddPower.Basic.OddPowerDifferential curve.polynomial}
+    (cells : List Cell.Basic.CellModel) {start finish : LiftedPoint 2}
+    (path : LiftedPath 2 start finish) : Type 2 :=
+  match path with
+  | .nil _ => PUnit
+  | .cons (middle := middle) head tail =>
+      (closed : finish = start) →
+        UniformPathCertificates curve differential (Path.Basic.PathModel.mk cells).rotateHead.cells
+          ((closed ▸ tail).append (.cons head (.nil middle)))
+
+/-- Rotate the original uniform certificates using their actual stored cell and geometry owners. -/
+def rotate {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    {differential : OddPower.Basic.OddPowerDifferential curve.polynomial}
+    {cells : List Cell.Basic.CellModel} {start finish : LiftedPoint 2} {path : LiftedPath 2 start finish}
+    (certificates : UniformPathCertificates curve differential cells path) :
+    HeadRotation (curve := curve) (differential := differential) cells path :=
+  UniformPathCertificates.casesOn certificates
+    (fun _ => PUnit.unit)
+    (fun {actualStart actualMiddle actualFinish cell cells liftedCell remaining}
+        start_eq finish_eq valid tail closed => by
+      cases closed
+      exact append remaining tail (.cons (start := actualStart) (middle := actualMiddle)
+        (finish := actualMiddle) (liftedCell := liftedCell) (remaining := .nil actualMiddle)
+        start_eq finish_eq valid (.nil actualMiddle)))
+
+/-- Move the original certified head cell to the end of its closed lifted path.
+
+The original valid head certificate and every retained tail certificate are
+reused. No algebraic observation or numerical model is constructed again.
+-/
+def rotateHead {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+    {differential : OddPower.Basic.OddPowerDifferential curve.polynomial}
+    {cells : List Cell.Basic.CellModel} {start middle : LiftedPoint 2}
+    {head : LiftedCell start middle} {tail : LiftedPath 2 middle start}
+    (certificates : UniformPathCertificates curve differential cells (.cons head tail)) :
+    UniformPathCertificates curve differential (Path.Basic.PathModel.mk cells).rotateHead.cells
+      (tail.append (.cons head (.nil middle))) := certificates.rotate rfl
 
 /-- Forget the algebraic observation guarantees while retaining exact cell-by-cell alignment with the original lifted
 path. -/
 theorem toFollowedBy {genus
   : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : OddPower.Basic.OddPowerDifferential}
-    {cells : List Cell.Basic.CellModel} {start finish : Lifted.Basic.LiftedPoint 2}
-    {path : Lifted.Basic.LiftedPath 2 start finish}
-    (certificates : Curves.Hyperelliptic.Integration.Algebraic.Path.Jets.UniformPathCertificates curve differential
+    {curve : Basic.HyperellipticCurve genus}
+    {differential : OddPower.Basic.OddPowerDifferential curve.polynomial}
+    {cells : List Cell.Basic.CellModel} {start finish : LiftedPoint 2}
+    {path : LiftedPath 2 start finish}
+    (certificates : UniformPathCertificates curve differential
       cells path) :
     LiftedPath.FollowedBy cells path :=
   match certificates with

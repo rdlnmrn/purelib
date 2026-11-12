@@ -76,6 +76,8 @@ import Purelib.Topology.Mesh.IndexedQuadrilaterals
 import Purelib.Tactic.QuotientFreeOmega
 import Purelib.RootIsolation.SquareRoot.Grid.EdgeCoherence
 
+open Purelib.RootIsolation.SquareRoot.Grid
+
 public section
 
 /-!
@@ -132,12 +134,12 @@ open Purelib.Riemann.Meshes.GridLiftedFaces.BranchCellBank (LiftedFace)
 open Purelib.Geometry.Rectangle.Partition.RectangularEdgeUniqueness
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+  {frames : RootFrames bank.grid} {vertices :
+    LiftedVertices.VertexBank bank.grid} {edges :
+    RootEdgeBank frames}
   {faces : PuncturedFaces bank} {mesh :
     LiftedMesh vertices edges faces}
   {position : Fin faces.regulars.length} {sheet : Fin 2}
@@ -168,11 +170,11 @@ open Purelib.Topology.Polygon.Stokes (OrientedEdge)
 open Purelib.Curves.Hyperelliptic.Integration.Observation.PreparedFaceTracePrefixes (Reached)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+  {frames : RootFrames base.bank.grid} {vertices :
+    LiftedVertices.VertexBank base.bank.grid} {edges :
+    RootEdgeBank frames}
   {start finish : Gaussian}
 
 set_option genInjectivity false in
@@ -181,8 +183,8 @@ set_option genInjectivity false in
 The retained face index, sheet and endpoint coordinates identify its original mesh route and preserve reachability of
 both actual root owners. -/
 structure LiftedSide (cell : PuncturedEdgeFaces.RegularEdgeCell base start finish)
-    (mesh : GridLiftedMesh.LiftedMesh vertices edges base.faces) (sheet : Fin 2) where
-  /-- The retained actual oriented edge in the original lifted vertex bank. -/ edge : Stokes.OrientedEdge vertices.count
+    (mesh : LiftedMesh vertices edges base.faces) (sheet : Fin 2) where
+  /-- The retained actual oriented edge in the original lifted vertex bank. -/ edge : OrientedEdge vertices.count
   /-- The existing lifted-mesh route for this exact edge occurrence. -/ route : MeshPathWalks.EdgeRoute mesh edge
   /-- The route uses exactly the original located regular-face position. -/ position_eq : route.position =
     cell.located.index
@@ -225,8 +227,8 @@ theorem indexed_same {otherStart otherFinish : Gaussian}
 
 Both endpoint equalities refer to the original face side and edge occurrence. The indexed lift uses the sheet of the
 same retained lifted start vertex. -/
-theorem forward_indexed {face : PuncturedGridFaces.RegularFace base.bank.toBranchCellBank} {sheet : Fin 2}
-    (lifted : BranchCellBank.LiftedFace vertices edges face sheet) (side : GridLiftedDualSteps.GridSide)
+theorem forward_indexed {face : RegularFace base.bank.toBranchCellBank} {sheet : Fin 2}
+    (lifted : LiftedFace vertices edges face sheet) (side : GridSide)
     (original : Walks.Edge base.bank.grid start finish)
     (first : side.start face.cell.box = start) (last : side.finish face.cell.box = finish) :
     lifted.quad.edge side.kind = edges.indexedEdge vertices original (vertices.sheet (lifted.quad.edge side.kind).start)
@@ -243,8 +245,8 @@ theorem forward_indexed {face : PuncturedGridFaces.RegularFace base.bank.toBranc
 
 Reversal interchanges the two original endpoint owners. The indexed reverse edge uses the sheet of the retained lifted
 finish vertex without selecting a new edge bank. -/
-theorem backward_indexed {face : PuncturedGridFaces.RegularFace base.bank.toBranchCellBank} {sheet : Fin 2}
-    (lifted : BranchCellBank.LiftedFace vertices edges face sheet) (side : GridLiftedDualSteps.GridSide)
+theorem backward_indexed {face : RegularFace base.bank.toBranchCellBank} {sheet : Fin 2}
+    (lifted : LiftedFace vertices edges face sheet) (side : GridSide)
     (original : Walks.Edge base.bank.grid start finish)
     (first : side.finish face.cell.box = start) (last : side.start face.cell.box = finish) :
     (lifted.quad.edge side.kind).reverse =
@@ -262,12 +264,12 @@ theorem backward_indexed {face : PuncturedGridFaces.RegularFace base.bank.toBran
 /-- Orientation follows the retained incident-cell certificate.
 
 The sheet is the face sheet already selected for the original fragment. -/
-@[expose] def build (cell : PuncturedEdgeFaces.RegularEdgeCell base start finish) (mesh : GridLiftedMesh.LiftedMesh
+@[expose] def build (cell : PuncturedEdgeFaces.RegularEdgeCell base start finish) (mesh : LiftedMesh
   vertices edges base.faces)
-    (sheet : Fin 2) : Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.LiftedEdges.RegularEdgeCell.LiftedSide cell
+    (sheet : Fin 2) : LiftedSide cell
       mesh sheet := by
   let located := mesh.locateFace cell.located.index sheet
-  let location := Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.LiftedEdges.LocatedFace.edgeLocation located
+  let location := LocatedFace.edgeLocation located
     cell.geometry.side.kind
   have cellEq : base.faces.regulars[cell.located.index.val].cell = cell.geometry.cell :=
     (congrArg RegularFace.cell cell.located.indexed).trans cell.located.cell_eq
@@ -327,12 +329,12 @@ open Purelib.Riemann.Paths.PreparedPathTrace (TracedPath)
 /-- Reverse a reachability proof by a finite clear return route.
 
 The loop certificate proves the return owner; it does not assume trace-edge reversal. -/
-theorem reverse_in_clear_box {polynomial : ClearPath.GaussianPolynomial} {box : Rational.Box} {start
+theorem reverse_in_clear_box {polynomial : GaussianPolynomial} {box : Rational.Box} {start
   finish : Gaussian}
-    {first : SquareRootContinuationChain.Owner (polynomial.eval start)} {last : SquareRootContinuationChain.Owner
+    {first : Owner (polynomial.eval start)} {last : Owner
       (polynomial.eval finish)}
     (clearance : Region.RegionClearance polynomial box) (degree : 0 < polynomial.natDegree)
-    (reference : OwnerLoopMonodromy.WindingOneLoop polynomial start) (firstInside : box.Contains start) (lastInside :
+    (reference : WindingOneLoop polynomial start) (firstInside : box.Contains start) (lastInside :
       box.Contains finish)
     (reached : PreparedFaceTracePrefixes.Reached box first last) : PreparedFaceTracePrefixes.Reached box last first :=
       by
@@ -375,16 +377,16 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.Branch
 open Purelib.Curves.Hyperelliptic.Integration.Observation.PreparedFaceTracePrefixes (Reached)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+  {frames : RootFrames base.bank.grid} {vertices :
+    LiftedVertices.VertexBank base.bank.grid} {edges :
+    RootEdgeBank frames}
   {source : Differential genus} {axes :
     PrimitiveAxes base.bank.grid} {parent :
     CenteredEdge curve source}
-  {partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)}
-    {interval : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval}
+  {cuts : List Rational} {partition : Partition 0 1 cuts}
+    {interval : Rectangle.Partition.PreparedAxisPartitions.Interval}
   {fragment : RegularPrimitiveFragment axes
     parent partition interval}
   {domains : FaceDomainBank frames
@@ -396,8 +398,8 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 
 The equality changes only the face index of the retained domain cache. Eliminating that equality preserves the original
 owner and reachability witness. -/
-theorem castFace_reached {first last : PuncturedGridFaces.RegularFace base.bank.toBranchCellBank}
-    (equal : first = last) (cached : DomainBanks.FaceDomains frames first) {point : Gaussian}
+theorem castFace_reached {first last : RegularFace base.bank.toBranchCellBank}
+    (equal : first = last) (cached : FaceDomains frames first) {point : Gaussian}
     {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval point)} (sheet : Fin 2)
     (reached : PreparedFaceTracePrefixes.Reached last.cell.box ((cached.castFace equal).models.frame.owners sheet)
       owner) :
@@ -412,9 +414,9 @@ Internal fragment endpoints retain their own coordinates and are not promoted to
 The retained source endpoints are linked to the original assigned sheet entry and mesh route. Both reachability
 certificates refer to their original cached owners. -/
 structure LiftedSource (assigned : RegularPrimitiveFragment.SheetEntry fragment domains request) (mesh :
-  GridLiftedMesh.LiftedMesh vertices edges base.faces) where
+  LiftedMesh vertices edges base.faces) where
   /-- The actual original containing lifted grid side on the fragment's retained sheet. -/ side :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.LiftedEdges.RegularEdgeCell.LiftedSide fragment.face mesh
+    RegularEdgeCell.LiftedSide fragment.face mesh
     assigned.entry.sheet
   /-- The original fragment's final parameter lies in the retained unit interval. -/ finishInside : 0 ≤ interval.upper ∧
     interval.upper ≤ 1
@@ -431,13 +433,14 @@ structure LiftedSource (assigned : RegularPrimitiveFragment.SheetEntry fragment 
 
 constructive_injectivity LiftedSource
 
-/-- Retain the fragment's actual containing grid side and transport both original query owners through that same clear
-face from its start owner. -/
-@[expose] def LiftedSource.build (assigned : RegularPrimitiveFragment.SheetEntry fragment domains request) (mesh :
-  GridLiftedMesh.LiftedMesh vertices edges base.faces) :
-    LiftedSource assigned mesh := by
-  let side := Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.LiftedEdges.RegularEdgeCell.LiftedSide.build
-    fragment.face mesh assigned.entry.sheet
+/-- Certify both original query endpoints on a supplied complete retained lifted side.
+
+The original face/sample comparison machinery supplies both reachability
+proofs. The side and its transport caches remain inputs; no side, query,
+Point or Entry acquisition is executed. -/
+@[expose] def LiftedSource.ofSide (assigned : RegularPrimitiveFragment.SheetEntry fragment domains request)
+    (mesh : LiftedMesh vertices edges base.faces)
+    (side : RegularEdgeCell.LiftedSide fragment.face mesh assigned.entry.sheet) : LiftedSource assigned mesh := by
   let face := base.faces.regulars[fragment.face.located.index.val]
   let cached := domains.get fragment.face.located.index
   have bounds := partition.interval_bounds fragment.located.member
@@ -452,12 +455,30 @@ face from its start owner. -/
     rw [side.start_eq]
     exact (congrArg RegularFace.cell fragment.face.located.indexed).symm ▸
       (fragment.face.located.cell_eq.symm ▸ fragment.face.geometry.first.corner.contains)
-  have back := Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.LiftedEdges.Reached.reverse_in_clear_box
+  have back := Reached.reverse_in_clear_box
     face.clearance (BranchIsolation.degreePositive curve)
     (BranchCellBank.referenceAt base.bank.toBranchCellBank face.cell.box.anchor (face.cell.anchor_mem
       face.member)).toLoop
     face.cell.box.contains_anchor cornerInside corner
   exact ⟨side, finishInside, back.append first, back.append last⟩
+
+/-- Retain the fragment's actual containing grid side and its original endpoint certificates. -/
+@[expose] def LiftedSource.build (assigned : RegularPrimitiveFragment.SheetEntry fragment domains request) (mesh :
+    LiftedMesh vertices edges base.faces) : LiftedSource assigned mesh :=
+  LiftedSource.ofSide assigned mesh (RegularEdgeCell.LiftedSide.build fragment.face mesh assigned.entry.sheet)
+
+/-- The original constructor is the retained-side operation on its one original side factory. -/
+theorem LiftedSource.build_eq_ofSide (assigned : RegularPrimitiveFragment.SheetEntry fragment domains request)
+    (mesh : LiftedMesh vertices edges base.faces) : LiftedSource.build assigned mesh =
+    LiftedSource.ofSide assigned mesh (RegularEdgeCell.LiftedSide.build fragment.face mesh assigned.entry.sheet) := rfl
+
+/-- The retained-side operation preserves the complete supplied side. -/
+theorem LiftedSource.ofSide_side (assigned : RegularPrimitiveFragment.SheetEntry fragment domains request)
+    (mesh : LiftedMesh vertices edges base.faces)
+    (side : RegularEdgeCell.LiftedSide fragment.face mesh assigned.entry.sheet) :
+    (LiftedSource.ofSide assigned mesh side).side = side := by
+  unfold LiftedSource.ofSide
+  rfl
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.LiftedEdges.SheetEntry
 

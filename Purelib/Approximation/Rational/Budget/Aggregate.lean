@@ -18,6 +18,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 public import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 public section
 
@@ -55,16 +57,46 @@ The original count is nonnegative. Adding one gives a positive denominator base,
 whose square remains positive under multiplication by two. -/
 private theorem denominator_positive (count : Nat) :
     0 < (2 : Fraction.Rational) * ((count : Fraction.Rational) + 1) ^ 2 :=
-  Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-    (Fraction.Order.Arithmetic.pow_pos_direct
-      (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
+  Arithmetic.mul_pos_direct (by decide)
+    (Arithmetic.pow_pos_direct
+      (Arithmetic.add_pos_of_nonneg_of_pos_direct
         (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count)) (by decide)) 2)
 
 /-- A positive aggregate target gives a positive per-term allowance for every finite count. -/
 theorem perTerm_positive {target : Fraction.Rational} (positive : 0 < target) (count : Nat) :
     0 < perTerm target count := by
   rw [perTerm, countCoordinate_eq]
-  exact Fraction.Order.Field.div_pos_direct positive (denominator_positive count)
+  exact Field.div_pos_direct positive (denominator_positive count)
+
+/-- Increasing the aggregate target increases its allowance at the same original finite term count. -/
+theorem perTerm_mono {target next : Fraction.Rational} (bound : target ≤ next) (count : Nat) :
+    perTerm target count ≤ perTerm next count := by
+  unfold perTerm
+  rewrite [countCoordinate_eq]
+  exact Field.divide_mono bound (denominator_positive count)
+
+/-- Compute the aggregate target whose original count allowance is the supplied exact local target. -/
+@[expose] def targetFor (localTarget : Fraction.Rational) (count : Nat) : Fraction.Rational :=
+  (2 * (countCoordinate count + 1) ^ 2) * localTarget
+
+/-- A positive local target gives a positive original aggregate target at every retained finite count. -/
+theorem targetFor_positive {localTarget : Fraction.Rational} (positive : 0 < localTarget) (count : Nat) :
+    0 < targetFor localTarget count := by
+  unfold targetFor
+  have denominator : 0 < (2 : Fraction.Rational) * (countCoordinate count + 1) ^ 2 := by
+    rewrite [countCoordinate_eq]
+    exact denominator_positive count
+  exact Arithmetic.mul_pos_direct denominator positive
+
+/-- The original aggregate allowance of the computed target is exactly the supplied original local target. -/
+theorem perTerm_targetFor (localTarget : Fraction.Rational) (count : Nat) :
+    perTerm (targetFor localTarget count) count = localTarget := by
+  have nonzero : (2 : Fraction.Rational) * (countCoordinate count + 1) ^ 2 ≠ 0 := by
+    rewrite [countCoordinate_eq]
+    exact (denominator_positive count).ne'
+  unfold perTerm targetFor
+  apply Fraction.Field.mul_right_cancel_of_ne nonzero
+  exact (Fraction.Field.div_mul_cancel_of_ne _ _ nonzero).trans (Fraction.Field.mul_comm _ _)
 
 /-- The two count factors consume at most half of the requested error. -/
 theorem count_mul_perTerm_lt {target : Fraction.Rational} (positive : 0 < target) (count : Nat) :
@@ -72,7 +104,7 @@ theorem count_mul_perTerm_lt {target : Fraction.Rational} (positive : 0 < target
   have countNonnegative : (0 : Fraction.Rational) ≤ count := Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count)
   have squares : (count : Fraction.Rational) * count ≤ ((count : Fraction.Rational) + 1) ^ 2 := by
     have extra : (0 : Fraction.Rational) ≤ 2 * count + 1 :=
-      add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) countNonnegative) (by decide)
+      add_nonneg (Arithmetic.mul_nonneg_direct (by decide) countNonnegative) (by decide)
     calc
       _ ≤ (count : Fraction.Rational) * count + (2 * count + 1) := le_add_of_nonneg_right extra
       _ = _ := by ring1
@@ -87,14 +119,14 @@ theorem count_mul_perTerm_lt {target : Fraction.Rational} (positive : 0 < target
       _ = (2 * ((count : Fraction.Rational) + 1) ^ 2) * perTerm target count := by ring1
       _ = target := paid
   have halfLt : target / 2 < target := by
-    apply (Fraction.Order.Field.div_lt_iff_pos (by decide)).mpr
-    have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct positive (by
+    apply (Field.div_lt_iff_pos (by decide)).mpr
+    have scaled := Arithmetic.mul_lt_mul_of_pos_left_direct positive (by
         decide : (1 : Fraction.Rational) < 2)
     simpa only [Fraction.Field.mul_one_direct] using scaled
   calc
     _ = ((count : Fraction.Rational) * count) * perTerm target count := by ring1
     _ ≤ ((count : Fraction.Rational) + 1) ^ 2 * perTerm target count :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct squares (perTerm_positive positive count).le
+      Arithmetic.mul_le_mul_of_nonneg_right_direct squares (perTerm_positive positive count).le
     _ = target / 2 := half
     _ < target := halfLt
 
@@ -106,9 +138,9 @@ theorem perTerm_le {target : Fraction.Rational} (nonnegative : 0 ≤ target) (co
     exact Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count)
   have extra : (0 : Fraction.Rational) ≤ 2 * countCoordinate count ^ 2 + 4 * countCoordinate count + 1 :=
     add_nonneg (add_nonneg
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (Fraction.Order.Arithmetic.sq_nonneg_direct _))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) countNonnegative)) (by decide)
-  apply Fraction.Order.Field.divide_le_self nonnegative
+      (Arithmetic.mul_nonneg_direct (by decide) (Arithmetic.sq_nonneg_direct _))
+      (Arithmetic.mul_nonneg_direct (by decide) countNonnegative)) (by decide)
+  apply Field.divide_le_self nonnegative
   calc
     1 ≤ 1 + (2 * countCoordinate count ^ 2 + 4 * countCoordinate count + 1) := le_add_of_nonneg_right extra
     _ = 2 * (countCoordinate count + 1) ^ 2 := by ring1
@@ -124,9 +156,9 @@ theorem count_mul_allowance_lt {first last : Nat} (countBound : first ≤ last) 
   have nonnegative : 0 ≤ countCoordinate first := by
     rw [countCoordinate_eq]
     exact Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)
-  have firstBound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct localBound nonnegative) nonnegative
-  have countSquare := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+  have firstBound := Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct localBound nonnegative) nonnegative
+  have countSquare := Arithmetic.mul_le_mul_of_nonneg_right_direct
     (Fraction.Cast.Order.natCast_le_direct (Nat.mul_le_mul countBound countBound))
     (perTerm_positive positive last).le
   have regroup : countCoordinate first * (countCoordinate first * perTerm budget last) ≤
@@ -154,21 +186,21 @@ public theorem count_square_mul_quarters_lt {target : Fraction.Rational} (positi
       (perTerm target count / 4) / 4)) < target := by
   let term := perTerm target count
   have termPositive := perTerm_positive positive count
-  have quarterNonnegative : 0 ≤ term / 4 := Fraction.Order.Field.div_nonneg_direct termPositive.le (by decide)
+  have quarterNonnegative : 0 ≤ term / 4 := Field.div_nonneg_direct termPositive.le (by decide)
   have quarterScale : term / 4 ≤ term / 4 * 4 := by
     simpa only [Fraction.Field.mul_one_direct, -eq_self, -iff_self] using
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (by decide : (1 : Fraction.Rational) ≤ 4)
+      Arithmetic.mul_le_mul_of_nonneg_left_direct (by decide : (1 : Fraction.Rational) ≤ 4)
         quarterNonnegative
   have quarterSmall : (term / 4) / 4 ≤ term / 4 :=
-    (Fraction.Order.Field.div_le_iff_pos (by decide : (0 : Fraction.Rational) < 4)).mpr quarterScale
+    (Field.div_le_iff_pos (by decide : (0 : Fraction.Rational) < 4)).mpr quarterScale
   have small : 2 * (term / 4 + (term / 4) / 4) ≤ term := by
     calc
-      _ ≤ 2 * (term / 4 + term / 4) := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.add_le_add_direct (Fraction.Order.Basic.le_refl (term / 4)) quarterSmall) (by decide)
+      _ ≤ 2 * (term / 4 + term / 4) := Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.add_le_add_direct (Basic.le_refl (term / 4)) quarterSmall) (by decide)
       _ = term / 4 * 4 := by ring1
       _ = term := Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
-  have bounded := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct small
-    (Fraction.Order.Arithmetic.sq_nonneg_direct (count : Fraction.Rational))
+  have bounded := Arithmetic.mul_le_mul_of_nonneg_left_direct small
+    (Arithmetic.sq_nonneg_direct (count : Fraction.Rational))
   have paid : (count : Fraction.Rational) ^ 2 * term < target := by
     simpa only [pow_two, Fraction.Field.mul_assoc, -eq_self, -iff_self] using count_mul_perTerm_lt positive count
   exact bounded.trans_lt paid
@@ -192,27 +224,12 @@ retained occurrence and leaves a strict margin below the positive target. -/
 theorem count_mul_weighted_allowance_lt {target : Fraction.Rational}
     (positive : 0 < target) (count : Nat) :
     (count : Fraction.Rational) * Weighted.allowance target (countCoordinate count) < target := by
-  have denominator : 0 < (count : Fraction.Rational) + 1 :=
-    Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
-      (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count)) (by decide)
-  have allowancePositive : 0 < Weighted.allowance target (countCoordinate count) :=
-    Weighted.allowance_positive positive (by
-      rewrite [countCoordinate_eq]
-      exact Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count))
-  calc
-    _ < ((count : Fraction.Rational) + 1) * Weighted.allowance target (countCoordinate count) :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
-        (by
-          have translated := Fraction.Order.Arithmetic.add_lt_add_right_direct
-            (show (0 : Fraction.Rational) < 1 by decide) (count : Fraction.Rational)
-          rewrite [Fraction.Field.zero_add, Fraction.Field.add_comm 1] at translated
-          exact translated) allowancePositive
-    _ = Weighted.allowance target (countCoordinate count) * ((count : Fraction.Rational) + 1) :=
-      Fraction.Field.mul_comm _ _
-    _ = target := by
-      unfold Weighted.allowance
-      rewrite [countCoordinate_eq]
-      exact Fraction.Field.div_mul_cancel_of_ne _ _ denominator.ne'
+  have nonnegative : 0 ≤ countCoordinate count := by
+    rewrite [countCoordinate_eq]
+    exact Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count)
+  have paid := Weighted.mul_allowance_lt positive nonnegative
+  exact (congrArg (fun value : Fraction.Rational => value * Weighted.allowance target (countCoordinate count))
+    (countCoordinate_eq count)).symm.trans_lt paid
 
 end Purelib.Approximation.Rational.Budget.Aggregate
 end

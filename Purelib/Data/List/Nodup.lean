@@ -5,6 +5,7 @@ import Purelib.Data.List.Filter
 import Purelib.Tactic.Ring
 import Purelib.Data.List.Reverse
 import Purelib.Data.List.Map
+public import Purelib.Data.List.GetD
 import Purelib.Data.List.Pairwise
 import Purelib.Data.List.Append
 
@@ -183,6 +184,19 @@ public theorem getElem_index_injective {Item : Type} {values : List Item}
           | succ right =>
               exact congrArg Nat.succ (ih facts.2
                 (Nat.lt_of_succ_lt_succ leftBound) (Nat.lt_of_succ_lt_succ rightBound) equal)
+
+/-- Equal successful optional readings of a duplicate-free list identify their original indices. -/
+public theorem getElem?_index_injective {Item : Type} {values : List Item}
+    (distinct : values.Nodup) {left right : Nat} {entry : Item}
+    (leftRead : Purelib.Data.List.getElem? values left = some entry)
+    (rightRead : Purelib.Data.List.getElem? values right = some entry) : left = right := by
+  have leftBound := Purelib.Data.List.index_lt_length_of_getElem? values left entry leftRead
+  have rightBound := Purelib.Data.List.index_lt_length_of_getElem? values right entry rightRead
+  have leftEqual : values[left]'leftBound = entry := Option.some.inj
+    ((Purelib.Data.List.getElem?_eq_getElem values left leftBound).symm.trans leftRead)
+  have rightEqual : values[right]'rightBound = entry := Option.some.inj
+    ((Purelib.Data.List.getElem?_eq_getElem values right rightBound).symm.trans rightRead)
+  exact getElem_index_injective distinct leftBound rightBound (leftEqual.trans rightEqual.symm)
 
 end Purelib.Data.List.Nodup
 

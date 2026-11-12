@@ -11,6 +11,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-!
@@ -34,7 +36,7 @@ namespace Purelib.Data.Rat.Rounding.Nearest
 Compute the Euclidean floor after adding one half. The resulting displacement lies between negative one half inclusively
 and positive one half exclusively, which specifies the tie direction. -/
 @[expose] def nearestCoordinate (value : Fraction.Rational) : Int :=
-  Rounding.Floor.floor (value + 1 / 2)
+  Floor.floor (value + 1 / 2)
 
 /-- The displacement from the chosen nearest integer lies in the half-open interval from negative one half to one half.
 
@@ -44,26 +46,26 @@ theorem nearestCoordinate_error_bounds (value : Fraction.Rational) :
         value - (nearestCoordinate value : Fraction.Rational) ∧
       value - (nearestCoordinate value : Fraction.Rational) < 1 / 2 := by
   let shifted := value + (1 / 2 : Fraction.Rational)
-  let selected := Rounding.Floor.floor shifted
+  let selected := Floor.floor shifted
   have selectedLower : (selected : Fraction.Rational) ≤ shifted := by
-    exact Rounding.Floor.intCast_floor_le shifted
+    exact Floor.intCast_floor_le shifted
   have selectedUpper :
       shifted < ((selected + 1 : Int) : Fraction.Rational) := by
-    exact Rounding.Floor.lt_intCast_floor_add_one shifted
+    exact Floor.lt_intCast_floor_add_one shifted
   have lowerBase : (selected : Fraction.Rational) - 1 / 2 ≤ value := by
     calc
       (selected : Fraction.Rational) - 1 / 2 ≤ shifted - 1 / 2 :=
-        Fraction.Order.Arithmetic.add_le_add_right_direct selectedLower
+        Arithmetic.add_le_add_right_direct selectedLower
           (-(1 / 2 : Fraction.Rational))
       _ = value := by
         dsimp only [shifted]
         ring1
   have lowerShifted :=
-    Fraction.Order.Arithmetic.add_le_add_right_direct lowerBase
+    Arithmetic.add_le_add_right_direct lowerBase
       (-(selected : Fraction.Rational))
   have upperBase : value < (selected : Fraction.Rational) + 1 / 2 := by
     have translated :=
-      Fraction.Order.Arithmetic.add_lt_add_right_direct selectedUpper
+      Arithmetic.add_lt_add_right_direct selectedUpper
         (-(1 / 2 : Fraction.Rational))
     calc
       value = shifted - 1 / 2 := by
@@ -78,13 +80,13 @@ theorem nearestCoordinate_error_bounds (value : Fraction.Rational) :
           _ = (selected : Fraction.Rational) + 1 / 2 := by
             rw [show (1 : Fraction.Rational) - 1 / 2 = 1 / 2 by decide]
   have upperShifted :=
-    Fraction.Order.Arithmetic.add_lt_add_right_direct upperBase
+    Arithmetic.add_lt_add_right_direct upperBase
       (-(selected : Fraction.Rational))
   change
     -(1 / 2 : Fraction.Rational) ≤
-        value - (Rounding.Floor.floor
+        value - (Floor.floor
           (value + 1 / 2) : Fraction.Rational) ∧
-      value - (Rounding.Floor.floor
+      value - (Floor.floor
         (value + 1 / 2) : Fraction.Rational) < 1 / 2
   constructor
   · change
@@ -139,7 +141,7 @@ theorem nearestCoordinate_sq_le (value : Fraction.Rational) (competitor : Int) :
               gapInt (-1)).2 gapAtMostMinusOne
         have minusOneLeTwiceError : (-1 : Fraction.Rational) ≤ 2 * error := by
           have scaled :=
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+            Arithmetic.mul_le_mul_of_nonneg_left_direct
               errorLower (show (0 : Fraction.Rational) ≤ 2 by decide)
           calc
             (-1 : Fraction.Rational) = 2 * (-(1 / 2 : Fraction.Rational)) := by decide
@@ -150,7 +152,7 @@ theorem nearestCoordinate_sq_le (value : Fraction.Rational) (competitor : Int) :
           gapCastAtMostMinusOne.trans (show (-1 : Fraction.Rational) ≤ 0 by decide)
         have factorNonpositive : gap - 2 * error ≤ 0 := by
           have translated :=
-            Fraction.Order.Arithmetic.add_le_add_right_direct gapLeTwiceError
+            Arithmetic.add_le_add_right_direct gapLeTwiceError
               (-(2 * error))
           calc
             gap - 2 * error = gap + -(2 * error) := by ring1
@@ -159,14 +161,14 @@ theorem nearestCoordinate_sq_le (value : Fraction.Rational) (competitor : Int) :
         have negativeGapNonnegative : 0 ≤ -gap := by
           calc
             0 ≤ 0 - gap :=
-              Fraction.Order.Arithmetic.sub_nonneg_direct gapNonpositive
+              Arithmetic.sub_nonneg_direct gapNonpositive
             _ = -gap := by ring1
         have negativeFactorNonnegative : 0 ≤ -(gap - 2 * error) := by
           calc
             0 ≤ 0 - (gap - 2 * error) :=
-              Fraction.Order.Arithmetic.sub_nonneg_direct factorNonpositive
+              Arithmetic.sub_nonneg_direct factorNonpositive
             _ = -(gap - 2 * error) := by ring1
-        have product := Fraction.Order.Arithmetic.mul_nonneg_direct
+        have product := Arithmetic.mul_nonneg_direct
           negativeGapNonnegative negativeFactorNonnegative
         calc
           0 ≤ (-gap) * (-(gap - 2 * error)) := product
@@ -180,7 +182,7 @@ theorem nearestCoordinate_sq_le (value : Fraction.Rational) (competitor : Int) :
               1 gapInt).2 oneLeGapInt
         have twiceErrorLtOne : 2 * error < (1 : Fraction.Rational) := by
           have scaled :=
-            Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+            Arithmetic.mul_lt_mul_of_pos_left_direct
               (show (0 : Fraction.Rational) < 2 by decide) errorUpper
           calc
             2 * error < 2 * (1 / 2 : Fraction.Rational) := scaled
@@ -189,8 +191,8 @@ theorem nearestCoordinate_sq_le (value : Fraction.Rational) (competitor : Int) :
           twiceErrorLtOne.le.trans oneLeGap
         have gapNonnegative : 0 ≤ gap :=
           (show (0 : Fraction.Rational) ≤ 1 by decide).trans oneLeGap
-        exact Fraction.Order.Arithmetic.mul_nonneg_direct gapNonnegative
-          (Fraction.Order.Arithmetic.sub_nonneg_direct twiceErrorLeGap)
+        exact Arithmetic.mul_nonneg_direct gapNonnegative
+          (Arithmetic.sub_nonneg_direct twiceErrorLeGap)
     have differenceNonnegative :
         0 ≤ (value - (competitor : Fraction.Rational)) ^ 2 - error ^ 2 := by
       calc
@@ -199,7 +201,7 @@ theorem nearestCoordinate_sq_le (value : Fraction.Rational) (competitor : Int) :
           dsimp only [gap, gapInt, error, selected]
           rw [IntCast.sub]
           ring1
-    have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+    have shifted := Arithmetic.add_le_add_right_direct
       differenceNonnegative (error ^ 2)
     change error ^ 2 ≤ (value - (competitor : Fraction.Rational)) ^ 2
     calc

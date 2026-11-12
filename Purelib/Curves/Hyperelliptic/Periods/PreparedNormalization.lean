@@ -31,6 +31,8 @@ import Purelib.Riemann.Readings.NamedMatrixActionBound
 import Purelib.Riemann.Readings.TailSynchronizedEnergy
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired
+
 open Purelib.Approximation
 
 open Purelib.Curves
@@ -58,7 +60,7 @@ open Purelib.Riemann.Readings.CurveRawRequest.PairedPeriodBank (RawRequest rawRe
 open Purelib.Riemann.Topology.PreparedObservationSurface (ObservationBoxEnergy)
 open Purelib.Riemann.Readings.NamedMatrixActionBound (UniformActionBound)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus}
 
 /-- Exact equality of the retained raw period parent with the supplied original period data. -/
 @[expose, reducible] def RawParentEq (data raw : PeriodData curve) : Prop := raw = data
@@ -250,39 +252,39 @@ theorem prepareEntry_radiusSq_readback (target : Fraction.Rational) (positive : 
 end Normalization
 
 /-- The original prepared-cycle bank's raw request at stage floor zero. -/
-@[expose, reducible] def Raw (bank : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve) :=
+@[expose, reducible] def Raw (bank : PeriodBank.PairedPeriodBank curve) :=
   RawRequest bank 0
 /-- The retained lower-bound action on the original raw period request. -/
-@[expose, reducible] def Action {bank : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve}
-  (raw : Raw bank) := Hyperelliptic.Periods.Action.LowerBound.ActionLower raw
+@[expose, reducible] def Action {bank : PeriodBank.PairedPeriodBank curve}
+  (raw : Raw bank) := Action.LowerBound.ActionLower raw
 /-- The original polynomial observation geometry for the curve and its genus. -/
-@[expose, reducible] def Geometry (curve : Hyperelliptic.Basic.HyperellipticCurve genus) := ObservationBoxEnergy
+@[expose, reducible] def Geometry (curve : Basic.HyperellipticCurve genus) := ObservationBoxEnergy
   curve.polynomial genus
 /-- A uniform action bound on the original period bank's a-matrix. -/
-@[expose, reducible] def AAction (bank : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve) :=
+@[expose, reducible] def AAction (bank : PeriodBank.PairedPeriodBank curve) :=
   UniformActionBound bank.periodData.aMatrix
 /-- A retained scalar-tail separation certificate for the original a-matrix. -/
-@[expose, reducible] def InverseTail (bank : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank
+@[expose, reducible] def InverseTail (bank : PeriodBank.PairedPeriodBank
   curve) := ScalarTailSeparationCertificate bank.periodData.aMatrix
 /-- Exact identity of the supplied physical tail with the original action-derived tail certificate. -/
-@[expose, reducible] def TailOwnerEq {bank : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank
+@[expose, reducible] def TailOwnerEq {bank : PeriodBank.PairedPeriodBank
   curve} {raw : Raw bank}
     (action : Action raw) (inverseTail : InverseTail bank) : Prop :=
-  inverseTail = (Hyperelliptic.Periods.Normalization.CurveInverseTail.ActionLower.scalarTailLower
+  inverseTail = (Normalization.CurveInverseTail.ActionLower.scalarTailLower
     action).toScalarTailSeparationCertificate
 /-- The first bilinear-relation certificate on the original raw period bank. -/
-@[expose, reducible] def PreBilinear (bank : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank
+@[expose, reducible] def PreBilinear (bank : PeriodBank.PairedPeriodBank
   curve) :=
   BilinearRelations.Certificate.PreNormalizationCertificate bank.periodData
 /-- The controlled normalized-energy certificate on the original period data and retained physical inverse tail. -/
-@[expose, reducible] def ControlledEnergy (bank : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank
+@[expose, reducible] def ControlledEnergy (bank : PeriodBank.PairedPeriodBank
   curve) (inverseTail : InverseTail bank) :=
-  Hyperelliptic.Integration.Energy.Prepared.TailControlledCertificate bank.periodData inverseTail
+  Integration.Energy.Prepared.TailControlledCertificate bank.periodData inverseTail
 
 set_option genInjectivity false in
 /-- Original acquisition parents, raw action, comparison, inverse tail and
 energy remain attached to one supplied prepared-cycle bank. -/
-structure PreparedOwner (bank : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve) where
+structure PreparedOwner (bank : PeriodBank.PairedPeriodBank curve) where
   /-- The raw request on the original prepared-cycle bank. -/ raw : Raw bank
   /-- The retained action lower bound on that exact raw request. -/ action : Action raw
   /-- The original curve observation geometry. -/ geometry : Geometry curve
@@ -300,29 +302,29 @@ namespace PreparedOwner
 
 /-- Acquire the original raw request, action, inverse tail, bilinear certificate and controlled energy once on the
 supplied prepared-cycle bank. -/
-@[expose] def realize (bank : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve) :
+@[expose] def realize (bank : PeriodBank.PairedPeriodBank curve) :
   PreparedOwner bank :=
   let raw := rawRequest bank 0
-  let action := Hyperelliptic.Periods.Action.LowerBound.ActionLower.build raw
+  let action := Action.LowerBound.ActionLower.build raw
   let geometry := Topology.PreparedObservationSurface.curveObservationBoxEnergy curve
   let aBound := UniformActionBound.build bank.periodData.aMatrix
-  let inverseTail := (Hyperelliptic.Periods.Normalization.CurveInverseTail.ActionLower.scalarTailLower
+  let inverseTail := (Normalization.CurveInverseTail.ActionLower.scalarTailLower
     action).toScalarTailSeparationCertificate
   { raw := raw, action := action, geometry := geometry, aBound := aBound
     inverseTail := inverseTail, inverseTail_eq := rfl
     preBilinear := Periods.CurveFirstBilinearRelation.PairedPeriodBank.preNormalization bank
-    energy := (Hyperelliptic.Periods.Normalization.TailSchedule.tailScheduleSupplied
+    energy := (Normalization.TailSchedule.tailScheduleSupplied
       raw action geometry aBound inverseTail rfl).toTailControlledCertificate }
 
 end PreparedOwner
 
 /-- The supplied period data belong to exactly the original prepared-cycle bank. -/
 @[expose, reducible] def PeriodOwnerEq (data : PeriodData curve) (bank :
-  Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve) : Prop :=
+  PeriodBank.PairedPeriodBank curve) : Prop :=
   data = bank.periodData
 /-- The supplied cycle basis is exactly the basis of the original ordered prepared-cycle bank. -/
 @[expose, reducible] def CycleOwnerEq (basis : PeriodCycleBasis curve) (bank :
-  Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve) : Prop :=
+  PeriodBank.PairedPeriodBank curve) : Prop :=
   basis = PeriodCycleBasis.ofOrdered bank
 
 set_option genInjectivity false in
@@ -332,7 +334,7 @@ inductive Acquisition (data : PeriodData curve) (basis : PeriodCycleBasis curve)
   /-- The period and cycle certificates were supplied directly. -/ | supplied
   /-- The actual prepared-cycle bank and acquisition owner are retained with exact period and cycle-parent identities.
   -/
-  | prepared (bank : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve) (owner :
+  | prepared (bank : PeriodBank.PairedPeriodBank curve) (owner :
     PreparedOwner bank)
       (periods_eq : PeriodOwnerEq data bank) (cycles_eq : CycleOwnerEq basis bank)
 

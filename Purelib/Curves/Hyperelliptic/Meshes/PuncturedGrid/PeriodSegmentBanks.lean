@@ -84,9 +84,9 @@ open Purelib.Riemann.Topology.SquareRootContinuationChain (Owner)
 open _root_.Purelib.Polynomial.Geometry.Grid renaming ClearGrid -> Grid
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {ambient :
-  Purelib.Geometry.Rational.Box} {grid : Polynomial.Geometry.Grid.ClearGrid
+  Geometry.Rational.Box} {grid : Grid
   curve.polynomial ambient}
-  {base : Purelib.Data.Gaussian.Basic.Canonical} {owner : Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+  {base : Data.Gaussian.Basic.Canonical} {owner : Riemann.Topology.SquareRootContinuationChain.Owner
     (curve.polynomial.eval base)} {source : Differential genus}
 
 set_option genInjectivity false in
@@ -94,7 +94,7 @@ set_option genInjectivity false in
 
 The retained pieces share its exact prepared path, and cached segment and parent counts are certified against that
 decomposition. -/
-structure SegmentBank (period : PreparedGridPeriodPrograms.PeriodWalk grid base owner source) where
+structure SegmentBank (period : PeriodWalk grid base owner source) where
   /-- The covered segment pieces of the exact retained period preparation. -/ pieces : PreparedPath.CoveredSegments
     period.closed.traced.prepared
   /-- The cached number of retained segment pieces. -/ count : Nat
@@ -110,53 +110,53 @@ namespace SegmentBank
 variable {period : PeriodWalk grid base owner source}
 
 /-- Decompose the original covered period preparation and retain both segment and parent counts. -/
-@[expose] def build (period : PreparedGridPeriodPrograms.PeriodWalk grid base owner source) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank period :=
+@[expose] def build (period : PeriodWalk grid base owner source) :
+  SegmentBank period :=
   let covered : PreparedClearPathModels.CoveredTracedPath period.closed.walk.path owner := ⟨period.closed.traced,
     period.closed.cover⟩
   let pieces := CoveredTracedPath.segments covered
   ⟨pieces, pieces.count, rfl, CoveredSegments.parentCount pieces, rfl⟩
 
 /-- The retained segment-bank count equals the original grid walk edge count. -/
-theorem count_eq_edges (bank : Curves.Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank period) :
+theorem count_eq_edges (bank : SegmentBank period) :
   bank.count = period.closed.walk.edgeCount := by
   rw [bank.count_eq, bank.pieces.count_eq, period.closed.walk.path_segmentCount]
 
 /-- Each piece retains its actual original parent occurrences for every differential, including when the source and
 target differentials differ. -/
-theorem parents_eq (bank : Curves.Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank period) (target :
-  Differentials.Basic.Differential genus) :
+theorem parents_eq (bank : SegmentBank period) (target :
+  Differential genus) :
     CoveredSegments.parents target 0 bank.pieces = period.initial.state.parents.map
       (PreparedEdgeRecasting.recastCenteredEdge target) := by
   rw [CoveredSegments.parents_eq, period.initial_eq, RootClosedWalk.initial_parents,
     PreparedPathDifferentialRecasting.ofPreparedPath_recast]
 
 /-- The retained parent-bank count equals the original initial period-state parent length. -/
-theorem parentCount_eq_initial (bank : Curves.Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank period)
+theorem parentCount_eq_initial (bank : SegmentBank period)
   : bank.parentCount = period.initial.state.parents.length := by
   have count := CoveredSegments.parents_length source 0 bank.pieces
-  rw [bank.parents_eq source, Purelib.Data.List.Map.length_map] at count
+  rw [bank.parents_eq source, Data.List.Map.length_map] at count
   exact bank.parentCount_eq.trans count.symm
 
 /-- Split the actual cached integration parents and primitive patches. Recasting changes the numerator centers only, not
 the retained root owners. -/
-@[expose] def parentCaches (bank : Curves.Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank period)
-  (target : Differentials.Basic.Differential genus) :
-    CoveredSegments.ParentCaches target 0 bank.pieces :=
+@[expose] def parentCaches (bank : SegmentBank period)
+  (target : Differential genus) :
+    ParentCaches target 0 bank.pieces :=
   ParentCaches.build target 0 bank.pieces
     (period.initial.state.parents.map (PreparedEdgeRecasting.recastCenteredEdge target)) (bank.parents_eq target).symm
     (CoveredParents.recast target period.covered)
 
 /-- Flattening the retained per-piece parent caches gives exactly the original recast initial parents. -/
-theorem parentCaches_parents (bank : Curves.Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank period)
-  (target : Differentials.Basic.Differential genus) :
+theorem parentCaches_parents (bank : SegmentBank period)
+  (target : Differential genus) :
     ParentCaches.parents (bank.parentCaches target) = period.initial.state.parents.map
       (PreparedEdgeRecasting.recastCenteredEdge target) :=
   (ParentCaches.parents_eq (bank.parentCaches target)).trans (bank.parents_eq target)
 
 /-- The very cells sampled by the original initial period program are the concatenated piece cells. This asserts no
 equality with separately prepared programs and needs no independent owner-agreement premise. -/
-theorem initial_cells (bank : Curves.Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank period)
+theorem initial_cells (bank : SegmentBank period)
   (differential : Fin genus) :
     ((period.program differential).integral.model 0).cells =
       (CoveredSegments.parents (PeriodMatrix.standardDifferential differential) 0 bank.pieces).map

@@ -92,21 +92,21 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Gaussian.Norm.Basic (normSq_nonneg)
 open Purelib.Data.Rat.Fraction.Compatibility
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential} {target : Coordinate} {minimum
     stage fine index : Nat}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
   {plan : PairedSourcePlan occurrence
     other target minimum}
 
@@ -119,18 +119,18 @@ variable {evaluated :
 
 /-- A physical source run descending within one retained parent. Explicit step inequalities also admit constant
 junctions irrespective of their direction tag. -/
-inductive ReverseSourceFragmentChain (entry : PairedFragmentQueries.SourceEntry plan sample otherSample fine) (width :
-  InverseRootPolynomial.Coordinate) :
-    List (PairedFragmentBlocks.OwnedFragment evaluated data otherData) → InverseRootPolynomial.Coordinate →
-      InverseRootPolynomial.Coordinate → Prop
+inductive ReverseSourceFragmentChain (entry : SourceEntry plan sample otherSample fine) (width :
+  Coordinate) :
+    List (PairedFragmentBlocks.OwnedFragment evaluated data otherData) → Coordinate →
+      Coordinate → Prop
   /-- The empty descending source chain starts and finishes at the same retained parameter. -/ | nil (point :
-    InverseRootPolynomial.Coordinate) :
+    Coordinate) :
     ReverseSourceFragmentChain entry
     width [] point point
   /-- Extend the original descending chain by a fragment with the identical source entry, adjacent terminal parameter
     and bounded descending steps. -/ | cons (fragment : PairedFragmentBlocks.OwnedFragment evaluated data otherData)
       {rest : List (PairedFragmentBlocks.OwnedFragment evaluated data otherData)} {last :
-        InverseRootPolynomial.Coordinate}
+        Coordinate}
       (same : fragment.entry = entry)
       (descending : ∀ edge : Fin fragment.count, fragment.parameters edge.succ ≤ fragment.parameters edge.castSucc)
       (steps : ∀ edge : Fin fragment.count,
@@ -142,7 +142,7 @@ inductive ReverseSourceFragmentChain (entry : PairedFragmentQueries.SourceEntry 
 
 /-- Concatenate reversed original fragment parameters in reverse fragment order. -/
 @[expose] def reverseSourceFragmentParameters : List (PairedFragmentBlocks.OwnedFragment evaluated data otherData) →
-  List InverseRootPolynomial.Coordinate
+  List Coordinate
   | [] => []
   | fragment :: rest =>
     reverseSourceFragmentParameters rest
@@ -157,10 +157,10 @@ variable {entry : SourceEntry plan
 /-- Reversing the retained descending fragment chain gives an ascending parameter chain between its original endpoints.
 -/
 theorem parameters_chain (chain :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ReverseFragmentRuns.ReverseSourceFragmentChain entry width
+  ReverseSourceFragmentChain entry width
   fragments first last) :
     SourceResampling.Chain last
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ReverseFragmentRuns.reverseSourceFragmentParameters fragments)
+      (ReverseFragmentRuns.reverseSourceFragmentParameters fragments)
       first := by
   induction chain with
   | nil point => exact .nil point
@@ -169,10 +169,10 @@ theorem parameters_chain (chain :
 
 /-- Every reversed original source parameter step retains the common descending width bound. -/
 theorem parameter_widths (chain :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ReverseFragmentRuns.ReverseSourceFragmentChain entry width
+  ReverseSourceFragmentChain entry width
   fragments first last) :
     SourceResampling.widths last
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ReverseFragmentRuns.reverseSourceFragmentParameters fragments)
+      (ReverseFragmentRuns.reverseSourceFragmentParameters fragments)
       width := by
   induction chain with
   | nil point => trivial
@@ -184,11 +184,11 @@ theorem parameter_widths (chain :
 /-- Reverse the cached source path as a whole. Group boundaries and stationary junctions remain in the exact parameter
 and increment readbacks. -/
 theorem source_readback (chain :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ReverseFragmentRuns.ReverseSourceFragmentChain entry width
+  ReverseSourceFragmentChain entry width
   fragments first last) :
     PairedAreaReversal.reverseIncrements (FragmentFamilies.fragmentSourcePath fragments) =
       SourceListResampling.increments (PairedFragmentValues.sourceValues entry) last
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ReverseFragmentRuns.reverseSourceFragmentParameters
+        (ReverseFragmentRuns.reverseSourceFragmentParameters
         fragments) := by
   induction chain with
   | nil point => rfl
@@ -196,28 +196,28 @@ theorem source_readback (chain :
     change PairedAreaReversal.reverseIncrements (CenteredPathIncrements.Sample.increments fragment.source ++
       FragmentFamilies.fragmentSourcePath rest) =
       SourceListResampling.increments (PairedFragmentValues.sourceValues entry) last
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ReverseFragmentRuns.reverseSourceFragmentParameters rest ++
+        (ReverseFragmentRuns.reverseSourceFragmentParameters rest ++
           OwnedFragment.reversedSourceParameters fragment)
     rw [PairedAreaReversal.reverseIncrements_append, SourceListResampling.increments_append, Chain.terminal_eq
       (tail.parameters_chain), ih]
     have read := (OwnedFragment.reversed_source_increments fragment).trans
-      (congrArg (fun chosen : PairedFragmentQueries.SourceEntry plan sample otherSample fine =>
+      (congrArg (fun chosen : SourceEntry plan sample otherSample fine =>
         SourceListResampling.increments (PairedFragmentValues.sourceValues chosen)
           (fragment.parameters (Fin.last fragment.count))
           (OwnedFragment.reversedSourceParameters fragment)) same)
     exact congrArg (fun values =>
       SourceListResampling.increments (PairedFragmentValues.sourceValues entry) last
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ReverseFragmentRuns.reverseSourceFragmentParameters rest) ++
+        (ReverseFragmentRuns.reverseSourceFragmentParameters rest) ++
         values) read
 
 end ReverseSourceFragmentChain
 
 /-- Feed a complete descending physical run into the existing ascending resampling estimate using reversed cached
 increments and the same source owner. -/
-@[expose] def ResampledSourceRun.ofReverseFragments (entry : PairedFragmentQueries.SourceEntry plan sample otherSample
+@[expose] def ResampledSourceRun.ofReverseFragments (entry : SourceEntry plan sample otherSample
   fine)
     (fragments : List (PairedFragmentBlocks.OwnedFragment evaluated data otherData)) (width :
-      InverseRootPolynomial.Coordinate)
+      Coordinate)
     (chain : ReverseSourceFragmentChain entry
       width fragments 1 0) :
     ConjugateSourceRuns.ResampledSourceRun plan sample otherSample fine :=
@@ -233,25 +233,25 @@ increments and the same source owner. -/
 /-- The physical descending run approximates the negative reference area. The error budget is the same finite resampling
 budget used for forward runs. -/
 theorem ReverseSourceFragmentChain.conjugate_error
-    {entry : PairedFragmentQueries.SourceEntry plan sample otherSample fine}
+    {entry : SourceEntry plan sample otherSample fine}
     {fragments : List (PairedFragmentBlocks.OwnedFragment evaluated data otherData)} {width :
-      InverseRootPolynomial.Coordinate}
+      Coordinate}
     (chain : ReverseSourceFragmentChain entry
       width fragments 1 0) :
     Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area
       ((FragmentFamilies.fragmentSourcePath fragments).map ConjugateIncrementComparison.conjugateFirst) +
       PairedIncrementArea.area (entry.pair.1.map ConjugateIncrementComparison.conjugateFirst)) ≤
       16 * (PairedFragmentValues.sourceDensity entry)^2 * (max width ((1 / 2 :
-        InverseRootPolynomial.Coordinate)^(plan.parents.depth + fine)))^2 := by
+        Coordinate)^(plan.parents.depth + fine)))^2 := by
   have bound :=
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ReverseFragmentRuns.ResampledSourceRun.ofReverseFragments entry
+    (ResampledSourceRun.ofReverseFragments entry
     fragments width chain).accurate
   change Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area
     ((PairedAreaReversal.reverseIncrements (FragmentFamilies.fragmentSourcePath fragments)).map
       ConjugateIncrementComparison.conjugateFirst) -
     PairedIncrementArea.area (entry.pair.1.map ConjugateIncrementComparison.conjugateFirst)) ≤ _ at bound
   rw [PairedAreaReversal.conjugate_area_reverseIncrements] at bound
-  have negative (a b : InverseRootPolynomial.Gaussian) : -a - b = -(a + b) := by ring1
+  have negative (a b : Gaussian) : -a - b = -(a + b) := by ring1
   rw [negative, Data.Gaussian.Norm.Basic.normSq_neg] at bound
   exact bound
 

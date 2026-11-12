@@ -2,6 +2,7 @@ module
 meta import Purelib.Elab.ConstructiveInjectivity
 -- Exposed owner builders retain mapped-coordinate bound and readback certificates.
 public import Purelib.Data.List.Map
+import Purelib.Data.List.Membership
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Vector.Basic
 
@@ -48,7 +49,7 @@ coordinate belongs to that exact cell and remains the readback value. -/
 structure OwnedVertex {columns rows : Nat} (geometry : Geometry columns rows) where
   /-- The retained original cell-column index. -/ column : Fin (columns + 1)
   /-- The retained original cell-row index. -/ row : Fin (rows + 1)
-  /-- The retained original geometric vertex coordinate. -/ point : Basic.Canonical
+  /-- The retained original geometric vertex coordinate. -/ point : Canonical
   /-- The retained point belongs to its exact original owner cell. -/ contains : (geometry.box column row).Contains
     point
 
@@ -63,7 +64,7 @@ Separate containment certificates concern the three ordered triangle corners. -/
 structure ModelTriangle {columns rows : Nat} (geometry : Geometry columns rows) where
   /-- The retained original cell-column index. -/ column : Fin (columns + 1)
   /-- The retained original cell-row index. -/ row : Fin (rows + 1)
-  /-- The original coordinate triangle. -/ triangle : Topology.Mesh.CoordinateTriangulation.CoordinateTriangle
+  /-- The original coordinate triangle. -/ triangle : CoordinateTriangle
   /-- The original triangle's first vertex belongs to its retained owner cell. -/ firstInside : (geometry.box column
     row).Contains triangle.first
   /-- The original triangle's second vertex belongs to its retained owner cell. -/ secondInside : (geometry.box column
@@ -94,7 +95,7 @@ open Purelib in
 Every face contributes the same three ordered coordinates to both lists.
 Structural recursion compares their retained tails without changing ownership. -/
 theorem ownedVertices_points (triangles : List (ModelTriangle geometry)) :
-    Topology.Mesh.CoordinateTriangulation.triangleVertices (triangles.map ModelTriangle.triangle) =
+    triangleVertices (triangles.map triangle) =
       (ownedVertices triangles).map OwnedVertex.point := by
   induction triangles with
   | nil => rfl
@@ -102,6 +103,27 @@ theorem ownedVertices_points (triangles : List (ModelTriangle geometry)) :
       exact congrArg (List.cons face.triangle.first)
         (congrArg (List.cons face.triangle.second)
           (congrArg (List.cons face.triangle.third) ih))
+
+/-- Every retained corner keeps the fixed coarse indices when all actual triangles use that same cell. -/
+theorem ownedVertices_cell (column : Fin (columns + 1)) (row : Fin (rows + 1))
+    (triangles : List (ModelTriangle geometry))
+    (same : ∀ triangle ∈ triangles, triangle.column = column ∧ triangle.row = row)
+    {vertex : OwnedVertex geometry} (member : vertex ∈ ownedVertices triangles) :
+    vertex.column = column ∧ vertex.row = row := by
+  induction triangles with
+  | nil => cases member
+  | cons face rest ih =>
+      have head := same face List.mem_cons_self
+      rcases Membership.mem_cons.mp member with equal | member
+      · cases equal
+        exact head
+      · rcases Membership.mem_cons.mp member with equal | member
+        · cases equal
+          exact head
+        · rcases Membership.mem_cons.mp member with equal | member
+          · cases equal
+            exact head
+          · exact ih (fun triangle present => same triangle (List.mem_cons_of_mem _ present)) member
 
 end ModelTriangle
 
@@ -115,7 +137,7 @@ indices for equal coordinates. -/
 structure OwnedTriangulation {columns rows : Nat} {geometry : Geometry columns rows}
     (triangles : List (ModelTriangle geometry)) where
   /-- The original coordinate triangulation of the exact model-triangle list. -/ mesh :
-    Topology.Mesh.CoordinateTriangulation (triangles.map ModelTriangle.triangle)
+    CoordinateTriangulation (triangles.map ModelTriangle.triangle)
   /-- The retained owner vector indexed by the original mesh vertices. -/ owners : Data.Vector (OwnedVertex
     geometry) mesh.vertices.length
   /-- Each retained owner's coordinate equals its exact original mesh coordinate. -/ point_eq : ∀ vertex, (owners
@@ -138,19 +160,19 @@ open Purelib.Data in
 The exact flattened owned-vertex list supplies containment data; coordinate lookup shares the original owner indices
 whenever coordinates coincide. -/
 @[expose] def build (triangles : List (ModelTriangle geometry)) : OwnedTriangulation triangles :=
-  let mesh := Topology.Mesh.CoordinateTriangulation.build (triangles.map ModelTriangle.triangle)
+  let mesh := CoordinateTriangulation.build (triangles.map ModelTriangle.triangle)
   let vertices := ModelTriangle.ownedVertices triangles
   have lengthEq : mesh.vertices.length = vertices.length := by
-    change (Topology.Mesh.CoordinateTriangulation.triangleVertices (triangles.map ModelTriangle.triangle)).length =
+    change (triangleVertices (triangles.map ModelTriangle.triangle)).length =
       vertices.length
     rw [ModelTriangle.ownedVertices_points, Map.length_map]
   let firstOccurrence := fun vertex : Fin mesh.vertices.length =>
-    Topology.Mesh.CoordinateTriangulation.lookupVertex (mesh.coordinate vertex) mesh.vertices (List.getElem_mem _)
+    lookupVertex (mesh.coordinate vertex) mesh.vertices (List.getElem_mem _)
   have readback (vertex : Fin mesh.vertices.length) :
       (vertices[vertex.val]'(vertex.isLt.trans_eq lengthEq)).point = mesh.coordinate vertex := by
-    change (vertices[vertex.val]).point = (Topology.Mesh.CoordinateTriangulation.triangleVertices (triangles.map
+    change (vertices[vertex.val]).point = (triangleVertices (triangles.map
       ModelTriangle.triangle))[vertex.val]
-    have same : Topology.Mesh.CoordinateTriangulation.triangleVertices
+    have same : triangleVertices
         (triangles.map ModelTriangle.triangle) = vertices.map OwnedVertex.point :=
       ModelTriangle.ownedVertices_points triangles
     have sourceBound : vertex.val < vertices.length := vertex.isLt.trans_eq lengthEq
@@ -165,16 +187,32 @@ whenever coordinates coincide. -/
     exact (Map.getElem_map OwnedVertex.point vertices vertex.val sourceBound mappedBound).symm.trans
       (coordinateTransport same vertex.isLt mappedBound).symm
   { mesh := mesh
-    owners := Vector.Basic.vectorOfFn fun vertex => vertices[(firstOccurrence vertex).index.val]'((firstOccurrence
+    owners := vectorOfFn fun vertex => vertices[(firstOccurrence vertex).index.val]'((firstOccurrence
       vertex).index.isLt.trans_eq lengthEq)
     point_eq := fun vertex => by
-      rw [Vector.Basic.vectorOfFn_apply]
+      rw [vectorOfFn_apply]
       exact (readback (firstOccurrence vertex).index).trans (firstOccurrence vertex).coordinate_eq
     owner_consistent := fun first last equal => by
       have same : (firstOccurrence first).index = (firstOccurrence last).index :=
-        Topology.Mesh.CoordinateTriangulation.lookupVertex_same mesh.vertices _ _ equal
-      rw [Vector.Basic.vectorOfFn_apply, Vector.Basic.vectorOfFn_apply, same]
+        lookupVertex_same mesh.vertices _ _ equal
+      rw [vectorOfFn_apply, vectorOfFn_apply, same]
       exact ⟨rfl, rfl⟩ }
+
+/-- The original first-occurrence owner is an actual whole corner owner from the original triangle list. -/
+theorem build_owner_mem (triangles : List (ModelTriangle geometry))
+    (vertex : Fin (build triangles).mesh.vertices.length) :
+    (build triangles).owners vertex ∈ ModelTriangle.ownedVertices triangles := by
+  unfold build
+  rewrite [vectorOfFn_apply]
+  exact List.getElem_mem _
+
+/-- The original triangulation builder retains a uniform coarse cell at every vertex when its actual faces do. -/
+theorem build_owner_cell (column : Fin (columns + 1)) (row : Fin (rows + 1))
+    (triangles : List (ModelTriangle geometry))
+    (same : ∀ triangle ∈ triangles, triangle.column = column ∧ triangle.row = row)
+    (vertex : Fin (build triangles).mesh.vertices.length) :
+    ((build triangles).owners vertex).column = column ∧ ((build triangles).owners vertex).row = row :=
+  ModelTriangle.ownedVertices_cell column row triangles same (build_owner_mem triangles vertex)
 
 /-- The original model triangle at the retained mapped-face index. -/
 @[expose] def faceSource (_surface : OwnedTriangulation triangles)

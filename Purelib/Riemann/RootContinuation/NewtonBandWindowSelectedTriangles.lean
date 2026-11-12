@@ -47,19 +47,19 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.Bra
   (compileResplit_two_sheets)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SelectedTrianglePartition (selectedFullTriangleArea)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_succ)
-attribute [local congr] Purelib.Algebra.FiniteSum.Fin.sumFin_congr
+attribute [local congr] sumFin_congr
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : NewtonPreparation original} {target radius : Purelib.Data.Rat.Fraction.Rational}
+  {preparation : NewtonPreparation original} {target radius : Rational}
   {grid : NewtonGrid preparation target radius} {index :
-    Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
+    Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
   {current : LiftedPuncturedGrid grid.punctured}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames
+  {domains : FaceDomainBank current.frames
     grid.faces.regulars} {i j : Fin genus}
-  {stage : Nat} {cache : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+  {stage : Nat} {cache : RegularMeshes.Numerics
     domains stage}
 
 open Purelib.Algebra in
@@ -70,66 +70,66 @@ open Purelib.Polynomial in
 
 The identity uses the retained annular compiler's actual face positions, even when the two traversals transport their
 sheets along different stems. -/
-theorem fine_triangles_selected (region : Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) current.mesh)
-      (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j) current.mesh)
+theorem fine_triangles_selected (region : AnnularFaces grid index)
+    (left : TriangleReadings (cache.get i) current.mesh)
+      (right : TriangleReadings (cache.get j) current.mesh)
       :
-    Geometry.Grid.CellBoundary.sumValues (Hyperelliptic.Meshes.PuncturedGrid.FinePolygonAggregate.fineTriangleArea left
+    sumValues (fineTriangleArea left
       right) (fineCompiler (current := current) region 0).regulars +
-      Geometry.Grid.CellBoundary.sumValues (Hyperelliptic.Meshes.PuncturedGrid.FinePolygonAggregate.fineTriangleArea
+      sumValues (fineTriangleArea
         left right) (fineCompiler (current := current) region 1).regulars =
-      Hyperelliptic.Meshes.PuncturedGrid.SelectedTrianglePartition.selectedFullTriangleArea left right (fun position =>
+      selectedFullTriangleArea left right (fun position =>
         decide ((grid.faces.regulars[position.val]'position.isLt).cell.box.Refines (grid.bands.box index))) := by
   let value := fun position sheet =>
-    Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+    bilinearArea left right
       (current.mesh.triangleIndex position sheet false) +
-      Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+      bilinearArea left right
         (current.mesh.triangleIndex position sheet true)
   have paired :=
-    Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.compileResplit_two_sheets
+    compileResplit_two_sheets
     (Geometry.Grid.Extension.CoordinateInclusion.refl grid.punctured.bank.grid) current.edges current.vertices
     (fun point member => (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
       grid.punctured.bank.toBranchCellBank point member).toLoop)
     (Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.anchor_onGrid region)
     (fineOrder (current := current) region 0).partition value 0 1 (by decide)
-  have positions := Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces.fineCompiler_position_sum region (current :=
+  have positions := AnnularFaces.fineCompiler_position_sum region (current :=
     current) 0
     (fun position => value position 0 + value position 1)
   refine paired.trans (positions.trans ?_)
-  apply FiniteSum.Fin.sumFin_congr
+  apply sumFin_congr
   intro position
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.SelectedTrianglePartition.selectedFullTriangleArea,
+  dsimp only [selectedFullTriangleArea,
     Hyperelliptic.Meshes.PuncturedGrid.SelectedPerimeterIdentity.SelectedSides.value]
   change (if (grid.faces.regulars[position.val]'position.isLt).cell.box.Refines (grid.bands.box index)
     then value position 0 + value position 1 else 0) =
-    FiniteSum.Fin.sumFin (fun sheet : Fin 2 =>
+    sumFin (fun sheet : Fin 2 =>
       (if decide ((grid.faces.regulars[position.val]'position.isLt).cell.box.Refines (grid.bands.box index)) = true then
-        Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+        bilinearArea left right
           (current.mesh.triangleIndex position sheet false) else 0) +
       (if decide ((grid.faces.regulars[position.val]'position.isLt).cell.box.Refines (grid.bands.box index)) = true then
-        Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+        bilinearArea left right
           (current.mesh.triangleIndex position sheet true) else 0))
   by_cases selected : (grid.faces.regulars[position.val]'position.isLt).cell.box.Refines (grid.bands.box index)
   · rw [if_pos selected]
     have each (sheet : Fin 2) :
         (if decide ((grid.faces.regulars[position.val]'position.isLt).cell.box.Refines (grid.bands.box index)) = true
           then
-          Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+          bilinearArea left right
             (current.mesh.triangleIndex position sheet false) else 0) +
         (if decide ((grid.faces.regulars[position.val]'position.isLt).cell.box.Refines (grid.bands.box index)) = true
           then
-          Hyperelliptic.Meshes.PuncturedGrid.CornerTriangleAreas.TriangleReadings.bilinearArea left right
+          bilinearArea left right
             (current.mesh.triangleIndex position sheet true) else 0) = value position sheet := by
       rw [if_pos (decide_eq_true selected), if_pos (decide_eq_true selected)]
-    rw [FiniteSum.Fin.sumFin_congr each]
-    rw [FiniteSum.Fin.sumFin_succ, FiniteSum.Fin.sumFin_succ]
+    rw [sumFin_congr each]
+    rw [sumFin_succ, sumFin_succ]
     change value position 0 + value position 1 = value position 0 + (value position 1 + 0)
     rw [add_zero]
   · rw [if_neg selected]
     symm
-    refine Eq.trans (b := FiniteSum.Fin.sumFin (fun _ : Fin 2 => (0 : Gaussian.Basic.Canonical))) ?_
+    refine Eq.trans (b := sumFin (fun _ : Fin 2 => (0 : Gaussian.Basic.Canonical))) ?_
       FiniteSum.Fin.sumFin_zero
-    apply FiniteSum.Fin.sumFin_congr
+    apply sumFin_congr
     intro sheet
     rw [if_neg (fun h => selected (of_decide_eq_true h)),
       if_neg (fun h => selected (of_decide_eq_true h)), add_zero]

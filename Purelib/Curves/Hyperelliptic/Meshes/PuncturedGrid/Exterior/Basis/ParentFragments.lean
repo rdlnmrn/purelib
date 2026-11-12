@@ -58,6 +58,8 @@ import Purelib.Riemann.Paths.PreparedPathDecomposition
 import Purelib.Riemann.Paths.PreparedPathParentCaches
 import Purelib.Riemann.Paths.RectangularTraceParameterReadings
 
+open Purelib.Geometry.Rectangle
+
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments
@@ -91,17 +93,17 @@ open Purelib.Integration.Path.ConjugateIncrementComparison (conjugateFirst)
 open Purelib.Riemann.Integration.RectangularAxisParameterRange (AxisParameterRange)
 open Purelib.Geometry.Rectangle.SourceIntervals (axisCoordinate)
 open Purelib.Data.Rat.Fraction.Compatibility
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential other :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential other :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
 
 open Purelib.Topology.Polygon.Stokes (PrimitivePoint)
@@ -109,42 +111,42 @@ open Purelib.Riemann.Periods.CenteredBilinearPath (Sample)
 open Purelib.Integration.Path.NoisyPathArea (LengthErrorBudget)
 
 namespace ParentBlock
-variable {vertical forward : Bool} {physical : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval}
-  (block : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.ParentBlock occurrence vertical
+variable {vertical forward : Bool} {physical : Partition.PreparedAxisPartitions.Interval}
+  (block : ParentBlock occurrence vertical
     forward physical)
-  {covers : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent occurrence block.index)}
+  {covers : BasisSourceCovers
+    (ParentBlocks.cacheParent occurrence block.index)}
   {sourceIndex faceIndex : Nat}
   {originals :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+    PrimitiveBank
     covers sourceIndex}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus} {data :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData occurrence faceIndex}
-  (coordinate : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate)
-  (sourceFirst : Purelib.Geometry.Rectangle.SourceIntervals.axisCoordinate (!vertical) occurrence.start = coordinate)
-  (sourceLast : Purelib.Geometry.Rectangle.SourceIntervals.axisCoordinate (!vertical) occurrence.finish = coordinate)
+    RowData occurrence faceIndex}
+  (coordinate : Coordinate)
+  (sourceFirst : SourceIntervals.axisCoordinate (!vertical) occurrence.start = coordinate)
+  (sourceLast : SourceIntervals.axisCoordinate (!vertical) occurrence.finish = coordinate)
   {lc lr rc rr vertices : Nat}
-  {lg : Purelib.Riemann.Normalization.RectangularInverseModels.Geometry lc lr} {rg :
-    Purelib.Riemann.Normalization.RectangularInverseModels.Geometry rc rr}
-  {piece : Purelib.Riemann.Paths.RectangularPairedSegments.PairedSegmentPiece lg rg} (trace :
-    Purelib.Riemann.Integration.RectangularPairedPointBanks.Trace piece vertices)
-  (firstAlong : Purelib.Geometry.Rectangle.SourceIntervals.axisCoordinate vertical piece.first = physical.lower)
-  (lastAlong : Purelib.Geometry.Rectangle.SourceIntervals.axisCoordinate vertical piece.last = physical.upper)
-  (firstAcross : Purelib.Geometry.Rectangle.SourceIntervals.axisCoordinate (!vertical) piece.first = coordinate)
-  (lastAcross : Purelib.Geometry.Rectangle.SourceIntervals.axisCoordinate (!vertical) piece.last = coordinate)
+  {lg : RectangularInverseModels.Geometry lc lr} {rg :
+    RectangularInverseModels.Geometry rc rr}
+  {piece : RectangularPairedSegments.PairedSegmentPiece lg rg} (trace :
+    Riemann.Integration.RectangularPairedPointBanks.Trace piece vertices)
+  (firstAlong : SourceIntervals.axisCoordinate vertical piece.first = physical.lower)
+  (lastAlong : SourceIntervals.axisCoordinate vertical piece.last = physical.upper)
+  (firstAcross : SourceIntervals.axisCoordinate (!vertical) piece.first = coordinate)
+  (lastAcross : SourceIntervals.axisCoordinate (!vertical) piece.last = coordinate)
   (increasing : ∀ edge : Fin vertices, trace.parameters edge.castSucc ≤ trace.parameters edge.succ)
-  {allowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} (budget :
-    Purelib.Integration.Path.NoisyPathArea.LengthErrorBudget vertices allowance)
+  {allowance : Coordinate} (budget :
+    LengthErrorBudget vertices allowance)
   (owners : OwnerRequest occurrence
     budget.tolerance) (later : owners.index ≤ faceIndex)
-  (readings : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings data (fun
+  (readings : OwnedReadings data (fun
     vertex => trace.points vertex))
-  (owned : Purelib.Riemann.Periods.CenteredBilinearPath.Sample (fun vertex =>
-    Purelib.Integration.Path.ConjugateIncrementComparison.conjugateFirst
+  (owned : Sample (fun vertex =>
+    ConjugateIncrementComparison.conjugateFirst
     (⟨ownedValue readings coefficients vertex, ownedValue readings coefficients vertex⟩ :
-      Purelib.Topology.Polygon.Stokes.PrimitivePoint)))
-  (source : Purelib.Riemann.Periods.CenteredBilinearPath.Sample (fun vertex =>
-    Purelib.Integration.Path.ConjugateIncrementComparison.conjugateFirst
+      PrimitivePoint)))
+  (source : Sample (fun vertex =>
+    ConjugateIncrementComparison.conjugateFirst
 
       (⟨Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
       originals coefficients
@@ -154,11 +156,11 @@ variable {vertical forward : Bool} {physical : Purelib.Geometry.Rectangle.Partit
         Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
         originals coefficients
         ((block.traceParameters coordinate sourceFirst sourceLast trace firstAlong lastAlong firstAcross
-          lastAcross).parameters vertex)⟩ : Purelib.Topology.Polygon.Stokes.PrimitivePoint)))
+          lastAcross).parameters vertex)⟩ : PrimitivePoint)))
 
 /-- Consume the canonical parent's located split and the existing physical trace. The source bank is indexed by that
 exact original parent. -/
-def ownedFragment : OwnedFragments.OwnedFragment (originals := originals) (coefficients := coefficients) data :=
+def ownedFragment : OwnedFragment (originals := originals) (coefficients := coefficients) data :=
   OwnedFragment.ofTrace block.member block.located forward
     (block.traceParameters coordinate sourceFirst sourceLast trace firstAlong lastAlong firstAcross lastAcross)
     increasing budget owners later readings owned source

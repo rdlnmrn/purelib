@@ -54,16 +54,16 @@ set_option genInjectivity false in
 every emitted leaf. -/
 structure EventPartition
     (event : Dense.Basic.RationalPolynomial) (eventNonzero : event.isZero = false)
-    (curve : Curve.RationalCurve) (box : Box) (root : Data.Rat.Interval.Proper.Cell) where
-  /-- The actual retained simultaneous event-subdivision tree. -/ tree : Curve.Event.Partition.Subdivision event curve
+    (curve : Curve.RationalCurve) (box : Box) (root : Interval.Proper.Cell) where
+  /-- The actual retained simultaneous event-subdivision tree. -/ tree : Subdivision event curve
     box
   /-- The retained tree equals the original common-subdivision construction. -/ tree_eq : tree =
-    Curve.Event.Partition.commonSubdivision event eventNonzero curve box root
-  /-- Classify each actual member of the retained leaf list. -/ classify : (leaf : Data.Rat.Interval.Proper.Cell) → leaf
+    commonSubdivision event eventNonzero curve box root
+  /-- Classify each actual member of the retained leaf list. -/ classify : (leaf : Interval.Proper.Cell) → leaf
     ∈ tree.leaves →
-    Curve.Event.Partition.ClassifiedLeaf event eventNonzero curve box root
+    ClassifiedLeaf event eventNonzero curve box root
   /-- Each classification retains its supplied original leaf exactly. -/ classify_cell : ∀ (leaf :
-    Data.Rat.Interval.Proper.Cell) (member : leaf ∈ tree.leaves),
+    Interval.Proper.Cell) (member : leaf ∈ tree.leaves),
     (classify leaf member).cell = leaf
 
 constructive_injectivity EventPartition
@@ -73,12 +73,12 @@ constructive_injectivity EventPartition
 Each classified record retains the exact leaf selected from that same subdivision tree. -/
 def classifyEvents
     (event : Dense.Basic.RationalPolynomial) (eventNonzero : event.isZero = false)
-    (curve : Curve.RationalCurve) (box : Box) (root : Data.Rat.Interval.Proper.Cell) :
-    Curve.Event.Partition.EventPartition event eventNonzero curve box root where
-  tree := Curve.Event.Partition.commonSubdivision event eventNonzero curve box root
+    (curve : Curve.RationalCurve) (box : Box) (root : Interval.Proper.Cell) :
+    EventPartition event eventNonzero curve box root where
+  tree := commonSubdivision event eventNonzero curve box root
   tree_eq := rfl
   classify := fun leaf member =>
-    Curve.Event.Partition.classifyLeaf event eventNonzero curve box root leaf member
+    classifyLeaf event eventNonzero curve box root leaf member
   classify_cell := fun _leaf _member => rfl
 
 set_option genInjectivity false in
@@ -86,14 +86,14 @@ set_option genInjectivity false in
 common leaf family. -/
 structure LocatedParameter
     {event : Dense.Basic.RationalPolynomial} {eventNonzero : event.isZero = false}
-    {curve : Curve.RationalCurve} {box : Box} {root : Data.Rat.Interval.Proper.Cell}
-    (partition : Curve.Event.Partition.EventPartition event eventNonzero curve box root)
+    {curve : Curve.RationalCurve} {box : Box} {root : Interval.Proper.Cell}
+    (partition : EventPartition event eventNonzero curve box root)
     (parameter : Fraction.Rational) where
-  /-- The original subdivision leaf selected for this parameter. -/ leaf : Data.Rat.Interval.Proper.Cell
+  /-- The original subdivision leaf selected for this parameter. -/ leaf : Interval.Proper.Cell
   /-- The selected leaf belongs to the retained tree. -/ member : leaf ∈ partition.tree.leaves
   /-- The selected interval contains the original query parameter. -/ contains : leaf.interval.Contains parameter
   /-- The retained simultaneous classification of the selected leaf. -/ classification :
-    Curve.Event.Partition.ClassifiedLeaf event eventNonzero curve box root
+    ClassifiedLeaf event eventNonzero curve box root
   /-- The retained classification equals the original partition classifier's result. -/ classification_eq :
     classification = partition.classify leaf member
   /-- The classified cell is the exact selected original leaf. -/ classification_cell : classification.cell = leaf
@@ -103,12 +103,12 @@ constructive_injectivity LocatedParameter
 /-- Locate a displayed parameter in the retained common subdivision and return that exact leaf's classification. -/
 def EventPartition.locate
     {event : Dense.Basic.RationalPolynomial} {eventNonzero : event.isZero = false}
-    {curve : Curve.RationalCurve} {box : Box} {root : Data.Rat.Interval.Proper.Cell}
-    (partition : Curve.Event.Partition.EventPartition event eventNonzero curve box root)
+    {curve : Curve.RationalCurve} {box : Box} {root : Interval.Proper.Cell}
+    (partition : EventPartition event eventNonzero curve box root)
     (parameter : Fraction.Rational) (inside : root.interval.Contains parameter) :
-    Curve.Event.Partition.LocatedParameter partition parameter := by
-  let found := Curve.Event.Partition.Subdivision.locateBuild event eventNonzero curve box
-    (Curve.Event.Partition.commonDepth event curve box root) root parameter inside
+    LocatedParameter partition parameter := by
+  let found := Subdivision.locateBuild event eventNonzero curve box
+    (commonDepth event curve box root) root parameter inside
   have treeMember : found.leaf ∈ partition.tree.leaves := by
     rw [partition.tree_eq]
     exact found.member

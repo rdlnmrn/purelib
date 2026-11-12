@@ -58,42 +58,42 @@ open Purelib.Data.Gaussian.Basic.Canonical
 /-- Strong exact-zero candidate evidence at one retained source. This is distinct from operational equivalence to zero
 with approximate candidates. -/
 def ZeroCandidates (denominator :
-  Coherent.CoherentNamed) (state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator) : Prop :=
+  CoherentNamed) (state : State denominator) : Prop :=
   ∀ {value : Data.Gaussian.Basic.Canonical}, denominator.name.process.Possible state.source value → value = 0
 
 namespace ZeroCandidates
 
 /-- Exact-zero candidate evidence persists along any supplied backwards candidate transport between retained states. -/
 theorem after {denominator :
-  Coherent.CoherentNamed} {first last : Approximation.Gaussian.Name.Coherent.Refinement.State denominator}
-    (zero : Approximation.Gaussian.Name.Coherent.Refinement.Zero.ZeroCandidates denominator first)
+  CoherentNamed} {first last : State denominator}
+    (zero : ZeroCandidates denominator first)
     (persists : ∀ {value : Data.Gaussian.Basic.Canonical}, denominator.name.process.Possible last.source value →
       denominator.name.process.Possible first.source value) :
-        Approximation.Gaussian.Name.Coherent.Refinement.Zero.ZeroCandidates denominator last :=
+        ZeroCandidates denominator last :=
   fun possible => zero (persists possible)
 
 /-- Canonical refinement preserves exact-zero candidate evidence at the retained denominator state. -/
 theorem advance {denominator :
-  Coherent.CoherentNamed} {state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator}
-    (zero : Approximation.Gaussian.Name.Coherent.Refinement.Zero.ZeroCandidates denominator state) :
-      Approximation.Gaussian.Name.Coherent.Refinement.Zero.ZeroCandidates denominator state.advance :=
+  CoherentNamed} {state : State denominator}
+    (zero : ZeroCandidates denominator state) :
+      ZeroCandidates denominator state.advance :=
   zero.after (fun possible => denominator.name.process.refine_persists state.source
-    (Gaussian.Process.Sampling.refinementTarget state.nextIndex)
-    (Gaussian.Process.Sampling.refinementTarget_pos state.nextIndex) possible)
+    (Process.Sampling.refinementTarget state.nextIndex)
+    (Process.Sampling.refinementTarget_pos state.nextIndex) possible)
 
 /-- Every finitely reachable refinement state retains the original exact-zero candidate evidence. -/
 theorem reachable {denominator :
-  Coherent.CoherentNamed} {first last : Approximation.Gaussian.Name.Coherent.Refinement.State denominator}
-    (zero : Approximation.Gaussian.Name.Coherent.Refinement.Zero.ZeroCandidates denominator first) (path :
+  CoherentNamed} {first last : State denominator}
+    (zero : ZeroCandidates denominator first) (path :
       State.Reachable first last) :
-    Approximation.Gaussian.Name.Coherent.Refinement.Zero.ZeroCandidates denominator last := zero.after
+    ZeroCandidates denominator last := zero.after
       path.possible_persists
 
 /-- Exact-zero candidate evidence contradicts apartness of the process based at that same retained source. -/
 theorem incompatible {denominator :
-  Coherent.CoherentNamed} {state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator}
-    (zero : Approximation.Gaussian.Name.Coherent.Refinement.Zero.ZeroCandidates denominator state)
-    (evidence : Possible.PossibleApart (Gaussian.Process.Based.based denominator.name.process state.source)) :
+  CoherentNamed} {state : State denominator}
+    (zero : ZeroCandidates denominator state)
+    (evidence : Possible.PossibleApart (Process.Based.based denominator.name.process state.source)) :
     False := by
   let witness := denominator.name.process.witness state.source
   have lower := evidence.lower
@@ -104,19 +104,19 @@ theorem incompatible {denominator :
 
 /-- Exact-zero candidates prevent the retained source ball from passing the center-separation test. -/
 theorem not_separated {denominator :
-  Coherent.CoherentNamed} {state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator}
-    (zero : Approximation.Gaussian.Name.Coherent.Refinement.Zero.ZeroCandidates denominator state) :
+  CoherentNamed} {state : State denominator}
+    (zero : ZeroCandidates denominator state) :
     ¬ 2 * (denominator.name.process.ball state.source).radiusSq <
       Data.Gaussian.Norm.Basic.normSq (denominator.name.process.ball state.source).center :=
   fun separated => zero.incompatible (Preparation.evidenceOfSeparation state separated)
 
 /-- Arbitrary requested-target refinement also preserves the obstruction; no canonical-step assertion is needed. -/
 theorem requested {denominator :
-  Coherent.CoherentNamed} {state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator}
-    (zero : Approximation.Gaussian.Name.Coherent.Refinement.Zero.ZeroCandidates denominator state) {target :
-      Fraction.Rational} {positive : 0 < target}
-    (inspection : Approximation.Gaussian.Name.Coherent.Refinement.Inspection denominator state target positive) :
-    Approximation.Gaussian.Name.Coherent.Refinement.Zero.ZeroCandidates denominator inspection.retained := zero.after
+  CoherentNamed} {state : State denominator}
+    (zero : ZeroCandidates denominator state) {target :
+      Rational} {positive : 0 < target}
+    (inspection : Inspection denominator state target positive) :
+    ZeroCandidates denominator inspection.retained := zero.after
       inspection.possible_at_start
 
 end ZeroCandidates

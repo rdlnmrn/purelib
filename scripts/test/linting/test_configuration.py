@@ -60,7 +60,7 @@ class DefaultScopeTests(unittest.TestCase):
         self.assertEqual(args.expand(["lint", "--linters", ".style.longLine"], discover),
                          ["lint", "--linters", ".style.longLine", "Purelib.A"])
         for original in (["lint", "Purelib.A"], ["lint", "--help"],
-                         ["env", "echo", "lint"], ["--wfail", "build", "Test"],
+                         ["env", "echo", "lint"], ["--wfail", "build", "TestPurelib"],
                          ["--dir", "/tmp/another-workspace", "lint"],
                          ["--file=alternate.toml", "lint"], []):
             self.assertEqual(args.expand(original, lambda: self.fail("unexpected discovery")), original)
@@ -121,6 +121,13 @@ class NativeLinterTests(unittest.TestCase):
             assert path.is_file(), f"build {target} first"
             cls.plugins.append({"path": str(path)})
         cls.dynlibs = [str(ROOT / ".lake/packages/batteries/.lake/build/lib/libbatteries_Batteries.so")]
+        raw = subprocess.check_output([str(ROOT / "scripts/run-lake.sh"), "env", "python3", "-c",
+                                       "import os,json; print(json.dumps(dict(os.environ)))"], cwd=ROOT)
+        cls.env = json.loads(raw)
+        cls.lean = shutil.which("lean", path=cls.env["PATH"])
+        cls.lake = shutil.which("lake", path=cls.env["PATH"])
+        if cls.lean is None or cls.lake is None:
+            raise FileNotFoundError("checked Lake environment must provide lean and lake")
         cls.temp = tempfile.TemporaryDirectory(prefix="ccl-native-lint-")
         cls.directory = Path(cls.temp.name)
 
@@ -137,11 +144,10 @@ class NativeLinterTests(unittest.TestCase):
                                     "plugins": self.plugins if plugins else [],
                                     "dynlibs": self.dynlibs if plugins else []}))
         olean = self.directory / (name + ".olean")
-        command = [str(ROOT / "scripts/run-lake.sh"), "env", "lean", "--setup", str(setup),
-                   "-o", str(olean)]
+        command = [self.lean, "--setup", str(setup), "-o", str(olean)]
         if warning_errors:
             command += ["-E", "linter.style.longLine"]
-        result = subprocess.run(command + [str(source)], cwd=ROOT, text=True,
+        result = subprocess.run(command + [str(source)], cwd=ROOT, env=self.env, text=True,
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         return result, olean
 
@@ -206,13 +212,11 @@ class NativeLinterTests(unittest.TestCase):
 
     def test_native_checker_agrees_with_original_checker_on_pass_and_failures(self):
         from scripts.linting import runner
-        raw = subprocess.check_output([str(ROOT / 'scripts/run-lake.sh'), 'env', 'python3', '-c',
-                                       'import os,json; print(json.dumps(dict(os.environ)))'], cwd=ROOT)
-        env = json.loads(raw)
+        env = self.env.copy()
         env['LEAN_PATH'] = str(self.directory) + os.pathsep + env['LEAN_PATH']
         env['LEAN_SRC_PATH'] = str(self.directory) + os.pathsep + env['LEAN_SRC_PATH']
-        lean = shutil.which('lean', path=env['PATH'])
-        lake = shutil.which('lake', path=env['PATH'])
+        lean = self.lean
+        lake = self.lake
         search = [Path(p).resolve() for p in env['LEAN_PATH'].split(os.pathsep) if p]
         cache = self.directory / 'native-cache'
         cache.mkdir()

@@ -61,7 +61,7 @@ Each interval starts where its predecessor finishes. The last interval ends
 at the supplied final endpoint, including when the cut list is empty. -/
 @[expose] def intervalsBetween (start finish : Fraction.Rational) : List Fraction.Rational → List Interval
   | [] => [⟨start, finish⟩]
-  | cut :: tail => ⟨start, cut⟩ :: Purelib.Integration.Partition.Interval.intervalsBetween cut finish tail
+  | cut :: tail => ⟨start, cut⟩ :: Interval.intervalsBetween cut finish tail
 
 end Interval
 
@@ -72,11 +72,11 @@ namespace Interval
 Consecutive intervals share the same intermediate endpoint; orientation and monotonicity are separate conditions. -/
 inductive Chain : Fraction.Rational → Fraction.Rational → List Interval → Prop
   /-- The empty interval list chains a point to itself. -/ | nil (point : Fraction.Rational) :
-    Purelib.Integration.Partition.Interval.Chain point point []
+    Interval.Chain point point []
   /-- Prepend an interval ending at the exact start of the retained tail chain. -/ | cons {start middle finish :
     Fraction.Rational} {tail : List Interval}
-      (rest : Purelib.Integration.Partition.Interval.Chain middle finish tail) :
-        Purelib.Integration.Partition.Interval.Chain start finish (⟨start, middle⟩ :: tail)
+      (rest : Interval.Chain middle finish tail) :
+        Interval.Chain start finish (⟨start, middle⟩ :: tail)
 
 end Interval
 
@@ -86,7 +86,7 @@ namespace Interval
 theorem intervalsBetween_chain (start finish : Fraction.Rational) : ∀ cuts,
     Chain start finish (intervalsBetween start finish cuts)
   | [] => .cons (.nil finish)
-  | cut :: tail => .cons (Purelib.Integration.Partition.Interval.intervalsBetween_chain cut finish tail)
+  | cut :: tail => .cons (Interval.intervalsBetween_chain cut finish tail)
 
 end Interval
 
@@ -98,7 +98,7 @@ theorem intervalsBetween_length (start finish : Fraction.Rational) : ∀ cuts,
   | [] => rfl
   | cut :: tail => by
       change (intervalsBetween cut finish tail).length + 1 = (tail.length + 1) + 1
-      rw [Purelib.Integration.Partition.Interval.intervalsBetween_length]
+      rw [Interval.intervalsBetween_length]
 
 end Interval
 
@@ -119,7 +119,7 @@ theorem intervalsBetween_lower {bound finish : Fraction.Rational} :
   | cut :: tail, start, lower, bounds, interval, member => by
       rcases Membership.mem_cons.mp member with atHead | inTail
       · exact atHead ▸ lower
-      · exact Purelib.Integration.Partition.Interval.intervalsBetween_lower (bounds cut List.mem_cons_self)
+      · exact Interval.intervalsBetween_lower (bounds cut List.mem_cons_self)
           (fun other otherMember => bounds other (List.mem_cons_of_mem cut otherMember))
           interval inTail
 
@@ -170,7 +170,7 @@ theorem intervalsBetween_no_cut (start finish : Fraction.Rational) : ∀ {cuts},
               (fun other otherMember => ((List.pairwise_cons.mp sorted).1 other otherMember).le)
               interval inTail
           exact (not_lt_of_ge lower) (atHead ▸ between.1)
-        · exact Purelib.Integration.Partition.Interval.intervalsBetween_no_cut head finish (List.pairwise_cons.mp
+        · exact Interval.intervalsBetween_no_cut head finish (List.pairwise_cons.mp
             sorted).2
             cutInTail inTail between
 

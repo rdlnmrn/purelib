@@ -9,6 +9,8 @@ import Purelib.Data.Rat.Fraction.Order.Field
 import Purelib.NumberTheory.Approximation.Dirichlet.Critical.Robust.CoefficientBound
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Critical cylinders with perturbed denominator coordinates
 
@@ -35,7 +37,7 @@ open Purelib.NumberTheory.Approximation.Dirichlet.Critical
 /-- The retained error ratio cannot enlarge a perturbation quadrance bounded by one eighth. -/
 private theorem perturbation_errorRatio_normSq_le
     {errorParameter : Fraction.Rational}
-    (certificate : Cylinder.Basic.IsCriticalParameter errorParameter)
+    (certificate : Basic.IsCriticalParameter errorParameter)
     {perturbation : Gaussian.Basic.Canonical}
     (small : Gaussian.Norm.Basic.normSq perturbation ≤ 1 / 8) :
     Gaussian.Norm.Basic.normSq (perturbation * errorRatio errorParameter) ≤ 1 / 8 := by
@@ -43,7 +45,7 @@ private theorem perturbation_errorRatio_normSq_le
   calc
     Gaussian.Norm.Basic.normSq perturbation * Gaussian.Norm.Basic.normSq (errorRatio errorParameter) ≤
         Gaussian.Norm.Basic.normSq perturbation * 1 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (normSq_errorRatio_lt_one certificate).le (Gaussian.Norm.Basic.normSq_nonneg perturbation)
     _ = Gaussian.Norm.Basic.normSq perturbation := Fraction.Field.mul_one_direct _
     _ ≤ 1 / 8 := small
@@ -51,7 +53,7 @@ private theorem perturbation_errorRatio_normSq_le
 /-- A perturbation of quadrance at most one eighth leaves the upper denominator quadrance at most nine quarters. -/
 theorem perturbed_upper_normSq_le
     {errorParameter : Fraction.Rational}
-    (certificate : Cylinder.Basic.IsCriticalParameter errorParameter)
+    (certificate : Basic.IsCriticalParameter errorParameter)
     {perturbation : Gaussian.Basic.Canonical}
     (small : Gaussian.Norm.Basic.normSq perturbation ≤ 1 / 8) :
     Gaussian.Norm.Basic.normSq (1 - perturbation * errorRatio errorParameter) ≤ 9 / 4 := by
@@ -63,8 +65,8 @@ theorem perturbed_upper_normSq_le
       Gaussian.Norm.Bounds.normSq_sub_le_two _ _
     _ ≤ 2 * (1 + (1 / 8 : Fraction.Rational)) := by
       rewrite [Gaussian.Norm.Basic.normSq_one]
-      exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.add_le_add_direct (Fraction.Order.Basic.le_refl _) productBound) (by decide)
+      exact Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.add_le_add_direct (Basic.le_refl _) productBound) (by decide)
     _ = 9 / 4 := by decide
 
 /-- A perturbation of quadrance at most one eighth leaves the upper denominator quadrance at least three eighths.
@@ -75,7 +77,7 @@ positive lower bound.
 -/
 theorem threeEighths_le_perturbed_upper_normSq
     {errorParameter : Fraction.Rational}
-    (certificate : Cylinder.Basic.IsCriticalParameter errorParameter)
+    (certificate : Basic.IsCriticalParameter errorParameter)
     {perturbation : Gaussian.Basic.Canonical}
     (small : Gaussian.Norm.Basic.normSq perturbation ≤ 1 / 8) :
     (3 / 8 : Fraction.Rational) ≤
@@ -90,10 +92,10 @@ theorem threeEighths_le_perturbed_upper_normSq
   rewrite [identity, Gaussian.Norm.Basic.normSq_one] at sumBound
   have bounded : (1 : Fraction.Rational) ≤
       2 * (Gaussian.Norm.Basic.normSq (1 - perturbation * errorRatio errorParameter) + 1 / 8) :=
-    sumBound.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct (Fraction.Order.Basic.le_refl _) productBound) (by decide))
-  have shifted := Fraction.Order.Arithmetic.sub_le_sub_right_direct bounded (1 / 4)
-  apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct (c := (2 : Fraction.Rational)) _ (by decide)
+    sumBound.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct (Basic.le_refl _) productBound) (by decide))
+  have shifted := Arithmetic.sub_le_sub_right_direct bounded (1 / 4)
+  apply Arithmetic.le_of_mul_le_mul_right_direct (c := (2 : Fraction.Rational)) _ (by decide)
   calc
     (3 / 8 : Fraction.Rational) * 2 = 1 - 1 / 4 := by decide
     _ ≤ 2 * (Gaussian.Norm.Basic.normSq (1 - perturbation * errorRatio errorParameter) + 1 / 8) - 1 / 4 := shifted
@@ -107,8 +109,8 @@ theorem threeEighths_le_perturbed_upper_normSq
 /-- An apparent competitor after a small denominator perturbation lies in the retained finite coefficient domain. -/
 private theorem coefficient_bounds_of_denominator_perturbation
     {errorParameter denominatorParameter : Fraction.Rational}
-    (errorCertificate : Cylinder.Basic.IsCriticalParameter errorParameter)
-    (denominatorCertificate : Cylinder.Basic.IsCriticalParameter denominatorParameter)
+    (errorCertificate : Basic.IsCriticalParameter errorParameter)
+    (denominatorCertificate : Basic.IsCriticalParameter denominatorParameter)
     {perturbation : Gaussian.Basic.Canonical}
     (small : Gaussian.Norm.Basic.normSq perturbation ≤ 1 / 8)
     (left right : GaussianInt)
@@ -123,7 +125,7 @@ private theorem coefficient_bounds_of_denominator_perturbation
     calc
       Gaussian.Norm.Basic.normSq perturbation * Gaussian.Norm.Basic.normSq
           (normalizedError errorParameter left right) ≤ Gaussian.Norm.Basic.normSq perturbation * 1 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           errorBound (Gaussian.Norm.Basic.normSq_nonneg perturbation)
       _ = Gaussian.Norm.Basic.normSq perturbation := Fraction.Field.mul_one_direct _
       _ ≤ 1 / 8 := small
@@ -147,8 +149,8 @@ private theorem coefficient_bounds_of_denominator_perturbation
             Gaussian.Norm.Basic.normSq (perturbation * normalizedError errorParameter left right)) :=
         Gaussian.Norm.Bounds.normSq_add_le_two _ _
       _ ≤ 2 * ((9 / 4 : Fraction.Rational) + 1 / 8) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Fraction.Order.Arithmetic.add_le_add_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.add_le_add_direct
             (denominatorBound.trans (perturbed_upper_normSq_le errorCertificate small)) productBound) (by decide)
       _ ≤ 5 := by decide
   exact coefficient_normNat_lt_thirtyTwo_of_swapped_bounds
@@ -180,8 +182,8 @@ private def coefficientDistanceSq (errorParameter denominatorParameter : Fractio
 /-- Every coefficient budget is positive for two retained critical parameters. -/
 private theorem coefficientDistanceSq_pos
     {errorParameter denominatorParameter : Fraction.Rational}
-    (errorCertificate : Cylinder.Basic.IsCriticalParameter errorParameter)
-    (denominatorCertificate : Cylinder.Basic.IsCriticalParameter denominatorParameter)
+    (errorCertificate : Basic.IsCriticalParameter errorParameter)
+    (denominatorCertificate : Basic.IsCriticalParameter denominatorParameter)
     (coefficients : GaussianInt × GaussianInt) :
     0 < coefficientDistanceSq errorParameter denominatorParameter coefficients := by
   unfold coefficientDistanceSq
@@ -209,14 +211,14 @@ private def minimumCoefficientDistanceSq (errorParameter denominatorParameter : 
 /-- The finite coefficient minimum stays positive. -/
 private theorem minimumCoefficientDistanceSq_pos
     {errorParameter denominatorParameter : Fraction.Rational}
-    (errorCertificate : Cylinder.Basic.IsCriticalParameter errorParameter)
-    (denominatorCertificate : Cylinder.Basic.IsCriticalParameter denominatorParameter)
+    (errorCertificate : Basic.IsCriticalParameter errorParameter)
+    (denominatorCertificate : Basic.IsCriticalParameter denominatorParameter)
     (coefficients : List (GaussianInt × GaussianInt)) :
     0 < minimumCoefficientDistanceSq errorParameter denominatorParameter coefficients := by
   induction coefficients with
   | nil => exact (by decide : (0 : Fraction.Rational) < 1)
   | cons head remaining inductionHypothesis =>
-      exact Fraction.Order.Basic.lt_min
+      exact Basic.lt_min
         (coefficientDistanceSq_pos errorCertificate denominatorCertificate head) inductionHypothesis
 
 /-- The retained finite minimum pays every listed coefficient clearance. -/
@@ -229,10 +231,10 @@ private theorem minimumCoefficientDistanceSq_le_of_mem
   induction list with
   | nil => cases member
   | cons head remaining inductionHypothesis =>
-      rcases Purelib.Data.List.Membership.mem_cons.mp member with same | remainingMember
+      rcases Data.List.Membership.mem_cons.mp member with same | remainingMember
       · rewrite [same]
-        exact Fraction.Order.Basic.min_le_left _ _
-      · exact (Fraction.Order.Basic.min_le_right _ _).trans (inductionHypothesis remainingMember)
+        exact Basic.min_le_left _ _
+      · exact (Basic.min_le_right _ _).trans (inductionHypothesis remainingMember)
 
 /-- Compute one finite rational budget preserving the entire perturbed denominator cylinder.
 
@@ -250,13 +252,13 @@ def denominatorPerturbationDistanceSq (errorParameter denominatorParameter : Fra
 /-- The finite denominator perturbation budget always pays its one-eighth coefficient cutoff. -/
 theorem denominatorPerturbationDistanceSq_le_oneEighth (errorParameter denominatorParameter : Fraction.Rational) :
     denominatorPerturbationDistanceSq errorParameter denominatorParameter ≤ 1 / 8 :=
-  Fraction.Order.Basic.min_le_left _ _
+  Basic.min_le_left _ _
 
 /-- The denominator perturbation budget is positive for two critical parameters. -/
 theorem denominatorPerturbationDistanceSq_pos
     {errorParameter denominatorParameter : Fraction.Rational}
-    (errorCertificate : Cylinder.Basic.IsCriticalParameter errorParameter)
-    (denominatorCertificate : Cylinder.Basic.IsCriticalParameter denominatorParameter) :
+    (errorCertificate : Basic.IsCriticalParameter errorParameter)
+    (denominatorCertificate : Basic.IsCriticalParameter denominatorParameter) :
     0 < denominatorPerturbationDistanceSq errorParameter denominatorParameter := by
   have denominatorOrder : Gaussian.Norm.Basic.normSq (denominatorRatio denominatorParameter) <
       Gaussian.Norm.Basic.normSq (1 : Gaussian.Basic.Canonical) := by
@@ -265,16 +267,16 @@ theorem denominatorPerturbationDistanceSq_pos
     rewrite [normSq_errorRatio] at ordered
     exact ordered
   unfold denominatorPerturbationDistanceSq
-  exact Fraction.Order.Basic.lt_min (by decide)
-    (Fraction.Order.Basic.lt_min
+  exact Basic.lt_min (by decide)
+    (Basic.lt_min
       (Gaussian.Norm.Stability.affineComparisonDistanceSq_pos _ _ denominatorOrder)
       (minimumCoefficientDistanceSq_pos errorCertificate denominatorCertificate _))
 
 /-- A perturbation inside the common budget retains strict lower-to-upper denominator order. -/
 theorem denominatorOrder_of_perturbation
     {errorParameter denominatorParameter : Fraction.Rational}
-    (_errorCertificate : Cylinder.Basic.IsCriticalParameter errorParameter)
-    (denominatorCertificate : Cylinder.Basic.IsCriticalParameter denominatorParameter)
+    (_errorCertificate : Basic.IsCriticalParameter errorParameter)
+    (denominatorCertificate : Basic.IsCriticalParameter denominatorParameter)
     {perturbation : Gaussian.Basic.Canonical}
     (small : Gaussian.Norm.Basic.normSq perturbation <
       denominatorPerturbationDistanceSq errorParameter denominatorParameter) :
@@ -289,7 +291,7 @@ theorem denominatorOrder_of_perturbation
   have ordered := Gaussian.Norm.Stability.normSq_affine_lt_of_distance
     (referenceDirection := (-1 : Gaussian.Basic.Canonical))
     (contenderDirection := -errorRatio errorParameter) denominatorOrder
-    (small.trans_le ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _)))
+    (small.trans_le ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _)))
   have lowerIdentity : denominatorRatio denominatorParameter + perturbation * (-1) =
       denominatorRatio denominatorParameter - perturbation := by
     apply Gaussian.Basic.ext <;>
@@ -319,9 +321,9 @@ theorem perturbedLowerDenominator_ne_zero
   have quarterLe : (1 / 4 : Fraction.Rational) ≤
       Gaussian.Norm.Basic.normSq (denominatorRatio denominatorParameter) := by
     rewrite [denominatorNorm]
-    exact le_add_of_nonneg_left (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+    exact le_add_of_nonneg_left (Arithmetic.sq_nonneg_direct _)
   have eighthBound : Gaussian.Norm.Basic.normSq perturbation < 1 / 8 :=
-    small.trans_le (Fraction.Order.Basic.min_le_left _ _)
+    small.trans_le (Basic.min_le_left _ _)
   intro zero
   have same : denominatorRatio denominatorParameter = perturbation := by
     calc
@@ -340,8 +342,8 @@ theorem perturbedLowerDenominator_ne_zero
 /-- The computed denominator order keeps the perturbed upper denominator coordinate nonzero. -/
 theorem perturbedUpperDenominator_ne_zero
     {errorParameter denominatorParameter : Fraction.Rational}
-    (errorCertificate : Cylinder.Basic.IsCriticalParameter errorParameter)
-    (denominatorCertificate : Cylinder.Basic.IsCriticalParameter denominatorParameter)
+    (errorCertificate : Basic.IsCriticalParameter errorParameter)
+    (denominatorCertificate : Basic.IsCriticalParameter denominatorParameter)
     {perturbation : Gaussian.Basic.Canonical}
     (small : Gaussian.Norm.Basic.normSq perturbation <
       denominatorPerturbationDistanceSq errorParameter denominatorParameter) :
@@ -354,8 +356,8 @@ theorem perturbedUpperDenominator_ne_zero
 /-- The common finite clearance preserves the strict mixed-cylinder exterior for every integral coefficient pair. -/
 theorem strictExterior_of_denominator_perturbation
     {errorParameter denominatorParameter : Fraction.Rational}
-    (errorCertificate : Cylinder.Basic.IsCriticalParameter errorParameter)
-    (denominatorCertificate : Cylinder.Basic.IsCriticalParameter denominatorParameter)
+    (errorCertificate : Basic.IsCriticalParameter errorParameter)
+    (denominatorCertificate : Basic.IsCriticalParameter denominatorParameter)
     {perturbation : Gaussian.Basic.Canonical}
     (small : Gaussian.Norm.Basic.normSq perturbation <
       denominatorPerturbationDistanceSq errorParameter denominatorParameter)
@@ -368,19 +370,19 @@ theorem strictExterior_of_denominator_perturbation
       Gaussian.Norm.Basic.normSq (normalizedError errorParameter left right)
   · exact Or.inl errorExterior
   · right
-    apply Fraction.Order.Arithmetic.lt_of_not_ge_direct
+    apply Arithmetic.lt_of_not_ge_direct
     intro denominatorBound
     have cutoff := coefficient_bounds_of_denominator_perturbation errorCertificate denominatorCertificate
-      ((small.trans_le (Fraction.Order.Basic.min_le_left _ _)).le) left right
-      (Fraction.Order.Arithmetic.le_of_not_gt_direct errorExterior) denominatorBound
+      ((small.trans_le (Basic.min_le_left _ _)).le) left right
+      (Arithmetic.le_of_not_gt_direct errorExterior) denominatorBound
     have member : (left, right) ∈ Robust.CoefficientBound.boundedCoefficientPairs :=
       Robust.CoefficientBound.mem_boundedCoefficientPairs_of_normNat_lt_thirtyTwo cutoff.1 cutoff.2
     have needs : NeedsDenominatorComparison errorParameter (left, right) :=
       ⟨leftNonzero, rightNonzero, errorExterior⟩
     have coefficientSmall : Gaussian.Norm.Basic.normSq perturbation <
         coefficientDistanceSq errorParameter denominatorParameter (left, right) :=
-      small.trans_le ((Fraction.Order.Basic.min_le_right _ _).trans
-        ((Fraction.Order.Basic.min_le_right _ _).trans
+      small.trans_le ((Basic.min_le_right _ _).trans
+        ((Basic.min_le_right _ _).trans
           (minimumCoefficientDistanceSq_le_of_mem errorParameter denominatorParameter _ member)))
     unfold coefficientDistanceSq at coefficientSmall
     rewrite [if_pos needs] at coefficientSmall

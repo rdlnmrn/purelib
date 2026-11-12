@@ -28,40 +28,40 @@ The construction never selects or names a value common to all states.
 
 /-- The refined state selected by `stateAt` already meets the target of its own finite index. -/
 theorem stateAt_radiusSq_lt (a :
-  Gaussian.Sequence.ApproximationData) (index : Nat) :
-    a.radiusSq (Gaussian.Process.Sampling.stateAt a.toProcess (0 : Nat) index) <
-      Gaussian.Process.Sampling.refinementTarget index := by
+  ApproximationData) (index : Nat) :
+    a.radiusSq (Process.Sampling.stateAt a.toProcess (0 : Nat) index) <
+      Process.Sampling.refinementTarget index := by
   cases index with
   | zero =>
-      dsimp only [ApproximationData.toProcess, Gaussian.Process.Sampling.stateAt]
-      exact a.refineIndex_accurate 0 (Gaussian.Process.Sampling.refinementTarget 0)
-        (Gaussian.Process.Sampling.refinementTarget_pos 0)
+      dsimp only [toProcess, Process.Sampling.stateAt]
+      exact a.refineIndex_accurate 0 (Process.Sampling.refinementTarget 0)
+        (Process.Sampling.refinementTarget_pos 0)
   | succ index =>
-      dsimp only [ApproximationData.toProcess, Gaussian.Process.Sampling.stateAt]
-      exact a.refineIndex_accurate (Gaussian.Process.Sampling.stateAt a.toProcess (0 : Nat) index)
-        (Gaussian.Process.Sampling.refinementTarget (index + 1))
-        (Gaussian.Process.Sampling.refinementTarget_pos (index + 1))
+      dsimp only [toProcess, Process.Sampling.stateAt]
+      exact a.refineIndex_accurate (Process.Sampling.stateAt a.toProcess (0 : Nat) index)
+        (Process.Sampling.refinementTarget (index + 1))
+        (Process.Sampling.refinementTarget_pos (index + 1))
 
 /-- The geometric coherent witness and the model sample at the same index are close, with the larger of the two finite
 allowances. -/
 theorem witness_sample_close (a :
-  Gaussian.Sequence.ApproximationData) (index : Nat) :
+  ApproximationData) (index : Nat) :
     Data.Gaussian.Norm.Basic.normSq
-        (a.sample (Gaussian.Process.Sampling.stateAt a.toProcess (0 : Nat) index) - a.sample index) ≤
-      max (a.radiusSq index) (Gaussian.Process.Sampling.refinementTarget index) := by
-  rcases Nat.le_total index (Gaussian.Process.Sampling.stateAt a.toProcess (0 : Nat) index) with order | order
-  · exact (a.later_close order).trans (Purelib.Data.Rat.Fraction.Order.Basic.le_max_left _ _)
+        (a.sample (Process.Sampling.stateAt a.toProcess (0 : Nat) index) - a.sample index) ≤
+      max (a.radiusSq index) (Process.Sampling.refinementTarget index) := by
+  rcases Nat.le_total index (Process.Sampling.stateAt a.toProcess (0 : Nat) index) with order | order
+  · exact (a.later_close order).trans (Data.Rat.Fraction.Order.Basic.le_max_left _ _)
   · have close := a.later_close order
     have same : Data.Gaussian.Norm.Basic.normSq
-        (a.sample (Gaussian.Process.Sampling.stateAt a.toProcess (0 : Nat) index) - a.sample index) =
+        (a.sample (Process.Sampling.stateAt a.toProcess (0 : Nat) index) - a.sample index) =
         Data.Gaussian.Norm.Basic.normSq
-          (a.sample index - a.sample (Gaussian.Process.Sampling.stateAt a.toProcess (0 : Nat) index)) := by
-      rw [show a.sample (Gaussian.Process.Sampling.stateAt a.toProcess (0 : Nat) index) - a.sample index =
-        -(a.sample index - a.sample (Gaussian.Process.Sampling.stateAt a.toProcess (0 : Nat) index)) by ring1,
+          (a.sample index - a.sample (Process.Sampling.stateAt a.toProcess (0 : Nat) index)) := by
+      rw [show a.sample (Process.Sampling.stateAt a.toProcess (0 : Nat) index) - a.sample index =
+        -(a.sample index - a.sample (Process.Sampling.stateAt a.toProcess (0 : Nat) index)) by ring1,
         Data.Gaussian.Norm.Basic.normSq_neg]
     rw [same]
     exact close.trans ((le_of_lt (a.stateAt_radiusSq_lt index)).trans
-      (Purelib.Data.Rat.Fraction.Order.Basic.le_max_right _ _))
+      (Data.Rat.Fraction.Order.Basic.le_max_right _ _))
 
 end
 

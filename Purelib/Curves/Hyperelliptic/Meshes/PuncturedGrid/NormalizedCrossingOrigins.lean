@@ -104,24 +104,24 @@ open Purelib.Data.Rat.Fraction (Rational)
 open Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh (MatchedHorizontalSide
   MatchedVerticalSide)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {faces : Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces bank} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
-  {cuts : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+    VertexBank bank.grid} {edges :
+    RootEdgeBank frames}
+  {faces : PuncturedFaces bank} {domains :
+    FaceDomainBank frames faces.regulars}
+  {cuts : CommonCuts domains}
     {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
-    {target : Purelib.Data.Rat.Fraction.Rational}
-  {mesh : Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
+    Preflights domains sheet}
+    {target : Rational}
+  {mesh : LiftedMesh vertices edges faces}
   {firstPosition : Fin faces.regulars.length} {firstSheet : Fin 2}
 
-variable {request : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet
-  => Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet
+variable {request : TwoSheetRequest (fun sheet
+  => RegularMeshes.build domains cuts sheet
   coarseDepth) fixed target}
 
 namespace HorizontalCrossing
@@ -136,7 +136,7 @@ theorem normalized_right_origin_bound
       (PreparedPrimitiveSamples.differentialNumerator differential)}
     (gridRequest : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds
       ((domains.get nextPosition).domain joined.crossing.next.sheet).steps 1)
-    (cached : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet) differential
+    (cached : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet) differential
       gridRequest.index) :
     Data.Gaussian.Norm.Basic.normSq
       ((trace.rightReadings cached.normalize.anchors cached.normalize.offsets).values 0) ≤ 4 := by
@@ -155,7 +155,7 @@ theorem right_origin_bound_of_zero
       (PreparedPrimitiveSamples.differentialNumerator differential)}
     (gridRequest : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds
       ((domains.get nextPosition).domain joined.crossing.next.sheet).steps 1)
-    (cached : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet) differential
+    (cached : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet) differential
       gridRequest.index) (originZero : cached.corners.values 0 = 0) :
     Data.Gaussian.Norm.Basic.normSq
       ((trace.rightReadings cached.anchors cached.offsets).values 0) ≤ 4 := by
@@ -179,7 +179,7 @@ theorem normalized_right_origin_bound
       (PreparedPrimitiveSamples.differentialNumerator differential)}
     (gridRequest : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds
       ((domains.get nextPosition).domain joined.crossing.next.sheet).steps 1)
-    (cached : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet) differential
+    (cached : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet) differential
       gridRequest.index) :
     Data.Gaussian.Norm.Basic.normSq
       ((trace.rightReadings cached.normalize.anchors cached.normalize.offsets).values 0) ≤ 4 := by
@@ -198,7 +198,7 @@ theorem right_origin_bound_of_zero
       (PreparedPrimitiveSamples.differentialNumerator differential)}
     (gridRequest : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy bounds
       ((domains.get nextPosition).domain joined.crossing.next.sheet).steps 1)
-    (cached : PrimitiveData.DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet) differential
+    (cached : DomainPrimitives ((domains.get nextPosition).domain joined.crossing.next.sheet) differential
       gridRequest.index) (originZero : cached.corners.values 0 = 0) :
     Data.Gaussian.Norm.Basic.normSq
       ((trace.rightReadings cached.anchors cached.offsets).values 0) ≤ 4 := by

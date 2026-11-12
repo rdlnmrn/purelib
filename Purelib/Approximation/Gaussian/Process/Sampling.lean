@@ -44,7 +44,7 @@ open Purelib.Data.Nat
 
 The original unit-scale quarter radius supplies the squared-error request
 for each displayed natural stage of the sampling trajectory. -/
-@[expose] public def refinementTarget (index : Nat) : Fraction.Rational :=
+@[expose] public def refinementTarget (index : Nat) : Rational :=
   Geometric.Basic.quarterRadius 1 index
 
 /-- Every finite sampling request is strictly positive.
@@ -69,7 +69,7 @@ the preceding selected state with its own positive quarter-radius request. -/
 @[expose] public def stateAt (process : Process) (start : process.State) : Nat → process.State
   | 0 => process.refine start (refinementTarget 0) (refinementTarget_pos 0)
   | index + 1 =>
-      process.refine (Purelib.Approximation.Gaussian.Process.Sampling.stateAt process start index)
+      process.refine (Sampling.stateAt process start index)
         (refinementTarget (index + 1)) (refinementTarget_pos (index + 1))
 
 /-- The first sampled state refines the original start at the index-zero request.
@@ -196,7 +196,7 @@ Both original witnesses are possible in the earlier state's retained ball.
 The same ball radius and geometric request bound their displayed squared separation. -/
 public theorem witnessAt_later_close (process : Process) (start : process.State)
     {earlier later : Nat} (order : earlier ≤ later) :
-    Data.Gaussian.Norm.Basic.normSq (witnessAt process start later - witnessAt process start earlier) ≤
+    Norm.Basic.normSq (witnessAt process start later - witnessAt process start earlier) ≤
       Geometric.Basic.quarterRadius 4 earlier := by
   let state := stateAt process start earlier
   let center := (process.ball state).center
@@ -206,18 +206,18 @@ public theorem witnessAt_later_close (process : Process) (start : process.State)
   have earlierInside := process.possible_inside
     (witnessAt_possible process start earlier)
   have centerEarlierInside :
-      Data.Gaussian.Norm.Basic.normSq (center - witnessAt process start earlier) ≤ radius := by
-    rw [Purelib.Data.Gaussian.Field.sub_eq_neg_sub, Norm.Basic.normSq_neg]
+      Norm.Basic.normSq (center - witnessAt process start earlier) ≤ radius := by
+    rw [Field.sub_eq_neg_sub, Norm.Basic.normSq_neg]
     exact earlierInside
   have radiusLeTarget : radius ≤ refinementTarget earlier :=
     (stateAt_accurate process start earlier).le
   calc
-    Data.Gaussian.Norm.Basic.normSq (witnessAt process start later - witnessAt process start earlier) =
-        Data.Gaussian.Norm.Basic.normSq ((witnessAt process start later - center) +
+    Norm.Basic.normSq (witnessAt process start later - witnessAt process start earlier) =
+        Norm.Basic.normSq ((witnessAt process start later - center) +
           (center - witnessAt process start earlier)) := by
-      rw [Data.Gaussian.Field.later_sub_earlier]
-    _ ≤ 2 * (Data.Gaussian.Norm.Basic.normSq (witnessAt process start later - center) +
-        Data.Gaussian.Norm.Basic.normSq (center - witnessAt process start earlier)) :=
+      rw [Field.later_sub_earlier]
+    _ ≤ 2 * (Norm.Basic.normSq (witnessAt process start later - center) +
+        Norm.Basic.normSq (center - witnessAt process start earlier)) :=
       Norm.Bounds.normSq_add_le_two _ _
     _ ≤ 2 * (radius + radius) :=
       Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
@@ -238,7 +238,7 @@ The witness lies inside the original selected ball. Its retained radius
 is at most one, and the same centre satisfies the process centre-bound certificate. -/
 public theorem witnessAt_bounded (process : Process) (start : process.State)
     (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (witnessAt process start index) ≤
+    Norm.Basic.normSq (witnessAt process start index) ≤
       2 * (1 + process.centerBound) := by
   let state := stateAt process start index
   let center := (process.ball state).center
@@ -254,8 +254,8 @@ public theorem witnessAt_bounded (process : Process) (start : process.State)
       simp only [Basic.sub_re, Basic.sub_im, Basic.add_re, Basic.add_im] <;> ring1
   rw [identity]
   calc
-    Data.Gaussian.Norm.Basic.normSq ((witnessAt process start index - center) + center) ≤
-        2 * (Data.Gaussian.Norm.Basic.normSq (witnessAt process start index - center) + Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq ((witnessAt process start index - center) + center) ≤
+        2 * (Norm.Basic.normSq (witnessAt process start index - center) + Norm.Basic.normSq
           center) :=
       Norm.Bounds.normSq_add_le_two _ _
     _ ≤ 2 * (radius + process.centerBound) :=
@@ -281,5 +281,22 @@ private theorem quarterRadius_four_eq_four_refinementTarget (index : Nat) :
     Geometric.Basic.quarterRadius_eq_mul_pow,
     Geometric.Basic.quarterRadius_eq_mul_pow]
   ring1
+
+/-- Transport an actual retained state along a displayed equality of its complete process owner. -/
+@[expose] public def castState {first last : Process} (equal : first = last) (state : first.State) : last.State :=
+  Eq.mp (congrArg (fun process : Process => process.State) equal) state
+
+/-- Owner-equality transport retains the same actual indexed witness at the transported state. -/
+public theorem witnessAt_castState {first last : Process} (equal : first = last) (state : first.State) (index : Nat) :
+    witnessAt last (castState equal state) index = witnessAt first state index := by
+  cases equal
+  rfl
+
+/-- A possible reading of the original process remains possible at the same transported state. -/
+public theorem possible_castState {first last : Process} (equal : first = last) (state : first.State)
+    {value : Basic.Canonical}
+    (possible : first.Possible state value) : last.Possible (castState equal state) value := by
+  cases equal
+  exact possible
 
 end Purelib.Approximation.Gaussian.Process.Sampling

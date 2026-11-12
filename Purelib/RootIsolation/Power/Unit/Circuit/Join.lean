@@ -41,20 +41,20 @@ quarter returns to the first vertex. -/
 theorem unitCircuitQuarters_join (degree :
   Data.Nat.Positive.RootDegree)
     (degreeAtLeastTwo : 2 ≤ degree.value) :
-    Power.Unit.Circuit.Point.unitCircuitPoint .first degree degreeAtLeastTwo
-          (Power.Unit.Circuit.Subdivision.unitCircuitStepCount degree degreeAtLeastTwo) =
-        Power.Unit.Circuit.Point.unitCircuitPoint .second degree degreeAtLeastTwo 0 ∧
-      Power.Unit.Circuit.Point.unitCircuitPoint .second degree degreeAtLeastTwo
-          (Power.Unit.Circuit.Subdivision.unitCircuitStepCount degree degreeAtLeastTwo) =
-        Power.Unit.Circuit.Point.unitCircuitPoint .third degree degreeAtLeastTwo 0 ∧
-      Power.Unit.Circuit.Point.unitCircuitPoint .third degree degreeAtLeastTwo
-          (Power.Unit.Circuit.Subdivision.unitCircuitStepCount degree degreeAtLeastTwo) =
-        Power.Unit.Circuit.Point.unitCircuitPoint .fourth degree degreeAtLeastTwo 0 ∧
-      Power.Unit.Circuit.Point.unitCircuitPoint .fourth degree degreeAtLeastTwo
-          (Power.Unit.Circuit.Subdivision.unitCircuitStepCount degree degreeAtLeastTwo) =
-        Power.Unit.Circuit.Point.unitCircuitPoint .first degree degreeAtLeastTwo 0 := by
-  simp only [Power.Unit.Circuit.Point.unitCircuitPoint, Power.Unit.Circuit.Subdivision.unitCircuitParameter_last,
-    Power.Unit.Circuit.Subdivision.unitCircuitParameter_zero,
+    Point.unitCircuitPoint .first degree degreeAtLeastTwo
+          (Subdivision.unitCircuitStepCount degree degreeAtLeastTwo) =
+        Point.unitCircuitPoint .second degree degreeAtLeastTwo 0 ∧
+      Point.unitCircuitPoint .second degree degreeAtLeastTwo
+          (Subdivision.unitCircuitStepCount degree degreeAtLeastTwo) =
+        Point.unitCircuitPoint .third degree degreeAtLeastTwo 0 ∧
+      Point.unitCircuitPoint .third degree degreeAtLeastTwo
+          (Subdivision.unitCircuitStepCount degree degreeAtLeastTwo) =
+        Point.unitCircuitPoint .fourth degree degreeAtLeastTwo 0 ∧
+      Point.unitCircuitPoint .fourth degree degreeAtLeastTwo
+          (Subdivision.unitCircuitStepCount degree degreeAtLeastTwo) =
+        Point.unitCircuitPoint .first degree degreeAtLeastTwo 0 := by
+  simp only [Point.unitCircuitPoint, Subdivision.unitCircuitParameter_last,
+    Subdivision.unitCircuitParameter_zero,
       Geometry.Gaussian.UnitCircle.Stereographic.unitQuarterPoint_one,
       Geometry.Gaussian.UnitCircle.Stereographic.unitQuarterPoint_zero,
     Geometry.Gaussian.UnitCircle.Quarter.unitCircuitMultiplier]

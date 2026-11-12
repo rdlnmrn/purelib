@@ -40,6 +40,10 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Data.Gaussian
+
 public section
 
 /-!
@@ -80,45 +84,45 @@ open Purelib.Data.Gaussian.Cast.Path (ofCoordinate)
 open Purelib.Geometry.Rational.Affine (line)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {collar :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar}
 
 namespace FactorBounds
 
 /-- Embedding a rational parameter as a Gaussian value commutes with finite powers. -/
-private theorem coordinate_power (parameter : InverseRootPolynomial.Coordinate) (exponent : Nat) :
-    Path.ofCoordinate (parameter ^ exponent) = (Path.ofCoordinate parameter) ^ exponent := by
+private theorem coordinate_power (parameter : Coordinate) (exponent : Nat) :
+    ofCoordinate (parameter ^ exponent) = (ofCoordinate parameter) ^ exponent := by
   induction exponent with
   | zero => rfl
   | succ exponent previous =>
       rw [pow_succ, pow_succ, ← previous]
-      apply Data.Gaussian.Basic.ext <;>
-        simp only [Path.ofCoordinate, Data.Gaussian.Basic.mul_re, Data.Gaussian.Basic.mul_im] <;> ring1
+      apply Basic.ext <;>
+        simp only [ofCoordinate, Basic.mul_re, Basic.mul_im] <;> ring1
 
 /-- Every nonnegative unit-interval radial power contraction remains inside the original reciprocal collar box. -/
-private theorem radial_inside {point : InverseRootPolynomial.Gaussian} (inside : collar.box.Contains point)
-    {parameter : InverseRootPolynomial.Coordinate} (unit : 0 ≤ parameter ∧ parameter ≤ 1) (exponent : Nat) :
-    collar.box.Contains (point * (Path.ofCoordinate parameter) ^ exponent) := by
+theorem radial_inside {point : Gaussian} (inside : collar.box.Contains point)
+    {parameter : Coordinate} (unit : 0 ≤ parameter ∧ parameter ≤ 1) (exponent : Nat) :
+    collar.box.Contains (point * (ofCoordinate parameter) ^ exponent) := by
   have zeroInside : collar.box.Contains 0 := by
     rw [collar.box_eq]
     exact ⟨(by
-        have ordered := Fraction.Order.Arithmetic.neg_le_neg_direct
+        have ordered := Arithmetic.neg_le_neg_direct
           (ReciprocalExteriorCollar.innerRadius_positive curve).le
         change -(ReciprocalExteriorCollar.innerRadius curve) ≤ 0 at ordered
         exact ordered),
       (ReciprocalExteriorCollar.innerRadius_positive curve).le,
       (by
-        have ordered := Fraction.Order.Arithmetic.neg_le_neg_direct
+        have ordered := Arithmetic.neg_le_neg_direct
           (ReciprocalExteriorCollar.innerRadius_positive curve).le
         change -(ReciprocalExteriorCollar.innerRadius curve) ≤ 0 at ordered
         exact ordered),
       (ReciprocalExteriorCollar.innerRadius_positive curve).le⟩
   have powered : 0 ≤ parameter ^ exponent ∧ parameter ^ exponent ≤ 1 :=
-    ⟨Fraction.Order.Arithmetic.pow_nonneg_direct unit.1 _,
-      (Fraction.Order.Arithmetic.pow_le_pow_direct unit.1 unit.2 exponent).trans_eq (one_pow _)⟩
-  have contained := Rational.Box.contains_line zeroInside inside powered
-  simpa only [Affine.line, Data.Gaussian.Basic.zero_add, Data.Gaussian.Basic.sub_zero,
-    coordinate_power, Data.Gaussian.Basic.mul_comm] using
+    ⟨Arithmetic.pow_nonneg_direct unit.1 _,
+      (Arithmetic.pow_le_pow_direct unit.1 unit.2 exponent).trans_eq (one_pow _)⟩
+  have contained := Box.contains_line zeroInside inside powered
+  simpa only [line, Basic.zero_add, Basic.sub_zero,
+    coordinate_power, Basic.mul_comm] using
     contained
 
 end FactorBounds
@@ -137,7 +141,7 @@ private theorem radial_degree :
     exact Eq.refl _
 
 /-- The squared Gaussian norm of either cap coordinate degree is at most four. -/
-private theorem degree_norm : Data.Gaussian.Norm.Basic.normSq (degree curve : InverseRootPolynomial.Gaussian) ≤
+private theorem degree_norm : Norm.Basic.normSq (degree curve : Gaussian) ≤
   4 := by
   rcases (HyperellipticReciprocal.origin_factor curve).2 with regular | branch
   · rw [degree, regular]
@@ -152,13 +156,13 @@ end
 set_option genInjectivity false in
 /-- Cache the fixed numerator and its box norm together with the regular inverse ceiling. This data is independent of
 the primitive's Newton index. -/
-structure FactorBounds (cap : ReciprocalInnerInverse.Data curve collar) (differential : Differentials.Basic.Differential
+structure FactorBounds (cap : ReciprocalInnerInverse.Data curve collar) (differential : Differential
   genus) where
-  /-- The cached fixed reversed-differential monomial polynomial. -/ numerator : InverseRootPolynomial.Polynomial
+  /-- The cached fixed reversed-differential monomial polynomial. -/ numerator : Polynomial
   /-- The cached numerator evaluates to the exact original reversed-differential coordinate power. -/ numerator_eq : ∀
     point, numerator.eval point = point ^ (HyperellipticReciprocal.reversedDifferential differential).exponent
   /-- The retained numerator and inverse-root ceilings on the original cap-clearance box. -/ base :
-    PrimitiveEdgeComparison.PrimitiveOverlapBounds cap.clearance numerator
+    PrimitiveOverlapBounds cap.clearance numerator
 
 constructive_injectivity FactorBounds
 
@@ -166,12 +170,12 @@ namespace FactorBounds
 
 /-- Cache the fixed differential monomial and its original cap-box comparison bounds once. -/
 @[expose] public def build (cap : ReciprocalInnerInverse.Data curve collar) (differential :
-  Differentials.Basic.Differential genus) : FactorBounds cap
+  Differential genus) : FactorBounds cap
   differential :=
-  let numerator := DensePolynomial.shift (HyperellipticReciprocal.reversedDifferential differential).exponent
-    (DensePolynomial.constant 1)
-  ⟨numerator, fun point => by rw [DensePolynomial.eval_shift, DensePolynomial.eval_constant,
-    Data.Gaussian.Basic.one_mul], PrimitiveOverlapBounds.build cap.clearance numerator⟩
+  let numerator := shift (HyperellipticReciprocal.reversedDifferential differential).exponent
+    (constant 1)
+  ⟨numerator, fun point => by rw [eval_shift, eval_constant,
+    Basic.one_mul], PrimitiveOverlapBounds.build cap.clearance numerator⟩
 
 variable {differential : Differential genus}
 
@@ -182,43 +186,43 @@ variable {differential : Differential genus}
 /-- The retained uniform primitive-factor ceiling is nonnegative. -/
 theorem bound_nonnegative (bounds : FactorBounds cap
   differential) : 0 ≤ bounds.bound :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) bounds.base.numeratorUpper_nonnegative)
+  Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (by decide) bounds.base.numeratorUpper_nonnegative)
       bounds.base.inverseUpper_positive.le
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives in
 /-- The same factor ceiling holds throughout the original inner box at every finite primitive stage, including its
 branch origin. -/
 theorem factor_le (bounds : FactorBounds cap differential)
-  {index : Nat} {box : Rational.Box}
-    (sample : Primitives.Sample cap differential index box) {point : InverseRootPolynomial.Gaussian} (inside :
+  {index : Nat} {box : Box}
+    (sample : Sample cap differential index box) {point : Gaussian} (inside :
       collar.box.Contains point) :
-    Data.Gaussian.Norm.Basic.normSq (sample.factor.eval point) ≤ bounds.bound := by
+    Norm.Basic.normSq (sample.factor.eval point) ≤ bounds.bound := by
   have estimate := Radial.Bounds.factor_bound sample.factor point
     (decide (HyperellipticReciprocal.originOrder curve = 1))
     (4 * bounds.base.numeratorUpper * bounds.base.inverseUpper) (by
       intro parameter unit
       rw [radial_degree]
-      let coordinate := point * (Path.ofCoordinate parameter) ^ degree curve
+      let coordinate := point * (ofCoordinate parameter) ^ degree curve
       have contained : collar.box.Contains coordinate :=
         radial_inside inside unit _
       have productScalar := bounds.base.numerator_inverse_le sample.inverse contained
-      rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at productScalar
-      change Data.Gaussian.Norm.Basic.normSq (sample.factor.eval coordinate + (degree curve :
-        InverseRootPolynomial.Gaussian) * coordinate *
+      rw [← Norm.Basic.normSq_eq_canonical] at productScalar
+      change Norm.Basic.normSq (sample.factor.eval coordinate + (degree curve :
+        Gaussian) * coordinate *
         (GCD.derivative sample.factor).eval coordinate) ≤ _
       rw [sample.factor_derivative]
       calc
-        _ = Data.Gaussian.Norm.Basic.normSq (degree curve : InverseRootPolynomial.Gaussian) *
-          Data.Gaussian.Norm.Basic.normSq (bounds.numerator.eval coordinate * sample.inverse.value.eval
+        _ = Norm.Basic.normSq (degree curve : Gaussian) *
+          Norm.Basic.normSq (bounds.numerator.eval coordinate * sample.inverse.value.eval
           coordinate) := by
-          rw [bounds.numerator_eq, Data.Gaussian.Norm.Basic.normSq_mul, Data.Gaussian.Norm.Basic.normSq_mul,
-            Data.Gaussian.Norm.Basic.normSq_neg, Data.Gaussian.Norm.Basic.normSq_mul]
+          rw [bounds.numerator_eq, Norm.Basic.normSq_mul, Norm.Basic.normSq_mul,
+            Norm.Basic.normSq_neg, Norm.Basic.normSq_mul]
           ring1
         _ ≤ 4 * (bounds.base.numeratorUpper * bounds.base.inverseUpper) :=
-          Fraction.Order.Arithmetic.mul_le_mul_direct
+          Arithmetic.mul_le_mul_direct
             degree_norm
-            productScalar (Data.Gaussian.Norm.Basic.normSq_nonneg _) (by decide)
+            productScalar (Norm.Basic.normSq_nonneg _) (by decide)
         _ = _ := by ring1)
   exact estimate.trans_eq (by unfold bound; ring1)
 

@@ -25,6 +25,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 
 open Purelib
 
+open Purelib.Approximation.Gaussian.Process.Apart.Preparation (ApartState)
+
 open Purelib.Approximation
 
 open Purelib.Approximation.Gaussian.Enclosure
@@ -61,40 +63,44 @@ namespace Purelib.Approximation.Gaussian.Division.Partial.Preparation
 
 /-- The coherent denominator restricted to the retained refinement future. -/
 def basedDenominator {denominator :
-  Coherent.CoherentNamed}
-    (state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator) : Coherent.CoherentNamed :=
+  CoherentNamed}
+    (state : State denominator) : CoherentNamed :=
   CoherentNamed.based denominator state.source
 
 /-- Turn exact state-indexed candidate apartness into the existing total, whole-ball-apart coherent denominator. -/
 def preparedDenominator {denominator :
-  Coherent.CoherentNamed}
-    (state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator)
+  CoherentNamed}
+    (state : State denominator)
     (evidence : Possible.PossibleApart
-      (Gaussian.Process.Based.based denominator.name.process state.source)) :
-    Coherent.CoherentNamed :=
+      (Process.Based.based denominator.name.process state.source))
+    (cached : Option (ApartState
+      (Process.Based.based denominator.name.process state.source) evidence) := none) :
+    CoherentNamed :=
   CoherentNamed.apartify
-    (basedDenominator state) evidence
+    (basedDenominator state) evidence cached
 
 /-- Uniform whole-ball apartness consumed by ordinary total division. -/
 def preparedApart {denominator :
-  Coherent.CoherentNamed}
-    (state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator)
+  CoherentNamed}
+    (state : State denominator)
     (evidence : Possible.PossibleApart
-      (Gaussian.Process.Based.based denominator.name.process state.source)) :
+      (Process.Based.based denominator.name.process state.source))
+    (cached : Option (ApartState
+      (Process.Based.based denominator.name.process state.source) evidence) := none) :
     Named.Apart
-      (preparedDenominator state evidence).name where
+      (preparedDenominator state evidence cached).name where
   certificate := Preparation.apartifyApart evidence
 
 /-- Convert the successful rational centre-separation test into the precisely indexed evidence required for manual or
 automatic readiness. -/
 def evidenceOfSeparation {denominator :
-  Coherent.CoherentNamed}
-    (state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator)
+  CoherentNamed}
+    (state : State denominator)
     (separated :
       2 * (denominator.name.process.ball state.source).radiusSq <
         Data.Gaussian.Norm.Basic.normSq (denominator.name.process.ball state.source).center) :
     Possible.PossibleApart
-      (Gaussian.Process.Based.based denominator.name.process state.source) :=
+      (Process.Based.based denominator.name.process state.source) :=
   Based.possibleApartOfBall
     denominator.name.process state.source
     (Residual.apartOfCenter
@@ -104,19 +110,19 @@ set_option genInjectivity false in
 /-- Denominator-only preparation result. This separates acquisition of the apartness certificate from construction of a
 quotient, allowing a dependency scheduler to prepare a denominator before its numerator is available. -/
 inductive PreparationResult (denominator :
-  Coherent.CoherentNamed)
-    (state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator) : Type
+  CoherentNamed)
+    (state : State denominator) : Type
   /-- Retain apartness evidence for the denominator process based at this exact refinement state. -/ | prepared
     (evidence : Possible.PossibleApart
-      (Gaussian.Process.Based.based denominator.name.process state.source))
+      (Process.Based.based denominator.name.process state.source))
   /-- Retain the next denominator refinement state and its certified progress from the original state. -/ | progressed
-    (next : Approximation.Gaussian.Name.Coherent.Refinement.State denominator) (progress : State.Progress state next)
+    (next : State denominator) (progress : State.Progress state next)
 
 constructive_injectivity PreparationResult
 
 /-- Inspect or refine only the denominator. No placeholder numerator and no partial quotient is constructed. -/
-def prepare (denominator : Coherent.CoherentNamed)
-  (state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator) :
+def prepare (denominator : CoherentNamed)
+  (state : State denominator) :
     PreparationResult denominator state :=
   if separated :
       2 * (denominator.name.process.ball state.source).radiusSq <
@@ -128,20 +134,20 @@ def prepare (denominator : Coherent.CoherentNamed)
 /-- Successful center separation makes denominator preparation return the prepared alternative with state-indexed
 apartness evidence. -/
 theorem prepare_is_prepared_of_separated (denominator
-  : Coherent.CoherentNamed)
-    (state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator)
+  : CoherentNamed)
+    (state : State denominator)
     (separated :
       2 * (denominator.name.process.ball state.source).radiusSq <
         Data.Gaussian.Norm.Basic.normSq (denominator.name.process.ball state.source).center) :
     ∃ evidence : Possible.PossibleApart
-        (Gaussian.Process.Based.based denominator.name.process state.source),
+        (Process.Based.based denominator.name.process state.source),
       prepare denominator state = .prepared evidence := by
   rw [prepare, dif_pos separated]
   exact ⟨_, rfl⟩
 
 /-- Without center separation, preparation returns the canonical refined state and its progress certificate. -/
 theorem prepare_eq_progressed_of_not_separated
-    (denominator : Coherent.CoherentNamed) (state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator)
+    (denominator : CoherentNamed) (state : State denominator)
     (notSeparated : ¬
       2 * (denominator.name.process.ball state.source).radiusSq <
         Data.Gaussian.Norm.Basic.normSq (denominator.name.process.ball state.source).center) :

@@ -42,18 +42,18 @@ def coinFrequencyEvents : List (Bool → Bool)
   [fun outcome => outcome, fun outcome => !outcome]
 
 /-- The two-event frequency request with tolerance one tenth and failure budget one twentieth uses 1501 samples. -/
-example : Purelib.Measure.Distribution.requiredEventFamilyFrequencySampleCount
+example : Distribution.requiredEventFamilyFrequencySampleCount
     coinFrequencyEvents (1 / 10) (1 / 20) = 1501 := by decide
 
 /-- The requested sample count makes simultaneous coin-event frequency failure probability less than one twentieth. -/
 example :
     (fairCoin.iidSamples
-      (Purelib.Measure.Distribution.requiredEventFamilyFrequencySampleCount
+      (Distribution.requiredEventFamilyFrequencySampleCount
         coinFrequencyEvents (1 / 10) (1 / 20))).probability
-      (Purelib.Measure.Distribution.simultaneousEventFrequencyDeviation
+      (Distribution.simultaneousEventFrequencyDeviation
         fairCoin
         coinFrequencyEvents
-        (Purelib.Measure.Distribution.requiredEventFamilyFrequencySampleCount
+        (Distribution.requiredEventFamilyFrequencySampleCount
           coinFrequencyEvents (1 / 10) (1 / 20))
         (1 / 10)) < 1 / 20 :=
   open Purelib.Examples in
@@ -65,23 +65,23 @@ def coinCumulativeThresholdGrid : List
   Fraction.Rational := [0, 1]
 
 /-- The two-threshold cumulative request uses 1501 samples at the displayed tolerance and budget. -/
-example : Purelib.Measure.Distribution.requiredCumulativeGridSampleCount
+example : Distribution.requiredCumulativeGridSampleCount
     coinCumulativeThresholdGrid (1 / 10) (1 / 20) = 1501 := by decide
 
 /-- The numeric fair-coin Kolmogorov request uses 1501 samples at the displayed tolerance and budget. -/
-example : Purelib.Measure.Distribution.requiredKolmogorovSampleCount
+example : Distribution.requiredKolmogorovSampleCount
   coinNumberLaw
     (1 / 10) (1 / 20) = 1501 := by decide
 
 /-- The requested empirical numeric-coin Kolmogorov distance exceeds tolerance with probability below one twentieth. -/
 example :
     (coinNumberLaw.iidSamples
-      (Purelib.Measure.Distribution.requiredKolmogorovSampleCount
+      (Distribution.requiredKolmogorovSampleCount
         coinNumberLaw
         (1 / 10) (1 / 20))).probability
-      (Purelib.Measure.Distribution.empiricalKolmogorovDistanceDeviation
+      (Distribution.empiricalKolmogorovDistanceDeviation
         coinNumberLaw
-        (Purelib.Measure.Distribution.requiredKolmogorovSampleCount
+        (Distribution.requiredKolmogorovSampleCount
           coinNumberLaw
           (1 / 10) (1 / 20))
         (1 / 10)) < 1 / 20 :=
@@ -92,12 +92,12 @@ example :
 /-- The requested cumulative-grid deviation has probability below one twentieth. -/
 example :
     (coinNumberLaw.iidSamples
-      (Purelib.Measure.Distribution.requiredCumulativeGridSampleCount
+      (Distribution.requiredCumulativeGridSampleCount
         coinCumulativeThresholdGrid (1 / 10) (1 / 20))).probability
-      (Purelib.Measure.Distribution.empiricalCumulativeGridDeviation
+      (Distribution.empiricalCumulativeGridDeviation
         coinNumberLaw
         coinCumulativeThresholdGrid
-        (Purelib.Measure.Distribution.requiredCumulativeGridSampleCount
+        (Distribution.requiredCumulativeGridSampleCount
           coinCumulativeThresholdGrid (1 / 10) (1 / 20))
         (1 / 10)) < 1 / 20 :=
   open Purelib.Examples in
@@ -107,10 +107,10 @@ example :
 
 /-- A sample outside the cumulative-grid deviation event carries the corresponding accuracy certificate. -/
 example (sample : List Fraction.Rational)
-    (outside : Purelib.Measure.Distribution.empiricalCumulativeGridDeviation
+    (outside : Distribution.empiricalCumulativeGridDeviation
       coinNumberLaw
       coinCumulativeThresholdGrid 1501 (1 / 10) sample = false) :
-    Purelib.Measure.Distribution.EmpiricalCumulativeGridAccurate
+    Distribution.EmpiricalCumulativeGridAccurate
       coinNumberLaw
       coinCumulativeThresholdGrid 1501 (1 / 10) sample :=
   coinNumberLaw.empiricalCumulativeGridAccurate_of_outside
@@ -120,10 +120,10 @@ example (sample : List Fraction.Rational)
 twentieth. -/
 example :
     (coinNumberLaw.iidSamples
-      (Purelib.Measure.Distribution.requiredCumulativeGridSampleCount
+      (Distribution.requiredCumulativeGridSampleCount
         coinCumulativeThresholdGrid (1 / 10) (1 / 20))).probability
-      (Purelib.Measure.Distribution.empiricalLowerQuantileBracketDeviation
-        (Purelib.Measure.Distribution.requiredCumulativeGridSampleCount
+      (Distribution.empiricalLowerQuantileBracketDeviation
+        (Distribution.requiredCumulativeGridSampleCount
           coinCumulativeThresholdGrid (1 / 10) (1 / 20))
         (3 / 4) (by decide) (by decide) 0 1) < 1 / 20 := open Purelib.Examples in by
   apply coinNumberLaw
@@ -136,10 +136,10 @@ example :
   · decide
 
 /-- Total variation distance below one tenth gives closeness on the retained coin cumulative grid. -/
-example (approximation : Purelib.Measure.Distribution Fraction.Rational)
+example (approximation : Distribution Fraction.Rational)
     (close : approximation.totalVariationDistance coinNumberLaw < 1 / 10)
       :
-    Purelib.Measure.Distribution.CumulativeGridClose approximation
+    Distribution.CumulativeGridClose approximation
       coinNumberLaw
       coinCumulativeThresholdGrid (1 / 10) :=
   approximation.cumulativeGridClose_of_totalVariationDistance_lt

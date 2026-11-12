@@ -62,6 +62,8 @@ import Purelib.Riemann.RootContinuation.SquareRootChannelOwnership
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
@@ -115,15 +117,15 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartReadings.Endpoint 
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap}
   {parent : CenteredEdge curve differential} {patch :
     PreparedPatch parent}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
+  {data : UniformReciprocalModels.Data patch count} {cover :
     Cover data}
-  {index readingIndex energyDepth : Nat} {box : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {target
+  {index readingIndex energyDepth : Nat} {box : Geometry.Rational.Box}
+  {sample : Primitives.Sample cap differential index box} {target
     joining : Coordinate} {joinFloor : Nat}
 
 namespace EnergyEndBank
@@ -134,32 +136,32 @@ set_option genInjectivity false in
 Both endpoint certificates share the original cap sample, reading stage and radial depth independently of local
 preparation budgets. -/
 structure EnergyEnds (sample : Primitives.Sample cap differential index box)
-    (readingIndex energyDepth : Nat) (target : InverseRootPolynomial.Coordinate) (prepared :
-      ParentComparison.Preparation regular cover) where
+    (readingIndex energyDepth : Nat) (target : Coordinate) (prepared :
+      Preparation regular cover) where
   /-- The actual original first endpoint approximation on the retained cap sample. -/ first :
     Coordinates.Overlap.Endpoint prepared.boundary.first.point.coordinates sample
   /-- The cached original first endpoint root reading at the shared stage. -/ firstReading :
-    ChartReadings.Endpoint.Reading first readingIndex
+    Reading first readingIndex
   /-- The actual original terminal endpoint approximation on that same retained cap sample. -/ last :
     Coordinates.Overlap.Endpoint prepared.boundary.last.point.coordinates sample
   /-- The cached original terminal endpoint root reading at the shared stage. -/ lastReading :
-    ChartReadings.Endpoint.Reading last readingIndex
-  /-- The cached actual primitive reading at the original first endpoint. -/ firstValue : InverseRootPolynomial.Gaussian
+    Reading last readingIndex
+  /-- The cached actual primitive reading at the original first endpoint. -/ firstValue : Gaussian
   /-- The first primitive-value cache is exactly the retained endpoint approximation sample. -/ first_value :
     first.approximation.sample readingIndex = firstValue
   /-- The cached actual primitive reading at the original terminal endpoint. -/ lastValue :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The last primitive-value cache is exactly the retained endpoint approximation sample. -/ last_value :
     last.approximation.sample readingIndex = lastValue
   /-- The cached shifted radial potential of the original first endpoint. -/ firstPotential :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The cached shifted radial potential of the original terminal endpoint. -/ lastPotential :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The retained first potential and reading satisfy the original energy endpoint certificate. -/ first_bound :
-    ReciprocalDiskVertices.EnergyEndpoint sample regular energyDepth target firstReading.coordinate firstValue
+    EnergyEndpoint sample regular energyDepth target firstReading.coordinate firstValue
     firstPotential
   /-- The retained terminal potential and reading satisfy that same original energy target. -/ last_bound :
-    ReciprocalDiskVertices.EnergyEndpoint sample regular energyDepth target lastReading.coordinate lastValue
+    EnergyEndpoint sample regular energyDepth target lastReading.coordinate lastValue
     lastPotential
 
 constructive_injectivity EnergyEnds
@@ -171,9 +173,9 @@ namespace EnergyEndBank.EnergyEnds
 variable {prepared : Preparation regular cover}
 
 /-- Enlarge the original endpoint-error target while preserving the exact roots, readings and potential caches. -/
-@[expose] def weaken (ends : Curves.Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndBank.EnergyEnds sample readingIndex
-  energyDepth target prepared) {larger : InverseRootPolynomial.Coordinate} (le : target ≤ larger) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndBank.EnergyEnds sample readingIndex energyDepth larger prepared
+@[expose] def weaken (ends : EnergyEnds sample readingIndex
+  energyDepth target prepared) {larger : Coordinate} (le : target ≤ larger) :
+    EnergyEnds sample readingIndex energyDepth larger prepared
       :=
   { ends with
     first_bound := ⟨ends.first_bound.potential_eq, ends.first_bound.offset.trans le, ends.first_bound.small,
@@ -184,21 +186,21 @@ variable {prepared : Preparation regular cover}
 variable {otherCount : Nat} {otherParent : CenteredEdge curve
   differential}
   {otherPatch : PreparedPatch otherParent}
-  {otherData : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
+  {otherData : UniformReciprocalModels.Data otherPatch otherCount}
     {otherCover : Cover otherData}
   {next : Preparation regular otherCover}
 
 /-- The actual neighboring energy-potential discrepancy, including its endpoint wedge, satisfies the original endpoint
 and junction budgets. -/
-theorem join_bound (left : Curves.Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndBank.EnergyEnds sample readingIndex
+theorem join_bound (left : EnergyEnds sample readingIndex
   energyDepth target prepared)
-    (right : Curves.Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndBank.EnergyEnds sample readingIndex energyDepth target
+    (right : EnergyEnds sample readingIndex energyDepth target
       next)
     (branch : HyperellipticReciprocal.originOrder curve = 1) (small : joining ≤ 1)
     {joined : ArcOwners.Join prepared.boundary.last.point next.boundary.first.point}
     (request : JunctionRequests.Request prepared.boundary.last.bounds joined joining joinFloor) (later : request.index ≤
       readingIndex) :
-    Data.Gaussian.Norm.Basic.normSq (right.firstPotential - left.lastPotential - BoundaryRibbon.area
+    Basic.normSq (right.firstPotential - left.lastPotential - area
       left.lastValue right.firstValue) ≤ 80 * target + 2 * joining := by
   have radial := request.radial_accurate left.lastReading right.firstReading branch left.last_bound.inside
     right.first_bound.inside later later energyDepth
@@ -215,20 +217,20 @@ section SideBank
 set_option genInjectivity false in
 /-- The ordered complete energy endpoint bank indexed by the original retained side preparation. -/
 inductive EnergyEndBank (sample : Primitives.Sample cap differential index box)
-    (readingIndex energyDepth : Nat) (target : InverseRootPolynomial.Coordinate) :
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
-      UniformReciprocalCover.ParentCovers parents} → ParentJoins.SideBank regular covers → Type 2
+    (readingIndex energyDepth : Nat) (target : Coordinate) :
+    {parents : List (CenteredEdge curve differential)} → {covers :
+      ParentCovers parents} → SideBank regular covers → Type 2
   /-- The empty original side bank retains no energy endpoint packets. -/ | nil :
     EnergyEndBank sample readingIndex
     energyDepth target .nil
   /-- Retain one original parent's energy endpoints before the exact remaining side bank. -/ | cons {parent :
-    PreparedSubdivisionModelCore.CenteredEdge curve differential} {parents : List
-    (PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-      {patch : UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data : UniformReciprocalModels.Data patch
+    CenteredEdge curve differential} {parents : List
+    (CenteredEdge curve differential)}
+      {patch : PreparedPatch parent} {data : UniformReciprocalModels.Data patch
         genus}
-      {cover : UniformReciprocalCover.Cover data} {covers : UniformReciprocalCover.ParentCovers parents}
-      {head : ParentComparison.Preparation regular cover} {tail : ParentJoins.SideBank regular covers}
-      (ends : Curves.Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndBank.EnergyEnds sample readingIndex energyDepth
+      {cover : Cover data} {covers : ParentCovers parents}
+      {head : Preparation regular cover} {tail : SideBank regular covers}
+      (ends : EnergyEndBank.EnergyEnds sample readingIndex energyDepth
         target head)
       (remaining : EnergyEndBank sample
         readingIndex energyDepth target tail) :
@@ -241,12 +243,12 @@ namespace EnergyEndBank
 
 variable {parents : List (CenteredEdge curve differential)}
   {covers : ParentCovers parents}
-  {prepared : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers}
+  {prepared : SideBank regular covers}
 
 /-- Enlarge the common endpoint target throughout the actual original side bank without changing its retained data. -/
-@[expose] def weaken {larger : InverseRootPolynomial.Coordinate} (le : target ≤ larger) :
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
-      UniformReciprocalCover.ParentCovers parents} → {prepared : ParentJoins.SideBank regular covers} →
+@[expose] def weaken {larger : Coordinate} (le : target ≤ larger) :
+    {parents : List (CenteredEdge curve differential)} → {covers :
+      ParentCovers parents} → {prepared : SideBank regular covers} →
     EnergyEndBank sample readingIndex energyDepth
       target prepared → EnergyEndBank sample
       readingIndex energyDepth larger prepared
@@ -255,61 +257,61 @@ variable {parents : List (CenteredEdge curve differential)}
     (weaken le tail)
 
 /-- Read the first actual cached primitive value, returning zero for an empty original bank. -/
-@[expose] def firstValue : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
-  UniformReciprocalCover.ParentCovers parents} → {prepared : ParentJoins.SideBank regular covers} →
+@[expose] def firstValue : {parents : List (CenteredEdge curve differential)} → {covers :
+  ParentCovers parents} → {prepared : SideBank regular covers} →
     EnergyEndBank sample readingIndex energyDepth
-      target prepared → InverseRootPolynomial.Gaussian
+      target prepared → Gaussian
   | _, _, _, .nil => 0
   | _, _, _, .cons head _ => head.firstValue
 
 /-- Read the first actual cached shifted potential, returning zero for an empty original bank. -/
-@[expose] def firstPotential : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers
-  : UniformReciprocalCover.ParentCovers parents} → {prepared : ParentJoins.SideBank regular covers} →
+@[expose] def firstPotential : {parents : List (CenteredEdge curve differential)} → {covers
+  : ParentCovers parents} → {prepared : SideBank regular covers} →
     EnergyEndBank sample readingIndex energyDepth
-      target prepared → InverseRootPolynomial.Gaussian
+      target prepared → Gaussian
   | _, _, _, .nil => 0
   | _, _, _, .cons head _ => head.firstPotential
 
 /-- Read the last actual cached primitive value, retaining the supplied previous value for an empty tail. -/
-@[expose] def lastValue : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
-  UniformReciprocalCover.ParentCovers parents} → {prepared : ParentJoins.SideBank regular covers} →
+@[expose] def lastValue : {parents : List (CenteredEdge curve differential)} → {covers :
+  ParentCovers parents} → {prepared : SideBank regular covers} →
     EnergyEndBank sample readingIndex energyDepth
-      target prepared → InverseRootPolynomial.Gaussian → InverseRootPolynomial.Gaussian
+      target prepared → Gaussian → Gaussian
   | _, _, _, .nil, previous => previous
   | _, _, _, .cons head tail, _ => tail.lastValue head.lastValue
 
 /-- Read the last actual cached shifted potential, retaining the supplied previous potential for an empty tail. -/
-@[expose] def lastPotential : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers
-  : UniformReciprocalCover.ParentCovers parents} → {prepared : ParentJoins.SideBank regular covers} →
+@[expose] def lastPotential : {parents : List (CenteredEdge curve differential)} → {covers
+  : ParentCovers parents} → {prepared : SideBank regular covers} →
     EnergyEndBank sample readingIndex energyDepth
-      target prepared → InverseRootPolynomial.Gaussian → InverseRootPolynomial.Gaussian
+      target prepared → Gaussian → Gaussian
   | _, _, _, .nil, previous => previous
   | _, _, _, .cons head tail, _ => tail.lastPotential head.lastPotential
 
 /-- Read each actual inter-parent potential discrepancy with its original endpoint wedge in retained parent order. -/
-@[expose] def errors : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
-  UniformReciprocalCover.ParentCovers parents} → {prepared : ParentJoins.SideBank regular covers} →
+@[expose] def errors : {parents : List (CenteredEdge curve differential)} → {covers :
+  ParentCovers parents} → {prepared : SideBank regular covers} →
     EnergyEndBank sample readingIndex energyDepth
-      target prepared → InverseRootPolynomial.Gaussian → InverseRootPolynomial.Gaussian → List
-      InverseRootPolynomial.Gaussian
+      target prepared → Gaussian → Gaussian → List
+      Gaussian
   | _, _, _, .nil, _, _ => []
   | _, _, _, .cons head tail, value, potential =>
-      (head.firstPotential - potential - BoundaryRibbon.area value head.firstValue) :: tail.errors head.lastValue
+      (head.firstPotential - potential - area value head.firstValue) :: tail.errors head.lastValue
         head.lastPotential
 
 /-- The actual initial connector satisfies the supplied bound, or the retained bank is empty. -/
-@[expose] def FirstBound : {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
-  UniformReciprocalCover.ParentCovers parents} → {prepared : ParentJoins.SideBank regular covers} →
+@[expose] def FirstBound : {parents : List (CenteredEdge curve differential)} → {covers :
+  ParentCovers parents} → {prepared : SideBank regular covers} →
     EnergyEndBank sample readingIndex energyDepth
-      target prepared → InverseRootPolynomial.Gaussian → InverseRootPolynomial.Gaussian →
-      InverseRootPolynomial.Coordinate → Prop
+      target prepared → Gaussian → Gaussian →
+      Coordinate → Prop
   | _, _, _, .nil, _, _, _ => True
-  | _, _, _, .cons head _, value, potential, bound => Data.Gaussian.Norm.Basic.normSq (head.firstPotential -
-    potential - BoundaryRibbon.area value head.firstValue) ≤ bound
+  | _, _, _, .cons head _, value, potential, bound => Basic.normSq (head.firstPotential -
+    potential - area value head.firstValue) ≤ bound
 
 /-- There is exactly one retained connector error per actual original parent. -/
 theorem errors_count (ends : EnergyEndBank sample
-  readingIndex energyDepth target prepared) (value potential : InverseRootPolynomial.Gaussian) :
+  readingIndex energyDepth target prepared) (value potential : Gaussian) :
     (ends.errors value potential).length = parents.length := by
   induction ends generalizing value potential with
   | nil => rfl
@@ -317,13 +319,13 @@ theorem errors_count (ends : EnergyEndBank sample
 
 /-- Every actual retained connector error satisfies the original endpoint and paid junction budgets. -/
 theorem errors_bounded (branch : HyperellipticReciprocal.originOrder curve = 1) (small : joining ≤ 1) :
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
-      UniformReciprocalCover.ParentCovers parents} → {prepared : ParentJoins.SideBank regular covers} →
+    {parents : List (CenteredEdge curve differential)} → {covers :
+      ParentCovers parents} → {prepared : SideBank regular covers} →
     (ends : EnergyEndBank sample readingIndex
-      energyDepth target prepared) → {links : SideBank.Links prepared} →
-    (requests : SideConnections.JunctionRequests joining joinFloor prepared links) → requests.maximum ≤ readingIndex →
-    (value potential : InverseRootPolynomial.Gaussian) → ends.FirstBound value potential (80 * target + 2 * joining) →
-    ∀ error ∈ ends.errors value potential, Data.Gaussian.Norm.Basic.normSq error ≤ 80 * target + 2 * joining
+      energyDepth target prepared) → {links : Links prepared} →
+    (requests : JunctionRequests joining joinFloor prepared links) → requests.maximum ≤ readingIndex →
+    (value potential : Gaussian) → ends.FirstBound value potential (80 * target + 2 * joining) →
+    ∀ error ∈ ends.errors value potential, Basic.normSq error ≤ 80 * target + 2 * joining
   | _, _, _, .nil, _, _, _, _, _, _, _, member => by cases member
   | _, _, _, .cons head tail, links, requests, later, value, potential, first, error, member => by
       rcases Data.List.Membership.mem_cons.mp member with same | member
@@ -341,17 +343,17 @@ theorem errors_bounded (branch : HyperellipticReciprocal.originOrder curve = 1) 
 
 /-- The actual final connector to the supplied original first endpoint satisfies the retained root-return budget. -/
 theorem last_closing_bound (branch : HyperellipticReciprocal.originOrder curve = 1) (small : joining ≤ 1)
-    {destination : ParentComparison.Preparation regular cover} (first :
+    {destination : Preparation regular cover} (first :
       EnergyEnds sample readingIndex energyDepth target
       destination) :
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
-      UniformReciprocalCover.ParentCovers parents} → {prepared : ParentJoins.SideBank regular covers} →
+    {parents : List (CenteredEdge curve differential)} → {covers :
+      ParentCovers parents} → {prepared : SideBank regular covers} →
     (ends : EnergyEndBank sample readingIndex
-      energyDepth target prepared) → {joined : ClosingJoins.LastJoin destination prepared} →
-    (request : ClosingRequests.LastRequest destination joining joinFloor prepared joined) → request.maximum ≤
+      energyDepth target prepared) → {joined : LastJoin destination prepared} →
+    (request : LastRequest destination joining joinFloor prepared joined) → request.maximum ≤
       readingIndex → parents ≠ [] →
-    (value potential : InverseRootPolynomial.Gaussian) →
-    Data.Gaussian.Norm.Basic.normSq (first.firstPotential - ends.lastPotential potential - BoundaryRibbon.area
+    (value potential : Gaussian) →
+    Basic.normSq (first.firstPotential - ends.lastPotential potential - area
       (ends.lastValue value) first.firstValue) ≤ 80 * target + 2 * joining
   | _, _, _, .nil, _, _, _, nonempty, _, _ => False.elim (nonempty rfl)
   | _, _, _, .cons head tail, _, request, later, _, value, potential => by
@@ -369,16 +371,16 @@ theorem closing_bound (ends : EnergyEndBank sample
   readingIndex energyDepth target prepared)
     (branch : HyperellipticReciprocal.originOrder curve = 1) (nonnegative : 0 ≤ target) (joinNonnegative : 0 ≤ joining)
       (small : joining ≤ 1)
-    {joined : ClosingJoins.ClosingJoin prepared} (request : ClosingRequests.ClosingRequest joining joinFloor prepared
+    {joined : ClosingJoin prepared} (request : ClosingRequest joining joinFloor prepared
       joined) (later : request.maximum ≤ readingIndex) :
-    Data.Gaussian.Norm.Basic.normSq (ends.firstPotential - ends.lastPotential ends.firstPotential -
-      BoundaryRibbon.area (ends.lastValue ends.firstValue) ends.firstValue) ≤ 80 * target + 2 * joining := by
+    Basic.normSq (ends.firstPotential - ends.lastPotential ends.firstPotential -
+      area (ends.lastValue ends.firstValue) ends.firstValue) ≤ 80 * target + 2 * joining := by
   cases ends with
   | nil =>
-      change Data.Gaussian.Norm.Basic.normSq ((0 : InverseRootPolynomial.Gaussian) - 0 - BoundaryRibbon.area 0
+      change Basic.normSq ((0 : Gaussian) - 0 - area 0
         0) ≤ _
       rw [Data.Gaussian.Basic.sub_self, IncrementArea.area_self, Data.Gaussian.Basic.sub_zero,
-        Data.Gaussian.Norm.Basic.normSq_zero]
+        Basic.normSq_zero]
       exact add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) nonnegative)
         (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) joinNonnegative)
   | cons head tail =>
@@ -390,8 +392,8 @@ theorem closing_bound (ends : EnergyEndBank sample
 error. -/
 @[expose] def residual (ends : EnergyEndBank sample
   readingIndex energyDepth target prepared) : Gaussian :=
-  -(Data.Gaussian.Norm.Sum.Basic.gaussianSum (ends.errors ends.firstValue ends.firstPotential) +
-    (ends.firstPotential - ends.lastPotential ends.firstPotential - BoundaryRibbon.area (ends.lastValue ends.firstValue)
+  -(gaussianSum (ends.errors ends.firstValue ends.firstPotential) +
+    (ends.firstPotential - ends.lastPotential ends.firstPotential - area (ends.lastValue ends.firstValue)
       ends.firstValue))
 
 /-- The actual complete energy residual satisfies the count-weighted original join and root-return bounds. -/
@@ -399,29 +401,29 @@ theorem residual_bound (ends : EnergyEndBank sample
   readingIndex energyDepth target prepared)
     (branch : HyperellipticReciprocal.originOrder curve = 1) (nonnegative : 0 ≤ target) (joinNonnegative : 0 ≤ joining)
       (small : joining ≤ 1)
-    {links : SideBank.Links prepared} (requests : SideConnections.JunctionRequests joining joinFloor prepared links)
+    {links : Links prepared} (requests : JunctionRequests joining joinFloor prepared links)
       (later : requests.maximum ≤ readingIndex)
-    {joined : ClosingJoins.ClosingJoin prepared} (closing : ClosingRequests.ClosingRequest joining joinFloor prepared
+    {joined : ClosingJoin prepared} (closing : ClosingRequest joining joinFloor prepared
       joined) (closingLater : closing.maximum ≤ readingIndex) :
-    Data.Gaussian.Norm.Basic.normSq ends.residual ≤ 2 * (((parents.length : InverseRootPolynomial.Coordinate) *
-      ((parents.length : InverseRootPolynomial.Coordinate) * (80 * target + 2 * joining))) + (80 * target + 2 *
+    Basic.normSq ends.residual ≤ 2 * (((parents.length : Coordinate) *
+      ((parents.length : Coordinate) * (80 * target + 2 * joining))) + (80 * target + 2 *
       joining)) := by
   have initial : ends.FirstBound ends.firstValue ends.firstPotential (80 * target + 2 * joining) := by
     cases ends with
     | nil => trivial
     | cons head tail =>
-        change Data.Gaussian.Norm.Basic.normSq (head.firstPotential - head.firstPotential - BoundaryRibbon.area
+        change Basic.normSq (head.firstPotential - head.firstPotential - area
           head.firstValue head.firstValue) ≤ _
         rw [Data.Gaussian.Basic.sub_self, IncrementArea.area_self, Data.Gaussian.Basic.sub_zero,
-          Data.Gaussian.Norm.Basic.normSq_zero]
+          Basic.normSq_zero]
         exact add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) nonnegative)
           (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) joinNonnegative)
-  have sumBound := Data.Gaussian.Norm.Sum.Bounds.normSq_sum_le _ _ (ends.errors_bounded branch small requests later _ _
+  have sumBound := Sum.Bounds.normSq_sum_le _ _ (ends.errors_bounded branch small requests later _ _
     initial)
   rw [ends.errors_count] at sumBound
   rw [residual,
-    Data.Gaussian.Norm.Basic.normSq_neg]
-  exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
+    Basic.normSq_neg]
+  exact (Bounds.normSq_add_le_two _ _).trans
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
     (add_le_add sumBound (ends.closing_bound branch nonnegative joinNonnegative small closing closingLater)) (by
       decide))

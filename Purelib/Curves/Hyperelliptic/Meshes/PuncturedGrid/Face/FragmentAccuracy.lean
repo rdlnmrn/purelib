@@ -61,6 +61,8 @@ import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation.Rational
@@ -135,7 +137,7 @@ open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius quarterRadius
 open Purelib.Approximation.Rational.Budget.Aggregate (countCoordinate countCoordinate_eq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face :
@@ -148,20 +150,20 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {differential : Differential genus} {bounds :
     FragmentBounds patch differential}
   {globalBounds : PrimitiveOverlapBounds face.clearance
-    (Purelib.Riemann.Readings.PreparedPrimitiveSamples.differentialNumerator differential)}
-  {fragments : Nat} {tolerance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+    (PreparedPrimitiveSamples.differentialNumerator differential)}
+  {fragments : Nat} {tolerance : Coordinate}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentAccuracy
 
 /-- At any later model stage, the original retained residual is bounded by the minimum-stage quarter-radius. -/
-private theorem uniform_residual {polynomial : InverseRootPolynomial.Polynomial} {box : InverseRootPolynomial.Box}
-  (model : InverseRootPolynomial.Model polynomial box)
+theorem uniform_residual {polynomial : InverseRootPolynomial.Polynomial} {box : Box}
+  (model : Model polynomial box)
     {minimum index : Nat} (later : minimum ≤ index) :
     Geometric.Basic.quarterRadius model.bound index ≤ Geometric.Basic.quarterRadius (1 / 16) minimum :=
   (quarterRadius_antitone model.bound_nonnegative later).trans (by
     simp only [Geometric.Basic.quarterRadius_eq_mul_pow]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct model.bound_small
-      (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) minimum))
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct model.bound_small
+      (Arithmetic.pow_nonneg_direct (by decide) minimum))
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentAccuracy
 
@@ -171,66 +173,79 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentReading
 
 /-- Every local cached numerator bound is dominated by the same enclosing face calculation; the inverse ceiling is
 unchanged by restriction. -/
-theorem product_le (bounds
-  : FragmentReadings.FragmentBounds patch differential)
-    (globalBounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds face.clearance
-      (PreparedPrimitiveSamples.differentialNumerator differential))
+theorem product_le {numeratorPolynomial : InverseRootPolynomial.Polynomial}
+    (bounds : FragmentBounds patch differential (numeratorPolynomial := numeratorPolynomial))
+    (globalBounds : PrimitiveOverlapBounds face.clearance
+      numeratorPolynomial)
     (column : Fin (columns + 1)) (row : Fin (rows + 1)) :
     bounds.numerator column row * bounds.inverse ≤ globalBounds.numeratorUpper * globalBounds.inverseUpper := by
   have numeratorLe : bounds.numerator column row ≤ globalBounds.numeratorUpper := by
     rw [bounds.numerator_eq, globalBounds.numeratorUpper_eq]
-    exact (Polynomial.Dense.Gaussian.Bounds.Box.Monotonicity.denseHornerNormBounds_le_of_refines _ (patch.cell_refines
+    exact (Monotonicity.denseHornerNormBounds_le_of_refines _ (patch.cell_refines
       column row)).1
   have inverseEq : bounds.inverse = globalBounds.inverseUpper := bounds.inverse_eq.trans
     globalBounds.inverseUpper_eq.symm
   rw [inverseEq]
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct numeratorLe globalBounds.inverseUpper_positive.le
+  exact Arithmetic.mul_le_mul_of_nonneg_right_direct numeratorLe globalBounds.inverseUpper_positive.le
 
-/-- The original requested fragment charge is less than half its retained per-fragment budget. -/
-theorem charge_accurate
-  (bounds : FragmentReadings.FragmentBounds patch differential)
+/-- The actual polynomial numerator and two residual floors pay half the retained per-fragment allowance.
+
+The source residual bound is the original numerical model's quarter-radius
+payment at its actual source floor. It is not an increment-error hypothesis.
+-/
+theorem residualCharge_accurate {numeratorPolynomial : InverseRootPolynomial.Polynomial}
+    (bounds : FragmentBounds patch differential (numeratorPolynomial := numeratorPolynomial))
+    {globalBounds : PrimitiveOverlapBounds face.clearance numeratorPolynomial}
     (budget : Fragment.FragmentAccuracy globalBounds columns fragments tolerance)
-    {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential} (piece :
-      RectangularSegmentSplitting.SegmentPiece geometry (parent.edge.point 0) (parent.edge.point 1))
-    {count : Nat} {target : InverseRootPolynomial.Coordinate} (request : UniformPreparedRequests.LocalRequest parent
-      count target)
-    (later : budget.minimumIndex ≤ request.request.index) :
-    2 * bounds.charge piece request budget.grid.index < budget.perFragment / 2 := by
-  let residual := Geometric.Basic.quarterRadius (1 / 16) budget.minimumIndex
-  have residualNonnegative : 0 ≤ residual := Geometric.Basic.quarterRadius_nonneg (by decide +kernel) _
-  have left := Face.FragmentAccuracy.uniform_residual (patch.transported.cell
-    piece.column piece.row).model
-    (budget.grid_ge.trans (Nat.le_add_right _ 2))
-  have right := Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentAccuracy.uniform_residual
-    request.neighborhood.base.model later
+    {first last : InverseRootPolynomial.Gaussian}
+    (piece : SegmentPiece geometry first last)
+    {sourceResidual : Coordinate}
+    (sourceLe : sourceResidual ≤ quarterRadius (1 / 16) budget.minimumIndex) :
+    2 * bounds.residualCharge piece sourceResidual budget.grid.index < budget.perFragment / 2 := by
+  let residual := quarterRadius (1 / 16) budget.minimumIndex
+  have residualNonnegative : 0 ≤ residual := quarterRadius_nonneg (by decide +kernel) _
+  have left := FragmentAccuracy.uniform_residual (patch.transported.cell
+    piece.column piece.row).model (budget.grid_ge.trans (Nat.le_add_right _ 2))
   have productNonnegative : 0 ≤ bounds.numerator piece.column piece.row * bounds.inverse :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (bounds.atCell piece.column piece.row).numeratorUpper_nonnegative
+    Arithmetic.mul_nonneg_direct (bounds.atCell piece.column piece.row).numeratorUpper_nonnegative
       (bounds.atCell piece.column piece.row).inverseUpper_positive.le
-  have globalNonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct
+  have globalNonnegative := Arithmetic.mul_nonneg_direct
     globalBounds.numeratorUpper_nonnegative globalBounds.inverseUpper_positive.le
   have movement := Rational.Box.normSq_sub_le_diagonalSq
     ((patch.cell_refines piece.column piece.row).contains piece.last_inside)
     ((patch.cell_refines piece.column piece.row).contains piece.first_inside)
-  have weightBound := Fraction.Order.Arithmetic.mul_le_mul_direct (bounds.product_le globalBounds piece.column
-    piece.row)
+  have weightBound := Arithmetic.mul_le_mul_direct (bounds.product_le globalBounds piece.column piece.row)
     movement (Data.Gaussian.Norm.Basic.normSq_nonneg _) globalNonnegative
-  have factorBound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add left right)
-    (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 12)
-  have bound := Fraction.Order.Arithmetic.mul_le_mul_direct factorBound weightBound
-    (Fraction.Order.Arithmetic.mul_nonneg_direct productNonnegative (Data.Gaussian.Norm.Basic.normSq_nonneg _))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg residualNonnegative residualNonnegative))
-  have charged : bounds.charge piece request budget.grid.index ≤
+  have factorBound := Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add left sourceLe)
+    (by decide : (0 : Coordinate) ≤ 12)
+  have bound := Arithmetic.mul_le_mul_direct factorBound weightBound
+    (Arithmetic.mul_nonneg_direct productNonnegative (Data.Gaussian.Norm.Basic.normSq_nonneg _))
+    (Arithmetic.mul_nonneg_direct (by decide) (add_nonneg residualNonnegative residualNonnegative))
+  have charged : bounds.residualCharge piece sourceResidual budget.grid.index ≤
       24 * residual * (globalBounds.numeratorUpper * globalBounds.inverseUpper) * face.cell.box.diagonalSq := by
     exact (by
-        unfold FragmentReadings.FragmentBounds.charge;
-        ring1 : bounds.charge piece request budget.grid.index = _).trans_le
-      (bound.trans_eq (by change 12 * (residual + residual) * _ = _; ring1))
-  exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct charged (by
-      decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)).trans_lt
+      unfold FragmentBounds.residualCharge
+      ring1 : bounds.residualCharge piece sourceResidual budget.grid.index = _).trans_le
+        (bound.trans_eq (by change 12 * (residual + residual) * _ = _; ring1))
+  exact (Arithmetic.mul_le_mul_of_nonneg_left_direct charged (by
+      decide : (0 : Coordinate) ≤ 2)).trans_lt
     ((by ring1 : 2 * (24 * residual * (globalBounds.numeratorUpper * globalBounds.inverseUpper) *
       face.cell.box.diagonalSq) =
       48 * residual * (globalBounds.numeratorUpper * globalBounds.inverseUpper) * face.cell.box.diagonalSq).trans_lt
         budget.analytic_accurate)
+
+/-- The original requested fragment charge is less than half its retained per-fragment budget. -/
+theorem charge_accurate
+  (bounds : FragmentBounds patch differential)
+    (budget : Fragment.FragmentAccuracy globalBounds columns fragments tolerance)
+    {parent : CenteredEdge curve differential} (piece :
+      SegmentPiece geometry (parent.edge.point 0) (parent.edge.point 1))
+    {count : Nat} {target : Coordinate} (request : LocalRequest parent
+      count target)
+    (later : budget.minimumIndex ≤ request.request.index) :
+    2 * bounds.charge piece request budget.grid.index < budget.perFragment / 2 := by
+  exact bounds.residualCharge_accurate budget piece
+    (FragmentAccuracy.uniform_residual request.neighborhood.base.model later)
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentReadings.FragmentBounds
 
@@ -239,17 +254,17 @@ end
 variable {budget : FragmentAccuracy globalBounds columns
   fragments tolerance}
   {primitives : Primitives
-    (Purelib.Riemann.Branches.RectangularSheetGauge.Transitions.oriented (patch.sheets.refine
+    (Riemann.Branches.RectangularSheetGauge.Transitions.oriented (patch.sheets.refine
     budget.grid.index).transitions (patch.sheets.refine budget.grid.index).gauge)
-    (Purelib.Riemann.Readings.PreparedPrimitiveSamples.differentialNumerator differential)}
+    (PreparedPrimitiveSamples.differentialNumerator differential)}
   {anchors : PrimitiveAnchors primitives} {offsets :
     LinearAlgebra.Grid.Offsets anchors.edges}
   {cuts : GridCuts geometry} {meshParents : List
     (CenteredEdge curve differential)} {extra : List
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Gaussian}
+    InverseRootPolynomial.Gaussian}
   {mesh : PreparedSplitMesh cuts meshParents extra}
   {readings : SharedPrimitiveValues anchors offsets
-    mesh.mesh.surface} {count : Nat} {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+    mesh.mesh.surface} {count : Nat} {target : Coordinate}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentReadings
 
@@ -258,19 +273,19 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.Fr
 Each cached charge obeys the same per-fragment ceiling. The original finite
 list or split count adds those ceilings without changing any selected reading. -/
 theorem chargeSum_le
-    {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential} {request :
-      UniformPreparedRequests.LocalRequest parent count target}
-    {pieces : List (RectangularSegmentSplitting.SegmentPiece geometry (parent.edge.point 0) (parent.edge.point 1))}
-    (entries : FragmentSums.FragmentReadings (gridRequest := budget.grid) bounds readings request pieces)
+    {parent : CenteredEdge curve differential} {request :
+      LocalRequest parent count target}
+    {pieces : List (SegmentPiece geometry (parent.edge.point 0) (parent.edge.point 1))}
+    (entries : FragmentReadings (gridRequest := budget.grid) bounds readings request pieces)
     (later : budget.minimumIndex ≤ request.request.index) :
     entries.chargeSum ≤ Aggregate.countCoordinate pieces.length * budget.perFragment := by
   rw [Aggregate.countCoordinate_eq]
   induction entries with
-  | nil => change (0 : InverseRootPolynomial.Coordinate) ≤ 0 * budget.perFragment; rw [Fraction.Field.zero_mul_direct]
+  | nil => change (0 : Coordinate) ≤ 0 * budget.perFragment; rw [Fraction.Field.zero_mul_direct]
   | @cons piece pieces reading tail ih =>
       have charged : reading.charge < budget.perFragment := by
         rw [reading.charge_eq]
-        exact (Fraction.Order.Arithmetic.add_lt_add_direct budget.ownership_accurate (bounds.charge_accurate budget
+        exact (Arithmetic.add_lt_add_direct budget.ownership_accurate (bounds.charge_accurate budget
           piece request later)).trans_eq (by
           rw [show budget.perFragment / 2 + budget.perFragment / 2 = (budget.perFragment / 2) * 2 by ring1]
           exact Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))
@@ -287,14 +302,14 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.Sp
 Each cached charge obeys the same per-fragment ceiling. The original finite
 list or split count adds those ceilings without changing any selected reading. -/
 theorem chargeSum_le {parents :
-  List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} {splits : PreparedParentSplitting.ParentSplits
+  List (CenteredEdge curve differential)} {splits : ParentSplits
   cuts parents}
-    {requests : UniformPreparedRequests.RequestedParents count target parents}
-    (entries : FragmentSums.SplitReadings (gridRequest := budget.grid) bounds readings splits requests)
-    (later : PreparedControlledPrimitiveRequests.IndicesAbove budget.minimumIndex requests) :
+    {requests : RequestedParents count target parents}
+    (entries : SplitReadings (gridRequest := budget.grid) bounds readings splits requests)
+    (later : IndicesAbove budget.minimumIndex requests) :
     entries.chargeSum ≤ Aggregate.countCoordinate splits.pieceCount * budget.perFragment := by
   induction entries with
-  | nil => change (0 : InverseRootPolynomial.Coordinate) ≤ Aggregate.countCoordinate 0 * budget.perFragment
+  | nil => change (0 : Coordinate) ≤ Aggregate.countCoordinate 0 * budget.perFragment
            rw [Aggregate.countCoordinate_eq, Nat.cast_zero, Fraction.Field.zero_mul_direct]
   | @cons parent parents split splits request requests entries tail ih =>
       exact (add_le_add (entries.chargeSum_le later.1) (ih later.2)).trans_eq (by
@@ -305,21 +320,37 @@ end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.SplitRea
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentSum
 
+/-- A retained subspine is paid by the same budget for a larger actual fragment count.
+
+The original per-fragment allowance pays both factors of the shorter count.
+The shared grid, readings, request indices and actual charge cache remain
+unchanged; no combined request bank is constructed.
+-/
+theorem bound_lt_of_count_le {parents : List (CenteredEdge curve differential)}
+    {splits : ParentSplits cuts parents} {requests : RequestedParents count target parents}
+    (summary : FragmentSum (gridRequest := budget.grid) bounds readings splits requests)
+    (countLe : splits.pieceCount ≤ fragments) (later : IndicesAbove budget.minimumIndex requests) :
+    summary.bound < tolerance := by
+  rw [summary.bound_eq, summary.fragmentCount_eq, summary.chargeSum_eq]
+  have estimate := Arithmetic.mul_le_mul_of_nonneg_left_direct (summary.entries.chargeSum_le later)
+    ((Fraction.Cast.Order.natCast_le_direct (Nat.zero_le splits.pieceCount)).trans_eq
+      (Aggregate.countCoordinate_eq _).symm)
+  have allowance : budget.perFragment ≤ Aggregate.perTerm tolerance fragments := by
+    rewrite [budget.perFragment_eq]
+    exact Fraction.Order.Basic.le_refl _
+  exact estimate.trans_lt (Aggregate.count_mul_allowance_lt countLe budget.target_positive allowance)
+
 /-- The original requested fragment sum pays the full retained tolerance using its exact fragment count and stage
 floors. -/
 theorem bound_lt {parents : List
-  (PreparedSubdivisionModelCore.CenteredEdge curve differential)} {splits : PreparedParentSplitting.ParentSplits cuts
+  (CenteredEdge curve differential)} {splits : ParentSplits cuts
   parents}
-    {requests : UniformPreparedRequests.RequestedParents count target parents}
-    (summary : FragmentSums.FragmentSum (gridRequest := budget.grid) bounds readings splits requests)
-    (countEq : splits.pieceCount = fragments) (later : PreparedControlledPrimitiveRequests.IndicesAbove
+    {requests : RequestedParents count target parents}
+    (summary : FragmentSum (gridRequest := budget.grid) bounds readings splits requests)
+    (countEq : splits.pieceCount = fragments) (later : IndicesAbove
       budget.minimumIndex requests) :
     summary.bound < tolerance := by
-  rw [summary.bound_eq, summary.fragmentCount_eq, summary.chargeSum_eq]
-  have estimate := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (summary.entries.chargeSum_le later)
-    ((Fraction.Cast.Order.natCast_le_direct (Nat.zero_le splits.pieceCount)).trans_eq (Aggregate.countCoordinate_eq
-      _).symm)
-  exact estimate.trans_lt (countEq ▸ budget.full_count_accurate)
+  exact summary.bound_lt_of_count_le countEq.le later
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.FragmentSums.FragmentSum
 

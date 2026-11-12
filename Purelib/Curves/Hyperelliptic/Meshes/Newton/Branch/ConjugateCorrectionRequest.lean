@@ -77,6 +77,8 @@ import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Meshes.Newton
@@ -169,7 +171,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -181,20 +183,20 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     grid.faces.regulars} {i j : Fin genus}
   {entry : AnnularEntry grid current} {sheet : Fin 2}
   {leftFixed : FaceMagnitudeBank domains
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential i)}
+    (Riemann.Periods.PeriodMatrix.standardDifferential i)}
   {rightFixed : FaceMagnitudeBank domains
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential j)}
+    (Riemann.Periods.PeriodMatrix.standardDifferential j)}
   {error : Rational} {floor : Nat}
 
 /-- These are the actual fine compiler's retained hole words, on both initial sheets, evaluated at the same two
 numerical readings. -/
 @[expose] def retainedConjugateHoleArea (request : PairedBranchRegion.PairedBranchRequest bank entry sheet leftFixed
   rightFixed error floor)
-    {stage : Nat} {cache : RegularMeshes.Numerics domains stage}
-    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) current.mesh) (right :
-      TrianglePrimitiveReadings.TriangleReadings (cache.get j) current.mesh) : Gaussian :=
+    {stage : Nat} {cache : Numerics domains stage}
+    (left : TriangleReadings (cache.get i) current.mesh) (right :
+      TriangleReadings (cache.get j) current.mesh) : Gaussian :=
   let hole := fun initial => BilinearPolarization.extract (fun coefficient => RetracingWords.wordArea
-    (BilinearPolarization.mix (fun edge => Data.Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation
+    (BilinearPolarization.mix (fun edge => Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation
       current.mesh left.values edge))
       (CanonicalEdgeValues.edgeValuation current.mesh right.values) coefficient)
     (WindowCircuits.fineCompiler (current := current) request.outer initial).word)
@@ -204,23 +206,23 @@ numerical readings. -/
 constructed common later stage. -/
 @[expose] def conjugateCorrectionRequest (request : PairedBranchRegion.PairedBranchRequest bank entry sheet leftFixed
   rightFixed error floor)
-    (prepared : SewnBilinearRequest.BilinearPreparation current.cutPolygon domains i j)
+    (prepared : BilinearPreparation current.cutPolygon domains i j)
     (bound : Rational) (positive : 0 < bound) (minimum : Nat) :
     {threshold : Nat // minimum ≤ threshold ∧
-      ∀ stage (cache : RegularMeshes.Numerics domains stage)
-        (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) current.mesh) (right :
-          TrianglePrimitiveReadings.TriangleReadings (cache.get j) current.mesh)
-        (leftSurface : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch left.values)
-        (rightSurface : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch right.values)
-        (pair : SewnConjugateSamples.ConjugatePair leftSurface rightSurface)
+      ∀ stage (cache : Numerics domains stage)
+        (left : TriangleReadings (cache.get i) current.mesh) (right :
+          TriangleReadings (cache.get j) current.mesh)
+        (leftSurface : CachedSample current.cutPolygon.patch left.values)
+        (rightSurface : CachedSample current.cutPolygon.patch right.values)
+        (pair : ConjugatePair leftSurface rightSurface)
         (sample : PairedBranchRequest.ConjugateSample request left right leftSurface rightSurface pair), threshold ≤
           stage →
-        Data.Gaussian.Norm.Basic.normSq (sample.cut.correction +
+        Gaussian.Norm.Basic.normSq (sample.cut.correction +
           retainedConjugateHoleArea request left
           right) ≤ bound} := by
   let part := bound / 16
-  have partPositive : 0 < part := Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Rational) < 16)
-  have lapPositive : 0 < part / 4 := Fraction.Order.Field.div_pos_direct partPositive (by decide : (0 : Rational) < 4)
+  have partPositive : 0 < part := Field.div_pos_direct positive (by decide : (0 : Rational) < 16)
+  have lapPositive : 0 < part / 4 := Field.div_pos_direct partPositive (by decide : (0 : Rational) < 4)
   let geometry := ConjugateWindowSelectedRequest.selectedConjugateTriangleRequest request.outer prepared.leftMagnitude
     prepared.rightMagnitude part partPositive minimum
   let sewing := BilinearPreparation.Request.build prepared part partPositive minimum
@@ -235,9 +237,9 @@ constructed common later stage. -/
   have sewingLater := (Nat.Order.le_max_right _ _).trans ((Nat.Order.le_max_left _ _).trans later)
   have canonicalLater := (Nat.Order.le_max_left _ _).trans ((Nat.Order.le_max_right _ _).trans later)
   have lapsLater := (Nat.Order.le_max_right _ _).trans ((Nat.Order.le_max_right _ _).trans later)
-  let value := fun edge => (⟨Data.Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation current.mesh
+  let value := fun edge => (⟨Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation current.mesh
     left.values edge),
-    CanonicalEdgeValues.edgeValuation current.mesh right.values edge⟩ : Stokes.PrimitivePoint)
+    CanonicalEdgeValues.edgeValuation current.mesh right.values edge⟩ : PrimitivePoint)
   let walk :=
     BilinearHoleRequest.boundary (next
     := grid.punctured) bank grid.shrunk.included entry.hole.index
@@ -247,16 +249,16 @@ constructed common later stage. -/
   let triangles := ConjugateTriangleAreas.selectedConjugateFullTriangleArea left right (fun position =>
     decide ((grid.faces.regulars[position.val]'position.isLt).cell.box.Refines (base.bank.cell entry.hole.index).box))
   let hole := fun initial =>
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun
+    BilinearPolarization.extract (fun
     coefficient => RetracingWords.wordArea
-    (BilinearPolarization.mix (fun edge => Data.Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation
+    (BilinearPolarization.mix (fun edge => Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation
       current.mesh left.values edge))
       (CanonicalEdgeValues.edgeValuation current.mesh right.values) coefficient)
     (WindowCircuits.fineCompiler (current := current) request.outer initial).word)
   let outer := fun initial =>
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun
+    BilinearPolarization.extract (fun
     coefficient => current.edges.chainArea current.vertices
-    (BilinearPolarization.mix (fun edge => Data.Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation
+    (BilinearPolarization.mix (fun edge => Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation
       current.mesh left.values edge))
       (CanonicalEdgeValues.edgeValuation current.mesh right.values) coefficient)
     (grid.shrunk.included.resplit (CellBoundary.Cell.boundaryWalk (base.bank.cell entry.hole.index) (base.bank.cell_mem
@@ -270,41 +272,41 @@ constructed common later stage. -/
     exact BilinearPolarization.extract_wordArea_mix _ _ _
   have geometryBound := geometry.property.2 stage cache left right geometryLater
   have extraction (initial : Fin 2) :
-      Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun
+      BilinearPolarization.extract (fun
         coefficient => current.edges.chainArea current.vertices
-        (BilinearPolarization.mix (fun edge => Data.Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation
+        (BilinearPolarization.mix (fun edge => Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation
           current.mesh left.values edge))
           (CanonicalEdgeValues.edgeValuation current.mesh right.values) coefficient)
         (grid.shrunk.included.resplit (CellBoundary.Cell.boundaryWalk (base.bank.cell entry.hole.index)
           (base.bank.cell_mem entry.hole.index))
           (ClearGrid.Cell.anchor_mem (base.bank.cell entry.hole.index) (base.bank.cell_mem entry.hole.index))) initial -
-        RetracingWords.wordArea (BilinearPolarization.mix (fun edge => Data.Gaussian.Basic.conj
+        RetracingWords.wordArea (BilinearPolarization.mix (fun edge => Gaussian.Basic.conj
           (CanonicalEdgeValues.edgeValuation current.mesh left.values edge))
           (CanonicalEdgeValues.edgeValuation current.mesh right.values) coefficient)
           (WindowCircuits.fineCompiler (current := current) request.outer initial).word) = outer initial - hole initial
             := by
     dsimp only [outer, hole]
-    unfold Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract
+    unfold BilinearPolarization.extract
     ring1
   dsimp only at geometryBound
   rw [extraction 0, extraction 1, polygonEq 0, polygonEq 1] at geometryBound
-  change Data.Gaussian.Norm.Basic.normSq ((polygon 0 - hole 0) + (polygon 1 - hole 1) - triangles) < part
+  change Gaussian.Norm.Basic.normSq ((polygon 0 - hole 0) + (polygon 1 - hole 1) - triangles) < part
     at geometryBound
   have areaBound := ConjugateSample.selected_accurate left right sample.cut sewing sewingLater
-  change Data.Gaussian.Norm.Basic.normSq (sample.cut.area - triangles) < part at areaBound
+  change Gaussian.Norm.Basic.normSq (sample.cut.area - triangles) < part at areaBound
   have corrected := ConjugateSample.canonical_accurate canonical left right leftSurface rightSurface pair sample.cut
     canonicalLater
-  change Data.Gaussian.Norm.Basic.normSq (sample.cut.area - sample.cut.correction - double) ≤ part at corrected
+  change Gaussian.Norm.Basic.normSq (sample.cut.area - sample.cut.correction - double) ≤ part at corrected
   have lapBound := ConjugateLapSum.conjugate_sum_accurate laps left right lapsLater
-  have lapPaid : Data.Gaussian.Norm.Basic.normSq (polygon 0 + polygon 1 - double) ≤ part :=
+  have lapPaid : Gaussian.Norm.Basic.normSq (polygon 0 + polygon 1 - double) ≤ part :=
     lapBound.trans_eq ((Fraction.Field.mul_comm _ _).trans (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)))
-  have first := (Data.Gaussian.Norm.Bounds.normSq_sub_le_two (sample.cut.area - triangles)
+  have first := (Gaussian.Norm.Bounds.normSq_sub_le_two (sample.cut.area - triangles)
     (sample.cut.area - sample.cut.correction - double)).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
       areaBound.le corrected) (by decide))
-  have second := (Data.Gaussian.Norm.Bounds.normSq_sub_le_two (polygon 0 + polygon 1 - double)
+  have second := (Gaussian.Norm.Bounds.normSq_sub_le_two (polygon 0 + polygon 1 - double)
     ((polygon 0 - hole 0) + (polygon 1 - hole 1) - triangles)).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct lapPaid
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct lapPaid
       geometryBound.le) (by decide))
   have equal : sample.cut.correction +
     retainedConjugateHoleArea request left right =
@@ -313,8 +315,8 @@ constructed common later stage. -/
     change sample.cut.correction + (hole 0 + hole 1) = _
     ring1
   rw [equal]
-  exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct first
+  exact (Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct first
       second) (by decide)).trans_eq
       ((by ring1 : 2 * (2 * (part + part) + 2 * (part + part)) = bound / 16 * 16).trans
         (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))))

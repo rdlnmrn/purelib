@@ -5,6 +5,7 @@ import Purelib.Geometry.Projective.Line.Basic
 public import Purelib.Geometry.Projective.Line.Gaussian
 public import Purelib.Geometry.Projective.Line.Matrix
 import Purelib.LinearAlgebra.Coordinates2.Matrix
+import Purelib.Geometry.Projective.Line.Scale
 
 import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Tactic.Ring
@@ -80,6 +81,83 @@ theorem act_hasNonzeroCoordinate {matrix :
       exact Data.Gaussian.Field.mul_ne_zero_direct
         determinantNonzero pointDenominatorNonzero determinantProduct
   · exact Or.inl numeratorZero
+
+end Purelib.Geometry.Projective.Line.Matrix.Gaussian.Mat2
+
+end
+
+public section
+
+namespace Purelib.Geometry.Projective.Line.Matrix.Gaussian.Mat2
+
+/-- Pull a homogeneous image back through the supplied matrix's explicit adjugate. -/
+@[expose] def pullback (matrix : GaussianMatrix) (image : Line.GaussianLine) : Line.GaussianLine :=
+  Line.Matrix.act (BoundaryAdjugate.adjugate matrix) image
+
+/-- Pulling back an actual matrix image scales the original homogeneous pair by that matrix's determinant. -/
+theorem pullback_act (matrix : GaussianMatrix) (point : Line.GaussianLine) :
+    pullback matrix (Line.Matrix.act matrix point) =
+      Line.Gaussian.Proj.scale (Matrix2.determinant matrix) point := by
+  unfold pullback
+  rewrite [← Line.Matrix.act_mul, BoundaryAdjugate.adjugate_mul]
+  apply Line.Proj.ext <;>
+    simp only [Line.Matrix.act, Line.Gaussian.Proj.scale,
+      Data.Gaussian.Basic.zero_mul, Data.Gaussian.Basic.add_zero, Data.Gaussian.Basic.zero_add,
+      -eq_self, -iff_self] <;> rfl
+
+/-- A nonzero determinant and a valid image give a valid explicit pullback. -/
+theorem pullback_valid {matrix : GaussianMatrix} {image : Line.GaussianLine}
+    (determinantNonzero : Matrix2.determinant matrix ≠ 0) (imageValid : Proj.HasNonzeroCoordinate image) :
+    Proj.HasNonzeroCoordinate (pullback matrix image) := by
+  have adjugateNonzero : Matrix2.determinant (BoundaryAdjugate.adjugate matrix) ≠ 0 := by
+    change BoundaryAdjugate.determinant (BoundaryAdjugate.adjugate matrix) ≠ 0
+    rewrite [BoundaryAdjugate.determinant_adjugate]
+    exact determinantNonzero
+  exact act_hasNonzeroCoordinate adjugateNonzero imageValid
+
+/-- An image equivalent to an affine matrix image pulls back to that same affine point. -/
+theorem pullback_equivalent_affine {matrix : GaussianMatrix} {image : Line.GaussianLine}
+    {value : Data.Gaussian.Basic.Canonical} (determinantNonzero : Matrix2.determinant matrix ≠ 0)
+    (equivalent : image.Equivalent (Line.Matrix.act matrix (Line.Proj.affine value))) :
+    (pullback matrix image).Equivalent (Line.Proj.affine value) := by
+  have pulled := Line.Matrix.act_respects_equivalent (BoundaryAdjugate.adjugate matrix) equivalent
+  change (pullback matrix image).Equivalent (pullback matrix (Line.Matrix.act matrix (Line.Proj.affine value)))
+    at pulled
+  rewrite [pullback_act] at pulled
+  have scaleValid : Proj.HasNonzeroCoordinate
+      (Line.Gaussian.Proj.scale (Matrix2.determinant matrix) (Line.Proj.affine value)) :=
+    Line.Proj.scale_nonzero determinantNonzero (Proj.affine_hasNonzeroCoordinate value)
+  exact Proj.equivalent_trans pulled
+    (Line.Proj.Equivalent.symm (Line.Proj.equivalent_scale (Line.Proj.affine value) (Matrix2.determinant matrix)))
+    scaleValid (Proj.affine_hasNonzeroCoordinate value)
+
+/-- Read the total affine quotient of the explicit matrix pullback.
+
+Its affine interpretation requires the pulled denominator to be nonzero.
+The supplied-image correctness laws establish that condition when the image
+has a certified affine preimage under a nonsingular matrix.
+-/
+@[expose] def affinePullback (matrix : GaussianMatrix) (image : Line.GaussianLine) :
+    Data.Gaussian.Basic.Canonical := Proj.affineReading (pullback matrix image)
+
+/-- A valid image with an affine preimage has a nonzero pulled denominator. -/
+theorem pullback_denominator_ne_zero {matrix : GaussianMatrix} {image : Line.GaussianLine}
+    {value : Data.Gaussian.Basic.Canonical} (determinantNonzero : Matrix2.determinant matrix ≠ 0)
+    (imageValid : Proj.HasNonzeroCoordinate image)
+    (equivalent : image.Equivalent (Line.Matrix.act matrix (Line.Proj.affine value))) :
+    (pullback matrix image).q ≠ 0 :=
+  Proj.denominator_ne_zero_of_equivalent_affine (pullback_valid determinantNonzero imageValid)
+    (pullback_equivalent_affine determinantNonzero equivalent)
+
+/-- The computed affine pullback is the exact affine preimage named by the supplied image certificate. -/
+theorem affinePullback_eq {matrix : GaussianMatrix} {image : Line.GaussianLine}
+    {value : Data.Gaussian.Basic.Canonical} (determinantNonzero : Matrix2.determinant matrix ≠ 0)
+    (imageValid : Proj.HasNonzeroCoordinate image)
+    (equivalent : image.Equivalent (Line.Matrix.act matrix (Line.Proj.affine value))) :
+    affinePullback matrix image = value :=
+  Proj.affineReading_eq_of_equivalent
+    (pullback_denominator_ne_zero determinantNonzero imageValid equivalent)
+    (pullback_equivalent_affine determinantNonzero equivalent)
 
 end Purelib.Geometry.Projective.Line.Matrix.Gaussian.Mat2
 

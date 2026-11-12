@@ -17,6 +17,8 @@ import Purelib.Approximation.Gaussian.Process.Coherence.Division
 
 open Purelib
 
+open Purelib.Approximation.Gaussian.Process.Apart.Preparation (ApartState)
+
 open Purelib.Approximation
 
 open Purelib.Approximation.Gaussian.Division.Partial
@@ -61,13 +63,16 @@ def preparedDenominatorEquivalent {denominator :
   Coherent.CoherentNamed}
     (state : Approximation.Gaussian.Name.Coherent.Refinement.State denominator)
     (evidence : Possible.PossibleApart
-      (Gaussian.Process.Based.based denominator.name.process state.source)) :
-    Gaussian.Equivalence.NamedEquivalent denominator.name (Preparation.preparedDenominator state evidence).name :=
+      (Gaussian.Process.Based.based denominator.name.process state.source))
+    (cached : Option (ApartState
+      (Gaussian.Process.Based.based denominator.name.process state.source) evidence) := none) :
+    Gaussian.Equivalence.NamedEquivalent denominator.name
+      (Preparation.preparedDenominator state evidence cached).name :=
   NamedEquivalent.trans
     (CoherentNamed.basedEquivalent
       denominator state.source)
     (CoherentNamed.apartifyEquivalent
-      (Preparation.basedDenominator state) evidence)
+      (Preparation.basedDenominator state) evidence cached)
 
 /-- Any two ready quotients of the fixed inputs are operationally equivalent, regardless of the finite states or
 evidence schedules at which readiness was obtained. -/

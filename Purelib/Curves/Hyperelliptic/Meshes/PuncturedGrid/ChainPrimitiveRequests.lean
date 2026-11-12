@@ -127,47 +127,47 @@ open Purelib.Topology.Polygon.Stokes (OrientedEdge)
 /-- A finite vector retaining its original entry count. -/
 abbrev Vector := Data.Vector
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {source :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} {count : Nat}
-  {cycles : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimitiveRequests.Vector
-    (Purelib.Topology.Surface.Sewing.CutCycleChains.ClosedCutCycle lifted.cutPolygon.patch.cut.vertexLabels
-    (lifted.cutPolygon.patch.cut.boundary.map (Purelib.Topology.Surface.Sewing.VertexSewing.OrientedEdge.map
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {source :
+    Differential genus} {count : Nat}
+  {cycles : Vector
+    (ClosedCutCycle lifted.cutPolygon.patch.cut.vertexLabels
+    (lifted.cutPolygon.patch.cut.boundary.map (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map
       lifted.cutPolygon.patch.cut.vertexLabels))) count}
-  {bank : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgramBank lifted source cycles}
+  {bank : CutCycleProgramBank lifted source cycles}
     {differential : Fin genus}
 
 set_option genInjectivity false in
 /-- Index-tagged dependent requests can be materialized in one ordinary finite vector. The row request below checks
 every tag against its position. -/
-structure ComponentPrimitiveRequest (components : ChainPeriods.ComponentSamples bank differential) (target :
-  WeightedPeriods.Coordinate) (minimumStage : Nat) where
+structure ComponentPrimitiveRequest (components : ComponentSamples bank differential) (target :
+  Coordinate) (minimumStage : Nat) where
   /-- The actual original component index selected by this local request. -/ index : Fin count
   /-- The retained controlled primitive request on the exact original recast period parents. -/ request :
-    PreparedControlledPrimitiveRequests.ControlledSumRequest ((bank.programs index).period.initial.state.parents.map
+    ControlledSumRequest ((bank.programs index).period.initial.state.parents.map
     (PreparedEdgeRecasting.recastCenteredEdge (PeriodMatrix.standardDifferential differential))) genus target
   /-- The cached original component period comparison at its selected stage. -/ comparison :
-    PreparedPeriodPrimitiveRequests.PeriodSample (bank.programs index).period.initial
+    PeriodSample (bank.programs index).period.initial
     (PreparedRefinementProgramCore.standardDifferentials genus)
     (PeriodMatrix.standardDifferential differential) request minimumStage
   /-- The original component stream's remaining movement is below its retained local target. -/ movement_small :
-    Geometric.Basic.quarterRadius (components.streams index).errorScale comparison.stage < target
+    Basic.quarterRadius (components.streams index).errorScale comparison.stage < target
 
 constructive_injectivity ComponentPrimitiveRequest
 
 namespace ComponentPrimitiveRequest
 
-variable {components : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples bank
-  differential} {target : Purelib.Riemann.Periods.WeightedPeriods.Coordinate} {minimumStage : Nat}
+variable {components : ComponentSamples bank
+  differential} {target : Coordinate} {minimumStage : Nat}
 
 /-- Acquire the original component primitive requests once and retain a paid common stage above their exact selected
 floors. -/
-def acquire (components : ChainPeriods.ComponentSamples bank differential) (index : Fin count) (target :
-  WeightedPeriods.Coordinate)
+def acquire (components : ComponentSamples bank differential) (index : Fin count) (target :
+  Coordinate)
     (positive : 0 < target) (minimumStage : Nat) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimitiveRequests.ComponentPrimitiveRequest components target
+      ComponentPrimitiveRequest components target
       minimumStage :=
   let period := (bank.programs index).period
   let stream := components.streams index
@@ -181,7 +181,7 @@ def acquire (components : ChainPeriods.ComponentSamples bank differential) (inde
       (Search.firstQuarterBelow_accurate stream.errorScale stream.errorScale_nonneg minimumStage target positive)⟩
 
 /-- The retained comparison sample is exactly the corresponding original geometric stream sample. -/
-theorem sample_eq (entry : Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimitiveRequests.ComponentPrimitiveRequest
+theorem sample_eq (entry : ComponentPrimitiveRequest
   components target minimumStage) :
     entry.comparison.sample = (components.streams entry.index).sample entry.comparison.stage := by
   rw [components.samples_eq, entry.comparison.sample_eq,
@@ -193,26 +193,26 @@ theorem sample_eq (entry : Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimit
 
 /-- Every later original component sample remains within four local targets of the retained primitive sum. -/
 theorem accurate_later (entry :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimitiveRequests.ComponentPrimitiveRequest components target
+  ComponentPrimitiveRequest components target
   minimumStage) {stage : Nat}
     (later : entry.comparison.stage ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (entry.request.primitiveSum - (components.streams entry.index).sample
+    Gaussian.Norm.Basic.normSq (entry.request.primitiveSum - (components.streams entry.index).sample
       stage) < 4 * target := by
   have initial := entry.comparison.accurate
   rw [entry.sample_eq] at initial
-  rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at initial
+  rw [← Gaussian.Norm.Basic.normSq_eq_canonical] at initial
   have movement := ((components.streams entry.index).later_close later).trans_lt entry.movement_small
   calc
-    _ = Data.Gaussian.Norm.Basic.normSq ((entry.request.primitiveSum - (components.streams entry.index).sample
+    _ = Gaussian.Norm.Basic.normSq ((entry.request.primitiveSum - (components.streams entry.index).sample
       entry.comparison.stage) -
         ((components.streams entry.index).sample stage - (components.streams entry.index).sample
           entry.comparison.stage)) := by
       congr 1; ring1
-    _ ≤ 2 * (Data.Gaussian.Norm.Basic.normSq (entry.request.primitiveSum - (components.streams
+    _ ≤ 2 * (Gaussian.Norm.Basic.normSq (entry.request.primitiveSum - (components.streams
       entry.index).sample entry.comparison.stage) +
-        Data.Gaussian.Norm.Basic.normSq ((components.streams entry.index).sample stage - (components.streams
+        Gaussian.Norm.Basic.normSq ((components.streams entry.index).sample stage - (components.streams
           entry.index).sample entry.comparison.stage)) :=
-      Data.Gaussian.Norm.Bounds.normSq_sub_le_two _ _
+      Gaussian.Norm.Bounds.normSq_sub_le_two _ _
     _ < 2 * (target + target) := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide)
       (Fraction.Order.Arithmetic.add_lt_add_direct initial movement)
     _ = 4 * target := by ring1
@@ -220,45 +220,45 @@ theorem accurate_later (entry :
 end ComponentPrimitiveRequest
 
 /-- Compute the maximum of the original finite natural-number vector, with zero for the empty vector. -/
-def maximum : {size : Nat} → Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimitiveRequests.Vector Nat size → Nat
+def maximum : {size : Nat} → Vector Nat size → Nat
   | _, .nil => 0
-  | _, .cons first rest => max first (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimitiveRequests.maximum
+  | _, .cons first rest => max first (ChainPrimitiveRequests.maximum
     rest)
 
 /-- Every original finite-vector entry is bounded by the computed retained maximum. -/
-theorem le_maximum : {size : Nat} → (values : Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimitiveRequests.Vector
+theorem le_maximum : {size : Nat} → (values : Vector
   Nat size) → (index : Fin size) → values index ≤
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimitiveRequests.maximum values
+  ChainPrimitiveRequests.maximum values
   | _, .nil, index => Fin.elim0 index
   | _, .cons _ _, ⟨0, _⟩ => Nat.Order.le_max_left _ _
   | _, .cons _ rest, ⟨index + 1, bound⟩ =>
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimitiveRequests.le_maximum rest ⟨index,
+    (ChainPrimitiveRequests.le_maximum rest ⟨index,
     Nat.lt_of_succ_lt_succ bound⟩).trans (Nat.Order.le_max_right _ _)
 
 namespace ChainPeriod
 
-variable {components : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples bank
-  differential} {weights : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimitiveRequests.Vector Int count}
+variable {components : ComponentSamples bank
+  differential} {weights : Vector Int count}
 
 set_option genInjectivity false in
 /-- Cached local primitive requests and their original weighted period comparison.
 
 The retained component tags match their vector positions, and one stage pays all original component floors before
 applying the actual integer-weight amplification. -/
-structure PrimitiveRequest (period : ChainPeriods.ChainPeriod components weights) (target : WeightedPeriods.Coordinate)
+structure PrimitiveRequest (period : ChainPeriods.ChainPeriod components weights) (target : Coordinate)
   (minimumStage : Nat) where
   /-- The cached per-component budget after paying the original integer-weight amplification. -/ budget :
-    WeightedPeriods.Coordinate
+    Coordinate
   /-- The local budget is one quarter of the original coefficient certificate's per-component target. -/ budget_eq :
     budget = period.coefficients.perComponent target / 4
   /-- The cached primitive requests for all original component programs. -/ entries :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimitiveRequests.Vector
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimitiveRequests.ComponentPrimitiveRequest components budget
+    Vector
+    (ComponentPrimitiveRequest components budget
     minimumStage) count
   /-- Each cached component request retains exactly its original vector position. -/ indices_eq : ∀ index, (entries
     index).index = index
   /-- The cached selected stage of every original component request. -/ stages :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimitiveRequests.Vector Nat count
+    Vector Nat count
   /-- Every cached stage is exactly its retained component comparison stage. -/ stages_eq : ∀ index, stages index =
     (entries index).comparison.stage
   /-- The cached common stage used by the original weighted period comparison. -/ stage : Nat
@@ -266,7 +266,7 @@ structure PrimitiveRequest (period : ChainPeriods.ChainPeriod components weights
   /-- The common stage is at least every original retained component stage. -/ entries_le : ∀ index, stages index ≤
     stage
   /-- The cached primitive sums of the original component requests. -/ primitives :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimitiveRequests.Vector WeightedPeriods.Gaussian count
+    Vector WeightedPeriods.Gaussian count
   /-- Every cached primitive value is its exact retained request sum. -/ primitives_eq : ∀ index, primitives index =
     (entries index).request.primitiveSum
   /-- The cached original coefficient-weighted primitive sum. -/ value : WeightedPeriods.Gaussian
@@ -280,38 +280,38 @@ constructive_injectivity PrimitiveRequest
 
 namespace PrimitiveRequest
 
-variable {period : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ChainPeriod components weights}
-  {target : Purelib.Riemann.Periods.WeightedPeriods.Coordinate} {minimumStage : Nat}
+variable {period : ChainPeriods.ChainPeriod components weights}
+  {target : Coordinate} {minimumStage : Nat}
 
 /-- Acquire the original component primitive requests once and retain a paid common stage above their exact selected
 floors. -/
-def acquire (period : ChainPeriods.ChainPeriod components weights) (target : WeightedPeriods.Coordinate) (positive : 0 <
+def acquire (period : ChainPeriods.ChainPeriod components weights) (target : Coordinate) (positive : 0 <
   target) (minimumStage : Nat) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimitiveRequests.ChainPeriod.PrimitiveRequest period target
+    PrimitiveRequest period target
       minimumStage :=
   let budget := period.coefficients.perComponent target / 4
   have budgetPositive := Fraction.Order.Field.div_pos_direct (period.coefficients.perComponent_positive positive) (by
-    decide : (0 : WeightedPeriods.Coordinate) < 4)
-  let entries := Data.Vector.Basic.vectorOfFn fun index =>
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimitiveRequests.ComponentPrimitiveRequest.acquire components index
+    decide : (0 : Coordinate) < 4)
+  let entries := Vector.Basic.vectorOfFn fun index =>
+    ComponentPrimitiveRequest.acquire components index
     budget budgetPositive minimumStage
-  let stages := Data.Vector.Basic.vectorOfFn fun index => (entries index).comparison.stage
-  let stage := max minimumStage (Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimitiveRequests.maximum stages)
-  let primitives := Data.Vector.Basic.vectorOfFn fun index => (entries index).request.primitiveSum
-  ⟨budget, rfl, entries, fun index => by rw [Data.Vector.Basic.vectorOfFn_apply]; rfl,
-    stages, Data.Vector.Basic.vectorOfFn_apply _, stage, Nat.Order.le_max_left _ _, fun index =>
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimitiveRequests.le_maximum stages index).trans
+  let stages := Vector.Basic.vectorOfFn fun index => (entries index).comparison.stage
+  let stage := max minimumStage (ChainPrimitiveRequests.maximum stages)
+  let primitives := Vector.Basic.vectorOfFn fun index => (entries index).request.primitiveSum
+  ⟨budget, rfl, entries, fun index => by rw [Vector.Basic.vectorOfFn_apply]; rfl,
+    stages, Vector.Basic.vectorOfFn_apply _, stage, Nat.Order.le_max_left _ _, fun index =>
+      (ChainPrimitiveRequests.le_maximum stages index).trans
       (Nat.Order.le_max_right _ _),
-    primitives, Data.Vector.Basic.vectorOfFn_apply _, period.coefficients.combine primitives, rfl,
+    primitives, Vector.Basic.vectorOfFn_apply _, period.coefficients.combine primitives, rfl,
       period.approximation.sample stage, rfl⟩
 
 /-- The actual retained weighted primitive value differs from its original chain-period sample by less than the
 requested target. -/
 theorem accurate (request :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.ChainPrimitiveRequests.ChainPeriod.PrimitiveRequest period target
+  PrimitiveRequest period target
   minimumStage) (positive : 0 < target) :
-    Data.Gaussian.Norm.Basic.normSq (request.value - request.sample) < target := by
-  rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+    Gaussian.Norm.Basic.normSq (request.value - request.sample) < target := by
+  rw [Gaussian.Norm.Basic.normSq_eq_canonical]
   rw [request.value_eq, request.sample_eq, period.sample_eq]
   apply period.coefficients.normSq_difference_lt _ _ positive
   intro index
@@ -323,7 +323,7 @@ theorem accurate (request :
   have paid : 4 * (period.coefficients.perComponent target / 4) = period.coefficients.perComponent target := by
     rw [Fraction.Field.mul_comm]
     exact Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
-  rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at bounded
+  rw [Gaussian.Norm.Basic.normSq_eq_canonical] at bounded
   exact bounded.le.trans_eq paid
 
 end PrimitiveRequest

@@ -19,6 +19,9 @@ import Purelib.Riemann.Branches.ClearSheetContinuation
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.RootIsolation.SquareRoot.Subdivision.Dyadic
+open Purelib.Data.Fin.Cases
+
 open Purelib.Data
 
 open Purelib.Data.Rat
@@ -62,10 +65,10 @@ theorem aBackwardDyadicStepMovement
       (segment.pointAt 1 - segment.pointAt 0) = (1 / 16 : Q))
     (edge : Fin 8) :
     Gaussian.Norm.Basic.normSq
-        (segment.pointAt (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-          (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeTarget edge)).parameter -
-          segment.pointAt (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-            (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeSource edge)).parameter) =
+        (segment.pointAt (Eight.secondMeshEndpoint
+          (Eight.secondEdgeTarget edge)).parameter -
+          segment.pointAt (Eight.secondMeshEndpoint
+            (Eight.secondEdgeSource edge)).parameter) =
       (1 / 1024 : Q) := by
   have fullFormula := segment.normSq_pointAt_sub_pointAt 1 0
   have endpointMovement :
@@ -79,19 +82,19 @@ theorem aBackwardDyadicStepMovement
     exact formula.symm.trans fullMovement
   rw [segment.normSq_pointAt_sub_pointAt, endpointMovement]
   have parameterDifference :
-      (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-        (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeTarget edge)).parameter -
-          (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-            (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeSource edge)).parameter =
+      (Eight.secondMeshEndpoint
+        (Eight.secondEdgeTarget edge)).parameter -
+          (Eight.secondMeshEndpoint
+            (Eight.secondEdgeSource edge)).parameter =
         (1 / 8 : Q) := by
-    rw [RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint_parameter,
-      RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint_parameter]
-    rcases Data.Fin.Cases.ExplicitQuarticPreparedALeftSampleCertificatesPart1.aLeftBoundaryFinEightCases edge with
+    rw [Eight.secondMeshEndpoint_parameter,
+      Eight.secondMeshEndpoint_parameter]
+    rcases ExplicitQuarticPreparedALeftSampleCertificatesPart1.aLeftBoundaryFinEightCases edge with
       h | h | h | h | h | h | h | h
     all_goals subst edge
-    all_goals simp only [RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeTarget,
-      RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeSource,
-      RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondGridEndpoint,
+    all_goals simp only [Eight.secondEdgeTarget,
+      Eight.secondEdgeSource,
+      Eight.secondGridEndpoint,
       Fraction.Field.div_eq_mul_inv_direct]
     all_goals ring1
   rw [parameterDifference, pow_two,
@@ -113,10 +116,10 @@ theorem aBackwardDyadicStepDisplacement
     (fullDisplacement : segment.pointAt 1 - segment.pointAt 0 =
       point (-1 / 4) 0)
     (edge : Fin 8) :
-    segment.pointAt (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-      (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeTarget edge)).parameter -
-        segment.pointAt (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-          (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeSource edge)).parameter =
+    segment.pointAt (Eight.secondMeshEndpoint
+      (Eight.secondEdgeTarget edge)).parameter -
+        segment.pointAt (Eight.secondMeshEndpoint
+          (Eight.secondEdgeSource edge)).parameter =
       point (-1 / 32) 0 := by
   have endpointDisplacement : finish - start = point (-1 / 4) 0 := by
     rw [segment.pointAt_sub_pointAt] at fullDisplacement
@@ -133,19 +136,19 @@ theorem aBackwardDyadicStepDisplacement
       simpa only [one_mul] using imaginary
   rw [segment.pointAt_sub_pointAt, endpointDisplacement]
   have parameterDifference :
-      (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-        (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeTarget edge)).parameter -
-          (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-            (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeSource edge)).parameter =
+      (Eight.secondMeshEndpoint
+        (Eight.secondEdgeTarget edge)).parameter -
+          (Eight.secondMeshEndpoint
+            (Eight.secondEdgeSource edge)).parameter =
         (1 / 8 : Q) := by
-    rw [RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint_parameter,
-      RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint_parameter]
-    rcases Data.Fin.Cases.ExplicitQuarticPreparedALeftSampleCertificatesPart1.aLeftBoundaryFinEightCases edge with
+    rw [Eight.secondMeshEndpoint_parameter,
+      Eight.secondMeshEndpoint_parameter]
+    rcases ExplicitQuarticPreparedALeftSampleCertificatesPart1.aLeftBoundaryFinEightCases edge with
       h | h | h | h | h | h | h | h
     all_goals subst edge
-    all_goals simp only [RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeTarget,
-      RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeSource,
-      RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondGridEndpoint,
+    all_goals simp only [Eight.secondEdgeTarget,
+      Eight.secondEdgeSource,
+      Eight.secondGridEndpoint,
       Fraction.Field.div_eq_mul_inv_direct]
     all_goals ring1
   rw [parameterDifference]
@@ -185,10 +188,10 @@ theorem bBackwardVerticalDyadicStepDisplacement
     (fullDisplacement : segment.pointAt 1 - segment.pointAt 0 =
       point 0 (-1 / 8))
     (edge : Fin 8) :
-    segment.pointAt (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-      (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeTarget edge)).parameter -
-        segment.pointAt (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-          (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeSource edge)).parameter =
+    segment.pointAt (Eight.secondMeshEndpoint
+      (Eight.secondEdgeTarget edge)).parameter -
+        segment.pointAt (Eight.secondMeshEndpoint
+          (Eight.secondEdgeSource edge)).parameter =
       point 0 (-1 / 64) := by
   have endpointDisplacement : finish - start = point 0 (-1 / 8) := by
     rw [segment.pointAt_sub_pointAt] at fullDisplacement
@@ -203,19 +206,19 @@ theorem bBackwardVerticalDyadicStepDisplacement
       simpa only [one_mul] using imaginary
   rw [segment.pointAt_sub_pointAt, endpointDisplacement]
   have parameterDifference :
-      (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-        (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeTarget edge)).parameter -
-          (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-            (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeSource edge)).parameter =
+      (Eight.secondMeshEndpoint
+        (Eight.secondEdgeTarget edge)).parameter -
+          (Eight.secondMeshEndpoint
+            (Eight.secondEdgeSource edge)).parameter =
         (1 / 8 : Q) := by
-    rw [RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint_parameter,
-      RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint_parameter]
-    rcases Data.Fin.Cases.ExplicitQuarticPreparedALeftSampleCertificatesPart1.aLeftBoundaryFinEightCases edge with
+    rw [Eight.secondMeshEndpoint_parameter,
+      Eight.secondMeshEndpoint_parameter]
+    rcases ExplicitQuarticPreparedALeftSampleCertificatesPart1.aLeftBoundaryFinEightCases edge with
       h | h | h | h | h | h | h | h
     all_goals subst edge
-    all_goals simp only [RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeTarget,
-      RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeSource,
-      RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondGridEndpoint,
+    all_goals simp only [Eight.secondEdgeTarget,
+      Eight.secondEdgeSource,
+      Eight.secondGridEndpoint,
       Fraction.Field.div_eq_mul_inv_direct]
     all_goals ring1
   rw [parameterDifference]
@@ -245,10 +248,10 @@ theorem bBackwardHorizontalDyadicStepDisplacement
     (fullDisplacement : segment.pointAt 1 - segment.pointAt 0 =
       point (-1 / 8) 0)
     (edge : Fin 8) :
-    segment.pointAt (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-      (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeTarget edge)).parameter -
-        segment.pointAt (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-          (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeSource edge)).parameter =
+    segment.pointAt (Eight.secondMeshEndpoint
+      (Eight.secondEdgeTarget edge)).parameter -
+        segment.pointAt (Eight.secondMeshEndpoint
+          (Eight.secondEdgeSource edge)).parameter =
       point (-1 / 64) 0 := by
   have endpointDisplacement : finish - start = point (-1 / 8) 0 := by
     rw [segment.pointAt_sub_pointAt] at fullDisplacement
@@ -263,19 +266,19 @@ theorem bBackwardHorizontalDyadicStepDisplacement
       simpa only [one_mul] using imaginary
   rw [segment.pointAt_sub_pointAt, endpointDisplacement]
   have parameterDifference :
-      (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-        (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeTarget edge)).parameter -
-          (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-            (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeSource edge)).parameter =
+      (Eight.secondMeshEndpoint
+        (Eight.secondEdgeTarget edge)).parameter -
+          (Eight.secondMeshEndpoint
+            (Eight.secondEdgeSource edge)).parameter =
         (1 / 8 : Q) := by
-    rw [RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint_parameter,
-      RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint_parameter]
-    rcases Data.Fin.Cases.ExplicitQuarticPreparedALeftSampleCertificatesPart1.aLeftBoundaryFinEightCases edge with
+    rw [Eight.secondMeshEndpoint_parameter,
+      Eight.secondMeshEndpoint_parameter]
+    rcases ExplicitQuarticPreparedALeftSampleCertificatesPart1.aLeftBoundaryFinEightCases edge with
       h | h | h | h | h | h | h | h
     all_goals subst edge
-    all_goals simp only [RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeTarget,
-      RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeSource,
-      RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondGridEndpoint,
+    all_goals simp only [Eight.secondEdgeTarget,
+      Eight.secondEdgeSource,
+      Eight.secondGridEndpoint,
       Fraction.Field.div_eq_mul_inv_direct]
     all_goals ring1
   rw [parameterDifference]
@@ -319,10 +322,10 @@ theorem bForwardHorizontalDyadicStepDisplacement
     (fullDisplacement : segment.pointAt 1 - segment.pointAt 0 =
       point (1 / 8) 0)
     (edge : Fin 8) :
-    segment.pointAt (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-      (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeTarget edge)).parameter -
-        segment.pointAt (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-          (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeSource edge)).parameter =
+    segment.pointAt (Eight.secondMeshEndpoint
+      (Eight.secondEdgeTarget edge)).parameter -
+        segment.pointAt (Eight.secondMeshEndpoint
+          (Eight.secondEdgeSource edge)).parameter =
       point (1 / 64) 0 := by
   have endpointDisplacement : finish - start = point (1 / 8) 0 := by
     rw [segment.pointAt_sub_pointAt] at fullDisplacement
@@ -337,19 +340,19 @@ theorem bForwardHorizontalDyadicStepDisplacement
       simpa only [one_mul] using imaginary
   rw [segment.pointAt_sub_pointAt, endpointDisplacement]
   have parameterDifference :
-      (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-        (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeTarget edge)).parameter -
-          (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-            (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeSource edge)).parameter =
+      (Eight.secondMeshEndpoint
+        (Eight.secondEdgeTarget edge)).parameter -
+          (Eight.secondMeshEndpoint
+            (Eight.secondEdgeSource edge)).parameter =
         (1 / 8 : Q) := by
-    rw [RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint_parameter,
-      RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint_parameter]
-    rcases Data.Fin.Cases.ExplicitQuarticPreparedALeftSampleCertificatesPart1.aLeftBoundaryFinEightCases edge with
+    rw [Eight.secondMeshEndpoint_parameter,
+      Eight.secondMeshEndpoint_parameter]
+    rcases ExplicitQuarticPreparedALeftSampleCertificatesPart1.aLeftBoundaryFinEightCases edge with
       h | h | h | h | h | h | h | h
     all_goals subst edge
-    all_goals simp only [RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeTarget,
-      RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeSource,
-      RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondGridEndpoint,
+    all_goals simp only [Eight.secondEdgeTarget,
+      Eight.secondEdgeSource,
+      Eight.secondGridEndpoint,
       Fraction.Field.div_eq_mul_inv_direct]
     all_goals ring1
   rw [parameterDifference]
@@ -378,10 +381,10 @@ theorem bForwardVerticalDyadicStepDisplacement
     (fullDisplacement : segment.pointAt 1 - segment.pointAt 0 =
       point 0 (1 / 8))
     (edge : Fin 8) :
-    segment.pointAt (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-      (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeTarget edge)).parameter -
-        segment.pointAt (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-          (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeSource edge)).parameter =
+    segment.pointAt (Eight.secondMeshEndpoint
+      (Eight.secondEdgeTarget edge)).parameter -
+        segment.pointAt (Eight.secondMeshEndpoint
+          (Eight.secondEdgeSource edge)).parameter =
       point 0 (1 / 64) := by
   have endpointDisplacement : finish - start = point 0 (1 / 8) := by
     rw [segment.pointAt_sub_pointAt] at fullDisplacement
@@ -396,19 +399,19 @@ theorem bForwardVerticalDyadicStepDisplacement
       simpa only [one_mul] using imaginary
   rw [segment.pointAt_sub_pointAt, endpointDisplacement]
   have parameterDifference :
-      (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-        (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeTarget edge)).parameter -
-          (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint
-            (RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeSource edge)).parameter =
+      (Eight.secondMeshEndpoint
+        (Eight.secondEdgeTarget edge)).parameter -
+          (Eight.secondMeshEndpoint
+            (Eight.secondEdgeSource edge)).parameter =
         (1 / 8 : Q) := by
-    rw [RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint_parameter,
-      RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondMeshEndpoint_parameter]
-    rcases Data.Fin.Cases.ExplicitQuarticPreparedALeftSampleCertificatesPart1.aLeftBoundaryFinEightCases edge with
+    rw [Eight.secondMeshEndpoint_parameter,
+      Eight.secondMeshEndpoint_parameter]
+    rcases ExplicitQuarticPreparedALeftSampleCertificatesPart1.aLeftBoundaryFinEightCases edge with
       h | h | h | h | h | h | h | h
     all_goals subst edge
-    all_goals simp only [RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeTarget,
-      RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondEdgeSource,
-      RootIsolation.SquareRoot.Subdivision.Dyadic.Eight.secondGridEndpoint,
+    all_goals simp only [Eight.secondEdgeTarget,
+      Eight.secondEdgeSource,
+      Eight.secondGridEndpoint,
       Fraction.Field.div_eq_mul_inv_direct]
     all_goals ring1
   rw [parameterDifference]

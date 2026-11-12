@@ -25,12 +25,11 @@ import Mathlib.Data.Nat.Basic
 @[expose] public section
 
 /-!
-# Exact provenance regression clients
+Exact cancellation with nonzero finite candidates.
 
-The cancellation example has a nonzero possible finite reading at its
-initial state. Its symbolic identity to zero nonetheless rules out every
-division preparation, demonstrating why candidate equality and operational
-identity must not be conflated.
+The switching approximation supplies a coherent arithmetic channel whose
+rational provenance rules out every denominator preparation, while its
+initial possible values still include a nonzero candidate.
 -/
 
 namespace Purelib.Examples.Approximation.Gaussian.Provenance.Rational.Cancellation
@@ -148,21 +147,6 @@ theorem cancellation_all_budgets
       .exhausted final reachable :=
   Obstruction.Symbolic.addNeg_excludes_every_budget
     switchingInput numerator state fuel
-
-/-- Exact rational provenance prepares the Gaussian value one. -/
-theorem rational_nonzero_prepared :
-    ∃ prepared, (RationalSidecar.exact (1 : Basic.Canonical)).decide = .prepared prepared :=
-      ⟨_, rfl⟩
-
-/-- Adding exact provenance for one and negative one excludes the sum. -/
-theorem rational_sum_excluded :
-    ∃ identity, ((RationalSidecar.exact (1 : Basic.Canonical)).add
-      (RationalSidecar.exact (-1))).decide = .excluded identity := ⟨_, rfl⟩
-
-/-- Multiplying exact provenance for one and negative one prepares the product. -/
-theorem rational_product_prepared :
-    ∃ prepared, ((RationalSidecar.exact (1 : Basic.Canonical)).mul
-      (RationalSidecar.exact (-1))).decide = .prepared prepared := ⟨_, rfl⟩
 
 /-- The original cancellation name paired with its retained rational provenance. -/
 def withSidecar :

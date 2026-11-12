@@ -77,6 +77,8 @@ import Purelib.Topology.Surface.Cut.WordArea
 import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Tactic.Ring
 
+open Purelib.Topology.Surface
+
 open Purelib.Approximation
 
 open Purelib.Curves
@@ -116,57 +118,57 @@ private theorem component_cost (component : Normalization.InverseRootPolynomial.
 private theorem row_cost (mass component : Normalization.InverseRootPolynomial.Coordinate) :
     2 * (mass * (10 * component) + mass * component) = 22 * mass * component := by ring1
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {source : Hyperelliptic.Differentials.Basic.Differential genus}
-  {pairing : Topology.Surface.Word.ProjectedEdgePairs.ProjectedEdgePairing lifted.cutPolygon.patch.cut.vertexLabels
+  {lifted : Meshes.LiftedPuncturedGrid base} {source : Differentials.Basic.Differential genus}
+  {pairing : Word.ProjectedEdgePairs.ProjectedEdgePairing lifted.cutPolygon.patch.cut.vertexLabels
     lifted.cutPolygon.patch.cut.boundary}
-  {wordData : Topology.Surface.Cut.BoundaryWord.CutBoundaryWord lifted.cutPolygon.patch.cut.vertexLabels
+  {wordData : Cut.BoundaryWord.CutBoundaryWord lifted.cutPolygon.patch.cut.vertexLabels
     lifted.cutPolygon.patch.cut.boundary}
-  {routes : Topology.Surface.Sewing.ChordCycleBank wordData}
-  {programBank : Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgramBank lifted source routes.cycles}
-  {boundary : Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrograms.LiftedPuncturedGrid.BoundaryProgram lifted source}
-    {boundarySegments : Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank boundary.program.period}
+  {routes : ChordCycleBank wordData}
+  {programBank : Cut.CyclePrograms.CutCycleProgramBank lifted source routes.cycles}
+  {boundary : BoundaryPrograms.LiftedPuncturedGrid.BoundaryProgram lifted source}
+    {boundarySegments : PeriodSegmentBanks.SegmentBank boundary.program.period}
   {differential : Fin genus} {comparison :
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank
-    (Hyperelliptic.Meshes.PuncturedGrid.Cut.FaceBanks.FaceBank.ofSegments boundary.program boundarySegments)
+    Cut.PeriodPrimitiveComparison.PrimitiveBank
+    (Cut.FaceBanks.FaceBank.ofSegments boundary.program boundarySegments)
     differential}
-  {segments : Data.Vector.DependentVector (fun index =>
-    Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank (programBank.programs index).period)}
-  {contacts : Hyperelliptic.Meshes.PuncturedGrid.BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch
+  {segments : Vector.DependentVector (fun index =>
+    PeriodSegmentBanks.SegmentBank (programBank.programs index).period)}
+  {contacts : BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch
     pairing
     (Periods.PeriodMatrix.standardDifferential differential) comparison.domains}
-  {reference : Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrimitiveReferences.BoundaryReference boundary comparison
+  {reference : BoundaryPrimitiveReferences.BoundaryReference boundary comparison
     contacts.prepared}
-  {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord wordData}
-  {raw : List (Handle.Basic.PivotIndices wordData.alphabet.count)} {normal : LinearAlgebra.Alternating.NormalForm
+  {integral : Cut.IntegralPairing.CutBoundaryWord wordData}
+  {raw : List (Handle.Basic.PivotIndices wordData.alphabet.count)} {normal : NormalForm
     integral.paired
     raw}
-  {components : Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples programBank differential}
-  {family : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily programBank.programs
+  {components : Cut.ChainPeriods.ComponentSamples programBank differential}
+  {family : Cut.PeriodFamilies.PrimitiveFamily programBank.programs
     comparison.domains differential}
   {periods : NormalFormPeriods components
-    normal} {profile : Hyperelliptic.Meshes.PuncturedGrid.NormalFormSamples.Profile periods}
+    normal} {profile : NormalFormSamples.Profile periods}
   {rowTarget areaTarget : Normalization.InverseRootPolynomial.Coordinate}
   {floors : Data.Vector Nat wordData.alphabet.count} {surfaceFloor : Nat}
 
 /-- A uniform error bound on the actual component readings gives the retained coefficient-mass bound on each original
 normal-form row. -/
 private theorem sampled_rows_bounded {stage : Nat} {bound : Normalization.InverseRootPolynomial.Coordinate}
-    {primitive : Fin lifted.cutPolygon.patch.cut.count → Topology.Polygon.Stokes.PrimitivePoint}
-    {values : Data.Vector Topology.Polygon.Stokes.PrimitivePoint wordData.alphabet.count}
+    {primitive : Fin lifted.cutPolygon.patch.cut.count → PrimitivePoint}
+    {values : Data.Vector PrimitivePoint wordData.alphabet.count}
     {readings : routes.Sample integral primitive values}
-    (rows : Hyperelliptic.Meshes.PuncturedGrid.NormalFormSamples.Sample periods stage) (cycles :
-      Topology.Surface.Sewing.NormalFormCycles normal readings)
-    (bounded : ∀ index, Data.Gaussian.Norm.Basic.normSq (((routes.cycles index).increment primitive).right -
+    (rows : NormalFormSamples.Sample periods stage) (cycles :
+      NormalFormCycles normal readings)
+    (bounded : ∀ index, Gaussian.Norm.Basic.normSq (((routes.cycles index).increment primitive).right -
       rows.componentValues index) ≤ bound)
     (row : Fin wordData.alphabet.count) :
-    Data.Gaussian.Norm.Basic.normSq ((cycles.jumps row).right - rows.rows row) ≤ (profile.rows.coefficients.get
+    Gaussian.Norm.Basic.normSq ((cycles.jumps row).right - rows.rows row) ≤ (profile.rows.coefficients.get
       row).mass * bound := by
   have sameChain : (periods.rows row).period.chain = cycles.chains row := by
     rw [periods.row_chain, cycles.chains_eq, cycles.weights_eq]
-  have estimate := Hyperelliptic.Meshes.PuncturedGrid.NormalFormSamples.Sample.row_comparison rows primitive bounded row
+  have estimate := NormalFormSamples.Sample.row_comparison rows primitive bounded row
   rw [sameChain, cycles.increment_eq, ← profile.masses_eq] at estimate
   exact estimate
 
@@ -174,76 +176,76 @@ namespace NormalFormRequest
 
 /-- Retain the exact program geometry and ownership propositions behind
 compact types, including the dependent constructor in bank agreement. -/
-@[expose] def ProgramSegments (programBank : Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgramBank
+@[expose] def ProgramSegments (programBank : Cut.CyclePrograms.CutCycleProgramBank
   lifted source routes.cycles) :=
-  Data.Vector.DependentVector (fun index => Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank
+  Vector.DependentVector (fun index => PeriodSegmentBanks.SegmentBank
     (programBank.programs index).period)
 
 variable {segments :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.ProgramSegments programBank}
+  ProgramSegments programBank}
 
 /-- The retained original sewn-face sources for each exact cut-cycle program path. -/
-@[expose] def ProgramSources (programBank : Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgramBank
+@[expose] def ProgramSources (programBank : Cut.CyclePrograms.CutCycleProgramBank
   lifted source routes.cycles) :=
-  Data.Vector.DependentVector (fun index => Topology.Surface.Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.PathSources
+  Vector.DependentVector (fun index => SewnPrimitivePaths.SewnPrimitiveFaces.PathSources
     lifted.cutPolygon.patch.cut
     (programBank.programs index).cycle.path.cutEdges)
 
 /-- Every retained original path-source family has the required positive orientation. -/
 @[expose] def SourcesPositive (sources :
-  Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.ProgramSources programBank) : Prop :=
+  ProgramSources programBank) : Prop :=
   ∀ index, (sources.get index).Positive
 
 /-- Every original cut-cycle program route spine has the required positive orientation. -/
-@[expose] def RoutesPositive (programBank : Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgramBank
+@[expose] def RoutesPositive (programBank : Cut.CyclePrograms.CutCycleProgramBank
   lifted source routes.cycles) : Prop :=
-  ∀ index, Hyperelliptic.Meshes.PuncturedGrid.TriangleSourceUniqueness.LiftedMesh.RouteSpine.Positive
+  ∀ index, TriangleSourceUniqueness.LiftedMesh.RouteSpine.Positive
     (programBank.programs index).routed.spine
 
 /-- Every primitive family bank is exactly the bank constructed from its retained original program segments. -/
-@[expose] def BanksAligned (family : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily
+@[expose] def BanksAligned (family : Cut.PeriodFamilies.PrimitiveFamily
   programBank.programs comparison.domains differential)
-    (segments : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.ProgramSegments programBank)
+    (segments : ProgramSegments programBank)
       : Prop :=
-  ∀ index, family.banks.get index = Hyperelliptic.Meshes.PuncturedGrid.Cut.FaceBanks.FaceBank.ofSegments
+  ∀ index, family.banks.get index = Cut.FaceBanks.FaceBank.ofSegments
     (programBank.programs index) (segments.get index)
 
 variable {targets : Data.Vector Normalization.InverseRootPolynomial.Coordinate wordData.alphabet.count}
-  (allocation : Topology.Surface.Word.NormalFormBudgets.RowAllocation profile.rows
-    (Topology.Surface.Cut.WordAreaBounds.CutWordArea.areaWeight reference.bound boundary.count) rowTarget areaTarget)
-  (area : Hyperelliptic.Meshes.PuncturedGrid.Cut.WordAreaRequests.WordAreaBudget family contacts reference
+  (allocation : Word.NormalFormBudgets.RowAllocation profile.rows
+    (Cut.WordAreaBounds.CutWordArea.areaWeight reference.bound boundary.count) rowTarget areaTarget)
+  (area : Cut.WordAreaRequests.WordAreaBudget family contacts reference
     boundary.count allocation.component allocation.area targets surfaceFloor)
   (movement : Budget.SynchronizedSamples.StageRequest components.streams allocation.component floors)
   (targets_eq : ∀ index, targets index = allocation.component)
-  (banks_eq : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.BanksAligned
+  (banks_eq : BanksAligned
     family segments)
-  {requested : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.PeriodRequest area
+  {requested : PeriodRequest area
     movement.stages}
-  {surface : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.SurfaceSample requested} {centered
-    : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.CenteredSample surface}
-  {word : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.WordSample wordData centered}
-  {readings : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.ChordSample routes integral word}
+  {surface : SurfaceSample requested} {centered
+    : CenteredSample surface}
+  {word : WordSample wordData centered}
+  {readings : ChordSample routes integral word}
   {sampleFloor : Nat}
 
 section
 variable {allocation area movement}
 /-- The actual original component period samples sharing the same requested surface and one sufficient stage. -/
-@[expose] def CommonReadings (components : Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples
+@[expose] def CommonReadings (components : Cut.ChainPeriods.ComponentSamples
   programBank differential)
-    (requested : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.PeriodRequest area
+    (requested : PeriodRequest area
       movement.stages) (sampleFloor : Nat) :=
-  Hyperelliptic.Meshes.PuncturedGrid.SynchronizedPeriodSamples.CommonSamples components requested sampleFloor
+  SynchronizedPeriodSamples.CommonSamples components requested sampleFloor
 end
 
 variable (common :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.CommonReadings components
+  CommonReadings components
   requested sampleFloor)
-  (sources : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.ProgramSources
+  (sources : ProgramSources
     programBank)
-  (positive : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.SourcesPositive
+  (positive : SourcesPositive
     sources)
   (routedPositive :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.RoutesPositive
+    RoutesPositive
     programBank)
 
 section
@@ -252,49 +254,49 @@ variable {allocation area movement common}
 /-- The original normal-form row sample at the retained common component stage. -/
 @[expose] def RowSample (periods :
   NormalFormPeriods components normal)
-    (common : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.CommonReadings components
+    (common : CommonReadings components
       requested sampleFloor) :=
-  Hyperelliptic.Meshes.PuncturedGrid.NormalFormSamples.Sample periods common.common.stage
+  NormalFormSamples.Sample periods common.common.stage
 
 /-- The actual cut-cycle increment and original component period reading differ within ten times the retained component
 allowance. -/
 @[expose] def ComponentAccurate (centered :
-  Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.CenteredSample surface)
-    (common : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.CommonReadings components
+  CenteredSample surface)
+    (common : CommonReadings components
       requested sampleFloor)
     (index : Fin wordData.alphabet.count) : Prop :=
-  Data.Gaussian.Norm.Basic.normSq (((routes.cycles index).increment centered.energyValues).right -
+  Gaussian.Norm.Basic.normSq (((routes.cycles index).increment centered.energyValues).right -
     common.common.values index) <
     10 * allocation.component
 
 /-- The actual normal-form row jump differs from its original sampled row within the cached coefficient-mass bound. -/
-@[expose] def RowsBounded (cycles : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.CycleSample
+@[expose] def RowsBounded (cycles : CycleSample
   normal readings)
-    (rows : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.RowSample periods common) (row :
+    (rows : RowSample periods common) (row :
       Fin wordData.alphabet.count) : Prop :=
-  Data.Gaussian.Norm.Basic.normSq ((cycles.jumps row).right - rows.rows row) ≤
+  Gaussian.Norm.Basic.normSq ((cycles.jumps row).right - rows.rows row) ≤
     (profile.rows.coefficients.get row).mass * (10 * allocation.component)
 
 /-- The first original handle period meets its requested comparison to the transformed word coordinate with the original
 physical correction subtracted. -/
 @[expose] def FirstAccurate (cycles :
-  Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.CycleSample normal readings) (evaluated :
-  Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.EvaluatedArea normal word)
-    (common : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.CommonReadings components
+  CycleSample normal readings) (evaluated :
+  EvaluatedArea normal word)
+    (common : CommonReadings components
       requested sampleFloor)
     (pair : Handle.Basic.PivotIndices wordData.alphabet.count) : Prop :=
-  Data.Gaussian.Norm.Basic.normSq ((periods.first pair).period.approximation.sample common.common.stage -
+  Gaussian.Norm.Basic.normSq ((periods.first pair).period.approximation.sample common.common.stage -
     ((evaluated.points pair.1).right - (cycles.physical pair.2).right)) < rowTarget
 
 /-- The last original handle period meets its requested comparison to the transformed word coordinate with the original
 physical correction added. -/
-@[expose] def LastAccurate (cycles : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.CycleSample
-  normal readings) (evaluated : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.EvaluatedArea
+@[expose] def LastAccurate (cycles : CycleSample
+  normal readings) (evaluated : EvaluatedArea
   normal word)
-    (common : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.CommonReadings components
+    (common : CommonReadings components
       requested sampleFloor)
     (pair : Handle.Basic.PivotIndices wordData.alphabet.count) : Prop :=
-  Data.Gaussian.Norm.Basic.normSq ((periods.last pair).period.approximation.sample common.common.stage -
+  Gaussian.Norm.Basic.normSq ((periods.last pair).period.approximation.sample common.common.stage -
     ((evaluated.points pair.2).right + (cycles.physical pair.1).right)) < rowTarget
 
 end
@@ -302,303 +304,303 @@ end
 /-- Actual cut increments and the original period streams are compared on
 one common stage, with path, integration and movement errors all paid. -/
 theorem component_accurate
-    {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-      Hyperelliptic.Branches.BranchIsolation.Data curve}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+      Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {source : Hyperelliptic.Differentials.Basic.Differential genus}
-  {pairing : Topology.Surface.Word.ProjectedEdgePairs.ProjectedEdgePairing lifted.cutPolygon.patch.cut.vertexLabels
+  {lifted : Meshes.LiftedPuncturedGrid base} {source : Differentials.Basic.Differential genus}
+  {pairing : Word.ProjectedEdgePairs.ProjectedEdgePairing lifted.cutPolygon.patch.cut.vertexLabels
     lifted.cutPolygon.patch.cut.boundary}
-  {wordData : Topology.Surface.Cut.BoundaryWord.CutBoundaryWord lifted.cutPolygon.patch.cut.vertexLabels
+  {wordData : Cut.BoundaryWord.CutBoundaryWord lifted.cutPolygon.patch.cut.vertexLabels
     lifted.cutPolygon.patch.cut.boundary}
-  {routes : Topology.Surface.Sewing.ChordCycleBank wordData}
-  {programBank : Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgramBank lifted source routes.cycles}
-  {boundary : Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrograms.LiftedPuncturedGrid.BoundaryProgram lifted source}
-    {boundarySegments : Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank boundary.program.period}
+  {routes : ChordCycleBank wordData}
+  {programBank : Cut.CyclePrograms.CutCycleProgramBank lifted source routes.cycles}
+  {boundary : BoundaryPrograms.LiftedPuncturedGrid.BoundaryProgram lifted source}
+    {boundarySegments : PeriodSegmentBanks.SegmentBank boundary.program.period}
   {differential : Fin genus} {comparison :
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank
-    (Hyperelliptic.Meshes.PuncturedGrid.Cut.FaceBanks.FaceBank.ofSegments boundary.program boundarySegments)
+    Cut.PeriodPrimitiveComparison.PrimitiveBank
+    (Cut.FaceBanks.FaceBank.ofSegments boundary.program boundarySegments)
     differential}
-  {segments : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.ProgramSegments programBank}
-  {contacts : Hyperelliptic.Meshes.PuncturedGrid.BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch
+  {segments : ProgramSegments programBank}
+  {contacts : BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch
     pairing
     (Periods.PeriodMatrix.standardDifferential differential) comparison.domains}
-  {reference : Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrimitiveReferences.BoundaryReference boundary comparison
+  {reference : BoundaryPrimitiveReferences.BoundaryReference boundary comparison
     contacts.prepared}
-  {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord wordData}
-  {raw : List (Handle.Basic.PivotIndices wordData.alphabet.count)} {normal : LinearAlgebra.Alternating.NormalForm
+  {integral : Cut.IntegralPairing.CutBoundaryWord wordData}
+  {raw : List (Handle.Basic.PivotIndices wordData.alphabet.count)} {normal : NormalForm
     integral.paired
     raw}
-  {components : Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples programBank differential}
-  {family : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily programBank.programs
+  {components : Cut.ChainPeriods.ComponentSamples programBank differential}
+  {family : Cut.PeriodFamilies.PrimitiveFamily programBank.programs
     comparison.domains differential}
   {periods : NormalFormPeriods components
-    normal} {profile : Hyperelliptic.Meshes.PuncturedGrid.NormalFormSamples.Profile periods}
+    normal} {profile : NormalFormSamples.Profile periods}
   {rowTarget areaTarget : Normalization.InverseRootPolynomial.Coordinate}
   {floors : Data.Vector Nat wordData.alphabet.count} {surfaceFloor : Nat}
   {targets : Data.Vector Normalization.InverseRootPolynomial.Coordinate wordData.alphabet.count}
-  (allocation : Topology.Surface.Word.NormalFormBudgets.RowAllocation profile.rows
-    (Topology.Surface.Cut.WordAreaBounds.CutWordArea.areaWeight reference.bound boundary.count) rowTarget areaTarget)
-  (area : Hyperelliptic.Meshes.PuncturedGrid.Cut.WordAreaRequests.WordAreaBudget family contacts reference
+  (allocation : Word.NormalFormBudgets.RowAllocation profile.rows
+    (Cut.WordAreaBounds.CutWordArea.areaWeight reference.bound boundary.count) rowTarget areaTarget)
+  (area : Cut.WordAreaRequests.WordAreaBudget family contacts reference
     boundary.count allocation.component allocation.area targets surfaceFloor)
   (movement : Budget.SynchronizedSamples.StageRequest components.streams allocation.component floors)
   (targets_eq : ∀ index, targets index = allocation.component)
-  (banks_eq : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.BanksAligned family segments)
-  {requested : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.PeriodRequest area
+  (banks_eq : BanksAligned family segments)
+  {requested : PeriodRequest area
     movement.stages}
-  {surface : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.SurfaceSample requested} {centered
-    : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.CenteredSample surface}
+  {surface : SurfaceSample requested} {centered
+    : CenteredSample surface}
   {sampleFloor : Nat}
-  (common : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.CommonReadings components
+  (common : CommonReadings components
     requested sampleFloor)
-  (sources : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.ProgramSources programBank)
-  (positive : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.SourcesPositive sources)
-  (routedPositive : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.RoutesPositive
+  (sources : ProgramSources programBank)
+  (positive : SourcesPositive sources)
+  (routedPositive : RoutesPositive
     programBank)
     (index : Fin wordData.alphabet.count) :
-    Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.ComponentAccurate centered common index
+    ComponentAccurate centered common index
       := by
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.ComponentAccurate]
+  dsimp only [ComponentAccurate]
   have lengths (next : Fin wordData.alphabet.count) :
       (programBank.programs next).cycle.path.cutEdges.length ≤ boundary.count := by
     rw [programBank.cycles_eq, boundary.count_eq]
-    exact Topology.Surface.Cut.ChordErrors.ChordCycleBank.cycle_length_le routes next
+    exact Cut.ChordErrors.ChordCycleBank.cycle_length_le routes next
   have estimate := common.path_accurate segments (contact := area.word.request) (movement := movement)
     banks_eq surface sources positive routedPositive lengths index
   have cost := (congrArg (fun target : Normalization.InverseRootPolynomial.Coordinate => 2 * (2 * (allocation.component
     + target) + allocation.component))
-    (targets_eq index)).trans (Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.component_cost
+    (targets_eq index)).trans (NormalFormComparisons.component_cost
       allocation.component)
   have actual := congrArg (fun cycle => (cycle.increment centered.energyValues).right) (programBank.cycles_eq index)
   have increment := actual.symm.trans (CenteredSewnSamples.Centered.cycle_increment_right surface.surface centered
     (programBank.programs index).cycle)
-  exact (congrArg (fun value => Data.Gaussian.Norm.Basic.normSq (value - common.common.values index))
+  exact (congrArg (fun value => Gaussian.Norm.Basic.normSq (value - common.common.values index))
     increment).trans_lt (estimate.trans_eq cost)
 
 /-- The row cache is exactly a weighted sample of those same original
 streams. No comparison premise or second numerical surface is supplied. -/
 theorem rows_bounded
-    {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-      Hyperelliptic.Branches.BranchIsolation.Data curve}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+      Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {source : Hyperelliptic.Differentials.Basic.Differential genus}
-  {pairing : Topology.Surface.Word.ProjectedEdgePairs.ProjectedEdgePairing lifted.cutPolygon.patch.cut.vertexLabels
+  {lifted : Meshes.LiftedPuncturedGrid base} {source : Differentials.Basic.Differential genus}
+  {pairing : Word.ProjectedEdgePairs.ProjectedEdgePairing lifted.cutPolygon.patch.cut.vertexLabels
     lifted.cutPolygon.patch.cut.boundary}
-  {wordData : Topology.Surface.Cut.BoundaryWord.CutBoundaryWord lifted.cutPolygon.patch.cut.vertexLabels
+  {wordData : Cut.BoundaryWord.CutBoundaryWord lifted.cutPolygon.patch.cut.vertexLabels
     lifted.cutPolygon.patch.cut.boundary}
-  {routes : Topology.Surface.Sewing.ChordCycleBank wordData}
-  {programBank : Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgramBank lifted source routes.cycles}
-  {boundary : Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrograms.LiftedPuncturedGrid.BoundaryProgram lifted source}
-    {boundarySegments : Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank boundary.program.period}
+  {routes : ChordCycleBank wordData}
+  {programBank : Cut.CyclePrograms.CutCycleProgramBank lifted source routes.cycles}
+  {boundary : BoundaryPrograms.LiftedPuncturedGrid.BoundaryProgram lifted source}
+    {boundarySegments : PeriodSegmentBanks.SegmentBank boundary.program.period}
   {differential : Fin genus} {comparison :
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank
-    (Hyperelliptic.Meshes.PuncturedGrid.Cut.FaceBanks.FaceBank.ofSegments boundary.program boundarySegments)
+    Cut.PeriodPrimitiveComparison.PrimitiveBank
+    (Cut.FaceBanks.FaceBank.ofSegments boundary.program boundarySegments)
     differential}
-  {segments : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.ProgramSegments programBank}
-  {contacts : Hyperelliptic.Meshes.PuncturedGrid.BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch
+  {segments : ProgramSegments programBank}
+  {contacts : BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch
     pairing
     (Periods.PeriodMatrix.standardDifferential differential) comparison.domains}
-  {reference : Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrimitiveReferences.BoundaryReference boundary comparison
+  {reference : BoundaryPrimitiveReferences.BoundaryReference boundary comparison
     contacts.prepared}
-  {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord wordData}
-  {raw : List (Handle.Basic.PivotIndices wordData.alphabet.count)} {normal : LinearAlgebra.Alternating.NormalForm
+  {integral : Cut.IntegralPairing.CutBoundaryWord wordData}
+  {raw : List (Handle.Basic.PivotIndices wordData.alphabet.count)} {normal : NormalForm
     integral.paired
     raw}
-  {components : Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples programBank differential}
-  {family : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily programBank.programs
+  {components : Cut.ChainPeriods.ComponentSamples programBank differential}
+  {family : Cut.PeriodFamilies.PrimitiveFamily programBank.programs
     comparison.domains differential}
   {periods : NormalFormPeriods components
-    normal} {profile : Hyperelliptic.Meshes.PuncturedGrid.NormalFormSamples.Profile periods}
+    normal} {profile : NormalFormSamples.Profile periods}
   {rowTarget areaTarget : Normalization.InverseRootPolynomial.Coordinate}
   {floors : Data.Vector Nat wordData.alphabet.count} {surfaceFloor : Nat}
   {targets : Data.Vector Normalization.InverseRootPolynomial.Coordinate wordData.alphabet.count}
-  (allocation : Topology.Surface.Word.NormalFormBudgets.RowAllocation profile.rows
-    (Topology.Surface.Cut.WordAreaBounds.CutWordArea.areaWeight reference.bound boundary.count) rowTarget areaTarget)
-  (area : Hyperelliptic.Meshes.PuncturedGrid.Cut.WordAreaRequests.WordAreaBudget family contacts reference
+  (allocation : Word.NormalFormBudgets.RowAllocation profile.rows
+    (Cut.WordAreaBounds.CutWordArea.areaWeight reference.bound boundary.count) rowTarget areaTarget)
+  (area : Cut.WordAreaRequests.WordAreaBudget family contacts reference
     boundary.count allocation.component allocation.area targets surfaceFloor)
   (movement : Budget.SynchronizedSamples.StageRequest components.streams allocation.component floors)
   (targets_eq : ∀ index, targets index = allocation.component)
-  (banks_eq : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.BanksAligned family segments)
-  {requested : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.PeriodRequest area
+  (banks_eq : BanksAligned family segments)
+  {requested : PeriodRequest area
     movement.stages}
-  {surface : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.SurfaceSample requested} {centered
-    : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.CenteredSample surface}
-  {word : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.WordSample wordData centered}
-  {readings : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.ChordSample routes integral word}
+  {surface : SurfaceSample requested} {centered
+    : CenteredSample surface}
+  {word : WordSample wordData centered}
+  {readings : ChordSample routes integral word}
   {sampleFloor : Nat}
-  (common : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.CommonReadings components
+  (common : CommonReadings components
     requested sampleFloor)
-  (sources : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.ProgramSources programBank)
-  (positive : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.SourcesPositive sources)
-  (routedPositive : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.RoutesPositive
+  (sources : ProgramSources programBank)
+  (positive : SourcesPositive sources)
+  (routedPositive : RoutesPositive
     programBank)
-    (cycles : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.CycleSample normal readings)
-    (rows : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.RowSample periods common) (row :
+    (cycles : CycleSample normal readings)
+    (rows : RowSample periods common) (row :
       Fin wordData.alphabet.count) :
-    Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.RowsBounded cycles rows row := by
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.RowsBounded]
-  apply Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.sampled_rows_bounded rows cycles ?_ row
+    RowsBounded cycles rows row := by
+  dsimp only [RowsBounded]
+  apply NormalFormComparisons.sampled_rows_bounded rows cycles ?_ row
   intro index
   have equal := (rows.components_eq index).trans (common.common.values_eq index).symm
-  exact (congrArg (fun value => Data.Gaussian.Norm.Basic.normSq (((routes.cycles index).increment
+  exact (congrArg (fun value => Gaussian.Norm.Basic.normSq (((routes.cycles index).increment
     centered.energyValues).right - value)) equal).le.trans
-    (Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.component_accurate allocation area
+    (NormalFormRequest.component_accurate allocation area
       movement targets_eq banks_eq (centered := centered) common sources positive routedPositive index).le
 
 /-- Both actual handle periods now have the requested accuracy relative to
 the transformed word coordinates, retaining the physical-boundary terms. -/
 theorem first_accurate
-    {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-      Hyperelliptic.Branches.BranchIsolation.Data curve}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+      Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {source : Hyperelliptic.Differentials.Basic.Differential genus}
-  {pairing : Topology.Surface.Word.ProjectedEdgePairs.ProjectedEdgePairing lifted.cutPolygon.patch.cut.vertexLabels
+  {lifted : Meshes.LiftedPuncturedGrid base} {source : Differentials.Basic.Differential genus}
+  {pairing : Word.ProjectedEdgePairs.ProjectedEdgePairing lifted.cutPolygon.patch.cut.vertexLabels
     lifted.cutPolygon.patch.cut.boundary}
-  {wordData : Topology.Surface.Cut.BoundaryWord.CutBoundaryWord lifted.cutPolygon.patch.cut.vertexLabels
+  {wordData : Cut.BoundaryWord.CutBoundaryWord lifted.cutPolygon.patch.cut.vertexLabels
     lifted.cutPolygon.patch.cut.boundary}
-  {routes : Topology.Surface.Sewing.ChordCycleBank wordData}
-  {programBank : Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgramBank lifted source routes.cycles}
-  {boundary : Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrograms.LiftedPuncturedGrid.BoundaryProgram lifted source}
-    {boundarySegments : Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank boundary.program.period}
+  {routes : ChordCycleBank wordData}
+  {programBank : Cut.CyclePrograms.CutCycleProgramBank lifted source routes.cycles}
+  {boundary : BoundaryPrograms.LiftedPuncturedGrid.BoundaryProgram lifted source}
+    {boundarySegments : PeriodSegmentBanks.SegmentBank boundary.program.period}
   {differential : Fin genus} {comparison :
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank
-    (Hyperelliptic.Meshes.PuncturedGrid.Cut.FaceBanks.FaceBank.ofSegments boundary.program boundarySegments)
+    Cut.PeriodPrimitiveComparison.PrimitiveBank
+    (Cut.FaceBanks.FaceBank.ofSegments boundary.program boundarySegments)
     differential}
-  {segments : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.ProgramSegments programBank}
-  {contacts : Hyperelliptic.Meshes.PuncturedGrid.BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch
+  {segments : ProgramSegments programBank}
+  {contacts : BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch
     pairing
     (Periods.PeriodMatrix.standardDifferential differential) comparison.domains}
-  {reference : Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrimitiveReferences.BoundaryReference boundary comparison
+  {reference : BoundaryPrimitiveReferences.BoundaryReference boundary comparison
     contacts.prepared}
-  {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord wordData}
-  {raw : List (Handle.Basic.PivotIndices wordData.alphabet.count)} {normal : LinearAlgebra.Alternating.NormalForm
+  {integral : Cut.IntegralPairing.CutBoundaryWord wordData}
+  {raw : List (Handle.Basic.PivotIndices wordData.alphabet.count)} {normal : NormalForm
     integral.paired
     raw}
-  {components : Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples programBank differential}
-  {family : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily programBank.programs
+  {components : Cut.ChainPeriods.ComponentSamples programBank differential}
+  {family : Cut.PeriodFamilies.PrimitiveFamily programBank.programs
     comparison.domains differential}
   {periods : NormalFormPeriods components
-    normal} {profile : Hyperelliptic.Meshes.PuncturedGrid.NormalFormSamples.Profile periods}
+    normal} {profile : NormalFormSamples.Profile periods}
   {rowTarget areaTarget : Normalization.InverseRootPolynomial.Coordinate}
   {floors : Data.Vector Nat wordData.alphabet.count} {surfaceFloor : Nat}
   {targets : Data.Vector Normalization.InverseRootPolynomial.Coordinate wordData.alphabet.count}
-  (allocation : Topology.Surface.Word.NormalFormBudgets.RowAllocation profile.rows
-    (Topology.Surface.Cut.WordAreaBounds.CutWordArea.areaWeight reference.bound boundary.count) rowTarget areaTarget)
-  (area : Hyperelliptic.Meshes.PuncturedGrid.Cut.WordAreaRequests.WordAreaBudget family contacts reference
+  (allocation : Word.NormalFormBudgets.RowAllocation profile.rows
+    (Cut.WordAreaBounds.CutWordArea.areaWeight reference.bound boundary.count) rowTarget areaTarget)
+  (area : Cut.WordAreaRequests.WordAreaBudget family contacts reference
     boundary.count allocation.component allocation.area targets surfaceFloor)
   (movement : Budget.SynchronizedSamples.StageRequest components.streams allocation.component floors)
   (targets_eq : ∀ index, targets index = allocation.component)
-  (banks_eq : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.BanksAligned family segments)
-  {requested : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.PeriodRequest area
+  (banks_eq : BanksAligned family segments)
+  {requested : PeriodRequest area
     movement.stages}
-  {surface : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.SurfaceSample requested} {centered
-    : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.CenteredSample surface}
-  {word : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.WordSample wordData centered}
-  {readings : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.ChordSample routes integral word}
+  {surface : SurfaceSample requested} {centered
+    : CenteredSample surface}
+  {word : WordSample wordData centered}
+  {readings : ChordSample routes integral word}
   {sampleFloor : Nat}
-  (common : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.CommonReadings components
+  (common : CommonReadings components
     requested sampleFloor)
-  (sources : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.ProgramSources programBank)
-  (positive : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.SourcesPositive sources)
-  (routedPositive : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.RoutesPositive
+  (sources : ProgramSources programBank)
+  (positive : SourcesPositive sources)
+  (routedPositive : RoutesPositive
     programBank)
-    (word_eq : wordData = (Topology.Surface.Cut.BoundaryWord.ProjectedEdgePairing.boundaryWord pairing)) (cycles :
-      Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.CycleSample normal readings)
-    (rows : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.RowSample periods common)
-      (evaluated : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.EvaluatedArea normal word)
+    (word_eq : wordData = (Cut.BoundaryWord.ProjectedEdgePairing.boundaryWord pairing)) (cycles :
+      CycleSample normal readings)
+    (rows : RowSample periods common)
+      (evaluated : EvaluatedArea normal word)
     (pair : Handle.Basic.PivotIndices wordData.alphabet.count) (member : pair ∈ raw) :
-    Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.FirstAccurate cycles evaluated common
+    FirstAccurate cycles evaluated common
       pair := by
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.FirstAccurate]
+  dsimp only [FirstAccurate]
   have equal := (periods.first_sample pair common.common.stage).trans (congrArg Neg.neg (rows.row_eq_period
     pair.2).symm)
-  have estimate := Topology.Surface.Boundary.NormalFormErrorBounds.first_sample_bounded cycles evaluated rows.rows
-    (Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.rows_bounded allocation area movement
+  have estimate := Boundary.NormalFormErrorBounds.first_sample_bounded cycles evaluated rows.rows
+    (NormalFormRequest.rows_bounded allocation area movement
       targets_eq banks_eq common sources positive routedPositive cycles rows)
     (fun row => by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using
-      (Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.row_errors_bounded allocation area
+      (NormalFormRequests.NormalFormRequest.row_errors_bounded allocation area
         word_eq cycles row).2) pair member
-  have paid := (estimate.trans_eq (Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.row_cost
+  have paid := (estimate.trans_eq (NormalFormComparisons.row_cost
     (profile.rows.coefficients.get pair.2).mass allocation.component)).trans_lt
     (allocation.row_charge_lt pair.2)
-  exact (congrArg (fun value => Data.Gaussian.Norm.Basic.normSq (value - ((evaluated.points pair.1).right -
+  exact (congrArg (fun value => Gaussian.Norm.Basic.normSq (value - ((evaluated.points pair.1).right -
     (cycles.physical pair.2).right))) equal).trans_lt paid
 
 /-- The actual last handle period has the requested accuracy against the transformed word coordinate and its retained
 physical-boundary correction. -/
 theorem last_accurate
-    {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-      Hyperelliptic.Branches.BranchIsolation.Data curve}
+    {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+      Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {source : Hyperelliptic.Differentials.Basic.Differential genus}
-  {pairing : Topology.Surface.Word.ProjectedEdgePairs.ProjectedEdgePairing lifted.cutPolygon.patch.cut.vertexLabels
+  {lifted : Meshes.LiftedPuncturedGrid base} {source : Differentials.Basic.Differential genus}
+  {pairing : Word.ProjectedEdgePairs.ProjectedEdgePairing lifted.cutPolygon.patch.cut.vertexLabels
     lifted.cutPolygon.patch.cut.boundary}
-  {wordData : Topology.Surface.Cut.BoundaryWord.CutBoundaryWord lifted.cutPolygon.patch.cut.vertexLabels
+  {wordData : Cut.BoundaryWord.CutBoundaryWord lifted.cutPolygon.patch.cut.vertexLabels
     lifted.cutPolygon.patch.cut.boundary}
-  {routes : Topology.Surface.Sewing.ChordCycleBank wordData}
-  {programBank : Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgramBank lifted source routes.cycles}
-  {boundary : Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrograms.LiftedPuncturedGrid.BoundaryProgram lifted source}
-    {boundarySegments : Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank boundary.program.period}
+  {routes : ChordCycleBank wordData}
+  {programBank : Cut.CyclePrograms.CutCycleProgramBank lifted source routes.cycles}
+  {boundary : BoundaryPrograms.LiftedPuncturedGrid.BoundaryProgram lifted source}
+    {boundarySegments : PeriodSegmentBanks.SegmentBank boundary.program.period}
   {differential : Fin genus} {comparison :
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank
-    (Hyperelliptic.Meshes.PuncturedGrid.Cut.FaceBanks.FaceBank.ofSegments boundary.program boundarySegments)
+    Cut.PeriodPrimitiveComparison.PrimitiveBank
+    (Cut.FaceBanks.FaceBank.ofSegments boundary.program boundarySegments)
     differential}
-  {segments : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.ProgramSegments programBank}
-  {contacts : Hyperelliptic.Meshes.PuncturedGrid.BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch
+  {segments : ProgramSegments programBank}
+  {contacts : BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch
     pairing
     (Periods.PeriodMatrix.standardDifferential differential) comparison.domains}
-  {reference : Hyperelliptic.Meshes.PuncturedGrid.BoundaryPrimitiveReferences.BoundaryReference boundary comparison
+  {reference : BoundaryPrimitiveReferences.BoundaryReference boundary comparison
     contacts.prepared}
-  {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord wordData}
-  {raw : List (Handle.Basic.PivotIndices wordData.alphabet.count)} {normal : LinearAlgebra.Alternating.NormalForm
+  {integral : Cut.IntegralPairing.CutBoundaryWord wordData}
+  {raw : List (Handle.Basic.PivotIndices wordData.alphabet.count)} {normal : NormalForm
     integral.paired
     raw}
-  {components : Hyperelliptic.Meshes.PuncturedGrid.Cut.ChainPeriods.ComponentSamples programBank differential}
-  {family : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily programBank.programs
+  {components : Cut.ChainPeriods.ComponentSamples programBank differential}
+  {family : Cut.PeriodFamilies.PrimitiveFamily programBank.programs
     comparison.domains differential}
   {periods : NormalFormPeriods components
-    normal} {profile : Hyperelliptic.Meshes.PuncturedGrid.NormalFormSamples.Profile periods}
+    normal} {profile : NormalFormSamples.Profile periods}
   {rowTarget areaTarget : Normalization.InverseRootPolynomial.Coordinate}
   {floors : Data.Vector Nat wordData.alphabet.count} {surfaceFloor : Nat}
   {targets : Data.Vector Normalization.InverseRootPolynomial.Coordinate wordData.alphabet.count}
-  (allocation : Topology.Surface.Word.NormalFormBudgets.RowAllocation profile.rows
-    (Topology.Surface.Cut.WordAreaBounds.CutWordArea.areaWeight reference.bound boundary.count) rowTarget areaTarget)
-  (area : Hyperelliptic.Meshes.PuncturedGrid.Cut.WordAreaRequests.WordAreaBudget family contacts reference
+  (allocation : Word.NormalFormBudgets.RowAllocation profile.rows
+    (Cut.WordAreaBounds.CutWordArea.areaWeight reference.bound boundary.count) rowTarget areaTarget)
+  (area : Cut.WordAreaRequests.WordAreaBudget family contacts reference
     boundary.count allocation.component allocation.area targets surfaceFloor)
   (movement : Budget.SynchronizedSamples.StageRequest components.streams allocation.component floors)
   (targets_eq : ∀ index, targets index = allocation.component)
-  (banks_eq : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.BanksAligned family segments)
-  {requested : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.PeriodRequest area
+  (banks_eq : BanksAligned family segments)
+  {requested : PeriodRequest area
     movement.stages}
-  {surface : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.SurfaceSample requested} {centered
-    : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.CenteredSample surface}
-  {word : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.WordSample wordData centered}
-  {readings : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.ChordSample routes integral word}
+  {surface : SurfaceSample requested} {centered
+    : CenteredSample surface}
+  {word : WordSample wordData centered}
+  {readings : ChordSample routes integral word}
   {sampleFloor : Nat}
-  (common : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.CommonReadings components
+  (common : CommonReadings components
     requested sampleFloor)
-  (sources : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.ProgramSources programBank)
-  (positive : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.SourcesPositive sources)
-  (routedPositive : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.RoutesPositive
+  (sources : ProgramSources programBank)
+  (positive : SourcesPositive sources)
+  (routedPositive : RoutesPositive
     programBank)
-    (word_eq : wordData = (Topology.Surface.Cut.BoundaryWord.ProjectedEdgePairing.boundaryWord pairing)) (cycles :
-      Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.CycleSample normal readings)
-    (rows : Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.RowSample periods common)
-      (evaluated : Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.EvaluatedArea normal word)
+    (word_eq : wordData = (Cut.BoundaryWord.ProjectedEdgePairing.boundaryWord pairing)) (cycles :
+      CycleSample normal readings)
+    (rows : RowSample periods common)
+      (evaluated : EvaluatedArea normal word)
     (pair : Handle.Basic.PivotIndices wordData.alphabet.count) (member : pair ∈ raw) :
-    Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.LastAccurate cycles evaluated common pair
+    LastAccurate cycles evaluated common pair
       := by
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.LastAccurate]
+  dsimp only [LastAccurate]
   have equal := (periods.last_sample pair common.common.stage).trans (rows.row_eq_period pair.1).symm
-  have estimate := Topology.Surface.Boundary.NormalFormErrorBounds.last_sample_bounded cycles evaluated rows.rows
-    (Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.NormalFormRequest.rows_bounded allocation area movement
+  have estimate := Boundary.NormalFormErrorBounds.last_sample_bounded cycles evaluated rows.rows
+    (NormalFormRequest.rows_bounded allocation area movement
       targets_eq banks_eq common sources positive routedPositive cycles rows)
     (fun row => by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using
-      (Hyperelliptic.Meshes.PuncturedGrid.NormalFormRequests.NormalFormRequest.row_errors_bounded allocation area
+      (NormalFormRequests.NormalFormRequest.row_errors_bounded allocation area
         word_eq cycles row).2) pair member
-  have paid := (estimate.trans_eq (Hyperelliptic.Meshes.PuncturedGrid.NormalFormComparisons.row_cost
+  have paid := (estimate.trans_eq (NormalFormComparisons.row_cost
     (profile.rows.coefficients.get pair.1).mass allocation.component)).trans_lt
     (allocation.row_charge_lt pair.1)
-  exact (congrArg (fun value => Data.Gaussian.Norm.Basic.normSq (value - ((evaluated.points pair.2).right +
+  exact (congrArg (fun value => Gaussian.Norm.Basic.normSq (value - ((evaluated.points pair.2).right +
     (cycles.physical pair.1).right))) equal).trans_lt paid
 
 end NormalFormRequest

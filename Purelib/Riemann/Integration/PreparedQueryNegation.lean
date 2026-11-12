@@ -30,6 +30,7 @@ import Purelib.RootIsolation.SquareRoot.Owner.Transport
 
 public import Purelib.RootIsolation.SquareRoot.Preparation.FaceNegation
 public import Purelib.Riemann.RootContinuation.SquareRootDifferentialNegation
+import Purelib.Riemann.RootContinuation.SquareRootTrackEquivalence
 import Purelib.Polynomial.Geometry.ClearPath
 import Purelib.Data.Vector.Basic
 import Purelib.Polynomial.Dense.Evaluation
@@ -62,6 +63,7 @@ open Purelib.Curves.Hyperelliptic.Differentials.Value (differentialValue)
 open Purelib.Approximation.Gaussian.Name.Coherent.Power (namedPower)
 open Purelib.Riemann.Topology.SquareRootContinuationChain (Owner)
 open Purelib.Riemann.Paths.OwnerTraceReadings (ownerName)
+open Purelib.Riemann.RootContinuation.SquareRootTrackEquivalence (ownerRootName ownerRootName_castOwnerParameter)
 open Purelib.Approximation.Gaussian.Equivalence (NamedEquivalent)
 open Purelib.Riemann.Branches.PreparedSheetContinuation (Subdivision parameterAt)
 
@@ -87,21 +89,15 @@ def ownerAtPoint (parent : PreparedEdge curve differential) (fraction : Fraction
     (parent.directQueryOwner fraction inside)
 
 open Purelib.Data.Gaussian in
-open Purelib.RootIsolation in
-/-- Exact parameter transport preserves the original root owner's name. -/
-private theorem ownerName_cast {first last : Basic.Canonical} (equal : first = last) (owner : Owner first) :
-    ownerName (SquareRoot.Owner.Transport.castOwnerParameter equal owner) = ownerName owner := by
-  cases equal
-  rfl
-
-open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
 /-- The transported query owner retains the original edge root name at that fraction. -/
 theorem ownerAtPoint_name (parent : PreparedEdge curve differential) (fraction : Fraction.Rational)
     (inside : 0 ≤ fraction ∧ fraction ≤ 1) (point : Basic.Canonical) (equal : parent.point fraction = point) :
     ownerName (ownerAtPoint parent fraction inside point equal) = parent.rootName fraction inside := by
-  rw [ownerAtPoint, ownerName_cast, parent.rootName_eq_directQueryOwnerRootName]
-  rfl
+  change ownerRootName (ownerAtPoint parent fraction inside point equal).parameterNonzero
+    (ownerAtPoint parent fraction inside point equal) = _
+  rewrite [ownerAtPoint, ownerRootName_castOwnerParameter]
+  rw [parent.rootName_eq_directQueryOwnerRootName]
 
 open Purelib.Approximation.Gaussian in
 open Purelib.Curves.Hyperelliptic in
@@ -141,6 +137,8 @@ end Purelib.Riemann.Integration.PreparedQueryNegation.PreparedEdge
 
 namespace Purelib.Riemann.Integration.PreparedQueryNegation.PreparedFaceTracePrefixes
 
+open Purelib.Polynomial.Geometry.ClearPath.ClearSegment (pointAt_eq_line)
+
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
@@ -178,7 +176,7 @@ theorem ParentReached.query_inside (reached : Observation.PreparedFaceTracePrefi
   rw [PreparedConstantModels.PreparedEdge.point_zero] at left
   rw [PreparedConstantModels.PreparedEdge.point_one] at right
   change box.Contains (first.edge.localSegment.pointAt fraction)
-  rw [PreparedPathWinding.ClearSegment.pointAt_eq_line]
+  rw [pointAt_eq_line]
   exact Box.contains_line left right inside
 
 open Purelib.Curves.Hyperelliptic.Integration in

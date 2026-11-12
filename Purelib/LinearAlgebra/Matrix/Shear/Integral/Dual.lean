@@ -38,7 +38,7 @@ variable {first last : Fin n}
 /-- Apply the transpose shear using two retained finite weighted sums.
 
 The two sums are computed once and added at the original bounded pivot coordinates. -/
-@[expose] def transpose (shear : SquareMatrix.Integral.Shear first last) (values : Data.Vector
+@[expose] def transpose (shear : Shear first last) (values : Data.Vector
   K n) : Data.Vector K n :=
   let leftTotal := Weighted.weighted (fun index => (shear.left index : K)) values
   let rightTotal := Weighted.weighted (fun index => (shear.right index : K)) values
@@ -47,15 +47,15 @@ The two sums are computed once and added at the original bounded pivot coordinat
 /-- Apply the inverse transpose shear using two retained finite weighted sums.
 
 The two sums are computed once and subtracted at the original bounded pivot coordinates. -/
-@[expose] def dual (shear : SquareMatrix.Integral.Shear first last) (values : Data.Vector K n)
+@[expose] def dual (shear : Shear first last) (values : Data.Vector K n)
   : Data.Vector K n :=
   let leftTotal := Weighted.weighted (fun index => (shear.left index : K)) values
   let rightTotal := Weighted.weighted (fun index => (shear.right index : K)) values
   Update.bump (Update.bump values first (-leftTotal)) last (-rightTotal)
 
 /-- Matrix congruence pairs with the transpose on its two arguments. -/
-theorem pairing_transform (shear : SquareMatrix.Integral.Shear first last) (matrix :
-  SquareMatrix.IntegralMatrix n) (left right : Data.Vector K n) :
+theorem pairing_transform (shear : Shear first last) (matrix :
+  IntegralMatrix n) (left right : Data.Vector K n) :
     Bilinear.Integral.pairing (shear.transform matrix) left right = Bilinear.Integral.pairing matrix (shear.transpose
       left) (shear.transpose right) := open Purelib.Algebra in by
   have expanded (row column : Fin n) : (shear.transform matrix row column : K) =
@@ -68,12 +68,12 @@ theorem pairing_transform (shear : SquareMatrix.Integral.Shear first last) (matr
       (shear.left row : K) * ((matrix first last : K) * (shear.right column : K)) +
       (shear.right row : K) * ((matrix last last : K) * (shear.right column : K)) := by
     rw [shear.transform_apply]
-    simp only [Purelib.Algebra.Ring.IntCast.add, Ring.IntCast.intCast_mul]
+    simp only [Ring.IntCast.add, Ring.IntCast.intCast_mul]
     ring1
   unfold Bilinear.Integral.pairing
   rw [Bilinear.Matrix.Basic.bilinear_congr expanded left right]
   simp only [Bilinear.Matrix.Basic.bilinear_add, Bilinear.Matrix.Basic.bilinear_outer, Weighted.weighted_scale]
-  rw [SquareMatrix.Integral.Shear.transpose, SquareMatrix.Integral.Shear.transpose,
+  rw [transpose, transpose,
     Bilinear.Matrix.Basic.bilinear_bump_right, Bilinear.Matrix.Basic.bilinear_bump_right,
     Bilinear.Matrix.Basic.bilinear_bump_left,
     Bilinear.Matrix.Basic.bilinear_bump_left, Weighted.weighted_bump, Weighted.weighted_bump, Weighted.weighted_bump,
@@ -81,10 +81,10 @@ theorem pairing_transform (shear : SquareMatrix.Integral.Shear first last) (matr
   ring1
 
 /-- Weights vanishing at both pivot coordinates are unchanged by the dual action. -/
-private theorem weighted_dual (shear : SquareMatrix.Integral.Shear first last) (weights : Fin n → K)
+private theorem weighted_dual (shear : Shear first last) (weights : Fin n → K)
     (firstZero : weights first = 0) (lastZero : weights last = 0) (values : Data.Vector K n) :
     Weighted.weighted weights (shear.dual values) = Weighted.weighted weights values := by
-  rw [SquareMatrix.Integral.Shear.dual, Weighted.weighted_bump, Weighted.weighted_bump, firstZero, lastZero,
+  rw [dual, Weighted.weighted_bump, Weighted.weighted_bump, firstZero, lastZero,
     mul_zero, mul_zero, add_zero, add_zero]
 
 end Shear
@@ -100,10 +100,10 @@ open Purelib.LinearAlgebra.Vector
 variable {K : Type*} [CommRing K] {n : Nat} {first last : Fin n}
 
 /-- Weights vanishing at both pivot coordinates are unchanged by the transpose action. -/
-private theorem weighted_transpose (shear : SquareMatrix.Integral.Shear first last) (weights : Fin n → K)
+private theorem weighted_transpose (shear : Integral.Shear first last) (weights : Fin n → K)
     (firstZero : weights first = 0) (lastZero : weights last = 0) (values : Data.Vector K n) :
     Weighted.weighted weights (shear.transpose values) = Weighted.weighted weights values := by
-  rw [SquareMatrix.Integral.Shear.transpose, Weighted.weighted_bump, Weighted.weighted_bump, firstZero,
+  rw [Integral.Shear.transpose, Weighted.weighted_bump, Weighted.weighted_bump, firstZero,
     lastZero, mul_zero, mul_zero, add_zero, add_zero]
 
 end Purelib.LinearAlgebra.Matrix.Shear.Integral.Dual.Pairing
@@ -120,17 +120,17 @@ namespace Shear
 variable {first last : Fin n}
 
 /-- The transpose action undoes the dual action on every structural vector. -/
-theorem transpose_dual (shear : SquareMatrix.Integral.Shear first last) (values : Data.Vector K
+theorem transpose_dual (shear : Shear first last) (values : Data.Vector K
   n) : shear.transpose (shear.dual values) = values := by
   have left := shear.weighted_dual (fun index => (shear.left index : K))
-    (by rw [shear.left_first, Purelib.Algebra.Ring.IntCast.cast_zero]) (by
-        rw [shear.left_last, Purelib.Algebra.Ring.IntCast.cast_zero]) values
+    (by rw [shear.left_first, Algebra.Ring.IntCast.cast_zero]) (by
+        rw [shear.left_last, Algebra.Ring.IntCast.cast_zero]) values
   have right := shear.weighted_dual (fun index => (shear.right index : K))
-    (by rw [shear.right_first, Purelib.Algebra.Ring.IntCast.cast_zero]) (by
-        rw [shear.right_last, Purelib.Algebra.Ring.IntCast.cast_zero]) values
+    (by rw [shear.right_first, Algebra.Ring.IntCast.cast_zero]) (by
+        rw [shear.right_last, Algebra.Ring.IntCast.cast_zero]) values
   apply Data.Vector.Basic.vector_ext; intro index
   change Update.bump (Update.bump (shear.dual values) first _) last _ index = _
-  rw [left, right, SquareMatrix.Integral.Shear.dual, Update.bump_apply, Update.bump_apply,
+  rw [left, right, dual, Update.bump_apply, Update.bump_apply,
     Update.bump_apply, Update.bump_apply]
   by_cases atFirst : index = first
   · rw [if_pos atFirst, if_pos atFirst]
@@ -143,19 +143,19 @@ theorem transpose_dual (shear : SquareMatrix.Integral.Shear first last) (values 
     · rw [if_neg atLast, if_neg atLast]; ring1
 
 /-- The dual action undoes the transpose action on every structural vector. -/
-theorem dual_transpose (shear : SquareMatrix.Integral.Shear first last) (values : Data.Vector K
+theorem dual_transpose (shear : Shear first last) (values : Data.Vector K
   n) : shear.dual (shear.transpose values) = values := by
-  have left := Matrix.Shear.Integral.Dual.Pairing.weighted_transpose shear (fun index => (shear.left
+  have left := Shear.Integral.Dual.Pairing.weighted_transpose shear (fun index => (shear.left
     index : K))
-    (by rw [shear.left_first, Purelib.Algebra.Ring.IntCast.cast_zero]) (by
-        rw [shear.left_last, Purelib.Algebra.Ring.IntCast.cast_zero]) values
-  have right := Matrix.Shear.Integral.Dual.Pairing.weighted_transpose shear (fun index =>
+    (by rw [shear.left_first, Algebra.Ring.IntCast.cast_zero]) (by
+        rw [shear.left_last, Algebra.Ring.IntCast.cast_zero]) values
+  have right := Shear.Integral.Dual.Pairing.weighted_transpose shear (fun index =>
     (shear.right index : K))
-    (by rw [shear.right_first, Purelib.Algebra.Ring.IntCast.cast_zero]) (by
-        rw [shear.right_last, Purelib.Algebra.Ring.IntCast.cast_zero]) values
+    (by rw [shear.right_first, Algebra.Ring.IntCast.cast_zero]) (by
+        rw [shear.right_last, Algebra.Ring.IntCast.cast_zero]) values
   apply Data.Vector.Basic.vector_ext; intro index
   change Update.bump (Update.bump (shear.transpose values) first _) last _ index = _
-  rw [left, right, SquareMatrix.Integral.Shear.transpose, Update.bump_apply, Update.bump_apply,
+  rw [left, right, transpose, Update.bump_apply, Update.bump_apply,
     Update.bump_apply, Update.bump_apply]
   by_cases atFirst : index = first
   · rw [if_pos atFirst, if_pos atFirst]
@@ -168,8 +168,8 @@ theorem dual_transpose (shear : SquareMatrix.Integral.Shear first last) (values 
     · rw [if_neg atLast, if_neg atLast]; ring1
 
 /-- Applying the dual shear to both vectors preserves the pairing with the transformed matrix. -/
-theorem pairing_dual (shear : SquareMatrix.Integral.Shear first last) (matrix :
-  SquareMatrix.IntegralMatrix n) (left right : Data.Vector K n) :
+theorem pairing_dual (shear : Shear first last) (matrix :
+  IntegralMatrix n) (left right : Data.Vector K n) :
     Bilinear.Integral.pairing matrix left right = Bilinear.Integral.pairing (shear.transform matrix) (shear.dual left)
       (shear.dual right) := by
   rw [shear.pairing_transform, shear.transpose_dual, shear.transpose_dual]
@@ -202,10 +202,10 @@ open Purelib.LinearAlgebra.Vector
 variable {K : Type*} [CommRing K] {n : Nat}
 
 /-- Casting an integral vector commutes with the retained transpose shear. -/
-theorem cast_transpose {first last : Fin n} (shear : SquareMatrix.Integral.Shear first last)
+theorem cast_transpose {first last : Fin n} (shear : Shear first last)
     (values : Data.Vector Int n) :
     IntCast.castVector (K := K) (shear.transpose values) = shear.transpose (IntCast.castVector values) := by
-  unfold SquareMatrix.Integral.Shear.transpose
+  unfold transpose
   simp only [Int.cast_id]
   rw [IntCast.cast_bump, IntCast.cast_bump, IntCast.cast_weighted, IntCast.cast_weighted]
 end Purelib.LinearAlgebra.Matrix.Integral.Shear
@@ -234,10 +234,10 @@ open Purelib.LinearAlgebra.Vector
 variable {n : Nat}
 
 /-- Move a transpose shear from the values to the weights in an integral weighted sum. -/
-theorem weighted_transpose {first last : Fin n} (shear : SquareMatrix.Integral.Shear first last)
+theorem weighted_transpose {first last : Fin n} (shear : Shear first last)
     (weights values : Data.Vector Int n) : Weighted.weighted weights (shear.transpose values) =
       Weighted.weighted (shear.apply weights) values := open Purelib.Algebra in by
-  rw [SquareMatrix.Integral.Shear.transpose, Weighted.weighted_bump, Weighted.weighted_bump]
+  rw [transpose, Weighted.weighted_bump, Weighted.weighted_bump]
   have expanded : Weighted.weighted (shear.apply weights) values = Weighted.weighted weights values +
       Weighted.weighted shear.left values * weights first + Weighted.weighted shear.right values * weights last := by
     calc
@@ -245,7 +245,7 @@ theorem weighted_transpose {first last : Fin n} (shear : SquareMatrix.Integral.S
           (shear.left index * values index) * weights first + (shear.right index * values index) * weights last) := by
         apply FiniteSum.Fin.sumFin_congr
         intro index
-        rw [SquareMatrix.Integral.Shear.apply, Data.Vector.Basic.vectorOfFn_apply]
+        rw [apply, Data.Vector.Basic.vectorOfFn_apply]
         ring1
       _ = _ := by
         rw [FiniteSum.Fin.sumFin_add, FiniteSum.Fin.sumFin_add, FiniteSum.Fin.sumFin_mul_right,

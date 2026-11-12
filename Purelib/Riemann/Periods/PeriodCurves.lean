@@ -8,6 +8,10 @@ import Purelib.Data.Nat.Positive
 import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Polynomial.Dense.Gaussian.Squarefree.Basic
 
+open Purelib.Polynomial.Dense.Gaussian.Squarefree
+
+open Purelib.Polynomial.Power.Gaussian
+
 @[expose] public section
 
 /-!
@@ -27,7 +31,7 @@ abbrev Gaussian := Gaussian.Basic.Canonical
 open Purelib.Polynomial in
 /-- The dense Gaussian polynomial type used by the cyclic curve inputs. -/
 abbrev GaussianPolynomial :=
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+  Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
 open Purelib.Data in
 /-- A positive natural degree with its retained positivity proof. -/
 abbrev RootDegree := Nat.Positive.RootDegree
@@ -51,122 +55,122 @@ section
 open Purelib.Polynomial
 /-- The dense Gaussian polynomial x to the power 1 minus one. -/
 def linearPolynomial : GaussianPolynomial :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial 1 degreeOne
+  Power.Gaussian.rootPolynomial 1 degreeOne
 
 /-- The dense Gaussian polynomial x to the power 2 minus one. -/
 def quadraticPolynomial : GaussianPolynomial :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial 1 degreeTwo
+  Power.Gaussian.rootPolynomial 1 degreeTwo
 
 /-- The dense Gaussian polynomial x to the power 3 minus one. -/
 def cubicPolynomial : GaussianPolynomial :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial 1 degreeThree
+  Power.Gaussian.rootPolynomial 1 degreeThree
 
 /-- The dense Gaussian polynomial x to the power 4 minus one. -/
 def quarticPolynomial : GaussianPolynomial :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial 1 degreeFour
+  Power.Gaussian.rootPolynomial 1 degreeFour
 
 /-- The dense Gaussian polynomial x to the power 5 minus one. -/
 def quinticPolynomial : GaussianPolynomial :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial 1 degreeFive
+  Power.Gaussian.rootPolynomial 1 degreeFive
 
 /-- The dense Gaussian polynomial x to the power 6 minus one. -/
 def sexticPolynomial : GaussianPolynomial :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial 1 degreeSix
+  Power.Gaussian.rootPolynomial 1 degreeSix
 
 /-- The dense Gaussian polynomial x to the power 7 minus one. -/
 def septicPolynomial : GaussianPolynomial :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial 1 degreeSeven
+  Power.Gaussian.rootPolynomial 1 degreeSeven
 
 /-- The displayed linear polynomial is nonzero. -/
 theorem linear_nonzero : linearPolynomial.isZero = false :=
-  Power.Gaussian.Bezout.polynomial_nonzero 1 degreeOne
+  Bezout.polynomial_nonzero 1 degreeOne
 
 /-- The displayed quadratic polynomial is nonzero. -/
 theorem quadratic_nonzero : quadraticPolynomial.isZero = false :=
-  Power.Gaussian.Bezout.polynomial_nonzero 1 degreeTwo
+  Bezout.polynomial_nonzero 1 degreeTwo
 
 /-- The displayed cubic polynomial is nonzero. -/
 theorem cubic_nonzero : cubicPolynomial.isZero = false :=
-  Power.Gaussian.Bezout.polynomial_nonzero 1 degreeThree
+  Bezout.polynomial_nonzero 1 degreeThree
 
 /-- The displayed quartic polynomial is nonzero. -/
 theorem quartic_nonzero : quarticPolynomial.isZero = false :=
-  Power.Gaussian.Bezout.polynomial_nonzero 1 degreeFour
+  Bezout.polynomial_nonzero 1 degreeFour
 
 /-- The displayed quintic polynomial is nonzero. -/
 theorem quintic_nonzero : quinticPolynomial.isZero = false :=
-  Power.Gaussian.Bezout.polynomial_nonzero 1 degreeFive
+  Bezout.polynomial_nonzero 1 degreeFive
 
 /-- The displayed sextic polynomial is nonzero. -/
 theorem sextic_nonzero : sexticPolynomial.isZero = false :=
-  Power.Gaussian.Bezout.polynomial_nonzero 1 degreeSix
+  Bezout.polynomial_nonzero 1 degreeSix
 
 /-- The displayed septic polynomial is nonzero. -/
 theorem septic_nonzero : septicPolynomial.isZero = false :=
-  Power.Gaussian.Bezout.polynomial_nonzero 1 degreeSeven
+  Bezout.polynomial_nonzero 1 degreeSeven
 
 /-- The displayed linear polynomial has natural degree 1. -/
 theorem linear_degree : linearPolynomial.natDegree = 1 :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree 1 degreeOne
+  Power.Gaussian.rootPolynomial_degree 1 degreeOne
 
 /-- The displayed quadratic polynomial has natural degree 2. -/
 theorem quadratic_degree : quadraticPolynomial.natDegree = 2 :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree 1 degreeTwo
+  Power.Gaussian.rootPolynomial_degree 1 degreeTwo
 
 /-- The displayed cubic polynomial has natural degree 3. -/
 theorem cubic_degree : cubicPolynomial.natDegree = 3 :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree 1 degreeThree
+  Power.Gaussian.rootPolynomial_degree 1 degreeThree
 
 /-- The displayed quartic polynomial has natural degree 4. -/
 theorem quartic_degree : quarticPolynomial.natDegree = 4 :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree 1 degreeFour
+  Power.Gaussian.rootPolynomial_degree 1 degreeFour
 
 /-- The displayed quintic polynomial has natural degree 5. -/
 theorem quintic_degree : quinticPolynomial.natDegree = 5 :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree 1 degreeFive
+  Power.Gaussian.rootPolynomial_degree 1 degreeFive
 
 /-- The displayed sextic polynomial has natural degree 6. -/
 theorem sextic_degree : sexticPolynomial.natDegree = 6 :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree 1 degreeSix
+  Power.Gaussian.rootPolynomial_degree 1 degreeSix
 
 /-- The displayed septic polynomial has natural degree 7. -/
 theorem septic_degree : septicPolynomial.natDegree = 7 :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree 1 degreeSeven
+  Power.Gaussian.rootPolynomial_degree 1 degreeSeven
 
 /-- The executable squarefree certificate for x to the power 3 minus one. -/
 def cubic_squarefree :
-    Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate cubicPolynomial :=
-  Power.Gaussian.Squarefree.squarefree (by decide : (1 : Gaussian) ≠ 0) degreeThree
+    Basic.SquarefreeCertificate cubicPolynomial :=
+  Squarefree.squarefree (by decide : (1 : Gaussian) ≠ 0) degreeThree
 
 /-- The executable squarefree certificate for x to the power 4 minus one. -/
 def quartic_squarefree :
-    Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate quarticPolynomial :=
-  Power.Gaussian.Squarefree.squarefree (by decide : (1 : Gaussian) ≠ 0) degreeFour
+    Basic.SquarefreeCertificate quarticPolynomial :=
+  Squarefree.squarefree (by decide : (1 : Gaussian) ≠ 0) degreeFour
 
 /-- The executable squarefree certificate for x to the power 5 minus one. -/
 def quintic_squarefree :
-    Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate quinticPolynomial :=
-  Power.Gaussian.Squarefree.squarefree (by decide : (1 : Gaussian) ≠ 0) degreeFive
+    Basic.SquarefreeCertificate quinticPolynomial :=
+  Squarefree.squarefree (by decide : (1 : Gaussian) ≠ 0) degreeFive
 
 /-- The executable squarefree certificate for x to the power 6 minus one. -/
 def sextic_squarefree :
-    Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate sexticPolynomial :=
-  Power.Gaussian.Squarefree.squarefree (by decide : (1 : Gaussian) ≠ 0) degreeSix
+    Basic.SquarefreeCertificate sexticPolynomial :=
+  Squarefree.squarefree (by decide : (1 : Gaussian) ≠ 0) degreeSix
 
 /-- The executable squarefree certificate for x to the power 7 minus one. -/
 def septic_squarefree :
-    Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate septicPolynomial :=
-  Power.Gaussian.Squarefree.squarefree (by decide : (1 : Gaussian) ≠ 0) degreeSeven
+    Basic.SquarefreeCertificate septicPolynomial :=
+  Squarefree.squarefree (by decide : (1 : Gaussian) ≠ 0) degreeSeven
 
 /-- The executable squarefree certificate for x to the power 1 minus one. -/
 def linear_squarefree :
-    Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate linearPolynomial :=
-  Power.Gaussian.Squarefree.squarefree (by decide : (1 : Gaussian) ≠ 0) degreeOne
+    Basic.SquarefreeCertificate linearPolynomial :=
+  Squarefree.squarefree (by decide : (1 : Gaussian) ≠ 0) degreeOne
 
 /-- The executable squarefree certificate for x to the power 2 minus one. -/
 def quadratic_squarefree :
-    Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate quadraticPolynomial :=
-  Power.Gaussian.Squarefree.squarefree (by decide : (1 : Gaussian) ≠ 0) degreeTwo
+    Basic.SquarefreeCertificate quadraticPolynomial :=
+  Squarefree.squarefree (by decide : (1 : Gaussian) ≠ 0) degreeTwo
 
 end
 

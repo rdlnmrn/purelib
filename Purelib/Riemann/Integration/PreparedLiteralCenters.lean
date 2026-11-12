@@ -11,6 +11,8 @@ import Purelib.Data.Rat.Fraction.Order.Arithmetic
 public import Purelib.Riemann.Integration.PreparedConstantModels
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Differentials
+
 @[expose] public section
 
 /-!
@@ -46,7 +48,7 @@ set_option genInjectivity false in
 The retained center belongs to the supplied prepared edge; the literal itself need not be a witness of its coefficient
 process. -/
 structure Certificate {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Hyperelliptic.Differentials.Basic.Differential genus} (prepared : PreparedEdge curve differential)
+    {differential : Basic.Differential genus} (prepared : PreparedEdge curve differential)
     (literal : Gaussian) (allowance : Coordinate) where
   /-- The retained certified center of the prepared edge. -/ center : PreparedEdge.CenterState prepared
   /-- The cached squared distance between the literal and the center. -/ distanceSq : Coordinate
@@ -59,7 +61,7 @@ constructive_injectivity Certificate
 open Purelib.Curves in
 /-- Recover the literal-to-center distance bound from its certificate. -/
 theorem Certificate.error_le {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Hyperelliptic.Differentials.Basic.Differential genus} {prepared : PreparedEdge curve differential}
+    {differential : Basic.Differential genus} {prepared : PreparedEdge curve differential}
     {literal : Gaussian} {allowance : Coordinate}
     (certificate : Certificate prepared literal allowance) :
     normSq (literal - certificate.center.value) ≤ allowance := by
@@ -72,7 +74,7 @@ open Purelib.Curves
 
 Return the retained certificate exactly when the distance fits the allowance; an unsuccessful check returns none. -/
 def check {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Hyperelliptic.Differentials.Basic.Differential genus} {prepared : PreparedEdge curve differential}
+    {differential : Basic.Differential genus} {prepared : PreparedEdge curve differential}
     (center : PreparedEdge.CenterState prepared) (literal : Gaussian)
     (allowance : Coordinate) : Option (Certificate prepared literal allowance) :=
   let distanceSq := normSq (literal - center.value)
@@ -82,7 +84,7 @@ def check {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
 
 /-- The literal check returns none when the allowance is strictly below the actual distance. -/
 theorem check_rejects {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Hyperelliptic.Differentials.Basic.Differential genus} {prepared : PreparedEdge curve differential}
+    {differential : Basic.Differential genus} {prepared : PreparedEdge curve differential}
     (center : PreparedEdge.CenterState prepared) (literal : Gaussian)
     (allowance : Coordinate) (tooLarge : allowance < normSq (literal - center.value)) :
     check center literal allowance = none := by
@@ -91,7 +93,7 @@ theorem check_rejects {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCu
 
 /-- Check a literal against the canonical center of the prepared edge. -/
 def canonical? {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Hyperelliptic.Differentials.Basic.Differential genus} (prepared : PreparedEdge curve differential)
+    {differential : Basic.Differential genus} (prepared : PreparedEdge curve differential)
     (literal : Gaussian) (allowance : Coordinate) :
     Option (Certificate prepared literal allowance) :=
   check (PreparedEdge.CenterState.canonical prepared) literal allowance
@@ -105,7 +107,7 @@ open Purelib.Data in
 Two squared errors bounded by the same error give a literal-to-center allowance of four times that error; only the
 certified center and actual distance are retained. -/
 def ofTwoErrors {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Hyperelliptic.Differentials.Basic.Differential genus} {prepared : PreparedEdge curve differential}
+    {differential : Basic.Differential genus} {prepared : PreparedEdge curve differential}
     (center : PreparedEdge.CenterState prepared) (literal bridge : Gaussian)
     (error : Coordinate) (bridgeError : normSq (bridge - literal) ≤ error)
     (close : normSq (bridge - center.value) < error) :
@@ -118,7 +120,7 @@ def ofTwoErrors {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve ge
       apply Gaussian.Basic.ext <;>
         simp only [Gaussian.Basic.sub_re, Gaussian.Basic.sub_im, Gaussian.Basic.neg_re, Gaussian.Basic.neg_im] <;> ring1
     have literalError : normSq (literal - bridge) ≤ error := by
-      rw [reverse, Gaussian.Basic.Canonical.normSq_neg]
+      rw [reverse, normSq_neg]
       exact bridgeError
     have identity : literal - center.value =
         (literal - bridge) + (bridge - center.value) := by

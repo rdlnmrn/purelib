@@ -1,4 +1,6 @@
 module
+public import Purelib.Data.Rat.Interval.Bisection
+import Purelib.Data.List.Map
 
 import Purelib.Data.List.Membership
 import Purelib.Algebra.FiniteSum.Fin
@@ -11,6 +13,7 @@ import Purelib.Topology.Polygon.Stokes
 public import Purelib.Riemann.Periods.DyadicBilinearBoundaryRibbon
 public import Purelib.Riemann.Periods.CenteredBilinearPath
 import Purelib.Data.Rat.Fraction.Order.Basic
+import Purelib.Data.Rat.Fraction.Order.Arithmetic
 import Mathlib.Order.Basic
 import Mathlib.Data.Nat.Basic
 import Purelib.Tactic.Ring
@@ -199,5 +202,76 @@ theorem indexed_inside (depth : Nat) {first last : Fraction.Rational} (ordered :
   · rw [equal]
     exact ⟨le_rfl, ordered⟩
   · exact Dyadic.DyadicTrace.tail_inside depth ordered member
+
+open Purelib.Data.Rat
+
+/-- Locate a retained parameter in an actual adjacent interval of a nonempty original finite trace.
+
+The scan reads the same ordered tail and returns its bounded edge index with
+both exact interval inequalities. Endpoint bounds guarantee a result; no
+monotonicity, successful-search witness or chosen enumeration is required.
+-/
+@[expose] def locate : (first : Fraction.Rational) → (rest : List Fraction.Rational) → rest ≠ [] →
+    (time : Fraction.Rational) → first ≤ time → time ≤ terminal first rest →
+    {edge : Fin rest.length // indexed first rest edge.castSucc ≤ time ∧ time ≤ indexed first rest edge.succ}
+  | _, [], nonempty, _, _, _ => False.elim (nonempty rfl)
+  | first, next :: rest, _, time, lower, upper =>
+      if atHead : time ≤ next then
+        ⟨0, lower, atHead⟩
+      else
+        have nonempty : rest ≠ [] := by
+          intro empty
+          rewrite [empty] at upper
+          exact atHead upper
+        let result := locate next rest nonempty time
+          (Fraction.Order.Arithmetic.le_of_not_gt_direct (fun less => atHead less.le)) upper
+        ⟨result.val.succ, result.property⟩
+
+section Parts
+
+open Purelib.Data.Rat
+open Purelib.Geometry.Rectangle.Partition
+
+/-- The original dyadic tail is exactly the ordered upper-endpoint row of the same midpoint interval parts.
+
+This identifies the original two finite representations through their actual
+constructors, shared midpoint and ordered append. Weakly ordered initial
+endpoints include stationary intervals; no numerical owner is identified.
+-/
+theorem tail_eq_parts_upper (depth : Nat) (span : Interval.Bounds) :
+    tail depth span.lower span.upper = (Interval.Bisection.parts depth span).map (fun part => part.upper) := by
+  induction depth generalizing span with
+  | zero => rfl
+  | succ depth inductionHypothesis =>
+      rewrite [tail, Interval.Bisection.parts_split, Map.map_append,
+        ← inductionHypothesis (Interval.Bisection.leftHalf span),
+        ← inductionHypothesis (Interval.Bisection.rightHalf span)]
+      change tail depth span.lower (PreparedBoxPartitions.midpoint span.lower span.upper) ++
+        tail depth (PreparedBoxPartitions.midpoint span.lower span.upper) span.upper =
+          tail depth span.lower (Interval.Bisection.midpoint span) ++
+            tail depth (Interval.Bisection.midpoint span) span.upper
+      rewrite [Interval.Bisection.midpoint, ← PreparedBoxPartitions.midpoint_eq_average]
+      rfl
+
+/-- The original interval locator retains a strict lower endpoint whenever its actual query is past the trace start.
+
+Each failed head comparison advances through the same original tail and
+supplies strict progress. The returned original index and its complete
+factory procedure remain unchanged, without a new half-open search.
+-/
+theorem locate_lower_lt : (first : Fraction.Rational) → (rest : List Fraction.Rational) →
+    (nonempty : rest ≠ []) → (time : Fraction.Rational) →
+    (lower : first ≤ time) → (upper : time ≤ terminal first rest) → first < time →
+    indexed first rest (locate first rest nonempty time lower upper).val.castSucc < time
+  | _, [], nonempty, _, _, _, _ => False.elim (nonempty rfl)
+  | first, next :: rest, _, time, lower, upper, strict => by
+      unfold locate
+      split
+      · exact strict
+      · rename_i after
+        exact locate_lower_lt next rest _ time _ upper
+          (Fraction.Order.Arithmetic.lt_of_not_ge_direct after)
+
+end Parts
 
 end Purelib.Integration.Path.Dyadic.DyadicTrace

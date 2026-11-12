@@ -49,6 +49,10 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Algebra
@@ -120,18 +124,18 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPreparedCon
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {bounds :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {bounds :
+    ReciprocalPaddedInverse.UniformBounds regular.padded}
   {parent : CenteredEdge curve differential} {patch :
-    Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {basis : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+    Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
+  {data : UniformReciprocalModels.Data patch count}
+  {basis : ReciprocalPaddedBasisBounds.BasisBounds bounds}
   {allowance coefficientTarget : Coordinate} {coverFloor floor :
     Nat}
-  {index minimum readingIndex : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {index minimum readingIndex : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
   {polynomials : RegularBasisPolynomials cap
     index box}
 
@@ -158,28 +162,28 @@ The estimate retains the actual terminal sample and target sample and scales by 
 private theorem lastEndpointReturn (branch : HyperellipticReciprocal.originOrder curve = 1)
     (target : CommonParentBank.BasisCommonParentEntry cover targetSources basis allowance coefficientTarget coverFloor
       floor)
-    (targetPlan : BasisCommonParentRequest.Plan target.request capSample polynomials minimum)
+    (targetPlan : Plan target.request capSample polynomials minimum)
     (targetInput : CommonParentPlans.NumericalInput cover targetSources index)
     (targetReading : Plan.Acquisition targetPlan targetInput.anchor targetInput.cells stage)
-    (targetFans : CommonEnergyPreparation.EnergyPreparation target.request.charts.requests targetPlan.charts
+    (targetFans : EnergyPreparation target.request.charts.requests targetPlan.charts
       targetReading.readings allowance energyFloor)
     (targetSample : Acquisition.Sample targetReading targetFans targetInput.originals coefficients radialDepth) :
-      {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-    (anchors : UniformReciprocalCover.ParentCovers parents) → (sources : SourceLocations.BasisParentSourceCovers
+      {parents : List (CenteredEdge curve differential)} →
+    (anchors : ParentCovers parents) → (sources : SourceLocations.BasisParentSourceCovers
       parents) →
     (bank : CommonParentBank.BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor) →
     (plans : CommonParentPlans.Plans capSample polynomials minimum anchors sources bank) → (inputs :
       CommonParentPlans.NumericalBank index anchors sources) →
     (readings : CommonParentPlans.Readings anchors sources bank plans inputs stage) →
-    (prepared : CommonParentSamples.FanPreparations energyFloor anchors sources bank plans inputs readings) →
-    (samples : CommonParentSamples.Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
+    (prepared : FanPreparations energyFloor anchors sources bank plans inputs readings) →
+    (samples : Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
       →
     (closing : BasisCommonParentBank.LastJunction target anchors sources bank) → closing.stage target anchors sources
       bank ≤ stage →
-    (before beforePotential : InverseRootPolynomial.Gaussian) → parents ≠ [] →
-    Data.Gaussian.Norm.Basic.normSq ((Samples.lastValues anchors sources bank plans inputs readings prepared
+    (before beforePotential : Gaussian) → parents ≠ [] →
+    Basic.normSq ((lastValues anchors sources bank plans inputs readings prepared
       samples before beforePotential).1 - targetSample.endpoints.first.2) ≤
-      (4 * allowance)^2 * PreparedObservationCoercivity.coefficientNormSq coefficients
+      (4 * allowance)^2 * coefficientNormSq coefficients
   | _, .nil, _, _, _, _, _, _, _, _, _, _, _, nonempty => False.elim (nonempty rfl)
   | _, .cons _ _ _ .nil, _, _, _, _, _, _, samples, closing, later, _, _, _ =>
       by
@@ -187,21 +191,21 @@ private theorem lastEndpointReturn (branch : HyperellipticReciprocal.originOrder
           samples.1 targetSample closing.request branch later later
         have paid : target.request.restoration.target ≤ (4 * allowance)^2 :=
           (show target.request.restoration.target = 1 * target.request.restoration.target by ring1).trans_le
-            ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by
-                decide +kernel : (1 : InverseRootPolynomial.Coordinate) ≤ 436)
+            ((Arithmetic.mul_le_mul_of_nonneg_right_direct (by
+                decide +kernel : (1 : Coordinate) ≤ 436)
               target.request.restoration.positive.le).trans
               ((show 436 * target.request.restoration.target =
                 416 * target.request.restoration.target + 20 * target.request.restoration.target by ring1).trans_le
                 target.request.restoration.paid))
-        have nonnegative : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients :=
+        have nonnegative : 0 ≤ coefficientNormSq coefficients :=
           FiniteSum.Fin.sumFin_zero.symm.trans_le
-            (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : InverseRootPolynomial.Coordinate)) _
-              (fun row => Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
-        change Data.Gaussian.Norm.Basic.normSq (samples.1.endpoints.last.2 - targetSample.endpoints.first.2) ≤
+            (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Coordinate)) _
+              (fun row => normSq_nonneg (coefficients row)))
+        change Basic.normSq (samples.1.endpoints.last.2 - targetSample.endpoints.first.2) ≤
           _
         rw [show samples.1.endpoints.last.2 - targetSample.endpoints.first.2 =
-          -(targetSample.endpoints.first.2 - samples.1.endpoints.last.2) by ring1, Data.Gaussian.Norm.Basic.normSq_neg]
-        exact gap.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct paid nonnegative)
+          -(targetSample.endpoints.first.2 - samples.1.endpoints.last.2) by ring1, Basic.normSq_neg]
+        exact gap.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct paid nonnegative)
   | _, .cons _ _ _ (.cons _ _ _ _), _, bank, plans, inputs, readings, prepared, samples, closing, later, _, _, _ =>
       lastEndpointReturn
         branch target targetPlan targetInput targetReading targetFans targetSample
@@ -210,29 +214,29 @@ private theorem lastEndpointReturn (branch : HyperellipticReciprocal.originOrder
 
 /-- The closing request is tied to the literal final and initial parent samples, including the empty-bank base case. -/
 theorem returned_endpoint_bound (branch : HyperellipticReciprocal.originOrder curve = 1) : {parents : List
-  (PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-    (anchors : UniformReciprocalCover.ParentCovers parents) → (sources : SourceLocations.BasisParentSourceCovers
+  (CenteredEdge curve differential)} →
+    (anchors : ParentCovers parents) → (sources : SourceLocations.BasisParentSourceCovers
       parents) →
     (bank : CommonParentBank.BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor) →
     (plans : CommonParentPlans.Plans capSample polynomials minimum anchors sources bank) → (inputs :
       CommonParentPlans.NumericalBank index anchors sources) →
     (readings : CommonParentPlans.Readings anchors sources bank plans inputs stage) →
-    (prepared : CommonParentSamples.FanPreparations energyFloor anchors sources bank plans inputs readings) →
-    (samples : CommonParentSamples.Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
+    (prepared : FanPreparations energyFloor anchors sources bank plans inputs readings) →
+    (samples : Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
       →
     (closing : BasisCommonParentBank.ClosingJunction anchors sources bank) → closing.stage anchors sources bank ≤ stage
       →
-    let first := Samples.firstValues anchors sources bank plans inputs readings prepared samples
-    Data.Gaussian.Norm.Basic.normSq ((Samples.lastValues anchors sources bank plans inputs readings prepared
+    let first := firstValues anchors sources bank plans inputs readings prepared samples
+    Basic.normSq ((lastValues anchors sources bank plans inputs readings prepared
       samples first.1 first.2).1 - first.1) ≤
-      (4 * allowance)^2 * PreparedObservationCoercivity.coefficientNormSq coefficients
+      (4 * allowance)^2 * coefficientNormSq coefficients
   | _, .nil, _, _, _, _, _, _, _, _, _ => by
-      change Data.Gaussian.Norm.Basic.normSq ((0 : InverseRootPolynomial.Gaussian) - 0) ≤ _
-      rw [_root_.sub_self, Data.Gaussian.Norm.Basic.normSq_zero]
-      exact Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+      change Basic.normSq ((0 : Gaussian) - 0) ≤ _
+      rw [_root_.sub_self, Basic.normSq_zero]
+      exact Arithmetic.mul_nonneg_direct (Arithmetic.sq_nonneg_direct _)
         (FiniteSum.Fin.sumFin_zero.symm.trans_le
-          (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : InverseRootPolynomial.Coordinate)) _
-            (fun row => Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row))))
+          (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Coordinate)) _
+            (fun row => normSq_nonneg (coefficients row))))
   | _, .cons patch data cover tail, sources, bank, plans, inputs, readings, prepared, samples, closing, later =>
       lastEndpointReturn branch
         bank.1 plans.1 inputs.1 readings.1 prepared.1 samples.1
@@ -242,33 +246,33 @@ theorem returned_endpoint_bound (branch : HyperellipticReciprocal.originOrder cu
 /-- The closing ribbon is small, rather than discarded as a zero term. Its bound uses the actual initial endpoint and
 the same scheduled closing join. -/
 theorem returned_ribbon_bound (branch : HyperellipticReciprocal.originOrder curve = 1)
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-    (anchors : UniformReciprocalCover.ParentCovers parents) (sources : SourceLocations.BasisParentSourceCovers parents)
+    {parents : List (CenteredEdge curve differential)}
+    (anchors : ParentCovers parents) (sources : SourceLocations.BasisParentSourceCovers parents)
     (bank : CommonParentBank.BasisCommonParentBank anchors sources basis allowance coefficientTarget coverFloor floor)
     (plans : CommonParentPlans.Plans capSample polynomials minimum anchors sources bank) (inputs :
       CommonParentPlans.NumericalBank index anchors sources)
     (readings : CommonParentPlans.Readings anchors sources bank plans inputs stage)
-    (prepared : CommonParentSamples.FanPreparations energyFloor anchors sources bank plans inputs readings)
-    (samples : CommonParentSamples.Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
-    (comparisons : Samples.PreparedComparisons anchors sources bank plans inputs readings prepared samples)
+    (prepared : FanPreparations energyFloor anchors sources bank plans inputs readings)
+    (samples : Samples coefficients radialDepth anchors sources bank plans inputs readings prepared)
+    (comparisons : PreparedComparisons anchors sources bank plans inputs readings prepared samples)
     (closing : BasisCommonParentBank.ClosingJunction anchors sources bank) (later : closing.stage anchors sources bank ≤
       stage) :
-    let first := Samples.firstValues anchors sources bank plans inputs readings prepared samples
-    let last := Samples.lastValues anchors sources bank plans inputs readings prepared samples first.1 first.2
-    Data.Gaussian.Norm.Basic.normSq (BoundaryRibbon.area first.1 (last.1 - first.1)) ≤
-      4 * (2 + 8 * basis.coefficient) * (4 * allowance)^2 * (PreparedObservationCoercivity.coefficientNormSq
+    let first := firstValues anchors sources bank plans inputs readings prepared samples
+    let last := lastValues anchors sources bank plans inputs readings prepared samples first.1 first.2
+    Basic.normSq (BoundaryRibbon.area first.1 (last.1 - first.1)) ≤
+      4 * (2 + 8 * basis.coefficient) * (4 * allowance)^2 * (coefficientNormSq
         coefficients)^2 := by
   dsimp only
-  have first := Samples.firstValue_bound branch anchors sources bank plans inputs readings prepared samples comparisons
+  have first := firstValue_bound branch anchors sources bank plans inputs readings prepared samples comparisons
   have gap := returned_endpoint_bound
     branch anchors sources bank plans inputs readings prepared samples closing later
-  have product := Fraction.Order.Arithmetic.mul_le_mul_direct first gap (Data.Gaussian.Norm.Basic.normSq_nonneg _)
-    ((Data.Gaussian.Norm.Basic.normSq_nonneg _).trans first)
+  have product := Arithmetic.mul_le_mul_direct first gap (Basic.normSq_nonneg _)
+    ((Basic.normSq_nonneg _).trans first)
   exact (BoundaryRibbon.area_bound _ _).trans
-    ((show 4 * Data.Gaussian.Norm.Basic.normSq _ * Data.Gaussian.Norm.Basic.normSq _ = 4 *
-      (Data.Gaussian.Norm.Basic.normSq _ * Data.Gaussian.Norm.Basic.normSq _) by ring1).trans_le
-      ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct product (by
-          decide : (0 : InverseRootPolynomial.Coordinate) ≤ 4)).trans_eq (by ring1)))
+    ((show 4 * Basic.normSq _ * Basic.normSq _ = 4 *
+      (Basic.normSq _ * Basic.normSq _) by ring1).trans_le
+      ((Arithmetic.mul_le_mul_of_nonneg_left_direct product (by
+          decide : (0 : Coordinate) ≤ 4)).trans_eq (by ring1)))
 
 end Samples
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonBankEndpointReturn

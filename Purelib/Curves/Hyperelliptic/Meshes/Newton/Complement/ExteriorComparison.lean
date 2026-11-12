@@ -52,6 +52,8 @@ import Purelib.Riemann.RootContinuation.NewtonPathBudget
 import Purelib.Riemann.RootContinuation.PreparedNewtonBandSamples
 import Purelib.Tactic.Ring
 
+open Purelib.Riemann.Topology.NewtonGlobalSurfaceBoundary
+
 open Purelib.Riemann.RootContinuation.NewtonGlobalPhysicalEndpointReadback.SynchronizedSurfaceRequests
 
 public section
@@ -67,15 +69,15 @@ open Purelib
 open Purelib.Riemann
 open Purelib.RootIsolation
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
-    Fraction.Rational} (allocated : Hyperelliptic.Meshes.Newton.AllHoles.FineAreaRequests.FamilyFineAreaRequest
+    Fraction.Rational} (allocated : AllHoles.FineAreaRequests.FamilyFineAreaRequest
     preparation target radius)
   {observations : RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
-    RootIsolation.SquareRoot.Grid.RootFrames allocated.family.single.grid.shrunk.prepared.grid}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
+    SquareRoot.Grid.RootFrames allocated.family.single.grid.shrunk.prepared.grid}
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
     allocated.family.single.grid.faces.regulars} {partitions : Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions
     observations allocated.family.single.grid}
   {coarse : (sheet : Fin 2) → Topology.NewtonRequestedSurfaceEnergy.SurfaceMeshes partitions domains sheet}
@@ -89,9 +91,9 @@ namespace SynchronizedSurfaceRequests
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {lifted : Meshes.LiftedPuncturedGrid allocated.family.single.grid.punctured}
-  {excision : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision allocated.family.single.grid lifted}
+  {excision : AllHoles.Excision.AllHoleExcision allocated.family.single.grid lifted}
   {requests : Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests coarse fixed error} {traces :
-    Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.PerimeterTraces requests}
+    SynchronizedSurfaceRequests.PerimeterTraces requests}
   {position : Fin allocated.family.single.grid.faces.regulars.length} {side : Meshes.GridLiftedDualSteps.GridSide}
 
 open Purelib.Data.Rat.Fraction.Compatibility
@@ -105,21 +107,21 @@ variable {floor : Nat} {allowance : Fraction.Rational}
 The retained band request, synchronized face samples and same coefficient vector determine both sides at the common late
 stage. -/
 theorem exterior_accurate
-    (request : Hyperelliptic.Meshes.Newton.Complement.BandBoundary.SynchronizedSurfaceRequests.RemainingBandRequest
+    (request : BandBoundary.SynchronizedSurfaceRequests.RemainingBandRequest
       (grid := allocated.family.single.grid) excision traces floor)
     (later : request.index ≤ stage) (samples :
-      Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.PerimeterSamples requests traces cache
+      SynchronizedSurfaceRequests.PerimeterSamples requests traces cache
       coefficients)
-    {assemblies : Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.SheetAssemblies requests (cache :=
+    {assemblies : SynchronizedSurfaceRequests.SheetAssemblies requests (cache :=
       cache) (coefficients := coefficients)}
-    {perimeters : Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.SheetPerimeters requests assemblies}
-      (faces : Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.SheetFaces requests perimeters)
+    {perimeters : SynchronizedSurfaceRequests.SheetPerimeters requests assemblies}
+      (faces : SynchronizedSurfaceRequests.SheetFaces requests perimeters)
     (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank allocated.family.single.grid.faces)
     (positive : 0 < allowance)
     (targetLe : target ≤
       BoundaryBudget.ProtectedObservations.SynchronizedSurfaceRequests.remainingBoundaryTarget
-      genus (Hyperelliptic.Meshes.Newton.Annulus.AreaRequests.NewtonPreparation.outerCount preparation) allowance) :
-    Data.Gaussian.Norm.Basic.normSq
+      genus (Annulus.AreaRequests.NewtonPreparation.outerCount preparation) allowance) :
+    Gaussian.Norm.Basic.normSq
       (CenteredBoundary.SynchronizedSurfaceRequests.PerimeterSamples.remainingBoundaryCentered
       excision samples neighbors -
       (RootContinuation.NewtonGlobalPhysicalComponents.SynchronizedSurfaceRequests.PerimeterSamples.componentBoundary
@@ -141,20 +143,20 @@ theorem exterior_accurate
 The actual exterior and retained endpoint chords remain explicit, and the allowance is scaled by the same coefficient
 norm. -/
 theorem exterior_energy_lower
-    (request : Hyperelliptic.Meshes.Newton.Complement.BandBoundary.SynchronizedSurfaceRequests.RemainingBandRequest
+    (request : BandBoundary.SynchronizedSurfaceRequests.RemainingBandRequest
       (grid := allocated.family.single.grid) excision traces floor)
     (later : request.index ≤ stage) (samples :
-      Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.PerimeterSamples requests traces cache
+      SynchronizedSurfaceRequests.PerimeterSamples requests traces cache
       coefficients)
-    {assemblies : Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.SheetAssemblies requests (cache :=
+    {assemblies : SynchronizedSurfaceRequests.SheetAssemblies requests (cache :=
       cache) (coefficients := coefficients)}
-    {perimeters : Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.SheetPerimeters requests assemblies}
-      (faces : Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.SheetFaces requests perimeters)
+    {perimeters : SynchronizedSurfaceRequests.SheetPerimeters requests assemblies}
+      (faces : SynchronizedSurfaceRequests.SheetFaces requests perimeters)
     (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank allocated.family.single.grid.faces)
     (positive : 0 < allowance)
     (targetLe : target ≤
       BoundaryBudget.ProtectedObservations.SynchronizedSurfaceRequests.remainingBoundaryTarget
-      genus (Hyperelliptic.Meshes.Newton.Annulus.AreaRequests.NewtonPreparation.outerCount preparation) allowance)
+      genus (Annulus.AreaRequests.NewtonPreparation.outerCount preparation) allowance)
     (energy : Gaussian.Basic.Canonical) :
     (energy +
       CenteredBoundary.SynchronizedSurfaceRequests.PerimeterSamples.remainingBoundaryCentered
@@ -166,7 +168,7 @@ theorem exterior_energy_lower
         RootContinuation.NewtonGlobalPhysicalComponents.SynchronizedSurfaceRequests.PerimeterSamples.componentSum
           neighbors .exterior
           (PerimeterSamples.cachedEndpointSideSum
-          cache coefficients))).im / 4 := open Purelib.Algebra in by
+          cache coefficients))).im / 4 := open Algebra in by
   have normNonnegative : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := by
     have bound := FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Fraction.Rational)) _
       (fun row => Gaussian.Norm.Basic.normSq_nonneg (coefficients row))

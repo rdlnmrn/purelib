@@ -35,6 +35,9 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+open Purelib.Data.Rat.Fraction.Order
+
 section
 public section
 
@@ -59,7 +62,7 @@ open Purelib.Data.Rat
 open Purelib.Data.Rat.Geometric
 
 /-- Apply rational Cayley reconstruction to the displayed finite reduced-input sample. -/
-@[expose] public def dynamicLocalExpLogChartSample (input : Gaussian.Name.Basic.Named) (depth : Nat) :
+@[expose] public def dynamicLocalExpLogChartSample (input : Name.Basic.Named) (depth : Nat) :
   Data.Gaussian.Basic.Canonical :=
   let reduced :=
     ComplexLog.inputSample input depth
@@ -67,12 +70,12 @@ open Purelib.Data.Rat.Geometric
 
 /-- The diagonal exponential–logarithm sample approximates reconstruction of the same finite input reading with the
 retained geometric squared-error bound. -/
-theorem dynamicLocalExpLog_chart_error (input : Gaussian.Name.Basic.Named)
+theorem dynamicLocalExpLog_chart_error (input : Name.Basic.Named)
     (disk : Domain.Disk input)
     (depth : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
         ((Diagonal.dynamicLocalExpLogApproximation input disk).sample depth -
-          Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartSample
+          dynamicLocalExpLogChartSample
             input depth) ≤
       Error.expLogErrorScale *
         (1 / 4 : Fraction.Rational) ^ depth := by
@@ -90,12 +93,12 @@ theorem dynamicLocalExpLogChartApproximationScale_nonneg :
     0 ≤
       dynamicLocalExpLogChartApproximationScale
       := by
-  unfold Reconstruction.dynamicLocalExpLogChartApproximationScale
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  unfold dynamicLocalExpLogChartApproximationScale
+  exact Arithmetic.mul_nonneg_direct (by decide)
     (add_nonneg
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.mul_nonneg_direct (by decide)
         Error.expLogErrorScale_nonnegative)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.mul_nonneg_direct (by decide)
         Diagonal.dynamicLocalExpLogErrorScale_nonneg))
 
 /-- The uniform rational squared-norm bound combining reconstruction error with the diagonal sample bound. -/
@@ -107,8 +110,8 @@ theorem dynamicLocalExpLogChartCenterBound_nonneg :
     0 ≤
       dynamicLocalExpLogChartCenterBound
       := by
-  unfold Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartCenterBound
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  unfold dynamicLocalExpLogChartCenterBound
+  exact Arithmetic.mul_nonneg_direct (by decide)
     (add_nonneg
       Error.expLogErrorScale_nonnegative
       (by decide))
@@ -117,91 +120,91 @@ theorem dynamicLocalExpLogChartCenterBound_nonneg :
 
 Its Cauchy certificate is obtained solely from the explicit finite exp-log error and the already proved dynamic-program
 movement bound. -/
-@[expose] public def dynamicLocalExpLogChartApproximation (input : Gaussian.Name.Basic.Named)
+@[expose] public def dynamicLocalExpLogChartApproximation (input : Name.Basic.Named)
     (disk : Domain.Disk input) :
     ApproximationData where
-  sample := Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartSample
+  sample := dynamicLocalExpLogChartSample
     input
-  radiusSq := Geometric.Basic.quarterRadius
+  radiusSq := Basic.quarterRadius
 
       dynamicLocalExpLogChartApproximationScale
   radiusSq_nonneg :=
-    Geometric.Basic.quarterRadius_nonneg
+    Basic.quarterRadius_nonneg
 
         dynamicLocalExpLogChartApproximationScale_nonneg
   later_close := by
     intro earlier later order
     let dynamic := Diagonal.dynamicLocalExpLogApproximation input disk
     have laterError :=
-      Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLog_chart_error input
+      dynamicLocalExpLog_chart_error input
       disk later
     have earlierError :=
-      Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLog_chart_error input
+      dynamicLocalExpLog_chart_error input
       disk earlier
     have laterScaled :
         Error.expLogErrorScale *
             (1 / 4 : Fraction.Rational) ^ later ≤
           Error.expLogErrorScale *
             (1 / 4 : Fraction.Rational) ^ earlier :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (Quarter.quarterPower_antitone order)
         Error.expLogErrorScale_nonnegative
     have laterErrorScaled := laterError.trans laterScaled
     have laterErrorReverse :
-        Data.Gaussian.Norm.Basic.normSq
-            (Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartSample
+        Basic.normSq
+            (dynamicLocalExpLogChartSample
               input later -
               dynamic.sample later) ≤
           Error.expLogErrorScale *
             (1 / 4 : Fraction.Rational) ^ earlier := by
       have identity :
-          Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartSample
+          dynamicLocalExpLogChartSample
             input later -
               dynamic.sample later =
             -(dynamic.sample later -
-              Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartSample
+              dynamicLocalExpLogChartSample
                 input later) := by
         apply Data.Gaussian.Basic.ext <;>
-          simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-            Purelib.Data.Gaussian.Basic.neg_re, Purelib.Data.Gaussian.Basic.neg_im] <;> ring1
-      rw [identity, Data.Gaussian.Norm.Basic.normSq_neg]
+          simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+            Data.Gaussian.Basic.neg_re, Data.Gaussian.Basic.neg_im] <;> ring1
+      rw [identity, Basic.normSq_neg]
       exact laterErrorScaled
     have dynamicMovement := dynamic.later_close order
     have dynamicMovementScaled :
-        Data.Gaussian.Norm.Basic.normSq (dynamic.sample later - dynamic.sample earlier) ≤
+        Basic.normSq (dynamic.sample later - dynamic.sample earlier) ≤
           Diagonal.dynamicLocalExpLogErrorScale *
             (1 / 4 : Fraction.Rational) ^ earlier := by
-      change Data.Gaussian.Norm.Basic.normSq (dynamic.sample later - dynamic.sample earlier) ≤
-        Geometric.Basic.quarterRadius
+      change Basic.normSq (dynamic.sample later - dynamic.sample earlier) ≤
+        Basic.quarterRadius
           Diagonal.dynamicLocalExpLogErrorScale earlier at dynamicMovement
-      simpa only [Geometric.Basic.quarterRadius_eq_mul_pow]
+      simpa only [Basic.quarterRadius_eq_mul_pow]
         using dynamicMovement
-    change Data.Gaussian.Norm.Basic.normSq
-        (Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartSample input
+    change Basic.normSq
+        (dynamicLocalExpLogChartSample input
           later -
-          Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartSample
+          dynamicLocalExpLogChartSample
             input earlier) ≤
-      Geometric.Basic.quarterRadius
+      Basic.quarterRadius
 
           dynamicLocalExpLogChartApproximationScale
           earlier
     calc
-      Data.Gaussian.Norm.Basic.normSq
-          (Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartSample
+      Basic.normSq
+          (dynamicLocalExpLogChartSample
             input later -
-            Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartSample
+            dynamicLocalExpLogChartSample
               input earlier) ≤
         2 *
-          (Data.Gaussian.Norm.Basic.normSq
-              (Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartSample
+          (Basic.normSq
+              (dynamicLocalExpLogChartSample
                 input later -
                 dynamic.sample later) +
-            Data.Gaussian.Norm.Basic.normSq
+            Basic.normSq
               (dynamic.sample later -
 
                   dynamicLocalExpLogChartSample
                   input earlier)) :=
-        Data.Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _
+        Bounds.normSq_sub_le_via _ _ _
       _ ≤ 2 *
           (Error.expLogErrorScale *
               (1 / 4 : Fraction.Rational) ^ earlier +
@@ -210,35 +213,35 @@ movement bound. -/
                   (1 / 4 : Fraction.Rational) ^ earlier +
                 Error.expLogErrorScale *
                   (1 / 4 : Fraction.Rational) ^ earlier)) := by
-        apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct _
+        apply Arithmetic.mul_le_mul_of_nonneg_left_direct _
           (by decide)
         apply add_le_add laterErrorReverse
         calc
-          Data.Gaussian.Norm.Basic.normSq
+          Basic.normSq
               (dynamic.sample later -
 
                   dynamicLocalExpLogChartSample
                   input earlier) ≤
             2 *
-              (Data.Gaussian.Norm.Basic.normSq (dynamic.sample later - dynamic.sample earlier) +
-                Data.Gaussian.Norm.Basic.normSq
+              (Basic.normSq (dynamic.sample later - dynamic.sample earlier) +
+                Basic.normSq
                   (dynamic.sample earlier -
 
                       dynamicLocalExpLogChartSample
                       input earlier)) :=
-              Data.Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _
+              Bounds.normSq_sub_le_via _ _ _
           _ ≤ 2 *
               (Diagonal.dynamicLocalExpLogErrorScale *
                   (1 / 4 : Fraction.Rational) ^ earlier +
                 Error.expLogErrorScale *
                   (1 / 4 : Fraction.Rational) ^ earlier) :=
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+            Arithmetic.mul_le_mul_of_nonneg_left_direct
               (add_le_add dynamicMovementScaled earlierError) (by decide)
-      _ = Geometric.Basic.quarterRadius
+      _ = Basic.quarterRadius
 
             dynamicLocalExpLogChartApproximationScale
             earlier := by
-        rw [Geometric.Basic.quarterRadius_eq_mul_pow]
+        rw [Basic.quarterRadius_eq_mul_pow]
         unfold
           dynamicLocalExpLogChartApproximationScale
         ring1
@@ -259,69 +262,69 @@ movement bound. -/
 
         dynamicLocalExpLogChartApproximationScale_nonneg
   centerBound :=
-    Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartCenterBound
+    dynamicLocalExpLogChartCenterBound
   centerBound_nonneg :=
     dynamicLocalExpLogChartCenterBound_nonneg
   sample_bounded := by
     intro depth
     let dynamic := Diagonal.dynamicLocalExpLogApproximation input disk
     have error :=
-      Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLog_chart_error input
+      dynamicLocalExpLog_chart_error input
       disk depth
     have errorLe :
         Error.expLogErrorScale *
             (1 / 4 : Fraction.Rational) ^ depth ≤
           Error.expLogErrorScale := by
       simpa only [pow_zero, Fraction.Field.mul_one_direct]
-        using Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        using Arithmetic.mul_le_mul_of_nonneg_left_direct
           (Quarter.quarterPower_antitone
             (show 0 ≤ depth by omega))
           Error.expLogErrorScale_nonnegative
     have reverseError :
-        Data.Gaussian.Norm.Basic.normSq
-            (Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartSample
+        Basic.normSq
+            (dynamicLocalExpLogChartSample
               input depth -
               dynamic.sample depth) ≤
           Error.expLogErrorScale := by
       have identity :
-        Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartSample input
+        dynamicLocalExpLogChartSample input
         depth -
             dynamic.sample depth =
           -(dynamic.sample depth -
-            Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartSample
+            dynamicLocalExpLogChartSample
               input depth) := by
         apply Data.Gaussian.Basic.ext <;>
-          simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-            Purelib.Data.Gaussian.Basic.neg_re, Purelib.Data.Gaussian.Basic.neg_im] <;> ring1
-      rw [identity, Data.Gaussian.Norm.Basic.normSq_neg]
+          simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+            Data.Gaussian.Basic.neg_re, Data.Gaussian.Basic.neg_im] <;> ring1
+      rw [identity, Basic.normSq_neg]
       exact error.trans errorLe
-    have dynamicBound : Data.Gaussian.Norm.Basic.normSq (dynamic.sample depth) ≤ 5 * 10 :=
+    have dynamicBound : Basic.normSq (dynamic.sample depth) ≤ 5 * 10 :=
       Sequence.localExpLogSample_bounded
         (Sampling.inputSample_bound disk depth)
         depth
     have identity :
-      Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartSample input
+      dynamicLocalExpLogChartSample input
       depth =
-        (Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartSample input
+        (dynamicLocalExpLogChartSample input
           depth - dynamic.sample depth) +
           dynamic.sample depth := by
       apply Data.Gaussian.Basic.ext <;>
-        simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-          Purelib.Data.Gaussian.Basic.add_re, Purelib.Data.Gaussian.Basic.add_im] <;> ring1
+        simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+          Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im] <;> ring1
     rw [identity]
-    exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    exact (Bounds.normSq_add_le_two _ _).trans
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add reverseError dynamicBound) (by decide))
 
 /-- Exact finite Möbius reconstruction respects operational equality of two progressive reduced inputs. -/
-@[expose] public def dynamicLocalExpLogChartApproximation_respects {left right : Gaussian.Name.Basic.Named}
+@[expose] public def dynamicLocalExpLogChartApproximation_respects {left right : Name.Basic.Named}
     (leftDisk : Domain.Disk left)
     (rightDisk : Domain.Disk right)
-    (equivalent : Gaussian.Equivalence.NamedEquivalent left right) :
-    Gaussian.Equivalence.Equivalent
-      (Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartApproximation
+    (equivalent : NamedEquivalent left right) :
+    Equivalent
+      (dynamicLocalExpLogChartApproximation
         left leftDisk)
-      (Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartApproximation
+      (dynamicLocalExpLogChartApproximation
         right rightDisk) where
   compare := by
     intro leftStart rightStart target positive
@@ -331,7 +334,7 @@ movement bound. -/
       decide
     let inputTarget := target / coefficient
     have inputPositive : 0 < inputTarget :=
-      Fraction.Order.Field.div_pos_direct positive coefficientPositive
+      Field.div_pos_direct positive coefficientPositive
     let comparison := equivalent.compare leftStart rightStart
       inputTarget inputPositive
     exact
@@ -349,7 +352,7 @@ movement bound. -/
               (Sampling.inputSample_bound
                 rightDisk rightLater)
           calc
-            Data.Gaussian.Norm.Basic.normSq
+            Basic.normSq
 
                   ((dynamicLocalExpLogChartApproximation
                   left leftDisk).sample
@@ -358,13 +361,13 @@ movement bound. -/
                     (dynamicLocalExpLogChartApproximation
                     right rightDisk).sample
                     rightLater) ≤
-              coefficient * Data.Gaussian.Norm.Basic.normSq
+              coefficient * Basic.normSq
                 (ComplexLog.inputSample
                     left leftLater -
                   ComplexLog.inputSample
                     right rightLater) := chartClose
             _ < coefficient * inputTarget :=
-              Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+              Arithmetic.mul_lt_mul_of_pos_left_direct
                 coefficientPositive inputClose
             _ = target := by
               dsimp only [inputTarget]
@@ -374,14 +377,14 @@ movement bound. -/
 
 /-- Names generated by reconstructed-chart approximations preserve operational equivalence of the original certified
 reduced inputs. -/
-@[expose] public def dynamicLocalExpLogChartNamed_respects {left right : Gaussian.Name.Basic.Named}
+@[expose] public def dynamicLocalExpLogChartNamed_respects {left right : Name.Basic.Named}
     (leftDisk : Domain.Disk left)
     (rightDisk : Domain.Disk right)
-    (equivalent : Gaussian.Equivalence.NamedEquivalent left right) :
-    Gaussian.Equivalence.NamedEquivalent
-      (Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartApproximation
+    (equivalent : NamedEquivalent left right) :
+    NamedEquivalent
+      (dynamicLocalExpLogChartApproximation
         left leftDisk).toNamed
-      (Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Reconstruction.dynamicLocalExpLogChartApproximation
+      (dynamicLocalExpLogChartApproximation
         right rightDisk).toNamed :=
   Equivalence.approximationEquivalent_toNamed
 

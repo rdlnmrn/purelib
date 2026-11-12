@@ -4,6 +4,7 @@ import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Rat.Fraction
 import Purelib.Data.Rat.Fraction.Order.Arithmetic
 import Purelib.Geometry.Rational.Box.Basic
+import Purelib.Geometry.Rational.Box.Outside
 import Purelib.Polynomial.Clearance.Box.Boundary.Basic
 import Purelib.Polynomial.Clearance.Box.Boundary.Constant
 public import Purelib.Polynomial.Clearance.Box.Boundary.Operations
@@ -19,6 +20,8 @@ import Purelib.Polynomial.Winding.Box.Basic
 import Purelib.Polynomial.Winding.Box.Constant
 import Purelib.Polynomial.Winding.Box.HalfPlane
 import Purelib.Polynomial.Winding.Box.Product
+import Purelib.Polynomial.Winding.Box.Affine.Outside
+import Purelib.Polynomial.Clearance.Box.Interior
 
 public import Purelib.Curves.Legendre.Paths
 import Purelib.Data.Rat.Fraction.Compatibility
@@ -192,6 +195,27 @@ theorem factor_winding_zero_of_right (root : Gaussian) {box :
   rewrite [Data.Int.Arithmetic.zero_add] at productFormula
   exact productFormula.symm
 
+/-- The three actual affine-factor windings add to the original product winding.
+
+Each factor retains its own quantitative clearance on the same proper
+box. The original finite product formula is applied in the displayed
+coefficient order, without a prescribed total winding.
+-/
+theorem factors_winding {lambda : Gaussian} {box : Box}
+    (proper : box.Proper)
+    (zeroClearance : BoundaryClearance (factor 0) box)
+    (movingClearance : BoundaryClearance (factor lambda) box)
+    (oneClearance : BoundaryClearance (factor 1) box) :
+    Winding.Box.Basic.quadrupledBoxWinding (factors lambda) box =
+      Winding.Box.Basic.quadrupledBoxWinding (factor 0) box +
+      Winding.Box.Basic.quadrupledBoxWinding (factor lambda) box +
+      Winding.Box.Basic.quadrupledBoxWinding (factor 1) box := by
+  rw [factors,
+    Winding.Box.Product.quadrupledBoxWinding_mul_of_boundaryClearances
+      _ _ box proper (BoundaryClearance.mul zeroClearance movingClearance) oneClearance,
+    Winding.Box.Product.quadrupledBoxWinding_mul_of_boundaryClearances
+      _ _ box proper zeroClearance movingClearance]
+
 /-- If the three retained factor windings sum to four, their product has quadrupled box winding four. -/
 theorem factors_winding_of_sum {lambda : Gaussian} {box :
   Box}
@@ -205,14 +229,85 @@ theorem factors_winding_of_sum {lambda : Gaussian} {box :
         Winding.Box.Basic.quadrupledBoxWinding (factor lambda) box +
         Winding.Box.Basic.quadrupledBoxWinding (factor 1) box = 4) :
     Winding.Box.Basic.quadrupledBoxWinding (factors lambda) box = 4 := by
-  rw [factors,
-    Winding.Box.Product.quadrupledBoxWinding_mul_of_boundaryClearances
-      _ _ box proper
-        (BoundaryClearance.mul
-          zeroClearance movingClearance) oneClearance,
-    Winding.Box.Product.quadrupledBoxWinding_mul_of_boundaryClearances
-      _ _ box proper zeroClearance movingClearance]
-  exact sum
+  exact (factors_winding proper zeroClearance movingClearance oneClearance).trans sum
+
+/-- Excluding all three exact branch points gives zero winding on the actual box.
+
+Each failed membership has an explicit rational outside side. The same
+side supplies the original affine clearance and zero-winding certificate;
+finite multiplicativity retains the displayed Legendre polynomial.
+-/
+theorem winding_zero_of_outside {lambda : Gaussian} {box : Box}
+    (proper : box.Proper) (zero : box.OutsideSide 0) (moving : box.OutsideSide lambda)
+    (one : box.OutsideSide 1) :
+    Winding.Box.Basic.quadrupledBoxWinding (Paths.polynomial lambda) box = 0 := by
+  let zeroClearance := Affine.translatedCoordinate_boundaryClearance_of_outside 0 zero
+  let movingClearance := Affine.translatedCoordinate_boundaryClearance_of_outside lambda moving
+  let oneClearance := Affine.translatedCoordinate_boundaryClearance_of_outside 1 one
+  have zeroWinding : Winding.Box.Basic.quadrupledBoxWinding (factor 0) box = 0 :=
+    Winding.Box.Affine.Outside.quadrupledBoxWinding_translatedCoordinate_of_outside proper zero
+  have movingWinding : Winding.Box.Basic.quadrupledBoxWinding (factor lambda) box = 0 :=
+    Winding.Box.Affine.Outside.quadrupledBoxWinding_translatedCoordinate_of_outside proper moving
+  have oneWinding : Winding.Box.Basic.quadrupledBoxWinding (factor 1) box = 0 :=
+    Winding.Box.Affine.Outside.quadrupledBoxWinding_translatedCoordinate_of_outside proper one
+  rw [polynomial_eq_factors lambda, factors_winding proper zeroClearance movingClearance oneClearance,
+    zeroWinding, movingWinding, oneWinding]
+  rfl
+
+/-- A nonzero-winding box contains at least one of the three original exact branch points.
+
+The finite rational membership decisions retain the actual box. If all
+three are excluded, their explicit outside-side windings contradict the
+supplied nonzero winding; no root selection or limit is used.
+-/
+theorem winding_contains_branch {lambda : Gaussian} {box : Box} (proper : box.Proper)
+    (winding : Winding.Box.Basic.quadrupledBoxWinding (Paths.polynomial lambda) box ≠ 0) :
+    box.Contains 0 ∨ box.Contains lambda ∨ box.Contains 1 := by
+  by_cases zero : box.Contains 0
+  · exact Or.inl zero
+  by_cases moving : box.Contains lambda
+  · exact Or.inr (Or.inl moving)
+  by_cases one : box.Contains 1
+  · exact Or.inr (Or.inr one)
+  exact (winding (winding_zero_of_outside proper (Rational.Box.outsideSide zero)
+    (Rational.Box.outsideSide moving) (Rational.Box.outsideSide one))).elim
+
+/-- Every clear nonzero-winding Legendre box at a real parameter strictly crosses the real axis.
+
+One of the original exact branch points belongs to this same box. The
+original boundary-clearance law places that point strictly inside; all
+three branch points have imaginary coordinate zero.
+-/
+theorem real_axis_of_winding {lambda : Gaussian} {box : Box} (real : lambda.im = 0)
+    (proper : box.Proper) (clearance : BoundaryClearance (Paths.polynomial lambda) box)
+    (winding : Winding.Box.Basic.quadrupledBoxWinding (Paths.polynomial lambda) box ≠ 0) :
+    box.yLower < 0 ∧ 0 < box.yUpper := by
+  rcases winding_contains_branch proper winding with zero | moving | one
+  · have strict := clearance.root_strictContains zero (Paths.polynomial_zero lambda)
+    exact ⟨strict.2.2.1, strict.2.2.2⟩
+  · have strict := clearance.root_strictContains moving (Paths.polynomial_lambda lambda)
+    have below := strict.2.2.1
+    have above := strict.2.2.2
+    rw [real] at below above
+    exact ⟨below, above⟩
+  · have strict := clearance.root_strictContains one (Paths.polynomial_one lambda)
+    exact ⟨strict.2.2.1, strict.2.2.2⟩
+
+/-- Read a logical branch label from the same nonzero-winding box.
+
+The three displayed exact points are checked in their original logical
+order. The nonzero-winding theorem discharges the impossible all-excluded
+branch. The result retains exact membership in the supplied box, without
+creating a new root or replacing its retained winding owner.
+-/
+def branchInBox {lambda : Gaussian} {box : Box} (proper : box.Proper)
+    (winding : Winding.Box.Basic.quadrupledBoxWinding (Paths.polynomial lambda) box ≠ 0) :
+    { label : Fin 3 // box.Contains (Paths.branchPoint lambda label) } :=
+  if zero : box.Contains 0 then ⟨0, zero⟩
+  else if moving : box.Contains lambda then ⟨1, moving⟩
+  else if one : box.Contains 1 then ⟨2, one⟩
+  else False.elim (winding (winding_zero_of_outside proper (Rational.Box.outsideSide zero)
+    (Rational.Box.outsideSide moving) (Rational.Box.outsideSide one)))
 
 end
 end Purelib.Curves.Legendre.FactorGeometry

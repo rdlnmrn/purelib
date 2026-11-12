@@ -42,6 +42,7 @@ theorem step_squareBound_le (parameters accumulator :
     {bound : Fraction.Rational} (accumulatorBound : accumulator.squareBound ≤ bound) :
     (Dense.Rational.Enclosure.Basic.step parameters accumulator coefficient).squareBound ≤
       Dense.Rational.Bounds.Horner.evalSqBoundStep parameters.squareBound bound coefficient := by
+  rewrite [Dense.Rational.Bounds.Horner.evalSqBoundStep_eq]
   have productBound := (Interval.Arithmetic.Bounds.mul_squareBound_le accumulator parameters).trans
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
       accumulatorBound parameters.squareBound_nonneg)

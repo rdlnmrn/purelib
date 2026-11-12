@@ -52,10 +52,10 @@ inductive Observation
   /-- The supplied exact Gaussian sample is a root of the original polynomial. -/ | exact (evaluation : p.eval sample =
     0)
   /-- The supplied sample has a retained localized winding-one box and owner in the original computed isolation. -/ |
-    assigned (result : Residual.Global.Assignment.AssignedResult input sample epsilon)
+    assigned (result : Assignment.AssignedResult input sample epsilon)
   /-- The sample's measured residual meets or exceeds the explicit localization threshold. -/ | residualNotSmall
-      (failure : Residual.Global.Assignment.residualThreshold input sample epsilon ≤
-        Data.Gaussian.Norm.Basic.normSq (p.eval sample))
+      (failure : Assignment.residualThreshold input sample epsilon ≤
+        Gaussian.Norm.Basic.normSq (p.eval sample))
 
 -- Preserve the original constructor certificate names of this unchanged nominal datatype.
 
@@ -73,17 +73,17 @@ of the explicit positive small-residual hypothesis. -/
   if evaluation : p.eval sample = 0 then
     .exact evaluation
   else if inside : (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox p).Contains sample then
-    if residualSmall : Data.Gaussian.Norm.Basic.normSq (p.eval sample) <
-        Residual.Global.Assignment.residualThreshold input sample epsilon then
-      .assigned (Residual.Global.Assignment.assignInside input sample inside epsilonPositive (by
-        rw [Residual.Global.Assignment.residualThreshold, if_pos inside] at residualSmall
+    if residualSmall : Gaussian.Norm.Basic.normSq (p.eval sample) <
+        Assignment.residualThreshold input sample epsilon then
+      .assigned (Assignment.assignInside input sample inside epsilonPositive (by
+        rw [Assignment.residualThreshold, if_pos inside] at residualSmall
         exact residualSmall))
     else
       .residualNotSmall (le_of_not_gt residualSmall)
   else
     .residualNotSmall (by
-      rw [Residual.Global.Assignment.residualThreshold, if_neg inside]
-      exact Residual.Global.Bounds.outsideResidualThreshold_le input.degreeAtLeastTwo sample inside)
+      rw [Assignment.residualThreshold, if_neg inside]
+      exact Bounds.outsideResidualThreshold_le input.degreeAtLeastTwo sample inside)
 
 end Observation
 

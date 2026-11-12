@@ -64,42 +64,42 @@ open Purelib.Riemann
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
 namespace CommonBasisPreparation.ParentRunSchedule
 
 /-- Compute a common tolerance by taking the finite minimum of the supplied values and one. -/
-@[expose] def commonTolerance : List Normalization.InverseRootPolynomial.Coordinate →
-  Normalization.InverseRootPolynomial.Coordinate
+@[expose] def commonTolerance : List InverseRootPolynomial.Coordinate →
+  InverseRootPolynomial.Coordinate
   | [] => 1
   | value :: rest => min value
     (commonTolerance
     rest)
 
 /-- The common tolerance is positive when every supplied tolerance is positive. -/
-theorem commonTolerance_positive (values : List Normalization.InverseRootPolynomial.Coordinate)
+theorem commonTolerance_positive (values : List InverseRootPolynomial.Coordinate)
     (positive : ∀ value ∈ values, 0 < value) : 0 <
       commonTolerance
       values := by
   induction values with
-  | nil => exact (by decide : (0 : Normalization.InverseRootPolynomial.Coordinate) < 1)
+  | nil => exact (by decide : (0 : InverseRootPolynomial.Coordinate) < 1)
   | cons value rest ih =>
     exact Fraction.Order.Basic.lt_min (positive value List.mem_cons_self)
       (ih (fun next member => positive next (List.mem_cons_of_mem _ member)))
 
 /-- The common tolerance is no greater than any member of its original tolerance list. -/
-private theorem commonTolerance_le {values : List Normalization.InverseRootPolynomial.Coordinate} {value :
-  Normalization.InverseRootPolynomial.Coordinate}
+private theorem commonTolerance_le {values : List InverseRootPolynomial.Coordinate} {value :
+  InverseRootPolynomial.Coordinate}
     (member : value ∈ values) :
       commonTolerance
       values ≤ value := by
@@ -108,32 +108,32 @@ private theorem commonTolerance_le {values : List Normalization.InverseRootPolyn
   | cons head rest ih =>
     rcases Data.List.Membership.mem_cons.mp member with rfl | tail
     · exact Fraction.Order.Basic.min_le_left ..
-    · exact Data.Rat.Fraction.Order.Basic.le_trans _ _ _ (Fraction.Order.Basic.min_le_right ..) (ih tail)
+    · exact Fraction.Order.Basic.le_trans _ _ _ (Fraction.Order.Basic.min_le_right ..) (ih tail)
 
-variable {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared}
+variable {retained : Preparation.CommonBasisPreparation prepared}
   {index : Nat} {inputs : retained.Inputs index}
   {outer : Fin prepared.occurrences.length} {capacity minimum : Nat} {requested :
-    Normalization.InverseRootPolynomial.Coordinate}
+    InverseRootPolynomial.Coordinate}
   (schedule :
     ParentRunSchedule
     retained inputs outer capacity requested minimum)
 
 /-- Certify that a stored tolerance list is exactly the list of retained parent-request tolerances. -/
-@[expose] def ToleranceReadback (values : List Normalization.InverseRootPolynomial.Coordinate) : Prop :=
+@[expose] def ToleranceReadback (values : List InverseRootPolynomial.Coordinate) : Prop :=
   values = List.ofFn (fun position => (schedule.requests.get position).blocks.budget.tolerance)
 
 /-- The owner request for one retained occurrence at the computed physical-piece tolerance. -/
-@[expose] def PieceOwner (count : Nat) {target : Normalization.InverseRootPolynomial.Coordinate}
+@[expose] def PieceOwner (count : Nat) {target : InverseRootPolynomial.Coordinate}
     (piece : Budget.RequestedLengthBudget.Requested count 1 target) :=
   OwnerRequest
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer)
+    (ParentIndices.occurrenceAt prepared.occurrences outer)
     piece.budget.tolerance
 
 /-- The owner request for one retained occurrence at the computed junction tolerance. -/
-@[expose] def JunctionOwner {target : Normalization.InverseRootPolynomial.Coordinate} (junction :
+@[expose] def JunctionOwner {target : InverseRootPolynomial.Coordinate} (junction :
   Budget.RequestedLengthBudget.Requested 1 1 target) :=
   OwnerRequest
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer)
+    (ParentIndices.occurrenceAt prepared.occurrences outer)
     junction.budget.tolerance
 
 set_option genInjectivity false in
@@ -141,12 +141,12 @@ set_option genInjectivity false in
 and parent preparations so numerical acquisition consumes their computed stages. -/
 structure SharedOwners (count : Nat) (vertices : Fin capacity → Nat) where
   /-- The retained list of original parent-request tolerances. -/ tolerances : List
-    Normalization.InverseRootPolynomial.Coordinate
+    InverseRootPolynomial.Coordinate
   /-- The stored tolerances read back the exact dependent parent-request vector. -/ tolerances_eq :
     ToleranceReadback
     schedule tolerances
   /-- The common positive cap used by both physical fragment kinds. -/ target :
-    Normalization.InverseRootPolynomial.Coordinate
+    InverseRootPolynomial.Coordinate
   /-- The target is exactly the finite minimum of the retained tolerances and one. -/ target_eq : target =
     commonTolerance
     tolerances
@@ -190,10 +190,10 @@ thresholds. -/
   let piece := Budget.RequestedLengthBudget.requested count 1 target (by decide) positive
   let junction := Budget.RequestedLengthBudget.requested 1 1 target (by decide) positive
   let pieceOwner := OwnerRequest.build
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) _
+    (ParentIndices.occurrenceAt prepared.occurrences outer) _
     piece.budget.tolerance_positive
   let junctionOwner := OwnerRequest.build
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) _
+    (ParentIndices.occurrenceAt prepared.occurrences outer) _
     junction.budget.tolerance_positive
   let parents := schedule.prepareOwners vertices
   exact ⟨tolerances, rfl, target, rfl, positive, piece, junction, pieceOwner, junctionOwner,
@@ -202,11 +202,11 @@ thresholds. -/
 namespace SharedOwners
 variable {schedule} {count : Nat} {vertices : Fin capacity → Nat}
   (owners :
-    ParentRunSchedule.SharedOwners
+    SharedOwners
     schedule count vertices)
 
 /-- The shared target is no greater than each original parent-request tolerance. -/
-theorem target_le (position : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+theorem target_le (position : Fin (ParentIndices.occurrenceAt
   prepared.occurrences outer).compared.entered.cache.parents.length) :
     owners.target ≤ (schedule.requests.get position).blocks.budget.tolerance := by
   rw [owners.target_eq]
@@ -216,14 +216,14 @@ theorem target_le (position : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.B
   exact Data.List.OfFn.Basic.mem_ofFn.mpr ⟨position, rfl⟩
 
 /-- The physical-piece tolerance fits every original parent-request tolerance. -/
-theorem piece_tolerance_le (position : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+theorem piece_tolerance_le (position : Fin (ParentIndices.occurrenceAt
   prepared.occurrences outer).compared.entered.cache.parents.length) :
     owners.piece.budget.tolerance ≤ (schedule.requests.get position).blocks.budget.tolerance :=
   owners.piece.tolerance_le.trans (owners.target_le position)
 
 /-- The junction tolerance fits every original parent-request tolerance. -/
 theorem junction_tolerance_le (position : Fin
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (ParentIndices.occurrenceAt prepared.occurrences
   outer).compared.entered.cache.parents.length) :
     owners.junction.budget.tolerance ≤ (schedule.requests.get position).blocks.budget.tolerance :=
   owners.junction.tolerance_le.trans (owners.target_le position)
@@ -241,7 +241,7 @@ theorem junction_le : owners.junctionOwner.index ≤ owners.faceIndex :=
   ((Data.Nat.Order.le_max_right ..).trans (Data.Nat.Order.le_max_right ..)).trans_eq owners.face_eq.symm
 
 /-- Each original parent face-query stage is bounded by the common face stage. -/
-theorem query_le (position : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+theorem query_le (position : Fin (ParentIndices.occurrenceAt
   prepared.occurrences outer).compared.entered.cache.parents.length) :
     (schedule.requests.get position).blocks.queries.faceIndex ≤ owners.faceIndex :=
   (owners.parents.query_le position).trans owners.parents_le

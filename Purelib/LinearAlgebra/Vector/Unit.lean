@@ -105,8 +105,8 @@ open Purelib.LinearAlgebra.Vector
 variable {n : Nat}
 
 open Purelib.LinearAlgebra.Vector in
-/-- An integral unit value vector selects the corresponding weight. -/
-theorem weighted_right_unit (weights : Fin n → Int) (index : Fin n) :
+/-- A retained unit value vector selects the corresponding weight in its original coefficient ring. -/
+theorem weighted_right_unit {K : Type*} [CommRing K] (weights : Fin n → K) (index : Fin n) :
     Weighted.weighted weights (Unit.unitVector index) = weights index := open Purelib.Algebra in by
   calc
     _ = FiniteSum.Fin.sumFin (fun position => if position = index then weights position else 0) := by

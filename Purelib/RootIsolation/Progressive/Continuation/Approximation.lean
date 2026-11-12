@@ -17,6 +17,8 @@ import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Geometry.Rational.Box.Bounds
 import Purelib.Geometry.Rational.Box.Sample
 
+open Purelib.Data.Rat.Bounds
+
 open Purelib.Polynomial.Dense.Gaussian.Coefficient.Progressive.Table (CoefficientTable)
 
 open Purelib.Approximation.Gaussian
@@ -53,8 +55,8 @@ values are exactly the rational points in the current certified box, and a
 process refinement invokes the common coefficient/root continuation step. -/
 def toProcess
     {initialTable : CoefficientTable}
-    (continuation : Progressive.Continuation.Basic.RootContinuation initialTable)
-    (index : continuation.Index) : Approximation.Gaussian.Process where
+    (continuation : RootContinuation initialTable)
+    (index : continuation.Index) : Process where
   State := continuation.State
   ball state :=
     Enclosure.Ball.ofBox (continuation.box state index)
@@ -67,20 +69,20 @@ def toProcess
     exact Enclosure.Ball.contains_ofBox possible
   refine state target positive :=
     continuation.refine state
-      (Data.Rat.Bounds.AccuracyRadius.accuracyRadius target)
-      (Data.Rat.Bounds.AccuracyRadius.accuracyRadius_pos positive)
+      (AccuracyRadius.accuracyRadius target)
+      (AccuracyRadius.accuracyRadius_pos positive)
   refine_persists := by
     intro state target positive value possible
     exact (continuation.nested state
-      (Data.Rat.Bounds.AccuracyRadius.accuracyRadius target)
-      (Data.Rat.Bounds.AccuracyRadius.accuracyRadius_pos positive) index).contains
+      (AccuracyRadius.accuracyRadius target)
+      (AccuracyRadius.accuracyRadius_pos positive) index).contains
         possible
   accurate := by
     intro state target positive
     exact (continuation.accurate state
-      (Data.Rat.Bounds.AccuracyRadius.accuracyRadius target)
-      (Data.Rat.Bounds.AccuracyRadius.accuracyRadius_pos positive) index).trans_lt
-        (Data.Rat.Bounds.AccuracyRadius.accuracyRadius_sq_lt positive)
+      (AccuracyRadius.accuracyRadius target)
+      (AccuracyRadius.accuracyRadius_pos positive) index).trans_lt
+        (AccuracyRadius.accuracyRadius_sq_lt positive)
   centerBound :=
     (continuation.box continuation.initial index).normSqBound
   centerBound_nonneg :=
@@ -120,7 +122,7 @@ namespace RootContinuation
 /-- The arithmetic-ready CCL name belonging to one persistent root owner. -/
 def rootNameAt
     {initialTable : CoefficientTable}
-    (continuation : Progressive.Continuation.Basic.RootContinuation initialTable)
+    (continuation : RootContinuation initialTable)
     (index : continuation.Index) : Name.Basic.Named :=
   { process := continuation.toProcess index
     state := continuation.initial }
@@ -154,7 +156,7 @@ namespace RootContinuation
 /-- The complete degree-indexed family of arithmetic-ready root names. -/
 def rootNames
     {initialTable : CoefficientTable}
-    (continuation : Progressive.Continuation.Basic.RootContinuation initialTable) :
+    (continuation : RootContinuation initialTable) :
     Fin initialTable.degree → Name.Basic.Named :=
   continuation.rootNameAt
 end RootContinuation

@@ -55,23 +55,23 @@ open Purelib.Riemann.Meshes.GridLiftedDualSteps (GridSide)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings (TriangleReadings)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData (DomainPrimitives)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {faces : Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces bank} {mesh :
-    Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
-    {stage : Nat} {cache : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+  {faces : PuncturedFaces bank} {mesh :
+    LiftedMesh vertices edges faces}
+  {domains : FaceDomainBank frames faces.regulars}
+    {stage : Nat} {cache : RegularDomainMeshes.RegularMeshes.Numerics
     domains stage}
   {i j : Fin genus}
 
 /-- The oriented endpoint-chord area of one retained regular-face side. -/
 @[expose] def RegularMeshes.Numerics.sideChord (cache : RegularMeshes.Numerics domains stage) (i j : Fin genus)
-    (position : Fin faces.regulars.length) (sheet : Fin 2) : GridLiftedDualSteps.GridSide →
+    (position : Fin faces.regulars.length) (sheet : Fin 2) : GridSide →
       Data.Gaussian.Basic.Canonical
   | .bottom => Stokes.edgeArea (Numerics.cornerPair cache i j position sheet 0) (Numerics.cornerPair cache i j position
     sheet 1)
@@ -85,7 +85,7 @@ variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.Hyperelliptic
 /-- The normalized bottom side has zero endpoint-chord area. -/
 theorem RegularMeshes.Numerics.normalized_bottom_chord (cache : RegularMeshes.Numerics domains stage)
     (i j : Fin genus) (position : Fin faces.regulars.length) (sheet : Fin 2) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.PhysicalSideChords.RegularMeshes.Numerics.sideChord cache.normalize i j
+    RegularMeshes.Numerics.sideChord cache.normalize i j
       position sheet .bottom = 0 := by
   unfold sideChord Numerics.cornerPair
   rw [cache.normalize_atDomain, cache.normalize_atDomain]
@@ -95,7 +95,7 @@ theorem RegularMeshes.Numerics.normalized_bottom_chord (cache : RegularMeshes.Nu
 /-- The normalized left side has zero endpoint-chord area. -/
 theorem RegularMeshes.Numerics.normalized_left_chord (cache : RegularMeshes.Numerics domains stage)
     (i j : Fin genus) (position : Fin faces.regulars.length) (sheet : Fin 2) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.PhysicalSideChords.RegularMeshes.Numerics.sideChord cache.normalize i j
+    RegularMeshes.Numerics.sideChord cache.normalize i j
       position sheet .left = 0 := by
   unfold sideChord Numerics.cornerPair
   rw [cache.normalize_atDomain, cache.normalize_atDomain]
@@ -107,12 +107,12 @@ theorem TriangleReadings.normalized_right_chord
     (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
     (position : Fin faces.regulars.length) (sheet : Fin 2) :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PhysicalSideChords.RegularMeshes.Numerics.sideChord
+    RegularMeshes.Numerics.sideChord
       cache.normalize i j position sheet .right =
       TriangleReadings.bilinearArea left right (mesh.triangleIndex position sheet false) := by
   rw [TriangleReadings.bilinearArea_eq_corners left right]
   simp only [-eq_self, -iff_self, if_neg (show (false : Bool) ≠ true by decide)]
-  unfold Curves.Hyperelliptic.Meshes.PuncturedGrid.PhysicalSideChords.RegularMeshes.Numerics.sideChord
+  unfold RegularMeshes.Numerics.sideChord
     Numerics.cornerPair
   rw [cache.normalize_atDomain, cache.normalize_atDomain]
   simp only [-eq_self, -iff_self, DomainPrimitives.normalize_corner, Numerics.atDomain,
@@ -124,12 +124,12 @@ theorem TriangleReadings.normalized_top_chord
     (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
     (position : Fin faces.regulars.length) (sheet : Fin 2) :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.PhysicalSideChords.RegularMeshes.Numerics.sideChord
+    RegularMeshes.Numerics.sideChord
       cache.normalize i j position sheet .top =
       -TriangleReadings.bilinearArea left right (mesh.triangleIndex position sheet true) := by
   rw [TriangleReadings.bilinearArea_eq_corners left right]
   simp only [-eq_self, -iff_self, if_pos (Eq.refl true)]
-  unfold Curves.Hyperelliptic.Meshes.PuncturedGrid.PhysicalSideChords.RegularMeshes.Numerics.sideChord
+  unfold RegularMeshes.Numerics.sideChord
     Numerics.cornerPair
   rw [cache.normalize_atDomain, cache.normalize_atDomain]
   simp only [-eq_self, -iff_self, DomainPrimitives.normalize_corner, Numerics.atDomain,

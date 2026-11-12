@@ -73,6 +73,10 @@ import Purelib.Riemann.Periods.CenteredBilinearPath
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Gaussian.Norm
+
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! Actual retained chart traces, including every joining edge. -/
@@ -115,14 +119,14 @@ open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_add)
 
 /-- Concatenate the complete original trace family with every joining edge, using a single zero vertex for an empty
 family. -/
-@[expose] def familyTrace {n : Nat} (traces : Fin n → JoinedTrace.VertexTrace Stokes.PrimitivePoint) :
-  JoinedTrace.VertexTrace PrimitivePoint :=
+@[expose] def familyTrace {n : Nat} (traces : Fin n → VertexTrace PrimitivePoint) :
+  VertexTrace PrimitivePoint :=
   match n, traces with
   | 0, _ => ⟨PrimitivePoint.zero, []⟩
   | _ + 1, traces => VertexTrace.concatenate traces
 
 /-- A nonempty original trace family begins at its actual first trace's initial vertex. -/
-private theorem familyTrace_first {n : Nat} (traces : Fin n → JoinedTrace.VertexTrace Stokes.PrimitivePoint) (positive :
+private theorem familyTrace_first {n : Nat} (traces : Fin n → VertexTrace PrimitivePoint) (positive :
   0 < n) :
     (familyTrace traces).first = (traces ⟨0,
       positive⟩).first := by
@@ -131,7 +135,7 @@ private theorem familyTrace_first {n : Nat} (traces : Fin n → JoinedTrace.Vert
   | succ n => exact VertexTrace.glue_first _ _
 
 /-- A nonempty original trace family ends at its actual last trace's final vertex. -/
-private theorem familyTrace_last {n : Nat} (traces : Fin n → JoinedTrace.VertexTrace Stokes.PrimitivePoint) (positive :
+private theorem familyTrace_last {n : Nat} (traces : Fin n → VertexTrace PrimitivePoint) (positive :
   0 < n) :
     (familyTrace traces).last = (traces ⟨n - 1, by
       omega0⟩).last := by
@@ -140,28 +144,28 @@ private theorem familyTrace_last {n : Nat} (traces : Fin n → JoinedTrace.Verte
   | succ n => exact VertexTrace.concatenate_last traces
 
 /-- The complete retained family area is the sum of original trace areas and every actual intervening joining edge. -/
-private theorem familyTrace_area {n : Nat} (traces : Fin n → JoinedTrace.VertexTrace Stokes.PrimitivePoint) :
-    (familyTrace traces).area id = FiniteSum.Fin.sumFin
+private theorem familyTrace_area {n : Nat} (traces : Fin n → VertexTrace PrimitivePoint) :
+    (familyTrace traces).area id = sumFin
       (fun i => (traces i).area id) +
-      FiniteSum.Fin.sumFin (fun i : Fin (n - 1) => Stokes.edgeArea (traces ⟨i.val, by omega0⟩).last
+      sumFin (fun i : Fin (n - 1) => edgeArea (traces ⟨i.val, by omega0⟩).last
         (traces ⟨i.val + 1, by omega0⟩).first) := by
   cases n with
-  | zero => change (0 : Data.Gaussian.Basic.Canonical) = 0 + 0; ring1
+  | zero => change (0 : Canonical) = 0 + 0; ring1
   | succ n =>
       rw [familyTrace, VertexTrace.concatenate_area,
         VertexTrace.joiningArea_ofFn]
       rfl
 
 /-- The original trace-increment blocks paired with themselves, interleaved with the actual connector insertions. -/
-private def insertionPairs : {n : Nat} → (Fin (n + 1) → JoinedTrace.VertexTrace Stokes.PrimitivePoint) →
-    List (List Stokes.PrimitivePoint × List Stokes.PrimitivePoint)
+private def insertionPairs : {n : Nat} → (Fin (n + 1) → VertexTrace PrimitivePoint) →
+    List (List PrimitivePoint × List PrimitivePoint)
   | 0, traces => [((VertexTrace.increments (traces 0) id), (VertexTrace.increments (traces 0) id))]
   | _ + 1, traces => ((VertexTrace.increments (traces 0) id), (VertexTrace.increments (traces 0) id)) ::
       ([], [(traces 1).first.sub (traces 0).last]) ::
         insertionPairs (fun i => traces i.succ)
 
 /-- The first block projection flattens to exactly the original trace increment lists. -/
-private theorem insertionPairs_left {n : Nat} (traces : Fin (n + 1) → JoinedTrace.VertexTrace Stokes.PrimitivePoint) :
+private theorem insertionPairs_left {n : Nat} (traces : Fin (n + 1) → VertexTrace PrimitivePoint) :
     ((insertionPairs traces).map Prod.fst).flatten =
       (List.ofFn (fun i => (VertexTrace.increments (traces i) id))).flatten := by
   induction n with
@@ -172,11 +176,11 @@ private theorem insertionPairs_left {n : Nat} (traces : Fin (n + 1) → JoinedTr
         List.flatten_cons, List.flatten_cons, List.nil_append, ih]
 
 /-- The second block projection flattens to the actual concatenated trace increments including every connector. -/
-private theorem insertionPairs_right {n : Nat} (traces : Fin (n + 1) → JoinedTrace.VertexTrace Stokes.PrimitivePoint) :
+private theorem insertionPairs_right {n : Nat} (traces : Fin (n + 1) → VertexTrace PrimitivePoint) :
     ((insertionPairs traces).map Prod.snd).flatten =
-      (VertexTrace.increments (Purelib.Integration.Path.JoinedTrace.VertexTrace.concatenate traces) id) := by
+      (VertexTrace.increments (VertexTrace.concatenate traces) id) := by
   induction n with
-  | zero => exact Data.List.Append.append_nil _
+  | zero => exact Append.append_nil _
   | succ n ih =>
       rw [insertionPairs, List.map_cons, List.map_cons,
         List.flatten_cons, List.flatten_cons, ih]
@@ -185,7 +189,7 @@ private theorem insertionPairs_right {n : Nat} (traces : Fin (n + 1) → JoinedT
       rfl
 
 /-- The retained insertion comparison has two blocks per junction plus one original trace block. -/
-private theorem insertionPairs_length {n : Nat} (traces : Fin (n + 1) → JoinedTrace.VertexTrace Stokes.PrimitivePoint) :
+private theorem insertionPairs_length {n : Nat} (traces : Fin (n + 1) → VertexTrace PrimitivePoint) :
     (insertionPairs traces).length = 2 * n + 1 := by
   induction n with
   | zero => rfl
@@ -200,49 +204,49 @@ open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
 
 /-- Original trace-total and junction-gap bounds supply all area, total-error and magnitude certificates for the
 retained insertion blocks. -/
-private theorem insertionPairs_valid {n : Nat} (traces : Fin (n + 1) → JoinedTrace.VertexTrace Stokes.PrimitivePoint)
-    {error magnitude : InverseRootPolynomial.Coordinate} (errorNonnegative : 0 ≤ error) (magnitudeNonnegative : 0 ≤
+private theorem insertionPairs_valid {n : Nat} (traces : Fin (n + 1) → VertexTrace PrimitivePoint)
+    {error magnitude : Coordinate} (errorNonnegative : 0 ≤ error) (magnitudeNonnegative : 0 ≤
       magnitude)
     (small : error ≤ magnitude)
     (totals : ∀ i, (PrimitivePoint.Bounded (PairedIncrementArea.total ((VertexTrace.increments (traces i) id))))
       magnitude)
     (gaps : ∀ i : Fin n, (PrimitivePoint.Bounded ((traces i.succ).first.sub (traces i.castSucc).last)) error) :
     ∀ pair ∈ insertionPairs traces,
-      Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area pair.1 - PairedIncrementArea.area pair.2) ≤ 0 ∧
+      normSq (PairedIncrementArea.area pair.1 - PairedIncrementArea.area pair.2) ≤ 0 ∧
       (PrimitivePoint.Bounded ((PairedIncrementArea.total pair.1).sub (PairedIncrementArea.total pair.2))) error ∧
       (PrimitivePoint.Bounded (PairedIncrementArea.total pair.1)) magnitude ∧
       (PrimitivePoint.Bounded (PairedIncrementArea.total pair.2)) magnitude := by
-  have diagonal (values : List Stokes.PrimitivePoint) (bounded : (PrimitivePoint.Bounded (PairedIncrementArea.total
+  have diagonal (values : List PrimitivePoint) (bounded : (PrimitivePoint.Bounded (PairedIncrementArea.total
     values)) magnitude) :
-      Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area values - PairedIncrementArea.area values) ≤ 0 ∧
+      normSq (PairedIncrementArea.area values - PairedIncrementArea.area values) ≤ 0 ∧
       (PrimitivePoint.Bounded ((PairedIncrementArea.total values).sub (PairedIncrementArea.total values))) error ∧
       (PrimitivePoint.Bounded (PairedIncrementArea.total values)) magnitude ∧ (PrimitivePoint.Bounded
         (PairedIncrementArea.total values)) magnitude := by
     refine ⟨?_, ?_, bounded, bounded⟩
-    · rw [sub_self, Data.Gaussian.Norm.Basic.normSq_zero]
-    · constructor <;> change Data.Gaussian.Basic.Canonical.normSq (_ - _) ≤ error <;>
-        rw [sub_self, Data.Gaussian.Basic.Canonical.normSq_zero] <;> exact errorNonnegative
-  have connector (gap : Stokes.PrimitivePoint) (bounded : (PrimitivePoint.Bounded gap) error) :
-      Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area [] - PairedIncrementArea.area [gap]) ≤ 0 ∧
+    · rw [sub_self, Basic.normSq_zero]
+    · constructor <;> change Canonical.normSq (_ - _) ≤ error <;>
+        rw [sub_self, Canonical.normSq_zero] <;> exact errorNonnegative
+  have connector (gap : PrimitivePoint) (bounded : (PrimitivePoint.Bounded gap) error) :
+      normSq (PairedIncrementArea.area [] - PairedIncrementArea.area [gap]) ≤ 0 ∧
       (PrimitivePoint.Bounded ((PairedIncrementArea.total []).sub (PairedIncrementArea.total [gap]))) error ∧
       (PrimitivePoint.Bounded (PairedIncrementArea.total [])) magnitude ∧ (PrimitivePoint.Bounded
         (PairedIncrementArea.total [gap])) magnitude := by
     have total : PairedIncrementArea.total [gap] = gap := by
       apply congrArg₂ PrimitivePoint.mk <;> change _ + 0 = _ <;> exact add_zero _
     have area : PairedIncrementArea.area [gap] = 0 := by
-      change Stokes.edgeArea gap PrimitivePoint.zero + 0 = 0
-      unfold Stokes.edgeArea PrimitivePoint.zero
+      change edgeArea gap PrimitivePoint.zero + 0 = 0
+      unfold edgeArea PrimitivePoint.zero
       ring1
     rw [total, area]
     refine ⟨?_, ?_, ?_, bounded.1.trans small, bounded.2.trans small⟩
-    · change Data.Gaussian.Norm.Basic.normSq (0 - 0) ≤ 0
-      rw [sub_self, Data.Gaussian.Norm.Basic.normSq_zero]
+    · change normSq (0 - 0) ≤ 0
+      rw [sub_self, Basic.normSq_zero]
     · constructor
-      · change Data.Gaussian.Basic.Canonical.normSq (0 - gap.left) ≤ error
-        rw [zero_sub, Data.Gaussian.Basic.Canonical.normSq_neg]
+      · change Canonical.normSq (0 - gap.left) ≤ error
+        rw [zero_sub, Canonical.normSq_neg]
         exact bounded.1
-      · change Data.Gaussian.Basic.Canonical.normSq (0 - gap.right) ≤ error
-        rw [zero_sub, Data.Gaussian.Basic.Canonical.normSq_neg]
+      · change Canonical.normSq (0 - gap.right) ≤ error
+        rw [zero_sub, Canonical.normSq_neg]
         exact bounded.2
     · exact ⟨Data.Gaussian.Basic.Canonical.normSq_zero.trans_le magnitudeNonnegative,
         Data.Gaussian.Basic.Canonical.normSq_zero.trans_le magnitudeNonnegative⟩
@@ -263,17 +267,17 @@ private theorem insertionPairs_valid {n : Nat} (traces : Fin (n + 1) → JoinedT
 /-- Inserting all actual joining edges changes the complete original increment area by the retained fourth-power count
 error bound. -/
 theorem concatenate_area_insertion
-    {n : Nat} (traces : Fin (n + 1) → JoinedTrace.VertexTrace Stokes.PrimitivePoint)
-    {error magnitude : InverseRootPolynomial.Coordinate} (errorNonnegative : 0 ≤ error) (magnitudeNonnegative : 0 ≤
+    {n : Nat} (traces : Fin (n + 1) → VertexTrace PrimitivePoint)
+    {error magnitude : Coordinate} (errorNonnegative : 0 ≤ error) (magnitudeNonnegative : 0 ≤
       magnitude)
     (small : error ≤ magnitude)
     (totals : ∀ i, (PrimitivePoint.Bounded (PairedIncrementArea.total ((VertexTrace.increments (traces i) id))))
       magnitude)
     (gaps : ∀ i : Fin n, (PrimitivePoint.Bounded ((traces i.succ).first.sub (traces i.castSucc).last)) error) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area (List.ofFn (fun i => (VertexTrace.increments
+    normSq (PairedIncrementArea.area (List.ofFn (fun i => (VertexTrace.increments
       (traces i) id))).flatten -
       PairedIncrementArea.area ((VertexTrace.increments (VertexTrace.concatenate traces) id))) ≤
-      32 * ((2 * n + 1 : Nat) : InverseRootPolynomial.Coordinate)^4 * error * magnitude := by
+      32 * ((2 * n + 1 : Nat) : Coordinate)^4 * error * magnitude := by
   have valid := insertionPairs_valid traces
     errorNonnegative magnitudeNonnegative small totals gaps
   have bound := PairedBlockComparison.blocks_area_difference_bound
@@ -287,24 +291,24 @@ theorem concatenate_area_insertion
   exact bound.trans_eq (by ring1)
 
 /-- Each original insertion pair has its total discrepancy bounded by the retained connector error. -/
-private theorem insertionPairs_total_valid {n : Nat} (traces : Fin (n + 1) → JoinedTrace.VertexTrace
-  Stokes.PrimitivePoint)
-    {error : InverseRootPolynomial.Coordinate} (nonnegative : 0 ≤ error)
+private theorem insertionPairs_total_valid {n : Nat} (traces : Fin (n + 1) → VertexTrace
+  PrimitivePoint)
+    {error : Coordinate} (nonnegative : 0 ≤ error)
     (gaps : ∀ i : Fin n, (PrimitivePoint.Bounded ((traces i.succ).first.sub (traces i.castSucc).last)) error) :
     ∀ pair ∈ insertionPairs traces,
       (PrimitivePoint.Bounded ((PairedIncrementArea.total pair.1).sub (PairedIncrementArea.total pair.2))) error := by
-  have diagonal (values : List Stokes.PrimitivePoint) :
+  have diagonal (values : List PrimitivePoint) :
       (PrimitivePoint.Bounded ((PairedIncrementArea.total values).sub (PairedIncrementArea.total values))) error := by
-    constructor <;> change Data.Gaussian.Basic.Canonical.normSq (_ - _) ≤ error <;>
-      rw [sub_self, Data.Gaussian.Basic.Canonical.normSq_zero] <;> exact nonnegative
-  have connector (gap : Stokes.PrimitivePoint) (bounded : (PrimitivePoint.Bounded gap) error) :
+    constructor <;> change Canonical.normSq (_ - _) ≤ error <;>
+      rw [sub_self, Canonical.normSq_zero] <;> exact nonnegative
+  have connector (gap : PrimitivePoint) (bounded : (PrimitivePoint.Bounded gap) error) :
       (PrimitivePoint.Bounded ((PairedIncrementArea.total []).sub (PairedIncrementArea.total [gap]))) error := by
     constructor
-    · change Data.Gaussian.Basic.Canonical.normSq (0 - (gap.left + 0)) ≤ error
-      rw [add_zero, zero_sub, Data.Gaussian.Basic.Canonical.normSq_neg]
+    · change Canonical.normSq (0 - (gap.left + 0)) ≤ error
+      rw [add_zero, zero_sub, Canonical.normSq_neg]
       exact bounded.1
-    · change Data.Gaussian.Basic.Canonical.normSq (0 - (gap.right + 0)) ≤ error
-      rw [add_zero, zero_sub, Data.Gaussian.Basic.Canonical.normSq_neg]
+    · change Canonical.normSq (0 - (gap.right + 0)) ≤ error
+      rw [add_zero, zero_sub, Canonical.normSq_neg]
       exact bounded.2
   induction n with
   | zero =>
@@ -322,13 +326,13 @@ private theorem insertionPairs_total_valid {n : Nat} (traces : Fin (n + 1) → J
 
 /-- Inserting the joining edges changes the total only by their increments. No bound on the parent totals is needed. -/
 theorem concatenate_total_insertion
-    {n : Nat} (traces : Fin (n + 1) → JoinedTrace.VertexTrace Stokes.PrimitivePoint)
-    {error : InverseRootPolynomial.Coordinate} (errorNonnegative : 0 ≤ error)
+    {n : Nat} (traces : Fin (n + 1) → VertexTrace PrimitivePoint)
+    {error : Coordinate} (errorNonnegative : 0 ≤ error)
     (gaps : ∀ i : Fin n, (PrimitivePoint.Bounded ((traces i.succ).first.sub (traces i.castSucc).last)) error) :
     (PrimitivePoint.Bounded ((PairedIncrementArea.total (List.ofFn (fun i => (VertexTrace.increments (traces i)
       id))).flatten).sub
       (PairedIncrementArea.total ((VertexTrace.increments (VertexTrace.concatenate traces) id)))))
-      (((2 * n + 1 : Nat) : InverseRootPolynomial.Coordinate)^2 * error) := by
+      (((2 * n + 1 : Nat) : Coordinate)^2 * error) := by
   let pairs := (insertionPairs traces).map (fun pair =>
     (PairedIncrementArea.total pair.1, PairedIncrementArea.total pair.2))
   have valid := insertionPairs_total_valid traces
@@ -342,51 +346,51 @@ theorem concatenate_total_insertion
     obtain ⟨pair, inOriginal, rfl⟩ := Map.mem_map.mp inPairs
     exact valid pair inOriginal
   have bound := PairedIncrementArea.total_bound errorNonnegative bounded (count := 2 * n + 1)
-    (by rw [Data.List.Map.length_map, Data.List.Map.length_map,
+    (by rw [Map.length_map, Map.length_map,
       insertionPairs_length])
   rw [PairedIncrementComparison.total_differences] at bound
   have left : pairs.map Prod.fst = ((insertionPairs
     traces).map Prod.fst).map PairedIncrementArea.total := by
-    rw [Data.List.Map.map_map, Data.List.Map.map_map]; rfl
+    rw [Map.map_map, Map.map_map]; rfl
   have right : pairs.map Prod.snd = ((insertionPairs
     traces).map Prod.snd).map PairedIncrementArea.total := by
-    rw [Data.List.Map.map_map, Data.List.Map.map_map]; rfl
+    rw [Map.map_map, Map.map_map]; rfl
   rw [left, right, ← PairedAreaBlocks.total_flatten, ← PairedAreaBlocks.total_flatten,
     insertionPairs_left,
       insertionPairs_right] at bound
   exact bound
 
 /-- The complete original trace family satisfies both area and total insertion bounds, including the empty case. -/
-private theorem family_insertion {n : Nat} (traces : Fin n → JoinedTrace.VertexTrace Stokes.PrimitivePoint)
-    {error magnitude : InverseRootPolynomial.Coordinate}
+private theorem family_insertion {n : Nat} (traces : Fin n → VertexTrace PrimitivePoint)
+    {error magnitude : Coordinate}
     (errorNonnegative : 0 ≤ error) (magnitudeNonnegative : 0 ≤ magnitude) (small : error ≤ magnitude)
     (totals : ∀ i, (PrimitivePoint.Bounded (PairedIncrementArea.total ((VertexTrace.increments (traces i) id))))
       magnitude)
     (gaps : ∀ i : Fin (n - 1), (PrimitivePoint.Bounded ((traces ⟨i.val + 1, by omega0⟩).first.sub
       (traces ⟨i.val, by omega0⟩).last)) error) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area (List.ofFn (fun i => (VertexTrace.increments
+    normSq (PairedIncrementArea.area (List.ofFn (fun i => (VertexTrace.increments
       (traces i) id))).flatten -
       PairedIncrementArea.area ((VertexTrace.increments
         (familyTrace traces) id))) ≤
-      32 * ((2 * n - 1 : Nat) : InverseRootPolynomial.Coordinate)^4 * error * magnitude ∧
+      32 * ((2 * n - 1 : Nat) : Coordinate)^4 * error * magnitude ∧
     (PrimitivePoint.Bounded ((PairedIncrementArea.total (List.ofFn (fun i => (VertexTrace.increments (traces i)
       id))).flatten).sub
       (PairedIncrementArea.total ((VertexTrace.increments
         (familyTrace traces) id)))))
-      (((2 * n - 1 : Nat) : InverseRootPolynomial.Coordinate)^2 * error) := by
+      (((2 * n - 1 : Nat) : Coordinate)^2 * error) := by
   cases n with
   | zero =>
-      change Data.Gaussian.Norm.Basic.normSq (0 - 0) ≤ 32 * (0 : InverseRootPolynomial.Coordinate)^4 * error *
+      change normSq (0 - 0) ≤ 32 * (0 : Coordinate)^4 * error *
         magnitude ∧
-        (PrimitivePoint.Bounded (PrimitivePoint.zero.sub PrimitivePoint.zero)) ((0 : InverseRootPolynomial.Coordinate)^2
+        (PrimitivePoint.Bounded (PrimitivePoint.zero.sub PrimitivePoint.zero)) ((0 : Coordinate)^2
           * error)
       constructor
-      · rw [sub_self, Data.Gaussian.Norm.Basic.normSq_zero]
+      · rw [sub_self, Basic.normSq_zero]
         simp only [zero_pow (by decide : 4 ≠ 0), mul_zero, zero_mul, -eq_self, -iff_self]
         exact le_rfl
-      · constructor <;> change Data.Gaussian.Norm.Basic.normSq (0 - 0) ≤ (0 :
-          InverseRootPolynomial.Coordinate)^2 * error <;>
-          rw [sub_self, Data.Gaussian.Norm.Basic.normSq_zero] <;>
+      · constructor <;> change normSq (0 - 0) ≤ (0 :
+          Coordinate)^2 * error <;>
+          rw [sub_self, Basic.normSq_zero] <;>
           simp only [zero_pow (by decide : 2 ≠ 0), zero_mul, -eq_self, -iff_self] <;> exact le_rfl
   | succ n =>
       rw [show 2 * (n + 1) - 1 = 2 * n + 1 by omega0]
@@ -395,9 +399,9 @@ private theorem family_insertion {n : Nat} (traces : Fin n → JoinedTrace.Verte
           gaps⟩
 
 /-- The actual increments of a trace built from indexed values equal the original centered increment list. -/
-private theorem ofIndexed_increments {n : Nat} (values : Fin (n + 1) → Stokes.PrimitivePoint) :
-    (Purelib.Integration.Path.JoinedTraceIncrements.VertexTrace.increments
-      (Purelib.Integration.Path.JoinedTrace.VertexTrace.ofIndexed values) id) = CenteredPathIncrements.increments values
+private theorem ofIndexed_increments {n : Nat} (values : Fin (n + 1) → PrimitivePoint) :
+    (VertexTrace.increments
+      (VertexTrace.ofIndexed values) id) = CenteredPathIncrements.increments values
       := by
   induction n with
   | zero => rfl
@@ -408,7 +412,7 @@ private theorem ofIndexed_increments {n : Nat} (values : Fin (n + 1) → Stokes.
       exact congrArg (List.cons ((values 1).sub (values 0))) (ih (fun i => values i.succ))
 
 /-- The complete actual trace increment total is its retained last vertex minus its first. -/
-private theorem trace_increment_total (trace : JoinedTrace.VertexTrace Stokes.PrimitivePoint) :
+private theorem trace_increment_total (trace : VertexTrace PrimitivePoint) :
     PairedIncrementArea.total ((VertexTrace.increments trace id)) = trace.last.sub trace.first := by
   have total := CenteredPathIncrements.increments_total (fun vertex => id (trace.indexed vertex))
   rw [(VertexTrace.indexed_increments trace id)] at total
@@ -418,8 +422,8 @@ private theorem trace_increment_total (trace : JoinedTrace.VertexTrace Stokes.Pr
   exact total
 
 /-- The original trace area is its actual increment area plus the retained initial-point endpoint term. -/
-private theorem trace_increment_area (trace : JoinedTrace.VertexTrace Stokes.PrimitivePoint) :
-    trace.area id = PairedIncrementArea.area ((VertexTrace.increments trace id)) + Stokes.edgeArea trace.first
+private theorem trace_increment_area (trace : VertexTrace PrimitivePoint) :
+    trace.area id = PairedIncrementArea.area ((VertexTrace.increments trace id)) + edgeArea trace.first
       (trace.last.sub trace.first) := by
   have traced := CenteredPathIncrements.increments_trace (fun vertex => id (trace.indexed vertex))
   rw [(VertexTrace.indexed_increments trace id), PairedIncrementArea.traceArea_eq,
@@ -434,17 +438,17 @@ open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
 variable {genus count otherCount depth floor index : Nat} {curve : HyperellipticCurve
   genus}
   {differential other : Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {otherPatch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch
-    (Purelib.Riemann.Integration.PreparedEdgeRecasting.recastCenteredEdge other parent)}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
+  {otherPatch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch
+    (recastCenteredEdge other parent)}
   {data : Data patch count} {otherData :
     Data otherPatch otherCount}
   {cover : Cover data} {otherCover :
     Cover otherData}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {common :
+  {regular : RegularBounds.Data cap} {common :
     CommonCover cover otherCover}
   {target : Coordinate} {request :
     ChartRequest regular common depth target floor}
@@ -452,7 +456,7 @@ variable {genus count otherCount depth floor index : Nat} {curve : Hyperelliptic
     index)
 
 /-- The actual retained chart readings of one original common interval as an owned trace. -/
-@[expose] def intervalTrace (i : Fin common.intervals.length) : JoinedTrace.VertexTrace PrimitivePoint :=
+@[expose] def intervalTrace (i : Fin common.intervals.length) : VertexTrace PrimitivePoint :=
   VertexTrace.ofIndexed (fun vertex =>
     ((evaluated.entries.get i).evaluated.chart.retained.area.evaluated.readings.get vertex).chartPoint)
 
@@ -477,19 +481,19 @@ theorem intervalTrace_area (i : Fin common.intervals.length) :
 theorem intervalTrace_increments (i : Fin common.intervals.length) :
     (VertexTrace.increments ((intervalTrace
       evaluated) i) id) = (CommonChartBlockComparison.ChartBlock evaluated) i :=
-  (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.ofIndexed_increments _).trans
+  (ofIndexed_increments _).trans
     (CenteredPathIncrements.Sample.increments_raw (evaluated.entries.get
     i).evaluated.chart.retained.area.evaluated.chart).symm
 
 /-- The complete actual chart trace formed from the original common-interval readings with every joining edge. -/
-@[expose] def chartTrace : JoinedTrace.VertexTrace PrimitivePoint :=
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.familyTrace
+@[expose] def chartTrace : VertexTrace PrimitivePoint :=
+  familyTrace
   (intervalTrace evaluated)
 
 /-- The complete original common-interval trace begins at the actual first retained chart point. -/
 theorem chartTrace_first : (chartTrace
   evaluated).first = (Evaluation.firstChartPoint evaluated) ⟨0, (CommonCover.nonempty common)⟩ :=
-  (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.familyTrace_first
+  (familyTrace_first
     (intervalTrace evaluated)
     (CommonCover.nonempty common)).trans
     (intervalTrace_first evaluated _)
@@ -500,7 +504,7 @@ theorem chartTrace_last : (chartTrace
     (Evaluation.lastChartPoint evaluated) ⟨common.intervals.length - 1, by
       have := (CommonCover.nonempty common);
       omega0⟩ :=
-  (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.familyTrace_last
+  (familyTrace_last
     (intervalTrace evaluated)
     (CommonCover.nonempty common)).trans
     (intervalTrace_last evaluated _)
@@ -509,13 +513,13 @@ theorem chartTrace_last : (chartTrace
 connectors. -/
 theorem chartTrace_area : (chartTrace
   evaluated).area id = evaluated.chartArea +
-    FiniteSum.Fin.sumFin (FanBankRequest.ConnectorArea (evaluated := evaluated)) := by
+    sumFin (FanBankRequest.ConnectorArea (evaluated := evaluated)) := by
   rw [chartTrace,
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.familyTrace_area, evaluated.chartArea_eq]
+    familyTrace_area, evaluated.chartArea_eq]
   apply congrArg₂ (· + ·)
-  · exact FiniteSum.Fin.sumFin_congr
+  · exact sumFin_congr
       (intervalTrace_area evaluated)
-  · exact FiniteSum.Fin.sumFin_congr (fun i => congrArg₂ Stokes.edgeArea
+  · exact sumFin_congr (fun i => congrArg₂ edgeArea
       (intervalTrace_last evaluated _)
         (intervalTrace_first evaluated _))
 
@@ -528,7 +532,7 @@ theorem chartTrace_area : (chartTrace
 theorem chartTrace_total : PairedIncrementArea.total ((VertexTrace.increments
   (chartTrace evaluated) id)) =
   (chartTraceTotal evaluated) := by
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.trace_increment_total,
+  rw [trace_increment_total,
     chartTrace_first evaluated,
     chartTrace_last evaluated]
   rfl
@@ -537,17 +541,17 @@ theorem chartTrace_total : PairedIncrementArea.total ((VertexTrace.increments
 summary. -/
 @[expose] def chartTraceSummary : PairedIncrementArea.Summary ((VertexTrace.increments
   (chartTrace evaluated) id)) :=
-  let area := evaluated.chartArea + FiniteSum.Fin.sumFin (FanBankRequest.ConnectorArea (evaluated := evaluated)) -
-    Stokes.edgeArea ((Evaluation.firstChartPoint evaluated) (CommonCover.firstIndex common))
+  let area := evaluated.chartArea + sumFin (FanBankRequest.ConnectorArea (evaluated := evaluated)) -
+    edgeArea ((Evaluation.firstChartPoint evaluated) (CommonCover.firstIndex common))
       (chartTraceTotal evaluated)
   have areaEq : area = PairedIncrementArea.area ((VertexTrace.increments
     (chartTrace evaluated) id)) := by
-    have traced := Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.trace_increment_area
+    have traced := trace_increment_area
       (chartTrace evaluated)
     rw [chartTrace_area evaluated,
       chartTrace_first evaluated,
       chartTrace_last evaluated] at traced
-    change _ = _ + Stokes.edgeArea ((Evaluation.firstChartPoint evaluated) (CommonCover.firstIndex common))
+    change _ = _ + edgeArea ((Evaluation.firstChartPoint evaluated) (CommonCover.firstIndex common))
       (chartTraceTotal evaluated) at traced
     dsimp only [area, -eq_self, -iff_self]
     rw [traced]
@@ -559,21 +563,21 @@ summary. -/
 /-- The original chart block cache and actual joined chart trace satisfy retained area and total insertion bounds. -/
 theorem BlockBank.chartTrace_insertion (bank : (CommonChartBlockComparison.BlockBank evaluated)) (small :
   request.allowance ≤ 1) :
-    Data.Gaussian.Norm.Basic.normSq (bank.chart.areaValue - PairedIncrementArea.area ((VertexTrace.increments
+    normSq (bank.chart.areaValue - PairedIncrementArea.area ((VertexTrace.increments
       (chartTrace evaluated) id))) ≤
-      32 * ((2 * common.intervals.length - 1 : Nat) : InverseRootPolynomial.Coordinate)^4 * request.allowance *
+      32 * ((2 * common.intervals.length - 1 : Nat) : Coordinate)^4 * request.allowance *
         (2 * (data.sourceSlope + otherData.sourceSlope + 4)) ∧
     (PrimitivePoint.Bounded (bank.chart.totalValue.sub (PairedIncrementArea.total ((VertexTrace.increments
       (chartTrace evaluated) id)))))
-      (((2 * common.intervals.length - 1 : Nat) : InverseRootPolynomial.Coordinate)^2 * request.allowance) := by
-  have slopes := add_nonneg (UniformReciprocalModels.Data.sourceSlope_nonnegative data)
-    (UniformReciprocalModels.Data.sourceSlope_nonnegative otherData)
+      (((2 * common.intervals.length - 1 : Nat) : Coordinate)^2 * request.allowance) := by
+  have slopes := add_nonneg (Data.sourceSlope_nonnegative data)
+    (Data.sourceSlope_nonnegative otherData)
   have larger : request.allowance ≤ 2 * (data.sourceSlope + otherData.sourceSlope + 4) := by
-    have four : (4 : InverseRootPolynomial.Coordinate) ≤ data.sourceSlope + otherData.sourceSlope + 4 :=
+    have four : (4 : Coordinate) ≤ data.sourceSlope + otherData.sourceSlope + 4 :=
       le_add_of_nonneg_left slopes
-    have eight := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct four (by
-        decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
-    exact small.trans ((by decide +kernel : (1 : InverseRootPolynomial.Coordinate) ≤ 2 * 4).trans eight)
+    have eight := Arithmetic.mul_le_mul_of_nonneg_left_direct four (by
+        decide : (0 : Coordinate) ≤ 2)
+    exact small.trans ((by decide +kernel : (1 : Coordinate) ≤ 2 * 4).trans eight)
   have nonnegative : 0 ≤ 2 * (data.sourceSlope + otherData.sourceSlope + 4) := request.positive.le.trans larger
   have totals (i : Fin common.intervals.length) :
       (PrimitivePoint.Bounded (PairedIncrementArea.total ((VertexTrace.increments
@@ -585,13 +589,13 @@ theorem BlockBank.chartTrace_insertion (bank : (CommonChartBlockComparison.Block
     exact ⟨(bank.entries.get i).chart_bounded.1.trans prepared, (bank.entries.get i).chart_bounded.2.trans prepared⟩
   have gaps (i : Fin (common.intervals.length - 1)) :
       (PrimitivePoint.Bounded (((intervalTrace
-        evaluated) (CommonChartBank.junctionRight common i)).first.sub
+        evaluated) (junctionRight common i)).first.sub
         ((intervalTrace evaluated)
-          (CommonChartBank.junctionLeft common i)).last)) request.allowance := by
+          (junctionLeft common i)).last)) request.allowance := by
     rw [intervalTrace_first evaluated,
       intervalTrace_last evaluated]
     exact Evaluation.junction_bounded evaluated i
-  have bound := Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.family_insertion
+  have bound := family_insertion
     (intervalTrace evaluated)
     request.positive.le nonnegative larger totals gaps
   have paths : List.ofFn (fun i => (VertexTrace.increments
@@ -606,17 +610,17 @@ open Purelib.Data.Rat.Fraction.Compatibility
 
 /-- The retained positive common-interval allowance is at most the original complete target. -/
 private theorem allowance_le_target : request.allowance ≤ target := by
-  have count : (1 : InverseRootPolynomial.Coordinate) ≤ (common.intervals.length : InverseRootPolynomial.Coordinate) :=
+  have count : (1 : Coordinate) ≤ (common.intervals.length : Coordinate) :=
     Fraction.Cast.Order.natCast_le_direct (CommonCover.nonempty common)
-  have square := Fraction.Order.Arithmetic.pow_le_pow_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 1)
+  have square := Arithmetic.pow_le_pow_direct (by decide : (0 : Coordinate) ≤ 1)
     count 2
-  rw [show (1 : InverseRootPolynomial.Coordinate)^2 = 1 by decide] at square
-  have smaller := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct square request.positive.le
+  rw [show (1 : Coordinate)^2 = 1 by decide] at square
+  have smaller := Arithmetic.mul_le_mul_of_nonneg_right_direct square request.positive.le
   rw [Fraction.Field.one_mul] at smaller
-  have paid : (common.intervals.length : InverseRootPolynomial.Coordinate)^2 * request.allowance < target :=
-    (by ring1 : (common.intervals.length : InverseRootPolynomial.Coordinate)^2 * request.allowance =
-      (common.intervals.length : InverseRootPolynomial.Coordinate) * ((common.intervals.length :
-        InverseRootPolynomial.Coordinate) * request.allowance)).trans_lt request.paid
+  have paid : (common.intervals.length : Coordinate)^2 * request.allowance < target :=
+    (by ring1 : (common.intervals.length : Coordinate)^2 * request.allowance =
+      (common.intervals.length : Coordinate) * ((common.intervals.length :
+        Coordinate) * request.allowance)).trans_lt request.paid
   exact smaller.trans paid.le
 
 /-- The original cached source total and actual joined chart total satisfy the complete retained componentwise target
@@ -626,34 +630,34 @@ theorem BlockBank.joined_total_accurate (bank : (CommonChartBlockComparison.Bloc
       (chartTrace evaluated) id))))) (16 *
       target) := by
   have inserted :=
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.BlockBank.chartTrace_insertion evaluated
+    (BlockBank.chartTrace_insertion evaluated
     bank (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.allowance_le_target.trans small)).2
   have count := Fraction.Cast.Order.natCast_le_direct (Nat.sub_le (2 * common.intervals.length) 1)
-  rw [Purelib.Algebra.NatCast.mul] at count
-  change (((2 * common.intervals.length - 1 : Nat) : InverseRootPolynomial.Coordinate)) ≤ 2 * (common.intervals.length :
-    InverseRootPolynomial.Coordinate) at count
-  have square := Fraction.Order.Arithmetic.pow_le_pow_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le (2 *
+  rw [NatCast.mul] at count
+  change (((2 * common.intervals.length - 1 : Nat) : Coordinate)) ≤ 2 * (common.intervals.length :
+    Coordinate) at count
+  have square := Arithmetic.pow_le_pow_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le (2 *
     common.intervals.length - 1))) count 2
-  have counted := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct square request.positive.le
-  have paid : ((2 * common.intervals.length - 1 : Nat) : InverseRootPolynomial.Coordinate)^2 * request.allowance < 4 *
+  have counted := Arithmetic.mul_le_mul_of_nonneg_right_direct square request.positive.le
+  have paid : ((2 * common.intervals.length - 1 : Nat) : Coordinate)^2 * request.allowance < 4 *
     target := by
-    exact counted.trans_lt ((by ring1 : (2 * (common.intervals.length : InverseRootPolynomial.Coordinate))^2 *
+    exact counted.trans_lt ((by ring1 : (2 * (common.intervals.length : Coordinate))^2 *
       request.allowance =
-      4 * ((common.intervals.length : InverseRootPolynomial.Coordinate) * ((common.intervals.length :
-        InverseRootPolynomial.Coordinate) * request.allowance))).trans_lt
-      (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide) request.paid))
+      4 * ((common.intervals.length : Coordinate) * ((common.intervals.length :
+        Coordinate) * request.allowance))).trans_lt
+      (Arithmetic.mul_lt_mul_of_pos_left_direct (by decide) request.paid))
   have source := bank.total_accurate evaluated
   have leftSource := source.1
   have rightSource := source.2
-  simp only [Data.Gaussian.Norm.Basic.normSq_eq_canonical, -eq_self, -iff_self] at leftSource rightSource
-  have scalar (a b c : Data.Gaussian.Basic.Canonical) (first : Data.Gaussian.Basic.Canonical.normSq (a - b) < 4 *
+  simp only [Basic.normSq_eq_canonical, -eq_self, -iff_self] at leftSource rightSource
+  have scalar (a b c : Canonical) (first : Canonical.normSq (a - b) < 4 *
     target)
-      (last : Data.Gaussian.Basic.Canonical.normSq (b - c) < 4 * target) : Data.Gaussian.Basic.Canonical.normSq (a - c)
+      (last : Canonical.normSq (b - c) < 4 * target) : Canonical.normSq (a - c)
         ≤ 16 * target := by
-    have via := Data.Gaussian.Norm.Bounds.normSq_sub_le_via a b c
-    simp only [Data.Gaussian.Norm.Basic.normSq_eq_canonical, -eq_self, -iff_self] at via
-    exact via.trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct first.le last.le) (by decide)).trans_eq (by ring1))
+    have via := Bounds.normSq_sub_le_via a b c
+    simp only [Basic.normSq_eq_canonical, -eq_self, -iff_self] at via
+    exact via.trans ((Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct first.le last.le) (by decide)).trans_eq (by ring1))
   exact ⟨scalar bank.source.totalValue.left bank.chart.totalValue.left
       (PairedIncrementArea.total ((VertexTrace.increments
         (chartTrace evaluated) id))).left
@@ -666,60 +670,60 @@ theorem BlockBank.joined_total_accurate (bank : (CommonChartBlockComparison.Bloc
 /-- The original cached source area and actual joined chart increment area satisfy the complete block-and-connector
 comparison bound. -/
 theorem BlockBank.joined_source_bound (bank : (CommonChartBlockComparison.BlockBank evaluated)) (small : target ≤ 1) :
-    Data.Gaussian.Norm.Basic.normSq (bank.source.areaValue - PairedIncrementArea.area ((VertexTrace.increments
+    normSq (bank.source.areaValue - PairedIncrementArea.area ((VertexTrace.increments
       (chartTrace evaluated) id))) ≤
-      Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRequestedBoundary.joinedBlockScale common * target := by
+      CommonRequestedBoundary.joinedBlockScale common * target := by
   have localSmall : request.allowance ≤ 1 :=
     Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.allowance_le_target.trans small
   have inserted :=
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.BlockBank.chartTrace_insertion evaluated
+    (BlockBank.chartTrace_insertion evaluated
     bank localSmall).1
-  have insertion : Data.Gaussian.Norm.Basic.normSq (bank.chart.areaValue - PairedIncrementArea.area
+  have insertion : normSq (bank.chart.areaValue - PairedIncrementArea.area
     ((VertexTrace.increments (chartTrace
     evaluated) id))) ≤
       CommonRequestedBoundary.chartInsertionScale common * target := by
-    have before : Data.Gaussian.Norm.Basic.normSq (bank.chart.areaValue - PairedIncrementArea.area
+    have before : normSq (bank.chart.areaValue - PairedIncrementArea.area
       ((VertexTrace.increments (chartTrace
       evaluated) id))) ≤
         CommonRequestedBoundary.chartInsertionScale common * request.allowance := inserted.trans_eq (by
             unfold CommonRequestedBoundary.chartInsertionScale;
             ring1)
-    exact before.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    exact before.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
       allowance_le_target
       (CommonRequestedBoundary.chartInsertionScale_nonnegative common))
   have source := bank.bounded.trans (bank.error_target evaluated)
-  have via := Data.Gaussian.Norm.Bounds.normSq_sub_le_via bank.source.areaValue bank.chart.areaValue
+  have via := Bounds.normSq_sub_le_via bank.source.areaValue bank.chart.areaValue
     (PairedIncrementArea.area ((VertexTrace.increments
       (chartTrace evaluated) id)))
-  exact via.trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.add_le_add_direct source insertion) (by decide)).trans_eq
+  exact via.trans ((Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.add_le_add_direct source insertion) (by decide)).trans_eq
     (by unfold CommonRequestedBoundary.joinedBlockScale; ring1))
 
 /-- The original requested boundary certificate pays the full source-versus-joined-chart increment area error. -/
-theorem joined_source_accurate {requested : InverseRootPolynomial.Coordinate}
+theorem joined_source_accurate {requested : Coordinate}
     (planned : CommonRequestedBoundary.BoundaryRequest regular common requested floor)
     (actual : planned.request.Evaluation index) (certificate : planned.Certificate actual)
     (small : planned.allowance ≤ 1) :
-    Data.Gaussian.Norm.Basic.normSq (certificate.blocks.source.areaValue - PairedIncrementArea.area
+    normSq (certificate.blocks.source.areaValue - PairedIncrementArea.area
       ((VertexTrace.increments (chartTrace
       actual) id))) < requested := by
-  have before := Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.BlockBank.joined_source_bound
+  have before := BlockBank.joined_source_bound
     actual certificate.blocks small
   rw [← planned.blockScale_eq] at before
   have requestedPositive : 0 < requested := by
-    have divided := planned.positive.trans_le (planned.allowance_eq.trans_le (Fraction.Order.Basic.min_le_left _ _))
-    exact (Fraction.Order.Arithmetic.mul_pos_direct divided (by
-        decide +kernel : (0 : InverseRootPolynomial.Coordinate) < 32)).trans_eq
+    have divided := planned.positive.trans_le (planned.allowance_eq.trans_le (Basic.min_le_left _ _))
+    exact (Arithmetic.mul_pos_direct divided (by
+        decide +kernel : (0 : Coordinate) < 32)).trans_eq
       (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide +kernel))
-  have halfPositive := Fraction.Order.Field.div_pos_direct requestedPositive (by
-      decide : (0 : InverseRootPolynomial.Coordinate) < 2)
+  have halfPositive := Field.div_pos_direct requestedPositive (by
+      decide : (0 : Coordinate) < 2)
   have halfEq : requested / 2 + requested / 2 = requested :=
     (by ring1 : requested / 2 + requested / 2 = (requested / 2) * 2).trans (Fraction.Field.div_mul_cancel_of_ne _ _ (by
       decide))
-  have halfLess := (Fraction.Field.zero_add _ ▸ Fraction.Order.Arithmetic.add_lt_add_right_direct halfPositive
+  have halfLess := (Fraction.Field.zero_add _ ▸ Arithmetic.add_lt_add_right_direct halfPositive
     _).trans_eq halfEq
-  exact before.trans_lt (((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (planned.allowance_eq.trans_le (Fraction.Order.Basic.min_le_right _ _)) planned.blockScale_nonnegative).trans
+  exact before.trans_lt (((Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (planned.allowance_eq.trans_le (Basic.min_le_right _ _)) planned.blockScale_nonnegative).trans
     (Weighted.mul_allowance_le halfPositive.le planned.blockScale_nonnegative)).trans_lt halfLess)
 
 end Evaluation
@@ -730,10 +734,10 @@ open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {differential other :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {parents : List (Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap}
+  {parents : List (Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
   {target requested : Coordinate} {minimum : Nat}
   {original : Request regular other parents
     target minimum} {request :
@@ -743,9 +747,9 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {differential other :
 /-- The first chart vertex of an original parent reads its actual shared radial polynomial value. -/
 private theorem parentTrace_first (branch : HyperellipticReciprocal.originOrder curve = 1)
     (i : Fin original.plans.length) :
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get i)).first
+    (PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get i)).first
       = (Evaluation.radialValues evaluated) ((Evaluation.firstCoordinate evaluated) i) := by
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace_first (evaluated.entries.get
+  rw [Evaluation.chartTrace_first (evaluated.entries.get
     i)]
   unfold Evaluation.firstChartPoint
   rw [Evaluation.chartPoint_readback (evaluated.entries.get i) branch]
@@ -755,117 +759,117 @@ private theorem parentTrace_first (branch : HyperellipticReciprocal.originOrder 
 /-- The last chart vertex of an original parent reads its actual shared radial polynomial value. -/
 private theorem parentTrace_last (branch : HyperellipticReciprocal.originOrder curve = 1)
     (i : Fin original.plans.length) :
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get i)).last
+    (PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get i)).last
       = (Evaluation.radialValues evaluated) ((Evaluation.lastCoordinate evaluated) i) := by
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace_last (evaluated.entries.get i)]
+  rw [Evaluation.chartTrace_last (evaluated.entries.get i)]
   unfold Evaluation.lastChartPoint
   rw [Evaluation.chartPoint_readback (evaluated.entries.get i) branch]
   rw [(evaluated.shared i).1, (evaluated.shared i).2]
   rfl
 
 /-- The actual full trace formed by concatenating every original retained parent chart trace. -/
-@[expose] def Evaluation.chartTrace : JoinedTrace.VertexTrace PrimitivePoint :=
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.familyTrace (fun i =>
-  (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get i)))
+@[expose] def Evaluation.chartTrace : VertexTrace PrimitivePoint :=
+  familyTrace (fun i =>
+  (PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get i)))
 
 /-- Inserting the actual joins between original parent chart traces satisfies the retained complete area error bound. -/
-theorem Evaluation.parentTrace_insertion {error magnitude : InverseRootPolynomial.Coordinate}
+theorem Evaluation.parentTrace_insertion {error magnitude : Coordinate}
     (errorNonnegative : 0 ≤ error) (magnitudeNonnegative : 0 ≤ magnitude) (small : error ≤ magnitude)
     (totals : ∀ i, (PrimitivePoint.Bounded (PairedIncrementArea.total ((VertexTrace.increments
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get i))
+      (PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get i))
       id)))) magnitude)
     (gaps : ∀ i : Fin (original.plans.length - 1),
-      (PrimitivePoint.Bounded (((Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace
-        (evaluated.entries.get (PairedBoundaryClosure.rightParent i))).first).sub
-        (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get
-          (PairedBoundaryClosure.leftParent i))).last)) error) :
-    Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area (List.ofFn (fun i => (VertexTrace.increments
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get i))
+      (PrimitivePoint.Bounded (((PairedChartTrace.Evaluation.chartTrace
+        (evaluated.entries.get (rightParent i))).first).sub
+        (PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get
+          (leftParent i))).last)) error) :
+    normSq (PairedIncrementArea.area (List.ofFn (fun i => (VertexTrace.increments
+      (PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get i))
       id))).flatten -
       PairedIncrementArea.area ((VertexTrace.increments
-        (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.chartTrace
+        (Evaluation.chartTrace
         evaluated) id))) ≤
-      32 * ((2 * original.plans.length - 1 : Nat) : InverseRootPolynomial.Coordinate)^4 * error * magnitude :=
-  (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.family_insertion (fun i =>
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get i)))
+      32 * ((2 * original.plans.length - 1 : Nat) : Coordinate)^4 * error * magnitude :=
+  (family_insertion (fun i =>
+    (PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get i)))
     errorNonnegative magnitudeNonnegative small totals gaps).1
 
 /-- The cached original parent junction increment equals the actual next trace start minus the previous trace end. -/
 theorem Evaluation.junctionIncrement_trace (i j : Fin original.plans.length) :
     (Evaluation.junctionIncrement evaluated) i j =
-      ((Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get
+      ((PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get
       j)).first).sub
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get
+      (PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get
         i)).last := by
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace_first (evaluated.entries.get
-    j), Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace_last (evaluated.entries.get
+  rw [Evaluation.chartTrace_first (evaluated.entries.get
+    j), Evaluation.chartTrace_last (evaluated.entries.get
     i)]
   rfl
 
 /-- Inserting all original parent joins changes the complete retained trace total within its squared-count gap bound. -/
-theorem Evaluation.parentTrace_total_insertion {error magnitude : InverseRootPolynomial.Coordinate}
+theorem Evaluation.parentTrace_total_insertion {error magnitude : Coordinate}
     (errorNonnegative : 0 ≤ error) (magnitudeNonnegative : 0 ≤ magnitude) (small : error ≤ magnitude)
     (totals : ∀ i, (PrimitivePoint.Bounded (PairedIncrementArea.total ((VertexTrace.increments
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get i))
+      (PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get i))
       id)))) magnitude)
     (gaps : ∀ i : Fin (original.plans.length - 1),
-      (PrimitivePoint.Bounded (((Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace
-        (evaluated.entries.get (PairedBoundaryClosure.rightParent i))).first).sub
-        (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get
-          (PairedBoundaryClosure.leftParent i))).last)) error) :
+      (PrimitivePoint.Bounded (((PairedChartTrace.Evaluation.chartTrace
+        (evaluated.entries.get (rightParent i))).first).sub
+        (PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get
+          (leftParent i))).last)) error) :
     (PrimitivePoint.Bounded ((PairedIncrementArea.total (List.ofFn (fun i => (VertexTrace.increments
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get i))
+      (PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get i))
       id))).flatten).sub
       (PairedIncrementArea.total ((VertexTrace.increments
-        (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.chartTrace
+        (Evaluation.chartTrace
         evaluated) id)))))
-      (((2 * original.plans.length - 1 : Nat) : InverseRootPolynomial.Coordinate)^2 * error) :=
-  (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.family_insertion (fun i =>
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get i)))
+      (((2 * original.plans.length - 1 : Nat) : Coordinate)^2 * error) :=
+  (family_insertion (fun i =>
+    (PairedChartTrace.Evaluation.chartTrace (evaluated.entries.get i)))
     errorNonnegative magnitudeNonnegative small totals gaps).2
 
 /-- The original linked-boundary certificate pays each actual retained parent trace junction increment. -/
-theorem LinkedRequest.Certificate.trace_increments_bounded {junctionTarget : InverseRootPolynomial.Coordinate}
-    {linked : PairedBoundaryClosure.LinkedRequest request junctionTarget} (certificate : linked.Certificate)
+theorem LinkedRequest.Certificate.trace_increments_bounded {junctionTarget : Coordinate}
+    {linked : LinkedRequest request junctionTarget} (certificate : linked.Certificate)
     (i : Fin (original.plans.length - 1)) :
-    (PrimitivePoint.Bounded (((Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace
-      (certificate.boundary.entries.get (PairedBoundaryClosure.rightParent i))).first).sub
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace
-        (certificate.boundary.entries.get (PairedBoundaryClosure.leftParent i))).last)) linked.allowance :=
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.junctionIncrement_trace
+    (PrimitivePoint.Bounded (((PairedChartTrace.Evaluation.chartTrace
+      (certificate.boundary.entries.get (rightParent i))).first).sub
+      (PairedChartTrace.Evaluation.chartTrace
+        (certificate.boundary.entries.get (leftParent i))).last)) linked.allowance :=
+  Evaluation.junctionIncrement_trace
     certificate.boundary _ _ ▸ certificate.increments_bounded i
 
 /-- The full original parent chart trace area retains every cached parent area and all internal and cross-parent
 connectors. -/
 theorem Evaluation.chartTrace_area (branch : HyperellipticReciprocal.originOrder curve = 1) :
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.chartTrace
-      evaluated).area id = FiniteSum.Fin.sumFin (fun i => (evaluated.entries.get i).chartArea) +
-      (Evaluation.internalConnectors evaluated) + FiniteSum.Fin.sumFin (Evaluation.parentConnector evaluated) := by
-  rw [chartTrace, Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.familyTrace_area]
-  have areas := FiniteSum.Fin.sumFin_congr (fun i =>
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace_area (evaluated.entries.get i))
-  rw [areas, FiniteSum.Fin.sumFin_add]
-  apply congrArg (fun value => FiniteSum.Fin.sumFin (fun i => (evaluated.entries.get i).chartArea) +
+    (Evaluation.chartTrace
+      evaluated).area id = sumFin (fun i => (evaluated.entries.get i).chartArea) +
+      (Evaluation.internalConnectors evaluated) + sumFin (Evaluation.parentConnector evaluated) := by
+  rw [chartTrace, familyTrace_area]
+  have areas := sumFin_congr (fun i =>
+    PairedChartTrace.Evaluation.chartTrace_area (evaluated.entries.get i))
+  rw [areas, sumFin_add]
+  apply congrArg (fun value => sumFin (fun i => (evaluated.entries.get i).chartArea) +
     (Evaluation.internalConnectors evaluated) + value)
-  exact FiniteSum.Fin.sumFin_congr (fun i => congrArg₂ Stokes.edgeArea
+  exact sumFin_congr (fun i => congrArg₂ edgeArea
     (parentTrace_last evaluated branch
       _) (parentTrace_first evaluated
       branch _))
 
 /-- The actual original joined parent trace with its first retained vertex appended as the closing point. -/
-@[expose] def Evaluation.closedChartTrace : JoinedTrace.VertexTrace PrimitivePoint :=
-  (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.chartTrace
+@[expose] def Evaluation.closedChartTrace : VertexTrace PrimitivePoint :=
+  (Evaluation.chartTrace
     evaluated).join
-    ⟨(Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.chartTrace
+    ⟨(Evaluation.chartTrace
     evaluated).first, []⟩
 
 /-- The actual increment total of the explicitly closed original chart trace is zero. -/
 theorem Evaluation.closedChartTrace_total :
     PairedIncrementArea.total ((VertexTrace.increments
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.closedChartTrace
+      (Evaluation.closedChartTrace
       evaluated) id)) = PrimitivePoint.zero := by
   let trace :=
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.closedChartTrace
+    (Evaluation.closedChartTrace
     evaluated)
   have total := CenteredPathIncrements.increments_total (fun vertex => id (trace.indexed vertex))
   rw [(VertexTrace.indexed_increments trace id)] at total
@@ -881,63 +885,63 @@ theorem Evaluation.closedChartTrace_total :
 /-- The explicitly closed original chart trace has the same area as its actual increment polygon. -/
 theorem Evaluation.closedChartTrace_increment_area :
     PairedIncrementArea.area ((VertexTrace.increments
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.closedChartTrace
+      (Evaluation.closedChartTrace
       evaluated) id)) =
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.closedChartTrace
+      (Evaluation.closedChartTrace
       evaluated).area id := by
   let trace :=
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.closedChartTrace
+    (Evaluation.closedChartTrace
     evaluated)
   have traced := CenteredPathIncrements.increments_trace (fun vertex => id (trace.indexed vertex))
   rw [(VertexTrace.indexed_increments trace id), PairedIncrementArea.traceArea_eq,
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.closedChartTrace_total
+    Evaluation.closedChartTrace_total
     evaluated] at traced
   have equal := traced.trans (trace.indexed_area id)
-  change PairedIncrementArea.area ((VertexTrace.increments trace id)) + Stokes.edgeArea trace.first PrimitivePoint.zero
+  change PairedIncrementArea.area ((VertexTrace.increments trace id)) + edgeArea trace.first PrimitivePoint.zero
     = trace.area id at equal
-  have zero : Stokes.edgeArea trace.first PrimitivePoint.zero = 0 := by
-    unfold Stokes.edgeArea PrimitivePoint.zero;
+  have zero : edgeArea trace.first PrimitivePoint.zero = 0 := by
+    unfold edgeArea PrimitivePoint.zero;
     ring1
   rw [zero, add_zero] at equal
   exact equal
 
 /-- An empty original trace family is exactly the single retained zero vertex. -/
-private theorem familyTrace_empty {n : Nat} (traces : Fin n → JoinedTrace.VertexTrace Stokes.PrimitivePoint) (absent : n
+private theorem familyTrace_empty {n : Nat} (traces : Fin n → VertexTrace PrimitivePoint) (absent : n
   = 0) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.familyTrace traces = ⟨PrimitivePoint.zero, []⟩ := by
+    familyTrace traces = ⟨PrimitivePoint.zero, []⟩ := by
       subst n; rfl
 
 /-- The unclosed trace total is paid by the actual root-return junction, not inferred from the area of its artificially
 closed trace. -/
-theorem ClosingPlan.trace_total_bounded {tolerance : InverseRootPolynomial.Coordinate} (closing :
+theorem ClosingPlan.trace_total_bounded {tolerance : Coordinate} (closing :
   PairedClosedBoundary.ClosingPlan request tolerance)
     (later : closing.index request ≤ evaluated.externalFloor) (nonnegative : 0 ≤ tolerance)
     (branch : HyperellipticReciprocal.originOrder curve = 1) :
     (PrimitivePoint.Bounded (PairedIncrementArea.total ((VertexTrace.increments
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.chartTrace evaluated)
+      (Evaluation.chartTrace evaluated)
       id)))) tolerance := by
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.trace_increment_total]
+  rw [trace_increment_total]
   cases closing with
   | empty absent =>
       have empty := familyTrace_empty
-        (fun i => (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace
+        (fun i => (PairedChartTrace.Evaluation.chartTrace
         (evaluated.entries.get i))) absent
-      change (PrimitivePoint.Bounded ((Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.familyTrace
-        _).last.sub (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.familyTrace _).first)) tolerance
+      change (PrimitivePoint.Bounded ((familyTrace
+        _).last.sub (familyTrace _).first)) tolerance
       rw [empty]
-      constructor <;> change Data.Gaussian.Basic.Canonical.normSq (0 - 0) ≤ tolerance <;>
-        rw [sub_self, Data.Gaussian.Basic.Canonical.normSq_zero] <;> exact nonnegative
+      constructor <;> change Canonical.normSq (0 - 0) ≤ tolerance <;>
+        rw [sub_self, Canonical.normSq_zero] <;> exact nonnegative
   | present positive joined junction =>
       have bound := junction.increment_accurate evaluated later branch
       rw
         [Evaluation.junctionIncrement_trace
         evaluated] at bound
-      rw [Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.chartTrace,
-        Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.familyTrace_last _ positive,
-        Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.familyTrace_first _ positive]
-      have reversed (a b : Data.Gaussian.Basic.Canonical) : Data.Gaussian.Basic.Canonical.normSq (a - b) =
-        Data.Gaussian.Basic.Canonical.normSq (b - a) := by
-        rw [show a - b = -(b - a) by ring1, Data.Gaussian.Basic.Canonical.normSq_neg]
+      rw [Evaluation.chartTrace,
+        familyTrace_last _ positive,
+        familyTrace_first _ positive]
+      have reversed (a b : Canonical) : Canonical.normSq (a - b) =
+        Canonical.normSq (b - a) := by
+        rw [show a - b = -(b - a) by ring1, Canonical.normSq_neg]
       constructor
       · exact (reversed _ _).trans_le bound.1
       · exact (reversed _ _).trans_le bound.2
@@ -946,49 +950,49 @@ theorem ClosingPlan.trace_total_bounded {tolerance : InverseRootPolynomial.Coord
 small-gap estimate is needed. -/
 theorem Evaluation.chartTrace_closing_area :
     PairedIncrementArea.area ((VertexTrace.increments
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.chartTrace evaluated)
+      (Evaluation.chartTrace evaluated)
       id)) =
       PairedIncrementArea.area ((VertexTrace.increments
-        (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.closedChartTrace
+        (Evaluation.closedChartTrace
         evaluated) id)) := by
   rw
     [Evaluation.closedChartTrace_increment_area
     evaluated,
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.closedChartTrace,
+    Evaluation.closedChartTrace,
     VertexTrace.join_area,
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.trace_increment_area
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.chartTrace
+    trace_increment_area
+      (Evaluation.chartTrace
       evaluated)]
-  change _ = _ + Stokes.edgeArea
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.chartTrace
+  change _ = _ + edgeArea
+    (Evaluation.chartTrace
     evaluated).last
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.chartTrace
+    (Evaluation.chartTrace
     evaluated).first + 0
-  unfold Stokes.edgeArea PrimitivePoint.sub
+  unfold edgeArea PrimitivePoint.sub
   ring1
 
 /-- The actual last-to-first trace edge is exactly the retained original closing connector. -/
-theorem ClosingPlan.trace_connector {tolerance : InverseRootPolynomial.Coordinate} (closing :
+theorem ClosingPlan.trace_connector {tolerance : Coordinate} (closing :
   PairedClosedBoundary.ClosingPlan request tolerance)
     (branch : HyperellipticReciprocal.originOrder curve = 1) :
-    Stokes.edgeArea
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.chartTrace
+    edgeArea
+      (Evaluation.chartTrace
       evaluated).last
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.chartTrace
+      (Evaluation.chartTrace
       evaluated).first = closing.connector evaluated := by
   cases closing with
   | empty absent =>
       have empty := familyTrace_empty
-        (fun i => (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.Evaluation.chartTrace
+        (fun i => (PairedChartTrace.Evaluation.chartTrace
         (evaluated.entries.get i))) absent
-      change Stokes.edgeArea (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.familyTrace _).last
-        (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.familyTrace _).first = 0
+      change edgeArea (familyTrace _).last
+        (familyTrace _).first = 0
       rw [empty]
       rfl
   | present positive joined junction =>
-      rw [Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.chartTrace,
-        Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.familyTrace_last _ positive,
-        Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.familyTrace_first _ positive,
+      rw [Evaluation.chartTrace,
+        familyTrace_last _ positive,
+        familyTrace_first _ positive,
         parentTrace_last evaluated
           branch, parentTrace_first
           evaluated branch]
@@ -996,23 +1000,23 @@ theorem ClosingPlan.trace_connector {tolerance : InverseRootPolynomial.Coordinat
 
 /-- The complete closed original chart trace area retains every parent area, internal connector, parent connector and
 actual closing connector. -/
-theorem ClosingPlan.closedChartTrace_area {tolerance : InverseRootPolynomial.Coordinate} (closing :
+theorem ClosingPlan.closedChartTrace_area {tolerance : Coordinate} (closing :
   PairedClosedBoundary.ClosingPlan request tolerance)
     (branch : HyperellipticReciprocal.originOrder curve = 1) :
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.closedChartTrace
-      evaluated).area id = FiniteSum.Fin.sumFin (fun i => (evaluated.entries.get i).chartArea) +
-      (Evaluation.internalConnectors evaluated) + FiniteSum.Fin.sumFin (Evaluation.parentConnector evaluated) +
+    (Evaluation.closedChartTrace
+      evaluated).area id = sumFin (fun i => (evaluated.entries.get i).chartArea) +
+      (Evaluation.internalConnectors evaluated) + sumFin (Evaluation.parentConnector evaluated) +
         closing.connector evaluated := by
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.closedChartTrace,
+  rw [Evaluation.closedChartTrace,
     VertexTrace.join_area,
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.chartTrace_area
+    Evaluation.chartTrace_area
     evaluated branch]
-  change _ + Stokes.edgeArea
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.chartTrace
+  change _ + edgeArea
+    (Evaluation.chartTrace
     evaluated).last
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.Evaluation.chartTrace
+    (Evaluation.chartTrace
     evaluated).first + 0 = _
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedChartTrace.BoundaryBankRequest.ClosingPlan.trace_connector
+  rw [ClosingPlan.trace_connector
     evaluated closing branch]
   ring1
 

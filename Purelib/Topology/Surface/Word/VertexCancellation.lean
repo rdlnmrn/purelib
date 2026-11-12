@@ -1,4 +1,5 @@
 module
+import Purelib.Topology.Chain.PathBoundary
 public import Purelib.Data.List.Membership
 import Purelib.Data.Nat.Subtraction
 import Purelib.Data.Vector.Basic
@@ -27,6 +28,8 @@ pairs, together with coverage and executable universal factorization.
 public section
 
 namespace Purelib.Topology.Surface.Word.VertexCancellation
+
+open Purelib.Topology.Chain
 
 open Purelib.Data.List
 open Purelib.Data.Nat
@@ -170,9 +173,9 @@ private theorem joined_outside (inside : Vertices.WordVertexRealization chord.in
         congrArg OrientedEdge.reverse (ChordWord.joined_pivot chord inside outside)
       simpa only [edge] using WordVertexPath.single
         (ChordWord.joinedEdges chord inside outside) ⟨chord.index, true⟩
-    exact PathEndpoints.append forward
-      (PathEndpoints.append inner
-        (PathEndpoints.append backward outer))
+    exact PathBoundary.PathEndpoints.append forward
+      (PathBoundary.PathEndpoints.append inner
+        (PathBoundary.PathEndpoints.append backward outer))
 
 /-- Coverage of the two original models covers the entire joined vertex bank. -/
 private theorem join_covered (inside : Vertices.WordVertexModel chord.inside leftSize)

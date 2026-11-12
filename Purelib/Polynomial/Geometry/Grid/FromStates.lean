@@ -33,11 +33,11 @@ open Purelib.Data.List
 
 open Purelib.Polynomial.Geometry.Grid.ClearGrid (VerticalLine HorizontalLine)
 
-variable {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient : Box}
+variable {polynomial : ClearPath.GaussianPolynomial} {ambient : Box}
 
 /-- The original winding-one root-isolation state, indexed by its polynomial and
 ambient box. -/
-public abbrev BranchState (polynomial : Geometry.ClearPath.GaussianPolynomial) (ambient : Box) :=
+public abbrev BranchState (polynomial : ClearPath.GaussianPolynomial) (ambient : Box) :=
   RootIsolation.State.WindingOne.Basic.WindingOneState polynomial ambient
 
 /-- Retain the left and right ambient line-clearance payloads of a branch state's
@@ -46,8 +46,8 @@ box.
 Both retained vertical side certificates come from the original state. The
 ambient endpoint bounds keep those same clearance payloads on the original
 polynomial and box. -/
-@[expose] public def verticalSides (state : Geometry.Grid.FromStates.BranchState polynomial ambient) : List
-  (Geometry.Grid.ClearGrid.VerticalLine polynomial ambient) :=
+@[expose] public def verticalSides (state : BranchState polynomial ambient) : List
+  (VerticalLine polynomial ambient) :=
   [⟨state.box.xLower, ⟨state.refinesAmbient.1, state.box.x_valid.trans state.refinesAmbient.2.1⟩,
       state.ambientLeftClearance⟩,
     ⟨state.box.xUpper, ⟨state.refinesAmbient.1.trans state.box.x_valid, state.refinesAmbient.2.1⟩,
@@ -59,8 +59,8 @@ box.
 Both retained horizontal side certificates come from the original state. The
 ambient endpoint bounds keep those same clearance payloads on the original
 polynomial and box. -/
-@[expose] public def horizontalSides (state : Geometry.Grid.FromStates.BranchState polynomial ambient) : List
-  (Geometry.Grid.ClearGrid.HorizontalLine polynomial ambient) :=
+@[expose] public def horizontalSides (state : BranchState polynomial ambient) : List
+  (HorizontalLine polynomial ambient) :=
   [⟨state.box.yLower, ⟨state.refinesAmbient.2.2.1, state.box.y_valid.trans state.refinesAmbient.2.2.2⟩,
       state.ambientBottomClearance⟩,
     ⟨state.box.yUpper, ⟨state.refinesAmbient.2.2.1.trans state.box.y_valid, state.refinesAmbient.2.2.2⟩,
@@ -68,53 +68,53 @@ polynomial and box. -/
 
 section Grid
 
-variable {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient : Box}
+variable {polynomial : ClearPath.GaussianPolynomial} {ambient : Box}
 
 /-- All box-side lines are sorted together; no fresh polynomial-clearance search is
 needed to create grid edges or face boundaries.
 
 The displayed states supply the original four side-line payloads. Sorting those
 retained payloads once gives the shared coordinate grid. -/
-@[expose] public def ofStates (states : List (Geometry.Grid.FromStates.BranchState polynomial ambient)) :
+@[expose] public def ofStates (states : List (BranchState polynomial ambient)) :
   ClearGrid polynomial ambient :=
-  ClearGrid.build (states.flatMap Geometry.Grid.FromStates.verticalSides) (states.flatMap
-    Geometry.Grid.FromStates.horizontalSides)
+  ClearGrid.build (states.flatMap verticalSides) (states.flatMap
+    horizontalSides)
 
 /-- Both horizontal endpoint coordinates of every retained state box occur in the
 common vertical-line bank.
 
 Both retained side occurrences come from the selected state in the original
 list. The grid build preserves their two endpoint coordinates. -/
-public theorem ofStates_x_bounds (states : List (Geometry.Grid.FromStates.BranchState polynomial ambient))
-    {state : Geometry.Grid.FromStates.BranchState polynomial ambient} (member : state ∈ states) :
+public theorem ofStates_x_bounds (states : List (BranchState polynomial ambient))
+    {state : BranchState polynomial ambient} (member : state ∈ states) :
     state.box.xLower ∈ (ofStates states).vertical.map
-      Geometry.Grid.ClearGrid.VerticalLine.coordinate ∧
+      VerticalLine.coordinate ∧
       state.box.xUpper ∈ (ofStates states).vertical.map VerticalLine.coordinate := by
   constructor
   · apply (ClearGrid.build_vertical_coordinates _ _ _).2
-    exact Data.List.Map.mem_map.mpr ⟨(Geometry.Grid.FromStates.verticalSides state)[0]'(by change 0 < 2; decide),
-      Data.List.Flatten.mem_flatMap.mpr ⟨state, member, List.mem_cons_self⟩, rfl⟩
+    exact Map.mem_map.mpr ⟨(verticalSides state)[0]'(by change 0 < 2; decide),
+      Flatten.mem_flatMap.mpr ⟨state, member, List.mem_cons_self⟩, rfl⟩
   · apply (ClearGrid.build_vertical_coordinates _ _ _).2
-    exact Data.List.Map.mem_map.mpr ⟨(Geometry.Grid.FromStates.verticalSides state)[1]'(by change 1 < 2; decide),
-      Data.List.Flatten.mem_flatMap.mpr ⟨state, member, List.mem_cons_of_mem _ List.mem_cons_self⟩, rfl⟩
+    exact Map.mem_map.mpr ⟨(verticalSides state)[1]'(by change 1 < 2; decide),
+      Flatten.mem_flatMap.mpr ⟨state, member, List.mem_cons_of_mem _ List.mem_cons_self⟩, rfl⟩
 
 /-- Both vertical endpoint coordinates of every retained state box occur in the
 common horizontal-line bank.
 
 Both retained side occurrences come from the selected state in the original
 list. The grid build preserves their two endpoint coordinates. -/
-public theorem ofStates_y_bounds (states : List (Geometry.Grid.FromStates.BranchState polynomial ambient))
-    {state : Geometry.Grid.FromStates.BranchState polynomial ambient} (member : state ∈ states) :
+public theorem ofStates_y_bounds (states : List (BranchState polynomial ambient))
+    {state : BranchState polynomial ambient} (member : state ∈ states) :
     state.box.yLower ∈ (ofStates states).horizontal.map
-      Geometry.Grid.ClearGrid.HorizontalLine.coordinate ∧
+      HorizontalLine.coordinate ∧
       state.box.yUpper ∈ (ofStates states).horizontal.map HorizontalLine.coordinate := by
   constructor
   · apply (ClearGrid.build_horizontal_coordinates _ _ _).2
-    exact Data.List.Map.mem_map.mpr ⟨(Geometry.Grid.FromStates.horizontalSides state)[0]'(by change 0 < 2; decide),
-      Data.List.Flatten.mem_flatMap.mpr ⟨state, member, List.mem_cons_self⟩, rfl⟩
+    exact Map.mem_map.mpr ⟨(horizontalSides state)[0]'(by change 0 < 2; decide),
+      Flatten.mem_flatMap.mpr ⟨state, member, List.mem_cons_self⟩, rfl⟩
   · apply (ClearGrid.build_horizontal_coordinates _ _ _).2
-    exact Data.List.Map.mem_map.mpr ⟨(Geometry.Grid.FromStates.horizontalSides state)[1]'(by change 1 < 2; decide),
-      Data.List.Flatten.mem_flatMap.mpr ⟨state, member, List.mem_cons_of_mem _ List.mem_cons_self⟩, rfl⟩
+    exact Map.mem_map.mpr ⟨(horizontalSides state)[1]'(by change 1 < 2; decide),
+      Flatten.mem_flatMap.mpr ⟨state, member, List.mem_cons_of_mem _ List.mem_cons_self⟩, rfl⟩
 
 /-- Finite coordinate coverage supplies the proof-only span used by the linear-time
 locator; the locator still selects its own retained payloads.
@@ -124,10 +124,10 @@ strict outer order and closed query bounds supply the same span certificate. -/
 public theorem spanned_of_keys {Alpha : Type} (key : Alpha → Fraction.Rational) (entries : List Alpha)
     {lower upper point : Fraction.Rational} (lowerMember : lower ∈ entries.map key) (upperMember : upper ∈ entries.map
       key)
-    (strict : lower < upper) (inside : lower ≤ point ∧ point ≤ upper) : Geometry.Grid.ClearGridCoverage.Interval.Spanned
+    (strict : lower < upper) (inside : lower ≤ point ∧ point ≤ upper) : ClearGridCoverage.Interval.Spanned
       (key := key) entries point := by
-  rcases Data.List.Map.mem_map.mp lowerMember with ⟨left, leftMember, leftEq⟩
-  rcases Data.List.Map.mem_map.mp upperMember with ⟨right, rightMember, rightEq⟩
+  rcases Map.mem_map.mp lowerMember with ⟨left, leftMember, leftEq⟩
+  rcases Map.mem_map.mp upperMember with ⟨right, rightMember, rightEq⟩
   exact ⟨left, leftMember, right, rightMember, by simpa only [leftEq, rightEq] using strict,
     by simpa only [leftEq] using inside.1, by simpa only [rightEq] using inside.2⟩
 
@@ -136,8 +136,8 @@ scans the axes only; it does not allocate the entire grid-cell list.
 
 The original state has a proper box containing the supplied point. Its retained
 endpoint occurrences give the two spans used by the existing axis locator. -/
-@[expose] public def locateInState (states : List (Geometry.Grid.FromStates.BranchState polynomial ambient))
-    (state : Geometry.Grid.FromStates.BranchState polynomial ambient) (member : state ∈ states) (point :
+@[expose] public def locateInState (states : List (BranchState polynomial ambient))
+    (state : BranchState polynomial ambient) (member : state ∈ states) (point :
       Gaussian.Basic.Canonical)
     (inside : state.box.Contains point) : ClearGridCoverage.Located
       (ofStates states) point :=
@@ -154,8 +154,22 @@ Both coordinate occurrences belong to the same original grid. The predicate
 retains the stored vertical and horizontal coordinate banks. -/
 @[expose] public def ContainsVertex (grid : ClearGrid polynomial ambient) (point :
   Gaussian.Basic.Canonical) : Prop :=
-  point.re ∈ grid.vertical.map Geometry.Grid.ClearGrid.VerticalLine.coordinate ∧ point.im ∈ grid.horizontal.map
-    Geometry.Grid.ClearGrid.HorizontalLine.coordinate
+  point.re ∈ grid.vertical.map VerticalLine.coordinate ∧ point.im ∈ grid.horizontal.map
+    HorizontalLine.coordinate
+
+namespace ContainsVertex
+
+/-- Every actual retained vertex lies in the SAME grid ambient box. -/
+public theorem inside {grid : ClearGrid polynomial ambient} {point : Gaussian.Basic.Canonical}
+    (member : ContainsVertex grid point) : ambient.Contains point := by
+  obtain ⟨vertical, _, xEq⟩ := Map.mem_map.mp member.1
+  obtain ⟨horizontal, _, yEq⟩ := Map.mem_map.mp member.2
+  exact ⟨Eq.mp (congrArg (fun x => ambient.xLower ≤ x) xEq) vertical.inside.1,
+    Eq.mp (congrArg (fun x => x ≤ ambient.xUpper) xEq) vertical.inside.2,
+    Eq.mp (congrArg (fun y => ambient.yLower ≤ y) yEq) horizontal.inside.1,
+    Eq.mp (congrArg (fun y => y ≤ ambient.yUpper) yEq) horizontal.inside.2⟩
+
+end ContainsVertex
 
 /-- Every vertex of the displayed clear path belongs to the retained grid
 coordinate banks.
@@ -235,8 +249,8 @@ end ContainsPathVertices
 
 The anchor uses the original state box lower coordinates. Their two retained
 side occurrences certify that same grid vertex. -/
-public theorem ofStates_anchor (states : List (Geometry.Grid.FromStates.BranchState polynomial ambient))
-    {state : Geometry.Grid.FromStates.BranchState polynomial ambient} (member : state ∈ states) :
+public theorem ofStates_anchor (states : List (BranchState polynomial ambient))
+    {state : BranchState polynomial ambient} (member : state ∈ states) :
     ContainsVertex (ofStates states) state.box.anchor :=
   ⟨(ofStates_x_bounds states member).1, (ofStates_y_bounds
     states member).1⟩
@@ -247,8 +261,8 @@ original clearance certificates use the smaller owner box.
 The four original branch-box corners use its retained lower and upper endpoint
 occurrences. Their common-grid memberships keep the original boundary path
 owner. -/
-public theorem ofStates_boundary (states : List (Geometry.Grid.FromStates.BranchState polynomial ambient))
-    {state : Geometry.Grid.FromStates.BranchState polynomial ambient} (member : state ∈ states) :
+public theorem ofStates_boundary (states : List (BranchState polynomial ambient))
+    {state : BranchState polynomial ambient} (member : state ∈ states) :
     ContainsPathVertices (ofStates states)
       (Curves.Hyperelliptic.Branches.BranchCutLifts.ownerBoundaryPath state) :=
   let horizontal := ofStates_x_bounds states member
@@ -259,3 +273,47 @@ public theorem ofStates_boundary (states : List (Geometry.Grid.FromStates.Branch
 end Grid
 
 end Purelib.Polynomial.Geometry.Grid.FromStates
+
+namespace Purelib.Polynomial.Geometry.Grid.ClearGrid.Cell
+
+open Purelib.Data
+open Purelib.Geometry.Rational (Box)
+open Purelib.Polynomial
+
+variable {polynomial : ClearPath.GaussianPolynomial} {ambient : Box} {original : Grid.ClearGrid polynomial ambient}
+
+/-- Every local four-corner vertex is an occurrence of the SAME original grid.
+
+Actual cell-list membership supplies both original adjacent intervals.
+The local coordinate readbacks select their retained endpoint payloads;
+no arbitrary geometric point is promoted to an original grid vertex.
+-/
+public theorem grid_vertex (cell : Cell polynomial ambient) (listed : cell ∈ original.cells)
+    {point : Gaussian.Basic.Canonical} (member : FromStates.ContainsVertex cell.grid point) :
+    FromStates.ContainsVertex original point := by
+  obtain ⟨horizontal, horizontalMember, row⟩ := List.Flatten.mem_flatMap.mp listed
+  obtain ⟨vertical, verticalMember, same⟩ := List.Map.mem_map.mp row
+  cases same
+  have xEnds := Interval.endpoints_mem original.vertical original.vertical_ordered horizontalMember
+  have yEnds := Interval.endpoints_mem original.horizontal original.horizontal_ordered verticalMember
+  have x := Eq.mp (congrArg (fun values : List Rat.Fraction.Rational => point.re ∈ values)
+    (grid_vertical_coordinates (⟨horizontal, vertical⟩ : Cell polynomial ambient))) member.1
+  have y := Eq.mp (congrArg (fun values : List Rat.Fraction.Rational => point.im ∈ values)
+    (grid_horizontal_coordinates (⟨horizontal, vertical⟩ : Cell polynomial ambient))) member.2
+  constructor
+  · rcases List.Membership.mem_cons.mp x with lower | upper
+    · exact List.Map.mem_map.mpr ⟨horizontal.lower, xEnds.1, lower.symm⟩
+    · exact List.Map.mem_map.mpr ⟨horizontal.upper, xEnds.2, (List.Membership.mem_singleton.mp upper).symm⟩
+  · rcases List.Membership.mem_cons.mp y with lower | upper
+    · exact List.Map.mem_map.mpr ⟨vertical.lower, yEnds.1, lower.symm⟩
+    · exact List.Map.mem_map.mpr ⟨vertical.upper, yEnds.2, (List.Membership.mem_singleton.mp upper).symm⟩
+
+/-- A whole retained local-grid factory transports the SAME original corner incidence without rebuilding the grid. -/
+public theorem grid_vertex_of_eq (cell : Cell polynomial ambient) (listed : cell ∈ original.cells)
+    {smallGrid : Grid.ClearGrid polynomial cell.box} (factory : smallGrid = cell.grid)
+    {point : Gaussian.Basic.Canonical} (member : FromStates.ContainsVertex smallGrid point) :
+    FromStates.ContainsVertex original point :=
+  cell.grid_vertex listed (Eq.mp (congrArg (fun value : Grid.ClearGrid polynomial cell.box =>
+    FromStates.ContainsVertex value point) factory) member)
+
+end Purelib.Polynomial.Geometry.Grid.ClearGrid.Cell

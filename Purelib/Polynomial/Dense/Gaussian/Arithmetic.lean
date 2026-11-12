@@ -29,37 +29,37 @@ namespace Purelib.Polynomial.Dense.Gaussian.Arithmetic
 
 /-- Coefficientwise addition after finite left padding and normalization. -/
 def add (left right : Basic.GaussianCanonical.CoefficientPolynomial)
-  : (Dense.Basic.DensePolynomial Gaussian.Basic.Canonical) :=
-  Dense.Basic.DensePolynomial.add left right
+  : (Basic.DensePolynomial Gaussian.Basic.Canonical) :=
+  Basic.DensePolynomial.add left right
 
 /-- Gaussian evaluation sends normalized coefficientwise addition to scalar addition. -/
 theorem eval_add (left right :
   Basic.GaussianCanonical.CoefficientPolynomial) (point : Gaussian.Basic.Canonical) :
-    Dense.Gaussian.Evaluation.eval (Dense.Gaussian.Arithmetic.add left right) point = Dense.Gaussian.Evaluation.eval
-      left point + Dense.Gaussian.Evaluation.eval right point :=
-  Dense.Basic.DensePolynomial.eval_add left right point
+    Evaluation.eval (add left right) point = Evaluation.eval
+      left point + Evaluation.eval right point :=
+  Basic.DensePolynomial.eval_add left right point
 
 /-- The single-slot shift evaluation law, proved by direct list recursion so
 that it does not pass through the generic `List.foldl_append`/`LawfulMonad`
 extensionality route. -/
 public theorem eval_shift_one (polynomial :
   Basic.GaussianCanonical.CoefficientPolynomial) (point : Gaussian.Basic.Canonical) :
-    (Dense.Basic.DensePolynomial.shift 1 polynomial).eval point =
+    (Basic.DensePolynomial.shift 1 polynomial).eval point =
       polynomial.eval point * point := by
-  rw [Dense.Basic.DensePolynomial.shift]
+  rw [Basic.DensePolynomial.shift]
   split
   · rename_i polynomialZero
-    rw [Dense.Basic.DensePolynomial.eval_zero,
-      Dense.Basic.DensePolynomial.eval_eq_zero_of_isZero
+    rw [Basic.DensePolynomial.eval_zero,
+      Basic.DensePolynomial.eval_eq_zero_of_isZero
         polynomialZero,
       zero_mul]
-  · change Dense.Gaussian.Evaluation.evalCoeffs point (polynomial.normalize.coeffs ++ [0]) =
+  · change Evaluation.evalCoeffs point (polynomial.normalize.coeffs ++ [0]) =
       polynomial.eval point * point
-    rw [Dense.Gaussian.Evaluation.evalCoeffs_append_zero]
+    rw [Evaluation.evalCoeffs_append_zero]
     change polynomial.normalize.eval point * point =
       polynomial.eval point * point
     exact congrArg (fun value : Gaussian.Basic.Canonical => value * point)
-      (Dense.Basic.DensePolynomial.eval_normalize
+      (Basic.DensePolynomial.eval_normalize
         polynomial point)
 
 end Purelib.Polynomial.Dense.Gaussian.Arithmetic

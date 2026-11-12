@@ -106,6 +106,29 @@ theorem append_winding {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCo
         right.vertices := by
   rw [OwnerTracePath.OwnerPath.append_vertices, Winding.Polygon.Basic.chainRaw_append, left.vertices_terminal]
 
+/-- Zero winding of actual framed owner-path pairs returns the retained original index.
+
+The two supplied families keep their actual endpoints, root owners and
+selected finite maps. Concatenation uses those exact paths; the original
+reference loop distinguishes the two source-frame owners.
+-/
+theorem roundTrip_index {polynomial : Dense} {start finish : Gaussian}
+    (first : OwnerFrame (polynomial.eval start)) (last : OwnerFrame (polynomial.eval finish))
+    (reference : WindingOneLoop polynomial start) (forward backward : Fin 2 → Fin 2)
+    (outward : (index : Fin 2) →
+      OwnerPath polynomial start (first.owners index) finish (last.owners (forward index)))
+    (returned : (index : Fin 2) →
+      OwnerPath polynomial finish (last.owners index) start (first.owners (backward index)))
+    (cancel : (index : Fin 2) →
+      Polynomial.Winding.Polygon.Basic.chainRaw polynomial start (outward index).vertices +
+        Polynomial.Winding.Polygon.Basic.chainRaw polynomial finish (returned (forward index)).vertices = 0)
+    (index : Fin 2) : backward (forward index) = index := by
+  let closed := (outward index).append (returned (forward index))
+  have winding : Polynomial.Winding.Polygon.Basic.chainRaw polynomial start closed.vertices = 8 * (0 : Int) :=
+    (append_winding (outward index) (returned (forward index))).trans (cancel index)
+  exact first.distinguish _ _
+    (Paths.OwnerLoopMonodromy.OwnerPath.rootEquivalent_of_even_with_reference reference closed 0 winding)
+
 end OwnerPath
 
 variable {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
@@ -249,14 +272,13 @@ theorem roundTrip_index {backPath : Polynomial.Geometry.ClearPath polynomial amb
     (cancel : PreparedPathWinding.ClearPath.rawWinding path + PreparedPathWinding.ClearPath.rawWinding backPath = 0)
       (index : Fin 2) :
     backward.target (forward.target index) = index := by
-  let left := forward.row index
-  let right := backward.row left.target
-  let closed := left.joined.append right.joined
-  have winding : Winding.Polygon.Basic.chainRaw polynomial start closed.vertices = 8 * (0 : Int) := by
-    rw [OwnerPath.append_winding, left.joined_winding, right.joined_winding]
-    exact cancel
-  exact first.distinguish _ _ (OwnerLoopMonodromy.OwnerPath.rootEquivalent_of_even_with_reference reference closed 0
-    winding)
+  exact OwnerPath.roundTrip_index first last reference forward.target backward.target
+    (fun selected => (forward.row selected).joined) (fun selected => (backward.row selected).joined)
+    (fun selected =>
+      (congrArg (fun value : Int => value + Polynomial.Winding.Polygon.Basic.chainRaw polynomial finish
+        (backward.row (forward.target selected)).joined.vertices) (forward.row selected).joined_winding).trans
+        ((congrArg (fun value : Int => PreparedPathWinding.ClearPath.rawWinding path + value)
+          (backward.row (forward.target selected)).joined_winding).trans cancel)) index
 
 open Purelib.Data in
 open Purelib.Polynomial in

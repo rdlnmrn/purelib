@@ -5,6 +5,7 @@ import Purelib.Approximation.Gaussian.Name.Coherent.Division.SampleEquivalence
 import Purelib.Approximation.Gaussian.Name.Coherent.Division.Sample
 import Purelib.Approximation.Gaussian.Name.Apart.Sampling
 public import Purelib.Approximation.Gaussian.Arithmetic.Mul
+public import Purelib.Approximation.Gaussian.Name.Coherent.Exact.Arithmetic
 import Purelib.Approximation.Gaussian.Equivalence
 import Purelib.Approximation.Gaussian.Name.Apart
 import Purelib.Approximation.Gaussian.Name.Coherent
@@ -280,6 +281,76 @@ def coherentMul_cancel_left (scalar left right :
           (NamedEquivalent.trans associateRight
             (NamedEquivalent.trans removeInverse
               (Mul.coherentMul_one_left right))))))
+
+/-- A retained right product identity gives the original guarded quotient of its actual result.
+
+Multiplication is commuted to the original left-cancellation interface. The
+same supplied denominator guard justifies its quotient and cancellation;
+no product guard or independently prepared denominator is constructed.
+-/
+def coherentDiv_of_mul (left scalar right : CoherentNamed) (apart : Named.Apart scalar.name)
+    (product : NamedEquivalent (left.mul scalar).name right.name) :
+    NamedEquivalent left.name (CoherentNamed.div right scalar apart).name := by
+  let quotient := CoherentNamed.div right scalar apart
+  exact coherentMul_cancel_left scalar left quotient apart
+    ((Laws.coherentMul_comm scalar left).trans
+      (product.trans ((coherentDiv_mul_cancel right scalar apart).symm.trans
+        (Laws.coherentMul_comm quotient scalar))))
+
+/-- A numerator's actual left factor passes outside division by the same original guarded scalar.
+
+Both quotient programs use the identical supplied denominator and guard.
+Original multiplication associativity and actual quotient cancellation
+establish the operational identity without preparing a product channel.
+-/
+def coherentDiv_mul_left (factor numerator scalar : CoherentNamed) (apart : Named.Apart scalar.name) :
+    NamedEquivalent (CoherentNamed.div (factor.mul numerator) scalar apart).name
+      (factor.mul (CoherentNamed.div numerator scalar apart)).name := by
+  let quotient := CoherentNamed.div numerator scalar apart
+  have product : NamedEquivalent ((factor.mul quotient).mul scalar).name (factor.mul numerator).name :=
+    (Laws.coherentMul_assoc factor quotient scalar).trans
+      (Congruence.coherentMul_respects factor factor (quotient.mul scalar) numerator
+        (NamedEquivalent.refl _) (coherentDiv_mul_cancel numerator scalar apart))
+  exact (coherentDiv_of_mul (factor.mul quotient) scalar (factor.mul numerator) apart product).symm
+
+/-- Dividing two actual coherent square channels gives the retained quotient's exact operational square.
+
+The numerator and denominator square to the displayed Gaussian parameters,
+whose exact product relation specifies the quotient square. Only the original
+denominator's apartness is used: two scalar cancellations avoid preparing a
+different squared denominator or assuming exact squares of finite samples.
+-/
+def coherentDiv_square_of_squares (numerator denominator : Coherent.CoherentNamed)
+    (apart : Named.Apart denominator.name)
+    (numeratorParameter denominatorParameter target : Data.Gaussian.Basic.Canonical)
+    (numeratorSquare : NamedEquivalent (numerator.mul numerator).name (Named.exact numeratorParameter))
+    (denominatorSquare : NamedEquivalent (denominator.mul denominator).name (Named.exact denominatorParameter))
+    (product : numeratorParameter = denominatorParameter * target) :
+    let quotient := numerator.div denominator apart
+    NamedEquivalent (quotient.mul quotient).name (Named.exact target) := by
+  let quotient := numerator.div denominator apart
+  let quotientSquare := quotient.mul quotient
+  let exactTarget := Coherence.exact target
+  have cancelled : NamedEquivalent (denominator.mul quotient).name numerator.name :=
+    (Laws.coherentMul_comm denominator quotient).trans (coherentDiv_mul_cancel numerator denominator apart)
+  have leftSquare : NamedEquivalent (denominator.mul (denominator.mul quotientSquare)).name
+      (Named.exact numeratorParameter) :=
+    (Laws.coherentMul_assoc denominator denominator quotientSquare).symm.trans
+      ((Laws.coherentMul_squares_interchange denominator quotient).trans
+        ((Congruence.coherentMul_respects (denominator.mul quotient) numerator
+          (denominator.mul quotient) numerator cancelled cancelled).trans numeratorSquare))
+  have rightSquare : NamedEquivalent (denominator.mul (denominator.mul exactTarget)).name
+      (Named.exact (denominatorParameter * target)) :=
+    (Laws.coherentMul_assoc denominator denominator exactTarget).symm.trans
+      ((Congruence.coherentMul_respects (denominator.mul denominator) (Coherence.exact denominatorParameter)
+        exactTarget exactTarget denominatorSquare (NamedEquivalent.refl _)).trans
+        (Name.Coherent.Exact.Arithmetic.exact_mul denominatorParameter target))
+  have rightParameter : NamedEquivalent (denominator.mul (denominator.mul exactTarget)).name
+      (Named.exact numeratorParameter) :=
+    NamedEquivalent.transport rfl (congrArg Named.exact product.symm) rightSquare
+  exact coherentMul_cancel_left denominator quotientSquare exactTarget apart
+    (coherentMul_cancel_left denominator (denominator.mul quotientSquare) (denominator.mul exactTarget) apart
+      (leftSquare.trans rightParameter.symm))
 
 end Purelib.Approximation.Gaussian.Division.Cancellation
 

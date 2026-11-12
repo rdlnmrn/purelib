@@ -100,7 +100,7 @@ open Purelib.Data.Rat
 open Purelib.Geometry.Rational
 open Purelib.RootIsolation
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus}
 
 /-- Append the four retained owner traces using the exact successive owner identities. -/
 @[expose] def trace (tour : TracedBoundaryDoublePath curve) :
@@ -130,19 +130,19 @@ theorem trace_winding (tour : TracedBoundaryDoublePath curve) :
 /-- Assemble a traced boundary tour from the four sequentially owner-linked banks.
 
 All trace and winding certificates belong to those exact supplied banks and the original two owner-boundary paths. -/
-@[expose] def ofFinished {leftAmbient rightAmbient connectorAmbient : Purelib.Geometry.Rational.Box}
+@[expose] def ofFinished {leftAmbient rightAmbient connectorAmbient : Geometry.Rational.Box}
     (leftState : State.WindingOne.Basic.WindingOneState curve.polynomial leftAmbient)
     (rightState : State.WindingOne.Basic.WindingOneState curve.polynomial rightAmbient)
-    (connector : Polynomial.Geometry.ClearPath curve.polynomial connectorAmbient leftState.box.anchor
+    (connector : Geometry.ClearPath curve.polynomial connectorAmbient leftState.box.anchor
       rightState.box.anchor)
     (owner : Owner (curve.polynomial.eval leftState.box.anchor))
     (diameter : Fraction.Rational) (positive : 0 < diameter)
     (forward : TracedFinishedDyadic connector owner diameter positive)
-    (right : TracedFinishedDyadic (BranchCutLifts.ownerBoundaryPath rightState) forward.bank.finishOwner diameter
+    (right : TracedFinishedDyadic (ownerBoundaryPath rightState) forward.bank.finishOwner diameter
       positive)
     (backward : TracedFinishedDyadic (BranchCutLifts.ClearPath.reverse connector)
       right.bank.finishOwner diameter positive)
-    (left : TracedFinishedDyadic (BranchCutLifts.ownerBoundaryPath leftState) backward.bank.finishOwner diameter
+    (left : TracedFinishedDyadic (ownerBoundaryPath leftState) backward.bank.finishOwner diameter
       positive) :
     TracedBoundaryDoublePath curve :=
   { joined := JoinedBoundaryDoublePath.ofFinished leftState rightState connector owner diameter positive
@@ -158,19 +158,19 @@ All trace and winding certificates belong to those exact supplied banks and the 
 
 The minimum of their retained path budgets fixes the diameter, while each bank is selected beyond its own movement-depth
 floor and starts at the preceding bank's exact terminal owner. -/
-@[expose] def total {leftAmbient rightAmbient connectorAmbient : Purelib.Geometry.Rational.Box}
+@[expose] def total {leftAmbient rightAmbient connectorAmbient : Geometry.Rational.Box}
     (leftState : State.WindingOne.Basic.WindingOneState curve.polynomial leftAmbient)
     (rightState : State.WindingOne.Basic.WindingOneState curve.polynomial rightAmbient)
-    (connector : Polynomial.Geometry.ClearPath curve.polynomial connectorAmbient leftState.box.anchor
+    (connector : Geometry.ClearPath curve.polynomial connectorAmbient leftState.box.anchor
       rightState.box.anchor)
     (within : connector.WithinAmbient) (owner : Owner (curve.polynomial.eval leftState.box.anchor)) :
     TracedBoundaryDoublePath curve := by
   let forwardBudget := PreparedDyadicTrace.PreparedClearPathModels.PathTraceBudgets.build connector
-  let rightPath := BranchCutLifts.ownerBoundaryPath rightState
+  let rightPath := ownerBoundaryPath rightState
   let rightBudget := PreparedDyadicTrace.PreparedClearPathModels.PathTraceBudgets.build rightPath
   let backwardPath := BranchCutLifts.ClearPath.reverse connector
   let backwardBudget := PreparedDyadicTrace.PreparedClearPathModels.PathTraceBudgets.build backwardPath
-  let leftPath := BranchCutLifts.ownerBoundaryPath leftState
+  let leftPath := ownerBoundaryPath leftState
   let leftBudget := PreparedDyadicTrace.PreparedClearPathModels.PathTraceBudgets.build leftPath
   let diameter := min (min forwardBudget.diameter rightBudget.diameter)
     (min backwardBudget.diameter leftBudget.diameter)
@@ -179,14 +179,14 @@ floor and starts at the preceding bank's exact terminal owner. -/
     (Fraction.Order.Basic.lt_min backwardBudget.diameter_positive leftBudget.diameter_positive)
   let forward := TracedFinishedDyadic.total connector within owner forwardBudget diameter positive
     ((Fraction.Order.Basic.min_le_left _ _).trans (Fraction.Order.Basic.min_le_left _ _))
-  let right := TracedFinishedDyadic.total rightPath (BranchCutLifts.ownerBoundaryPath_withinAmbient rightState)
+  let right := TracedFinishedDyadic.total rightPath (ownerBoundaryPath_withinAmbient rightState)
     forward.bank.finishOwner rightBudget diameter positive ((Fraction.Order.Basic.min_le_left _ _).trans
       (Fraction.Order.Basic.min_le_right _ _))
   let backward := TracedFinishedDyadic.total backwardPath
     (BranchCutLifts.ClearPath.reverse_withinAmbient connector within)
     right.bank.finishOwner backwardBudget diameter positive ((Fraction.Order.Basic.min_le_right _ _).trans
       (Fraction.Order.Basic.min_le_left _ _))
-  let left := TracedFinishedDyadic.total leftPath (BranchCutLifts.ownerBoundaryPath_withinAmbient leftState)
+  let left := TracedFinishedDyadic.total leftPath (ownerBoundaryPath_withinAmbient leftState)
     backward.bank.finishOwner leftBudget diameter positive ((Fraction.Order.Basic.min_le_right _ _).trans
       (Fraction.Order.Basic.min_le_right _ _))
   exact ofFinished leftState rightState connector owner diameter positive forward right backward left
@@ -221,7 +221,7 @@ open Purelib.Data.Gaussian
 open Purelib.Curves.Hyperelliptic.Branches
 open Purelib.Riemann.Topology
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus}
 
 /-- Read a closed boundary cycle from the supplied trace and its certified root return. -/
 @[expose] def ofTraced (tour : TracedBoundaryDoublePath curve) : ClosedBoundaryDoublePath curve :=
@@ -313,10 +313,10 @@ theorem ReturnInconclusive.check_error {joined : JoinedBoundaryDoublePath curve}
 
 The fast attempt retains its exact joined banks when successful. An inconclusive return check selects the certified
 winding trace construction with the same original connector and initial owner. -/
-@[irreducible, expose] def total {leftAmbient rightAmbient connectorAmbient : Purelib.Geometry.Rational.Box}
+@[irreducible, expose] def total {leftAmbient rightAmbient connectorAmbient : Geometry.Rational.Box}
     (leftState : State.WindingOne.Basic.WindingOneState curve.polynomial leftAmbient)
     (rightState : State.WindingOne.Basic.WindingOneState curve.polynomial rightAmbient)
-    (connector : Polynomial.Geometry.ClearPath curve.polynomial connectorAmbient leftState.box.anchor
+    (connector : Geometry.ClearPath curve.polynomial connectorAmbient leftState.box.anchor
       rightState.box.anchor)
     (within : connector.WithinAmbient) (owner : Owner (curve.polynomial.eval leftState.box.anchor)) :
     ClosedBoundaryDoublePath curve :=
@@ -326,10 +326,10 @@ winding trace construction with the same original connector and initial owner. -
   | .error _ => ofTraced (TracedBoundaryDoublePath.total leftState rightState connector within owner)
 
 /-- Either total-construction branch retains the exact original initial root owner and parameter. -/
-theorem total_initialOwner {leftAmbient rightAmbient connectorAmbient : Purelib.Geometry.Rational.Box}
+theorem total_initialOwner {leftAmbient rightAmbient connectorAmbient : Geometry.Rational.Box}
     (leftState : State.WindingOne.Basic.WindingOneState curve.polynomial leftAmbient)
     (rightState : State.WindingOne.Basic.WindingOneState curve.polynomial rightAmbient)
-    (connector : Polynomial.Geometry.ClearPath curve.polynomial connectorAmbient leftState.box.anchor
+    (connector : Geometry.ClearPath curve.polynomial connectorAmbient leftState.box.anchor
       rightState.box.anchor)
     (within : connector.WithinAmbient) (owner : Owner (curve.polynomial.eval leftState.box.anchor)) :
     (⟨_, (total leftState rightState connector within owner).joined.data.forwardOwner⟩ :
@@ -343,10 +343,10 @@ theorem total_initialOwner {leftAmbient rightAmbient connectorAmbient : Purelib.
   · rfl
 
 /-- Either total-construction branch retains the original left anchor as its basepoint. -/
-theorem total_base {leftAmbient rightAmbient connectorAmbient : Purelib.Geometry.Rational.Box}
+theorem total_base {leftAmbient rightAmbient connectorAmbient : Geometry.Rational.Box}
     (leftState : State.WindingOne.Basic.WindingOneState curve.polynomial leftAmbient)
     (rightState : State.WindingOne.Basic.WindingOneState curve.polynomial rightAmbient)
-    (connector : Polynomial.Geometry.ClearPath curve.polynomial connectorAmbient leftState.box.anchor
+    (connector : Geometry.ClearPath curve.polynomial connectorAmbient leftState.box.anchor
       rightState.box.anchor)
     (within : connector.WithinAmbient) (owner : Owner (curve.polynomial.eval leftState.box.anchor)) :
     (total leftState rightState connector within owner).joined.data.leftState.box.anchor =
@@ -360,10 +360,10 @@ theorem total_base {leftAmbient rightAmbient connectorAmbient : Purelib.Geometry
   · rfl
 
 /-- Either total-construction branch retains the original initial root name. -/
-theorem total_initialName {leftAmbient rightAmbient connectorAmbient : Purelib.Geometry.Rational.Box}
+theorem total_initialName {leftAmbient rightAmbient connectorAmbient : Geometry.Rational.Box}
     (leftState : State.WindingOne.Basic.WindingOneState curve.polynomial leftAmbient)
     (rightState : State.WindingOne.Basic.WindingOneState curve.polynomial rightAmbient)
-    (connector : Polynomial.Geometry.ClearPath curve.polynomial connectorAmbient leftState.box.anchor
+    (connector : Geometry.ClearPath curve.polynomial connectorAmbient leftState.box.anchor
       rightState.box.anchor)
     (within : connector.WithinAmbient) (owner : Owner (curve.polynomial.eval leftState.box.anchor)) :
     ownerName (total leftState rightState connector within owner).joined.data.forwardOwner = ownerName owner := by

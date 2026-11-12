@@ -97,11 +97,11 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceWords (Pat
 open Purelib.Approximation.Gaussian.Name.Basic (Named)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
   {source : Differential genus} {axes :
     PrimitiveAxes base.bank.grid}
   {domains : FaceDomainBank frames
@@ -114,21 +114,21 @@ namespace SegmentAxisGroups
 
 /-- The same complete interval groups, viewed in the actual axis direction. -/
 @[expose] def AxisGroups {Alpha : Type} {key : Alpha → Fraction.Rational}
-    (span : RootedWords.LiftedFragment axes domains mesh source count target → ClearGrid.Interval key)
-    (first last : RootedWords.LiftedFragment axes domains mesh source count target → Fraction.Rational)
+    (span : LiftedFragment axes domains mesh source count target → ClearGrid.Interval key)
+    (first last : LiftedFragment axes domains mesh source count target → Fraction.Rational)
     {intervals : List (ClearGrid.Interval key)} {start finish : Fraction.Rational}
-    (walk : AxisWalks.Walk intervals start finish) (pieces : List (RootedWords.LiftedFragment axes domains mesh source
+    (walk : AxisWalks.Walk intervals start finish) (pieces : List (LiftedFragment axes domains mesh source
       count target)) : Prop :=
   match walk with
   | .forward whole => PartialWalk.Groups span first last intervals whole.edges pieces
   | .backward whole => PartialWalk.Groups span last first intervals whole.edges pieces.reverse
 
 /-- An original stationary segment has no actual moving fragments retaining its source ancestry. -/
-private theorem empty_of_stationary_source {pieces : List (RootedWords.LiftedFragment axes domains mesh source count
+private theorem empty_of_stationary_source {pieces : List (LiftedFragment axes domains mesh source count
   target)}
     {ambient : Rational.Box} {start finish : Data.Gaussian.Basic.Canonical} {segment :
       ClearPath.ClearSegment curve.polynomial ambient start finish}
-    (original : ∀ piece ∈ pieces, PreparedSegmentSources.SegmentSource segment piece.parent)
+    (original : ∀ piece ∈ pieces, SegmentSource segment piece.parent)
     (moving : ∀ piece ∈ pieces, piece.last ≠ piece.first) (stationary : start = finish) : pieces = [] := by
   cases pieces with
   | nil => rfl
@@ -142,16 +142,16 @@ private theorem empty_of_stationary_source {pieces : List (RootedWords.LiftedFra
 
 /-- The actual rooted fragments of a horizontal source form complete groups in its retained grid walk and original
 traversal direction. -/
-private theorem horizontal_axis_groups {pieces : List (RootedWords.LiftedFragment axes domains mesh source count
+private theorem horizontal_axis_groups {pieces : List (LiftedFragment axes domains mesh source count
   target)}
     {ambient : Rational.Box} {start finish : Data.Gaussian.Basic.Canonical} {segment :
       ClearPath.ClearSegment curve.polynomial ambient start finish}
-    {firstName lastName : Gaussian.Name.Basic.Named} (word : LiftedFragment.RootedWord pieces start firstName finish
+    {firstName lastName : Named} (word : LiftedFragment.RootedWord pieces start firstName finish
       lastName)
-    (original : ∀ piece ∈ pieces, PreparedSegmentSources.SegmentSource segment piece.parent)
+    (original : ∀ piece ∈ pieces, SegmentSource segment piece.parent)
     (moving : ∀ piece ∈ pieces, piece.last ≠ piece.first) (flat : start.im = finish.im)
-    (firstOnGrid : Polynomial.Geometry.Grid.FromStates.ContainsVertex base.bank.grid start) (lastOnGrid :
-      Polynomial.Geometry.Grid.FromStates.ContainsVertex base.bank.grid finish)
+    (firstOnGrid : ContainsVertex base.bank.grid start) (lastOnGrid :
+      ContainsVertex base.bank.grid finish)
     (whole : AxisWalks.Walk base.bank.grid.xIntervals start.re finish.re) :
     AxisGroups (fun piece =>
       piece.fragment.located.cell.horizontal) (fun piece => piece.first.re) (fun piece => piece.last.re) whole pieces :=
@@ -162,14 +162,14 @@ private theorem horizontal_axis_groups {pieces : List (RootedWords.LiftedFragmen
     subst pieces
     cases whole with
     | forward whole =>
-        have walk : Partial.PartialWalk (fun piece : RootedWords.LiftedFragment axes domains mesh source count target =>
+        have walk : PartialWalk (fun piece : LiftedFragment axes domains mesh source count target =>
           piece.fragment.located.cell.horizontal)
             (fun piece => piece.first.re) (fun piece => piece.last.re) base.bank.grid.xIntervals [] start.re finish.re
               := by
           rw [stationary]; exact .nil _
         exact walk.groups_for_walk base.bank.grid.vertical_ordered firstOnGrid.1 lastOnGrid.1 whole
     | backward whole =>
-        have walk : Partial.PartialWalk (fun piece : RootedWords.LiftedFragment axes domains mesh source count target =>
+        have walk : PartialWalk (fun piece : LiftedFragment axes domains mesh source count target =>
           piece.fragment.located.cell.horizontal)
             (fun piece => piece.last.re) (fun piece => piece.first.re) base.bank.grid.xIntervals [] finish.re start.re
               := by
@@ -187,15 +187,15 @@ private theorem horizontal_axis_groups {pieces : List (RootedWords.LiftedFragmen
 
 /-- The actual rooted fragments of a vertical source form complete groups in its retained grid walk and original
 traversal direction. -/
-private theorem vertical_axis_groups {pieces : List (RootedWords.LiftedFragment axes domains mesh source count target)}
+private theorem vertical_axis_groups {pieces : List (LiftedFragment axes domains mesh source count target)}
     {ambient : Rational.Box} {start finish : Data.Gaussian.Basic.Canonical} {segment :
       ClearPath.ClearSegment curve.polynomial ambient start finish}
-    {firstName lastName : Gaussian.Name.Basic.Named} (word : LiftedFragment.RootedWord pieces start firstName finish
+    {firstName lastName : Named} (word : LiftedFragment.RootedWord pieces start firstName finish
       lastName)
-    (original : ∀ piece ∈ pieces, PreparedSegmentSources.SegmentSource segment piece.parent)
+    (original : ∀ piece ∈ pieces, SegmentSource segment piece.parent)
     (moving : ∀ piece ∈ pieces, piece.last ≠ piece.first) (flat : start.re = finish.re)
-    (firstOnGrid : Polynomial.Geometry.Grid.FromStates.ContainsVertex base.bank.grid start) (lastOnGrid :
-      Polynomial.Geometry.Grid.FromStates.ContainsVertex base.bank.grid finish)
+    (firstOnGrid : ContainsVertex base.bank.grid start) (lastOnGrid :
+      ContainsVertex base.bank.grid finish)
     (whole : AxisWalks.Walk base.bank.grid.yIntervals start.im finish.im) :
     AxisGroups (fun piece =>
       piece.fragment.located.cell.vertical) (fun piece => piece.first.im) (fun piece => piece.last.im) whole pieces :=
@@ -206,14 +206,14 @@ private theorem vertical_axis_groups {pieces : List (RootedWords.LiftedFragment 
     subst pieces
     cases whole with
     | forward whole =>
-        have walk : Partial.PartialWalk (fun piece : RootedWords.LiftedFragment axes domains mesh source count target =>
+        have walk : PartialWalk (fun piece : LiftedFragment axes domains mesh source count target =>
           piece.fragment.located.cell.vertical)
             (fun piece => piece.first.im) (fun piece => piece.last.im) base.bank.grid.yIntervals [] start.im finish.im
               := by
           rw [stationary]; exact .nil _
         exact walk.groups_for_walk base.bank.grid.horizontal_ordered firstOnGrid.2 lastOnGrid.2 whole
     | backward whole =>
-        have walk : Partial.PartialWalk (fun piece : RootedWords.LiftedFragment axes domains mesh source count target =>
+        have walk : PartialWalk (fun piece : LiftedFragment axes domains mesh source count target =>
           piece.fragment.located.cell.vertical)
             (fun piece => piece.last.im) (fun piece => piece.first.im) base.bank.grid.yIntervals [] finish.im start.im
               := by
@@ -235,15 +235,15 @@ end SegmentAxisGroups
 @[expose] def SegmentAxisGroups {ambient : Rational.Box} :
     {start finish : Data.Gaussian.Basic.Canonical} → (segment : ClearPath.ClearSegment curve.polynomial ambient start
       finish) →
-      Polynomial.Geometry.Grid.FromStates.ContainsVertex base.bank.grid start →
-        Polynomial.Geometry.Grid.FromStates.ContainsVertex base.bank.grid finish →
-      List (RootedWords.LiftedFragment axes domains mesh source count target) → Prop
+      ContainsVertex base.bank.grid start →
+        ContainsVertex base.bank.grid finish →
+      List (LiftedFragment axes domains mesh source count target) → Prop
   | _, _, .horizontal xStart xFinish _ _ _ _ _ _, first, last, pieces =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.SegmentAxisGroups.AxisGroups (fun piece =>
+      SegmentAxisGroups.AxisGroups (fun piece =>
         piece.fragment.located.cell.horizontal) (fun piece => piece.first.re) (fun piece => piece.last.re)
         (AxisWalks.walk base.bank.grid.vertical base.bank.grid.vertical_ordered xStart xFinish first.1 last.1) pieces
   | _, _, .vertical _ yStart yFinish _ _ _ _ _, first, last, pieces =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.SegmentAxisGroups.AxisGroups (fun piece =>
+      SegmentAxisGroups.AxisGroups (fun piece =>
         piece.fragment.located.cell.vertical) (fun piece => piece.first.im) (fun piece => piece.last.im)
         (AxisWalks.walk base.bank.grid.horizontal base.bank.grid.horizontal_ordered yStart yFinish first.2 last.2)
           pieces
@@ -254,23 +254,23 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SegmentAxisGroups.Ro
 
 /-- The original source segment and grid endpoint certificates supply the complete retained axis grouping of its actual
 moving rooted word. -/
-theorem segment_axis_groups {pieces : List (RootedWords.LiftedFragment axes domains mesh source count target)}
+theorem segment_axis_groups {pieces : List (LiftedFragment axes domains mesh source count target)}
     {ambient : Rational.Box} {start finish : Data.Gaussian.Basic.Canonical} {segment :
       ClearPath.ClearSegment curve.polynomial ambient start finish}
-    {firstName lastName : Gaussian.Name.Basic.Named} (word : LiftedFragment.RootedWord pieces start firstName finish
+    {firstName lastName : Named} (word : LiftedFragment.RootedWord pieces start firstName finish
       lastName)
-    (original : ∀ piece ∈ pieces, PreparedSegmentSources.SegmentSource segment piece.parent) (moving : ∀ piece ∈ pieces,
+    (original : ∀ piece ∈ pieces, SegmentSource segment piece.parent) (moving : ∀ piece ∈ pieces,
       piece.last ≠ piece.first)
-    (firstOnGrid : Polynomial.Geometry.Grid.FromStates.ContainsVertex base.bank.grid start) (lastOnGrid :
-      Polynomial.Geometry.Grid.FromStates.ContainsVertex base.bank.grid finish) :
+    (firstOnGrid : ContainsVertex base.bank.grid start) (lastOnGrid :
+      ContainsVertex base.bank.grid finish) :
     SegmentAxisGroups segment firstOnGrid lastOnGrid pieces
       := by
   cases segment with
   | horizontal =>
-    exact Curves.Hyperelliptic.Meshes.PuncturedGrid.SegmentAxisGroups.horizontal_axis_groups word original moving rfl
+    exact SegmentAxisGroups.horizontal_axis_groups word original moving rfl
       firstOnGrid lastOnGrid _
   | vertical =>
-    exact Curves.Hyperelliptic.Meshes.PuncturedGrid.SegmentAxisGroups.vertical_axis_groups word original moving rfl
+    exact SegmentAxisGroups.vertical_axis_groups word original moving rfl
       firstOnGrid lastOnGrid _
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SegmentAxisGroups.RootedWord
@@ -282,10 +282,10 @@ the original path on the grid. -/
 inductive AxisPathWords {ambient : Rational.Box} :
     {start finish : Data.Gaussian.Basic.Canonical} → Polynomial.Geometry.ClearPath curve.polynomial ambient start
       finish →
-      Gaussian.Name.Basic.Named → Gaussian.Name.Basic.Named →
-      List (RootedWords.LiftedFragment axes domains mesh source count target) → Prop
+      Named → Named →
+      List (LiftedFragment axes domains mesh source count target) → Prop
   /-- The empty original source path retains the equivalence of its actual endpoint root names. -/ | nil (point :
-    Data.Gaussian.Basic.Canonical) {firstName lastName : Gaussian.Name.Basic.Named}
+    Data.Gaussian.Basic.Canonical) {firstName lastName : Named}
       (root : Nonempty (Gaussian.Equivalence.NamedEquivalent firstName lastName)) :
         AxisPathWords (.nil point) firstName
         lastName []
@@ -293,12 +293,12 @@ inductive AxisPathWords {ambient : Rational.Box} :
     middle root owner. -/ | cons {start middle finish : Data.Gaussian.Basic.Canonical} {segment : ClearPath.ClearSegment
     curve.polynomial ambient start middle}
       {tail : Polynomial.Geometry.ClearPath curve.polynomial ambient middle finish} {firstName middleName lastName :
-        Gaussian.Name.Basic.Named}
-      {block pieces : List (RootedWords.LiftedFragment axes domains mesh source count target)}
+        Named}
+      {block pieces : List (LiftedFragment axes domains mesh source count target)}
       (word : LiftedFragment.RootedWord block start firstName middle middleName)
-      (original : ∀ piece ∈ block, PreparedSegmentSources.SegmentSource segment piece.parent)
-      (firstOnGrid : Polynomial.Geometry.Grid.FromStates.ContainsVertex base.bank.grid start) (lastOnGrid :
-        Polynomial.Geometry.Grid.FromStates.ContainsVertex base.bank.grid middle)
+      (original : ∀ piece ∈ block, SegmentSource segment piece.parent)
+      (firstOnGrid : ContainsVertex base.bank.grid start) (lastOnGrid :
+        ContainsVertex base.bank.grid middle)
       (groups : SegmentAxisGroups segment firstOnGrid
         lastOnGrid block)
       (remaining : AxisPathWords tail middleName
@@ -313,19 +313,19 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SegmentAxisGroups.Pa
 /-- All grouping obligations are discharged on the actual source word. -/
 theorem group_axes {ambient : Rational.Box} {start finish : Data.Gaussian.Basic.Canonical}
     {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish} {firstName lastName :
-      Gaussian.Name.Basic.Named}
-    {pieces : List (RootedWords.LiftedFragment axes domains mesh source count target)}
+      Named}
+    {pieces : List (LiftedFragment axes domains mesh source count target)}
     (words : SourceWords.PathSourceWords path firstName lastName pieces) (moving : ∀ piece ∈ pieces, piece.last ≠
       piece.first)
-    (onGrid : Polynomial.Geometry.Grid.FromStates.ContainsPathVertices base.bank.grid path) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.SegmentAxisGroups.AxisPathWords path firstName lastName pieces := by
+    (onGrid : ContainsPathVertices base.bank.grid path) :
+      AxisPathWords path firstName lastName pieces := by
   induction words with
   | nil point root => exact .nil point root
   | @cons start middle finish segment tail firstName middleName lastName block pieces word original remaining ih =>
       have firstOnGrid := onGrid.1
-      have lastOnGrid := Polynomial.Geometry.Grid.FromStates.ContainsPathVertices.start base.bank.grid tail onGrid.2
+      have lastOnGrid := ContainsPathVertices.start base.bank.grid tail onGrid.2
       exact .cons word original firstOnGrid lastOnGrid
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.SegmentAxisGroups.RootedWord.segment_axis_groups word original (fun
+        (RootedWord.segment_axis_groups word original (fun
           piece member => moving piece (List.mem_append_left _ member)) firstOnGrid lastOnGrid)
         (ih (fun piece member => moving piece (List.mem_append_right _ member)) onGrid.2)
 
@@ -336,11 +336,11 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SegmentAxisGroups
 /-- Complete axis grouping of all four actual source legs, retaining the original root handoffs between the connector
 and both branch boundaries. -/
 inductive AxisTourWords (tour : PreparedBoundaryClosure.ClosedBoundaryDoublePath curve) (firstName lastName :
-  Gaussian.Name.Basic.Named) :
-    List (RootedWords.LiftedFragment axes domains mesh source count target) → Prop
+  Named) :
+    List (LiftedFragment axes domains mesh source count target) → Prop
   /-- Combine the four actual source-leg groupings with their retained connector and branch-boundary root handoffs. -/ |
-    mk {forward right backward left : List (RootedWords.LiftedFragment axes domains mesh source count target)}
-      {afterForward afterRight afterBackward : Gaussian.Name.Basic.Named}
+    mk {forward right backward left : List (LiftedFragment axes domains mesh source count target)}
+      {afterForward afterRight afterBackward : Named}
       (forwardWords : AxisPathWords
         tour.joined.data.connector firstName afterForward forward)
       (rightWords : AxisPathWords
@@ -359,25 +359,25 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SegmentAxisGroups.To
 /-- Construct all complete interval groups from the actual retained source words and the original tour's grid-vertex
 certificate. -/
 theorem group_axes {tour : PreparedBoundaryClosure.ClosedBoundaryDoublePath curve}
-    {firstName lastName : Gaussian.Name.Basic.Named} {pieces : List (RootedWords.LiftedFragment axes domains mesh source
+    {firstName lastName : Named} {pieces : List (LiftedFragment axes domains mesh source
       count target)}
     (words : SourceWords.TourSourceWords tour firstName lastName pieces)
     (moving : ∀ piece ∈ pieces, piece.last ≠ piece.first)
     (onGrid : Grid.ContainsTourVertices base.bank.grid tour) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.SegmentAxisGroups.AxisTourWords tour firstName lastName pieces := by
+      AxisTourWords tour firstName lastName pieces := by
   cases words with
   | mk forward right backward left =>
       exact .mk
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.SegmentAxisGroups.PathSourceWords.group_axes forward (fun piece
+        (PathSourceWords.group_axes forward (fun piece
           member => moving piece
           (List.mem_append_left _ (List.mem_append_left _ (List.mem_append_left _ member)))) onGrid.1)
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.SegmentAxisGroups.PathSourceWords.group_axes right (fun piece member
+        (PathSourceWords.group_axes right (fun piece member
           => moving piece
           (List.mem_append_left _ (List.mem_append_left _ (List.mem_append_right _ member)))) onGrid.2.1)
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.SegmentAxisGroups.PathSourceWords.group_axes backward (fun piece
+        (PathSourceWords.group_axes backward (fun piece
           member => moving piece
           (List.mem_append_left _ (List.mem_append_right _ member))) onGrid.2.2.1)
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.SegmentAxisGroups.PathSourceWords.group_axes left (fun piece member
+        (PathSourceWords.group_axes left (fun piece member
           => moving piece (List.mem_append_right _ member)) onGrid.2.2.2)
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SegmentAxisGroups.TourSourceWords

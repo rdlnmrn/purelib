@@ -33,6 +33,8 @@ import Purelib.Riemann.Integration.PreparedModelAccuracy
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! Models are selected before one shared numerical and root-safe mesh. -/
@@ -57,7 +59,7 @@ open Purelib.Approximation.Rational.Geometric.Search (firstQuarterBelow)
 open Purelib.Approximation.Rational in
 /-- A scalar weight moves into the scale of the original quarter-radius sequence. -/
 theorem quarter_weight (weight scale : Coordinate) (index : Nat) :
-    weight * Geometric.Basic.quarterRadius scale index = Geometric.Basic.quarterRadius (weight * scale) index := by
+    weight * quarterRadius scale index = quarterRadius (weight * scale) index := by
   simp only [Geometric.Basic.quarterRadius_eq_mul_pow, -eq_self, -iff_self]
   ring1
 
@@ -65,10 +67,10 @@ open Purelib.Approximation.Rational in
 open Purelib.Data.Rat in
 /-- Quarter-radius values preserve the original ordering of their scales. -/
 theorem quarter_scale {first second : Coordinate} (order : first ≤ second) (index : Nat) :
-    Geometric.Basic.quarterRadius first index ≤ Geometric.Basic.quarterRadius second index := by
+    quarterRadius first index ≤ quarterRadius second index := by
   simp only [Geometric.Basic.quarterRadius_eq_mul_pow, -eq_self, -iff_self]
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct order
-    (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) index)
+  exact Arithmetic.mul_le_mul_of_nonneg_right_direct order
+    (Arithmetic.pow_nonneg_direct (by decide) index)
 
 open Purelib.Approximation.Rational in
 set_option genInjectivity false in
@@ -77,9 +79,9 @@ set_option genInjectivity false in
 Both bounds use the same selected index and target, preserving separate first and second scale witnesses. -/
 structure IndexBudget (first second target : Coordinate) where
   /-- The selected common index in the original quarter-radius sequences. -/ index : Nat
-  /-- The first original scale meets the target at the retained index. -/ firstPaid : Geometric.Basic.quarterRadius
+  /-- The first original scale meets the target at the retained index. -/ firstPaid : quarterRadius
     first index ≤ target
-  /-- The second original scale meets the target at the same index. -/ secondPaid : Geometric.Basic.quarterRadius second
+  /-- The second original scale meets the target at the same index. -/ secondPaid : quarterRadius second
     index ≤ target
 
 constructive_injectivity IndexBudget
@@ -91,23 +93,23 @@ The constructive search uses their sum from index zero; monotonicity transports 
 @[expose] def IndexBudget.build (first second target : Coordinate)
     (firstNonnegative : 0 ≤ first) (secondNonnegative : 0 ≤ second) (positive : 0 < target) :
     IndexBudget first second target := by
-  let index := Geometric.Search.firstQuarterBelow (first + second) 0 target
+  let index := firstQuarterBelow (first + second) 0 target
   have paid := (Geometric.Search.firstQuarterBelow_accurate (first + second)
     (add_nonneg firstNonnegative secondNonnegative) 0 target positive).le
-  exact ⟨index, (Riemann.Readings.PreparedPairedPrimitiveRequests.quarter_scale (le_add_of_nonneg_right
+  exact ⟨index, (quarter_scale (le_add_of_nonneg_right
     secondNonnegative) index).trans paid,
-    (Riemann.Readings.PreparedPairedPrimitiveRequests.quarter_scale (le_add_of_nonneg_left firstNonnegative)
+    (quarter_scale (le_add_of_nonneg_left firstNonnegative)
       index).trans paid⟩
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {source :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {source :
+  Differential genus}
 
 open Purelib.Curves.Hyperelliptic in
 /-- A shared paired request with both original primitive error densities paid.
 
 The same model index indexes separate first and recast second comparisons, while the original parent, upper accuracy and
 target remain explicit. -/
-@[expose] def PaidPrimitivePair (parent : CenteredEdge curve source) (other : Differentials.Basic.Differential genus)
+@[expose] def PaidPrimitivePair (parent : CenteredEdge curve source) (other : Differential genus)
     (count : Nat) (upper target : Coordinate) :=
   (shared : PairedRequest parent other upper) × (index : Nat) ×
   (first : PrimitiveComparison shared.first count index) ×
@@ -124,7 +126,7 @@ open Purelib.Riemann.RootContinuation in
 
 Shared polynomial and spatial indices pay one third of the target each; the positive accuracy cap pays the remaining
 factor-40 term. The exact original patch and recast patch retain their selected models and common geometry. -/
-@[expose] def PaidPrimitivePair.build (parent : CenteredEdge curve source) (other : Differentials.Basic.Differential
+@[expose] def PaidPrimitivePair.build (parent : CenteredEdge curve source) (other : Differential
   genus)
     (patch : PreparedPatch parent) (count : Nat)
     (finishInside : (patch.neighborhood count).box.Contains (parent.edge.point 1))
@@ -138,24 +140,24 @@ factor-40 term. The exact original patch and recast patch retain their selected 
     (Bounds.Box.denseHornerNormBounds_nonneg (differentialNumerator source) (patch.neighborhood count).box).1
   have secondNumeratorNonnegative : 0 ≤ secondNumerator :=
     (Bounds.Box.denseHornerNormBounds_nonneg (differentialNumerator other) (otherPatch.neighborhood count).box).1
-  have thirdPositive : 0 < target / 3 := Fraction.Order.Field.div_pos_direct positive (by decide)
+  have thirdPositive : 0 < target / 3 := Field.div_pos_direct positive (by decide)
   let polynomial := IndexBudget.build
     (4 * firstNumerator * (patch.neighborhood count).inverseErrorScale)
     (4 * secondNumerator * (otherPatch.neighborhood count).inverseErrorScale) (target / 3)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    (Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide)
       firstNumeratorNonnegative) (patch.neighborhood count).inverseErrorScale_positive.le)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    (Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide)
       secondNumeratorNonnegative) (otherPatch.neighborhood count).inverseErrorScale_positive.le)
     thirdPositive
   let firstModel := PrimitiveModel.ofIndex (patch.neighborhood count) polynomial.index (differentialNumerator source)
   let secondModel := PrimitiveModel.ofIndex (otherPatch.neighborhood count) polynomial.index (differentialNumerator
     other)
   have firstTaylorNonnegative : 0 ≤ 2 * firstModel.primitive.remainderBound * movement parent :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide)
       firstModel.primitive.remainderBound_nonnegative)
       (PreparedPrimitiveRequests.movement_nonnegative parent)
   have secondTaylorNonnegative : 0 ≤ 2 * secondModel.primitive.remainderBound * movement parent :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide)
       secondModel.primitive.remainderBound_nonnegative)
       (PreparedPrimitiveRequests.movement_nonnegative parent)
   let spatial := IndexBudget.build (2 * firstModel.primitive.remainderBound * movement parent)
@@ -163,33 +165,33 @@ factor-40 term. The exact original patch and recast patch retain their selected 
     firstTaylorNonnegative secondTaylorNonnegative thirdPositive
   let accuracy := min upper (Budget.Weighted.allowance (target / 3) 40)
   have fortyNonnegative : (0 : Coordinate) ≤ 40 := by decide +kernel
-  have accuracyPositive : 0 < accuracy := Fraction.Order.Basic.lt_min upperPositive
+  have accuracyPositive : 0 < accuracy := Basic.lt_min upperPositive
     (Budget.Weighted.allowance_positive thirdPositive fortyNonnegative)
   let shared := PairedRequest.build parent other proper upper accuracy accuracyPositive
-    (Fraction.Order.Basic.min_le_left _ _) spatial.index
+    (Basic.min_le_left _ _) spatial.index
   let first := PrimitiveComparison.ofModel shared.first count polynomial.index patch firstModel finishInside
   let second := PrimitiveComparison.ofModel shared.second count polynomial.index otherPatch secondModel finishInside
   have numerical : 40 * shared.accuracy ≤ target / 3 :=
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Basic.min_le_right _ _)
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Basic.min_le_right _ _)
       fortyNonnegative).trans
       (Budget.Weighted.mul_allowance_le thirdPositive.le fortyNonnegative)
-  have firstTaylor : 2 * firstModel.primitive.remainderBound * Geometric.Basic.quarterRadius (movement parent)
+  have firstTaylor : 2 * firstModel.primitive.remainderBound * quarterRadius (movement parent)
     shared.first.block.depth ≤ target / 3 := by
-    rw [Riemann.Readings.PreparedPairedPrimitiveRequests.quarter_weight]
+    rw [quarter_weight]
     exact ((quarterRadius_antitone firstTaylorNonnegative shared.first_depth_ge).trans
       spatial.firstPaid)
-  have secondTaylor : 2 * secondModel.primitive.remainderBound * Geometric.Basic.quarterRadius (movement parent)
+  have secondTaylor : 2 * secondModel.primitive.remainderBound * quarterRadius (movement parent)
     shared.second.block.depth ≤ target / 3 := by
-    rw [Riemann.Readings.PreparedPairedPrimitiveRequests.quarter_weight]
+    rw [quarter_weight]
     exact ((quarterRadius_antitone secondTaylorNonnegative shared.second_depth_ge).trans
       spatial.secondPaid)
-  have firstPolynomial : 4 * firstNumerator * Geometric.Basic.quarterRadius (patch.neighborhood count).inverseErrorScale
+  have firstPolynomial : 4 * firstNumerator * quarterRadius (patch.neighborhood count).inverseErrorScale
     polynomial.index ≤ target / 3 := by
-    rw [Riemann.Readings.PreparedPairedPrimitiveRequests.quarter_weight]
+    rw [quarter_weight]
     exact polynomial.firstPaid
-  have secondPolynomial : 4 * secondNumerator * Geometric.Basic.quarterRadius (otherPatch.neighborhood
+  have secondPolynomial : 4 * secondNumerator * quarterRadius (otherPatch.neighborhood
     count).inverseErrorScale polynomial.index ≤ target / 3 := by
-    rw [Riemann.Readings.PreparedPairedPrimitiveRequests.quarter_weight]
+    rw [quarter_weight]
     exact polynomial.secondPaid
   have thirds : target / 3 + (target / 3 + target / 3) = target := by
     calc

@@ -114,12 +114,12 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Algebra.FiniteSum.Fin (sumFin)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
   {faces : PuncturedFaces bank} {mesh :
     LiftedMesh vertices edges faces}
   {forest : Topology.Surface.Sewing.SewingForest mesh.triangulation.faces} {domains :
@@ -128,18 +128,18 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 
 set_option genInjectivity false in
 /-- The original paired differential magnitude and contact preparations on one retained sewn polygon. -/
-structure BilinearPreparation (polygon : SewingForest.SinglePolygon forest)
-    (domains : DomainBanks.FaceDomainBank frames faces.regulars) (i j : Fin genus) where
+structure BilinearPreparation (polygon : SinglePolygon forest)
+    (domains : FaceDomainBank frames faces.regulars) (i j : Fin genus) where
   /-- The cached magnitude request for the original first standard differential. -/ leftMagnitude :
-    MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential i)
+    FaceMagnitudeBank domains (PeriodMatrix.standardDifferential i)
   /-- The cached magnitude request for the original second standard differential. -/ rightMagnitude :
-    MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential j)
+    FaceMagnitudeBank domains (PeriodMatrix.standardDifferential j)
   /-- The retained complete contact bank of this exact original polygon assembly. -/ contacts :
-    SewnPrimitiveContacts.ContactBank polygon.patch.assembly
+    ContactBank polygon.patch.assembly
   /-- The first differential's preparations on these exact retained contacts and domains. -/ leftContacts :
-    ContactBanks.ContactPreparations contacts.entries (PeriodMatrix.standardDifferential i) domains
+    ContactPreparations contacts.entries (PeriodMatrix.standardDifferential i) domains
   /-- The second differential's preparations on the same retained contacts and domains. -/ rightContacts :
-    ContactBanks.ContactPreparations contacts.entries (PeriodMatrix.standardDifferential j) domains
+    ContactPreparations contacts.entries (PeriodMatrix.standardDifferential j) domains
 
 constructive_injectivity BilinearPreparation
 
@@ -147,9 +147,9 @@ namespace BilinearPreparation
 variable {polygon : SinglePolygon forest}
 
 /-- Cache the original polygon's complete contact bank and both differential magnitude and contact preparations. -/
-@[expose] def build (polygon : SewingForest.SinglePolygon forest) (domains : DomainBanks.FaceDomainBank frames
+@[expose] def build (polygon : SinglePolygon forest) (domains : FaceDomainBank frames
   faces.regulars) (i j : Fin genus) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation polygon domains i j :=
+    BilinearPreparation polygon domains i j :=
   let contacts := ContactBank.build polygon.patch.assembly
   ⟨FaceMagnitudeBank.build domains (PeriodMatrix.standardDifferential i),
     FaceMagnitudeBank.build domains (PeriodMatrix.standardDifferential j), contacts,
@@ -158,9 +158,9 @@ variable {polygon : SinglePolygon forest}
 
 set_option genInjectivity false in
 /-- A paid paired sewing-area budget and both contact requests on the original preparation. -/
-structure Request (prepared : Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation polygon
-  domains i j) (target : SewnPrimitiveFaces.Coordinate) (floor : Nat) where
-  /-- The retained area budget using the sum of the two original magnitude bounds. -/ budget : Requests.AreaRequest
+structure Request (prepared : BilinearPreparation polygon
+  domains i j) (target : Coordinate) (floor : Nat) where
+  /-- The retained area budget using the sum of the two original magnitude bounds. -/ budget : AreaRequest
     polygon.patch
     (prepared.leftMagnitude.bound + prepared.rightMagnitude.bound) target
   /-- The first contact request meeting both the caller floor and original first magnitude stage. -/ left :
@@ -174,15 +174,15 @@ structure Request (prepared : Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnBili
 constructive_injectivity Request
 
 namespace Request
-variable {prepared : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation polygon
-  domains i j} {target : Purelib.Topology.Surface.Sewing.SewnPrimitiveFaces.Coordinate} {floor : Nat}
+variable {prepared : BilinearPreparation polygon
+  domains i j} {target : Coordinate} {floor : Nat}
 
 /-- Allocate the positive original area target and cache both paid contact requests at their exact common maximum stage.
 -/
-@[expose] def build (prepared : Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation
-  polygon domains i j) (target : SewnPrimitiveFaces.Coordinate)
+@[expose] def build (prepared : BilinearPreparation
+  polygon domains i j) (target : Coordinate)
     (positive : 0 < target) (floor : Nat) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation.Request prepared target floor :=
+      Request prepared target floor :=
   let budget := AreaRequest.build polygon.patch
     (prepared.leftMagnitude.bound + prepared.rightMagnitude.bound) target
     (add_nonneg prepared.leftMagnitude.nonnegative prepared.rightMagnitude.nonnegative) positive
@@ -193,33 +193,33 @@ variable {prepared : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnBilin
   ⟨budget, left, right, max left.index right.index, rfl⟩
 
 /-- The first retained contact request is paid at the common stage. -/
-theorem left_le (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation.Request
+theorem left_le (request : Request
   prepared target floor) : request.left.index ≤ request.index := by
   rw [request.index_eq]
   exact Nat.Order.le_max_left _ _
 
 /-- The second retained contact request is paid at the common stage. -/
-theorem right_le (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation.Request
+theorem right_le (request : Request
   prepared target floor) : request.right.index ≤ request.index := by
   rw [request.index_eq]
   exact Nat.Order.le_max_right _ _
 
 /-- The retained common stage meets the original caller floor. -/
-theorem floor_le (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation.Request
+theorem floor_le (request : Request
   prepared target floor) : floor ≤ request.index :=
   (Nat.Order.le_max_left _ _).trans (request.left.floor_le.trans request.left_le)
 
 /-- All contact and magnitude premises are discharged at the shared later stage. Coverage reads every actual mesh
 triangle exactly once. -/
-theorem accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnBilinearRequest.BilinearPreparation.Request
+theorem accurate (request : Request
   prepared target floor) {stage : Nat} (later : request.index ≤ stage)
     {cache : RegularMeshes.Numerics domains stage}
     (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) mesh) (right :
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) mesh)
-    {leftSurface : SewnPrimitiveSamples.CachedSample polygon.patch left.values} {rightSurface :
-      SewnPrimitiveSamples.CachedSample polygon.patch right.values}
-    (sample : Topology.Surface.Sewing.Bilinear.Samples leftSurface rightSurface) :
-    Data.Gaussian.Norm.Basic.normSq (sample.boundaryArea - FiniteSum.Fin.sumFin (TriangleReadings.bilinearArea
+    {leftSurface : CachedSample polygon.patch left.values} {rightSurface :
+      CachedSample polygon.patch right.values}
+    (sample : Samples leftSurface rightSurface) :
+    Gaussian.Norm.Basic.normSq (sample.boundaryArea - FiniteSum.Fin.sumFin (TriangleReadings.bilinearArea
       left right)) < target := by
   have coverage : ∀ contact ∈ SewnPrimitiveContacts.sourceContacts polygon.patch.assembly, contact ∈
     prepared.contacts.entries := by
@@ -240,15 +240,15 @@ theorem accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnBiline
         ((Nat.Order.le_max_right _ _).trans (request.left.floor_le.trans (request.left_le.trans later))) left source
           which).trans
         (le_add_of_nonneg_right prepared.rightMagnitude.nonnegative)
-      simpa only [-eq_self, -iff_self, Data.Gaussian.Norm.Basic.normSq_eq_canonical] using scalar
+      simpa only [-eq_self, -iff_self, Gaussian.Norm.Basic.normSq_eq_canonical] using scalar
     · have scalar := (FaceMagnitudeBank.triangle_bounded prepared.rightMagnitude
         ((Nat.Order.le_max_right _ _).trans (request.right.floor_le.trans (request.right_le.trans later))) right source
           which).trans
         (le_add_of_nonneg_left prepared.leftMagnitude.nonnegative)
-      simpa only [-eq_self, -iff_self, Data.Gaussian.Norm.Basic.normSq_eq_canonical] using scalar
+      simpa only [-eq_self, -iff_self, Gaussian.Norm.Basic.normSq_eq_canonical] using scalar
   have estimate := request.budget.accurate sample leftAccuracy rightAccuracy
     (fun position => bounded (Errors.traceAt leftSurface position).source)
-  change Data.Gaussian.Norm.Basic.normSq (sample.boundaryArea - FiniteSum.Fin.sumFin (fun position =>
+  change Gaussian.Norm.Basic.normSq (sample.boundaryArea - FiniteSum.Fin.sumFin (fun position =>
     TriangleReadings.bilinearArea left right (Errors.traceAt leftSurface position).source)) < target at estimate
   rw [Coverage.source_sum polygon leftSurface (TriangleReadings.bilinearArea left right)] at estimate
   exact estimate

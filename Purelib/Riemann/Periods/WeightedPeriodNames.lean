@@ -16,6 +16,8 @@ import Purelib.Integration.Program.Gaussian.Basic
 
 public import Purelib.Riemann.Periods.WeightedPeriods
 
+open Purelib.Approximation.Gaussian
+
 @[expose] public section
 
 /-!
@@ -42,7 +44,7 @@ open Purelib.Data in
 /-- Read a geometric approximation directly from a retained refinement program's model samples.
 
 Reuse its error scale, later-sample comparison and center bound at the exact original model indices. -/
-def programApproximation (program : Program.Gaussian.Basic.RefinementProgram) : GeometricApproximation where
+def programApproximation (program : RefinementProgram) : GeometricApproximation where
   sample := fun stage => (program.model stage).integralSample
   errorScale := program.errorScale
   errorScale_nonneg := program.errorScale_nonneg
@@ -58,28 +60,28 @@ def programApproximation (program : Program.Gaussian.Basic.RefinementProgram) : 
 open Purelib.Integration in
 open Purelib.Approximation in
 /-- The retained program output name is operationally its direct geometric approximation name. -/
-def programApproximation_output (program : Program.Gaussian.Basic.RefinementProgram) :
-    Gaussian.Equivalence.NamedEquivalent program.output.name (geometricNamed (programApproximation program)).name :=
-  Gaussian.Equivalence.NamedEquivalent.refl _
+def programApproximation_output (program : RefinementProgram) :
+    NamedEquivalent program.output.name (geometricNamed (programApproximation program)).name :=
+  NamedEquivalent.refl _
 
 open Purelib.Approximation in
 /-- Actual multiplication by an exact Gaussian constant agrees operationally with scaled geometric samples.
 
 Multiplication congruence and the pointwise product readback identify the same retained source approximation. -/
 public def scaledName (coefficient : Gaussian) (source : GeometricApproximation) :
-    Gaussian.Equivalence.NamedEquivalent (Gaussian.Name.Coherent.CoherentNamed.mul
-      (Gaussian.Name.Coherent.CoherentNamed.Coherence.exact coefficient) (geometricNamed source)).name
-      (geometricNamed (Gaussian.Geometric.GeometricApproximation.mul
-        (Gaussian.Geometric.GeometricApproximation.exact coefficient) source)).name := by
-  apply Gaussian.Equivalence.NamedEquivalent.trans
-    (Gaussian.Name.Coherent.Arithmetic.Product.Congruence.coherentMul_respects _ _ _ _
-      (Gaussian.Geometric.Coherent.Comparison.geometricExact_equivalent_exact coefficient).symm
-        (Gaussian.Equivalence.NamedEquivalent.refl _))
-  exact Gaussian.Sequence.Arithmetic.Multiplication.Bridge.mulToNamed_equivalent_pointwise
-    (Gaussian.Geometric.GeometricApproximation.exact coefficient).toApproximation
+    NamedEquivalent (CoherentNamed.mul
+      (CoherentNamed.Coherence.exact coefficient) (geometricNamed source)).name
+      (geometricNamed (Geometric.GeometricApproximation.mul
+        (Geometric.GeometricApproximation.exact coefficient) source)).name := by
+  apply NamedEquivalent.trans
+    (Name.Coherent.Arithmetic.Product.Congruence.coherentMul_respects _ _ _ _
+      (Geometric.Coherent.Comparison.geometricExact_equivalent_exact coefficient).symm
+        (NamedEquivalent.refl _))
+  exact Sequence.Arithmetic.Multiplication.Bridge.mulToNamed_equivalent_pointwise
+    (Geometric.GeometricApproximation.exact coefficient).toApproximation
     source.toApproximation
-    (Gaussian.Geometric.GeometricApproximation.mul
-      (Gaussian.Geometric.GeometricApproximation.exact coefficient) source).toApproximation
+    (Geometric.GeometricApproximation.mul
+      (Geometric.GeometricApproximation.exact coefficient) source).toApproximation
     (fun _ => rfl)
 
 namespace Coefficients
@@ -88,9 +90,9 @@ variable {count : Nat} {weights : Data.Vector Int count}
 
 open Purelib.Approximation in
 /-- Form the finite arithmetic combination of supplied names using the cached integer coefficients. -/
-def named (coefficients : Coefficients weights) (values : Fin count → Gaussian.Name.Coherent.CoherentNamed) :
+def named (coefficients : Coefficients weights) (values : Fin count → CoherentNamed) :
   CoherentNamed :=
-  sumNamed fun index => Gaussian.Name.Coherent.CoherentNamed.mul (Gaussian.Name.Coherent.CoherentNamed.Coherence.exact
+  sumNamed fun index => CoherentNamed.mul (CoherentNamed.Coherence.exact
     (coefficients.values index)) (values index)
 
 open Purelib.Algebra in
@@ -101,28 +103,28 @@ open Purelib.Data in
 
 Each supplied name is equivalent to its retained geometric source. The proof preserves the cached coefficient bank and
 exact component samples in the finite sum. -/
-def named_equivalent (coefficients : Coefficients weights) (values : Fin count → Gaussian.Name.Coherent.CoherentNamed)
+def named_equivalent (coefficients : Coefficients weights) (values : Fin count → CoherentNamed)
     (sources : Data.Vector GeometricApproximation count)
-    (equivalent : ∀ index, Gaussian.Equivalence.NamedEquivalent (values index).name (geometricNamed (sources
+    (equivalent : ∀ index, NamedEquivalent (values index).name (geometricNamed (sources
       index)).name) :
-    Gaussian.Equivalence.NamedEquivalent (Periods.WeightedPeriodNames.Coefficients.named coefficients values).name
+    NamedEquivalent (named coefficients values).name
       (geometricNamed (coefficients.approximation sources)).name := by
-  let summands := fun index => Gaussian.Geometric.GeometricApproximation.mul
-    (Gaussian.Geometric.GeometricApproximation.exact (coefficients.values index)) (sources index)
+  let summands := fun index => Geometric.GeometricApproximation.mul
+    (Geometric.GeometricApproximation.exact (coefficients.values index)) (sources index)
   have arithmetic := PeriodMatrix.sumNamed_equivalent_geometricSum
-    (fun index => Gaussian.Name.Coherent.CoherentNamed.mul (Gaussian.Name.Coherent.CoherentNamed.Coherence.exact
+    (fun index => CoherentNamed.mul (CoherentNamed.Coherence.exact
       (coefficients.values index)) (values index)) summands
-    (fun index => (Gaussian.Name.Coherent.Arithmetic.Product.Congruence.coherentMul_respects _ _ _ _
-      (Gaussian.Equivalence.NamedEquivalent.refl _) (equivalent index)).trans (scaledName _ _))
+    (fun index => (Name.Coherent.Arithmetic.Product.Congruence.coherentMul_respects _ _ _ _
+      (NamedEquivalent.refl _) (equivalent index)).trans (scaledName _ _))
   apply arithmetic.trans
-  exact Gaussian.Sequence.Name.Equivalence.approximationEquivalent_toNamed
-    (Gaussian.Sequence.Equivalence.approximationEquivalentOfSamplesEq
-      (Gaussian.Geometric.GeometricApproximation.sum summands).toApproximation
+  exact Sequence.Name.Equivalence.approximationEquivalent_toNamed
+    (Sequence.Equivalence.approximationEquivalentOfSamplesEq
+      (Geometric.GeometricApproximation.sum summands).toApproximation
       (coefficients.approximation sources).toApproximation (by
         intro stage
-        rw [Gaussian.Geometric.GeometricApproximation.toApproximation_sample,
-          Gaussian.Geometric.GeometricApproximation.sum_sample]
-        exact FiniteSum.Fin.sumFin_congr fun _ => rfl))
+        rw [Geometric.GeometricApproximation.toApproximation_sample,
+          Geometric.GeometricApproximation.sum_sample]
+        exact sumFin_congr fun _ => rfl))
 
 end Coefficients
 

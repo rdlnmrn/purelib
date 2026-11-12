@@ -73,6 +73,44 @@ public theorem all_eq_true {predicate : Alpha → Bool} :
 
 end Purelib.Data.List.All
 
+public section
+
+namespace Purelib.Data.List.All
+
+universe u
+
+set_option genInjectivity false in
+/-- An exact finite predicate check retains universal acceptance or an actual rejected occurrence. -/
+inductive Check {Alpha : Type u} (predicate : Alpha → Prop) (values : List Alpha) where
+  /-- Every original occurrence satisfies the supplied predicate. -/ | accepted
+      (all : ∀ value ∈ values, predicate value)
+  /-- This original occurrence violates the supplied predicate. -/ | rejected
+      (value : Alpha) (member : value ∈ values) (failed : ¬ predicate value)
+
+/-- Check each displayed entry in order using its supplied exact decision procedure.
+
+The first rejection retains its original occurrence and negative evidence.
+Acceptance retains a pointwise certificate for the unchanged list spine.
+-/
+@[expose] def check {Alpha : Type u} (predicate : Alpha → Prop)
+    (decision : (value : Alpha) → Decidable (predicate value)) :
+    (values : List Alpha) → Check predicate values
+  | [] => .accepted (fun _ impossible => by nomatch impossible)
+  | head :: tail =>
+      match decision head with
+      | .isFalse failed => .rejected head (List.Mem.head tail) failed
+      | .isTrue passed =>
+          match check predicate decision tail with
+          | .rejected value member failed => .rejected value (List.Mem.tail head member) failed
+          | .accepted all => .accepted (fun value member => by
+              cases member with
+              | head => exact passed
+              | tail _ retained => exact all value retained)
+
+end Purelib.Data.List.All
+
+end
+
 namespace Purelib.Data.List.All
 
 open Purelib

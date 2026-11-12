@@ -244,6 +244,10 @@ def ofClosed (closed : RootClosedWalk grid base owner) (source : Basic.Different
 def state (prepared : PeriodWalk grid base owner source) (stage : Nat) :
     RootClosedState curve source (ownerName owner) := prepared.initial.states (standardDifferentials genus) stage
 
+/-- The selected state is the whole original initial-state schedule at the same index. -/
+theorem state_eq (prepared : PeriodWalk grid base owner source) (stage : Nat) :
+    prepared.state stage = prepared.initial.states (standardDifferentials genus) stage := rfl
+
 open Purelib.Curves.Hyperelliptic.Differentials in
 open Purelib.Riemann.Topology.PreparedRecastRootChains in
 /-- Retain operational root closure for the actual recast parents at a period stage.

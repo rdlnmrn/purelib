@@ -23,6 +23,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Geometry.Rational.Box.Sample
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 /-!
 # Box bounds for affine chordal quadrance
 
@@ -50,15 +52,15 @@ public section
 
 /-- Decide the cleared box-accuracy budget by exact rational comparison. -/
 instance completedBoxBudgetDecidable (K epsilon Q : Fraction.Rational) :
-    Decidable (Purelib.Geometry.Projective.Chordal.Box.CompletedBoxBudget K epsilon Q) := by
-  unfold Purelib.Geometry.Projective.Chordal.Box.CompletedBoxBudget
+    Decidable (CompletedBoxBudget K epsilon Q) := by
+  unfold CompletedBoxBudget
   infer_instance
 
 /-- The paper's displayed smallness hypothesis implies the executable denominator-cleared budget. -/
 theorem completedBoxBudget_of_paper_bound
     {K epsilon Q : Fraction.Rational} (KNonnegative : 0 ≤ K)
     (paperBound : Q ≤ epsilon ^ 2 / (16 * (1 + K) ^ 2)) :
-    Box.CompletedBoxBudget K epsilon Q := by
+    CompletedBoxBudget K epsilon Q := by
   let scale := (1 + K) ^ 2
   have onePlusPositive : (0 : Fraction.Rational) < 1 + K :=
     add_pos_of_pos_of_nonneg (by decide) KNonnegative
@@ -83,14 +85,14 @@ theorem completedBoxBudget_of_paper_bound
           (Fraction.Field.div_mul_cancel_of_ne _ _
             (show (16 : Fraction.Rational) ≠ 0 by decide)).symm
       _ = (epsilon ^ 2 / 16) * (16 * scale) := by ring1
-  unfold Box.CompletedBoxBudget
+  unfold CompletedBoxBudget
   change scale * Q ≤ (epsilon / 4) ^ 2
   calc
     scale * Q ≤ scale * (epsilon ^ 2 / (16 * scale)) :=
       Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
         paperBound scalePositive.le
     _ = epsilon ^ 2 / 16 := cancelScale
-    _ = (epsilon / 4) ^ 2 := (Purelib.Data.Rat.Bounds.Quarter.quarter_square epsilon).symm
+    _ = (epsilon / 4) ^ 2 := (Bounds.Quarter.quarter_square epsilon).symm
 
 /-- Direct finite form of Proposition 7.25: a pairwise chordal certificate, a common affine norm bound, and the paper's
 displayed smallness inequality place the supplied value in the explicit witness-centred box. -/
@@ -98,9 +100,9 @@ theorem epsilonBox_contains_of_chordalSq_le
     {witness value : Data.Gaussian.Basic.Canonical} {K Q epsilon : Fraction.Rational}
     (KNonnegative : 0 ≤ K) (QNonnegative : 0 ≤ Q)
     (epsilonPositive : 0 < epsilon)
-    (witnessNorm : Data.Gaussian.Norm.Basic.normSq witness ≤ K) (valueNorm :
-      Data.Gaussian.Norm.Basic.normSq value ≤ K)
-    (chordalBound : Chordal.Basic.chordalSq (Proj.affine value)
+    (witnessNorm : Basic.normSq witness ≤ K) (valueNorm :
+      Basic.normSq value ≤ K)
+    (chordalBound : Basic.chordalSq (Proj.affine value)
       (Proj.affine witness) ≤ Q)
     (paperBound : Q ≤ epsilon ^ 2 / (16 * (1 + K) ^ 2)) :
     (Centered.epsilonBox witness epsilon epsilonPositive).Contains value := by
@@ -108,14 +110,14 @@ theorem epsilonBox_contains_of_chordalSq_le
   apply Centered.centeredBox_contains_of_normSq_sub_le
   exact (Affine.normSq_sub_le_of_chordalSq_le KNonnegative QNonnegative
     valueNorm witnessNorm chordalBound).trans
-      (Geometry.Projective.Chordal.Box.completedBoxBudget_of_paper_bound KNonnegative paperBound)
+      (completedBoxBudget_of_paper_bound KNonnegative paperBound)
 
 /-- Every two affine points in one rational box are projectively at most the box's squared diagonal apart. Thus
 winding-box refinement and projective cylinder refinement can be compared in the same `chi^2` metric. -/
 theorem chordalSq_affine_le_box_diagonal
     {box : Rational.Box} {z w : Data.Gaussian.Basic.Canonical}
     (zInside : box.Contains z) (wInside : box.Contains w) :
-    Chordal.Basic.chordalSq (Proj.affine z) (Proj.affine w) ≤ box.diagonalSq :=
+    Basic.chordalSq (Proj.affine z) (Proj.affine w) ≤ box.diagonalSq :=
   (Affine.chordalSq_affine_le_normSq z w).trans
     (box.normSq_sub_le_diagonalSq zInside wInside)
 
@@ -132,27 +134,27 @@ opposite corners. -/
 theorem diagonalSq_eq_cornerWeight_mul_affineChordalSq
     (box : Rational.Box) :
     box.diagonalSq =
-      ((1 + Data.Gaussian.Norm.Basic.normSq box.anchor) * (1 + Data.Gaussian.Norm.Basic.normSq
+      ((1 + Basic.normSq box.anchor) * (1 + Basic.normSq
         (Rational.Box.Bounds.oppositeCorner box))) *
         Affine.affineChordalSq box.anchor (Rational.Box.Bounds.oppositeCorner box) := by
   let weight :=
-    (1 + Data.Gaussian.Norm.Basic.normSq box.anchor) * (1 + Data.Gaussian.Norm.Basic.normSq
+    (1 + Basic.normSq box.anchor) * (1 + Basic.normSq
       (Rational.Box.Bounds.oppositeCorner box))
-  have leftPositive : (0 : Fraction.Rational) < 1 + Data.Gaussian.Norm.Basic.normSq box.anchor :=
+  have leftPositive : (0 : Fraction.Rational) < 1 + Basic.normSq box.anchor :=
     (show (0 : Fraction.Rational) < 1 by decide).trans_le
-      (le_add_of_nonneg_right (Data.Gaussian.Norm.Basic.normSq_nonneg box.anchor))
+      (le_add_of_nonneg_right (Basic.normSq_nonneg box.anchor))
   have rightPositive : (0 : Fraction.Rational) <
-      1 + Data.Gaussian.Norm.Basic.normSq (Rational.Box.Bounds.oppositeCorner box) :=
+      1 + Basic.normSq (Rational.Box.Bounds.oppositeCorner box) :=
     (show (0 : Fraction.Rational) < 1 by decide).trans_le
-      (le_add_of_nonneg_right (Data.Gaussian.Norm.Basic.normSq_nonneg (Rational.Box.Bounds.oppositeCorner box)))
+      (le_add_of_nonneg_right (Basic.normSq_nonneg (Rational.Box.Bounds.oppositeCorner box)))
   have weightNonzero : weight ≠ 0 := ne_of_gt
     (Fraction.Order.Arithmetic.mul_pos_direct leftPositive rightPositive)
   have numerator :
-      Data.Gaussian.Norm.Basic.normSq (box.anchor - Rational.Box.Bounds.oppositeCorner box) = box.diagonalSq :=
+      Basic.normSq (box.anchor - Rational.Box.Bounds.oppositeCorner box) = box.diagonalSq :=
     Rational.Box.Bounds.normSq_anchor_sub_oppositeCorner box
   unfold Affine.affineChordalSq
   change box.diagonalSq = weight *
-    (Data.Gaussian.Norm.Basic.normSq (box.anchor - Rational.Box.Bounds.oppositeCorner box) / weight)
+    (Basic.normSq (box.anchor - Rational.Box.Bounds.oppositeCorner box) / weight)
   rw [numerator, Fraction.Field.mul_comm]
   exact (Fraction.Field.div_mul_cancel_of_ne
     box.diagonalSq weight weightNonzero).symm

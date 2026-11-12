@@ -45,7 +45,8 @@ set_option genInjectivity false in
 The provenance remains indexed by that exact channel; absence of a sidecar does not alter the numerical program. -/
 structure Annotated where
   /-- The original coherent numerical channel. -/ channel : Coherent.CoherentNamed
-  /-- Optional rational or square-root provenance indexed by the retained channel. -/ provenance : Option
+  /-- Optional rational, quadratic or arbitrary-degree root provenance indexed by the retained channel. -/
+  provenance : Option
     (Provenance channel)
 
 constructive_injectivity Annotated
@@ -63,7 +64,17 @@ def «opaque» (channel :
 /-- Construct the exact Gaussian channel with its executable rational provenance. -/
 def rational (value :
   Data.Gaussian.Basic.Canonical) : Annotated :=
-  ⟨Coherence.exact value, some (.inl (RationalSidecar.exact value))⟩
+  ⟨Coherence.exact value, some (.rational (RationalSidecar.exact value))⟩
+
+/-- Retain arbitrary-degree root provenance at its exact original numerical channel. -/
+def polynomialRoot {channel : CoherentNamed}
+    (sidecar : Approximation.Gaussian.Provenance.PolynomialRoot.Sidecar channel) : Annotated :=
+  ⟨channel, some (.polynomialRoot sidecar)⟩
+
+/-- Retain a finite algebraic construction on its exact original numerical channel. -/
+def algebraic {channel : CoherentNamed}
+    (sidecar : Approximation.Gaussian.Provenance.Algebraic.Sidecar channel) : Annotated :=
+  ⟨channel, some (.algebraic sidecar)⟩
 
 /-- Remove the provenance sidecar while retaining the same coherent channel. -/
 def forget (input :
@@ -79,8 +90,35 @@ set_option backward.match.sparseCases false in
 def rationalValue (input :
   Annotated) : Option Data.Gaussian.Basic.Canonical :=
   match input.provenance with
-  | some (.inl rational) => some rational.value
+  | some (.rational reading) => some reading.value
   | _ => none
+
+/-- A displayed rational reading identifies an actual retained sidecar at the original channel. -/
+theorem rationalValue_evidence (input : Annotated) (value : Canonical) (known : input.rationalValue = some value) :
+    ∃ sidecar : RationalSidecar input.channel,
+      input.provenance = some (.rational sidecar) ∧ sidecar.value = value := by
+  unfold rationalValue at known
+  cases selected : input.provenance with
+  | none =>
+      rewrite [selected] at known
+      cases known
+  | some provenance =>
+      cases provenance with
+      | rational reading =>
+          rewrite [selected] at known
+          exact ⟨reading, rfl, Option.some.inj known⟩
+      | squareRoot root =>
+          rewrite [selected] at known
+          cases known
+      | quadratic coordinates =>
+          rewrite [selected] at known
+          cases known
+      | polynomialRoot root =>
+          rewrite [selected] at known
+          cases known
+      | algebraic sidecar =>
+          rewrite [selected] at known
+          cases known
 
 end Annotated
 

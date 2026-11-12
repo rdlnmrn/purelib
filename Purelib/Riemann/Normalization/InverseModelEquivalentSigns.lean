@@ -12,6 +12,8 @@ import Purelib.Data.Rat.Fraction.Order.Field
 public import Purelib.Riemann.Normalization.InverseModelRootChannels
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -56,36 +58,36 @@ private theorem root_lower {box : Box} {model : Model polynomial box}
   have oneLe : (1 : Coordinate) ≤ 3 * (normSq (polynomial.eval point) * normSq ((model.refine index).value.eval point) ^
     2) :=
     (by decide : (1 : Coordinate) = 3 * (1 / 3)).trans_le
-      (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct normalized (by decide))
-  have weighted := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct oneLe
-    (Gaussian.Basic.Canonical.normSq_nonneg (polynomial.eval point))
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct normalized (by decide))
+  have weighted := Arithmetic.mul_le_mul_of_nonneg_left_direct oneLe
+    (normSq_nonneg (polynomial.eval point))
   rw [Rat.Fraction.Field.mul_one_direct] at weighted
   have lowerSquare : normSq (polynomial.eval point) ≤ 3 * normSq (channel.samples.sample index) ^ 2 := by
     apply weighted.trans_eq
-    rw [channel.samples.sample_eq, Gaussian.Basic.Canonical.normSq_mul]
+    rw [channel.samples.sample_eq, normSq_mul]
     ring1
   have upper := (channel.samples.sample_bounded channel.inside index).trans
     (le_add_of_nonneg_right (by decide : (0 : Coordinate) ≤ 1))
   have squared : normSq (channel.samples.sample index) ^ 2 ≤
       normSq (channel.samples.sample index) * (channel.samples.bound + 1) := by
     rw [pow_two]
-    exact Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct upper (Gaussian.Basic.Canonical.normSq_nonneg
+    exact Arithmetic.mul_le_mul_of_nonneg_left_direct upper (normSq_nonneg
       _)
-  have positive : 0 < 3 * (channel.samples.bound + 1) := Rat.Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-    (Rat.Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct channel.samples.bound_nonnegative (by decide))
-  apply (Rat.Fraction.Order.Field.div_le_iff_pos positive).mpr
-  exact (lowerSquare.trans (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct squared (by
+  have positive : 0 < 3 * (channel.samples.bound + 1) := Arithmetic.mul_pos_direct (by decide)
+    (Arithmetic.add_pos_of_nonneg_of_pos_direct channel.samples.bound_nonnegative (by decide))
+  apply (Field.div_le_iff_pos positive).mpr
+  exact (lowerSquare.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct squared (by
     decide))).trans_eq (by ring1)
 
 /-- A Gaussian difference no larger than the first value is no larger than the corresponding sum. -/
 private theorem nearest_of_close {first last : Gaussian} (close : normSq (first - last) ≤ normSq first) :
     normSq (first - last) ≤ normSq (first + last) := by
-  apply Rat.Fraction.Order.Arithmetic.le_of_add_le_add_right_direct (c := normSq (first - last))
+  apply Arithmetic.le_of_add_le_add_right_direct (c := normSq (first - last))
   calc
     _ = 2 * normSq (first - last) := by ring1
-    _ ≤ 2 * normSq first := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct close (by decide)
-    _ ≤ 2 * (normSq first + normSq last) := Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (le_add_of_nonneg_right (Gaussian.Basic.Canonical.normSq_nonneg _)) (by decide)
+    _ ≤ 2 * normSq first := Arithmetic.mul_le_mul_of_nonneg_left_direct close (by decide)
+    _ ≤ 2 * (normSq first + normSq last) := Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (le_add_of_nonneg_right (normSq_nonneg _)) (by decide)
     _ = _ := by
       simp only [normSq, Gaussian.Basic.add_re, Gaussian.Basic.add_im, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im];
       ring1
@@ -100,7 +102,7 @@ open Purelib.Data in
 A finite comparison of their own Newton samples establishes the nearest sign at one sufficiently accurate pair of
 stages. The original refinement-sign law transports it to the two requested stages. -/
 theorem equivalent_flip (first : RootChannel left point) (last : RootChannel right point)
-    (roots : Gaussian.Equivalence.NamedEquivalent first.certificate.value.name last.certificate.value.name)
+    (roots : NamedEquivalent first.certificate.value.name last.certificate.value.name)
     (leftIndex rightIndex : Nat) :
     (SignAlignment.build ((left.refine leftIndex).value.eval point) ((right.refine rightIndex).value.eval point)).flip =
       false := by
@@ -108,9 +110,9 @@ theorem equivalent_flip (first : RootChannel left point) (last : RootChannel rig
     (by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using (Gaussian.Norm.Basic.normSq_pos
       (RootContinuation.SquareRootChannelOwnership.parameter_nonzero first.certificate)))
   let target := normSq (polynomial.eval point) / (3 * (first.samples.bound + 1))
-  have positive : 0 < target := Rat.Fraction.Order.Field.div_pos_direct parameterPositive
-    (Rat.Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-      (Rat.Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct first.samples.bound_nonnegative (by decide)))
+  have positive : 0 < target := Field.div_pos_direct parameterPositive
+    (Arithmetic.mul_pos_direct (by decide)
+      (Arithmetic.add_pos_of_nonneg_of_pos_direct first.samples.bound_nonnegative (by decide)))
   let equivalent := first.samples_equivalent.trans (Gaussian.Equivalence.Equivalent.trans roots
     last.samples_equivalent.symm)
   let compared := equivalent.compare 0 0 target positive
@@ -119,14 +121,14 @@ theorem equivalent_flip (first : RootChannel left point) (last : RootChannel rig
     have comparedClose := (compared.close le_rfl le_rfl).le
     simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at comparedClose
     exact comparedClose.trans (root_lower first compared.leftIndex)
-  rw [first.samples.sample_eq, last.samples.sample_eq, ← mul_sub, Gaussian.Basic.Canonical.normSq_mul,
-    Gaussian.Basic.Canonical.normSq_mul] at close
+  rw [first.samples.sample_eq, last.samples.sample_eq, ← mul_sub, normSq_mul,
+    normSq_mul] at close
   rw [Rat.Fraction.Field.mul_comm (normSq (polynomial.eval point)),
     Rat.Fraction.Field.mul_comm (normSq (polynomial.eval point))] at close
   have inverseClose : normSq ((left.refine compared.leftIndex).value.eval point - (right.refine
     compared.rightIndex).value.eval point) ≤
       normSq ((left.refine compared.leftIndex).value.eval point) :=
-    Rat.Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct close parameterPositive
+    Arithmetic.le_of_mul_le_mul_right_direct close parameterPositive
   let aligned : SignAlignment ((left.refine compared.leftIndex).value.eval point) ((right.refine
     compared.rightIndex).value.eval point) :=
     ⟨false, (right.refine compared.rightIndex).value.eval point, rfl, nearest_of_close inverseClose⟩
@@ -135,11 +137,11 @@ theorem equivalent_flip (first : RootChannel left point) (last : RootChannel rig
     (SignAlignment.build _ _).flip_unique aligned (residual_small first compared.leftIndex) (residual_small last
       compared.rightIndex)
       (left.refine compared.leftIndex).bound_small (right.refine compared.rightIndex).bound_small
-  let initial := Normalization.InverseModelOverlap.OverlapSample.build left right point
+  let initial := InverseModelOverlap.OverlapSample.build left right point
   have initialFalse : initial.alignment.flip = false :=
-    (Normalization.InverseModelRefinementSigns.OverlapSample.refine_flip initial first.inside last.inside first.small
+    (InverseModelRefinementSigns.OverlapSample.refine_flip initial first.inside last.inside first.small
       last.small compared.leftIndex compared.rightIndex).symm.trans lateFalse
-  exact (Normalization.InverseModelRefinementSigns.OverlapSample.refine_flip initial first.inside last.inside
+  exact (InverseModelRefinementSigns.OverlapSample.refine_flip initial first.inside last.inside
     first.small last.small leftIndex rightIndex).trans initialFalse
 
 open Purelib.Approximation
@@ -148,7 +150,7 @@ open Purelib.Approximation
 The two finite model stages are independent; both are evaluated at the retained common point and use the operational
 equivalence of the original root names. -/
 theorem equivalent_nearest (first : RootChannel left point) (last : RootChannel right point)
-    (roots : Gaussian.Equivalence.NamedEquivalent first.certificate.value.name last.certificate.value.name)
+    (roots : NamedEquivalent first.certificate.value.name last.certificate.value.name)
     (leftIndex rightIndex : Nat) :
     normSq ((left.refine leftIndex).value.eval point - (right.refine rightIndex).value.eval point) ≤
       normSq ((left.refine leftIndex).value.eval point + (right.refine rightIndex).value.eval point) := by
@@ -163,7 +165,7 @@ Operational equivalence of the original root names supplies the comparison at an
 stages. -/
 theorem equivalent_nearest_at {firstPoint lastPoint : Gaussian}
     (first : RootChannel left firstPoint) (last : RootChannel right lastPoint) (same : firstPoint = lastPoint)
-    (roots : Gaussian.Equivalence.NamedEquivalent first.certificate.value.name last.certificate.value.name) (leftIndex
+    (roots : NamedEquivalent first.certificate.value.name last.certificate.value.name) (leftIndex
       rightIndex : Nat) :
     normSq ((left.refine leftIndex).value.eval firstPoint - (right.refine rightIndex).value.eval lastPoint) ≤
       normSq ((left.refine leftIndex).value.eval firstPoint + (right.refine rightIndex).value.eval lastPoint) := by

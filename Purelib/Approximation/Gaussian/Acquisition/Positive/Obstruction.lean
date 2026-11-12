@@ -51,33 +51,33 @@ namespace Purelib.Approximation.Gaussian.Acquisition.Positive.Obstruction
 
 /-- Every possible candidate at the exact retained acquisition source has nonpositive imaginary coordinate. -/
 def Nonpositive (tau : Coherent.CoherentNamed)
-  (state : Approximation.Gaussian.Acquisition.State tau) : Prop :=
+  (state : State tau) : Prop :=
   ∀ {value : Canonical}, tau.name.process.Possible state.retained.source value → value.im ≤ 0
 
 namespace Nonpositive
 
 /-- Nonpositive candidate evidence persists along the supplied backwards candidate transport. -/
 theorem after {tau :
-  Coherent.CoherentNamed} {first last : Approximation.Gaussian.Acquisition.State tau}
-    (nonpositive : Approximation.Gaussian.Acquisition.Positive.Obstruction.Nonpositive tau first)
+  Coherent.CoherentNamed} {first last : State tau}
+    (nonpositive : Nonpositive tau first)
     (persists : ∀ {value : Canonical}, tau.name.process.Possible last.retained.source value →
       tau.name.process.Possible first.retained.source value) :
-        Approximation.Gaussian.Acquisition.Positive.Obstruction.Nonpositive tau last :=
+        Nonpositive tau last :=
   fun possible => nonpositive (persists possible)
 
 /-- Canonical acquisition refinement preserves nonpositive candidate evidence. -/
 theorem advance {tau :
-  Coherent.CoherentNamed} {state : Approximation.Gaussian.Acquisition.State tau} (nonpositive :
-  Approximation.Gaussian.Acquisition.Positive.Obstruction.Nonpositive tau state) :
-    Approximation.Gaussian.Acquisition.Positive.Obstruction.Nonpositive tau (State.advance state) :=
+  Coherent.CoherentNamed} {state : State tau} (nonpositive :
+  Nonpositive tau state) :
+    Nonpositive tau (State.advance state) :=
   nonpositive.after (fun possible => tau.name.process.refine_persists state.retained.source
-    (Gaussian.Process.Sampling.refinementTarget state.retained.nextIndex)
-    (Gaussian.Process.Sampling.refinementTarget_pos state.retained.nextIndex) possible)
+    (Process.Sampling.refinementTarget state.retained.nextIndex)
+    (Process.Sampling.refinementTarget_pos state.retained.nextIndex) possible)
 
 /-- Nonpositive candidate evidence contradicts a positive enclosure at the same retained source. -/
 theorem incompatible {tau :
-  Coherent.CoherentNamed} {state : Approximation.Gaussian.Acquisition.State tau}
-    (nonpositive : Approximation.Gaussian.Acquisition.Positive.Obstruction.Nonpositive tau state) (certificate :
+  Coherent.CoherentNamed} {state : State tau}
+    (nonpositive : Nonpositive tau state) (certificate :
       Positive.Basic.PositiveEnclosure tau)
     (source : certificate.state = state.retained.source) : False := by
   let witness := tau.name.process.witness state.retained.source
@@ -90,27 +90,27 @@ theorem incompatible {tau :
 /-- A positive enclosure at a later source contradicts nonpositive candidates with explicit provenance back to the
 original source. -/
 theorem incompatible_future {tau :
-  Coherent.CoherentNamed} {first last : Approximation.Gaussian.Acquisition.State tau}
-    (nonpositive : Approximation.Gaussian.Acquisition.Positive.Obstruction.Nonpositive tau first)
+  Coherent.CoherentNamed} {first last : State tau}
+    (nonpositive : Nonpositive tau first)
     (persists : ∀ {value : Canonical}, tau.name.process.Possible last.retained.source value →
       tau.name.process.Possible first.retained.source value)
     (certificate : Positive.Basic.PositiveEnclosure tau) (source : certificate.state = last.retained.source) :
-    False := Approximation.Gaussian.Acquisition.Positive.Obstruction.Nonpositive.incompatible
-      (Approximation.Gaussian.Acquisition.Positive.Obstruction.Nonpositive.after nonpositive persists) certificate
+    False := incompatible
+      (after nonpositive persists) certificate
       source
 
 /-- Nonpositive candidates prevent the cached ball from passing its positivity test. -/
 theorem not_positiveTest {tau :
-  Coherent.CoherentNamed} {state : Approximation.Gaussian.Acquisition.State tau}
-    (nonpositive : Approximation.Gaussian.Acquisition.Positive.Obstruction.Nonpositive tau state) : ¬
+  Coherent.CoherentNamed} {state : State tau}
+    (nonpositive : Nonpositive tau state) : ¬
       Positive.PositiveTest state.ball :=
   fun test => nonpositive.incompatible (Enclosure.enclosure state test) rfl
 
 /-- A direct invariant proves exact exhaustion for every finite future budget. This is stronger evidence than observing
 any number of failed tests. -/
 theorem attempt_exhausts {tau :
-  Coherent.CoherentNamed} (state : Approximation.Gaussian.Acquisition.State tau)
-    (nonpositive : Approximation.Gaussian.Acquisition.Positive.Obstruction.Nonpositive tau state) (fuel : Nat) :
+  Coherent.CoherentNamed} (state : State tau)
+    (nonpositive : Nonpositive tau state) (fuel : Nat) :
     Search.attempt tau state fuel = .exhausted (Schedule.advanceN state fuel) := by
   induction fuel generalizing state with
   | zero => rfl

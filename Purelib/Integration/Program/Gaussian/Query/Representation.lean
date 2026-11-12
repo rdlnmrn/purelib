@@ -29,6 +29,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Integration.CertifiedProgram
 import Purelib.Data.Rat.Fraction
 
+open Purelib.Approximation.Gaussian.Enclosure.Ball.Data
+
 /-!
 # Exact process representations over cached integration recipes
 
@@ -49,14 +51,14 @@ set_option genInjectivity false in
 
 The state-index map preserves the original center bound, ball readings and refinement indices, keeping both process and
 program owners fixed. -/
-public structure Represents (program : Basic.CachedProgram) (recipe : Approximation.Gaussian.Process.Recipe) (process :
-  Approximation.Gaussian.Process) where
+public structure Represents (program : Basic.CachedProgram) (recipe : Process.Recipe) (process :
+  Process) where
   /-- The retained map from exact process states to original program stage indices. -/ index : process.State → Nat
   /-- The original process center bound equals the recipe's retained control bound. -/ bound_eq : process.centerBound =
     recipe.centerBound (IntegrationReplay.control program)
   /-- Every original process ball equals the recipe transform of the exact indexed source reading. -/ ball_eq : ∀ state,
-    Enclosure.Ball.Data.BallData.ofBall (process.ball state) =
-    recipe.transform (Enclosure.Ball.Data.BallData.ofBall (IntegrationReplay.reading (IntegrationReplay.control program)
+    BallData.ofBall (process.ball state) =
+    recipe.transform (BallData.ofBall (IntegrationReplay.reading (IntegrationReplay.control program)
       (index state) (program.stage (index state))).ball)
   /-- Original process refinement maps to the exact recipe-refined source index. -/ refine_eq : ∀ state target positive,
     index (process.refine state target positive) =
@@ -89,15 +91,15 @@ open Purelib.Integration.Program.Gaussian.Cached in
 The recipe queries the retained program stage at the represented state
 index. Its exact source reading and original transformation return the
 same process ball, without replacing the stage or its cache. -/
-public theorem ball_run {program : Basic.CachedProgram} {recipe : Approximation.Gaussian.Process.Recipe} {process :
-  Approximation.Gaussian.Process}
+public theorem ball_run {program : Basic.CachedProgram} {recipe : Process.Recipe} {process :
+  Process}
     (representation : Represents program recipe process) (state : process.State) :
     ((recipe.ball (IntegrationReplay.control program) (representation.index state)).run program.stage).value =
-      .ok (Enclosure.Ball.Data.BallData.ofBall (process.ball state)) := by
-  rw [Approximation.Gaussian.Process.Recipe.ball, Computation.Query.Protocol.map_run_value,
+      .ok (BallData.ofBall (process.ball state)) := by
+  rw [Process.Recipe.ball_run, Protocol.map_run_value,
       IntegrationReplay.read_stage_value]
-  change (Except.ok (recipe.transform _) : Except IntegrationReplay.InvalidReply Enclosure.Ball.Data.BallData) =
-    Except.ok (Enclosure.Ball.Data.BallData.ofBall (process.ball state))
+  change (Except.ok (recipe.transform _) : Except IntegrationReplay.InvalidReply BallData) =
+    Except.ok (BallData.ofBall (process.ball state))
   rw [representation.ball_eq]
 
 open Purelib.Approximation.Gaussian in
@@ -108,8 +110,8 @@ open Purelib.Integration.Program.Gaussian.Cached in
 Each based state retains its exact source state. The index, center
 bound, ball identity and refinement equation are inherited from those
 original states and the same program. -/
-@[expose] public def based {program : Basic.CachedProgram} {recipe : Approximation.Gaussian.Process.Recipe} {process :
-  Approximation.Gaussian.Process}
+@[expose] public def based {program : Basic.CachedProgram} {recipe : Process.Recipe} {process :
+  Process}
     (representation : Represents program recipe process) (base : process.State) :
     Represents program recipe (Process.Based.based process base) where
   index state := representation.index state.source
@@ -128,23 +130,23 @@ open Purelib.Integration.Program.Gaussian.Cached
 The supplied shift is retained by both the original process translation
 and numerical recipe. Their center bound and target refinement use the
 same scalar formulas and original source-index map. -/
-@[expose] public def translated {program : Basic.CachedProgram} {recipe : Approximation.Gaussian.Process.Recipe}
+@[expose] public def translated {program : Basic.CachedProgram} {recipe : Process.Recipe}
     {process :
-  Approximation.Gaussian.Process}
+  Process}
     (representation : Represents program recipe process) (shift : Basic.Canonical) :
     Represents program (recipe.translated (IntegrationReplay.control program) shift)
       (Process.Translation.translate process shift) where
   index := representation.index
   bound_eq := by
-    simp only [Approximation.Gaussian.Process.Recipe.translated, Approximation.Gaussian.Process.Recipe.centerBound,
+    simp only [Process.Recipe.translated, Process.Recipe.centerBound,
       Basic.Canonical.Norm.Comparison.normSqFromReduced_eq]
-    change 2 * (process.centerBound + Data.Gaussian.Norm.Basic.normSq shift) = 2 * (_ + Data.Gaussian.Norm.Basic.normSq
+    change 2 * (process.centerBound + Norm.Basic.normSq shift) = 2 * (_ + Norm.Basic.normSq
       shift)
     rw [representation.bound_eq]
   ball_eq := by
     intro state
-    change Enclosure.Ball.Data.BallData.ofBall ((process.ball state).sub (Enclosure.Ball.point shift)) = _
-    rw [← Enclosure.Ball.Data.BallData.translate_ofBall, representation.ball_eq]
+    change BallData.ofBall ((process.ball state).sub (Enclosure.Ball.point shift)) = _
+    rw [← BallData.translate_ofBall, representation.ball_eq]
     rfl
   refine_eq := by
     intro state target positive
@@ -157,29 +159,29 @@ same scalar formulas and original source-index map. -/
 The supplied factor is retained by the exact-factor process and the
 scaled recipe. Their cached center bounds, ball transforms and propagated
 accuracy targets agree at the same original process states. -/
-@[expose] public def scaled {program : Basic.CachedProgram} {recipe : Approximation.Gaussian.Process.Recipe} {process :
-  Approximation.Gaussian.Process}
+@[expose] public def scaled {program : Basic.CachedProgram} {recipe : Process.Recipe} {process :
+  Process}
     (representation : Represents program recipe process) (factor : Basic.Canonical) :
     Represents program (recipe.scaled (IntegrationReplay.control program) factor)
-      (Approximation.Gaussian.Process.mul (Approximation.Gaussian.Process.exact factor) process) where
+      (Process.mul (Process.exact factor) process) where
   index state := representation.index state.2
   bound_eq := by
-    simp only [Approximation.Gaussian.Process.Recipe.scaled, Approximation.Gaussian.Process.Recipe.centerBound,
+    simp only [Process.Recipe.scaled, Process.Recipe.centerBound,
       Basic.Canonical.Norm.Comparison.normSqFromReduced_eq]
-    change Data.Gaussian.Norm.Basic.normSq factor * process.centerBound = Data.Gaussian.Norm.Basic.normSq factor * _
+    change Norm.Basic.normSq factor * process.centerBound = Norm.Basic.normSq factor * _
     rw [representation.bound_eq]
   ball_eq := by
     intro state
-    change Enclosure.Ball.Data.BallData.ofBall ((Enclosure.Ball.point factor).mul (process.ball state.2)) = _
-    rw [← Enclosure.Ball.Data.BallData.scale_ofBall, representation.ball_eq]
+    change BallData.ofBall ((Enclosure.Ball.point factor).mul (process.ball state.2)) = _
+    rw [← BallData.scale_ofBall, representation.ball_eq]
     rfl
   refine_eq := by
     intro state target positive
     change representation.index (process.refine state.2
-      (target / (target + (4 * (Data.Gaussian.Norm.Basic.normSq factor + process.centerBound) + 2))) _) = _
+      (target / (target + (4 * (Norm.Basic.normSq factor + process.centerBound) + 2))) _) = _
     rw [representation.refine_eq, representation.bound_eq]
-    dsimp only [Approximation.Gaussian.Process.Recipe.refine, Approximation.Gaussian.Process.Recipe.sourceTarget,
-      Approximation.Gaussian.Process.Recipe.scaled]
+    dsimp only [Process.Recipe.refine, Process.Recipe.sourceTarget,
+      Process.Recipe.scaled]
     rw [Basic.Canonical.Norm.Comparison.normSqFromReduced_eq]
 
 end
@@ -193,9 +195,9 @@ open Purelib.Integration.Program.Gaussian.Cached in
 The supplied possible-apartness certificate retains its original process
 and lower squared bound. Preparation refines the same source states at
 the corresponding common target and preserves their ball readings. -/
-@[expose] public def apartified {program : Basic.CachedProgram} {recipe : Approximation.Gaussian.Process.Recipe}
+@[expose] public def apartified {program : Basic.CachedProgram} {recipe : Process.Recipe}
     {process :
-  Approximation.Gaussian.Process}
+  Process}
     (representation : Represents program recipe process) (apart : Process.Apart.Possible.PossibleApart process) :
     Represents program (.apart recipe apart.lowerSq) (Process.Apart.Preparation.apartify apart) where
   index state := representation.index state.source
@@ -217,9 +219,9 @@ open Purelib.Integration.Program.Gaussian.Cached in
 The original possible-apartness lower bound determines the preparation
 target. Applying the retained representation refinement equation gives
 the exact source stage selected by the same recipe. -/
-public theorem prepared_index {program : Basic.CachedProgram} {recipe : Approximation.Gaussian.Process.Recipe} {process
+public theorem prepared_index {program : Basic.CachedProgram} {recipe : Process.Recipe} {process
     :
-  Approximation.Gaussian.Process}
+  Process}
     (representation : Represents program recipe process) (apart : Process.Apart.Possible.PossibleApart process)
     (state : process.State) :
     representation.index (Process.Apart.Preparation.prepareApartState apart state).source =
@@ -237,32 +239,32 @@ certificate.
 The denominator remains the original process with its supplied apartness
 certificate. Both constructions retain the same numerator, lower squared
 bound, cached center bound and original refinement-target formula. -/
-@[expose] public def divided {program : Basic.CachedProgram} {recipe : Approximation.Gaussian.Process.Recipe} {process :
-  Approximation.Gaussian.Process}
+@[expose] public def divided {program : Basic.CachedProgram} {recipe : Process.Recipe} {process :
+  Process}
     (representation : Represents program recipe process) (numerator : Basic.Canonical)
-    (apart : Approximation.Gaussian.Process.Apart process) :
+    (apart : Process.Apart process) :
     Represents program (recipe.divided numerator apart.lowerSq)
-      (Approximation.Gaussian.Process.div (Approximation.Gaussian.Process.exact numerator) process apart) where
+      (Process.div (Process.exact numerator) process apart) where
   index state := representation.index state.2
   bound_eq := by
-    simp only [Approximation.Gaussian.Process.Recipe.divided, Approximation.Gaussian.Process.Recipe.centerBound,
+    simp only [Process.Recipe.divided, Process.Recipe.centerBound,
       Basic.Canonical.Norm.Comparison.normSqFromReduced_eq]
     rfl
   ball_eq := by
     intro state
-    change Enclosure.Ball.Data.BallData.ofBall ((Enclosure.Ball.point numerator).div
-      (process.ball state.2) ((Approximation.Gaussian.Process.Apart.atState apart) state.2)) = _
-    rw [← Enclosure.Ball.Data.BallData.divide_ofBall, representation.ball_eq]
+    change BallData.ofBall ((Enclosure.Ball.point numerator).div
+      (process.ball state.2) ((Process.Apart.atState apart) state.2)) = _
+    rw [← BallData.divide_ofBall, representation.ball_eq]
     rfl
   refine_eq := by
     intro state target positive
     change representation.index (process.refine state.2
-      ((target * (apart.lowerSq * apart.lowerSq)) / (4 * (Data.Gaussian.Norm.Basic.normSq numerator +
+      ((target * (apart.lowerSq * apart.lowerSq)) / (4 * (Norm.Basic.normSq numerator +
         process.centerBound +
         1))) _) = _
     rw [representation.refine_eq, representation.bound_eq]
-    dsimp only [Approximation.Gaussian.Process.Recipe.refine, Approximation.Gaussian.Process.Recipe.sourceTarget,
-      Approximation.Gaussian.Process.Recipe.divided]
+    dsimp only [Process.Recipe.refine, Process.Recipe.sourceTarget,
+      Process.Recipe.divided]
     rw [Basic.Canonical.Norm.Comparison.normSqFromReduced_eq]
 
 end Represents

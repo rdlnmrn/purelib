@@ -17,6 +17,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation
@@ -42,28 +44,28 @@ namespace BoundProcess
 
 /-- All independently scheduled finite states of one process overlap. This is a finite coherence law, not the assertion
 of a common point of every state. -/
-@[expose] def Coherent (process : Approximation.BoundProcess) : Prop :=
+@[expose] def Coherent (process : BoundProcess) : Prop :=
   ∀ left right : process.State,
     (process.bound left).Overlaps (process.bound right)
 
 /-- The exact rational process has overlapping bounds at every pair of states. -/
 theorem exact_coherent (value : Fraction.Rational) :
-    (BoundProcess.exact value).Coherent := by
+    (exact value).Coherent := by
   intro left right
   exact ⟨le_rfl, le_rfl⟩
 
 /-- Every displayed finite state explicitly contains the same rational anchor. -/
-@[expose] def AnchoredAt (process : Approximation.BoundProcess) (value : Fraction.Rational) : Prop :=
+@[expose] def AnchoredAt (process : BoundProcess) (value : Fraction.Rational) : Prop :=
   ∀ state : process.State, (process.bound state).Contains value
 
 /-- A common displayed rational anchor gives finite pairwise coherence. -/
-theorem coherent_of_anchoredAt (process : Approximation.BoundProcess) (value : Fraction.Rational)
+theorem coherent_of_anchoredAt (process : BoundProcess) (value : Fraction.Rational)
     (anchored : process.AnchoredAt value) : process.Coherent := by
   intro left right
   exact Interval.overlaps_of_common (anchored left) (anchored right)
 
 /-- Adding rationally anchored processes adds their retained anchors. -/
-theorem anchoredAt_add (left right : Approximation.BoundProcess)
+theorem anchoredAt_add (left right : BoundProcess)
     (leftValue rightValue : Fraction.Rational)
     (leftAnchored : left.AnchoredAt leftValue)
     (rightAnchored : right.AnchoredAt rightValue) :
@@ -72,14 +74,14 @@ theorem anchoredAt_add (left right : Approximation.BoundProcess)
   exact Interval.add_contains (leftAnchored state.1) (rightAnchored state.2)
 
 /-- Negating a rationally anchored process negates its anchor. -/
-theorem anchoredAt_neg (process : Approximation.BoundProcess) (value : Fraction.Rational)
+theorem anchoredAt_neg (process : BoundProcess) (value : Fraction.Rational)
     (anchored : process.AnchoredAt value) :
     process.neg.AnchoredAt (-value) := by
   intro state
   exact Interval.neg_contains (anchored state)
 
 /-- Subtracting rationally anchored processes subtracts their anchors. -/
-theorem anchoredAt_sub (left right : Approximation.BoundProcess)
+theorem anchoredAt_sub (left right : BoundProcess)
     (leftValue rightValue : Fraction.Rational)
     (leftAnchored : left.AnchoredAt leftValue)
     (rightAnchored : right.AnchoredAt rightValue) :
@@ -88,7 +90,7 @@ theorem anchoredAt_sub (left right : Approximation.BoundProcess)
     leftAnchored (right.anchoredAt_neg rightValue rightAnchored)
 
 /-- Positive scaling preserves the displayed rational anchor after scaling it. -/
-theorem anchoredAt_scalePositive (process : Approximation.BoundProcess)
+theorem anchoredAt_scalePositive (process : BoundProcess)
     (value factor : Fraction.Rational) (positive : 0 < factor)
     (anchored : process.AnchoredAt value) :
     (process.scalePositive factor positive).AnchoredAt (factor * value) := by
@@ -99,7 +101,7 @@ end BoundProcess
 
 set_option genInjectivity false in
 /-- Finite joint request program witnessing operational equality of two rational enclosure processes. -/
-structure OperationalEquivalence (left right : Approximation.BoundProcess) where
+structure OperationalEquivalence (left right : BoundProcess) where
   /-- The retained joint scheduler state type. -/ State : Type
   /-- Read the left process state from a joint scheduler state. -/ leftState : State → left.State
   /-- Read the right process state from a joint scheduler state. -/ rightState : State → right.State
@@ -107,11 +109,11 @@ structure OperationalEquivalence (left right : Approximation.BoundProcess) where
   /-- Compute a joint refinement for the supplied positive rational tolerance. -/ request : (state : State) → (epsilon :
     Fraction.Rational) → 0 < epsilon → State
   /-- The joint request refines its original left enclosure. -/ left_refines : ∀ state epsilon positive,
-    Interval.Refines
+    Refines
       (left.bound (leftState (request state epsilon positive)))
       (left.bound (leftState state))
   /-- The joint request refines its original right enclosure. -/ right_refines : ∀ state epsilon positive,
-    Interval.Refines
+    Refines
       (right.bound (rightState (request state epsilon positive)))
       (right.bound (rightState state))
   /-- After the request, all admitted left and right values differ by less than the requested tolerance in both
@@ -128,8 +130,8 @@ constructive_injectivity OperationalEquivalence
 namespace OperationalEquivalence
 
 /-- Every finite bound process is operationally equivalent to itself. -/
-@[expose] def refl (process : Approximation.BoundProcess) :
-    Approximation.OperationalEquivalence process process where
+@[expose] def refl (process : BoundProcess) :
+    OperationalEquivalence process process where
   State := process.State
   leftState state := state
   rightState state := state
@@ -142,9 +144,9 @@ namespace OperationalEquivalence
 
 /-- A rationally anchored shrinking process is operationally equivalent to the exact rational anchor. Every comparison
 is made after one finite request. -/
-@[expose] def ofAnchoredAt (process : Approximation.BoundProcess) (value : Fraction.Rational)
+@[expose] def ofAnchoredAt (process : BoundProcess) (value : Fraction.Rational)
     (anchored : process.AnchoredAt value) :
-    Approximation.OperationalEquivalence process (BoundProcess.exact value) where
+    OperationalEquivalence process (BoundProcess.exact value) where
   State := process.State
   leftState state := state
   rightState _ := ()
@@ -160,9 +162,9 @@ is made after one finite request. -/
       leftInside (anchored (process.request state epsilon positive))
 
 /-- Reverse a finite operational equivalence. -/
-@[expose] def symm {left right : Approximation.BoundProcess}
-    (equivalent : Approximation.OperationalEquivalence left right) :
-    Approximation.OperationalEquivalence right left where
+@[expose] def symm {left right : BoundProcess}
+    (equivalent : OperationalEquivalence left right) :
+    OperationalEquivalence right left where
   State := equivalent.State
   leftState := equivalent.rightState
   rightState := equivalent.leftState
@@ -178,10 +180,10 @@ is made after one finite request. -/
 
 /-- Addition respects finite operational equivalence. Endpoint comparisons avoid selecting a decomposition of an
 arbitrary value admitted by a sum enclosure. -/
-@[expose] def add {leftFirst rightFirst leftSecond rightSecond : Approximation.BoundProcess}
-    (first : Approximation.OperationalEquivalence leftFirst rightFirst)
-    (second : Approximation.OperationalEquivalence leftSecond rightSecond) :
-    Approximation.OperationalEquivalence (leftFirst.add leftSecond)
+@[expose] def add {leftFirst rightFirst leftSecond rightSecond : BoundProcess}
+    (first : OperationalEquivalence leftFirst rightFirst)
+    (second : OperationalEquivalence leftSecond rightSecond) :
+    OperationalEquivalence (leftFirst.add leftSecond)
       (rightFirst.add rightSecond) where
   State := first.State × second.State
   leftState state :=
@@ -191,27 +193,27 @@ arbitrary value admitted by a sum enclosure. -/
   initial := ⟨first.initial, second.initial⟩
   request state epsilon positive :=
     let half := epsilon / 2
-    let halfPositive := Fraction.Order.Field.div_pos_direct positive
+    let halfPositive := Field.div_pos_direct positive
       (by decide : (0 : Fraction.Rational) < 2)
     ⟨first.request state.1 half halfPositive,
       second.request state.2 half halfPositive⟩
   left_refines state epsilon positive :=
     Refines.add
       (first.left_refines state.1 (epsilon / 2)
-        (Fraction.Order.Field.div_pos_direct positive (by decide)))
+        (Field.div_pos_direct positive (by decide)))
       (second.left_refines state.2 (epsilon / 2)
-        (Fraction.Order.Field.div_pos_direct positive (by decide)))
+        (Field.div_pos_direct positive (by decide)))
   right_refines state epsilon positive :=
     Refines.add
       (first.right_refines state.1 (epsilon / 2)
-        (Fraction.Order.Field.div_pos_direct positive (by decide)))
+        (Field.div_pos_direct positive (by decide)))
       (second.right_refines state.2 (epsilon / 2)
-        (Fraction.Order.Field.div_pos_direct positive (by decide)))
+        (Field.div_pos_direct positive (by decide)))
   close state epsilon positive {leftValue} {rightValue}
       leftInside rightInside := by
     let half := epsilon / 2
     have halfPositive : (0 : Fraction.Rational) < half :=
-      Fraction.Order.Field.div_pos_direct positive (by decide)
+      Field.div_pos_direct positive (by decide)
     let firstRequested := first.request state.1 half halfPositive
     let secondRequested := second.request state.2 half halfPositive
     let leftFirstBound := leftFirst.bound (first.leftState firstRequested)
@@ -237,16 +239,16 @@ arbitrary value admitted by a sum enclosure. -/
       (leftValue := leftSecondBound.lower)
       (rightValue := rightSecondBound.upper)
       ⟨le_rfl, leftSecondBound.valid⟩ ⟨rightSecondBound.valid, le_rfl⟩
-    have forwardSum := Fraction.Order.Arithmetic.add_lt_add_direct
+    have forwardSum := Arithmetic.add_lt_add_direct
       firstForward.1 secondForward.1
-    have reverseSum := Fraction.Order.Arithmetic.add_lt_add_direct
+    have reverseSum := Arithmetic.add_lt_add_direct
       firstReverse.2 secondReverse.2
     constructor
     · calc
         leftValue - rightValue ≤
             (leftFirstBound.upper + leftSecondBound.upper) -
               (rightFirstBound.lower + rightSecondBound.lower) :=
-          Fraction.Order.Arithmetic.sub_le_sub_direct leftInside.2 rightInside.1
+          Arithmetic.sub_le_sub_direct leftInside.2 rightInside.1
         _ = (leftFirstBound.upper - rightFirstBound.lower) +
               (leftSecondBound.upper - rightSecondBound.lower) := by ring1
         _ < half + half := forwardSum
@@ -261,7 +263,7 @@ arbitrary value admitted by a sum enclosure. -/
         rightValue - leftValue ≤
             (rightFirstBound.upper + rightSecondBound.upper) -
               (leftFirstBound.lower + leftSecondBound.lower) :=
-          Fraction.Order.Arithmetic.sub_le_sub_direct rightInside.2 leftInside.1
+          Arithmetic.sub_le_sub_direct rightInside.2 leftInside.1
         _ = (rightFirstBound.upper - leftFirstBound.lower) +
               (rightSecondBound.upper - leftSecondBound.lower) := by ring1
         _ < half + half := reverseSum
@@ -274,9 +276,9 @@ arbitrary value admitted by a sum enclosure. -/
                 (by decide)
 
 /-- Additive inverse respects finite operational equivalence. -/
-@[expose] def neg {left right : Approximation.BoundProcess}
-    (equivalent : Approximation.OperationalEquivalence left right) :
-    Approximation.OperationalEquivalence left.neg right.neg where
+@[expose] def neg {left right : BoundProcess}
+    (equivalent : OperationalEquivalence left right) :
+    OperationalEquivalence left.neg right.neg where
   State := equivalent.State
   leftState := equivalent.leftState
   rightState := equivalent.rightState
@@ -289,8 +291,8 @@ arbitrary value admitted by a sum enclosure. -/
   close state epsilon positive {leftValue} {rightValue}
       leftInside rightInside := by
     have original := equivalent.close state epsilon positive
-      (Interval.neg_contains_iff.mp leftInside)
-      (Interval.neg_contains_iff.mp rightInside)
+      (neg_contains_iff.mp leftInside)
+      (neg_contains_iff.mp rightInside)
     constructor
     · calc
         leftValue - rightValue =
@@ -302,18 +304,18 @@ arbitrary value admitted by a sum enclosure. -/
         _ < epsilon := original.1
 
 /-- Difference respects finite operational equivalence. -/
-@[expose] def sub {leftFirst rightFirst leftSecond rightSecond : Approximation.BoundProcess}
-    (first : Approximation.OperationalEquivalence leftFirst rightFirst)
-    (second : Approximation.OperationalEquivalence leftSecond rightSecond) :
-    Approximation.OperationalEquivalence (leftFirst.sub leftSecond)
+@[expose] def sub {leftFirst rightFirst leftSecond rightSecond : BoundProcess}
+    (first : OperationalEquivalence leftFirst rightFirst)
+    (second : OperationalEquivalence leftSecond rightSecond) :
+    OperationalEquivalence (leftFirst.sub leftSecond)
       (rightFirst.sub rightSecond) :=
   first.add second.neg
 
 /-- Positive rational scaling respects finite operational equivalence. -/
-@[expose] def scalePositive {left right : Approximation.BoundProcess}
-    (equivalent : Approximation.OperationalEquivalence left right)
+@[expose] def scalePositive {left right : BoundProcess}
+    (equivalent : OperationalEquivalence left right)
     (factor : Fraction.Rational) (factorPositive : 0 < factor) :
-    Approximation.OperationalEquivalence
+    OperationalEquivalence
       (left.scalePositive factor factorPositive)
       (right.scalePositive factor factorPositive) where
   State := equivalent.State
@@ -322,19 +324,19 @@ arbitrary value admitted by a sum enclosure. -/
   initial := equivalent.initial
   request state epsilon positive :=
     equivalent.request state (epsilon / factor)
-      (Fraction.Order.Field.div_pos_direct positive factorPositive)
+      (Field.div_pos_direct positive factorPositive)
   left_refines state epsilon positive :=
     Refines.scale factor factorPositive.le
       (equivalent.left_refines state (epsilon / factor)
-        (Fraction.Order.Field.div_pos_direct positive factorPositive))
+        (Field.div_pos_direct positive factorPositive))
   right_refines state epsilon positive :=
     Refines.scale factor factorPositive.le
       (equivalent.right_refines state (epsilon / factor)
-        (Fraction.Order.Field.div_pos_direct positive factorPositive))
+        (Field.div_pos_direct positive factorPositive))
   close state epsilon positive {leftValue} {rightValue}
       leftInside rightInside := by
     have requestPositive : 0 < epsilon / factor :=
-      Fraction.Order.Field.div_pos_direct positive factorPositive
+      Field.div_pos_direct positive factorPositive
     let requested := equivalent.request state (epsilon / factor) requestPositive
     let leftBound := left.bound (equivalent.leftState requested)
     let rightBound := right.bound (equivalent.rightState requested)
@@ -349,16 +351,16 @@ arbitrary value admitted by a sum enclosure. -/
       (leftValue := leftBound.lower) (rightValue := rightBound.upper)
       ⟨le_rfl, leftBound.valid⟩ ⟨rightBound.valid, le_rfl⟩
     have forwardScaled :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+      Arithmetic.mul_lt_mul_of_pos_left_direct
         factorPositive forward.1
     have reverseScaled :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+      Arithmetic.mul_lt_mul_of_pos_left_direct
         factorPositive reverse.2
     constructor
     · calc
         leftValue - rightValue ≤
             factor * leftBound.upper - factor * rightBound.lower :=
-          Fraction.Order.Arithmetic.sub_le_sub_direct leftInside.2 rightInside.1
+          Arithmetic.sub_le_sub_direct leftInside.2 rightInside.1
         _ = factor * (leftBound.upper - rightBound.lower) := by ring1
         _ < factor * (epsilon / factor) := forwardScaled
         _ = epsilon := by
@@ -371,7 +373,7 @@ arbitrary value admitted by a sum enclosure. -/
     · calc
         rightValue - leftValue ≤
             factor * rightBound.upper - factor * leftBound.lower :=
-          Fraction.Order.Arithmetic.sub_le_sub_direct rightInside.2 leftInside.1
+          Arithmetic.sub_le_sub_direct rightInside.2 leftInside.1
         _ = factor * (rightBound.upper - leftBound.lower) := by ring1
         _ < factor * (epsilon / factor) := reverseScaled
         _ = epsilon := by
@@ -384,32 +386,32 @@ arbitrary value admitted by a sum enclosure. -/
 
 /-- Compose two finite joint schedulers. Coherence of the middle process constructs one rational overlap witness shared
 by the two finite requests. -/
-@[expose] def trans {first middle third : Approximation.BoundProcess}
-    (firstMiddle : Approximation.OperationalEquivalence first middle)
-    (middleThird : Approximation.OperationalEquivalence middle third)
+@[expose] def trans {first middle third : BoundProcess}
+    (firstMiddle : OperationalEquivalence first middle)
+    (middleThird : OperationalEquivalence middle third)
     (middleCoherent : middle.Coherent) :
-    Approximation.OperationalEquivalence first third where
+    OperationalEquivalence first third where
   State := firstMiddle.State × middleThird.State
   leftState state := firstMiddle.leftState state.1
   rightState state := middleThird.rightState state.2
   initial := ⟨firstMiddle.initial, middleThird.initial⟩
   request state epsilon positive :=
     let half := epsilon / 2
-    let halfPositive := Fraction.Order.Field.div_pos_direct positive
+    let halfPositive := Field.div_pos_direct positive
       (by decide : (0 : Fraction.Rational) < 2)
     ⟨firstMiddle.request state.1 half halfPositive,
       middleThird.request state.2 half halfPositive⟩
   left_refines state epsilon positive :=
     firstMiddle.left_refines state.1 (epsilon / 2)
-      (Fraction.Order.Field.div_pos_direct positive (by decide))
+      (Field.div_pos_direct positive (by decide))
   right_refines state epsilon positive :=
     middleThird.right_refines state.2 (epsilon / 2)
-      (Fraction.Order.Field.div_pos_direct positive (by decide))
+      (Field.div_pos_direct positive (by decide))
   close state epsilon positive {leftValue} {rightValue}
       leftInside rightInside := by
     let half := epsilon / 2
     have halfPositive : (0 : Fraction.Rational) < half :=
-      Fraction.Order.Field.div_pos_direct positive (by decide)
+      Field.div_pos_direct positive (by decide)
     let firstRequested := firstMiddle.request state.1 half halfPositive
     let thirdRequested := middleThird.request state.2 half halfPositive
     let middleLeft := middle.bound (firstMiddle.rightState firstRequested)
@@ -422,9 +424,9 @@ by the two finite requests. -/
       leftInside witnessInside.1
     have thirdClose := middleThird.close state.2 half halfPositive
       witnessInside.2 rightInside
-    have forward := Fraction.Order.Arithmetic.add_lt_add_direct
+    have forward := Arithmetic.add_lt_add_direct
       firstClose.1 thirdClose.1
-    have reverse := Fraction.Order.Arithmetic.add_lt_add_direct
+    have reverse := Arithmetic.add_lt_add_direct
       thirdClose.2 firstClose.2
     constructor
     · calc
@@ -453,62 +455,62 @@ by the two finite requests. -/
 end OperationalEquivalence
 
 /-- Propositional wrapper around an explicit finite joint scheduler. -/
-@[expose] def OperationallyEquivalent (left right : Approximation.BoundProcess) : Prop :=
-  Nonempty (Approximation.OperationalEquivalence left right)
+@[expose] def OperationallyEquivalent (left right : BoundProcess) : Prop :=
+  Nonempty (OperationalEquivalence left right)
 
 /-- Every rational-bound process is operationally equivalent to itself. -/
-theorem operationallyEquivalent_refl (process : Approximation.BoundProcess) :
-    Approximation.OperationallyEquivalent process process :=
+theorem operationallyEquivalent_refl (process : BoundProcess) :
+    OperationallyEquivalent process process :=
   ⟨OperationalEquivalence.refl process⟩
 
 /-- A process with a retained rational anchor is operationally equivalent to that exact rational process. -/
 theorem operationallyEquivalent_exact_of_anchoredAt
-    (process : Approximation.BoundProcess) (value : Fraction.Rational)
+    (process : BoundProcess) (value : Fraction.Rational)
     (anchored : process.AnchoredAt value) :
-    Approximation.OperationallyEquivalent process (BoundProcess.exact value) :=
+    OperationallyEquivalent process (BoundProcess.exact value) :=
   ⟨OperationalEquivalence.ofAnchoredAt process value anchored⟩
 
 /-- Reverse the existence of a finite operational comparison scheduler. -/
-theorem operationallyEquivalent_symm {left right : Approximation.BoundProcess}
-    (equivalent : Approximation.OperationallyEquivalent left right) :
-    Approximation.OperationallyEquivalent right left := by
+theorem operationallyEquivalent_symm {left right : BoundProcess}
+    (equivalent : OperationallyEquivalent left right) :
+    OperationallyEquivalent right left := by
   rcases equivalent with ⟨witness⟩
   exact ⟨witness.symm⟩
 
 /-- Adding two pairs of operationally equivalent processes preserves operational equivalence. -/
 theorem operationallyEquivalent_add
-    {leftFirst rightFirst leftSecond rightSecond : Approximation.BoundProcess}
-    (first : Approximation.OperationallyEquivalent leftFirst rightFirst)
-    (second : Approximation.OperationallyEquivalent leftSecond rightSecond) :
-    Approximation.OperationallyEquivalent (leftFirst.add leftSecond)
+    {leftFirst rightFirst leftSecond rightSecond : BoundProcess}
+    (first : OperationallyEquivalent leftFirst rightFirst)
+    (second : OperationallyEquivalent leftSecond rightSecond) :
+    OperationallyEquivalent (leftFirst.add leftSecond)
       (rightFirst.add rightSecond) := by
   rcases first with ⟨firstWitness⟩
   rcases second with ⟨secondWitness⟩
   exact ⟨firstWitness.add secondWitness⟩
 
 /-- Negation preserves operational equivalence. -/
-theorem operationallyEquivalent_neg {left right : Approximation.BoundProcess}
-    (equivalent : Approximation.OperationallyEquivalent left right) :
-    Approximation.OperationallyEquivalent left.neg right.neg := by
+theorem operationallyEquivalent_neg {left right : BoundProcess}
+    (equivalent : OperationallyEquivalent left right) :
+    OperationallyEquivalent left.neg right.neg := by
   rcases equivalent with ⟨witness⟩
   exact ⟨witness.neg⟩
 
 /-- Subtraction preserves operational equivalence of both operands. -/
 theorem operationallyEquivalent_sub
-    {leftFirst rightFirst leftSecond rightSecond : Approximation.BoundProcess}
-    (first : Approximation.OperationallyEquivalent leftFirst rightFirst)
-    (second : Approximation.OperationallyEquivalent leftSecond rightSecond) :
-    Approximation.OperationallyEquivalent (leftFirst.sub leftSecond)
+    {leftFirst rightFirst leftSecond rightSecond : BoundProcess}
+    (first : OperationallyEquivalent leftFirst rightFirst)
+    (second : OperationallyEquivalent leftSecond rightSecond) :
+    OperationallyEquivalent (leftFirst.sub leftSecond)
       (rightFirst.sub rightSecond) := by
   rcases first with ⟨firstWitness⟩
   rcases second with ⟨secondWitness⟩
   exact ⟨firstWitness.sub secondWitness⟩
 
 /-- Positive rational scaling preserves operational equivalence. -/
-theorem operationallyEquivalent_scalePositive {left right : Approximation.BoundProcess}
-    (equivalent : Approximation.OperationallyEquivalent left right)
+theorem operationallyEquivalent_scalePositive {left right : BoundProcess}
+    (equivalent : OperationallyEquivalent left right)
     (factor : Fraction.Rational) (positive : 0 < factor) :
-    Approximation.OperationallyEquivalent
+    OperationallyEquivalent
       (left.scalePositive factor positive)
       (right.scalePositive factor positive) := by
   rcases equivalent with ⟨witness⟩
@@ -516,11 +518,11 @@ theorem operationallyEquivalent_scalePositive {left right : Approximation.BoundP
 
 /-- Compose operational equivalences when the shared middle process has finite pairwise coherence. -/
 theorem operationallyEquivalent_trans
-    {first middle third : Approximation.BoundProcess}
-    (firstMiddle : Approximation.OperationallyEquivalent first middle)
-    (middleThird : Approximation.OperationallyEquivalent middle third)
+    {first middle third : BoundProcess}
+    (firstMiddle : OperationallyEquivalent first middle)
+    (middleThird : OperationallyEquivalent middle third)
     (middleCoherent : middle.Coherent) :
-    Approximation.OperationallyEquivalent first third := by
+    OperationallyEquivalent first third := by
   rcases firstMiddle with ⟨firstWitness⟩
   rcases middleThird with ⟨thirdWitness⟩
   exact ⟨firstWitness.trans thirdWitness middleCoherent⟩

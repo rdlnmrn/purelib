@@ -31,55 +31,55 @@ open Purelib.Polynomial.Dense.Rational.Substitution.Affine (subst subst_isZero s
 
 For every fixed fuel value, the substituted chain is the entrywise substitution of the original chain. -/
 theorem signedRemainderChainFuel_affine (origin slope : Fraction.Rational) (nonzero : slope ≠ 0) :
-    ∀ (fuel : Nat) (first second : Dense.Rational.Basic.CoordinatePolynomial),
-      Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChainFuel fuel (subst first origin slope) (subst second
+    ∀ (fuel : Nat) (first second : Basic.CoordinatePolynomial),
+      Basic.Sturm.signedRemainderChainFuel fuel (subst first origin slope) (subst second
         origin slope) =
-        (Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChainFuel fuel first second).map (fun polynomial =>
+        (Basic.Sturm.signedRemainderChainFuel fuel first second).map (fun polynomial =>
           subst polynomial origin slope)
   | 0, _, _ => rfl
   | fuel + 1, first, second => by
-      rewrite [Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChainFuel_succ,
-        Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChainFuel_succ,
-        Dense.Rational.Substitution.Affine.subst_isZero second origin slope nonzero]
+      rewrite [Basic.Sturm.signedRemainderChainFuel_succ,
+        Basic.Sturm.signedRemainderChainFuel_succ,
+        subst_isZero second origin slope nonzero]
       by_cases secondZero : second.isZero = true
       · rewrite [if_pos secondZero, if_pos secondZero]
         exact Eq.refl _
       · rewrite [if_neg secondZero, if_neg secondZero]
         dsimp only
-        rewrite [Dense.Rational.Substitution.Affine.subst_remainder first second origin slope nonzero,
-          Dense.Rational.Substitution.Affine.subst_isZero
-            (Dense.Basic.DensePolynomial.divMod first second).remainder origin slope nonzero]
+        rewrite [subst_remainder first second origin slope nonzero,
+          subst_isZero
+            (Basic.DensePolynomial.divMod first second).remainder origin slope nonzero]
         by_cases remainderZero :
-            (Dense.Basic.DensePolynomial.divMod first second).remainder.isZero = true
+            (Basic.DensePolynomial.divMod first second).remainder.isZero = true
         · rewrite [if_pos remainderZero, if_pos remainderZero]
           exact Eq.refl _
         · rewrite [if_neg remainderZero, if_neg remainderZero]
           change subst first origin slope ::
-              Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChainFuel fuel
+              Basic.Sturm.signedRemainderChainFuel fuel
                 (subst second origin slope)
-                (-subst (Dense.Basic.DensePolynomial.divMod first second).remainder origin slope) =
+                (-subst (Basic.DensePolynomial.divMod first second).remainder origin slope) =
             subst first origin slope ::
-              (Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChainFuel fuel second
-                (-(Dense.Basic.DensePolynomial.divMod first second).remainder)).map
+              (Basic.Sturm.signedRemainderChainFuel fuel second
+                (-(Basic.DensePolynomial.divMod first second).remainder)).map
                   (fun polynomial => subst polynomial origin slope)
-          rewrite [← Dense.Rational.Substitution.Affine.subst_neg]
+          rewrite [← subst_neg]
           exact congrArg (List.cons (subst first origin slope))
             (signedRemainderChainFuel_affine origin slope nonzero fuel second
-              (-(Dense.Basic.DensePolynomial.divMod first second).remainder))
+              (-(Basic.DensePolynomial.divMod first second).remainder))
 
 /-- Invertible affine substitution acts entrywise on the signed remainder chain.
 
 A nonzero slope preserves the degree-based fuel and each signed division remainder. -/
-theorem signedRemainderChain_affine (first second : Dense.Rational.Basic.CoordinatePolynomial)
+theorem signedRemainderChain_affine (first second : Basic.CoordinatePolynomial)
     (origin slope : Fraction.Rational) (nonzero : slope ≠ 0) :
-    Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChain (subst first origin slope) (subst second origin
+    Basic.Sturm.signedRemainderChain (subst first origin slope) (subst second origin
       slope) =
-      (Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChain first second).map (fun polynomial => subst
+      (Basic.Sturm.signedRemainderChain first second).map (fun polynomial => subst
         polynomial origin slope) := by
-  unfold Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChain
-    Dense.Rational.SignedRemainder.Basic.Sturm.signedRemainderChainWF
-  rewrite [Dense.Rational.Substitution.Affine.subst_degreeCount second origin slope nonzero]
-  exact Dense.Rational.SignedRemainder.Affine.signedRemainderChainFuel_affine origin slope nonzero _ first second
+  unfold Basic.Sturm.signedRemainderChain
+    Basic.Sturm.signedRemainderChainWF
+  rewrite [subst_degreeCount second origin slope nonzero]
+  exact signedRemainderChainFuel_affine origin slope nonzero _ first second
 end
 
 end Purelib.Polynomial.Dense.Rational.SignedRemainder.Affine

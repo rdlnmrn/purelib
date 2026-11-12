@@ -35,23 +35,23 @@ namespace Purelib.Approximation.Gaussian.Logarithm.OnePlus.Polynomial
 
 /-- The actual finite polynomial whose value is the local `log(1+u)` sample. -/
 def log1pPolynomial : Nat →
-  Purelib.Polynomial.Ascending.Rational.Basic.CoefficientPolynomial
-  | 0 => Purelib.Polynomial.Ascending.Rational.Monomial.monomial 1 1
+  Basic.CoefficientPolynomial
+  | 0 => Monomial.monomial 1 1
   | index + 1 =>
-      Purelib.Polynomial.Ascending.Rational.Basic.add
+      Basic.add
         (log1pPolynomial index)
-        (Purelib.Polynomial.Ascending.Rational.Monomial.monomial (index + 2)
-          (Purelib.Approximation.Gaussian.Logarithm.OnePlus.Coefficient.alternatingCoefficient (index + 1)))
+        (Monomial.monomial (index + 2)
+          (Coefficient.alternatingCoefficient (index + 1)))
 
 /-- The formal derivative target, a finite alternating geometric polynomial. -/
 def log1pGeometricPolynomial : Nat →
-  Purelib.Polynomial.Ascending.Rational.Basic.CoefficientPolynomial
-  | 0 => Purelib.Polynomial.Ascending.Rational.Basic.constant 1
+  Basic.CoefficientPolynomial
+  | 0 => Basic.constant 1
   | index + 1 =>
-      Purelib.Polynomial.Ascending.Rational.Basic.add
+      Basic.add
         (log1pGeometricPolynomial index)
-        (Purelib.Polynomial.Ascending.Rational.Monomial.monomial (index + 1)
-          (Purelib.Data.Rat.Alternating.alternatingSign (index + 1)))
+        (Monomial.monomial (index + 1)
+          (Data.Rat.Alternating.alternatingSign (index + 1)))
 
 /-- The formal derivative of each finite one-plus logarithm polynomial is coefficientwise equal to the matching
 alternating geometric polynomial. -/

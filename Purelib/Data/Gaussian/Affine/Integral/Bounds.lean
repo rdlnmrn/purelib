@@ -15,6 +15,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 section
 public section
@@ -38,8 +40,8 @@ open Purelib.Data.Rat in
 
 When the imaginary row coefficient vanishes, retain the square of the real coefficient. Otherwise use the imaginary
 coefficient square times the gap square; positivity requires a nonzero row and a positive gap. -/
-@[expose] def rowLower (a b : Int) (epsilon : Fraction.Rational) : Fraction.Rational :=
-  if b = 0 then (a : Fraction.Rational) ^ 2 else (b : Fraction.Rational) ^ 2 * epsilon ^ 2
+@[expose] def rowLower (a b : Int) (epsilon : Q) : Q :=
+  if b = 0 then (a : Q) ^ 2 else (b : Q) ^ 2 * epsilon ^ 2
 
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
@@ -56,21 +58,21 @@ theorem rowLower_le_of_squared (a b : Int) (gap : Q) (value : Gaussian)
       ((a : Q) + (0 * value.re - 0 * value.im)) ^ 2 +
       (0 + (0 * value.im + 0 * value.re)) ^ 2
     simp only [-eq_self, -iff_self, MulZeroClass.zero_mul, Fraction.Arithmetic.sub_eq_add_neg_direct, (show -(0 :
-      Fraction.Rational) = 0 from rfl), AddZeroClass.add_zero, zero_pow (by decide : 2 ≠ 0)]
+      Q) = 0 from rfl), AddZeroClass.add_zero, zero_pow (by decide : 2 ≠ 0)]
     exact le_rfl
   next _ =>
-    have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      lower (Fraction.Order.Arithmetic.sq_nonneg_direct (b : Q))
+    have scaled := Arithmetic.mul_le_mul_of_nonneg_left_direct
+      lower (Arithmetic.sq_nonneg_direct (b : Q))
     apply scaled.trans
     change (b : Q) ^ 2 * value.im ^ 2 ≤
       ((a : Q) + ((b : Q) * value.re - 0 * value.im)) ^ 2 +
       (0 + ((b : Q) * value.im + 0 * value.re)) ^ 2
     simp only [-eq_self, -iff_self, MulZeroClass.zero_mul, AddZeroClass.add_zero, _root_.zero_add,
-      Fraction.Arithmetic.sub_eq_add_neg_direct, (show -(0 : Fraction.Rational) = 0 from rfl)]
+      Fraction.Arithmetic.sub_eq_add_neg_direct, (show -(0 : Q) = 0 from rfl)]
     calc
       (b : Q) ^ 2 * value.im ^ 2 = ((b : Q) * value.im) ^ 2 := by ring1
       _ ≤ ((a : Q) + (b : Q) * value.re) ^ 2 + ((b : Q) * value.im) ^ 2 :=
-        le_add_of_nonneg_left (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+        le_add_of_nonneg_left (Arithmetic.sq_nonneg_direct _)
 end Purelib.Data.Gaussian.Affine.Integral.Bounds
 
 end
@@ -102,9 +104,9 @@ theorem rowLower_positive (a b : Int) (epsilon : Fraction.Rational)
     have aNonzero : a ≠ 0 := nonzero.resolve_right (fun h => h equal)
     exact Bounds.Square.integer_square_positive a aNonzero
   next different =>
-    apply Fraction.Order.Arithmetic.mul_pos_direct
+    apply Arithmetic.mul_pos_direct
     · exact Bounds.Square.integer_square_positive b different
-    · exact Fraction.Order.Arithmetic.pow_pos_direct positive 2
+    · exact Arithmetic.pow_pos_direct positive 2
 
 /-- A positive lower bound on the imaginary coordinate bounds the integral affine row norm from below. -/
 theorem rowLower_le (a b : Int) (epsilon : Fraction.Rational) (value : Basic.Canonical)
@@ -122,10 +124,10 @@ theorem rowLower_le (a b : Int) (epsilon : Fraction.Rational) (value : Basic.Can
       Fraction.Rational) = 0 from rfl), AddZeroClass.add_zero, zero_pow (by decide : 2 ≠ 0)]
     exact le_rfl
   next _ =>
-    have squareLe := Fraction.Order.Arithmetic.pow_le_pow_direct
+    have squareLe := Arithmetic.pow_le_pow_direct
       positive.le lower 2
-    have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      squareLe (Fraction.Order.Arithmetic.sq_nonneg_direct (b : Fraction.Rational))
+    have scaled := Arithmetic.mul_le_mul_of_nonneg_left_direct
+      squareLe (Arithmetic.sq_nonneg_direct (b : Fraction.Rational))
     calc
       (b : Fraction.Rational) ^ 2 * epsilon ^ 2 ≤ (b : Fraction.Rational) ^ 2 * value.im ^ 2 := scaled
       _ ≤ Norm.Basic.normSq (Cast.integralGaussian a + Cast.integralGaussian b * value) := by
@@ -138,7 +140,7 @@ theorem rowLower_le (a b : Int) (epsilon : Fraction.Rational) (value : Basic.Can
           (b : Fraction.Rational) ^ 2 * value.im ^ 2 = ((b : Fraction.Rational) * value.im) ^ 2 := by ring1
           _ ≤ ((a : Fraction.Rational) + (b : Fraction.Rational) * value.re) ^ 2 +
               ((b : Fraction.Rational) * value.im) ^ 2 :=
-            le_add_of_nonneg_left (Fraction.Order.Arithmetic.sq_nonneg_direct
+            le_add_of_nonneg_left (Arithmetic.sq_nonneg_direct
               ((a : Fraction.Rational) + (b : Fraction.Rational) * value.re))
 end Purelib.Data.Gaussian.Affine.Integral.Bounds
 

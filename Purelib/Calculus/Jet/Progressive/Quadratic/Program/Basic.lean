@@ -51,7 +51,7 @@ inductive Program : {increment : Nat →
     Canonical) {trace : Trace increment} :
       Program trace →
       Program
-        (Trace.Automatic.Arithmetic.scaleAutomatic
+        (Arithmetic.scaleAutomatic
           scalar trace)
   /-- Retain both input programs and record addition of their traces. -/ | add {left right : Trace increment} :
     Program left →
@@ -64,7 +64,7 @@ inductive Program : {increment : Nat →
     increment} : Program left →
     Program right →
       Program
-        (Trace.Automatic.Arithmetic.mulAutomatic
+        (Arithmetic.mulAutomatic
           left right)
   /-- Record reciprocal construction with uniform positive bounds for base and output quadrances. -/ | reciprocal {trace
     : Trace increment} : Program trace →
@@ -76,7 +76,7 @@ inductive Program : {increment : Nat →
       (outputApart : ∀ index,
         outputLower ≤ Canonical.normSq (trace.certificate index).output) →
       Program
-        (Trace.Automatic.Reciprocal.reciprocalAutomatic
+        (Reciprocal.reciprocalAutomatic
           trace baseLower outputLower basePositive outputPositive (fun index => by
               simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
                 using baseApart index)
@@ -93,7 +93,7 @@ inductive Program : {increment : Nat →
       (outputApart : ∀ index,
         outputLower ≤ Canonical.normSq (denominator.certificate index).output) →
       Program
-        (Trace.Automatic.Reciprocal.divAutomatic
+        (Reciprocal.divAutomatic
           numerator denominator baseLower outputLower basePositive
             outputPositive (fun index => by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using baseApart index)
               (fun index => by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using outputApart index))
@@ -105,7 +105,7 @@ inductive Program : {increment : Nat →
         Program outer →
       (incrementUnit : ∀ index, Canonical.normSq (increment index) ≤ 1) →
       Program
-        (Trace.Automatic.Arithmetic.composeAutomatic
+        (Arithmetic.composeAutomatic
           inner outer incrementUnit)
   /-- Record finite exponential composition with unit bounds for base, movement and increment. -/ | exponential {inner :
     Trace increment} : Program inner →
@@ -115,7 +115,7 @@ inductive Program : {increment : Nat →
           (inner.certificate index).base) ≤ 1) →
       (incrementUnit : ∀ index, Canonical.normSq (increment index) ≤ 1) →
       Program
-        (Trace.Automatic.Exponential.exponentialAutomatic
+        (Exponential.exponentialAutomatic
           inner baseUnit movementUnit (fun index => by
               simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
                 using incrementUnit index))
@@ -126,40 +126,40 @@ inductive Program : {increment : Nat →
           (inner.certificate index).base) ≤ 1 / 9) →
       (incrementUnit : ∀ index, Canonical.normSq (increment index) ≤ 1) →
       Program
-        (Trace.Automatic.ReducedLog.reducedLogAutomatic
+        (ReducedLog.reducedLogAutomatic
           inner (fun index => by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using movementDisk index) (fun
             index => by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using incrementUnit index))
   /-- Record finite sine construction with unit bounds for the rotated base and movement. -/ | sine {inner : Trace
     increment} : Program inner →
       (rotatedBaseUnit : ∀ index,
         Canonical.normSq
-          ((Trace.Automatic.Trigonometric.rotateAutomatic
+          ((Trigonometric.rotateAutomatic
             inner).certificate index).base ≤ 1) →
       (rotatedMovementUnit : ∀ index,
         Canonical.normSq
-          (((Trace.Automatic.Trigonometric.rotateAutomatic
+          (((Trigonometric.rotateAutomatic
               inner).certificate index).output -
-            ((Trace.Automatic.Trigonometric.rotateAutomatic
+            ((Trigonometric.rotateAutomatic
               inner).certificate index).base) ≤ 1) →
       (incrementUnit : ∀ index, Canonical.normSq (increment index) ≤ 1) →
       Program
-        (Trace.Automatic.Trigonometric.sineAutomatic
+        (Trigonometric.sineAutomatic
           inner rotatedBaseUnit rotatedMovementUnit incrementUnit)
   /-- Record finite cosine construction with unit bounds for the rotated base and movement. -/ | cosine {inner : Trace
     increment} : Program inner →
       (rotatedBaseUnit : ∀ index,
         Canonical.normSq
-          ((Trace.Automatic.Trigonometric.rotateAutomatic
+          ((Trigonometric.rotateAutomatic
             inner).certificate index).base ≤ 1) →
       (rotatedMovementUnit : ∀ index,
         Canonical.normSq
-          (((Trace.Automatic.Trigonometric.rotateAutomatic
+          (((Trigonometric.rotateAutomatic
               inner).certificate index).output -
-            ((Trace.Automatic.Trigonometric.rotateAutomatic
+            ((Trigonometric.rotateAutomatic
               inner).certificate index).base) ≤ 1) →
       (incrementUnit : ∀ index, Canonical.normSq (increment index) ≤ 1) →
       Program
-        (Trace.Automatic.Trigonometric.cosineAutomatic
+        (Trigonometric.cosineAutomatic
           inner rotatedBaseUnit rotatedMovementUnit incrementUnit)
 
 namespace Program.Basic

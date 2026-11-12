@@ -16,6 +16,8 @@ import Purelib.Riemann.RootContinuation.SquareRootDegree
 import Purelib.RootIsolation.State.WindingOne.Basic
 import Purelib.RootIsolation.Track.Basic
 
+open Purelib.Riemann.Branches
+
 open Purelib.Data
 
 open Purelib.Geometry.Rational
@@ -44,28 +46,28 @@ namespace Purelib.Examples.Riemann.ExplicitQuarticABackwardSampleCertificates
 
 The supplied carrying and box equalities identify the actual prepared source selected by the original constructor. -/
 private theorem canonicalCachedSource_box_eq
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box}
     {start finish : Gaussian.Basic.Canonical}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient
       start finish)
-    (left : Riemann.Branches.ClearSheetContinuation.Subdivision.Endpoint)
+    (left : ClearSheetContinuation.Subdivision.Endpoint)
     (owner : Riemann.Topology.SquareRootContinuationChain.Owner
       (polynomial.eval (segment.pointAt left.parameter)))
-    (request : Riemann.Branches.PreparedSheetContinuation.StepRequest)
+    (request : PreparedSheetContinuation.StepRequest)
     (box : Box)
-    (ready : Riemann.Branches.PreparedSheetContinuation.AlreadyPrepared
+    (ready : PreparedSheetContinuation.AlreadyPrepared
       segment left owner request)
     (strengthenedCarries :
-      Riemann.Branches.ClearSheetContinuation.variationBound segment left.parameter
+      ClearSheetContinuation.variationBound segment left.parameter
           request.endpoint.parameter <
         (SquareRoot.Clearance.ExactQuadraticOwnerClearance.strengthenQuadraticOwner
           owner).track.initial.clearance.bound)
     (boxEq : owner.track.initial.box = box) :
-    (Riemann.Branches.PreparedSheetContinuation.CachedSource.canonical
+    (PreparedSheetContinuation.CachedSource.canonical
       segment left owner request).preparedOwner.track.initial.box = box := by
   exact
-    (Riemann.Branches.PreparedSheetContinuation.prepared_initial_box_eq_of_ready_of_strengthenedCarries
+    (PreparedSheetContinuation.prepared_initial_box_eq_of_ready_of_strengthenedCarries
       segment left owner request ready strengthenedCarries).trans boxEq
 end Purelib.Examples.Riemann.ExplicitQuarticABackwardSampleCertificates
 
@@ -88,27 +90,27 @@ namespace Purelib.Examples.Riemann.ExplicitQuarticHorizontalSampleCertificates
 
 The supplied carrying and box equalities identify the actual prepared source selected by the original constructor. -/
 private theorem canonicalCachedSource_box_eq
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    {polynomial : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
     {start finish : Gaussian.Basic.Canonical}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient
       start finish)
-    (left : Riemann.Branches.ClearSheetContinuation.Subdivision.Endpoint)
+    (left : ClearSheetContinuation.Subdivision.Endpoint)
     (owner : Riemann.Topology.SquareRootContinuationChain.Owner
       (polynomial.eval (segment.pointAt left.parameter)))
-    (request : Riemann.Branches.PreparedSheetContinuation.StepRequest)
+    (request : PreparedSheetContinuation.StepRequest)
     (box : Box)
-    (ready : Riemann.Branches.PreparedSheetContinuation.AlreadyPrepared
+    (ready : PreparedSheetContinuation.AlreadyPrepared
       segment left owner request)
     (strengthenedCarries :
-      Riemann.Branches.ClearSheetContinuation.variationBound segment left.parameter
+      ClearSheetContinuation.variationBound segment left.parameter
           request.endpoint.parameter <
         (SquareRoot.Clearance.ExactQuadraticOwnerClearance.strengthenQuadraticOwner
           owner).track.initial.clearance.bound)
     (boxEq : owner.track.initial.box = box) :
-    (Riemann.Branches.PreparedSheetContinuation.CachedSource.canonical
+    (PreparedSheetContinuation.CachedSource.canonical
       segment left owner request).preparedOwner.track.initial.box = box := by
   exact
-    (Riemann.Branches.PreparedSheetContinuation.prepared_initial_box_eq_of_ready_of_strengthenedCarries
+    (PreparedSheetContinuation.prepared_initial_box_eq_of_ready_of_strengthenedCarries
       segment left owner request ready strengthenedCarries).trans boxEq
 end Purelib.Examples.Riemann.ExplicitQuarticHorizontalSampleCertificates
 
@@ -124,27 +126,27 @@ namespace Purelib.RootIsolation.SquareRoot.Preparation.CachedSource.BoxReadback
 Readiness and the strengthened variation bound identify the cached owner; the
 input equality then transports that box to the requested retained box. -/
 theorem canonicalCachedSource_box_eq
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box}
     {start finish : Gaussian.Basic.Canonical}
     (segment : Geometry.ClearPath.ClearSegment polynomial ambient
       start finish)
-    (left : Riemann.Branches.ClearSheetContinuation.Subdivision.Endpoint)
+    (left : ClearSheetContinuation.Subdivision.Endpoint)
     (owner : Riemann.Topology.SquareRootContinuationChain.Owner
       (polynomial.eval (segment.pointAt left.parameter)))
-    (request : Riemann.Branches.PreparedSheetContinuation.StepRequest)
+    (request : PreparedSheetContinuation.StepRequest)
     (box : Box)
-    (ready : Riemann.Branches.PreparedSheetContinuation.AlreadyPrepared
+    (ready : PreparedSheetContinuation.AlreadyPrepared
       segment left owner request)
     (strengthenedCarries :
-      Riemann.Branches.ClearSheetContinuation.variationBound segment left.parameter
+      ClearSheetContinuation.variationBound segment left.parameter
           request.endpoint.parameter <
-        (SquareRoot.Clearance.ExactQuadraticOwnerClearance.strengthenQuadraticOwner
+        (Clearance.ExactQuadraticOwnerClearance.strengthenQuadraticOwner
           owner).track.initial.clearance.bound)
     (boxEq : owner.track.initial.box = box) :
-    (Riemann.Branches.PreparedSheetContinuation.CachedSource.canonical
+    (PreparedSheetContinuation.CachedSource.canonical
       segment left owner request).preparedOwner.track.initial.box = box :=
-  (Riemann.Branches.PreparedSheetContinuation.prepared_initial_box_eq_of_ready_of_strengthenedCarries
+  (PreparedSheetContinuation.prepared_initial_box_eq_of_ready_of_strengthenedCarries
     segment left owner request ready strengthenedCarries).trans boxEq
 
 end Purelib.RootIsolation.SquareRoot.Preparation.CachedSource.BoxReadback

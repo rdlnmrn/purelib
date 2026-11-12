@@ -22,6 +22,9 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Data.Gaussian.Norm
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.Gaussian.Basic (Canonical)
 
 open Purelib
@@ -61,11 +64,11 @@ def exact (value :
   errorScale_nonneg := le_rfl
   later_close := by
     intro earlier later order
-    rw [_root_.sub_self, Data.Gaussian.Norm.Basic.normSq_zero,
+    rw [_root_.sub_self, Basic.normSq_zero,
       Geometric.Basic.quarterRadius_eq_mul_pow,
       Fraction.Field.zero_mul_direct]
-  centerBound := Data.Gaussian.Norm.Basic.normSq value
-  centerBound_nonneg := Data.Gaussian.Norm.Basic.normSq_nonneg value
+  centerBound := Basic.normSq value
+  centerBound_nonneg := Basic.normSq_nonneg value
   bounded := fun _ => le_rfl
 
 /-- Transport a geometric channel along supplied pointwise equalities.
@@ -96,7 +99,7 @@ def add {left right : Nat →
     Channel (fun index => left index + right index) where
   errorScale := 2 * (leftChannel.errorScale + rightChannel.errorScale)
   errorScale_nonneg :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    Arithmetic.mul_nonneg_direct (by decide)
       (add_nonneg leftChannel.errorScale_nonneg
         rightChannel.errorScale_nonneg)
   later_close := by
@@ -105,21 +108,21 @@ def add {left right : Nat →
         (left later + right later) - (left earlier + right earlier) =
           (left later - left earlier) + (right later - right earlier) := by
       apply Data.Gaussian.Basic.ext <;>
-        simp only [Purelib.Data.Gaussian.Basic.add_re, Purelib.Data.Gaussian.Basic.add_im,
-          Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im] <;> ring1
+        simp only [Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im,
+          Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im] <;> ring1
     rw [identity]
     calc
-      Data.Gaussian.Norm.Basic.normSq ((left later - left earlier) +
+      Basic.normSq ((left later - left earlier) +
           (right later - right earlier)) ≤
-          2 * (Data.Gaussian.Norm.Basic.normSq (left later - left earlier) +
-            Data.Gaussian.Norm.Basic.normSq (right later - right earlier)) :=
-        Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _
+          2 * (Basic.normSq (left later - left earlier) +
+            Basic.normSq (right later - right earlier)) :=
+        Bounds.normSq_add_le_two _ _
       _ ≤ 2 *
           (Geometric.Basic.quarterRadius
               leftChannel.errorScale earlier +
             Geometric.Basic.quarterRadius
               rightChannel.errorScale earlier) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add (leftChannel.later_close order)
             (rightChannel.later_close order)) (by decide)
       _ = Geometric.Basic.quarterRadius
@@ -130,18 +133,18 @@ def add {left right : Nat →
         ring1
   centerBound := 2 * (leftChannel.centerBound + rightChannel.centerBound)
   centerBound_nonneg :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    Arithmetic.mul_nonneg_direct (by decide)
       (add_nonneg leftChannel.centerBound_nonneg
         rightChannel.centerBound_nonneg)
   bounded := by
     intro index
     calc
-      Data.Gaussian.Norm.Basic.normSq (left index + right index) ≤
-          2 * (Data.Gaussian.Norm.Basic.normSq (left index) + Data.Gaussian.Norm.Basic.normSq (right
+      Basic.normSq (left index + right index) ≤
+          2 * (Basic.normSq (left index) + Basic.normSq (right
             index)) :=
-        Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _
+        Bounds.normSq_add_le_two _ _
       _ ≤ 2 * (leftChannel.centerBound + rightChannel.centerBound) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add (leftChannel.bounded index)
             (rightChannel.bounded index)) (by decide)
 
@@ -156,15 +159,15 @@ def neg {source : Nat →
     have identity : -source later - -source earlier =
         -(source later - source earlier) := by
       apply Data.Gaussian.Basic.ext <;>
-        simp only [Purelib.Data.Gaussian.Basic.neg_re, Purelib.Data.Gaussian.Basic.neg_im,
-          Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im] <;> ring1
-    rw [identity, Data.Gaussian.Norm.Basic.normSq_neg]
+        simp only [Data.Gaussian.Basic.neg_re, Data.Gaussian.Basic.neg_im,
+          Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im] <;> ring1
+    rw [identity, Basic.normSq_neg]
     exact channel.later_close order
   centerBound := channel.centerBound
   centerBound_nonneg := channel.centerBound_nonneg
   bounded := by
     intro index
-    rw [Data.Gaussian.Norm.Basic.normSq_neg]
+    rw [Basic.normSq_neg]
     exact channel.bounded index
 
 /-- Certify the pointwise difference using addition and negation of the original channels. -/
@@ -175,9 +178,9 @@ def sub {left right : Nat →
   (add leftChannel rightChannel.neg).map (by
     intro index
     apply Data.Gaussian.Basic.ext <;>
-      simp only [Purelib.Data.Gaussian.Basic.add_re, Purelib.Data.Gaussian.Basic.add_im,
-        Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im, Purelib.Data.Gaussian.Basic.neg_re,
-        Purelib.Data.Gaussian.Basic.neg_im] <;> ring1)
+      simp only [Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im,
+        Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im, Data.Gaussian.Basic.neg_re,
+        Data.Gaussian.Basic.neg_im] <;> ring1)
 
 /-- Certify the pointwise product of two Gaussian rational channels.
 
@@ -191,11 +194,11 @@ def mul {left right : Nat →
     (leftChannel.errorScale * rightChannel.centerBound +
       leftChannel.centerBound * rightChannel.errorScale)
   errorScale_nonneg :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    Arithmetic.mul_nonneg_direct (by decide)
       (add_nonneg
-        (Fraction.Order.Arithmetic.mul_nonneg_direct
+        (Arithmetic.mul_nonneg_direct
           leftChannel.errorScale_nonneg rightChannel.centerBound_nonneg)
-        (Fraction.Order.Arithmetic.mul_nonneg_direct
+        (Arithmetic.mul_nonneg_direct
           leftChannel.centerBound_nonneg rightChannel.errorScale_nonneg))
   later_close := by
     intro earlier later order
@@ -204,41 +207,41 @@ def mul {left right : Nat →
           (left later - left earlier) * right later +
             left earlier * (right later - right earlier) := by
       apply Data.Gaussian.Basic.ext <;>
-        simp only [Purelib.Data.Gaussian.Basic.add_re, Purelib.Data.Gaussian.Basic.add_im,
-          Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im, Purelib.Data.Gaussian.Basic.mul_re,
-          Purelib.Data.Gaussian.Basic.mul_im] <;> ring1
+        simp only [Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im,
+          Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im, Data.Gaussian.Basic.mul_re,
+          Data.Gaussian.Basic.mul_im] <;> ring1
     rw [identity]
     have first :
-        Data.Gaussian.Norm.Basic.normSq ((left later - left earlier) * right later) ≤
+        Basic.normSq ((left later - left earlier) * right later) ≤
           Geometric.Basic.quarterRadius
               leftChannel.errorScale earlier * rightChannel.centerBound := by
-      rw [Data.Gaussian.Norm.Basic.normSq_mul]
-      exact Fraction.Order.Arithmetic.mul_le_mul_direct
+      rw [Basic.normSq_mul]
+      exact Arithmetic.mul_le_mul_direct
         (leftChannel.later_close order) (rightChannel.bounded later)
-        (Data.Gaussian.Norm.Basic.normSq_nonneg _) (Geometric.Basic.quarterRadius_nonneg
+        (Basic.normSq_nonneg _) (Geometric.Basic.quarterRadius_nonneg
           leftChannel.errorScale_nonneg earlier)
     have second :
-        Data.Gaussian.Norm.Basic.normSq (left earlier * (right later - right earlier)) ≤
+        Basic.normSq (left earlier * (right later - right earlier)) ≤
           leftChannel.centerBound *
             Geometric.Basic.quarterRadius
               rightChannel.errorScale earlier := by
-      rw [Data.Gaussian.Norm.Basic.normSq_mul]
-      exact Fraction.Order.Arithmetic.mul_le_mul_direct
+      rw [Basic.normSq_mul]
+      exact Arithmetic.mul_le_mul_direct
         (leftChannel.bounded earlier) (rightChannel.later_close order)
-        (Data.Gaussian.Norm.Basic.normSq_nonneg _) leftChannel.centerBound_nonneg
+        (Basic.normSq_nonneg _) leftChannel.centerBound_nonneg
     calc
-      Data.Gaussian.Norm.Basic.normSq ((left later - left earlier) * right later +
+      Basic.normSq ((left later - left earlier) * right later +
           left earlier * (right later - right earlier)) ≤
-          2 * (Data.Gaussian.Norm.Basic.normSq ((left later - left earlier) * right later) +
-            Data.Gaussian.Norm.Basic.normSq (left earlier * (right later - right earlier))) :=
-        Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _
+          2 * (Basic.normSq ((left later - left earlier) * right later) +
+            Basic.normSq (left earlier * (right later - right earlier))) :=
+        Bounds.normSq_add_le_two _ _
       _ ≤ 2 *
           (Geometric.Basic.quarterRadius
               leftChannel.errorScale earlier * rightChannel.centerBound +
             leftChannel.centerBound *
               Geometric.Basic.quarterRadius
                 rightChannel.errorScale earlier) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add first second) (by decide)
       _ = Geometric.Basic.quarterRadius
           (2 * (leftChannel.errorScale * rightChannel.centerBound +
@@ -249,14 +252,14 @@ def mul {left right : Nat →
         ring1
   centerBound := leftChannel.centerBound * rightChannel.centerBound
   centerBound_nonneg :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
+    Arithmetic.mul_nonneg_direct
       leftChannel.centerBound_nonneg rightChannel.centerBound_nonneg
   bounded := by
     intro index
-    rw [Data.Gaussian.Norm.Basic.normSq_mul]
-    exact Fraction.Order.Arithmetic.mul_le_mul_direct
+    rw [Basic.normSq_mul]
+    exact Arithmetic.mul_le_mul_direct
       (leftChannel.bounded index) (rightChannel.bounded index)
-      (Data.Gaussian.Norm.Basic.normSq_nonneg _) leftChannel.centerBound_nonneg
+      (Basic.normSq_nonneg _) leftChannel.centerBound_nonneg
 
 /-- Certify multiplication of a Gaussian rational channel by one displayed Gaussian rational scalar. -/
 def scale (scalar :

@@ -21,6 +21,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Approximation
@@ -52,7 +54,7 @@ final estimate.
 The numerator retains the output target times the lower quadrance squared.
 Four times the sum of the two original centre bounds plus one is the same
 strictly positive budget denominator. -/
-@[expose] public def divisionInputTarget (left right : Gaussian.Request.Basic.Name) (lowerSq : Fraction.Rational)
+@[expose] public def divisionInputTarget (left right : Name) (lowerSq : Fraction.Rational)
     (target : Fraction.Rational) : Fraction.Rational :=
   (target * (lowerSq * lowerSq)) /
     (4 * (left.centerBound + right.centerBound + 1))
@@ -62,7 +64,7 @@ is strictly positive.
 
 The two original centre bounds are nonnegative. Adding the fixed unit gives a
 strictly positive sum, and multiplication by four preserves that sign. -/
-public theorem divisionDenominator_pos (left right : Gaussian.Request.Basic.Name) :
+public theorem divisionDenominator_pos (left right : Name) :
     0 < 4 * (left.centerBound + right.centerBound + 1) := by
   apply Arithmetic.mul_pos_direct (by decide)
   exact Arithmetic.add_pos_of_nonneg_of_pos_direct
@@ -74,11 +76,11 @@ positive common division input request.
 The output target and denominator lower quadrance are both strictly positive.
 Their original product is positive and the retained centre-bound denominator
 is positive. -/
-public theorem divisionInputTarget_pos (left right : Gaussian.Request.Basic.Name) (lowerSq : Fraction.Rational)
+public theorem divisionInputTarget_pos (left right : Name) (lowerSq : Fraction.Rational)
     (lowerPositive : 0 < lowerSq) {target : Fraction.Rational}
     (positive : 0 < target) :
     0 < divisionInputTarget left right lowerSq target := by
-  apply Fraction.Order.Field.div_pos_direct
+  apply Field.div_pos_direct
   · exact Arithmetic.mul_pos_direct positive
       (Arithmetic.mul_pos_direct lowerPositive lowerPositive)
   · exact divisionDenominator_pos left right
@@ -89,7 +91,7 @@ squared lower quadrance.
 Twice the sum of the original centre bounds is strictly below the retained
 budget denominator. Multiplication by the same positive operand request gives
 the stated margin. -/
-public theorem division_budget_lt (left right : Gaussian.Request.Basic.Name) (lowerSq : Fraction.Rational)
+public theorem division_budget_lt (left right : Name) (lowerSq : Fraction.Rational)
     (lowerPositive : 0 < lowerSq) {target : Fraction.Rational}
     (positive : 0 < target) :
     2 * divisionInputTarget left right lowerSq target *
@@ -135,8 +137,8 @@ original operand bounds and matching denominator lower quadrance.
 Both operand radii meet the original common request and both centres satisfy
 their retained bounds. The positive lower quadrance and its exact ball
 certificate bound the original quotient radius. -/
-public theorem div_radius_lt (leftName rightName : Gaussian.Request.Basic.Name) (lowerSq : Fraction.Rational)
-    (lowerPositive : 0 < lowerSq) (left right : Enclosure.Ball)
+public theorem div_radius_lt (leftName rightName : Name) (lowerSq : Fraction.Rational)
+    (lowerPositive : 0 < lowerSq) (left right : Ball)
     {target : Fraction.Rational} (positive : 0 < target)
     (leftSmall :
       left.radiusSq <
@@ -144,18 +146,18 @@ public theorem div_radius_lt (leftName rightName : Gaussian.Request.Basic.Name) 
     (rightSmall :
       right.radiusSq <
         divisionInputTarget leftName rightName lowerSq target)
-    (leftCenter : Data.Gaussian.Norm.Basic.normSq left.center ≤ leftName.centerBound)
-    (rightCenter : Data.Gaussian.Norm.Basic.normSq right.center ≤ rightName.centerBound)
+    (leftCenter : Basic.normSq left.center ≤ leftName.centerBound)
+    (rightCenter : Basic.normSq right.center ≤ rightName.centerBound)
     (rightApart :
       Ball.Apart right)
     (sameLower : rightApart.lowerSq = lowerSq) :
     (left.div right rightApart).radiusSq < target := by
   let epsilon :=
     divisionInputTarget leftName rightName lowerSq target
-  let centerNorm := Data.Gaussian.Norm.Basic.normSq right.center
+  let centerNorm := Basic.normSq right.center
   let numerator :=
     2 * (left.radiusSq * centerNorm +
-      Data.Gaussian.Norm.Basic.normSq left.center * right.radiusSq)
+      Basic.normSq left.center * right.radiusSq)
   let lowerProduct := lowerSq * lowerSq
   have epsilonPositive : 0 < epsilon :=
     divisionInputTarget_pos leftName rightName lowerSq lowerPositive positive
@@ -170,23 +172,23 @@ public theorem div_radius_lt (leftName rightName : Gaussian.Request.Basic.Name) 
     exact Arithmetic.mul_nonneg_direct (by decide)
       (add_nonneg
         (Arithmetic.mul_nonneg_direct left.radiusSq_nonneg
-          (Data.Gaussian.Norm.Basic.normSq_nonneg right.center))
+          (Basic.normSq_nonneg right.center))
         (Arithmetic.mul_nonneg_direct
-          (Data.Gaussian.Norm.Basic.normSq_nonneg left.center) right.radiusSq_nonneg))
+          (Basic.normSq_nonneg left.center) right.radiusSq_nonneg))
   have numeratorUpper : numerator ≤
       2 * epsilon * (leftName.centerBound + rightName.centerBound) := by
     dsimp only [numerator, centerNorm]
-    have leftTerm : left.radiusSq * Data.Gaussian.Norm.Basic.normSq right.center ≤
+    have leftTerm : left.radiusSq * Basic.normSq right.center ≤
         epsilon * rightName.centerBound :=
       Arithmetic.mul_le_mul_direct leftSmall.le rightCenter
-        (Data.Gaussian.Norm.Basic.normSq_nonneg right.center) epsilonPositive.le
-    have rightTerm : Data.Gaussian.Norm.Basic.normSq left.center * right.radiusSq ≤
+        (Basic.normSq_nonneg right.center) epsilonPositive.le
+    have rightTerm : Basic.normSq left.center * right.radiusSq ≤
         leftName.centerBound * epsilon :=
       Arithmetic.mul_le_mul_direct leftCenter rightSmall.le
         right.radiusSq_nonneg leftName.centerBound_nonneg
     calc
-      2 * (left.radiusSq * Data.Gaussian.Norm.Basic.normSq right.center +
-          Data.Gaussian.Norm.Basic.normSq left.center * right.radiusSq) ≤
+      2 * (left.radiusSq * Basic.normSq right.center +
+          Basic.normSq left.center * right.radiusSq) ≤
           2 * (epsilon * rightName.centerBound +
             leftName.centerBound * epsilon) :=
         Arithmetic.mul_le_mul_of_nonneg_left_direct
@@ -203,17 +205,17 @@ public theorem div_radius_lt (leftName rightName : Gaussian.Request.Basic.Name) 
   have denominatorPositive : 0 < lowerSq * centerNorm :=
     Arithmetic.mul_pos_direct lowerPositive centerPositive
   change
-    (2 * (left.radiusSq * Data.Gaussian.Norm.Basic.normSq right.center +
-      Data.Gaussian.Norm.Basic.normSq left.center * right.radiusSq)) /
-      (rightApart.lowerSq * Data.Gaussian.Norm.Basic.normSq right.center) < target
+    (2 * (left.radiusSq * Basic.normSq right.center +
+      Basic.normSq left.center * right.radiusSq)) /
+      (rightApart.lowerSq * Basic.normSq right.center) < target
   rw [sameLower]
   calc
     numerator / (lowerSq * centerNorm) ≤
         numerator / lowerProduct :=
-      Fraction.Order.Field.div_le_div_of_nonneg_left_direct
+      Field.div_le_div_of_nonneg_left_direct
         numeratorNonnegative lowerProductPositive denominatorLower
     _ < target :=
-      (Fraction.Order.Field.div_lt_iff_pos lowerProductPositive).2
+      (Field.div_lt_iff_pos lowerProductPositive).2
         numeratorStrict
 
 /-- Divide two enclosure request oracles using the original denominator apartness
@@ -221,8 +223,8 @@ certificate.
 
 Both operands receive a common request computed from their retained centre
 bounds, output target and denominator lower quadrance. -/
-@[expose] public def div (left right : Gaussian.Request.Basic.Name) (apart : Name.Apart right) :
-  Gaussian.Request.Basic.Name where
+@[expose] public def div (left right : Name) (apart : Apart right) :
+  Name where
   request target positive :=
     let inputPositive := divisionInputTarget_pos left right apart.lowerSq
       apart.positive positive
@@ -245,7 +247,7 @@ bounds, output target and denominator lower quadrance. -/
     · rfl
   centerBound := left.centerBound / apart.lowerSq
   centerBound_nonneg :=
-    Fraction.Order.Field.div_nonneg_direct left.centerBound_nonneg
+    Field.div_nonneg_direct left.centerBound_nonneg
       apart.positive.le
   center_bounded target positive := by
     let inputPositive := divisionInputTarget_pos left right apart.lowerSq
@@ -258,34 +260,34 @@ bounds, output target and denominator lower quadrance. -/
         inputPositive
     let rightApart := (Apart.atRequest apart)
       (divisionInputTarget left right apart.lowerSq target) inputPositive
-    have rightCenterLower : apart.lowerSq ≤ Data.Gaussian.Norm.Basic.normSq rightBall.center :=
+    have rightCenterLower : apart.lowerSq ≤ Basic.normSq rightBall.center :=
       (Apart.center_lower apart) _ _
-    have rightCenterPositive : 0 < Data.Gaussian.Norm.Basic.normSq rightBall.center :=
+    have rightCenterPositive : 0 < Basic.normSq rightBall.center :=
       apart.positive.trans_le rightCenterLower
     have rightCenterNonzero : rightBall.center ≠ 0 := by
       intro centerZero
-      rw [centerZero, Data.Gaussian.Norm.Basic.normSq_zero] at rightCenterPositive
+      rw [centerZero, Basic.normSq_zero] at rightCenterPositive
       exact (lt_irrefl _ rightCenterPositive).elim
-    change Data.Gaussian.Norm.Basic.normSq (leftBall.center / rightBall.center) ≤
+    change Basic.normSq (leftBall.center / rightBall.center) ≤
       left.centerBound / apart.lowerSq
     rw [Data.Gaussian.Field.normSq_div _ _ rightCenterNonzero]
     calc
-      Data.Gaussian.Norm.Basic.normSq leftBall.center * (Data.Gaussian.Norm.Basic.normSq
+      Basic.normSq leftBall.center * (Basic.normSq
         rightBall.center)⁻¹ =
-          Data.Gaussian.Norm.Basic.normSq leftBall.center / Data.Gaussian.Norm.Basic.normSq
+          Basic.normSq leftBall.center / Basic.normSq
             rightBall.center := rfl
-      _ ≤ left.centerBound / Data.Gaussian.Norm.Basic.normSq rightBall.center := by
-        apply (Fraction.Order.Field.div_le_iff_pos
+      _ ≤ left.centerBound / Basic.normSq rightBall.center := by
+        apply (Field.div_le_iff_pos
           rightCenterPositive).2
         calc
-          Data.Gaussian.Norm.Basic.normSq leftBall.center ≤ left.centerBound :=
+          Basic.normSq leftBall.center ≤ left.centerBound :=
             left.center_bounded _ _
-          _ = (left.centerBound / Data.Gaussian.Norm.Basic.normSq rightBall.center) *
-              Data.Gaussian.Norm.Basic.normSq rightBall.center :=
+          _ = (left.centerBound / Basic.normSq rightBall.center) *
+              Basic.normSq rightBall.center :=
             (Fraction.Field.div_mul_cancel_of_ne
               left.centerBound _ rightCenterPositive.ne').symm
       _ ≤ left.centerBound / apart.lowerSq :=
-        Fraction.Order.Field.div_le_div_of_nonneg_left_direct
+        Field.div_le_div_of_nonneg_left_direct
           left.centerBound_nonneg apart.positive rightCenterLower
 
 /-- The division request admits quotients of readings admitted by its original two
@@ -294,7 +296,7 @@ operand requests and retained denominator apartness certificate.
 The two readings remain in the original common-target operand balls. The
 retained uniform denominator apartness certifies their quotient in the same
 requested quotient ball. -/
-public theorem request_contains_div (left right : Gaussian.Request.Basic.Name) (apart : Name.Apart right)
+public theorem request_contains_div (left right : Name) (apart : Apart right)
     {target : Fraction.Rational} (positive : 0 < target) {x y : Data.Gaussian.Basic.Canonical}
     (xInside : (left.request
       (divisionInputTarget left right apart.lowerSq target)
@@ -305,7 +307,7 @@ public theorem request_contains_div (left right : Gaussian.Request.Basic.Name) (
       (divisionInputTarget_pos left right apart.lowerSq apart.positive
         positive)).Contains y) :
     (left.div right apart).request target positive |>.Contains (x / y) :=
-  Enclosure.Ball.contains_div
+  Ball.contains_div
     ((Apart.atRequest apart) _ _) xInside yInside
 
 end Purelib.Approximation.Gaussian.Request.Basic.Name

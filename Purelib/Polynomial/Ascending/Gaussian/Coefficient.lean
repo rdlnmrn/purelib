@@ -40,6 +40,10 @@ def CoefficientwiseEqual (left right :
   ∀ degree, coefficient left degree = coefficient right
     degree
 
+/-- Equality of the original finite Gaussian coefficient tables below a displayed degree count. -/
+def EqualBelow (count : Nat) (left right : CoefficientPolynomial) : Prop :=
+  ∀ degree, degree < count → coefficient left degree = coefficient right degree
+
 /-- Every Gaussian polynomial is coefficientwise equal to itself. -/
 theorem coefficientwise_refl (polynomial :
   CoefficientPolynomial) :
@@ -70,6 +74,25 @@ theorem coefficientwise_trans {first second third :
       value else 0
   | 0 => rfl
   | _ + 1 => rfl
+
+/-- A zero-extended coefficient outside the actual finite list length is zero. -/
+theorem coefficientList_eq_zero_of_length_le :
+    ∀ (values : List Gaussian.Basic.Canonical) (degree : Nat),
+      values.length ≤ degree → coefficientList values degree = 0
+  | [], _, _ => rfl
+  | _ :: _, 0, impossible => by cases impossible
+  | _ :: tail, degree + 1, bound =>
+      coefficientList_eq_zero_of_length_le tail degree (Nat.le_of_succ_le_succ bound)
+
+/-- A finite list with zero at every retained occurrence has zero at every zero-extended coefficient. -/
+theorem coefficientList_zero_of_all :
+    ∀ (values : List Gaussian.Basic.Canonical), (∀ entry, entry ∈ values → entry = 0) →
+      ∀ degree, coefficientList values degree = 0
+  | [], _, _ => rfl
+  | head :: _, zero, 0 => zero head (List.Mem.head _)
+  | head :: tail, zero, degree + 1 =>
+      coefficientList_zero_of_all tail (fun entry member => zero entry (List.Mem.tail head member)) degree
+
 end Purelib.Polynomial.Ascending.Gaussian.Coefficient
 
 end

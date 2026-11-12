@@ -16,6 +16,8 @@ import Purelib.Riemann.Integration.PreparedConstantModels
 public import Purelib.Riemann.RootContinuation.PreparedDirectedRootRefinements
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-!
@@ -48,53 +50,53 @@ open Purelib.Riemann.RootContinuation.PreparedSubedgeRootQueries
 open Purelib.Riemann.RootContinuation.PreparedDirectedRootRefinements
   (SameDirection DirectedRefinement)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {source :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {ambient : Purelib.Geometry.Rational.Box} {start finish : Purelib.Data.Gaussian.Basic.Canonical}
-  {segment : Purelib.Polynomial.Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {source :
+  Differential genus}
+  {ambient : Geometry.Rational.Box} {start finish : Gaussian.Basic.Canonical}
+  {segment : ClearSegment curve.polynomial ambient start finish}
 
 /-- A prepared parent has ordered endpoint parameters on the exact original clear segment.
 
 Both parameters lie in the closed unit interval. Equality is allowed, retaining stationary parents without an extra
 strict movement assumption. -/
-@[expose] def SegmentSource (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish)
+@[expose] def SegmentSource (segment : ClearSegment curve.polynomial ambient start finish)
     (parent : CenteredEdge curve source) : Prop :=
-  ∃ first last : Rat.Fraction.Rational, 0 ≤ first ∧ first ≤ last ∧ last ≤ 1 ∧
+  ∃ first last : Rational, 0 ≤ first ∧ first ≤ last ∧ last ≤ 1 ∧
     parent.edge.point 0 = segment.pointAt first ∧ parent.edge.point 1 = segment.pointAt last
 
 namespace SegmentSource
 
 /-- Every prepared-edge point is the affine interpolation of its two endpoints. -/
-private theorem parent_affine (parent : CenteredEdge curve source) (parameter : Rat.Fraction.Rational) :
+private theorem parent_affine (parent : CenteredEdge curve source) (parameter : Rational) :
     parent.edge.point parameter = parent.edge.point 0 + Gaussian.Scale.scale parameter (parent.edge.point 1 -
       parent.edge.point 0) := by
   apply Gaussian.Basic.ext <;>
     simp only [Integration.PreparedConstantModels.PreparedEdge.point,
-      Geometry.ClearPath.ClearSegment.pointAt,
+      ClearSegment.pointAt,
       Gaussian.Basic.add_re, Gaussian.Basic.add_im,
       Gaussian.Basic.sub_re, Gaussian.Basic.sub_im,
       Gaussian.Scale.scale_re, Gaussian.Scale.scale_im] <;> ring1
 
 /-- Composing source-segment parameters agrees with affine interpolation of the corresponding points. -/
-private theorem segment_affine (segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient start finish)
-    (first last parameter : Rat.Fraction.Rational) :
+private theorem segment_affine (segment : ClearSegment curve.polynomial ambient start finish)
+    (first last parameter : Rational) :
     segment.pointAt ((1 - parameter) * first + parameter * last) =
       segment.pointAt first + Gaussian.Scale.scale parameter (segment.pointAt last - segment.pointAt first) := by
   apply Gaussian.Basic.ext <;>
-    simp only [Geometry.ClearPath.ClearSegment.pointAt, Gaussian.Basic.add_re, Gaussian.Basic.add_im,
+    simp only [ClearSegment.pointAt, Gaussian.Basic.add_re, Gaussian.Basic.add_im,
       Gaussian.Basic.sub_re, Gaussian.Basic.sub_im,
       Gaussian.Scale.scale_re, Gaussian.Scale.scale_im] <;> ring1
 
 /-- Interpolating two unit-interval parameters with a unit-interval weight stays in that interval. -/
-private theorem interpolate_inside {first last parameter : Rat.Fraction.Rational}
+private theorem interpolate_inside {first last parameter : Rational}
     (firstInside : 0 ≤ first ∧ first ≤ 1) (lastInside : 0 ≤ last ∧ last ≤ 1)
     (inside : 0 ≤ parameter ∧ parameter ≤ 1) :
     0 ≤ (1 - parameter) * first + parameter * last ∧ (1 - parameter) * first + parameter * last ≤ 1 := by
-  have remaining := Rat.Fraction.Order.Arithmetic.sub_nonneg_direct inside.2
-  refine ⟨add_nonneg (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct remaining firstInside.1)
-    (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct inside.1 lastInside.1), ?_⟩
-  exact (add_le_add (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct firstInside.2 remaining)
-    (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct lastInside.2 inside.1)).trans_eq (by ring1)
+  have remaining := Arithmetic.sub_nonneg_direct inside.2
+  refine ⟨add_nonneg (Arithmetic.mul_nonneg_direct remaining firstInside.1)
+    (Arithmetic.mul_nonneg_direct inside.1 lastInside.1), ?_⟩
+  exact (add_le_add (Arithmetic.mul_le_mul_of_nonneg_left_direct firstInside.2 remaining)
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct lastInside.2 inside.1)).trans_eq (by ring1)
 
 /-- Transport ordered source parameters through an actual root subedge with the same direction.
 
@@ -104,7 +106,7 @@ theorem refine {parent child : CenteredEdge curve source} (original : SegmentSou
     (relation : RootSubedge parent child) (direction : SameDirection parent child) : SegmentSource segment child := by
   obtain ⟨first, last, firstNonnegative, ordered, lastBound, firstEq, lastEq⟩ := original
   by_cases stationary : parent.edge.point 1 = parent.edge.point 0
-  · have constant (parameter : Rat.Fraction.Rational) : parent.edge.point parameter = parent.edge.point 0 := by
+  · have constant (parameter : Rational) : parent.edge.point parameter = parent.edge.point 0 := by
       rw [parent_affine, stationary]
       apply Gaussian.Basic.ext <;>
         simp only [Gaussian.Basic.add_re, Gaussian.Basic.add_im,
@@ -124,12 +126,12 @@ theorem refine {parent child : CenteredEdge curve source} (original : SegmentSou
     have rightInside := interpolate_inside firstInside lastInside right.inside
     have order : (1 - left.fraction) * first + left.fraction * last ≤
         (1 - right.fraction) * first + right.fraction * last := by
-      apply Rat.Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
-      have nonnegative := Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Rat.Fraction.Order.Arithmetic.sub_nonneg_direct increasing) (Rat.Fraction.Order.Arithmetic.sub_nonneg_direct
+      apply Arithmetic.le_of_sub_nonneg_direct
+      have nonnegative := Arithmetic.mul_nonneg_direct
+        (Arithmetic.sub_nonneg_direct increasing) (Arithmetic.sub_nonneg_direct
           ordered)
       exact (by ring1 : _ = (right.fraction - left.fraction) * (last - first)).trans_ge nonnegative
-    have query (parameter : Rat.Fraction.Rational) : parent.edge.point parameter = segment.pointAt ((1 - parameter) *
+    have query (parameter : Rational) : parent.edge.point parameter = segment.pointAt ((1 - parameter) *
       first + parameter * last) := by
       rw [parent_affine, firstEq, lastEq, segment_affine]
     exact ⟨_, _, leftInside.1, order, rightInside.2,
@@ -137,7 +139,7 @@ theorem refine {parent child : CenteredEdge curve source} (original : SegmentSou
 
 /-- Recasting the differential preserves the parent's original ordered source parameters. -/
 theorem recast {parent : CenteredEdge curve source} (original : SegmentSource segment parent) (target :
-  Hyperelliptic.Differentials.Basic.Differential genus) :
+  Differential genus) :
     SegmentSource segment (recastCenteredEdge target parent) := original
 
 end SegmentSource

@@ -46,6 +46,8 @@ operation preserves all and only the vertex identifications.
 
 namespace Purelib.Topology.Surface.Word.VertexSurgery
 
+open Purelib.Topology.Chain
+
 open Purelib.Topology.Surface.Word.VertexRotation
 open Purelib.Topology.Surface.Word.Surgery (InterlacedWord)
 open Purelib.Topology.Surface.Word.SignedWord (SignedGenerator)
@@ -130,9 +132,9 @@ theorem before_anchor (cut : Surgery.InterlacedWord count) (model : Vertices.Wor
   anchor := (model.edges cut.first).finish
   closed :=
     let paths := InterlacedWord.before_paths cut model
-    PathEndpoints.append
-      (PathEndpoints.append
-        (PathEndpoints.append paths.u paths.x) paths.w) paths.v
+    PathBoundary.PathEndpoints.append
+      (PathBoundary.PathEndpoints.append
+        (PathBoundary.PathEndpoints.append paths.u paths.x) paths.w) paths.v
 
 set_option genInjectivity false in
 /-- All junctions are stored once and tied to their actual prefix paths. -/
@@ -242,13 +244,13 @@ theorem edges_on_after (corners : InterlacedWord.VertexCorners cut model)
       simpa only [firstReverse] using WordVertexPath.single corners.edges ⟨cut.first, true⟩
     have four : WordVertexPath.Path corners.edges [⟨cut.last, true⟩] corners.d corners.c := by
       simpa only [lastReverse] using WordVertexPath.single corners.edges ⟨cut.last, true⟩
-    exact PathEndpoints.append one
-      (PathEndpoints.append u
-        (PathEndpoints.append two
-          (PathEndpoints.append v
-            (PathEndpoints.append three
-              (PathEndpoints.append w
-                (PathEndpoints.append four x))))))
+    exact PathBoundary.PathEndpoints.append one
+      (PathBoundary.PathEndpoints.append u
+        (PathBoundary.PathEndpoints.append two
+          (PathBoundary.PathEndpoints.append v
+            (PathBoundary.PathEndpoints.append three
+              (PathBoundary.PathEndpoints.append w
+                (PathBoundary.PathEndpoints.append four x))))))
 
 /-- Restoring the two pivot edges preserves coverage of the original finite vertex bank. -/
 theorem restore_covered (corners : InterlacedWord.VertexCorners cut model)

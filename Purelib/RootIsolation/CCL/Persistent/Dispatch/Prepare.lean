@@ -31,6 +31,8 @@ import Purelib.Polynomial.Dense.Evaluation
 import Purelib.RootIsolation.CCL.Persistent.Controller.Basic
 import Purelib.RootIsolation.State.WindingOne.Basic
 
+open Purelib.LinearAlgebra.Coordinates2.Matrix
+
 public section
 
 open Purelib
@@ -61,28 +63,28 @@ namespace Purelib.RootIsolation.CCL.Persistent.Dispatch.Prepare
 equality boundary, and either append one stable bit or return the first
 genuinely parameterized curve event. -/
 @[expose] def dispatch
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
     (degreePositive : 0 < p.natDegree)
     (track : Track.Basic.WindingOneTrack p ambient) (current : State p ambient) :
-    CCL.Persistent.Dispatch.Basic.Outcome current := by
+    Basic.Outcome current := by
   let parser := Data.CCL.Encoding.Parser.State.parse current.word
-  let inverse := LinearAlgebra.Coordinates2.Matrix.BoundaryAdjugate.adjugate parser.matrix
+  let inverse := BoundaryAdjugate.adjugate parser.matrix
   have inverseDeterminantNonzero :
-      LinearAlgebra.Coordinates2.Matrix.Matrix2.determinant inverse ≠ 0 := by
-    change LinearAlgebra.Coordinates2.Matrix.BoundaryAdjugate.determinant
-      (LinearAlgebra.Coordinates2.Matrix.BoundaryAdjugate.adjugate parser.matrix) ≠ 0
-    rw [LinearAlgebra.Coordinates2.Matrix.BoundaryAdjugate.determinant_adjugate]
-    simpa only [parser, LinearAlgebra.Coordinates2.Matrix.BoundaryAdjugate.determinant, -eq_self, -iff_self] using
+      Matrix2.determinant inverse ≠ 0 := by
+    change BoundaryAdjugate.determinant
+      (BoundaryAdjugate.adjugate parser.matrix) ≠ 0
+    rw [BoundaryAdjugate.determinant_adjugate]
+    simpa only [parser, BoundaryAdjugate.determinant, -eq_self, -iff_self] using
       Data.CCL.Encoding.Parser.State.parse_det_ne current.word
   match Track.Exclusion.Homography.decide degreePositive track
       current.numerical inverse
-      (LinearAlgebra.Coordinates2.Matrix.Boundary.lowerRow_ne_of_determinant_ne inverse
+      (Boundary.lowerRow_ne_of_determinant_ne inverse
         inverseDeterminantNonzero) with
   | .exact point root inside _denominatorZero =>
       exact .decided (.exact ⟨point, root, inside⟩)
   | .separated separated =>
     let separatedState := current.refine separated.state separated.refines
-    match CCL.Persistent.Terminal.Prepare.prepare degreePositive track
+    match Terminal.Prepare.prepare degreePositive track
         separatedState with
     | .exact root =>
       exact .decided (.exact
@@ -90,7 +92,7 @@ genuinely parameterized curve event. -/
           root := root.root
           inside := separated.refines.contains root.inside })
     | .ready localPrepared =>
-      let prepared : CCL.Persistent.Terminal.Prepare.SourcePersistentDispatchPreparedAlias current :=
+      let prepared : Terminal.Prepare.SourcePersistentDispatchPreparedAlias current :=
         { state := localPrepared.state
           boxRefines := localPrepared.boxRefines.trans separated.refines
           word_eq := by
@@ -98,7 +100,7 @@ genuinely parameterized curve event. -/
               State.refine_word, -eq_self, -iff_self] using
               localPrepared.word_eq
           canContinue := localPrepared.canContinue }
-      let denominator : CCL.Persistent.Dispatch.Basic.DenominatorCertificate prepared :=
+      let denominator : Basic.DenominatorCertificate prepared :=
         { margin := separated.margin
           margin_pos := separated.margin_pos
           lower := by
@@ -108,10 +110,10 @@ genuinely parameterized curve event. -/
             have wordIdentity : prepared.state.word = current.word :=
               prepared.word_eq
             simpa only [wordIdentity, parser, inverse, -eq_self, -iff_self] using lower }
-      exact CCL.Persistent.Dispatch.Finite.dispatchFinite degreePositive track
-        ⟨prepared, denominator, CCL.Persistent.Dispatch.Finite.candidateForms prepared.state.word, [], (by
+      exact Finite.dispatchFinite degreePositive track
+        ⟨prepared, denominator, Finite.candidateForms prepared.state.word, [], (by
           intro bit atom member
-          exact Or.inl (CCL.Persistent.Dispatch.Finite.form_mem_candidateForms
+          exact Or.inl (Finite.form_mem_candidateForms
             prepared.state.word bit member))⟩
 
 end Purelib.RootIsolation.CCL.Persistent.Dispatch.Prepare

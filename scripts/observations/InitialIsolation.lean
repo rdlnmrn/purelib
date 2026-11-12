@@ -52,11 +52,9 @@ open Purelib.RootIsolation.FTA.Squarefree
 public section
 
 /-!
-Short-iteration diagnostic for the actual coefficient-first initial isolator.
-It imports no CCL or generated period bank.  Squarefreeness is computed from
-the coefficients; the production isolator supplies all root boxes.  Runtime
-regression checks supplement, and do not replace, its universal Lean proofs.
-Run under an explicit SIGKILL timeout and a systemd memory bound.
+Isolate roots directly from exact polynomial coefficients. Squarefreeness is
+computed and the production isolator supplies every root box. The finite
+fixture set checks root counts, pairwise separation and winding data.
 -/
 
 namespace InitialIsolationHarness

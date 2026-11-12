@@ -41,7 +41,7 @@ inductive Basic.PathModel.ReversalCells : List
     Basic.PathModel.ReversalCells []
   /-- The original head cell's reversal certificate followed by certificates for the exact tail. -/ | cons {cell :
     CellModel} {remaining : List CellModel}
-      (head : Rational.Cell.Basic.CellModel.ReversalCertificate cell)
+      (head : CellModel.ReversalCertificate cell)
       (tail : Basic.PathModel.ReversalCells remaining) :
         Basic.PathModel.ReversalCells (cell :: remaining)
 
@@ -53,7 +53,7 @@ open Purelib.Integration.Polynomial in
 /-- Read the certified cells in reverse order, reversing each original cell's endpoints with its own polynomial
 certificate. -/
 def reversed : {cells : List
-  CellModel} → Rational.Path.Basic.PathModel.ReversalCells cells → List
+  CellModel} → Basic.PathModel.ReversalCells cells → List
   CellModel
   | [], .nil => []
   | _ :: _, .cons head tail => (reversed
@@ -64,30 +64,30 @@ open Purelib.Integration.Polynomial in
 /-- The reversed certified cell list has the negative of the original path integral sample. -/
 theorem integralSample_reversed : ∀
   {cells : List CellModel}
-    (certificate : Rational.Path.Basic.PathModel.ReversalCells cells),
-    (Rational.Path.Basic.PathModel.mk (reversed
+    (certificate : Basic.PathModel.ReversalCells cells),
+    (Basic.PathModel.mk (reversed
       certificate)).integralSample =
-      -(Rational.Path.Basic.PathModel.mk cells).integralSample
+      -(Basic.PathModel.mk cells).integralSample
   | [], .nil => by
       apply Basic.ext <;>
         simp only [reversed,
-          Rational.Path.Basic.PathModel.integralSample, List.foldr_nil, Basic.neg_re, Basic.neg_im,
+          Basic.PathModel.integralSample, List.foldr_nil, Basic.neg_re, Basic.neg_im,
           Basic.zero_re, Basic.zero_im] <;> ring1
   | cell :: remaining, .cons head tail => by
       change
-        (Rational.Path.Basic.PathModel.mk ((reversed tail) ++
+        (Basic.PathModel.mk ((reversed tail) ++
           [CellModel.reverse cell head])).integralSample =
-          -(Rational.Path.Basic.PathModel.mk (cell :: remaining)).integralSample
-      rw [show Rational.Path.Basic.PathModel.mk ((reversed tail) ++
+          -(Basic.PathModel.mk (cell :: remaining)).integralSample
+      rw [show Basic.PathModel.mk ((reversed tail) ++
         [CellModel.reverse cell head]) =
-          (Rational.Path.Basic.PathModel.mk (reversed tail)).concat
-            (Rational.Path.Basic.PathModel.mk [CellModel.reverse cell head]) from rfl,
-        Rational.Path.Basic.PathModel.integralSample_concat,
+          (Basic.PathModel.mk (reversed tail)).concat
+            (Basic.PathModel.mk [CellModel.reverse cell head]) from rfl,
+        Basic.PathModel.integralSample_concat,
           integralSample_reversed tail,
-        Rational.Path.Basic.PathModel.singleton_integralSample, CellModel.reverse_integralSample]
+        Basic.PathModel.singleton_integralSample, CellModel.reverse_integralSample]
       change
-        -(Rational.Path.Basic.PathModel.mk remaining).integralSample + -cell.integralSample =
-          -(cell.integralSample + (Rational.Path.Basic.PathModel.mk remaining).integralSample)
+        -(Basic.PathModel.mk remaining).integralSample + -cell.integralSample =
+          -(cell.integralSample + (Basic.PathModel.mk remaining).integralSample)
       apply Basic.ext <;>
         simp only [Basic.add_re, Basic.add_im, Basic.neg_re, Basic.neg_im] <;> ring1
 
@@ -97,7 +97,7 @@ open Purelib.Integration.Polynomial in
 set_option genInjectivity false in
 /-- A collection of cell reversal certificates indexed by the exact original path cells. -/
 structure Basic.PathModel.Reversal (path :
-  Rational.Path.Basic.PathModel) where
+  Basic.PathModel) where
   /-- The reversal certificates indexed by this path's exact cell list. -/ cells :
     Basic.PathModel.ReversalCells path.cells
 
@@ -105,13 +105,13 @@ constructive_injectivity Basic.PathModel.Reversal
 
 open Purelib.Integration.Polynomial
 /-- Construct the reversed path from its retained cell-indexed reversal certificates. -/
-def Basic.PathModel.reverse (path : Rational.Path.Basic.PathModel)
-  (certificate : Basic.PathModel.Reversal path) : Rational.Path.Basic.PathModel :=
+def Basic.PathModel.reverse (path : Basic.PathModel)
+  (certificate : Basic.PathModel.Reversal path) : Basic.PathModel :=
   ⟨(Reversal.PathModel.ReversalCells.reversed certificate.cells)⟩
 
 /-- The certified reversed path's integral sample is the negative of the original sample. -/
 theorem Basic.PathModel.reverse_integralSample (path :
-  Rational.Path.Basic.PathModel)
+  Basic.PathModel)
     (certificate : Basic.PathModel.Reversal path) :
     (path.reverse certificate).integralSample = -path.integralSample :=
   (Reversal.PathModel.ReversalCells.integralSample_reversed certificate.cells)

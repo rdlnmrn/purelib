@@ -104,22 +104,22 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndi
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedVerticalRuns
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedRunBudgets.SharedVerticalRuns
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
 open Purelib.Riemann.Normalization.RectangularInverseModels
 
 namespace SharedVerticalRuns
-variable (retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared)
+variable (retained : Preparation.CommonBasisPreparation prepared)
   {index : Nat} (inputs : retained.Inputs index)
   (outer : Fin prepared.occurrences.length) {stage depth : Nat}
 
@@ -127,24 +127,24 @@ variable {cuts : Paths.RectangularSegmentSplitting.GridCuts ((domains.get (occur
   outer).sideOccurrence.position).domain (occurrenceAt prepared.occurrences outer).sideOccurrence.sheet).geometry}
   {meshBox : Rational.Box} {mesh : Meshes.RectangularObservationMesh.ObservationMesh cuts meshBox}
   {firstColumn secondColumn : Fin mesh.partition.x.intervals.length} {width :
-    Normalization.InverseRootPolynomial.Coordinate}
+    InverseRootPolynomial.Coordinate}
   {side : Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedVerticalSide mesh mesh firstColumn
     secondColumn width}
-  (trace : side.Trace depth) (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+  (trace : side.Trace depth) (cache : RegularDomainMeshes.RegularMeshes.Numerics
     domains stage)
-  (bank : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideBanks.SharedVerticalBank.Data (occurrence :=
+  (bank : SharedSideBanks.SharedVerticalBank.Data (occurrence :=
     occurrenceAt prepared.occurrences outer) trace cache)
   (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
-  {allowance : Normalization.InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
+  {allowance : InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
     (Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
   (owners : OwnerRequest (occurrenceAt
     prepared.occurrences outer) budget.tolerance) (later : owners.index ≤ stage)
-  {junctionAllowance : Normalization.InverseRootPolynomial.Coordinate} (junctionBudget :
+  {junctionAllowance : InverseRootPolynomial.Coordinate} (junctionBudget :
     Path.NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
   (junctionOwners : OwnerRequest (occurrenceAt
     prepared.occurrences outer) junctionBudget.tolerance) (junctionLater : junctionOwners.index ≤ stage)
 
-variable (blocks : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBank.ParentBlockBank (occurrenceAt
+variable (blocks : ParentBank.ParentBlockBank (occurrenceAt
   prepared.occurrences outer) mesh
     (occurrenceAt prepared.occurrences outer).sourceVertical (occurrenceAt prepared.occurrences outer).sourceForward)
   (axis : (occurrenceAt prepared.occurrences outer).sourceVertical = true)
@@ -177,30 +177,30 @@ private theorem transport_apply {a b : Bool} {T : Sort u}
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices in
 /-- Traversal selection preserves the entire acquired side word. -/
 theorem forOccurrence_increments :
-    (List.ofFn (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.VerticalOccurrence.SharedVerticalRuns.forOccurrence
+    (List.ofFn (VerticalOccurrence.SharedVerticalRuns.forOccurrence
       retained inputs outer trace cache bank coefficients
       budget owners later junctionBudget junctionOwners junctionLater blocks axis fixed boxEq).physical).flatten =
       if (occurrenceAt prepared.occurrences outer).sourceForward then
         Path.CenteredPathIncrements.Sample.increments
-          (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideSamples.SharedVerticalBank.Data.sample bank
+          (SharedSideSamples.SharedVerticalBank.Data.sample bank
           coefficients)
       else Path.PairedAreaReversal.reverseIncrements (Path.CenteredPathIncrements.Sample.increments
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideSamples.SharedVerticalBank.Data.sample bank
+        (SharedSideSamples.SharedVerticalBank.Data.sample bank
         coefficients)) := by
-  unfold Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.VerticalOccurrence.SharedVerticalRuns.forOccurrence
+  unfold VerticalOccurrence.SharedVerticalRuns.forOccurrence
   rcases Bool.eq_false_or_eq_true (occurrenceAt prepared.occurrences outer).sourceForward with direction | direction
   · simp only [-eq_self, -iff_self, direction, if_pos rfl]
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.VerticalOccurrenceTotals.SharedVerticalRuns.rec_true
+    rw [SharedVerticalRuns.rec_true
       (direction := direction)]
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.VerticalOccurrenceTotals.SharedVerticalRuns.transport_apply]
-    exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedVerticalTotals.SharedVerticalRuns.forward_increments
+    rw [SharedVerticalRuns.transport_apply]
+    exact SharedVerticalTotals.SharedVerticalRuns.forward_increments
       retained inputs outer trace cache bank coefficients _ _
       budget owners later junctionBudget junctionOwners junctionLater _ axis direction boxEq
   · simp only [-eq_self, -iff_self, direction, if_neg (by decide : ¬ false = true)]
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.VerticalOccurrenceTotals.SharedVerticalRuns.rec_false
+    rw [SharedVerticalRuns.rec_false
       (direction := direction)]
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.VerticalOccurrenceTotals.SharedVerticalRuns.transport_apply]
-    exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedVerticalTotals.SharedVerticalRuns.reverse_increments
+    rw [SharedVerticalRuns.transport_apply]
+    exact SharedVerticalTotals.SharedVerticalRuns.reverse_increments
       retained inputs outer trace cache bank coefficients _ _
       budget owners later junctionBudget junctionOwners junctionLater _ axis direction boxEq
 

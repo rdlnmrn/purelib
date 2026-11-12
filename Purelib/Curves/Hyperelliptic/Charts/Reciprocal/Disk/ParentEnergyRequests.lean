@@ -71,17 +71,17 @@ open _root_.Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap (EnergyRequest)
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergy.AreaRequest.Evaluation (RequestedEnergy)
 
-variable {genus count index depth readingIndex floor minimum : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve
+variable {genus count index depth readingIndex floor minimum : Nat} {curve : Basic.HyperellipticCurve
   genus}
-  {differential : Hyperelliptic.Differentials.Basic.Differential genus} {collar :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {parent :
+  {differential : Differentials.Basic.Differential genus} {collar :
+    ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {parent :
     Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {source :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
-  {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap} {source :
+    UniformReciprocalPrimitives.SourcePrimitive data index}
+  {box : Rational.Box} {capSample : Cap.Primitives.Sample cap
     differential index box}
   {target : Normalization.InverseRootPolynomial.Coordinate}
 
@@ -90,15 +90,15 @@ variable {genus count index depth readingIndex floor minimum : Nat} {curve : Hyp
   RootContinuation.RootRadialGeometry.domain) (energyTarget : Normalization.InverseRootPolynomial.Coordinate)
   (energyFloor : Nat) :
     {edges : List Branches.ClearSheetContinuation.Subdivision.ParameterEdge} → {bank :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentBank.Bank regular data edges} → {owners :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank} →
-    {requests : Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartRequests target floor owners} → (plans :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans capSample minimum requests) →
-    (cells : Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank) →
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans.EvaluationData readingIndex plans cells → Type
+      ParentBank.Bank regular data edges} → {owners :
+      ParentOwners.Owners bank} →
+    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans :
+      ParentChartRequests.ChartPlans capSample minimum requests) →
+    (cells : ParentPaths.ComparedCells source capSample depth bank) →
+      ParentChartRequests.ChartPlans.EvaluationData readingIndex plans cells → Type
   | _, _, _, _, .nil, .nil, _ => PUnit
   | _, _, _, _, .cons _ tail, .cons _ cells, evaluated =>
-      Cap.EnergyRequest bounds evaluated.1.vertices.path.segments.length
+      EnergyRequest bounds evaluated.1.vertices.path.segments.length
         energyTarget energyFloor ×
         EnergyRequests bounds energyTarget
           energyFloor tail cells evaluated.2
@@ -110,13 +110,13 @@ namespace EnergyRequests
   RootContinuation.RootRadialGeometry.domain) (energyTarget : Normalization.InverseRootPolynomial.Coordinate)
     (positive : 0 < energyTarget) (energyFloor : Nat) :
     {edges : List Branches.ClearSheetContinuation.Subdivision.ParameterEdge} → {bank :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentBank.Bank regular data edges} → {owners :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank} →
-    {requests : Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartRequests target floor owners} → (plans :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans capSample minimum requests) →
-    (cells : Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank) → (evaluated :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans.EvaluationData readingIndex plans cells) →
-    Hyperelliptic.Charts.Reciprocal.Disk.ParentEnergyRequests.EnergyRequests bounds energyTarget energyFloor plans cells
+      ParentBank.Bank regular data edges} → {owners :
+      ParentOwners.Owners bank} →
+    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans :
+      ParentChartRequests.ChartPlans capSample minimum requests) →
+    (cells : ParentPaths.ComparedCells source capSample depth bank) → (evaluated :
+      ParentChartRequests.ChartPlans.EvaluationData readingIndex plans cells) →
+    EnergyRequests bounds energyTarget energyFloor plans cells
       evaluated
   | _, _, _, _, .nil, .nil, _ => ⟨⟩
   | _, _, _, _, .cons _ tail, .cons _ cells, evaluated =>
@@ -130,13 +130,13 @@ variable {bounds : Cap.EnergyBounds capSample
 
 /-- Take the maximum of every original requested fan depth and the retained energy floor. -/
 @[expose] def maximum : {edges : List Branches.ClearSheetContinuation.Subdivision.ParameterEdge} → {bank :
-  Hyperelliptic.Charts.Reciprocal.Disk.ParentBank.Bank regular data edges} → {owners :
-  Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank} →
-    {requests : Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartRequests target floor owners} → {plans :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans capSample minimum requests} →
-    {cells : Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank} → {evaluated :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans.EvaluationData readingIndex plans cells} →
-    Hyperelliptic.Charts.Reciprocal.Disk.ParentEnergyRequests.EnergyRequests bounds energyTarget energyFloor plans cells
+  ParentBank.Bank regular data edges} → {owners :
+  ParentOwners.Owners bank} →
+    {requests : ParentChartRequests.ChartRequests target floor owners} → {plans :
+      ParentChartRequests.ChartPlans capSample minimum requests} →
+    {cells : ParentPaths.ComparedCells source capSample depth bank} → {evaluated :
+      ParentChartRequests.ChartPlans.EvaluationData readingIndex plans cells} →
+    EnergyRequests bounds energyTarget energyFloor plans cells
       evaluated → Nat
   | _, _, _, _, .nil, .nil, _, _ => energyFloor
   | _, _, _, _, .cons _ _, .cons _ _, _, requests => max requests.1.depth
@@ -148,16 +148,16 @@ end EnergyRequests
 @[expose] def EnergyData (energyTarget : Normalization.InverseRootPolynomial.Coordinate) (energyFloor energyDepth : Nat)
   :
     {edges : List Branches.ClearSheetContinuation.Subdivision.ParameterEdge} → {bank :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentBank.Bank regular data edges} → {owners :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank} →
-    {requests : Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartRequests target floor owners} → (plans :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans capSample minimum requests) →
-    (cells : Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank) →
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans.EvaluationData readingIndex plans cells → Type
+      ParentBank.Bank regular data edges} → {owners :
+      ParentOwners.Owners bank} →
+    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans :
+      ParentChartRequests.ChartPlans capSample minimum requests) →
+    (cells : ParentPaths.ComparedCells source capSample depth bank) →
+      ParentChartRequests.ChartPlans.EvaluationData readingIndex plans cells → Type
       1
   | _, _, _, _, .nil, .nil, _ => PUnit
   | _, _, _, _, .cons _ tail, .cons _ cells, evaluated =>
-      { energy : Hyperelliptic.Charts.Reciprocal.Disk.ChartEnergy.AreaRequest.Evaluation.RequestedEnergy evaluated.1
+      { energy : RequestedEnergy evaluated.1
         energyTarget energyFloor // energy.request.depth = energyDepth } ×
         EnergyData energyTarget energyFloor
           energyDepth tail cells evaluated.2
@@ -170,19 +170,19 @@ variable {bounds : Cap.EnergyBounds capSample
 
 /-- Existing chart readings and sources are reused. The common mesh is
 passed down the whole spine; no already-built fan is discarded or rebuilt. -/
-@[expose] def evaluate (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+@[expose] def evaluate (branch : HyperellipticReciprocal.originOrder curve = 1)
     (oriented : 0 < Energy.AffineTriangle.crossEnergy (parent.edge.point 0) (parent.edge.point 1))
     (parameters : Path.Dyadic.RadialTriangles.Parameters energyDepth) :
     {edges : List Branches.ClearSheetContinuation.Subdivision.ParameterEdge} → {bank :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentBank.Bank regular data edges} → {owners :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank} →
-    {requests : Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartRequests target floor owners} → (plans :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans capSample minimum requests) →
-    (cells : Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank) → (evaluated :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans.EvaluationData readingIndex plans cells) →
-    (energyRequests : Hyperelliptic.Charts.Reciprocal.Disk.ParentEnergyRequests.EnergyRequests bounds energyTarget
+      ParentBank.Bank regular data edges} → {owners :
+      ParentOwners.Owners bank} →
+    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans :
+      ParentChartRequests.ChartPlans capSample minimum requests) →
+    (cells : ParentPaths.ComparedCells source capSample depth bank) → (evaluated :
+      ParentChartRequests.ChartPlans.EvaluationData readingIndex plans cells) →
+    (energyRequests : EnergyRequests bounds energyTarget
       energyFloor plans cells evaluated) → energyRequests.maximum ≤ energyDepth →
-    Hyperelliptic.Charts.Reciprocal.Disk.ParentEnergyRequests.EnergyData energyTarget energyFloor energyDepth plans
+    EnergyData energyTarget energyFloor energyDepth plans
       cells evaluated
   | _, _, _, _, .nil, .nil, _, _, _ => ⟨⟩
   | _, _, _, _, .cons _ tail, .cons _ cells, evaluated, requests, later =>

@@ -12,6 +12,8 @@ public import Purelib.Data.Rat.Fraction.Field
 public import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Algebra.Field
 
 open Purelib.Data.Rat
@@ -40,52 +42,52 @@ theorem
   chebyshevFirst_mem_unitInterval
     (index : Nat) (value : Fraction.Rational)
     (lowerBound : -1 ≤ value) (upperBound : value ≤ 1) :
-    -1 ≤ Recurrence.Chebyshev.First.Basic.chebyshevFirst index value ∧
-      Recurrence.Chebyshev.First.Basic.chebyshevFirst index value ≤ 1 := by
+    -1 ≤ Basic.chebyshevFirst index value ∧
+      Basic.chebyshevFirst index value ≤ 1 := by
   have leftFactorNonnegative : 0 ≤ (1 : Fraction.Rational) - value :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct upperBound
+    Arithmetic.sub_nonneg_direct upperBound
   have rightFactorNonnegative : 0 ≤ (1 : Fraction.Rational) + value := by
     have shifted :=
-      Fraction.Order.Arithmetic.sub_nonneg_direct lowerBound
+      Arithmetic.sub_nonneg_direct lowerBound
     calc
       0 ≤ value - (-1 : Fraction.Rational) := shifted
       _ = 1 + value := by ring1
   have radialFactorNonnegative : 0 ≤ (1 : Fraction.Rational) - value ^ 2 := by
     calc
       0 ≤ (1 - value) * (1 + value) :=
-        Fraction.Order.Arithmetic.mul_nonneg_direct
+        Arithmetic.mul_nonneg_direct
           leftFactorNonnegative rightFactorNonnegative
       _ = 1 - value ^ 2 := by ring1
   have residualNonnegative :
       0 ≤ ((1 : Fraction.Rational) - value ^ 2) *
-        Recurrence.Chebyshev.SecondPrevious.Basic.chebyshevSecondPrevious index value ^ 2 :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct radialFactorNonnegative
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+        SecondPrevious.Basic.chebyshevSecondPrevious index value ^ 2 :=
+    Arithmetic.mul_nonneg_direct radialFactorNonnegative
+      (Arithmetic.sq_nonneg_direct _)
   have squareDifferenceNonnegative :
-      0 ≤ (1 : Fraction.Rational) - Recurrence.Chebyshev.First.Basic.chebyshevFirst index value ^ 2 := by
+      0 ≤ (1 : Fraction.Rational) - Basic.chebyshevFirst index value ^ 2 := by
     calc
       0 ≤ ((1 : Fraction.Rational) - value ^ 2) *
-          Recurrence.Chebyshev.SecondPrevious.Basic.chebyshevSecondPrevious index value ^ 2 := residualNonnegative
-      _ = 1 - Recurrence.Chebyshev.First.Basic.chebyshevFirst index value ^ 2 := by
+          SecondPrevious.Basic.chebyshevSecondPrevious index value ^ 2 := residualNonnegative
+      _ = 1 - Basic.chebyshevFirst index value ^ 2 := by
         calc
           ((1 : Fraction.Rational) - value ^ 2) *
-                Recurrence.Chebyshev.SecondPrevious.Basic.chebyshevSecondPrevious index value ^ 2 =
-              (Recurrence.Chebyshev.First.Basic.chebyshevFirst index value ^ 2 +
+                SecondPrevious.Basic.chebyshevSecondPrevious index value ^ 2 =
+              (Basic.chebyshevFirst index value ^ 2 +
                   (1 - value ^ 2) *
-                    Recurrence.Chebyshev.SecondPrevious.Basic.chebyshevSecondPrevious index value ^ 2) -
-                Recurrence.Chebyshev.First.Basic.chebyshevFirst index value ^ 2 := by ring1
-          _ = 1 - Recurrence.Chebyshev.First.Basic.chebyshevFirst index value ^ 2 := by
-            rw [Recurrence.Chebyshev.Transitions.chebyshevFirst_square_invariant]
+                    SecondPrevious.Basic.chebyshevSecondPrevious index value ^ 2) -
+                Basic.chebyshevFirst index value ^ 2 := by ring1
+          _ = 1 - Basic.chebyshevFirst index value ^ 2 := by
+            rw [Transitions.chebyshevFirst_square_invariant]
   have squareBound :
-      Recurrence.Chebyshev.First.Basic.chebyshevFirst index value ^ 2 ≤ (1 : Fraction.Rational) ^ 2 := by
-    have raw := Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
+      Basic.chebyshevFirst index value ^ 2 ≤ (1 : Fraction.Rational) ^ 2 := by
+    have raw := Arithmetic.le_of_sub_nonneg_direct
       squareDifferenceNonnegative
     simpa only [one_pow] using raw
   have oneNonnegative : (0 : Fraction.Rational) ≤ 1 := by decide
   exact ⟨
-    Fraction.Order.Arithmetic.neg_le_of_sq_le_sq_direct
+    Arithmetic.neg_le_of_sq_le_sq_direct
       oneNonnegative squareBound,
-    Fraction.Order.Arithmetic.le_of_sq_le_sq_direct
+    Arithmetic.le_of_sq_le_sq_direct
       oneNonnegative squareBound⟩
 end
 

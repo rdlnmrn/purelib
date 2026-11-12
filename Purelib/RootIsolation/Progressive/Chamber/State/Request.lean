@@ -26,6 +26,8 @@ import Purelib.Polynomial.Dense.Gaussian.GCD
 import Purelib.RootIsolation.Owner.Family.Basic
 import Purelib.RootIsolation.Owner.Local.Basic
 
+open Purelib.Polynomial.Dense.Gaussian.Coefficient.Progressive
+
 /-!
 # Joint coefficient targets for a retained simple-root chamber
 
@@ -49,9 +51,9 @@ open Purelib.Data.Gaussian
 The retained stability gap is squared and divided by four times the current
 polynomial's norm majorant on the original owner box. -/
 @[expose] def transportedClearanceBound
-    {reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {chamber :
-      Progressive.Chamber.Basic.SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (index : chamber.Index) :
+    {reference : Table.CoefficientTable} {chamber :
+      Basic.SimpleRootChamber reference}
+    (state : ChamberContinuationState chamber) (index : chamber.Index) :
     Fraction.Rational :=
   ((state.family.owner index).clearance.bound -
       state.table.refinementEvaluationBound state.guardTarget
@@ -64,9 +66,9 @@ polynomial's norm majorant on the original owner box. -/
 The bound uses the retained transported clearance, reference extraction
 majorants and the supplied perturbation size on the same original box. -/
 @[expose] def predictedOwnerClearance
-    {reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {chamber :
-      Progressive.Chamber.Basic.SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (index : chamber.Index)
+    {reference : Table.CoefficientTable} {chamber :
+      Basic.SimpleRootChamber reference}
+    (state : ChamberContinuationState chamber) (index : chamber.Index)
     (epsilon : Fraction.Rational) : Fraction.Rational :=
   Dense.Gaussian.Newton.Box.Budget.Data.predictedExtractionClearanceData
     (state.family.owner index).box
@@ -86,27 +88,27 @@ majorants and the supplied perturbation size on the same original box. -/
 The current coefficient table computes its stability target on the original
 owner box using that owner's predicted clearance. -/
 @[expose] def nextOwnerGuardTarget
-    {reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {chamber :
-      Progressive.Chamber.Basic.SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (index : chamber.Index)
+    {reference : Table.CoefficientTable} {chamber :
+      Basic.SimpleRootChamber reference}
+    (state : ChamberContinuationState chamber) (index : chamber.Index)
     (epsilon : Fraction.Rational) : Fraction.Rational :=
   state.table.stabilityTargetForBound (state.family.owner index).box
     (state.predictedOwnerClearance index epsilon)
 
 /-- Collect the next perturbation targets of the original retained owner family in index order. -/
 @[expose] def nextOwnerGuardTargets
-    {reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {chamber :
-      Progressive.Chamber.Basic.SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational) :
+    {reference : Table.CoefficientTable} {chamber :
+      Basic.SimpleRootChamber reference}
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational) :
     List Fraction.Rational :=
   List.ofFn fun index : chamber.Index =>
     state.nextOwnerGuardTarget index epsilon
 
 /-- Compute the positive minimum of the retained per-owner next-step targets. -/
 @[expose] def nextGuardTarget
-    {reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {chamber :
-      Progressive.Chamber.Basic.SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational) :
+    {reference : Table.CoefficientTable} {chamber :
+      Basic.SimpleRootChamber reference}
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational) :
     Fraction.Rational :=
   Data.Rat.List.Minimum.positiveMinimum (state.nextOwnerGuardTargets epsilon)
 
@@ -115,40 +117,40 @@ owner box using that owner's predicted clearance. -/
 The nested minimum bounds the request by the permanent chamber target, the
 current transport guard and the common predicted next-step guard. -/
 @[expose] def coefficientTarget
-    {reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {chamber :
-      Progressive.Chamber.Basic.SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational) :
+    {reference : Table.CoefficientTable} {chamber :
+      Basic.SimpleRootChamber reference}
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational) :
     Fraction.Rational :=
   min chamber.target (min state.guardTarget (state.nextGuardTarget epsilon))
 
 /-- The joint coefficient request fits the original permanent chamber target. -/
 theorem coefficientTarget_le_chamber
-    {reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {chamber :
-      Progressive.Chamber.Basic.SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational) :
+    {reference : Table.CoefficientTable} {chamber :
+      Basic.SimpleRootChamber reference}
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational) :
     state.coefficientTarget epsilon ≤ chamber.target := Fraction.Order.Basic.min_le_left _ _
 
 /-- The joint coefficient request fits the currently retained guard target. -/
 theorem coefficientTarget_le_guard
-    {reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {chamber :
-      Progressive.Chamber.Basic.SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational) :
+    {reference : Table.CoefficientTable} {chamber :
+      Basic.SimpleRootChamber reference}
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational) :
     state.coefficientTarget epsilon ≤ state.guardTarget :=
   (Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _)
 
 /-- The joint coefficient request fits the computed next-step guard target. -/
 theorem coefficientTarget_le_nextGuard
-    {reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {chamber :
-      Progressive.Chamber.Basic.SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational) :
+    {reference : Table.CoefficientTable} {chamber :
+      Basic.SimpleRootChamber reference}
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational) :
     state.coefficientTarget epsilon ≤ state.nextGuardTarget epsilon :=
   (Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_right _ _)
 
 /-- The common next-step target fits each original owner's individual target. -/
 theorem nextGuardTarget_le_owner
-    {reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {chamber :
-      Progressive.Chamber.Basic.SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (epsilon : Fraction.Rational)
+    {reference : Table.CoefficientTable} {chamber :
+      Basic.SimpleRootChamber reference}
+    (state : ChamberContinuationState chamber) (epsilon : Fraction.Rational)
     (index : chamber.Index) :
     state.nextGuardTarget epsilon ≤
       state.nextOwnerGuardTarget index epsilon := by
@@ -157,9 +159,9 @@ theorem nextGuardTarget_le_owner
 
 /-- The retained stable refinement leaves a strictly positive transported clearance bound. -/
 theorem transportedClearanceBound_pos
-    {reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {chamber :
-      Progressive.Chamber.Basic.SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (index : chamber.Index) :
+    {reference : Table.CoefficientTable} {chamber :
+      Basic.SimpleRootChamber reference}
+    (state : ChamberContinuationState chamber) (index : chamber.Index) :
     0 < state.transportedClearanceBound index := by
   exact Fraction.Order.Field.div_pos_direct
     (Fraction.Order.Arithmetic.pow_pos_direct
@@ -170,9 +172,9 @@ theorem transportedClearanceBound_pos
 
 /-- The predicted clearance of each retained owner is strictly positive. -/
 theorem predictedOwnerClearance_pos
-    {reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {chamber :
-      Progressive.Chamber.Basic.SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (index : chamber.Index)
+    {reference : Table.CoefficientTable} {chamber :
+      Basic.SimpleRootChamber reference}
+    (state : ChamberContinuationState chamber) (index : chamber.Index)
     {epsilon : Fraction.Rational} (positive : 0 < epsilon) :
     0 < state.predictedOwnerClearance index epsilon := by
   exact Dense.Gaussian.Newton.Box.Budget.Data.predictedExtractionClearanceData_pos
@@ -190,9 +192,9 @@ theorem predictedOwnerClearance_pos
 
 /-- Each original owner has a strictly positive next-step perturbation target. -/
 theorem nextOwnerGuardTarget_pos
-    {reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {chamber :
-      Progressive.Chamber.Basic.SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) (index : chamber.Index)
+    {reference : Table.CoefficientTable} {chamber :
+      Basic.SimpleRootChamber reference}
+    (state : ChamberContinuationState chamber) (index : chamber.Index)
     {epsilon : Fraction.Rational} (positive : 0 < epsilon) :
     0 < state.nextOwnerGuardTarget index epsilon :=
   state.table.stabilityTargetForBound_pos (state.family.owner index).box
@@ -200,9 +202,9 @@ theorem nextOwnerGuardTarget_pos
 
 /-- The finite family's computed common next-step target is strictly positive. -/
 theorem nextGuardTarget_pos
-    {reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {chamber :
-      Progressive.Chamber.Basic.SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) {epsilon : Fraction.Rational}
+    {reference : Table.CoefficientTable} {chamber :
+      Basic.SimpleRootChamber reference}
+    (state : ChamberContinuationState chamber) {epsilon : Fraction.Rational}
     (positive : 0 < epsilon) : 0 < state.nextGuardTarget epsilon := by
   apply Data.Rat.List.Minimum.positiveMinimum_pos
   intro target member
@@ -211,9 +213,9 @@ theorem nextGuardTarget_pos
 
 /-- The joint chamber, current-guard and next-guard coefficient request is strictly positive. -/
 theorem coefficientTarget_pos
-    {reference : Dense.Gaussian.Coefficient.Progressive.Table.CoefficientTable} {chamber :
-      Progressive.Chamber.Basic.SimpleRootChamber reference}
-    (state : Progressive.Chamber.State.ChamberContinuationState chamber) {epsilon : Fraction.Rational}
+    {reference : Table.CoefficientTable} {chamber :
+      Basic.SimpleRootChamber reference}
+    (state : ChamberContinuationState chamber) {epsilon : Fraction.Rational}
     (positive : 0 < epsilon) : 0 < state.coefficientTarget epsilon :=
   Fraction.Order.Basic.lt_min chamber.target_pos
     (Fraction.Order.Basic.lt_min state.guardPositive (state.nextGuardTarget_pos positive))

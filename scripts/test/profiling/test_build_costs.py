@@ -17,6 +17,7 @@ from unittest.mock import patch
 from scripts.profiling.build_costs import Probes, compiler_command, import_header, stop_owned, timings
 
 from scripts.profiling import build as driver
+from scripts.profiling import build_costs
 
 
 class DispatchTests(unittest.TestCase):
@@ -132,6 +133,18 @@ for option,suffix in [('-o','.olean'),('-i','.ilean'),('-c','.c')]:
         command = json.loads((Path(result["receipt"]).parent / "command.json").read_text())
         self.assertIn("-DwarningAsError=true", command)
 
+    def test_standalone_replay_timeout_rejects_zero_exit(self):
+        self.fake.write_text('#!/usr/bin/env python3\nimport signal, sys, time\n'
+                             'signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))\n'
+                             'time.sleep(30)\n')
+        with patch.object(build_costs, 'MODULE_TIMEOUT', .3), patch.object(
+                build_costs, 'TERMINATION_GRACE', .1):
+            result = self.probes.run(self.module, 'full')
+        self.assertEqual(result['exit_code'], 124)
+        self.assertEqual(result['raw_exit_code'], 0)
+        self.assertTrue(result['timed_out'])
+        self.assertEqual(Path(result['receipt']).name, 'failure.json')
+
     def test_corrupt_checkpoint_is_rejected(self):
         result = self.probes.run(self.module, "full")
         (Path(result["receipt"]).parent / "Module.ir").write_text("corrupt")
@@ -157,6 +170,42 @@ for option,suffix in [('-o','.olean'),('-i','.ilean'),('-c','.c')]:
         self.assertTrue(result["runs"]["full"]["reused"])
         self.assertEqual(len((self.root / "calls").read_text().splitlines()), 4)
 
+
+
+class ProfileSelectionTests(unittest.TestCase):
+    def test_default_skips_short_modules_and_explicit_threshold_selects_them(self):
+        for threshold, expected in ((None, ["Purelib.Slow"]), ("5", ["Purelib.Slow", "Purelib.Short"])):
+            with self.subTest(threshold=threshold), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                (root / "scripts").mkdir()
+                wrapper = root / "scripts/run-lake.sh"
+                wrapper.write_text(
+                    "#!/bin/sh\n"
+                    "echo '✔ [1/2] Built Purelib.Short (9.0s)'\n"
+                    "echo '✔ [2/2] Built Purelib.Slow (30.0s)'\n")
+                wrapper.chmod(0o755)
+                before = Path.cwd()
+                try:
+                    os.chdir(root)
+                    with patch.dict(os.environ, {"CCL_PROFILE_JOBS": "1", "LEAN_NUM_THREADS": "1"}), \
+                         patch.object(driver, "ROOT", root), \
+                         patch.object(driver, "inventory", return_value=["Purelib.Short", "Purelib.Slow"]), \
+                         patch.object(driver, "source_hashes",
+                                      return_value={"Purelib.Short": "short", "Purelib.Slow": "slow"}), \
+                         patch.object(driver.subprocess, "check_output", return_value="revision\n"), \
+                         patch.object(driver, "Probes") as probes, contextlib.redirect_stdout(io.StringIO()):
+                        if threshold is None:
+                            os.environ.pop("CCL_PROFILE_THRESHOLD", None)
+                        else:
+                            os.environ["CCL_PROFILE_THRESHOLD"] = threshold
+                        probes.return_value.selected.return_value = []
+                        self.assertEqual(driver.execute(["build", "Purelib.Short", "Purelib.Slow"], True, False), 0)
+                        probes.return_value.selected.assert_called_once_with(expected, 1)
+                    report = next((root / ".lake/build-profiles").iterdir())
+                    summary = json.loads((report / "summary.json").read_text())
+                    self.assertEqual(summary["module_seconds"], {"Purelib.Short": 9, "Purelib.Slow": 30})
+                finally:
+                    os.chdir(before)
 
 class ColdTests(unittest.TestCase):
     def test_scoped_cold_build_preserves_old_bytes_and_does_not_claim_full_coverage(self):

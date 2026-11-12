@@ -77,34 +77,34 @@ open Purelib.Data.Gaussian.Basic.Canonical
 open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 
 /-- Exact Gaussian rational reciprocal coordinates and sample values. -/
-abbrev Gaussian := Data.Gaussian.Basic.Canonical
+abbrev Gaussian := Basic.Canonical
 /-- Exact rational refinement parameters and error bounds. -/
 abbrev Coordinate := Fraction.Rational
 
 /-- The rational image of the original parametrized segment, not its chord. -/
-def point (cell : Cell.Basic.CellModel) (parameter :
+def point (cell : CellModel) (parameter :
   Coordinate) : Gaussian :=
   (cell.start + Scale.scale parameter cell.displacement)⁻¹
 
 /-- The reciprocal parametrized segment starts at the inverse of its original starting point. -/
-theorem point_zero (cell : Cell.Basic.CellModel) : point
+theorem point_zero (cell : CellModel) : point
   cell 0 = cell.start⁻¹ := by
   apply congrArg Inv.inv
-  apply Data.Gaussian.Basic.ext <;>
+  apply Basic.ext <;>
     simp only [Scale.scale_re, Scale.scale_im, Basic.add_re, Basic.add_im] <;> ring1
 
 /-- The reciprocal parametrized segment ends at the inverse of its original finishing point. -/
-theorem point_one (cell : Cell.Basic.CellModel) : point
+theorem point_one (cell : CellModel) : point
   cell 1 = cell.finish⁻¹ := by
   apply congrArg Inv.inv
-  apply Data.Gaussian.Basic.ext <;>
+  apply Basic.ext <;>
     simp only [Scale.scale_re, Scale.scale_im, CellModel.displacement,
       Basic.add_re, Basic.add_im, Basic.sub_re, Basic.sub_im] <;> ring1
 
 set_option genInjectivity false in
 /-- Endpoint sample data. Nonvanishing between endpoints is a separate path obligation, discharged for the fixed
 exterior by `parent_point_nonzero` in `PreparedExteriorReciprocal`; it does not follow from these two checks. -/
-structure Cell (source : Cell.Basic.CellModel) where
+structure Cell (source : CellModel) where
   /-- The original source cell constant-coefficient certificate. -/ constant : source.ConstantCertificate
   /-- The original source starting point is nonzero. -/ startNonzero : source.start ≠ 0
   /-- The original source finishing point is nonzero. -/ finishNonzero : source.finish ≠ 0
@@ -132,7 +132,7 @@ variable {source : CellModel}
 /-- Cache the reciprocal endpoints, transformed coefficient and sample from one original constant cell and its endpoint
 nonvanishing proofs. -/
 def build (constant : source.ConstantCertificate) (first : source.start ≠ 0) (last : source.finish ≠ 0) :
-  Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Cell source :=
+  Cell source :=
   let start := source.start⁻¹
   let finish := source.finish⁻¹
   let coefficient := -(source.start ^ 2 * constant.coefficient)
@@ -140,10 +140,10 @@ def build (constant : source.ConstantCertificate) (first : source.start ≠ 0) (
 
 /-- In particular, the stored coefficient is the negative reversed hyperelliptic basis coefficient under the existing
 root-coordinate map. -/
-theorem coefficient_transport (reading : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Cell source)
+theorem coefficient_transport (reading : Cell source)
   {genus : Nat}
     (differential : Differentials.Basic.Differential genus) (root :
-      Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Gaussian) (rootNonzero : root ≠ 0)
+      Gaussian) (rootNonzero : root ≠ 0)
     (original : reading.constant.coefficient = HyperellipticReciprocal.coefficient differential source.start root) :
     reading.coefficient = -HyperellipticReciprocal.coefficient (HyperellipticReciprocal.reversedDifferential
       differential)
@@ -154,12 +154,12 @@ theorem coefficient_transport (reading : Curves.Hyperelliptic.Charts.Reciprocal.
 
 /-- The error is not silently declared zero: the reciprocal endpoint displacement differs from the derivative times the
 affine displacement. -/
-theorem error_identity (reading : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Cell source) :
+theorem error_identity (reading : Cell source) :
     source.integralSample - reading.sample = reading.constant.coefficient * source.displacement ^ 2 / source.finish :=
       by
-  rw [Cell.Basic.CellModel.integralSample_constant source reading.constant.coefficient reading.constant.polynomial_eq,
+  rw [CellModel.integralSample_constant source reading.constant.coefficient reading.constant.polynomial_eq,
     reading.sample_eq, reading.start_eq, reading.finish_eq, reading.coefficient_eq]
-  apply Data.Gaussian.Field.mul_right_cancel_of_ne reading.finishNonzero
+  apply Field.mul_right_cancel_of_ne reading.finishNonzero
   rw [Algebra.Field.ExplicitField.div_mul_cancel _ reading.finishNonzero]
   change ((source.finish - source.start) * reading.constant.coefficient -
     (source.finish⁻¹ - source.start⁻¹) * -(source.start ^ 2 * reading.constant.coefficient)) * source.finish = _
@@ -175,26 +175,26 @@ theorem error_identity (reading : Curves.Hyperelliptic.Charts.Reciprocal.Recipro
 
 /-- The reciprocal sample discrepancy squared norm is the exact coefficient and displacement expression divided by the
 original finish norm. -/
-theorem error_norm (reading : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Cell source) :
-    Data.Gaussian.Norm.Basic.normSq (source.integralSample - reading.sample) =
-      Data.Gaussian.Norm.Basic.normSq reading.constant.coefficient * Data.Gaussian.Norm.Basic.normSq
-        source.displacement ^ 2 / Data.Gaussian.Norm.Basic.normSq source.finish := by
-  rw [reading.error_identity, Data.Gaussian.Field.normSq_div _ _ reading.finishNonzero,
-    Data.Gaussian.Norm.Basic.normSq_mul, Power.normSq_pow]
+theorem error_norm (reading : Cell source) :
+    Norm.Basic.normSq (source.integralSample - reading.sample) =
+      Norm.Basic.normSq reading.constant.coefficient * Norm.Basic.normSq
+        source.displacement ^ 2 / Norm.Basic.normSq source.finish := by
+  rw [reading.error_identity, Field.normSq_div _ _ reading.finishNonzero,
+    Norm.Basic.normSq_mul, Power.normSq_pow]
   rfl
 
 /-- Coefficient and nonzero-endpoint bounds control the reciprocal sample discrepancy by the squared source movement. -/
-theorem error_bound (reading : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Cell source) {density lower
-  : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Coordinate} (lowerPositive : 0 < lower)
-    (coefficientBound : Data.Gaussian.Norm.Basic.normSq reading.constant.coefficient ≤ density) (finishBound :
-      lower ≤ Data.Gaussian.Norm.Basic.normSq source.finish) :
-    Data.Gaussian.Norm.Basic.normSq (source.integralSample - reading.sample) ≤ (density / lower) *
-      Data.Gaussian.Norm.Basic.normSq source.displacement ^ 2 := by
+theorem error_bound (reading : Cell source) {density lower
+  : Coordinate} (lowerPositive : 0 < lower)
+    (coefficientBound : Norm.Basic.normSq reading.constant.coefficient ≤ density) (finishBound :
+      lower ≤ Norm.Basic.normSq source.finish) :
+    Norm.Basic.normSq (source.integralSample - reading.sample) ≤ (density / lower) *
+      Norm.Basic.normSq source.displacement ^ 2 := by
   rw [reading.error_norm]
-  have densityNonnegative := (Data.Gaussian.Norm.Basic.normSq_nonneg _).trans coefficientBound
+  have densityNonnegative := (Norm.Basic.normSq_nonneg _).trans coefficientBound
   have denominatorPositive := lowerPositive.trans_le finishBound
   have divisionNonnegative := Fraction.Order.Field.div_nonneg_direct densityNonnegative lowerPositive.le
-  have paid : density ≤ (density / lower) * Data.Gaussian.Norm.Basic.normSq source.finish := by
+  have paid : density ≤ (density / lower) * Norm.Basic.normSq source.finish := by
     calc
       _ = (density / lower) * lower := (Fraction.Field.div_mul_cancel_of_ne _ _ lowerPositive.ne').symm
       _ ≤ _ := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct finishBound divisionNonnegative
@@ -206,11 +206,11 @@ end Cell
 
 set_option genInjectivity false in
 /-- One occurrence per actual source cell. All reciprocal values and coefficients are cached in the retained spine. -/
-inductive Cells : List Cell.Basic.CellModel → Type
+inductive Cells : List CellModel → Type
   /-- The empty source cell list has no reciprocal sample data. -/ | nil :
     Cells []
   /-- Retain the reciprocal sample for the original head cell and the exact retained tail. -/ | cons {source :
-    Cell.Basic.CellModel} {remaining : List Cell.Basic.CellModel} (head :
+    CellModel} {remaining : List CellModel} (head :
     Cell source) (tail :
     Cells remaining) :
     Cells (source :: remaining)
@@ -221,107 +221,107 @@ namespace Cells
 
 /-- Construct the retained reciprocal sample spine from the original constant-cell certificates and endpoint
 nonvanishing evidence. -/
-def build : ∀ {sources : List Cell.Basic.CellModel}, PathModel.ConstantCells sources →
+def build : ∀ {sources : List CellModel}, ConstantCells sources →
     (∀ source ∈ sources, source.start ≠ 0 ∧ source.finish ≠ 0) →
-      Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Cells sources
+      Cells sources
   | _, .nil, _ => .nil
   | _, .cons constant tail, nonzero =>
-      .cons (Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Cell.build constant (nonzero _
+      .cons (Cell.build constant (nonzero _
         (List.mem_cons_self ..)).1 (nonzero _ (List.mem_cons_self ..)).2)
         (build tail (fun source member =>
           nonzero source (List.mem_cons_of_mem _ member)))
 
 /-- Read the cached reciprocal samples in the original source-cell order. -/
-def values : {sources : List Cell.Basic.CellModel} → Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Cells
-  sources → List Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Gaussian
+def values : {sources : List CellModel} → Cells
+  sources → List Gaussian
   | _, .nil => []
   | _, .cons head tail => head.sample :: tail.values
 
 /-- Compute each original source sample minus its corresponding retained reciprocal sample. -/
-def errors : {sources : List Cell.Basic.CellModel} → Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Cells
-  sources → List Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Gaussian
+def errors : {sources : List CellModel} → Cells
+  sources → List Gaussian
   | _, .nil => []
   | source :: _, .cons head tail => (source.integralSample - head.sample) :: tail.errors
 
 /-- There is one retained discrepancy for each original source cell. -/
-theorem errors_length {sources : List Cell.Basic.CellModel} (cells :
-  Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Cells sources) : cells.errors.length = sources.length :=
+theorem errors_length {sources : List CellModel} (cells :
+  Cells sources) : cells.errors.length = sources.length :=
   by
   induction cells with
   | nil => rfl
   | cons head tail ih => exact congrArg Nat.succ ih
 
 /-- The finite discrepancy sum equals the original path sample minus the retained reciprocal sample sum. -/
-theorem errors_sum {sources : List Cell.Basic.CellModel} (cells :
-  Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Cells sources) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum cells.errors = (PathModel.mk sources).integralSample -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum cells.values := by
+theorem errors_sum {sources : List CellModel} (cells :
+  Cells sources) :
+    gaussianSum cells.errors = (PathModel.mk sources).integralSample -
+      gaussianSum cells.values := by
   induction cells with
-  | nil => change (0 : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Gaussian) = 0 - 0; ring1
+  | nil => change (0 : Gaussian) = 0 - 0; ring1
   | @cons source remaining head tail ih =>
-      change _ + Data.Gaussian.Norm.Sum.Basic.gaussianSum tail.errors = _
+      change _ + gaussianSum tail.errors = _
       rw [ih]
       change (source.integralSample - head.sample) + ((PathModel.mk remaining).integralSample -
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum tail.values) =
+        gaussianSum tail.values) =
         (source.integralSample + (PathModel.mk remaining).integralSample) - (head.sample +
-          Data.Gaussian.Norm.Sum.Basic.gaussianSum tail.values)
+          gaussianSum tail.values)
       ring1
 
 /-- Every original constant coefficient in the retained cell spine satisfies the same squared-norm bound. -/
-def CoefficientsBounded {sources : List Cell.Basic.CellModel} (cells :
-  Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Cells sources) (density :
-  Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Coordinate) : Prop :=
+def CoefficientsBounded {sources : List CellModel} (cells :
+  Cells sources) (density :
+  Coordinate) : Prop :=
   match cells with
   | .nil => True
-  | .cons head tail => Data.Gaussian.Norm.Basic.normSq head.constant.coefficient ≤ density ∧
+  | .cons head tail => Norm.Basic.normSq head.constant.coefficient ≤ density ∧
     tail.CoefficientsBounded density
 
 /-- Uniform coefficient, endpoint and movement bounds control every discrepancy in the original finite cell list. -/
-theorem errors_bounded {sources : List Cell.Basic.CellModel} (cells :
-  Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Cells sources) {density lower movement :
-  Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Coordinate}
+theorem errors_bounded {sources : List CellModel} (cells :
+  Cells sources) {density lower movement :
+  Coordinate}
     (lowerPositive : 0 < lower) (coefficients : cells.CoefficientsBounded density)
-    (finishes : ∀ source ∈ sources, lower ≤ Data.Gaussian.Norm.Basic.normSq source.finish)
-    (movements : ∀ source ∈ sources, Data.Gaussian.Norm.Basic.normSq source.displacement ≤ movement) :
-    ∀ error ∈ cells.errors, Data.Gaussian.Norm.Basic.normSq error ≤ (density / lower) * movement ^ 2 := by
+    (finishes : ∀ source ∈ sources, lower ≤ Norm.Basic.normSq source.finish)
+    (movements : ∀ source ∈ sources, Norm.Basic.normSq source.displacement ≤ movement) :
+    ∀ error ∈ cells.errors, Norm.Basic.normSq error ≤ (density / lower) * movement ^ 2 := by
   induction cells with
   | nil => intro error member; cases member
   | @cons source remaining head tail ih =>
       intro error member
       rcases List.Membership.mem_cons.mp member with rfl | member
       · have bound := head.error_bound lowerPositive coefficients.1 (finishes source (List.mem_cons_self ..))
-        have square := Fraction.Order.Arithmetic.pow_le_pow_direct (Data.Gaussian.Norm.Basic.normSq_nonneg
+        have square := Fraction.Order.Arithmetic.pow_le_pow_direct (Norm.Basic.normSq_nonneg
           source.displacement)
           (movements source (List.mem_cons_self ..)) 2
         exact bound.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct square
-          (Fraction.Order.Field.div_nonneg_direct ((Data.Gaussian.Norm.Basic.normSq_nonneg _).trans coefficients.1)
+          (Fraction.Order.Field.div_nonneg_direct ((Norm.Basic.normSq_nonneg _).trans coefficients.1)
             lowerPositive.le))
       · exact ih coefficients.2 (fun other inTail => finishes other (List.mem_cons_of_mem _ inTail))
           (fun other inTail => movements other (List.mem_cons_of_mem _ inTail)) error member
 
 /-- On a uniform dyadic source side, the complete sample discrepancy decays like its squared step size. No
 identification of the inverted arc and its chord, and no infinite limiting argument, is used. -/
-theorem dyadic_error_bound {sources : List Cell.Basic.CellModel} (cells :
-  Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Cells sources) {density lower movement :
-  Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Coordinate}
+theorem dyadic_error_bound {sources : List CellModel} (cells :
+  Cells sources) {density lower movement :
+  Coordinate}
     (depth : Nat) (count : sources.length = 2 ^ depth) (lowerPositive : 0 < lower)
     (coefficients : cells.CoefficientsBounded density) (finishes : ∀ source ∈ sources, lower ≤
-      Data.Gaussian.Norm.Basic.normSq source.finish)
-    (movements : ∀ source ∈ sources, Data.Gaussian.Norm.Basic.normSq source.displacement ≤
-      Geometric.Basic.quarterRadius movement depth) :
-    Data.Gaussian.Norm.Basic.normSq ((PathModel.mk sources).integralSample -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum cells.values) ≤
-      (density / lower) * movement * Geometric.Basic.quarterRadius movement depth := by
+      Norm.Basic.normSq source.finish)
+    (movements : ∀ source ∈ sources, Norm.Basic.normSq source.displacement ≤
+      Basic.quarterRadius movement depth) :
+    Norm.Basic.normSq ((PathModel.mk sources).integralSample -
+      gaussianSum cells.values) ≤
+      (density / lower) * movement * Basic.quarterRadius movement depth := by
   rw [← cells.errors_sum]
-  have estimate := Data.Gaussian.Norm.Sum.Bounds.normSq_sum_le cells.errors _
+  have estimate := Norm.Sum.Bounds.normSq_sum_le cells.errors _
     (cells.errors_bounded lowerPositive coefficients finishes movements)
   rw [cells.errors_length, count] at estimate
   apply estimate.trans_eq
   calc
-    _ = (density / lower) * Geometric.Basic.quarterRadius movement depth *
-        (((2 ^ depth : Nat) : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Coordinate) * (((2 ^ depth :
-          Nat) : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPathSamples.Coordinate) *
-          Geometric.Basic.quarterRadius movement depth)) := by ring1
+    _ = (density / lower) * Basic.quarterRadius movement depth *
+        (((2 ^ depth : Nat) : Coordinate) * (((2 ^ depth :
+          Nat) : Coordinate) *
+          Basic.quarterRadius movement depth)) := by ring1
     _ = _ := by rw [DyadicCount.dyadic_count_cancel]; ring1
 
 end Cells

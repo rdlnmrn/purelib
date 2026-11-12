@@ -19,6 +19,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Approximation.Gaussian.Enclosure
@@ -46,19 +48,19 @@ metric point is used. -/
 theorem normSq_sub_le_four_radiusSq {ball :
   Ball} {left right : Data.Gaussian.Basic.Canonical}
     (leftInside : ball.Contains left) (rightInside : ball.Contains right) :
-    Data.Gaussian.Norm.Basic.normSq (left - right) ≤ 4 * ball.radiusSq := by
-  have centerRight : Data.Gaussian.Norm.Basic.normSq (ball.center - right) ≤ ball.radiusSq := by
+    Basic.normSq (left - right) ≤ 4 * ball.radiusSq := by
+  have centerRight : Basic.normSq (ball.center - right) ≤ ball.radiusSq := by
     have identity : ball.center - right = -(right - ball.center) := by
       apply Data.Gaussian.Basic.ext <;>
         simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im, Data.Gaussian.Basic.neg_re,
           Data.Gaussian.Basic.neg_im] <;> ring1
-    rw [identity, Data.Gaussian.Norm.Basic.normSq_neg]
+    rw [identity, Basic.normSq_neg]
     exact rightInside
   calc
-    Data.Gaussian.Norm.Basic.normSq (left - right) ≤
-        2 * (Data.Gaussian.Norm.Basic.normSq (left - ball.center) +
-          Data.Gaussian.Norm.Basic.normSq (ball.center - right)) :=
-      Data.Gaussian.Norm.Bounds.normSq_sub_le_via left ball.center right
+    Basic.normSq (left - right) ≤
+        2 * (Basic.normSq (left - ball.center) +
+          Basic.normSq (ball.center - right)) :=
+      Bounds.normSq_sub_le_via left ball.center right
     _ ≤ 2 * (ball.radiusSq + ball.radiusSq) :=
       Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add leftInside centerRight) (by decide)

@@ -19,6 +19,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 /-!
 # Root-free finite Lp comparison
@@ -40,7 +42,7 @@ open Purelib
 open Purelib.Data.Rat
 /-- Squared magnitude integral is bounded by total content mass times the square integral. -/
 theorem poweredL1_sq_le_total_mul_poweredL2 {α : Type}
-    (content : Measure.Content α) (value : α → Fraction.Rational) :
+    (content : Content α) (value : α → Fraction.Rational) :
     content.poweredL1 value ^ 2 ≤
       content.total * content.poweredL2 value := by
   let magnitude := fun item => Distance.rationalSeparation (value item) 0
@@ -69,7 +71,7 @@ theorem poweredL1_sq_le_total_mul_poweredL2 {α : Type}
 
 /-- Squared integrated separation is bounded by total content mass times squared integrated distance. -/
 theorem l1Distance_sq_le_total_mul_poweredL2Distance {α : Type}
-    (content : Measure.Content α) (left right : α → Fraction.Rational) :
+    (content : Content α) (left right : α → Fraction.Rational) :
     content.l1Distance left right ^ 2 ≤
       content.total * content.poweredL2Distance left right := by
   have bound := content.poweredL1_sq_le_total_mul_poweredL2
@@ -80,7 +82,7 @@ theorem l1Distance_sq_le_total_mul_poweredL2Distance {α : Type}
 /-- An essential magnitude ceiling bounds the higher powered integral by its extra power times the lower powered
 integral. -/
 theorem poweredLp_add_le_of_essentialBound {α : Type}
-    (content : Measure.Content α) (exponent extra : Nat)
+    (content : Content α) (exponent extra : Nat)
     (value : α → Fraction.Rational) (ceiling : Fraction.Rational)
     (bounded : content.EssentiallyBoundedBy value ceiling) :
     content.poweredLp (exponent + extra) value ≤
@@ -101,10 +103,10 @@ theorem poweredLp_add_le_of_essentialBound {α : Type}
       rcases bounded atom member with zero | bound
       · exact Or.inl zero
       · apply Or.inr
-        exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Fraction.Order.Arithmetic.pow_le_pow_direct
+        exact Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.pow_le_pow_direct
             (Distance.rationalSeparation_nonneg _ _) bound extra)
-          (Fraction.Order.Arithmetic.pow_nonneg_direct
+          (Arithmetic.pow_nonneg_direct
             (Distance.rationalSeparation_nonneg _ _) exponent)
     _ = ceiling ^ extra * content.integral (fun item =>
           Distance.rationalSeparation (value item) 0 ^ exponent) := by
@@ -121,7 +123,7 @@ theorem poweredLp_add_le_of_essentialBound {α : Type}
 
 /-- The computed essential maximum bounds every exponent increase by its corresponding extra power. -/
 theorem poweredLp_add_le_essentialMaximum {α : Type}
-    (content : Measure.Content α) (exponent extra : Nat)
+    (content : Content α) (exponent extra : Nat)
     (value : α → Fraction.Rational) :
     content.poweredLp (exponent + extra) value ≤
       content.essentialMaximumMagnitude value ^ extra *
@@ -132,7 +134,7 @@ theorem poweredLp_add_le_essentialMaximum {α : Type}
 
 /-- The square integral is bounded by essential maximum magnitude times the magnitude integral. -/
 theorem poweredL2_le_essentialMaximum_mul_poweredL1 {α : Type}
-    (content : Measure.Content α) (value : α → Fraction.Rational) :
+    (content : Content α) (value : α → Fraction.Rational) :
     content.poweredL2 value ≤
       content.essentialMaximumMagnitude value * content.poweredL1 value := by
   have bound := content.poweredLp_add_le_essentialMaximum 1 1 value
@@ -143,7 +145,7 @@ theorem poweredL2_le_essentialMaximum_mul_poweredL1 {α : Type}
 /-- An essential separation ceiling bounds the higher powered distance by its extra power times the lower powered
 distance. -/
 theorem poweredLpDistance_add_le_of_essentialBound {α : Type}
-    (content : Measure.Content α) (exponent extra : Nat)
+    (content : Content α) (exponent extra : Nat)
     (left right : α → Fraction.Rational) (ceiling : Fraction.Rational)
     (bounded : ∀ atom, atom ∈ content.atoms →
       atom.weight = 0 ∨
@@ -168,10 +170,10 @@ theorem poweredLpDistance_add_le_of_essentialBound {α : Type}
       rcases bounded atom member with zero | bound
       · exact Or.inl zero
       · apply Or.inr
-        exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          (Fraction.Order.Arithmetic.pow_le_pow_direct
+        exact Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.pow_le_pow_direct
             (Distance.rationalSeparation_nonneg _ _) bound extra)
-          (Fraction.Order.Arithmetic.pow_nonneg_direct
+          (Arithmetic.pow_nonneg_direct
             (Distance.rationalSeparation_nonneg _ _) exponent)
     _ = ceiling ^ extra * content.integral (fun item =>
           Distance.rationalSeparation (left item) (right item) ^ exponent) := by
@@ -188,7 +190,7 @@ theorem poweredLpDistance_add_le_of_essentialBound {α : Type}
 
 /-- Squared integrated distance is bounded by essential maximum difference magnitude times integrated separation. -/
 theorem poweredL2Distance_le_essentialMaximumDifference_mul_l1Distance
-    {α : Type} (content : Measure.Content α)
+    {α : Type} (content : Content α)
     (left right : α → Fraction.Rational) :
     content.poweredL2Distance left right ≤
       content.essentialMaximumMagnitude
@@ -217,7 +219,7 @@ theorem poweredL2Distance_le_essentialMaximumDifference_mul_l1Distance
 /-- An integrated-separation allowance and nonnegative essential ceiling give their product as a squared-distance
 allowance. -/
 theorem poweredL2Distance_le_mul_of_l1Distance_le_and_essentialBound
-    {α : Type} (content : Measure.Content α)
+    {α : Type} (content : Content α)
     (left right : α → Fraction.Rational) (ceiling epsilon : Fraction.Rational)
     (ceilingNonnegative : 0 ≤ ceiling)
     (bounded : ∀ atom, atom ∈ content.atoms →
@@ -230,7 +232,7 @@ theorem poweredL2Distance_le_mul_of_l1Distance_le_and_essentialBound
   rw [show 1 + 1 = 2 by decide, content.poweredLpDistance_two,
     content.poweredLpDistance_one, pow_one] at comparison
   exact comparison.trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
       l1Bound ceilingNonnegative)
 
 end

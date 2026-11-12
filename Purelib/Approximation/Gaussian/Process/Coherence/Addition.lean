@@ -56,8 +56,8 @@ namespace Coherent
 The semantic allowance is twice the sum of operand allowances; the computed common request pays both operand coherence
 thresholds. -/
 @[expose] public def add {left right :
-  Process} (leftCoherent : Gaussian.Process.Coherence.Basic.Coherent left)
-    (rightCoherent : Gaussian.Process.Coherence.Basic.Coherent right) : Gaussian.Process.Coherence.Basic.Coherent
+  Process} (leftCoherent : Coherent left)
+    (rightCoherent : Coherent right) : Coherent
       (left.add right) where
   allowance state :=
     2 * (leftCoherent.allowance state.1 + rightCoherent.allowance state.2)
@@ -86,8 +86,8 @@ thresholds. -/
         leftX + leftY - (rightX + rightY) =
           (leftX - rightX) + (leftY - rightY) := by
       apply Data.Gaussian.Basic.ext <;>
-        simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-          Purelib.Data.Gaussian.Basic.add_re, Purelib.Data.Gaussian.Basic.add_im] <;> ring1
+        simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+          Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im] <;> ring1
     rw [difference]
     calc
       Data.Gaussian.Norm.Basic.normSq ((leftX - rightX) + (leftY - rightY)) ≤
@@ -109,7 +109,7 @@ thresholds. -/
   accuracyRequest target :=
     let semanticInputTarget :=
       Name.additiveInputTarget target
-    4 * Gaussian.Process.Coherence.Basic.Coherent.commonRequest
+    4 * commonRequest
       (leftCoherent.accuracyRequest semanticInputTarget)
       (rightCoherent.accuracyRequest semanticInputTarget)
   accuracyRequest_pos := by
@@ -117,9 +117,9 @@ thresholds. -/
     let semanticInputTarget :=
       Name.additiveInputTarget target
     have semanticPositive : 0 < semanticInputTarget :=
-      Purelib.Data.Rat.Bounds.Quarter.quarter_pos positive
+      Bounds.Quarter.quarter_pos positive
     exact Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-      (Gaussian.Process.Coherence.Basic.Coherent.commonRequest_pos
+      (commonRequest_pos
         (leftCoherent.accuracyRequest_pos semanticPositive)
         (rightCoherent.accuracyRequest_pos semanticPositive))
   refine_accurate := by
@@ -127,20 +127,20 @@ thresholds. -/
     let semanticInputTarget :=
       Name.additiveInputTarget target
     have semanticPositive : 0 < semanticInputTarget :=
-      Purelib.Data.Rat.Bounds.Quarter.quarter_pos positive
+      Bounds.Quarter.quarter_pos positive
     let leftRequest := leftCoherent.accuracyRequest semanticInputTarget
     let rightRequest := rightCoherent.accuracyRequest semanticInputTarget
     have leftRequestPositive : 0 < leftRequest :=
       leftCoherent.accuracyRequest_pos semanticPositive
     have rightRequestPositive : 0 < rightRequest :=
       rightCoherent.accuracyRequest_pos semanticPositive
-    let sharedRequest := Gaussian.Process.Coherence.Basic.Coherent.commonRequest leftRequest rightRequest
+    let sharedRequest := commonRequest leftRequest rightRequest
     have sharedPositive : 0 < sharedRequest :=
-      Gaussian.Process.Coherence.Basic.Coherent.commonRequest_pos leftRequestPositive rightRequestPositive
+      commonRequest_pos leftRequestPositive rightRequestPositive
     let processInputTarget :=
       Name.additiveInputTarget request
     have processInputPositive : 0 < processInputTarget :=
-      Purelib.Data.Rat.Bounds.Quarter.quarter_pos requestPositive
+      Bounds.Quarter.quarter_pos requestPositive
     have processInputSmall : processInputTarget < sharedRequest := by
       apply (Fraction.Order.Field.div_lt_iff_pos
         (show (0 : Fraction.Rational) < 4 by decide)).2
@@ -150,17 +150,17 @@ thresholds. -/
           Fraction.Field.mul_comm _ _
     have leftInputSmall : processInputTarget < leftRequest :=
       processInputSmall.trans
-        (Gaussian.Process.Coherence.Basic.Coherent.commonRequest_lt_left leftRequestPositive rightRequestPositive)
+        (commonRequest_lt_left leftRequestPositive rightRequestPositive)
     have rightInputSmall : processInputTarget < rightRequest :=
       processInputSmall.trans
-        (Gaussian.Process.Coherence.Basic.Coherent.commonRequest_lt_right leftRequestPositive rightRequestPositive)
-    let leftAllowance : Enclosure.Ball :=
+        (commonRequest_lt_right leftRequestPositive rightRequestPositive)
+    let leftAllowance : Ball :=
       { center := 0
         radiusSq := leftCoherent.allowance
           (left.refine state.1
             processInputTarget processInputPositive)
         radiusSq_nonneg := leftCoherent.allowance_nonneg _ }
-    let rightAllowance : Enclosure.Ball :=
+    let rightAllowance : Ball :=
       { center := 0
         radiusSq := rightCoherent.allowance
           (right.refine state.2
@@ -175,8 +175,8 @@ thresholds. -/
 
 /-- Certify coherence of the original negated process while retaining its semantic allowance and request function. -/
 @[expose] public def neg {process :
-  Process} (coherent : Gaussian.Process.Coherence.Basic.Coherent process) :
-    Gaussian.Process.Coherence.Basic.Coherent process.neg where
+  Process} (coherent : Coherent process) :
+    Coherent process.neg where
   allowance := coherent.allowance
   allowance_nonneg := coherent.allowance_nonneg
   ball_radius_le := coherent.ball_radius_le
@@ -188,8 +188,8 @@ thresholds. -/
     have difference :
         -leftSource - -rightSource = -(leftSource - rightSource) := by
       apply Data.Gaussian.Basic.ext <;>
-        simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-          Purelib.Data.Gaussian.Basic.neg_re, Purelib.Data.Gaussian.Basic.neg_im] <;> ring1
+        simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+          Data.Gaussian.Basic.neg_re, Data.Gaussian.Basic.neg_im] <;> ring1
     rw [difference, Data.Gaussian.Norm.Basic.normSq_neg]
     exact close
   accuracyRequest := coherent.accuracyRequest
@@ -198,8 +198,8 @@ thresholds. -/
 
 /-- Certify coherence of the original difference process by composing sum and negation certificates. -/
 @[expose] public def sub {left right :
-  Process} (leftCoherent : Gaussian.Process.Coherence.Basic.Coherent left)
-    (rightCoherent : Gaussian.Process.Coherence.Basic.Coherent right) : Gaussian.Process.Coherence.Basic.Coherent
+  Process} (leftCoherent : Coherent left)
+    (rightCoherent : Coherent right) : Coherent
       (left.sub right) :=
   add leftCoherent
     (neg rightCoherent)

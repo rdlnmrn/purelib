@@ -42,13 +42,13 @@ value, using the retained rational integer cast at each entry. -/
 The original ascending coefficient table is reversed, cast entrywise, then
 normalized. This retains the same descending coefficient construction and its
 exact zero-trimming operation. -/
-@[expose] public def ofAscending (coefficients : List Int) : (Dense.Basic.DensePolynomial Fraction.Rational) :=
-  Dense.Basic.DensePolynomial.normalize ⟨castCoefficients coefficients.reverse⟩
+@[expose] public def ofAscending (coefficients : List Int) : (Basic.DensePolynomial Fraction.Rational) :=
+  Basic.DensePolynomial.normalize ⟨castCoefficients coefficients.reverse⟩
 
 /-- Conversion from ascending integer coefficients returns an already normalized rational polynomial. -/
 @[simp] public theorem ofAscending_normalized (coefficients : List Int) :
     (ofAscending coefficients).normalize = ofAscending coefficients :=
-  Dense.Basic.DensePolynomial.normalize_normalize _
+  Basic.DensePolynomial.normalize_normalize _
 
 /-- Conversion from ascending integer coefficients preserves rational evaluation.
 
@@ -58,18 +58,18 @@ evaluation. -/
 @[simp] public theorem eval_ofAscending (coefficients : List Int)
     (point : Fraction.Rational) :
     (ofAscending coefficients).eval point = Ascending.Integer.Basic.eval coefficients point := by
-  rw [ofAscending, Dense.Basic.DensePolynomial.eval_normalize]
-  exact Dense.Basic.DensePolynomial.evalCoeffs_reverse_intCast coefficients point
+  rw [ofAscending, Basic.DensePolynomial.eval_normalize]
+  exact Basic.DensePolynomial.evalCoeffs_reverse_intCast coefficients point
 
 /-- The empty ascending coefficient table converts to the zero dense polynomial. -/
 public theorem ofAscending_zero : ofAscending [] = 0 := rfl
 
 /-- The ascending singleton one converts to the dense constant-one polynomial. -/
-public theorem ofAscending_one : ofAscending [1] = Dense.Basic.DensePolynomial.constant (1 : Fraction.Rational) := by
-  change (Dense.Basic.DensePolynomial.constant ((1 : Int) : Fraction.Rational)).normalize =
-    Dense.Basic.DensePolynomial.constant (1 : Fraction.Rational)
+public theorem ofAscending_one : ofAscending [1] = Basic.DensePolynomial.constant (1 : Fraction.Rational) := by
+  change (Basic.DensePolynomial.constant ((1 : Int) : Fraction.Rational)).normalize =
+    Basic.DensePolynomial.constant (1 : Fraction.Rational)
   rewrite [Int.cast_one]
-  exact Dense.Basic.DensePolynomial.normalize_constant_of_ne Fraction.Field.zero_ne_one.symm
+  exact Basic.DensePolynomial.normalize_constant_of_ne Fraction.Field.zero_ne_one.symm
 
 /-- Conversion from ascending integer coefficients preserves polynomial addition.
 
@@ -79,11 +79,11 @@ identify the complete coefficient representations. -/
 public theorem ofAscending_add (left right : List Int) :
     ofAscending (Ascending.Integer.Basic.Certificate.add left right) =
       ofAscending left + ofAscending right := by
-  apply Dense.Rational.Extensionality.rational_normalized_eq_of_eval_eq
-    (ofAscending_normalized _) (Dense.Basic.DensePolynomial.normalize_add _ _)
+  apply Extensionality.rational_normalized_eq_of_eval_eq
+    (ofAscending_normalized _) (Basic.DensePolynomial.normalize_add _ _)
   intro point
   rw [eval_ofAscending, Ascending.Integer.Basic.eval_add,
-    Dense.Basic.DensePolynomial.eval_add,
+    Basic.DensePolynomial.eval_add,
     eval_ofAscending, eval_ofAscending]
 
 open Purelib.Algebra.Group in
@@ -95,11 +95,11 @@ therefore coincide. -/
 public theorem ofAscending_neg (coefficients : List Int) :
     ofAscending (Ascending.Integer.Basic.neg coefficients) = -ofAscending coefficients := by
   letI : SubNegZeroMonoid Fraction.Rational := Negation.subNegZeroMonoid
-  apply Dense.Rational.Extensionality.rational_normalized_eq_of_eval_eq
-    (ofAscending_normalized _) (Dense.Basic.DensePolynomial.normalize_neg _)
+  apply Extensionality.rational_normalized_eq_of_eval_eq
+    (ofAscending_normalized _) (Basic.DensePolynomial.normalize_neg _)
   intro point
   rw [eval_ofAscending, Ascending.Integer.Basic.eval_neg,
-    Dense.Basic.DensePolynomial.eval_neg, eval_ofAscending]
+    Basic.DensePolynomial.eval_neg, eval_ofAscending]
 
 /-- Conversion from ascending integer coefficients preserves polynomial subtraction.
 
@@ -109,11 +109,11 @@ of those same retained dense inputs. -/
 public theorem ofAscending_sub (left right : List Int) :
     ofAscending (Ascending.Integer.Basic.sub left right) =
       ofAscending left - ofAscending right := by
-  apply Dense.Rational.Extensionality.rational_normalized_eq_of_eval_eq
-    (ofAscending_normalized _) (Dense.Basic.DensePolynomial.normalize_sub _ _)
+  apply Extensionality.rational_normalized_eq_of_eval_eq
+    (ofAscending_normalized _) (Basic.DensePolynomial.normalize_sub _ _)
   intro point
   rw [eval_ofAscending, Ascending.Integer.Basic.eval_sub,
-    Dense.Basic.DensePolynomial.eval_sub,
+    Basic.DensePolynomial.eval_sub,
     eval_ofAscending, eval_ofAscending]
 
 /-- Conversion from ascending integer coefficients preserves polynomial multiplication.
@@ -124,11 +124,11 @@ the same two retained input polynomials. -/
 public theorem ofAscending_mul (left right : List Int) :
     ofAscending (Ascending.Integer.Basic.Certificate.mul left right) =
       ofAscending left * ofAscending right := by
-  apply Dense.Rational.Extensionality.rational_normalized_eq_of_eval_eq
-    (ofAscending_normalized _) (Dense.Basic.DensePolynomial.normalize_mul _ _)
+  apply Extensionality.rational_normalized_eq_of_eval_eq
+    (ofAscending_normalized _) (Basic.DensePolynomial.normalize_mul _ _)
   intro point
   rw [eval_ofAscending, Ascending.Integer.Basic.eval_mul,
-    Dense.Basic.DensePolynomial.eval_mul,
+    Basic.DensePolynomial.eval_mul,
     eval_ofAscending, eval_ofAscending]
 
 /-- Scaling an ascending integer table converts to scaling its dense polynomial by the embedded integer.
@@ -138,13 +138,13 @@ into rational scalar multiplication. Evaluation and normalization identify
 both complete dense coefficient representations. -/
 public theorem ofAscending_scale (factor : Int) (coefficients : List Int) :
     ofAscending (Ascending.Integer.Basic.Certificate.scale factor coefficients) =
-      Dense.Basic.DensePolynomial.scale
+      Basic.DensePolynomial.scale
         (factor : Fraction.Rational) (ofAscending coefficients) := by
-  apply Dense.Rational.Extensionality.rational_normalized_eq_of_eval_eq
-    (ofAscending_normalized _) (Dense.Basic.DensePolynomial.normalize_scale _ _)
+  apply Extensionality.rational_normalized_eq_of_eval_eq
+    (ofAscending_normalized _) (Basic.DensePolynomial.normalize_scale _ _)
   intro point
   rw [eval_ofAscending, Ascending.Integer.Basic.eval_scale,
-    Dense.Basic.DensePolynomial.eval_scale,
+    Basic.DensePolynomial.eval_scale,
     eval_ofAscending]
 
 /-- Repeat the ascending-list multiplication-by-`X` operation.
@@ -154,7 +154,7 @@ completed smaller shift. The same coefficient table and exponent are retained. -
 @[expose] public def shiftN : Nat → List Int → List Int
   | 0, coefficients => coefficients
   | exponent + 1, coefficients => Ascending.Integer.Basic.shift
-    (Purelib.Polynomial.Dense.Rational.AscendingInteger.Basic.shiftN exponent coefficients)
+    (Basic.shiftN exponent coefficients)
 
 /-- Repeated ascending coefficient shifts multiply evaluation by the corresponding point power.
 
@@ -177,12 +177,12 @@ The repeated original coefficient shift and dense degree shift have the
 same retained rational evaluations and normalization certificates. -/
 public theorem ofAscending_shiftN (exponent : Nat) (coefficients : List Int) :
     ofAscending (shiftN exponent coefficients) =
-      Dense.Basic.DensePolynomial.shift exponent
+      Basic.DensePolynomial.shift exponent
         (ofAscending coefficients) := by
-  apply Dense.Rational.Extensionality.rational_normalized_eq_of_eval_eq
-    (ofAscending_normalized _) (Dense.Basic.DensePolynomial.normalize_shift _ _)
+  apply Extensionality.rational_normalized_eq_of_eval_eq
+    (ofAscending_normalized _) (Basic.DensePolynomial.normalize_shift _ _)
   intro point
   rw [eval_ofAscending, eval_shiftN,
-    Dense.Basic.DensePolynomial.eval_shift,
+    Basic.DensePolynomial.eval_shift,
     eval_ofAscending]
 end Purelib.Polynomial.Dense.Rational.AscendingInteger.Basic

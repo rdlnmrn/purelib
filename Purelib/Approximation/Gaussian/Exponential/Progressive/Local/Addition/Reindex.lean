@@ -43,6 +43,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_antitone quarterRadius_scale_mono)
 
 public section
@@ -81,28 +83,28 @@ open Purelib.Data.Rat
 
 /-- The direct exponential-sum resampling error scale is nonnegative. -/
 theorem dynamicSumReindexDirectScale_nonneg :
-    0 ≤ Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexDirectScale :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    0 ≤ dynamicSumReindexDirectScale :=
+  Arithmetic.mul_nonneg_direct (by decide)
     (add_nonneg (by decide) (by decide))
 
 /-- The sum of the dynamic-sum, progressive-exponential and direct-resampling error scales. -/
 @[expose] public def dynamicSumReindexMasterScale : Fraction.Rational :=
   Sequence.dynamicExpSumErrorScale + Budget.errorScale +
-    Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexDirectScale
+    dynamicSumReindexDirectScale
 
 /-- The combined exponential-sum comparison scale is nonnegative. -/
 theorem dynamicSumReindexMasterScale_nonneg :
-    0 ≤ Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexMasterScale :=
+    0 ≤ dynamicSumReindexMasterScale :=
   add_nonneg
     (add_nonneg Sequence.dynamicExpSumErrorScale_nonneg
       Budget.errorScale_nonneg)
-    Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexDirectScale_nonneg
+    dynamicSumReindexDirectScale_nonneg
 
 /-- The combined comparison scale bounds the dynamic exponential-sum scale. -/
 private theorem dynamicSumScale_le_reindexMaster :
     Sequence.dynamicExpSumErrorScale ≤
-      Purelib.Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexMasterScale := by
-  unfold Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexMasterScale
+      dynamicSumReindexMasterScale := by
+  unfold dynamicSumReindexMasterScale
   calc
     Sequence.dynamicExpSumErrorScale ≤
         Sequence.dynamicExpSumErrorScale +
@@ -113,13 +115,13 @@ private theorem dynamicSumScale_le_reindexMaster :
           Budget.errorScale +
             Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexDirectScale :=
       Fraction.Compatibility.coordinate_le_add_of_nonneg_right _ _
-        Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexDirectScale_nonneg
+        dynamicSumReindexDirectScale_nonneg
 
 /-- The combined comparison scale bounds the progressive local-exponential scale. -/
 private theorem progressiveExpScale_le_reindexMaster :
     Budget.errorScale ≤
-      Purelib.Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexMasterScale := by
-  unfold Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexMasterScale
+      dynamicSumReindexMasterScale := by
+  unfold dynamicSumReindexMasterScale
   calc
     Budget.errorScale ≤
       Sequence.dynamicExpSumErrorScale + Budget.errorScale :=
@@ -127,15 +129,15 @@ private theorem progressiveExpScale_le_reindexMaster :
     _ ≤ Sequence.dynamicExpSumErrorScale + Budget.errorScale +
           Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexDirectScale :=
       Fraction.Compatibility.coordinate_le_add_of_nonneg_right _ _
-        Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexDirectScale_nonneg
+        dynamicSumReindexDirectScale_nonneg
 
 /-- The combined comparison scale bounds the direct resampling scale. -/
 public theorem reindexDirectScale_le_master :
-    Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexDirectScale ≤
-      Purelib.Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexMasterScale := by
-  unfold Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexMasterScale
+    dynamicSumReindexDirectScale ≤
+      dynamicSumReindexMasterScale := by
+  unfold dynamicSumReindexMasterScale
   calc
-    Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexDirectScale ≤
+    dynamicSumReindexDirectScale ≤
         (Sequence.dynamicExpSumErrorScale +
           Budget.errorScale) +
             Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexDirectScale :=
@@ -146,15 +148,15 @@ public theorem reindexDirectScale_le_master :
 /-- Finite resampling bridge from the canonical dynamic sum-Horner program to local exponential evaluation on the
 productive sampled-sum input wrapper. -/
 @[expose] public def dynamicExpSumReindexEquivalent (left right : Coherent.CoherentNamed)
-    (sumDomain : Name.UnitDisk
+    (sumDomain : UnitDisk
       (Named.add
         left.name right.name)) :
-    Gaussian.Equivalence.Equivalent
+    Equivalent
       (Sequence.dynamicExpSumApproximation left.name right.name sumDomain)
       (Name.approximation
-        (Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation left.name right.name).toNamed
+        (Sequence.Arithmetic.Sum.sampledSumApproximation left.name right.name).toNamed
         (Sequence.sampledSumUnitDisk left right sumDomain)) := by
-  let source := Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation left.name right.name
+  let source := Sequence.Arithmetic.Sum.sampledSumApproximation left.name right.name
   let wrapperDomain := Sequence.sampledSumUnitDisk left right sumDomain
   let wrapperExp := Name.approximation
     source.toNamed wrapperDomain
@@ -163,136 +165,136 @@ productive sampled-sum input wrapper. -/
         intro leftStart rightStart target positive
         let smallTarget := target / 16
         have smallPositive : 0 < smallTarget :=
-          Fraction.Order.Field.div_pos_direct positive (by decide)
+          Field.div_pos_direct positive (by decide)
         let start := max leftStart rightStart
         let rightIndex := Search.firstQuarterBelow
-          Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexMasterScale start
+          dynamicSumReindexMasterScale start
             smallTarget
         have startLeRight : start ≤ rightIndex :=
           Search.firstQuarterBelow_ge
-            Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexMasterScale start
+            dynamicSumReindexMasterScale start
               smallTarget
         have masterSmall :
-            Geometric.Basic.quarterRadius
-                Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexMasterScale
+            Basic.quarterRadius
+                dynamicSumReindexMasterScale
                   rightIndex < smallTarget :=
           Search.firstQuarterBelow_accurate
-            Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexMasterScale
-              Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexMasterScale_nonneg
+            dynamicSumReindexMasterScale
+              dynamicSumReindexMasterScale_nonneg
                 start smallTarget
                 smallPositive
         let sourceIndex :=
           Sampling.emittedSampleIndex
             source rightIndex
         let leftIndex := max rightIndex sourceIndex
-        have rightLeLeft : rightIndex ≤ leftIndex := Purelib.Data.Nat.Order.le_max_left _ _
-        have sourceLeLeft : sourceIndex ≤ leftIndex := Purelib.Data.Nat.Order.le_max_right _ _
+        have rightLeLeft : rightIndex ≤ leftIndex := Data.Nat.Order.le_max_left _ _
+        have sourceLeLeft : sourceIndex ≤ leftIndex := Data.Nat.Order.le_max_right _ _
         have sourceRadiusSmall :
             source.radiusSq sourceIndex <
-              Gaussian.Process.Sampling.refinementTarget rightIndex :=
-          Gaussian.Process.Sampling.stateAt_accurate
+              Process.Sampling.refinementTarget rightIndex :=
+          Process.Sampling.stateAt_accurate
             source.toProcess (show source.toProcess.State from (0 : Nat))
               rightIndex
         have sourceMovement := source.later_close sourceLeLeft
         have inputMovement :
-            Data.Gaussian.Norm.Basic.normSq (source.sample leftIndex - source.sample sourceIndex) <
-              Gaussian.Process.Sampling.refinementTarget rightIndex :=
+            Gaussian.Norm.Basic.normSq (source.sample leftIndex - source.sample sourceIndex) <
+              Process.Sampling.refinementTarget rightIndex :=
           sourceMovement.trans_lt sourceRadiusSmall
-        have leftInputUnit : Data.Gaussian.Norm.Basic.normSq (source.sample leftIndex) ≤ 1 := by
-          rw [Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation_sample]
+        have leftInputUnit : Gaussian.Norm.Basic.normSq (source.sample leftIndex) ≤ 1 := by
+          rw [Sequence.Arithmetic.Sum.sampledSumApproximation_sample]
           exact Sequence.dynamicInputSum_unit left.name right.name sumDomain leftIndex
-        have rightInputUnit : Data.Gaussian.Norm.Basic.normSq (source.sample sourceIndex) ≤ 1 := by
-          rw [Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation_sample]
+        have rightInputUnit : Gaussian.Norm.Basic.normSq (source.sample sourceIndex) ≤ 1 := by
+          rw [Sequence.Arithmetic.Sum.sampledSumApproximation_sample]
           exact Sequence.dynamicInputSum_unit left.name right.name sumDomain sourceIndex
-        have truncation := Horner.Sample.sample_later_close
+        have truncation := Sample.sample_later_close
           (source.sample leftIndex) leftInputUnit rightLeLeft
-        have inputEffect := Horner.Sample.sample_input_close
+        have inputEffect := Sample.sample_input_close
           (source.sample leftIndex) (source.sample sourceIndex)
             leftInputUnit rightInputUnit rightIndex
         have inputStrict :
-            Data.Gaussian.Norm.Basic.normSq
+            Gaussian.Norm.Basic.normSq
                 (Horner.Sample.sample
                     (source.sample leftIndex) rightIndex -
                   Horner.Sample.sample
                     (source.sample sourceIndex) rightIndex) <
-              16 * Gaussian.Process.Sampling.refinementTarget
+              16 * Process.Sampling.refinementTarget
                 rightIndex :=
           inputEffect.trans_lt
-            (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+            (Arithmetic.mul_lt_mul_of_pos_left_direct
               (by decide) inputMovement)
         have direct :
-            Data.Gaussian.Norm.Basic.normSq
+            Gaussian.Norm.Basic.normSq
                 (Horner.Sample.sample
                     (source.sample leftIndex) leftIndex -
                   Horner.Sample.sample
                     (source.sample sourceIndex) rightIndex) <
-              Geometric.Basic.quarterRadius
+              Basic.quarterRadius
 
                   dynamicSumReindexDirectScale
                   rightIndex := by
           calc
-            Data.Gaussian.Norm.Basic.normSq
+            Gaussian.Norm.Basic.normSq
                 (Horner.Sample.sample
                     (source.sample leftIndex) leftIndex -
                   Horner.Sample.sample
                     (source.sample sourceIndex) rightIndex) ≤
               2 *
-                (Data.Gaussian.Norm.Basic.normSq
+                (Gaussian.Norm.Basic.normSq
                     (Horner.Sample.sample
                         (source.sample leftIndex) leftIndex -
                       Horner.Sample.sample
                         (source.sample leftIndex) rightIndex) +
-                  Data.Gaussian.Norm.Basic.normSq
+                  Gaussian.Norm.Basic.normSq
                     (Horner.Sample.sample
                         (source.sample leftIndex) rightIndex -
                       Horner.Sample.sample
                         (source.sample sourceIndex) rightIndex)) :=
-              Data.Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _
+              Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _
             _ < 2 *
-                (Geometric.Basic.quarterRadius 10 rightIndex +
-                  16 * Gaussian.Process.Sampling.refinementTarget
+                (Basic.quarterRadius 10 rightIndex +
+                  16 * Process.Sampling.refinementTarget
                     rightIndex) :=
-              Purelib.Data.Rat.Bounds.Sum.twice_add_lt_twice_add_of_le_of_lt truncation inputStrict
-            _ = Geometric.Basic.quarterRadius
+              Bounds.Sum.twice_add_lt_twice_add_of_le_of_lt truncation inputStrict
+            _ = Basic.quarterRadius
 
                   dynamicSumReindexDirectScale
                   rightIndex := by
               unfold
                 dynamicSumReindexDirectScale
-              rw [Geometric.Basic.quarterRadius_eq_mul_pow,
-                Gaussian.Process.Sampling.refinementTarget,
-                Geometric.Basic.quarterRadius_eq_mul_pow,
-                Geometric.Basic.quarterRadius_eq_mul_pow]
+              rw [Basic.quarterRadius_eq_mul_pow,
+                Process.Sampling.refinementTarget,
+                Basic.quarterRadius_eq_mul_pow,
+                Basic.quarterRadius_eq_mul_pow]
               ring1
         have directSmall :
-            Data.Gaussian.Norm.Basic.normSq
+            Gaussian.Norm.Basic.normSq
                 (Horner.Sample.sample
                     (source.sample leftIndex) leftIndex -
                   Horner.Sample.sample
                     (source.sample sourceIndex) rightIndex) < smallTarget :=
           direct.trans
             ((quarterRadius_scale_mono
-              Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.reindexDirectScale_le_master
+              reindexDirectScale_le_master
               rightIndex).trans_lt masterSmall)
         exact
           { leftIndex := leftIndex
             rightIndex := rightIndex
-            left_ge := (Purelib.Data.Nat.Order.le_max_left leftStart rightStart).trans
+            left_ge := (Data.Nat.Order.le_max_left leftStart rightStart).trans
               (startLeRight.trans rightLeLeft)
-            right_ge := (Purelib.Data.Nat.Order.le_max_right leftStart rightStart).trans startLeRight
+            right_ge := (Data.Nat.Order.le_max_right leftStart rightStart).trans startLeRight
             close := by
               intro leftLater rightLater leftOrder rightOrder
               have leftTail :=
                 (Sequence.dynamicExpSumApproximation left.name right.name
                   sumDomain).later_close leftOrder
               have leftRadiusToMaster :
-                  Geometric.Basic.quarterRadius
+                  Basic.quarterRadius
                       Sequence.dynamicExpSumErrorScale leftIndex ≤
-                    Geometric.Basic.quarterRadius
-                      Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumReindexMasterScale
+                    Basic.quarterRadius
+                      dynamicSumReindexMasterScale
                         rightIndex :=
                 (quarterRadius_scale_mono
-                  Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicSumScale_le_reindexMaster
+                  dynamicSumScale_le_reindexMaster
                   leftIndex).trans
                     (quarterRadius_antitone
 
@@ -306,17 +308,17 @@ productive sampled-sum input wrapper. -/
                   progressiveExpScale_le_reindexMaster
                   rightIndex).trans_lt masterSmall)
               have rightTailReverse :
-                  Data.Gaussian.Norm.Basic.normSq
+                  Gaussian.Norm.Basic.normSq
                       (wrapperExp.sample rightIndex -
                         wrapperExp.sample rightLater) < smallTarget := by
                 have identity : wrapperExp.sample rightIndex -
                       wrapperExp.sample rightLater =
                     -(wrapperExp.sample rightLater -
                       wrapperExp.sample rightIndex) := by
-                  apply Data.Gaussian.Basic.ext <;>
-                    simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-                      Purelib.Data.Gaussian.Basic.neg_re, Purelib.Data.Gaussian.Basic.neg_im] <;> ring1
-                rw [identity, Data.Gaussian.Norm.Basic.normSq_neg]
+                  apply Gaussian.Basic.ext <;>
+                    simp only [Gaussian.Basic.sub_re, Gaussian.Basic.sub_im,
+                      Gaussian.Basic.neg_re, Gaussian.Basic.neg_im] <;> ring1
+                rw [identity, Gaussian.Norm.Basic.normSq_neg]
                 exact rightTailSmall
               have baseIdentity :
                   (Sequence.dynamicExpSumApproximation left.name right.name
@@ -328,50 +330,50 @@ productive sampled-sum input wrapper. -/
                   Horner.Sample.sample
                     (source.sample sourceIndex) rightIndex := rfl
               rw [← baseIdentity, ← wrapperIdentity] at directSmall
-              have middle := (Data.Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _).trans_lt
-                (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+              have middle := (Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _).trans_lt
+                (Arithmetic.mul_lt_mul_of_pos_left_direct
                   (by decide)
-                  (Fraction.Order.Arithmetic.add_lt_add_direct
+                  (Arithmetic.add_lt_add_direct
                     directSmall rightTailReverse))
               calc
-                Data.Gaussian.Norm.Basic.normSq
+                Gaussian.Norm.Basic.normSq
                     ((Sequence.dynamicExpSumApproximation left.name right.name
                       sumDomain).sample leftLater -
                         wrapperExp.sample rightLater) ≤
                   2 *
-                    (Data.Gaussian.Norm.Basic.normSq
+                    (Gaussian.Norm.Basic.normSq
                         ((Sequence.dynamicExpSumApproximation left.name right.name
                             sumDomain).sample leftLater -
                           (Sequence.dynamicExpSumApproximation left.name right.name
                             sumDomain).sample leftIndex) +
-                      Data.Gaussian.Norm.Basic.normSq
+                      Gaussian.Norm.Basic.normSq
                         ((Sequence.dynamicExpSumApproximation left.name right.name
                             sumDomain).sample leftIndex -
                           wrapperExp.sample rightLater)) :=
-                  Data.Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _
+                  Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _
                 _ < 2 *
                     (smallTarget + 2 * (smallTarget + smallTarget)) :=
-                  Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+                  Arithmetic.mul_lt_mul_of_pos_left_direct
                     (by decide)
-                    (Fraction.Order.Arithmetic.add_lt_add_direct
+                    (Arithmetic.add_lt_add_direct
                       leftTailSmall middle)
                 _ = 10 * smallTarget := by ring1
                 _ < target := by
                   dsimp only [smallTarget]
-                  exact Purelib.Data.Rat.Bounds.Fraction.ten_sixteenths_lt positive } }
+                  exact Bounds.Fraction.ten_sixteenths_lt positive } }
 
 /-- Named form of the finite resampling bridge. -/
 @[expose] public def dynamicExpSum_toSampledLocalExp (left right : Coherent.CoherentNamed)
-    (sumDomain : Name.UnitDisk
+    (sumDomain : UnitDisk
       (Named.add
         left.name right.name)) :
-    Gaussian.Equivalence.NamedEquivalent
+    NamedEquivalent
       (Sequence.dynamicExpSumApproximation left.name right.name sumDomain).toNamed
       (Name.named
-        (Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation left.name right.name).toNamed
+        (Sequence.Arithmetic.Sum.sampledSumApproximation left.name right.name).toNamed
         (Sequence.sampledSumUnitDisk left right sumDomain)) :=
   Equivalence.approximationEquivalent_toNamed
-    (Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex.dynamicExpSumReindexEquivalent left right
+    (dynamicExpSumReindexEquivalent left right
       sumDomain)
 end Purelib.Approximation.Gaussian.Exponential.Progressive.Local.Addition.Reindex
 

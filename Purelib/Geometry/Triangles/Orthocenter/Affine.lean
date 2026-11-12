@@ -37,7 +37,7 @@ open Purelib.LinearAlgebra.Alternating.Bracket
 open scoped Purelib.Data.Nat
 attribute [local instance 2000] Purelib.Data.Nat.successorNeZero
   Purelib.Data.Nat.successorAtLeastTwo
-  Purelib.Algebra.Group.Negation.subNegZeroMonoid
+  Algebra.Group.Negation.subNegZeroMonoid
 
 public section
 
@@ -54,7 +54,7 @@ section
 
 open Purelib.Algebra
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry.Triangles.Orthocenter.Affine
 
@@ -69,18 +69,18 @@ theorem affine_orthocenter_weights_sum
     [Nontrivial K]
     (q₁ q₂ q₃ : K)
     (areaNonzero : QuadTriple.Basic.archimedesFunction q₁ q₂ q₃ ≠ 0) :
-    Affine.affineOrthocenterWeight q₁ q₂ q₃
+    affineOrthocenterWeight q₁ q₂ q₃
         (QuadTriple.Basic.archimedesFunction q₁ q₂ q₃) +
-      Affine.affineOrthocenterWeight q₂ q₃ q₁
+      affineOrthocenterWeight q₂ q₃ q₁
         (QuadTriple.Basic.archimedesFunction q₁ q₂ q₃) +
-      Affine.affineOrthocenterWeight q₃ q₁ q₂
+      affineOrthocenterWeight q₃ q₁ q₂
         (QuadTriple.Basic.archimedesFunction q₁ q₂ q₃) = 1 := by
   have areaCancel :
       QuadTriple.Basic.archimedesFunction q₁ q₂ q₃ *
           (QuadTriple.Basic.archimedesFunction q₁ q₂ q₃)⁻¹ = 1 :=
-    Algebra.Field.ExplicitField.mul_inv_cancel _ areaNonzero
-  unfold Affine.affineOrthocenterWeight
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    ExplicitField.mul_inv_cancel _ areaNonzero
+  unfold affineOrthocenterWeight
+  simp only [ExplicitField.div_eq_mul_inv]
   calc
     (q₃ + q₁ - q₂) * (q₁ + q₂ - q₃) *
           (QuadTriple.Basic.archimedesFunction q₁ q₂ q₃)⁻¹ +
@@ -103,9 +103,9 @@ Each weight is the product of two signed quadrance sums divided by quadrea. -/
   let q₃ := Quadrance.quadrance first second
   let area := Quadrea.Basic.quadrea first second third
   Affine.affineCombinationThree
-    (Geometry.Triangles.Orthocenter.Affine.affineOrthocenterWeight q₁ q₂ q₃ area) first
-    (Geometry.Triangles.Orthocenter.Affine.affineOrthocenterWeight q₂ q₃ q₁ area) second
-    (Geometry.Triangles.Orthocenter.Affine.affineOrthocenterWeight q₃ q₁ q₂ area) third
+    (affineOrthocenterWeight q₁ q₂ q₃ area) first
+    (affineOrthocenterWeight q₂ q₃ q₁ area) second
+    (affineOrthocenterWeight q₃ q₁ q₂ area) third
 
 /-- The weights defining `affineOrthocenterPoint` really are affine. -/
 theorem affineOrthocenterPoint_weights_sum
@@ -117,15 +117,15 @@ theorem affineOrthocenterPoint_weights_sum
     let q₂ := Quadrance.quadrance first third
     let q₃ := Quadrance.quadrance first second
     let area := Quadrea.Basic.quadrea first second third
-    Geometry.Triangles.Orthocenter.Affine.affineOrthocenterWeight q₁ q₂ q₃ area +
-      Geometry.Triangles.Orthocenter.Affine.affineOrthocenterWeight q₂ q₃ q₁ area +
-      Geometry.Triangles.Orthocenter.Affine.affineOrthocenterWeight q₃ q₁ q₂ area = 1 := by
+    affineOrthocenterWeight q₁ q₂ q₃ area +
+      affineOrthocenterWeight q₂ q₃ q₁ area +
+      affineOrthocenterWeight q₃ q₁ q₂ area = 1 := by
   dsimp only
   have areaNonzero : Quadrea.Basic.quadrea first second third ≠ 0 :=
     (Quadrea.Basic.quadrea_ne_zero_iff_not_collinear first second third twoNonzero).2
       notCollinear
   unfold Quadrea.Basic.quadrea at areaNonzero ⊢
-  exact Geometry.Triangles.Orthocenter.Affine.affine_orthocenter_weights_sum
+  exact affine_orthocenter_weights_sum
     (Quadrance.quadrance second third) (Quadrance.quadrance first third)
     (Quadrance.quadrance first second) areaNonzero
 
@@ -139,9 +139,9 @@ theorem affine_orthocenter
     (secondThirdDistinct : second ≠ third)
     (notCollinear : ¬ Incidence.Collinear first second third)
     (twoNonzero : (2 : K) ≠ 0) :
-    Orthocenter.Basic.orthocenterPoint first second third firstThirdDistinct
+    Basic.orthocenterPoint first second third firstThirdDistinct
         secondThirdDistinct notCollinear =
-      Affine.affineOrthocenterPoint first second third := by
+      affineOrthocenterPoint first second third := by
   rw [Formula.orthocenter_formula first second third firstThirdDistinct
     secondThirdDistinct notCollinear]
   let determinant := Incidence.pointDeterminant first second third
@@ -178,17 +178,17 @@ theorem affine_orthocenter
           first.x second.x third.x first.y second.y third.y ≠ 0 := by
     rw [antisymmetricDenominator]
     exact determinantNonzero
-  have affineX : (Affine.affineOrthocenterPoint first second third).x =
+  have affineX : (affineOrthocenterPoint first second third).x =
       weightedX / area := by
-    unfold Affine.affineOrthocenterPoint Affine.affineCombinationThree
-      Geometry.Triangles.Orthocenter.Affine.affineOrthocenterWeight weightedX q₁ q₂ q₃ area
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    unfold affineOrthocenterPoint Affine.affineCombinationThree
+      affineOrthocenterWeight weightedX q₁ q₂ q₃ area
+    simp only [ExplicitField.div_eq_mul_inv]
     ring1
-  have affineY : (Affine.affineOrthocenterPoint first second third).y =
+  have affineY : (affineOrthocenterPoint first second third).y =
       weightedY / area := by
-    unfold Affine.affineOrthocenterPoint Affine.affineCombinationThree
-      Geometry.Triangles.Orthocenter.Affine.affineOrthocenterWeight weightedY q₁ q₂ q₃ area
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    unfold affineOrthocenterPoint Affine.affineCombinationThree
+      affineOrthocenterWeight weightedY q₁ q₂ q₃ area
+    simp only [ExplicitField.div_eq_mul_inv]
     ring1
   have xCross :
       xNumerator * area =
@@ -219,7 +219,7 @@ theorem affine_orthocenter
       xNumerator /
           Fin3.antisymmetricTripleProduct
             first.x second.x third.x first.y second.y third.y =
-        (Affine.affineOrthocenterPoint first second third).x
+        (affineOrthocenterPoint first second third).x
     rw [affineX]
     exact Ratio.ratio_eq_of_cross_product formulaDenominatorNonzero areaNonzero
       xCross
@@ -227,7 +227,7 @@ theorem affine_orthocenter
       yNumerator /
           Fin3.antisymmetricTripleProduct
             first.x second.x third.x first.y second.y third.y =
-        (Affine.affineOrthocenterPoint first second third).y
+        (affineOrthocenterPoint first second third).y
     rw [affineY]
     exact Ratio.ratio_eq_of_cross_product formulaDenominatorNonzero areaNonzero
       yCross

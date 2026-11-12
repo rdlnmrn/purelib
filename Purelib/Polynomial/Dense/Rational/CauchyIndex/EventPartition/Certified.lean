@@ -40,31 +40,31 @@ set_option genInjectivity false in
 /-- One coefficient-computed finite event partition together with the exact
 telescoping identity for all emitted leaf indices. -/
 structure ClassifiedPartition
-    (numerator denominator : Dense.Rational.Basic.CoordinatePolynomial) (root : Data.Rat.Interval.Proper.Cell) where
+    (numerator denominator : Basic.CoordinatePolynomial) (root : Data.Rat.Interval.Proper.Cell) where
   /-- The retained safe subdivision and classifier of its actual leaf events. -/ partition :
-    Dense.Rational.CauchyIndex.EventPartition.Basic.Partition
+    Basic.Partition
     numerator denominator root
   /-- The classified leaf indices sum to the Cauchy index on the original interval. -/ indexSum :
-    Dense.Rational.CauchyIndex.EventPartition.Index.cellIndex2 numerator denominator root =
+    Index.cellIndex2 numerator denominator root =
       (partition.tree.leaves.map
-        (Dense.Rational.CauchyIndex.EventPartition.Index.cellIndex2 numerator denominator)).sum
+        (Index.cellIndex2 numerator denominator)).sum
 
 constructive_injectivity ClassifiedPartition
 
 /-- Execute and package the complete finite gcd-reduced event partition. -/
 def classify
-    (numerator denominator : Dense.Rational.Basic.CoordinatePolynomial)
+    (numerator denominator : Basic.CoordinatePolynomial)
     (denominatorNonzero : denominator.isZero = false)
     (root : Data.Rat.Interval.Proper.Cell) : ClassifiedPartition
       numerator denominator root := by
-  let partition := Dense.Rational.CauchyIndex.EventPartition.Basic.classifyEvents
+  let partition := Basic.classifyEvents
     numerator denominator denominatorNonzero root
   exact
     { partition := partition
       indexSum := by
         simpa only [partition,
-          Dense.Rational.CauchyIndex.EventPartition.Basic.classifyEvents] using
-          Dense.Rational.CauchyIndex.EventPartition.Index.eventSubdivision_cellIndex2_sum
+          Basic.classifyEvents] using
+          Index.eventSubdivision_cellIndex2_sum
             numerator denominator denominatorNonzero root }
 
 end Purelib.Polynomial.Dense.Rational.CauchyIndex.EventPartition.Certified

@@ -37,6 +37,8 @@ import Purelib.Riemann.Integration.PreparedEdgeRecasting
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 
+open Purelib.Riemann.Normalization.ReciprocalDiskCommonSourceCharts
+
 public section
 
 /-! The retained parent request supplies every common cover. Parent chart
@@ -54,43 +56,43 @@ open Purelib.Data.Rat
 
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate Gaussian)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-  {differential other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+  {differential other : Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap}
   {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-  {target : Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
-  (original : Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request regular other parents target minimum)
+  {target : Coordinate} {minimum : Nat}
+  (original : PairedParentRequest.Request regular other parents target minimum)
 
 /-- The original retained paired parent plan at its certified finite index. -/
 @[expose] def ChartParent (i : Fin original.plans.length) := original.plans[i.val]'i.isLt
 
 /-- The actual common chart request on an original parent at its adjusted shared depth. -/
-@[expose] def ChartPlanAt (depth : Nat) (allowance : Normalization.InverseRootPolynomial.Coordinate) (i : Fin
+@[expose] def ChartPlanAt (depth : Nat) (allowance : Coordinate) (i : Fin
   original.plans.length) :=
-  Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.ChartRequest regular
-    (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent original i).common
-    (original.localDepth (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent original i) depth)
+  CommonChartBank.ChartRequest regular
+    (ChartParent original i).common
+    (original.localDepth (ChartParent original i) depth)
       allowance minimum
 
 /-- Every original parent's coarse depth plus its local refinement equals the common total depth. -/
 theorem chartDepth_eq (depth : Nat) (i : Fin original.plans.length) :
-    (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent original i).common.depth + original.localDepth
-      (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent original i) depth = original.depth + depth :=
+    (ChartParent original i).common.depth + original.localDepth
+      (ChartParent original i) depth = original.depth + depth :=
       by
-  have member : Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent original i ∈ original.plans :=
+  have member : ChartParent original i ∈ original.plans :=
     List.getElem_mem i.isLt
-  have lower : (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent original i).common.depth ≤
-    original.depth := original.depth_eq ▸ Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Plan.depth_le member
-  change (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent original i).common.depth + (original.depth
-    - (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent original i).common.depth + depth) = _
+  have lower : (ChartParent original i).common.depth ≤
+    original.depth := original.depth_eq ▸ PairedParentRequest.Plan.depth_le member
+  change (ChartParent original i).common.depth + (original.depth
+    - (ChartParent original i).common.depth + depth) = _
   rw [← Nat.add_assoc, Data.Nat.Subtraction.add_sub_of_le lower]
 
 /-- The sufficient stage of one original parent chart plan. -/
-@[expose] def chartIndexWeight {depth : Nat} {allowance : Normalization.InverseRootPolynomial.Coordinate} (i : Fin
+@[expose] def chartIndexWeight {depth : Nat} {allowance : Coordinate} (i : Fin
   original.plans.length)
-    (plan : Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartPlanAt original depth allowance i) : Nat :=
+    (plan : ChartPlanAt original depth allowance i) : Nat :=
       plan.index
 
 set_option genInjectivity false in
@@ -98,21 +100,21 @@ set_option genInjectivity false in
 
 It retains each original parent cover, a count-paid joining budget and one stage sufficient for both original and chart
 requests. -/
-structure ChartBankRequest (depth : Nat) (requested : Normalization.InverseRootPolynomial.Coordinate) where
+structure ChartBankRequest (depth : Nat) (requested : Coordinate) where
   /-- The retained finite joining budget for the original parent count. -/ joinBudget :
-    Normalization.ReciprocalDiskCommonSourceCharts.SourceComparisonRequest.PathReplacement.JoinBudget
+    SourceComparisonRequest.PathReplacement.JoinBudget
     original.plans.length requested
-  /-- The common local parent chart allowance. -/ allowance : Normalization.InverseRootPolynomial.Coordinate
+  /-- The common local parent chart allowance. -/ allowance : Coordinate
   /-- The local allowance is exactly the retained joining allocation. -/ allowance_eq : allowance = joinBudget.allowance
   /-- The common local allowance is positive. -/ positive : 0 < allowance
   /-- The complete original parent-count-squared charge fits the requested target. -/ paid : (original.plans.length :
-    Normalization.InverseRootPolynomial.Coordinate) * ((original.plans.length :
-    Normalization.InverseRootPolynomial.Coordinate) * allowance) < requested
+    Coordinate) * ((original.plans.length :
+    Coordinate) * allowance) < requested
   /-- The actual chart requests on the original parent plans. -/ plans : Data.Vector.DependentVector
-    (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartPlanAt original depth allowance)
+    (ChartPlanAt original depth allowance)
   /-- The cached common sufficient parent and chart stage. -/ index : Nat
   /-- The common stage is the maximum of the original request index and actual parent chart indices. -/ index_eq : index
-    = max original.index (plans.maximum (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.chartIndexWeight
+    = max original.index (plans.maximum (chartIndexWeight
     original))
 
 constructive_injectivity ChartBankRequest
@@ -121,27 +123,27 @@ namespace ChartBankRequest
 
 /-- Prepare common chart requests on the original parent covers and retain their paid joining budget with one sufficient
 stage. -/
-@[expose] def build (depth : Nat) (requested : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 <
+@[expose] def build (depth : Nat) (requested : Coordinate) (positive : 0 <
   requested) :
-    Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest original depth requested :=
+    ChartBankRequest original depth requested :=
   let joinBudget :=
-    Normalization.ReciprocalDiskCommonSourceCharts.SourceComparisonRequest.PathReplacement.JoinBudget.build
+    SourceComparisonRequest.PathReplacement.JoinBudget.build
     original.plans.length requested positive
   let allowance := joinBudget.allowance
   have allowancePositive := joinBudget.positive
   let plans := Data.Vector.DependentVector.ofFn (fun i =>
-    Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.ChartRequest.build
-    regular (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent original i).common
-    (Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPreparation.ChartPreparation.build regular
-      (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent original i).common)
-    (original.localDepth (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent original i) depth)
+    CommonChartBank.ChartRequest.build
+    regular (ChartParent original i).common
+    (CommonChartPreparation.ChartPreparation.build regular
+      (ChartParent original i).common)
+    (original.localDepth (ChartParent original i) depth)
       allowance allowancePositive minimum)
   ⟨joinBudget, allowance, rfl, allowancePositive, joinBudget.count_paid,
-    plans, max original.index (plans.maximum (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.chartIndexWeight
+    plans, max original.index (plans.maximum (chartIndexWeight
       original)), rfl⟩
 
-variable {original} {depth : Nat} {requested : Normalization.InverseRootPolynomial.Coordinate}
-  (request : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest original depth
+variable {original} {depth : Nat} {requested : Coordinate}
+  (request : ChartBankRequest original depth
     requested)
 
 /-- The original paired parent request is valid at the retained chart-bank stage. -/
@@ -151,78 +153,78 @@ theorem original_le : original.index ≤ request.index := by
 
 /-- The dependent vector of actual retained parent chart evaluations at the common stage. -/
 @[expose] def Entries := Data.Vector.DependentVector (fun i =>
-  Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.ChartRequest.Evaluation (request.plans.get i) request.index)
+  CommonChartBank.ChartRequest.Evaluation (request.plans.get i) request.index)
 
 /-- Evaluate each original parent chart using the same supplied cap sample pair. -/
-@[expose] def evaluateEntries (firstCap : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential
+@[expose] def evaluateEntries (firstCap : Cap.Primitives.Sample cap differential
   request.index collar.box)
-    (otherCap : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other request.index collar.box) :
+    (otherCap : Cap.Primitives.Sample cap other request.index collar.box) :
       request.Entries :=
   Data.Vector.DependentVector.ofFn (fun i =>
-    let plan := Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent original i
-    let samples := Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.SampleBank.ofCapSamples
+    let plan := ChartParent original i
+    let samples := CommonChartBank.SampleBank.ofCapSamples
       (cover := plan.left) (otherCover := plan.right) firstCap otherCap
     (request.plans.get i).evaluate samples
       ((Data.Vector.DependentVector.get_le_maximum
-        (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.chartIndexWeight original) request.plans i).trans
+        (chartIndexWeight original) request.plans i).trans
         ((Data.Nat.Order.le_max_right _ _).trans_eq request.index_eq.symm)) 0)
 
 /-- Every retained parent evaluation uses exactly the supplied original cap sample pair. -/
 @[expose] def SharedCaps (entries : request.Entries)
-    (firstCap : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential request.index collar.box)
-    (otherCap : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other request.index collar.box) : Prop :=
+    (firstCap : Cap.Primitives.Sample cap differential request.index collar.box)
+    (otherCap : Cap.Primitives.Sample cap other request.index collar.box) : Prop :=
   ∀ i, (entries.get i).samples.firstCap = firstCap ∧ (entries.get i).samples.otherCap = otherCap
 
 /-- Evaluating the parent entries preserves the same supplied cap samples in every entry. -/
-theorem evaluateEntries_shared (firstCap : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential
+theorem evaluateEntries_shared (firstCap : Cap.Primitives.Sample cap differential
   request.index collar.box)
-    (otherCap : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other request.index collar.box) :
+    (otherCap : Cap.Primitives.Sample cap other request.index collar.box) :
     request.SharedCaps (request.evaluateEntries firstCap otherCap) firstCap otherCap := by
   intro i
-  dsimp only [Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.evaluateEntries, -eq_self,
+  dsimp only [evaluateEntries, -eq_self,
     -iff_self]
   rw [Data.Vector.DependentVector.ofFn_get]
-  rw [Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.ChartRequest.evaluate_samples]
+  rw [CommonChartBank.ChartRequest.evaluate_samples]
   exact ⟨rfl, rfl⟩
 
 set_option genInjectivity false in
 /-- The actual shared-cap parent evaluations with cached source, chart and correction areas and their paid bounds. -/
 structure Evaluation where
   /-- The single retained first-differential cap sample. -/ firstCap :
-    Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential request.index collar.box
+    Cap.Primitives.Sample cap differential request.index collar.box
   /-- The single retained other-differential cap sample. -/ otherCap :
-    Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other request.index collar.box
+    Cap.Primitives.Sample cap other request.index collar.box
   /-- The actual original parent chart evaluations. -/ entries : request.Entries
   /-- Every entry retains the same two cached cap samples. -/ shared : request.SharedCaps entries firstCap otherCap
-  /-- The cached total original source area. -/ sourceArea : Normalization.InverseRootPolynomial.Gaussian
+  /-- The cached total original source area. -/ sourceArea : Gaussian
   /-- The source area is the finite sum of the actual retained parent source areas. -/ sourceArea_eq : sourceArea =
     FiniteSum.Fin.sumFin (fun i => (entries.get i).sourceArea)
-  /-- The cached total original chart area. -/ chartArea : Normalization.InverseRootPolynomial.Gaussian
+  /-- The cached total original chart area. -/ chartArea : Gaussian
   /-- The chart area is the finite sum of the actual retained parent chart areas. -/ chartArea_eq : chartArea =
     FiniteSum.Fin.sumFin (fun i => (entries.get i).chartArea)
-  /-- The cached complete parent chart correction. -/ correction : Normalization.InverseRootPolynomial.Gaussian
+  /-- The cached complete parent chart correction. -/ correction : Gaussian
   /-- The correction is the finite sum of the original retained parent corrections. -/ correction_eq : correction =
     FiniteSum.Fin.sumFin (fun i => (entries.get i).correction)
   /-- The actual source-minus-chart-minus-correction discrepancy meets the whole target. -/ bounded :
-    Data.Gaussian.Norm.Basic.normSq (sourceArea - chartArea - correction) < requested
+    Gaussian.Norm.Basic.normSq (sourceArea - chartArea - correction) < requested
   /-- The cached total original centered source area. -/ sourceCenteredArea :
-    Normalization.InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The centered source area is the finite sum of the actual retained parent values. -/ sourceCenteredArea_eq :
     sourceCenteredArea = FiniteSum.Fin.sumFin (fun i => (entries.get i).sourceCenteredArea)
-  /-- The cached total original centered chart area. -/ chartCenteredArea : Normalization.InverseRootPolynomial.Gaussian
+  /-- The cached total original centered chart area. -/ chartCenteredArea : Gaussian
   /-- The centered chart area is the finite sum of the actual retained parent values. -/ chartCenteredArea_eq :
     chartCenteredArea = FiniteSum.Fin.sumFin (fun i => (entries.get i).chartCenteredArea)
   /-- The actual centered source-to-chart discrepancy meets the whole target. -/ centered_bounded :
-    Data.Gaussian.Norm.Basic.normSq (sourceCenteredArea - chartCenteredArea) < requested
+    Gaussian.Norm.Basic.normSq (sourceCenteredArea - chartCenteredArea) < requested
 
 constructive_injectivity Evaluation
 
 /-- Both cap polynomials are sampled once for the complete retained parent
 family. Each parent reuses them in its cached reciprocal primitive bank. -/
-@[expose] def acquire : Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation request :=
+@[expose] def acquire : Evaluation request :=
   by
-  let firstCap := Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample.build cap differential request.index collar.box
-  let otherCap := Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample.build cap other request.index collar.box
+  let firstCap := Cap.Primitives.Sample.build cap differential request.index collar.box
+  let otherCap := Cap.Primitives.Sample.build cap other request.index collar.box
   let entries := request.evaluateEntries firstCap otherCap
   let sourceArea := FiniteSum.Fin.sumFin (fun i => (entries.get i).sourceArea)
   let chartArea := FiniteSum.Fin.sumFin (fun i => (entries.get i).chartArea)
@@ -231,11 +233,11 @@ family. Each parent reuses them in its cached reciprocal primitive bank. -/
     (fun i => (entries.get i).sourceArea - (entries.get i).chartArea - (entries.get i).correction)
     request.allowance (fun i => (entries.get i).bounded.le)
   rw [FiniteSum.Fin.sumFin_sub, FiniteSum.Fin.sumFin_sub] at estimate
-  have paid : (original.plans.length : Normalization.InverseRootPolynomial.Coordinate)^2 * request.allowance < requested
+  have paid : (original.plans.length : Coordinate)^2 * request.allowance < requested
     :=
-    (by ring1 : (original.plans.length : Normalization.InverseRootPolynomial.Coordinate)^2 * request.allowance =
-      (original.plans.length : Normalization.InverseRootPolynomial.Coordinate) * ((original.plans.length :
-        Normalization.InverseRootPolynomial.Coordinate) * request.allowance)).trans_lt request.paid
+    (by ring1 : (original.plans.length : Coordinate)^2 * request.allowance =
+      (original.plans.length : Coordinate) * ((original.plans.length :
+        Coordinate) * request.allowance)).trans_lt request.paid
   let sourceCenteredArea := FiniteSum.Fin.sumFin (fun i => (entries.get i).sourceCenteredArea)
   let chartCenteredArea := FiniteSum.Fin.sumFin (fun i => (entries.get i).chartCenteredArea)
   have centered := Gaussian.Norm.Sum.Indexed.normSq_sumFin_le
@@ -248,123 +250,123 @@ family. Each parent reuses them in its cached reciprocal primitive bank. -/
 
 /-- Every original parent source area uses the retained common total depth. -/
 theorem Evaluation.source_depth (evaluated :
-  Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation request) (i : Fin
+  Evaluation request) (i : Fin
   original.plans.length) :
     (evaluated.entries.get i).sourceArea = Periods.DyadicBilinearBoundaryRibbon.dyadicArea
-      (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues (evaluated.entries.get
+      (CommonRibbonFamily.CommonRibbonRequest.sourceValues (evaluated.entries.get
         i).samples.source (evaluated.entries.get i).samples.otherSource)
       (original.depth + depth) 0 1 := by
   have full := (evaluated.entries.get i).sourceArea_full
-  rw [Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.chartDepth_eq original depth i] at full
+  rw [chartDepth_eq original depth i] at full
   exact full
 
 /-- The retained parent polygons are recovered from cached fine and local
 centered areas. This does not discard the remaining between-parent terms. -/
 @[expose] def Evaluation.coarseSourceArea (evaluated :
-  Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation request) : Gaussian :=
+  Evaluation request) : Gaussian :=
   evaluated.sourceArea - evaluated.sourceCenteredArea
 
 /-- The cached coarse source area equals the finite sum of the retained parent coarse areas. -/
 theorem Evaluation.coarseSourceArea_eq (evaluated :
-  Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation request) :
+  Evaluation request) :
     evaluated.coarseSourceArea = FiniteSum.Fin.sumFin (fun i => (evaluated.entries.get i).coarseSourceArea) := by
-  unfold Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation.coarseSourceArea
+  unfold Evaluation.coarseSourceArea
   rw [evaluated.sourceArea_eq, evaluated.sourceCenteredArea_eq, ← FiniteSum.Fin.sumFin_sub]
   rfl
 
 /-- The cached coarse source area is the actual original parent dyadic area sum at each retained coarse depth. -/
 theorem Evaluation.coarseSourceArea_full (evaluated :
-  Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation request) :
+  Evaluation request) :
     evaluated.coarseSourceArea = FiniteSum.Fin.sumFin (fun i => Periods.DyadicBilinearBoundaryRibbon.dyadicArea
-      (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues (evaluated.entries.get
+      (CommonRibbonFamily.CommonRibbonRequest.sourceValues (evaluated.entries.get
         i).samples.source (evaluated.entries.get i).samples.otherSource)
-      (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartParent original i).common.depth 0 1) := by
-  rw [Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation.coarseSourceArea_eq]
+      (ChartParent original i).common.depth 0 1) := by
+  rw [Evaluation.coarseSourceArea_eq]
   exact FiniteSum.Fin.sumFin_congr (fun i => (evaluated.entries.get i).coarseSourceArea_eq)
 
 /-- Subtracting the exact retained coarse source area leaves the paid centered chart comparison. -/
 theorem Evaluation.coarse_centered_bounded (evaluated :
-  Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation request) :
-    Data.Gaussian.Norm.Basic.normSq (evaluated.sourceArea - evaluated.coarseSourceArea -
+  Evaluation request) :
+    Gaussian.Norm.Basic.normSq (evaluated.sourceArea - evaluated.coarseSourceArea -
       evaluated.chartCenteredArea) < requested := by
   have equal : evaluated.sourceArea - evaluated.coarseSourceArea = evaluated.sourceCenteredArea := by
-    unfold Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation.coarseSourceArea
+    unfold Evaluation.coarseSourceArea
     ring1
   rw [equal]
   exact evaluated.centered_bounded
 
 /-- The ordered original parent increment paths at the common total depth. -/
 @[expose] def Evaluation.sourcePaths (evaluated :
-  Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation request) :=
+  Evaluation request) :=
   List.ofFn (fun i : Fin original.plans.length => Path.Dyadic.DyadicPairedPrimitivePaths.increments
-    (Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest.sourceValues (evaluated.entries.get
+    (CommonRibbonFamily.CommonRibbonRequest.sourceValues (evaluated.entries.get
       i).samples.source (evaluated.entries.get i).samples.otherSource)
     (original.depth + depth) 0 1)
 
 /-- Compose every parent replacement in the retained order. Equal source
 totals preserve the polygon of parent increments exactly. -/
 @[expose] def Evaluation.joinedCharts (evaluated :
-  Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation request) :
-    Normalization.ReciprocalDiskCommonSourceCharts.SourceComparisonRequest.PathReplacement evaluated.sourcePaths.flatten
+  Evaluation request) :
+    SourceComparisonRequest.PathReplacement evaluated.sourcePaths.flatten
       := by
   let paths := fun i : Fin original.plans.length => (evaluated.entries.get i).sourceBlocks.flatten
   have pathsEq : List.ofFn paths = evaluated.sourcePaths := by
     apply Data.List.OfFn.Basic.ofFn_congr
     intro i
     have full := (evaluated.entries.get i).sourceBlocks_full
-    rw [Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.chartDepth_eq original depth i] at full
+    rw [chartDepth_eq original depth i] at full
     exact full
-  exact Normalization.ReciprocalDiskCommonSourceCharts.SourceComparisonRequest.PathReplacement.readback (congrArg
+  exact SourceComparisonRequest.PathReplacement.readback (congrArg
     List.flatten pathsEq)
-    (Normalization.ReciprocalDiskCommonSourceCharts.SourceComparisonRequest.PathReplacement.join paths (fun i =>
+    (SourceComparisonRequest.PathReplacement.join paths (fun i =>
       (evaluated.entries.get i).joinedCharts))
 
 /-- The actual joined chart replacement's retained bound is strictly below the whole target. -/
 theorem Evaluation.joinedCharts_paid (evaluated :
-  Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation request) :
-    (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation.joinedCharts request
+  Evaluation request) :
+    (Evaluation.joinedCharts request
       evaluated).bound < requested := by
-  have bound := Normalization.ReciprocalDiskCommonSourceCharts.SourceComparisonRequest.PathReplacement.join_bound _ (fun
+  have bound := SourceComparisonRequest.PathReplacement.join_bound _ (fun
     i => (evaluated.entries.get i).joinedCharts)
-    (fun i => (Hyperelliptic.Charts.Reciprocal.Disk.CommonChartBank.ChartRequest.Evaluation.joinedCharts_paid
+    (fun i => (CommonChartBank.ChartRequest.Evaluation.joinedCharts_paid
       (request.plans.get i) (evaluated.entries.get i)).le)
-  have paid := (congrArg₂ (fun a b : Normalization.InverseRootPolynomial.Coordinate => a * b)
+  have paid := (congrArg₂ (fun a b : Coordinate => a * b)
     request.joinBudget.rate_eq.symm request.allowance_eq).trans_lt
     request.joinBudget.join_paid
   exact bound.trans_lt paid
 
 /-- The actual joined chart preserves the complete original source path total. -/
 theorem Evaluation.joinedCharts_total (evaluated :
-  Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation request) :
-    (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation.joinedCharts request
+  Evaluation request) :
+    (Evaluation.joinedCharts request
       evaluated).chart.totalValue = Path.PairedIncrementArea.total evaluated.sourcePaths.flatten := by
-  rw [(Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation.joinedCharts request
+  rw [(Evaluation.joinedCharts request
     evaluated).total_eq,
-    (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation.joinedCharts request
+    (Evaluation.joinedCharts request
     evaluated).source.total_eq]
 
 /-- The complete original source path area and retained joined chart area meet the actual replacement bound. -/
 theorem Evaluation.joinedCharts_bounded (evaluated :
-  Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation request) :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area evaluated.sourcePaths.flatten -
-      (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation.joinedCharts request
+  Evaluation request) :
+    Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area evaluated.sourcePaths.flatten -
+      (Evaluation.joinedCharts request
         evaluated).chart.areaValue) ≤
-        (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation.joinedCharts request
+        (Evaluation.joinedCharts request
         evaluated).bound := by
-  rw [← (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation.joinedCharts request
+  rw [← (Evaluation.joinedCharts request
     evaluated).source.area_eq]
-  exact (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation.joinedCharts request
+  exact (Evaluation.joinedCharts request
     evaluated).bounded
 
 /-- The complete original source path area and retained joined chart area meet the requested whole target. -/
 theorem Evaluation.joinedCharts_accurate (evaluated :
-  Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation request) :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area evaluated.sourcePaths.flatten -
-      (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation.joinedCharts request
+  Evaluation request) :
+    Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area evaluated.sourcePaths.flatten -
+      (Evaluation.joinedCharts request
         evaluated).chart.areaValue) < requested :=
-  (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation.joinedCharts_bounded request
+  (Evaluation.joinedCharts_bounded request
     evaluated).trans_lt
-    (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentCharts.ChartBankRequest.Evaluation.joinedCharts_paid request
+    (Evaluation.joinedCharts_paid request
     evaluated)
 
 end ChartBankRequest

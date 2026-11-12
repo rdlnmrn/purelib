@@ -13,6 +13,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Tactic.Ring
 import Purelib.Algebra.NatCast
 
+open Purelib.Polynomial.Dense.Rational.SignedRemainder
+
 /-!
 # Doubled Cauchy indices of retained polynomial pairs
 
@@ -35,8 +37,8 @@ The signed remainder chain starts with the displayed denominator and numerator
 polynomials. Its doubled variation at the second endpoint is subtracted from
 its reading at the first, preserving both input polynomials and endpoint order. -/
 @[expose] public def Sturm.cauchyIndex2 (p q : Dense) (a b : Fraction.Rational) : Int :=
-  (SignedRemainder.Variation.Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain q p) a : Int) -
-    SignedRemainder.Variation.Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain q p) b
+  (Variation.Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain q p) a : Int) -
+    Variation.Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain q p) b
 
 /-- Normalizing both polynomials preserves their doubled Cauchy index.
 
@@ -46,8 +48,8 @@ at the original two rational endpoints. -/
 public theorem cauchyIndex2_normalize (p q : Dense) (a b : Fraction.Rational) :
     Sturm.cauchyIndex2 p.normalize q.normalize a b = Sturm.cauchyIndex2 p q a b := by
   unfold Sturm.cauchyIndex2
-  rw [SignedRemainder.Variation.endpointVariation2_signedRemainderChain_normalize,
-    SignedRemainder.Variation.endpointVariation2_signedRemainderChain_normalize]
+  rw [Variation.endpointVariation2_signedRemainderChain_normalize,
+    Variation.endpointVariation2_signedRemainderChain_normalize]
 
 /-- Negating the denominator negates the doubled Cauchy index.
 
@@ -69,10 +71,10 @@ public theorem cauchyIndex2_neg_denominator
     simpa only [P, Q, DensePolynomial.eval_normalize] using pairAtA.symm
   have normalizedAtB : Q.eval b ≠ 0 ∨ P.eval b ≠ 0 := by
     simpa only [P, Q, DensePolynomial.eval_normalize] using pairAtB.symm
-  have variationSum := SignedRemainder.Variation.endpointVariation2_neg_second_sum_eq
+  have variationSum := Variation.endpointVariation2_neg_second_sum_eq
     normalizedAtA normalizedAtB
-  have negAtA := SignedRemainder.Variation.endpointVariation2_signedRemainderChain_neg Q (-P) a
-  have negAtB := SignedRemainder.Variation.endpointVariation2_signedRemainderChain_neg Q (-P) b
+  have negAtA := Variation.endpointVariation2_signedRemainderChain_neg Q (-P) a
+  have negAtB := Variation.endpointVariation2_signedRemainderChain_neg Q (-P) b
   rw [DensePolynomial.neg_neg,
     pNormalized] at negAtA negAtB
   change Sturm.cauchyIndex2 P (-Q) a b = -Sturm.cauchyIndex2 P Q a b
@@ -82,30 +84,30 @@ public theorem cauchyIndex2_neg_denominator
     congrArg (fun value : Nat => (value : Int)) variationSum
   rewrite [NatCast.add, NatCast.add] at variationSumInt
   calc
-    (SignedRemainder.Variation.Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain Q (-P)) a :
+    (Variation.Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain Q (-P)) a :
       Int) -
-          SignedRemainder.Variation.Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain Q (-P)) b
+          Variation.Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain Q (-P)) b
             =
-        ((SignedRemainder.Variation.Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain Q P) a :
+        ((Variation.Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain Q P) a :
           Int) +
-            SignedRemainder.Variation.Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain Q (-P))
+            Variation.Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain Q (-P))
               a) -
-          ((SignedRemainder.Variation.Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain Q P) a
+          ((Variation.Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain Q P) a
             : Int) +
-            SignedRemainder.Variation.Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain Q (-P))
+            Variation.Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain Q (-P))
               b) := by ring1
-    _ = ((SignedRemainder.Variation.Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain Q P) b :
+    _ = ((Variation.Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain Q P) b :
       Int) +
-            SignedRemainder.Variation.Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain Q (-P))
+            Variation.Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain Q (-P))
               b) -
-          ((SignedRemainder.Variation.Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain Q P) a
+          ((Variation.Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain Q P) a
             : Int) +
-            SignedRemainder.Variation.Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain Q (-P))
+            Variation.Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain Q (-P))
               b) := by
         rw [variationSumInt]
-    _ = -((SignedRemainder.Variation.Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain Q P) a :
+    _ = -((Variation.Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain Q P) a :
       Int) -
-          SignedRemainder.Variation.Sturm.endpointVariation2 (SignedRemainder.Basic.Sturm.signedRemainderChain Q P) b)
+          Variation.Sturm.endpointVariation2 (Basic.Sturm.signedRemainderChain Q P) b)
             := by ring1
 
 /-- Doubled Cauchy indices add across any intermediate endpoint.

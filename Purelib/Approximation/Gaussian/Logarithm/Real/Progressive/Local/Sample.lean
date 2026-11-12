@@ -20,6 +20,9 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Approximation.Gaussian.Logarithm.Rational
@@ -58,7 +61,7 @@ def sampleFrom (source :
 theorem sampleFrom_input_effect (source :
   Sequence.ChartSamples)
     {oldIndex newIndex : Nat} (indexOrder : oldIndex ≤ newIndex) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
         (Sample.sample (source.value newIndex) oldIndex -
           Sample.sample (source.value oldIndex) oldIndex) ≤
       (Sensitivity.sampleInputScale * 4) *
@@ -68,17 +71,17 @@ theorem sampleFrom_input_effect (source :
     (source.half oldIndex) (source.two oldIndex) oldIndex
   have movement := source.close indexOrder
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
         (Sample.sample (source.value newIndex) oldIndex -
           Sample.sample (source.value oldIndex) oldIndex) ≤
         Sensitivity.sampleInputScale *
           (source.value newIndex - source.value oldIndex) ^ 2 := sensitivity
     _ ≤ Sensitivity.sampleInputScale *
         Geometric.Basic.quarterRadius 4 oldIndex :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct movement
+      Arithmetic.mul_le_mul_of_nonneg_left_direct movement
         (by
           rw [Sensitivity.sampleInputScale]
-          exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+          exact Arithmetic.mul_nonneg_direct (by decide)
             (add_nonneg (by decide) (by decide)))
     _ = (Sensitivity.sampleInputScale * 4) *
         (1 / 4 : Fraction.Rational) ^ oldIndex := by
@@ -100,17 +103,17 @@ theorem errorScale_nonneg : 0 ≤
   rw [errorScale,
     inputEffectScale,
     Sensitivity.sampleInputScale]
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  exact Arithmetic.mul_nonneg_direct (by decide)
     (add_nonneg (by decide)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.mul_nonneg_direct
+        (Arithmetic.mul_nonneg_direct (by decide)
           (add_nonneg (by decide) (by decide))) (by decide)))
 
 /-- Combined finite input and truncation movement. -/
 theorem sampleFrom_later_close (source :
   Sequence.ChartSamples)
     {oldIndex newIndex : Nat} (indexOrder : oldIndex ≤ newIndex) :
-    Data.Gaussian.Norm.Basic.normSq (sampleFrom
+    Basic.normSq (sampleFrom
       source newIndex - sampleFrom source oldIndex) ≤
       Geometric.Basic.quarterRadius errorScale oldIndex
         := by
@@ -119,19 +122,19 @@ theorem sampleFrom_later_close (source :
   have inputEffect := sampleFrom_input_effect source
     indexOrder
   calc
-    Data.Gaussian.Norm.Basic.normSq (sampleFrom
+    Basic.normSq (sampleFrom
       source newIndex - sampleFrom source oldIndex) ≤
-        2 * (Data.Gaussian.Norm.Basic.normSq
+        2 * (Basic.normSq
           (Sample.sample (source.value newIndex) newIndex -
             Sample.sample (source.value newIndex) oldIndex) +
-          Data.Gaussian.Norm.Basic.normSq
+          Basic.normSq
           (Sample.sample (source.value newIndex) oldIndex -
             Sample.sample (source.value oldIndex) oldIndex)) :=
-      Data.Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _
+      Bounds.normSq_sub_le_via _ _ _
     _ ≤ 2 * (Geometric.Basic.quarterRadius 1 oldIndex +
         inputEffectScale * (1 / 4 : Fraction.Rational) ^
           oldIndex) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add truncation (by
           simpa only [inputEffectScale] using
             inputEffect)) (by decide)

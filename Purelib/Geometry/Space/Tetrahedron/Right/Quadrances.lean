@@ -14,6 +14,8 @@ public import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -39,7 +41,7 @@ namespace Purelib.Geometry.Space.Tetrahedron.Right.Quadrances
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Algebra.Field.ExplicitField K]
 
 /-- Problem 12, the three-dimensional Pythagoras theorem for quadrea. The three pairwise perpendicular leg quadrances
 are `P₁,P₂,P₃`; expanding Archimedes' formula gives the sum of the three right-face quadreas. -/
@@ -78,40 +80,40 @@ theorem exercise_22_3_acute
     TriangleSpreadRules.AcuteQuadranceBounds Q₁ Q₂ Q₃ := by
   rcases relations with ⟨r₁, r₂, r₃⟩
   have firstNonnegative :=
-    Fraction.Order.Arithmetic.le_of_lt_direct firstPositive
+    Arithmetic.le_of_lt_direct firstPositive
   have secondNonnegative :=
-    Fraction.Order.Arithmetic.le_of_lt_direct secondPositive
+    Arithmetic.le_of_lt_direct secondPositive
   have thirdNonnegative :=
-    Fraction.Order.Arithmetic.le_of_lt_direct thirdPositive
+    Arithmetic.le_of_lt_direct thirdPositive
   unfold TriangleSpreadRules.AcuteQuadranceBounds
   rw [r₁, r₂, r₃]
   constructor
   · have doubledThird : (0 : Fraction.Rational) ≤ P₃ + P₃ :=
-      Fraction.Order.Arithmetic.add_le_add_direct
+      Arithmetic.add_le_add_direct
         thirdNonnegative thirdNonnegative
     calc
       P₁ + P₂ = 0 + (P₁ + P₂) := by ring1
       _ ≤ (P₃ + P₃) + (P₁ + P₂) :=
-        Fraction.Order.Arithmetic.add_le_add_right_direct
+        Arithmetic.add_le_add_right_direct
           doubledThird (P₁ + P₂)
       _ = (P₂ + P₃) + (P₁ + P₃) := by ring1
   constructor
   · have doubledFirst : (0 : Fraction.Rational) ≤ P₁ + P₁ :=
-      Fraction.Order.Arithmetic.add_le_add_direct
+      Arithmetic.add_le_add_direct
         firstNonnegative firstNonnegative
     calc
       P₂ + P₃ = 0 + (P₂ + P₃) := by ring1
       _ ≤ (P₁ + P₁) + (P₂ + P₃) :=
-        Fraction.Order.Arithmetic.add_le_add_right_direct
+        Arithmetic.add_le_add_right_direct
           doubledFirst (P₂ + P₃)
       _ = (P₁ + P₃) + (P₁ + P₂) := by ring1
   · have doubledSecond : (0 : Fraction.Rational) ≤ P₂ + P₂ :=
-      Fraction.Order.Arithmetic.add_le_add_direct
+      Arithmetic.add_le_add_direct
         secondNonnegative secondNonnegative
     calc
       P₁ + P₃ = 0 + (P₁ + P₃) := by ring1
       _ ≤ (P₂ + P₂) + (P₁ + P₃) :=
-        Fraction.Order.Arithmetic.add_le_add_right_direct
+        Arithmetic.add_le_add_right_direct
           doubledSecond (P₁ + P₃)
       _ = (P₁ + P₂) + (P₂ + P₃) := by ring1
 end

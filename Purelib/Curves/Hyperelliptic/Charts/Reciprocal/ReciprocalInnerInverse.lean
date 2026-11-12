@@ -43,6 +43,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 public import Purelib.Riemann.Normalization.InverseRootComparison
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-!
@@ -103,9 +105,9 @@ open Purelib.Riemann.Topology.SquareRootContinuationChain (Owner)
 /-- Exact rational residual and geometric bounds. -/
 abbrev Coordinate := Fraction.Rational
 /-- Exact Gaussian rational inverse-root samples. -/
-abbrev Gaussian := Data.Gaussian.Basic.Canonical
+abbrev Gaussian := Basic.Canonical
 /-- A finite dense polynomial over exact Gaussian rationals. -/
-abbrev Polynomial := Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+abbrev Polynomial := Basic.CanonicalCoefficients.CoefficientPolynomial
 /-- A closed rational coordinate rectangle. -/
 abbrev Box := Rational.Box
 
@@ -113,29 +115,29 @@ abbrev Box := Rational.Box
 quarters of the old bound squared. -/
 theorem residual_step_bound {residual : Gaussian} {bound :
   Coordinate}
-    (bounded : Data.Gaussian.Norm.Basic.normSq residual ≤ bound) (small : bound ≤ 1) :
-    Data.Gaussian.Norm.Basic.normSq (Purelib.Riemann.Normalization.InverseRootPolynomial.residualStep residual)
+    (bounded : Norm.Basic.normSq residual ≤ bound) (small : bound ≤ 1) :
+    Norm.Basic.normSq (residualStep residual)
       ≤ (5 / 4) * bound ^ 2 := by
-  have factor : Data.Gaussian.Norm.Basic.normSq ((3 :
+  have factor : Norm.Basic.normSq ((3 :
     Gaussian) + residual) ≤ 20 := by
     calc
-      _ ≤ 2 * (Data.Gaussian.Norm.Basic.normSq (3 :
+      _ ≤ 2 * (Norm.Basic.normSq (3 :
         Gaussian) +
-        Data.Gaussian.Norm.Basic.normSq residual) := Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _
-      _ ≤ 2 * (9 + 1) := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Norm.Basic.normSq residual) := Norm.Bounds.normSq_add_le_two _ _
+      _ ≤ 2 * (9 + 1) := Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add (le_of_eq (by decide)) (bounded.trans small)) (by decide)
       _ = _ := by decide
-  have square := Fraction.Order.Arithmetic.pow_le_pow_direct (Data.Gaussian.Norm.Basic.normSq_nonneg residual) bounded 2
+  have square := Arithmetic.pow_le_pow_direct (Norm.Basic.normSq_nonneg residual) bounded 2
   calc
-    _ = Data.Gaussian.Norm.Basic.normSq residual ^ 2 * Data.Gaussian.Norm.Basic.normSq (3 + residual)
+    _ = Norm.Basic.normSq residual ^ 2 * Norm.Basic.normSq (3 + residual)
       * (1 / 16) := by
-      unfold InverseRootPolynomial.residualStep
-      rw [Data.Gaussian.Norm.Basic.normSq_mul, Data.Gaussian.Norm.Basic.normSq_mul, Power.normSq_pow, Power.normSq_pow,
-        show Data.Gaussian.Norm.Basic.normSq InverseRootPolynomial.half ^ 2 = (1 / 16 :
+      unfold residualStep
+      rw [Norm.Basic.normSq_mul, Norm.Basic.normSq_mul, Power.normSq_pow, Power.normSq_pow,
+        show Norm.Basic.normSq InverseRootPolynomial.half ^ 2 = (1 / 16 :
           Coordinate) by decide]
-    _ ≤ bound ^ 2 * 20 * (1 / 16) := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (Fraction.Order.Arithmetic.mul_le_mul_direct square factor (Data.Gaussian.Norm.Basic.normSq_nonneg _)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _)) (by decide)
+    _ ≤ bound ^ 2 * 20 * (1 / 16) := Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (Arithmetic.mul_le_mul_direct square factor (Norm.Basic.normSq_nonneg _)
+        (Arithmetic.sq_nonneg_direct _)) (by decide)
     _ = (5 / 4) * bound ^ 2 := by
       rw [show bound ^ 2 * 20 * (1 / 16) = bound ^ 2 * (20 * (1 / 16)) by ring1,
         show (20 : Coordinate) * (1 / 16) = 5 / 4 by
@@ -153,13 +155,13 @@ structure Candidate (polynomial : Polynomial) (box :
   /-- The cached inverse-root approximation polynomial. -/ value :
     Polynomial
   /-- At every point, the cached polynomial is the exact retained-seed Newton refinement at the indexed step count. -/
-    value_eq : ∀ point, value.eval point = InverseModelRootSamples.refineValue (polynomial.eval point) seed steps
+    value_eq : ∀ point, value.eval point = refineValue (polynomial.eval point) seed steps
   /-- The cached residual polynomial for the retained inverse-root approximation. -/ residual :
     Polynomial
   /-- The cached residual evaluates to one minus the original polynomial times the cached approximation squared. -/
     residual_eq : ∀ point, residual.eval point = 1 - polynomial.eval point * (value.eval point) ^ 2
   /-- The retained residual squared norm satisfies its indexed bound throughout the original box. -/ bounded : ∀ point,
-    box.Contains point → Data.Gaussian.Norm.Basic.normSq (residual.eval point) ≤ bound
+    box.Contains point → Norm.Basic.normSq (residual.eval point) ≤ bound
 
 constructive_injectivity Candidate
 
@@ -170,17 +172,17 @@ and its retained residual throughout the same indexed box. -/
 @[expose] def initial (polynomial : Polynomial) (box :
   Box) (seed :
   Gaussian)
-    (bounded : ∀ point, box.Contains point → Data.Gaussian.Norm.Basic.normSq (1 - polynomial.eval point * seed
+    (bounded : ∀ point, box.Contains point → Norm.Basic.normSq (1 - polynomial.eval point * seed
       ^ 2) ≤ 2 / 3) :
     Candidate polynomial box seed 0 (2 / 3) where
-  value := DensePolynomial.constant seed
-  value_eq := fun _ => by rw [DensePolynomial.eval_constant]; rfl
-  residual := DensePolynomial.constant 1 - polynomial * DensePolynomial.constant (seed ^ 2)
+  value := constant seed
+  value_eq := fun _ => by rw [eval_constant]; rfl
+  residual := constant 1 - polynomial * constant (seed ^ 2)
   residual_eq := fun point => by
-    rw [DensePolynomial.eval_sub, DensePolynomial.eval_mul, DensePolynomial.eval_constant,
-      DensePolynomial.eval_constant, DensePolynomial.eval_constant]
+    rw [eval_sub, eval_mul, eval_constant,
+      eval_constant, eval_constant]
   bounded := fun point inside => by
-    simpa only [DensePolynomial.eval_sub, DensePolynomial.eval_mul, DensePolynomial.eval_constant] using bounded point
+    simpa only [eval_sub, eval_mul, eval_constant] using bounded point
       inside
 
 /-- Perform one polynomial inverse-root correction while retaining exact evaluation and residual identities.
@@ -195,33 +197,33 @@ The supplied next bound must pay five quarters of the old bound squared, and the
     (next : Coordinate) (paid : (5 / 4) * bound ^ 2 ≤
       next) : Candidate polynomial box seed (steps + 1)
       next where
-  value := candidate.value * (DensePolynomial.constant 1 + candidate.residual.scale InverseRootPolynomial.half)
+  value := candidate.value * (constant 1 + candidate.residual.scale InverseRootPolynomial.half)
   value_eq := fun point => by
-    simp only [DensePolynomial.eval_mul, DensePolynomial.eval_add, DensePolynomial.eval_constant,
-      DensePolynomial.eval_scale, candidate.residual_eq, candidate.value_eq,
-      InverseModelRootSamples.refineValue, Purelib.Riemann.Normalization.InverseRootPolynomial.correction, -eq_self,
+    simp only [eval_mul, eval_add, eval_constant,
+      eval_scale, candidate.residual_eq, candidate.value_eq,
+      refineValue, correction, -eq_self,
         -iff_self]
     rfl
-  residual := (candidate.residual * candidate.residual * (DensePolynomial.constant 3 + candidate.residual)).scale
+  residual := (candidate.residual * candidate.residual * (constant 3 + candidate.residual)).scale
     (InverseRootPolynomial.half ^ 2)
   residual_eq := fun point => by
-    simp only [DensePolynomial.eval_scale, DensePolynomial.eval_mul, DensePolynomial.eval_add,
-      DensePolynomial.eval_constant]
+    simp only [eval_scale, eval_mul, eval_add,
+      eval_constant]
     have identity := InverseRootPolynomial.correction_residual (polynomial.eval point) (candidate.value.eval point)
       (candidate.residual.eval point) (candidate.residual_eq point)
-    unfold Purelib.Riemann.Normalization.InverseRootPolynomial.correction
-      Purelib.Riemann.Normalization.InverseRootPolynomial.residualStep at identity
+    unfold correction
+      residualStep at identity
     exact (by ring1 : InverseRootPolynomial.half ^ 2 *
       (candidate.residual.eval point * candidate.residual.eval point * (3 + candidate.residual.eval point)) =
         candidate.residual.eval point ^ 2 * (3 + candidate.residual.eval point) * InverseRootPolynomial.half ^ 2).trans
           identity.symm
   bounded := fun point inside => by
-    have evaluation : ((candidate.residual * candidate.residual * (DensePolynomial.constant 3 +
+    have evaluation : ((candidate.residual * candidate.residual * (constant 3 +
       candidate.residual)).scale
-        (InverseRootPolynomial.half ^ 2)).eval point = Purelib.Riemann.Normalization.InverseRootPolynomial.residualStep
+        (InverseRootPolynomial.half ^ 2)).eval point = residualStep
           (candidate.residual.eval point) := by
-      simp only [DensePolynomial.eval_scale, DensePolynomial.eval_mul, DensePolynomial.eval_add,
-        DensePolynomial.eval_constant, Purelib.Riemann.Normalization.InverseRootPolynomial.residualStep]
+      simp only [eval_scale, eval_mul, eval_add,
+        eval_constant, residualStep]
       ring1
     rw [evaluation]
     exact (residual_step_bound (candidate.bounded point
@@ -233,10 +235,10 @@ The resulting model keeps the exact original seed and pointwise seven-step speci
 @[expose] def bootstrap (polynomial : Polynomial) (box :
   Box) (seed :
   Gaussian)
-    (bounded : ∀ point, box.Contains point → Data.Gaussian.Norm.Basic.normSq (1 - polynomial.eval point * seed
+    (bounded : ∀ point, box.Contains point → Norm.Basic.normSq (1 - polynomial.eval point * seed
       ^ 2) ≤ 2 / 3) :
-    { model : InverseRootPolynomial.Model polynomial box // (∀ point, model.value.eval point =
-      InverseModelRootSamples.refineValue (polynomial.eval point) seed 7) ∧
+    { model : Model polynomial box // (∀ point, model.value.eval point =
+      refineValue (polynomial.eval point) seed 7) ∧
       model.bound ≤ 1 / 256 } :=
   let first := step
     (initial polynomial box seed bounded) (by decide) (3 /
@@ -251,7 +253,7 @@ The resulting model keeps the exact original seed and pointwise seven-step speci
   ⟨⟨seventh.value, seventh.residual, seventh.residual_eq, 1 / 256, by decide +kernel,
     by decide +kernel, fun point inside => by
       have scalar := seventh.bounded point inside
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+      rw [Norm.Basic.normSq_eq_canonical] at scalar
       exact scalar⟩, seventh.value_eq, le_rfl⟩
 
 variable {genus : Nat} {curve : HyperellipticCurve genus}
@@ -263,54 +265,54 @@ private theorem square_bound {radius value : Coordinate}
   (bounds : -radius ≤ value ∧ value ≤ radius) :
     value ^ 2 ≤ radius ^ 2 := by
   have estimate := Rational.Box.sq_le_endpoint_max bounds.1 bounds.2
-  simpa only [show (-radius) ^ 2 = radius ^ 2 by ring1, Fraction.Order.Basic.max_self] using estimate
+  simpa only [show (-radius) ^ 2 = radius ^ 2 by ring1, Basic.max_self] using estimate
 
 /-- Every point of the reciprocal inner box satisfies the original radius-weighted squared-norm bound of one half. -/
 private theorem inner_disk_half {point : Gaussian} (inside
-  : (ReciprocalExteriorCollar.innerBox curve).Contains point) :
-    radius curve ^ 2 * Data.Gaussian.Norm.Basic.normSq point ≤ 1 / 2 := by
-  have upper : Data.Gaussian.Norm.Basic.normSq point ≤ 2 * ReciprocalExteriorCollar.innerRadius curve ^ 2 :=
+  : (innerBox curve).Contains point) :
+    radius curve ^ 2 * Norm.Basic.normSq point ≤ 1 / 2 := by
+  have upper : Norm.Basic.normSq point ≤ 2 * innerRadius curve ^ 2 :=
     (add_le_add (square_bound ⟨inside.1, inside.2.1⟩)
       (square_bound ⟨inside.2.2.1,
       inside.2.2.2⟩)).trans_eq (by ring1)
   calc
-    _ ≤ radius curve ^ 2 * (2 * ReciprocalExteriorCollar.innerRadius curve ^ 2) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct upper (ReciprocalExteriorCollar.radius_square_positive
+    _ ≤ radius curve ^ 2 * (2 * innerRadius curve ^ 2) :=
+      Arithmetic.mul_le_mul_of_nonneg_left_direct upper (radius_square_positive
         curve).le
-    _ = 2 * (radius curve ^ 2 * ReciprocalExteriorCollar.innerRadius curve ^ 2) := by ring1
-    _ = _ := by rw [ReciprocalExteriorCollar.innerRadius_identity]; decide
+    _ = 2 * (radius curve ^ 2 * innerRadius curve ^ 2) := by ring1
+    _ = _ := by rw [innerRadius_identity]; decide
 
 /-- The reversed-polynomial tail in the reciprocal inner box has squared norm at most one eighth of the original
 leading-coefficient squared norm. -/
 theorem tail_bound {point : Gaussian} (inside :
-  (ReciprocalExteriorCollar.innerBox curve).Contains point) :
-    8 * Data.Gaussian.Norm.Basic.normSq ((Reciprocal.reversed curve.polynomial).eval point -
-      curve.polynomial.leadingCoeff) ≤ Data.Gaussian.Norm.Basic.normSq curve.polynomial.leadingCoeff := by
+  (innerBox curve).Contains point) :
+    8 * Norm.Basic.normSq ((reversed curve.polynomial).eval point -
+      curve.polynomial.leadingCoeff) ≤ Norm.Basic.normSq curve.polynomial.leadingCoeff := by
   have tail := Reciprocal.Bounds.tail_bound curve.polynomial (BranchIsolation.degreePositive curve) point
-    (Reciprocal.Bounds.disk_unit_bound (ReciprocalExteriorCollar.innerBox_inDisk curve inside))
+    (Reciprocal.Bounds.disk_unit_bound (innerBox_inDisk curve inside))
   have weight := Reciprocal.Bounds.four_weight_le curve.polynomial curve.nonzero
   calc
-    _ ≤ 8 * (RootRadius.denseLowerCoefficientWeight curve.polynomial * Data.Gaussian.Norm.Basic.normSq point)
+    _ ≤ 8 * (RootRadius.denseLowerCoefficientWeight curve.polynomial * Norm.Basic.normSq point)
       :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct tail (by decide)
-    _ = 2 * (4 * RootRadius.denseLowerCoefficientWeight curve.polynomial) * Data.Gaussian.Norm.Basic.normSq
+      Arithmetic.mul_le_mul_of_nonneg_left_direct tail (by decide)
+    _ = 2 * (4 * RootRadius.denseLowerCoefficientWeight curve.polynomial) * Norm.Basic.normSq
       point := by
       ring1
-    _ ≤ 2 * (Data.Gaussian.Norm.Basic.normSq curve.polynomial.leadingCoeff * radius curve ^ 2) *
-      Data.Gaussian.Norm.Basic.normSq point :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct weight (by decide))
-          (Data.Gaussian.Norm.Basic.normSq_nonneg _)
-    _ = 2 * Data.Gaussian.Norm.Basic.normSq curve.polynomial.leadingCoeff * (radius curve ^ 2 *
-      Data.Gaussian.Norm.Basic.normSq point) := by
+    _ ≤ 2 * (Norm.Basic.normSq curve.polynomial.leadingCoeff * radius curve ^ 2) *
+      Norm.Basic.normSq point :=
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct weight (by decide))
+          (Norm.Basic.normSq_nonneg _)
+    _ = 2 * Norm.Basic.normSq curve.polynomial.leadingCoeff * (radius curve ^ 2 *
+      Norm.Basic.normSq point) := by
       ring1
-    _ ≤ 2 * Data.Gaussian.Norm.Basic.normSq curve.polynomial.leadingCoeff * (1 / 2) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    _ ≤ 2 * Norm.Basic.normSq curve.polynomial.leadingCoeff * (1 / 2) :=
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (inner_disk_half inside)
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (Data.Gaussian.Norm.Basic.normSq_nonneg _))
+        (Arithmetic.mul_nonneg_direct (by decide) (Norm.Basic.normSq_nonneg _))
     _ = _ := by
-      rw [show 2 * Data.Gaussian.Norm.Basic.normSq curve.polynomial.leadingCoeff * (1 / 2) =
-        Data.Gaussian.Norm.Basic.normSq curve.polynomial.leadingCoeff * (2 * (1 / 2)) by ring1,
+      rw [show 2 * Norm.Basic.normSq curve.polynomial.leadingCoeff * (1 / 2) =
+        Norm.Basic.normSq curve.polynomial.leadingCoeff * (2 * (1 / 2)) by ring1,
         show (2 : Coordinate) * (1 / 2) = 1 by decide,
           _root_.mul_one]
 
@@ -318,54 +320,54 @@ end
 
 /-- The retained leading-coefficient inverse-root seed has residual squared norm at most two thirds throughout the
 reciprocal inner box. -/
-public theorem initial_bound (seed : OwnerSeededInverseRoot.Seed curve.polynomial.leadingCoeff) {point :
+public theorem initial_bound (seed : Seed curve.polynomial.leadingCoeff) {point :
   Gaussian}
-    (inside : (ReciprocalExteriorCollar.innerBox curve).Contains point) :
-    Data.Gaussian.Norm.Basic.normSq (1 - (Reciprocal.reversed curve.polynomial).eval point * seed.value ^ 2) ≤
+    (inside : (innerBox curve).Contains point) :
+    Norm.Basic.normSq (1 - (reversed curve.polynomial).eval point * seed.value ^ 2) ≤
       2 / 3 := by
   have seedScalar := seed.residual_small
-  rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at seedScalar
-  have normalized : Data.Gaussian.Norm.Basic.normSq curve.polynomial.leadingCoeff *
-    Data.Gaussian.Norm.Basic.normSq seed.value ^ 2 ≤ 65 / 32 := by
+  rw [← Norm.Basic.normSq_eq_canonical] at seedScalar
+  have normalized : Norm.Basic.normSq curve.polynomial.leadingCoeff *
+    Norm.Basic.normSq seed.value ^ 2 ≤ 65 / 32 := by
     calc
-      _ = Data.Gaussian.Norm.Basic.normSq (1 - (1 - curve.polynomial.leadingCoeff * seed.value ^ 2)) := by
+      _ = Norm.Basic.normSq (1 - (1 - curve.polynomial.leadingCoeff * seed.value ^ 2)) := by
         rw [show 1 - (1 - curve.polynomial.leadingCoeff * seed.value ^ 2) = curve.polynomial.leadingCoeff * seed.value ^
           2 by ring1,
-          Data.Gaussian.Norm.Basic.normSq_mul, Power.normSq_pow]
-      _ ≤ 2 * (1 + 1 / 64) := (Data.Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add (by
-            rw [Data.Gaussian.Norm.Basic.normSq_one]) seedScalar) (by decide))
+          Norm.Basic.normSq_mul, Power.normSq_pow]
+      _ ≤ 2 * (1 + 1 / 64) := (Norm.Bounds.normSq_sub_le_two _ _).trans
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add (by
+            rw [Norm.Basic.normSq_one]) seedScalar) (by decide))
       _ = _ := by decide +kernel
-  have perturbation : Data.Gaussian.Norm.Basic.normSq ((curve.polynomial.leadingCoeff - (Reciprocal.reversed
+  have perturbation : Norm.Basic.normSq ((curve.polynomial.leadingCoeff - (reversed
     curve.polynomial).eval point) * seed.value ^ 2) ≤ 65 / 256 := by
-    have scaled : 8 * Data.Gaussian.Norm.Basic.normSq ((curve.polynomial.leadingCoeff - (Reciprocal.reversed
+    have scaled : 8 * Norm.Basic.normSq ((curve.polynomial.leadingCoeff - (reversed
       curve.polynomial).eval point) * seed.value ^ 2) ≤ 65 / 32 := by
-      rw [Data.Gaussian.Norm.Basic.normSq_mul, Power.normSq_pow, show curve.polynomial.leadingCoeff -
-        (Reciprocal.reversed curve.polynomial).eval point =
-        -((Reciprocal.reversed curve.polynomial).eval point - curve.polynomial.leadingCoeff) by ring1,
-          Data.Gaussian.Norm.Basic.normSq_neg]
+      rw [Norm.Basic.normSq_mul, Power.normSq_pow, show curve.polynomial.leadingCoeff -
+        (reversed curve.polynomial).eval point =
+        -((reversed curve.polynomial).eval point - curve.polynomial.leadingCoeff) by ring1,
+          Norm.Basic.normSq_neg]
       calc
-        _ = (8 * Data.Gaussian.Norm.Basic.normSq ((Reciprocal.reversed curve.polynomial).eval point -
-          curve.polynomial.leadingCoeff)) * Data.Gaussian.Norm.Basic.normSq seed.value ^ 2 := by
+        _ = (8 * Norm.Basic.normSq ((reversed curve.polynomial).eval point -
+          curve.polynomial.leadingCoeff)) * Norm.Basic.normSq seed.value ^ 2 := by
           ring1
-        _ ≤ Data.Gaussian.Norm.Basic.normSq curve.polynomial.leadingCoeff *
-          Data.Gaussian.Norm.Basic.normSq seed.value ^ 2 :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        _ ≤ Norm.Basic.normSq curve.polynomial.leadingCoeff *
+          Norm.Basic.normSq seed.value ^ 2 :=
+          Arithmetic.mul_le_mul_of_nonneg_right_direct
             (tail_bound inside)
-            (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+            (Arithmetic.sq_nonneg_direct _)
         _ ≤ _ := normalized
-    have divided := (Fraction.Order.Field.le_div_iff_pos (by
+    have divided := (Field.le_div_iff_pos (by
         decide : (0 : Coordinate) < 8)).mpr
-      ((show Data.Gaussian.Norm.Basic.normSq ((curve.polynomial.leadingCoeff - (Reciprocal.reversed
+      ((show Norm.Basic.normSq ((curve.polynomial.leadingCoeff - (reversed
         curve.polynomial).eval point) * seed.value ^ 2) * 8 =
-        8 * Data.Gaussian.Norm.Basic.normSq ((curve.polynomial.leadingCoeff - (Reciprocal.reversed
+        8 * Norm.Basic.normSq ((curve.polynomial.leadingCoeff - (reversed
           curve.polynomial).eval point) * seed.value ^ 2) by ring1).trans_le scaled)
     exact divided.trans (by decide +kernel)
-  rw [show 1 - (Reciprocal.reversed curve.polynomial).eval point * seed.value ^ 2 =
+  rw [show 1 - (reversed curve.polynomial).eval point * seed.value ^ 2 =
     (1 - curve.polynomial.leadingCoeff * seed.value ^ 2) +
-      (curve.polynomial.leadingCoeff - (Reciprocal.reversed curve.polynomial).eval point) * seed.value ^ 2 by ring1]
-  exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (curve.polynomial.leadingCoeff - (reversed curve.polynomial).eval point) * seed.value ^ 2 by ring1]
+  exact (Norm.Bounds.normSq_add_le_two _ _).trans
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct
     (add_le_add seedScalar perturbation) (by decide)).trans (by decide +kernel))
 
 set_option genInjectivity false in
@@ -373,25 +375,25 @@ set_option genInjectivity false in
 
 The reversed polynomial, leading-coefficient owner, seeded seven-step model and clearance retain their exact original
 specifications. -/
-structure Data (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (collar : ReciprocalExteriorCollar.Data curve)
+structure Data (curve : HyperellipticCurve genus) (collar : ReciprocalExteriorCollar.Data curve)
   where
   /-- The cached original reversed curve polynomial. -/ polynomial :
     Polynomial
   /-- The cached polynomial is exactly the reversal of the original curve polynomial. -/ polynomial_eq : polynomial =
-    Reciprocal.reversed curve.polynomial
+    reversed curve.polynomial
   /-- The retained square-root owner of the original leading coefficient. -/ owner : SquareRootContinuationChain.Owner
     curve.polynomial.leadingCoeff
-  /-- The retained inverse-root seed for the original leading coefficient. -/ seed : OwnerSeededInverseRoot.Seed
+  /-- The retained inverse-root seed for the original leading coefficient. -/ seed : Seed
     curve.polynomial.leadingCoeff
   /-- The seed retains exactly the displayed original square-root owner. -/ seed_owner : seed.owner = owner
   /-- The cached reversed polynomial has uniform positive clearance on the original collar box. -/ clearance :
     Region.RegionClearance polynomial collar.box
   /-- The retained clearance bound is exactly the original collar radicand bound. -/ clearance_bound : clearance.bound =
     collar.radicandBound
-  /-- The cached polynomial inverse-root model on the original collar box. -/ model : InverseRootPolynomial.Model
+  /-- The cached polynomial inverse-root model on the original collar box. -/ model : Model
     polynomial collar.box
   /-- Every cached model value equals seven Newton refinements from the retained original seed. -/ model_eq : ∀ point,
-    model.value.eval point = InverseModelRootSamples.refineValue (polynomial.eval point) seed.value 7
+    model.value.eval point = refineValue (polynomial.eval point) seed.value 7
   /-- The retained model residual bound is at most one over 256. -/ model_small : model.bound ≤ 1 / 256
 
 constructive_injectivity Data
@@ -399,11 +401,11 @@ constructive_injectivity Data
 /-- Build the reciprocal inner-box model from the supplied original leading-coefficient seed.
 
 The original owner, reversed polynomial, box clearance and seven-step model are cached with exact specifications. -/
-@[expose] def Data.ofSeed (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (collar : ReciprocalExteriorCollar.Data
+@[expose] def Data.ofSeed (curve : HyperellipticCurve genus) (collar : ReciprocalExteriorCollar.Data
   curve)
-    (seed : OwnerSeededInverseRoot.Seed curve.polynomial.leadingCoeff) :
+    (seed : Seed curve.polynomial.leadingCoeff) :
       Data curve collar :=
-  let polynomial := Reciprocal.reversed curve.polynomial
+  let polynomial := reversed curve.polynomial
   let clearance : Region.RegionClearance polynomial collar.box :=
     { bound := collar.radicandBound
       positive := collar.radicandBound_positive
@@ -411,9 +413,9 @@ The original owner, reversed polynomial, box clearance and seven-step model are 
         have lower := Reciprocal.Bounds.disk_lower curve.polynomial (BranchIsolation.degreePositive curve) point
           (ReciprocalExteriorCollar.innerBox_inDisk curve (collar.box_eq ▸ inside))
         rw [collar.radicandBound_eq, ReciprocalExteriorCollar.radicandLower]
-        exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        exact (Arithmetic.mul_le_mul_of_nonneg_left_direct
           (ReciprocalExteriorCollar.coordinateLower_le_one curve)
-          (Fraction.Order.Field.div_nonneg_direct (Data.Gaussian.Norm.Basic.normSq_nonneg _) (by decide))).trans
+          (Field.div_nonneg_direct (Norm.Basic.normSq_nonneg _) (by decide))).trans
             (by simpa only [_root_.mul_one] using lower) }
   let built := bootstrap polynomial collar.box seed.value
     (fun _ inside =>
@@ -422,10 +424,10 @@ The original owner, reversed polynomial, box clearance and seven-step model are 
 
 /-- Choose the requested leading-coefficient sheet once and build its retained reciprocal inner-box inverse-root model.
 -/
-@[expose] def Data.build (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (collar : ReciprocalExteriorCollar.Data
+@[expose] def Data.build (curve : HyperellipticCurve genus) (collar : ReciprocalExteriorCollar.Data
   curve) (sheet : Fin 2) : Data curve collar :=
-  Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data.ofSeed curve collar (Seed.ofOwner
+  Data.ofSeed curve collar (Seed.ofOwner
     (Owner.independent
-    (DensePolynomial.leadingCoeff_ne_zero curve.nonzero) sheet))
+    (leadingCoeff_ne_zero curve.nonzero) sheet))
 
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse

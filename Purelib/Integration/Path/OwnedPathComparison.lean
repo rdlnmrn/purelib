@@ -19,6 +19,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-! Retained owner errors are paid on the full centered path, including
@@ -50,7 +52,7 @@ theorem increment_difference {count : Nat} {first second : Fin (count + 1) → S
     have estimate := Norm.Bounds.normSq_sub_le_two (a - c) (b - d)
     rw [Norm.Basic.normSq_eq_canonical, Norm.Basic.normSq_eq_canonical, Norm.Basic.normSq_eq_canonical] at estimate
     exact estimate.trans
-      ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct last
+      ((Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct last
         initial) (by decide)).trans_eq
         ((show 2 * (tolerance / 4 + tolerance / 4) = (tolerance / 4) * 4 by ring1).trans
           (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))))
@@ -68,7 +70,7 @@ open Purelib.Topology.Polygon in
 Quarter-tolerance vertex accuracy transports the fixed sample's increment bounds to the owned sample; the estimate keeps
 original total length, allowance and density. -/
 theorem LengthErrorBudget.reading_comparison {count : Nat} {allowance : CenteredBilinearPath.Coordinate}
-    (budget : NoisyPathArea.LengthErrorBudget count allowance)
+    (budget : LengthErrorBudget count allowance)
     {first second : Fin (count + 1) → Stokes.PrimitivePoint} (owned : CenteredBilinearPath.Sample first) (fixed :
       CenteredBilinearPath.Sample second)
     (lengths : Fin count → CenteredBilinearPath.Coordinate) {density : CenteredBilinearPath.Coordinate}
@@ -77,34 +79,34 @@ theorem LengthErrorBudget.reading_comparison {count : Nat} {allowance : Centered
       (second vertex))) (budget.tolerance / 4))
     (increments : ∀ edge : Fin count, (PrimitiveAreaBounds.PrimitivePoint.Bounded ((Stokes.PrimitivePoint.sub (second
       edge.succ)) (second edge.castSucc))) (density * (lengths edge)^2)) :
-    Data.Gaussian.Norm.Basic.normSq (owned.centeredArea - fixed.centeredArea) ≤
+    Norm.Basic.normSq (owned.centeredArea - fixed.centeredArea) ≤
       40 * budget.tolerance * (4 * density + 3) * (FiniteSum.Fin.sumFin lengths + allowance)^2 := by
   have stepNonnegative (edge : Fin count) : 0 ≤ density * (lengths edge)^2 :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct densityNonnegative (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+    Arithmetic.mul_nonneg_direct densityNonnegative (Arithmetic.sq_nonneg_direct _)
   apply WeightedPathComparison.LengthErrorBudget.centered_full_comparison budget owned fixed lengths
     budget.tolerance_positive.le densityNonnegative nonnegative
   · intro vertex
     rw [owned.centered_eq, fixed.centered_eq]
-    exact OwnedPathComparison.increment_difference accurate 0 vertex
+    exact increment_difference accurate 0 vertex
   · intro edge
-    have errors := OwnedPathComparison.increment_difference accurate edge.castSucc edge.succ
+    have errors := increment_difference accurate edge.castSucc edge.succ
     have scalar {a b : Basic.Canonical} (error : Basic.Canonical.normSq (a - b) ≤ budget.tolerance)
         (bounded : Basic.Canonical.normSq b ≤ density * (lengths edge)^2) :
         Basic.Canonical.normSq a ≤ 3 * budget.tolerance + 4 * density * (lengths edge)^2 := by
       have estimate := Norm.Bounds.normSq_add_le_two (a - b) b
       rw [Norm.Basic.normSq_eq_canonical, Norm.Basic.normSq_eq_canonical, Norm.Basic.normSq_eq_canonical,
         sub_add_cancel] at estimate
-      have lower := estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.add_le_add_direct error bounded) (by decide))
+      have lower := estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.add_le_add_direct error bounded) (by decide))
       exact lower.trans ((le_add_of_nonneg_right
-        (add_nonneg budget.tolerance_positive.le (Fraction.Order.Arithmetic.mul_nonneg_direct (by
+        (add_nonneg budget.tolerance_positive.le (Arithmetic.mul_nonneg_direct (by
             decide : (0 : CenteredBilinearPath.Coordinate) ≤ 2) (stepNonnegative edge)))).trans_eq (by ring1))
     exact ⟨scalar errors.1 (increments edge).1, scalar errors.2 (increments edge).2⟩
   · intro edge
     have upper : density * (lengths edge)^2 ≤ 3 * budget.tolerance + 4 * density * (lengths edge)^2 :=
-      (le_add_of_nonneg_right (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by
+      (le_add_of_nonneg_right (add_nonneg (Arithmetic.mul_nonneg_direct (by
           decide : (0 : CenteredBilinearPath.Coordinate) ≤ 3) budget.tolerance_positive.le)
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : CenteredBilinearPath.Coordinate) ≤ 3)
+        (Arithmetic.mul_nonneg_direct (by decide : (0 : CenteredBilinearPath.Coordinate) ≤ 3)
           (stepNonnegative edge)))).trans_eq (by ring1)
     exact ⟨(increments edge).1.trans upper, (increments edge).2.trans upper⟩
 

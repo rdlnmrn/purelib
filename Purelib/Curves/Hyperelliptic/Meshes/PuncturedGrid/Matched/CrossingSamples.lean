@@ -75,6 +75,8 @@ import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Riemann.Integration.RectangularMatchedPerimeter
 
+open Purelib.Data.Gaussian
+
 public section
 
 /-! Samples retain both actual path areas and endpoint corrections for every
@@ -93,7 +95,7 @@ open Purelib.Riemann.Periods
 open Purelib.Riemann.Readings.RectangularObservationAssembly
 open Purelib.Topology.Polygon
 
-attribute [local congr] Purelib.Algebra.FiniteSum.Fin.sumFin_congr
+attribute [local congr] Algebra.FiniteSum.Fin.sumFin_congr
 
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Curves.Hyperelliptic.Branches (BranchCellBank)
@@ -120,7 +122,7 @@ open Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh
   MatchedVerticalSide)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
@@ -152,7 +154,7 @@ cache. -/
 @[expose] def leftValues {joined : LiftedSides.HorizontalCrossing request first nextPosition false false}
     (allocated : HorizontalCrossing.AreaRequest joined (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) firstParent secondParent tolerance floor)
-    (cache : RegularMeshes.Numerics domains stage) (vertex : Fin (allocated.trace.vertices.rest.length + 1)) :
+    (cache : Numerics domains stage) (vertex : Fin (allocated.trace.vertices.rest.length + 1)) :
       PrimitivePoint :=
   ⟨(allocated.trace.leftReadings (cache.atDomain firstPosition (firstSheet) i).anchors
       (cache.atDomain firstPosition (firstSheet) i).offsets).values vertex,
@@ -163,7 +165,7 @@ cache. -/
 @[expose] def rightValues {joined : LiftedSides.HorizontalCrossing request first nextPosition false false}
     (allocated : HorizontalCrossing.AreaRequest joined (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) firstParent secondParent tolerance floor)
-    (cache : RegularMeshes.Numerics domains stage) (vertex : Fin (allocated.trace.vertices.rest.length + 1)) :
+    (cache : Numerics domains stage) (vertex : Fin (allocated.trace.vertices.rest.length + 1)) :
       PrimitivePoint :=
   ⟨(allocated.trace.rightReadings (cache.atDomain nextPosition (joined.crossing.next.sheet) i).anchors
       (cache.atDomain nextPosition (joined.crossing.next.sheet) i).offsets).values vertex,
@@ -172,10 +174,10 @@ cache. -/
 
 /-- The two actual centered path samples for a matched horizontal crossing, or the unit value for certified separation.
 -/
-@[expose] def Sample {outcome : CrossingBank.HorizontalOutcome request first nextPosition}
+@[expose] def Sample {outcome : HorizontalOutcome request first nextPosition}
     (prepared : CrossingRequests.HorizontalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) firstParent secondParent tolerance floor outcome) (cache :
-      RegularMeshes.Numerics domains stage) : Type :=
+      Numerics domains stage) : Type :=
   match prepared with
   | .matched allocated => CenteredBilinearPath.Sample
     (leftValues allocated cache) ×
@@ -185,10 +187,10 @@ cache. -/
   | .separated _ => Unit
 
 /-- Acquire both retained horizontal path samples for a match, preserving the unit result for a certified separation. -/
-@[expose] def Sample.build {outcome : CrossingBank.HorizontalOutcome request first nextPosition}
+@[expose] def Sample.build {outcome : HorizontalOutcome request first nextPosition}
     (prepared : CrossingRequests.HorizontalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) firstParent secondParent tolerance floor outcome) (cache :
-      RegularMeshes.Numerics domains stage) :
+      Numerics domains stage) :
       Sample prepared cache :=
   match prepared with
   | .matched allocated => ⟨CenteredBilinearPath.Sample.build
@@ -199,26 +201,26 @@ cache. -/
   | .separated _ => ()
 
 /-- The actual path-area difference minus its retained endpoint correction, with zero for separation. -/
-@[expose] def Sample.residual {outcome : CrossingBank.HorizontalOutcome request first nextPosition}
+@[expose] def Sample.residual {outcome : HorizontalOutcome request first nextPosition}
     {prepared : CrossingRequests.HorizontalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) firstParent secondParent tolerance floor outcome} {cache :
-      RegularMeshes.Numerics domains stage}
+      Numerics domains stage}
     (sample : Sample prepared
-      cache) : Data.Gaussian.Basic.Canonical := by
+      cache) : Basic.Canonical := by
   cases prepared with
   | matched allocated => exact (sample.1.originalArea - sample.2.originalArea) - (sample.1.endpoint - sample.2.endpoint)
   | separated _ => exact 0
 
 /-- The paid original horizontal request bounds the squared norm of the retained centered residual. -/
-theorem Sample.bound {outcome : CrossingBank.HorizontalOutcome request first nextPosition}
+theorem Sample.bound {outcome : HorizontalOutcome request first nextPosition}
     {prepared : CrossingRequests.HorizontalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) firstParent secondParent tolerance floor outcome} {cache :
-      RegularMeshes.Numerics domains stage}
+      Numerics domains stage}
     (sample : Sample prepared
       cache) (positive : 0 < tolerance)
     (later : HorizontalPrepared.index _ _ _ _ _ _ prepared ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.HorizontalPrepared.Sample.residual sample) ≤
+    Norm.Basic.normSq
+      (Sample.residual sample) ≤
       tolerance := by
   cases prepared with
   | matched allocated =>
@@ -227,41 +229,41 @@ theorem Sample.bound {outcome : CrossingBank.HorizontalOutcome request first nex
         (cache.atDomain firstPosition firstSheet i) (cache.atDomain nextPosition _ i)
         (cache.atDomain firstPosition firstSheet j) (cache.atDomain nextPosition _ j) left right).le
   | separated obstruction =>
-      simpa only [Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.HorizontalPrepared.Sample.residual,
-        Data.Gaussian.Norm.Basic.normSq_zero, -eq_self, -iff_self] using positive.le
+      simpa only [Sample.residual,
+        Norm.Basic.normSq_zero, -eq_self, -iff_self] using positive.le
 
 /-- The actual area difference of the two retained horizontal paths, with zero for separation. -/
-@[expose] def Sample.areaDifference {outcome : CrossingBank.HorizontalOutcome request first nextPosition}
+@[expose] def Sample.areaDifference {outcome : HorizontalOutcome request first nextPosition}
     {prepared : CrossingRequests.HorizontalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) firstParent secondParent tolerance floor outcome} {cache :
-      RegularMeshes.Numerics domains stage}
+      Numerics domains stage}
     (sample : Sample prepared
-      cache) : Data.Gaussian.Basic.Canonical := by
+      cache) : Basic.Canonical := by
   cases prepared with
   | matched allocated => exact sample.1.originalArea - sample.2.originalArea
   | separated _ => exact 0
 
 /-- The difference of the two retained endpoint determinants, with zero for separation. -/
-@[expose] def Sample.endpointDifference {outcome : CrossingBank.HorizontalOutcome request first nextPosition}
+@[expose] def Sample.endpointDifference {outcome : HorizontalOutcome request first nextPosition}
     {prepared : CrossingRequests.HorizontalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) firstParent secondParent tolerance floor outcome} {cache :
-      RegularMeshes.Numerics domains stage}
+      Numerics domains stage}
     (sample : Sample prepared
-      cache) : Data.Gaussian.Basic.Canonical := by
+      cache) : Basic.Canonical := by
   cases prepared with
   | matched allocated => exact sample.1.endpoint - sample.2.endpoint
   | separated _ => exact 0
 
 /-- The retained residual is the actual area difference minus the endpoint determinant difference. -/
-theorem Sample.residual_eq {outcome : CrossingBank.HorizontalOutcome request first nextPosition}
+theorem Sample.residual_eq {outcome : HorizontalOutcome request first nextPosition}
     {prepared : CrossingRequests.HorizontalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) firstParent secondParent tolerance floor outcome} {cache :
-      RegularMeshes.Numerics domains stage}
+      Numerics domains stage}
     (sample : Sample prepared
       cache) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.HorizontalPrepared.Sample.residual sample =
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.HorizontalPrepared.Sample.areaDifference sample
-      - Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.HorizontalPrepared.Sample.endpointDifference
+    Sample.residual sample =
+      Sample.areaDifference sample
+      - Sample.endpointDifference
       sample := by
   cases prepared with
   | matched allocated => rfl
@@ -273,17 +275,17 @@ theorem Sample.areaDifference_eq_perimeters
     {joined : LiftedSides.HorizontalCrossing request first nextPosition false false}
     {allocated : HorizontalCrossing.AreaRequest joined (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) firstParent secondParent tolerance floor}
-    {cache : RegularMeshes.Numerics domains stage} (sample :
+    {cache : Numerics domains stage} (sample :
       Sample (.matched allocated)
       cache)
-    (leftAssembly : ObservationMesh.ClippedAssembly
+    (leftAssembly : ClippedAssembly
       ((request.entries.get firstSheet).meshes.entries.get firstPosition)
       (fun column row point =>
         ⟨(cache.atDomain firstPosition firstSheet i).anchors.alignedValue (cache.atDomain firstPosition firstSheet
           i).offsets column row point,
           (cache.atDomain firstPosition firstSheet j).anchors.alignedValue (cache.atDomain firstPosition firstSheet
             j).offsets column row point⟩))
-    (rightAssembly : ObservationMesh.ClippedAssembly
+    (rightAssembly : ClippedAssembly
       ((request.entries.get (joined.crossing.next.sheet)).meshes.entries.get nextPosition)
       (fun column row point =>
         ⟨(cache.atDomain nextPosition (joined.crossing.next.sheet) i).anchors.alignedValue (cache.atDomain nextPosition
@@ -291,17 +293,17 @@ theorem Sample.areaDifference_eq_perimeters
           (cache.atDomain nextPosition (joined.crossing.next.sheet) j).anchors.alignedValue (cache.atDomain nextPosition
             (joined.crossing.next.sheet) j).offsets column row point⟩))
     (leftPerimeter : leftAssembly.Perimeter) (rightPerimeter : rightAssembly.Perimeter) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.HorizontalPrepared.Sample.areaDifference sample =
+    Sample.areaDifference sample =
       leftPerimeter.top - rightPerimeter.bottom := by
   let leftValue := fun column row point => (⟨(cache.atDomain firstPosition firstSheet i).anchors.alignedValue
       (cache.atDomain firstPosition firstSheet i).offsets column row point,
     (cache.atDomain firstPosition firstSheet j).anchors.alignedValue
-      (cache.atDomain firstPosition firstSheet j).offsets column row point⟩ : Stokes.PrimitivePoint)
+      (cache.atDomain firstPosition firstSheet j).offsets column row point⟩ : PrimitivePoint)
   let rightValue := fun column row point => (⟨(cache.atDomain nextPosition (joined.crossing.next.sheet)
     i).anchors.alignedValue
       (cache.atDomain nextPosition (joined.crossing.next.sheet) i).offsets column row point,
     (cache.atDomain nextPosition (joined.crossing.next.sheet) j).anchors.alignedValue
-      (cache.atDomain nextPosition (joined.crossing.next.sheet) j).offsets column row point⟩ : Stokes.PrimitivePoint)
+      (cache.atDomain nextPosition (joined.crossing.next.sheet) j).offsets column row point⟩ : PrimitivePoint)
   have leftArea : sample.1.originalArea = leftPerimeter.top := by
     rw [sample.1.originalArea_eq]
     have readback := allocated.trace.left_area_eq_top leftValue leftAssembly leftPerimeter
@@ -328,11 +330,11 @@ theorem Sample.areaDifference_eq_perimeters
   rw [leftArea, rightArea]
 
 /-- Canonical endpoint determinant difference; the sample retains the computed value. -/
-@[expose] def endpointSpecification {outcome : CrossingBank.HorizontalOutcome request first nextPosition}
+@[expose] def endpointSpecification {outcome : HorizontalOutcome request first nextPosition}
     (prepared : CrossingRequests.HorizontalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j)
-      firstParent secondParent tolerance floor outcome) (cache : RegularMeshes.Numerics domains stage) :
-        Data.Gaussian.Basic.Canonical := by
+      firstParent secondParent tolerance floor outcome) (cache : Numerics domains stage) :
+        Basic.Canonical := by
   cases prepared with
   | @matched joined allocated =>
       exact joined.side.leftChord (fun column row point =>
@@ -348,10 +350,10 @@ theorem Sample.areaDifference_eq_perimeters
   | separated _ => exact 0
 
 /-- The retained endpoint determinant difference equals the chord difference of the actual matched side. -/
-theorem Sample.endpointDifference_eq_specification {outcome : CrossingBank.HorizontalOutcome request first nextPosition}
+theorem Sample.endpointDifference_eq_specification {outcome : HorizontalOutcome request first nextPosition}
     {prepared : CrossingRequests.HorizontalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j)
-      firstParent secondParent tolerance floor outcome} {cache : RegularMeshes.Numerics domains stage}
+      firstParent secondParent tolerance floor outcome} {cache : Numerics domains stage}
     (sample : Sample prepared
       cache) :
       Sample.endpointDifference
@@ -361,9 +363,9 @@ theorem Sample.endpointDifference_eq_specification {outcome : CrossingBank.Horiz
   cases prepared with
   | @matched joined allocated =>
       unfold
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.HorizontalPrepared.Sample.endpointDifference
-        CrossingSamples.HorizontalPrepared.endpointSpecification
-      apply congrArg₂ (fun left right : Data.Gaussian.Basic.Canonical => left - right)
+        Sample.endpointDifference
+        HorizontalPrepared.endpointSpecification
+      apply congrArg₂ (fun left right : Basic.Canonical => left - right)
       · apply allocated.trace.left_endpoint_eq_chord
         intro vertex
         simp only [leftValues,
@@ -377,23 +379,23 @@ theorem Sample.endpointDifference_eq_specification {outcome : CrossingBank.Horiz
   | separated obstruction => rfl
 
 /-- The endpoint jump of the two retained path samples, with zero for separation. -/
-@[expose] def Sample.endpointJump {outcome : CrossingBank.HorizontalOutcome request first nextPosition}
+@[expose] def Sample.endpointJump {outcome : HorizontalOutcome request first nextPosition}
     {prepared : CrossingRequests.HorizontalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j)
-      firstParent secondParent tolerance floor outcome} {cache : RegularMeshes.Numerics domains stage}
+      firstParent secondParent tolerance floor outcome} {cache : Numerics domains stage}
     (sample : Sample prepared
-      cache) : Data.Gaussian.Basic.Canonical := by
+      cache) : Basic.Canonical := by
   cases prepared with
   | matched allocated => exact sample.1.endpointJump sample.2
   | separated _ => exact 0
 
 /-- The actual matched horizontal side jump read from the retained anchor and offset caches, with zero for separation.
 -/
-@[expose] def jumpSpecification {outcome : CrossingBank.HorizontalOutcome request first nextPosition}
+@[expose] def jumpSpecification {outcome : HorizontalOutcome request first nextPosition}
     (prepared : CrossingRequests.HorizontalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j)
-      firstParent secondParent tolerance floor outcome) (cache : RegularMeshes.Numerics domains stage) :
-        Data.Gaussian.Basic.Canonical := by
+      firstParent secondParent tolerance floor outcome) (cache : Numerics domains stage) :
+        Basic.Canonical := by
   cases prepared with
   | @matched joined allocated =>
       exact joined.side.jump (fun column row point =>
@@ -408,20 +410,20 @@ theorem Sample.endpointDifference_eq_specification {outcome : CrossingBank.Horiz
   | separated _ => exact 0
 
 /-- The retained sample jump reads the actual matched-side jump specification. -/
-theorem Sample.endpointJump_eq_specification {outcome : CrossingBank.HorizontalOutcome request first nextPosition}
+theorem Sample.endpointJump_eq_specification {outcome : HorizontalOutcome request first nextPosition}
     {prepared : CrossingRequests.HorizontalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j)
-      firstParent secondParent tolerance floor outcome} {cache : RegularMeshes.Numerics domains stage}
+      firstParent secondParent tolerance floor outcome} {cache : Numerics domains stage}
     (sample : Sample prepared
       cache) :
-      Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.HorizontalPrepared.Sample.endpointJump
+      Sample.endpointJump
       sample =
       jumpSpecification
       prepared cache := by
   cases prepared with
   | @matched joined allocated =>
-      unfold Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.HorizontalPrepared.Sample.endpointJump
-        CrossingSamples.HorizontalPrepared.jumpSpecification
+      unfold Sample.endpointJump
+        HorizontalPrepared.jumpSpecification
       apply allocated.trace.endpointJump_eq
       · intro vertex
         simp only [leftValues,
@@ -434,27 +436,27 @@ theorem Sample.endpointJump_eq_specification {outcome : CrossingBank.HorizontalO
   | separated obstruction => rfl
 
 /-- The retained endpoint increment error between the two actual path samples, with zero for separation. -/
-@[expose] def Sample.endpointIncrementError {outcome : CrossingBank.HorizontalOutcome request first nextPosition}
+@[expose] def Sample.endpointIncrementError {outcome : HorizontalOutcome request first nextPosition}
     {prepared : CrossingRequests.HorizontalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j)
-      firstParent secondParent tolerance floor outcome} {cache : RegularMeshes.Numerics domains stage}
+      firstParent secondParent tolerance floor outcome} {cache : Numerics domains stage}
     (sample : Sample prepared
-      cache) : Data.Gaussian.Basic.Canonical := by
+      cache) : Basic.Canonical := by
   cases prepared with
   | matched allocated => exact sample.1.endpointIncrementError sample.2
   | separated _ => exact 0
 
 /-- The actual endpoint determinant difference splits into the retained jump and endpoint increment error. -/
-theorem Sample.endpointDifference_eq_jump {outcome : CrossingBank.HorizontalOutcome request first nextPosition}
+theorem Sample.endpointDifference_eq_jump {outcome : HorizontalOutcome request first nextPosition}
     {prepared : CrossingRequests.HorizontalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j)
-      firstParent secondParent tolerance floor outcome} {cache : RegularMeshes.Numerics domains stage}
+      firstParent secondParent tolerance floor outcome} {cache : Numerics domains stage}
     (sample : Sample prepared
       cache) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.HorizontalPrepared.Sample.endpointDifference
-      sample = Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.HorizontalPrepared.Sample.endpointJump
+    Sample.endpointDifference
+      sample = Sample.endpointJump
       sample +
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.HorizontalPrepared.Sample.endpointIncrementError
+      Sample.endpointIncrementError
       sample := by
   cases prepared with
   | matched allocated => exact sample.1.endpoint_difference sample.2
@@ -462,16 +464,16 @@ theorem Sample.endpointDifference_eq_jump {outcome : CrossingBank.HorizontalOutc
 
 /-- At the paid stage, normalized horizontal readings bound the area difference minus the retained endpoint jump by four
 times the tolerance. -/
-theorem Sample.normalized_jump_bound {outcome : CrossingBank.HorizontalOutcome request first nextPosition}
+theorem Sample.normalized_jump_bound {outcome : HorizontalOutcome request first nextPosition}
     {prepared : CrossingRequests.HorizontalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j)
-      firstParent secondParent tolerance floor outcome} {cache : RegularMeshes.Numerics domains stage}
+      firstParent secondParent tolerance floor outcome} {cache : Numerics domains stage}
     (sample : Sample prepared
       cache.normalize) (positive : 0 < tolerance)
     (later : HorizontalPrepared.index _ _ _ _ _ _ prepared ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.HorizontalPrepared.Sample.areaDifference sample
-      - Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.HorizontalPrepared.Sample.endpointJump sample)
+    Norm.Basic.normSq
+      (Sample.areaDifference sample
+      - Sample.endpointJump sample)
       ≤ 4 * tolerance := by
   cases prepared with
   | @matched joined allocated =>
@@ -488,8 +490,8 @@ theorem Sample.normalized_jump_bound {outcome : CrossingBank.HorizontalOutcome r
           joined.crossing.next.sheet j)
         firstZero secondZero sample.1 sample.2).le
   | separated obstruction =>
-      change Data.Gaussian.Norm.Basic.normSq (0 - 0) ≤ 4 * tolerance
-      rw [Data.Gaussian.Basic.sub_zero, Data.Gaussian.Norm.Basic.normSq_zero]
+      change Norm.Basic.normSq (0 - 0) ≤ 4 * tolerance
+      rw [Basic.sub_zero, Norm.Basic.normSq_zero]
       exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) positive.le
 
 end HorizontalPrepared
@@ -501,7 +503,7 @@ cache. -/
 @[expose] def leftValues {joined : LiftedSides.VerticalCrossing request first nextPosition false false}
     (allocated : VerticalCrossing.AreaRequest joined (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) firstParent secondParent tolerance floor)
-    (cache : RegularMeshes.Numerics domains stage) (vertex : Fin (allocated.trace.vertices.rest.length + 1)) :
+    (cache : Numerics domains stage) (vertex : Fin (allocated.trace.vertices.rest.length + 1)) :
       PrimitivePoint :=
   ⟨(allocated.trace.leftReadings (cache.atDomain firstPosition (firstSheet) i).anchors
       (cache.atDomain firstPosition (firstSheet) i).offsets).values vertex,
@@ -512,7 +514,7 @@ cache. -/
 @[expose] def rightValues {joined : LiftedSides.VerticalCrossing request first nextPosition false false}
     (allocated : VerticalCrossing.AreaRequest joined (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) firstParent secondParent tolerance floor)
-    (cache : RegularMeshes.Numerics domains stage) (vertex : Fin (allocated.trace.vertices.rest.length + 1)) :
+    (cache : Numerics domains stage) (vertex : Fin (allocated.trace.vertices.rest.length + 1)) :
       PrimitivePoint :=
   ⟨(allocated.trace.rightReadings (cache.atDomain nextPosition (joined.crossing.next.sheet) i).anchors
       (cache.atDomain nextPosition (joined.crossing.next.sheet) i).offsets).values vertex,
@@ -520,10 +522,10 @@ cache. -/
       (cache.atDomain nextPosition (joined.crossing.next.sheet) j).offsets).values vertex⟩
 
 /-- The two actual centered path samples for a matched vertical crossing, or the unit value for certified separation. -/
-@[expose] def Sample {outcome : CrossingBank.VerticalOutcome request first nextPosition}
+@[expose] def Sample {outcome : VerticalOutcome request first nextPosition}
     (prepared : CrossingRequests.VerticalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) firstParent secondParent tolerance floor outcome) (cache :
-      RegularMeshes.Numerics domains stage) : Type :=
+      Numerics domains stage) : Type :=
   match prepared with
   | .matched allocated => CenteredBilinearPath.Sample
     (leftValues allocated cache) ×
@@ -532,10 +534,10 @@ cache. -/
   | .separated _ => Unit
 
 /-- Acquire both retained vertical path samples for a match, preserving the unit result for a certified separation. -/
-@[expose] def Sample.build {outcome : CrossingBank.VerticalOutcome request first nextPosition}
+@[expose] def Sample.build {outcome : VerticalOutcome request first nextPosition}
     (prepared : CrossingRequests.VerticalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) firstParent secondParent tolerance floor outcome) (cache :
-      RegularMeshes.Numerics domains stage) :
+      Numerics domains stage) :
       Sample prepared cache :=
   match prepared with
   | .matched allocated => ⟨CenteredBilinearPath.Sample.build
@@ -546,26 +548,26 @@ cache. -/
   | .separated _ => ()
 
 /-- The actual path-area difference minus its retained endpoint correction, with zero for separation. -/
-@[expose] def Sample.residual {outcome : CrossingBank.VerticalOutcome request first nextPosition}
+@[expose] def Sample.residual {outcome : VerticalOutcome request first nextPosition}
     {prepared : CrossingRequests.VerticalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) firstParent secondParent tolerance floor outcome} {cache :
-      RegularMeshes.Numerics domains stage}
+      Numerics domains stage}
     (sample : Sample prepared cache)
-      : Data.Gaussian.Basic.Canonical := by
+      : Basic.Canonical := by
   cases prepared with
   | matched allocated => exact (sample.1.originalArea - sample.2.originalArea) - (sample.1.endpoint - sample.2.endpoint)
   | separated _ => exact 0
 
 /-- The paid original vertical request bounds the squared norm of the retained centered residual. -/
-theorem Sample.bound {outcome : CrossingBank.VerticalOutcome request first nextPosition}
+theorem Sample.bound {outcome : VerticalOutcome request first nextPosition}
     {prepared : CrossingRequests.VerticalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) firstParent secondParent tolerance floor outcome} {cache :
-      RegularMeshes.Numerics domains stage}
+      Numerics domains stage}
     (sample : Sample prepared cache)
       (positive : 0 < tolerance)
     (later : VerticalPrepared.index _ _ _ _ _ _ prepared ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.VerticalPrepared.Sample.residual sample) ≤
+    Norm.Basic.normSq
+      (Sample.residual sample) ≤
       tolerance := by
   cases prepared with
   | matched allocated =>
@@ -574,41 +576,41 @@ theorem Sample.bound {outcome : CrossingBank.VerticalOutcome request first nextP
         (cache.atDomain firstPosition firstSheet i) (cache.atDomain nextPosition _ i)
         (cache.atDomain firstPosition firstSheet j) (cache.atDomain nextPosition _ j) left right).le
   | separated obstruction =>
-      simpa only [Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.VerticalPrepared.Sample.residual,
-        Data.Gaussian.Norm.Basic.normSq_zero, -eq_self, -iff_self] using positive.le
+      simpa only [Sample.residual,
+        Norm.Basic.normSq_zero, -eq_self, -iff_self] using positive.le
 
 /-- The actual area difference of the two retained vertical paths, with zero for separation. -/
-@[expose] def Sample.areaDifference {outcome : CrossingBank.VerticalOutcome request first nextPosition}
+@[expose] def Sample.areaDifference {outcome : VerticalOutcome request first nextPosition}
     {prepared : CrossingRequests.VerticalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) firstParent secondParent tolerance floor outcome} {cache :
-      RegularMeshes.Numerics domains stage}
+      Numerics domains stage}
     (sample : Sample prepared cache)
-      : Data.Gaussian.Basic.Canonical := by
+      : Basic.Canonical := by
   cases prepared with
   | matched allocated => exact sample.1.originalArea - sample.2.originalArea
   | separated _ => exact 0
 
 /-- The difference of the two retained endpoint determinants, with zero for separation. -/
-@[expose] def Sample.endpointDifference {outcome : CrossingBank.VerticalOutcome request first nextPosition}
+@[expose] def Sample.endpointDifference {outcome : VerticalOutcome request first nextPosition}
     {prepared : CrossingRequests.VerticalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) firstParent secondParent tolerance floor outcome} {cache :
-      RegularMeshes.Numerics domains stage}
+      Numerics domains stage}
     (sample : Sample prepared cache)
-      : Data.Gaussian.Basic.Canonical := by
+      : Basic.Canonical := by
   cases prepared with
   | matched allocated => exact sample.1.endpoint - sample.2.endpoint
   | separated _ => exact 0
 
 /-- The retained residual is the actual area difference minus the endpoint determinant difference. -/
-theorem Sample.residual_eq {outcome : CrossingBank.VerticalOutcome request first nextPosition}
+theorem Sample.residual_eq {outcome : VerticalOutcome request first nextPosition}
     {prepared : CrossingRequests.VerticalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) firstParent secondParent tolerance floor outcome} {cache :
-      RegularMeshes.Numerics domains stage}
+      Numerics domains stage}
     (sample : Sample prepared cache)
       :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.VerticalPrepared.Sample.residual sample =
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.VerticalPrepared.Sample.areaDifference sample -
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.VerticalPrepared.Sample.endpointDifference
+    Sample.residual sample =
+      Sample.areaDifference sample -
+      Sample.endpointDifference
       sample := by
   cases prepared with
   | matched allocated => rfl
@@ -620,17 +622,17 @@ theorem Sample.areaDifference_eq_perimeters
     {joined : LiftedSides.VerticalCrossing request first nextPosition false false}
     {allocated : VerticalCrossing.AreaRequest joined (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j) firstParent secondParent tolerance floor}
-    {cache : RegularMeshes.Numerics domains stage} (sample :
+    {cache : Numerics domains stage} (sample :
       Sample (.matched allocated)
       cache)
-    (leftAssembly : ObservationMesh.ClippedAssembly
+    (leftAssembly : ClippedAssembly
       ((request.entries.get firstSheet).meshes.entries.get firstPosition)
       (fun column row point =>
         ⟨(cache.atDomain firstPosition firstSheet i).anchors.alignedValue (cache.atDomain firstPosition firstSheet
           i).offsets column row point,
           (cache.atDomain firstPosition firstSheet j).anchors.alignedValue (cache.atDomain firstPosition firstSheet
             j).offsets column row point⟩))
-    (rightAssembly : ObservationMesh.ClippedAssembly
+    (rightAssembly : ClippedAssembly
       ((request.entries.get (joined.crossing.next.sheet)).meshes.entries.get nextPosition)
       (fun column row point =>
         ⟨(cache.atDomain nextPosition (joined.crossing.next.sheet) i).anchors.alignedValue (cache.atDomain nextPosition
@@ -638,17 +640,17 @@ theorem Sample.areaDifference_eq_perimeters
           (cache.atDomain nextPosition (joined.crossing.next.sheet) j).anchors.alignedValue (cache.atDomain nextPosition
             (joined.crossing.next.sheet) j).offsets column row point⟩))
     (leftPerimeter : leftAssembly.Perimeter) (rightPerimeter : rightAssembly.Perimeter) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.VerticalPrepared.Sample.areaDifference sample =
+    Sample.areaDifference sample =
       leftPerimeter.right - rightPerimeter.left := by
   let leftValue := fun column row point => (⟨(cache.atDomain firstPosition firstSheet i).anchors.alignedValue
       (cache.atDomain firstPosition firstSheet i).offsets column row point,
     (cache.atDomain firstPosition firstSheet j).anchors.alignedValue
-      (cache.atDomain firstPosition firstSheet j).offsets column row point⟩ : Stokes.PrimitivePoint)
+      (cache.atDomain firstPosition firstSheet j).offsets column row point⟩ : PrimitivePoint)
   let rightValue := fun column row point => (⟨(cache.atDomain nextPosition (joined.crossing.next.sheet)
     i).anchors.alignedValue
       (cache.atDomain nextPosition (joined.crossing.next.sheet) i).offsets column row point,
     (cache.atDomain nextPosition (joined.crossing.next.sheet) j).anchors.alignedValue
-      (cache.atDomain nextPosition (joined.crossing.next.sheet) j).offsets column row point⟩ : Stokes.PrimitivePoint)
+      (cache.atDomain nextPosition (joined.crossing.next.sheet) j).offsets column row point⟩ : PrimitivePoint)
   have leftArea : sample.1.originalArea = leftPerimeter.right := by
     rw [sample.1.originalArea_eq]
     have readback := allocated.trace.left_area_eq_right leftValue leftAssembly leftPerimeter
@@ -675,11 +677,11 @@ theorem Sample.areaDifference_eq_perimeters
   rw [leftArea, rightArea]
 
 /-- Canonical endpoint determinant difference; the sample retains the computed value. -/
-@[expose] def endpointSpecification {outcome : CrossingBank.VerticalOutcome request first nextPosition}
+@[expose] def endpointSpecification {outcome : VerticalOutcome request first nextPosition}
     (prepared : CrossingRequests.VerticalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j)
-      firstParent secondParent tolerance floor outcome) (cache : RegularMeshes.Numerics domains stage) :
-        Data.Gaussian.Basic.Canonical := by
+      firstParent secondParent tolerance floor outcome) (cache : Numerics domains stage) :
+        Basic.Canonical := by
   cases prepared with
   | @matched joined allocated =>
       exact joined.side.leftChord (fun column row point =>
@@ -695,10 +697,10 @@ theorem Sample.areaDifference_eq_perimeters
   | separated _ => exact 0
 
 /-- The retained endpoint determinant difference equals the chord difference of the actual matched side. -/
-theorem Sample.endpointDifference_eq_specification {outcome : CrossingBank.VerticalOutcome request first nextPosition}
+theorem Sample.endpointDifference_eq_specification {outcome : VerticalOutcome request first nextPosition}
     {prepared : CrossingRequests.VerticalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j)
-      firstParent secondParent tolerance floor outcome} {cache : RegularMeshes.Numerics domains stage}
+      firstParent secondParent tolerance floor outcome} {cache : Numerics domains stage}
     (sample : Sample prepared cache)
       :
       Sample.endpointDifference
@@ -708,9 +710,9 @@ theorem Sample.endpointDifference_eq_specification {outcome : CrossingBank.Verti
   cases prepared with
   | @matched joined allocated =>
       unfold
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.VerticalPrepared.Sample.endpointDifference
-        CrossingSamples.VerticalPrepared.endpointSpecification
-      apply congrArg₂ (fun left right : Data.Gaussian.Basic.Canonical => left - right)
+        Sample.endpointDifference
+        VerticalPrepared.endpointSpecification
+      apply congrArg₂ (fun left right : Basic.Canonical => left - right)
       · apply allocated.trace.left_endpoint_eq_chord
         intro vertex
         simp only [leftValues,
@@ -724,22 +726,22 @@ theorem Sample.endpointDifference_eq_specification {outcome : CrossingBank.Verti
   | separated obstruction => rfl
 
 /-- The endpoint jump of the two retained path samples, with zero for separation. -/
-@[expose] def Sample.endpointJump {outcome : CrossingBank.VerticalOutcome request first nextPosition}
+@[expose] def Sample.endpointJump {outcome : VerticalOutcome request first nextPosition}
     {prepared : CrossingRequests.VerticalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j)
-      firstParent secondParent tolerance floor outcome} {cache : RegularMeshes.Numerics domains stage}
+      firstParent secondParent tolerance floor outcome} {cache : Numerics domains stage}
     (sample : Sample prepared cache)
-      : Data.Gaussian.Basic.Canonical := by
+      : Basic.Canonical := by
   cases prepared with
   | matched allocated => exact sample.1.endpointJump sample.2
   | separated _ => exact 0
 
 /-- The actual matched vertical side jump read from the retained anchor and offset caches, with zero for separation. -/
-@[expose] def jumpSpecification {outcome : CrossingBank.VerticalOutcome request first nextPosition}
+@[expose] def jumpSpecification {outcome : VerticalOutcome request first nextPosition}
     (prepared : CrossingRequests.VerticalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j)
-      firstParent secondParent tolerance floor outcome) (cache : RegularMeshes.Numerics domains stage) :
-        Data.Gaussian.Basic.Canonical := by
+      firstParent secondParent tolerance floor outcome) (cache : Numerics domains stage) :
+        Basic.Canonical := by
   cases prepared with
   | @matched joined allocated =>
       exact joined.side.jump (fun column row point =>
@@ -754,19 +756,19 @@ theorem Sample.endpointDifference_eq_specification {outcome : CrossingBank.Verti
   | separated _ => exact 0
 
 /-- The retained sample jump reads the actual matched-side jump specification. -/
-theorem Sample.endpointJump_eq_specification {outcome : CrossingBank.VerticalOutcome request first nextPosition}
+theorem Sample.endpointJump_eq_specification {outcome : VerticalOutcome request first nextPosition}
     {prepared : CrossingRequests.VerticalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j)
-      firstParent secondParent tolerance floor outcome} {cache : RegularMeshes.Numerics domains stage}
+      firstParent secondParent tolerance floor outcome} {cache : Numerics domains stage}
     (sample : Sample prepared cache)
-      : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.VerticalPrepared.Sample.endpointJump
+      : Sample.endpointJump
       sample =
       jumpSpecification
       prepared cache := by
   cases prepared with
   | @matched joined allocated =>
-      unfold Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.VerticalPrepared.Sample.endpointJump
-        CrossingSamples.VerticalPrepared.jumpSpecification
+      unfold Sample.endpointJump
+        VerticalPrepared.jumpSpecification
       apply allocated.trace.endpointJump_eq
       · intro vertex
         simp only [leftValues,
@@ -779,26 +781,26 @@ theorem Sample.endpointJump_eq_specification {outcome : CrossingBank.VerticalOut
   | separated obstruction => rfl
 
 /-- The retained endpoint increment error between the two actual path samples, with zero for separation. -/
-@[expose] def Sample.endpointIncrementError {outcome : CrossingBank.VerticalOutcome request first nextPosition}
+@[expose] def Sample.endpointIncrementError {outcome : VerticalOutcome request first nextPosition}
     {prepared : CrossingRequests.VerticalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j)
-      firstParent secondParent tolerance floor outcome} {cache : RegularMeshes.Numerics domains stage}
+      firstParent secondParent tolerance floor outcome} {cache : Numerics domains stage}
     (sample : Sample prepared cache)
-      : Data.Gaussian.Basic.Canonical := by
+      : Basic.Canonical := by
   cases prepared with
   | matched allocated => exact sample.1.endpointIncrementError sample.2
   | separated _ => exact 0
 
 /-- The actual endpoint determinant difference splits into the retained jump and endpoint increment error. -/
-theorem Sample.endpointDifference_eq_jump {outcome : CrossingBank.VerticalOutcome request first nextPosition}
+theorem Sample.endpointDifference_eq_jump {outcome : VerticalOutcome request first nextPosition}
     {prepared : CrossingRequests.VerticalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j)
-      firstParent secondParent tolerance floor outcome} {cache : RegularMeshes.Numerics domains stage}
+      firstParent secondParent tolerance floor outcome} {cache : Numerics domains stage}
     (sample : Sample prepared cache)
       :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.VerticalPrepared.Sample.endpointDifference sample
-      = Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.VerticalPrepared.Sample.endpointJump sample +
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.VerticalPrepared.Sample.endpointIncrementError
+    Sample.endpointDifference sample
+      = Sample.endpointJump sample +
+      Sample.endpointIncrementError
       sample := by
   cases prepared with
   | matched allocated => exact sample.1.endpoint_difference sample.2
@@ -806,16 +808,16 @@ theorem Sample.endpointDifference_eq_jump {outcome : CrossingBank.VerticalOutcom
 
 /-- At the paid stage, normalized vertical readings bound the area difference minus the retained endpoint jump by four
 times the tolerance. -/
-theorem Sample.normalized_jump_bound {outcome : CrossingBank.VerticalOutcome request first nextPosition}
+theorem Sample.normalized_jump_bound {outcome : VerticalOutcome request first nextPosition}
     {prepared : CrossingRequests.VerticalPrepared (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j)
-      firstParent secondParent tolerance floor outcome} {cache : RegularMeshes.Numerics domains stage}
+      firstParent secondParent tolerance floor outcome} {cache : Numerics domains stage}
     (sample : Sample prepared
       cache.normalize) (positive : 0 < tolerance)
     (later : VerticalPrepared.index _ _ _ _ _ _ prepared ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.VerticalPrepared.Sample.areaDifference sample -
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.VerticalPrepared.Sample.endpointJump sample) ≤ 4
+    Norm.Basic.normSq
+      (Sample.areaDifference sample -
+      Sample.endpointJump sample) ≤ 4
       * tolerance := by
   cases prepared with
   | @matched joined allocated =>
@@ -832,8 +834,8 @@ theorem Sample.normalized_jump_bound {outcome : CrossingBank.VerticalOutcome req
           joined.crossing.next.sheet j)
         firstZero secondZero sample.1 sample.2).le
   | separated obstruction =>
-      change Data.Gaussian.Norm.Basic.normSq (0 - 0) ≤ 4 * tolerance
-      rw [Data.Gaussian.Basic.sub_zero, Data.Gaussian.Norm.Basic.normSq_zero]
+      change Norm.Basic.normSq (0 - 0) ≤ 4 * tolerance
+      rw [Basic.sub_zero, Norm.Basic.normSq_zero]
       exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) positive.le
 
 end VerticalPrepared
@@ -841,8 +843,8 @@ end VerticalPrepared
 namespace CrossingRequests
 variable {retained : CrossingBank request mesh}
   (allocated : CrossingRequests
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential i)
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential j)
+    (PeriodMatrix.standardDifferential i)
+    (PeriodMatrix.standardDifferential j)
     firstParent secondParent tolerance floor retained)
   (cache : Numerics domains stage)
 
@@ -852,14 +854,14 @@ set_option genInjectivity false in
 Every matched pair carries both actual path samples; every certified separation keeps its original zero contribution. -/
 structure Samples where
   /-- The actual horizontal samples indexed by original face, sheet and neighboring face. -/ horizontal :
-    Data.Vector.DependentVector (fun a : Fin faces.regulars.length =>
-    Data.Vector.DependentVector (fun b : Fin 2 => Data.Vector.DependentVector (fun c : Fin faces.regulars.length =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.HorizontalPrepared.Sample
+    DependentVector (fun a : Fin faces.regulars.length =>
+    DependentVector (fun b : Fin 2 => DependentVector (fun c : Fin faces.regulars.length =>
+      HorizontalPrepared.Sample
         (((allocated.horizontal.get a).get b).get c) cache)))
   /-- The actual vertical samples indexed by original face, sheet and neighboring face. -/ vertical :
-    Data.Vector.DependentVector (fun a : Fin faces.regulars.length =>
-    Data.Vector.DependentVector (fun b : Fin 2 => Data.Vector.DependentVector (fun c : Fin faces.regulars.length =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.VerticalPrepared.Sample
+    DependentVector (fun a : Fin faces.regulars.length =>
+    DependentVector (fun b : Fin 2 => DependentVector (fun c : Fin faces.regulars.length =>
+      VerticalPrepared.Sample
         (((allocated.vertical.get a).get b).get c) cache)))
 
 constructive_injectivity Samples
@@ -868,10 +870,10 @@ constructive_injectivity Samples
 @[expose] def Samples.build : Samples
   allocated cache :=
   ⟨DependentVector.ofFn (fun a => DependentVector.ofFn (fun b => DependentVector.ofFn (fun c =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.HorizontalPrepared.Sample.build
+      HorizontalPrepared.Sample.build
         (((allocated.horizontal.get a).get b).get c) cache))),
     DependentVector.ofFn (fun a => DependentVector.ofFn (fun b => DependentVector.ofFn (fun c =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.VerticalPrepared.Sample.build
+      VerticalPrepared.Sample.build
         (((allocated.vertical.get a).get b).get c) cache)))⟩
 
 /-- Every retained horizontal sample satisfies the original tolerance once the common crossing request is paid. -/
@@ -879,11 +881,11 @@ theorem Samples.horizontal_bound (samples :
   Samples allocated cache) (positive
   : 0 < tolerance)
     (later : allocated.index ≤ stage) (a : Fin faces.regulars.length) (b : Fin 2) (c : Fin faces.regulars.length) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.HorizontalPrepared.Sample.residual
+    Norm.Basic.normSq
+      (HorizontalPrepared.Sample.residual
       (prepared := (((allocated.horizontal.get a).get b).get c)) (cache := cache)
       (((samples.horizontal.get a).get b).get c)) ≤ tolerance :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.HorizontalPrepared.Sample.bound _ positive
+  HorizontalPrepared.Sample.bound _ positive
     ((allocated.horizontal_le a b c).trans later)
 
 /-- Every retained vertical sample satisfies the original tolerance once the common crossing request is paid. -/
@@ -891,11 +893,11 @@ theorem Samples.vertical_bound (samples :
   Samples allocated cache) (positive
   : 0 < tolerance)
     (later : allocated.index ≤ stage) (a : Fin faces.regulars.length) (b : Fin 2) (c : Fin faces.regulars.length) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.VerticalPrepared.Sample.residual
+    Norm.Basic.normSq
+      (VerticalPrepared.Sample.residual
       (prepared := (((allocated.vertical.get a).get b).get c)) (cache := cache)
       (((samples.vertical.get a).get b).get c)) ≤ tolerance :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CrossingSamples.VerticalPrepared.Sample.bound _ positive
+  VerticalPrepared.Sample.bound _ positive
     ((allocated.vertical_le a b c).trans later)
 
 end CrossingRequests

@@ -14,6 +14,8 @@ import Purelib.LinearAlgebra.Coordinates2.Matrix
 import Purelib.Data.List.Basic
 import Purelib.Data.CCL.Encoding.Parser.Syntax
 
+open Purelib.Data.CCL.Transducer.Mode.Semantics
+
 /-!
 # Exact semantics of emission chunks
 
@@ -39,40 +41,40 @@ open Purelib.LinearAlgebra.Coordinates2 renaming Matrix -> Matrix2
 The comparison uses the same nonsingular incoming parser matrix and its exact folded emitted word. Its witness remains
 possible at the original mode's retained process state. -/
 @[expose] def ExactEmission (mode : Mode) (emission : Emission) : Prop :=
-  ∀ (parser : Encoding.Parser.State),
+  ∀ (parser : Parser.State),
     Matrix2.Matrix2.determinant parser.matrix ≠ 0 →
       parser.phase = Mode.Grammar.modeRawPhase mode →
-      ∀ {tail : Basic.Canonical}, Mode.Semantics.SemanticMode.possible emission.next tail →
+      ∀ {tail : Basic.Canonical}, SemanticMode.possible emission.next tail →
         ∃ previous : Basic.Canonical,
-          Mode.Semantics.SemanticMode.possible mode previous ∧
+          SemanticMode.possible mode previous ∧
             (Line.Matrix.act
               (emission.bits.foldl Parser.State.step parser).matrix
-              (Mode.Semantics.SemanticMode.parserTail emission.next tail)).Equivalent
+              (SemanticMode.parserTail emission.next tail)).Equivalent
                 (Line.Matrix.act parser.matrix
-                  (Mode.Semantics.SemanticMode.parserTail mode previous))
+                  (SemanticMode.parserTail mode previous))
 
 /-- Append an exact emitted chunk while preserving the same origin process, state and represented value.
 
 The original word's semantic relation supplies an origin witness after pulling the new tail back through the exact
 emission. Matrix folding then identifies the appended word with that same retained projective image. -/
 theorem extend_exact
-    (origin : Approximation.Gaussian.Process) (originState : origin.State)
+    (origin : Process) (originState : origin.State)
     (mode : Mode) (word : List Bool) (emission : Emission)
     (phase : (Parser.State.parse word).phase =
       Mode.Grammar.modeRawPhase mode)
-    (before : ∀ {tail : Basic.Canonical}, Mode.Semantics.SemanticMode.possible mode tail →
+    (before : ∀ {tail : Basic.Canonical}, SemanticMode.possible mode tail →
       ∃ value : Basic.Canonical,
         origin.Possible originState value ∧
           (Line.Matrix.act (Parser.State.parse word).matrix
-            (Mode.Semantics.SemanticMode.parserTail mode tail)).Equivalent
+            (SemanticMode.parserTail mode tail)).Equivalent
               (Line.Proj.affine value))
-    (chunkExact : Emission.Semantics.Basic.ExactEmission mode emission) :
-    ∀ {tail : Basic.Canonical}, Mode.Semantics.SemanticMode.possible emission.next tail →
+    (chunkExact : ExactEmission mode emission) :
+    ∀ {tail : Basic.Canonical}, SemanticMode.possible emission.next tail →
       ∃ value : Basic.Canonical,
         origin.Possible originState value ∧
           (Line.Matrix.act
             (Parser.State.parse (word ++ emission.bits)).matrix
-            (Mode.Semantics.SemanticMode.parserTail emission.next tail)).Equivalent
+            (SemanticMode.parserTail emission.next tail)).Equivalent
               (Line.Proj.affine value) := by
   intro tail possible
   rcases chunkExact (Parser.State.parse word)
@@ -85,7 +87,7 @@ theorem extend_exact
     localExact beforeExact
     (Line.Matrix.Gaussian.Mat2.act_hasNonzeroCoordinate
       (Parser.State.parse_det_ne word)
-      (Mode.Semantics.SemanticMode.parserTail_valid mode previous))
+      (SemanticMode.parserTail_valid mode previous))
     (Line.Gaussian.Proj.affine_hasNonzeroCoordinate value)
 
 end Purelib.Data.CCL.Transducer.Emission.Semantics.Basic

@@ -24,6 +24,8 @@ import Purelib.Measure.Distribution.Kernel.Basic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Approximation.CCL
+
 open Purelib.Data.CCL.Encoding.Cylinder.Basic (Realizes)
 
 section
@@ -51,7 +53,7 @@ open Purelib.Measure in
 spread. -/
 theorem probeLawCoupling_transportCost_le {ι : Type}
     (process : Cylinder.PrefixFamilyProcess ι)
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
     (sensitive : ∀ left right,
@@ -67,14 +69,14 @@ theorem probeLawCoupling_transportCost_le {ι : Type}
     (Coupling.Law.probeLawCoupling distribution probe leftPoints rightPoints).transportCost
         Distance.rationalSeparation ≤
       distribution.expectation fun item =>
-        factor * Approximation.CCL.Cylinder.cylinderSpread (process.blocks state item) := by
+        factor * Cylinder.cylinderSpread (process.blocks state item) := by
   rw [Coupling.Law.probeLawCoupling_transportCost]
   change distribution.expectation (fun item =>
       Distance.rationalSeparation
         (probe (leftPoints item)) (probe (rightPoints item))) ≤ _
   apply distribution.expectation_mono
   intro atom member
-  exact Approximation.CCL.Prefix.realized_probe_separation_le (leftRealizes atom member)
+  exact Prefix.realized_probe_separation_le (leftRealizes atom member)
     (rightRealizes atom member) probe factor factorNonnegative sensitive
 
 open Purelib in
@@ -90,7 +92,7 @@ Both families realize the same requested prefix state, and the sensitivity facto
 -/
 theorem request_probeLawCoupling_transportCost_lt {ι : Type}
     (process : Cylinder.PrefixFamilyProcess ι)
-    (distribution : Measure.Distribution ι)
+    (distribution : Distribution ι)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)
     (sensitive : ∀ left right,
@@ -118,47 +120,47 @@ theorem request_probeLawCoupling_transportCost_lt {ι : Type}
     probe factor factorPositive.le sensitive requested leftPoints rightPoints
     leftRealizes rightRealizes
   have radiusLeHalf : distribution.expectation (fun item =>
-        factor * Approximation.CCL.Cylinder.cylinderSpread (process.blocks requested item)) ≤
+        factor * Cylinder.cylinderSpread (process.blocks requested item)) ≤
       epsilon / 2 := by
     calc
       distribution.expectation (fun item =>
-            factor * Approximation.CCL.Cylinder.cylinderSpread (process.blocks requested item)) ≤
+            factor * Cylinder.cylinderSpread (process.blocks requested item)) ≤
           distribution.expectation (fun _ => epsilon / 2) := by
         apply distribution.expectation_mono
         intro atom member
-        have widthSmall := Approximation.CCL.Prefix.completedPrefixProbeBound_width_lt_requested
+        have widthSmall := Prefix.completedPrefixProbeBound_width_lt_requested
           (process.witness atom.item) (process.realizes requested atom.item)
           probe factor factorPositive sensitive (epsilon / 2)
           (Fraction.Order.Field.div_pos_direct positive (by decide))
           (process.request_length state
             (Budget.requiredProbeBlockCount (epsilon / 2) factor) atom.item)
         have radiusNonnegative : 0 ≤
-            factor * Approximation.CCL.Cylinder.cylinderSpread (process.blocks requested atom.item) :=
+            factor * Cylinder.cylinderSpread (process.blocks requested atom.item) :=
           Fraction.Order.Arithmetic.mul_nonneg_direct factorPositive.le
-            (Approximation.CCL.Cylinder.cylinderSpread_nonneg _)
+            (Cylinder.cylinderSpread_nonneg _)
         calc
-          factor * Approximation.CCL.Cylinder.cylinderSpread (process.blocks requested atom.item) ≤
-              2 * (factor * Approximation.CCL.Cylinder.cylinderSpread
+          factor * Cylinder.cylinderSpread (process.blocks requested atom.item) ≤
+              2 * (factor * Cylinder.cylinderSpread
                 (process.blocks requested atom.item)) := by
             calc
-              _ = 0 + factor * Approximation.CCL.Cylinder.cylinderSpread
+              _ = 0 + factor * Cylinder.cylinderSpread
                     (process.blocks requested atom.item) := by ring1
-              _ ≤ factor * Approximation.CCL.Cylinder.cylinderSpread
+              _ ≤ factor * Cylinder.cylinderSpread
                       (process.blocks requested atom.item) +
-                    factor * Approximation.CCL.Cylinder.cylinderSpread
+                    factor * Cylinder.cylinderSpread
                       (process.blocks requested atom.item) :=
                 Fraction.Order.Arithmetic.add_le_add_direct
                   radiusNonnegative le_rfl
               _ = _ := by ring1
-          _ = (Approximation.CCL.Prefix.completedPrefixProbeBound
+          _ = (Prefix.completedPrefixProbeBound
               (process.blocks requested atom.item) (process.witness atom.item)
               (process.realizes requested atom.item) probe factor
               factorPositive.le sensitive).width := by
-            rw [Approximation.CCL.Prefix.completedPrefixProbeBound_width]
+            rw [Prefix.completedPrefixProbeBound_width]
           _ ≤ epsilon / 2 := widthSmall.le
       _ = epsilon / 2 := distribution.expectation_constant _
   exact transportLe.trans_lt
-    (radiusLeHalf.trans_lt (Purelib.Data.Rat.Fraction.Order.Field.half_lt_self positive))
+    (radiusLeHalf.trans_lt (Fraction.Order.Field.half_lt_self positive))
 
 end PrefixFamilyProcess
 

@@ -87,7 +87,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Approximation.Rational.Budget.Aggregate (perTerm perTerm_positive)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -106,26 +106,26 @@ The original lifted anchor and included grid vertex index the actual frame selec
 @[expose] def canonicalPeriodSheet
     (boundary : PeriodGeometry base.bank.toBranchCellBank) : Fin 2 :=
   ((boundary.lifted.frames.frameAt (lifted.vertices.coordinate
-    (Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.anchor lifted sheet))
+    (BasedBranchBank.anchor lifted sheet))
     (boundary.grid.shrunk.included.vertex (lifted.vertices.coordinate_onGrid
-      (Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.anchor lifted sheet)))).select
+      (BasedBranchBank.anchor lifted sheet)))).select
     (lifted.vertices.owner lifted.frames
-      (Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.anchor lifted sheet))).index
+      (BasedBranchBank.anchor lifted sheet))).index
 
 /-- The original canonical A-face assignment retains the selected anchor sheet. -/
-theorem aCanonicalFaces_sheet (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+theorem aCanonicalFaces_sheet (prepared : Prepared paired)
     (boundary : PeriodGeometry base.bank.toBranchCellBank) :
     (aCanonicalFaces (cycle := cycle) prepared boundary).sheet = canonicalPeriodSheet (lifted := lifted) (sheet :=
       sheet) boundary := rfl
 
 /-- The canonical A assignment reads back the original resplit closed walk's indexed edges. -/
-theorem aCanonicalAssigned_indexed (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+theorem aCanonicalAssigned_indexed (prepared : Prepared paired)
     (boundary : PeriodGeometry base.bank.toBranchCellBank) :
     (aCanonicalAssigned (cycle := cycle) prepared boundary).indexed =
       boundary.lifted.edges.indexedEdges boundary.lifted.vertices
         (boundary.grid.shrunk.included.resplit (prepared.aWalk cycle).closed.walk
           (lifted.vertices.coordinate_onGrid
-            (Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.anchor lifted sheet)))
+            (BasedBranchBank.anchor lifted sheet)))
         (canonicalPeriodSheet (lifted := lifted) (sheet := sheet) boundary) :=
   Meshes.PuncturedGrid.SkeletonFaceAssignments.walkFaces_indexed _ _ _
 
@@ -139,45 +139,45 @@ open Purelib.Topology.Surface in
 
 The actual numerical cache and triangle readings must meet the stored numerical floor; the original A-program stage must
 meet the retained fragment floor. -/
-theorem ACanonicalPreparation.word_accurate {prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired}
+theorem ACanonicalPreparation.word_accurate {prepared : Prepared paired}
     {boundary : PeriodGeometry base.bank.toBranchCellBank}
     (data : ACanonicalPreparation prepared boundary differential cycle target minimum)
     (positive : 0 < target) (numericalIndex : Nat)
-    (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics boundary.domains numericalIndex)
-    (triangles : Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get differential)
+    (cache : Numerics boundary.domains numericalIndex)
+    (triangles : TriangleReadings (cache.get differential)
       boundary.lifted.mesh)
     (later : data.numericalIndex ≤ numericalIndex) (stage : Nat) (after : data.request.fragments.stage ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Sewing.SewingRetraction.wordValue
-      (Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation boundary.lifted.mesh triangles.values)
+    normSq (Sewing.SewingRetraction.wordValue
+      (edgeValuation boundary.lifted.mesh triangles.values)
       (boundary.lifted.edges.indexedEdges boundary.lifted.vertices
         (boundary.grid.shrunk.included.resplit (prepared.aWalk cycle).closed.walk
           (lifted.vertices.coordinate_onGrid
-            (Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.anchor lifted sheet)))
+            (BasedBranchBank.anchor lifted sheet)))
         (canonicalPeriodSheet (lifted := lifted) (sheet := sheet) boundary)) -
       ((prepared.periodData.aProgram differential cycle).integral.model stage).integralSample) < target := by
   have accurate := NewtonCanonicalPeriodComparison.ACanonicalPreparation.accurate data positive numericalIndex cache
     triangles later stage after
-  exact (congrArg (fun word => Data.Gaussian.Norm.Basic.normSq (Sewing.SewingRetraction.wordValue
-    (Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation boundary.lifted.mesh triangles.values) word -
+  exact (congrArg (fun word => normSq (Sewing.SewingRetraction.wordValue
+    (edgeValuation boundary.lifted.mesh triangles.values) word -
     ((prepared.periodData.aProgram differential cycle).integral.model stage).integralSample))
       (aCanonicalAssigned_indexed (cycle := cycle) prepared boundary)).symm.trans_lt accurate
 
 section
 open Purelib.Curves.Hyperelliptic
 /-- The original canonical B-face assignment retains the selected anchor sheet. -/
-theorem bCanonicalFaces_sheet (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+theorem bCanonicalFaces_sheet (prepared : Prepared paired)
     (boundary : PeriodGeometry base.bank.toBranchCellBank) :
     (bCanonicalFaces (cycle := cycle) prepared boundary).sheet = canonicalPeriodSheet (lifted := lifted) (sheet :=
       sheet) boundary := rfl
 
 /-- The canonical B assignment reads back the original resplit closed walk's indexed edges. -/
-theorem bCanonicalAssigned_indexed (prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+theorem bCanonicalAssigned_indexed (prepared : Prepared paired)
     (boundary : PeriodGeometry base.bank.toBranchCellBank) :
     (bCanonicalAssigned (cycle := cycle) prepared boundary).indexed =
       boundary.lifted.edges.indexedEdges boundary.lifted.vertices
         (boundary.grid.shrunk.included.resplit (prepared.bWalk cycle).closed.walk
           (lifted.vertices.coordinate_onGrid
-            (Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.anchor lifted sheet)))
+            (BasedBranchBank.anchor lifted sheet)))
         (canonicalPeriodSheet (lifted := lifted) (sheet := sheet) boundary) :=
   Meshes.PuncturedGrid.SkeletonFaceAssignments.walkFaces_indexed _ _ _
 
@@ -191,26 +191,26 @@ open Purelib.Topology.Surface in
 
 The actual numerical cache and triangle readings must meet the stored numerical floor; the original B-program stage must
 meet the retained fragment floor. -/
-theorem BCanonicalPreparation.word_accurate {prepared : Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired}
+theorem BCanonicalPreparation.word_accurate {prepared : Prepared paired}
     {boundary : PeriodGeometry base.bank.toBranchCellBank}
     (data : BCanonicalPreparation prepared boundary differential cycle target minimum)
     (positive : 0 < target) (numericalIndex : Nat)
-    (cache : Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics boundary.domains numericalIndex)
-    (triangles : Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get differential)
+    (cache : Numerics boundary.domains numericalIndex)
+    (triangles : TriangleReadings (cache.get differential)
       boundary.lifted.mesh)
     (later : data.numericalIndex ≤ numericalIndex) (stage : Nat) (after : data.request.fragments.stage ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Sewing.SewingRetraction.wordValue
-      (Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation boundary.lifted.mesh triangles.values)
+    normSq (Sewing.SewingRetraction.wordValue
+      (edgeValuation boundary.lifted.mesh triangles.values)
       (boundary.lifted.edges.indexedEdges boundary.lifted.vertices
         (boundary.grid.shrunk.included.resplit (prepared.bWalk cycle).closed.walk
           (lifted.vertices.coordinate_onGrid
-            (Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.anchor lifted sheet)))
+            (BasedBranchBank.anchor lifted sheet)))
         (canonicalPeriodSheet (lifted := lifted) (sheet := sheet) boundary)) -
       ((prepared.periodData.bProgram differential cycle).integral.model stage).integralSample) < target := by
   have accurate := NewtonCanonicalPeriodComparison.BCanonicalPreparation.accurate data positive numericalIndex cache
     triangles later stage after
-  exact (congrArg (fun word => Data.Gaussian.Norm.Basic.normSq (Sewing.SewingRetraction.wordValue
-    (Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation boundary.lifted.mesh triangles.values) word -
+  exact (congrArg (fun word => normSq (Sewing.SewingRetraction.wordValue
+    (edgeValuation boundary.lifted.mesh triangles.values) word -
     ((prepared.periodData.bProgram differential cycle).integral.model stage).integralSample))
       (bCanonicalAssigned_indexed (cycle := cycle) prepared boundary)).symm.trans_lt accurate
 

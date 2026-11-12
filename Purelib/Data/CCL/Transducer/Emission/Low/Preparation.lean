@@ -51,18 +51,18 @@ A retained possible witness supplies the old 43/20 bound. The initial radius bud
 the center error without replacing the process or its refined state. -/
 theorem low_center_lt_extended_upper
     (current : Mode.Basic.LowState) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (current.process.ball
-          (Emission.Initial.Preparation.initialRefinedState current.process current.state)).center <
+          (Initial.Preparation.initialRefinedState current.process current.state)).center <
       13 / 6 := by
-  let refined := Emission.Initial.Preparation.initialRefinedState current.process current.state
+  let refined := Initial.Preparation.initialRefinedState current.process current.state
   rcases current.process.witness refined with ⟨witness, possible⟩
   have possibleAtOld : current.process.Possible current.state witness :=
     current.process.refine_persists current.state _ _ possible
-  have witnessUpper : Data.Gaussian.Norm.Basic.normSq witness < 43 / 20 :=
+  have witnessUpper : Norm.Basic.normSq witness < 43 / 20 :=
     current.upperBound possibleAtOld
   have errorNorm :
-      Data.Gaussian.Norm.Basic.normSq ((current.process.ball refined).center - witness) ≤
+      Norm.Basic.normSq ((current.process.ball refined).center - witness) ≤
         (current.process.ball refined).radiusSq := by
     have reversed :
         (current.process.ball refined).center - witness =
@@ -71,40 +71,40 @@ theorem low_center_lt_extended_upper
         simp only [Basic.sub_re, Basic.sub_im, Basic.neg_re, Basic.neg_im] <;> ring1
     rw [reversed, Norm.Basic.normSq_neg]
     exact current.process.possible_inside possible
-  have radiusUpper := Emission.Initial.Preparation.initialRefined_accurate current.process current.state
-  have weightPlusPositive : 0 < Emission.Low.Budget.lowCenterWeight + 1 :=
-    add_pos_of_pos_of_nonneg Emission.Low.Budget.lowCenterWeight_pos (by decide)
-  have errorScaled : (Emission.Low.Budget.lowCenterWeight + 1) *
-      Data.Gaussian.Norm.Basic.normSq ((current.process.ball refined).center - witness) <
-      Emission.Low.Budget.lowCenterSlack := by
-    have first : (Emission.Low.Budget.lowCenterWeight + 1) *
-        Data.Gaussian.Norm.Basic.normSq ((current.process.ball refined).center - witness) <
-        (Emission.Low.Budget.lowCenterWeight + 1) * Emission.Initial.Budget.initialRadiusSq :=
+  have radiusUpper := Initial.Preparation.initialRefined_accurate current.process current.state
+  have weightPlusPositive : 0 < Budget.lowCenterWeight + 1 :=
+    add_pos_of_pos_of_nonneg Budget.lowCenterWeight_pos (by decide)
+  have errorScaled : (Budget.lowCenterWeight + 1) *
+      Norm.Basic.normSq ((current.process.ball refined).center - witness) <
+      Budget.lowCenterSlack := by
+    have first : (Budget.lowCenterWeight + 1) *
+        Norm.Basic.normSq ((current.process.ball refined).center - witness) <
+        (Budget.lowCenterWeight + 1) * Initial.Budget.initialRadiusSq :=
       (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
         errorNorm weightPlusPositive.le).trans_lt
         (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
           weightPlusPositive radiusUpper)
-    have second : (Emission.Low.Budget.lowCenterWeight + 1) * Emission.Initial.Budget.initialRadiusSq <
+    have second : (Budget.lowCenterWeight + 1) * Initial.Budget.initialRadiusSq <
         2 * Enclosure.Sector.Budget.uniformRadiusSq := by
       calc
-        (Emission.Low.Budget.lowCenterWeight + 1) * Emission.Initial.Budget.initialRadiusSq =
-            Emission.Low.Budget.lowCenterWeight * Emission.Initial.Budget.initialRadiusSq +
+        (Budget.lowCenterWeight + 1) * Initial.Budget.initialRadiusSq =
+            Budget.lowCenterWeight * Initial.Budget.initialRadiusSq +
               Emission.Initial.Budget.initialRadiusSq := by ring1
         _ = Enclosure.Sector.Budget.uniformRadiusSq +
-            Emission.Initial.Budget.initialRadiusSq := by rw [Emission.Low.Budget.lowCenterWeight_mul_initial]
-        _ = Emission.Initial.Budget.initialRadiusSq +
+            Emission.Initial.Budget.initialRadiusSq := by rw [Budget.lowCenterWeight_mul_initial]
+        _ = Initial.Budget.initialRadiusSq +
             Enclosure.Sector.Budget.uniformRadiusSq := by ring1
         _ < Enclosure.Sector.Budget.uniformRadiusSq +
             Enclosure.Sector.Budget.uniformRadiusSq :=
           Fraction.Order.Arithmetic.add_lt_add_right_direct
-            Emission.Initial.Budget.initialRadiusSq_lt_uniform Enclosure.Sector.Budget.uniformRadiusSq
+            Initial.Budget.initialRadiusSq_lt_uniform Enclosure.Sector.Budget.uniformRadiusSq
         _ = 2 * Enclosure.Sector.Budget.uniformRadiusSq := by ring1
-    exact first.trans (second.trans Emission.Low.Budget.two_uniform_lt_lowCenterSlack)
-  have witnessDivWeight : Data.Gaussian.Norm.Basic.normSq witness / Emission.Low.Budget.lowCenterWeight <
-      Emission.Low.Budget.lowCenterSlack := by
+    exact first.trans (second.trans Budget.two_uniform_lt_lowCenterSlack)
+  have witnessDivWeight : Norm.Basic.normSq witness / Budget.lowCenterWeight <
+      Budget.lowCenterSlack := by
     apply (Fraction.Order.Field.div_lt_iff_pos
-      Emission.Low.Budget.lowCenterWeight_pos).2
-    rw [Emission.Low.Budget.lowCenterSlack_mul_weight]
+      Budget.lowCenterWeight_pos).2
+    rw [Budget.lowCenterSlack_mul_weight]
     have fortyThreeTwentiethsLtFive : (43 / 20 : Fraction.Rational) < 5 := by
       apply (Fraction.Order.Field.div_lt_iff_pos
         (Fraction.Cast.Order.natCast_pos_direct
@@ -115,45 +115,45 @@ theorem low_center_lt_extended_upper
         _ = 5 * 20 := by ring1
     exact witnessUpper.trans fortyThreeTwentiethsLtFive
   have ratioIdentity :
-      ((Emission.Low.Budget.lowCenterWeight + 1) / Emission.Low.Budget.lowCenterWeight) *
-        Data.Gaussian.Norm.Basic.normSq witness =
-        Data.Gaussian.Norm.Basic.normSq witness + Data.Gaussian.Norm.Basic.normSq witness /
-          Emission.Low.Budget.lowCenterWeight := by
-    have weightNonzero := Emission.Low.Budget.lowCenterWeight_pos.ne'
+      ((Budget.lowCenterWeight + 1) / Budget.lowCenterWeight) *
+        Norm.Basic.normSq witness =
+        Norm.Basic.normSq witness + Norm.Basic.normSq witness /
+          Budget.lowCenterWeight := by
+    have weightNonzero := Budget.lowCenterWeight_pos.ne'
     apply Fraction.Field.mul_right_cancel_of_ne
-      Emission.Low.Budget.lowCenterWeight_pos.ne'
+      Budget.lowCenterWeight_pos.ne'
     calc
-      (((Emission.Low.Budget.lowCenterWeight + 1) / Emission.Low.Budget.lowCenterWeight) *
-        Data.Gaussian.Norm.Basic.normSq witness) *
-          Emission.Low.Budget.lowCenterWeight =
-          Data.Gaussian.Norm.Basic.normSq witness *
-            (((Emission.Low.Budget.lowCenterWeight + 1) / Emission.Low.Budget.lowCenterWeight) *
-              Emission.Low.Budget.lowCenterWeight) := by ring1
-      _ = Data.Gaussian.Norm.Basic.normSq witness * (Emission.Low.Budget.lowCenterWeight + 1) := by
+      (((Budget.lowCenterWeight + 1) / Budget.lowCenterWeight) *
+        Norm.Basic.normSq witness) *
+          Budget.lowCenterWeight =
+          Norm.Basic.normSq witness *
+            (((Budget.lowCenterWeight + 1) / Budget.lowCenterWeight) *
+              Budget.lowCenterWeight) := by ring1
+      _ = Norm.Basic.normSq witness * (Budget.lowCenterWeight + 1) := by
         have cancellation :
-            (Emission.Low.Budget.lowCenterWeight + 1) / Emission.Low.Budget.lowCenterWeight *
-              Emission.Low.Budget.lowCenterWeight =
-              Emission.Low.Budget.lowCenterWeight + 1 :=
+            (Budget.lowCenterWeight + 1) / Budget.lowCenterWeight *
+              Budget.lowCenterWeight =
+              Budget.lowCenterWeight + 1 :=
           Fraction.Field.div_mul_cancel_of_ne _ _ weightNonzero
         rw [cancellation]
-      _ = (Data.Gaussian.Norm.Basic.normSq witness + Data.Gaussian.Norm.Basic.normSq witness /
-        Emission.Low.Budget.lowCenterWeight) *
+      _ = (Norm.Basic.normSq witness + Norm.Basic.normSq witness /
+        Budget.lowCenterWeight) *
           Emission.Low.Budget.lowCenterWeight := by
-        have cancellation : Data.Gaussian.Norm.Basic.normSq witness / Emission.Low.Budget.lowCenterWeight *
-            Emission.Low.Budget.lowCenterWeight = Data.Gaussian.Norm.Basic.normSq witness :=
+        have cancellation : Norm.Basic.normSq witness / Budget.lowCenterWeight *
+            Budget.lowCenterWeight = Norm.Basic.normSq witness :=
           Fraction.Field.div_mul_cancel_of_ne _ _ weightNonzero
-        rw [show (Data.Gaussian.Norm.Basic.normSq witness + Data.Gaussian.Norm.Basic.normSq witness /
-          Emission.Low.Budget.lowCenterWeight) *
-            Emission.Low.Budget.lowCenterWeight = Data.Gaussian.Norm.Basic.normSq witness *
-              Emission.Low.Budget.lowCenterWeight +
-              (Data.Gaussian.Norm.Basic.normSq witness / Emission.Low.Budget.lowCenterWeight) *
-                Emission.Low.Budget.lowCenterWeight by ring1,
+        rw [show (Norm.Basic.normSq witness + Norm.Basic.normSq witness /
+          Budget.lowCenterWeight) *
+            Budget.lowCenterWeight = Norm.Basic.normSq witness *
+              Budget.lowCenterWeight +
+              (Norm.Basic.normSq witness / Budget.lowCenterWeight) *
+                Budget.lowCenterWeight by ring1,
           cancellation]
         ring1
   have witnessScaled :
-      ((Emission.Low.Budget.lowCenterWeight + 1) / Emission.Low.Budget.lowCenterWeight) *
-        Data.Gaussian.Norm.Basic.normSq witness <
-        (43 / 20 : Fraction.Rational) + Emission.Low.Budget.lowCenterSlack := by
+      ((Budget.lowCenterWeight + 1) / Budget.lowCenterWeight) *
+        Norm.Basic.normSq witness <
+        (43 / 20 : Fraction.Rational) + Budget.lowCenterSlack := by
     rw [ratioIdentity]
     exact Fraction.Order.Arithmetic.add_lt_add_direct witnessUpper
       witnessDivWeight
@@ -163,20 +163,20 @@ theorem low_center_lt_extended_upper
     apply Basic.ext <;>
       simp only [Basic.sub_re, Basic.sub_im, Basic.add_re, Basic.add_im] <;> ring1
   rw [decomposition]
-  exact (Norm.Weighted.normSq_add_le_parameter Emission.Low.Budget.lowCenterWeight
-    Emission.Low.Budget.lowCenterWeight_pos
+  exact (Norm.Weighted.normSq_add_le_parameter Budget.lowCenterWeight
+    Budget.lowCenterWeight_pos
       ((current.process.ball refined).center - witness) witness).trans_lt (calc
-    (Emission.Low.Budget.lowCenterWeight + 1) *
-          Data.Gaussian.Norm.Basic.normSq ((current.process.ball refined).center - witness) +
-        ((Emission.Low.Budget.lowCenterWeight + 1) / Emission.Low.Budget.lowCenterWeight) *
-          Data.Gaussian.Norm.Basic.normSq witness <
-      Emission.Low.Budget.lowCenterSlack + ((43 / 20 : Fraction.Rational) +
-        Emission.Low.Budget.lowCenterSlack) :=
+    (Budget.lowCenterWeight + 1) *
+          Norm.Basic.normSq ((current.process.ball refined).center - witness) +
+        ((Budget.lowCenterWeight + 1) / Budget.lowCenterWeight) *
+          Norm.Basic.normSq witness <
+      Budget.lowCenterSlack + ((43 / 20 : Fraction.Rational) +
+        Budget.lowCenterSlack) :=
         Fraction.Order.Arithmetic.add_lt_add_direct errorScaled witnessScaled
-    _ = (43 / 20 : Fraction.Rational) + Emission.Low.Budget.lowCenterSlack +
+    _ = (43 / 20 : Fraction.Rational) + Budget.lowCenterSlack +
       Emission.Low.Budget.lowCenterSlack := by
       ring1
-    _ < 13 / 6 := Emission.Low.Budget.lowCenter_budget)
+    _ < 13 / 6 := Budget.lowCenter_budget)
 
 open Purelib.Approximation.Gaussian
 open Purelib.Data.CCL.Transducer
@@ -187,8 +187,8 @@ The constructed process is based at the same supplied state. Its possible-value 
 radius budget establish the low squared-norm bound 43/20. -/
 def nextLowState (process : Process) (base :
   process.State)
-    (accurate : (process.ball base).radiusSq < Emission.Initial.Budget.initialRadiusSq)
-    (centerSmall : Data.Gaussian.Norm.Basic.normSq (process.ball base).center < 1)
+    (accurate : (process.ball base).radiusSq < Initial.Budget.initialRadiusSq)
+    (centerSmall : Norm.Basic.normSq (process.ball base).center < 1)
     (count : Nat) : Mode.Basic.LowState := by
   let nextProcess := Process.Gamma.Upscale.upscaledProcess process base 1
   let nextState := Process.Gamma.Upscale.upscaledInitial process base 1
@@ -202,14 +202,14 @@ def nextLowState (process : Process) (base :
           ⟨sourceValue, sourcePossible, valueEqual⟩
         rw [valueEqual, Power.natPow_succ, Power.natPow_zero,
           Basic.one_mul]
-        exact Emission.Initial.Preparation.scaled_candidate_norm_lt_low_upper accurate centerSmall
+        exact Initial.Preparation.scaled_candidate_norm_lt_low_upper accurate centerSmall
           sourcePossible }
 
 /-- The constructed next low state keeps exactly the supplied normalization count. -/
 @[simp] theorem nextLowState_count (process :
   Approximation.Gaussian.Process) (base : process.State)
-    (accurate : (process.ball base).radiusSq < Emission.Initial.Budget.initialRadiusSq)
-    (centerSmall : Data.Gaussian.Norm.Basic.normSq (process.ball base).center < 1) (count : Nat) :
+    (accurate : (process.ball base).radiusSq < Initial.Budget.initialRadiusSq)
+    (centerSmall : Norm.Basic.normSq (process.ball base).center < 1) (count : Nat) :
     (nextLowState process base accurate centerSmall count).count = count := by
   rfl
 

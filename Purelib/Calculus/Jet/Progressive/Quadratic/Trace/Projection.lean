@@ -7,6 +7,8 @@ import Purelib.Approximation.Rational.Geometric.Basic
 public import Purelib.Approximation.Rational.Geometric.Search
 public import Purelib.Calculus.Jet.Progressive.Quadratic.Trace.Basic
 
+open Purelib.Approximation.Rational.Geometric
+
 open Purelib.Approximation.Gaussian.Name.Coherent (CoherentNamed)
 open Purelib.Approximation.Gaussian.Sequence (ApproximationData)
 open Purelib.Data.Gaussian.Basic (Canonical)
@@ -47,26 +49,26 @@ def projectionApproximation {increment : Nat →
     (trace : Trace increment) (sample : Nat → Canonical)
     (later_close : ∀ {earlier later : Nat}, earlier ≤ later →
       Canonical.normSq (sample later - sample earlier) ≤
-        Rational.Geometric.Basic.quarterRadius trace.errorScale earlier)
+        Basic.quarterRadius trace.errorScale earlier)
     (bounded : ∀ index, Canonical.normSq (sample index) ≤ trace.centerBound) :
     ApproximationData where
   sample := sample
-  radiusSq := Rational.Geometric.Basic.quarterRadius trace.errorScale
+  radiusSq := Basic.quarterRadius trace.errorScale
   radiusSq_nonneg :=
-    Rational.Geometric.Basic.quarterRadius_nonneg
+    Basic.quarterRadius_nonneg
       trace.errorScale_nonneg
   later_close := by
     intro earlier later order
     simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using later_close order
   refineIndex current target _positive :=
-    Rational.Geometric.Search.firstQuarterBelow trace.errorScale
+    Search.firstQuarterBelow trace.errorScale
       current target
   refineIndex_ge := by
     intro current target _positive
-    exact Rational.Geometric.Search.firstQuarterBelow_ge
+    exact Search.firstQuarterBelow_ge
       trace.errorScale current target
   refineIndex_accurate :=
-    Rational.Geometric.Search.firstQuarterBelow_accurate
+    Search.firstQuarterBelow_accurate
       trace.errorScale trace.errorScale_nonneg
   centerBound := trace.centerBound
   centerBound_nonneg := trace.centerBound_nonneg
@@ -159,7 +161,7 @@ proved strict accuracy guarantee. -/
 def requestIndex {increment : Nat →
   Canonical} (trace : Trace increment)
     (current : Nat) (target : Rat.Fraction.Rational) : Nat :=
-  Rational.Geometric.Search.firstQuarterBelow trace.errorScale
+  Search.firstQuarterBelow trace.errorScale
     current target
 
 /-- The selected common index never precedes the requested current index. -/
@@ -167,7 +169,7 @@ theorem requestIndex_ge {increment : Nat →
   Canonical}
     (trace : Trace increment) (current : Nat) (target : Rat.Fraction.Rational) :
     current ≤ trace.requestIndex current target :=
-  Rational.Geometric.Search.firstQuarterBelow_ge
+  Search.firstQuarterBelow_ge
     trace.errorScale current target
 
 /-- At a positive target, the selected common geometric allowance is strictly smaller. -/
@@ -175,9 +177,9 @@ theorem requestIndex_accurate {increment : Nat →
   Canonical}
     (trace : Trace increment) (current : Nat) {target : Rat.Fraction.Rational}
     (positive : 0 < target) :
-    Rational.Geometric.Basic.quarterRadius trace.errorScale
+    Basic.quarterRadius trace.errorScale
       (trace.requestIndex current target) < target :=
-  Rational.Geometric.Search.firstQuarterBelow_accurate
+  Search.firstQuarterBelow_accurate
     trace.errorScale trace.errorScale_nonneg current target positive
 
 end

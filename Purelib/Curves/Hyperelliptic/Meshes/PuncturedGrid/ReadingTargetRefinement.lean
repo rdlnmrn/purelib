@@ -36,6 +36,10 @@ import Purelib.Polynomial.Geometry.Grid.ClearGrid
 import Purelib.Riemann.Normalization.InverseRootPolynomial
 import Purelib.Riemann.Topology.PrimitiveSurfaceBudget
 
+open Purelib.Data.Vector (DependentVector)
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes
+
 open Purelib.Curves
 
 open Purelib.Data.Rat
@@ -56,16 +60,16 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid
 
 open Purelib.Riemann.Meshes.PuncturedGridFaces (RegularFace)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid}
 
 variable {face : RegularFace bank} {models :
-  Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames face} {sheet : Fin 2}
-  {domain : Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain models sheet} {box :
+  Face.InverseModels.BranchCellBank.FaceModels frames face} {sheet : Fin 2}
+  {domain : Face.Periods.PeriodDomain models sheet} {box :
     Rational.Box}
-  {preflight : Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight domain} {coarse :
+  {preflight : DomainBasisBounds.EnergyPreflight domain} {coarse :
     Meshes.RectangularObservationMesh.ObservationMesh domain.cuts box} {target : Fraction.Rational}
 
 /-- Tighten the original primitive-reading tolerance to a positive cap while retaining its mesh, depth and prior
@@ -74,12 +78,12 @@ numerical floor.
 The original request owners, mesh identities and spatial depths remain retained; only the reading cap and a certified
 common numerical stage are tightened. -/
 @[expose] def DomainEnergyRequest.EnergyRequest.limitReadings
-    (request : Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest preflight coarse target) (cap :
+    (request : DomainEnergyRequest.EnergyRequest preflight coarse target) (cap :
       Fraction.Rational) (positive : 0 < cap) :
-    Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest preflight coarse target :=
+    DomainEnergyRequest.EnergyRequest preflight coarse target :=
   let readingTarget := min request.readingTarget cap
   let readingPositive := Fraction.Order.Basic.lt_min request.reading_positive positive
-  let initial := Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight.Request.build preflight
+  let initial := DomainBasisBounds.EnergyPreflight.Request.build preflight
     readingTarget readingPositive
   { request with
     readingTarget := readingTarget
@@ -92,19 +96,19 @@ common numerical stage are tightened. -/
 
 /-- The tightened reading tolerance fits the supplied cap. -/
 theorem DomainEnergyRequest.EnergyRequest.limitReadings_target_le
-    (request : Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest preflight coarse target) (cap :
+    (request : DomainEnergyRequest.EnergyRequest preflight coarse target) (cap :
       Fraction.Rational) (positive : 0 < cap) :
     (request.limitReadings cap positive).readingTarget ≤ cap := Fraction.Order.Basic.min_le_right _ _
 
 /-- Tightening the reading tolerance retains the exact original observation mesh. -/
 theorem DomainEnergyRequest.EnergyRequest.limitReadings_mesh
-    (request : Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest preflight coarse target) (cap :
+    (request : DomainEnergyRequest.EnergyRequest preflight coarse target) (cap :
       Fraction.Rational) (positive : 0 < cap) :
     (request.limitReadings cap positive).mesh = request.mesh := rfl
 
 /-- Tightening the reading tolerance retains the exact original spatial depth. -/
 theorem DomainEnergyRequest.EnergyRequest.limitReadings_depth
-    (request : Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest preflight coarse target) (cap :
+    (request : DomainEnergyRequest.EnergyRequest preflight coarse target) (cap :
       Fraction.Rational) (positive : 0 < cap) :
     (request.limitReadings cap positive).depth = request.depth := rfl
 
@@ -113,16 +117,16 @@ theorem DomainEnergyRequest.EnergyRequest.limitReadings_depth
 The original request owners, mesh identities and spatial depths remain retained; only the reading cap and a certified
 common numerical stage are tightened. -/
 theorem DomainEnergyRequest.EnergyRequest.limitReadings_index_ge
-    (request : Hyperelliptic.Meshes.PuncturedGrid.DomainEnergyRequest.EnergyRequest preflight coarse target) (cap :
+    (request : DomainEnergyRequest.EnergyRequest preflight coarse target) (cap :
       Fraction.Rational) (positive : 0 < cap) :
     request.modelRequest.index ≤ (request.limitReadings cap positive).modelRequest.index := Data.Nat.Order.le_max_left _
       _
 
 variable {face : RegularFace bank} {models :
-  Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames face} {sheet : Fin 2}
-  {domain : Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain models sheet} {box :
+  Face.InverseModels.BranchCellBank.FaceModels frames face} {sheet : Fin 2}
+  {domain : Face.Periods.PeriodDomain models sheet} {box :
     Rational.Box}
-  {preflight : Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight domain}
+  {preflight : DomainBasisBounds.EnergyPreflight domain}
   {first last : Meshes.RectangularObservationMesh.ObservationMesh domain.cuts box} {target : Fraction.Rational}
 
 /-- Transport the retained ownership request along a certified mesh equality.
@@ -131,23 +135,23 @@ The supplied equality changes the observation-mesh index of the same request.
 Its original preflight, target, numerical index and retained preparation data
 are transported together. -/
 @[expose] def DomainClippedRequest.ClippedBasisRequest.transportMesh
-    (request : Hyperelliptic.Meshes.PuncturedGrid.DomainClippedRequest.ClippedBasisRequest preflight first target)
+    (request : DomainClippedRequest.ClippedBasisRequest preflight first target)
       (equal : first = last) :
-    Hyperelliptic.Meshes.PuncturedGrid.DomainClippedRequest.ClippedBasisRequest preflight last target := equal ▸ request
+    DomainClippedRequest.ClippedBasisRequest preflight last target := equal ▸ request
 
 /-- Transport along an exact observation-mesh equality preserves the original ownership request index. -/
 theorem DomainClippedRequest.ClippedBasisRequest.transportMesh_index
-    (request : Hyperelliptic.Meshes.PuncturedGrid.DomainClippedRequest.ClippedBasisRequest preflight first target)
+    (request : DomainClippedRequest.ClippedBasisRequest preflight first target)
       (equal : first = last) :
     (request.transportMesh equal).index = request.index := by
   cases equal
   rfl
 
-variable {faces : List (RegularFace bank)} {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank
+variable {faces : List (RegularFace bank)} {domains : Face.DomainBanks.FaceDomainBank
   frames faces}
 
-variable {sheet : Fin 2} {coarse : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains sheet}
-  {fixed : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {target :
+variable {sheet : Fin 2} {coarse : RegularMeshes domains sheet}
+  {fixed : RegularMeshes.Preflights domains sheet} {target :
   Fraction.Rational}
 
 /-- Tighten each original face's reading tolerance to its supplied positive cap and retain a common stage above the old
@@ -156,10 +160,10 @@ request.
 The original request owners, mesh identities and spatial depths remain retained; only the reading cap and a certified
 common numerical stage are tightened. -/
 @[expose] def RegularDomainMeshes.RegularMeshes.Request.limitReadings
-    (request : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request coarse fixed target)
+    (request : RegularMeshes.Request coarse fixed target)
     (caps : Fin faces.length → Fraction.Rational) (positive : ∀ position, 0 < caps position) :
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request coarse fixed target :=
-  let entries := Data.Vector.DependentVector.ofFn fun position =>
+      RegularMeshes.Request coarse fixed target :=
+  let entries := DependentVector.ofFn fun position =>
     (request.entries.get position).limitReadings (caps position) (positive position)
   { request with
     entries := entries
@@ -169,38 +173,38 @@ common numerical stage are tightened. -/
 
 /-- Each tightened face request retains the exact original observation mesh. -/
 theorem RegularDomainMeshes.RegularMeshes.Request.limitReadings_mesh
-    (request : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request coarse fixed target)
+    (request : RegularMeshes.Request coarse fixed target)
     (caps : Fin faces.length → Fraction.Rational) (positive : ∀ position, 0 < caps position) (position : Fin
       faces.length) :
     (request.limitReadings caps positive).meshes.entries.get position = request.meshes.entries.get position := by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request.mesh_eq,
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request.mesh_eq]
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request.limitReadings]
-  rw [Data.Vector.DependentVector.ofFn_get]
+  rw [RegularMeshes.Request.mesh_eq,
+    RegularMeshes.Request.mesh_eq]
+  dsimp only [RegularMeshes.Request.limitReadings]
+  rw [DependentVector.ofFn_get]
   rfl
 
 /-- Each tightened face request retains the exact original spatial depth. -/
 theorem RegularDomainMeshes.RegularMeshes.Request.limitReadings_depth
-    (request : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request coarse fixed target)
+    (request : RegularMeshes.Request coarse fixed target)
     (caps : Fin faces.length → Fraction.Rational) (positive : ∀ position, 0 < caps position) (position : Fin
       faces.length) :
     ((request.limitReadings caps positive).entries.get position).depth = (request.entries.get position).depth := by
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request.limitReadings]
-  rw [Data.Vector.DependentVector.ofFn_get]
+  dsimp only [RegularMeshes.Request.limitReadings]
+  rw [DependentVector.ofFn_get]
   rfl
 
 /-- Each tightened face reading tolerance fits its supplied positive cap. -/
 theorem RegularDomainMeshes.RegularMeshes.Request.limitReadings_target_le
-    (request : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request coarse fixed target)
+    (request : RegularMeshes.Request coarse fixed target)
     (caps : Fin faces.length → Fraction.Rational) (positive : ∀ position, 0 < caps position) (position : Fin
       faces.length) :
     ((request.limitReadings caps positive).entries.get position).readingTarget ≤ caps position := by
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request.limitReadings]
-  rw [Data.Vector.DependentVector.ofFn_get]
+  dsimp only [RegularMeshes.Request.limitReadings]
+  rw [DependentVector.ofFn_get]
   exact (request.entries.get position).limitReadings_target_le _ _
 
-variable {coarse : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains sheet}
-  {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+variable {coarse : (sheet : Fin 2) → RegularMeshes domains sheet}
+  {fixed : (sheet : Fin 2) → RegularMeshes.Preflights domains
     sheet} {target : Fraction.Rational}
 
 /-- Tighten the original reading tolerances on both sheets, preserving their shared spatial depths and increasing only
@@ -209,17 +213,17 @@ the common numerical stage.
 The original request owners, mesh identities and spatial depths remain retained; only the reading cap and a certified
 common numerical stage are tightened. -/
 @[expose] def TwoSheetBilinearRequest.TwoSheetRequest.limitReadings
-    (request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest coarse fixed target)
+    (request : TwoSheetBilinearRequest.TwoSheetRequest coarse fixed target)
     (caps : Fin 2 → Fin faces.length → Fraction.Rational) (positive : ∀ sheet position, 0 < caps sheet position) :
-    Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest coarse fixed target :=
-  let entries := Data.Vector.DependentVector.ofFn fun sheet : Fin 2 =>
+    TwoSheetBilinearRequest.TwoSheetRequest coarse fixed target :=
+  let entries := DependentVector.ofFn fun sheet : Fin 2 =>
     (request.entries.get sheet).limitReadings (caps sheet) (positive sheet)
   { request with
     entries := entries
     depth_eq := fun sheet position => by
       dsimp only [entries]
-      rw [Data.Vector.DependentVector.ofFn_get,
-        Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Request.limitReadings_depth]
+      rw [DependentVector.ofFn_get,
+        RegularMeshes.Request.limitReadings_depth]
       exact request.depth_eq sheet position
     index := max request.index (entries.maximum (fun _ entry => entry.index))
     index_ge := fun sheet => (entries.get_le_maximum (fun _ entry => entry.index) sheet).trans
@@ -227,27 +231,27 @@ common numerical stage are tightened. -/
 
 /-- Each tightened sheet and face retains its exact original observation mesh. -/
 theorem TwoSheetBilinearRequest.TwoSheetRequest.limitReadings_mesh
-    (request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest coarse fixed target)
+    (request : TwoSheetBilinearRequest.TwoSheetRequest coarse fixed target)
     (caps : Fin 2 → Fin faces.length → Fraction.Rational) (positive : ∀ sheet position, 0 < caps sheet position)
     (sheet : Fin 2) (position : Fin faces.length) :
     ((request.limitReadings caps positive).entries.get sheet).meshes.entries.get position =
       (request.entries.get sheet).meshes.entries.get position := by
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest.limitReadings]
-  rw [Data.Vector.DependentVector.ofFn_get]
+  dsimp only [TwoSheetBilinearRequest.TwoSheetRequest.limitReadings]
+  rw [DependentVector.ofFn_get]
   exact (request.entries.get sheet).limitReadings_mesh _ _ position
 
 /-- Each tightened sheet and face reading tolerance fits its supplied positive cap. -/
 theorem TwoSheetBilinearRequest.TwoSheetRequest.limitReadings_target_le
-    (request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest coarse fixed target)
+    (request : TwoSheetBilinearRequest.TwoSheetRequest coarse fixed target)
     (caps : Fin 2 → Fin faces.length → Fraction.Rational) (positive : ∀ sheet position, 0 < caps sheet position)
     (sheet : Fin 2) (position : Fin faces.length) :
     (((request.limitReadings caps positive).entries.get sheet).entries.get position).readingTarget ≤ caps sheet position
       := by
-  dsimp only [Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest.limitReadings]
-  rw [Data.Vector.DependentVector.ofFn_get]
+  dsimp only [TwoSheetBilinearRequest.TwoSheetRequest.limitReadings]
+  rw [DependentVector.ofFn_get]
   exact (request.entries.get sheet).limitReadings_target_le _ _ position
 
-variable {energy : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest coarse fixed target}
+variable {energy : TwoSheetBilinearRequest.TwoSheetRequest coarse fixed target}
   {ownershipTarget : Fraction.Rational}
 
 /-- Reuse every ownership preparation: tightening primitive accuracy leaves
@@ -256,11 +260,11 @@ its actual observation meshes unchanged.
 The original request owners, mesh identities and spatial depths remain retained; only the reading cap and a certified
 common numerical stage are tightened. -/
 @[expose] def RegularClippedRequest.ClippedRequest.limitReadings
-    (request : Hyperelliptic.Meshes.PuncturedGrid.RegularClippedRequest.ClippedRequest energy ownershipTarget)
+    (request : RegularClippedRequest.ClippedRequest energy ownershipTarget)
     (caps : Fin 2 → Fin faces.length → Fraction.Rational) (positive : ∀ sheet position, 0 < caps sheet position) :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularClippedRequest.ClippedRequest (energy.limitReadings caps positive)
+    RegularClippedRequest.ClippedRequest (energy.limitReadings caps positive)
       ownershipTarget :=
-  let entries := Data.Vector.DependentVector.ofFn fun sheet : Fin 2 => Data.Vector.DependentVector.ofFn fun position :
+  let entries := DependentVector.ofFn fun sheet : Fin 2 => DependentVector.ofFn fun position :
     Fin faces.length =>
     ((request.entries.get sheet).get position).transportMesh (energy.limitReadings_mesh caps positive sheet
       position).symm
@@ -272,12 +276,12 @@ common numerical stage are tightened. -/
     energy_le := Data.Nat.Order.le_max_left _ _
     index_ge := fun sheet position => by
       dsimp only [entries]
-      rw [Data.Vector.DependentVector.ofFn_get, Data.Vector.DependentVector.ofFn_get,
-        Hyperelliptic.Meshes.PuncturedGrid.DomainClippedRequest.ClippedBasisRequest.transportMesh_index]
+      rw [DependentVector.ofFn_get, DependentVector.ofFn_get,
+        DomainClippedRequest.ClippedBasisRequest.transportMesh_index]
       exact (request.index_ge sheet position).trans (Data.Nat.Order.le_max_right _ _) }
 
-variable {coarse : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains sheet}
-  {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+variable {coarse : (sheet : Fin 2) → RegularMeshes domains sheet}
+  {fixed : (sheet : Fin 2) → RegularMeshes.Preflights domains
     sheet} {target : Fraction.Rational}
 
 /-- Tighten the energy readings and transport the original ownership preparations along the retained exact mesh
@@ -286,16 +290,16 @@ identities.
 The original request owners, mesh identities and spatial depths remain retained; only the reading cap and a certified
 common numerical stage are tightened. -/
 @[expose] def RegularLocalBoundaryRequest.LocalBoundaryRequest.limitReadings
-    (request : Hyperelliptic.Meshes.PuncturedGrid.RegularLocalBoundaryRequest.LocalBoundaryRequest coarse fixed target)
+    (request : RegularLocalBoundaryRequest.LocalBoundaryRequest coarse fixed target)
     (caps : Fin 2 → Fin faces.length → Fraction.Rational) (positive : ∀ sheet position, 0 < caps sheet position) :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularLocalBoundaryRequest.LocalBoundaryRequest coarse fixed target :=
+    RegularLocalBoundaryRequest.LocalBoundaryRequest coarse fixed target :=
   { request with
     energy := request.energy.limitReadings caps positive
     ownership := request.ownership.limitReadings caps positive }
 
 /-- The tightened local-boundary request retains every original sheet and face observation mesh. -/
 theorem RegularLocalBoundaryRequest.LocalBoundaryRequest.limitReadings_mesh
-    (request : Hyperelliptic.Meshes.PuncturedGrid.RegularLocalBoundaryRequest.LocalBoundaryRequest coarse fixed target)
+    (request : RegularLocalBoundaryRequest.LocalBoundaryRequest coarse fixed target)
     (caps : Fin 2 → Fin faces.length → Fraction.Rational) (positive : ∀ sheet position, 0 < caps sheet position)
     (sheet : Fin 2) (position : Fin faces.length) :
     (((request.limitReadings caps positive).energy.entries.get sheet).meshes.entries.get position) =
@@ -304,7 +308,7 @@ theorem RegularLocalBoundaryRequest.LocalBoundaryRequest.limitReadings_mesh
 
 /-- Every tightened local-boundary reading tolerance fits its supplied positive cap. -/
 theorem RegularLocalBoundaryRequest.LocalBoundaryRequest.limitReadings_target_le
-    (request : Hyperelliptic.Meshes.PuncturedGrid.RegularLocalBoundaryRequest.LocalBoundaryRequest coarse fixed target)
+    (request : RegularLocalBoundaryRequest.LocalBoundaryRequest coarse fixed target)
     (caps : Fin 2 → Fin faces.length → Fraction.Rational) (positive : ∀ sheet position, 0 < caps sheet position)
     (sheet : Fin 2) (position : Fin faces.length) :
     ((((request.limitReadings caps positive).energy.entries.get sheet).entries.get position).readingTarget) ≤ caps sheet

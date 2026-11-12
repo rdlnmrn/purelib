@@ -62,6 +62,8 @@ import Purelib.Integration.Budget.Trace.Restoration
 import Purelib.Integration.Path.IncrementArea
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Algebra
@@ -119,23 +121,23 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy (
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+    UniformReciprocalModels.Data patch count}
   {cover : Cover data} {covers :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {bounds :
+    BasisSourceCovers parent}
+  {regular : RegularBounds.Data cap} {bounds :
     UniformBounds regular.padded}
   {depth floor sourceFloor : Nat} {target sourceTarget : Coordinate}
-  {index minimum stage : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {index minimum stage : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
   {polynomials : RegularBasisPolynomials cap
     index box}
   {anchorBank : PrimitiveCells data index
     cover.mesh.edges}
-  {bank : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank
+  {bank : BasisSourceLocations.SampleBank
     covers index}
   {basis : BasisBounds bounds}
   {joinTarget : Coordinate} {joinFloor : Nat}
@@ -155,7 +157,7 @@ open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 variable {energyTarget : Coordinate} {energyFloor energyDepth : Nat}
 
 variable {originals :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+  CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
   covers index}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -174,7 +176,7 @@ private theorem dyadic_nonempty (depth : Nat)
 
 /-- The retained common cover has at least one actual interval. -/
 private theorem common_nonempty {coverFloor : Nat}
-    (common : CommonCover.BasisCommonCover cover covers coverFloor) : common.intervals ≠ [] := by
+    (common : BasisCommonCover cover covers coverFloor) : common.intervals ≠ [] := by
   intro empty
   have edges := common.edges_eq
   rw [empty, List.map_nil] at edges
@@ -196,18 +198,18 @@ open
 namespace BasisCommonParentRequest
 
 variable {coverFloor : Nat} {common :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonCover cover covers coverFloor}
+  BasisCommonCover cover covers coverFloor}
   {allowance coefficientTarget : Coordinate}
 
 namespace Plan.Acquisition
 
 variable {request :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentRequest.BasisCommonParentRequest common basis
+  BasisCommonParentRequest common basis
   allowance coefficientTarget floor}
-  {plan : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentReadings.BasisCommonParentRequest.Plan
+  {plan : Plan
     request capSample polynomials minimum}
   {acquired :
-    CommonParentReadings.BasisCommonParentRequest.Plan.Acquisition
+    Plan.Acquisition
     plan anchorBank bank stage}
   {energyFloor radialDepth : Nat}
 
@@ -229,7 +231,7 @@ open
 namespace Sample
 
 variable {preparation :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonEnergyPreparation.EnergyPreparation
+  EnergyPreparation
   request.charts.requests plan.charts acquired.readings allowance energyFloor}
 
 namespace PreparedComparison
@@ -248,15 +250,15 @@ theorem endpointError_paid :
   endpointError
   (request := request) ≤ 4 * request.restoration.target := by
   have small := request.restoration.incoming_paid request.charts.local_positive.le request.source_le
-  have first := Fraction.Order.Arithmetic.add_le_add_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct small (by
-        decide : (0 : InverseRootPolynomial.Coordinate) ≤ 18))
+  have first := Arithmetic.add_le_add_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct small (by
+        decide : (0 : Coordinate) ≤ 18))
     (le_refl (2 * request.restoration.target))
-  have enlarged := Fraction.Order.Arithmetic.add_le_add_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by
-        decide +kernel : (18 : InverseRootPolynomial.Coordinate) ≤ 32)
-      (Fraction.Order.Field.div_nonneg_direct request.restoration.positive.le (by
-          decide : (0 : InverseRootPolynomial.Coordinate) ≤ 16)))
+  have enlarged := Arithmetic.add_le_add_direct
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct (by
+        decide +kernel : (18 : Coordinate) ≤ 32)
+      (Field.div_nonneg_direct request.restoration.positive.le (by
+          decide : (0 : Coordinate) ≤ 16)))
     (le_refl (2 * request.restoration.target))
   exact (show
     endpointError
@@ -266,85 +268,86 @@ theorem endpointError_paid :
       ring1).trans_le (first.trans (enlarged.trans_eq (calc
       32 * (request.restoration.target / 16) + 2 * request.restoration.target =
         2 * ((request.restoration.target / 16) * 16) + 2 * request.restoration.target := by ring1
-      _ = 4 * request.restoration.target := by rw [Fraction.Field.div_mul_cancel_of_ne _ _ (by
-          decide : (16 : InverseRootPolynomial.Coordinate) ≠ 0)]; ring1)))
+      _ = 4 * request.restoration.target := by
+        rw [Fraction.Field.div_mul_cancel_of_ne _ _ (by
+          decide : (16 : Coordinate) ≠ 0)]; ring1)))
 
 /-- All four actual endpoint corrections satisfy the common homogeneous allowance once the incoming root gap is paid. -/
-private theorem endpoint_bounds (previous : InverseRootPolynomial.Gaussian)
-    (gap : Data.Gaussian.Norm.Basic.normSq (sample.endpoints.first.2 - previous) ≤ request.restoration.target *
-      PreparedObservationCoercivity.coefficientNormSq coefficients) :
-    Data.Gaussian.Norm.Basic.normSq (Readings.firstChartValue coefficients request.charts.requests
+private theorem endpoint_bounds (previous : Gaussian)
+    (gap : Gaussian.Norm.Basic.normSq (sample.endpoints.first.2 - previous) ≤ request.restoration.target *
+      coefficientNormSq coefficients) :
+    Gaussian.Norm.Basic.normSq (Readings.firstChartValue coefficients request.charts.requests
       acquired.readings - sample.endpoints.first.1) ≤
 
         endpointError
-        (request := request) * PreparedObservationCoercivity.coefficientNormSq coefficients ∧
-    Data.Gaussian.Norm.Basic.normSq (sample.endpoints.last.1 - Readings.lastChartValue coefficients
+        (request := request) * coefficientNormSq coefficients ∧
+    Gaussian.Norm.Basic.normSq (sample.endpoints.last.1 - Readings.lastChartValue coefficients
       request.charts.requests acquired.readings) ≤
 
         endpointError
-        (request := request) * PreparedObservationCoercivity.coefficientNormSq coefficients ∧
-    Data.Gaussian.Norm.Basic.normSq (sample.endpoints.first.1 - previous) ≤
+        (request := request) * coefficientNormSq coefficients ∧
+    Gaussian.Norm.Basic.normSq (sample.endpoints.first.1 - previous) ≤
       endpointError
-      (request := request) * PreparedObservationCoercivity.coefficientNormSq coefficients ∧
-    Data.Gaussian.Norm.Basic.normSq (sample.endpoints.last.2 - sample.endpoints.last.1) ≤
+      (request := request) * coefficientNormSq coefficients ∧
+    Gaussian.Norm.Basic.normSq (sample.endpoints.last.2 - sample.endpoints.last.1) ≤
       endpointError
-      (request := request) * PreparedObservationCoercivity.coefficientNormSq coefficients := by
-  have normNonnegative : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients :=
+      (request := request) * coefficientNormSq coefficients := by
+  have normNonnegative : 0 ≤ coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
-    (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : InverseRootPolynomial.Coordinate)) _ (fun row =>
-      Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
+    (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Coordinate)) _ (fun row =>
+      normSq_nonneg (coefficients row)))
   have chartLe : 10 * request.charts.localAllowance^2 ≤
     endpointError
     (request := request) :=
-    le_add_of_nonneg_right (Fraction.Order.Arithmetic.mul_nonneg_direct (by
-        decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
-      (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 4)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _)) request.restoration.positive.le))
+    le_add_of_nonneg_right (Arithmetic.mul_nonneg_direct (by
+        decide : (0 : Coordinate) ≤ 2)
+      (add_nonneg (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 4)
+        (Arithmetic.sq_nonneg_direct _)) request.restoration.positive.le))
   have sourceLe : 4 * request.charts.localAllowance^2 ≤
     endpointError
     (request := request) :=
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide : (4 : InverseRootPolynomial.Coordinate) ≤
-      10) (Fraction.Order.Arithmetic.sq_nonneg_direct _)).trans chartLe
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct (by decide : (4 : Coordinate) ≤
+      10) (Arithmetic.sq_nonneg_direct _)).trans chartLe
   have incomingLe : 2 * (4 * request.charts.localAllowance^2 + request.restoration.target) ≤
     endpointError
     (request := request) :=
-    le_add_of_nonneg_left (Fraction.Order.Arithmetic.mul_nonneg_direct (by
-        decide : (0 : InverseRootPolynomial.Coordinate) ≤ 10) (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+    le_add_of_nonneg_left (Arithmetic.mul_nonneg_direct (by
+        decide : (0 : Coordinate) ≤ 10) (Arithmetic.sq_nonneg_direct _))
   have first := sample.endpoints.first_bounded.chart_close.trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct chartLe normNonnegative)
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct chartLe normNonnegative)
   have last := sample.endpoints.last_bounded.chart_close.trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct chartLe normNonnegative)
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct chartLe normNonnegative)
   have outgoing := sample.endpoints.last_bounded.source_close.trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct sourceLe normNonnegative)
-  have incoming := (Data.Gaussian.Norm.Bounds.normSq_sub_le_via sample.endpoints.first.1 sample.endpoints.first.2
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct sourceLe normNonnegative)
+  have incoming := (Gaussian.Norm.Bounds.normSq_sub_le_via sample.endpoints.first.1 sample.endpoints.first.2
     previous).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
       sample.endpoints.first_bounded.source_close gap)
-      (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2))
+      (by decide : (0 : Coordinate) ≤ 2))
   have incomingPaid := incoming.trans ((show 2 * (4 * request.charts.localAllowance^2 *
-    PreparedObservationCoercivity.coefficientNormSq coefficients +
-      request.restoration.target * PreparedObservationCoercivity.coefficientNormSq coefficients) =
+    coefficientNormSq coefficients +
+      request.restoration.target * coefficientNormSq coefficients) =
       (2 * (4 * request.charts.localAllowance^2 + request.restoration.target)) *
-        PreparedObservationCoercivity.coefficientNormSq coefficients by ring1).trans_le
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct incomingLe normNonnegative))
+        coefficientNormSq coefficients by ring1).trans_le
+    (Arithmetic.mul_le_mul_of_nonneg_right_direct incomingLe normNonnegative))
   rw [show Readings.firstChartValue coefficients request.charts.requests acquired.readings - sample.endpoints.first.1 =
     -(sample.endpoints.first.1 - Readings.firstChartValue coefficients request.charts.requests acquired.readings) by
-      ring1, Data.Gaussian.Norm.Basic.normSq_neg]
+      ring1, Gaussian.Norm.Basic.normSq_neg]
   rw [show sample.endpoints.last.2 - sample.endpoints.last.1 = -(sample.endpoints.last.1 - sample.endpoints.last.2) by
-    ring1, Data.Gaussian.Norm.Basic.normSq_neg]
+    ring1, Gaussian.Norm.Basic.normSq_neg]
   exact ⟨first, last, incomingPaid, outgoing⟩
 
 /-- Endpoint restoration changes the total by exactly the retained endpoint corrections; the fine child count does not
 enter this bound. -/
 theorem restored_endpoint_total_error (comparison : Acquisition.Sample.PreparedComparison sample) (previous :
-  InverseRootPolynomial.Gaussian)
-    (gap : Data.Gaussian.Norm.Basic.normSq (sample.endpoints.first.2 - previous) ≤ request.restoration.target *
-      PreparedObservationCoercivity.coefficientNormSq coefficients) :
-    Data.Gaussian.Norm.Basic.normSq ((PreparedComparison.restoredIntegral comparison previous).total -
+  Gaussian)
+    (gap : Gaussian.Norm.Basic.normSq (sample.endpoints.first.2 - previous) ≤ request.restoration.target *
+      coefficientNormSq coefficients) :
+    Gaussian.Norm.Basic.normSq ((PreparedComparison.restoredIntegral comparison previous).total -
       comparison.weighted.integral.total) ≤
       (16 *
         endpointError
-        (request := request)) * PreparedObservationCoercivity.coefficientNormSq coefficients := by
+        (request := request)) * coefficientNormSq coefficients := by
   have bounds :=
     endpoint_bounds
     previous gap
@@ -354,19 +357,19 @@ theorem restored_endpoint_total_error (comparison : Acquisition.Sample.PreparedC
 /-- All endpoint polygon terms are retained, including the interaction with the integral total. No closed-path area is
 assumed to vanish. -/
 theorem restored_endpoint_area_error (comparison : Acquisition.Sample.PreparedComparison sample) (previous :
-  InverseRootPolynomial.Gaussian)
-    (gap : Data.Gaussian.Norm.Basic.normSq (sample.endpoints.first.2 - previous) ≤ request.restoration.target *
-      PreparedObservationCoercivity.coefficientNormSq coefficients)
-    {bound : InverseRootPolynomial.Coordinate} (bounded : Data.Gaussian.Norm.Basic.normSq
-      comparison.weighted.integral.total ≤ bound * PreparedObservationCoercivity.coefficientNormSq coefficients) :
-    Data.Gaussian.Norm.Basic.normSq ((PreparedComparison.restoredIntegral comparison previous).area -
+  Gaussian)
+    (gap : Gaussian.Norm.Basic.normSq (sample.endpoints.first.2 - previous) ≤ request.restoration.target *
+      coefficientNormSq coefficients)
+    {bound : Coordinate} (bounded : Gaussian.Norm.Basic.normSq
+      comparison.weighted.integral.total ≤ bound * coefficientNormSq coefficients) :
+    Gaussian.Norm.Basic.normSq ((PreparedComparison.restoredIntegral comparison previous).area -
       comparison.weighted.integral.area) ≤
       (240 *
         endpointError
         (request := request) * bound + 352 *
         (endpointError
         (request := request))^2) *
-        (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
+        (coefficientNormSq coefficients)^2 := by
   have bounds :=
     endpoint_bounds
     previous gap
@@ -376,17 +379,17 @@ theorem restored_endpoint_area_error (comparison : Acquisition.Sample.PreparedCo
 /-- Bound the actual prepared total using its retained source primitive and its certified endpoint error, before adding
 the restoration increments. -/
 theorem integral_total_bound (comparison : Acquisition.Sample.PreparedComparison sample) :
-    Data.Gaussian.Norm.Basic.normSq comparison.weighted.integral.total ≤
+    Gaussian.Norm.Basic.normSq comparison.weighted.integral.total ≤
       (2 * (BasisSourceCovers.primitiveSlope covers + request.prepared.sourceTarget)) *
-        PreparedObservationCoercivity.coefficientNormSq coefficients := by
+        coefficientNormSq coefficients := by
   have source := ReciprocalDiskArcOwners.increment_bound originals coefficients (first := 0) (last := 1) ⟨le_rfl, by
     decide⟩ ⟨by decide, le_rfl⟩
-  rw [show ((1 : InverseRootPolynomial.Coordinate) - 0)^2 = 1 by decide, Fraction.Field.mul_one_direct, ←
+  rw [show ((1 : Coordinate) - 0)^2 = 1 by decide, Fraction.Field.mul_one_direct, ←
     Weighted.source_total comparison.weighted] at source
-  have combined := (Data.Gaussian.Norm.Bounds.normSq_sub_le_two comparison.weighted.source.total
+  have combined := (Gaussian.Norm.Bounds.normSq_sub_le_two comparison.weighted.source.total
     (comparison.weighted.source.total - comparison.weighted.integral.total)).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct source
-        (Weighted.total_error comparison.weighted)) (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2))
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct source
+        (Weighted.total_error comparison.weighted)) (by decide : (0 : Coordinate) ≤ 2))
   rw [show comparison.weighted.source.total - (comparison.weighted.source.total - comparison.weighted.integral.total) =
     comparison.weighted.integral.total by ring1] at combined
   exact combined.trans_eq (by ring1)
@@ -410,33 +413,33 @@ theorem integral_total_bound (comparison : Acquisition.Sample.PreparedComparison
 /-- Connect the complete restored integral polygon to the cached source polygon used by the original-schedule
 comparison. -/
 theorem restored_source_area_error (comparison : Acquisition.Sample.PreparedComparison sample) (previous :
-  InverseRootPolynomial.Gaussian)
-    (gap : Data.Gaussian.Norm.Basic.normSq (sample.endpoints.first.2 - previous) ≤ request.restoration.target *
-      PreparedObservationCoercivity.coefficientNormSq coefficients) :
-    Data.Gaussian.Norm.Basic.normSq ((PreparedComparison.restoredIntegral comparison previous).area -
+  Gaussian)
+    (gap : Gaussian.Norm.Basic.normSq (sample.endpoints.first.2 - previous) ≤ request.restoration.target *
+      coefficientNormSq coefficients) :
+    Gaussian.Norm.Basic.normSq ((PreparedComparison.restoredIntegral comparison previous).area -
       comparison.weighted.source.area) ≤
 
         restoredSourceAreaError
-        (request := request) * (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
+        (request := request) * (coefficientNormSq coefficients)^2 := by
   have source := comparison.weighted.area_error
   rw [comparison.weighted.difference_eq] at source
-  have reversed : Data.Gaussian.Norm.Basic.normSq (comparison.weighted.integral.area -
+  have reversed : Gaussian.Norm.Basic.normSq (comparison.weighted.integral.area -
     comparison.weighted.source.area) =
-      Data.Gaussian.Norm.Basic.normSq (comparison.weighted.source.area - comparison.weighted.integral.area) :=
+      Gaussian.Norm.Basic.normSq (comparison.weighted.source.area - comparison.weighted.integral.area) :=
         by
     rw [show comparison.weighted.integral.area - comparison.weighted.source.area =
       -(comparison.weighted.source.area - comparison.weighted.integral.area) by ring1,
-        Data.Gaussian.Norm.Basic.normSq_neg]
-  have combined := (Data.Gaussian.Norm.Bounds.normSq_sub_le_via (PreparedComparison.restoredIntegral comparison
+        Gaussian.Norm.Basic.normSq_neg]
+  have combined := (Gaussian.Norm.Bounds.normSq_sub_le_via (PreparedComparison.restoredIntegral comparison
     previous).area comparison.weighted.integral.area
     comparison.weighted.source.area).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
 
           (restored_endpoint_area_error
           comparison previous gap
           (integral_total_bound
           comparison))
-        (reversed.trans_le source)) (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2))
+        (reversed.trans_le source)) (by decide : (0 : Coordinate) ≤ 2))
   exact combined.trans_eq (by
     unfold restoredSourceAreaError
     ring1)
@@ -445,29 +448,29 @@ theorem restored_source_area_error (comparison : Acquisition.Sample.PreparedComp
 
 The bound uses the retained source and endpoint allowances and scales by the squared coefficient norm. -/
 theorem restored_source_total_error (comparison : Acquisition.Sample.PreparedComparison sample) (previous :
-  InverseRootPolynomial.Gaussian)
-    (gap : Data.Gaussian.Norm.Basic.normSq (sample.endpoints.first.2 - previous) ≤ request.restoration.target *
-      PreparedObservationCoercivity.coefficientNormSq coefficients) :
-    Data.Gaussian.Norm.Basic.normSq ((PreparedComparison.restoredIntegral comparison previous).total -
+  Gaussian)
+    (gap : Gaussian.Norm.Basic.normSq (sample.endpoints.first.2 - previous) ≤ request.restoration.target *
+      coefficientNormSq coefficients) :
+    Gaussian.Norm.Basic.normSq ((PreparedComparison.restoredIntegral comparison previous).total -
       comparison.weighted.source.total) ≤
 
         restoredSourceTotalError
-        (request := request) * PreparedObservationCoercivity.coefficientNormSq coefficients := by
-  have reversed : Data.Gaussian.Norm.Basic.normSq (comparison.weighted.integral.total -
+        (request := request) * coefficientNormSq coefficients := by
+  have reversed : Gaussian.Norm.Basic.normSq (comparison.weighted.integral.total -
     comparison.weighted.source.total) =
-      Data.Gaussian.Norm.Basic.normSq (comparison.weighted.source.total - comparison.weighted.integral.total)
+      Gaussian.Norm.Basic.normSq (comparison.weighted.source.total - comparison.weighted.integral.total)
         := by
     rw [show comparison.weighted.integral.total - comparison.weighted.source.total =
       -(comparison.weighted.source.total - comparison.weighted.integral.total) by ring1,
-        Data.Gaussian.Norm.Basic.normSq_neg]
-  exact ((Data.Gaussian.Norm.Bounds.normSq_sub_le_via (PreparedComparison.restoredIntegral comparison previous).total
+        Gaussian.Norm.Basic.normSq_neg]
+  exact ((Gaussian.Norm.Bounds.normSq_sub_le_via (PreparedComparison.restoredIntegral comparison previous).total
     comparison.weighted.integral.total
     comparison.weighted.source.total).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
 
           (restored_endpoint_total_error
           comparison previous gap) (reversed.trans_le (Weighted.total_error comparison.weighted)))
-        (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2))).trans_eq (by
+        (by decide : (0 : Coordinate) ≤ 2))).trans_eq (by
           unfold restoredSourceTotalError
           ring1)
 

@@ -52,6 +52,23 @@ constructive_injectivity Phase
 
 derive_exposed_repr Phase
 
+namespace BlockKind
+
+/-- Select the original unary phase for a block kind and retained counter. -/
+def unaryPhase (kind : BlockKind) (count : Nat) : Phase :=
+  match kind with
+  | .initialHigh => .highUnary count
+  | .initialLow => .lowUnary count
+  | .loop => .loopUnary count
+
+/-- Read the exact unary header of an initial high, initial low or loop block. -/
+def header (kind : BlockKind) (exponent : Nat) : List Bool :=
+  match kind with
+  | .initialHigh | .loop => List.replicate exponent true ++ [false]
+  | .initialLow => false :: (List.replicate exponent true ++ [false])
+
+end BlockKind
+
 namespace Phase
 
 section

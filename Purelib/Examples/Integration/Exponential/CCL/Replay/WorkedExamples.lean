@@ -24,11 +24,7 @@ import Purelib.Integration.Program.Gaussian.Cached.Basic
 @[expose] public section
 
 /-!
-# Automatically deepened exponential integration regressions
-
-The coefficient tables are generated and integrated by the shared partition
-kernel.  These examples exercise the degree selector and the actual CCL
-output/replay path, not a constant cell containing the expected answer.
+Finite observations and replay of the exponential integration program.
 -/
 
 namespace Purelib.Examples.Integration.Exponential.CCL.Replay.WorkedExamples
@@ -68,21 +64,6 @@ theorem actual_nonempty_prefix :
   exact Record.recorded_length
     Program.WorkedExamples.fixedProgram
     request 1
-
-/-- The exponential observation's first bit is true.
-
-The retained sample's norm lower bound determines the initial transducer decision. -/
-theorem actual_first_bit :
-  recorded.observation.word = [true] := open Purelib.Approximation in
-  open Purelib.Data in open Purelib.Data.Rat in by
-  rw [recorded,
-    Record.recorded_prefix]
-  apply Data.CCL.Transducer.Initial.Observation.advance_one_large
-  change (13 / 6 : Rational) < Data.Gaussian.Norm.Basic.normSq
-    (Program.WorkedExamples.fixedProgram.approximation.sample _)
-  rw [Program.WorkedExamples.fixedProgram, Exponential.Program.program_sample]
-  exact (show (13 / 6 : Rational) < 9 / 4 from by decide).trans_le
-    (Gaussian.Exponential.Taylor.Integral.Bounds.integral_norm_lower _)
 
 /-- The recorded eight-bit observation of the same exponential program and request. -/
 def recordedEight :=

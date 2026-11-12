@@ -189,12 +189,15 @@ private theorem fold_scan
               (Nat.add_assoc processed 1 coefficients.length).symm)
         rfl result
 
-/-- The automatic derivative of a positive-degree Scalar-rational
-polynomial is represented nonzero. -/
-theorem derivative_isZero_false
+/-- The finite derivative retains the exact preceding degree and degree-scaled leading coefficient.
+
+The original Horner scan supplies its complete leading-term certificate.
+The positive degree makes the displayed natural coefficient nonzero. -/
+theorem derivative_leading
     {p : CoefficientPolynomial} (nonzero : p.isZero = false)
     (positive : 0 < p.natDegree) :
-    (Dense.Derivative.derivative p).isZero = false := by
+    Dense.Leading.LeadingTerm (Dense.Derivative.derivative p) (p.natDegree - 1)
+      ((p.natDegree : Scalar) * p.leadingCoeff) := by
   rw [← Dense.Derivative.derivative_normalize p]
   cases coefficients : p.normalize.coeffs with
   | nil =>
@@ -274,10 +277,32 @@ theorem derivative_isZero_false
                   change ((1 : Nat) : Scalar) * leading = leading
                   rw [Nat.cast_one, one_mul]) derivativeLeading }
           have final := fold_scan leading remaining 2 initial initialState
-          have finalNonzero := final.derivative.nonzero
-          change ((Dense.Derivative.derivativeState p.normalize.coeffs).2).isZero = false
-          rw [coefficients]
-          simpa only [Dense.Derivative.derivativeState, List.foldl_cons] using finalNonzero
+          have inputDegree : p.natDegree = remaining.length + 1 := by
+            change p.normalize.coeffs.length - 1 = remaining.length + 1
+            rewrite [coefficients]
+            simp only [List.length_cons]
+            omega0
+          have inputLeading : p.leadingCoeff = leading := by
+            change p.normalize.coeffs.headD 0 = leading
+            rewrite [coefficients]
+            rfl
+          have derivativeEqual : Dense.Derivative.derivative p.normalize =
+              (remaining.foldl Dense.Derivative.derivativeStep initial).2 := by
+            change (Dense.Derivative.derivativeState p.normalize.coeffs).2 = _
+            rewrite [coefficients]
+            rfl
+          apply LeadingTerm.of_equal derivativeEqual
+            (by rewrite [inputDegree]; omega0) ?_ final.derivative
+          have coefficientIndex : p.natDegree = 2 + remaining.length - 1 := by
+            rewrite [inputDegree]
+            omega0
+          rewrite [coefficientIndex, inputLeading]
+          rfl
+
+/-- A positive-degree Gaussian polynomial has a represented nonzero finite derivative. -/
+theorem derivative_isZero_false {p : CoefficientPolynomial} (nonzero : p.isZero = false)
+    (positive : 0 < p.natDegree) : (Dense.Derivative.derivative p).isZero = false :=
+  (derivative_leading nonzero positive).nonzero
 
 end Purelib.Polynomial.Dense.Gaussian.Derivative.Degree
 

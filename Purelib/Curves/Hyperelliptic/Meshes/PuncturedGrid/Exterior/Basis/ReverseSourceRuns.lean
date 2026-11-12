@@ -130,20 +130,20 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentBl
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {count : Nat} {patch : PreparedPatch parent}
-  {sourceData : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
+  {sourceData : Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
     Cover sourceData}
   {covers : BasisSourceCovers parent} {minimum
     floor index depth : Nat}
@@ -151,7 +151,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {areaAllowance sourceTarget coefficientTarget : Coordinate}
   {request : BasisPreparedCommonRequest
     regular common areaAllowance sourceTarget coefficientTarget floor}
-  {box : Purelib.Geometry.Rational.Box}
+  {box : Geometry.Rational.Box}
   {polynomials : RegularBasisPolynomials cap
     index box}
   {originals :
@@ -186,18 +186,18 @@ set_option genInjectivity false in
 /-- Retain the descending physical fragments and the exact ascending reverse of their cached source increments. -/
 structure ReverseSourceRun (acquired : BasisPreparedCommonRequest.Acquisition request polynomials originals cells
   coefficients depth)
-    {faceIndex : Nat} (data : FragmentQueries.RowData occurrence faceIndex) where
+    {faceIndex : Nat} (data : RowData occurrence faceIndex) where
   /-- The actual descending physical fragments in their retained occurrence order. -/ fragments : List
-    (OwnedFragments.OwnedFragment (originals := originals) (coefficients := coefficients) data)
+    (OwnedFragment (originals := originals) (coefficients := coefficients) data)
   /-- The ascending parameter list obtained from the reversed original source increments. -/ points : List
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The reversed retained source increments are exactly the original primitive's parameterized increment list. -/
     source_eq : PairedAreaReversal.reverseIncrements ((fragments.map OwnedFragment.pair).map Prod.snd).flatten =
     SourceListResampling.increments
       (fun t => ConjugatePathReadback.conjugateDiagonal (PrimitiveBank.value originals coefficients t)) 0 points
   /-- The retained ascending parameters form a complete source chain from zero to one. -/ chain : SourceResampling.Chain
     0 points 1
-  /-- The common upper bound on the actual reversed parameter steps. -/ width : InverseRootPolynomial.Coordinate
+  /-- The common upper bound on the actual reversed parameter steps. -/ width : Coordinate
   /-- Every retained reversed parameter step fits the common width. -/ steps : SourceResampling.widths 0 points width
 
 constructive_injectivity ReverseSourceRun
@@ -205,10 +205,10 @@ constructive_injectivity ReverseSourceRun
 namespace ReverseSourceRun
 
 /-- Derive the reversed readback and its width from the retained chain. -/
-@[expose] def ofChain (fragments : List (OwnedFragments.OwnedFragment (originals := originals) (coefficients :=
+@[expose] def ofChain (fragments : List (OwnedFragment (originals := originals) (coefficients :=
   coefficients) data))
-    (chain : ReverseSourceChains.ReverseSourceChain fragments 1 0) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSourceRuns.ReverseSourceRun acquired data :=
+    (chain : ReverseSourceChain fragments 1 0) :
+      ReverseSourceRun acquired data :=
   { fragments := fragments
     points := ReverseSourceChain.parameters fragments
     source_eq := chain.source_readback
@@ -217,16 +217,16 @@ namespace ReverseSourceRun
     steps := chain.parameter_widths (fun _ member => PairedFragmentBlocks.le_maximum _ member) }
 
 /-- The coefficient-independent allowance combining the original fragment error and reversed source-resampling error. -/
-@[expose] def error (run : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSourceRuns.ReverseSourceRun
+@[expose] def error (run : ReverseSourceRun
   acquired data) : Coordinate :=
   2 * (FragmentBlocks.fragmentBlockError (acquired := acquired) run.fragments +
     16 * (BasisSourceCovers.primitiveSlope covers)^2 *
-      (max run.width ((1 / 2 : InverseRootPolynomial.Coordinate)^(common.depth + acquired.extraDepth)))^2)
+      (max run.width ((1 / 2 : Coordinate)^(common.depth + acquired.extraDepth)))^2)
 
 /-- The complete descending physical area approximates the negative cached source area, with the same finite fragment
 and resampling costs. -/
 theorem cached_source_area_bound (run :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSourceRuns.ReverseSourceRun acquired data)
+  ReverseSourceRun acquired data)
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs) :
     Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area ((run.fragments.map OwnedFragment.pair).map
       Prod.fst).flatten +
@@ -234,18 +234,18 @@ theorem cached_source_area_bound (run :
   have owned := FragmentBlocks.owned_fragments_area_bound (acquired := acquired) run.fragments
   have source := Weighted.source_run_bound weighted run.chain run.steps
   rw [← run.source_eq, PairedAreaReversal.area_reverseIncrements] at source
-  have negative (a b : InverseRootPolynomial.Gaussian) : -a - b = -(a + b) := by ring1
+  have negative (a b : Gaussian) : -a - b = -(a + b) := by ring1
   rw [negative, Data.Gaussian.Norm.Basic.normSq_neg] at source
   have bounded := (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct owned
-      source) (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2))
-  have cancel (a b c : InverseRootPolynomial.Gaussian) : (a - b) + (b + c) = a + c := by ring1
+      source) (by decide : (0 : Coordinate) ≤ 2))
+  have cancel (a b c : Gaussian) : (a - b) + (b + c) = a + c := by ring1
   rw [cancel] at bounded
-  exact bounded.trans_eq (by unfold ReverseSourceRuns.ReverseSourceRun.error; ring1)
+  exact bounded.trans_eq (by unfold ReverseSourceRun.error; ring1)
 
 /-- The reversed total has the original parent's cached orientation. -/
 theorem reversed_source_total (run :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSourceRuns.ReverseSourceRun acquired data)
+  ReverseSourceRun acquired data)
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs) :
     PairedIncrementArea.total
       (PairedAreaReversal.reverseIncrements ((run.fragments.map OwnedFragment.pair).map Prod.snd).flatten) =
@@ -254,14 +254,14 @@ theorem reversed_source_total (run :
   exact Weighted.source_run_total weighted run.chain
 
 /-- The original descending path has the opposite cached source total. -/
-theorem source_total (run : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSourceRuns.ReverseSourceRun
+theorem source_total (run : ReverseSourceRun
   acquired data)
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs) :
     PairedIncrementArea.total ((run.fragments.map OwnedFragment.pair).map Prod.snd).flatten =
       PrimitivePoint.zero.sub (ConjugatePathReadback.conjugateDiagonal weighted.source.total) := by
   have total := run.reversed_source_total weighted
   rw [PairedAreaReversal.total_reverseIncrements] at total
-  have twice (point : Stokes.PrimitivePoint) : PrimitivePoint.zero.sub (PrimitivePoint.zero.sub point) = point := by
+  have twice (point : PrimitivePoint) : PrimitivePoint.zero.sub (PrimitivePoint.zero.sub point) = point := by
     cases point
     apply congrArg₂ PrimitivePoint.mk <;> dsimp [PrimitivePoint.zero, PrimitivePoint.sub] <;> ring1
   have opposite := congrArg (fun point => PrimitivePoint.zero.sub point) total

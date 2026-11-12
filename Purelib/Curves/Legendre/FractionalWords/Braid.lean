@@ -65,13 +65,13 @@ open Purelib.Riemann.Integration.LegendreFractionalAction
 /-- Folding the matrices of a finite braid word is exactly the established Picard--Lefschetz word matrix. -/
 theorem matrixProduct_braidMatrices
     (word : Braid.Word 3) :
-    Word.matrixProduct (Curves.Legendre.FractionalWords.Braid.braidMatrices word) =
+    Word.matrixProduct (braidMatrices word) =
       Words.wordMatrix word := by
   induction word with
   | nil => rfl
   | cons generator remaining inductionHypothesis =>
       change Multiplication.mul
-          (Word.matrixProduct (Curves.Legendre.FractionalWords.Braid.braidMatrices remaining))
+          (Word.matrixProduct (braidMatrices remaining))
           (Generators.generatorMatrix generator) =
         Multiplication.mul
           (Words.wordMatrix remaining)
@@ -83,11 +83,11 @@ traversal-order matrix fold. -/
 theorem braidMatrices_inverse_left
     (word : Braid.Word 3) :
     Multiplication.mul
-        (Word.matrixProduct (Curves.Legendre.FractionalWords.Braid.braidMatrices word.inverse))
-        (Word.matrixProduct (Curves.Legendre.FractionalWords.Braid.braidMatrices word)) =
+        (Word.matrixProduct (braidMatrices word.inverse))
+        (Word.matrixProduct (braidMatrices word)) =
       Multiplication.identity := by
-  rw [Curves.Legendre.FractionalWords.Braid.matrixProduct_braidMatrices,
-    Curves.Legendre.FractionalWords.Braid.matrixProduct_braidMatrices]
+  rw [matrixProduct_braidMatrices,
+    matrixProduct_braidMatrices]
   exact
     (Words.wordMatrix_inverse_identities word).1
 
@@ -95,11 +95,11 @@ theorem braidMatrices_inverse_left
 theorem braidMatrices_inverse_right
     (word : Braid.Word 3) :
     Multiplication.mul
-        (Word.matrixProduct (Curves.Legendre.FractionalWords.Braid.braidMatrices word))
-        (Word.matrixProduct (Curves.Legendre.FractionalWords.Braid.braidMatrices word.inverse)) =
+        (Word.matrixProduct (braidMatrices word))
+        (Word.matrixProduct (braidMatrices word.inverse)) =
       Multiplication.identity := by
-  rw [Curves.Legendre.FractionalWords.Braid.matrixProduct_braidMatrices,
-    Curves.Legendre.FractionalWords.Braid.matrixProduct_braidMatrices]
+  rw [matrixProduct_braidMatrices,
+    matrixProduct_braidMatrices]
   exact
     (Words.wordMatrix_inverse_identities word).2
 
@@ -109,41 +109,41 @@ The inverse law is derived from the certified inverse of every displayed braid g
 @[expose] def braidWord_reversal_rows (word : Braid.Word 3)
     (tau : CoherentNamed) :
     Gaussian.Vector.Operational.Basic.VectorEquivalent
-      (Action.matrixAction (Word.matrixProduct (Curves.Legendre.FractionalWords.Braid.braidMatrices word.inverse))
-        (Action.matrixAction (Word.matrixProduct (Curves.Legendre.FractionalWords.Braid.braidMatrices word))
+      (Action.matrixAction (Word.matrixProduct (braidMatrices word.inverse))
+        (Action.matrixAction (Word.matrixProduct (braidMatrices word))
           (fractionalVector tau)))
       (fractionalVector tau) :=
   Homogeneous.fractionalRows_inverse_of_mul_eq_identity
-    (Word.matrixProduct (Curves.Legendre.FractionalWords.Braid.braidMatrices word.inverse))
-    (Word.matrixProduct (Curves.Legendre.FractionalWords.Braid.braidMatrices word)) tau
-    (Curves.Legendre.FractionalWords.Braid.braidMatrices_inverse_left word)
+    (Word.matrixProduct (braidMatrices word.inverse))
+    (Word.matrixProduct (braidMatrices word)) tau
+    (braidMatrices_inverse_left word)
 
 /-- Productive finite braid-word reversal, with all three denominator preparations retained at their exact combined and
 intermediate names. -/
 @[expose] def braidWord_productReversal (word : Braid.Word 3)
     (tau : CoherentNamed)
     (preparation : Composition.Basic.CompositionPreparation
-      (Word.matrixProduct (Curves.Legendre.FractionalWords.Braid.braidMatrices word.inverse))
-      (Word.matrixProduct (Curves.Legendre.FractionalWords.Braid.braidMatrices word)) tau) :
-    Gaussian.Equivalence.NamedEquivalent preparation.nestedOutput.name tau.name :=
-  Words.Product.productReversal (Curves.Legendre.FractionalWords.Braid.braidMatrices word)
-    (Curves.Legendre.FractionalWords.Braid.braidMatrices word.inverse) tau
-    preparation (Curves.Legendre.FractionalWords.Braid.braidMatrices_inverse_left word)
+      (Word.matrixProduct (braidMatrices word.inverse))
+      (Word.matrixProduct (braidMatrices word)) tau) :
+    NamedEquivalent preparation.nestedOutput.name tau.name :=
+  Product.productReversal (braidMatrices word)
+    (braidMatrices word.inverse) tau
+    preparation (braidMatrices_inverse_left word)
 
 /-- Reversing a finite braid word and every certified generator undoes its actual stepwise productive fold, not merely
 the quotient by its folded matrix. -/
 @[expose] def braidWord_foldReversal (word : Braid.Word 3)
     (tau : CoherentNamed)
     (preparations : Reversal.FoldReversalPreparations
-      (Curves.Legendre.FractionalWords.Braid.braidMatrices word) (Curves.Legendre.FractionalWords.Braid.braidMatrices
+      (braidMatrices word) (braidMatrices
         word.inverse) tau) :
-    Gaussian.Equivalence.NamedEquivalent
-      (Fold.Basic.foldAction
-        (Fold.Basic.foldAction tau (Curves.Legendre.FractionalWords.Braid.braidMatrices word) preparations.forward)
-        (Curves.Legendre.FractionalWords.Braid.braidMatrices word.inverse) preparations.reverse).name tau.name :=
-  Reversal.foldAction_reversal (Curves.Legendre.FractionalWords.Braid.braidMatrices word)
-    (Curves.Legendre.FractionalWords.Braid.braidMatrices word.inverse) tau
-    preparations (Curves.Legendre.FractionalWords.Braid.braidMatrices_inverse_left word)
+    NamedEquivalent
+      (Basic.foldAction
+        (Basic.foldAction tau (braidMatrices word) preparations.forward)
+        (braidMatrices word.inverse) preparations.reverse).name tau.name :=
+  Reversal.foldAction_reversal (braidMatrices word)
+    (braidMatrices word.inverse) tau
+    preparations (braidMatrices_inverse_left word)
 
 end
 

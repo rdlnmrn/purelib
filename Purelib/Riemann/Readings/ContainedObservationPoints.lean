@@ -25,6 +25,10 @@ import Purelib.Polynomial.Dense.Multiplication
 import Purelib.Riemann.Readings.PreparedObservationNeighborhoods
 import Purelib.Tactic.Ring
 
+open Purelib.Approximation.Rational.Budget
+
+open Purelib.Polynomial.Dense.Gaussian.Basic
+
 @[expose] public section
 
 /-!
@@ -54,15 +58,15 @@ section
 open Purelib.Data
 open Purelib.Polynomial
 /-- Multiply a polynomial by one linear exclusion factor for each listed point. -/
-public def excluded (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) : List
+public def excluded (polynomial : CanonicalCoefficients.CoefficientPolynomial) : List
   Gaussian.Basic.Canonical →
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+  CanonicalCoefficients.CoefficientPolynomial
   | [] => polynomial
   | point :: remaining => exclusionFactor point * excluded polynomial remaining
 
 /-- A nonzero polynomial remains nonzero after adjoining the finite exclusion factors. -/
 public theorem excluded_nonzero (polynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (nonzero : polynomial.isZero =
+  CanonicalCoefficients.CoefficientPolynomial) (nonzero : polynomial.isZero =
   false)
     (points : List Gaussian.Basic.Canonical) : (excluded polynomial points).isZero = false := by
   induction points with
@@ -74,21 +78,21 @@ public theorem excluded_nonzero (polynomial :
 
 Structural membership identifies the original head or retained tail occurrence.
 The same exclusion factor makes the evaluation vanish in either case. -/
-public theorem excluded_zero (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+public theorem excluded_zero (polynomial : CanonicalCoefficients.CoefficientPolynomial)
   (points : List
   Gaussian.Basic.Canonical)
     (point : Gaussian.Basic.Canonical) (member : point ∈ points) : (excluded polynomial points).eval point = 0 := by
   induction points with
   | nil => exact (List.not_mem_nil member).elim
   | cons first remaining ih =>
-    rw [excluded, Dense.Basic.DensePolynomial.eval_mul]
+    rw [excluded, eval_mul]
     rcases Membership.mem_cons.mp member with rfl | member
     · rw [exclusionFactor_eval, Gaussian.Basic.sub_self, Gaussian.Basic.zero_mul]
     · rw [ih member, Gaussian.Basic.mul_zero]
 
 /-- A point clear of the exclusion product is clear of the original polynomial. -/
 public theorem excluded_clear (polynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (points : List
+  CanonicalCoefficients.CoefficientPolynomial) (points : List
   Gaussian.Basic.Canonical)
     (point : Gaussian.Basic.Canonical) (clear : (excluded polynomial points).eval point ≠ 0) : polynomial.eval point ≠ 0
       := by
@@ -98,7 +102,7 @@ public theorem excluded_clear (polynomial :
     apply ih
     intro zero
     apply clear
-    rw [excluded, Dense.Basic.DensePolynomial.eval_mul, zero, Gaussian.Basic.mul_zero]
+    rw [excluded, eval_mul, zero, Gaussian.Basic.mul_zero]
 
 end
 
@@ -107,7 +111,7 @@ open Purelib.Polynomial in
 /-- Build an observation bank from explicit distinct points with certified nonzero evaluations.
 
 Cache their exclusion product once and retain its nonvanishing and point-exclusion certificates. -/
-def ObservationBank.ofPoints (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+def ObservationBank.ofPoints (polynomial : CanonicalCoefficients.CoefficientPolynomial)
   (nonzero : polynomial.isZero = false)
     (points : List Gaussian.Basic.Canonical) (distinct : points.Nodup)
     (clear : ∀ point ∈ points, polynomial.eval point ≠ 0) : ObservationBank polynomial points.length :=
@@ -116,7 +120,7 @@ def ObservationBank.ofPoints (polynomial : Polynomial.Dense.Gaussian.Basic.Canon
 
 open Purelib.Polynomial in
 /-- Transporting a bank across a count equality preserves its retained point list. -/
-public theorem cast_points {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+public theorem cast_points {polynomial : CanonicalCoefficients.CoefficientPolynomial}
   {first last : Nat} (equal : first = last)
     (bank : ObservationBank polynomial first) : (equal ▸ bank).points = bank.points := by cases equal; rfl
 
@@ -127,7 +131,7 @@ set_option genInjectivity false in
 
 The record retains the ordinary polynomial bank and geometric containment for every original bounded index. -/
 structure BoxObservationPoints (polynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (box : Rational.Box)
+  CanonicalCoefficients.CoefficientPolynomial) (box : Box)
   (count : Nat) where
   /-- The retained polynomial observation bank of the requested size. -/ bank : ObservationBank polynomial count
   /-- Every retained bank point lies strictly inside the same box. -/ inside : ∀ index, box.StrictContains (bank.pointAt
@@ -142,15 +146,15 @@ open Purelib.Approximation
 open Purelib.Data
 open Purelib.Geometry
 /-- The horizontal spacing for the requested number of interior observation points. -/
-public def step (box : Rational.Box) (count : Nat) : Rat.Fraction.Rational :=
-  box.widthX / (Rational.Budget.Aggregate.countCoordinate count + 1)
+public def step (box : Box) (count : Nat) : Rational :=
+  box.widthX / (Aggregate.countCoordinate count + 1)
 
 /-- The interior-point spacing is positive in a proper rectangle. -/
-public theorem step_positive {box : Rational.Box} (proper : box.Proper) (count : Nat) : 0 < step box
+public theorem step_positive {box : Box} (proper : box.Proper) (count : Nat) : 0 < step box
   count := by
   unfold step
-  rw [Rational.Budget.Aggregate.countCoordinate_eq]
-  exact Rat.Fraction.Order.Field.div_pos_direct (Rat.Fraction.Order.Arithmetic.sub_pos_direct proper.1)
+  rw [Aggregate.countCoordinate_eq]
+  exact Field.div_pos_direct (Arithmetic.sub_pos_direct proper.1)
     (Arithmetic.add_pos_of_nonneg_of_pos_direct (Rat.Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count)) (by
       decide))
 
@@ -159,8 +163,8 @@ end
 open Purelib.Approximation in
 open Purelib.Geometry in
 /-- The indexed horizontal-progression point at the box's vertical midpoint. -/
-public def point (box : Rational.Box) (count : Nat) (index : Fin count) : Gaussian :=
-  ⟨box.xLower + (Rational.Budget.Aggregate.countCoordinate index.val + 1) * step box count,
+public def point (box : Box) (count : Nat) (index : Fin count) : Gaussian :=
+  ⟨box.xLower + (Aggregate.countCoordinate index.val + 1) * step box count,
     box.yLower + box.widthY / 2⟩
 
 section
@@ -172,65 +176,65 @@ open Purelib.Geometry
 The bounded index places the original horizontal progression between both
 sides, while the exact vertical midpoint lies between its original lower and
 upper sides. Direct scalar translation preserves those coordinates. -/
-public theorem point_inside {box : Rational.Box} (proper : box.Proper) (count : Nat) (index : Fin
+public theorem point_inside {box : Box} (proper : box.Proper) (count : Nat) (index : Fin
   count) :
     box.StrictContains (point box count index) := by
   have stepPositive := step_positive proper count
-  have indexPositive : (0 : Rat.Fraction.Rational) < (index.val : Rat.Fraction.Rational) + 1 :=
+  have indexPositive : (0 : Rational) < (index.val : Rational) + 1 :=
     Arithmetic.add_pos_of_nonneg_of_pos_direct (Rat.Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) (by decide)
-  have upper := Rat.Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
-    (Rat.Fraction.Order.Arithmetic.add_lt_add_right_direct (Rat.Fraction.Cast.Order.natCast_lt_direct index.isLt) 1)
+  have upper := Arithmetic.mul_lt_mul_of_pos_right_direct
+    (Arithmetic.add_lt_add_right_direct (Rat.Fraction.Cast.Order.natCast_lt_direct index.isLt) 1)
       stepPositive
-  have total : ((count : Rat.Fraction.Rational) + 1) * step box count = box.widthX := by
-    rw [step, Rational.Budget.Aggregate.countCoordinate_eq, Rat.Fraction.Field.mul_comm]
+  have total : ((count : Rational) + 1) * step box count = box.widthX := by
+    rw [step, Aggregate.countCoordinate_eq, Rat.Fraction.Field.mul_comm]
     exact Rat.Fraction.Field.div_mul_cancel_of_ne _ _
       (Arithmetic.add_pos_of_nonneg_of_pos_direct (Rat.Fraction.Cast.Order.natCast_le_direct (Nat.zero_le count)) (by
         decide)).ne'
   rw [total] at upper
-  have yPositive : 0 < box.widthY / 2 := Rat.Fraction.Order.Field.div_pos_direct
-    (Rat.Fraction.Order.Arithmetic.sub_pos_direct proper.2) (by decide)
+  have yPositive : 0 < box.widthY / 2 := Field.div_pos_direct
+    (Arithmetic.sub_pos_direct proper.2) (by decide)
   have twice : box.widthY / 2 + box.widthY / 2 = box.widthY := by
     calc
       _ = (box.widthY / 2) * 2 := by ring1
       _ = _ := Rat.Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
   unfold point
-  rw [Rational.Budget.Aggregate.countCoordinate_eq]
+  rw [Aggregate.countCoordinate_eq]
   refine ⟨(show box.xLower = box.xLower + 0 from (add_zero _).symm).trans_lt
-      (Arithmetic.add_lt_add_left_direct (Rat.Fraction.Order.Arithmetic.mul_pos_direct indexPositive stepPositive)
+      (Arithmetic.add_lt_add_left_direct (Arithmetic.mul_pos_direct indexPositive stepPositive)
         box.xLower), ?_,
     (show box.yLower = box.yLower + 0 from (add_zero _).symm).trans_lt
       (Arithmetic.add_lt_add_left_direct yPositive box.yLower), ?_⟩
-  · exact (Rat.Fraction.Order.Arithmetic.add_lt_add_left_direct upper box.xLower).trans_eq (by
-      unfold Rational.Box.widthX; ring1)
-  · have less := Rat.Fraction.Order.Arithmetic.add_lt_add_left_direct ((show box.widthY / 2 = box.widthY / 2 + 0 from
+  · exact (Arithmetic.add_lt_add_left_direct upper box.xLower).trans_eq (by
+      unfold Box.widthX; ring1)
+  · have less := Arithmetic.add_lt_add_left_direct ((show box.widthY / 2 = box.widthY / 2 + 0 from
       (add_zero _).symm).trans_lt
       (Arithmetic.add_lt_add_left_direct yPositive (box.widthY / 2))) box.yLower
     rw [twice] at less
-    exact less.trans_eq (by unfold Rational.Box.widthY; ring1)
+    exact less.trans_eq (by unfold Box.widthY; ring1)
 
 /-- Distinct bounded indices give distinct progression points in a proper rectangle.
 
 Equality of the retained points gives equality of their horizontal coordinates.
 Cancellation of the original positive spacing recovers the same natural index,
 so the bounded finite positions agree. -/
-public theorem point_injective {box : Rational.Box} (proper : box.Proper) (count : Nat) :
+public theorem point_injective {box : Box} (proper : box.Proper) (count : Nat) :
     Function.Injective (point box count) := by
   intro first last equal
   have real := congrArg Gaussian.Basic.re equal
   dsimp only [point] at real
-  rw [Rational.Budget.Aggregate.countCoordinate_eq, Rational.Budget.Aggregate.countCoordinate_eq] at real
-  have products : ((first.val : Rat.Fraction.Rational) + 1) * step box count = ((last.val : Rat.Fraction.Rational) + 1)
+  rw [Aggregate.countCoordinate_eq, Aggregate.countCoordinate_eq] at real
+  have products : ((first.val : Rational) + 1) * step box count = ((last.val : Rational) + 1)
     * step box count := by
     calc
-      _ = (box.xLower + ((first.val : Rat.Fraction.Rational) + 1) * step box count) - box.xLower := by ring1
-      _ = (box.xLower + ((last.val : Rat.Fraction.Rational) + 1) * step box count) - box.xLower := congrArg (· -
+      _ = (box.xLower + ((first.val : Rational) + 1) * step box count) - box.xLower := by ring1
+      _ = (box.xLower + ((last.val : Rational) + 1) * step box count) - box.xLower := congrArg (· -
         box.xLower) real
       _ = _ := by ring1
   have shifted := Rat.Fraction.Field.mul_right_cancel_of_ne (step_positive proper count).ne' products
-  have indices : (first.val : Rat.Fraction.Rational) = (last.val : Rat.Fraction.Rational) := by
+  have indices : (first.val : Rational) = (last.val : Rational) := by
     calc
-      _ = ((first.val : Rat.Fraction.Rational) + 1) - 1 := by ring1
-      _ = ((last.val : Rat.Fraction.Rational) + 1) - 1 := congrArg (· - 1) shifted
+      _ = ((first.val : Rational) + 1) - 1 := by ring1
+      _ = ((last.val : Rational) + 1) - 1 := congrArg (· - 1) shifted
       _ = _ := by ring1
   apply Fin.ext
   exact Rat.Fraction.Cast.Compatibility.natCast_injective_direct indices
@@ -243,9 +247,9 @@ open Purelib.Geometry in
 
 Use an explicit horizontal rational progression and the supplied clearance proof; retain the resulting interpolation
 bank and containment certificates, including for an empty request. -/
-def build (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (nonzero :
+def build (polynomial : CanonicalCoefficients.CoefficientPolynomial) (nonzero :
   polynomial.isZero = false) (box :
-  Rational.Box) (proper : box.Proper)
+  Box) (proper : box.Proper)
     (clear : ∀ point, box.Contains point → polynomial.eval point ≠ 0) (count : Nat) :
       BoxObservationPoints polynomial box count := by
   let points := List.ofFn (point box count)

@@ -1,4 +1,8 @@
 module
+import Purelib.Curves.Hyperelliptic.Differentials.OddPower.Ordinary
+import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ContactRequests.Polynomial
+import Purelib.Polynomial.Dense.Gaussian.Basic
+public import Purelib.Riemann.Readings.PreparedPrimitiveSamples.Numerator
 meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Data.Gaussian.Basic
 import Purelib.Curves.Hyperelliptic.Basic
@@ -75,12 +79,14 @@ default producer requires no cover or successful-search premise.
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid
 
 open Purelib.Approximation.Gaussian.Equivalence (NamedEquivalent)
+open Purelib.Curves.Hyperelliptic.Differentials.OddPower.Basic.OddPowerDifferential (Ordinary)
+open Purelib.Riemann.Readings
 open Purelib.Topology.Polygon.Stokes
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
     bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
   {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
 
@@ -89,13 +95,13 @@ set_option genInjectivity false in
 exact cancellation, or one common prepared path with checked face entries. -/
 inductive ContactPreparation (contact : Topology.Surface.Sewing.SewnPrimitiveContacts.SourceContact
   mesh.triangulation.faces)
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus) (domains :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars) where
+    (differential : Differentials.Basic.Differential genus) (domains :
+      Face.DomainBanks.FaceDomainBank frames faces.regulars) where
   /-- Retain the original located diagonal contact whose opposite corner increments cancel exactly. -/ | diagonal
-    (located : Hyperelliptic.Meshes.PuncturedGrid.SourceContactRequests.LocatedContact contact)
+    (located : SourceContactRequests.LocatedContact contact)
       (kind : located.left.kind = .upDiagonal ∨ located.left.kind = .downDiagonal)
   /-- Retain one original covered side segment and both actual entered-face comparisons. -/ | segment (located :
-    Hyperelliptic.Meshes.PuncturedGrid.SourceContactRequests.LocatedContact contact) {ambient :
+    SourceContactRequests.LocatedContact contact) {ambient :
     Rational.Box}
       {segment : Geometry.ClearPath.ClearSegment curve.polynomial ambient
         (vertices.coordinate (contact.left.project mesh.triangulation.faces).start)
@@ -103,7 +109,7 @@ inductive ContactPreparation (contact : Topology.Surface.Sewing.SewnPrimitiveCon
       {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval (vertices.coordinate
         (contact.left.project mesh.triangulation.faces).start))}
       (piece : Paths.PreparedPathDecomposition.CoveredSegment segment owner) (parentSheet : Fin 2)
-      (compared : Hyperelliptic.Meshes.PuncturedGrid.SegmentContactRequests.SegmentContact (located.firstPlacement
+      (compared : SegmentContactRequests.SegmentContact (located.firstPlacement
         segment) (located.lastPlacement segment) piece differential parentSheet domains)
 
 -- Preserve the original constructor certificate names of this unchanged nominal datatype.
@@ -113,8 +119,8 @@ constructive_injectivity ContactPreparation
 namespace ContactPreparation
 
 variable {contact : Topology.Surface.Sewing.SewnPrimitiveContacts.SourceContact mesh.triangulation.faces} {differential
-  : Hyperelliptic.Differentials.Basic.Differential genus}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
+  : Differentials.Basic.Differential genus}
+  {domains : Face.DomainBanks.FaceDomainBank frames faces.regulars}
 
 /-- Transport the original clear segment and ambient containment along exact endpoint equalities. -/
 @[expose] public def atEndpoints {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient :
@@ -129,22 +135,22 @@ variable {contact : Topology.Surface.Sewing.SewnPrimitiveContacts.SourceContact 
 
 /-- The side's retained clear-line certificate is transported only by exact
 endpoint equations. No root owner or line-clearance search is repeated. -/
-@[expose] def sideSegment (located : Hyperelliptic.Meshes.PuncturedGrid.SourceContactRequests.LocatedContact contact)
+@[expose] def sideSegment (located : SourceContactRequests.LocatedContact contact)
   (side : Meshes.GridLiftedDualSteps.GridSide) (kind : located.left.kind = side.kind) :
-    {segment : Geometry.ClearPath.ClearSegment curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve)
+    {segment : Geometry.ClearPath.ClearSegment curve.polynomial (Branches.Cuts.Ambient curve)
       (vertices.coordinate (contact.left.project mesh.triangulation.faces).start)
       (vertices.coordinate (contact.left.project mesh.triangulation.faces).finish) // segment.WithinAmbient} := by
   have coordinates := located.left.corner_coordinates
-  rw [Hyperelliptic.Meshes.PuncturedGrid.Face.Corners.FaceCorners.edge_coordinates, kind] at coordinates
+  rw [Face.Corners.FaceCorners.edge_coordinates, kind] at coordinates
   let edge := located.left.face.side side
   exact atEndpoints edge.segment
     edge.withinAmbient (congrArg Prod.fst coordinates) (congrArg Prod.snd coordinates)
 
 /-- Prepare the original side contact once using its retained initial vertex owner and shared parent cache. -/
-@[expose] def ofSide (located : Hyperelliptic.Meshes.PuncturedGrid.SourceContactRequests.LocatedContact contact) (side :
+@[expose] def ofSide (located : SourceContactRequests.LocatedContact contact) (side :
   Meshes.GridLiftedDualSteps.GridSide) (kind : located.left.kind = side.kind)
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus) (domains :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars) :
+    (differential : Differentials.Basic.Differential genus) (domains :
+      Face.DomainBanks.FaceDomainBank frames faces.regulars) :
     ContactPreparation contact differential domains :=
   let segment := sideSegment located side kind
   let owner := vertices.owner frames (contact.left.project mesh.triangulation.faces).start
@@ -158,10 +164,10 @@ endpoint equations. No root owner or line-clearance search is repeated. -/
   Topology.Surface.Sewing.SewnPrimitiveContacts.SourceContact mesh.triangulation.faces)
     (positive : Topology.Mesh.TriangleSourceUniqueness.SourceEdge.Positive contact.left mesh.triangulation.faces ∧
       Topology.Mesh.TriangleSourceUniqueness.SourceEdge.Positive contact.right mesh.triangulation.faces)
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus) (domains :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars) :
+    (differential : Differentials.Basic.Differential genus) (domains :
+      Face.DomainBanks.FaceDomainBank frames faces.regulars) :
     ContactPreparation contact differential domains :=
-  let located := Hyperelliptic.Meshes.PuncturedGrid.SourceContactRequests.LocatedContact.build mesh contact positive.1
+  let located := SourceContactRequests.LocatedContact.build mesh contact positive.1
     positive.2
   match kind : located.left.kind with
   | .bottom => ofSide located .bottom kind
@@ -175,27 +181,96 @@ endpoint equations. No root owner or line-clearance search is repeated. -/
   | .upDiagonal => .diagonal located (Or.inl kind)
   | .downDiagonal => .diagonal located (Or.inr kind)
 
-/-- All scalar choices are made before a numerical face bank is sampled. -/
-@[expose] def Budget : ContactPreparation contact differential
-  domains → Normalization.InverseRootPolynomial.Coordinate → Type
+/-- Select the original legacy budget or the genuine ordinary-polynomial budget on the SAME prepared geometry.
+
+The default retains the original contact budget exactly. A supplied ordinary specification retains its actual
+P-specific bounds, source and face floors, and whole original preparation factories before numerical sampling.
+-/
+@[expose] def Budget (prepared : ContactPreparation contact differential domains)
+    (target : Normalization.InverseRootPolynomial.Coordinate)
+    (polynomial : Option (Ordinary curve.polynomial) := none) : Type _ :=
+  match prepared, polynomial with
   | .diagonal _ _, _ => PUnit
-  | .segment _ _ _ compared, target => Hyperelliptic.Meshes.PuncturedGrid.Face.ContactRequests.ContactBudget
-    compared.left.entered compared.right.entered target
+  | .segment _ _ _ compared, none =>
+      Face.ContactRequests.ContactBudget compared.left.entered compared.right.entered target
+  | .segment _ _ _ compared, some ordinary =>
+      (positive : {_value : Unit // 0 < target}) ×
+        Face.ContactRequests.ContactBudget.PolynomialPreparation compared.left.entered compared.right.entered
+          ordinary.val target positive.property
 
-/-- Prepare the original side-contact accuracy budget, retaining the trivial budget for exact diagonal cancellation. -/
-@[expose] def budget (prepared : ContactPreparation contact
-  differential domains) (target : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < target) :
-    prepared.Budget target :=
-  match prepared with
-  | .diagonal _ _ => ⟨⟩
-  | .segment _ _ _ compared => compared.budget target positive
+/-- Prepare the selected contact budget before any face primitive or common-model reading.
 
-open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.ContactPreparation in
-/-- Read the original side-comparison stage, or zero for exact diagonal cancellation. -/
-@[expose] def budgetIndex : (prepared : ContactPreparation contact
-  differential domains) → {target : Normalization.InverseRootPolynomial.Coordinate} → prepared.Budget target → Nat
+The default executes the original budget branch. The polynomial branch constructs the two genuine P bound caches and
+one original common budget, with its actual independent source and face floors.
+-/
+@[expose] def budget (prepared : ContactPreparation contact differential domains)
+    (target : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < target)
+    (polynomial : Option (Ordinary curve.polynomial) := none) : prepared.Budget target polynomial :=
+  match prepared, polynomial with
+  | .diagonal _ _, _ => ⟨⟩
+  | .segment _ _ _ compared, none => compared.budget target positive
+  | .segment _ _ _ compared, some ordinary =>
+      ⟨⟨(), positive⟩, compared.polynomialBudget ordinary target positive⟩
+
+/-- Read the selected original sufficient face stage, or zero for exact diagonal cancellation. -/
+@[expose] def budgetIndex {polynomial : Option (Ordinary curve.polynomial)} :
+    (prepared : ContactPreparation contact differential domains) →
+      {target : Normalization.InverseRootPolynomial.Coordinate} → prepared.Budget target polynomial → Nat
   | .diagonal _ _, _, _ => 0
-  | .segment _ _ _ _, _, budget => budget.index
+  | .segment _ _ _ _, _, budget =>
+      match polynomial, budget with
+      | none, budget => budget.index
+      | some _, budget => budget.2.budget.index
+
+/-- The exact post-bank common comparison cache for this prepared contact and selected numerator.
+
+Diagonal and legacy branches need no new polynomial common bank. The polynomial segment branch retains the original
+whole PolynomialComparison of the SAME supplied primitive entries, including its work, models and reading factories.
+-/
+@[expose] def Comparison (prepared : ContactPreparation contact differential domains)
+    {target : Normalization.InverseRootPolynomial.Coordinate} {polynomial : Option (Ordinary curve.polynomial)}
+    (budget : prepared.Budget target polynomial) {index : Nat}
+    (shared : Face.PrimitiveData.FacePrimitiveBank differential index domains
+      (numerator := PreparedPrimitiveSamples.numerator curve.polynomial differential polynomial)) : Type _ :=
+  match prepared, polynomial, budget with
+  | .diagonal _ _, _, _ => PUnit
+  | .segment _ _ _ _, none, _ => PUnit
+  | .segment _ _ _ compared, some ordinary, budget =>
+      compared.PolynomialComparison (ordinary := ordinary) budget.2 shared
+
+/-- Construct the selected post-bank comparison once, retaining the genuine common-model cache where required. -/
+def compare (prepared : ContactPreparation contact differential domains)
+    {target : Normalization.InverseRootPolynomial.Coordinate} {polynomial : Option (Ordinary curve.polynomial)}
+    (budget : prepared.Budget target polynomial) {index : Nat}
+    (shared : Face.PrimitiveData.FacePrimitiveBank differential index domains
+      (numerator := PreparedPrimitiveSamples.numerator curve.polynomial differential polynomial)) :
+    prepared.Comparison budget shared :=
+  match prepared, polynomial, budget with
+  | .diagonal _ _, _, _ => ⟨⟩
+  | .segment _ _ _ _, none, _ => ⟨⟩
+  | .segment _ _ _ compared, some ordinary, budget =>
+      compared.comparePolynomial (ordinary := ordinary) budget.2 shared
+
+/-- The retained post-bank cache proves the actual contact mismatch bound at every sufficient face stage. -/
+theorem comparison_accurate (prepared : ContactPreparation contact differential domains)
+    {target : Normalization.InverseRootPolynomial.Coordinate} {polynomial : Option (Ordinary curve.polynomial)}
+    (positive : 0 < target) (budget : prepared.Budget target polynomial) {index : Nat}
+    (later : prepared.budgetIndex (polynomial := polynomial) budget ≤ index)
+    {shared : Face.PrimitiveData.FacePrimitiveBank differential index domains
+      (numerator := PreparedPrimitiveSamples.numerator curve.polynomial differential polynomial)}
+    (compared : prepared.Comparison budget shared) (readings : TrianglePrimitiveReadings.TriangleReadings shared mesh) :
+    contact.mismatch readings.values < target := by
+  cases prepared with
+  | diagonal located kind =>
+      have zero := kind.elim
+        (fun kind => DiagonalContacts.LocatedContact.upDiagonal_zero located kind readings)
+        (fun kind => DiagonalContacts.LocatedContact.downDiagonal_zero located kind readings)
+      exact zero ▸ positive
+  | segment located piece parentSheet contact =>
+      cases polynomial with
+      | none => exact located.mismatch_accurate contact budget later readings
+      | some ordinary =>
+          exact located.mismatch_polynomial_accurate contact (ordinary := ordinary) budget.2 later compared readings
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.ContactPreparation in
 /-- At the retained sufficient stage, the original triangle contact mismatch is below the requested positive tolerance.
@@ -204,15 +279,15 @@ theorem accurate (prepared : ContactPreparation contact
   differential domains) {target : Normalization.InverseRootPolynomial.Coordinate}
     (positive : 0 < target) (budget : prepared.Budget target) {index : Nat} (later : prepared.budgetIndex budget ≤
       index)
-    {shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains}
-      (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared mesh) :
+    {shared : Face.PrimitiveData.FacePrimitiveBank differential index domains}
+      (readings : TrianglePrimitiveReadings.TriangleReadings shared mesh) :
     contact.mismatch readings.values < target := by
   cases prepared with
   | diagonal located kind =>
       have zero := kind.elim
-        (fun kind => Hyperelliptic.Meshes.PuncturedGrid.DiagonalContacts.LocatedContact.upDiagonal_zero located kind
+        (fun kind => DiagonalContacts.LocatedContact.upDiagonal_zero located kind
           readings)
-        (fun kind => Hyperelliptic.Meshes.PuncturedGrid.DiagonalContacts.LocatedContact.downDiagonal_zero located kind
+        (fun kind => DiagonalContacts.LocatedContact.downDiagonal_zero located kind
           readings)
       exact zero ▸ positive
   | segment located piece parentSheet compared => exact located.mismatch_accurate compared budget later readings

@@ -58,6 +58,10 @@ import Purelib.Riemann.RootContinuation.SquareRootChannelOwnership
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Algebra
@@ -107,25 +111,25 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PathValues (Basis
 open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+    UniformReciprocalModels.Data patch count}
   {edge : ParameterEdge} {cell :
     Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {model :
+  {regular : RegularBounds.Data cap} {model :
     RootModel cell}
   {parameter target sourceTarget : Coordinate} {floor sourceFloor :
     Nat}
   {covers : BasisSourceCovers parent}
 
-variable {index readingStage minimum : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+variable {index readingStage minimum : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
   {polynomials : RegularBasisPolynomials cap
     index box}
   {comparison : Data regular cell}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample comparison capSample}
+  {sample : ArcSamples.Sample comparison capSample}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 open Purelib.Data.Gaussian.Basic.Canonical
@@ -141,53 +145,53 @@ variable {segments : List (Segment regular model sample
 
 /-- Bound the complete source polygon using its certified paired increments. The fourth power of the actual segment
 count remains explicit. -/
-theorem area_bound (values : PathValues.BasisPathValues polynomials coefficients sourceTarget segments firstSource
+theorem area_bound (values : BasisPathValues polynomials coefficients sourceTarget segments firstSource
   lastSource)
-    (nonnegative : 0 ≤ sourceTarget) {chartBound : InverseRootPolynomial.Coordinate} (chartNonnegative : 0 ≤ chartBound)
+    (nonnegative : 0 ≤ sourceTarget) {chartBound : Coordinate} (chartNonnegative : 0 ≤ chartBound)
     (chart : ∀ segment ∈ segments,
-      Data.Gaussian.Norm.Basic.normSq (polynomials.value coefficients segment.last.root.coordinate -
+      Basic.normSq (polynomials.value coefficients segment.last.root.coordinate -
         polynomials.value coefficients segment.first.root.coordinate) ≤ chartBound *
-          PreparedObservationCoercivity.coefficientNormSq coefficients) :
-    Data.Gaussian.Norm.Basic.normSq (values.source.area - IncrementArea.pathArea (segments.map (fun segment =>
+          coefficientNormSq coefficients) :
+    Basic.normSq (values.source.area - IncrementArea.pathArea (segments.map (fun segment =>
       polynomials.value coefficients segment.last.root.coordinate - polynomials.value coefficients
         segment.first.root.coordinate))) ≤
-      1280 * (segments.length : InverseRootPolynomial.Coordinate)^4 * sourceTarget * (40 * sourceTarget + chartBound) *
-        (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
-  have normNonnegative : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients :=
+      1280 * (segments.length : Coordinate)^4 * sourceTarget * (40 * sourceTarget + chartBound) *
+        (coefficientNormSq coefficients)^2 := by
+  have normNonnegative : 0 ≤ coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
-      (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : InverseRootPolynomial.Coordinate)) _ (fun row =>
-        Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
-  have errorNonnegative : 0 ≤ 40 * sourceTarget := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
+      (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Coordinate)) _ (fun row =>
+        normSq_nonneg (coefficients row)))
+  have errorNonnegative : 0 ≤ 40 * sourceTarget := Arithmetic.mul_nonneg_direct (by decide +kernel)
     nonnegative
   have boundNonnegative : 0 ≤ 2 * (40 * sourceTarget + chartBound) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg errorNonnegative chartNonnegative)
-  have pairedChart (pair : InverseRootPolynomial.Gaussian × InverseRootPolynomial.Gaussian) (member : pair ∈
+    Arithmetic.mul_nonneg_direct (by decide) (add_nonneg errorNonnegative chartNonnegative)
+  have pairedChart (pair : Gaussian × Gaussian) (member : pair ∈
     values.pairs) :
-      Data.Gaussian.Norm.Basic.normSq pair.2 ≤ chartBound * PreparedObservationCoercivity.coefficientNormSq
+      Basic.normSq pair.2 ≤ chartBound * coefficientNormSq
         coefficients := by
     have present : pair.2 ∈ values.pairs.map Prod.snd := Map.mem_map.mpr ⟨pair, member, rfl⟩
     rw [values.chart_eq] at present
     obtain ⟨segment, inSegments, equal⟩ := Map.mem_map.mp present
     rw [← equal]
     exact chart segment inSegments
-  have sourceBound (pair : InverseRootPolynomial.Gaussian × InverseRootPolynomial.Gaussian) (member : pair ∈
+  have sourceBound (pair : Gaussian × Gaussian) (member : pair ∈
     values.pairs) :
-      Data.Gaussian.Norm.Basic.normSq pair.1 ≤ (2 * (40 * sourceTarget + chartBound)) *
-        PreparedObservationCoercivity.coefficientNormSq coefficients := by
-    have bound := (Data.Gaussian.Norm.Bounds.normSq_add_le_two (pair.1 - pair.2) pair.2).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
+      Basic.normSq pair.1 ≤ (2 * (40 * sourceTarget + chartBound)) *
+        coefficientNormSq coefficients := by
+    have bound := (Bounds.normSq_add_le_two (pair.1 - pair.2) pair.2).trans
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct
         (values.errors pair member) (pairedChart pair member)) (by decide))
     rw [show pair.1 - pair.2 + pair.2 = pair.1 by ring1] at bound
     exact bound.trans_eq (by ring1)
   have chartLe : chartBound ≤ 2 * (40 * sourceTarget + chartBound) := by
     have extra : 0 ≤ 2 * (40 * sourceTarget) + chartBound :=
-      add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) errorNonnegative) chartNonnegative
+      add_nonneg (Arithmetic.mul_nonneg_direct (by decide) errorNonnegative) chartNonnegative
     exact (show chartBound = chartBound + 0 by ring1).trans_le
-      ((Fraction.Order.Arithmetic.add_le_add_direct (le_refl chartBound) extra).trans_eq (by ring1))
+      ((Arithmetic.add_le_add_direct (le_refl chartBound) extra).trans_eq (by ring1))
   have bound := IncrementAreaComparison.pathArea_difference_bound values.pairs
-    (Fraction.Order.Arithmetic.mul_nonneg_direct errorNonnegative normNonnegative)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct boundNonnegative normNonnegative) values.errors sourceBound
-    (fun pair member => (pairedChart pair member).trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_nonneg_direct errorNonnegative normNonnegative)
+    (Arithmetic.mul_nonneg_direct boundNonnegative normNonnegative) values.errors sourceBound
+    (fun pair member => (pairedChart pair member).trans (Arithmetic.mul_le_mul_of_nonneg_right_direct
       chartLe normNonnegative))
   have countEq : values.pairs.length = segments.length := by
     have equal := congrArg List.length values.chart_eq
@@ -197,27 +201,27 @@ theorem area_bound (values : PathValues.BasisPathValues polynomials coefficients
 
 /-- The same bound on literal traces, with the two trace-origin terms retained explicitly. No closure or zero-area
 implication is assumed. -/
-theorem trace_origin_bound (values : PathValues.BasisPathValues polynomials coefficients sourceTarget segments
+theorem trace_origin_bound (values : BasisPathValues polynomials coefficients sourceTarget segments
   firstSource lastSource)
-    (firstChart : InverseRootPolynomial.Gaussian) (nonnegative : 0 ≤ sourceTarget)
-    {chartBound : InverseRootPolynomial.Coordinate} (chartNonnegative : 0 ≤ chartBound)
+    (firstChart : Gaussian) (nonnegative : 0 ≤ sourceTarget)
+    {chartBound : Coordinate} (chartNonnegative : 0 ≤ chartBound)
     (chart : ∀ segment ∈ segments,
-      Data.Gaussian.Norm.Basic.normSq (polynomials.value coefficients segment.last.root.coordinate -
+      Basic.normSq (polynomials.value coefficients segment.last.root.coordinate -
         polynomials.value coefficients segment.first.root.coordinate) ≤ chartBound *
-          PreparedObservationCoercivity.coefficientNormSq coefficients) :
-    Data.Gaussian.Norm.Basic.normSq ((IncrementArea.traceArea firstSource (values.pairs.map Prod.fst) -
+          coefficientNormSq coefficients) :
+    Basic.normSq ((IncrementArea.traceArea firstSource (values.pairs.map Prod.fst) -
       IncrementArea.traceArea firstChart (values.pairs.map Prod.snd)) -
       (BoundaryRibbon.area firstSource (lastSource - firstSource) -
-        BoundaryRibbon.area firstChart (Data.Gaussian.Norm.Sum.Basic.gaussianSum (values.pairs.map Prod.snd)))) ≤
-      1280 * (segments.length : InverseRootPolynomial.Coordinate)^4 * sourceTarget * (40 * sourceTarget + chartBound) *
-        (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
+        BoundaryRibbon.area firstChart (gaussianSum (values.pairs.map Prod.snd)))) ≤
+      1280 * (segments.length : Coordinate)^4 * sourceTarget * (40 * sourceTarget + chartBound) *
+        (coefficientNormSq coefficients)^2 := by
   rw [IncrementArea.traceArea_eq, IncrementArea.traceArea_eq,
     ← values.source.total_eq, values.source_total, ← values.source.area_eq]
   rw [show (values.source.area + BoundaryRibbon.area firstSource (lastSource - firstSource) -
       (IncrementArea.pathArea (values.pairs.map Prod.snd) +
-        BoundaryRibbon.area firstChart (Data.Gaussian.Norm.Sum.Basic.gaussianSum (values.pairs.map Prod.snd)))) -
+        BoundaryRibbon.area firstChart (gaussianSum (values.pairs.map Prod.snd)))) -
       (BoundaryRibbon.area firstSource (lastSource - firstSource) -
-        BoundaryRibbon.area firstChart (Data.Gaussian.Norm.Sum.Basic.gaussianSum (values.pairs.map Prod.snd))) =
+        BoundaryRibbon.area firstChart (gaussianSum (values.pairs.map Prod.snd))) =
       values.source.area - IncrementArea.pathArea (values.pairs.map Prod.snd) by ring1,
     values.chart_eq]
   exact area_bound values nonnegative

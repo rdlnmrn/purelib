@@ -74,58 +74,58 @@ omit [ExplicitField K] in
 /-- Equal repeated-entry patterns give a retained permutation of the three entries. -/
 theorem sameEntries_of_repeatedEntryPattern
     {repeated single : K} {left right : Vector3 K}
-    (leftPattern : Vector3.Permutation.RepeatedEntryPattern repeated single left)
-    (rightPattern : Vector3.Permutation.RepeatedEntryPattern repeated single right) :
-    Vector3.Permutation.SameEntries left right := by
+    (leftPattern : RepeatedEntryPattern repeated single left)
+    (rightPattern : RepeatedEntryPattern repeated single right) :
+    SameEntries left right := by
   rcases leftPattern with leftFirst | leftSecond | leftThird
   · rcases leftFirst with ⟨leftOne, leftTwo, leftThree⟩
     rcases rightPattern with rightFirst | rightSecond | rightThird
     · rcases rightFirst with ⟨rightOne, rightTwo, rightThree⟩
-      apply Vector3.Permutation.SameEntries.abc
+      apply SameEntries.abc
       · exact leftOne.trans rightOne.symm
       · exact leftTwo.trans rightTwo.symm
       · exact leftThree.trans rightThree.symm
     · rcases rightSecond with ⟨rightOne, rightTwo, rightThree⟩
-      apply Vector3.Permutation.SameEntries.acb
+      apply SameEntries.acb
       · exact leftOne.trans rightOne.symm
       · exact leftTwo.trans rightThree.symm
       · exact leftThree.trans rightTwo.symm
     · rcases rightThird with ⟨rightOne, rightTwo, rightThree⟩
-      apply Vector3.Permutation.SameEntries.bca
+      apply SameEntries.bca
       · exact leftOne.trans rightTwo.symm
       · exact leftTwo.trans rightThree.symm
       · exact leftThree.trans rightOne.symm
   · rcases leftSecond with ⟨leftOne, leftTwo, leftThree⟩
     rcases rightPattern with rightFirst | rightSecond | rightThird
     · rcases rightFirst with ⟨rightOne, rightTwo, rightThree⟩
-      apply Vector3.Permutation.SameEntries.acb
+      apply SameEntries.acb
       · exact leftOne.trans rightOne.symm
       · exact leftTwo.trans rightThree.symm
       · exact leftThree.trans rightTwo.symm
     · rcases rightSecond with ⟨rightOne, rightTwo, rightThree⟩
-      apply Vector3.Permutation.SameEntries.abc
+      apply SameEntries.abc
       · exact leftOne.trans rightOne.symm
       · exact leftTwo.trans rightTwo.symm
       · exact leftThree.trans rightThree.symm
     · rcases rightThird with ⟨rightOne, rightTwo, rightThree⟩
-      apply Vector3.Permutation.SameEntries.bac
+      apply SameEntries.bac
       · exact leftOne.trans rightTwo.symm
       · exact leftTwo.trans rightOne.symm
       · exact leftThree.trans rightThree.symm
   · rcases leftThird with ⟨leftOne, leftTwo, leftThree⟩
     rcases rightPattern with rightFirst | rightSecond | rightThird
     · rcases rightFirst with ⟨rightOne, rightTwo, rightThree⟩
-      apply Vector3.Permutation.SameEntries.cab
+      apply SameEntries.cab
       · exact leftOne.trans rightThree.symm
       · exact leftTwo.trans rightOne.symm
       · exact leftThree.trans rightTwo.symm
     · rcases rightSecond with ⟨rightOne, rightTwo, rightThree⟩
-      apply Vector3.Permutation.SameEntries.bca
+      apply SameEntries.bca
       · exact leftOne.trans rightTwo.symm
       · exact leftTwo.trans rightThree.symm
       · exact leftThree.trans rightOne.symm
     · rcases rightThird with ⟨rightOne, rightTwo, rightThree⟩
-      apply Vector3.Permutation.SameEntries.abc
+      apply SameEntries.abc
       · exact leftOne.trans rightOne.symm
       · exact leftTwo.trans rightTwo.symm
       · exact leftThree.trans rightThree.symm

@@ -6,13 +6,14 @@ boxes, bounded searches, finite paths and words, and proof-bearing refinement
 states. A calculation may be refined as far as a caller asks, but the library
 does not turn that open-ended protocol into a completed real or complex number.
 
-The active Lean code uses neither `classical` nor `noncomputable`. It avoids
+The mathematical policy excludes `classical` and `noncomputable`. It excludes
 choice, completed infinite carriers, compactness, infinite series, and hidden
 enumerations of all roots or field elements. The authoritative axiom audit
 requires empty transitive axiom closures for its selected declarations. Full
 validation includes retained proof dependencies, configured project scripts and
-the independent nanoda check. Independent compiler-helper coverage is temporarily
-optional; strict `--all-helpers` coverage remains a separate audit obligation.
+the independent nanoda check. Untrusted generators and tooling may use broader
+host facilities; their emitted mathematical code and retained dependencies must
+pass the applicable checks. Strict `--all-helpers` audits are optional diagnostics.
 
 Constructor injectivity and logical normalization certificates use direct
 implications or equivalences (`↔`) rather than equalities between propositions.
@@ -24,11 +25,17 @@ continued logarithms, but now also contains substantial developments in exact
 approximation, finite measure theory, algebraic geometry, rational
 trigonometry, rotations, monodromy, periods, and combinatorial knot theory.
 
-Version 1.0.0 establishes the public Lean modules and declarations as the library's
-compatibility contract for the pinned toolchain. Future incompatible public API
-changes require a major version; compatible additions use a minor version, and
-compatible fixes use a patch version. Private proof implementations and internal
-tooling may evolve while preserving those public contracts.
+## Where to start
+
+Start with these PDF expositions:
+
+- [RFAP-1](papers/RFAP/RFAP.pdf): a finite constructive Fundamental Theorem of
+  Algebra and rational-function argument principle over displayed
+  Gaussian-rational polynomials.
+- [Sterling arithmetic](papers/Sterling/SterlingArithmetic.pdf): a worked account
+  of constructing and calculating with `e + pi + sqrt(2)`. Its companion,
+  [Definitions](papers/Sterling/Definitions.pdf), sketches the finite objects,
+  recognition procedures and equality conventions more formally.
 
 ## Why this work exists
 
@@ -91,12 +98,7 @@ The project's original TeX manuscripts and compiled papers are licensed under
 [Creative Commons Attribution-ShareAlike 4.0 International](LICENSE-PAPERS.md).
 Third-party material retains its existing license and copyright notices.
 
-## Where to start
-
-The most complete mathematical exposition is the
-[RFAP-1 paper](papers/RFAP/RFAP.pdf), which gives a finite constructive FTA and
-rational-function argument principle over displayed Gaussian-rational
-polynomials. Its source is [RFAP.tex](papers/RFAP/RFAP.tex).
+## Further directions to follow
 
 For a gentler introduction to complex continued logarithms, see the
 [interactive CCL essay (standalone HTML)](docs/ccl/static.html). It is prose-led and includes
@@ -116,6 +118,7 @@ The main Lean facades are:
 | --- | --- |
 | Finite FTA and rational-function argument principle | `papers.RFAP.Chapters.Paper` |
 | Gaussian-rational approximation and best approximants | `papers.RFAP.Chapters.Approximation` |
+| Finite Laurent recurrence index comparison | `Purelib.Polynomial.Laurent.Toeplitz` |
 | Complex continued logarithms | `papers.CCL.Chapters.Paper` |
 | Finite constructive measure theory | `Purelib.Measure` |
 | Hyperelliptic periods and Legendre monodromy | `Purelib.Riemann` |
@@ -123,8 +126,6 @@ The main Lean facades are:
 | *Divine Proportions* | [facade](formalisations/DivineProportions/DivineProportions.lean) |
 | Euclidean rational rotations | [facade](formalisations/RationalRotations/RationalRotations.lean) |
 | Minkowski rational rotations | [facade](formalisations/MinkowskiRotations/MinkowskiRotations.lean) |
-
-## What has been formalized
 
 ### Finite algebra, FTA, and rational functions
 
@@ -141,6 +142,22 @@ nested rational box at any requested positive rational squared diameter. A
 general polynomial retains multiplicities as finite data. The rational-
 function extension cancels common factors constructively, separates zero and
 pole sites, and proves the signed winding and multiplicity totals.
+
+The Laurent recurrence development constructs a boundary normal form from the
+same polynomial's generalized and zero-root modes. Its computed complement
+dimension minus kernel dimension equals minimal pole order minus the independent
+inside multiplicity, and the negative independent circle winding. Products,
+conjugation, reversal, adjoints and boundary-clear finite deformations retain
+their own actual target ledgers. Finite combination decay uses a computed
+shared window and paid observation budget. Complete-basis recovery handles
+outside cancellation given positive physical evidence for a queried outside
+coefficient: `b <= normSq(R.read coefficient)` yields a late entry with
+`target < normSq(value)`. The positive rational bounds concern Gaussian squared
+moduli and are fixed before observation. Exact formal support remains distinct
+from nonvanishing under that reading.
+
+The public [Toeplitz API](Purelib/Polynomial/Laurent/Toeplitz.lean) states the
+contracts for the index, boundary coordinates, companion and complete basis.
 
 The separate approximation layer proves exact lower and sufficient
 denominator-height bounds, terminating Hurwitz expansions, the finite Lakein
@@ -251,9 +268,8 @@ formalization work is currently planned.
 
 The revised Euclidean and Minkowski papers have complete finite algebraic
 coverage through separate publication facades and claim-by-claim ledgers
-linked above. Their full build, lint, configured-script axiom audit and nanoda
-checks passed on 11 October 2026. The August-draft formalisation and all
-reusable Purelib providers are retained.
+linked above. The August-draft formalisation and reusable Purelib providers
+are retained.
 
 `formalisations/RationalRotations/Chapters/` formalizes the finite algebraic content of Wildberger's
 *Rational rotations of three dimensional Euclidean space*. It develops the
@@ -302,7 +318,7 @@ finished article.
 | [CCL-2](papers/CCL/CCL-2.pdf) | Formal proof complete; paper needs editing and expansion to cover the later arithmetic and calculus surface. |
 | *Divine Proportions* | Finite constructive source coverage complete; the ledger is the current exposition. |
 | Rational rotations (August draft) | Retained formalization and archived coverage ledger; companion exposition now uses the revised source numbering. |
-| Revised Euclidean and Minkowski rotations | Finite algebraic assertion coverage complete and fully checked; two current companion papers explain issues, resolutions and remaining open problems. |
+| Revised Euclidean and Minkowski rotations | Finite algebraic assertion coverage complete; two current companion papers explain issues, resolutions and remaining open problems. |
 
 ## Proved but still to be explained properly
 
@@ -419,8 +435,9 @@ programs.
 ## Period theorem status and remaining comparison work
 
 The curve-only period theorem and its named examples are implemented.
-Efficient execution and the operational Legendre comparison estimates remain
-separate work.
+Efficient execution and comparison of periods on different fibres remain
+separate work. The admitted fixed-parameter Legendre relation constructors
+are described below.
 
 1. **The finite Riemann-period theorem in every genus.**
    `riemann_period_theorem curve` takes only the displayed squarefree
@@ -439,12 +456,16 @@ separate work.
    evaluation of these larger examples remains unestablished.
 
 3. **Operational Legendre Gauss--Manin and Picard--Fuchs equations.**
-   The fraction-free polynomial reductions are unconditional, but the period-
-   jet conclusions still consume `ConnectionCertificate` or
-   `PicardFuchsCertificate`; their `connection_samples_close` and
-   `residual_samples_close` fields are the hard analytic comparison estimates.
-   These estimates should be produced by the prepared integration and
-   subdivision machinery rather than handed to the headline theorem.
+   `ConnectionCertificate.ofJet jet` and `PicardFuchsCertificate.ofJet jet`
+   derive their sample comparisons from the jet's admitted original source
+   stages, actual inverse-root residuals and primitive endpoint banks. Callers
+   supply the synchronized jet with all six certified differential programs
+   on one lifted cycle, not a final comparison certificate. These are
+   fixed-parameter differential-program relations; differentiating periods
+   of moving cycles still requires regularity and cycle-transport geometry.
+   The [connection constructors](Purelib/Curves/Legendre/Periods/Jets/Connection.lean)
+   and [Picard--Fuchs constructors](Purelib/Curves/Legendre/Periods/Jets/PicardFuchs.lean)
+   state the required admission conditions.
 
 Some nearby premises are not defects. A generic theorem must be told which
 finite paths represent the standard loops; productive division genuinely
@@ -455,6 +476,14 @@ classification in rational rotations are missing theories, not superfluous
 assumptions on an otherwise completed theorem.
 
 ## Building and checking
+
+Work on a topic branch unless the user explicitly permits `master`; agents choose
+when to make coherent checkpoint commits. Incrementally build, axiom-check and
+lint changed modules and affected consumers during branch work. Additional
+worktrees belong under the task's original top-level worktree in `.worktrees/`.
+The full suite and nanoda are required when ready to integrate into `master`,
+not at every checkpoint or merely to finish a branch implementation. See
+[the working and verification policy](docs/verification.md).
 
 The toolchain and Mathlib revision are pinned to Lean/Mathlib `v4.32.2`.
 The repository wrapper reconstructs the tracked Core proof patches in
@@ -491,7 +520,7 @@ The line-length limit is 120 characters. The wrapper expands an unscoped lint
 command to the full active inventory; explicit commands remain scoped. See
 [linting](docs/linting.md) for the selected checks and constructive exclusions.
 
-Run all completion checks with one command:
+When ready to integrate into `master`, run the full suite with one command:
 
 ```sh
 scripts/check-all.sh
@@ -564,7 +593,7 @@ scripts/trace-axiom.sh --axiom propext MODULE DECLARATION
 scripts/trace-axiom.sh --axiom Classical.choice MODULE DECLARATION
 ```
 
-The independent nanoda check for the active project module inventory is:
+The merge-readiness independent nanoda check for the active project module inventory is:
 
 ```sh
 scripts/check-nanoda.sh
@@ -578,7 +607,7 @@ environments, preserving distinct declarations such as `main`. Independent root
 selection checks exact scanned owners and declarations before publishing a stream.
 Nanoda checks complete types and proof bodies with an empty axiom allowlist.
 
-For a focused run, provide one module name per line:
+For an explicitly requested or diagnostic focused run, provide one module name per line:
 
 ```sh
 NANODA_MODULE_MANIFEST=scripts/nanoda/benchmarks/control.modules \
@@ -591,7 +620,7 @@ on the complete ordinary graph. `NANODA_EXPORT_JOBS` sets exporter concurrency
 (default 3), and `NANODA_POST_EXPORT_CHECKS` bounds checker instances (default 3).
 Ready graphs are checked concurrently during export. Set `NANODA_PIPELINE=0` for
 sequential phases. Choose overrides from whole-worker memory measurements, not
-CPU count; consult [profiling.md](docs/profiling.md#repeated-verification-of-shared-proof-closures).
+CPU count; consult the [verification guide](docs/verification.md).
 The old shard and adaptive chunk limit options are retired and rejected.
 
 Export caches bind exact roots, scanned and defining owners, compiled dependency
@@ -604,8 +633,9 @@ keep `.lake/nanoda-*` to reuse completed work.
 
 See [the native tool contract](scripts/nanoda/README.md). A targeted pass does not
 establish a full-repository pass, and nanoda does not replace the authoritative
-axiom audit. The native producer is meta code; its strict helper closures remain
-a separate strict `--all-helpers` audit obligation.
+axiom audit. The native producer is untrusted meta code; its internal helpers
+need not be axiom-free when the intended emitted proofs and their complete
+dependencies are independently checked.
 
 For raw declaration graph diagnostics, use
 `python3 -m scripts.nanoda.export_graph`, optionally with `--manifest` and
@@ -614,8 +644,15 @@ complete native stream using
 `python3 -m scripts.nanoda.graph GRAPH --stream STREAM`. These diagnostics retain
 the complete raw reader and establish no independent checker pass.
 
-`NANODA_BIN` selects the checker; otherwise the wrapper looks under
-`.external/nanoda` and then on `PATH`. `LEAN4EXPORT_BIN` and `NANODA_EXPORT_MODE`
+The wrapper links module scheduling to the pinned `.external/nanoda` kernel
+library, retaining the shared graph and normal worker stacks. It checks every
+declaration once and records actual compiled-owner module timings. The current
+checker rejects module checks reaching 30 seconds and retains a five-minute
+runaway limit. See [verification policy](docs/verification.md) for branch timing
+debt, master integration and the current imported-owner limitation. The aggregate
+run may take longer. `NANODA_BIN` can select the pinned stock CLI (using the same
+scheduler) or another checker supporting `CONFIG --modules OWNERS`.
+`LEAN4EXPORT_BIN` and `NANODA_EXPORT_MODE`
 are retired and rejected. CI pins the independent checker in
 [.github/workflows/lean-ci.yml](.github/workflows/lean-ci.yml).
 
@@ -650,7 +687,7 @@ npm run dev
   Riemann, knot, root-isolation, and CCL developments. Project-owned finite
   replacements for broad upstream algebra live here by subject.
 - `Purelib/Examples/` contains worked examples and generated certificates;
-  `Test/` contains regression modules. Every `Purelib/` Lean source belongs to
+  `TestPurelib/` contains regression modules. Every `Purelib/` Lean source belongs to
   ordinary build and proof-audit coverage.
 - `papers/CCL/` and `papers/RFAP/` contain the paper sources, PDFs and
   top-level Lean facades. `formalisations/DivineProportions/` and

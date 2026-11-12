@@ -59,6 +59,8 @@ import Purelib.RootIsolation.SquareRoot.Grid.Walk.ChainComparison
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Topology.Mesh
+
 open Purelib.Approximation
 
 open Purelib.Curves
@@ -82,17 +84,17 @@ connector area correction while preserving every regular polygon area. -/
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
   {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {included : Geometry.Grid.Extension.CoordinateInclusion bank.grid base.bank.grid}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
+  {frames : SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
       SquareRoot.Grid.LiftedVertices.VertexBank
     base.bank.grid}
   {edges : SquareRoot.Grid.RootEdgeBank frames} {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges
     base.faces}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames base.faces.regulars}
+  {domains : Face.DomainBanks.FaceDomainBank frames base.faces.regulars}
     {differential : Fin genus}
 
 /-- The supplied canonical edge reading is bounded by four times the original retained magnitude-bank bound. -/
@@ -100,37 +102,37 @@ public theorem Inclusion.ConnectorRequest.CircuitPartition.edge_bounded (fixed :
   domains
   (Periods.PeriodMatrix.standardDifferential differential))
     {stage : Nat} (later : fixed.index ≤ stage)
-    {numerics : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    {numerics : Face.PrimitiveData.FacePrimitiveBank
       (Periods.PeriodMatrix.standardDifferential differential) stage domains}
-    (triangles : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings numerics mesh) (edge :
+    (triangles : TrianglePrimitiveReadings.TriangleReadings numerics mesh) (edge :
       Topology.Polygon.Stokes.OrientedEdge vertices.count) :
-    Data.Gaussian.Norm.Basic.normSq (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh
+    Gaussian.Norm.Basic.normSq (CanonicalEdgeValues.edgeValuation mesh
       triangles.values edge) ≤ 4 * fixed.bound := by
   let retainedMagnitude := Readings.EdgeMagnitude.ofBank
-    (owner := Hyperelliptic.Meshes.PuncturedGrid.Readings.SourceChartComparison.ownerFromMesh mesh) fixed later
+    (owner := Readings.SourceChartComparison.ownerFromMesh mesh) fixed later
       triangles
-  exact Hyperelliptic.Meshes.PuncturedGrid.Readings.WordObservations.edge_bounded retainedMagnitude edge
+  exact Readings.WordObservations.edge_bounded retainedMagnitude edge
 /-- All magnitudes and regular-loop requests are computed before the
 supplied numerical read. No analytic smallness premise remains. -/
 def
   OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitCompiled.connectorRequest
-    (compiled : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitCompiled
+    (compiled : OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitCompiled
       (faces := faces) included edges vertices member partition sheet)
     (mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces)
-    (fixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    (fixed : Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential differential))
-    (source : Hyperelliptic.Differentials.Basic.Differential genus) (target : Fraction.Rational) (positive : 0 < target)
+    (source : Differentials.Basic.Differential genus) (target : Fraction.Rational) (positive : 0 < target)
       (minimum : Nat) :
     { floor : Nat // ∀ stage
-      (numerics : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+      (numerics : Face.PrimitiveData.FacePrimitiveBank
         (Periods.PeriodMatrix.standardDifferential differential) stage domains)
-      (triangles : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings numerics mesh), floor ≤
+      (triangles : TrianglePrimitiveReadings.TriangleReadings numerics mesh), floor ≤
         stage →
-      Data.Gaussian.Norm.Basic.normSq (Topology.Mesh.RetracingWords.AreaTerm.total
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh triangles.values) compiled.areaTerms
+      Gaussian.Norm.Basic.normSq (RetracingWords.AreaTerm.total
+        (CanonicalEdgeValues.edgeValuation mesh triangles.values) compiled.areaTerms
         -
-        Geometry.Grid.CellBoundary.sumValues (fun occurrence => Topology.Mesh.RetracingWords.wordArea
-          (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh triangles.values) occurrence.word)
+        Geometry.Grid.CellBoundary.sumValues (fun occurrence => RetracingWords.wordArea
+          (CanonicalEdgeValues.edgeValuation mesh triangles.values) occurrence.word)
           compiled.regulars) < target } := by
   let edgeBound := 4 * fixed.bound
   let part := Rational.Budget.Aggregate.perTerm target compiled.connectorTerms.length
@@ -139,7 +141,7 @@ def
   have allowancePositive := Rational.Budget.Weighted.allowance_positive partPositive
     (compiled.connectorWeight_nonnegative edgeBound)
   let requests :=
-    Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.regularZeroRequests mesh
+    OrderedBranchCircuits.BranchCellBank.CircuitPartition.regularZeroRequests mesh
     domains source differential allowance allowancePositive minimum compiled.regulars
   refine ⟨max fixed.index requests.val, ?_⟩
   intro stage numerics triangles later
@@ -147,7 +149,7 @@ def
   have regularLater := (Nat.Order.le_max_right _ _).trans later
   exact compiled.connector_small _
     (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) fixed.nonnegative)
-    (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ConnectorRequest.CircuitPartition.edge_bounded fixed fixedLater
+    (Inclusion.ConnectorRequest.CircuitPartition.edge_bounded fixed fixedLater
       triangles) positive
     (fun occurrence present => (requests.property stage numerics triangles regularLater occurrence present).le)
 
@@ -155,52 +157,52 @@ end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ConnectorRequest.Ordered
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base next : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames next.bank.grid} {vertices :
+    BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {frames : SquareRoot.Grid.RootFrames next.bank.grid} {vertices :
       SquareRoot.Grid.LiftedVertices.VertexBank
     next.bank.grid}
   {edges : SquareRoot.Grid.RootEdgeBank frames} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames next.faces.regulars} {differential : Fin
+    Face.DomainBanks.FaceDomainBank frames next.faces.regulars} {differential : Fin
     genus}
 
 /-- One actual numerical stage pays both original exterior corrections.
 The branch word and all regular polygon areas are those of the original
 ordered compiler, evaluated on the identical supplied triangle cache. -/
 def resplitExteriorRequest (ordered :
-  Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet)
+  BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet)
     (included : Geometry.Grid.Extension.CoordinateInclusion base.bank.grid next.bank.grid)
-    (reference : ∀ point, Polynomial.Geometry.Grid.FromStates.ContainsVertex next.bank.grid point →
+    (reference : ∀ point, Geometry.Grid.FromStates.ContainsVertex next.bank.grid point →
       Paths.OwnerLoopMonodromy.WindingOneLoop curve.polynomial point)
     {newSheet : Fin 2}
-    (compiled : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitCompiled
-      included edges vertices (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember
+    (compiled : OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitCompiled
+      included edges vertices (BasedBranchTours.FramedBranchCellBank.baseMember
       base.bank)
       ordered.prepared.partition newSheet)
     (mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges next.faces)
-    (fixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    (fixed : Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential differential))
-    (source : Hyperelliptic.Differentials.Basic.Differential genus) (target : Fraction.Rational) (positive : 0 < target)
+    (source : Differentials.Basic.Differential genus) (target : Fraction.Rational) (positive : 0 < target)
       (minimum : Nat) :
     { floor : Nat // ∀ stage
-      (numerics : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+      (numerics : Face.PrimitiveData.FacePrimitiveBank
         (Periods.PeriodMatrix.standardDifferential differential) stage domains)
-      (triangles : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings numerics mesh), floor ≤
+      (triangles : TrianglePrimitiveReadings.TriangleReadings numerics mesh), floor ≤
         stage →
-      let value := Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh triangles.values
-      Data.Gaussian.Norm.Basic.normSq (edges.chainValue vertices value (included.resplit base.bank.exterior
-        (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet -
+      let value := CanonicalEdgeValues.edgeValuation mesh triangles.values
+      Gaussian.Norm.Basic.normSq (edges.chainValue vertices value (included.resplit base.bank.exterior
+        (BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet -
         Topology.Surface.Sewing.SewingRetraction.wordValue value compiled.word) < target ∧
-      Data.Gaussian.Norm.Basic.normSq (edges.chainArea vertices value (included.resplit base.bank.exterior
-        (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet -
-        (Topology.Mesh.RetracingWords.wordArea value compiled.word + Geometry.Grid.CellBoundary.sumValues (fun
-          occurrence => Topology.Mesh.RetracingWords.wordArea value occurrence.word) compiled.regulars)) < target } :=
+      Gaussian.Norm.Basic.normSq (edges.chainArea vertices value (included.resplit base.bank.exterior
+        (BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet -
+        (RetracingWords.wordArea value compiled.word + Geometry.Grid.CellBoundary.sumValues (fun
+          occurrence => RetracingWords.wordArea value occurrence.word) compiled.regulars)) < target } :=
           by
   let integrals :=
-    Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.regularZeroRequests mesh
+    OrderedBranchCircuits.BranchCellBank.CircuitPartition.regularZeroRequests mesh
     domains source differential (Rational.Budget.Aggregate.perTerm target compiled.regulars.length)
     (Rational.Budget.Aggregate.perTerm_positive positive _) minimum compiled.regulars
   let areas := compiled.connectorRequest mesh fixed source target positive minimum
@@ -212,13 +214,13 @@ def resplitExteriorRequest (ordered :
       stage numerics triangles ((Nat.Order.le_max_left _ _).trans later)
   · have bounded := areas.property stage numerics triangles ((Nat.Order.le_max_right _ _).trans later)
     rw [ordered.resplit_exterior_areas included edges vertices reference compiled value
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation_reverse mesh triangles.values)]
-    rw [show Topology.Mesh.RetracingWords.wordArea value compiled.word + Topology.Mesh.RetracingWords.AreaTerm.total
+      (CanonicalEdgeValues.edgeValuation_reverse mesh triangles.values)]
+    rw [show RetracingWords.wordArea value compiled.word + RetracingWords.AreaTerm.total
       value compiled.areaTerms -
-        (Topology.Mesh.RetracingWords.wordArea value compiled.word + Geometry.Grid.CellBoundary.sumValues (fun
-          occurrence => Topology.Mesh.RetracingWords.wordArea value occurrence.word) compiled.regulars) =
-        Topology.Mesh.RetracingWords.AreaTerm.total value compiled.areaTerms -
-          Geometry.Grid.CellBoundary.sumValues (fun occurrence => Topology.Mesh.RetracingWords.wordArea value
+        (RetracingWords.wordArea value compiled.word + Geometry.Grid.CellBoundary.sumValues (fun
+          occurrence => RetracingWords.wordArea value occurrence.word) compiled.regulars) =
+        RetracingWords.AreaTerm.total value compiled.areaTerms -
+          Geometry.Grid.CellBoundary.sumValues (fun occurrence => RetracingWords.wordArea value
             occurrence.word) compiled.regulars by ring1]
     exact bounded
 

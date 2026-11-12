@@ -52,11 +52,11 @@ structure Decomposition (p :
   where
   /-- The ordered finite list of normalized positive-degree squarefree factors, retaining multiplicities
   as occurrences. -/
-  factors : List Dense.Rational.Squarefree.Factor
+  factors : List Factor
   /-- At least one squarefree factor is retained. -/ factorsNonempty : factors ≠ []
   /-- The source evaluates as the exact finite product of the retained factor occurrences. -/ evalIdentity : ∀ point :
     Fraction.Rational,
-    p.eval point = (Dense.Rational.Squarefree.factorProduct factors).eval point
+    p.eval point = (factorProduct factors).eval point
   /-- The sum of retained factor degrees is exactly the source degree. -/ degreeSum : (factors.map fun factor =>
     factor.polynomial.natDegree).sum =
     p.natDegree
@@ -69,8 +69,8 @@ namespace Decomposition
 @[expose] def locateRoot
     {p : BoundaryFactorization.CoefficientPolynomial} (decomposition : Decomposition p)
     (point : Fraction.Rational) (root : p.eval point = 0) :
-    Dense.Rational.Squarefree.LocatedFactor decomposition.factors point := by
-  apply Dense.Rational.Squarefree.locateFactor decomposition.factors point
+    LocatedFactor decomposition.factors point := by
+  apply locateFactor decomposition.factors point
   rw [← decomposition.evalIdentity point]
   exact root
 
@@ -82,7 +82,7 @@ theorem eval_eq_zero_iff
       ∃ factor ∈ decomposition.factors,
         factor.polynomial.eval point = 0 := by
   rw [decomposition.evalIdentity point]
-  exact Dense.Rational.Squarefree.factorProduct_eval_eq_zero_iff decomposition.factors point
+  exact factorProduct_eval_eq_zero_iff decomposition.factors point
 
 end Decomposition
 
@@ -90,7 +90,7 @@ end Decomposition
 @[expose] def singletonDecomposition
     (p : BoundaryFactorization.CoefficientPolynomial) (pNormalized : p.normalize = p)
     (pNonzero : p.isZero = false) (pPositive : 0 < p.natDegree)
-    (squarefree : Dense.Rational.Squarefree.SquarefreeCertificate p) : Decomposition p :=
+    (squarefree : SquarefreeCertificate p) : Decomposition p :=
   { factors :=
       [{ polynomial := p
          normalized := pNormalized
@@ -100,7 +100,7 @@ end Decomposition
     factorsNonempty := by intro impossible; exact List.cons_ne_nil _ _ impossible
     evalIdentity := by
       intro point
-      simp only [Dense.Rational.Squarefree.factorProduct, DensePolynomial.eval_mul,
+      simp only [factorProduct, DensePolynomial.eval_mul,
         DensePolynomial.eval_constant,
         Fraction.Field.mul_one_direct, -eq_self, -iff_self]
       rfl
@@ -130,37 +130,37 @@ and cofactor. -/
       intro point
       calc
         p.eval point = divisor.eval point * cofactor.eval point :=
-          Dense.Rational.Factorization.eval_factorization factorization point
-        _ = (Dense.Rational.Squarefree.factorProduct leftDecomposition.factors).eval point *
-            (Dense.Rational.Squarefree.factorProduct rightDecomposition.factors).eval point := by
+          Factorization.eval_factorization factorization point
+        _ = (factorProduct leftDecomposition.factors).eval point *
+            (factorProduct rightDecomposition.factors).eval point := by
           exact congrArg₂ (· * ·) (leftDecomposition.evalIdentity point)
             (rightDecomposition.evalIdentity point)
-        _ = (Dense.Rational.Squarefree.factorProduct
+        _ = (factorProduct
             (leftDecomposition.factors ++
               rightDecomposition.factors)).eval point := by
           induction leftDecomposition.factors with
           | nil =>
-              simp only [Dense.Rational.Squarefree.factorProduct,
+              simp only [factorProduct,
                 DensePolynomial.eval_constant, Fraction.Field.one_mul, -eq_self, -iff_self]
               rfl
           | cons factor factors inductionHypothesis =>
-              simp only [List.cons_append, Dense.Rational.Squarefree.factorProduct,
+              simp only [List.cons_append, factorProduct,
                 DensePolynomial.eval_mul, -eq_self, -iff_self]
               calc
                 (factor.polynomial.eval point *
-                    (Dense.Rational.Squarefree.factorProduct factors).eval point) *
-                      (Dense.Rational.Squarefree.factorProduct rightDecomposition.factors).eval point =
+                    (factorProduct factors).eval point) *
+                      (factorProduct rightDecomposition.factors).eval point =
                   factor.polynomial.eval point *
-                    ((Dense.Rational.Squarefree.factorProduct factors).eval point *
-                      (Dense.Rational.Squarefree.factorProduct rightDecomposition.factors).eval
+                    ((factorProduct factors).eval point *
+                      (factorProduct rightDecomposition.factors).eval
                         point) := by ring1
                 _ = factor.polynomial.eval point *
-                    (Dense.Rational.Squarefree.factorProduct
+                    (factorProduct
                       (factors ++ rightDecomposition.factors)).eval point :=
                   congrArg (factor.polynomial.eval point * ·)
                     inductionHypothesis
     degreeSum := by
-      simp only [Purelib.Data.List.Map.map_append, Purelib.Data.List.Fold.sum_append Nat.zero_add Nat.add_assoc,
+      simp only [Data.List.Map.map_append, Data.List.Fold.sum_append Nat.zero_add Nat.add_assoc,
         leftDecomposition.degreeSum, rightDecomposition.degreeSum, -eq_self, -iff_self]
       exact degreeBalance }
 
@@ -169,34 +169,34 @@ and cofactor. -/
     (p : BoundaryFactorization.CoefficientPolynomial) (pNormalized : p.normalize = p)
     (pNonzero : p.isZero = false) (pPositive : 0 < p.natDegree) :
     Decomposition p := by
-  let derivative := Dense.Derivative.derivative p
-  let result := Dense.GCD.extendedGCD p derivative
+  let derivative := Derivative.derivative p
+  let result := GCD.extendedGCD p derivative
   have derivativeNonzero : derivative.isZero = false := by
-    exact Dense.Rational.Derivative.Degree.derivative_isZero_false
+    exact Derivative.Degree.derivative_isZero_false
       pNonzero pPositive
   have gcdNonzero : result.gcd.isZero = false :=
     result.nonzero (Or.inl pNonzero)
   if degreeZero : result.gcd.natDegree = 0 then
-    let squarefree : Dense.Rational.Squarefree.SquarefreeCertificate p :=
-      Dense.Rational.Bezout.certificateOfConstantGCD p derivative gcdNonzero degreeZero
+    let squarefree : SquarefreeCertificate p :=
+      Bezout.certificateOfConstantGCD p derivative gcdNonzero degreeZero
     exact singletonDecomposition p pNormalized pNonzero pPositive squarefree
   else
     let divisor := result.gcd
     let cofactor := result.pFactor
     have derivativeDegree : derivative.natDegree < p.natDegree :=
-      Dense.Derivative.derivative_natDegree_lt pNonzero pPositive
+      Derivative.derivative_natDegree_lt pNonzero pPositive
     have divisorProper : divisor.natDegree < p.natDegree :=
       (result.degreeLeRight derivativeNonzero).trans_lt derivativeDegree
     have divisorPositive : 0 < divisor.natDegree :=
       Nat.pos_of_ne_zero degreeZero
     have factorization : Factorization p divisor cofactor := by
-      apply Dense.Rational.Factorization.factorizationOfEvals
+      apply Factorization.factorizationOfEvals
       exact result.pIdentity
     have cofactorNonzero : cofactor.isZero = false :=
-      Dense.Rational.Factorization.right_isZero_false pNonzero pNormalized factorization
+      Factorization.right_isZero_false pNonzero pNormalized factorization
     have degreeBalance :
         divisor.natDegree + cofactor.natDegree = p.natDegree :=
-      Dense.Rational.Factorization.factor_natDegree_add pNonzero pNormalized gcdNonzero cofactorNonzero
+      Factorization.factor_natDegree_add pNonzero pNormalized gcdNonzero cofactorNonzero
         factorization
     have cofactorPositive : 0 < cofactor.natDegree := by
       apply Nat.pos_of_ne_zero

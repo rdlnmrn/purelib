@@ -116,24 +116,24 @@ open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 open Purelib.Riemann.RootContinuation
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {owners :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.OwnedEndpoints regular cell}
-  {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell} {target :
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
+    UniformReciprocalCover.Cell data edge}
+  {regular : RegularBounds.Data cap} {owners :
+    ParentOwners.OwnedEndpoints regular cell}
+  {comparison : ArcSamples.Data regular cell} {target :
     Coordinate} {floor : Nat}
-  {index depth stage minimum : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {source : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
-  {request : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartAreaRequest.AreaRequest comparison owners target
+  {index depth stage minimum : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {source : UniformReciprocalPrimitives.SourcePrimitive data index}
+  {request : AreaRequest comparison owners target
     floor}
   {charts : ChartMesh request.mesh capSample minimum}
-  {original : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentCells.ComparedCell comparison source capSample
+  {original : ParentCells.ComparedCell comparison source capSample
     depth}
 
 universe u
@@ -142,21 +142,21 @@ namespace AreaRequest.Evaluation
 
 variable {evaluated : Evaluation charts
   original stage}
-  {polynomials : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+  {polynomials : Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
     index box}
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
 /-- The preselected coordinate request bounds every retained root step by one. The resulting basis ceiling is
 independent of polynomial and reading stages. -/
-theorem basis_increment_bound (evaluated : AreaRequest.Evaluation charts original stage)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+theorem basis_increment_bound (evaluated : Evaluation charts original stage)
+    (coefficients : GaussianVector genus)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
-    (segment : VertexPaths.Segment regular owners.model original.sample request.tolerance floor stage)
+    (segment : Segment regular owners.model original.sample request.tolerance floor stage)
     (member : segment ∈ evaluated.vertices.path.segments) :
     Data.Gaussian.Norm.Basic.normSq (polynomials.value coefficients segment.last.root.coordinate -
       polynomials.value coefficients segment.first.root.coordinate) ≤
-      (2 * request.basisBounds.coefficient) * PreparedObservationCoercivity.coefficientNormSq coefficients := by
+      (2 * request.basisBounds.coefficient) * coefficientNormSq coefficients := by
   have bound := BasisBounds.chord_increment request.basisBounds polynomials coefficients branch
     (Evaluation.square_inside request branch segment.first) (Evaluation.square_inside request branch segment.last)
     (left := 0) (right := 1) ⟨le_rfl, by decide⟩ ⟨by decide, le_rfl⟩
@@ -168,37 +168,37 @@ theorem basis_increment_bound (evaluated : AreaRequest.Evaluation charts origina
       segment.last.root.coordinate := by
     apply Data.Gaussian.Basic.ext <;> simp only [RootRadialGeometry.chord, Data.Gaussian.Scale.scale_re,
       Data.Gaussian.Scale.scale_im, Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im] <;> ring1
-  rw [atZero, atOne, show ((1 : InverseRootPolynomial.Coordinate) - 0)^2 = 1 by decide, Fraction.Field.mul_one_direct]
+  rw [atZero, atOne, show ((1 : Coordinate) - 0)^2 = 1 by decide, Fraction.Field.mul_one_direct]
     at bound
   have step := ((evaluated.coordinate_step_bound branch segment member).trans request.coordinateStep_paid).le.trans
     request.coordinateSmall
-  have normNonnegative : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients :=
+  have normNonnegative : 0 ≤ coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
-      (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : InverseRootPolynomial.Coordinate)) _ (fun row =>
-        Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
+      (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Coordinate)) _ (fun row =>
+        normSq_nonneg (coefficients row)))
   have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct step
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
+    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 2)
       request.basisBounds.coefficient_nonnegative)
   exact bound.trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct scaled normNonnegative).trans_eq (by
     ring1))
 
 /-- Complete source/chart polygon comparison on the acquired geometry. Only the source tolerance remains to be paid by
 the request schedule. -/
-theorem source_path_trace_bound (evaluated : AreaRequest.Evaluation charts original stage)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+theorem source_path_trace_bound (evaluated : Evaluation charts original stage)
+    (coefficients : GaussianVector genus)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
-    {sourceTarget : InverseRootPolynomial.Coordinate} (nonnegative : 0 ≤ sourceTarget) {firstSource lastSource :
-      InverseRootPolynomial.Gaussian}
-    (values : PathValues.BasisPathValues polynomials coefficients sourceTarget evaluated.vertices.path.segments
+    {sourceTarget : Coordinate} (nonnegative : 0 ≤ sourceTarget) {firstSource lastSource :
+      Gaussian}
+    (values : BasisPathValues polynomials coefficients sourceTarget evaluated.vertices.path.segments
       firstSource lastSource) :
     Data.Gaussian.Norm.Basic.normSq ((IncrementArea.traceArea firstSource (values.pairs.map Prod.fst) -
       IncrementArea.traceArea (polynomials.value coefficients evaluated.vertices.first.root.coordinate)
         (values.pairs.map Prod.snd)) -
       (BoundaryRibbon.area firstSource (lastSource - firstSource) -
         BoundaryRibbon.area (polynomials.value coefficients evaluated.vertices.first.root.coordinate)
-          (Data.Gaussian.Norm.Sum.Basic.gaussianSum (values.pairs.map Prod.snd)))) ≤
-      1280 * (evaluated.vertices.path.segments.length : InverseRootPolynomial.Coordinate)^4 * sourceTarget *
-        (40 * sourceTarget + 2 * request.basisBounds.coefficient) * (PreparedObservationCoercivity.coefficientNormSq
+          (gaussianSum (values.pairs.map Prod.snd)))) ≤
+      1280 * (evaluated.vertices.path.segments.length : Coordinate)^4 * sourceTarget *
+        (40 * sourceTarget + 2 * request.basisBounds.coefficient) * (coefficientNormSq
           coefficients)^2 :=
   BasisPathValues.trace_origin_bound values _ nonnegative
     (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) request.basisBounds.coefficient_nonnegative)

@@ -58,7 +58,7 @@ are introduced only through the terminating Gaussian-rational constructor.
 
 /-- Actual stateful addition is operationally commutative. -/
 @[expose] def coherentAdd_comm (left right : CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
+    NamedEquivalent
       (Named.add left.name right.name)
       (Named.add right.name left.name) :=
   NamedEquivalent.trans
@@ -66,12 +66,12 @@ are introduced only through the terminating Gaussian-rational constructor.
     (NamedEquivalent.trans
       (Equivalence.approximationEquivalent_toNamed
         (Equivalence.approximationEquivalentOfSamplesEq
-          (Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation left.name right.name)
-          (Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation right.name left.name)
+          (Arithmetic.Sum.sampledSumApproximation left.name right.name)
+          (Arithmetic.Sum.sampledSumApproximation right.name left.name)
           (by
             intro index
-            rw [Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation_sample,
-              Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation_sample]
+            rw [Arithmetic.Sum.sampledSumApproximation_sample,
+              Arithmetic.Sum.sampledSumApproximation_sample]
             exact Data.Gaussian.Basic.add_comm _ _)))
       (NamedEquivalent.symm
         (Bridge.coherentAdd_toNamed right left)))
@@ -79,7 +79,7 @@ are introduced only through the terminating Gaussian-rational constructor.
 /-- Actual stateful addition is operationally associative. Both process trees normalize to one explicit three-input
 equal-index sampler. -/
 @[expose] def coherentAdd_assoc (left middle right : CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
+    NamedEquivalent
       (Named.add
         (Named.add
           left.name middle.name)
@@ -92,8 +92,8 @@ equal-index sampler. -/
     Sampling.approximation left.name
   let rightSource :=
     Sampling.approximation right.name
-  let leftMiddle := Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation left.name middle.name
-  let middleRight := Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation middle.name right.name
+  let leftMiddle := Arithmetic.Sum.sampledSumApproximation left.name middle.name
+  let middleRight := Arithmetic.Sum.sampledSumApproximation middle.name right.name
   let triple := Sampling.sampledTripleSumApproximation left.name middle.name right.name
   let sampledLeft :=
     CoherentNamed.ofApproximation
@@ -107,7 +107,7 @@ equal-index sampler. -/
   let canonicalMiddleRight :=
     CoherentNamed.ofApproximation
       middleRight
-  have normalizeLeft : Gaussian.Equivalence.NamedEquivalent
+  have normalizeLeft : NamedEquivalent
       (Named.add
         (Named.add
           left.name middle.name)
@@ -119,13 +119,13 @@ equal-index sampler. -/
       canonicalLeftMiddle right sampledRight
       (Bridge.coherentAdd_toNamed left middle)
       (Equivalence.named_toSamplingNamed right.name)
-  have leftPointwise : Gaussian.Equivalence.NamedEquivalent
+  have leftPointwise : NamedEquivalent
       (Named.add
         canonicalLeftMiddle.name sampledRight.name)
       triple.toNamed :=
     Sampling.addToNamed_equivalent_pointwise leftMiddle rightSource triple
       (by intro index; rfl)
-  have normalizeRight : Gaussian.Equivalence.NamedEquivalent
+  have normalizeRight : NamedEquivalent
       (Named.add
         left.name
         (Named.add
@@ -137,14 +137,14 @@ equal-index sampler. -/
       canonicalMiddleRight
       (Equivalence.named_toSamplingNamed left.name)
       (Bridge.coherentAdd_toNamed middle right)
-  have rightPointwise : Gaussian.Equivalence.NamedEquivalent
+  have rightPointwise : NamedEquivalent
       (Named.add
         sampledLeft.name canonicalMiddleRight.name)
       triple.toNamed :=
     Sampling.addToNamed_equivalent_pointwise leftSource middleRight triple (by
       intro index
       rw [Sampling.sampledTripleSumApproximation_sample,
-        Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation_sample]
+        Arithmetic.Sum.sampledSumApproximation_sample]
       exact Data.Gaussian.Basic.add_assoc _ _ _)
   exact NamedEquivalent.trans
     normalizeLeft
@@ -158,23 +158,23 @@ equal-index sampler. -/
 
 /-- Adding the terminating exact zero on the right changes no finite operational observation of a coherent CCL name. -/
 @[expose] def coherentAdd_zero_right (input : CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
+    NamedEquivalent
       (Named.add input.name
         (Named.exact 0))
       input.name := by
   let zero := Coherence.exact 0
   let inputApproximation :=
     Sampling.approximation input.name
-  have pointwise : Gaussian.Equivalence.NamedEquivalent
-      (Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation input.name zero.name).toNamed
+  have pointwise : NamedEquivalent
+      (Arithmetic.Sum.sampledSumApproximation input.name zero.name).toNamed
       inputApproximation.toNamed :=
     Equivalence.approximationEquivalent_toNamed
       (Equivalence.approximationEquivalentOfSamplesEq
-        (Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation input.name zero.name)
+        (Arithmetic.Sum.sampledSumApproximation input.name zero.name)
         inputApproximation
         (by
           intro index
-          rw [Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation_sample]
+          rw [Arithmetic.Sum.sampledSumApproximation_sample]
           change inputApproximation.sample index + 0 =
             inputApproximation.sample index
           exact Data.Gaussian.Basic.add_zero _))
@@ -189,13 +189,13 @@ equal-index sampler. -/
 
 /-- Adding the terminating exact zero on the left changes no finite operational observation of a coherent CCL name. -/
 @[expose] def coherentAdd_zero_left (input : CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
+    NamedEquivalent
       (Named.add
         (Named.exact 0) input.name)
       input.name :=
   NamedEquivalent.trans
-    (Approximation.Gaussian.Arithmetic.Add.coherentAdd_comm (Coherence.exact 0) input)
-    (Approximation.Gaussian.Arithmetic.Add.coherentAdd_zero_right input)
+    (coherentAdd_comm (Coherence.exact 0) input)
+    (coherentAdd_zero_right input)
 
 end
 
@@ -206,23 +206,23 @@ open Purelib.Data.Gaussian.Basic (Canonical)
 
 /-- Adding a channel with retained operational zero identity on the right preserves the left channel's operational
 value. -/
-@[expose] def addRightZero (left right : Coherent.CoherentNamed) (zero : Zero.ZeroIdentity right) :
-    Gaussian.Equivalence.NamedEquivalent (CoherentNamed.add left right).name left.name :=
+@[expose] def addRightZero (left right : CoherentNamed) (zero : Zero.ZeroIdentity right) :
+    NamedEquivalent (CoherentNamed.add left right).name left.name :=
   NamedEquivalent.trans
     (Congruence.coherentAdd_respects left left right
       (Coherence.exact 0)
       (NamedEquivalent.refl _) zero)
-    (Approximation.Gaussian.Arithmetic.Add.coherentAdd_zero_right left)
+    (coherentAdd_zero_right left)
 
 /-- Adding a channel with retained operational zero identity on the left preserves the right channel's operational
 value. -/
-@[expose] def addLeftZero (left right : Coherent.CoherentNamed) (zero : Zero.ZeroIdentity left) :
-    Gaussian.Equivalence.NamedEquivalent (CoherentNamed.add left right).name right.name :=
+@[expose] def addLeftZero (left right : CoherentNamed) (zero : Zero.ZeroIdentity left) :
+    NamedEquivalent (CoherentNamed.add left right).name right.name :=
   NamedEquivalent.trans
     (Congruence.coherentAdd_respects left
       (Coherence.exact 0) right right zero
       (NamedEquivalent.refl _))
-    (Approximation.Gaussian.Arithmetic.Add.coherentAdd_zero_left right)
+    (coherentAdd_zero_left right)
 
 end
 

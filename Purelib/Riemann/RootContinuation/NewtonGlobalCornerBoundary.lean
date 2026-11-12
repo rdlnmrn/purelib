@@ -35,6 +35,8 @@ import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Gaussian.Field
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces
+
 public section
 
 /-! The global endpoint correction is the sum of the actual outer corner
@@ -61,18 +63,18 @@ open Purelib.Riemann.Meshes.PuncturedGridFaces (PuncturedFaces)
 open Purelib.Riemann.Meshes.GridLiftedDualSteps (GridSide)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_add sumFin_sub)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : NewtonPreparation original} {target radius : Purelib.Data.Rat.Fraction.Rational} {grid : NewtonGrid
+  {preparation : NewtonPreparation original} {target radius : Rational} {grid : NewtonGrid
     preparation target radius}
   {observations : ProtectedObservations original} {frames : RootIsolation.SquareRoot.Grid.RootFrames
     grid.shrunk.prepared.grid}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
+  {domains : FaceDomainBank frames
     grid.faces.regulars} {partitions : SurfacePartitions observations grid}
   {coarse : (sheet : Fin 2) → SurfaceMeshes partitions domains sheet}
-  {fixed : (sheet : Fin 2) → Preflights domains sheet} {error : Purelib.Data.Rat.Fraction.Rational}
+  {fixed : (sheet : Fin 2) → Preflights domains sheet} {error : Rational}
   {stage : Nat} {cache : Numerics domains stage} {coefficients :
     LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -86,7 +88,7 @@ open Purelib.Algebra in
 
 Adds bottom and right and subtracts top and left for each regular face. -/
 @[expose] def endpointTotal : Gaussian :=
-  FiniteSum.Fin.sumFin (fun position => endpointSideSum samples .bottom position + endpointSideSum samples .right
+  sumFin (fun position => endpointSideSum samples .bottom position + endpointSideSum samples .right
     position -
     endpointSideSum samples .top position - endpointSideSum samples .left position)
 
@@ -98,7 +100,7 @@ open Purelib.Riemann.Periods in
 Reads the actual extreme partition corners in lower-left, lower-right, upper-right, upper-left order. -/
 @[expose] def cornerBoundary {assemblies : SheetAssemblies requests (cache := cache) (coefficients := coefficients)}
     {perimeters : SheetPerimeters requests assemblies} (faces : SheetFaces requests perimeters) : Gaussian :=
-  FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun sheet : Fin 2 =>
+  sumFin (fun position => sumFin (fun sheet : Fin 2 =>
     let face := (faces.get sheet).get position
     BilinearGridBoundary.cornerArea (face.corners 0 0).lowerLeft
       (face.corners (Fin.last (Meshes.Newton.Surface.PieceIndices.columns (partitions.get position))) 0).lowerRight
@@ -114,11 +116,11 @@ theorem endpointTotal_readback {assemblies : SheetAssemblies requests (cache := 
     {perimeters : SheetPerimeters requests assemblies} (faces : SheetFaces requests perimeters) :
     endpointTotal samples = cornerBoundary faces := by
   unfold endpointTotal cornerBoundary
-  apply FiniteSum.Fin.sumFin_congr
+  apply sumFin_congr
   intro position
   unfold endpointSideSum
-  rw [← FiniteSum.Fin.sumFin_add, ← FiniteSum.Fin.sumFin_sub, ← FiniteSum.Fin.sumFin_sub]
-  apply FiniteSum.Fin.sumFin_congr
+  rw [← sumFin_add, ← sumFin_sub, ← sumFin_sub]
+  apply sumFin_congr
   intro sheet
   exact ((samples.get sheet).get position).endpoint_total ((faces.get sheet).get position)
 
@@ -130,43 +132,43 @@ Uses the actual neighbor bank to partition each oriented side sum into regular-c
 theorem endpointTotal_split (neighbors : PuncturedFaces.NeighborBank grid.faces) :
     endpointTotal samples = pairedEndpoints samples + physicalEndpoints samples neighbors := by
   have paired : pairedEndpoints samples =
-      (FiniteSum.Fin.sumFin (fun p =>
-        Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.regularValue
+      (sumFin (fun p =>
+        SideNeighbor.regularValue
         ((neighbors.entries.get p).right) (endpointSideSum samples .right p)) -
-        FiniteSum.Fin.sumFin (fun p =>
-          Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.regularValue
+        sumFin (fun p =>
+          SideNeighbor.regularValue
           ((neighbors.entries.get p).left) (endpointSideSum samples .left p))) -
-      (FiniteSum.Fin.sumFin (fun p =>
-        Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.regularValue
+      (sumFin (fun p =>
+        SideNeighbor.regularValue
         ((neighbors.entries.get p).top) (endpointSideSum samples .top p)) -
-        FiniteSum.Fin.sumFin (fun p =>
-          Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.regularValue
+        sumFin (fun p =>
+          SideNeighbor.regularValue
           ((neighbors.entries.get p).bottom) (endpointSideSum samples .bottom p))) := by
     unfold pairedEndpoints
     exact congrArg₂ (· - ·)
-      (Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.NeighborBank.pair_sum neighbors .right
+      (NeighborBank.pair_sum neighbors .right
         (endpointSideSum samples .right) (endpointSideSum samples .left))
-      (Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.NeighborBank.pair_sum neighbors .top
+      (NeighborBank.pair_sum neighbors .top
         (endpointSideSum samples .top) (endpointSideSum samples .bottom))
-  have split (side : GridSide) : FiniteSum.Fin.sumFin (endpointSideSum samples side) =
-      FiniteSum.Fin.sumFin (fun p =>
-        Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.regularValue
-        (Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+  have split (side : GridSide) : sumFin (endpointSideSum samples side) =
+      sumFin (fun p =>
+        SideNeighbor.regularValue
+        (FaceNeighbors.at
         (neighbors.entries.get p) side) (endpointSideSum samples side p)) +
-        FiniteSum.Fin.sumFin (fun p =>
-          Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.physicalValue
-          (Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+        sumFin (fun p =>
+          SideNeighbor.physicalValue
+          (FaceNeighbors.at
           (neighbors.entries.get p) side) (endpointSideSum samples side p)) := by
-    rw [FiniteSum.Fin.sumFin_congr (fun p =>
-      Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.SideNeighbor.value_split
-      (Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at (neighbors.entries.get
-      p) side) (endpointSideSum samples side p)), FiniteSum.Fin.sumFin_add]
+    rw [sumFin_congr (fun p =>
+      SideNeighbor.value_split
+      (FaceNeighbors.at (neighbors.entries.get
+      p) side) (endpointSideSum samples side p)), sumFin_add]
   unfold endpointTotal
   rw [paired]
-  simp only [-eq_self, -iff_self, FiniteSum.Fin.sumFin_add, FiniteSum.Fin.sumFin_sub]
+  simp only [-eq_self, -iff_self, sumFin_add, sumFin_sub]
   rw [split .bottom, split .right, split .top, split .left]
   dsimp only [physicalEndpoints,
-    Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at]
+    FaceNeighbors.at]
   ring1
 
 /-- Decompose exterior area into centered contacts, physical sides and corners.

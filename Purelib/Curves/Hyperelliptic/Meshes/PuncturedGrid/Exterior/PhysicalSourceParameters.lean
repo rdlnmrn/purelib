@@ -68,26 +68,26 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalSou
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-    regular domains differential} {target : Normalization.InverseRootPolynomial.Coordinate} {minimum stage fine : Nat}
+    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    regular domains differential} {target : InverseRootPolynomial.Coordinate} {minimum stage fine : Nat}
   {box otherBox : Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
-  {plan : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan occurrence other target
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {plan : PairedSourceReferences.PairedSourcePlan occurrence other target
     minimum}
-  {evaluated : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan
+  {evaluated : PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan
     sample otherSample fine}
-  {lc lr rc rr : Nat} {lg : Normalization.RectangularInverseModels.Geometry lc lr} {rg :
-    Normalization.RectangularInverseModels.Geometry rc rr}
+  {lc lr rc rr : Nat} {lg : RectangularInverseModels.Geometry lc lr} {rg :
+    RectangularInverseModels.Geometry rc rr}
   {leftCuts : Paths.RectangularSegmentSplitting.GridCuts lg} {rightCuts : Paths.RectangularSegmentSplitting.GridCuts rg}
     {leftBox rightBox : Rational.Box}
   {left : Meshes.RectangularObservationMesh.ObservationMesh leftCuts leftBox} {right :
@@ -110,7 +110,7 @@ private theorem endpoint_unit {vertical : Bool} {physical : Rectangle.Partition.
 
 section Horizontal
 variable {leftRow : Fin left.partition.y.intervals.length} {rightRow : Fin right.partition.y.intervals.length}
-  {height : Normalization.InverseRootPolynomial.Coordinate} {side :
+  {height : InverseRootPolynomial.Coordinate} {side :
     Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedHorizontalSide left right leftRow rightRow
     height}
 /-- The actual horizontal matched trace retains both source endpoints and the dyadic upper bound on each parameter step.
@@ -120,7 +120,7 @@ theorem horizontalParameters_bounds (trace : side.Trace depth) (column : Fin lef
       forward (left.partition.x.intervals[column.val]'column.isLt))
     (sourceFirst : occurrence.start.im = height) (sourceLast : occurrence.finish.im = height) :
     let transport :=
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.MatchedSourceFragments.SourceBlockParameters.horizontalParameters
+      MatchedSourceFragments.SourceBlockParameters.horizontalParameters
       trace column block sourceFirst sourceLast
     transport.parameters 0 =
       (SourceBlockParameters.firstParameter block) ∧
@@ -128,19 +128,19 @@ theorem horizontalParameters_bounds (trace : side.Trace depth) (column : Fin lef
         (SourceBlockParameters.lastParameter block) ∧
       ∀ edge : Fin (Paths.RectangularDyadicPairedTrace.dyadicCount depth),
         transport.parameters edge.succ - transport.parameters edge.castSucc ≤ (1 / 2 :
-          Normalization.InverseRootPolynomial.Coordinate)^depth := by
+          InverseRootPolynomial.Coordinate)^depth := by
   intro transport
   refine ⟨(Paths.RectangularParentTraceSteps.first_parameter transport), transport.last_parameter, ?_⟩
   intro edge
   exact Paths.RectangularParentTraceSteps.dyadic_step_le transport (trace.segments_eq column)
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalSourceParameters.SourceBlockParameters.endpoint_unit block).1
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalSourceParameters.SourceBlockParameters.endpoint_unit block).2
+    (SourceBlockParameters.endpoint_unit block).1
+    (SourceBlockParameters.endpoint_unit block).2
     edge
 end Horizontal
 
 section Vertical
 variable {leftColumn : Fin left.partition.x.intervals.length} {rightColumn : Fin right.partition.x.intervals.length}
-  {horizontal : Normalization.InverseRootPolynomial.Coordinate} {side :
+  {horizontal : InverseRootPolynomial.Coordinate} {side :
     Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedVerticalSide left right leftColumn rightColumn
     horizontal}
 /-- The actual vertical matched trace retains both source endpoints and the dyadic upper bound on each parameter step.
@@ -150,7 +150,7 @@ theorem verticalParameters_bounds (trace : side.Trace depth) (row : Fin left.par
       forward (left.partition.y.intervals[row.val]'row.isLt))
     (sourceFirst : occurrence.start.re = horizontal) (sourceLast : occurrence.finish.re = horizontal) :
     let transport :=
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.MatchedSourceFragments.SourceBlockParameters.verticalParameters trace
+      MatchedSourceFragments.SourceBlockParameters.verticalParameters trace
       row block sourceFirst sourceLast
     transport.parameters 0 =
       (SourceBlockParameters.firstParameter block) ∧
@@ -158,13 +158,13 @@ theorem verticalParameters_bounds (trace : side.Trace depth) (row : Fin left.par
         (SourceBlockParameters.lastParameter block) ∧
       ∀ edge : Fin (Paths.RectangularDyadicPairedTrace.dyadicCount depth),
         transport.parameters edge.succ - transport.parameters edge.castSucc ≤ (1 / 2 :
-          Normalization.InverseRootPolynomial.Coordinate)^depth := by
+          InverseRootPolynomial.Coordinate)^depth := by
   intro transport
   refine ⟨(Paths.RectangularParentTraceSteps.first_parameter transport), transport.last_parameter, ?_⟩
   intro edge
   exact Paths.RectangularParentTraceSteps.dyadic_step_le transport (trace.segments_eq row)
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalSourceParameters.SourceBlockParameters.endpoint_unit block).1
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalSourceParameters.SourceBlockParameters.endpoint_unit block).2
+    (SourceBlockParameters.endpoint_unit block).1
+    (SourceBlockParameters.endpoint_unit block).2
     edge
 end Vertical
 

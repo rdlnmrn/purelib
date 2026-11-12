@@ -70,12 +70,12 @@ namespace Purelib.RootIsolation.Curve.Boundary.Profile.Residual.BoundaryProfileE
 
 section Profile
 
-variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
   LinearAlgebra.Coordinates2.Matrix.GaussianMatrix} {current : Box}
 variable {denominatorMargin : Fraction.Rational}
 variable {marginPositive : 0 < denominatorMargin}
 variable {atom : Geometry.Projective.Hermitian.Atom}
-variable {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+variable {boundary : Analysis.CurveBoundary p reference current denominatorMargin
   marginPositive atom}
 
 section BoundaryProfileEventEntry
@@ -88,7 +88,7 @@ of this condition-profile boundary event lying in a displayed affine box. -/
       BoundaryProfileEventEntry
         boundary)
     (targetBox : Box) : Fraction.Rational :=
-  Curve.Event.Profile.Residual.Lift.affineProfileResidualCoefficient (targetBox := targetBox) entry.event.1
+  Event.Profile.Residual.Lift.affineProfileResidualCoefficient (targetBox := targetBox) entry.event.1
 
 /-- The original profile event's affine residual coefficient for the supplied target box is nonnegative. -/
 theorem
@@ -97,8 +97,8 @@ theorem
       BoundaryProfileEventEntry
         boundary)
     (targetBox : Box) : 0 ≤
-      Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient entry targetBox :=
-  Curve.Event.Profile.Residual.Lift.affineProfileResidualCoefficient_nonneg
+      affineResidualCoefficient entry targetBox :=
+  Event.Profile.Residual.Lift.affineProfileResidualCoefficient_nonneg
     (targetBox := targetBox) entry.event.1
 
 /-- Every affine meeting of a requested profile event with `targetBox` has a
@@ -116,12 +116,12 @@ theorem
       entry.parent.chart.parameterization.curve.denominatorAt parameter ≠ 0)
     (pointInside : targetBox.Contains
       (entry.parent.chart.parameterization.curve.point parameter)) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         (p.eval
           (entry.parent.chart.parameterization.curve.point parameter)) ≤
-      Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient entry targetBox * epsilon ^ 2
+      affineResidualCoefficient entry targetBox * epsilon ^ 2
         :=
-  Curve.Event.Profile.Residual.Lift.ProfileEventLeaf.normSq_eval_point_request_le_of_inside entry.event.2
+  Event.Profile.Residual.Lift.ProfileEventLeaf.normSq_eval_point_request_le_of_inside entry.event.2
     epsilon positive parameter parameterInside denominatorNonzero pointInside
 
 /-- The explicit residual budget at the same request used for profile signs
@@ -134,8 +134,8 @@ and separated-region ownership. -/
     (boxes : List Box)
     (pairwise : boxes.Pairwise fun left right => left.Separated right)
     (targetBox : Box) : Fraction.Rational :=
-  Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient entry targetBox *
-    Curve.Boundary.Profile.Separation.combinedProfileRequestWidth
+  affineResidualCoefficient entry targetBox *
+    Separation.combinedProfileRequestWidth
       entry boxes pairwise ^ 2
 
 /-- The residual budget at the shared sign-and-region-separation request is nonnegative. -/
@@ -147,12 +147,12 @@ theorem
     (boxes : List Box)
     (pairwise : boxes.Pairwise fun left right => left.Separated right)
     (targetBox : Box) :
-    0 ≤ Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.combinedAffineResidualBudget entry boxes pairwise
+    0 ≤ combinedAffineResidualBudget entry boxes pairwise
       targetBox :=
   Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient_nonneg entry targetBox)
+    (affineResidualCoefficient_nonneg entry targetBox)
     (Fraction.Order.Arithmetic.sq_nonneg_direct
-      (Curve.Boundary.Profile.Separation.combinedProfileRequestWidth
+      (Separation.combinedProfileRequestWidth
         entry boxes pairwise))
 
 /-- Event-wide original-polynomial residual bound at the shared finite
@@ -167,21 +167,21 @@ theorem
     (targetBox : Box) (parameter : Fraction.Rational)
     (parameterInside :
       (entry.requestAt
-        (Curve.Boundary.Profile.Separation.combinedProfileRequestWidth
+        (Separation.combinedProfileRequestWidth
           entry boxes pairwise)).cell.interval.Contains parameter)
     (denominatorNonzero :
       entry.parent.chart.parameterization.curve.denominatorAt parameter ≠ 0)
     (pointInside : targetBox.Contains
       (entry.parent.chart.parameterization.curve.point parameter)) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         (p.eval
           (entry.parent.chart.parameterization.curve.point parameter)) ≤
-      Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.combinedAffineResidualBudget entry boxes pairwise
+      combinedAffineResidualBudget entry boxes pairwise
         targetBox :=
-  Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.normSq_eval_point_requestAt_le_of_inside entry targetBox
-    (Curve.Boundary.Profile.Separation.combinedProfileRequestWidth
+  normSq_eval_point_requestAt_le_of_inside entry targetBox
+    (Separation.combinedProfileRequestWidth
       entry boxes pairwise)
-    (Curve.Boundary.Profile.Separation.combinedProfileRequestWidth_pos
+    (Separation.combinedProfileRequestWidth_pos
       entry boxes pairwise)
     parameter parameterInside denominatorNonzero pointInside
 

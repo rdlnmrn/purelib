@@ -34,6 +34,8 @@ import Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -71,7 +73,7 @@ open Purelib.Topology.Polygon.Stokes (OrientedEdge triangleEdgeOccurrences)
 open _root_.Purelib.Data.Gaussian.Basic (conj)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus}
   {owner : OwnedPuncturedMesh curve}
 
 namespace EdgeMagnitude
@@ -101,7 +103,7 @@ namespace EdgeMagnitude
 @[expose] def ChartBound (owner : OwnedPuncturedMesh curve) (values : Values owner)
     (bound : Fraction.Rational) : Prop :=
   ∀ (edge : OrientedEdge owner.vertices.count) (_supported : Supported owner edge),
-    normSq (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation owner.mesh values edge) ≤ 8 * bound + 2
+    normSq (CanonicalEdgeValues.edgeValuation owner.mesh values edge) ≤ 8 * bound + 2
 
 end EdgeMagnitude
 
@@ -113,12 +115,12 @@ structure EdgeMagnitude (values : EdgeMagnitude.Values owner) where
   /-- The retained common numerical magnitude ceiling. -/ bound : Fraction.Rational
   /-- The retained magnitude ceiling is nonnegative. -/ nonnegative : 0 ≤ bound
   /-- The actual original triangle values satisfy the retained anchor-increment bound. -/ triangle_bounded :
-    _root_.Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Readings.EdgeMagnitude.TriangleBound owner values bound
+    EdgeMagnitude.TriangleBound owner values bound
   /-- Every original source-edge increment satisfies the retained magnitude bound. -/
   source_bounded : EdgeMagnitude.SourceBound owner
     values bound
   /-- The canonical chart valuation satisfies the retained bound on each supported original edge. -/ chart_bounded :
-    _root_.Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Readings.EdgeMagnitude.ChartBound owner values bound
+    EdgeMagnitude.ChartBound owner values bound
 
 -- Preserve the original constructor certificate names of this unchanged nominal datatype.
 
@@ -130,7 +132,7 @@ namespace EdgeMagnitude
 @[expose] def mixValues (leftValues rightValues : Values owner)
     (coefficient : Gaussian.Basic.Canonical) (triangle : Fin owner.mesh.triangles.length) :
       Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues 3 :=
-  Data.Vector.Basic.vectorOfFn fun which =>
+  Vector.Basic.vectorOfFn fun which =>
     conj (leftValues triangle which) + coefficient * rightValues triangle which
 
 /-- Read the exact conjugate-linear combination at one original triangle coordinate. -/
@@ -138,7 +140,7 @@ theorem mixValues_apply (leftValues rightValues : Values owner)
     (coefficient : Gaussian.Basic.Canonical) (triangle : Fin owner.mesh.triangles.length) (which : Fin 3) :
     EdgeMagnitude.mixValues (owner := owner) leftValues rightValues coefficient triangle which =
       conj (leftValues triangle which) + coefficient * rightValues triangle which := by
-  rw [EdgeMagnitude.mixValues.eq_1, Data.Vector.Basic.vectorOfFn_apply]
+  rw [EdgeMagnitude.mixValues.eq_1, Vector.Basic.vectorOfFn_apply]
 
 end EdgeMagnitude
 
@@ -156,14 +158,14 @@ theorem mixBound_nonnegative {leftBound rightBound : Fraction.Rational} (left : 
   rw [mixBound]
   exact add_nonneg
     (add_nonneg
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 4)
-        (add_nonneg left (Fraction.Order.Arithmetic.mul_nonneg_direct (Gaussian.Norm.Basic.normSq_nonneg coefficient)
+      (Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 4)
+        (add_nonneg left (Arithmetic.mul_nonneg_direct (Gaussian.Norm.Basic.normSq_nonneg coefficient)
           right)))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 4)
+      (Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 4)
         (Gaussian.Norm.Basic.normSq_nonneg coefficient)))
     (by decide : (0 : Fraction.Rational) ≤ 4)
 
-variable {domains : Domains owner} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
+variable {domains : Domains owner} {differential : Differentials.Basic.Differential genus}
 
 /-- The single-differential instance: the retained bank and its readings
 provide all three bounds at the bank's own index. -/
@@ -178,19 +180,19 @@ provide all three bounds at the bank's own index. -/
   triangle_bounded := fun source which => fixed.triangle_bounded later readings source which
   source_bounded := fun source => by
     rw [Gaussian.Norm.Basic.normSq_eq_canonical]
-    exact Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkAreaRequests.source_increment_bounded fixed later readings
+    exact Paired.WalkAreaRequests.source_increment_bounded fixed later readings
       source
   chart_bounded := fun edge supported => by
-    rw [← Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.orderedRoute_value owner.mesh edge supported
+    rw [← CanonicalEdgeValues.orderedRoute_value owner.mesh edge supported
       readings.values]
     rw [Gaussian.Norm.Basic.normSq_eq_canonical]
-    refine (Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkAreaRequests.source_increment_bounded fixed later readings
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.orderedRoute owner.mesh edge supported).sourceEdge).trans
+    refine (Paired.WalkAreaRequests.source_increment_bounded fixed later readings
+      (CanonicalEdgeValues.orderedRoute owner.mesh edge supported).sourceEdge).trans
         ?_
     rw [show (8 : Fraction.Rational) * fixed.bound + 2 =
       4 * fixed.bound + (4 * fixed.bound + 2) by ring1]
     exact le_add_of_nonneg_right
-      (add_nonneg (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by
+      (add_nonneg (Arithmetic.mul_nonneg_direct (by
           decide : (0 : Fraction.Rational) ≤ 4) fixed.nonnegative)
         (by decide : (0 : Fraction.Rational) ≤ 2))
 
@@ -228,16 +230,16 @@ theorem edgeValuation_mixValues {leftValues rightValues : Values owner}
     (coefficient : Gaussian.Basic.Canonical) {edge : OrientedEdge owner.vertices.count}
     (supported : edge ∈ triangleEdgeOccurrences owner.mesh.triangulation.faces ∨
       edge.reverse ∈ triangleEdgeOccurrences owner.mesh.triangulation.faces) :
-    Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation owner.mesh (mixValues (owner := owner)
+    CanonicalEdgeValues.edgeValuation owner.mesh (mixValues (owner := owner)
       leftValues rightValues coefficient) edge =
-      conj (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation owner.mesh leftValues edge) +
-        coefficient * Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation owner.mesh rightValues edge
+      conj (CanonicalEdgeValues.edgeValuation owner.mesh leftValues edge) +
+        coefficient * CanonicalEdgeValues.edgeValuation owner.mesh rightValues edge
           := by
-  have leftValue := Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.orderedRoute_value owner.mesh edge supported
+  have leftValue := CanonicalEdgeValues.orderedRoute_value owner.mesh edge supported
     leftValues
-  have rightValue := Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.orderedRoute_value owner.mesh edge supported
+  have rightValue := CanonicalEdgeValues.orderedRoute_value owner.mesh edge supported
     rightValues
-  rw [← Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.orderedRoute_value owner.mesh edge supported (mixValues
+  rw [← CanonicalEdgeValues.orderedRoute_value owner.mesh edge supported (mixValues
     (owner := owner) leftValues rightValues coefficient),
     ← leftValue, ← rightValue]
   unfold Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge.increment
@@ -264,11 +266,11 @@ values, with a bound enlarged to absorb the two chart constants. -/
   nonnegative := by
     have coefficientNonnegative := Gaussian.Norm.Basic.normSq_nonneg coefficient
     have first : 0 ≤ 4 * (left.bound + normSq coefficient * right.bound) :=
-      Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      Arithmetic.mul_nonneg_direct (by decide)
         (add_nonneg left.nonnegative
-          (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct coefficientNonnegative right.nonnegative))
+          (Arithmetic.mul_nonneg_direct coefficientNonnegative right.nonnegative))
     exact add_nonneg (add_nonneg first
-      (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 4)
+      (Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 4)
         coefficientNonnegative))
       (by decide : (0 : Fraction.Rational) ≤ 4)
   triangle_bounded := fun source which => by
@@ -286,11 +288,11 @@ values, with a bound enlarged to absorb the two chart constants. -/
     have inner : normSq (leftValues source which - leftValues source 0) +
         normSq coefficient * normSq (rightValues source which - rightValues source 0) ≤
         left.bound + normSq coefficient * right.bound :=
-      Purelib.Data.Rat.Fraction.Order.Arithmetic.add_le_add_direct (left.triangle_bounded source which)
-        (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (right.triangle_bounded source
+      Arithmetic.add_le_add_direct (left.triangle_bounded source which)
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct (right.triangle_bounded source
           which)
           (Gaussian.Norm.Basic.normSq_nonneg coefficient))
-    have scaled := Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct inner (by
+    have scaled := Arithmetic.mul_le_mul_of_nonneg_left_direct inner (by
         decide : (0 : Fraction.Rational) ≤ 2)
     refine scaled.trans ?_
     rw [show mixBound left.bound right.bound coefficient =
@@ -300,11 +302,11 @@ values, with a bound enlarged to absorb the two chart constants. -/
       rw [mixBound]; ring1]
     exact le_add_of_nonneg_right (add_nonneg
       (add_nonneg
-        (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 2)
+        (Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 2)
           (add_nonneg left.nonnegative
-            (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (Gaussian.Norm.Basic.normSq_nonneg
+            (Arithmetic.mul_nonneg_direct (Gaussian.Norm.Basic.normSq_nonneg
               coefficient) right.nonnegative)))
-        (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 4)
+        (Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 4)
           (Gaussian.Norm.Basic.normSq_nonneg coefficient)))
       (by decide : (0 : Fraction.Rational) ≤ 4))
   source_bounded := fun source => by
@@ -321,13 +323,13 @@ values, with a bound enlarged to absorb the two chart constants. -/
     have inner : normSq (source.increment leftValues) +
         normSq coefficient * normSq (source.increment rightValues) ≤
         4 * (left.bound + normSq coefficient * right.bound) := by
-      have combined := Purelib.Data.Rat.Fraction.Order.Arithmetic.add_le_add_direct (left.source_bounded source)
-        (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (right.source_bounded source)
+      have combined := Arithmetic.add_le_add_direct (left.source_bounded source)
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct (right.source_bounded source)
           (Gaussian.Norm.Basic.normSq_nonneg coefficient))
       calc
         _ ≤ 4 * left.bound + normSq coefficient * (4 * right.bound) := combined
         _ = 4 * (left.bound + normSq coefficient * right.bound) := by ring1
-    have scaled := Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct inner (by
+    have scaled := Arithmetic.mul_le_mul_of_nonneg_left_direct inner (by
         decide : (0 : Fraction.Rational) ≤ 2)
     refine scaled.trans ?_
     rw [show 4 * mixBound left.bound right.bound coefficient =
@@ -337,25 +339,25 @@ values, with a bound enlarged to absorb the two chart constants. -/
       rw [mixBound]; ring1]
     exact le_add_of_nonneg_right (add_nonneg
       (add_nonneg
-        (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 8)
+        (Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 8)
           (add_nonneg left.nonnegative
-            (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (Gaussian.Norm.Basic.normSq_nonneg
+            (Arithmetic.mul_nonneg_direct (Gaussian.Norm.Basic.normSq_nonneg
               coefficient) right.nonnegative)))
-        (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 16)
+        (Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 16)
           (Gaussian.Norm.Basic.normSq_nonneg coefficient)))
       (by decide : (0 : Fraction.Rational) ≤ 16))
   chart_bounded := fun edge supported => by
-    have leftValue := Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.orderedRoute_value owner.mesh edge
+    have leftValue := CanonicalEdgeValues.orderedRoute_value owner.mesh edge
       supported leftValues
-    have rightValue := Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.orderedRoute_value owner.mesh edge
+    have rightValue := CanonicalEdgeValues.orderedRoute_value owner.mesh edge
       supported rightValues
-    have expand : Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation owner.mesh (mixValues (owner :=
+    have expand : CanonicalEdgeValues.edgeValuation owner.mesh (mixValues (owner :=
       owner) (leftValues := leftValues)
         (rightValues := rightValues) coefficient) edge =
-        conj (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation owner.mesh leftValues edge) +
-          coefficient * Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation owner.mesh rightValues edge
+        conj (CanonicalEdgeValues.edgeValuation owner.mesh leftValues edge) +
+          coefficient * CanonicalEdgeValues.edgeValuation owner.mesh rightValues edge
             := by
-      rw [← Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.orderedRoute_value owner.mesh edge supported
+      rw [← CanonicalEdgeValues.orderedRoute_value owner.mesh edge supported
         (mixValues (owner := owner)
         (leftValues := leftValues) (rightValues := rightValues) coefficient),
         ← leftValue, ← rightValue]
@@ -363,20 +365,20 @@ values, with a bound enlarged to absorb the two chart constants. -/
       rw [mixValues_apply (owner := owner), mixValues_apply (owner := owner), conj_sub]
       ring1
     rw [expand]
-    have estimate := normSq_conj_add_mul (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation
+    have estimate := normSq_conj_add_mul (CanonicalEdgeValues.edgeValuation
       owner.mesh leftValues edge)
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation owner.mesh rightValues edge) coefficient
+      (CanonicalEdgeValues.edgeValuation owner.mesh rightValues edge) coefficient
     refine estimate.trans ?_
-    have inner : normSq (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation owner.mesh leftValues
+    have inner : normSq (CanonicalEdgeValues.edgeValuation owner.mesh leftValues
       edge) +
-        normSq coefficient * normSq (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation owner.mesh
+        normSq coefficient * normSq (CanonicalEdgeValues.edgeValuation owner.mesh
           rightValues edge) ≤
         (8 * left.bound + 2) + normSq coefficient * (8 * right.bound + 2) :=
-      Purelib.Data.Rat.Fraction.Order.Arithmetic.add_le_add_direct (left.chart_bounded edge supported)
-        (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (right.chart_bounded edge
+      Arithmetic.add_le_add_direct (left.chart_bounded edge supported)
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct (right.chart_bounded edge
           supported)
           (Gaussian.Norm.Basic.normSq_nonneg coefficient))
-    have scaled := Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct inner (by
+    have scaled := Arithmetic.mul_le_mul_of_nonneg_left_direct inner (by
         decide : (0 : Fraction.Rational) ≤ 2)
     refine scaled.trans ?_
     rw [show 8 * mixBound left.bound right.bound coefficient + 2 =
@@ -386,11 +388,11 @@ values, with a bound enlarged to absorb the two chart constants. -/
       rw [mixBound]; ring1]
     exact le_add_of_nonneg_right (add_nonneg
       (add_nonneg
-        (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 16)
+        (Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 16)
           (add_nonneg left.nonnegative
-            (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (Gaussian.Norm.Basic.normSq_nonneg
+            (Arithmetic.mul_nonneg_direct (Gaussian.Norm.Basic.normSq_nonneg
               coefficient) right.nonnegative)))
-        (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Fraction.Rational) ≤ 28)
+        (Arithmetic.mul_nonneg_direct (by decide +kernel : (0 : Fraction.Rational) ≤ 28)
           (Gaussian.Norm.Basic.normSq_nonneg coefficient)))
       (by decide +kernel : (0 : Fraction.Rational) ≤ 30))
 

@@ -65,24 +65,24 @@ def isolationRobustBridge
     {parameter : Canonical} (parameterNonzero : parameter ≠ 0)
     (parameterUnit : normSq parameter = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
-    (index : (Progressive.Power.Frame.Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo).Index) :
+    (index : (Frame.Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo).Index) :
     OwnerBridge
-      (Progressive.Power.Frame.Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo).polynomial
-      (Progressive.Power.Unit.Frame.robustChamberFrame parameterNonzero parameterUnit degree
+      (Frame.Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo).polynomial
+      (robustChamberFrame parameterNonzero parameterUnit degree
         degreeAtLeastTwo).polynomial := by
   let degreeIndex : Fin degree.value := Fin.cast
-    (Progressive.Power.Frame.Basic.chamberFrame_degree parameterNonzero degree degreeAtLeastTwo) index
+    (Frame.Basic.chamberFrame_degree parameterNonzero degree degreeAtLeastTwo) index
   let state := Power.Unit.Source.unitRobustSourceState parameterNonzero parameterUnit degree
     degreeAtLeastTwo degreeIndex
   let owner : Owner.Local.Basic.LocalOwner
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter degree) :=
+      (Power.Gaussian.rootPolynomial parameter degree) :=
     { box := state.box
       proper := state.proper
       clearance := state.clearance
       rawWindingFour := state.rawWindingFour }
   exact (OwnerBridge.reflexive owner).cast
-    (Progressive.Power.Frame.Basic.chamberFrame_polynomial parameterNonzero degree degreeAtLeastTwo).symm
-    (Progressive.Power.Unit.Frame.robustChamberFrame_polynomial parameterNonzero parameterUnit degree
+    (Frame.Basic.chamberFrame_polynomial parameterNonzero degree degreeAtLeastTwo).symm
+    (robustChamberFrame_polynomial parameterNonzero parameterUnit degree
       degreeAtLeastTwo).symm
 end Purelib.RootIsolation.Progressive.Power.Unit.Frame.Overlap
 
@@ -115,13 +115,13 @@ open Purelib.Data.Gaussian
     {parameter : Canonical} (parameterNonzero : parameter ≠ 0)
     (parameterUnit : normSq parameter = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
-    (index : (Progressive.Power.Frame.Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo).Index) :
+    (index : (Frame.Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo).Index) :
     (isolationRobustBridge parameterNonzero parameterUnit degree
       degreeAtLeastTwo index).box =
       (Power.Unit.Source.unitRobustSourceState parameterNonzero parameterUnit degree
         degreeAtLeastTwo
         (Fin.cast
-          (Progressive.Power.Frame.Basic.chamberFrame_degree parameterNonzero degree degreeAtLeastTwo)
+          (Frame.Basic.chamberFrame_degree parameterNonzero degree degreeAtLeastTwo)
           index)).box := by
   unfold isolationRobustBridge
   rw [OwnerBridge.cast_box]
@@ -159,10 +159,10 @@ theorem isolationRobustCountEq
     {parameter : Canonical} (parameterNonzero : parameter ≠ 0)
     (parameterUnit : normSq parameter = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value) :
-    (Progressive.Power.Frame.Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo).degree =
-      (Progressive.Power.Unit.Frame.robustChamberFrame parameterNonzero parameterUnit degree
+    (Frame.Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo).degree =
+      (robustChamberFrame parameterNonzero parameterUnit degree
         degreeAtLeastTwo).degree := by
-  rw [Progressive.Power.Frame.Basic.chamberFrame_degree, Progressive.Power.Unit.Frame.robustChamberFrame_degree]
+  rw [Frame.Basic.chamberFrame_degree, robustChamberFrame_degree]
 end Purelib.RootIsolation.Progressive.Power.Unit.Frame.Overlap
 
 end
@@ -195,9 +195,9 @@ def isolationRobustOverlap
     {parameter : Canonical} (parameterNonzero : parameter ≠ 0)
     (parameterUnit : normSq parameter = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value) :
-    Progressive.Chamber.Overlap.ChamberOverlap
-      (Progressive.Power.Frame.Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo)
-      (Progressive.Power.Unit.Frame.robustChamberFrame parameterNonzero parameterUnit degree
+    Chamber.Overlap.ChamberOverlap
+      (Frame.Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo)
+      (robustChamberFrame parameterNonzero parameterUnit degree
         degreeAtLeastTwo) where
   matching := Data.Fin.Bijection.cast
     (isolationRobustCountEq parameterNonzero parameterUnit degree
@@ -208,25 +208,25 @@ def isolationRobustOverlap
     intro index
     rw [isolationRobustBridge_box]
     let degreeIndex : Fin degree.value := Fin.cast
-      (Progressive.Power.Frame.Basic.chamberFrame_degree parameterNonzero degree degreeAtLeastTwo) index
+      (Frame.Basic.chamberFrame_degree parameterNonzero degree degreeAtLeastTwo) index
     calc
       (Power.Unit.Source.unitRobustSourceState parameterNonzero parameterUnit degree
           degreeAtLeastTwo degreeIndex).box.Refines
-          (Purelib.RootIsolation.Power.Isolation.Track.isolatedTrack parameterNonzero degree degreeAtLeastTwo
+          (Power.Isolation.Track.isolatedTrack parameterNonzero degree degreeAtLeastTwo
             degreeIndex).initial.box :=
-        Purelib.RootIsolation.Power.Unit.Source.Refinement.unitRobustSourceState_refinesInitial parameterNonzero
+        Power.Unit.Source.Refinement.unitRobustSourceState_refinesInitial parameterNonzero
           parameterUnit
           degree degreeAtLeastTwo degreeIndex
-      _ = ((Progressive.Power.Frame.Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo).owner
+      _ = ((Frame.Basic.chamberFrame parameterNonzero degree degreeAtLeastTwo).owner
           index).box :=
-        Purelib.RootIsolation.Power.Isolation.Track.isolatedTrack_initial_box_eq_chamber_owner parameterNonzero degree
+        Power.Isolation.Track.isolatedTrack_initial_box_eq_chamber_owner parameterNonzero degree
           degreeAtLeastTwo index
   bridge_refines_right := by
     intro index
     rw [isolationRobustBridge_box,
       Data.Fin.Bijection.cast_forward,
-      Progressive.Power.Unit.Frame.robustChamberFrame_owner_box]
-    exact Purelib.RootIsolation.Power.Unit.Source.Refinement.unitRobustSourceState_refinesBox parameterNonzero
+      robustChamberFrame_owner_box]
+    exact Power.Unit.Source.Refinement.unitRobustSourceState_refinesBox parameterNonzero
       parameterUnit degree
       degreeAtLeastTwo _
 end Purelib.RootIsolation.Progressive.Power.Unit.Frame.Overlap

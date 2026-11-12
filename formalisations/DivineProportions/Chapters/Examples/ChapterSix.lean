@@ -23,6 +23,9 @@ public import Purelib.Data.Rat.Fraction.Field
 import Purelib.Tactic.Ring
 import Purelib.Data.Rat.Fraction.Order.Cast
 
+open Purelib.Geometry.Trigonometry.QuadTriple
+open Purelib.Geometry.Plane.Line.VertexBisector
+
 open Purelib.Algebra.Field
 
 open Purelib.Data.Rat
@@ -53,7 +56,7 @@ variable {K : Type*} [ExplicitField K]
 namespace formalisations.DivineProportions.Chapters.Examples.ChapterSix.ExerciseSixTwo
 
 /-- The fixed comparison line with coefficient direction `(0,1)`. -/
-def comparison : Geometry.Plane.Line
+def comparison : Line
   Fraction.Rational where
   a := 0
   b := 1
@@ -61,7 +64,7 @@ def comparison : Geometry.Plane.Line
   direction_nonzero := Or.inr (by decide)
 
 /-- First rational direction in the Exercise 6.2 counterexample. -/
-def first : Geometry.Plane.Line
+def first : Line
   Fraction.Rational where
   a := 4
   b := 3
@@ -69,7 +72,7 @@ def first : Geometry.Plane.Line
   direction_nonzero := Or.inl (by decide)
 
 /-- Second rational direction in the Exercise 6.2 counterexample. -/
-def second : Geometry.Plane.Line
+def second : Line
   Fraction.Rational where
   a := 3
   b := 4
@@ -86,19 +89,19 @@ private theorem
   comparisonNonNull
   : ¬ comparison.IsNull := by
   unfold comparison
-      Geometry.Plane.Line.IsNull
+      Line.IsNull
   decide
 /-- The first line with coefficients (4, 3, 0) has nonzero norm. -/
 private theorem
   firstNonNull
   : ¬ first.IsNull := by
-  unfold first Geometry.Plane.Line.IsNull
+  unfold first Line.IsNull
   decide
 /-- The second line with coefficients (3, 4, 0) has nonzero norm. -/
 private theorem
   secondNonNull
   : ¬ second.IsNull := by
-  unfold second Geometry.Plane.Line.IsNull
+  unfold second Line.IsNull
   decide
 end formalisations.DivineProportions.Chapters.Examples.ChapterSix.ExerciseSixTwo
 end
@@ -112,16 +115,16 @@ theorem exercise_6_2 :
     let comparisonNonNull : ¬
       comparison.IsNull := by
       unfold comparison
-        Geometry.Plane.Line.IsNull
+        Line.IsNull
       decide
     let firstNonNull : ¬ first.IsNull := by
       unfold first
-          Geometry.Plane.Line.IsNull
+          Line.IsNull
       decide
     let secondNonNull : ¬ second.IsNull :=
       by
       unfold second
-          Geometry.Plane.Line.IsNull
+          Line.IsNull
       decide
     Line.Spread.spread first
       comparison firstNonNull
@@ -142,7 +145,7 @@ theorem exercise_6_2 :
     first
     second
     comparison
-    Geometry.Plane.Line.Perpendicular
+    Line.Perpendicular
   decide
 
 end formalisations.DivineProportions.Chapters.Examples.ChapterSix.ExerciseSixTwo
@@ -171,12 +174,12 @@ private theorem rational_two_nonzero : (2 : Fraction.Rational) ≠ 0 := by decid
 
 /-- Ten is nonzero in the rational field. -/
 private theorem rational_ten_nonzero : (10 : Fraction.Rational) ≠ 0 :=
-  Purelib.Data.Rat.Fraction.Order.Cast.rational_natCast_nonzero (by
+  Fraction.Order.Cast.rational_natCast_nonzero (by
     decide)
 
 /-- Fifty is nonzero in the rational field. -/
 private theorem rational_fifty_nonzero : (50 : Fraction.Rational) ≠ 0 :=
-  Purelib.Data.Rat.Fraction.Order.Cast.rational_natCast_nonzero (by
+  Fraction.Order.Cast.rational_natCast_nonzero (by
     decide)
 namespace ExampleSixOne
 
@@ -184,12 +187,12 @@ namespace ExampleSixOne
 book's decimal-field calculation is retained entirely in the constructive
 rationals. -/
 theorem example_6_1 :
-    Geometry.Trigonometry.QuadTriple.Basic.archimedesFunction (16 : Fraction.Rational) 36 9 = 455 ∧
+    Basic.archimedesFunction (16 : Fraction.Rational) 36 9 = 455 ∧
       (455 : Fraction.Rational) / (4 * 36 * 9) = 455 / 1296 ∧
       (455 : Fraction.Rational) / (4 * 16 * 9) = 455 / 576 ∧
       (455 : Fraction.Rational) / (4 * 16 * 36) = 455 / 2304 := by
   constructor
-  · unfold Geometry.Trigonometry.QuadTriple.Basic.archimedesFunction
+  · unfold Basic.archimedesFunction
     ring1
   constructor
   · rw [show (4 : Fraction.Rational) * 36 * 9 = 1296 by ring1]
@@ -214,11 +217,11 @@ theorem example_6_2 :
         4 * Line.Incidence.pointDeterminant first second third ^ 2 := by ring1
     _ = Quadrea.Basic.quadrea first second third :=
       (Quadrea.Basic.quadrea_coordinate_formula first second third).symm
-    _ = Geometry.Trigonometry.QuadTriple.Basic.archimedesFunction (16 : Fraction.Rational) 36 9 := by
+    _ = Basic.archimedesFunction (16 : Fraction.Rational) 36 9 := by
       unfold Quadrea.Basic.quadrea
       rw [firstQuadrance, secondQuadrance, thirdQuadrance]
     _ = 455 := by
-      unfold Geometry.Trigonometry.QuadTriple.Basic.archimedesFunction
+      unfold Basic.archimedesFunction
       ring1
 
 end ExampleSixTwo
@@ -227,14 +230,14 @@ namespace ExampleSixThree
 
 /-- A concrete first vertex realizing the existence assertion in Example
 6.3. -/
-def firstPoint : Geometry.Plane.Point Finite.Eleven.Element := ⟨0, 5⟩
+def firstPoint : Point Finite.Eleven.Element := ⟨0, 5⟩
 
 /-- A concrete second vertex realizing the existence assertion in Example
 6.3. -/
-def secondPoint : Geometry.Plane.Point Finite.Eleven.Element := ⟨2, 1⟩
+def secondPoint : Point Finite.Eleven.Element := ⟨2, 1⟩
 
 /-- The origin is the third vertex of the displayed realization. -/
-def thirdPoint : Geometry.Plane.Point Finite.Eleven.Element := ⟨0, 0⟩
+def thirdPoint : Point Finite.Eleven.Element := ⟨0, 0⟩
 
 /-- The first and second displayed vertices over the field with eleven elements are distinct. -/
 private theorem firstSecondDistinct : firstPoint ≠ secondPoint := by decide
@@ -248,37 +251,37 @@ private theorem secondThirdDistinct : secondPoint ≠ thirdPoint := by decide
 /-- The line from the first vertex to the second has nonzero norm. -/
 private theorem firstSecondNonNull :
     ¬ (Line.Incidence.lineThrough firstPoint secondPoint firstSecondDistinct).IsNull := by
-  unfold Geometry.Plane.Line.IsNull Line.Incidence.lineThrough firstPoint secondPoint
+  unfold Line.IsNull Line.Incidence.lineThrough firstPoint secondPoint
   decide
 
 /-- The line from the first vertex to the third has nonzero norm. -/
 private theorem firstThirdNonNull :
     ¬ (Line.Incidence.lineThrough firstPoint thirdPoint firstThirdDistinct).IsNull := by
-  unfold Geometry.Plane.Line.IsNull Line.Incidence.lineThrough firstPoint thirdPoint
+  unfold Line.IsNull Line.Incidence.lineThrough firstPoint thirdPoint
   decide
 
 /-- The line from the second vertex to the third has nonzero norm. -/
 private theorem secondThirdNonNull :
     ¬ (Line.Incidence.lineThrough secondPoint thirdPoint secondThirdDistinct).IsNull := by
-  unfold Geometry.Plane.Line.IsNull Line.Incidence.lineThrough secondPoint thirdPoint
+  unfold Line.IsNull Line.Incidence.lineThrough secondPoint thirdPoint
   decide
 
 /-- The reversed line from the second vertex to the first has nonzero norm. -/
 private theorem firstSecondReversedNonNull :
     ¬ (Line.Incidence.lineThrough secondPoint firstPoint firstSecondDistinct.symm).IsNull := by
-  unfold Geometry.Plane.Line.IsNull Line.Incidence.lineThrough firstPoint secondPoint
+  unfold Line.IsNull Line.Incidence.lineThrough firstPoint secondPoint
   decide
 
 /-- The reversed line from the third vertex to the first has nonzero norm. -/
 private theorem firstThirdReversedNonNull :
     ¬ (Line.Incidence.lineThrough thirdPoint firstPoint firstThirdDistinct.symm).IsNull := by
-  unfold Geometry.Plane.Line.IsNull Line.Incidence.lineThrough firstPoint thirdPoint
+  unfold Line.IsNull Line.Incidence.lineThrough firstPoint thirdPoint
   decide
 
 /-- The reversed line from the third vertex to the second has nonzero norm. -/
 private theorem secondThirdReversedNonNull :
     ¬ (Line.Incidence.lineThrough thirdPoint secondPoint secondThirdDistinct.symm).IsNull := by
-  unfold Geometry.Plane.Line.IsNull Line.Incidence.lineThrough secondPoint thirdPoint
+  unfold Line.IsNull Line.Incidence.lineThrough secondPoint thirdPoint
   decide
 
 /-- A triangle over the field with eleven elements realizes quadrances 5, 3 and 9.
@@ -305,29 +308,29 @@ theorem example_6_3 :
     let secondThirdDistinct : secondPoint ≠ thirdPoint := by decide
     let firstSecondNonNull :
         ¬ (Line.Incidence.lineThrough firstPoint secondPoint firstSecondDistinct).IsNull := by
-      unfold Geometry.Plane.Line.IsNull Line.Incidence.lineThrough firstPoint secondPoint
+      unfold Line.IsNull Line.Incidence.lineThrough firstPoint secondPoint
       decide
     let firstThirdNonNull :
         ¬ (Line.Incidence.lineThrough firstPoint thirdPoint firstThirdDistinct).IsNull := by
-      unfold Geometry.Plane.Line.IsNull Line.Incidence.lineThrough firstPoint thirdPoint
+      unfold Line.IsNull Line.Incidence.lineThrough firstPoint thirdPoint
       decide
     let secondThirdNonNull :
         ¬ (Line.Incidence.lineThrough secondPoint thirdPoint secondThirdDistinct).IsNull := by
-      unfold Geometry.Plane.Line.IsNull Line.Incidence.lineThrough secondPoint thirdPoint
+      unfold Line.IsNull Line.Incidence.lineThrough secondPoint thirdPoint
       decide
     let firstSecondReversedNonNull :
         ¬ (Line.Incidence.lineThrough secondPoint firstPoint firstSecondDistinct.symm).IsNull := by
-      unfold Geometry.Plane.Line.IsNull Line.Incidence.lineThrough firstPoint secondPoint
+      unfold Line.IsNull Line.Incidence.lineThrough firstPoint secondPoint
       decide
     let firstThirdReversedNonNull :
         ¬ (Line.Incidence.lineThrough thirdPoint firstPoint firstThirdDistinct.symm).IsNull := by
-      unfold Geometry.Plane.Line.IsNull Line.Incidence.lineThrough firstPoint thirdPoint
+      unfold Line.IsNull Line.Incidence.lineThrough firstPoint thirdPoint
       decide
     let secondThirdReversedNonNull :
         ¬ (Line.Incidence.lineThrough thirdPoint secondPoint secondThirdDistinct.symm).IsNull := by
-      unfold Geometry.Plane.Line.IsNull Line.Incidence.lineThrough secondPoint thirdPoint
+      unfold Line.IsNull Line.Incidence.lineThrough secondPoint thirdPoint
       decide
-    Geometry.Trigonometry.QuadTriple.Basic.archimedesFunction (5 : Finite.Eleven.Element) 3 9 = 4 ∧
+    Basic.archimedesFunction (5 : Finite.Eleven.Element) 3 9 = 4 ∧
       Line.Spread.spread
           (Line.Incidence.lineThrough firstPoint secondPoint firstSecondDistinct)
           (Line.Incidence.lineThrough firstPoint thirdPoint firstThirdDistinct)
@@ -359,10 +362,10 @@ namespace ExampleSixFour
 introducing a completed complex carrier. -/
 theorem example_6_4 {K : Type*} [ExplicitField K] [Nontrivial K]
     (i : K) (iSquare : i ^ 2 = -1) (twoNonzero : (2 : K) ≠ 0) :
-    Geometry.Trigonometry.QuadTriple.Basic.archimedesFunction (1 : K) 2 i = 6 * i ∧
-      Geometry.Trigonometry.QuadTriple.Basic.archimedesFunction (1 : K) 2 i / (4 * 2 * i) = 3 / 4 ∧
-      Geometry.Trigonometry.QuadTriple.Basic.archimedesFunction (1 : K) 2 i / (4 * 1 * i) = 3 / 2 ∧
-      Geometry.Trigonometry.QuadTriple.Basic.archimedesFunction (1 : K) 2 i / (4 * 1 * 2) = 3 * i / 4 := by
+    Basic.archimedesFunction (1 : K) 2 i = 6 * i ∧
+      Basic.archimedesFunction (1 : K) 2 i / (4 * 2 * i) = 3 / 4 ∧
+      Basic.archimedesFunction (1 : K) 2 i / (4 * 1 * i) = 3 / 2 ∧
+      Basic.archimedesFunction (1 : K) 2 i / (4 * 1 * 2) = 3 * i / 4 := by
   have iNonzero : i ≠ 0 := by
     intro iZero
     have negativeOneZero : (-1 : K) = 0 := by
@@ -387,10 +390,10 @@ theorem example_6_4 {K : Type*} [ExplicitField K] [Nontrivial K]
   have thirdDenominatorNonzero : (4 : K) * 1 * 2 ≠ 0 := by
     simpa only [mul_one] using
       ExplicitField.mul_ne_zero fourNonzero twoNonzero
-  have areaFormula : Geometry.Trigonometry.QuadTriple.Basic.archimedesFunction (1 : K) 2 i = 6 * i := by
+  have areaFormula : Basic.archimedesFunction (1 : K) 2 i = 6 * i := by
     calc
-      Geometry.Trigonometry.QuadTriple.Basic.archimedesFunction (1 : K) 2 i = 6 * i - (1 + i ^ 2) := by
-        unfold Geometry.Trigonometry.QuadTriple.Basic.archimedesFunction
+      Basic.archimedesFunction (1 : K) 2 i = 6 * i - (1 + i ^ 2) := by
+        unfold Basic.archimedesFunction
         ring1
       _ = 6 * i := by rw [iSquare]; ring1
   refine ⟨areaFormula, ?_, ?_, ?_⟩
@@ -409,28 +412,28 @@ end ExampleSixFour
 namespace ExampleSixFive
 
 /-- Example 6.5's first line `⟨2 : 1 : -1⟩`. -/
-def first : Geometry.Plane.Line Fraction.Rational where
+def first : Line Fraction.Rational where
   a := 2
   b := 1
   c := -1
   direction_nonzero := Or.inl (by decide)
 
 /-- Example 6.5's second line `⟨11 : 2 : -4⟩`. -/
-def second : Geometry.Plane.Line Fraction.Rational where
+def second : Line Fraction.Rational where
   a := 11
   b := 2
   c := -4
   direction_nonzero := Or.inl (by decide)
 
 /-- The first displayed book bisector `⟨1 : -3 : 1⟩`. -/
-def firstBisector : Geometry.Plane.Line Fraction.Rational where
+def firstBisector : Line Fraction.Rational where
   a := 1
   b := -3
   c := 1
   direction_nonzero := Or.inl (by decide)
 
 /-- The second displayed book bisector `⟨21 : 7 : -9⟩`. -/
-def secondBisector : Geometry.Plane.Line Fraction.Rational where
+def secondBisector : Line Fraction.Rational where
   a := 21
   b := 7
   c := -9
@@ -438,17 +441,17 @@ def secondBisector : Geometry.Plane.Line Fraction.Rational where
 
 /-- The first rational line in Example 6.5 has nonzero norm. -/
 theorem first_nonNull : ¬ first.IsNull := by
-  unfold Geometry.Plane.Line.IsNull first
+  unfold Line.IsNull first
   decide
 
 /-- The second rational line in Example 6.5 has nonzero norm. -/
 theorem second_nonNull : ¬ second.IsNull := by
-  unfold Geometry.Plane.Line.IsNull second
+  unfold Line.IsNull second
   decide
 
 /-- The two rational lines in Example 6.5 are not parallel. -/
 theorem not_parallel : ¬ first.Parallel second := by
-  unfold Geometry.Plane.Line.Parallel first second
+  unfold Line.Parallel first second
   decide
 
 /-- The product of the two line norms in Example 6.5 is the square of 25. -/
@@ -457,30 +460,30 @@ theorem norm_product_square :
 
 /-- The negative algebraic bisector candidate equals the first displayed bisector. -/
 theorem negative_candidate_is_firstBisector :
-    (Line.VertexBisector.Construction.negativeVertexBisector first second 25 first_nonNull not_parallel).Equivalent
+    (Construction.negativeVertexBisector first second 25 first_nonNull not_parallel).Equivalent
       firstBisector := by
-  unfold Geometry.Plane.Line.Equivalent Line.VertexBisector.Construction.negativeVertexBisector first second
+  unfold Line.Equivalent Construction.negativeVertexBisector first second
       firstBisector
     Line.Basic.lineNorm
   exact ⟨by ring1, by ring1, by ring1⟩
 
 /-- The positive algebraic bisector candidate equals the second displayed bisector. -/
 theorem positive_candidate_is_secondBisector :
-    (Line.VertexBisector.Construction.positiveVertexBisector first second 25 first_nonNull not_parallel).Equivalent
+    (Construction.positiveVertexBisector first second 25 first_nonNull not_parallel).Equivalent
       secondBisector := by
-  unfold Geometry.Plane.Line.Equivalent Line.VertexBisector.Construction.positiveVertexBisector first second
+  unfold Line.Equivalent Construction.positiveVertexBisector first second
       secondBisector
     Line.Basic.lineNorm
   exact ⟨by ring1, by ring1, by ring1⟩
 
 /-- The first displayed bisector in Example 6.5 has nonzero norm. -/
 theorem firstBisector_nonNull : ¬ firstBisector.IsNull := by
-  unfold Geometry.Plane.Line.IsNull firstBisector
+  unfold Line.IsNull firstBisector
   decide
 
 /-- The second displayed bisector in Example 6.5 has nonzero norm. -/
 theorem secondBisector_nonNull : ¬ secondBisector.IsNull := by
-  unfold Geometry.Plane.Line.IsNull secondBisector
+  unfold Line.IsNull secondBisector
   decide
 
 /-- Example 6.5's first pair of equal spreads. -/
@@ -525,7 +528,7 @@ theorem secondBisector_spreads :
 
 /-- The two displayed bisectors in Example 6.5 are perpendicular. -/
 theorem bisectors_perpendicular : firstBisector.Perpendicular secondBisector := by
-  unfold Geometry.Plane.Line.Perpendicular firstBisector secondBisector
+  unfold Line.Perpendicular firstBisector secondBisector
   ring1
 
 /-- The complete exact-arithmetic content of Example 6.5. -/
@@ -543,10 +546,10 @@ theorem example_6_5 :
   refine ⟨?_, bisectors_perpendicular,
     firstBisector_spreads.1, firstBisector_spreads.2,
     secondBisector_spreads.1, secondBisector_spreads.2⟩
-  exact (Line.VertexBisector.Existence.vertex_bisector_exists_iff_spread_isNonzeroSquare first second
+  exact (Existence.vertex_bisector_exists_iff_spread_isNonzeroSquare first second
     first_nonNull second_nonNull not_parallel rational_two_nonzero).1
-      ⟨Line.VertexBisector.Construction.negativeVertexBisector first second 25 first_nonNull not_parallel,
-        Line.VertexBisector.Construction.negativeVertexBisector_isVertexBisector first second 25 first_nonNull
+      ⟨Construction.negativeVertexBisector first second 25 first_nonNull not_parallel,
+        Construction.negativeVertexBisector_isVertexBisector first second 25 first_nonNull
           second_nonNull not_parallel rational_two_nonzero norm_product_square⟩
 
 end ExampleSixFive
@@ -554,28 +557,28 @@ end ExampleSixFive
 namespace ExampleSixSix
 
 /-- Example 6.6's first line `⟨3 : 1 : 5⟩`. -/
-def first : Geometry.Plane.Line Fraction.Rational where
+def first : Line Fraction.Rational where
   a := 3
   b := 1
   c := 5
   direction_nonzero := Or.inl (by decide)
 
 /-- Example 6.6's second line `⟨-3 : 1 : 2⟩`. -/
-def second : Geometry.Plane.Line Fraction.Rational where
+def second : Line Fraction.Rational where
   a := -3
   b := 1
   c := 2
   direction_nonzero := Or.inl (by decide)
 
 /-- The first displayed book bisector `⟨2 : 0 : 1⟩`. -/
-def firstBisector : Geometry.Plane.Line Fraction.Rational where
+def firstBisector : Line Fraction.Rational where
   a := 2
   b := 0
   c := 1
   direction_nonzero := Or.inl (by decide)
 
 /-- The second displayed book bisector `⟨0 : 2 : 7⟩`. -/
-def secondBisector : Geometry.Plane.Line Fraction.Rational where
+def secondBisector : Line Fraction.Rational where
   a := 0
   b := 2
   c := 7
@@ -583,17 +586,17 @@ def secondBisector : Geometry.Plane.Line Fraction.Rational where
 
 /-- The first rational line in Example 6.6 has nonzero norm. -/
 theorem first_nonNull : ¬ first.IsNull := by
-  unfold Geometry.Plane.Line.IsNull first
+  unfold Line.IsNull first
   decide
 
 /-- The second rational line in Example 6.6 has nonzero norm. -/
 theorem second_nonNull : ¬ second.IsNull := by
-  unfold Geometry.Plane.Line.IsNull second
+  unfold Line.IsNull second
   decide
 
 /-- The two rational lines in Example 6.6 are not parallel. -/
 theorem not_parallel : ¬ first.Parallel second := by
-  unfold Geometry.Plane.Line.Parallel first second
+  unfold Line.Parallel first second
   decide
 
 /-- The product of the two line norms in Example 6.6 is the square of 10. -/
@@ -602,30 +605,30 @@ theorem norm_product_square :
 
 /-- The negative algebraic bisector candidate equals the first displayed bisector. -/
 theorem negative_candidate_is_firstBisector :
-    (Line.VertexBisector.Construction.negativeVertexBisector first second 10 first_nonNull not_parallel).Equivalent
+    (Construction.negativeVertexBisector first second 10 first_nonNull not_parallel).Equivalent
       firstBisector := by
-  unfold Geometry.Plane.Line.Equivalent Line.VertexBisector.Construction.negativeVertexBisector first second
+  unfold Line.Equivalent Construction.negativeVertexBisector first second
       firstBisector
     Line.Basic.lineNorm
   exact ⟨by ring1, by ring1, by ring1⟩
 
 /-- The positive algebraic bisector candidate equals the second displayed bisector. -/
 theorem positive_candidate_is_secondBisector :
-    (Line.VertexBisector.Construction.positiveVertexBisector first second 10 first_nonNull not_parallel).Equivalent
+    (Construction.positiveVertexBisector first second 10 first_nonNull not_parallel).Equivalent
       secondBisector := by
-  unfold Geometry.Plane.Line.Equivalent Line.VertexBisector.Construction.positiveVertexBisector first second
+  unfold Line.Equivalent Construction.positiveVertexBisector first second
       secondBisector
     Line.Basic.lineNorm
   exact ⟨by ring1, by ring1, by ring1⟩
 
 /-- The first displayed bisector in Example 6.6 has nonzero norm. -/
 theorem firstBisector_nonNull : ¬ firstBisector.IsNull := by
-  unfold Geometry.Plane.Line.IsNull firstBisector
+  unfold Line.IsNull firstBisector
   decide
 
 /-- The second displayed bisector in Example 6.6 has nonzero norm. -/
 theorem secondBisector_nonNull : ¬ secondBisector.IsNull := by
-  unfold Geometry.Plane.Line.IsNull secondBisector
+  unfold Line.IsNull secondBisector
   decide
 
 /-- Example 6.6's first pair of equal spreads. -/
@@ -670,7 +673,7 @@ theorem secondBisector_spreads :
 
 /-- The two displayed bisectors in Example 6.6 are perpendicular. -/
 theorem bisectors_perpendicular : firstBisector.Perpendicular secondBisector := by
-  unfold Geometry.Plane.Line.Perpendicular firstBisector secondBisector
+  unfold Line.Perpendicular firstBisector secondBisector
   ring1
 
 /-- The complete exact-arithmetic content of Example 6.6. -/
@@ -688,10 +691,10 @@ theorem example_6_6 :
   refine ⟨?_, bisectors_perpendicular,
     firstBisector_spreads.1, firstBisector_spreads.2,
     secondBisector_spreads.1, secondBisector_spreads.2⟩
-  exact (Line.VertexBisector.Existence.vertex_bisector_exists_iff_spread_isNonzeroSquare first second
+  exact (Existence.vertex_bisector_exists_iff_spread_isNonzeroSquare first second
     first_nonNull second_nonNull not_parallel rational_two_nonzero).1
-      ⟨Line.VertexBisector.Construction.positiveVertexBisector first second 10 first_nonNull not_parallel,
-        Line.VertexBisector.Construction.positiveVertexBisector_isVertexBisector first second 10 first_nonNull
+      ⟨Construction.positiveVertexBisector first second 10 first_nonNull not_parallel,
+        Construction.positiveVertexBisector_isVertexBisector first second 10 first_nonNull
           second_nonNull not_parallel rational_two_nonzero norm_product_square⟩
 
 end ExampleSixSix

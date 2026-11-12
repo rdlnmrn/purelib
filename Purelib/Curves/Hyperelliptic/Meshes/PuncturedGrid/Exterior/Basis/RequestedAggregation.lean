@@ -77,6 +77,12 @@ import Purelib.Riemann.Periods.PreparedGridPeriodPrograms
 import Purelib.Riemann.RootContinuation.PreparedGridRootClosure
 import Purelib.Topology.Surface.Cut.PrimitiveJumps
 
+open Purelib.Data.Gaussian
+
+open Purelib.Algebra.FiniteSum.Rational
+
+open Purelib.Riemann.Readings.PrimitiveAreaBounds
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -98,36 +104,36 @@ open Purelib.Data.Rat
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
-variable {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
-  {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {target coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
+variable {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {retained : Preparation.CommonBasisPreparation prepared}
+  {basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {target coefficientTarget : InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
     energyFloor radialDepth : Nat}
-  {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+  {box : Rational.Box} {capSample : Charts.Reciprocal.Cap.Primitives.Sample cap
     differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 namespace CommonBasisRequest
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisRequest retained basis
+variable {request : Preparation.CommonBasisRequest retained basis
   target coefficientTarget coverFloor floor}
   {plans : request.Plans capSample polynomials minimum} {inputs : retained.Inputs index}
-  {readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
+  {readings : Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
     request.schedule.bank plans inputs stage}
 
-variable {fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.FanPreparation request
+variable {fans : Connection.CommonBasisRequest.FanPreparation request
   plans inputs readings energyFloor}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -138,51 +144,51 @@ open Purelib.Integration.Budget.Path.Aggregation (aggregationTolerance aggregati
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable (sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.Sampled fans
+variable (sample : Connection.CommonBasisRequest.Sampled fans
   coefficients radialDepth) (comparisons :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
+  CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
   sample)
 
 /-- A single positive local tolerance pays the complete occurrence area,
 including its joining polygon, for every coefficient vector. -/
 theorem occurrence_area_requested (outer : Fin prepared.occurrences.length)
-    (physical : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (physical : Fin (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length → List Topology.Polygon.Stokes.PrimitivePoint)
-    {bound requested : Normalization.InverseRootPolynomial.Coordinate} (boundNN : 0 ≤ bound) (positive : 0 < requested)
-    (areas : ∀ position, Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area (physical position) -
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentPrepared.CommonBasisRequest.Sampled.parentPrepared sample
+    {bound requested : InverseRootPolynomial.Coordinate} (boundNN : 0 ≤ bound) (positive : 0 < requested)
+    (areas : ∀ position, Norm.Basic.normSq (Path.PairedIncrementArea.area (physical position) -
+      (ParentPrepared.CommonBasisRequest.Sampled.parentPrepared sample
       comparisons outer position).weighted.source.area) ≤
       Budget.Path.Aggregation.aggregationTolerance
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+        (ParentIndices.occurrenceAt prepared.occurrences
         outer).compared.entered.cache.parents.length bound requested *
         (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) ^ 2)
-    (errors : ∀ position, Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded ((Path.PairedIncrementArea.total (physical
+    (errors : ∀ position, PrimitivePoint.Bounded ((Path.PairedIncrementArea.total (physical
       position)).sub
       (Path.ConjugatePathReadback.conjugateDiagonal
-        ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentPrepared.CommonBasisRequest.Sampled.parentPrepared
+        ((ParentPrepared.CommonBasisRequest.Sampled.parentPrepared
         sample comparisons outer position).weighted.source.total)))
         (Budget.Path.Aggregation.aggregationTolerance
-          (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+          (ParentIndices.occurrenceAt prepared.occurrences
           outer).compared.entered.cache.parents.length bound requested *
           Readings.PreparedObservationCoercivity.coefficientNormSq coefficients))
-    (leftBound : ∀ position, Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (Path.PairedIncrementArea.total
+    (leftBound : ∀ position, PrimitivePoint.Bounded (Path.PairedIncrementArea.total
       (physical position)) (bound * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients))
-    (rightBound : ∀ position, Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded
+    (rightBound : ∀ position, PrimitivePoint.Bounded
       (Path.ConjugatePathReadback.conjugateDiagonal
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentPrepared.CommonBasisRequest.Sampled.parentPrepared
+      ((ParentPrepared.CommonBasisRequest.Sampled.parentPrepared
       sample comparisons outer position).weighted.source.total))
       (bound * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)) :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area (List.ofFn physical).flatten -
+    Norm.Basic.normSq (Path.PairedIncrementArea.area (List.ofFn physical).flatten -
       sample.occurrenceSourceArea comparisons outer) ≤ requested *
-      (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := open Data.Rat in by
+      (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := open Rat in by
   have estimate :=
     Connection.CommonBasisRequest.Sampled.occurrence_physical_source_area_bound
     sample comparisons outer physical
     (Fraction.Order.Arithmetic.mul_nonneg_direct (Budget.Path.Aggregation.aggregationTolerance_positive _ boundNN
-      positive).le (Algebra.FiniteSum.Rational.Order.weight_sum_nonnegative _ (fun row =>
-      Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row))))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct boundNN (Algebra.FiniteSum.Rational.Order.weight_sum_nonnegative _ (fun
-      row => Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))) areas errors leftBound rightBound
+      positive).le (Order.weight_sum_nonnegative _ (fun row =>
+      Basic.Canonical.normSq_nonneg (coefficients row))))
+    (Fraction.Order.Arithmetic.mul_nonneg_direct boundNN (Order.weight_sum_nonnegative _ (fun
+      row => Basic.Canonical.normSq_nonneg (coefficients row)))) areas errors leftBound rightBound
   exact estimate.trans (Budget.Path.Aggregation.aggregationTolerance_area_scaled _ boundNN positive
     (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients))
 
@@ -190,66 +196,66 @@ theorem occurrence_area_requested (outer : Fin prepared.occurrences.length)
 including its joining polygon, for every coefficient vector. -/
 theorem component_area_requested (periodStage : Nat)
     (physical : Fin prepared.occurrences.length → List Topology.Polygon.Stokes.PrimitivePoint)
-    {bound requested : Normalization.InverseRootPolynomial.Coordinate} (boundNN : 0 ≤ bound) (positive : 0 < requested)
-    (areas : ∀ position, Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area (physical position) -
+    {bound requested : InverseRootPolynomial.Coordinate} (boundNN : 0 ≤ bound) (positive : 0 < requested)
+    (areas : ∀ position, Norm.Basic.normSq (Path.PairedIncrementArea.area (physical position) -
       sample.occurrenceSourceArea comparisons position) ≤
       Budget.Path.Aggregation.aggregationTolerance prepared.occurrences.length bound requested *
         (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) ^ 2)
-    (errors : ∀ position, Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded ((Path.PairedIncrementArea.total (physical
+    (errors : ∀ position, PrimitivePoint.Bounded ((Path.PairedIncrementArea.total (physical
       position)).sub
       (Path.ConjugatePathReadback.conjugateDiagonal (sample.occurrenceSourceTotal comparisons position)))
         (Budget.Path.Aggregation.aggregationTolerance prepared.occurrences.length bound requested *
           Readings.PreparedObservationCoercivity.coefficientNormSq coefficients))
-    (leftBound : ∀ position, Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (Path.PairedIncrementArea.total
+    (leftBound : ∀ position, PrimitivePoint.Bounded (Path.PairedIncrementArea.total
       (physical position)) (bound * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients))
-    (rightBound : ∀ position, Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded
+    (rightBound : ∀ position, PrimitivePoint.Bounded
       (Path.ConjugatePathReadback.conjugateDiagonal (sample.occurrenceSourceTotal comparisons position))
       (bound * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)) :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area (List.ofFn physical).flatten -
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonSourceArea.CommonBasisRequest.Sampled.sourceAreaAt sample
+    Norm.Basic.normSq (Path.PairedIncrementArea.area (List.ofFn physical).flatten -
+      CommonSourceArea.CommonBasisRequest.Sampled.sourceAreaAt sample
       comparisons periodStage) ≤ requested * (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)^2
-      := open Data.Rat in by
+      := open Rat in by
   have estimate :=
     OccurrenceAssembly.CommonBasisRequest.Sampled.occurrences_source_area_bound
     sample comparisons periodStage physical
     (Fraction.Order.Arithmetic.mul_nonneg_direct (Budget.Path.Aggregation.aggregationTolerance_positive _ boundNN
-      positive).le (Algebra.FiniteSum.Rational.Order.weight_sum_nonnegative _ (fun row =>
-      Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row))))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct boundNN (Algebra.FiniteSum.Rational.Order.weight_sum_nonnegative _ (fun
-      row => Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))) areas errors leftBound rightBound
+      positive).le (Order.weight_sum_nonnegative _ (fun row =>
+      Basic.Canonical.normSq_nonneg (coefficients row))))
+    (Fraction.Order.Arithmetic.mul_nonneg_direct boundNN (Order.weight_sum_nonnegative _ (fun
+      row => Basic.Canonical.normSq_nonneg (coefficients row)))) areas errors leftBound rightBound
   exact estimate.trans (Budget.Path.Aggregation.aggregationTolerance_area_scaled _ boundNN positive
     (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients))
 
 /-- Paying an occurrence's area tolerance also supplies the endpoint
 accuracy required by the next assembly level. -/
 theorem occurrence_total_requested (outer : Fin prepared.occurrences.length)
-    (physical : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (physical : Fin (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length → List Topology.Polygon.Stokes.PrimitivePoint)
-    {bound requested : Normalization.InverseRootPolynomial.Coordinate} (boundNN : 0 ≤ bound) (positive : 0 < requested)
-    (errors : ∀ position, Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded ((Path.PairedIncrementArea.total (physical
+    {bound requested : InverseRootPolynomial.Coordinate} (boundNN : 0 ≤ bound) (positive : 0 < requested)
+    (errors : ∀ position, PrimitivePoint.Bounded ((Path.PairedIncrementArea.total (physical
       position)).sub
       (Path.ConjugatePathReadback.conjugateDiagonal
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentPrepared.CommonBasisRequest.Sampled.parentPrepared
+        (ParentPrepared.CommonBasisRequest.Sampled.parentPrepared
         sample comparisons outer position).weighted.source.total))
         (Budget.Path.Aggregation.aggregationTolerance
-          (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+          (ParentIndices.occurrenceAt prepared.occurrences
           outer).compared.entered.cache.parents.length
           bound requested * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)) :
-    Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded ((Path.PairedIncrementArea.total (List.ofFn
+    PrimitivePoint.Bounded ((Path.PairedIncrementArea.total (List.ofFn
       physical).flatten).sub
       (Path.ConjugatePathReadback.conjugateDiagonal (sample.occurrenceSourceTotal comparisons outer)))
-        (requested * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) := open Data.Rat in by
+        (requested * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) := open Rat in by
   have estimate :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.Sampled.occurrence_total_error
+    Connection.CommonBasisRequest.Sampled.occurrence_total_error
     sample comparisons outer physical
     (Fraction.Order.Arithmetic.mul_nonneg_direct (Budget.Path.Aggregation.aggregationTolerance_positive _ boundNN
-      positive).le (Algebra.FiniteSum.Rational.Order.weight_sum_nonnegative _ (fun row =>
-      Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))) errors
+      positive).le (Order.weight_sum_nonnegative _ (fun row =>
+      Basic.Canonical.normSq_nonneg (coefficients row)))) errors
   have paid := Budget.Path.Aggregation.aggregationTolerance_total_scaled
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length
-    boundNN positive (Algebra.FiniteSum.Rational.Order.weight_sum_nonnegative _ (fun row =>
-      Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
+    boundNN positive (Order.weight_sum_nonnegative _ (fun row =>
+      Basic.Canonical.normSq_nonneg (coefficients row)))
   exact ⟨estimate.1.trans paid, estimate.2.trans paid⟩
 
 end Sampled

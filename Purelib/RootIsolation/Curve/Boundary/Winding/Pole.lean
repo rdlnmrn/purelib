@@ -79,13 +79,13 @@ is outside it.  Neither alternative asserts that a factor zero exists.
 namespace Purelib.RootIsolation.Curve.Boundary.Winding.Pole
 section Boundary
 
-variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
 variable {reference : LinearAlgebra.Coordinates2.Matrix.GaussianMatrix} {current :
   Box}
 variable {denominatorMargin : Fraction.Rational}
 variable {marginPositive : 0 < denominatorMargin}
 variable {atom : Geometry.Projective.Hermitian.Atom}
-variable {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+variable {boundary : Analysis.CurveBoundary p reference current denominatorMargin
   marginPositive atom}
 
 /-- If the finite denominator relation of a retained child is the equality
@@ -96,16 +96,16 @@ the profile factor has a zero. -/
 theorem pole_child_excludes_state
     (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
     (family : State.WindingOne.Family.Basic.WindingFamily p ambient)
-    (classified : Curve.Boundary.Winding.Budget.ClassifiedChild (boundary := boundary) squarefree family)
+    (classified : Budget.ClassifiedChild (boundary := boundary) squarefree family)
     (cofactor :
-      Polynomial.Dense.BoundaryFactorization.CoefficientPolynomial)
+      Dense.BoundaryFactorization.CoefficientPolynomial)
     (factorization :
-      Polynomial.Dense.Rational.Factorization
+      Dense.Rational.Factorization
         (Curve.Coordinates.denominatorNormSq
           classified.entry.parent.parent.chart.parameterization.curve)
         classified.entry.parent.event.1.profile.factor.polynomial cofactor)
     (relationEq :
-      (Curve.Event.Profile.Complete.Denominator.profileDenominatorRelation
+      (Event.Profile.Complete.Denominator.profileDenominatorRelation
         classified.entry.parent.event.1).relation =
           ConditionRelation.equality
             cofactor factorization)
@@ -119,14 +119,14 @@ theorem pole_child_excludes_state
       (classified.entry.parent.parent.chart.parameterization.curve.point
         parameter) := by
   let denominatorRelation :=
-    Curve.Event.Profile.Complete.Denominator.profileDenominatorRelation
+    Event.Profile.Complete.Denominator.profileDenominatorRelation
       classified.entry.parent.event.1
   have relationMember :
       (⟨Curve.Coordinates.denominatorNormSq
           classified.entry.parent.parent.chart.parameterization.curve,
         ConditionRelation.equality
           cofactor factorization⟩ :
-        Curve.Event.Profile.Classification.ProfileRelation
+        Event.Profile.Classification.ProfileRelation
           classified.entry.parent.event.1) ∈
         classified.entry.parent.event.1.profile.relations := by
     have member := denominatorRelation.member
@@ -134,7 +134,7 @@ theorem pole_child_excludes_state
     exact member
   have conditionSmall :=
     classified.entry.equality_condition_eval_sq_lt
-      (Curve.Boundary.Winding.Budget.windingTarget_pos (boundary := boundary) squarefree family)
+      (Budget.windingTarget_pos (boundary := boundary) squarefree family)
       (Curve.Coordinates.denominatorNormSq
         classified.entry.parent.parent.chart.parameterization.curve)
       cofactor factorization relationMember parameter inside
@@ -146,9 +146,9 @@ theorem pole_child_excludes_state
           Geometry.Projective.Chordal.Box.Interior.infinityBoxGap
             (family.boxes.get index)) ^ 2 :=
     conditionSmall.trans_le
-      ((Curve.Boundary.Winding.Budget.windingTarget_le_poleExclusion
+      ((Budget.windingTarget_le_poleExclusion
           (boundary := boundary) squarefree family).trans
-        (Curve.Boundary.Winding.Budget.poleExclusionTarget_le (boundary := boundary) family
+        (Budget.poleExclusionTarget_le (boundary := boundary) family
           classified.entry.parent classified.entry.parentMember index))
   have excluded :=
     Geometry.Projective.RationalCharts.Box.Exclusion.denominator_residual_excludes_box
@@ -162,16 +162,16 @@ boundary box.  This is the form consumed by the complete affine resolver. -/
 theorem pole_child_excludes_current
     (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
     (family : State.WindingOne.Family.Basic.WindingFamily p ambient)
-    (classified : Curve.Boundary.Winding.Budget.ClassifiedChild (boundary := boundary) squarefree family)
+    (classified : Budget.ClassifiedChild (boundary := boundary) squarefree family)
     (cofactor :
-      Polynomial.Dense.BoundaryFactorization.CoefficientPolynomial)
+      Dense.BoundaryFactorization.CoefficientPolynomial)
     (factorization :
-      Polynomial.Dense.Rational.Factorization
+      Dense.Rational.Factorization
         (Curve.Coordinates.denominatorNormSq
           classified.entry.parent.parent.chart.parameterization.curve)
         classified.entry.parent.event.1.profile.factor.polynomial cofactor)
     (relationEq :
-      (Curve.Event.Profile.Complete.Denominator.profileDenominatorRelation
+      (Event.Profile.Complete.Denominator.profileDenominatorRelation
         classified.entry.parent.event.1).relation =
           ConditionRelation.equality
             cofactor factorization)
@@ -184,14 +184,14 @@ theorem pole_child_excludes_current
       (classified.entry.parent.parent.chart.parameterization.curve.point
         parameter) := by
   let denominatorRelation :=
-    Curve.Event.Profile.Complete.Denominator.profileDenominatorRelation
+    Event.Profile.Complete.Denominator.profileDenominatorRelation
       classified.entry.parent.event.1
   have relationMember :
       (⟨Curve.Coordinates.denominatorNormSq
           classified.entry.parent.parent.chart.parameterization.curve,
         ConditionRelation.equality
           cofactor factorization⟩ :
-        Curve.Event.Profile.Classification.ProfileRelation
+        Event.Profile.Classification.ProfileRelation
           classified.entry.parent.event.1) ∈
         classified.entry.parent.event.1.profile.relations := by
     have member := denominatorRelation.member
@@ -199,7 +199,7 @@ theorem pole_child_excludes_current
     exact member
   have conditionSmall :=
     classified.entry.equality_condition_eval_sq_lt
-      (Curve.Boundary.Winding.Budget.windingTarget_pos (boundary := boundary) squarefree family)
+      (Budget.windingTarget_pos (boundary := boundary) squarefree family)
       (Curve.Coordinates.denominatorNormSq
         classified.entry.parent.parent.chart.parameterization.curve)
       cofactor factorization relationMember parameter inside
@@ -210,9 +210,9 @@ theorem pole_child_excludes_current
         (classified.entry.parent.parent.chart.parameterization.weightLower *
           Geometry.Projective.Chordal.Box.Interior.infinityBoxGap current) ^ 2 :=
     conditionSmall.trans_le
-      ((Curve.Boundary.Winding.Budget.windingTarget_le_poleExclusion
+      ((Budget.windingTarget_le_poleExclusion
           (boundary := boundary) squarefree family).trans
-        (Curve.Boundary.Winding.Budget.poleExclusionTarget_le_current (boundary := boundary) family
+        (Budget.poleExclusionTarget_le_current (boundary := boundary) family
           classified.entry.parent classified.entry.parentMember))
   exact
     Geometry.Projective.RationalCharts.Box.Exclusion.denominator_residual_excludes_box

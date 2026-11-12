@@ -19,6 +19,8 @@ public import Purelib.Geometry.Rational.Box.Sample
 import Purelib.Geometry.Projective.Hermitian.Formula.Basic
 import Purelib.Geometry.Rational.Box.Refinement
 
+open Purelib.Data.CCL.Encoding.Parser
+
 open Purelib.Data.CCL.Encoding.Parser.Semantics.State (Represents)
 open Purelib.Data.Gaussian.Basic (Canonical)
 open Purelib.Data.List.BinaryPrefix.Basic (SourcePersistentCCLWordAlias)
@@ -63,7 +65,7 @@ structure CompatibleSample (word :
   /-- The retained sample lies in the displayed box. -/ inside : box.Contains point
   /-- The sample is nonzero, so its raw CCL prefix has an affine representation. -/ nonzero : point ≠ 0
   /-- The displayed raw CCL prefix represents the same retained sample. -/ represented :
-    Data.CCL.Encoding.Parser.Semantics.Prefix.Represented word point
+    Semantics.Prefix.Represented word point
 
 constructive_injectivity CompatibleSample
 
@@ -76,10 +78,10 @@ structure NextDecision (word :
   /-- The displayed affine tail representing the input under the parsed prefix. -/ tail : Canonical
   /-- The parsed original prefix maps the retained tail to the original input. -/ represents :
     Represents
-    (Data.CCL.Encoding.Parser.State.parse word) input tail
+    (State.parse word) input tail
   /-- The finite Hermitian next-bit decision for the original parser, input and retained tail. -/ decision :
     Geometry.CCL.Parser.Formula.Decision
-    (Data.CCL.Encoding.Parser.State.parse word) input tail
+    (State.parse word) input tail
 
 constructive_injectivity NextDecision
 
@@ -88,11 +90,11 @@ tail witnessing a sample's raw-prefix representation.  This is the precise
 finite predicate consumed by the geometric one-bit controller. -/
 theorem tailFormula
     {word : SourcePersistentCCLWordAlias} {box : Box} (sample :
-      CCL.Persistent.Sample.Basic.CompatibleSample word box) :
+      CompatibleSample word box) :
     ∃ tail : Canonical,
       (Geometry.CCL.Parser.Formula.parseFormula word).Holds tail ∧
         Represents
-          (Data.CCL.Encoding.Parser.State.parse word) sample.point tail := by
+          (State.parse word) sample.point tail := by
   rcases sample.represented with ⟨tail, represents⟩
   exact ⟨tail,
     (Geometry.CCL.Parser.Formula.parseFormula_iff word tail).2
@@ -104,24 +106,24 @@ decision.  Persistence of one selected decision across all later subboxes is
 the geometric obligation of the controller. -/
 @[expose] def nextDecision
     {word : SourcePersistentCCLWordAlias} {box : Box} (sample :
-      CCL.Persistent.Sample.Basic.CompatibleSample word box) :
-    CCL.Persistent.Sample.Basic.CompatibleSample.NextDecision word sample.point := by
-  let parser := Data.CCL.Encoding.Parser.State.parse word
+      CompatibleSample word box) :
+    NextDecision word sample.point := by
+  let parser := State.parse word
   let tail := Geometry.Projective.Homography.Basic.homographic
     (LinearAlgebra.Coordinates2.Matrix.BoundaryAdjugate.adjugate parser.matrix) sample.point
   have determinantNonzero :
       LinearAlgebra.Coordinates2.Matrix.BoundaryAdjugate.determinant parser.matrix ≠ 0 := by
     simpa only [parser, LinearAlgebra.Coordinates2.Matrix.BoundaryAdjugate.determinant, -eq_self, -iff_self] using
-      Data.CCL.Encoding.Parser.State.parse_det_ne word
+      State.parse_det_ne word
   have represents : Represents
       parser sample.point tail := by
-    exact Data.CCL.Encoding.Parser.represents_inverse_tail_of_represented
+    exact CCL.Encoding.Parser.represents_inverse_tail_of_represented
       parser sample.point determinantNonzero sample.represented
   exact
     { tail := tail
       represents := represents
       decision := Geometry.CCL.Parser.Formula.decide
-        parser sample.point tail (Data.CCL.Encoding.Parser.State.parse_det_ne word)
+        parser sample.point tail (State.parse_det_ne word)
         represents }
 
 end CompatibleSample
@@ -132,7 +134,7 @@ supplied later winding-one subbox, not merely in the currently displayed
 box.  The quantification is over explicit finite states and refinement
 certificates; it does not form a set or a completed root. -/
 structure PersistentSamples
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
     (word : SourcePersistentCCLWordAlias) (current : WindingOneState
       p ambient) where
   /-- Compute a compatible nonzero sample in any supplied later winding-one box refining the current box. -/ sample :
@@ -144,7 +146,7 @@ constructive_injectivity PersistentSamples
 /-- The empty raw prefix is represented by every displayed rational point,
 so every winding-one state has an initial persistent provider. -/
 @[expose] def PersistentSamples.initial
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
     (current : WindingOneState p ambient) : PersistentSamples []
       current where
   sample := fun later _refines =>
@@ -153,7 +155,7 @@ so every winding-one state has an initial persistent provider. -/
       inside := sample.inside
       nonzero := sample.nonzero
       represented :=
-        Data.CCL.Encoding.Parser.Semantics.Prefix.represented_nil sample.point }
+        Semantics.Prefix.represented_nil sample.point }
 end Purelib.RootIsolation.CCL.Persistent.Sample.Basic
 
 end

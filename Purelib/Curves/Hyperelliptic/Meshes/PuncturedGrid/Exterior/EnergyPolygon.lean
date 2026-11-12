@@ -57,6 +57,8 @@ import Purelib.Riemann.Paths.PreparedPathParentCaches
 import Purelib.Tactic.Ring
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SegmentNonempty
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -90,18 +92,18 @@ open Purelib.Riemann.Meshes (FramedPuncturedGrid LiftedPuncturedGrid)
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
-  {lifted : LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {localTarget localArea chartTarget : Coordinate} {floor index depth readingIndex : Nat} {box :
     Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains}
+  {sample : Cap.Primitives.Sample cap differential index box} {shared :
+    Face.PrimitiveData.FacePrimitiveBank differential index domains}
 
 namespace ChartSamples.ChartedEntry.EnergyData
 
@@ -110,25 +112,25 @@ variable {energyTarget : Coordinate} {energyFloor energyDepth : Nat}
 /-- Only the retained endpoints of each original occurrence are read. -/
 @[expose] def
   segments
-  (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+  (branch : HyperellipticReciprocal.originOrder curve = 1) :
+    (entries : List (ChartedEntry (regular := regular) sample
       shared depth readingIndex localTarget localArea chartTarget floor)) →
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData energyTarget energyFloor
+    EnergyData energyTarget energyFloor
       energyDepth entries → List (Gaussian × Gaussian)
   | [], _ => []
   | _ :: tail, energies =>
       let ends := energies.1.endBank branch
       (ends.firstValue, ends.lastValue ends.firstValue) ::
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData.segments branch
+        EnergyData.segments branch
         tail energies.2
 
 /-- There is exactly one retained endpoint segment per original occurrence. -/
 theorem
   segments_length
-  (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+  (branch : HyperellipticReciprocal.originOrder curve = 1)
+    (entries : List (ChartedEntry (regular := regular) sample
       shared depth readingIndex localTarget localArea chartTarget floor))
-    (energies : Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData energyTarget
+    (energies : EnergyData energyTarget
       energyFloor energyDepth entries) :
     (energies.segments branch entries).length = entries.length := by
   induction entries with
@@ -139,10 +141,10 @@ theorem
 nonempty. -/
 theorem
   segments_totals
-  (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+  (branch : HyperellipticReciprocal.originOrder curve = 1)
+    (entries : List (ChartedEntry (regular := regular) sample
       shared depth readingIndex localTarget localArea chartTarget floor))
-    (energies : Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData energyTarget
+    (energies : EnergyData energyTarget
       energyFloor energyDepth entries)
     (nonempty : ∀ entry ∈ entries, entry.entry.occurrence.compared.entered.cache.parents ≠ []) :
     (energies.segments branch entries).map (fun segment => segment.2 - segment.1) =
@@ -158,33 +160,33 @@ theorem
 /-- The actual concatenated endpoint bank starts at the first original retained segment value. -/
 theorem
   segments_first
-  (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+  (branch : HyperellipticReciprocal.originOrder curve = 1)
+    (entries : List (ChartedEntry (regular := regular) sample
       shared depth readingIndex localTarget localArea chartTarget floor))
-    (energies : Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData energyTarget
+    (energies : EnergyData energyTarget
       energyFloor energyDepth entries)
     (nonempty : ∀ entry ∈ entries, entry.entry.occurrence.compared.entered.cache.parents ≠ []) :
     (energies.endBank branch entries).firstValue = Paths.SegmentGapArea.first (energies.segments branch entries) 0 := by
   cases entries with
   | nil => rfl
   | cons head tail =>
-    exact Charts.Reciprocal.Disk.EnergyEndBank.append_firstValue
+    exact Disk.EnergyEndBank.append_firstValue
       _ _ (nonempty head (List.mem_cons_self ..))
 
 /-- The actual concatenated boundary equals the local boundary sum with every original sewn connector and its endpoint
 correction. -/
 theorem
   boundary_sewn
-  (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+  (branch : HyperellipticReciprocal.originOrder curve = 1)
+    (entries : List (ChartedEntry (regular := regular) sample
       shared depth readingIndex localTarget localArea chartTarget floor))
-    (energies : Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData energyTarget
+    (energies : EnergyData energyTarget
       energyFloor energyDepth entries)
     (nonempty : ∀ entry ∈ entries, entry.entry.occurrence.compared.entered.cache.parents ≠ []) (previous finish :
       Gaussian) :
     (energies.endBank branch entries).boundary previous + Path.BoundaryRibbon.area ((energies.endBank branch
       entries).lastValue previous) finish =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (energies.boundaries entries) + Paths.SegmentGapArea.sewnAreas
+      Gaussian.Norm.Sum.Basic.gaussianSum (energies.boundaries entries) + Paths.SegmentGapArea.sewnAreas
         (energies.segments branch entries) finish +
         Path.BoundaryRibbon.area previous (Paths.SegmentGapArea.first (energies.segments branch entries) finish) := by
   induction entries generalizing previous with
@@ -198,8 +200,8 @@ theorem
       let right := energies.2.endBank branch tail
       change (left.append right).boundary previous + Path.BoundaryRibbon.area ((left.append right).lastValue previous)
         finish = _
-      rw [Charts.Reciprocal.Disk.EnergyEndBank.append_boundary,
-        Charts.Reciprocal.Disk.EnergyEndBank.append_lastValue,
+      rw [Disk.EnergyEndBank.append_boundary,
+        Disk.EnergyEndBank.append_lastValue,
         left.lastValue_independent present previous left.firstValue,
         left.boundary_translate previous left.firstValue]
       have tailEq := ih energies.2 remaining (left.lastValue left.firstValue)
@@ -212,7 +214,7 @@ theorem
           (right.boundary (left.lastValue left.firstValue) + Path.BoundaryRibbon.area (right.lastValue (left.lastValue
             left.firstValue)) finish) by ring1,
         tailEq]
-      change _ = (energies.1.boundary + Data.Gaussian.Norm.Sum.Basic.gaussianSum (energies.2.boundaries tail)) +
+      change _ = (energies.1.boundary + Gaussian.Norm.Sum.Basic.gaussianSum (energies.2.boundaries tail)) +
         (Path.BoundaryRibbon.area left.firstValue (left.lastValue left.firstValue) +
           Path.BoundaryRibbon.area (left.lastValue left.firstValue) (Paths.SegmentGapArea.first (energies.2.segments
             branch tail) finish) +
@@ -221,7 +223,7 @@ theorem
       rw [energies.1.endBank_boundary branch present]
       have origin : Path.BoundaryRibbon.area (previous - left.firstValue) left.firstValue = Path.BoundaryRibbon.area
         previous left.firstValue := by
-        apply Gaussian.Basic.ext <;> simp only [Path.BoundaryRibbon.area, Data.Gaussian.Basic.conj,
+        apply Gaussian.Basic.ext <;> simp only [Path.BoundaryRibbon.area, Gaussian.Basic.conj,
           Gaussian.Basic.sub_re, Gaussian.Basic.sub_im, Gaussian.Basic.mul_re, Gaussian.Basic.mul_im] <;> ring1
       rw [origin]
       dsimp only [left]
@@ -231,17 +233,17 @@ theorem
 polygon. -/
 theorem
   residual_sewn
-  (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+  (branch : HyperellipticReciprocal.originOrder curve = 1)
+    (entries : List (ChartedEntry (regular := regular) sample
       shared depth readingIndex localTarget localArea chartTarget floor))
-    (energies : Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData energyTarget
+    (energies : EnergyData energyTarget
       energyFloor energyDepth entries)
     (nonempty : ∀ entry ∈ entries, entry.entry.occurrence.compared.entered.cache.parents ≠ []) :
-    (energies.endBank branch entries).residual = Data.Gaussian.Norm.Sum.Basic.gaussianSum (energies.boundaries entries)
+    (energies.endBank branch entries).residual = Gaussian.Norm.Sum.Basic.gaussianSum (energies.boundaries entries)
       +
       Paths.SegmentGapArea.sewnAreas (energies.segments branch entries) (Paths.SegmentGapArea.first (energies.segments
         branch entries) 0) := by
-  rw [Charts.Reciprocal.Disk.EnergyEndBank.residual_eq, energies.segments_first
+  rw [Disk.EnergyEndBank.residual_eq, energies.segments_first
     branch entries nonempty,
     energies.boundary_sewn branch entries nonempty]
   have same : Paths.SegmentGapArea.first (energies.segments branch entries)
@@ -257,11 +259,11 @@ namespace SurfaceRequests.AllSurfacePreparation.Request.ChartRequest.Plan.Shared
 variable {prepared :
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
   regular domains differential} {target areaTarget : Coordinate}
-  {request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request prepared target
+  {request : Request prepared target
     areaTarget floor} {charts :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.ChartRequest request
+    ChartRequest request
     chartTarget}
-  {plan : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request.ChartRequest.Plan
+  {plan : Plan
     charts sample} {evaluated :
     Evaluation
     plan shared depth readingIndex}
@@ -271,7 +273,7 @@ variable {prepared :
 theorem
   occurrences_nonempty
   (_energy :
-  Plan.SharedEnergy
+  SharedEnergy
   evaluated energyTarget energyFloor) :
     ∀ entry ∈ evaluated.samples.values, entry.entry.occurrence.compared.entered.cache.parents ≠ [] := open Purelib in by
   intro entry member
@@ -286,9 +288,9 @@ residual of its actual concatenated endpoint bank. -/
 theorem
   boundary_residual_eq
   (energy :
-  Plan.SharedEnergy
+  SharedEnergy
   evaluated energyTarget energyFloor)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
+    (branch : HyperellipticReciprocal.originOrder curve = 1) :
     energy.boundary - (energy.data.endBank branch evaluated.samples.values).residual =
       Path.IncrementArea.pathArea ((energy.data.segments branch evaluated.samples.values).map (fun segment => segment.2
         - segment.1)) -
@@ -303,9 +305,9 @@ theorem
 theorem
   segments_bounded
   (energy :
-  Plan.SharedEnergy
+  SharedEnergy
   evaluated energyTarget energyFloor)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
+    (branch : HyperellipticReciprocal.originOrder curve = 1) :
     ∀ segment ∈ energy.data.segments branch evaluated.samples.values,
       normSq (segment.2 - segment.1) ≤ 2 * (request.slope + 1) := open Purelib in by
   intro segment member
@@ -317,7 +319,7 @@ theorem
   have sourceLe := request.entry_bound entry.entry
     (evaluated.samples.entries_eq ▸ Data.List.Map.mem_map.mpr ⟨entry, inEntries, rfl⟩)
   have bound := entry.value.pair_bounds (request.slope_eq ▸
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.sourceMaximum_nonnegative
+    AllSurfacePreparation.sourceMaximum_nonnegative
     prepared.occurrences)
     (entry.value_entry.symm ▸ sourceLe) (request.local_le.trans request.budget.total_le_one)
   have scalar := bound.2.2.2
@@ -329,21 +331,21 @@ the original count and slope. -/
 theorem
   boundary_residual_bound
   (energy :
-  Plan.SharedEnergy
+  SharedEnergy
   evaluated energyTarget energyFloor)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) {error : Coordinate}
+    (branch : HyperellipticReciprocal.originOrder curve = 1) {error : Coordinate}
       (nonnegative : 0 ≤ error)
     (gaps : Paths.SegmentGapArea.GapsSmall (energy.data.segments branch evaluated.samples.values)
       (Paths.SegmentGapArea.first (energy.data.segments branch evaluated.samples.values) 0) error) :
     normSq (energy.boundary - (energy.data.endBank branch evaluated.samples.values).residual) ≤
       2 * (16 * (request.count : Coordinate) ^ 4 * error * (2 * (2 * (request.slope + 1) + error)) +
-        (request.count : Coordinate) ^ 2 * (4 * (2 * (request.slope + 1)) * error)) := open Purelib.Data.Rat in by
+        (request.count : Coordinate) ^ 2 * (4 * (2 * (request.slope + 1)) * error)) := open Rat in by
   rw [energy.boundary_residual_eq branch]
   have estimate := Paths.SegmentGapArea.correction_bound (energy.data.segments branch evaluated.samples.values)
     nonnegative
     (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 2)
       (add_nonneg (request.slope_eq ▸
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.sourceMaximum_nonnegative
+        AllSurfacePreparation.sourceMaximum_nonnegative
         prepared.occurrences) (by decide : (0 : Coordinate) ≤ 1)))
     gaps (by
       intro segment member

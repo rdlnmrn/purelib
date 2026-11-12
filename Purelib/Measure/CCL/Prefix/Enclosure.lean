@@ -31,6 +31,8 @@ import Mathlib.Order.Basic
 import Purelib.Measure.Distribution.Stability
 import Purelib.Tactic.Ring
 
+open Purelib.Approximation.CCL
+
 open Purelib.Data.CCL.Encoding (Block)
 open Purelib.Data.CCL.Encoding.Cylinder.Basic (Realizes)
 
@@ -71,9 +73,9 @@ def completedPrefixProbeExpectationBound
     (sensitive : ∀ left right,
       Distance.rationalSeparation (probe left) (probe right) ≤
         factor * Chordal.Basic.chordalSq left right) :
-    Data.Rat.Interval :=
-  (CCL.Prefix.completedPrefixExtensionDistribution blocks depth).enclosedExpectation
-    (fun _ => Approximation.CCL.Prefix.completedPrefixProbeBound blocks witness witnessRealizes
+    Interval :=
+  (completedPrefixExtensionDistribution blocks depth).enclosedExpectation
+    (fun _ => Prefix.completedPrefixProbeBound blocks witness witnessRealizes
       probe factor factorNonnegative sensitive)
 
 /-- Averaging the constant completed-prefix enclosure returns that exact probe bound. -/
@@ -87,7 +89,7 @@ theorem completedPrefixProbeExpectationBound_eq_probeBound
         factor * Chordal.Basic.chordalSq left right) :
     completedPrefixProbeExpectationBound blocks depth witness witnessRealizes
         probe factor factorNonnegative sensitive =
-      Approximation.CCL.Prefix.completedPrefixProbeBound blocks witness witnessRealizes
+      Prefix.completedPrefixProbeBound blocks witness witnessRealizes
         probe factor factorNonnegative sensitive := by
   unfold completedPrefixProbeExpectationBound
   apply Interval.ext
@@ -115,15 +117,15 @@ theorem completedPrefixProbeExpectationBound_contains
         factor * Chordal.Basic.chordalSq left right)
     (points : List.BinaryPrefix.CCLMeasureWord → Line.GaussianLine)
     (pointsRealize : ∀ atom,
-      atom ∈ (CCL.Prefix.completedPrefixExtensionDistribution blocks depth).atoms →
+      atom ∈ (completedPrefixExtensionDistribution blocks depth).atoms →
         Realizes blocks (points atom.item)) :
     (completedPrefixProbeExpectationBound blocks depth witness witnessRealizes
       probe factor factorNonnegative sensitive).Contains
-        ((CCL.Prefix.completedPrefixExtensionDistribution blocks depth).expectation
+        ((completedPrefixExtensionDistribution blocks depth).expectation
           (fun word => probe (points word))) := by
   apply Distribution.expectation_mem_enclosedExpectation
   intro atom member
-  exact Approximation.CCL.Prefix.completedPrefixProbeBound_contains blocks witness witnessRealizes
+  exact Prefix.completedPrefixProbeBound_contains blocks witness witnessRealizes
     probe factor factorNonnegative sensitive (pointsRealize atom member)
 
 section
@@ -142,9 +144,9 @@ theorem completedPrefixProbeExpectationBound_width
         factor * Chordal.Basic.chordalSq left right) :
     (completedPrefixProbeExpectationBound blocks depth witness witnessRealizes
       probe factor factorNonnegative sensitive).width =
-        2 * (factor * Approximation.CCL.Cylinder.cylinderSpread blocks) := by
+        2 * (factor * Cylinder.cylinderSpread blocks) := by
   rw [completedPrefixProbeExpectationBound_eq_probeBound,
-    Approximation.CCL.Prefix.completedPrefixProbeBound_width]
+    Prefix.completedPrefixProbeBound_width]
 
 /-- Appending blocks refines the expectation enclosure while retaining the same realizing witness. -/
 theorem completedPrefixProbeExpectationBound_append_refines
@@ -164,7 +166,7 @@ theorem completedPrefixProbeExpectationBound_append_refines
         probe factor factorNonnegative sensitive) := by
   rw [completedPrefixProbeExpectationBound_eq_probeBound,
     completedPrefixProbeExpectationBound_eq_probeBound]
-  exact Approximation.CCL.Prefix.completedPrefixProbeBound_append_refines stem suffix witness
+  exact Prefix.completedPrefixProbeBound_append_refines stem suffix witness
     witnessRealizes probe factor factorNonnegative sensitive
 
 end
@@ -179,20 +181,20 @@ Each atom retains its own blocks and realizing witness; lower and upper endpoint
 rational interval. -/
 def prefixFamilyProbeExpectationBound
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
     (sensitive : ∀ left right,
       Distance.rationalSeparation (probe left) (probe right) ≤
         factor * Chordal.Basic.chordalSq left right) :
-    Data.Rat.Interval :=
+    Interval :=
   distribution.enclosedExpectation fun certificate =>
     certificate.probeBound probe factor factorNonnegative sensitive
 
 /-- Take the original expectation of the probe at each retained certificate witness. -/
 def prefixFamilyProbeWitnessExpectation
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) : Fraction.Rational :=
   distribution.expectation fun certificate => probe certificate.witness
 
@@ -203,10 +205,10 @@ open Purelib.Data.Rat in
 /-- Take the original expectation of sensitivity-scaled cylinder spread for each retained certificate. -/
 def prefixFamilyProbeRadius
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (factor : Fraction.Rational) : Fraction.Rational :=
   distribution.expectation fun certificate =>
-    factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks
+    factor * Cylinder.cylinderSpread certificate.blocks
 
 open Purelib.Data.CCL.Encoding in
 open Purelib.Data.Rat in
@@ -214,13 +216,13 @@ open Purelib.Measure in
 /-- A nonnegative sensitivity factor makes the family's expected probe radius nonnegative. -/
 theorem prefixFamilyProbeRadius_nonnegative
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (factor : Fraction.Rational) (factorNonnegative : 0 ≤ factor) :
     0 ≤ prefixFamilyProbeRadius distribution factor := by
   apply distribution.expectation_nonneg
   intro atom member
   exact Fraction.Order.Arithmetic.mul_nonneg_direct factorNonnegative
-    (Approximation.CCL.Cylinder.cylinderSpread_nonneg atom.item.blocks)
+    (Cylinder.cylinderSpread_nonneg atom.item.blocks)
 
 section
 open Purelib.Data.CCL.Encoding
@@ -230,9 +232,9 @@ open Purelib.Measure
 /-- Center a rational interval at the witness expectation with the expected cylinder radius. -/
 def prefixFamilyProbeWitnessBound
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
-    (factorNonnegative : 0 ≤ factor) : Data.Rat.Interval where
+    (factorNonnegative : 0 ≤ factor) : Interval where
   lower := prefixFamilyProbeWitnessExpectation distribution probe -
     prefixFamilyProbeRadius distribution factor
   upper := prefixFamilyProbeWitnessExpectation distribution probe +
@@ -250,7 +252,7 @@ def prefixFamilyProbeWitnessBound
 /-- The endpoint-averaged probe enclosure equals the witness-centered expected-radius interval. -/
 theorem prefixFamilyProbeExpectationBound_eq_witnessBound
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
     (sensitive : ∀ left right,
@@ -265,21 +267,21 @@ theorem prefixFamilyProbeExpectationBound_eq_witnessBound
     rw [Distribution.enclosedExpectation_lower]
     change distribution.expectation (fun certificate =>
         probe certificate.witness -
-          factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks) = _
+          factor * Cylinder.cylinderSpread certificate.blocks) = _
     rw [distribution.expectation_sub]
     rfl
   · unfold prefixFamilyProbeExpectationBound prefixFamilyProbeWitnessBound
     rw [Distribution.enclosedExpectation_upper]
     change distribution.expectation (fun certificate =>
         probe certificate.witness +
-          factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks) = _
+          factor * Cylinder.cylinderSpread certificate.blocks) = _
     rw [distribution.expectation_add]
     rfl
 
 /-- The family expectation enclosure has width twice its expected probe radius. -/
 theorem prefixFamilyProbeExpectationBound_width_eq_two_mul_radius
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
     (sensitive : ∀ left right,
@@ -295,7 +297,7 @@ theorem prefixFamilyProbeExpectationBound_width_eq_two_mul_radius
 /-- The family expectation enclosure's width is the original expectation of twice each scaled cylinder spread. -/
 theorem prefixFamilyProbeExpectationBound_width
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
     (sensitive : ∀ left right,
@@ -304,18 +306,18 @@ theorem prefixFamilyProbeExpectationBound_width
     (prefixFamilyProbeExpectationBound distribution probe factor
       factorNonnegative sensitive).width =
       distribution.expectation fun certificate =>
-        2 * (factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks) := by
+        2 * (factor * Cylinder.cylinderSpread certificate.blocks) := by
   unfold prefixFamilyProbeExpectationBound
   rw [Distribution.enclosedExpectation_width]
   exact distribution.expectation_congr _ _ (fun certificate =>
-    Approximation.CCL.Prefix.completedPrefixProbeBound_width certificate.blocks
+    Prefix.completedPrefixProbeBound_width certificate.blocks
       certificate.witness certificate.witnessRealizes probe factor
       factorNonnegative sensitive)
 
 /-- The family enclosure contains the probe expectation of any realization of the original certificate blocks. -/
 theorem prefixFamilyProbeExpectationBound_contains
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
     (sensitive : ∀ left right,
@@ -331,7 +333,7 @@ theorem prefixFamilyProbeExpectationBound_contains
   unfold prefixFamilyProbeExpectationBound
   apply Distribution.expectation_mem_enclosedExpectation
   intro atom member
-  exact Approximation.CCL.Prefix.completedPrefixProbeBound_contains atom.item.blocks
+  exact Prefix.completedPrefixProbeBound_contains atom.item.blocks
     atom.item.witness atom.item.witnessRealizes probe factor
     factorNonnegative sensitive (pointsRealize atom member)
 
@@ -345,7 +347,7 @@ open Purelib.Geometry.Projective in
 The original distribution and witnesses remain fixed, with evidence that each witness realizes its extended blocks. -/
 def extendedPrefixFamilyProbeExpectationBound
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (suffix : Cylinder.CompletedPrefixCertificate → List Block)
     (extendedRealizes : ∀ certificate,
       Realizes
@@ -355,9 +357,9 @@ def extendedPrefixFamilyProbeExpectationBound
     (sensitive : ∀ left right,
       Distance.rationalSeparation (probe left) (probe right) ≤
         factor * Chordal.Basic.chordalSq left right) :
-    Data.Rat.Interval :=
+    Interval :=
   distribution.enclosedExpectation fun certificate =>
-    Approximation.CCL.Prefix.completedPrefixProbeBound
+    Prefix.completedPrefixProbeBound
       (certificate.blocks ++ suffix certificate) certificate.witness
       (extendedRealizes certificate) probe factor factorNonnegative sensitive
 
@@ -369,7 +371,7 @@ open Purelib.Measure
 /-- The extended family enclosure contains the probe expectation of any points realizing the same extended blocks. -/
 theorem extendedPrefixFamilyProbeExpectationBound_contains
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (suffix : Cylinder.CompletedPrefixCertificate → List Block)
     (extendedRealizes : ∀ certificate,
       Realizes
@@ -389,7 +391,7 @@ theorem extendedPrefixFamilyProbeExpectationBound_contains
   unfold extendedPrefixFamilyProbeExpectationBound
   apply Distribution.expectation_mem_enclosedExpectation
   intro atom member
-  exact Approximation.CCL.Prefix.completedPrefixProbeBound_contains
+  exact Prefix.completedPrefixProbeBound_contains
     (atom.item.blocks ++ suffix atom.item) atom.item.witness
     (extendedRealizes atom.item) probe factor factorNonnegative sensitive
     (pointsRealize atom member)
@@ -397,7 +399,7 @@ theorem extendedPrefixFamilyProbeExpectationBound_contains
 /-- Extending certificate blocks while retaining their witnesses refines the original family expectation enclosure. -/
 theorem extendedPrefixFamilyProbeExpectationBound_refines
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (suffix : Cylinder.CompletedPrefixCertificate → List Block)
     (extendedRealizes : ∀ certificate,
       Realizes
@@ -414,14 +416,14 @@ theorem extendedPrefixFamilyProbeExpectationBound_refines
         factorNonnegative sensitive) := by
   apply distribution.enclosedExpectation_refines
   intro atom member
-  exact Approximation.CCL.Prefix.completedPrefixProbeBound_append_refines atom.item.blocks
+  exact Prefix.completedPrefixProbeBound_append_refines atom.item.blocks
     (suffix atom.item) atom.item.witness (extendedRealizes atom.item)
     probe factor factorNonnegative sensitive
 
 /-- The extended family expectation enclosure is no wider than the original enclosure. -/
 theorem extendedPrefixFamilyProbeExpectationBound_width_le
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (suffix : Cylinder.CompletedPrefixCertificate → List Block)
     (extendedRealizes : ∀ certificate,
       Realizes
@@ -441,7 +443,7 @@ theorem extendedPrefixFamilyProbeExpectationBound_width_le
 /-- An expected doubled-radius budget bounds the family expectation enclosure's width. -/
 theorem prefixFamilyProbeExpectationBound_width_lt_of_budget
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorNonnegative : 0 ≤ factor)
     (sensitive : ∀ left right,
@@ -449,7 +451,7 @@ theorem prefixFamilyProbeExpectationBound_width_lt_of_budget
         factor * Chordal.Basic.chordalSq left right)
     (target : Fraction.Rational)
     (budget : distribution.expectation (fun certificate =>
-      2 * (factor * Approximation.CCL.Cylinder.cylinderSpread certificate.blocks)) < target) :
+      2 * (factor * Cylinder.cylinderSpread certificate.blocks)) < target) :
     (prefixFamilyProbeExpectationBound distribution probe factor
       factorNonnegative sensitive).width < target := by
   rw [prefixFamilyProbeExpectationBound_width]
@@ -468,7 +470,7 @@ The per-atom request uses half the target and the positive sensitivity factor, r
 witnesses and distribution. -/
 theorem prefixFamilyProbeExpectationBound_width_lt_requested
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (probe : Line.GaussianLine → Fraction.Rational) (factor : Fraction.Rational)
     (factorPositive : 0 < factor)
     (sensitive : ∀ left right,
@@ -495,7 +497,7 @@ theorem prefixFamilyProbeExpectationBound_width_lt_requested
       factorPositive.le sensitive)
     (target / 2) target
   · intro atom member
-    exact (Approximation.CCL.Prefix.completedPrefixProbeBound_width_lt_requested atom.item.witness
+    exact (Prefix.completedPrefixProbeBound_width_lt_requested atom.item.witness
       atom.item.witnessRealizes probe factor factorPositive sensitive
       (target / 2) halfPositive (enough atom member)).le
   · exact halfSmall
@@ -528,11 +530,11 @@ open Purelib.Data.Rat in
 /-- Take the expected scaled cylinder spread after each certificate's supplied suffix extension. -/
 def extendedPrefixFamilyProbeRadius
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (suffix : Cylinder.CompletedPrefixCertificate → List Block)
     (factor : Fraction.Rational) : Fraction.Rational :=
   distribution.expectation fun certificate =>
-    factor * Approximation.CCL.Cylinder.cylinderSpread (certificate.blocks ++ suffix certificate)
+    factor * Cylinder.cylinderSpread (certificate.blocks ++ suffix certificate)
 
 open Purelib
 open Purelib.Data.CCL.Encoding
@@ -541,19 +543,19 @@ open Purelib.Measure
 /-- A nonnegative factor makes the expected extended-prefix radius nonnegative. -/
 theorem extendedPrefixFamilyProbeRadius_nonnegative
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (suffix : Cylinder.CompletedPrefixCertificate → List Block)
     (factor : Fraction.Rational) (factorNonnegative : 0 ≤ factor) :
     0 ≤ extendedPrefixFamilyProbeRadius distribution suffix factor := by
   apply distribution.expectation_nonneg
   intro atom member
   exact Fraction.Order.Arithmetic.mul_nonneg_direct factorNonnegative
-    (Approximation.CCL.Cylinder.cylinderSpread_nonneg (atom.item.blocks ++ suffix atom.item))
+    (Cylinder.cylinderSpread_nonneg (atom.item.blocks ++ suffix atom.item))
 
 /-- Appending blocks cannot increase the original family's expected scaled radius. -/
 theorem extendedPrefixFamilyProbeRadius_le
     (distribution :
-      Measure.Distribution Cylinder.CompletedPrefixCertificate)
+      Distribution Cylinder.CompletedPrefixCertificate)
     (suffix : Cylinder.CompletedPrefixCertificate → List Block)
     (factor : Fraction.Rational) (factorNonnegative : 0 ≤ factor) :
     extendedPrefixFamilyProbeRadius distribution suffix factor ≤
@@ -561,7 +563,7 @@ theorem extendedPrefixFamilyProbeRadius_le
   apply distribution.expectation_mono
   intro atom member
   exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Approximation.CCL.Cylinder.cylinderSpread_le_of_append atom.item.blocks (suffix atom.item))
+    (Cylinder.cylinderSpread_le_of_append atom.item.blocks (suffix atom.item))
     factorNonnegative
 end Purelib.Measure.CCL.Prefix
 

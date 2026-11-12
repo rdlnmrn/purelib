@@ -106,75 +106,75 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartBasisGeometry.Area
 open Purelib.Riemann.RootContinuation
 
 variable {genus count index depth readingIndex floor minimum : Nat} {curve :
-  Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-  {differential : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} {collar :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {parent :
-    Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {source :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
-  {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {polynomials : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+  HyperellipticCurve genus}
+  {differential : Differential genus} {collar :
+    ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {parent :
+    Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap} {source :
+    SourcePrimitive data index}
+  {box : Geometry.Rational.Box} {capSample :
+    Cap.Primitives.Sample cap differential index box}
+  {target : Coordinate}
+  {polynomials : RegularBasisPolynomials cap
     index box}
 
 /-- The inexpensive homogeneous radial requests for every actual retained parent cell.
 
 One shared polynomial-bound cache supplies the whole original chart spine before a common fan mesh is selected. -/
-def BasisEnergyRequests (bounds : CapBasisBounds.RegularBasisBounds polynomials RootRadialGeometry.domain) (energyTarget
-  : InverseRootPolynomial.Coordinate) (energyFloor : Nat) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+def BasisEnergyRequests (bounds : RegularBasisBounds polynomials RootRadialGeometry.domain) (energyTarget
+  : Coordinate) (energyFloor : Nat) :
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → ChartPlans.EvaluationData readingIndex plans cells
+    (cells : ComparedCells source capSample depth bank) → EvaluationData readingIndex plans cells
       → Type
   | _, _, _, _, .nil, .nil, _ => PUnit
   | _, _, _, _, .cons _ tail, .cons _ cells, evaluated =>
-      CapBasisRequest.RegularBasisRequest bounds evaluated.1.vertices.path.segments.length energyTarget energyFloor ×
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisRequests.BasisEnergyRequests bounds energyTarget
+      RegularBasisRequest bounds evaluated.1.vertices.path.segments.length energyTarget energyFloor ×
+        ParentBasisRequests.BasisEnergyRequests bounds energyTarget
           energyFloor tail cells evaluated.2
 
 namespace BasisEnergyRequests
 
 /-- Prepare the original homogeneous energy request for each actual evaluated cell using the same retained coefficient
 bounds. -/
-def build (bounds : CapBasisBounds.RegularBasisBounds polynomials RootRadialGeometry.domain) (energyTarget :
-  InverseRootPolynomial.Coordinate)
+def build (bounds : RegularBasisBounds polynomials RootRadialGeometry.domain) (energyTarget :
+  Coordinate)
     (positive : 0 < energyTarget) (energyFloor : Nat) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → (evaluated : ChartPlans.EvaluationData
+    (cells : ComparedCells source capSample depth bank) → (evaluated : EvaluationData
       readingIndex plans cells) →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisRequests.BasisEnergyRequests bounds energyTarget energyFloor
+    BasisEnergyRequests bounds energyTarget energyFloor
       plans cells evaluated
   | _, _, _, _, .nil, .nil, _ => ⟨⟩
   | _, _, _, _, .cons _ tail, .cons _ cells, evaluated =>
       ⟨RegularBasisRequest.build bounds evaluated.1.vertices.path.segments.length energyTarget positive energyFloor,
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisRequests.BasisEnergyRequests.build bounds
+        BasisEnergyRequests.build bounds
           energyTarget positive energyFloor tail cells evaluated.2⟩
 
-variable {bounds : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisBounds.RegularBasisBounds
-  polynomials Purelib.Riemann.RootContinuation.RootRadialGeometry.domain} {energyTarget :
-  Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {energyFloor : Nat}
+variable {bounds : RegularBasisBounds
+  polynomials RootRadialGeometry.domain} {energyTarget :
+  Coordinate} {energyFloor : Nat}
 
 /-- The maximum actual cell fan depth, retaining the original energy floor for an empty spine. -/
-def maximum : {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data
-  edges} → {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → {plans : ParentChartRequests.ChartPlans
+def maximum : {edges : List ParameterEdge} → {bank : Bank regular data
+  edges} → {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → {plans : ChartPlans
       capSample minimum requests} →
-    {cells : ParentPaths.ComparedCells source capSample depth bank} → {evaluated : ChartPlans.EvaluationData
+    {cells : ComparedCells source capSample depth bank} → {evaluated : EvaluationData
       readingIndex plans cells} →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisRequests.BasisEnergyRequests bounds energyTarget energyFloor
+    BasisEnergyRequests bounds energyTarget energyFloor
       plans cells evaluated → Nat
   | _, _, _, _, .nil, .nil, _, _ => energyFloor
   | _, _, _, _, .cons _ _, .cons _ _, _, requests => max requests.1.depth
-    (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisRequests.BasisEnergyRequests.maximum requests.2)
+    (BasisEnergyRequests.maximum requests.2)
 
 end BasisEnergyRequests
 
@@ -182,49 +182,49 @@ end BasisEnergyRequests
 
 Each original chart path keeps its own energy certificate and depth equality, while the dependent tail preserves its
 original cells. -/
-def BasisEnergyData {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box} (energyTarget :
-  InverseRootPolynomial.Coordinate) (energyFloor energyDepth : Nat) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+def BasisEnergyData {polynomials : RegularBasisPolynomials cap index box} (energyTarget :
+  Coordinate) (energyFloor energyDepth : Nat) :
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → ChartPlans.EvaluationData readingIndex plans cells
+    (cells : ComparedCells source capSample depth bank) → EvaluationData readingIndex plans cells
       → Type 1
   | _, _, _, _, .nil, .nil, _ => PUnit
   | _, _, _, _, .cons _ tail, .cons _ cells, evaluated =>
-      { energy : Evaluation.RequestedBasisEnergy evaluated.1.vertices.path.segments polynomials energyTarget energyFloor
+      { energy : RequestedBasisEnergy evaluated.1.vertices.path.segments polynomials energyTarget energyFloor
         // energy.request.depth = energyDepth } ×
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisRequests.BasisEnergyData (polynomials :=
+        ParentBasisRequests.BasisEnergyData (polynomials :=
           polynomials) energyTarget energyFloor energyDepth tail cells evaluated.2
 
 namespace BasisEnergyRequests
 
-variable {bounds : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisBounds.RegularBasisBounds
-  polynomials Purelib.Riemann.RootContinuation.RootRadialGeometry.domain} {energyTarget :
-  Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {energyFloor energyDepth : Nat}
+variable {bounds : RegularBasisBounds
+  polynomials RootRadialGeometry.domain} {energyTarget :
+  Coordinate} {energyFloor energyDepth : Nat}
 
 open Purelib.Data in
 /-- Existing chart readings and sources are reused. The common mesh is passed down the whole spine; no already-built fan
 is discarded or rebuilt. -/
 def evaluate (branch : HyperellipticReciprocal.originOrder curve = 1)
-    (oriented : 0 < AffineTriangle.crossEnergy (parent.edge.point 0) (parent.edge.point 1))
-    (parameters : RadialTriangles.Parameters energyDepth) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+    (oriented : 0 < crossEnergy (parent.edge.point 0) (parent.edge.point 1))
+    (parameters : Parameters energyDepth) :
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → (evaluated : ChartPlans.EvaluationData
+    (cells : ComparedCells source capSample depth bank) → (evaluated : EvaluationData
       readingIndex plans cells) →
-    (energyRequests : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisRequests.BasisEnergyRequests bounds
+    (energyRequests : BasisEnergyRequests bounds
       energyTarget energyFloor plans cells evaluated) → energyRequests.maximum ≤ energyDepth →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisRequests.BasisEnergyData (polynomials := polynomials)
+    BasisEnergyData (polynomials := polynomials)
       energyTarget energyFloor energyDepth plans cells evaluated
   | _, _, _, _, .nil, .nil, _, _, _ => ⟨⟩
   | _, _, _, _, .cons _ tail, .cons _ cells, evaluated, requests, later =>
       ⟨⟨RequestedBasisEnergy.buildWithRequest evaluated.1.vertices.path.segments polynomials
-          (Evaluation.basisFanGeometry evaluated.1 branch oriented) bounds
+          (basisFanGeometry evaluated.1 branch oriented) bounds
           (requests.1.atDepth energyDepth ((Nat.Order.le_max_left _ _).trans later)) parameters, rfl⟩,
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisRequests.BasisEnergyRequests.evaluate branch
+        BasisEnergyRequests.evaluate branch
           oriented parameters tail cells evaluated.2 requests.2 ((Nat.Order.le_max_right _ _).trans later)⟩
 
 end BasisEnergyRequests

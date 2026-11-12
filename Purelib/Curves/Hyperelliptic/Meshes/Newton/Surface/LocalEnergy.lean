@@ -63,6 +63,8 @@ import Purelib.Riemann.Topology.NewtonObservationSurfacePartition
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Algebra
 
 open Purelib.Curves
@@ -93,14 +95,14 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.LocalEnergy
 
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
     Fraction.Rational} {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
   {observations : RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
-    RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars} {sheet : Fin
+    SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars} {sheet : Fin
     2}
   {partitions : Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid} {coarse :
     Topology.NewtonRequestedSurfaceEnergy.SurfaceMeshes partitions domains sheet}
@@ -126,25 +128,25 @@ namespace ConjugateRequest
 
 /-- The squared ownership target is positive whenever the original energy allowance is positive. -/
 theorem energyAllowanceTarget_positive {allowance : Fraction.Rational} (positive : 0 < allowance) :
-    0 < Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance :=
-  Fraction.Order.Field.div_pos_direct
-    (Fraction.Order.Arithmetic.pow_pos_direct (Fraction.Order.Arithmetic.mul_pos_direct (by decide) positive) 2)
-    (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct (Fraction.Order.Arithmetic.sq_nonneg_direct _) (by
+    0 < ConjugateRequest.energyAllowanceTarget genus allowance :=
+  Field.div_pos_direct
+    (Arithmetic.pow_pos_direct (Arithmetic.mul_pos_direct (by decide) positive) 2)
+    (Arithmetic.add_pos_of_nonneg_of_pos_direct (Arithmetic.sq_nonneg_direct _) (by
       decide))
 
 /-- Genus squared times the retained ownership target is bounded by the square of four times the energy allowance. -/
 theorem energyAllowanceTarget_paid {allowance : Fraction.Rational} (positive : 0 < allowance) :
     (genus : Fraction.Rational) ^ 2 *
-      Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance ≤ (4 *
+      ConjugateRequest.energyAllowanceTarget genus allowance ≤ (4 *
       allowance) ^ 2 := by
   have denominator : 0 < (genus : Fraction.Rational) ^ 2 + 1 :=
-    Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct (Fraction.Order.Arithmetic.sq_nonneg_direct _) (by decide)
+    Arithmetic.add_pos_of_nonneg_of_pos_direct (Arithmetic.sq_nonneg_direct _) (by decide)
   calc
     _ ≤ ((genus : Fraction.Rational) ^ 2 + 1) *
-      Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (le_add_of_nonneg_right (by decide))
-        (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget_positive positive).le
-    _ = Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance * ((genus
+      ConjugateRequest.energyAllowanceTarget genus allowance :=
+      Arithmetic.mul_le_mul_of_nonneg_right_direct (le_add_of_nonneg_right (by decide))
+        (ConjugateRequest.energyAllowanceTarget_positive positive).le
+    _ = ConjugateRequest.energyAllowanceTarget genus allowance * ((genus
       : Fraction.Rational) ^ 2 + 1) := by
       ring1
     _ = _ := Fraction.Field.div_mul_cancel_of_ne _ _ denominator.ne'
@@ -155,9 +157,9 @@ theorem energyAllowanceTarget_paid {allowance : Fraction.Rational} (positive : 0
   energyTarget)
     (allowance : Fraction.Rational) (positive : 0 < allowance) :
     ConjugateRequest energy
-      (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance) :=
+      (ConjugateRequest.energyAllowanceTarget genus allowance) :=
   ConjugateRequest.build energy _
-    (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget_positive positive)
+    (ConjugateRequest.energyAllowanceTarget_positive positive)
 
 /-- The sum of imaginary quarter-readings is the imaginary quarter-reading of the exact finite Gaussian sum. -/
 private theorem sum_energy {count : Nat} (values : Fin count → Gaussian.Basic.Canonical) :
@@ -173,53 +175,53 @@ variable {energy : Topology.NewtonRequestedSurfaceEnergy.SurfaceRequest partitio
 /-- Every later common sample pays the same coefficient-uniform allowance.
 The reference is the full local-owner boundary sum, not the period form. -/
 theorem local_energy_lower (request : ConjugateRequest energy
-  (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance))
+  (ConjugateRequest.energyAllowanceTarget genus allowance))
     (positive : 0 < allowance) (later : request.index ≤ stage) (samples : energy.Readings cache)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (face :
       Topology.BranchedCover.Double.Attachment.Face) :
     (Topology.NewtonObservationSurfaceLower.surfaceLowerConstant observations - energyTarget - allowance) *
       Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ≤
-      (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.localEnergyArea energy cache coefficients).im / 4 := by
+      (LocalEnergy.localEnergyArea energy cache coefficients).im / 4 := by
   let budget := energy.budget (request.energy_le.trans later) samples
   let actual := FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
     (((budget.entries.get position).get piece).sample coefficients).boundaryArea))
-  have close := Hyperelliptic.Meshes.Newton.Surface.ConjugateCombination.boundary_error_bound request later samples
+  have close := ConjugateCombination.boundary_error_bound request later samples
     budget coefficients
   rw [FiniteSum.Fin.sumFin_congr (fun position => FiniteSum.Fin.sumFin_sub _ _),
     FiniteSum.Fin.sumFin_sub] at close
   have normNonnegative : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := by
     have bound := FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Fraction.Rational))
-      (fun row => Gaussian.Basic.Canonical.normSq (coefficients row))
-      (fun row => Gaussian.Basic.Canonical.normSq_nonneg (coefficients row))
+      (fun row => Gaussian.normSq (coefficients row))
+      (fun row => Gaussian.normSq_nonneg (coefficients row))
     exact (FiniteSum.Fin.sumFin_zero).symm.trans_le bound
-  have squared : Data.Gaussian.Norm.Basic.normSq (actual -
-    Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.localEnergyArea energy cache coefficients) ≤
+  have squared : Gaussian.Norm.Basic.normSq (actual -
+    LocalEnergy.localEnergyArea energy cache coefficients) ≤
       (4 * (allowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)) ^ 2 := by
     apply close.trans
     calc
       _ = ((genus : Fraction.Rational) ^ 2 *
-        Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance) *
+        ConjugateRequest.energyAllowanceTarget genus allowance) *
         Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 := by
         ring1
       _ ≤ (4 * allowance) ^ 2 * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-          (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget_paid positive)
-          (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
+          (ConjugateRequest.energyAllowanceTarget_paid positive)
+          (Arithmetic.sq_nonneg_direct _)
       _ = _ := by ring1
   have comparison := Topology.PreparedSurfaceCoercivity.boundaryEnergy_sub_budget_le actual
-    (Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.localEnergyArea energy cache coefficients) (allowance *
+    (LocalEnergy.localEnergyArea energy cache coefficients) (allowance *
       Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct positive.le normNonnegative) squared
+    (Arithmetic.mul_nonneg_direct positive.le normNonnegative) squared
   have lower := Topology.NewtonObservationSurfaceLower.SurfaceRequest.boundary_lower energy (request.energy_le.trans
     later) samples coefficients face
   have actualEq : FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun piece =>
       (((budget.entries.get position).get piece).sample coefficients).boundaryArea.im / 4)) = actual.im / 4 := by
     rw [FiniteSum.Fin.sumFin_congr (fun position =>
-      Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.sum_energy (fun piece =>
+      ConjugateRequest.sum_energy (fun piece =>
       (((budget.entries.get position).get piece).sample coefficients).boundaryArea)),
-        Hyperelliptic.Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.sum_energy]
+        ConjugateRequest.sum_energy]
   have lowerActual := lower.trans_eq actualEq
-  have paid := (Fraction.Order.Arithmetic.sub_le_sub_direct lowerActual
+  have paid := (Arithmetic.sub_le_sub_direct lowerActual
     (le_rfl (a := allowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients))).trans comparison
   exact (le_of_eq (by ring1)).trans paid
 

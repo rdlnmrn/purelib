@@ -44,7 +44,7 @@ namespace Certificate
 /-- Primitive certificate for the finite local logarithm at its rational origin. -/
 def logarithm1p {increment : Data.Gaussian.Basic.Canonical}
     (disk : Data.Gaussian.Norm.Basic.normSq increment ≤ 1 / 4) (index : Nat) :
-    Quadratic.Basic.Certificate increment :=
+    Certificate increment :=
   { base := 0
     slope := 1
     output := Sample.log1pSample
@@ -53,10 +53,10 @@ def logarithm1p {increment : Data.Gaussian.Basic.Canonical}
       increment (index + 1) - increment
     expansion := by
       apply Data.Gaussian.Basic.ext <;>
-        simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-          Purelib.Data.Gaussian.Basic.mul_re, Purelib.Data.Gaussian.Basic.mul_im, Purelib.Data.Gaussian.Basic.zero_re,
-          Purelib.Data.Gaussian.Basic.zero_im,
-          Purelib.Data.Gaussian.Basic.one_re, Purelib.Data.Gaussian.Basic.one_im] <;> ring1
+        simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+          Data.Gaussian.Basic.mul_re, Data.Gaussian.Basic.mul_im, Data.Gaussian.Basic.zero_re,
+          Data.Gaussian.Basic.zero_im,
+          Data.Gaussian.Basic.one_re, Data.Gaussian.Basic.one_im] <;> ring1
     factor := 4
     factor_nonneg := by decide
     remainder_le := by

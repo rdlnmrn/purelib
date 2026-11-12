@@ -17,9 +17,11 @@ to establish that its proof route is admissible. The authoritative axiom audit
 and independent nanoda check require empty transitive axiom closures for their
 selected mathematical declarations, including private and generated proof
 dependencies. Neither propositional extensionality (`propext`) nor quotient
-soundness (`Quot.sound`) is permitted in those closures. Independent compiler
-and elaborator helper coverage remains the separate strict-audit obligation
-described in the [repository README](../README.md#building-and-checking).
+soundness (`Quot.sound`) is permitted in those closures. Untrusted compiler,
+elaborator and generator internals need not satisfy the same mathematical
+restrictions; their emitted constructions and complete retained dependencies
+must pass the applicable checks described in the
+[repository README](../README.md#building-and-checking).
 
 Constructor injectivity certificates retain their original owners, arguments,
 and field equalities, but express the logical characterization with `↔` rather
@@ -49,6 +51,9 @@ affected consumers together. Preserve Lean module acyclicity and publication
 coverage. Imports and proof dependencies must remain constructive and finite
 under the restrictions above and the [repository instructions](../AGENTS.md).
 
-Regression-only declarations belong under `Test/`; generated examples
+Regression-only declarations belong under `TestPurelib/`; generated examples
 and mathematical demonstrations belong under `Purelib/Examples/`; command-line
 harnesses and generators remain under `scripts/`.
+Keep shared worked constructions in their subject example modules and let
+regressions import them. Library, example and publication modules do not import
+regressions; `scripts/check-purelib-surfaces.py` checks this transitively.

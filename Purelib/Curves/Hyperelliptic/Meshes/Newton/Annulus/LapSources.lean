@@ -45,23 +45,23 @@ open Purelib
 
 open Purelib.Topology.Polygon.Stokes
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
     Fraction.Rational}
   {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius} {index :
-    Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
-  {annulus : Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index} {lifted : Meshes.LiftedPuncturedGrid
+    Branches.BranchIsolation.Data.Index branches}
+  {annulus : Faces.AnnularFaces grid index} {lifted : Meshes.LiftedPuncturedGrid
     grid.punctured}
-  {region : Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted}
+  {region : LiftedBoundary.Lifted annulus lifted}
 
 /-- Take the original cached source prefix of one actual annular boundary length. -/
-@[expose] def firstLap (prepared : Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation
+@[expose] def firstLap (prepared : PrimitiveComparison.Lifted.OuterPreparation
   region) := prepared.sources.take annulus.boundary.edgeCount
 
 /-- Drop exactly one annular boundary length from the original cached sources. -/
-@[expose] def secondLap (prepared : Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation
+@[expose] def secondLap (prepared : PrimitiveComparison.Lifted.OuterPreparation
   region) := prepared.sources.drop annulus.boundary.edgeCount
 
 /-- The original two-lap outer word is the concatenation of the canonical sheet-zero and sheet-one boundaries. -/
@@ -73,46 +73,46 @@ private theorem outer_split : region.outer =
   exact split.trans (congrArg (fun tail =>
     lifted.edges.indexedEdges lifted.vertices annulus.boundary 0 ++ tail)
       (congrArg (lifted.edges.indexedEdges lifted.vertices annulus.boundary)
-        (Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.boundary_swap annulus lifted.edges 0)))
+        (LiftedBoundary.boundary_swap annulus lifted.edges 0)))
 
 /-- The retained first-lap sources project to the original sheet-zero boundary. -/
-theorem firstLap_project (prepared : Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation
+theorem firstLap_project (prepared : PrimitiveComparison.Lifted.OuterPreparation
   region) :
-    (Hyperelliptic.Meshes.Newton.Annulus.LapSources.firstLap prepared).map (fun source => source.project
+    (LapSources.firstLap prepared).map (fun source => source.project
       lifted.mesh.triangulation.faces) =
       lifted.edges.indexedEdges lifted.vertices annulus.boundary 0 := by
   change (prepared.sources.take annulus.boundary.edgeCount).map _ = _
-  rw [Data.List.Map.map_take, prepared.sources_project, Hyperelliptic.Meshes.Newton.Annulus.LapSources.outer_split]
+  rw [Data.List.Map.map_take, prepared.sources_project, LapSources.outer_split]
   exact List.take_left' (lifted.edges.indexedEdges_length lifted.vertices annulus.boundary 0)
 
 /-- The retained second-lap sources project to the original sheet-one boundary. -/
-theorem secondLap_project (prepared : Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation
+theorem secondLap_project (prepared : PrimitiveComparison.Lifted.OuterPreparation
   region) :
-    (Hyperelliptic.Meshes.Newton.Annulus.LapSources.secondLap prepared).map (fun source => source.project
+    (LapSources.secondLap prepared).map (fun source => source.project
       lifted.mesh.triangulation.faces) =
       lifted.edges.indexedEdges lifted.vertices annulus.boundary 1 := by
   change (prepared.sources.drop annulus.boundary.edgeCount).map _ = _
-  rw [Data.List.Map.map_drop, prepared.sources_project, Hyperelliptic.Meshes.Newton.Annulus.LapSources.outer_split]
+  rw [Data.List.Map.map_drop, prepared.sources_project, LapSources.outer_split]
   exact List.drop_left' (lifted.edges.indexedEdges_length lifted.vertices annulus.boundary 0)
 
 /-- Every retained first-lap occurrence belongs to the original source list. -/
-theorem firstLap_member (prepared : Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation
+theorem firstLap_member (prepared : PrimitiveComparison.Lifted.OuterPreparation
   region)
     {source : Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge lifted.mesh.triangles.length}
-    (member : source ∈ Hyperelliptic.Meshes.Newton.Annulus.LapSources.firstLap prepared) : source ∈ prepared.sources :=
+    (member : source ∈ LapSources.firstLap prepared) : source ∈ prepared.sources :=
       List.mem_of_mem_take member
 
 /-- Every retained second-lap occurrence belongs to the original source list. -/
-theorem secondLap_member (prepared : Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation
+theorem secondLap_member (prepared : PrimitiveComparison.Lifted.OuterPreparation
   region)
     {source : Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge lifted.mesh.triangles.length}
-    (member : source ∈ Hyperelliptic.Meshes.Newton.Annulus.LapSources.secondLap prepared) : source ∈ prepared.sources :=
+    (member : source ∈ LapSources.secondLap prepared) : source ∈ prepared.sources :=
       Data.List.Membership.mem_of_mem_drop member
 
 /-- The retained first lap has at most the original outer boundary length. -/
-theorem firstLap_length_le (prepared : Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation
+theorem firstLap_length_le (prepared : PrimitiveComparison.Lifted.OuterPreparation
   region) :
-    (Hyperelliptic.Meshes.Newton.Annulus.LapSources.firstLap prepared).length ≤ region.outer.length := by
+    (LapSources.firstLap prepared).length ≤ region.outer.length := by
   have count := congrArg List.length prepared.sources_project
   rw [Data.List.Map.length_map] at count
   change (prepared.sources.take _).length ≤ _
@@ -128,9 +128,9 @@ theorem firstLap_length_le (prepared : Hyperelliptic.Meshes.Newton.Annulus.Primi
   exact bounded.trans_eq count
 
 /-- The retained second lap has at most the original outer boundary length. -/
-theorem secondLap_length_le (prepared : Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation
+theorem secondLap_length_le (prepared : PrimitiveComparison.Lifted.OuterPreparation
   region) :
-    (Hyperelliptic.Meshes.Newton.Annulus.LapSources.secondLap prepared).length ≤ region.outer.length := by
+    (LapSources.secondLap prepared).length ≤ region.outer.length := by
   have count := congrArg List.length prepared.sources_project
   rw [Data.List.Map.length_map] at count
   change (prepared.sources.drop _).length ≤ _
@@ -138,22 +138,22 @@ theorem secondLap_length_le (prepared : Hyperelliptic.Meshes.Newton.Annulus.Prim
   exact (Nat.sub_le _ _).trans_eq count
 
 /-- Every cached original outer source has distinct triangle corners. -/
-theorem sources_nonloop (prepared : Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation
+theorem sources_nonloop (prepared : PrimitiveComparison.Lifted.OuterPreparation
   region)
     (source : Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge lifted.mesh.triangles.length)
     (member : source ∈ prepared.sources) : source.first ≠ source.last := by
   have projected : source.project lifted.mesh.triangulation.faces ∈ region.outer :=
     prepared.sources_project ▸ Data.List.Map.mem_map_of_mem member
   rw [region.outer_eq] at projected
-  have supported := Hyperelliptic.Meshes.PuncturedGrid.SkeletonFaceAssignments.indexedWalk_supported lifted.mesh
-    (Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.doubleBoundary annulus) 0 _ projected
+  have supported := PuncturedGrid.SkeletonFaceAssignments.indexedWalk_supported lifted.mesh
+    (LiftedBoundary.doubleBoundary annulus) 0 _ projected
   have nonloop : (source.project lifted.mesh.triangulation.faces).start ≠
       (source.project lifted.mesh.triangulation.faces).finish :=
     supported.elim
-      (Hyperelliptic.Meshes.PuncturedGrid.Cut.BoundaryPairs.ClearGrid.BranchCellBank.LiftedMesh.orientedEdges_nonloop
+      (PuncturedGrid.Cut.BoundaryPairs.ClearGrid.BranchCellBank.LiftedMesh.orientedEdges_nonloop
       lifted.mesh _)
       (fun member same =>
-        Hyperelliptic.Meshes.PuncturedGrid.Cut.BoundaryPairs.ClearGrid.BranchCellBank.LiftedMesh.orientedEdges_nonloop
+        PuncturedGrid.Cut.BoundaryPairs.ClearGrid.BranchCellBank.LiftedMesh.orientedEdges_nonloop
         lifted.mesh _ member same.symm)
   intro equal
   exact nonloop (congrArg (Topology.Surface.Sewing.SewnPrimitiveFaces.corner (lifted.mesh.triangulation.faces

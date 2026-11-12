@@ -69,34 +69,34 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedRibbon.RegularAli
   pairedCapValues)
 variable {genus count otherCount : Nat} {curve : HyperellipticCurve genus}
   {differential other : Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
   {parent : CenteredEdge curve differential} {patch :
     PreparedPatch parent}
   {otherPatch : PreparedPatch
-    (Purelib.Riemann.Integration.PreparedEdgeRecasting.recastCenteredEdge other parent)}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {otherData :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
+    (recastCenteredEdge other parent)}
+  {data : UniformReciprocalModels.Data patch count} {otherData :
+    UniformReciprocalModels.Data otherPatch otherCount}
   {firstCover : Cover data} {secondCover :
     Cover otherData}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {regular : RegularBounds.Data cap}
 
 namespace CommonRibbonRequest
 variable {common : CommonCover firstCover
   secondCover} {target : Coordinate} {minimum : Nat}
 
-variable {stage depth : Nat} {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+variable {stage depth : Nat} {box otherBox : Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Cap.Primitives.Sample cap other stage otherBox}
   {source : SourcePrimitive data stage}
     {otherSource : SourcePrimitive otherData
     stage}
-  {request : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonRibbonFamily.CommonRibbonRequest regular common
+  {request : CommonRibbonRequest regular common
     target minimum}
 
 /-- The conjugate ribbon uses the already retained source polynomials and signed cap alignments. Its endpoint correction
 is part of the expression. -/
-def Entry.conjugateRemainder (entry : CommonRibbonRequest.Entry request sample otherSample source otherSource depth) :
+def Entry.conjugateRemainder (entry : Entry request sample otherSample source otherSource depth) :
   Gaussian :=
   DyadicBilinearBoundaryRibbon.dyadicDifference
     (fun parameter => ConjugateIncrementComparison.conjugateFirst
@@ -107,10 +107,10 @@ def Entry.conjugateRemainder (entry : CommonRibbonRequest.Entry request sample o
     depth entry.plan.interval.edge.left.parameter entry.plan.interval.edge.right.parameter
 
 /-- The original retained conjugate ribbon remainder satisfies its paid per-interval allowance. -/
-theorem Entry.conjugate_accurate (entry : CommonRibbonRequest.Entry request sample otherSample source otherSource depth)
+theorem Entry.conjugate_accurate (entry : Entry request sample otherSample source otherSource depth)
   :
-    Data.Gaussian.Norm.Basic.normSq
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ConjugateRibbonFamily.CommonRibbonRequest.Entry.conjugateRemainder
+    normSq
+      (Entry.conjugateRemainder
       entry) < request.allowance :=
   PairedRibbonRequest.conjugate_accurate_at entry.plan.request source otherSource entry.left entry.right
     entry.evaluated.later entry.evaluated.leftLower entry.evaluated.leftUpper
@@ -118,25 +118,25 @@ theorem Entry.conjugate_accurate (entry : CommonRibbonRequest.Entry request samp
 
 /-- The original retained conjugate ribbon remainder satisfies its paid per-interval allowance. -/
 theorem Evaluation.conjugate_accurate
-    (evaluated : CommonRibbonRequest.Evaluation request sample otherSample source otherSource depth) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (evaluated.entries.map
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ConjugateRibbonFamily.CommonRibbonRequest.Entry.conjugateRemainder)) <
+    (evaluated : Evaluation request sample otherSample source otherSource depth) :
+    normSq (gaussianSum (evaluated.entries.map
+      Entry.conjugateRemainder)) <
       target := by
   have bound := Data.Gaussian.Norm.Sum.Bounds.normSq_sum_le
     (evaluated.entries.map
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ConjugateRibbonFamily.CommonRibbonRequest.Entry.conjugateRemainder)
+      Entry.conjugateRemainder)
       request.allowance (by
       intro value member
       obtain ⟨entry, _, rfl⟩ := Map.mem_map.mp member
       exact
-        (Curves.Hyperelliptic.Charts.Reciprocal.Disk.ConjugateRibbonFamily.CommonRibbonRequest.Entry.conjugate_accurate
+        (Entry.conjugate_accurate
         entry).le)
   have length : evaluated.entries.length = request.count := by
     have first := congrArg List.length evaluated.plans_eq
     have second := congrArg List.length request.intervals_eq
-    rw [Data.List.Map.length_map] at first second
+    rw [Map.length_map] at first second
     exact (first.trans second).trans request.count_eq.symm
-  rw [Data.List.Map.length_map, length] at bound
+  rw [Map.length_map, length] at bound
   exact bound.trans_lt request.paid
 
 end CommonRibbonRequest

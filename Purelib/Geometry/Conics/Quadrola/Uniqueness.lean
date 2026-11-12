@@ -38,7 +38,7 @@ open Purelib.LinearAlgebra
 open scoped Purelib.Data.Nat
 attribute [local instance 2000] Purelib.Data.Nat.successorNeZero
   Purelib.Data.Nat.successorAtLeastTwo
-  Purelib.Algebra.Group.Negation.subNegZeroMonoid
+  Algebra.Group.Negation.subNegZeroMonoid
 
 section
 public section
@@ -56,7 +56,7 @@ section
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry.Conics.Quadrola.Uniqueness
 
@@ -67,45 +67,45 @@ theorem exercise_15_10 [DecidableEq K]
     (firstFocus₁ firstFocus₂ secondFocus₁ secondFocus₂ : Plane.Point K)
     (firstAssociated secondAssociated : K)
     (firstPresentation :
-      Quadrola.Presentation firstFocus₁ firstFocus₂ firstAssociated)
+      Presentation firstFocus₁ firstFocus₂ firstAssociated)
     (secondPresentation :
-      Quadrola.Presentation secondFocus₁ secondFocus₂ secondAssociated)
+      Presentation secondFocus₁ secondFocus₂ secondAssociated)
     (eightNonzero : (8 : K) ≠ 0) (twoNonzero : (2 : K) ≠ 0)
-    (noNegativeOneSquare : Squares.NoSquareRootOfNegativeOne (K := K))
+    (noNegativeOneSquare : NoSquareRootOfNegativeOne (K := K))
     (scale : K) (scaleNonzero : scale ≠ 0)
     (sameConic :
       Scale.CoefficientScale
-        (Quadrola.conic firstFocus₁ firstFocus₂ firstAssociated
+        (conic firstFocus₁ firstFocus₂ firstAssociated
           firstPresentation.associatedNonzero eightNonzero)
-        (Quadrola.conic secondFocus₁ secondFocus₂ secondAssociated
+        (conic secondFocus₁ secondFocus₂ secondAssociated
           secondPresentation.associatedNonzero eightNonzero)
         scale) :
     firstAssociated = secondAssociated ∧
       ((firstFocus₁ = secondFocus₁ ∧ firstFocus₂ = secondFocus₂) ∨
         (firstFocus₁ = secondFocus₂ ∧ firstFocus₂ = secondFocus₁)) := by
   let firstConic :=
-    Quadrola.conic firstFocus₁ firstFocus₂ firstAssociated
+    conic firstFocus₁ firstFocus₂ firstAssociated
       firstPresentation.associatedNonzero eightNonzero
   let secondConic :=
-    Quadrola.conic secondFocus₁ secondFocus₂ secondAssociated
+    conic secondFocus₁ secondFocus₂ secondAssociated
       secondPresentation.associatedNonzero eightNonzero
   let firstMidpoint := Affine.midpoint firstFocus₁ firstFocus₂
   let secondMidpoint := Affine.midpoint secondFocus₁ secondFocus₂
   have firstDiscriminantNonzero : firstConic.centerDiscriminant ≠ 0 := by
     unfold firstConic
-    exact Purelib.Geometry.Conics.Quadrola.Center.conic_discriminant_nonzero firstFocus₁ firstFocus₂ firstAssociated
+    exact Center.conic_discriminant_nonzero firstFocus₁ firstFocus₂ firstAssociated
       firstPresentation eightNonzero
   have secondDiscriminantNonzero : secondConic.centerDiscriminant ≠ 0 := by
     unfold secondConic
-    exact Purelib.Geometry.Conics.Quadrola.Center.conic_discriminant_nonzero secondFocus₁ secondFocus₂
+    exact Center.conic_discriminant_nonzero secondFocus₁ secondFocus₂
       secondAssociated secondPresentation eightNonzero
   have firstCenter : firstConic.IsCenter firstMidpoint := by
     unfold firstConic firstMidpoint
-    exact Purelib.Geometry.Conics.Quadrola.Center.conic_midpoint_isCenter firstFocus₁ firstFocus₂ firstAssociated
+    exact Center.conic_midpoint_isCenter firstFocus₁ firstFocus₂ firstAssociated
       firstPresentation.associatedNonzero eightNonzero twoNonzero
   have secondCenter : secondConic.IsCenter secondMidpoint := by
     unfold secondConic secondMidpoint
-    exact Purelib.Geometry.Conics.Quadrola.Center.conic_midpoint_isCenter secondFocus₁ secondFocus₂ secondAssociated
+    exact Center.conic_midpoint_isCenter secondFocus₁ secondFocus₂ secondAssociated
       secondPresentation.associatedNonzero eightNonzero twoNonzero
   have secondCenterForFirst : firstConic.IsCenter secondMidpoint :=
     sameConic.isCenter secondMidpoint secondCenter
@@ -119,18 +119,18 @@ theorem exercise_15_10 [DecidableEq K]
       firstConic.centerDiscriminant =
         64 * firstConic.evaluate firstMidpoint := by
     unfold firstConic firstMidpoint
-    rw [Purelib.Geometry.Conics.Quadrola.Center.conic_centerDiscriminant firstFocus₁ firstFocus₂ firstAssociated
+    rw [Center.conic_centerDiscriminant firstFocus₁ firstFocus₂ firstAssociated
         firstPresentation.associatedNonzero eightNonzero,
-      Purelib.Geometry.Conics.Quadrola.Center.conic_evaluate_midpoint firstFocus₁ firstFocus₂ firstAssociated
+      Center.conic_evaluate_midpoint firstFocus₁ firstFocus₂ firstAssociated
         firstPresentation.associatedNonzero eightNonzero twoNonzero]
     ring1
   have secondCanonical :
       secondConic.centerDiscriminant =
         64 * secondConic.evaluate secondMidpoint := by
     unfold secondConic secondMidpoint
-    rw [Purelib.Geometry.Conics.Quadrola.Center.conic_centerDiscriminant secondFocus₁ secondFocus₂ secondAssociated
+    rw [Center.conic_centerDiscriminant secondFocus₁ secondFocus₂ secondAssociated
         secondPresentation.associatedNonzero eightNonzero,
-      Purelib.Geometry.Conics.Quadrola.Center.conic_evaluate_midpoint secondFocus₁ secondFocus₂ secondAssociated
+      Center.conic_evaluate_midpoint secondFocus₁ secondFocus₂ secondAssociated
         secondPresentation.associatedNonzero eightNonzero twoNonzero]
     ring1
   have discriminantScale := sameConic.discriminant
@@ -154,14 +154,14 @@ theorem exercise_15_10 [DecidableEq K]
           scale ^ 2 * secondConic.centerDiscriminant -
             scale * secondConic.centerDiscriminant := by ring1
       _ = 0 := by rw [scaleDiscriminants]; ring1
-  have scalePolynomialZero := Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left
+  have scalePolynomialZero := ExplicitField.eq_zero_of_mul_eq_zero_left
     secondDiscriminantNonzero discriminantTimesScaleDifference
   have scaleTimesDifference : scale * (scale - 1) = 0 := by
     calc
       scale * (scale - 1) = scale ^ 2 - scale := by ring1
       _ = 0 := scalePolynomialZero
   have scaleDifferenceZero :=
-    Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left scaleNonzero scaleTimesDifference
+    ExplicitField.eq_zero_of_mul_eq_zero_left scaleNonzero scaleTimesDifference
   have scaleOne : scale = 1 := by
     calc
       scale = (scale - 1) + 1 := by ring1
@@ -182,7 +182,7 @@ theorem exercise_15_10 [DecidableEq K]
   let firstY := firstFocus₂.y - firstFocus₁.y
   let secondX := secondFocus₂.x - secondFocus₁.x
   let secondY := secondFocus₂.y - secondFocus₁.y
-  have fourNonzero := Purelib.Algebra.Field.Characteristic.Nonzero.four_ne_zero_of_eight_ne_zero eightNonzero
+  have fourNonzero := Characteristic.Nonzero.four_ne_zero_of_eight_ne_zero eightNonzero
   have negativeEightNonzero : (-8 : K) ≠ 0 := by
     intro negativeEightZero
     apply eightNonzero
@@ -196,7 +196,7 @@ theorem exercise_15_10 [DecidableEq K]
       (4 : K) * ((firstAssociated - firstX ^ 2) -
           (secondAssociated - secondX ^ 2)) =
         firstConic.d - secondConic.d := by
-          unfold firstConic secondConic firstX secondX Quadrola.conic Quadrola.conicD
+          unfold firstConic secondConic firstX secondX conic conicD
           ring1
       _ = 0 := by rw [dCoefficient]; ring1
   have eProductZero :
@@ -204,8 +204,8 @@ theorem exercise_15_10 [DecidableEq K]
     calc
       (-8 : K) * (firstX * firstY - secondX * secondY) =
         firstConic.e - secondConic.e := by
-          unfold firstConic secondConic firstX firstY secondX secondY Quadrola.conic
-            Quadrola.conicE
+          unfold firstConic secondConic firstX firstY secondX secondY conic
+            conicE
           ring1
       _ = 0 := by rw [eCoefficient]; ring1
   have fProductZero :
@@ -215,15 +215,15 @@ theorem exercise_15_10 [DecidableEq K]
       (4 : K) * ((firstAssociated - firstY ^ 2) -
           (secondAssociated - secondY ^ 2)) =
         firstConic.f - secondConic.f := by
-          unfold firstConic secondConic firstY secondY Quadrola.conic Quadrola.conicF
+          unfold firstConic secondConic firstY secondY conic conicF
           ring1
       _ = 0 := by rw [fCoefficient]; ring1
   have dDifferenceZero :=
-    Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left fourNonzero dProductZero
+    ExplicitField.eq_zero_of_mul_eq_zero_left fourNonzero dProductZero
   have mixedDifferenceZero :=
-    Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left negativeEightNonzero eProductZero
+    ExplicitField.eq_zero_of_mul_eq_zero_left negativeEightNonzero eProductZero
   have fDifferenceZero :=
-    Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left fourNonzero fProductZero
+    ExplicitField.eq_zero_of_mul_eq_zero_left fourNonzero fProductZero
   have dEqual :
       firstAssociated - firstX ^ 2 = secondAssociated - secondX ^ 2 := by
     calc

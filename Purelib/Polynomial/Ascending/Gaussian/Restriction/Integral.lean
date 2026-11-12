@@ -34,10 +34,10 @@ Multiplication by their displacement accounts for orientation exactly once,
 including coincident endpoints, without dividing by that displacement. -/
 theorem definiteIntegral_restrict (polynomial : CoefficientPolynomial) (start finish :
   Gaussian.Basic.Canonical) :
-    (finish - start) * Ascending.Gaussian.Integral.definiteIntegral (Ascending.Gaussian.Restriction.Basic.restrict
+    (finish - start) * Integral.definiteIntegral (Basic.restrict
       polynomial start finish) 0 1 =
-      Ascending.Gaussian.Integral.definiteIntegral polynomial start finish := by
-  have transported := Ascending.Gaussian.Affine.Integral.definiteIntegral_affine polynomial start (finish - start) 0 1
+      Integral.definiteIntegral polynomial start finish := by
+  have transported := Affine.Integral.definiteIntegral_affine polynomial start (finish - start) 0 1
   have leftEndpoint : start + (finish - start) * 0 = start := by ring1
   have rightEndpoint : start + (finish - start) * 1 = finish := by ring1
   rw [leftEndpoint, rightEndpoint] at transported
@@ -48,13 +48,13 @@ theorem definiteIntegral_restrict (polynomial : CoefficientPolynomial) (start fi
 The reversed endpoint displacement supplies the sign of the oriented source
 integral. Negation cancellation transports the finite endpoint-evaluation identity. -/
 theorem definiteIntegral_reverse_parameter (polynomial : CoefficientPolynomial) :
-    Ascending.Gaussian.Integral.definiteIntegral (Ascending.Gaussian.Restriction.Basic.reverse polynomial) 0 1 =
-      Ascending.Gaussian.Integral.definiteIntegral polynomial 0 1 := by
+    Integral.definiteIntegral (Basic.reverse polynomial) 0 1 =
+      Integral.definiteIntegral polynomial 0 1 := by
   have transported := definiteIntegral_restrict polynomial 1 0
-  rw [Ascending.Gaussian.Integral.definiteIntegral_reverse polynomial 0 1] at transported
-  change (0 - 1 : Gaussian.Basic.Canonical) * Ascending.Gaussian.Integral.definiteIntegral
-    (Ascending.Gaussian.Restriction.Basic.reverse polynomial) 0 1 =
-    -Ascending.Gaussian.Integral.definiteIntegral polynomial 0 1 at transported
+  rw [Integral.definiteIntegral_reverse polynomial 0 1] at transported
+  change (0 - 1 : Gaussian.Basic.Canonical) * Integral.definiteIntegral
+    (Basic.reverse polynomial) 0 1 =
+    -Integral.definiteIntegral polynomial 0 1 at transported
   have negative : (0 - 1 : Gaussian.Basic.Canonical) = -1 := by ring1
   rw [negative, Ring.Multiplication.neg_mul, _root_.one_mul] at transported
   exact neg_inj.mp transported

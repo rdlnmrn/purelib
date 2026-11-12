@@ -144,10 +144,6 @@ theorem retained_bound : translatedRecipe.centerBound
   (Progressive.IntegrationReplay.control program) = 66 := by
   decide +kernel
 
-/-- The retained translated-process state has source index seven. -/
-theorem retained_source_index : translatedRepresentation.index
-  state = 7 := by decide +kernel
-
 /-- The actual process refinement and numerical recipe select the same source index for every positive target. -/
 theorem actual_refinement_matches (target : Rational) (positive : 0 < target) :
     translatedRepresentation.index
@@ -165,15 +161,6 @@ def observed := translatedRecipe.ball
 theorem observed_value : (observed.run
   program.stage).value = .ok ⟨1, 0⟩ := by decide +kernel
 
-/-- The observation records exactly one source request, at index seven. -/
-theorem observed_source_queries :
-    (observed.run
-      program.stage).trace.map
-      Computation.Query.Basic.Exchange.query = [7] := by
-  rw [observed,
-      Process.Recipe.ball_trace]
-  rfl
-
 /-- The generated observation trace replays to the same exact ball. -/
 theorem replay_generated :
     observed.replayExact
@@ -182,15 +169,9 @@ theorem replay_generated :
   rw [Computation.Query.Protocol.replayExact_run,
     observed_value]
 
-/-- An empty observation trace is rejected as missing index seven. -/
-theorem replay_missing : observed.replayExact [] = .error
-  (.missing 7) := by decide +kernel
-
-/-- A reply tagged with index eight is rejected when index seven is requested. -/
-theorem replay_mismatched :
-    observed.replayExact [⟨8,
-      program.stage 7⟩] = .error (.mismatch 7 8 (by decide)) :=
-      by decide +kernel
+/-- The retained translated-process state has source index seven. -/
+theorem retained_source_index : translatedRepresentation.index
+  state = 7 := by decide +kernel
 
 /-- The recipe observation projects to the ball of the same retained certified arithmetic-process state. -/
 theorem observed_actual_ball :

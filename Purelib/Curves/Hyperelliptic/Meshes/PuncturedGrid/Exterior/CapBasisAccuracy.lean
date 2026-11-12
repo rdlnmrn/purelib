@@ -108,24 +108,24 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Gaussian.Norm.Basic (normSq_nonneg)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+    AllSurfacePreparation
     regular domains differential} {attached :
     CapAttachment prepared}
   {geometry :
-    Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
-    attached} {coarse : Purelib.Topology.Polygon.Stokes.OrientedTriangle (lifted.vertices.count +
+    ReciprocalGeometry
+    attached} {coarse : OrientedTriangle (lifted.vertices.count +
     attached.words.length)}
-  {depth : Nat} {parameters : Purelib.Integration.Path.Dyadic.RadialTriangles.Parameters depth}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box}
+  {depth : Nat} {parameters : Integration.Path.Dyadic.RadialTriangles.Parameters depth}
+  {index : Nat} {box : Geometry.Rational.Box}
 
 open Purelib.Riemann.Readings.AffineBasisEnergy (AffineBasis)
 open Purelib.Integration.Energy.Polygon (energyPrimitivePoint)
@@ -147,36 +147,36 @@ namespace RegularBasisRequest
 variable {polynomials :
   RegularBasisPolynomials cap index box}
   {bounds : RegularBasisBounds polynomials
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.boundingBox}
-  {minimum : Nat} {target : Purelib.Data.Rat.Fraction.Rational}
-  (request : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisRequest.RegularBasisRequest bounds
+  Disk.RegularBounds.boundingBox}
+  {minimum : Nat} {target : Fraction.Rational}
+  (request : RegularBasisRequest bounds
     attached.caps.length target minimum)
-  {parameters : Purelib.Integration.Path.Dyadic.RadialTriangles.Parameters request.depth}
+  {parameters : Integration.Path.Dyadic.RadialTriangles.Parameters request.depth}
 
 /-- Replace only the error certificate, retaining every original basis value and the coordinates of the cap refinement.
 -/
-@[expose] def certifyFace (entry : CapBasisAggregate.RegularBasisFace geometry parameters polynomials) :
-  CapBasisAggregate.RegularBasisFace geometry parameters polynomials :=
+@[expose] def certifyFace (entry : RegularBasisFace geometry parameters polynomials) :
+  RegularBasisFace geometry parameters polynomials :=
   { entry with sample := { entry.sample with budget := request.surfaceBudget entry.sample entry.member } }
 
 /-- Replacing only the retained face error certificates preserves the exact original coarse face list. -/
-theorem coarses (entries : List (CapBasisAggregate.RegularBasisFace geometry parameters polynomials)) :
+theorem coarses (entries : List (RegularBasisFace geometry parameters polynomials)) :
     (entries.map request.certifyFace).map RegularBasisFace.coarse = entries.map RegularBasisFace.coarse := by
   induction entries with
   | nil => rfl
   | cons head tail ih => exact congrArg (List.cons head.coarse) ih
 
 /-- The complete certified cap reuses the existing geometry and basis cache. -/
-@[expose] def certify (prepared : CapBasisAggregate.RegularBasisCap geometry parameters polynomials) :
-  CapBasisAggregate.RegularBasisCap geometry parameters polynomials :=
+@[expose] def certify (prepared : RegularBasisCap geometry parameters polynomials) :
+  RegularBasisCap geometry parameters polynomials :=
   let entries := prepared.entries.map request.certifyFace
   ⟨entries, (request.coarses prepared.entries).trans prepared.coarses_eq,
     Squares.coordinateSum (entries.map (fun entry => entry.sample.budget.total)), rfl⟩
 
 /-- The certified cap's complete cached error budget is exactly the original request's paid total. -/
-theorem certify_budget (prepared : CapBasisAggregate.RegularBasisCap geometry parameters polynomials) :
+theorem certify_budget (prepared : RegularBasisCap geometry parameters polynomials) :
     (request.certify prepared).budget = request.total := by
-  have aggregate (entries : List (CapBasisAggregate.RegularBasisFace geometry parameters polynomials)) :
+  have aggregate (entries : List (RegularBasisFace geometry parameters polynomials)) :
       Squares.coordinateSum ((entries.map request.certifyFace).map (fun entry => entry.sample.budget.total)) =
         (entries.length : Fraction.Rational) * (128 * (2 * bounds.coefficient + 3) * request.tolerance.epsilon) := by
     induction entries with
@@ -194,19 +194,19 @@ theorem certify_budget (prepared : CapBasisAggregate.RegularBasisCap geometry pa
   ring1
 
 /-- The original request pays the complete certified cap budget strictly below its target. -/
-theorem certify_accurate (prepared : CapBasisAggregate.RegularBasisCap geometry parameters polynomials) :
+theorem certify_accurate (prepared : RegularBasisCap geometry parameters polynomials) :
     (request.certify prepared).budget < target :=
   (request.certify_budget prepared).trans_lt request.accurate
 
 /-- The requested homogeneous energy bound includes the zero vector and reads the cached energy of the complete cap. -/
-theorem energy_lower (prepared : CapBasisAggregate.RegularBasisCap geometry parameters polynomials)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+theorem energy_lower (prepared : RegularBasisCap geometry parameters polynomials)
+    (coefficients : GaussianVector genus)
     (evaluated : (request.certify prepared).Evaluation coefficients) :
     -(target * PreparedObservationCoercivity.coefficientNormSq coefficients) ≤ evaluated.area.im / 4 := by
   have normNonnegative : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le (Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Fraction.Rational))
       _
-      (fun row => Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
+      (fun row => Canonical.normSq_nonneg (coefficients row)))
   have paid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (request.certify_accurate prepared).le
     normNonnegative
   have lower := (Fraction.Order.Arithmetic.neg_le_neg_direct paid).trans evaluated.lower
@@ -215,8 +215,8 @@ theorem energy_lower (prepared : CapBasisAggregate.RegularBasisCap geometry para
 
 /-- The exact inverse-arc boundary inherits the requested homogeneous cap bound after all radial edges have cancelled.
 -/
-theorem arcs_lower (prepared : CapBasisAggregate.RegularBasisCap geometry parameters polynomials)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+theorem arcs_lower (prepared : RegularBasisCap geometry parameters polynomials)
+    (coefficients : GaussianVector genus)
     (evaluated : (request.certify prepared).Evaluation coefficients) :
     -(target * PreparedObservationCoercivity.coefficientNormSq coefficients) ≤
       (CellBoundary.sumValues (fun word => CellBoundary.sumValues (fun edge =>

@@ -69,24 +69,24 @@ error budget. The squared difference is bounded by forty times error, the densit
 length and allowance. -/
 theorem bottom_geometric_comparison (samples : Centered traces values) (lengths : Lengths traces)
     {sourceValues : Fin (traces.bottom.vertices.rest.length + 1) → PrimitivePoint} (source : Sample sourceValues)
-    {allowance error density : Coordinate} (budget : NoisyPathArea.LengthErrorBudget traces.bottom.vertices.rest.length
+    {allowance error density : Coordinate} (budget : LengthErrorBudget traces.bottom.vertices.rest.length
       allowance)
     (errorNonnegative : 0 ≤ error) (densityNonnegative : 0 ≤ density)
-    (accurate : ∀ vertex, PrimitiveAreaBounds.PrimitivePoint.Bounded ((samples.bottom.centered vertex).sub
+    (accurate : ∀ vertex, Bounded ((samples.bottom.centered vertex).sub
       (source.centered vertex)) error)
     (increments : ∀ edge : Fin traces.bottom.vertices.rest.length,
-      PrimitiveAreaBounds.PrimitivePoint.Bounded ((traces.bottom.leftValue values (traces.bottom.vertices.indexed
+      Bounded ((traces.bottom.leftValue values (traces.bottom.vertices.indexed
         edge.succ)).sub
         (traces.bottom.leftValue values (traces.bottom.vertices.indexed edge.castSucc)))
-        (3 * budget.tolerance + 4 * density * Data.Gaussian.Norm.Basic.normSq
+        (3 * budget.tolerance + 4 * density * normSq
           (traces.bottom.point (traces.bottom.vertices.indexed edge.succ) -
             traces.bottom.point (traces.bottom.vertices.indexed edge.castSucc))))
     (sourceIncrements : ∀ edge : Fin traces.bottom.vertices.rest.length,
-      PrimitiveAreaBounds.PrimitivePoint.Bounded ((sourceValues edge.succ).sub (sourceValues edge.castSucc))
-        (3 * budget.tolerance + 4 * density * Data.Gaussian.Norm.Basic.normSq
+      Bounded ((sourceValues edge.succ).sub (sourceValues edge.castSucc))
+        (3 * budget.tolerance + 4 * density * normSq
           (traces.bottom.point (traces.bottom.vertices.indexed edge.succ) -
             traces.bottom.point (traces.bottom.vertices.indexed edge.castSucc)))) :
-    Data.Gaussian.Norm.Basic.normSq (samples.bottom.centeredArea - source.centeredArea) ≤
+    normSq (samples.bottom.centeredArea - source.centeredArea) ≤
       40 * error * (4 * density + 3) * (box.xUpper - box.xLower + allowance)^2 := by
   have estimate := WeightedPathComparison.LengthErrorBudget.centered_full_comparison budget samples.bottom source
     lengths.bottom.values
@@ -101,7 +101,7 @@ theorem bottom_geometric_comparison (samples : Centered traces values) (lengths 
       simp only [Norm.Basic.normSq_eq_canonical] at bound
       rw [RectangularHorizontalTraceLengths.length_movement traces.bottom lengths.bottom edge] at bound
       exact bound)
-  rw [← lengths.bottom.total_eq, RectangularPerimeterLengths.Lengths.bottom_total lengths] at estimate
+  rw [← lengths.bottom.total_eq, Lengths.bottom_total lengths] at estimate
   exact estimate
 
 /-- The retained top centered area approximates the supplied source area using the original box's horizontal width.
@@ -111,24 +111,24 @@ error budget. The squared difference is bounded by forty times error, the densit
 length and allowance. -/
 theorem top_geometric_comparison (samples : Centered traces values) (lengths : Lengths traces)
     {sourceValues : Fin (traces.top.vertices.rest.length + 1) → PrimitivePoint} (source : Sample sourceValues)
-    {allowance error density : Coordinate} (budget : NoisyPathArea.LengthErrorBudget traces.top.vertices.rest.length
+    {allowance error density : Coordinate} (budget : LengthErrorBudget traces.top.vertices.rest.length
       allowance)
     (errorNonnegative : 0 ≤ error) (densityNonnegative : 0 ≤ density)
-    (accurate : ∀ vertex, PrimitiveAreaBounds.PrimitivePoint.Bounded ((samples.top.centered vertex).sub (source.centered
+    (accurate : ∀ vertex, Bounded ((samples.top.centered vertex).sub (source.centered
       vertex)) error)
     (increments : ∀ edge : Fin traces.top.vertices.rest.length,
-      PrimitiveAreaBounds.PrimitivePoint.Bounded ((traces.top.leftValue values (traces.top.vertices.indexed
+      Bounded ((traces.top.leftValue values (traces.top.vertices.indexed
         edge.succ)).sub
         (traces.top.leftValue values (traces.top.vertices.indexed edge.castSucc)))
-        (3 * budget.tolerance + 4 * density * Data.Gaussian.Norm.Basic.normSq
+        (3 * budget.tolerance + 4 * density * normSq
           (traces.top.point (traces.top.vertices.indexed edge.succ) -
             traces.top.point (traces.top.vertices.indexed edge.castSucc))))
     (sourceIncrements : ∀ edge : Fin traces.top.vertices.rest.length,
-      PrimitiveAreaBounds.PrimitivePoint.Bounded ((sourceValues edge.succ).sub (sourceValues edge.castSucc))
-        (3 * budget.tolerance + 4 * density * Data.Gaussian.Norm.Basic.normSq
+      Bounded ((sourceValues edge.succ).sub (sourceValues edge.castSucc))
+        (3 * budget.tolerance + 4 * density * normSq
           (traces.top.point (traces.top.vertices.indexed edge.succ) -
             traces.top.point (traces.top.vertices.indexed edge.castSucc)))) :
-    Data.Gaussian.Norm.Basic.normSq (samples.top.centeredArea - source.centeredArea) ≤
+    normSq (samples.top.centeredArea - source.centeredArea) ≤
       40 * error * (4 * density + 3) * (box.xUpper - box.xLower + allowance)^2 := by
   have estimate := WeightedPathComparison.LengthErrorBudget.centered_full_comparison budget samples.top source
     lengths.top.values
@@ -143,7 +143,7 @@ theorem top_geometric_comparison (samples : Centered traces values) (lengths : L
       simp only [Norm.Basic.normSq_eq_canonical] at bound
       rw [RectangularHorizontalTraceLengths.length_movement traces.top lengths.top edge] at bound
       exact bound)
-  rw [← lengths.top.total_eq, RectangularPerimeterLengths.Lengths.top_total lengths] at estimate
+  rw [← lengths.top.total_eq, Lengths.top_total lengths] at estimate
   exact estimate
 
 /-- The retained left centered area approximates the supplied source area using the original box's vertical height.
@@ -153,24 +153,24 @@ error budget. The squared difference is bounded by forty times error, the densit
 length and allowance. -/
 theorem left_geometric_comparison (samples : Centered traces values) (lengths : Lengths traces)
     {sourceValues : Fin (traces.left.vertices.rest.length + 1) → PrimitivePoint} (source : Sample sourceValues)
-    {allowance error density : Coordinate} (budget : NoisyPathArea.LengthErrorBudget traces.left.vertices.rest.length
+    {allowance error density : Coordinate} (budget : LengthErrorBudget traces.left.vertices.rest.length
       allowance)
     (errorNonnegative : 0 ≤ error) (densityNonnegative : 0 ≤ density)
-    (accurate : ∀ vertex, PrimitiveAreaBounds.PrimitivePoint.Bounded ((samples.left.centered vertex).sub
+    (accurate : ∀ vertex, Bounded ((samples.left.centered vertex).sub
       (source.centered vertex)) error)
     (increments : ∀ edge : Fin traces.left.vertices.rest.length,
-      PrimitiveAreaBounds.PrimitivePoint.Bounded ((traces.left.leftValue values (traces.left.vertices.indexed
+      Bounded ((traces.left.leftValue values (traces.left.vertices.indexed
         edge.succ)).sub
         (traces.left.leftValue values (traces.left.vertices.indexed edge.castSucc)))
-        (3 * budget.tolerance + 4 * density * Data.Gaussian.Norm.Basic.normSq
+        (3 * budget.tolerance + 4 * density * normSq
           (traces.left.point (traces.left.vertices.indexed edge.succ) -
             traces.left.point (traces.left.vertices.indexed edge.castSucc))))
     (sourceIncrements : ∀ edge : Fin traces.left.vertices.rest.length,
-      PrimitiveAreaBounds.PrimitivePoint.Bounded ((sourceValues edge.succ).sub (sourceValues edge.castSucc))
-        (3 * budget.tolerance + 4 * density * Data.Gaussian.Norm.Basic.normSq
+      Bounded ((sourceValues edge.succ).sub (sourceValues edge.castSucc))
+        (3 * budget.tolerance + 4 * density * normSq
           (traces.left.point (traces.left.vertices.indexed edge.succ) -
             traces.left.point (traces.left.vertices.indexed edge.castSucc)))) :
-    Data.Gaussian.Norm.Basic.normSq (samples.left.centeredArea - source.centeredArea) ≤
+    normSq (samples.left.centeredArea - source.centeredArea) ≤
       40 * error * (4 * density + 3) * (box.yUpper - box.yLower + allowance)^2 := by
   have estimate := WeightedPathComparison.LengthErrorBudget.centered_full_comparison budget samples.left source
     lengths.left.values
@@ -185,7 +185,7 @@ theorem left_geometric_comparison (samples : Centered traces values) (lengths : 
       simp only [Norm.Basic.normSq_eq_canonical] at bound
       rw [RectangularVerticalTraceLengths.length_movement traces.left lengths.left edge] at bound
       exact bound)
-  rw [← lengths.left.total_eq, RectangularPerimeterLengths.Lengths.left_total lengths] at estimate
+  rw [← lengths.left.total_eq, Lengths.left_total lengths] at estimate
   exact estimate
 
 /-- The retained right centered area approximates the supplied source area using the original box's vertical height.
@@ -195,24 +195,24 @@ error budget. The squared difference is bounded by forty times error, the densit
 length and allowance. -/
 theorem right_geometric_comparison (samples : Centered traces values) (lengths : Lengths traces)
     {sourceValues : Fin (traces.right.vertices.rest.length + 1) → PrimitivePoint} (source : Sample sourceValues)
-    {allowance error density : Coordinate} (budget : NoisyPathArea.LengthErrorBudget traces.right.vertices.rest.length
+    {allowance error density : Coordinate} (budget : LengthErrorBudget traces.right.vertices.rest.length
       allowance)
     (errorNonnegative : 0 ≤ error) (densityNonnegative : 0 ≤ density)
-    (accurate : ∀ vertex, PrimitiveAreaBounds.PrimitivePoint.Bounded ((samples.right.centered vertex).sub
+    (accurate : ∀ vertex, Bounded ((samples.right.centered vertex).sub
       (source.centered vertex)) error)
     (increments : ∀ edge : Fin traces.right.vertices.rest.length,
-      PrimitiveAreaBounds.PrimitivePoint.Bounded ((traces.right.leftValue values (traces.right.vertices.indexed
+      Bounded ((traces.right.leftValue values (traces.right.vertices.indexed
         edge.succ)).sub
         (traces.right.leftValue values (traces.right.vertices.indexed edge.castSucc)))
-        (3 * budget.tolerance + 4 * density * Data.Gaussian.Norm.Basic.normSq
+        (3 * budget.tolerance + 4 * density * normSq
           (traces.right.point (traces.right.vertices.indexed edge.succ) -
             traces.right.point (traces.right.vertices.indexed edge.castSucc))))
     (sourceIncrements : ∀ edge : Fin traces.right.vertices.rest.length,
-      PrimitiveAreaBounds.PrimitivePoint.Bounded ((sourceValues edge.succ).sub (sourceValues edge.castSucc))
-        (3 * budget.tolerance + 4 * density * Data.Gaussian.Norm.Basic.normSq
+      Bounded ((sourceValues edge.succ).sub (sourceValues edge.castSucc))
+        (3 * budget.tolerance + 4 * density * normSq
           (traces.right.point (traces.right.vertices.indexed edge.succ) -
             traces.right.point (traces.right.vertices.indexed edge.castSucc)))) :
-    Data.Gaussian.Norm.Basic.normSq (samples.right.centeredArea - source.centeredArea) ≤
+    normSq (samples.right.centeredArea - source.centeredArea) ≤
       40 * error * (4 * density + 3) * (box.yUpper - box.yLower + allowance)^2 := by
   have estimate := WeightedPathComparison.LengthErrorBudget.centered_full_comparison budget samples.right source
     lengths.right.values
@@ -227,7 +227,7 @@ theorem right_geometric_comparison (samples : Centered traces values) (lengths :
       simp only [Norm.Basic.normSq_eq_canonical] at bound
       rw [RectangularVerticalTraceLengths.length_movement traces.right lengths.right edge] at bound
       exact bound)
-  rw [← lengths.right.total_eq, RectangularPerimeterLengths.Lengths.right_total lengths] at estimate
+  rw [← lengths.right.total_eq, Lengths.right_total lengths] at estimate
   exact estimate
 
 end

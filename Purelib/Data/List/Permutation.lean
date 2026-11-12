@@ -32,7 +32,7 @@ variable {Alpha : Type u} {Beta : Type v}
 /-- Every displayed list permutes to itself. -/
 theorem refl : (values : List Alpha) → List.Perm values values
   | [] => .nil
-  | head :: tail => .cons head (Purelib.Data.List.Permutation.refl tail)
+  | head :: tail => .cons head (Permutation.refl tail)
 
 /-- Reverse a retained permutation certificate between two lists. -/
 theorem symm {left right : List Alpha} (permutation : List.Perm left right) : List.Perm right left := by
@@ -53,7 +53,7 @@ theorem append_left (before : List Alpha) {left right : List Alpha} (permutation
 theorem move_head (head : Alpha) (before after : List Alpha) :
     List.Perm (head :: (before ++ after)) (before ++ head :: after) := by
   induction before with
-  | nil => exact Permutation.refl _
+  | nil => exact refl _
   | cons first tail ih => exact .trans (.swap first head _) (.cons first ih)
 
 /-- Exchanging two displayed list blocks preserves their combined multiplicities.
@@ -69,10 +69,10 @@ theorem append_swap (first second tail : List Alpha) : List.Perm (first ++ secon
         | nil => rfl
         | cons head remaining ih => exact congrArg (List.cons head) ih
       rewrite [List.nil_append, emptyRight]
-      exact Permutation.refl _
+      exact refl _
   | cons head remaining ih =>
       exact (List.Perm.cons head ih).trans (by
-        simpa only [List.cons_append, Append.append_assoc] using Permutation.move_head head second (remaining ++ tail))
+        simpa only [List.cons_append, Append.append_assoc] using move_head head second (remaining ++ tail))
 
 /-- A list permutation induces a permutation of its finite flat-map outputs.
 
@@ -82,9 +82,9 @@ theorem flatMap (values : Alpha → List Beta) {left right : List Alpha} (permut
     List.Perm (left.flatMap values) (right.flatMap values) := by
   induction permutation with
   | nil => exact .nil
-  | cons head tail ih => exact Permutation.append_left (values head) ih
+  | cons head tail ih => exact append_left (values head) ih
   | swap first second tail =>
-      simpa only [Flatten.flatMap_cons, Append.append_assoc] using Permutation.append_swap (values second) (values
+      simpa only [Flatten.flatMap_cons, Append.append_assoc] using append_swap (values second) (values
         first) (tail.flatMap values)
   | trans first second ihFirst ihSecond => exact .trans ihFirst ihSecond
 
@@ -161,25 +161,25 @@ private theorem remove_same {value : Alpha} {beforeLeft beforeRight afterLeft af
       cases beforeLeft <;> cases beforeRight <;>
         dsimp at leftEq rightEq <;> injections <;> subst_vars
       · exact permutation
-      · exact permutation.trans (Permutation.symm (Permutation.move_head _ _ _))
-      · exact (Permutation.move_head _ _ _).trans permutation
+      · exact permutation.trans (symm (move_head _ _ _))
+      · exact (move_head _ _ _).trans permutation
       · exact (ih rfl rfl).cons _
   | swap' first second permutation ih =>
       obtain _ | ⟨headLeft, _ | ⟨nextLeft, beforeLeft⟩⟩ := beforeLeft
         <;> obtain _ | ⟨headRight, _ | ⟨nextRight, beforeRight⟩⟩ := beforeRight
         <;> dsimp at leftEq rightEq <;> injections <;> subst_vars
         <;> try exact permutation.cons _
-      · exact (permutation.trans (Permutation.symm (Permutation.move_head _ _ _))).cons headRight
-      · exact ((permutation.trans (Permutation.symm (Permutation.move_head _ _ _))).cons _).trans (.swap _ _ _)
-      · exact ((Permutation.move_head _ _ _).trans permutation).cons headLeft
-      · exact (List.Perm.swap _ _ _).trans (((Permutation.move_head _ _ _).trans permutation).cons headRight)
+      · exact (permutation.trans (symm (move_head _ _ _))).cons headRight
+      · exact ((permutation.trans (symm (move_head _ _ _))).cons _).trans (.swap _ _ _)
+      · exact ((move_head _ _ _).trans permutation).cons headLeft
+      · exact (List.Perm.swap _ _ _).trans (((move_head _ _ _).trans permutation).cons headRight)
       · exact (ih rfl rfl).swap' _ _
   | trans first second ihFirst ihSecond =>
       subst leftEq rightEq
       have member : value ∈ beforeLeft ++ value :: afterLeft :=
         Membership.mem_append.mpr (Or.inr (List.Mem.head afterLeft))
       obtain ⟨beforeMiddle, afterMiddle, equal⟩ :=
-        Membership.split_of_mem ((Permutation.mem_iff first value).mp member)
+        Membership.split_of_mem ((mem_iff first value).mp member)
       cases equal
       exact (ihFirst rfl rfl).trans (ihSecond rfl rfl)
 
@@ -201,7 +201,7 @@ theorem nodup {left right : List Alpha} (permutation : List.Perm left right) (un
   | nil => exact .nil
   | cons head tail ih =>
       rcases List.pairwise_cons.mp unique with ⟨fresh, remaining⟩
-      exact List.pairwise_cons.mpr ⟨fun value member => fresh value ((Permutation.mem_iff tail value).mpr member), ih
+      exact List.pairwise_cons.mpr ⟨fun value member => fresh value ((mem_iff tail value).mpr member), ih
         remaining⟩
   | swap first second remaining =>
       rcases List.pairwise_cons.mp unique with ⟨firstFresh, restUnique⟩
@@ -253,26 +253,26 @@ theorem of_nodup_mem_iff : ∀ {left right : List Alpha},
       obtain ⟨before, after, split⟩ := Membership.split_of_mem ((members head).mp (List.Mem.head tail))
       cases split
       have moved : List.Perm (before ++ head :: after) (head :: (before ++ after)) :=
-        Permutation.symm (Permutation.move_head head before after)
-      have rightParts := List.pairwise_cons.mp (Permutation.nodup moved rightUnique)
+        symm (move_head head before after)
+      have rightParts := List.pairwise_cons.mp (nodup moved rightUnique)
       have leftParts := List.pairwise_cons.mp leftUnique
       have tails : ∀ value, value ∈ tail ↔ value ∈ before ++ after := by
         intro value
         constructor
         · intro member
-          have inRight := (Permutation.mem_iff moved value).mp
+          have inRight := (mem_iff moved value).mp
             ((members value).mp (List.Mem.tail head member))
           cases inRight with
           | head => exact False.elim (leftParts.1 head member rfl)
           | tail _ retained => exact retained
         · intro member
-          have inLeft := (members value).mpr ((Permutation.mem_iff moved value).mpr
+          have inLeft := (members value).mpr ((mem_iff moved value).mpr
             (List.Mem.tail head member))
           cases inLeft with
           | head => exact False.elim (rightParts.1 head member rfl)
           | tail _ retained => exact retained
       exact (List.Perm.cons head (of_nodup_mem_iff leftParts.2 rightParts.2 tails)).trans
-        (Permutation.symm moved)
+        (symm moved)
 
 /-- A retained permutation preserves a product with associative commutative multiplication.
 
@@ -365,9 +365,9 @@ entire input; success preserves all remaining occurrences and their order. -/
 private def extract [DecidableEq Alpha] (needle : Alpha) : (values : List Alpha) → ExtractionResult needle values
   | [] => .missing (fun member => List.not_mem_nil member)
   | head :: tail =>
-      if equal : head = needle then .found ⟨tail, by cases equal; exact Permutation.refl _⟩
+      if equal : head = needle then .found ⟨tail, by cases equal; exact refl _⟩
       else
-        match Purelib.Data.List.Permutation.extract needle tail with
+        match Permutation.extract needle tail with
         | .missing absent => .missing (by
             intro member
             rcases Membership.mem_cons.mp member with same | remaining
@@ -391,13 +391,13 @@ Matched steps preserve the actual extraction remainder and the recursive failure
 certificate. -/
 inductive Invalid : List Alpha → List Alpha → Type u where
   /-- The source is exhausted while the target still contains a displayed occurrence. -/ | excess (head : Alpha) (tail :
-    List Alpha) : Purelib.Data.List.Permutation.Invalid [] (head :: tail)
+    List Alpha) : Permutation.Invalid [] (head :: tail)
   /-- The next source occurrence is absent from the retained target list. -/ | missing (head : Alpha) (tail right : List
-    Alpha) (absent : head ∉ right) : Purelib.Data.List.Permutation.Invalid (head :: tail) right
+    Alpha) (absent : head ∉ right) : Permutation.Invalid (head :: tail) right
   /-- A matched occurrence leaves the displayed remainder with its own retained obstruction. -/ | matched (head : Alpha)
     (tail right remaining : List Alpha)
-      (ordering : List.Perm right (head :: remaining)) (invalid : Purelib.Data.List.Permutation.Invalid tail remaining)
-        : Purelib.Data.List.Permutation.Invalid (head :: tail) right
+      (ordering : List.Perm right (head :: remaining)) (invalid : Permutation.Invalid tail remaining)
+        : Permutation.Invalid (head :: tail) right
 
 constructive_injectivity Invalid
 
@@ -411,13 +411,13 @@ theorem Invalid.notPerm {left right : List Alpha} (invalid : Invalid left right)
   induction invalid with
   | excess head tail =>
       intro permutation
-      exact Nat.noConfusion (Permutation.length_eq permutation)
+      exact Nat.noConfusion (length_eq permutation)
   | missing head tail right absent =>
       intro permutation
-      exact absent ((Permutation.mem_iff permutation head).mp List.mem_cons_self)
+      exact absent ((mem_iff permutation head).mp List.mem_cons_self)
   | matched head tail right remaining ordering invalid ih =>
       intro permutation
-      exact ih (Permutation.cons_inv (permutation.trans ordering))
+      exact ih (cons_inv (permutation.trans ordering))
 
 /-- Decide permutation by repeatedly extracting matching occurrences from the target
 list.
@@ -435,7 +435,7 @@ obstruction, including each actual remainder used by the recursive finite check.
         | [] => .error ⟨(), fun member => List.not_mem_nil member⟩
         | first :: rest =>
             if equal : first = head then
-              .ok ⟨rest, by cases equal; exact Permutation.refl _⟩
+              .ok ⟨rest, by cases equal; exact refl _⟩
             else
               match extractHere rest with
               | .error ⟨_, absent⟩ => .error ⟨(), by
@@ -449,10 +449,10 @@ obstruction, including each actual remainder used by the recursive finite check.
       match extractHere right with
       | .error ⟨_, absent⟩ => .error (.missing head tail right absent)
       | .ok ⟨remaining, ordering⟩ =>
-          match Purelib.Data.List.Permutation.certify tail remaining with
+          match Permutation.certify tail remaining with
           | .error invalid => .error (.matched head tail right remaining ordering invalid)
           | .ok certificate => .ok
-              ⟨(List.Perm.cons head certificate.permutation).trans (Permutation.symm ordering)⟩
+              ⟨(List.Perm.cons head certificate.permutation).trans (symm ordering)⟩
 
 end Purelib.Data.List.Permutation
 

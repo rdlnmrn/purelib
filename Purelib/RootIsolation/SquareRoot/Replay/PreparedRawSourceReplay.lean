@@ -48,28 +48,28 @@ open Purelib.RootIsolation.SquareRoot.Replay.PreparedSourceReplay
 open Purelib.Riemann.Branches.PreparedSheetContinuation
   (StepRequest AlreadyPrepared prepared prepared_eq_checked_of_not_ready)
 
-variable {polynomial : SquareRoot.Replay.PreparedSourceReplay.Polynomial} {ambient : Box} {start finish : Gaussian}
+variable {polynomial : Polynomial} {ambient : Box} {start finish : Gaussian}
 variable (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish)
 variable (current : Endpoint)
 variable (source : Owner (polynomial.eval (segment.pointAt current.parameter)))
-variable (request : Riemann.Branches.PreparedSheetContinuation.StepRequest)
+variable (request : StepRequest)
 variable {rootAmbient : Box}
-variable (restored : SquareRoot.Replay.PreparedRawStateReplay.Checked _ rootAmbient
-  (SquareRoot.Replay.PreparedRawStateReplay.capture source.track.initial))
+variable (restored : PreparedRawStateReplay.Checked _ rootAmbient
+  (PreparedRawStateReplay.capture source.track.initial))
 variable (sameAmbient : rootAmbient = source.ambient)
 
 /-- Construct the deferred quadratic representative from the restored raw-state checkpoint.
 
 It supplies executable input to replay without claiming the original incoming track's refinement history. -/
 @[expose] def representative : Owner (polynomial.eval (segment.pointAt current.parameter)) :=
-  SquareRoot.Clearance.ExactQuadraticOwnerClearance.ownerOfState source.parameterNonzero restored.representative
+  Clearance.ExactQuadraticOwnerClearance.ownerOfState source.parameterNonzero restored.representative
 
 /-- Readiness uses only the raw box and boundary, so its decision does not
 need the unknown incoming refinement function or original side numbers. -/
 theorem ready_iff (sameAmbient : rootAmbient = source.ambient) :
-    Riemann.Branches.PreparedSheetContinuation.AlreadyPrepared segment current
-      (SquareRoot.Replay.PreparedRawSourceReplay.representative segment current source restored) request ↔
-      Riemann.Branches.PreparedSheetContinuation.AlreadyPrepared segment current source request := by
+    AlreadyPrepared segment current
+      (representative segment current source restored) request ↔
+      AlreadyPrepared segment current source request := by
   cases sameAmbient
   have same := restored.raw_eq_original source.track.initial
   have box := congrArg (fun state => state.box) same
@@ -77,19 +77,19 @@ theorem ready_iff (sameAmbient : rootAmbient = source.ambient) :
   change restored.representative.box = source.track.initial.box at box
   change restored.representative.clearance.bound = source.track.initial.clearance.bound at boundary
   change (restored.representative.box.diagonalSq < request.rootDiameter ∧
-    Riemann.RootContinuation.UniformSquareRootPreparation.predictedClearance segment request.rootDiameter ≤
+    UniformSquareRootPreparation.predictedClearance segment request.rootDiameter ≤
       restored.representative.clearance.bound ∧
-    restored.representative.box.Refines (Riemann.RootContinuation.UniformSquareRootPreparation.rootAmbient segment)) ↔ _
+    restored.representative.box.Refines (UniformSquareRootPreparation.rootAmbient segment)) ↔ _
   rw [boundary, box]
   rfl
 
 /-- The optional diameter attempt has the same target-owner values for the restored representative and original source.
 -/
 theorem attempt_values_eq (sameAmbient : rootAmbient = source.ambient) :
-    ((Riemann.RootContinuation.CheckedSquareRootPreparation.attempt segment current.parameter
-      (SquareRoot.Replay.PreparedRawSourceReplay.representative segment current source restored)
+    ((CheckedSquareRootPreparation.attempt segment current.parameter
+      (representative segment current source restored)
         request.rootDiameter).value).map (fun result => result.value) =
-    ((Riemann.RootContinuation.CheckedSquareRootPreparation.attempt segment current.parameter source
+    ((CheckedSquareRootPreparation.attempt segment current.parameter source
       request.rootDiameter).value).map
       (fun result => result.value) := by
   cases sameAmbient
@@ -98,21 +98,21 @@ theorem attempt_values_eq (sameAmbient : rootAmbient = source.ambient) :
 /-- Projected optional output suffices for the canonical branch equation.
 No decision procedure on whole owners or their function fields is needed. -/
 theorem prepared_eq_of_attempt_value
-    (notReady : ¬ Riemann.Branches.PreparedSheetContinuation.AlreadyPrepared segment current source request)
+    (notReady : ¬ AlreadyPrepared segment current source request)
     (candidate : Owner (polynomial.eval (segment.pointAt current.parameter)))
-    (found : ((Riemann.RootContinuation.CheckedSquareRootPreparation.attempt segment current.parameter source
+    (found : ((CheckedSquareRootPreparation.attempt segment current.parameter source
       request.rootDiameter).value).map (fun result => result.value) = some candidate)
-    (carries : Riemann.Branches.ClearSheetContinuation.variationBound segment current.parameter
+    (carries : ClearSheetContinuation.variationBound segment current.parameter
       request.endpoint.parameter < candidate.track.initial.clearance.bound) :
-    Riemann.Branches.PreparedSheetContinuation.prepared segment current source request = candidate := by
-  cases attempt : (Riemann.RootContinuation.CheckedSquareRootPreparation.attempt segment current.parameter source
+    prepared segment current source request = candidate := by
+  cases attempt : (CheckedSquareRootPreparation.attempt segment current.parameter source
       request.rootDiameter).value with
   | none => simp only [attempt, Option.map] at found; cases found
   | some accepted =>
       simp only [attempt, Option.map, -eq_self, -iff_self] at found
       have candidateEqual := Option.some.inj found
       cases candidateEqual
-      exact Riemann.Branches.PreparedSheetContinuation.prepared_eq_checked_of_not_ready segment current source request
+      exact prepared_eq_checked_of_not_ready segment current source request
         notReady accepted attempt carries
 
 set_option genInjectivity false in
@@ -123,28 +123,28 @@ original total preparation. -/
 inductive Inconclusive where
   /-- The restored representative is already ready, so the original inherited owner requires information beyond this
     first-attempt replay route. -/ | alreadyReady
-      (data : SquareRoot.Replay.PreparedSourceReplay.Readiness segment current request
-        (SquareRoot.Replay.PreparedRawSourceReplay.representative segment current source restored))
+      (data : Readiness segment current request
+        (representative segment current source restored))
       (ready : data.Ready)
   /-- Retain failed readiness and the exact diameter-attempt equation returning no candidate. -/ | attemptMiss
-      (data : SquareRoot.Replay.PreparedSourceReplay.Readiness segment current request
-        (SquareRoot.Replay.PreparedRawSourceReplay.representative segment current source restored))
+      (data : Readiness segment current request
+        (representative segment current source restored))
       (notReady : ¬ data.Ready)
-      (procedure : (Riemann.RootContinuation.CheckedSquareRootPreparation.attempt segment current.parameter
-        (SquareRoot.Replay.PreparedRawSourceReplay.representative segment current source restored)
+      (procedure : (CheckedSquareRootPreparation.attempt segment current.parameter
+        (representative segment current source restored)
         request.rootDiameter).value
           = none)
   /-- Retain the actual diameter candidate, successful attempt equation and failed movement-versus-clearance comparison.
   -/
   | doesNotCarry
-      (candidate : Riemann.RootContinuation.CheckedSquareRootPreparation.Result segment current.parameter
-        (SquareRoot.Replay.PreparedRawSourceReplay.representative segment current source restored) request.rootDiameter)
-      (procedure : (Riemann.RootContinuation.CheckedSquareRootPreparation.attempt segment current.parameter
-        (SquareRoot.Replay.PreparedRawSourceReplay.representative segment current source restored)
+      (candidate : CheckedSquareRootPreparation.Result segment current.parameter
+        (representative segment current source restored) request.rootDiameter)
+      (procedure : (CheckedSquareRootPreparation.attempt segment current.parameter
+        (representative segment current source restored)
         request.rootDiameter).value
           = some candidate)
       (movement : Coordinate)
-      (movement_eq : movement = Riemann.Branches.ClearSheetContinuation.variationBound segment current.parameter
+      (movement_eq : movement = ClearSheetContinuation.variationBound segment current.parameter
         request.endpoint.parameter)
       (failed : ¬ movement < candidate.value.track.initial.clearance.bound)
 
@@ -156,36 +156,36 @@ is used to index proofs; no original refinement or canonical preparation runs.
 Inconclusivity certifies this first-attempt route only, not the total process.
 -/
 @[expose] def replay :
-    Except (SquareRoot.Replay.PreparedRawSourceReplay.Inconclusive segment current source request restored)
-      (SquareRoot.Replay.PreparedSourceReplay.Accepted segment current source request) := by
-  let owner := SquareRoot.Replay.PreparedRawSourceReplay.representative segment current source restored
-  let data := SquareRoot.Replay.PreparedSourceReplay.Readiness.capture segment current request owner
-    (SquareRoot.Replay.PreparedSourceReplay.Inputs.capture segment request.rootDiameter)
+    Except (Inconclusive segment current source request restored)
+      (Accepted segment current source request) := by
+  let owner := representative segment current source restored
+  let data := Readiness.capture segment current request owner
+    (Inputs.capture segment request.rootDiameter)
   if ready : data.Ready then
     exact .error (.alreadyReady data ready)
   else
-    have notReady : ¬ Riemann.Branches.PreparedSheetContinuation.AlreadyPrepared segment current source request := fun
+    have notReady : ¬ AlreadyPrepared segment current source request := fun
       originalReady =>
-      ready (data.ready_iff.mpr ((SquareRoot.Replay.PreparedRawSourceReplay.ready_iff segment current source request
+      ready (data.ready_iff.mpr ((ready_iff segment current source request
         restored sameAmbient).mpr originalReady))
     exact
-      match attempt : (Riemann.RootContinuation.CheckedSquareRootPreparation.attempt segment current.parameter owner
+      match attempt : (CheckedSquareRootPreparation.attempt segment current.parameter owner
         request.rootDiameter).value with
       | none => .error (.attemptMiss data ready attempt)
       | some candidate =>
-          let movement := Riemann.Branches.ClearSheetContinuation.variationBound segment current.parameter
+          let movement := ClearSheetContinuation.variationBound segment current.parameter
             request.endpoint.parameter
           if carries : movement < candidate.value.track.initial.clearance.bound then
             .ok
               { cached :=
                   { preparedOwner := candidate.value
                     preparedOwner_eq := by
-                      apply (SquareRoot.Replay.PreparedRawSourceReplay.prepared_eq_of_attempt_value segment current
+                      apply (prepared_eq_of_attempt_value segment current
                         source request notReady
                         candidate.value ?_ carries).symm
-                      rw [← SquareRoot.Replay.PreparedRawSourceReplay.attempt_values_eq segment current source request
+                      rw [← attempt_values_eq segment current source request
                         restored sameAmbient]
-                      change ((Riemann.RootContinuation.CheckedSquareRootPreparation.attempt segment current.parameter
+                      change ((CheckedSquareRootPreparation.attempt segment current.parameter
                         owner
                         request.rootDiameter).value).map (fun result => result.value) = some candidate.value
                       rw [attempt]

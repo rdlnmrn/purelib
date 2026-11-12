@@ -97,25 +97,25 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy (
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {cover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {covers :
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {cover : UniformReciprocalCover.Cover data} {covers :
     BasisSourceCovers parent}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {bounds :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {regular : RegularBounds.Data cap} {bounds :
+    ReciprocalPaddedInverse.UniformBounds regular.padded}
   {depth floor sourceFloor : Nat} {target sourceTarget : Coordinate}
-  {index minimum stage : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {index minimum stage : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
   {polynomials : RegularBasisPolynomials cap
     index box}
-  {anchorBank : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.PrimitiveCells data index
+  {anchorBank : UniformReciprocalPrimitives.PrimitiveCells data index
     cover.mesh.edges}
   {bank : BasisSourceLocations.SampleBank
     covers index}
-  {basis : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {basis : ReciprocalPaddedBasisBounds.BasisBounds bounds}
   {joinTarget : Coordinate} {joinFloor : Nat}
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentRequest (BasisCommonParentRequest)
@@ -135,7 +135,7 @@ open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 variable {energyTarget : Coordinate} {energyFloor energyDepth : Nat}
 
 variable {originals :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+  CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
   covers index}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -148,7 +148,7 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover (Basi
 Its edge identity retains the nonempty dyadic subdivision at the selected
 cover depth. Mapping an empty interval list would contradict that exact count. -/
 theorem common_nonempty {coverFloor : Nat}
-    (common : CommonCover.BasisCommonCover cover covers coverFloor) : common.intervals ≠ [] := by
+    (common : BasisCommonCover cover covers coverFloor) : common.intervals ≠ [] := by
   intro empty
   have eq := common.edges_eq
   rw [empty, List.map_nil] at eq
@@ -171,16 +171,16 @@ variable {request :
   allowance coefficientTarget floor}
 
 /-- The original common-parent request's first retained physical root owner. -/
-@[expose] def firstView (request : CommonParentRequest.BasisCommonParentRequest common basis allowance coefficientTarget
-  floor) : Owners.EndpointView regular data 0 :=
-  BasisCommonChartRequests.firstView request.charts.requests (BasisCommonChartRequests.common_from common)
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentBoundary.common_nonempty common)
+@[expose] def firstView (request : BasisCommonParentRequest common basis allowance coefficientTarget
+  floor) : EndpointView regular data 0 :=
+  BasisCommonChartRequests.firstView request.charts.requests (common_from common)
+    (common_nonempty common)
 
 /-- The original common-parent request's last retained physical root owner. -/
-@[expose] def lastView (request : CommonParentRequest.BasisCommonParentRequest common basis allowance coefficientTarget
-  floor) : Owners.EndpointView regular data 1 :=
-  BasisCommonChartRequests.lastView request.charts.requests (BasisCommonChartRequests.common_from common)
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentBoundary.common_nonempty common)
+@[expose] def lastView (request : BasisCommonParentRequest common basis allowance coefficientTarget
+  floor) : EndpointView regular data 1 :=
+  BasisCommonChartRequests.lastView request.charts.requests (common_from common)
+    (common_nonempty common)
 
 /-- Join the actual common-parent boundary owners using the retained source root agreement, before selecting any
 polynomial or root-reading stage. -/
@@ -189,16 +189,16 @@ polynomial or root-reading stage. -/
     {otherPatch : UniformPrimitiveSheetCompatibility.PreparedPatch otherParent}
     {otherData : UniformReciprocalModels.Data otherPatch otherCount}
     {otherCover : UniformReciprocalCover.Cover otherData}
-    {otherCovers : SourceLocations.BasisSourceCovers otherParent}
-    {otherCommon : CommonCover.BasisCommonCover otherCover otherCovers otherMinimum}
-    {otherAllowance otherCoefficientTarget : InverseRootPolynomial.Coordinate}
-    (first : CommonParentRequest.BasisCommonParentRequest common basis allowance coefficientTarget floor)
-    (last : CommonParentRequest.BasisCommonParentRequest otherCommon basis otherAllowance otherCoefficientTarget
+    {otherCovers : BasisSourceCovers otherParent}
+    {otherCommon : BasisCommonCover otherCover otherCovers otherMinimum}
+    {otherAllowance otherCoefficientTarget : Coordinate}
+    (first : BasisCommonParentRequest common basis allowance coefficientTarget floor)
+    (last : BasisCommonParentRequest otherCommon basis otherAllowance otherCoefficientTarget
       otherFloor)
     (same : parent.edge.point 1 = otherParent.edge.point 0)
     (roots : Gaussian.Equivalence.NamedEquivalent
       (parent.edge.rootName 1 (by decide)) (otherParent.edge.rootName 0 otherParent.edge.baseInside)) :
-    ArcOwners.Join
+    Join
       (lastView
       first).point
       (firstView
@@ -227,19 +227,19 @@ variable {plan :
 
 /-- Read the first retained boundary root from the already acquired common-parent bank. -/
 @[expose] def firstReading (acquired : Plan.Acquisition plan anchorBank bank stage) :
-  (Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentBoundary.BasisCommonParentRequest.firstView
+  (firstView
   request).RootReading capSample stage :=
   Plans.firstReading request.charts.requests acquired.readings
-    (BasisCommonChartRequests.common_from common)
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentBoundary.common_nonempty common)
+    (common_from common)
+      (common_nonempty common)
 
 /-- Read the last retained boundary root from the already acquired common-parent bank. -/
 @[expose] def lastReading (acquired : Plan.Acquisition plan anchorBank bank stage) :
-  (Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentBoundary.BasisCommonParentRequest.lastView
+  (lastView
   request).RootReading capSample stage :=
   Plans.lastReading request.charts.requests acquired.readings
-    (BasisCommonChartRequests.common_from common)
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentBoundary.common_nonempty common)
+    (common_from common)
+      (common_nonempty common)
 
 /-- The acquired first boundary root has its square inside the original padded domain. -/
 theorem first_inside (acquired : Plan.Acquisition plan anchorBank bank stage) :
@@ -250,8 +250,8 @@ theorem first_inside (acquired : Plan.Acquisition plan anchorBank bank stage) :
       acquired).reading.coordinate) :=
   Plans.firstReading_inside request.charts.requests acquired.readings
     (acquired.geometry.inside request.charts.requests plan.charts acquired.readings)
-    (BasisCommonChartRequests.common_from common)
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentBoundary.common_nonempty common)
+    (common_from common)
+      (common_nonempty common)
 
 /-- The acquired last boundary root has its square inside the original padded domain. -/
 theorem last_inside (acquired : Plan.Acquisition plan anchorBank bank stage) :
@@ -262,8 +262,8 @@ theorem last_inside (acquired : Plan.Acquisition plan anchorBank bank stage) :
       acquired).reading.coordinate) :=
   Plans.lastReading_inside request.charts.requests acquired.readings
     (acquired.geometry.inside request.charts.requests plan.charts acquired.readings)
-    (BasisCommonChartRequests.common_from common)
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentBoundary.common_nonempty common)
+    (common_from common)
+      (common_nonempty common)
 
 end Plan.Acquisition
 end BasisCommonParentRequest

@@ -73,24 +73,24 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes (Regu
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes (CommonCuts Preflights)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest (TwoSheetRequest)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {faces : Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces bank} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces.regulars}
-  {cuts : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+    VertexBank bank.grid} {edges :
+    RootEdgeBank frames}
+  {faces : PuncturedFaces bank} {domains :
+    FaceDomainBank frames faces.regulars}
+  {cuts : CommonCuts domains}
     {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
-    {target : Purelib.Data.Rat.Fraction.Rational}
-  {mesh : Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
+    Preflights domains sheet}
+    {target : Rational}
+  {mesh : LiftedMesh vertices edges faces}
   {firstPosition : Fin faces.regulars.length} {firstSheet : Fin 2}
 
-variable (request : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet
-  => Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet
+variable (request : TwoSheetRequest (fun sheet
+  => RegularMeshes.build domains cuts sheet
   coarseDepth) fixed target)
 
 set_option genInjectivity false in
@@ -107,7 +107,7 @@ structure HorizontalCrossing (first : mesh.LocatedFace firstPosition firstSheet)
   /-- The matched observation side between the two actual sheet-specific retained face meshes. -/ side :
     let firstMesh := (request.entries.get firstSheet).meshes.entries.get firstPosition
     let lastMesh := (request.entries.get crossing.next.sheet).meshes.entries.get nextPosition
-    ObservationMesh.MatchedHorizontalSide firstMesh lastMesh
+    MatchedHorizontalSide firstMesh lastMesh
       (Fin.cast firstMesh.boundaryRows_eq (Fin.last firstMesh.boundaryRows))
       (Fin.cast lastMesh.boundaryRows_eq 0) faces.regulars[firstPosition.val].cell.box.yUpper
 
@@ -120,7 +120,7 @@ def HorizontalCrossing.build (first : mesh.LocatedFace firstPosition firstSheet)
     (lowerEq : faces.regulars[firstPosition.val].cell.box.xLower = faces.regulars[nextPosition.val].cell.box.xLower)
     (upperEq : faces.regulars[firstPosition.val].cell.box.xUpper = faces.regulars[nextPosition.val].cell.box.xUpper)
     (adjacent : faces.regulars[firstPosition.val].cell.box.yUpper = faces.regulars[nextPosition.val].cell.box.yLower)
-    (firstUpper lastUpper : Bool) : Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.LiftedSides.HorizontalCrossing
+    (firstUpper lastUpper : Bool) : HorizontalCrossing
       request first nextPosition firstUpper lastUpper := by
   have startEq : GridSide.start .bottom faces.regulars[nextPosition.val].cell.box =
       GridSide.finish .top faces.regulars[firstPosition.val].cell.box := by
@@ -147,7 +147,7 @@ structure VerticalCrossing (first : mesh.LocatedFace firstPosition firstSheet)
   /-- The matched observation side between the two actual sheet-specific retained face meshes. -/ side :
     let firstMesh := (request.entries.get firstSheet).meshes.entries.get firstPosition
     let lastMesh := (request.entries.get crossing.next.sheet).meshes.entries.get nextPosition
-    ObservationMesh.MatchedVerticalSide firstMesh lastMesh
+    MatchedVerticalSide firstMesh lastMesh
       (Fin.cast firstMesh.boundaryColumns_eq (Fin.last firstMesh.boundaryColumns))
       (Fin.cast lastMesh.boundaryColumns_eq 0) faces.regulars[firstPosition.val].cell.box.xUpper
 
@@ -160,7 +160,7 @@ def VerticalCrossing.build (first : mesh.LocatedFace firstPosition firstSheet)
     (lowerEq : faces.regulars[firstPosition.val].cell.box.yLower = faces.regulars[nextPosition.val].cell.box.yLower)
     (upperEq : faces.regulars[firstPosition.val].cell.box.yUpper = faces.regulars[nextPosition.val].cell.box.yUpper)
     (adjacent : faces.regulars[firstPosition.val].cell.box.xUpper = faces.regulars[nextPosition.val].cell.box.xLower)
-    (firstUpper lastUpper : Bool) : Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.LiftedSides.VerticalCrossing
+    (firstUpper lastUpper : Bool) : VerticalCrossing
       request first nextPosition firstUpper lastUpper := by
   have startEq : GridSide.start .left faces.regulars[nextPosition.val].cell.box =
       GridSide.finish .right faces.regulars[firstPosition.val].cell.box := by

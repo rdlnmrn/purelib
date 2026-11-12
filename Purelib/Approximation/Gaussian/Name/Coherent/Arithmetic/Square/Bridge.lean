@@ -39,6 +39,10 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+open Purelib.Data.Gaussian.Norm
+open Purelib.Approximation.Gaussian.Process.Coherence.Basic
+
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_antitone)
 
 namespace Purelib.Approximation.Gaussian.Name.Coherent.Arithmetic.Square.Bridge
@@ -71,7 +75,7 @@ assert that a completed exponential or logarithm value has been selected.
 /-- A sufficiently small positive self-product refinement request makes both retained component allowances smaller than
 the positive target. -/
 private theorem coherentMul_refine_component_allowance_lt
-    {process : Process} (coherent : Gaussian.Process.Coherence.Basic.Coherent process)
+    {process : Process} (coherent : Coherent process)
     (state : process.State × process.State)
     (request : Fraction.Rational) (requestPositive : 0 < request)
     (target : Fraction.Rational) (targetPositive : 0 < target)
@@ -93,7 +97,7 @@ private theorem coherentMul_refine_component_allowance_lt
     Name.multiplicativeInputTarget_pos
       leftName rightName requestPositive
   have inputLtRequest : inputRequest < request :=
-    Gaussian.Process.Coherence.Basic.Coherent.processMultiplicativeInputTarget_lt_target
+    Coherent.processMultiplicativeInputTarget_lt_target
       leftName rightName requestPositive
   have inputSmall : inputRequest < coherent.accuracyRequest target :=
     inputLtRequest.trans requestSmall
@@ -109,13 +113,13 @@ private theorem coherentMul_refine_component_allowance_lt
 /-- A canonical self-product sample satisfying the original coherence request bound has both component allowances below
 the positive target. -/
 public theorem coherentMul_stateAt_component_allowance_lt
-    {process : Process} (coherent : Gaussian.Process.Coherence.Basic.Coherent process)
+    {process : Process} (coherent : Coherent process)
     (start : process.State × process.State) (index : Nat)
     (target : Fraction.Rational) (targetPositive : 0 < target)
     (requestSmall :
-      Gaussian.Process.Sampling.refinementTarget index <
+      Process.Sampling.refinementTarget index <
         coherent.accuracyRequest target) :
-    let state := Gaussian.Process.Sampling.stateAt
+    let state := Process.Sampling.stateAt
       (process.mul process) start index
     coherent.allowance state.1 < target ∧
       coherent.allowance state.2 < target := by
@@ -127,7 +131,7 @@ public theorem coherentMul_stateAt_component_allowance_lt
   | succ index =>
       exact coherentMul_refine_component_allowance_lt
         coherent
-        (Gaussian.Process.Sampling.stateAt
+        (Process.Sampling.stateAt
           (process.mul process) start index) _ _ target targetPositive
             requestSmall
 
@@ -140,10 +144,10 @@ theorem coherentSquareBridgeCoefficient_pos (process : Process) :
     0 < coherentSquareBridgeCoefficient process :=
       by
   unfold coherentSquareBridgeCoefficient
-  exact Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct (by decide)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  exact Arithmetic.add_pos_of_pos_of_nonneg_direct (by decide)
+    (Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.mul_nonneg_direct (by decide)
+        (Arithmetic.mul_nonneg_direct (by decide)
           (add_nonneg (by decide) process.centerBound_nonneg))))
 
 /-- Divide the requested square tolerance by its sum with the retained square-comparison coefficient. -/
@@ -156,23 +160,23 @@ theorem coherentSquareBridgeCoefficient_pos (process : Process) :
 theorem coherentSquareBridgeTarget_pos (process : Process)
     {target : Fraction.Rational} (positive : 0 < target) :
     0 < coherentSquareBridgeTarget process target :=
-  Fraction.Order.Field.div_pos_direct positive
-    (Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct positive
+  Field.div_pos_direct positive
+    (Arithmetic.add_pos_of_pos_of_nonneg_direct positive
       (coherentSquareBridgeCoefficient_pos process).le)
 
 /-- The operand square-comparison tolerance is below one for a positive output target. -/
 theorem coherentSquareBridgeTarget_lt_one (process : Process)
     {target : Fraction.Rational} (positive : 0 < target) :
     coherentSquareBridgeTarget process target < 1 := by
-  apply (Fraction.Order.Field.div_lt_iff_pos
-    (Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct positive
+  apply (Field.div_lt_iff_pos
+    (Arithmetic.add_pos_of_pos_of_nonneg_direct positive
       (coherentSquareBridgeCoefficient_pos process).le)).2
   calc
     target = 0 + target :=
       (Fraction.Field.zero_add target).symm
     _ < coherentSquareBridgeCoefficient process + target
       :=
-      Fraction.Order.Arithmetic.add_lt_add_right_direct
+      Arithmetic.add_lt_add_right_direct
         (coherentSquareBridgeCoefficient_pos process)
           target
     _ = target + coherentSquareBridgeCoefficient process
@@ -192,7 +196,7 @@ theorem coherentSquareBridgeTarget_budget_lt (process : Process)
   have denominatorPositive :
       0 < target + coherentSquareBridgeCoefficient process
         :=
-    Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct positive
+    Arithmetic.add_pos_of_pos_of_nonneg_direct positive
       (coherentSquareBridgeCoefficient_pos process).le
   change target /
       (target + coherentSquareBridgeCoefficient process) *
@@ -235,7 +239,7 @@ theorem coherentSquareBridgeTarget_budget_lt (process : Process)
               process)⁻¹ :=
           (_root_.mul_assoc _ _ _).symm
     _ < target := by
-      apply (Fraction.Order.Field.div_lt_iff_pos
+      apply (Field.div_lt_iff_pos
         denominatorPositive).2
       have coefficientLt : coherentSquareBridgeCoefficient
         process <
@@ -248,14 +252,14 @@ theorem coherentSquareBridgeTarget_budget_lt (process : Process)
             (Fraction.Field.zero_add _).symm
           _ < target + coherentSquareBridgeCoefficient
             process :=
-            Fraction.Order.Arithmetic.add_lt_add_right_direct positive _
-      exact Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+            Arithmetic.add_lt_add_right_direct positive _
+      exact Arithmetic.mul_lt_mul_of_pos_left_direct
         positive coefficientLt
 
 /-- Actual stateful self-multiplication of a coherent CCL name is operationally equivalent to the canonical pointwise
 square of its finite sampling approximation. -/
-@[expose] def coherentSquare_toNamed (value : Coherent.CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
+@[expose] def coherentSquare_toNamed (value : CoherentNamed) :
+    NamedEquivalent
       (Named.mul value.name value.name)
       (Square.squareApproximation
         (Sampling.approximation value.name)).toNamed := by
@@ -264,7 +268,7 @@ square of its finite sampling approximation. -/
     (value.name.state, value.name.state)
   let source := Sampling.approximation value.name
   let squared := Square.squareApproximation source
-  let bridge : Gaussian.Equivalence.Equivalent
+  let bridge : Equivalent
       (Sampling.approximation
         (Named.mul
           value.name value.name)) squared :=
@@ -281,10 +285,10 @@ square of its finite sampling approximation. -/
         have processThresholdPositive : 0 < processThreshold :=
           value.coherent.accuracyRequest_pos semanticPositive
         let outputThreshold :=
-          Gaussian.Process.Coherence.Basic.Coherent.commonRequest
+          Coherent.commonRequest
             processThreshold semanticTarget
         have outputThresholdPositive : 0 < outputThreshold :=
-          Gaussian.Process.Coherence.Basic.Coherent.commonRequest_pos
+          Coherent.commonRequest_pos
             processThresholdPositive semanticPositive
         let leftIndex := Search.firstQuarterBelow
           1 leftStart outputThreshold
@@ -292,21 +296,21 @@ square of its finite sampling approximation. -/
           Search.firstQuarterBelow_ge
             1 leftStart outputThreshold
         have outputRequestSmall :
-            Gaussian.Process.Sampling.refinementTarget leftIndex <
+            Process.Sampling.refinementTarget leftIndex <
               outputThreshold :=
           Search.firstQuarterBelow_accurate
             1 (by decide) leftStart outputThreshold outputThresholdPositive
         have outputRequestLtProcess :
-            Gaussian.Process.Sampling.refinementTarget leftIndex <
+            Process.Sampling.refinementTarget leftIndex <
               processThreshold :=
           outputRequestSmall.trans
-            (Gaussian.Process.Coherence.Basic.Coherent.commonRequest_lt_left
+            (Coherent.commonRequest_lt_left
               processThresholdPositive semanticPositive)
         have outputRequestLtSemantic :
-            Gaussian.Process.Sampling.refinementTarget leftIndex <
+            Process.Sampling.refinementTarget leftIndex <
               semanticTarget :=
           outputRequestSmall.trans
-            (Gaussian.Process.Coherence.Basic.Coherent.commonRequest_lt_right
+            (Coherent.commonRequest_lt_right
               processThresholdPositive semanticPositive)
         let rightIndex := Search.firstQuarterBelow
           1 rightStart processThreshold
@@ -314,11 +318,11 @@ square of its finite sampling approximation. -/
           Search.firstQuarterBelow_ge
             1 rightStart processThreshold
         have rightRequestSmall :
-            Gaussian.Process.Sampling.refinementTarget rightIndex <
+            Process.Sampling.refinementTarget rightIndex <
               processThreshold :=
           Search.firstQuarterBelow_accurate
             1 (by decide) rightStart processThreshold processThresholdPositive
-        let baseState := Gaussian.Process.Sampling.stateAt
+        let baseState := Process.Sampling.stateAt
           (process.mul process) start leftIndex
         have componentSmall :
             value.coherent.allowance baseState.1 < semanticTarget ∧
@@ -335,22 +339,22 @@ square of its finite sampling approximation. -/
             close := by
               intro leftLater rightLater leftOrder rightOrder
               have canonicalRequestSmall :
-                  Gaussian.Process.Sampling.refinementTarget
+                  Process.Sampling.refinementTarget
                       rightLater < processThreshold :=
                 (quarterRadius_antitone (by decide)
                   rightOrder).trans_lt
                   rightRequestSmall
               have canonicalAllowanceSmall :
                   value.coherent.allowance
-                      (Gaussian.Process.Sampling.stateAt process
+                      (Process.Sampling.stateAt process
                         value.name.state rightLater) < semanticTarget :=
-                Gaussian.Process.Coherence.Basic.Coherent.stateAt_allowance_lt
+                Coherent.stateAt_allowance_lt
                   value.coherent value.name.state rightLater semanticTarget
                     semanticPositive canonicalRequestSmall
               let leftReading := (process.witness baseState.1).val
               let rightReading := (process.witness baseState.2).val
               let canonicalReading :=
-                Gaussian.Process.Sampling.witnessAt process
+                Process.Sampling.witnessAt process
                   value.name.state rightLater
               have leftPossible : process.Possible baseState.1 leftReading :=
                 (process.witness baseState.1).property
@@ -358,9 +362,9 @@ square of its finite sampling approximation. -/
                 (process.witness baseState.2).property
               have canonicalPossible :
                   process.Possible
-                      (Gaussian.Process.Sampling.stateAt process
+                      (Process.Sampling.stateAt process
                         value.name.state rightLater) canonicalReading :=
-                Gaussian.Process.Sampling.witnessAt_possible
+                Process.Sampling.witnessAt_possible
                   process value.name.state rightLater
               have leftCloseRaw := value.coherent.possible_close
                 leftPossible canonicalPossible
@@ -369,43 +373,43 @@ square of its finite sampling approximation. -/
               have allowanceSumLeft :
                   value.coherent.allowance baseState.1 +
                       value.coherent.allowance
-                        (Gaussian.Process.Sampling.stateAt process
+                        (Process.Sampling.stateAt process
                           value.name.state rightLater) <
                     semanticTarget + semanticTarget :=
-                Fraction.Order.Arithmetic.add_lt_add_direct
+                Arithmetic.add_lt_add_direct
                   componentSmall.1 canonicalAllowanceSmall
               have allowanceSumRight :
                   value.coherent.allowance baseState.2 +
                       value.coherent.allowance
-                        (Gaussian.Process.Sampling.stateAt process
+                        (Process.Sampling.stateAt process
                           value.name.state rightLater) <
                     semanticTarget + semanticTarget :=
-                Fraction.Order.Arithmetic.add_lt_add_direct
+                Arithmetic.add_lt_add_direct
                   componentSmall.2 canonicalAllowanceSmall
-              have leftClose : Data.Gaussian.Norm.Basic.normSq (leftReading - canonicalReading) ≤
+              have leftClose : Basic.normSq (leftReading - canonicalReading) ≤
                   8 * semanticTarget := by
                 calc
-                  Data.Gaussian.Norm.Basic.normSq (leftReading - canonicalReading) ≤
+                  Basic.normSq (leftReading - canonicalReading) ≤
                     4 *
                       (value.coherent.allowance baseState.1 +
                         value.coherent.allowance
-                          (Gaussian.Process.Sampling.stateAt process
+                          (Process.Sampling.stateAt process
                             value.name.state rightLater)) := leftCloseRaw
                   _ ≤ 4 * (semanticTarget + semanticTarget) :=
-                    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                    Arithmetic.mul_le_mul_of_nonneg_left_direct
                       allowanceSumLeft.le (by decide)
                   _ = 8 * semanticTarget := by ring1
-              have rightClose : Data.Gaussian.Norm.Basic.normSq (rightReading - canonicalReading) ≤
+              have rightClose : Basic.normSq (rightReading - canonicalReading) ≤
                   8 * semanticTarget := by
                 calc
-                  Data.Gaussian.Norm.Basic.normSq (rightReading - canonicalReading) ≤
+                  Basic.normSq (rightReading - canonicalReading) ≤
                     4 *
                       (value.coherent.allowance baseState.2 +
                         value.coherent.allowance
-                          (Gaussian.Process.Sampling.stateAt process
+                          (Process.Sampling.stateAt process
                             value.name.state rightLater)) := rightCloseRaw
                   _ ≤ 4 * (semanticTarget + semanticTarget) :=
-                    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                    Arithmetic.mul_le_mul_of_nonneg_left_direct
                       allowanceSumRight.le (by decide)
                   _ = 8 * semanticTarget := by ring1
               let readingBound := 2 * (1 + process.centerBound)
@@ -425,16 +429,16 @@ square of its finite sampling approximation. -/
                     _root_.add_comm _ _
               have canonicalAllowanceBound :
                   value.coherent.allowance
-                      (Gaussian.Process.Sampling.stateAt process
+                      (Process.Sampling.stateAt process
                         value.name.state rightLater) + process.centerBound ≤
                     1 + process.centerBound := by
                 calc
                   value.coherent.allowance
-                        (Gaussian.Process.Sampling.stateAt process
+                        (Process.Sampling.stateAt process
                           value.name.state rightLater) + process.centerBound =
                       process.centerBound +
                         value.coherent.allowance
-                          (Gaussian.Process.Sampling.stateAt process
+                          (Process.Sampling.stateAt process
                             value.name.state rightLater) :=
                     _root_.add_comm _ _
                   _ ≤ process.centerBound + semanticTarget :=
@@ -444,35 +448,35 @@ square of its finite sampling approximation. -/
                     add_le_add_right semanticLtOne.le process.centerBound
                   _ = 1 + process.centerBound :=
                     _root_.add_comm _ _
-              have rightReadingNorm : Data.Gaussian.Norm.Basic.normSq rightReading ≤ readingBound :=
-                (Gaussian.Process.Coherence.Basic.Coherent.possible_normSq_le
+              have rightReadingNorm : Basic.normSq rightReading ≤ readingBound :=
+                (Coherent.possible_normSq_le
                   value.coherent rightPossible).trans
-                    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                    (Arithmetic.mul_le_mul_of_nonneg_left_direct
                       rightAllowanceBound (by decide))
               have canonicalReadingNorm :
-                  Data.Gaussian.Norm.Basic.normSq canonicalReading ≤ readingBound :=
-                (Gaussian.Process.Coherence.Basic.Coherent.possible_normSq_le
+                  Basic.normSq canonicalReading ≤ readingBound :=
+                (Coherent.possible_normSq_le
                   value.coherent canonicalPossible).trans
-                    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                    (Arithmetic.mul_le_mul_of_nonneg_left_direct
                       canonicalAllowanceBound (by decide))
               have firstTerm :
-                  Data.Gaussian.Norm.Basic.normSq
+                  Basic.normSq
                       ((leftReading - canonicalReading) * rightReading) ≤
                     (8 * semanticTarget) * readingBound := by
-                rw [Data.Gaussian.Norm.Basic.normSq_mul]
-                exact Fraction.Order.Arithmetic.mul_le_mul_direct
-                  leftClose rightReadingNorm (Data.Gaussian.Norm.Basic.normSq_nonneg _)
-                  (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+                rw [Basic.normSq_mul]
+                exact Arithmetic.mul_le_mul_direct
+                  leftClose rightReadingNorm (Basic.normSq_nonneg _)
+                  (Arithmetic.mul_nonneg_direct (by decide)
                     semanticPositive.le)
               have secondTerm :
-                  Data.Gaussian.Norm.Basic.normSq
+                  Basic.normSq
                       (canonicalReading *
                         (rightReading - canonicalReading)) ≤
                     readingBound * (8 * semanticTarget) := by
-                rw [Data.Gaussian.Norm.Basic.normSq_mul]
-                exact Fraction.Order.Arithmetic.mul_le_mul_direct
-                  canonicalReadingNorm rightClose (Data.Gaussian.Norm.Basic.normSq_nonneg _)
-                  (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+                rw [Basic.normSq_mul]
+                exact Arithmetic.mul_le_mul_direct
+                  canonicalReadingNorm rightClose (Basic.normSq_nonneg _)
+                  (Arithmetic.mul_nonneg_direct (by decide)
                     (add_nonneg (by decide) process.centerBound_nonneg))
               have productIdentity :
                   leftReading * rightReading -
@@ -481,80 +485,80 @@ square of its finite sampling approximation. -/
                       canonicalReading *
                         (rightReading - canonicalReading) := by
                 apply Data.Gaussian.Basic.ext <;>
-                  simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-                    Purelib.Data.Gaussian.Basic.add_re, Purelib.Data.Gaussian.Basic.add_im,
-                    Purelib.Data.Gaussian.Basic.mul_re, Purelib.Data.Gaussian.Basic.mul_im] <;>
+                  simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+                    Data.Gaussian.Basic.add_re, Data.Gaussian.Basic.add_im,
+                    Data.Gaussian.Basic.mul_re, Data.Gaussian.Basic.mul_im] <;>
                     ring1
               have productBound :
-                  Data.Gaussian.Norm.Basic.normSq
+                  Basic.normSq
                       (leftReading * rightReading -
                         canonicalReading * canonicalReading) ≤
                     32 * semanticTarget * readingBound := by
                 rw [productIdentity]
                 calc
-                  Data.Gaussian.Norm.Basic.normSq
+                  Basic.normSq
                       ((leftReading - canonicalReading) * rightReading +
                         canonicalReading *
                           (rightReading - canonicalReading)) ≤
                     2 *
-                      (Data.Gaussian.Norm.Basic.normSq
+                      (Basic.normSq
                           ((leftReading - canonicalReading) * rightReading) +
-                        Data.Gaussian.Norm.Basic.normSq
+                        Basic.normSq
                           (canonicalReading *
                             (rightReading - canonicalReading))) :=
-                    Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _
+                    Bounds.normSq_add_le_two _ _
                   _ ≤ 2 *
                       ((8 * semanticTarget) * readingBound +
                         readingBound * (8 * semanticTarget)) :=
-                    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                    Arithmetic.mul_le_mul_of_nonneg_left_direct
                       (add_le_add firstTerm secondTerm) (by decide)
                   _ = 32 * semanticTarget * readingBound := by ring1
               have actualTail :
-                  Data.Gaussian.Norm.Basic.normSq
-                      (Gaussian.Process.Sampling.witnessAt
+                  Basic.normSq
+                      (Process.Sampling.witnessAt
                           (process.mul process) start leftLater -
-                        Gaussian.Process.Sampling.witnessAt
+                        Process.Sampling.witnessAt
                           (process.mul process) start leftIndex) ≤
-                    4 * Gaussian.Process.Sampling.refinementTarget
+                    4 * Process.Sampling.refinementTarget
                       leftIndex := by
-                rw [← Gaussian.Sampling.Dyadic.quarterRadius_four_eq_four_refinementTarget]
-                exact Gaussian.Process.Sampling.witnessAt_later_close
+                rw [← Sampling.Dyadic.quarterRadius_four_eq_four_refinementTarget]
+                exact Process.Sampling.witnessAt_later_close
                   (process.mul process) start leftOrder
               have baseWitness :
-                  Gaussian.Process.Sampling.witnessAt
+                  Process.Sampling.witnessAt
                       (process.mul process) start leftIndex =
                     leftReading * rightReading :=
                 rfl
               have canonicalSample : source.sample rightLater =
                   canonicalReading :=
                 rfl
-              change Data.Gaussian.Norm.Basic.normSq
-                  (Gaussian.Process.Sampling.witnessAt
+              change Basic.normSq
+                  (Process.Sampling.witnessAt
                       (process.mul process) start leftLater -
                     source.sample rightLater * source.sample rightLater) < target
               rw [canonicalSample]
               calc
-                Data.Gaussian.Norm.Basic.normSq
-                    (Gaussian.Process.Sampling.witnessAt
+                Basic.normSq
+                    (Process.Sampling.witnessAt
                         (process.mul process) start leftLater -
                       canonicalReading * canonicalReading) ≤
                   2 *
-                    (Data.Gaussian.Norm.Basic.normSq
-                        (Gaussian.Process.Sampling.witnessAt
+                    (Basic.normSq
+                        (Process.Sampling.witnessAt
                             (process.mul process) start leftLater -
-                          Gaussian.Process.Sampling.witnessAt
+                          Process.Sampling.witnessAt
                             (process.mul process) start leftIndex) +
-                      Data.Gaussian.Norm.Basic.normSq
-                        (Gaussian.Process.Sampling.witnessAt
+                      Basic.normSq
+                        (Process.Sampling.witnessAt
                             (process.mul process) start leftIndex -
                           canonicalReading * canonicalReading)) :=
-                    Data.Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _
+                    Bounds.normSq_sub_le_via _ _ _
                 _ ≤ 2 *
                     (4 *
-                        Gaussian.Process.Sampling.refinementTarget
+                        Process.Sampling.refinementTarget
                           leftIndex +
                       32 * semanticTarget * readingBound) := by
-                  apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                  apply Arithmetic.mul_le_mul_of_nonneg_left_direct
                   · apply add_le_add actualTail
                     rw [baseWitness]
                     exact productBound
@@ -562,9 +566,9 @@ square of its finite sampling approximation. -/
                 _ ≤ 2 *
                     (4 * semanticTarget +
                       32 * semanticTarget * readingBound) :=
-                  Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                  Arithmetic.mul_le_mul_of_nonneg_left_direct
                     (add_le_add
-                      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+                      (Arithmetic.mul_le_mul_of_nonneg_left_direct
                         outputRequestLtSemantic.le (by decide)) le_rfl)
                     (by decide)
                 _ = semanticTarget *

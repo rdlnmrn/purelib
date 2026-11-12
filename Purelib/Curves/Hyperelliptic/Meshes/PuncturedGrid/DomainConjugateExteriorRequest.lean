@@ -92,13 +92,13 @@ open _root_.Purelib.Data.Gaussian.Basic (conj)
 
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face : Meshes.PuncturedGridFaces.RegularFace bank}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {face : Meshes.PuncturedGridFaces.RegularFace bank}
       {models
-    : Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames face} {sheet : Fin 2}
-  {domain : Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain models sheet} {box :
+    : Face.InverseModels.BranchCellBank.FaceModels frames face} {sheet : Fin 2}
+  {domain : Face.Periods.PeriodDomain models sheet} {box :
     Rational.Box}
 
 set_option genInjectivity false in
@@ -106,45 +106,45 @@ set_option genInjectivity false in
 
 The fixed face slope allocates a retained reading cap, and the model request uses that exact cap on the same prepared
 mesh. -/
-structure ConjugateExteriorRequest (preflight : Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight
+structure ConjugateExteriorRequest (preflight : DomainBasisBounds.EnergyPreflight
   domain)
     (mesh : Meshes.RectangularObservationMesh.ObservationMesh domain.cuts box) (target : Fraction.Rational) where
   /-- The original face's cached common slope and exterior-reading cap. -/ tolerance :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.ReadingCaps.DomainPrimitives.FaceExteriorTolerance preflight mesh target
+    Exterior.ReadingCaps.DomainPrimitives.FaceExteriorTolerance preflight mesh target
   /-- The original basis model request at the exact retained cap. -/ models :
-    Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight.Request preflight tolerance.budget.cap
+    DomainBasisBounds.EnergyPreflight.Request preflight tolerance.budget.cap
 
 constructive_injectivity ConjugateExteriorRequest
 
 namespace ConjugateExteriorRequest
 
-variable {preflight : Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight domain} {mesh :
+variable {preflight : DomainBasisBounds.EnergyPreflight domain} {mesh :
   Meshes.RectangularObservationMesh.ObservationMesh domain.cuts box} {target : Fraction.Rational}
 
 /-- Prepare the original face tolerance and request every basis model at that same retained positive cap. -/
-@[expose] def build (preflight : Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight domain) (mesh :
+@[expose] def build (preflight : DomainBasisBounds.EnergyPreflight domain) (mesh :
   Meshes.RectangularObservationMesh.ObservationMesh domain.cuts box)
     (target : Fraction.Rational) (positive : 0 < target) :
-      Hyperelliptic.Meshes.PuncturedGrid.DomainConjugateExteriorRequest.ConjugateExteriorRequest preflight mesh target
+      ConjugateExteriorRequest preflight mesh target
       :=
-  let tolerance := Hyperelliptic.Meshes.PuncturedGrid.Exterior.ReadingCaps.DomainPrimitives.FaceExteriorTolerance.build
+  let tolerance := Exterior.ReadingCaps.DomainPrimitives.FaceExteriorTolerance.build
     preflight mesh target positive
-  ⟨tolerance, Hyperelliptic.Meshes.PuncturedGrid.DomainBasisBounds.EnergyPreflight.Request.build preflight
+  ⟨tolerance, DomainBasisBounds.EnergyPreflight.Request.build preflight
     tolerance.budget.cap tolerance.budget.positive⟩
 
 variable {stage : Nat}
 
 /-- Every original conjugate basis-pair local-minus-exterior area satisfies the requested bound at a sufficient shared
 model stage. -/
-theorem pair_bound (request : Hyperelliptic.Meshes.PuncturedGrid.DomainConjugateExteriorRequest.ConjugateExteriorRequest
+theorem pair_bound (request : ConjugateExteriorRequest
   preflight mesh target) (later : request.models.index ≤ stage)
-    (cached : (row : Fin genus) → Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives domain
+    (cached : (row : Fin genus) → Face.PrimitiveData.DomainPrimitives domain
       (Periods.PeriodMatrix.standardDifferential row) stage)
     (first second : Fin genus)
     (assembly : Readings.RectangularObservationAssembly.ObservationMesh.ClippedAssembly mesh (fun column row point =>
       ⟨conj ((cached first).anchors.alignedValue (cached first).offsets column row point),
         (cached second).anchors.alignedValue (cached second).offsets column row point⟩)) :
-    Data.Gaussian.Norm.Basic.normSq (assembly.localTotal - assembly.exterior) ≤ target := by
+    Gaussian.Norm.Basic.normSq (assembly.localTotal - assembly.exterior) ≤ target := by
   let left := request.models.rowAtStage stage later first
   let right := request.models.rowAtStage stage later second
   have estimate :=
@@ -163,20 +163,20 @@ theorem pair_bound (request : Hyperelliptic.Meshes.PuncturedGrid.DomainConjugate
 /-- The conjugated coefficient expansion keeps a compact dependent assembly
 type while referring to precisely the retained aligned primitive bank. -/
 @[expose] def EnergyAssembly
-    (cached : (row : Fin genus) → Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives domain
+    (cached : (row : Fin genus) → Face.PrimitiveData.DomainPrimitives domain
       (Periods.PeriodMatrix.standardDifferential row) stage)
     (mesh : Meshes.RectangularObservationMesh.ObservationMesh domain.cuts box) (coefficients :
       LinearAlgebra.Gaussian.Energy.GaussianVector genus) :=
   Readings.RectangularObservationAssembly.ObservationMesh.ClippedAssembly mesh (fun column row point =>
-    ⟨sumFin (fun i => Data.Gaussian.Basic.conj (coefficients i) * Data.Gaussian.Basic.conj ((cached
+    ⟨sumFin (fun i => Gaussian.Basic.conj (coefficients i) * Gaussian.Basic.conj ((cached
       i).anchors.alignedValue (cached i).offsets column row point)),
       FiniteSum.Fin.sumFin (fun i => coefficients i * (cached i).anchors.alignedValue (cached i).offsets column row
         point)⟩)
 
 /-- Conjugation distributes through a finite Gaussian coefficient combination. -/
 private theorem conjugate_combination {count : Nat} (coefficients values : Fin count → Gaussian.Basic.Canonical) :
-    Data.Gaussian.Basic.conj (FiniteSum.Fin.sumFin (fun i => coefficients i * values i)) = FiniteSum.Fin.sumFin (fun
-      i => Data.Gaussian.Basic.conj (coefficients i) * Data.Gaussian.Basic.conj (values i)) := by
+    Gaussian.Basic.conj (FiniteSum.Fin.sumFin (fun i => coefficients i * values i)) = FiniteSum.Fin.sumFin (fun
+      i => Gaussian.Basic.conj (coefficients i) * Gaussian.Basic.conj (values i)) := by
   induction count with
   | zero => rfl
   | succ count ih =>
@@ -186,10 +186,10 @@ private theorem conjugate_combination {count : Nat} (coefficients values : Fin c
 /-- Alignment adds a constant on each retained model rectangle. Its closed
 energy boundary is unchanged, including the conjugated component. -/
 theorem EnergyAssembly.raw_localTotal_eq
-    (cached : (row : Fin genus) → Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives domain
+    (cached : (row : Fin genus) → Face.PrimitiveData.DomainPrimitives domain
       (Periods.PeriodMatrix.standardDifferential row) stage)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (assembly :
-      Hyperelliptic.Meshes.PuncturedGrid.DomainConjugateExteriorRequest.ConjugateExteriorRequest.EnergyAssembly cached
+      EnergyAssembly cached
       mesh coefficients) :
     assembly.localTotal = mesh.pieces.localBoundary (fun column row point => Energy.Polygon.energyPrimitivePoint
       (FiniteSum.Fin.sumFin (fun i => coefficients i * (cached i).primitives.value column row point))) mesh.depth := by
@@ -197,7 +197,7 @@ theorem EnergyAssembly.raw_localTotal_eq
   let raw := fun column row point => Energy.Polygon.energyPrimitivePoint
     (FiniteSum.Fin.sumFin (fun i => coefficients i * (cached i).primitives.value column row point))
   let aligned := fun column row point => (⟨
-    FiniteSum.Fin.sumFin (fun i => Data.Gaussian.Basic.conj (coefficients i) * Data.Gaussian.Basic.conj ((cached
+    FiniteSum.Fin.sumFin (fun i => Gaussian.Basic.conj (coefficients i) * Gaussian.Basic.conj ((cached
       i).anchors.alignedValue (cached i).offsets column row point)),
     FiniteSum.Fin.sumFin (fun i => coefficients i * (cached i).anchors.alignedValue (cached i).offsets column row
       point)⟩ : Topology.Polygon.Stokes.PrimitivePoint)
@@ -215,34 +215,34 @@ theorem EnergyAssembly.raw_localTotal_eq
         row from by
         rw [Integration.RectangularPrimitiveGluing.PrimitiveAnchors.alignedValue]; ring1), FiniteSum.Fin.sumFin_add]
   dsimp only [raw, aligned, offsets, Energy.Polygon.energyPrimitivePoint, Topology.Polygon.Stokes.PrimitivePoint.add]
-  rw [← Hyperelliptic.Meshes.PuncturedGrid.DomainConjugateExteriorRequest.ConjugateExteriorRequest.conjugate_combination
+  rw [← ConjugateExteriorRequest.conjugate_combination
     coefficients (fun i => (cached i).anchors.alignedValue (cached i).offsets column row point),
     alignedSum, Gaussian.Basic.conj_add]
 
 /-- The actual combined energy's local-minus-exterior discrepancy is bounded homogeneously by genus squared, coefficient
 norm squared and the retained target. -/
 theorem weighted_bound (request :
-  Hyperelliptic.Meshes.PuncturedGrid.DomainConjugateExteriorRequest.ConjugateExteriorRequest preflight mesh target)
+  ConjugateExteriorRequest preflight mesh target)
   (later : request.models.index ≤ stage)
-    (cached : (row : Fin genus) → Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives domain
+    (cached : (row : Fin genus) → Face.PrimitiveData.DomainPrimitives domain
       (Periods.PeriodMatrix.standardDifferential row) stage)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (assembly :
-      Hyperelliptic.Meshes.PuncturedGrid.DomainConjugateExteriorRequest.ConjugateExteriorRequest.EnergyAssembly cached
+      EnergyAssembly cached
       mesh coefficients) :
-    Data.Gaussian.Norm.Basic.normSq (assembly.localTotal - assembly.exterior) ≤
+    Gaussian.Norm.Basic.normSq (assembly.localTotal - assembly.exterior) ≤
       (genus : Fraction.Rational) ^ 2 * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
         target := by
   let pairs := fun first second : Fin genus =>
     Readings.RectangularObservationAssembly.ObservationMesh.ClippedAssembly.build mesh
     (fun column row point => ⟨conj ((cached first).anchors.alignedValue (cached first).offsets column row point),
       (cached second).anchors.alignedValue (cached second).offsets column row point⟩)
-  have expanded := assembly.local_sub_exterior_combination (fun i => Data.Gaussian.Basic.conj (coefficients i))
+  have expanded := assembly.local_sub_exterior_combination (fun i => Gaussian.Basic.conj (coefficients i))
     coefficients
-    (fun i column row point => Data.Gaussian.Basic.conj ((cached i).anchors.alignedValue (cached i).offsets column
+    (fun i column row point => Gaussian.Basic.conj ((cached i).anchors.alignedValue (cached i).offsets column
       row point))
     (fun i column row point => (cached i).anchors.alignedValue (cached i).offsets column row point) pairs
   rw [expanded]
-  have estimate := Periods.BilinearCombination.combination_bound (fun i => Data.Gaussian.Basic.conj (coefficients
+  have estimate := Periods.BilinearCombination.combination_bound (fun i => Gaussian.Basic.conj (coefficients
     i)) coefficients
     (fun first second => (pairs first second).localTotal - (pairs first second).exterior)
     (fun first second => request.pair_bound later cached first second (pairs first second))

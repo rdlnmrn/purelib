@@ -22,6 +22,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 namespace Purelib.Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Scale
 
 open Purelib
@@ -51,43 +53,43 @@ assert that a completed exponential or logarithm value has been selected.
 
 /-- Multiply the reconstructed-chart movement scale by the squared norm of the displayed Gaussian factor. -/
 @[expose] def scaledDynamicLocalExpLogChartErrorScale (factor : Data.Gaussian.Basic.Canonical) : Fraction.Rational :=
-  Reconstruction.dynamicLocalExpLogChartApproximationScale * Data.Gaussian.Norm.Basic.normSq factor
+  Reconstruction.dynamicLocalExpLogChartApproximationScale * Basic.normSq factor
 
 /-- The scaled reconstructed-chart movement coefficient is nonnegative. -/
 theorem scaledDynamicLocalExpLogChartErrorScale_nonneg (factor : Data.Gaussian.Basic.Canonical) :
-    0 ≤ Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Scale.scaledDynamicLocalExpLogChartErrorScale
+    0 ≤ scaledDynamicLocalExpLogChartErrorScale
       factor :=
   Fraction.Order.Arithmetic.mul_nonneg_direct
-    Reconstruction.dynamicLocalExpLogChartApproximationScale_nonneg (Data.Gaussian.Norm.Basic.normSq_nonneg factor)
+    Reconstruction.dynamicLocalExpLogChartApproximationScale_nonneg (Basic.normSq_nonneg factor)
 
 /-- Pointwise multiplication of the reconstructed local exp-log chart by one displayed rational branch factor. -/
-@[expose] def scaledDynamicLocalExpLogChartApproximation (input : Gaussian.Name.Basic.Named)
+@[expose] def scaledDynamicLocalExpLogChartApproximation (input : Name.Basic.Named)
     (disk : Domain.Disk input)
     (factor : Data.Gaussian.Basic.Canonical) : ApproximationData where
   sample depth := Reconstruction.dynamicLocalExpLogChartSample input depth * factor
-  radiusSq := Geometric.Basic.quarterRadius
-    (Purelib.Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Scale.scaledDynamicLocalExpLogChartErrorScale
+  radiusSq := Basic.quarterRadius
+    (scaledDynamicLocalExpLogChartErrorScale
       factor)
   radiusSq_nonneg :=
-    Geometric.Basic.quarterRadius_nonneg
-      (Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Scale.scaledDynamicLocalExpLogChartErrorScale_nonneg
+    Basic.quarterRadius_nonneg
+      (scaledDynamicLocalExpLogChartErrorScale_nonneg
         factor)
   later_close := by
     intro earlier later order
     have movement :=
       (Reconstruction.dynamicLocalExpLogChartApproximation input disk).later_close order
     have movementScaled :
-        Data.Gaussian.Norm.Basic.normSq
+        Basic.normSq
             (Reconstruction.dynamicLocalExpLogChartSample input later -
               Reconstruction.dynamicLocalExpLogChartSample input earlier) ≤
           Reconstruction.dynamicLocalExpLogChartApproximationScale *
             (1 / 4 : Fraction.Rational) ^ earlier := by
-      change Data.Gaussian.Norm.Basic.normSq
+      change Basic.normSq
           (Reconstruction.dynamicLocalExpLogChartSample input later -
             Reconstruction.dynamicLocalExpLogChartSample input earlier) ≤
-        Geometric.Basic.quarterRadius
+        Basic.quarterRadius
           Reconstruction.dynamicLocalExpLogChartApproximationScale earlier at movement
-      simpa only [Geometric.Basic.quarterRadius_eq_mul_pow]
+      simpa only [Basic.quarterRadius_eq_mul_pow]
         using movement
     have identity :
         Reconstruction.dynamicLocalExpLogChartSample input later * factor -
@@ -95,29 +97,29 @@ theorem scaledDynamicLocalExpLogChartErrorScale_nonneg (factor : Data.Gaussian.B
           (Reconstruction.dynamicLocalExpLogChartSample input later -
             Reconstruction.dynamicLocalExpLogChartSample input earlier) * factor := by
       apply Data.Gaussian.Basic.ext <;>
-        simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-          Purelib.Data.Gaussian.Basic.mul_re, Purelib.Data.Gaussian.Basic.mul_im] <;> ring1
-    change Data.Gaussian.Norm.Basic.normSq
+        simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+          Data.Gaussian.Basic.mul_re, Data.Gaussian.Basic.mul_im] <;> ring1
+    change Basic.normSq
         (Reconstruction.dynamicLocalExpLogChartSample input later * factor -
           Reconstruction.dynamicLocalExpLogChartSample input earlier * factor) ≤
-      Geometric.Basic.quarterRadius
+      Basic.quarterRadius
 
           (scaledDynamicLocalExpLogChartErrorScale
           factor) earlier
-    rw [identity, Data.Gaussian.Norm.Basic.normSq_mul,
-      Geometric.Basic.quarterRadius_eq_mul_pow]
+    rw [identity, Basic.normSq_mul,
+      Basic.quarterRadius_eq_mul_pow]
     unfold
-      Purelib.Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Scale.scaledDynamicLocalExpLogChartErrorScale
+      scaledDynamicLocalExpLogChartErrorScale
     calc
-      Data.Gaussian.Norm.Basic.normSq
+      Basic.normSq
           (Reconstruction.dynamicLocalExpLogChartSample input later -
-            Reconstruction.dynamicLocalExpLogChartSample input earlier) * Data.Gaussian.Norm.Basic.normSq
+            Reconstruction.dynamicLocalExpLogChartSample input earlier) * Basic.normSq
               factor ≤
         (Reconstruction.dynamicLocalExpLogChartApproximationScale *
-            (1 / 4 : Fraction.Rational) ^ earlier) * Data.Gaussian.Norm.Basic.normSq factor :=
+            (1 / 4 : Fraction.Rational) ^ earlier) * Basic.normSq factor :=
           Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-            movementScaled (Data.Gaussian.Norm.Basic.normSq_nonneg factor)
-      _ = Reconstruction.dynamicLocalExpLogChartApproximationScale * Data.Gaussian.Norm.Basic.normSq factor *
+            movementScaled (Basic.normSq_nonneg factor)
+      _ = Reconstruction.dynamicLocalExpLogChartApproximationScale * Basic.normSq factor *
           (1 / 4 : Fraction.Rational) ^ earlier := by ring1
   refineIndex current target _ :=
     Search.firstQuarterBelow
@@ -134,24 +136,24 @@ theorem scaledDynamicLocalExpLogChartErrorScale_nonneg (factor : Data.Gaussian.B
 
         (scaledDynamicLocalExpLogChartErrorScale
         factor)
-      (Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Scale.scaledDynamicLocalExpLogChartErrorScale_nonneg
+      (scaledDynamicLocalExpLogChartErrorScale_nonneg
         factor)
-  centerBound := Reconstruction.dynamicLocalExpLogChartCenterBound * Data.Gaussian.Norm.Basic.normSq factor
+  centerBound := Reconstruction.dynamicLocalExpLogChartCenterBound * Basic.normSq factor
   centerBound_nonneg :=
     Fraction.Order.Arithmetic.mul_nonneg_direct
-      Reconstruction.dynamicLocalExpLogChartCenterBound_nonneg (Data.Gaussian.Norm.Basic.normSq_nonneg factor)
+      Reconstruction.dynamicLocalExpLogChartCenterBound_nonneg (Basic.normSq_nonneg factor)
   sample_bounded := by
     intro depth
-    rw [Data.Gaussian.Norm.Basic.normSq_mul]
+    rw [Basic.normSq_mul]
     exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
       ((Reconstruction.dynamicLocalExpLogChartApproximation input disk).sample_bounded depth)
-      (Data.Gaussian.Norm.Basic.normSq_nonneg factor)
+      (Basic.normSq_nonneg factor)
 
 /-- Sampling the scaled reconstruction multiplies the original chart sample by the constant factor at the same index. -/
 @[simp] theorem scaledDynamicLocalExpLogChartApproximation_sample
-    (input : Gaussian.Name.Basic.Named) (disk : Domain.Disk input)
+    (input : Name.Basic.Named) (disk : Domain.Disk input)
     (factor : Data.Gaussian.Basic.Canonical) (depth : Nat) :
-    (Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Scale.scaledDynamicLocalExpLogChartApproximation input
+    (scaledDynamicLocalExpLogChartApproximation input
       disk factor).sample
         depth =
       (Reconstruction.dynamicLocalExpLogChartApproximation input disk).sample depth *
@@ -161,14 +163,14 @@ theorem scaledDynamicLocalExpLogChartErrorScale_nonneg (factor : Data.Gaussian.B
 
 /-- Rational branch scaling preserves the finite Möbius reconstruction congruence, with a direct zero-factor branch and
 an explicit norm budget otherwise. -/
-@[expose] def scaledDynamicLocalExpLogChartApproximation_respects {left right : Gaussian.Name.Basic.Named}
+@[expose] def scaledDynamicLocalExpLogChartApproximation_respects {left right : Name.Basic.Named}
     (leftDisk : Domain.Disk left)
     (rightDisk : Domain.Disk right)
-    (factor : Data.Gaussian.Basic.Canonical) (equivalent : Gaussian.Equivalence.NamedEquivalent left right) :
-    Gaussian.Equivalence.Equivalent
-      (Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Scale.scaledDynamicLocalExpLogChartApproximation
+    (factor : Data.Gaussian.Basic.Canonical) (equivalent : NamedEquivalent left right) :
+    Equivalent
+      (scaledDynamicLocalExpLogChartApproximation
         left leftDisk factor)
-      (Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Scale.scaledDynamicLocalExpLogChartApproximation
+      (scaledDynamicLocalExpLogChartApproximation
         right rightDisk factor) := by
   by_cases factorZero : factor = 0
   · subst factor
@@ -177,16 +179,16 @@ an explicit norm budget otherwise. -/
       change Reconstruction.dynamicLocalExpLogChartSample left index * 0 =
         Reconstruction.dynamicLocalExpLogChartSample right index * 0
       apply Data.Gaussian.Basic.ext <;>
-        simp only [Purelib.Data.Gaussian.Basic.mul_re, Purelib.Data.Gaussian.Basic.mul_im,
-          Purelib.Data.Gaussian.Basic.zero_re, Purelib.Data.Gaussian.Basic.zero_im] <;> ring1)
+        simp only [Data.Gaussian.Basic.mul_re, Data.Gaussian.Basic.mul_im,
+          Data.Gaussian.Basic.zero_re, Data.Gaussian.Basic.zero_im] <;> ring1)
   · let sourceEquivalent :=
       Reconstruction.dynamicLocalExpLogChartApproximation_respects
         leftDisk rightDisk equivalent
     exact
       { compare := by
           intro leftStart rightStart target positive
-          let factorNorm := Data.Gaussian.Norm.Basic.normSq factor
-          have factorPositive : 0 < factorNorm := Data.Gaussian.Norm.Basic.normSq_pos factorZero
+          let factorNorm := Basic.normSq factor
+          have factorPositive : 0 < factorNorm := Basic.normSq_pos factorZero
           let sourceTarget := target / factorNorm
           have sourcePositive : 0 < sourceTarget :=
             Fraction.Order.Field.div_pos_direct positive factorPositive
@@ -207,15 +209,15 @@ an explicit norm budget otherwise. -/
                         Reconstruction.dynamicLocalExpLogChartSample right rightLater) *
                           factor := by
                   apply Data.Gaussian.Basic.ext <;>
-                    simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-                      Purelib.Data.Gaussian.Basic.mul_re, Purelib.Data.Gaussian.Basic.mul_im] <;> ring1
-                change Data.Gaussian.Norm.Basic.normSq
+                    simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+                      Data.Gaussian.Basic.mul_re, Data.Gaussian.Basic.mul_im] <;> ring1
+                change Basic.normSq
                     (Reconstruction.dynamicLocalExpLogChartSample left leftLater * factor -
                       Reconstruction.dynamicLocalExpLogChartSample right rightLater * factor) <
                     target
-                rw [identity, Data.Gaussian.Norm.Basic.normSq_mul]
+                rw [identity, Basic.normSq_mul]
                 calc
-                  Data.Gaussian.Norm.Basic.normSq
+                  Basic.normSq
                         (Reconstruction.dynamicLocalExpLogChartSample left leftLater -
                           Reconstruction.dynamicLocalExpLogChartSample right rightLater) *
                       factorNorm < sourceTarget * factorNorm :=
@@ -227,14 +229,14 @@ an explicit norm budget otherwise. -/
 
 /-- Productive names of equally scaled chart reconstructions preserve operational equivalence of the original reduced
 inputs. -/
-@[expose] def scaledDynamicLocalExpLogChartNamed_respects {left right : Gaussian.Name.Basic.Named}
+@[expose] def scaledDynamicLocalExpLogChartNamed_respects {left right : Name.Basic.Named}
     (leftDisk : Domain.Disk left)
     (rightDisk : Domain.Disk right)
-    (factor : Data.Gaussian.Basic.Canonical) (equivalent : Gaussian.Equivalence.NamedEquivalent left right) :
-    Gaussian.Equivalence.NamedEquivalent
-      (Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Scale.scaledDynamicLocalExpLogChartApproximation
+    (factor : Data.Gaussian.Basic.Canonical) (equivalent : NamedEquivalent left right) :
+    NamedEquivalent
+      (scaledDynamicLocalExpLogChartApproximation
         left leftDisk factor).toNamed
-      (Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Scale.scaledDynamicLocalExpLogChartApproximation
+      (scaledDynamicLocalExpLogChartApproximation
         right rightDisk factor).toNamed :=
   Equivalence.approximationEquivalent_toNamed
 

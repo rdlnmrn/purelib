@@ -6,14 +6,18 @@ import Purelib.Approximation.Gaussian.Equivalence.Zero
 
 public import Purelib.Approximation.Gaussian.Acquisition.Provenance
 import Purelib.Examples.Approximation.Gaussian.Provenance.Rational.Cancellation
-public import Test.RootIsolation.SquareRoot.Sidecar
+public import Purelib.Examples.RootIsolation.SquareRoot.Provenance
 import Purelib.Approximation.Gaussian.Division.Prepared.Decision.Laws
 
 @[expose] public section
 
-/-! # Regression clients through the public finite-acquisition interface -/
+/-!
+Rational and square-root provenance for the same exact cancellation channel.
+-/
 
 namespace Purelib.Examples.Approximation.Gaussian.Acquisition.Provenance.WorkedExamples
+
+open Purelib.Examples.RootIsolation.SquareRoot.Provenance (cancellationSidecar)
 
 open Purelib.Examples.Approximation.Gaussian.Division.Bounded.WorkedExamples (oneInput tinyInput zeroInput)
 open Purelib.Approximation.Gaussian.Acquisition
@@ -29,7 +33,7 @@ def rationalCancellation :=
 /-- Square-root acquisition provenance for the same cancellation channel. -/
 def algebraicCancellation :=
   Approximation.Gaussian.Acquisition.Provenance.squareRoot
-  Test.RootIsolation.SquareRoot.Sidecar.cancellationSidecar
+  cancellationSidecar
 
 /-- Rational and square-root provenance agree on exact denominator readiness.
 

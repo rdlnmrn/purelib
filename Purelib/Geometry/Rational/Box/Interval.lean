@@ -63,7 +63,7 @@ theorem ofCoordinate_mem_intervalBox
   Data.Rat.Interval.Bounds) :
     (intervalBox interval).diagonalSq =
       (interval.upper - interval.lower) ^ 2 := by
-  simp only [Rational.Box.diagonalSq, intervalBox]
+  simp only [Rational.Box.diagonalSq_eq_original, intervalBox]
   ring1
 
 /-- Any two displayed points of one coordinate interval are no farther apart than its displayed width, in squared

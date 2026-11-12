@@ -7,6 +7,8 @@ public import Purelib.Polynomial.Winding.Polygon.Product
 import Purelib.Tactic.Ring
 import Purelib.Algebra.NatCast
 
+open Purelib.Polynomial.Dense.Gaussian.Monomial
+
 /-!
 # Positive coordinate powers on closed polygonal chains
 
@@ -31,14 +33,14 @@ list. -/
 public inductive ClosedPositivePowerFormula (base : Gaussian.Basic.Canonical)
     (vertices : List Gaussian.Basic.Canonical) : Nat → Prop
   /-- The first positive power is the coordinate polynomial itself. -/ | zero :
-    Purelib.Polynomial.Winding.Polygon.Power.ClosedPositivePowerFormula base vertices 0
+    Power.ClosedPositivePowerFormula base vertices 0
   /-- Retain the previous power certificate and the next multiplication's closed-chain product formula. -/ | succ
     {exponent : Nat}
-      (previous : Purelib.Polynomial.Winding.Polygon.Power.ClosedPositivePowerFormula base vertices exponent)
-      (product : Winding.Polygon.Product.ClosedProductFormula
+      (previous : Power.ClosedPositivePowerFormula base vertices exponent)
+      (product : Product.ClosedProductFormula
         (Dense.Gaussian.Power.Coordinate.coordinatePositivePower exponent)
-        Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial base vertices) :
-      Purelib.Polynomial.Winding.Polygon.Power.ClosedPositivePowerFormula base vertices (exponent + 1)
+        Coordinate.coordinatePolynomial base vertices) :
+      Power.ClosedPositivePowerFormula base vertices (exponent + 1)
 
 /-- Raising every vertex path value to the displayed positive power
 multiplies the raw closed-walk winding by that power.
@@ -47,28 +49,28 @@ The product identities telescope on the same closed chain. Induction on the reta
 exact natural cast multiplying its coordinate winding. -/
 public theorem closedRaw_coordinatePositivePower
     (base : Gaussian.Basic.Canonical) (vertices : List Gaussian.Basic.Canonical) :
-    ∀ (exponent : Nat), Winding.Polygon.Power.ClosedPositivePowerFormula base vertices exponent →
-      Winding.Polygon.Basic.closedRaw
+    ∀ (exponent : Nat), ClosedPositivePowerFormula base vertices exponent →
+      Basic.closedRaw
           (Dense.Gaussian.Power.Coordinate.coordinatePositivePower exponent)
           base vertices =
         ((exponent + 1 : Nat) : Int) *
-          Winding.Polygon.Basic.closedRaw Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial base vertices := by
+          Basic.closedRaw Coordinate.coordinatePolynomial base vertices := by
   intro exponent formula
   induction formula with
   | zero =>
-      change Winding.Polygon.Basic.closedRaw Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial
+      change Basic.closedRaw Coordinate.coordinatePolynomial
           base vertices = (1 : Int) *
-            Winding.Polygon.Basic.closedRaw Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial base vertices
+            Basic.closedRaw Coordinate.coordinatePolynomial base vertices
       ring1
   | @succ exponent previous product inductionHypothesis =>
-      have productWinding := Winding.Polygon.Product.closedRaw_mul_of_formula
+      have productWinding := Product.closedRaw_mul_of_formula
         (Dense.Gaussian.Power.Coordinate.coordinatePositivePower exponent)
-        Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial base vertices product
-      change Winding.Polygon.Basic.closedRaw
+        Coordinate.coordinatePolynomial base vertices product
+      change Basic.closedRaw
           (Dense.Gaussian.Power.Coordinate.coordinatePositivePower exponent *
-            Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial) base vertices =
+            Coordinate.coordinatePolynomial) base vertices =
         (((exponent + 1 + 1 : Nat) : Int) *
-          Winding.Polygon.Basic.closedRaw Dense.Gaussian.Monomial.Coordinate.coordinatePolynomial base vertices)
+          Basic.closedRaw Coordinate.coordinatePolynomial base vertices)
       rw [productWinding, inductionHypothesis]
       simp only [Algebra.NatCast.add, Nat.cast_one]
       ring1

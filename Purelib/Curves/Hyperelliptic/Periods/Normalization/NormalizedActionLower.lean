@@ -55,14 +55,14 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Gaussian.Norm.Basic (normSq_mul)
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus}
   (data : PeriodData curve) (bound :
     UniformActionBound data.aMatrix)
 
 /-- Embedding a retained nonzero rational vector gives a strictly positive finite Gaussian coefficient norm. -/
-theorem embedded_norm_positive (vector : QuadraticForm.RationalVector genus) (nonzero : QuadraticForm.NonzeroVector
+theorem embedded_norm_positive (vector : RationalVector genus) (nonzero : NonzeroVector
   vector) :
-    0 < PreparedObservationCoercivity.coefficientNormSq (Energy.gaussianVectorOfRational vector) := by
+    0 < coefficientNormSq (Energy.gaussianVectorOfRational vector) := by
   apply PreparedObservationCoercivity.coefficientNormSq_positive
   refine ⟨nonzero.index, ?_⟩
   rw [Energy.gaussianVectorOfRational_apply]
@@ -70,49 +70,49 @@ theorem embedded_norm_positive (vector : QuadraticForm.RationalVector genus) (no
 
 /-- The synchronized A-action of scaled normalized coefficients has norm equal to the inverse scalar squared norm times
 the original vector norm. -/
-theorem scaled_action_norm (index : Nat) (vector : QuadraticForm.RationalVector genus) :
-    Purelib.Riemann.Readings.PreparedObservationCoercivity.coefficientNormSq (Energy.periodCombination
-      (Purelib.LinearAlgebra.Gaussian.Energy.scaledNormalizedCoefficients data index vector)
-      (PeriodMatrix.sampledMatrix data.aMatrix index)) =
-    Data.Gaussian.Norm.Basic.normSq (Certificate.synchronizedScaledInverse data index).scalar *
-      Purelib.Riemann.Readings.PreparedObservationCoercivity.coefficientNormSq (Energy.gaussianVectorOfRational vector)
+theorem scaled_action_norm (index : Nat) (vector : RationalVector genus) :
+    coefficientNormSq (Energy.periodCombination
+      (Energy.scaledNormalizedCoefficients data index vector)
+      (sampledMatrix data.aMatrix index)) =
+    normSq (synchronizedScaledInverse data index).scalar *
+      coefficientNormSq (Energy.gaussianVectorOfRational vector)
       := by
   unfold Energy.scaledNormalizedCoefficients
   rw [Energy.periodCombination_scaled_a]
-  unfold PreparedObservationCoercivity.coefficientNormSq
-  rw [FiniteSum.Fin.sumFin_congr (fun row => by rw [Data.Vector.Basic.vectorOfFn_apply, ←
-    Data.Gaussian.Norm.Basic.normSq_eq_canonical, Data.Gaussian.Norm.Basic.normSq_mul,
+  unfold coefficientNormSq
+  rw [sumFin_congr (fun row => by rw [vectorOfFn_apply, ←
+    Data.Gaussian.Norm.Basic.normSq_eq_canonical, normSq_mul,
     Data.Gaussian.Norm.Basic.normSq_eq_canonical])]
-  rw [FiniteSum.Fin.sumFin_mul_right]
+  rw [sumFin_mul_right]
   exact _root_.mul_comm _ _
 
 /-- A retained uniform A-action bound transports the raw energy floor to normalized coordinates.
 
 The original scalar squared norm and action scale remain explicit positive denominators; the conclusion uses the same
 synchronized coefficients and sampled energy. -/
-theorem normalized_lower (index : Nat) (vector : QuadraticForm.RationalVector genus)
-    (scalarPositive : 0 < Data.Gaussian.Norm.Basic.normSq (Certificate.synchronizedScaledInverse data
+theorem normalized_lower (index : Nat) (vector : RationalVector genus)
+    (scalarPositive : 0 < normSq (synchronizedScaledInverse data
       index).scalar)
-    (lower : Fraction.Rational) (lowerNonnegative : 0 ≤ lower) (energy : Fraction.Rational)
-    (energyLower : lower * PreparedObservationCoercivity.coefficientNormSq (Energy.scaledNormalizedCoefficients data
+    (lower : Rational) (lowerNonnegative : 0 ≤ lower) (energy : Rational)
+    (energyLower : lower * coefficientNormSq (Energy.scaledNormalizedCoefficients data
       index vector) ≤ energy) :
-    lower * PreparedObservationCoercivity.coefficientNormSq (Energy.gaussianVectorOfRational vector) / bound.scale ≤
-      energy / Data.Gaussian.Norm.Basic.normSq (Certificate.synchronizedScaledInverse data index).scalar := by
+    lower * coefficientNormSq (Energy.gaussianVectorOfRational vector) / bound.scale ≤
+      energy / normSq (synchronizedScaledInverse data index).scalar := by
   have action := bound.action_bound index (Energy.scaledNormalizedCoefficients data index vector)
   rw [scaled_action_norm] at action
   have multiplied := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct action lowerNonnegative
   have energyBound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct energyLower bound.scale_positive.le
   apply (Fraction.Order.Field.le_div_iff_pos scalarPositive).mpr
   calc
-    _ = (lower * (Data.Gaussian.Norm.Basic.normSq (Certificate.synchronizedScaledInverse data index).scalar *
-        PreparedObservationCoercivity.coefficientNormSq (Energy.gaussianVectorOfRational vector))) / bound.scale := by
+    _ = (lower * (normSq (synchronizedScaledInverse data index).scalar *
+        coefficientNormSq (Energy.gaussianVectorOfRational vector))) / bound.scale := by
       simp only [Fraction.Field.div_eq_mul_inv_direct]
       ring1
     _ ≤ energy := (Fraction.Order.Field.div_le_iff_pos bound.scale_positive).mpr (by
       calc
-        _ ≤ lower * (bound.scale * PreparedObservationCoercivity.coefficientNormSq (Energy.scaledNormalizedCoefficients
+        _ ≤ lower * (bound.scale * coefficientNormSq (Energy.scaledNormalizedCoefficients
           data index vector)) := multiplied
-        _ = bound.scale * (lower * PreparedObservationCoercivity.coefficientNormSq (Energy.scaledNormalizedCoefficients
+        _ = bound.scale * (lower * coefficientNormSq (Energy.scaledNormalizedCoefficients
           data index vector)) := by
           ring1
         _ ≤ bound.scale * energy := energyBound

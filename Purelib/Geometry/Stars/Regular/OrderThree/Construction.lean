@@ -39,11 +39,11 @@ any appeal to a global collection of lines.
 
 namespace Purelib.Geometry.Stars.Regular.OrderThree.Construction
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 /-- The second explicit line `⟨r:1:0⟩`. -/
 def orderThreeLine₁ [Nontrivial K] (root : K) :
-  Plane.Line K where
+  Line K where
   a := root
   b := 1
   c := 0
@@ -51,7 +51,7 @@ def orderThreeLine₁ [Nontrivial K] (root : K) :
 
 /-- The third explicit line `⟨-r:1:0⟩`. -/
 def orderThreeLine₂ [Nontrivial K] (root : K) :
-  Plane.Line K where
+  Line K where
   a := -root
   b := 1
   c := 0
@@ -60,8 +60,8 @@ def orderThreeLine₂ [Nontrivial K] (root : K) :
 /-- The source's three displayed lines form a regular star whenever `3 = r²` with `r ≠ 0`. -/
 def orderThreeStar [Nontrivial K] [DecidableEq K]
     (root : K) (rootNonzero : root ≠ 0) (threeSquare : (3 : K) = root ^ 2)
-    (twoNonzero : (2 : K) ≠ 0) : OrderThree.Basic.RegularThreeStar K where
-  line₀ := Purelib.Geometry.Plane.Line.Basic.xAxis
+    (twoNonzero : (2 : K) ≠ 0) : Basic.RegularThreeStar K where
+  line₀ := Line.Basic.xAxis
   line₁ := orderThreeLine₁ root
   line₂ := orderThreeLine₂ root
   line₀NonNull := by
@@ -86,16 +86,16 @@ def orderThreeStar [Nontrivial K] [DecidableEq K]
   line₀Line₁Nonparallel := by
     intro parallel
     apply rootNonzero
-    unfold Purelib.Geometry.Plane.Line.Parallel Purelib.Geometry.Plane.Line.Basic.xAxis
+    unfold Line.Parallel Line.Basic.xAxis
       orderThreeLine₁ at parallel
     calc
       root = -(0 * 1 - root * 1) := by ring1
       _ = 0 := by rw [parallel]; ring1
   line₁Line₂Nonparallel := by
     intro parallel
-    have productNonzero := Algebra.Field.ExplicitField.mul_ne_zero twoNonzero rootNonzero
+    have productNonzero := ExplicitField.mul_ne_zero twoNonzero rootNonzero
     apply productNonzero
-    unfold Purelib.Geometry.Plane.Line.Parallel
+    unfold Line.Parallel
       orderThreeLine₁
       orderThreeLine₂ at parallel
     calc
@@ -104,25 +104,25 @@ def orderThreeStar [Nontrivial K] [DecidableEq K]
   line₂Line₀Nonparallel := by
     intro parallel
     apply rootNonzero
-    unfold Purelib.Geometry.Plane.Line.Parallel
+    unfold Line.Parallel
       orderThreeLine₂
-      Purelib.Geometry.Plane.Line.Basic.xAxis at parallel
+      Line.Basic.xAxis at parallel
     calc
       root = -((-root) * 1 - 0 * 1) := by ring1
       _ = 0 := by rw [parallel]; ring1
   reflectAround₀ := by
-    unfold Purelib.Geometry.Plane.Line.Equivalent
+    unfold Line.Equivalent
     simp only [Line.reflectLine, Line.reflectedLineA, Line.reflectedLineB, Line.reflectedLineC,
-      Line.Basic.lineNorm, Purelib.Geometry.Plane.Line.Basic.xAxis,
+      Line.Basic.lineNorm, Line.Basic.xAxis,
         orderThreeLine₁,
         orderThreeLine₂]
     constructor
     · ring1
     constructor <;> ring1
   reflectAround₁ := by
-    unfold Purelib.Geometry.Plane.Line.Equivalent
+    unfold Line.Equivalent
     simp only [Line.reflectLine, Line.reflectedLineA, Line.reflectedLineB, Line.reflectedLineC,
-      Line.Basic.lineNorm, Purelib.Geometry.Plane.Line.Basic.xAxis,
+      Line.Basic.lineNorm, Line.Basic.xAxis,
         orderThreeLine₁,
         orderThreeLine₂]
     constructor
@@ -130,9 +130,9 @@ def orderThreeStar [Nontrivial K] [DecidableEq K]
       ring1
     constructor <;> ring1
   reflectAround₂ := by
-    unfold Purelib.Geometry.Plane.Line.Equivalent
+    unfold Line.Equivalent
     simp only [Line.reflectLine, Line.reflectedLineA, Line.reflectedLineB, Line.reflectedLineC,
-      Line.Basic.lineNorm, Purelib.Geometry.Plane.Line.Basic.xAxis,
+      Line.Basic.lineNorm, Line.Basic.xAxis,
         orderThreeLine₁,
         orderThreeLine₂]
     constructor

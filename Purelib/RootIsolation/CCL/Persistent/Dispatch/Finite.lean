@@ -46,6 +46,10 @@ import Purelib.RootIsolation.Curve.Boundary.Inspection
 import Purelib.RootIsolation.Curve.Chart.Analysis
 import Purelib.RootIsolation.State.WindingOne.Basic
 
+open Purelib.Geometry.CCL.Parser
+
+open Purelib.Geometry.Projective
+
 open Purelib.Geometry.Projective.Hermitian (Atom)
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 open Purelib.RootIsolation.CCL.Persistent.Terminal.Prepare (SourcePersistentDispatchPreparedAlias)
@@ -81,10 +85,10 @@ raw prefix.  The list deliberately retains duplicates: erasing the first
 occurrence of a newly resolved form still gives a strict natural measure,
 and the cache prevents that form from being returned again. -/
 @[expose] def candidateForms (word : List Bool) : List
-  Geometry.Projective.Hermitian.HermitianForm :=
+  Hermitian.HermitianForm :=
   let parser := Data.CCL.Encoding.Parser.State.parse word
-  (((Geometry.CCL.Parser.Formula.inputIncrementalAdvanceFormula parser false).atoms ++
-    (Geometry.CCL.Parser.Formula.inputIncrementalAdvanceFormula parser true).atoms).map
+  (((Formula.inputIncrementalAdvanceFormula parser false).atoms ++
+    (Formula.inputIncrementalAdvanceFormula parser true).atoms).map
       fun atom => atom.form)
 
 /-- Every atom of either original child formula has its form in the retained candidate multiset. -/
@@ -92,7 +96,7 @@ theorem form_mem_candidateForms
     (word : List Bool) (bit : Bool)
     {atom : Atom}
     (member : atom ∈
-      (Geometry.CCL.Parser.Formula.inputIncrementalAdvanceFormula
+      (Formula.inputIncrementalAdvanceFormula
         (Data.CCL.Encoding.Parser.State.parse word) bit).atoms) :
     atom.form ∈ candidateForms word := by
   apply Data.List.Map.mem_map.mpr
@@ -107,10 +111,10 @@ finite-boundary refinements to the dispatcher input. -/
     {p : CoefficientPolynomial} {ambient : Box}
     {current : State p ambient} (prepared :
       SourcePersistentDispatchPreparedAlias current)
-    (stable : CCL.Persistent.Next.Strict.StableNext prepared.state) :
-    CCL.Persistent.Controller.Basic.SourcePersistentDispatchStepResultAlias current :=
+    (stable : Next.Strict.StableNext prepared.state) :
+    Controller.Basic.SourcePersistentDispatchStepResultAlias current :=
   .next stable.bit stable.state prepared.boxRefines (by
-    rw [CCL.Persistent.Next.Strict.StableNext.state_word,
+    rw [Next.Strict.StableNext.state_word,
       prepared.word_eq])
 
 /-- The exact dependent input tuple for finite boundary dispatch.
@@ -122,14 +126,14 @@ complete coverage of both original child formulas. -/
   CoefficientPolynomial} {ambient : Box}
     (current : State p ambient) :=
   PSigma fun prepared : SourcePersistentDispatchPreparedAlias current =>
-  PSigma fun _denominator : CCL.Persistent.Dispatch.Basic.DenominatorCertificate prepared =>
-  PSigma fun unresolved : List Geometry.Projective.Hermitian.HermitianForm =>
-  PSigma fun overrides : List (Geometry.Projective.Hermitian.Formula.Box.FormOverride prepared.state.numerical.box) =>
+  PSigma fun _denominator : Basic.DenominatorCertificate prepared =>
+  PSigma fun unresolved : List Hermitian.HermitianForm =>
+  PSigma fun overrides : List (Hermitian.Formula.Box.FormOverride prepared.state.numerical.box) =>
   ∀ (bit : Bool) (atom : Atom),
-      atom ∈ (Geometry.CCL.Parser.Formula.inputIncrementalAdvanceFormula
+      atom ∈ (Formula.inputIncrementalAdvanceFormula
         (Data.CCL.Encoding.Parser.State.parse prepared.state.word) bit).atoms →
       atom.form ∈ unresolved ∨
-        Geometry.Projective.Hermitian.Formula.Box.findFormOverride
+        Hermitian.Formula.Box.findFormOverride
           overrides atom.form ≠ none
 
 /-- Resolve the retained finite boundary forms until a step is decided or a genuine curve boundary remains.
@@ -142,9 +146,9 @@ form certificate to the cache and erases one unresolved occurrence. -/
     (track : Track.Basic.WindingOneTrack p ambient)
     {current : State p ambient}
     (input : FiniteDispatchInput current) :
-    CCL.Persistent.Dispatch.Basic.Outcome current := by
+    Basic.Outcome current := by
   rcases input with ⟨prepared, denominator, unresolved, overrides, covered⟩
-  match CCL.Persistent.Boundary.inspectNextWith prepared.state
+  match Boundary.inspectNextWith prepared.state
       denominator.margin denominator.margin_pos overrides with
   | .terminal terminal =>
       have impossible : False := by
@@ -165,7 +169,7 @@ form certificate to the cache and erases one unresolved occurrence. -/
             rcases covered next.bit next.atom next.member with member | found
             · exact member
             · exact (found notResolved).elim
-          match CCL.Persistent.Boundary.resolve degreePositive
+          match Boundary.resolve degreePositive
               track prepared.state next.atom points complete nonnegative with
           | .exact root =>
               exact .decided (.exact
@@ -179,7 +183,7 @@ form certificate to the cache and erases one unresolved occurrence. -/
                   word_eq := wordEq.trans prepared.word_eq
                   canContinue := fun sample => by
                     let priorSample :
-                        CCL.Persistent.Sample.Basic.CompatibleSample
+                        Sample.Basic.CompatibleSample
                           prepared.state.word prepared.state.numerical.box :=
                       { point := sample.point
                         inside := boxRefines.contains sample.inside
@@ -192,23 +196,23 @@ form certificate to the cache and erases one unresolved occurrence. -/
               let refinedOverrides :=
                 overrides.map fun override => override.refine boxRefines
               let nextOverrides : List
-                  (Geometry.Projective.Hermitian.Formula.Box.FormOverride nextPrepared.state.numerical.box) :=
+                  (Hermitian.Formula.Box.FormOverride nextPrepared.state.numerical.box) :=
                 stability :: refinedOverrides
               let nextUnresolved := Data.List.Erase.eraseForm next.atom.form unresolved
               have nextCovered : ∀ (bit : Bool)
                   (other : Atom),
                   other ∈
-                    (Geometry.CCL.Parser.Formula.inputIncrementalAdvanceFormula
+                    (Formula.inputIncrementalAdvanceFormula
                       (Data.CCL.Encoding.Parser.State.parse
                         nextPrepared.state.word) bit).atoms →
                   other.form ∈ nextUnresolved ∨
-                    Geometry.Projective.Hermitian.Formula.Box.findFormOverride
+                    Hermitian.Formula.Box.findFormOverride
                       nextOverrides other.form ≠ none := by
                 intro bit other member
                 have sameWord : nextPrepared.state.word =
                     prepared.state.word := wordEq
                 have priorMember : other ∈
-                    (Geometry.CCL.Parser.Formula.inputIncrementalAdvanceFormula
+                    (Formula.inputIncrementalAdvanceFormula
                       (Data.CCL.Encoding.Parser.State.parse
                         prepared.state.word) bit).atoms := by
                   simpa only [sameWord, -eq_self, -iff_self] using member
@@ -218,19 +222,19 @@ form certificate to the cache and erases one unresolved occurrence. -/
                     have headEqual : stability.form = other.form := by
                       rw [formEq]
                       exact equal.symm
-                    change Geometry.Projective.Hermitian.Formula.Box.findFormOverride
+                    change Hermitian.Formula.Box.findFormOverride
                       (stability :: refinedOverrides) other.form ≠ none
-                    rewrite [Geometry.Projective.Hermitian.Formula.Box.findFormOverride, dif_pos headEqual]
+                    rewrite [Hermitian.Formula.Box.findFormOverride, dif_pos headEqual]
                     intro impossible
                     cases impossible
                   · left
                     exact Data.List.Erase.mem_eraseForm_of_ne equal candidate
                 · right
-                  exact Geometry.Projective.Hermitian.BoxSign.Cache.findFormOverride_cons_ne_none stability
+                  exact Hermitian.BoxSign.Cache.findFormOverride_cons_ne_none stability
                     refinedOverrides other.form
-                    (Geometry.Projective.Hermitian.BoxSign.Cache.findFormOverride_refine_ne_none overrides boxRefines
+                    (Hermitian.BoxSign.Cache.findFormOverride_refine_ne_none overrides boxRefines
                       other.form found)
-              let nextDenominator : CCL.Persistent.Dispatch.Basic.DenominatorCertificate nextPrepared :=
+              let nextDenominator : Basic.DenominatorCertificate nextPrepared :=
                 { margin := denominator.margin
                   margin_pos := denominator.margin_pos
                   lower := by

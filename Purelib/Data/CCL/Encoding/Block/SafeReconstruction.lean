@@ -51,7 +51,7 @@ open Purelib.Data.Gaussian
 open Purelib.Geometry.Projective
 /-- A regular block maps a retained safe tail to the affine target obtained by its exact gamma-power scaling. -/
 theorem regularBlock_act_equivalent {sector :
-  Data.ComplexContinuedFraction.Encoding.Sector} (exponent : Nat)
+  Sector} (exponent : Nat)
     (tail : Tail sector) (value target : Basic.Canonical)
     (models : tail.ModelsValue value)
     (targetIdentity : Power.natPow Basic.Canonical.gamma exponent * value = target) :
@@ -91,7 +91,7 @@ theorem regularBlock_act_equivalent {sector :
 /-- An initial-low block maps a retained safe tail to the affine target whose gamma-power scaling is the modeled value.
 -/
 theorem lowBlock_act_equivalent {sector :
-  Data.ComplexContinuedFraction.Encoding.Sector} (exponent : Nat)
+  Sector} (exponent : Nat)
     (tail : Tail sector) (value target : Basic.Canonical)
     (models : tail.ModelsValue value)
     (sourceIdentity : value = Power.natPow Basic.Canonical.gamma exponent * target) :
@@ -156,19 +156,19 @@ open Purelib.Geometry.Projective
 open Purelib.Geometry.Rational
 /-- A safe nonzero normalized residual gives exact inverse-block reconstruction and a tail squared norm above one. -/
 theorem safeBlock_sufficient
-    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (sector : Data.ComplexContinuedFraction.Encoding.Sector) (value :
+    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (sector : Sector) (value :
       Basic.Canonical)
-    (safe : Geometry.Rational.Sector.Eight.Safe sector
+    (safe : Sector.Eight.Safe sector
       (Parser.Semantics.Basic.normalizedValue kind exponent value))
     (residualNonzero :
       Parser.Semantics.Basic.normalizedValue kind exponent value - sector.rep ≠ 0) :
     Homography.Basic.homographic (Block.Matrix.blockMatrix kind exponent sector)
         ((Basic.Canonical.gamma *
           (Parser.Semantics.Basic.normalizedValue kind exponent value - sector.rep))⁻¹) = value ∧
-      1 < Data.Gaussian.Norm.Basic.normSq
+      1 < Norm.Basic.normSq
         ((Basic.Canonical.gamma *
           (Parser.Semantics.Basic.normalizedValue kind exponent value - sector.rep))⁻¹) :=
-  ⟨Block.Semantics.block_homographic_inverse
+  ⟨Semantics.block_homographic_inverse
       kind exponent sector value residualNonzero,
     Sector.Eight.Inversion.postInversion_norm_gt_one
       safe residualNonzero⟩
@@ -178,33 +178,33 @@ theorem safeBlock_sufficient
 The output keeps the supplied sector and the original normalized value. The existing safe-tail constructor handles
 terminal and nonterminal residuals without replacing the witnesses. -/
 def safeBlockTail
-    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (sector : Data.ComplexContinuedFraction.Encoding.Sector) (value :
+    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (sector : Sector) (value :
       Basic.Canonical)
-    (normLower : 1 ≤ Data.Gaussian.Norm.Basic.normSq (Parser.Semantics.Basic.normalizedValue kind exponent value))
-    (safe : Geometry.Rational.Sector.Eight.Safe sector
+    (normLower : 1 ≤ Norm.Basic.normSq (Parser.Semantics.Basic.normalizedValue kind exponent value))
+    (safe : Sector.Eight.Safe sector
       (Parser.Semantics.Basic.normalizedValue kind exponent value)) :
-    Geometry.Projective.SectorBlock.Safe.Tail sector :=
-  Geometry.Projective.SectorBlock.Safe.Tail.ofSafe sector
+    SectorBlock.Safe.Tail sector :=
+  SectorBlock.Safe.Tail.ofSafe sector
     (Parser.Semantics.Basic.normalizedValue kind exponent value) normLower safe
 
 /-- The constructed safe tail models the exact original normalized value. -/
 theorem safeBlockTail_models
-    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (sector : Data.ComplexContinuedFraction.Encoding.Sector) (value :
+    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (sector : Sector) (value :
       Basic.Canonical)
-    (normLower : 1 ≤ Data.Gaussian.Norm.Basic.normSq (Parser.Semantics.Basic.normalizedValue kind exponent value))
-    (safe : Geometry.Rational.Sector.Eight.Safe sector
+    (normLower : 1 ≤ Norm.Basic.normSq (Parser.Semantics.Basic.normalizedValue kind exponent value))
+    (safe : Sector.Eight.Safe sector
       (Parser.Semantics.Basic.normalizedValue kind exponent value)) :
     (safeBlockTail kind exponent sector value normLower safe).ModelsValue
       (Parser.Semantics.Basic.normalizedValue kind exponent value) :=
-  Geometry.Projective.SectorBlock.Safe.Tail.ofSafe_models sector
+  SectorBlock.Safe.Tail.ofSafe_models sector
     (Parser.Semantics.Basic.normalizedValue kind exponent value) normLower safe
 
 /-- The retained block matrix sends the constructed safe tail to a projectively equivalent original affine value. -/
 theorem safeBlockTail_exact
-    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (sector : Data.ComplexContinuedFraction.Encoding.Sector) (value :
+    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (sector : Sector) (value :
       Basic.Canonical)
-    (normLower : 1 ≤ Data.Gaussian.Norm.Basic.normSq (Parser.Semantics.Basic.normalizedValue kind exponent value))
-    (safe : Geometry.Rational.Sector.Eight.Safe sector
+    (normLower : 1 ≤ Norm.Basic.normSq (Parser.Semantics.Basic.normalizedValue kind exponent value))
+    (safe : Sector.Eight.Safe sector
       (Parser.Semantics.Basic.normalizedValue kind exponent value)) :
     Line.Proj.Equivalent
       (Line.Matrix.act (Block.Matrix.blockMatrix kind exponent sector)
@@ -216,7 +216,7 @@ theorem safeBlockTail_exact
   cases kind with
   | initialLow =>
       exact
-        Geometry.Projective.SectorBlock.Safe.Tail.lowBlock_act_equivalent
+        SectorBlock.Safe.Tail.lowBlock_act_equivalent
           exponent tail (Parser.Semantics.Basic.normalizedValue .initialLow exponent value) value
           models rfl
   | initialHigh | loop =>
@@ -237,16 +237,16 @@ theorem safeBlockTail_exact
           _ = value := by
             rw [cancellation, Basic.mul_one]
       simpa only [Block.Matrix.blockMatrix] using
-        Geometry.Projective.SectorBlock.Safe.Tail.regularBlock_act_equivalent
+        SectorBlock.Safe.Tail.regularBlock_act_equivalent
           exponent tail (Parser.Semantics.Basic.normalizedValue .initialHigh exponent value) value
           models targetIdentity
 
 /-- The retained safe homogeneous residual reconstructs the original affine value through the exact block matrix. -/
 theorem safeBlockHomogeneous_exact
-    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (sector : Data.ComplexContinuedFraction.Encoding.Sector) (value :
+    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (sector : Sector) (value :
       Basic.Canonical)
-    (normLower : 1 ≤ Data.Gaussian.Norm.Basic.normSq (Parser.Semantics.Basic.normalizedValue kind exponent value))
-    (safe : Geometry.Rational.Sector.Eight.Safe sector
+    (normLower : 1 ≤ Norm.Basic.normSq (Parser.Semantics.Basic.normalizedValue kind exponent value))
+    (safe : Sector.Eight.Safe sector
       (Parser.Semantics.Basic.normalizedValue kind exponent value)) :
     Line.Proj.Equivalent
       (Line.Matrix.act (Block.Matrix.blockMatrix kind exponent sector)
@@ -255,7 +255,7 @@ theorem safeBlockHomogeneous_exact
   let tail := safeBlockTail kind exponent sector value normLower safe
   have tailToHomogeneous : tail.point.Equivalent
       ⟨1, Basic.Canonical.gamma * (Parser.Semantics.Basic.normalizedValue kind exponent value - sector.rep)⟩ :=
-    Geometry.Projective.SectorBlock.Safe.Tail.ofSafe_point_equivalent_homogeneous
+    SectorBlock.Safe.Tail.ofSafe_point_equivalent_homogeneous
       sector (Parser.Semantics.Basic.normalizedValue kind exponent value) normLower safe
   have homogeneousToTail := Line.Matrix.act_respects_equivalent
     (Block.Matrix.blockMatrix kind exponent sector) tailToHomogeneous.symm

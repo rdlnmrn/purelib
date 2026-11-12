@@ -32,6 +32,8 @@ import Purelib.Riemann.Meshes.PuncturedGridFaces
 import Purelib.Riemann.Paths.PreparedPathDecomposition
 import Purelib.Riemann.Paths.PreparedPathParentCaches
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis
+
 open Purelib.Curves
 
 open Purelib.Riemann
@@ -43,15 +45,15 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Paren
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
@@ -59,30 +61,30 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
 
 Both selections use the original occurrence and parent position, including their exact parent transport. -/
 theorem parentInput_sources_eq (retained :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared) {firstIndex lastIndex :
+  Preparation.CommonBasisPreparation prepared) {firstIndex lastIndex :
   Nat}
     (first : retained.Inputs firstIndex) (last : retained.Inputs lastIndex)
     (outer : Fin prepared.occurrences.length)
-    (position : Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (position : Fin (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentInputs.parentInput retained first outer position).sources =
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentInputs.parentInput retained last outer position).sources
+    (ParentInputs.parentInput retained first outer position).sources =
+      (ParentInputs.parentInput retained last outer position).sources
       := by
-  have left := Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceStageReadback.SelectedInput.cast_sources
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.parentIndex_read prepared outer position)
-    (Hyperelliptic.Charts.Reciprocal.Disk.Basis.NumericalSelection.NumericalBank.select retained.anchors
-      retained.sources first (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.parentIndex prepared outer
+  have left := SourceStageReadback.SelectedInput.cast_sources
+    (ParentIndices.parentIndex_read prepared outer position)
+    (NumericalSelection.NumericalBank.select retained.anchors
+      retained.sources first (ParentIndices.parentIndex prepared outer
       position))
-  have right := Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceStageReadback.SelectedInput.cast_sources
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.parentIndex_read prepared outer position)
-    (Hyperelliptic.Charts.Reciprocal.Disk.Basis.NumericalSelection.NumericalBank.select retained.anchors
-      retained.sources last (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.parentIndex prepared outer
+  have right := SourceStageReadback.SelectedInput.cast_sources
+    (ParentIndices.parentIndex_read prepared outer position)
+    (NumericalSelection.NumericalBank.select retained.anchors
+      retained.sources last (ParentIndices.parentIndex prepared outer
       position))
   have middle := congrArg (Eq.mp (congrArg (fun parent =>
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent)
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.parentIndex_read prepared outer position)))
-    (Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceStageReadback.NumericalBank.select_sources_eq retained.anchors
-      retained.sources first last (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.parentIndex prepared
+    SourceLocations.BasisSourceCovers parent)
+    (ParentIndices.parentIndex_read prepared outer position)))
+    (SourceStageReadback.NumericalBank.select_sources_eq retained.anchors
+      retained.sources first last (ParentIndices.parentIndex prepared
       outer position))
   exact left.trans (middle.trans right.symm)
 

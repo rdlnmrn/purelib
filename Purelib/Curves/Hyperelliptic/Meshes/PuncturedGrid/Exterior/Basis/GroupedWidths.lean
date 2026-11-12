@@ -44,6 +44,8 @@ import Purelib.Riemann.Meshes.PuncturedGridFaces
 import Purelib.Riemann.Paths.PreparedPathDecomposition
 import Purelib.Riemann.Paths.PreparedPathParentCaches
 
+open Purelib.Data.List
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior
@@ -80,26 +82,26 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGr
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedSideReadback (groupSideFragments
   indexedSideFragments)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains (SourceChain)
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
+  {program : ExteriorProgram lifted
     differential} {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+    SurfacePreparation
     regular domains program}
 
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
-variable (retained : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation
+variable (retained : CommonBasisPreparation
   prepared) {index : Nat} (inputs : retained.Inputs index)
   (outer : Fin prepared.occurrences.length) {faceIndex : Nat}
-  (data : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (data : RowData
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) faceIndex)
   (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
 
@@ -120,47 +122,47 @@ end ParentFragment
 /-- Transporting original fragments to their common retained parent preserves every source-width bound. -/
 private theorem fragmentsAt_bounded
     (parent : Fin (ParentIndices.occurrenceAt prepared.occurrences outer).compared.entered.cache.parents.length)
-    (items : List (IndexedFragments.IndexedFragment retained inputs outer data coefficients))
-    (same : ∀ item ∈ items, item.parent = parent) {width : InverseRootPolynomial.Coordinate}
+    (items : List (IndexedFragment retained inputs outer data coefficients))
+    (same : ∀ item ∈ items, item.parent = parent) {width : Coordinate}
     (bounded : ∀ item ∈ items, item.fragment.sourceWidth ≤ width) :
     ∀ fragment ∈ IndexedRun.fragmentsAt parent items same, fragment.sourceWidth ≤ width := by
   induction items with
   | nil => intro _ member; cases member
   | cons item rest ih =>
     intro fragment member
-    rcases Purelib.Data.List.Membership.mem_cons.mp member with rfl | member
-    · exact (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedWidths.ParentFragment.castParent_width _
+    rcases Membership.mem_cons.mp member with rfl | member
+    · exact (ParentFragment.castParent_width _
         item.fragment).trans_le (bounded item List.mem_cons_self)
     · exact ih (fun found present => same found (List.mem_cons_of_mem item present))
         (fun found present => bounded found (List.mem_cons_of_mem item present)) fragment member
 
 /-- An original fragment of a retained member run belongs to the complete flattened run list. -/
-private theorem item_present (runs : List (FragmentGrouping.IndexedRun retained inputs outer data coefficients))
-    {run : FragmentGrouping.IndexedRun retained inputs outer data coefficients} (present : run ∈ runs)
-    {item : IndexedFragments.IndexedFragment retained inputs outer data coefficients} (member : item ∈ run.items) :
+private theorem item_present (runs : List (IndexedRun retained inputs outer data coefficients))
+    {run : IndexedRun retained inputs outer data coefficients} (present : run ∈ runs)
+    {item : IndexedFragment retained inputs outer data coefficients} (member : item ∈ run.items) :
     item ∈ (runs.map IndexedRun.items).flatten := by
   induction runs with
   | nil => cases present
   | cons first rest ih =>
-    rcases Purelib.Data.List.Membership.mem_cons.mp present with rfl | present
-    · exact Purelib.Data.List.Membership.mem_append.mpr (Or.inl member)
-    · exact Purelib.Data.List.Membership.mem_append.mpr (Or.inr (ih present))
+    rcases Membership.mem_cons.mp present with rfl | present
+    · exact Membership.mem_append.mpr (Or.inl member)
+    · exact Membership.mem_append.mpr (Or.inr (ih present))
 
 /-- The explicit finite maximum is bounded by any nonnegative common bound on the original values. -/
-private theorem maximum_le {Item : Type u} (value : Item → InverseRootPolynomial.Coordinate) (items : List Item)
-    {bound : InverseRootPolynomial.Coordinate} (nonnegative : 0 ≤ bound) (bounded : ∀ item ∈ items, value item ≤ bound)
+private theorem maximum_le {Item : Type u} (value : Item → Coordinate) (items : List Item)
+    {bound : Coordinate} (nonnegative : 0 ≤ bound) (bounded : ∀ item ∈ items, value item ≤ bound)
       :
     PairedFragmentBlocks.maximum value items ≤ bound := by
   induction items with
   | nil => exact nonnegative
   | cons first rest ih =>
-    exact Purelib.Data.Rat.Fraction.Order.Basic.max_le (bounded first List.mem_cons_self)
+    exact Data.Rat.Fraction.Order.Basic.max_le (bounded first List.mem_cons_self)
       (ih (fun item member => bounded item (List.mem_cons_of_mem _ member)))
 
 namespace IndexedGrouping
 variable {items : List
-  (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment retained inputs
-  outer data coefficients)} {width : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+  (IndexedFragment retained inputs
+  outer data coefficients)} {width : Coordinate}
 
 /-- Transport and maximal grouping preserve the paid forward mesh width. -/
 theorem width_bound (grouped : FragmentGrouping.IndexedGrouping retained inputs outer data coefficients items)
@@ -168,34 +170,34 @@ theorem width_bound (grouped : FragmentGrouping.IndexedGrouping retained inputs 
     ∀ run ∈ grouped.runs,
       PairedFragmentBlocks.maximum OwnedFragment.sourceWidth run.fragments ≤ width := by
   intro run present
-  apply Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedWidths.maximum_le _ _ nonnegative
-  apply Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedWidths.fragmentsAt_bounded run.parent run.items
+  apply GroupedWidths.maximum_le _ _ nonnegative
+  apply GroupedWidths.fragmentsAt_bounded run.parent run.items
     (fun _ member => run.parent_eq member)
   intro item member
   exact bounded item ((congrArg (fun entries => item ∈ entries) grouped.flattened).mp
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedWidths.item_present grouped.runs present member))
+    (GroupedWidths.item_present grouped.runs present member))
 
 end IndexedGrouping
 
 /-- Every original piece and stationary junction contributes its retained width. -/
 theorem indexedSideFragments_width {count : Nat}
-    (pieces : Fin (count + 1) → IndexedFragments.IndexedFragment retained inputs outer data coefficients)
-    (junctions : Fin count → IndexedFragments.IndexedFragment retained inputs outer data coefficients) {width :
-      InverseRootPolynomial.Coordinate}
+    (pieces : Fin (count + 1) → IndexedFragment retained inputs outer data coefficients)
+    (junctions : Fin count → IndexedFragment retained inputs outer data coefficients) {width :
+      Coordinate}
     (pieceBound : ∀ position, (pieces position).fragment.sourceWidth ≤ width)
     (junctionBound : ∀ position, (junctions position).fragment.sourceWidth ≤ width) :
     ∀ item ∈ GroupedSideReadback.indexedSideFragments pieces junctions, item.fragment.sourceWidth ≤ width := by
   induction count with
   | zero =>
     intro item member
-    rcases Purelib.Data.List.Membership.mem_cons.mp member with rfl | member
+    rcases Membership.mem_cons.mp member with rfl | member
     · exact pieceBound 0
     · cases member
   | succ count ih =>
     intro item member
-    rcases Purelib.Data.List.Membership.mem_cons.mp member with rfl | member
+    rcases Membership.mem_cons.mp member with rfl | member
     · exact pieceBound 0
-    rcases Purelib.Data.List.Membership.mem_cons.mp member with rfl | member
+    rcases Membership.mem_cons.mp member with rfl | member
     · exact junctionBound 0
     exact ih (fun position => pieces position.succ) (fun position => junctions position.succ)
       (fun position => pieceBound position.succ) (fun position => junctionBound position.succ) item member

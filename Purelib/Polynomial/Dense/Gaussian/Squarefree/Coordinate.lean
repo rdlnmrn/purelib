@@ -45,19 +45,19 @@ namespace Purelib.Polynomial.Dense.Gaussian.Squarefree.Coordinate
 
 Its derivative evaluates to one, yielding an explicit constant Bézout cofactor. -/
 def coordinateSquarefree :
-  SquarefreeCertificate Dense.Gaussian.Coefficients.Constants.coordinate :=
+  SquarefreeCertificate Coefficients.Constants.coordinate :=
   by
-  apply Dense.Gaussian.Coprime.Evaluation.coprimeCertificateOfIdentity Dense.Gaussian.Coefficients.Constants.coordinate
-    (Dense.Gaussian.GCD.derivative Dense.Gaussian.Coefficients.Constants.coordinate)
+  apply Coprime.Evaluation.coprimeCertificateOfIdentity Coefficients.Constants.coordinate
+    (GCD.derivative Coefficients.Constants.coordinate)
     (Or.inl (by decide)) 0 (DensePolynomial.constant 1)
   intro point
   have derivativeValue :
-      (Dense.Gaussian.GCD.derivative Dense.Gaussian.Coefficients.Constants.coordinate).eval point = 1 := by
-    rw [Dense.Gaussian.GCD.derivative,
-      Dense.Derivative.eval_derivative]
-    simp only [Dense.Gaussian.Coefficients.Constants.coordinate, Dense.Derivative.evalDerivativeCoeffs,
+      (GCD.derivative Coefficients.Constants.coordinate).eval point = 1 := by
+    rw [GCD.derivative,
+      Derivative.eval_derivative]
+    simp only [Coefficients.Constants.coordinate, Derivative.evalDerivativeCoeffs,
       List.foldl_cons, List.foldl_nil,
-      Dense.Derivative.evalDerivativeStep,
+      Derivative.evalDerivativeStep,
       Gaussian.Basic.zero_mul, Gaussian.Basic.zero_add, Gaussian.Basic.one_mul, Gaussian.Basic.add_zero, -eq_self,
         -iff_self]
     rfl
@@ -70,29 +70,29 @@ which is nonzero at the origin.
 The retained origin witness supplies the original coprime coordinate factor, and the same shifted polynomial receives
 the resulting squarefree certificate. -/
 def shiftOneSquarefree (polynomial :
-  Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (nonzero : polynomial.isZero = false)
+  Basic.CanonicalCoefficients.CoefficientPolynomial) (nonzero : polynomial.isZero = false)
     (squarefree : SquarefreeCertificate polynomial) (originNonzero :
       polynomial.eval 0 ≠ 0) :
     SquarefreeCertificate (DensePolynomial.shift 1 polynomial)
       := by
-  have coordinateValue (point : Gaussian.Basic.Canonical) : Dense.Gaussian.Coefficients.Constants.coordinate.eval point
+  have coordinateValue (point : Gaussian.Basic.Canonical) : Coefficients.Constants.coordinate.eval point
     = point := by
-    simp only [Dense.Gaussian.Coefficients.Constants.coordinate, DensePolynomial.eval,
+    simp only [Coefficients.Constants.coordinate, DensePolynomial.eval,
       DensePolynomial.evalCoeffs, List.foldl_cons, List.foldl_nil,
       Gaussian.Basic.zero_mul, Gaussian.Basic.zero_add, Gaussian.Basic.one_mul, Gaussian.Basic.add_zero, -eq_self,
         -iff_self]
     rfl
-  let power := Dense.Gaussian.Coprime.CoordinatePower.ofOrigin polynomial originNonzero 1
-  let coprime : Dense.Gaussian.Coprime.Basic.CoprimeCertificate polynomial
-    Dense.Gaussian.Coefficients.Constants.coordinate :=
-    Dense.Gaussian.Coprime.Evaluation.coprimeCertificateOfIdentity polynomial
-      Dense.Gaussian.Coefficients.Constants.coordinate (Or.inl nonzero)
+  let power := Coprime.CoordinatePower.ofOrigin polynomial originNonzero 1
+  let coprime : Coprime.Basic.CoprimeCertificate polynomial
+    Coefficients.Constants.coordinate :=
+    Coprime.Evaluation.coprimeCertificateOfIdentity polynomial
+      Coefficients.Constants.coordinate (Or.inl nonzero)
       power.left power.right (by intro point; rw [coordinateValue]; simpa only [pow_one] using power.identity point)
-  let product := Dense.Gaussian.Squarefree.Product.product nonzero (show
-    Dense.Gaussian.Coefficients.Constants.coordinate.isZero = false by decide)
+  let product := Product.product nonzero (show
+    Coefficients.Constants.coordinate.isZero = false by decide)
     squarefree coordinateSquarefree coprime
-  exact Dense.Gaussian.Squarefree.Transport.ofSameValues (polynomial * Dense.Gaussian.Coefficients.Constants.coordinate)
-    (DensePolynomial.shift 1 polynomial) (Dense.Gaussian.Reciprocal.shifted_nonzero polynomial nonzero 1)
+  exact Transport.ofSameValues (polynomial * Coefficients.Constants.coordinate)
+    (DensePolynomial.shift 1 polynomial) (Reciprocal.shifted_nonzero polynomial nonzero 1)
     product (by
         intro point;
         rw [DensePolynomial.eval_mul, coordinateValue, DensePolynomial.eval_shift, pow_one])

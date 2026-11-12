@@ -28,6 +28,8 @@ import Purelib.Geometry.Rational.Box.Sample
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 open Purelib.Polynomial.Dense.Gaussian.Derivative.Separation.Basic (Certificate)
 open Purelib.Polynomial.Dense.Gaussian.Newton.Box.Certificate (SeparatedNewtonCenterCertificate)
@@ -63,7 +65,7 @@ def separatedNewtonDominanceMargin
     {p : CoefficientPolynomial} {ambient : Box}
     (separation : Certificate p ambient)
     (r : Fraction.Rational) : Fraction.Rational :=
-  separation.margin * r ^ 2 - Dense.Gaussian.Newton.Box.Square.Bounds.newtonErrorBudget p ambient r
+  separation.margin * r ^ 2 - Bounds.newtonErrorBudget p ambient r
 
 /-- The Newton dominance margin is positive under the doubled Taylor-budget bound.
 
@@ -74,37 +76,37 @@ theorem separatedNewtonDominanceMargin_pos
     (separation : Certificate p ambient)
     {r : Fraction.Rational} (positive : 0 < r)
     (taylorSmall :
-      2 * (36 * Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p ambient * r ^ 2) ≤
+      2 * (36 * Bounds.Box.Taylor.denseTaylorRemainderBound p ambient * r ^ 2) ≤
         separation.margin) :
     0 < separatedNewtonDominanceMargin separation r := by
   have radiusSquarePositive :=
-    Fraction.Order.Arithmetic.pow_pos_direct positive 2
-  let base := 36 * Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p ambient * r ^ 2
+    Arithmetic.pow_pos_direct positive 2
+  let base := 36 * Bounds.Box.Taylor.denseTaylorRemainderBound p ambient * r ^ 2
   have thirtySixPositive : (0 : Fraction.Rational) < 36 :=
     Fraction.Cast.Order.natCast_pos_direct
       (n := 36) (by decide)
   have basePositive : 0 < base :=
-    Fraction.Order.Arithmetic.mul_pos_direct
-      (Fraction.Order.Arithmetic.mul_pos_direct thirtySixPositive
-        (Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound_pos p ambient)) radiusSquarePositive
+    Arithmetic.mul_pos_direct
+      (Arithmetic.mul_pos_direct thirtySixPositive
+        (Bounds.Box.Taylor.denseTaylorRemainderBound_pos p ambient)) radiusSquarePositive
   have halfStrict : base < 2 * base := by
     calc
       base = 0 + base := by ring1
       _ < base + base :=
-        Fraction.Order.Arithmetic.add_lt_add_right_direct basePositive base
+        Arithmetic.add_lt_add_right_direct basePositive base
       _ = 2 * base := by ring1
   have coefficientBound :
-      36 * Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p ambient * r ^ 2 <
+      36 * Bounds.Box.Taylor.denseTaylorRemainderBound p ambient * r ^ 2 <
         separation.margin := by
     change base < separation.margin
     exact halfStrict.trans_le taylorSmall
-  have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+  have scaled := Arithmetic.mul_lt_mul_of_pos_right_direct
     coefficientBound radiusSquarePositive
-  apply Fraction.Order.Arithmetic.sub_pos_direct
+  apply Arithmetic.sub_pos_direct
   calc
-    Dense.Gaussian.Newton.Box.Square.Bounds.newtonErrorBudget p ambient r =
-        (36 * Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p ambient * r ^ 2) * r ^ 2 := by
-      dsimp only [Dense.Gaussian.Newton.Box.Square.Bounds.newtonErrorBudget]
+    Bounds.newtonErrorBudget p ambient r =
+        (36 * Bounds.Box.Taylor.denseTaylorRemainderBound p ambient * r ^ 2) * r ^ 2 := by
+      dsimp only [Bounds.newtonErrorBudget]
       ring1
     _ < separation.margin * r ^ 2 := scaled
 
@@ -120,36 +122,36 @@ theorem separatedNewtonError_le_budget
     (sourceRefines : source.Refines ambient)
     {r : Fraction.Rational} (positive : 0 < r)
     (targetRefines :
-      (Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) r
+      (Box.Square.Centered.Affine.centeredSquare (Anchor.anchorNewtonCenter p source) r
         positive.le).Refines ambient)
     (displacementSmall :
-      Data.Gaussian.Norm.Basic.normSq (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source - source.anchor)
+      Gaussian.Norm.Basic.normSq (Anchor.anchorNewtonCenter p source - source.anchor)
         ≤ r ^ 2)
     {z : Gaussian.Basic.Canonical}
     (boundary : Box.Boundary.OnBoxBoundary
-      (Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) r
+      (Box.Square.Centered.Affine.centeredSquare (Anchor.anchorNewtonCenter p source) r
         positive.le) z) :
-    Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Newton.Box.Linearization.newtonError p source).eval z) ≤
-      Dense.Gaussian.Newton.Box.Square.Bounds.newtonErrorBudget p ambient r := by
+    Gaussian.Norm.Basic.normSq ((Linearization.newtonError p source).eval z) ≤
+      Bounds.newtonErrorBudget p ambient r := by
   have insideTarget := boundary.1
   have insideAmbient := targetRefines.contains insideTarget
-  have distance := Dense.Gaussian.Newton.Box.Square.Bounds.centeredSquare_normSq_sub_anchor_le
+  have distance := Bounds.centeredSquare_normSq_sub_anchor_le
     positive displacementSmall insideTarget
-  have distanceSquared : Data.Gaussian.Norm.Basic.normSq (z - source.anchor) ^ 2 ≤
+  have distanceSquared : Gaussian.Norm.Basic.normSq (z - source.anchor) ^ 2 ≤
       (6 * r ^ 2) ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
+    Arithmetic.pow_le_pow_direct
       (Gaussian.Norm.Basic.normSq_nonneg (z - source.anchor)) distance 2
-  have rawError := Dense.Gaussian.Newton.Box.Taylor.normSq_newtonError_le p sourceRefines insideAmbient
+  have rawError := Taylor.normSq_newtonError_le p sourceRefines insideAmbient
     newton.derivativeNonzero
   calc
-    Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Newton.Box.Linearization.newtonError p source).eval z) ≤
-        Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p ambient *
-          Data.Gaussian.Norm.Basic.normSq (z - source.anchor) ^ 2 := rawError
-    _ ≤ Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound p ambient * (6 * r ^ 2) ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        distanceSquared (Dense.Gaussian.Bounds.Box.Taylor.denseTaylorRemainderBound_pos p ambient).le
-    _ = Dense.Gaussian.Newton.Box.Square.Bounds.newtonErrorBudget p ambient r := by
-      dsimp only [Dense.Gaussian.Newton.Box.Square.Bounds.newtonErrorBudget]
+    Gaussian.Norm.Basic.normSq ((Linearization.newtonError p source).eval z) ≤
+        Bounds.Box.Taylor.denseTaylorRemainderBound p ambient *
+          Gaussian.Norm.Basic.normSq (z - source.anchor) ^ 2 := rawError
+    _ ≤ Bounds.Box.Taylor.denseTaylorRemainderBound p ambient * (6 * r ^ 2) ^ 2 :=
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
+        distanceSquared (Bounds.Box.Taylor.denseTaylorRemainderBound_pos p ambient).le
+    _ = Bounds.newtonErrorBudget p ambient r := by
+      dsimp only [Bounds.newtonErrorBudget]
       ring1
 
 /-- Bound the affine Newton term below on the centered square boundary.
@@ -162,28 +164,28 @@ theorem separatedNewtonLinearization_boundary_lower
       p ambient source separation)
     {r : Fraction.Rational} (positive : 0 < r) {z : Gaussian.Basic.Canonical}
     (boundary : Box.Boundary.OnBoxBoundary
-      (Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) r
+      (Box.Square.Centered.Affine.centeredSquare (Anchor.anchorNewtonCenter p source) r
         positive.le) z) :
     separation.margin * r ^ 2 ≤
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Newton.Box.Linearization.newtonLinearization p source).eval
+      Gaussian.Norm.Basic.normSq ((Linearization.newtonLinearization p source).eval
         z) := by
   let affineClearance := Clearance.Box.Boundary.Affine.affineCoordinate_boundaryClearance
-    newton.derivativeNonzero (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) positive
+    newton.derivativeNonzero (Anchor.anchorNewtonCenter p source) positive
   have affineLower := affineClearance.lower z boundary
   have affineLowerExact :
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.GCD.derivative p).eval source.anchor) *
-          r ^ 2 ≤ Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Newton.Box.Linearization.newtonLinearization p
+      Gaussian.Norm.Basic.normSq ((GCD.derivative p).eval source.anchor) *
+          r ^ 2 ≤ Gaussian.Norm.Basic.normSq ((Linearization.newtonLinearization p
             source).eval z) :=
     by
       change Gaussian.Basic.Canonical.normSq
-          ((Dense.Gaussian.GCD.derivative p).eval source.anchor) * r ^ 2 ≤
+          ((GCD.derivative p).eval source.anchor) * r ^ 2 ≤
         Gaussian.Basic.Canonical.normSq
-          ((Dense.Gaussian.Newton.Box.Linearization.newtonLinearization p source).eval z)
+          ((Linearization.newtonLinearization p source).eval z)
         at affineLower
       simpa only [← Gaussian.Norm.Basic.normSq_eq_canonical] using affineLower
-  exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+  exact (Arithmetic.mul_le_mul_of_nonneg_right_direct
     newton.derivativeLower
-    (Fraction.Order.Arithmetic.sq_nonneg_direct r)).trans affineLowerExact
+    (Arithmetic.sq_nonneg_direct r)).trans affineLowerExact
 
 /-- The retained Newton dominance margin is a lower bound for the boundary norm gap.
 
@@ -197,31 +199,31 @@ theorem separatedNewtonDominanceMargin_le
     (sourceRefines : source.Refines ambient)
     {r : Fraction.Rational} (positive : 0 < r)
     (targetRefines :
-      (Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) r
+      (Box.Square.Centered.Affine.centeredSquare (Anchor.anchorNewtonCenter p source) r
         positive.le).Refines ambient)
     (displacementSmall :
-      Data.Gaussian.Norm.Basic.normSq (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source - source.anchor)
+      Gaussian.Norm.Basic.normSq (Anchor.anchorNewtonCenter p source - source.anchor)
         ≤ r ^ 2)
     {z : Gaussian.Basic.Canonical}
     (boundary : Box.Boundary.OnBoxBoundary
-      (Box.Square.Centered.Affine.centeredSquare (Dense.Gaussian.Newton.Box.Anchor.anchorNewtonCenter p source) r
+      (Box.Square.Centered.Affine.centeredSquare (Anchor.anchorNewtonCenter p source) r
         positive.le) z) :
     separatedNewtonDominanceMargin separation r ≤
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Newton.Box.Linearization.newtonLinearization p source).eval
+      Gaussian.Norm.Basic.normSq ((Linearization.newtonLinearization p source).eval
         z) -
-        Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Newton.Box.Linearization.newtonError p source).eval z) :=
+        Gaussian.Norm.Basic.normSq ((Linearization.newtonError p source).eval z) :=
           by
-  have errorUpper : Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Newton.Box.Linearization.newtonError p
+  have errorUpper : Gaussian.Norm.Basic.normSq ((Linearization.newtonError p
     source).eval z) ≤
-      Dense.Gaussian.Newton.Box.Square.Bounds.newtonErrorBudget p ambient r :=
+      Bounds.newtonErrorBudget p ambient r :=
     separatedNewtonError_le_budget newton sourceRefines positive
       targetRefines
       displacementSmall boundary
   have linearLower : separation.margin * r ^ 2 ≤
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Newton.Box.Linearization.newtonLinearization p source).eval
+      Gaussian.Norm.Basic.normSq ((Linearization.newtonLinearization p source).eval
         z) :=
     separatedNewtonLinearization_boundary_lower newton positive boundary
-  exact Fraction.Order.Arithmetic.sub_le_sub_direct linearLower errorUpper
+  exact Arithmetic.sub_le_sub_direct linearLower errorUpper
 end Purelib.Polynomial.Dense.Gaussian.Newton.Box.Square.Separated
 
 end

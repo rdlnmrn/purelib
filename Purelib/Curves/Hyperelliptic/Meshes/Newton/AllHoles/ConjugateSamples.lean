@@ -53,6 +53,8 @@ import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Topology.Surface.Sewing.SewingTree
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm.Sum
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison.NewtonPreparation
@@ -98,7 +100,7 @@ open Purelib.Polynomial.Geometry.Grid.CellBoundary (sumValues)
 open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target
@@ -111,7 +113,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     FaceDomainBank lifted.frames
     request.single.grid.faces.regulars}
   {prepared :
-    Purelib.Curves.Hyperelliptic.Meshes.Newton.AllHoles.PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations
+    AllHoleExcision.OuterPreparations
     excision} {comparison :
     PairedComparison
     prepared first second domains}
@@ -130,22 +132,22 @@ set_option genInjectivity false in
 
 Both caches have specification equalities tied to the same retained entry and supplied sewn conjugate pair. -/
 structure ConjugateTerm where
-  /-- The retained original paired annulus. -/ entry : FamilyAreaRequest.PairedAnnulus request lifted first second
+  /-- The retained original paired annulus. -/ entry : PairedAnnulus request lifted first second
     domains
   /-- The actual source-mask selection on the supplied original left sewn surface. -/ selected :
-    CachedSample.FaceSelection leftSurface
+    FaceSelection leftSurface
     (AllHoleExcision.sourceMask entry.source.entry)
-  /-- The cached conjugate area of the actual selected triangle boundaries. -/ area : Data.Gaussian.Basic.Canonical
+  /-- The cached conjugate area of the actual selected triangle boundaries. -/ area : Gaussian
   /-- The area cache equals the original selected triangle boundary evaluation on this conjugate pair. -/ area_eq : area
     = Stokes.edgeListArea pair.values (selected.triangles.flatMap OrientedTriangle.boundary)
-  /-- The cached conjugate physical-hole area of that exact entry. -/ hole : Data.Gaussian.Basic.Canonical
+  /-- The cached conjugate physical-hole area of that exact entry. -/ hole : Gaussian
   /-- The hole cache equals the original entry's conjugate physical-hole readback. -/ hole_eq : hole =
     entry.source.entry.conjugatePhysicalHoleArea left right
 
 constructive_injectivity ConjugateTerm
 
 /-- Select the original annulus source mask once and retain its exact conjugate area and physical-hole readback. -/
-@[expose] def ConjugateTerm.build (entry : FamilyAreaRequest.PairedAnnulus request lifted first second domains) :
+@[expose] def ConjugateTerm.build (entry : PairedAnnulus request lifted first second domains) :
     ConjugateTerm left right leftSurface rightSurface pair
       :=
   let selected := FaceSelection.build leftSurface (AllHoleExcision.sourceMask entry.source.entry)
@@ -162,15 +164,15 @@ structure ConjugateSample (comparison : PairedComparison prepared first second d
     (ConjugateTerm left right leftSurface rightSurface
     pair)
   /-- The retained term entries are exactly the original comparison entry list. -/ terms_eq : terms.map
-    Curves.Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateTerm.entry = comparison.entries
-  /-- The cached sum of the actual selected annular conjugate areas. -/ area : Data.Gaussian.Basic.Canonical
+    ConjugateTerm.entry = comparison.entries
+  /-- The cached sum of the actual selected annular conjugate areas. -/ area : Gaussian
   /-- The aggregate area equals the sum of the retained term area caches. -/ area_eq : area =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (terms.map
-    Curves.Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateTerm.area)
-  /-- The cached sum of the actual conjugate physical-hole areas. -/ holes : Data.Gaussian.Basic.Canonical
+    Basic.gaussianSum (terms.map
+    ConjugateTerm.area)
+  /-- The cached sum of the actual conjugate physical-hole areas. -/ holes : Gaussian
   /-- The hole cache equals the sum of the retained term hole caches. -/ holes_eq : holes =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (terms.map
-    Curves.Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateTerm.hole)
+    Basic.gaussianSum (terms.map
+    ConjugateTerm.hole)
 
 constructive_injectivity ConjugateSample
 
@@ -178,24 +180,24 @@ constructive_injectivity ConjugateSample
 @[expose] def ConjugateSample.build (comparison : PairedComparison prepared first second domains) :
     ConjugateSample left right leftSurface rightSurface
       pair comparison :=
-  let terms := comparison.entries.map (Curves.Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateTerm.build
+  let terms := comparison.entries.map (ConjugateTerm.build
     left right leftSurface rightSurface pair)
   ⟨terms, by
     dsimp only [terms]
     induction comparison.entries with
     | nil => rfl
     | cons entry rest ih => exact congrArg (List.cons entry) ih,
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (terms.map
-      Curves.Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateTerm.area), rfl,
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (terms.map
-      Curves.Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateTerm.hole), rfl⟩
+    Basic.gaussianSum (terms.map
+      ConjugateTerm.area), rfl,
+      Basic.gaussianSum (terms.map
+      ConjugateTerm.hole), rfl⟩
 
 variable {left right leftSurface rightSurface pair}
 
 namespace ConjugateSample
 
 /-- The actual retained conjugate term count is bounded by the original family request count. -/
-theorem terms_count (sample : Curves.Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateSample left right
+theorem terms_count (sample : ConjugateSample left right
   leftSurface rightSurface pair comparison) :
     sample.terms.length ≤ request.count := by
   have count := congrArg List.length sample.terms_eq
@@ -203,10 +205,10 @@ theorem terms_count (sample : Curves.Hyperelliptic.Meshes.Newton.AllHoles.Conjug
   exact count.le.trans comparison.entries_count
 
 /-- The retained conjugate terms have exactly the original excision entry list. -/
-theorem entries_eq (sample : Curves.Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateSample left right
+theorem entries_eq (sample : ConjugateSample left right
   leftSurface rightSurface pair comparison) :
     sample.terms.map (fun term => term.entry.source.entry) = excision.entries := by
-  have first := congrArg (List.map (fun entry : FamilyAreaRequest.PairedAnnulus request lifted first second domains =>
+  have first := congrArg (List.map (fun entry : PairedAnnulus request lifted first second domains =>
     entry.source.entry)) sample.terms_eq
   have second := congrArg (List.map (fun entry : AnnularEntry.Prepared request.single.grid lifted => entry.entry))
     comparison.entries_eq
@@ -214,13 +216,13 @@ theorem entries_eq (sample : Curves.Hyperelliptic.Meshes.Newton.AllHoles.Conjuga
   exact first.trans (second.trans prepared.entries_eq)
 
 /-- The retained aggregate hole cache is exactly the conjugate physical-hole sum on the original excision entries. -/
-theorem holes_readback (sample : Curves.Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateSample left right
+theorem holes_readback (sample : ConjugateSample left right
   leftSurface rightSurface pair comparison) :
     sample.holes = CellBoundary.sumValues (fun entry => entry.conjugatePhysicalHoleArea left right) excision.entries :=
       by
   rw [sample.holes_eq]
-  have read : Data.Gaussian.Norm.Sum.Basic.gaussianSum (sample.terms.map
-    Curves.Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateTerm.hole) =
+  have read : Basic.gaussianSum (sample.terms.map
+    ConjugateTerm.hole) =
       CellBoundary.sumValues (fun entry => entry.conjugatePhysicalHoleArea left right)
         (sample.terms.map (fun term => term.entry.source.entry)) := by
     induction sample.terms with
@@ -230,16 +232,16 @@ theorem holes_readback (sample : Curves.Hyperelliptic.Meshes.Newton.AllHoles.Con
     sample.entries_eq)
 
 /-- The sum of the actual term area-plus-hole residuals equals the retained aggregate area plus its hole cache. -/
-theorem residuals_sum (sample : Curves.Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateSample left right
+theorem residuals_sum (sample : ConjugateSample left right
   leftSurface rightSurface pair comparison) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (sample.terms.map (fun term => term.area + term.hole)) = sample.area +
+    Basic.gaussianSum (sample.terms.map (fun term => term.area + term.hole)) = sample.area +
       sample.holes := by
   rw [sample.area_eq, sample.holes_eq]
   induction sample.terms with
-  | nil => change (0 : Data.Gaussian.Basic.Canonical) = 0 + 0; ring1
+  | nil => change (0 : Gaussian) = 0 + 0; ring1
   | cons term rest ih =>
-    change (term.area + term.hole) + Data.Gaussian.Norm.Sum.Basic.gaussianSum _ = (term.area +
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum _) + (term.hole + Data.Gaussian.Norm.Sum.Basic.gaussianSum _)
+    change (term.area + term.hole) + Basic.gaussianSum _ = (term.area +
+      Basic.gaussianSum _) + (term.hole + Basic.gaussianSum _)
     rw [ih]
     ring1
 

@@ -57,6 +57,8 @@ import Purelib.RootIsolation.SquareRoot.Grid.Walk.ChainComparison
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-! Twice the actual conjugate exterior offset is the canonical component
@@ -107,7 +109,7 @@ open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Approximation.Rational.Budget.Aggregate (perTerm perTerm_positive)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {bank :
     BasedBranchBank lifted}
@@ -128,19 +130,19 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.Newton.ConjugateExteriorLapRequest
 /-- The exterior residual keeps the physical terminal product. In even degree it must still be estimated; component
 closure alone does not remove it. -/
 theorem exterior_component_accurate
-    {first : MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential firstIndex)}
-    {second : MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential secondIndex)}
-    {error : Fraction.Rational} (request : LapRequest.ExteriorLapRequest first second error)
-    {stage : Nat} {leftBank : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential firstIndex) stage
+    {first : FaceMagnitudeBank domains (PeriodMatrix.standardDifferential firstIndex)}
+    {second : FaceMagnitudeBank domains (PeriodMatrix.standardDifferential secondIndex)}
+    {error : Rational} (request : LapRequest.ExteriorLapRequest first second error)
+    {stage : Nat} {leftBank : FacePrimitiveBank (PeriodMatrix.standardDifferential firstIndex) stage
       domains}
-    {rightBank : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential secondIndex) stage domains}
-    (left : TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh) (right :
-      TrianglePrimitiveReadings.TriangleReadings rightBank current.mesh)
+    {rightBank : FacePrimitiveBank (PeriodMatrix.standardDifferential secondIndex) stage domains}
+    (left : TriangleReadings leftBank current.mesh) (right :
+      TriangleReadings rightBank current.mesh)
     (later : request.index ≤ stage) (newSheet : Fin 2) :
     let firstValue := fun edge => Data.Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation current.mesh
       left.values edge)
     let secondValue := CanonicalEdgeValues.edgeValuation current.mesh right.values
-    let components := Data.Gaussian.Norm.Sum.Basic.gaussianSum (current.exteriorBoundaries.map (fun word =>
+    let components := Sum.Basic.gaussianSum (current.exteriorBoundaries.map (fun word =>
       PairedIncrementArea.area (word.map (fun edge =>
         (⟨firstValue edge, secondValue edge⟩ : Stokes.PrimitivePoint)))))
     let factor := (⟨resplitExteriorFactor (paired := paired) grid.shrunk.included current.edges current.vertices
@@ -153,7 +155,7 @@ theorem exterior_component_accurate
       current.edges.chainValue current.vertices secondValue
         (grid.shrunk.included.resplit base.bank.exterior (FramedBranchCellBank.baseMember base.bank)) newSheet⟩ :
           Stokes.PrimitivePoint)
-    Data.Gaussian.Norm.Basic.normSq (2 * ConjugatePhysicalRequest.exterior (paired := paired) newSheet
+    Basic.normSq (2 * ConjugatePhysicalRequest.exterior (paired := paired) newSheet
       (CanonicalEdgeValues.edgeValuation current.mesh left.values) secondValue -
         (components - 2 * Stokes.edgeArea factor total)) ≤ error := by
   intro firstValue secondValue components factor total
@@ -163,7 +165,7 @@ theorem exterior_component_accurate
   have split : ConjugatePhysicalRequest.exterior (paired := paired) newSheet
       (CanonicalEdgeValues.edgeValuation current.mesh left.values) secondValue =
         lap - Stokes.edgeArea factor total := by
-    have linear (area correction : Data.Gaussian.Basic.Canonical → Data.Gaussian.Basic.Canonical) :
+    have linear (area correction : Gaussian → Gaussian) :
         BilinearPolarization.extract (fun coefficient => area coefficient - correction coefficient) =
           BilinearPolarization.extract area - BilinearPolarization.extract correction := by
       unfold BilinearPolarization.extract
@@ -188,38 +190,38 @@ theorem exterior_component_accurate
         rfl) (CanonicalEdgeValues.edgeValuation_reverse current.mesh right.values) coefficient) newSheet)
     exact equal.trans (BilinearPolarization.extract_wordArea_mix _ _ _)
   have bounded := ExteriorLapRequest.conjugate_accurate request left right later newSheet
-  change Data.Gaussian.Norm.Basic.normSq (_ + _ - components) ≤ error at bounded
+  change Basic.normSq (_ + _ - components) ≤ error at bounded
   have rearrange : 2 * ConjugatePhysicalRequest.exterior (paired := paired) newSheet
       (CanonicalEdgeValues.edgeValuation current.mesh left.values) secondValue -
         (components - 2 * Stokes.edgeArea factor total) = lap + lap - components :=
     (congrArg (fun value => 2 * value - (components - 2 * Stokes.edgeArea factor total)) split).trans
       (by ring1)
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq rearrange).trans_le
-    ((congrArg (fun area => Data.Gaussian.Norm.Basic.normSq (area + area - components)) readback).trans_le
+  exact (congrArg Basic.normSq rearrange).trans_le
+    ((congrArg (fun area => Basic.normSq (area + area - components)) readback).trans_le
       bounded)
 
 /-- Pay the retained terminal product before comparing canonical polygons with cap polygons. Both error bounds concern
 the same numerical readings. -/
 theorem exterior_component_bound
-    {first : MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential firstIndex)}
-    {second : MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential secondIndex)}
-    {error : Fraction.Rational} (request : LapRequest.ExteriorLapRequest first second error)
-    {stage : Nat} {leftBank : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential firstIndex) stage
+    {first : FaceMagnitudeBank domains (PeriodMatrix.standardDifferential firstIndex)}
+    {second : FaceMagnitudeBank domains (PeriodMatrix.standardDifferential secondIndex)}
+    {error : Rational} (request : LapRequest.ExteriorLapRequest first second error)
+    {stage : Nat} {leftBank : FacePrimitiveBank (PeriodMatrix.standardDifferential firstIndex) stage
       domains}
-    {rightBank : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential secondIndex) stage domains}
-    (left : TrianglePrimitiveReadings.TriangleReadings leftBank current.mesh) (right :
-      TrianglePrimitiveReadings.TriangleReadings rightBank current.mesh)
-    (later : request.index ≤ stage) (newSheet : Fin 2) {terminalError : Fraction.Rational}
-    (terminal : Data.Gaussian.Norm.Basic.normSq (BilinearPolarization.extract (fun coefficient =>
+    {rightBank : FacePrimitiveBank (PeriodMatrix.standardDifferential secondIndex) stage domains}
+    (left : TriangleReadings leftBank current.mesh) (right :
+      TriangleReadings rightBank current.mesh)
+    (later : request.index ≤ stage) (newSheet : Fin 2) {terminalError : Rational}
+    (terminal : Basic.normSq (BilinearPolarization.extract (fun coefficient =>
       ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
       grid.shrunk.included current.edges current.vertices newSheet
       (BilinearPolarization.mix (fun edge => Data.Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation
         current.mesh left.values edge))
         (CanonicalEdgeValues.edgeValuation current.mesh right.values) coefficient))) ≤ terminalError) :
-    Data.Gaussian.Norm.Basic.normSq (2 * ConjugatePhysicalRequest.exterior (paired := paired) newSheet
+    Basic.normSq (2 * ConjugatePhysicalRequest.exterior (paired := paired) newSheet
       (CanonicalEdgeValues.edgeValuation current.mesh left.values)
       (CanonicalEdgeValues.edgeValuation current.mesh right.values) -
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (current.exteriorBoundaries.map (fun word =>
+        Sum.Basic.gaussianSum (current.exteriorBoundaries.map (fun word =>
           PairedIncrementArea.area (word.map (fun edge =>
             (⟨conj (CanonicalEdgeValues.edgeValuation current.mesh left.values edge),
               CanonicalEdgeValues.edgeValuation current.mesh right.values edge⟩ : Stokes.PrimitivePoint)))))) ≤
@@ -233,7 +235,7 @@ theorem exterior_component_bound
   let offset := 2 * ConjugatePhysicalRequest.exterior (paired := paired) newSheet
     (CanonicalEdgeValues.edgeValuation current.mesh left.values)
     (CanonicalEdgeValues.edgeValuation current.mesh right.values)
-  let components := Data.Gaussian.Norm.Sum.Basic.gaussianSum (current.exteriorBoundaries.map (fun word =>
+  let components := Sum.Basic.gaussianSum (current.exteriorBoundaries.map (fun word =>
     PairedIncrementArea.area (word.map (fun edge =>
       (⟨conj (CanonicalEdgeValues.edgeValuation current.mesh left.values edge),
         CanonicalEdgeValues.edgeValuation current.mesh right.values edge⟩ : Stokes.PrimitivePoint)))))
@@ -244,18 +246,18 @@ theorem exterior_component_bound
     grid.shrunk.included newSheet (fun edge => Data.Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation
       current.mesh left.values edge))
     (CanonicalEdgeValues.edgeValuation current.mesh right.values)
-  have first : Data.Gaussian.Norm.Basic.normSq (offset - (components - 2 * correction)) ≤ error :=
-    (congrArg (fun value => Data.Gaussian.Norm.Basic.normSq (offset - (components - 2 * value)))
+  have first : Basic.normSq (offset - (components - 2 * correction)) ≤ error :=
+    (congrArg (fun value => Basic.normSq (offset - (components - 2 * value)))
       product).trans_le lap
-  have twice : Data.Gaussian.Norm.Basic.normSq (correction + correction) ≤ 4 * terminalError :=
-    ((Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
+  have twice : Basic.normSq (correction + correction) ≤ 4 * terminalError :=
+    ((Bounds.normSq_add_le_two _ _).trans
       (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct terminal
         terminal) (by decide))).trans_eq (by ring1)
-  have bounded := (Data.Gaussian.Norm.Bounds.normSq_sub_le_two
+  have bounded := (Bounds.normSq_sub_le_two
     (offset - (components - 2 * correction)) (correction + correction)).trans
       (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct first
         twice) (by decide))
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq (show offset - components =
+  exact (congrArg Basic.normSq (show offset - components =
     (offset - (components - 2 * correction)) - (correction + correction) by ring1)).trans_le bounded
 
 end Purelib.Curves.Hyperelliptic.Meshes.Newton.ConjugateExteriorLapRequest.ConjugatePhysicalRequest

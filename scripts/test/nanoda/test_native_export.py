@@ -18,8 +18,9 @@ from scripts.lean_module_data.paths import search_path
 from scripts.nanoda.artifact_inputs import compiled_inputs, digest, verify_inputs
 from scripts.nanoda.build_exporter import build, initialize_meta_entrypoint
 from scripts.nanoda.compare_exports import compare
-from scripts.nanoda.export_cache import export_group
-from scripts.nanoda.planning import group_inputs, plan
+from scripts.nanoda.export_cache import export_group, prepare_roots
+from scripts.nanoda.module_owners import prepare as prepare_owners
+from scripts.nanoda.planning import canonical_inputs, group_inputs, plan
 from scripts.nanoda.processes import process_record
 from scripts.nanoda.root_inventory import authoritative_roots, validate_roots
 
@@ -263,6 +264,24 @@ class NativeExportTests(unittest.TestCase):
             self.assertEqual(second, receipt)
             self.assertEqual((restored / 'stream.ndjson').read_bytes(), saved)
 
+    def test_flush_failures_reject_complete_empty_exports_and_metadata(self):
+        """A successful serialization still fails if its final output cannot be flushed."""
+        module = 'NanodaMetaOnly'
+        self.compile(module, 'module\nmeta section\npublic def toolValue : Nat := 0\n')
+        stream, inventory, _ = self.export([module], 'empty')
+        self.assertEqual(json.loads(inventory.read_text())['roots'], [])
+        self.assertEqual(len(stream.read_text().splitlines()), 1)
+        commands = [[str(self.binary), '--metadata'],
+                    [str(self.binary), '--export', str(self.work / 'empty.modules'), str(inventory)]]
+        unwritable = self.work / 'unwritable-output'
+        unwritable.write_bytes(b'unchanged')
+        for command in commands:
+            with self.subTest(mode=command[1]):
+                with unwritable.open('rb') as output:
+                    result = subprocess.run(command, env=self.env, stdout=output, stderr=subprocess.PIPE)
+                self.assertNotEqual(result.returncode, 0, 'output failure was reported as success')
+                self.assertEqual(unwritable.read_bytes(), b'unchanged')
+
     def test_empty_duplicate_and_missing_module_requests_fail(self):
         for modules in ([], ['Init', 'Init'], ['NoSuchNanodaFixture']):
             with self.subTest(modules=modules):
@@ -280,8 +299,21 @@ public theorem checkpointWitness : True := True.intro
         manifest = self.work / 'selected.modules'
         manifest.write_text(module + '\n')
         cache = self.work / 'pipeline-cache'
+        # Prepare the independently checked inventories before observing the
+        # export/check interruption points. No export or checker pass exists yet.
+        context = canonical_inputs(group_inputs(compiled_inputs([module], self.search), [module]))
+        prepare_roots([module], context, cache / 'nanoda-native', self.search)
+        prepare_owners(context, cache / 'nanoda-checked', self.search)
+        self.assertEqual(list((cache / 'nanoda-native').glob('*/complete.json')), [])
+        self.assertEqual(list((cache / 'nanoda-checked').glob('*.json')), [])
+        module_checker = Path(subprocess.check_output(
+            ['bash', str(ROOT / 'scripts/build-nanoda-module-checker.sh')], text=True).strip())
+        module_config = self.work / 'module-config.json'
+        settings = json.loads((ROOT / 'scripts/nanoda/config.json').read_text())
+        settings['num_threads'] = 2
+        module_config.write_text(json.dumps(settings))
         wrappers = []
-        for role, executable in [('export', self.binary), ('check', CHECKER)]:
+        for role, executable in [('export', self.binary), ('check', module_checker)]:
             folder = self.work / role
             folder.mkdir()
             child = folder / 'child.py'
@@ -310,7 +342,7 @@ public theorem checkpointWitness : True := True.intro
             'from scripts.nanoda.pipeline import run\n'
             f'with patch("scripts.nanoda.pipeline.build", return_value=Path({str(wrappers[0])!r})):\n'
             f' run({str(manifest)!r}, {str(cache)!r}, {str(wrappers[1])!r}, '
-            f'{str(ROOT / "scripts/nanoda/config.json")!r}, exporters=1, checkers=1)\n')
+            f'{str(module_config)!r}, exporters=1, checkers=1)\n')
         environment = dict(self.env, PYTHONPATH=str(ROOT))
         for role in ('export', 'check'):
             folder = self.work / role

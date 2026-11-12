@@ -6,6 +6,8 @@ import Purelib.Geometry.Rational.Box.Refinement
 import Purelib.Data.List.Append
 import Purelib.Data.List.Membership
 
+open Purelib.Data.CCL.Encoding.Prefix
+
 /-!
 # Joint unreserved sharpness windows and exact raw CCL prefixes
 
@@ -51,10 +53,10 @@ structure History (threshold : Fraction.Rational) (certificate : Sharpness.IsSha
   /-- The actual retained robust window history with all original run owners. -/ robust :
     Robust.WindowHistory threshold certificate
   /-- The actual exposed raw-prefix enclosure with its parser and inverse cache. -/ enclosure :
-    Encoding.Prefix.Enclosure
+    Enclosure
   /-- Both original owners use the exact same proper box. -/ boxEq : enclosure.box = robust.box
   /-- The actual cached nonzero rational witness realizing the exposed word. -/ witness :
-    Encoding.Prefix.Enclosure.Realization enclosure
+    Enclosure.Realization enclosure
 
 namespace History
 
@@ -63,7 +65,7 @@ variable {threshold : Fraction.Rational} {certificate : Sharpness.IsSharperWindo
 /-- Start a joint state from one retained robust window history and an empty exact raw prefix. -/
 @[expose] def ofWindowHistory (robust : Robust.WindowHistory threshold certificate) :
     History threshold certificate := by
-  let enclosure := Encoding.Prefix.Enclosure.ofBox robust.box robust.proper
+  let enclosure := Enclosure.ofBox robust.box robust.proper
   exact ⟨robust, enclosure, rfl, enclosure.realize⟩
 
 /-- Read the actual common prefix box without reconstructing either retained owner. -/
@@ -95,7 +97,7 @@ theorem consecutive (history : History threshold certificate) (entry : Robust.Wi
 /-- Every actual retained window violates the requested threshold at the same displayed rational witness. -/
 theorem violation (history : History threshold certificate) (entry : Robust.WindowHistory.Entry threshold)
     (member : entry ∈ history.robust.windows) :
-    1 < threshold * Dirichlet.Window.SourceBound.dirichletWindowQuadrance history.point entry.2.lower entry.2.upper :=
+    1 < threshold * Window.SourceBound.dirichletWindowQuadrance history.point entry.2.lower entry.2.upper :=
   history.robust.uniformViolation history.point (history.boxEq ▸ history.point_inside) entry member
 
 set_option genInjectivity false in
@@ -118,7 +120,7 @@ structure Extension (previous : History threshold certificate) (request : Reques
     Robust.WindowHistory.Extension previous.robust request.requestedScale request.additionalWindows
   /-- The new robust window box refines the original prefix enclosure. -/ windowsRefinePrefix :
     windowGrowth.next.box.Refines previous.enclosure.box
-  /-- The actual earlier prefix refined into the new robust window box. -/ prefixStart : Encoding.Prefix.Enclosure
+  /-- The actual earlier prefix refined into the new robust window box. -/ prefixStart : Enclosure
   /-- The refinement consumes the exact old word, parser, inverse cache and new window box. -/ prefixStartSpec :
     prefixStart = previous.enclosure.refine windowGrowth.next.box windowGrowth.next.proper windowsRefinePrefix
   /-- The actual finite geometric continuation for the additional-bit request. -/ prefixPath :
@@ -175,28 +177,28 @@ namespace Extension
 /-- The intermediate prefix refinement retains the exact previously exposed word. -/
 theorem prefixStart_word {previous : History threshold certificate} {request : Request}
     (extension : Extension previous request) : extension.prefixStart.word = previous.word :=
-  (congrArg Encoding.Prefix.Enclosure.word extension.prefixStartSpec).trans
+  (congrArg Enclosure.word extension.prefixStartSpec).trans
     (previous.enclosure.refine_word extension.windowGrowth.next.box extension.windowGrowth.next.proper
       extension.windowsRefinePrefix)
 
 /-- The intermediate prefix refinement retains the actual original parser-state cache. -/
 theorem prefixStart_state {previous : History threshold certificate} {request : Request}
     (extension : Extension previous request) : extension.prefixStart.state = previous.enclosure.state :=
-  (congrArg Encoding.Prefix.Enclosure.state extension.prefixStartSpec).trans
+  (congrArg Enclosure.state extension.prefixStartSpec).trans
     (previous.enclosure.refine_state extension.windowGrowth.next.box extension.windowGrowth.next.proper
       extension.windowsRefinePrefix)
 
 /-- The intermediate prefix refinement retains the actual original inverse-matrix cache. -/
 theorem prefixStart_inverse {previous : History threshold certificate} {request : Request}
     (extension : Extension previous request) : extension.prefixStart.inverseMatrix = previous.enclosure.inverseMatrix :=
-  (congrArg Encoding.Prefix.Enclosure.inverseMatrix extension.prefixStartSpec).trans
+  (congrArg Enclosure.inverseMatrix extension.prefixStartSpec).trans
     (previous.enclosure.refine_inverseMatrix extension.windowGrowth.next.box extension.windowGrowth.next.proper
       extension.windowsRefinePrefix)
 
 /-- The intermediate prefix refinement uses the same actual new robust window box. -/
 theorem prefixStart_box {previous : History threshold certificate} {request : Request}
     (extension : Extension previous request) : extension.prefixStart.box = extension.windowGrowth.next.box :=
-  (congrArg Encoding.Prefix.Enclosure.box extension.prefixStartSpec).trans
+  (congrArg Enclosure.box extension.prefixStartSpec).trans
     (previous.enclosure.refine_box extension.windowGrowth.next.box extension.windowGrowth.next.proper
       extension.windowsRefinePrefix)
 
@@ -214,7 +216,7 @@ theorem windowCount {previous : History threshold certificate} {request : Reques
 /-- The exact final exposed word is the actual earlier word followed by the retained new suffix. -/
 theorem wordEq {previous : History threshold certificate} {request : Request}
     (extension : Extension previous request) : extension.next.word = previous.word ++ extension.prefixPath.bits :=
-  (congrArg Encoding.Prefix.Enclosure.word extension.nextPrefix).trans
+  (congrArg Enclosure.word extension.nextPrefix).trans
     (extension.prefixPath.result_word.trans
       (congrArg (fun word => word ++ extension.prefixPath.bits) extension.prefixStart_word))
 
@@ -227,7 +229,7 @@ theorem wordPrefix {previous : History threshold certificate} {request : Request
 theorem wordLength {previous : History threshold certificate} {request : Request}
     (extension : Extension previous request) :
     extension.next.word.length = previous.word.length + request.additionalBits :=
-  (congrArg Encoding.Prefix.Enclosure.word extension.nextPrefix |>.trans extension.prefixPath.result_word |>
+  (congrArg Enclosure.word extension.nextPrefix |>.trans extension.prefixPath.result_word |>
     congrArg List.length).trans ((List.Append.length_append _ _).trans
       (congrArg₂ Nat.add (congrArg List.length extension.prefixStart_word) extension.prefixPath.bits_length))
 
@@ -239,7 +241,7 @@ theorem nested {previous : History threshold certificate} {request : Request}
     extension.pathRefinesWindows
   have actual := Box.Refinement.StrictInterior.of_refines extension.windowGrowth.nested pathRefines
   have target : extension.next.enclosure.box = extension.prefixPath.result.box :=
-    congrArg Encoding.Prefix.Enclosure.box extension.nextPrefix
+    congrArg Enclosure.box extension.nextPrefix
   have sharedTarget : extension.prefixPath.result.box.StrictInterior previous.enclosure.box :=
     previous.boxEq.symm ▸ actual
   exact target.symm ▸ sharedTarget
@@ -267,7 +269,7 @@ theorem earlierConsecutive {previous : History threshold certificate} {request :
 theorem earlierViolation {previous : History threshold certificate} {request : Request}
     (extension : Extension previous request) (entry : Robust.WindowHistory.Entry threshold)
     (member : entry ∈ previous.robust.windows) :
-    1 < threshold * Dirichlet.Window.SourceBound.dirichletWindowQuadrance
+    1 < threshold * Window.SourceBound.dirichletWindowQuadrance
       extension.next.point entry.2.lower entry.2.upper :=
   extension.next.violation entry (extension.earlier_mem entry member)
 

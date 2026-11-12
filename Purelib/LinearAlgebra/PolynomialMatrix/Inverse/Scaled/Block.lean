@@ -21,6 +21,7 @@ scaled inverse from `Purelib.LinearAlgebra`.
 namespace Purelib.LinearAlgebra.PolynomialMatrix.Inverse.Scaled.Block
 
 open Purelib
+open Purelib.Data
 open Purelib.Algebra.Field
 open Purelib.LinearAlgebra
 open Purelib.LinearAlgebra renaming Matrix -> SquareMatrix
@@ -40,11 +41,16 @@ The leading pivot, cached row and column products, and retained smaller scalar d
   let inverseColumn := PolynomialMatrix.Basic.matrixVector inverse column
   let rowInverse := PolynomialMatrix.Basic.vectorMatrix row inverse
   let corner := smaller.scalar + PolynomialMatrix.Basic.dot row inverseColumn
+  let negativeHead := -a
+  let headSquare := a * a
+  let scaledRow := Data.Vector.Basic.vectorOfFn fun index => negativeHead * rowInverse index
+  let scaledColumn := Data.Vector.Basic.vectorOfFn fun index => negativeHead * inverseColumn index
+  let scaledInverse := SquareMatrix.matrixOfFn fun row column => headSquare * inverse row column
   SquareMatrix.matrixOfFn fun i j => Data.Fin.cases
-    (Data.Fin.cases corner (fun columnIndex => -a * rowInverse columnIndex) j)
+    (Data.Fin.cases corner (fun columnIndex => scaledRow columnIndex) j)
     (fun rowIndex => Data.Fin.cases
-      (-a * inverseColumn rowIndex)
-      (fun columnIndex => (a * a) * inverse rowIndex columnIndex) j) i
+      (scaledColumn rowIndex)
+      (fun columnIndex => scaledInverse rowIndex columnIndex) j) i
 
 /-- Read one finite entry of the symbolic division-free block inverse.
 
@@ -70,7 +76,23 @@ theorem blockInverse_apply {n : Nat} (matrix : PolynomialMatrix.Basic.Matrix K (
               smaller.inverse rowIndex columnIndex) column) row := by
   unfold PolynomialMatrix.Inverse.Scaled.Block.blockInverse
   rewrite [SquareMatrix.matrixOfFn_apply]
-  exact Eq.refl _
+  revert row column
+  apply Fin.cases_induction
+  · apply Fin.cases_induction
+    · rfl
+    · intro index
+      change (Data.Vector.Basic.vectorOfFn _ : Data.Vector _ n) index = _
+      rewrite [Data.Vector.Basic.vectorOfFn_apply]
+      rfl
+  · intro rowIndex
+    apply Fin.cases_induction
+    · change (Data.Vector.Basic.vectorOfFn _ : Data.Vector _ n) rowIndex = _
+      rewrite [Data.Vector.Basic.vectorOfFn_apply]
+      rfl
+    · intro columnIndex
+      change (SquareMatrix.matrixOfFn _ : SquareMatrix _ n) rowIndex columnIndex = _
+      rewrite [SquareMatrix.matrixOfFn_apply]
+      rfl
 end
 
 end Purelib.LinearAlgebra.PolynomialMatrix.Inverse.Scaled.Block

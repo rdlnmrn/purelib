@@ -83,9 +83,9 @@ open Purelib.Polynomial in
 /-- Dense polynomials with rational Gaussian coordinates. -/
 abbrev Polynomial := Dense.Basic.DensePolynomial Coordinate
 /-- The original rational box type with retained coordinate bounds. -/
-abbrev Box := Purelib.Geometry.Rational.Box
+abbrev Box := Geometry.Rational.Box
 /-- The original winding-one root track indexed by its polynomial and ambient box. -/
-abbrev WindingOneTrack := Purelib.RootIsolation.Track.Basic.WindingOneTrack
+abbrev WindingOneTrack := RootIsolation.Track.Basic.WindingOneTrack
 
 open Purelib.Polynomial.Power in
 open Purelib.Riemann.RootContinuation in
@@ -98,7 +98,7 @@ structure Owner (parameter : Gaussian) where
   /-- The original radicand is nonzero. -/ parameterNonzero : parameter ≠ 0
   /-- The retained original ambient box of the square-root track. -/ ambient : Box
   /-- The winding-one track indexed by this exact radicand and ambient box. -/ track : WindingOneTrack
-    (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+    (Gaussian.rootPolynomial parameter
       SquareRootDegree.degreeTwo) ambient
 
 constructive_injectivity Owner
@@ -112,7 +112,7 @@ open Purelib.Polynomial.Power in
 open Purelib.Riemann.RootContinuation in
 /-- The quadratic polynomial whose roots square to the original parameter. -/
 abbrev rootPolynomial (parameter : Gaussian) :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+  Gaussian.rootPolynomial parameter
     SquareRootDegree.degreeTwo
 
 open Purelib.Polynomial.Dense.Basic.DensePolynomial
@@ -134,15 +134,39 @@ retained. -/
       (rootPolynomial parameter) ambient) : Owner parameter where
   parameterNonzero := parameterNonzero
   ambient := ambient
-  track := QuadraticLineClearance.Owner.accelerateTrack parameter
+  track := accelerateTrack parameter
     (Track.Newton.Build.ofInitial
       (by
-        rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]
+        rw [Gaussian.rootPolynomial_degree]
         decide)
       (Gaussian.Squarefree.squarefree parameterNonzero
         SquareRootDegree.degreeTwo)
-      (QuadraticAxisElimination.quadraticAxisElimination parameter)
+      (quadraticAxisElimination parameter)
       initial)
+
+open Purelib.RootIsolation in
+/-- Building from a winding-one state retains its original ambient box. -/
+theorem ofState_ambient {parameter : Gaussian} (parameterNonzero : parameter ≠ 0)
+    {ambient : Box}
+    (initial : State.WindingOne.Basic.WindingOneState (rootPolynomial parameter) ambient) :
+    (ofState parameterNonzero initial).ambient = ambient := by
+  unfold ofState
+  rfl
+
+open Purelib.RootIsolation in
+/-- Building from a winding-one state retains its complete original initial state.
+
+Checked quadratic acceleration preserves the same initial box, clearance,
+winding and ambient-side certificates. This equality compares the original
+state records before any subsequent refinement is requested.
+-/
+theorem ofState_initial {parameter : Gaussian} (parameterNonzero : parameter ≠ 0)
+    {ambient : Box}
+    (initial : State.WindingOne.Basic.WindingOneState (rootPolynomial parameter) ambient) :
+    (ofState parameterNonzero initial).track.initial = initial := by
+  unfold ofState
+  rewrite [SquareRoot.Clearance.QuadraticLineClearance.Owner.accelerateTrack_initial]
+  rfl
 
 open Purelib.Geometry.Rational in
 open Purelib.Polynomial in
@@ -154,24 +178,24 @@ The determinants give the exact boundary clearance witnesses, which are retained
 square-root track constructor. -/
 @[expose] def ofBox {parameter : Gaussian} (parameterNonzero : parameter ≠ 0)
     (box : Box) (proper : box.Proper)
-    (leftNonzero : QuadraticAxisElimination.verticalDeterminant parameter box.xLower ≠ 0)
-    (rightNonzero : QuadraticAxisElimination.verticalDeterminant parameter box.xUpper ≠ 0)
-    (bottomNonzero : QuadraticAxisElimination.horizontalDeterminant parameter box.yLower ≠ 0)
-    (topNonzero : QuadraticAxisElimination.horizontalDeterminant parameter box.yUpper ≠ 0)
+    (leftNonzero : verticalDeterminant parameter box.xLower ≠ 0)
+    (rightNonzero : verticalDeterminant parameter box.xUpper ≠ 0)
+    (bottomNonzero : horizontalDeterminant parameter box.yLower ≠ 0)
+    (topNonzero : horizontalDeterminant parameter box.yUpper ≠ 0)
     (windingFour : Winding.Box.Basic.quadrupledBoxWinding (rootPolynomial parameter) box = 4) :
     Owner parameter := by
   let left := Line.Bezout.verticalOfCoprime
     (rootPolynomial parameter) box box.xLower
-    (QuadraticAxisElimination.verticalCoprime parameter box.xLower leftNonzero)
+    (verticalCoprime parameter box.xLower leftNonzero)
   let right := Line.Bezout.verticalOfCoprime
     (rootPolynomial parameter) box box.xUpper
-    (QuadraticAxisElimination.verticalCoprime parameter box.xUpper rightNonzero)
+    (verticalCoprime parameter box.xUpper rightNonzero)
   let bottom := Line.Bezout.horizontalOfCoprime
     (rootPolynomial parameter) box box.yLower
-    (QuadraticAxisElimination.horizontalCoprime parameter box.yLower bottomNonzero)
+    (horizontalCoprime parameter box.yLower bottomNonzero)
   let top := Line.Bezout.horizontalOfCoprime
     (rootPolynomial parameter) box box.yUpper
-    (QuadraticAxisElimination.horizontalCoprime parameter box.yUpper topNonzero)
+    (horizontalCoprime parameter box.yUpper topNonzero)
   let clearance := Boundary.Lines.boundaryOfLines left right bottom top
   exact ofState parameterNonzero
     { box := box
@@ -193,7 +217,7 @@ The same track initial state supplies the box, properness, boundary clearance an
 is selected. -/
 @[expose] def localOwner {parameter : Gaussian} (owner : Owner parameter) :
     Owner.Local.Basic.LocalOwner
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      (Gaussian.rootPolynomial parameter
         SquareRootDegree.degreeTwo) where
   box := owner.track.initial.box
   proper := owner.track.initial.proper
@@ -212,7 +236,7 @@ large-square ambient box. -/
     (sheet : Fin 2) : Owner parameter where
   parameterNonzero := parameterNonzero
   ambient := Bounds.RootRadius.Box.largeSquareBox
-    (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+    (Gaussian.rootPolynomial parameter
       SquareRootDegree.degreeTwo)
   track := SquareRootSheets.track parameterNonzero sheet
 
@@ -224,7 +248,7 @@ The returned track uses the certified common ambient box and preserves the selec
 squared-displacement witness. -/
 @[expose] def advance {source target : Gaussian} (owner : Owner source)
     (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound) : Owner target := by
   exact
     { parameterNonzero := targetNonzero
@@ -373,7 +397,7 @@ target accuracy radius. -/
   let majorants := quantitativePreparationMajorants owner
   Majorized.Build.extractSeparatedMajorized
     (by
-      rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]
+      rw [Gaussian.rootPolynomial_degree]
       exact SquareRootDegree.degreeTwo_atLeastTwo)
     current separation majorants
     (Power.Isolation.isolationInput parameterNonzero
@@ -496,6 +520,11 @@ and its retained coherent value. -/
   CertifiedSquareRoot.certificate parameterNonzero owner.track
 
 open Purelib.Riemann.Branches in
+/-- The actual original owner certificate retains one eighth of its radicand's sample-norm floor. -/
+theorem certificate_lowerSq {parameter : Gaussian} (owner : Owner parameter) (nonzero : parameter ≠ 0) :
+    (owner.certificate nonzero).apart.certificate.lowerSq = SquareRootSheets.sampleNormLower parameter / 8 := rfl
+
+open Purelib.Riemann.Branches in
 open Purelib.Riemann.RootContinuation in
 /-- Every possible value of the owner's certified root process lies in its original initial box.
 
@@ -526,7 +555,7 @@ open Purelib.Riemann.RootContinuation in
 /-- Continuing to a nearby nonzero parameter retains an initial box refining the source initial box. -/
 theorem advance_initial_box_refines {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound) :
     (advance owner targetNonzero small).track.initial.box.Refines
       owner.track.initial.box :=
@@ -537,7 +566,7 @@ open Purelib.Data.Gaussian in
 /-- The continued owner's initial boundary-clearance bound is strictly positive. -/
 theorem advance_clearance_positive {source target : Gaussian}
     (owner : Owner source) (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Norm.Basic.normSq (source - target) <
       owner.track.initial.clearance.bound) :
     0 < (advance owner targetNonzero small).track.initial.clearance.bound :=
   (advance owner targetNonzero small).track.initial.clearance.positive
@@ -580,7 +609,7 @@ The supplied squared-displacement bound permits the retained source owner
 to advance to this target. The result contains that exact advanced owner. -/
 @[expose] def advance (current : PackedOwner) (target : Gaussian)
     (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq
+    (small : Norm.Basic.normSq
       (current.parameter - target) <
         current.owner.track.initial.clearance.bound) : PackedOwner :=
   ⟨target, current.owner.advance targetNonzero small⟩
@@ -598,7 +627,7 @@ inductive Chain : PackedOwner → Type
   /-- A clearance-bounded continuation step followed by a chain at the exact advanced owner. -/ | step (owner :
     PackedOwner) (target : Gaussian)
       (targetNonzero : target ≠ 0)
-      (small : Data.Gaussian.Norm.Basic.normSq
+      (small : Norm.Basic.normSq
         (owner.parameter - target) <
           owner.owner.track.initial.clearance.bound)
       (remaining : Chain
@@ -655,6 +684,20 @@ theorem endpointNonzero {initial : PackedOwner} (chain : Chain initial)
   | .step _ _ targetNonzero _ remaining =>
       remaining.endpointNonzero targetNonzero
 
+open Purelib.Geometry.Rational in
+/-- The actual terminal owner's initial box refines the original chain source owner's initial box.
+
+Each retained continuation step refines its actual preceding source box.
+Transitivity follows the original continuation tail, preserving all exact
+intermediate owners rather than replacing them by independently selected roots.
+-/
+theorem endpoint_initial_box_refines {initial : PackedOwner} (chain : Chain initial) :
+    chain.endpoint.owner.track.initial.box.Refines initial.owner.track.initial.box := by
+  induction chain with
+  | nil owner => exact Box.refines_refl _
+  | step owner target nonzero small remaining inductionHypothesis =>
+      exact inductionHypothesis.trans (owner.owner.advance_initial_box_refines nonzero small)
+
 open Purelib.Data.Gaussian
 /-- Build one certified continuation step followed by the empty chain at its actual advanced owner.
 
@@ -662,7 +705,7 @@ The supplied nonzero target and squared-displacement witness index the exact adv
 same computed owner. -/
 @[expose] def single (owner : PackedOwner) (target : Gaussian)
     (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq
+    (small : Norm.Basic.normSq
       (owner.parameter - target) <
         owner.owner.track.initial.clearance.bound) : Chain owner :=
   .step owner target targetNonzero small (.nil _)
@@ -670,7 +713,7 @@ same computed owner. -/
 /-- A single-step continuation chain has length one. -/
 @[simp] theorem length_single (owner : PackedOwner) (target : Gaussian)
     (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq
+    (small : Norm.Basic.normSq
       (owner.parameter - target) <
         owner.owner.track.initial.clearance.bound) :
     (single owner target targetNonzero small).length = 1 := rfl
@@ -678,7 +721,7 @@ same computed owner. -/
 /-- The endpoint of a single-step chain is its exact advanced owner. -/
 @[simp] theorem endpoint_single (owner : PackedOwner) (target : Gaussian)
     (targetNonzero : target ≠ 0)
-    (small : Data.Gaussian.Norm.Basic.normSq
+    (small : Norm.Basic.normSq
       (owner.parameter - target) <
         owner.owner.track.initial.clearance.bound) :
     (single owner target targetNonzero small).endpoint =

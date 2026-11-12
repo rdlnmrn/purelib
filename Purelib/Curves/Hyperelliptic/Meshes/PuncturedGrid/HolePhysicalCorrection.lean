@@ -133,7 +133,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Riemann.Periods.WeightedPeriods (Coefficients)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
@@ -146,20 +146,20 @@ set_option genInjectivity false in
 The original coefficient mass allocates one per-hole allowance; every retained one-sided cut word uses the same path and
 contact budget caches above a common stage. -/
 structure HolePhysicalRequest
-    (prepared : BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch lifted.cutBoundaryPairs
+    (prepared : BoundaryContactPreparations lifted.cutPolygon.patch lifted.cutBoundaryPairs
       differential domains)
-    (coefficients : WeightedPeriods.Coefficients weights) (target : SewnPrimitiveFaces.Coordinate) (floor : Nat) where
+    (coefficients : Coefficients weights) (target : Coordinate) (floor : Nat) where
   /-- The complete weighted hole-correction target is strictly positive. -/ positive : 0 < target
-  /-- The cached common allowance for each original physical branch hole. -/ perHole : SewnPrimitiveFaces.Coordinate
+  /-- The cached common allowance for each original physical branch hole. -/ perHole : Coordinate
   /-- The per-hole allowance is the target divided by the original coefficient mass plus one. -/ perHole_eq : perHole =
     target / (coefficients.mass + 1)
   /-- The shared retained sewing-path request for the original per-hole allowance. -/ path :
-    SewnPathRequests.PathRequest lifted.cutPolygon.patch.assembly 8 (perHole / 4)
+    PathRequest lifted.cutPolygon.patch.assembly 8 (perHole / 4)
   /-- The single cached original contact request used by every retained hole row. -/ contacts :
     ContactPreparations.Request prepared.prepared path.tolerance 0
   /-- The actual original hole requests indexed by their retained physical face positions. -/ rows :
-    Data.Vector.DependentVector (fun index : Fin base.faces.holes.length =>
-    BranchHoleCutCancellation.BranchHoleCutRequest base.faces.holes[index.val] prepared.prepared perHole floor)
+    DependentVector (fun index : Fin base.faces.holes.length =>
+    BranchHoleCutRequest base.faces.holes[index.val] prepared.prepared perHole floor)
   /-- Every original hole row reuses the exact same cached sewing-path request. -/ rows_path : ∀ index, (rows.get
     index).path = path
   /-- Every original hole row reuses the exact same cached contact budgets. -/ rows_budgets : ∀ index, HEq (rows.get
@@ -178,15 +178,15 @@ namespace HolePhysicalRequest
 variable {prepared : BoundaryContactPreparations
   lifted.cutPolygon.patch lifted.cutBoundaryPairs differential domains}
   {coefficients : Coefficients weights} {target :
-    Purelib.Topology.Surface.Sewing.SewnPrimitiveFaces.Coordinate} {floor : Nat}
+    Coordinate} {floor : Nat}
 
 /-- Cache one sewing path and contact budget, then build all original physical hole rows with the same per-hole
 allowance. -/
-@[expose] def build (prepared : BoundaryContacts.BoundaryContactPreparations lifted.cutPolygon.patch
+@[expose] def build (prepared : BoundaryContactPreparations lifted.cutPolygon.patch
   lifted.cutBoundaryPairs differential domains)
-    (coefficients : WeightedPeriods.Coefficients weights) (target : SewnPrimitiveFaces.Coordinate) (positive : 0 <
+    (coefficients : Coefficients weights) (target : Coordinate) (positive : 0 <
       target) (floor : Nat) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.HolePhysicalCorrection.HolePhysicalRequest prepared coefficients target
+    HolePhysicalRequest prepared coefficients target
       floor :=
   let perHole := target / (coefficients.mass + 1)
   have perHolePositive : 0 < perHole := Fraction.Order.Field.div_pos_direct positive
@@ -210,13 +210,13 @@ allowance. -/
     maximum, rfl, max floor maximum, rfl⟩
 
 /-- The common hole-request stage retains the original supplied minimum floor. -/
-theorem floor_le (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.HolePhysicalCorrection.HolePhysicalRequest
+theorem floor_le (request : HolePhysicalRequest
   prepared coefficients target floor) : floor ≤ request.index := by
   rw [request.index_eq]
   exact Data.Nat.Order.le_max_left _ _
 
 /-- Every original hole row is ready above the common cached request stage. -/
-theorem row_later (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.HolePhysicalCorrection.HolePhysicalRequest
+theorem row_later (request : HolePhysicalRequest
   prepared coefficients target floor) (row : Fin base.faces.holes.length)
     {index : Nat} (later : request.index ≤ index) : (request.rows.get row).contactRequest.index ≤ index := by
   have bounded := request.rows.get_le_maximum (fun _ row => row.contactRequest.index) row
@@ -224,18 +224,18 @@ theorem row_later (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.HolePhysi
   exact bounded.trans ((Data.Nat.Order.le_max_right _ _).trans (request.index_eq ▸ later))
 
 /-- The retained per-hole allowance is strictly positive. -/
-theorem perHole_positive (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.HolePhysicalCorrection.HolePhysicalRequest
+theorem perHole_positive (request : HolePhysicalRequest
   prepared coefficients target floor) : 0 < request.perHole := by
   rw [request.perHole_eq]
   exact Fraction.Order.Field.div_pos_direct request.positive
     (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct coefficients.mass_nonnegative (by decide))
 
 /-- The original coefficient mass times the common hole allowance is strictly below the complete target. -/
-theorem paid (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.HolePhysicalCorrection.HolePhysicalRequest prepared
+theorem paid (request : HolePhysicalRequest prepared
   coefficients target floor) : coefficients.mass * request.perHole < target := by
   have strict : coefficients.mass < coefficients.mass + 1 := by
     have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct
-      (by decide : (0 : SewnPrimitiveFaces.Coordinate) < 1) coefficients.mass
+      (by decide : (0 : Coordinate) < 1) coefficients.mass
     exact ((Fraction.Field.add_comm coefficients.mass 0).trans
       (Fraction.Field.zero_add coefficients.mass)).symm.trans_lt translated
   have bound := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
@@ -247,12 +247,12 @@ theorem paid (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.HolePhysicalCo
 
 /-- Every original branch-hole loop is evaluated through the same cut generator bank. The cached coefficient mass
 includes the complete finite count and squared integer multiplicities. -/
-theorem accurate (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.HolePhysicalCorrection.HolePhysicalRequest
+theorem accurate (request : HolePhysicalRequest
   prepared coefficients target floor) {index : Nat}
     (later : request.index ≤ index)
-    {shared : PrimitiveData.FacePrimitiveBank differential index domains} (triangles :
-      TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh)
-    (surface : SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch triangles.values) :
+    {shared : FacePrimitiveBank differential index domains} (triangles :
+      TriangleReadings shared lifted.mesh)
+    (surface : CachedSample lifted.cutPolygon.patch triangles.values) :
     Data.Gaussian.Norm.Basic.normSq (coefficients.combine (fun row : Fin base.faces.holes.length =>
       SewingRetraction.wordValue (ProjectedEdgePairing.generatorValue lifted.cutBoundaryPairs (fun column =>
         surface.sewn.values ((ProjectedEdgePairing.boundaryWord lifted.cutBoundaryPairs).alphabet.generators

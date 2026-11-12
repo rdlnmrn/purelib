@@ -63,6 +63,8 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Algebra
@@ -122,26 +124,26 @@ open Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions (midpoint_betwee
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+    UniformReciprocalModels.Data patch count}
   {edge : ParameterEdge} {cell :
     Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {model :
+  {regular : RegularBounds.Data cap} {model :
     RootModel cell}
   {parameter target sourceTarget : Coordinate} {floor sourceFloor :
     Nat}
   {covers : BasisSourceCovers parent}
 
-variable {index readingStage minimum : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+variable {index readingStage minimum : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
   {polynomials : RegularBasisPolynomials cap
     index box}
   {comparison : Data regular cell}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample comparison capSample}
-  {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
+  {sample : ArcSamples.Sample comparison capSample}
+  {coefficients : GaussianVector genus}
 
 open Purelib.Data.Gaussian.Basic.Canonical
 open Purelib.Data.Rat.Fraction.Compatibility
@@ -154,13 +156,13 @@ namespace PathValues
 set_option genInjectivity false in
 /-- Paired source/chart increments on the actual retained segment list. The source total and every increment error are
 certified without normalizing coefficients or suppressing the polygon's area. -/
-structure BasisPathValues (polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (sourceTarget :
-      InverseRootPolynomial.Coordinate)
-    (segments : List (VertexPaths.Segment regular model sample target floor readingStage))
-    (firstSource lastSource : InverseRootPolynomial.Gaussian) where
+structure BasisPathValues (polynomials : RegularBasisPolynomials cap index box)
+    (coefficients : GaussianVector genus) (sourceTarget :
+      Coordinate)
+    (segments : List (Segment regular model sample target floor readingStage))
+    (firstSource lastSource : Gaussian) where
   /-- The actual paired original-source and chart increments in retained segment order. -/ pairs : List
-    (InverseRootPolynomial.Gaussian × InverseRootPolynomial.Gaussian)
+    (Gaussian × Gaussian)
   /-- The chart components are exactly the increment readings of the original retained root segment list. -/ chart_eq :
     pairs.map Prod.snd = segments.map (fun segment =>
     polynomials.value coefficients segment.last.root.coordinate - polynomials.value coefficients
@@ -170,8 +172,8 @@ structure BasisPathValues (polynomials : CapBasisEnergy.RegularBasisPolynomials 
   /-- The cached source increment total equals the retained last source value minus the first. -/ source_total :
     source.total = lastSource - firstSource
   /-- Every actual paired increment satisfies the coefficient-weighted source/chart squared-error bound. -/ errors : ∀
-    pair ∈ pairs, Data.Gaussian.Norm.Basic.normSq (pair.1 - pair.2) ≤ 40 * sourceTarget *
-    PreparedObservationCoercivity.coefficientNormSq coefficients
+    pair ∈ pairs, Basic.normSq (pair.1 - pair.2) ≤ 40 * sourceTarget *
+    coefficientNormSq coefficients
 
 constructive_injectivity BasisPathValues
 
@@ -185,14 +187,14 @@ variable {first last : Coordinate}
 
 The retained source values and accuracy certificates certify the exact ordered
 pair, its source total, and its coefficient-weighted squared error. -/
-@[expose] def leaf (before : VertexRequests.Reading regular model sample first target floor readingStage)
-    (after : VertexRequests.Reading regular model sample last target floor readingStage) (ordered : first ≤ last)
-    (firstSource lastSource : InverseRootPolynomial.Gaussian)
-    (firstClose : Data.Gaussian.Norm.Basic.normSq (firstSource - polynomials.value coefficients
-      before.root.coordinate) ≤ 10 * sourceTarget * PreparedObservationCoercivity.coefficientNormSq coefficients)
-    (lastClose : Data.Gaussian.Norm.Basic.normSq (lastSource - polynomials.value coefficients
-      after.root.coordinate) ≤ 10 * sourceTarget * PreparedObservationCoercivity.coefficientNormSq coefficients) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PathValues.BasisPathValues polynomials coefficients sourceTarget
+@[expose] def leaf (before : Reading regular model sample first target floor readingStage)
+    (after : Reading regular model sample last target floor readingStage) (ordered : first ≤ last)
+    (firstSource lastSource : Gaussian)
+    (firstClose : Basic.normSq (firstSource - polynomials.value coefficients
+      before.root.coordinate) ≤ 10 * sourceTarget * coefficientNormSq coefficients)
+    (lastClose : Basic.normSq (lastSource - polynomials.value coefficients
+      after.root.coordinate) ≤ 10 * sourceTarget * coefficientNormSq coefficients) :
+    BasisPathValues polynomials coefficients sourceTarget
       (Path.leaf before after ordered).segments firstSource lastSource := by
   let pair := (lastSource - firstSource,
     polynomials.value coefficients after.root.coordinate - polynomials.value coefficients before.root.coordinate)
@@ -202,12 +204,12 @@ pair, its source total, and its coefficient-weighted squared error. -/
   · intro value member
     have equal := Purelib.Data.List.Membership.mem_singleton.mp member
     subst value
-    have bound := (Data.Gaussian.Norm.Bounds.normSq_sub_le_two (lastSource - polynomials.value coefficients
+    have bound := (Bounds.normSq_sub_le_two (lastSource - polynomials.value coefficients
       after.root.coordinate)
       (firstSource - polynomials.value coefficients before.root.coordinate)).trans
       (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct lastClose
         firstClose) (by decide))
-    change Data.Gaussian.Norm.Basic.normSq ((lastSource - firstSource) -
+    change Basic.normSq ((lastSource - firstSource) -
       (polynomials.value coefficients after.root.coordinate - polynomials.value coefficients before.root.coordinate)) ≤
         _
     rw [show (lastSource - firstSource) -
@@ -220,21 +222,21 @@ pair, its source total, and its coefficient-weighted squared error. -/
 
 Both ordered pair lists and their cached source summaries are retained. Their
 exact middle-source identity makes the complete source increments telescope. -/
-@[expose] def append {leftSegments rightSegments : List (VertexPaths.Segment regular model sample target floor
+@[expose] def append {leftSegments rightSegments : List (Segment regular model sample target floor
   readingStage)}
-    {firstSource middleSource lastSource : InverseRootPolynomial.Gaussian}
-    (left : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PathValues.BasisPathValues polynomials coefficients
+    {firstSource middleSource lastSource : Gaussian}
+    (left : BasisPathValues polynomials coefficients
       sourceTarget leftSegments firstSource middleSource)
-    (right : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PathValues.BasisPathValues polynomials coefficients
+    (right : BasisPathValues polynomials coefficients
       sourceTarget rightSegments middleSource lastSource) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PathValues.BasisPathValues polynomials coefficients sourceTarget
+    BasisPathValues polynomials coefficients sourceTarget
       (leftSegments ++ rightSegments) firstSource lastSource := by
   let source : IncrementArea.Summary ((left.pairs ++ right.pairs).map Prod.fst) := by
-    rw [Purelib.Data.List.Map.map_append]
+    rw [Data.List.Map.map_append]
     exact left.source.append right.source
   refine ⟨left.pairs ++ right.pairs, ?_, source, ?_, ?_⟩
-  · rw [Purelib.Data.List.Map.map_append, left.chart_eq, right.chart_eq, Purelib.Data.List.Map.map_append]
-  · rw [source.total_eq, Purelib.Data.List.Map.map_append, IncrementArea.sum_append,
+  · rw [Data.List.Map.map_append, left.chart_eq, right.chart_eq, Data.List.Map.map_append]
+  · rw [source.total_eq, Data.List.Map.map_append, IncrementArea.sum_append,
       ← left.source.total_eq, ← right.source.total_eq, left.source_total, right.source_total]
     ring1
   · intro pair member
@@ -249,31 +251,31 @@ namespace PathValues.BasisTreeSources.Plans
 /-- Evaluate each source combination once per retained midpoint and share it between the two children. No root or
 inverse approximation is repeated. -/
 @[expose] def pathValues (bank : BasisSourceLocations.SampleBank covers index)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    {depth : Nat} → {first last : InverseRootPolynomial.Coordinate} → (tree : VertexTree.Tree regular model target floor
+    (coefficients : GaussianVector genus) :
+    {depth : Nat} → {first last : Coordinate} → (tree : VertexTree.Tree regular model target floor
       depth first last) →
-    (sources : EndpointSchedule.BasisTreeSources covers sourceTarget sourceFloor tree) →
-    (plans : BasisTreeSources.Plans polynomials minimum tree sources) → (readings : VertexPaths.TreeReadings sample
+    (sources : BasisTreeSources covers sourceTarget sourceFloor tree) →
+    (plans : Plans polynomials minimum tree sources) → (readings : TreeReadings sample
       readingStage tree) →
-    Plans.Evaluation bank tree sources plans readings →
-    (before : VertexRequests.Reading regular model sample first target floor readingStage) →
-    (after : VertexRequests.Reading regular model sample last target floor readingStage) → (ordered : first ≤ last) →
-    (firstSource lastSource : InverseRootPolynomial.Gaussian) →
-    Data.Gaussian.Norm.Basic.normSq (firstSource - polynomials.value coefficients before.root.coordinate) ≤ 10
-      * sourceTarget * PreparedObservationCoercivity.coefficientNormSq coefficients →
-    Data.Gaussian.Norm.Basic.normSq (lastSource - polynomials.value coefficients after.root.coordinate) ≤ 10 *
-      sourceTarget * PreparedObservationCoercivity.coefficientNormSq coefficients →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PathValues.BasisPathValues polynomials coefficients sourceTarget
+    Evaluation bank tree sources plans readings →
+    (before : Reading regular model sample first target floor readingStage) →
+    (after : Reading regular model sample last target floor readingStage) → (ordered : first ≤ last) →
+    (firstSource lastSource : Gaussian) →
+    Basic.normSq (firstSource - polynomials.value coefficients before.root.coordinate) ≤ 10
+      * sourceTarget * coefficientNormSq coefficients →
+    Basic.normSq (lastSource - polynomials.value coefficients after.root.coordinate) ≤ 10 *
+      sourceTarget * coefficientNormSq coefficients →
+    BasisPathValues polynomials coefficients sourceTarget
       (TreeReadings.path readings before after ordered).segments firstSource lastSource
   | _, _, _, .leaf _ _, _, _, _, _, before, after, ordered, firstSource, lastSource, firstClose, lastClose =>
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PathValues.BasisPathValues.leaf before after ordered firstSource
+      BasisPathValues.leaf before after ordered firstSource
         lastSource firstClose lastClose
   | _, _, _, .node _ left right, sources, plans, readings, evaluated, before, after, ordered,
       firstSource, lastSource, firstClose, lastClose =>
-      let middle := FiniteSum.Fin.sumFin (fun row => coefficients row * evaluated.1.evaluated.sources row)
+      let middle := sumFin (fun row => coefficients row * evaluated.1.evaluated.sources row)
       let middleClose := evaluated.1.evaluated.accurate coefficients
-      let between := PreparedBoxPartitions.midpoint_between ordered
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PathValues.BasisPathValues.append
+      let between := midpoint_between ordered
+      BasisPathValues.append
         (pathValues bank
           coefficients left sources.2.1 plans.2.1 readings.2.1 evaluated.2.1
           before readings.1.reading between.1 firstSource middle firstClose middleClose)
@@ -296,23 +298,23 @@ variable {depth : Nat} {mesh : Mesh regular model depth
     charts polynomials}
   {bank : BasisSourceLocations.SampleBank
     covers index}
-  {original : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.ChartMesh.Evaluation charts sample
+  {original : ChartMesh.Evaluation charts sample
     readingStage}
 
 set_option genInjectivity false in
 /-- The extreme source combinations and complete increment certificate, owned by the original acquired mesh path. -/
 structure PathValues (evaluated : Evaluation plan bank original)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) where
+    (coefficients : GaussianVector genus) where
   /-- The cached coefficient-weighted source value at the original acquired first endpoint. -/ firstSource :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The first source cache reads the actual retained first endpoint comparison sources. -/ first_eq : firstSource =
-    FiniteSum.Fin.sumFin (fun row => coefficients row * evaluated.first.evaluated.sources row)
+    sumFin (fun row => coefficients row * evaluated.first.evaluated.sources row)
   /-- The cached coefficient-weighted source value at the original acquired last endpoint. -/ lastSource :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The last source cache reads the actual retained last endpoint comparison sources. -/ last_eq : lastSource =
-    FiniteSum.Fin.sumFin (fun row => coefficients row * evaluated.last.evaluated.sources row)
+    sumFin (fun row => coefficients row * evaluated.last.evaluated.sources row)
   /-- The complete paired increment certificate on the exact original acquired mesh path. -/ values :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PathValues.BasisPathValues polynomials coefficients sourceTarget
+    PathValues.BasisPathValues polynomials coefficients sourceTarget
     original.path.segments firstSource lastSource
 
 constructive_injectivity PathValues
@@ -322,14 +324,14 @@ namespace PathValues.Mesh.BasisEndpoints.Plan.Evaluation
 /-- Read both original extreme source combinations and recursively certify the exact acquired mesh path, sharing each
 retained midpoint evaluation. -/
 @[expose] def pathValues (evaluated : Evaluation plan bank original)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
+    (coefficients : GaussianVector genus) :
       PathValues evaluated
       coefficients := by
-  let firstSource := FiniteSum.Fin.sumFin (fun row => coefficients row * evaluated.first.evaluated.sources row)
-  let lastSource := FiniteSum.Fin.sumFin (fun row => coefficients row * evaluated.last.evaluated.sources row)
+  let firstSource := sumFin (fun row => coefficients row * evaluated.first.evaluated.sources row)
+  let lastSource := sumFin (fun row => coefficients row * evaluated.last.evaluated.sources row)
   refine ⟨firstSource, rfl, lastSource, rfl, ?_⟩
   rw [original.path_eq]
-  exact Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PathValues.BasisTreeSources.Plans.pathValues bank coefficients
+  exact BasisTreeSources.Plans.pathValues bank coefficients
     mesh.tree sources.tree plan.tree original.readings
     evaluated.tree original.first original.last cell.ordered.le firstSource lastSource
     (evaluated.first.evaluated.accurate coefficients) (evaluated.last.evaluated.accurate coefficients)

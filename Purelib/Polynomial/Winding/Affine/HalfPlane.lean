@@ -5,6 +5,7 @@ import Purelib.Curves.Legendre.Paths
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Rat.Fraction.Order.Arithmetic
 import Purelib.Geometry.Rational.Box.Basic
+public import Purelib.Geometry.Rational.Box.Outside
 public import Purelib.Polynomial.Clearance.Box.Boundary.Basic
 import Purelib.Polynomial.Clearance.Box.Boundary.Constant
 import Purelib.Polynomial.Clearance.Box.Boundary.Operations
@@ -18,6 +19,9 @@ import Purelib.Polynomial.Winding.Box.Product
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Tactic.Ring
+
+open Purelib.Polynomial.Dense.Gaussian
+open Purelib.Polynomial.Clearance.Box.Boundary.Basic
 
 /-!
 # Boundary-clear affine factors in rational half-planes
@@ -41,25 +45,25 @@ The scalar transport retains the original factor, box and boundary witness. Its 
 nonzero constant and factor values. -/
 theorem factor_winding_zero_of_below (root : Gaussian.Basic.Canonical) {box : Box}
     (proper : box.Proper)
-    (clearance : Clearance.Box.Boundary.Basic.BoundaryClearance
-      (Dense.Gaussian.Linear.Translated.translatedCoordinate root) box)
+    (clearance : BoundaryClearance
+      (Linear.Translated.translatedCoordinate root) box)
     (below : root.im < box.yLower) :
-    Winding.Box.Basic.quadrupledBoxWinding
-      (Dense.Gaussian.Linear.Translated.translatedCoordinate root) box = 0 := open Purelib in by
+    Box.Basic.quadrupledBoxWinding
+      (Linear.Translated.translatedCoordinate root) box = 0 := open Purelib in by
   let minusI : Gaussian.Basic.Canonical := Curves.Legendre.Paths.gaussian 0 (-1)
-  let constant := Dense.Gaussian.Constants.gaussianConstant minusI
+  let constant := Constants.gaussianConstant minusI
   have minusINonzero : minusI ≠ 0 := by decide
   let constantClearance :=
     Clearance.Box.Boundary.Constant.gaussianConstant_boundaryClearance minusINonzero box
-  have productZero : Winding.Box.Basic.quadrupledBoxWinding
-      (constant * Dense.Gaussian.Linear.Translated.translatedCoordinate root) box = 0 := by
-    apply Winding.Box.HalfPlane.quadrupledBoxWinding_eq_zero_of_positive_real
-      (constant * Dense.Gaussian.Linear.Translated.translatedCoordinate root) box proper
-      (Clearance.Box.Boundary.Basic.BoundaryClearance.mul constantClearance clearance)
+  have productZero : Box.Basic.quadrupledBoxWinding
+      (constant * Linear.Translated.translatedCoordinate root) box = 0 := by
+    apply Box.HalfPlane.quadrupledBoxWinding_eq_zero_of_positive_real
+      (constant * Linear.Translated.translatedCoordinate root) box proper
+      (BoundaryClearance.mul constantClearance clearance)
     intro point boundary
     rw [Dense.Basic.DensePolynomial.eval_mul,
-      Dense.Gaussian.Constants.gaussianConstant_eval,
-      Dense.Gaussian.Linear.Translated.translatedCoordinate_eval]
+      Constants.gaussianConstant_eval,
+      Linear.Translated.translatedCoordinate_eval]
     change 0 < (minusI * (point - root)).re
     dsimp only [minusI, Curves.Legendre.Paths.gaussian,
       Gaussian.Basic.mul_re,
@@ -70,11 +74,11 @@ theorem factor_winding_zero_of_below (root : Gaussian.Basic.Canonical) {box : Bo
     exact Fraction.Order.Arithmetic.sub_pos_direct
       (below.trans_le boundary.1.2.2.1)
   have productFormula :=
-    Winding.Box.Product.quadrupledBoxWinding_mul_of_boundaryClearances
-      constant (Dense.Gaussian.Linear.Translated.translatedCoordinate root) box proper
+    Box.Product.quadrupledBoxWinding_mul_of_boundaryClearances
+      constant (Linear.Translated.translatedCoordinate root) box proper
       constantClearance clearance
-  have constantZero : Winding.Box.Basic.quadrupledBoxWinding constant box = 0 :=
-    Winding.Box.Constant.quadrupledBoxWinding_gaussianConstant minusINonzero box
+  have constantZero : Box.Basic.quadrupledBoxWinding constant box = 0 :=
+    Box.Constant.quadrupledBoxWinding_gaussianConstant minusINonzero box
   rw [productZero, constantZero] at productFormula
   rewrite [Data.Int.Arithmetic.zero_add] at productFormula
   exact productFormula.symm
@@ -84,25 +88,25 @@ theorem factor_winding_zero_of_below (root : Gaussian.Basic.Canonical) {box : Bo
 Multiplication by the constant imaginary unit places the boundary values in the positive real half-plane. -/
 theorem factor_winding_zero_of_above (root : Gaussian.Basic.Canonical) {box : Box}
     (proper : box.Proper)
-    (clearance : Clearance.Box.Boundary.Basic.BoundaryClearance
-      (Dense.Gaussian.Linear.Translated.translatedCoordinate root) box)
+    (clearance : BoundaryClearance
+      (Linear.Translated.translatedCoordinate root) box)
     (above : box.yUpper < root.im) :
-    Winding.Box.Basic.quadrupledBoxWinding
-      (Dense.Gaussian.Linear.Translated.translatedCoordinate root) box = 0 := open Purelib in by
+    Box.Basic.quadrupledBoxWinding
+      (Linear.Translated.translatedCoordinate root) box = 0 := open Purelib in by
   let i : Gaussian.Basic.Canonical := Curves.Legendre.Paths.gaussian 0 1
-  let constant := Dense.Gaussian.Constants.gaussianConstant i
+  let constant := Constants.gaussianConstant i
   have iNonzero : i ≠ 0 := by decide
   let constantClearance :=
     Clearance.Box.Boundary.Constant.gaussianConstant_boundaryClearance iNonzero box
-  have productZero : Winding.Box.Basic.quadrupledBoxWinding
-      (constant * Dense.Gaussian.Linear.Translated.translatedCoordinate root) box = 0 := by
-    apply Winding.Box.HalfPlane.quadrupledBoxWinding_eq_zero_of_positive_real
-      (constant * Dense.Gaussian.Linear.Translated.translatedCoordinate root) box proper
-      (Clearance.Box.Boundary.Basic.BoundaryClearance.mul constantClearance clearance)
+  have productZero : Box.Basic.quadrupledBoxWinding
+      (constant * Linear.Translated.translatedCoordinate root) box = 0 := by
+    apply Box.HalfPlane.quadrupledBoxWinding_eq_zero_of_positive_real
+      (constant * Linear.Translated.translatedCoordinate root) box proper
+      (BoundaryClearance.mul constantClearance clearance)
     intro point boundary
     rw [Dense.Basic.DensePolynomial.eval_mul,
-      Dense.Gaussian.Constants.gaussianConstant_eval,
-      Dense.Gaussian.Linear.Translated.translatedCoordinate_eval]
+      Constants.gaussianConstant_eval,
+      Linear.Translated.translatedCoordinate_eval]
     change 0 < (i * (point - root)).re
     dsimp only [i, Curves.Legendre.Paths.gaussian,
       Gaussian.Basic.mul_re,
@@ -113,11 +117,11 @@ theorem factor_winding_zero_of_above (root : Gaussian.Basic.Canonical) {box : Bo
     exact Fraction.Order.Arithmetic.sub_pos_direct
       (boundary.1.2.2.2.trans_lt above)
   have productFormula :=
-    Winding.Box.Product.quadrupledBoxWinding_mul_of_boundaryClearances
-      constant (Dense.Gaussian.Linear.Translated.translatedCoordinate root) box proper
+    Box.Product.quadrupledBoxWinding_mul_of_boundaryClearances
+      constant (Linear.Translated.translatedCoordinate root) box proper
       constantClearance clearance
-  have constantZero : Winding.Box.Basic.quadrupledBoxWinding constant box = 0 :=
-    Winding.Box.Constant.quadrupledBoxWinding_gaussianConstant iNonzero box
+  have constantZero : Box.Basic.quadrupledBoxWinding constant box = 0 :=
+    Box.Constant.quadrupledBoxWinding_gaussianConstant iNonzero box
   rw [productZero, constantZero] at productFormula
   rewrite [Data.Int.Arithmetic.zero_add] at productFormula
   exact productFormula.symm
@@ -127,15 +131,15 @@ has zero winding there.  The proof uses the finite half-plane Cauchy scanner,
 not an ambient argument principle. -/
 theorem factor_winding_zero_of_left (root : Gaussian.Basic.Canonical) {box : Box}
     (proper : box.Proper)
-    (clearance : Clearance.Box.Boundary.Basic.BoundaryClearance
-      (Dense.Gaussian.Linear.Translated.translatedCoordinate root) box)
+    (clearance : BoundaryClearance
+      (Linear.Translated.translatedCoordinate root) box)
     (left : root.re < box.xLower) :
-    Winding.Box.Basic.quadrupledBoxWinding
-      (Dense.Gaussian.Linear.Translated.translatedCoordinate root) box = 0 := by
-  apply Winding.Box.HalfPlane.quadrupledBoxWinding_eq_zero_of_positive_real
-    (Dense.Gaussian.Linear.Translated.translatedCoordinate root) box proper clearance
+    Box.Basic.quadrupledBoxWinding
+      (Linear.Translated.translatedCoordinate root) box = 0 := by
+  apply Box.HalfPlane.quadrupledBoxWinding_eq_zero_of_positive_real
+    (Linear.Translated.translatedCoordinate root) box proper clearance
   intro point boundary
-  rw [Dense.Gaussian.Linear.Translated.translatedCoordinate_eval]
+  rw [Linear.Translated.translatedCoordinate_eval]
   change 0 < point.re - root.re
   exact Fraction.Order.Arithmetic.sub_pos_direct
     (left.trans_le boundary.1.1)
@@ -149,25 +153,25 @@ The scalar transport retains the original factor, box and boundary witness. Its 
 nonzero constant and factor values. -/
 theorem factor_winding_zero_of_right (root : Gaussian.Basic.Canonical) {box : Box}
     (proper : box.Proper)
-    (clearance : Clearance.Box.Boundary.Basic.BoundaryClearance
-      (Dense.Gaussian.Linear.Translated.translatedCoordinate root) box)
+    (clearance : BoundaryClearance
+      (Linear.Translated.translatedCoordinate root) box)
     (right : box.xUpper < root.re) :
-    Winding.Box.Basic.quadrupledBoxWinding
-      (Dense.Gaussian.Linear.Translated.translatedCoordinate root) box = 0 := by
+    Box.Basic.quadrupledBoxWinding
+      (Linear.Translated.translatedCoordinate root) box = 0 := by
   let minusOne : Gaussian.Basic.Canonical := -1
-  let constant := Dense.Gaussian.Constants.gaussianConstant minusOne
+  let constant := Constants.gaussianConstant minusOne
   have minusOneNonzero : minusOne ≠ 0 := by decide
   let constantClearance :=
     Clearance.Box.Boundary.Constant.gaussianConstant_boundaryClearance minusOneNonzero box
-  have productZero : Winding.Box.Basic.quadrupledBoxWinding
-      (constant * Dense.Gaussian.Linear.Translated.translatedCoordinate root) box = 0 := by
-    apply Winding.Box.HalfPlane.quadrupledBoxWinding_eq_zero_of_positive_real
-      (constant * Dense.Gaussian.Linear.Translated.translatedCoordinate root) box proper
-      (Clearance.Box.Boundary.Basic.BoundaryClearance.mul constantClearance clearance)
+  have productZero : Box.Basic.quadrupledBoxWinding
+      (constant * Linear.Translated.translatedCoordinate root) box = 0 := by
+    apply Box.HalfPlane.quadrupledBoxWinding_eq_zero_of_positive_real
+      (constant * Linear.Translated.translatedCoordinate root) box proper
+      (BoundaryClearance.mul constantClearance clearance)
     intro point boundary
     rw [Dense.Basic.DensePolynomial.eval_mul,
-      Dense.Gaussian.Constants.gaussianConstant_eval,
-      Dense.Gaussian.Linear.Translated.translatedCoordinate_eval]
+      Constants.gaussianConstant_eval,
+      Linear.Translated.translatedCoordinate_eval]
     rw [show minusOne * (point - root) = -(point - root) by
       ring1]
     rw [Gaussian.Basic.neg_re,
@@ -176,15 +180,33 @@ theorem factor_winding_zero_of_right (root : Gaussian.Basic.Canonical) {box : Bo
     rewrite [reflected]
     exact Fraction.Order.Arithmetic.sub_pos_direct (boundary.1.2.1.trans_lt right)
   have productFormula :=
-    Winding.Box.Product.quadrupledBoxWinding_mul_of_boundaryClearances
-      constant (Dense.Gaussian.Linear.Translated.translatedCoordinate root) box proper
+    Box.Product.quadrupledBoxWinding_mul_of_boundaryClearances
+      constant (Linear.Translated.translatedCoordinate root) box proper
       constantClearance clearance
-  have constantZero : Winding.Box.Basic.quadrupledBoxWinding constant box = 0 :=
-    Winding.Box.Constant.quadrupledBoxWinding_gaussianConstant
+  have constantZero : Box.Basic.quadrupledBoxWinding constant box = 0 :=
+    Box.Constant.quadrupledBoxWinding_gaussianConstant
       minusOneNonzero box
   rw [productZero, constantZero] at productFormula
   rewrite [Data.Int.Arithmetic.zero_add] at productFormula
   exact productFormula.symm
+
+/-- An affine factor whose root has a certified original outside side has zero box winding.
+
+The same side chooses one of the existing four half-plane arguments. The
+original box, factor and retained boundary clearance remain fixed throughout
+that choice. -/
+theorem factor_winding_zero_of_outside (root : Gaussian.Basic.Canonical) {box : Box}
+    (proper : box.Proper)
+    (clearance : Clearance.Box.Boundary.Basic.BoundaryClearance
+      (Dense.Gaussian.Linear.Translated.translatedCoordinate root) box)
+    (side : Box.OutsideSide box root) :
+    Winding.Box.Basic.quadrupledBoxWinding
+      (Dense.Gaussian.Linear.Translated.translatedCoordinate root) box = 0 := by
+  cases side with
+  | left less => exact factor_winding_zero_of_left root proper clearance less
+  | right less => exact factor_winding_zero_of_right root proper clearance less
+  | bottom less => exact factor_winding_zero_of_below root proper clearance less
+  | top less => exact factor_winding_zero_of_above root proper clearance less
 
 end
 end Purelib.Polynomial.Winding.Affine.HalfPlane

@@ -64,6 +64,18 @@ import Purelib.Integration.Program.Gaussian.Basic
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Approximation.Gaussian.Sequence.Arithmetic
+
+open Purelib.Approximation.Gaussian.Name.Coherent
+
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.LinearAlgebra.Matrix
+
+open Purelib.Approximation.Rational.Geometric
+
+open Purelib.Approximation.Gaussian
+
 open Purelib.Algebra
 
 open Purelib.Approximation
@@ -97,19 +109,19 @@ open Purelib.LinearAlgebra.Gaussian.QuadraticForm
 open Purelib.Riemann.Curves.AlgebraicDifferentials
 
 /-- A productive Gaussian CCL name with its retained coherence certificate. -/
-abbrev CoherentNamed := Gaussian.Name.Coherent.CoherentNamed
+abbrev CoherentNamed := Name.Coherent.CoherentNamed
 /-- A finite square matrix of coherent Gaussian names. -/
 abbrev NamedMatrix (size : Nat) :=
   SquareMatrix CoherentNamed size
 /-- Operational equivalence between the original finite requests of two Gaussian names. -/
-abbrev NamedEquivalent := Gaussian.Equivalence.NamedEquivalent
+abbrev NamedEquivalent := Equivalence.NamedEquivalent
 /-- The exact rational coordinate type used by period bounds and requests. -/
 abbrev Coordinate := Rat.Fraction.Rational
 /-- A Gaussian rational sample of a period entry. -/
 abbrev Gaussian := Gaussian.Basic.Canonical
 /-- A synchronized Gaussian approximation with its retained geometric error bounds. -/
 abbrev GeometricApproximation :=
-  Gaussian.Geometric.GeometricApproximation
+  Geometric.GeometricApproximation
 /-- A finite square matrix of synchronized geometric approximations. -/
 abbrev GeometricMatrix (size : Nat) :=
   Matrix.GeometricMatrix size
@@ -186,7 +198,7 @@ theorem matrixEntry_mem_channels {genus : Nat} (matrix : NamedMatrix genus)
 
 /-- One same-budget finite table containing both period matrices. -/
 @[expose] def table {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    (data : PeriodData curve) : Gaussian.Table.Basic.ChannelTable :=
+    (data : PeriodData curve) : Table.Basic.ChannelTable :=
   ⟨matrixChannels data.aMatrix ++ matrixChannels data.bMatrix⟩
 
 /-- Every retained A-period entry belongs to the original shared period table. -/
@@ -210,7 +222,7 @@ theorem aEntry_sharedRequest {genus : Nat}
     (differential cycle : Fin genus)
     (target : Rat.Fraction.Rational) (positive : 0 < target)
     (count : Nat) :
-    Gaussian.Table.CCL.Request.RequestContract data.table.channels
+    Table.CCL.Request.RequestContract data.table.channels
       (data.aMatrix differential cycle) target positive count :=
   data.table.member_bitstream_and_allowance
     (data.aEntry_mem_table differential cycle) target positive count
@@ -221,7 +233,7 @@ theorem bEntry_sharedRequest {genus : Nat}
     (differential cycle : Fin genus)
     (target : Rat.Fraction.Rational) (positive : 0 < target)
     (count : Nat) :
-    Gaussian.Table.CCL.Request.RequestContract data.table.channels
+    Table.CCL.Request.RequestContract data.table.channels
       (data.bMatrix differential cycle) target positive count :=
   data.table.member_bitstream_and_allowance
     (data.bEntry_mem_table differential cycle) target positive count
@@ -229,15 +241,15 @@ theorem bEntry_sharedRequest {genus : Nat}
 /-- Shared finite refinement of one unnormalized A-period entry. -/
 @[expose] def refinedAEntry {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
     (data : PeriodData curve) (target : Coordinate) (positive : 0 < target)
-    (differential cycle : Fin genus) : Gaussian.Name.Basic.Named :=
-  Gaussian.Table.Request.sharedName data.table.channels
+    (differential cycle : Fin genus) : Name.Basic.Named :=
+  Table.Request.sharedName data.table.channels
     (data.aMatrix differential cycle) target positive
 
 /-- Shared finite refinement of one unnormalized B-period entry. -/
 @[expose] def refinedBEntry {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
     (data : PeriodData curve) (target : Coordinate) (positive : 0 < target)
-    (differential cycle : Fin genus) : Gaussian.Name.Basic.Named :=
-  Gaussian.Table.Request.sharedName data.table.channels
+    (differential cycle : Fin genus) : Name.Basic.Named :=
+  Table.Request.sharedName data.table.channels
     (data.bMatrix differential cycle) target positive
 
 /-- Displayed rational centre of one unnormalized A-period entry. -/
@@ -274,7 +286,7 @@ theorem aRadiusSq_lt_target {genus : Nat} {curve : Hyperelliptic.Basic.Hyperelli
     (differential cycle : Fin genus) :
     data.aRadiusSq target positive differential cycle < target := by
   unfold aRadiusSq refinedAEntry
-  exact Gaussian.Table.Request.sharedName_radius_lt
+  exact Table.Request.sharedName_radius_lt
     data.table.channels (data.aMatrix differential cycle) positive
 
 /-- The shared B-entry request returns a squared radius strictly below its positive rational target. -/
@@ -283,7 +295,7 @@ theorem bRadiusSq_lt_target {genus : Nat} {curve : Hyperelliptic.Basic.Hyperelli
     (differential cycle : Fin genus) :
     data.bRadiusSq target positive differential cycle < target := by
   unfold bRadiusSq refinedBEntry
-  exact Gaussian.Table.Request.sharedName_radius_lt
+  exact Table.Request.sharedName_radius_lt
     data.table.channels (data.bMatrix differential cycle) positive
 
 /-- One finite Gaussian-rational A-period centre matrix. -/
@@ -305,7 +317,7 @@ end PeriodData
 /-- The productive coherent name generated directly by a synchronized finite
 geometric approximation. -/
 @[expose] def geometricNamed (source : GeometricApproximation) : CoherentNamed :=
-  Gaussian.Name.Coherent.CoherentNamed.ofApproximation
+  CoherentNamed.ofApproximation
     source.toApproximation
 
 /-- Dropping any finite prefix of a geometric stream preserves its operational value.
@@ -315,12 +327,12 @@ asking reflexivity of the original stream to start the right side at the
 corresponding absolute index. -/
 @[expose] def geometricDropEquivalent (source : GeometricApproximation)
     (anchor : Nat) :
-    Gaussian.Equivalence.Equivalent source.toApproximation
+    Equivalence.Equivalent source.toApproximation
       (source.drop anchor).toApproximation where
   compare := by
     intro leftStart rightStart target positive
     let comparison :=
-      (Gaussian.Equivalence.Equivalent.refl source.toApproximation).compare
+      (Equivalence.Equivalent.refl source.toApproximation).compare
         leftStart (anchor + rightStart) target positive
     have anchorLeRight : anchor <= comparison.rightIndex := by
       exact (by omega0 : anchor <= anchor + rightStart).trans
@@ -343,8 +355,8 @@ corresponding absolute index. -/
               comparison.rightIndex <= anchor + rightLater := by
             rw [<- shiftedIdentity]
             omega0
-          simpa only [Gaussian.Geometric.GeometricApproximation.drop_sample,
-            Gaussian.Geometric.GeometricApproximation.toApproximation_sample]
+          simpa only [Geometric.GeometricApproximation.drop_sample,
+            Geometric.GeometricApproximation.toApproximation_sample]
             using comparison.close leftOrder absoluteRightOrder }
 
 /-- The coherent name generated by a finite tail is operationally equivalent
@@ -354,27 +366,27 @@ to the name generated by the original geometric stream. -/
     NamedEquivalent (geometricNamed source).name
       (geometricNamed (source.drop anchor)).name := by
   simpa only [geometricNamed,
-    Gaussian.Name.Coherent.CoherentNamed.ofApproximation] using
-    Gaussian.Sequence.Name.Equivalence.approximationEquivalent_toNamed
+    CoherentNamed.ofApproximation] using
+    Sequence.Name.Equivalence.approximationEquivalent_toNamed
       (geometricDropEquivalent source anchor)
 
 /-- Uniform apartness of a nonzero synchronized constant approximation. -/
 @[expose] def geometricExactApart (value : Gaussian) (nonzero : value ≠ 0) :
-    Gaussian.Name.Basic.Named.Apart
+    Name.Basic.Named.Apart
       (geometricNamed
-        (Gaussian.Geometric.GeometricApproximation.exact
+        (Geometric.GeometricApproximation.exact
           value)).name where
   certificate :=
-    { lowerSq := Data.Gaussian.Norm.Basic.normSq value
+    { lowerSq := Gaussian.Norm.Basic.normSq value
       positive := Gaussian.Norm.Basic.normSq_pos nonzero
       lower := by
         intro state candidate inside
-        change Data.Gaussian.Norm.Basic.normSq
+        change Gaussian.Norm.Basic.normSq
           (candidate - value) <=
-            Rational.Geometric.Basic.quarterRadius 0 state at inside
-        rw [Rational.Geometric.Basic.quarterRadius_eq_mul_pow] at inside
+            Basic.quarterRadius 0 state at inside
+        rw [Basic.quarterRadius_eq_mul_pow] at inside
         rw [zero_mul] at inside
-        have normZero : Data.Gaussian.Norm.Basic.normSq
+        have normZero : Gaussian.Norm.Basic.normSq
             (candidate - value) = 0 :=
           le_antisymm inside
             (Gaussian.Norm.Basic.normSq_nonneg _)
@@ -385,9 +397,9 @@ to the name generated by the original geometric stream. -/
 
 /-- Whole-ball apartness in particular supplies the weaker genuine-candidate
 apartness accepted by constructive apartification. -/
-@[expose] def possibleApartOfNamedApart {name : Gaussian.Name.Basic.Named}
-    (apart : Gaussian.Name.Basic.Named.Apart name) :
-    Gaussian.Process.Apart.Possible.PossibleApart name.process where
+@[expose] def possibleApartOfNamedApart {name : Name.Basic.Named}
+    (apart : Name.Basic.Named.Apart name) :
+    Process.Apart.Possible.PossibleApart name.process where
   lowerSq := apart.certificate.lowerSq
   positive := apart.certificate.positive
   lower := by
@@ -399,9 +411,9 @@ apartness accepted by constructive apartification. -/
 same synchronized zero approximation as the matrix identities below. -/
 @[expose] def sumNamed : {count : Nat} -> (Fin count -> CoherentNamed) -> CoherentNamed
   | 0, _ => geometricNamed
-      (Gaussian.Geometric.GeometricApproximation.exact 0)
+      (Geometric.GeometricApproximation.exact 0)
   | count + 1, values =>
-      Gaussian.Name.Coherent.CoherentNamed.add (values 0)
+      CoherentNamed.add (values 0)
         (sumNamed fun index : Fin count => values index.succ)
 
 /-- Recursive actual CCL addition realizes the equal-index geometric sum
@@ -414,42 +426,42 @@ whenever each displayed summand realizes its synchronized approximation. -/
         (geometricNamed (sources entry)).name) :
     NamedEquivalent (sumNamed values).name
       (geometricNamed
-        (Gaussian.Geometric.GeometricApproximation.sum
+        (Geometric.GeometricApproximation.sum
           sources)).name := by
   induction count with
   | zero =>
-      exact Gaussian.Equivalence.NamedEquivalent.refl _
+      exact Equivalence.NamedEquivalent.refl _
   | succ count inductionHypothesis =>
       let tailValues := fun entry : Fin count => values entry.succ
       let tailSources := fun entry : Fin count => sources entry.succ
       let tailSum := sumNamed tailValues
       let geometricTail := geometricNamed
-        (Gaussian.Geometric.GeometricApproximation.sum
+        (Geometric.GeometricApproximation.sum
           tailSources)
       have tailEquivalent : NamedEquivalent tailSum.name geometricTail.name :=
         inductionHypothesis tailValues tailSources
           (fun entry => equivalent entry.succ)
       have replaceOperands : NamedEquivalent
-          (Gaussian.Name.Coherent.CoherentNamed.add
+          (CoherentNamed.add
             (values 0) tailSum).name
-          (Gaussian.Name.Coherent.CoherentNamed.add
+          (CoherentNamed.add
             (geometricNamed (sources 0)) geometricTail).name :=
-        Gaussian.Name.Coherent.Arithmetic.Sum.Congruence.coherentAdd_respects
+        Arithmetic.Sum.Congruence.coherentAdd_respects
           (values 0) (geometricNamed (sources 0)) tailSum geometricTail
           (equivalent 0) tailEquivalent
-      apply Gaussian.Equivalence.NamedEquivalent.trans replaceOperands
+      apply Equivalence.NamedEquivalent.trans replaceOperands
       dsimp only [geometricTail, tailSources]
       simpa only [geometricNamed,
-        Gaussian.Name.Coherent.CoherentNamed.add,
-        Gaussian.Name.Coherent.CoherentNamed.ofApproximation,
-        Gaussian.Geometric.GeometricApproximation.sum] using
-        Gaussian.Arithmetic.Sampling.addToNamed_equivalent_pointwise
+        CoherentNamed.add,
+        CoherentNamed.ofApproximation,
+        Geometric.GeometricApproximation.sum] using
+        Arithmetic.Sampling.addToNamed_equivalent_pointwise
           (sources 0).toApproximation
-          (Gaussian.Geometric.GeometricApproximation.sum
+          (Geometric.GeometricApproximation.sum
             tailSources).toApproximation
-          (Gaussian.Geometric.GeometricApproximation.add
+          (Geometric.GeometricApproximation.add
             (sources 0)
-            (Gaussian.Geometric.GeometricApproximation.sum
+            (Geometric.GeometricApproximation.sum
               tailSources)).toApproximation
           (by intro index; rfl)
 
@@ -460,14 +472,14 @@ whenever each displayed summand realizes its synchronized approximation. -/
       NamedEquivalent (left entry).name (right entry).name) :
     NamedEquivalent (sumNamed left).name (sumNamed right).name := by
   induction count with
-  | zero => exact Gaussian.Equivalence.NamedEquivalent.refl _
+  | zero => exact Equivalence.NamedEquivalent.refl _
   | succ count inductionHypothesis =>
       change NamedEquivalent
-        (Gaussian.Name.Coherent.CoherentNamed.add (left 0)
+        (CoherentNamed.add (left 0)
           (sumNamed fun entry : Fin count => left entry.succ)).name
-        (Gaussian.Name.Coherent.CoherentNamed.add (right 0)
+        (CoherentNamed.add (right 0)
           (sumNamed fun entry : Fin count => right entry.succ)).name
-      exact Gaussian.Name.Coherent.Arithmetic.Sum.Congruence.coherentAdd_respects
+      exact Arithmetic.Sum.Congruence.coherentAdd_respects
         (left 0) (right 0)
         (sumNamed fun entry : Fin count => left entry.succ)
         (sumNamed fun entry : Fin count => right entry.succ)
@@ -494,7 +506,7 @@ theorem sumBound_nonneg {count : Nat} (bounds : Fin count -> Coordinate)
   | succ count inductionHypothesis =>
       change 0 <= 2 *
         (bounds 0 + sumBound (fun index : Fin count => bounds index.succ))
-      exact Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      exact Arithmetic.mul_nonneg_direct (by decide)
         (add_nonneg (nonnegative 0)
           (inductionHypothesis (fun index => bounds index.succ)
             (fun index => nonnegative index.succ)))
@@ -504,24 +516,24 @@ displayed per-entry squared-norm bounds. -/
 theorem normSq_sumFin_le_sumBound {count : Nat}
     (values : Fin count -> Gaussian) (bounds : Fin count -> Coordinate)
     (bounded : forall index,
-      Data.Gaussian.Norm.Basic.normSq (values index) <= bounds index) :
-    Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq (values index) <= bounds index) :
+    Gaussian.Norm.Basic.normSq
         (FiniteSum.Fin.sumFin values) <=
       sumBound bounds := by
   induction count with
   | zero =>
-      change Data.Gaussian.Norm.Basic.normSq 0 <= 0
+      change Gaussian.Norm.Basic.normSq 0 <= 0
       rw [Gaussian.Norm.Basic.normSq_zero]
   | succ count inductionHypothesis =>
       rw [FiniteSum.Fin.sumFin_succ]
-      change Data.Gaussian.Norm.Basic.normSq
+      change Gaussian.Norm.Basic.normSq
           (values 0 + FiniteSum.Fin.sumFin
             (fun index : Fin count => values index.succ)) <=
         2 * (bounds 0 +
           sumBound (fun index : Fin count => bounds index.succ))
       exact
         (Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-          (Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct
             (add_le_add (bounded 0)
               (inductionHypothesis
                 (fun index : Fin count => values index.succ)
@@ -532,33 +544,33 @@ theorem normSq_sumFin_le_sumBound {count : Nat}
 theorem sumBound_quarterRadius {count : Nat}
     (scales : Fin count -> Coordinate) (index : Nat) :
     sumBound (fun entry =>
-        Rational.Geometric.Basic.quarterRadius (scales entry) index) =
-      Rational.Geometric.Basic.quarterRadius (sumBound scales) index := by
+        Basic.quarterRadius (scales entry) index) =
+      Basic.quarterRadius (sumBound scales) index := by
   induction count with
   | zero =>
-      change (0 : Coordinate) = Rational.Geometric.Basic.quarterRadius 0 index
-      rw [Rational.Geometric.Basic.quarterRadius_eq_mul_pow]
+      change (0 : Coordinate) = Basic.quarterRadius 0 index
+      rw [Basic.quarterRadius_eq_mul_pow]
       ring1
   | succ count inductionHypothesis =>
       change 2 *
-          (Rational.Geometric.Basic.quarterRadius (scales 0) index +
+          (Basic.quarterRadius (scales 0) index +
             sumBound (fun entry : Fin count =>
-              Rational.Geometric.Basic.quarterRadius
+              Basic.quarterRadius
                 (scales entry.succ) index)) =
-        Rational.Geometric.Basic.quarterRadius
+        Basic.quarterRadius
           (2 * (scales 0 +
             sumBound (fun entry : Fin count => scales entry.succ))) index
       rw [inductionHypothesis (fun entry : Fin count => scales entry.succ),
-        Rational.Geometric.Basic.quarterRadius_eq_mul_pow,
-        Rational.Geometric.Basic.quarterRadius_eq_mul_pow,
-        Rational.Geometric.Basic.quarterRadius_eq_mul_pow]
+        Basic.quarterRadius_eq_mul_pow,
+        Basic.quarterRadius_eq_mul_pow,
+        Basic.quarterRadius_eq_mul_pow]
       ring1
 
 /-- Error scale for one synchronized finite matrix-product entry. -/
 @[expose] def matrixProductErrorScale {size : Nat} (left right : NamedMatrix size)
     (row column : Fin size) : Coordinate :=
   sumBound fun middle =>
-    Gaussian.Sequence.Arithmetic.Product.sampledProductErrorScale
+    Product.sampledProductErrorScale
       (left row middle).name (right middle column).name
 
 /-- The synchronized matrix-product entry error scale is nonnegative. -/
@@ -566,7 +578,7 @@ theorem matrixProductErrorScale_nonneg {size : Nat}
     (left right : NamedMatrix size) (row column : Fin size) :
     0 <= matrixProductErrorScale left right row column :=
   sumBound_nonneg _ fun middle =>
-    Gaussian.Sequence.Arithmetic.Product.sampledProductErrorScale_nonneg
+    Product.sampledProductErrorScale_nonneg
       (left row middle).name (right middle column).name
 
 /-- Equal-index finite products, summed at one common index.  This diagnostic
@@ -574,60 +586,60 @@ sampler exposes synchronized readings of arbitrary named matrices; it never
 silently combines entries taken from unrelated refinement levels. -/
 @[expose] def matrixProductApproximation {size : Nat}
     (left right : NamedMatrix size) (row column : Fin size) :
-    Gaussian.Sequence.ApproximationData where
+    Sequence.ApproximationData where
   sample index :=
     FiniteSum.Fin.sumFin fun middle =>
-      (Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation
+      (Product.sampledProductApproximation
         (left row middle).name (right middle column).name).sample index
-  radiusSq := Rational.Geometric.Basic.quarterRadius
+  radiusSq := Basic.quarterRadius
     (matrixProductErrorScale left right row column)
-  radiusSq_nonneg := Rational.Geometric.Basic.quarterRadius_nonneg
+  radiusSq_nonneg := Basic.quarterRadius_nonneg
     (matrixProductErrorScale_nonneg left right row column)
   later_close := by
     intro earlier later order
     let product := fun middle : Fin size =>
-      Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation
+      Product.sampledProductApproximation
         (left row middle).name (right middle column).name
     calc
-      Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq
           (FiniteSum.Fin.sumFin
               (fun middle => (product middle).sample later) -
             FiniteSum.Fin.sumFin
               (fun middle => (product middle).sample earlier)) =
-        Data.Gaussian.Norm.Basic.normSq
+        Gaussian.Norm.Basic.normSq
           (FiniteSum.Fin.sumFin fun middle =>
             (product middle).sample later -
               (product middle).sample earlier) := by
           rw [FiniteSum.Fin.sumFin_sub]
       _ <= sumBound (fun middle =>
-          Rational.Geometric.Basic.quarterRadius
-            (Gaussian.Sequence.Arithmetic.Product.sampledProductErrorScale
+          Basic.quarterRadius
+            (Product.sampledProductErrorScale
               (left row middle).name (right middle column).name) earlier) :=
         normSq_sumFin_le_sumBound _ _ fun middle =>
           (product middle).later_close order
-      _ = Rational.Geometric.Basic.quarterRadius
+      _ = Basic.quarterRadius
           (matrixProductErrorScale left right row column) earlier :=
         sumBound_quarterRadius _ earlier
   refineIndex current target _ :=
-    Rational.Geometric.Search.firstQuarterBelow
+    Search.firstQuarterBelow
       (matrixProductErrorScale left right row column) current target
   refineIndex_ge current target _ :=
-    Rational.Geometric.Search.firstQuarterBelow_ge
+    Search.firstQuarterBelow_ge
       (matrixProductErrorScale left right row column) current target
-  refineIndex_accurate := Rational.Geometric.Search.firstQuarterBelow_accurate
+  refineIndex_accurate := Search.firstQuarterBelow_accurate
     (matrixProductErrorScale left right row column)
     (matrixProductErrorScale_nonneg left right row column)
   centerBound := sumBound fun middle =>
-    (Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation
+    (Product.sampledProductApproximation
       (left row middle).name (right middle column).name).centerBound
   centerBound_nonneg := sumBound_nonneg _ fun middle =>
-    (Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation
+    (Product.sampledProductApproximation
       (left row middle).name
       (right middle column).name).centerBound_nonneg
   sample_bounded := by
     intro index
     exact normSq_sumFin_le_sumBound _ _ fun middle =>
-      (Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation
+      (Product.sampledProductApproximation
         (left row middle).name
         (right middle column).name).sample_bounded index
 
@@ -636,14 +648,14 @@ silently combines entries taken from unrelated refinement levels. -/
     (left right : NamedMatrix size) (row column : Fin size) (index : Nat) :
     (matrixProductApproximation left right row column).sample index =
       FiniteSum.Fin.sumFin fun middle =>
-        (Gaussian.Name.Sampling.approximation
+        (Name.Sampling.approximation
           (left row middle).name).sample index *
-        (Gaussian.Name.Sampling.approximation
+        (Name.Sampling.approximation
           (right middle column).name).sample index := by
   unfold matrixProductApproximation
   apply FiniteSum.Fin.sumFin_congr
   intro middle
-  exact Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation_sample
+  exact Product.sampledProductApproximation_sample
     (left row middle).name (right middle column).name index
 
 /-- Finite named matrix multiplication as the actual CCL arithmetic
@@ -654,7 +666,7 @@ refinement levels coincide. -/
     NamedMatrix size :=
   SquareMatrix.matrixOfFn fun row column =>
     sumNamed fun middle =>
-      Gaussian.Name.Coherent.CoherentNamed.mul
+      CoherentNamed.mul
         (left row middle) (right middle column)
 
 /-- Place the retained coherent scalar on the diagonal and the exact synchronized zero name elsewhere. -/
@@ -663,14 +675,14 @@ refinement levels coincide. -/
   SquareMatrix.matrixOfFn fun row column =>
     if row = column then scalar
     else geometricNamed
-      (Gaussian.Geometric.GeometricApproximation.exact 0)
+      (Geometric.GeometricApproximation.exact 0)
 
 /-- Read one entry of the original finite CCL matrix multiplication expression tree. -/
 @[simp] theorem matrixMul_apply {size : Nat}
     (left right : NamedMatrix size) (row column : Fin size) :
     matrixMul left right row column =
       sumNamed fun middle =>
-        Gaussian.Name.Coherent.CoherentNamed.mul
+        CoherentNamed.mul
           (left row middle) (right middle column) := by
   exact SquareMatrix.matrixOfFn_apply _ _ _
 
@@ -680,7 +692,7 @@ refinement levels coincide. -/
     scaleIdentity scalar row column =
       if row = column then scalar
       else geometricNamed
-        (Gaussian.Geometric.GeometricApproximation.exact 0) := by
+        (Geometric.GeometricApproximation.exact 0) := by
   exact SquareMatrix.matrixOfFn_apply _ _ _
 
 /-- Entrywise operational equality of finite named matrices. -/
@@ -694,13 +706,13 @@ namespace MatrixEquivalent
 /-- Construct entrywise operational reflexivity for the original named matrix. -/
 @[expose] def refl {size : Nat} (matrix : NamedMatrix size) :
     MatrixEquivalent matrix matrix := fun row column =>
-  Gaussian.Equivalence.NamedEquivalent.refl (matrix row column).name
+  Equivalence.NamedEquivalent.refl (matrix row column).name
 
 /-- Reverse every retained entrywise operational equivalence. -/
 @[expose] def symm {size : Nat} {left right : NamedMatrix size}
     (equivalent : MatrixEquivalent left right) : MatrixEquivalent right left :=
   fun row column =>
-    Gaussian.Equivalence.NamedEquivalent.symm
+    Equivalence.NamedEquivalent.symm
       (equivalent row column)
 
 /-- Compose the original entrywise operational equivalences through their common matrix. -/
@@ -708,7 +720,7 @@ namespace MatrixEquivalent
     (firstSecond : MatrixEquivalent first second)
     (secondThird : MatrixEquivalent second third) :
     MatrixEquivalent first third := fun row column =>
-  Gaussian.Equivalence.NamedEquivalent.trans
+  Equivalence.NamedEquivalent.trans
     (firstSecond row column) (secondThird row column)
 
 end MatrixEquivalent
@@ -742,7 +754,7 @@ equality in both operands. -/
   rw [matrixMul_apply, matrixMul_apply]
   apply sumNamed_respects
   intro middle
-  exact Gaussian.Name.Coherent.Arithmetic.Product.Congruence.coherentMul_respects
+  exact Arithmetic.Product.Congruence.coherentMul_respects
     (leftOne row middle) (leftTwo row middle)
     (rightOne middle column) (rightTwo middle column)
     (leftEquivalent row middle) (rightEquivalent middle column)
@@ -752,14 +764,14 @@ finite sampler index. -/
 @[expose] def sampledMatrix {size : Nat} (matrix : NamedMatrix size) (index : Nat) :
     SquareMatrix Gaussian size :=
   SquareMatrix.matrixOfFn fun row column =>
-    (Gaussian.Name.Sampling.approximation
+    (Name.Sampling.approximation
       (matrix row column).name).sample index
 
 /-- Read the original named entry's finite sample at the shared matrix index. -/
 @[simp] theorem sampledMatrix_apply {size : Nat}
     (matrix : NamedMatrix size) (index : Nat) (row column : Fin size) :
     sampledMatrix matrix index row column =
-      (Gaussian.Name.Sampling.approximation
+      (Name.Sampling.approximation
         (matrix row column).name).sample index :=
   SquareMatrix.matrixOfFn_apply _ _ _
 
@@ -769,14 +781,14 @@ geometric allowance. -/
 theorem sampledMatrix_aProgram_close {genus : Nat}
     {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
     (data : PeriodData curve) (differential cycle : Fin genus) (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         (sampledMatrix data.aMatrix index differential cycle -
           ((data.aProgram differential cycle).integral.model index).integralSample) <=
-      Rational.Geometric.Basic.quarterRadius
+      Basic.quarterRadius
         (max (data.aProgram differential cycle).integral.errorScale 1) index := open Purelib.Integration in by
   rw [show sampledMatrix data.aMatrix index differential cycle =
       (data.aProgram differential cycle).integral.approximation.sample
-        (Gaussian.Process.Sampling.stateAt
+        (Process.Sampling.stateAt
           (data.aProgram differential cycle).integral.approximation.toProcess (0 : Nat) index) from by
     rw [sampledMatrix_apply, PeriodData.aMatrix_apply]
     rfl]
@@ -788,14 +800,14 @@ model sample at the same index are close. -/
 theorem sampledMatrix_bProgram_close {genus : Nat}
     {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
     (data : PeriodData curve) (differential cycle : Fin genus) (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         (sampledMatrix data.bMatrix index differential cycle -
           ((data.bProgram differential cycle).integral.model index).integralSample) <=
-      Rational.Geometric.Basic.quarterRadius
+      Basic.quarterRadius
         (max (data.bProgram differential cycle).integral.errorScale 1) index := open Purelib.Integration in by
   rw [show sampledMatrix data.bMatrix index differential cycle =
       (data.bProgram differential cycle).integral.approximation.sample
-        (Gaussian.Process.Sampling.stateAt
+        (Process.Sampling.stateAt
           (data.bProgram differential cycle).integral.approximation.toProcess (0 : Nat) index) from by
     rw [sampledMatrix_apply, PeriodData.bMatrix_apply]
     rfl]
@@ -806,14 +818,14 @@ theorem sampledMatrix_bProgram_close {genus : Nat}
 @[expose] def geometricMatrixOfNamed {size : Nat} (matrix : NamedMatrix size) :
     GeometricMatrix size :=
   SquareMatrix.matrixOfFn fun row column =>
-    Gaussian.Geometric.GeometricApproximation.ofNamed
+    Geometric.GeometricApproximation.ofNamed
       (matrix row column).name
 
 /-- Read the canonical nested geometric sampler of the original named matrix entry. -/
 @[simp] theorem geometricMatrixOfNamed_apply {size : Nat}
     (matrix : NamedMatrix size) (row column : Fin size) :
     geometricMatrixOfNamed matrix row column =
-      Gaussian.Geometric.GeometricApproximation.ofNamed
+      Geometric.GeometricApproximation.ofNamed
         (matrix row column).name :=
   SquareMatrix.matrixOfFn_apply _ _ _
 
@@ -833,7 +845,7 @@ theorem sample_geometricMatrixOfNamed {size : Nat}
 matrix.  This is a total finite construction; its scalar may be zero. -/
 @[expose] def canonicalScaledInverse {size : Nat} (matrix : NamedMatrix size) :
     Matrix.ScaledInverseApproximation size :=
-  SquareMatrix.Inverse.PivotedScaledInverse.completeApproximation
+  Inverse.PivotedScaledInverse.completeApproximation
     (geometricMatrixOfNamed matrix)
 
 /-- At each synchronized sample, the squared norm of the canonical scalar
@@ -841,15 +853,15 @@ for a one-by-one matrix is exactly the fourth power of the squared norm of
 its sole entry. -/
 theorem normSq_canonicalScaledInverse_one_scalar_sample
     (matrix : NamedMatrix 1) (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         ((canonicalScaledInverse matrix).scalar.sample index) =
-      Data.Gaussian.Norm.Basic.normSq
-          ((Gaussian.Name.Sampling.approximation
+      Gaussian.Norm.Basic.normSq
+          ((Name.Sampling.approximation
             (matrix 0 0).name).sample index) ^ 4 := by
   rw [canonicalScaledInverse]
-  rw [(SquareMatrix.Inverse.PivotedScaledInverse.completeApproximation_sample
+  rw [(Inverse.PivotedScaledInverse.completeApproximation_sample
     (geometricMatrixOfNamed matrix) index).1]
-  rw [SquareMatrix.Inverse.PivotedScaledInverse.normSq_completeScaledInverse_one_scalar]
+  rw [Inverse.PivotedScaledInverse.normSq_completeScaledInverse_one_scalar]
   rw [Matrix.sampleMatrix_apply,
     geometricMatrixOfNamed_apply]
   rfl
@@ -885,7 +897,7 @@ structure ScaledInverseCertificate {size : Nat} (matrix : NamedMatrix size) wher
     sourceEquivalent : NamedEquivalent
     (canonicalInverseScalar matrix).name scalarSource.name
   /-- A positive lower bound for genuine candidates of the retained scalar source process. -/ scalarPossibleApart :
-    Gaussian.Process.Apart.Possible.PossibleApart
+    Process.Apart.Possible.PossibleApart
     scalarSource.name.process
 
 constructive_injectivity ScaledInverseCertificate
@@ -902,7 +914,7 @@ structure ScalarCandidateLowerCertificate {size : Nat}
   /-- Every finite synchronized sample of the canonical scaled-inverse scalar satisfies the retained squared-norm
 floor. -/
   sample_lower : forall index,
-    lowerSq <= Data.Gaussian.Norm.Basic.normSq
+    lowerSq <= Gaussian.Norm.Basic.normSq
       ((canonicalScaledInverse matrix).scalar.sample index)
 
 constructive_injectivity ScalarCandidateLowerCertificate
@@ -918,8 +930,8 @@ structure OneByOneEntryCandidateLowerCertificate
   /-- The retained squared-norm floor is strictly positive. -/ positive : 0 < lowerSq
   /-- Every finite synchronized sample of the sole original matrix entry satisfies the retained squared-norm floor. -/
     sample_lower : forall index,
-    lowerSq <= Data.Gaussian.Norm.Basic.normSq
-      ((Gaussian.Name.Sampling.approximation
+    lowerSq <= Gaussian.Norm.Basic.normSq
+      ((Name.Sampling.approximation
         (matrix 0 0).name).sample index)
 
 constructive_injectivity OneByOneEntryCandidateLowerCertificate
@@ -932,12 +944,12 @@ dimension-one pivot-complete inverse calculation. -/
     (certificate : OneByOneEntryCandidateLowerCertificate matrix) :
     ScalarCandidateLowerCertificate matrix where
   lowerSq := certificate.lowerSq ^ 4
-  positive := Purelib.Data.Rat.Fraction.Order.Arithmetic.pow_pos_direct
+  positive := Arithmetic.pow_pos_direct
     certificate.positive 4
   sample_lower := by
     intro index
     rw [normSq_canonicalScaledInverse_one_scalar_sample]
-    exact Purelib.Data.Rat.Fraction.Order.Arithmetic.pow_le_pow_direct
+    exact Arithmetic.pow_le_pow_direct
       certificate.positive.le (certificate.sample_lower index) 4
 
 end OneByOneEntryCandidateLowerCertificate
@@ -951,17 +963,17 @@ structure OneByOneEntryDirectionalLowerCertificate
   /-- The original rational projection direction, retained without unit normalization. -/ direction :
     Gaussian.Basic.Canonical
   /-- The retained projection direction has strictly positive squared norm. -/ directionNormSqPositive :
-    0 < Data.Gaussian.Norm.Basic.normSq direction
+    0 < Gaussian.Norm.Basic.normSq direction
   /-- The retained uniform rational lower bound on projected entry samples. -/ lower : Coordinate
   /-- The retained projection lower bound is strictly positive. -/ positive : 0 < lower
   /-- Every synchronized sample of the sole original matrix entry satisfies the retained directed projection bound. -/
     sample_lower : forall index,
     lower <=
       direction.re *
-          ((Gaussian.Name.Sampling.approximation
+          ((Name.Sampling.approximation
             (matrix 0 0).name).sample index).re +
         direction.im *
-          ((Gaussian.Name.Sampling.approximation
+          ((Name.Sampling.approximation
             (matrix 0 0).name).sample index).im
 
 constructive_injectivity OneByOneEntryDirectionalLowerCertificate
@@ -974,28 +986,28 @@ choosing a square root or normalizing the displayed rational direction. -/
     (certificate : OneByOneEntryDirectionalLowerCertificate matrix) :
     OneByOneEntryCandidateLowerCertificate matrix where
   lowerSq := certificate.lower ^ 2 /
-    Data.Gaussian.Norm.Basic.normSq certificate.direction
-  positive := Purelib.Data.Rat.Fraction.Order.Field.div_pos_direct
-    (Purelib.Data.Rat.Fraction.Order.Arithmetic.pow_pos_direct certificate.positive 2)
+    Gaussian.Norm.Basic.normSq certificate.direction
+  positive := Field.div_pos_direct
+    (Arithmetic.pow_pos_direct certificate.positive 2)
     certificate.directionNormSqPositive
   sample_lower := by
     intro index
     let sample :=
-      (Gaussian.Name.Sampling.approximation
+      (Name.Sampling.approximation
         (matrix 0 0).name).sample index
     let projection :=
       certificate.direction.re * sample.re +
         certificate.direction.im * sample.im
     have lowerSqLeProjectionSq :
         certificate.lower ^ 2 <= projection ^ 2 :=
-      Purelib.Data.Rat.Fraction.Order.Arithmetic.pow_le_pow_direct certificate.positive.le
+      Arithmetic.pow_le_pow_direct certificate.positive.le
         (certificate.sample_lower index) 2
     have projectionSqLe : projection ^ 2 <=
-        Data.Gaussian.Norm.Basic.normSq certificate.direction *
-          Data.Gaussian.Norm.Basic.normSq sample :=
+        Gaussian.Norm.Basic.normSq certificate.direction *
+          Gaussian.Norm.Basic.normSq sample :=
       Gaussian.Norm.Bounds.projection_sq_le_normSq_mul
         certificate.direction sample
-    apply (Purelib.Data.Rat.Fraction.Order.Field.div_le_iff_pos
+    apply (Field.div_le_iff_pos
       certificate.directionNormSqPositive).2
     exact (lowerSqLeProjectionSq.trans projectionSqLe).trans_eq (by ring1)
 
@@ -1007,9 +1019,9 @@ the squared norm of every later sample. -/
 private theorem geometric_tail_normSq_lower
     (source : GeometricApproximation) {anchor index : Nat}
     (order : anchor <= index) :
-    Data.Gaussian.Norm.Basic.normSq (source.sample anchor) / 2 -
-        Rational.Geometric.Basic.quarterRadius source.errorScale anchor <=
-      Data.Gaussian.Norm.Basic.normSq (source.sample index) := by
+    Gaussian.Norm.Basic.normSq (source.sample anchor) / 2 -
+        Basic.quarterRadius source.errorScale anchor <=
+      Gaussian.Norm.Basic.normSq (source.sample index) := by
   have movementForward := source.later_close order
   have reverseDifference :
       source.sample anchor - source.sample index =
@@ -1020,30 +1032,30 @@ private theorem geometric_tail_normSq_lower
         Gaussian.Basic.neg_re,
         Gaussian.Basic.neg_im] <;> ring1
   have movement :
-      Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq
           (source.sample anchor - source.sample index) <=
-        Rational.Geometric.Basic.quarterRadius source.errorScale anchor := by
+        Basic.quarterRadius source.errorScale anchor := by
     rw [reverseDifference, Gaussian.Norm.Basic.normSq_neg]
     exact movementForward
   have triangle :=
     Gaussian.Norm.Bounds.half_normSq_sub_le_normSq_sub
       (source.sample anchor) (source.sample index)
-  have translated := Rat.Fraction.Order.Arithmetic.add_le_add_right_direct
+  have translated := Arithmetic.add_le_add_right_direct
     (triangle.trans movement)
-    (Data.Gaussian.Norm.Basic.normSq (source.sample index) -
-      Rational.Geometric.Basic.quarterRadius source.errorScale anchor)
+    (Gaussian.Norm.Basic.normSq (source.sample index) -
+      Basic.quarterRadius source.errorScale anchor)
   have leftIdentity :
-      (Data.Gaussian.Norm.Basic.normSq (source.sample anchor) / 2 -
-          Data.Gaussian.Norm.Basic.normSq (source.sample index)) +
-        (Data.Gaussian.Norm.Basic.normSq (source.sample index) -
-          Rational.Geometric.Basic.quarterRadius source.errorScale anchor) =
-      Data.Gaussian.Norm.Basic.normSq (source.sample anchor) / 2 -
-        Rational.Geometric.Basic.quarterRadius source.errorScale anchor := by ring1
+      (Gaussian.Norm.Basic.normSq (source.sample anchor) / 2 -
+          Gaussian.Norm.Basic.normSq (source.sample index)) +
+        (Gaussian.Norm.Basic.normSq (source.sample index) -
+          Basic.quarterRadius source.errorScale anchor) =
+      Gaussian.Norm.Basic.normSq (source.sample anchor) / 2 -
+        Basic.quarterRadius source.errorScale anchor := by ring1
   have rightIdentity :
-      Rational.Geometric.Basic.quarterRadius source.errorScale anchor +
-        (Data.Gaussian.Norm.Basic.normSq (source.sample index) -
-          Rational.Geometric.Basic.quarterRadius source.errorScale anchor) =
-      Data.Gaussian.Norm.Basic.normSq (source.sample index) := by ring1
+      Basic.quarterRadius source.errorScale anchor +
+        (Gaussian.Norm.Basic.normSq (source.sample index) -
+          Basic.quarterRadius source.errorScale anchor) =
+      Gaussian.Norm.Basic.normSq (source.sample index) := by ring1
   rw [leftIdentity, rightIdentity] at translated
   exact translated
 
@@ -1051,7 +1063,7 @@ private theorem geometric_tail_normSq_lower
 named matrix. -/
 @[expose] def oneByOneEntryApproximation (matrix : NamedMatrix 1) :
     GeometricApproximation :=
-  Gaussian.Geometric.GeometricApproximation.ofNamed
+  Geometric.GeometricApproximation.ofNamed
     (matrix 0 0).name
 
 set_option genInjectivity false in
@@ -1064,13 +1076,13 @@ structure OneByOneEntrySeparationCertificate
   /-- The retained prefix squared-norm floor is strictly positive. -/ prefixPositive : 0 < prefixLowerSq
   /-- Every displayed sample strictly before the retained anchor satisfies the prefix floor. -/ prefix_lower : forall
     index, index < anchor ->
-    prefixLowerSq <= Data.Gaussian.Norm.Basic.normSq
+    prefixLowerSq <= Gaussian.Norm.Basic.normSq
       ((oneByOneEntryApproximation matrix).sample index)
   /-- The original sole original matrix entry has strictly positive norm clearance beyond its retained anchor's
     geometric error. -/ tailPositive :
-    0 < Data.Gaussian.Norm.Basic.normSq
+    0 < Gaussian.Norm.Basic.normSq
           ((oneByOneEntryApproximation matrix).sample anchor) / 2 -
-        Rational.Geometric.Basic.quarterRadius
+        Basic.quarterRadius
           (oneByOneEntryApproximation matrix).errorScale anchor
 
 constructive_injectivity OneByOneEntrySeparationCertificate
@@ -1081,9 +1093,9 @@ namespace OneByOneEntrySeparationCertificate
 check constructs the complete finite separation record. -/
 @[expose] def ofAnchorZero {matrix : NamedMatrix 1}
     (tailPositive :
-      0 < Data.Gaussian.Norm.Basic.normSq
+      0 < Gaussian.Norm.Basic.normSq
             ((oneByOneEntryApproximation matrix).sample 0) / 2 -
-          Rational.Geometric.Basic.quarterRadius
+          Basic.quarterRadius
             (oneByOneEntryApproximation matrix).errorScale 0) :
     OneByOneEntrySeparationCertificate matrix where
   anchor := 0
@@ -1100,7 +1112,7 @@ This is the theorem-facing adapter for compact oriented cycle estimates. -/
 @[expose] def ofAnchorZeroDirectional {matrix : NamedMatrix 1}
     (direction : Gaussian.Basic.Canonical)
     (directionNormSqPositive :
-      0 < Data.Gaussian.Norm.Basic.normSq direction)
+      0 < Gaussian.Norm.Basic.normSq direction)
     (lower : Coordinate) (lowerPositive : 0 < lower)
     (projectionLower :
       lower <=
@@ -1109,56 +1121,56 @@ This is the theorem-facing adapter for compact oriented cycle estimates. -/
     (clearancePositive :
       0 <
         (lower ^ 2 /
-          Data.Gaussian.Norm.Basic.normSq direction) / 2 -
-        Rational.Geometric.Basic.quarterRadius
+          Gaussian.Norm.Basic.normSq direction) / 2 -
+        Basic.quarterRadius
           (oneByOneEntryApproximation matrix).errorScale 0) :
     OneByOneEntrySeparationCertificate matrix := by
   let sample := (oneByOneEntryApproximation matrix).sample 0
   let projection :=
     direction.re * sample.re + direction.im * sample.im
   have lowerSqLeProjectionSq : lower ^ 2 <= projection ^ 2 :=
-    Rat.Fraction.Order.Arithmetic.pow_le_pow_direct lowerPositive.le
+    Arithmetic.pow_le_pow_direct lowerPositive.le
       projectionLower 2
   have projectionSqLe : projection ^ 2 <=
-      Data.Gaussian.Norm.Basic.normSq direction *
-        Data.Gaussian.Norm.Basic.normSq sample :=
+      Gaussian.Norm.Basic.normSq direction *
+        Gaussian.Norm.Basic.normSq sample :=
     Gaussian.Norm.Bounds.projection_sq_le_normSq_mul
       direction sample
   have normLower :
       lower ^ 2 /
-          Data.Gaussian.Norm.Basic.normSq direction <=
-        Data.Gaussian.Norm.Basic.normSq sample := by
-    apply (Rat.Fraction.Order.Field.div_le_iff_pos
+          Gaussian.Norm.Basic.normSq direction <=
+        Gaussian.Norm.Basic.normSq sample := by
+    apply (Field.div_le_iff_pos
       directionNormSqPositive).2
     exact (lowerSqLeProjectionSq.trans projectionSqLe).trans_eq (by ring1)
   have halfLower :
       (lower ^ 2 /
-          Data.Gaussian.Norm.Basic.normSq direction) / 2 <=
-        Data.Gaussian.Norm.Basic.normSq sample / 2 := by
+          Gaussian.Norm.Basic.normSq direction) / 2 <=
+        Gaussian.Norm.Basic.normSq sample / 2 := by
     simp only [Rat.Fraction.Field.div_eq_mul_inv_direct]
-    exact Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
       normLower
-      (Rat.Fraction.Order.Field.inv_pos_direct
+      (Field.inv_pos_direct
         (by decide : (0 : Coordinate) < 2)).le
   apply ofAnchorZero
   exact clearancePositive.trans_le
-    (Rat.Fraction.Order.Arithmetic.sub_le_sub_right_direct halfLower _)
+    (Arithmetic.sub_le_sub_right_direct halfLower _)
 
 /-- Take the exact rational minimum of the retained entry prefix floor and anchor tail clearance. -/
 @[expose] def lowerSq {matrix : NamedMatrix 1}
     (certificate : OneByOneEntrySeparationCertificate matrix) :
     Coordinate :=
   min certificate.prefixLowerSq
-    (Data.Gaussian.Norm.Basic.normSq
+    (Gaussian.Norm.Basic.normSq
           ((oneByOneEntryApproximation matrix).sample certificate.anchor) / 2 -
-      Rational.Geometric.Basic.quarterRadius
+      Basic.quarterRadius
         (oneByOneEntryApproximation matrix).errorScale certificate.anchor)
 
 /-- The common minimum of the retained prefix floor and anchor tail clearance is strictly positive. -/
 theorem lowerSq_positive {matrix : NamedMatrix 1}
     (certificate : OneByOneEntrySeparationCertificate matrix) :
     0 < certificate.lowerSq :=
-  Rat.Fraction.Order.Basic.lt_min certificate.prefixPositive certificate.tailPositive
+  Basic.lt_min certificate.prefixPositive certificate.tailPositive
 
 /-- Expand the finite entry check to the uniform entry lower certificate. -/
 @[expose] def toOneByOneEntryCandidateLowerCertificate {matrix : NamedMatrix 1}
@@ -1169,12 +1181,12 @@ theorem lowerSq_positive {matrix : NamedMatrix 1}
   sample_lower := by
     intro index
     change certificate.lowerSq <=
-      Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq
         ((oneByOneEntryApproximation matrix).sample index)
     by_cases beforeAnchor : index < certificate.anchor
-    · exact (Rat.Fraction.Order.Basic.min_le_left _ _).trans
+    · exact (Basic.min_le_left _ _).trans
         (certificate.prefix_lower index beforeAnchor)
-    · exact (Rat.Fraction.Order.Basic.min_le_right _ _).trans
+    · exact (Basic.min_le_right _ _).trans
         (geometric_tail_normSq_lower
           (oneByOneEntryApproximation matrix)
           (Nat.le_of_not_gt beforeAnchor))
@@ -1200,13 +1212,13 @@ structure ScalarSeparationCertificate {size : Nat}
   /-- The retained prefix squared-norm floor is strictly positive. -/ prefixPositive : 0 < prefixLowerSq
   /-- Every displayed sample strictly before the retained anchor satisfies the prefix floor. -/ prefix_lower : forall
     index, index < anchor ->
-    prefixLowerSq <= Data.Gaussian.Norm.Basic.normSq
+    prefixLowerSq <= Gaussian.Norm.Basic.normSq
       ((canonicalScaledInverse matrix).scalar.sample index)
   /-- The original canonical inverse scalar has strictly positive norm clearance beyond its retained anchor's geometric
     error. -/ tailPositive :
-    0 < Data.Gaussian.Norm.Basic.normSq
+    0 < Gaussian.Norm.Basic.normSq
           ((canonicalScaledInverse matrix).scalar.sample anchor) / 2 -
-        Rational.Geometric.Basic.quarterRadius
+        Basic.quarterRadius
           (canonicalScaledInverse matrix).scalar.errorScale anchor
 
 constructive_injectivity ScalarSeparationCertificate
@@ -1218,7 +1230,7 @@ minimum with the newly displayed sample. -/
     Nat -> Coordinate
   | 0 => 1
   | count + 1 => min (scalarPrefixLowerSq source count)
-      (Data.Gaussian.Norm.Basic.normSq (source.sample count))
+      (Gaussian.Norm.Basic.normSq (source.sample count))
 
 /-- Pointwise nonvanishing of the displayed finite prefix makes its computed
 rational minimum strictly positive. -/
@@ -1232,7 +1244,7 @@ theorem scalarPrefixLowerSq_positive (source : GeometricApproximation)
       decide
   | succ count inductionHypothesis =>
       unfold scalarPrefixLowerSq
-      apply Rat.Fraction.Order.Basic.lt_min
+      apply Basic.lt_min
       · exact inductionHypothesis (fun index before =>
           sampleNonzero index (by omega0))
       · exact Gaussian.Norm.Basic.normSq_pos
@@ -1242,16 +1254,16 @@ theorem scalarPrefixLowerSq_positive (source : GeometricApproximation)
 theorem scalarPrefixLowerSq_le (source : GeometricApproximation)
     {count index : Nat} (before : index < count) :
     scalarPrefixLowerSq source count <=
-      Data.Gaussian.Norm.Basic.normSq (source.sample index) := by
+      Gaussian.Norm.Basic.normSq (source.sample index) := by
   induction count with
   | zero => exact (Nat.not_lt_zero index before).elim
   | succ count inductionHypothesis =>
       unfold scalarPrefixLowerSq
       by_cases last : index = count
       · subst index
-        exact Rat.Fraction.Order.Basic.min_le_right _ _
+        exact Basic.min_le_right _ _
       · have earlier : index < count := by omega0
-        exact (Rat.Fraction.Order.Basic.min_le_left _ _).trans (inductionHypothesis earlier)
+        exact (Basic.min_le_left _ _).trans (inductionHypothesis earlier)
 
 namespace ScalarSeparationCertificate
 
@@ -1263,9 +1275,9 @@ clearance is then the only remaining separation datum. -/
     (sampleNonzero : forall index,
       (canonicalScaledInverse matrix).scalar.sample index ≠ 0)
     (tailPositive :
-      0 < Data.Gaussian.Norm.Basic.normSq
+      0 < Gaussian.Norm.Basic.normSq
             ((canonicalScaledInverse matrix).scalar.sample anchor) / 2 -
-          Rational.Geometric.Basic.quarterRadius
+          Basic.quarterRadius
             (canonicalScaledInverse matrix).scalar.errorScale anchor) :
     ScalarSeparationCertificate matrix where
   anchor := anchor
@@ -1284,29 +1296,29 @@ clearance is then the only remaining separation datum. -/
 @[expose] def lowerSq {size : Nat} {matrix : NamedMatrix size}
     (certificate : ScalarSeparationCertificate matrix) : Coordinate :=
   min certificate.prefixLowerSq
-    (Data.Gaussian.Norm.Basic.normSq
+    (Gaussian.Norm.Basic.normSq
           ((canonicalScaledInverse matrix).scalar.sample certificate.anchor) /
         2 -
-      Rational.Geometric.Basic.quarterRadius
+      Basic.quarterRadius
         (canonicalScaledInverse matrix).scalar.errorScale certificate.anchor)
 
 /-- The common minimum of the retained prefix floor and anchor tail clearance is strictly positive. -/
 theorem lowerSq_positive {size : Nat} {matrix : NamedMatrix size}
     (certificate : ScalarSeparationCertificate matrix) :
     0 < certificate.lowerSq :=
-  Rat.Fraction.Order.Basic.lt_min certificate.prefixPositive certificate.tailPositive
+  Basic.lt_min certificate.prefixPositive certificate.tailPositive
 
 /-- The retained scalar anchor clearance bounds every later original synchronized sample from below. -/
 private theorem tail_lower {size : Nat} {matrix : NamedMatrix size}
     (certificate : ScalarSeparationCertificate matrix)
     {index : Nat} (order : certificate.anchor <= index) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
           ((canonicalScaledInverse matrix).scalar.sample certificate.anchor) /
         2 -
-      Rational.Geometric.Basic.quarterRadius
+      Basic.quarterRadius
           (canonicalScaledInverse matrix).scalar.errorScale
           certificate.anchor <=
-      Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq
         ((canonicalScaledInverse matrix).scalar.sample index) := by
   exact geometric_tail_normSq_lower
     (canonicalScaledInverse matrix).scalar order
@@ -1322,9 +1334,9 @@ candidate lower certificate. -/
   sample_lower := by
     intro index
     by_cases beforeAnchor : index < certificate.anchor
-    · exact (Rat.Fraction.Order.Basic.min_le_left _ _).trans
+    · exact (Basic.min_le_left _ _).trans
         (certificate.prefix_lower index beforeAnchor)
-    · exact (Rat.Fraction.Order.Basic.min_le_right _ _).trans
+    · exact (Basic.min_le_right _ _).trans
         (certificate.tail_lower (Nat.le_of_not_gt beforeAnchor))
 
 end ScalarSeparationCertificate
@@ -1337,7 +1349,7 @@ whole-ball apartness is derived by the ordinary apartification controller. -/
     (certificate : ScalarCandidateLowerCertificate matrix) :
     ScaledInverseCertificate matrix where
   scalarSource := canonicalInverseScalar matrix
-  sourceEquivalent := Gaussian.Equivalence.NamedEquivalent.refl _
+  sourceEquivalent := Equivalence.NamedEquivalent.refl _
   scalarPossibleApart :=
     { lowerSq := certificate.lowerSq
       positive := certificate.positive
@@ -1367,17 +1379,17 @@ theorem sampledMatrix_leftKernel_trivial {size : Nat}
     (certificate : ScalarCandidateLowerCertificate matrix) (index : Nat)
     (vector : Data.Vector Gaussian size)
     (kernel : forall row,
-      SquareMatrix.Multiplication.matrixVector
+      Multiplication.matrixVector
         (sampledMatrix matrix index) vector row = 0) :
     forall row, vector row = 0 := by
   let sampled := sampledMatrix matrix index
   let computed :=
-    SquareMatrix.Inverse.PivotedScaledInverse.completeScaledInverse sampled
+    Inverse.PivotedScaledInverse.completeScaledInverse sampled
   have scalarSample :
       (canonicalScaledInverse matrix).scalar.sample index = computed.scalar := by
     unfold canonicalScaledInverse computed sampled
     have samples :=
-      SquareMatrix.Inverse.PivotedScaledInverse.completeApproximation_sample
+      Inverse.PivotedScaledInverse.completeApproximation_sample
         (geometricMatrixOfNamed matrix) index
     rw [sample_geometricMatrixOfNamed] at samples
     exact samples.1
@@ -1389,27 +1401,27 @@ theorem sampledMatrix_leftKernel_trivial {size : Nat}
   have productZero : computed.scalar * vector row = 0 := by
     calc
       computed.scalar * vector row =
-          SquareMatrix.Multiplication.matrixVector
-            (SquareMatrix.Multiplication.scaleIdentity computed.scalar)
+          Multiplication.matrixVector
+            (Multiplication.scaleIdentity computed.scalar)
               vector row := by
         simpa only [Data.Vector.Basic.vectorOfFn_apply] using
           (Data.Vector.Basic.vector_eq_at
-            (SquareMatrix.Multiplication.matrixVector_scaleIdentity
+            (Multiplication.matrixVector_scaleIdentity
               computed.scalar vector) row).symm
-      _ = SquareMatrix.Multiplication.matrixVector
-            (SquareMatrix.Multiplication.mul computed.inverse sampled)
+      _ = Multiplication.matrixVector
+            (Multiplication.mul computed.inverse sampled)
               vector row := by
         rw [computed.left_identity]
-      _ = SquareMatrix.Multiplication.matrixVector computed.inverse
-            (SquareMatrix.Multiplication.matrixVector sampled vector) row :=
+      _ = Multiplication.matrixVector computed.inverse
+            (Multiplication.matrixVector sampled vector) row :=
         Data.Vector.Basic.vector_eq_at
-          (SquareMatrix.Multiplication.matrixVector_mul
+          (Multiplication.matrixVector_mul
             computed.inverse sampled vector) row
       _ = 0 := by
-        rw [SquareMatrix.Multiplication.matrixVector_apply]
+        rw [Multiplication.matrixVector_apply]
         rw [FiniteSum.Fin.sumFin_congr
           (right := fun _ => (0 : Gaussian)) (fun column => by
-            rw [show SquareMatrix.Multiplication.matrixVector sampled
+            rw [show Multiplication.matrixVector sampled
                 vector column = 0 by
               exact kernel column]
             exact mul_zero _)]
@@ -1429,8 +1441,8 @@ subsequent geometric movement allowed by the approximation. -/
 @[expose] def scalarTailClearanceAt {size : Nat} (matrix : NamedMatrix size)
     (anchor : Nat) : Coordinate :=
   let inverse := canonicalScaledInverse matrix
-  Data.Gaussian.Norm.Basic.normSq (inverse.scalar.sample anchor) / 2 -
-    Rational.Geometric.Basic.quarterRadius
+  Gaussian.Norm.Basic.normSq (inverse.scalar.sample anchor) / 2 -
+    Basic.quarterRadius
       inverse.scalar.errorScale anchor
 
 /-- Genus-one presentation of the inverse-scalar tail clearance.  Its centre
@@ -1438,9 +1450,9 @@ is computed directly from the sole matrix entry; only the already-certified
 inverse error scale is retained. -/
 @[expose] def oneByOneEntryTailClearanceAt (matrix : NamedMatrix 1)
     (anchor : Nat) : Coordinate :=
-  Data.Gaussian.Norm.Basic.normSq
+  Gaussian.Norm.Basic.normSq
       ((oneByOneEntryApproximation matrix).sample anchor) ^ 4 / 2 -
-    Rational.Geometric.Basic.quarterRadius
+    Basic.quarterRadius
       (canonicalScaledInverse matrix).scalar.errorScale anchor
 
 /-- The one-entry fourth-power clearance equals the canonical scaled-inverse scalar clearance exactly. -/
@@ -1452,7 +1464,7 @@ theorem oneByOneEntryTailClearanceAt_eq_scalarTailClearanceAt
   dsimp only [scalarTailClearanceAt]
   rw [normSq_canonicalScaledInverse_one_scalar_sample]
   unfold oneByOneEntryApproximation
-  rw [Gaussian.Geometric.GeometricApproximation.ofNamed_sample]
+  rw [Geometric.GeometricApproximation.ofNamed_sample]
 
 set_option genInjectivity false in
 /-- One finite tail-clearance check for the canonical fraction-free inverse
@@ -1473,7 +1485,7 @@ search through candidate centres.  The chosen quarter-radius is already
 strictly below half the certified squared-norm floor. -/
 @[expose] def tailAnchor {size : Nat} {matrix : NamedMatrix size}
     (certificate : ScalarCandidateLowerCertificate matrix) : Nat :=
-  Rational.Geometric.Search.firstQuarterBelow
+  Search.firstQuarterBelow
     (canonicalScaledInverse matrix).scalar.errorScale 0
       (certificate.lowerSq / 2)
 
@@ -1486,29 +1498,29 @@ theorem tailAnchor_clearance_positive {size : Nat}
   let scalar := (canonicalScaledInverse matrix).scalar
   let anchor := certificate.tailAnchor
   have halfPositive : 0 < certificate.lowerSq / 2 :=
-    Rat.Fraction.Order.Field.div_pos_direct certificate.positive (by decide)
+    Field.div_pos_direct certificate.positive (by decide)
   have radiusSmall :
-      Rational.Geometric.Basic.quarterRadius scalar.errorScale anchor <
+      Basic.quarterRadius scalar.errorScale anchor <
         certificate.lowerSq / 2 := by
-    exact Rational.Geometric.Search.firstQuarterBelow_accurate scalar.errorScale
+    exact Search.firstQuarterBelow_accurate scalar.errorScale
       scalar.errorScale_nonneg 0 (certificate.lowerSq / 2) halfPositive
   have lowerHalfLeSampleHalf :
       certificate.lowerSq / 2 <=
-        Data.Gaussian.Norm.Basic.normSq
+        Gaussian.Norm.Basic.normSq
             (scalar.sample anchor) / 2 := by
     simp only [Rat.Fraction.Field.div_eq_mul_inv_direct]
-    exact Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
       (certificate.sample_lower anchor)
-      (Rat.Fraction.Order.Field.inv_pos_direct
+      (Field.inv_pos_direct
         (by decide : (0 : Coordinate) < 2)).le
   have radiusBelowSampleHalf :
-      Rational.Geometric.Basic.quarterRadius scalar.errorScale anchor <
-        Data.Gaussian.Norm.Basic.normSq
+      Basic.quarterRadius scalar.errorScale anchor <
+        Gaussian.Norm.Basic.normSq
             (scalar.sample anchor) / 2 :=
     radiusSmall.trans_le lowerHalfLeSampleHalf
   unfold scalarTailClearanceAt
   dsimp only
-  exact Rat.Fraction.Order.Arithmetic.sub_pos_direct radiusBelowSampleHalf
+  exact Arithmetic.sub_pos_direct radiusBelowSampleHalf
 
 /-- Forget the stronger uniform separation only after selecting a certified
 tail anchor.  This adapter lets tail-oriented clients share the same
@@ -1623,9 +1635,9 @@ namespace ScalarTailSeparationCertificate
 /-- The positive rational lower bound visible from the selected tail anchor. -/
 @[expose] def lowerSq {size : Nat} {matrix : NamedMatrix size}
     (certificate : ScalarTailSeparationCertificate matrix) : Coordinate :=
-  Data.Gaussian.Norm.Basic.normSq
+  Gaussian.Norm.Basic.normSq
         ((canonicalScaledInverse matrix).scalar.sample certificate.anchor) / 2 -
-      Rational.Geometric.Basic.quarterRadius
+      Basic.quarterRadius
         (canonicalScaledInverse matrix).scalar.errorScale certificate.anchor
 
 /-- The retained scalar tail squared-norm floor is strictly positive. -/
@@ -1644,7 +1656,7 @@ theorem sample_nonzero_of_anchor_le {size : Nat} {matrix : NamedMatrix size}
   have lower := geometric_tail_normSq_lower
     (canonicalScaledInverse matrix).scalar order
   change certificate.lowerSq <=
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
       ((canonicalScaledInverse matrix).scalar.sample index) at lower
   rw [sampleZero, Gaussian.Norm.Basic.normSq_zero] at lower
   exact (not_lt_of_ge lower certificate.lowerSq_positive).elim
@@ -1683,7 +1695,7 @@ centre. -/
             certificate.anchor).toApproximation.Possible state value at possible
         rcases possible with ⟨later, _order, rfl⟩
         change certificate.lowerSq <=
-          Data.Gaussian.Norm.Basic.normSq
+          Gaussian.Norm.Basic.normSq
             ((canonicalScaledInverse matrix).scalar.sample
               (certificate.anchor + later))
         exact geometric_tail_normSq_lower
@@ -1696,14 +1708,14 @@ namespace ScaledInverseCertificate
 /-- Apartify the retained scalar source using its original genuine-candidate separation certificate. -/
 @[expose] def scalar {size : Nat} {matrix : NamedMatrix size}
     (inverse : ScaledInverseCertificate matrix) : CoherentNamed :=
-  Gaussian.Name.Coherent.CoherentNamed.apartify
+  CoherentNamed.apartify
     inverse.scalarSource inverse.scalarPossibleApart
 
 /-- The prepared scalar is uniformly apart on every displayed ball. -/
 @[expose] def scalarApart {size : Nat} {matrix : NamedMatrix size}
     (inverse : ScaledInverseCertificate matrix) :
-    Gaussian.Name.Basic.Named.Apart inverse.scalar.name where
-  certificate := Gaussian.Process.Apart.Preparation.apartifyApart
+    Name.Basic.Named.Apart inverse.scalar.name where
+  certificate := Process.Apart.Preparation.apartifyApart
     inverse.scalarPossibleApart
 
 /-- Apartification changes the finite process representation but preserves
@@ -1711,8 +1723,8 @@ the scalar's operational value. -/
 @[expose] def canonicalScalarEquivalent {size : Nat} {matrix : NamedMatrix size}
     (inverse : ScaledInverseCertificate matrix) :
     NamedEquivalent (canonicalInverseScalar matrix).name inverse.scalar.name :=
-  Gaussian.Equivalence.NamedEquivalent.trans inverse.sourceEquivalent
-    (Gaussian.Name.Coherent.CoherentNamed.apartifyEquivalent
+  Equivalence.NamedEquivalent.trans inverse.sourceEquivalent
+    (CoherentNamed.apartifyEquivalent
       inverse.scalarSource inverse.scalarPossibleApart)
 
 /-- Read the canonical computed adjugate of the original named matrix. -/
@@ -1724,8 +1736,8 @@ the scalar's operational value. -/
 @[expose] def geometricProductEntry {size : Nat}
     (left right : GeometricMatrix size) (row column : Fin size) :
     GeometricApproximation :=
-  Gaussian.Geometric.GeometricApproximation.sum fun middle =>
-    Gaussian.Geometric.GeometricApproximation.mul
+  Geometric.GeometricApproximation.sum fun middle =>
+    Geometric.GeometricApproximation.mul
       (left row middle) (right middle column)
 
 /-- An equal-index geometric product entry samples to the original finite Gaussian matrix product. -/
@@ -1733,16 +1745,16 @@ the scalar's operational value. -/
     (left right : GeometricMatrix size) (row column : Fin size)
     (index : Nat) :
     (geometricProductEntry left right row column).sample index =
-      SquareMatrix.Multiplication.mul
+      Multiplication.mul
         (Matrix.sampleMatrix left index)
         (Matrix.sampleMatrix right index)
         row column := by
-  rw [SquareMatrix.Multiplication.mul_apply]
+  rw [Multiplication.mul_apply]
   unfold geometricProductEntry
-  rw [Gaussian.Geometric.GeometricApproximation.sum_sample]
+  rw [Geometric.GeometricApproximation.sum_sample]
   apply FiniteSum.Fin.sumFin_congr
   intro middle
-  rewrite [Gaussian.Geometric.GeometricApproximation.mul_sample,
+  rewrite [Geometric.GeometricApproximation.mul_sample,
     Matrix.sampleMatrix_apply, Matrix.sampleMatrix_apply]
   exact Eq.refl _
 
@@ -1775,7 +1787,7 @@ theorem sample_geometricProductMatrix {size : Nat}
     (left right : GeometricMatrix size) (index : Nat) :
     Matrix.sampleMatrix
         (geometricProductMatrix left right) index =
-      SquareMatrix.Multiplication.mul
+      Multiplication.mul
         (Matrix.sampleMatrix left index)
         (Matrix.sampleMatrix right index) := by
   apply SquareMatrix.matrix_ext
@@ -1792,8 +1804,8 @@ theorem geometricProduct_transpose_sample {size : Nat}
         (geometricTranspose left) row column).sample index := by
   rw [geometricProductMatrix_apply, geometricProductMatrix_apply,
     geometricProductEntry_sample, geometricProductEntry_sample,
-    SquareMatrix.Multiplication.mul_apply,
-    SquareMatrix.Multiplication.mul_apply]
+    Multiplication.mul_apply,
+    Multiplication.mul_apply]
   apply FiniteSum.Fin.sumFin_congr
   intro middle
   rewrite [Matrix.sampleMatrix_apply, Matrix.sampleMatrix_apply,
@@ -1819,16 +1831,16 @@ canonical nested sampler. -/
 @[expose] def named_equivalent_geometricOfNamed (value : CoherentNamed) :
     NamedEquivalent value.name
       (geometricNamed
-        (Gaussian.Geometric.GeometricApproximation.ofNamed
+        (Geometric.GeometricApproximation.ofNamed
           value.name)).name := by
-  apply Gaussian.Equivalence.NamedEquivalent.trans
-    (Gaussian.Sequence.Name.Equivalence.named_toSamplingNamed value.name)
+  apply Equivalence.NamedEquivalent.trans
+    (Sequence.Name.Equivalence.named_toSamplingNamed value.name)
   simpa only [geometricNamed,
-    Gaussian.Name.Coherent.CoherentNamed.ofApproximation] using
-    Gaussian.Sequence.Name.Equivalence.approximationEquivalent_toNamed
-      (Gaussian.Sequence.Equivalence.approximationEquivalentOfSamplesEq
-        (Gaussian.Name.Sampling.approximation value.name)
-        (Gaussian.Geometric.GeometricApproximation.ofNamed
+    CoherentNamed.ofApproximation] using
+    Sequence.Name.Equivalence.approximationEquivalent_toNamed
+      (Sequence.Equivalence.approximationEquivalentOfSamplesEq
+        (Name.Sampling.approximation value.name)
+        (Geometric.GeometricApproximation.ofNamed
           value.name).toApproximation (by intro index; rfl))
 
 /-- Actual finite matrix arithmetic realizes the synchronized geometric
@@ -1852,22 +1864,22 @@ product whenever both entry families realize their geometric sources. -/
   let leftGeometric := geometricNamed (leftSource row middle)
   let rightGeometric := geometricNamed (rightSource middle column)
   have replaceOperands : NamedEquivalent
-      (Gaussian.Name.Coherent.CoherentNamed.mul
+      (CoherentNamed.mul
         (left row middle) (right middle column)).name
-      (Gaussian.Name.Coherent.CoherentNamed.mul
+      (CoherentNamed.mul
         leftGeometric rightGeometric).name :=
-    Gaussian.Name.Coherent.Arithmetic.Product.Congruence.coherentMul_respects
+    Arithmetic.Product.Congruence.coherentMul_respects
       (left row middle) leftGeometric
       (right middle column) rightGeometric
       (leftEquivalent row middle) (rightEquivalent middle column)
-  apply Gaussian.Equivalence.NamedEquivalent.trans replaceOperands
+  apply Equivalence.NamedEquivalent.trans replaceOperands
   simpa only [leftGeometric, rightGeometric, geometricNamed,
-    Gaussian.Name.Coherent.CoherentNamed.mul,
-    Gaussian.Name.Coherent.CoherentNamed.ofApproximation] using
-    Gaussian.Sequence.Arithmetic.Multiplication.Bridge.mulToNamed_equivalent_pointwise
+    CoherentNamed.mul,
+    CoherentNamed.ofApproximation] using
+    Multiplication.Bridge.mulToNamed_equivalent_pointwise
       (leftSource row middle).toApproximation
       (rightSource middle column).toApproximation
-      (Gaussian.Geometric.GeometricApproximation.mul
+      (Geometric.GeometricApproximation.mul
         (leftSource row middle) (rightSource middle column)).toApproximation
       (by intro index; rfl)
 
@@ -1897,9 +1909,9 @@ produce operationally equivalent coherent names. -/
     (samples : forall index, left.sample index = right.sample index) :
     NamedEquivalent (geometricNamed left).name (geometricNamed right).name := by
   simpa only [geometricNamed,
-    Gaussian.Name.Coherent.CoherentNamed.ofApproximation] using
-    Gaussian.Sequence.Name.Equivalence.approximationEquivalent_toNamed
-      (Gaussian.Sequence.Equivalence.approximationEquivalentOfSamplesEq
+    CoherentNamed.ofApproximation] using
+    Sequence.Name.Equivalence.approximationEquivalent_toNamed
+      (Sequence.Equivalence.approximationEquivalentOfSamplesEq
         left.toApproximation right.toApproximation samples)
 
 /-- Actual multiplication of two coherent names realizes any synchronized
@@ -1912,26 +1924,26 @@ geometric product realizing its two operands. -/
     (rightEquivalent : NamedEquivalent right.name
       (geometricNamed rightSource).name) :
     NamedEquivalent
-      (Gaussian.Name.Coherent.CoherentNamed.mul left right).name
+      (CoherentNamed.mul left right).name
       (geometricNamed
-        (Gaussian.Geometric.GeometricApproximation.mul
+        (Geometric.GeometricApproximation.mul
           leftSource rightSource)).name := by
   let leftGeometric := geometricNamed leftSource
   let rightGeometric := geometricNamed rightSource
   have replaceOperands : NamedEquivalent
-      (Gaussian.Name.Coherent.CoherentNamed.mul left right).name
-      (Gaussian.Name.Coherent.CoherentNamed.mul
+      (CoherentNamed.mul left right).name
+      (CoherentNamed.mul
         leftGeometric rightGeometric).name :=
-    Gaussian.Name.Coherent.Arithmetic.Product.Congruence.coherentMul_respects
+    Arithmetic.Product.Congruence.coherentMul_respects
       left leftGeometric right rightGeometric
       leftEquivalent rightEquivalent
-  apply Gaussian.Equivalence.NamedEquivalent.trans replaceOperands
+  apply Equivalence.NamedEquivalent.trans replaceOperands
   simpa only [leftGeometric, rightGeometric, geometricNamed,
-    Gaussian.Name.Coherent.CoherentNamed.mul,
-    Gaussian.Name.Coherent.CoherentNamed.ofApproximation] using
-    Gaussian.Sequence.Arithmetic.Multiplication.Bridge.mulToNamed_equivalent_pointwise
+    CoherentNamed.mul,
+    CoherentNamed.ofApproximation] using
+    Multiplication.Bridge.mulToNamed_equivalent_pointwise
       leftSource.toApproximation rightSource.toApproximation
-      (Gaussian.Geometric.GeometricApproximation.mul
+      (Geometric.GeometricApproximation.mul
         leftSource rightSource).toApproximation
       (by intro index; rfl)
 
@@ -1969,7 +1981,7 @@ operational equality of their generated CCL matrices. -/
             (geometricProductMatrix second third)) index := by
     rw [sample_geometricProductMatrix, sample_geometricProductMatrix,
       sample_geometricProductMatrix, sample_geometricProductMatrix]
-    exact SquareMatrix.Multiplication.mul_assoc _ _ _
+    exact Multiplication.mul_assoc _ _ _
   simpa only [Matrix.sampleMatrix_apply] using
     SquareMatrix.matrix_eq_at associated row column
 
@@ -2105,13 +2117,13 @@ operational equality. -/
 @[expose] def scalarMul {size : Nat} (scalar : CoherentNamed)
     (matrix : NamedMatrix size) : NamedMatrix size :=
   SquareMatrix.matrixOfFn fun row column =>
-    Gaussian.Name.Coherent.CoherentNamed.mul scalar (matrix row column)
+    CoherentNamed.mul scalar (matrix row column)
 
 /-- Read the original left scalar multiplication of the retained named matrix entry. -/
 @[simp] theorem scalarMul_apply {size : Nat} (scalar : CoherentNamed)
     (matrix : NamedMatrix size) (row column : Fin size) :
     scalarMul scalar matrix row column =
-      Gaussian.Name.Coherent.CoherentNamed.mul scalar
+      CoherentNamed.mul scalar
         (matrix row column) :=
   SquareMatrix.matrixOfFn_apply _ _ _
 
@@ -2120,14 +2132,14 @@ operational equality. -/
     (scalar : GeometricApproximation) : GeometricMatrix size :=
   SquareMatrix.matrixOfFn fun row column =>
     if row = column then scalar
-    else Gaussian.Geometric.GeometricApproximation.exact 0
+    else Geometric.GeometricApproximation.exact 0
 
 /-- Read the diagonal geometric scalar or exact off-diagonal zero of the synchronized scaled identity. -/
 @[simp] theorem geometricScaleIdentity_apply {size : Nat}
     (scalar : GeometricApproximation) (row column : Fin size) :
     geometricScaleIdentity scalar row column =
       if row = column then scalar
-      else Gaussian.Geometric.GeometricApproximation.exact 0 :=
+      else Geometric.GeometricApproximation.exact 0 :=
   SquareMatrix.matrixOfFn_apply _ _ _
 
 /-- Every synchronized sample of a geometric scaled identity is the exact
@@ -2136,13 +2148,13 @@ theorem sample_geometricScaleIdentity {size : Nat}
     (scalar : GeometricApproximation) (index : Nat) :
     Matrix.sampleMatrix
         (geometricScaleIdentity (size := size) scalar) index =
-      SquareMatrix.Multiplication.scaleIdentity (n := size)
+      Multiplication.scaleIdentity (n := size)
         (scalar.sample index) := by
   apply SquareMatrix.matrix_ext
   intro row column
   rw [Matrix.sampleMatrix_apply,
     geometricScaleIdentity_apply,
-    SquareMatrix.Multiplication.scaleIdentity_apply]
+    Multiplication.scaleIdentity_apply]
   by_cases equal : row = column
   · rewrite [if_pos equal, if_pos equal]
     exact Eq.refl _
@@ -2156,7 +2168,7 @@ the scalar's canonical sampler. -/
     MatrixEquivalent (scaleIdentity (size := size) scalar)
       (geometricNamedMatrix (size := size)
         (geometricScaleIdentity (size := size)
-          (Gaussian.Geometric.GeometricApproximation.ofNamed
+          (Geometric.GeometricApproximation.ofNamed
             scalar.name))) := by
   intro row column
   rw [scaleIdentity_apply, geometricNamedMatrix_apply,
@@ -2165,7 +2177,7 @@ the scalar's canonical sampler. -/
   · simp only [if_pos equal]
     exact named_equivalent_geometricOfNamed scalar
   · simp only [if_neg equal]
-    exact Gaussian.Equivalence.NamedEquivalent.refl _
+    exact Equivalence.NamedEquivalent.refl _
 
 /-- A scaled identity on the left acts by entrywise scalar multiplication at
 the operational finite-request layer. -/
@@ -2174,7 +2186,7 @@ the operational finite-request layer. -/
     MatrixEquivalent (matrixMul (scaleIdentity scalar) matrix)
       (scalarMul scalar matrix) := by
   let scalarSource :=
-    Gaussian.Geometric.GeometricApproximation.ofNamed
+    Geometric.GeometricApproximation.ofNamed
       scalar.name
   let identitySource : GeometricMatrix size :=
     geometricScaleIdentity scalarSource
@@ -2196,13 +2208,13 @@ the operational finite-request layer. -/
   have productSamples : forall index,
       (geometricProductMatrix identitySource matrixSource row column).sample
           index =
-        (Gaussian.Geometric.GeometricApproximation.mul
+        (Geometric.GeometricApproximation.mul
           scalarSource (matrixSource row column)).sample index := by
     intro index
     calc
       (geometricProductMatrix identitySource matrixSource row column).sample
           index =
-          SquareMatrix.Multiplication.mul
+          Multiplication.mul
             (Matrix.sampleMatrix
               identitySource index)
             (Matrix.sampleMatrix
@@ -2216,31 +2228,31 @@ the operational finite-request layer. -/
             matrixSource index) row column := by
         rw [show Matrix.sampleMatrix
               identitySource index =
-              SquareMatrix.Multiplication.scaleIdentity
+              Multiplication.scaleIdentity
                 (scalarSource.sample index) by
           exact sample_geometricScaleIdentity scalarSource index]
         simpa only [SquareMatrix.matrixOfFn_apply] using
           SquareMatrix.matrix_eq_at
-            (SquareMatrix.Multiplication.scaleIdentity_mul
+            (Multiplication.scaleIdentity_mul
               (scalarSource.sample index)
               (Matrix.sampleMatrix
                 matrixSource index)) row column
       _ = scalarSource.sample index *
           (matrixSource row column).sample index := by
         rw [Matrix.sampleMatrix_apply]
-      _ = (Gaussian.Geometric.GeometricApproximation.mul
+      _ = (Geometric.GeometricApproximation.mul
           scalarSource (matrixSource row column)).sample index := rfl
   have geometricProductEquivalent : NamedEquivalent
       (geometricNamed
         (geometricProductMatrix identitySource matrixSource row column)).name
       (geometricNamed
-        (Gaussian.Geometric.GeometricApproximation.mul
+        (Geometric.GeometricApproximation.mul
           scalarSource (matrixSource row column))).name :=
     geometricNamed_equivalent_of_samples _ _ productSamples
   have normalizeEntry : NamedEquivalent
       (scalarMul scalar matrix row column).name
       (geometricNamed
-        (Gaussian.Geometric.GeometricApproximation.mul
+        (Geometric.GeometricApproximation.mul
           scalarSource (matrixSource row column))).name := by
     rw [scalarMul_apply]
     exact coherentMul_equivalent_geometricMul scalar (matrix row column)
@@ -2251,19 +2263,19 @@ the operational finite-request layer. -/
       (by
           simpa only [matrixSource, geometricMatrixOfNamed_apply]
             using named_equivalent_geometricOfNamed (matrix row column))
-  exact Gaussian.Equivalence.NamedEquivalent.trans
+  exact Equivalence.NamedEquivalent.trans
     (middle := (geometricNamed (geometricProductMatrix identitySource matrixSource row column)).name)
     (by
         simpa only [geometricNamedMatrix_apply, geometricProductMatrix_apply]
           using normalizeProduct row column)
-    (Gaussian.Equivalence.NamedEquivalent.trans
+    (Equivalence.NamedEquivalent.trans
       (middle := (geometricNamed
-        (Gaussian.Geometric.GeometricApproximation.mul
+        (Geometric.GeometricApproximation.mul
           scalarSource (matrixSource row column))).name)
       (by
           simpa only [geometricProductMatrix_apply]
             using geometricProductEquivalent)
-      (Gaussian.Equivalence.NamedEquivalent.symm normalizeEntry))
+      (Equivalence.NamedEquivalent.symm normalizeEntry))
 
 /-- A scaled identity on the right has the same entrywise scalar action; the
 finite Gaussian commutativity step is made explicit. -/
@@ -2272,7 +2284,7 @@ finite Gaussian commutativity step is made explicit. -/
     MatrixEquivalent (matrixMul matrix (scaleIdentity scalar))
       (scalarMul scalar matrix) := by
   let scalarSource :=
-    Gaussian.Geometric.GeometricApproximation.ofNamed
+    Geometric.GeometricApproximation.ofNamed
       scalar.name
   let identitySource : GeometricMatrix size :=
     geometricScaleIdentity scalarSource
@@ -2294,13 +2306,13 @@ finite Gaussian commutativity step is made explicit. -/
   have productSamples : forall index,
       (geometricProductMatrix matrixSource identitySource row column).sample
           index =
-        (Gaussian.Geometric.GeometricApproximation.mul
+        (Geometric.GeometricApproximation.mul
           scalarSource (matrixSource row column)).sample index := by
     intro index
     calc
       (geometricProductMatrix matrixSource identitySource row column).sample
           index =
-          SquareMatrix.Multiplication.mul
+          Multiplication.mul
             (Matrix.sampleMatrix
               matrixSource index)
             (Matrix.sampleMatrix
@@ -2313,31 +2325,31 @@ finite Gaussian commutativity step is made explicit. -/
             matrixSource index) row column * scalarSource.sample index := by
         rw [show Matrix.sampleMatrix
               identitySource index =
-              SquareMatrix.Multiplication.scaleIdentity
+              Multiplication.scaleIdentity
                 (scalarSource.sample index) by
           exact sample_geometricScaleIdentity scalarSource index]
         simpa only [SquareMatrix.matrixOfFn_apply] using
           SquareMatrix.matrix_eq_at
-            (SquareMatrix.Multiplication.mul_scaleIdentity
+            (Multiplication.mul_scaleIdentity
               (Matrix.sampleMatrix
                 matrixSource index) (scalarSource.sample index)) row column
       _ = (matrixSource row column).sample index * scalarSource.sample index := by
         rw [Matrix.sampleMatrix_apply]
       _ = scalarSource.sample index * (matrixSource row column).sample index :=
         Gaussian.Basic.mul_comm _ _
-      _ = (Gaussian.Geometric.GeometricApproximation.mul
+      _ = (Geometric.GeometricApproximation.mul
           scalarSource (matrixSource row column)).sample index := rfl
   have geometricProductEquivalent : NamedEquivalent
       (geometricNamed
         (geometricProductMatrix matrixSource identitySource row column)).name
       (geometricNamed
-        (Gaussian.Geometric.GeometricApproximation.mul
+        (Geometric.GeometricApproximation.mul
           scalarSource (matrixSource row column))).name :=
     geometricNamed_equivalent_of_samples _ _ productSamples
   have normalizeEntry : NamedEquivalent
       (scalarMul scalar matrix row column).name
       (geometricNamed
-        (Gaussian.Geometric.GeometricApproximation.mul
+        (Geometric.GeometricApproximation.mul
           scalarSource (matrixSource row column))).name := by
     rw [scalarMul_apply]
     exact coherentMul_equivalent_geometricMul scalar (matrix row column)
@@ -2348,19 +2360,19 @@ finite Gaussian commutativity step is made explicit. -/
       (by
           simpa only [matrixSource, geometricMatrixOfNamed_apply]
             using named_equivalent_geometricOfNamed (matrix row column))
-  exact Gaussian.Equivalence.NamedEquivalent.trans
+  exact Equivalence.NamedEquivalent.trans
     (middle := (geometricNamed (geometricProductMatrix matrixSource identitySource row column)).name)
     (by
         simpa only [geometricNamedMatrix_apply, geometricProductMatrix_apply]
           using normalizeProduct row column)
-    (Gaussian.Equivalence.NamedEquivalent.trans
+    (Equivalence.NamedEquivalent.trans
       (middle := (geometricNamed
-        (Gaussian.Geometric.GeometricApproximation.mul
+        (Geometric.GeometricApproximation.mul
           scalarSource (matrixSource row column))).name)
       (by
           simpa only [geometricProductMatrix_apply]
             using geometricProductEquivalent)
-      (Gaussian.Equivalence.NamedEquivalent.symm normalizeEntry))
+      (Equivalence.NamedEquivalent.symm normalizeEntry))
 
 /-- Transposition fixes a scaled identity operationally. -/
 @[expose] def transpose_scaleIdentity {size : Nat} (scalar : CoherentNamed) :
@@ -2371,9 +2383,9 @@ finite Gaussian commutativity step is made explicit. -/
   rw [transpose_apply, scaleIdentity_apply, scaleIdentity_apply]
   by_cases equal : row = column
   · subst column
-    exact Gaussian.Equivalence.NamedEquivalent.refl _
+    exact Equivalence.NamedEquivalent.refl _
   · simp only [if_neg equal, if_neg (Ne.symm equal)]
-    exact Gaussian.Equivalence.NamedEquivalent.refl _
+    exact Equivalence.NamedEquivalent.refl _
 
 /-- The synchronized left product is the canonical scaled identity at every
 finite source index. -/
@@ -2389,38 +2401,38 @@ theorem left_geometric_sample_identity {size : Nat}
     Matrix.sampleMatrix source index
   calc
     (geometricProductEntry computed.inverse source row column).sample index =
-        SquareMatrix.Multiplication.mul
+        Multiplication.mul
           (Matrix.sampleMatrix
             computed.inverse index) sampled row column :=
       geometricProductEntry_sample computed.inverse source row column index
-    _ = SquareMatrix.Multiplication.mul
-          (SquareMatrix.Inverse.PivotedScaledInverse.completeScaledInverse
+    _ = Multiplication.mul
+          (Inverse.PivotedScaledInverse.completeScaledInverse
             sampled).inverse
           sampled row column := by
       rw [show Matrix.sampleMatrix
           computed.inverse index =
-            (SquareMatrix.Inverse.PivotedScaledInverse.completeScaledInverse
+            (Inverse.PivotedScaledInverse.completeScaledInverse
               sampled).inverse by
         exact
-          (SquareMatrix.Inverse.PivotedScaledInverse.completeApproximation_sample
+          (Inverse.PivotedScaledInverse.completeApproximation_sample
             source index).2]
-    _ = SquareMatrix.Multiplication.scaleIdentity
-          (SquareMatrix.Inverse.PivotedScaledInverse.completeScaledInverse
+    _ = Multiplication.scaleIdentity
+          (Inverse.PivotedScaledInverse.completeScaledInverse
             sampled).scalar
           row column :=
       SquareMatrix.matrix_eq_at
-        (SquareMatrix.Inverse.PivotedScaledInverse.completeScaledInverse_left_identity
+        (Inverse.PivotedScaledInverse.completeScaledInverse_left_identity
           sampled)
         row column
     _ = if row = column then
-          (SquareMatrix.Inverse.PivotedScaledInverse.completeScaledInverse
+          (Inverse.PivotedScaledInverse.completeScaledInverse
             sampled).scalar else 0 :=
-      SquareMatrix.Multiplication.scaleIdentity_apply _ row column
+      Multiplication.scaleIdentity_apply _ row column
     _ = if row = column then computed.scalar.sample index else 0 := by
       by_cases equal : row = column
       · simp only [if_pos equal]
         exact
-          (SquareMatrix.Inverse.PivotedScaledInverse.completeApproximation_sample
+          (Inverse.PivotedScaledInverse.completeApproximation_sample
             source index).1.symm
       · rewrite [if_neg equal, if_neg equal]
         exact Eq.refl _
@@ -2438,38 +2450,38 @@ theorem right_geometric_sample_identity {size : Nat}
     Matrix.sampleMatrix source index
   calc
     (geometricProductEntry source computed.inverse row column).sample index =
-        SquareMatrix.Multiplication.mul sampled
+        Multiplication.mul sampled
           (Matrix.sampleMatrix
             computed.inverse index) row column :=
       geometricProductEntry_sample source computed.inverse row column index
-    _ = SquareMatrix.Multiplication.mul sampled
-          (SquareMatrix.Inverse.PivotedScaledInverse.completeScaledInverse
+    _ = Multiplication.mul sampled
+          (Inverse.PivotedScaledInverse.completeScaledInverse
             sampled).inverse
           row column := by
       rw [show Matrix.sampleMatrix
           computed.inverse index =
-            (SquareMatrix.Inverse.PivotedScaledInverse.completeScaledInverse
+            (Inverse.PivotedScaledInverse.completeScaledInverse
               sampled).inverse by
         exact
-          (SquareMatrix.Inverse.PivotedScaledInverse.completeApproximation_sample
+          (Inverse.PivotedScaledInverse.completeApproximation_sample
             source index).2]
-    _ = SquareMatrix.Multiplication.scaleIdentity
-          (SquareMatrix.Inverse.PivotedScaledInverse.completeScaledInverse
+    _ = Multiplication.scaleIdentity
+          (Inverse.PivotedScaledInverse.completeScaledInverse
             sampled).scalar
           row column :=
       SquareMatrix.matrix_eq_at
-        (SquareMatrix.Inverse.PivotedScaledInverse.completeScaledInverse_right_identity
+        (Inverse.PivotedScaledInverse.completeScaledInverse_right_identity
           sampled)
         row column
     _ = if row = column then
-          (SquareMatrix.Inverse.PivotedScaledInverse.completeScaledInverse
+          (Inverse.PivotedScaledInverse.completeScaledInverse
             sampled).scalar else 0 :=
-      SquareMatrix.Multiplication.scaleIdentity_apply _ row column
+      Multiplication.scaleIdentity_apply _ row column
     _ = if row = column then computed.scalar.sample index else 0 := by
       by_cases equal : row = column
       · simp only [if_pos equal]
         exact
-          (SquareMatrix.Inverse.PivotedScaledInverse.completeApproximation_sample
+          (Inverse.PivotedScaledInverse.completeApproximation_sample
             source index).1.symm
       · rewrite [if_neg equal, if_neg equal]
         exact Eq.refl _
@@ -2492,9 +2504,9 @@ Gaussian matrix theorem. -/
       (fun leftRow leftColumn => by
         simpa only [adjugate, canonicalAdjugate_apply, computed,
           canonicalScaledInverse] using
-          Gaussian.Equivalence.NamedEquivalent.refl
+          Equivalence.NamedEquivalent.refl
             (geometricNamed
-              ((SquareMatrix.Inverse.PivotedScaledInverse.completeApproximation
+              ((Inverse.PivotedScaledInverse.completeApproximation
                 (geometricMatrixOfNamed matrix)).inverse
                   leftRow leftColumn)).name)
       (fun rightRow rightColumn => by
@@ -2502,7 +2514,7 @@ Gaussian matrix theorem. -/
           named_equivalent_geometricOfNamed
             (matrix rightRow rightColumn))
       row column
-  apply Gaussian.Equivalence.NamedEquivalent.trans productEquivalent
+  apply Equivalence.NamedEquivalent.trans productEquivalent
   by_cases equal : row = column
   · subst column
     rw [scaleIdentity_apply, if_pos rfl]
@@ -2538,13 +2550,13 @@ Gaussian matrix theorem. -/
       (fun rightRow rightColumn => by
         simpa only [adjugate, canonicalAdjugate_apply, computed,
           canonicalScaledInverse] using
-          Gaussian.Equivalence.NamedEquivalent.refl
+          Equivalence.NamedEquivalent.refl
             (geometricNamed
-              ((SquareMatrix.Inverse.PivotedScaledInverse.completeApproximation
+              ((Inverse.PivotedScaledInverse.completeApproximation
                 (geometricMatrixOfNamed matrix)).inverse
                   rightRow rightColumn)).name)
       row column
-  apply Gaussian.Equivalence.NamedEquivalent.trans productEquivalent
+  apply Equivalence.NamedEquivalent.trans productEquivalent
   by_cases equal : row = column
   · subst column
     rw [scaleIdentity_apply, if_pos rfl]
@@ -2572,7 +2584,7 @@ identity matrices. -/
   · simp only [if_pos equal]
     exact equivalent
   · simp only [if_neg equal]
-    exact Gaussian.Equivalence.NamedEquivalent.refl _
+    exact Equivalence.NamedEquivalent.refl _
 
 /-- Apartification preserves the left scaled-inverse identity while making
 the scalar safe for productive reciprocal construction. -/
@@ -2580,7 +2592,7 @@ the scalar safe for productive reciprocal construction. -/
     (inverse : ScaledInverseCertificate matrix) (row column : Fin size) :
     NamedEquivalent (matrixMul inverse.adjugate matrix row column).name
       (scaleIdentity inverse.scalar row column).name :=
-  Gaussian.Equivalence.NamedEquivalent.trans
+  Equivalence.NamedEquivalent.trans
     (left_identity_canonical inverse row column)
     (scaleIdentity_respects (size := size)
       (canonicalInverseScalar matrix) inverse.scalar
@@ -2592,7 +2604,7 @@ identity. -/
     (inverse : ScaledInverseCertificate matrix) (row column : Fin size) :
     NamedEquivalent (matrixMul matrix inverse.adjugate row column).name
       (scaleIdentity inverse.scalar row column).name :=
-  Gaussian.Equivalence.NamedEquivalent.trans
+  Equivalence.NamedEquivalent.trans
     (right_identity_canonical inverse row column)
     (scaleIdentity_respects (size := size)
       (canonicalInverseScalar matrix) inverse.scalar
@@ -2603,8 +2615,8 @@ end ScaledInverseCertificate
 /-- The one shared reciprocal of the fraction-free inverse scalar. -/
 @[expose] def inverseScalar {size : Nat} {matrix : NamedMatrix size}
     (inverse : ScaledInverseCertificate matrix) : CoherentNamed :=
-  Gaussian.Name.Coherent.CoherentNamed.div
-    (Gaussian.Name.Coherent.CoherentNamed.Coherence.exact 1)
+  CoherentNamed.div
+    (CoherentNamed.Coherence.exact 1)
     inverse.scalar inverse.scalarApart
 
 /-- Construct `A^{-1}B` entrywise as `(adj(A) B) * (1 / det(A))`.
@@ -2616,14 +2628,14 @@ entries a direct consequence of multiplication congruence. -/
   let numerator := matrixMul adjugate b
   let reciprocal := inverseScalar inverse
   SquareMatrix.matrixOfFn fun row column =>
-    Gaussian.Name.Coherent.CoherentNamed.mul
+    CoherentNamed.mul
       (numerator row column) reciprocal
 
 /-- Read a normalized entry as its original adjugate-product numerator times the shared retained scalar reciprocal. -/
 @[simp] theorem normalize_apply {size : Nat} (a b : NamedMatrix size)
     (inverse : ScaledInverseCertificate a) (row column : Fin size) :
     normalize a b inverse row column =
-      Gaussian.Name.Coherent.CoherentNamed.mul
+      CoherentNamed.mul
         (matrixMul inverse.adjugate b row column)
         (inverseScalar inverse) := by
   exact SquareMatrix.matrixOfFn_apply _ _ _
@@ -2700,18 +2712,18 @@ multiplying both entries by the same persistent reciprocal scalar. -/
   symmetric := by
     intro row column
     simpa only [omega, normalize_apply,
-      Gaussian.Name.Coherent.CoherentNamed.mul] using
-      Gaussian.Name.Coherent.Arithmetic.Product.Congruence.coherentMul_respects
+      CoherentNamed.mul] using
+      Arithmetic.Product.Congruence.coherentMul_respects
         (matrixMul data.aInverse.adjugate data.toPeriodData.bMatrix row column)
         (matrixMul data.aInverse.adjugate data.toPeriodData.bMatrix column row)
         (inverseScalar data.aInverse) (inverseScalar data.aInverse)
         (certificate.symmetric row column)
-        (Gaussian.Equivalence.NamedEquivalent.refl
+        (Equivalence.NamedEquivalent.refl
           (inverseScalar data.aInverse).name)
 
 /-- One shared finite table for the normalized period matrix. -/
 @[expose] def omegaTable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    (data : NormalizedPeriodData curve) : Gaussian.Table.Basic.ChannelTable :=
+    (data : NormalizedPeriodData curve) : Table.Basic.ChannelTable :=
   ⟨PeriodData.matrixChannels data.omega⟩
 
 /-- Every retained normalized period entry occurs in its original shared request table. -/
@@ -2728,7 +2740,7 @@ theorem omegaEntry_sharedRequest {genus : Nat}
     (row column : Fin genus)
     (target : Rat.Fraction.Rational) (positive : 0 < target)
     (count : Nat) :
-    Gaussian.Table.CCL.Request.RequestContract data.omegaTable.channels
+    Table.CCL.Request.RequestContract data.omegaTable.channels
       (data.omega row column) target positive count :=
   data.omegaTable.member_bitstream_and_allowance
     (data.omegaEntry_mem_table row column) target positive count
@@ -2737,8 +2749,8 @@ theorem omegaEntry_sharedRequest {genus : Nat}
 @[expose] def refinedOmegaEntry {genus : Nat}
     {curve : Hyperelliptic.Basic.HyperellipticCurve genus} (data : NormalizedPeriodData curve)
     (target : Rat.Fraction.Rational) (positive : 0 < target)
-    (row column : Fin genus) : Gaussian.Name.Basic.Named :=
-  Gaussian.Table.Request.sharedName data.omegaTable.channels
+    (row column : Fin genus) : Name.Basic.Named :=
+  Table.Request.sharedName data.omegaTable.channels
     (data.omega row column) target positive
 
 /-- Retain one normalized entry's shared refinement and evaluated ball.
@@ -2749,8 +2761,8 @@ and their strict accuracy certificate come from the same returned ball. -/
 @[expose] def prepareOmegaEntry {genus : Nat}
     {curve : Hyperelliptic.Basic.HyperellipticCurve genus} (data : NormalizedPeriodData curve)
     (target : Rat.Fraction.Rational) (positive : 0 < target) (row column : Fin genus) :
-    Gaussian.Table.Request.PreparedEntry data.omegaTable.channels (data.omega row column) target positive :=
-  Gaussian.Table.Request.prepareEntry data.omegaTable.channels (data.omega row column) target positive
+    Table.Request.PreparedEntry data.omegaTable.channels (data.omega row column) target positive :=
+  Table.Request.prepareEntry data.omegaTable.channels (data.omega row column) target positive
 
 /-- The prepared entry retains exactly the original shared normalized-entry name. -/
 theorem prepareOmegaEntry_name {genus : Nat}
@@ -2802,7 +2814,7 @@ theorem omegaRadiusSq_lt_target {genus : Nat}
     (row column : Fin genus) :
     data.omegaRadiusSq target positive row column < target := by
   unfold omegaRadiusSq refinedOmegaEntry
-  exact Gaussian.Table.Request.sharedName_radius_lt
+  exact Table.Request.sharedName_radius_lt
     data.omegaTable.channels (data.omega row column) positive
 
 /-- The prepared center preserves the original normalized-entry scalar readback. -/
@@ -2810,14 +2822,14 @@ theorem prepareOmegaEntry_center {genus : Nat}
     {curve : Hyperelliptic.Basic.HyperellipticCurve genus} (data : NormalizedPeriodData curve)
     (target : Rat.Fraction.Rational) (positive : 0 < target) (row column : Fin genus) :
     (data.prepareOmegaEntry target positive row column).center = data.omegaCenter target positive row column :=
-  congrArg Gaussian.Enclosure.Ball.center (data.prepareOmegaEntry_ball target positive row column)
+  congrArg Enclosure.Ball.center (data.prepareOmegaEntry_ball target positive row column)
 
 /-- The prepared radius preserves the original normalized-entry scalar readback. -/
 theorem prepareOmegaEntry_radiusSq {genus : Nat}
     {curve : Hyperelliptic.Basic.HyperellipticCurve genus} (data : NormalizedPeriodData curve)
     (target : Rat.Fraction.Rational) (positive : 0 < target) (row column : Fin genus) :
     (data.prepareOmegaEntry target positive row column).radiusSq = data.omegaRadiusSq target positive row column :=
-  congrArg Gaussian.Enclosure.Ball.radiusSq (data.prepareOmegaEntry_ball target positive row column)
+  congrArg Enclosure.Ball.radiusSq (data.prepareOmegaEntry_ball target positive row column)
 
 end NormalizedPeriodData
 
@@ -2840,7 +2852,7 @@ structure PositiveRequestCertificate {genus : Nat}
 bound. -/
   compatible_positive : forall candidate : GaussianMatrix genus,
     (forall row column : Fin genus,
-      Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq
           (candidate row column -
             data.omegaCenter refinementTarget refinementPositive row column) <=
         data.omegaRadiusSq refinementTarget refinementPositive row column) ->

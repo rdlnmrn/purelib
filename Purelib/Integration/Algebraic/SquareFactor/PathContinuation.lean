@@ -60,14 +60,14 @@ open Purelib.Data.Rat in
 /-- The rational carrier for continuation parameters and diameter requests. -/
 abbrev Coordinate := Fraction.Rational
 /-- The original square-root continuation owner carrier indexed by its exact target value. -/
-abbrev Owner := Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+abbrev Owner := SquareRootContinuationChain.Owner
 /-- The retained in-unit endpoint carrier used by sheet subdivision. -/
-abbrev Endpoint := Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.Endpoint
+abbrev Endpoint := ClearSheetContinuation.Subdivision.Endpoint
 
-variable {polynomial : Purelib.Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial} {request :
-  Purelib.Curves.Hyperelliptic.Differentials.SquareFactor.Request}
-  {prepared : Purelib.Curves.Hyperelliptic.Differentials.SquareFactor.Prepared polynomial request} {segment :
-    Purelib.Integration.Algebraic.SquareFactor.PathInput.Segment}
+variable {polynomial : GaussianPolynomial} {request :
+  Request}
+  {prepared : Prepared polynomial request} {segment :
+    Segment}
 
 /-- The certified parameter-zero endpoint. -/
 @[expose] def first : Endpoint := ⟨0, by decide⟩
@@ -80,7 +80,7 @@ open Purelib.Data.Gaussian
 open Purelib.Integration.Algebraic.SquareFactor
 open Purelib.Riemann.Branches
 /-- Use the exact retained positive radicand margin as horizontal parameter-line clearance. -/
-@[expose] def parameterClearance {data : PathInput.Data prepared segment} (safe : data.Safe) :
+@[expose] def parameterClearance {data : Data prepared segment} (safe : data.Safe) :
     Polynomial.Clearance.Box.Line.Basic.HorizontalLineClearance data.radicand.parameterPolynomial
       ClearSheetContinuation.parameterAmbient 0 where
   bound := data.radicand.lowerBound
@@ -92,25 +92,25 @@ open Purelib.Riemann.Branches
     exact scalar
 
 /-- Construct the cleared horizontal unit-parameter segment for the original radicand parameter polynomial. -/
-@[expose] def clearSegment {data : PathInput.Data prepared segment} (safe : data.Safe) :
+@[expose] def clearSegment {data : Data prepared segment} (safe : data.Safe) :
     Polynomial.Geometry.ClearPath.ClearSegment data.radicand.parameterPolynomial
       ClearSheetContinuation.parameterAmbient (Components.Basic.point 0 0) (Components.Basic.point 1 0) :=
-  .horizontal 0 1 0 (by decide) (by decide) (by decide) (by decide) (PathContinuation.parameterClearance safe)
+  .horizontal 0 1 0 (by decide) (by decide) (by decide) (by decide) (parameterClearance safe)
 
 end
 
 open Purelib.Integration.Algebraic.SquareFactor in
 /-- The constructed parameter segment lies inside the original parameter ambient box. -/
-theorem within {data : PathInput.Data prepared segment} (safe : data.Safe) :
-    (PathContinuation.clearSegment safe).WithinAmbient := ⟨le_rfl, le_rfl⟩
+theorem within {data : Data prepared segment} (safe : data.Safe) :
+    (clearSegment safe).WithinAmbient := ⟨le_rfl, le_rfl⟩
 
 open Purelib in
 open Purelib.Data.Gaussian in
 open Purelib.Integration.Algebraic.SquareFactor in
 /-- Reading the cleared parameter segment gives the exact real-coordinate Gaussian embedding. -/
-theorem pointAt_eq {data : PathInput.Data prepared segment} (safe : data.Safe) (parameter : PathContinuation.Coordinate)
+theorem pointAt_eq {data : Data prepared segment} (safe : data.Safe) (parameter : Coordinate)
   :
-    (PathContinuation.clearSegment safe).pointAt parameter = Cast.Path.ofCoordinate parameter := by
+    (clearSegment safe).pointAt parameter = Cast.Path.ofCoordinate parameter := by
   apply Basic.ext <;>
     simp only [Polynomial.Geometry.ClearPath.ClearSegment.pointAt, Scale.scale_re, Scale.scale_im,
       Components.Basic.point, Cast.ofCoordinate_re, Cast.ofCoordinate_im,
@@ -118,31 +118,31 @@ theorem pointAt_eq {data : PathInput.Data prepared segment} (safe : data.Safe) (
 
 open Purelib.Integration.Algebraic.SquareFactor in
 /-- The cleared parameter polynomial reading equals the original radicand at the physical segment point. -/
-theorem radicand_eq {data : PathInput.Data prepared segment} (safe : data.Safe) (parameter :
-  PathContinuation.Coordinate) :
-    data.radicand.parameterPolynomial.eval ((PathContinuation.clearSegment safe).pointAt parameter) =
+theorem radicand_eq {data : Data prepared segment} (safe : data.Safe) (parameter :
+  Coordinate) :
+    data.radicand.parameterPolynomial.eval ((clearSegment safe).pointAt parameter) =
       prepared.reduction.radicand.eval (segment.point parameter) := by
-  rw [PathContinuation.pointAt_eq]
+  rw [pointAt_eq]
   exact data.radicand.value_eq parameter
 
 open Purelib.Integration.Algebraic.SquareFactor in
 open Purelib.Riemann.Topology in
 /-- Construct the original starting square-root owner for the supplied sheet using the retained nonzero radicand margin.
 -/
-@[expose] def initialOwner {data : PathInput.Data prepared segment} (safe : data.Safe) (sheet : Fin 2) :
-    PathContinuation.Owner (data.radicand.parameterPolynomial.eval ((PathContinuation.clearSegment safe).pointAt
+@[expose] def initialOwner {data : Data prepared segment} (safe : data.Safe) (sheet : Fin 2) :
+    Owner (data.radicand.parameterPolynomial.eval ((clearSegment safe).pointAt
       PathContinuation.first.parameter)) :=
   SquareRootContinuationChain.Owner.independent (by
-    rw [PathContinuation.radicand_eq]
+    rw [radicand_eq]
     exact safe.radicand_nonzero PathContinuation.first.inside) sheet
 
 open Purelib.Integration.Algebraic.SquareFactor in
 open Purelib.Riemann.Branches in
 /-- The maximum of the certified sufficient dyadic depth and the requested minimum depth. -/
-@[expose] def maximumDepth {data : PathInput.Data prepared segment} (safe : data.Safe)
-    (rootDiameter : PathContinuation.Coordinate) (minimumDepth : Nat) : Nat :=
-  max (PreparedSheetContinuation.Subdivision.sufficientDyadicDepth (PathContinuation.clearSegment safe)
-    PathContinuation.first PathContinuation.last rootDiameter) minimumDepth
+@[expose] def maximumDepth {data : Data prepared segment} (safe : data.Safe)
+    (rootDiameter : Coordinate) (minimumDepth : Nat) : Nat :=
+  max (PreparedSheetContinuation.Subdivision.sufficientDyadicDepth (clearSegment safe)
+    PathContinuation.first last rootDiameter) minimumDepth
 
 set_option genInjectivity false in
 open Purelib.Integration.Algebraic.SquareFactor in
@@ -151,20 +151,20 @@ open Purelib.Riemann.Branches in
 
 Its actual depth lies between the requested minimum and the derived sufficient maximum, and its acceptance equation
 names the exact checked run. -/
-structure SelectedMesh {data : PathInput.Data prepared segment} (safe : data.Safe)
-    (owner : PathContinuation.Owner (data.radicand.parameterPolynomial.eval ((PathContinuation.clearSegment
+structure SelectedMesh {data : Data prepared segment} (safe : data.Safe)
+    (owner : Owner (data.radicand.parameterPolynomial.eval ((clearSegment
       safe).pointAt PathContinuation.first.parameter)))
-    (rootDiameter : PathContinuation.Coordinate) (positive : 0 < rootDiameter) (minimumDepth : Nat) where
+    (rootDiameter : Coordinate) (positive : 0 < rootDiameter) (minimumDepth : Nat) where
   /-- The actual selected dyadic subdivision depth. -/ depth : Nat
   /-- The selected depth is at least the original requested minimum. -/ minimumDepth_le : minimumDepth ≤ depth
   /-- The selected depth does not exceed the derived sufficient maximum. -/ depth_le_maximum : depth ≤
-    PathContinuation.maximumDepth safe rootDiameter minimumDepth
+    maximumDepth safe rootDiameter minimumDepth
   /-- The exact retained subdivision run indexed by the original starting owner. -/ run :
-    PreparedSheetContinuation.Subdivision (PathContinuation.clearSegment safe) (PathContinuation.within safe)
+    PreparedSheetContinuation.Subdivision (clearSegment safe) (within safe)
     PathContinuation.first owner
   /-- The checker at the retained depth and original diameter request returns this exact run. -/ accepted :
-    PreparedSheetContinuation.Subdivision.tryDyadic (PathContinuation.clearSegment safe) (PathContinuation.within safe)
-    PathContinuation.first PathContinuation.last owner depth rootDiameter positive = some run
+    PreparedSheetContinuation.Subdivision.tryDyadic (clearSegment safe) (within safe)
+    PathContinuation.first last owner depth rootDiameter positive = some run
 
 constructive_injectivity SelectedMesh
 
@@ -175,39 +175,39 @@ range.
 
 An accepted attempt returns its original run. At the sufficient final depth, the mathematical safety certificate
 constructs and certifies the checked subdivision. -/
-@[expose] def searchMesh {data : PathInput.Data prepared segment} (safe : data.Safe)
-    (owner : PathContinuation.Owner (data.radicand.parameterPolynomial.eval ((PathContinuation.clearSegment
+@[expose] def searchMesh {data : Data prepared segment} (safe : data.Safe)
+    (owner : Owner (data.radicand.parameterPolynomial.eval ((clearSegment
       safe).pointAt PathContinuation.first.parameter)))
-    (rootDiameter : PathContinuation.Coordinate) (positive : 0 < rootDiameter) (minimumDepth : Nat)
+    (rootDiameter : Coordinate) (positive : 0 < rootDiameter) (minimumDepth : Nat)
     (depth : Nat) : (remaining : Nat) → minimumDepth ≤ depth →
-      PathContinuation.maximumDepth safe rootDiameter minimumDepth = depth + remaining →
-      PathContinuation.SelectedMesh safe owner rootDiameter positive minimumDepth
+      maximumDepth safe rootDiameter minimumDepth = depth + remaining →
+      SelectedMesh safe owner rootDiameter positive minimumDepth
   | 0, minimum, upper => by
       have sufficient : PreparedSheetContinuation.Subdivision.sufficientDyadicDepth
-          (PathContinuation.clearSegment safe) PathContinuation.first PathContinuation.last rootDiameter ≤ depth := by
+          (clearSegment safe) PathContinuation.first last rootDiameter ≤ depth := by
         have bound := Order.le_max_left
           (PreparedSheetContinuation.Subdivision.sufficientDyadicDepth
-            (PathContinuation.clearSegment safe) PathContinuation.first PathContinuation.last rootDiameter) minimumDepth
+            (clearSegment safe) PathContinuation.first last rootDiameter) minimumDepth
         rw [← Order.max_eq_natMax] at bound
-        change _ ≤ PathContinuation.maximumDepth safe rootDiameter minimumDepth at bound
+        change _ ≤ maximumDepth safe rootDiameter minimumDepth at bound
         rw [upper, Nat.add_zero] at bound
         exact bound
       let safety := PreparedSheetContinuation.Subdivision.dyadicMeshSafe_of_sufficientDepth_le
-        (PathContinuation.clearSegment safe) PathContinuation.first PathContinuation.last owner depth rootDiameter
+        (clearSegment safe) PathContinuation.first last owner depth rootDiameter
           positive (by decide) sufficient
       exact
         { depth
           minimumDepth_le := minimum
           depth_le_maximum := by omega
-          run := PreparedSheetContinuation.Subdivision.checkedDyadic (PathContinuation.clearSegment safe)
-            (PathContinuation.within safe) PathContinuation.first PathContinuation.last owner depth rootDiameter
+          run := PreparedSheetContinuation.Subdivision.checkedDyadic (clearSegment safe)
+            (within safe) PathContinuation.first last owner depth rootDiameter
               positive safety
           accepted := PreparedSheetContinuation.Subdivision.tryDyadic_eq_some_checkedDyadic
-            (PathContinuation.clearSegment safe) (PathContinuation.within safe) PathContinuation.first
-              PathContinuation.last owner depth rootDiameter positive safety }
+            (clearSegment safe) (within safe) PathContinuation.first
+              last owner depth rootDiameter positive safety }
   | remaining + 1, minimum, upper =>
-      match found : PreparedSheetContinuation.Subdivision.tryDyadic (PathContinuation.clearSegment safe)
-          (PathContinuation.within safe) PathContinuation.first PathContinuation.last owner depth rootDiameter positive
+      match found : PreparedSheetContinuation.Subdivision.tryDyadic (clearSegment safe)
+          (within safe) PathContinuation.first last owner depth rootDiameter positive
             with
       | some run =>
           { depth
@@ -215,36 +215,59 @@ constructs and certifies the checked subdivision. -/
             depth_le_maximum := by omega
             run
             accepted := found }
-      | none => Purelib.Integration.Algebraic.SquareFactor.PathContinuation.searchMesh safe owner rootDiameter positive
+      | none => PathContinuation.searchMesh safe owner rootDiameter positive
         minimumDepth (depth + 1)
           remaining (by omega) (by omega)
+
+open Purelib.Integration.Algebraic.SquareFactor in
+/-- Search from the requested minimum using the same retained starting root owner.
+
+The supplied owner is passed to every checked subdivision and retained in
+the selected mesh. No independent root isolation is performed.
+-/
+@[expose] def selectMeshFromOwner {data : Data prepared segment} (safe : data.Safe)
+    (owner : Owner (data.radicand.parameterPolynomial.eval
+      ((clearSegment safe).pointAt PathContinuation.first.parameter)))
+    (rootDiameter : Coordinate) (positive : 0 < rootDiameter) (minimumDepth : Nat) :
+    SelectedMesh safe owner rootDiameter positive minimumDepth :=
+  searchMesh safe owner rootDiameter positive minimumDepth minimumDepth
+    (maximumDepth safe rootDiameter minimumDepth - minimumDepth) le_rfl (by
+      have bound : minimumDepth ≤ maximumDepth safe rootDiameter minimumDepth := by
+        unfold maximumDepth
+        rw [Order.max_eq_natMax]
+        exact Order.le_max_right _ _
+      omega)
 
 open Purelib.Integration.Algebraic.SquareFactor in
 /-- Search from the requested minimum depth using the original independently selected starting sheet owner.
 
 The finite search stops no later than the retained sufficient depth and returns an accepted run with its exact owner and
 request indices. -/
-@[expose] def selectMesh {data : PathInput.Data prepared segment} (safe : data.Safe) (sheet : Fin 2)
-    (rootDiameter : PathContinuation.Coordinate) (positive : 0 < rootDiameter) (minimumDepth : Nat) :
-    PathContinuation.SelectedMesh safe (PathContinuation.initialOwner safe sheet) rootDiameter positive minimumDepth :=
-  PathContinuation.searchMesh safe (PathContinuation.initialOwner safe sheet) rootDiameter positive minimumDepth
-    minimumDepth
-    (PathContinuation.maximumDepth safe rootDiameter minimumDepth - minimumDepth) le_rfl (by
-      have bound : minimumDepth ≤ PathContinuation.maximumDepth safe rootDiameter minimumDepth := by
-        unfold PathContinuation.maximumDepth
-        rw [Order.max_eq_natMax]
-        exact Order.le_max_right _ _
-      omega)
+@[expose] def selectMesh {data : Data prepared segment} (safe : data.Safe) (sheet : Fin 2)
+    (rootDiameter : Coordinate) (positive : 0 < rootDiameter) (minimumDepth : Nat) :
+    SelectedMesh safe (initialOwner safe sheet) rootDiameter positive minimumDepth :=
+  selectMeshFromOwner safe (initialOwner safe sheet)
+    rootDiameter positive minimumDepth
 
 namespace SelectedMesh
 
-variable {data : Purelib.Integration.Algebraic.SquareFactor.PathInput.Data prepared segment} {safe : data.Safe}
-  {owner : Purelib.Integration.Algebraic.SquareFactor.PathContinuation.Owner (data.radicand.parameterPolynomial.eval
-    ((Purelib.Integration.Algebraic.SquareFactor.PathContinuation.clearSegment safe).pointAt
-    Purelib.Integration.Algebraic.SquareFactor.PathContinuation.first.parameter))}
-  {rootDiameter : Purelib.Integration.Algebraic.SquareFactor.PathContinuation.Coordinate} {positive : 0 < rootDiameter}
+/-- Transport the selected mesh to an equal original starting owner without rebuilding its retained subdivision. -/
+@[expose] def castOwner {data : Data prepared segment} {safe : data.Safe}
+    {first second : Owner (data.radicand.parameterPolynomial.eval
+      ((clearSegment safe).pointAt PathContinuation.first.parameter))}
+    {rootDiameter : Coordinate} {positive : 0 < rootDiameter} {minimumDepth : Nat}
+    (equal : first = second) (mesh : SelectedMesh safe first rootDiameter positive minimumDepth) :
+    SelectedMesh safe second rootDiameter positive minimumDepth := by
+  cases equal
+  exact mesh
+
+variable {data : Data prepared segment} {safe : data.Safe}
+  {owner : Owner (data.radicand.parameterPolynomial.eval
+    ((clearSegment safe).pointAt
+    PathContinuation.first.parameter))}
+  {rootDiameter : Coordinate} {positive : 0 < rootDiameter}
     {minimumDepth : Nat}
-  (mesh : Purelib.Integration.Algebraic.SquareFactor.PathContinuation.SelectedMesh safe owner rootDiameter positive
+  (mesh : SelectedMesh safe owner rootDiameter positive
     minimumDepth)
 
 section
@@ -252,15 +275,15 @@ open Purelib.Integration.Algebraic.SquareFactor
 open Purelib.Riemann.Branches
 /-- The accepted retained subdivision ends at the original parameter-one endpoint. -/
 theorem endpoint : mesh.run.endpoint = last :=
-  PreparedSheetContinuation.Subdivision.tryDyadic_endpoint (PathContinuation.clearSegment safe) (PathContinuation.within
+  PreparedSheetContinuation.Subdivision.tryDyadic_endpoint (clearSegment safe) (within
     safe)
-    PathContinuation.first PathContinuation.last owner mesh.depth rootDiameter positive mesh.accepted
+    PathContinuation.first last owner mesh.depth rootDiameter positive mesh.accepted
 
 /-- The retained accepted subdivision has exactly two to the power of its selected depth steps. -/
 theorem stepCount : mesh.run.stepCount = 2 ^ mesh.depth :=
-  PreparedSheetContinuation.Subdivision.tryDyadic_stepCount (PathContinuation.clearSegment safe)
-    (PathContinuation.within safe)
-    PathContinuation.first PathContinuation.last owner mesh.depth rootDiameter positive mesh.accepted
+  PreparedSheetContinuation.Subdivision.tryDyadic_stepCount (clearSegment safe)
+    (within safe)
+    PathContinuation.first last owner mesh.depth rootDiameter positive mesh.accepted
 
 end
 

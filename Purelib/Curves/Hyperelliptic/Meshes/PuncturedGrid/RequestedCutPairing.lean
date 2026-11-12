@@ -138,7 +138,7 @@ open Purelib.LinearAlgebra.Gaussian.QuadraticForm (GaussianMatrix)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
@@ -146,24 +146,24 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 set_option genInjectivity false in
 /-- No scalar accuracy, sewing compatibility, or successful stage search is supplied by the caller. The request retains
 every prepared input. -/
-structure CutPairingRequest (lifted : Meshes.LiftedPuncturedGrid base)
-    (domains : DomainBanks.FaceDomainBank lifted.frames base.faces.regulars)
-    (i j : Fin genus) (target : Fraction.Rational) (floor : Nat) where
+structure CutPairingRequest (lifted : LiftedPuncturedGrid base)
+    (domains : FaceDomainBank lifted.frames base.faces.regulars)
+    (i j : Fin genus) (target : Rational) (floor : Nat) where
   /-- The requested cut-pairing target is strictly positive. -/ positive : 0 < target
-  /-- The shared retained cut refinements on the original face domains. -/ cuts : RegularMeshes.CommonCuts domains
-  /-- The original numerical preflights on each sheet. -/ fixed : (sheet : Fin 2) → RegularMeshes.Preflights domains
+  /-- The shared retained cut refinements on the original face domains. -/ cuts : CommonCuts domains
+  /-- The original numerical preflights on each sheet. -/ fixed : (sheet : Fin 2) → Preflights domains
     sheet
   /-- The prepared exterior boundary request with its allocated fraction of the target. -/ exterior :
-    RegularExteriorRequest.ExteriorBoundaryRequest (fun sheet => RegularMeshes.build domains cuts sheet 0) fixed
+    ExteriorBoundaryRequest (fun sheet => RegularMeshes.build domains cuts sheet 0) fixed
     ((((target / 4) / 4) / 4) / 4)
   /-- The actual crossing bank of the retained exterior request and lifted mesh. -/ crossings :
     Matched.CrossingBank exterior.prepared.energy lifted.mesh
   /-- The complete crossing replacement request on the actual retained crossing bank. -/ total :
     CrossingRequests.TotalRequest crossings i j 0 0 (((((target / 4) / 4) / 4) / 4) / 4) floor
-  /-- The retained common corner replacement budget. -/ corner : CrossingCornerBudget.CornerRequest fixed i j (((target
+  /-- The retained common corner replacement budget. -/ corner : CornerRequest fixed i j (((target
     / 4) / 4) / 4)
   /-- The original bilinear sewing preparations for the two basis differentials. -/ preparation :
-    SewnBilinearRequest.BilinearPreparation lifted.cutPolygon domains i j
+    BilinearPreparation lifted.cutPolygon domains i j
   /-- The paid sewing request on those exact retained preparations. -/ sewing : BilinearPreparation.Request preparation
     ((target / 4) / 4) floor
   /-- The common stage paying every ownership, crossing, corner and sewing threshold. -/ index : Nat
@@ -182,13 +182,13 @@ namespace CutPairingRequest
 variable {i j : Fin genus} {target : Rational} {floor : Nat}
 
 /-- Prepare all original cut-pairing requests and cache a common paid stage for the supplied positive target. -/
-@[expose] def build (lifted : Meshes.LiftedPuncturedGrid base) (domains : DomainBanks.FaceDomainBank lifted.frames
+@[expose] def build (lifted : LiftedPuncturedGrid base) (domains : FaceDomainBank lifted.frames
   base.faces.regulars)
-    (cuts : RegularMeshes.CommonCuts domains)
-    (i j : Fin genus) (target : Fraction.Rational) (positive : 0 < target) (floor : Nat) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest lifted domains i j target floor :=
+    (cuts : CommonCuts domains)
+    (i j : Fin genus) (target : Rational) (positive : 0 < target) (floor : Nat) :
+    CutPairingRequest lifted domains i j target floor :=
       by
-  have quarter {value : Fraction.Rational} (h : 0 < value) : 0 < value / 4 :=
+  have quarter {value : Rational} (h : 0 < value) : 0 < value / 4 :=
     Fraction.Order.Field.div_pos_direct h (by decide)
   have localPositive := quarter positive
   let fixed := fun sheet => RegularMeshes.preflights domains sheet
@@ -211,25 +211,25 @@ variable {i j : Fin genus} {target : Rational} {floor : Nat}
 set_option genInjectivity false in
 /-- The caller may supply a later shared bank without repeating its numerical preparation. All comparison samples retain
 that same bank. -/
-structure Readings (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest lifted
+structure Readings (request : CutPairingRequest lifted
   domains i j target floor)
-    {stage : Nat} (cache : RegularMeshes.Numerics domains stage) where
+    {stage : Nat} (cache : Numerics domains stage) where
   /-- The actual first differential's triangle readings from the shared numerical cache. -/ left :
-    TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh
+    TriangleReadings (cache.get i) lifted.mesh
   /-- The actual second differential's triangle readings from that same cache. -/ right :
-    TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh
+    TriangleReadings (cache.get j) lifted.mesh
   /-- The acquired crossing samples on the normalization of the same numerical cache. -/ crossings :
     CrossingRequests.Samples request.total.allocated cache.normalize
   /-- The retained original face perimeters on the supplied cache. -/ original : Matched.FacePerimeters (request
     := request.exterior.prepared.energy) cache i j
   /-- The retained face perimeters on the normalization of that same cache. -/ normalized :
     Matched.FacePerimeters (request := request.exterior.prepared.energy) cache.normalize i j
-  /-- The sewn surface built from the exact first triangle readings. -/ leftSurface : SewnPrimitiveSamples.CachedSample
+  /-- The sewn surface built from the exact first triangle readings. -/ leftSurface : CachedSample
     lifted.cutPolygon.patch left.values
   /-- The sewn surface built from the exact second triangle readings. -/ rightSurface :
-    SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch right.values
+    CachedSample lifted.cutPolygon.patch right.values
   /-- The bilinear surface sample retaining both original sewn owners. -/ surface :
-    Topology.Surface.Sewing.Bilinear.Samples leftSurface
+    Bilinear.Samples leftSurface
     rightSurface
   /-- The actual canonical cut-boundary word sample on the retained surface values. -/ word : CutBoundaryWord.AreaSample
     lifted.cutBoundaryWord surface.values
@@ -237,25 +237,25 @@ structure Readings (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.Requeste
   /-- The original integral pairing of the canonical cut-boundary word. -/ integral :
     Topology.Surface.Cut.IntegralPairing.CutBoundaryWord
     lifted.cutBoundaryWord
-  /-- The retained regular-face neighbor bank for the original framed grid. -/ neighbors : PuncturedFaces.NeighborBank
+  /-- The retained regular-face neighbor bank for the original framed grid. -/ neighbors : NeighborBank
     base.faces
 
 constructive_injectivity Readings
 
 namespace Readings
 
-variable {request : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest lifted
+variable {request : CutPairingRequest lifted
   domains i j target floor}
   {stage : Nat} {cache : Numerics
     domains stage}
 
 /-- Retain supplied triangle readings when the standard-period comparison has already acquired them on this numerical
 bank. -/
-@[expose] def buildWith (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest
-  lifted domains i j target floor) (cache : RegularMeshes.Numerics domains stage)
-    (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh) (right :
-      TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings request cache :=
+@[expose] def buildWith (request : CutPairingRequest
+  lifted domains i j target floor) (cache : Numerics domains stage)
+    (left : TriangleReadings (cache.get i) lifted.mesh) (right :
+      TriangleReadings (cache.get j) lifted.mesh) :
+    Readings request cache :=
   let leftSurface := CachedSample.build lifted.cutPolygon.patch left.values
   let rightSurface := CachedSample.build lifted.cutPolygon.patch right.values
   let surface := Bilinear.build leftSurface rightSurface
@@ -265,30 +265,30 @@ bank. -/
     lifted.cutIntegralPairing, NeighborBank.build base.faces base.bank.frame⟩
 
 /-- Acquire both original triangle readings once and build the complete comparison on the same numerical cache. -/
-@[expose] def build (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest lifted
-  domains i j target floor) (cache : RegularMeshes.Numerics domains stage) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings request cache :=
+@[expose] def build (request : CutPairingRequest lifted
+  domains i j target floor) (cache : Numerics domains stage) :
+    Readings request cache :=
   buildWith request cache
     (TriangleReadings.build (cache.get i) lifted.mesh) (TriangleReadings.build (cache.get j) lifted.mesh)
 
 /-- The complete retained cut pairing, including paired and remaining matrices and the closed correction. -/
 @[expose] def paired (readings :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings request cache) :
-  Data.Gaussian.Basic.Canonical :=
+  Readings request cache) :
+  Canonical :=
   2 * Pairing.contract (fun row column => readings.integral.paired row column) readings.word.values +
     Pairing.contract (fun row column => readings.integral.remaining row column) readings.word.values +
     readings.word.closedCorrection
 
 /-- The actual physical perimeter minus its original source-triangle correction. -/
 @[expose] def physical (readings :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings request cache) :
-  Data.Gaussian.Basic.Canonical :=
+  Readings request cache) :
+  Canonical :=
   FacePerimeters.physicalPerimeter readings.normalized readings.neighbors -
     CrossingTriangleAreas.physicalTriangleArea readings.neighbors readings.left readings.right
 
 /-- All geometric and numerical thresholds are discharged by the request's single index; the bound concerns the actual
 retained cut-word pairing. -/
-theorem comparison (readings : Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings
+theorem comparison (readings : Readings
   request cache) (later : request.index ≤ stage) :
     Data.Gaussian.Norm.Basic.normSq (readings.original.localTotalSum - readings.paired - readings.physical) ≤
       target / 4 :=
@@ -301,10 +301,10 @@ theorem comparison (readings : Curves.Hyperelliptic.Meshes.PuncturedGrid.Request
 
 /-- The actual corrected cut-pairing value fits the requested target at every paid stage. -/
 theorem corrected_bound (readings :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings request cache) (later :
+  Readings request cache) (later :
   request.index ≤ stage) :
     Data.Gaussian.Norm.Basic.normSq (readings.paired + readings.physical) ≤ target := by
-  have quarterPositive {value : Fraction.Rational} (h : 0 < value) : 0 < value / 4 :=
+  have quarterPositive {value : Rational} (h : 0 < value) : 0 < value / 4 :=
     Fraction.Order.Field.div_pos_direct h (by decide)
   have positive := quarterPositive request.positive
   have bound := LocalCutPairing.corrected_cut_pairing_bound request.exterior request.total request.corner readings.left
@@ -322,14 +322,14 @@ theorem corrected_bound (readings :
           (Fraction.Order.Field.divide_le_self positive.le (by decide))))
   apply bound.trans
   have paid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (add_le_add (le_refl (target / 4)) exteriorLe) (show (0 : Fraction.Rational) ≤ 2 by decide)
+    (add_le_add (le_refl (target / 4)) exteriorLe) (show (0 : Rational) ≤ 2 by decide)
   exact paid.trans_eq ((show 2 * (target / 4 + target / 4) = target / 4 * 4 by ring1).trans
     (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)))
 
 /-- Keep the ambient term and every individual hole correction available to subsequent patch/excision comparisons; none
 is inferred to vanish. -/
 theorem physical_components (readings :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings request cache) :
+  Readings request cache) :
     readings.physical = PhysicalComponentCorrection.physicalComponentCorrection readings.normalized readings.neighbors
       readings.left readings.right .exterior +
       FiniteSum.Fin.sumFin (fun hole =>
@@ -342,13 +342,13 @@ end Readings
 
 set_option genInjectivity false in
 /-- Cached corrected values and the bound for this exact finite acquisition. -/
-structure CertifiedReadings (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest
+structure CertifiedReadings (request : CutPairingRequest
   lifted domains i j target floor)
-    {stage : Nat} (cache : RegularMeshes.Numerics domains stage) where
+    {stage : Nat} (cache : Numerics domains stage) where
   /-- The complete comparison readings on the supplied numerical cache. -/ readings :
     Readings request cache
-  /-- The cached complete corrected cut-pairing value. -/ pairedValue : Data.Gaussian.Basic.Canonical
-  /-- The cached physical boundary correction. -/ physicalValue : Data.Gaussian.Basic.Canonical
+  /-- The cached complete corrected cut-pairing value. -/ pairedValue : Canonical
+  /-- The cached physical boundary correction. -/ physicalValue : Canonical
   /-- The paired cache equals the retained comparison's actual cut pairing. -/ paired_eq : pairedValue = readings.paired
   /-- The physical cache equals the retained comparison's actual boundary correction. -/ physical_eq : physicalValue =
     readings.physical
@@ -358,19 +358,19 @@ structure CertifiedReadings (request : Curves.Hyperelliptic.Meshes.PuncturedGrid
 constructive_injectivity CertifiedReadings
 
 /-- Consume an existing later bank and retain the expensive scalar results. -/
-@[expose] def readAt (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest lifted
+@[expose] def readAt (request : CutPairingRequest lifted
   domains i j target floor)
-    {stage : Nat} (cache : RegularMeshes.Numerics domains stage) (later : request.index ≤ stage) :
+    {stage : Nat} (cache : Numerics domains stage) (later : request.index ≤ stage) :
     CertifiedReadings request cache :=
-  let readings := Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings.build request
+  let readings := Readings.build request
     cache
   ⟨readings, readings.paired, readings.physical, rfl, rfl, readings.corrected_bound later⟩
 
 /-- Execute the prepared comparison at its certified index, retaining the expensive all-differential numerical bank
 alongside its certified readings. -/
-@[expose] def acquire (request : Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest lifted
+@[expose] def acquire (request : CutPairingRequest lifted
   domains i j target floor) :
-    (cache : RegularMeshes.Numerics domains request.index) ×
+    (cache : Numerics domains request.index) ×
       CertifiedReadings request cache :=
   let cache := DependentVector.ofFn fun row =>
     FacePrimitiveBank.build (PeriodMatrix.standardDifferential row) request.index domains

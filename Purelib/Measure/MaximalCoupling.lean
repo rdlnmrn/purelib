@@ -792,10 +792,10 @@ theorem maximalLawCoupling_mismatchProbability
       left.totalVariationDistance right := by
   by_cases zero : left.totalVariationDistance right = 0
   · unfold maximalLawCoupling
-    rewrite [dif_pos zero, zero]
+    rewrite [dif_pos zero]
     change (LawCoupling.refl left).mismatchProbability
-      LawCoupling.equalityRelation = 0
-    exact LawCoupling.refl_mismatchProbability_eq_zero left
+      LawCoupling.equalityRelation = left.totalVariationDistance right
+    exact (LawCoupling.refl_mismatchProbability_eq_zero left).trans zero.symm
   · have positive : 0 < left.totalVariationDistance right :=
       lt_of_le_of_ne (left.totalVariationDistance_nonnegative right)
         (Ne.symm zero)

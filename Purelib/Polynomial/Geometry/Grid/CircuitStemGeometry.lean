@@ -30,6 +30,8 @@ import Purelib.Data.Gaussian.Field
 import Purelib.Geometry.Rational.Box.Sample
 import Purelib.Polynomial.Dense.Basic
 
+open Purelib.Data.Gaussian.Components
+
 open Purelib.Polynomial.Geometry.Grid.AxisWalks (IncreasingWalk Lookup)
 open Purelib.Polynomial.Geometry.Grid.ClearGrid (Cell HorizontalLine Interval VerticalLine)
 open Purelib.Polynomial.Geometry.Grid.RowCircuitOrder (CellCircuits)
@@ -63,7 +65,7 @@ namespace Purelib.Polynomial.Geometry.Grid
 open Purelib.Polynomial.Geometry.Grid.WindowCircuitOrder.WindowCircuits
 open Purelib.Polynomial.Geometry.Grid.RowCircuitOrder.RowCircuits
 
-variable {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient : Box} {grid :
+variable {polynomial : ClearPath.GaussianPolynomial} {ambient : Box} {grid :
   ClearGrid polynomial ambient}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames grid} {vertices :
     VertexBank grid} {edges :
@@ -80,21 +82,21 @@ inductive HorizontalStems (edges :
     (band : Interval (HorizontalLine.coordinate (polynomial :=
       polynomial) (ambient := ambient)))
     (member : band ∈ grid.yIntervals) {start : Fraction.Rational} : CellCircuits grid
-      (Gaussian.Components.Basic.point start band.lower.coordinate) → Prop
+      (Basic.point start band.lower.coordinate) → Prop
   /-- The empty circuit tree has no connector obligations. -/ | nil : HorizontalStems edges vertices band member (.nil
     _)
   /-- The retained cell connector agrees with the displayed increasing horizontal axis route. -/ | cell (interval :
     Interval (VerticalLine.coordinate (polynomial := polynomial)
     (ambient := ambient)))
       (cellMember : Cell.mk interval band ∈ grid.cells)
-      (stem : Geometry.Grid.Walks.Walk grid (Gaussian.Components.Basic.point start band.lower.coordinate)
-        (Gaussian.Components.Basic.point interval.lower.coordinate band.lower.coordinate))
+      (stem : Walks.Walk grid (Basic.point start band.lower.coordinate)
+        (Basic.point interval.lower.coordinate band.lower.coordinate))
       (axis : IncreasingWalk grid.xIntervals start interval.lower.coordinate)
       (same : ChainComparison edges vertices stem
-        (Geometry.Grid.RowCircuitOrder.RowCircuits.bottom band member axis)) :
+        (RowCircuits.bottom band member axis)) :
       HorizontalStems edges vertices band member (.cell (Cell.mk interval band) cellMember stem)
   /-- Both retained subtrees have certified horizontal connectors. -/ | append {first last :
-    CellCircuits grid (Gaussian.Components.Basic.point start band.lower.coordinate)}
+    CellCircuits grid (Basic.point start band.lower.coordinate)}
       (firstStems : HorizontalStems edges vertices band member first) (lastStems : HorizontalStems edges vertices band
         member last) :
       HorizontalStems edges vertices band member (.append first last)
@@ -112,7 +114,7 @@ theorem prepend (interval :
   Interval (VerticalLine.coordinate (polynomial := polynomial) (ambient
   := ambient)))
     (adjacent : interval ∈ grid.xIntervals)
-    {tree : CellCircuits grid (Gaussian.Components.Basic.point interval.upper.coordinate
+    {tree : CellCircuits grid (Basic.point interval.upper.coordinate
       band.lower.coordinate)}
     (stems : HorizontalStems edges vertices band member tree) :
     HorizontalStems edges vertices band member
@@ -139,7 +141,7 @@ inductive AscendingStems (edges :
   /-- The empty circuit tree has no ascending connector obligations. -/ | nil : AscendingStems edges vertices (.nil
     base)
   /-- The retained connector agrees with its original vertical-then-horizontal axis walks. -/ | cell (cell :
-    Geometry.Grid.ClearGrid.Cell polynomial ambient) (member : cell ∈ grid.cells) (stem : Geometry.Grid.Walks.Walk grid
+    Cell polynomial ambient) (member : cell ∈ grid.cells) (stem : Walks.Walk grid
     base cell.box.anchor)
       (x : IncreasingWalk grid.xIntervals base.re cell.box.xLower)
       (y : IncreasingWalk grid.yIntervals base.im cell.box.yLower)
@@ -148,8 +150,8 @@ inductive AscendingStems (edges :
       (top : Lookup (key := HorizontalLine.coordinate) grid.horizontal
         cell.box.yLower)
       (same : ChainComparison edges vertices stem
-        ((Geometry.Grid.WindowCircuitOrder.WindowCircuits.vertical left y).append
-        (Geometry.Grid.WindowCircuitOrder.WindowCircuits.horizontal x top))) :
+        ((WindowCircuitOrder.WindowCircuits.vertical left y).append
+        (WindowCircuitOrder.WindowCircuits.horizontal x top))) :
       AscendingStems edges vertices (.cell cell member stem)
   /-- Both retained subtrees have certified ascending connectors. -/ | append {first last :
     CellCircuits grid base} (firstStems : AscendingStems edges vertices first)
@@ -164,7 +166,7 @@ theorem ascending
     {band : Interval (HorizontalLine.coordinate (polynomial :=
       polynomial) (ambient := ambient))}
     {member : band ∈ grid.yIntervals} {start : Fraction.Rational}
-    {tree : CellCircuits grid (Gaussian.Components.Basic.point start
+    {tree : CellCircuits grid (Basic.point start
       band.lower.coordinate)}
     (stems : HorizontalStems edges vertices band member tree)
     (left : Lookup (key := VerticalLine.coordinate) grid.vertical start)
@@ -172,11 +174,11 @@ theorem ascending
   induction stems with
   | nil => exact .nil
   | cell interval cellMember stem axis same =>
-      apply Geometry.Grid.RowCircuitOrder.CellCircuits.AscendingStems.cell (Cell.mk interval
+      apply AscendingStems.cell (Cell.mk interval
         band) cellMember stem axis (.nil band.lower.coordinate) left
         ⟨band.lower, (Interval.endpoints_mem _ grid.horizontal_ordered member).1, rfl⟩
       exact same.trans (ChainComparison.of_eq (congrArg
-        (fun prefixPath => prefixPath.append (Geometry.Grid.RowCircuitOrder.RowCircuits.bottom band member axis))
+        (fun prefixPath => prefixPath.append (RowCircuits.bottom band member axis))
         (AxisChainCoherence.WindowCircuits.vertical_nil_eq (y := band.lower.coordinate) left)).symm)
   | append first last ihFirst ihLast => exact .append ihFirst ihLast
 
@@ -191,22 +193,22 @@ theorem prepend_vertical
       polynomial) (ambient := ambient)))
     (member : band ∈ grid.yIntervals) {left : Fraction.Rational}
     (line : Lookup (key := VerticalLine.coordinate) grid.vertical left)
-    {tree : CellCircuits grid (Gaussian.Components.Basic.point left
+    {tree : CellCircuits grid (Basic.point left
       band.upper.coordinate)}
     (stems : AscendingStems edges vertices tree) :
     AscendingStems edges vertices (tree.based (.cons
-      (Geometry.Grid.WindowCircuitOrder.WindowCircuits.side band member line) (.nil _))) := by
+      (WindowCircuitOrder.WindowCircuits.side band member line) (.nil _))) := by
   induction stems with
   | nil => exact .nil
   | cell cell cellMember stem x y actual top same =>
-      apply Geometry.Grid.RowCircuitOrder.CellCircuits.AscendingStems.cell (base := Gaussian.Components.Basic.point left
+      apply AscendingStems.cell (base := Basic.point left
         band.lower.coordinate) cell cellMember _ x (.cons band member y) actual top
       have compared := (ChainComparison.refl (edges :=
         edges) (vertices := vertices)
-        (.cons (Geometry.Grid.WindowCircuitOrder.WindowCircuits.side band member line) (.nil _))).append same
+        (.cons (WindowCircuitOrder.WindowCircuits.side band member line) (.nil _))).append same
       apply compared.trans (ChainComparison.of_eq ?_)
-      rw [Geometry.Grid.WindowCircuitOrder.WindowCircuits.lookup_unique grid.vertical_ordered line actual]
-      exact (congrArg (fun prefixPath => prefixPath.append (Geometry.Grid.WindowCircuitOrder.WindowCircuits.horizontal x
+      rw [WindowCircuitOrder.WindowCircuits.lookup_unique grid.vertical_ordered line actual]
+      exact (congrArg (fun prefixPath => prefixPath.append (WindowCircuitOrder.WindowCircuits.horizontal x
         top))
         (AxisChainCoherence.WindowCircuits.vertical_cons_eq actual band member y)).symm
   | append first last ihFirst ihLast => exact .append ihFirst ihLast
@@ -244,14 +246,14 @@ theorem canonicalize_comparison
   | cell cell member stem x y left top same =>
       let box : Box := ⟨base.re, cell.box.xLower, base.im, cell.box.yLower, x.ordered, y.ordered⟩
       let window : WindowBoundary.Window grid box :=
-        ⟨x, y, left, Geometry.Grid.AxisWalks.lookup _ grid.vertical (cell.anchor_mem member).1,
-          Geometry.Grid.AxisWalks.lookup _ grid.horizontal first.2, top,
+        ⟨x, y, left, AxisWalks.lookup _ grid.vertical (cell.anchor_mem member).1,
+          AxisWalks.lookup _ grid.horizontal first.2, top,
           grid.cells.filter (fun cell => decide (cell.box.Refines box)), rfl⟩
       have canonical := AxisChainCoherence.Window.reverse_connect_comparison window (edges := edges)
         (vertices := vertices)
         reference first (cell.anchor_mem member)
       exact AxisChainCoherence.RootEdgeBank.ChainComparison.based_stem
-        reference (same.trans canonical.symm) (Geometry.Grid.CellBoundary.Cell.boundaryWalk cell member)
+        reference (same.trans canonical.symm) (CellBoundary.Cell.boundaryWalk cell member)
   | append initial final ihInitial ihFinal => exact ihInitial.append ihFinal
 
 end AscendingStems
@@ -267,10 +269,10 @@ variable (band : Interval (HorizontalLine.coordinate (polynomial :=
 /-- The constructed row circuit tree has certified increasing horizontal connectors. -/
 theorem horizontal_stems : {start finish :
   Fraction.Rational} → (walk : IncreasingWalk grid.xIntervals start finish) →
-    Geometry.Grid.RowCircuitOrder.CellCircuits.HorizontalStems edges vertices band member (ofWalk band member walk)
+    CellCircuits.HorizontalStems edges vertices band member (ofWalk band member walk)
   | _, _, .nil _ => .nil
   | _, _, .cons interval adjacent tail => by
-      refine .append (Geometry.Grid.RowCircuitOrder.CellCircuits.HorizontalStems.prepend interval adjacent
+      refine .append (CellCircuits.HorizontalStems.prepend interval adjacent
         (horizontal_stems tail)) ?_
       exact .cell interval _ (.nil _) (.nil _)
         (ChainComparison.refl _)
@@ -286,12 +288,12 @@ open Purelib.Polynomial.Geometry.Grid.RowCircuitOrder.RowCircuits in
 /-- The constructed window circuit tree has certified left-then-top connectors. -/
 theorem ascending_stems : {bottom top :
   Fraction.Rational} → (y : IncreasingWalk grid.yIntervals bottom top) →
-    Geometry.Grid.RowCircuitOrder.CellCircuits.AscendingStems edges vertices (ofWalk x line y)
+    CellCircuits.AscendingStems edges vertices (ofWalk x line y)
   | _, _, .nil _ => .nil
   | _, _, .cons band member tail =>
-      .append (Geometry.Grid.RowCircuitOrder.CellCircuits.HorizontalStems.ascending
-        (Geometry.Grid.RowCircuitOrder.RowCircuits.horizontal_stems band member x) line)
-        (Geometry.Grid.RowCircuitOrder.CellCircuits.AscendingStems.prepend_vertical
+      .append (CellCircuits.HorizontalStems.ascending
+        (RowCircuitOrder.RowCircuits.horizontal_stems band member x) line)
+        (CellCircuits.AscendingStems.prepend_vertical
           band member line (ascending_stems tail))
 
 end WindowCircuitOrder.WindowCircuits
@@ -301,8 +303,8 @@ namespace WindowBoundary.Window
 /-- Every connector in the retained window circuit tree has an ascending axis-route certificate. -/
 theorem ascending_stems {box : Box}
   (window : Window grid box) :
-    Geometry.Grid.RowCircuitOrder.CellCircuits.AscendingStems edges vertices window.circuits :=
-  Geometry.Grid.WindowCircuitOrder.WindowCircuits.ascending_stems window.x window.left window.y
+    CellCircuits.AscendingStems edges vertices window.circuits :=
+  WindowCircuitOrder.WindowCircuits.ascending_stems window.x window.left window.y
 
 end WindowBoundary.Window
 
@@ -321,8 +323,8 @@ variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve ge
 /-- The retained part of a circuit partition inherits the original ascending connector certificates. -/
 theorem kept_stems {tree : CellCircuits bank.grid base} (partition :
   Curves.Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition faces tree)
-    (stems : Geometry.Grid.RowCircuitOrder.CellCircuits.AscendingStems edges vertices tree) :
-    Geometry.Grid.RowCircuitOrder.CellCircuits.AscendingStems edges vertices partition.kept := by
+    (stems : CellCircuits.AscendingStems edges vertices tree) :
+    CellCircuits.AscendingStems edges vertices partition.kept := by
   induction partition with
   | nil => exact .nil
   | regular => exact .nil

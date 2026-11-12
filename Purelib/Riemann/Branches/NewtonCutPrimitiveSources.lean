@@ -115,32 +115,32 @@ open Purelib.Topology.Surface in
 
 The original source-list membership locates the exact cut triangle, and its cyclic corner certificate retains the
 boundary occurrence and source-edge equation. -/
-@[expose] def positiveSourceOwner (patch : Cut.Patch.CutPatch faces indices boundary) (source :
-  Sewing.SewnPrimitiveContacts.SourceEdge faceCount)
+@[expose] def positiveSourceOwner (patch : CutPatch faces indices boundary) (source :
+  SourceEdge faceCount)
     (member : source.source ∈ indices) (cyclic : cyclicCorners source.first source.last) :
-    {route : Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.OrientedOwner patch // route.sourceEdge = source} := by
+    {route : OrientedOwner patch // route.sourceEdge = source} := by
   let found := sourcePosition source.source indices member
   let position : Fin patch.triangles.length := ⟨found.val.val, by rw [patch.triangles_length]; exact found.val.isLt⟩
   let triangle := patch.triangles[position.val]
   let edge : OrientedEdge patch.count := ⟨corner triangle source.first, corner triangle source.last⟩
-  let owner : Sewing.SewnPrimitiveBoundary.TriangleEdgeOwner patch.triangles edge :=
+  let owner : TriangleEdgeOwner patch.triangles edge :=
     ⟨position, source.first, source.last, rfl, rfl, corner_boundary triangle cyclic⟩
   refine ⟨⟨edge, owner, false⟩, ?_⟩
-  change (⟨indices[found.val.val], source.first, source.last⟩ : Sewing.SewnPrimitiveContacts.SourceEdge faceCount) =
+  change (⟨indices[found.val.val], source.first, source.last⟩ : SourceEdge faceCount) =
     source
   rw [found.property]
 
 section
 open Purelib.Topology.Surface
 /-- Reverse the retained orientation flag of the original cut-edge owner. -/
-@[expose] def reverseOwner {patch : Cut.Patch.CutPatch faces indices boundary} (route :
-  Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.OrientedOwner patch) :
-  Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.OrientedOwner patch :=
+@[expose] def reverseOwner {patch : CutPatch faces indices boundary} (route :
+  OrientedOwner patch) :
+  OrientedOwner patch :=
   { route with reversed := !route.reversed }
 
 /-- Reversing the original owner swaps exactly its retained source corners. -/
-private theorem reverseOwner_source {patch : Cut.Patch.CutPatch faces indices boundary} (route :
-  Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.OrientedOwner patch) :
+private theorem reverseOwner_source {patch : CutPatch faces indices boundary} (route :
+  OrientedOwner patch) :
     (reverseOwner route).sourceEdge = ⟨route.sourceEdge.source, route.sourceEdge.last, route.sourceEdge.first⟩ := by
   rcases route with ⟨edge, owner, reversed⟩
   cases reversed <;> rfl
@@ -149,13 +149,13 @@ private theorem reverseOwner_source {patch : Cut.Patch.CutPatch faces indices bo
 
 A finite cyclic-order decision either keeps the original orientation or reverses the exact opposite owner, preserving
 the source-edge equation. -/
-@[expose] def sourceOwner (patch : Cut.Patch.CutPatch faces indices boundary) (source :
-  Sewing.SewnPrimitiveContacts.SourceEdge faceCount)
+@[expose] def sourceOwner (patch : CutPatch faces indices boundary) (source :
+  SourceEdge faceCount)
     (member : source.source ∈ indices) (distinct : source.first ≠ source.last) :
-    {route : Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.OrientedOwner patch // route.sourceEdge = source} :=
+    {route : OrientedOwner patch // route.sourceEdge = source} :=
   if cyclic : cyclicCorners source.first source.last then positiveSourceOwner patch source member cyclic
   else
-    let opposite : Sewing.SewnPrimitiveContacts.SourceEdge faceCount := ⟨source.source, source.last, source.first⟩
+    let opposite : SourceEdge faceCount := ⟨source.source, source.last, source.first⟩
     let route := positiveSourceOwner patch opposite member ((cyclic_or_reverse _ _ distinct).resolve_left cyclic)
     ⟨reverseOwner route.val, by rw [reverseOwner_source, route.property]⟩
 
@@ -166,11 +166,11 @@ set_option genInjectivity false in
 /-- An ordered cut-edge word with retained original path-source owners and an exact source-list equation.
 
 The original source list remains an index, preserving every directed occurrence and its retained cut ownership. -/
-structure CutSourceWord (patch : Cut.Patch.CutPatch faces indices boundary) (original : List
-  (Sewing.SewnPrimitiveContacts.SourceEdge faceCount)) where
+structure CutSourceWord (patch : CutPatch faces indices boundary) (original : List
+  (SourceEdge faceCount)) where
   /-- The retained ordered cut-edge list with original directed occurrences. -/ edges : List (OrientedEdge patch.count)
   /-- The retained original owner certificates for the exact stored cut-edge word. -/ sources :
-    Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.PathSources patch edges
+    PathSources patch edges
   /-- The retained source readback equals the original source-edge list exactly. -/ sources_eq : sources.sources =
     original
 
@@ -180,20 +180,20 @@ namespace CutSourceWord
 
 open Purelib.Topology.Surface
 /-- Construct original cut owners in the exact retained source-word order. -/
-@[expose] def owners (patch : Cut.Patch.CutPatch faces indices boundary) : (original : List
-  (Sewing.SewnPrimitiveContacts.SourceEdge faceCount)) →
+@[expose] def owners (patch : CutPatch faces indices boundary) : (original : List
+  (SourceEdge faceCount)) →
     (∀ source ∈ original, source.source ∈ indices ∧ source.first ≠ source.last) → List
-      (Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.OrientedOwner patch)
+      (OrientedOwner patch)
   | [], _ => []
   | source :: tail, valid =>
       (sourceOwner patch source (valid source List.mem_cons_self).1 (valid source List.mem_cons_self).2).val ::
         owners patch tail (fun source member => valid source (List.mem_cons_of_mem _ member))
 
 /-- The retained constructed owners read back exactly the original source-edge list. -/
-theorem owners_sources (patch : Cut.Patch.CutPatch faces indices boundary) : ∀ (original : List
-  (Sewing.SewnPrimitiveContacts.SourceEdge faceCount))
+theorem owners_sources (patch : CutPatch faces indices boundary) : ∀ (original : List
+  (SourceEdge faceCount))
     (valid : ∀ source ∈ original, source.source ∈ indices ∧ source.first ≠ source.last),
-    (owners patch original valid).map Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.OrientedOwner.sourceEdge = original
+    (owners patch original valid).map OrientedOwner.sourceEdge = original
   | [], _ => rfl
   | source :: tail, valid => congrArg₂ List.cons (sourceOwner patch source _ _).property
       (owners_sources patch tail (fun source member => valid source (List.mem_cons_of_mem _ member)))
@@ -202,25 +202,25 @@ theorem owners_sources (patch : Cut.Patch.CutPatch faces indices boundary) : ∀
 
 The exact owner list supplies both the stored cut edges and original source readback, preserving order and multiplicity.
 -/
-@[expose] def build (patch : Cut.Patch.CutPatch faces indices boundary) (original : List
-  (Sewing.SewnPrimitiveContacts.SourceEdge faceCount))
+@[expose] def build (patch : CutPatch faces indices boundary) (original : List
+  (SourceEdge faceCount))
     (valid : ∀ source ∈ original, source.source ∈ indices ∧ source.first ≠ source.last) : CutSourceWord patch original
       :=
   let entries := owners patch original valid
-  ⟨entries.map Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.OrientedOwner.cutEdge, ⟨entries, rfl, original,
+  ⟨entries.map OrientedOwner.cutEdge, ⟨entries, rfl, original,
     (owners_sources patch original valid).symm⟩, rfl⟩
 
 /-- The retained cut-edge word has exactly the original source-word length. -/
-theorem length_eq {patch : Cut.Patch.CutPatch faces indices boundary} {original : List
-  (Sewing.SewnPrimitiveContacts.SourceEdge faceCount)}
+theorem length_eq {patch : CutPatch faces indices boundary} {original : List
+  (SourceEdge faceCount)}
     (word : CutSourceWord patch original) : word.edges.length = original.length := by
   have equal := congrArg List.length word.sources.sources_project
   rw [Map.length_map, Map.length_map, word.sources_eq] at equal
   exact equal.symm
 
 /-- The retained cut edges project to the exact original source-edge projections in order. -/
-theorem project {patch : Cut.Patch.CutPatch faces indices boundary} {original : List
-  (Sewing.SewnPrimitiveContacts.SourceEdge faceCount)}
+theorem project {patch : CutPatch faces indices boundary} {original : List
+  (SourceEdge faceCount)}
     (word : CutSourceWord patch original) :
     word.edges.map (Sewing.VertexSewing.OrientedEdge.map patch.vertexLabels) = original.map (fun source =>
       source.project faces) :=
@@ -256,10 +256,10 @@ open Purelib.Curves.Hyperelliptic.Branches in
 open Purelib.RootIsolation in
 open Purelib.Topology.Polygon in
 /-- An original retained mesh-edge route has distinct source triangle corners. -/
-private theorem sourceCorners_distinct {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+private theorem sourceCorners_distinct {genus : Nat} {curve : HyperellipticCurve genus}
     {branches : BranchIsolation.Data curve} {higher : 1 < curve.polynomial.natDegree}
-    {bank : Curves.Hyperelliptic.Branches.BranchCellBank curve branches higher} {frames :
-      RootIsolation.SquareRoot.Grid.RootFrames bank.grid}
+    {bank : BranchCellBank curve branches higher} {frames :
+      SquareRoot.Grid.RootFrames bank.grid}
     {vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges : SquareRoot.Grid.RootEdgeBank
       frames}
     {faces : PuncturedFaces bank} {mesh : LiftedMesh vertices edges faces}
@@ -267,12 +267,12 @@ private theorem sourceCorners_distinct {genus : Nat} {curve : Basic.Hyperellipti
     route.sourceEdge.first ≠ route.sourceEdge.last := by
   cases route with
   | forward location =>
-      change Meshes.PuncturedGrid.Face.Corners.FaceCorners.firstCorner location.kind ≠
-        Meshes.PuncturedGrid.Face.Corners.FaceCorners.lastCorner location.kind
+      change firstCorner location.kind ≠
+        lastCorner location.kind
       cases location.kind <;> decide
   | backward location =>
-      change Meshes.PuncturedGrid.Face.Corners.FaceCorners.lastCorner location.kind ≠
-        Meshes.PuncturedGrid.Face.Corners.FaceCorners.firstCorner location.kind
+      change lastCorner location.kind ≠
+        firstCorner location.kind
       cases location.kind <;> decide
 
 open Purelib in
@@ -283,18 +283,18 @@ open Purelib.Geometry.Rational in
 open Purelib.Polynomial in
 open Purelib.RootIsolation in
 /-- Every source edge assigned to the original prepared segment list has distinct corners. -/
-private theorem assignedCorners_distinct {genus : Nat} {curve : Basic.HyperellipticCurve genus}
+private theorem assignedCorners_distinct {genus : Nat} {curve : HyperellipticCurve genus}
     {branches : BranchIsolation.Data curve} {higher : 1 < curve.polynomial.natDegree}
-    {bank : Curves.Hyperelliptic.Branches.BranchCellBank curve branches higher} {frames :
-      RootIsolation.SquareRoot.Grid.RootFrames bank.grid}
+    {bank : BranchCellBank curve branches higher} {frames :
+      SquareRoot.Grid.RootFrames bank.grid}
     {vertices : SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges : SquareRoot.Grid.RootEdgeBank
       frames}
     {faces : PuncturedFaces bank} {mesh : LiftedMesh vertices edges faces} {ambient : Box} :
-    ∀ {start finish : Basic.Canonical} {path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish}
+    ∀ {start finish : Basic.Canonical} {path : Geometry.ClearPath curve.polynomial ambient start finish}
       {owner : Owner (curve.polynomial.eval start)}
       {prepared : PreparedPath path owner}
       {pieces : CoveredSegments prepared}
-      (assigned : Meshes.PuncturedGrid.PreparedFaceSegments.AssignedSegments mesh pieces),
+      (assigned : AssignedSegments mesh pieces),
       ∀ source ∈ Meshes.PuncturedGrid.Cut.TriangleComparison.AssignedSegments.sourceEdges assigned, source.first ≠
         source.last
   | _, _, _, _, _, _, .nil _ _, _, member => (List.not_mem_nil member).elim
@@ -303,21 +303,21 @@ private theorem assignedCorners_distinct {genus : Nat} {curve : Basic.Hyperellip
       · exact sourceCorners_distinct placement.location
       · exact assignedCorners_distinct tail source member
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : NewtonPreparation original} {target radius : Purelib.Data.Rat.Fraction.Rational}
+  {preparation : NewtonPreparation original} {target radius : Data.Rat.Fraction.Rational}
   {grid : NewtonGrid preparation target radius} {index :
-    Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
-  {annulus : Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces grid index} {lifted :
+    Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
+  {annulus : AnnularFaces grid index} {lifted :
     LiftedPuncturedGrid grid.punctured} {region :
-    Purelib.Curves.Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted}
+    Lifted annulus lifted}
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.List in
 /-- Every original annular outer-preparation source belongs to the retained cut source list and has distinct corners. -/
-theorem source_valid (prepared : Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation region) :
+theorem source_valid (prepared : OuterPreparation region) :
     ∀ source ∈ prepared.sources, source.source ∈ lifted.cutPolygon.patch.faceIndices ∧ source.first ≠ source.last := by
   rw [prepared.sources_eq]
   intro source member
@@ -326,25 +326,25 @@ theorem source_valid (prepared : Meshes.Newton.Annulus.PrimitiveComparison.Lifte
 
 open Purelib.Curves.Hyperelliptic in
 /-- Construct the retained cut-source word of the original prepared annular outer boundary. -/
-@[expose] def cutSources (prepared : Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation region) :
+@[expose] def cutSources (prepared : OuterPreparation region) :
   CutSourceWord lifted.cutPolygon.patch.cut prepared.sources :=
   CutSourceWord.build _ prepared.sources (source_valid prepared)
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Topology.Surface in
 /-- The retained cut-source word projects to the exact original annular outer boundary. -/
-theorem cutSources_project (prepared : Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation region) :
+theorem cutSources_project (prepared : OuterPreparation region) :
     (cutSources prepared).edges.map (Sewing.VertexSewing.OrientedEdge.map lifted.cutPolygon.patch.cut.vertexLabels) =
       region.outer :=
-  (cutSources prepared).project.trans (Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation.sources_project
+  (cutSources prepared).project.trans (OuterPreparation.sources_project
     prepared)
 
 open Purelib.Curves.Hyperelliptic in
 /-- The retained cut-source word has exactly the original annular outer-boundary length. -/
-theorem cutSources_length (prepared : Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation region) :
+theorem cutSources_length (prepared : OuterPreparation region) :
   (cutSources prepared).edges.length = region.outer.length := by
   rw [(cutSources prepared).length_eq]
-  have equal := congrArg List.length (Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation.sources_project
+  have equal := congrArg List.length (OuterPreparation.sources_project
     prepared)
   simpa only [Map.length_map] using equal
 

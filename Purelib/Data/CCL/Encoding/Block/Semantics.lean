@@ -39,9 +39,9 @@ open Purelib.Data.Gaussian
 open Purelib.Geometry.Projective
 /-- A regular decoder block sends a compatible retained sector tail to the exact gamma-scaled affine target. -/
 theorem regularBlock_act_equivalent {sector :
-  Data.ComplexContinuedFraction.Encoding.Sector}
+  Sector}
   (exponent : Nat)
-    (tail : Geometry.Projective.SectorBlock.Tail sector) (value target : Basic.Canonical)
+    (tail : SectorBlock.Tail sector) (value target : Basic.Canonical)
     (models : tail.ModelsValue value)
     (targetIdentity : Power.natPow Basic.Canonical.gamma exponent * value = target) :
     (Line.Matrix.act (Block.Matrix.regularBlock exponent sector)
@@ -50,7 +50,7 @@ theorem regularBlock_act_equivalent {sector :
   | omega =>
       rw [targetIdentity.symm, models]
       dsimp only [Line.Proj.Equivalent,
-        Geometry.Projective.SectorBlock.Tail.point, Line.Matrix.act,
+        SectorBlock.Tail.point, Line.Matrix.act,
         Block.Matrix.regularBlock, Line.Proj.omega,
         Line.Proj.affine]
       rw [Power.natPow_succ]
@@ -62,7 +62,7 @@ theorem regularBlock_act_equivalent {sector :
       rw [models] at compatible
       rw [targetIdentity.symm]
       dsimp only [Line.Proj.Equivalent,
-        Geometry.Projective.SectorBlock.Tail.point, Line.Matrix.act,
+        SectorBlock.Tail.point, Line.Matrix.act,
         Block.Matrix.regularBlock, Line.Proj.affine]
       simp only [Basic.mul_one,
         Basic.add_zero]
@@ -84,9 +84,9 @@ theorem regularBlock_act_equivalent {sector :
 
 /-- An initial-low decoder block sends a compatible tail to the target whose gamma-scaled value it models. -/
 theorem lowBlock_act_equivalent {sector :
-  Data.ComplexContinuedFraction.Encoding.Sector}
+  Sector}
   (exponent : Nat)
-    (tail : Geometry.Projective.SectorBlock.Tail sector) (value target : Basic.Canonical)
+    (tail : SectorBlock.Tail sector) (value target : Basic.Canonical)
     (models : tail.ModelsValue value)
     (sourceIdentity : value = Power.natPow Basic.Canonical.gamma exponent * target) :
     (Line.Matrix.act (Block.Matrix.lowBlock exponent sector)
@@ -95,7 +95,7 @@ theorem lowBlock_act_equivalent {sector :
   | omega =>
       rw [models] at sourceIdentity
       dsimp only [Line.Proj.Equivalent,
-        Geometry.Projective.SectorBlock.Tail.point, Line.Matrix.act,
+        SectorBlock.Tail.point, Line.Matrix.act,
         Block.Matrix.lowBlock, Line.Proj.omega,
         Line.Proj.affine]
       rw [sourceIdentity, Power.natPow_succ]
@@ -106,7 +106,7 @@ theorem lowBlock_act_equivalent {sector :
   | affine tail storedValue compatible =>
       rw [models] at compatible
       dsimp only [Line.Proj.Equivalent,
-        Geometry.Projective.SectorBlock.Tail.point, Line.Matrix.act,
+        SectorBlock.Tail.point, Line.Matrix.act,
         Block.Matrix.lowBlock, Line.Proj.affine]
       simp only [Basic.mul_one,
         Basic.add_zero]
@@ -154,7 +154,7 @@ open Purelib.Data.Gaussian
 open Purelib.Geometry.Projective
 /-- The regular block homography inverts a retained nonzero gamma-scaled residual decomposition. -/
 private theorem regularBlock_homographic_inverse
-    (exponent : Nat) (sector : Data.ComplexContinuedFraction.Encoding.Sector) (value residual : Basic.Canonical)
+    (exponent : Nat) (sector : Sector) (value residual : Basic.Canonical)
     (residualNonzero : residual ≠ 0)
     (decomposition :
       value = Power.natPow Basic.Canonical.gamma exponent * (sector.rep + residual)) :
@@ -196,7 +196,7 @@ private theorem regularBlock_homographic_inverse
 
 /-- The initial-low block homography inverts the retained nonzero residual of the gamma-scaled source. -/
 private theorem lowBlock_homographic_inverse
-    (exponent : Nat) (sector : Data.ComplexContinuedFraction.Encoding.Sector) (value residual : Basic.Canonical)
+    (exponent : Nat) (sector : Sector) (value residual : Basic.Canonical)
     (residualNonzero : residual ≠ 0)
     (decomposition :
       Power.natPow Basic.Canonical.gamma exponent * value = sector.rep + residual) :
@@ -284,7 +284,7 @@ private theorem lowBlock_homographic_inverse
 The residual is nonzero and uses the exact parser kind, normalization exponent and sector representative. The formula
 preserves the distinct regular and initial-low normalization branches. -/
 theorem block_homographic_inverse
-    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (sector : Data.ComplexContinuedFraction.Encoding.Sector)
+    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (sector : Sector)
     (value : Basic.Canonical)
     (residualNonzero :
       Parser.Semantics.Basic.normalizedValue kind exponent value - sector.rep ≠ 0) :
@@ -341,7 +341,7 @@ theorem block_homographic_inverse
 
 /-- The homographic denominator at the retained inverse residual is nonzero for every parser block kind. -/
 theorem block_inverse_denominator_ne
-    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (sector : Data.ComplexContinuedFraction.Encoding.Sector)
+    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (sector : Sector)
     (value : Basic.Canonical)
     (residualNonzero :
       Parser.Semantics.Basic.normalizedValue kind exponent value - sector.rep ≠ 0) :
@@ -372,7 +372,7 @@ theorem block_inverse_denominator_ne
 Both retained block kinds have a denominator that vanishes at a zero tail, so the supplied nonzero denominator excludes
 that input. -/
 theorem tail_ne_of_block_denominator
-    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (sector : Data.ComplexContinuedFraction.Encoding.Sector)
+    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (sector : Sector)
     (tail : Basic.Canonical)
     (denominatorNonzero :
       Homography.Basic.denominator (Block.Matrix.blockMatrix kind exponent sector) tail ≠ 0) :
@@ -387,7 +387,7 @@ theorem tail_ne_of_block_denominator
 
 /-- Normalizing the block homography value recovers the sector representative plus the reciprocal gamma-scaled tail. -/
 theorem normalizedValue_block_homographic
-    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (sector : Data.ComplexContinuedFraction.Encoding.Sector)
+    (kind : Parser.Syntax.BlockKind) (exponent : Nat) (sector : Sector)
     (tail : Basic.Canonical)
     (denominatorNonzero :
       Homography.Basic.denominator (Block.Matrix.blockMatrix kind exponent sector) tail ≠ 0) :

@@ -54,27 +54,27 @@ open Purelib.Data.Gaussian
 open Purelib.Integration.Path
 /-- Skew area is additive in its first argument. -/
 theorem area_add_left (first second last : Gaussian) :
-    BoundaryRibbon.area (first + second) last = BoundaryRibbon.area first last + BoundaryRibbon.area second last := by
-  apply Basic.ext <;> simp only [BoundaryRibbon.area, Data.Gaussian.Basic.conj, Basic.add_re, Basic.add_im,
+    area (first + second) last = area first last + area second last := by
+  apply Basic.ext <;> simp only [area, Basic.conj, Basic.add_re, Basic.add_im,
     Basic.sub_re,
     Basic.sub_im, Basic.mul_re, Basic.mul_im] <;> ring1
 
 /-- Skew area is additive in its second argument. -/
 theorem area_add_right (first second last : Gaussian) :
-    BoundaryRibbon.area first (second + last) = BoundaryRibbon.area first second + BoundaryRibbon.area first last := by
-  apply Basic.ext <;> simp only [BoundaryRibbon.area, Data.Gaussian.Basic.conj, Basic.add_re, Basic.add_im,
+    area first (second + last) = area first second + area first last := by
+  apply Basic.ext <;> simp only [area, Basic.conj, Basic.add_re, Basic.add_im,
     Basic.sub_re,
     Basic.sub_im, Basic.mul_re, Basic.mul_im] <;> ring1
 
 /-- Skew area with zero as its first argument vanishes. -/
-@[simp] theorem area_zero_left (value : Gaussian) : BoundaryRibbon.area 0 value = 0 := by
-  apply Basic.ext <;> simp only [BoundaryRibbon.area, Data.Gaussian.Basic.conj, Basic.zero_re, Basic.zero_im,
+@[simp] theorem area_zero_left (value : Gaussian) : area 0 value = 0 := by
+  apply Basic.ext <;> simp only [area, Basic.conj, Basic.zero_re, Basic.zero_im,
     Basic.sub_re,
     Basic.sub_im, Basic.mul_re, Basic.mul_im] <;> ring1
 
 /-- Skew area with zero as its second argument vanishes. -/
-@[simp] theorem area_zero_right (value : Gaussian) : BoundaryRibbon.area value 0 = 0 := by
-  apply Basic.ext <;> simp only [BoundaryRibbon.area, Data.Gaussian.Basic.conj, Basic.zero_re, Basic.zero_im,
+@[simp] theorem area_zero_right (value : Gaussian) : area value 0 = 0 := by
+  apply Basic.ext <;> simp only [area, Basic.conj, Basic.zero_re, Basic.zero_im,
     Basic.sub_re,
     Basic.sub_im, Basic.mul_re, Basic.mul_im] <;> ring1
 
@@ -82,7 +82,7 @@ end
 
 open Purelib.Integration.Path in
 /-- The skew area of a value with itself vanishes. -/
-@[simp] theorem area_self (value : Gaussian) : BoundaryRibbon.area value value = 0 := _root_.sub_self _
+@[simp] theorem area_self (value : Gaussian) : area value value = 0 := _root_.sub_self _
 
 open Purelib.Data.Gaussian in
 open Purelib.Integration.Path in
@@ -91,15 +91,15 @@ open Purelib.Integration.Path in
 Both original increment lists retain their order. Structural recursion adds
 the head to the exact unchanged tail sum. -/
 theorem sum_append (first last : List Gaussian) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (first ++ last) = Data.Gaussian.Norm.Sum.Basic.gaussianSum first +
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum last := by
+    Norm.Sum.Basic.gaussianSum (first ++ last) = Norm.Sum.Basic.gaussianSum first +
+      Norm.Sum.Basic.gaussianSum last := by
   induction first with
   | nil =>
       change _ = 0 + _
       exact (Basic.zero_add _).symm
   | cons value first ih =>
-      change value + Data.Gaussian.Norm.Sum.Basic.gaussianSum (first ++ last) =
-        (value + Data.Gaussian.Norm.Sum.Basic.gaussianSum first) + Data.Gaussian.Norm.Sum.Basic.gaussianSum last
+      change value + Norm.Sum.Basic.gaussianSum (first ++ last) =
+        (value + Norm.Sum.Basic.gaussianSum first) + Norm.Sum.Basic.gaussianSum last
       rewrite [ih]
       exact (Basic.add_assoc _ _ _).symm
 
@@ -108,7 +108,7 @@ open Purelib.Integration.Path
 /-- Sum consecutive skew areas while accumulating the original ordered increments from a retained start. -/
 @[expose] def traceArea (start : Gaussian) : List Gaussian → Gaussian
   | [] => 0
-  | value :: remaining => BoundaryRibbon.area start (start + value) + traceArea
+  | value :: remaining => area start (start + value) + traceArea
     (start + value) remaining
 
 /-- The area traced by the original ordered increments starting at zero. -/
@@ -124,33 +124,33 @@ open Purelib.Integration.Path
 The shift contributes its skew area with the exact total displacement.
 Every original excursion remains in the recursively accumulated path area. -/
 theorem traceArea_translate (start shift : Gaussian) (increments : List Gaussian) :
-    traceArea (start + shift) increments = traceArea start increments + BoundaryRibbon.area
-      shift (Data.Gaussian.Norm.Sum.Basic.gaussianSum increments) := by
+    traceArea (start + shift) increments = traceArea start increments + area
+      shift (Norm.Sum.Basic.gaussianSum increments) := by
   induction increments generalizing start with
   | nil =>
-      change 0 = 0 + BoundaryRibbon.area shift 0
+      change 0 = 0 + area shift 0
       rewrite [area_zero_right]
       exact (Basic.add_zero _).symm
   | cons value remaining ih =>
-      simp only [traceArea, Data.Gaussian.Norm.Sum.Basic.gaussianSum]
+      simp only [traceArea, Norm.Sum.Basic.gaussianSum]
       rw [show start + shift + value = (start + value) + shift by ring1, ih]
       simp only [area_add_left, area_add_right, area_self]
-      have skew : BoundaryRibbon.area shift start = -BoundaryRibbon.area start shift := by
-        unfold BoundaryRibbon.area
+      have skew : area shift start = -area start shift := by
+        unfold area
         ring1
       rw [skew]
       ring1
 
 /-- The trace area is the zero-start path area plus the starting point's skew area with total displacement. -/
 theorem traceArea_eq (start : Gaussian) (increments : List Gaussian) :
-    traceArea start increments = pathArea increments + BoundaryRibbon.area start
-      (Data.Gaussian.Norm.Sum.Basic.gaussianSum increments) := by
+    traceArea start increments = pathArea increments + area start
+      (Norm.Sum.Basic.gaussianSum increments) := by
   simpa only [Basic.zero_add, pathArea] using traceArea_translate 0 start increments
 
 /-- Prepending an increment adds its skew area with the remaining total to the tail path area. -/
 theorem pathArea_cons (value : Gaussian) (remaining : List Gaussian) :
-    pathArea (value :: remaining) = pathArea remaining + BoundaryRibbon.area value
-      (Data.Gaussian.Norm.Sum.Basic.gaussianSum remaining) := by
+    pathArea (value :: remaining) = pathArea remaining + area value
+      (Norm.Sum.Basic.gaussianSum remaining) := by
   simp only [pathArea, traceArea, area_zero_left, Basic.zero_add]
   exact traceArea_eq value remaining
 
@@ -160,7 +160,7 @@ The second list starts at the first list's exact terminal displacement.
 The equality retains both ordered tails and their original intermediate excursions. -/
 theorem traceArea_append (start : Gaussian) (first last : List Gaussian) :
     traceArea start (first ++ last) = traceArea start first + traceArea (start
-      + Data.Gaussian.Norm.Sum.Basic.gaussianSum first) last := by
+      + Norm.Sum.Basic.gaussianSum first) last := by
   induction first generalizing start with
   | nil =>
       change traceArea start last =
@@ -169,22 +169,22 @@ theorem traceArea_append (start : Gaussian) (first last : List Gaussian) :
       exact (Basic.zero_add _).symm
   | cons value first ih =>
       rewrite [List.cons_append, traceArea, traceArea,
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum, ih, Basic.add_assoc, Basic.add_assoc]
+        Norm.Sum.Basic.gaussianSum, ih, Basic.add_assoc, Basic.add_assoc]
       exact Eq.refl _
 
 /-- Concatenating increment paths adds their areas and the skew area of their two exact totals. -/
 theorem pathArea_append (first last : List Gaussian) :
     pathArea (first ++ last) = pathArea first + pathArea last +
-      BoundaryRibbon.area (Data.Gaussian.Norm.Sum.Basic.gaussianSum first) (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      area (Norm.Sum.Basic.gaussianSum first) (Norm.Sum.Basic.gaussianSum
         last) := by
   rw [pathArea, traceArea_append, Basic.zero_add, traceArea_eq
-    (Data.Gaussian.Norm.Sum.Basic.gaussianSum first) last]
+    (Norm.Sum.Basic.gaussianSum first) last]
   exact (_root_.add_assoc _ _ _).symm
 
 /-- Retain each increment's skew area with the sum of all later original increments. -/
 private def pairTerms : List Gaussian → List Gaussian
   | [] => []
-  | value :: remaining => BoundaryRibbon.area value (Data.Gaussian.Norm.Sum.Basic.gaussianSum remaining) ::
+  | value :: remaining => area value (Norm.Sum.Basic.gaussianSum remaining) ::
     pairTerms remaining
 
 end
@@ -200,12 +200,12 @@ private theorem pairTerms_length (values : List Gaussian) : (pairTerms values).l
 open Purelib.Data.Gaussian in
 open Purelib.Integration.Path in
 /-- Summing the retained pair terms gives the exact zero-start path area. -/
-private theorem pairTerms_sum (values : List Gaussian) : Data.Gaussian.Norm.Sum.Basic.gaussianSum
+private theorem pairTerms_sum (values : List Gaussian) : Norm.Sum.Basic.gaussianSum
   (pairTerms values) = pathArea values := by
   induction values with
   | nil => rfl
   | cons value values ih =>
-    rw [pairTerms, Data.Gaussian.Norm.Sum.Basic.gaussianSum, ih, pathArea_cons,
+    rw [pairTerms, Norm.Sum.Basic.gaussianSum, ih, pathArea_cons,
       Basic.add_comm]
 
 section
@@ -215,9 +215,9 @@ open Purelib.Integration.Path
 /-- A common nonnegative squared-norm bound and a length bound control the total increment norm by count squared times
 that bound. -/
 theorem sum_bound_of_length {values : List Gaussian} {bound : Coordinate}
-    (nonnegative : 0 ≤ bound) (bounded : ∀ value ∈ values, Data.Gaussian.Norm.Basic.normSq value ≤ bound)
+    (nonnegative : 0 ≤ bound) (bounded : ∀ value ∈ values, Norm.Basic.normSq value ≤ bound)
     {count : Nat} (countLe : values.length ≤ count) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum values) ≤ (count :
+    Norm.Basic.normSq (Norm.Sum.Basic.gaussianSum values) ≤ (count :
       Coordinate) ^ 2 * bound
       := by
   have le : (values.length : Coordinate) ≤ count := Fraction.Cast.Order.natCast_le_direct countLe
@@ -241,9 +241,9 @@ theorem sum_bound_of_length {values : List Gaussian} {bound : Coordinate}
 The retained length bound controls each tail total. The common nonnegative
 increment bound then pays its skew product with the displayed head increment. -/
 private theorem pairTerms_bounded {values : List Gaussian} {bound : Coordinate}
-    (nonnegative : 0 ≤ bound) (bounded : ∀ value ∈ values, Data.Gaussian.Norm.Basic.normSq value ≤ bound)
+    (nonnegative : 0 ≤ bound) (bounded : ∀ value ∈ values, Norm.Basic.normSq value ≤ bound)
     {count : Nat} (countLe : values.length ≤ count) :
-    ∀ value ∈ pairTerms values, Data.Gaussian.Norm.Basic.normSq value ≤ 4 * (count :
+    ∀ value ∈ pairTerms values, Norm.Basic.normSq value ≤ 4 * (count :
       Coordinate)
       ^ 2 * bound ^ 2 := by
   induction values with
@@ -253,18 +253,18 @@ private theorem pairTerms_bounded {values : List Gaussian} {bound : Coordinate}
       have tailCount : values.length ≤ count := (Nat.le_succ _).trans countLe
       intro value member
       rcases Membership.mem_cons.mp member with rfl | member
-      · have product : Data.Gaussian.Norm.Basic.normSq first * Data.Gaussian.Norm.Basic.normSq
-          (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      · have product : Norm.Basic.normSq first * Norm.Basic.normSq
+          (Norm.Sum.Basic.gaussianSum
           values) ≤ bound * ((count : Coordinate) ^ 2 * bound) :=
           Fraction.Order.Arithmetic.mul_le_mul_direct
           (bounded first (List.mem_cons_self ..)) (sum_bound_of_length nonnegative tailBound tailCount)
           (Norm.Basic.normSq_nonneg _) nonnegative
         calc
-          _ ≤ 4 * Data.Gaussian.Norm.Basic.normSq first * Data.Gaussian.Norm.Basic.normSq
-            (Data.Gaussian.Norm.Sum.Basic.gaussianSum values)
-            := BoundaryRibbon.area_bound first (Data.Gaussian.Norm.Sum.Basic.gaussianSum values)
-          _ = 4 * (Data.Gaussian.Norm.Basic.normSq first * Data.Gaussian.Norm.Basic.normSq
-            (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+          _ ≤ 4 * Norm.Basic.normSq first * Norm.Basic.normSq
+            (Norm.Sum.Basic.gaussianSum values)
+            := area_bound first (Norm.Sum.Basic.gaussianSum values)
+          _ = 4 * (Norm.Basic.normSq first * Norm.Basic.normSq
+            (Norm.Sum.Basic.gaussianSum
             values)) := by
             ring1
           _ ≤ 4 * (bound * ((count : Coordinate) ^ 2 * bound)) :=
@@ -282,8 +282,8 @@ open Purelib.Integration.Path
 The estimate depends on the exact original list length and the common nonnegative squared-norm bound. It applies without
 an endpoint closure assumption. -/
 theorem pathArea_bound (values : List Gaussian) {bound : Coordinate}
-    (nonnegative : 0 ≤ bound) (bounded : ∀ value ∈ values, Data.Gaussian.Norm.Basic.normSq value ≤ bound) :
-    Data.Gaussian.Norm.Basic.normSq (pathArea values) ≤ 4 * ((values.length : Coordinate) ^
+    (nonnegative : 0 ≤ bound) (bounded : ∀ value ∈ values, Norm.Basic.normSq value ≤ bound) :
+    Norm.Basic.normSq (pathArea values) ≤ 4 * ((values.length : Coordinate) ^
       2 *
       bound) ^ 2 := by
   rw [← pairTerms_sum]
@@ -297,27 +297,27 @@ theorem pathArea_bound (values : List Gaussian) {bound : Coordinate}
 Each block contributes its exact total in the original block order.
 Structural concatenation preserves every original increment, including repeats. -/
 theorem sum_flatten (blocks : List (List Gaussian)) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum blocks.flatten = Data.Gaussian.Norm.Sum.Basic.gaussianSum (blocks.map
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum) := by
+    Norm.Sum.Basic.gaussianSum blocks.flatten = Norm.Sum.Basic.gaussianSum (blocks.map
+      Norm.Sum.Basic.gaussianSum) := by
   induction blocks with
   | nil => rfl
   | cons block blocks ih =>
-      change Data.Gaussian.Norm.Sum.Basic.gaussianSum (block ++ blocks.flatten) =
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum block +
-          Data.Gaussian.Norm.Sum.Basic.gaussianSum (blocks.map Data.Gaussian.Norm.Sum.Basic.gaussianSum)
+      change Norm.Sum.Basic.gaussianSum (block ++ blocks.flatten) =
+        Norm.Sum.Basic.gaussianSum block +
+          Norm.Sum.Basic.gaussianSum (blocks.map Norm.Sum.Basic.gaussianSum)
       rewrite [sum_append, ih]
       exact Eq.refl _
 
 /-- Flattened path area splits into the sum of internal block areas and the path area of their exact totals. -/
 theorem pathArea_flatten (blocks : List (List Gaussian)) :
-    pathArea blocks.flatten = Data.Gaussian.Norm.Sum.Basic.gaussianSum (blocks.map
+    pathArea blocks.flatten = Norm.Sum.Basic.gaussianSum (blocks.map
       pathArea) +
-      pathArea (blocks.map Data.Gaussian.Norm.Sum.Basic.gaussianSum) := by
+      pathArea (blocks.map Norm.Sum.Basic.gaussianSum) := by
   induction blocks with
   | nil => change (0 : Gaussian) = 0 + 0; ring1
   | cons block blocks ih =>
       simp only [List.flatten_cons, List.map_cons, pathArea_append,
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum,
+        Norm.Sum.Basic.gaussianSum,
         pathArea_cons, ih, sum_flatten]
       ring1
 
@@ -332,7 +332,7 @@ Both caches retain defining equalities to the original list operations, allowing
 -/
 structure Summary (increments : List Gaussian) where
   /-- The retained exact total displacement. -/ total : Gaussian
-  /-- The total cache equals the original increment sum. -/ total_eq : total = Data.Gaussian.Norm.Sum.Basic.gaussianSum
+  /-- The total cache equals the original increment sum. -/ total_eq : total = Norm.Sum.Basic.gaussianSum
     increments
   /-- The retained zero-start path area. -/ area : Gaussian
   /-- The area cache equals the original increment list's path area. -/ area_eq : area = pathArea
@@ -345,14 +345,14 @@ open Purelib.Data.Gaussian
 open Purelib.Integration.Path
 /-- Negating every retained increment negates its exact sum. -/
 theorem negative_sum {α : Type} (value : α → Gaussian) (entries : List α) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map (fun entry => -value entry)) =
-      -Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    Norm.Sum.Basic.gaussianSum (entries.map (fun entry => -value entry)) =
+      -Norm.Sum.Basic.gaussianSum
       (entries.map value) := by
   induction entries with
   | nil => change (0 : Gaussian) = -0; ring1
   | cons head tail ih =>
-      change -value head + Data.Gaussian.Norm.Sum.Basic.gaussianSum (tail.map _) = -(value head +
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      change -value head + Norm.Sum.Basic.gaussianSum (tail.map _) = -(value head +
+        Norm.Sum.Basic.gaussianSum
         (tail.map value))
       rw [ih]
       ring1
@@ -366,7 +366,7 @@ theorem negative_area {α : Type} (value : α → Gaussian) (entries : List α) 
       rw [List.map_cons, List.map_cons, pathArea_cons, pathArea_cons, ih,
         negative_sum]
       congr 1
-      apply Basic.ext <;> simp only [BoundaryRibbon.area, Data.Gaussian.Basic.conj, Basic.neg_re, Basic.neg_im,
+      apply Basic.ext <;> simp only [area, Basic.conj, Basic.neg_re, Basic.neg_im,
         Basic.mul_re,
         Basic.mul_im, Basic.sub_re, Basic.sub_im] <;> ring1
 
@@ -379,42 +379,42 @@ open Purelib.Integration.Path
 /-- Compute the total and path area together in one recursion over the original increments.
 
 Each step reuses the tail summary's cached total and area when constructing its own exact certificates. -/
-@[expose] def build : (increments : List IncrementArea.Gaussian) → IncrementArea.Summary increments
+@[expose] def build : (increments : List Gaussian) → Summary increments
   | [] => ⟨0, rfl, 0, rfl⟩
   | value :: remaining =>
       let tail := build remaining
       { total := value + tail.total
         total_eq := congrArg (value + ·) tail.total_eq
         area := tail.area + BoundaryRibbon.area value tail.total
-        area_eq := by rw [tail.area_eq, tail.total_eq, IncrementArea.pathArea_cons] }
+        area_eq := by rw [tail.area_eq, tail.total_eq, pathArea_cons] }
 
 /-- Combine two retained summaries using their cached totals and areas and the exact cross-area term. -/
-@[expose] def append {first last : List IncrementArea.Gaussian} (left : IncrementArea.Summary first) (right :
-  IncrementArea.Summary last) : IncrementArea.Summary (first ++ last) where
+@[expose] def append {first last : List Gaussian} (left : Summary first) (right :
+  Summary last) : Summary (first ++ last) where
   total := left.total + right.total
-  total_eq := by rw [left.total_eq, right.total_eq, IncrementArea.sum_append]
+  total_eq := by rw [left.total_eq, right.total_eq, sum_append]
   area := left.area + right.area + BoundaryRibbon.area left.total right.total
-  area_eq := by rw [left.area_eq, right.area_eq, left.total_eq, right.total_eq, IncrementArea.pathArea_append]
+  area_eq := by rw [left.area_eq, right.area_eq, left.total_eq, right.total_eq, pathArea_append]
 
 end
 
 open Purelib.Data.Gaussian in
 open Purelib.Integration.Path in
 /-- Construct the negated-increment summary by negating its cached total and retaining its cached area. -/
-@[expose] def negate {increments : List IncrementArea.Gaussian} (summary : IncrementArea.Summary increments) :
-    IncrementArea.Summary (increments.map (fun value => -value)) where
+@[expose] def negate {increments : List Gaussian} (summary : Summary increments) :
+    Summary (increments.map (fun value => -value)) where
   total := -summary.total
   total_eq := by
-    have negative := IncrementArea.negative_sum (fun value : IncrementArea.Gaussian => value) increments
-    change Data.Gaussian.Norm.Sum.Basic.gaussianSum (increments.map (fun value => -value)) =
-      -Data.Gaussian.Norm.Sum.Basic.gaussianSum (increments.map id) at negative
+    have negative := negative_sum (fun value : Gaussian => value) increments
+    change Norm.Sum.Basic.gaussianSum (increments.map (fun value => -value)) =
+      -Norm.Sum.Basic.gaussianSum (increments.map id) at negative
     rw [Map.map_id] at negative
-    exact (congrArg (fun value : IncrementArea.Gaussian => -value) summary.total_eq).trans negative.symm
+    exact (congrArg (fun value : Gaussian => -value) summary.total_eq).trans negative.symm
   area := summary.area
   area_eq := by
-    have negative := IncrementArea.negative_area (fun value : IncrementArea.Gaussian => value) increments
-    change IncrementArea.pathArea (increments.map (fun value => -value)) =
-      IncrementArea.pathArea (increments.map id) at negative
+    have negative := negative_area (fun value : Gaussian => value) increments
+    change pathArea (increments.map (fun value => -value)) =
+      pathArea (increments.map id) at negative
     rw [Map.map_id] at negative
     exact summary.area_eq.trans negative.symm
 

@@ -10,7 +10,8 @@ import Purelib.Approximation.Rational.Geometric.Search
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Rat.Fraction
 import Purelib.Computation.Query.Basic
-public import Purelib.Computation.Query.Computation
+import Purelib.Computation.Query.Computation
+public import Purelib.Computation.Query.Program
 
 import Purelib.Integration.CertifiedProgram
 
@@ -58,6 +59,8 @@ section
 open Purelib.Computation
 /-- An ordered finite trace of stage-index queries and cached-model replies. -/
 abbrev Trace := Query.Basic.Trace Nat CachedModel
+/-- An inspectable query construction whose replies are the original retained integration models. -/
+abbrev QueryProgram (Value : Type) := Computation.Query.Program Nat CachedModel Value
 /-- A finite query computation whose replies are retained integration models. -/
 abbrev QueryComputation (Value : Type) := Computation.Query.Protocol Nat CachedModel Value
 
@@ -219,9 +222,13 @@ theorem validate_error_violated {control : Control} {index : Nat} {reply : Cache
 end
 
 open Purelib.Computation in
+/-- Construct one exact indexed model request and validate its same retained reply. -/
+@[expose] def readProgram (control : Control) (index : Nat) : QueryProgram (Except InvalidReply Reading) :=
+  (Computation.Query.Program.query index).map (validate control index)
+
 /-- Query one stage and validate its retained cached-model reply. -/
 @[expose] def read (control : Control) (index : Nat) : QueryComputation (Except InvalidReply Reading) :=
-  (Computation.Query.Protocol.query index).map (validate control index)
+  (readProgram control index).protocol
 
 open Purelib.Data.Gaussian in
 /-- A cached program's own stage satisfies its retained numerical control bounds. -/
@@ -244,9 +251,17 @@ theorem read_trace (control : Control) (index : Nat) (oracle : Nat → CachedMod
     ((read control index).run oracle).trace = [⟨index, oracle index⟩] :=
   Computation.Query.Protocol.map_run_trace _ _ _
 
+/-- Construct the exact model request selected by the accuracy request and retained control. -/
+@[expose] def requestReadingProgram (control : Control) (request : Request) :
+    QueryProgram (Except InvalidReply Reading) := readProgram control (selectedIndex control request)
+
 /-- Read the first stage selected by the accuracy request and control. -/
 @[expose] def requestReading (control : Control) (request : Request) : QueryComputation (Except InvalidReply Reading) :=
-  read control (selectedIndex control request)
+  (requestReadingProgram control request).protocol
+
+/-- Selected-stage execution retains the original index, checked reading and complete single-query log. -/
+theorem requestReading_run (control : Control) (request : Request) (oracle : Nat → CachedModel) :
+    (requestReading control request).run oracle = (read control (selectedIndex control request)).run oracle := rfl
 
 open Purelib.Approximation.Gaussian in
 /-- Refine the program's Gaussian name from the request's current stage.

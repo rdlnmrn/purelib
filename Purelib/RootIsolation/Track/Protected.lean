@@ -18,6 +18,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Geometry.Rational.Box.Refinement
 import Purelib.Polynomial.Dense.Basic
 
+open Purelib.Polynomial.Clearance.Box
+
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 open Purelib.RootIsolation.State.WindingOne.Basic (WindingOneState)
 open Purelib.RootIsolation.Track.Basic (WindingOneTrack)
@@ -58,9 +60,9 @@ def protectedRefinement
     (track : WindingOneTrack p ambient)
     (current : WindingOneState p ambient) : WindingOneState p ambient :=
   track.refine current
-    (Clearance.Box.ProtectedRadius.protectedBoundaryRadius p current.box
+    (ProtectedRadius.protectedBoundaryRadius p current.box
       current.clearance)
-    (Clearance.Box.ProtectedRadius.protectedBoundaryRadius_pos p
+    (ProtectedRadius.protectedBoundaryRadius_pos p
       current.clearance current.proper)
 
 /-- The protected-boundary refinement stays within its original input box. -/
@@ -70,9 +72,9 @@ theorem protectedRefinement_refines
     (current : WindingOneState p ambient) :
     (protectedRefinement track current).box.Refines current.box := by
   exact track.nested current
-    (Clearance.Box.ProtectedRadius.protectedBoundaryRadius p current.box
+    (ProtectedRadius.protectedBoundaryRadius p current.box
       current.clearance)
-    (Clearance.Box.ProtectedRadius.protectedBoundaryRadius_pos p
+    (ProtectedRadius.protectedBoundaryRadius_pos p
       current.clearance current.proper)
 
 /-- The protected refinement is uniformly away from all four sides of its
@@ -83,17 +85,17 @@ theorem protectedRefinement_margin
     (track : WindingOneTrack p ambient)
     (current : WindingOneState p ambient) :
     let rho :=
-      Clearance.Box.ProtectedRadius.protectedBoundaryRadius p current.box
+      ProtectedRadius.protectedBoundaryRadius p current.box
         current.clearance
     current.box.xLower + 4 * rho < (protectedRefinement track current).box.xLower ∧
       (protectedRefinement track current).box.xUpper < current.box.xUpper - 4 * rho ∧
       current.box.yLower + 4 * rho < (protectedRefinement track current).box.yLower ∧
       (protectedRefinement track current).box.yUpper < current.box.yUpper - 4 * rho := by
   let rho :=
-    Clearance.Box.ProtectedRadius.protectedBoundaryRadius p current.box
+    ProtectedRadius.protectedBoundaryRadius p current.box
       current.clearance
   let positive :=
-    Clearance.Box.ProtectedRadius.protectedBoundaryRadius_pos p
+    ProtectedRadius.protectedBoundaryRadius_pos p
       current.clearance current.proper
   let refined := protectedRefinement track current
   have diagonal : refined.box.diagonalSq ≤ rho ^ 2 := by

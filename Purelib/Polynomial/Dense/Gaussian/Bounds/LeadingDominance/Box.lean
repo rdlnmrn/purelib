@@ -19,6 +19,8 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Components
+
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 
 open Purelib.Data
@@ -46,66 +48,66 @@ namespace Purelib.Polynomial.Dense.Gaussian.Bounds.LeadingDominance.Box
 theorem largeSquare_bottom_dominance
     {p : CoefficientPolynomial} (degreePositive : 0 < p.natDegree)
     {t : Fraction.Rational}
-    (lower : -Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ≤ t)
-    (upper : t ≤ Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p) :
-    Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval
-        (Gaussian.Components.Basic.point t (-Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p))) <
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval
-        (Gaussian.Components.Basic.point t (-Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p))) := open
+    (lower : -RootRadius.denseLargeSquareRadius p ≤ t)
+    (upper : t ≤ RootRadius.denseLargeSquareRadius p) :
+    Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval
+        (Basic.point t (-RootRadius.denseLargeSquareRadius p))) <
+      Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval
+        (Basic.point t (-RootRadius.denseLargeSquareRadius p))) := open
           Purelib in by
   have bounds := Gaussian.Norm.Bounds.horizontal_symmetric_norm_bounds
-    (Data.Rat.Bounds.Square.symmetric_coordinate_sq_bound lower upper)
-    (show (-Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p) ^ 2 =
-        Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ^ 2 by ring1)
-  exact Dense.Gaussian.Bounds.LeadingDominance.largeSquare_radial_dominance degreePositive bounds.1 bounds.2
+    (Bounds.Square.symmetric_coordinate_sq_bound lower upper)
+    (show (-RootRadius.denseLargeSquareRadius p) ^ 2 =
+        RootRadius.denseLargeSquareRadius p ^ 2 by ring1)
+  exact largeSquare_radial_dominance degreePositive bounds.1 bounds.2
 
 /-- The leading monomial strictly dominates the lower terms in quadrance along the computed large square's top edge. -/
 theorem largeSquare_top_dominance
     {p : CoefficientPolynomial} (degreePositive : 0 < p.natDegree)
     {t : Fraction.Rational}
-    (lower : -Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ≤ t)
-    (upper : t ≤ Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p) :
-    Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval
-        (Gaussian.Components.Basic.point t (Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p))) <
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval
-        (Gaussian.Components.Basic.point t (Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p))) := open Purelib
+    (lower : -RootRadius.denseLargeSquareRadius p ≤ t)
+    (upper : t ≤ RootRadius.denseLargeSquareRadius p) :
+    Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval
+        (Basic.point t (RootRadius.denseLargeSquareRadius p))) <
+      Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval
+        (Basic.point t (RootRadius.denseLargeSquareRadius p))) := open Purelib
           in by
   have bounds := Gaussian.Norm.Bounds.horizontal_symmetric_norm_bounds
-    (Data.Rat.Bounds.Square.symmetric_coordinate_sq_bound lower upper) rfl
-  exact Dense.Gaussian.Bounds.LeadingDominance.largeSquare_radial_dominance degreePositive bounds.1 bounds.2
+    (Bounds.Square.symmetric_coordinate_sq_bound lower upper) rfl
+  exact largeSquare_radial_dominance degreePositive bounds.1 bounds.2
 
 /-- The leading monomial strictly dominates the lower terms in quadrance along the computed large square's right edge.
 -/
 theorem largeSquare_right_dominance
     {p : CoefficientPolynomial} (degreePositive : 0 < p.natDegree)
     {t : Fraction.Rational}
-    (lower : -Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ≤ t)
-    (upper : t ≤ Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p) :
-    Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval
-        (Gaussian.Components.Basic.point (Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p) t)) <
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval
-        (Gaussian.Components.Basic.point (Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p) t)) := open Purelib
+    (lower : -RootRadius.denseLargeSquareRadius p ≤ t)
+    (upper : t ≤ RootRadius.denseLargeSquareRadius p) :
+    Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval
+        (Basic.point (RootRadius.denseLargeSquareRadius p) t)) <
+      Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval
+        (Basic.point (RootRadius.denseLargeSquareRadius p) t)) := open Purelib
           in by
   have bounds := Gaussian.Norm.Bounds.vertical_symmetric_norm_bounds
-    (Data.Rat.Bounds.Square.symmetric_coordinate_sq_bound lower upper) rfl
-  exact Dense.Gaussian.Bounds.LeadingDominance.largeSquare_radial_dominance degreePositive bounds.1 bounds.2
+    (Bounds.Square.symmetric_coordinate_sq_bound lower upper) rfl
+  exact largeSquare_radial_dominance degreePositive bounds.1 bounds.2
 
 /-- The leading monomial strictly dominates the lower terms in quadrance along the computed large square's left edge. -/
 theorem largeSquare_left_dominance
     {p : CoefficientPolynomial} (degreePositive : 0 < p.natDegree)
     {t : Fraction.Rational}
-    (lower : -Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ≤ t)
-    (upper : t ≤ Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p) :
-    Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.Tail.lowerTermsPolynomial p).eval
-        (Gaussian.Components.Basic.point (-Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p) t)) <
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.Coefficients.LeadingSplit.leadingMonomial p).eval
-        (Gaussian.Components.Basic.point (-Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p) t)) := open
+    (lower : -RootRadius.denseLargeSquareRadius p ≤ t)
+    (upper : t ≤ RootRadius.denseLargeSquareRadius p) :
+    Gaussian.Norm.Basic.normSq ((Coefficients.Tail.lowerTermsPolynomial p).eval
+        (Basic.point (-RootRadius.denseLargeSquareRadius p) t)) <
+      Gaussian.Norm.Basic.normSq ((Coefficients.LeadingSplit.leadingMonomial p).eval
+        (Basic.point (-RootRadius.denseLargeSquareRadius p) t)) := open
           Purelib in by
   have bounds := Gaussian.Norm.Bounds.vertical_symmetric_norm_bounds
-    (Data.Rat.Bounds.Square.symmetric_coordinate_sq_bound lower upper)
-    (show (-Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p) ^ 2 =
-        Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius p ^ 2 by ring1)
-  exact Dense.Gaussian.Bounds.LeadingDominance.largeSquare_radial_dominance degreePositive bounds.1 bounds.2
+    (Bounds.Square.symmetric_coordinate_sq_bound lower upper)
+    (show (-RootRadius.denseLargeSquareRadius p) ^ 2 =
+        RootRadius.denseLargeSquareRadius p ^ 2 by ring1)
+  exact largeSquare_radial_dominance degreePositive bounds.1 bounds.2
 end Purelib.Polynomial.Dense.Gaussian.Bounds.LeadingDominance.Box
 
 end

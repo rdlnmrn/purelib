@@ -4,6 +4,9 @@ import Purelib.Data.List.Fold
 -- The public reverse-cast law retains the original ascending evaluation owner.
 public import Purelib.Polynomial.Ascending.Integer.Basic
 public import Purelib.Polynomial.Dense.Basic
+public import Purelib.Algebra.FiniteSum.Fin
+public import Purelib.Data.List.GetD
+import Purelib.Data.List.Reverse
 
 import Lean.Elab.Tactic.Omega
 import Mathlib.Tactic.Ring.Basic
@@ -18,7 +21,7 @@ import Purelib.Tactic.Ring
 Evaluation consumes the retained coefficient spine with its original scalar
 multiply-and-add step. Scalar expansion, leading-zero trimming and the
 original reversal accumulator relate that same scan to normalized data and
-ascending integer coefficient evaluation in an explicit field.
+ascending integer coefficient evaluation in a commutative ring.
 -/
 
 namespace Purelib.Polynomial.Dense.Basic.DensePolynomial
@@ -27,8 +30,9 @@ open Purelib.Algebra.Field
 open Purelib.Polynomial
 
 open Purelib.Data.List
+open Purelib.Algebra.FiniteSum
 
-variable {K : Type*} [ExplicitField K] [DecidableEq K]
+variable {K : Type*} [CommRing K] [DecidableEq K]
 
 /-- Horner evaluation is a recursion over the finite coefficient list.
 
@@ -115,6 +119,72 @@ public theorem evalCoeffs_cons_expansion (x a : K) (as : List K) :
   rw [evalCoeffs_cons]
   exact foldl_horner_expansion x as a
 
+omit [DecidableEq K] in
+/-- Reversing an ascending coefficient table evaluates as its original finite coefficient-power sum.
+
+The original list and every bounded natural coordinate are retained. Structural
+recursion separates the head coefficient from the successor powers without
+identifying functions or introducing a new coefficient enumeration.
+-/
+public theorem evalCoeffs_reverse_sum (point : K) : ∀ coefficients : List K,
+    evalCoeffs point coefficients.reverse =
+      Fin.sumFin (fun index : Fin coefficients.length =>
+        getD coefficients index.val 0 * point ^ index.val)
+  | [] => rfl
+  | coefficient :: remaining => by
+      have step : evalCoeffs point (coefficient :: remaining).reverse =
+          evalCoeffs point remaining.reverse * point + coefficient := by
+        unfold evalCoeffs
+        rewrite [Reverse.reverse_cons, Fold.foldl_append]
+        rfl
+      rewrite [step, Fin.sumFin_succ]
+      change evalCoeffs point remaining.reverse * point + coefficient =
+        coefficient * point ^ 0 + Fin.sumFin
+          (fun index : Fin remaining.length => getD remaining index.val 0 * point ^ (index.val + 1))
+      rewrite [pow_zero, mul_one]
+      have shifted : Fin.sumFin
+          (fun index : Fin remaining.length => getD remaining index.val 0 * point ^ (index.val + 1)) =
+          Fin.sumFin
+            (fun index : Fin remaining.length => getD remaining index.val 0 * point ^ index.val) * point := by
+        rewrite [← Fin.sumFin_mul_right]
+        apply Fin.sumFin_congr
+        intro index
+        exact congrArg (getD remaining index.val 0 * ·) (pow_succ point index.val) |>.trans
+          (mul_assoc _ _ _).symm
+      rewrite [shifted, ← evalCoeffs_reverse_sum point remaining]
+      exact add_comm _ _
+
+omit [DecidableEq K] in
+/-- Evaluation at zero reads the original descending table's constant coefficient.
+
+Reversal identifies the same retained constant slot. The original finite
+Horner expansion has no other contribution, since every positive power of
+zero vanishes by its successor multiplication equation.
+-/
+public theorem eval_at_zero (polynomial : Dense.Basic.DensePolynomial K) :
+    polynomial.eval 0 = getD polynomial.coeffs.reverse 0 0 := by
+  change evalCoeffs 0 polynomial.coeffs = _
+  have reading := evalCoeffs_reverse_sum (0 : K) polynomial.coeffs.reverse
+  rewrite [Reverse.reverse_reverse] at reading
+  rewrite [reading]
+  cases shape : polynomial.coeffs.reverse with
+  | nil => rfl
+  | cons coefficient remaining =>
+      rewrite [Fin.sumFin_succ]
+      change coefficient * (0 : K) ^ 0 + Fin.sumFin
+        (fun index : Fin remaining.length => getD remaining index.val 0 * (0 : K) ^ (index.val + 1)) = coefficient
+      have tailZero : Fin.sumFin
+          (fun index : Fin remaining.length => getD remaining index.val 0 * (0 : K) ^ (index.val + 1)) = 0 := by
+        calc
+          _ = Fin.sumFin (fun _ : Fin remaining.length => (0 : K)) := by
+            apply Fin.sumFin_congr
+            intro index
+            rewrite [pow_succ, mul_zero, mul_zero]
+            exact Eq.refl _
+          _ = 0 := Fin.sumFin_zero
+      rewrite [pow_zero, mul_one, tailZero, add_zero]
+      exact Eq.refl _
+
 /-- Removing a finite leading zero prefix preserves Horner evaluation.
 
 Each original zero head leaves the Horner starting accumulator unchanged.
@@ -141,7 +211,7 @@ omit [DecidableEq K] in
 
 The original reversal accumulator turns the left Horner fold into a right fold
 on the same retained integer table. Each original cast and scalar step is
-transported into the supplied explicit field without identifying fold functions. -/
+transported into the supplied commutative ring without identifying fold functions. -/
 public theorem evalCoeffs_reverse_intCast (coefficients : List Int) (point : K) :
     evalCoeffs point (coefficients.reverse.map fun coefficient : Int => (coefficient : K)) =
       Ascending.Integer.Basic.eval coefficients point := by

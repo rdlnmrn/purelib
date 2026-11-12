@@ -1,6 +1,7 @@
 module
 
 import Purelib.Data.List.Reverse
+import Purelib.Data.List.Map
 
 /-!
 # Optional and defaulting finite list coordinates
@@ -15,6 +16,20 @@ namespace Purelib.Data.List
 
 universe u v
 
+/-- Enumerate the bounded positions of the original finite list in their original order. -/
+@[expose] public def indices {Alpha : Type u} : (values : List Alpha) → List (Fin values.length)
+  | [] => []
+  | _ :: remaining => ⟨0, Nat.zero_lt_succ _⟩ :: (indices remaining).map Fin.succ
+
+/-- Reading all original bounded positions recovers the same ordered finite list. -/
+public theorem indices_get {Alpha : Type u} : ∀ values : List Alpha, (indices values).map values.get = values
+  | [] => rfl
+  | head :: remaining => by
+      change head :: ((indices remaining).map Fin.succ).map (head :: remaining).get = head :: remaining
+      rw [Map.map_map]
+      change head :: (indices remaining).map remaining.get = head :: remaining
+      rw [indices_get remaining]
+
 set_option backward.match.sparseCases false in
 /-- Read a retained finite list coordinate, using the supplied fallback beyond its length.
 
@@ -25,6 +40,14 @@ or membership enumeration replaces the original list and natural coordinate. -/
   | [], _, fallback => fallback
   | head :: _, 0, _ => head
   | _ :: tail, index + 1, fallback => getD tail index fallback
+
+/-- Mapping the original list and fallback maps its same defaulting coordinate. -/
+public theorem getD_map {Alpha : Type u} {Beta : Type v} (function : Alpha → Beta) :
+    ∀ (values : List Alpha) (index : Nat) (fallback : Alpha),
+      getD (values.map function) index (function fallback) = function (getD values index fallback)
+  | [], _, _ => rfl
+  | _ :: _, 0, _ => rfl
+  | _ :: remaining, index + 1, fallback => getD_map function remaining index fallback
 
 /-- Reading concatenation at the left length reads the first original right entry.
 
@@ -62,6 +85,33 @@ public theorem getD_eq_default_of_length_le {Alpha : Type u} :
       getD_eq_default_of_length_le remaining index fallback
         (Nat.le_of_succ_le_succ bound)
 
+/-- Every coordinate of repeated fallback entries reads that same fallback, including beyond the block. -/
+public theorem getD_replicate {Alpha : Type u} (fallback : Alpha) :
+    ∀ count index, getD (List.replicate count fallback) index fallback = fallback
+  | 0, _ => rfl
+  | _ + 1, 0 => rfl
+  | count + 1, index + 1 => getD_replicate fallback count index
+
+/-- Appending a repeated fallback block preserves every original defaulting coordinate. -/
+public theorem getD_append_replicate {Alpha : Type u} (fallback : Alpha) (count : Nat) :
+    ∀ (values : List Alpha) index,
+      getD (values ++ List.replicate count fallback) index fallback = getD values index fallback
+  | [], index => getD_replicate fallback count index
+  | _ :: _, 0 => rfl
+  | _ :: remaining, index + 1 => getD_append_replicate fallback count remaining index
+
+/-- Equal-length original finite lists are determined by their same defaulting scalar readings. -/
+public theorem eq_of_getD {Alpha : Type u} (fallback : Alpha) :
+    ∀ (left right : List Alpha), left.length = right.length →
+      (∀ index, getD left index fallback = getD right index fallback) → left = right
+  | [], [], _, _ => rfl
+  | [], _ :: _, size, _ => by cases size
+  | _ :: _, [], size, _ => by cases size
+  | first :: left, second :: right, size, readings => by
+      have heads : first = second := readings 0
+      have tails := eq_of_getD fallback left right (Nat.succ.inj size) (fun index => readings (index + 1))
+      exact (congrArg (fun head => head :: left) heads).trans (congrArg (List.cons second) tails)
+
 set_option backward.match.sparseCases false in
 /-- Read a retained finite list coordinate, returning no entry beyond its length.
 
@@ -89,6 +139,15 @@ public theorem mem_of_getElem? {Alpha : Type u} :
       exact List.Mem.head tail
   | head :: tail, index + 1, entry, same =>
       List.Mem.tail head (mem_of_getElem? tail index entry same)
+
+/-- A successful optional coordinate is strictly below the original finite list length. -/
+public theorem index_lt_length_of_getElem? {Alpha : Type u} :
+    ∀ (values : List Alpha) (index : Nat) (entry : Alpha),
+      getElem? values index = some entry → index < values.length
+  | [], _, _, impossible => by cases impossible
+  | _ :: _, 0, _, _ => Nat.zero_lt_succ _
+  | _ :: tail, index + 1, entry, same =>
+      Nat.succ_lt_succ (index_lt_length_of_getElem? tail index entry same)
 
 /-- Reading a mapped finite list maps the retained optional coordinate.
 

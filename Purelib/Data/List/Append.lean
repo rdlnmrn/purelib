@@ -93,6 +93,20 @@ public theorem take_append_direct {α : Type*} (first second : List α) (count :
             Nat.succ_sub_succ_eq_sub, -eq_self, -iff_self] using
             congrArg (List.cons entry) (ih count)
 
+/-- Taking the exact original prefix length from concatenation returns that prefix unchanged. -/
+public theorem take_length_append {Alpha : Type u} (first second : List Alpha) :
+    (first ++ second).take first.length = first := by
+  induction first with
+  | nil => rfl
+  | cons head remaining induction => exact congrArg (List.cons head) induction
+
+/-- Dropping the exact original prefix length from concatenation returns its original suffix. -/
+public theorem drop_length_append {Alpha : Type u} (first second : List Alpha) :
+    (first ++ second).drop first.length = second := by
+  induction first with
+  | nil => rfl
+  | cons head remaining induction => exact induction
+
 /-- The head of concatenation comes from the first list when it is nonempty.
 
 If the first list is empty, the second list supplies its original optional

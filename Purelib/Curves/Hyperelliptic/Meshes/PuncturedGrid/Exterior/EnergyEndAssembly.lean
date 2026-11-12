@@ -120,14 +120,14 @@ open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {index readingIndex energyDepth : Nat} {box :
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {index readingIndex energyDepth : Nat} {box :
     Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {target :
-    Normalization.InverseRootPolynomial.Coordinate}
+  {sample : Cap.Primitives.Sample cap differential index box} {target :
+    Coordinate}
 
 namespace EnergyEndBank
 
@@ -135,10 +135,10 @@ namespace EnergyEndBank
 target. -/
 @[expose] def append : {first last : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve
   differential)} →
-    {firstCovers : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers first} → {lastCovers :
-      Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers last} →
-    {left : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular firstCovers} → {right :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular lastCovers} →
+    {firstCovers : UniformReciprocalCover.ParentCovers first} → {lastCovers :
+      UniformReciprocalCover.ParentCovers last} →
+    {left : ParentJoins.SideBank regular firstCovers} → {right :
+      ParentJoins.SideBank regular lastCovers} →
     EnergyEndBank sample readingIndex energyDepth target
       left → EnergyEndBank sample readingIndex energyDepth
       target right →
@@ -154,15 +154,15 @@ namespace RegularSides.Plans
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.ChartRequest in
 /-- In odd degree, regular request data has no parents to contribute. -/
 @[expose] def emptyEndBank
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+    (branch : HyperellipticReciprocal.originOrder curve = 1)
     {sourceTarget reciprocalTarget coefficientTarget totalTarget areaTarget :
-      Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat} :
+      Coordinate} {minimum : Nat} :
     {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
-      Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents} →
-    {prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers} → {requests :
-      Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Requests sourceTarget reciprocalTarget
+      UniformReciprocalCover.ParentCovers parents} →
+    {prepared : ParentJoins.SideBank regular covers} → {requests :
+      SideRequests.SideBank.Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared} →
-    Hyperelliptic.Charts.Reciprocal.Disk.RegularSides.Plans requests →
+    Plans requests →
       EnergyEndBank sample readingIndex energyDepth target
       prepared
   | _, _, _, .nil, _ => .nil
@@ -181,41 +181,41 @@ open Purelib.Data.Gaussian.Basic.Canonical
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {vertices : SquareRoot.Grid.LiftedVertices.VertexBank
     bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
   {faces : Meshes.PuncturedGridFaces.PuncturedFaces bank} {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
   {start finish : Gaussian.Basic.Canonical} {segment : Geometry.ClearPath.ClearSegment curve.polynomial
-    (Hyperelliptic.Branches.Cuts.Ambient curve) start finish}
+    (Branches.Cuts.Ambient curve) start finish}
   {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)} {piece :
     Paths.PreparedPathDecomposition.CoveredSegment segment owner}
   {placement : Meshes.GridLiftedMesh.LiftedMesh.SegmentFace mesh segment} {differential :
-    Hyperelliptic.Differentials.Basic.Differential genus} {parentSheet : Fin 2}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {compared : Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison placement piece
+    Differentials.Basic.Differential genus} {parentSheet : Fin 2}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {compared : SegmentComparison placement piece
     differential parentSheet}
-  {prepared : Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapPreparation regular
-    compared} {target areaTarget chartTarget : Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
+  {prepared : CapPreparation regular
+    compared} {target areaTarget chartTarget : Coordinate} {floor : Nat}
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.CapRequest
+variable {request : CapRequest
   prepared target areaTarget floor} {charts :
-  Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.ChartRequest request chartTarget}
+  ChartRequest request chartTarget}
   {index depth readingIndex energyFloor energyDepth : Nat} {box : Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {plan :
-    Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.ChartRequest.Plan charts sample}
-  {data : Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.ChartRequest.Plan.Data plan
-    depth readingIndex} {energyTarget : Normalization.InverseRootPolynomial.Coordinate}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {plan :
+    Plan charts sample}
+  {data : Data plan
+    depth readingIndex} {energyTarget : Coordinate}
 
 /-- Only retained endpoint data are transported through the common-depth
 certificate; the chart, source samples and parent owners stay unchanged. -/
 @[expose] def endBank (energy :
-  Hyperelliptic.Meshes.PuncturedGrid.Cut.PrimitiveBanks.LiftedMesh.SegmentComparison.ChartRequest.Plan.Data.EnergyData
+  EnergyData
   data energyTarget energyFloor energyDepth)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
+    (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
     Charts.Reciprocal.Disk.EnergyEndBank sample readingIndex energyDepth
       chartTarget prepared.path.bank := by
   cases request with
@@ -223,8 +223,8 @@ certificate; the chart, source samples and parent owners stay unchanged. -/
   | ramified degree original =>
       obtain ⟨energy, sameDepth⟩ := energy
       cases sameDepth
-      let retained := Hyperelliptic.Charts.Reciprocal.Disk.ConnectedCharts.ChartRequest.Plan.Evaluation.original data
-      let ends := Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.endBank
+      let retained := Charts.Reciprocal.Disk.ConnectedCharts.ChartRequest.Plan.Evaluation.original data
+      let ends := Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.endBank
         branch retained.separated.parents data.replacements energy.parents
       have paid : charts.parentTarget ≤ chartTarget := by
         rw [charts.parentTarget_eq]
@@ -243,31 +243,31 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrenc
   (SurfaceOccurrence)
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {localTarget localArea chartTarget : Normalization.InverseRootPolynomial.Coordinate} {floor index depth readingIndex :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {localTarget localArea chartTarget : Coordinate} {floor index depth readingIndex :
     Nat} {box : Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
+    Face.PrimitiveData.FacePrimitiveBank differential index domains}
 
-variable {energyTarget : Normalization.InverseRootPolynomial.Coordinate} {energyFloor energyDepth : Nat}
+variable {energyTarget : Coordinate} {energyFloor energyDepth : Nat}
 
 /-- Concatenate the retained chart-entry energy endpoints on the exact original occurrence spine in odd degree. -/
-@[expose] def endBank (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+@[expose] def endBank (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
+    (entries : List (ChartedEntry (regular := regular) sample
       shared depth readingIndex localTarget localArea chartTarget floor)) →
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData energyTarget energyFloor
+    EnergyData energyTarget energyFloor
       energyDepth entries →
     Charts.Reciprocal.Disk.EnergyEndBank sample readingIndex energyDepth
       chartTarget
 
-        (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence.capSpine
+        (SurfaceOccurrence.capSpine
         (entries.map (fun entry => entry.entry.occurrence))).bank
   | [], _ => .nil
   | _ :: tail, energies => (energies.1.endBank branch).append
@@ -288,36 +288,36 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrenc
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
-    ExteriorProgram.SurfacePreparation
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+    SurfacePreparation
     regular domains program}
 
 set_option genInjectivity false in
 /-- All cross-occurrence and closing stages are selected from the original
 root-return bank before evaluating any chart endpoint readings. -/
 structure EnergyRootRequest (prepared :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
-  regular domains program) (target : Normalization.InverseRootPolynomial.Coordinate) (floor : Nat) where
+  SurfacePreparation
+  regular domains program) (target : Coordinate) (floor : Nat) where
   /-- The retained joined cap bank of the original surface preparation. -/ joined :
     JoinedCap
     prepared
   /-- The positive root-return allowance bounded by the supplied target and one. -/ allowance :
-    Normalization.InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The allowance is exactly the minimum of the target and one. -/ allowance_eq : allowance = min target 1
   /-- The retained root-return allowance is positive. -/ positive : 0 < allowance
   /-- The retained allowance is at most one. -/ small : allowance ≤ 1
   /-- The original root-return requests for every retained inter-parent junction. -/ junctions :
-    Hyperelliptic.Charts.Reciprocal.Disk.SideConnections.JunctionRequests allowance floor joined.spine.bank joined.links
+    Charts.Reciprocal.Disk.SideConnections.JunctionRequests allowance floor joined.spine.bank joined.links
   /-- The original closing root-return request on the same joined bank. -/ closing :
-    Hyperelliptic.Charts.Reciprocal.Disk.ClosingRequests.ClosingRequest allowance floor joined.spine.bank joined.closing
+    Charts.Reciprocal.Disk.ClosingRequests.ClosingRequest allowance floor joined.spine.bank joined.closing
   /-- The cached common sufficient root-return reading index. -/ index : Nat
   /-- The index is exactly the maximum of the retained junction and closing stages. -/ index_eq : index = max
     junctions.maximum closing.maximum
@@ -326,39 +326,39 @@ constructive_injectivity EnergyRootRequest
 
 namespace EnergyRootRequest
 
-variable {target : Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
+variable {target : Coordinate} {floor : Nat}
 
 /-- Prepare the original joined component bank, bounded positive allowance and root-junction and closing requests before
 choosing their common stage. -/
 @[expose] def build (prepared :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
-  regular domains program) (target : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < target) (floor :
+  SurfacePreparation
+  regular domains program) (target : Coordinate) (positive : 0 < target) (floor :
   Nat) :
 
-      SurfacePreparation.EnergyRootRequest
+      EnergyRootRequest
       prepared target floor :=
   let joined :=
     JoinedCap.build
     prepared
   let allowance := min target 1
   have allowancePositive : 0 < allowance := Fraction.Order.Basic.lt_min positive (by decide)
-  let junctions := Hyperelliptic.Charts.Reciprocal.Disk.SideConnections.JunctionRequests.build allowance
+  let junctions := Charts.Reciprocal.Disk.SideConnections.JunctionRequests.build allowance
     allowancePositive floor joined.spine.bank joined.links
-  let closing := Hyperelliptic.Charts.Reciprocal.Disk.ClosingRequests.ClosingRequest.build allowance allowancePositive
+  let closing := Charts.Reciprocal.Disk.ClosingRequests.ClosingRequest.build allowance allowancePositive
     floor joined.spine.bank joined.closing
   ⟨joined, allowance, rfl, allowancePositive, Fraction.Order.Basic.min_le_right _ _, junctions, closing, max
     junctions.maximum closing.maximum, rfl⟩
 
 variable {index depth readingIndex energyFloor energyDepth : Nat} {box : Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains}
-  {localTarget localArea chartTarget energyTarget : Normalization.InverseRootPolynomial.Coordinate} {sourceFloor : Nat}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
+    Face.PrimitiveData.FacePrimitiveBank differential index domains}
+  {localTarget localArea chartTarget energyTarget : Coordinate} {sourceFloor : Nat}
 
 /-- Equality transport changes only the dependent bank index. -/
 @[expose] def transportEnds {first last : List
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  (SurfaceOccurrence
   regular domains differential)} (same : first = last)
-    {spine : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank.Retained regular (last.map (fun item =>
+    {spine : Charts.Reciprocal.Disk.ParentJoins.SideBank.Retained regular (last.map (fun item =>
       item.compared.entered.cache.parents)).flatten}
     (spineEq : spine =
       SurfaceOccurrence.capSpine
@@ -375,9 +375,9 @@ variable {index depth readingIndex energyFloor energyDepth : Nat} {box : Rationa
 
 /-- Transport along the original occurrence and spine equalities preserves the retained endpoint residual exactly. -/
 theorem transportEnds_residual {first last : List
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  (SurfaceOccurrence
   regular domains differential)} (same : first = last)
-    {spine : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank.Retained regular (last.map (fun item =>
+    {spine : Charts.Reciprocal.Disk.ParentJoins.SideBank.Retained regular (last.map (fun item =>
       item.compared.entered.cache.parents)).flatten}
     (spineEq : spine =
       SurfaceOccurrence.capSpine
@@ -395,13 +395,13 @@ theorem transportEnds_residual {first last : List
 
 /-- Transport the exact retained endpoints to this original component bank. -/
 @[expose] def endBank (request :
-  SurfacePreparation.EnergyRootRequest
+  EnergyRootRequest
   prepared target floor)
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+    (entries : List (ChartSamples.ChartedEntry (regular := regular) sample
       shared depth readingIndex localTarget localArea chartTarget sourceFloor))
-    (energies : Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData energyTarget
+    (energies : ChartSamples.ChartedEntry.EnergyData energyTarget
       energyFloor energyDepth entries)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+    (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
     (occurrences : entries.map (fun entry => entry.entry.occurrence) = prepared.occurrences) :
     Charts.Reciprocal.Disk.EnergyEndBank sample readingIndex energyDepth
       chartTarget request.joined.spine.bank := by
@@ -411,13 +411,13 @@ theorem transportEnds_residual {first last : List
 
 /-- Reading endpoints through the component request preserves the exact original chart-entry residual. -/
 theorem endBank_residual (request :
-  SurfacePreparation.EnergyRootRequest
+  EnergyRootRequest
   prepared target floor)
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+    (entries : List (ChartSamples.ChartedEntry (regular := regular) sample
       shared depth readingIndex localTarget localArea chartTarget sourceFloor))
-    (energies : Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData energyTarget
+    (energies : ChartSamples.ChartedEntry.EnergyData energyTarget
       energyFloor energyDepth entries)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+    (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
     (occurrences : entries.map (fun entry => entry.entry.occurrence) = prepared.occurrences) :
     (request.endBank entries energies branch occurrences).residual = (energies.endBank branch entries).residual :=
 
@@ -427,24 +427,24 @@ theorem endBank_residual (request :
 /-- The retained component endpoint residual satisfies the original parent-count, chart-target and root-return allowance
 bound at a sufficient stage. -/
 theorem endBank_bound (request :
-  SurfacePreparation.EnergyRootRequest
+  EnergyRootRequest
   prepared target floor)
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry (regular := regular) sample
+    (entries : List (ChartSamples.ChartedEntry (regular := regular) sample
       shared depth readingIndex localTarget localArea chartTarget sourceFloor))
-    (energies : Hyperelliptic.Meshes.PuncturedGrid.Exterior.ChartSamples.ChartedEntry.EnergyData energyTarget
+    (energies : ChartSamples.ChartedEntry.EnergyData energyTarget
       energyFloor energyDepth entries)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+    (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
     (occurrences : entries.map (fun entry => entry.entry.occurrence) = prepared.occurrences)
     (nonnegative : 0 ≤ chartTarget) (later : request.index ≤ readingIndex) :
-    Data.Gaussian.Norm.Basic.normSq (request.endBank entries energies branch occurrences).residual ≤
+    Gaussian.Norm.Basic.normSq (request.endBank entries energies branch occurrences).residual ≤
       2 * (((((prepared.occurrences.map (fun item => item.compared.entered.cache.parents)).flatten.length : Nat) :
-        Normalization.InverseRootPolynomial.Coordinate) *
+        Coordinate) *
         ((((prepared.occurrences.map (fun item => item.compared.entered.cache.parents)).flatten.length : Nat) :
-          Normalization.InverseRootPolynomial.Coordinate) * (80 * chartTarget + 2 * request.allowance))) +
+          Coordinate) * (80 * chartTarget + 2 * request.allowance))) +
           (80 * chartTarget + 2 * request.allowance)) :=
   (request.endBank entries energies branch occurrences).residual_bound branch nonnegative request.positive.le
     request.small request.junctions
-    ((Data.Nat.Order.le_max_left _ _).trans (request.index_eq ▸ later)) request.closing ((Data.Nat.Order.le_max_right _
+    ((Nat.Order.le_max_left _ _).trans (request.index_eq ▸ later)) request.closing ((Nat.Order.le_max_right _
       _).trans (request.index_eq ▸ later))
 
 end EnergyRootRequest

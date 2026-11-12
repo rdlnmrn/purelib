@@ -55,6 +55,8 @@ import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Topology.Surface.Sewing.SewingConnected
 import Purelib.Tactic.Ring
 
+open Purelib.Approximation.Rational.Budget
+
 open Purelib.Approximation
 
 open Purelib.Curves
@@ -74,17 +76,17 @@ shared cut surface, with a single requested aggregate error. -/
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.Newton.OriginalConjugateRegionsComparison
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+    PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation base.bank.toBranchCellBank}
     {target radius : Fraction.Rational}
   {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius} {current :
     Meshes.LiftedPuncturedGrid grid.punctured}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
-    {leftDifferential rightDifferential : Hyperelliptic.Differentials.Basic.Differential genus}
+  {domains : PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames grid.faces.regulars}
+    {leftDifferential rightDifferential : Differentials.Basic.Differential genus}
 
 open Purelib.Integration in
 /-- No original-cell area remains unexplained. Every canonical polygon
@@ -92,45 +94,45 @@ comes from the retained original compiler or original based branch bank;
 all physical inner boundaries, sewn jumps and offsets remain explicit in
 the cached corrections, rather than being silently declared negligible. -/
 theorem original_conjugate_regions_accurate (ordered :
-  Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet) (newSheet
+  PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet) (newSheet
   : Fin 2)
-    (branchSheet : Hyperelliptic.Branches.BranchIsolation.Data.Index branches → Fin 2) (excision :
-      Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid current)
-    (leftFixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains leftDifferential)
-      (rightFixed : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains rightDifferential)
+    (branchSheet : Branches.BranchIsolation.Data.Index branches → Fin 2) (excision :
+      AllHoles.Excision.AllHoleExcision grid current)
+    (leftFixed : PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains leftDifferential)
+      (rightFixed : PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains rightDifferential)
       (error : Fraction.Rational) (positive : 0 < error) (floor : Nat) :
-    let reference := fun point member => (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
+    let reference := fun point member => (PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
       grid.punctured.bank.toBranchCellBank point member).toLoop
     let compiled :=
-      Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.compileResplit
+      PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.compileResplit
       grid.shrunk.included current.edges current.vertices
-      reference (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
+      reference (PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
         ordered.prepared.partition newSheet
-    let part := Rational.Budget.Aggregate.perTerm error 2
-    let partPositive := Rational.Budget.Aggregate.perTerm_positive positive 2
-    let regular := Hyperelliptic.Meshes.Newton.PairedRegularAggregate.PairedRegularRequests.build leftFixed rightFixed
-      (Rational.Budget.Aggregate.perTerm part compiled.regulars.length)
-      (Rational.Budget.Aggregate.perTerm_positive partPositive _) floor compiled.regulars
-    let branch := Hyperelliptic.Meshes.Newton.PairedBranchAggregate.PairedBranchRequests.build bank branchSheet
-      leftFixed rightFixed (Rational.Budget.Aggregate.perTerm part excision.entries.length)
-      (Rational.Budget.Aggregate.perTerm_positive partPositive _) floor excision.entries
-    ∀ stage (leftBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank leftDifferential stage
-      domains) (rightBank : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank rightDifferential
-      stage domains) (leftReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings
+    let part := Aggregate.perTerm error 2
+    let partPositive := Aggregate.perTerm_positive positive 2
+    let regular := PairedRegularAggregate.PairedRegularRequests.build leftFixed rightFixed
+      (Aggregate.perTerm part compiled.regulars.length)
+      (Aggregate.perTerm_positive partPositive _) floor compiled.regulars
+    let branch := PairedBranchAggregate.PairedBranchRequests.build bank branchSheet
+      leftFixed rightFixed (Aggregate.perTerm part excision.entries.length)
+      (Aggregate.perTerm_positive partPositive _) floor excision.entries
+    ∀ stage (leftBank : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank leftDifferential stage
+      domains) (rightBank : PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank rightDifferential
+      stage domains) (leftReadings : PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings
       leftBank current.mesh) (rightReadings :
-      Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings rightBank current.mesh)
+      PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings rightBank current.mesh)
       (leftSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample current.cutPolygon.patch
         leftReadings.values) (rightSurface : Topology.Surface.Sewing.SewnPrimitiveSamples.CachedSample
         current.cutPolygon.patch rightReadings.values)
       (pair : Topology.Surface.Sewing.SewnConjugateSamples.ConjugatePair leftSurface rightSurface), max regular.index
         branch.index ≤ stage →
       let regularSamples :=
-        Hyperelliptic.Meshes.Newton.ConjugateRegularAggregate.PairedRegularRequests.ConjugateSamples.build leftReadings
+        ConjugateRegularAggregate.PairedRegularRequests.ConjugateSamples.build leftReadings
         rightReadings leftSurface rightSurface pair regular
       let branchSamples :=
-        Hyperelliptic.Meshes.Newton.ConjugateBranchAggregate.PairedBranchRequests.ConjugateSamples.build leftReadings
+        ConjugateBranchAggregate.PairedBranchRequests.ConjugateSamples.build leftReadings
         rightReadings leftSurface rightSurface pair branch
-      Data.Gaussian.Norm.Basic.normSq (pair.boundaryArea - (regularSamples.corrections + branchSamples.corrections)
+      Gaussian.Norm.Basic.normSq (pair.boundaryArea - (regularSamples.corrections + branchSamples.corrections)
         -
         ((regularSamples.polygons + branchSamples.polygons) + (regularSamples.polygons + branchSamples.polygons))) <
           error := by
@@ -141,7 +143,7 @@ theorem original_conjugate_regions_accurate (ordered :
     leftSurface (RootContinuation.NewtonOriginalRegionPartition.NewtonGrid.originalCellMask current cell)
   have regularArea := regularSamples.areas_eq selected
   have branchArea := (branchSamples.areas_eq selected).trans
-    (Hyperelliptic.Meshes.Newton.Branch.RegionAggregate.Ordered.branch_entries_sum ordered excision (fun index =>
+    (Branch.RegionAggregate.Ordered.branch_entries_sum ordered excision (fun index =>
       Topology.Polygon.Stokes.edgeListArea pair.values ((selected (base.bank.cell index)).triangles.flatMap
       Topology.Polygon.Stokes.OrientedTriangle.boundary))).symm
   have partition : regularSamples.areas + branchSamples.areas = Topology.Polygon.Stokes.edgeListArea pair.values
@@ -152,10 +154,10 @@ theorem original_conjugate_regions_accurate (ordered :
   let regularError := regularSamples.areas - regularSamples.corrections - (regularSamples.polygons +
     regularSamples.polygons)
   let branchError := branchSamples.areas - branchSamples.corrections - (branchSamples.polygons + branchSamples.polygons)
-  have regularBound : Data.Gaussian.Norm.Basic.normSq regularError ≤ part :=
-    (regularSamples.aggregate_accurate partPositive ((Data.Nat.Order.le_max_left _ _).trans later)).le
-  have branchBound : Data.Gaussian.Norm.Basic.normSq branchError ≤ part :=
-    (branchSamples.aggregate_accurate partPositive ((Data.Nat.Order.le_max_right _ _).trans later)).le
+  have regularBound : Gaussian.Norm.Basic.normSq regularError ≤ part :=
+    (regularSamples.aggregate_accurate partPositive ((Nat.Order.le_max_left _ _).trans later)).le
+  have branchBound : Gaussian.Norm.Basic.normSq branchError ≤ part :=
+    (branchSamples.aggregate_accurate partPositive ((Nat.Order.le_max_right _ _).trans later)).le
   have estimate := Gaussian.Budget.Aggregate.normSq_sum_lt [regularError, branchError] positive (by
     intro value member
     rcases Data.List.Membership.mem_cons.mp member with rfl | member
@@ -163,7 +165,7 @@ theorem original_conjugate_regions_accurate (ordered :
     · rcases Data.List.Membership.mem_cons.mp member with rfl | member
       · exact branchBound
       · exact (List.not_mem_nil member).elim)
-  change Data.Gaussian.Norm.Basic.normSq (regularError + (branchError + 0)) < error at estimate
+  change Gaussian.Norm.Basic.normSq (regularError + (branchError + 0)) < error at estimate
   rw [add_zero] at estimate
   have equal : Topology.Polygon.Stokes.edgeListArea pair.values current.cutPolygon.patch.cut.boundary -
     (regularSamples.corrections + branchSamples.corrections) -
@@ -172,6 +174,6 @@ theorem original_conjugate_regions_accurate (ordered :
     rw [← partition]
     unfold regularError branchError
     ring1
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq equal).trans_lt estimate
+  exact (congrArg Gaussian.Norm.Basic.normSq equal).trans_lt estimate
 
 end Purelib.Curves.Hyperelliptic.Meshes.Newton.OriginalConjugateRegionsComparison

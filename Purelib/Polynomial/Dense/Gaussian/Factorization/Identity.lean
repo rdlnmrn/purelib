@@ -6,6 +6,7 @@ import Purelib.Polynomial.Dense.Gaussian.Basic
 public import Purelib.Polynomial.Dense.Gaussian.GCD
 public import Purelib.Polynomial.Dense.Gaussian.NonzeroEvaluation
 import Purelib.Polynomial.Dense.Leading
+import Purelib.Polynomial.Dense.Gaussian.Extensionality
 import Purelib.Polynomial.Dense.Multiplication
 
 import Purelib.Tactic.QuotientFreeOmega
@@ -115,6 +116,23 @@ public theorem eval_factorization
     _ = (left * right).eval point := zero_add _
     _ = left.eval point * right.eval point := DensePolynomial.eval_mul left right point
 
+/-- A nonzero original source forces its retained right factor to be nonzero without a source-normalization premise.
+
+The original pointwise product identity is transported through normalization
+once. The normalized nonzero-complement theorem supplies the same conclusion
+for the same original factor and cofactor owners.
+-/
+public theorem right_nonzero
+    {p left right : Basic.CanonicalCoefficients.CoefficientPolynomial}
+    (pNonzero : p.isZero = false) (factorization : ProductIdentity p left right) :
+    right.isZero = false := by
+  have normalized : ProductIdentity p.normalize left right :=
+    factorizationOfCandidateEvals p.normalize left right
+      (fun point _ => (DensePolynomial.eval_normalize p point).trans
+        (eval_factorization factorization point))
+  exact right_isZero_false ((DensePolynomial.isZero_normalize p).trans pNonzero)
+    (DensePolynomial.normalize_normalize p) normalized
+
 /-- A zero coefficient difference identifies the retained derivative evaluations.
 
 The finite derivative difference certificate is specialized at the original
@@ -139,4 +157,19 @@ public theorem factorization_swap
   intro point _
   rw [eval_factorization factorization point]
   exact Purelib.Data.Gaussian.Basic.mul_comm _ _
+
+/-- A checked product identity identifies the source's normalized coefficients with the same ordered factor product.
+
+Finite Gaussian probe extensionality compares the original normalized source
+and normalized product. The retained coefficient identity supplies every scalar
+evaluation equality, so no infinite-carrier root argument is used.
+-/
+public theorem normalized_product
+    {p left right : Basic.CanonicalCoefficients.CoefficientPolynomial}
+    (factorization : ProductIdentity p left right) : p.normalize = left * right :=
+  Extensionality.gaussian_normalized_eq_of_eval_eq
+    (DensePolynomial.normalize_normalize p) (DensePolynomial.normalize_mul left right)
+    (fun point => (DensePolynomial.eval_normalize p point).trans
+      ((eval_factorization factorization point).trans (DensePolynomial.eval_mul left right point).symm))
+
 end Purelib.Polynomial.Dense.Gaussian.Factorization.Identity

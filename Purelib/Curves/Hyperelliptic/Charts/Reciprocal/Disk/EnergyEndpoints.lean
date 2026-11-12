@@ -117,11 +117,11 @@ open Purelib.Data.Gaussian.Basic.Canonical
 open Purelib.Integration.Path.IncrementRestoration (potential)
 open Purelib.Riemann.RootContinuation.RootRadialGeometry (radialArea)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {index : Nat} {box : Geometry.Rational.Box}
 
 open Purelib.Integration.Path.IncrementRestoration in
 /-- An actual retained energy endpoint's radial potential, primitive offset and padded-domain certificate.
@@ -129,11 +129,11 @@ open Purelib.Integration.Path.IncrementRestoration in
 The original polynomial sample, root coordinate and cached reading determine the potential at the retained radial depth.
 -/
 structure EnergyEndpoint (sample : Primitives.Sample cap differential index box)
-    (regular : RegularBounds.Data cap) (depth : Nat) (target : InverseRootPolynomial.Coordinate)
-    (root value potential : InverseRootPolynomial.Gaussian) : Prop where
+    (regular : RegularBounds.Data cap) (depth : Nat) (target : Coordinate)
+    (root value potential : Gaussian) : Prop where
   /-- The retained potential is exactly the radial area corrected by the original polynomial value and cached endpoint
     reading. -/ potential_eq : potential = IncrementRestoration.potential
-    (RootRadialGeometry.radialArea sample.primitive.value.eval depth root) (sample.primitive.value.eval root) value
+    (radialArea sample.primitive.value.eval depth root) (sample.primitive.value.eval root) value
   /-- The actual polynomial-to-reading squared-norm offset meets the retained target. -/ offset :
     Data.Gaussian.Norm.Basic.normSq (sample.primitive.value.eval root - value) ≤ target
   /-- The actual polynomial-to-reading squared-norm offset is at most one. -/ small :
@@ -154,38 +154,38 @@ open Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision (ParameterEdge)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover (Cell)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives (SourcePrimitive)
 
-variable {count : Nat} {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve
+variable {count : Nat} {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve
   differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {owners :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.OwnedEndpoints regular cell}
-  {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell} {target energyTarget
-    joining : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor energyFloor pairFloor : Nat}
-  {depth stage minimum energyDepth : Nat} {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : ParameterEdge} {cell :
+    Cell data edge}
+  {regular : RegularBounds.Data cap} {owners :
+    ParentOwners.OwnedEndpoints regular cell}
+  {comparison : ArcSamples.Data regular cell} {target energyTarget
+    joining : Coordinate} {floor energyFloor pairFloor : Nat}
+  {depth stage minimum energyDepth : Nat} {sample : Primitives.Sample
     cap differential index box}
-  {source : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
-    {request : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartAreaRequest.AreaRequest comparison owners target
+  {source : SourcePrimitive data index}
+    {request : AreaRequest comparison owners target
     floor}
-  {charts : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexTree.ChartMesh request.mesh sample minimum}
-  {original : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentCells.ComparedCell comparison source sample
+  {charts : ChartMesh request.mesh sample minimum}
+  {original : ParentCells.ComparedCell comparison source sample
     depth}
-  {pairRequest : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.EndpointPairs.PairRequest owners.bounds joining
+  {pairRequest : PairRequest owners.bounds joining
     pairFloor}
 
 /-- The actual first retained energy-block endpoint satisfies the original radial-potential and offset certificates. -/
 theorem first_endpoint (evaluated : AreaRequest.Evaluation charts original stage)
     (energy : Evaluation.RequestedEnergy evaluated energyTarget energyFloor)
     (branch : HyperellipticReciprocal.originOrder curve = 1) (sameDepth : energy.request.depth = energyDepth)
-    (pair : Evaluation.EndpointPair evaluated pairRequest) (nonnegative : 0 ≤ joining) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndpoints.ReciprocalDiskVertices.EnergyEndpoint sample regular
+    (pair : EndpointPair evaluated pairRequest) (nonnegative : 0 ≤ joining) :
+    EnergyEndpoint sample regular
       energyDepth target pair.pair.firstReading.coordinate pair.pair.firstValue
-      (RestoredEnergyCells.ofEvaluation evaluated energy branch sameDepth pair nonnegative).firstPotential := by
-  let block := RestoredEnergyCells.ofEvaluation evaluated energy branch sameDepth pair nonnegative
+      (ofEvaluation evaluated energy branch sameDepth pair nonnegative).firstPotential := by
+  let block := ofEvaluation evaluated energy branch sameDepth pair nonnegative
   rw [pair.first_coordinate]
-  change Curves.Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndpoints.ReciprocalDiskVertices.EnergyEndpoint sample
+  change EnergyEndpoint sample
     regular energyDepth target block.raw.firstRoot block.firstValue block.firstPotential
   refine ⟨?_, ?_, ?_, Evaluation.square_inside request branch evaluated.vertices.first⟩
   · rw [block.first_potential, block.raw.first_radial, block.raw.first_value]
@@ -197,13 +197,13 @@ theorem first_endpoint (evaluated : AreaRequest.Evaluation charts original stage
 theorem last_endpoint (evaluated : AreaRequest.Evaluation charts original stage)
     (energy : Evaluation.RequestedEnergy evaluated energyTarget energyFloor)
     (branch : HyperellipticReciprocal.originOrder curve = 1) (sameDepth : energy.request.depth = energyDepth)
-    (pair : Evaluation.EndpointPair evaluated pairRequest) (nonnegative : 0 ≤ joining) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndpoints.ReciprocalDiskVertices.EnergyEndpoint sample regular
+    (pair : EndpointPair evaluated pairRequest) (nonnegative : 0 ≤ joining) :
+    EnergyEndpoint sample regular
       energyDepth target pair.pair.lastReading.coordinate pair.pair.lastValue
-      (RestoredEnergyCells.ofEvaluation evaluated energy branch sameDepth pair nonnegative).lastPotential := by
-  let block := RestoredEnergyCells.ofEvaluation evaluated energy branch sameDepth pair nonnegative
+      (ofEvaluation evaluated energy branch sameDepth pair nonnegative).lastPotential := by
+  let block := ofEvaluation evaluated energy branch sameDepth pair nonnegative
   rw [pair.last_coordinate]
-  change Curves.Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndpoints.ReciprocalDiskVertices.EnergyEndpoint sample
+  change EnergyEndpoint sample
     regular energyDepth target block.raw.lastRoot block.lastValue block.lastPotential
   refine ⟨?_, ?_, ?_, Evaluation.square_inside request branch evaluated.vertices.last⟩
   · rw [block.last_potential, block.raw.last_radial, block.raw.last_value]
@@ -234,36 +234,36 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RestoredEnergyBlocks (R
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RestoredParentEnergy.EnergyData (restoredBlocks)
 
 variable {genus count index depth readingIndex floor minimum : Nat} {curve :
-  Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-  {differential : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} {collar :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {parent :
-    Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {source :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
-  {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {target energyTarget tolerance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {energyFloor
+  HyperellipticCurve genus}
+  {differential : Differential genus} {collar :
+    ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {parent :
+    Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap} {source :
+    SourcePrimitive data index}
+  {box : Geometry.Rational.Box} {capSample :
+    Primitives.Sample cap differential index box}
+  {target energyTarget tolerance : Coordinate} {energyFloor
     energyDepth pairFloor : Nat}
 
 namespace EnergyData
 
-variable (branch : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+variable (branch : HyperellipticReciprocal.originOrder curve = 1)
   (nonnegative : 0 ≤ tolerance / 4)
-  {edges : List Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {bank :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBank.Bank regular data edges} {owners :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank}
-  {requests : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartRequests target floor owners}
-    (plans : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans capSample minimum
+  {edges : List ParameterEdge} {bank :
+    Bank regular data edges} {owners :
+    Owners bank}
+  {requests : ChartRequests target floor owners}
+    (plans : ChartPlans capSample minimum
     requests)
-  (cells : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank)
-    (evaluated : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans.EvaluationData
+  (cells : ComparedCells source capSample depth bank)
+    (evaluated : EvaluationData
     readingIndex plans cells)
-  (energies : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentEnergyRequests.EnergyData energyTarget
+  (energies : EnergyData energyTarget
     energyFloor energyDepth plans cells evaluated)
-  (pairs : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentEndpoints.EndpointRequests (tolerance / 4)
+  (pairs : EndpointRequests (tolerance / 4)
     pairFloor owners)
   (modelLater : pairs.maximum ≤ index) (readingLater : pairs.readingMaximum ≤ readingIndex) (nonempty : edges ≠ [])
 
@@ -271,10 +271,10 @@ include nonempty in
 /-- The actual first retained energy-block endpoint satisfies the original radial-potential and offset certificates. -/
 theorem first_endpoint :
     let readings := plans.endpointReadings cells evaluated pairs modelLater readingLater
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndpoints.ReciprocalDiskVertices.EnergyEndpoint capSample regular
+    EnergyEndpoint capSample regular
       energyDepth target (EndpointRequests.firstCoordinate pairs cells readings)
       (EndpointRequests.firstValue pairs cells readings)
-      (RestoredEnergyBlock.initial (EnergyData.restoredBlocks branch nonnegative plans cells evaluated energies pairs
+      (RestoredEnergyBlock.initial (restoredBlocks branch nonnegative plans cells evaluated energies pairs
         modelLater readingLater)).2 := by
   cases plans with
   | nil => exact False.elim (nonempty rfl)
@@ -290,12 +290,12 @@ theorem first_endpoint :
 include nonempty in
 /-- The actual terminal retained energy-block endpoint satisfies the original radial-potential and offset certificates.
 -/
-theorem last_endpoint (previousValue previousRoot previousPotential : InverseRootPolynomial.Gaussian) :
+theorem last_endpoint (previousValue previousRoot previousPotential : Gaussian) :
     let readings := plans.endpointReadings cells evaluated pairs modelLater readingLater
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndpoints.ReciprocalDiskVertices.EnergyEndpoint capSample regular
+    EnergyEndpoint capSample regular
       energyDepth target (EndpointRequests.lastCoordinate pairs cells readings previousRoot)
       (EndpointRequests.lastValue pairs cells readings previousValue)
-      (RestoredEnergyBlock.terminalPotential (EnergyData.restoredBlocks branch nonnegative plans cells evaluated
+      (RestoredEnergyBlock.terminalPotential (restoredBlocks branch nonnegative plans cells evaluated
         energies pairs modelLater readingLater) previousPotential) := by
   induction plans generalizing previousValue previousRoot previousPotential with
   | nil => exact False.elim (nonempty rfl)
@@ -318,45 +318,45 @@ end EnergyData
 
 namespace RequestedEnergy
 
-variable {edges : List Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {bank :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBank.Bank regular data edges} {owners :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.Owners bank}
-  {requests : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartRequests target floor owners}
-    {plans : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans capSample minimum
+variable {edges : List ParameterEdge} {bank :
+  Bank regular data edges} {owners :
+  Owners bank}
+  {requests : ChartRequests target floor owners}
+    {plans : ChartPlans capSample minimum
     requests}
-  {cells : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth bank}
-    {evaluated : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentChartRequests.ChartPlans.EvaluationData
+  {cells : ComparedCells source capSample depth bank}
+    {evaluated : EvaluationData
     readingIndex plans cells}
-  {pairs : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentEndpoints.EndpointRequests (tolerance / 4)
+  {pairs : EndpointRequests (tolerance / 4)
     pairFloor owners}
   (energy : RequestedEnergy plans cells evaluated pairs energyTarget energyFloor)
-  (branch : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) (nonempty :
+  (branch : HyperellipticReciprocal.originOrder curve = 1) (nonempty :
     edges ≠ [])
 
 include branch nonempty in
 /-- The actual first retained energy-block endpoint satisfies the original radial-potential and offset certificates. -/
 theorem first_endpoint :
     let readings := plans.endpointReadings cells evaluated pairs energy.model_later energy.reading_later
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndpoints.ReciprocalDiskVertices.EnergyEndpoint capSample regular
+    EnergyEndpoint capSample regular
       energy.depth target (EndpointRequests.firstCoordinate pairs cells readings) energy.firstValue
       energy.firstPotential := by
   rw [energy.first_value, show energy.firstPotential = (RestoredEnergyBlock.initial energy.blocks).2 from congrArg
     Prod.snd energy.first_eq,
     energy.blocks_eq branch]
-  exact Curves.Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndpoints.ChartPlans.EnergyData.first_endpoint branch
+  exact EnergyData.first_endpoint branch
     energy.join_nonnegative plans cells evaluated energy.energies pairs energy.model_later energy.reading_later nonempty
 
 include branch nonempty in
 /-- The actual terminal retained energy-block endpoint satisfies the original radial-potential and offset certificates.
 -/
-theorem last_endpoint (previousValue previousRoot : InverseRootPolynomial.Gaussian) :
+theorem last_endpoint (previousValue previousRoot : Gaussian) :
     let readings := plans.endpointReadings cells evaluated pairs energy.model_later energy.reading_later
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndpoints.ReciprocalDiskVertices.EnergyEndpoint capSample regular
+    EnergyEndpoint capSample regular
       energy.depth target (EndpointRequests.lastCoordinate pairs cells readings previousRoot)
       (EndpointRequests.lastValue pairs cells readings previousValue)
       (RestoredEnergyBlock.terminalPotential energy.blocks energy.firstPotential) := by
   rw [energy.blocks_eq branch]
-  exact Curves.Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndpoints.ChartPlans.EnergyData.last_endpoint branch
+  exact EnergyData.last_endpoint branch
     energy.join_nonnegative plans cells evaluated energy.energies pairs energy.model_later energy.reading_later nonempty
     previousValue previousRoot energy.firstPotential
 

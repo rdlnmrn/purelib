@@ -20,6 +20,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Geometry.Rational.Box.Refinement
 import Purelib.Polynomial.Dense.Basic
 
+open Purelib.Polynomial.Dense.Gaussian
+
 open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 open Purelib.Polynomial.Dense.Gaussian.Squarefree.Basic (SquarefreeCertificate)
 open Purelib.Polynomial.Elimination.Axis.Certificate.AxisSafeCuts (AxisEliminationCertificate)
@@ -53,7 +55,7 @@ def refineForNewton
     (squarefree : SquarefreeCertificate p)
     (state : RawWindingState p ambient) : RawWindingState p ambient :=
   Subdivision.Raw.Request.refineTo elimination state
-    (Dense.Gaussian.Newton.Box.Threshold.newtonDiagonalThreshold p ambient squarefree)
+    (Newton.Box.Threshold.newtonDiagonalThreshold p ambient squarefree)
 
 /-- Refinement to the Newton threshold preserves containment in the original input box. -/
 theorem refineForNewton_refines
@@ -64,7 +66,7 @@ theorem refineForNewton_refines
     (state : RawWindingState p ambient) :
     (refineForNewton elimination squarefree state).box.Refines state.box :=
   Subdivision.Raw.Request.refineTo_refines elimination state
-    (Dense.Gaussian.Newton.Box.Threshold.newtonDiagonalThreshold p ambient squarefree)
+    (Newton.Box.Threshold.newtonDiagonalThreshold p ambient squarefree)
 
 /-- The retained Newton-preparation box has anchor residual bound at most the original squarefree derivative threshold.
 -/
@@ -74,27 +76,27 @@ theorem refineForNewton_residualBound_le
     (elimination : AxisEliminationCertificate p degreeBound)
     (squarefree : SquarefreeCertificate p)
     (state : RawWindingState p ambient) :
-    Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound p ambient
+    Bounds.Box.Residual.anchorResidualBound p ambient
         (refineForNewton elimination squarefree state).box ≤
-      Dense.Gaussian.Derivative.Separation.Squarefree.derivativeThreshold squarefree ambient := open Purelib.Data.Rat in
+      Derivative.Separation.Squarefree.derivativeThreshold squarefree ambient := open Purelib.Data.Rat in
         by
   let refined := refineForNewton elimination squarefree state
   have diagonal := Subdivision.Raw.Request.refineTo_diagonalSq_le elimination state
-    (Dense.Gaussian.Newton.Box.Threshold.newtonDiagonalThreshold_pos p ambient squarefree)
-  have lipschitzPositive := Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos p ambient
+    (Newton.Box.Threshold.newtonDiagonalThreshold_pos p ambient squarefree)
+  have lipschitzPositive := Bounds.Box.denseLipschitzBound_pos p ambient
   have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
     diagonal lipschitzPositive.le
-  change Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient * refined.box.diagonalSq ≤
-    Dense.Gaussian.Derivative.Separation.Squarefree.derivativeThreshold squarefree ambient
+  change Bounds.Box.denseLipschitzBound p ambient * refined.box.diagonalSq ≤
+    Derivative.Separation.Squarefree.derivativeThreshold squarefree ambient
   calc
-    Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient * refined.box.diagonalSq ≤
-        Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient *
-          Dense.Gaussian.Newton.Box.Threshold.newtonDiagonalThreshold p ambient squarefree := scaled
-    _ = Dense.Gaussian.Derivative.Separation.Squarefree.derivativeThreshold squarefree ambient := by
+    Bounds.Box.denseLipschitzBound p ambient * refined.box.diagonalSq ≤
+        Bounds.Box.denseLipschitzBound p ambient *
+          Newton.Box.Threshold.newtonDiagonalThreshold p ambient squarefree := scaled
+    _ = Derivative.Separation.Squarefree.derivativeThreshold squarefree ambient := by
       rw [Fraction.Field.mul_comm]
       exact Fraction.Field.div_mul_cancel_of_ne
-        (Dense.Gaussian.Derivative.Separation.Squarefree.derivativeThreshold squarefree ambient)
-        (Dense.Gaussian.Bounds.Box.denseLipschitzBound p ambient) (ne_of_gt lipschitzPositive)
+        (Derivative.Separation.Squarefree.derivativeThreshold squarefree ambient)
+        (Bounds.Box.denseLipschitzBound p ambient) (ne_of_gt lipschitzPositive)
 
 /-- One finite raw subdivision followed by the certified local Newton step. -/
 def extractNewton
@@ -103,7 +105,7 @@ def extractNewton
     (degreePositive : 0 < p.natDegree)
     (elimination : AxisEliminationCertificate p degreeBound)
     (squarefree : SquarefreeCertificate p)
-    (state : RawWindingState p ambient) : Newton.Refinement.Basic.Output p ambient squarefree := by
+    (state : RawWindingState p ambient) : Basic.Output p ambient squarefree := by
   let refined := refineForNewton elimination squarefree state
   exact
     { state := refined

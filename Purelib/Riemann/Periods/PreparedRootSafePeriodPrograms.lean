@@ -38,6 +38,8 @@ import Purelib.Data.Gaussian.Basic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_antitone)
 
 @[expose] public section
@@ -69,8 +71,8 @@ open Purelib.Integration.Polynomial.Gaussian.Path.Basic (PathModel)
 open Purelib.Integration.Program.Gaussian.Basic (RefinementProgram)
 open Purelib.Integration.Program.Gaussian.Sequential (SequentialCompatibleConstantRefinementProgram)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {source :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} {root : Named}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {source :
+  Differential genus} {root : Named}
 
 open Purelib.Data.Rat in
 /-- A natural-number count casts to a nonnegative rational coordinate. -/
@@ -83,24 +85,24 @@ public theorem natCast_nonnegative (value : Nat) : (0 : Fraction.Rational) ≤ (
 
 open Purelib.Curves.Hyperelliptic in
 /-- Read the target differential's recast parent model at the retained root-safe stage. -/
-def flatModel (initial : RootClosedState curve source root) (targets : List (Differentials.Basic.Differential genus))
-    (differential : Differentials.Basic.Differential genus) (index : Nat) : PathModel :=
+def flatModel (initial : RootClosedState curve source root) (targets : List (Differential genus))
+    (differential : Differential genus) (index : Nat) : PathModel :=
   ⟨(((initial.states targets index).state.parents.map (recastCenteredEdge differential)).map CenteredEdge.model)⟩
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- The checked compatible refinement between consecutive root-safe flat models. -/
-def flatStep (initial : RootClosedState curve source root) (targets : List (Differentials.Basic.Differential genus))
-    (differential : Differentials.Basic.Differential genus) (index : Nat) :
-    Basic.PathModel.CompatibleConstantPathRefinement (flatModel initial targets differential index).cells
+def flatStep (initial : RootClosedState curve source root) (targets : List (Differential genus))
+    (differential : Differential genus) (index : Nat) :
+    PathModel.CompatibleConstantPathRefinement (flatModel initial targets differential index).cells
       (flatModel initial targets differential (index + 1)).cells :=
   (initial.scheduledStep targets index).compatible differential
 
 open Purelib.Curves.Hyperelliptic in
 /-- A requested differential's initial flat allowance is bounded by the original schedule base. -/
 theorem initialAllowance_le (initial : RootClosedState curve source root) (targets : List
-  (Differentials.Basic.Differential genus))
-    (differential : Differentials.Basic.Differential genus) (member : differential ∈ targets) :
+  (Differential genus))
+    (differential : Differential genus) (member : differential ∈ targets) :
     (flatModel initial targets differential 0).aggregateAllowance ≤ initial.state.scheduleBase targets :=
   initial.state.initialFlatModelAllowance_le_base targets differential member
 
@@ -108,9 +110,9 @@ open Purelib.Approximation.Rational in
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data.Rat in
 /-- Every requested root-safe flat model meets its stage's geometric allowance bound. -/
-theorem flatAllowance_le (initial : RootClosedState curve source root) (targets : List (Differentials.Basic.Differential
+theorem flatAllowance_le (initial : RootClosedState curve source root) (targets : List (Differential
   genus))
-    (differential : Differentials.Basic.Differential genus) (member : differential ∈ targets) :
+    (differential : Differential genus) (member : differential ∈ targets) :
     ∀ index, (flatModel initial targets differential index).aggregateAllowance ≤
       Geometric.Basic.quarterRadius (initial.state.scheduleBase targets) index
   | 0 => by
@@ -124,13 +126,13 @@ open Purelib.Data.Rat in
 open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- Consecutive flat comparisons meet the geometric bound with three times the original schedule base. -/
 theorem flatComparison_le (initial : RootClosedState curve source root) (targets : List
-  (Differentials.Basic.Differential genus))
-    (differential : Differentials.Basic.Differential genus) (member : differential ∈ targets) (index : Nat) :
+  (Differential genus))
+    (differential : Differential genus) (member : differential ∈ targets) (index : Nat) :
     (CompatibleRefinement.PathModel.CompatibleConstantPathRefinement.comparisonAllowance (flatStep initial targets
       differential index)) ≤
       Geometric.Basic.quarterRadius (3 * initial.state.scheduleBase targets) index := by
   have compared := (initial.scheduledStep targets index).comparisonAllowance_le differential member
-  have parent := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  have parent := Arithmetic.mul_le_mul_of_nonneg_left_direct
     (flatAllowance_le initial targets differential member index) (show (0 : Fraction.Rational) ≤ 2 by decide)
   have later := quarterRadius_antitone
     (initial.state.scheduleBase_positive targets).le (Nat.le_succ index)
@@ -150,29 +152,29 @@ open Purelib.Integration.Program in
 
 The retained original stage sequence supplies all models and witnesses; its comparison scale is three times the initial
 state's schedule base. -/
-def flatProgram (initial : RootClosedState curve source root) (targets : List (Differentials.Basic.Differential genus))
-    (differential : Differentials.Basic.Differential genus) (member : differential ∈ targets) :
-      Gaussian.Sequential.SequentialCompatibleConstantRefinementProgram where
+def flatProgram (initial : RootClosedState curve source root) (targets : List (Differential genus))
+    (differential : Differential genus) (member : differential ∈ targets) :
+      SequentialCompatibleConstantRefinementProgram where
   model := flatModel initial targets differential
   steps := flatStep initial targets differential
   stepScale := 3 * initial.state.scheduleBase targets
-  stepScale_nonneg := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (initial.state.scheduleBase_positive
+  stepScale_nonneg := Arithmetic.mul_nonneg_direct (by decide) (initial.state.scheduleBase_positive
     targets).le
   initialAllowance_le := by
     calc
       _ ≤ initial.state.scheduleBase targets := initialAllowance_le initial targets differential member
       _ = 1 * initial.state.scheduleBase targets := by ring1
       _ ≤ 12 * initial.state.scheduleBase targets :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (show (1 : Fraction.Rational) ≤ 12 by decide)
+        Arithmetic.mul_le_mul_of_nonneg_right_direct (show (1 : Fraction.Rational) ≤ 12 by decide)
           (initial.state.scheduleBase_positive targets).le
       _ = _ := by ring1
   comparisonAllowance_le := flatComparison_le initial targets differential member
 
 open Purelib.Curves.Hyperelliptic in
 /-- The switched root-safe model has exactly the same sample as its flat parent model. -/
-theorem sample_eq_flat (initial : RootClosedState curve source root) (targets : List (Differentials.Basic.Differential
+theorem sample_eq_flat (initial : RootClosedState curve source root) (targets : List (Differential
   genus))
-    (differential : Differentials.Basic.Differential genus) (index : Nat) :
+    (differential : Differential genus) (index : Nat) :
     ((initial.states targets index).state.model differential).integralSample =
       (flatModel initial targets differential index).integralSample :=
   SwitchedPathChain.recastCells_integralSample differential (initial.states targets index).state.chain
@@ -184,8 +186,8 @@ open Purelib.Data.Rat in
 
 The stationary-switch factor scales the flat error payments while the identical flat samples supply later closeness and
 the uniform center bound. -/
-def period (initial : RootClosedState curve source root) (targets : List (Differentials.Basic.Differential genus))
-    (differential : Differentials.Basic.Differential genus) (member : differential ∈ targets) : RefinementProgram := by
+def period (initial : RootClosedState curve source root) (targets : List (Differential genus))
+    (differential : Differential genus) (member : differential ∈ targets) : RefinementProgram := by
   let flat := (flatProgram initial targets differential member).toRefinementProgram
   let factor := initial.state.chain.switchFactor
   have factorPositive : 0 < factor := initial.state.chain.switchFactor_positive
@@ -195,7 +197,7 @@ def period (initial : RootClosedState curve source root) (targets : List (Differ
   exact
     { model := fun index => (initial.states targets index).state.model differential
       errorScale := factor * flat.errorScale
-      errorScale_nonneg := Fraction.Order.Arithmetic.mul_nonneg_direct factorPositive.le flat.errorScale_nonneg
+      errorScale_nonneg := Arithmetic.mul_nonneg_direct factorPositive.le flat.errorScale_nonneg
       modelAllowance_le := by
         intro index
         have bound := SwitchedPathChain.recastCells_aggregateAllowance_le_switchFactor
@@ -206,7 +208,7 @@ def period (initial : RootClosedState curve source root) (targets : List (Differ
         calc
           _ ≤ factor * (flatModel initial targets differential index).aggregateAllowance := bound
           _ ≤ factor * Geometric.Basic.quarterRadius flat.errorScale index :=
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (flat.modelAllowance_le index) factorPositive.le
+            Arithmetic.mul_le_mul_of_nonneg_left_direct (flat.modelAllowance_le index) factorPositive.le
           _ = _ := by
             rw [Geometric.Basic.quarterRadius_eq_mul_pow, Geometric.Basic.quarterRadius_eq_mul_pow]
             ring1
@@ -217,7 +219,7 @@ def period (initial : RootClosedState curve source root) (targets : List (Differ
           _ ≤ Geometric.Basic.quarterRadius flat.errorScale earlier := flat.later_close order
           _ = 1 * Geometric.Basic.quarterRadius flat.errorScale earlier := by ring1
           _ ≤ factor * Geometric.Basic.quarterRadius flat.errorScale earlier :=
-            Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct oneLeFactor
+            Arithmetic.mul_le_mul_of_nonneg_right_direct oneLeFactor
               (Geometric.Basic.quarterRadius_nonneg flat.errorScale_nonneg earlier)
           _ = _ := by
             rw [Geometric.Basic.quarterRadius_eq_mul_pow, Geometric.Basic.quarterRadius_eq_mul_pow]
@@ -232,7 +234,7 @@ def period (initial : RootClosedState curve source root) (targets : List (Differ
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Geometry.Path.Gaussian in
 /-- Read the closed lifted-cycle sequence from the retained root-safe states. -/
-def cycle (initial : RootClosedState curve source root) (targets : List (Differentials.Basic.Differential genus)) :
+def cycle (initial : RootClosedState curve source root) (targets : List (Differential genus)) :
     Lifted.Refinement.LiftedCycleRefinement 2 where
   liftedPath := fun index => (initial.states targets index).state.closedLift (initial.states targets index).closed
 
@@ -240,8 +242,8 @@ open Purelib.Curves.Hyperelliptic in
 open Purelib.Curves.Hyperelliptic.Integration in
 /-- Certify the target differential integral on the exact retained root-safe cycle sequence. -/
 def certifiedPeriodProgram (initial : RootClosedState curve source root) (targets : List
-  (Differentials.Basic.Differential genus))
-    (differential : Differentials.Basic.Differential genus) (member : differential ∈ targets) :
+  (Differential genus))
+    (differential : Differential genus) (member : differential ∈ targets) :
     Algebraic.Period.Basis.CertifiedPeriodProgram curve differential (cycle initial targets) where
   integral := period initial targets differential member
   certificates := fun index =>
@@ -263,9 +265,9 @@ open Purelib.Riemann.Integration in
 open Purelib.Riemann.Periods in
 open Purelib.Riemann.Topology in
 /-- The root-safe A-cycle sequence from the original canonical owner-closed seed. -/
-def ownerClosedARootCycle {genus : Nat} (curve : Basic.HyperellipticCurve genus) (cycleIndex : Fin genus) :
+def ownerClosedARootCycle {genus : Nat} (curve : HyperellipticCurve genus) (cycleIndex : Fin genus) :
     Lifted.Refinement.LiftedCycleRefinement 2 :=
-  PreparedRootSafePeriodPrograms.RootClosedState.cycle
+  RootClosedState.cycle
     (PreparedRootSafeCycleStates.ClosedBoundaryDoublePath.rootClosedInitial
       (PreparedOwnerClosedSchedules.PreparedRefinementPrograms.ownerClosedASeed curve cycleIndex)
       (PeriodMatrix.standardDifferential cycleIndex))
@@ -277,11 +279,11 @@ open Purelib.Riemann.Integration in
 open Purelib.Riemann.Periods in
 open Purelib.Riemann.Topology in
 /-- The requested standard differential's certified period on the original root-safe A cycle. -/
-def ownerClosedARootPeriodProgram {genus : Nat} (curve : Basic.HyperellipticCurve genus)
+def ownerClosedARootPeriodProgram {genus : Nat} (curve : HyperellipticCurve genus)
     (cycleIndex differentialIndex : Fin genus) :
     Algebraic.Period.Basis.CertifiedPeriodProgram curve (PeriodMatrix.standardDifferential differentialIndex)
       (ownerClosedARootCycle curve cycleIndex) :=
-  PreparedRootSafePeriodPrograms.RootClosedState.certifiedPeriodProgram
+  RootClosedState.certifiedPeriodProgram
     (PreparedRootSafeCycleStates.ClosedBoundaryDoublePath.rootClosedInitial
       (PreparedOwnerClosedSchedules.PreparedRefinementPrograms.ownerClosedASeed curve cycleIndex)
       (PeriodMatrix.standardDifferential cycleIndex))

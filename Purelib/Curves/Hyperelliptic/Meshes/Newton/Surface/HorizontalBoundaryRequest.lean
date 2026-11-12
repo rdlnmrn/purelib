@@ -104,42 +104,42 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels (
 open _root_.Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid (EndpointPolygonPreparation)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.EndpointPolygonEnergy.EndpointPolygonPreparation (EnergyRequest)
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve branches
     higher}
-  {preparation : Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius
-    : Data.Rat.Fraction.Rational} {grid : Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid
+  {preparation : NewtonPreparation original} {target radius
+    : Rational} {grid : NewtonGrid
     preparation target radius}
-  {observations : Riemann.RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
+  {observations : ProtectedObservations original} {frames :
     RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars}
-    {partitions : Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid}
-  {surfaceCuts : Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceCuts partitions domains}
+  {domains : FaceDomainBank frames grid.faces.regulars}
+    {partitions : SurfacePartitions observations grid}
+  {surfaceCuts : SurfaceCuts partitions domains}
   {first last : Fin grid.faces.regulars.length}
-  {start : Data.Gaussian.Basic.Canonical} {owner : Riemann.Topology.SquareRootContinuationChain.Owner
+  {start : Gaussian} {owner : Riemann.Topology.SquareRootContinuationChain.Owner
     (curve.polynomial.eval start)}
-  (firstEntry : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry (domains.get first).models start
+  (firstEntry : Entry (domains.get first).models start
     owner)
-  (lastEntry : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry (domains.get last).models start
+  (lastEntry : Entry (domains.get last).models start
     owner)
-  {coarseDepth : Nat} {fixed : (sheet : Fin 2) → Riemann.RootContinuation.NewtonRequestedObservationEnergy.Preflights
-    domains sheet} {error : Data.Rat.Fraction.Rational}
+  {coarseDepth : Nat} {fixed : (sheet : Fin 2) → Preflights
+    domains sheet} {error : Rational}
 
-variable (requests : Riemann.Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests
-  (fun sheet => Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains
+variable (requests : SynchronizedSurfaceRequests
+  (fun sheet => MeshCompatibility.surfaceMeshes partitions domains
     surfaceCuts sheet coarseDepth) fixed error)
 
 variable
-  (firstTraces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.PiecePerimeterTraces (requests.entries.get
+  (firstTraces : PiecePerimeterTraces (requests.entries.get
     firstEntry.sheet) first)
-  (lastTraces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.PiecePerimeterTraces (requests.entries.get
+  (lastTraces : PiecePerimeterTraces (requests.entries.get
     lastEntry.sheet) last)
 
 section HorizontalBoundaryRequest
 
 variable {count : Nat}
-  (pieces : Fin (count + 1) → Curves.Hyperelliptic.Meshes.Newton.Surface.BoundaryPieces.HorizontalPieces (partitions.get
+  (pieces : Fin (count + 1) → HorizontalPieces (partitions.get
     first) (partitions.get last))
   (endpoints : PuncturedGrid.EndpointPolygonPreparation
     (leftEntry := firstEntry) (rightEntry := lastEntry)
@@ -147,7 +147,7 @@ variable {count : Nat}
       lastTraces pieces))
 
 /-- The original matched horizontal trace on every retained cross-face piece at the shared surface depth. -/
-@[expose] def Traces := Data.Vector.DependentVector (fun piece =>
+@[expose] def Traces := DependentVector (fun piece =>
   (CrossFaceSides.horizontalFaceSide (requests.entries.get firstEntry.sheet) (requests.entries.get lastEntry.sheet)
     first last (pieces piece).firstPiece (pieces piece).lastPiece
     (pieces piece).lower_eq (pieces piece).upper_eq (pieces piece).joined).Trace requests.depth)
@@ -170,7 +170,7 @@ variable (traces : Traces
   firstEntry lastEntry requests pieces)
 
 /-- The original horizontal conjugate energy request bank, using the retained endpoint contacts and piece origins. -/
-@[expose] def PieceRequests (allowance : Fraction.Rational) (floor : Nat) := Data.Vector.DependentVector (fun piece =>
+@[expose] def PieceRequests (allowance : Rational) (floor : Nat) := DependentVector (fun piece =>
   let vertex := VertexTrace.pairedEndpointStart
     (fun index => RectangularOwnedPerimeterTraces.topOwned (firstTraces.get (pieces index).firstPiece))
     (fun index => RectangularOwnedPerimeterTraces.bottomOwned (lastTraces.get (pieces index).lastPiece)) piece
@@ -182,7 +182,7 @@ namespace PieceRequests
 
 /-- Prepare every original horizontal piece energy request from its retained endpoint contact and actual piece origin.
 -/
-@[expose] def build (allowance : Fraction.Rational) (positive : 0 < allowance) (floor : Nat) :
+@[expose] def build (allowance : Rational) (positive : 0 < allowance) (floor : Nat) :
     PieceRequests
       firstEntry lastEntry requests firstTraces lastTraces pieces endpoints traces allowance floor :=
   DependentVector.ofFn fun piece => PieceRequests.horizontalPieceRequest firstEntry lastEntry requests
@@ -190,7 +190,7 @@ namespace PieceRequests
 
 end PieceRequests
 
-variable {pieceAllowance polygonAllowance : Data.Rat.Fraction.Rational} {floor : Nat}
+variable {pieceAllowance polygonAllowance : Rational} {floor : Nat}
 
 namespace PieceRequests
 
@@ -207,9 +207,9 @@ set_option genInjectivity false in
 /-- A complete horizontal boundary schedule retaining its endpoint polygon and every original matched piece request.
 
 One common stage pays both request families, the original surface schedule and the supplied floor. -/
-structure Request (pieceAllowance polygonAllowance : Fraction.Rational) (floor : Nat) where
+structure Request (pieceAllowance polygonAllowance : Rational) (floor : Nat) where
   /-- The original endpoint polygon energy request with the retained surface and numerical floors. -/ polygon :
-    EndpointPolygonPreparation.EnergyRequest endpoints polygonAllowance (max requests.index floor)
+    EnergyRequest endpoints polygonAllowance (max requests.index floor)
   /-- All original horizontal matched-piece energy requests on the same retained endpoint preparation. -/ entries :
     PieceRequests
     firstEntry lastEntry requests firstTraces lastTraces pieces endpoints traces pieceAllowance floor
@@ -227,7 +227,7 @@ namespace Request
 
 /-- Prepare the original endpoint polygon and all horizontal piece requests, then retain one maximum stage paying the
 complete boundary schedule. -/
-@[expose] def build (pieceAllowance polygonAllowance : Fraction.Rational)
+@[expose] def build (pieceAllowance polygonAllowance : Rational)
     (piecePositive : 0 < pieceAllowance) (polygonPositive : 0 < polygonAllowance) (floor : Nat) :
     Request firstEntry
       lastEntry requests firstTraces lastTraces pieces endpoints traces pieceAllowance polygonAllowance floor := by

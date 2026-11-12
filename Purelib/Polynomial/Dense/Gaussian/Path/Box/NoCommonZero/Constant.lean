@@ -39,36 +39,36 @@ Each of the four oriented edges retains the same nonzero constant evaluation, so
 common zero. -/
 theorem gaussianConstant_boundaryCoprime {c :
   Gaussian.Basic.Canonical} (nonzero : c ≠ 0)
-    (box : Box) : Dense.Gaussian.Path.Box.NoCommonZero.BoundaryCoprime
-      (Dense.Gaussian.Constants.gaussianConstant c) box := by
+    (box : Box) : BoundaryCoprime
+      (Constants.gaussianConstant c) box := by
   constructor
-  · change (PolynomialEdge.ofLine (Dense.Gaussian.Constants.gaussianConstant c)
+  · change (PolynomialEdge.ofLine (Constants.gaussianConstant c)
       (Gaussian.Cast.Imaginary.horizontalBase box.yLower) Gaussian.Constants.horizontalDirection
       box.xLower box.xUpper).Coprime
     apply PolynomialEdge.ofLine_coprime_of_eval_ne_zero
     intro t
-    rw [Dense.Gaussian.Constants.gaussianConstant_eval]
+    rw [Constants.gaussianConstant_eval]
     exact nonzero
-  · change (PolynomialEdge.ofLine (Dense.Gaussian.Constants.gaussianConstant c)
+  · change (PolynomialEdge.ofLine (Constants.gaussianConstant c)
       (Gaussian.Cast.Winding.verticalBase box.xUpper) Gaussian.Constants.imaginaryUnit
       box.yLower box.yUpper).Coprime
     apply PolynomialEdge.ofLine_coprime_of_eval_ne_zero
     intro t
-    rw [Dense.Gaussian.Constants.gaussianConstant_eval]
+    rw [Constants.gaussianConstant_eval]
     exact nonzero
-  · change (PolynomialEdge.ofLine (Dense.Gaussian.Constants.gaussianConstant c)
+  · change (PolynomialEdge.ofLine (Constants.gaussianConstant c)
       (Gaussian.Cast.Imaginary.horizontalBase box.yUpper) Gaussian.Constants.horizontalDirection
       box.xUpper box.xLower).Coprime
     apply PolynomialEdge.ofLine_coprime_of_eval_ne_zero
     intro t
-    rw [Dense.Gaussian.Constants.gaussianConstant_eval]
+    rw [Constants.gaussianConstant_eval]
     exact nonzero
-  · change (PolynomialEdge.ofLine (Dense.Gaussian.Constants.gaussianConstant c)
+  · change (PolynomialEdge.ofLine (Constants.gaussianConstant c)
       (Gaussian.Cast.Winding.verticalBase box.xLower) Gaussian.Constants.imaginaryUnit
       box.yUpper box.yLower).Coprime
     apply PolynomialEdge.ofLine_coprime_of_eval_ne_zero
     intro t
-    rw [Dense.Gaussian.Constants.gaussianConstant_eval]
+    rw [Constants.gaussianConstant_eval]
     exact nonzero
 end Purelib.Polynomial.Dense.Gaussian.Path.Box.NoCommonZero.Constant
 

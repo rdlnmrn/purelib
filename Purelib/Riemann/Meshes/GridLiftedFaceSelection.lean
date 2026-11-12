@@ -21,6 +21,8 @@ import Purelib.Data.Gaussian.Field
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Geometry.Grid
+
 @[expose] public section
 
 /-!
@@ -43,13 +45,13 @@ open Purelib.Riemann.Meshes.PuncturedGridFaces (RegularFace)
 open Purelib.Riemann.Meshes.GridLiftedMesh (LiftedFaces)
 open Purelib.Riemann.Meshes.GridLiftedFaces.BranchCellBank (LiftedFace)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
 
 /-- Transport retained face lifts along equality of their original ordered face lists. -/
 def reindex {faces other : List (RegularFace bank)} (lifts : LiftedFaces vertices edges faces) (equal : faces = other) :
@@ -123,8 +125,8 @@ open Purelib.Riemann.Meshes
 /-- The original selected triangle list keeps all four head triangles exactly when its face satisfies the predicate. -/
 private theorem selected_cons_eq (keep : RegularFace bank → Bool) {face : RegularFace bank} {faces : List (RegularFace
   bank)}
-    (zero : GridLiftedFaces.BranchCellBank.LiftedFace vertices edges face 0)
-    (one : GridLiftedFaces.BranchCellBank.LiftedFace vertices edges face 1) (tail : LiftedFaces vertices edges faces) :
+    (zero : LiftedFace vertices edges face 0)
+    (one : LiftedFace vertices edges face 1) (tail : LiftedFaces vertices edges faces) :
     (select keep (.cons zero one tail)).selected.triangles =
       if keep face then zero.quad.firstTriangle :: zero.quad.secondTriangle :: one.quad.firstTriangle ::
         one.quad.secondTriangle :: (select keep tail).selected.triangles else (select keep tail).selected.triangles :=
@@ -140,8 +142,8 @@ private theorem selected_cons_eq (keep : RegularFace bank → Bool) {face : Regu
 /-- The original rejected triangle list keeps all four head triangles exactly when its face fails the predicate. -/
 private theorem rejected_cons_eq (keep : RegularFace bank → Bool) {face : RegularFace bank} {faces : List (RegularFace
   bank)}
-    (zero : GridLiftedFaces.BranchCellBank.LiftedFace vertices edges face 0)
-    (one : GridLiftedFaces.BranchCellBank.LiftedFace vertices edges face 1) (tail : LiftedFaces vertices edges faces) :
+    (zero : LiftedFace vertices edges face 0)
+    (one : LiftedFace vertices edges face 1) (tail : LiftedFaces vertices edges faces) :
     (select keep (.cons zero one tail)).rejected.triangles =
       if keep face then (select keep tail).rejected.triangles else
         zero.quad.firstTriangle :: zero.quad.secondTriangle :: one.quad.firstTriangle ::
@@ -190,21 +192,21 @@ open Purelib.Data.Gaussian in
 open Purelib.Polynomial in
 open Purelib.Riemann.Meshes in
 /-- Selected and rejected original triangle sums add to the complete retained triangle sum. -/
-theorem select_sum (keep : RegularFace bank → Bool) (value : OrientedTriangle vertices.count → Basic.Canonical) :
+theorem select_sum (keep : RegularFace bank → Bool) (value : OrientedTriangle vertices.count → Canonical) :
     {faces : List (RegularFace bank)} → (lifts : LiftedFaces vertices edges faces) →
-      Geometry.Grid.CellBoundary.sumValues value (select keep lifts).selected.triangles +
-        Geometry.Grid.CellBoundary.sumValues value (select keep lifts).rejected.triangles =
-          Geometry.Grid.CellBoundary.sumValues value lifts.triangles
-  | _, .nil => by change (0 : Basic.Canonical) + 0 = 0; exact zero_add _
+      CellBoundary.sumValues value (select keep lifts).selected.triangles +
+        CellBoundary.sumValues value (select keep lifts).rejected.triangles =
+          CellBoundary.sumValues value lifts.triangles
+  | _, .nil => by change (0 : Canonical) + 0 = 0; exact zero_add _
   | face :: _, .cons zero one tail => by
       rw [selected_cons_eq, rejected_cons_eq]
       by_cases kept : keep face = true
-      · simp only [if_pos kept, GridLiftedMesh.LiftedFaces.triangles,
-          Geometry.Grid.CellBoundary.sumValues, -eq_self, -iff_self]
+      · simp only [if_pos kept, LiftedFaces.triangles,
+          CellBoundary.sumValues, -eq_self, -iff_self]
         rw [← select_sum keep value tail]
         ring1
-      · simp only [if_neg kept, GridLiftedMesh.LiftedFaces.triangles,
-          Geometry.Grid.CellBoundary.sumValues, -eq_self, -iff_self]
+      · simp only [if_neg kept, LiftedFaces.triangles,
+          CellBoundary.sumValues, -eq_self, -iff_self]
         rw [← select_sum keep value tail]
         ring1
 
@@ -217,13 +219,13 @@ selection at each head. Scalar Boolean splitting preserves the original
 selected tails and their exact triangle sums. -/
 theorem select_or_sum (first second : RegularFace bank → Bool)
     (disjoint : ∀ face, first face = true → second face = true → False)
-    (value : OrientedTriangle vertices.count → Basic.Canonical) :
+    (value : OrientedTriangle vertices.count → Canonical) :
     {faces : List (RegularFace bank)} → (lifts : LiftedFaces vertices edges faces) →
-      Geometry.Grid.CellBoundary.sumValues value (select (fun face => first face || second face)
+      CellBoundary.sumValues value (select (fun face => first face || second face)
         lifts).selected.triangles =
-        Geometry.Grid.CellBoundary.sumValues value (select first lifts).selected.triangles +
-          Geometry.Grid.CellBoundary.sumValues value (select second lifts).selected.triangles
-  | _, .nil => by change (0 : Basic.Canonical) = 0 + 0; exact (zero_add _).symm
+        CellBoundary.sumValues value (select first lifts).selected.triangles +
+          CellBoundary.sumValues value (select second lifts).selected.triangles
+  | _, .nil => by change (0 : Canonical) = 0 + 0; exact (zero_add _).symm
   | face :: _, .cons zero one tail => by
       rw [selected_cons_eq, selected_cons_eq, selected_cons_eq]
       cases left : first face with
@@ -234,14 +236,14 @@ theorem select_or_sum (first second : RegularFace bank → Bool)
               exact select_or_sum first second disjoint value tail
           | true =>
               simp only [Bool.false_or, if_neg Bool.false_ne_true,
-                if_pos rfl, Geometry.Grid.CellBoundary.sumValues, -eq_self, -iff_self]
+                if_pos rfl, CellBoundary.sumValues, -eq_self, -iff_self]
               rw [select_or_sum first second disjoint value tail]
               ring1
       | true =>
           cases right : second face with
           | false =>
               simp only [Bool.or_false, if_neg Bool.false_ne_true,
-                if_pos rfl, Geometry.Grid.CellBoundary.sumValues, -eq_self, -iff_self]
+                if_pos rfl, CellBoundary.sumValues, -eq_self, -iff_self]
               rw [select_or_sum first second disjoint value tail]
               ring1
           | true => exact (disjoint face left right).elim
@@ -276,22 +278,22 @@ open Purelib.Polynomial in
 The proof keeps the original label list and each selection's retained triangles, combining finite sums through disjoint
 unions. -/
 theorem select_family_sum {Label : Type} (keep : Label → RegularFace bank → Bool)
-    (value : OrientedTriangle vertices.count → Basic.Canonical) (labels : List Label)
+    (value : OrientedTriangle vertices.count → Canonical) (labels : List Label)
     (disjoint : labels.Pairwise (fun first second => ∀ face,
       keep first face = true → keep second face = true → False))
     {faces : List (RegularFace bank)} (lifts : LiftedFaces vertices edges faces) :
-    Geometry.Grid.CellBoundary.sumValues value (select (fun face => labels.any (fun label => keep label face))
+    CellBoundary.sumValues value (select (fun face => labels.any (fun label => keep label face))
       lifts).selected.triangles =
-      Geometry.Grid.CellBoundary.sumValues (fun label => Geometry.Grid.CellBoundary.sumValues value (select (keep label)
+      CellBoundary.sumValues (fun label => CellBoundary.sumValues value (select (keep label)
         lifts).selected.triangles) labels := by
   induction labels with
-  | nil => exact congrArg (Geometry.Grid.CellBoundary.sumValues value) (select_false_triangles lifts)
+  | nil => exact congrArg (CellBoundary.sumValues value) (select_false_triangles lifts)
   | cons head tail ih =>
       have separate : ∀ face, keep head face = true → tail.any (fun label => keep label face) = true → False := by
         intro face kept found
         obtain ⟨label, member, keptTail⟩ := any_true_witness (fun label => keep label face) tail found
         exact (List.pairwise_cons.mp disjoint).1 label member face kept keptTail
-      change Geometry.Grid.CellBoundary.sumValues value (select (fun face => keep head face || tail.any (fun label =>
+      change CellBoundary.sumValues value (select (fun face => keep head face || tail.any (fun label =>
         keep label face)) lifts).selected.triangles = _
       rw [select_or_sum _ _ separate value lifts, ih (List.pairwise_cons.mp disjoint).2]
       rfl

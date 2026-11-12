@@ -76,25 +76,25 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleRootedCorrection (HoleSideLifts rootedHoleCorrection)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_ite_eq)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {cuts : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : Riemann.Meshes.FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
+  {cuts : CommonCuts domains}
     {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
-  {target : Purelib.Data.Rat.Fraction.Rational} {i j : Fin genus} {stage : Nat} {cache :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
-  {request : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet
+    Preflights domains sheet}
+  {target : Rational} {i j : Fin genus} {stage : Nat} {cache :
+    RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  {request : TwoSheetRequest (fun sheet =>
+    RegularMeshes.build domains cuts sheet
     coarseDepth) fixed target}
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleLiftedSides.FramedPuncturedGrid.HoleAdjacentFace (LiftedSide)
 
 /-- The signed area of an actual retained face side minus its endpoint chord. -/
-def sideAreaRemainder (perimeters : Matched.FacePerimeters (request := request) cache i j)
-    (position : Fin base.faces.regulars.length) (sheet : Fin 2) (side : GridLiftedDualSteps.GridSide) : Gaussian :=
+def sideAreaRemainder (perimeters : FacePerimeters (request := request) cache i j)
+    (position : Fin base.faces.regulars.length) (sheet : Fin 2) (side : GridSide) : Gaussian :=
   (match side with
     | .bottom => ((perimeters.perimeters.get position).get sheet).bottom
     | .right => ((perimeters.perimeters.get position).get sheet).right
@@ -106,35 +106,35 @@ def sideAreaRemainder (perimeters : Matched.FacePerimeters (request := request) 
 
 All four adjacent faces retain their selected sheets, and each actual side area is centered by its own endpoint chord.
 -/
-def holeAreaRemainder (perimeters : Matched.FacePerimeters (request := request) cache.normalize i j)
+def holeAreaRemainder (perimeters : FacePerimeters (request := request) cache.normalize i j)
     {hole : Fin base.faces.holes.length} {adjacent : HoleAdjacentFaces base
       (base.faces.holes[hole.val]'hole.isLt)}
-    (sides : HoleRootedCorrection.HoleSideLifts lifted adjacent) : Gaussian :=
+    (sides : HoleSideLifts lifted adjacent) : Gaussian :=
   FiniteSum.Fin.sumFin (fun sheet =>
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleAreaRemainder.sideAreaRemainder perimeters adjacent.left.position
+    HoleAreaRemainder.sideAreaRemainder perimeters adjacent.left.position
       (sides.left.get sheet).selected.sheet .right -
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleAreaRemainder.sideAreaRemainder perimeters adjacent.right.position
+    HoleAreaRemainder.sideAreaRemainder perimeters adjacent.right.position
       (sides.right.get sheet).selected.sheet .left -
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleAreaRemainder.sideAreaRemainder perimeters adjacent.bottom.position
+    (HoleAreaRemainder.sideAreaRemainder perimeters adjacent.bottom.position
       (sides.bottom.get sheet).selected.sheet .top -
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleAreaRemainder.sideAreaRemainder perimeters adjacent.top.position
+      HoleAreaRemainder.sideAreaRemainder perimeters adjacent.top.position
         (sides.top.get sheet).selected.sheet .bottom))
 
 /-- The original rooted hole correction equals the signed sum of its actual side-area remainders. -/
-theorem rootedHoleCorrection_eq_remainder (perimeters : Matched.FacePerimeters (request := request)
+theorem rootedHoleCorrection_eq_remainder (perimeters : FacePerimeters (request := request)
   cache.normalize i j)
     (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh) (right :
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
     {hole : Fin base.faces.holes.length} {adjacent : HoleAdjacentFaces base
       (base.faces.holes[hole.val]'hole.isLt)}
-    (sides : HoleRootedCorrection.HoleSideLifts lifted adjacent) :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleRootedCorrection.rootedHoleCorrection perimeters left right
-      sides = Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleAreaRemainder.holeAreaRemainder perimeters sides :=
+    (sides : HoleSideLifts lifted adjacent) :
+    HoleRootedCorrection.rootedHoleCorrection perimeters left right
+      sides = HoleAreaRemainder.holeAreaRemainder perimeters sides :=
       by
   unfold HoleRootedCorrection.rootedHoleCorrection HoleAreaRemainder.holeAreaRemainder
   apply FiniteSum.Fin.sumFin_congr
   intro sheet
-  simp only [Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleAreaRemainder.sideAreaRemainder,
+  simp only [HoleAreaRemainder.sideAreaRemainder,
     Numerics.normalized_bottom_chord cache,
     Numerics.normalized_left_chord cache,
     TriangleReadings.normalized_right_chord left right,

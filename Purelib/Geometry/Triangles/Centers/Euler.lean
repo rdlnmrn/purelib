@@ -32,6 +32,8 @@ import Mathlib.Logic.Nontrivial.Defs
 public import Purelib.Geometry.Plane.Medians
 import Purelib.Tactic.Ring
 
+open Purelib.Algebra.Field
+
 section
 open Purelib
 open Purelib.Geometry
@@ -47,7 +49,7 @@ open Purelib.LinearAlgebra.Alternating.Bracket
 open scoped Purelib.Data.Nat
 attribute [local instance 2000] Purelib.Data.Nat.successorNeZero
   Purelib.Data.Nat.successorAtLeastTwo
-  Purelib.Algebra.Group.Negation.subNegZeroMonoid
+  Algebra.Group.Negation.subNegZeroMonoid
 
 section
 public section
@@ -64,7 +66,7 @@ introduced: collinearity is the finite three-point determinant relation.
 
 section
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Purelib.Geometry.Triangles.Centers.Euler
 
@@ -79,9 +81,9 @@ theorem euler_center_weight_identity
   have areaCancel :
       QuadTriple.Basic.archimedesFunction q₁ q₂ q₃ *
           (QuadTriple.Basic.archimedesFunction q₁ q₂ q₃)⁻¹ = 1 :=
-    Algebra.Field.ExplicitField.mul_inv_cancel _ areaNonzero
+    ExplicitField.mul_inv_cancel _ areaNonzero
   unfold Affine.affineCircumcenterWeight Affine.affineOrthocenterWeight
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  simp only [ExplicitField.div_eq_mul_inv]
   calc
     2 * (q₁ * (q₂ + q₃ - q₁) *
           (QuadTriple.Basic.archimedesFunction q₁ q₂ q₃)⁻¹) +
@@ -119,7 +121,7 @@ theorem euler_affine_center_relation
       notCollinear
   have firstWeight : 2 * c₁ + o₁ = 1 := by
     unfold c₁ o₁ area Quadrea.Basic.quadrea q₁ q₂ q₃
-    exact Geometry.Triangles.Centers.Euler.euler_center_weight_identity
+    exact euler_center_weight_identity
       (Quadrance.quadrance second third) (Quadrance.quadrance first third)
       (Quadrance.quadrance first second) areaNonzero
   have secondWeight : 2 * c₂ + o₂ = 1 := by
@@ -136,7 +138,7 @@ theorem euler_affine_center_relation
           (Quadrance.quadrance first second) (Quadrance.quadrance second third) ≠ 0 := by
       rw [rotatedArea]
       exact areaNonzero
-    have result := Geometry.Triangles.Centers.Euler.euler_center_weight_identity
+    have result := euler_center_weight_identity
       (Quadrance.quadrance first third) (Quadrance.quadrance first second)
       (Quadrance.quadrance second third) rotatedAreaNonzero
     rw [rotatedArea] at result
@@ -155,7 +157,7 @@ theorem euler_affine_center_relation
           (Quadrance.quadrance second third) (Quadrance.quadrance first third) ≠ 0 := by
       rw [rotatedArea]
       exact areaNonzero
-    have result := Geometry.Triangles.Centers.Euler.euler_center_weight_identity
+    have result := euler_center_weight_identity
       (Quadrance.quadrance first second) (Quadrance.quadrance second third)
       (Quadrance.quadrance first third) rotatedAreaNonzero
     rw [rotatedArea] at result
@@ -166,7 +168,7 @@ theorem euler_affine_center_relation
           (1 / 3 : K) *
             (o₁ * first.x + o₂ * second.x + o₃ * third.x) =
         (first.x + second.x + third.x) / 3
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    simp only [ExplicitField.div_eq_mul_inv]
     calc
       2 * (3 : K)⁻¹ *
             (c₁ * first.x + c₂ * second.x + c₃ * third.x) +
@@ -185,7 +187,7 @@ theorem euler_affine_center_relation
           (1 / 3 : K) *
             (o₁ * first.y + o₂ * second.y + o₃ * third.y) =
         (first.y + second.y + third.y) / 3
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    simp only [ExplicitField.div_eq_mul_inv]
     calc
       2 * (3 : K)⁻¹ *
             (c₁ * first.y + c₂ * second.y + c₃ * third.y) +
@@ -209,17 +211,17 @@ theorem euler_center_relation
     (notCollinear : ¬ Incidence.Collinear first second third)
     (twoNonzero : (2 : K) ≠ 0) :
     Affine.affineCombination ((2 : K) / 3)
-        (Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+        (Basic.circumcenterPoint first second third firstThirdDistinct
           secondThirdDistinct notCollinear)
         ((1 : K) / 3)
-        (Orthocenter.Basic.orthocenterPoint first second third firstThirdDistinct
+        (Basic.orthocenterPoint first second third firstThirdDistinct
           secondThirdDistinct notCollinear) =
       centroidPoint first second third := by
   rw [Affine.affine_circumcenter first second third firstThirdDistinct
     secondThirdDistinct notCollinear twoNonzero]
   rw [Affine.affine_orthocenter first second third firstThirdDistinct
     secondThirdDistinct notCollinear twoNonzero]
-  exact Geometry.Triangles.Centers.Euler.euler_affine_center_relation first second third notCollinear
+  exact euler_affine_center_relation first second third notCollinear
     twoNonzero
 
 /-- The denominator-cleared coordinate form `2C+O=A₁+A₂+A₃`. Unlike the divided centroid relation, this identity remains
@@ -232,10 +234,10 @@ theorem euler_center_cleared_coordinates
     (notCollinear : ¬ Incidence.Collinear first second third)
     (twoNonzero : (2 : K) ≠ 0) :
     let circumcenter :=
-      Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+      Basic.circumcenterPoint first second third firstThirdDistinct
         secondThirdDistinct notCollinear
     let orthocenter :=
-      Orthocenter.Basic.orthocenterPoint first second third firstThirdDistinct
+      Basic.orthocenterPoint first second third firstThirdDistinct
         secondThirdDistinct notCollinear
     2 * circumcenter.x + orthocenter.x = first.x + second.x + third.x ∧
       2 * circumcenter.y + orthocenter.y = first.y + second.y + third.y := by
@@ -261,20 +263,20 @@ theorem euler_center_cleared_coordinates
     exact (Incidence.collinear_iff_pointDeterminant_eq_zero first second third).2
       determinantZero
   have twiceDenominatorNonzero : 2 * denominator ≠ 0 :=
-    Algebra.Field.ExplicitField.mul_ne_zero twoNonzero denominatorNonzero
+    ExplicitField.mul_ne_zero twoNonzero denominatorNonzero
   constructor
   · change 2 * (circumcenterX / (2 * denominator)) +
         orthocenterX / denominator = first.x + second.x + third.x
-    apply Algebra.Field.ExplicitField.eq_of_mul_eq_mul_right twiceDenominatorNonzero
+    apply ExplicitField.eq_of_mul_eq_mul_right twiceDenominatorNonzero
     calc
       (2 * (circumcenterX / (2 * denominator)) +
           orthocenterX / denominator) * (2 * denominator) =
         2 * ((circumcenterX / (2 * denominator)) * (2 * denominator)) +
           2 * ((orthocenterX / denominator) * denominator) := by ring1
       _ = 2 * circumcenterX + 2 * orthocenterX := by
-        rw [Algebra.Field.ExplicitField.div_mul_cancel circumcenterX
+        rw [ExplicitField.div_mul_cancel circumcenterX
             twiceDenominatorNonzero,
-          Algebra.Field.ExplicitField.div_mul_cancel orthocenterX denominatorNonzero]
+          ExplicitField.div_mul_cancel orthocenterX denominatorNonzero]
       _ = (first.x + second.x + third.x) * (2 * denominator) := by
         unfold circumcenterX orthocenterX denominator
           Formula.circumcenterXNumerator Formula.orthocenterXNumerator
@@ -282,16 +284,16 @@ theorem euler_center_cleared_coordinates
         ring1
   · change 2 * (circumcenterY / (2 * denominator)) +
         orthocenterY / denominator = first.y + second.y + third.y
-    apply Algebra.Field.ExplicitField.eq_of_mul_eq_mul_right twiceDenominatorNonzero
+    apply ExplicitField.eq_of_mul_eq_mul_right twiceDenominatorNonzero
     calc
       (2 * (circumcenterY / (2 * denominator)) +
           orthocenterY / denominator) * (2 * denominator) =
         2 * ((circumcenterY / (2 * denominator)) * (2 * denominator)) +
           2 * ((orthocenterY / denominator) * denominator) := by ring1
       _ = 2 * circumcenterY + 2 * orthocenterY := by
-        rw [Algebra.Field.ExplicitField.div_mul_cancel circumcenterY
+        rw [ExplicitField.div_mul_cancel circumcenterY
             twiceDenominatorNonzero,
-          Algebra.Field.ExplicitField.div_mul_cancel orthocenterY denominatorNonzero]
+          ExplicitField.div_mul_cancel orthocenterY denominatorNonzero]
       _ = (first.y + second.y + third.y) * (2 * denominator) := by
         unfold circumcenterY orthocenterY denominator
           Formula.circumcenterYNumerator Formula.orthocenterYNumerator
@@ -309,27 +311,27 @@ theorem euler_line
     (twoNonzero : (2 : K) ≠ 0)
     (threeNonzero : (3 : K) ≠ 0) :
     Incidence.Collinear
-      (Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+      (Basic.circumcenterPoint first second third firstThirdDistinct
         secondThirdDistinct notCollinear)
-      (Orthocenter.Basic.orthocenterPoint first second third firstThirdDistinct
+      (Basic.orthocenterPoint first second third firstThirdDistinct
         secondThirdDistinct notCollinear)
       (centroidPoint first second third) := by
   have weightsSum : (2 / 3 : K) + 1 / 3 = 1 := by
-    apply Algebra.Field.ExplicitField.eq_of_mul_eq_mul_right threeNonzero
+    apply ExplicitField.eq_of_mul_eq_mul_right threeNonzero
     calc
       ((2 / 3 : K) + 1 / 3) * 3 =
           (2 / 3 : K) * 3 + (1 / 3 : K) * 3 := by ring1
       _ = 2 + 1 := by
-        rw [Algebra.Field.ExplicitField.div_mul_cancel 2 threeNonzero,
-          Algebra.Field.ExplicitField.div_mul_cancel 1 threeNonzero]
+        rw [ExplicitField.div_mul_cancel 2 threeNonzero,
+          ExplicitField.div_mul_cancel 1 threeNonzero]
       _ = 1 * 3 := by ring1
   have centersCollinear := Affine.collinear_affineCombination
-    (Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+    (Basic.circumcenterPoint first second third firstThirdDistinct
       secondThirdDistinct notCollinear)
-    (Orthocenter.Basic.orthocenterPoint first second third firstThirdDistinct
+    (Basic.orthocenterPoint first second third firstThirdDistinct
       secondThirdDistinct notCollinear)
     ((2 : K) / 3) ((1 : K) / 3) weightsSum
-  rw [Geometry.Triangles.Centers.Euler.euler_center_relation first second third firstThirdDistinct
+  rw [euler_center_relation first second third firstThirdDistinct
     secondThirdDistinct notCollinear twoNonzero] at centersCollinear
   exact centersCollinear
 
@@ -350,7 +352,7 @@ theorem exercise_18_1
       Basic.circumcenterPoint first second third firstThirdDistinct
         secondThirdDistinct notCollinear
     let orthocenter :=
-      Orthocenter.Basic.orthocenterPoint first second third firstThirdDistinct
+      Basic.orthocenterPoint first second third firstThirdDistinct
         secondThirdDistinct notCollinear
     (centroid = circumcenter ∧ centroid = orthocenter) ↔
       Equilateral.Basic.IsEquilateralTriangle first second third := by
@@ -360,9 +362,9 @@ theorem exercise_18_1
     Basic.circumcenterPoint first second third firstThirdDistinct
       secondThirdDistinct notCollinear
   let orthocenter :=
-    Orthocenter.Basic.orthocenterPoint first second third firstThirdDistinct
+    Basic.orthocenterPoint first second third firstThirdDistinct
       secondThirdDistinct notCollinear
-  have centerFacts := Circumcenter.Basic.circumcenter first second third firstSecondDistinct
+  have centerFacts := Basic.circumcenter first second third firstSecondDistinct
     firstThirdDistinct secondThirdDistinct notCollinear twoNonzero
   dsimp only at centerFacts
   constructor
@@ -385,7 +387,7 @@ theorem exercise_18_1
         threeNonzero
     have firstQuadrances :
         Quadrance.quadrance first third = Quadrance.quadrance second third := by
-      apply Purelib.Algebra.Group.eq_of_sub_eq_zero
+      apply Algebra.Group.eq_of_sub_eq_zero
       calc
         Quadrance.quadrance first third - Quadrance.quadrance second third =
             3 * (Quadrance.quadrance centroid first - Quadrance.quadrance centroid second) :=
@@ -393,7 +395,7 @@ theorem exercise_18_1
         _ = 0 := by rw [firstSecondRadii]; ring1
     have secondQuadrances :
         Quadrance.quadrance first second = Quadrance.quadrance first third := by
-      apply Purelib.Algebra.Group.eq_of_sub_eq_zero
+      apply Algebra.Group.eq_of_sub_eq_zero
       calc
         Quadrance.quadrance first second - Quadrance.quadrance first third =
             3 * (Quadrance.quadrance centroid second - Quadrance.quadrance centroid third) :=
@@ -409,24 +411,24 @@ theorem exercise_18_1
         threeNonzero
     have firstDifferenceZero :
         Quadrance.quadrance centroid first - Quadrance.quadrance centroid second = 0 := by
-      apply Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left threeNonzero
+      apply ExplicitField.eq_zero_of_mul_eq_zero_left threeNonzero
       calc
         3 * (Quadrance.quadrance centroid first - Quadrance.quadrance centroid second) =
             Quadrance.quadrance first third - Quadrance.quadrance second third := firstDifference
         _ = 0 := by rw [equilateral.1]; ring1
     have secondDifferenceZero :
         Quadrance.quadrance centroid second - Quadrance.quadrance centroid third = 0 := by
-      apply Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left threeNonzero
+      apply ExplicitField.eq_zero_of_mul_eq_zero_left threeNonzero
       calc
         3 * (Quadrance.quadrance centroid second - Quadrance.quadrance centroid third) =
             Quadrance.quadrance first second - Quadrance.quadrance first third := secondDifference
         _ = 0 := by rw [← equilateral.2]; ring1
     have firstSecondRadii :
         Quadrance.quadrance centroid first = Quadrance.quadrance centroid second :=
-      Purelib.Algebra.Group.eq_of_sub_eq_zero firstDifferenceZero
+      Algebra.Group.eq_of_sub_eq_zero firstDifferenceZero
     have secondThirdRadii :
         Quadrance.quadrance centroid second = Quadrance.quadrance centroid third :=
-      Purelib.Algebra.Group.eq_of_sub_eq_zero secondDifferenceZero
+      Algebra.Group.eq_of_sub_eq_zero secondDifferenceZero
     have onSecondThird :
         (PerpendicularBisector.perpendicularBisector second third secondThirdDistinct).Contains
           centroid :=
@@ -443,10 +445,10 @@ theorem exercise_18_1
       exact Intersection.lineIntersection_unique
         (PerpendicularBisector.perpendicularBisector second third secondThirdDistinct)
         (PerpendicularBisector.perpendicularBisector first third firstThirdDistinct)
-        (Circumcenter.Basic.circumcenter_bisectors_not_parallel first second third
+        (Basic.circumcenter_bisectors_not_parallel first second third
           firstThirdDistinct secondThirdDistinct notCollinear)
         centroid onSecondThird onFirstThird
-    have relation := Geometry.Triangles.Centers.Euler.euler_center_relation first second third
+    have relation := euler_center_relation first second third
       firstThirdDistinct secondThirdDistinct notCollinear twoNonzero
     change Affine.affineCombination ((2 : K) / 3) circumcenter ((1 : K) / 3)
       orthocenter = centroid at relation

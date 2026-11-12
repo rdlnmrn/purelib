@@ -33,6 +33,8 @@ import Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices
 import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
@@ -67,15 +69,15 @@ open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {rows : List (Int × List
-    (Purelib.Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count))}
+    (OrientedEdge lifted.vertices.count))}
 
 namespace OddExteriorWeights
 
 /-- Read the original first exterior row's integer coefficient, returning zero for an empty row list. -/
-@[expose] def firstCoefficient {count : Nat} (entries : List (Int × List (Stokes.OrientedEdge count))) : Int :=
+@[expose] def firstCoefficient {count : Nat} (entries : List (Int × List (OrientedEdge count))) : Int :=
   match entries with
   | [] => 0
   | entry :: _ => entry.1
@@ -97,12 +99,12 @@ namespace OddExteriorWeights
 
 /-- A retained singleton boundary row has weighted value equal to its original first coefficient times that boundary's
 word value. -/
-theorem singleton_value {count : Nat} (entries : List (Int × List (Stokes.OrientedEdge count)))
-    (boundary : List (Stokes.OrientedEdge count)) (equal : entries.map Prod.snd = [boundary])
-    (value : Stokes.OrientedEdge count → Data.Gaussian.Basic.Canonical) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map (fun entry => (entry.1 : Data.Gaussian.Basic.Canonical) *
+theorem singleton_value {count : Nat} (entries : List (Int × List (OrientedEdge count)))
+    (boundary : List (OrientedEdge count)) (equal : entries.map Prod.snd = [boundary])
+    (value : OrientedEdge count → Canonical) :
+    Sum.Basic.gaussianSum (entries.map (fun entry => (entry.1 : Canonical) *
       SewingRetraction.wordValue value entry.2)) =
-      (firstCoefficient entries : Data.Gaussian.Basic.Canonical) * SewingRetraction.wordValue value boundary := by
+      (firstCoefficient entries : Canonical) * SewingRetraction.wordValue value boundary := by
   cases entries with
   | nil => cases equal
   | cons entry rest =>
@@ -111,7 +113,7 @@ theorem singleton_value {count : Nat} (entries : List (Int × List (Stokes.Orien
     cases rest with
     | cons _ _ => cases tail
     | nil =>
-      change (entry.1 : Data.Gaussian.Basic.Canonical) * SewingRetraction.wordValue value entry.2 + 0 = _
+      change (entry.1 : Canonical) * SewingRetraction.wordValue value entry.2 + 0 = _
       rw [add_zero, head]
       rfl
 
@@ -126,10 +128,10 @@ canonical exterior boundary word value. -/
 theorem odd_value (split :
   PhysicalLoopSplit lifted rows)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
-    (value : Stokes.OrientedEdge lifted.vertices.count → Data.Gaussian.Basic.Canonical) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (split.exterior.map (fun entry => (entry.1 :
-      Data.Gaussian.Basic.Canonical) * SewingRetraction.wordValue value entry.2)) =
-      (split.exteriorCoefficient : Data.Gaussian.Basic.Canonical) * SewingRetraction.wordValue value
+    (value : OrientedEdge lifted.vertices.count → Canonical) :
+    Sum.Basic.gaussianSum (split.exterior.map (fun entry => (entry.1 :
+      Canonical) * SewingRetraction.wordValue value entry.2)) =
+      (split.exteriorCoefficient : Canonical) * SewingRetraction.wordValue value
         lifted.exteriorBoundaries.flatten := by
   cases shape : curve.degreeShape with
   | even degree =>
@@ -138,7 +140,7 @@ theorem odd_value (split :
   | odd degree =>
       have equal := split.exterior_eq
       rw [LiftedPuncturedGrid.exteriorBoundaries, shape] at equal
-      have result := Curves.Hyperelliptic.Meshes.PuncturedGrid.OddExteriorWeights.singleton_value split.exterior _ equal
+      have result := OddExteriorWeights.singleton_value split.exterior _ equal
         value
       simpa only [LiftedPuncturedGrid.exteriorBoundaries, shape, List.flatten_cons, List.flatten_nil,
         Data.List.Append.append_nil,
@@ -149,38 +151,38 @@ boundary value norm. -/
 theorem odd_normSq (split :
   PhysicalLoopSplit lifted rows)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
-    (value : Stokes.OrientedEdge lifted.vertices.count → Data.Gaussian.Basic.Canonical) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (split.exterior.map (fun
-      entry => (entry.1 : Data.Gaussian.Basic.Canonical) * SewingRetraction.wordValue value entry.2))) =
-      Data.Gaussian.Norm.Basic.normSq (split.exteriorCoefficient : Data.Gaussian.Basic.Canonical) *
-        Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue value lifted.exteriorBoundaries.flatten) :=
-  (congrArg Data.Gaussian.Norm.Basic.normSq (split.odd_value branch value)).trans
-    (Data.Gaussian.Norm.Basic.normSq_mul _ _)
+    (value : OrientedEdge lifted.vertices.count → Canonical) :
+    Basic.normSq (Sum.Basic.gaussianSum (split.exterior.map (fun
+      entry => (entry.1 : Canonical) * SewingRetraction.wordValue value entry.2))) =
+      Basic.normSq (split.exteriorCoefficient : Canonical) *
+        Basic.normSq (SewingRetraction.wordValue value lifted.exteriorBoundaries.flatten) :=
+  (congrArg Basic.normSq (split.odd_value branch value)).trans
+    (Basic.normSq_mul _ _)
 
 /-- The retained coefficient pays the weighted exterior error, including zero coefficients without requiring a
 nonzero-weight premise. -/
 theorem odd_bound (split :
   PhysicalLoopSplit lifted rows)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
-    (value : Stokes.OrientedEdge lifted.vertices.count → Data.Gaussian.Basic.Canonical)
+    (value : OrientedEdge lifted.vertices.count → Canonical)
     {target : InverseRootPolynomial.Coordinate} (positive : 0 < target)
-    (small : Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue value
+    (small : Basic.normSq (SewingRetraction.wordValue value
       lifted.exteriorBoundaries.flatten) < target) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (split.exterior.map (fun
-      entry => (entry.1 : Data.Gaussian.Basic.Canonical) * SewingRetraction.wordValue value entry.2))) <
-      (Data.Gaussian.Norm.Basic.normSq (split.exteriorCoefficient : Data.Gaussian.Basic.Canonical) + 1) *
+    Basic.normSq (Sum.Basic.gaussianSum (split.exterior.map (fun
+      entry => (entry.1 : Canonical) * SewingRetraction.wordValue value entry.2))) <
+      (Basic.normSq (split.exteriorCoefficient : Canonical) + 1) *
         target := by
   have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct small.le
-    (Data.Gaussian.Norm.Basic.normSq_nonneg (split.exteriorCoefficient : Data.Gaussian.Basic.Canonical))
+    (Basic.normSq_nonneg (split.exteriorCoefficient : Canonical))
   have paid := Fraction.Order.Arithmetic.add_lt_add_left_direct positive
-    (Data.Gaussian.Norm.Basic.normSq (split.exteriorCoefficient : Data.Gaussian.Basic.Canonical) * target)
-  have bound : Data.Gaussian.Norm.Basic.normSq (split.exteriorCoefficient : Data.Gaussian.Basic.Canonical) *
+    (Basic.normSq (split.exteriorCoefficient : Canonical) * target)
+  have bound : Basic.normSq (split.exteriorCoefficient : Canonical) *
     target <
-      (Data.Gaussian.Norm.Basic.normSq (split.exteriorCoefficient : Data.Gaussian.Basic.Canonical) + 1) *
+      (Basic.normSq (split.exteriorCoefficient : Canonical) + 1) *
         target := by
-    exact (by ring1 : Data.Gaussian.Norm.Basic.normSq (split.exteriorCoefficient :
-      Data.Gaussian.Basic.Canonical) * target =
-      Data.Gaussian.Norm.Basic.normSq (split.exteriorCoefficient : Data.Gaussian.Basic.Canonical) * target +
+    exact (by ring1 : Basic.normSq (split.exteriorCoefficient :
+      Canonical) * target =
+      Basic.normSq (split.exteriorCoefficient : Canonical) * target +
         0).trans_lt
       (paid.trans_eq (by ring1))
   exact ((split.odd_normSq branch value).trans_le scaled).trans_lt bound

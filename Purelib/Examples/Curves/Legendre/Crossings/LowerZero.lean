@@ -1,4 +1,5 @@
 module
+import Purelib.Geometry.Rational.Box.Rotation
 import Purelib.RootIsolation.Owner.Family.Basic
 import Purelib.Polynomial.Clearance.Box.Boundary.Translated
 import Purelib.Data.Gaussian.Basic
@@ -55,6 +56,9 @@ import Purelib.Topology.Knot.Braid.Basic
 import Purelib.Topology.Knot.Braid.Word.Basic
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
+
+open Purelib.Curves.Legendre.Polynomial
+open Purelib.Curves.Legendre.Coefficients
 
 section
 public section
@@ -140,7 +144,7 @@ The product certificate retains the three original linear-factor clearances on t
       lowerLeftParameter) (Centered.realAxisSquareSixteenth 0)
       := by
   rw [lowerLeft_polynomial_eq_factors]
-  exact Legendre.Polynomial.Clearance.factorsClearance
+  exact Clearance.factorsClearance
     (centeredClearance 0 (by decide) (by decide) (by decide) (by decide))
     (belowClearance lowerLeftParameter (by decide))
     (rightClearance 1 (by decide))
@@ -152,7 +156,7 @@ The product certificate retains the three original linear-factor clearances on t
     BoundaryClearance (Legendre.Paths.polynomial
       lowerLeftParameter) lowerMovingBox := by
   rw [lowerLeft_polynomial_eq_factors]
-  exact Legendre.Polynomial.Clearance.factorsClearance
+  exact Clearance.factorsClearance
     (aboveClearance 0 (by decide))
     (centeredClearance lowerLeftParameter
       (by decide) (by decide) (by decide) (by decide))
@@ -166,7 +170,7 @@ The product certificate retains the three original linear-factor clearances on t
       lowerLeftParameter) (Centered.realAxisSquareSixteenth 1)
       := by
   rw [lowerLeft_polynomial_eq_factors]
-  exact Legendre.Polynomial.Clearance.factorsClearance
+  exact Clearance.factorsClearance
     (leftClearance 0 (by decide))
     (belowClearance lowerLeftParameter (by decide))
     (centeredClearance 1 (by decide) (by decide) (by decide) (by decide))
@@ -179,7 +183,7 @@ The product certificate retains the three original linear-factor clearances on t
       lowerRightParameter) (Centered.realAxisSquareSixteenth 0)
       := by
   rw [lowerRight_polynomial_eq_factors]
-  exact Legendre.Polynomial.Clearance.factorsClearance
+  exact Clearance.factorsClearance
     (centeredClearance 0 (by decide) (by decide) (by decide) (by decide))
     (belowClearance lowerRightParameter (by decide))
     (rightClearance 1 (by decide))
@@ -191,7 +195,7 @@ The product certificate retains the three original linear-factor clearances on t
     BoundaryClearance (Legendre.Paths.polynomial
       lowerRightParameter) lowerMovingBox := by
   rw [lowerRight_polynomial_eq_factors]
-  exact Legendre.Polynomial.Clearance.factorsClearance
+  exact Clearance.factorsClearance
     (aboveClearance 0 (by decide))
     (centeredClearance lowerRightParameter
       (by decide) (by decide) (by decide) (by decide))
@@ -205,7 +209,7 @@ The product certificate retains the three original linear-factor clearances on t
       lowerRightParameter) (Centered.realAxisSquareSixteenth 1)
       := by
   rw [lowerRight_polynomial_eq_factors]
-  exact Legendre.Polynomial.Clearance.factorsClearance
+  exact Clearance.factorsClearance
     (leftClearance 0 (by decide))
     (belowClearance lowerRightParameter (by decide))
     (centeredClearance 1 (by decide) (by decide) (by decide) (by decide))
@@ -216,7 +220,7 @@ theorem lowerLeftZeroWinding :
       (Legendre.Paths.polynomial lowerLeftParameter)
         (Centered.realAxisSquareSixteenth 0) = 4 := by
   rw [lowerLeft_polynomial_eq_factors]
-  apply Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.realAxisSquareSixteenth_proper
+  apply Winding.factors_winding_of_sum (Centered.realAxisSquareSixteenth_proper
     0)
     (centeredClearance 0 (by decide) (by decide) (by decide) (by decide))
     (belowClearance lowerLeftParameter (by decide))
@@ -243,7 +247,7 @@ theorem lowerLeftMovingWinding :
       (Legendre.Paths.polynomial lowerLeftParameter)
         lowerMovingBox = 4 := by
   rw [lowerLeft_polynomial_eq_factors]
-  apply Legendre.Polynomial.Winding.factors_winding_of_sum lowerMovingBox_proper
+  apply Winding.factors_winding_of_sum lowerMovingBox_proper
     (aboveClearance 0 (by decide))
     (centeredClearance lowerLeftParameter
       (by decide) (by decide) (by decide) (by decide))
@@ -271,7 +275,7 @@ theorem lowerLeftOneWinding :
       (Legendre.Paths.polynomial lowerLeftParameter)
         (Centered.realAxisSquareSixteenth 1) = 4 := by
   rw [lowerLeft_polynomial_eq_factors]
-  apply Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.realAxisSquareSixteenth_proper
+  apply Winding.factors_winding_of_sum (Centered.realAxisSquareSixteenth_proper
     1)
     (leftClearance 0 (by decide))
     (belowClearance lowerLeftParameter (by decide))
@@ -298,7 +302,7 @@ theorem lowerRightZeroWinding :
       (Legendre.Paths.polynomial lowerRightParameter)
         (Centered.realAxisSquareSixteenth 0) = 4 := by
   rw [lowerRight_polynomial_eq_factors]
-  apply Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.realAxisSquareSixteenth_proper
+  apply Winding.factors_winding_of_sum (Centered.realAxisSquareSixteenth_proper
     0)
     (centeredClearance 0 (by decide) (by decide) (by decide) (by decide))
     (belowClearance lowerRightParameter (by decide))
@@ -325,7 +329,7 @@ theorem lowerRightMovingWinding :
       (Legendre.Paths.polynomial lowerRightParameter)
         lowerMovingBox = 4 := by
   rw [lowerRight_polynomial_eq_factors]
-  apply Legendre.Polynomial.Winding.factors_winding_of_sum lowerMovingBox_proper
+  apply Winding.factors_winding_of_sum lowerMovingBox_proper
     (aboveClearance 0 (by decide))
     (centeredClearance lowerRightParameter
       (by decide) (by decide) (by decide) (by decide))
@@ -353,7 +357,7 @@ theorem lowerRightOneWinding :
       (Legendre.Paths.polynomial lowerRightParameter)
         (Centered.realAxisSquareSixteenth 1) = 4 := by
   rw [lowerRight_polynomial_eq_factors]
-  apply Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.realAxisSquareSixteenth_proper
+  apply Winding.factors_winding_of_sum (Centered.realAxisSquareSixteenth_proper
     1)
     (leftClearance 0 (by decide))
     (belowClearance lowerRightParameter (by decide))
@@ -380,7 +384,7 @@ theorem lowerLeftSampleZeroWinding :
       (Legendre.Paths.polynomial lowerLeftParameter)
         (Centered.sampleBox 0) = 4 := by
   rw [lowerLeft_polynomial_eq_factors]
-  apply Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.sampleBox_proper 0)
+  apply Winding.factors_winding_of_sum (Centered.sampleBox_proper 0)
     (centeredClearance 0 (by decide) (by decide) (by decide) (by decide))
     (leftClearance lowerLeftParameter (by decide))
     (rightClearance 1 (by decide))
@@ -408,7 +412,7 @@ theorem lowerLeftSampleMovingWinding :
       (Legendre.Paths.polynomial lowerLeftParameter)
         (Centered.sampleBox lowerLeftParameter) = 4 := by
   rw [lowerLeft_polynomial_eq_factors]
-  apply Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.sampleBox_proper
+  apply Winding.factors_winding_of_sum (Centered.sampleBox_proper
     lowerLeftParameter)
     (rightClearance 0 (by decide))
     (centeredClearance lowerLeftParameter
@@ -437,7 +441,7 @@ theorem lowerLeftSampleOneWinding :
       (Legendre.Paths.polynomial lowerLeftParameter)
         (Centered.sampleBox 1) = 4 := by
   rw [lowerLeft_polynomial_eq_factors]
-  apply Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.sampleBox_proper 1)
+  apply Winding.factors_winding_of_sum (Centered.sampleBox_proper 1)
     (leftClearance 0 (by decide))
     (leftClearance lowerLeftParameter (by decide))
     (centeredClearance 1 (by decide) (by decide) (by decide) (by decide))
@@ -465,7 +469,7 @@ theorem lowerRightSampleZeroWinding :
       (Legendre.Paths.polynomial lowerRightParameter)
         (Centered.sampleBox 0) = 4 := by
   rw [lowerRight_polynomial_eq_factors]
-  apply Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.sampleBox_proper 0)
+  apply Winding.factors_winding_of_sum (Centered.sampleBox_proper 0)
     (centeredClearance 0 (by decide) (by decide) (by decide) (by decide))
     (rightClearance lowerRightParameter (by decide))
     (rightClearance 1 (by decide))
@@ -493,7 +497,7 @@ theorem lowerRightSampleMovingWinding :
       (Legendre.Paths.polynomial lowerRightParameter)
         (Centered.sampleBox lowerRightParameter) = 4 := by
   rw [lowerRight_polynomial_eq_factors]
-  apply Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.sampleBox_proper
+  apply Winding.factors_winding_of_sum (Centered.sampleBox_proper
     lowerRightParameter)
     (leftClearance 0 (by decide))
     (centeredClearance lowerRightParameter
@@ -524,7 +528,7 @@ theorem lowerRightSampleOneWinding :
       (Legendre.Paths.polynomial lowerRightParameter)
         (Centered.sampleBox 1) = 4 := by
   rw [lowerRight_polynomial_eq_factors]
-  apply Legendre.Polynomial.Winding.factors_winding_of_sum (Centered.sampleBox_proper 1)
+  apply Winding.factors_winding_of_sum (Centered.sampleBox_proper 1)
     (leftClearance 0 (by decide))
     (leftClearance lowerRightParameter (by decide))
     (centeredClearance 1 (by decide) (by decide) (by decide) (by decide))
@@ -612,7 +616,7 @@ Its original proper box, positive boundary clearance and winding-one witness spe
   apply UpperZero.ownerOf (Centered.sampleBox 0)
     (Centered.sampleBox_proper 0)
   · rw [lowerLeft_polynomial_eq_factors]
-    exact Legendre.Polynomial.Clearance.lowerSampleZeroClearance lowerLeftParameter
+    exact Clearance.lowerSampleZeroClearance lowerLeftParameter
       (by decide)
   · exact lowerLeftSampleZeroWinding
 
@@ -623,7 +627,7 @@ Its original proper box, positive boundary clearance and winding-one witness spe
     lowerLeftParameter)
     (Centered.sampleBox_proper lowerLeftParameter)
   · rw [lowerLeft_polynomial_eq_factors]
-    exact Legendre.Polynomial.Clearance.lowerSampleMovingClearance
+    exact Clearance.lowerSampleMovingClearance
       lowerLeftParameter (by decide) (by decide)
   · exact lowerLeftSampleMovingWinding
 
@@ -633,7 +637,7 @@ Its original proper box, positive boundary clearance and winding-one witness spe
   apply UpperZero.ownerOf (Centered.sampleBox 1)
     (Centered.sampleBox_proper 1)
   · rw [lowerLeft_polynomial_eq_factors]
-    exact Legendre.Polynomial.Clearance.lowerSampleOneClearance lowerLeftParameter
+    exact Clearance.lowerSampleOneClearance lowerLeftParameter
       (by decide)
   · exact lowerLeftSampleOneWinding
 
@@ -643,7 +647,7 @@ Its original proper box, positive boundary clearance and winding-one witness spe
   apply UpperZero.ownerOf (Centered.sampleBox 0)
     (Centered.sampleBox_proper 0)
   · rw [lowerRight_polynomial_eq_factors]
-    exact Legendre.Polynomial.Clearance.lowerRightSampleZeroClearance
+    exact Clearance.lowerRightSampleZeroClearance
       lowerRightParameter (by decide)
   · exact lowerRightSampleZeroWinding
 
@@ -654,7 +658,7 @@ Its original proper box, positive boundary clearance and winding-one witness spe
     lowerRightParameter)
     (Centered.sampleBox_proper lowerRightParameter)
   · rw [lowerRight_polynomial_eq_factors]
-    exact Legendre.Polynomial.Clearance.lowerRightSampleMovingClearance
+    exact Clearance.lowerRightSampleMovingClearance
       lowerRightParameter
       (by decide) (by decide)
   · exact lowerRightSampleMovingWinding
@@ -665,7 +669,7 @@ Its original proper box, positive boundary clearance and winding-one witness spe
   apply UpperZero.ownerOf (Centered.sampleBox 1)
     (Centered.sampleBox_proper 1)
   · rw [lowerRight_polynomial_eq_factors]
-    exact Legendre.Polynomial.Clearance.lowerSampleOneClearance lowerRightParameter
+    exact Clearance.lowerSampleOneClearance lowerRightParameter
       (by decide)
   · exact lowerRightSampleOneWinding
 
@@ -726,31 +730,31 @@ theorem lowerRightOwner_pairwise : forall left right : Fin
 /-- The exact coefficient-table polynomial at the lower left parameter is squarefree. -/
 @[expose] def lowerLeftSquarefree :
   Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate
-    (Legendre.Coefficients.Exact.coefficientTable lowerLeftParameter).polynomial :=
+    (Exact.coefficientTable lowerLeftParameter).polynomial :=
       by
-  rw [Legendre.Coefficients.Exact.coefficientTable_polynomial]
+  rw [Exact.coefficientTable_polynomial]
   exact Legendre.Squarefree.squarefreeAt lowerLeftParameter
     (by decide)
 
 /-- The exact coefficient-table polynomial at the lower right parameter is squarefree. -/
 @[expose] def lowerRightSquarefree :
   Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate
-    (Legendre.Coefficients.Exact.coefficientTable lowerRightParameter).polynomial :=
+    (Exact.coefficientTable lowerRightParameter).polynomial :=
       by
-  rw [Legendre.Coefficients.Exact.coefficientTable_polynomial]
+  rw [Exact.coefficientTable_polynomial]
   exact Legendre.Squarefree.squarefreeAt lowerRightParameter
     (by decide)
 
 /-- The squarefree isolation input at the lower left parameter, retaining its degree-at-least-two proof. -/
 @[expose] def lowerLeftIsolationInput :
-    RootIsolation.FTA.Squarefree.Input (Legendre.Coefficients.Exact.coefficientTable
+    FTA.Squarefree.Input (Exact.coefficientTable
       lowerLeftParameter).polynomial where
   squarefree := lowerLeftSquarefree
   degreeAtLeastTwo := by decide
 
 /-- The squarefree isolation input at the lower right parameter, retaining its degree-at-least-two proof. -/
 @[expose] def lowerRightIsolationInput :
-    RootIsolation.FTA.Squarefree.Input (Legendre.Coefficients.Exact.coefficientTable
+    FTA.Squarefree.Input (Exact.coefficientTable
       lowerRightParameter).polynomial where
   squarefree := lowerRightSquarefree
   degreeAtLeastTwo := by decide
@@ -761,14 +765,14 @@ The original coefficient table, separated owner family, coefficient allowance bo
 certificate are retained together. -/
 @[expose] def lowerLeftChamber :
   Progressive.Chamber.Frame.ChamberFrame where
-  reference := Legendre.Coefficients.Exact.coefficientTable lowerLeftParameter
+  reference := Exact.coefficientTable lowerLeftParameter
   chamber :=
     { degreeAtLeastTwo := by decide
       squarefree := lowerLeftSquarefree
       owners := lowerLeftOwnerFamily
-      referenceSmall := Legendre.Coefficients.Exact.coefficientTable_allowances_lt _
+      referenceSmall := Exact.coefficientTable_allowances_lt _
         (Progressive.Chamber.Target.simpleRootChamberTarget_pos
-          (Legendre.Coefficients.Exact.coefficientTable lowerLeftParameter)
+          (Exact.coefficientTable lowerLeftParameter)
             lowerLeftSquarefree
           lowerLeftOwnerFamily)
       referenceMaximality :=
@@ -780,14 +784,14 @@ The original coefficient table, separated owner family, coefficient allowance bo
 certificate are retained together. -/
 @[expose] def lowerRightChamber :
   Progressive.Chamber.Frame.ChamberFrame where
-  reference := Legendre.Coefficients.Exact.coefficientTable lowerRightParameter
+  reference := Exact.coefficientTable lowerRightParameter
   chamber :=
     { degreeAtLeastTwo := by decide
       squarefree := lowerRightSquarefree
       owners := lowerRightOwnerFamily
-      referenceSmall := Legendre.Coefficients.Exact.coefficientTable_allowances_lt _
+      referenceSmall := Exact.coefficientTable_allowances_lt _
         (Progressive.Chamber.Target.simpleRootChamberTarget_pos
-          (Legendre.Coefficients.Exact.coefficientTable lowerRightParameter)
+          (Exact.coefficientTable lowerRightParameter)
             lowerRightSquarefree
           lowerRightOwnerFamily)
       referenceMaximality :=
@@ -827,7 +831,7 @@ projection order. -/
   lowerLeftParameter where
   chamber := lowerLeftChamber
   polynomial_eq := rfl
-  labels := Data.Fin.Bijection.identity 3
+  labels := Bijection.identity 3
   owner_contains := by
     intro label
     rcases Cases.three label with labelZero | labelOne | labelTwo <;>
@@ -855,7 +859,8 @@ projection order. -/
       exact ⟨by decide, by decide, by decide, by decide⟩
   projection_xOrdered := by
     intro left right order
-    rcases Cases.three left with leftZero | leftOne | leftTwo <;>
+    rewrite [Rational.Box.Rotation.enclosure_zero, Rational.Box.Rotation.enclosure_zero]
+    rcases Purelib.Data.Fin.Cases.three left with leftZero | leftOne | leftTwo <;>
       subst left <;>
       rcases Cases.three right with rightZero | rightOne | rightTwo <;>
       subst right <;>
@@ -877,12 +882,12 @@ projection order. -/
   lowerRightParameter where
   chamber := lowerRightChamber
   polynomial_eq := rfl
-  labels := Data.Fin.Bijection.identity 3
+  labels := Bijection.identity 3
   owner_contains := by
     intro label
     rcases Cases.three label with labelZero | labelOne | labelTwo <;>
       subst label <;> decide
-  projectionOrder := Data.Fin.Bijection.identity 3
+  projectionOrder := Bijection.identity 3
   projectionOwner := fun position =>
     Owner.Local.Transport.castOwner lowerRightChamber_polynomial.symm
       (lowerRightProjectionOwner position)
@@ -891,7 +896,7 @@ projection order. -/
     rcases Cases.three position with positionZero | positionOne |
       positionTwo <;> subst position <;>
       simp only [lowerRightProjectionOwner,
-        Data.Fin.Bijection.identity,
+        Bijection.identity,
         lowerRightChamber,
           lowerRightOwnerFamily,
           lowerRightOwner,
@@ -906,7 +911,8 @@ projection order. -/
       exact ⟨by decide, by decide, by decide, by decide⟩
   projection_xOrdered := by
     intro left right order
-    rcases Cases.three left with leftZero | leftOne | leftTwo <;>
+    rewrite [Rational.Box.Rotation.enclosure_zero, Rational.Box.Rotation.enclosure_zero]
+    rcases Purelib.Data.Fin.Cases.three left with leftZero | leftOne | leftTwo <;>
       subst left <;>
       rcases Cases.three right with rightZero | rightOne | rightTwo <;>
       subst right <;>
@@ -919,6 +925,20 @@ projection order. -/
       | exact ((by decide : ¬ ((2 : Nat) < 1)) order).elim
       | exact ((by decide : ¬ ((2 : Nat) < 2)) order).elim
       | decide
+
+/-- The lower left frame retains its original moving-root/zero projection order. -/
+theorem lowerLeftFrame_projection_order (position : Fin 3) :
+    lowerLeftFrame.projected.ownerIndex position = UpperZero.targetProjectionOrder.forward position := rfl
+
+/-- The lower right frame retains the original persistent owner order in projection. -/
+theorem lowerRightFrame_projection_order (position : Fin 3) :
+    lowerRightFrame.projected.ownerIndex position = position := rfl
+
+/-- The lower left frame retains its original horizontal projection chart. -/
+theorem lowerLeftFrame_projected_slope : lowerLeftFrame.projected.slope = 0 := rfl
+
+/-- The lower right frame retains its original horizontal projection chart. -/
+theorem lowerRightFrame_projected_slope : lowerRightFrame.projected.slope = 0 := rfl
 
 /-! ## The lower positive crossing -/
 
@@ -1030,7 +1050,7 @@ Its three original Rouche bridges refine both corresponding endpoint owners. -/
 @[expose] def lowerChamberOverlap :
   Progressive.Chamber.Overlap.ChamberOverlap
     lowerLeftChamber lowerRightChamber where
-  matching := Data.Fin.Bijection.identity 3
+  matching := Bijection.identity 3
   bridge := lowerBridgeAt
   bridge_refines_left := by
     intro index
@@ -1056,10 +1076,11 @@ theorem lowerCrossingGeometry :
 /-- The projected chamber overlap with its single lower-positive crossing and retained label matching. -/
 @[expose] def lowerProjectedOverlap :
   Progressive.Braid.Projected.Overlap.ProjectedOverlap
-    lowerLeftFrame.projected
-      lowerRightFrame.projected :=
-  .crossing lowerChamberOverlap
-    Legendre.Conventions.lowerPositive lowerCrossingGeometry (by
+    Curves.Legendre.Crossings.LowerZero.lowerLeftFrame.projected
+      Curves.Legendre.Crossings.LowerZero.lowerRightFrame.projected :=
+  .crossing Curves.Legendre.Crossings.LowerZero.lowerChamberOverlap
+    Legendre.Conventions.lowerPositive Curves.Legendre.Crossings.LowerZero.lowerCrossingGeometry (by
+      refine ⟨rfl, ?_⟩
       intro position
       change UpperZero.targetProjectionOrder.forward position =
         Legendre.Conventions.lowerPositive.permutation.forward position
@@ -1128,10 +1149,10 @@ The minimum bound lies below each original left and right boundary clearance. -/
   .horizontal (-(1 / 4)) (1 / 4) (-2)
 
 /-- The displayed lower horizontal segment stays away from both excluded parameters zero and one. -/
-@[expose] def lowerGeometrySafe :
-  Legendre.Paths.AxisSegment.Safe lowerGeometry where
-  avoidsZero := { bound := 1, positive := by decide, lower := by decide }
-  avoidsOne := { bound := 1, positive := by decide, lower := by decide }
+@[expose] def _root_.Purelib.Examples.Curves.Legendre.Crossings.LowerZero.lowerGeometrySafe :
+  Legendre.Paths.AxisSegment.Safe Curves.Legendre.Crossings.LowerZero.lowerGeometry where
+  avoidsZero := Legendre.Paths.AxisSegment.Clearance.ofFixedGap _ 0 1 (by decide) (by decide)
+  avoidsOne := Legendre.Paths.AxisSegment.Clearance.ofFixedGap _ 1 1 (by decide) (by decide)
 
 /-- The certified lower-positive Legendre crossing segment.
 

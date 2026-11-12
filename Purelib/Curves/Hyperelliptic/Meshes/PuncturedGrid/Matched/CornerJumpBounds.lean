@@ -72,6 +72,10 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face
@@ -123,12 +127,12 @@ open Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh
   MatchedVerticalSide)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
   {faces : PuncturedFaces bank} {domains :
     FaceDomainBank frames faces.regulars}
   {cuts : CommonCuts domains}
@@ -147,14 +151,14 @@ open Purelib.Topology.Polygon.Stokes (PrimitivePoint)
 
 /-- Two retained endpoint errors bounded by four times a tolerance give a difference error bounded by sixteen times that
 tolerance. -/
-private theorem difference_error {a b c d : Data.Gaussian.Basic.Canonical} {tolerance : Fraction.Rational}
-    (left : Data.Gaussian.Norm.Basic.normSq (a - c) ≤ 4 * tolerance) (right :
-      Data.Gaussian.Norm.Basic.normSq (b - d) ≤ 4 * tolerance) :
-    Data.Gaussian.Norm.Basic.normSq ((a - b) - (c - d)) ≤ 16 * tolerance := by
+private theorem difference_error {a b c d : Data.Gaussian.Basic.Canonical} {tolerance : Rational}
+    (left : Basic.normSq (a - c) ≤ 4 * tolerance) (right :
+      Basic.normSq (b - d) ≤ 4 * tolerance) :
+    Basic.normSq ((a - b) - (c - d)) ≤ 16 * tolerance := by
   have equal : (a - b) - (c - d) = (a - c) - (b - d) := by ring1
   rw [equal]
-  exact (Data.Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add left right) (by decide)).trans_eq (by
+  exact (Bounds.normSq_sub_le_two _ _).trans
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add left right) (by decide)).trans_eq (by
       ring1))
 
 namespace HorizontalCrossing
@@ -168,10 +172,10 @@ The paid four grid requests and both original magnitude references bound the dis
 theorem corner_jump_bound
     (joined : LiftedSides.HorizontalCrossing request first nextPosition firstUpper lastUpper)
     {depth : Nat} (trace : joined.side.Trace depth) {i j : Fin genus} {stage : Nat}
-    (firstMagnitude : MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential i))
-    (secondMagnitude : MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential j))
+    (firstMagnitude : FaceMagnitudeBank domains (PeriodMatrix.standardDifferential i))
+    (secondMagnitude : FaceMagnitudeBank domains (PeriodMatrix.standardDifferential j))
     (firstLater : firstMagnitude.index ≤ stage) (secondLater : secondMagnitude.index ≤ stage)
-    {tolerance : Fraction.Rational} (positive : 0 < tolerance) (small : 16 * tolerance ≤ 1)
+    {tolerance : Rational} (positive : 0 < tolerance) (small : 16 * tolerance ≤ 1)
     {liBounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds faces.regulars[firstPosition.val].clearance
       (PreparedPrimitiveSamples.differentialNumerator (PeriodMatrix.standardDifferential i))}
     (li : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy liBounds
@@ -199,35 +203,35 @@ theorem corner_jump_bound
           (cache.normalize.atDomain nextPosition joined.crossing.next.sheet i).offsets).values vertex,
         (trace.rightReadings (cache.normalize.atDomain nextPosition joined.crossing.next.sheet j).anchors
           (cache.normalize.atDomain nextPosition joined.crossing.next.sheet j).offsets).values vertex⟩))
-    : Data.Gaussian.Norm.Basic.normSq (left.endpointJump right -
+    : Basic.normSq (left.endpointJump right -
         Numerics.cornerJump cache.normalize i j firstPosition nextPosition firstSheet joined.crossing.next.sheet 3 2) ≤
       512 * (4 * (firstMagnitude.bound + secondMagnitude.bound) + 1) * tolerance := by
   let liGrid := GridPrimitiveAccuracy.atIndex li stage liLater
-  have liPaid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct liGrid.accurate.le
-    (by decide : (0 : Fraction.Rational) ≤ 4)
+  have liPaid := Arithmetic.mul_le_mul_of_nonneg_left_direct liGrid.accurate.le
+    (by decide : (0 : Rational) ≤ 4)
   have liOrigin := (HorizontalCrossing.left_corner_origin_bound joined trace liGrid
     (cache.normalize.atDomain firstPosition firstSheet i)).trans liPaid
   have liIncrement := (HorizontalCrossing.left_corner_increment_bound joined trace liGrid
     (cache.normalize.atDomain firstPosition firstSheet i)).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct liGrid.accurate.le
-      (by decide +kernel : (0 : Fraction.Rational) ≤ 16))
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct liGrid.accurate.le
+      (by decide +kernel : (0 : Rational) ≤ 16))
   let riGrid := GridPrimitiveAccuracy.atIndex ri stage riLater
-  have riPaid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct riGrid.accurate.le
-    (by decide : (0 : Fraction.Rational) ≤ 4)
+  have riPaid := Arithmetic.mul_le_mul_of_nonneg_left_direct riGrid.accurate.le
+    (by decide : (0 : Rational) ≤ 4)
   have riOrigin := (HorizontalCrossing.right_corner_origin_bound joined trace riGrid
     (cache.normalize.atDomain nextPosition joined.crossing.next.sheet i)).trans riPaid
   let ljGrid := GridPrimitiveAccuracy.atIndex lj stage ljLater
-  have ljPaid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct ljGrid.accurate.le
-    (by decide : (0 : Fraction.Rational) ≤ 4)
+  have ljPaid := Arithmetic.mul_le_mul_of_nonneg_left_direct ljGrid.accurate.le
+    (by decide : (0 : Rational) ≤ 4)
   have ljOrigin := (HorizontalCrossing.left_corner_origin_bound joined trace ljGrid
     (cache.normalize.atDomain firstPosition firstSheet j)).trans ljPaid
   have ljIncrement := (HorizontalCrossing.left_corner_increment_bound joined trace ljGrid
     (cache.normalize.atDomain firstPosition firstSheet j)).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct ljGrid.accurate.le
-      (by decide +kernel : (0 : Fraction.Rational) ≤ 16))
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct ljGrid.accurate.le
+      (by decide +kernel : (0 : Rational) ≤ 16))
   let rjGrid := GridPrimitiveAccuracy.atIndex rj stage rjLater
-  have rjPaid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct rjGrid.accurate.le
-    (by decide : (0 : Fraction.Rational) ≤ 4)
+  have rjPaid := Arithmetic.mul_le_mul_of_nonneg_left_direct rjGrid.accurate.le
+    (by decide : (0 : Rational) ≤ 4)
   have rjOrigin := (HorizontalCrossing.right_corner_origin_bound joined trace rjGrid
     (cache.normalize.atDomain nextPosition joined.crossing.next.sheet j)).trans rjPaid
   have jumpError : PrimitivePoint.Bounded ((⟨
@@ -244,11 +248,11 @@ theorem corner_jump_bound
         (Numerics.cornerPair cache.normalize i j nextPosition joined.crossing.next.sheet 0))) (16 * tolerance) :=
     ⟨by
       have scalar := difference_error liOrigin riOrigin
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+      rw [Basic.normSq_eq_canonical] at scalar
       exact scalar, by
-      have scalar := Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CornerJumpBounds.difference_error ljOrigin
+      have scalar := CornerJumpBounds.difference_error ljOrigin
         rjOrigin
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+      rw [Basic.normSq_eq_canonical] at scalar
       exact scalar⟩
   have incrementError : PrimitivePoint.Bounded
       ((left.centered (Fin.last trace.vertices.rest.length)).sub
@@ -256,12 +260,12 @@ theorem corner_jump_bound
           (Numerics.cornerPair cache.normalize i j firstPosition firstSheet 3)))
       (16 * tolerance) := by
     rw [left.centered_eq]
-    rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at liIncrement ljIncrement
+    rw [Basic.normSq_eq_canonical] at liIncrement ljIncrement
     exact ⟨liIncrement, ljIncrement⟩
   have estimate := Numerics.normalized_corner_jump_perturbation
     firstMagnitude secondMagnitude firstLater secondLater cache
     firstPosition nextPosition firstSheet joined.crossing.next.sheet 3 2 _ _
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) positive.le) small jumpError incrementError
+    (Arithmetic.mul_nonneg_direct (by decide +kernel) positive.le) small jumpError incrementError
   exact estimate.trans_eq (by ring1)
 
 end HorizontalCrossing
@@ -277,10 +281,10 @@ The paid four grid requests and both original magnitude references bound the dis
 theorem corner_jump_bound
     (joined : LiftedSides.VerticalCrossing request first nextPosition firstUpper lastUpper)
     {depth : Nat} (trace : joined.side.Trace depth) {i j : Fin genus} {stage : Nat}
-    (firstMagnitude : MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential i))
-    (secondMagnitude : MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential j))
+    (firstMagnitude : FaceMagnitudeBank domains (PeriodMatrix.standardDifferential i))
+    (secondMagnitude : FaceMagnitudeBank domains (PeriodMatrix.standardDifferential j))
     (firstLater : firstMagnitude.index ≤ stage) (secondLater : secondMagnitude.index ≤ stage)
-    {tolerance : Fraction.Rational} (positive : 0 < tolerance) (small : 16 * tolerance ≤ 1)
+    {tolerance : Rational} (positive : 0 < tolerance) (small : 16 * tolerance ≤ 1)
     {liBounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds faces.regulars[firstPosition.val].clearance
       (PreparedPrimitiveSamples.differentialNumerator (PeriodMatrix.standardDifferential i))}
     (li : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy liBounds
@@ -308,35 +312,35 @@ theorem corner_jump_bound
           (cache.normalize.atDomain nextPosition joined.crossing.next.sheet i).offsets).values vertex,
         (trace.rightReadings (cache.normalize.atDomain nextPosition joined.crossing.next.sheet j).anchors
           (cache.normalize.atDomain nextPosition joined.crossing.next.sheet j).offsets).values vertex⟩))
-    : Data.Gaussian.Norm.Basic.normSq (left.endpointJump right -
+    : Basic.normSq (left.endpointJump right -
         Numerics.cornerJump cache.normalize i j firstPosition nextPosition firstSheet joined.crossing.next.sheet 1 2) ≤
       512 * (4 * (firstMagnitude.bound + secondMagnitude.bound) + 1) * tolerance := by
   let liGrid := GridPrimitiveAccuracy.atIndex li stage liLater
-  have liPaid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct liGrid.accurate.le
-    (by decide : (0 : Fraction.Rational) ≤ 4)
+  have liPaid := Arithmetic.mul_le_mul_of_nonneg_left_direct liGrid.accurate.le
+    (by decide : (0 : Rational) ≤ 4)
   have liOrigin := (VerticalCrossing.left_corner_origin_bound joined trace liGrid
     (cache.normalize.atDomain firstPosition firstSheet i)).trans liPaid
   have liIncrement := (VerticalCrossing.left_corner_increment_bound joined trace liGrid
     (cache.normalize.atDomain firstPosition firstSheet i)).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct liGrid.accurate.le
-      (by decide +kernel : (0 : Fraction.Rational) ≤ 16))
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct liGrid.accurate.le
+      (by decide +kernel : (0 : Rational) ≤ 16))
   let riGrid := GridPrimitiveAccuracy.atIndex ri stage riLater
-  have riPaid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct riGrid.accurate.le
-    (by decide : (0 : Fraction.Rational) ≤ 4)
+  have riPaid := Arithmetic.mul_le_mul_of_nonneg_left_direct riGrid.accurate.le
+    (by decide : (0 : Rational) ≤ 4)
   have riOrigin := (VerticalCrossing.right_corner_origin_bound joined trace riGrid
     (cache.normalize.atDomain nextPosition joined.crossing.next.sheet i)).trans riPaid
   let ljGrid := GridPrimitiveAccuracy.atIndex lj stage ljLater
-  have ljPaid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct ljGrid.accurate.le
-    (by decide : (0 : Fraction.Rational) ≤ 4)
+  have ljPaid := Arithmetic.mul_le_mul_of_nonneg_left_direct ljGrid.accurate.le
+    (by decide : (0 : Rational) ≤ 4)
   have ljOrigin := (VerticalCrossing.left_corner_origin_bound joined trace ljGrid
     (cache.normalize.atDomain firstPosition firstSheet j)).trans ljPaid
   have ljIncrement := (VerticalCrossing.left_corner_increment_bound joined trace ljGrid
     (cache.normalize.atDomain firstPosition firstSheet j)).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct ljGrid.accurate.le
-      (by decide +kernel : (0 : Fraction.Rational) ≤ 16))
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct ljGrid.accurate.le
+      (by decide +kernel : (0 : Rational) ≤ 16))
   let rjGrid := GridPrimitiveAccuracy.atIndex rj stage rjLater
-  have rjPaid := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct rjGrid.accurate.le
-    (by decide : (0 : Fraction.Rational) ≤ 4)
+  have rjPaid := Arithmetic.mul_le_mul_of_nonneg_left_direct rjGrid.accurate.le
+    (by decide : (0 : Rational) ≤ 4)
   have rjOrigin := (VerticalCrossing.right_corner_origin_bound joined trace rjGrid
     (cache.normalize.atDomain nextPosition joined.crossing.next.sheet j)).trans rjPaid
   have jumpError : PrimitivePoint.Bounded ((⟨
@@ -353,11 +357,11 @@ theorem corner_jump_bound
         (Numerics.cornerPair cache.normalize i j nextPosition joined.crossing.next.sheet 0))) (16 * tolerance) :=
     ⟨by
       have scalar := difference_error liOrigin riOrigin
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+      rw [Basic.normSq_eq_canonical] at scalar
       exact scalar, by
-      have scalar := Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.CornerJumpBounds.difference_error ljOrigin
+      have scalar := CornerJumpBounds.difference_error ljOrigin
         rjOrigin
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+      rw [Basic.normSq_eq_canonical] at scalar
       exact scalar⟩
   have incrementError : PrimitivePoint.Bounded
       ((left.centered (Fin.last trace.vertices.rest.length)).sub
@@ -365,12 +369,12 @@ theorem corner_jump_bound
           (Numerics.cornerPair cache.normalize i j firstPosition firstSheet 1)))
       (16 * tolerance) := by
     rw [left.centered_eq]
-    rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at liIncrement ljIncrement
+    rw [Basic.normSq_eq_canonical] at liIncrement ljIncrement
     exact ⟨liIncrement, ljIncrement⟩
   have estimate := Numerics.normalized_corner_jump_perturbation
     firstMagnitude secondMagnitude firstLater secondLater cache
     firstPosition nextPosition firstSheet joined.crossing.next.sheet 1 2 _ _
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) positive.le) small jumpError incrementError
+    (Arithmetic.mul_nonneg_direct (by decide +kernel) positive.le) small jumpError incrementError
   exact estimate.trans_eq (by ring1)
 
 end VerticalCrossing

@@ -53,6 +53,10 @@ import Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Geometry.Grid
+
+open Purelib.Topology.Surface.Sewing
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -80,29 +84,29 @@ open Purelib.Polynomial.Geometry.Grid.CellBoundary (sumValues)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest
   (factorBound factorBound_nonnegative factor_bounded factor_mix canonicalWeight RegularRequest)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base next : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
-    {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered} {current :
+    BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {ordered : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
+    {paired : OrderedBranchPairs.Ordered.Paired ordered} {current :
     Meshes.LiftedPuncturedGrid next}
-  (included : Geometry.Grid.Extension.CoordinateInclusion base.bank.grid next.bank.grid)
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank current.frames next.faces.regulars}
+  (included : Extension.CoordinateInclusion base.bank.grid next.bank.grid)
+  {domains : Face.DomainBanks.FaceDomainBank current.frames next.faces.regulars}
 
 namespace PolarizedExteriorRequest
 
 /-- Conjugating each original edge value conjugates the value of its retained word. -/
 private theorem word_conj {count : Nat} (value : Topology.Polygon.Stokes.OrientedEdge count → Gaussian.Basic.Canonical)
     (word : List (Topology.Polygon.Stokes.OrientedEdge count)) :
-    Purelib.Topology.Surface.Sewing.SewingRetraction.wordValue (fun edge => Data.Gaussian.Basic.conj (value edge))
-      word = Data.Gaussian.Basic.conj (Purelib.Topology.Surface.Sewing.SewingRetraction.wordValue value word) := by
+    SewingRetraction.wordValue (fun edge => Gaussian.Basic.conj (value edge))
+      word = Gaussian.Basic.conj (SewingRetraction.wordValue value word) := by
   induction word with
   | nil => rfl
   | cons edge rest ih =>
-      change Data.Gaussian.Basic.conj (value edge) + Topology.Surface.Sewing.SewingRetraction.wordValue _ rest =
-        Data.Gaussian.Basic.conj (value edge + Topology.Surface.Sewing.SewingRetraction.wordValue value rest)
+      change Gaussian.Basic.conj (value edge) + SewingRetraction.wordValue _ rest =
+        Gaussian.Basic.conj (value edge + SewingRetraction.wordValue value rest)
       rw [ih, Gaussian.Basic.conj_add]
 
 /-- The finite sum of conjugated original word values is the conjugate of their retained total. -/
@@ -110,172 +114,172 @@ private theorem sum_word_conj {Alpha : Type} {count : Nat}
     (value : Topology.Polygon.Stokes.OrientedEdge count → Gaussian.Basic.Canonical) (word : Alpha → List
       (Topology.Polygon.Stokes.OrientedEdge count))
     (entries : List Alpha) :
-    Purelib.Polynomial.Geometry.Grid.CellBoundary.sumValues (fun entry =>
-      Purelib.Topology.Surface.Sewing.SewingRetraction.wordValue (fun edge => Data.Gaussian.Basic.conj (value edge))
+    CellBoundary.sumValues (fun entry =>
+      SewingRetraction.wordValue (fun edge => Gaussian.Basic.conj (value edge))
       (word entry)) entries =
-      Data.Gaussian.Basic.conj (Purelib.Polynomial.Geometry.Grid.CellBoundary.sumValues (fun entry =>
-        Purelib.Topology.Surface.Sewing.SewingRetraction.wordValue value (word entry)) entries) := by
+      Gaussian.Basic.conj (CellBoundary.sumValues (fun entry =>
+        SewingRetraction.wordValue value (word entry)) entries) := by
   induction entries with
   | nil => rfl
   | cons entry rest ih =>
-      change Topology.Surface.Sewing.SewingRetraction.wordValue _ (word entry) + Geometry.Grid.CellBoundary.sumValues _
-        rest = Data.Gaussian.Basic.conj (Topology.Surface.Sewing.SewingRetraction.wordValue value (word entry) +
-        Geometry.Grid.CellBoundary.sumValues _ rest)
-      rw [Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ConjugateExterior.PolarizedExteriorRequest.word_conj, ih,
+      change SewingRetraction.wordValue _ (word entry) + CellBoundary.sumValues _
+        rest = Gaussian.Basic.conj (SewingRetraction.wordValue value (word entry) +
+        CellBoundary.sumValues _ rest)
+      rw [PolarizedExteriorRequest.word_conj, ih,
         Gaussian.Basic.conj_add]
 
 /-- Conjugating the original edge readings conjugates the retained terminal exterior factor. -/
 private theorem factor_conj (newSheet : Fin 2)
     (value : Topology.Polygon.Stokes.OrientedEdge current.vertices.count → Gaussian.Basic.Canonical) :
-    Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitExteriorFactor (paired := paired) included
+    ExteriorTotal.resplitExteriorFactor (paired := paired) included
       current.edges current.vertices newSheet
-        (fun edge => Data.Gaussian.Basic.conj (value edge)) =
-      Data.Gaussian.Basic.conj (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitExteriorFactor
+        (fun edge => Gaussian.Basic.conj (value edge)) =
+      Gaussian.Basic.conj (ExteriorTotal.resplitExteriorFactor
         (paired := paired) included current.edges current.vertices newSheet value) := by
-  unfold Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitExteriorFactor
+  unfold ExteriorTotal.resplitExteriorFactor
   cases paired.split.ending with
   | odd index => rfl
   | even firstIndex lastIndex =>
     dsimp only
     rw [← bank.resplit_pairs_value included current.edges current.vertices,
       ← bank.resplit_pairs_value included current.edges current.vertices,
-      Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ConjugateExterior.PolarizedExteriorRequest.word_conj,
-        Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ConjugateExterior.PolarizedExteriorRequest.word_conj,
+      PolarizedExteriorRequest.word_conj,
+        PolarizedExteriorRequest.word_conj,
         Gaussian.Basic.conj_add]
 
 variable {newSheet : Fin 2}
-  (compiled : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitCompiled
+  (compiled : OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitCompiled
     included current.edges current.vertices
-    (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
+    (BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
     ordered.prepared.partition newSheet)
 
 /-- The physical-minus-terminal polarized exterior correction is the exact paired area of the retained factors and
 regular-loop totals. -/
 private theorem difference_readback
-    (reference : ∀ point, Polynomial.Geometry.Grid.FromStates.ContainsVertex next.bank.grid point →
+    (reference : ∀ point, FromStates.ContainsVertex next.bank.grid point →
       Paths.OwnerLoopMonodromy.WindingOneLoop curve.polynomial point)
     (first second : Topology.Polygon.Stokes.OrientedEdge current.vertices.count → Gaussian.Basic.Canonical)
     (firstAnti : ∀ edge, first edge.reverse = -first edge) (secondAnti : ∀ edge, second edge.reverse = -second edge) :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-      Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
+    BilinearPolarization.extract (fun coefficient =>
+      ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
         included current.edges current.vertices newSheet
-        (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient))
+        (BilinearPolarization.mix first second coefficient))
           -
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-        Hyperelliptic.Meshes.PuncturedGrid.Inclusion.TerminalCorrection.resplitExteriorCorrection (paired := paired)
+      BilinearPolarization.extract (fun coefficient =>
+        TerminalCorrection.resplitExteriorCorrection (paired := paired)
           included current.edges current.vertices newSheet
-          (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second
+          (BilinearPolarization.mix first second
             coefficient)) =
       Topology.Polygon.Stokes.edgeArea
         (⟨resplitExteriorFactor (paired := paired) included current.edges current.vertices newSheet first,
-          Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitExteriorFactor (paired := paired) included
+          ExteriorTotal.resplitExteriorFactor (paired := paired) included
             current.edges current.vertices newSheet second⟩ : Topology.Polygon.Stokes.PrimitivePoint)
-        (⟨sumValues (fun occurrence => Purelib.Topology.Surface.Sewing.SewingRetraction.wordValue first occurrence.word)
+        (⟨sumValues (fun occurrence => SewingRetraction.wordValue first occurrence.word)
           compiled.regulars,
-          Purelib.Polynomial.Geometry.Grid.CellBoundary.sumValues (fun occurrence =>
-            Purelib.Topology.Surface.Sewing.SewingRetraction.wordValue second occurrence.word) compiled.regulars⟩ :
-            Topology.Polygon.Stokes.PrimitivePoint) := open Purelib.Integration in open Purelib.RootIsolation in by
+          CellBoundary.sumValues (fun occurrence =>
+            SewingRetraction.wordValue second occurrence.word) compiled.regulars⟩ :
+            Topology.Polygon.Stokes.PrimitivePoint) := open Purelib.Integration in open RootIsolation in by
   have partition (value : Topology.Polygon.Stokes.OrientedEdge current.vertices.count → Gaussian.Basic.Canonical) (anti
     : ∀ edge, value edge.reverse = -value edge) :
-      Geometry.Grid.CellBoundary.sumValues (fun occurrence => Topology.Surface.Sewing.SewingRetraction.wordValue value
+      CellBoundary.sumValues (fun occurrence => SewingRetraction.wordValue value
         occurrence.word) compiled.regulars =
         current.edges.chainValue current.vertices value (included.resplit base.bank.exterior
-          (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet -
-        Topology.Surface.Sewing.SewingRetraction.wordValue value (current.edges.indexedEdges current.vertices
+          (BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet -
+        SewingRetraction.wordValue value (current.edges.indexedEdges current.vertices
           (included.resplit (bank.loopProduct ordered.prepared.labels)
-            (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet)
+            (BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet)
             := by
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplit_exterior_integral_partition included
+    rw [ExteriorTotal.resplit_exterior_integral_partition included
       current.edges current.vertices reference compiled value anti]
     ring1
   have read (coefficient : Gaussian.Basic.Canonical) :=
-    Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplit_physical_exterior_difference (paired := paired)
+    ExteriorTotal.resplit_physical_exterior_difference (paired := paired)
     included
     current.edges current.vertices reference compiled
-      (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient)
-    (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix_reverse first second firstAnti
+      (BilinearPolarization.mix first second coefficient)
+    (BilinearPolarization.mix_reverse first second firstAnti
       secondAnti coefficient)
-  have polarized := Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract_congr read
+  have polarized := BilinearPolarization.extract_congr read
   have linear (coefficient : Gaussian.Basic.Canonical) :
-      Geometry.Grid.CellBoundary.sumValues (fun occurrence => Topology.Surface.Sewing.SewingRetraction.wordValue
-        (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient)
+      CellBoundary.sumValues (fun occurrence => SewingRetraction.wordValue
+        (BilinearPolarization.mix first second coefficient)
         occurrence.word)
-        compiled.regulars = Data.Gaussian.Basic.conj (Geometry.Grid.CellBoundary.sumValues (fun occurrence =>
-          Topology.Surface.Sewing.SewingRetraction.wordValue first occurrence.word) compiled.regulars) +
-          coefficient * Geometry.Grid.CellBoundary.sumValues (fun occurrence =>
-            Topology.Surface.Sewing.SewingRetraction.wordValue second occurrence.word) compiled.regulars := by
-    rw [partition _ (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix_reverse first
+        compiled.regulars = Gaussian.Basic.conj (CellBoundary.sumValues (fun occurrence =>
+          SewingRetraction.wordValue first occurrence.word) compiled.regulars) +
+          coefficient * CellBoundary.sumValues (fun occurrence =>
+            SewingRetraction.wordValue second occurrence.word) compiled.regulars := by
+    rw [partition _ (BilinearPolarization.mix_reverse first
       second firstAnti secondAnti coefficient),
       partition first firstAnti, partition second secondAnti]
     unfold SquareRoot.Grid.RootEdgeBank.chainValue
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.word_mix,
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.word_mix]
-    have conjugateSub (a b : Gaussian.Basic.Canonical) : Data.Gaussian.Basic.conj (a - b) =
-      Data.Gaussian.Basic.conj a - Data.Gaussian.Basic.conj b := by
+    rw [BilinearPolarization.word_mix,
+      BilinearPolarization.word_mix]
+    have conjugateSub (a b : Gaussian.Basic.Canonical) : Gaussian.Basic.conj (a - b) =
+      Gaussian.Basic.conj a - Gaussian.Basic.conj b := by
       apply Gaussian.Basic.ext
       · rfl
       · change -(a.im - b.im) = -a.im - -b.im
         ring1
     rw [conjugateSub]
     ring1
-  have target := (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract_congr
+  have target := (BilinearPolarization.extract_congr
     (first := fun coefficient => Path.BoundaryRibbon.area
-      (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitExteriorFactor (paired := paired) included
+      (ExteriorTotal.resplitExteriorFactor (paired := paired) included
         current.edges current.vertices newSheet
-        (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient))
-      (Geometry.Grid.CellBoundary.sumValues (fun occurrence => Topology.Surface.Sewing.SewingRetraction.wordValue
-        (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient)
+        (BilinearPolarization.mix first second coefficient))
+      (CellBoundary.sumValues (fun occurrence => SewingRetraction.wordValue
+        (BilinearPolarization.mix first second coefficient)
         occurrence.word)
         compiled.regulars)) (fun coefficient => by
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factor_mix,
-      linear])).trans (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract_area
-      (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitExteriorFactor (paired := paired) included
+    rw [PolarizedExterior.PolarizedExteriorRequest.factor_mix,
+      linear])).trans (BilinearPolarization.extract_area
+      (ExteriorTotal.resplitExteriorFactor (paired := paired) included
         current.edges current.vertices newSheet first)
-      (Geometry.Grid.CellBoundary.sumValues (fun occurrence => Topology.Surface.Sewing.SewingRetraction.wordValue first
+      (CellBoundary.sumValues (fun occurrence => SewingRetraction.wordValue first
         occurrence.word) compiled.regulars)
-      (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitExteriorFactor (paired := paired) included
+      (ExteriorTotal.resplitExteriorFactor (paired := paired) included
         current.edges current.vertices newSheet second)
-      (Geometry.Grid.CellBoundary.sumValues (fun occurrence => Topology.Surface.Sewing.SewingRetraction.wordValue second
+      (CellBoundary.sumValues (fun occurrence => SewingRetraction.wordValue second
         occurrence.word) compiled.regulars))
   refine Eq.trans ?_ (polarized.trans target)
-  unfold Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract
+  unfold BilinearPolarization.extract
   ring1
 
 variable {firstIndex secondIndex : Fin genus}
 
 /-- The common original exterior factor weight is nonnegative. -/
 private theorem weight_nonnegative
-    (first : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    (first : Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential firstIndex))
-    (second : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    (second : Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential secondIndex)) :
-    0 ≤ Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.canonicalWeight (paired
+    0 ≤ PolarizedExterior.PolarizedExteriorRequest.canonicalWeight (paired
       := paired) included first second :=
   Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-    ((Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound_nonnegative
+    ((PolarizedExterior.PolarizedExteriorRequest.factorBound_nonnegative
     included first).trans (Fraction.Order.Basic.le_max_left _ _))
 
 variable {included compiled}
-  {first : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+  {first : Face.MagnitudeBank.FaceMagnitudeBank domains
     (Periods.PeriodMatrix.standardDifferential firstIndex)}
-  {second : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+  {second : Face.MagnitudeBank.FaceMagnitudeBank domains
     (Periods.PeriodMatrix.standardDifferential secondIndex)} {error : Fraction.Rational}
 
 /-- The retained original compiled regular-loop total meets its requested allowance at every sufficient stage. -/
 private theorem regular_bound {differential : Fin genus} {tolerance : Fraction.Rational}
     (positive : 0 < tolerance) (request :
-      Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.RegularRequest (domains :=
+      RegularRequest (domains :=
       domains) included compiled differential tolerance)
-    {stage : Nat} {shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    {stage : Nat} {shared : Face.PrimitiveData.FacePrimitiveBank
       (Periods.PeriodMatrix.standardDifferential differential) stage domains}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared current.mesh)
+    (readings : TrianglePrimitiveReadings.TriangleReadings shared current.mesh)
       (later : request.val ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Purelib.Polynomial.Geometry.Grid.CellBoundary.sumValues (fun occurrence =>
-      Purelib.Topology.Surface.Sewing.SewingRetraction.wordValue
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh readings.values)
-      occurrence.word) compiled.regulars) ≤ tolerance := open Purelib.Approximation in by
+    Gaussian.Norm.Basic.normSq (CellBoundary.sumValues (fun occurrence =>
+      SewingRetraction.wordValue
+      (CanonicalEdgeValues.edgeValuation current.mesh readings.values)
+      occurrence.word) compiled.regulars) ≤ tolerance := open Approximation in by
   have listRead {Alpha : Type} (value : Alpha → Gaussian.Basic.Canonical) (entries : List Alpha) :
-      Geometry.Grid.CellBoundary.sumValues value entries = Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map value)
+      CellBoundary.sumValues value entries = Gaussian.Norm.Sum.Basic.gaussianSum (entries.map value)
         := by
     induction entries with
     | nil => rfl
@@ -291,63 +295,63 @@ open Purelib.Approximation in
 /-- The replacement error is paid at every later common sample. The
 physical exterior itself has not been asserted small. -/
 theorem conjugate_accurate (request :
-  Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest (paired := paired) included
+  PolarizedExterior.PolarizedExteriorRequest (paired := paired) included
   compiled first second error)
-    (reference : ∀ point, Polynomial.Geometry.Grid.FromStates.ContainsVertex next.bank.grid point →
+    (reference : ∀ point, FromStates.ContainsVertex next.bank.grid point →
       Paths.OwnerLoopMonodromy.WindingOneLoop curve.polynomial point)
-    {stage : Nat} {leftShared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    {stage : Nat} {leftShared : Face.PrimitiveData.FacePrimitiveBank
       (Periods.PeriodMatrix.standardDifferential firstIndex) stage domains}
-    {rightShared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    {rightShared : Face.PrimitiveData.FacePrimitiveBank
       (Periods.PeriodMatrix.standardDifferential secondIndex) stage domains}
-    (leftReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings leftShared
-      current.mesh) (rightReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings
+    (leftReadings : TrianglePrimitiveReadings.TriangleReadings leftShared
+      current.mesh) (rightReadings : TrianglePrimitiveReadings.TriangleReadings
       rightShared current.mesh)
     (later : request.index ≤ stage) :
-    let left := fun edge => Data.Gaussian.Basic.conj
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh leftReadings.values edge)
-    let right := Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation current.mesh rightReadings.values
-    Data.Gaussian.Norm.Basic.normSq
-      (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-      Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
+    let left := fun edge => Gaussian.Basic.conj
+      (CanonicalEdgeValues.edgeValuation current.mesh leftReadings.values edge)
+    let right := CanonicalEdgeValues.edgeValuation current.mesh rightReadings.values
+    Gaussian.Norm.Basic.normSq
+      (BilinearPolarization.extract (fun coefficient =>
+      ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired)
         included current.edges current.vertices newSheet
-        (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix left right coefficient)) -
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-        Hyperelliptic.Meshes.PuncturedGrid.Inclusion.TerminalCorrection.resplitExteriorCorrection (paired := paired)
+        (BilinearPolarization.mix left right coefficient)) -
+      BilinearPolarization.extract (fun coefficient =>
+        TerminalCorrection.resplitExteriorCorrection (paired := paired)
           included current.edges current.vertices newSheet
-          (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix left right coefficient)))
+          (BilinearPolarization.mix left right coefficient)))
             ≤ error := by
   intro left right
-  rw [Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ConjugateExterior.PolarizedExteriorRequest.difference_readback
+  rw [PolarizedExteriorRequest.difference_readback
     included compiled reference left right
     (fun edge => by
         dsimp only [left];
-        rw [Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation_reverse];
+        rw [CanonicalEdgeValues.edgeValuation_reverse];
         rfl)
-    (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation_reverse current.mesh rightReadings.values)]
-  rw [Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ConjugateExterior.PolarizedExteriorRequest.factor_conj,
-    Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ConjugateExterior.PolarizedExteriorRequest.sum_word_conj]
+    (CanonicalEdgeValues.edgeValuation_reverse current.mesh rightReadings.values)]
+  rw [PolarizedExteriorRequest.factor_conj,
+    PolarizedExteriorRequest.sum_word_conj]
   have fixedLater := (Nat.Order.le_max_left _ _).trans later
   have requestLater := (Nat.Order.le_max_right _ _).trans later
   have leftBound :=
-    Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factor_bounded (paired :=
+    PolarizedExterior.PolarizedExteriorRequest.factor_bounded (paired :=
     paired) included first newSheet leftReadings
     ((Nat.Order.le_max_left _ _).trans fixedLater)
   have rightBound :=
-    Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factor_bounded (paired :=
+    PolarizedExterior.PolarizedExteriorRequest.factor_bounded (paired :=
     paired) included second newSheet rightReadings
     ((Nat.Order.le_max_right _ _).trans fixedLater)
   have weightNonnegative : 0 ≤ request.weight := request.weight_eq ▸
-    Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ConjugateExterior.PolarizedExteriorRequest.weight_nonnegative included
+    PolarizedExteriorRequest.weight_nonnegative included
     first second
   have tolerancePositive := Rational.Budget.Weighted.allowance_positive request.positive weightNonnegative
   have leftSmall :=
-    Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ConjugateExterior.PolarizedExteriorRequest.regular_bound
+    PolarizedExteriorRequest.regular_bound
     tolerancePositive request.left leftReadings ((Nat.Order.le_max_left _ _).trans requestLater)
   have rightSmall :=
-    Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ConjugateExterior.PolarizedExteriorRequest.regular_bound
+    PolarizedExteriorRequest.regular_bound
     tolerancePositive request.right rightReadings ((Nat.Order.le_max_right _ _).trans requestLater)
   have canonicalBound {point : Gaussian.Basic.Canonical} {limit : Fraction.Rational}
-      (h : Data.Gaussian.Norm.Basic.normSq point ≤ limit) :
+      (h : Gaussian.Norm.Basic.normSq point ≤ limit) :
       Gaussian.Basic.Canonical.normSq point ≤ limit := by
     change Fraction.Order.Basic.LessEqual _ _ at h ⊢
     rw [← Gaussian.Norm.Basic.normSq_eq_canonical]
@@ -357,18 +361,18 @@ theorem conjugate_accurate (request :
     (first := (⟨_, _⟩ : Topology.Polygon.Stokes.PrimitivePoint)) (last := (⟨_, _⟩ :
       Topology.Polygon.Stokes.PrimitivePoint))
     ⟨canonicalBound (((Gaussian.Norm.Basic.normSq_conj _).trans_le leftBound).trans (Fraction.Order.Basic.le_max_left
-      (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
+      (PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
       paired) included first)
-      (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
+      (PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
       paired) included second))),
       canonicalBound (rightBound.trans (Fraction.Order.Basic.le_max_right
-        (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
+        (PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
         paired) included first)
-        (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
+        (PolarizedExterior.PolarizedExteriorRequest.factorBound (paired :=
         paired) included second)))⟩
     ⟨canonicalBound ((Gaussian.Norm.Basic.normSq_conj _).trans_le leftSmall), canonicalBound rightSmall⟩
   refine estimate.trans ?_
-  change Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PolarizedExterior.PolarizedExteriorRequest.canonicalWeight (paired
+  change PolarizedExterior.PolarizedExteriorRequest.canonicalWeight (paired
     := paired) included first second * Rational.Budget.Weighted.allowance error request.weight ≤ error
   rw [← request.weight_eq]
   exact Rational.Budget.Weighted.mul_allowance_le request.positive.le weightNonnegative

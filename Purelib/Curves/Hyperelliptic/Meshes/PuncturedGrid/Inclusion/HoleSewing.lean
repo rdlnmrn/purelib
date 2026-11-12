@@ -83,6 +83,10 @@ import Purelib.Topology.Surface.Sewing.SewnPathRequests
 import Purelib.Tactic.Ring
 public import Purelib.RootIsolation.SquareRoot.Grid.Inclusion.CircuitSewing
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-! The doubled original cell walk on the actual sewn cut surface. Every
@@ -149,11 +153,11 @@ open Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianNormSqSum)
 open Purelib.Data.Rat.Fraction.Order.Arithmetic (mul_nonneg_direct)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base next : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {current : LiftedPuncturedGrid next}
   (bank : BasedBranchBank lifted)
-    (included : Purelib.Polynomial.Geometry.Grid.Extension.CoordinateInclusion base.bank.grid next.bank.grid)
+    (included : Extension.CoordinateInclusion base.bank.grid next.bank.grid)
 
 /-- The original branch-cell boundary resplit on the enlarged grid and traversed twice. -/
 @[expose] def doubleWalk (branch : BranchIsolation.Data.Index branches) :=
@@ -169,17 +173,17 @@ set_option genInjectivity false in
 
 Its source word preserves every cut occurrence, with the full contact bank and exact assembly profile. -/
 structure IncludedHoleSewing (branch : BranchIsolation.Data.Index branches)
-    (domains : DomainBanks.FaceDomainBank current.frames next.faces.regulars) (differential :
-      Differentials.Basic.Differential genus) where
-  /-- The actual paired source placement of the doubled resplit boundary. -/ paired : WalkOccurrences.PairedWalk
+    (domains : FaceDomainBank current.frames next.faces.regulars) (differential :
+      Differential genus) where
+  /-- The actual paired source placement of the doubled resplit boundary. -/ paired : PairedWalk
     current.mesh (doubleWalk bank included branch)
   /-- The cut source word retaining the exact ordered source occurrences. -/ word : CutSourceWord
     current.cutPolygon.patch.cut (paired.sources 0)
-  /-- The complete retained contact bank on the actual cut assembly. -/ contacts : SewnPrimitiveContacts.ContactBank
+  /-- The complete retained contact bank on the actual cut assembly. -/ contacts : ContactBank
     current.cutPolygon.patch.assembly
   /-- Differential preparations covering the same retained contact entries. -/ covered :
-    ContactBanks.ContactPreparations contacts.entries differential domains
-  /-- The cached finite shape of the cut assembly. -/ profile : SewnPrimitiveAccounting.Shape
+    ContactPreparations contacts.entries differential domains
+  /-- The cached finite shape of the cut assembly. -/ profile : Shape
   /-- The cached profile is the actual cut-assembly shape. -/ profile_eq : profile = SewnPrimitiveAccounting.shape
     current.cutPolygon.patch.assembly
 
@@ -187,15 +191,15 @@ constructive_injectivity IncludedHoleSewing
 
 namespace IncludedHoleSewing
 
-variable {bank included} {branch : Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data.Index branches}
+variable {bank included} {branch : BranchIsolation.Data.Index branches}
 
 /-- Construct the doubled boundary placement, its cut source word and the covered contact bank on the retained assembly.
 -/
-@[expose] def build (bank : LiftedPuncturedGrid.BasedBranchBank lifted) (included : Extension.CoordinateInclusion
+@[expose] def build (bank : BasedBranchBank lifted) (included : Extension.CoordinateInclusion
   base.bank.grid next.bank.grid)
-    (branch : BranchIsolation.Data.Index branches) (domains : DomainBanks.FaceDomainBank current.frames
+    (branch : BranchIsolation.Data.Index branches) (domains : FaceDomainBank current.frames
       next.faces.regulars)
-    (differential : Differentials.Basic.Differential genus) : IncludedHoleSewing bank included branch domains
+    (differential : Differential genus) : IncludedHoleSewing bank included branch domains
       differential :=
   let paired := PairedWalk.build current.mesh (doubleWalk bank included branch)
   let word := CutSourceWord.build current.cutPolygon.patch.cut (paired.sources 0) (by
@@ -218,14 +222,14 @@ set_option genInjectivity false in
 
 The path, contact and source-to-chart requests share the actual word count and magnitude budget. -/
 structure Request (geometry : IncludedHoleSewing bank included branch domains differential)
-    (fixed : MagnitudeBank.FaceMagnitudeBank domains differential) (target : Fraction.Rational) (floor : Nat) where
+    (fixed : FaceMagnitudeBank domains differential) (target : Rational) (floor : Nat) where
   /-- The requested squared-area error is strictly positive. -/ positive : 0 < target
   /-- The cached number of retained cut-edge occurrences. -/ count : Nat
   /-- The occurrence count reads the actual retained cut word. -/ count_eq : count = geometry.word.edges.length
-  /-- The cached bound on the sum of source-increment squared norms. -/ magnitude : Fraction.Rational
+  /-- The cached bound on the sum of source-increment squared norms. -/ magnitude : Rational
   /-- The magnitude is the retained occurrence count times the paid edge-magnitude bound. -/ magnitude_eq : magnitude =
-    (count : Fraction.Rational) * (4 * fixed.bound)
-  /-- The actual sewn path-area request at one quarter of the target. -/ budget : SewnPathAreaRequests.PathAreaRequest
+    (count : Rational) * (4 * fixed.bound)
+  /-- The actual sewn path-area request at one quarter of the target. -/ budget : PathAreaRequest
     current.cutPolygon.patch.assembly count magnitude (target / 4)
   /-- The contact request paying the sewn path tolerance above both the supplied floor and magnitude stage. -/ contact :
     ContactPreparations.Request geometry.covered budget.path.tolerance (max floor fixed.index)
@@ -245,15 +249,15 @@ variable {geometry : IncludedHoleSewing bank included branch domains differentia
 
 /-- Prepare the sewn path, covered contacts and source-to-chart requests, then cache their shared stage. -/
 @[expose] def build (geometry : IncludedHoleSewing bank included branch domains differential)
-    (fixed : MagnitudeBank.FaceMagnitudeBank domains differential) (target : Fraction.Rational) (positive : 0 < target)
+    (fixed : FaceMagnitudeBank domains differential) (target : Rational) (positive : 0 < target)
       (floor : Nat) :
     Request geometry fixed target floor :=
   let count := geometry.word.edges.length
-  let magnitude := (count : Fraction.Rational) * (4 * fixed.bound)
-  have nonnegative : 0 ≤ magnitude := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  let magnitude := (count : Rational) * (4 * fixed.bound)
+  have nonnegative : 0 ≤ magnitude := Arithmetic.mul_nonneg_direct
+    (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) (Arithmetic.mul_nonneg_direct (by decide)
       fixed.nonnegative)
-  have quarterPositive : 0 < target / 4 := Fraction.Order.Field.div_pos_direct positive (by decide)
+  have quarterPositive : 0 < target / 4 := Field.div_pos_direct positive (by decide)
   let budget := PathAreaRequest.ofProfile geometry.profile geometry.profile_eq count magnitude (target / 4) nonnegative
     quarterPositive
   let contact := ContactPreparations.Request.build geometry.covered budget.path.tolerance budget.path.tolerance_positive
@@ -265,36 +269,36 @@ variable {geometry : IncludedHoleSewing bank included branch domains differentia
 
 /-- The actual retained source increments satisfy the cached total squared-norm budget at a paid magnitude stage. -/
 private theorem source_magnitude (request : Request geometry fixed target floor)
-    {stage : Nat} {shared : PrimitiveData.FacePrimitiveBank differential stage domains} (readings :
-      TrianglePrimitiveReadings.TriangleReadings shared current.mesh)
+    {stage : Nat} {shared : FacePrimitiveBank differential stage domains} (readings :
+      TriangleReadings shared current.mesh)
     (later : fixed.index ≤ stage) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianNormSqSum (geometry.word.sources.sources.map (fun source => source.increment
+    Sum.Basic.gaussianNormSqSum (geometry.word.sources.sources.map (fun source => source.increment
       readings.values)) ≤ request.magnitude := by
-  let retainedMagnitude := Readings.EdgeMagnitude.ofBank
+  let retainedMagnitude := EdgeMagnitude.ofBank
     (owner := SourceChartComparison.ownerFromMesh current.mesh) fixed later readings
   rw [geometry.word.sources_eq]
-  have bound := Data.Gaussian.Norm.Sum.Bounds.normSum_le ((geometry.paired.sources 0).map (fun source =>
+  have bound := Sum.Bounds.normSum_le ((geometry.paired.sources 0).map (fun source =>
     source.increment readings.values)) (4 * fixed.bound) (by
     intro value member
     obtain ⟨source, _, equal⟩ := Map.mem_map.mp member
     rw [← equal]
     exact retainedMagnitude.source_bounded source)
-  change Data.Gaussian.Norm.Sum.Basic.gaussianNormSqSum ((geometry.paired.sources 0).map (fun source => source.increment
+  change Sum.Basic.gaussianNormSqSum ((geometry.paired.sources 0).map (fun source => source.increment
     readings.values)) ≤
-    (((geometry.paired.sources 0).map (fun source => source.increment readings.values)).length : Fraction.Rational) *
+    (((geometry.paired.sources 0).map (fun source => source.increment readings.values)).length : Rational) *
       (4 * fixed.bound) at bound
-  rw [Data.List.Map.length_map, ← geometry.word.length_eq, ← request.count_eq, ← request.magnitude_eq] at bound
+  rw [Map.length_map, ← geometry.word.length_eq, ← request.count_eq, ← request.magnitude_eq] at bound
   exact bound
 
 /-- The actual cut-edge area minus all retained occurrence offsets agrees with the canonical doubled original-cell word
 to the requested accuracy. -/
 theorem accurate (request : Request geometry fixed target floor)
-    {stage : Nat} {shared : PrimitiveData.FacePrimitiveBank differential stage domains} (readings :
-      TrianglePrimitiveReadings.TriangleReadings shared current.mesh)
+    {stage : Nat} {shared : FacePrimitiveBank differential stage domains} (readings :
+      TriangleReadings shared current.mesh)
     (surface : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch readings.values)
-    (readback : CutSourceWord.AreaReadback geometry.word surface.sewn.values)
+    (readback : AreaReadback geometry.word surface.sewn.values)
     (later : request.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq ((readback.raw - readback.correction) -
+    Basic.normSq ((readback.raw - readback.correction) -
       RetracingWords.wordArea (CanonicalEdgeValues.edgeValuation current.mesh readings.values)
         (current.edges.indexedEdges current.vertices (doubleWalk bank included branch) 0)) ≤ target := by
   have contactLater := (Data.Nat.Order.le_max_left _ _).trans (request.index_eq ▸ later)
@@ -320,21 +324,21 @@ theorem accurate (request : Request geometry fixed target floor)
     readback.corrected.trans (area.sewn.area_eq.trans (congrArg IncrementArea.pathArea
       (PathSources.Sample.areaPairs_left path))).symm
   rw [actual]
-  have chartBound : Data.Gaussian.Norm.Basic.normSq
+  have chartBound : Basic.normSq
       (area.source.area - RetracingWords.wordArea
         (CanonicalEdgeValues.edgeValuation current.mesh readings.values)
         (current.edges.indexedEdges current.vertices (doubleWalk bank included branch) 0)) ≤ target / 4 := by
     have h := source ▸ charts
-    change Fraction.Order.Basic.LessEqual _ _ at h ⊢
+    change Basic.LessEqual _ _ at h ⊢
     dsimp only [sample, SingleReadings.values,
       SingleReadings.ofReadings] at h
-    rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical]
+    rw [Basic.normSq_eq_canonical]
     convert h using 1; rfl
-  have estimate := (Data.Gaussian.Norm.Bounds.normSq_sub_le_via area.sewn.area area.source.area
+  have estimate := (Bounds.normSq_sub_le_via area.sewn.area area.source.area
       (RetracingWords.wordArea (CanonicalEdgeValues.edgeValuation current.mesh readings.values)
         (current.edges.indexedEdges current.vertices (doubleWalk bank included branch) 0))).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct sewn.le chartBound) (by decide))
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct sewn.le chartBound) (by decide))
   exact estimate.trans_eq ((by ring1 : 2 * (target / 4 + target / 4) = target / 4 * 4).trans
     (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)))
 
@@ -343,24 +347,24 @@ end IncludedHoleSewing
 
 /-- Read the original based branch excursion from the actual sewn surface. Both the full doubled area and every
 cut-occurrence correction remain in the conclusion; no projected-vertex equality is used to erase offsets. -/
-theorem included_branch_sewn_accurate (fixed : MagnitudeBank.FaceMagnitudeBank domains differential)
+theorem included_branch_sewn_accurate (fixed : FaceMagnitudeBank domains differential)
     (branch : BranchIsolation.Data.Index branches) (sheet : Fin 2)
-    (target : Fraction.Rational) (positive : 0 < target) (floor : Nat) :
+    (target : Rational) (positive : 0 < target) (floor : Nat) :
     let part := target / 4
-    let partPositive : 0 < part := Fraction.Order.Field.div_pos_direct positive (by decide)
-    let innerPositive : 0 < part / 10 := Fraction.Order.Field.div_pos_direct partPositive (by decide)
+    let partPositive : 0 < part := Field.div_pos_direct positive (by decide)
+    let innerPositive : 0 < part / 10 := Field.div_pos_direct partPositive (by decide)
     let stems := IncludedStemRequest.build bank included fixed branch sheet (part / 10) innerPositive
     let holes := IncludedHoleRequest.build bank included fixed branch (part / 10) innerPositive
     let geometry := IncludedHoleSewing.build bank included branch domains differential
     let sewing := IncludedHoleSewing.Request.build geometry fixed part partPositive floor
-    ∀ stage (shared : PrimitiveData.FacePrimitiveBank differential stage domains) (readings :
-      TrianglePrimitiveReadings.TriangleReadings shared current.mesh)
+    ∀ stage (shared : FacePrimitiveBank differential stage domains) (readings :
+      TriangleReadings shared current.mesh)
       (surface : SewnPrimitiveSamples.CachedSample current.cutPolygon.patch readings.values),
       max (max stems.index holes.index) sewing.index ≤ stage →
       let readback := AreaReadback.build geometry.word surface.sewn.values
       let loop := current.edges.indexedEdges current.vertices
         (included.resplit (bank.rows.get branch).reference.walk (FramedBranchCellBank.baseMember base.bank)) sheet
-      Data.Gaussian.Norm.Basic.normSq ((readback.raw - readback.correction) -
+      Basic.normSq ((readback.raw - readback.correction) -
         (RetracingWords.wordArea (CanonicalEdgeValues.edgeValuation current.mesh readings.values) loop +
           RetracingWords.wordArea (CanonicalEdgeValues.edgeValuation current.mesh readings.values) loop)) ≤ target := by
   intro part partPositive innerPositive stems holes geometry sewing stage shared readings surface later readback loop
@@ -372,18 +376,18 @@ theorem included_branch_sewn_accurate (fixed : MagnitudeBank.FaceMagnitudeBank d
     (current.edges.indexedEdges current.vertices (doubleWalk bank included branch) 0)
   let doubled := RetracingWords.wordArea (CanonicalEdgeValues.edgeValuation current.mesh readings.values) loop +
     RetracingWords.wordArea (CanonicalEdgeValues.edgeValuation current.mesh readings.values) loop
-  have branchBoundOld : Data.Gaussian.Norm.Basic.normSq (doubled - canonical) ≤ part := by
+  have branchBoundOld : Basic.normSq (doubled - canonical) ≤ part := by
     have h := branchBound
-    change Fraction.Order.Basic.LessEqual _ _ at h ⊢
+    change Basic.LessEqual _ _ at h ⊢
     dsimp only [doubled, canonical, doubleWalk]
-    simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical] using h
-  have reversed : Data.Gaussian.Norm.Basic.normSq (canonical - doubled) ≤ part := by
-    rw [show canonical - doubled = -(doubled - canonical) by ring1, Data.Gaussian.Norm.Basic.normSq_neg]
+    simpa only [Basic.normSq_eq_canonical] using h
+  have reversed : Basic.normSq (canonical - doubled) ≤ part := by
+    rw [show canonical - doubled = -(doubled - canonical) by ring1, Basic.normSq_neg]
     exact branchBoundOld
-  have estimate := (Data.Gaussian.Norm.Bounds.normSq_sub_le_via
+  have estimate := (Bounds.normSq_sub_le_via
       (readback.raw - readback.correction) canonical doubled).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct sewn reversed) (by decide))
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.add_le_add_direct sewn reversed) (by decide))
   exact estimate.trans_eq ((by ring1 : 2 * (part + part) = target / 4 * 4).trans
     (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)))
 

@@ -75,7 +75,8 @@ theorem residualApart_neutralTransition
       (Mode.Semantics.SemanticMode.parserTail
         (.loop (Emission.Residual.residualApartLoopState current certificate)) tail).Equivalent
         (Mode.Semantics.SemanticMode.parserTail (.residual current) residual) := by
-    simpa only [Mode.Semantics.SemanticMode.parserTail, Emission.Residual.residualApartLoopState] using
+    simpa only [Mode.Semantics.SemanticMode.parserTail, Emission.Residual.residualApartLoopState,
+      Emission.Residual.apartLoopState] using
       chartEquivalent
   exact chartEquivalent'.symm
 
@@ -91,7 +92,7 @@ theorem residualStep_accounted (current :
   change Contraction.Transition.AccountedStep (.residual current) (Emission.Residual.residualStep current).next
   generalize hStep : Emission.Residual.residualStep current = emission
   unfold Contraction.Transition.AccountedStep
-  unfold Emission.Residual.residualStep at hStep
+  rewrite [Emission.Residual.residualStep_eq] at hStep
   simp only at hStep
   split at hStep
   · cases hStep

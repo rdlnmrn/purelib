@@ -59,3 +59,52 @@ end Seed
 end Purelib.RootIsolation.Newton.Restart.Seed
 
 end
+
+public section
+
+namespace Purelib.RootIsolation.Newton.Restart.Seed
+
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+  {degreeBound : Nat}
+  {squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p}
+  {elimination : Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound}
+  {current : Clearance.Box.Region.ProtectedAmbient p ambient}
+
+/-- Build the original seed track once from its actual restored initial state. -/
+def trackFromState (degreeAtLeastTwo : 2 ≤ p.natDegree)
+    (seed : Seed squarefree elimination current)
+    (saved : State.WindingOne.Basic.WindingOneState p ambient)
+    (_same : saved = seed.state degreeAtLeastTwo) : Track.Basic.WindingOneTrack p ambient :=
+  Track.Newton.Build.ofInitial degreeAtLeastTwo squarefree elimination saved
+
+/-- Read back the supplied initial state and complete original seed track together. -/
+private theorem trackFromState_readbacks (degreeAtLeastTwo : 2 ≤ p.natDegree)
+    (seed : Seed squarefree elimination current)
+    (saved : State.WindingOne.Basic.WindingOneState p ambient)
+    (same : saved = seed.state degreeAtLeastTwo) :
+    (trackFromState degreeAtLeastTwo seed saved same).initial = saved ∧
+      trackFromState degreeAtLeastTwo seed saved same = seed.track degreeAtLeastTwo := by
+  constructor
+  · rfl
+  · cases same
+    rfl
+
+/-- The restored seed track starts at the exact supplied state. -/
+theorem trackFromState_initial (degreeAtLeastTwo : 2 ≤ p.natDegree)
+    (seed : Seed squarefree elimination current)
+    (saved : State.WindingOne.Basic.WindingOneState p ambient)
+    (same : saved = seed.state degreeAtLeastTwo) :
+    (trackFromState degreeAtLeastTwo seed saved same).initial = saved :=
+  (trackFromState_readbacks degreeAtLeastTwo seed saved same).1
+
+/-- The restored track is the complete original residual-seed track. -/
+theorem trackFromState_eq (degreeAtLeastTwo : 2 ≤ p.natDegree)
+    (seed : Seed squarefree elimination current)
+    (saved : State.WindingOne.Basic.WindingOneState p ambient)
+    (same : saved = seed.state degreeAtLeastTwo) :
+    trackFromState degreeAtLeastTwo seed saved same = seed.track degreeAtLeastTwo :=
+  (trackFromState_readbacks degreeAtLeastTwo seed saved same).2
+
+end Purelib.RootIsolation.Newton.Restart.Seed
+
+end

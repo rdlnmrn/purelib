@@ -6,14 +6,14 @@ import Purelib.Data.List.Map
 import Purelib.Data.List.Range.Basic
 import Purelib.Data.List.Nodup
 import Purelib.Data.List.Range.Nodup
-import Purelib.Data.Rat.Fraction.Cast
+public import Purelib.Data.Rat.Fraction.Cast
 import Purelib.Polynomial.Dense.Arithmetic
 import Purelib.Polynomial.Dense.Extensionality
 public import Purelib.Polynomial.Dense.RootBound
 
 import Purelib.Tactic.QuotientFreeOmega
 import Mathlib.Algebra.Ring.Defs
-import Purelib.Data.Rat.Fraction.Field
+public import Purelib.Data.Rat.Fraction.Field
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring

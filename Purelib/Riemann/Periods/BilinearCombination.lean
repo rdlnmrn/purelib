@@ -20,7 +20,7 @@ open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_add sumFin_sub su
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Gaussian.Norm.Basic (normSq_mul normSq_nonneg)
 
-attribute [local congr] Purelib.Algebra.FiniteSum.Fin.sumFin_congr
+attribute [local congr] sumFin_congr
 
 section
 open Purelib.Algebra
@@ -30,45 +30,45 @@ open Purelib.Data
 
 The exact double sum retains every ordered pair of left and right basis values at both endpoints. -/
 theorem edgeArea_combination {leftCount rightCount : Nat}
-    (left : Fin leftCount → Gaussian.Basic.Canonical) (right : Fin rightCount → Gaussian.Basic.Canonical)
-    (firstLeft lastLeft : Fin leftCount → Gaussian.Basic.Canonical) (firstRight lastRight : Fin rightCount →
-      Gaussian.Basic.Canonical) :
-    Polygon.Stokes.edgeArea ⟨sumFin (fun row => left row * firstLeft row), FiniteSum.Fin.sumFin (fun row => right row *
+    (left : Fin leftCount → Canonical) (right : Fin rightCount → Canonical)
+    (firstLeft lastLeft : Fin leftCount → Canonical) (firstRight lastRight : Fin rightCount →
+      Canonical) :
+    edgeArea ⟨sumFin (fun row => left row * firstLeft row), sumFin (fun row => right row *
       firstRight row)⟩
-      ⟨sumFin (fun row => left row * lastLeft row), FiniteSum.Fin.sumFin (fun row => right row * lastRight row)⟩ =
-      FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => left first * right second *
-        Polygon.Stokes.edgeArea ⟨firstLeft first, firstRight second⟩ ⟨lastLeft first, lastRight second⟩)) := by
-  have expanded := FiniteSum.Fin.sumFin_congr (fun first : Fin leftCount => FiniteSum.Fin.sumFin_congr
+      ⟨sumFin (fun row => left row * lastLeft row), sumFin (fun row => right row * lastRight row)⟩ =
+      sumFin (fun first => sumFin (fun second => left first * right second *
+        edgeArea ⟨firstLeft first, firstRight second⟩ ⟨lastLeft first, lastRight second⟩)) := by
+  have expanded := sumFin_congr (fun first : Fin leftCount => sumFin_congr
     (fun second : Fin rightCount => show left first * right second *
-      Polygon.Stokes.edgeArea ⟨firstLeft first, firstRight second⟩ ⟨lastLeft first, lastRight second⟩ =
+      edgeArea ⟨firstLeft first, firstRight second⟩ ⟨lastLeft first, lastRight second⟩ =
         (left first * firstLeft first) * (right second * lastRight second) -
         (left first * lastLeft first) * (right second * firstRight second) by
-      simp only [Polygon.Stokes.edgeArea]
+      simp only [edgeArea]
       ring1))
   rw [expanded]
-  conv_lhs => simp only [FiniteSum.Fin.sumFin_sub, FiniteSum.Fin.sumFin_mul_left, FiniteSum.Fin.sumFin_mul_right,
-    Polygon.Stokes.edgeArea]
-  conv_rhs => simp only [FiniteSum.Fin.sumFin_sub, FiniteSum.Fin.sumFin_mul_left, FiniteSum.Fin.sumFin_mul_right,
-    Polygon.Stokes.edgeArea]
+  conv_lhs => simp only [sumFin_sub, sumFin_mul_left, sumFin_mul_right,
+    edgeArea]
+  conv_rhs => simp only [sumFin_sub, sumFin_mul_left, sumFin_mul_right,
+    edgeArea]
 
 /-- Expand a finite edge-word area into all coefficient-weighted basis-pair areas.
 
 The same ordered word is used for every pair, preserving all endpoint contributions. -/
 theorem edgeListArea_combination {leftCount rightCount vertices : Nat}
-    (left : Fin leftCount → Gaussian.Basic.Canonical) (right : Fin rightCount → Gaussian.Basic.Canonical)
-    (first : Fin leftCount → Fin vertices → Gaussian.Basic.Canonical) (second : Fin rightCount → Fin vertices →
-      Gaussian.Basic.Canonical)
-    (word : List (Polygon.Stokes.OrientedEdge vertices)) :
-    Polygon.Stokes.edgeListArea (fun vertex => ⟨sumFin (fun row => left row * first row vertex),
-      FiniteSum.Fin.sumFin (fun row => right row * second row vertex)⟩) word =
-      FiniteSum.Fin.sumFin (fun i => FiniteSum.Fin.sumFin (fun j => left i * right j * Polygon.Stokes.edgeListArea (fun
+    (left : Fin leftCount → Canonical) (right : Fin rightCount → Canonical)
+    (first : Fin leftCount → Fin vertices → Canonical) (second : Fin rightCount → Fin vertices →
+      Canonical)
+    (word : List (OrientedEdge vertices)) :
+    edgeListArea (fun vertex => ⟨sumFin (fun row => left row * first row vertex),
+      sumFin (fun row => right row * second row vertex)⟩) word =
+      sumFin (fun i => sumFin (fun j => left i * right j * edgeListArea (fun
         vertex => ⟨first i vertex, second j vertex⟩) word)) := by
   induction word with
   | nil =>
-      conv_lhs => simp only [Polygon.Stokes.edgeListArea, mul_zero, FiniteSum.Fin.sumFin_zero]
-      conv_rhs => simp only [Polygon.Stokes.edgeListArea, mul_zero, FiniteSum.Fin.sumFin_zero]
+      conv_lhs => simp only [edgeListArea, mul_zero, FiniteSum.Fin.sumFin_zero]
+      conv_rhs => simp only [edgeListArea, mul_zero, FiniteSum.Fin.sumFin_zero]
   | cons edge word ih =>
-      simp only [Polygon.Stokes.edgeListArea, mul_add, FiniteSum.Fin.sumFin_add]
+      simp only [edgeListArea, mul_add, sumFin_add]
       rw [edgeArea_combination, ih]
 
 end
@@ -80,52 +80,52 @@ open Purelib.Data
 Every displayed basis-pair error has quadrance at most the same target. The bound pays leftCount times rightCount before
 multiplying the two coefficient sums and target. -/
 theorem combination_bound {leftCount rightCount : Nat}
-    (left : Fin leftCount → Gaussian.Basic.Canonical) (right : Fin rightCount → Gaussian.Basic.Canonical)
-    (errors : Fin leftCount → Fin rightCount → Gaussian.Basic.Canonical) {target : Rat.Fraction.Rational}
-    (bounded : ∀ first second, Data.Gaussian.Norm.Basic.normSq (errors first second) ≤ target) :
-    Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => left
+    (left : Fin leftCount → Canonical) (right : Fin rightCount → Canonical)
+    (errors : Fin leftCount → Fin rightCount → Canonical) {target : Rat.Fraction.Rational}
+    (bounded : ∀ first second, normSq (errors first second) ≤ target) :
+    normSq (sumFin (fun first => sumFin (fun second => left
       first * right second * errors first second))) ≤
       ((leftCount : Rat.Fraction.Rational) * (rightCount : Rat.Fraction.Rational)) *
-        FiniteSum.Fin.sumFin (fun first => Data.Gaussian.Norm.Basic.normSq (left first)) * FiniteSum.Fin.sumFin (fun
-          second => Data.Gaussian.Norm.Basic.normSq (right second)) * target := by
+        sumFin (fun first => normSq (left first)) * sumFin (fun
+          second => normSq (right second)) * target := by
   have pointwise (first : Fin leftCount) (second : Fin rightCount) :
-      Data.Gaussian.Norm.Basic.normSq (left first * right second * errors first second) ≤
-        Data.Gaussian.Norm.Basic.normSq (left first) * Data.Gaussian.Norm.Basic.normSq (right second) * target
+      normSq (left first * right second * errors first second) ≤
+        normSq (left first) * normSq (right second) * target
         := by
-    rw [Gaussian.Norm.Basic.normSq_mul, Gaussian.Norm.Basic.normSq_mul]
+    rw [normSq_mul, normSq_mul]
     exact Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (bounded first second)
-      (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (Gaussian.Norm.Basic.normSq_nonneg _)
-        (Gaussian.Norm.Basic.normSq_nonneg _))
+      (Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (normSq_nonneg _)
+        (normSq_nonneg _))
   have inner (first : Fin leftCount) := Gaussian.Norm.Sum.Indexed.normSq_sumFin_le_count_mul_sumFin
     (fun second => left first * right second * errors first second)
-    (fun second => Data.Gaussian.Norm.Basic.normSq (left first) * Data.Gaussian.Norm.Basic.normSq (right second)
+    (fun second => normSq (left first) * normSq (right second)
       * target) (pointwise first)
   have estimate := Gaussian.Norm.Sum.Indexed.normSq_sumFin_le_count_mul_sumFin
-    (fun first => FiniteSum.Fin.sumFin (fun second => left first * right second * errors first second))
+    (fun first => sumFin (fun second => left first * right second * errors first second))
     (fun first => (rightCount : Rat.Fraction.Rational) *
-      FiniteSum.Fin.sumFin (fun second => Data.Gaussian.Norm.Basic.normSq (left first) *
-        Data.Gaussian.Norm.Basic.normSq (right second) * target)) inner
+      sumFin (fun second => normSq (left first) *
+        normSq (right second) * target)) inner
   apply estimate.trans_eq
-  simp only [FiniteSum.Fin.sumFin_mul_right, FiniteSum.Fin.sumFin_mul_left]
+  simp only [sumFin_mul_right, sumFin_mul_left]
   ring1
 
 /-- Interchange finite entry summation with bilinear coefficient combination.
 
 The two coefficient vectors are independent of the entry index, and all three finite index sets are retained. -/
 theorem sumFin_combination {count leftCount rightCount : Nat}
-    (left : Fin leftCount → Gaussian.Basic.Canonical) (right : Fin rightCount → Gaussian.Basic.Canonical)
-    (errors : Fin count → Fin leftCount → Fin rightCount → Gaussian.Basic.Canonical) :
-    FiniteSum.Fin.sumFin (fun entry => FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => left first
+    (left : Fin leftCount → Canonical) (right : Fin rightCount → Canonical)
+    (errors : Fin count → Fin leftCount → Fin rightCount → Canonical) :
+    sumFin (fun entry => sumFin (fun first => sumFin (fun second => left first
       * right second * errors entry first second))) =
-      FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => left first * right second *
-        FiniteSum.Fin.sumFin (fun entry => errors entry first second))) := by
+      sumFin (fun first => sumFin (fun second => left first * right second *
+        sumFin (fun entry => errors entry first second))) := by
   rw [FiniteSum.Fin.sumFin_swap]
-  apply FiniteSum.Fin.sumFin_congr
+  apply sumFin_congr
   intro first
   rw [FiniteSum.Fin.sumFin_swap]
-  apply FiniteSum.Fin.sumFin_congr
+  apply sumFin_congr
   intro second
-  exact FiniteSum.Fin.sumFin_mul_left _ _
+  exact sumFin_mul_left _ _
 
 end Purelib.Riemann.Periods.BilinearCombination
 

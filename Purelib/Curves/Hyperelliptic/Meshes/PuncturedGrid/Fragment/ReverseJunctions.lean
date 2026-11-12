@@ -65,39 +65,39 @@ open Purelib
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.LiftedEdges.SheetEntry.LiftedSource
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
+  {frames : SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
       SquareRoot.Grid.LiftedVertices.VertexBank
     base.bank.grid} {edges : SquareRoot.Grid.RootEdgeBank frames}
-  {source : Hyperelliptic.Differentials.Basic.Differential genus} {axes :
-    Hyperelliptic.Meshes.PuncturedGrid.PreparedPrimitiveSplits.PrimitiveAxes base.bank.grid} {parent :
+  {source : Differentials.Basic.Differential genus} {axes :
+    PreparedPrimitiveSplits.PrimitiveAxes base.bank.grid} {parent :
     Integration.PreparedSubdivisionModelCore.CenteredEdge curve source}
-  {partition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters parent)} {leftInterval
+  {cuts : List Fraction.Rational} {partition : Rectangle.AxisPartition 0 1 cuts} {leftInterval
     rightInterval : Rectangle.Partition.PreparedAxisPartitions.Interval}
-  {leftFragment : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.RegularPrimitiveFragment axes parent
+  {leftFragment : RegularFaces.RegularPrimitiveFragment axes parent
     partition leftInterval}
-  {rightFragment : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.RegularPrimitiveFragment axes parent
+  {rightFragment : RegularFaces.RegularPrimitiveFragment axes parent
     partition rightInterval}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames base.faces.regulars}
+  {domains : Face.DomainBanks.FaceDomainBank frames base.faces.regulars}
   {count : Nat} {target : Fraction.Rational} {request : Readings.UniformPreparedRequests.LocalRequest parent count
     target}
-  {leftEntry : Hyperelliptic.Meshes.PuncturedGrid.Fragment.SheetEntries.RegularPrimitiveFragment.SheetEntry leftFragment
+  {leftEntry : SheetEntries.RegularPrimitiveFragment.SheetEntry leftFragment
     domains request} {rightEntry :
-    Hyperelliptic.Meshes.PuncturedGrid.Fragment.SheetEntries.RegularPrimitiveFragment.SheetEntry rightFragment domains
+    SheetEntries.RegularPrimitiveFragment.SheetEntry rightFragment domains
     request}
   {mesh : Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces}
 
 /-- Reuse the cached face frame to read either query from the other full
 edge endpoint. This changes only the proof of the same retained reach. -/
-theorem from_finish (right : Hyperelliptic.Meshes.PuncturedGrid.Fragment.LiftedEdges.SheetEntry.LiftedSource rightEntry
+theorem from_finish (right : LiftedSource rightEntry
   mesh) {point : Gaussian.Basic.Canonical}
     {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval point)}
-    (reached : Hyperelliptic.Integration.Observation.PreparedFaceTracePrefixes.Reached
+    (reached : Integration.Observation.PreparedFaceTracePrefixes.Reached
       base.faces.regulars[rightFragment.face.located.index.val].cell.box
       (vertices.owner frames right.side.edge.start) owner) :
-    Hyperelliptic.Integration.Observation.PreparedFaceTracePrefixes.Reached
+    Integration.Observation.PreparedFaceTracePrefixes.Reached
       base.faces.regulars[rightFragment.face.located.index.val].cell.box
       (vertices.owner frames right.side.edge.finish) owner := by
   let face := base.faces.regulars[rightFragment.face.located.index.val]
@@ -109,27 +109,27 @@ theorem from_finish (right : Hyperelliptic.Meshes.PuncturedGrid.Fragment.LiftedE
     rw [right.side.finish_eq, cellEq]
     exact rightFragment.face.geometry.last.corner.contains
   have corner := (right.side.reached cached.models).2
-  have back := Hyperelliptic.Meshes.PuncturedGrid.Fragment.LiftedEdges.Reached.reverse_in_clear_box
-    face.clearance (Hyperelliptic.Branches.BranchIsolation.degreePositive curve)
-    (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt base.bank.toBranchCellBank
+  have back := Reached.reverse_in_clear_box
+    face.clearance (Branches.BranchIsolation.degreePositive curve)
+    (LoopMonodromy.BranchCellBank.referenceAt base.bank.toBranchCellBank
       face.cell.box.anchor (face.cell.anchor_mem face.member)).toLoop
     face.cell.box.contains_anchor lastInside corner
-  exact Hyperelliptic.Integration.Observation.PreparedFaceTracePrefixes.Reached.append back
-    (Hyperelliptic.Integration.Observation.PreparedFaceTracePrefixes.Reached.append (right.side.reached cached.models).1
+  exact Integration.Observation.PreparedFaceTracePrefixes.Reached.append back
+    (Integration.Observation.PreparedFaceTracePrefixes.Reached.append (right.side.reached cached.models).1
       reached)
 
 /-- A certified original query junction fixes the same starting vertex
 sheet across different parents and different selected incident faces. -/
 theorem sheet_eq_of_reverse_query_junction
     {rightParent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve source}
-    {rightPartition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters rightParent)}
-    {rightFragment : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.RegularPrimitiveFragment axes rightParent
+    {rightCuts : List Fraction.Rational} {rightPartition : Rectangle.AxisPartition 0 1 rightCuts}
+    {rightFragment : RegularFaces.RegularPrimitiveFragment axes rightParent
       rightPartition rightInterval}
     {rightRequest : Readings.UniformPreparedRequests.LocalRequest rightParent count target}
-    {rightEntry : Hyperelliptic.Meshes.PuncturedGrid.Fragment.SheetEntries.RegularPrimitiveFragment.SheetEntry
+    {rightEntry : SheetEntries.RegularPrimitiveFragment.SheetEntry
       rightFragment domains rightRequest}
-    (left : Hyperelliptic.Meshes.PuncturedGrid.Fragment.LiftedEdges.SheetEntry.LiftedSource leftEntry mesh) (right :
-      Hyperelliptic.Meshes.PuncturedGrid.Fragment.LiftedEdges.SheetEntry.LiftedSource rightEntry mesh)
+    (left : LiftedSource leftEntry mesh) (right :
+      LiftedSource rightEntry mesh)
     (pointEq : leftFragment.located.last = rightFragment.located.first)
     (roots : Gaussian.Equivalence.NamedEquivalent (parent.edge.rootName leftInterval.upper left.finishInside)
       (rightParent.edge.rootName rightInterval.lower rightEntry.fractionInside))
@@ -171,27 +171,27 @@ theorem sheet_eq_of_reverse_query_junction
   let segment := (raw.castStart (leftFragment.source.edge.segment.pointAt_zero.trans
     left.side.start_eq.symm)).castFinish
     leftFragment.source.last.point_eq
-  obtain ⟨same⟩ := Hyperelliptic.Meshes.PuncturedGrid.Fragment.JunctionSheets.Reached.source_equivalent_along
+  obtain ⟨same⟩ := JunctionSheets.Reached.source_equivalent_along
     left.finish_reached (right.from_finish right.first_reached) coordinateEq pointEq equivalent
-    leftFace.clearance rightFace.clearance (Hyperelliptic.Branches.BranchIsolation.degreePositive curve) segment
-    (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt base.bank.toBranchCellBank _
+    leftFace.clearance rightFace.clearance (Branches.BranchIsolation.degreePositive curve) segment
+    (LoopMonodromy.BranchCellBank.referenceAt base.bank.toBranchCellBank _
       (vertices.coordinate_onGrid left.side.edge.start)).toLoop
     leftFirst leftLast rightFirst rightLast
-  exact Hyperelliptic.Meshes.PuncturedGrid.Fragment.JunctionSheets.VertexBank.sheet_eq_of_equivalent
+  exact JunctionSheets.VertexBank.sheet_eq_of_equivalent
     vertices frames _ _ coordinateEq same
 
 /-- Oppositely presented complete edges agree as reversed lifted indices
 only after the original query owners have been identified. -/
 theorem edge_eq_of_reverse_query_junction
     {rightParent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve source}
-    {rightPartition : Geometry.Rectangle.AxisPartition 0 1 (axes.parameters rightParent)}
-    {rightFragment : Hyperelliptic.Meshes.PuncturedGrid.Fragment.RegularFaces.RegularPrimitiveFragment axes rightParent
+    {rightCuts : List Fraction.Rational} {rightPartition : Rectangle.AxisPartition 0 1 rightCuts}
+    {rightFragment : RegularFaces.RegularPrimitiveFragment axes rightParent
       rightPartition rightInterval}
     {rightRequest : Readings.UniformPreparedRequests.LocalRequest rightParent count target}
-    {rightEntry : Hyperelliptic.Meshes.PuncturedGrid.Fragment.SheetEntries.RegularPrimitiveFragment.SheetEntry
+    {rightEntry : SheetEntries.RegularPrimitiveFragment.SheetEntry
       rightFragment domains rightRequest}
-    (left : Hyperelliptic.Meshes.PuncturedGrid.Fragment.LiftedEdges.SheetEntry.LiftedSource leftEntry mesh) (right :
-      Hyperelliptic.Meshes.PuncturedGrid.Fragment.LiftedEdges.SheetEntry.LiftedSource rightEntry mesh)
+    (left : LiftedSource leftEntry mesh) (right :
+      LiftedSource rightEntry mesh)
     (pointEq : leftFragment.located.last = rightFragment.located.first)
     (roots : Gaussian.Equivalence.NamedEquivalent (parent.edge.rootName leftInterval.upper left.finishInside)
       (rightParent.edge.rootName rightInterval.lower rightEntry.fractionInside))
@@ -208,9 +208,9 @@ theorem edge_eq_of_reverse_query_junction
     ((congrArg (edges.indexedEdge vertices leftFragment.source.edge) (sheet.trans targetSheet)).trans
       ((edges.indexedEdge_opposite_of_endpoints vertices rightFragment.source.edge leftFragment.source.edge
         startEq finishEq
-        (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt base.bank.toBranchCellBank _
+        (LoopMonodromy.BranchCellBank.referenceAt base.bank.toBranchCellBank _
           rightFragment.source.edge.vertices.1).toLoop
-        (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt base.bank.toBranchCellBank _
+        (LoopMonodromy.BranchCellBank.referenceAt base.bank.toBranchCellBank _
           rightFragment.source.edge.vertices.2).toLoop _).trans
           (congrArg Topology.Polygon.Stokes.OrientedEdge.reverse (right.side.indexed_eq
             rightFragment.source.edge).symm)))

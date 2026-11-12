@@ -62,7 +62,7 @@ assert that a completed exponential or logarithm value has been selected.
 -/
 
 /-- One explicit halving of an arbitrary coherent progressive input. -/
-@[expose] def halfScaled (input : Coherent.CoherentNamed) : Coherent.CoherentNamed :=
+@[expose] def halfScaled (input : CoherentNamed) : CoherentNamed :=
   CoherentNamed.mul
     (Coherence.exact Dyadic.dyadicHalf)
     input
@@ -70,40 +70,40 @@ assert that a completed exponential or logarithm value has been selected.
 /-- Adding two actual, independently scheduled half-scaled copies is operationally the original coherent input.
 
 The comparison passes through only finite canonical samplers. -/
-@[expose] def halfScaledSelfAdd_equivalent (input : Coherent.CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
+@[expose] def halfScaledSelfAdd_equivalent (input : CoherentNamed) :
+    NamedEquivalent
       (Named.add
-        (Approximation.Gaussian.Name.Coherent.Arithmetic.Dyadic.halfScaled input).name
-          (Approximation.Gaussian.Name.Coherent.Arithmetic.Dyadic.halfScaled input).name)
+        (halfScaled input).name
+          (halfScaled input).name)
       input.name := by
   let halfExact :=
     Coherence.exact Dyadic.dyadicHalf
-  let half := Approximation.Gaussian.Name.Coherent.Arithmetic.Dyadic.halfScaled input
-  let halfProduct := Gaussian.Sequence.Arithmetic.Product.sampledProductApproximation halfExact.name input.name
+  let half := halfScaled input
+  let halfProduct := Product.sampledProductApproximation halfExact.name input.name
   let halfProductName :=
     CoherentNamed.ofApproximation
       halfProduct
   let inputApproximation :=
     Sampling.approximation input.name
-  have halfToProduct : Gaussian.Equivalence.NamedEquivalent half.name halfProductName.name :=
+  have halfToProduct : NamedEquivalent half.name halfProductName.name :=
     Bridge.coherentMul_toNamed halfExact input
   have addToProductAdd :
-      Gaussian.Equivalence.NamedEquivalent
+      NamedEquivalent
         (Named.add half.name half.name)
         (Named.add
           halfProductName.name halfProductName.name) :=
     Congruence.coherentAdd_respects half halfProductName half halfProductName
       halfToProduct halfToProduct
   have productAddToSampled :
-      Gaussian.Equivalence.NamedEquivalent
+      NamedEquivalent
         (Named.add
           halfProductName.name halfProductName.name)
-        (Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation
+        (Arithmetic.Sum.sampledSumApproximation
           halfProductName.name halfProductName.name).toNamed :=
     Bridge.coherentAdd_toNamed halfProductName halfProductName
   have sampledToInput :
-      Gaussian.Equivalence.NamedEquivalent
-        (Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation
+      NamedEquivalent
+        (Arithmetic.Sum.sampledSumApproximation
           halfProductName.name halfProductName.name).toNamed
         inputApproximation.toNamed :=
     Equivalence.approximationEquivalent_toNamed
@@ -130,87 +130,87 @@ The comparison passes through only finite canonical samplers. -/
           (Equivalence.named_toSamplingNamed input.name))))
 
 /-- A finite chain of explicit input halvings. -/
-@[expose] def halfIterate : Nat → Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed →
-  Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed
+@[expose] def halfIterate : Nat → CoherentNamed →
+  CoherentNamed
   | 0, input => input
-  | extra + 1, input => Purelib.Approximation.Gaussian.Name.Coherent.Arithmetic.Dyadic.halfScaled
-    (Purelib.Approximation.Gaussian.Name.Coherent.Arithmetic.Dyadic.halfIterate extra input)
+  | extra + 1, input => halfScaled
+    (Dyadic.halfIterate extra input)
 
 /-- Normalize a finite halving chain to one explicit dyadic-scaled sampler, starting from any name already equivalent to
 the sampler at `base`. -/
 @[expose] def halfIterate_to_dyadicScaledFrom (base : Nat) :
-    (extra : Nat) → (original start : Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed) →
-      Gaussian.Equivalence.NamedEquivalent start.name
-        (Purelib.Approximation.Gaussian.Sequence.Arithmetic.DyadicScale.dyadicScaledApproximation base
+    (extra : Nat) → (original start : CoherentNamed) →
+      NamedEquivalent start.name
+        (DyadicScale.dyadicScaledApproximation base
           original.name).toNamed →
-      Gaussian.Equivalence.NamedEquivalent
-        (Purelib.Approximation.Gaussian.Name.Coherent.Arithmetic.Dyadic.halfIterate extra start).name
-        (Purelib.Approximation.Gaussian.Sequence.Arithmetic.DyadicScale.dyadicScaledApproximation (base + extra)
+      NamedEquivalent
+        (halfIterate extra start).name
+        (DyadicScale.dyadicScaledApproximation (base + extra)
           original.name).toNamed
   | 0, _original, _start, startEquivalent => startEquivalent
   | extra + 1, original, start, startEquivalent => by
-      let previous := Purelib.Approximation.Gaussian.Name.Coherent.Arithmetic.Dyadic.halfIterate extra start
+      let previous := halfIterate extra start
       let previousApproximation :=
-        Purelib.Approximation.Gaussian.Sequence.Arithmetic.DyadicScale.dyadicScaledApproximation (base + extra)
+        DyadicScale.dyadicScaledApproximation (base + extra)
           original.name
       let previousApproximationName :=
-        Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.ofApproximation
+        CoherentNamed.ofApproximation
           previousApproximation
       let halfExact :=
-        Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.Coherence.exact
-          Purelib.Data.Gaussian.Dyadic.dyadicHalf
+        Coherence.exact
+          Dyadic.dyadicHalf
       let halfConstant :=
-        Purelib.Approximation.Gaussian.Sequence.Constant.constantApproximation Purelib.Data.Gaussian.Dyadic.dyadicHalf
+        Constant.constantApproximation Dyadic.dyadicHalf
       let halfConstantName :=
-        Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed.ofApproximation
+        CoherentNamed.ofApproximation
           halfConstant
       let nextApproximation :=
-        Purelib.Approximation.Gaussian.Sequence.Arithmetic.DyadicScale.dyadicScaledApproximation ((base + extra) + 1)
+        DyadicScale.dyadicScaledApproximation ((base + extra) + 1)
           original.name
       have previousEquivalent :
-          Gaussian.Equivalence.NamedEquivalent previous.name previousApproximationName.name :=
-        Purelib.Approximation.Gaussian.Name.Coherent.Arithmetic.Dyadic.halfIterate_to_dyadicScaledFrom base extra
+          NamedEquivalent previous.name previousApproximationName.name :=
+        Dyadic.halfIterate_to_dyadicScaledFrom base extra
           original start
           startEquivalent
       have actualToApproximationFactors :
-          Gaussian.Equivalence.NamedEquivalent
-            (Purelib.Approximation.Gaussian.Name.Basic.Named.mul
+          NamedEquivalent
+            (Named.mul
               halfExact.name previous.name)
-            (Purelib.Approximation.Gaussian.Name.Basic.Named.mul
+            (Named.mul
               halfConstantName.name previousApproximationName.name) :=
-        Purelib.Approximation.Gaussian.Name.Coherent.Arithmetic.Product.Congruence.coherentMul_respects halfExact
+        Congruence.coherentMul_respects halfExact
           halfConstantName
           previous previousApproximationName
-          (Purelib.Approximation.Gaussian.Sequence.Name.Exact.exact_toConstantNamed
-            Purelib.Data.Gaussian.Dyadic.dyadicHalf) previousEquivalent
+          (Exact.exact_toConstantNamed
+            Dyadic.dyadicHalf) previousEquivalent
       have factorsToNext :
-          Gaussian.Equivalence.NamedEquivalent
-            (Purelib.Approximation.Gaussian.Name.Basic.Named.mul
+          NamedEquivalent
+            (Named.mul
               halfConstantName.name previousApproximationName.name)
             nextApproximation.toNamed :=
-        Purelib.Approximation.Gaussian.Sequence.Arithmetic.Multiplication.Bridge.mulToNamed_equivalent_pointwise
+        Multiplication.Bridge.mulToNamed_equivalent_pointwise
           halfConstant previousApproximation
           nextApproximation (by
             intro index
-            change Purelib.Data.Gaussian.Dyadic.inverseDyadicAt ((base + extra) + 1) *
-                (Purelib.Approximation.Gaussian.Name.Sampling.approximation
+            change Dyadic.inverseDyadicAt ((base + extra) + 1) *
+                (Sampling.approximation
                   original.name).sample index =
-              Purelib.Data.Gaussian.Dyadic.dyadicHalf *
-                (Purelib.Data.Gaussian.Dyadic.inverseDyadicAt (base + extra) *
-                  (Purelib.Approximation.Gaussian.Name.Sampling.approximation
+              Dyadic.dyadicHalf *
+                (Dyadic.inverseDyadicAt (base + extra) *
+                  (Sampling.approximation
                     original.name).sample index)
-            rw [← Purelib.Data.Gaussian.Dyadic.inverseDyadicAt_succ]
-            exact Purelib.Data.Gaussian.Basic.mul_assoc _ _ _)
-      exact Gaussian.Equivalence.NamedEquivalent.trans
+            rw [← Dyadic.inverseDyadicAt_succ]
+            exact Basic.mul_assoc _ _ _)
+      exact NamedEquivalent.trans
         actualToApproximationFactors factorsToNext
 
 /-- Every finite halving chain has the explicit inverse-dyadic sampler of its original coherent input. -/
-@[expose] def halfIterate_to_dyadicScaled (extra : Nat) (input : Coherent.CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
-      (Approximation.Gaussian.Name.Coherent.Arithmetic.Dyadic.halfIterate extra input).name
+@[expose] def halfIterate_to_dyadicScaled (extra : Nat) (input : CoherentNamed) :
+    NamedEquivalent
+      (halfIterate extra input).name
       (DyadicScale.dyadicScaledApproximation extra input.name).toNamed := by
   let source := Sampling.approximation input.name
-  have baseEquivalent : Gaussian.Equivalence.NamedEquivalent input.name
+  have baseEquivalent : NamedEquivalent input.name
       (DyadicScale.dyadicScaledApproximation 0 input.name).toNamed :=
     NamedEquivalent.trans
       (Equivalence.named_toSamplingNamed input.name)
@@ -220,16 +220,16 @@ the sampler at `base`. -/
           (by
             intro index
             rw [DyadicScale.dyadicScaledApproximation_sample, Dyadic.inverseDyadicAt_zero,
-              Data.Gaussian.Basic.one_mul])))
+              Basic.one_mul])))
   simpa only [Nat.zero_add] using
-    Approximation.Gaussian.Name.Coherent.Arithmetic.Dyadic.halfIterate_to_dyadicScaledFrom 0 extra input input
+    halfIterate_to_dyadicScaledFrom 0 extra input input
       baseEquivalent
 
 /-- At one displayed inverse-dyadic scale, the two canonical operand samplers add operationally to the canonical sampler
 of the actual input sum. -/
 @[expose] def dyadicScaledAdd_equivalent (exponent : Nat)
-    (left right : Coherent.CoherentNamed) :
-    Gaussian.Equivalence.NamedEquivalent
+    (left right : CoherentNamed) :
+    NamedEquivalent
       (Named.add
         (DyadicScale.dyadicScaledApproximation exponent left.name).toNamed
         (DyadicScale.dyadicScaledApproximation exponent right.name).toNamed)
@@ -246,21 +246,21 @@ of the actual input sum. -/
       rightScaled
   let sumInput :=
     CoherentNamed.add left right
-  let sourceSum := Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation left.name right.name
+  let sourceSum := Arithmetic.Sum.sampledSumApproximation left.name right.name
   let directScaledSum := ContractiveScale.contractiveScaleApproximation
     (Dyadic.inverseDyadicAt exponent) (Dyadic.normSq_inverseDyadicAt_le_one exponent)
       sourceSum
   let sumScaled := DyadicScale.dyadicScaledApproximation exponent sumInput.name
   have addToSampled :
-      Gaussian.Equivalence.NamedEquivalent
+      NamedEquivalent
         (Named.add
           leftScaledName.name rightScaledName.name)
-        (Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation
+        (Arithmetic.Sum.sampledSumApproximation
           leftScaledName.name rightScaledName.name).toNamed :=
     Bridge.coherentAdd_toNamed leftScaledName rightScaledName
   have sampledToDirect :
-      Gaussian.Equivalence.NamedEquivalent
-        (Gaussian.Sequence.Arithmetic.Sum.sampledSumApproximation
+      NamedEquivalent
+        (Arithmetic.Sum.sampledSumApproximation
           leftScaledName.name rightScaledName.name).toNamed
         directScaledSum.toNamed :=
     Equivalence.approximationEquivalent_toNamed
@@ -283,15 +283,15 @@ of the actual input sum. -/
                 Dyadic.inverseDyadicAt exponent *
                   (Sampling.approximation
                     right.name).sample index
-          exact Data.Gaussian.Basic.left_distrib _ _ _))
-  have sumSamplerToDirect : Gaussian.Equivalence.Equivalent
+          exact Basic.left_distrib _ _ _))
+  have sumSamplerToDirect : Equivalent
       (Sampling.approximation sumInput.name)
       sourceSum :=
     Equivalent.trans
       (Bridge.coherentAdd_toNamed left right)
       (Equivalent.toNamed_sampling
         sourceSum)
-  have sumScaledToDirect : Gaussian.Equivalence.Equivalent sumScaled directScaledSum :=
+  have sumScaledToDirect : Equivalent sumScaled directScaledSum :=
     ContractiveScale.contractiveScaleApproximation_respects
       (Dyadic.inverseDyadicAt exponent) (Dyadic.normSq_inverseDyadicAt_le_one exponent)
       sumSamplerToDirect
@@ -304,17 +304,17 @@ of the actual input sum. -/
 
 /-- A possible reading after finitely many actual halvings is an explicitly displayed inverse-dyadic multiple of a
 possible original reading. -/
-theorem halfIterate_possible (extra : Nat) (input : Coherent.CoherentNamed)
-    {value : Data.Gaussian.Basic.Canonical}
-    (possible : (Approximation.Gaussian.Name.Coherent.Arithmetic.Dyadic.halfIterate extra input).name.process.Possible
-      (Approximation.Gaussian.Name.Coherent.Arithmetic.Dyadic.halfIterate extra input).name.state value) :
+theorem halfIterate_possible (extra : Nat) (input : CoherentNamed)
+    {value : Basic.Canonical}
+    (possible : (halfIterate extra input).name.process.Possible
+      (halfIterate extra input).name.state value) :
     ∃ sourceValue,
       input.name.process.Possible input.name.state sourceValue ∧
         value = Dyadic.inverseDyadicAt extra * sourceValue := by
   induction extra generalizing value with
   | zero =>
       exact ⟨value, possible, by rw [Dyadic.inverseDyadicAt_zero,
-        Data.Gaussian.Basic.one_mul]⟩
+        Basic.one_mul]⟩
   | succ extra inductionHypothesis =>
       rcases possible with ⟨scaleValue, previousValue,
         scalePossible, previousPossible, rfl⟩
@@ -323,7 +323,7 @@ theorem halfIterate_possible (extra : Nat) (input : Coherent.CoherentNamed)
       rcases inductionHypothesis previousPossible with
         ⟨sourceValue, sourcePossible, previousEqual⟩
       refine ⟨sourceValue, sourcePossible, ?_⟩
-      rw [previousEqual, ← Data.Gaussian.Basic.mul_assoc,
+      rw [previousEqual, ← Basic.mul_assoc,
         Dyadic.inverseDyadicAt_succ]
 
 end

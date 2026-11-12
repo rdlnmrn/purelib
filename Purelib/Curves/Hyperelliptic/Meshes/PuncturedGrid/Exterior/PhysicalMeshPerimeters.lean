@@ -63,34 +63,34 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateArcFami
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {coarse : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains sheet}
-  {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {coarse : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes domains sheet}
+  {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet} {surfaceTarget target : Fraction.Rational}
   {minimum floor stage : Nat} {box : Rational.Box}
   {basis : PhysicalBasisRequest regular domains target
     minimum floor}
-  {initial : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest coarse fixed surfaceTarget}
+  {initial : TwoSheetBilinearRequest.TwoSheetRequest coarse fixed surfaceTarget}
 
 variable (request : PhysicalMeshRequest basis initial)
 
 set_option genInjectivity false in
 /-- A perimeter assembled from the same mesh and shared primitive values as
 its physical sample. Existing assemblies can be supplied directly. -/
-structure OccurrencePerimeter (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+structure OccurrencePerimeter (cache : RegularDomainMeshes.RegularMeshes.Numerics
   domains stage) (first second : Fin genus)
     (i : Fin (basis.preparations.get first).occurrences.length) where
   /-- The retained clipped assembly uses the original occurrence mesh and its shared primitive values. -/ assembly :
     Readings.RectangularObservationAssembly.ObservationMesh.ClippedAssembly (request.mesh first i)
 
-      (SharedPhysicalPerimeterReadback.SharedPhysicalPerimeterReadings.gridValues
+      (SharedPhysicalPerimeterReadings.gridValues
       (occurrence := (basis.preparations.get first).occurrences[i.val]'i.isLt)
       (cache.get first) (cache.get second))
   /-- The complete perimeter of that same retained clipped assembly. -/ perimeter : assembly.Perimeter
@@ -99,20 +99,20 @@ constructive_injectivity OccurrencePerimeter
 
 namespace OccurrencePerimeter
 
-variable {request} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+variable {request} {cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage}
   {first second : Fin genus}
   {i : Fin (basis.preparations.get first).occurrences.length}
 
 /-- Read the retained perimeter area on the side selected by its original surface occurrence. -/
 @[expose] def area (retained : request.OccurrencePerimeter cache first second i) : Gaussian :=
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SharedPhysicalPerimeterReadback.SharedPhysicalPerimeterReadings.sideArea
+  SharedPhysicalPerimeterReadings.sideArea
     retained.perimeter
     ((basis.preparations.get first).occurrences[i.val]'i.isLt).sideOccurrence.side
 
 end OccurrencePerimeter
 
 namespace OccurrenceReadings
-variable {request} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+variable {request} {cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage}
   {first second : Fin genus}
   {i : Fin (basis.preparations.get first).occurrences.length}
   (entry : request.OccurrenceReadings cache first second i)
@@ -121,35 +121,35 @@ variable {request} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMesh
 theorem centered_add_endpoint (retained : request.OccurrencePerimeter cache first second i) :
     entry.original.centeredArea + entry.original.endpoint = retained.area :=
 
-    SharedPhysicalPerimeterReadback.SharedPhysicalPerimeterReadings.centered_add_endpoint
+    SharedPhysicalPerimeterReadings.centered_add_endpoint
     entry.traces entry.readings retained.assembly retained.perimeter
 
 /-- The cap restoration uses cap values, not physical endpoint values. -/
 @[expose] def endpointCorrection (polynomials :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box) : Gaussian :=
+  CapBasisEnergy.RegularBasisPolynomials cap stage box) : Gaussian :=
   let occurrence := (basis.preparations.get first).occurrences[i.val]'i.isLt
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateArcFamily.PairedArcRequest.conjugateChordValue occurrence
+  PairedArcRequest.conjugateChordValue occurrence
     (polynomials.get first) (polynomials.get second) -
     (if occurrence.sourceForward then entry.original.endpoint else -entry.original.endpoint)
 
 /-- The physical arc value equals its oriented full perimeter area plus the original cap endpoint correction. -/
 theorem corrected_area (retained : request.OccurrencePerimeter cache first second i)
-    (polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box) :
+    (polynomials : CapBasisEnergy.RegularBasisPolynomials cap stage box) :
     let occurrence := (basis.preparations.get first).occurrences[i.val]'i.isLt
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalArcAggregation.physicalArcValue occurrence (polynomials.get
+    PhysicalArcAggregation.physicalArcValue occurrence (polynomials.get
       first) (polynomials.get second) entry.original.centeredArea =
       (if occurrence.sourceForward then retained.area else -retained.area) + entry.endpointCorrection polynomials := by
   intro occurrence
-  change Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalArcAggregation.physicalArcValue occurrence (polynomials.get
+  change PhysicalArcAggregation.physicalArcValue occurrence (polynomials.get
     first) (polynomials.get second) entry.original.centeredArea =
     (if occurrence.sourceForward then retained.area else -retained.area) +
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateArcFamily.PairedArcRequest.conjugateChordValue occurrence
+      (PairedArcRequest.conjugateChordValue occurrence
         (polynomials.get first) (polynomials.get second) -
         (if occurrence.sourceForward then entry.original.endpoint else -entry.original.endpoint))
   have decomposition := entry.centered_add_endpoint retained
   rw [← decomposition]
   cases direction : occurrence.sourceForward <;>
-    simp only [Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalArcAggregation.physicalArcValue, direction, if_pos
+    simp only [PhysicalArcAggregation.physicalArcValue, direction, if_pos
       (rfl : true = true), if_neg (by decide : false ≠ true), -eq_self, -iff_self] <;> ring1
 
 end OccurrenceReadings
@@ -157,26 +157,26 @@ end OccurrenceReadings
 /-- A perimeter retained for every basis-row pair and original occurrence.
 
 Each dependent entry uses the same mesh and shared primitive values as its physical sample. -/
-@[expose] def Perimeters (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains
+@[expose] def Perimeters (cache : RegularDomainMeshes.RegularMeshes.Numerics domains
   stage) :=
   Data.Vector.DependentVector (fun first : Fin genus => Data.Vector.DependentVector (fun second : Fin genus =>
     Data.Vector.DependentVector (fun i : Fin (basis.preparations.get first).occurrences.length =>
       request.OccurrencePerimeter cache first second i)))
 
 namespace Readings
-variable {request} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+variable {request} {cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage}
   (entries : request.Readings cache)
 
 /-- Sum the retained cap-versus-physical endpoint corrections for one original pair of basis rows. -/
 @[expose] def endpointCorrection (polynomials :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box) (first second : Fin
+  CapBasisEnergy.RegularBasisPolynomials cap stage box) (first second : Fin
   genus) : Gaussian :=
   FiniteSum.Fin.sumFin fun i => (((entries.get first).get second).get i).endpointCorrection polynomials
 
 end Readings
 
 namespace Perimeters
-variable {request} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+variable {request} {cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage}
   (retained : request.Perimeters cache)
 
 /-- Sum the retained physical perimeter areas with the directions of their original source occurrences. -/

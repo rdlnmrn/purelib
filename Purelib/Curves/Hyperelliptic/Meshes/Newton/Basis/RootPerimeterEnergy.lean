@@ -69,6 +69,8 @@ import Purelib.Riemann.Paths.PreparedPathParentCaches
 import Purelib.Riemann.Periods.PreparedGridPeriodPrograms
 import Purelib.Riemann.RootContinuation.PreparedGridRootClosure
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior
+
 open Purelib.Riemann.RootContinuation.NewtonGlobalPhysicalEndpointReadback.SynchronizedSurfaceRequests
 
 open Purelib.Curves
@@ -109,40 +111,40 @@ open Purelib.Riemann.RootContinuation.NewtonGlobalPhysicalEndpointReadback.Synch
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Basis.EndpointReadback.SynchronizedSurfaceRequests.PerimeterSamples
   (commonBasis_endpoint_eq_cached)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {gridTarget radius :
-    Normalization.InverseRootPolynomial.Coordinate}
+    InverseRootPolynomial.Coordinate}
   {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation gridTarget radius}
-  {lifted : Meshes.LiftedPuncturedGrid grid.punctured} {differential : Hyperelliptic.Differentials.Basic.Differential
+  {lifted : Meshes.LiftedPuncturedGrid grid.punctured} {differential : Differentials.Basic.Differential
     genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
-    PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+    SurfacePreparation
     regular domains program}
 
-variable {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
-  {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {target coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
+variable {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {retained : Basis.Preparation.CommonBasisPreparation prepared}
+  {basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {target coefficientTarget : InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
     energyFloor radialDepth : Nat}
-  {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+  {box : Rational.Box} {capSample : Charts.Reciprocal.Cap.Primitives.Sample cap
     differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 namespace CommonBasisRequest
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisRequest retained basis
+variable {request : Basis.Preparation.CommonBasisRequest retained basis
   target coefficientTarget coverFloor floor}
   {plans : request.Plans capSample polynomials minimum} {inputs : retained.Inputs index}
-  {readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
+  {readings : Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
     request.schedule.bank plans inputs stage}
 
-variable {fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.FanPreparation request
+variable {fans : Basis.Connection.CommonBasisRequest.FanPreparation request
   plans inputs readings energyFloor}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -150,50 +152,50 @@ namespace Sampled
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable (sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.Sampled fans
+variable (sample : Basis.Connection.CommonBasisRequest.Sampled fans
   coefficients radialDepth) (comparisons :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
+  CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
   sample)
   {whole :
-    PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+    AllSurfacePreparation
     regular domains differential}
-  {previous : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
-  {selected : PuncturedGrid.Exterior.SourceCuts whole previous}
+  {previous : PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+  {selected : SourceCuts whole previous}
   {coarseDepth : Nat}
-  {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+  {fixed : (sheet : Fin 2) → PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet}
-  {meshTarget : Normalization.InverseRootPolynomial.Coordinate}
-  {meshRequest : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
-    (fun sheet => Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
+  {meshTarget : InverseRootPolynomial.Coordinate}
+  {meshRequest : PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
+    (fun sheet => PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
       coarseDepth) fixed meshTarget}
-  {requested : Normalization.InverseRootPolynomial.Coordinate} {runMinimum : Nat}
+  {requested : InverseRootPolynomial.Coordinate} {runMinimum : Nat}
   {initialSchedules :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.Schedules
+    Basis.SurfaceRunSchedules.RequestedSurfaceRuns.Schedules
     selected meshRequest retained inputs requested runMinimum}
   (spatial :
-    PuncturedGrid.Exterior.Basis.SpatialAcquisition
+    Basis.SpatialAcquisition
     initialSchedules)
   {faceIndex : Nat}
-  {traces : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedPhysicalComponent.RequestedSurfaceRuns.Traces
+  {traces : Traces
     (prepared := prepared) selected spatial.refined}
-  {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains faceIndex}
+  {cache : PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains faceIndex}
   {vertices : (outer : Fin prepared.occurrences.length) →
-    Fin (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.capacities selected
+    Fin (Basis.SurfaceRunSchedules.RequestedSurfaceRuns.capacities selected
       spatial.refined outer) → Nat}
   {owners :
-    PuncturedGrid.Exterior.Basis.RunFaceSynchronization.CommonBasisPreparation.ParentRunSchedules.SharedOwnerBanks
+    SharedOwnerBanks
     spatial.requests
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedPhysicalComponent.RequestedSurfaceRuns.pieceCounts
+    (Basis.RequestedPhysicalComponent.RequestedSurfaceRuns.pieceCounts
       selected spatial.refined) vertices}
   {perimeters :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedPhysicalComponent.RequestedSurfaceRuns.Perimeters
+    Perimeters
     selected spatial.refined traces cache}
   (physical :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedPhysicalComponent.RequestedSurfaceRuns.PhysicalSamples
+    PhysicalSamples
     selected spatial.refined traces cache
     coefficients spatial.requests owners perimeters)
   (face :
-    PuncturedGrid.Exterior.Basis.RunFaceSynchronization.CommonBasisPreparation.ParentRunSchedules.FaceStage
+    FaceStage
     owners spatial.refined.index)
   (facePaid : face.stage ≤ faceIndex)
   (sourcePaid : ∀ outer, (initialSchedules.get outer).sourceIndex ≤ index)
@@ -202,10 +204,10 @@ variable (sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.
 /-- The acquired physical endpoint subtraction is the literal Newton cache
 on the same face, sheet, coefficient vector, and numerical stage. -/
 theorem requested_newton_endpoints :
-  PuncturedGrid.Exterior.Basis.RequestedPerimeterBoundary.RequestedSurfaceRuns.PhysicalSamples.endpointSides
+  Basis.RequestedPerimeterBoundary.RequestedSurfaceRuns.PhysicalSamples.endpointSides
   physical =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn fun outer =>
-      let occurrence := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+    Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn fun outer =>
+      let occurrence := Basis.ParentIndices.occurrenceAt
         prepared.occurrences outer
       let endpoint :=
         PerimeterSamples.cachedSideEndpoint
@@ -213,20 +215,20 @@ theorem requested_newton_endpoints :
         occurrence.sideOccurrence.sheet occurrence.sideOccurrence.side
       if occurrence.sourceForward then endpoint else -endpoint) := by
   rw
-    [PuncturedGrid.Exterior.Basis.RequestedEndpoints.RequestedSurfaceRuns.PhysicalSamples.endpointSides_eq_cached]
-  apply congrArg Data.Gaussian.Norm.Sum.Basic.gaussianSum
-  apply Data.List.OfFn.Basic.ofFn_congr
+    [Basis.RequestedEndpoints.RequestedSurfaceRuns.PhysicalSamples.endpointSides_eq_cached]
+  apply congrArg Gaussian.Norm.Sum.Basic.gaussianSum
+  apply List.OfFn.Basic.ofFn_congr
   intro outer
-  exact congrArg (fun endpoint => if (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  exact congrArg (fun endpoint => if (Basis.ParentIndices.occurrenceAt
     prepared.occurrences outer).sourceForward then endpoint else -endpoint)
 
       (EndpointReadback.SynchronizedSurfaceRequests.PerimeterSamples.commonBasis_endpoint_eq_cached
       (cache := cache) (coefficients := coefficients)
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      (Basis.ParentIndices.occurrenceAt prepared.occurrences
         outer).sideOccurrence.position
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      (Basis.ParentIndices.occurrenceAt prepared.occurrences
         outer).sideOccurrence.sheet
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      (Basis.ParentIndices.occurrenceAt prepared.occurrences
         outer).sideOccurrence.side)
 
 include comparisons facePaid sourcePaid coverPaid
@@ -234,35 +236,35 @@ include comparisons facePaid sourcePaid coverPaid
 /-- The root-corrected bound now uses Newton's original cached endpoint chords,
 without changing its retained root polygon or paying another approximation. -/
 theorem requested_newton_cached_root_upper (positive : 0 < requested)
-    {physicalAllowance rootAllowance : Normalization.InverseRootPolynomial.Coordinate}
+    {physicalAllowance rootAllowance : InverseRootPolynomial.Coordinate}
     (physicalNN : 0 ≤ physicalAllowance) (rootNN : 0 ≤ rootAllowance)
     (physicalPaid : requested ≤ 16 * physicalAllowance ^ 2)
     (rootPaid :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootBoundaryEnergy.CommonBasisRequest.Sampled.rootJoiningCost
+      Basis.RootBoundaryEnergy.CommonBasisRequest.Sampled.rootJoiningCost
       (request := request) (inputs := inputs) requested ≤ 16 * rootAllowance ^ 2)
     (trace :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedTrace
-      sample comparisons) (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+      CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedTrace
+      sample comparisons) (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
     (later : request.readingStage plans ≤ stage) :
 
-      (PuncturedGrid.Exterior.Basis.RequestedPerimeterBoundary.RequestedSurfaceRuns.PhysicalSamples.originalSides
-      physical - Data.Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn fun outer =>
-      let occurrence := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+      (Basis.RequestedPerimeterBoundary.RequestedSurfaceRuns.PhysicalSamples.originalSides
+      physical - Gaussian.Norm.Sum.Basic.gaussianSum (List.ofFn fun outer =>
+      let occurrence := Basis.ParentIndices.occurrenceAt
         prepared.occurrences outer
       let endpoint :=
         PerimeterSamples.cachedSideEndpoint
         cache coefficients occurrence.sideOccurrence.position
         occurrence.sideOccurrence.sheet occurrence.sideOccurrence.side
       if occurrence.sourceForward then endpoint else -endpoint) +
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootBoundaryEnergy.CommonBasisRequest.Sampled.rootJoiningArea
+        Basis.RootBoundaryEnergy.CommonBasisRequest.Sampled.rootJoiningArea
         sample).im / 4 ≤
       (5 * target + physicalAllowance + rootAllowance) * Readings.PreparedObservationCoercivity.coefficientNormSq
         coefficients := by
   have upper :=
-    PuncturedGrid.Exterior.Basis.RequestedRootEnergy.CommonBasisRequest.Sampled.requested_root_perimeter_upper
+    Basis.RequestedRootEnergy.CommonBasisRequest.Sampled.requested_root_perimeter_upper
     sample comparisons spatial physical face facePaid sourcePaid coverPaid
     positive physicalNN rootNN physicalPaid rootPaid trace branch later
-  rw [Hyperelliptic.Meshes.Newton.Basis.RootPerimeterEnergy.CommonBasisRequest.Sampled.requested_newton_endpoints
+  rw [Sampled.requested_newton_endpoints
     spatial physical] at upper
   exact upper
 

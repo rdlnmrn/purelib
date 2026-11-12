@@ -68,6 +68,8 @@ import Purelib.Riemann.RootContinuation.RootOwnerFrames
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 
+open Purelib.Approximation.Rational.Budget
+
 /-! A shared finite owner-error request for all basis rows, selected before
 reading any coefficient vector or fine boundary path. -/
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis
@@ -85,16 +87,16 @@ open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate Gaussian)
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
     regular domains differential}
 
 open Purelib.Data.Rat.Fraction.Compatibility
@@ -107,12 +109,12 @@ The tolerance is divided across the exact number of basis rows and the retained 
 supplies the unchanged geometry and stage floor. -/
 @[expose]
 def RowOwnerBudget (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-  regular domains differential) (tolerance : Normalization.InverseRootPolynomial.Coordinate) (row : Fin genus) :=
+  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  regular domains differential) (tolerance : Coordinate) (row : Fin genus) :=
   Integration.RectangularPrimitiveAccuracy.GridPrimitiveAccuracy (occurrence.recastComparison
     (Periods.PeriodMatrix.standardDifferential row)).entered.globalBounds
     (occurrence.recastComparison (Periods.PeriodMatrix.standardDifferential row)).entered.domain.steps
-    (Rational.Budget.Aggregate.perTerm (tolerance / 4) genus / 4)
+    (Aggregate.perTerm (tolerance / 4) genus / 4)
 
 end OwnerRequest
 
@@ -122,13 +124,13 @@ Each component retains its own basis-row budget and the original occurrence; the
 attached to those requests. -/
 @[expose]
 def OwnerRequest (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-  regular domains differential) (tolerance : Normalization.InverseRootPolynomial.Coordinate) :=
-  Data.Vector.DependentVector (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.RowOwnerBudget occurrence
+  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  regular domains differential) (tolerance : Coordinate) :=
+  Vector.DependentVector (OwnerRequest.RowOwnerBudget occurrence
     tolerance)
 
 namespace OwnerRequest
-variable {tolerance : Normalization.InverseRootPolynomial.Coordinate}
+variable {tolerance : Coordinate}
 
 /-- Allocate every original basis-row owner budget before reading a coefficient vector or fine boundary path.
 
@@ -136,14 +138,14 @@ Positive tolerance gives a positive allocated row budget at every retained index
 occurrence's original grid and basis-row order. -/
 @[expose]
 def build (occurrence :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
   regular domains differential)
-    (tolerance : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < tolerance) :
+    (tolerance : Coordinate) (positive : 0 < tolerance) :
       OwnerRequest occurrence tolerance :=
-  Data.Vector.DependentVector.ofFn fun _ => Integration.RectangularPrimitiveAccuracy.GridPrimitiveAccuracy.build _ _ _
-    (Fraction.Order.Field.div_pos_direct (Rational.Budget.Aggregate.perTerm_positive
-      (Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Normalization.InverseRootPolynomial.Coordinate) <
-        4)) genus) (by decide : (0 : Normalization.InverseRootPolynomial.Coordinate) < 4))
+  Vector.DependentVector.ofFn fun _ => Integration.RectangularPrimitiveAccuracy.GridPrimitiveAccuracy.build _ _ _
+    (Fraction.Order.Field.div_pos_direct (Aggregate.perTerm_positive
+      (Fraction.Order.Field.div_pos_direct positive (by decide : (0 : Coordinate) <
+        4)) genus) (by decide : (0 : Coordinate) < 4))
 
 /-- The cached maximum stage of all original basis-row owner requests. -/
 @[expose]
@@ -155,24 +157,24 @@ def index (owners : OwnerRequest occurrence tolerance) :
 The original point owner, containing cell and common late row budget supply the comparison. -/
 theorem row_bound (owners : OwnerRequest occurrence
   tolerance) {faceIndex vertices : Nat}
-    (later : owners.index ≤ faceIndex) (data : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
-      occurrence faceIndex) {points : Fin vertices → Normalization.InverseRootPolynomial.Gaussian}
+    (later : owners.index ≤ faceIndex) (data : FragmentQueries.RowData
+      occurrence faceIndex) {points : Fin vertices → InverseRootPolynomial.Gaussian}
     (row : Fin genus) (readings : Readings.RectangularPointReadings.PointReadings (data row).anchors (data row).offsets
       points)
     (vertex : Fin vertices) (column height : Fin (occurrence.compared.entered.domain.steps + 1))
     (inside : (occurrence.compared.entered.domain.geometry.box column height).Contains (points vertex)) :
-    Data.Gaussian.Norm.Basic.normSq (readings.values vertex - (data row).anchors.alignedValue (data row).offsets
+    Gaussian.Norm.Basic.normSq (readings.values vertex - (data row).anchors.alignedValue (data row).offsets
       column height (points vertex)) ≤
-      Rational.Budget.Aggregate.perTerm (tolerance / 4) genus := open Purelib.Integration in by
+      Aggregate.perTerm (tolerance / 4) genus := open Purelib.Integration in by
   let selected := Polynomial.Rectangle.Accuracy.FragmentIndex.GridPrimitiveAccuracy.atIndex
     (owners.get row) faceIndex ((owners.get_le_maximum (fun _ request => request.index) row).trans later)
   have bounded := Readings.RectangularPointOwnerBounds.point_cell_bound selected readings
     (occurrence.recastComparison (Periods.PeriodMatrix.standardDifferential row)).entered.domain.patch.cell_refines
     vertex column height inside
   exact bounded.trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct selected.accurate.le (by
-      decide : (0 : Normalization.InverseRootPolynomial.Coordinate) ≤ 4)).trans_eq
-    ((show 4 * (Rational.Budget.Aggregate.perTerm (tolerance / 4) genus / 4) =
-      (Rational.Budget.Aggregate.perTerm (tolerance / 4) genus / 4) * 4 by ring1).trans
+      decide : (0 : Coordinate) ≤ 4)).trans_eq
+    ((show 4 * (Aggregate.perTerm (tolerance / 4) genus / 4) =
+      (Aggregate.perTerm (tolerance / 4) genus / 4) * 4 by ring1).trans
       (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))))
 
 end OwnerRequest
@@ -185,8 +187,8 @@ Each row retains its original anchors and offsets on the same finite point vecto
 row's realization. -/
 @[expose]
 def OwnedReadings {faceIndex vertices : Nat} (data :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData occurrence faceIndex) (points : Fin vertices
-  → Normalization.InverseRootPolynomial.Gaussian) :=
+  FragmentQueries.RowData occurrence faceIndex) (points : Fin vertices
+  → InverseRootPolynomial.Gaussian) :=
   (row : Fin genus) → Readings.RectangularPointReadings.PointReadings (data row).anchors (data row).offsets points
 
 /-- Read the coefficient-weighted sum of the retained basis-row values at one original vertex.
@@ -195,24 +197,24 @@ The finite sum uses the retained row readings and the supplied coefficient at ea
 pairing at the selected vertex. -/
 @[expose]
 def ownedValue {faceIndex vertices : Nat} {data :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData occurrence faceIndex} {points : Fin vertices
-  → Normalization.InverseRootPolynomial.Gaussian}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings data points) (coefficients
+  FragmentQueries.RowData occurrence faceIndex} {points : Fin vertices
+  → InverseRootPolynomial.Gaussian}
+    (readings : OwnedReadings data points) (coefficients
       : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (vertex : Fin vertices) : Gaussian :=
   FiniteSum.Fin.sumFin fun row => coefficients row * (readings row).values vertex
 
 /-- Every row keeps its actual point owner. The uniform owner request pays
 the weighted discrepancy even when adjacent vertices share a coordinate. -/
-theorem owned_value_bound {tolerance : Normalization.InverseRootPolynomial.Coordinate} (owners :
+theorem owned_value_bound {tolerance : Coordinate} (owners :
   OwnerRequest occurrence tolerance)
     (positive : 0 < tolerance) {faceIndex vertices : Nat} (later : owners.index ≤ faceIndex)
-    (data : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData occurrence faceIndex) {points :
-      Fin vertices → Normalization.InverseRootPolynomial.Gaussian}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings data points) (coefficients
+    (data : FragmentQueries.RowData occurrence faceIndex) {points :
+      Fin vertices → InverseRootPolynomial.Gaussian}
+    (readings : OwnedReadings data points) (coefficients
       : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
     (vertex : Fin vertices) (column height : Fin (occurrence.compared.entered.domain.steps + 1))
     (inside : (occurrence.compared.entered.domain.geometry.box column height).Contains (points vertex)) :
-    Data.Gaussian.Norm.Basic.normSq (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.ownedValue
+    Gaussian.Norm.Basic.normSq (OwnerRequest.ownedValue
       readings coefficients vertex - FiniteSum.Fin.sumFin (fun row => coefficients row *
       (data row).anchors.alignedValue (data row).offsets column height (points vertex))) ≤
       (tolerance / 4) * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := by
@@ -226,20 +228,20 @@ theorem owned_value_bound {tolerance : Normalization.InverseRootPolynomial.Coord
         vertex column height inside))
       (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus))
     rw [sum_constant] at bound
-    exact bound.trans (Rational.Budget.Aggregate.count_mul_perTerm_lt
+    exact bound.trans (Aggregate.count_mul_perTerm_lt
       (Fraction.Order.Field.div_pos_direct positive (by
-          decide : (0 : Normalization.InverseRootPolynomial.Coordinate) < 4)) genus).le
-  have equal : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.ownedValue readings coefficients vertex -
+          decide : (0 : Coordinate) < 4)) genus).le
+  have equal : OwnerRequest.ownedValue readings coefficients vertex -
     FiniteSum.Fin.sumFin (fun row => coefficients row *
       (data row).anchors.alignedValue (data row).offsets column height (points vertex)) =
       FiniteSum.Fin.sumFin (fun row => coefficients row * errors row) := by
-    unfold Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.ownedValue
+    unfold OwnerRequest.ownedValue
     rw [← FiniteSum.Fin.sumFin_sub]
     exact FiniteSum.Fin.sumFin_congr (fun row => by dsimp only [errors]; ring1)
   have nonnegative : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
     (FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 :
-      Normalization.InverseRootPolynomial.Coordinate)) _ (fun row => Gaussian.Basic.Canonical.normSq_nonneg
+      Coordinate)) _ (fun row => Gaussian.Basic.Canonical.normSq_nonneg
       (coefficients row)))
   rw [equal]
   exact (budget.bound coefficients).trans

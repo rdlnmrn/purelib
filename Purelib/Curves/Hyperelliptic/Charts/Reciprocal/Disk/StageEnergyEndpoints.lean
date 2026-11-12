@@ -57,6 +57,8 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap
@@ -103,35 +105,35 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.StageReque
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.StageChartReplacement (ChartReplacement)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RestoredParentEnergy (RequestedEnergy)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {cover :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data}
-  {prepared : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison.Preparation regular cover}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap} {cover :
+    Cover data}
+  {prepared : Preparation regular cover}
     {sourceTarget reciprocalTarget coefficientTarget totalTarget areaTarget target :
-    Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {minimum index depth readingIndex : Nat} {box : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {request : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.StageRequest prepared sourceTarget
+    Coordinate}
+  {minimum index depth readingIndex : Nat} {box : Geometry.Rational.Box}
+  {sample : Primitives.Sample cap differential index box}
+  {request : StageRequest prepared sourceTarget
     reciprocalTarget coefficientTarget totalTarget areaTarget minimum}
   {replacement : ChartReplacementRequest
     prepared target minimum}
-  {evaluated : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.StageRequest.Evaluation request sample
+  {evaluated : Evaluation request sample
     depth readingIndex}
 
 /-- Transport the original energy endpoint certificate along equality of the retained cap sample and model index. -/
 private theorem transportEndpoint {firstIndex lastIndex energyDepth : Nat}
     {first : Primitives.Sample cap differential firstIndex box}
     {last : Primitives.Sample cap differential lastIndex box}
-    {root value potential : InverseRootPolynomial.Gaussian} {target : InverseRootPolynomial.Coordinate}
+    {root value potential : Gaussian} {target : Coordinate}
     (indices : firstIndex = lastIndex) (samples : HEq first last)
-    (endpoint : ReciprocalDiskVertices.EnergyEndpoint first regular energyDepth target root value potential) :
-    ReciprocalDiskVertices.EnergyEndpoint last regular energyDepth target root value potential := by
+    (endpoint : EnergyEndpoint first regular energyDepth target root value potential) :
+    EnergyEndpoint last regular energyDepth target root value potential := by
   cases indices
   cases samples
   exact endpoint
@@ -143,42 +145,42 @@ private theorem local_le_target (replacement : ChartReplacementRequest prepared 
     cases equal : cover.mesh.edges with
     | nil => exact False.elim (Owners.mesh_nonempty cover.mesh equal)
     | cons head tail => simp only [List.length_cons]; omega
-  have one : (1 : InverseRootPolynomial.Coordinate) ≤ (cover.mesh.edges.length : InverseRootPolynomial.Coordinate) :=
+  have one : (1 : Coordinate) ≤ (cover.mesh.edges.length : Coordinate) :=
     Fraction.Cast.Order.natCast_le_direct oneNat
-  have countNonnegative : (0 : InverseRootPolynomial.Coordinate) ≤ (cover.mesh.edges.length :
-    InverseRootPolynomial.Coordinate) := Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)
-  have square : (1 : InverseRootPolynomial.Coordinate) ≤ (cover.mesh.edges.length : InverseRootPolynomial.Coordinate) ^
+  have countNonnegative : (0 : Coordinate) ≤ (cover.mesh.edges.length :
+    Coordinate) := Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)
+  have square : (1 : Coordinate) ≤ (cover.mesh.edges.length : Coordinate) ^
     2 := by
-    have bound := Fraction.Order.Arithmetic.mul_le_mul_direct one one (by
-        decide : (0 : InverseRootPolynomial.Coordinate) ≤ 1) countNonnegative
-    exact (by ring1 : (1 : InverseRootPolynomial.Coordinate) = 1 * 1).trans_le (bound.trans_eq (by ring1))
-  have quarter := Fraction.Order.Field.div_nonneg_direct replacement.localPositive.le (by
-      decide : (0 : InverseRootPolynomial.Coordinate) ≤ 4)
+    have bound := Arithmetic.mul_le_mul_direct one one (by
+        decide : (0 : Coordinate) ≤ 1) countNonnegative
+    exact (by ring1 : (1 : Coordinate) = 1 * 1).trans_le (bound.trans_eq (by ring1))
+  have quarter := Field.div_nonneg_direct replacement.localPositive.le (by
+      decide : (0 : Coordinate) ≤ 4)
   have factor : replacement.localTarget ≤ 2 * (replacement.localTarget + replacement.localTarget / 4) := by
-    apply Fraction.Order.Arithmetic.le_of_sub_nonneg_direct
-    exact (add_nonneg replacement.localPositive.le (Fraction.Order.Arithmetic.mul_nonneg_direct (by
-        decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2) quarter)).trans_eq (by ring1)
-  have counted := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct square replacement.localPositive.le
-  have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct factor
-    (Fraction.Order.Arithmetic.sq_nonneg_direct (cover.mesh.edges.length : InverseRootPolynomial.Coordinate))
+    apply Arithmetic.le_of_sub_nonneg_direct
+    exact (add_nonneg replacement.localPositive.le (Arithmetic.mul_nonneg_direct (by
+        decide : (0 : Coordinate) ≤ 2) quarter)).trans_eq (by ring1)
+  have counted := Arithmetic.mul_le_mul_of_nonneg_right_direct square replacement.localPositive.le
+  have scaled := Arithmetic.mul_le_mul_of_nonneg_left_direct factor
+    (Arithmetic.sq_nonneg_direct (cover.mesh.edges.length : Coordinate))
   exact (show replacement.localTarget = 1 * replacement.localTarget by ring1).trans_le (counted.trans (scaled.trans
     replacement.paid.le))
 
 namespace ChartReplacement
 
-variable {energyTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {energyFloor energyDepth : Nat}
-  (chart : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.StageChartReplacement.ChartReplacement replacement
+variable {energyTarget : Coordinate} {energyFloor energyDepth : Nat}
+  (chart : ChartReplacement replacement
     evaluated)
-  (energy : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RestoredParentEnergy.RequestedEnergy chart.charts
+  (energy : RequestedEnergy chart.charts
     evaluated.cap.polynomial.cells chart.vertices request.cap.endpoints energyTarget energyFloor)
-  (branch : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) (sameDepth :
+  (branch : HyperellipticReciprocal.originOrder curve = 1) (sameDepth :
     energy.depth = energyDepth)
 
 include branch sameDepth in
 /-- The actual energy chain begins at the original synchronized first reading with its retained potential and paid chart
 offset. -/
 theorem energy_first_endpoint :
-    ReciprocalDiskVertices.EnergyEndpoint sample regular energyDepth target evaluated.firstReading.coordinate
+    EnergyEndpoint sample regular energyDepth target evaluated.firstReading.coordinate
       evaluated.cap.firstValue energy.firstPotential := by
   cases sameDepth
   have endpoint := RequestedEnergy.first_endpoint energy branch (Owners.mesh_nonempty cover.mesh)
@@ -186,29 +188,29 @@ theorem energy_first_endpoint :
   rw [← chart.readings_eq, ← evaluated.cap.boundary.first_coordinate,
     ChartReplacement.energy_first chart energy,
     ← evaluated.first_coordinate] at endpoint
-  have shared := Curves.Hyperelliptic.Charts.Reciprocal.Disk.StageEnergyEndpoints.transportEndpoint
+  have shared := transportEndpoint
     evaluated.original_index evaluated.capSample_eq endpoint
   exact ⟨shared.potential_eq, shared.offset.trans
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.StageEnergyEndpoints.local_le_target replacement), shared.small,
+    (local_le_target replacement), shared.small,
     shared.inside⟩
 
 include branch sameDepth in
 /-- The actual energy chain ends at the original synchronized last reading with its retained terminal potential and paid
 chart offset. -/
 theorem energy_last_endpoint :
-    ReciprocalDiskVertices.EnergyEndpoint sample regular energyDepth target evaluated.lastReading.coordinate
+    EnergyEndpoint sample regular energyDepth target evaluated.lastReading.coordinate
       evaluated.cap.joined.lastValue
-      (RestoredEnergyBlock.terminalPotential energy.blocks energy.firstPotential) := by
+      (terminalPotential energy.blocks energy.firstPotential) := by
   cases sameDepth
   have endpoint := RequestedEnergy.last_endpoint energy branch (Owners.mesh_nonempty cover.mesh)
     evaluated.cap.firstValue 0
   dsimp only at endpoint
   rw [← chart.readings_eq, ← evaluated.cap.boundary.last_coordinate 0, ← evaluated.cap.joined.lastValue_eq, ←
     evaluated.last_coordinate] at endpoint
-  have shared := Curves.Hyperelliptic.Charts.Reciprocal.Disk.StageEnergyEndpoints.transportEndpoint
+  have shared := transportEndpoint
     evaluated.original_index evaluated.capSample_eq endpoint
   exact ⟨shared.potential_eq, shared.offset.trans
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.StageEnergyEndpoints.local_le_target replacement), shared.small,
+    (local_le_target replacement), shared.small,
     shared.inside⟩
 
 end ChartReplacement

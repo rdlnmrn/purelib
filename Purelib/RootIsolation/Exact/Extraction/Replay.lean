@@ -78,13 +78,14 @@ theorem extraction_eq (selected : Clearance.Box.Region.ClearRegion p ambient)
       intro zero
       have impossible : (0 : Int) < 0 := zero ▸ positive
       exact Purelib.Data.Int.Order.lt_irrefl 0 impossible)) 1)
+    (request : Option Data.Rat.Fraction.Rational)
     (same : value = Newton.Extraction.Initial.Build.extract degreeAtLeastTwo squarefree elimination
       (selected.raw (by
         intro zero
         have impossible : (0 : Int) < 0 := zero ▸ positive
-        exact Purelib.Data.Int.Order.lt_irrefl 0 impossible)) (by decide)) :
+        exact Purelib.Data.Int.Order.lt_irrefl 0 impossible)) (by decide) request) :
     Exact.Extraction.Replay.extraction degreeAtLeastTwo squarefree elimination selected positive value =
-      Exact.Extraction.extractRegion degreeAtLeastTwo squarefree elimination selected positive := by
+      Exact.Extraction.extractRegion degreeAtLeastTwo squarefree elimination selected positive request := by
   cases same
   rfl
 

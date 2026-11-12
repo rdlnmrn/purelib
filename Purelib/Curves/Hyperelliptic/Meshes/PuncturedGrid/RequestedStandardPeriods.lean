@@ -14,6 +14,7 @@ import Purelib.Data.Rat.Fraction.Order.Field
 import Purelib.Curves.Hyperelliptic.Branches.BranchConfiguration
 import Purelib.Curves.Hyperelliptic.Branches.BranchIsolation
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.CommonMeshes
+import Purelib.Riemann.Readings.PreparedPrimitiveSamples
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets
@@ -141,10 +142,10 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.PeriodFragments (GridFragments)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
   {base : FramedPuncturedGrid curve
-    (Purelib.Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).branches higher}
+    (Branches.BranchConfiguration.configurationOfData curve branches).branches higher}
   {lifted : LiftedPuncturedGrid base}
   {integral : Topology.Surface.Cut.IntegralPairing.CutBoundaryWord lifted.cutBoundaryWord}
   {index differential : Fin genus} {row :
@@ -158,21 +159,21 @@ set_option genInjectivity false in
 /-- Geometry, original request polynomials, and their scalar certificates are prepared before the final numerical bank.
 Later contact floors reuse this data without rerunning the original covered-stage preparation. -/
 structure RequestedPreparation (row : TourIntersection.IntersectionRow lifted integral index) (differential : Fin genus)
-    (minimum : Nat) (target : Fraction.Rational) (domains : DomainBanks.FaceDomainBank lifted.frames
+    (minimum : Nat) (target : Rational) (domains : DomainBanks.FaceDomainBank lifted.frames
       base.faces.regulars) : Type 2 where
   /-- The cached finite bound on all original grid and analytic fragments. -/ pieces : Nat
   /-- The retained face scalar budgets for the original differential, fragment count and quarter target. -/ scalars :
-    BranchCellBank.FaceScalarBudgets (PeriodMatrix.standardDifferential differential) pieces (target / 4) domains
+    FaceScalarBudgets (PeriodMatrix.standardDifferential differential) pieces (target / 4) domains
   /-- The original A/B covered-period comparison prepared with the quarter target. -/ comparison :
     IntersectionRow.PrimitiveComparison row differential minimum (target / 4)
   /-- The actual shared-grid splitting of the original A/B primitive requests. -/ fragments :
-    PeriodFragments.GridFragments comparison
+    GridFragments comparison
   /-- The actual fragment sheet assignments on the original retained face domains. -/ assignments :
     GridFragments.SheetAssignments fragments domains
   /-- Every original A request polynomial is prepared above the retained common scalar stage. -/ a_indices :
-    PreparedControlledPrimitiveRequests.IndicesAbove (FaceScalarBudgets.index scalars) comparison.a.request.requests
+    IndicesAbove (FaceScalarBudgets.index scalars) comparison.a.request.requests
   /-- Every original B request polynomial is prepared above that same scalar stage. -/ b_indices :
-    PreparedControlledPrimitiveRequests.IndicesAbove (FaceScalarBudgets.index scalars) comparison.b.request.requests
+    IndicesAbove (FaceScalarBudgets.index scalars) comparison.b.request.requests
   /-- The actual A splitting and analytic step count are bounded by the retained fragment allowance. -/ a_count :
     fragments.a.splits.count * (2 * FaceDomainBank.stepsBound domains + 5) ≤ pieces
   /-- The actual B splitting and analytic step count are bounded by the retained fragment allowance. -/ b_count :
@@ -185,7 +186,7 @@ set_option genInjectivity false in
 verified error bounds are retained. -/
 structure RequestedSharedReadings (row : TourIntersection.IntersectionRow lifted integral index) (differential : Fin
   genus)
-    (minimum : Nat) (target : Fraction.Rational) (domains : DomainBanks.FaceDomainBank lifted.frames
+    (minimum : Nat) (target : Rational) (domains : DomainBanks.FaceDomainBank lifted.frames
       base.faces.regulars)
     (extraPoints : List Data.Gaussian.Basic.Canonical) extends
       RequestedPreparation row differential minimum
@@ -206,13 +207,13 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedStandardPer
 
 /-- Every local request obtained from the retained original cover is above the supplied stage floor. -/
 theorem ofCover_indices {source : Differentials.Basic.Differential genus}
-    {root : PreparedRefinementRootChains.Named}
-    {initial : PreparedRefinementRootEndpoints.RootClosedState curve source root}
+    {root : Named}
+    {initial : RootClosedState curve source root}
     {targets : List (Differentials.Basic.Differential genus)} {count minimum : Nat}
-    (cover : PreparedPeriodPrimitiveCover.CoveredPeriodStage initial targets count minimum) (differential :
+    (cover : CoveredPeriodStage initial targets count minimum) (differential :
       Differentials.Basic.Differential genus)
-    (target : Fraction.Rational) (positive : 0 < target) (floor : Nat) :
-    PreparedControlledPrimitiveRequests.IndicesAbove floor (CoveredPeriodRequest.ofCover cover differential target
+    (target : Rational) (positive : 0 < target) (floor : Nat) :
+    IndicesAbove floor (CoveredPeriodRequest.ofCover cover differential target
       positive floor).request.requests := by
   let requested := CoveredPeriodRequest.ofCover cover differential target positive floor
   have equal : requested.request.minimumIndex = floor := ControlledSumRequest.acquire_minimumIndex ..
@@ -222,9 +223,9 @@ theorem ofCover_indices {source : Differentials.Basic.Differential genus}
 bank is prepared twice. -/
 @[expose] def build (row : TourIntersection.IntersectionRow lifted integral index) (differential : Fin genus) (minimum :
   Nat)
-    (target : Fraction.Rational) (positive : 0 < target) (domains : DomainBanks.FaceDomainBank lifted.frames
+    (target : Rational) (positive : 0 < target) (domains : DomainBanks.FaceDomainBank lifted.frames
       base.faces.regulars) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedStandardPeriods.RequestedPreparation row differential minimum
+    RequestedPreparation row differential minimum
       target domains := by
   let aCover := CoveredPeriodStage.acquire row.period.aInitial (PreparedRefinementProgramCore.standardDifferentials
     genus) genus minimum
@@ -246,9 +247,9 @@ bank is prepared twice. -/
     b.stage, rfl⟩
   let fragments := GridFragments.build comparison
   let assignments := fragments.assign domains
-  have aIndices : PreparedControlledPrimitiveRequests.IndicesAbove floor comparison.a.request.requests :=
+  have aIndices : IndicesAbove floor comparison.a.request.requests :=
     ofCover_indices ..
-  have bIndices : PreparedControlledPrimitiveRequests.IndicesAbove floor comparison.b.request.requests :=
+  have bIndices : IndicesAbove floor comparison.b.request.requests :=
     ofCover_indices ..
   have aCount : fragments.a.splits.count * analyticCount ≤ pieces := by
     have splitBound := fragments.a.splits.count_le
@@ -277,12 +278,12 @@ bank is prepared twice. -/
 /-- Read both actual period programs from the bank already used by the surface and observation consumers. The threshold
 is computed by `build`. -/
 @[expose] def readWith (prepared :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedStandardPeriods.RequestedPreparation row differential minimum
+  RequestedPreparation row differential minimum
   target domains)
     (positive : 0 < target) (extraPoints : List Data.Gaussian.Basic.Canonical) {stage : Nat}
-    (numerics : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential differential) stage domains)
+    (numerics : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) stage domains)
     (later : FaceScalarBudgets.index prepared.scalars ≤ stage) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedStandardPeriods.RequestedSharedReadings row differential minimum
+    RequestedSharedReadings row differential minimum
       target domains extraPoints := by
   let points := (SheetEntries.points prepared.assignments.a ++ SheetEntries.points prepared.assignments.b) ++
     extraPoints
@@ -308,19 +309,19 @@ is computed by `build`. -/
 
 /-- Reading with the supplied numerical bank preserves its exact original stage. -/
 theorem readWith_index (prepared :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedStandardPeriods.RequestedPreparation row differential minimum
+  RequestedPreparation row differential minimum
   target domains)
     (positive : 0 < target) (extraPoints : List Data.Gaussian.Basic.Canonical) {stage : Nat}
-    (numerics : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential differential) stage domains)
+    (numerics : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) stage domains)
     (later : FaceScalarBudgets.index prepared.scalars ≤ stage) :
     (prepared.readWith positive extraPoints numerics later).shared.numericalIndex = stage := rfl
 
 /-- Reading both retained periods reuses exactly the supplied original numerical bank. -/
 theorem readWith_numerics (prepared :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedStandardPeriods.RequestedPreparation row differential minimum
+  RequestedPreparation row differential minimum
   target domains)
     (positive : 0 < target) (extraPoints : List Data.Gaussian.Basic.Canonical) {stage : Nat}
-    (numerics : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential differential) stage domains)
+    (numerics : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) stage domains)
     (later : FaceScalarBudgets.index prepared.scalars ≤ stage) :
     HEq (prepared.readWith positive extraPoints numerics later).shared.numerics numerics := HEq.rfl
 
@@ -329,10 +330,10 @@ end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedStandardPeriods.R
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedStandardPeriods.RequestedSharedReadings
 
 /-- A quarter-target local error pays the original two-part aggregate comparison target. -/
-private theorem pay {error target : Fraction.Rational} (small : error < target / 4) : 2 * error + 2 * (target / 4) <
+private theorem pay {error target : Rational} (small : error < target / 4) : 2 * error + 2 * (target / 4) <
   target := by
   have bound := Fraction.Order.Arithmetic.add_lt_add_right_direct
-    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2) small) (2 *
+    (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Rational) < 2) small) (2 *
       (target / 4))
   exact bound.trans_eq (by
     rw [show 2 * (target / 4) + 2 * (target / 4) = (target / 4) * 4 by ring1]
@@ -340,7 +341,7 @@ private theorem pay {error target : Fraction.Rational} (small : error < target /
 
 /-- The retained shared A reading approximates the original standard A period throughout its requested stage tail. -/
 theorem a_accurate {extraPoints : List Data.Gaussian.Basic.Canonical}
-    (requested : Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedStandardPeriods.RequestedSharedReadings row
+    (requested : RequestedSharedReadings row
       differential minimum target domains extraPoints)
     (stage : Nat) (later : requested.comparison.stage ≤ stage) :
     Data.Gaussian.Norm.Basic.normSq (requested.shared.a.value -
@@ -351,7 +352,7 @@ theorem a_accurate {extraPoints : List Data.Gaussian.Basic.Canonical}
 
 /-- The retained shared B reading approximates the original standard B period throughout its requested stage tail. -/
 theorem b_accurate {extraPoints : List Data.Gaussian.Basic.Canonical}
-    (requested : Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedStandardPeriods.RequestedSharedReadings row
+    (requested : RequestedSharedReadings row
       differential minimum target domains extraPoints)
     (stage : Nat) (later : requested.comparison.stage ≤ stage) :
     Data.Gaussian.Norm.Basic.normSq (requested.shared.b.value -
@@ -359,6 +360,50 @@ theorem b_accurate {extraPoints : List Data.Gaussian.Basic.Canonical}
         stage).integralSample) < target :=
   (requested.shared.b_accurate stage later).trans
     (pay requested.b_small)
+
+/-- The retained common numerical stage meets the actual supplied point-bank budgets. -/
+theorem budgets_le {extraPoints : List Gaussian}
+    (requested : RequestedSharedReadings row differential minimum target domains extraPoints) :
+    requested.shared.budgets.index ≤ requested.shared.numericalIndex := by
+  rewrite [requested.shared.numericalIndex_eq]
+  exact (Data.Nat.Order.le_max_right _ _).trans (Data.Nat.Order.le_max_right _ _)
+
+/-- View a GIVEN certified readWith result as its original numerical execution, without running readWith again.
+
+All input bank/Frame/domain objects and exact observations are forwarded
+from the supplied result. Its whole original factory is used only in the
+erased proof of the original shared-mesh build identity. No A/B cover,
+request, source model, primitive bank or observation is acquired again.
+-/
+def toAcquisition (prepared : RequestedPreparation row differential minimum target domains)
+    (positive : 0 < target) (extraPoints : List Gaussian) {stage : Nat}
+    (numerics : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) stage domains)
+    (later : FaceScalarBudgets.index prepared.scalars ≤ stage)
+    (cached : {value : RequestedSharedReadings row differential minimum target domains extraPoints //
+      value = prepared.readWith positive extraPoints numerics later}) :
+    FaceSharedMeshes.Acquisition cached.val.shared.budgets cached.val.shared.numerics cached.val.budgets_le := by
+  have whole : cached.val.shared.meshes = FaceSharedMeshes.build cached.val.shared.budgets
+      cached.val.shared.numerics cached.val.budgets_le := by
+    rcases cached with ⟨value, factory⟩
+    cases factory
+    rfl
+  exact ⟨⟨(base.bank.toBranchCellBank, lifted.frames, base.faces.regulars, domains,
+      PeriodMatrix.standardDifferential differential, cached.val.shared.points,
+      Aggregate.perTerm (target / 4) cached.val.pieces / 64,
+      PreparedPrimitiveSamples.differentialNumerator (PeriodMatrix.standardDifferential differential),
+      cached.val.shared.numericalIndex), rfl⟩,
+    ⟨cached.val.shared.budgets, rfl⟩, ⟨cached.val.shared.numerics, rfl⟩, ⟨cached.val.shared.meshes, whole⟩⟩
+
+/-- The numerical view forwards the literal given old shared observation cache. -/
+theorem toAcquisition_shared (prepared : RequestedPreparation row differential minimum target domains)
+    (positive : 0 < target) (extraPoints : List Gaussian) {stage : Nat}
+    (numerics : FacePrimitiveBank (PeriodMatrix.standardDifferential differential) stage domains)
+    (later : FaceScalarBudgets.index prepared.scalars ≤ stage)
+    (cached : {value : RequestedSharedReadings row differential minimum target domains extraPoints //
+      value = prepared.readWith positive extraPoints numerics later}) :
+    (toAcquisition prepared positive extraPoints numerics later cached).shared = cached.val.shared.meshes := by
+  unfold toAcquisition
+  rfl
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RequestedStandardPeriods.RequestedSharedReadings
 

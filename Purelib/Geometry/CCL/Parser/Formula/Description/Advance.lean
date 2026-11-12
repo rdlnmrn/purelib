@@ -86,96 +86,96 @@ namespace Purelib.Geometry.CCL.Parser.Formula.Description
 
 /-- Boundary descriptions for every active parser phase after pullback. -/
 @[expose] def pulledActive
-    (phase : Syntax.Phase) (inner : GaussianMatrix)
+    (phase : Phase) (inner : GaussianMatrix)
     (innerNonzero : Matrix2.determinant inner ≠ 0) :
-    Formula.Descriptions inner ((Formula.activeFormula phase).pullback inner) := by
+    Descriptions inner ((activeFormula phase).pullback inner) := by
   cases phase with
   | initial =>
-      simp only [Formula.activeFormula, BoundaryFormula.pullback, -eq_self, -iff_self]
+      simp only [activeFormula, BoundaryFormula.pullback, -eq_self, -iff_self]
       exact Descriptions.truth
   | highUnary count =>
-      simp only [Formula.activeFormula, BoundaryFormula.pullback,
-        Purelib.Geometry.Projective.Hermitian.Formula.pullbackAtom, -eq_self, -iff_self]
+      simp only [activeFormula, BoundaryFormula.pullback,
+        Formula.pullbackAtom, -eq_self, -iff_self]
       exact Descriptions.atom _
         (Boundary.pulledAffineNormDyadic
           inner innerNonzero count)
   | lowUnary count =>
       cases count with
       | zero =>
-          simp only [Formula.activeFormula, BoundaryFormula.pullback,
-            Purelib.Geometry.Projective.Hermitian.Formula.pullbackAtom, -eq_self, -iff_self]
+          simp only [activeFormula, BoundaryFormula.pullback,
+            Formula.pullbackAtom, -eq_self, -iff_self]
           exact Descriptions.atom _ (by
             simpa only [pow_one, -eq_self, -iff_self] using
               (Boundary.pulledAffineNormDyadic
                 inner innerNonzero 1))
       | succ count =>
-          simp only [Formula.activeFormula, BoundaryFormula.pullback,
-            Purelib.Geometry.Projective.Hermitian.Formula.pullbackAtom, -eq_self, -iff_self]
+          simp only [activeFormula, BoundaryFormula.pullback,
+            Formula.pullbackAtom, -eq_self, -iff_self]
           exact Descriptions.atom _
             (Description.pulledScaledNormOne
               inner innerNonzero count)
   | loopUnary count =>
-      simp only [Formula.activeFormula, BoundaryFormula.pullback,
-        Purelib.Geometry.Projective.Hermitian.Formula.pullbackAtom, -eq_self, -iff_self]
+      simp only [activeFormula, BoundaryFormula.pullback,
+        Formula.pullbackAtom, -eq_self, -iff_self]
       exact Descriptions.atom _
         (Boundary.pulledAffineNormDyadic
           inner innerNonzero count)
   | sector kind exponent bits =>
-      simp only [Formula.activeFormula, BoundaryFormula.pullback, -eq_self, -iff_self]
-      let outer := Parser.normalizedMatrix kind exponent Coordinates2.Matrix.identityMatrix
+      simp only [activeFormula, BoundaryFormula.pullback, -eq_self, -iff_self]
+      let outer := normalizedMatrix kind exponent Coordinates2.Matrix.identityMatrix
       have identityNonzero :
           Matrix2.determinant Coordinates2.Matrix.identityMatrix ≠ 0 := by
         intro determinantZero
         have realZero := congrArg Data.Gaussian.Basic.re determinantZero
         simp only [Matrix2.determinant, Coordinates2.Matrix.identityMatrix,
-          Purelib.Data.Gaussian.Basic.mul_re,
-          Purelib.Data.Gaussian.Basic.sub_re,
-          Purelib.Data.Gaussian.Basic.one_re,
-          Purelib.Data.Gaussian.Basic.one_im,
-          Purelib.Data.Gaussian.Basic.zero_re,
-          Purelib.Data.Gaussian.Basic.zero_im, -eq_self, -iff_self] at realZero
+          Data.Gaussian.Basic.mul_re,
+          Data.Gaussian.Basic.sub_re,
+          Data.Gaussian.Basic.one_re,
+          Data.Gaussian.Basic.one_im,
+          Data.Gaussian.Basic.zero_re,
+          Data.Gaussian.Basic.zero_im, -eq_self, -iff_self] at realZero
         exact Fraction.Field.zero_ne_one realZero.symm
       have outerNonzero :
           Matrix2.determinant outer ≠ 0 := by
         change Matrix2.determinant
-          (Parser.normalizedMatrix kind exponent Coordinates2.Matrix.identityMatrix) ≠ 0
-        rw [Parser.normalizedMatrix, Coordinates2.Matrix.det_mul]
+          (normalizedMatrix kind exponent Coordinates2.Matrix.identityMatrix) ≠ 0
+        rw [normalizedMatrix, Coordinates2.Matrix.det_mul]
         exact Data.Gaussian.Field.mul_ne_zero_direct
-          (Parser.normalizationMatrix_det_ne kind exponent) identityNonzero
+          (normalizationMatrix_det_ne kind exponent) identityNonzero
       have outerLowerRow : outer.c = 0 ∧ outer.d = 1 := by
-        have lower := Parser.normalizedMatrix_lowerRow kind exponent Coordinates2.Matrix.identityMatrix
+        have lower := normalizedMatrix_lowerRow kind exponent Coordinates2.Matrix.identityMatrix
         simpa only [Coordinates2.Matrix.identityMatrix, outer, -eq_self, -iff_self] using lower
       have sectorDescriptions :
-          Formula.Descriptions inner ((Formula.sectorBitsFormula kind exponent bits).pullback inner) := by
-        simpa only [Formula.sectorBitsFormula, outer, -eq_self, -iff_self] using
+          Descriptions inner ((sectorBitsFormula kind exponent bits).pullback inner) := by
+        simpa only [sectorBitsFormula, outer, -eq_self, -iff_self] using
           (Description.pulledSectorAlternatives (Code.sectorCandidates bits) outer inner
             outerNonzero innerNonzero outerLowerRow)
       exact Descriptions.and
-        (Description.pulledRadial kind exponent inner innerNonzero)
+        (pulledRadial kind exponent inner innerNonzero)
         sectorDescriptions
 
 /-- Describe the pulled-back zero boundary of a normalized sector residual.
 
 Use the explicit affine numerator coefficients to retain an exact squared-norm boundary description. -/
 private def pulledResidual
-    (kind : Syntax.BlockKind) (exponent : Nat)
-    (sector : Data.ComplexContinuedFraction.Encoding.Sector) (inner : GaussianMatrix) :
-    Boundary.BoundaryDescription inner
+    (kind : BlockKind) (exponent : Nat)
+    (sector : Sector) (inner : GaussianMatrix) :
+    BoundaryDescription inner
       (Hermitian.pullbackForm inner
-        (Formula.residualForm kind exponent sector)) := by
-  let matrix := Parser.normalizedMatrix kind exponent Coordinates2.Matrix.identityMatrix
-  simpa only [Formula.residualForm, matrix, -eq_self, -iff_self] using
+        (residualForm kind exponent sector)) := by
+  let matrix := normalizedMatrix kind exponent Coordinates2.Matrix.identityMatrix
+  simpa only [residualForm, matrix, -eq_self, -iff_self] using
     (BoundaryDescription.pulledAffineNorm inner
       (matrix.a - sector.rep * matrix.c)
       (matrix.b - sector.rep * matrix.d))
 
 /-- Complete atom-boundary provenance for one input-coordinate incremental next-bit formula. -/
 @[expose] def inputIncremental
-    (state : Data.CCL.Encoding.Parser.State)
+    (state : State)
     (stateNonzero : Matrix2.determinant state.matrix ≠ 0)
     (bit : Bool) :
-    Formula.Descriptions (BoundaryAdjugate.adjugate state.matrix)
-      (Formula.inputIncrementalAdvanceFormula state bit) := by
+    Descriptions (BoundaryAdjugate.adjugate state.matrix)
+      (inputIncrementalAdvanceFormula state bit) := by
   let inner := BoundaryAdjugate.adjugate state.matrix
   have innerNonzero : Matrix2.determinant inner ≠ 0 := by
     change BoundaryAdjugate.determinant
@@ -185,42 +185,42 @@ private def pulledResidual
   rcases state with ⟨phase, matrix, history⟩
   cases phase with
   | initial =>
-      simpa only [Formula.inputIncrementalAdvanceFormula,
-        Formula.incrementalAdvanceFormula, inner, -eq_self, -iff_self] using
+      simpa only [inputIncrementalAdvanceFormula,
+        incrementalAdvanceFormula, inner, -eq_self, -iff_self] using
         (pulledActive
           (State.step ⟨Phase.initial, matrix, history⟩ bit).phase
           (BoundaryAdjugate.adjugate matrix) innerNonzero)
   | highUnary count =>
-      simpa only [Formula.inputIncrementalAdvanceFormula,
-        Formula.incrementalAdvanceFormula, inner, -eq_self, -iff_self] using
+      simpa only [inputIncrementalAdvanceFormula,
+        incrementalAdvanceFormula, inner, -eq_self, -iff_self] using
         (pulledActive
           (State.step ⟨Phase.highUnary count, matrix, history⟩ bit).phase
           (BoundaryAdjugate.adjugate matrix) innerNonzero)
   | lowUnary count =>
-      simpa only [Formula.inputIncrementalAdvanceFormula,
-        Formula.incrementalAdvanceFormula, inner, -eq_self, -iff_self] using
+      simpa only [inputIncrementalAdvanceFormula,
+        incrementalAdvanceFormula, inner, -eq_self, -iff_self] using
         (pulledActive
           (State.step ⟨Phase.lowUnary count, matrix, history⟩ bit).phase
           (BoundaryAdjugate.adjugate matrix) innerNonzero)
   | loopUnary count =>
-      simpa only [Formula.inputIncrementalAdvanceFormula,
-        Formula.incrementalAdvanceFormula, inner, -eq_self, -iff_self] using
+      simpa only [inputIncrementalAdvanceFormula,
+        incrementalAdvanceFormula, inner, -eq_self, -iff_self] using
         (pulledActive
           (State.step ⟨Phase.loopUnary count, matrix, history⟩ bit).phase
           (BoundaryAdjugate.adjugate matrix) innerNonzero)
   | sector kind exponent bits =>
       cases bits with
       | zero =>
-          simpa only [Formula.inputIncrementalAdvanceFormula,
-            Formula.incrementalAdvanceFormula, State.step, inner, -eq_self, -iff_self]
+          simpa only [inputIncrementalAdvanceFormula,
+            incrementalAdvanceFormula, State.step, inner, -eq_self, -iff_self]
             using
             (pulledActive
               (State.step ⟨Phase.sector kind exponent .zero, matrix, history⟩
                 bit).phase
               (BoundaryAdjugate.adjugate matrix) innerNonzero)
       | one first =>
-          simpa only [Formula.inputIncrementalAdvanceFormula,
-            Formula.incrementalAdvanceFormula, State.step, inner, -eq_self, -iff_self]
+          simpa only [inputIncrementalAdvanceFormula,
+            incrementalAdvanceFormula, State.step, inner, -eq_self, -iff_self]
             using
             (pulledActive
               (State.step
@@ -229,46 +229,46 @@ private def pulledResidual
               (BoundaryAdjugate.adjugate matrix) innerNonzero)
       | two first second =>
           let selected := Code.sectorOfBits first second bit
-          let outer := Parser.normalizedMatrix kind exponent Coordinates2.Matrix.identityMatrix
+          let outer := normalizedMatrix kind exponent Coordinates2.Matrix.identityMatrix
           have identityNonzero :
               Matrix2.determinant Coordinates2.Matrix.identityMatrix ≠ 0 := by
             intro determinantZero
             have realZero := congrArg Data.Gaussian.Basic.re determinantZero
             simp only [Matrix2.determinant, Coordinates2.Matrix.identityMatrix,
-              Purelib.Data.Gaussian.Basic.mul_re,
-              Purelib.Data.Gaussian.Basic.sub_re,
-              Purelib.Data.Gaussian.Basic.one_re,
-              Purelib.Data.Gaussian.Basic.one_im,
-              Purelib.Data.Gaussian.Basic.zero_re,
-              Purelib.Data.Gaussian.Basic.zero_im, -eq_self, -iff_self] at realZero
+              Data.Gaussian.Basic.mul_re,
+              Data.Gaussian.Basic.sub_re,
+              Data.Gaussian.Basic.one_re,
+              Data.Gaussian.Basic.one_im,
+              Data.Gaussian.Basic.zero_re,
+              Data.Gaussian.Basic.zero_im, -eq_self, -iff_self] at realZero
             exact Fraction.Field.zero_ne_one realZero.symm
           have outerNonzero :
               Matrix2.determinant outer ≠ 0 := by
             change Matrix2.determinant
-              (Parser.normalizedMatrix kind exponent Coordinates2.Matrix.identityMatrix) ≠ 0
-            rw [Parser.normalizedMatrix, Coordinates2.Matrix.det_mul]
+              (normalizedMatrix kind exponent Coordinates2.Matrix.identityMatrix) ≠ 0
+            rw [normalizedMatrix, Coordinates2.Matrix.det_mul]
             exact Data.Gaussian.Field.mul_ne_zero_direct
-              (Parser.normalizationMatrix_det_ne kind exponent) identityNonzero
+              (normalizationMatrix_det_ne kind exponent) identityNonzero
           have outerLowerRow : outer.c = 0 ∧ outer.d = 1 := by
-            have lower := Parser.normalizedMatrix_lowerRow kind exponent Coordinates2.Matrix.identityMatrix
+            have lower := normalizedMatrix_lowerRow kind exponent Coordinates2.Matrix.identityMatrix
             simpa only [Coordinates2.Matrix.identityMatrix, outer, -eq_self, -iff_self] using lower
           have residualDescription :
-              Boundary.BoundaryDescription (BoundaryAdjugate.adjugate matrix)
+              BoundaryDescription (BoundaryAdjugate.adjugate matrix)
                 (Hermitian.pullbackForm
                   (BoundaryAdjugate.adjugate matrix)
-                  (Formula.residualForm
+                  (residualForm
                     kind exponent selected)) := by
-            simpa only [Formula.residualForm, outer, -eq_self, -iff_self] using
+            simpa only [residualForm, outer, -eq_self, -iff_self] using
               (BoundaryDescription.pulledAffineNorm
                 (BoundaryAdjugate.adjugate matrix)
                 (outer.a - selected.rep * outer.c)
                 (outer.b - selected.rep * outer.d))
-          simp only [Formula.inputIncrementalAdvanceFormula,
-            Formula.incrementalAdvanceFormula,
-            Purelib.Geometry.CCL.Parser.Formula.advanceFormula, BoundaryFormula.pullback,
-            Purelib.Geometry.Projective.Hermitian.Formula.pullbackAtom, -eq_self, -iff_self]
+          simp only [inputIncrementalAdvanceFormula,
+            incrementalAdvanceFormula,
+            advanceFormula, BoundaryFormula.pullback,
+            Formula.pullbackAtom, -eq_self, -iff_self]
           exact Descriptions.and
-            (Description.pulledRadial kind exponent
+            (pulledRadial kind exponent
               (BoundaryAdjugate.adjugate matrix) innerNonzero)
             (Descriptions.and
               (Description.pulledSector selected outer

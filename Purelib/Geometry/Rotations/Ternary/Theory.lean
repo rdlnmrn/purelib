@@ -30,6 +30,9 @@ import Purelib.Geometry.Quadratic.Ternary.Isometry
 import Purelib.Tactic.Ring
 public import Mathlib.Algebra.Ring.Nat
 
+open Purelib.Geometry.Quadratic.Ternary
+open Purelib.Algebra.Field
+
 open Purelib
 
 open Purelib.Algebra.Clifford.Ternary.Basic.TernaryForm
@@ -79,7 +82,7 @@ namespace Purelib.Geometry.Rotations.Ternary.Theory
 
 open Purelib.LinearAlgebra.Coordinates3
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 section TernaryForm
 
@@ -88,13 +91,13 @@ set_option genInjectivity false in
 
 The original form and nonzero-two certificate index the retained projective correspondence, per-rotation axis/spread
 witnesses and the two affine-cap laws. -/
-structure TernaryForm.GeneralRotationTheory (form : Ternary.Basic.TernaryForm K)
+structure TernaryForm.GeneralRotationTheory (form : TernaryForm K)
     (twoNonzero : (2 : K) ≠ 0) where
   /-- The retained projective Clifford correspondence for the original ternary form. -/ projective :
-    TernaryForm.ProjectiveCliffordCorrespondence form twoNonzero
+    ProjectiveCliffordCorrespondence form twoNonzero
   /-- Construct the cached axis, chart, and geometric spread witness for each rotation of the original form. -/
     axisSpread : (rotation : form.SpecialOrthogonal) →
-    TernaryForm.RotationAxisSpreadWitness form rotation
+    RotationAxisSpreadWitness form rotation
   /-- Equal defined caps have equal displayed anchor vectors. -/ capInjective : ∀ left right : Coordinates3.Vector K,
     (leftDefined : (TernaryForm.cayleyDenominator form) left ≠ 0) →
     (rightDefined : (TernaryForm.cayleyDenominator form) right ≠ 0) →
@@ -116,8 +119,8 @@ constructive_injectivity TernaryForm.GeneralRotationTheory
 
 /-- Assemble the projective, affine-chart, and geometric-spread layers for an arbitrary displayed ternary form. -/
 def TernaryForm.generalRotationTheory [DecidableEq K]
-    (form : Ternary.Basic.TernaryForm K) (twoNonzero : (2 : K) ≠ 0) :
-    Geometry.Rotations.Ternary.Theory.TernaryForm.GeneralRotationTheory form twoNonzero where
+    (form : TernaryForm K) (twoNonzero : (2 : K) ≠ 0) :
+    TernaryForm.GeneralRotationTheory form twoNonzero where
   projective := form.projectiveCliffordCorrespondence twoNonzero
   axisSpread := fun rotation =>
     (TernaryForm.rotationAxisSpreadWitness form) rotation twoNonzero
@@ -163,7 +166,7 @@ structure MinkowskiClifford.ParabolicClassification [DecidableEq K]
       (MinkowskiClifford.nullParameter_isNull oneNonzero coordinates.first coordinates.second)
       parameter
   /-- The original rotation fixes the null vector given by the retained conic coordinates. -/ fixedAxis :
-    (Algebra.Quadratic.Ternary.Basic.TernaryForm.Isometry.act rotation.toIsometry) (MinkowskiClifford.nullParameter
+    (Isometry.act rotation.toIsometry) (MinkowskiClifford.nullParameter
         coordinates.first coordinates.second) =
       MinkowskiClifford.nullParameter coordinates.first coordinates.second
   /-- The original rotation has characteristic polynomial `(X - 1)³`. -/ characteristicUnipotent : ∀ X : K,
@@ -222,8 +225,8 @@ theorem MinkowskiClifford.rotationHalfSpread_eq_zero_of_characteristicUnipotent
         ring1
       _ = 6 := tracePlusPrincipal
   have traceDifferenceZero : Matrix3.trace rotation.matrix - 3 = 0 := by
-    apply (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] {factor value : K} (factorNonzero : factor ≠ 0)
-      (productZero : factor * value = 0) => (Purelib.Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left (R := K)
+    apply (fun {K : Type _} [ExplicitField K] {factor value : K} (factorNonzero : factor ≠ 0)
+      (productZero : factor * value = 0) => (ExplicitField.eq_zero_of_mul_eq_zero_left (R := K)
       (factor := factor) (value := value) factorNonzero productZero : value = 0))
       twoNonzero
     calc
@@ -238,7 +241,7 @@ theorem MinkowskiClifford.rotationHalfSpread_eq_zero_of_characteristicUnipotent
       _ = 3 := by ring1
   unfold TernaryForm.rotationHalfSpread
   rw [traceEqThree]
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  simp only [ExplicitField.div_eq_mul_inv]
   ring1
 
 /-- Every nonidentity half-spread-zero rotation of the displayed Minkowski form is constructively classified by a
@@ -249,7 +252,7 @@ def MinkowskiClifford.parabolicClassification [DecidableEq K]
     (spreadZero :
       (TernaryForm.rotationHalfSpread (TernaryForm.minkowski oneNonzero)) rotation = 0)
     (nonidentity : rotation.matrix ≠ Matrix3.identity) :
-    Geometry.Rotations.Ternary.Theory.MinkowskiClifford.ParabolicClassification oneNonzero twoNonzero rotation := by
+    MinkowskiClifford.ParabolicClassification oneNonzero twoNonzero rotation := by
   let form := TernaryForm.minkowski oneNonzero
   let correspondence := form.projectiveCliffordCorrespondence twoNonzero
   let representative := correspondence.preimage rotation
@@ -261,36 +264,36 @@ def MinkowskiClifford.parabolicClassification [DecidableEq K]
   have productZero :
       form.determinant *
           form.quadrance representative.toEvenClifford.vector *
-          (Purelib.Algebra.Clifford.Ternary.Basic.TernaryForm.EvenClifford.norm representative.toEvenClifford)⁻¹ = 0 :=
+          (EvenClifford.norm representative.toEvenClifford)⁻¹ = 0 :=
             by
-    simpa only [Algebra.Field.ExplicitField.div_eq_mul_inv] using
+    simpa only [ExplicitField.div_eq_mul_inv] using
       halfSpreadFormula.symm
   have determinantQuadranceZero :
       form.determinant *
           form.quadrance representative.toEvenClifford.vector = 0 := by
-    apply (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] {factor value : K} (factorNonzero : factor ≠ 0)
-      (productZero : factor * value = 0) => (Purelib.Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left (R := K)
+    apply (fun {K : Type _} [ExplicitField K] {factor value : K} (factorNonzero : factor ≠ 0)
+      (productZero : factor * value = 0) => (ExplicitField.eq_zero_of_mul_eq_zero_left (R := K)
       (factor := factor) (value := value) factorNonzero productZero : value = 0))
-      (Algebra.Field.ExplicitField.inv_ne_zero representative.normNonzero)
+      (ExplicitField.inv_ne_zero representative.normNonzero)
     calc
-      (Purelib.Algebra.Clifford.Ternary.Basic.TernaryForm.EvenClifford.norm representative.toEvenClifford)⁻¹ *
+      (EvenClifford.norm representative.toEvenClifford)⁻¹ *
           (form.determinant *
             form.quadrance representative.toEvenClifford.vector) =
         form.determinant *
           form.quadrance representative.toEvenClifford.vector *
-          (Purelib.Algebra.Clifford.Ternary.Basic.TernaryForm.EvenClifford.norm representative.toEvenClifford)⁻¹ := by
+          (EvenClifford.norm representative.toEvenClifford)⁻¹ := by
             ring1
       _ = 0 := productZero
   have vectorNull :
       form.IsNull representative.toEvenClifford.vector := by
-    exact (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] {factor value : K} (factorNonzero : factor ≠ 0)
-      (productZero : factor * value = 0) => (Purelib.Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left (R := K)
+    exact (fun {K : Type _} [ExplicitField K] {factor value : K} (factorNonzero : factor ≠ 0)
+      (productZero : factor * value = 0) => (ExplicitField.eq_zero_of_mul_eq_zero_left (R := K)
       (factor := factor) (value := value) factorNonzero productZero : value = 0))
       form.determinantNonzero determinantQuadranceZero
   have scalarNonzero : representative.toEvenClifford.scalar ≠ 0 := by
     intro scalarZero
     apply representative.normNonzero
-    unfold Purelib.Algebra.Clifford.Ternary.Basic.TernaryForm.EvenClifford.norm
+    unfold EvenClifford.norm
     rw [scalarZero, vectorNull]
     ring1
   have vectorNonzero :
@@ -318,23 +321,23 @@ def MinkowskiClifford.parabolicClassification [DecidableEq K]
       representative.toEvenClifford.vector vectorNull
   have inverseScalarNonzero :
       representative.toEvenClifford.scalar⁻¹ ≠ 0 :=
-    Algebra.Field.ExplicitField.inv_ne_zero scalarNonzero
+    ExplicitField.inv_ne_zero scalarNonzero
   have axisNonzero : axis ≠ Coordinates3.Vector.zero := by
     intro axisZero
     apply vectorNonzero
     apply Coordinates3.Vector.ext
-    · apply (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] {factor value : K} (factorNonzero : factor ≠ 0)
-      (productZero : factor * value = 0) => (Purelib.Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left (R := K)
+    · apply (fun {K : Type _} [ExplicitField K] {factor value : K} (factorNonzero : factor ≠ 0)
+      (productZero : factor * value = 0) => (ExplicitField.eq_zero_of_mul_eq_zero_left (R := K)
       (factor := factor) (value := value) factorNonzero productZero : value = 0))
         inverseScalarNonzero
       exact congrArg Coordinates3.Vector.t axisZero
-    · apply (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] {factor value : K} (factorNonzero : factor ≠ 0)
-      (productZero : factor * value = 0) => (Purelib.Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left (R := K)
+    · apply (fun {K : Type _} [ExplicitField K] {factor value : K} (factorNonzero : factor ≠ 0)
+      (productZero : factor * value = 0) => (ExplicitField.eq_zero_of_mul_eq_zero_left (R := K)
       (factor := factor) (value := value) factorNonzero productZero : value = 0))
         inverseScalarNonzero
       exact congrArg Coordinates3.Vector.r axisZero
-    · apply (fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] {factor value : K} (factorNonzero : factor ≠ 0)
-      (productZero : factor * value = 0) => (Purelib.Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left (R := K)
+    · apply (fun {K : Type _} [ExplicitField K] {factor value : K} (factorNonzero : factor ≠ 0)
+      (productZero : factor * value = 0) => (ExplicitField.eq_zero_of_mul_eq_zero_left (R := K)
       (factor := factor) (value := value) factorNonzero productZero : value = 0))
         inverseScalarNonzero
       exact congrArg Coordinates3.Vector.s axisZero
@@ -342,13 +345,13 @@ def MinkowskiClifford.parabolicClassification [DecidableEq K]
     axis axisNull axisNonzero
   let parameter := coordinates.factor⁻¹
   have parameterNonzero : parameter ≠ 0 :=
-    Algebra.Field.ExplicitField.inv_ne_zero coordinates.factorNonzero
+    ExplicitField.inv_ne_zero coordinates.factorNonzero
   let parameterAxis := MinkowskiClifford.nullParameter coordinates.first coordinates.second
   let parameterAxisNull :=
     MinkowskiClifford.nullParameter_isNull oneNonzero coordinates.first coordinates.second
   let parabolic := MinkowskiClifford.parabolicAt oneNonzero parameterAxis parameterAxisNull
     parameter
-  have factorCancel := Algebra.Field.ExplicitField.mul_inv_cancel
+  have factorCancel := ExplicitField.mul_inv_cancel
     coordinates.factor coordinates.factorNonzero
   have inverseFactorCancel : coordinates.factor⁻¹ * coordinates.factor = 1 := by
     calc
@@ -364,7 +367,7 @@ def MinkowskiClifford.parabolicClassification [DecidableEq K]
       calc
         (1 : K) = representative.toEvenClifford.scalar *
             representative.toEvenClifford.scalar⁻¹ :=
-          (Algebra.Field.ExplicitField.mul_inv_cancel
+          (ExplicitField.mul_inv_cancel
             representative.toEvenClifford.scalar scalarNonzero).symm
         _ = representative.toEvenClifford.scalar⁻¹ *
             representative.toEvenClifford.scalar := by ring1
@@ -421,9 +424,9 @@ def MinkowskiClifford.parabolicClassificationOfCharacteristic [DecidableEq K]
     (characteristic : ∀ X : K,
       Matrix3.characteristicValue rotation.matrix X = (X - 1) ^ 3)
     (nonidentity : rotation.matrix ≠ Matrix3.identity) :
-    Geometry.Rotations.Ternary.Theory.MinkowskiClifford.ParabolicClassification oneNonzero twoNonzero rotation :=
-  Geometry.Rotations.Ternary.Theory.MinkowskiClifford.parabolicClassification oneNonzero twoNonzero rotation
-    (Geometry.Rotations.Ternary.Theory.MinkowskiClifford.rotationHalfSpread_eq_zero_of_characteristicUnipotent
+    MinkowskiClifford.ParabolicClassification oneNonzero twoNonzero rotation :=
+  MinkowskiClifford.parabolicClassification oneNonzero twoNonzero rotation
+    (MinkowskiClifford.rotationHalfSpread_eq_zero_of_characteristicUnipotent
       oneNonzero
       twoNonzero rotation characteristic)
     nonidentity
@@ -434,71 +437,71 @@ section RationalMinkowski
 
 /-- Exact rational specialization of the complete parabolic normal-form classifier. -/
 def RationalMinkowski.classifyParabolic
-    (rotation : (TernaryForm.SpecialOrthogonal
-      Quadratic.Ternary.RationalMinkowski.form))
-    (spreadZero : (TernaryForm.rotationHalfSpread Quadratic.Ternary.RationalMinkowski.form) rotation = 0)
+    (rotation : (SpecialOrthogonal
+      RationalMinkowski.form))
+    (spreadZero : (TernaryForm.rotationHalfSpread RationalMinkowski.form) rotation = 0)
     (nonidentity : rotation.matrix ≠ Matrix3.identity) :
-    Geometry.Rotations.Ternary.Theory.MinkowskiClifford.ParabolicClassification
-        Quadratic.Ternary.RationalMinkowski.oneNonzero
-      Quadratic.Ternary.RationalMinkowski.twoNonzero rotation :=
-  Geometry.Rotations.Ternary.Theory.MinkowskiClifford.parabolicClassification
-      Quadratic.Ternary.RationalMinkowski.oneNonzero
-    Quadratic.Ternary.RationalMinkowski.twoNonzero rotation
+    MinkowskiClifford.ParabolicClassification
+        RationalMinkowski.oneNonzero
+      RationalMinkowski.twoNonzero rotation :=
+  MinkowskiClifford.parabolicClassification
+      RationalMinkowski.oneNonzero
+    RationalMinkowski.twoNonzero rotation
     spreadZero nonidentity
 
 /-- Rational classifier from the paper's characteristic-polynomial description of a parabolic rotation. -/
 def RationalMinkowski.classifyParabolicOfCharacteristic
-    (rotation : (TernaryForm.SpecialOrthogonal
-      Quadratic.Ternary.RationalMinkowski.form))
+    (rotation : (SpecialOrthogonal
+      RationalMinkowski.form))
     (characteristic : ∀ X : Fraction.Basic.Rational,
       Matrix3.characteristicValue rotation.matrix X = (X - 1) ^ 3)
     (nonidentity : rotation.matrix ≠ Matrix3.identity) :
-    Geometry.Rotations.Ternary.Theory.MinkowskiClifford.ParabolicClassification
-        Quadratic.Ternary.RationalMinkowski.oneNonzero
-      Quadratic.Ternary.RationalMinkowski.twoNonzero rotation :=
-  Geometry.Rotations.Ternary.Theory.MinkowskiClifford.parabolicClassificationOfCharacteristic
-    Quadratic.Ternary.RationalMinkowski.oneNonzero
-    Quadratic.Ternary.RationalMinkowski.twoNonzero rotation characteristic nonidentity
+    MinkowskiClifford.ParabolicClassification
+        RationalMinkowski.oneNonzero
+      RationalMinkowski.twoNonzero rotation :=
+  MinkowskiClifford.parabolicClassificationOfCharacteristic
+    RationalMinkowski.oneNonzero
+    RationalMinkowski.twoNonzero rotation characteristic nonidentity
 
 /-- The rational null axis remains in the affine Cayley chart even though the Minkowski determinant changes the
 denominator from `1 + Q` to `1 - Q`. -/
 theorem RationalMinkowski.parabolicAxis_cayleyDenominator :
-    (TernaryForm.cayleyDenominator Quadratic.Ternary.RationalMinkowski.form) RationalMinkowski.parabolicAxis = 1 := by
+    (TernaryForm.cayleyDenominator RationalMinkowski.form) RationalMinkowski.parabolicAxis = 1 := by
   unfold TernaryForm.cayleyDenominator
   have nullQuadrance : (TernaryForm.quadrance
-    Quadratic.Ternary.RationalMinkowski.form) RationalMinkowski.parabolicAxis = 0 :=
+    RationalMinkowski.form) RationalMinkowski.parabolicAxis = 0 :=
     RationalMinkowski.parabolicAxis_null
   rw [nullQuadrance]
   ring1
 
 /-- The displayed rational parabolic axis has nonzero form-relative cap denominator. -/
 theorem RationalMinkowski.parabolicCapDefined
-    : (TernaryForm.cayleyDenominator Quadratic.Ternary.RationalMinkowski.form) RationalMinkowski.parabolicAxis ≠ 0
+    : (TernaryForm.cayleyDenominator RationalMinkowski.form) RationalMinkowski.parabolicAxis ≠ 0
   := by
-  rw [Geometry.Rotations.Ternary.Theory.RationalMinkowski.parabolicAxis_cayleyDenominator]
-  exact Quadratic.Ternary.RationalMinkowski.oneNonzero
+  rw [RationalMinkowski.parabolicAxis_cayleyDenominator]
+  exact RationalMinkowski.oneNonzero
 
 /-- The previously evaluated rational unipotent is exactly the new form-relative Cayley cap of its null anchor. -/
 theorem RationalMinkowski.parabolic_capRotation :
-    (TernaryForm.capRotation Quadratic.Ternary.RationalMinkowski.form) RationalMinkowski.parabolicAxis
-      Geometry.Rotations.Ternary.Theory.RationalMinkowski.parabolicCapDefined =
+    (TernaryForm.capRotation RationalMinkowski.form) RationalMinkowski.parabolicAxis
+      RationalMinkowski.parabolicCapDefined =
       (NonNullEvenClifford.actionRotation RationalMinkowski.parabolicValue) := by
   apply SpecialOrthogonal.eq_of_matrix_eq
   rfl
 
 /-- The displayed rational null-axis cap has half spread zero. -/
 theorem RationalMinkowski.parabolic_cap_halfSpread :
-    (TernaryForm.rotationHalfSpread Quadratic.Ternary.RationalMinkowski.form)
-      ((TernaryForm.capRotation Quadratic.Ternary.RationalMinkowski.form) RationalMinkowski.parabolicAxis
-        Geometry.Rotations.Ternary.Theory.RationalMinkowski.parabolicCapDefined) = 0 := by
-  rw [(TernaryForm.rotationHalfSpread_cap Quadratic.Ternary.RationalMinkowski.form) RationalMinkowski.parabolicAxis
-    Geometry.Rotations.Ternary.Theory.RationalMinkowski.parabolicCapDefined
-    Quadratic.Ternary.RationalMinkowski.twoNonzero]
+    (TernaryForm.rotationHalfSpread RationalMinkowski.form)
+      ((TernaryForm.capRotation RationalMinkowski.form) RationalMinkowski.parabolicAxis
+        RationalMinkowski.parabolicCapDefined) = 0 := by
+  rw [(TernaryForm.rotationHalfSpread_cap RationalMinkowski.form) RationalMinkowski.parabolicAxis
+    RationalMinkowski.parabolicCapDefined
+    RationalMinkowski.twoNonzero]
   have nullQuadrance : (TernaryForm.quadrance
-    Quadratic.Ternary.RationalMinkowski.form) RationalMinkowski.parabolicAxis = 0 :=
+    RationalMinkowski.form) RationalMinkowski.parabolicAxis = 0 :=
     RationalMinkowski.parabolicAxis_null
   rw [nullQuadrance]
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  simp only [ExplicitField.div_eq_mul_inv]
   ring1
 
 /-- A concrete rational anchor on the Minkowski unit quadric. Its affine cap is excluded because the
@@ -507,12 +510,12 @@ def RationalMinkowski.excludedCapAnchor : Coordinates3.Vector Fraction.Basic.Rat
 
 /-- The displayed Minkowski unit-axis anchor has zero cap denominator. -/
 theorem RationalMinkowski.excludedCapAnchor_cayleyDenominator_zero :
-    (TernaryForm.cayleyDenominator Quadratic.Ternary.RationalMinkowski.form)
-      Geometry.Rotations.Ternary.Theory.RationalMinkowski.excludedCapAnchor = 0 := by
-  unfold TernaryForm.cayleyDenominator Quadratic.Ternary.RationalMinkowski.form
+    (TernaryForm.cayleyDenominator RationalMinkowski.form)
+      RationalMinkowski.excludedCapAnchor = 0 := by
+  unfold TernaryForm.cayleyDenominator RationalMinkowski.form
   rw [TernaryForm.minkowski_determinant,
     TernaryForm.quadrance_minkowski]
-  unfold Geometry.Rotations.Ternary.Theory.RationalMinkowski.excludedCapAnchor
+  unfold RationalMinkowski.excludedCapAnchor
   ring1
 
 set_option genInjectivity false in
@@ -522,45 +525,45 @@ The original rational form indexes the general and split packages. The retained 
 classifier functions refer to the same displayed rotations and their original characteristic or half-spread evidence. -/
 structure RationalMinkowski.CompleteTheory where
   /-- The complete finite-coordinate rotation theory for the retained ternary form. -/ general :
-    Geometry.Rotations.Ternary.Theory.TernaryForm.GeneralRotationTheory Quadratic.Ternary.RationalMinkowski.form
-    Quadratic.Ternary.RationalMinkowski.twoNonzero
+    TernaryForm.GeneralRotationTheory RationalMinkowski.form
+    RationalMinkowski.twoNonzero
   /-- The retained split Clifford algebra, null-conic, and parabolic-family package. -/ split :
-    MinkowskiClifford.SplitTheory Quadratic.Ternary.RationalMinkowski.oneNonzero
-        Quadratic.Ternary.RationalMinkowski.twoNonzero
+    MinkowskiClifford.SplitTheory RationalMinkowski.oneNonzero
+        RationalMinkowski.twoNonzero
   /-- The exact certificate for the displayed rational Minkowski parabolic. -/ evaluatedParabolic :
     RationalMinkowski.ParabolicCertificate (NonNullEvenClifford.actionRotation RationalMinkowski.parabolicValue)
   /-- Classify each nonidentity rational Minkowski rotation of half spread zero by retained null-conic parabolic data.
-  -/ classifyParabolic : ∀ rotation : (TernaryForm.SpecialOrthogonal
-    Quadratic.Ternary.RationalMinkowski.form),
-    (TernaryForm.rotationHalfSpread Quadratic.Ternary.RationalMinkowski.form) rotation = 0 →
+  -/ classifyParabolic : ∀ rotation : (SpecialOrthogonal
+    RationalMinkowski.form),
+    (TernaryForm.rotationHalfSpread RationalMinkowski.form) rotation = 0 →
     rotation.matrix ≠ Matrix3.identity →
-      Geometry.Rotations.Ternary.Theory.MinkowskiClifford.ParabolicClassification
-          Quadratic.Ternary.RationalMinkowski.oneNonzero
-        Quadratic.Ternary.RationalMinkowski.twoNonzero rotation
+      MinkowskiClifford.ParabolicClassification
+          RationalMinkowski.oneNonzero
+        RationalMinkowski.twoNonzero rotation
   /-- Classify each nonidentity rational Minkowski rotation with characteristic polynomial `(X - 1)³` by retained
-    parabolic data. -/ classifyParabolicCharacteristic : ∀ rotation : (TernaryForm.SpecialOrthogonal
-      Quadratic.Ternary.RationalMinkowski.form),
+    parabolic data. -/ classifyParabolicCharacteristic : ∀ rotation : (SpecialOrthogonal
+      RationalMinkowski.form),
     (∀ X : Fraction.Basic.Rational,
       Matrix3.characteristicValue rotation.matrix X = (X - 1) ^ 3) →
     rotation.matrix ≠ Matrix3.identity →
-      Geometry.Rotations.Ternary.Theory.MinkowskiClifford.ParabolicClassification
-          Quadratic.Ternary.RationalMinkowski.oneNonzero
-        Quadratic.Ternary.RationalMinkowski.twoNonzero rotation
+      MinkowskiClifford.ParabolicClassification
+          RationalMinkowski.oneNonzero
+        RationalMinkowski.twoNonzero rotation
 
 constructive_injectivity RationalMinkowski.CompleteTheory
 
 /-- Assemble every completed finite clause of the Minkowski specialization. -/
 def RationalMinkowski.completeTheory : RationalMinkowski.CompleteTheory where
-  general := Geometry.Rotations.Ternary.Theory.TernaryForm.generalRotationTheory
-      Quadratic.Ternary.RationalMinkowski.form
-    Quadratic.Ternary.RationalMinkowski.twoNonzero
-  split := MinkowskiClifford.splitTheory Quadratic.Ternary.RationalMinkowski.oneNonzero
-      Quadratic.Ternary.RationalMinkowski.twoNonzero
+  general := TernaryForm.generalRotationTheory
+      RationalMinkowski.form
+    RationalMinkowski.twoNonzero
+  split := MinkowskiClifford.splitTheory RationalMinkowski.oneNonzero
+      RationalMinkowski.twoNonzero
   evaluatedParabolic := RationalMinkowski.parabolicCertificate
   classifyParabolic := fun rotation spreadZero nonidentity =>
-    Geometry.Rotations.Ternary.Theory.RationalMinkowski.classifyParabolic rotation spreadZero nonidentity
+    RationalMinkowski.classifyParabolic rotation spreadZero nonidentity
   classifyParabolicCharacteristic := fun rotation characteristic nonidentity =>
-    Geometry.Rotations.Ternary.Theory.RationalMinkowski.classifyParabolicOfCharacteristic rotation characteristic
+    RationalMinkowski.classifyParabolicOfCharacteristic rotation characteristic
       nonidentity
 
 end RationalMinkowski
@@ -570,20 +573,20 @@ set_option genInjectivity false in
 
 The supplied form and nonzero-two certificate index the general package; the rational model retains its own original
 form, evaluated parabolic and complete normal-form classifiers. -/
-structure ProblemSeventyOneSolution (form : Ternary.Basic.TernaryForm K)
+structure ProblemSeventyOneSolution (form : TernaryForm K)
     (twoNonzero : (2 : K) ≠ 0) where
   /-- The complete finite-coordinate rotation theory for the retained ternary form. -/ general :
-    Geometry.Rotations.Ternary.Theory.TernaryForm.GeneralRotationTheory form twoNonzero
+    TernaryForm.GeneralRotationTheory form twoNonzero
   /-- The complete rational Minkowski specialization with its evaluated parabolic and classifiers. -/ rationalMinkowski
-    : Geometry.Rotations.Ternary.Theory.RationalMinkowski.CompleteTheory
+    : RationalMinkowski.CompleteTheory
 
 constructive_injectivity ProblemSeventyOneSolution
 
 /-- Construct the complete Problem 71 package without diagonalization, quotients, or proposition-derived choices. -/
 def problemSeventyOneSolution [DecidableEq K]
-    (form : Ternary.Basic.TernaryForm K) (twoNonzero : (2 : K) ≠ 0) :
-    Geometry.Rotations.Ternary.Theory.ProblemSeventyOneSolution form twoNonzero where
-  general := Geometry.Rotations.Ternary.Theory.TernaryForm.generalRotationTheory form twoNonzero
-  rationalMinkowski := Geometry.Rotations.Ternary.Theory.RationalMinkowski.completeTheory
+    (form : TernaryForm K) (twoNonzero : (2 : K) ≠ 0) :
+    ProblemSeventyOneSolution form twoNonzero where
+  general := TernaryForm.generalRotationTheory form twoNonzero
+  rationalMinkowski := RationalMinkowski.completeTheory
 
 end Purelib.Geometry.Rotations.Ternary.Theory

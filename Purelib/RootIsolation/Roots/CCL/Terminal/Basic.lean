@@ -14,6 +14,8 @@ import Purelib.Data.Rat.Fraction
 import Purelib.Data.Rat.Fraction.Arithmetic
 public import Purelib.Polynomial.Dense.Evaluation
 
+open Purelib.Polynomial.Dense.Gaussian.Basic
+
 -- Preserve the established `Terminal.Basic.Terminal` nominal carrier and methods.
 section
 public section
@@ -42,7 +44,7 @@ set_option genInjectivity false in
 
 The stored point, displayed fraction, completed block encoding and cached raw
 word belong to the same polynomial root and retain their reconstruction evidence. -/
-structure NonzeroTerminal (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) where
+structure NonzeroTerminal (p : CanonicalCoefficients.CoefficientPolynomial) where
   /-- The retained exact Gaussian rational root. -/ point : Gaussian.Basic.Canonical
   /-- The original polynomial vanishes at the retained point. -/ root : p.eval point = 0
   /-- The retained point is nonzero, as required by its finite CCL encoder. -/ nonzero : point ≠ 0
@@ -50,10 +52,10 @@ structure NonzeroTerminal (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoeffici
   /-- The retained fraction evaluates to the original point. -/ fractionValue : fraction.value = point
   /-- The fraction's numerator is nonzero. -/ numeratorNonzero : fraction.numerator ≠ 0
   /-- The completed finite block encoding of the retained fraction. -/ encoding :
-    Data.CCL.Encoding.Encoder.Blocks.BlockEncoding fraction
+    CCL.Encoding.Encoder.Blocks.BlockEncoding fraction
   /-- The cached raw word read from the retained completed blocks. -/ word : List.Basic.BinaryWord
   /-- The cached word is exactly the retained block encoding's raw word. -/ word_eq : word =
-    Data.CCL.Encoding.Block.Basic.rawWord encoding.blocks
+    CCL.Encoding.Block.Basic.rawWord encoding.blocks
 
 constructive_injectivity NonzeroTerminal
 
@@ -65,10 +67,10 @@ set_option genInjectivity false in
 
 The zero constructor stores the polynomial equation at zero. The nonzero
 constructor retains its displayed root and all cached CCL data. -/
-inductive Terminal (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) where
+inductive Terminal (p : CanonicalCoefficients.CoefficientPolynomial) where
   /-- The original polynomial has the distinguished exact root zero. -/ | zero (root : p.eval 0 = 0)
   /-- The nonzero exact root retains its fraction, encoding and cached word. -/ | nonzero (data :
-    Roots.CCL.Terminal.Basic.NonzeroTerminal p)
+    Terminal.Basic.NonzeroTerminal p)
 
 constructive_injectivity Terminal
 
@@ -76,20 +78,20 @@ namespace Terminal
 
 open Purelib.RootIsolation
 /-- Read the terminal's exact Gaussian rational root. -/
-@[expose] def point {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} : Terminal p →
+@[expose] def point {p : CanonicalCoefficients.CoefficientPolynomial} : Terminal p →
   Gaussian.Basic.Canonical
   | .zero _ => 0
   | .nonzero data => data.point
 
 /-- Return the cached word for a nonzero terminal; zero has its distinguished empty option. -/
-@[expose] def word? {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} : Terminal p →
+@[expose] def word? {p : CanonicalCoefficients.CoefficientPolynomial} : Terminal p →
   Option
   List.Basic.BinaryWord
   | .zero _ => none
   | .nonzero data => some data.word
 
 /-- The original polynomial vanishes at the terminal's retained point. -/
-theorem eval_point {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (terminal :
+theorem eval_point {p : CanonicalCoefficients.CoefficientPolynomial} (terminal :
   Terminal p) :
     p.eval terminal.point = 0 := by
   cases terminal with
@@ -97,17 +99,17 @@ theorem eval_point {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.Co
   | nonzero data => exact data.root
 
 /-- Terminal states have exact zero polynomial residual. -/
-theorem residual_zero {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (terminal :
+theorem residual_zero {p : CanonicalCoefficients.CoefficientPolynomial} (terminal :
   Terminal p) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         (p.eval terminal.point) = 0 := by
   rw [terminal.eval_point,
     Gaussian.Norm.Basic.normSq_zero]
 
 /-- A nonzero terminal's completed blocks reconstruct its exact root. -/
 theorem reconstruct
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} (data :
-      Roots.CCL.Terminal.Basic.NonzeroTerminal p) :
+    {p : CanonicalCoefficients.CoefficientPolynomial} (data :
+      Basic.NonzeroTerminal p) :
     data.encoding.point.Equivalent (Geometry.Projective.Line.Proj.affine data.point) := by
   rw [← data.fractionValue]
   exact data.encoding.reconstruct

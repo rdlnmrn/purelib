@@ -80,22 +80,22 @@ open Purelib.Riemann.Meshes.RectangularObservationMesh (ObservationMesh)
 open Purelib.Geometry.Rectangle.SourceIntervals (axisCoordinate axisIntervals)
 open Purelib.Riemann.Integration.RectangularAxisParameterRange (AxisParameterRange)
 open Purelib.Data.Rat.Fraction.Compatibility
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential other :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential other :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
 
 namespace ParentBlock
 variable {vertical : Bool}
-  {beforePhysical afterPhysical : Purelib.Geometry.Rectangle.Partition.PreparedAxisPartitions.Interval}
+  {beforePhysical afterPhysical : Partition.PreparedAxisPartitions.Interval}
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.ParentBlock
 /-- Consecutive forward physical blocks either remain in one retained parent or cross exactly one parent boundary, with
@@ -144,7 +144,7 @@ theorem occurrence_parent_handoff
     (after.index = before.index ∧ after.firstParameter = before.lastParameter) ∨
       (after.index.val = before.index.val + 1 ∧
         before.lastParameter = 1 ∧ after.firstParameter = 0) := by
-  apply Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentHandoffs.ParentBlock.consecutive_parent_handoff
+  apply ParentBlock.consecutive_parent_handoff
     before after _ consecutive
   intro parent member
   have ordered := BoundaryAxisLocation.source_parent_ordered occurrence member
@@ -190,17 +190,17 @@ theorem reverse_occurrence_parent_handoff
     change before.lastParameter = 0 ∧ after.firstParameter = 1 at endpoints
     have joint := before.last_axis.trans (consecutive.symm.trans after.first_axis.symm)
     rw [endpoints.1, endpoints.2] at joint
-    have signedJoint := congrArg (fun value : InverseRootPolynomial.Coordinate => -value) joint.symm
+    have signedJoint := congrArg (fun value : Coordinate => -value) joint.symm
     exact Or.inr ⟨ParentCache.parents_no_skip occurrence.compared.entered.cache project ordered
       after.index before.index next signedJoint, endpoints⟩
 
 end ParentBlock
 
 namespace ParentBlockBank
-variable {columns rows : Nat} {geometry : Purelib.Riemann.Normalization.RectangularInverseModels.Geometry columns
-  rows} {cuts : Purelib.Riemann.Paths.RectangularSegmentSplitting.GridCuts geometry}
-  {meshBox : Purelib.Geometry.Rational.Box} {mesh :
-    Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh cuts meshBox}
+variable {columns rows : Nat} {geometry : RectangularInverseModels.Geometry columns
+  rows} {cuts : GridCuts geometry}
+  {meshBox : Geometry.Rational.Box} {mesh :
+    ObservationMesh cuts meshBox}
 
 /-- Adjacent entries of the cached physical source bank carry the exact parent transition and parameter join, without
 caller-supplied chain evidence. -/
@@ -213,7 +213,7 @@ theorem consecutive_handoff
     let right := (bank.get after)
     (right.index = left.index ∧ right.firstParameter = left.lastParameter) ∨
       (right.index.val = left.index.val + 1 ∧ left.lastParameter = 1 ∧ right.firstParameter = 0) :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentHandoffs.ParentBlock.occurrence_parent_handoff
+  ParentBlock.occurrence_parent_handoff
     (bank.get before) (bank.get after) forward
     (SourceIntervals.axis_consecutive mesh occurrence.sourceVertical before after next)
 
@@ -228,7 +228,7 @@ theorem reverse_consecutive_handoff
     let right := bank.get after
     (right.index = left.index ∧ right.firstParameter = left.lastParameter) ∨
       (left.index.val = right.index.val + 1 ∧ left.lastParameter = 0 ∧ right.firstParameter = 1) :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentHandoffs.ParentBlock.reverse_occurrence_parent_handoff
+  ParentBlock.reverse_occurrence_parent_handoff
     (bank.get before) (bank.get after) backward
     (SourceIntervals.axis_consecutive mesh occurrence.sourceVertical before after next)
 

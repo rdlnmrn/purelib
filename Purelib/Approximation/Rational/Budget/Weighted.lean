@@ -64,3 +64,44 @@ theorem mul_allowance_le {target weight : Fraction.Rational}
 end Purelib.Approximation.Rational.Budget.Weighted
 
 end
+
+public section
+
+namespace Purelib.Approximation.Rational.Budget.Weighted
+
+open Purelib.Data.Rat.Fraction.Order
+
+/-- The original weighted allowance uses the same scalar denominator with its unit summand written first. -/
+theorem allowance_eq_div_one_add (target weight : Fraction.Rational) :
+    allowance target weight = target / (1 + weight) :=
+  congrArg (fun denominator : Fraction.Rational => target / denominator) (Fraction.Field.add_comm weight 1)
+
+/-- A positive target and nonnegative weight leave a strict margin after paying the weighted allowance.
+
+The weight is strictly smaller than its incremented positive denominator.
+The original positive allowance and exact division cancellation preserve
+that strict margin, including when the weight is zero.
+-/
+theorem mul_allowance_lt {target weight : Fraction.Rational}
+    (targetPositive : 0 < target) (weightNonnegative : 0 ≤ weight) :
+    weight * allowance target weight < target := by
+  have denominatorPositive : 0 < weight + 1 :=
+    Arithmetic.add_pos_of_nonneg_of_pos_direct weightNonnegative (by decide)
+  have allowancePositive : 0 < allowance target weight :=
+    allowance_positive targetPositive weightNonnegative
+  calc
+    _ < (weight + 1) * allowance target weight :=
+      Arithmetic.mul_lt_mul_of_pos_right_direct
+        (by
+          have translated := Arithmetic.add_lt_add_right_direct
+            (show (0 : Fraction.Rational) < 1 by decide) weight
+          rewrite [Fraction.Field.zero_add, Fraction.Field.add_comm 1] at translated
+          exact translated) allowancePositive
+    _ = allowance target weight * (weight + 1) := Fraction.Field.mul_comm _ _
+    _ = target := by
+      unfold allowance
+      exact Fraction.Field.div_mul_cancel_of_ne _ _ denominatorPositive.ne'
+
+end Purelib.Approximation.Rational.Budget.Weighted
+
+end

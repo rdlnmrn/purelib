@@ -54,6 +54,12 @@ import Purelib.Polynomial.Dense.Multiplication
 import Purelib.Riemann.RootContinuation.CoherentRoot
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian
+open Purelib.Curves.Hyperelliptic.Branches
+open Purelib.Polynomial.Clearance.Box.Line
+open Purelib.Polynomial.Dense.Basic
+open Purelib.Data.Rat.Fraction.Order
+
 section
 public section
 
@@ -100,9 +106,9 @@ open Purelib.Geometry.Rational (Box)
 
 /-- The displayed cubic factorization (x+1)x(x-1). -/
 @[expose] def factors : GaussianPolynomial :=
-  (Translated.translatedCoordinate (Gaussian.Components.Basic.point (-1) 0) *
-    Translated.translatedCoordinate (Gaussian.Components.Basic.point 0 0)) *
-      Translated.translatedCoordinate (Gaussian.Components.Basic.point 1 0)
+  (Translated.translatedCoordinate (Components.Basic.point (-1) 0) *
+    Translated.translatedCoordinate (Components.Basic.point 0 0)) *
+      Translated.translatedCoordinate (Components.Basic.point 1 0)
 
 /-- The Gaussian polynomial with descending coefficients [1,0,-1,0]. -/
 @[expose] def polynomial : GaussianPolynomial :=
@@ -118,37 +124,37 @@ theorem polynomial_nonzero : polynomial.isZero = false := by decide
 theorem polynomial_degree : polynomial.natDegree = 3 := by decide
 
 /-- The displayed cubic evaluates to z cubed minus z. -/
-@[simp] theorem polynomial_eval (z : Gaussian.Basic.Canonical) :
+@[simp] theorem polynomial_eval (z : Gaussian) :
     polynomial.eval z = z ^ 3 - z := by
-  unfold polynomial Dense.Basic.DensePolynomial.eval
-    Dense.Basic.DensePolynomial.evalCoeffs
+  unfold polynomial DensePolynomial.eval
+    DensePolynomial.evalCoeffs
   simp only [List.foldl_cons, List.foldl_nil]
   ring1
 
 /-- The linear Bézout coefficient -9z/2 for the cubic. -/
-@[expose] def bezoutLeft : GaussianPolynomial := ⟨[Gaussian.Basic.ExplicitLegendrePreparedData.point (-9 / 2) 0, 0]⟩
+@[expose] def bezoutLeft : GaussianPolynomial := ⟨[Basic.ExplicitLegendrePreparedData.point (-9 / 2) 0, 0]⟩
 
 /-- The quadratic Bézout coefficient 3z²/2-1 for the derivative. -/
-@[expose] def bezoutRight : GaussianPolynomial := ⟨[Gaussian.Basic.ExplicitLegendrePreparedData.point (3 / 2) 0, 0, -1]⟩
+@[expose] def bezoutRight : GaussianPolynomial := ⟨[Basic.ExplicitLegendrePreparedData.point (3 / 2) 0, 0, -1]⟩
 
 /-- The left Bézout coefficient evaluates to -9z/2. -/
-@[simp] theorem bezoutLeft_eval (z : Gaussian.Basic.Canonical) :
-    bezoutLeft.eval z = Gaussian.Basic.ExplicitLegendrePreparedData.point (-9 / 2) 0 * z := by
-  unfold bezoutLeft Dense.Basic.DensePolynomial.eval
-    Dense.Basic.DensePolynomial.evalCoeffs
+@[simp] theorem bezoutLeft_eval (z : Gaussian) :
+    bezoutLeft.eval z = Basic.ExplicitLegendrePreparedData.point (-9 / 2) 0 * z := by
+  unfold bezoutLeft DensePolynomial.eval
+    DensePolynomial.evalCoeffs
   simp only [List.foldl_cons, List.foldl_nil]
   ring1
 
 /-- The right Bézout coefficient evaluates to 3z²/2-1. -/
-@[simp] theorem bezoutRight_eval (z : Gaussian.Basic.Canonical) :
-    bezoutRight.eval z = Gaussian.Basic.ExplicitLegendrePreparedData.point (3 / 2) 0 * z ^ 2 - 1 := by
-  unfold bezoutRight Dense.Basic.DensePolynomial.eval
-    Dense.Basic.DensePolynomial.evalCoeffs
+@[simp] theorem bezoutRight_eval (z : Gaussian) :
+    bezoutRight.eval z = Basic.ExplicitLegendrePreparedData.point (3 / 2) 0 * z ^ 2 - 1 := by
+  unfold bezoutRight DensePolynomial.eval
+    DensePolynomial.evalCoeffs
   simp only [List.foldl_cons, List.foldl_nil]
   ring1
 
 /-- The derivative of the displayed cubic evaluates to 3z²-1. -/
-@[simp] theorem derivative_eval (z : Gaussian.Basic.Canonical) :
+@[simp] theorem derivative_eval (z : Gaussian) :
     (Dense.Gaussian.GCD.derivative polynomial).eval z = 3 * z ^ 2 - 1 := by
   unfold polynomial Dense.Gaussian.GCD.derivative
   rw [Dense.Derivative.eval_derivative]
@@ -166,15 +172,15 @@ The coefficients -9z/2 and 3z²/2-1 combine the cubic and its derivative to give
     bezoutLeft bezoutRight (by
       intro z
       rw [bezoutLeft_eval, polynomial_eval, bezoutRight_eval, derivative_eval]
-      apply Gaussian.Field.mul_right_cancel_of_ne
+      apply Field.mul_right_cancel_of_ne
         (factor := 2) (by decide)
-      have leftScaled : Gaussian.Basic.ExplicitLegendrePreparedData.point (-9 / 2) 0 * 2 = -9 := by decide
-      have rightScaled : Gaussian.Basic.ExplicitLegendrePreparedData.point (3 / 2) 0 * 2 = 3 := by decide
+      have leftScaled : Basic.ExplicitLegendrePreparedData.point (-9 / 2) 0 * 2 = -9 := by decide
+      have rightScaled : Basic.ExplicitLegendrePreparedData.point (3 / 2) 0 * 2 = 3 := by decide
       calc
-        (Gaussian.Basic.ExplicitLegendrePreparedData.point (-9 / 2) 0 * z * (z ^ 3 - z) +
-              (Gaussian.Basic.ExplicitLegendrePreparedData.point (3 / 2) 0 * z ^ 2 - 1) * (3 * z ^ 2 - 1)) * 2 =
-            (Gaussian.Basic.ExplicitLegendrePreparedData.point (-9 / 2) 0 * 2) * z * (z ^ 3 - z) +
-              ((Gaussian.Basic.ExplicitLegendrePreparedData.point (3 / 2) 0 * 2) * z ^ 2 - 2) *
+        (Basic.ExplicitLegendrePreparedData.point (-9 / 2) 0 * z * (z ^ 3 - z) +
+              (Basic.ExplicitLegendrePreparedData.point (3 / 2) 0 * z ^ 2 - 1) * (3 * z ^ 2 - 1)) * 2 =
+            (Basic.ExplicitLegendrePreparedData.point (-9 / 2) 0 * 2) * z * (z ^ 3 - z) +
+              ((Basic.ExplicitLegendrePreparedData.point (3 / 2) 0 * 2) * z ^ 2 - 2) *
                 (3 * z ^ 2 - 1) := by ring1
         _ = (-9) * z * (z ^ 3 - z) +
               (3 * z ^ 2 - 2) * (3 * z ^ 2 - 1) := by
@@ -191,7 +197,7 @@ The coefficients -9z/2 and 3z²/2-1 combine the cubic and its derivative to give
     exact polynomial_degree)
 
 /-- The rational root rectangle centered at a real coordinate with horizontal radius 1/4 and vertical radius 1/2. -/
-@[expose] def boxAt (x : Fraction.Rational) : Box :=
+@[expose] def boxAt (x : Coordinate) : Box :=
   { xLower := x - 1 / 4
     xUpper := x + 1 / 4
     yLower := -1 / 2
@@ -200,64 +206,64 @@ The coefficients -9z/2 and 3z²/2-1 combine the cubic and its derivative to give
       apply le_of_lt
       calc
         x - 1 / 4 < x := by
-          exact (Fraction.Order.Arithmetic.sub_lt_sub_left_direct
-            (by decide : (0 : Fraction.Rational) < 1 / 4) x).trans_eq (by ring1)
+          exact (Arithmetic.sub_lt_sub_left_direct
+            (by decide : (0 : Coordinate) < 1 / 4) x).trans_eq (by ring1)
         _ < x + 1 / 4 := by
           exact (show x = x + 0 by ring1).trans_lt
-            (Fraction.Order.Arithmetic.add_lt_add_left_direct
-              (by decide : (0 : Fraction.Rational) < 1 / 4) x)
+            (Arithmetic.add_lt_add_left_direct
+              (by decide : (0 : Coordinate) < 1 / 4) x)
     y_valid := by decide }
 
 /-- Every displayed real-root rectangle has strictly positive coordinate widths. -/
-theorem boxAt_proper (x : Fraction.Rational) : (boxAt x).Proper := by
+theorem boxAt_proper (x : Coordinate) : (boxAt x).Proper := by
   constructor
   · change x - 1 / 4 < x + 1 / 4
     calc
       x - 1 / 4 < x := by
-        exact (Fraction.Order.Arithmetic.sub_lt_sub_left_direct
-          (by decide : (0 : Fraction.Rational) < 1 / 4) x).trans_eq (by ring1)
+        exact (Arithmetic.sub_lt_sub_left_direct
+          (by decide : (0 : Coordinate) < 1 / 4) x).trans_eq (by ring1)
       _ < x + 1 / 4 := by
         exact (show x = x + 0 by ring1).trans_lt
-          (Fraction.Order.Arithmetic.add_lt_add_left_direct
-            (by decide : (0 : Fraction.Rational) < 1 / 4) x)
-  · change (-1 / 2 : Fraction.Rational) < 1 / 2
+          (Arithmetic.add_lt_add_left_direct
+            (by decide : (0 : Coordinate) < 1 / 4) x)
+  · change (-1 / 2 : Coordinate) < 1 / 2
     decide
 
 /-- Certify the centered linear factor on the boundary of its displayed root rectangle. -/
-@[expose] def selfClearance (x : Fraction.Rational) :
+@[expose] def selfClearance (x : Coordinate) :
     BoundaryClearance
-      (Translated.translatedCoordinate (Gaussian.Components.Basic.point x 0)) (boxAt x) :=
+      (Translated.translatedCoordinate (Components.Basic.point x 0)) (boxAt x) :=
   Clearance.Box.Boundary.Translated.Affine.translatedCoordinate_boundaryClearanceBox
-    (Gaussian.Basic.ExplicitLegendrePreparedData.point x 0) (by
-      unfold boxAt Gaussian.Basic.ExplicitLegendrePreparedData.point
-      exact (Fraction.Order.Arithmetic.sub_lt_sub_left_direct
-        (by decide : (0 : Fraction.Rational) < 1 / 4) x).trans_eq (by ring1))
+    (Basic.ExplicitLegendrePreparedData.point x 0) (by
+      unfold boxAt Basic.ExplicitLegendrePreparedData.point
+      exact (Arithmetic.sub_lt_sub_left_direct
+        (by decide : (0 : Coordinate) < 1 / 4) x).trans_eq (by ring1))
     (by
-      unfold boxAt Gaussian.Basic.ExplicitLegendrePreparedData.point
+      unfold boxAt Basic.ExplicitLegendrePreparedData.point
       exact (show x = x + 0 by ring1).trans_lt
-        (Fraction.Order.Arithmetic.add_lt_add_left_direct
-          (by decide : (0 : Fraction.Rational) < 1 / 4) x))
-    (by change (-1 / 2 : Fraction.Rational) < 0; decide)
-    (by change (0 : Fraction.Rational) < 1 / 2; decide)
+        (Arithmetic.add_lt_add_left_direct
+          (by decide : (0 : Coordinate) < 1 / 4) x))
+    (by change (-1 / 2 : Coordinate) < 0; decide)
+    (by change (0 : Coordinate) < 1 / 2; decide)
 
 /-- Certify a linear factor whose root lies strictly left of the displayed root rectangle. -/
-@[expose] def leftClearance (rootX boxX : Fraction.Rational)
+@[expose] def leftClearance (rootX boxX : Coordinate)
     (separated : rootX < boxX - 1 / 4) :
     BoundaryClearance
-      (Translated.translatedCoordinate (Gaussian.Components.Basic.point rootX 0)) (boxAt boxX) :=
+      (Translated.translatedCoordinate (Components.Basic.point rootX 0)) (boxAt boxX) :=
   Clearance.Box.Boundary.Translated.Affine.translatedCoordinate_boundaryClearance_of_left
-    (Gaussian.Basic.ExplicitLegendrePreparedData.point rootX 0) (by
-      unfold boxAt Gaussian.Basic.ExplicitLegendrePreparedData.point
+    (Basic.ExplicitLegendrePreparedData.point rootX 0) (by
+      unfold boxAt Basic.ExplicitLegendrePreparedData.point
       exact separated)
 
 /-- Certify a linear factor whose root lies strictly right of the displayed root rectangle. -/
-@[expose] def rightClearance (rootX boxX : Fraction.Rational)
+@[expose] def rightClearance (rootX boxX : Coordinate)
     (separated : boxX + 1 / 4 < rootX) :
     BoundaryClearance
-      (Translated.translatedCoordinate (Gaussian.Components.Basic.point rootX 0)) (boxAt boxX) :=
+      (Translated.translatedCoordinate (Components.Basic.point rootX 0)) (boxAt boxX) :=
   Clearance.Box.Boundary.Translated.Affine.translatedCoordinate_boundaryClearance_of_right
-    (Gaussian.Basic.ExplicitLegendrePreparedData.point rootX 0) (by
-      unfold boxAt Gaussian.Basic.ExplicitLegendrePreparedData.point
+    (Basic.ExplicitLegendrePreparedData.point rootX 0) (by
+      unfold boxAt Basic.ExplicitLegendrePreparedData.point
       exact separated)
 
 /-- The displayed cubic has certified nonzero boundary values on the rectangle around minus one. -/
@@ -289,7 +295,7 @@ theorem boxAt_proper (x : Fraction.Rational) : (boxAt x).Proper := by
     (selfClearance 1)
 
 /-- Certify the cubic on a vertical ambient line whose real coordinate avoids -1, zero and one. -/
-@[expose] def verticalClearance (x : Fraction.Rational)
+@[expose] def verticalClearance (x : Coordinate)
     (apartMinusOne : x ≠ -1) (apartZero : x ≠ 0)
     (apartOne : x ≠ 1) :
     VerticalLineClearance polynomial
@@ -297,42 +303,42 @@ theorem boxAt_proper (x : Fraction.Rational) : (boxAt x).Proper := by
   rw [polynomial_eq_factors]
   exact VerticalLineClearance.mul
     (VerticalLineClearance.mul
-      (Clearance.Box.Line.Translated.translatedCoordinate_verticalLineClearance
-        (Gaussian.Basic.ExplicitLegendrePreparedData.point (-1) 0) _ x apartMinusOne)
-      (Clearance.Box.Line.Translated.translatedCoordinate_verticalLineClearance
-        (Gaussian.Basic.ExplicitLegendrePreparedData.point 0 0) _ x apartZero))
-    (Clearance.Box.Line.Translated.translatedCoordinate_verticalLineClearance
-      (Gaussian.Basic.ExplicitLegendrePreparedData.point 1 0) _ x apartOne)
+      (Translated.translatedCoordinate_verticalLineClearance
+        (Basic.ExplicitLegendrePreparedData.point (-1) 0) _ x apartMinusOne)
+      (Translated.translatedCoordinate_verticalLineClearance
+        (Basic.ExplicitLegendrePreparedData.point 0 0) _ x apartZero))
+    (Translated.translatedCoordinate_verticalLineClearance
+      (Basic.ExplicitLegendrePreparedData.point 1 0) _ x apartOne)
 
 /-- Certify the cubic on a horizontal ambient line with nonzero imaginary coordinate. -/
-@[expose] def horizontalClearance (y : Fraction.Rational) (apartZero : y ≠ 0) :
+@[expose] def horizontalClearance (y : Coordinate) (apartZero : y ≠ 0) :
     HorizontalLineClearance polynomial
       (Box.largeSquareBox polynomial) y := by
   rw [polynomial_eq_factors]
   exact HorizontalLineClearance.mul
     (HorizontalLineClearance.mul
-      (Clearance.Box.Line.Translated.translatedCoordinate_horizontalLineClearance
-        (Gaussian.Basic.ExplicitLegendrePreparedData.point (-1) 0) _ y apartZero)
-      (Clearance.Box.Line.Translated.translatedCoordinate_horizontalLineClearance
-        (Gaussian.Basic.ExplicitLegendrePreparedData.point 0 0) _ y apartZero))
-    (Clearance.Box.Line.Translated.translatedCoordinate_horizontalLineClearance
-      (Gaussian.Basic.ExplicitLegendrePreparedData.point 1 0) _ y apartZero)
+      (Translated.translatedCoordinate_horizontalLineClearance
+        (Basic.ExplicitLegendrePreparedData.point (-1) 0) _ y apartZero)
+      (Translated.translatedCoordinate_horizontalLineClearance
+        (Basic.ExplicitLegendrePreparedData.point 0 0) _ y apartZero))
+    (Translated.translatedCoordinate_horizontalLineClearance
+      (Basic.ExplicitLegendrePreparedData.point 1 0) _ y apartZero)
 
 /-- A displayed root rectangle refines the original large ambient square when its two horizontal bounds fit. -/
-theorem refinesAmbient (x : Fraction.Rational)
+theorem refinesAmbient (x : Coordinate)
     (lowerX : -Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius polynomial ≤
       (boxAt x).xLower)
     (upperX : (boxAt x).xUpper ≤
       Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius polynomial) :
     (boxAt x).Refines (Box.largeSquareBox polynomial) := by
-  unfold Rational.Box.Refines Box.largeSquareBox
-    Rational.Box.symmetric
+  unfold Box.Refines Box.largeSquareBox
+    Box.symmetric
   exact ⟨lowerX, upperX,
     (by
-        change -Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius polynomial ≤ (-1 / 2 : Fraction.Rational);
+        change -Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius polynomial ≤ (-1 / 2 : Coordinate);
         decide),
     (by
-        change (1 / 2 : Fraction.Rational) ≤ Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius polynomial;
+        change (1 / 2 : Coordinate) ≤ Dense.Gaussian.Bounds.RootRadius.denseLargeSquareRadius polynomial;
         decide)⟩
 
 /-- The displayed cubic has quadrupled winding four on the rectangle around minus one. -/
@@ -468,8 +474,8 @@ theorem degreeGtOne : 1 < curve.polynomial.natDegree := by
   decide
 
 /-- The degree-complete finite branch isolation data constructed from the three displayed winding-one states. -/
-@[expose] def branchData : Hyperelliptic.Branches.BranchIsolation.Data curve :=
-  Hyperelliptic.Branches.BranchIsolation.Data.ofStates curve degreeGtOne
+@[expose] def branchData : BranchIsolation.Data curve :=
+  BranchIsolation.Data.ofStates curve degreeGtOne
     curveStateAt curveStateAt_pairwise
 
 /-- The retained branch data has exactly three sites. -/
@@ -479,22 +485,22 @@ theorem branchData_siteCount : branchData.siteCount = 3 := rfl
 
 /-- Convert a displayed root index to the corresponding retained branch-data index. -/
 @[expose] def branchIndex (index : Fin 3) :
-    Hyperelliptic.Branches.BranchIsolation.Data.Index branchData :=
+    BranchIsolation.Data.Index branchData :=
   Fin.cast branchData_siteCount.symm index
 
 /-- The exact lower-left anchors of the three displayed branch boxes. -/
-@[expose] def squareRootEndpointPoint : Fin 3 → Gaussian.Basic.Canonical :=
-  Data.Fin.casesDependent (size := 2) (motive := fun _ => Gaussian.Basic.Canonical)
-    (Gaussian.Basic.ExplicitLegendrePreparedData.point (-5 / 4) (-1 / 2)) (fun second =>
-      Data.Fin.casesDependent (size := 1) (motive := fun _ => Gaussian.Basic.Canonical)
-        (Gaussian.Basic.ExplicitLegendrePreparedData.point (-1 / 4) (-1 / 2)) (fun third =>
-          Data.Fin.casesDependent (size := 0) (motive := fun _ => Gaussian.Basic.Canonical)
-            (Gaussian.Basic.ExplicitLegendrePreparedData.point (3 / 4) (-1 / 2))
+@[expose] def squareRootEndpointPoint : Fin 3 → Gaussian :=
+  Data.Fin.casesDependent (size := 2) (motive := fun _ => Gaussian)
+    (Basic.ExplicitLegendrePreparedData.point (-5 / 4) (-1 / 2)) (fun second =>
+      Data.Fin.casesDependent (size := 1) (motive := fun _ => Gaussian)
+        (Basic.ExplicitLegendrePreparedData.point (-1 / 4) (-1 / 2)) (fun third =>
+          Data.Fin.casesDependent (size := 0) (motive := fun _ => Gaussian)
+            (Basic.ExplicitLegendrePreparedData.point (3 / 4) (-1 / 2))
             (fun impossible => False.elim (Nat.not_lt_zero impossible.val impossible.isLt)) third) second)
 
 /-- At refinement depth zero, each retained branch-track anchor is its displayed lower-left endpoint. -/
 theorem refinedTrackAnchor_eq_squareRootEndpointPoint : ∀ index : Fin 3,
-    Hyperelliptic.Branches.Cuts.refinedTrackAnchor branchData degreeGtOne
+    Cuts.refinedTrackAnchor branchData degreeGtOne
         (branchIndex index) 0 = squareRootEndpointPoint index := by
   intro index
   rcases Cases.three index with indexZero | indexOne | indexTwo <;>
@@ -505,20 +511,20 @@ theorem refinedTrackAnchor_eq_squareRootEndpointPoint : ∀ index : Fin 3,
   polynomial.eval (squareRootEndpointPoint index)
 
 /-- The displayed Gaussian centers 1-i, 3/4+i/3 and -i for the three positive-sheet owners. -/
-@[expose] def positiveSquareRootCenter : Fin 3 → Gaussian.Basic.Canonical :=
-  Data.Fin.casesDependent (size := 2) (motive := fun _ => Gaussian.Basic.Canonical)
-    (Gaussian.Basic.ExplicitLegendrePreparedData.point 1 (-1)) (fun second =>
-      Data.Fin.casesDependent (size := 1) (motive := fun _ => Gaussian.Basic.Canonical)
-        (Gaussian.Basic.ExplicitLegendrePreparedData.point (3 / 4) (1 / 3)) (fun third =>
-          Data.Fin.casesDependent (size := 0) (motive := fun _ => Gaussian.Basic.Canonical)
-            (Gaussian.Basic.ExplicitLegendrePreparedData.point 0 (-1))
+@[expose] def positiveSquareRootCenter : Fin 3 → Gaussian :=
+  Data.Fin.casesDependent (size := 2) (motive := fun _ => Gaussian)
+    (Basic.ExplicitLegendrePreparedData.point 1 (-1)) (fun second =>
+      Data.Fin.casesDependent (size := 1) (motive := fun _ => Gaussian)
+        (Basic.ExplicitLegendrePreparedData.point (3 / 4) (1 / 3)) (fun third =>
+          Data.Fin.casesDependent (size := 0) (motive := fun _ => Gaussian)
+            (Basic.ExplicitLegendrePreparedData.point 0 (-1))
             (fun impossible => False.elim (Nat.not_lt_zero impossible.val impossible.isLt)) third) second)
 
 /-- Select the displayed square-root center or its negative according to the retained sheet index. -/
-@[expose] def squareRootCenter (index : Fin 3) : Fin 2 → Gaussian.Basic.Canonical :=
-  Data.Fin.casesDependent (size := 1) (motive := fun _ => Gaussian.Basic.Canonical) (positiveSquareRootCenter index)
+@[expose] def squareRootCenter (index : Fin 3) : Fin 2 → Gaussian :=
+  Data.Fin.casesDependent (size := 1) (motive := fun _ => Gaussian) (positiveSquareRootCenter index)
     (fun last =>
-    Data.Fin.casesDependent (size := 0) (motive := fun _ => Gaussian.Basic.Canonical) (-positiveSquareRootCenter index)
+    Data.Fin.casesDependent (size := 0) (motive := fun _ => Gaussian) (-positiveSquareRootCenter index)
       (fun impossible => False.elim (Nat.not_lt_zero impossible.val impossible.isLt)) last)
 
 /-- The square of radius one half centered at the selected sheet-owner center. -/
@@ -528,7 +534,7 @@ theorem refinedTrackAnchor_eq_squareRootEndpointPoint : ∀ index : Fin 3,
 
 /-- The exact quadratic whose roots are the two square roots of the selected cubic endpoint value. -/
 @[expose] def squareRootPolynomial (index : Fin 3) : GaussianPolynomial :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial (squareRootParameter index)
+  Power.Gaussian.rootPolynomial (squareRootParameter index)
     RootContinuation.SquareRootDegree.degreeTwo
 
 /-- The three displayed cubic endpoint values are all nonzero. -/
@@ -591,7 +597,7 @@ theorem squareRootOwner_windingFour :
 @[expose] def branchSquareRootOwner (index : Fin 3) (sheet : Fin 2) :
     Topology.SquareRootContinuationChain.Owner
       (curve.polynomial.eval
-        (Hyperelliptic.Branches.Cuts.refinedTrackAnchor branchData degreeGtOne
+        (Cuts.refinedTrackAnchor branchData degreeGtOne
           (branchIndex index) 0)) := by
   rw [refinedTrackAnchor_eq_squareRootEndpointPoint]
   exact squareRootOwner index sheet
@@ -612,8 +618,8 @@ theorem workingRootDiameter_positive : 0 < workingRootDiameter := by decide
 
 /-- A checked dyadic bank at the fixed inner depth and diameter for the exact clear path and starting quadratic owner.
 -/
-abbrev WorkingBank {ambient : Rational.Box} {start finish : Gaussian.Basic.Canonical}
-    (path : Polynomial.Geometry.ClearPath curve.polynomial ambient
+abbrev WorkingBank {ambient : Box} {start finish : Gaussian}
+    (path : Geometry.ClearPath curve.polynomial ambient
       start finish)
     (owner : Topology.SquareRootContinuationChain.Owner
       (curve.polynomial.eval start)) :=
@@ -625,8 +631,8 @@ abbrev WorkingBank {ambient : Rational.Box} {start finish : Gaussian.Basic.Canon
 
 Incomplete execution keeps the prepared prefix and its dependent finish owner
 for inspection or continuation. -/
-abbrev WorkingAttempt {ambient : Rational.Box} {start finish : Gaussian.Basic.Canonical}
-    (path : Polynomial.Geometry.ClearPath curve.polynomial ambient start finish)
+abbrev WorkingAttempt {ambient : Box} {start finish : Gaussian}
+    (path : Geometry.ClearPath curve.polynomial ambient start finish)
     (within : path.WithinAmbient)
     (owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)) :=
   DyadicBank.Execution .direct workingInnerDepth
@@ -634,13 +640,13 @@ abbrev WorkingAttempt {ambient : Rational.Box} {start finish : Gaussian.Basic.Ca
 
 /-- The original depth-zero clear connector between the selected retained branch tracks. -/
 @[expose] def rawConnector (left right : Fin 3) :=
-  Hyperelliptic.Branches.Cuts.connectorAt branchData degreeGtOne
+  Cuts.connectorAt branchData degreeGtOne
     (branchIndex left) (branchIndex right) 0
 
 /-- The retained original connector stays within its original ambient square. -/
 theorem rawConnector_withinAmbient (left right : Fin 3) :
     (rawConnector left right).WithinAmbient :=
-  Hyperelliptic.Branches.Cuts.connectorAt_withinAmbient branchData
+  Cuts.connectorAt_withinAmbient branchData
     degreeGtOne (branchIndex left) (branchIndex right) 0
 
 /-- The original branch connector refined to the fixed outer connector depth. -/
@@ -658,27 +664,27 @@ theorem workingConnector_withinAmbient (left right : Fin 3) :
 
 /-- Reverse the retained refined connector while preserving its exact endpoints. -/
 @[expose] def workingBackwardConnector (left right : Fin 3) :=
-  Hyperelliptic.Branches.BranchCutLifts.ClearPath.reverse (workingConnector left right)
+  BranchCutLifts.ClearPath.reverse (workingConnector left right)
 
 /-- The retained reversed refined connector stays within its original ambient square. -/
 theorem workingBackwardConnector_withinAmbient (left right : Fin 3) :
     (workingBackwardConnector left right).WithinAmbient :=
-  Hyperelliptic.Branches.BranchCutLifts.ClearPath.reverse_withinAmbient
+  BranchCutLifts.ClearPath.reverse_withinAmbient
     (workingConnector left right) (workingConnector_withinAmbient left right)
 
 /-- The selected retained branch state at refinement depth zero. -/
 @[expose] def branchState (index : Fin 3) :=
-  Hyperelliptic.Branches.Cuts.refinedState branchData degreeGtOne
+  Cuts.refinedState branchData degreeGtOne
     (branchIndex index) 0
 
 /-- The original clear boundary path of the selected retained branch state. -/
 @[expose] def rawBoundary (index : Fin 3) :=
-  Hyperelliptic.Branches.BranchCutLifts.ownerBoundaryPath (branchState index)
+  BranchCutLifts.ownerBoundaryPath (branchState index)
 
 /-- The retained original owner boundary stays within its original ambient square. -/
 theorem rawBoundary_withinAmbient (index : Fin 3) :
     (rawBoundary index).WithinAmbient :=
-  Hyperelliptic.Branches.BranchCutLifts.ownerBoundaryPath_withinAmbient
+  BranchCutLifts.ownerBoundaryPath_withinAmbient
     (branchState index)
 
 /-- The original branch-owner boundary refined to the fixed outer boundary depth. -/
@@ -743,9 +749,9 @@ depths and root diameter. -/
     (leftBoundary : WorkingBank (workingBoundary 0)
       (branchSquareRootOwner 0 1)) :
     Topology.PreparedCycleModels.PreparedBoundaryDoublePath curve :=
-  { leftAmbient := Hyperelliptic.Branches.Cuts.Ambient curve
-    rightAmbient := Hyperelliptic.Branches.Cuts.Ambient curve
-    connectorAmbient := Hyperelliptic.Branches.Cuts.Ambient curve
+  { leftAmbient := Cuts.Ambient curve
+    rightAmbient := Cuts.Ambient curve
+    connectorAmbient := Cuts.Ambient curve
     leftState := branchState 0
     rightState := branchState 1
     connector := workingConnector 0 1
@@ -769,7 +775,7 @@ depths and root diameter. -/
 /-- The unsubdivided owner-boundary cycle represented by the prepared
 Legendre A-cycle data. -/
 @[expose] def rawACycleTarget : Path.Gaussian.Lifted.Closed.ClosedLiftedPath 2 :=
-  Hyperelliptic.Branches.BranchCutLifts.doubleLiftWithBoundaryOwners
+  BranchCutLifts.doubleLiftWithBoundaryOwners
     (branchState 0) (branchState 1) (rawConnector 0 1)
 
 set_option genInjectivity false in
@@ -911,7 +917,7 @@ The original connector, endpoints and opposite-sheet owners are retained with th
     (backward : WorkingBank (workingBackwardConnector 0 2)
       (branchSquareRootOwner 2 1)) :
     Topology.PreparedCycleModels.PreparedDoublePath curve :=
-  { ambient := Hyperelliptic.Branches.Cuts.Ambient curve
+  { ambient := Cuts.Ambient curve
     start := (branchState 0).box.anchor
     finish := (branchState 2).box.anchor
     basePath := workingConnector 0 2
@@ -926,7 +932,7 @@ The original connector, endpoints and opposite-sheet owners are retained with th
 /-- The unsubdivided double lift represented by the prepared Legendre
 B-cycle data. -/
 @[expose] def rawBCycleTarget : Path.Gaussian.Lifted.Closed.ClosedLiftedPath 2 :=
-  Hyperelliptic.Branches.BranchCutLifts.doubleLift (rawConnector 0 2)
+  BranchCutLifts.doubleLift (rawConnector 0 2)
 
 /-- Conservative total B-cycle construction retained as a fallback. -/
 @[expose] def totalPreparedBCycleWitness (_ : Unit) :
@@ -1000,7 +1006,7 @@ opaque preparedBCycleWitness (token : Unit) :
 
 /-- The finite branch-cut family constructed from the exact displayed curve and retained branch data. -/
 @[expose] def branchFamily :=
-  Hyperelliptic.Branches.BranchCutLifts.familyOfData curve branchData
+  BranchCutLifts.familyOfData curve branchData
 
 end
 

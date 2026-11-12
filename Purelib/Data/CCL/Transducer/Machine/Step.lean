@@ -55,22 +55,45 @@ public theorem consumeEmission_emitted (emitted : Basic.BinaryWord) (emission : 
       | cons bit rest => rfl
       | nil => exact (nonempty rfl).elim
 
+/-- The returned first bit and retained pending queue reconstruct the exact original emitted chunk. -/
+public theorem consumeEmission_chunk (emitted : Basic.BinaryWord) (emission : Emission) :
+    (consumeEmission emitted emission).1 :: (consumeEmission emitted emission).2.pending = emission.bits := by
+  cases emission with
+  | mk bits nonempty next =>
+      cases bits with
+      | cons bit rest => rfl
+      | nil => exact (nonempty rfl).elim
+
 end
 
 open Purelib.Data.CCL.Transducer
+/-- Return the original queued head and next machine when a pending bit is available. -/
+@[expose] public def pendingResult (machine : Machine) : Option (Bool × Machine) :=
+  match machine.pending with
+  | bit :: rest => some (bit,
+      { mode := machine.mode
+        emitted := machine.emitted ++ [bit]
+        pending := rest })
+  | [] => none
+
+/-- Returning a retained queued bit leaves the original quantitative mode unchanged. -/
+public theorem pendingResult_mode (machine : Machine) (result : Bool × Machine)
+    (same : pendingResult machine = some result) : result.2.mode = machine.mode := by
+  cases machine with
+  | mk mode emitted pending =>
+      cases pending with
+      | nil => nomatch same
+      | cons bit rest => cases same; rfl
+
 /-- Return one pending bit, or compute and consume one exact emission when the retained queue is empty.
 
-A pending bit leaves the mode unchanged and keeps the rest of the same queue. An empty queue advances through the
-certified emission procedure once and retains its next mode and remaining bits. -/
+Both raw and cached execution use the same pending-result selector. An empty
+queue advances through the original emission procedure once.
+-/
 @[expose] public def nextBit (machine : Machine) : Bool × Machine :=
-  match machine.pending with
-  | bit :: rest =>
-      (bit,
-        { mode := machine.mode
-          emitted := machine.emitted ++ [bit]
-          pending := rest })
-  | [] =>
-      Machine.Step.consumeEmission machine.emitted (Emission.Step.step machine.mode)
+  match pendingResult machine with
+  | some result => result
+  | none => consumeEmission machine.emitted (Emission.Step.step machine.mode)
 
 /-- A machine step appends exactly its returned bit to the retained emitted prefix.
 
@@ -95,5 +118,14 @@ public theorem nextBit_length (machine : Machine) :
     (Machine.Step.nextBit machine).2.emitted.length = machine.emitted.length + 1 := by
   rw [Machine.Step.nextBit_emitted, Append.length_append]
   rfl
+
+/-- Consuming a retained pending bit leaves the original quantitative mode unchanged. -/
+public theorem nextBit_mode_of_pending (machine : Machine) (nonempty : machine.pending ≠ []) :
+    (nextBit machine).2.mode = machine.mode := by
+  cases machine with
+  | mk mode emitted pending =>
+      cases pending with
+      | nil => exact (nonempty rfl).elim
+      | cons bit rest => rfl
 
 end Purelib.Data.CCL.Transducer.Machine.Step

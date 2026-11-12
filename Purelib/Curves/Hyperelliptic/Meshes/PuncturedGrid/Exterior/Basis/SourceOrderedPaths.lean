@@ -53,23 +53,23 @@ open Purelib.Riemann
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
-variable (retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared)
+variable (retained : Preparation.CommonBasisPreparation prepared)
   {index : Nat} (inputs : retained.Inputs index)
   (outer : Fin prepared.occurrences.length) {faceIndex : Nat}
-  (data : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) faceIndex)
+  (data : FragmentQueries.RowData
+    (ParentIndices.occurrenceAt prepared.occurrences outer) faceIndex)
   (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
 
 variable {retained inputs outer data coefficients}
@@ -77,10 +77,10 @@ variable {retained inputs outer data coefficients}
 /-- Flattening each retained run before concatenating yields the same complete physical path as flattening the original
 fragment pairs first. -/
 private theorem physical_flatten (runs : List
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedRun retained inputs outer data
+  (FragmentGrouping.IndexedRun retained inputs outer data
   coefficients)) :
     (runs.map (fun run => ((run.fragments.map
-      Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.pair).map
+      OwnedFragments.OwnedFragment.pair).map
       Prod.fst).flatten)).flatten =
       (((runs.map (fun run => run.fragments.map
         OwnedFragments.OwnedFragment.pair)).flatten).map
@@ -93,49 +93,49 @@ private theorem physical_flatten (runs : List
     rfl
 
 namespace IndexedGrouping
-variable {items : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment retained
+variable {items : List (IndexedFragments.IndexedFragment retained
   inputs outer data coefficients)}
 
 /-- Reading every source position preserves the full forward physical word. -/
 theorem source_order_physical (grouped :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedGrouping retained inputs outer data
+  FragmentGrouping.IndexedGrouping retained inputs outer data
   coefficients items)
-    (word : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.IndexedFragment.ParentWord items) :
-    (List.ofFn (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.IndexedGrouping.inSourceOrder
+    (word : GroupedParentOrder.IndexedFragment.ParentWord items) :
+    (List.ofFn (SourceOrderedRuns.IndexedGrouping.inSourceOrder
       grouped word).physical).flatten =
-      ((items.map Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment.pair).map
+      ((items.map IndexedFragments.IndexedFragment.pair).map
         Prod.fst).flatten := by
-  rw [(Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.IndexedGrouping.inSourceOrder grouped
+  rw [(SourceOrderedRuns.IndexedGrouping.inSourceOrder grouped
     word).physical_all]
-  exact (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedPaths.physical_flatten grouped.runs).trans
+  exact (SourceOrderedPaths.physical_flatten grouped.runs).trans
     (congrArg (fun pairs => (pairs.map Prod.fst).flatten) grouped.pairs_eq)
 
 /-- Source order reverses both the descending group list and the path inside
 each group; all cross-parent joins remain part of the complete reversed word. -/
 theorem reverse_source_order_physical (grouped :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedGrouping retained inputs outer data
+  FragmentGrouping.IndexedGrouping retained inputs outer data
   coefficients items)
-    (word : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedReverseOrder.IndexedFragment.ReverseParentWord
+    (word : GroupedReverseOrder.IndexedFragment.ReverseParentWord
       items) :
     (List.ofFn (fun position => Path.PairedAreaReversal.reverseIncrements
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.IndexedGrouping.reverseInSourceOrder grouped
+      ((SourceOrderedRuns.IndexedGrouping.reverseInSourceOrder grouped
         word).physical position))).flatten =
       Path.PairedAreaReversal.reverseIncrements ((items.map
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment.pair).map Prod.fst).flatten
+        IndexedFragments.IndexedFragment.pair).map Prod.fst).flatten
         := by
   have entries := congrArg (fun paths : List (List Topology.Polygon.Stokes.PrimitivePoint) =>
     (paths.map Path.PairedAreaReversal.reverseIncrements).flatten)
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.IndexedGrouping.reverseInSourceOrder grouped
+    (SourceOrderedRuns.IndexedGrouping.reverseInSourceOrder grouped
       word).physical_all
   rw [Data.List.OfFn.Basic.map_ofFn] at entries
   apply entries.trans
   change ((grouped.runs.reverse.map (fun run =>
-    ((run.fragments.map Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.pair).map
+    ((run.fragments.map OwnedFragments.OwnedFragment.pair).map
       Prod.fst).flatten)).map
       Path.PairedAreaReversal.reverseIncrements).flatten = _
   rw [Data.List.Reverse.map_reverse, ← Path.PairedAreaReversal.reverseIncrements_flatten]
   exact congrArg Path.PairedAreaReversal.reverseIncrements
-    ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedPaths.physical_flatten grouped.runs).trans
+    ((SourceOrderedPaths.physical_flatten grouped.runs).trans
       (congrArg (fun pairs => (pairs.map Prod.fst).flatten) grouped.pairs_eq))
 
 end IndexedGrouping

@@ -39,6 +39,10 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-!
@@ -79,29 +83,29 @@ open Purelib.Data.Gaussian.Basic.Canonical
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius quarterRadius_eq_mul_pow)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {collar :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {localBox :
-    Purelib.Geometry.Rational.Box}
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {localBox :
+    Rational.Box}
   {initial : Model
-    (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.polynomial curve) localBox}
+    (HyperellipticReciprocal.polynomial curve) localBox}
 
 set_option genInjectivity false in
 /-- Cached reciprocal and cap-factor ceilings for the original differential comparison.
 
 The exact collar-box coordinate bound and combined error scale are retained with their original model and clearance
 owners. -/
-structure Bounds (preparation : PolynomialPullback.Preparation cap initial)
-    (clearance : PrimitiveEdgeComparison.RegionClearance (HyperellipticReciprocal.polynomial curve) localBox)
-      (differential : Differentials.Basic.Differential genus) where
+structure Bounds (preparation : Preparation cap initial)
+    (clearance : RegionClearance (HyperellipticReciprocal.polynomial curve) localBox)
+      (differential : Differential genus) where
   /-- The retained overlap bounds for the original reciprocal primitive model with unit numerator bound. -/ reciprocal :
-    PrimitiveEdgeComparison.PrimitiveOverlapBounds clearance (DensePolynomial.constant 1)
+    PrimitiveOverlapBounds clearance (constant 1)
   /-- The retained regular-factor bounds for the original cap differential. -/ factor : FactorBounds cap
     differential
-  /-- The cached squared-norm ceiling of the original collar box. -/ pointUpper : InverseRootPolynomial.Coordinate
+  /-- The cached squared-norm ceiling of the original collar box. -/ pointUpper : Coordinate
   /-- The retained point ceiling is exactly the original collar-box squared-norm bound. -/ pointUpper_eq : pointUpper =
     collar.box.normSqBound
   /-- The retained comparison scale combining the original numerator, inverse, factor and coordinate ceilings. -/ scale
-    : InverseRootPolynomial.Coordinate
+    : Coordinate
   /-- The cached scale is exactly the displayed sum of the original numerator, factor, inverse and coordinate error
     contributions. -/ scale_eq : scale = 2 * factor.base.numeratorUpper * reciprocal.inverseUpper * cap.model.bound +
     4 * factor.bound * ((1 + pointUpper) * factor.base.inverseUpper * preparation.reciprocal.bound +
@@ -112,11 +116,11 @@ constructive_injectivity Bounds
 namespace Bounds
 
 /-- Cache the original reciprocal and cap-factor bounds and their exact combined comparison scale. -/
-@[expose] public def build (preparation : PolynomialPullback.Preparation cap initial)
-    (clearance : PrimitiveEdgeComparison.RegionClearance (HyperellipticReciprocal.polynomial curve) localBox)
-      (differential : Differentials.Basic.Differential genus) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Cap.ComparisonBounds.Bounds preparation clearance differential :=
-  let reciprocal := PrimitiveOverlapBounds.build clearance (DensePolynomial.constant 1)
+@[expose] public def build (preparation : Preparation cap initial)
+    (clearance : RegionClearance (HyperellipticReciprocal.polynomial curve) localBox)
+      (differential : Differential genus) :
+    Bounds preparation clearance differential :=
+  let reciprocal := PrimitiveOverlapBounds.build clearance (constant 1)
   let factor := FactorBounds.build cap differential
   let pointUpper := collar.box.normSqBound
   let scale := 2 * factor.base.numeratorUpper * reciprocal.inverseUpper * cap.model.bound +
@@ -126,147 +130,147 @@ namespace Bounds
 
 variable {preparation : Preparation cap initial}
   {clearance : RegionClearance
-    (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.polynomial curve) localBox} {differential :
+    (HyperellipticReciprocal.polynomial curve) localBox} {differential :
     Differential genus}
 
 /-- The original collar-box squared-norm ceiling is nonnegative. -/
-theorem pointUpper_nonnegative (bounds : Curves.Hyperelliptic.Charts.Reciprocal.Cap.ComparisonBounds.Bounds preparation
+theorem pointUpper_nonnegative (bounds : Bounds preparation
   clearance differential) : 0 ≤ bounds.pointUpper := by
   rw [bounds.pointUpper_eq]
   exact collar.box.normSqBound_nonneg
 
 /-- The retained cap comparison error scale is nonnegative. -/
-theorem scale_nonnegative (bounds : Curves.Hyperelliptic.Charts.Reciprocal.Cap.ComparisonBounds.Bounds preparation
+theorem scale_nonnegative (bounds : Bounds preparation
   clearance differential) : 0 ≤ bounds.scale := by
   rw [bounds.scale_eq]
   apply add_nonneg
-  · exact Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) bounds.factor.base.numeratorUpper_nonnegative)
+  · exact Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct
+        (Arithmetic.mul_nonneg_direct (by decide) bounds.factor.base.numeratorUpper_nonnegative)
         bounds.reciprocal.inverseUpper_positive.le) cap.model.bound_nonnegative
-  · apply Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) bounds.factor.bound_nonnegative)
+  · apply Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct (by decide) bounds.factor.bound_nonnegative)
     exact add_nonneg
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (add_nonneg (by decide) bounds.pointUpper_nonnegative)
+      (Arithmetic.mul_nonneg_direct
+        (Arithmetic.mul_nonneg_direct (add_nonneg (by decide) bounds.pointUpper_nonnegative)
           bounds.factor.base.inverseUpper_positive.le) preparation.reciprocal.bound_nonnegative)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Fraction.Order.Arithmetic.mul_nonneg_direct bounds.pointUpper_nonnegative
+      (Arithmetic.mul_nonneg_direct
+        (Arithmetic.mul_nonneg_direct bounds.pointUpper_nonnegative
           bounds.reciprocal.inverseUpper_positive.le)
         preparation.regular.bound_nonnegative)
 
 /-- A point of the original cap box satisfies the retained collar-box squared-norm ceiling. -/
-private theorem coordinate_le (bounds : Curves.Hyperelliptic.Charts.Reciprocal.Cap.ComparisonBounds.Bounds preparation
-  clearance differential) {point : InverseRootPolynomial.Gaussian}
-    (inside : collar.box.Contains point) : Data.Gaussian.Norm.Basic.normSq point ≤ bounds.pointUpper := by
+private theorem coordinate_le (bounds : Bounds preparation
+  clearance differential) {point : Gaussian}
+    (inside : collar.box.Contains point) : Basic.normSq point ≤ bounds.pointUpper := by
   rw [bounds.pointUpper_eq]
   exact Rational.Box.normSq_le_normSqBound inside
 
 /-- The original parity power has squared norm at most one plus the retained point ceiling. -/
-private theorem parity_le (bounds : Curves.Hyperelliptic.Charts.Reciprocal.Cap.ComparisonBounds.Bounds preparation
-  clearance differential) {point : InverseRootPolynomial.Gaussian}
+private theorem parity_le (bounds : Bounds preparation
+  clearance differential) {point : Gaussian}
     (inside : collar.box.Contains point) :
-    Data.Gaussian.Norm.Basic.normSq (point ^ (1 - HyperellipticReciprocal.originOrder curve)) ≤ 1 +
+    Basic.normSq (point ^ (1 - HyperellipticReciprocal.originOrder curve)) ≤ 1 +
       bounds.pointUpper := by
   rcases (HyperellipticReciprocal.origin_factor curve).2 with regular | branch
   · rw [regular, Nat.sub_zero, pow_one]
     exact (bounds.coordinate_le inside).trans (le_add_of_nonneg_left (by decide))
-  · rw [branch, Nat.sub_self, pow_zero, Data.Gaussian.Norm.Basic.normSq_one]
+  · rw [branch, Nat.sub_self, pow_zero, Basic.normSq_one]
     exact Fraction.Compatibility.coordinate_le_add_of_nonneg_right _ _ bounds.pointUpper_nonnegative
 
 /-- The squared norm of a product of three Gaussian factors is bounded by the product of their nonnegative ceilings. -/
-private theorem product_bound {first second third : InverseRootPolynomial.Gaussian} {firstUpper secondUpper thirdUpper :
-  InverseRootPolynomial.Coordinate}
-    (firstBound : Data.Gaussian.Norm.Basic.normSq first ≤ firstUpper) (secondBound :
-      Data.Gaussian.Norm.Basic.normSq second ≤ secondUpper)
-    (thirdBound : Data.Gaussian.Norm.Basic.normSq third ≤ thirdUpper) :
-      Data.Gaussian.Norm.Basic.normSq (first * second * third) ≤ firstUpper * secondUpper * thirdUpper := by
-  rw [Data.Gaussian.Norm.Basic.normSq_mul, Data.Gaussian.Norm.Basic.normSq_mul]
-  exact Fraction.Order.Arithmetic.mul_le_mul_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_direct firstBound secondBound (Data.Gaussian.Norm.Basic.normSq_nonneg _)
-      ((Data.Gaussian.Norm.Basic.normSq_nonneg _).trans firstBound))
-    thirdBound (Data.Gaussian.Norm.Basic.normSq_nonneg _)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct ((Data.Gaussian.Norm.Basic.normSq_nonneg _).trans firstBound)
-      ((Data.Gaussian.Norm.Basic.normSq_nonneg _).trans secondBound))
+private theorem product_bound {first second third : Gaussian} {firstUpper secondUpper thirdUpper :
+  Coordinate}
+    (firstBound : Basic.normSq first ≤ firstUpper) (secondBound :
+      Basic.normSq second ≤ secondUpper)
+    (thirdBound : Basic.normSq third ≤ thirdUpper) :
+      Basic.normSq (first * second * third) ≤ firstUpper * secondUpper * thirdUpper := by
+  rw [Basic.normSq_mul, Basic.normSq_mul]
+  exact Arithmetic.mul_le_mul_direct
+    (Arithmetic.mul_le_mul_direct firstBound secondBound (Basic.normSq_nonneg _)
+      ((Basic.normSq_nonneg _).trans firstBound))
+    thirdBound (Basic.normSq_nonneg _)
+    (Arithmetic.mul_nonneg_direct ((Basic.normSq_nonneg _).trans firstBound)
+      ((Basic.normSq_nonneg _).trans secondBound))
 
 /-- The derivative error has one uniform geometric budget on the common domain, independent of all later polynomial
 degrees and spatial mesh counts. -/
-theorem derivative_error_le (bounds : Curves.Hyperelliptic.Charts.Reciprocal.Cap.ComparisonBounds.Bounds preparation
+theorem derivative_error_le (bounds : Bounds preparation
   clearance differential) {index : Nat} {box : Rational.Box}
-    {capSample : Primitives.Sample cap differential index box} (sample : PolynomialPullback.Sample preparation
+    {capSample : Primitives.Sample cap differential index box} (sample : Sample preparation
       capSample)
-    {point : InverseRootPolynomial.Gaussian} (localInside : localBox.Contains point) (capInside : collar.box.Contains
+    {point : Gaussian} (localInside : localBox.Contains point) (capInside : collar.box.Contains
       point) :
-    Data.Gaussian.Norm.Basic.normSq ((Derivative.derivative sample.value).eval point - sample.coefficient.eval
+    Basic.normSq ((Derivative.derivative sample.value).eval point - sample.coefficient.eval
       point) ≤
-      Geometric.Basic.quarterRadius bounds.scale index := by
+      quarterRadius bounds.scale index := by
   let first := point ^ (HyperellipticReciprocal.reversedDifferential differential).exponent *
     sample.reciprocal.value.eval point *
     capSample.inverse.residual.eval point
   let second := point ^ (1 - HyperellipticReciprocal.originOrder curve) * capSample.inverse.value.eval point *
-    InverseModelDifferentialResidual.differentialResidual (HyperellipticReciprocal.polynomial curve)
+    differentialResidual (HyperellipticReciprocal.polynomial curve)
       sample.reciprocal.value point
-  let third := point * sample.reciprocal.value.eval point * InverseModelDifferentialResidual.differentialResidual
+  let third := point * sample.reciprocal.value.eval point * differentialResidual
     cap.polynomial capSample.inverse.value point
   have reciprocalBound := bounds.reciprocal.inverse_norm_le sample.reciprocal localInside
   have regularBound := bounds.factor.base.inverse_norm_le capSample.inverse capInside
-  rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at reciprocalBound regularBound
-  have numeratorBound : Data.Gaussian.Norm.Basic.normSq (point ^ (HyperellipticReciprocal.reversedDifferential
+  rw [← Basic.normSq_eq_canonical] at reciprocalBound regularBound
+  have numeratorBound : Basic.normSq (point ^ (HyperellipticReciprocal.reversedDifferential
     differential).exponent) ≤
       bounds.factor.base.numeratorUpper := by
     rw [← bounds.factor.numerator_eq, bounds.factor.base.numeratorUpper_eq]
-    exact Dense.Gaussian.Bounds.Box.normSq_eval_le_denseEvalNormBound _ capInside
-  have residualBound : Data.Gaussian.Norm.Basic.normSq (capSample.inverse.residual.eval point) ≤
-    Geometric.Basic.quarterRadius cap.model.bound index := by
+    exact Gaussian.Bounds.Box.normSq_eval_le_denseEvalNormBound _ capInside
+  have residualBound : Basic.normSq (capSample.inverse.residual.eval point) ≤
+    quarterRadius cap.model.bound index := by
     rw [capSample.inverse_eq, ← cap.model.refine_bound]
     have scalar := (cap.model.refine index).residualBound point capInside
-    rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+    rw [← Basic.normSq_eq_canonical] at scalar
     exact scalar
-  have firstBound : Data.Gaussian.Norm.Basic.normSq first ≤
-      Geometric.Basic.quarterRadius (bounds.factor.base.numeratorUpper * bounds.reciprocal.inverseUpper *
+  have firstBound : Basic.normSq first ≤
+      quarterRadius (bounds.factor.base.numeratorUpper * bounds.reciprocal.inverseUpper *
         cap.model.bound) index :=
     (product_bound numeratorBound reciprocalBound
       residualBound).trans_eq (by
-          rw [Geometric.Basic.quarterRadius_eq_mul_pow, Geometric.Basic.quarterRadius_eq_mul_pow];
+          rw [quarterRadius_eq_mul_pow, quarterRadius_eq_mul_pow];
           ring1)
-  have secondBound : Data.Gaussian.Norm.Basic.normSq second ≤
-      Geometric.Basic.quarterRadius ((1 + bounds.pointUpper) * bounds.factor.base.inverseUpper *
+  have secondBound : Basic.normSq second ≤
+      quarterRadius ((1 + bounds.pointUpper) * bounds.factor.base.inverseUpper *
         preparation.reciprocal.bound) index :=
     (product_bound (bounds.parity_le capInside)
       regularBound (sample.reciprocal_differential_bound localInside)).trans_eq
-      (by rw [Geometric.Basic.quarterRadius_eq_mul_pow, Geometric.Basic.quarterRadius_eq_mul_pow]; ring1)
-  have thirdBound : Data.Gaussian.Norm.Basic.normSq third ≤
-      Geometric.Basic.quarterRadius (bounds.pointUpper * bounds.reciprocal.inverseUpper * preparation.regular.bound)
+      (by rw [quarterRadius_eq_mul_pow, quarterRadius_eq_mul_pow]; ring1)
+  have thirdBound : Basic.normSq third ≤
+      quarterRadius (bounds.pointUpper * bounds.reciprocal.inverseUpper * preparation.regular.bound)
         index :=
     (product_bound (bounds.coordinate_le capInside)
       reciprocalBound (sample.regular_differential_bound capInside)).trans_eq
-      (by rw [Geometric.Basic.quarterRadius_eq_mul_pow, Geometric.Basic.quarterRadius_eq_mul_pow]; ring1)
-  have factorBound : Data.Gaussian.Norm.Basic.normSq (InverseRootPolynomial.half * capSample.factor.eval point)
+      (by rw [quarterRadius_eq_mul_pow, quarterRadius_eq_mul_pow]; ring1)
+  have factorBound : Basic.normSq (half * capSample.factor.eval point)
     ≤ bounds.factor.bound := by
-    rw [Data.Gaussian.Norm.Basic.normSq_mul]
-    exact (Fraction.Order.Arithmetic.mul_le_mul_direct
-      (show Data.Gaussian.Norm.Basic.normSq InverseRootPolynomial.half ≤ 1 by decide) (bounds.factor.factor_le
+    rw [Basic.normSq_mul]
+    exact (Arithmetic.mul_le_mul_direct
+      (show Basic.normSq half ≤ 1 by decide) (bounds.factor.factor_le
         capSample capInside)
-      (Data.Gaussian.Norm.Basic.normSq_nonneg _) (by decide)).trans_eq (Fraction.Field.one_mul _)
-  have sumBound := (Data.Gaussian.Norm.Bounds.normSq_add_le_two second third).trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add secondBound thirdBound) (by decide))
-  have tailBound : Data.Gaussian.Norm.Basic.normSq (InverseRootPolynomial.half * capSample.factor.eval point *
+      (Basic.normSq_nonneg _) (by decide)).trans_eq (Fraction.Field.one_mul _)
+  have sumBound := (Bounds.normSq_add_le_two second third).trans
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add secondBound thirdBound) (by decide))
+  have tailBound : Basic.normSq (half * capSample.factor.eval point *
     (second + third)) ≤
       bounds.factor.bound * (2 *
-        (Geometric.Basic.quarterRadius ((1 + bounds.pointUpper) * bounds.factor.base.inverseUpper *
+        (quarterRadius ((1 + bounds.pointUpper) * bounds.factor.base.inverseUpper *
           preparation.reciprocal.bound) index +
-          Geometric.Basic.quarterRadius (bounds.pointUpper * bounds.reciprocal.inverseUpper * preparation.regular.bound)
+          quarterRadius (bounds.pointUpper * bounds.reciprocal.inverseUpper * preparation.regular.bound)
             index)) := by
-    rw [Data.Gaussian.Norm.Basic.normSq_mul]
-    exact Fraction.Order.Arithmetic.mul_le_mul_direct factorBound sumBound (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+    rw [Basic.normSq_mul]
+    exact Arithmetic.mul_le_mul_direct factorBound sumBound (Basic.normSq_nonneg _)
       bounds.factor.bound_nonnegative
   rw [sample.derivative_error]
-  change Data.Gaussian.Norm.Basic.normSq (first + InverseRootPolynomial.half * capSample.factor.eval point *
+  change Basic.normSq (first + half * capSample.factor.eval point *
     (second + third)) ≤ _
-  exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add firstBound tailBound) (by decide)).trans_eq
+  exact (Bounds.normSq_add_le_two _ _).trans
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add firstBound tailBound) (by decide)).trans_eq
       (by
-      simp only [Geometric.Basic.quarterRadius_eq_mul_pow, bounds.scale_eq]
+      simp only [quarterRadius_eq_mul_pow, bounds.scale_eq]
       ring1))
 
 end Bounds

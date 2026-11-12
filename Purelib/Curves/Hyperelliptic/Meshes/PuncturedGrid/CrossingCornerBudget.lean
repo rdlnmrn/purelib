@@ -49,6 +49,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Polynomial.Dense.Basic
 import Purelib.Riemann.Normalization.InverseRootPolynomial
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! A positive finite budget pays the complete actual corner replacement. -/
@@ -88,7 +90,7 @@ open Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh
   MatchedVerticalSide)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
@@ -117,20 +119,20 @@ open Purelib.Algebra.FiniteSum.Fin (sumFin)
 set_option genInjectivity false in
 /-- All corner replacement requests share these retained magnitude references, scalar grids, and one certified
 numerical-stage threshold. -/
-structure CornerRequest (fixed : (sheet : Fin 2) → RegularMeshes.Preflights domains sheet) (i j : Fin genus) (target :
-  Fraction.Rational) where
+structure CornerRequest (fixed : (sheet : Fin 2) → Preflights domains sheet) (i j : Fin genus) (target :
+  Rational) where
   /-- The retained magnitude bank for the first standard differential. -/ firstMagnitude :
-    MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential i)
+    FaceMagnitudeBank domains (PeriodMatrix.standardDifferential i)
   /-- The retained magnitude bank for the second standard differential. -/ secondMagnitude :
-    MagnitudeBank.FaceMagnitudeBank domains (PeriodMatrix.standardDifferential j)
-  /-- The shared scalar tolerance for all actual corner replacements. -/ tolerance : Fraction.Rational
+    FaceMagnitudeBank domains (PeriodMatrix.standardDifferential j)
+  /-- The shared scalar tolerance for all actual corner replacements. -/ tolerance : Rational
   /-- The retained corner tolerance is strictly positive. -/ positive : 0 < tolerance
   /-- Sixteen times the shared tolerance is at most one. -/ small : 16 * tolerance ≤ 1
   /-- The complete count and magnitude weight times the tolerance fits the requested target. -/ paid : 8192 *
-    (faces.regulars.length : Fraction.Rational)^4 *
+    (faces.regulars.length : Rational)^4 *
     (4 * (firstMagnitude.bound + secondMagnitude.bound) + 1) * tolerance ≤ target
   /-- The retained scalar corner grids sharing the original face preflights. -/ grids :
-    CrossingCornerRequests.CornerGrids fixed tolerance
+    CornerGrids fixed tolerance
   /-- The common numerical stage paying both magnitude banks and every corner grid. -/ index : Nat
   /-- The first magnitude threshold is at most the retained common stage. -/ first_le : firstMagnitude.index ≤ index
   /-- The second magnitude threshold is at most the retained common stage. -/ second_le : secondMagnitude.index ≤ index
@@ -141,32 +143,32 @@ constructive_injectivity CornerRequest
 namespace CornerRequest
 
 /-- Choose a positive shared corner tolerance and cache all grids at one paid numerical stage. -/
-@[expose] def build (fixed : (sheet : Fin 2) → RegularMeshes.Preflights domains sheet) (i j : Fin genus)
-    (target : Fraction.Rational) (positive : 0 < target) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.CrossingCornerBudget.CornerRequest fixed i j target := by
+@[expose] def build (fixed : (sheet : Fin 2) → Preflights domains sheet) (i j : Fin genus)
+    (target : Rational) (positive : 0 < target) :
+      CornerRequest fixed i j target := by
   let first := FaceMagnitudeBank.build domains (PeriodMatrix.standardDifferential i)
   let second := FaceMagnitudeBank.build domains (PeriodMatrix.standardDifferential j)
-  let weight := 8192 * (faces.regulars.length : Fraction.Rational)^4 * (4 * (first.bound + second.bound) + 1)
-  have nonnegative : 0 ≤ weight := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct
+  let weight := 8192 * (faces.regulars.length : Rational)^4 * (4 * (first.bound + second.bound) + 1)
+  have nonnegative : 0 ≤ weight := Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct
       (Fraction.Cast.Order.natCast_le_direct (m := 0) (n := 8192) (Nat.zero_le _))
-      (Fraction.Order.Arithmetic.pow_nonneg_direct
+      (Arithmetic.pow_nonneg_direct
       (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 4))
-    (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg first.nonnegative
+    (add_nonneg (Arithmetic.mul_nonneg_direct (by decide) (add_nonneg first.nonnegative
       second.nonnegative)) (by decide))
   let tolerance := min (Weighted.allowance target weight) (1 / 16)
-  have tolerancePositive : 0 < tolerance := Fraction.Order.Basic.lt_min
+  have tolerancePositive : 0 < tolerance := Basic.lt_min
     (Weighted.allowance_positive positive nonnegative)
-    (Fraction.Order.Field.div_pos_direct (by decide) (by decide +kernel))
+    (Field.div_pos_direct (by decide) (by decide +kernel))
   have small : 16 * tolerance ≤ 1 := by
-    have bound := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Fraction.Order.Basic.min_le_right (Weighted.allowance target weight) (1 / 16))
-      (by decide +kernel : (0 : Fraction.Rational) ≤ 16)
+    have bound := Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Basic.min_le_right (Weighted.allowance target weight) (1 / 16))
+      (by decide +kernel : (0 : Rational) ≤ 16)
     apply bound.trans_eq
     rw [Fraction.Field.mul_comm]
     exact Fraction.Field.div_mul_cancel_of_ne _ _ (by decide +kernel)
   have paid : weight * tolerance ≤ target :=
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Basic.min_le_left _ _)
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (Basic.min_le_left _ _)
       nonnegative).trans
       (Weighted.mul_allowance_le positive.le nonnegative)
   let grids := CornerGrids.build fixed tolerance tolerancePositive
@@ -176,14 +178,14 @@ namespace CornerRequest
     (Data.Nat.Order.le_max_right _ _).trans (Data.Nat.Order.le_max_left _ _), Data.Nat.Order.le_max_right _ _⟩
 
 /-- The complete actual endpoint-jump replacement fits the retained corner target at every paid stage. -/
-theorem bound {retained : Matched.CrossingBank request mesh}
+theorem bound {retained : CrossingBank request mesh}
     {allocated : Matched.CrossingRequests (PeriodMatrix.standardDifferential i)
       (PeriodMatrix.standardDifferential j)
-      firstParent secondParent tolerance floor retained} {cache : RegularMeshes.Numerics domains stage}
-    {cornerTarget : Fraction.Rational} (corner :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.CrossingCornerBudget.CornerRequest fixed i j cornerTarget) (later :
+      firstParent secondParent tolerance floor retained} {cache : Numerics domains stage}
+    {cornerTarget : Rational} (corner :
+      CornerRequest fixed i j cornerTarget) (later :
       corner.index ≤ stage)
-    (samples : CrossingRequests.Samples allocated cache.normalize) :
+    (samples : Samples allocated cache.normalize) :
     Data.Gaussian.Norm.Basic.normSq (samples.endpointJump - retained.cornerJump cache.normalize i j) ≤
       cornerTarget :=
   (samples.corner_jump_bound corner.firstMagnitude corner.secondMagnitude

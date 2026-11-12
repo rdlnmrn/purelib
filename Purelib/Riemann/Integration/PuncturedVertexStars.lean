@@ -16,6 +16,8 @@ import Purelib.Polynomial.Geometry.Grid.FramedVertexStar
 import Purelib.Data.List.Attach
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Curves.Hyperelliptic.Branches
+
 public section
 
 /-!
@@ -37,7 +39,7 @@ open _root_.Purelib.Polynomial.Geometry.Grid renaming ClearGrid -> Grid
 open _root_.Purelib.Polynomial.Geometry.Grid.ClearGrid (Cell)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
 
 open Purelib.Curves in
@@ -49,8 +51,8 @@ set_option genInjectivity false in
 The cell contains the displayed point, and the classification preserves its exact position in the existing regular or
 hole bank. -/
 structure StarEntry (base : FramedPuncturedGrid curve branches higher) (point : Gaussian.Basic.Canonical) where
-  /-- The retained grid cell incident to the point. -/ cell : Geometry.Grid.ClearGrid.Cell curve.polynomial
-    (Hyperelliptic.Branches.Cuts.Ambient curve)
+  /-- The retained grid cell incident to the point. -/ cell : Cell curve.polynomial
+    (Cuts.Ambient curve)
   /-- The cell's retained classification in the regular and hole banks. -/ classified : LocatedCell base.faces.regulars
     base.faces.holes cell
   /-- The displayed point lies in this cell's box. -/ contains : cell.box.Contains point
@@ -59,7 +61,7 @@ constructive_injectivity StarEntry
 
 namespace StarEntry
 
-variable {point : Purelib.Data.Gaussian.Basic.Canonical}
+variable {point : Data.Gaussian.Basic.Canonical}
 
 /-- Two classified holes incident to the same point have the same cell.
 
@@ -80,9 +82,9 @@ open Purelib.Curves in
 
 Every retained hole lies strictly inside the frame, contradicting any boundary-coordinate equality. -/
 theorem no_hole_on_frame (entry : StarEntry base point) (hole : HoleLocation base.faces.holes entry.cell)
-    (boundary : point.re = (Hyperelliptic.Branches.Cuts.Ambient curve).xLower ∨ point.re =
-      (Hyperelliptic.Branches.Cuts.Ambient curve).xUpper ∨
-      point.im = (Hyperelliptic.Branches.Cuts.Ambient curve).yLower ∨ point.im = (Hyperelliptic.Branches.Cuts.Ambient
+    (boundary : point.re = (Cuts.Ambient curve).xLower ∨ point.re =
+      (Cuts.Ambient curve).xUpper ∨
+      point.im = (Cuts.Ambient curve).yLower ∨ point.im = (Cuts.Ambient
         curve).yUpper) : False := by
   have inside : hole.hole.cell.box.Contains point := by rw [hole.cell_eq]; exact entry.contains
   have strict := base.hole_interior hole.hole
@@ -182,7 +184,7 @@ set_option genInjectivity false in
 The retained entries project to the geometric star's ordered cells, tying every classification to the original framed
 grid. -/
 structure VertexStar (base : FramedPuncturedGrid curve branches higher) (point : Gaussian.Basic.Canonical) where
-  /-- The retained geometric vertex star. -/ geometry : Polynomial.Geometry.Grid.ClearGrid.VertexStar base.bank.grid
+  /-- The retained geometric vertex star. -/ geometry : Geometry.Grid.ClearGrid.VertexStar base.bank.grid
     point
   /-- The ordered list of classified incident cells. -/ entries : List (StarEntry base point)
   /-- The classified entries project exactly to the geometric star's cells. -/ entries_eq : entries.map StarEntry.cell =
@@ -195,7 +197,7 @@ constructive_injectivity VertexStar
 
 namespace VertexStar
 
-variable {point : Purelib.Data.Gaussian.Basic.Canonical}
+variable {point : Data.Gaussian.Basic.Canonical}
 
 open Purelib.Data in
 open Purelib.Polynomial in
@@ -204,8 +206,8 @@ open Purelib.Polynomial in
 At a certified grid vertex, retain each incident cell's location and containment proof, then compute its hole count
 once. -/
 @[expose] def build (base : FramedPuncturedGrid curve branches higher) (point : Gaussian.Basic.Canonical)
-    (onGrid : Polynomial.Geometry.Grid.FromStates.ContainsVertex base.bank.grid point) : VertexStar base point :=
-  let geometry := Polynomial.Geometry.Grid.ClearGrid.VertexStar.build base.bank.grid point onGrid
+    (onGrid : Geometry.Grid.FromStates.ContainsVertex base.bank.grid point) : VertexStar base point :=
+  let geometry := Geometry.Grid.ClearGrid.VertexStar.build base.bank.grid point onGrid
   let entries := geometry.cells.attach.map fun cell =>
     (⟨cell.val, base.faces.locateCell cell.val (geometry.member cell.property), geometry.contains cell.property⟩ :
       StarEntry base point)
@@ -213,8 +215,8 @@ once. -/
     entries := entries
     entries_eq := by
       dsimp only [entries]
-      rw [Purelib.Data.List.Map.map_map]
-      exact Purelib.Data.List.attach_map_subtype_val _
+      rw [Data.List.Map.map_map]
+      exact Data.List.attach_map_subtype_val _
     holeCount := StarEntry.countHoles entries
     holeCount_eq := rfl }
 
@@ -224,7 +226,7 @@ Applying list length to the retained projection equation preserves its exact cla
 gives the same count for the original geometric-cell cache. -/
 theorem length_eq_geometry (star : VertexStar base point) : star.entries.length = star.geometry.cells.length := by
   have lengths := congrArg List.length star.entries_eq
-  rw [Purelib.Data.List.Map.length_map] at lengths
+  rw [Data.List.Map.length_map] at lengths
   exact lengths
 
 /-- A classified vertex star has at most four incident entries. -/
@@ -244,9 +246,9 @@ theorem holeCount_le_one (star : VertexStar base point) : star.holeCount ≤ 1 :
 open Purelib.Curves in
 /-- The cached hole count is zero at an ambient-frame point. -/
 theorem holeCount_eq_zero_on_frame (star : VertexStar base point)
-    (boundary : point.re = (Hyperelliptic.Branches.Cuts.Ambient curve).xLower ∨ point.re =
-      (Hyperelliptic.Branches.Cuts.Ambient curve).xUpper ∨
-      point.im = (Hyperelliptic.Branches.Cuts.Ambient curve).yLower ∨ point.im = (Hyperelliptic.Branches.Cuts.Ambient
+    (boundary : point.re = (Cuts.Ambient curve).xLower ∨ point.re =
+      (Cuts.Ambient curve).xUpper ∨
+      point.im = (Cuts.Ambient curve).yLower ∨ point.im = (Cuts.Ambient
         curve).yUpper) : star.holeCount = 0 := by
   rw [star.holeCount_eq]
   apply StarEntry.countHoles_zero
@@ -281,8 +283,8 @@ open Purelib.Curves in
 open Purelib.Data in
 open Purelib.Polynomial in
 /-- Every actual grid cell containing the vertex has a classified entry in the star. -/
-theorem covers (star : VertexStar base point) {cell : Geometry.Grid.ClearGrid.Cell curve.polynomial
-  (Hyperelliptic.Branches.Cuts.Ambient curve)}
+theorem covers (star : VertexStar base point) {cell : Cell curve.polynomial
+  (Cuts.Ambient curve)}
     (member : cell ∈ base.bank.grid.cells) (inside : cell.box.Contains point) : ∃ entry ∈ star.entries, entry.cell =
       cell := by
   have inGeometry := star.geometry.covers member inside

@@ -72,7 +72,7 @@ choice principle enters the construction.
 
 namespace Purelib.Geometry.Rotations.Axis.Prescribed
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 /-- The finite square test occurring in Theorem 65. -/
 @[expose] def prescribedAxisSquareValue (axis : Coordinates3.Vector K)
@@ -84,7 +84,7 @@ set_option genInjectivity false in
 of projective axis lines. -/
 structure PrescribedAxisRotation (axis : Coordinates3.Vector K)
   (spread : K) where
-  /-- The retained rotation with the prescribed axis and half spread. -/ rotation : Rotations.Basic.Rotation K
+  /-- The retained rotation with the prescribed axis and half spread. -/ rotation : Basic.Rotation K
   /-- The retained rotation has half spread different from one. -/ notHalfTurn : Spread.halfSpread rotation ≠ 1
   /-- The retained rotation has exactly the requested half spread. -/ halfSpread_eq : Spread.halfSpread rotation =
     spread
@@ -104,22 +104,22 @@ nonzero square root. -/
     (axisNonNull : axis.quadrance ≠ 0)
     (spreadNotOne : spread ≠ 1)
     (twoNonzero : (2 : K) ≠ 0) :
-    Witness.NonzeroSquare (Purelib.Geometry.Rotations.Axis.Prescribed.prescribedAxisSquareValue axis spread) where
+    Witness.NonzeroSquare (prescribedAxisSquareValue axis spread) where
   root := candidate.anchorScale * axis.quadrance * (1 - spread)
   rootNonzero := by
-    exact Algebra.Field.ExplicitField.mul_ne_zero
-      (Algebra.Field.ExplicitField.mul_ne_zero candidate.anchorScaleNonzero axisNonNull)
-      (Purelib.Algebra.Field.ExplicitField.one_sub_ne_zero_of_ne_one spreadNotOne)
+    exact ExplicitField.mul_ne_zero
+      (ExplicitField.mul_ne_zero candidate.anchorScaleNonzero axisNonNull)
+      (ExplicitField.one_sub_ne_zero_of_ne_one spreadNotOne)
   square := by
-    have complementNonzero := Purelib.Algebra.Field.ExplicitField.one_sub_ne_zero_of_ne_one spreadNotOne
-    have complementCancel := Algebra.Field.ExplicitField.mul_inv_cancel
+    have complementNonzero := ExplicitField.one_sub_ne_zero_of_ne_one spreadNotOne
+    have complementCancel := ExplicitField.mul_inv_cancel
       (1 - spread) complementNonzero
     have anchorQuadrance := Recovery.quadrance_rotationAnchorVector
       candidate.rotation candidate.notHalfTurn twoNonzero
     rw [candidate.halfSpread_eq, candidate.anchor_eq,
       Coordinates3.Vector.quadrance_scale] at anchorQuadrance
-    unfold Purelib.Geometry.Rotations.Axis.Prescribed.prescribedAxisSquareValue
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv] at anchorQuadrance
+    unfold prescribedAxisSquareValue
+    simp only [ExplicitField.div_eq_mul_inv] at anchorQuadrance
     calc
       (candidate.anchorScale * axis.quadrance * (1 - spread)) ^ 2 =
           (candidate.anchorScale ^ 2 * axis.quadrance) *
@@ -139,39 +139,39 @@ nonzero square root. -/
 /-- The anchor scalar computed from a supplied root of the Theorem 65 condition. -/
 @[expose] def prescribedAnchorScale (axis : Coordinates3.Vector K)
   (spread : K)
-    (certificate : Witness.NonzeroSquare (Geometry.Rotations.Axis.Prescribed.prescribedAxisSquareValue axis spread)) : K
+    (certificate : Witness.NonzeroSquare (prescribedAxisSquareValue axis spread)) : K
       :=
   certificate.root / (axis.quadrance * (1 - spread))
 
 /-- The root-derived anchor scale is nonzero for a non-null axis and a half spread different from one. -/
 theorem prescribedAnchorScale_nonzero (axis : Coordinates3.Vector K)
   (spread : K)
-    (certificate : Witness.NonzeroSquare (Geometry.Rotations.Axis.Prescribed.prescribedAxisSquareValue axis spread))
+    (certificate : Witness.NonzeroSquare (prescribedAxisSquareValue axis spread))
     (axisNonNull : axis.quadrance ≠ 0) (spreadNotOne : spread ≠ 1) :
-    Prescribed.prescribedAnchorScale axis spread certificate ≠ 0 := by
-  unfold Prescribed.prescribedAnchorScale
-  exact Algebra.Field.ExplicitField.div_ne_zero certificate.rootNonzero
-    (Algebra.Field.ExplicitField.mul_ne_zero axisNonNull
-      (Purelib.Algebra.Field.ExplicitField.one_sub_ne_zero_of_ne_one spreadNotOne))
+    prescribedAnchorScale axis spread certificate ≠ 0 := by
+  unfold prescribedAnchorScale
+  exact ExplicitField.div_ne_zero certificate.rootNonzero
+    (ExplicitField.mul_ne_zero axisNonNull
+      (ExplicitField.one_sub_ne_zero_of_ne_one spreadNotOne))
 
 /-- The computed scalar has exactly the anchor quadrance required by the half-spread equation. -/
 theorem prescribedAnchorScale_quadrance (axis : Coordinates3.Vector K)
   (spread : K)
-    (certificate : Witness.NonzeroSquare (Geometry.Rotations.Axis.Prescribed.prescribedAxisSquareValue axis spread))
+    (certificate : Witness.NonzeroSquare (prescribedAxisSquareValue axis spread))
     (axisNonNull : axis.quadrance ≠ 0) (spreadNotOne : spread ≠ 1) :
-    Prescribed.prescribedAnchorScale axis spread certificate ^ 2 * axis.quadrance =
+    prescribedAnchorScale axis spread certificate ^ 2 * axis.quadrance =
       spread / (1 - spread) := by
   let complement := 1 - spread
   let denominator := axis.quadrance * complement
   have complementNonzero : complement ≠ 0 :=
-    Purelib.Algebra.Field.ExplicitField.one_sub_ne_zero_of_ne_one spreadNotOne
+    ExplicitField.one_sub_ne_zero_of_ne_one spreadNotOne
   have denominatorNonzero : denominator ≠ 0 :=
-    Algebra.Field.ExplicitField.mul_ne_zero axisNonNull complementNonzero
-  have denominatorCancel := Algebra.Field.ExplicitField.mul_inv_cancel denominator
+    ExplicitField.mul_ne_zero axisNonNull complementNonzero
+  have denominatorCancel := ExplicitField.mul_inv_cancel denominator
     denominatorNonzero
-  apply Purelib.Algebra.Field.Inverse.eq_div_of_mul_eq complementNonzero
-  unfold Prescribed.prescribedAnchorScale
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  apply Inverse.eq_div_of_mul_eq complementNonzero
+  unfold prescribedAnchorScale
+  simp only [ExplicitField.div_eq_mul_inv]
   change (certificate.root * denominator⁻¹) ^ 2 * axis.quadrance *
       complement = spread
   calc
@@ -194,20 +194,20 @@ theorem prescribedAnchorScale_quadrance (axis : Coordinates3.Vector K)
 /-- The constructed anchor denominator times the complementary half spread is one. -/
 private theorem prescribedAnchor_capDenominator_mul
     (axis : Coordinates3.Vector K) (spread : K)
-    (certificate : Witness.NonzeroSquare (Geometry.Rotations.Axis.Prescribed.prescribedAxisSquareValue axis spread))
+    (certificate : Witness.NonzeroSquare (prescribedAxisSquareValue axis spread))
     (axisNonNull : axis.quadrance ≠ 0) (spreadNotOne : spread ≠ 1) :
     Cap.capDenominator
-        (Coordinates3.Vector.scale (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate)
+        (Coordinates3.Vector.scale (prescribedAnchorScale axis spread certificate)
           axis) *
       (1 - spread) = 1 := by
   have quadranceFormula := prescribedAnchorScale_quadrance axis spread
     certificate axisNonNull spreadNotOne
-  have complementNonzero := Purelib.Algebra.Field.ExplicitField.one_sub_ne_zero_of_ne_one spreadNotOne
-  have complementCancel := Algebra.Field.ExplicitField.mul_inv_cancel
+  have complementNonzero := ExplicitField.one_sub_ne_zero_of_ne_one spreadNotOne
+  have complementCancel := ExplicitField.mul_inv_cancel
     (1 - spread) complementNonzero
   unfold Cap.capDenominator
   rw [Coordinates3.Vector.quadrance_scale, quadranceFormula]
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  simp only [ExplicitField.div_eq_mul_inv]
   calc
     (1 + spread * (1 - spread)⁻¹) * (1 - spread) =
         (1 - spread) + spread *
@@ -224,32 +224,32 @@ private theorem prescribedAnchor_capDenominator_mul
 /-- The root-derived prescribed anchor has nonzero cap denominator. -/
 theorem prescribedAnchor_capDefined (axis : Coordinates3.Vector K)
   (spread : K)
-    (certificate : Witness.NonzeroSquare (Geometry.Rotations.Axis.Prescribed.prescribedAxisSquareValue axis spread))
+    (certificate : Witness.NonzeroSquare (prescribedAxisSquareValue axis spread))
     (axisNonNull : axis.quadrance ≠ 0) (spreadNotOne : spread ≠ 1) :
     Cap.capDenominator
-      (Coordinates3.Vector.scale (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate)
+      (Coordinates3.Vector.scale (prescribedAnchorScale axis spread certificate)
         axis) ≠ 0 := by
   intro denominatorZero
   have product := prescribedAnchor_capDenominator_mul axis spread
     certificate
     axisNonNull spreadNotOne
   rw [denominatorZero, zero_mul] at product
-  exact (Purelib.Algebra.Field.Characteristic.Nonzero.one_ne_zero_of_nonzero axisNonNull) product.symm
+  exact (Characteristic.Nonzero.one_ne_zero_of_nonzero axisNonNull) product.symm
 
 /-- The cap built from the supplied square certificate has the requested half spread. -/
 theorem halfSpread_prescribedAnchor (axis : Coordinates3.Vector K)
   (spread : K)
-    (certificate : Witness.NonzeroSquare (Geometry.Rotations.Axis.Prescribed.prescribedAxisSquareValue axis spread))
+    (certificate : Witness.NonzeroSquare (prescribedAxisSquareValue axis spread))
     (axisNonNull : axis.quadrance ≠ 0) (spreadNotOne : spread ≠ 1)
     (twoNonzero : (2 : K) ≠ 0) :
     Spread.halfSpread
         (Cap.capRotation
-          (Coordinates3.Vector.scale (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate)
+          (Coordinates3.Vector.scale (prescribedAnchorScale axis spread certificate)
             axis)
           (prescribedAnchor_capDefined axis spread certificate axisNonNull
             spreadNotOne)) = spread := by
   let anchorVector :=
-    Coordinates3.Vector.scale (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate) axis
+    Coordinates3.Vector.scale (prescribedAnchorScale axis spread certificate) axis
   let defined := prescribedAnchor_capDefined axis spread certificate
     axisNonNull spreadNotOne
   let negativeDefined := prescribedAnchor_capDefined axis spread
@@ -257,19 +257,19 @@ theorem halfSpread_prescribedAnchor (axis : Coordinates3.Vector K)
   have denominatorProduct := prescribedAnchor_capDenominator_mul axis
     spread
     certificate axisNonNull spreadNotOne
-  have denominatorInverse := Purelib.Algebra.Field.Inverse.inverse_eq_of_mul_eq_one defined
+  have denominatorInverse := Inverse.inverse_eq_of_mul_eq_one defined
     denominatorProduct
   have quadranceFormula := prescribedAnchorScale_quadrance axis spread
     certificate axisNonNull spreadNotOne
-  have complementNonzero := Purelib.Algebra.Field.ExplicitField.one_sub_ne_zero_of_ne_one spreadNotOne
-  have complementCancel := Algebra.Field.ExplicitField.mul_inv_cancel
+  have complementNonzero := ExplicitField.one_sub_ne_zero_of_ne_one spreadNotOne
+  have complementCancel := ExplicitField.mul_inv_cancel
     (1 - spread) complementNonzero
   rw [Spread.halfSpread_cap anchorVector defined twoNonzero]
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  simp only [ExplicitField.div_eq_mul_inv]
   rw [denominatorInverse]
   unfold anchorVector
   rw [Coordinates3.Vector.quadrance_scale, quadranceFormula]
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  simp only [ExplicitField.div_eq_mul_inv]
   calc
     spread * (1 - spread)⁻¹ * (1 - spread) =
         spread * ((1 - spread) * (1 - spread)⁻¹) := by ring1
@@ -278,21 +278,21 @@ theorem halfSpread_prescribedAnchor (axis : Coordinates3.Vector K)
 /-- Sufficiency in Theorem 65 as an executable construction. -/
 @[expose] def prescribedAxisRotationOfSquare (axis :
   Coordinates3.Vector K) (spread : K)
-    (certificate : Witness.NonzeroSquare (Geometry.Rotations.Axis.Prescribed.prescribedAxisSquareValue axis spread))
+    (certificate : Witness.NonzeroSquare (prescribedAxisSquareValue axis spread))
     (axisNonNull : axis.quadrance ≠ 0) (spreadNotOne : spread ≠ 1)
     (twoNonzero : (2 : K) ≠ 0) : PrescribedAxisRotation axis spread where
   rotation := Cap.capRotation
-    (Coordinates3.Vector.scale (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate) axis)
+    (Coordinates3.Vector.scale (prescribedAnchorScale axis spread certificate) axis)
     (prescribedAnchor_capDefined axis spread certificate axisNonNull
       spreadNotOne)
   notHalfTurn := Spread.halfSpread_cap_ne_one _ _ twoNonzero
   halfSpread_eq := halfSpread_prescribedAnchor axis spread certificate
     axisNonNull spreadNotOne twoNonzero
-  anchorScale := Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate
+  anchorScale := prescribedAnchorScale axis spread certificate
   anchorScaleNonzero := prescribedAnchorScale_nonzero axis spread certificate
     axisNonNull spreadNotOne
   anchor_eq := by
-    unfold Purelib.Geometry.Rotations.Axis.Recovery.rotationAnchorVector
+    unfold Recovery.rotationAnchorVector
     rw [Recovery.rotationAnchor_cap _ _ twoNonzero]
     exact Antisymmetric.anchorVector_anchor _
 
@@ -302,19 +302,19 @@ theorem prescribedAxisRotation_exists_iff
     (axisNonNull : axis.quadrance ≠ 0) (_spreadNonzero : spread ≠ 0)
     (spreadNotOne : spread ≠ 1) (twoNonzero : (2 : K) ≠ 0) :
     Nonempty (PrescribedAxisRotation axis spread) ↔
-      Nonempty (Witness.NonzeroSquare (Geometry.Rotations.Axis.Prescribed.prescribedAxisSquareValue axis spread)) := by
+      Nonempty (Witness.NonzeroSquare (prescribedAxisSquareValue axis spread)) := by
   constructor
   · rintro ⟨candidate⟩
     exact ⟨candidate.squareCertificate axisNonNull spreadNotOne twoNonzero⟩
   · rintro ⟨certificate⟩
-    exact ⟨Geometry.Rotations.Axis.Prescribed.prescribedAxisRotationOfSquare axis spread certificate axisNonNull
+    exact ⟨prescribedAxisRotationOfSquare axis spread certificate axisNonNull
       spreadNotOne twoNonzero⟩
 
 /-- Multiplication by four does not change the existence condition, because four is the displayed square of two. This is
 Theorem 65's equivalent spread formulation. -/
 theorem prescribedAxis_square_iff_spreadSquare
     (axis : Coordinates3.Vector K) (spread : K) (twoNonzero : (2 : K) ≠ 0) :
-    Nonempty (Witness.NonzeroSquare (Prescribed.prescribedAxisSquareValue axis spread)) ↔
+    Nonempty (Witness.NonzeroSquare (prescribedAxisSquareValue axis spread)) ↔
       Nonempty
         (Witness.NonzeroSquare
           (axis.quadrance * (4 * spread * (1 - spread)))) := by
@@ -322,24 +322,24 @@ theorem prescribedAxis_square_iff_spreadSquare
   · rintro ⟨certificate⟩
     refine ⟨{
       root := 2 * certificate.root
-      rootNonzero := Algebra.Field.ExplicitField.mul_ne_zero twoNonzero
+      rootNonzero := ExplicitField.mul_ne_zero twoNonzero
         certificate.rootNonzero
       square := ?_ }⟩
-    unfold Prescribed.prescribedAxisSquareValue at certificate
+    unfold prescribedAxisSquareValue at certificate
     calc
       (2 * certificate.root) ^ 2 = 4 * certificate.root ^ 2 := by ring1
       _ = 4 * (axis.quadrance * spread * (1 - spread)) := by
         rw [certificate.square]
       _ = axis.quadrance * (4 * spread * (1 - spread)) := by ring1
   · rintro ⟨certificate⟩
-    have twoCancel := Algebra.Field.ExplicitField.mul_inv_cancel (2 : K) twoNonzero
+    have twoCancel := ExplicitField.mul_inv_cancel (2 : K) twoNonzero
     refine ⟨{
       root := certificate.root / 2
-      rootNonzero := Algebra.Field.ExplicitField.div_ne_zero certificate.rootNonzero
+      rootNonzero := ExplicitField.div_ne_zero certificate.rootNonzero
         twoNonzero
       square := ?_ }⟩
-    unfold Prescribed.prescribedAxisSquareValue
-    simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    unfold prescribedAxisSquareValue
+    simp only [ExplicitField.div_eq_mul_inv]
     calc
       (certificate.root * (2 : K)⁻¹) ^ 2 =
           certificate.root ^ 2 * (2 : K)⁻¹ ^ 2 := by ring1
@@ -354,21 +354,21 @@ theorem prescribedAxis_square_iff_spreadSquare
 /-- Negating the square witness negates the computed anchor scale. -/
 theorem prescribedAnchorScale_neg (axis : Coordinates3.Vector K)
   (spread : K)
-    (certificate : Witness.NonzeroSquare (Geometry.Rotations.Axis.Prescribed.prescribedAxisSquareValue axis spread)) :
-    Prescribed.prescribedAnchorScale axis spread certificate.neg =
-      -Prescribed.prescribedAnchorScale axis spread certificate := by
-  unfold Prescribed.prescribedAnchorScale Witness.NonzeroSquare.neg
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+    (certificate : Witness.NonzeroSquare (prescribedAxisSquareValue axis spread)) :
+    prescribedAnchorScale axis spread certificate.neg =
+      -prescribedAnchorScale axis spread certificate := by
+  unfold prescribedAnchorScale Witness.NonzeroSquare.neg
+  simp only [ExplicitField.div_eq_mul_inv]
   ring1
 
 /-- Negating the square witness negates the computed anchor vector. -/
 theorem prescribedAnchorVector_neg (axis : Coordinates3.Vector K)
   (spread : K)
-    (certificate : Witness.NonzeroSquare (Geometry.Rotations.Axis.Prescribed.prescribedAxisSquareValue axis spread)) :
-    Coordinates3.Vector.scale (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate.neg)
+    (certificate : Witness.NonzeroSquare (prescribedAxisSquareValue axis spread)) :
+    Coordinates3.Vector.scale (prescribedAnchorScale axis spread certificate.neg)
       axis =
       Coordinates3.Vector.neg
-        (Coordinates3.Vector.scale (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate)
+        (Coordinates3.Vector.scale (prescribedAnchorScale axis spread certificate)
           axis) := by
   rw [prescribedAnchorScale_neg]
   ext <;> unfold Coordinates3.Vector.scale Coordinates3.Vector.neg <;> ring1
@@ -376,21 +376,21 @@ theorem prescribedAnchorVector_neg (axis : Coordinates3.Vector K)
 /-- The two rotations computed from the two square roots are inverse in both orders. -/
 theorem prescribedAxisRotation_pair_inverse
     (axis : Coordinates3.Vector K) (spread : K)
-    (certificate : Witness.NonzeroSquare (Geometry.Rotations.Axis.Prescribed.prescribedAxisSquareValue axis spread))
+    (certificate : Witness.NonzeroSquare (prescribedAxisSquareValue axis spread))
     (axisNonNull : axis.quadrance ≠ 0) (spreadNotOne : spread ≠ 1)
     (twoNonzero : (2 : K) ≠ 0) :
     Matrix3.mul
-        (Geometry.Rotations.Axis.Prescribed.prescribedAxisRotationOfSquare axis spread certificate axisNonNull
+        (prescribedAxisRotationOfSquare axis spread certificate axisNonNull
           spreadNotOne twoNonzero).rotation.matrix
-        (Geometry.Rotations.Axis.Prescribed.prescribedAxisRotationOfSquare axis spread certificate.neg axisNonNull
+        (prescribedAxisRotationOfSquare axis spread certificate.neg axisNonNull
           spreadNotOne twoNonzero).rotation.matrix = Matrix3.identity ∧
       Matrix3.mul
-        (Geometry.Rotations.Axis.Prescribed.prescribedAxisRotationOfSquare axis spread certificate.neg axisNonNull
+        (prescribedAxisRotationOfSquare axis spread certificate.neg axisNonNull
           spreadNotOne twoNonzero).rotation.matrix
-        (Geometry.Rotations.Axis.Prescribed.prescribedAxisRotationOfSquare axis spread certificate axisNonNull
+        (prescribedAxisRotationOfSquare axis spread certificate axisNonNull
           spreadNotOne twoNonzero).rotation.matrix = Matrix3.identity := by
   let anchorVector :=
-    Coordinates3.Vector.scale (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate) axis
+    Coordinates3.Vector.scale (prescribedAnchorScale axis spread certificate) axis
   let defined := prescribedAnchor_capDefined axis spread certificate
     axisNonNull spreadNotOne
   let negativeDefined := prescribedAnchor_capDefined axis spread
@@ -399,16 +399,16 @@ theorem prescribedAxisRotation_pair_inverse
   have negativeCap :
       Cap.cap
           (Coordinates3.Vector.scale
-            (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate.neg) axis)
+            (prescribedAnchorScale axis spread certificate.neg) axis)
           negativeDefined =
         Cap.cap (Coordinates3.Vector.neg anchorVector) (Cap.cap_neg_defined anchorVector defined) :=
-    Geometry.Rotations.Cayley.Cap.cap_congr_vector oppositeAnchor negativeDefined
+    Cap.cap_congr_vector oppositeAnchor negativeDefined
       (Cap.cap_neg_defined anchorVector defined)
   constructor
   · change Matrix3.mul (Cap.cap anchorVector defined)
         (Cap.cap
           (Coordinates3.Vector.scale
-            (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate.neg) axis)
+            (prescribedAnchorScale axis spread certificate.neg) axis)
           negativeDefined) =
         Matrix3.identity
     rw [negativeCap]
@@ -416,7 +416,7 @@ theorem prescribedAxisRotation_pair_inverse
   · change Matrix3.mul
         (Cap.cap
           (Coordinates3.Vector.scale
-            (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate.neg) axis)
+            (prescribedAnchorScale axis spread certificate.neg) axis)
           negativeDefined)
         (Cap.cap anchorVector defined) = Matrix3.identity
     rw [negativeCap]
@@ -425,13 +425,13 @@ theorem prescribedAxisRotation_pair_inverse
 /-- The root-derived anchor on a non-null axis is nonzero. -/
 private theorem prescribedAnchorVector_ne_zero
     (axis : Coordinates3.Vector K) (spread : K)
-    (certificate : Witness.NonzeroSquare (Geometry.Rotations.Axis.Prescribed.prescribedAxisSquareValue axis spread))
+    (certificate : Witness.NonzeroSquare (prescribedAxisSquareValue axis spread))
     (axisNonNull : axis.quadrance ≠ 0) (spreadNotOne : spread ≠ 1) :
-    Coordinates3.Vector.scale (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate) axis ≠
+    Coordinates3.Vector.scale (prescribedAnchorScale axis spread certificate) axis ≠
       Coordinates3.Vector.zero := by
   intro vectorZero
   have scaledNonNull := Coordinates3.Vector.quadrance_scale_ne_zero
-    (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate) axis
+    (prescribedAnchorScale axis spread certificate) axis
     (prescribedAnchorScale_nonzero axis spread certificate axisNonNull
       spreadNotOne) axisNonNull
   apply scaledNonNull
@@ -440,15 +440,15 @@ private theorem prescribedAnchorVector_ne_zero
 /-- The two displayed rotations are distinct. -/
 theorem prescribedAxisRotation_pair_distinct
     (axis : Coordinates3.Vector K) (spread : K)
-    (certificate : Witness.NonzeroSquare (Geometry.Rotations.Axis.Prescribed.prescribedAxisSquareValue axis spread))
+    (certificate : Witness.NonzeroSquare (prescribedAxisSquareValue axis spread))
     (axisNonNull : axis.quadrance ≠ 0) (spreadNotOne : spread ≠ 1)
     (twoNonzero : (2 : K) ≠ 0) :
-    (Geometry.Rotations.Axis.Prescribed.prescribedAxisRotationOfSquare axis spread certificate axisNonNull
+    (prescribedAxisRotationOfSquare axis spread certificate axisNonNull
       spreadNotOne twoNonzero).rotation.matrix ≠
-      (Geometry.Rotations.Axis.Prescribed.prescribedAxisRotationOfSquare axis spread certificate.neg axisNonNull
+      (prescribedAxisRotationOfSquare axis spread certificate.neg axisNonNull
         spreadNotOne twoNonzero).rotation.matrix := by
   let anchorVector :=
-    Coordinates3.Vector.scale (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate) axis
+    Coordinates3.Vector.scale (prescribedAnchorScale axis spread certificate) axis
   let defined := prescribedAnchor_capDefined axis spread certificate
     axisNonNull spreadNotOne
   let negativeDefined := prescribedAnchor_capDefined axis spread
@@ -460,15 +460,15 @@ theorem prescribedAxisRotation_pair_distinct
   have negativeCap :
       Cap.cap
           (Coordinates3.Vector.scale
-            (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate.neg) axis)
+            (prescribedAnchorScale axis spread certificate.neg) axis)
           negativeDefined =
         Cap.cap (Coordinates3.Vector.neg anchorVector) (Cap.cap_neg_defined anchorVector defined) :=
-    Geometry.Rotations.Cayley.Cap.cap_congr_vector
+    Cap.cap_congr_vector
       (prescribedAnchorVector_neg axis spread certificate) negativeDefined
       (Cap.cap_neg_defined anchorVector defined)
   change Cap.cap anchorVector defined ≠
     Cap.cap
-      (Coordinates3.Vector.scale (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate.neg)
+      (Coordinates3.Vector.scale (prescribedAnchorScale axis spread certificate.neg)
         axis)
       negativeDefined
   intro equal
@@ -478,26 +478,26 @@ theorem prescribedAxisRotation_pair_distinct
 transversal. -/
 theorem prescribedAxisRotation_pair_oppositeHandedness
     (axis : Coordinates3.Vector K) (spread : K)
-    (certificate : Witness.NonzeroSquare (Geometry.Rotations.Axis.Prescribed.prescribedAxisSquareValue axis spread))
+    (certificate : Witness.NonzeroSquare (prescribedAxisSquareValue axis spread))
     (axisNonNull : axis.quadrance ≠ 0) (spreadNotOne : spread ≠ 1)
     (twoNonzero : (2 : K) ≠ 0) (transversal : Coordinates3.Vector K)
     (perpendicular : transversal.Perpendicular
-      (Coordinates3.Vector.scale (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate)
+      (Coordinates3.Vector.scale (prescribedAnchorScale axis spread certificate)
         axis)) :
     Handedness.handednessDet
-        (Coordinates3.Vector.scale (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate)
+        (Coordinates3.Vector.scale (prescribedAnchorScale axis spread certificate)
           axis)
         transversal
-        (Geometry.Rotations.Axis.Prescribed.prescribedAxisRotationOfSquare axis spread certificate.neg axisNonNull
+        (prescribedAxisRotationOfSquare axis spread certificate.neg axisNonNull
           spreadNotOne twoNonzero).rotation.matrix =
       -Handedness.handednessDet
-        (Coordinates3.Vector.scale (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate)
+        (Coordinates3.Vector.scale (prescribedAnchorScale axis spread certificate)
           axis)
         transversal
-        (Geometry.Rotations.Axis.Prescribed.prescribedAxisRotationOfSquare axis spread certificate axisNonNull
+        (prescribedAxisRotationOfSquare axis spread certificate axisNonNull
           spreadNotOne twoNonzero).rotation.matrix := by
   let anchorVector :=
-    Coordinates3.Vector.scale (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate) axis
+    Coordinates3.Vector.scale (prescribedAnchorScale axis spread certificate) axis
   let defined := prescribedAnchor_capDefined axis spread certificate
     axisNonNull spreadNotOne
   let negativeDefined := prescribedAnchor_capDefined axis spread
@@ -505,15 +505,15 @@ theorem prescribedAxisRotation_pair_oppositeHandedness
   have negativeCap :
       Cap.cap
           (Coordinates3.Vector.scale
-            (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate.neg) axis)
+            (prescribedAnchorScale axis spread certificate.neg) axis)
           negativeDefined =
         Cap.cap (Coordinates3.Vector.neg anchorVector) (Cap.cap_neg_defined anchorVector defined) :=
-    Geometry.Rotations.Cayley.Cap.cap_congr_vector
+    Cap.cap_congr_vector
       (prescribedAnchorVector_neg axis spread certificate) negativeDefined
       (Cap.cap_neg_defined anchorVector defined)
   change Handedness.handednessDet anchorVector transversal
       (Cap.cap
-        (Coordinates3.Vector.scale (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread
+        (Coordinates3.Vector.scale (prescribedAnchorScale axis spread
           certificate.neg) axis)
         negativeDefined) =
       -Handedness.handednessDet anchorVector transversal (Cap.cap anchorVector defined)
@@ -527,14 +527,14 @@ of the two computed matrices. -/
 theorem PrescribedAxisRotation.matrix_eq_pair [DecidableEq K]
     {axis : Coordinates3.Vector K} {spread : K}
     (candidate : PrescribedAxisRotation axis spread)
-    (certificate : Witness.NonzeroSquare (Geometry.Rotations.Axis.Prescribed.prescribedAxisSquareValue axis spread))
+    (certificate : Witness.NonzeroSquare (prescribedAxisSquareValue axis spread))
     (axisNonNull : axis.quadrance ≠ 0) (spreadNotOne : spread ≠ 1)
     (twoNonzero : (2 : K) ≠ 0) :
     candidate.rotation.matrix =
-        (Geometry.Rotations.Axis.Prescribed.prescribedAxisRotationOfSquare axis spread certificate axisNonNull
+        (prescribedAxisRotationOfSquare axis spread certificate axisNonNull
           spreadNotOne twoNonzero).rotation.matrix ∨
       candidate.rotation.matrix =
-        (Geometry.Rotations.Axis.Prescribed.prescribedAxisRotationOfSquare axis spread certificate.neg axisNonNull
+        (prescribedAxisRotationOfSquare axis spread certificate.neg axisNonNull
           spreadNotOne twoNonzero).rotation.matrix := by
   have candidateQuadrance := Recovery.quadrance_rotationAnchorVector candidate.rotation
     candidate.notHalfTurn twoNonzero
@@ -543,8 +543,8 @@ theorem PrescribedAxisRotation.matrix_eq_pair [DecidableEq K]
   have canonicalQuadrance := prescribedAnchorScale_quadrance axis spread
     certificate axisNonNull spreadNotOne
   have scaleSquares : candidate.anchorScale ^ 2 =
-      Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate ^ 2 :=
-    Purelib.Algebra.Field.ExplicitField.eq_of_mul_eq_mul_right axisNonNull (by
+      prescribedAnchorScale axis spread certificate ^ 2 :=
+    ExplicitField.eq_of_mul_eq_mul_right axisNonNull (by
       rw [candidateQuadrance, canonicalQuadrance])
   let recovered := Recovery.rotationAnchorVector candidate.rotation candidate.notHalfTurn
   let recoveredDefined := Recovery.rotationAnchorVector_capDefined candidate.rotation
@@ -559,12 +559,12 @@ theorem PrescribedAxisRotation.matrix_eq_pair [DecidableEq K]
     axisNonNull spreadNotOne
   have recoveredCap : Cap.cap recovered recoveredDefined =
       Cap.cap (Coordinates3.Vector.scale candidate.anchorScale axis) candidateDefined :=
-    Geometry.Rotations.Cayley.Cap.cap_congr_vector candidate.anchor_eq recoveredDefined
+    Cap.cap_congr_vector candidate.anchor_eq recoveredDefined
       candidateDefined
   rcases Squares.eq_or_eq_neg_of_square_eq scaleSquares with scaleEqual | scaleEqual
   · left
     have scaledEqual : Coordinates3.Vector.scale candidate.anchorScale axis =
-        Coordinates3.Vector.scale (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate)
+        Coordinates3.Vector.scale (prescribedAnchorScale axis spread certificate)
           axis :=
       congrArg (fun scalar => Coordinates3.Vector.scale scalar axis) scaleEqual
     calc
@@ -576,21 +576,21 @@ theorem PrescribedAxisRotation.matrix_eq_pair [DecidableEq K]
         recoveredCap
       _ = Cap.cap
           (Coordinates3.Vector.scale
-            (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate) axis)
+            (prescribedAnchorScale axis spread certificate) axis)
           positiveDefined :=
-        Geometry.Rotations.Cayley.Cap.cap_congr_vector scaledEqual candidateDefined
+        Cap.cap_congr_vector scaledEqual candidateDefined
           positiveDefined
-      _ = (Geometry.Rotations.Axis.Prescribed.prescribedAxisRotationOfSquare axis spread certificate axisNonNull
+      _ = (prescribedAxisRotationOfSquare axis spread certificate axisNonNull
           spreadNotOne twoNonzero).rotation.matrix := rfl
   · right
     have scaledEqual : Coordinates3.Vector.scale candidate.anchorScale axis =
-        Coordinates3.Vector.scale (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate.neg)
+        Coordinates3.Vector.scale (prescribedAnchorScale axis spread certificate.neg)
           axis := by
       apply congrArg (fun scalar => Coordinates3.Vector.scale scalar axis)
       calc
         candidate.anchorScale =
-            -Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate := scaleEqual
-        _ = Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate.neg :=
+            -prescribedAnchorScale axis spread certificate := scaleEqual
+        _ = prescribedAnchorScale axis spread certificate.neg :=
           (prescribedAnchorScale_neg axis spread certificate).symm
     calc
       candidate.rotation.matrix =
@@ -601,11 +601,11 @@ theorem PrescribedAxisRotation.matrix_eq_pair [DecidableEq K]
         recoveredCap
       _ = Cap.cap
           (Coordinates3.Vector.scale
-            (Geometry.Rotations.Axis.Prescribed.prescribedAnchorScale axis spread certificate.neg) axis)
+            (prescribedAnchorScale axis spread certificate.neg) axis)
           negativeDefined :=
-        Geometry.Rotations.Cayley.Cap.cap_congr_vector scaledEqual candidateDefined
+        Cap.cap_congr_vector scaledEqual candidateDefined
           negativeDefined
-      _ = (Geometry.Rotations.Axis.Prescribed.prescribedAxisRotationOfSquare axis spread certificate.neg
+      _ = (prescribedAxisRotationOfSquare axis spread certificate.neg
           axisNonNull spreadNotOne twoNonzero).rotation.matrix := rfl
 
 /-- The endpoint `p=1`: the canonical half turn about the supplied non-null axis has half spread one. -/
@@ -628,10 +628,10 @@ theorem prescribedAxis_halfTurn_unique (axis : Coordinates3.Vector K)
 /-- The endpoint `p=0`: in a field whose only null vector is zero, a half-spread-zero rotation is the identity matrix.
 -/
 theorem rotation_eq_identity_of_halfSpread_zero
-    (separation : NullVectors.SumSquaresSeparate K) (rotation : Rotations.Basic.Rotation K)
+    (separation : NullVectors.SumSquaresSeparate K) (rotation : Basic.Rotation K)
     (spreadZero : Spread.halfSpread rotation = 0) (twoNonzero : (2 : K) ≠ 0) :
     rotation.matrix = Matrix3.identity := by
-  have oneNonzero : (1 : K) ≠ 0 := Purelib.Algebra.Field.Characteristic.Nonzero.one_ne_zero_of_nonzero twoNonzero
+  have oneNonzero : (1 : K) ≠ 0 := Characteristic.Nonzero.one_ne_zero_of_nonzero twoNonzero
   have notHalfTurn : Spread.halfSpread rotation ≠ 1 := by
     intro spreadOne
     apply oneNonzero
@@ -646,7 +646,7 @@ theorem rotation_eq_identity_of_halfSpread_zero
       notHalfTurn twoNonzero
     rw [spreadZero] at quadranceFormula
     simp only [SubNegMonoid.sub_eq_add_neg, SubNegZeroMonoid.neg_zero, AddZeroClass.add_zero,
-      Algebra.Field.ExplicitField.zero_div] at quadranceFormula
+      ExplicitField.zero_div] at quadranceFormula
     exact quadranceFormula
   have recoveredZero := NullVectors.only_zero_null_vector separation recovered recoveredNull
   let zeroDefined : Cap.capDenominator (Coordinates3.Vector.zero : Coordinates3.Vector K) ≠ 0 := by
@@ -657,7 +657,7 @@ theorem rotation_eq_identity_of_halfSpread_zero
     rotation.matrix = Cap.cap recovered recoveredDefined :=
       (Recovery.cap_rotationAnchor rotation notHalfTurn twoNonzero).symm
     _ = Cap.cap Coordinates3.Vector.zero zeroDefined :=
-      Geometry.Rotations.Cayley.Cap.cap_congr_vector recoveredZero recoveredDefined zeroDefined
+      Cap.cap_congr_vector recoveredZero recoveredDefined zeroDefined
     _ = Matrix3.identity := by
       ext <;> unfold Cap.cap Matrix3.add Matrix3.scale Matrix3.identity
         Matrix3.mul Antisymmetric.anchor Coordinates3.Vector.zero <;> ring1
@@ -728,7 +728,7 @@ scale used by the executable square-witness construction. -/
 theorem prescribedAxis_fixedLine_exists_iff (axis : Vector3 K) (spread : K)
     (axisNonNull : axis.quadrance ≠ 0) (spreadNonzero : spread ≠ 0)
     (spreadNotOne : spread ≠ 1) (twoNonzero : (2 : K) ≠ 0) :
-    (∃ rotation : Rotations.Basic.Rotation K, Spread.halfSpread rotation = spread ∧
+    (∃ rotation : Basic.Rotation K, Spread.halfSpread rotation = spread ∧
       ∀ vector : Vector3 K, Matrix3.rowMul vector rotation.matrix = vector ↔
         ∃ factor : K, vector = Vector3.scale factor axis) ↔
       Nonempty (Witness.NonzeroSquare (prescribedAxisSquareValue axis spread)) := by

@@ -115,42 +115,42 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideChartConnections (c
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap}
   {sourceTarget reciprocalTarget coefficientTarget totalTarget areaTarget target energyTarget :
     Coordinate}
-  {minimum index depth readingIndex energyFloor energyDepth : Nat} {box : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {minimum index depth readingIndex energyFloor energyDepth : Nat} {box : Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential index box}
 
 /-- Read the actual same-depth parent fan energies in their original retained order. -/
 @[expose] def EnergyData.values :
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
+    {parents : List (CenteredEdge curve differential)} → {covers :
       UniformReciprocalCover.ParentCovers parents} →
-    {prepared : ParentJoins.SideBank regular covers} → {requests : SideBank.Requests sourceTarget reciprocalTarget
+    {prepared : SideBank regular covers} → {requests : Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared} →
-    (evaluated : SideBank.Evaluations sample depth readingIndex requests) → (charts :
-      SideChartRequests.ChartReplacements target evaluated) →
-    SideEnergyRequests.EnergyData energyTarget energyFloor energyDepth evaluated charts → List
-      InverseRootPolynomial.Gaussian
+    (evaluated : Evaluations sample depth readingIndex requests) → (charts :
+      ChartReplacements target evaluated) →
+    EnergyData energyTarget energyFloor energyDepth evaluated charts → List
+      Gaussian
   | _, _, _, _, .nil, .nil, _ => []
   | _, _, _, _, .cons _ rest, .cons _ _ tail, energies => energies.1.val.connection.energy :: values rest tail
     energies.2
 
 /-- Read each actual shifted endpoint-potential difference with its original inter-parent connector wedge. -/
 @[expose] def EnergyData.boundaryTerms :
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
+    {parents : List (CenteredEdge curve differential)} → {covers :
       UniformReciprocalCover.ParentCovers parents} →
-    {prepared : ParentJoins.SideBank regular covers} → {requests : SideBank.Requests sourceTarget reciprocalTarget
+    {prepared : SideBank regular covers} → {requests : Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared} →
-    (evaluated : SideBank.Evaluations sample depth readingIndex requests) → (charts :
-      SideChartRequests.ChartReplacements target evaluated) →
-    SideEnergyRequests.EnergyData energyTarget energyFloor energyDepth evaluated charts → InverseRootPolynomial.Gaussian
-      → List InverseRootPolynomial.Gaussian
+    (evaluated : Evaluations sample depth readingIndex requests) → (charts :
+      ChartReplacements target evaluated) →
+    EnergyData energyTarget energyFloor energyDepth evaluated charts → Gaussian
+      → List Gaussian
   | _, _, _, _, .nil, .nil, _, _ => []
   | _, _, _, _, .cons first rest, .cons _ _ tail, energies, previous =>
-      (RestoredEnergyBlock.terminalPotential energies.1.val.blocks energies.1.val.firstPotential -
-        energies.1.val.firstPotential + BoundaryRibbon.area previous first.cap.firstValue) ::
+      (terminalPotential energies.1.val.blocks energies.1.val.firstPotential -
+        energies.1.val.firstPotential + area previous first.cap.firstValue) ::
         boundaryTerms rest tail energies.2 first.cap.joined.lastValue
 
 set_option genInjectivity false in
@@ -158,34 +158,34 @@ set_option genInjectivity false in
 
 The actual parent-count error list and signed lower energy bound use the same cached fans and every original connector.
 -/
-structure EnergyConnection {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} {covers :
+structure EnergyConnection {parents : List (CenteredEdge curve differential)} {covers :
   UniformReciprocalCover.ParentCovers parents}
-    {prepared : ParentJoins.SideBank regular covers} {requests : SideBank.Requests sourceTarget reciprocalTarget
+    {prepared : SideBank regular covers} {requests : Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared}
-    (evaluated : SideBank.Evaluations sample depth readingIndex requests) (charts : SideChartRequests.ChartReplacements
+    (evaluated : Evaluations sample depth readingIndex requests) (charts : ChartReplacements
       target evaluated)
-    (energies : SideEnergyRequests.EnergyData energyTarget energyFloor energyDepth evaluated charts) (previous :
-      InverseRootPolynomial.Gaussian) where
-  /-- The cached sum of all actual retained parent fan energies. -/ energy : InverseRootPolynomial.Gaussian
+    (energies : EnergyData energyTarget energyFloor energyDepth evaluated charts) (previous :
+      Gaussian) where
+  /-- The cached sum of all actual retained parent fan energies. -/ energy : Gaussian
   /-- The energy cache is exactly the Gaussian sum of the original parent energy readings. -/ energy_eq : energy =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideEnergy.EnergyData.values evaluated charts energies)
+    gaussianSum
+    (EnergyData.values evaluated charts energies)
   /-- The signed imaginary energy is bounded below by the negative original parent-count energy allowance. -/ lower :
-    -((parents.length : InverseRootPolynomial.Coordinate) * energyTarget) ≤ energy.im / 4
+    -((parents.length : Coordinate) * energyTarget) ≤ energy.im / 4
   /-- The cached complete connected replacement-path trace from the supplied previous value. -/ trace :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The trace cache equals the actual original connected path's full trace area. -/ trace_eq : trace =
-    IncrementArea.traceArea previous (SideChartConnections.connectedPaths evaluated charts previous).flatten
+    traceArea previous (connectedPaths evaluated charts previous).flatten
   /-- The cached sum of original potential differences and inter-parent connector wedges. -/ boundary :
-    InverseRootPolynomial.Gaussian
+    Gaussian
   /-- The boundary cache equals the complete original ordered boundary-term sum. -/ boundary_eq : boundary =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideEnergy.EnergyData.boundaryTerms evaluated charts energies previous)
-  /-- The retained list of actual parent energy-versus-trace residuals. -/ errors : List InverseRootPolynomial.Gaussian
+    gaussianSum
+    (EnergyData.boundaryTerms evaluated charts energies previous)
+  /-- The retained list of actual parent energy-versus-trace residuals. -/ errors : List Gaussian
   /-- There is exactly one retained energy residual per actual original parent. -/ count_eq : errors.length =
     parents.length
   /-- The actual total energy discrepancy equals the sum of the retained parent residuals. -/ discrepancy : energy -
-    (-trace + boundary) = Data.Gaussian.Norm.Sum.Basic.gaussianSum errors
+    (-trace + boundary) = gaussianSum errors
   /-- Every actual parent residual satisfies the original chart and total-error allowance. -/ bounded : ∀ error ∈
     errors, Data.Gaussian.Norm.Basic.normSq error ≤ 256 * (4 * target + totalTarget / 4)
 
@@ -196,61 +196,61 @@ namespace EnergyConnection
 /-- Combine the actual retained same-depth fan energies, preserving every original connector and exact trace and
 boundary readback. -/
 @[expose] def build :
-    {parents : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} → {covers :
+    {parents : List (CenteredEdge curve differential)} → {covers :
       UniformReciprocalCover.ParentCovers parents} →
-    {prepared : ParentJoins.SideBank regular covers} → {requests : SideBank.Requests sourceTarget reciprocalTarget
+    {prepared : SideBank regular covers} → {requests : Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared} →
-    (evaluated : SideBank.Evaluations sample depth readingIndex requests) → (charts :
-      SideChartRequests.ChartReplacements target evaluated) →
-    (energies : SideEnergyRequests.EnergyData energyTarget energyFloor energyDepth evaluated charts) → (previous :
-      InverseRootPolynomial.Gaussian) →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideEnergy.EnergyConnection evaluated charts energies previous
+    (evaluated : Evaluations sample depth readingIndex requests) → (charts :
+      ChartReplacements target evaluated) →
+    (energies : EnergyData energyTarget energyFloor energyDepth evaluated charts) → (previous :
+      Gaussian) →
+    EnergyConnection evaluated charts energies previous
   | _, _, _, _, .nil, .nil, _, _ => by
       refine ⟨0, rfl, ?_, 0, rfl, 0, rfl, [], rfl, ?_, ?_⟩
-      · change -((0 : InverseRootPolynomial.Coordinate) * energyTarget) ≤ 0 / 4
-        rw [show -((0 : InverseRootPolynomial.Coordinate) * energyTarget) = 0 by ring1]; decide
-      · change (0 : InverseRootPolynomial.Gaussian) - (-0 + 0) = 0; ring1
+      · change -((0 : Coordinate) * energyTarget) ≤ 0 / 4
+        rw [show -((0 : Coordinate) * energyTarget) = 0 by ring1]; decide
+      · change (0 : Gaussian) - (-0 + 0) = 0; ring1
       · intro _ member; exact False.elim (List.not_mem_nil member)
   | _, _, _, _, .cons (parents := restParents) first rest, .cons _ head tail, energies, previous => by
       let energy := energies.1.val
       let remaining := build rest tail
         energies.2 first.cap.joined.lastValue
-      let potential := RestoredEnergyBlock.terminalPotential energy.blocks energy.firstPotential - energy.firstPotential
-      let boundary := potential + BoundaryRibbon.area previous first.cap.firstValue
+      let potential := terminalPotential energy.blocks energy.firstPotential - energy.firstPotential
+      let boundary := potential + area previous first.cap.firstValue
       let error := energy.connection.energy - (-energy.connection.trace + potential)
       refine ⟨energy.connection.energy + remaining.energy, ?_, ?_,
-        BoundaryRibbon.area previous first.cap.firstValue + energy.connection.trace + remaining.trace, ?_,
+        area previous first.cap.firstValue + energy.connection.trace + remaining.trace, ?_,
         boundary + remaining.boundary, ?_, error :: remaining.errors, congrArg Nat.succ remaining.count_eq, ?_, ?_⟩
       · change energy.connection.energy + remaining.energy = energy.connection.energy +
-          Data.Gaussian.Norm.Sum.Basic.gaussianSum _
+          gaussianSum _
         rw [remaining.energy_eq]
       · have lower := Fraction.Order.Arithmetic.add_le_add_direct energy.lower.le remaining.lower
-        simp only [List.length_cons, Nat.cast_succ, Purelib.Data.Gaussian.Basic.add_im]
-        exact (by ring1 : -(((restParents.length : InverseRootPolynomial.Coordinate) + 1) * energyTarget) =
-          -energyTarget + -((restParents.length : InverseRootPolynomial.Coordinate) * energyTarget)).trans_le
-          (lower.trans_eq (by simp only [Purelib.Data.Rat.Fraction.Field.div_eq_mul_inv_direct]; ring1))
-      · change _ = IncrementArea.traceArea previous (((first.cap.firstValue - previous) ::
+        simp only [List.length_cons, Nat.cast_succ, Data.Gaussian.Basic.add_im]
+        exact (by ring1 : -(((restParents.length : Coordinate) + 1) * energyTarget) =
+          -energyTarget + -((restParents.length : Coordinate) * energyTarget)).trans_le
+          (lower.trans_eq (by simp only [Fraction.Field.div_eq_mul_inv_direct]; ring1))
+      · change _ = traceArea previous (((first.cap.firstValue - previous) ::
           head.replacement.paths.flatten) ++
-          (SideChartConnections.connectedPaths rest tail first.cap.joined.lastValue).flatten)
+          (connectedPaths rest tail first.cap.joined.lastValue).flatten)
         rw [IncrementArea.traceArea_append]
-        have headTotal : Data.Gaussian.Norm.Sum.Basic.gaussianSum ((first.cap.firstValue - previous) ::
+        have headTotal : gaussianSum ((first.cap.firstValue - previous) ::
           head.replacement.paths.flatten) = first.cap.joined.lastValue - previous := by
-          change first.cap.firstValue - previous + Data.Gaussian.Norm.Sum.Basic.gaussianSum
+          change first.cap.firstValue - previous + gaussianSum
             head.replacement.paths.flatten = _
           rw [← head.replacement.summary.total_eq,
             Replacement.total_preserved head.replacement first.cap.joined,
             first.cap.joined.total_eq]
           ring1
         rw [headTotal, show previous + (first.cap.joined.lastValue - previous) = first.cap.joined.lastValue by ring1,
-          IncrementArea.traceArea, show previous + (first.cap.firstValue - previous) = first.cap.firstValue by ring1,
+          traceArea, show previous + (first.cap.firstValue - previous) = first.cap.firstValue by ring1,
           IncrementArea.traceArea_eq, ← head.replacement.summary.area_eq, ← head.replacement.summary.total_eq,
           ← ChartReplacement.energy_trace head energy, ← remaining.trace_eq]
-      · change boundary + remaining.boundary = boundary + Data.Gaussian.Norm.Sum.Basic.gaussianSum _
+      · change boundary + remaining.boundary = boundary + gaussianSum _
         rw [remaining.boundary_eq]
       · change energy.connection.energy + remaining.energy -
-          (-(BoundaryRibbon.area previous first.cap.firstValue + energy.connection.trace + remaining.trace) + (boundary
+          (-(area previous first.cap.firstValue + energy.connection.trace + remaining.trace) + (boundary
             + remaining.boundary)) =
-          error + Data.Gaussian.Norm.Sum.Basic.gaussianSum remaining.errors
+          error + gaussianSum remaining.errors
         rw [← remaining.discrepancy]
         dsimp only [error, boundary]
         ring1
@@ -259,8 +259,8 @@ boundary readback. -/
         · subst term
           have close := ChartReplacement.energy_boundary_close head energy
           have errorEq : error = energy.connection.energy - (-head.replacement.summary.area -
-              BoundaryRibbon.area first.cap.firstValue head.replacement.summary.total +
-              RestoredEnergyBlock.terminalPotential energy.blocks energy.firstPotential - energy.firstPotential) := by
+              area first.cap.firstValue head.replacement.summary.total +
+              terminalPotential energy.blocks energy.firstPotential - energy.firstPotential) := by
             dsimp only [error, potential]
             rw [ChartReplacement.energy_trace head energy]
             ring1
@@ -268,7 +268,7 @@ boundary readback. -/
         · exact remaining.bounded term member
 
 variable {parents : List (CenteredEdge curve differential)}
-  {covers : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents}
+  {covers : UniformReciprocalCover.ParentCovers parents}
   {prepared : SideBank regular covers} {requests :
     Requests sourceTarget reciprocalTarget
     coefficientTarget totalTarget areaTarget minimum prepared}
@@ -280,12 +280,12 @@ variable {parents : List (CenteredEdge curve differential)}
 
 /-- The actual complete energy and connected boundary-area discrepancy satisfies the original parent-count squared error
 bound. -/
-theorem boundary_error (energy : Curves.Hyperelliptic.Charts.Reciprocal.Disk.SideEnergy.EnergyConnection evaluated
-  charts energies previous) (connected : SideChartConnections.Connected evaluated charts previous) :
-    Data.Gaussian.Norm.Basic.normSq (energy.energy - (-connected.summary.area - BoundaryRibbon.area previous
+theorem boundary_error (energy : EnergyConnection evaluated
+  charts energies previous) (connected : Connected evaluated charts previous) :
+    Data.Gaussian.Norm.Basic.normSq (energy.energy - (-connected.summary.area - area previous
       connected.summary.total + energy.boundary)) ≤
-      (parents.length : InverseRootPolynomial.Coordinate) ^ 2 * (256 * (4 * target + totalTarget / 4)) := by
-  have trace : energy.trace = connected.summary.area + BoundaryRibbon.area previous connected.summary.total := by
+      (parents.length : Coordinate) ^ 2 * (256 * (4 * target + totalTarget / 4)) := by
+  have trace : energy.trace = connected.summary.area + area previous connected.summary.total := by
     rw [energy.trace_eq, ← connected.paths_eq, IncrementArea.traceArea_eq,
       ← connected.summary.area_eq, ← connected.summary.total_eq]
   have bound := Data.Gaussian.Norm.Sum.Bounds.normSq_sum_le energy.errors _ energy.bounded

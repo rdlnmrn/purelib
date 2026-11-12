@@ -42,7 +42,7 @@ open Purelib.Geometry.Rational
 namespace Data
 
 variable {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial} {origin direction : Canonical} {interval :
-  Data.Rat.Interval.Bounds}
+  Interval.Bounds}
 
 /-- Demand-driven separation on the unchanged path.  Accepted data and a
 previously retained attempt are reused verbatim.  Exact endpoint zeros skip
@@ -50,8 +50,8 @@ subdivision; the caller can report its separately checked obstruction.
 
 The original positive-floor, retained-attempt and endpoint-zero branches return the same data. Only the remaining branch
 prepares clearance from the cached enclosures and sample certificate. -/
-@[expose] public def sharpen (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction interval) :
-  Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction interval :=
+@[expose] public def sharpen (data : Data polynomial origin direction interval) :
+  Data polynomial origin direction interval :=
   if 0 < data.lowerBound then data
   else
     match data.clearance with
@@ -64,8 +64,8 @@ prepares clearance from the cached enclosures and sample certificate. -/
             data.enclosures (some data.sampleCertificate)
           { data with
             clearance := some clearance
-            lowerBound := max (max (Data.Gaussian.Norm.Basic.normSq data.sample / 2 -
-              data.slopeBound * Data.Rat.Interval.Radius.sampleRadiusSq
+            lowerBound := max (max (Norm.Basic.normSq data.sample / 2 -
+              data.slopeBound * Interval.Radius.sampleRadiusSq
                 interval interval.lower) data.enclosures.normFloor)
                 clearance.result.normFloor
             lowerBound_eq := rfl }
@@ -73,18 +73,18 @@ prepares clearance from the cached enclosures and sample certificate. -/
 /-- Sharpening leaves an already positive path bound unchanged.
 
 The first retained branch checks the supplied positive lower bound and returns the same complete data record. -/
-public theorem sharpen_of_positive (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction interval)
+public theorem sharpen_of_positive (data : Data polynomial origin direction interval)
   (positive : 0 < data.lowerBound) :
     data.sharpen = data := by
-  rw [Dense.Gaussian.Path.Bounds.Basic.Data.sharpen, if_pos positive]
+  rw [sharpen, if_pos positive]
 
 /-- Sharpening cannot decrease the retained squared-norm lower bound.
 
 All early-return branches retain their lower bound. The remaining branch combines the same proposals with a nonnegative
 retained-cover floor. -/
-public theorem sharpen_lowerBound (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction interval) :
+public theorem sharpen_lowerBound (data : Data polynomial origin direction interval) :
     data.lowerBound ≤ data.sharpen.lowerBound := by
-  unfold Dense.Gaussian.Path.Bounds.Basic.Data.sharpen
+  unfold sharpen
   split
   · exact le_rfl
   · rename_i unresolved
@@ -94,16 +94,16 @@ public theorem sharpen_lowerBound (data : Dense.Gaussian.Path.Bounds.Basic.Data 
       · exact le_rfl
       · split
         · exact le_rfl
-        · exact (le_of_not_gt unresolved).trans (Dense.Gaussian.Path.Bounds.Basic.Data.lowerBound_nonnegative _)
+        · exact (le_of_not_gt unresolved).trans (lowerBound_nonnegative _)
 
 /-- Sharpening cannot decrease the retained coordinate lower bound.
 
 All early-return branches retain their coordinate floor. The remaining branch combines the existing enclosure floor with
 the new cover coordinate proposal. -/
-public theorem sharpen_coordinateLower (data : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction
+public theorem sharpen_coordinateLower (data : Data polynomial origin direction
   interval) :
     data.coordinateLower ≤ data.sharpen.coordinateLower := by
-  unfold Dense.Gaussian.Path.Bounds.Basic.Data.sharpen
+  unfold sharpen
   split
   · exact le_rfl
   · split
@@ -139,8 +139,8 @@ Coarse preparation computes and caches the affine and interval data once. Sharpe
 performs refinement only when its retained stop conditions permit it. -/
 @[expose] public def prepare (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial) (origin direction :
   Canonical)
-    (interval : Data.Rat.Interval.Bounds) : Dense.Gaussian.Path.Bounds.Basic.Data polynomial origin direction
+    (interval : Data.Rat.Interval.Bounds) : Basic.Data polynomial origin direction
       interval :=
-  (Dense.Gaussian.Path.Bounds.Basic.prepareCoarse polynomial origin direction interval).sharpen
+  (Basic.prepareCoarse polynomial origin direction interval).sharpen
 
 end Purelib.Polynomial.Dense.Gaussian.Path.Bounds.Prepare

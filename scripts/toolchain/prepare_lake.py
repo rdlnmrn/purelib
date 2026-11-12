@@ -16,6 +16,8 @@ import subprocess
 import sys
 import tempfile
 
+from scripts.verification.module_process import MODULE_TIMEOUT, MODULE_TARGET, run as run_worker
+
 HERE = Path(__file__).resolve().parent
 PARTS = ('.olean', '.ir', '.olean.server', '.olean.private')
 
@@ -65,10 +67,12 @@ def run(args, cwd, env, label):
     with log.open('wb') as stream:
         stream.write((json.dumps(list(map(str, args))) + '\n').encode())
         stream.flush()
-        result = subprocess.run(list(map(str, args)), cwd=cwd, env=env,
-                                stdout=stream, stderr=subprocess.STDOUT)
-    if result.returncode:
-        raise RuntimeError(f'{label} failed ({result.returncode}); see {log}')
+        compilation = any(str(arg).endswith('.lean') for arg in args)
+        code = run_worker(list(map(str, args)), label, cwd / 'process-receipts', cwd=cwd, env=env,
+                          stdout=stream, timeout=MODULE_TIMEOUT if compilation else 300,
+                          performance_target=MODULE_TARGET if compilation else None)
+    if code:
+        raise RuntimeError(f'{label} failed ({code}); see {log}')
 
 
 def package(base, module):

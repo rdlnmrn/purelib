@@ -71,18 +71,6 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
 
 open Purelib.Data.Gaussian in
-open Purelib.Integration.Polynomial.Gaussian.Path in
-/-- Summing original mapped child increments equals the primitive increment sum of their exact models. -/
-private theorem mapped_increment_sum (primitive : Basic.Canonical → Basic.Canonical) (children : List (CenteredEdge
-  curve differential)) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (children.map (fun child => primitive (child.edge.point 1) - primitive
-      (child.edge.point 0))) =
-      Primitive.incrementSum primitive (children.map CenteredEdge.model) := by
-  induction children with
-  | nil => rfl
-  | cons child rest ih => exact congrArg (_ + ·) ih
-
-open Purelib.Data.Gaussian in
 /-- Read both original primitive increments at each retained child in order. -/
 @[expose] def pairedPrimitiveIncrements (first second : Basic.Canonical → Basic.Canonical) (children : List
   (CenteredEdge curve differential)) :

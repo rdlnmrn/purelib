@@ -79,59 +79,59 @@ open Purelib.Integration.Path.IncrementArea (Summary)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover (Parent Bank)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathRequests.Bank (Requests Samples)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {collar :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus} {count : Nat}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {collar :
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {differential :
+    Differential genus} {count : Nat}
+  {index : Nat} {box : Geometry.Rational.Box} {capSample :
+    Primitives.Sample cap differential index box}
 
 /-- Read the actual coordinate differences joining consecutive retained fine polygons. -/
-@[expose] public def gaps : {parents : List (PathCover.Parent curve differential)} → {bank : PathCover.Bank cap
+@[expose] public def gaps : {parents : List (Parent curve differential)} → {bank : Bank cap
   differential count parents} →
-    {target slope : InverseRootPolynomial.Coordinate} → {floor : Nat} → {requests : Bank.Requests bank target floor} →
-    {samples : Bank.Samples requests capSample} → {fine : Bank.FineRequests requests slope} →
-    Bank.FineSamples samples fine → List InverseRootPolynomial.Gaussian
+    {target slope : Coordinate} → {floor : Nat} → {requests : Requests bank target floor} →
+    {samples : Samples requests capSample} → {fine : FineRequests requests slope} →
+    FineSamples samples fine → List Gaussian
   | [], .nil, _, _, _, _, _, _, _ => []
   | [_], .cons _ .nil, _, _, _, _, _, _, _ => []
   | _ :: _ :: _, .cons _ (.cons _ _), _, _, _, _, _, _, charts =>
       (charts.2.1.first.vertex.value - charts.1.last.vertex.value) ::
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.gaps charts.2
+        FineSamples.gaps charts.2
 
 /-- Refined polygon gaps equal the differences of their exact retained endpoint streams at the common stage. -/
-theorem gaps_refine : {parents : List (PathCover.Parent curve differential)} → {bank : PathCover.Bank cap differential
+theorem gaps_refine : {parents : List (Parent curve differential)} → {bank : Bank cap differential
   count parents} →
-    {target slope : InverseRootPolynomial.Coordinate} → {floor : Nat} → {requests : Bank.Requests bank target floor} →
-    {samples : Bank.Samples requests capSample} → {fine : Bank.FineRequests requests slope} →
-    (charts : Bank.FineSamples samples fine) → (later : FineRequests.stage fine ≤ index) → (next : Nat) →
+    {target slope : Coordinate} → {floor : Nat} → {requests : Requests bank target floor} →
+    {samples : Samples requests capSample} → {fine : FineRequests requests slope} →
+    (charts : FineSamples samples fine) → (later : FineRequests.stage fine ≤ index) → (next : Nat) →
     (ready : charts.stage ≤ next) →
     (charts.refine later next ready).gaps = charts.streamPairs.map (fun pair => pair.first.sample next -
       pair.last.sample next)
   | [], .nil, _, _, _, _, _, _, _, _, _, _ => rfl
   | [_], .cons _ .nil, _, _, _, _, _, _, _, _, _, _ => rfl
   | _ :: _ :: _, .cons _ (.cons _ _), _, _, _, _, _, _, charts, later, next, ready => by
-      simp only [Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.gaps, FineSamples.refine,
-        FineSamples.streamPairs, List.map_cons,
+      simp only [gaps, refine,
+        streamPairs, List.map_cons,
         Evaluation.refine_first_value,
         Evaluation.refine_last_value]
       apply congrArg₂ List.cons
       · change -charts.2.1.firstStream.sample next - -charts.1.lastStream.sample next =
           charts.1.lastStream.sample next - charts.2.1.firstStream.sample next
         ring1
-      · exact Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.gaps_refine charts.2
-          ((Purelib.Data.Nat.Order.le_max_right _ _).trans later) next ((Purelib.Data.Nat.Order.le_max_right _ _).trans
+      · exact FineSamples.gaps_refine charts.2
+          ((Data.Nat.Order.le_max_right _ _).trans later) next ((Data.Nat.Order.le_max_right _ _).trans
           ready)
 
 namespace JunctionRequests
 
 /-- At every later common stage, each retained junction stream pair satisfies its requested error. -/
-theorem close {parents : List (PathCover.Parent curve differential)} {bank : PathCover.Bank cap differential count
+theorem close {parents : List (Parent curve differential)} {bank : Bank cap differential count
   parents}
-    {target slope error : InverseRootPolynomial.Coordinate} {floor : Nat} {requests : Bank.Requests bank target floor}
-    {samples : Bank.Samples requests capSample} {fine : Bank.FineRequests requests slope} {charts : Bank.FineSamples
+    {target slope error : Coordinate} {floor : Nat} {requests : Requests bank target floor}
+    {samples : Samples requests capSample} {fine : FineRequests requests slope} {charts : FineSamples
       samples fine}
-    (junctions : FineSamples.JunctionRequests charts error) {next : Nat} (later : junctions.stage ≤ next)
-    (pair : FineSamples.StreamPair) (member : pair ∈ charts.streamPairs) :
+    (junctions : JunctionRequests charts error) {next : Nat} (later : junctions.stage ≤ next)
+    (pair : StreamPair) (member : pair ∈ charts.streamPairs) :
     Data.Gaussian.Norm.Basic.normSq (pair.first.sample next - pair.last.sample next) < error := by
   rw [← junctions.sources_eq] at member
   obtain ⟨item, retained, equal⟩ := Map.mem_map.mp member
@@ -141,15 +141,15 @@ theorem close {parents : List (PathCover.Parent curve differential)} {bank : Pat
   exact item.comparison.close (indices.1.trans upper) (indices.2.trans upper)
 
 /-- Every actual refined polygon connector satisfies the paid junction error at the selected common stage. -/
-theorem gaps_small {parents : List (PathCover.Parent curve differential)} {bank : PathCover.Bank cap differential count
+theorem gaps_small {parents : List (Parent curve differential)} {bank : Bank cap differential count
   parents}
-    {target slope error : InverseRootPolynomial.Coordinate} {floor : Nat} {requests : Bank.Requests bank target floor}
-    {samples : Bank.Samples requests capSample} {fine : Bank.FineRequests requests slope} {charts : Bank.FineSamples
+    {target slope error : Coordinate} {floor : Nat} {requests : Requests bank target floor}
+    {samples : Samples requests capSample} {fine : FineRequests requests slope} {charts : FineSamples
       samples fine}
-    (junctions : FineSamples.JunctionRequests charts error) (later : FineRequests.stage fine ≤ index) (next : Nat)
+    (junctions : JunctionRequests charts error) (later : FineRequests.stage fine ≤ index) (next : Nat)
     (ready : charts.stage ≤ next) (joined : junctions.stage ≤ next) :
     ∀ gap ∈ (charts.refine later next ready).gaps, Data.Gaussian.Norm.Basic.normSq gap < error := by
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.gaps_refine]
+  rw [gaps_refine]
   intro gap member
   obtain ⟨pair, retained, equal⟩ := Map.mem_map.mp member
   rw [← equal]
@@ -159,54 +159,54 @@ end JunctionRequests
 
 /-- Each connector belongs to the next retained polygon. The first entry can be zero, giving a duplicate initial vertex
 without an added area term. -/
-@[expose] public def connectedBlocks : {parents : List (PathCover.Parent curve differential)} → {bank : PathCover.Bank
+@[expose] public def connectedBlocks : {parents : List (Parent curve differential)} → {bank : Bank
   cap differential count parents} →
-    {target slope : InverseRootPolynomial.Coordinate} → {floor : Nat} → {requests : Bank.Requests bank target floor} →
-    {samples : Bank.Samples requests capSample} → {fine : Bank.FineRequests requests slope} →
-    Bank.FineSamples samples fine → InverseRootPolynomial.Gaussian → List (InverseRootPolynomial.Gaussian × List
-      InverseRootPolynomial.Gaussian)
+    {target slope : Coordinate} → {floor : Nat} → {requests : Requests bank target floor} →
+    {samples : Samples requests capSample} → {fine : FineRequests requests slope} →
+    FineSamples samples fine → Gaussian → List (Gaussian × List
+      Gaussian)
   | [], .nil, _, _, _, _, _, _, _, _ => []
   | [_], .cons _ .nil, _, _, _, _, _, _, charts, entry => [(entry, charts.1.pairs.map Prod.fst)]
   | _ :: _ :: _, .cons _ (.cons _ _), _, _, _, _, _, _, charts, entry =>
       (entry, charts.1.pairs.map Prod.fst) ::
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.connectedBlocks charts.2
+        FineSamples.connectedBlocks charts.2
         (charts.2.1.first.vertex.value - charts.1.last.vertex.value)
 
 /-- There is exactly one connected path block per retained parent. -/
-theorem connectedBlocks_length : {parents : List (PathCover.Parent curve differential)} → {bank : PathCover.Bank cap
+theorem connectedBlocks_length : {parents : List (Parent curve differential)} → {bank : Bank cap
   differential count parents} →
-    {target slope : InverseRootPolynomial.Coordinate} → {floor : Nat} → {requests : Bank.Requests bank target floor} →
-    {samples : Bank.Samples requests capSample} → {fine : Bank.FineRequests requests slope} →
-    (charts : Bank.FineSamples samples fine) → (entry : InverseRootPolynomial.Gaussian) → (charts.connectedBlocks
+    {target slope : Coordinate} → {floor : Nat} → {requests : Requests bank target floor} →
+    {samples : Samples requests capSample} → {fine : FineRequests requests slope} →
+    (charts : FineSamples samples fine) → (entry : Gaussian) → (charts.connectedBlocks
       entry).length = parents.length
   | [], .nil, _, _, _, _, _, _, _, _ => rfl
   | [_], .cons _ .nil, _, _, _, _, _, _, _, _ => rfl
   | _ :: _ :: _, .cons _ (.cons _ _), _, _, _, _, _, _, charts, _ =>
       congrArg Nat.succ
-        (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.connectedBlocks_length charts.2
+        (FineSamples.connectedBlocks_length charts.2
         _)
 
 /-- Removing the retained incoming connectors recovers exactly the original fine polygon paths. -/
-theorem connectedBlocks_source : {parents : List (PathCover.Parent curve differential)} → {bank : PathCover.Bank cap
+theorem connectedBlocks_source : {parents : List (Parent curve differential)} → {bank : Bank cap
   differential count parents} →
-    {target slope : InverseRootPolynomial.Coordinate} → {floor : Nat} → {requests : Bank.Requests bank target floor} →
-    {samples : Bank.Samples requests capSample} → {fine : Bank.FineRequests requests slope} →
-    (charts : Bank.FineSamples samples fine) → (entry : InverseRootPolynomial.Gaussian) →
+    {target slope : Coordinate} → {floor : Nat} → {requests : Requests bank target floor} →
+    {samples : Samples requests capSample} → {fine : FineRequests requests slope} →
+    (charts : FineSamples samples fine) → (entry : Gaussian) →
     (charts.connectedBlocks entry).map Prod.snd = charts.pairs.map Prod.fst
   | [], .nil, _, _, _, _, _, _, _, _ => rfl
   | [_], .cons _ .nil, _, _, _, _, _, _, _, _ => rfl
   | _ :: _ :: _, .cons _ (.cons _ _), _, _, _, _, _, _, charts, _ =>
       congrArg (List.cons _)
-        (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.connectedBlocks_source charts.2
+        (FineSamples.connectedBlocks_source charts.2
         _)
 
 /-- Every connected block's actual incoming connector satisfies the supplied shared norm bound. -/
-theorem connectedBlocks_small : {parents : List (PathCover.Parent curve differential)} → {bank : PathCover.Bank cap
+theorem connectedBlocks_small : {parents : List (Parent curve differential)} → {bank : Bank cap
   differential count parents} →
-    {target slope error : InverseRootPolynomial.Coordinate} → {floor : Nat} → {requests : Bank.Requests bank target
+    {target slope error : Coordinate} → {floor : Nat} → {requests : Requests bank target
       floor} →
-    {samples : Bank.Samples requests capSample} → {fine : Bank.FineRequests requests slope} →
-    (charts : Bank.FineSamples samples fine) → (entry : InverseRootPolynomial.Gaussian) →
+    {samples : Samples requests capSample} → {fine : FineRequests requests slope} →
+    (charts : FineSamples samples fine) → (entry : Gaussian) →
       Data.Gaussian.Norm.Basic.normSq entry ≤ error →
     (∀ gap ∈ charts.gaps, Data.Gaussian.Norm.Basic.normSq gap ≤ error) → ∀ block ∈ charts.connectedBlocks
       entry, Data.Gaussian.Norm.Basic.normSq block.1 ≤ error
@@ -219,22 +219,22 @@ theorem connectedBlocks_small : {parents : List (PathCover.Parent curve differen
       cases Purelib.Data.List.Membership.mem_cons.mp member with
       | inl equal => subst equal; exact small
       | inr member =>
-          exact Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.connectedBlocks_small
+          exact FineSamples.connectedBlocks_small
             charts.2 _ (bounded _ (List.mem_cons_self))
             (fun gap retained => bounded gap (List.mem_cons_of_mem _ retained)) _ member
 
 /-- Compose the cached summaries; do not sum the fine increments again. -/
-@[expose] public def connectedSummary : {parents : List (PathCover.Parent curve differential)} → {bank : PathCover.Bank
+@[expose] public def connectedSummary : {parents : List (Parent curve differential)} → {bank : Bank
   cap differential count parents} →
-    {target slope : InverseRootPolynomial.Coordinate} → {floor : Nat} → {requests : Bank.Requests bank target floor} →
-    {samples : Bank.Samples requests capSample} → {fine : Bank.FineRequests requests slope} →
-    (charts : Bank.FineSamples samples fine) → (entry : InverseRootPolynomial.Gaussian) →
-    IncrementArea.Summary ((charts.connectedBlocks entry).map (fun block => block.1 :: block.2)).flatten
-  | [], .nil, _, _, _, _, _, _, _, _ => IncrementArea.Summary.build []
+    {target slope : Coordinate} → {floor : Nat} → {requests : Requests bank target floor} →
+    {samples : Samples requests capSample} → {fine : FineRequests requests slope} →
+    (charts : FineSamples samples fine) → (entry : Gaussian) →
+    Summary ((charts.connectedBlocks entry).map (fun block => block.1 :: block.2)).flatten
+  | [], .nil, _, _, _, _, _, _, _, _ => Summary.build []
   | [_], .cons _ .nil, _, _, _, _, _, _, charts, entry => (Summary.prepend charts.1.chart entry).append
-    (IncrementArea.Summary.build [])
+    (Summary.build [])
   | _ :: _ :: _, .cons _ (.cons _ _), _, _, _, _, _, _, charts, entry =>
       (Summary.prepend charts.1.chart entry).append
-        (Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples.connectedSummary charts.2 _)
+        (FineSamples.connectedSummary charts.2 _)
 
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover.Bank.FineSamples

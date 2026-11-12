@@ -74,7 +74,7 @@ open Purelib.Topology.Surface.Sewing.SewnPrimitiveFaces
 
 /-- A triangle source is degenerate, positively oriented, or projects to the reverse of a triangle boundary edge. -/
 private theorem corner_orientations {vertexCount faceCount : Nat}
-    (faces : Fin faceCount → Topology.Polygon.Stokes.OrientedTriangle vertexCount) (source :
+    (faces : Fin faceCount → OrientedTriangle vertexCount) (source :
       Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge faceCount) :
     source.first = source.last ∨ Topology.Mesh.TriangleSourceUniqueness.SourceEdge.Positive source faces ∨
       (source.project faces).reverse ∈ (faces source.source).boundary := by
@@ -91,8 +91,8 @@ private theorem corner_orientations {vertexCount faceCount : Nat}
       | exact Or.inr (Or.inr (List.mem_cons_of_mem _ List.mem_cons_self))
       | exact Or.inr (Or.inr (List.mem_cons_of_mem _ (List.mem_cons_of_mem _ List.mem_cons_self)))
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base}
 
@@ -114,71 +114,71 @@ theorem physicalSource_positive (lifted : Meshes.LiftedPuncturedGrid base)
   · exact positive
   · exact (boundary.2 (Data.List.Flatten.mem_flatMap.mpr
       ⟨lifted.mesh.triangulation.faces source.source,
-        Data.List.Permutation.ofFn_mem _ source.source, reverse⟩)).elim
+        List.Permutation.ofFn_mem _ source.source, reverse⟩)).elim
 
 /-- Every edge of a retained branch-hole boundary belongs to the original complete physical boundary. -/
 private theorem hole_edge_member (hole : Meshes.PuncturedGridFaces.BranchHole base.bank.toBranchCellBank)
-    (retained : hole ∈ base.faces.holes) {edge : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count}
+    (retained : hole ∈ base.faces.holes) {edge : OrientedEdge lifted.vertices.count}
     (member : edge ∈ hole.liftedBoundary lifted.vertices lifted.edges) : edge ∈ lifted.boundaryLoops.flatten :=
   Topology.Surface.Sewing.SimpleBoundaryCycles.mem_flatten.mpr ⟨_, Data.List.Membership.mem_append.mpr
-    (Or.inr (Data.List.Map.mem_map_of_mem retained)), member⟩
+    (Or.inr (List.Map.mem_map_of_mem retained)), member⟩
 
-variable {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+variable {domains : Face.DomainBanks.FaceDomainBank lifted.frames
   base.faces.regulars}
-  {differential : Hyperelliptic.Differentials.Basic.Differential genus} {target :
-    Topology.Surface.Sewing.SewnPrimitiveFaces.Coordinate}
+  {differential : Differentials.Basic.Differential genus} {target :
+    Coordinate}
 
 /-- The actual physical boundary forces positive source orientation; a
 caller need not certify which side the geometric lookup selected. -/
 theorem hole_sources_positive (hole : Meshes.PuncturedGridFaces.BranchHole base.bank.toBranchCellBank)
     (retained : hole ∈ base.faces.holes)
-    (request : Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkCancellation.PairedWalkRequest (mesh := lifted.mesh)
+    (request : Paired.WalkCancellation.PairedWalkRequest (mesh := lifted.mesh)
       domains differential hole.inwardBoundary target) :
     ∀ source ∈ request.sources, Topology.Mesh.TriangleSourceUniqueness.SourceEdge.Positive source
       lifted.mesh.triangulation.faces := by
   intro source member
-  apply Hyperelliptic.Meshes.PuncturedGrid.BranchHoleSourceComparison.physicalSource_positive lifted source
-  apply Hyperelliptic.Meshes.PuncturedGrid.BranchHoleSourceComparison.hole_edge_member hole retained
-  rw [← Hyperelliptic.Meshes.PuncturedGrid.BranchHoleCancellation.cancellation_sources_project hole request]
-  exact Data.List.Map.mem_map_of_mem member
+  apply BranchHoleSourceComparison.physicalSource_positive lifted source
+  apply BranchHoleSourceComparison.hole_edge_member hole retained
+  rw [← BranchHoleCancellation.cancellation_sources_project hole request]
+  exact List.Map.mem_map_of_mem member
 
 /-- Existing occurrence caches are identified exactly, without rebuilding
 their geometry or comparing independently prepared root paths. -/
 theorem hole_sources_eq (hole : Meshes.PuncturedGridFaces.BranchHole base.bank.toBranchCellBank)
     (retained : hole ∈ base.faces.holes)
-    (request : Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkCancellation.PairedWalkRequest (mesh := lifted.mesh)
+    (request : Paired.WalkCancellation.PairedWalkRequest (mesh := lifted.mesh)
       domains differential hole.inwardBoundary target)
     (sources : List (Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge lifted.mesh.triangles.length))
     (projected : sources.map (fun source => source.project lifted.mesh.triangulation.faces) =
       hole.liftedBoundary lifted.vertices lifted.edges) : sources = request.sources := by
   apply Topology.Mesh.TriangleSourceUniqueness.SourceEdge.list_eq_of_project_eq lifted.mesh.orientedEdges_unique
-      (Hyperelliptic.Meshes.PuncturedGrid.TriangleSourceUniqueness.LiftedMesh.corners_injective lifted.mesh)
-      sources request.sources ?_ (Hyperelliptic.Meshes.PuncturedGrid.BranchHoleSourceComparison.hole_sources_positive
+      (TriangleSourceUniqueness.LiftedMesh.corners_injective lifted.mesh)
+      sources request.sources ?_ (BranchHoleSourceComparison.hole_sources_positive
         hole retained request)
-      (projected.trans (Hyperelliptic.Meshes.PuncturedGrid.BranchHoleCancellation.cancellation_sources_project hole
+      (projected.trans (BranchHoleCancellation.cancellation_sources_project hole
         request).symm)
   intro source member
-  apply Hyperelliptic.Meshes.PuncturedGrid.BranchHoleSourceComparison.physicalSource_positive lifted source
-  apply Hyperelliptic.Meshes.PuncturedGrid.BranchHoleSourceComparison.hole_edge_member hole retained
+  apply BranchHoleSourceComparison.physicalSource_positive lifted source
+  apply BranchHoleSourceComparison.hole_edge_member hole retained
   rw [← projected]
-  exact Data.List.Map.mem_map_of_mem member
+  exact List.Map.mem_map_of_mem member
 
 /-- The shared triangle bound applies to the sources already retained by
 the cut, rather than only to the auxiliary paired-walk source list. -/
 theorem hole_source_sum_accurate (hole : Meshes.PuncturedGridFaces.BranchHole base.bank.toBranchCellBank)
     (retained : hole ∈ base.faces.holes)
-    (request : Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkCancellation.PairedWalkRequest (mesh := lifted.mesh)
+    (request : Paired.WalkCancellation.PairedWalkRequest (mesh := lifted.mesh)
       domains differential hole.inwardBoundary target)
-    {sampleIndex : Nat} {numerics : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential
+    {sampleIndex : Nat} {numerics : Face.PrimitiveData.FacePrimitiveBank differential
       sampleIndex domains}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings numerics lifted.mesh)
+    (readings : TrianglePrimitiveReadings.TriangleReadings numerics lifted.mesh)
       (later : request.index ≤ sampleIndex)
     (sources : List (Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge lifted.mesh.triangles.length))
     (projected : sources.map (fun source => source.project lifted.mesh.triangulation.faces) =
       hole.liftedBoundary lifted.vertices lifted.edges) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (sources.map fun source =>
+    Gaussian.Norm.Basic.normSq (Gaussian.Norm.Sum.Basic.gaussianSum (sources.map fun source =>
       source.increment readings.values)) < target := by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.BranchHoleSourceComparison.hole_sources_eq hole retained request sources
+  rw [BranchHoleSourceComparison.hole_sources_eq hole retained request sources
     projected]
   exact request.accurate readings later
 

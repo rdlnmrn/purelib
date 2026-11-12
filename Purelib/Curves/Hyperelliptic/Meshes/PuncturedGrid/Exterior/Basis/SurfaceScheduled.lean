@@ -73,6 +73,8 @@ import Purelib.Riemann.Topology.PreparedRootSafeCycleStates
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePrepared.Plans
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -92,22 +94,22 @@ open Purelib.Riemann.Normalization
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
 
-variable {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {target coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor index minimum
+variable {basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {target coefficientTarget : InverseRootPolynomial.Coordinate} {coverFloor floor index minimum
     readingIndex : Nat}
-  {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+  {box : Rational.Box} {capSample : Charts.Reciprocal.Cap.Primitives.Sample cap
     differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 variable {energyFloor radialDepth : Nat}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
@@ -117,17 +119,17 @@ namespace Plans.Samples
 /-- The dependent spine of scheduled source-versus-period comparisons on the original acquired components.
 
 Each component retains its exact samples and prepared comparisons at the common error target. -/
-def ScheduledComparisons (errorTarget : Normalization.InverseRootPolynomial.Coordinate) :
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRequest.Entry (domains := domains)
+def ScheduledComparisons (errorTarget : InverseRootPolynomial.Coordinate) :
+    (entries : List (SurfaceRequest.Entry (domains := domains)
       (differential := differential) basis target coefficientTarget coverFloor floor)) →
-    (plans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans capSample polynomials minimum entries)
-      → (readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans.Readings entries plans
+    (plans : SurfacePlans.Plans capSample polynomials minimum entries)
+      → (readings : SurfacePlans.Plans.Readings entries plans
       readingIndex) →
-    (fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.FanPreparations energyFloor entries
+    (fans : SurfaceSamples.Plans.FanPreparations energyFloor entries
       plans readings) →
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.Samples coefficients radialDepth
+    (samples : SurfaceSamples.Plans.Samples coefficients radialDepth
       entries plans readings fans) →
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePrepared.Plans.Samples.PreparedComparisons entries plans
+    Samples.PreparedComparisons entries plans
       readings fans samples → Type
   | [], _, _, _, _, _ => PUnit
   | _ :: tail, plans, readings, fans, samples, comparisons =>
@@ -139,69 +141,69 @@ def ScheduledComparisons (errorTarget : Normalization.InverseRootPolynomial.Coor
           errorTarget tail plans.2 readings.2 fans.2 samples.2 comparisons.2
 
 /-- The shared coefficient tolerance and cover floor pay this original component's trace allocation. -/
-def Compatible (errorTarget : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < errorTarget)
-    (entry : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRequest.Entry (domains := domains) (differential
+def Compatible (errorTarget : InverseRootPolynomial.Coordinate) (positive : 0 < errorTarget)
+    (entry : SurfaceRequest.Entry (domains := domains) (differential
       := differential) basis target coefficientTarget coverFloor floor) : Prop :=
   coefficientTarget ≤ Integration.PreparedWeightedCoefficientBudget.coefficientTolerance
     entry.component.program.period.initial
-      (Hyperelliptic.Charts.Reciprocal.Disk.Basis.ScheduledTraceRequest.Samples.traceAllocation entry.retained.anchors
+      (Charts.Reciprocal.Disk.Basis.ScheduledTraceRequest.Samples.traceAllocation entry.retained.anchors
       entry.retained.sources errorTarget (2 + 8 * basis.coefficient) positive
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceTraceRequest.TraceComponent.originBound_nonnegative
+      (SurfaceTraceRequest.TraceComponent.originBound_nonnegative
       basis)).half ∧
-  (Hyperelliptic.Charts.Reciprocal.Disk.Basis.ScheduledTraceRequest.Samples.traceAllocation entry.retained.anchors
+  (Charts.Reciprocal.Disk.Basis.ScheduledTraceRequest.Samples.traceAllocation entry.retained.anchors
     entry.retained.sources errorTarget (2 + 8 * basis.coefficient) positive
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceTraceRequest.TraceComponent.originBound_nonnegative
+    (SurfaceTraceRequest.TraceComponent.originBound_nonnegative
     basis)).coverFloor ≤ coverFloor
 
 /-- Compute a common original-stage threshold from these exact acquired banks. -/
-def threshold (errorTarget : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < errorTarget)
+def threshold (errorTarget : InverseRootPolynomial.Coordinate) (positive : 0 < errorTarget)
     (coefficientNonnegative : 0 ≤ coefficientTarget) :
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRequest.Entry (domains := domains)
+    (entries : List (SurfaceRequest.Entry (domains := domains)
       (differential := differential) basis target coefficientTarget coverFloor floor)) →
-    (plans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans capSample polynomials minimum entries)
-      → (readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans.Readings entries plans
+    (plans : SurfacePlans.Plans capSample polynomials minimum entries)
+      → (readings : SurfacePlans.Plans.Readings entries plans
       readingIndex) →
-    (fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.FanPreparations energyFloor entries
+    (fans : SurfaceSamples.Plans.FanPreparations energyFloor entries
       plans readings) →
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.Samples coefficients radialDepth
+    (samples : SurfaceSamples.Plans.Samples coefficients radialDepth
       entries plans readings fans) →
-    (comparisons : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePrepared.Plans.Samples.PreparedComparisons
+    (comparisons : Samples.PreparedComparisons
       entries plans readings fans samples) →
-    (∀ entry ∈ entries, Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.Compatible
+    (∀ entry ∈ entries, Compatible
       errorTarget positive entry) → Nat
   | [], _, _, _, _, _, _ => 0
   | head :: tail, plans, readings, fans, samples, comparisons, compatible =>
-      max (Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonScheduledTrace.CommonBasisRequest.Sampled.sourceSelection
+      max (CommonScheduledTrace.CommonBasisRequest.Sampled.sourceSelection
         samples.1 comparisons.1 errorTarget positive coefficientNonnegative
         (compatible head (List.mem_cons_self ..)).1).predecessor
-        (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.threshold
+        (Samples.threshold
           errorTarget positive coefficientNonnegative tail plans.2 readings.2 fans.2 samples.2 comparisons.2
           (fun entry member => compatible entry (List.mem_cons_of_mem head member)))
 
 /-- Compare every original acquired component at a shared paid predecessor stage.
 
 The exact per-component compatibility witnesses pay both source tolerances and retained cover floors. -/
-def compareScheduled (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
-    (errorTarget : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < errorTarget) (coefficientNonnegative
+def compareScheduled (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+    (errorTarget : InverseRootPolynomial.Coordinate) (positive : 0 < errorTarget) (coefficientNonnegative
       : 0 ≤ coefficientTarget) :
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRequest.Entry (domains := domains)
+    (entries : List (SurfaceRequest.Entry (domains := domains)
       (differential := differential) basis target coefficientTarget coverFloor floor)) →
-    (plans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans capSample polynomials minimum entries)
-      → (readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans.Readings entries plans
+    (plans : SurfacePlans.Plans capSample polynomials minimum entries)
+      → (readings : SurfacePlans.Plans.Readings entries plans
       readingIndex) →
-    (fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.FanPreparations energyFloor entries
+    (fans : SurfaceSamples.Plans.FanPreparations energyFloor entries
       plans readings) →
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.Samples coefficients radialDepth
+    (samples : SurfaceSamples.Plans.Samples coefficients radialDepth
       entries plans readings fans) →
-    (comparisons : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePrepared.Plans.Samples.PreparedComparisons
+    (comparisons : Samples.PreparedComparisons
       entries plans readings fans samples) →
     (compatible : ∀ entry ∈ entries,
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.Compatible errorTarget positive
+      Compatible errorTarget positive
       entry) →
-    (predecessor : Nat) → Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.threshold
+    (predecessor : Nat) → Samples.threshold
       errorTarget positive coefficientNonnegative entries plans readings fans samples comparisons compatible ≤
       predecessor →
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.ScheduledComparisons errorTarget
+    ScheduledComparisons errorTarget
       entries plans readings fans samples comparisons
   | [], _, _, _, _, _, _, _, _ => PUnit.unit
   | head :: tail, plans, readings, fans, samples, comparisons, compatible, predecessor, later =>
@@ -210,57 +212,57 @@ def compareScheduled (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReci
         samples.1 comparisons.1 branch errorTarget positive coefficientNonnegative
         (compatible head (List.mem_cons_self ..)).1 (compatible head (List.mem_cons_self ..)).2 predecessor
         ((Nat.Order.le_max_left ..).trans later),
-      Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.compareScheduled
+      Samples.compareScheduled
         branch errorTarget positive coefficientNonnegative tail plans.2 readings.2 fans.2 samples.2 comparisons.2
         (fun entry member => compatible entry (List.mem_cons_of_mem head member)) predecessor ((Nat.Order.le_max_right
           ..).trans later))
 
 /-- Every retained component uses the displayed original stage. -/
-def AtStage (stage : Nat) {errorTarget : Normalization.InverseRootPolynomial.Coordinate} :
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRequest.Entry (domains := domains)
+def AtStage (stage : Nat) {errorTarget : InverseRootPolynomial.Coordinate} :
+    (entries : List (SurfaceRequest.Entry (domains := domains)
       (differential := differential) basis target coefficientTarget coverFloor floor)) →
-    (plans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans capSample polynomials minimum entries)
-      → (readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans.Readings entries plans
+    (plans : SurfacePlans.Plans capSample polynomials minimum entries)
+      → (readings : SurfacePlans.Plans.Readings entries plans
       readingIndex) →
-    (fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.FanPreparations energyFloor entries
+    (fans : SurfaceSamples.Plans.FanPreparations energyFloor entries
       plans readings) →
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.Samples coefficients radialDepth
+    (samples : SurfaceSamples.Plans.Samples coefficients radialDepth
       entries plans readings fans) →
-    (comparisons : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePrepared.Plans.Samples.PreparedComparisons
+    (comparisons : Samples.PreparedComparisons
       entries plans readings fans samples) →
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.ScheduledComparisons errorTarget
+    ScheduledComparisons errorTarget
       entries plans readings fans samples comparisons → Prop
   | [], _, _, _, _, _, _ => True
   | _ :: tail, plans, readings, fans, samples, comparisons, scheduled =>
       scheduled.1.stage = stage ∧
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.AtStage stage
+        AtStage stage
         tail plans.2 readings.2 fans.2 samples.2 comparisons.2 scheduled.2
 
 /-- Every comparison constructed at the paid predecessor retains exactly its successor as the original stage. -/
-theorem compareScheduled_atStage (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve =
+theorem compareScheduled_atStage (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve =
   1)
-    (errorTarget : Normalization.InverseRootPolynomial.Coordinate) (positive : 0 < errorTarget) (coefficientNonnegative
+    (errorTarget : InverseRootPolynomial.Coordinate) (positive : 0 < errorTarget) (coefficientNonnegative
       : 0 ≤ coefficientTarget) :
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRequest.Entry (domains := domains)
+    (entries : List (SurfaceRequest.Entry (domains := domains)
       (differential := differential) basis target coefficientTarget coverFloor floor)) →
-    (plans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans capSample polynomials minimum entries)
-      → (readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans.Readings entries plans
+    (plans : SurfacePlans.Plans capSample polynomials minimum entries)
+      → (readings : SurfacePlans.Plans.Readings entries plans
       readingIndex) →
-    (fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.FanPreparations energyFloor entries
+    (fans : SurfaceSamples.Plans.FanPreparations energyFloor entries
       plans readings) →
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.Samples coefficients radialDepth
+    (samples : SurfaceSamples.Plans.Samples coefficients radialDepth
       entries plans readings fans) →
-    (comparisons : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePrepared.Plans.Samples.PreparedComparisons
+    (comparisons : Samples.PreparedComparisons
       entries plans readings fans samples) →
     (compatible : ∀ entry ∈ entries,
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.Compatible errorTarget positive
+      Compatible errorTarget positive
       entry) →
     (predecessor : Nat) →
-    (later : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.threshold errorTarget
+    (later : Samples.threshold errorTarget
       positive coefficientNonnegative entries plans readings fans samples comparisons compatible ≤ predecessor) →
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.AtStage (predecessor + 1) entries
+    AtStage (predecessor + 1) entries
       plans readings fans samples comparisons
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.compareScheduled branch
+      (Samples.compareScheduled branch
         errorTarget positive coefficientNonnegative entries plans readings fans samples comparisons compatible
         predecessor later)
   | [], _, _, _, _, _, _, _, _ => trivial
@@ -272,42 +274,42 @@ theorem compareScheduled_atStage (branch : Hyperelliptic.Charts.Reciprocal.Hyper
           ..).trans later)⟩
 
 /-- Read the ordered list of original source-minus-period trace discrepancies. -/
-def scheduledErrors {errorTarget : Normalization.InverseRootPolynomial.Coordinate} :
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRequest.Entry (domains := domains)
+def scheduledErrors {errorTarget : InverseRootPolynomial.Coordinate} :
+    (entries : List (SurfaceRequest.Entry (domains := domains)
       (differential := differential) basis target coefficientTarget coverFloor floor)) →
-    (plans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans capSample polynomials minimum entries)
-      → (readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans.Readings entries plans
+    (plans : SurfacePlans.Plans capSample polynomials minimum entries)
+      → (readings : SurfacePlans.Plans.Readings entries plans
       readingIndex) →
-    (fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.FanPreparations energyFloor entries
+    (fans : SurfaceSamples.Plans.FanPreparations energyFloor entries
       plans readings) →
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.Samples coefficients radialDepth
+    (samples : SurfaceSamples.Plans.Samples coefficients radialDepth
       entries plans readings fans) →
-    (comparisons : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePrepared.Plans.Samples.PreparedComparisons
+    (comparisons : Samples.PreparedComparisons
       entries plans readings fans samples) →
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.ScheduledComparisons errorTarget
-      entries plans readings fans samples comparisons → List Normalization.InverseRootPolynomial.Gaussian
+    ScheduledComparisons errorTarget
+      entries plans readings fans samples comparisons → List InverseRootPolynomial.Gaussian
   | [], _, _, _, _, _, _ => []
   | _ :: tail, plans, readings, fans, samples, comparisons, scheduled =>
       (scheduled.1.source - scheduled.1.period) ::
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.scheduledErrors
+        Samples.scheduledErrors
           tail plans.2 readings.2 fans.2 samples.2 comparisons.2 scheduled.2
 
 /-- There is exactly one retained scheduled discrepancy for each original component entry. -/
-theorem scheduledErrors_length {errorTarget : Normalization.InverseRootPolynomial.Coordinate} :
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRequest.Entry (domains := domains)
+theorem scheduledErrors_length {errorTarget : InverseRootPolynomial.Coordinate} :
+    (entries : List (SurfaceRequest.Entry (domains := domains)
       (differential := differential) basis target coefficientTarget coverFloor floor)) →
-    (plans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans capSample polynomials minimum entries)
-      → (readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans.Readings entries plans
+    (plans : SurfacePlans.Plans capSample polynomials minimum entries)
+      → (readings : SurfacePlans.Plans.Readings entries plans
       readingIndex) →
-    (fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.FanPreparations energyFloor entries
+    (fans : SurfaceSamples.Plans.FanPreparations energyFloor entries
       plans readings) →
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.Samples coefficients radialDepth
+    (samples : SurfaceSamples.Plans.Samples coefficients radialDepth
       entries plans readings fans) →
-    (comparisons : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePrepared.Plans.Samples.PreparedComparisons
+    (comparisons : Samples.PreparedComparisons
       entries plans readings fans samples) →
-    (scheduled : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.ScheduledComparisons
+    (scheduled : ScheduledComparisons
       errorTarget entries plans readings fans samples comparisons) →
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.scheduledErrors entries plans
+    (Samples.scheduledErrors entries plans
       readings fans samples comparisons scheduled).length = entries.length
   | [], _, _, _, _, _, _ => rfl
   | _ :: tail, plans, readings, fans, samples, comparisons, scheduled =>
@@ -316,23 +318,23 @@ theorem scheduledErrors_length {errorTarget : Normalization.InverseRootPolynomia
         tail plans.2 readings.2 fans.2 samples.2 comparisons.2 scheduled.2)
 
 /-- Every retained component discrepancy meets the common homogeneous trace-error bound. -/
-theorem scheduledErrors_bounded {errorTarget : Normalization.InverseRootPolynomial.Coordinate} :
-    (entries : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRequest.Entry (domains := domains)
+theorem scheduledErrors_bounded {errorTarget : InverseRootPolynomial.Coordinate} :
+    (entries : List (SurfaceRequest.Entry (domains := domains)
       (differential := differential) basis target coefficientTarget coverFloor floor)) →
-    (plans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans capSample polynomials minimum entries)
-      → (readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePlans.Plans.Readings entries plans
+    (plans : SurfacePlans.Plans capSample polynomials minimum entries)
+      → (readings : SurfacePlans.Plans.Readings entries plans
       readingIndex) →
-    (fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.FanPreparations energyFloor entries
+    (fans : SurfaceSamples.Plans.FanPreparations energyFloor entries
       plans readings) →
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceSamples.Plans.Samples coefficients radialDepth
+    (samples : SurfaceSamples.Plans.Samples coefficients radialDepth
       entries plans readings fans) →
-    (comparisons : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfacePrepared.Plans.Samples.PreparedComparisons
+    (comparisons : Samples.PreparedComparisons
       entries plans readings fans samples) →
-    (scheduled : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.ScheduledComparisons
+    (scheduled : ScheduledComparisons
       errorTarget entries plans readings fans samples comparisons) →
-    ∀ value ∈ Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.scheduledErrors entries
+    ∀ value ∈ Samples.scheduledErrors entries
       plans readings fans samples comparisons scheduled,
-      Data.Gaussian.Norm.Basic.normSq value ≤ errorTarget * Readings.PreparedObservationCoercivity.coefficientNormSq
+      Gaussian.Norm.Basic.normSq value ≤ errorTarget * Readings.PreparedObservationCoercivity.coefficientNormSq
         coefficients ^ 2
   | [], _, _, _, _, _, _, _, member => False.elim (List.not_mem_nil member)
   | _ :: tail, plans, readings, fans, samples, comparisons, scheduled, value, member => by
@@ -348,15 +350,15 @@ namespace ScheduledRequest
 
 variable {prepared :
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
-  regular domains differential} {errorTarget : Normalization.InverseRootPolynomial.Coordinate}
-  (scheduled : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceTraceRequest.ScheduledRequest prepared basis
+  regular domains differential} {errorTarget : InverseRootPolynomial.Coordinate}
+  (scheduled : SurfaceTraceRequest.ScheduledRequest prepared basis
     target errorTarget floor)
-  (acquired : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceEnergy.Request.Acquisition scheduled.request
+  (acquired : SurfaceEnergy.Request.Acquisition scheduled.request
     capSample polynomials minimum energyFloor)
   (evaluation : acquired.Evaluation coefficients)
 
 /-- The exact component-comparison spine for this scheduled request and original cached evaluation. -/
-def Comparisons := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.ScheduledComparisons
+def Comparisons := Plans.Samples.ScheduledComparisons
   scheduled.localError scheduled.request.entries
   acquired.plans acquired.readings acquired.fans evaluation.samples evaluation.comparisons
 
@@ -366,10 +368,10 @@ literal stage readbacks; no equality between distinct samples is asserted. -/
 structure SynchronizedComparisons where
   /-- The retained common predecessor of all original comparison stages. -/ predecessor : Nat
   /-- The component comparisons on the exact original acquisition and evaluation. -/ comparisons :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.ScheduledRequest.Comparisons scheduled acquired
+    Comparisons scheduled acquired
     evaluation
   /-- Every retained component comparison uses exactly the shared predecessor's successor stage. -/ atStage :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.AtStage (predecessor + 1)
+    Plans.Samples.AtStage (predecessor + 1)
     scheduled.request.entries
     acquired.plans acquired.readings acquired.fans evaluation.samples evaluation.comparisons comparisons
 
@@ -377,19 +379,19 @@ constructive_injectivity SynchronizedComparisons
 
 /-- Reuse the complete-surface evaluation's banks and compare every component
 at the maximum of its internally certified original-stage thresholds. -/
-def compareSources (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.ScheduledRequest.SynchronizedComparisons scheduled
+def compareSources (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
+  SynchronizedComparisons scheduled
   acquired evaluation :=
-  let predecessor := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.threshold
+  let predecessor := Plans.Samples.threshold
     scheduled.localError scheduled.positive scheduled.coefficientPositive.le
     scheduled.request.entries acquired.plans acquired.readings acquired.fans evaluation.samples evaluation.comparisons
       scheduled.compatible
-  let comparisons := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.compareScheduled
+  let comparisons := Plans.Samples.compareScheduled
     branch scheduled.localError scheduled.positive scheduled.coefficientPositive.le
     scheduled.request.entries acquired.plans acquired.readings acquired.fans evaluation.samples evaluation.comparisons
       scheduled.compatible predecessor le_rfl
   ⟨predecessor, comparisons,
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.compareScheduled_atStage branch
+    Plans.Samples.compareScheduled_atStage branch
     scheduled.localError scheduled.positive scheduled.coefficientPositive.le
     scheduled.request.entries acquired.plans acquired.readings acquired.fans evaluation.samples evaluation.comparisons
       scheduled.compatible predecessor le_rfl⟩
@@ -397,29 +399,29 @@ def compareSources (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticRecipr
 /-- The sum compares source and period traces component by component; it
 introduces no joining polygon between disconnected surface components. -/
 theorem source_error_bound (comparisons :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.ScheduledRequest.Comparisons scheduled acquired
+  Comparisons scheduled acquired
   evaluation) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Data.Gaussian.Norm.Sum.Basic.gaussianSum
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.scheduledErrors
+    Gaussian.Norm.Basic.normSq
+      (Gaussian.Norm.Sum.Basic.gaussianSum
+        (Plans.Samples.scheduledErrors
           scheduled.request.entries acquired.plans acquired.readings acquired.fans
           evaluation.samples evaluation.comparisons comparisons)) ≤
-      errorTarget * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 := open Purelib.Data.Rat
+      errorTarget * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 := open Rat
         in by
   have bounded := Gaussian.Norm.Sum.Bounds.normSq_sum_le
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.scheduledErrors
+    (Plans.Samples.scheduledErrors
       scheduled.request.entries acquired.plans acquired.readings acquired.fans
       evaluation.samples evaluation.comparisons comparisons) _
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.scheduledErrors_bounded
+    (Plans.Samples.scheduledErrors_bounded
       scheduled.request.entries acquired.plans acquired.readings acquired.fans
       evaluation.samples evaluation.comparisons comparisons)
-  rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceScheduled.Plans.Samples.scheduledErrors_length,
+  rw [Plans.Samples.scheduledErrors_length,
     scheduled.request.entries_length] at bounded
   apply bounded.trans
-  exact (show (prepared.components.length : Normalization.InverseRootPolynomial.Coordinate) *
-      ((prepared.components.length : Normalization.InverseRootPolynomial.Coordinate) * (scheduled.localError *
+  exact (show (prepared.components.length : InverseRootPolynomial.Coordinate) *
+      ((prepared.components.length : InverseRootPolynomial.Coordinate) * (scheduled.localError *
         Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2)) =
-      ((prepared.components.length : Normalization.InverseRootPolynomial.Coordinate)^2 * scheduled.localError) *
+      ((prepared.components.length : InverseRootPolynomial.Coordinate)^2 * scheduled.localError) *
         Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 by ring1).trans_le
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct scheduled.paid
       (Fraction.Order.Arithmetic.sq_nonneg_direct _))

@@ -61,6 +61,8 @@ comparison across successive containing cells is a separate obligation.
 
 namespace Purelib.Riemann.Integration.PreparedParentSplitting
 
+open Purelib.Polynomial.Geometry.ClearPath.ClearSegment (pointAt_eq_line)
+
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate Gaussian)
 open Purelib.Data.List
 open Purelib.Data.Nat
@@ -87,7 +89,7 @@ theorem prepared_point_eq (parent : CenteredEdge curve differential) (parameter 
   change parent.edge.localSegment.pointAt parameter = PreparedSegmentCuts.point
     (parent.edge.localSegment.pointAt 0) (parent.edge.localSegment.pointAt 1) parameter
   rw [parent.edge.localSegment.pointAt_zero, parent.edge.localSegment.pointAt_one, PreparedSegmentCuts.point_eq_line]
-  exact PreparedPathWinding.ClearSegment.pointAt_eq_line
+  exact pointAt_eq_line
     parent.edge.localSegment parameter
 
 set_option genInjectivity false in
@@ -119,6 +121,61 @@ open Purelib.Riemann.Paths in
         (covered parent List.mem_cons_self).1 (covered parent List.mem_cons_self).2)
         (build cuts rest (fun parent member => covered parent (List.mem_cons_of_mem _ member)))
 
+/-- Read the parent-list index from the retained constructor metadata in constant work. -/
+private def parentList : {parents : List (CenteredEdge curve differential)} →
+    ParentSplits cuts parents → List (CenteredEdge curve differential)
+  | _, .nil => []
+  | _, .cons (parent := parent) (rest := rest) _ _ => parent :: rest
+
+/-- The stored constructor metadata is the exact original parent-list index. -/
+private theorem parentList_eq {parents : List (CenteredEdge curve differential)}
+    (splits : ParentSplits cuts parents) : parentList splits = parents := by
+  cases splits <;> rfl
+
+/-- Prepend one original split using the supplied tail's stored parent-list metadata.
+
+The two erased transports retain the complete tail and split unchanged.
+The constructor stores the cached metadata rather than recomputing a list
+expression from the parent-list type index.
+-/
+private def prepend {parent : CenteredEdge curve differential}
+    {parents : List (CenteredEdge curve differential)}
+    (split : SegmentSplit cuts (parent.edge.point 0) (parent.edge.point 1))
+    (tail : ParentSplits cuts parents) : ParentSplits cuts (parent :: parents) :=
+  let cached := parentList tail
+  let same : cached = parents := parentList_eq tail
+  let retained : ParentSplits cuts cached :=
+    Eq.mp (congrArg (fun entries => ParentSplits cuts entries) same.symm) tail
+  let result : ParentSplits cuts (parent :: cached) := .cons (rest := cached) split retained
+  Eq.mp (congrArg (fun entries => ParentSplits cuts (parent :: entries)) same) result
+
+/-- Prepending with cached metadata retains the entire original split and tail value. -/
+private theorem prepend_eq {parent : CenteredEdge curve differential}
+    {parents : List (CenteredEdge curve differential)}
+    (split : SegmentSplit cuts (parent.edge.point 0) (parent.edge.point 1))
+    (tail : ParentSplits cuts parents) : prepend split tail = .cons split tail := by
+  cases tail <;> rfl
+
+/-- Concatenate two retained split banks in their original parent order.
+
+Each left head keeps its exact split payload. The empty-left branch returns
+the complete supplied right bank without splitting any parent again.
+-/
+def append : ∀ {first second : List (CenteredEdge curve differential)},
+    ParentSplits cuts first → ParentSplits cuts second → ParentSplits cuts (first ++ second)
+  | _, _, .nil, second => second
+  | _, _, .cons split tail, second =>
+      let joined := append tail second
+      prepend split joined
+
+/-- The complete nonempty append result retains the original head and recursively joined tail. -/
+private theorem append_cons {parent : CenteredEdge curve differential}
+    {first second : List (CenteredEdge curve differential)}
+    (split : SegmentSplit cuts (parent.edge.point 0) (parent.edge.point 1))
+    (tail : ParentSplits cuts first) (right : ParentSplits cuts second) :
+    (ParentSplits.cons split tail).append right = .cons split (tail.append right) :=
+  prepend_eq split (tail.append right)
+
 /-- Concatenate the original retained split-point lists in parent order. -/
 @[expose] def points : {parents : List (CenteredEdge curve differential)} → ParentSplits cuts parents → List Gaussian
   | _, .nil => []
@@ -128,6 +185,34 @@ open Purelib.Riemann.Paths in
 @[expose] def pieceCount : {parents : List (CenteredEdge curve differential)} → ParentSplits cuts parents → Nat
   | _, .nil => 0
   | _, .cons split tail => split.count + tail.pieceCount
+
+/-- Concatenation retains every original split-point occurrence in the same order.
+
+The displayed equality preserves repeated and stationary endpoint occurrences;
+no point comparison or deduplication is performed.
+-/
+theorem points_append {first second : List (CenteredEdge curve differential)}
+    (left : ParentSplits cuts first) (right : ParentSplits cuts second) :
+    (left.append right).points = left.points ++ right.points := by
+  induction left with
+  | nil => rfl
+  | cons split tail ih =>
+      rewrite [append_cons]
+      change split.points ++ (tail.append right).points = (split.points ++ tail.points) ++ right.points
+      exact (congrArg (fun points => split.points ++ points) ih).trans
+        (Append.append_assoc split.points tail.points right.points).symm
+
+/-- Concatenation adds the actual fragment counts of the two retained split banks. -/
+theorem pieceCount_append {first second : List (CenteredEdge curve differential)}
+    (left : ParentSplits cuts first) (right : ParentSplits cuts second) :
+    (left.append right).pieceCount = left.pieceCount + right.pieceCount := by
+  induction left with
+  | nil => exact (Nat.zero_add right.pieceCount).symm
+  | cons split tail ih =>
+      rewrite [append_cons]
+      change split.count + (tail.append right).pieceCount = (split.count + tail.pieceCount) + right.pieceCount
+      exact (congrArg (fun count : Nat => split.count + count) ih).trans
+        (Nat.add_assoc split.count tail.pieceCount right.pieceCount).symm
 
 /-- The retained split-point list has exactly twice the original fragment count.
 
@@ -168,6 +253,35 @@ inductive Member {parent : CenteredEdge curve differential}
       (first : SegmentSplit cuts (head.edge.point 0) (head.edge.point 1)) {tail : ParentSplits cuts rest}
       (member : Member split tail) : Member split (.cons first tail)
 
+namespace Member
+
+variable {parent : CenteredEdge curve differential}
+variable {split : SegmentSplit cuts (parent.edge.point 0) (parent.edge.point 1)}
+
+/-- A retained left split occurrence remains that same split after concatenation. -/
+theorem append_left {first second : List (CenteredEdge curve differential)}
+    {left : ParentSplits cuts first} (member : Member split left) (right : ParentSplits cuts second) :
+    Member split (left.append right) := by
+  induction member with
+  | here tail =>
+      rewrite [append_cons]
+      exact .here (tail.append right)
+  | there head member ih =>
+      rewrite [append_cons]
+      exact .there head ih
+
+/-- A retained right split occurrence remains that same split after the entire left bank. -/
+theorem append_right {first second : List (CenteredEdge curve differential)}
+    (left : ParentSplits cuts first) {right : ParentSplits cuts second} (member : Member split right) :
+    Member split (left.append right) := by
+  induction left with
+  | nil => exact member
+  | cons head tail ih =>
+      rewrite [append_cons]
+      exact .there head ih
+
+end Member
+
 /-- A point in a retained split occurrence belongs to the exact complete split-point list. -/
 theorem point_mem {parents : List (CenteredEdge curve differential)} {splits : ParentSplits cuts parents}
     {parent : CenteredEdge curve differential} {split : SegmentSplit cuts (parent.edge.point 0) (parent.edge.point 1)}
@@ -206,19 +320,19 @@ Each original polynomial telescopes over its own retained segment split, preserv
 owners. -/
 theorem sum_eq {parents : List (CenteredEdge curve differential)} (splits : ParentSplits cuts parents)
     {count : Nat} {target : Coordinate} (requests : RequestedParents count target parents) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (splits.increments requests) = Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    gaussianSum (splits.increments requests) = gaussianSum
       requests.increments
       := by
-  have sumAppend (first last : List Gaussian) : Data.Gaussian.Norm.Sum.Basic.gaussianSum (first ++ last) =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum first + Data.Gaussian.Norm.Sum.Basic.gaussianSum last := by
+  have sumAppend (first last : List Gaussian) : gaussianSum (first ++ last) =
+    gaussianSum first + gaussianSum last := by
     induction first with
     | nil =>
-        change Data.Gaussian.Norm.Sum.Basic.gaussianSum last = 0 + Data.Gaussian.Norm.Sum.Basic.gaussianSum last;
+        change gaussianSum last = 0 + gaussianSum last;
         ring1
     | cons first rest ih =>
-        change first + Data.Gaussian.Norm.Sum.Basic.gaussianSum (rest ++ last) = (first +
-          Data.Gaussian.Norm.Sum.Basic.gaussianSum rest) +
-          Data.Gaussian.Norm.Sum.Basic.gaussianSum last
+        change first + gaussianSum (rest ++ last) = (first +
+          gaussianSum rest) +
+          gaussianSum last
         rw [ih]
         ring1
   induction splits with
@@ -272,7 +386,7 @@ structure PreparedSplitMesh (cuts : GridCuts geometry) (parents : List (Centered
   /-- The point cache equals the exact retained split list concatenated with the original extras. -/ points_eq : points
     = splits.points ++ extra
   /-- The original common mesh on all cells containing the exact retained point cache. -/ mesh :
-    RectangularCommonMesh.RectangularInverseModels.CommonMesh geometry (RectangularExteriorBoundary.Geometry.allCells
+    CommonMesh geometry (RectangularExteriorBoundary.Geometry.allCells
     geometry) points
 
 constructive_injectivity PreparedSplitMesh
@@ -284,15 +398,19 @@ variable {cuts : GridCuts geometry} {parents : List (CenteredEdge curve differen
 open Purelib.Geometry.Rectangle.Partition in
 open Purelib.Riemann.Paths in
 open Purelib.Riemann.Readings in
-/-- Split the original covered parent list, cache its endpoints with supplied extras, and build their exact common mesh.
+/-- Cache retained split endpoints with supplied extras and build their exact common mesh.
+
+A supplied original splitting bank is consumed directly. Omitting it runs
+its original parent splitter once, with the same exact former result.
 -/
 @[expose] def build (cuts : GridCuts geometry) (parents : List (CenteredEdge curve differential))
     (covered : ∀ parent ∈ parents, RectangularSegmentSplitting.Geometry.Covers geometry (parent.edge.point 0) ∧
       RectangularSegmentSplitting.Geometry.Covers geometry (parent.edge.point 1))
-    (extra : List Gaussian := []) : PreparedSplitMesh cuts parents extra :=
-  let splits := ParentSplits.build cuts parents covered
+    (extra : List Gaussian := [])
+    (splits : ParentSplits cuts parents := ParentSplits.build cuts parents covered) :
+    PreparedSplitMesh cuts parents extra :=
   let points := splits.points ++ extra
-  ⟨splits, points, rfl, RectangularCommonMesh.RectangularInverseModels.CommonMesh.build geometry
+  ⟨splits, points, rfl, CommonMesh.build geometry
     (RectangularExteriorBoundary.Geometry.allCells geometry) points⟩
 
 open Purelib.Curves.Hyperelliptic.Integration in
@@ -307,13 +425,13 @@ open Purelib.Riemann.Topology in
 
 The retained trace's parent-lineage evidence supplies endpoint coverage on the original uniform geometry; the exact
 parent list and extra points remain unchanged. -/
-@[expose] def ofTraced {box : Purelib.Geometry.Rational.Box} (proper : box.Proper) (steps : Nat)
-    (cuts : GridCuts (Geometry.Rectangle.Partition.RectangularUniformGeometry.uniform box proper steps))
+@[expose] def ofTraced {box : Box} (proper : box.Proper) (steps : Nat)
+    (cuts : GridCuts (RectangularUniformGeometry.uniform box proper steps))
     (clearance : Region.RegionClearance curve.polynomial box)
-    {ambient : Purelib.Geometry.Rational.Box} {base finish : Gaussian}
+    {ambient : Box} {base finish : Gaussian}
     {source : SquareRootContinuationChain.Owner (curve.polynomial.eval base)}
-    {path : Polynomial.Geometry.ClearPath curve.polynomial ambient base finish}
-    (traced : PreparedPathTrace.TracedPath path source) (inside : Polynomial.Geometry.ClearPath.InBox box path)
+    {path : Geometry.ClearPath curve.polynomial ambient base finish}
+    (traced : PreparedPathTrace.TracedPath path source) (inside : Geometry.ClearPath.InBox box path)
     (sheet : Fin 2) (parents : List (CenteredEdge curve differential))
     (membership : ∀ parent ∈ parents, parent ∈
       (PreparedDirectDyadicRefinements.CenteredPathChain.ofPreparedPath curve differential sheet

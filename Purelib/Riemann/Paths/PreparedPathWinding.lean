@@ -63,72 +63,53 @@ trace preparation, and cannot return operationally to its initial square root.
 namespace Purelib.Riemann.Paths.PreparedPathWinding
 
 open Purelib.Data
+open Purelib.Polynomial.Geometry.ClearPath.ClearSegment (pointAt_eq_line)
 
 public section
 
 namespace ClearSegment
 
-open Purelib.Geometry.Rational.Affine (line)
-open Purelib.Data.Gaussian.Cast (ofCoordinate_re ofCoordinate_im)
 open Purelib.RootIsolation.Winding
 open Purelib.Polynomial.Geometry.ClearPath (ClearSegment)
-open Purelib.Polynomial.Geometry.ClearPath.ClearSegment (pointAt)
-
-open Purelib.Data.Gaussian in
-open Purelib.Data.Rat in
-open Purelib.Geometry.Rational in
-open Purelib.Polynomial in
-open Purelib.Polynomial.Dense.Gaussian in
-/-- The original cleared segment parameterization equals its affine line with the same start and displacement. -/
-theorem pointAt_eq_line {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-  {ambient : Purelib.Geometry.Rational.Box} {start finish :
-  Basic.Canonical}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) (parameter : Fraction.Rational) :
-    segment.pointAt parameter = Affine.line start (finish - start) parameter := by
-  apply Basic.ext <;>
-    simp only [Geometry.ClearPath.ClearSegment.pointAt, Affine.line, Scale.scale_re, Scale.scale_im,
-      Cast.ofCoordinate_re, Cast.ofCoordinate_im, Basic.add_re,
-      Basic.add_im, Basic.mul_re,
-      Basic.mul_im] <;> ring1
 
 open Purelib.Data.Gaussian
 open Purelib.Geometry.Rational
 open Purelib.Polynomial
 open Purelib.Polynomial.Dense.Gaussian
 /-- The raw integer winding of the polynomial along the original cleared segment. -/
-@[expose] def rawWinding {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-  {ambient : Purelib.Geometry.Rational.Box} {start finish :
+@[expose] def rawWinding {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
+  {ambient : Box} {start finish :
   Basic.Canonical}
-    (_segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) : Int :=
+    (_segment : ClearSegment polynomial ambient start finish) : Int :=
   (Path.Segment.segment polynomial start finish).doubledWinding
 
 /-- The original cleared segment's raw winding computed from its horizontal or vertical polynomial edge. -/
 @[expose] def coordinateWinding {polynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
-    Purelib.Geometry.Rational.Box} {start finish :
+  Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
+    Box} {start finish :
   Basic.Canonical}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) : Int :=
+    (segment : ClearSegment polynomial ambient start finish) : Int :=
   match segment with
   | .horizontal left right y _ _ _ _ _ => (Path.Box.Sides.horizontalEdge polynomial y left right).doubledWinding
   | .vertical x left right _ _ _ _ _ => (Path.Box.Sides.verticalEdge polynomial x left right).doubledWinding
 
 /-- Affine-segment and axis-edge formulas give the same original cleared-segment winding. -/
 theorem rawWinding_eq_coordinateWinding {polynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
-    Purelib.Geometry.Rational.Box} {start
+  Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
+    Box} {start
   finish : Basic.Canonical}
-    (segment : Geometry.ClearPath.ClearSegment polynomial ambient start finish) : rawWinding segment = coordinateWinding
+    (segment : ClearSegment polynomial ambient start finish) : rawWinding segment = coordinateWinding
       segment := by
   cases segment with
   | horizontal left right y leftLower leftUpper _ _ clearance =>
-      have nonzero := Geometry.ClearPath.ClearSegment.horizontal_eval_ne_zero clearance left leftLower leftUpper
+      have nonzero := ClearSegment.horizontal_eval_ne_zero clearance left leftLower leftUpper
       have formula := Winding.Polygon.Subdivision.segmentRaw_eq_ofLine polynomial (Cast.Imaginary.horizontalBase y)
         Constants.horizontalDirection left right
         (by simpa only [Affine.Axis.line_horizontal] using nonzero)
       simpa only [rawWinding, coordinateWinding, Path.Box.Sides.horizontalEdge, Affine.Axis.line_horizontal] using
         formula
   | vertical x left right leftLower leftUpper _ _ clearance =>
-      have nonzero := Geometry.ClearPath.ClearSegment.vertical_eval_ne_zero clearance left leftLower leftUpper
+      have nonzero := ClearSegment.vertical_eval_ne_zero clearance left leftLower leftUpper
       have formula := Winding.Polygon.Subdivision.segmentRaw_eq_ofLine polynomial (Cast.Winding.verticalBase x)
         Constants.imaginaryUnit left right
         (by simpa only [Affine.Axis.line_vertical] using nonzero)
@@ -151,11 +132,11 @@ open Purelib.Riemann.Paths in
 /-- Sum the original cleared segments' raw integer windings in path order.
 
 The empty path contributes zero, and each step retains its original segment and exact tail. -/
-@[expose] def rawWinding {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-  {ambient : Purelib.Geometry.Rational.Box} :
-    {start finish : Basic.Canonical} → Polynomial.Geometry.ClearPath polynomial ambient start finish → Int
+@[expose] def rawWinding {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
+  {ambient : Box} :
+    {start finish : Basic.Canonical} → ClearPath polynomial ambient start finish → Int
   | _, _, .nil _ => 0
-  | _, _, .cons head tail => PreparedPathWinding.ClearSegment.rawWinding head + rawWinding tail
+  | _, _, .cons head tail => ClearSegment.rawWinding head + rawWinding tail
 
 end ClearPath
 
@@ -166,7 +147,7 @@ open Purelib.Riemann.Branches.PreparedSheetContinuation (Endpoint Owner Subdivis
 open Purelib.RootIsolation.Winding
 
 variable {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
-  Purelib.Geometry.Rational.Box} {start finish : Purelib.Data.Gaussian.Basic.Canonical}
+  Geometry.Rational.Box} {start finish : Gaussian.Basic.Canonical}
   {segment : ClearSegment polynomial ambient start finish} {within :
     segment.WithinAmbient}
 
@@ -198,10 +179,10 @@ theorem requests_winding : ∀ {current : Endpoint}
   | _, _, .stop _ _ => (Int.Arithmetic.sub_eq_zero_of_eq (Eq.refl _)).symm
   | current, _owner, .next _ _ request _cached _ordered _safe remaining => by
       have nonzero := segment.pointAt_eval_ne_zero current.parameter current.inside
-      rw [PreparedPathWinding.ClearSegment.pointAt_eq_line segment] at nonzero
+      rw [pointAt_eq_line segment] at nonzero
       have edge := Winding.Polygon.Subdivision.segmentRaw_eq_ofLine polynomial start (finish - start)
         current.parameter request.endpoint.parameter nonzero
-      rw [← PreparedPathWinding.ClearSegment.pointAt_eq_line segment, ← PreparedPathWinding.ClearSegment.pointAt_eq_line
+      rw [← pointAt_eq_line segment, ← pointAt_eq_line
         segment] at edge
       change (Path.Segment.segment polynomial (segment.pointAt current.parameter)
         (segment.pointAt request.endpoint.parameter)).doubledWinding +
@@ -222,7 +203,7 @@ open Purelib.Riemann.Paths.PreparedPathTrace (TracedPath)
 namespace CompleteSegment
 
 variable {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
-  Purelib.Geometry.Rational.Box} {start finish : Purelib.Data.Gaussian.Basic.Canonical}
+  Geometry.Rational.Box} {start finish : Gaussian.Basic.Canonical}
   {segment : ClearSegment polynomial ambient start finish} {within :
     segment.WithinAmbient}
   {owner : Owner (polynomial.eval start)}
@@ -233,7 +214,7 @@ open Purelib.Riemann.Paths in
 theorem moving_terminal (prepared : CompleteSegment segment within owner) :
     Polygon.Chain.terminal start
       (PreparedPathTrace.CompleteSegment.movingVertices prepared) = finish := by
-  have equality := PreparedPathWinding.Subdivision.requests_terminal prepared.subdivision
+  have equality := Subdivision.requests_terminal prepared.subdivision
   rw [prepared.start_eq, prepared.finish_eq] at equality
   exact equality
 
@@ -243,8 +224,8 @@ open Purelib.Riemann.Paths in
 theorem moving_winding (prepared : CompleteSegment segment within owner) :
     Winding.Polygon.Basic.chainRaw polynomial start
       (PreparedPathTrace.CompleteSegment.movingVertices prepared) =
-        PreparedPathWinding.ClearSegment.rawWinding segment := by
-  have equality := PreparedPathWinding.Subdivision.requests_winding prepared.subdivision
+        ClearSegment.rawWinding segment := by
+  have equality := Subdivision.requests_winding prepared.subdivision
   rw [prepared.start_eq, prepared.endpoint_eq] at equality
   exact equality
 
@@ -260,13 +241,13 @@ open Purelib.Riemann.Paths in
 /-- The original prepared path's concatenated moving vertices have exactly the raw winding of its cleared path.
 
 The proof retains each segment's endpoint equation and combines the original finite chain windings in order. -/
-theorem moving_winding {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-  {ambient : Purelib.Geometry.Rational.Box} :
-    ∀ {start finish : Basic.Canonical} {path : Polynomial.Geometry.ClearPath polynomial ambient start finish}
+theorem moving_winding {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
+  {ambient : Geometry.Rational.Box} :
+    ∀ {start finish : Basic.Canonical} {path : ClearPath polynomial ambient start finish}
       {owner : Owner (polynomial.eval start)} (prepared : PreparedPath path owner),
       Winding.Polygon.Basic.chainRaw polynomial start
         (PreparedPathTrace.PreparedPath.movingVertices prepared) =
-          PreparedPathWinding.ClearPath.rawWinding path
+          ClearPath.rawWinding path
   | _, _, _, _, .nil _ _ => rfl
   | _, _, _, _, .cons _ _ _ _ head tail => by
       change Winding.Polygon.Basic.chainRaw polynomial _
@@ -287,13 +268,13 @@ open Purelib.Polynomial in
 open Purelib.Polynomial.Dense.Gaussian in
 open Purelib.Riemann.Paths in
 /-- The retained traced path has exactly the raw winding of its original cleared path. -/
-theorem winding_original {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-  {ambient : Purelib.Geometry.Rational.Box} {start finish :
+theorem winding_original {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
+  {ambient : Geometry.Rational.Box} {start finish :
   Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath polynomial ambient start finish} {owner : Owner (polynomial.eval start)}
+    {path : ClearPath polynomial ambient start finish} {owner : Owner (polynomial.eval start)}
     (traced : TracedPath path owner) :
     Winding.Polygon.Basic.chainRaw polynomial start traced.trace.get.vertices =
-      PreparedPathWinding.ClearPath.rawWinding path :=
+      ClearPath.rawWinding path :=
   traced.winding_eq.trans (PreparedPath.moving_winding traced.prepared)
 
 open Purelib.Approximation.Gaussian in
@@ -304,17 +285,17 @@ open Purelib.Polynomial.Dense.Gaussian in
 open Purelib.Riemann.Paths in
 /-- Odd original loop winding excludes equivalence of its initial and retained terminal root names. -/
 theorem root_not_equivalent_of_original_odd {polynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
-    Purelib.Geometry.Rational.Box} {base :
+  Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
+    Geometry.Rational.Box} {base :
   Basic.Canonical}
-    {path : Polynomial.Geometry.ClearPath polynomial ambient base base} {owner : Owner (polynomial.eval base)}
+    {path : ClearPath polynomial ambient base base} {owner : Owner (polynomial.eval base)}
     (traced : TracedPath path owner) (turns : Int)
-    (odd : PreparedPathWinding.ClearPath.rawWinding path =
+    (odd : ClearPath.rawWinding path =
       4 * (2 * turns + 1)) :
     Equivalence.NamedEquivalent
       (OwnerTraceReadings.ownerName traced.finishOwner)
       (OwnerTraceReadings.ownerName owner) → False :=
-  PreparedPathTrace.TracedPath.root_not_equivalent_of_odd
+  TracedPath.root_not_equivalent_of_odd
     traced turns ((PreparedPath.moving_winding traced.prepared).trans odd)
 
 end TracedPath
@@ -333,18 +314,18 @@ open Purelib.Riemann.Paths in
 open Purelib.RootIsolation in
 /-- The original cleared boundary path of a winding-one isolation state has raw winding four. -/
 theorem ownerBoundaryPath_rawWinding
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
-      Purelib.Geometry.Rational.Box}
+    {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
+      Box}
     (state : State.WindingOne.Basic.WindingOneState polynomial ambient) :
-    PreparedPathWinding.ClearPath.rawWinding
-      (BranchCutLifts.ownerBoundaryPath state) = 4 := by
-  have equality : PreparedPathWinding.ClearPath.rawWinding
-      (BranchCutLifts.ownerBoundaryPath state) =
+    ClearPath.rawWinding
+      (ownerBoundaryPath state) = 4 := by
+  have equality : ClearPath.rawWinding
+      (ownerBoundaryPath state) =
         Winding.Box.Basic.quadrupledBoxWinding polynomial state.box := by
-    unfold BranchCutLifts.ownerBoundaryPath
-    simp only [PreparedPathWinding.ClearPath.rawWinding,
-      PreparedPathWinding.ClearSegment.rawWinding_eq_coordinateWinding,
-      PreparedPathWinding.ClearSegment.coordinateWinding]
+    unfold ownerBoundaryPath
+    simp only [ClearPath.rawWinding,
+      ClearSegment.rawWinding_eq_coordinateWinding,
+      ClearSegment.coordinateWinding]
     rw [Winding.Box.Basic.quadrupledBoxWinding_eq]
     ring1
   exact equality.trans state.rawWindingFour
@@ -364,12 +345,12 @@ open Purelib.RootIsolation in
 /-- Trace the original winding-one state's boundary starting at the supplied anchor root owner.
 
 The retained boundary containment supplies the exact original path preparation and owner trace. -/
-@[expose] def ownerBoundary {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-  {ambient : Purelib.Geometry.Rational.Box}
+@[expose] def ownerBoundary {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
+  {ambient : Geometry.Rational.Box}
     (state : State.WindingOne.Basic.WindingOneState polynomial ambient)
     (owner : Owner (polynomial.eval state.box.anchor)) :
     TracedPath (BranchCutLifts.ownerBoundaryPath state) owner :=
-  PreparedPathTrace.TracedPath.build
+  TracedPath.build
     (BranchCutLifts.ownerBoundaryPath state)
     (BranchCutLifts.ownerBoundaryPath_withinAmbient state) owner
 
@@ -381,17 +362,17 @@ open Purelib.Riemann.Paths in
 open Purelib.RootIsolation in
 /-- Following the original winding-one boundary cannot return an equivalent root name. -/
 theorem ownerBoundary_not_return {polynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Purelib.Geometry.Rational.Box}
+  Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Geometry.Rational.Box}
     (state : State.WindingOne.Basic.WindingOneState polynomial ambient)
     (owner : Owner (polynomial.eval state.box.anchor)) :
     Equivalence.NamedEquivalent
       (OwnerTraceReadings.ownerName (ownerBoundary state owner).finishOwner)
       (OwnerTraceReadings.ownerName owner) → False := by
-  apply PreparedPathWinding.PreparedClearPathModels.TracedPath.root_not_equivalent_of_original_odd
+  apply PreparedClearPathModels.TracedPath.root_not_equivalent_of_original_odd
     (ownerBoundary state owner) 0
-  change PreparedPathWinding.ClearPath.rawWinding
+  change ClearPath.rawWinding
     (BranchCutLifts.ownerBoundaryPath state) = 4
-  exact PreparedPathWinding.BranchCutLifts.ownerBoundaryPath_rawWinding state
+  exact BranchCutLifts.ownerBoundaryPath_rawWinding state
 
 open Purelib.Approximation.Gaussian in
 open Purelib.Curves.Hyperelliptic.Branches in
@@ -404,7 +385,7 @@ open Purelib.RootIsolation in
 An equal assignment would compare the original endpoint root names through their exact reconditioning bridges,
 contradicting the boundary's odd winding. -/
 theorem ownerBoundary_assignment_swaps {polynomial :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Purelib.Geometry.Rational.Box}
+  Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Geometry.Rational.Box}
     (state : State.WindingOne.Basic.WindingOneState polynomial ambient)
     (owner : Owner (polynomial.eval state.box.anchor)) :
     (SquareRootReconditioning.assignment owner.parameterNonzero

@@ -33,18 +33,18 @@ section
 /-- Parent boundary clearance and the two selected clear lines give all four
 child boundary certificates. -/
 def childClearances {p :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {parent : Box}
-    (grid : Clearance.Box.Grid.Four.Basic.ClearFourGrid p parent) (parentClear :
+  Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {parent : Box}
+    (grid : ClearFourGrid p parent) (parentClear :
       BoundaryClearance p parent) :
     BoundaryClearance p grid.lowerLeft ×
       BoundaryClearance p grid.upperLeft ×
       BoundaryClearance p grid.lowerRight ×
       BoundaryClearance p grid.upperRight :=
-  let leftParent := Clearance.Box.Boundary.Lines.leftOfBoundary parentClear
-  let rightParent := Clearance.Box.Boundary.Lines.rightOfBoundary parentClear
-  let bottomParent := Clearance.Box.Boundary.Lines.bottomOfBoundary parentClear
-  let topParent := Clearance.Box.Boundary.Lines.topOfBoundary parentClear
-  let lowerLeftClear := Clearance.Box.Boundary.Lines.boundaryOfLines
+  let leftParent := Boundary.Lines.leftOfBoundary parentClear
+  let rightParent := Boundary.Lines.rightOfBoundary parentClear
+  let bottomParent := Boundary.Lines.bottomOfBoundary parentClear
+  let topParent := Boundary.Lines.topOfBoundary parentClear
+  let lowerLeftClear := Boundary.Lines.boundaryOfLines
     (VerticalLineClearance.restrict (small := grid.lowerLeft)
       leftParent grid.lowerLeft_refines)
     (VerticalLineClearance.restrict (small := grid.lowerLeft)
@@ -53,7 +53,7 @@ def childClearances {p :
       bottomParent grid.lowerLeft_refines)
     (HorizontalLineClearance.restrict (small := grid.lowerLeft)
       grid.horizontalClearance grid.lowerLeft_refines)
-  let upperLeftClear := Clearance.Box.Boundary.Lines.boundaryOfLines
+  let upperLeftClear := Boundary.Lines.boundaryOfLines
     (VerticalLineClearance.restrict (small := grid.upperLeft)
       leftParent grid.upperLeft_refines)
     (VerticalLineClearance.restrict (small := grid.upperLeft)
@@ -62,7 +62,7 @@ def childClearances {p :
       grid.horizontalClearance grid.upperLeft_refines)
     (HorizontalLineClearance.restrict (small := grid.upperLeft)
       topParent grid.upperLeft_refines)
-  let lowerRightClear := Clearance.Box.Boundary.Lines.boundaryOfLines
+  let lowerRightClear := Boundary.Lines.boundaryOfLines
     (VerticalLineClearance.restrict (small := grid.lowerRight)
       grid.verticalClearance grid.lowerRight_refines)
     (VerticalLineClearance.restrict (small := grid.lowerRight)
@@ -71,7 +71,7 @@ def childClearances {p :
       bottomParent grid.lowerRight_refines)
     (HorizontalLineClearance.restrict (small := grid.lowerRight)
       grid.horizontalClearance grid.lowerRight_refines)
-  let upperRightClear := Clearance.Box.Boundary.Lines.boundaryOfLines
+  let upperRightClear := Boundary.Lines.boundaryOfLines
     (VerticalLineClearance.restrict (small := grid.upperRight)
       grid.verticalClearance grid.upperRight_refines)
     (VerticalLineClearance.restrict (small := grid.upperRight)

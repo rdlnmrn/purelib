@@ -58,18 +58,7 @@ The construction reuses its exact state box, boundary and ambient line clearance
 accuracy certificate. -/
 def fallback (saved : SavedBand degreeAtLeastTwo squarefree elimination current epsilon positive) :
     Refinement current epsilon :=
-  { state :=
-      { box := saved.val.box
-        refinesAmbient := saved.val.refinesAmbient
-        proper := saved.val.proper
-        clearance := saved.val.clearance
-        rawWindingFour := saved.val.rawWindingFour
-        ambientLeftClearance := saved.val.ambientLeftClearance
-        ambientRightClearance := saved.val.ambientRightClearance
-        ambientBottomClearance := saved.val.ambientBottomClearance
-        ambientTopClearance := saved.val.ambientTopClearance }
-    strict := saved.val.strictCurrent
-    accurate := saved.val.diagonalSq_le }
+  Newton.Extraction.Initial.Build.fromBand saved.val
 
 /-- After the retained canonical seed search fails, reading its saved fallback band equals the original total extractor
 exactly. -/
@@ -77,10 +66,16 @@ theorem fallback_eq (replay : Replay elimination current epsilon) (missed : repl
     (saved : SavedBand degreeAtLeastTwo squarefree elimination current epsilon positive) :
     fallback degreeAtLeastTwo squarefree elimination current epsilon positive saved =
       Newton.Extraction.Initial.Build.extract degreeAtLeastTwo squarefree elimination current positive := by
-  rcases saved with ⟨band, same⟩
-  cases same
-  unfold Newton.Extraction.Initial.Build.extract
-  rw [replay.equation, missed]
-  rfl
+  let cached : Newton.Extraction.Initial.Build.SearchCache elimination current epsilon :=
+    ⟨none, (replay.equation.trans missed).symm⟩
+  calc
+    fallback degreeAtLeastTwo squarefree elimination current epsilon positive saved =
+        Newton.Extraction.Initial.Build.extract degreeAtLeastTwo squarefree elimination current positive
+          none (some cached) := by
+      rcases saved with ⟨band, same⟩
+      cases same
+      rfl
+    _ = _ := Newton.Extraction.Initial.Build.extract_cachedSearch_eq_default
+      degreeAtLeastTwo squarefree elimination current positive none cached
 
 end Purelib.RootIsolation.Isolation.InitialExtractionReplay

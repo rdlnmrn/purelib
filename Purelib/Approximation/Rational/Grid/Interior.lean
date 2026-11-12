@@ -43,21 +43,51 @@ The interval width is divided by the degree bound plus two, leaving a gap at eac
     (Fraction.Arithmetic.normalizedSub b a)
     (degreeBound + 2 : Nat)
 
+/-- The indexed point of a rational grid with a retained spacing.
+
+The original bounded index selects its positive successor multiple of the
+supplied spacing from the same left endpoint.
+-/
+@[expose] public def point (left spacing : Fraction.Rational) {degreeBound : Nat}
+    (index : Fin (degreeBound + 1)) : Fraction.Rational :=
+  Fraction.Arithmetic.normalizedAdd left
+    (Fraction.Arithmetic.normalizedMul (index.val + 1 : Nat) spacing)
+
 /-- Compute the indexed interior point using normalized rational arithmetic.
 
 The index selects one of the degree bound plus one equally spaced points strictly between ordered endpoints. -/
 @[expose] public def interiorCandidate (a b : Fraction.Rational) (degreeBound : Nat)
     (index : Fin (degreeBound + 1)) : Fraction.Rational :=
-  Fraction.Arithmetic.normalizedAdd a
-    (Fraction.Arithmetic.normalizedMul (index.val + 1 : Nat)
-      (Approximation.Rational.Grid.Interior.interiorStep a b degreeBound))
+  point a (interiorStep a b degreeBound) index
 
 /-- Enumerate all displayed interior grid points in index order.
 
-The list is built from the original finite index type and contains exactly the degree bound plus one candidates. -/
+The original spacing is retained once before the finite index table is built.
+The list contains exactly the same degree bound plus one candidates. -/
 @[expose] public def interiorCandidates (a b : Fraction.Rational) (degreeBound : Nat) :
     List Fraction.Rational :=
-  List.ofFn (Approximation.Rational.Grid.Interior.interiorCandidate a b degreeBound)
+  let spacing := interiorStep a b degreeBound
+  List.ofFn (fun index : Fin (degreeBound + 1) => point a spacing index)
+
+/-- A retained-spacing candidate is the complete original rational grid expression.
+
+The same original endpoints, degree bound and bounded index determine its
+normalized difference, spacing, successor multiple and final sum.
+-/
+public theorem interiorCandidate_eq_original (a b : Fraction.Rational) (degreeBound : Nat)
+    (index : Fin (degreeBound + 1)) :
+    interiorCandidate a b degreeBound index =
+      Fraction.Arithmetic.normalizedAdd a
+        (Fraction.Arithmetic.normalizedMul (index.val + 1 : Nat)
+          (interiorStep a b degreeBound)) := rfl
+
+/-- Retaining the spacing once preserves the complete original ordered candidate list.
+
+Every bounded occurrence is the original candidate at that same index;
+materialization changes neither the table values nor their order.
+-/
+public theorem interiorCandidates_eq_original (a b : Fraction.Rational) (degreeBound : Nat) :
+    interiorCandidates a b degreeBound = List.ofFn (interiorCandidate a b degreeBound) := rfl
 
 /-- Strictly ordered endpoints give a positive interior-grid spacing.
 
@@ -65,12 +95,12 @@ The original endpoint difference is strictly positive. Dividing that
 same normalized difference by the positive natural degree bound plus two
 therefore gives a strictly positive retained spacing. -/
 public theorem interiorStep_pos {a b : Fraction.Rational} (less : a < b)
-    (degreeBound : Nat) : 0 < Approximation.Rational.Grid.Interior.interiorStep a b degreeBound := by
-  simp only [Approximation.Rational.Grid.Interior.interiorStep, Fraction.Arithmetic.normalizedDiv_eq,
+    (degreeBound : Nat) : 0 < interiorStep a b degreeBound := by
+  simp only [interiorStep, Fraction.Arithmetic.normalizedDiv_eq,
     Fraction.Arithmetic.normalizedSub_eq]
-  apply Fraction.Order.Field.div_pos_direct
-  · exact Fraction.Order.Arithmetic.sub_pos_direct less
-  · exact Purelib.Data.Rat.Cast.Order.natCast_pos (Nat.zero_lt_succ _)
+  apply Field.div_pos_direct
+  · exact Arithmetic.sub_pos_direct less
+  · exact Cast.Order.natCast_pos (Nat.zero_lt_succ _)
 
 /-- For strictly ordered endpoints, distinct finite indices give distinct interior candidates.
 
@@ -79,35 +109,35 @@ Scalar additive and multiplicative cancellation identify their original
 positive successor indices and hence the same bounded Fin entries. -/
 public theorem interiorCandidate_injective {a b : Fraction.Rational} (less : a < b)
     (degreeBound : Nat) :
-    Function.Injective (Approximation.Rational.Grid.Interior.interiorCandidate a b degreeBound) := by
+    Function.Injective (interiorCandidate a b degreeBound) := by
   intro first second equal
   apply Fin.ext
   have productsEqual :
-      ((first.val + 1 : Nat) : Fraction.Rational) * Approximation.Rational.Grid.Interior.interiorStep a b degreeBound =
+      ((first.val + 1 : Nat) : Fraction.Rational) * interiorStep a b degreeBound =
         ((second.val + 1 : Nat) : Fraction.Rational) *
-          Approximation.Rational.Grid.Interior.interiorStep a b degreeBound := by
+          interiorStep a b degreeBound := by
     change Fraction.Arithmetic.normalizedAdd a
         (Fraction.Arithmetic.normalizedMul (first.val + 1 : Nat)
-          (Approximation.Rational.Grid.Interior.interiorStep a b degreeBound)) =
+          (interiorStep a b degreeBound)) =
       Fraction.Arithmetic.normalizedAdd a
         (Fraction.Arithmetic.normalizedMul (second.val + 1 : Nat)
-          (Approximation.Rational.Grid.Interior.interiorStep a b degreeBound)) at equal
+          (interiorStep a b degreeBound)) at equal
     rw [Fraction.Arithmetic.normalizedAdd_eq,
       Fraction.Arithmetic.normalizedAdd_eq,
       Fraction.Arithmetic.normalizedMul_eq,
       Fraction.Arithmetic.normalizedMul_eq] at equal
     calc
       ((first.val + 1 : Nat) : Fraction.Rational) *
-          Approximation.Rational.Grid.Interior.interiorStep a b degreeBound =
+          interiorStep a b degreeBound =
         (a + ((first.val + 1 : Nat) : Fraction.Rational) *
-          Approximation.Rational.Grid.Interior.interiorStep a b degreeBound) - a := by ring1
+          interiorStep a b degreeBound) - a := by ring1
       _ = (a + ((second.val + 1 : Nat) : Fraction.Rational) *
-          Approximation.Rational.Grid.Interior.interiorStep a b degreeBound) - a :=
+          interiorStep a b degreeBound) - a :=
         congrArg (fun value : Fraction.Rational => value - a) equal
       _ = ((second.val + 1 : Nat) : Fraction.Rational) *
-          Approximation.Rational.Grid.Interior.interiorStep a b degreeBound := by ring1
+          interiorStep a b degreeBound := by ring1
   have castsEqual := Fraction.Field.mul_right_cancel_of_ne
-    (Approximation.Rational.Grid.Interior.interiorStep_pos less degreeBound).ne' productsEqual
+    (interiorStep_pos less degreeBound).ne' productsEqual
   have sumsEqual : first.val + 1 = second.val + 1 := by
     exact Fraction.Cast.Compatibility.natCast_injective_direct castsEqual
   exact Data.Nat.Addition.add_right_cancel sumsEqual
@@ -118,10 +148,10 @@ The original List.ofFn enumeration retains exactly the indexed candidate
 function. Its injectivity for strictly ordered endpoints excludes repeated
 entries without changing the table order. -/
 public theorem interiorCandidates_nodup {a b : Fraction.Rational} (less : a < b)
-    (degreeBound : Nat) : (Approximation.Rational.Grid.Interior.interiorCandidates a b degreeBound).Nodup :=
+    (degreeBound : Nat) : (interiorCandidates a b degreeBound).Nodup :=
   OfFn.Nodup.nodup_ofFn_of_injective
-    (function := Approximation.Rational.Grid.Interior.interiorCandidate a b degreeBound)
-    (Approximation.Rational.Grid.Interior.interiorCandidate_injective less degreeBound)
+    (function := interiorCandidate a b degreeBound)
+    (interiorCandidate_injective less degreeBound)
 
 /-- The interior grid contains exactly the degree bound plus one candidates.
 
@@ -130,7 +160,7 @@ Materializing that same indexed function with List.ofFn retains exactly
 that many entries. -/
 @[simp] public theorem interiorCandidates_length (a b : Fraction.Rational)
     (degreeBound : Nat) :
-    (Approximation.Rational.Grid.Interior.interiorCandidates a b degreeBound).length = degreeBound + 1 := by
+    (interiorCandidates a b degreeBound).length = degreeBound + 1 := by
   exact OfFn.Basic.length_ofFn
 
 /-- Multiplying the grid spacing by the degree bound plus two recovers the endpoint difference.
@@ -140,12 +170,12 @@ Multiplication cancels that nonzero denominator and recovers the same
 normalized endpoint difference. -/
 public theorem interiorStep_scaled (a b : Fraction.Rational) (degreeBound : Nat) :
     ((degreeBound + 2 : Nat) : Fraction.Rational) *
-        Approximation.Rational.Grid.Interior.interiorStep a b degreeBound = b - a := by
-  simp only [Approximation.Rational.Grid.Interior.interiorStep, Fraction.Arithmetic.normalizedDiv_eq,
+        interiorStep a b degreeBound = b - a := by
+  simp only [interiorStep, Fraction.Arithmetic.normalizedDiv_eq,
     Fraction.Arithmetic.normalizedSub_eq]
   rw [Fraction.Field.mul_comm]
   exact Fraction.Field.div_mul_cancel_of_ne _ _
-    (Purelib.Data.Rat.Cast.Order.natCast_pos (Nat.zero_lt_succ _)).ne'
+    (Cast.Order.natCast_pos (Nat.zero_lt_succ _)).ne'
 
 /-- Every displayed interior candidate lies strictly between the ordered endpoints.
 
@@ -154,15 +184,15 @@ strictly below the degree bound plus two. Multiplying those comparisons
 by the same positive spacing locates its original normalized point. -/
 public theorem interiorCandidate_bounds {a b : Fraction.Rational} (less : a < b)
     (degreeBound : Nat) (index : Fin (degreeBound + 1)) :
-    a < Approximation.Rational.Grid.Interior.interiorCandidate a b degreeBound index ∧
-      Approximation.Rational.Grid.Interior.interiorCandidate a b degreeBound index < b := by
-  have stepPositive := Approximation.Rational.Grid.Interior.interiorStep_pos less degreeBound
+    a < interiorCandidate a b degreeBound index ∧
+      interiorCandidate a b degreeBound index < b := by
+  have stepPositive := interiorStep_pos less degreeBound
   have indexPositive :
       (0 : Fraction.Rational) < ((index.val + 1 : Nat) : Fraction.Rational) :=
-    Purelib.Data.Rat.Cast.Order.natCast_pos (Nat.zero_lt_succ _)
+    Cast.Order.natCast_pos (Nat.zero_lt_succ _)
   have offsetPositive : 0 <
       ((index.val + 1 : Nat) : Fraction.Rational) *
-        Approximation.Rational.Grid.Interior.interiorStep a b degreeBound := by
+        interiorStep a b degreeBound := by
     exact Arithmetic.mul_pos_direct indexPositive stepPositive
   have indexLessNat : index.val + 1 < degreeBound + 2 :=
     Nat.add_lt_add_right index.isLt 1
@@ -172,30 +202,30 @@ public theorem interiorCandidate_bounds {a b : Fraction.Rational} (less : a < b)
     exact Fraction.Cast.Order.natCast_lt_direct indexLessNat
   have offsetLess :
       ((index.val + 1 : Nat) : Fraction.Rational) *
-          Approximation.Rational.Grid.Interior.interiorStep a b degreeBound < b - a := by
+          interiorStep a b degreeBound < b - a := by
     have multiplied := Arithmetic.mul_lt_mul_of_pos_right_direct indexLess stepPositive
-    rw [Approximation.Rational.Grid.Interior.interiorStep_scaled] at multiplied
+    rw [interiorStep_scaled] at multiplied
     exact multiplied
   constructor
   · calc
       a = a + 0 := by ring1
       _ < a + ((index.val + 1 : Nat) : Fraction.Rational) *
-          Approximation.Rational.Grid.Interior.interiorStep a b degreeBound :=
-        Fraction.Order.Arithmetic.add_lt_add_left_direct offsetPositive a
-      _ = Approximation.Rational.Grid.Interior.interiorCandidate a b degreeBound index := by
+          interiorStep a b degreeBound :=
+        Arithmetic.add_lt_add_left_direct offsetPositive a
+      _ = interiorCandidate a b degreeBound index := by
         symm
-        rw [Approximation.Rational.Grid.Interior.interiorCandidate,
+        rw [interiorCandidate, point,
           Fraction.Arithmetic.normalizedAdd_eq,
           Fraction.Arithmetic.normalizedMul_eq]
   · calc
-      Approximation.Rational.Grid.Interior.interiorCandidate a b degreeBound index =
+      interiorCandidate a b degreeBound index =
           a + ((index.val + 1 : Nat) : Fraction.Rational) *
-            Approximation.Rational.Grid.Interior.interiorStep a b degreeBound := by
-        rw [Approximation.Rational.Grid.Interior.interiorCandidate,
+            interiorStep a b degreeBound := by
+        rw [interiorCandidate, point,
           Fraction.Arithmetic.normalizedAdd_eq,
           Fraction.Arithmetic.normalizedMul_eq]
       _ < a + (b - a) :=
-        Fraction.Order.Arithmetic.add_lt_add_left_direct offsetLess a
+        Arithmetic.add_lt_add_left_direct offsetLess a
       _ = b := by ring1
 
 /-- Each selected point leaves both subintervals no longer than `D+1` candidate spacings.
@@ -205,13 +235,13 @@ Its offset and the complementary endpoint difference are each bounded
 by the same degree-scaled retained spacing. -/
 public theorem interiorCandidate_contraction {a b : Fraction.Rational} (less : a < b)
     (degreeBound : Nat) (index : Fin (degreeBound + 1)) :
-    Approximation.Rational.Grid.Interior.interiorCandidate a b degreeBound index - a ≤
+    interiorCandidate a b degreeBound index - a ≤
         ((degreeBound + 1 : Nat) : Fraction.Rational) *
-          Approximation.Rational.Grid.Interior.interiorStep a b degreeBound ∧
-      b - Approximation.Rational.Grid.Interior.interiorCandidate a b degreeBound index ≤
+          interiorStep a b degreeBound ∧
+      b - interiorCandidate a b degreeBound index ≤
         ((degreeBound + 1 : Nat) : Fraction.Rational) *
-          Approximation.Rational.Grid.Interior.interiorStep a b degreeBound := by
-  have stepPositive := Approximation.Rational.Grid.Interior.interiorStep_pos less degreeBound
+          interiorStep a b degreeBound := by
+  have stepPositive := interiorStep_pos less degreeBound
   have indexUpperNat : index.val + 1 ≤ degreeBound + 1 :=
     Nat.succ_le_iff.mpr index.isLt
   have indexUpper :
@@ -219,7 +249,7 @@ public theorem interiorCandidate_contraction {a b : Fraction.Rational} (less : a
         ((degreeBound + 1 : Nat) : Fraction.Rational) :=
     Fraction.Cast.Order.natCast_le_direct indexUpperNat
   have leftBound :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    Arithmetic.mul_le_mul_of_nonneg_right_direct
       indexUpper stepPositive.le
   have indexLowerNat : 1 ≤ index.val + 1 :=
     Nat.succ_le_succ (Nat.zero_le _)
@@ -227,39 +257,39 @@ public theorem interiorCandidate_contraction {a b : Fraction.Rational} (less : a
       ((index.val + 1 : Nat) : Fraction.Rational) :=
     Fraction.Cast.Order.natCast_le_direct indexLowerNat
   have offsetLower :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    Arithmetic.mul_le_mul_of_nonneg_right_direct
       indexLower stepPositive.le
-  have offsetLower' : Approximation.Rational.Grid.Interior.interiorStep a b degreeBound ≤
+  have offsetLower' : interiorStep a b degreeBound ≤
       ((index.val + 1 : Nat) : Fraction.Rational) *
-        Approximation.Rational.Grid.Interior.interiorStep a b degreeBound := by
+        interiorStep a b degreeBound := by
     simpa only [one_mul] using offsetLower
   constructor
   · calc
-      Approximation.Rational.Grid.Interior.interiorCandidate a b degreeBound index - a =
+      interiorCandidate a b degreeBound index - a =
           ((index.val + 1 : Nat) : Fraction.Rational) *
-            Approximation.Rational.Grid.Interior.interiorStep a b degreeBound := by
-        rw [Approximation.Rational.Grid.Interior.interiorCandidate,
+            interiorStep a b degreeBound := by
+        rw [interiorCandidate, point,
           Fraction.Arithmetic.normalizedAdd_eq,
           Fraction.Arithmetic.normalizedMul_eq]
         ring1
       _ ≤ ((degreeBound + 1 : Nat) : Fraction.Rational) *
-          Approximation.Rational.Grid.Interior.interiorStep a b degreeBound := leftBound
+          interiorStep a b degreeBound := leftBound
   · calc
-      b - Approximation.Rational.Grid.Interior.interiorCandidate a b degreeBound index =
+      b - interiorCandidate a b degreeBound index =
           (b - a) - ((index.val + 1 : Nat) : Fraction.Rational) *
-            Approximation.Rational.Grid.Interior.interiorStep a b degreeBound := by
-        rw [Approximation.Rational.Grid.Interior.interiorCandidate,
+            interiorStep a b degreeBound := by
+        rw [interiorCandidate, point,
           Fraction.Arithmetic.normalizedAdd_eq,
           Fraction.Arithmetic.normalizedMul_eq]
         ring1
-      _ ≤ (b - a) - Approximation.Rational.Grid.Interior.interiorStep a b degreeBound :=
-        Fraction.Order.Arithmetic.sub_le_sub_left_direct offsetLower' (b - a)
+      _ ≤ (b - a) - interiorStep a b degreeBound :=
+        Arithmetic.sub_le_sub_left_direct offsetLower' (b - a)
       _ = ((degreeBound + 2 : Nat) : Fraction.Rational) *
-            Approximation.Rational.Grid.Interior.interiorStep a b degreeBound -
-          Approximation.Rational.Grid.Interior.interiorStep a b degreeBound := by
-        rw [Approximation.Rational.Grid.Interior.interiorStep_scaled]
+            interiorStep a b degreeBound -
+          interiorStep a b degreeBound := by
+        rw [interiorStep_scaled]
       _ = ((degreeBound + 1 : Nat) : Fraction.Rational) *
-            Approximation.Rational.Grid.Interior.interiorStep a b degreeBound := by
+            interiorStep a b degreeBound := by
         have successorCast : ((degreeBound + 2 : Nat) : Fraction.Rational) =
             ((degreeBound + 1 : Nat) : Fraction.Rational) + 1 := by
           calc

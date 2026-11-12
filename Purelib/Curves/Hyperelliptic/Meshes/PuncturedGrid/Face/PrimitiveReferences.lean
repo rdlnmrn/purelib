@@ -60,6 +60,8 @@ import Purelib.Riemann.Readings.RectangularPointReadings
 import Purelib.Riemann.Readings.UniformPreparedRequests
 import Purelib.Riemann.RootContinuation.RootOwnerFrames
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face
@@ -111,37 +113,37 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Gaussian.Norm.Basic (normSq_nonneg)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face :
     RegularFace bank} {models :
     FaceModels frames face}
-  {base finish : Purelib.Data.Gaussian.Basic.Canonical} {owner :
+  {base finish : Gaussian} {owner :
     Owner (curve.polynomial.eval base)} {ambient :
-    Purelib.Geometry.Rational.Box}
-  {path : Polynomial.Geometry.ClearPath curve.polynomial ambient base finish} {prepared :
+    Geometry.Rational.Box}
+  {path : ClearPath curve.polynomial ambient base finish} {prepared :
     CoveredTracedPath path owner}
   {differential : Differential genus} {parentSheet : Fin 2}
 
 set_option genInjectivity false in
 /-- The reference is independent of the later numerical face bank. In particular, its value and bound are executable
 cached data, not repeated evaluations hidden inside an inequality. -/
-structure Reference (entered : EnteredPaths.EnteredPath models prepared differential parentSheet) (target :
-  InverseRootPolynomial.Coordinate) where
+structure Reference (entered : EnteredPath models prepared differential parentSheet) (target :
+  Coordinate) where
   /-- The original reference accuracy target is positive. -/ positive : 0 < target
   /-- The retained scalar fragment budget on the original entered face path. -/ budget : Fragment.FragmentAccuracy
     entered.globalBounds entered.domain.steps entered.mesh.splits.pieceCount (target / 4)
   /-- The cached original prepared-parent integration request. -/ request :
-    PreparedControlledPrimitiveRequests.ControlledSumRequest entered.cache.parents genus (target / 4)
+    ControlledSumRequest entered.cache.parents genus (target / 4)
   /-- The cached request meets the retained fragment budget's exact parent-stage floor. -/ minimum : budget.minimumIndex
     ≤ request.minimumIndex
-  /-- The cached actual primitive sum of the retained original request. -/ value : Data.Gaussian.Basic.Canonical
+  /-- The cached actual primitive sum of the retained original request. -/ value : Gaussian
   /-- The reference value reads back that exact prepared primitive sum. -/ value_eq : value = request.primitiveSum
   /-- The cached stage-independent squared-norm bound for all later retained face increments. -/ bound :
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The bound is twice the original target plus squared norm of the exact cached reference value. -/ bound_eq : bound
-    = 2 * (target + Data.Gaussian.Norm.Basic.normSq value)
+    = 2 * (target + Basic.normSq value)
 
 constructive_injectivity Reference
 
@@ -153,19 +155,19 @@ variable {entered : EnteredPath models prepared
 /-- Retain the supplied checked parent request and materialize its exact reference sum and finite bound once. -/
 def ofRequest (budget : Fragment.FragmentAccuracy entered.globalBounds entered.domain.steps
   entered.mesh.splits.pieceCount (target / 4))
-    (request : PreparedControlledPrimitiveRequests.ControlledSumRequest entered.cache.parents genus (target / 4))
+    (request : ControlledSumRequest entered.cache.parents genus (target / 4))
     (minimum : budget.minimumIndex ≤ request.minimumIndex) (positive : 0 < target) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveReferences.Reference entered target :=
+      Reference entered target :=
   let value := request.primitiveSum
-  ⟨positive, budget, request, minimum, value, rfl, 2 * (target + Data.Gaussian.Norm.Basic.normSq value), rfl⟩
+  ⟨positive, budget, request, minimum, value, rfl, 2 * (target + Basic.normSq value), rfl⟩
 
 /-- A total fallback producer. Subsequent refinements consume the retained request; they do not acquire another
 integration or recompute its sum. -/
-def build (entered : EnteredPaths.EnteredPath models prepared differential parentSheet) (target :
-  InverseRootPolynomial.Coordinate) (positive : 0 < target) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveReferences.Reference entered target :=
+def build (entered : EnteredPath models prepared differential parentSheet) (target :
+  Coordinate) (positive : 0 < target) :
+    Reference entered target :=
   have quarterPositive := Fraction.Order.Field.div_pos_direct positive (by
-      decide : (0 : InverseRootPolynomial.Coordinate) < 4)
+      decide : (0 : Coordinate) < 4)
   let budget := FragmentAccuracy.build entered.globalBounds entered.domain.steps entered.mesh.splits.pieceCount (target
     / 4) quarterPositive
   let request := ControlledSumRequest.acquire entered.cache.covered entered.cache.proper (target / 4) quarterPositive
@@ -176,32 +178,32 @@ def build (entered : EnteredPaths.EnteredPath models prepared differential paren
 /-- The reference constructed from a supplied parent request retains that exact request. -/
 theorem ofRequest_request (budget : Fragment.FragmentAccuracy entered.globalBounds entered.domain.steps
   entered.mesh.splits.pieceCount (target / 4))
-    (request : PreparedControlledPrimitiveRequests.ControlledSumRequest entered.cache.parents genus (target / 4))
+    (request : ControlledSumRequest entered.cache.parents genus (target / 4))
     (minimum : budget.minimumIndex ≤ request.minimumIndex) (positive : 0 < target) :
     (ofRequest budget request minimum
       positive).request = request := rfl
 
 /-- The retained reference bound is strictly positive. -/
-theorem bound_positive (reference : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveReferences.Reference entered
+theorem bound_positive (reference : Reference entered
   target) : 0 < reference.bound := by
   rw [reference.bound_eq]
-  have translated : Data.Gaussian.Norm.Basic.normSq reference.value < target +
-    Data.Gaussian.Norm.Basic.normSq reference.value := by
+  have translated : Basic.normSq reference.value < target +
+    Basic.normSq reference.value := by
     simpa only [zero_add] using
-      Fraction.Order.Arithmetic.add_lt_add_right_direct reference.positive (Data.Gaussian.Norm.Basic.normSq
+      Fraction.Order.Arithmetic.add_lt_add_right_direct reference.positive (Basic.normSq
         reference.value)
   exact Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-    ((Data.Gaussian.Norm.Basic.normSq_nonneg _).trans_lt translated)
+    ((Basic.normSq_nonneg _).trans_lt translated)
 
 /-- Only the face-polynomial index increases. The original parent request and its finite sum remain fixed throughout
 this estimate. -/
-theorem accurate (reference : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveReferences.Reference entered
+theorem accurate (reference : Reference entered
   target) {index : Nat} (later : reference.budget.grid.index ≤ index)
-    (data : PrimitiveData.DomainPrimitives entered.domain differential index)
+    (data : DomainPrimitives entered.domain differential index)
     (first last : Fin 4)
     (firstEq : FaceCorners.point face.cell.box first = base)
     (lastEq : FaceCorners.point face.cell.box last = finish) :
-    Data.Gaussian.Norm.Basic.normSq ((data.corners.values last - data.corners.values first) - reference.value)
+    Basic.normSq ((data.corners.values last - data.corners.values first) - reference.value)
       < target := by
   rw [reference.value_eq]
   exact SharedCornerRequests.corner_accurate entered
@@ -209,16 +211,16 @@ theorem accurate (reference : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.Pri
     data (entered.requestSharedWith_usesData ..) first last firstEq lastEq
 
 /-- Every sufficiently refined actual face-corner increment satisfies the fixed retained reference bound. -/
-theorem bounded (reference : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveReferences.Reference entered
+theorem bounded (reference : Reference entered
   target) {index : Nat} (later : reference.budget.grid.index ≤ index)
-    (data : PrimitiveData.DomainPrimitives entered.domain differential index)
+    (data : DomainPrimitives entered.domain differential index)
     (first last : Fin 4)
     (firstEq : FaceCorners.point face.cell.box first = base)
     (lastEq : FaceCorners.point face.cell.box last = finish) :
-    Data.Gaussian.Norm.Basic.normSq (data.corners.values last - data.corners.values first) ≤ reference.bound :=
+    Basic.normSq (data.corners.values last - data.corners.values first) ≤ reference.bound :=
       by
   have accurate := reference.accurate later data first last firstEq lastEq
-  have estimate := (Data.Gaussian.Norm.Bounds.normSq_add_le_two
+  have estimate := (Bounds.normSq_add_le_two
     ((data.corners.values last - data.corners.values first) - reference.value) reference.value).trans
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add accurate.le le_rfl) (by decide))
   rw [sub_add_cancel, ← reference.bound_eq] at estimate

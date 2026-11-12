@@ -32,6 +32,8 @@ import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Curves.Hyperelliptic.Periods.Pairing (StokesClosure)
 
 section
@@ -625,7 +627,7 @@ theorem squareEllipticOmega_positive
     Fin.ext (Nat.eq_zero_of_le_zero (Nat.le_of_lt_succ nonzero.index.isLt))
   have witness := nonzero.coefficient_nonzero
   rw [indexZero] at witness
-  exact Fraction.Order.Arithmetic.exact_rational_sq_pos witness
+  exact Arithmetic.exact_rational_sq_pos witness
 
 /-- The coupled imaginary energy is positive at every nonzero rational vector.
 
@@ -648,22 +650,22 @@ theorem coupledGenusTwoOmega_positive
       calc
         0 = (0 : Fraction.Rational) + 0 := by decide +kernel
         _ ≤ (vector 1) ^ 2 + (vector 0 + vector 1) ^ 2 :=
-          Fraction.Order.Arithmetic.add_le_add_direct
-            (Fraction.Order.Arithmetic.sq_nonneg_direct (vector 1))
-            (Fraction.Order.Arithmetic.sq_nonneg_direct (vector 0 + vector 1))
-    exact Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct
-      (Fraction.Order.Arithmetic.exact_rational_sq_pos firstNonzero) tailNonnegative
+          Arithmetic.add_le_add_direct
+            (Arithmetic.sq_nonneg_direct (vector 1))
+            (Arithmetic.sq_nonneg_direct (vector 0 + vector 1))
+    exact Arithmetic.add_pos_of_pos_of_nonneg_direct
+      (Arithmetic.exact_rational_sq_pos firstNonzero) tailNonnegative
   · have secondNonzero : vector 1 ≠ 0 := by
       have indexLiteral : nonzero.index = (1 : Fin 2) :=
         indexOne.trans (by apply Fin.ext; rfl)
       have witness := nonzero.coefficient_nonzero
       rw [indexLiteral] at witness
       exact witness
-    exact Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
-      (Fraction.Order.Arithmetic.sq_nonneg_direct (vector 0))
-      (Fraction.Order.Arithmetic.add_pos_of_pos_of_nonneg_direct
-        (Fraction.Order.Arithmetic.exact_rational_sq_pos secondNonzero)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct (vector 0 + vector 1)))
+    exact Arithmetic.add_pos_of_nonneg_of_pos_direct
+      (Arithmetic.sq_nonneg_direct (vector 0))
+      (Arithmetic.add_pos_of_pos_of_nonneg_direct
+        (Arithmetic.exact_rational_sq_pos secondNonzero)
+        (Arithmetic.sq_nonneg_direct (vector 0 + vector 1)))
 
 /-- The original one-by-one matrix with its symmetry and positivity certificates. -/
 def squareEllipticMatrixWitness :

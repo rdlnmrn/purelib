@@ -89,3 +89,15 @@ theorem based_initial_persists (process :
 end Purelib.Approximation.Gaussian.Process.Based
 
 end
+
+namespace Purelib.Approximation.Gaussian.Process.Based.BasedState
+
+/-- The original source state determines the complete based state, including its persistence certificate. -/
+public theorem eq_of_source_eq {process : Approximation.Gaussian.Process} {base : process.State}
+    {left right : BasedState process base} (same : left.source = right.source) : left = right := by
+  cases left
+  cases right
+  cases same
+  rfl
+
+end Purelib.Approximation.Gaussian.Process.Based.BasedState

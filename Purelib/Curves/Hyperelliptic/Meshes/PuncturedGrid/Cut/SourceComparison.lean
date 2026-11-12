@@ -64,6 +64,8 @@ import Purelib.Topology.Surface.Sewing.SewingTree
 import Purelib.Topology.Surface.Sewing.SewnPrimitiveContacts
 import Purelib.Topology.Surface.Sewing.SewnPrimitiveSamples
 
+open Purelib.Topology.Surface.Sewing.SewnPrimitivePaths
+
 /-!
 # Sewn chord jumps compared with the actual routed period programs
 
@@ -84,8 +86,8 @@ open Purelib
 
 open Purelib.Topology.Polygon.Stokes
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base}
 
@@ -97,47 +99,47 @@ theorem build_sourceEdges (cycle : Topology.Surface.Sewing.CutCycleChains.Closed
   lifted.cutPolygon.patch.cut.vertexLabels
     (lifted.cutPolygon.patch.cut.boundary.map (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map
       lifted.cutPolygon.patch.cut.vertexLabels)))
-    (source : Hyperelliptic.Differentials.Basic.Differential genus) (sources :
-      Topology.Surface.Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.PathSources lifted.cutPolygon.patch.cut
+    (source : Differentials.Basic.Differential genus) (sources :
+      SewnPrimitiveFaces.PathSources lifted.cutPolygon.patch.cut
       cycle.path.cutEdges)
     (positive : sources.Positive) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgram.build lifted cycle source).routed.spine.values
+    (CyclePrograms.CutCycleProgram.build lifted cycle source).routed.spine.values
       (fun _ route => route.sourceEdge) = sources.sources :=
-  Hyperelliptic.Meshes.PuncturedGrid.TriangleSourceUniqueness.LiftedMesh.RouteSpine.build_sources lifted.mesh
+  TriangleSourceUniqueness.LiftedMesh.RouteSpine.build_sources lifted.mesh
     sources.sources positive _
     (sources.sources_project.trans cycle.path.projection_eq.symm) _
 
 /-- Checked generated preparations and spines use the same comparison.
 Positive occurrence certificates replace equality with any canonical lookup,
 cover, subdivision, or numerical witness-producing algorithm. -/
-theorem path_program_bound (prepared : Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgram lifted
-  source) (routedPositive : Hyperelliptic.Meshes.PuncturedGrid.TriangleSourceUniqueness.LiftedMesh.RouteSpine.Positive
+theorem path_program_bound (prepared : CyclePrograms.CutCycleProgram lifted
+  source) (routedPositive : TriangleSourceUniqueness.LiftedMesh.RouteSpine.Positive
   prepared.routed.spine)
-    (segments : Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank prepared.period)
+    (segments : PeriodSegmentBanks.SegmentBank prepared.period)
     {differential : Fin genus} (comparison :
-      Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank
-      (Hyperelliptic.Meshes.PuncturedGrid.Cut.FaceBanks.FaceBank.ofSegments prepared segments) differential)
+      PeriodPrimitiveComparison.PrimitiveBank
+      (FaceBanks.FaceBank.ofSegments prepared segments) differential)
     {target : Readings.PreparedPrimitiveChargeBounds.Coordinate} {minimumStage : Nat} (result :
-      Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison target
+      PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison target
       minimumStage)
-    (sample : Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.RequestedPeriod.Sewn result
+    (sample : TriangleComparison.RequestedPeriod.Sewn result
       lifted.cutPolygon.patch)
-    (sources : Topology.Surface.Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.PathSources lifted.cutPolygon.patch.cut
+    (sources : SewnPrimitiveFaces.PathSources lifted.cutPolygon.patch.cut
       prepared.cycle.path.cutEdges) (positive : sources.Positive) :
-    Data.Gaussian.Norm.Basic.normSq ((sample.surface.sewn.values prepared.cycle.finish - sample.surface.sewn.values
+    Gaussian.Norm.Basic.normSq ((sample.surface.sewn.values prepared.cycle.finish - sample.surface.sewn.values
       prepared.cycle.start) -
       ((prepared.program differential).integral.model result.sample.stage).integralSample) ≤
-        2 * ((Topology.Surface.Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.CachedSample.pathSample sample.surface
+        2 * ((SewnPrimitiveFaces.CachedSample.pathSample sample.surface
           sources).bound + target) := by
-  have aligned := Hyperelliptic.Meshes.PuncturedGrid.TriangleSourceUniqueness.LiftedMesh.RouteSpine.sources_eq
+  have aligned := TriangleSourceUniqueness.LiftedMesh.RouteSpine.sources_eq
     prepared.routed.spine routedPositive sources.sources positive
     (sources.sources_project.trans prepared.cycle.path.projection_eq.symm)
-  apply (Topology.Surface.Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.CachedSample.pathSample sample.surface
+  apply (SewnPrimitiveFaces.CachedSample.pathSample sample.surface
     sources).compare_bound prepared.cycle.path.endpoints
-  rw [(Topology.Surface.Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.CachedSample.pathSample sample.surface
+  rw [(SewnPrimitiveFaces.CachedSample.pathSample sample.surface
     sources).value_eq_sources, ← aligned,
-    Hyperelliptic.Meshes.PuncturedGrid.TriangleSourceUniqueness.LiftedMesh.RouteSpine.source_increments]
-  exact (Hyperelliptic.Meshes.PuncturedGrid.Cut.DetourComparison.original_triangles_accurate result sample.triangles).le
+    TriangleSourceUniqueness.LiftedMesh.RouteSpine.source_increments]
+  exact (DetourComparison.original_triangles_accurate result sample.triangles).le
 
 /-- The only source condition is positive boundary ownership, checked before
 accuracy selection. No equality of independently selected source lists is
@@ -146,61 +148,61 @@ theorem build_path_program_bound (cycle : Topology.Surface.Sewing.CutCycleChains
   lifted.cutPolygon.patch.cut.vertexLabels
     (lifted.cutPolygon.patch.cut.boundary.map (Topology.Surface.Sewing.VertexSewing.OrientedEdge.map
       lifted.cutPolygon.patch.cut.vertexLabels)))
-    (source : Hyperelliptic.Differentials.Basic.Differential genus) (segments :
-      Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank
-      (Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgram.build lifted cycle source).period)
+    (source : Differentials.Basic.Differential genus) (segments :
+      PeriodSegmentBanks.SegmentBank
+      (CyclePrograms.CutCycleProgram.build lifted cycle source).period)
     {differential : Fin genus} (comparison :
-      Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank
-      (Hyperelliptic.Meshes.PuncturedGrid.Cut.FaceBanks.FaceBank.ofSegments
-      (Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgram.build lifted cycle source) segments)
+      PeriodPrimitiveComparison.PrimitiveBank
+      (FaceBanks.FaceBank.ofSegments
+      (CyclePrograms.CutCycleProgram.build lifted cycle source) segments)
       differential)
     {target : Readings.PreparedPrimitiveChargeBounds.Coordinate} {minimumStage : Nat} (result :
-      Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison target
+      PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison target
       minimumStage)
-    (sample : Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.RequestedPeriod.Sewn result
+    (sample : TriangleComparison.RequestedPeriod.Sewn result
       lifted.cutPolygon.patch)
-    (sources : Topology.Surface.Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.PathSources lifted.cutPolygon.patch.cut
+    (sources : SewnPrimitiveFaces.PathSources lifted.cutPolygon.patch.cut
       cycle.path.cutEdges) (positive : sources.Positive) :
-    Data.Gaussian.Norm.Basic.normSq ((sample.surface.sewn.values cycle.finish - sample.surface.sewn.values
+    Gaussian.Norm.Basic.normSq ((sample.surface.sewn.values cycle.finish - sample.surface.sewn.values
       cycle.start) -
-      (((Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgram.build lifted cycle source).program
+      (((CyclePrograms.CutCycleProgram.build lifted cycle source).program
         differential).integral.model result.sample.stage).integralSample) ≤
-        2 * ((Topology.Surface.Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.CachedSample.pathSample sample.surface
+        2 * ((SewnPrimitiveFaces.CachedSample.pathSample sample.surface
           sources).bound + target) := by
-  apply Hyperelliptic.Meshes.PuncturedGrid.Cut.SourceComparison.path_program_bound
-    (Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgram.build lifted cycle source) ?_ segments
+  apply SourceComparison.path_program_bound
+    (CyclePrograms.CutCycleProgram.build lifted cycle source) ?_ segments
     comparison result sample sources positive
-  change ∀ edge ∈ (Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgram.build lifted cycle
+  change ∀ edge ∈ (CyclePrograms.CutCycleProgram.build lifted cycle
     source).routed.spine.values (fun _ route => route.sourceEdge),
     Topology.Mesh.TriangleSourceUniqueness.SourceEdge.Positive edge lifted.mesh.triangulation.faces
-  rw [Hyperelliptic.Meshes.PuncturedGrid.Cut.SourceComparison.build_sourceEdges cycle source sources positive]
+  rw [SourceComparison.build_sourceEdges cycle source sources positive]
   exact positive
 
 /-- Every canonical chord slot, including empty physical-boundary slots,
 gets the comparison without an additional ownership or detour premise. -/
 theorem build_chord_program_bound (routes : Topology.Surface.Sewing.ChordCycleBank
   lifted.cutBoundaryWord)
-    (index : Fin lifted.cutBoundaryWord.alphabet.count) (source : Hyperelliptic.Differentials.Basic.Differential genus)
-    (segments : Hyperelliptic.Meshes.PuncturedGrid.PeriodSegmentBanks.SegmentBank
-      (Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgram.build lifted (routes.cycles index)
+    (index : Fin lifted.cutBoundaryWord.alphabet.count) (source : Differentials.Basic.Differential genus)
+    (segments : PeriodSegmentBanks.SegmentBank
+      (CyclePrograms.CutCycleProgram.build lifted (routes.cycles index)
       source).period)
     {differential : Fin genus}
-    (comparison : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank
-      (Hyperelliptic.Meshes.PuncturedGrid.Cut.FaceBanks.FaceBank.ofSegments
-      (Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgram.build lifted (routes.cycles index) source)
+    (comparison : PeriodPrimitiveComparison.PrimitiveBank
+      (FaceBanks.FaceBank.ofSegments
+      (CyclePrograms.CutCycleProgram.build lifted (routes.cycles index) source)
       segments) differential)
     {target : Readings.PreparedPrimitiveChargeBounds.Coordinate} {minimumStage : Nat} (result :
-      Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison target
+      PeriodPrimitiveComparison.PrimitiveBank.RequestedPeriod comparison target
       minimumStage)
-    (sample : Hyperelliptic.Meshes.PuncturedGrid.Cut.TriangleComparison.RequestedPeriod.Sewn result
+    (sample : TriangleComparison.RequestedPeriod.Sewn result
       lifted.cutPolygon.patch) :
-    Data.Gaussian.Norm.Basic.normSq ((sample.surface.sewn.values (routes.cycles index).finish -
+    Gaussian.Norm.Basic.normSq ((sample.surface.sewn.values (routes.cycles index).finish -
       sample.surface.sewn.values (routes.cycles index).start) -
-      (((Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgram.build lifted (routes.cycles index)
+      (((CyclePrograms.CutCycleProgram.build lifted (routes.cycles index)
         source).program differential).integral.model result.sample.stage).integralSample) ≤
-        2 * ((Topology.Surface.Sewing.SewnPrimitivePaths.SewnPrimitiveFaces.CachedSample.pathSample sample.surface
+        2 * ((SewnPrimitiveFaces.CachedSample.pathSample sample.surface
           (Topology.Surface.Chord.SourceBanks.sourceBank lifted.cutPolygon.patch.cut routes index)).bound + target) :=
-  Hyperelliptic.Meshes.PuncturedGrid.Cut.SourceComparison.build_path_program_bound _ source segments comparison result
+  SourceComparison.build_path_program_bound _ source segments comparison result
     sample _ (Topology.Surface.Chord.SourceBanks.sourceBank_positive routes index)
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut.SourceComparison

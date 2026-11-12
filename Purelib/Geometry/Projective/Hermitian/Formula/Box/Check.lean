@@ -25,16 +25,16 @@ namespace Purelib.Geometry.Projective.Hermitian.Formula.Box
 
 /-- Execute all of the finitely many atom-margin comparisons in a formula. -/
 def stable?
-    (formula : Purelib.Geometry.Projective.Hermitian.Formula.BoundaryFormula) (bounding current :
-      Purelib.Geometry.Rational.Box)
-    (refines : current.Refines bounding) (sample : Purelib.Data.Gaussian.Basic.Canonical)
+    (formula : BoundaryFormula) (bounding current :
+      Rational.Box)
+    (refines : current.Refines bounding) (sample : Data.Gaussian.Basic.Canonical)
     (sampleInside : current.Contains sample) :
-    Option (Purelib.Geometry.Projective.Hermitian.Formula.Box.Stable bounding current formula) :=
+    Option (Stable bounding current formula) :=
   match formula with
   | .truth => some .truth
   | .falsity => some .falsity
   | .atom value =>
-      match Purelib.Geometry.Projective.Hermitian.Box.certificate?
+      match Box.certificate?
           value.form bounding current refines sample sampleInside with
       | none => none
       | some certificate => some (.atom value (.strict certificate))
@@ -60,17 +60,17 @@ def stable?
 /-- Execute formula stability while reusing a finite list of exact boundary decisions already made by the equality-owner
 layer. -/
 def stableWith?
-    (bounding current : Purelib.Geometry.Rational.Box)
-    (overrides : List (Purelib.Geometry.Projective.Hermitian.Formula.Box.Override bounding current))
-    (formula : Purelib.Geometry.Projective.Hermitian.Formula.BoundaryFormula)
-    (refines : current.Refines bounding) (sample : Purelib.Data.Gaussian.Basic.Canonical)
+    (bounding current : Rational.Box)
+    (overrides : List (Override bounding current))
+    (formula : BoundaryFormula)
+    (refines : current.Refines bounding) (sample : Data.Gaussian.Basic.Canonical)
     (sampleInside : current.Contains sample) :
-    Option (Purelib.Geometry.Projective.Hermitian.Formula.Box.Stable bounding current formula) :=
+    Option (Stable bounding current formula) :=
   match formula with
   | .truth => some .truth
   | .falsity => some .falsity
   | .atom value =>
-      match Purelib.Geometry.Projective.Hermitian.Formula.Box.atomStability? overrides refines sample sampleInside value
+      match atomStability? overrides refines sample sampleInside value
         with
       | none => none
       | some stability => some (.atom value stability)

@@ -2,6 +2,8 @@ module
 import Purelib.Polynomial.Power.Gaussian
 import Purelib.Polynomial.Power.Gaussian.Squarefree
 import Purelib.Data.Gaussian.Norm.Basic
+public import Purelib.Data.Gaussian.Norm.Separation
+public import Purelib.Data.Gaussian.Norm.SquareResidual
 import Purelib.Polynomial.Clearance.Box.Region.Basic
 import Purelib.Riemann.RootContinuation.CertifiedSquareRoot
 import Purelib.Riemann.RootContinuation.CoherentRoot
@@ -54,6 +56,7 @@ import Purelib.RootIsolation.FTA.Squarefree.Input
 import Purelib.Data.Gaussian.Field
 import Purelib.Approximation.Gaussian.Name.Coherent
 public import Purelib.RootIsolation.Owner.Local.Track
+public import Purelib.RootIsolation.SquareRoot.Owner.Transport
 import Purelib.Polynomial.Clearance.Box.Boundary.Basic
 import Mathlib.Order.Basic
 import Mathlib.Data.Nat.Basic
@@ -61,6 +64,8 @@ import Mathlib.Order.MinMax
 import Purelib.Tactic.Ring
 import Purelib.Data.Nat.Order
 import Purelib.Tactic.QuotientFreeOmega
+
+open Purelib.Geometry.Rational.Box.Refinement
 
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_antitone)
 
@@ -77,7 +82,11 @@ one certificate.  A rational overlap point then bounds the two displayed
 anchors by the sum of their box diagonals.
 -/
 
+variable {mode : Purelib.Polynomial.Geometry.ClearPath.ClearSegment.Mode}
+
 namespace Purelib.Riemann.RootContinuation.SquareRootTrackEquivalence
+
+open Purelib.Data.Rat.Fraction.Order
 
 open Purelib.Data
 
@@ -88,13 +97,13 @@ open Purelib.Data.Gaussian in
 /-- The canonical Gaussian rational carrier. -/
 public abbrev Gaussian := Basic.Canonical
 /-- The original rational box type with retained coordinate bounds. -/
-public abbrev Box := Purelib.Geometry.Rational.Box
+public abbrev Box := Geometry.Rational.Box
 /-- The original winding-one state indexed by its polynomial and ambient box. -/
-public abbrev WindingOneState := Purelib.RootIsolation.State.WindingOne.Basic.WindingOneState
+public abbrev WindingOneState := RootIsolation.State.WindingOne.Basic.WindingOneState
 /-- The original executable winding-one root track. -/
-public abbrev WindingOneTrack := Purelib.RootIsolation.Track.Basic.WindingOneTrack
+public abbrev WindingOneTrack := RootIsolation.Track.Basic.WindingOneTrack
 /-- Operational equivalence of the two original Gaussian names. -/
-public abbrev NamedEquivalent := Purelib.Approximation.Gaussian.Equivalence.NamedEquivalent
+public abbrev NamedEquivalent := Approximation.Gaussian.Equivalence.NamedEquivalent
 
 open Purelib.Data.Gaussian.Basic.Canonical
 
@@ -158,7 +167,7 @@ public theorem supportedInside_refines_inner {parameter : Gaussian}
   change (Newton.Search.Extraction.extract _ _ _ _ (epsilon := (1 : Coordinate))
     (by decide)
     (QuadraticLineClearance.Owner.quadraticAxisClearances parameter)).state.box.Refines inner.box
-  exact Geometry.Rational.Box.Refinement.StrictInterior.refines
+  exact StrictInterior.refines
     (Newton.Search.Extraction.extract _ _ _ _ (epsilon := (1 : Coordinate))
       (by decide)
       (QuadraticLineClearance.Owner.quadraticAxisClearances parameter)).strict
@@ -172,7 +181,7 @@ open Purelib.Riemann.RootContinuation in
 A positive index is a successor. The first retained refinement is strict,
 and the later original state refines that same first state. -/
 public theorem state_strict_initial_of_pos
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box} (track : WindingOneTrack polynomial ambient)
     {index : Nat} (positive : 0 < index) :
     (CoherentRoot.state track index).box.StrictInterior
@@ -191,7 +200,7 @@ public theorem state_strict_initial_of_pos
               (CoherentRoot.stepTarget_positive track 0))).box.StrictInterior
             track.initial.box
         exact track.strict _ _ _
-      exact (Geometry.Rational.Box.Refinement.StrictInterior.of_refines firstStrict)
+      exact (StrictInterior.of_refines firstStrict)
         (CoherentRoot.state_refines_of_le track
           (Nat.succ_le_succ (Nat.zero_le index)))
 
@@ -229,25 +238,25 @@ public theorem states_not_separated_of_initial_strict
   have innerRefinesInitial : innerState.box.Refines inner.initial.box :=
     CoherentRoot.state_refines_of_le inner (Nat.zero_le innerIndex)
   have innerStrictOuter : innerState.box.StrictInterior outer.initial.box :=
-    (Geometry.Rational.Box.Refinement.StrictInterior.of_refines innerStrict) innerRefinesInitial
+    (StrictInterior.of_refines innerStrict) innerRefinesInitial
   let outerSupported := supportedInside parameterNonzero outer.initial
-    outerState (Geometry.Rational.Box.Refinement.StrictInterior.refines outerStrict)
+    outerState (StrictInterior.refines outerStrict)
   let innerSupported := supportedInside parameterNonzero outer.initial
-    innerState (Geometry.Rational.Box.Refinement.StrictInterior.refines innerStrictOuter)
+    innerState (StrictInterior.refines innerStrictOuter)
   have outerSupportedRefines : outerSupported.box.Refines outerState.box :=
     supportedInside_refines_inner parameterNonzero outer.initial outerState
-      (Geometry.Rational.Box.Refinement.StrictInterior.refines outerStrict)
+      (StrictInterior.refines outerStrict)
   have innerSupportedRefines : innerSupported.box.Refines innerState.box :=
     supportedInside_refines_inner parameterNonzero outer.initial innerState
-      (Geometry.Rational.Box.Refinement.StrictInterior.refines innerStrictOuter)
+      (StrictInterior.refines innerStrictOuter)
   have supportedSeparated : outerSupported.box.Separated innerSupported.box :=
     separated.of_refines outerSupportedRefines innerSupportedRefines
   have outerSupportedStrict :
       outerSupported.box.StrictInterior outer.initial.box :=
-    (Geometry.Rational.Box.Refinement.StrictInterior.of_refines outerStrict) outerSupportedRefines
+    (StrictInterior.of_refines outerStrict) outerSupportedRefines
   have innerSupportedStrict :
       innerSupported.box.StrictInterior outer.initial.box :=
-    (Geometry.Rational.Box.Refinement.StrictInterior.of_refines innerStrictOuter) innerSupportedRefines
+    (StrictInterior.of_refines innerStrictOuter) innerSupportedRefines
   let region : Region.ClearRegion polynomial outer.initial.box :=
     { box := outer.initial.box
       refinesAmbient := Box.refines_refl _
@@ -450,18 +459,198 @@ give the exact requested sample-distance estimate. -/
                     outerRawIndex).box.diagonalSq +
                   (CoherentRoot.state inner
                     innerRawIndex).box.diagonalSq) :=
-              Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+              Arithmetic.mul_le_mul_of_nonneg_left_direct
                 (add_le_add outerDistance innerDistance) (by decide)
             _ < 2 * (smallTarget + smallTarget) :=
-              Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+              Arithmetic.mul_lt_mul_of_pos_left_direct
                 (by decide)
-                (Fraction.Order.Arithmetic.add_lt_add_direct
+                (Arithmetic.add_lt_add_direct
                   outerDiagonalSmall innerDiagonalSmall)
             _ = target := two_quarter_sums target }
 
 section
 open Purelib.Approximation.Gaussian
 open Purelib.Riemann.RootContinuation
+open Purelib.Data.Gaussian
+open Purelib.Data.Rat
+
+/-- A retained root approximation stays near one fixed reference beyond its actual self-comparison floors.
+
+The comparison and both index bounds belong to the same original numerical
+channel. The supplied squared norm is retained data rather than a newly
+computed norm of the fixed reference.
+-/
+@[expose] public def NearReference (approximation : Sequence.ApproximationData) (reference : Gaussian)
+    (referenceNorm : Coordinate) : Prop :=
+  ∀ {leftStart rightStart : Nat}
+    (comparison : Equivalence.Comparison approximation approximation leftStart rightStart (referenceNorm / 64))
+    (index : Nat), comparison.leftIndex ≤ index → comparison.rightIndex ≤ index →
+      normSq (approximation.sample index - reference) ≤ referenceNorm / 4
+
+/-- Compare two original root tracks whose sampled tails stay near the same fixed nonzero reading.
+
+The procedure retains both input tracks and starts. It pays their original
+self-comparisons and square residuals at the reference-relative targets;
+the shared reference fixes a positive sum floor without selecting a root
+owner or assuming that the two roots have already been identified.
+-/
+@[expose] public def approximationEquivalent_of_near_reference
+    {parameter : Gaussian} {firstAmbient secondAmbient : Box}
+    (first : WindingOneTrack (SquareRootReconditioning.rootPolynomial parameter) firstAmbient)
+    (second : WindingOneTrack (SquareRootReconditioning.rootPolynomial parameter) secondAmbient)
+    (reference : Gaussian) (referenceNorm : Coordinate) (normEq : referenceNorm = normSq reference)
+    (positive : 0 < referenceNorm)
+    (firstNear : NearReference (CertifiedSquareRoot.approximation first) reference referenceNorm)
+    (secondNear : NearReference (CertifiedSquareRoot.approximation second) reference referenceNorm) :
+    Equivalence.Equivalent (CertifiedSquareRoot.approximation first) (CertifiedSquareRoot.approximation second) := by
+  unfold NearReference at firstNear secondNear
+  refine ⟨?_⟩
+  intro leftStart rightStart tolerance tolerancePositive
+  let firstSelf := (Equivalence.Equivalent.refl (CertifiedSquareRoot.approximation first)).compare
+    leftStart leftStart (referenceNorm / 64)
+      (Fraction.Order.Field.div_pos_direct positive (by decide +kernel))
+  let secondSelf := (Equivalence.Equivalent.refl (CertifiedSquareRoot.approximation second)).compare
+    rightStart rightStart (referenceNorm / 64)
+      (Fraction.Order.Field.div_pos_direct positive (by decide +kernel))
+  let firstFloor := max firstSelf.leftIndex firstSelf.rightIndex
+  let secondFloor := max secondSelf.leftIndex secondSelf.rightIndex
+  have firstLeft : firstSelf.leftIndex ≤ firstFloor := by
+    change firstSelf.leftIndex ≤ max firstSelf.leftIndex firstSelf.rightIndex
+    rewrite [Data.Nat.Order.max_eq_natMax]
+    exact Data.Nat.Order.le_max_left _ _
+  have firstRight : firstSelf.rightIndex ≤ firstFloor := by
+    change firstSelf.rightIndex ≤ max firstSelf.leftIndex firstSelf.rightIndex
+    rewrite [Data.Nat.Order.max_eq_natMax]
+    exact Data.Nat.Order.le_max_right _ _
+  have secondLeft : secondSelf.leftIndex ≤ secondFloor := by
+    change secondSelf.leftIndex ≤ max secondSelf.leftIndex secondSelf.rightIndex
+    rewrite [Data.Nat.Order.max_eq_natMax]
+    exact Data.Nat.Order.le_max_left _ _
+  have secondRight : secondSelf.rightIndex ≤ secondFloor := by
+    change secondSelf.rightIndex ≤ max secondSelf.leftIndex secondSelf.rightIndex
+    rewrite [Data.Nat.Order.max_eq_natMax]
+    exact Data.Nat.Order.le_max_right _ _
+  let residualTarget := tolerance * referenceNorm / 8
+  have residualPositive : 0 < residualTarget := Fraction.Order.Field.div_pos_direct
+    (Arithmetic.mul_pos_direct tolerancePositive positive) (by decide +kernel)
+  let firstResidual := (CertifiedSquareRoot.squareApproximation_equivalent_parameter first).compare
+    firstFloor 0 residualTarget residualPositive
+  let secondResidual := (CertifiedSquareRoot.squareApproximation_equivalent_parameter second).compare
+    secondFloor 0 residualTarget residualPositive
+  refine
+    { leftIndex := firstResidual.leftIndex
+      rightIndex := secondResidual.leftIndex
+      left_ge := firstSelf.left_ge.trans (firstLeft.trans firstResidual.left_ge)
+      right_ge := secondSelf.left_ge.trans (secondLeft.trans secondResidual.left_ge)
+      close := ?_ }
+  intro leftLater rightLater leftOrder rightOrder
+  have firstNearReference := firstNear firstSelf leftLater
+    (firstLeft.trans (firstResidual.left_ge.trans leftOrder))
+    (firstRight.trans (firstResidual.left_ge.trans leftOrder))
+  have secondNearReference := secondNear secondSelf rightLater
+    (secondLeft.trans (secondResidual.left_ge.trans rightOrder))
+    (secondRight.trans (secondResidual.left_ge.trans rightOrder))
+  let left := (CertifiedSquareRoot.approximation first).sample leftLater
+  let right := (CertifiedSquareRoot.approximation second).sample rightLater
+  have reverseLeft : normSq (reference - left) = normSq (left - reference) := by
+    rewrite [show reference - left = -(left - reference) by ring1, Basic.Canonical.normSq_neg]
+    rfl
+  have reverseRight : normSq (reference - right) = normSq (right - reference) := by
+    rewrite [show reference - right = -(right - reference) by ring1, Basic.Canonical.normSq_neg]
+    rfl
+  have doubled : Norm.Basic.normSq (reference + reference) / 4 = referenceNorm := by
+    rewrite [Norm.Basic.normSq_double, Norm.Basic.normSq_eq_canonical, ← normEq]
+    calc
+      _ = ((4 : Fraction.Rational) * (4 : Fraction.Rational)⁻¹) * referenceNorm := by
+        rewrite [Fraction.Field.div_eq_mul_inv_direct]
+        ring1
+      _ = 1 * referenceNorm := congrArg (fun coefficient : Fraction.Rational => coefficient * referenceNorm)
+        (by decide +kernel)
+      _ = _ := Fraction.Field.one_mul _
+  have sumClose : Norm.Basic.normSq ((reference + reference) - (left + right)) ≤
+      Norm.Basic.normSq (reference + reference) / 4 := by
+    rewrite [show (reference + reference) - (left + right) =
+      (reference - left) + (reference - right) by ring1, doubled]
+    have triangle := Norm.Bounds.normSq_add_le_two (reference - left) (reference - right)
+    simp only [Norm.Basic.normSq_eq_canonical] at triangle
+    rewrite [reverseLeft, reverseRight] at triangle
+    rewrite [Norm.Basic.normSq_eq_canonical]
+    calc
+      _ ≤ 2 * (normSq (left - reference) + normSq (right - reference)) := triangle
+      _ ≤ 2 * (referenceNorm / 4 + referenceNorm / 4) :=
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (Arithmetic.add_le_add_direct firstNearReference secondNearReference) (by decide +kernel)
+      _ = (4 * (4 : Fraction.Rational)⁻¹) * referenceNorm := by
+        simp only [Fraction.Field.div_eq_mul_inv_direct]
+        ring1
+      _ = 1 * referenceNorm := congrArg (fun coefficient : Fraction.Rational => coefficient * referenceNorm)
+        (by decide +kernel)
+      _ = _ := Fraction.Field.one_mul _
+  have sumLower := Norm.Bounds.quarter_normSq_le_of_close
+    (reference + reference) (left + right) sumClose
+  rewrite [doubled] at sumLower
+  have firstSmall := firstResidual.close leftOrder (Nat.le_refl firstResidual.rightIndex)
+  have secondSmall := secondResidual.close rightOrder (Nat.le_refl secondResidual.rightIndex)
+  change Norm.Basic.normSq (left * left - parameter) < residualTarget at firstSmall
+  change Norm.Basic.normSq (right * right - parameter) < residualTarget at secondSmall
+  have strictDifference : Norm.Basic.normSq (left - right) * referenceNorm < tolerance * referenceNorm := by
+    have residualBound := Arithmetic.mul_lt_mul_of_pos_left_direct
+      (by decide +kernel : (0 : Fraction.Rational) < 4)
+      (Arithmetic.add_lt_add_direct firstSmall secondSmall)
+    have exactDifference := Norm.SquareResidual.distance_mul_le
+      (first := left) (last := right)
+      (firstParameter := parameter) (lastParameter := parameter)
+      (firstResidual := Norm.Basic.normSq (left * left - parameter))
+      (lastResidual := Norm.Basic.normSq (right * right - parameter))
+      (parameterMovement := 0) (sumFloor := referenceNorm)
+      sumLower (Fraction.Order.Basic.le_refl _) (Fraction.Order.Basic.le_refl _)
+      (by rewrite [Basic.sub_self, Norm.Basic.normSq_zero]; exact Fraction.Order.Basic.le_refl _)
+    rewrite [Fraction.Field.mul_zero_direct, Fraction.Field.add_comm _ 0, Fraction.Field.zero_add] at exactDifference
+    calc
+      _ ≤ _ := exactDifference
+      _ < 4 * (residualTarget + residualTarget) := residualBound
+      _ = tolerance * referenceNorm := by
+        change 4 * (tolerance * referenceNorm / 8 + tolerance * referenceNorm / 8) = _
+        calc
+          _ = (tolerance * referenceNorm / 8) * 8 := by ring1
+          _ = _ := Fraction.Field.div_mul_cancel_of_ne _ _ (by decide +kernel)
+  exact Arithmetic.lt_of_mul_lt_mul_right_direct strictDifference positive
+
+end
+
+section
+open Purelib.Approximation.Gaussian
+open Purelib.Riemann.RootContinuation
+/-- Original apartness-prepared root names inherit the supplied comparison of their unchanged raw track approximations.
+
+Both input tracks and their exact apartness preparations remain retained.
+The operation transports only through their original raw-name and
+apartification comparisons; no new isolation owner is selected.
+-/
+@[expose] public def rootEquivalent_of_approximationEquivalent
+    {parameter : Gaussian} (parameterNonzero : parameter ≠ 0)
+    {outerAmbient innerAmbient : Box}
+    (outer : WindingOneTrack (SquareRootReconditioning.rootPolynomial parameter) outerAmbient)
+    (inner : WindingOneTrack (SquareRootReconditioning.rootPolynomial parameter) innerAmbient)
+    (equivalent : Equivalence.Equivalent
+      (CertifiedSquareRoot.approximation outer) (CertifiedSquareRoot.approximation inner)) :
+    NamedEquivalent
+      (CertifiedSquareRoot.root parameterNonzero outer).name
+      (CertifiedSquareRoot.root parameterNonzero inner).name := by
+  let outerRaw := CertifiedSquareRoot.rawRoot outer
+  let innerRaw := CertifiedSquareRoot.rawRoot inner
+  have rawEquivalent : NamedEquivalent outerRaw.name innerRaw.name :=
+    Sequence.Name.Equivalence.approximationEquivalent_toNamed
+      equivalent
+  exact Equivalence.NamedEquivalent.trans
+    (Equivalence.NamedEquivalent.symm
+      (Name.Coherent.CoherentNamed.apartifyEquivalent outerRaw
+        (CertifiedSquareRoot.possibleApart parameterNonzero outer)))
+    (Equivalence.NamedEquivalent.trans rawEquivalent
+      (Name.Coherent.CoherentNamed.apartifyEquivalent innerRaw
+        (CertifiedSquareRoot.possibleApart parameterNonzero
+          inner)))
+
 /-- Strict initial-box containment gives equivalence of the two original apartness-prepared root names.
 
 The finite overlap comparison retains both approximation owners and their
@@ -478,21 +667,9 @@ requested starting indices; their apartness preparation preserves that equivalen
     (innerStrict : inner.initial.box.StrictInterior outer.initial.box) :
     NamedEquivalent
       (CertifiedSquareRoot.root parameterNonzero outer).name
-      (CertifiedSquareRoot.root parameterNonzero inner).name := by
-  let outerRaw := CertifiedSquareRoot.rawRoot outer
-  let innerRaw := CertifiedSquareRoot.rawRoot inner
-  have rawEquivalent : NamedEquivalent outerRaw.name innerRaw.name :=
-    Sequence.Name.Equivalence.approximationEquivalent_toNamed
-      (approximationEquivalent_of_initial_strict parameterNonzero outer inner
-        innerStrict)
-  exact Equivalence.NamedEquivalent.trans
-    (Equivalence.NamedEquivalent.symm
-      (Name.Coherent.CoherentNamed.apartifyEquivalent outerRaw
-        (CertifiedSquareRoot.possibleApart parameterNonzero outer)))
-    (Equivalence.NamedEquivalent.trans rawEquivalent
-      (Name.Coherent.CoherentNamed.apartifyEquivalent innerRaw
-        (CertifiedSquareRoot.possibleApart parameterNonzero
-          inner)))
+      (CertifiedSquareRoot.root parameterNonzero inner).name :=
+  rootEquivalent_of_approximationEquivalent parameterNonzero outer inner
+    (approximationEquivalent_of_initial_strict parameterNonzero outer inner innerStrict)
 
 /-- Recover equivalence of the original tailed approximations from their prepared root-name equivalence.
 
@@ -579,7 +756,7 @@ public theorem canonicalOwner_index_eq_of_rootEquivalent
     let approximationEquivalent := approximationEquivalent_of_rootEquivalent
       parameterNonzero first.track second.track equivalent
     let comparison := approximationEquivalent.compare 0 0 (separation.gap ^ 2)
-      (Fraction.Order.Arithmetic.pow_pos_direct separation.positive 2)
+      (Arithmetic.pow_pos_direct separation.positive 2)
     have firstInside : first.track.initial.box.Contains
         ((CertifiedSquareRoot.approximation first.track).sample
           comparison.leftIndex) := by
@@ -610,7 +787,7 @@ nonzero target supplies the same quadratic degree and squarefree witnesses. -/
     (targetNonzero : target ≠ 0)
     (sourceTrack : WindingOneTrack
       (SquareRootReconditioning.rootPolynomial source) ambient)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Norm.Basic.normSq (source - target) <
       sourceTrack.initial.clearance.bound) :
     WindingOneTrack
       (SquareRootReconditioning.rootPolynomial target)
@@ -618,7 +795,7 @@ nonzero target supplies the same quadratic degree and squarefree witnesses. -/
   (SquareRootContinuation.transportedOwner
       sourceTrack.initial small).track
     (by
-      rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]
+      rw [Gaussian.rootPolynomial_degree]
       exact SquareRootDegree.degreeTwo_atLeastTwo)
     (Gaussian.Squarefree.squarefree targetNonzero
       SquareRootDegree.degreeTwo)
@@ -630,7 +807,7 @@ open Purelib.Riemann.RootContinuation in
     {ambient : Box} (targetNonzero : target ≠ 0)
     (sourceTrack : WindingOneTrack
       (SquareRootReconditioning.rootPolynomial source) ambient)
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (small : Norm.Basic.normSq (source - target) <
       sourceTrack.initial.clearance.bound) :
     (transportedTrack targetNonzero sourceTrack small).initial.box =
       sourceTrack.initial.box := rfl
@@ -657,11 +834,11 @@ track. -/
       commonAmbient)
     (commonStrictFirst : common.initial.box.StrictInterior first.initial.box)
     (commonStrictSecond : common.initial.box.StrictInterior second.initial.box)
-    (firstSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (firstSmall : Norm.Basic.normSq (source - target) <
       first.initial.clearance.bound)
-    (secondSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (secondSmall : Norm.Basic.normSq (source - target) <
       second.initial.clearance.bound)
-    (commonSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (commonSmall : Norm.Basic.normSq (source - target) <
       common.initial.clearance.bound) :
     NamedEquivalent
       (CertifiedSquareRoot.root targetNonzero
@@ -695,11 +872,11 @@ track. -/
   have commonTargetStrictFirst : commonTarget.initial.box.StrictInterior
       firstOuter.initial.box := by
     change commonTarget.initial.box.StrictInterior first.initial.box
-    exact (Geometry.Rational.Box.Refinement.StrictInterior.of_refines commonStrictFirst) commonTargetRefines
+    exact (StrictInterior.of_refines commonStrictFirst) commonTargetRefines
   have commonTargetStrictSecond : commonTarget.initial.box.StrictInterior
       secondOuter.initial.box := by
     change commonTarget.initial.box.StrictInterior second.initial.box
-    exact (Geometry.Rational.Box.Refinement.StrictInterior.of_refines commonStrictSecond) commonTargetRefines
+    exact (StrictInterior.of_refines commonStrictSecond) commonTargetRefines
   have firstOuterToFirst := rootEquivalent_of_initial_strict targetNonzero
     firstOuter firstTarget firstTargetStrict
   have firstOuterToCommon := rootEquivalent_of_initial_strict targetNonzero
@@ -727,11 +904,11 @@ source track, with separate clearance payments for each original owner. -/
       common.track.initial.box.StrictInterior first.track.initial.box)
     (commonStrictSecond :
       common.track.initial.box.StrictInterior second.track.initial.box)
-    (firstSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (firstSmall : Norm.Basic.normSq (source - target) <
       first.track.initial.clearance.bound)
-    (secondSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (secondSmall : Norm.Basic.normSq (source - target) <
       second.track.initial.clearance.bound)
-    (commonSmall : Data.Gaussian.Norm.Basic.normSq (source - target) <
+    (commonSmall : Norm.Basic.normSq (source - target) <
       common.track.initial.clearance.bound) :
     NamedEquivalent
       ((first.advance targetNonzero firstSmall).certificate
@@ -800,7 +977,7 @@ exact retained source and intermediate states. -/
   have stagedStrict : stagedTrack.initial.box.StrictInterior
       outer.initial.box := by
     change stagedTrack.initial.box.StrictInterior sourceTrack.initial.box
-    exact (Geometry.Rational.Box.Refinement.StrictInterior.of_refines middleStrict) stagedRefinesMiddle
+    exact (StrictInterior.of_refines middleStrict) stagedRefinesMiddle
   have outerToDirect := rootEquivalent_of_initial_strict targetNonzero outer
     directTrack directStrict
   have outerToStaged := rootEquivalent_of_initial_strict targetNonzero outer
@@ -819,10 +996,10 @@ open Purelib.Riemann.Topology
 The retained robust bridge and its strict initial containments give a finite
 common-track comparison without replacing either source owner. -/
 @[expose] public def rootEquivalent_robustPrepare
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment
-      polynomial ambient start finish)
+      polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) ≤ parameter ∧ parameter ≤ 1)
     (owner : SquareRootContinuationChain.Owner
@@ -855,10 +1032,10 @@ common-track comparison without replacing either source owner. -/
 Uniform preparation retains its common bridge and strict source containment;
 that exact finite relation supplies the comparison of root names. -/
 @[expose] public def rootEquivalent_uniformPrepare
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box} {start finish : Gaussian}
     (segment : Geometry.ClearPath.ClearSegment
-      polynomial ambient start finish)
+      polynomial ambient start finish mode)
     (parameter : Coordinate)
     (inside : (0 : Coordinate) <= parameter ∧ parameter <= 1)
     (owner : SquareRootContinuationChain.Owner
@@ -955,7 +1132,7 @@ open Purelib.Polynomial.Dense.Gaussian in
 
 Only the initial state changes; the original refine, strict and diagonal
 certificates are retained with the same polynomial and ambient box. -/
-@[expose] public def restart {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+@[expose] public def restart {polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial}
     {ambient : Box} (track : WindingOneTrack polynomial ambient)
     (initial : WindingOneState polynomial ambient) :
     WindingOneTrack polynomial ambient where
@@ -1089,10 +1266,10 @@ public theorem commonTailOfBridge_initial_strict_owner {parameter : Gaussian}
       owner) :
     (commonTailOfBridge reset).initial.box.StrictInterior
       owner.track.initial.box := by
-  apply (Geometry.Rational.Box.Refinement.StrictInterior.of_refines reset.commonInitialStrictOwner)
+  apply (StrictInterior.of_refines reset.commonInitialStrictOwner)
   change reset.refined.box.Refines reset.common.initial.box
   rw [reset.refined_eq]
-  exact Geometry.Rational.Box.Refinement.StrictInterior.refines (reset.common.strict _ _ _)
+  exact StrictInterior.refines (reset.common.strict _ _ _)
 
 open Purelib.Riemann.RootContinuation in
 open Purelib.Riemann.Topology in
@@ -1277,6 +1454,20 @@ constructing a new track or selecting another finite isolation. -/
     (owner : SquareRootContinuationChain.Owner source) :
     Name.Basic.Named :=
   (owner.certificate sourceNonzero).value.name
+
+open Purelib.Riemann.Topology in
+open Purelib.RootIsolation in
+/-- Exact parameter reindexing preserves the original retained owner's root name.
+
+The complete original owner is transported along the displayed parameter
+equality. Its certificate reads the same track and original named state.
+-/
+public theorem ownerRootName_castOwnerParameter {source target : Gaussian}
+    (equal : source = target) (owner : SquareRootContinuationChain.Owner source) :
+    ownerRootName (SquareRoot.Owner.Transport.castOwnerParameter equal owner).parameterNonzero
+      (SquareRoot.Owner.Transport.castOwnerParameter equal owner) = ownerRootName owner.parameterNonzero owner := by
+  cases equal
+  rfl
 
 section
 open Purelib.Data.Gaussian

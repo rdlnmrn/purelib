@@ -60,16 +60,16 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.TerminalCo
 
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base} {bank :
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
-  {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
-    {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered}
-  {fine : Polynomial.Geometry.Grid.ClearGrid curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve)}
+    BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet : Fin 2}
+  {ordered : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
+    {paired : OrderedBranchPairs.Ordered.Paired ordered}
+  {fine : Geometry.Grid.ClearGrid curve.polynomial (Branches.Cuts.Ambient curve)}
   (included : Geometry.Grid.Extension.CoordinateInclusion base.bank.grid fine)
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames fine} (edges : SquareRoot.Grid.RootEdgeBank frames)
+  {frames : SquareRoot.Grid.RootFrames fine} (edges : SquareRoot.Grid.RootEdgeBank frames)
     (vertices : SquareRoot.Grid.LiftedVertices.VertexBank fine)
 
 /-- The retained resplit reference-loop correction summed over both original sheets.
@@ -78,62 +78,62 @@ Its ribbon pairs the preceding original paired total with the actual two-sheet r
 @[expose] def resplitReferenceCorrection (newSheet : Fin 2) (value : Topology.Polygon.Stokes.OrientedEdge vertices.count
   → Gaussian.Basic.Canonical) : Gaussian :=
   Path.BoundaryRibbon.area (Path.Paired.Increments.total
-    (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PairedArea.resplitReadings included edges vertices bank newSheet value
+    (PairedArea.resplitReadings included edges vertices bank newSheet value
     paired.split.pairs))
     (Topology.Surface.Sewing.SewingRetraction.wordValue value (edges.indexedEdges vertices
       (included.resplit (bank.rows.get paired.split.ending.reference).reference.walk
-        (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet) +
+        (BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet) +
       Topology.Surface.Sewing.SewingRetraction.wordValue value (edges.indexedEdges vertices
         (included.resplit (bank.rows.get paired.split.ending.reference).reference.walk
-          (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank))
-        (Hyperelliptic.Branches.BranchCutLifts.otherSheet newSheet)))
+          (BasedBranchTours.FramedBranchCellBank.baseMember base.bank))
+        (Branches.BranchCutLifts.otherSheet newSheet)))
 
 /-- The odd ending has no exterior-total cross. In even degree the full
 ending increment is retained, not replaced by a refinement-small term. -/
 @[expose] def resplitExteriorCorrection (newSheet : Fin 2) (value : Topology.Polygon.Stokes.OrientedEdge vertices.count
   → Gaussian.Basic.Canonical) : Gaussian :=
-  let total := Path.Paired.Increments.total (Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PairedArea.resplitReadings
+  let total := Path.Paired.Increments.total (PairedArea.resplitReadings
     included edges vertices bank newSheet value paired.split.pairs)
   match paired.split.ending with
   | .odd _ => 0
   | .even first last =>
       let outward := Topology.Surface.Sewing.SewingRetraction.wordValue value (edges.indexedEdges vertices
         (included.resplit (bank.rows.get first).reference.walk
-          (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet)
+          (BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet)
       let ending := Topology.Surface.Sewing.SewingRetraction.wordValue value (edges.indexedEdges vertices
         (included.resplit (bank.loopProduct [first, last])
-          (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet)
+          (BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) newSheet)
       Path.BoundaryRibbon.area (outward + total) (total + ending)
 
 /-- The original terminal correction splits into its two-sheet reference correction and retained even-ending exterior
 correction. -/
 theorem resplitEndCorrection_split (newSheet : Fin 2) (value : Topology.Polygon.Stokes.OrientedEdge vertices.count →
   Gaussian.Basic.Canonical) :
-    Hyperelliptic.Meshes.Newton.OriginalPeriodArea.resplitEndCorrection (paired := paired) included edges vertices
+    Newton.OriginalPeriodArea.resplitEndCorrection (paired := paired) included edges vertices
       newSheet value =
-      Hyperelliptic.Meshes.PuncturedGrid.Inclusion.TerminalCorrection.resplitReferenceCorrection (paired := paired)
+      TerminalCorrection.resplitReferenceCorrection (paired := paired)
         included edges vertices newSheet value +
-      Hyperelliptic.Meshes.PuncturedGrid.Inclusion.TerminalCorrection.resplitExteriorCorrection (paired := paired)
+      TerminalCorrection.resplitExteriorCorrection (paired := paired)
         included edges vertices newSheet value := by
   have empty (incoming : Fin 2) : edges.indexedEdges vertices
       (included.resplit (bank.loopProduct [])
-        (Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) incoming = []
+        (BasedBranchTours.FramedBranchCellBank.baseMember base.bank)) incoming = []
         := rfl
-  unfold Hyperelliptic.Meshes.Newton.OriginalPeriodArea.resplitEndCorrection
-    Hyperelliptic.Meshes.PuncturedGrid.Inclusion.TerminalCorrection.resplitReferenceCorrection
-    Hyperelliptic.Meshes.PuncturedGrid.Inclusion.TerminalCorrection.resplitExteriorCorrection
+  unfold Newton.OriginalPeriodArea.resplitEndCorrection
+    TerminalCorrection.resplitReferenceCorrection
+    TerminalCorrection.resplitExteriorCorrection
   cases endingEq : paired.split.ending with
   | odd index =>
-      rw [Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.PairEnding.labels,
-        Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.resplit_product_cons
-        bank included edges vertices, empty, Purelib.Data.List.Append.append_nil]
+      rw [OrderedBranchPairs.PairEnding.labels,
+        BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.resplit_product_cons
+        bank included edges vertices, empty, List.Append.append_nil]
       rfl
   | even first last =>
-      dsimp only [-eq_self, -iff_self, Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.PairEnding.reference,
-        Hyperelliptic.Meshes.Newton.OrderedBranchPolygons.terminalCross]
-      rw [Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.PairEnding.labels,
-        Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.resplit_product_pair
-        bank included edges vertices, empty, Purelib.Data.List.Append.append_nil,
+      dsimp only [-eq_self, -iff_self, OrderedBranchPairs.PairEnding.reference,
+        Newton.OrderedBranchPolygons.terminalCross]
+      rw [OrderedBranchPairs.PairEnding.labels,
+        BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.resplit_product_pair
+        bank included edges vertices, empty, List.Append.append_nil,
         Topology.Surface.Sewing.SewingRetraction.wordValue_append]
       have scalar (total outward returning referenceReturn : Gaussian.Basic.Canonical) :
           Path.BoundaryRibbon.area total (outward + returning + referenceReturn) + Path.BoundaryRibbon.area outward

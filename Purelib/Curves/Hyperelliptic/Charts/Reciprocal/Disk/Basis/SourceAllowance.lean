@@ -67,6 +67,8 @@ import Purelib.Riemann.RootContinuation.SquareRootChannelOwnership
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation.Rational.Budget
@@ -111,24 +113,24 @@ open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 open Purelib.Riemann.RootContinuation
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {owners :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentOwners.OwnedEndpoints regular cell}
-  {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell} {target :
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
+    UniformReciprocalCover.Cell data edge}
+  {regular : RegularBounds.Data cap} {owners :
+    ParentOwners.OwnedEndpoints regular cell}
+  {comparison : ArcSamples.Data regular cell} {target :
     Coordinate} {floor : Nat}
-  {index depth stage minimum : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {source : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index}
+  {index depth stage minimum : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {source : UniformReciprocalPrimitives.SourcePrimitive data index}
   {request : AreaRequest comparison owners target
     floor}
   {charts : ChartMesh request.mesh capSample minimum}
-  {original : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentCells.ComparedCell comparison source capSample
+  {original : ParentCells.ComparedCell comparison source capSample
     depth}
 
 open Purelib.Data.Rat.Fraction.Compatibility
@@ -138,14 +140,14 @@ namespace AreaRequest
 set_option genInjectivity false in
 /-- A source target chosen from the retained mesh count and uniform basis ceiling, before any source polynomial or root
 reading is acquired. -/
-structure BasisSourceAllowance (request : ChartAreaRequest.AreaRequest comparison owners target floor)
-    (endpointTarget allowance : InverseRootPolynomial.Coordinate) where
+structure BasisSourceAllowance (request : AreaRequest comparison owners target floor)
+    (endpointTarget allowance : Coordinate) where
   /-- The cached complete source-polygon comparison weight from the original mesh count and uniform basis bound. -/
-    weight : InverseRootPolynomial.Coordinate
+    weight : Coordinate
   /-- The weight is exactly the original fourth-power mesh-count expression with the retained basis coefficient. -/
-    weight_eq : weight = 1280 * (request.count : InverseRootPolynomial.Coordinate)^4 * (40 + 2 *
+    weight_eq : weight = 1280 * (request.count : Coordinate)^4 * (40 + 2 *
     request.basisBounds.coefficient)
-  /-- The cached common positive source comparison tolerance. -/ sourceTarget : InverseRootPolynomial.Coordinate
+  /-- The cached common positive source comparison tolerance. -/ sourceTarget : Coordinate
   /-- The source tolerance is the minimum of the unit ceiling, original endpoint tolerance and retained weighted area
     allowance. -/ source_eq : sourceTarget = min 1 (min endpointTarget (Weighted.allowance ((4 * allowance)^2) weight))
   /-- The actual retained source tolerance is strictly positive. -/ positive : 0 < sourceTarget
@@ -153,7 +155,7 @@ structure BasisSourceAllowance (request : ChartAreaRequest.AreaRequest compariso
   /-- The retained source tolerance pays the original endpoint comparison target. -/ endpoint_le : sourceTarget ≤
     endpointTarget
   /-- The complete original source-polygon error expression is paid by the retained squared area allowance. -/ paid :
-    1280 * (request.count : InverseRootPolynomial.Coordinate)^4 * sourceTarget *
+    1280 * (request.count : Coordinate)^4 * sourceTarget *
     (40 * sourceTarget + 2 * request.basisBounds.coefficient) ≤ (4 * allowance)^2
 
 constructive_injectivity BasisSourceAllowance
@@ -162,61 +164,61 @@ namespace BasisSourceAllowance
 
 /-- Choose the positive source tolerance from the original geometry and uniform basis bounds, retaining both endpoint
 and complete polygon payment. -/
-def build (request : ChartAreaRequest.AreaRequest comparison owners target floor)
-    (endpointTarget allowance : InverseRootPolynomial.Coordinate) (endpointPositive : 0 < endpointTarget) (positive : 0
+def build (request : AreaRequest comparison owners target floor)
+    (endpointTarget allowance : Coordinate) (endpointPositive : 0 < endpointTarget) (positive : 0
       < allowance) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceAllowance.AreaRequest.BasisSourceAllowance request
+    BasisSourceAllowance request
       endpointTarget allowance := by
   let coefficient := request.basisBounds.coefficient
   have coefficientNonnegative : 0 ≤ coefficient := request.basisBounds.coefficient_nonnegative
-  let factor := 1280 * (request.count : InverseRootPolynomial.Coordinate)^4
-  have factorNonnegative : 0 ≤ factor := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
-    (Fraction.Order.Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 4)
+  let factor := 1280 * (request.count : Coordinate)^4
+  have factorNonnegative : 0 ≤ factor := Arithmetic.mul_nonneg_direct (by decide +kernel)
+    (Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 4)
   let weight := factor * (40 + 2 * coefficient)
-  have weightNonnegative : 0 ≤ weight := Fraction.Order.Arithmetic.mul_nonneg_direct factorNonnegative
-    (add_nonneg (by decide +kernel) (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) coefficientNonnegative))
-  have squarePositive : 0 < (4 * allowance)^2 := Fraction.Order.Arithmetic.pow_pos_direct
-    (Fraction.Order.Arithmetic.mul_pos_direct (by decide) positive) 2
+  have weightNonnegative : 0 ≤ weight := Arithmetic.mul_nonneg_direct factorNonnegative
+    (add_nonneg (by decide +kernel) (Arithmetic.mul_nonneg_direct (by decide) coefficientNonnegative))
+  have squarePositive : 0 < (4 * allowance)^2 := Arithmetic.pow_pos_direct
+    (Arithmetic.mul_pos_direct (by decide) positive) 2
   let sourceTarget := min 1 (min endpointTarget (Weighted.allowance ((4 * allowance)^2) weight))
-  have sourcePositive : 0 < sourceTarget := Fraction.Order.Basic.lt_min (by decide)
-    (Fraction.Order.Basic.lt_min endpointPositive (Weighted.allowance_positive squarePositive weightNonnegative))
-  have small : sourceTarget ≤ 1 := Fraction.Order.Basic.min_le_left _ _
+  have sourcePositive : 0 < sourceTarget := Basic.lt_min (by decide)
+    (Basic.lt_min endpointPositive (Weighted.allowance_positive squarePositive weightNonnegative))
+  have small : sourceTarget ≤ 1 := Basic.min_le_left _ _
   have factorLe : 40 * sourceTarget + 2 * coefficient ≤ 40 + 2 * coefficient := by
-    have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct small (by
-        decide +kernel : (0 : InverseRootPolynomial.Coordinate) ≤ 40)
+    have scaled := Arithmetic.mul_le_mul_of_nonneg_left_direct small (by
+        decide +kernel : (0 : Coordinate) ≤ 40)
     rw [Fraction.Field.mul_one_direct] at scaled
-    exact Fraction.Order.Arithmetic.add_le_add_direct scaled le_rfl
-  have estimated := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct factorLe
-    (Fraction.Order.Arithmetic.mul_nonneg_direct factorNonnegative sourcePositive.le)
+    exact Arithmetic.add_le_add_direct scaled le_rfl
+  have estimated := Arithmetic.mul_le_mul_of_nonneg_left_direct factorLe
+    (Arithmetic.mul_nonneg_direct factorNonnegative sourcePositive.le)
   have budgetLe : sourceTarget ≤ Weighted.allowance ((4 * allowance)^2) weight :=
-    (Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_right _ _)
-  have budgetPaid := (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct budgetLe weightNonnegative).trans
+    (Basic.min_le_right _ _).trans (Basic.min_le_right _ _)
+  have budgetPaid := (Arithmetic.mul_le_mul_of_nonneg_left_direct budgetLe weightNonnegative).trans
     (Weighted.mul_allowance_le squarePositive.le weightNonnegative)
   refine ⟨weight, rfl, sourceTarget, rfl, sourcePositive, small,
-    (Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _), ?_⟩
+    (Basic.min_le_right _ _).trans (Basic.min_le_left _ _), ?_⟩
   exact estimated.trans ((show factor * sourceTarget * (40 + 2 * coefficient) = weight * sourceTarget by ring1).trans_le
     budgetPaid)
 
 /-- A common parent tolerance may be smaller than each cell's allocation. -/
-theorem paid_of_le {endpointTarget allowance sourceTarget : InverseRootPolynomial.Coordinate}
-    (allocation : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceAllowance.AreaRequest.BasisSourceAllowance
+theorem paid_of_le {endpointTarget allowance sourceTarget : Coordinate}
+    (allocation : BasisSourceAllowance
       request endpointTarget allowance)
     (nonnegative : 0 ≤ sourceTarget) (smaller : sourceTarget ≤ allocation.sourceTarget) :
-    1280 * (request.count : InverseRootPolynomial.Coordinate)^4 * sourceTarget *
+    1280 * (request.count : Coordinate)^4 * sourceTarget *
       (40 * sourceTarget + 2 * request.basisBounds.coefficient) ≤ (4 * allowance)^2 := by
-  have factorNonnegative : 0 ≤ 1280 * (request.count : InverseRootPolynomial.Coordinate)^4 :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) (Fraction.Order.Arithmetic.pow_nonneg_direct
+  have factorNonnegative : 0 ≤ 1280 * (request.count : Coordinate)^4 :=
+    Arithmetic.mul_nonneg_direct (by decide +kernel) (Arithmetic.pow_nonneg_direct
       (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 4)
-  have left := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct smaller factorNonnegative
-  have right := Fraction.Order.Arithmetic.add_le_add_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct smaller (by
-        decide +kernel : (0 : InverseRootPolynomial.Coordinate) ≤ 40))
+  have left := Arithmetic.mul_le_mul_of_nonneg_left_direct smaller factorNonnegative
+  have right := Arithmetic.add_le_add_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct smaller (by
+        decide +kernel : (0 : Coordinate) ≤ 40))
     (le_refl (2 * request.basisBounds.coefficient))
   have rightNonnegative : 0 ≤ 40 * sourceTarget + 2 * request.basisBounds.coefficient :=
-    add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) nonnegative)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) request.basisBounds.coefficient_nonnegative)
-  exact (Fraction.Order.Arithmetic.mul_le_mul_direct left right rightNonnegative
-    (Fraction.Order.Arithmetic.mul_nonneg_direct factorNonnegative allocation.positive.le)).trans allocation.paid
+    add_nonneg (Arithmetic.mul_nonneg_direct (by decide +kernel) nonnegative)
+      (Arithmetic.mul_nonneg_direct (by decide) request.basisBounds.coefficient_nonnegative)
+  exact (Arithmetic.mul_le_mul_direct left right rightNonnegative
+    (Arithmetic.mul_nonneg_direct factorNonnegative allocation.positive.le)).trans allocation.paid
 
 end BasisSourceAllowance
 end AreaRequest
@@ -224,34 +226,34 @@ end AreaRequest
 namespace AreaRequest.Evaluation
 
 variable {polynomials :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 /-- The automatically chosen source target pays the homogeneous polygon error, with the two trace-origin terms still
 explicitly present. -/
-theorem source_path_paid (evaluated : AreaRequest.Evaluation charts original stage)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+theorem source_path_paid (evaluated : Evaluation charts original stage)
+    (coefficients : GaussianVector genus)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
-    {endpointTarget allowance : InverseRootPolynomial.Coordinate} (allocation :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceAllowance.AreaRequest.BasisSourceAllowance request
+    {endpointTarget allowance : Coordinate} (allocation :
+      BasisSourceAllowance request
       endpointTarget allowance)
-    {sourceTarget : InverseRootPolynomial.Coordinate} (nonnegative : 0 ≤ sourceTarget) (smaller : sourceTarget ≤
+    {sourceTarget : Coordinate} (nonnegative : 0 ≤ sourceTarget) (smaller : sourceTarget ≤
       allocation.sourceTarget)
-    {firstSource lastSource : InverseRootPolynomial.Gaussian}
-    (values : PathValues.BasisPathValues polynomials coefficients sourceTarget evaluated.vertices.path.segments
+    {firstSource lastSource : Gaussian}
+    (values : BasisPathValues polynomials coefficients sourceTarget evaluated.vertices.path.segments
       firstSource lastSource) :
     Data.Gaussian.Norm.Basic.normSq ((IncrementArea.traceArea firstSource (values.pairs.map Prod.fst) -
       IncrementArea.traceArea (polynomials.value coefficients evaluated.vertices.first.root.coordinate)
         (values.pairs.map Prod.snd)) -
       (BoundaryRibbon.area firstSource (lastSource - firstSource) -
         BoundaryRibbon.area (polynomials.value coefficients evaluated.vertices.first.root.coordinate)
-          (Data.Gaussian.Norm.Sum.Basic.gaussianSum (values.pairs.map Prod.snd)))) ≤
-      (4 * allowance)^2 * (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
+          (gaussianSum (values.pairs.map Prod.snd)))) ≤
+      (4 * allowance)^2 * (coefficientNormSq coefficients)^2 := by
   have bound := Evaluation.source_path_trace_bound evaluated coefficients branch nonnegative values
   have countEq : evaluated.vertices.path.segments.length = request.count :=
     evaluated.vertices.path.count_eq.trans request.count_eq.symm
   rw [countEq] at bound
-  exact bound.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (allocation.paid_of_le nonnegative
-    smaller) (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+  exact bound.trans (Arithmetic.mul_le_mul_of_nonneg_right_direct (allocation.paid_of_le nonnegative
+    smaller) (Arithmetic.sq_nonneg_direct _))
 
 end AreaRequest.Evaluation
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceAllowance

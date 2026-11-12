@@ -25,11 +25,11 @@ set_option genInjectivity false in
 The dependent constructors retain the original segment list while keeping the supplied cut order for every segment. -/
 inductive Request.CutRequest : Source.PolynomialPath → Type
   /-- The empty request for the exact empty original source path. -/ | nil :
-    Purelib.Integration.Polynomial.Gaussian.Partition.Request.CutRequest []
+    Request.CutRequest []
   /-- Retain the original segment's cut list and the exact tail request. -/ | cons {source : PolynomialSegment} {rest :
     Source.PolynomialPath}
-      (cuts : List Fraction.Rational) (tail : Purelib.Integration.Polynomial.Gaussian.Partition.Request.CutRequest rest)
-        : Purelib.Integration.Polynomial.Gaussian.Partition.Request.CutRequest (source :: rest)
+      (cuts : List Fraction.Rational) (tail : Request.CutRequest rest)
+        : Request.CutRequest (source :: rest)
 
 constructive_injectivity Request.CutRequest
 
@@ -56,19 +56,19 @@ shape failed. -/
 inductive Request.CutError : Nat → Source.PolynomialPath → List Request.CutRow → Type
   /-- The original nonempty source still needs a row but the row list is empty. -/ | missingCell (offset : Nat) (source
     : PolynomialSegment) (rest : Source.PolynomialPath) :
-      Purelib.Integration.Polynomial.Gaussian.Partition.Request.CutError offset (source :: rest) []
+      Request.CutError offset (source :: rest) []
   /-- The original source is exhausted while a retained row remains. -/ | extraCell (offset : Nat) (row :
     Request.CutRow) (rows : List Request.CutRow) :
-      Purelib.Integration.Polynomial.Gaussian.Partition.Request.CutError offset [] (row :: rows)
+      Request.CutError offset [] (row :: rows)
   /-- The retained row's source index differs from the expected original offset. -/ | wrongCell (offset : Nat) (source :
     PolynomialSegment) (rest : Source.PolynomialPath)
       (row : Request.CutRow) (rows : List Request.CutRow) (different : row.sourceIndex ≠ offset) :
-      Purelib.Integration.Polynomial.Gaussian.Partition.Request.CutError offset (source :: rest) (row :: rows)
+      Request.CutError offset (source :: rest) (row :: rows)
   /-- The current original row matched, and the retained failure occurs in its exact tail. -/ | afterCell (offset : Nat)
     (source : PolynomialSegment) (rest : Source.PolynomialPath)
       (row : Request.CutRow) (rows : List Request.CutRow) (matched : row.sourceIndex = offset)
-      (tail : Purelib.Integration.Polynomial.Gaussian.Partition.Request.CutError (offset + 1) rest rows) :
-      Purelib.Integration.Polynomial.Gaussian.Partition.Request.CutError offset (source :: rest) (row :: rows)
+      (tail : Request.CutError (offset + 1) rest rows) :
+      Request.CutError offset (source :: rest) (row :: rows)
 
 constructive_injectivity Request.CutError
 
@@ -78,7 +78,7 @@ Each source segment keeps the supplied cut list, and recursion follows the same 
 @[expose] def Request.CutRequest.every (cuts : List Fraction.Rational) : (source : Source.PolynomialPath) →
   Request.CutRequest source
   | [] => .nil
-  | _ :: rest => .cons cuts (Purelib.Integration.Polynomial.Gaussian.Partition.Request.CutRequest.every cuts rest)
+  | _ :: rest => .cons cuts (Request.CutRequest.every cuts rest)
 
 /-- Decode original serialized cut rows against the exact source path and starting index.
 
@@ -96,7 +96,7 @@ failure. -/
       | [] => .error (.missingCell offset source rest)
       | row :: rows =>
           if matched : row.sourceIndex = offset then
-            match Purelib.Integration.Polynomial.Gaussian.Partition.Request.CutRequest.decode (offset + 1) rest rows
+            match Request.CutRequest.decode (offset + 1) rest rows
               with
             | .error error => .error (.afterCell offset source rest row rows matched error)
             | .ok tail => .ok (.cons row.cuts tail)
@@ -109,7 +109,7 @@ Each row retains the supplied starting index and cut list. The tail advances tha
 @[expose] def Request.CutRequest.serialize (offset : Nat) {source : Source.PolynomialPath} : Request.CutRequest source →
   List Request.CutRow
   | .nil => []
-  | .cons cuts tail => ⟨offset, cuts⟩ :: Purelib.Integration.Polynomial.Gaussian.Partition.Request.CutRequest.serialize
+  | .cons cuts tail => ⟨offset, cuts⟩ :: Request.CutRequest.serialize
     (offset + 1) tail
 
 /-- Decoding an original request's serialization recovers that exact request.
@@ -122,7 +122,7 @@ theorem Request.CutRequest.decode_serialize (offset : Nat) : ∀ {source : Sourc
   | [], .nil => rfl
   | _ :: _, .cons cuts tail => by
       rw [Request.CutRequest.serialize, Request.CutRequest.decode, dif_pos rfl,
-        Purelib.Integration.Polynomial.Gaussian.Partition.Request.CutRequest.decode_serialize (offset + 1) tail]
+        Request.CutRequest.decode_serialize (offset + 1) tail]
 
 /-- A retained cut error proves the original rows cannot serialize any request for that exact source and offset.
 

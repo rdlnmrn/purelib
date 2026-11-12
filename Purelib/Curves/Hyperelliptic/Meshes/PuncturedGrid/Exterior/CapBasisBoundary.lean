@@ -56,31 +56,31 @@ open Purelib.Topology.Polygon.Stokes
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
     regular domains differential} {attached :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared}
-  {geometry : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
-    attached} {coarse : Topology.Polygon.Stokes.OrientedTriangle (lifted.vertices.count + attached.words.length)}
+    Caps.AllSurfacePreparation.CapAttachment prepared}
+  {geometry : Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
+    attached} {coarse : OrientedTriangle (lifted.vertices.count + attached.words.length)}
   {depth : Nat} {parameters : Path.Dyadic.RadialTriangles.Parameters depth}
   {index : Nat} {box : Rational.Box}
 
 namespace RegularBasisSample
 
-variable {refinement : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapRefinement.Refinement geometry coarse parameters}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+variable {refinement : CapRefinement.Refinement geometry coarse parameters}
+  {polynomials : RegularBasisPolynomials cap index box}
 
 /-- The homogeneous energy uses the actual combined polynomial on the
 retained radial parameter mesh. -/
-theorem boundary_eq_rectangle (sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisSample
+theorem boundary_eq_rectangle (sample : RegularBasisSample
   refinement polynomials)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
     (sample.budget.sample coefficients).boundaryArea = Rectangle.Partition.PreparedBoxBoundary.rectangleBoundary
@@ -113,18 +113,18 @@ theorem boundary_eq_rectangle (sample : Hyperelliptic.Meshes.PuncturedGrid.Exter
 
 /-- The complete conjugate energy boundary contains the inverse source arc
 and both radial sides, before cancellation across the attachment fan. -/
-theorem boundary_eq_arc (sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisSample
+theorem boundary_eq_arc (sample : RegularBasisSample
   refinement polynomials)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
     (sample.budget.sample coefficients).boundaryArea =
-      Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.radialArea (polynomials.value coefficients) depth
+      Charts.Reciprocal.ReciprocalRadialGeometry.radialArea (polynomials.value coefficients) depth
         (geometry.sourceCoordinates coarse.second) +
-      Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.arcArea (polynomials.value coefficients) depth
+      Charts.Reciprocal.ReciprocalRadialGeometry.arcArea (polynomials.value coefficients) depth
         (geometry.sourceCoordinates coarse.second) (geometry.sourceCoordinates coarse.third) -
-      Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.radialArea (polynomials.value coefficients) depth
+      Charts.Reciprocal.ReciprocalRadialGeometry.radialArea (polynomials.value coefficients) depth
         (geometry.sourceCoordinates coarse.third) := by
   rw [sample.boundary_eq_rectangle]
-  exact Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.rectangle_boundary (polynomials.value coefficients)
+  exact Charts.Reciprocal.ReciprocalRadialGeometry.rectangle_boundary (polynomials.value coefficients)
     depth _ _
 
 end RegularBasisSample

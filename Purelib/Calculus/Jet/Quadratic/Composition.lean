@@ -8,6 +8,8 @@ public import Purelib.Calculus.Jet.Quadratic.Bounds
 import Purelib.Tactic.Ring
 public import Mathlib.Algebra.Field.Defs
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 @[expose] public section
 
@@ -43,12 +45,12 @@ def compose {increment : Basic.Canonical}
   let remainder := inner.remainder * outer.slope + outer.remainder
   have factorNonnegative : 0 ≤ factor := by
     dsimp only [factor]
-    exact Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    exact Arithmetic.mul_nonneg_direct (by decide)
       (add_nonneg
-        (Fraction.Order.Arithmetic.mul_nonneg_direct
+        (Arithmetic.mul_nonneg_direct
           (Basic.Canonical.normSq_nonneg outer.slope) inner.factor_nonneg)
-        (Fraction.Order.Arithmetic.mul_nonneg_direct outer.factor_nonneg
-          (Fraction.Order.Arithmetic.pow_nonneg_direct
+        (Arithmetic.mul_nonneg_direct outer.factor_nonneg
+          (Arithmetic.pow_nonneg_direct
             inner.sensitivity_nonneg 2)))
   refine
     { base := outer.base
@@ -67,7 +69,7 @@ def compose {increment : Basic.Canonical}
     have movementSquare :
         Basic.Canonical.normSq (inner.output - inner.base) ^ 2 ≤
           (sensitivity * Basic.Canonical.normSq increment) ^ 2 :=
-      Fraction.Order.Arithmetic.pow_le_pow_direct
+      Arithmetic.pow_le_pow_direct
         (Basic.Canonical.normSq_nonneg (inner.output - inner.base)) innerMovement 2
     have firstBound :
         Basic.Canonical.normSq (inner.remainder * outer.slope) ≤
@@ -77,7 +79,7 @@ def compose {increment : Basic.Canonical}
         Basic.Canonical.normSq inner.remainder * Basic.Canonical.normSq outer.slope ≤
             (inner.factor * Basic.Canonical.normSq increment ^ 2) *
               Basic.Canonical.normSq outer.slope :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+          Arithmetic.mul_le_mul_of_nonneg_right_direct
             inner.remainder_le (Basic.Canonical.normSq_nonneg outer.slope)
         _ = (Basic.Canonical.normSq outer.slope * inner.factor) *
             Basic.Canonical.normSq increment ^ 2 := by ring1
@@ -88,7 +90,7 @@ def compose {increment : Basic.Canonical}
             outer.factor * Basic.Canonical.normSq (inner.output - inner.base) ^ 2 :=
           outer.remainder_le
         _ ≤ outer.factor * (sensitivity * Basic.Canonical.normSq increment) ^ 2 :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          Arithmetic.mul_le_mul_of_nonneg_left_direct
             movementSquare outer.factor_nonneg
         _ = (outer.factor * sensitivity ^ 2) *
             Basic.Canonical.normSq increment ^ 2 := by ring1
@@ -104,7 +106,7 @@ def compose {increment : Basic.Canonical}
               Basic.Canonical.normSq increment ^ 2) +
             ((outer.factor * sensitivity ^ 2) *
               Basic.Canonical.normSq increment ^ 2)) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add firstBound secondBound) (by decide)
       _ = 2 *
           (Basic.Canonical.normSq outer.slope * inner.factor +

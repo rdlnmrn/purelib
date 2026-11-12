@@ -41,6 +41,8 @@ import Purelib.Polynomial.Dense.Basic
 import Purelib.Riemann.Meshes.PuncturedGridFaces
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis
@@ -82,20 +84,20 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSou
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {count : Nat} {patch : PreparedPatch parent}
-  {sourceData : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
+  {sourceData : Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
     Cover sourceData}
   {covers : BasisSourceCovers parent} {minimum
     floor index depth : Nat}
@@ -103,7 +105,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {areaAllowance sourceTarget coefficientTarget : Coordinate}
   {request : BasisPreparedCommonRequest
     regular common areaAllowance sourceTarget coefficientTarget floor}
-  {box : Purelib.Geometry.Rational.Box}
+  {box : Geometry.Rational.Box}
   {polynomials : RegularBasisPolynomials cap
     index box}
   {originals :
@@ -138,8 +140,8 @@ namespace ReverseSourceRun
 
 /-- The existing local fragment tolerance also pays the whole-run endpoint error; no additional numerical acquisition is
 required. -/
-theorem totalError_lt (run : ReverseSourceRuns.ReverseSourceRun acquired data) {bound target :
-  InverseRootPolynomial.Coordinate}
+theorem totalError_lt (run : ReverseSourceRun acquired data) {bound target :
+  Coordinate}
     (boundNN : 0 ≤ bound) (positive : 0 < target)
     (errors : ∀ fragment ∈ run.fragments,
       OwnedFragment.totalError (acquired := acquired) fragment ≤
@@ -150,30 +152,30 @@ theorem totalError_lt (run : ReverseSourceRuns.ReverseSourceRun acquired data) {
     PairedFragmentBlocks.fragmentLocalTolerance_positive _ boundNN positive
   have maxBound : PairedFragmentBlocks.maximum (OwnedFragment.totalError (acquired := acquired)) run.fragments ≤
     tolerance := by
-    have general (fragments : List (OwnedFragments.OwnedFragment (originals := originals) (coefficients := coefficients)
+    have general (fragments : List (OwnedFragment (originals := originals) (coefficients := coefficients)
       data))
         (bounded : ∀ fragment ∈ fragments, OwnedFragment.totalError (acquired := acquired) fragment ≤ tolerance) :
         PairedFragmentBlocks.maximum (OwnedFragment.totalError (acquired := acquired)) fragments ≤ tolerance := by
       induction fragments with
       | nil => exact tolerancePos.le
       | cons first rest ih =>
-        exact Purelib.Data.Rat.Fraction.Order.Basic.max_le (bounded first List.mem_cons_self)
+        exact Basic.max_le (bounded first List.mem_cons_self)
           (ih (fun fragment member => bounded fragment (List.mem_cons_of_mem _ member)))
     exact general run.fragments errors
-  have squareNN := Fraction.Order.Arithmetic.sq_nonneg_direct (run.fragments.length : InverseRootPolynomial.Coordinate)
-  have crossNN : 0 ≤ 32 * (run.fragments.length : InverseRootPolynomial.Coordinate)^4 * bound :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
-      (Fraction.Order.Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 4)) boundNN
-  have restPos : 0 < (run.fragments.length : InverseRootPolynomial.Coordinate)^2 +
-      32 * (run.fragments.length : InverseRootPolynomial.Coordinate)^4 * bound + 1 :=
-    Purelib.Data.Rat.Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct squareNN crossNN) (by decide)
-  have denomPos : 0 < 2 * ((run.fragments.length : InverseRootPolynomial.Coordinate)^2 +
-      16 * (run.fragments.length : InverseRootPolynomial.Coordinate)^4 * bound) + 1 := by
-    have positive := Purelib.Data.Rat.Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct squareNN restPos
+  have squareNN := Arithmetic.sq_nonneg_direct (run.fragments.length : Coordinate)
+  have crossNN : 0 ≤ 32 * (run.fragments.length : Coordinate)^4 * bound :=
+    Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide +kernel)
+      (Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)) 4)) boundNN
+  have restPos : 0 < (run.fragments.length : Coordinate)^2 +
+      32 * (run.fragments.length : Coordinate)^4 * bound + 1 :=
+    Arithmetic.add_pos_of_nonneg_of_pos_direct
+      (Arithmetic.add_le_add_direct squareNN crossNN) (by decide)
+  have denomPos : 0 < 2 * ((run.fragments.length : Coordinate)^2 +
+      16 * (run.fragments.length : Coordinate)^4 * bound) + 1 := by
+    have positive := Arithmetic.add_pos_of_nonneg_of_pos_direct squareNN restPos
     exact positive.trans_eq (by ring1)
-  have paid : (2 * ((run.fragments.length : InverseRootPolynomial.Coordinate)^2 +
-      16 * (run.fragments.length : InverseRootPolynomial.Coordinate)^4 * bound) + 1) * tolerance = target := by
+  have paid : (2 * ((run.fragments.length : Coordinate)^2 +
+      16 * (run.fragments.length : Coordinate)^4 * bound) + 1) * tolerance = target := by
     rw [Fraction.Field.mul_comm]
     exact Fraction.Field.div_mul_cancel_of_ne _ _ denomPos.ne'
   have strict : (run.fragments.length : Coordinate)^2 * tolerance <
@@ -181,18 +183,18 @@ theorem totalError_lt (run : ReverseSourceRuns.ReverseSourceRun acquired data) {
         ((run.fragments.length : Coordinate)^2 + 32 *
           (run.fragments.length : Coordinate)^4 * bound + 1) *
           tolerance := by
-    have translated := Fraction.Order.Arithmetic.add_lt_add_left_direct
-      (Fraction.Order.Arithmetic.mul_pos_direct restPos tolerancePos)
+    have translated := Arithmetic.add_lt_add_left_direct
+      (Arithmetic.mul_pos_direct restPos tolerancePos)
       ((run.fragments.length : Coordinate)^2 * tolerance)
     simpa only [-eq_self, -iff_self, AddZeroClass.add_zero] using translated
-  have strictPaid : (run.fragments.length : InverseRootPolynomial.Coordinate)^2 * tolerance < target :=
+  have strictPaid : (run.fragments.length : Coordinate)^2 * tolerance < target :=
     strict.trans_eq ((show
-      (run.fragments.length : InverseRootPolynomial.Coordinate)^2 * tolerance +
-        ((run.fragments.length : InverseRootPolynomial.Coordinate)^2 + 32 * (run.fragments.length :
-          InverseRootPolynomial.Coordinate)^4 * bound + 1) * tolerance =
-      (2 * ((run.fragments.length : InverseRootPolynomial.Coordinate)^2 + 16 * (run.fragments.length :
-        InverseRootPolynomial.Coordinate)^4 * bound) + 1) * tolerance by ring1).trans paid)
-  exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct maxBound squareNN).trans_lt strictPaid
+      (run.fragments.length : Coordinate)^2 * tolerance +
+        ((run.fragments.length : Coordinate)^2 + 32 * (run.fragments.length :
+          Coordinate)^4 * bound + 1) * tolerance =
+      (2 * ((run.fragments.length : Coordinate)^2 + 16 * (run.fragments.length :
+        Coordinate)^4 * bound) + 1) * tolerance by ring1).trans paid)
+  exact (Arithmetic.mul_le_mul_of_nonneg_left_direct maxBound squareNN).trans_lt strictPaid
 
 end ReverseSourceRun
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSourceRuns

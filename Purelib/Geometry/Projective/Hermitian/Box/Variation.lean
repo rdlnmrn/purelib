@@ -19,6 +19,9 @@ public import Purelib.Geometry.Rational.Box.Bounds
 import Purelib.Geometry.Rational.Box.Refinement
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 open Purelib
@@ -47,47 +50,47 @@ squared diagonal, so it contracts along the existing finite shrinking track.
 namespace Purelib.Geometry.Projective.Hermitian.Box
 
 /-- The fixed coefficient multiplying the current squared diagonal in the Hermitian variation estimate. -/
-@[expose] def variationCoefficient (form : Hermitian.HermitianForm)
+@[expose] def variationCoefficient (form : HermitianForm)
   (bounding : Rational.Box) : Fraction.Rational :=
   3 * (16 * form.radial ^ 2 * bounding.coordinateSqBound +
     form.realLinear ^ 2 + form.imagLinear ^ 2)
 
 /-- Squared variation margin for a current box inside `bounding`. -/
 @[expose] def variationSqBound
-    (form : Hermitian.HermitianForm) (bounding current : Rational.Box) : Fraction.Rational :=
+    (form : HermitianForm) (bounding current : Rational.Box) : Fraction.Rational :=
   variationCoefficient form bounding * current.diagonalSq
 
 /-- The Hermitian variation coefficient on a rational bounding box is nonnegative. -/
-theorem variationCoefficient_nonneg (form : Hermitian.HermitianForm)
+theorem variationCoefficient_nonneg (form : HermitianForm)
   (bounding : Rational.Box) :
     0 ≤ variationCoefficient form bounding := by
   have sixteenNonnegative : (0 : Fraction.Rational) ≤ 16 := by decide
   have threeNonnegative : (0 : Fraction.Rational) ≤ 3 := by decide
   have radialSquare :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct form.radial
+    Arithmetic.sq_nonneg_direct form.radial
   have radialCoordinateNonnegative :
       0 ≤ 16 * form.radial ^ 2 * bounding.coordinateSqBound :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct sixteenNonnegative
+    Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct sixteenNonnegative
         radialSquare)
       bounding.coordinateSqBound_nonneg
-  exact Fraction.Order.Arithmetic.mul_nonneg_direct threeNonnegative
+  exact Arithmetic.mul_nonneg_direct threeNonnegative
     (add_nonneg
       (add_nonneg radialCoordinateNonnegative
-        (Fraction.Order.Arithmetic.sq_nonneg_direct form.realLinear))
-      (Fraction.Order.Arithmetic.sq_nonneg_direct form.imagLinear))
+        (Arithmetic.sq_nonneg_direct form.realLinear))
+      (Arithmetic.sq_nonneg_direct form.imagLinear))
 
 /-- The computed squared variation bound is nonnegative. -/
 theorem variationSqBound_nonneg
-    (form : Hermitian.HermitianForm) (bounding current : Rational.Box) :
+    (form : HermitianForm) (bounding current : Rational.Box) :
     0 ≤ variationSqBound form bounding current :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct
+  Arithmetic.mul_nonneg_direct
     (variationCoefficient_nonneg form bounding) current.diagonalSq_nonneg
 
 /-- The squared change in a Hermitian form between any two points of the current box is bounded by a displayed rational
 multiple of its squared diagonal. -/
 theorem eval_sub_sq_le
-    (form : Hermitian.HermitianForm) {bounding current : Rational.Box} {left right :
+    (form : HermitianForm) {bounding current : Rational.Box} {left right :
       Data.Gaussian.Basic.Canonical}
     (refines : current.Refines bounding)
     (leftInside : current.Contains left)
@@ -97,33 +100,33 @@ theorem eval_sub_sq_le
   have normDifference := Rational.Box.normSq_sub_sq_le refines leftInside rightInside
   have realDifference := Rational.Box.real_sub_sq_le_diagonalSq leftInside rightInside
   have imaginaryDifference := Rational.Box.imag_sub_sq_le_diagonalSq leftInside rightInside
-  have radialSquare := Fraction.Order.Arithmetic.sq_nonneg_direct form.radial
+  have radialSquare := Arithmetic.sq_nonneg_direct form.radial
   have realSquare :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct form.realLinear
+    Arithmetic.sq_nonneg_direct form.realLinear
   have imaginarySquare :=
-    Fraction.Order.Arithmetic.sq_nonneg_direct form.imagLinear
+    Arithmetic.sq_nonneg_direct form.imagLinear
   have radialTerm :
-      (form.radial * (Data.Gaussian.Norm.Basic.normSq left - Data.Gaussian.Norm.Basic.normSq right)) ^
+      (form.radial * (Basic.normSq left - Basic.normSq right)) ^
         2 ≤
         form.radial ^ 2 *
           (16 * bounding.coordinateSqBound * current.diagonalSq) := by
-    rw [Purelib.Algebra.Semiring.Normalization.product_pow]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    rw [Algebra.Semiring.Normalization.product_pow]
+    exact Arithmetic.mul_le_mul_of_nonneg_left_direct
       normDifference radialSquare
   have realTerm :
       (form.realLinear * (left.re - right.re)) ^ 2 ≤
         form.realLinear ^ 2 * current.diagonalSq := by
-    rw [Purelib.Algebra.Semiring.Normalization.product_pow]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    rw [Algebra.Semiring.Normalization.product_pow]
+    exact Arithmetic.mul_le_mul_of_nonneg_left_direct
       realDifference realSquare
   have imaginaryTerm :
       (form.imagLinear * (left.im - right.im)) ^ 2 ≤
         form.imagLinear ^ 2 * current.diagonalSq := by
-    rw [Purelib.Algebra.Semiring.Normalization.product_pow]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    rw [Algebra.Semiring.Normalization.product_pow]
+    exact Arithmetic.mul_le_mul_of_nonneg_left_direct
       imaginaryDifference imaginarySquare
   have termSum :
-      (form.radial * (Data.Gaussian.Norm.Basic.normSq left - Data.Gaussian.Norm.Basic.normSq right)) ^
+      (form.radial * (Basic.normSq left - Basic.normSq right)) ^
         2 +
           (form.realLinear * (left.re - right.re)) ^ 2 +
           (form.imagLinear * (left.im - right.im)) ^ 2 ≤
@@ -135,14 +138,14 @@ theorem eval_sub_sq_le
   have threeNonnegative : (0 : Fraction.Rational) ≤ 3 := by decide
   calc
     (form.eval left - form.eval right) ^ 2 =
-        (form.radial * (Data.Gaussian.Norm.Basic.normSq left - Data.Gaussian.Norm.Basic.normSq right)
+        (form.radial * (Basic.normSq left - Basic.normSq right)
           +
           form.realLinear * (left.re - right.re) +
           form.imagLinear * (left.im - right.im)) ^ 2 := by
       simp only [HermitianForm.eval, -eq_self, -iff_self]
       ring1
     _ ≤ 3 *
-        ((form.radial * (Data.Gaussian.Norm.Basic.normSq left - Data.Gaussian.Norm.Basic.normSq
+        ((form.radial * (Basic.normSq left - Basic.normSq
           right)) ^ 2 +
           (form.realLinear * (left.re - right.re)) ^ 2 +
           (form.imagLinear * (left.im - right.im)) ^ 2) :=
@@ -152,7 +155,7 @@ theorem eval_sub_sq_le
             (16 * bounding.coordinateSqBound * current.diagonalSq) +
           form.realLinear ^ 2 * current.diagonalSq +
           form.imagLinear ^ 2 * current.diagonalSq) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         termSum threeNonnegative
     _ = variationSqBound form bounding current := by
       simp only [variationSqBound,

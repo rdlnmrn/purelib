@@ -3,7 +3,9 @@ module
 public import Purelib.Geometry.Projective.Hermitian.Parabola
 public import Purelib.Geometry.Projective.Hermitian.Affine
 public import Purelib.Polynomial.Dense.Rational.Product.List
-import Purelib.Polynomial.Dense.Rational.Nonzero.Search.Interval
+public import Purelib.Polynomial.Dense.Rational.Nonzero.Search.Interval
+import Purelib.Polynomial.Dense.Rational.Nonzero.Search.List
+import Purelib.Approximation.Rational.Grid.Interior
 import Purelib.Data.List.Map
 import Purelib.Data.Rat.Fraction.Order.Arithmetic
 
@@ -23,6 +25,8 @@ open Purelib.Data
 open Purelib.Data.Rat
 open Purelib.Geometry
 open Purelib.Polynomial
+open Purelib.Polynomial.Dense.Rational.Nonzero
+open Purelib.Approximation.Rational
 
 set_option genInjectivity false in
 /-- Retain an interior rational sample avoiding every non-universal form in one original finite family.
@@ -42,7 +46,17 @@ structure Sample (forms : List HermitianForm) (outer : Rational.Box) where
   /-- The product uses this exact polynomial cache, preserving repeated occurrences. -/ productSpec :
     product = Dense.Rational.Product.List.polynomialProduct polynomials
   /-- The computed product is a represented nonzero polynomial. -/ productNonzero : product.isZero = false
+  /-- The exact ordered interior candidate list, materialized once. -/ candidates : List Fraction.Rational
+  /-- The finite candidate list uses this retained product's degree and the original unit interval. -/ candidatesSpec :
+    candidates = Grid.Interior.interiorCandidates 0 1 product.natDegree
+  /-- The actual original candidate scan and every polynomial value it computed. -/ search :
+    Search.List.Scan product candidates
+  /-- The retained search is the exact once-computed scan of this cached product and list. -/ searchSpec :
+    search = Search.List.scan product candidates
+  /-- The same actual finite search succeeded. -/ searchSuccess : search.result.isSome
   /-- The rational parameter selected by the finite nonzero search. -/ parameter : Fraction.Rational
+  /-- The parameter is projected from this retained scan, without another polynomial evaluation. -/ parameterSpec :
+    parameter = search.result.get searchSuccess
   /-- The selected parameter is strictly above zero. -/ parameterPositive : 0 < parameter
   /-- The selected parameter is strictly below one. -/ parameterLessOne : parameter < 1
   /-- The actual cached product is nonzero at the selected parameter. -/ productValueNonzero :
@@ -73,10 +87,15 @@ def sampleAvoidingForms (forms : List HermitianForm) (outer : Rational.Box) (pro
   have productNonzero : product.isZero = false :=
     Dense.Rational.Product.List.polynomialProduct_isZero_false allNonzero
   have intervalProper : (0 : Fraction.Rational) < 1 := by decide
-  let parameter := Dense.Rational.Nonzero.Search.Interval.interiorSearchValue product
+  let candidates := Grid.Interior.interiorCandidates 0 1 product.natDegree
+  let search := Search.Interval.interiorSearch product 0 1 product.natDegree
+  have searchSuccess : search.result.isSome :=
+    Search.Interval.interiorSearch_isSome product
+      product.natDegree intervalProper productNonzero (Nat.le_refl _)
+  let parameter := search.result.get searchSuccess
+  have parameterSpec := Search.Interval.interiorSearchValue_spec product
     product.natDegree intervalProper productNonzero (Nat.le_refl _)
-  have parameterSpec := Dense.Rational.Nonzero.Search.Interval.interiorSearchValue_spec product
-    product.natDegree intervalProper productNonzero (Nat.le_refl _)
+  rewrite [Search.Interval.interiorSearchValue_eq_get] at parameterSpec
   let point := arc.point parameter
   refine
     { arc := arc
@@ -85,7 +104,13 @@ def sampleAvoidingForms (forms : List HermitianForm) (outer : Rational.Box) (pro
       product := product
       productSpec := rfl
       productNonzero := productNonzero
+      candidates := candidates
+      candidatesSpec := rfl
+      search := search
+      searchSpec := Search.Interval.interiorSearch_eq product 0 1 product.natDegree
+      searchSuccess := searchSuccess
       parameter := parameter
+      parameterSpec := rfl
       parameterPositive := parameterSpec.2.1
       parameterLessOne := parameterSpec.2.2
       productValueNonzero := parameterSpec.1
@@ -101,6 +126,23 @@ def sampleAvoidingForms (forms : List HermitianForm) (outer : Rational.Box) (pro
     polynomialMember parameterSpec.1
 
 namespace Sample
+
+/-- The original finite search evaluates at most the retained product's degree plus one candidates. -/
+theorem evaluationCount_le {forms : List HermitianForm} {outer : Rational.Box}
+    (sample : Sample forms outer) : sample.search.evaluations.length ≤ sample.product.natDegree + 1 := by
+  have bounded := Search.List.scan_length_le sample.product sample.candidates
+  rewrite [← sample.searchSpec] at bounded
+  have length : sample.candidates.length = sample.product.natDegree + 1 :=
+    (congrArg List.length sample.candidatesSpec).trans (Grid.Interior.interiorCandidates_length _ _ _)
+  exact Nat.le_trans bounded (Nat.le_of_eq length)
+
+/-- Every actual cached polynomial evaluation belongs to the same retained candidate list and product. -/
+theorem evaluation {forms : List HermitianForm} {outer : Rational.Box}
+    (sample : Sample forms outer) (entry : Fraction.Rational × Fraction.Rational)
+    (member : entry ∈ sample.search.evaluations) :
+    entry.1 ∈ sample.candidates ∧ entry.2 = sample.product.eval entry.1 := by
+  rewrite [sample.searchSpec] at member
+  exact Search.List.scan_evaluation _ _ _ member
 
 /-- A retained squared-distance guard excludes its exact original centre from the regular sample. -/
 theorem ne_center {forms : List HermitianForm} {outer : Rational.Box}

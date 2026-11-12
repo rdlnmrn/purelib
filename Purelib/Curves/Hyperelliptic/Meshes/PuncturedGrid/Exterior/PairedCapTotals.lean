@@ -88,7 +88,7 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
   {prepared :
     ExteriorProgram.AllSurfacePreparation
     regular domains differential} {target areaTarget : Fraction.Rational} {floor : Nat}
-  {requested : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request prepared target
+  {requested : Request prepared target
     areaTarget floor}
   {index depth readingIndex : Nat} {box : Rational.Box}
   {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
@@ -98,13 +98,13 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequ
 
 /-- The ordered triangle-source list read from the original sampled cap entries. -/
 @[expose] def sources (values :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Samples requested.entries sample
+  Samples requested.entries sample
   shared depth readingIndex) : List (Topology.Surface.Sewing.SewnPrimitiveContacts.SourceEdge
   lifted.mesh.triangles.length) :=
   values.values.map (fun value => value.entry.occurrence.placement.location.sourceEdge)
 
 /-- The sampled entries retain exactly the original preparation's ordered source list. -/
-theorem sources_eq (values : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Samples
+theorem sources_eq (values : Samples
   requested.entries sample shared depth readingIndex) : values.sources = prepared.sources := by
   have first := congrArg (List.map (fun entry => entry.occurrence.placement.location.sourceEdge)) values.entries_eq
   have last := congrArg (List.map (fun occurrence => occurrence.placement.location.sourceEdge)) requested.occurrences_eq
@@ -113,21 +113,21 @@ theorem sources_eq (values : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Surface
 
 /-- Bound both an original sampled source increment and its cached cap total by twice a common slope plus one. -/
 private theorem bounds (values :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Samples requested.entries sample
+  Samples requested.entries sample
   shared depth readingIndex)
-    (value : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry (regular :=
+    (value : SampledEntry (regular :=
       regular) sample shared depth readingIndex requested.localTarget requested.budget.areaTarget floor)
     (member : value ∈ values.values) {slope : Fraction.Rational} (nonnegative : 0 ≤ slope) (slopeLe : requested.slope ≤
       slope) :
-    Data.Gaussian.Norm.Basic.normSq value.increment ≤ 2 * (slope + 1) ∧ Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq value.increment ≤ 2 * (slope + 1) ∧ Gaussian.Norm.Basic.normSq
       value.evaluated.right.total ≤ 2 * (slope + 1) := by
-  have sourceLe := (requested.entry_bound value.entry (values.entries_eq ▸ Data.List.Map.mem_map_of_mem member)).trans
+  have sourceLe := (requested.entry_bound value.entry (values.entries_eq ▸ Map.mem_map_of_mem member)).trans
     slopeLe
   have small := requested.local_le.trans requested.budget.total_le_one
   have capBound := (value.pair_bounds nonnegative sourceLe small).2.2.2
-  change Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum value.evaluated.capPath) ≤ _
+  change Gaussian.Norm.Basic.normSq (Gaussian.Norm.Sum.Basic.gaussianSum value.evaluated.capPath) ≤ _
     at capBound
-  exact ⟨value.increment_bound sourceLe small, (congrArg Data.Gaussian.Norm.Basic.normSq
+  exact ⟨value.increment_bound sourceLe small, (congrArg Gaussian.Norm.Basic.normSq
     value.evaluated.right.total_eq).trans_le capBound⟩
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Samples
@@ -136,14 +136,14 @@ variable {other : Hyperelliptic.Differentials.Basic.Differential genus} {next :
   ExteriorProgram.AllSurfacePreparation
   regular domains other}
   {otherTarget otherArea : Fraction.Rational} {otherFloor otherDepth otherReadingIndex : Nat}
-  {otherRequest : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Request next
+  {otherRequest : Request next
     otherTarget otherArea otherFloor}
   {otherSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other index box}
   {otherShared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank other index domains}
 
-variable (left : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Samples
+variable (left : Samples
   requested.entries sample shared depth readingIndex)
-  (right : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Samples
+  (right : Samples
     otherRequest.entries otherSample otherShared otherDepth otherReadingIndex)
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Samples
@@ -193,17 +193,17 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.
 Exact ordered source identities align the two differentials while preserving every original occurrence and both cached
 cap totals. -/
 theorem paired_triangle_values (firstReadings :
-  Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh)
-    (lastReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings otherShared
+  TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh)
+    (lastReadings : TrianglePrimitiveReadings.TriangleReadings otherShared
       lifted.mesh) :
     (left.pairedValues right).map Prod.fst = prepared.sources.map (fun source =>
       (⟨source.increment firstReadings.values, source.increment lastReadings.values⟩ :
         Topology.Polygon.Stokes.PrimitivePoint)) := by
   have matched := Zip.keys_eq_of_mem_zip
-    (fun value : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry (regular
+    (fun value : SampledEntry (regular
       := regular) sample shared depth readingIndex requested.localTarget requested.budget.areaTarget floor =>
       value.entry.occurrence.placement.location.sourceEdge)
-    (fun value : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry (regular
+    (fun value : SampledEntry (regular
       := regular) otherSample otherShared otherDepth otherReadingIndex otherRequest.localTarget
       otherRequest.budget.areaTarget otherFloor =>
       value.entry.occurrence.placement.location.sourceEdge)
@@ -213,9 +213,9 @@ theorem paired_triangle_values (firstReadings :
         (⟨pair.1.entry.occurrence.placement.location.sourceEdge.increment firstReadings.values,
           pair.1.entry.occurrence.placement.location.sourceEdge.increment lastReadings.values⟩ :
             Topology.Polygon.Stokes.PrimitivePoint)) := by
-    rw [Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Samples.pairedValues,
+    rw [Samples.pairedValues,
       Map.map_map]
-    apply Data.List.Map.map_congr_left
+    apply Map.map_congr_left
     intro pair member
     have first := pair.1.increment_eq.trans (firstReadings.route_increment _).symm
     have last := pair.2.increment_eq.trans (lastReadings.route_increment _).symm
@@ -231,22 +231,22 @@ theorem paired_triangle_values (firstReadings :
     (⟨source.increment firstReadings.values, source.increment lastReadings.values⟩ :
       Topology.Polygon.Stokes.PrimitivePoint))) left.sources_eq
   simp only [Map.map_map, Function.comp_def, -eq_self, -iff_self] at projected
-  simp only [Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.Samples.sources,
+  simp only [Samples.sources,
     Map.map_map, Function.comp_def, -eq_self, -iff_self] at sources
   exact entries.trans (projected.trans sources)
 
 /-- Automatic per-occurrence bounds use the original request slopes. No
 caller numerical bound or fresh primitive evaluation is needed. -/
 theorem paired_area_error :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area ((left.pairedValues right).map Prod.fst) -
+    Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area ((left.pairedValues right).map Prod.fst) -
       Path.PairedIncrementArea.area ((left.pairedValues right).map Prod.snd)) ≤
       16 * (requested.count : Fraction.Rational)^4 * max requested.localTarget otherRequest.localTarget *
         (2 * (max requested.slope otherRequest.slope + 1)) := by
   let slope := max requested.slope otherRequest.slope
   have nonnegative : 0 ≤ slope :=
     (requested.slope_eq ▸
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.sourceMaximum_nonnegative
-      prepared.occurrences).trans (Data.Rat.Fraction.Order.Basic.le_max_left _ _)
+      AllSurfacePreparation.sourceMaximum_nonnegative
+      prepared.occurrences).trans (Fraction.Order.Basic.le_max_left _ _)
   have pointBounds : ∀ pair ∈ left.pairedValues right,
       Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (pair.1.sub pair.2) (max requested.localTarget
         otherRequest.localTarget) ∧
@@ -256,17 +256,17 @@ theorem paired_area_error :
     obtain ⟨entries, retained, equal⟩ := Data.List.Map.mem_map.mp member
     cases equal
     have members := Zip.of_mem_zip retained
-    have lb := left.bounds entries.1 members.1 nonnegative (Data.Rat.Fraction.Order.Basic.le_max_left _ _)
-    have rb := right.bounds entries.2 members.2 nonnegative (Data.Rat.Fraction.Order.Basic.le_max_right _ _)
+    have lb := left.bounds entries.1 members.1 nonnegative (Fraction.Order.Basic.le_max_left _ _)
+    have rb := right.bounds entries.2 members.2 nonnegative (Fraction.Order.Basic.le_max_right _ _)
     have leftClose := entries.1.integral_close
     have rightClose := entries.2.integral_close
     rw [Gaussian.Norm.Basic.normSq_eq_canonical] at leftClose rightClose
     simp only [Gaussian.Norm.Basic.normSq_eq_canonical, -eq_self, -iff_self] at lb rb
-    exact ⟨⟨leftClose.le.trans (Data.Rat.Fraction.Order.Basic.le_max_left _ _), rightClose.le.trans
-      (Data.Rat.Fraction.Order.Basic.le_max_right _ _)⟩,
+    exact ⟨⟨leftClose.le.trans (Fraction.Order.Basic.le_max_left _ _), rightClose.le.trans
+      (Fraction.Order.Basic.le_max_right _ _)⟩,
       ⟨lb.1, rb.1⟩, ⟨lb.2, rb.2⟩⟩
   have estimate := Path.PairedIncrementComparison.area_difference_bound (left.pairedValues right)
-    (requested.positive.le.trans (Data.Rat.Fraction.Order.Basic.le_max_left _ _))
+    (requested.positive.le.trans (Fraction.Order.Basic.le_max_left _ _))
     (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg nonnegative (by decide)))
     (fun pair member => (pointBounds pair member).1)
     (fun pair member => (pointBounds pair member).2.1)
@@ -278,16 +278,16 @@ theorem paired_area_error :
 Each total belongs to a complete retained cap path; their internal paired
 areas still need a separate comparison and are not set to zero here. -/
 theorem triangle_cap_area_error (firstReadings :
-  Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh)
-    (lastReadings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings otherShared
+  TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh)
+    (lastReadings : TrianglePrimitiveReadings.TriangleReadings otherShared
       lifted.mesh) :
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area (prepared.sources.map (fun source =>
+    Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area (prepared.sources.map (fun source =>
         (⟨source.increment firstReadings.values, source.increment lastReadings.values⟩ :
           Topology.Polygon.Stokes.PrimitivePoint))) -
       Path.PairedIncrementArea.area ((left.pairedValues right).map Prod.snd)) ≤
       16 * (requested.count : Fraction.Rational)^4 * max requested.localTarget otherRequest.localTarget *
         (2 * (max requested.slope otherRequest.slope + 1)) :=
-  (congrArg (fun values => Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area values -
+  (congrArg (fun values => Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area values -
     Path.PairedIncrementArea.area ((left.pairedValues right).map Prod.snd)))
       (left.paired_triangle_values right firstReadings lastReadings)).symm.trans_le (left.paired_area_error right)
 

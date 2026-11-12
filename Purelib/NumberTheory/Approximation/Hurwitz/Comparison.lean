@@ -15,6 +15,9 @@ import Purelib.Data.Rat.Fraction
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.ComplexContinuedFraction.Hurwitz
+open Purelib.Data.GaussianInt.Division
+
 open Purelib
 
 open Purelib.Data
@@ -38,11 +41,11 @@ namespace Purelib.NumberTheory.Approximation.Hurwitz.Comparison
 /-- Prepending the same Gaussian integer digit to two continuants negates their pair determinant. -/
 theorem determinant_prepend (digit : GaussianInt)
     (left right : GaussianInt.Pair.Basic.ConvergentPair) :
-    GaussianInt.Pair.Basis.determinant (Data.ComplexContinuedFraction.Hurwitz.Continuant.prepend digit left)
-      (Data.ComplexContinuedFraction.Hurwitz.Continuant.prepend digit right) =
+    GaussianInt.Pair.Basis.determinant (Continuant.prepend digit left)
+      (Continuant.prepend digit right) =
       -GaussianInt.Pair.Basis.determinant left right := by
   apply GaussianInt.ext <;>
-    simp only [GaussianInt.Pair.Basis.determinant, Data.ComplexContinuedFraction.Hurwitz.Continuant.prepend,
+    simp only [GaussianInt.Pair.Basis.determinant, Continuant.prepend,
       GaussianInt.add_re,
       GaussianInt.add_im,
       GaussianInt.sub_re,
@@ -60,15 +63,15 @@ theorem adjacent_hasUnitDeterminant (initialDigits : List
   GaussianInt)
     (nextDigit : GaussianInt) :
     GaussianInt.Pair.Basis.HasUnitDeterminant
-      (Data.ComplexContinuedFraction.Hurwitz.Continuant.continuant (initialDigits ++ [nextDigit]))
-      (Data.ComplexContinuedFraction.Hurwitz.Continuant.continuant initialDigits) := by
+      (Continuant.continuant (initialDigits ++ [nextDigit]))
+      (Continuant.continuant initialDigits) := by
   induction initialDigits with
   | nil =>
       right
       apply GaussianInt.ext <;>
         simp only [List.nil_append, GaussianInt.Pair.Basis.determinant,
-          Data.ComplexContinuedFraction.Hurwitz.Continuant.continuant,
-          Data.ComplexContinuedFraction.Hurwitz.Continuant.prepend,
+          Continuant.continuant,
+          Continuant.prepend,
           GaussianInt.add_re,
           GaussianInt.add_im,
           GaussianInt.sub_re,
@@ -83,8 +86,8 @@ theorem adjacent_hasUnitDeterminant (initialDigits : List
           GaussianInt.one_im] <;>
         ring1
   | cons head tail inductionHypothesis =>
-      rw [List.cons_append, Data.ComplexContinuedFraction.Hurwitz.Continuant.continuant_cons,
-        Data.ComplexContinuedFraction.Hurwitz.Continuant.continuant_cons,
+      rw [List.cons_append, Continuant.continuant_cons,
+        Continuant.continuant_cons,
         GaussianInt.Pair.Basis.HasUnitDeterminant, determinant_prepend]
       rcases inductionHypothesis with positive | negative
       · right
@@ -96,15 +99,15 @@ theorem adjacent_hasUnitDeterminant (initialDigits : List
 /-- The first Hurwitz convergent has exactly the nearest-division residual as its division-free error. -/
 theorem firstConvergent_error (fraction :
   GaussianInt.Fraction) :
-    Best.Error.error fraction.value (Data.ComplexContinuedFraction.Hurwitz.Continuant.continuant
-      [GaussianInt.Division.Nearest.digit fraction]) =
-      GaussianInt.Division.Nearest.residual fraction := by
-  simp only [Best.Error.error, Data.ComplexContinuedFraction.Hurwitz.Continuant.continuant,
-    Data.ComplexContinuedFraction.Hurwitz.Continuant.prepend,
+    Best.Error.error fraction.value (Continuant.continuant
+      [Nearest.digit fraction]) =
+      Nearest.residual fraction := by
+  simp only [Best.Error.error, Continuant.continuant,
+    Continuant.prepend,
     GaussianInt.mul_one,
     GaussianInt.add_zero, GaussianInt.toGaussian_one,
     Gaussian.Basic.mul_one,
-    GaussianInt.Division.Nearest.residual, GaussianInt.Division.Nearest.digit,
+    Nearest.residual, Nearest.digit,
     GaussianInt.Nearest.remainder, -eq_self, -iff_self]
   rfl
 
@@ -113,10 +116,10 @@ displayed Gaussian integer. -/
 theorem firstConvergent_atLeastAsGoodAs_integral
     (fraction : GaussianInt.Fraction) (competitor : GaussianInt) :
     Best.Error.AtLeastAsGoodAs fraction.value
-      (Data.ComplexContinuedFraction.Hurwitz.Continuant.continuant [GaussianInt.Division.Nearest.digit fraction])
+      (Continuant.continuant [Nearest.digit fraction])
       (GaussianInt.Pair.Basis.integralPair competitor) := by
   rw [Best.Error.AtLeastAsGoodAs, firstConvergent_error]
-  simpa only [GaussianInt.Division.Nearest.residual, Best.Error.error, GaussianInt.Pair.Basis.integralPair,
+  simpa only [Nearest.residual, Best.Error.error, GaussianInt.Pair.Basis.integralPair,
     GaussianInt.toGaussian_one, Gaussian.Basic.mul_one]
     using GaussianInt.Nearest.remainder_normSq_le_competitor
       fraction.value competitor
@@ -125,9 +128,9 @@ theorem firstConvergent_atLeastAsGoodAs_integral
 has zero division-free error. -/
 theorem encodedConvergent_error_eq_zero (fraction :
   GaussianInt.Fraction) :
-    Best.Error.error fraction.value (Data.ComplexContinuedFraction.Hurwitz.Continuant.continuant
-      (Data.ComplexContinuedFraction.Hurwitz.Encoding.encode fraction)) = 0 := by
-  rw [Best.Error.error, Data.ComplexContinuedFraction.Hurwitz.Encoding.encode_reconstruct fraction]
+    Best.Error.error fraction.value (Continuant.continuant
+      (Encoding.encode fraction)) = 0 := by
+  rw [Best.Error.error, Encoding.encode_reconstruct fraction]
   exact Gaussian.Basic.sub_self _
 
 /-- The complete finite Hurwitz convergent is at least as good as every displayed competitor.
@@ -137,8 +140,8 @@ has nonnegative error quadrance. -/
 theorem encodedConvergent_atLeastAsGoodAs (fraction :
   GaussianInt.Fraction)
     (competitor : GaussianInt.Pair.Basic.ConvergentPair) :
-    Best.Error.AtLeastAsGoodAs fraction.value (Data.ComplexContinuedFraction.Hurwitz.Continuant.continuant
-      (Data.ComplexContinuedFraction.Hurwitz.Encoding.encode fraction)) competitor := by
+    Best.Error.AtLeastAsGoodAs fraction.value (Continuant.continuant
+      (Encoding.encode fraction)) competitor := by
   rw [Best.Error.AtLeastAsGoodAs, encodedConvergent_error_eq_zero, Gaussian.Norm.Basic.normSq_zero]
   exact Gaussian.Norm.Basic.normSq_nonneg _
 

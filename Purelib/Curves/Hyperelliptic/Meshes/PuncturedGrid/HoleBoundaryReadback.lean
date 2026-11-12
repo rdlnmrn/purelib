@@ -62,16 +62,16 @@ open Purelib.Riemann.Meshes.GridLiftedDualSteps (GridSide)
 open Purelib.Topology.Polygon.Stokes (OrientedEdge PrimitivePoint edgeListArea)
 open Purelib.Topology.Chain.PathBoundary (PathEndpoints)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {hole : Fin base.faces.holes.length}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {hole : Fin base.faces.holes.length}
   {adjacent : HoleAdjacentFaces
     base (base.faces.holes[hole.val]'hole.isLt)}
 
 /-- Start at the hole's lower-left corner, then follow its left, top, right, and bottom inward edges. Each next sheet is
 the previous edge's target. -/
-def lap (sides : HoleRootedCorrection.HoleSideLifts lifted adjacent) (sheet : Fin 2) : List (Stokes.OrientedEdge
+def lap (sides : HoleSideLifts lifted adjacent) (sheet : Fin 2) : List (OrientedEdge
   lifted.vertices.count) :=
   let source := (base.faces.holes[hole.val]'hole.isLt)
   let afterLeft := (lifted.edges.edge (source.side .left).reverse).forward.target sheet
@@ -83,50 +83,50 @@ def lap (sides : HoleRootedCorrection.HoleSideLifts lifted adjacent) (sheet : Fi
     (sides.bottom.get afterRight).selected.located.lifted.quad.edge .top]
 
 /-- The selected adjacent-face lap is exactly the original indexed inward hole boundary. -/
-theorem lap_eq (sides : HoleRootedCorrection.HoleSideLifts lifted adjacent) (sheet : Fin 2) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleBoundaryReadback.lap sides sheet = lifted.edges.indexedEdges
+theorem lap_eq (sides : HoleSideLifts lifted adjacent) (sheet : Fin 2) :
+    HoleBoundaryReadback.lap sides sheet = lifted.edges.indexedEdges
       lifted.vertices (base.faces.holes[hole.val]'hole.isLt).inwardBoundary sheet := by
   have leftEq := fun sheet => (sides.left.get sheet).edge_eq
   have topEq := fun sheet => (sides.top.get sheet).edge_eq
   have rightEq := fun sheet => (sides.right.get sheet).edge_eq
   have bottomEq := fun sheet => (sides.bottom.get sheet).edge_eq
   simp only [GridSide.opposite, GridSide.kind] at leftEq topEq rightEq bottomEq
-  dsimp only [Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleBoundaryReadback.lap]
+  dsimp only [HoleBoundaryReadback.lap]
   rw [leftEq, topEq, rightEq, bottomEq]
   rfl
 
 /-- The two actual inward hole laps in initial-sheet order. -/
-def boundaryEdges (sides : HoleRootedCorrection.HoleSideLifts lifted adjacent) : List (Stokes.OrientedEdge
+def boundaryEdges (sides : HoleSideLifts lifted adjacent) : List (OrientedEdge
   lifted.vertices.count) :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleBoundaryReadback.lap sides 0 ++
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleBoundaryReadback.lap sides 1
+  HoleBoundaryReadback.lap sides 0 ++
+    HoleBoundaryReadback.lap sides 1
 
 /-- The retained adjacent-face edge list is exactly the original lifted hole boundary. -/
-theorem boundaryEdges_eq (sides : HoleRootedCorrection.HoleSideLifts lifted adjacent) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleBoundaryReadback.boundaryEdges sides =
+theorem boundaryEdges_eq (sides : HoleSideLifts lifted adjacent) :
+    HoleBoundaryReadback.boundaryEdges sides =
       (base.faces.holes[hole.val]'hole.isLt).liftedBoundary lifted.vertices lifted.edges := by
-  rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleBoundaryReadback.boundaryEdges,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleBoundaryReadback.lap_eq sides,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleBoundaryReadback.lap_eq sides,
+  rw [HoleBoundaryReadback.boundaryEdges,
+    HoleBoundaryReadback.lap_eq sides,
+    HoleBoundaryReadback.lap_eq sides,
     (base.faces.holes[hole.val]'hole.isLt).liftedBoundary_eq]
 
 /-- The complete retained two-lap hole boundary closes at the original sheet-zero anchor. -/
-theorem boundaryEdges_closed (sides : HoleRootedCorrection.HoleSideLifts lifted adjacent) :
-    PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleBoundaryReadback.boundaryEdges sides)
+theorem boundaryEdges_closed (sides : HoleSideLifts lifted adjacent) :
+    PathEndpoints OrientedEdge.start OrientedEdge.finish
+      (HoleBoundaryReadback.boundaryEdges sides)
       (lifted.vertices.index (base.faces.holes[hole.val]'hole.isLt).cell.box.anchor
         ((base.faces.holes[hole.val]'hole.isLt).cell.anchor_mem (base.faces.holes[hole.val]'hole.isLt).member) 0)
       (lifted.vertices.index (base.faces.holes[hole.val]'hole.isLt).cell.box.anchor
         ((base.faces.holes[hole.val]'hole.isLt).cell.anchor_mem (base.faces.holes[hole.val]'hole.isLt).member) 0) := by
-  rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleBoundaryReadback.boundaryEdges_eq sides]
+  rw [HoleBoundaryReadback.boundaryEdges_eq sides]
   exact (base.faces.holes[hole.val]'hole.isLt).liftedBoundary_closed lifted.vertices lifted.edges
 
 /-- The retained hole boundary area equals the original inward two-sheet area. -/
-theorem boundaryEdges_area (sides : HoleRootedCorrection.HoleSideLifts lifted adjacent)
-    (primitive : Fin lifted.vertices.count → Stokes.PrimitivePoint) :
-    Stokes.edgeListArea primitive (Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleBoundaryReadback.boundaryEdges sides) =
+theorem boundaryEdges_area (sides : HoleSideLifts lifted adjacent)
+    (primitive : Fin lifted.vertices.count → PrimitivePoint) :
+    Stokes.edgeListArea primitive (HoleBoundaryReadback.boundaryEdges sides) =
       lifted.edges.twoSheetArea lifted.vertices primitive (base.faces.holes[hole.val]'hole.isLt).inwardBoundary := by
-  rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleBoundaryReadback.boundaryEdges_eq sides]
+  rw [HoleBoundaryReadback.boundaryEdges_eq sides]
   exact (base.faces.holes[hole.val]'hole.isLt).liftedBoundary_area lifted.vertices lifted.edges primitive
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleBoundaryReadback

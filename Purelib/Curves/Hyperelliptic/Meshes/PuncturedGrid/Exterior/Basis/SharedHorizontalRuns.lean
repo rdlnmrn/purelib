@@ -116,82 +116,82 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSide
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
 open Purelib.Riemann.Normalization.RectangularInverseModels
 
 section SharedHorizontalRuns
-variable (retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared)
+variable (retained : Preparation.CommonBasisPreparation prepared)
   {index : Nat} (inputs : retained.Inputs index)
   (outer : Fin prepared.occurrences.length) {stage depth : Nat}
 
 variable {cuts : Paths.RectangularSegmentSplitting.GridCuts ((domains.get
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
-  outer).sideOccurrence.position).domain (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+  (ParentIndices.occurrenceAt prepared.occurrences
+  outer).sideOccurrence.position).domain (ParentIndices.occurrenceAt
   prepared.occurrences outer).sideOccurrence.sheet).geometry}
   {meshBox : Rational.Box} {mesh : Meshes.RectangularObservationMesh.ObservationMesh cuts meshBox}
-  {firstRow secondRow : Fin mesh.partition.y.intervals.length} {height : Normalization.InverseRootPolynomial.Coordinate}
+  {firstRow secondRow : Fin mesh.partition.y.intervals.length} {height : InverseRootPolynomial.Coordinate}
   {side : Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedHorizontalSide mesh mesh firstRow secondRow
     height}
-  (trace : side.Trace depth) (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+  (trace : side.Trace depth) (cache : RegularDomainMeshes.RegularMeshes.Numerics
     domains stage)
-  (bank : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideBanks.SharedHorizontalBank.Data (occurrence :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) trace
+  (bank : SharedSideBanks.SharedHorizontalBank.Data (occurrence :=
+    ParentIndices.occurrenceAt prepared.occurrences outer) trace
     cache)
   (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
-  (sourceFirst : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (sourceFirst : (ParentIndices.occurrenceAt prepared.occurrences
     outer).start.im = height)
-  (sourceLast : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (sourceLast : (ParentIndices.occurrenceAt prepared.occurrences
     outer).finish.im = height)
-  {allowance : Normalization.InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
+  {allowance : InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
     (Paths.RectangularDyadicPairedTrace.dyadicCount depth) allowance)
   (owners : OwnerRequest
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer)
+    (ParentIndices.occurrenceAt prepared.occurrences outer)
     budget.tolerance) (later : owners.index ≤ stage)
-  {junctionAllowance : Normalization.InverseRootPolynomial.Coordinate} (junctionBudget :
+  {junctionAllowance : InverseRootPolynomial.Coordinate} (junctionBudget :
     Path.NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
   (junctionOwners : OwnerRequest
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer)
+    (ParentIndices.occurrenceAt prepared.occurrences outer)
     junctionBudget.tolerance) (junctionLater : junctionOwners.index ≤ stage)
 
 section Forward
-variable (blocks : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBank.ParentBlockBank
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) mesh false
+variable (blocks : ParentBank.ParentBlockBank
+  (ParentIndices.occurrenceAt prepared.occurrences outer) mesh false
   true)
 
 /-- Reuse the cached Newton readings on every piece and owner junction. -/
-@[expose] def forward : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment
+@[expose] def forward : List (IndexedFragments.IndexedFragment
   retained inputs outer bank.data coefficients) := by
-  let readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings bank.data (fun vertex :
+  let readings : OwnerRequest.OwnedReadings bank.data (fun vertex :
     Fin (trace.vertices.rest.length + 1) =>
     trace.point (trace.vertices.indexed vertex)) := bank.readings
   have same : ∀ (row : Fin genus) (vertex : Fin (trace.vertices.rest.length + 1)), (readings row).values vertex =
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideBanks.SharedHorizontalBank.values (occurrence :=
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) trace
+      SharedSideBanks.SharedHorizontalBank.values (occurrence :=
+        ParentIndices.occurrenceAt prepared.occurrences outer) trace
         cache row (trace.vertices.indexed vertex) := by
     intro row vertex
     exact bank.readback row vertex
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.HorizontalChains.horizontalItems retained (coefficients :=
+  exact HorizontalChains.horizontalItems retained (coefficients :=
     coefficients) inputs outer trace blocks
     sourceFirst sourceLast budget owners later readings
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideBanks.SharedHorizontalBank.values (occurrence :=
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) trace
+    (SharedSideBanks.SharedHorizontalBank.values (occurrence :=
+      ParentIndices.occurrenceAt prepared.occurrences outer) trace
       cache) same
     junctionBudget junctionOwners junctionLater
 
-variable (axis : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+variable (axis : (ParentIndices.occurrenceAt prepared.occurrences
   outer).sourceVertical = false)
-  (orientation : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (orientation : (ParentIndices.occurrenceAt prepared.occurrences
     outer).sourceForward = true)
   (boxEq : meshBox = (base.faces.regulars[(ParentIndices.occurrenceAt prepared.occurrences
     outer).sideOccurrence.position.val]'(ParentIndices.occurrenceAt prepared.occurrences
@@ -201,26 +201,26 @@ include axis orientation boxEq
 
 /-- The shared horizontal readings retain the complete forward source word and original parent order. -/
 theorem forward_words :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment.Word
+    IndexedFragments.IndexedFragment.Word
       (forward retained
       inputs outer trace cache bank coefficients sourceFirst sourceLast
     budget owners later junctionBudget junctionOwners junctionLater blocks) ∧
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedParentOrder.IndexedFragment.ParentWord
+      GroupedParentOrder.IndexedFragment.ParentWord
         (forward retained
         inputs outer trace cache bank coefficients sourceFirst sourceLast
     budget owners later junctionBudget junctionOwners junctionLater blocks) := by
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.HorizontalChains.horizontal_words retained (data := bank.data)
+  exact HorizontalChains.horizontal_words retained (data := bank.data)
     (coefficients := coefficients) inputs outer trace blocks sourceFirst sourceLast
     budget owners later bank.readings
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideBanks.SharedHorizontalBank.values trace cache)
+      (SharedSideBanks.SharedHorizontalBank.values trace cache)
       bank.readback
     junctionBudget junctionOwners junctionLater axis orientation boxEq
 
 /-- Source positions remain distinct even when their payloads repeat. -/
-@[expose] def forwardOrdered : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentOrderedRuns
+@[expose] def forwardOrdered : SourceOrderedRuns.ParentOrderedRuns
   retained inputs outer bank.data coefficients :=
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.IndexedGrouping.inSourceOrder
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedGrouping.build
+  SourceOrderedRuns.IndexedGrouping.inSourceOrder
+    (FragmentGrouping.IndexedGrouping.build
     (forward retained inputs
     outer trace cache bank coefficients sourceFirst sourceLast
     budget owners later junctionBudget junctionOwners junctionLater blocks))
@@ -230,46 +230,46 @@ theorem forward_words :
 
 /-- Every source-ordered shared horizontal run retains its complete increasing source chain. -/
 theorem forward_chains : ∀ run ∈
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedHorizontalRuns.forwardOrdered retained
+  (SharedHorizontalRuns.forwardOrdered retained
   inputs outer trace cache bank coefficients sourceFirst sourceLast
     budget owners later junctionBudget junctionOwners junctionLater blocks axis orientation boxEq).runs,
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains.SourceChain run.fragments 0 1 := by
+    SourceChains.SourceChain run.fragments 0 1 := by
   intro run member
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.HorizontalChains.horizontal_source_chains retained (data :=
+  exact HorizontalChains.horizontal_source_chains retained (data :=
     bank.data) (coefficients := coefficients) inputs outer trace blocks sourceFirst sourceLast
     budget owners later bank.readings
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideBanks.SharedHorizontalBank.values trace cache)
+      (SharedSideBanks.SharedHorizontalBank.values trace cache)
       bank.readback
     junctionBudget junctionOwners junctionLater axis orientation boxEq run
     member
 
 /-- The complete unsampled side bounds each source-ordered run. -/
 theorem forward_capacity : ∀ run ∈
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedHorizontalRuns.forwardOrdered retained
+  (SharedHorizontalRuns.forwardOrdered retained
   inputs outer trace cache bank coefficients sourceFirst sourceLast
     budget owners later junctionBudget junctionOwners junctionLater blocks axis orientation boxEq).runs,
     run.fragments.length ≤ 2 * mesh.boundaryColumns + 1 := by
   intro run member
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.HorizontalChains.horizontal_capacity retained (data :=
+  exact HorizontalChains.horizontal_capacity retained (data :=
     bank.data) (coefficients := coefficients) inputs outer trace blocks sourceFirst sourceLast
     budget owners later bank.readings
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideBanks.SharedHorizontalBank.values trace cache)
+      (SharedSideBanks.SharedHorizontalBank.values trace cache)
       bank.readback
     junctionBudget junctionOwners junctionLater run member
 
 /-- Each shared forward horizontal run retains the dyadic source-width bound of its original physical depth. -/
 theorem forward_widths : ∀ run ∈
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedHorizontalRuns.forwardOrdered retained
+  (SharedHorizontalRuns.forwardOrdered retained
   inputs outer trace cache bank coefficients sourceFirst sourceLast
     budget owners later junctionBudget junctionOwners junctionLater blocks axis orientation boxEq).runs,
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.sourceWidth run.fragments ≤
-      (1 / 2 : Normalization.InverseRootPolynomial.Coordinate)^depth := by
+    PairedFragmentBlocks.maximum
+      OwnedFragments.OwnedFragment.sourceWidth run.fragments ≤
+      (1 / 2 : InverseRootPolynomial.Coordinate)^depth := by
   intro run member
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.HorizontalChains.horizontal_widths retained (data :=
+  exact HorizontalChains.horizontal_widths retained (data :=
     bank.data) (coefficients := coefficients) inputs outer trace blocks sourceFirst sourceLast
     budget owners later bank.readings
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideBanks.SharedHorizontalBank.values trace cache)
+      (SharedSideBanks.SharedHorizontalBank.values trace cache)
       bank.readback
     junctionBudget junctionOwners junctionLater run member
 
@@ -279,30 +279,30 @@ theorem forward_area : Path.PairedIncrementArea.area (List.ofFn
   (forwardOrdered retained
   inputs outer trace cache bank coefficients sourceFirst sourceLast
     budget owners later junctionBudget junctionOwners junctionLater blocks axis orientation boxEq).physical).flatten =
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideSamples.SharedHorizontalBank.Data.sample bank
+    (SharedSideSamples.SharedHorizontalBank.Data.sample bank
       coefficients).centeredArea := by
-  have path := (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedGrouping.build
+  have path := (FragmentGrouping.IndexedGrouping.build
     (forward retained inputs
     outer trace cache bank coefficients sourceFirst sourceLast
     budget owners later junctionBudget junctionOwners junctionLater blocks))
     |> fun grouped =>
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedPaths.IndexedGrouping.source_order_physical grouped
+      SourceOrderedPaths.IndexedGrouping.source_order_physical grouped
     (forward_words retained
       inputs outer trace cache bank coefficients sourceFirst sourceLast
       budget owners later junctionBudget junctionOwners junctionLater blocks axis orientation boxEq).2
   apply (congrArg Path.PairedIncrementArea.area path).trans
-  have readback := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.HorizontalChains.horizontal_grouped_area retained
+  have readback := HorizontalChains.horizontal_grouped_area retained
     (data := bank.data) (coefficients := coefficients) inputs outer trace blocks sourceFirst sourceLast
     budget owners later bank.readings
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideBanks.SharedHorizontalBank.values trace cache)
+      (SharedSideBanks.SharedHorizontalBank.values trace cache)
       bank.readback
     junctionBudget junctionOwners junctionLater
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideSamples.SharedHorizontalBank.Data.sample bank
+      (SharedSideSamples.SharedHorizontalBank.Data.sample bank
       coefficients)
   have grouped := congrArg (fun pairs : List (List Topology.Polygon.Stokes.PrimitivePoint × List
     Topology.Polygon.Stokes.PrimitivePoint) =>
     Path.PairedIncrementArea.area (pairs.map Prod.fst).flatten)
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedGrouping.build
+      (FragmentGrouping.IndexedGrouping.build
       (forward retained
       inputs outer trace cache bank coefficients sourceFirst sourceLast
     budget owners later junctionBudget junctionOwners junctionLater blocks)).pairs_eq
@@ -311,33 +311,33 @@ theorem forward_area : Path.PairedIncrementArea.area (List.ofFn
 end Forward
 
 section Reverse
-variable (blocks : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBank.ParentBlockBank
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) mesh false
+variable (blocks : ParentBank.ParentBlockBank
+  (ParentIndices.occurrenceAt prepared.occurrences outer) mesh false
   false)
 
 /-- Reuse the cached Newton readings on every piece and owner junction. -/
-@[expose] def reverse : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment
+@[expose] def reverse : List (IndexedFragments.IndexedFragment
   retained inputs outer bank.data coefficients) := by
-  let readings : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings bank.data (fun vertex :
+  let readings : OwnerRequest.OwnedReadings bank.data (fun vertex :
     Fin (trace.vertices.rest.length + 1) =>
     trace.point (trace.vertices.indexed vertex)) := bank.readings
   have same : ∀ (row : Fin genus) (vertex : Fin (trace.vertices.rest.length + 1)), (readings row).values vertex =
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideBanks.SharedHorizontalBank.values (occurrence :=
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) trace
+      SharedSideBanks.SharedHorizontalBank.values (occurrence :=
+        ParentIndices.occurrenceAt prepared.occurrences outer) trace
         cache row (trace.vertices.indexed vertex) := by
     intro row vertex
     exact bank.readback row vertex
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseHorizontalChains.horizontalReverseItems retained
+  exact ReverseHorizontalChains.horizontalReverseItems retained
     (coefficients := coefficients) inputs outer trace blocks
     sourceFirst sourceLast budget owners later readings
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideBanks.SharedHorizontalBank.values (occurrence :=
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) trace
+    (SharedSideBanks.SharedHorizontalBank.values (occurrence :=
+      ParentIndices.occurrenceAt prepared.occurrences outer) trace
       cache) same
     junctionBudget junctionOwners junctionLater
 
-variable (axis : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+variable (axis : (ParentIndices.occurrenceAt prepared.occurrences
   outer).sourceVertical = false)
-  (orientation : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (orientation : (ParentIndices.occurrenceAt prepared.occurrences
     outer).sourceForward = false)
   (boxEq : meshBox = (base.faces.regulars[(ParentIndices.occurrenceAt prepared.occurrences
     outer).sideOccurrence.position.val]'(ParentIndices.occurrenceAt prepared.occurrences
@@ -347,26 +347,26 @@ include axis orientation boxEq
 
 /-- The shared horizontal readings retain the complete descending source word and reverse parent order. -/
 theorem reverse_words :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment.ReverseWord
+    IndexedFragments.IndexedFragment.ReverseWord
       (reverse retained
       inputs outer trace cache bank coefficients sourceFirst sourceLast
     budget owners later junctionBudget junctionOwners junctionLater blocks) ∧
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedReverseOrder.IndexedFragment.ReverseParentWord
+      GroupedReverseOrder.IndexedFragment.ReverseParentWord
         (reverse retained
         inputs outer trace cache bank coefficients sourceFirst sourceLast
     budget owners later junctionBudget junctionOwners junctionLater blocks) := by
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseHorizontalChains.horizontal_reverse_words retained
+  exact ReverseHorizontalChains.horizontal_reverse_words retained
     (data := bank.data) (coefficients := coefficients) inputs outer trace blocks sourceFirst sourceLast
     budget owners later bank.readings
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideBanks.SharedHorizontalBank.values trace cache)
+      (SharedSideBanks.SharedHorizontalBank.values trace cache)
       bank.readback
     junctionBudget junctionOwners junctionLater axis orientation boxEq
 
 /-- Source positions remain distinct even when their payloads repeat. -/
-@[expose] def reverseOrdered : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.ParentOrderedRuns
+@[expose] def reverseOrdered : SourceOrderedRuns.ParentOrderedRuns
   retained inputs outer bank.data coefficients :=
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedRuns.IndexedGrouping.reverseInSourceOrder
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedGrouping.build
+  SourceOrderedRuns.IndexedGrouping.reverseInSourceOrder
+    (FragmentGrouping.IndexedGrouping.build
     (reverse retained inputs
     outer trace cache bank coefficients sourceFirst sourceLast
     budget owners later junctionBudget junctionOwners junctionLater blocks))
@@ -376,46 +376,46 @@ theorem reverse_words :
 
 /-- Every source-ordered shared horizontal run retains its complete descending source chain. -/
 theorem reverse_chains : ∀ run ∈
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedHorizontalRuns.reverseOrdered retained
+  (SharedHorizontalRuns.reverseOrdered retained
   inputs outer trace cache bank coefficients sourceFirst sourceLast
     budget owners later junctionBudget junctionOwners junctionLater blocks axis orientation boxEq).runs,
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseSourceChains.ReverseSourceChain run.fragments 1 0 := by
+    ReverseSourceChains.ReverseSourceChain run.fragments 1 0 := by
   intro run member
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseHorizontalChains.horizontal_reverse_source_chains
+  exact ReverseHorizontalChains.horizontal_reverse_source_chains
     retained (data := bank.data) (coefficients := coefficients) inputs outer trace blocks sourceFirst sourceLast
     budget owners later bank.readings
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideBanks.SharedHorizontalBank.values trace cache)
+      (SharedSideBanks.SharedHorizontalBank.values trace cache)
       bank.readback
     junctionBudget junctionOwners junctionLater axis orientation boxEq run
     ((Data.List.Reverse.mem_reverse _).mp member)
 
 /-- The complete unsampled side bounds each source-ordered run. -/
 theorem reverse_capacity : ∀ run ∈
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedHorizontalRuns.reverseOrdered retained
+  (SharedHorizontalRuns.reverseOrdered retained
   inputs outer trace cache bank coefficients sourceFirst sourceLast
     budget owners later junctionBudget junctionOwners junctionLater blocks axis orientation boxEq).runs,
     run.fragments.length ≤ 2 * mesh.boundaryColumns + 1 := by
   intro run member
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseHorizontalChains.horizontal_reverse_capacity retained
+  exact ReverseHorizontalChains.horizontal_reverse_capacity retained
     (data := bank.data) (coefficients := coefficients) inputs outer trace blocks sourceFirst sourceLast
     budget owners later bank.readings
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideBanks.SharedHorizontalBank.values trace cache)
+      (SharedSideBanks.SharedHorizontalBank.values trace cache)
       bank.readback
     junctionBudget junctionOwners junctionLater run ((Data.List.Reverse.mem_reverse _).mp member)
 
 /-- Each shared reversed horizontal run retains the dyadic reverse-width bound of its original physical depth. -/
 theorem reverse_widths : ∀ run ∈
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedHorizontalRuns.reverseOrdered retained
+  (SharedHorizontalRuns.reverseOrdered retained
   inputs outer trace cache bank coefficients sourceFirst sourceLast
     budget owners later junctionBudget junctionOwners junctionLater blocks axis orientation boxEq).runs,
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBlocks.maximum
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnedFragments.OwnedFragment.reverseSourceWidth run.fragments ≤
-      (1 / 2 : Normalization.InverseRootPolynomial.Coordinate)^depth := by
+    PairedFragmentBlocks.maximum
+      OwnedFragments.OwnedFragment.reverseSourceWidth run.fragments ≤
+      (1 / 2 : InverseRootPolynomial.Coordinate)^depth := by
   intro run member
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseHorizontalChains.horizontal_reverse_widths retained
+  exact ReverseHorizontalChains.horizontal_reverse_widths retained
     (data := bank.data) (coefficients := coefficients) inputs outer trace blocks sourceFirst sourceLast
     budget owners later bank.readings
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideBanks.SharedHorizontalBank.values trace cache)
+      (SharedSideBanks.SharedHorizontalBank.values trace cache)
       bank.readback
     junctionBudget junctionOwners junctionLater run ((Data.List.Reverse.mem_reverse _).mp member)
 
@@ -427,14 +427,14 @@ theorem reverse_area : Path.PairedIncrementArea.area (List.ofFn (fun position =>
   inputs outer trace cache bank coefficients sourceFirst sourceLast
     budget owners later junctionBudget junctionOwners junctionLater blocks axis orientation boxEq).physical
       position))).flatten =
-    -(Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideSamples.SharedHorizontalBank.Data.sample bank
+    -(SharedSideSamples.SharedHorizontalBank.Data.sample bank
       coefficients).centeredArea := by
-  have path := (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedGrouping.build
+  have path := (FragmentGrouping.IndexedGrouping.build
     (reverse retained inputs
     outer trace cache bank coefficients sourceFirst sourceLast
     budget owners later junctionBudget junctionOwners junctionLater blocks))
     |> fun grouped =>
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceOrderedPaths.IndexedGrouping.reverse_source_order_physical
+      SourceOrderedPaths.IndexedGrouping.reverse_source_order_physical
       grouped
     (reverse_words retained
       inputs outer trace cache bank coefficients sourceFirst sourceLast
@@ -442,18 +442,18 @@ theorem reverse_area : Path.PairedIncrementArea.area (List.ofFn (fun position =>
   apply (congrArg Path.PairedIncrementArea.area path).trans
   rw [Path.PairedAreaReversal.area_reverseIncrements]
   have readback :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ReverseHorizontalChains.horizontal_reverse_grouped_area retained
+    ReverseHorizontalChains.horizontal_reverse_grouped_area retained
     (data := bank.data) (coefficients := coefficients) inputs outer trace blocks sourceFirst sourceLast
     budget owners later bank.readings
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideBanks.SharedHorizontalBank.values trace cache)
+      (SharedSideBanks.SharedHorizontalBank.values trace cache)
       bank.readback
     junctionBudget junctionOwners junctionLater
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedSideSamples.SharedHorizontalBank.Data.sample bank
+      (SharedSideSamples.SharedHorizontalBank.Data.sample bank
       coefficients)
   have grouped := congrArg (fun pairs : List (List Topology.Polygon.Stokes.PrimitivePoint × List
     Topology.Polygon.Stokes.PrimitivePoint) =>
     Path.PairedIncrementArea.area (pairs.map Prod.fst).flatten)
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGrouping.IndexedGrouping.build
+      (FragmentGrouping.IndexedGrouping.build
       (reverse retained
       inputs outer trace cache bank coefficients sourceFirst sourceLast
     budget owners later junctionBudget junctionOwners junctionLater blocks)).pairs_eq

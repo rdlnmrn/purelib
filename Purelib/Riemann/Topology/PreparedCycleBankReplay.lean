@@ -39,7 +39,7 @@ open Purelib.Curves.Hyperelliptic.Branches.Cuts (refinedState refinedTrackAnchor
 open Purelib.Curves.Hyperelliptic.Branches.BranchCutLifts (ownerBoundaryPath ownerBoundaryPath_withinAmbient)
 open Purelib.RootIsolation.SquareRoot.Preparation.Bank.Adaptive (Task Selected)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Polynomial in
@@ -56,7 +56,7 @@ structure BoundaryInput (curve : Basic.HyperellipticCurve genus) where
   /-- Actual left winding-one state. -/ leftState : State.WindingOne.Basic.WindingOneState curve.polynomial leftAmbient
   /-- Actual right winding-one state. -/ rightState : State.WindingOne.Basic.WindingOneState curve.polynomial
     rightAmbient
-  /-- Original clear connector between the retained state anchors. -/ connector : Polynomial.Geometry.ClearPath
+  /-- Original clear connector between the retained state anchors. -/ connector : ClearPath
     curve.polynomial connectorAmbient leftState.box.anchor rightState.box.anchor
   /-- Containment certificate for the actual retained path. -/ within : connector.WithinAmbient
   /-- Original root owner at the forward path's start. -/ forwardOwner : Owner (curve.polynomial.eval
@@ -75,24 +75,24 @@ namespace BoundaryInput
 
 open Purelib.RootIsolation in
 /-- Singleton adaptive task for the original forward connector and owner. -/
-def forward (input : BoundaryInput curve) := [SquareRoot.Preparation.Bank.Adaptive.Task.ofPath input.connector
+def forward (input : BoundaryInput curve) := [Task.ofPath input.connector
   input.within input.forwardOwner]
 section
 open Purelib.Curves.Hyperelliptic.Branches
 open Purelib.RootIsolation
 /-- Singleton adaptive task for the original right-state boundary and owner. -/
 def right (input : BoundaryInput curve) :=
-  [SquareRoot.Preparation.Bank.Adaptive.Task.ofPath (BranchCutLifts.ownerBoundaryPath input.rightState)
-    (BranchCutLifts.ownerBoundaryPath_withinAmbient input.rightState) input.rightOwner]
+  [Task.ofPath (ownerBoundaryPath input.rightState)
+    (ownerBoundaryPath_withinAmbient input.rightState) input.rightOwner]
 /-- Singleton adaptive task for the reversed connector and backward owner. -/
 def backward (input : BoundaryInput curve) :=
-  [SquareRoot.Preparation.Bank.Adaptive.Task.ofPath (BranchCutLifts.ClearPath.reverse input.connector)
+  [Task.ofPath (BranchCutLifts.ClearPath.reverse input.connector)
     (BranchCutLifts.ClearPath.reverse_withinAmbient input.connector input.within)
     input.backwardOwner]
 /-- Singleton adaptive task for the original left-state boundary and owner. -/
 def left (input : BoundaryInput curve) :=
-  [SquareRoot.Preparation.Bank.Adaptive.Task.ofPath (BranchCutLifts.ownerBoundaryPath input.leftState)
-    (BranchCutLifts.ownerBoundaryPath_withinAmbient input.leftState) input.leftOwner]
+  [Task.ofPath (ownerBoundaryPath input.leftState)
+    (ownerBoundaryPath_withinAmbient input.leftState) input.leftOwner]
 
 end
 
@@ -110,10 +110,10 @@ open Purelib.RootIsolation in
 Keeps the four independently selected singleton banks and their separate depths, preserving the input geometry, original
 root owners and selected executable banks. -/
 def restore (input : BoundaryInput curve)
-    (forward : SquareRoot.Preparation.Bank.Adaptive.Selected input.forward input.diameter input.positive)
-    (right : SquareRoot.Preparation.Bank.Adaptive.Selected input.right input.diameter input.positive)
-    (backward : SquareRoot.Preparation.Bank.Adaptive.Selected input.backward input.diameter input.positive)
-    (left : SquareRoot.Preparation.Bank.Adaptive.Selected input.left input.diameter input.positive) :
+    (forward : Selected input.forward input.diameter input.positive)
+    (right : Selected input.right input.diameter input.positive)
+    (backward : Selected input.backward input.diameter input.positive)
+    (left : Selected input.left input.diameter input.positive) :
       PreparedBoundaryDoublePath curve where
   leftAmbient := input.leftAmbient
   rightAmbient := input.rightAmbient
@@ -121,8 +121,8 @@ def restore (input : BoundaryInput curve)
   leftState := input.leftState
   rightState := input.rightState
   connector := input.connector
-  rightBoundaryPath := BranchCutLifts.ownerBoundaryPath input.rightState
-  leftBoundaryPath := BranchCutLifts.ownerBoundaryPath input.leftState
+  rightBoundaryPath := ownerBoundaryPath input.rightState
+  leftBoundaryPath := ownerBoundaryPath input.leftState
   forwardDepth := forward.depth
   rightBoundaryDepth := right.depth
   backwardDepth := backward.depth
@@ -144,10 +144,10 @@ open Purelib.RootIsolation in
 Requires exact equality of the supplied selections with the original adaptive selector results, preserving every
 retained bank and depth. -/
 theorem restore_eq (input : BoundaryInput curve)
-    (forward : SquareRoot.Preparation.Bank.Adaptive.Selected input.forward input.diameter input.positive)
-    (right : SquareRoot.Preparation.Bank.Adaptive.Selected input.right input.diameter input.positive)
-    (backward : SquareRoot.Preparation.Bank.Adaptive.Selected input.backward input.diameter input.positive)
-    (left : SquareRoot.Preparation.Bank.Adaptive.Selected input.left input.diameter input.positive)
+    (forward : Selected input.forward input.diameter input.positive)
+    (right : Selected input.right input.diameter input.positive)
+    (backward : Selected input.backward input.diameter input.positive)
+    (left : Selected input.left input.diameter input.positive)
     (forwardEq : forward = SquareRoot.Preparation.Bank.Adaptive.select input.forward input.diameter input.positive)
     (rightEq : right = SquareRoot.Preparation.Bank.Adaptive.select input.right input.diameter input.positive)
     (backwardEq : backward = SquareRoot.Preparation.Bank.Adaptive.select input.backward input.diameter input.positive)
@@ -166,16 +166,16 @@ Uses the branch bank at the supplied refinement and its exact connector containm
 and unit diameter. -/
 def ofOwners (branches : BranchIsolation.Data curve) (higher : 1 < curve.polynomial.natDegree)
     (left right : BranchIsolation.Data.Index branches) (refinement : Nat)
-    (forwardOwner : Owner (curve.polynomial.eval (Cuts.refinedTrackAnchor branches higher left refinement)))
-    (rightOwner backwardOwner : Owner (curve.polynomial.eval (Cuts.refinedTrackAnchor branches higher right
+    (forwardOwner : Owner (curve.polynomial.eval (refinedTrackAnchor branches higher left refinement)))
+    (rightOwner backwardOwner : Owner (curve.polynomial.eval (refinedTrackAnchor branches higher right
       refinement)))
-    (leftOwner : Owner (curve.polynomial.eval (Cuts.refinedTrackAnchor branches higher left refinement))) :
+    (leftOwner : Owner (curve.polynomial.eval (refinedTrackAnchor branches higher left refinement))) :
       BoundaryInput curve :=
   { leftAmbient := _, rightAmbient := _, connectorAmbient := _
-    leftState := Cuts.refinedState branches higher left refinement
-    rightState := Cuts.refinedState branches higher right refinement
-    connector := Cuts.connectorAt branches higher left right refinement
-    within := Cuts.connectorAt_withinAmbient branches higher left right refinement
+    leftState := refinedState branches higher left refinement
+    rightState := refinedState branches higher right refinement
+    connector := connectorAt branches higher left right refinement
+    within := connectorAt_withinAmbient branches higher left right refinement
     forwardOwner := forwardOwner, rightOwner := rightOwner, backwardOwner := backwardOwner, leftOwner := leftOwner
     diameter := 1, positive := by decide }
 
@@ -192,7 +192,7 @@ structure BridgeInput (curve : Basic.HyperellipticCurve genus) where
   /-- Ambient box of the original bridge path. -/ ambient : Box
   /-- Original bridge start coordinate. -/ start : Gaussian
   /-- Original bridge finish coordinate. -/ finish : Gaussian
-  /-- Actual clear bridge path with its retained endpoints. -/ path : Polynomial.Geometry.ClearPath curve.polynomial
+  /-- Actual clear bridge path with its retained endpoints. -/ path : ClearPath curve.polynomial
     ambient start finish
   /-- Containment certificate for the actual retained path. -/ within : path.WithinAmbient
   /-- Original root owner at the forward path's start. -/ forwardOwner : Owner (curve.polynomial.eval start)
@@ -210,8 +210,8 @@ open Purelib.RootIsolation in
 
 Each task keeps its original endpoint owner and the exact path containment witness. -/
 def tasks (input : BridgeInput curve) :=
-  [SquareRoot.Preparation.Bank.Adaptive.Task.ofPath input.path input.within input.forwardOwner,
-   SquareRoot.Preparation.Bank.Adaptive.Task.ofPath (BranchCutLifts.ClearPath.reverse input.path)
+  [Task.ofPath input.path input.within input.forwardOwner,
+   Task.ofPath (BranchCutLifts.ClearPath.reverse input.path)
      (BranchCutLifts.ClearPath.reverse_withinAmbient input.path input.within) input.backwardOwner]
 
 /-- Construct the original two-direction bridge from the retained input.
@@ -226,7 +226,7 @@ open Purelib.RootIsolation
 
 Keeps the two original tasks in one selected bank and their common depth, preserving the input geometry, original root
 owners and selected executable banks. -/
-def restore (input : BridgeInput curve) (selected : SquareRoot.Preparation.Bank.Adaptive.Selected input.tasks
+def restore (input : BridgeInput curve) (selected : Selected input.tasks
   input.diameter input.positive) :
     PreparedDoublePath curve where
   ambient := input.ambient
@@ -245,7 +245,7 @@ def restore (input : BridgeInput curve) (selected : SquareRoot.Preparation.Bank.
 
 Requires exact equality of the supplied selections with the original adaptive selector results, preserving every
 retained bank and depth. -/
-theorem restore_eq (input : BridgeInput curve) (selected : SquareRoot.Preparation.Bank.Adaptive.Selected input.tasks
+theorem restore_eq (input : BridgeInput curve) (selected : Selected input.tasks
   input.diameter input.positive)
     (equal : selected = SquareRoot.Preparation.Bank.Adaptive.select input.tasks input.diameter input.positive) :
     input.restore selected = input.original := by
@@ -261,12 +261,12 @@ Uses the branch bank at the supplied refinement and its exact connector containm
 and unit diameter. -/
 def ofOwners (branches : BranchIsolation.Data curve) (higher : 1 < curve.polynomial.natDegree)
     (left right : BranchIsolation.Data.Index branches) (refinement : Nat)
-    (forwardOwner : Owner (curve.polynomial.eval (Cuts.refinedTrackAnchor branches higher left refinement)))
-    (backwardOwner : Owner (curve.polynomial.eval (Cuts.refinedTrackAnchor branches higher right refinement))) :
+    (forwardOwner : Owner (curve.polynomial.eval (refinedTrackAnchor branches higher left refinement)))
+    (backwardOwner : Owner (curve.polynomial.eval (refinedTrackAnchor branches higher right refinement))) :
       BridgeInput curve :=
   { ambient := _, start := _, finish := _
-    path := Cuts.connectorAt branches higher left right refinement
-    within := Cuts.connectorAt_withinAmbient branches higher left right refinement
+    path := connectorAt branches higher left right refinement
+    within := connectorAt_withinAmbient branches higher left right refinement
     forwardOwner := forwardOwner, backwardOwner := backwardOwner, diameter := 1, positive := by decide }
 
 end BridgeInput

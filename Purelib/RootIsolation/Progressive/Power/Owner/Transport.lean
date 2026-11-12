@@ -58,7 +58,7 @@ def ownerMoveRouche
     {source target : Gaussian.Basic.Canonical} (degree : Data.Nat.Positive.RootDegree)
     (owner : LocalOwner
       (Purelib.Polynomial.Power.Gaussian.rootPolynomial source degree))
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) < owner.clearance.bound) :
+    (small : Norm.Basic.normSq (source - target) < owner.clearance.bound) :
     Winding.Box.Rouche.Connection.OrientedRouche
       (Purelib.Polynomial.Power.Gaussian.rootPolynomial source degree) (Purelib.Polynomial.Power.Gaussian.rootPolynomial
         target
@@ -66,14 +66,14 @@ def ownerMoveRouche
   perturbation := Power.Gaussian.Perturbation.parameterPerturbation source target
   target_eq_add := Power.Gaussian.Perturbation.polynomial_target_eq_add_perturbation source target degree
   dominance :=
-    { margin := owner.clearance.bound - Data.Gaussian.Norm.Basic.normSq (source - target)
+    { margin := owner.clearance.bound - Norm.Basic.normSq (source - target)
       positive := Purelib.Data.Rat.Fraction.Order.Arithmetic.sub_pos_direct small
       lower := by
         intro point boundary
         rw [Power.Gaussian.Perturbation.parameterPerturbation_eval]
-        simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using
+        simpa only [Norm.Basic.normSq_eq_canonical] using
           (Purelib.Data.Rat.Fraction.Order.Arithmetic.sub_le_sub_right_direct
-            (owner.clearance.lower point boundary) (Data.Gaussian.Norm.Basic.normSq (source - target))) }
+            (owner.clearance.lower point boundary) (Norm.Basic.normSq (source - target))) }
 end Purelib.RootIsolation.Progressive.Power.Owner.Transport
 
 end
@@ -106,11 +106,22 @@ def transportedOwner
     {source target : Gaussian.Basic.Canonical} (degree : Data.Nat.Positive.RootDegree)
     (owner : LocalOwner
       (Purelib.Polynomial.Power.Gaussian.rootPolynomial source degree))
-    (small : Data.Gaussian.Norm.Basic.normSq (source - target) < owner.clearance.bound) :
+    (small : Norm.Basic.normSq (source - target) < owner.clearance.bound) :
     LocalOwner
       (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree) :=
   (Owner.Bridge.Basic.OwnerBridge.ofForward owner
     (ownerMoveRouche degree owner small)).rightOwner
+
+/-- Equal complete source owners produce equal complete target owners under the same coefficient move. -/
+theorem transportedOwner_congr {source target : Gaussian.Basic.Canonical}
+    (degree : Data.Nat.Positive.RootDegree)
+    {left right : LocalOwner (Power.Gaussian.rootPolynomial source degree)}
+    (same : left = right)
+    (leftSmall : Norm.Basic.normSq (source - target) < left.clearance.bound)
+    (rightSmall : Norm.Basic.normSq (source - target) < right.clearance.bound) :
+    transportedOwner degree left leftSmall = transportedOwner degree right rightSmall := by
+  cases same
+  rfl
 end Purelib.RootIsolation.Progressive.Power.Owner.Transport
 
 end

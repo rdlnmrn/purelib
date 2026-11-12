@@ -53,8 +53,8 @@ set_option genInjectivity false in
 The record keeps the directrix ratios, nondegeneracy conditions and conic coefficient equations divided by the nonzero
 `y²` coefficient. -/
 private structure ParabolaAChart (conic : Conic K) (focus :
-  Plane.Point K)
-    (directrix : Plane.Line K) where
+  Point K)
+    (directrix : Line K) where
   /-- Ratio of the directrix y-normal to its x-normal. -/ beta : K
   /-- Ratio of the directrix constant to its x-normal. -/ gamma : K
   /-- The conic `y²` coefficient is nonzero and can normalize the remaining coefficients. -/ conicFNonzero : conic.f ≠ 0
@@ -79,9 +79,9 @@ constructive_injectivity ParabolaAChart
 
 /-- Construct the normalized `a ≠ 0` chart by explicit division. -/
 private def parabolaAChart (conic : Conic K) (focus :
-  Plane.Point K)
-    (directrix : Plane.Line K)
-    (presentation : Conic.ParabolaPresentationData conic focus directrix)
+  Point K)
+    (directrix : Line K)
+    (presentation : ParabolaPresentationData conic focus directrix)
     (directrixANonzero : directrix.a ≠ 0) :
     ParabolaAChart conic focus directrix := by
   let beta := directrix.b / directrix.a
@@ -110,7 +110,7 @@ private def parabolaAChart (conic : Conic K) (focus :
   have normalizedNormNonzero : 1 + beta ^ 2 ≠ 0 := by
     intro normalizedNormZero
     apply presentation.directrixNonNull
-    unfold Plane.Line.IsNull
+    unfold Line.IsNull
     calc
       directrix.a ^ 2 + directrix.b ^ 2 =
           directrix.a ^ 2 * (1 + beta ^ 2) := by
@@ -121,7 +121,7 @@ private def parabolaAChart (conic : Conic K) (focus :
       focus.x + beta * focus.y + gamma ≠ 0 := by
     intro normalizedIncidence
     apply presentation.focusNotOnDirectrix
-    unfold Plane.Line.Contains
+    unfold Line.Contains
     calc
       directrix.a * focus.x + directrix.b * focus.y + directrix.c =
           directrix.a * (focus.x + beta * focus.y + gamma) := by
@@ -140,14 +140,14 @@ private def parabolaAChart (conic : Conic K) (focus :
       aNormalized := ?_
       bNormalized := ?_
       cNormalized := ?_ }
-  · apply Purelib.Algebra.Field.Inverse.div_eq_of_eq_mul_right conicFNonzero
+  · apply Algebra.Field.Inverse.div_eq_of_eq_mul_right conicFNonzero
     calc
       conic.e = presentation.scale *
           (-2 * directrix.a * directrix.b) := presentation.eEquation
       _ = conic.f * (-2 * beta) := by
         rw [presentation.fEquation, lineB]
         ring1
-  · apply Purelib.Algebra.Field.Inverse.div_eq_of_eq_mul_right conicFNonzero
+  · apply Algebra.Field.Inverse.div_eq_of_eq_mul_right conicFNonzero
     calc
       conic.a = presentation.scale *
           (-2 * directrix.a * directrix.c -
@@ -158,7 +158,7 @@ private def parabolaAChart (conic : Conic K) (focus :
         unfold Line.Basic.lineNorm
         rw [lineB, lineC]
         ring1
-  · apply Purelib.Algebra.Field.Inverse.div_eq_of_eq_mul_right conicFNonzero
+  · apply Algebra.Field.Inverse.div_eq_of_eq_mul_right conicFNonzero
     calc
       conic.b = presentation.scale *
           (-2 * directrix.b * directrix.c -
@@ -170,7 +170,7 @@ private def parabolaAChart (conic : Conic K) (focus :
         unfold Line.Basic.lineNorm
         rw [lineB, lineC]
         ring1
-  · apply Purelib.Algebra.Field.Inverse.div_eq_of_eq_mul_right conicFNonzero
+  · apply Algebra.Field.Inverse.div_eq_of_eq_mul_right conicFNonzero
     calc
       conic.c = presentation.scale *
           (Line.Basic.lineNorm directrix * (focus.x ^ 2 + focus.y ^ 2) -
@@ -185,15 +185,15 @@ private def parabolaAChart (conic : Conic K) (focus :
 
 /-- Uniqueness of the source's recovered data in the `a ≠ 0` chart. -/
 private theorem parabolaACharts_unique
-    (conic : Conic K) (focus otherFocus : Plane.Point K)
-    (directrix otherDirectrix : Plane.Line K) (twoNonzero : (2 : K) ≠ 0)
+    (conic : Conic K) (focus otherFocus : Point K)
+    (directrix otherDirectrix : Line K) (twoNonzero : (2 : K) ≠ 0)
     (first : ParabolaAChart conic focus directrix)
     (second : ParabolaAChart conic otherFocus otherDirectrix) :
     focus = otherFocus ∧ first.beta = second.beta ∧
       first.gamma = second.gamma := by
   have betaEqual : first.beta = second.beta := by
     apply ExplicitField.eq_of_mul_eq_mul_left
-      (Purelib.Algebra.Field.Characteristic.Nonzero.negative_two_nonzero twoNonzero)
+      (Algebra.Field.Characteristic.Nonzero.negative_two_nonzero twoNonzero)
     calc
       (-2 : K) * first.beta = conic.e / conic.f :=
         first.eNormalized.symm
@@ -241,7 +241,7 @@ private theorem parabolaACharts_unique
             (focus.x + first.beta * focus.y + first.gamma) ≠ 0 :=
       ExplicitField.mul_ne_zero
         (ExplicitField.mul_ne_zero
-          (Purelib.Algebra.Field.Characteristic.Nonzero.negative_two_nonzero twoNonzero)
+          (Algebra.Field.Characteristic.Nonzero.negative_two_nonzero twoNonzero)
           first.normalizedNormNonzero)
         first.normalizedFocusOff
     intro linearZero
@@ -329,8 +329,8 @@ set_option genInjectivity false in
 
 Its x-normal vanishes; the retained offset ratio and conic equations use the nonzero `x²` coefficient. -/
 private structure ParabolaBChart (conic : Conic K) (focus :
-  Plane.Point K)
-    (directrix : Plane.Line K) where
+  Point K)
+    (directrix : Line K) where
   /-- Ratio of the horizontal directrix constant to its y-normal. -/ delta : K
   /-- The directrix x-normal vanishes. -/ lineAZero : directrix.a = 0
   /-- The conic `x²` coefficient is nonzero and can normalize the remaining coefficients. -/ conicDNonzero : conic.d ≠ 0
@@ -349,9 +349,9 @@ constructive_injectivity ParabolaBChart
 
 /-- Construct the normalized horizontal-directrix chart by explicit division. -/
 private def parabolaBChart (conic : Conic K) (focus :
-  Plane.Point K)
-    (directrix : Plane.Line K)
-    (presentation : Conic.ParabolaPresentationData conic focus directrix)
+  Point K)
+    (directrix : Line K)
+    (presentation : ParabolaPresentationData conic focus directrix)
     (directrixAZero : directrix.a = 0) :
     ParabolaBChart conic focus directrix := by
   have directrixBNonzero : directrix.b ≠ 0 := by
@@ -376,7 +376,7 @@ private def parabolaBChart (conic : Conic K) (focus :
   have normalizedFocusOff : focus.y + delta ≠ 0 := by
     intro normalizedIncidence
     apply presentation.focusNotOnDirectrix
-    unfold Plane.Line.Contains
+    unfold Line.Contains
     calc
       directrix.a * focus.x + directrix.b * focus.y + directrix.c =
           directrix.b * (focus.y + delta) := by
@@ -392,7 +392,7 @@ private def parabolaBChart (conic : Conic K) (focus :
       aNormalized := ?_
       bNormalized := ?_
       cNormalized := ?_ }
-  · apply Purelib.Algebra.Field.Inverse.div_eq_of_eq_mul_right conicDNonzero
+  · apply Algebra.Field.Inverse.div_eq_of_eq_mul_right conicDNonzero
     calc
       conic.a = presentation.scale *
           (-2 * directrix.a * directrix.c -
@@ -402,7 +402,7 @@ private def parabolaBChart (conic : Conic K) (focus :
         unfold Line.Basic.lineNorm
         rw [directrixAZero]
         ring1
-  · apply Purelib.Algebra.Field.Inverse.div_eq_of_eq_mul_right conicDNonzero
+  · apply Algebra.Field.Inverse.div_eq_of_eq_mul_right conicDNonzero
     calc
       conic.b = presentation.scale *
           (-2 * directrix.b * directrix.c -
@@ -412,7 +412,7 @@ private def parabolaBChart (conic : Conic K) (focus :
         unfold Line.Basic.lineNorm
         rw [directrixAZero, lineC]
         ring1
-  · apply Purelib.Algebra.Field.Inverse.div_eq_of_eq_mul_right conicDNonzero
+  · apply Algebra.Field.Inverse.div_eq_of_eq_mul_right conicDNonzero
     calc
       conic.c = presentation.scale *
           (Line.Basic.lineNorm directrix * (focus.x ^ 2 + focus.y ^ 2) -
@@ -426,8 +426,8 @@ private def parabolaBChart (conic : Conic K) (focus :
 
 /-- Uniqueness of the recovered data in the `a = 0` chart. -/
 private theorem parabolaBCharts_unique
-    (conic : Conic K) (focus otherFocus : Plane.Point K)
-    (directrix otherDirectrix : Plane.Line K) (twoNonzero : (2 : K) ≠ 0)
+    (conic : Conic K) (focus otherFocus : Point K)
+    (directrix otherDirectrix : Line K) (twoNonzero : (2 : K) ≠ 0)
     (first : ParabolaBChart conic focus directrix)
     (second : ParabolaBChart conic otherFocus otherDirectrix) :
     focus = otherFocus ∧ first.delta = second.delta := by
@@ -438,7 +438,7 @@ private theorem parabolaBCharts_unique
         first.aNormalized.symm
       _ = (-2 : K) * otherFocus.x := second.aNormalized
   have xEqual : focus.x = otherFocus.x :=
-    ExplicitField.eq_of_mul_eq_mul_left (Purelib.Algebra.Field.Characteristic.Nonzero.negative_two_nonzero
+    ExplicitField.eq_of_mul_eq_mul_left (Algebra.Field.Characteristic.Nonzero.negative_two_nonzero
       twoNonzero)
       xProductsEqual
   have sumProductsEqual :
@@ -453,7 +453,7 @@ private theorem parabolaBCharts_unique
         ring1
   have sumEqual : focus.y + first.delta =
       otherFocus.y + second.delta :=
-    ExplicitField.eq_of_mul_eq_mul_left (Purelib.Algebra.Field.Characteristic.Nonzero.negative_two_nonzero
+    ExplicitField.eq_of_mul_eq_mul_left (Algebra.Field.Characteristic.Nonzero.negative_two_nonzero
       twoNonzero)
       sumProductsEqual
   have squareDifferenceEqual :
@@ -504,7 +504,7 @@ private theorem parabolaBCharts_unique
 the same line. -/
 theorem parabola_uniqueness [DecidableEq K] (conic : Conic K)
     (twoNonzero : (2 : K) ≠ 0)
-    {focus otherFocus : Plane.Point K} {directrix otherDirectrix : Plane.Line K}
+    {focus otherFocus : Point K} {directrix otherDirectrix : Line K}
     (presentation : conic.IsParabolaPresentation focus directrix)
     (otherPresentation :
       conic.IsParabolaPresentation otherFocus otherDirectrix) :
@@ -541,7 +541,7 @@ theorem parabola_uniqueness [DecidableEq K] (conic : Conic K)
         otherDirectrix twoNonzero firstChart secondChart with
       ⟨focusEqual, deltaEqual⟩
     refine ⟨focusEqual, ?_⟩
-    unfold Plane.Line.Equivalent
+    unfold Line.Equivalent
     constructor
     · rw [directrixAZero, otherDirectrixAZero]
       ring1
@@ -577,7 +577,7 @@ theorem parabola_uniqueness [DecidableEq K] (conic : Conic K)
         otherDirectrix twoNonzero firstChart secondChart with
       ⟨focusEqual, betaEqual, gammaEqual⟩
     refine ⟨focusEqual, ?_⟩
-    unfold Plane.Line.Equivalent
+    unfold Line.Equivalent
     constructor
     · calc
         directrix.a * otherDirectrix.b =
@@ -614,9 +614,9 @@ theorem parabola_uniqueness [DecidableEq K] (conic : Conic K)
 theorem parabola_has_unique_focus_directrix [DecidableEq K]
     (conic : Conic K) (twoNonzero : (2 : K) ≠ 0)
     (isParabola : conic.IsParabola) :
-    ∃ focus : Plane.Point K, ∃ directrix : Plane.Line K,
+    ∃ focus : Point K, ∃ directrix : Line K,
       conic.IsParabolaPresentation focus directrix ∧
-        ∀ otherFocus : Plane.Point K, ∀ otherDirectrix : Plane.Line K,
+        ∀ otherFocus : Point K, ∀ otherDirectrix : Line K,
           conic.IsParabolaPresentation otherFocus otherDirectrix →
             otherFocus = focus ∧ otherDirectrix.Equivalent directrix := by
   rcases isParabola with ⟨focus, directrix, presentation⟩

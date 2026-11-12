@@ -15,6 +15,8 @@ public import Purelib.RationalFunctions.Residual.Local.Prepare
 import Purelib.RationalFunctions.Residual.Local.Bounds
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Data.Rat.Fraction (Rational)
 
 section
@@ -33,7 +35,7 @@ namespace Purelib.RationalFunctions.Residual.Local.Basic
 namespace LocalQuotientContext
 
 variable {source opposite : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
-  Purelib.Geometry.Rational.Box}
+  Geometry.Rational.Box}
 
 /-! ## Constructed epsilon residual states and pole blow-up -/
 
@@ -45,19 +47,19 @@ open Purelib.RationalFunctions in
 The request epsilon is positive. The polynomial residual threshold is the retained positive opposite margin times
 epsilon squared, preserving the original source track. -/
 def epsilonResidualState
-    (context : Residual.Local.Basic.LocalQuotientContext source opposite ambient)
+    (context : LocalQuotientContext source opposite ambient)
     (epsilon : Rational) (epsilonPositive : 0 < epsilon) :
     State.WindingOne.Basic.WindingOneState source ambient :=
   Isolation.Coprime.UniformResidual.uniformlySmallState context.track
     context.protectedState (context.oppositeMargin * epsilon ^ 2)
-    (Rat.Fraction.Order.Arithmetic.mul_pos_direct context.oppositeMargin_pos
-      (Rat.Fraction.Order.Arithmetic.pow_pos_direct epsilonPositive 2))
+    (Arithmetic.mul_pos_direct context.oppositeMargin_pos
+      (Arithmetic.pow_pos_direct epsilonPositive 2))
 
 open Purelib.Data in
 open Purelib.RationalFunctions in
 /-- The epsilon residual state refines the context's protected box. -/
 theorem epsilonResidualState_refines
-    (context : Residual.Local.Basic.LocalQuotientContext source opposite ambient)
+    (context : LocalQuotientContext source opposite ambient)
     (epsilon : Rational) (epsilonPositive : 0 < epsilon) :
     (context.epsilonResidualState epsilon epsilonPositive).box.Refines
       context.protectedState.box := by
@@ -72,40 +74,40 @@ Protection keeps the opposite polynomial nonzero and bounds its quadrance below,
 residual estimate. -/
 theorem
   epsilonResidualState_quotientResidualSq_lt
-    (context : Residual.Local.Basic.LocalQuotientContext source opposite ambient)
+    (context : LocalQuotientContext source opposite ambient)
     {epsilon : Rational} (epsilonPositive : 0 < epsilon)
     {sample : Gaussian.Basic.Canonical}
     (inside : (context.epsilonResidualState epsilon epsilonPositive).box.Contains
       sample) :
-    Residual.Basic.quotientResidualSq source opposite sample < epsilon ^ 2 := by
+    Basic.quotientResidualSq source opposite sample < epsilon ^ 2 := by
   let state := context.epsilonResidualState epsilon epsilonPositive
   let margin := context.oppositeMargin
   have sourceSmall : Gaussian.Norm.Basic.normSq (source.eval sample) < margin * epsilon ^ 2 :=
     Isolation.Coprime.UniformResidual.uniformlySmallState_residual_lt
       context.sourceDegreePositive context.track context.protectedState
-      (Rat.Fraction.Order.Arithmetic.mul_pos_direct context.oppositeMargin_pos
-        (Rat.Fraction.Order.Arithmetic.pow_pos_direct epsilonPositive 2)) inside
+      (Arithmetic.mul_pos_direct context.oppositeMargin_pos
+        (Arithmetic.pow_pos_direct epsilonPositive 2)) inside
   have refines := context.epsilonResidualState_refines epsilon epsilonPositive
   have oppositeNonzero := context.oppositeNonzero refines inside
   have lower := context.oppositeLower refines inside
   have identity := context.quotientResidualSq_mul_oppositeNorm refines inside
   have scaledLower : margin * epsilon ^ 2 ≤
       Gaussian.Norm.Basic.normSq (opposite.eval sample) * epsilon ^ 2 :=
-    Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct lower
-      (Rat.Fraction.Order.Arithmetic.pow_pos_direct epsilonPositive 2).le
+    Arithmetic.mul_le_mul_of_nonneg_right_direct lower
+      (Arithmetic.pow_pos_direct epsilonPositive 2).le
   have productStrict :
-      Residual.Basic.quotientResidualSq source opposite sample *
+      Basic.quotientResidualSq source opposite sample *
           Gaussian.Norm.Basic.normSq (opposite.eval sample) <
         epsilon ^ 2 * Gaussian.Norm.Basic.normSq (opposite.eval sample) := by
     calc
-      Residual.Basic.quotientResidualSq source opposite sample *
+      Basic.quotientResidualSq source opposite sample *
           Gaussian.Norm.Basic.normSq (opposite.eval sample) = Gaussian.Norm.Basic.normSq (source.eval
             sample) :=
         identity
       _ < margin * epsilon ^ 2 := sourceSmall
       _ ≤ Gaussian.Norm.Basic.normSq (opposite.eval sample) * epsilon ^ 2 := scaledLower
       _ = epsilon ^ 2 * Gaussian.Norm.Basic.normSq (opposite.eval sample) := by ring1
-  exact Rat.Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct productStrict
+  exact Arithmetic.lt_of_mul_lt_mul_right_direct productStrict
     (Gaussian.Norm.Basic.normSq_pos oppositeNonzero)
 
 open Purelib.Data in
@@ -115,7 +117,7 @@ open Purelib.RationalFunctions in
 Epsilon is positive and the displayed source evaluation is nonzero. The small source-over-opposite residual and
 protected opposite margin yield the reciprocal lower bound. -/
 theorem oppositeQuotientSq_ge_inv_epsilonSq
-    (context : Residual.Local.Basic.LocalQuotientContext source opposite ambient)
+    (context : LocalQuotientContext source opposite ambient)
     {epsilon : Rational} (epsilonPositive : 0 < epsilon)
     {sample : Gaussian.Basic.Canonical}
     (inside : (context.epsilonResidualState epsilon epsilonPositive).box.Contains
@@ -131,10 +133,10 @@ theorem oppositeQuotientSq_ge_inv_epsilonSq
       epsilon ^ 2 * Gaussian.Norm.Basic.normSq (opposite.eval sample) := by
     calc
       Gaussian.Norm.Basic.normSq (source.eval sample) =
-          Residual.Basic.quotientResidualSq source opposite sample *
+          Basic.quotientResidualSq source opposite sample *
             Gaussian.Norm.Basic.normSq (opposite.eval sample) := identity.symm
       _ < epsilon ^ 2 * Gaussian.Norm.Basic.normSq (opposite.eval sample) :=
-        Rat.Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct reciprocalSmall
+        Arithmetic.mul_lt_mul_of_pos_right_direct reciprocalSmall
           (Gaussian.Norm.Basic.normSq_pos oppositeNonzero)
   rw [Gaussian.Field.normSq_div _ _ sourceNonzero]
   change 1 / epsilon ^ 2 ≤

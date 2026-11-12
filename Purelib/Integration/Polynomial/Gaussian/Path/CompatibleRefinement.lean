@@ -21,6 +21,7 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Tactic.Ring
 import Purelib.Data.List.Append
 import Purelib.Data.List.Map
+import Purelib.Data.List.Membership
 
 open Purelib.Integration.Polynomial.Gaussian.Path.Basic.PathModel (ConstantCells)
 
@@ -363,11 +364,114 @@ theorem integral_difference_le {parents children : List Basic.CellModel}
     refinement)] at bounded
   exact bounded
 
+/-- Uniform bounds on the actual parents and children bound every retained original comparison cell.
+
+The comparison keeps each child's displacement and doubles the sum of
+that child's and its actual parent's local allowances. Structural
+recursion preserves the original child occurrences and comparison order.
+-/
+theorem comparisonCells_bounds {parents children : List Basic.CellModel}
+    (refinement : CompatibleConstantPathRefinement parents children)
+    (movement parentAllowance childAllowance : Fraction.Rational)
+    (parentBounds : ∀ parent ∈ parents, parent.localAllowance ≤ parentAllowance)
+    (childBounds : ∀ child ∈ children,
+      Norm.Basic.normSq child.displacement ≤ movement ∧ child.localAllowance ≤ childAllowance) :
+    ∀ cell ∈ comparisonCells refinement,
+      Norm.Basic.normSq cell.displacement ≤ movement ∧
+        cell.localAllowance ≤ 2 * (parentAllowance + childAllowance) := by
+  induction refinement with
+  | nil => intro cell impossible; nomatch impossible
+  | @cons parent parents childCells children head remaining previous =>
+      intro cell member
+      change cell ∈ childCells.map (Basic.PathModel.comparisonCell parent) ++ comparisonCells remaining at member
+      cases Purelib.Data.List.Membership.mem_append.mp member with
+      | inl first =>
+          rcases Purelib.Data.List.Map.mem_map.mp first with ⟨child, selected, same⟩
+          cases same
+          have bound := childBounds child
+            (Purelib.Data.List.Membership.mem_append.mpr (Or.inl selected))
+          constructor
+          · rewrite [Basic.PathModel.comparisonCell_displacement]
+            exact bound.1
+          · change 2 * (parent.localAllowance + child.localAllowance) ≤ _
+            exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+              (Fraction.Order.Arithmetic.add_le_add_direct (parentBounds parent (List.Mem.head _)) bound.2)
+              (by decide : (0 : Fraction.Rational) ≤ 2)
+      | inr tail =>
+          exact previous
+            (fun actual selected => parentBounds actual (List.Mem.tail parent selected))
+            (fun actual selected => childBounds actual
+              (Purelib.Data.List.Membership.mem_append.mpr (Or.inr selected))) cell tail
+
 end Purelib.Integration.Polynomial.Gaussian.Path.CompatibleRefinement.PathModel.CompatibleConstantPathRefinement
 
 end
 end
 
 end
+
+end
+
+public section
+
+namespace Purelib.Integration.Polynomial.Gaussian.Path.Basic.PathModel.CompatibleConstantPathRefinement
+
+open Purelib
+open Purelib.Integration.Polynomial.Gaussian.Cell.Basic (CellModel)
+open Purelib.Integration.Polynomial.Gaussian.Path.CompatibleRefinement.PathModel.CompatibleConstantPathRefinement
+
+set_option backward.match.sparseCases false
+
+/-- Append two actual compatible refinements while retaining their original ordered parents and children.
+
+The empty first refinement returns the literal supplied second cache.
+Each nonempty step retains its actual head certificate and recursively
+attaches the original tail. Only finite list association is transported.
+-/
+def append : {firstParents firstChildren secondParents secondChildren : List CellModel} →
+    CompatibleConstantPathRefinement firstParents firstChildren →
+    CompatibleConstantPathRefinement secondParents secondChildren →
+      CompatibleConstantPathRefinement (firstParents ++ secondParents) (firstChildren ++ secondChildren)
+  | _, _, _, _, .nil, second => second
+  | _, _, _, _, .cons head remaining, second =>
+      cast (congrArg (fun children => CompatibleConstantPathRefinement _ children)
+        (Data.List.Append.append_assoc _ _ _).symm)
+        (CompatibleConstantPathRefinement.cons head (append remaining second))
+
+/-- An empty left refinement returns the same complete supplied right certificate. -/
+theorem append_nil {parents children : List CellModel}
+    (second : CompatibleConstantPathRefinement parents children) : append .nil second = second := by
+  unfold append
+  rfl
+
+/-- Exact parent and child identities let whole heterogeneous certificate equality preserve its comparison cells. -/
+private theorem comparisonCells_heq {firstParents firstChildren lastParents lastChildren : List CellModel}
+    (parents : firstParents = lastParents) (children : firstChildren = lastChildren)
+    {first : CompatibleConstantPathRefinement firstParents firstChildren}
+    {last : CompatibleConstantPathRefinement lastParents lastChildren} (same : HEq first last) :
+    comparisonCells first = comparisonCells last := by
+  cases parents
+  cases children
+  exact congrArg comparisonCells (eq_of_heq same)
+
+/-- Appending the actual refinements concatenates their same retained comparison cells in original order. -/
+theorem comparisonCells_append {firstParents firstChildren secondParents secondChildren : List CellModel}
+    (first : CompatibleConstantPathRefinement firstParents firstChildren)
+    (second : CompatibleConstantPathRefinement secondParents secondChildren) :
+    comparisonCells (append first second) = comparisonCells first ++ comparisonCells second := by
+  induction first with
+  | nil => unfold append; rfl
+  | cons head remaining previous =>
+      have same : HEq (append (.cons head remaining) second)
+          (CompatibleConstantPathRefinement.cons head (append remaining second)) := by
+        rewrite [append]
+        exact cast_heq _ _
+      have readback := comparisonCells_heq rfl (Data.List.Append.append_assoc _ _ _) same
+      rewrite [readback]
+      change _ ++ comparisonCells (append remaining second) = (_ ++ comparisonCells remaining) ++ _
+      rewrite [previous]
+      exact (Data.List.Append.append_assoc _ _ _).symm
+
+end Purelib.Integration.Polynomial.Gaussian.Path.Basic.PathModel.CompatibleConstantPathRefinement
 
 end

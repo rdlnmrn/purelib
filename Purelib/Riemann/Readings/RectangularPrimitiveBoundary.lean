@@ -37,6 +37,8 @@ for the default indexing algorithm.  The A/B period-word identification is
 still a separate cut-surface obligation.
 -/
 
+open Purelib.Riemann.Integration.RectangularSharedPrimitives renaming SharedPrimitiveValues -> SharedValues
+
 namespace Purelib.Riemann.Readings.RectangularPrimitiveBoundary
 
 open Purelib.Data.Gaussian in
@@ -71,24 +73,6 @@ variable {polynomial numerator : Polynomial.Dense.Gaussian.Basic.CanonicalCoeffi
     {anchors : PrimitiveAnchors primitives} {offsets : LinearAlgebra.Grid.Offsets anchors.edges}
     {triangles : List (ModelTriangle geometry)} {surface : OwnedTriangulation triangles}
 
-open Purelib in
-open Purelib.Data.Gaussian in
-/-- Read the retained shared primitive at a present original mesh coordinate, returning zero outside the vertex list. -/
-def atPoint (readings : SharedPrimitiveValues anchors offsets surface) (point : Basic.Canonical) : Basic.Canonical :=
-  if member : point ∈ surface.mesh.vertices then
-    readings.values (Topology.Mesh.CoordinateTriangulation.lookupVertex point surface.mesh.vertices member).index
-  else 0
-
-open Purelib in
-open Purelib.Riemann.Readings in
-/-- Coordinate lookup returns the exact retained reading at every original mesh vertex. -/
-theorem atPoint_coordinate (readings : SharedPrimitiveValues anchors offsets surface)
-    (vertex : Fin surface.mesh.vertices.length) : RectangularPrimitiveBoundary.SharedPrimitiveValues.atPoint readings
-      (surface.mesh.coordinate vertex) = readings.values vertex := by
-  have member : surface.mesh.coordinate vertex ∈ surface.mesh.vertices := List.getElem_mem _
-  rw [atPoint, dif_pos member]
-  exact readings.coordinate_consistent _ vertex (Topology.Mesh.CoordinateTriangulation.lookupVertex _ _ _).coordinate_eq
-
 open Purelib.Algebra in
 open Purelib.Data.Rat in
 open Purelib.Geometry.Rectangle.Partition in
@@ -102,7 +86,7 @@ theorem sample_boundary_eq_wedges (readings : SharedPrimitiveValues anchors offs
     (radius : Fraction.Rational) (positive : 0 < radius) :
     (readings.sample radius positive).boundaryArea =
       PreparedBoxBoundary.sumCoordinateWedges (fun point => Polygon.energyPrimitivePoint
-        (RectangularPrimitiveBoundary.SharedPrimitiveValues.atPoint readings point))
+        (SharedValues.atPoint readings point))
         (triangles.map ModelTriangle.triangle) := by
   change edgeListArea (fun vertex => Polygon.energyPrimitivePoint (readings.values vertex))
     surface.mesh.triangulation.boundary = _
@@ -114,9 +98,9 @@ theorem sample_boundary_eq_wedges (readings : SharedPrimitiveValues anchors offs
     (Polygon.energyPrimitivePoint (readings.values (surface.mesh.triangulation.faces face).first))
     (Polygon.energyPrimitivePoint (readings.values (surface.mesh.triangulation.faces face).second))
     (Polygon.energyPrimitivePoint (readings.values (surface.mesh.triangulation.faces face).third)) = _
-  rw [← RectangularPrimitiveBoundary.SharedPrimitiveValues.atPoint_coordinate readings, ←
-    RectangularPrimitiveBoundary.SharedPrimitiveValues.atPoint_coordinate readings, ←
-    RectangularPrimitiveBoundary.SharedPrimitiveValues.atPoint_coordinate readings,
+  rw [← SharedValues.atPoint_coordinate readings, ←
+    SharedValues.atPoint_coordinate readings, ←
+    SharedValues.atPoint_coordinate readings,
     coordinates.1, coordinates.2.1, coordinates.2.2]
   rfl
 
@@ -205,7 +189,7 @@ theorem sample_boundary_eq_selection (readings : SharedPrimitiveValues anchors o
     (radius : Fraction.Rational) (positive : 0 < radius) :
     (readings.sample radius positive).boundaryArea =
       RectangularPrimitiveBoundary.Geometry.selectionBoundary geometry (fun point => Polygon.energyPrimitivePoint
-        (RectangularPrimitiveBoundary.SharedPrimitiveValues.atPoint readings point)) depth selection := by
+        (SharedValues.atPoint readings point)) depth selection := by
   rw [RectangularPrimitiveBoundary.SharedPrimitiveValues.sample_boundary_eq_wedges readings,
     RectangularPrimitiveBoundary.Geometry.refineSelection_wedges geometry]
 
@@ -217,7 +201,7 @@ theorem sample_energy_le_selectionBoundary (readings : SharedPrimitiveValues anc
     let sample := readings.sample radius positive
     sample.affineEnergy - sample.errorBudget ≤
       (RectangularPrimitiveBoundary.Geometry.selectionBoundary geometry (fun point => Polygon.energyPrimitivePoint
-        (RectangularPrimitiveBoundary.SharedPrimitiveValues.atPoint readings point)) depth selection).im / 4 := by
+        (SharedValues.atPoint readings point)) depth selection).im / 4 := by
   have estimate := (readings.sample radius positive).affineEnergy_sub_errorBudget_le_boundaryEnergy
   rw [RectangularPrimitiveBoundary.SharedPrimitiveValues.sample_boundary_eq_selection readings] at estimate
   exact estimate

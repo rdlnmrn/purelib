@@ -170,7 +170,7 @@ theorem not_identicallyZero
       (denominatorAt index)).1
     exact ⟨DensePolynomial.eval_eq_zero_of_isZero realZero (parameter index),
       DensePolynomial.eval_eq_zero_of_isZero imaginaryZero (parameter index)⟩
-  have tooMany := Dense.RootBound.Roots.nodup_zeros_length_lt_degreeCount
+  have tooMany := Dense.RootBound.Extensionality.nodup_zeros_length_lt_degreeCount
     p polynomialNonzero points pointsNodup roots
   rw [Data.List.OfFn.Basic.length_ofFn,
     DensePolynomial.natDegree_add_one_eq_degreeCount polynomialNonzero] at tooMany

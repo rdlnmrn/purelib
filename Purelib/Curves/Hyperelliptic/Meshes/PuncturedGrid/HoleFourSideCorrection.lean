@@ -67,27 +67,27 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleComponentCorrection (holeSideValue holeCorrection)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_ite_eq)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {cuts : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : Riemann.Meshes.FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
+  {cuts : CommonCuts domains}
     {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet}
-  {target : Purelib.Data.Rat.Fraction.Rational} {i j : Fin genus} {stage : Nat} {cache :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
-  {request : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains cuts sheet
+    Preflights domains sheet}
+  {target : Rational} {i j : Fin genus} {stage : Nat} {cache :
+    Numerics domains stage}
+  {request : TwoSheetRequest (fun sheet =>
+    RegularMeshes.build domains cuts sheet
     coarseDepth) fixed target}
 
 /-- The finite hole-side sum selects the unique retained adjacent regular face. -/
-private theorem side_sum (hole : Fin base.faces.holes.length) (side : GridLiftedDualSteps.GridSide)
+private theorem side_sum (hole : Fin base.faces.holes.length) (side : GridSide)
     (position : Fin base.faces.regulars.length) (values : Fin base.faces.regulars.length →
-      Data.Gaussian.Basic.Canonical)
+      Gaussian)
     (matching : side.Matches base.faces.regulars[position.val].cell.box base.faces.holes[hole.val].cell.box) :
     FiniteSum.Fin.sumFin (fun p =>
-      Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleComponentCorrection.holeSideValue hole side p (values p)) =
+      HoleComponentCorrection.holeSideValue hole side p (values p)) =
       values position := by
   have equal (p : Fin base.faces.regulars.length) : HoleComponentCorrection.holeSideValue hole side p (values p) =
       if p = position then values p else 0 := by
@@ -124,24 +124,24 @@ theorem holeCorrection_eq_fourSides (perimeters : Matched.FacePerimeters (reques
       TrianglePrimitiveReadings.TriangleReadings (cache.get j) lifted.mesh)
     (hole : Fin base.faces.holes.length) (adjacent : HoleAdjacentFaces base
       (base.faces.holes[hole.val]'hole.isLt)) :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleComponentCorrection.holeCorrection perimeters left right hole
-      = Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleFourSideCorrection.fourSideHoleCorrection perimeters left
+    HoleComponentCorrection.holeCorrection perimeters left right hole
+      = HoleFourSideCorrection.fourSideHoleCorrection perimeters left
       right adjacent := by
   unfold HoleComponentCorrection.holeCorrection HoleFourSideCorrection.fourSideHoleCorrection
-  rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleFourSideCorrection.side_sum hole .right adjacent.left.position _
+  rw [HoleFourSideCorrection.side_sum hole .right adjacent.left.position _
     adjacent.left.matching.reverse,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleFourSideCorrection.side_sum hole .left adjacent.right.position _
+    HoleFourSideCorrection.side_sum hole .left adjacent.right.position _
       adjacent.right.matching.reverse,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleFourSideCorrection.side_sum hole .top adjacent.bottom.position _
+    HoleFourSideCorrection.side_sum hole .top adjacent.bottom.position _
       adjacent.bottom.matching.reverse,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleFourSideCorrection.side_sum hole .bottom adjacent.top.position _
+    HoleFourSideCorrection.side_sum hole .bottom adjacent.top.position _
       adjacent.top.matching.reverse]
   congr 1
   apply FiniteSum.Fin.sumFin_congr
   intro sheet
-  rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleFourSideCorrection.side_sum hole .right adjacent.left.position _
+  rw [HoleFourSideCorrection.side_sum hole .right adjacent.left.position _
     adjacent.left.matching.reverse,
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleFourSideCorrection.side_sum hole .top adjacent.bottom.position _
+    HoleFourSideCorrection.side_sum hole .top adjacent.bottom.position _
       adjacent.bottom.matching.reverse]
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleFourSideCorrection

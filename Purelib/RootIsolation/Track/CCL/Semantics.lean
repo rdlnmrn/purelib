@@ -51,12 +51,12 @@ theorem toNamedAt_exact
     {p : CoefficientPolynomial} {ambient : Box}
     (track : WindingOneTrack p ambient) (state : State.WindingOne.Basic.WindingOneState p ambient)
     (count : Nat) :
-    Data.CCL.Transducer.Machine.Semantics.Basic.ExactCursor
-      (Track.Approximation.Process.toProcess track) state
+    Machine.Semantics.Basic.ExactCursor
+      (Approximation.Process.toProcess track) state
       (Machine.Advance.advance
-        (Track.Approximation.Name.toNamedAt track state).machine count) :=
+        (Approximation.Name.toNamedAt track state).machine count) :=
   open Purelib.Approximation.Gaussian in Name.CCL.Semantics.Named.advance_exact
-    (Track.Approximation.Name.toNamedAt track state) count
+    (Approximation.Name.toNamedAt track state) count
 
 /-- Pointwise box/cursor compatibility: every quantitative tail after a
 finite bit request reconstructs a displayed rational point of the source
@@ -67,31 +67,31 @@ theorem toNamedAt_candidate_exact
     (count : Nat)
     {tail : Gaussian.Basic.Canonical}
     (possible :
-      Data.CCL.Transducer.Mode.Semantics.SemanticMode.possible
+      CCL.Transducer.Mode.Semantics.SemanticMode.possible
         (Machine.Advance.advance
-          (Track.Approximation.Name.toNamedAt track state).machine count).mode tail) :
+          (Approximation.Name.toNamedAt track state).machine count).mode tail) :
     ∃ value : Gaussian.Basic.Canonical,
       state.box.Contains value ∧
         (Geometry.Projective.Line.Matrix.act
-          (Data.CCL.Encoding.Parser.State.parse
+          (CCL.Encoding.Parser.State.parse
             (Machine.committed
               (Machine.Advance.advance
-                (Track.Approximation.Name.toNamedAt track state).machine count))).matrix
-          (Data.CCL.Transducer.Mode.Semantics.SemanticMode.parserTail
+                (Approximation.Name.toNamedAt track state).machine count))).matrix
+          (CCL.Transducer.Mode.Semantics.SemanticMode.parserTail
             (Machine.Advance.advance
-              (Track.Approximation.Name.toNamedAt track state).machine count).mode tail)).Equivalent
+              (Approximation.Name.toNamedAt track state).machine count).mode tail)).Equivalent
                 (Geometry.Projective.Line.Proj.affine value) := open Purelib.Approximation.Gaussian in by
   exact Name.CCL.Semantics.Named.advance_candidate_exact
-    (Track.Approximation.Name.toNamedAt track state) count possible
+    (Approximation.Name.toNamedAt track state) count possible
 
 /-- Every finite advance of the initial track cursor remains exact for the original initial winding box. -/
 theorem initial_exact
     {p : CoefficientPolynomial} {ambient : Box}
     (track : WindingOneTrack p ambient) (count : Nat) :
-    Data.CCL.Transducer.Machine.Semantics.Basic.ExactCursor
-      (Track.Approximation.Process.toProcess track) track.initial
+    Machine.Semantics.Basic.ExactCursor
+      (Approximation.Process.toProcess track) track.initial
       (Machine.Advance.advance
-        (Track.Approximation.Name.initialNamed track).machine count) :=
+        (Approximation.Name.initialNamed track).machine count) :=
   toNamedAt_exact track track.initial count
 
 end Purelib.RootIsolation.Track.CCL.Semantics

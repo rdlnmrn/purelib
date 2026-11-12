@@ -80,58 +80,58 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartRequ
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartAcquisition.BasisIntervalChartRequest.Plan
   (Evaluation)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {model :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell}
-  {parameter target sourceTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor sourceFloor :
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : ParameterEdge} {cell :
+    Cell data edge}
+  {regular : RegularBounds.Data cap} {model :
+    RootModel cell}
+  {parameter target sourceTarget : Coordinate} {floor sourceFloor :
     Nat}
-  {covers : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
+  {covers : BasisSourceCovers parent}
 
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
 
-variable {cover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data}
+variable {cover : Cover data}
 
 open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Data.Gaussian.Basic.Canonical
 open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 
-variable {depth : Nat} {allowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+variable {depth : Nat} {allowance : Coordinate}
 
-variable {index minimum stage : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {polynomials : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+variable {index minimum stage : Nat} {box : Geometry.Rational.Box}
+  {capSample : Primitives.Sample cap differential index box}
+  {polynomials : RegularBasisPolynomials cap
     index box}
 
 namespace BasisIntervalChartRequest.Plan
 
 /-- The anchor geometry is the common interval's retained original cell. -/
-@[expose] def AnchorSample (interval : CommonCover.BasisCommonInterval cover covers)
+@[expose] def AnchorSample (interval : BasisCommonInterval cover covers)
     (regular : RegularBounds.Data cap)
     (capSample : Primitives.Sample cap differential index box) :=
   ArcSamples.Sample (ArcSamples.Data.build regular interval.anchor.cell) capSample
 
 /-- Read the common interval's actual anchor primitive from the retained bank and attach the supplied cap sample. -/
-@[expose] def anchorSample (interval : CommonCover.BasisCommonInterval cover covers)
+@[expose] def anchorSample (interval : BasisCommonInterval cover covers)
     (regular : RegularBounds.Data cap)
     (anchorBank : UniformReciprocalPrimitives.PrimitiveCells data index cover.mesh.edges)
     (capSample : Primitives.Sample cap differential index box) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisIntervalChartRequest.Plan.AnchorSample
+      AnchorSample
       interval regular capSample :=
   let retained := anchorBank.readCell interval.anchor.cell interval.anchor.member
   ArcSamples.Sample.ofPrimitive (ArcSamples.Data.build regular interval.anchor.cell)
     capSample retained.primitive retained.cell_eq
 
-variable {interval : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover
+variable {interval : BasisCommonInterval cover
   covers}
-  {request : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartRequest.BasisIntervalChartRequest
+  {request : BasisIntervalChartRequest
     interval regular depth target sourceTarget floor sourceFloor}
 
 set_option genInjectivity false in
@@ -139,30 +139,30 @@ set_option genInjectivity false in
 
 The retained sample equality binds evaluation to the original anchor bank, while all basis transports consume the same
 supplied sample bank and stage. -/
-structure Acquisition (plan : BasisIntervalChartRequest.Plan request capSample polynomials minimum)
+structure Acquisition (plan : Plan request capSample polynomials minimum)
     (anchorBank : UniformReciprocalPrimitives.PrimitiveCells data index cover.mesh.edges)
     (bank : BasisSourceLocations.SampleBank covers index) (stage : Nat) where
   /-- The retained actual anchor sample on the original interval. -/ sample :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisIntervalChartRequest.Plan.AnchorSample
+    AnchorSample
     interval regular capSample
   /-- The sample is exactly the anchor-bank readback for this interval and cap sample. -/ sample_eq : sample =
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisIntervalChartRequest.Plan.anchorSample
+    anchorSample
     interval regular anchorBank capSample
-  /-- The acquired chart readings and basis transports at the retained stage. -/ evaluated : Plan.Evaluation plan sample
+  /-- The acquired chart readings and basis transports at the retained stage. -/ evaluated : Evaluation plan sample
     bank stage
 
 constructive_injectivity Acquisition
 
 /-- Acquire one interval's actual anchor and basis readings after both the model and reading thresholds are paid. -/
-@[expose] def acquire (plan : BasisIntervalChartRequest.Plan request capSample polynomials minimum)
+@[expose] def acquire (plan : Plan request capSample polynomials minimum)
     (anchorBank : UniformReciprocalPrimitives.PrimitiveCells data index cover.mesh.edges)
     (bank : BasisSourceLocations.SampleBank covers index)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
     (modelLater : request.index ≤ index) (stage : Nat) (readingLater : plan.stage ≤ stage) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisIntervalChartRequest.Plan.Acquisition
+      Acquisition
       plan anchorBank bank stage :=
   let sample :=
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisIntervalChartRequest.Plan.anchorSample
+    anchorSample
     interval regular anchorBank capSample
   ⟨sample, rfl, plan.evaluate sample bank branch modelLater stage readingLater⟩
 
@@ -174,13 +174,13 @@ namespace BasisCommonChartRequests.Plans
 original common-interval order. -/
 @[expose] def Readings (anchorBank : UniformReciprocalPrimitives.PrimitiveCells data index cover.mesh.edges)
     (bank : BasisSourceLocations.SampleBank covers index) (stage : Nat) :
-    {intervals : List (CommonCover.BasisCommonInterval cover covers)} →
-    (requests : CommonChartSchedule.BasisCommonChartRequests regular depth target allowance floor sourceFloor intervals)
+    {intervals : List (BasisCommonInterval cover covers)} →
+    (requests : BasisCommonChartRequests regular depth target allowance floor sourceFloor intervals)
       →
-    BasisCommonChartRequests.Plans capSample polynomials minimum requests → Type 2
+    Plans capSample polynomials minimum requests → Type 2
   | _, .nil, _ => PUnit
   | _, .cons _ tail, plans =>
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisIntervalChartRequest.Plan.Acquisition
+    BasisIntervalChartRequest.Plan.Acquisition
     plans.1 anchorBank bank stage ×
     Readings
     anchorBank bank stage tail plans.2
@@ -192,23 +192,23 @@ thresholds. -/
 @[expose] def read (anchorBank : UniformReciprocalPrimitives.PrimitiveCells data index cover.mesh.edges)
     (bank : BasisSourceLocations.SampleBank covers index)
     (branch : HyperellipticReciprocal.originOrder curve = 1) (readingStage : Nat) :
-    {intervals : List (CommonCover.BasisCommonInterval cover covers)} →
-    (requests : CommonChartSchedule.BasisCommonChartRequests regular depth target allowance floor sourceFloor intervals)
+    {intervals : List (BasisCommonInterval cover covers)} →
+    (requests : BasisCommonChartRequests regular depth target allowance floor sourceFloor intervals)
       →
-    (plans : BasisCommonChartRequests.Plans capSample polynomials minimum requests) →
+    (plans : Plans capSample polynomials minimum requests) →
     requests.index ≤ index → Plans.stage requests plans ≤ readingStage →
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisCommonChartRequests.Plans.Readings
+      Readings
       anchorBank bank readingStage requests plans
   | _, .nil, _, _, _ => ⟨⟩
   | _, .cons head tail, plans, modelLater, readingLater =>
-      ⟨Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisIntervalChartRequest.Plan.acquire
-        plans.1 anchorBank bank branch ((Purelib.Data.Nat.Order.le_max_left head.request.index tail.index).trans
+      ⟨BasisIntervalChartRequest.Plan.acquire
+        plans.1 anchorBank bank branch ((Data.Nat.Order.le_max_left head.request.index tail.index).trans
         modelLater)
-        readingStage ((Purelib.Data.Nat.Order.le_max_left ..).trans readingLater),
+        readingStage ((Data.Nat.Order.le_max_left ..).trans readingLater),
 
           read
-          anchorBank bank branch readingStage tail plans.2 ((Purelib.Data.Nat.Order.le_max_right ..).trans modelLater)
-          ((Purelib.Data.Nat.Order.le_max_right ..).trans readingLater)⟩
+          anchorBank bank branch readingStage tail plans.2 ((Data.Nat.Order.le_max_right ..).trans modelLater)
+          ((Data.Nat.Order.le_max_right ..).trans readingLater)⟩
 
 end BasisCommonChartRequests.Plans
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings

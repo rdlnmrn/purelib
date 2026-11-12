@@ -1,6 +1,7 @@
 module
 
 public import Init.Prelude
+public import Purelib.Data.Nat.Order
 meta import Purelib.Elab.ConstructiveInjectivity
 
 section
@@ -41,6 +42,40 @@ structure CommonSchedule where
 constructive_injectivity CommonSchedule
 
 namespace CommonSchedule
+
+open Purelib.Data.Nat
+
+/-- Advance both retained schedules to their coordinatewise maximum.
+
+Each selected stream remains monotone and meets both original floors. The
+original schedules remain available to transport their cached comparisons
+to these later indices. -/
+def join (left right : CommonSchedule) : CommonSchedule where
+  sourceIndex := fun request => max (left.sourceIndex request) (right.sourceIndex request)
+  targetIndex := fun request => max (left.targetIndex request) (right.targetIndex request)
+  comparisonIndex := fun request => max (left.comparisonIndex request) (right.comparisonIndex request)
+  source_ge := fun request => Nat.le_trans (left.source_ge request) (Order.le_max_left _ _)
+  target_ge := fun request => Nat.le_trans (left.target_ge request) (Order.le_max_left _ _)
+  comparison_ge := fun request => Nat.le_trans (left.comparison_ge request) (Order.le_max_left _ _)
+  source_mono := fun order => Order.max_le_max (left.source_mono order) (right.source_mono order)
+  target_mono := fun order => Order.max_le_max (left.target_mono order) (right.target_mono order)
+  comparison_mono := fun order => Order.max_le_max (left.comparison_mono order) (right.comparison_mono order)
+
+/-- The joined target stream is at least the first original target stream. -/
+theorem target_le_join_left (left right : CommonSchedule) (request : Nat) :
+    left.targetIndex request ≤ (left.join right).targetIndex request := Order.le_max_left _ _
+
+/-- The joined target stream is at least the second original target stream. -/
+theorem target_le_join_right (left right : CommonSchedule) (request : Nat) :
+    right.targetIndex request ≤ (left.join right).targetIndex request := Order.le_max_right _ _
+
+/-- The joined comparison stream is at least the first original comparison stream. -/
+theorem comparison_le_join_left (left right : CommonSchedule) (request : Nat) :
+    left.comparisonIndex request ≤ (left.join right).comparisonIndex request := Order.le_max_left _ _
+
+/-- The joined comparison stream is at least the second original comparison stream. -/
+theorem comparison_le_join_right (left right : CommonSchedule) (request : Nat) :
+    right.comparisonIndex request ≤ (left.join right).comparisonIndex request := Order.le_max_right _ _
 
 open Purelib
 /-- The request itself is a deterministic common schedule. -/

@@ -54,7 +54,7 @@ private theorem
         (radialSquare := radialSquare)
     (scalar center + generator) ^ index +
         (scalar center - generator) ^ index =
-      scalar (2 * Recurrence.Chebyshev.First.Basic.chebyshevFirst index center) := by
+      scalar (2 * Basic.chebyshevFirst index center) := by
   dsimp only
   let scalar :=
     Algebra.Quadratic.Pair.scalar (radialSquare := radialSquare)
@@ -92,21 +92,21 @@ private theorem
     all_goals ring1
   let traceAt := fun current : Nat =>
     positive ^ current + negative ^ current =
-      scalar (2 * Recurrence.Chebyshev.First.Basic.chebyshevFirst current center)
+      scalar (2 * Basic.chebyshevFirst current center)
   have allPairs : ∀ current : Nat,
       traceAt current ∧ traceAt (current + 1) := by
     intro current
     induction current with
     | zero =>
         constructor
-        · unfold traceAt positive negative scalar generator Recurrence.Chebyshev.First.Basic.chebyshevFirst
+        · unfold traceAt positive negative scalar generator Basic.chebyshevFirst
           apply Algebra.Quadratic.Pair.ext <;>
             simp only [pow_zero, Algebra.Quadratic.Pair.add_re,
               Algebra.Quadratic.Pair.add_im, Algebra.Quadratic.Pair.one_re,
               Algebra.Quadratic.Pair.one_im, Algebra.Quadratic.Pair.scalar_re,
               Algebra.Quadratic.Pair.scalar_im]
           all_goals ring1
-        · unfold traceAt positive negative scalar generator Recurrence.Chebyshev.First.Basic.chebyshevFirst
+        · unfold traceAt positive negative scalar generator Basic.chebyshevFirst
           apply Algebra.Quadratic.Pair.ext <;>
             simp only [Nat.zero_add, pow_one, Algebra.Quadratic.Pair.add_re,
               Algebra.Quadratic.Pair.add_im, Algebra.Quadratic.Pair.sub_re,
@@ -120,10 +120,10 @@ private theorem
         · simpa only [Nat.succ_eq_add_one] using inductionHypothesis.2
         · unfold traceAt
           rw [show Nat.succ current + 1 = current + 2 by omega0]
-          rw [Recurrence.Chebyshev.First.QuadraticPair.quadraticPair_power_recurrence
+          rw [quadraticPair_power_recurrence
             positive (scalar center)
               positiveQuadratic,
-            Recurrence.Chebyshev.First.QuadraticPair.quadraticPair_power_recurrence
+            quadraticPair_power_recurrence
               negative (scalar center)
               negativeQuadratic]
           calc
@@ -140,18 +140,18 @@ private theorem
                   generalize negative ^ current = negativePriorPower
                   ring1
             _ = 2 * scalar center *
-                  scalar (2 * Recurrence.Chebyshev.First.Basic.chebyshevFirst (current + 1) center) -
-                scalar (2 * Recurrence.Chebyshev.First.Basic.chebyshevFirst current center) := by
+                  scalar (2 * Basic.chebyshevFirst (current + 1) center) -
+                scalar (2 * Basic.chebyshevFirst current center) := by
                   rw [inductionHypothesis.1, inductionHypothesis.2]
             _ = scalar
-                (2 * center * (2 * Recurrence.Chebyshev.First.Basic.chebyshevFirst (current + 1) center) -
-                  2 * Recurrence.Chebyshev.First.Basic.chebyshevFirst current center) := by
+                (2 * center * (2 * Basic.chebyshevFirst (current + 1) center) -
+                  2 * Basic.chebyshevFirst current center) := by
                   rw [Algebra.Quadratic.Pair.two_eq_scalar]
                   rw [← Algebra.Quadratic.Pair.scalar_mul,
                     ← Algebra.Quadratic.Pair.scalar_mul,
                     ← Algebra.Quadratic.Pair.scalar_sub]
-            _ = scalar (2 * Recurrence.Chebyshev.First.Basic.chebyshevFirst (current + 2) center) := by
-                  rw [Recurrence.Chebyshev.First.Basic.chebyshevFirst_succ_succ]
+            _ = scalar (2 * Basic.chebyshevFirst (current + 2) center) := by
+                  rw [Basic.chebyshevFirst_succ_succ]
                   congr 1
                   ring1
   exact (allPairs index).1
@@ -170,8 +170,8 @@ theorem chebyshevFirst_quadraticPair_trace
         (radialSquare := radialSquare)
     (scalar center + generator) ^ index +
         (scalar center - generator) ^ index =
-      scalar (2 * Recurrence.Chebyshev.First.Basic.chebyshevFirst index center) :=
-  Recurrence.Chebyshev.First.QuadraticPair.quadraticPair_chebyshev_trace index center
+      scalar (2 * Basic.chebyshevFirst index center) :=
+  quadraticPair_chebyshev_trace index center
     radialSquare radialEquation
 end Purelib.Polynomial.Recurrence.Chebyshev.First.QuadraticPair
 

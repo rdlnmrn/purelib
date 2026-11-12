@@ -21,6 +21,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -61,10 +63,10 @@ set_option genInjectivity false in
 
 The two structural arrays retain the different vertex bounds for each edge direction. -/
 structure Edges (columns rows : Nat) where
-  /-- The horizontal increment at each bounded column and vertex row. -/ horizontal : LinearAlgebra.Grid.Offsets.Vector
-    (LinearAlgebra.Grid.Offsets.Vector LinearAlgebra.Grid.Offsets.Gaussian (rows + 1)) columns
-  /-- The vertical increment at each vertex column and bounded row. -/ vertical : LinearAlgebra.Grid.Offsets.Vector
-    (LinearAlgebra.Grid.Offsets.Vector LinearAlgebra.Grid.Offsets.Gaussian rows) (columns + 1)
+  /-- The horizontal increment at each bounded column and vertex row. -/ horizontal : Offsets.Vector
+    (Offsets.Vector Gaussian (rows + 1)) columns
+  /-- The vertical increment at each vertex column and bounded row. -/ vertical : Offsets.Vector
+    (Offsets.Vector Gaussian rows) (columns + 1)
 
 constructive_injectivity Edges
 
@@ -75,7 +77,7 @@ namespace Offsets.Edges
 
 The forward horizontal and vertical increments are subtracted from their opposite boundary readings with the displayed
 orientation. -/
-def square {columns rows : Nat} (edges : LinearAlgebra.Grid.Offsets.Edges columns rows) (column : Fin columns)
+def square {columns rows : Nat} (edges : Edges columns rows) (column : Fin columns)
   (row : Fin rows) : Gaussian :=
   edges.horizontal column row.castSucc + edges.vertical column.succ row -
     edges.vertical column.castSucc row - edges.horizontal column row.succ
@@ -86,9 +88,9 @@ set_option genInjectivity false in
 
 Horizontal edges and the first column retain their exact increment equations. The remaining square defects are bounded
 separately and need not vanish. -/
-structure Offsets {columns rows : Nat} (edges : LinearAlgebra.Grid.Offsets.Edges columns rows) where
-  /-- The cached Gaussian offset at every bounded grid vertex. -/ values : LinearAlgebra.Grid.Offsets.Vector
-    (LinearAlgebra.Grid.Offsets.Vector LinearAlgebra.Grid.Offsets.Gaussian (rows + 1)) (columns + 1)
+structure Offsets {columns rows : Nat} (edges : Offsets.Edges columns rows) where
+  /-- The cached Gaussian offset at every bounded grid vertex. -/ values : Offsets.Vector
+    (Offsets.Vector Offsets.Gaussian (rows + 1)) (columns + 1)
   /-- Each forward horizontal vertex difference equals its retained edge increment. -/ horizontal : ∀ column row,
     values column.succ row = values column.castSucc row + edges.horizontal column row
   /-- Each forward vertical difference in the first column equals its retained edge increment. -/ firstVertical : ∀ row,
@@ -101,12 +103,12 @@ namespace Offsets
 end Offsets
 namespace Offsets
 
-variable {columns rows : Nat} {edges : Purelib.LinearAlgebra.Grid.Offsets.Edges columns rows}
+variable {columns rows : Nat} {edges : Edges columns rows}
 
 /-- Integrate the retained edge increments along the first column and each horizontal row.
 
 The supplied initial value anchors the cached vertex array; the result certifies exactly the spanning-tree equations. -/
-def build (edges : LinearAlgebra.Grid.Offsets.Edges columns rows) (initial : Gaussian := 0) :
+def build (edges : Edges columns rows) (initial : Gaussian := 0) :
   Offsets edges :=
   let first := Data.Vector.Scan.scan (· + ·) initial (edges.vertical 0)
   { values := Data.Vector.Scan.propagate (· + ·) first edges.horizontal
@@ -117,8 +119,8 @@ def build (edges : LinearAlgebra.Grid.Offsets.Edges columns rows) (initial : Gau
       exact Data.Vector.Scan.scan_step (· + ·) (edges.vertical 0) initial row }
 
 /-- The constructed offset at the grid origin equals the supplied initial value. -/
-theorem build_origin (edges : LinearAlgebra.Grid.Offsets.Edges columns rows) (initial :
-  LinearAlgebra.Grid.Offsets.Gaussian) :
+theorem build_origin (edges : Edges columns rows) (initial :
+  Gaussian) :
     (build edges initial).values 0 0 = initial := by
   change Data.Vector.Scan.propagate (· + ·) (Data.Vector.Scan.scan (· + ·) initial (edges.vertical 0)) edges.horizontal
     0 0 = initial
@@ -139,18 +141,18 @@ theorem verticalGap_zero (offsets : Offsets edges) (row : Fin rows) : offsets.ve
 theorem verticalGap_step (offsets : Offsets edges) (column : Fin columns) (row : Fin rows) :
     offsets.verticalGap column.succ row = offsets.verticalGap column.castSucc row - edges.square column row := by
   simp only [verticalGap, offsets.horizontal,
-    LinearAlgebra.Grid.Offsets.Edges.square]
+    Edges.square]
   ring1
 
 /-- Represent a vertical gap by a list of bounded square defects along its column prefix.
 
 The retained list has exactly the column index as its length, and each term obeys the supplied squared-norm bound. -/
 private theorem verticalGap_terms (offsets : Offsets edges) (bound :
-  LinearAlgebra.Grid.Offsets.Coordinate)
-    (squareBound : ∀ column row, Data.Gaussian.Norm.Basic.normSq (edges.square column row) ≤ bound)
+  Coordinate)
+    (squareBound : ∀ column row, Basic.normSq (edges.square column row) ≤ bound)
     (column : Fin (columns + 1)) (row : Fin rows) :
-    ∃ terms : List LinearAlgebra.Grid.Offsets.Gaussian, terms.length = column.val ∧
-      (∀ term ∈ terms, Data.Gaussian.Norm.Basic.normSq term ≤ bound) ∧ offsets.verticalGap column row =
+    ∃ terms : List Gaussian, terms.length = column.val ∧
+      (∀ term ∈ terms, Basic.normSq term ≤ bound) ∧ offsets.verticalGap column row =
         Data.Gaussian.Norm.Sum.Basic.gaussianSum terms := by
   induction column using Data.Fin.induction with
   | zero =>
@@ -161,7 +163,7 @@ private theorem verticalGap_terms (offsets : Offsets edges) (bound :
       · exact congrArg (· + 1) length
       · intro term member
         rcases Data.List.Membership.mem_cons.mp member with same | member
-        · rw [same, Data.Gaussian.Norm.Basic.normSq_neg]
+        · rw [same, Basic.normSq_neg]
           exact squareBound column row
         · exact bounded term member
       · rw [offsets.verticalGap_step, equal]
@@ -171,11 +173,11 @@ private theorem verticalGap_terms (offsets : Offsets edges) (bound :
 
 /-- Cauchy pays the actual number of square defects on this column prefix. -/
 theorem verticalGap_bound (offsets : Offsets edges) (bound :
-  LinearAlgebra.Grid.Offsets.Coordinate)
-    (squareBound : ∀ column row, Data.Gaussian.Norm.Basic.normSq (edges.square column row) ≤ bound)
+  Coordinate)
+    (squareBound : ∀ column row, Basic.normSq (edges.square column row) ≤ bound)
     (column : Fin (columns + 1)) (row : Fin rows) :
-    Data.Gaussian.Norm.Basic.normSq (offsets.verticalGap column row) ≤ (column.val :
-      LinearAlgebra.Grid.Offsets.Coordinate) ^ 2 * bound := by
+    Basic.normSq (offsets.verticalGap column row) ≤ (column.val :
+      Coordinate) ^ 2 * bound := by
   rcases offsets.verticalGap_terms bound squareBound column row with ⟨terms, length, bounded, equal⟩
   rw [equal]
   have estimate := Data.Gaussian.Norm.Sum.Bounds.normSq_sum_le terms bound bounded
@@ -186,11 +188,11 @@ theorem verticalGap_bound (offsets : Offsets edges) (bound :
 
 The supplied bound is nonnegative and applies to every bounded grid square. -/
 theorem verticalGap_width_bound (offsets : Offsets edges) (bound :
-  LinearAlgebra.Grid.Offsets.Coordinate) (nonnegative : 0 ≤ bound)
-    (squareBound : ∀ column row, Data.Gaussian.Norm.Basic.normSq (edges.square column row) ≤ bound)
+  Coordinate) (nonnegative : 0 ≤ bound)
+    (squareBound : ∀ column row, Basic.normSq (edges.square column row) ≤ bound)
     (column : Fin (columns + 1)) (row : Fin rows) :
-    Data.Gaussian.Norm.Basic.normSq (offsets.verticalGap column row) ≤ (columns :
-      LinearAlgebra.Grid.Offsets.Coordinate) ^ 2 * bound := by
+    Basic.normSq (offsets.verticalGap column row) ≤ (columns :
+      Coordinate) ^ 2 * bound := by
   have width := Fraction.Cast.Order.natCast_le_direct (Nat.le_of_lt_succ column.isLt)
   have nonnegativeIndex := Fraction.Cast.Order.natCast_le_direct (Nat.zero_le column.val)
   exact (offsets.verticalGap_bound bound squareBound column row).trans

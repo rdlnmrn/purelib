@@ -62,20 +62,20 @@ open Purelib.Data.Rat
 open Purelib
 open Purelib.Riemann
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {source : Hyperelliptic.Differentials.Basic.Differential genus} {count :
+  {lifted : Meshes.LiftedPuncturedGrid base} {source : Differentials.Basic.Differential genus} {count :
     Nat}
-  {programs : Data.Vector (Hyperelliptic.Meshes.PuncturedGrid.Cut.CyclePrograms.CutCycleProgram lifted
+  {programs : Data.Vector (Cut.CyclePrograms.CutCycleProgram lifted
     source) count}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {domains : Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
     {differential : Fin genus}
-  {family : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily programs domains differential}
+  {family : Cut.PeriodFamilies.PrimitiveFamily programs domains differential}
   {targets : Data.Vector Fraction.Rational count} {floor : Nat}
 
 /-- Each retained component period budget has a positive original target. -/
-theorem target_positive (budget : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily.Budget family
+theorem target_positive (budget : Cut.PeriodFamilies.PrimitiveFamily.Budget family
   targets floor) (entry : Fin count) : 0 < targets entry := by
   let allocation := (budget.requests.get entry).allocation
   have equal : allocation.periodTarget * 4 = targets entry := by
@@ -89,11 +89,11 @@ set_option genInjectivity false in
 
 The dependent request vector follows the original finite component family and
 its paid targets. Its cached common index suffices for every original component request. -/
-structure RouteRequests (budget : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily.Budget family
+structure RouteRequests (budget : Cut.PeriodFamilies.PrimitiveFamily.Budget family
   targets floor) where
   /-- The retained requests on the original component route spines and standard differential. -/ entries :
-    Data.Vector.DependentVector (fun entry : Fin count =>
-    Hyperelliptic.Meshes.PuncturedGrid.RouteChartRequests.RouteChartRequest (programs entry).routed.spine
+    Vector.DependentVector (fun entry : Fin count =>
+    RouteChartRequests.RouteChartRequest (programs entry).routed.spine
       (Periods.PeriodMatrix.standardDifferential differential) domains (targets entry))
   /-- The cached common sufficient route comparison stage. -/ index : Nat
   /-- The cached stage is exactly the maximum of the retained component request stages. -/ index_eq : index =
@@ -103,30 +103,30 @@ constructive_injectivity RouteRequests
 
 namespace RouteRequests
 
-variable {budget : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily.Budget family targets floor}
+variable {budget : Cut.PeriodFamilies.PrimitiveFamily.Budget family targets floor}
 
 /-- Retain a canonical chart comparison for each original component route word and cache their maximum sufficient stage.
 -/
-@[expose] def build (budget : Hyperelliptic.Meshes.PuncturedGrid.Cut.PeriodFamilies.PrimitiveFamily.Budget family
-  targets floor) : Hyperelliptic.Meshes.PuncturedGrid.FamilyRouteRequests.RouteRequests budget :=
-  let entries := Data.Vector.DependentVector.ofFn (fun entry =>
-    Hyperelliptic.Meshes.PuncturedGrid.RouteChartRequests.RouteChartRequest.build
+@[expose] def build (budget : Cut.PeriodFamilies.PrimitiveFamily.Budget family
+  targets floor) : RouteRequests budget :=
+  let entries := Vector.DependentVector.ofFn (fun entry =>
+    RouteChartRequests.RouteChartRequest.build
     (programs entry).routed.spine (Periods.PeriodMatrix.standardDifferential differential) domains (targets entry)
-      (Hyperelliptic.Meshes.PuncturedGrid.FamilyRouteRequests.target_positive budget entry))
+      (FamilyRouteRequests.target_positive budget entry))
   ⟨entries, entries.maximum (fun _ request => request.index), rfl⟩
 
 /-- Each original component's canonical word valuation meets its retained target against the actual source-route
 increment sum. -/
-theorem accurate (requests : Hyperelliptic.Meshes.PuncturedGrid.FamilyRouteRequests.RouteRequests budget) {stage : Nat}
+theorem accurate (requests : RouteRequests budget) {stage : Nat}
   (later : requests.index ≤ stage)
-    {shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    {shared : Face.PrimitiveData.FacePrimitiveBank
       (Periods.PeriodMatrix.standardDifferential differential) stage domains}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh) (entry
+    (readings : TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh) (entry
       : Fin count) :
-    Data.Gaussian.Norm.Basic.normSq (Topology.Surface.Sewing.SewingRetraction.wordValue
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh readings.values) (programs
+    Gaussian.Norm.Basic.normSq (Topology.Surface.Sewing.SewingRetraction.wordValue
+      (CanonicalEdgeValues.edgeValuation lifted.mesh readings.values) (programs
       entry).cycle.path.surfaceEdges -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum ((programs entry).routed.spine.values fun _ route =>
+      Gaussian.Norm.Sum.Basic.gaussianSum ((programs entry).routed.spine.values fun _ route =>
         route.sourceEdge.increment readings.values)) < targets entry :=
   (requests.entries.get entry).accurate
     ((requests.entries.get_le_maximum (fun _ request => request.index) entry).trans (requests.index_eq ▸ later))

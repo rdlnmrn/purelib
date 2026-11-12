@@ -48,6 +48,8 @@ import Purelib.Riemann.Meshes.PuncturedGridFaces
 import Purelib.Riemann.Meshes.RectangularObservationMesh
 import Purelib.Riemann.Meshes.ShrinkingPuncturedGrid
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior
+
 open Purelib.Curves
 
 open Purelib.Riemann
@@ -66,20 +68,20 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRun
 
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.DepthRefinement
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
-    Normalization.InverseRootPolynomial.Coordinate}
+    InverseRootPolynomial.Coordinate}
   {grid : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-  {lifted : Meshes.LiftedPuncturedGrid grid.punctured} {differential : Hyperelliptic.Differentials.Basic.Differential
+  {lifted : Meshes.LiftedPuncturedGrid grid.punctured} {differential : Differentials.Basic.Differential
     genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
-    PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
 open Purelib.Riemann.Normalization.RectangularInverseModels
@@ -88,27 +90,27 @@ section RequestedSurfaceRuns
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes
 
 variable {whole :
-  PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
   regular domains differential} {previous :
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
-  {selected : PuncturedGrid.Exterior.SourceCuts whole previous}
+  CommonCuts domains}
+  {selected : SourceCuts whole previous}
   {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {meshTarget :
-    Normalization.InverseRootPolynomial.Coordinate}
-  {request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
-    (fun sheet => Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
+    Preflights domains sheet} {meshTarget :
+    InverseRootPolynomial.Coordinate}
+  {request : PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
+    (fun sheet => PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
       coarseDepth) fixed meshTarget}
-  {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared} {index :
+  {retained : Basis.Preparation.CommonBasisPreparation prepared} {index :
     Nat} {inputs : retained.Inputs index}
-  {requested : Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
-  (schedules : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.Schedules
+  {requested : InverseRootPolynomial.Coordinate} {minimum : Nat}
+  (schedules : Schedules
     selected request retained inputs requested minimum)
 
 variable {observations : RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {partitions :
   Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid}
   {surfaceCoarse : (sheet : Fin 2) → Topology.NewtonRequestedSurfaceEnergy.SurfaceMeshes partitions domains sheet}
   {surfaceFixed : (sheet : Fin 2) → RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet}
-    {surfaceTarget : Normalization.InverseRootPolynomial.Coordinate}
+    {surfaceTarget : InverseRootPolynomial.Coordinate}
   (initialSurface : Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests surfaceCoarse surfaceFixed
     surfaceTarget)
 
@@ -116,7 +118,7 @@ namespace SurfaceAcquisition.RequestedSurfaceRuns
 
 /-- Retain the source requests after raising the mesh floor to include observation refinement. -/
 @[expose] def observationSchedules :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.Schedules selected
+  Schedules selected
     (request.atDepth (max request.depth initialSurface.depth) (Nat.Order.le_max_left ..)) retained inputs requested
       minimum :=
   atDepth schedules (max request.depth initialSurface.depth) (Nat.Order.le_max_left ..)
@@ -127,8 +129,8 @@ set_option genInjectivity false in
 /-- The physical and observation meshes are acquired together at the depth required by all parent runs. -/
 structure SurfaceAcquisition where
   /-- The physical spatial acquisition after including the original observation depth. -/ spatial :
-    PuncturedGrid.Exterior.Basis.SpatialAcquisition
-    (Hyperelliptic.Meshes.Newton.Basis.SurfaceAcquisition.RequestedSurfaceRuns.observationSchedules schedules
+    Basis.SpatialAcquisition
+    (SurfaceAcquisition.RequestedSurfaceRuns.observationSchedules schedules
     initialSurface)
   /-- The retained observation surface refined to the same physical depth. -/ surface :
     Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests surfaceCoarse surfaceFixed surfaceTarget
@@ -148,15 +150,15 @@ namespace SurfaceAcquisition
 @[expose] def build : SurfaceAcquisition
   schedules initialSurface := by
   let spatial :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SpatialAcquisition.RequestedSurfaceRuns.acquireSpatial
-    (Hyperelliptic.Meshes.Newton.Basis.SurfaceAcquisition.RequestedSurfaceRuns.observationSchedules schedules
+    Basis.SpatialAcquisition.RequestedSurfaceRuns.acquireSpatial
+    (RequestedSurfaceRuns.observationSchedules schedules
     initialSurface)
   have later : initialSurface.depth ≤ spatial.depths.depth :=
     (Nat.Order.le_max_right request.depth initialSurface.depth).trans spatial.depths.floor_le
-  let surface := Hyperelliptic.Meshes.Newton.Surface.DepthRefinement.atDepth
+  let surface := Surface.DepthRefinement.atDepth
     initialSurface spatial.depths.depth later
   exact ⟨spatial, surface, spatial.mesh_depth,
-    Hyperelliptic.Meshes.Newton.Surface.DepthRefinement.atDepth_index_ge initialSurface _ later,
+    Surface.DepthRefinement.atDepth_index_ge initialSurface _ later,
     max spatial.refined.index surface.index, rfl⟩
 
 variable {schedules initialSurface} (acquired :
@@ -186,7 +188,7 @@ theorem initial_observation_le : initialSurface.index ≤ acquired.index :=
 theorem sourceIndex_readback (outer : Fin prepared.occurrences.length) :
     (acquired.spatial.requests.get outer).sourceIndex = (schedules.get outer).sourceIndex :=
   (acquired.spatial.sourceIndex_readback outer).trans
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.atDepth_sourceIndex
+    (Basis.SurfaceRunSchedules.RequestedSurfaceRuns.atDepth_sourceIndex
       schedules _ (Nat.Order.le_max_left ..) outer)
 
 /-- The synchronized mesh still pays the original parent-run depth. -/
@@ -199,14 +201,14 @@ theorem request_depth (outer : Fin prepared.occurrences.length) :
 theorem magnitude_readback (outer : Fin prepared.occurrences.length) :
     (acquired.spatial.requests.get outer).magnitude = (schedules.get outer).magnitude :=
   (acquired.spatial.magnitude_readback outer).trans
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.atDepth_magnitude
+    (Basis.SurfaceRunSchedules.RequestedSurfaceRuns.atDepth_magnitude
       schedules _ (Nat.Order.le_max_left ..) outer)
 
 /-- Each acquired physical occurrence uses the observation request's depth. -/
 theorem occurrence_depth (outer : Fin prepared.occurrences.length) :
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedOccurrence.RequestedOccurrenceRuns.mesh outer selected
+    (RequestedOccurrenceRuns.mesh outer selected
       acquired.spatial.refined).depth = acquired.surface.depth :=
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OccurrenceRefinement.RequestedOccurrenceRuns.mesh_depth
+  (Basis.OccurrenceRefinement.RequestedOccurrenceRuns.mesh_depth
     outer selected acquired.spatial.refined).trans acquired.same_depth
 
 end SurfaceAcquisition

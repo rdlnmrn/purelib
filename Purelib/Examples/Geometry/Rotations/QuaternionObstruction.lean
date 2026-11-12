@@ -18,6 +18,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.Tactic.Ring
 
+open Purelib.Geometry.Rotations.Projective.Action
+
 open Purelib.Algebra.Field
 
 open Purelib
@@ -58,22 +60,22 @@ variable {K : Type*} [ExplicitField K]
 namespace ExampleSixtyFour
 
 /-- The rational coordinate axis (1,0,0). -/
-def axis : Vector3 Fraction.Rational
+def axis : Vector3 Rational
   := ⟨1, 0, 0⟩
 
 /-- The nonnull projective quaternion representative (1:1:0:0). -/
 def quarterTurn :
-  Basic.NonNullProportion Fraction.Rational where
+  Basic.NonNullProportion Rational where
   scalar := 1
   vector := axis
   normNonzero := by
-    change (2 : Fraction.Rational) ≠ 0
+    change (2 : Rational) ≠ 0
     exact (fun {value : Nat} (nonzero : value ≠ 0) => (rational_natCast_nonzero
       (value := value) nonzero : (value : Rational) ≠ 0)) (by decide)
 
 /-- The displayed rational quarter-turn matrix with rows (1,0,0), (0,0,1), (0,-1,0). -/
 def quarterTurnDisplayed :
-  Coordinates3.Matrix3 Fraction.Rational :=
+  Coordinates3.Matrix3 Rational :=
   ⟨1, 0, 0, 0, 0, 1, 0, -1, 0⟩
 
 section
@@ -87,14 +89,14 @@ theorem quarterTurn_norm :
 
 /-- The rotation of the retained quarterTurn representative equals its displayed matrix. -/
 theorem quarterTurn_matrix :
-  (Rotations.Projective.Action.NonNullProportion.rotationMatrix
+  (NonNullProportion.rotationMatrix
   quarterTurn) =
     quarterTurnDisplayed := by
   decide
 
 /-- The displayed quarter-turn matrix sends coordinates (t,r,s) to (t,-s,r). -/
 theorem quarterTurn_action (vector :
-  Vector3 Fraction.Rational) :
+  Vector3 Rational) :
     Coordinates3.Matrix3.rowMul vector quarterTurnDisplayed =
       ⟨vector.t, -vector.s, vector.r⟩ := by
   apply Vector3.ext <;> unfold quarterTurnDisplayed
@@ -102,17 +104,17 @@ theorem quarterTurn_action (vector :
 
 /-- The retained quarterTurn rotation has half-spread one half. -/
 theorem quarterTurn_halfSpread :
-    Rotations.Spread.halfSpread (Rotations.Projective.Action.NonNullProportion.rotation
-      quarterTurn) = (1 : Fraction.Rational) / 2 := by
-  rw [Rotations.Projective.Action.NonNullProportion.halfSpread_rotation
+    Rotations.Spread.halfSpread (NonNullProportion.rotation
+      quarterTurn) = (1 : Rational) / 2 := by
+  rw [NonNullProportion.halfSpread_rotation
     quarterTurn
       ((fun {value : Nat} (nonzero : value ≠ 0) => (rational_natCast_nonzero (value
         := value) nonzero : (value : Rational) ≠ 0)) (by decide))]
   change axis.quadrance /
-    quarterTurn.toProportion.norm = (1 : Fraction.Rational) /
+    quarterTurn.toProportion.norm = (1 : Rational) /
     2
   rw [quarterTurn_norm]
-  rw [show axis.quadrance = (1 : Fraction.Rational) by
+  rw [show axis.quadrance = (1 : Rational) by
     unfold axis Vector3.quadrance Vector3.dot
     ring1]
 
@@ -129,7 +131,7 @@ theorem quarterTurn_class_nontrivial :
       (UnitObstruction.NonNullProportion.unitSquareClass
       quarterTurn) := open Purelib.NumberTheory in by
   rintro ⟨factor, _, unitValue⟩
-  change (1 : Fraction.Rational) = factor ^ 2 * 2 at unitValue
+  change (1 : Rational) = factor ^ 2 * 2 at unitValue
   apply SquareClass.Rational.Nonsquare.square_ne_two (2 * factor)
   calc
     (2 * factor) ^ 2 = 2 * (factor ^ 2 * 2) := by ring1
@@ -148,11 +150,11 @@ theorem quarterTurn_no_unit_quaternion
 
 /-- The paper's `3-4-5` rotation representative `(2:1:0:0)`. -/
 def threeFourFive :
-  Basic.NonNullProportion Fraction.Rational where
+  Basic.NonNullProportion Rational where
   scalar := 2
   vector := axis
   normNonzero := by
-    change (5 : Fraction.Rational) ≠ 0
+    change (5 : Rational) ≠ 0
     exact (fun {value : Nat} (nonzero : value ≠ 0) => (rational_natCast_nonzero
       (value := value) nonzero : (value : Rational) ≠ 0)) (by decide)
 
@@ -160,9 +162,9 @@ end
 
 /-- The displayed rotation matrix fixing the first axis, with transverse cosine 3/5 and sine 4/5. -/
 def threeFourFiveDisplayed :
-  Coordinates3.Matrix3 Fraction.Rational :=
+  Coordinates3.Matrix3 Rational :=
   ⟨1, 0, 0,
-    0, (3 : Fraction.Rational) / 5, 4 / 5,
+    0, (3 : Rational) / 5, 4 / 5,
     0, -4 / 5, 3 / 5⟩
 
 /-- The retained threeFourFive representative has norm 5. -/
@@ -175,24 +177,24 @@ theorem threeFourFive_norm :
 
 /-- The rotation of the retained threeFourFive representative equals its displayed matrix. -/
 theorem threeFourFive_matrix :
-  (Rotations.Projective.Action.NonNullProportion.rotationMatrix
+  (NonNullProportion.rotationMatrix
   threeFourFive) =
     threeFourFiveDisplayed := by
   decide
 
 /-- The retained threeFourFive rotation has half-spread one fifth. -/
 theorem threeFourFive_halfSpread :
-    Rotations.Spread.halfSpread (Rotations.Projective.Action.NonNullProportion.rotation
-      threeFourFive) = (1 : Fraction.Rational) / 5 := by
-  rw [Rotations.Projective.Action.NonNullProportion.halfSpread_rotation
+    Rotations.Spread.halfSpread (NonNullProportion.rotation
+      threeFourFive) = (1 : Rational) / 5 := by
+  rw [NonNullProportion.halfSpread_rotation
     threeFourFive
       ((fun {value : Nat} (nonzero : value ≠ 0) => (rational_natCast_nonzero (value
         := value) nonzero : (value : Rational) ≠ 0)) (by decide))]
   change axis.quadrance /
-    threeFourFive.toProportion.norm = (1 : Fraction.Rational)
+    threeFourFive.toProportion.norm = (1 : Rational)
     / 5
   rw [threeFourFive_norm]
-  rw [show axis.quadrance = (1 : Fraction.Rational) by
+  rw [show axis.quadrance = (1 : Rational) by
     unfold axis Vector3.quadrance Vector3.dot
     ring1]
 
@@ -210,7 +212,7 @@ theorem threeFourFive_class_nontrivial
       (UnitObstruction.NonNullProportion.unitSquareClass
         threeFourFive) := open Purelib.NumberTheory in by
   rintro ⟨factor, _, unitValue⟩
-  change (1 : Fraction.Rational) = factor ^ 2 * 5 at unitValue
+  change (1 : Rational) = factor ^ 2 * 5 at unitValue
   apply SquareClass.Rational.Nonsquare.square_ne_five (5 * factor)
   calc
     (5 * factor) ^ 2 = 5 * (factor ^ 2 * 5) := by ring1

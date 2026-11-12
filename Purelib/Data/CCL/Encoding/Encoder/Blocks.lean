@@ -29,6 +29,8 @@ import Purelib.Data.Gaussian.Constants
 import Purelib.Data.Gaussian.Power
 import Purelib.Tactic.Ring
 
+open Purelib.Data.GaussianInt.Fraction.Basic
+
 section
 public section
 namespace Purelib.Data.CCL.Encoding.Encoder.Blocks
@@ -41,7 +43,7 @@ set_option genInjectivity false in
 
 The projective realization belongs to the same stored blocks and point. Reconstruction relates that point to the affine
 value of the original displayed fraction. -/
-structure BlockEncoding (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias) where
+structure BlockEncoding (fraction : SourceEncodingEncoderFracAlias) where
   /-- The retained finite encoded block list. -/ blocks : List Block.Basic.SourceEncodingEncoderBlockAlias
   /-- The retained projective point represented by these exact blocks. -/ point :
     Line.Basic.SourceEncodingEncoderProjAlias
@@ -85,11 +87,11 @@ open Purelib.Data.ComplexContinuedFraction.Encoding in
 The supplied high or low norm comparison selects the displayed initial block and retained annulus continuation. No
 normalization exponent or sector is replaced. -/
 theorem annulusStep_block_eq (annulus : Annulus)
-    (residualNonzero : Encoder.Annulus.Blocks.annulusResidual annulus ≠ 0) :
-    (Encoder.Annulus.Blocks.annulusStep annulus residualNonzero).block =
+    (residualNonzero : Annulus.Blocks.annulusResidual annulus ≠ 0) :
+    (Annulus.Blocks.annulusStep annulus residualNonzero).block =
       ⟨.regular,
-        (Encoder.Annulus.Blocks.annulusStep annulus residualNonzero).block.exponent,
-        ComplexContinuedFraction.Encoding.Sector.select (Encoder.Annulus.Blocks.annulusStep annulus
+        (Annulus.Blocks.annulusStep annulus residualNonzero).block.exponent,
+        Sector.select (Annulus.Blocks.annulusStep annulus
           residualNonzero).next.frac.value⟩ := by
   rfl
 end Purelib.Data.CCL.Encoding.Encoder.Blocks
@@ -110,34 +112,34 @@ bounds.
 The supplied high or low norm comparison selects the displayed initial block and retained annulus continuation. No
 normalization exponent or sector is replaced. -/
 theorem annulusStep_exponent_eq_of_bounds (annulus : Annulus)
-    (residualNonzero : Encoder.Annulus.Blocks.annulusResidual annulus ≠ 0)
+    (residualNonzero : Annulus.Blocks.annulusResidual annulus ≠ 0)
     (candidate : Nat)
     (candidateLower :
-      2 ^ candidate * GaussianInt.normNat (GaussianInt.gammaInt * Encoder.Annulus.Blocks.annulusResidual annulus) <
+      2 ^ candidate * GaussianInt.normNat (GaussianInt.gammaInt * Annulus.Blocks.annulusResidual annulus) <
         GaussianInt.normNat annulus.frac.denominator)
     (candidateUpper :
       GaussianInt.normNat annulus.frac.denominator ≤
         2 ^ (candidate + 1) *
-          GaussianInt.normNat (GaussianInt.gammaInt * Encoder.Annulus.Blocks.annulusResidual annulus)) :
-    (Encoder.Annulus.Blocks.annulusStep annulus residualNonzero).block.exponent = candidate := by
+          GaussianInt.normNat (GaussianInt.gammaInt * Annulus.Blocks.annulusResidual annulus)) :
+    (Annulus.Blocks.annulusStep annulus residualNonzero).block.exponent = candidate := by
   let directNonzero :
       annulus.frac.numerator -
-          Sector.Integral.sectorInt (ComplexContinuedFraction.Encoding.Sector.select annulus.frac.value) *
+          Sector.Integral.sectorInt (Sector.select annulus.frac.value) *
             annulus.frac.denominator ≠
         0 := by
-    simpa only [Encoder.Annulus.Blocks.annulusResidual] using residualNonzero
-  let post := Encoder.Annulus.postInversion annulus directNonzero
-  let normalized := Encoder.Annulus.normalizeLoop post.frac
+    simpa only [Annulus.Blocks.annulusResidual] using residualNonzero
+  let post := Annulus.postInversion annulus directNonzero
+  let normalized := Annulus.normalizeLoop post.frac
     (GaussianInt.normNat annulus.frac.denominator) post.den_descent rfl
   change normalized.exponent = candidate
-  dsimp only [normalized, Encoder.Annulus.normalizeLoop]
+  dsimp only [normalized, Annulus.normalizeLoop]
   apply (BinaryNormalization.loop
     (GaussianInt.normNat post.frac.numerator) (GaussianInt.normNat post.frac.denominator)
     (GaussianInt.normNat_pos post.frac.denominatorNonzero) post.den_descent).exponent_eq_of_bounds
   · rw [post.num_eq, post.den_eq]
-    simpa only [Encoder.Annulus.Blocks.annulusResidual] using candidateLower
+    simpa only [Annulus.Blocks.annulusResidual] using candidateLower
   · rw [post.num_eq, post.den_eq]
-    simpa only [Encoder.Annulus.Blocks.annulusResidual] using candidateUpper
+    simpa only [Annulus.Blocks.annulusResidual] using candidateUpper
 end Purelib.Data.CCL.Encoding.Encoder.Blocks
 
 end
@@ -153,11 +155,11 @@ open Purelib.Data.CCL.Encoding in
 The supplied high or low norm comparison selects the displayed initial block and retained annulus continuation. No
 normalization exponent or sector is replaced. -/
 theorem annulusStep_next_den_eq (annulus : Annulus)
-    (residualNonzero : Encoder.Annulus.Blocks.annulusResidual annulus ≠ 0) :
-    (Encoder.Annulus.Blocks.annulusStep annulus residualNonzero).next.frac.denominator =
-      GaussianInt.natPow GaussianInt.gammaInt (Encoder.Annulus.Blocks.annulusStep annulus
+    (residualNonzero : Annulus.Blocks.annulusResidual annulus ≠ 0) :
+    (Annulus.Blocks.annulusStep annulus residualNonzero).next.frac.denominator =
+      GaussianInt.natPow GaussianInt.gammaInt (Annulus.Blocks.annulusStep annulus
         residualNonzero).block.exponent *
-        (GaussianInt.gammaInt * Encoder.Annulus.Blocks.annulusResidual annulus) := by
+        (GaussianInt.gammaInt * Annulus.Blocks.annulusResidual annulus) := by
   rfl
 end Purelib.Data.CCL.Encoding.Encoder.Blocks
 
@@ -173,8 +175,8 @@ open Purelib.Data.CCL.Encoding in
 The supplied high or low norm comparison selects the displayed initial block and retained annulus continuation. No
 normalization exponent or sector is replaced. -/
 theorem annulusStep_next_num_eq (annulus : Annulus)
-    (residualNonzero : Encoder.Annulus.Blocks.annulusResidual annulus ≠ 0) :
-    (Encoder.Annulus.Blocks.annulusStep annulus residualNonzero).next.frac.numerator =
+    (residualNonzero : Annulus.Blocks.annulusResidual annulus ≠ 0) :
+    (Annulus.Blocks.annulusStep annulus residualNonzero).next.frac.numerator =
       annulus.frac.denominator := by
   rfl
 end Purelib.Data.CCL.Encoding.Encoder.Blocks
@@ -196,19 +198,19 @@ open Purelib.Geometry.Projective in
 The exact numerator and denominator norms select the high or low initial branch. Retain that branch's normalization and
 annulus continuation, then construct the projective point, realization and affine reconstruction from those same blocks.
 -/
-@[expose] def encodeBlocks (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias) (numeratorNonzero :
+@[expose] def encodeBlocks (fraction : SourceEncodingEncoderFracAlias) (numeratorNonzero :
   fraction.numerator ≠ 0) :
-    Encoder.Blocks.BlockEncoding fraction :=
+    BlockEncoding fraction :=
   let highHere : (highBranch : 2 * GaussianInt.normNat fraction.denominator ≤ GaussianInt.normNat fraction.numerator) →
-      Encoder.Blocks.BlockEncoding fraction := fun highBranch => by
+      BlockEncoding fraction := fun highBranch => by
     let scan := BinaryNormalization.high
       (GaussianInt.normNat fraction.numerator) (GaussianInt.normNat fraction.denominator)
       (GaussianInt.normNat_pos fraction.denominatorNonzero) highBranch
-    let initial := Encoder.Normalization.initialHigh fraction numeratorNonzero highBranch
-    let suffix := Encoder.Annulus.Blocks.encodeAnnulusBlocks initial.annulus
+    let initial := Normalization.initialHigh fraction numeratorNonzero highBranch
+    let suffix := Annulus.Blocks.encodeAnnulusBlocks initial.annulus
     let block : Block :=
       ⟨.regular, scan.exponent,
-        ComplexContinuedFraction.Encoding.Sector.select initial.annulus.frac.value⟩
+        Sector.select initial.annulus.frac.value⟩
     let point := Line.Matrix.act block.matrix suffix.tail.point
     have numeratorIdentity : initial.annulus.frac.numerator = fraction.numerator := by
       rfl
@@ -259,15 +261,15 @@ annulus continuation, then construct the projective point, realization and affin
       (block.act_model_valid suffix.tail)
       (Line.Gaussian.Proj.affine_hasNonzeroCoordinate fraction.value)
   let lowHere : (lowBranch : GaussianInt.normNat fraction.numerator < 2 * GaussianInt.normNat fraction.denominator) →
-      Encoder.Blocks.BlockEncoding fraction := fun lowBranch => by
+      BlockEncoding fraction := fun lowBranch => by
     let scan := BinaryNormalization.low
       (GaussianInt.normNat fraction.numerator) (GaussianInt.normNat fraction.denominator)
       (GaussianInt.normNat_pos numeratorNonzero) (GaussianInt.normNat_pos fraction.denominatorNonzero) lowBranch
-    let initial := Encoder.Normalization.initialLow fraction numeratorNonzero lowBranch
-    let suffix := Encoder.Annulus.Blocks.encodeAnnulusBlocks initial.annulus
+    let initial := Normalization.initialLow fraction numeratorNonzero lowBranch
+    let suffix := Annulus.Blocks.encodeAnnulusBlocks initial.annulus
     let block : Block :=
       ⟨.initialLow, scan.exponent,
-        ComplexContinuedFraction.Encoding.Sector.select initial.annulus.frac.value⟩
+        Sector.select initial.annulus.frac.value⟩
     let point := Line.Matrix.act block.matrix suffix.tail.point
     have numeratorIdentity : initial.annulus.frac.numerator =
         GaussianInt.natPow GaussianInt.gammaInt scan.exponent * fraction.numerator := by
@@ -340,30 +342,30 @@ open Purelib.Data.Nat in
 
 The supplied high or low norm comparison selects the displayed initial block and retained annulus continuation. No
 normalization exponent or sector is replaced. -/
-theorem encodeBlocks_blocks_eq (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+theorem encodeBlocks_blocks_eq (fraction : SourceEncodingEncoderFracAlias)
     (numeratorNonzero : fraction.numerator ≠ 0) :
-    (Encoder.Blocks.encodeBlocks fraction numeratorNonzero).blocks =
+    (encodeBlocks fraction numeratorNonzero).blocks =
       if highBranch : 2 * GaussianInt.normNat fraction.denominator ≤ GaussianInt.normNat fraction.numerator then
         let scan := BinaryNormalization.high
           (GaussianInt.normNat fraction.numerator) (GaussianInt.normNat fraction.denominator)
           (GaussianInt.normNat_pos fraction.denominatorNonzero) highBranch
-        let initial := Encoder.Normalization.initialHigh fraction numeratorNonzero highBranch
+        let initial := Normalization.initialHigh fraction numeratorNonzero highBranch
         let block : Block :=
           ⟨.regular, scan.exponent,
-            ComplexContinuedFraction.Encoding.Sector.select initial.annulus.frac.value⟩
-        block :: (Encoder.Annulus.Blocks.encodeAnnulusBlocks initial.annulus).continuation
+            Sector.select initial.annulus.frac.value⟩
+        block :: (Annulus.Blocks.encodeAnnulusBlocks initial.annulus).continuation
       else
         let lowBranch := Nat.lt_of_not_ge highBranch
         let scan := BinaryNormalization.low
           (GaussianInt.normNat fraction.numerator) (GaussianInt.normNat fraction.denominator)
           (GaussianInt.normNat_pos numeratorNonzero) (GaussianInt.normNat_pos fraction.denominatorNonzero)
           lowBranch
-        let initial := Encoder.Normalization.initialLow fraction numeratorNonzero lowBranch
+        let initial := Normalization.initialLow fraction numeratorNonzero lowBranch
         let block : Block :=
           ⟨.initialLow, scan.exponent,
-            ComplexContinuedFraction.Encoding.Sector.select initial.annulus.frac.value⟩
-        block :: (Encoder.Annulus.Blocks.encodeAnnulusBlocks initial.annulus).continuation := by
-  unfold Encoder.Blocks.encodeBlocks
+            Sector.select initial.annulus.frac.value⟩
+        block :: (Annulus.Blocks.encodeAnnulusBlocks initial.annulus).continuation := by
+  unfold encodeBlocks
   split <;> rfl
 end Purelib.Data.CCL.Encoding.Encoder.Blocks
 
@@ -381,19 +383,19 @@ open Purelib.Data.Nat in
 
 The supplied high or low norm comparison selects the displayed initial block and retained annulus continuation. No
 normalization exponent or sector is replaced. -/
-theorem encodeBlocks_blocks_of_high (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+theorem encodeBlocks_blocks_of_high (fraction : SourceEncodingEncoderFracAlias)
     (numeratorNonzero : fraction.numerator ≠ 0)
     (highBranch : 2 * GaussianInt.normNat fraction.denominator ≤ GaussianInt.normNat fraction.numerator) :
-    (Encoder.Blocks.encodeBlocks fraction numeratorNonzero).blocks =
+    (encodeBlocks fraction numeratorNonzero).blocks =
       let scan := BinaryNormalization.high
         (GaussianInt.normNat fraction.numerator) (GaussianInt.normNat fraction.denominator)
         (GaussianInt.normNat_pos fraction.denominatorNonzero) highBranch
-      let initial := Encoder.Normalization.initialHigh fraction numeratorNonzero highBranch
+      let initial := Normalization.initialHigh fraction numeratorNonzero highBranch
       let block : Block :=
         ⟨.regular, scan.exponent,
-          ComplexContinuedFraction.Encoding.Sector.select initial.annulus.frac.value⟩
-      block :: (Encoder.Annulus.Blocks.encodeAnnulusBlocks initial.annulus).continuation := by
-  rw [Encoder.Blocks.encodeBlocks_blocks_eq]
+          Sector.select initial.annulus.frac.value⟩
+      block :: (Annulus.Blocks.encodeAnnulusBlocks initial.annulus).continuation := by
+  rw [encodeBlocks_blocks_eq]
   rw [dif_pos highBranch]
 end Purelib.Data.CCL.Encoding.Encoder.Blocks
 
@@ -411,20 +413,20 @@ open Purelib.Data.Nat in
 
 The supplied high or low norm comparison selects the displayed initial block and retained annulus continuation. No
 normalization exponent or sector is replaced. -/
-theorem encodeBlocks_blocks_of_low (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+theorem encodeBlocks_blocks_of_low (fraction : SourceEncodingEncoderFracAlias)
     (numeratorNonzero : fraction.numerator ≠ 0)
     (lowBranch : GaussianInt.normNat fraction.numerator < 2 * GaussianInt.normNat fraction.denominator) :
-    (Encoder.Blocks.encodeBlocks fraction numeratorNonzero).blocks =
+    (encodeBlocks fraction numeratorNonzero).blocks =
       let scan := BinaryNormalization.low
         (GaussianInt.normNat fraction.numerator) (GaussianInt.normNat fraction.denominator)
         (GaussianInt.normNat_pos numeratorNonzero) (GaussianInt.normNat_pos fraction.denominatorNonzero)
         lowBranch
-      let initial := Encoder.Normalization.initialLow fraction numeratorNonzero lowBranch
+      let initial := Normalization.initialLow fraction numeratorNonzero lowBranch
       let block : Block :=
         ⟨.initialLow, scan.exponent,
-          ComplexContinuedFraction.Encoding.Sector.select initial.annulus.frac.value⟩
-      block :: (Encoder.Annulus.Blocks.encodeAnnulusBlocks initial.annulus).continuation := by
-  rw [Encoder.Blocks.encodeBlocks_blocks_eq]
+          Sector.select initial.annulus.frac.value⟩
+      block :: (Annulus.Blocks.encodeAnnulusBlocks initial.annulus).continuation := by
+  rw [encodeBlocks_blocks_eq]
   rw [dif_neg (Nat.not_le_of_lt lowBranch)]
 end Purelib.Data.CCL.Encoding.Encoder.Blocks
 
@@ -437,12 +439,12 @@ namespace Purelib.Data.CCL.Encoding.Encoder.Blocks
 open Purelib.Data in
 open Purelib.Data.CCL.Encoding in
 /-- Read the exact projective realization stored with the computed block encoding. -/
-@[expose] def encodeBlocks_realizes (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+@[expose] def encodeBlocks_realizes (fraction : SourceEncodingEncoderFracAlias)
     (numeratorNonzero : fraction.numerator ≠ 0) :
     Cylinder.Projective.SourceEncodingEncoderProjectiveRealizesAlias
-      (Encoder.Blocks.encodeBlocks fraction numeratorNonzero).blocks
-      (Encoder.Blocks.encodeBlocks fraction numeratorNonzero).point :=
-  (Encoder.Blocks.encodeBlocks fraction numeratorNonzero).realizes
+      (encodeBlocks fraction numeratorNonzero).blocks
+      (encodeBlocks fraction numeratorNonzero).point :=
+  (encodeBlocks fraction numeratorNonzero).realizes
 end Purelib.Data.CCL.Encoding.Encoder.Blocks
 
 end
@@ -458,11 +460,11 @@ open Purelib.Geometry.Projective in
 
 The supplied high or low norm comparison selects the displayed initial block and retained annulus continuation. No
 normalization exponent or sector is replaced. -/
-theorem encodeBlocks_reconstruct (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+theorem encodeBlocks_reconstruct (fraction : SourceEncodingEncoderFracAlias)
     (numeratorNonzero : fraction.numerator ≠ 0) :
-    (Encoder.Blocks.encodeBlocks fraction numeratorNonzero).point.Equivalent
+    (encodeBlocks fraction numeratorNonzero).point.Equivalent
       (Line.Proj.affine fraction.value) :=
-  (Encoder.Blocks.encodeBlocks fraction numeratorNonzero).reconstruct
+  (encodeBlocks fraction numeratorNonzero).reconstruct
 end Purelib.Data.CCL.Encoding.Encoder.Blocks
 
 end
@@ -478,18 +480,18 @@ open Purelib.Data.Gaussian in
 open Purelib.Data.Nat in
 open Purelib.Geometry.Projective in
 /-- Construct the high-branch block encoding using the retained denominator scaling and annulus continuation. -/
-private def encodeHighBlocks (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+private def encodeHighBlocks (fraction : SourceEncodingEncoderFracAlias)
     (numeratorNonzero : fraction.numerator ≠ 0)
     (highBranch : 2 * GaussianInt.normNat fraction.denominator ≤ GaussianInt.normNat fraction.numerator) :
-    Encoder.Blocks.BlockEncoding fraction := by
+    BlockEncoding fraction := by
   let scan := BinaryNormalization.high
     (GaussianInt.normNat fraction.numerator) (GaussianInt.normNat fraction.denominator)
     (GaussianInt.normNat_pos fraction.denominatorNonzero) highBranch
-  let initial := Encoder.Normalization.initialHigh fraction numeratorNonzero highBranch
-  let suffix := Encoder.Annulus.Blocks.encodeAnnulusBlocks initial.annulus
+  let initial := Normalization.initialHigh fraction numeratorNonzero highBranch
+  let suffix := Annulus.Blocks.encodeAnnulusBlocks initial.annulus
   let block : Block :=
     ⟨.regular, scan.exponent,
-      ComplexContinuedFraction.Encoding.Sector.select initial.annulus.frac.value⟩
+      Sector.select initial.annulus.frac.value⟩
   let point := Line.Matrix.act block.matrix suffix.tail.point
   have numeratorIdentity : initial.annulus.frac.numerator = fraction.numerator := by
     rfl
@@ -533,18 +535,18 @@ open Purelib.Data.Gaussian in
 open Purelib.Data.Nat in
 open Purelib.Geometry.Projective in
 /-- Construct the low-branch block encoding using the retained numerator scaling and annulus continuation. -/
-private def encodeLowBlocks (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+private def encodeLowBlocks (fraction : SourceEncodingEncoderFracAlias)
     (numeratorNonzero : fraction.numerator ≠ 0)
     (lowBranch : GaussianInt.normNat fraction.numerator < 2 * GaussianInt.normNat fraction.denominator) :
-    Encoder.Blocks.BlockEncoding fraction := by
+    BlockEncoding fraction := by
   let scan := BinaryNormalization.low
     (GaussianInt.normNat fraction.numerator) (GaussianInt.normNat fraction.denominator)
     (GaussianInt.normNat_pos numeratorNonzero) (GaussianInt.normNat_pos fraction.denominatorNonzero) lowBranch
-  let initial := Encoder.Normalization.initialLow fraction numeratorNonzero lowBranch
-  let suffix := Encoder.Annulus.Blocks.encodeAnnulusBlocks initial.annulus
+  let initial := Normalization.initialLow fraction numeratorNonzero lowBranch
+  let suffix := Annulus.Blocks.encodeAnnulusBlocks initial.annulus
   let block : Block :=
     ⟨.initialLow, scan.exponent,
-      ComplexContinuedFraction.Encoding.Sector.select initial.annulus.frac.value⟩
+      Sector.select initial.annulus.frac.value⟩
   let point := Line.Matrix.act block.matrix suffix.tail.point
   have numeratorIdentity : initial.annulus.frac.numerator =
       GaussianInt.natPow GaussianInt.gammaInt scan.exponent * fraction.numerator := by
@@ -586,16 +588,16 @@ open Purelib.Data.CCL.Encoding in
 open Purelib.Data.ComplexContinuedFraction.Encoding in
 open Purelib.Data.Nat in
 /-- Retain the regular initial block and annulus computed by the exact high normalization. -/
-@[expose] def initialHighBlockStep (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+@[expose] def initialHighBlockStep (fraction : SourceEncodingEncoderFracAlias)
     (numeratorNonzero : fraction.numerator ≠ 0)
     (highBranch : 2 * GaussianInt.normNat fraction.denominator ≤ GaussianInt.normNat fraction.numerator) :
-    Encoder.Blocks.InitialBlockStep :=
+    InitialBlockStep :=
   let scan := BinaryNormalization.high
     (GaussianInt.normNat fraction.numerator) (GaussianInt.normNat fraction.denominator)
     (GaussianInt.normNat_pos fraction.denominatorNonzero) highBranch
-  let initial := Encoder.Normalization.initialHigh fraction numeratorNonzero highBranch
+  let initial := Normalization.initialHigh fraction numeratorNonzero highBranch
   ⟨⟨.regular, scan.exponent,
-      ComplexContinuedFraction.Encoding.Sector.select initial.annulus.frac.value⟩,
+      Sector.select initial.annulus.frac.value⟩,
     initial.annulus⟩
 end Purelib.Data.CCL.Encoding.Encoder.Blocks
 
@@ -611,15 +613,15 @@ open Purelib.Data.CCL.Encoding in
 
 The supplied high or low norm comparison selects the displayed initial block and retained annulus continuation. No
 normalization exponent or sector is replaced. -/
-theorem encodeBlocks_blocks_of_high_step (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+theorem encodeBlocks_blocks_of_high_step (fraction : SourceEncodingEncoderFracAlias)
     (numeratorNonzero : fraction.numerator ≠ 0)
     (highBranch : 2 * GaussianInt.normNat fraction.denominator ≤ GaussianInt.normNat fraction.numerator) :
-    (Encoder.Blocks.encodeBlocks fraction numeratorNonzero).blocks =
-      (Encoder.Blocks.initialHighBlockStep fraction numeratorNonzero highBranch).block ::
-        (Encoder.Annulus.Blocks.encodeAnnulusBlocks
-          (Encoder.Blocks.initialHighBlockStep fraction numeratorNonzero highBranch).annulus).continuation := by
-  simpa only [Encoder.Blocks.initialHighBlockStep] using
-    Encoder.Blocks.encodeBlocks_blocks_of_high fraction numeratorNonzero highBranch
+    (encodeBlocks fraction numeratorNonzero).blocks =
+      (initialHighBlockStep fraction numeratorNonzero highBranch).block ::
+        (Annulus.Blocks.encodeAnnulusBlocks
+          (initialHighBlockStep fraction numeratorNonzero highBranch).annulus).continuation := by
+  simpa only [initialHighBlockStep] using
+    encodeBlocks_blocks_of_high fraction numeratorNonzero highBranch
 end Purelib.Data.CCL.Encoding.Encoder.Blocks
 
 end
@@ -635,14 +637,14 @@ open Purelib.Data.ComplexContinuedFraction.Encoding in
 
 The supplied high or low norm comparison selects the displayed initial block and retained annulus continuation. No
 normalization exponent or sector is replaced. -/
-theorem initialHighBlockStep_block_eq (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+theorem initialHighBlockStep_block_eq (fraction : SourceEncodingEncoderFracAlias)
     (numeratorNonzero : fraction.numerator ≠ 0)
     (highBranch : 2 * GaussianInt.normNat fraction.denominator ≤ GaussianInt.normNat fraction.numerator) :
-    (Encoder.Blocks.initialHighBlockStep fraction numeratorNonzero highBranch).block =
+    (initialHighBlockStep fraction numeratorNonzero highBranch).block =
       ⟨.regular,
-        (Encoder.Blocks.initialHighBlockStep fraction numeratorNonzero highBranch).block.exponent,
-        ComplexContinuedFraction.Encoding.Sector.select
-          (Encoder.Blocks.initialHighBlockStep fraction numeratorNonzero highBranch).annulus.frac.value⟩ := by
+        (initialHighBlockStep fraction numeratorNonzero highBranch).block.exponent,
+        Sector.select
+          (initialHighBlockStep fraction numeratorNonzero highBranch).annulus.frac.value⟩ := by
   rfl
 end Purelib.Data.CCL.Encoding.Encoder.Blocks
 
@@ -658,12 +660,12 @@ open Purelib.Data.CCL.Encoding in
 
 The supplied high or low norm comparison selects the displayed initial block and retained annulus continuation. No
 normalization exponent or sector is replaced. -/
-theorem initialHighBlockStep_den_eq (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+theorem initialHighBlockStep_den_eq (fraction : SourceEncodingEncoderFracAlias)
     (numeratorNonzero : fraction.numerator ≠ 0)
     (highBranch : 2 * GaussianInt.normNat fraction.denominator ≤ GaussianInt.normNat fraction.numerator) :
-    (Encoder.Blocks.initialHighBlockStep fraction numeratorNonzero highBranch).annulus.frac.denominator =
+    (initialHighBlockStep fraction numeratorNonzero highBranch).annulus.frac.denominator =
       GaussianInt.natPow GaussianInt.gammaInt
-          (Encoder.Blocks.initialHighBlockStep fraction numeratorNonzero highBranch).block.exponent *
+          (initialHighBlockStep fraction numeratorNonzero highBranch).block.exponent *
         fraction.denominator := by
   rfl
 end Purelib.Data.CCL.Encoding.Encoder.Blocks
@@ -682,7 +684,7 @@ open Purelib.Data.Nat in
 The supplied high or low norm comparison selects the displayed initial block and retained annulus continuation. No
 normalization exponent or sector is replaced. -/
 theorem initialHighBlockStep_exponent_eq_of_bounds (fraction :
-  GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+  SourceEncodingEncoderFracAlias)
     (numeratorNonzero : fraction.numerator ≠ 0)
     (highBranch : 2 * GaussianInt.normNat fraction.denominator ≤ GaussianInt.normNat fraction.numerator)
     (candidate : Nat)
@@ -691,9 +693,9 @@ theorem initialHighBlockStep_exponent_eq_of_bounds (fraction :
     (candidateUpper :
       GaussianInt.normNat fraction.numerator <
         2 ^ (candidate + 1) * GaussianInt.normNat fraction.denominator) :
-    (Encoder.Blocks.initialHighBlockStep fraction numeratorNonzero highBranch).block.exponent =
+    (initialHighBlockStep fraction numeratorNonzero highBranch).block.exponent =
       candidate := by
-  unfold Encoder.Blocks.initialHighBlockStep
+  unfold initialHighBlockStep
   dsimp only
   exact (BinaryNormalization.high
     (GaussianInt.normNat fraction.numerator) (GaussianInt.normNat fraction.denominator)
@@ -713,10 +715,10 @@ open Purelib.Data.CCL.Encoding in
 
 The supplied high or low norm comparison selects the displayed initial block and retained annulus continuation. No
 normalization exponent or sector is replaced. -/
-theorem initialHighBlockStep_num_eq (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+theorem initialHighBlockStep_num_eq (fraction : SourceEncodingEncoderFracAlias)
     (numeratorNonzero : fraction.numerator ≠ 0)
     (highBranch : 2 * GaussianInt.normNat fraction.denominator ≤ GaussianInt.normNat fraction.numerator) :
-    (Encoder.Blocks.initialHighBlockStep fraction numeratorNonzero highBranch).annulus.frac.numerator =
+    (initialHighBlockStep fraction numeratorNonzero highBranch).annulus.frac.numerator =
       fraction.numerator := by
   rfl
 end Purelib.Data.CCL.Encoding.Encoder.Blocks
@@ -732,16 +734,16 @@ open Purelib.Data.CCL.Encoding in
 open Purelib.Data.ComplexContinuedFraction.Encoding in
 open Purelib.Data.Nat in
 /-- Retain the initial-low block and annulus computed by the exact low normalization. -/
-@[expose] def initialLowBlockStep (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+@[expose] def initialLowBlockStep (fraction : SourceEncodingEncoderFracAlias)
     (numeratorNonzero : fraction.numerator ≠ 0)
     (lowBranch : GaussianInt.normNat fraction.numerator < 2 * GaussianInt.normNat fraction.denominator) :
-    Encoder.Blocks.InitialBlockStep :=
+    InitialBlockStep :=
   let scan := BinaryNormalization.low
     (GaussianInt.normNat fraction.numerator) (GaussianInt.normNat fraction.denominator)
     (GaussianInt.normNat_pos numeratorNonzero) (GaussianInt.normNat_pos fraction.denominatorNonzero) lowBranch
-  let initial := Encoder.Normalization.initialLow fraction numeratorNonzero lowBranch
+  let initial := Normalization.initialLow fraction numeratorNonzero lowBranch
   ⟨⟨.initialLow, scan.exponent,
-      ComplexContinuedFraction.Encoding.Sector.select initial.annulus.frac.value⟩,
+      Sector.select initial.annulus.frac.value⟩,
     initial.annulus⟩
 end Purelib.Data.CCL.Encoding.Encoder.Blocks
 
@@ -757,15 +759,15 @@ open Purelib.Data.CCL.Encoding in
 
 The supplied high or low norm comparison selects the displayed initial block and retained annulus continuation. No
 normalization exponent or sector is replaced. -/
-theorem encodeBlocks_blocks_of_low_step (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+theorem encodeBlocks_blocks_of_low_step (fraction : SourceEncodingEncoderFracAlias)
     (numeratorNonzero : fraction.numerator ≠ 0)
     (lowBranch : GaussianInt.normNat fraction.numerator < 2 * GaussianInt.normNat fraction.denominator) :
-    (Encoder.Blocks.encodeBlocks fraction numeratorNonzero).blocks =
-      (Encoder.Blocks.initialLowBlockStep fraction numeratorNonzero lowBranch).block ::
-        (Encoder.Annulus.Blocks.encodeAnnulusBlocks
-          (Encoder.Blocks.initialLowBlockStep fraction numeratorNonzero lowBranch).annulus).continuation := by
-  simpa only [Encoder.Blocks.initialLowBlockStep] using
-    Encoder.Blocks.encodeBlocks_blocks_of_low fraction numeratorNonzero lowBranch
+    (encodeBlocks fraction numeratorNonzero).blocks =
+      (initialLowBlockStep fraction numeratorNonzero lowBranch).block ::
+        (Annulus.Blocks.encodeAnnulusBlocks
+          (initialLowBlockStep fraction numeratorNonzero lowBranch).annulus).continuation := by
+  simpa only [initialLowBlockStep] using
+    encodeBlocks_blocks_of_low fraction numeratorNonzero lowBranch
 end Purelib.Data.CCL.Encoding.Encoder.Blocks
 
 end

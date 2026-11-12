@@ -87,7 +87,7 @@ open Purelib.Riemann.Meshes.PuncturedGridFaces (PuncturedFaces)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_add sumFin_sub)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target radius : Rational} {grid : NewtonGrid
@@ -117,15 +117,15 @@ open Purelib.Riemann.Periods in
 /-- Sum of cached four-corner areas over regular faces and sheets.
 
 Reads every corner from the same coefficient-combined numerical cache in the retained rectangle order. -/
-def cachedCornerBoundary (cache : Numerics domains stage) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector
+def cachedCornerBoundary (cache : Numerics domains stage) (coefficients : Energy.GaussianVector
   genus) : Gaussian
   :=
-  FiniteSum.Fin.sumFin (fun position => FiniteSum.Fin.sumFin (fun sheet : Fin 2 =>
+  sumFin (fun position => sumFin (fun sheet : Fin 2 =>
     BilinearGridBoundary.cornerArea
-      (Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.cachedValue cache coefficients position sheet 0)
-      (Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.cachedValue cache coefficients position sheet 1)
-      (Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.cachedValue cache coefficients position sheet 2)
-      (Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.cachedValue cache coefficients position sheet 3)))
+      (OuterCorners.cachedValue cache coefficients position sheet 0)
+      (OuterCorners.cachedValue cache coefficients position sheet 1)
+      (OuterCorners.cachedValue cache coefficients position sheet 2)
+      (OuterCorners.cachedValue cache coefficients position sheet 3)))
 
 open Purelib.Algebra in
 open Purelib.Curves.Hyperelliptic in
@@ -137,24 +137,24 @@ theorem cornerBoundary_cached {assemblies : SheetAssemblies requests (cache := c
     {perimeters : SheetPerimeters requests assemblies} (faces : SheetFaces requests perimeters) :
     cornerBoundary faces = cachedCornerBoundary cache coefficients := by
   unfold cornerBoundary cachedCornerBoundary
-  apply FiniteSum.Fin.sumFin_congr
+  apply sumFin_congr
   intro position
-  apply FiniteSum.Fin.sumFin_congr
+  apply sumFin_congr
   intro sheet
   let face := (faces.get sheet).get position
   change BilinearGridBoundary.cornerArea
-    (Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value face false false)
-      (Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value face true false)
-    (Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value face true true)
-      (Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value face false true) = _
-  rw [Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value_eq_cached,
-    Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value_eq_cached,
-    Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value_eq_cached,
-    Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.value_eq_cached]
+    (OuterCorners.value face false false)
+      (OuterCorners.value face true false)
+    (OuterCorners.value face true true)
+      (OuterCorners.value face false true) = _
+  rw [OuterCorners.value_eq_cached,
+    OuterCorners.value_eq_cached,
+    OuterCorners.value_eq_cached,
+    OuterCorners.value_eq_cached]
   rfl
 
-variable {vertices : Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank grid.shrunk.prepared.grid} {edges :
-  Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+variable {vertices : RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank grid.shrunk.prepared.grid} {edges :
+  RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
   {mesh : LiftedMesh vertices edges grid.faces}
 
 open Purelib.Curves.Hyperelliptic in
@@ -163,7 +163,7 @@ open Purelib.Data in
 
 The dependent bank keeps each differential cache and the original mesh triangle owner. -/
 def EnergyTriangleReadings (cache : Numerics domains stage) (mesh : LiftedMesh vertices edges grid.faces) :=
-  Vector.DependentVector (fun basis : Fin genus => Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings
+  Vector.DependentVector (fun basis : Fin genus => TriangleReadings
     (cache.get basis) mesh)
 
 open Purelib.Algebra in
@@ -173,19 +173,19 @@ open Purelib.LinearAlgebra.Gaussian in
 
 Keeps the conjugated coefficient/value sum separate from the ordinary coefficient/value sum. -/
 def triangleValue (readings : EnergyTriangleReadings cache mesh) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+  Energy.GaussianVector genus)
     (triangle : Fin mesh.triangles.length) (corner : Fin 3) : PrimitivePoint :=
-  ⟨sumFin (fun basis => Data.Gaussian.Basic.conj (coefficients basis) * Data.Gaussian.Basic.conj ((readings.get
+  ⟨sumFin (fun basis => conj (coefficients basis) * conj ((readings.get
     basis).values
     triangle corner)),
-    FiniteSum.Fin.sumFin (fun basis => coefficients basis * (readings.get basis).values triangle corner)⟩
+    sumFin (fun basis => coefficients basis * (readings.get basis).values triangle corner)⟩
 
 open Purelib.LinearAlgebra.Gaussian in
 /-- Oriented wedge area of a retained triangle's three primitive values.
 
 Uses the coefficient-combined values in their original corner order. -/
 def triangleEnergy (readings : EnergyTriangleReadings cache mesh) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+  Energy.GaussianVector genus)
     (triangle : Fin mesh.triangles.length) : Gaussian :=
   triangleWedgeArea (triangleValue readings coefficients triangle 0)
     (triangleValue readings coefficients triangle 1) (triangleValue readings coefficients triangle 2)
@@ -201,18 +201,18 @@ components separately. -/
 theorem triangleValue_readback (readings : EnergyTriangleReadings cache mesh)
     (position : Fin grid.faces.regulars.length) (sheet : Fin 2) (upper : Bool) (corner : Fin 3) :
     triangleValue readings coefficients (mesh.triangleIndex position sheet upper) corner =
-      Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.cachedValue cache coefficients position sheet
-        (Sewing.SewnPrimitiveFaces.corner (Meshes.PuncturedGrid.Face.Corners.FaceCorners.triangle upper) corner) := by
+      OuterCorners.cachedValue cache coefficients position sheet
+        (Sewing.SewnPrimitiveFaces.corner (FaceCorners.triangle upper) corner) := by
   apply congrArg₂ PrimitivePoint.mk
-  · apply FiniteSum.Fin.sumFin_congr
+  · apply sumFin_congr
     intro basis
     rw [(readings.get basis).values_eq]
-    simp only [Meshes.PuncturedGrid.TrianglePrimitiveReadings.FaceCorners.triangleValues, Vector.Basic.vectorOfFn_apply]
+    simp only [FaceCorners.triangleValues, Vector.Basic.vectorOfFn_apply]
     rfl
-  · apply FiniteSum.Fin.sumFin_congr
+  · apply sumFin_congr
     intro basis
     rw [(readings.get basis).values_eq]
-    simp only [Meshes.PuncturedGrid.TrianglePrimitiveReadings.FaceCorners.triangleValues, Vector.Basic.vectorOfFn_apply]
+    simp only [FaceCorners.triangleValues, Vector.Basic.vectorOfFn_apply]
     rfl
 
 open Purelib.Curves.Hyperelliptic in
@@ -225,10 +225,10 @@ theorem triangleEnergy_pair (readings : EnergyTriangleReadings cache mesh)
     triangleEnergy readings coefficients (mesh.triangleIndex position sheet false) +
       triangleEnergy readings coefficients (mesh.triangleIndex position sheet true) =
       BilinearGridBoundary.cornerArea
-        (Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.cachedValue cache coefficients position sheet 0)
-        (Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.cachedValue cache coefficients position sheet 1)
-        (Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.cachedValue cache coefficients position sheet 2)
-        (Meshes.Newton.Surface.OuterCornerReadback.OuterCorners.cachedValue cache coefficients position sheet 3) := by
+        (OuterCorners.cachedValue cache coefficients position sheet 0)
+        (OuterCorners.cachedValue cache coefficients position sheet 1)
+        (OuterCorners.cachedValue cache coefficients position sheet 2)
+        (OuterCorners.cachedValue cache coefficients position sheet 3) := by
   unfold triangleEnergy
   rw [triangleValue_readback, triangleValue_readback, triangleValue_readback,
     triangleValue_readback, triangleValue_readback, triangleValue_readback]
@@ -243,11 +243,11 @@ Reindexes the actual lifted mesh triangles by regular face and sheet, then appli
 theorem cornerBoundary_triangles {assemblies : SheetAssemblies requests (cache := cache) (coefficients := coefficients)}
     {perimeters : SheetPerimeters requests assemblies} (faces : SheetFaces requests perimeters)
     (readings : EnergyTriangleReadings cache mesh) :
-    cornerBoundary faces = FiniteSum.Fin.sumFin (triangleEnergy readings coefficients) := by
+    cornerBoundary faces = sumFin (triangleEnergy readings coefficients) := by
   rw [cornerBoundary_cached, Meshes.PuncturedGrid.TriangleSums.LiftedMesh.triangle_sum mesh]
-  apply FiniteSum.Fin.sumFin_congr
+  apply sumFin_congr
   intro position
-  apply FiniteSum.Fin.sumFin_congr
+  apply sumFin_congr
   intro sheet
   exact (triangleEnergy_pair readings position sheet).symm
 
@@ -255,7 +255,7 @@ section PaidEnergy
 
 variable {depth : Nat}
   {requests : SynchronizedSurfaceRequests (fun sheet =>
-    Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
+    surfaceMeshes partitions domains surfaceCuts
     sheet depth) fixed error}
   {ownershipAllowance exteriorAllowance faceAllowance contactAllowance : Rational}
 
@@ -278,13 +278,13 @@ theorem shared_triangle_energy_lower
     {perimeters : SheetPerimeters requests assemblies} (faces : SheetFaces requests perimeters)
     {traces : PerimeterTraces requests} (samples : PerimeterSamples requests traces cache coefficients)
     (neighbors : PuncturedFaces.NeighborBank grid.faces) (positive : 0 < contactAllowance)
-    (contacts : Data.Gaussian.Norm.Basic.normSq (pairedCentered samples) ≤
+    (contacts : Norm.Basic.normSq (pairedCentered samples) ≤
       (4 * (contactAllowance * PreparedObservationCoercivity.coefficientNormSq coefficients))^2)
     (readings : EnergyTriangleReadings cache mesh) :
     (2 * (NewtonObservationSurfaceLower.surfaceLowerConstant observations - error - ownershipAllowance -
       exteriorAllowance - faceAllowance) - contactAllowance) *
       PreparedObservationCoercivity.coefficientNormSq coefficients ≤
-        (FiniteSum.Fin.sumFin (triangleEnergy readings coefficients) + physicalCentered samples neighbors).im / 4 := by
+        (sumFin (triangleEnergy readings coefficients) + physicalCentered samples neighbors).im / 4 := by
   rw [← cornerBoundary_triangles faces readings]
   exact energy_lower_after_contacts request later surfaceReadings observationFace faces samples neighbors positive
     contacts

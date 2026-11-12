@@ -33,6 +33,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Algebra
@@ -66,20 +68,20 @@ open Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility (PreparedPatch)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CoordinatePolynomial (CoordinateBounds)
 open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_succ)
-variable {genus count otherCount : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
-  {differential other : Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {otherPatch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch
-    (Purelib.Riemann.Integration.PreparedEdgeRecasting.recastCenteredEdge other parent)}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {otherData :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
-  {cover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {otherCover :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover otherData}
-  (regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap) (common :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCommonCover.CommonCover cover otherCover)
+variable {genus count otherCount : Nat} {curve : HyperellipticCurve genus}
+  {differential other : Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent}
+  {otherPatch : PreparedPatch
+    (recastCenteredEdge other parent)}
+  {data : Data patch count} {otherData :
+    Data otherPatch otherCount}
+  {cover : Cover data} {otherCover :
+    Cover otherData}
+  (regular : RegularBounds.Data cap) (common :
+    CommonCover cover otherCover)
 
 /-- Read an original common-cover interval with its retained finite-index bound. -/
 def IntervalAt (i : Fin common.intervals.length) := common.intervals[i.val]'i.isLt
@@ -88,22 +90,22 @@ set_option genInjectivity false in
 /-- The two original cell comparisons and intrinsic coordinate bounds at one retained common-cover interval. -/
 structure ChartPreparationAt (i : Fin common.intervals.length) where
   /-- The original first covered cell's retained regular comparison. -/ first : ArcSamples.Data regular
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPreparation.IntervalAt common i).first.cell
+    (IntervalAt common i).first.cell
   /-- The original second covered cell's retained regular comparison. -/ second : ArcSamples.Data regular
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPreparation.IntervalAt common i).second.cell
+    (IntervalAt common i).second.cell
   /-- The intrinsic reciprocal-coordinate bounds for this exact first retained cell. -/ coordinates :
-    CoordinatePolynomial.CoordinateBounds first
+    CoordinateBounds first
 
 constructive_injectivity ChartPreparationAt
 
 /-- A dependent vector of preparations indexed by the original common-cover intervals. -/
-def ChartPreparations := Data.Vector.DependentVector
-  (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPreparation.ChartPreparationAt regular common)
+def ChartPreparations := DependentVector
+  (ChartPreparationAt regular common)
 
 /-- Combine the original interval coordinate slopes and common arc bound into the retained full-cover error scale. -/
-def chartGeometricScale (arcScale : InverseRootPolynomial.Coordinate) (entries :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPreparation.ChartPreparations regular common) : Coordinate :=
-  (common.intervals.length : InverseRootPolynomial.Coordinate) * FiniteSum.Fin.sumFin (fun i => 4 * arcScale *
+def chartGeometricScale (arcScale : Coordinate) (entries :
+  ChartPreparations regular common) : Coordinate :=
+  (common.intervals.length : Coordinate) * sumFin (fun i => 4 * arcScale *
     ((entries.get i).coordinates.slope + 4)^2)
 
 set_option genInjectivity false in
@@ -113,56 +115,56 @@ The entries retain both source cells, a shared padded coefficient bound and the 
 selecting any sampling stage. -/
 structure ChartPreparation where
   /-- The cached comparison preparation at every original common-cover interval. -/ entries :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPreparation.ChartPreparations regular common
+    ChartPreparations regular common
   /-- The retained padded inverse bounds shared by both original differentials. -/ bounds :
-    ReciprocalPaddedInverse.UniformBounds regular.padded
+    UniformBounds regular.padded
   /-- The cached common squared coefficient ceiling for the two original cap primitives. -/ arcScale :
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The arc ceiling is sixteen times the square of the larger original coefficient bound. -/ arcScale_eq : arcScale =
     16 * (max (bounds.coefficientUpper differential) (bounds.coefficientUpper other))^2
-  /-- The cached full-cover geometric discrepancy scale. -/ scale : InverseRootPolynomial.Coordinate
+  /-- The cached full-cover geometric discrepancy scale. -/ scale : Coordinate
   /-- The scale is exactly the original interval-count weighted sum of retained coordinate ceilings. -/ scale_eq : scale
-    = Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPreparation.chartGeometricScale regular common arcScale
+    = chartGeometricScale regular common arcScale
     entries
   /-- The retained full-cover geometric scale is nonnegative. -/ nonnegative : 0 ≤ scale
 
 constructive_injectivity ChartPreparation
 
 /-- A finite sum of nonnegative original rational entries is nonnegative. -/
-private theorem sum_nonnegative {n : Nat} (values : Fin n → InverseRootPolynomial.Coordinate) (bounded : ∀ i, 0 ≤ values
-  i) : 0 ≤ FiniteSum.Fin.sumFin values := by
+private theorem sum_nonnegative {n : Nat} (values : Fin n → Coordinate) (bounded : ∀ i, 0 ≤ values
+  i) : 0 ≤ sumFin values := by
   induction n with
   | zero => exact le_rfl
-  | succ n ih => rw [FiniteSum.Fin.sumFin_succ]; exact add_nonneg (bounded 0) (ih _ (fun i => bounded i.succ))
+  | succ n ih => rw [sumFin_succ]; exact add_nonneg (bounded 0) (ih _ (fun i => bounded i.succ))
 
 /-- A finite sum of nonnegative original rational entries is nonnegative. -/
-theorem sum_nonnegative_for_chart {n : Nat} (values : Fin n → InverseRootPolynomial.Coordinate) (bounded : ∀ i, 0 ≤
-  values i) : 0 ≤ FiniteSum.Fin.sumFin values := by
+theorem sum_nonnegative_for_chart {n : Nat} (values : Fin n → Coordinate) (bounded : ∀ i, 0 ≤
+  values i) : 0 ≤ sumFin values := by
   induction n with
   | zero => exact le_rfl
-  | succ n ih => rw [FiniteSum.Fin.sumFin_succ]; exact add_nonneg (bounded 0) (ih _ (fun i => bounded i.succ))
+  | succ n ih => rw [sumFin_succ]; exact add_nonneg (bounded 0) (ih _ (fun i => bounded i.succ))
 
 /-- No dyadic vertices or polynomial sampling stage is chosen here. -/
-def ChartPreparation.build : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPreparation.ChartPreparation regular
+def ChartPreparation.build : ChartPreparation regular
   common := by
-  let entries : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPreparation.ChartPreparations regular common :=
+  let entries : ChartPreparations regular common :=
     DependentVector.ofFn (fun i =>
     let first := ArcSamples.Data.build regular
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPreparation.IntervalAt common i).first.cell
+      (IntervalAt common i).first.cell
     let second := ArcSamples.Data.build regular
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPreparation.IntervalAt common i).second.cell
+      (IntervalAt common i).second.cell
     ⟨first, second, CoordinateBounds.build first⟩)
   let bounds := UniformBounds.build regular.padded
   let arcScale := 16 * (max (bounds.coefficientUpper differential) (bounds.coefficientUpper other))^2
-  have arcNonnegative : 0 ≤ arcScale := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
-    (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-  let scale := Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPreparation.chartGeometricScale regular common
+  have arcNonnegative : 0 ≤ arcScale := Arithmetic.mul_nonneg_direct (by decide +kernel)
+    (Arithmetic.sq_nonneg_direct _)
+  let scale := chartGeometricScale regular common
     arcScale entries
-  have nonnegative : 0 ≤ scale := Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Cast.Order.natCast_le_direct
+  have nonnegative : 0 ≤ scale := Arithmetic.mul_nonneg_direct (Fraction.Cast.Order.natCast_le_direct
     (Nat.zero_le _))
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPreparation.sum_nonnegative_for_chart _ (fun _ =>
-      Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-      arcNonnegative) (Fraction.Order.Arithmetic.sq_nonneg_direct _)))
+    (sum_nonnegative_for_chart _ (fun _ =>
+      Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide)
+      arcNonnegative) (Arithmetic.sq_nonneg_direct _)))
   exact ⟨entries, bounds, arcScale, rfl, scale, rfl, nonnegative⟩
 
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartPreparation

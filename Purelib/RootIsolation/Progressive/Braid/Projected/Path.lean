@@ -69,7 +69,7 @@ namespace ProjectedPath
 /-- Read the original chamber path underlying the retained projected events. -/
 def chamberPath {strands : Nat} :
     {start finish : ProjectedFrame strands} →
-      Progressive.Braid.Projected.Path.ProjectedPath start finish →
+      ProjectedPath start finish →
         ChamberPath start.chamber finish.chamber
   | _, _, .nil frame => .nil frame.chamber
   | _, _, .cons step remaining =>
@@ -78,23 +78,23 @@ def chamberPath {strands : Nat} :
 /-- Concatenate the braid words of the original projected events in path order. -/
 def word {strands : Nat} :
     {start finish : ProjectedFrame strands} →
-      Progressive.Braid.Projected.Path.ProjectedPath start finish → Word strands
+      ProjectedPath start finish → Word strands
   | _, _, .nil _ => []
   | _, _, .cons step remaining => step.word ++ remaining.word
 
 /-- Count the actual retained projected event steps. -/
 def stepCount {strands : Nat} :
     {start finish : ProjectedFrame strands} →
-      Progressive.Braid.Projected.Path.ProjectedPath start finish → Nat
+      ProjectedPath start finish → Nat
   | _, _, .nil _ => 0
   | _, _, .cons _ remaining => remaining.stepCount + 1
 
 /-- Join projected paths at their exact shared projected frame. -/
 def append {strands : Nat}
     {start middle finish : ProjectedFrame strands}
-    (first : Progressive.Braid.Projected.Path.ProjectedPath start middle)
-    (second : Progressive.Braid.Projected.Path.ProjectedPath middle finish) :
-      Progressive.Braid.Projected.Path.ProjectedPath start finish :=
+    (first : ProjectedPath start middle)
+    (second : ProjectedPath middle finish) :
+      ProjectedPath start finish :=
   match first with
   | .nil _ => second
   | .cons step remaining => .cons step (remaining.append second)
@@ -102,7 +102,7 @@ def append {strands : Nat}
 /-- Reverse the original projected path and each of its certified signed events. -/
 def reverse {strands : Nat} :
     {start finish : ProjectedFrame strands} →
-      Progressive.Braid.Projected.Path.ProjectedPath start finish → Progressive.Braid.Projected.Path.ProjectedPath
+      ProjectedPath start finish → ProjectedPath
         finish start
   | _, _, .nil frame => .nil frame
   | _, _, .cons (start := start) step remaining =>
@@ -112,15 +112,15 @@ def reverse {strands : Nat} :
 @[simp] theorem chamberPath_append {strands
   : Nat}
     {start middle finish : ProjectedFrame strands}
-    (first : Progressive.Braid.Projected.Path.ProjectedPath start middle)
-    (second : Progressive.Braid.Projected.Path.ProjectedPath middle finish) :
+    (first : ProjectedPath start middle)
+    (second : ProjectedPath middle finish) :
     (first.append second).chamberPath =
       first.chamberPath.append second.chamberPath := by
   induction first with
   | nil frame => rfl
   | cons step remaining inductionHypothesis =>
-      simp only [Progressive.Braid.Projected.Path.ProjectedPath.append,
-        Progressive.Braid.Projected.Path.ProjectedPath.chamberPath,
+      simp only [append,
+        chamberPath,
         ChamberPath.append, -eq_self, -iff_self]
       rewrite [inductionHypothesis]
       rfl
@@ -128,14 +128,14 @@ def reverse {strands : Nat} :
 /-- Joining projected paths concatenates their retained braid words in order. -/
 @[simp] theorem word_append {strands : Nat}
     {start middle finish : ProjectedFrame strands}
-    (first : Progressive.Braid.Projected.Path.ProjectedPath start middle)
-    (second : Progressive.Braid.Projected.Path.ProjectedPath middle finish) :
+    (first : ProjectedPath start middle)
+    (second : ProjectedPath middle finish) :
     (first.append second).word = first.word ++ second.word := by
   induction first with
   | nil frame => rfl
   | cons step remaining inductionHypothesis =>
-      simp only [Progressive.Braid.Projected.Path.ProjectedPath.append,
-        Progressive.Braid.Projected.Path.ProjectedPath.word, -eq_self, -iff_self]
+      simp only [append,
+        word, -eq_self, -iff_self]
       rewrite [inductionHypothesis]
       exact (Data.List.Append.append_assoc _ _ _).symm
 
@@ -143,14 +143,14 @@ def reverse {strands : Nat} :
 @[simp] theorem chamberPath_reverse {strands
   : Nat}
     {start finish : ProjectedFrame strands}
-    (path : Progressive.Braid.Projected.Path.ProjectedPath start finish) :
+    (path : ProjectedPath start finish) :
     path.reverse.chamberPath = path.chamberPath.reverse := by
   induction path with
   | nil frame => rfl
   | cons step remaining inductionHypothesis =>
-      simp only [Progressive.Braid.Projected.Path.ProjectedPath.reverse,
-        Progressive.Braid.Projected.Path.ProjectedPath.chamberPath_append,
-        Progressive.Braid.Projected.Path.ProjectedPath.chamberPath,
+      simp only [reverse,
+        chamberPath_append,
+        chamberPath,
         inductionHypothesis, ProjectedOverlap.reverse_chamberOverlap,
         ChamberPath.reverse, -eq_self, -iff_self]
       rfl
@@ -158,13 +158,13 @@ def reverse {strands : Nat} :
 /-- Reversing a projected path gives the inverse of its retained original braid word. -/
 @[simp] theorem word_reverse {strands : Nat}
     {start finish : ProjectedFrame strands}
-    (path : Progressive.Braid.Projected.Path.ProjectedPath start finish) :
+    (path : ProjectedPath start finish) :
     path.reverse.word = path.word.inverse := by
   induction path with
   | nil frame => rfl
   | cons step remaining inductionHypothesis =>
-      simp only [Progressive.Braid.Projected.Path.ProjectedPath.reverse,
-        Progressive.Braid.Projected.Path.ProjectedPath.word_append, Progressive.Braid.Projected.Path.ProjectedPath.word,
+      simp only [reverse,
+        word_append, word,
         inductionHypothesis,
         ProjectedOverlap.reverse_word,
         Word.inverse_append,
@@ -175,14 +175,14 @@ def reverse {strands : Nat} :
 @[simp] theorem stepCount_append {strands :
   Nat}
     {start middle finish : ProjectedFrame strands}
-    (first : Progressive.Braid.Projected.Path.ProjectedPath start middle)
-    (second : Progressive.Braid.Projected.Path.ProjectedPath middle finish) :
+    (first : ProjectedPath start middle)
+    (second : ProjectedPath middle finish) :
     (first.append second).stepCount = first.stepCount + second.stepCount := by
   induction first with
   | nil frame => exact (Nat.zero_add _).symm
   | cons step remaining inductionHypothesis =>
-      simp only [Progressive.Braid.Projected.Path.ProjectedPath.append,
-        Progressive.Braid.Projected.Path.ProjectedPath.stepCount, -eq_self, -iff_self]
+      simp only [append,
+        stepCount, -eq_self, -iff_self]
       rewrite [inductionHypothesis]
       omega0
 
@@ -190,14 +190,14 @@ def reverse {strands : Nat} :
 @[simp] theorem chamberPath_stepCount
   {strands : Nat}
     {start finish : ProjectedFrame strands}
-    (path : Progressive.Braid.Projected.Path.ProjectedPath start finish) :
+    (path : ProjectedPath start finish) :
     path.chamberPath.stepCount = path.stepCount := by
   induction path with
   | nil frame => rfl
   | cons step remaining inductionHypothesis =>
-      simp only [Progressive.Braid.Projected.Path.ProjectedPath.chamberPath,
+      simp only [chamberPath,
         ChamberPath.stepCount,
-        Progressive.Braid.Projected.Path.ProjectedPath.stepCount, -eq_self, -iff_self]
+        stepCount, -eq_self, -iff_self]
       exact congrArg Nat.succ inductionHypothesis
 
 /-- Evaluation of the extracted word agrees exactly with owner transport,
@@ -205,14 +205,14 @@ after applying the independently certified projection order at each endpoint.
 This is the central finite braid-extraction theorem. -/
 theorem transport_agrees {strands : Nat}
     {start finish : ProjectedFrame strands}
-    (path : Progressive.Braid.Projected.Path.ProjectedPath start finish) (position : Fin strands) :
+    (path : ProjectedPath start finish) (position : Fin strands) :
     path.chamberPath.transport.forward (start.ownerIndex position) =
       finish.ownerIndex (path.word.permutation.forward position) := by
   induction path generalizing position with
   | nil frame => rfl
   | @cons start middle finish step remaining inductionHypothesis =>
       calc
-        (Progressive.Braid.Projected.Path.ProjectedPath.cons step remaining).chamberPath.transport.forward
+        (cons step remaining).chamberPath.transport.forward
             (start.ownerIndex position) =
           remaining.chamberPath.transport.forward
             (step.chamberOverlap.matching.forward
@@ -234,7 +234,7 @@ theorem transport_agrees {strands : Nat}
 bijection. -/
 theorem iterate_agrees {strands : Nat}
   (frame : ProjectedFrame strands)
-    (loop : Progressive.Braid.Projected.Path.ProjectedPath frame frame) (steps : Nat)
+    (loop : ProjectedPath frame frame) (steps : Nat)
     (position : Fin strands) :
     Data.Fin.Bijection.iterateForward
         loop.chamberPath.monodromy steps (frame.ownerIndex position) =
@@ -255,7 +255,7 @@ theorem iterate_agrees {strands : Nat}
 path. -/
 def closure {strands : Nat} (frame :
   ProjectedFrame strands)
-    (loop : Progressive.Braid.Projected.Path.ProjectedPath frame frame) : Topology.Knot.Braid.Closure where
+    (loop : ProjectedPath frame frame) : Topology.Knot.Braid.Closure where
   strands := strands
   word := loop.word
 
@@ -266,10 +266,10 @@ theorem
   closure_isKnot_of_monodromy_isSingleCycle
   {strands : Nat}
     (frame : ProjectedFrame strands) (loop :
-      Progressive.Braid.Projected.Path.ProjectedPath frame frame)
+      ProjectedPath frame frame)
     (single : Data.Fin.Bijection.IsSingleCycle
       loop.chamberPath.monodromy) :
-    (Progressive.Braid.Projected.Path.ProjectedPath.closure frame loop).IsKnot := by
+    (closure frame loop).IsKnot := by
   change Data.Fin.Bijection.IsSingleCycle
     loop.word.permutation
   refine
@@ -283,12 +283,12 @@ theorem
               (frame.ownerIndex position) = frame.ownerIndex position := by
       simpa only [frame.degree_eq] using
         single.return_at_count (frame.ownerIndex position)
-    rw [Progressive.Braid.Projected.Path.ProjectedPath.iterate_agrees frame loop strands position] at returns
+    rw [iterate_agrees frame loop strands position] at returns
     exact returns
   · intro position steps positive small returned
     apply single.no_early_return (frame.ownerIndex position) steps positive
     · simpa only [frame.degree_eq] using small
-    · rw [Progressive.Braid.Projected.Path.ProjectedPath.iterate_agrees frame loop steps position]
+    · rw [iterate_agrees frame loop steps position]
       exact congrArg frame.ownerIndex returned
 
 end ProjectedPath

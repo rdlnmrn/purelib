@@ -10,6 +10,8 @@ import Purelib.Data.Rat.Fraction
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -39,11 +41,11 @@ namespace Purelib.Geometry.Projective.Homography
 /-- Exact squared-norm quotient for the affine decoder chart. -/
 theorem normSq_homographic (matrix : GaussianMatrix)
   (value : Data.Gaussian.Basic.Canonical)
-    (denominatorNonzero : Homography.Basic.denominator matrix value ≠ 0) :
-    Data.Gaussian.Norm.Basic.normSq (Homography.Basic.homographic matrix value) =
-      Data.Gaussian.Norm.Basic.normSq (Homography.Basic.numerator matrix value) *
-        (Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix value))⁻¹ := by
-  rw [Homography.Basic.homographic, Data.Gaussian.Norm.Basic.normSq_mul, Data.Gaussian.Field.inv_eq,
+    (denominatorNonzero : Basic.denominator matrix value ≠ 0) :
+    Basic.normSq (Basic.homographic matrix value) =
+      Basic.normSq (Basic.numerator matrix value) *
+        (Basic.normSq (Basic.denominator matrix value))⁻¹ := by
+  rw [Basic.homographic, Basic.normSq_mul, Data.Gaussian.Field.inv_eq,
     Data.Gaussian.Field.normSq_inv _ denominatorNonzero]
 
 /-- Clear the squared-norm denominator of a homography.
@@ -52,27 +54,27 @@ At a point with nonzero affine denominator, its squared norm times the squared n
 numerator squared norm. -/
 theorem normSq_mul_homographic
     (matrix : GaussianMatrix) (value : Data.Gaussian.Basic.Canonical)
-    (denominatorNonzero : Homography.Basic.denominator matrix value ≠ 0) :
-    Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix value) *
-        Data.Gaussian.Norm.Basic.normSq (Homography.Basic.homographic matrix value) =
-      Data.Gaussian.Norm.Basic.normSq (Homography.Basic.numerator matrix value) := by
+    (denominatorNonzero : Basic.denominator matrix value ≠ 0) :
+    Basic.normSq (Basic.denominator matrix value) *
+        Basic.normSq (Basic.homographic matrix value) =
+      Basic.normSq (Basic.numerator matrix value) := by
   rw [normSq_homographic matrix value denominatorNonzero]
-  have normNonzero : Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix value) ≠ 0 :=
-    fun zero => denominatorNonzero (Data.Gaussian.Norm.Basic.normSq_eq_zero.mp zero)
-  let inverseNorm := (Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix value))⁻¹
+  have normNonzero : Basic.normSq (Basic.denominator matrix value) ≠ 0 :=
+    fun zero => denominatorNonzero (Basic.normSq_eq_zero.mp zero)
+  let inverseNorm := (Basic.normSq (Basic.denominator matrix value))⁻¹
   have cancel :
-      Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix value) * inverseNorm = 1 :=
+      Basic.normSq (Basic.denominator matrix value) * inverseNorm = 1 :=
     Fraction.Field.mul_inv_cancel _ normNonzero
-  change Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix value) *
-      (Data.Gaussian.Norm.Basic.normSq (Homography.Basic.numerator matrix value) * inverseNorm) =
-    Data.Gaussian.Norm.Basic.normSq (Homography.Basic.numerator matrix value)
+  change Basic.normSq (Basic.denominator matrix value) *
+      (Basic.normSq (Basic.numerator matrix value) * inverseNorm) =
+    Basic.normSq (Basic.numerator matrix value)
   calc
-    Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix value) *
-        (Data.Gaussian.Norm.Basic.normSq (Homography.Basic.numerator matrix value) * inverseNorm) =
-        Data.Gaussian.Norm.Basic.normSq (Homography.Basic.numerator matrix value) *
-          (Data.Gaussian.Norm.Basic.normSq (Homography.Basic.denominator matrix value) * inverseNorm) :=
+    Basic.normSq (Basic.denominator matrix value) *
+        (Basic.normSq (Basic.numerator matrix value) * inverseNorm) =
+        Basic.normSq (Basic.numerator matrix value) *
+          (Basic.normSq (Basic.denominator matrix value) * inverseNorm) :=
       Fraction.BoundaryClearing.norm_clear_algebra _ _ _
-    _ = Data.Gaussian.Norm.Basic.normSq (Homography.Basic.numerator matrix value) := by
+    _ = Basic.normSq (Basic.numerator matrix value) := by
       rw [cancel]
       ring1
 end Purelib.Geometry.Projective.Homography

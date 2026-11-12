@@ -14,6 +14,8 @@ import Purelib.Polynomial.Dense.Gaussian.Roots.Certificate
 import Purelib.Polynomial.Dense.Gaussian.Squarefree.Part
 import Purelib.RootIsolation.FTA.Squarefree.Basic
 
+open Purelib.Polynomial.Dense.Gaussian.Multiplicity.Basis
+
 open Purelib.Polynomial
 
 section
@@ -33,11 +35,11 @@ namespace Purelib.RootIsolation.Multiplicity.Observation.Index
 has its single displayed rational site; a higher observation retains the
 degree-indexed family of independently shrinking tracks. -/
 @[expose] def ObservationIndex
-    {source opposite : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    {input : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput source opposite}
-    {context : Dense.Gaussian.Multiplicity.Basis.Context.Basic.PositiveContext input.entries} :
+    {source opposite : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {input : Coprime.Side.PositiveSideInput source opposite}
+    {context : Context.Basic.PositiveContext input.entries} :
     (observation :
-      Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.FactorObservation input context) →
+      Coprime.Side.PositiveSideInput.FactorObservation input context) →
       Type
   | .exact _ _ _ => Unit
   | .higher _ _ => Fin context.focus.part.polynomial.natDegree
@@ -46,12 +48,12 @@ open Purelib.RootIsolation
 /-- Displayed finite enumeration of every site inside one exact or
 higher-degree factor observation. -/
 @[expose] def observationIndices
-    {source opposite : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    {input : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput source opposite}
-    {context : Dense.Gaussian.Multiplicity.Basis.Context.Basic.PositiveContext input.entries}
+    {source opposite : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {input : Coprime.Side.PositiveSideInput source opposite}
+    {context : Context.Basic.PositiveContext input.entries}
     (observation :
-      Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.FactorObservation input context) :
-    List (Multiplicity.Observation.Index.ObservationIndex observation) := by
+      Coprime.Side.PositiveSideInput.FactorObservation input context) :
+    List (ObservationIndex observation) := by
   cases observation with
   | exact root degree oppositeAtRoot => exact [Unit.unit]
   | higher boxes degree => exact List.ofFn id
@@ -59,13 +61,13 @@ higher-degree factor observation. -/
 /-- The displayed observation index list contains every exact or higher
 site. -/
 theorem mem_observationIndices
-    {source opposite : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    {input : Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput source opposite}
-    {context : Dense.Gaussian.Multiplicity.Basis.Context.Basic.PositiveContext input.entries}
+    {source opposite : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {input : Coprime.Side.PositiveSideInput source opposite}
+    {context : Context.Basic.PositiveContext input.entries}
     (observation :
-      Dense.Gaussian.Multiplicity.Basis.Coprime.Side.PositiveSideInput.FactorObservation input context)
-    (index : Multiplicity.Observation.Index.ObservationIndex observation) :
-    index ∈ Multiplicity.Observation.Index.observationIndices observation := by
+      Coprime.Side.PositiveSideInput.FactorObservation input context)
+    (index : ObservationIndex observation) :
+    index ∈ observationIndices observation := by
   cases observation with
   | exact root degree oppositeAtRoot =>
       cases index

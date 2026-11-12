@@ -82,20 +82,20 @@ open Purelib.Data.Rat
 
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Gaussian Coordinate)
 
-variable {genus count : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {bounds :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+variable {genus count : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {bounds :
+    ReciprocalPaddedInverse.UniformBounds regular.padded}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential} {patch :
     Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent}
-  {data : Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {allowance coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor : Nat}
+  {data : UniformReciprocalModels.Data patch count}
+  {basis : ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {allowance coefficientTarget : Coordinate} {coverFloor floor : Nat}
   {index minimum readingIndex : Nat} {box : Rational.Box}
-  {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {polynomials : Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 variable {stage energyFloor radialDepth : Nat} {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector
   genus}
@@ -114,32 +114,32 @@ namespace SourceRestoration
 /-- The original path indexed by a retained increment-area summary.
 
 The readback retains the summary's exact original path index and does not reconstruct or select another path. -/
-@[expose] def summaryPath {path : List Normalization.InverseRootPolynomial.Gaussian} (_ : Path.IncrementArea.Summary
+@[expose] def summaryPath {path : List Gaussian} (_ : Path.IncrementArea.Summary
   path) : List Gaussian := path
 
 /-- Pair complete restored polygons with the retained source polygons in
 original parent order, including the actual incoming predecessor at each step. -/
 @[expose] def pairs : {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-    (anchors : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents) → (sources :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisParentSourceCovers parents) →
-    (bank : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentBank.BasisCommonParentBank anchors sources basis
+    (anchors : UniformReciprocalCover.ParentCovers parents) → (sources :
+      SourceLocations.BasisParentSourceCovers parents) →
+    (bank : CommonParentBank.BasisCommonParentBank anchors sources basis
       allowance coefficientTarget coverFloor floor) →
-    (plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Plans capSample polynomials minimum anchors
-      sources bank) → (inputs : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.NumericalBank index anchors
+    (plans : CommonParentPlans.Plans capSample polynomials minimum anchors
+      sources bank) → (inputs : CommonParentPlans.NumericalBank index anchors
       sources) →
-    (readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings anchors sources bank plans inputs
+    (readings : CommonParentPlans.Readings anchors sources bank plans inputs
       stage) →
-    (prepared : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.FanPreparations energyFloor anchors
+    (prepared : CommonParentSamples.FanPreparations energyFloor anchors
       sources bank plans inputs readings) →
-    (samples : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.Samples coefficients radialDepth anchors
+    (samples : CommonParentSamples.Samples coefficients radialDepth anchors
       sources bank plans inputs readings prepared) →
-    (comparisons : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPreparedBank.Samples.PreparedComparisons anchors
+    (comparisons : CommonPreparedBank.Samples.PreparedComparisons anchors
       sources bank plans inputs readings prepared samples) →
-    Normalization.InverseRootPolynomial.Gaussian → List (List Normalization.InverseRootPolynomial.Gaussian × List
-      Normalization.InverseRootPolynomial.Gaussian)
+    Gaussian → List (List Gaussian × List
+      Gaussian)
   | _, .nil, _, _, _, _, _, _, _, _, _ => []
   | _, .cons _ _ _ tail, sources, bank, plans, inputs, readings, prepared, samples, comparisons, previous =>
-      (Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.summaryPath
+      (summaryPath
         ((Sample.PreparedComparison.restoredIntegral
         comparisons.1 previous)), comparisons.1.weighted.values.map Prod.fst) ::
         pairs
@@ -150,30 +150,30 @@ section
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration
 /-- The restored sides of the original block pairs are exactly the complete restored parent polygons. -/
 theorem left : {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-    (anchors : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents) → (sources :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisParentSourceCovers parents) →
-    (bank : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentBank.BasisCommonParentBank anchors sources basis
+    (anchors : UniformReciprocalCover.ParentCovers parents) → (sources :
+      SourceLocations.BasisParentSourceCovers parents) →
+    (bank : CommonParentBank.BasisCommonParentBank anchors sources basis
       allowance coefficientTarget coverFloor floor) →
-    (plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Plans capSample polynomials minimum anchors
-      sources bank) → (inputs : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.NumericalBank index anchors
+    (plans : CommonParentPlans.Plans capSample polynomials minimum anchors
+      sources bank) → (inputs : CommonParentPlans.NumericalBank index anchors
       sources) →
-    (readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings anchors sources bank plans inputs
+    (readings : CommonParentPlans.Readings anchors sources bank plans inputs
       stage) →
-    (prepared : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.FanPreparations energyFloor anchors
+    (prepared : CommonParentSamples.FanPreparations energyFloor anchors
       sources bank plans inputs readings) →
-    (samples : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.Samples coefficients radialDepth anchors
+    (samples : CommonParentSamples.Samples coefficients radialDepth anchors
       sources bank plans inputs readings prepared) →
-    (comparisons : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPreparedBank.Samples.PreparedComparisons anchors
+    (comparisons : CommonPreparedBank.Samples.PreparedComparisons anchors
       sources bank plans inputs readings prepared samples) →
-    (previous : Normalization.InverseRootPolynomial.Gaussian) →
-    (Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.pairs anchors sources
+    (previous : Gaussian) →
+    (pairs anchors sources
       bank plans inputs readings prepared samples comparisons previous).map Prod.fst =
-      (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPreparedConcatenation.Samples.restoredPairs anchors sources bank
+      (CommonPreparedConcatenation.Samples.restoredPairs anchors sources bank
         plans inputs readings prepared samples comparisons previous).map Prod.fst
   | _, .nil, _, _, _, _, _, _, _, _, _ => rfl
   | _, .cons _ _ _ tail, sources, bank, plans, inputs, readings, prepared, samples, comparisons, previous =>
       congrArg (List.cons
-        (Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.summaryPath
+        (summaryPath
         ((Sample.PreparedComparison.restoredIntegral
         comparisons.1 previous))))
         (left tail sources.tail bank.2 plans.2 inputs.2 readings.2 prepared.2 samples.2 comparisons.2
@@ -183,25 +183,25 @@ theorem left : {parents : List (Integration.PreparedSubdivisionModelCore.Centere
 schedule. -/
 theorem right (scheduled : Nat) : {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve
   differential)} →
-    (anchors : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents) → (sources :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisParentSourceCovers parents) →
-    (bank : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentBank.BasisCommonParentBank anchors sources basis
+    (anchors : UniformReciprocalCover.ParentCovers parents) → (sources :
+      SourceLocations.BasisParentSourceCovers parents) →
+    (bank : CommonParentBank.BasisCommonParentBank anchors sources basis
       allowance coefficientTarget coverFloor floor) →
-    (plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Plans capSample polynomials minimum anchors
-      sources bank) → (inputs : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.NumericalBank index anchors
+    (plans : CommonParentPlans.Plans capSample polynomials minimum anchors
+      sources bank) → (inputs : CommonParentPlans.NumericalBank index anchors
       sources) →
-    (readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings anchors sources bank plans inputs
+    (readings : CommonParentPlans.Readings anchors sources bank plans inputs
       stage) →
-    (prepared : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.FanPreparations energyFloor anchors
+    (prepared : CommonParentSamples.FanPreparations energyFloor anchors
       sources bank plans inputs readings) →
-    (samples : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.Samples coefficients radialDepth anchors
+    (samples : CommonParentSamples.Samples coefficients radialDepth anchors
       sources bank plans inputs readings prepared) →
-    (comparisons : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPreparedBank.Samples.PreparedComparisons anchors
+    (comparisons : CommonPreparedBank.Samples.PreparedComparisons anchors
       sources bank plans inputs readings prepared samples) →
-    (previous : Normalization.InverseRootPolynomial.Gaussian) →
-    (Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.pairs anchors sources
+    (previous : Gaussian) →
+    (pairs anchors sources
       bank plans inputs readings prepared samples comparisons previous).map Prod.snd =
-      (Hyperelliptic.Charts.Reciprocal.Disk.Basis.WeightedResampling.BasisCommonParentBank.Samples.sourceResamplingPairs
+      (WeightedResampling.BasisCommonParentBank.Samples.sourceResamplingPairs
         scheduled anchors sources bank plans inputs readings prepared samples comparisons).map Prod.snd
   | _, .nil, _, _, _, _, _, _, _, _, _ => rfl
   | _, .cons _ _ _ tail, sources, bank, plans, inputs, readings, prepared, samples, comparisons, _ =>
@@ -213,23 +213,23 @@ end
 
 /-- The original restoration/source pairing has one block for each retained parent. -/
 theorem length : {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-    (anchors : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents) → (sources :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisParentSourceCovers parents) →
-    (bank : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentBank.BasisCommonParentBank anchors sources basis
+    (anchors : UniformReciprocalCover.ParentCovers parents) → (sources :
+      SourceLocations.BasisParentSourceCovers parents) →
+    (bank : CommonParentBank.BasisCommonParentBank anchors sources basis
       allowance coefficientTarget coverFloor floor) →
-    (plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Plans capSample polynomials minimum anchors
-      sources bank) → (inputs : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.NumericalBank index anchors
+    (plans : CommonParentPlans.Plans capSample polynomials minimum anchors
+      sources bank) → (inputs : CommonParentPlans.NumericalBank index anchors
       sources) →
-    (readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings anchors sources bank plans inputs
+    (readings : CommonParentPlans.Readings anchors sources bank plans inputs
       stage) →
-    (prepared : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.FanPreparations energyFloor anchors
+    (prepared : CommonParentSamples.FanPreparations energyFloor anchors
       sources bank plans inputs readings) →
-    (samples : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.Samples coefficients radialDepth anchors
+    (samples : CommonParentSamples.Samples coefficients radialDepth anchors
       sources bank plans inputs readings prepared) →
-    (comparisons : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPreparedBank.Samples.PreparedComparisons anchors
+    (comparisons : CommonPreparedBank.Samples.PreparedComparisons anchors
       sources bank plans inputs readings prepared samples) →
-    (previous : Normalization.InverseRootPolynomial.Gaussian) →
-    (Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.pairs anchors sources
+    (previous : Gaussian) →
+    (pairs anchors sources
       bank plans inputs readings prepared samples comparisons previous).length = parents.length
   | _, .nil, _, _, _, _, _, _, _, _, _ => rfl
   | _, .cons _ _ _ tail, sources, bank, plans, inputs, readings, prepared, samples, comparisons, _ =>
@@ -247,7 +247,7 @@ open
   (incoming_gap)
 
 /-- The larger of the retained restored-total bound and original source-slope bound. -/
-@[expose] def totalBound (slope : Normalization.InverseRootPolynomial.Coordinate) : Coordinate := max
+@[expose] def totalBound (slope : Coordinate) : Coordinate := max
   (Sample.PreparedComparison.restoredTotalBound
   (basis := basis) (allowance := allowance)) slope
 
@@ -255,54 +255,54 @@ open
 
 The area error is quadratic in the coefficient norm, while increment and total bounds retain their original linear
 coefficient weighting. -/
-@[expose] def BlockBounds (slope : Normalization.InverseRootPolynomial.Coordinate) (pair : List
-  Normalization.InverseRootPolynomial.Gaussian × List Normalization.InverseRootPolynomial.Gaussian) : Prop :=
-  Data.Gaussian.Norm.Basic.normSq (Path.IncrementArea.pathArea pair.1 - Path.IncrementArea.pathArea pair.2) ≤
+@[expose] def BlockBounds (slope : Coordinate) (pair : List
+  Gaussian × List Gaussian) : Prop :=
+  Gaussian.Norm.Basic.normSq (Path.IncrementArea.pathArea pair.1 - Path.IncrementArea.pathArea pair.2) ≤
     PreparedComparison.uniformSourceAreaError
     allowance slope * (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) ^ 2 ∧
-  Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.1 -
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2) ≤
+  Gaussian.Norm.Basic.normSq (Gaussian.Norm.Sum.Basic.gaussianSum pair.1 -
+    Gaussian.Norm.Sum.Basic.gaussianSum pair.2) ≤
     PreparedComparison.uniformSourceTotalError
     allowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ∧
-  Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.1) ≤
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.totalBound (basis :=
+  Gaussian.Norm.Basic.normSq (Gaussian.Norm.Sum.Basic.gaussianSum pair.1) ≤
+    totalBound (basis :=
     basis) (allowance := allowance) slope * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients ∧
-  Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2) ≤
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.totalBound (basis :=
+  Gaussian.Norm.Basic.normSq (Gaussian.Norm.Sum.Basic.gaussianSum pair.2) ≤
+    totalBound (basis :=
     basis) (allowance := allowance) slope * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration in
 /-- Exact original area and increment summaries transport the paid restoration estimates to their indexed block paths.
 -/
-private theorem bounds_of_summaries (slope : Normalization.InverseRootPolynomial.Coordinate) {leftPath rightPath : List
-  Normalization.InverseRootPolynomial.Gaussian}
+private theorem bounds_of_summaries (slope : Coordinate) {leftPath rightPath : List
+  Gaussian}
     (left : Path.IncrementArea.Summary leftPath) (right : Path.IncrementArea.Summary rightPath)
-    (area : Data.Gaussian.Norm.Basic.normSq (left.area - right.area) ≤
+    (area : Gaussian.Norm.Basic.normSq (left.area - right.area) ≤
       PreparedComparison.uniformSourceAreaError
       allowance slope * (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) ^ 2)
-    (total : Data.Gaussian.Norm.Basic.normSq (left.total - right.total) ≤
+    (total : Gaussian.Norm.Basic.normSq (left.total - right.total) ≤
       PreparedComparison.uniformSourceTotalError
       allowance * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)
-    (leftBound : Data.Gaussian.Norm.Basic.normSq left.total ≤
+    (leftBound : Gaussian.Norm.Basic.normSq left.total ≤
       Sample.PreparedComparison.restoredTotalBound
       (basis := basis) (allowance := allowance) * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)
-    {sourceSlope : Normalization.InverseRootPolynomial.Coordinate} (sourceLe : sourceSlope ≤ slope)
-    (rightBound : Data.Gaussian.Norm.Basic.normSq right.total ≤ sourceSlope *
+    {sourceSlope : Coordinate} (sourceLe : sourceSlope ≤ slope)
+    (rightBound : Gaussian.Norm.Basic.normSq right.total ≤ sourceSlope *
       Readings.PreparedObservationCoercivity.coefficientNormSq coefficients) :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.BlockBounds (basis :=
+    BlockBounds (basis :=
       basis) (allowance := allowance) (coefficients := coefficients) slope (leftPath, rightPath) := open Purelib.Algebra
       in open Purelib.Data.Rat in by
   have nonnegative : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
     (FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 :
-      Normalization.InverseRootPolynomial.Coordinate)) _ (fun row => Gaussian.Basic.Canonical.normSq_nonneg
+      Coordinate)) _ (fun row => normSq_nonneg
       (coefficients row)))
-  change Data.Gaussian.Norm.Basic.normSq (Path.IncrementArea.pathArea leftPath - Path.IncrementArea.pathArea
+  change Gaussian.Norm.Basic.normSq (Path.IncrementArea.pathArea leftPath - Path.IncrementArea.pathArea
     rightPath) ≤ _ ∧
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum leftPath -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum rightPath) ≤ _ ∧ Data.Gaussian.Norm.Basic.normSq
-      (Data.Gaussian.Norm.Sum.Basic.gaussianSum leftPath) ≤ _ ∧ Data.Gaussian.Norm.Basic.normSq
-      (Data.Gaussian.Norm.Sum.Basic.gaussianSum rightPath) ≤ _
+    Gaussian.Norm.Basic.normSq (Gaussian.Norm.Sum.Basic.gaussianSum leftPath -
+      Gaussian.Norm.Sum.Basic.gaussianSum rightPath) ≤ _ ∧ Gaussian.Norm.Basic.normSq
+      (Gaussian.Norm.Sum.Basic.gaussianSum leftPath) ≤ _ ∧ Gaussian.Norm.Basic.normSq
+      (Gaussian.Norm.Sum.Basic.gaussianSum rightPath) ≤ _
   rw [← left.area_eq, ← right.area_eq, ← left.total_eq, ← right.total_eq]
   exact ⟨area, total, leftBound.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
     (Fraction.Order.Basic.le_max_left _ _) nonnegative),
@@ -310,63 +310,63 @@ private theorem bounds_of_summaries (slope : Normalization.InverseRootPolynomial
       (Fraction.Order.Basic.le_max_right _ _)) nonnegative)⟩
 
 /-- The original first block satisfies the common restoration/source bounds, with the empty parent list vacuous. -/
-private def HeadBounds (slope : Normalization.InverseRootPolynomial.Coordinate) : {parents : List
+private def HeadBounds (slope : Coordinate) : {parents : List
   (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-    (anchors : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents) → (sources :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisParentSourceCovers parents) →
-    (bank : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentBank.BasisCommonParentBank anchors sources basis
+    (anchors : UniformReciprocalCover.ParentCovers parents) → (sources :
+      SourceLocations.BasisParentSourceCovers parents) →
+    (bank : CommonParentBank.BasisCommonParentBank anchors sources basis
       allowance coefficientTarget coverFloor floor) →
-    (plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Plans capSample polynomials minimum anchors
-      sources bank) → (inputs : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.NumericalBank index anchors
+    (plans : CommonParentPlans.Plans capSample polynomials minimum anchors
+      sources bank) → (inputs : CommonParentPlans.NumericalBank index anchors
       sources) →
-    (readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings anchors sources bank plans inputs
+    (readings : CommonParentPlans.Readings anchors sources bank plans inputs
       stage) →
-    (prepared : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.FanPreparations energyFloor anchors
+    (prepared : CommonParentSamples.FanPreparations energyFloor anchors
       sources bank plans inputs readings) →
-    (samples : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.Samples coefficients radialDepth anchors
+    (samples : CommonParentSamples.Samples coefficients radialDepth anchors
       sources bank plans inputs readings prepared) →
-    (comparisons : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPreparedBank.Samples.PreparedComparisons anchors
+    (comparisons : CommonPreparedBank.Samples.PreparedComparisons anchors
       sources bank plans inputs readings prepared samples) →
-    Normalization.InverseRootPolynomial.Gaussian → Prop
+    Gaussian → Prop
   | _, .nil, _, _, _, _, _, _, _, _, _ => True
   | _, .cons _ _ _ _, _, _, _, _, _, _, _, comparisons, previous =>
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.BlockBounds (basis :=
+      BlockBounds (basis :=
         basis) (allowance := allowance) (coefficients := coefficients) slope
-        (Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.summaryPath
+        (summaryPath
           ((Sample.PreparedComparison.restoredIntegral
           comparisons.1 previous)), comparisons.1.weighted.values.map Prod.fst)
 
 /-- Propagate a paid first-block estimate through the original parent sequence using the scheduled retained incoming
 joins. -/
-private theorem boundsFromHead (slope : Normalization.InverseRootPolynomial.Coordinate) (branch :
-  Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) : {parents : List
+private theorem boundsFromHead (slope : Coordinate) (branch :
+  HyperellipticReciprocal.originOrder curve = 1) : {parents : List
   (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-    (anchors : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents) → (sources :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisParentSourceCovers parents) →
-    (bank : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentBank.BasisCommonParentBank anchors sources basis
+    (anchors : UniformReciprocalCover.ParentCovers parents) → (sources :
+      SourceLocations.BasisParentSourceCovers parents) →
+    (bank : CommonParentBank.BasisCommonParentBank anchors sources basis
       allowance coefficientTarget coverFloor floor) →
-    (plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Plans capSample polynomials minimum anchors
-      sources bank) → (inputs : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.NumericalBank index anchors
+    (plans : CommonParentPlans.Plans capSample polynomials minimum anchors
+      sources bank) → (inputs : CommonParentPlans.NumericalBank index anchors
       sources) →
-    (readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings anchors sources bank plans inputs
+    (readings : CommonParentPlans.Readings anchors sources bank plans inputs
       stage) →
-    (prepared : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.FanPreparations energyFloor anchors
+    (prepared : CommonParentSamples.FanPreparations energyFloor anchors
       sources bank plans inputs readings) →
-    (samples : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.Samples coefficients radialDepth anchors
+    (samples : CommonParentSamples.Samples coefficients radialDepth anchors
       sources bank plans inputs readings prepared) →
-    (comparisons : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPreparedBank.Samples.PreparedComparisons anchors
+    (comparisons : CommonPreparedBank.Samples.PreparedComparisons anchors
       sources bank plans inputs readings prepared samples) →
-    (joins : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.Junctions anchors
+    (joins : CommonParentJoins.BasisCommonParentBank.Junctions anchors
       sources bank) → joins.stage anchors sources bank ≤ stage →
-    (previous : Normalization.InverseRootPolynomial.Gaussian) →
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.HeadBounds slope
+    (previous : Gaussian) →
+      HeadBounds slope
       anchors sources bank plans inputs readings prepared samples comparisons previous →
 
       WeightedResampling.BasisCommonParentBank.Samples.weightedSourceSlopeMaximum
       anchors sources ≤ slope →
-    ∀ pair ∈ Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.pairs anchors
+    ∀ pair ∈ pairs anchors
       sources bank plans inputs readings prepared samples comparisons previous,
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.BlockBounds (basis :=
+      BlockBounds (basis :=
         basis) (allowance := allowance) (coefficients := coefficients) slope pair
   | _, .nil, _, _, _, _, _, _, _, _, _, _, _, _, _, _, member => False.elim (List.not_mem_nil member)
   | _, .cons _ _ _ .nil, _, _, _, _, _, _, _, _, _, _, _, head, _, pair, member => by
@@ -408,30 +408,30 @@ private theorem boundsFromHead (slope : Normalization.InverseRootPolynomial.Coor
           ((Nat.Order.le_max_right ..).trans later) samples.1.endpoints.last.2 nextHead tailSlope pair member
 
 /-- The original initial source value pays the first restoration block at the common source-slope bound. -/
-private theorem firstBounds (slope : Normalization.InverseRootPolynomial.Coordinate) (branch :
-  Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) : {parents : List
+private theorem firstBounds (slope : Coordinate) (branch :
+  HyperellipticReciprocal.originOrder curve = 1) : {parents : List
   (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} →
-    (anchors : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents) → (sources :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisParentSourceCovers parents) →
-    (bank : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentBank.BasisCommonParentBank anchors sources basis
+    (anchors : UniformReciprocalCover.ParentCovers parents) → (sources :
+      SourceLocations.BasisParentSourceCovers parents) →
+    (bank : CommonParentBank.BasisCommonParentBank anchors sources basis
       allowance coefficientTarget coverFloor floor) →
-    (plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Plans capSample polynomials minimum anchors
-      sources bank) → (inputs : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.NumericalBank index anchors
+    (plans : CommonParentPlans.Plans capSample polynomials minimum anchors
+      sources bank) → (inputs : CommonParentPlans.NumericalBank index anchors
       sources) →
-    (readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings anchors sources bank plans inputs
+    (readings : CommonParentPlans.Readings anchors sources bank plans inputs
       stage) →
-    (prepared : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.FanPreparations energyFloor anchors
+    (prepared : CommonParentSamples.FanPreparations energyFloor anchors
       sources bank plans inputs readings) →
-    (samples : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.Samples coefficients radialDepth anchors
+    (samples : CommonParentSamples.Samples coefficients radialDepth anchors
       sources bank plans inputs readings prepared) →
-    (comparisons : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPreparedBank.Samples.PreparedComparisons anchors
+    (comparisons : CommonPreparedBank.Samples.PreparedComparisons anchors
       sources bank plans inputs readings prepared samples) →
 
       WeightedResampling.BasisCommonParentBank.Samples.weightedSourceSlopeMaximum
       anchors sources ≤ slope →
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.HeadBounds slope anchors
+    HeadBounds slope anchors
       sources bank plans inputs readings prepared samples comparisons
-      (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentConnection.Samples.firstValues anchors sources bank plans
+      (CommonParentConnection.Samples.firstValues anchors sources bank plans
         inputs readings prepared samples).1
   | _, .nil, _, _, _, _, _, _, _, _, _ => trivial
   | _, .cons _ _ _ _, sources, bank, _, _, _, _, samples, comparisons, slopeLe => by
@@ -439,15 +439,15 @@ private theorem firstBounds (slope : Normalization.InverseRootPolynomial.Coordin
       have nonnegative : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
         Algebra.FiniteSum.Fin.sumFin_zero.symm.trans_le
         (Algebra.FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 :
-          Normalization.InverseRootPolynomial.Coordinate)) _ (fun row => Gaussian.Basic.Canonical.normSq_nonneg
+          Coordinate)) _ (fun row => normSq_nonneg
           (coefficients row)))
-      have gap : Data.Gaussian.Norm.Basic.normSq (samples.1.endpoints.first.2 - samples.1.endpoints.first.2) ≤
+      have gap : Gaussian.Norm.Basic.normSq (samples.1.endpoints.first.2 - samples.1.endpoints.first.2) ≤
           bank.1.request.restoration.target * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
             by
         rw [_root_.sub_self, Gaussian.Norm.Basic.normSq_zero]
-        exact Rat.Fraction.Order.Arithmetic.mul_nonneg_direct bank.1.request.restoration.positive.le nonnegative
+        exact Fraction.Order.Arithmetic.mul_nonneg_direct bank.1.request.restoration.positive.le nonnegative
       exact
-        Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.bounds_of_summaries
+        bounds_of_summaries
         slope
         ((Sample.PreparedComparison.restoredIntegral
         comparisons.1 samples.1.endpoints.first.2)) comparisons.1.weighted.source
@@ -463,39 +463,39 @@ private theorem firstBounds (slope : Normalization.InverseRootPolynomial.Coordin
           comparisons.1)
 
 variable {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-  {anchors : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents} {sources :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisParentSourceCovers parents}
-  {bank : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentBank.BasisCommonParentBank anchors sources basis
+  {anchors : UniformReciprocalCover.ParentCovers parents} {sources :
+    SourceLocations.BasisParentSourceCovers parents}
+  {bank : CommonParentBank.BasisCommonParentBank anchors sources basis
     allowance coefficientTarget coverFloor floor}
-  {plans : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Plans capSample polynomials minimum anchors
-    sources bank} {inputs : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.NumericalBank index anchors
+  {plans : CommonParentPlans.Plans capSample polynomials minimum anchors
+    sources bank} {inputs : CommonParentPlans.NumericalBank index anchors
     sources}
-  {readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings anchors sources bank plans inputs
+  {readings : CommonParentPlans.Readings anchors sources bank plans inputs
     stage}
-  {prepared : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.FanPreparations energyFloor anchors sources
+  {prepared : CommonParentSamples.FanPreparations energyFloor anchors sources
     bank plans inputs readings}
 
 /-- All block errors refer to these exact restored/source pairs and the
 scheduled incoming joins on the original parent bank. -/
-theorem bounded (samples : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentSamples.Samples coefficients
+theorem bounded (samples : CommonParentSamples.Samples coefficients
   radialDepth anchors sources bank plans inputs readings prepared)
-    (comparisons : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPreparedBank.Samples.PreparedComparisons anchors
+    (comparisons : CommonPreparedBank.Samples.PreparedComparisons anchors
       sources bank plans inputs readings prepared samples)
-    (joins : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentJoins.BasisCommonParentBank.Junctions anchors
-      sources bank) (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+    (joins : CommonParentJoins.BasisCommonParentBank.Junctions anchors
+      sources bank) (branch : HyperellipticReciprocal.originOrder curve = 1)
     (later : joins.stage anchors sources bank ≤ stage) :
-    ∀ pair ∈ Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.pairs anchors
+    ∀ pair ∈ pairs anchors
       sources bank plans inputs readings prepared samples comparisons
-      (Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentConnection.Samples.firstValues anchors sources bank plans
+      (CommonParentConnection.Samples.firstValues anchors sources bank plans
         inputs readings prepared samples).1,
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.BlockBounds (basis :=
+      BlockBounds (basis :=
         basis) (allowance := allowance) (coefficients := coefficients)
 
           (WeightedResampling.BasisCommonParentBank.Samples.weightedSourceSlopeMaximum
           anchors sources) pair :=
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.boundsFromHead _ branch
+  boundsFromHead _ branch
     anchors sources bank plans inputs readings prepared samples comparisons joins later _
-    (Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRestorationPairs.Samples.SourceRestoration.firstBounds _ branch
+    (firstBounds _ branch
       anchors sources bank plans inputs readings prepared samples comparisons le_rfl) le_rfl
 
 end SourceRestoration

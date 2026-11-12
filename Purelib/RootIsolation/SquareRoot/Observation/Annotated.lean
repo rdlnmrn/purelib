@@ -35,7 +35,7 @@ sidecar. -/
 def root (parameter :
   Gaussian.Basic.Canonical) (sheet : Fin 2) : Annotated :=
   let isolated := Riemann.RootContinuation.SquareRootSidecar.isolated parameter sheet
-  ⟨isolated.1, some (.inr isolated.2)⟩
+  ⟨isolated.1, some (.squareRoot isolated.2)⟩
 end Purelib.Approximation.Gaussian.Acquisition.Annotated
 
 end

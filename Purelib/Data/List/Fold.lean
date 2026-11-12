@@ -141,6 +141,30 @@ public theorem foldr_add_map_zero {Alpha : Type*} (values : List Alpha) :
   | cons head tail inductionHypothesis =>
       rw [List.map_cons, List.foldr_cons, inductionHypothesis]
 
+/-- The retained final natural accumulator is added to the same original zero-based right fold. -/
+private theorem foldr_add_accumulator (values : List Nat) (initial : Nat) :
+    values.foldr Nat.add initial = values.foldr Nat.add 0 + initial := by
+  induction values with
+  | nil => exact (Nat.zero_add initial).symm
+  | cons head remaining previous =>
+      rewrite [List.foldr_cons, List.foldr_cons, previous]
+      exact (Nat.add_assoc head (remaining.foldr Nat.add 0) initial).symm
+
+/-- Adding the entries of a retained concatenation adds its two original natural right folds. -/
+public theorem foldr_add_append (first second : List Nat) :
+    (first ++ second).foldr Nat.add 0 = first.foldr Nat.add 0 + second.foldr Nat.add 0 := by
+  rewrite [foldr_append, foldr_add_accumulator]
+  rfl
+
+/-- A fixed natural multiplier factors out of the same original finite mapped right fold. -/
+public theorem foldr_add_map_mul_left (values : List Nat) (factor : Nat) :
+    (values.map (fun value => factor * value)).foldr Nat.add 0 = factor * values.foldr Nat.add 0 := by
+  induction values with
+  | nil => exact (Nat.mul_zero factor).symm
+  | cons head remaining previous =>
+      rewrite [List.map_cons, List.foldr_cons, List.foldr_cons, previous]
+      exact (Nat.mul_add factor head (remaining.foldr Nat.add 0)).symm
+
 /-- A finite natural sum distributes over the pointwise sum of two value functions.
 
 The same retained list supplies both scalar readings. Structural induction combines

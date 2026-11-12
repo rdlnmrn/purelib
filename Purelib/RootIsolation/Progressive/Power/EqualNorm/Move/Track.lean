@@ -65,7 +65,7 @@ theorem isolationResult_support
     {parameter : Canonical} (parameterNonzero : parameter ≠ 0)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value) :
     (Power.Isolation.isolationResult parameterNonzero degree degreeAtLeastTwo).boxes.isolation.support =
-      Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter
+      Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Power.Gaussian.rootPolynomial parameter
         degree)
         := rfl
 end Purelib.RootIsolation.Progressive.Power.EqualNorm.Move.Track
@@ -104,8 +104,8 @@ def transportedSourceDegreeIndex
     (degreeAtLeastTwo : 2 ≤ degree.value)
     (index : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree) :
     Fin degree.value :=
-  Fin.cast (Progressive.Power.Frame.Basic.chamberFrame_degree sourceNonzero degree degreeAtLeastTwo)
-    (Progressive.Power.EqualNorm.Move.Frame.moveSourceIndex sourceNonzero target degree degreeAtLeastTwo index)
+  Fin.cast (Frame.Basic.chamberFrame_degree sourceNonzero degree degreeAtLeastTwo)
+    (Frame.moveSourceIndex sourceNonzero target degree degreeAtLeastTwo index)
 end Purelib.RootIsolation.Progressive.Power.EqualNorm.Move.Track
 
 end
@@ -137,12 +137,12 @@ the intermediate target frame. -/
 def transportedFrameTrack
     {source target : Canonical}
     (sourceNonzero : source ≠ 0) (targetNonzero : target ≠ 0)
-    (equalNorm : Gaussian.Norm.Basic.normSq source = Gaussian.Norm.Basic.normSq target)
+    (equalNorm : Norm.Basic.normSq source = Norm.Basic.normSq target)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo)
     (index : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree) :
-    Track.Basic.WindingOneTrack (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Purelib.Polynomial.Power.Gaussian.rootPolynomial target
+    Track.Basic.WindingOneTrack (Power.Gaussian.rootPolynomial target degree)
+      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Power.Gaussian.rootPolynomial target
         degree)) :=
   Power.EqualNorm.Transport.Track.transportedIsolatedTrack sourceNonzero targetNonzero equalNorm degree
     degreeAtLeastTwo small
@@ -178,29 +178,29 @@ open Purelib.Data.Gaussian
 theorem transportedFrameTrack_initial_refines
     {source target : Canonical}
     (sourceNonzero : source ≠ 0) (targetNonzero : target ≠ 0)
-    (equalNorm : Gaussian.Norm.Basic.normSq source = Gaussian.Norm.Basic.normSq target)
+    (equalNorm : Norm.Basic.normSq source = Norm.Basic.normSq target)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo)
     (index : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree) :
     (transportedFrameTrack sourceNonzero targetNonzero equalNorm degree
       degreeAtLeastTwo small index).initial.box.Refines
-      ((Progressive.Power.EqualNorm.Move.Frame.transportedFrame sourceNonzero targetNonzero degree degreeAtLeastTwo
+      ((Frame.transportedFrame sourceNonzero targetNonzero degree degreeAtLeastTwo
         small.toMoveSmall).owner index).box := by
   let sourceIndex :=
-    Progressive.Power.EqualNorm.Move.Frame.moveSourceIndex sourceNonzero target degree degreeAtLeastTwo index
+    Frame.moveSourceIndex sourceNonzero target degree degreeAtLeastTwo index
   have sourceBox := Power.Isolation.Track.isolatedTrack_initial_box_eq_chamber_owner
     sourceNonzero degree degreeAtLeastTwo sourceIndex
-  have transportedBox := Progressive.Power.EqualNorm.Move.Frame.transportedFrame_owner_box sourceNonzero
+  have transportedBox := Frame.transportedFrame_owner_box sourceNonzero
     targetNonzero degree degreeAtLeastTwo small.toMoveSmall sourceIndex
   have targetIndex :
-      Fin.cast (Progressive.Power.EqualNorm.Move.Frame.moveCountEq sourceNonzero target degree degreeAtLeastTwo)
+      Fin.cast (Frame.moveCountEq sourceNonzero target degree degreeAtLeastTwo)
           sourceIndex = index := by
     apply Fin.ext
     rfl
   have transportedBoxAtIndex :
-      ((Progressive.Power.EqualNorm.Move.Frame.transportedFrame sourceNonzero targetNonzero degree degreeAtLeastTwo
+      ((Frame.transportedFrame sourceNonzero targetNonzero degree degreeAtLeastTwo
         small.toMoveSmall).owner index).box =
-        ((Progressive.Power.Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo).owner
+        ((Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo).owner
           sourceIndex).box := by
     rw [← targetIndex]
     exact transportedBox
@@ -209,13 +209,13 @@ theorem transportedFrameTrack_initial_refines
         degreeAtLeastTwo small index).initial.box.Refines
         (Power.Isolation.Track.isolatedTrack sourceNonzero degree degreeAtLeastTwo
           (Fin.cast
-            (Progressive.Power.Frame.Basic.chamberFrame_degree sourceNonzero degree degreeAtLeastTwo)
+            (Frame.Basic.chamberFrame_degree sourceNonzero degree degreeAtLeastTwo)
             sourceIndex)).initial.box := by
       exact Power.EqualNorm.Transport.Track.transportedIsolatedTrack_initial_refines sourceNonzero targetNonzero
         equalNorm degree degreeAtLeastTwo small _
-    _ = ((Progressive.Power.Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo).owner
+    _ = ((Frame.Basic.chamberFrame sourceNonzero degree degreeAtLeastTwo).owner
           sourceIndex).box := sourceBox
-    _ = ((Progressive.Power.EqualNorm.Move.Frame.transportedFrame sourceNonzero targetNonzero degree
+    _ = ((Frame.transportedFrame sourceNonzero targetNonzero degree
           degreeAtLeastTwo small.toMoveSmall).owner index).box :=
       transportedBoxAtIndex.symm
 end Purelib.RootIsolation.Progressive.Power.EqualNorm.Move.Track
@@ -248,7 +248,7 @@ open Purelib.Data.Gaussian
 theorem transportedFrameTrack_supported
     {source target : Canonical}
     (sourceNonzero : source ≠ 0) (targetNonzero : target ≠ 0)
-    (equalNorm : Gaussian.Norm.Basic.normSq source = Gaussian.Norm.Basic.normSq target)
+    (equalNorm : Norm.Basic.normSq source = Norm.Basic.normSq target)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo)
     (index : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree) :
@@ -289,7 +289,7 @@ open Purelib.Data.Gaussian
 theorem transportedFrameTracks_pairwise
     {source target : Canonical}
     (sourceNonzero : source ≠ 0) (targetNonzero : target ≠ 0)
-    (equalNorm : Gaussian.Norm.Basic.normSq source = Gaussian.Norm.Basic.normSq target)
+    (equalNorm : Norm.Basic.normSq source = Norm.Basic.normSq target)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo)
     (left right : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree)
@@ -298,7 +298,7 @@ theorem transportedFrameTracks_pairwise
       degreeAtLeastTwo small left).initial.box.Separated
     (transportedFrameTrack sourceNonzero targetNonzero equalNorm degree
       degreeAtLeastTwo small right).initial.box := by
-  exact ((Progressive.Power.EqualNorm.Move.Frame.transportedFrame sourceNonzero targetNonzero degree degreeAtLeastTwo
+  exact ((Frame.transportedFrame sourceNonzero targetNonzero degree degreeAtLeastTwo
     small.toMoveSmall).pairwiseSeparated left right different).of_refines
       (transportedFrameTrack_initial_refines sourceNonzero targetNonzero
         equalNorm degree degreeAtLeastTwo small left)

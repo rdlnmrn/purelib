@@ -123,7 +123,7 @@ occurrence. -/
         congrArg₂ List.cons found.property.2 rest.property.2⟩
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base}
 
@@ -131,7 +131,7 @@ set_option genInjectivity false in
 /-- The actual retained cut-boundary word projecting to an original physical boundary word.
 
 Every selected cut edge remains physical and retains its original triangle source occurrence. -/
-structure PhysicalCutWord (lifted : Meshes.LiftedPuncturedGrid base) (original : List (Stokes.OrientedEdge
+structure PhysicalCutWord (lifted : LiftedPuncturedGrid base) (original : List (Stokes.OrientedEdge
   lifted.vertices.count)) where
   /-- The cached ordered actual cut-boundary edges. -/ edges : List (Stokes.OrientedEdge
     lifted.cutPolygon.patch.cut.count)
@@ -140,21 +140,21 @@ structure PhysicalCutWord (lifted : Meshes.LiftedPuncturedGrid base) (original :
   /-- The retained cut edges project exactly to the original ordered physical word. -/ project : edges.map
     (OrientedEdge.map lifted.cutPolygon.patch.cut.vertexLabels) = original
   /-- The original triangle-source occurrences of these exact retained cut edges. -/ sources :
-    SewnPrimitiveFaces.PathSources lifted.cutPolygon.patch.cut edges
+    PathSources lifted.cutPolygon.patch.cut edges
 
 constructive_injectivity PhysicalCutWord
 
 namespace PhysicalCutWord
 
-variable {original : List (Purelib.Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count)}
+variable {original : List (Stokes.OrientedEdge lifted.vertices.count)}
 
 /-- Select actual physical preimages of the original boundary word and cache their retained triangle-source
 certificates. -/
-@[expose] def build (lifted : Meshes.LiftedPuncturedGrid base) (original : List (Stokes.OrientedEdge
+@[expose] def build (lifted : LiftedPuncturedGrid base) (original : List (Stokes.OrientedEdge
   lifted.vertices.count))
     (physical : ∀ edge ∈ original, edge ∈ lifted.boundaryLoops.flatten) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHoleCutWords.PhysicalCutWord lifted original :=
-  let selected := Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHoleCutWords.preimages
+      PhysicalCutWord lifted original :=
+  let selected := BranchHoleCutWords.preimages
     lifted.cutPolygon.patch.cut.vertexLabels lifted.cutBoundaryPairs.boundary original
     (fun edge member => (lifted.cut_boundary_iff_boundaryComponents edge).mpr (physical edge member))
   let sources := PathSources.build lifted.cutPolygon.patch.cut selected.val (fun edge member =>
@@ -162,21 +162,21 @@ certificates. -/
   ⟨selected.val, selected.property.1, selected.property.2, sources⟩
 
 /-- The retained cut word has exactly the original physical word's length. -/
-theorem length_eq (word : Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHoleCutWords.PhysicalCutWord lifted original)
+theorem length_eq (word : PhysicalCutWord lifted original)
   : word.edges.length = original.length := by
   have equal := congrArg List.length word.project
   rw [Map.length_map] at equal
   exact equal
 
 /-- The actual cached triangle-source occurrences project exactly to the original physical word. -/
-theorem sources_project (word : Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHoleCutWords.PhysicalCutWord lifted
+theorem sources_project (word : PhysicalCutWord lifted
   original) :
     word.sources.sources.map (fun source => source.project lifted.mesh.triangulation.faces) = original :=
   word.sources.sources_project.trans word.project
 
 /-- Every actual physical boundary edge occurs as an original cut-alphabet generator. -/
 private theorem physical_index {source target : Nat} {labels : Fin source → Fin target}
-    (pairs : List (ProjectedEdgePairs.ProjectedEdgePair labels)) {edge : Stokes.OrientedEdge source} :
+    (pairs : List (ProjectedEdgePair labels)) {edge : Stokes.OrientedEdge source} :
     ∀ boundary : List (Stokes.OrientedEdge source), edge ∈ boundary →
       ∃ index : Fin (CutAlphabet.ofLists boundary pairs).count, (CutAlphabet.ofLists boundary pairs).generators index =
         edge
@@ -190,7 +190,7 @@ private theorem physical_index {source target : Nat} {labels : Fin source → Fi
         exact ⟨index.succ, equal⟩
 
 /-- The physical generator valuation reads exactly the actual retained cut-edge endpoint increment. -/
-private theorem generator_increment (values : PrimitiveSewing.PrimitiveValues lifted.cutPolygon.patch.cut.count)
+private theorem generator_increment (values : PrimitiveValues lifted.cutPolygon.patch.cut.count)
     (edge : Stokes.OrientedEdge lifted.cutPolygon.patch.cut.count) (physical : edge ∈ lifted.cutBoundaryPairs.boundary)
       :
     ProjectedEdgePairing.generatorValue lifted.cutBoundaryPairs (fun index =>
@@ -208,8 +208,8 @@ private theorem generator_increment (values : PrimitiveSewing.PrimitiveValues li
 
 /-- This is the valuation appearing in the physical-cycle decomposition, read directly from the actual cut-generator
 increments. -/
-theorem generator_sum (word : Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHoleCutWords.PhysicalCutWord lifted
-  original) (values : PrimitiveSewing.PrimitiveValues lifted.cutPolygon.patch.cut.count) :
+theorem generator_sum (word : PhysicalCutWord lifted
+  original) (values : PrimitiveValues lifted.cutPolygon.patch.cut.count) :
     SewingRetraction.wordValue (ProjectedEdgePairing.generatorValue lifted.cutBoundaryPairs (fun index =>
       values ((ProjectedEdgePairing.boundaryWord lifted.cutBoundaryPairs).alphabet.generators index).finish - values
         ((ProjectedEdgePairing.boundaryWord lifted.cutBoundaryPairs).alphabet.generators index).start)) original =
@@ -235,7 +235,7 @@ theorem generator_sum (word : Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHo
         intro physical
         change _ + SewingRetraction.wordValue _ (tail.map _) = _ + Data.Gaussian.Norm.Sum.Basic.gaussianSum
           (tail.map _)
-        exact congrArg₂ (fun first last : Data.Gaussian.Basic.Canonical => first + last)
+        exact congrArg₂ (fun first last : Canonical => first + last)
           (generator_increment values head
             (physical head List.mem_cons_self))
           (ih (fun edge member => physical edge (List.mem_cons_of_mem _ member)))
@@ -244,11 +244,11 @@ theorem generator_sum (word : Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHo
 end PhysicalCutWord
 
 /-- Lift an actual retained branch-hole boundary to its original physical cut edges and triangle sources. -/
-@[expose] def holeCutWord (lifted : Meshes.LiftedPuncturedGrid base) (hole : PuncturedGridFaces.BranchHole
+@[expose] def holeCutWord (lifted : LiftedPuncturedGrid base) (hole : BranchHole
   base.bank.toBranchCellBank)
     (retained : hole ∈ base.faces.holes) : PhysicalCutWord
       lifted (hole.liftedBoundary lifted.vertices lifted.edges) :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchHoleCutWords.PhysicalCutWord.build lifted _ (fun _ member =>
+  PhysicalCutWord.build lifted _ (fun _ member =>
     SimpleBoundaryCycles.mem_flatten.mpr
     ⟨_, Membership.mem_append.mpr (Or.inr (Map.mem_map_of_mem retained)), member⟩)
 

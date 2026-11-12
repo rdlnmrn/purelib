@@ -1,5 +1,7 @@
 module
 import Purelib.Data.Rat.Fraction
+public import Purelib.Approximation.Gaussian.Geometric
+public import Purelib.Integration.CertifiedProgram.Comparison
 import Purelib.Integration.Program.Gaussian.Basic
 public import Purelib.Integration.Program.Gaussian.Cached.Basic
 import Purelib.Integration.CertifiedProgram
@@ -23,6 +25,20 @@ coefficient before multiplication by the complex path displacement.
 
 namespace Purelib.Integration.Program.Gaussian.Basic
 namespace RefinementProgram
+
+open Purelib.Approximation.Gaussian.Geometric (GeometricApproximation)
+open Purelib.Data.Gaussian
+
+/-- Expose the original program's stage samples with its same geometric movement and center bounds.
+
+This view reads the original retained models directly. It does not sample a
+rewrapped output name or choose a new quadrature or model index. -/
+def geometric (program : Basic.RefinementProgram) : GeometricApproximation :=
+  program.certifiedView.program.geometric
+
+/-- The geometric view reads the original integral sample at exactly the original stage. -/
+theorem geometric_sample (program : Basic.RefinementProgram) (index : Nat) :
+    program.geometric.sample index = (program.model index).integralSample := rfl
 
 open Purelib.Approximation.Gaussian in
 open Purelib.Integration.Program.Gaussian in

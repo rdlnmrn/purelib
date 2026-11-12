@@ -10,6 +10,9 @@ import Purelib.Data.Rat.Fraction.Order.Arithmetic
 public import Purelib.Calculus.Jet.Quadratic.Arithmetic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm.Addition
+open Purelib.Approximation.Rational.Geometric
+
 open Purelib.Data.Gaussian.Basic (Canonical)
 
 open Purelib.Calculus.Jet.Progressive.Quadratic (Trace)
@@ -57,25 +60,25 @@ def add {increment : Nat → Canonical}
       intro earlier later order
       calc
         Canonical.normSq (increment later - increment earlier) ≤
-            Rational.Geometric.Basic.quarterRadius
+            Basic.quarterRadius
               left.errorScale earlier := left.increment_later_close order
         _ ≤ 2 *
-            (Rational.Geometric.Basic.quarterRadius
+            (Basic.quarterRadius
                 left.errorScale earlier +
-              Rational.Geometric.Basic.quarterRadius
+              Basic.quarterRadius
                 right.errorScale earlier) :=
-          Purelib.Data.Rat.Fraction.Order.le_twice_sum_of_nonneg _ _
-            (Rational.Geometric.Basic.quarterRadius_nonneg
+          Data.Rat.Fraction.Order.le_twice_sum_of_nonneg _ _
+            (Basic.quarterRadius_nonneg
               left.errorScale_nonneg earlier)
-            (Rational.Geometric.Basic.quarterRadius_nonneg
+            (Basic.quarterRadius_nonneg
               right.errorScale_nonneg earlier)
-        _ = Rational.Geometric.Basic.quarterRadius
+        _ = Basic.quarterRadius
               (2 * (left.errorScale + right.errorScale)) earlier :=
           (quarterRadius_sum_scale _ _ _).symm
     base_later_close := by
       intro earlier later order
       rw [← Gaussian.Norm.Basic.normSq_eq_canonical]
-      exact (Purelib.Data.Gaussian.Norm.Addition.Bounds.sum_movement_le _ _ _ _ _ _
+      exact (Bounds.sum_movement_le _ _ _ _ _ _
         (by
             simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
               using left.base_later_close order) (by
@@ -85,7 +88,7 @@ def add {increment : Nat → Canonical}
     output_later_close := by
       intro earlier later order
       rw [← Gaussian.Norm.Basic.normSq_eq_canonical]
-      exact (Purelib.Data.Gaussian.Norm.Addition.Bounds.sum_movement_le _ _ _ _ _ _
+      exact (Bounds.sum_movement_le _ _ _ _ _ _
         (by
             simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
               using left.output_later_close order)
@@ -96,7 +99,7 @@ def add {increment : Nat → Canonical}
     slope_later_close := by
       intro earlier later order
       rw [← Gaussian.Norm.Basic.normSq_eq_canonical]
-      exact (Purelib.Data.Gaussian.Norm.Addition.Bounds.sum_movement_le _ _ _ _ _ _
+      exact (Bounds.sum_movement_le _ _ _ _ _ _
         (by
             simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
               using left.slope_later_close order) (by
@@ -106,7 +109,7 @@ def add {increment : Nat → Canonical}
     remainder_later_close := by
       intro earlier later order
       rw [← Gaussian.Norm.Basic.normSq_eq_canonical]
-      exact (Purelib.Data.Gaussian.Norm.Addition.Bounds.sum_movement_le _ _ _ _ _ _
+      exact (Bounds.sum_movement_le _ _ _ _ _ _
         (by
             simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
               using left.remainder_later_close order)
@@ -121,12 +124,12 @@ def add {increment : Nat → Canonical}
     increment_bounded := by
       intro index
       exact (left.increment_bounded index).trans
-        (Purelib.Data.Rat.Fraction.Order.le_twice_sum_of_nonneg _ _ left.centerBound_nonneg
+        (Data.Rat.Fraction.Order.le_twice_sum_of_nonneg _ _ left.centerBound_nonneg
           right.centerBound_nonneg)
     base_bounded := by
       intro index
       rw [← Gaussian.Norm.Basic.normSq_eq_canonical]
-      exact Purelib.Data.Gaussian.Norm.Addition.Bounds.sum_bounded _ _ _ _ (by
+      exact Bounds.sum_bounded _ _ _ _ (by
           simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
             using left.base_bounded index)
         (by
@@ -135,7 +138,7 @@ def add {increment : Nat → Canonical}
     output_bounded := by
       intro index
       rw [← Gaussian.Norm.Basic.normSq_eq_canonical]
-      exact Purelib.Data.Gaussian.Norm.Addition.Bounds.sum_bounded _ _ _ _ (by
+      exact Bounds.sum_bounded _ _ _ _ (by
           simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
             using left.output_bounded index)
         (by
@@ -144,7 +147,7 @@ def add {increment : Nat → Canonical}
     slope_bounded := by
       intro index
       rw [← Gaussian.Norm.Basic.normSq_eq_canonical]
-      exact Purelib.Data.Gaussian.Norm.Addition.Bounds.sum_bounded _ _ _ _ (by
+      exact Bounds.sum_bounded _ _ _ _ (by
           simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
             using left.slope_bounded index)
         (by
@@ -153,7 +156,7 @@ def add {increment : Nat → Canonical}
     remainder_bounded := by
       intro index
       rw [← Gaussian.Norm.Basic.normSq_eq_canonical]
-      exact Purelib.Data.Gaussian.Norm.Addition.Bounds.sum_bounded _ _ _ _ (by
+      exact Bounds.sum_bounded _ _ _ _ (by
           simpa only [Gaussian.Norm.Basic.normSq_eq_canonical]
             using left.remainder_bounded index)
         (by

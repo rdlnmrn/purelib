@@ -110,19 +110,19 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ChartBasisArcs.Path (Ba
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
+    UniformReciprocalModels.Data patch count}
   {edge : ParameterEdge} {cell :
     Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {model :
+  {regular : RegularBounds.Data cap} {model :
     RootModel cell}
   {comparison : Data regular cell} {target :
     Coordinate} {floor : Nat}
-  {index depth stage : Nat} {box : Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {index depth stage : Nat} {box : Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
   {sample : Sample comparison capSample}
   {first last : Coordinate}
   {before : Reading regular model sample first target
@@ -148,18 +148,18 @@ open
 /-- Restore the homogeneous trace certificate from the exact retained chart summary and original fan sample.
 
 The full endpoint potentials and paid geometric allowance remain explicit, and the original cached summary is reused. -/
-@[expose] def trace (energy : Evaluation.RequestedBasisEnergy path.segments polynomials energyTarget energyFloor)
-    (basis : ReciprocalPaddedBasisBounds.BasisBounds bounds)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+@[expose] def trace (energy : RequestedBasisEnergy path.segments polynomials energyTarget energyFloor)
+    (basis : BasisBounds bounds)
+    (coefficients : GaussianVector genus)
     (sampled : energy.Sample coefficients before.root.coordinate after.root.coordinate)
     (summary : IncrementArea.Summary (path.segments.map (fun segment =>
       polynomials.value coefficients segment.last.root.coordinate - polynomials.value coefficients
         segment.first.root.coordinate)))
     (branch : HyperellipticReciprocal.originOrder curve = 1)
-    (geometry : Path.BasisArcGeometry path slope)
-    (allowance : InverseRootPolynomial.Coordinate) (nonnegative : 0 ≤ allowance)
-    (paid : Geometric.Basic.quarterRadius (ChartBasisArcs.basisArcScale basis slope) depth ≤ (4 * allowance) ^ 2) :
-    HomogeneousTraceConnection.HomogeneousTrace coefficients
+    (geometry : BasisArcGeometry path slope)
+    (allowance : Coordinate) (nonnegative : 0 ≤ allowance)
+    (paid : Geometric.Basic.quarterRadius (basisArcScale basis slope) depth ≤ (4 * allowance) ^ 2) :
+    HomogeneousTrace coefficients
       (path.segments.map (fun segment =>
         polynomials.value coefficients segment.last.root.coordinate - polynomials.value coefficients
           segment.first.root.coordinate))

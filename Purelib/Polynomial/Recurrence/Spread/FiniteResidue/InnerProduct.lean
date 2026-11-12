@@ -61,8 +61,8 @@ cast one at a time; no carrier, root set, or completed family is enumerated. -/
 def spreadInnerProduct
     (primeCardinality firstIndex secondIndex : Nat) : K :=
   FiniteSum.Prefix.prefixSum primeCardinality (fun residue =>
-    Recurrence.Spread.Basic.spreadPolynomial firstIndex (residue : K) *
-      Recurrence.Spread.Basic.spreadPolynomial secondIndex (residue : K))
+    Basic.spreadPolynomial firstIndex (residue : K) *
+      Basic.spreadPolynomial secondIndex (residue : K))
 
 /-- The two exceptional values asked for in Exercise 8.11, in the source's
 characteristic-free quotient notation. -/
@@ -132,26 +132,26 @@ theorem
       Prime.ChebyshevSum.centeredChebyshevSum prime (first + second) := open Purelib in by
   let center : Nat → K := fun residue => 1 - 2 * (residue : K)
   let productSum := FiniteSum.Prefix.prefixSum prime (fun residue =>
-    Recurrence.Chebyshev.First.Basic.chebyshevFirst first (center residue) *
-      Recurrence.Chebyshev.First.Basic.chebyshevFirst second (center residue))
-  have oneNonzero := Algebra.Field.Characteristic.Nonzero.one_ne_zero_of_two_ne_zero twoNonzero
+    Chebyshev.First.Basic.chebyshevFirst first (center residue) *
+      Chebyshev.First.Basic.chebyshevFirst second (center residue))
+  have oneNonzero := Characteristic.Nonzero.one_ne_zero_of_two_ne_zero twoNonzero
   have pointwise (residue : Nat) :
-      4 * (Recurrence.Spread.Basic.spreadPolynomial first (residue : K) *
-          Recurrence.Spread.Basic.spreadPolynomial second (residue : K)) =
-        1 - Recurrence.Chebyshev.First.Basic.chebyshevFirst first (center residue) -
-            Recurrence.Chebyshev.First.Basic.chebyshevFirst second (center residue) +
-          Recurrence.Chebyshev.First.Basic.chebyshevFirst first (center residue) *
-            Recurrence.Chebyshev.First.Basic.chebyshevFirst second (center residue) := by
-    have firstCentered := Recurrence.Spread.Chebyshev.exercise_8_4_cleared first (residue : K)
-    have secondCentered := Recurrence.Spread.Chebyshev.exercise_8_4_cleared second (residue : K)
-    change 2 * Recurrence.Spread.Basic.spreadPolynomial first (residue : K) =
-      1 - Recurrence.Chebyshev.First.Basic.chebyshevFirst first (center residue) at firstCentered
-    change 2 * Recurrence.Spread.Basic.spreadPolynomial second (residue : K) =
-      1 - Recurrence.Chebyshev.First.Basic.chebyshevFirst second (center residue) at secondCentered
-    rw [show 4 * (Recurrence.Spread.Basic.spreadPolynomial first (residue : K) *
-          Recurrence.Spread.Basic.spreadPolynomial second (residue : K)) =
-        (2 * Recurrence.Spread.Basic.spreadPolynomial first (residue : K)) *
-          (2 * Recurrence.Spread.Basic.spreadPolynomial second (residue : K)) by ring1,
+      4 * (Basic.spreadPolynomial first (residue : K) *
+          Basic.spreadPolynomial second (residue : K)) =
+        1 - Chebyshev.First.Basic.chebyshevFirst first (center residue) -
+            Chebyshev.First.Basic.chebyshevFirst second (center residue) +
+          Chebyshev.First.Basic.chebyshevFirst first (center residue) *
+            Chebyshev.First.Basic.chebyshevFirst second (center residue) := by
+    have firstCentered := Chebyshev.exercise_8_4_cleared first (residue : K)
+    have secondCentered := Chebyshev.exercise_8_4_cleared second (residue : K)
+    change 2 * Basic.spreadPolynomial first (residue : K) =
+      1 - Chebyshev.First.Basic.chebyshevFirst first (center residue) at firstCentered
+    change 2 * Basic.spreadPolynomial second (residue : K) =
+      1 - Chebyshev.First.Basic.chebyshevFirst second (center residue) at secondCentered
+    rw [show 4 * (Basic.spreadPolynomial first (residue : K) *
+          Basic.spreadPolynomial second (residue : K)) =
+        (2 * Basic.spreadPolynomial first (residue : K)) *
+          (2 * Basic.spreadPolynomial second (residue : K)) by ring1,
       firstCentered, secondCentered]
     ring1
   have fourTimesInner :
@@ -159,29 +159,29 @@ theorem
         productSum := by
     unfold spreadInnerProduct
     rw [show 4 * FiniteSum.Prefix.prefixSum prime (fun residue =>
-          Recurrence.Spread.Basic.spreadPolynomial first (residue : K) *
-            Recurrence.Spread.Basic.spreadPolynomial second (residue : K)) =
+          Basic.spreadPolynomial first (residue : K) *
+            Basic.spreadPolynomial second (residue : K)) =
         FiniteSum.Prefix.prefixSum prime (fun residue =>
-          4 * (Recurrence.Spread.Basic.spreadPolynomial first (residue : K) *
-            Recurrence.Spread.Basic.spreadPolynomial second (residue : K))) by
+          4 * (Basic.spreadPolynomial first (residue : K) *
+            Basic.spreadPolynomial second (residue : K))) by
           exact (FiniteSum.Prefix.prefixSum_mul_left prime 4 _).symm]
     calc
       FiniteSum.Prefix.prefixSum prime (fun residue =>
-          4 * (Recurrence.Spread.Basic.spreadPolynomial first (residue : K) *
-            Recurrence.Spread.Basic.spreadPolynomial second (residue : K))) =
+          4 * (Basic.spreadPolynomial first (residue : K) *
+            Basic.spreadPolynomial second (residue : K))) =
         FiniteSum.Prefix.prefixSum prime (fun residue =>
-          1 - Recurrence.Chebyshev.First.Basic.chebyshevFirst first (center residue) -
-              Recurrence.Chebyshev.First.Basic.chebyshevFirst second (center residue) +
-            Recurrence.Chebyshev.First.Basic.chebyshevFirst first (center residue) *
-              Recurrence.Chebyshev.First.Basic.chebyshevFirst second (center residue)) := by
+          1 - Chebyshev.First.Basic.chebyshevFirst first (center residue) -
+              Chebyshev.First.Basic.chebyshevFirst second (center residue) +
+            Chebyshev.First.Basic.chebyshevFirst first (center residue) *
+              Chebyshev.First.Basic.chebyshevFirst second (center residue)) := by
                 apply FiniteSum.Prefix.prefixSum_congr
                 intro residue residueBelow
                 exact pointwise residue
       _ = FiniteSum.Prefix.prefixSum prime (fun _ : Nat => (1 : K)) -
             FiniteSum.Prefix.prefixSum prime (fun residue =>
-              Recurrence.Chebyshev.First.Basic.chebyshevFirst first (center residue)) -
+              Chebyshev.First.Basic.chebyshevFirst first (center residue)) -
             FiniteSum.Prefix.prefixSum prime (fun residue =>
-              Recurrence.Chebyshev.First.Basic.chebyshevFirst second (center residue)) +
+              Chebyshev.First.Basic.chebyshevFirst second (center residue)) +
           productSum := by
             unfold productSum
             rw [FiniteSum.Prefix.prefixSum_add,
@@ -252,12 +252,12 @@ theorem spreadInnerProduct_zero
   have cleared := spreadInnerProduct_chebyshev_cleared
     (K := K) prime first second primeIsPrime primeCastZero twoNonzero
       firstBelow secondBelow
-  have chebyshevZero := Recurrence.Chebyshev.First.FiniteResidue.Sum.prime_centered_chebyshev_sum_regular_zero
+  have chebyshevZero := Chebyshev.First.FiniteResidue.Sum.prime_centered_chebyshev_sum_regular_zero
     (K := K) prime (first + second) primeIsPrime primeCastZero twoNonzero
       (by omega0) notLowerExceptional notUpperExceptional
   apply ExplicitField.eq_zero_of_mul_eq_zero_left
-    ((fun {K : Type _} [Purelib.Algebra.Field.ExplicitField K] (twoNonzero : (2 : K) ≠ 0) =>
-      (Purelib.Algebra.Field.Characteristic.Nonzero.eight_ne_zero (K := K) twoNonzero : (8 : K) ≠ 0)) twoNonzero)
+    ((fun {K : Type _} [ExplicitField K] (twoNonzero : (2 : K) ≠ 0) =>
+      (Characteristic.Nonzero.eight_ne_zero (K := K) twoNonzero : (8 : K) ≠ 0)) twoNonzero)
   rw [cleared, chebyshevZero]
 
 /-- At `m+n=p-1`, the exact exceptional value is `-1/16`. -/
@@ -270,7 +270,7 @@ theorem spreadInnerProduct_lower_exceptional
     (sumEquation : first + second = prime - 1) :
     spreadInnerProduct (K := K) prime first second =
       lowerExceptionalValue := open Purelib in by
-  have oneNonzero := Algebra.Field.Characteristic.Nonzero.one_ne_zero_of_two_ne_zero twoNonzero
+  have oneNonzero := Characteristic.Nonzero.one_ne_zero_of_two_ne_zero twoNonzero
   have firstBelow : first < prime - 1 := by omega0
   have secondBelow : second < prime - 1 := by omega0
   have innerCleared := spreadInnerProduct_chebyshev_cleared
@@ -289,8 +289,8 @@ theorem spreadInnerProduct_lower_exceptional
       _ = -1 := boundary
   have exceptional :=
     (exceptional_values_cleared (K := K)
-      (Algebra.Field.Characteristic.Nonzero.sixteen_ne_zero twoNonzero)).1
-  apply ExplicitField.eq_of_mul_eq_mul_left (Algebra.Field.Characteristic.Nonzero.sixteen_ne_zero
+      (Characteristic.Nonzero.sixteen_ne_zero twoNonzero)).1
+  apply ExplicitField.eq_of_mul_eq_mul_left (Characteristic.Nonzero.sixteen_ne_zero
     twoNonzero)
   calc
     16 * spreadInnerProduct (K := K) prime first second = -1 :=
@@ -316,7 +316,7 @@ theorem spreadInnerProduct_upper_exceptional
     (K := K) prime first second primeIsPrime primeCastZero twoNonzero
       firstBelow secondBelow
   rw [sumEquation] at innerCleared
-  have boundary := Recurrence.Chebyshev.First.FiniteResidue.Sum.prime_centered_chebyshev_sum_upper_boundary_cleared
+  have boundary := Chebyshev.First.FiniteResidue.Sum.prime_centered_chebyshev_sum_upper_boundary_cleared
     (K := K) prime primeIsPrime primeCastZero twoNonzero fourBelowPrime
   have sixteenTimesInner :
       16 * spreadInnerProduct (K := K) prime first second = 1 := by
@@ -328,8 +328,8 @@ theorem spreadInnerProduct_upper_exceptional
       _ = 1 := boundary
   have exceptional :=
     (exceptional_values_cleared (K := K)
-      (Algebra.Field.Characteristic.Nonzero.sixteen_ne_zero twoNonzero)).2
-  apply ExplicitField.eq_of_mul_eq_mul_left (Algebra.Field.Characteristic.Nonzero.sixteen_ne_zero
+      (Characteristic.Nonzero.sixteen_ne_zero twoNonzero)).2
+  apply ExplicitField.eq_of_mul_eq_mul_left (Characteristic.Nonzero.sixteen_ne_zero
     twoNonzero)
   calc
     16 * spreadInnerProduct (K := K) prime first second = 1 :=

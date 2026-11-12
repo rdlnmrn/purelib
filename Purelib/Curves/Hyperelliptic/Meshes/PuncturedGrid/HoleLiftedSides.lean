@@ -119,8 +119,8 @@ namespace Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank
 The supplied endpoint reference loops identify the existing cached root transport. -/
 public theorem same_endpoints {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient :
   Rational.Box}
-    {grid : Polynomial.Geometry.Grid.ClearGrid polynomial ambient} {frames : RootFrames grid}
-    (edges : SquareRoot.Grid.RootEdgeBank frames) (vertices : SquareRoot.Grid.LiftedVertices.VertexBank
+    {grid : Geometry.Grid.ClearGrid polynomial ambient} {frames : RootFrames grid}
+    (edges : RootEdgeBank frames) (vertices : LiftedVertices.VertexBank
       grid)
     {start finish otherStart otherFinish : Gaussian.Basic.Canonical}
     (first : Geometry.Grid.Walks.Edge grid start finish) (last : Geometry.Grid.Walks.Edge grid otherStart otherFinish)
@@ -139,7 +139,7 @@ end
 section
 
 variable {base : Meshes.FramedPuncturedGrid curve branches higher} {lifted : Meshes.LiftedPuncturedGrid base}
-  {hole : Meshes.PuncturedGridFaces.BranchHole base.bank.toBranchCellBank} {side : Meshes.GridLiftedDualSteps.GridSide}
+  {hole : BranchHole base.bank.toBranchCellBank} {side : GridSide}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.HoleLiftedSides.FramedPuncturedGrid.HoleAdjacentFace
 
@@ -148,7 +148,7 @@ set_option genInjectivity false in
 
 It retains the original face occurrence and equality with the cached reversed hole edge. -/
 structure LiftedSide (adjacent :
-  Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace base hole side) (lifted :
+  HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace base hole side) (lifted :
   Meshes.LiftedPuncturedGrid base)
     (requested : Fin 2) where
   /-- The retained adjacent face occurrence selected at the requested side-start sheet. -/ selected : lifted.mesh.AtSide
@@ -167,10 +167,10 @@ namespace HoleAdjacentFace.LiftedSide
 /-- Selection consumes the existing two face lifts and cached root maps.
 The requested sheet is the start of the inward-oriented hole edge. -/
 @[expose] def build (adjacent :
-  Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace base hole side) (lifted :
+  HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace base hole side) (lifted :
   Meshes.LiftedPuncturedGrid base)
     (requested : Fin 2) :
-      HoleAdjacentFace.LiftedSide adjacent lifted
+      LiftedSide adjacent lifted
       requested := by
   let selected := lifted.mesh.locateAtSide adjacent.position side.opposite requested
   refine ⟨selected, ?_⟩
@@ -180,18 +180,18 @@ The requested sheet is the start of the inward-oriented hole edge. -/
     (base.faces.regulars[adjacent.position.val].side side.opposite)
     (GridSide.Matches.opposite_start adjacent.matching)
     (GridSide.Matches.opposite_finish adjacent.matching)
-    (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt base.bank.toBranchCellBank
+    (LoopMonodromy.BranchCellBank.referenceAt base.bank.toBranchCellBank
       (side.finish hole.cell.box) (hole.side side).vertices.2).toLoop
-    (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt base.bank.toBranchCellBank
+    (LoopMonodromy.BranchCellBank.referenceAt base.bank.toBranchCellBank
       (side.start hole.cell.box) (hole.side side).vertices.1).toLoop requested
 
 /-- Equal selected face sheets imply equal requested inward-hole start sheets. -/
 theorem sheet_injective {adjacent :
-  Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace base hole side} {first last
+  HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace base hole side} {first last
   : Fin 2}
-    (left : HoleAdjacentFace.LiftedSide adjacent
+    (left : LiftedSide adjacent
       lifted first) (right :
-      HoleAdjacentFace.LiftedSide adjacent lifted
+      LiftedSide adjacent lifted
       last)
     (equal : left.selected.sheet = right.selected.sheet) : first = last :=
   left.selected.start_eq.symm.trans
@@ -201,9 +201,9 @@ theorem sheet_injective {adjacent :
 /-- Reading in inward-hole start-sheet order retains both original face
 occurrences exactly once; no arbitrary equality of local sheet labels is used. -/
 theorem sum_selected {adjacent :
-  Hyperelliptic.Meshes.PuncturedGrid.HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace base hole side}
+  HoleAdjacentFaces.FramedPuncturedGrid.HoleAdjacentFace base hole side}
     (sides : (sheet : Fin 2) →
-      HoleAdjacentFace.LiftedSide adjacent lifted
+      LiftedSide adjacent lifted
       sheet) (values : Fin 2 → Gaussian.Basic.Canonical) :
     FiniteSum.Fin.sumFin (fun sheet => values (sides sheet).selected.sheet) =
       FiniteSum.Fin.sumFin values := by

@@ -55,17 +55,17 @@ def scaleAutomatic (scalar :
   let outputChannel := (Channel.outputField trace).scale scalar
   let slopeChannel := (Channel.slopeField trace).scale scalar
   let remainderChannel := (Channel.remainderField trace).scale scalar
-  have baseChannel' : Approximation.Gaussian.Sequence.Geometric.Channel (fun index => (certificates index).base) :=
+  have baseChannel' : Channel (fun index => (certificates index).base) :=
     baseChannel.map (by intro index; rfl)
-  have outputChannel' : Approximation.Gaussian.Sequence.Geometric.Channel (fun index => (certificates index).output) :=
+  have outputChannel' : Channel (fun index => (certificates index).output) :=
     outputChannel.map (by intro index; rfl)
-  have slopeChannel' : Approximation.Gaussian.Sequence.Geometric.Channel (fun index => (certificates index).slope) :=
+  have slopeChannel' : Channel (fun index => (certificates index).slope) :=
     slopeChannel.map (by intro index; rfl)
   have remainderChannel' :
-      Approximation.Gaussian.Sequence.Geometric.Channel (fun index => (certificates index).remainder) :=
+      Channel (fun index => (certificates index).remainder) :=
     remainderChannel.map (by intro index; rfl)
-  exact Trace.ofTransport
-    (Transport.Channel.transportOfChannels incrementChannel baseChannel' outputChannel'
+  exact ofTransport
+    (Channel.transportOfChannels incrementChannel baseChannel' outputChannel'
       slopeChannel' remainderChannel')
 
 open Purelib.Calculus.Jet.Progressive.Quadratic.Trace.Automatic in
@@ -99,17 +99,17 @@ def mulAutomatic {increment : Nat →
       ((Channel.baseField left).mul (Channel.slopeField right))
   let remainderChannel :=
     (outputChannel.sub baseChannel).sub (incrementChannel.mul slopeChannel)
-  have baseChannel' : Approximation.Gaussian.Sequence.Geometric.Channel (fun index => (certificates index).base) :=
+  have baseChannel' : Channel (fun index => (certificates index).base) :=
     baseChannel.map (by intro index; rfl)
-  have outputChannel' : Approximation.Gaussian.Sequence.Geometric.Channel (fun index => (certificates index).output) :=
+  have outputChannel' : Channel (fun index => (certificates index).output) :=
     outputChannel.map (by intro index; rfl)
-  have slopeChannel' : Approximation.Gaussian.Sequence.Geometric.Channel (fun index => (certificates index).slope) :=
+  have slopeChannel' : Channel (fun index => (certificates index).slope) :=
     slopeChannel.map (by intro index; rfl)
   have remainderChannel' :
-      Approximation.Gaussian.Sequence.Geometric.Channel (fun index => (certificates index).remainder) :=
+      Channel (fun index => (certificates index).remainder) :=
     remainderChannel.map (by intro index; rfl)
-  exact Trace.ofTransport
-    (Transport.Channel.transportOfChannels incrementChannel baseChannel' outputChannel'
+  exact ofTransport
+    (Channel.transportOfChannels incrementChannel baseChannel' outputChannel'
       slopeChannel' remainderChannel')
 
 open Purelib.Calculus.Jet.Progressive.Quadratic.Trace.Automatic in
@@ -143,17 +143,17 @@ def composeAutomatic {increment : Nat
   let slopeChannel := (Channel.slopeField inner).mul (Channel.slopeField outer)
   let remainderChannel :=
     ((Channel.remainderField inner).mul (Channel.slopeField outer)).add (Channel.remainderField outer)
-  have baseChannel' : Approximation.Gaussian.Sequence.Geometric.Channel (fun index => (certificates index).base) :=
+  have baseChannel' : Channel (fun index => (certificates index).base) :=
     baseChannel.map (by intro index; rfl)
-  have outputChannel' : Approximation.Gaussian.Sequence.Geometric.Channel (fun index => (certificates index).output) :=
+  have outputChannel' : Channel (fun index => (certificates index).output) :=
     outputChannel.map (by intro index; rfl)
-  have slopeChannel' : Approximation.Gaussian.Sequence.Geometric.Channel (fun index => (certificates index).slope) :=
+  have slopeChannel' : Channel (fun index => (certificates index).slope) :=
     slopeChannel.map (by intro index; rfl)
   have remainderChannel' :
-      Approximation.Gaussian.Sequence.Geometric.Channel (fun index => (certificates index).remainder) :=
+      Channel (fun index => (certificates index).remainder) :=
     remainderChannel.map (by intro index; rfl)
-  exact Trace.ofTransport
-    (Transport.Channel.transportOfChannels incrementChannel baseChannel' outputChannel'
+  exact ofTransport
+    (Channel.transportOfChannels incrementChannel baseChannel' outputChannel'
       slopeChannel' remainderChannel')
 
 open Purelib.Calculus.Jet.Progressive.Quadratic.Trace.Automatic in

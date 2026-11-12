@@ -15,6 +15,8 @@ import Purelib.Data.Rat.Fraction.Order.Arithmetic
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 @[expose] public section
 
@@ -89,9 +91,9 @@ theorem expectation_separation_le_bound_mul_totalVariationDistance
       difference.positiveContent.integral value -
             difference.negativeContent.integral value ≤
           difference.positiveContent.integral value :=
-        (Fraction.Order.Arithmetic.sub_le_iff_le_add_direct).mpr (by
-          have translated := Fraction.Order.Arithmetic.add_le_add_direct
-            (Fraction.Order.Basic.le_refl (difference.positiveContent.integral value)) negativeNonnegative
+        (Arithmetic.sub_le_iff_le_add_direct).mpr (by
+          have translated := Arithmetic.add_le_add_direct
+            (Basic.le_refl (difference.positiveContent.integral value)) negativeNonnegative
           simpa only [-eq_self, -iff_self, add_zero] using translated)
       _ ≤ difference.positiveContent.total * bound := positiveBound
       _ = bound * difference.positiveContent.total := by ring1
@@ -104,16 +106,16 @@ theorem expectation_separation_le_bound_mul_totalVariationDistance
           difference.negativeContent.integral value -
             difference.positiveContent.integral value := by ring1
       _ ≤ difference.negativeContent.integral value :=
-        (Fraction.Order.Arithmetic.sub_le_iff_le_add_direct).mpr (by
-          have translated := Fraction.Order.Arithmetic.add_le_add_direct
-            (Fraction.Order.Basic.le_refl (difference.negativeContent.integral value)) positiveNonnegative
+        (Arithmetic.sub_le_iff_le_add_direct).mpr (by
+          have translated := Arithmetic.add_le_add_direct
+            (Basic.le_refl (difference.negativeContent.integral value)) positiveNonnegative
           simpa only [-eq_self, -iff_self, add_zero] using translated)
       _ ≤ difference.negativeContent.total * bound := negativeBound
       _ = bound * difference.positiveContent.total := by
         rw [← left.signedDifference_positiveTotal_eq_negativeTotal right]
         ring1
   unfold Distance.rationalSeparation totalVariationDistance
-  apply Fraction.Order.Basic.max_le
+  apply Basic.max_le
   · rw [← measured]
     exact upper
   · calc
@@ -147,12 +149,12 @@ theorem expectation_separation_le_oscillation_mul_totalVariationDistance
       (upper - lower) * left.totalVariationDistance right := by
   let shifted := fun item => value item - lower
   have shiftedNonnegative : ∀ item, 0 ≤ shifted item :=
-    fun item => Fraction.Order.Arithmetic.sub_nonneg_direct (lowerBound item)
+    fun item => Arithmetic.sub_nonneg_direct (lowerBound item)
   have shiftedBounded : ∀ item, shifted item ≤ upper - lower :=
-    fun item => Fraction.Order.Arithmetic.sub_le_sub_right_direct (upperBound item) lower
+    fun item => Arithmetic.sub_le_sub_right_direct (upperBound item) lower
   have estimate :=
     left.expectation_separation_le_bound_mul_totalVariationDistance right
-      shifted (upper - lower) (Fraction.Order.Arithmetic.sub_nonneg_direct order)
+      shifted (upper - lower) (Arithmetic.sub_nonneg_direct order)
       shiftedNonnegative shiftedBounded
   have leftShift : left.expectation shifted =
       left.expectation value - lower := by

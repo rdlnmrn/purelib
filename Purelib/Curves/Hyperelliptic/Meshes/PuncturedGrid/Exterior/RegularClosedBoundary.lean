@@ -70,6 +70,8 @@ import Purelib.Riemann.RootContinuation.PreparedGridRootClosure
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
+
 public section
 
 /-! Acquire the requested regular reciprocal boundary comparison for the
@@ -94,39 +96,39 @@ open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
-  {lifted : LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} (prepared :
-    ExteriorProgram.SurfacePreparation
+  {lifted : LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} (prepared :
+    SurfacePreparation
     regular domains program)
 
 /-- Keep the actual exterior program's parent cache and first-differential
 covers as the owner of the regular source comparison. -/
 @[expose] def
   regularSourceRequest
-  (other : Hyperelliptic.Differentials.Basic.Differential genus)
-    (right : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers
+  (other : Differentials.Basic.Differential genus)
+    (right : UniformReciprocalCover.ParentCovers
       (program.cache.parents.map (recastCenteredEdge other)))
     (error : Coordinate) (positive : 0 < error) (minimum : Nat) :
-    Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request regular other program.cache.parents error minimum
+    Disk.PairedParentRequest.Request regular other program.cache.parents error minimum
       :=
-  Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.Request.build regular other prepared.sourceCovers right
+  Disk.PairedParentRequest.Request.build regular other prepared.sourceCovers right
     program.cache.proper error positive minimum
 
 /-- The regular parent bank chosen for this literal exterior program. -/
 @[expose] def
   regularClosedBoundaryRequest
-  (other : Hyperelliptic.Differentials.Basic.Differential genus)
-    (right : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers
+  (other : Differentials.Basic.Differential genus)
+    (right : UniformReciprocalCover.ParentCovers
       (program.cache.parents.map (recastCenteredEdge other)))
     (error : Coordinate) (positive : 0 < error) (minimum : Nat) :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentRequest.RegularParentRequest
+    ReciprocalRegularParentRequest.RegularParentRequest
       (prepared.regularSourceRequest other right error positive minimum) (min (error / 64) 1) :=
   open Purelib.Data.Rat in Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentRequest.RegularParentRequest.build
     (prepared.regularSourceRequest other right error positive minimum) (min (error / 64) 1)
@@ -137,15 +139,15 @@ computed shared bank pays the corrected source-area request with no caller
 geometric depth, chart-arc budget or fan certificate. -/
 theorem
   regular_closed_boundary_accurate
-  (other : Hyperelliptic.Differentials.Basic.Differential genus)
-    (right : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers
+  (other : Differentials.Basic.Differential genus)
+    (right : UniformReciprocalCover.ParentCovers
       (program.cache.parents.map (recastCenteredEdge other)))
     (error : Coordinate) (positive : 0 < error) (minimum : Nat)
-    (unramified : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 0) :
+    (unramified : HyperellipticReciprocal.originOrder curve = 0) :
     let selected := prepared.regularClosedBoundaryRequest other right error positive minimum
     let evaluated := selected.request.acquire
-    Data.Gaussian.Norm.Basic.normSq (evaluated.sourceArea - evaluated.correction) < error := by
-  exact Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentRequest.RegularParentRequest.source_closed_requested
+    Gaussian.Norm.Basic.normSq (evaluated.sourceArea - evaluated.correction) < error := by
+  exact ReciprocalRegularParentRequest.RegularParentRequest.source_closed_requested
     (prepared.regularSourceRequest other right error positive minimum) error positive unramified
     (by obtain ⟨chain⟩ := program.cache.chain; exact ⟨chain.toDirectPathChain⟩) rfl
 
@@ -155,23 +157,23 @@ open Purelib.Approximation
 total on the same bank as the corrected area estimate. -/
 theorem
   regular_source_total_accurate
-  (other : Hyperelliptic.Differentials.Basic.Differential genus)
-    (right : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers
+  (other : Differentials.Basic.Differential genus)
+    (right : UniformReciprocalCover.ParentCovers
       (program.cache.parents.map (recastCenteredEdge other)))
     (error : Coordinate) (positive : 0 < error) (minimum : Nat)
-    (unramified : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 0) :
+    (unramified : HyperellipticReciprocal.originOrder curve = 0) :
     let selected := prepared.regularClosedBoundaryRequest other right error positive minimum
     let evaluated := selected.request.acquire
     Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (Path.PairedIncrementArea.total evaluated.sourcePaths.flatten)
       error := by
-  exact Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentRequest.RegularParentRequest.source_total_requested
+  exact ReciprocalRegularParentRequest.RegularParentRequest.source_total_requested
     (prepared.regularSourceRequest other right error positive minimum) error positive unramified
     (by obtain ⟨chain⟩ := program.cache.chain; exact ⟨chain.toDirectPathChain⟩)
       (RootContinuation.PreparedCachedParentRoots.ParentCache.rootChain program.cache) rfl (by
       change Gaussian.Equivalence.NamedEquivalent
         (Paths.OwnerTraceReadings.ownerName (Paths.PreparedPathGluing.finishOwner
           program.period.closed.traced.prepared))
-        (Paths.OwnerTraceReadings.ownerName ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.exteriorOwner
+        (Paths.OwnerTraceReadings.ownerName ((PeriodPrograms.exteriorOwner
           lifted program.sheet)))
       rw [← program.period.closed.traced.finishOwner_eq]
       exact program.period.closed.rootReturn)
@@ -180,22 +182,22 @@ theorem
 the same selected samples as its raw total and corrected area bounds. -/
 theorem
   regular_source_area_accurate
-  (other : Hyperelliptic.Differentials.Basic.Differential genus)
-    (right : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers
+  (other : Differentials.Basic.Differential genus)
+    (right : UniformReciprocalCover.ParentCovers
       (program.cache.parents.map (recastCenteredEdge other)))
     (error : Coordinate) (positive : 0 < error) (minimum : Nat)
-    (unramified : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 0) :
+    (unramified : HyperellipticReciprocal.originOrder curve = 0) :
     let selected := prepared.regularClosedBoundaryRequest other right error positive minimum
     let evaluated := selected.request.acquire
-    Data.Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area evaluated.sourcePaths.flatten) < error := by
-  exact Hyperelliptic.Charts.Reciprocal.ReciprocalRegularParentRequest.RegularParentRequest.source_area_requested
+    Gaussian.Norm.Basic.normSq (Path.PairedIncrementArea.area evaluated.sourcePaths.flatten) < error := by
+  exact ReciprocalRegularParentRequest.RegularParentRequest.source_area_requested
     (prepared.regularSourceRequest other right error positive minimum) error positive unramified
     (by obtain ⟨chain⟩ := program.cache.chain; exact ⟨chain.toDirectPathChain⟩)
       (RootContinuation.PreparedCachedParentRoots.ParentCache.rootChain program.cache) rfl (by
       change Gaussian.Equivalence.NamedEquivalent
         (Paths.OwnerTraceReadings.ownerName (Paths.PreparedPathGluing.finishOwner
           program.period.closed.traced.prepared))
-        (Paths.OwnerTraceReadings.ownerName ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.exteriorOwner
+        (Paths.OwnerTraceReadings.ownerName ((PeriodPrograms.exteriorOwner
           lifted program.sheet)))
       rw [← program.period.closed.traced.finishOwner_eq]
       exact program.period.closed.rootReturn)
@@ -208,33 +210,33 @@ For an unramified reciprocal origin, the original program's root return pays bot
 totals. -/
 @[expose] def
   regularSourceComparison
-  (other : Hyperelliptic.Differentials.Basic.Differential genus)
-    (right : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers
+  (other : Differentials.Basic.Differential genus)
+    (right : UniformReciprocalCover.ParentCovers
       (program.cache.parents.map (recastCenteredEdge other)))
     (requested : Coordinate) (positive : 0 < requested) (minimum : Nat)
-    (unramified : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 0) :
-    prepared.ClosedBoundaryComparison other requested minimum := open Purelib.Data.Rat in by
+    (unramified : HyperellipticReciprocal.originOrder curve = 0) :
+    prepared.ClosedBoundaryComparison other requested minimum := open Rat in by
   let localTarget := requested / 128
   have localPositive : 0 < localTarget := Fraction.Order.Field.div_pos_direct positive (by decide +kernel)
   let selected := prepared.regularClosedBoundaryRequest other right localTarget localPositive minimum
   let evaluated := selected.request.acquire
-  let controlled := Hyperelliptic.Charts.Reciprocal.Disk.ChartSourceRequests.controlledEntries evaluated
-  let entries : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceComparison.SourceReferenceEntries
+  let controlled := Disk.ChartSourceRequests.controlledEntries evaluated
+  let entries : SourceComparison.SourceReferenceEntries
     (prepared.regularSourceRequest other right localTarget localPositive minimum) :=
-    Data.Vector.DependentVector.ofFn (fun i =>
+    Vector.DependentVector.ofFn (fun i =>
       ⟨selected.request.index, (evaluated.entries.get i).samples.source, (evaluated.entries.get i).samples.otherSource,
         (controlled.get i).first, (controlled.get i).second, (controlled.get i).first_eq, (controlled.get i).second_eq,
         (prepared.regularSourceRequest other right localTarget localPositive minimum).depth + selected.depth,
         selected.referenceError, (selected.source_reference_rate i).le⟩)
-  have paths : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceComparison.sourceReferencePaths entries =
+  have paths : SourceComparison.sourceReferencePaths entries =
     evaluated.sourcePaths := by
-    apply Data.List.OfFn.Basic.ofFn_congr
+    apply List.OfFn.Basic.ofFn_congr
     intro i
-    dsimp only [Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceComparison.sourceReferencePaths, entries, -eq_self,
+    dsimp only [SourceComparison.sourceReferencePaths, entries, -eq_self,
       -iff_self]
-    rw [Data.Vector.DependentVector.ofFn_get]
+    rw [Vector.DependentVector.ofFn_get]
   let path := Path.PairedIncrementArea.Summary.build
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceComparison.sourceReferencePaths entries).flatten
+    (SourceComparison.sourceReferencePaths entries).flatten
   have localLe : localTarget ≤ requested := by
     apply (Fraction.Order.Field.div_le_iff_pos (by decide +kernel : (0 : Coordinate) < 128)).mpr
     exact (show requested = requested * 1 by ring1).le.trans
@@ -259,7 +261,7 @@ totals. -/
     selected.referenceError, selected.reference_positive, ?_, paid, path, ?_, ?_⟩
   · intro i
     dsimp only [entries, -eq_self, -iff_self]
-    rw [Data.Vector.DependentVector.ofFn_get]
+    rw [Vector.DependentVector.ofFn_get]
   · rw [path.area_eq, paths]
     exact (prepared.regular_source_area_accurate other right localTarget localPositive minimum unramified).trans_le
       localLe
@@ -271,26 +273,26 @@ totals. -/
 interface, retaining their actual source owners and reference depths. -/
 @[expose] def
   closedBoundaryComparison
-  (other : Hyperelliptic.Differentials.Basic.Differential genus)
-    (right : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers
+  (other : Differentials.Basic.Differential genus)
+    (right : UniformReciprocalCover.ParentCovers
       (program.cache.parents.map (recastCenteredEdge other)))
     (requested : Coordinate) (positive : 0 < requested) (minimum : Nat) :
     prepared.ClosedBoundaryComparison other requested minimum :=
   match shape : curve.degreeShape with
   | .odd _ => (prepared.oddClosedBoundaryComparison other right requested positive minimum
       (by
-        simp only [Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder,
+        simp only [HyperellipticReciprocal.originOrder,
           shape, -eq_self, -iff_self]; rfl)).toSourceComparison prepared
   | .even _ => prepared.regularSourceComparison other right requested positive minimum
       (by
-        simp only [Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder,
+        simp only [HyperellipticReciprocal.originOrder,
           shape, -eq_self, -iff_self]; rfl)
 
 /-- The parity-independent closed comparison retains exactly the supplied second source covers. -/
 theorem
   closedBoundaryComparison_right
-  (other : Hyperelliptic.Differentials.Basic.Differential genus)
-    (right : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers
+  (other : Differentials.Basic.Differential genus)
+    (right : UniformReciprocalCover.ParentCovers
       (program.cache.parents.map (recastCenteredEdge other)))
     (requested : Coordinate) (positive : 0 < requested) (minimum : Nat) :
     (prepared.closedBoundaryComparison other right requested positive minimum).original.right = right := by
@@ -301,13 +303,13 @@ theorem
 /-- The parity-independent closed comparison retains the maximum of the two original source-cover slopes. -/
 theorem
   closedBoundaryComparison_slope
-  (other : Hyperelliptic.Differentials.Basic.Differential genus)
-    (right : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers
+  (other : Differentials.Basic.Differential genus)
+    (right : UniformReciprocalCover.ParentCovers
       (program.cache.parents.map (recastCenteredEdge other)))
     (requested : Coordinate) (positive : 0 < requested) (minimum : Nat) :
     (prepared.closedBoundaryComparison other right requested positive minimum).original.slope =
-      max (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.sourceMaximum prepared.sourceCovers)
-        (Hyperelliptic.Charts.Reciprocal.Disk.PairedParentRequest.sourceMaximum right) := by
+      max (Disk.PairedParentRequest.sourceMaximum prepared.sourceCovers)
+        (Disk.PairedParentRequest.sourceMaximum right) := by
   unfold
     closedBoundaryComparison
   split <;> rfl

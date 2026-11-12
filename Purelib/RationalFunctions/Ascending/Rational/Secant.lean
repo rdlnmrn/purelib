@@ -11,6 +11,8 @@ import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Tactic.Ring
 import Purelib.Data.Gaussian.Field
 
+open Purelib.Polynomial.Ascending.Rational
+
 section
 @[expose] public section
 
@@ -36,35 +38,35 @@ open Purelib.RationalFunctions in
 The denominator evaluations at both Gaussian points are explicitly nonzero. Their quotient-rule kernel multiplies the
 argument difference to recover the exact value difference. -/
 theorem eval_sub_factor (expression :
-  Ascending.Rational.Basic.RationalPolynomial) (x y : Gaussian.Basic.Canonical)
+  RationalPolynomial) (x y : Gaussian.Basic.Canonical)
     (xDenominatorNonzero :
-      Ascending.Rational.GaussianEvaluation.eval expression.denominator x ≠ 0)
+      GaussianEvaluation.eval expression.denominator x ≠ 0)
     (yDenominatorNonzero :
-      Ascending.Rational.GaussianEvaluation.eval expression.denominator y ≠ 0) :
+      GaussianEvaluation.eval expression.denominator y ≠ 0) :
     expression.eval x - expression.eval y =
       (x - y) * expression.kernel x y := by
   let numeratorX :=
-    Ascending.Rational.GaussianEvaluation.eval expression.numerator x
+    GaussianEvaluation.eval expression.numerator x
   let numeratorY :=
-    Ascending.Rational.GaussianEvaluation.eval expression.numerator y
+    GaussianEvaluation.eval expression.numerator y
   let denominatorX :=
-    Ascending.Rational.GaussianEvaluation.eval expression.denominator x
+    GaussianEvaluation.eval expression.denominator x
   let denominatorY :=
-    Ascending.Rational.GaussianEvaluation.eval expression.denominator y
-  let numeratorKernel := Ascending.Rational.Secant.polynomialKernel expression.numerator x y
-  let denominatorKernel := Ascending.Rational.Secant.polynomialKernel expression.denominator x y
+    GaussianEvaluation.eval expression.denominator y
+  let numeratorKernel := Secant.polynomialKernel expression.numerator x y
+  let denominatorKernel := Secant.polynomialKernel expression.denominator x y
   have numeratorFactor : numeratorX - numeratorY =
       (x - y) * numeratorKernel :=
-    Ascending.Rational.Secant.eval_sub_factor
+    Secant.eval_sub_factor
       expression.numerator x y
   have denominatorFactor : denominatorX - denominatorY =
       (x - y) * denominatorKernel :=
-    Ascending.Rational.Secant.eval_sub_factor
+    Secant.eval_sub_factor
       expression.denominator x y
-  rw [Ascending.Rational.Basic.RationalPolynomial.eval, Ascending.Rational.Basic.RationalPolynomial.eval,
-    Ascending.Rational.Basic.RationalPolynomial.kernel]
+  rw [eval, eval,
+    kernel]
   change numeratorX / denominatorX - numeratorY / denominatorY = _
-  rw [Purelib.Data.Gaussian.Field.div_sub_div numeratorX numeratorY denominatorX denominatorY
+  rw [Gaussian.Field.div_sub_div numeratorX numeratorY denominatorX denominatorY
     xDenominatorNonzero yDenominatorNonzero]
   have crossNumerator :
       numeratorX * denominatorY - numeratorY * denominatorX =
@@ -99,10 +101,10 @@ open Purelib.Polynomial in
 open Purelib.RationalFunctions in
 /-- At equal arguments, the rational secant kernel is the executable quotient-rule derivative. -/
 theorem kernel_diagonal (expression :
-  Ascending.Rational.Basic.RationalPolynomial) (x : Gaussian.Basic.Canonical) :
+  RationalPolynomial) (x : Gaussian.Basic.Canonical) :
     expression.kernel x x = expression.derivativeEval x := by
-  rw [Ascending.Rational.Basic.RationalPolynomial.kernel, Ascending.Rational.Basic.RationalPolynomial.derivativeEval,
-    Ascending.Rational.Secant.polynomialKernel_diagonal, Ascending.Rational.Secant.polynomialKernel_diagonal]
+  rw [kernel, derivativeEval,
+    Secant.polynomialKernel_diagonal, Secant.polynomialKernel_diagonal]
 
 end RationalPolynomial
 

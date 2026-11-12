@@ -37,6 +37,12 @@ import Purelib.RootIsolation.Curve.Event.Profile.Basic
 import Purelib.RootIsolation.Curve.Event.Profile.Request
 import Purelib.RootIsolation.Sturm.Track.Basic
 
+open Purelib.Polynomial.Dense.Gaussian.Basic
+
+open Purelib.Geometry.Projective
+
+open Purelib.LinearAlgebra.Coordinates2
+
 open Purelib.Data.Rat
 
 open Purelib
@@ -66,20 +72,20 @@ set_option genInjectivity false in
 /-- One condition-profile event with its exact parent in the complete
 unsplit boundary-event family. -/
 structure BoundaryProfileEventEntry
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
-      LinearAlgebra.Coordinates2.Matrix.GaussianMatrix} {current : Box}
+    {p : CanonicalCoefficients.CoefficientPolynomial} {reference :
+      Matrix.GaussianMatrix} {current : Box}
     {denominatorMargin : Fraction.Rational} {marginPositive : 0 < denominatorMargin}
-    {atom : Geometry.Projective.Hermitian.Atom}
-    (boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {atom : Hermitian.Atom}
+    (boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom) where
   /-- The exact parent entry in the unsplit boundary-event family. -/ parent :
-    Curve.Boundary.Event.Basic.SourcePersistentProfileBoundaryEventsBoundaryEventEntryAlias boundary
+    Event.Basic.SourcePersistentProfileBoundaryEventsBoundaryEventEntryAlias boundary
   /-- The retained parent occurs in the original complete boundary-event family. -/ parentMember : parent ∈
-    Curve.Boundary.Event.Family.boundaryEventFamily boundary
+    Event.Family.boundaryEventFamily boundary
   /-- The actual condition-profile event belonging to the retained parent factor analysis. -/ event :
-    Curve.Event.Profile.Family.SourcePersistentProfileBoundaryEventsProfileEventEntryAlias parent.event.1
+    Event.Profile.Family.SourcePersistentProfileBoundaryEventsProfileEventEntryAlias parent.event.1
   /-- The retained event occurs in that exact parent's complete profile-event family. -/ eventMember : event ∈
-    Curve.Event.Profile.Family.profileEventFamily
+    Event.Profile.Family.profileEventFamily
       parent.event.1
 
 constructive_injectivity BoundaryProfileEventEntry
@@ -88,72 +94,72 @@ namespace BoundaryProfileEventEntry
 
 /-- Refine the retained profile event to the supplied parameter-width request. -/
 @[expose] def requestAt
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
-      LinearAlgebra.Coordinates2.Matrix.GaussianMatrix} {current : Box}
+    {p : CanonicalCoefficients.CoefficientPolynomial} {reference :
+      Matrix.GaussianMatrix} {current : Box}
     {denominatorMargin : Fraction.Rational} {marginPositive : 0 < denominatorMargin}
-    {atom : Geometry.Projective.Hermitian.Atom}
-    {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {atom : Hermitian.Atom}
+    {boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom}
     (entry : BoundaryProfileEventEntry boundary) (epsilon : Fraction.Rational) :=
   entry.event.2.request epsilon
 
 /-- Refine the retained profile event to its computed profile-wide sign width. -/
 @[expose] def request
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
-      LinearAlgebra.Coordinates2.Matrix.GaussianMatrix} {current : Box}
+    {p : CanonicalCoefficients.CoefficientPolynomial} {reference :
+      Matrix.GaussianMatrix} {current : Box}
     {denominatorMargin : Fraction.Rational} {marginPositive : 0 < denominatorMargin}
-    {atom : Geometry.Projective.Hermitian.Atom}
-    {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {atom : Hermitian.Atom}
+    {boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom}
     (entry : BoundaryProfileEventEntry boundary) :=
   entry.requestAt
-    (Curve.Event.Profile.Sign.profileSignWidth
+    (Event.Profile.Sign.profileSignWidth
       entry.event.1)
 
 /-- The sign-control request bounds the retained event interval by its computed profile-wide sign width. -/
 theorem request_width_le
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
-      LinearAlgebra.Coordinates2.Matrix.GaussianMatrix} {current : Box}
+    {p : CanonicalCoefficients.CoefficientPolynomial} {reference :
+      Matrix.GaussianMatrix} {current : Box}
     {denominatorMargin : Fraction.Rational} {marginPositive : 0 < denominatorMargin}
-    {atom : Geometry.Projective.Hermitian.Atom}
-    {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {atom : Hermitian.Atom}
+    {boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom}
     (entry : BoundaryProfileEventEntry boundary) :
-    (Data.Rat.Interval.Bounds.width entry.request.cell.interval) ≤
-      Curve.Event.Profile.Sign.profileSignWidth
+    (Interval.Bounds.width entry.request.cell.interval) ≤
+      Event.Profile.Sign.profileSignWidth
       entry.event.1 :=
   entry.event.2.request_width_le _
-    (Curve.Event.Profile.Sign.profileSignWidth_pos
+    (Event.Profile.Sign.profileSignWidth_pos
       entry.event.1)
 
 /-- A positive requested width bounds the refined profile event interval. -/
 theorem requestAt_width_le
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
-      LinearAlgebra.Coordinates2.Matrix.GaussianMatrix} {current : Box}
+    {p : CanonicalCoefficients.CoefficientPolynomial} {reference :
+      Matrix.GaussianMatrix} {current : Box}
     {denominatorMargin : Fraction.Rational} {marginPositive : 0 < denominatorMargin}
-    {atom : Geometry.Projective.Hermitian.Atom}
-    {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {atom : Hermitian.Atom}
+    {boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom}
     (entry : BoundaryProfileEventEntry boundary) (epsilon : Fraction.Rational)
     (positive : 0 < epsilon) :
-    (Data.Rat.Interval.Bounds.width (entry.requestAt epsilon).cell.interval) ≤ epsilon :=
+    (Interval.Bounds.width (entry.requestAt epsilon).cell.interval) ≤ epsilon :=
   entry.event.2.request_width_le epsilon positive
 
 /-- The profile event has the same chart-wide homogeneous chordal diameter
 bound as its parent event, independently of affine poles. -/
 theorem chordalSq_requestAt_le
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
-      LinearAlgebra.Coordinates2.Matrix.GaussianMatrix} {current : Box}
+    {p : CanonicalCoefficients.CoefficientPolynomial} {reference :
+      Matrix.GaussianMatrix} {current : Box}
     {denominatorMargin : Fraction.Rational} {marginPositive : 0 < denominatorMargin}
-    {atom : Geometry.Projective.Hermitian.Atom}
-    {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {atom : Hermitian.Atom}
+    {boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom}
     (entry : BoundaryProfileEventEntry boundary)
     (epsilon : Fraction.Rational) (positive : 0 < epsilon)
     {left right : Fraction.Rational}
     (leftInside : (entry.requestAt epsilon).cell.interval.Contains left)
     (rightInside : (entry.requestAt epsilon).cell.interval.Contains right) :
-    Geometry.Projective.Chordal.Basic.chordalSq
+    Chordal.Basic.chordalSq
         (entry.parent.chart.projective left)
         (entry.parent.chart.projective right) ≤
       entry.parent.chart.uniformChordalVariationCoefficient * epsilon ^ 2 := by
@@ -166,11 +172,11 @@ theorem chordalSq_requestAt_le
     ⟨requestedRefines.1.trans rightInside.1,
       rightInside.2.trans requestedRefines.2⟩
   have parameterBound :=
-    Data.Rat.Interval.parameter_sub_sq_le_width_sq
+    Interval.parameter_sub_sq_le_width_sq
       requested.cell.interval leftInside rightInside
-  have widthSquare : (Data.Rat.Interval.Bounds.width requested.cell.interval) ^ 2 ≤ epsilon ^ 2 :=
+  have widthSquare : (Interval.Bounds.width requested.cell.interval) ^ 2 ≤ epsilon ^ 2 :=
     Fraction.Order.Arithmetic.pow_le_pow_direct
-      (Data.Rat.Interval.Bounds.width_nonneg requested.cell.interval)
+      (Interval.Bounds.width_nonneg requested.cell.interval)
       (entry.requestAt_width_le epsilon positive) 2
   exact (entry.parent.chart.chordalSq_le_uniform leftChart rightChart).trans
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
@@ -179,14 +185,14 @@ theorem chordalSq_requestAt_le
 
 /-- Total affine classification against the boundary's analysis box. -/
 @[expose] def classification
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
-      LinearAlgebra.Coordinates2.Matrix.GaussianMatrix} {current : Box}
+    {p : CanonicalCoefficients.CoefficientPolynomial} {reference :
+      Matrix.GaussianMatrix} {current : Box}
     {denominatorMargin : Fraction.Rational} {marginPositive : 0 < denominatorMargin}
-    {atom : Geometry.Projective.Hermitian.Atom}
-    {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {atom : Hermitian.Atom}
+    {boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom}
     (entry : BoundaryProfileEventEntry boundary) :=
-  Curve.Event.Profile.Classification.classifyRequestedProfileEventAffine
+  Event.Profile.Classification.classifyRequestedProfileEventAffine
     entry.event.2
 
 end BoundaryProfileEventEntry
@@ -217,11 +223,11 @@ namespace Purelib.RootIsolation.Curve.Boundary.Profile
 /-- The original boundary profile-event entry, retaining its exact parent and family membership. -/
 abbrev
   SourcePersistentProfileResidualBoundaryProfileEventEntryAlias
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
-      LinearAlgebra.Coordinates2.Matrix.GaussianMatrix} {current : Box}
+    {p : CanonicalCoefficients.CoefficientPolynomial} {reference :
+      Matrix.GaussianMatrix} {current : Box}
     {denominatorMargin : Fraction.Rational} {marginPositive : 0 < denominatorMargin}
-    {atom : Geometry.Projective.Hermitian.Atom}
-    (boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {atom : Hermitian.Atom}
+    (boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom) :=
   BoundaryProfileEventEntry
     boundary
@@ -252,11 +258,11 @@ namespace Purelib.RootIsolation.Curve.Boundary.Profile
 /-- The same parent-indexed boundary profile-event entry used by complete request families. -/
 abbrev
   SourcePersistentProfileRequestFamilyBoundaryProfileEventEntryAlias
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
-      LinearAlgebra.Coordinates2.Matrix.GaussianMatrix} {current : Box}
+    {p : CanonicalCoefficients.CoefficientPolynomial} {reference :
+      Matrix.GaussianMatrix} {current : Box}
     {denominatorMargin : Fraction.Rational} {marginPositive : 0 < denominatorMargin}
-    {atom : Geometry.Projective.Hermitian.Atom}
-    (boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+    {atom : Hermitian.Atom}
+    (boundary : Analysis.CurveBoundary p reference current denominatorMargin
       marginPositive atom) :=
   SourcePersistentProfileResidualBoundaryProfileEventEntryAlias
     boundary

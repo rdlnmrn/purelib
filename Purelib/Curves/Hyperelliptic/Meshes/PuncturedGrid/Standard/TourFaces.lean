@@ -177,28 +177,28 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchGrid.Grid (Contains
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SkeletonFaceAssignments (walkFaces walkFaces_indexed)
 open Purelib.Riemann.Paths.PreparedPathWinding.ClearPath (rawWinding)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid}
-  {edges : Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames} {mesh :
-    Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges base.faces}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
+  {frames : RootFrames base.bank.grid} {vertices :
+    LiftedVertices.VertexBank base.bank.grid}
+  {edges : RootIsolation.SquareRoot.Grid.RootEdgeBank frames} {mesh :
+    LiftedMesh vertices edges base.faces}
 
 set_option genInjectivity false in
 /-- The selected shared-frame index certifies the original owner. Face lookups and later analytic requests reuse this
 one materialized selection. -/
-structure OwnerWalkFaces (mesh : GridLiftedMesh.LiftedMesh vertices edges base.faces)
+structure OwnerWalkFaces (mesh : LiftedMesh vertices edges base.faces)
     {start finish : Data.Gaussian.Basic.Canonical} (walk : Walks.Walk base.bank.grid start finish)
-    (owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)) where
+    (owner : Owner (curve.polynomial.eval start)) where
   /-- The retained starting point is an actual vertex of the original grid. -/ first :
-    Polynomial.Geometry.Grid.FromStates.ContainsVertex
+    ContainsVertex
     base.bank.grid start
   /-- The cached shared-frame sheet of the actual incoming owner. -/ sheet : Fin 2
   /-- The original incoming root name is operationally equivalent to this exact retained frame owner. -/ aligned :
     Nonempty (Gaussian.Equivalence.NamedEquivalent
     (OwnerTraceReadings.ownerName owner) (OwnerTraceReadings.ownerName ((frames.frameAt start first).owners sheet)))
-  /-- The cached face assignments for every occurrence of the actual grid walk. -/ geometry : LiftedMesh.PathFaces mesh
+  /-- The cached face assignments for every occurrence of the actual grid walk. -/ geometry : PathFaces mesh
     walk.path
   /-- The assigned indexed edges are exactly those obtained from the retained walk and selected sheet. -/ indexed_eq :
     geometry.indexed = edges.indexedEdges vertices walk sheet
@@ -207,115 +207,288 @@ constructive_injectivity OwnerWalkFaces
 
 namespace OwnerWalkFaces
 
-variable {start finish : Purelib.Data.Gaussian.Basic.Canonical} {walk : Purelib.Polynomial.Geometry.Grid.Walks.Walk
+variable {start finish : Data.Gaussian.Basic.Canonical} {walk : Walks.Walk
   base.bank.grid start finish}
-  {owner : Purelib.Riemann.Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)}
+  {owner : Owner (curve.polynomial.eval start)}
 
 /-- Attach actual walk-face geometry to a supplied retained starting-sheet agreement. -/
-def ofSheet (mesh : GridLiftedMesh.LiftedMesh vertices edges base.faces)
-    (walk : Walks.Walk base.bank.grid start finish) (first : Polynomial.Geometry.Grid.FromStates.ContainsVertex
+def ofSheet (mesh : LiftedMesh vertices edges base.faces)
+    (walk : Walks.Walk base.bank.grid start finish) (first : ContainsVertex
       base.bank.grid start)
     (sheet : Fin 2) (aligned : Nonempty (Gaussian.Equivalence.NamedEquivalent
       (OwnerTraceReadings.ownerName owner) (OwnerTraceReadings.ownerName ((frames.frameAt start first).owners sheet))))
-        : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces mesh walk
+        : OwnerWalkFaces mesh walk
         owner :=
   ⟨first, sheet, aligned, SkeletonFaceAssignments.walkFaces mesh walk sheet, SkeletonFaceAssignments.walkFaces_indexed
     mesh walk sheet⟩
 
 /-- Reuse a cached owner selection when constructing the actual walk-face assignments. -/
-def ofSelection (mesh : GridLiftedMesh.LiftedMesh vertices edges base.faces)
-    (walk : Walks.Walk base.bank.grid start finish) (first : Polynomial.Geometry.Grid.FromStates.ContainsVertex
+def ofSelection (mesh : LiftedMesh vertices edges base.faces)
+    (walk : Walks.Walk base.bank.grid start finish) (first : ContainsVertex
       base.bank.grid start)
-    (selection : RootOwnerFrames.OwnerSelection (frames.frameAt start first).owners owner) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces mesh walk owner :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces.ofSheet mesh walk
+    (selection : OwnerSelection (frames.frameAt start first).owners owner) :
+      OwnerWalkFaces mesh walk owner :=
+  OwnerWalkFaces.ofSheet mesh walk
     first selection.index ⟨selection.equivalent⟩
 
 /-- Classify the incoming owner once and cache its actual walk-face assignments. -/
-def build (mesh : GridLiftedMesh.LiftedMesh vertices edges base.faces)
-    (walk : Walks.Walk base.bank.grid start finish) (first : Polynomial.Geometry.Grid.FromStates.ContainsVertex
+def build (mesh : LiftedMesh vertices edges base.faces)
+    (walk : Walks.Walk base.bank.grid start finish) (first : ContainsVertex
       base.bank.grid start)
-    (owner : SquareRootContinuationChain.Owner (curve.polynomial.eval start)) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces mesh walk owner :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces.ofSelection mesh walk
+    (owner : Owner (curve.polynomial.eval start)) :
+      OwnerWalkFaces mesh walk owner :=
+  OwnerWalkFaces.ofSelection mesh walk
     first ((frames.frameAt start first).select owner)
 
+/-- Reindex the SAME complete face cache along equality of its actual retained walk.
+
+The incoming Owner and both endpoints remain the originals. No selection,
+face assignment, root frame or indexed edge word is constructed again.
+-/
+def castWalk {first last : Walks.Walk base.bank.grid start finish} (same : first = last)
+    (faces : OwnerWalkFaces mesh first owner) : OwnerWalkFaces mesh last owner := by
+  cases same
+  exact faces
+
+/-- Whole-walk transport keeps the entire original face/selection cache heterogeneously. -/
+theorem castWalk_heq {first last : Walks.Walk base.bank.grid start finish} (same : first = last)
+    (faces : OwnerWalkFaces mesh first owner) : HEq (castWalk same faces) faces := by
+  cases same
+  rfl
+
+/-- Whole-walk transport preserves the original selected shared-frame sheet. -/
+theorem castWalk_sheet {first last : Walks.Walk base.bank.grid start finish} (same : first = last)
+    (faces : OwnerWalkFaces mesh first owner) : (castWalk same faces).sheet = faces.sheet := by
+  cases same
+  rfl
+
 /-- The retained indexed face word has exactly the original walk's edge count. -/
-theorem count (faces : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces
+theorem count (faces : OwnerWalkFaces
   mesh walk owner) : faces.geometry.indexed.length = walk.edgeCount := by
   rw [faces.indexed_eq, edges.indexedEdges_length]
 
 /-- Every retained indexed edge occurrence belongs to an actual lifted triangle in one orientation. -/
 theorem supported (faces :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces mesh walk owner) :
-    CutPath.Supported (Stokes.triangleEdgeOccurrences mesh.triangulation.faces) faces.geometry.indexed := by
+  OwnerWalkFaces mesh walk owner) :
+    Supported (Stokes.triangleEdgeOccurrences mesh.triangulation.faces) faces.geometry.indexed := by
   rw [faces.indexed_eq]
   exact SkeletonFaceAssignments.indexedWalk_supported mesh walk faces.sheet
+
+/-- The actual retained face word has its original source and grid-transported terminal vertices.
+
+Both vertex memberships belong to the same stored grid. The indexed-word
+readback transports the existing edge-bank endpoint certificate to this
+unchanged ordered face assignment.
+-/
+theorem endpoints (faces : OwnerWalkFaces mesh walk owner)
+    (last : ContainsVertex base.bank.grid finish) :
+    PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish faces.geometry.indexed
+      (vertices.index start faces.first faces.sheet)
+      (vertices.index finish last (EdgeBank.RootEdgeBank.target edges walk faces.sheet)) := by
+  rewrite [faces.indexed_eq]
+  exact edges.indexedEdges_endpoints vertices walk faces.first last faces.sheet
 
 /-- A coordinate loop closes on its original root sheet only after paying the actual even-winding obligation. Canonical
 A and B below discharge it. -/
 theorem closed {point : Data.Gaussian.Basic.Canonical} {walk : Walks.Walk base.bank.grid point point}
-    {owner : SquareRootContinuationChain.Owner (curve.polynomial.eval point)} (faces :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces mesh walk owner)
+    {owner : Owner (curve.polynomial.eval point)} (faces :
+      OwnerWalkFaces mesh walk owner)
     (turns : Int) (winding : ClearPath.rawWinding walk.path = 8 * turns) :
     PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish faces.geometry.indexed
       (vertices.index point faces.first faces.sheet) (vertices.index point faces.first faces.sheet) := by
-  rw [faces.indexed_eq]
-  exact (edges.indexedEdges_endpoints vertices walk faces.first faces.first faces.sheet).castFinish
+  exact (faces.endpoints faces.first).castFinish
     (congrArg (vertices.index point faces.first)
       (RootEdgeBank.target_even edges (BranchCellBank.referenceAt base.bank.toBranchCellBank point faces.first).toLoop
         walk faces.first turns winding faces.sheet))
 
-variable {prepared : Purelib.Riemann.Paths.PreparedClearPathModels.PreparedPath walk.path owner}
+variable {prepared : Paths.PreparedClearPathModels.PreparedPath walk.path owner}
 
 /-- Attach geometry to the supplied preparation, with no re-preparation. -/
-def assign (faces : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces mesh
+def assign (faces : OwnerWalkFaces mesh
   walk owner) (pieces : PreparedPath.CoveredSegments prepared) : PreparedFaceSegments.AssignedSegments mesh pieces :=
   AssignedSegments.build pieces faces.geometry
 
 /-- Assigning the supplied covered segments preserves the actual indexed face word. -/
 theorem assign_indexed (faces :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces mesh walk owner)
+  OwnerWalkFaces mesh walk owner)
   (pieces : PreparedPath.CoveredSegments prepared) :
     (faces.assign pieces).indexed = faces.geometry.indexed := AssignedSegments.build_indexed pieces faces.geometry
 
 /-- The covered segments retain the incoming-owner alignments induced by the original selected sheet. -/
 theorem ownersAligned (faces :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces mesh walk owner)
+  OwnerWalkFaces mesh walk owner)
   (pieces : PreparedPath.CoveredSegments prepared) :
     (faces.assign pieces).OwnersAligned :=
   AssignedSegments.ownersAligned_of_indexed mesh walk faces.sheet faces.first (faces.assign pieces)
     ((faces.assign_indexed pieces).trans faces.indexed_eq) faces.aligned
 
+/-- The literal supplied covered walk finishes on the actual grid-transported sheet.
+
+The original selected starting sheet is retained. Segment decomposition and
+its cached terminal-owner equality supply the result without re-preparing
+the walk or selecting its finishing owner again.
+-/
+theorem finishAligned (faces : OwnerWalkFaces mesh walk owner)
+    (last : ContainsVertex base.bank.grid finish)
+    (covered : PreparedPathPrimitiveCover.PreparedClearPathModels.CoveredTracedPath walk.path owner) :
+    Nonempty (Gaussian.Equivalence.NamedEquivalent (ownerName covered.traced.finishOwner)
+      (ownerName ((frames.frameAt finish last).owners
+        (EdgeBank.RootEdgeBank.target edges walk faces.sheet)))) := by
+  let pieces := PreparedPathDecomposition.CoveredTracedPath.segments covered
+  obtain ⟨equivalent⟩ := AssignedSegments.finishAligned_of_indexed mesh walk faces.sheet faces.first last
+    (faces.assign pieces) ((faces.assign_indexed pieces).trans faces.indexed_eq) faces.aligned
+  exact ⟨Gaussian.Equivalence.NamedEquivalent.transport
+    (congrArg ownerName covered.traced.finishOwner_eq).symm rfl equivalent⟩
+
+/-- An actual covered head and its signed handoff identify the two retained frame indices.
+
+The original covered path supplies its terminal-owner alignment. The
+following assignment keeps its own actual incoming owner and selected
+sheet; the supplied operational handoff and original frame distinguish
+those retained indices without another root selection.
+-/
+theorem target_eq
+    (left : OwnerWalkFaces mesh walk owner)
+    {lastPoint : Data.Gaussian.Basic.Canonical}
+    {next : Walks.Walk base.bank.grid finish lastPoint}
+    {nextOwner : Owner (curve.polynomial.eval finish)}
+    (right : OwnerWalkFaces mesh next nextOwner)
+    (covered : PreparedPathPrimitiveCover.PreparedClearPathModels.CoveredTracedPath walk.path owner)
+    (related : Nonempty (Gaussian.Equivalence.NamedEquivalent
+      (ownerName covered.traced.finishOwner) (ownerName nextOwner))) :
+    EdgeBank.RootEdgeBank.target edges walk left.sheet = right.sheet := by
+  obtain ⟨finished⟩ := left.finishAligned right.first covered
+  obtain ⟨handoff⟩ := related
+  obtain ⟨entered⟩ := right.aligned
+  exact (frames.frameAt finish right.first).distinguish _ _ (finished.symm.trans (handoff.trans entered))
+
+/-- Two retained walk-face words append on the sheet supplied by their actual endpoint-owner comparison.
+
+The first covered walk's cached finish is compared with the second actual
+incoming Owner. Its derived terminal alignment identifies the retained
+sheets, so concatenation preserves both original indexed occurrence lists.
+-/
+theorem append_indexed
+    (left : OwnerWalkFaces mesh walk owner)
+    {lastPoint : Data.Gaussian.Basic.Canonical}
+    {next : Walks.Walk base.bank.grid finish lastPoint}
+    {nextOwner : Owner (curve.polynomial.eval finish)}
+    (right : OwnerWalkFaces mesh next nextOwner)
+    (covered : PreparedPathPrimitiveCover.PreparedClearPathModels.CoveredTracedPath walk.path owner)
+    (related : Nonempty (Gaussian.Equivalence.NamedEquivalent
+      (ownerName covered.traced.finishOwner) (ownerName nextOwner))) :
+    left.geometry.indexed ++ right.geometry.indexed =
+      edges.indexedEdges vertices (walk.append next) left.sheet := by
+  rewrite [edges.indexedEdges_append, left.target_eq right covered related]
+  exact congrArg₂ List.append left.indexed_eq right.indexed_eq
+
+/-- Concatenate two retained owner-walk assignments using their actual covered-head endpoint relation.
+
+The original head and tail keep their complete face placements. The same
+covered head and supplied endpoint comparison derive their sheet join;
+the first incoming Owner, membership, selected sheet and cached alignment
+are retained literally. Neither path, face lookup nor root selection is
+prepared again.
+-/
+def append (left : OwnerWalkFaces mesh walk owner)
+    {lastPoint : Data.Gaussian.Basic.Canonical}
+    {next : Walks.Walk base.bank.grid finish lastPoint}
+    {nextOwner : Owner (curve.polynomial.eval finish)}
+    (right : OwnerWalkFaces mesh next nextOwner)
+    (covered : PreparedPathPrimitiveCover.PreparedClearPathModels.CoveredTracedPath walk.path owner)
+    (related : Nonempty (Gaussian.Equivalence.NamedEquivalent
+      (ownerName covered.traced.finishOwner) (ownerName nextOwner))) :
+    OwnerWalkFaces mesh (walk.append next) owner :=
+  let joined := PathFaces.append left.geometry right.geometry
+  let same := joined.1.property.trans (Walks.Walk.path_append walk next).symm
+  { first := left.first
+    sheet := left.sheet
+    aligned := left.aligned
+    geometry := Eq.mp (congrArg (PathFaces mesh) same) joined.2
+    indexed_eq := (PathFaces.indexed_transport same joined.2).trans
+      ((PathFaces.indexed_append left.geometry right.geometry).trans
+        (left.append_indexed right covered related)) }
+
+/-- Owner-walk concatenation retains the identical source-vertex membership. -/
+theorem append_first (left : OwnerWalkFaces mesh walk owner)
+    {lastPoint : Data.Gaussian.Basic.Canonical} {next : Walks.Walk base.bank.grid finish lastPoint}
+    {nextOwner : Owner (curve.polynomial.eval finish)} (right : OwnerWalkFaces mesh next nextOwner)
+    (covered : PreparedPathPrimitiveCover.PreparedClearPathModels.CoveredTracedPath walk.path owner)
+    (related : Nonempty (Gaussian.Equivalence.NamedEquivalent
+      (ownerName covered.traced.finishOwner) (ownerName nextOwner))) :
+    (left.append right covered related).first = left.first := (rfl)
+
+/-- Owner-walk concatenation retains the actual original selected starting sheet. -/
+theorem append_sheet (left : OwnerWalkFaces mesh walk owner)
+    {lastPoint : Data.Gaussian.Basic.Canonical} {next : Walks.Walk base.bank.grid finish lastPoint}
+    {nextOwner : Owner (curve.polynomial.eval finish)} (right : OwnerWalkFaces mesh next nextOwner)
+    (covered : PreparedPathPrimitiveCover.PreparedClearPathModels.CoveredTracedPath walk.path owner)
+    (related : Nonempty (Gaussian.Equivalence.NamedEquivalent
+      (ownerName covered.traced.finishOwner) (ownerName nextOwner))) :
+    (left.append right covered related).sheet = left.sheet := (rfl)
+
+/-- Concatenation retains the complete original head and tail face-assignment spines. -/
+theorem append_geometry (left : OwnerWalkFaces mesh walk owner)
+    {lastPoint : Data.Gaussian.Basic.Canonical} {next : Walks.Walk base.bank.grid finish lastPoint}
+    {nextOwner : Owner (curve.polynomial.eval finish)} (right : OwnerWalkFaces mesh next nextOwner)
+    (covered : PreparedPathPrimitiveCover.PreparedClearPathModels.CoveredTracedPath walk.path owner)
+    (related : Nonempty (Gaussian.Equivalence.NamedEquivalent
+      (ownerName covered.traced.finishOwner) (ownerName nextOwner))) :
+    HEq (left.append right covered related).geometry (PathFaces.append left.geometry right.geometry).2 := by
+  unfold append
+  exact cast_heq _ _
+
+/-- The concatenated cached owner assignment reads the two original indexed words in order. -/
+theorem append_geometry_indexed (left : OwnerWalkFaces mesh walk owner)
+    {lastPoint : Data.Gaussian.Basic.Canonical} {next : Walks.Walk base.bank.grid finish lastPoint}
+    {nextOwner : Owner (curve.polynomial.eval finish)} (right : OwnerWalkFaces mesh next nextOwner)
+    (covered : PreparedPathPrimitiveCover.PreparedClearPathModels.CoveredTracedPath walk.path owner)
+    (related : Nonempty (Gaussian.Equivalence.NamedEquivalent
+      (ownerName covered.traced.finishOwner) (ownerName nextOwner))) :
+    (left.append right covered related).geometry.indexed = left.geometry.indexed ++ right.geometry.indexed :=
+  let joined := PathFaces.append left.geometry right.geometry
+  let same := joined.1.property.trans (Walks.Walk.path_append walk next).symm
+  (PathFaces.indexed_transport same joined.2).trans (PathFaces.indexed_append left.geometry right.geometry)
+
 /-- The shared analytic bank consumes the supplied actual parent caches. In particular selecting a surface face does not
 acquire a replacement root. -/
-def comparisons (faces : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces
+def comparisons (faces : OwnerWalkFaces
   mesh walk owner) (pieces : PreparedPath.CoveredSegments prepared)
-    (domains : DomainBanks.FaceDomainBank frames base.faces.regulars) (differential : Differentials.Basic.Differential
+    (domains : FaceDomainBank frames base.faces.regulars) (differential : Differential
       genus) (parentSheet : Fin 2)
-    (caches : CoveredSegments.ParentCaches differential parentSheet pieces) :
-    AssignedSegments.Comparisons differential parentSheet (faces.assign pieces) :=
+    (caches : ParentCaches differential parentSheet pieces) :
+    Comparisons differential parentSheet (faces.assign pieces) :=
   Comparisons.build domains differential parentSheet (faces.assign pieces) caches (faces.ownersAligned pieces)
 
 /-- Every local comparison uses exactly the supplied shared finite face-domain bank. -/
 theorem comparisons_shared (faces :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces mesh walk owner)
+  OwnerWalkFaces mesh walk owner)
   (pieces : PreparedPath.CoveredSegments prepared)
-    (domains : DomainBanks.FaceDomainBank frames base.faces.regulars) (differential : Differentials.Basic.Differential
+    (domains : FaceDomainBank frames base.faces.regulars) (differential : Differential
       genus) (parentSheet : Fin 2)
-    (caches : CoveredSegments.ParentCaches differential parentSheet pieces) :
+    (caches : ParentCaches differential parentSheet pieces) :
     Comparisons.UsesDomains domains differential parentSheet (faces.assign pieces)
       (faces.comparisons pieces domains differential parentSheet caches) :=
   Comparisons.build_usesDomains domains differential parentSheet (faces.assign pieces) caches (faces.ownersAligned
     pieces)
 
+/-- The local comparison bank retains the complete supplied original parent caches, including their covers. -/
+theorem comparisons_parentCaches (faces : OwnerWalkFaces mesh walk owner)
+    (pieces : PreparedPath.CoveredSegments prepared) (domains : FaceDomainBank frames base.faces.regulars)
+    (differential : Differential genus) (parentSheet : Fin 2)
+    (caches : ParentCaches differential parentSheet pieces) :
+    Comparisons.parentCaches differential parentSheet (faces.assign pieces)
+      (faces.comparisons pieces domains differential parentSheet caches) = caches :=
+  Comparisons.parentCaches_build domains differential parentSheet (faces.assign pieces) caches
+    (faces.ownersAligned pieces)
+
 /-- The local comparisons retain the exact ordered parent list of the supplied original caches. -/
 theorem comparisons_parents (faces :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.FramedPuncturedGrid.OwnerWalkFaces mesh walk owner)
+  OwnerWalkFaces mesh walk owner)
   (pieces : PreparedPath.CoveredSegments prepared)
-    (domains : DomainBanks.FaceDomainBank frames base.faces.regulars) (differential : Differentials.Basic.Differential
+    (domains : FaceDomainBank frames base.faces.regulars) (differential : Differential
       genus) (parentSheet : Fin 2)
-    (caches : CoveredSegments.ParentCaches differential parentSheet pieces) :
+    (caches : ParentCaches differential parentSheet pieces) :
     Comparisons.parents differential parentSheet (faces.assign pieces)
       (faces.comparisons pieces domains differential parentSheet caches) = ParentCaches.parents caches :=
   (Comparisons.parents_eq differential parentSheet (faces.assign pieces) _).trans
@@ -335,14 +508,14 @@ open Purelib.Riemann.Paths.OwnerTraceReadings (ownerName)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchGrid.Grid (ContainsTourVertices)
 open FramedPuncturedGrid (OwnerWalkFaces)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
-  {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve
-    (Purelib.Curves.Hyperelliptic.Branches.BranchConfiguration.configurationOfData curve branches).branches higher}
+  {base : Meshes.FramedPuncturedGrid curve
+    (BranchConfiguration.configurationOfData curve branches).branches higher}
 
 /-- The return check preserves both supplied winding-one boundaries. -/
-private theorem total_boundaryWindings {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+private theorem total_boundaryWindings {genus : Nat} {curve : HyperellipticCurve genus}
     {leftAmbient rightAmbient connectorAmbient : Rational.Box}
     (leftState : WindingOne.Basic.WindingOneState curve.polynomial leftAmbient)
     (rightState : WindingOne.Basic.WindingOneState curve.polynomial rightAmbient)
@@ -351,10 +524,10 @@ private theorem total_boundaryWindings {genus : Nat} {curve : Hyperelliptic.Basi
     (within : connector.WithinAmbient)
     (owner : PreparedSheetContinuation.Owner (curve.polynomial.eval leftState.box.anchor)) :
     ClearPath.rawWinding
-      (Purelib.Riemann.Readings.PreparedBoundaryClosure.ClosedBoundaryDoublePath.total leftState rightState connector
+      (ClosedBoundaryDoublePath.total leftState rightState connector
         within owner).joined.data.rightBoundaryPath = 4 ∧
       ClearPath.rawWinding
-      (Purelib.Riemann.Readings.PreparedBoundaryClosure.ClosedBoundaryDoublePath.total leftState rightState connector
+      (ClosedBoundaryDoublePath.total leftState rightState connector
         within owner).joined.data.leftBoundaryPath = 4 := by
   unfold ClosedBoundaryDoublePath.total
   dsimp only
@@ -367,43 +540,43 @@ private theorem total_boundaryWindings {genus : Nat} {curve : Hyperelliptic.Basi
       BranchCutLifts.ownerBoundaryPath_rawWinding leftState⟩
 
 /-- Each retained A boundary changes sheets once, independently of the chosen bank depths and the root-return proof. -/
-theorem aTourOfData_boundaryWindings {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
+theorem aTourOfData_boundaryWindings {genus : Nat} (curve : HyperellipticCurve genus)
     (branches : BranchIsolation.Data curve) (index : Fin genus) :
     ClearPath.rawWinding
       (OwnerClosedCyclePair.ofData curve branches index).aTour.joined.data.rightBoundaryPath = 4 ∧
       ClearPath.rawWinding
       (OwnerClosedCyclePair.ofData curve branches index).aTour.joined.data.leftBoundaryPath = 4 :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.total_boundaryWindings _ _ _ _ _
+  StandardTours.total_boundaryWindings _ _ _ _ _
 
 /-- Both retained B boundaries have their original separate winding. -/
-theorem bTourOfData_boundaryWindings {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
+theorem bTourOfData_boundaryWindings {genus : Nat} (curve : HyperellipticCurve genus)
     (branches : BranchIsolation.Data curve) (index : Fin genus) :
     ClearPath.rawWinding
       (OwnerClosedCyclePair.ofData curve branches index).bTour.joined.data.rightBoundaryPath = 4 ∧
       ClearPath.rawWinding
       (OwnerClosedCyclePair.ofData curve branches index).bTour.joined.data.leftBoundaryPath = 4 :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.total_boundaryWindings _ _ _ _ _
+  StandardTours.total_boundaryWindings _ _ _ _ _
 
 /-- Every actual vertex of the retained A tour lies in the framed grid. -/
 theorem aOnGrid (base : Meshes.FramedPuncturedGrid curve (BranchConfiguration.configurationOfData curve
   branches).branches higher)
-    (index : Fin genus) : Grid.ContainsTourVertices base.bank.grid (OwnerClosedCyclePair.ofData curve branches
+    (index : Fin genus) : ContainsTourVertices base.bank.grid (OwnerClosedCyclePair.ofData curve branches
       index).aTour :=
   base.bank.baseIncluded.tour _ (BranchGrid.branchGrid_aTour curve branches higher index)
 
 /-- Every actual vertex of the retained B tour lies in the framed grid. -/
 theorem bOnGrid (base : Meshes.FramedPuncturedGrid curve (BranchConfiguration.configurationOfData curve
   branches).branches higher)
-    (index : Fin genus) : Grid.ContainsTourVertices base.bank.grid (OwnerClosedCyclePair.ofData curve branches
+    (index : Fin genus) : ContainsTourVertices base.bank.grid (OwnerClosedCyclePair.ofData curve branches
       index).bTour :=
   base.bank.baseIncluded.tour _ (BranchGrid.branchGrid_bTour curve branches higher index)
 
 /-- Equal actual coordinates give equal retained frame-owner names at the same sheet. -/
-public theorem frameNames_eq {first last : Data.Gaussian.Basic.Canonical} (frames :
-    RootIsolation.SquareRoot.Grid.RootFrames
+public theorem frameNames_eq {first last : Canonical} (frames :
+    RootFrames
   base.bank.grid)
-    (equal : first = last) (firstMember : Polynomial.Geometry.Grid.FromStates.ContainsVertex base.bank.grid first)
-    (lastMember : Polynomial.Geometry.Grid.FromStates.ContainsVertex base.bank.grid last) (sheet : Fin 2) :
+    (equal : first = last) (firstMember : ContainsVertex base.bank.grid first)
+    (lastMember : ContainsVertex base.bank.grid last) (sheet : Fin 2) :
     OwnerTraceReadings.ownerName ((frames.frameAt first firstMember).owners sheet) = OwnerTraceReadings.ownerName
       ((frames.frameAt last lastMember).owners sheet) := by
   cases equal
@@ -413,14 +586,14 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.Standa
 set_option genInjectivity false in
 /-- One retained source pair, both split walks, and their actual face assignments. Reading A and B never prepares their
 source tours again. -/
-structure Pair (lifted : Meshes.LiftedPuncturedGrid base) (index : Fin genus) where
-  /-- The cached original owner-closed A/B source-tour pair. -/ source : PreparedOwnerClosedBridges.OwnerClosedCyclePair
+structure Pair (lifted : LiftedPuncturedGrid base) (index : Fin genus) where
+  /-- The cached original owner-closed A/B source-tour pair. -/ source : OwnerClosedCyclePair
     curve
   /-- The retained source is exactly the canonical pair for this original curve, branch data and index. -/ source_eq :
     source = OwnerClosedCyclePair.ofData curve branches index
-  /-- Every actual vertex of the retained A tour lies in the framed grid. -/ aOnGrid : Grid.ContainsTourVertices
+  /-- Every actual vertex of the retained A tour lies in the framed grid. -/ aOnGrid : ContainsTourVertices
     base.bank.grid source.aTour
-  /-- Every actual vertex of the retained B tour lies in the framed grid. -/ bOnGrid : Grid.ContainsTourVertices
+  /-- Every actual vertex of the retained B tour lies in the framed grid. -/ bOnGrid : ContainsTourVertices
     base.bank.grid source.bTour
   /-- The cached split A tour on the actual retained grid. -/ aWalk : Walks.Walk base.bank.grid
     source.aTour.joined.data.leftState.box.anchor source.aTour.joined.data.leftState.box.anchor
@@ -440,83 +613,83 @@ constructive_injectivity Pair
 
 namespace Pair
 
-variable {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {index : Fin genus}
+variable {lifted : LiftedPuncturedGrid base} {index : Fin genus}
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours in
 /-- Reuse a supplied canonical source cache. Classification is performed once for the common starting root; B consumes
 A's selected frame index. -/
-def ofSource (lifted : Meshes.LiftedPuncturedGrid base) (index : Fin genus) (source :
-  PreparedOwnerClosedBridges.OwnerClosedCyclePair curve)
+def ofSource (lifted : LiftedPuncturedGrid base) (index : Fin genus) (source :
+  OwnerClosedCyclePair curve)
     (sourceEq : source = OwnerClosedCyclePair.ofData curve branches index) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.Pair lifted index := by
-  have aOnGrid : Grid.ContainsTourVertices base.bank.grid source.aTour := sourceEq ▸
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.aOnGrid base index
-  have bOnGrid : Grid.ContainsTourVertices base.bank.grid source.bTour := sourceEq ▸
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.bOnGrid base index
+      Pair lifted index := by
+  have aOnGrid : ContainsTourVertices base.bank.grid source.aTour := sourceEq ▸
+    StandardTours.aOnGrid base index
+  have bOnGrid : ContainsTourVertices base.bank.grid source.bTour := sourceEq ▸
+    StandardTours.bOnGrid base index
   let aWalk := Grid.splitTour base.bank.grid source.aTour aOnGrid
   let bWalk := Grid.splitTour base.bank.grid source.bTour bOnGrid
-  let aFaces := OwnerWalkFaces.build lifted.mesh aWalk (Polynomial.Geometry.Grid.FromStates.ContainsPathVertices.start
+  let aFaces := OwnerWalkFaces.build lifted.mesh aWalk (ContainsPathVertices.start
     base.bank.grid _ aOnGrid.1)
     source.aTour.joined.data.forwardOwner
-  let bFirst := Polynomial.Geometry.Grid.FromStates.ContainsPathVertices.start base.bank.grid _ bOnGrid.1
+  let bFirst := ContainsPathVertices.start base.bank.grid _ bOnGrid.1
   have bAligned : Nonempty (Gaussian.Equivalence.NamedEquivalent
       (OwnerTraceReadings.ownerName source.bTour.joined.data.forwardOwner)
       (OwnerTraceReadings.ownerName ((lifted.frames.frameAt _ bFirst).owners aFaces.sheet))) := by
     rw [source.bRoot_eq, ← source.aRoot_eq, ←
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.frameNames_eq lifted.frames
+      StandardTours.frameNames_eq lifted.frames
       source.base_eq aFaces.first bFirst aFaces.sheet]
     exact aFaces.aligned
   let bFaces := OwnerWalkFaces.ofSheet lifted.mesh bWalk bFirst aFaces.sheet bAligned
   exact ⟨source, sourceEq, aOnGrid, bOnGrid, aWalk, bWalk, rfl, rfl, aFaces, bFaces, rfl⟩
 
 /-- Cache the canonical owner-closed A/B source pair and its actual grid walks and face assignments. -/
-def build (lifted : Meshes.LiftedPuncturedGrid base) (index : Fin genus) :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.Pair lifted index :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.Pair.ofSource lifted index
+def build (lifted : LiftedPuncturedGrid base) (index : Fin genus) :
+  Pair lifted index :=
+  Pair.ofSource lifted index
     (OwnerClosedCyclePair.ofData curve branches index) rfl
 
 /-- The actual split A walk has raw winding eight. -/
-theorem aWalk_winding (pair : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.Pair lifted
+theorem aWalk_winding (pair : Pair lifted
   index) : ClearPath.rawWinding pair.aWalk.path = 8 := by
   rw [pair.aWalk_eq, Grid.splitTour_winding, pair.source_eq]
   simpa only [BranchGridPaths.aTourWalkOfData, Grid.splitTour_winding] using
     BranchGridPaths.aTourWalkOfData_winding curve branches higher index
 
 /-- The actual split B walk has raw winding eight. -/
-theorem bWalk_winding (pair : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.Pair lifted
+theorem bWalk_winding (pair : Pair lifted
   index) : ClearPath.rawWinding pair.bWalk.path = 8 := by
   rw [pair.bWalk_eq, Grid.splitTour_winding, pair.source_eq]
   simpa only [BranchGridPaths.bTourWalkOfData, Grid.splitTour_winding] using
     BranchGridPaths.bTourWalkOfData_winding curve branches higher index
 
 /-- The actual indexed A word closes on its original selected lifted vertex. -/
-theorem a_closed (pair : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.Pair lifted index) :
+theorem a_closed (pair : Pair lifted index) :
     PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish pair.aFaces.geometry.indexed
       (lifted.vertices.index _ pair.aFaces.first pair.aFaces.sheet) (lifted.vertices.index _ pair.aFaces.first
         pair.aFaces.sheet) :=
   pair.aFaces.closed 1 pair.aWalk_winding
 
 /-- The actual indexed B word closes on its original selected lifted vertex. -/
-theorem b_closed (pair : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.Pair lifted index) :
+theorem b_closed (pair : Pair lifted index) :
     PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish pair.bFaces.geometry.indexed
       (lifted.vertices.index _ pair.bFaces.first pair.bFaces.sheet) (lifted.vertices.index _ pair.bFaces.first
         pair.bFaces.sheet) :=
   pair.bFaces.closed 1 pair.bWalk_winding
 
 /-- Equal actual coordinates give equal retained vertex indices at the same sheet. -/
-private theorem vertexIndex_eq {first last : Data.Gaussian.Basic.Canonical} (vertices : LiftedVertices.VertexBank
+private theorem vertexIndex_eq {first last : Canonical} (vertices : LiftedVertices.VertexBank
   base.bank.grid)
-    (equal : first = last) (firstMember : Polynomial.Geometry.Grid.FromStates.ContainsVertex base.bank.grid first)
-    (lastMember : Polynomial.Geometry.Grid.FromStates.ContainsVertex base.bank.grid last) (sheet : Fin 2) :
+    (equal : first = last) (firstMember : ContainsVertex base.bank.grid first)
+    (lastMember : ContainsVertex base.bank.grid last) (sheet : Fin 2) :
     vertices.index first firstMember sheet = vertices.index last lastMember sheet := by cases equal; rfl
 
 /-- The retained indexed A and B words share the same actual lifted starting vertex. -/
-theorem common_base (pair : Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.Pair lifted
+theorem common_base (pair : Pair lifted
   index) :
     lifted.vertices.index _ pair.aFaces.first pair.aFaces.sheet = lifted.vertices.index _ pair.bFaces.first
       pair.bFaces.sheet := by
   rw [pair.sheets_eq]
-  exact Curves.Hyperelliptic.Meshes.PuncturedGrid.Standard.TourFaces.StandardTours.Pair.vertexIndex_eq lifted.vertices
+  exact Pair.vertexIndex_eq lifted.vertices
     pair.source.base_eq pair.aFaces.first pair.bFaces.first pair.bFaces.sheet
 
 end Pair

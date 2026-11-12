@@ -59,19 +59,19 @@ one path bank, with both original model owners and the common root retained. -/
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {firstFace lastFace :
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {firstFace lastFace :
       Meshes.PuncturedGridFaces.RegularFace
     bank}
-  {firstModels : Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames firstFace}
-    {lastModels : Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames lastFace}
+  {firstModels : Face.InverseModels.BranchCellBank.FaceModels frames firstFace}
+    {lastModels : Face.InverseModels.BranchCellBank.FaceModels frames lastFace}
   {start : Gaussian.Basic.Canonical} {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)}
-  {leftEntry : Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry firstModels start owner} {rightEntry :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry lastModels start owner}
-  {leftDomain : Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain firstModels leftEntry.sheet} {rightDomain :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain lastModels rightEntry.sheet}
+  {leftEntry : Face.Entries.FaceModels.Entry firstModels start owner} {rightEntry :
+    Face.Entries.FaceModels.Entry lastModels start owner}
+  {leftDomain : Face.Periods.PeriodDomain firstModels leftEntry.sheet} {rightDomain :
+    Face.Periods.PeriodDomain lastModels rightEntry.sheet}
 
 variable {count : Nat}
   {first : Fin (count + 1) → Path.JoinedTrace.VertexTrace (Integration.RectangularOwnedTriangulation.OwnedVertex
@@ -88,10 +88,10 @@ structure EndpointPolygonPreparation (geometry :
   /-- The retained polygon's first coordinate is the original shared path origin. -/ origin_eq : geometry.points 0 =
     start
   /-- The original finite clear-box routes from the shared origin to every retained polygon point. -/ routes :
-    Data.Vector.DependentVector (fun vertex =>
+    Vector.DependentVector (fun vertex =>
     Paths.ClearBoxPaths.Route curve.polynomial firstFace.cell.box start (geometry.points vertex))
   /-- The exact retained path preparations using the original common root owner. -/ prepared :
-    Data.Vector.DependentVector (fun vertex =>
+    Vector.DependentVector (fun vertex =>
     Paths.PreparedPathPrimitiveCover.PreparedClearPathModels.CoveredTracedPath (routes.get vertex).path owner)
   /-- Every original retained contact route lies in the first face box. -/ leftInside : ∀ vertex, (routes.get
     vertex).path.InBox firstFace.cell.box
@@ -149,17 +149,17 @@ def build (geometry : Readings.RectangularPairedEndpointReadings.PairedEndpointR
   have rightVertexInside := rightPoint geometry
   have leftStart : firstFace.cell.box.Contains start := origin_eq ▸ leftVertexInside 0
   have rightStart : lastFace.cell.box.Contains start := origin_eq ▸ rightVertexInside 0
-  let routes := Data.Vector.DependentVector.ofFn fun vertex =>
+  let routes := Vector.DependentVector.ofFn fun vertex =>
     Paths.ClearBoxPaths.Route.build firstFace.clearance start (geometry.points vertex) leftStart (leftVertexInside
       vertex)
-  refine ⟨origin_eq, routes, Data.Vector.DependentVector.ofFn (fun vertex =>
+  refine ⟨origin_eq, routes, Vector.DependentVector.ofFn (fun vertex =>
     Paths.PreparedPathPrimitiveCover.PreparedClearPathModels.CoveredTracedPath.build (routes.get vertex).path
       (routes.get vertex).within owner), ?_, ?_⟩
   · intro vertex
     exact Geometry.ClearPath.InBox.ofWithin (routes.get vertex).path (routes.get vertex).within leftStart
   · intro vertex
     dsimp only [routes]
-    rw [Data.Vector.DependentVector.ofFn_get]
+    rw [Vector.DependentVector.ofFn_get]
     exact route_inBox
       firstFace.clearance start (geometry.points vertex)
       leftStart (leftVertexInside vertex) rightStart (rightVertexInside vertex)
@@ -169,15 +169,15 @@ bank. -/
 def contacts {geometry : Readings.RectangularPairedEndpointReadings.PairedEndpointReadingsGeometry first last}
     (preparation : EndpointPolygonPreparation (leftEntry
       := leftEntry) (rightEntry := rightEntry) geometry)
-    (differential : Hyperelliptic.Differentials.Basic.Differential genus) (parentSheet : Fin 2) :
-    Hyperelliptic.Meshes.PuncturedGrid.TraceContactBanks.TraceContactBank leftEntry rightEntry leftDomain rightDomain
+    (differential : Differentials.Basic.Differential genus) (parentSheet : Fin 2) :
+    TraceContactBanks.TraceContactBank leftEntry rightEntry leftDomain rightDomain
       (fun vertex => geometry.points vertex) differential parentSheet :=
-  Hyperelliptic.Meshes.PuncturedGrid.TraceContactBanks.TraceContactBank.build leftEntry rightEntry leftDomain
+  TraceContactBanks.TraceContactBank.build leftEntry rightEntry leftDomain
     rightDomain
     (fun vertex => geometry.points vertex) preparation.origin_eq (fun _ => firstFace.cell.box)
     (fun vertex => (preparation.routes.get vertex).path) preparation.prepared
     preparation.leftInside preparation.rightInside differential parentSheet
-    (Data.Vector.DependentVector.ofFn fun vertex =>
+    (Vector.DependentVector.ofFn fun vertex =>
       Paths.PreparedPathParentCaches.PreparedClearPathModels.ParentCache.build (preparation.prepared.get vertex)
       differential parentSheet)
 

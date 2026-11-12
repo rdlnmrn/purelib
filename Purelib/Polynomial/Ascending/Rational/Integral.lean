@@ -43,8 +43,8 @@ namespace Purelib.Polynomial.Ascending.Rational.Integral
 def definiteIntegral (polynomial :
   CoefficientPolynomial) (left right : Gaussian.Basic.Canonical) :
     Gaussian.Basic.Canonical :=
-  Ascending.Rational.GaussianEvaluation.eval (Ascending.Rational.Antiderivative.antiderivative 0 polynomial) right -
-    Ascending.Rational.GaussianEvaluation.eval (Ascending.Rational.Antiderivative.antiderivative 0 polynomial) left
+  GaussianEvaluation.eval (Antiderivative.antiderivative 0 polynomial) right -
+    GaussianEvaluation.eval (Antiderivative.antiderivative 0 polynomial) left
 
 /-- Reversing the displayed interval negates the exact finite integral. -/
 theorem definiteIntegral_reverse (polynomial :
@@ -71,13 +71,13 @@ theorem definiteIntegral_concat (polynomial :
 theorem definiteIntegral_add (left right :
   CoefficientPolynomial)
     (start finish : Gaussian.Basic.Canonical) :
-    definiteIntegral (Ascending.Rational.Basic.add left right) start finish =
+    definiteIntegral (Basic.add left right) start finish =
       definiteIntegral left start finish +
         definiteIntegral right start finish := by
   unfold definiteIntegral
-  rw [Ascending.Rational.Antiderivative.antiderivative_add,
-    Ascending.Rational.GaussianEvaluation.eval_add,
-    Ascending.Rational.GaussianEvaluation.eval_add]
+  rw [Antiderivative.antiderivative_add,
+    GaussianEvaluation.eval_add,
+    GaussianEvaluation.eval_add]
   apply Gaussian.Basic.ext <;>
     simp only [Gaussian.Basic.sub_re, Gaussian.Basic.sub_im, Gaussian.Basic.add_re, Gaussian.Basic.add_im] <;> ring1
 
@@ -85,13 +85,13 @@ theorem definiteIntegral_add (left right :
 theorem definiteIntegral_scale (factor : Fraction.Rational)
   (polynomial : CoefficientPolynomial)
     (start finish : Gaussian.Basic.Canonical) :
-    definiteIntegral (Ascending.Rational.Basic.scale factor polynomial) start finish =
+    definiteIntegral (Basic.scale factor polynomial) start finish =
       Gaussian.Scale.scale factor
         (definiteIntegral polynomial start finish) := by
   unfold definiteIntegral
-  rw [Ascending.Rational.Antiderivative.antiderivative_scale,
-    Ascending.Rational.GaussianEvaluation.eval_scale,
-    Ascending.Rational.GaussianEvaluation.eval_scale]
+  rw [Antiderivative.antiderivative_scale,
+    GaussianEvaluation.eval_scale,
+    GaussianEvaluation.eval_scale]
   apply Gaussian.Basic.ext <;>
     simp only [Gaussian.Scale.scale_re,
       Gaussian.Scale.scale_im, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im] <;> ring1
@@ -100,8 +100,8 @@ theorem definiteIntegral_scale (factor : Fraction.Rational)
 def integralKernel (polynomial :
   CoefficientPolynomial) (left right : Gaussian.Basic.Canonical) :
     Gaussian.Basic.Canonical :=
-  Ascending.Rational.Secant.polynomialKernel
-    (Ascending.Rational.Antiderivative.antiderivative 0 polynomial) right left
+  Secant.polynomialKernel
+    (Antiderivative.antiderivative 0 polynomial) right left
 
 /-- Infinitesimal-free interval form of the fundamental theorem: the
 constructed integral is exactly displacement times one displayed finite
@@ -111,18 +111,18 @@ theorem definiteIntegral_factor (polynomial :
     (left right : Gaussian.Basic.Canonical) :
     definiteIntegral polynomial left right =
       (right - left) * integralKernel polynomial left right :=
-  Ascending.Rational.Secant.eval_sub_factor
-    (Ascending.Rational.Antiderivative.antiderivative 0 polynomial) right left
+  Secant.eval_sub_factor
+    (Antiderivative.antiderivative 0 polynomial) right left
 
 /-- Diagonal substitution in the already-expanded interval kernel returns
 the integrand value. -/
 theorem integralKernel_diagonal (polynomial :
   CoefficientPolynomial) (point : Gaussian.Basic.Canonical) :
-    integralKernel polynomial point point = Ascending.Rational.GaussianEvaluation.eval
+    integralKernel polynomial point point = GaussianEvaluation.eval
       polynomial point := by
   rw [integralKernel,
-    Ascending.Rational.Secant.polynomialKernel_diagonal]
-  rw [Ascending.Rational.Antiderivative.derivative_antiderivative]
+    Secant.polynomialKernel_diagonal]
+  rw [Antiderivative.derivative_antiderivative]
 end Purelib.Polynomial.Ascending.Rational.Integral
 
 end

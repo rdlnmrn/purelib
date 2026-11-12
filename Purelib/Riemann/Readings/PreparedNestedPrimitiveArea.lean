@@ -43,6 +43,10 @@ import Purelib.Geometry.Path.Gaussian.Lifted.Basic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Riemann.Comparison
+
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -79,7 +83,7 @@ private abbrev Gaussian := Basic.Canonical
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {parent : CenteredEdge curve differential} {target : Purelib.Data.Rat.Fraction.Rational}
+  {parent : CenteredEdge curve differential} {target : Data.Rat.Fraction.Rational}
 
 open Purelib.Data.Gaussian in
 /-- Pair each original child's requested primitive increment with its exact integral sample. -/
@@ -95,7 +99,7 @@ open Purelib.Riemann.Paths in
 theorem descendantPairs_right (request : LocalRequest parent count target) (children : List (CenteredEdge curve
   differential)) :
     (descendantPairs request children).map Prod.snd =
-      PathArea.increments (Basic.PathModel.mk (children.map CenteredEdge.model)) := by
+      PathArea.increments (PathModel.mk (children.map CenteredEdge.model)) := by
   induction children with
   | nil => rfl
   | cons child children ih => exact congrArg (child.model.integralSample :: ·) ih
@@ -111,10 +115,10 @@ theorem descendantPairs_left_total (request : LocalRequest parent count target)
     (chain : PreparedDirectDyadicRefinements.DirectPathChain children
       (start := ⟨parent.edge.segment.pointAt parent.edge.left.parameter, parent.edge.sheet⟩)
       (finish := ⟨parent.edge.segment.pointAt parent.edge.request.endpoint.parameter, parent.edge.sheet⟩)) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum ((descendantPairs request children).map Prod.fst) =
-      Riemann.Comparison.PreparedNestedPrimitiveComparison.LocalRequest.increment request := by
+    gaussianSum ((descendantPairs request children).map Prod.fst) =
+      PreparedNestedPrimitiveComparison.LocalRequest.increment request := by
   have readback (cells : List (CenteredEdge curve differential)) :
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum ((descendantPairs request cells).map Prod.fst) =
+      gaussianSum ((descendantPairs request cells).map Prod.fst) =
         Primitive.incrementSum request.request.model.primitive.value.eval (cells.map CenteredEdge.model) := by
     induction cells with
     | nil => rfl
@@ -132,16 +136,16 @@ open Purelib.Data.Rat in
 /-- The original descendant paired errors have squared-norm sum bounded by their retained local charges. -/
 private theorem descendant_errors (request : LocalRequest parent count target)
     {children : List (CenteredEdge curve differential)} (roots : RootSubedgeBlock parent children) :
-    Norm.Sum.Basic.gaussianNormSqSum ((descendantPairs request children).map (fun pair => pair.1 - pair.2)) ≤
-      FiniteSum.Rational.Squares.coordinateSum (children.map
-        (Riemann.Comparison.PreparedNestedPrimitiveComparison.LocalRequest.childCharge request)) := by
+    gaussianNormSqSum ((descendantPairs request children).map (fun pair => pair.1 - pair.2)) ≤
+      coordinateSum (children.map
+        (PreparedNestedPrimitiveComparison.LocalRequest.childCharge request)) := by
   induction roots with
   | nil => exact le_rfl
   | cons head tail ih =>
-      simp only [descendantPairs, List.map_cons, Norm.Sum.Basic.gaussianNormSqSum,
-        FiniteSum.Rational.Squares.coordinateSum]
-      exact Fraction.Order.Arithmetic.add_le_add_direct
-        (Riemann.Comparison.PreparedNestedPrimitiveComparison.LocalRequest.child_error_le request head) ih
+      simp only [descendantPairs, List.map_cons, gaussianNormSqSum,
+        coordinateSum]
+      exact Arithmetic.add_le_add_direct
+        (PreparedNestedPrimitiveComparison.LocalRequest.child_error_le request head) ih
 
 open Purelib.Data.Gaussian in
 open Purelib.Integration.Polynomial.Gaussian.Cell in
@@ -149,7 +153,7 @@ open Purelib.Riemann.Integration in
 /-- The original child weighted allowance equals sixteen times its model error and movement. -/
 private theorem weightedAllowance_eq (child : CenteredEdge curve differential) :
     child.model.weightedAllowance = child.edge.pointMovement * (16 * child.edge.modelErrorAllowance) := by
-  unfold PreparedSubdivisionModelCore.CenteredEdge.model
+  unfold CenteredEdge.model
     Basic.CellModel.weightedAllowance
     Basic.CellModel.displacement
     PreparedConstantModels.PreparedEdge.centeredModel
@@ -169,11 +173,11 @@ remain indexed by the same parent request. -/
 private theorem charges_le (request : LocalRequest parent count target)
     {children : List (CenteredEdge curve differential)} (roots : RootSubedgeBlock parent children)
     {distance : Fraction.Rational} (movements : ∀ child ∈ children, child.edge.pointMovement ≤ distance) :
-      FiniteSum.Rational.Squares.coordinateSum (children.map
-        (Riemann.Comparison.PreparedNestedPrimitiveComparison.LocalRequest.childCharge request)) ≤
+      coordinateSum (children.map
+        (PreparedNestedPrimitiveComparison.LocalRequest.childCharge request)) ≤
       (2 * request.request.model.primitive.remainderBound * distance + localCoefficient request) * movementSum children
         +
-        (5 / 2) * (Basic.PathModel.mk (children.map CenteredEdge.model)).totalWeightedAllowance := by
+        (5 / 2) * (PathModel.mk (children.map CenteredEdge.model)).totalWeightedAllowance := by
   induction roots with
   | nil =>
       change (0 : Fraction.Rational) ≤ _ * 0 + (5 / 2) * 0
@@ -183,41 +187,41 @@ private theorem charges_le (request : LocalRequest parent count target)
           4 * normSq ((PreparedPrimitiveSamples.differentialNumerator differential).eval (child.edge.point 0)) *
             Geometric.Basic.quarterRadius request.neighborhood.inverseErrorScale request.request.index ≤
               localCoefficient request :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct
             (request.request.numerator_le _
-              (Riemann.Comparison.PreparedNestedPrimitiveComparison.LocalRequest.child_inside request head 0
+              (PreparedNestedPrimitiveComparison.LocalRequest.child_inside request head 0
               child.edge.baseInside)) (by decide))
           (Geometric.Basic.quarterRadius_nonneg request.neighborhood.inverseErrorScale_positive.le _)
       have pointNonnegative : 0 ≤ child.edge.pointMovement := Norm.Basic.normSq_nonneg (child.edge.point 1 -
         child.edge.point 0)
       have square : child.edge.pointMovement ^ 2 ≤ distance * child.edge.pointMovement :=
         (show child.edge.pointMovement ^ 2 = child.edge.pointMovement * child.edge.pointMovement by ring1).trans_le
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (movements child (List.mem_cons_self ..))
+          (Arithmetic.mul_le_mul_of_nonneg_right_direct (movements child (List.mem_cons_self ..))
             pointNonnegative)
-      have main := Fraction.Order.Arithmetic.add_le_add_direct
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct square
-          (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 2)
+      have main := Arithmetic.add_le_add_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct square
+          (Arithmetic.mul_nonneg_direct (by decide : (0 : Fraction.Rational) ≤ 2)
             request.request.model.primitive.remainderBound_nonnegative))
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct coefficientLe pointNonnegative)
-      have childLe : Riemann.Comparison.PreparedNestedPrimitiveComparison.LocalRequest.childCharge request child ≤
+        (Arithmetic.mul_le_mul_of_nonneg_right_direct coefficientLe pointNonnegative)
+      have childLe : PreparedNestedPrimitiveComparison.LocalRequest.childCharge request child ≤
           (2 * request.request.model.primitive.remainderBound * distance + localCoefficient request) *
             child.edge.pointMovement +
             (5 / 2) * child.model.weightedAllowance := by
         rw [weightedAllowance_eq]
-        have scaled := Fraction.Order.Arithmetic.add_le_add_direct main (le_rfl :
+        have scaled := Arithmetic.add_le_add_direct main (le_rfl :
           40 * child.edge.modelErrorAllowance * child.edge.pointMovement ≤ 40 * child.edge.modelErrorAllowance *
             child.edge.pointMovement)
-        exact (show Riemann.Comparison.PreparedNestedPrimitiveComparison.LocalRequest.childCharge request child = _ by
-          unfold Riemann.Comparison.PreparedNestedPrimitiveComparison.LocalRequest.childCharge; ring1).trans_le
+        exact (show PreparedNestedPrimitiveComparison.LocalRequest.childCharge request child = _ by
+          unfold PreparedNestedPrimitiveComparison.LocalRequest.childCharge; ring1).trans_le
             (scaled.trans_eq (by
           rw [show (5 / 2 : Fraction.Rational) * (child.edge.pointMovement * (16 * child.edge.modelErrorAllowance)) =
             ((5 / 2) * 16) * child.edge.pointMovement * child.edge.modelErrorAllowance by ring1,
             show (5 / 2 : Fraction.Rational) * 16 = 40 by decide +kernel]
           ring1))
-      exact (Fraction.Order.Arithmetic.add_le_add_direct childLe
+      exact (Arithmetic.add_le_add_direct childLe
         (ih fun other member => movements other (List.mem_cons_of_mem child member))).trans_eq (by
-          simp only [movementSum, List.map_cons, Basic.PathModel.totalWeightedAllowance, List.foldr_cons]
+          simp only [movementSum, List.map_cons, PathModel.totalWeightedAllowance, List.foldr_cons]
           ring1)
 
 open Purelib.Data.Gaussian in
@@ -228,10 +232,10 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 theorem descendant_error_sum_bound (request : LocalRequest parent count target)
     {children : List (CenteredEdge curve differential)} (roots : RootSubedgeBlock parent children)
     {distance : Fraction.Rational} (movements : ∀ child ∈ children, child.edge.pointMovement ≤ distance) :
-    Norm.Sum.Basic.gaussianNormSqSum ((descendantPairs request children).map (fun pair => pair.1 - pair.2)) ≤
+    gaussianNormSqSum ((descendantPairs request children).map (fun pair => pair.1 - pair.2)) ≤
       (2 * request.request.model.primitive.remainderBound * distance + localCoefficient request) * movementSum children
         +
-        (5 / 2) * (Basic.PathModel.mk (children.map CenteredEdge.model)).totalWeightedAllowance :=
+        (5 / 2) * (PathModel.mk (children.map CenteredEdge.model)).totalWeightedAllowance :=
   (descendant_errors request roots).trans (charges_le request roots movements)
 
 end Purelib.Riemann.Readings.PreparedNestedPrimitiveArea

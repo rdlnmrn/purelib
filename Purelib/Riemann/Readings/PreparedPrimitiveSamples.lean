@@ -39,6 +39,8 @@ import Purelib.Riemann.Readings.PreparedObservationNeighborhoods
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Integration.Polynomial.Gaussian
 
 @[expose] public section
@@ -88,8 +90,8 @@ theorem differentialNumerator_eval {genus : Nat} (differential : Differentials.B
   rw [differentialNumerator, Dense.Basic.DensePolynomial.eval_shift,
     Dense.Basic.DensePolynomial.eval_constant, Basic.one_mul]
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+variable {genus count : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
+  Curves.Hyperelliptic.Differentials.Basic.Differential genus}
 
 open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- The canonical prepared edge integral sample equals its directed endpoint displacement times the numerator divided by
@@ -115,8 +117,8 @@ open Purelib.Data.Rat in
 /-- The prepared edge's relative residual error is strictly positive. -/
 theorem relativeError_positive (patch : ContinuedNeighborhood curve.polynomial count)
     (prepared : PreparedEdge curve differential) : 0 < relativeError patch prepared :=
-  Fraction.Order.Field.div_pos_direct prepared.rootResidualTarget_positive
-    (Fraction.Order.Field.div_pos_direct patch.base.site.denominatorValue_positive (by decide))
+  Field.div_pos_direct prepared.rootResidualTarget_positive
+    (Field.div_pos_direct patch.base.site.denominatorValue_positive (by decide))
 
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
@@ -129,12 +131,12 @@ private theorem root_residual_relative (patch : ContinuedNeighborhood curve.poly
   have residual := prepared.residualRootState_candidate_residual_lt 0 prepared.baseInside
     prepared.residualRootCenter_possible
   have lowerPositive : 0 < patch.base.site.denominatorValue / 4 :=
-    Fraction.Order.Field.div_pos_direct patch.base.site.denominatorValue_positive (by decide)
+    Field.div_pos_direct patch.base.site.denominatorValue_positive (by decide)
   calc
     _ <= prepared.rootResidualTarget := by simpa only [pow_two, Norm.Basic.normSq_eq_canonical] using residual.le
     _ = relativeError patch prepared * (patch.base.site.denominatorValue / 4) :=
       (Fraction.Field.div_mul_cancel_of_ne _ _ lowerPositive.ne').symm
-    _ <= _ := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    _ <= _ := Arithmetic.mul_le_mul_of_nonneg_left_direct
       (patch.parameter_lower inside) (relativeError_positive patch prepared).le
 
 open Purelib.Approximation.Rational in
@@ -157,7 +159,7 @@ theorem root_inverse_error (patch : ContinuedNeighborhood curve.polynomial count
   have rootPositive := patch.rootLower_positive.trans_le rootLower
   have nonzero : prepared.residualRootCenter ≠ 0 := by
     intro zero
-    rw [zero, Basic.Canonical.normSq_zero] at rootPositive
+    rw [zero, normSq_zero] at rootPositive
     exact (lt_irrefl _ rootPositive)
   have initial : normSq (1 - prepared.residualRootCenter * patch.base.model.value.eval (prepared.point 0)) <= 1 / 256 :=
     by
@@ -166,7 +168,7 @@ theorem root_inverse_error (patch : ContinuedNeighborhood curve.polynomial count
   have budgetSmall : (1 / 256 : Coordinate) + 16 * relativeError patch prepared <= 1 / 64 := by
     calc
       _ <= (1 / 256 : Coordinate) + 16 * (1 / 4096) := add_le_add le_rfl
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct small (by decide))
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct small (by decide))
       _ <= 1 / 64 := by decide +kernel
   have bound := (InverseRootComparison.Model.refine_inverse_error patch.base.model) (prepared.point 0)
     (patch.box_refines.contains inside)
@@ -174,14 +176,14 @@ theorem root_inverse_error (patch : ContinuedNeighborhood curve.polynomial count
     (by simpa only [Norm.Basic.normSq_eq_canonical] using root_residual_relative patch prepared inside)
     (by simpa only [Norm.Basic.normSq_eq_canonical] using initial) budgetSmall index
   simp only [Norm.Basic.normSq_eq_canonical] at bound
-  have inverse_eq : Data.Gaussian.Field.inv prepared.residualRootCenter = Basic.Canonical.inv
+  have inverse_eq : Field.inv prepared.residualRootCenter = inv
     prepared.residualRootCenter :=
     by
     with_unfolding_all exact (Field.inv_eq prepared.residualRootCenter).symm
   rw [inverse_eq] at bound
-  exact bound.trans (Fraction.Order.Field.div_le_div_of_nonneg_left_direct
+  exact bound.trans (Field.div_le_div_of_nonneg_left_direct
     (add_nonneg (Geometric.Basic.quarterRadius_nonneg (by decide +kernel) index)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (relativeError_positive patch prepared).le))
+      (Arithmetic.mul_nonneg_direct (by decide) (relativeError_positive patch prepared).le))
     patch.rootLower_positive rootLower)
 
 open Purelib.Approximation.Rational in
@@ -233,14 +235,14 @@ theorem center_sub_canonical_le (prepared : PreparedEdge curve differential)
   have reversed : normSq (prepared.baseReading - prepared.residualCoefficientCenter) <= prepared.rawVariation := by
     have identity : prepared.baseReading - prepared.residualCoefficientCenter =
       -(prepared.residualCoefficientCenter - prepared.baseReading) := by ring1
-    rw [identity, Basic.Canonical.normSq_neg]; exact canonical
+    rw [identity, normSq_neg]; exact canonical
   have rawLe : prepared.rawVariation <= prepared.modelErrorAllowance :=
     le_add_of_nonneg_right prepared.preparedRootDiameter_positive.le
   calc
     _ <= 2 * (normSq (center.value - prepared.baseReading) +
         normSq (prepared.baseReading - prepared.residualCoefficientCenter)) := triangle
     _ <= 2 * (prepared.modelErrorAllowance + prepared.modelErrorAllowance) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add centerClose.le (reversed.trans rawLe)) (by decide)
     _ = _ := by ring1
 
@@ -265,10 +267,10 @@ theorem centered_integral_sub_canonical_le (prepared : PreparedEdge curve differ
   have identity : (prepared.point 1 - prepared.point 0) * center.value -
       (prepared.point 1 - prepared.point 0) * prepared.residualCoefficientCenter =
         (center.value - prepared.residualCoefficientCenter) * (prepared.point 1 - prepared.point 0) := by ring1
-  rw [identity, Basic.Canonical.normSq_mul]
+  rw [identity, normSq_mul]
   simp only [PreparedEdge.pointMovement, Norm.Basic.normSq_eq_canonical]
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (center_sub_canonical_le prepared center) (Basic.Canonical.normSq_nonneg _)
+  exact Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (center_sub_canonical_le prepared center) (normSq_nonneg _)
 
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
@@ -293,14 +295,14 @@ theorem centered_integral_error {patch : ContinuedNeighborhood curve.polynomial 
     have identity : (prepared.centeredModel (PreparedEdge.CenterState.canonical prepared)).integralSample -
         (prepared.centeredModel center).integralSample = -((prepared.centeredModel center).integralSample -
           (prepared.centeredModel (PreparedEdge.CenterState.canonical prepared)).integralSample) := by ring1
-    rw [identity, Basic.Canonical.normSq_neg]; exact rebasing
+    rw [identity, normSq_neg]; exact rebasing
   have triangle := Norm.Bounds.normSq_sub_le_via
     (model.primitive.value.eval (prepared.point 1) - model.primitive.value.eval (prepared.point 0))
     ((prepared.centeredModel (PreparedEdge.CenterState.canonical prepared)).integralSample)
     ((prepared.centeredModel center).integralSample)
   simp only [Norm.Basic.normSq_eq_canonical] at triangle
   exact triangle.trans
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add canonical reverse) (by decide))
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add canonical reverse) (by decide))
 
 open Purelib.Data.Rat in
 /-- A bound on the original model allowance also bounds relative residual error after division by the retained positive
@@ -311,9 +313,9 @@ theorem relativeError_le (patch : ContinuedNeighborhood curve.polynomial count)
     relativeError patch prepared ≤ error / (patch.base.site.denominatorValue / 4) := by
   have residual : prepared.rootResidualTarget ≤ error :=
     prepared.rootResidualTarget_le_modelErrorAllowance.trans bounded
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct residual
-    (Fraction.Order.Field.inv_pos_direct
-      (Fraction.Order.Field.div_pos_direct patch.base.site.denominatorValue_positive (by decide))).le
+  exact Arithmetic.mul_le_mul_of_nonneg_right_direct residual
+    (Field.inv_pos_direct
+      (Field.div_pos_direct patch.base.site.denominatorValue_positive (by decide))).le
 
 open Purelib.Approximation.Rational in
 /-- The retained linear movement-error coefficient for the indexed inverse-root model and supplied numerator and
@@ -336,15 +338,15 @@ theorem coefficientError_nonnegative (patch : ContinuedNeighborhood curve.polyno
     (numeratorNonnegative : 0 ≤ numeratorBound) (errorNonnegative : 0 ≤ error) :
     0 ≤ coefficientError patch index numeratorBound error := by
   exact add_nonneg
-    (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) numeratorNonnegative)
-      (Fraction.Order.Field.div_nonneg_direct
+    (Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct (by decide) numeratorNonnegative)
+      (Field.div_nonneg_direct
         (add_nonneg (Geometric.Basic.quarterRadius_nonneg (by decide +kernel) index)
-          (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-            (Fraction.Order.Field.div_nonneg_direct errorNonnegative
-              (Fraction.Order.Field.div_pos_direct patch.base.site.denominatorValue_positive (by decide)).le)))
+          (Arithmetic.mul_nonneg_direct (by decide)
+            (Field.div_nonneg_direct errorNonnegative
+              (Field.div_pos_direct patch.base.site.denominatorValue_positive (by decide)).le)))
         patch.rootLower_positive.le))
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) errorNonnegative)
+    (Arithmetic.mul_nonneg_direct (by decide) errorNonnegative)
 
 open Purelib.Approximation.Rational in
 open Purelib.Data.Gaussian in
@@ -369,28 +371,28 @@ theorem centered_integral_error_uniform {patch : ContinuedNeighborhood curve.pol
       4 * model.primitive.remainderBound * movement ^ 2 + coefficientError patch index numeratorBound error * movement
         := by
   have relativeLe := relativeError_le patch prepared errorLe
-  have numeratorNonnegative := (Basic.Canonical.normSq_nonneg _).trans numeratorLe
+  have numeratorNonnegative := (normSq_nonneg _).trans numeratorLe
   have errorNonnegative := prepared.modelErrorAllowance_positive.le.trans errorLe
   have movementNonnegative : 0 ≤ prepared.pointMovement := Norm.Basic.normSq_nonneg _
   have inverseLe :
       (Geometric.Basic.quarterRadius (1 / 256) index + 16 * relativeError patch prepared) / patch.rootLower ≤
         (Geometric.Basic.quarterRadius (1 / 256) index +
           16 * (error / (patch.base.site.denominatorValue / 4))) / patch.rootLower :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (add_le_add le_rfl (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct relativeLe (by decide)))
-      (Fraction.Order.Field.inv_pos_direct patch.rootLower_positive).le
+    Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (add_le_add le_rfl (Arithmetic.mul_le_mul_of_nonneg_left_direct relativeLe (by decide)))
+      (Field.inv_pos_direct patch.rootLower_positive).le
   have inverseNonnegative : 0 ≤
       (Geometric.Basic.quarterRadius (1 / 256) index + 16 * relativeError patch prepared) / patch.rootLower :=
-    Fraction.Order.Field.div_nonneg_direct
+    Field.div_nonneg_direct
       (add_nonneg (Geometric.Basic.quarterRadius_nonneg (by decide +kernel) index)
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (relativeError_positive patch prepared).le))
+        (Arithmetic.mul_nonneg_direct (by decide) (relativeError_positive patch prepared).le))
       patch.rootLower_positive.le
-  have numeratorTerm := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_direct numeratorLe inverseLe inverseNonnegative numeratorNonnegative)
+  have numeratorTerm := Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_le_mul_direct numeratorLe inverseLe inverseNonnegative numeratorNonnegative)
     movementNonnegative
   have rebasingTerm : 4 * prepared.modelErrorAllowance * prepared.pointMovement ≤
-      4 * error * prepared.pointMovement := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct errorLe (by decide)) movementNonnegative
+      4 * error * prepared.pointMovement := Arithmetic.mul_le_mul_of_nonneg_right_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct errorLe (by decide)) movementNonnegative
   have localBound := centered_integral_error model prepared center startInside finishInside rootBox (relativeLe.trans
     small)
   calc
@@ -399,16 +401,16 @@ theorem centered_integral_error_uniform {patch : ContinuedNeighborhood curve.pol
         numeratorBound * ((Geometric.Basic.quarterRadius (1 / 256) index +
           16 * (error / (patch.base.site.denominatorValue / 4))) / patch.rootLower) * prepared.pointMovement) +
         4 * error * prepared.pointMovement) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (add_le_add (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (add_le_add (Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add le_rfl numeratorTerm) (by decide)) rebasingTerm) (by decide)
     _ = 4 * model.primitive.remainderBound * prepared.pointMovement ^ 2 +
         coefficientError patch index numeratorBound error * prepared.pointMovement := by unfold coefficientError; ring1
     _ ≤ _ := add_le_add
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.pow_le_pow_direct movementNonnegative movementLe 2)
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) model.primitive.remainderBound_nonnegative))
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct movementLe
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.pow_le_pow_direct movementNonnegative movementLe 2)
+        (Arithmetic.mul_nonneg_direct (by decide) model.primitive.remainderBound_nonnegative))
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct movementLe
         (coefficientError_nonnegative patch index numeratorNonnegative errorNonnegative))
 
 end Purelib.Riemann.Readings.PreparedPrimitiveSamples

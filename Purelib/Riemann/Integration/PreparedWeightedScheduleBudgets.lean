@@ -29,6 +29,8 @@ import Mathlib.Order.Basic
 import Mathlib.Data.Nat.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_antitone)
 
 @[expose] public section
@@ -55,8 +57,8 @@ open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius quarterRadius_nonneg quarterRadius_le_scale
   quarterRadius_eq_mul_pow)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {source :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {source :
+  Differential genus}
   {root : Named} {target : Coordinate}
 
 open Purelib.Curves.Hyperelliptic in
@@ -65,7 +67,7 @@ open Purelib.Data in
 
 Every row uses the same retained initial root-closed schedule base, while keeping its exact request family and decay
 coefficients. -/
-def ScheduleBudgets (initial : RootClosedState curve source root) (targets : List (Differentials.Basic.Differential
+def ScheduleBudgets (initial : RootClosedState curve source root) (targets : List (Differential
   genus))
     (requests : (row : Fin genus) → RequestedParents count target
       (initial.state.parents.map (recastCenteredEdge (standardDifferential row)))) :=
@@ -74,14 +76,14 @@ def ScheduleBudgets (initial : RootClosedState curve source root) (targets : Lis
 namespace ScheduleBudgets
 
 variable {initial : RootClosedState curve source root} {targets : List
-  (Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus)}
+  (Differential genus)}
   {requests : (row : Fin genus) → RequestedParents count target
     (initial.state.parents.map (recastCenteredEdge (standardDifferential row)))}
 
 open Purelib.Curves.Hyperelliptic in
 open Purelib.Data in
 /-- Build the original row budgets using one shared cached initial movement mass. -/
-def build (initial : RootClosedState curve source root) (targets : List (Differentials.Basic.Differential genus))
+def build (initial : RootClosedState curve source root) (targets : List (Differential genus))
     (requests : (row : Fin genus) → RequestedParents count target
       (initial.state.parents.map (recastCenteredEdge (standardDifferential row)))) :
     ScheduleBudgets initial targets requests :=
@@ -109,12 +111,12 @@ theorem error_le (budgets : ScheduleBudgets initial targets requests) (row : Fin
   unfold errorBudget
   rw [← (budgets.get row).remainder_eq, ← (budgets.get row).coefficient_eq]
   have rateNonnegative := add_nonneg
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (budgets.get row).remainder_nonnegative
+    (Arithmetic.mul_nonneg_direct (budgets.get row).remainder_nonnegative
       (Geometric.Basic.quarterRadius_nonneg (initial.state.scheduleBase_positive targets).le stage)) (budgets.get
         row).coefficient_nonnegative
-  have paid := Fraction.Order.Arithmetic.add_le_add_direct
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (budgets.mass_le row stage) rateNonnegative)
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  have paid := Arithmetic.add_le_add_direct
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct (budgets.mass_le row stage) rateNonnegative)
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct
       (PreparedRootSafePeriodPrograms.RootClosedState.flatAllowance_le initial targets (standardDifferential row) member
       stage)
       (by decide : (0 : Coordinate) ≤ 5 / 2))
@@ -129,23 +131,23 @@ open Purelib.Data.Rat in
 /-- The genus-weighted row errors are bounded by retained floor sum plus summed spatial decay. -/
 theorem weighted_error_le (budgets : ScheduleBudgets initial targets requests)
     (members : ∀ row : Fin genus, standardDifferential row ∈ targets) (stage : Nat) :
-    (genus : Coordinate) * FiniteSum.Fin.sumFin (errorBudget requests (initial.states targets stage).state.parents
+    (genus : Coordinate) * sumFin (errorBudget requests (initial.states targets stage).state.parents
       (Geometric.Basic.quarterRadius (initial.state.scheduleBase targets) stage)) ≤
-      (genus : Coordinate) * FiniteSum.Fin.sumFin (fun row => (budgets.get row).polynomialFloor) +
-        Geometric.Basic.quarterRadius ((genus : Coordinate) * FiniteSum.Fin.sumFin (fun row => (budgets.get
+      (genus : Coordinate) * sumFin (fun row => (budgets.get row).polynomialFloor) +
+        Geometric.Basic.quarterRadius ((genus : Coordinate) * sumFin (fun row => (budgets.get
           row).spatialScale)) stage := by
-  have bounded := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  have bounded := Arithmetic.mul_le_mul_of_nonneg_left_direct
     (FiniteSum.Rational.Order.Positivity.sumFin_mono _ _ (fun row => budgets.error_le row (members row) stage))
     (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus))
-  have split : FiniteSum.Fin.sumFin (fun row => (budgets.get row).polynomialFloor + Geometric.Basic.quarterRadius
+  have split : sumFin (fun row => (budgets.get row).polynomialFloor + Geometric.Basic.quarterRadius
     (budgets.get row).spatialScale stage) =
-      FiniteSum.Fin.sumFin (fun row => (budgets.get row).polynomialFloor) +
-        FiniteSum.Fin.sumFin (fun row => (budgets.get row).spatialScale) * (1 / 4 : Coordinate) ^ stage := by
+      sumFin (fun row => (budgets.get row).polynomialFloor) +
+        sumFin (fun row => (budgets.get row).spatialScale) * (1 / 4 : Coordinate) ^ stage := by
     calc
-      _ = FiniteSum.Fin.sumFin (fun row => (budgets.get row).polynomialFloor +
+      _ = sumFin (fun row => (budgets.get row).polynomialFloor +
           (budgets.get row).spatialScale * (1 / 4 : Coordinate) ^ stage) :=
-        FiniteSum.Fin.sumFin_congr (fun row => by rw [Geometric.Basic.quarterRadius_eq_mul_pow])
-      _ = _ := by rw [FiniteSum.Fin.sumFin_add, FiniteSum.Fin.sumFin_mul_right]
+        sumFin_congr (fun row => by rw [Geometric.Basic.quarterRadius_eq_mul_pow])
+      _ = _ := by rw [sumFin_add, sumFin_mul_right]
   rw [split] at bounded
   exact bounded.trans_eq (by rw [Geometric.Basic.quarterRadius_eq_mul_pow]; ring1)
 
@@ -153,8 +155,8 @@ open Purelib.Algebra in
 open Purelib.Data.Rat in
 /-- The original genus-weighted sum of retained spatial scales is nonnegative. -/
 private theorem scale_nonnegative (budgets : ScheduleBudgets initial targets requests) :
-    0 ≤ (genus : Coordinate) * FiniteSum.Fin.sumFin (fun row => (budgets.get row).spatialScale) :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus))
+    0 ≤ (genus : Coordinate) * sumFin (fun row => (budgets.get row).spatialScale) :=
+  Arithmetic.mul_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le genus))
     (FiniteSum.Fin.sumFin_zero.symm.trans_le
       (FiniteSum.Rational.Order.Positivity.sumFin_mono _ _ (fun row =>
         (budgets.get row).spatialScale_nonnegative (initial.state.scheduleBase_positive targets).le)))
@@ -164,7 +166,7 @@ open Purelib.Approximation.Rational in
 /-- Select the shared decay stage for the original genus-weighted spatial-scale sum. -/
 def spatialStage (budgets : ScheduleBudgets initial targets requests) (tolerance : Coordinate) : Nat :=
   Geometric.Search.firstQuarterBelow
-    ((genus : Coordinate) * FiniteSum.Fin.sumFin (fun row => (budgets.get row).spatialScale)) 0 tolerance + 1
+    ((genus : Coordinate) * sumFin (fun row => (budgets.get row).spatialScale)) 0 tolerance + 1
 
 open Purelib.Algebra in
 open Purelib.Approximation.Rational in
@@ -177,14 +179,14 @@ theorem weighted_error_lt (budgets : ScheduleBudgets initial targets requests)
     (members : ∀ row : Fin genus, standardDifferential row ∈ targets)
     {tolerance : Coordinate} (positive : 0 < tolerance) (stage : Nat)
     (later : budgets.spatialStage tolerance ≤ stage) :
-    (genus : Coordinate) * FiniteSum.Fin.sumFin (errorBudget requests (initial.states targets stage).state.parents
+    (genus : Coordinate) * sumFin (errorBudget requests (initial.states targets stage).state.parents
       (Geometric.Basic.quarterRadius (initial.state.scheduleBase targets) stage)) <
-      (genus : Coordinate) * FiniteSum.Fin.sumFin (fun row => (budgets.get row).polynomialFloor) + tolerance := by
+      (genus : Coordinate) * sumFin (fun row => (budgets.get row).polynomialFloor) + tolerance := by
   have indexLe := (Nat.le_succ _).trans later
   have small := (quarterRadius_antitone budgets.scale_nonnegative indexLe).trans_lt
     (Geometric.Search.firstQuarterBelow_accurate _ budgets.scale_nonnegative 0 tolerance positive)
   exact (budgets.weighted_error_le members stage).trans_lt
-    (Fraction.Order.Arithmetic.add_lt_add_left_direct small _)
+    (Arithmetic.add_lt_add_left_direct small _)
 
 end ScheduleBudgets
 end Purelib.Riemann.Integration.PreparedWeightedScheduleBudgets

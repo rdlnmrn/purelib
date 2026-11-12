@@ -20,6 +20,8 @@ public import Purelib.Riemann.Meshes.GridLiftedMesh
 public import Purelib.Geometry.Rectangle.Partition.RectangularEdgeUniqueness
 public import Purelib.Topology.Surface.Sewing.SewingConnected
 
+open Purelib.RootIsolation.SquareRoot
+
 public section
 
 /-!
@@ -48,10 +50,10 @@ open _root_.Purelib.Topology.Surface.Sewing (SewingForest)
 open Purelib.Topology.Mesh.DualWalks (DualConnection)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid}
+  {frames : Grid.RootFrames bank.grid}
 
 namespace PuncturedGridFaces.FaceSplit
 
@@ -61,8 +63,8 @@ open Purelib.Polynomial in
 
 Structural classification retains either the original regular head or only the unchanged tail. The original cell-list
 separation applies to those same retained regular occurrences. -/
-theorem regulars_pairwise : ∀ {cells : List (Geometry.Grid.ClearGrid.Cell curve.polynomial
-  (Hyperelliptic.Branches.Cuts.Ambient curve))} (split : FaceSplit bank cells),
+theorem regulars_pairwise : ∀ {cells : List (Cell curve.polynomial
+  (Ambient curve))} (split : FaceSplit bank cells),
     cells.Pairwise (fun first second => first.box.InteriorSeparated second.box) →
       split.regulars.Pairwise (fun first second => first.cell.box.InteriorSeparated second.cell.box)
   | _, .nil, _ => .nil
@@ -83,14 +85,14 @@ those exact regular-face occurrences. -/
 theorem regulars_pairwise (faces : PuncturedFaces bank) :
     faces.regulars.Pairwise (fun first second => first.cell.box.InteriorSeparated second.cell.box) := by
   rw [faces.regulars_eq]
-  exact faces.split.regulars_pairwise (Polynomial.Geometry.Grid.ClearGridCoverage.cells_pairwise bank.grid)
+  exact faces.split.regulars_pairwise (Geometry.Grid.ClearGridCoverage.cells_pairwise bank.grid)
 
 end PuncturedGridFaces.PuncturedFaces
 
 namespace GridLiftedFaces.BranchCellBank.LiftedFace
 
-variable {vertices : Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-  Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+variable {vertices : Grid.LiftedVertices.VertexBank bank.grid} {edges :
+  Grid.RootEdgeBank frames}
   {face : RegularFace bank} {sheet : Fin 2}
 
 open Purelib.Geometry in
@@ -124,8 +126,8 @@ end GridLiftedFaces.BranchCellBank.LiftedFace
 
 namespace GridLiftedMesh.LiftedFaces
 
-variable {vertices : Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-  Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+variable {vertices : Grid.LiftedVertices.VertexBank bank.grid} {edges :
+  Grid.RootEdgeBank frames}
 
 /-- Read a retained face pair's oriented triangle edges before the tail's edges.
 
@@ -134,7 +136,7 @@ preserves all oriented edge occurrences and their concatenation order. -/
 theorem triangleEdges_cons {face : RegularFace bank} {faces : List (RegularFace bank)}
     (zero : LiftedFace vertices edges face 0) (one : LiftedFace vertices edges face 1) (tail : LiftedFaces vertices
       edges faces) :
-    ((LiftedFaces.cons zero one tail).triangles.flatMap OrientedTriangle.boundary) =
+    ((cons zero one tail).triangles.flatMap OrientedTriangle.boundary) =
       (zero.quad.triangles.flatMap OrientedTriangle.boundary ++ one.quad.triangles.flatMap OrientedTriangle.boundary) ++
         tail.triangles.flatMap OrientedTriangle.boundary := rfl
 
@@ -148,7 +150,7 @@ theorem triangleEdge_member : ∀ {faces : List (RegularFace bank)} (lifts : Lif
         edge ∈ lifted.quad.triangles.flatMap OrientedTriangle.boundary
   | _, .nil, _, member => (List.not_mem_nil member).elim
   | _, .cons zero one tail, edge, member => by
-      rw [Meshes.GridLiftedMesh.LiftedFaces.triangleEdges_cons] at member
+      rw [triangleEdges_cons] at member
       rcases Data.List.Membership.mem_append.mp member with localMember | tailMember
       · rcases Data.List.Membership.mem_append.mp localMember with zeroMember | oneMember
         · exact ⟨_, List.mem_cons_self, 0, zero, zeroMember⟩
@@ -167,7 +169,7 @@ theorem triangleEdges_nodup : ∀ {faces : List (RegularFace bank)} (lifts : Lif
       (lifts.triangles.flatMap OrientedTriangle.boundary).Nodup
   | _, .nil, _ => .nil
   | _, .cons zero one tail, separated => by
-      rw [Meshes.GridLiftedMesh.LiftedFaces.triangleEdges_cons]
+      rw [triangleEdges_cons]
       refine List.Nodup.nodup_append
         (List.Nodup.nodup_append zero.triangleEdges_nodup one.triangleEdges_nodup (zero.sheets_edges_disjoint one))
         (tail.triangleEdges_nodup (List.pairwise_cons.mp separated).2) ?_
@@ -176,16 +178,16 @@ theorem triangleEdges_nodup : ∀ {faces : List (RegularFace bank)} (lifts : Lif
       have apart := (List.pairwise_cons.mp separated).1 other otherMember
       rcases Data.List.Membership.mem_append.mp leftMember with zeroMember | oneMember
       · exact zero.rectangleCoordinates.edges_disjoint lifted.rectangleCoordinates
-          (Geometry.Grid.ClearGrid.Cell.box_proper _) other.cell.box_proper apart left zeroMember right liftedMember
+          (Cell.box_proper _) other.cell.box_proper apart left zeroMember right liftedMember
       · exact one.rectangleCoordinates.edges_disjoint lifted.rectangleCoordinates
-          (Geometry.Grid.ClearGrid.Cell.box_proper _) other.cell.box_proper apart left oneMember right liftedMember
+          (Cell.box_proper _) other.cell.box_proper apart left oneMember right liftedMember
 
 end GridLiftedMesh.LiftedFaces
 
 namespace GridLiftedMesh.LiftedMesh
 
-variable {vertices : Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-  Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames} {faces : PuncturedFaces bank}
+variable {vertices : Grid.LiftedVertices.VertexBank bank.grid} {edges :
+  Grid.RootEdgeBank frames} {faces : PuncturedFaces bank}
 
 /-- Every oriented triangle-edge occurrence in the actual lifted mesh is unique.
 
@@ -201,9 +203,9 @@ open Purelib.Topology in
 
 The lifted mesh supplies its proved oriented-edge uniqueness, so the only extra geometric evidence is the retained dual
 connection. -/
-@[expose] def singlePolygon (mesh : LiftedMesh vertices edges faces) (forest : Topology.Surface.Sewing.SewingForest
+@[expose] def singlePolygon (mesh : LiftedMesh vertices edges faces) (forest : SewingForest
   mesh.triangulation.faces)
-    (connected : Mesh.DualWalks.DualConnection mesh.triangulation.faces) :
+    (connected : DualConnection mesh.triangulation.faces) :
       Surface.Sewing.SewingConnected.SewingForest.SinglePolygon forest :=
   Surface.Sewing.SewingConnected.SewingForest.singlePolygon forest mesh.orientedEdges_unique connected
 

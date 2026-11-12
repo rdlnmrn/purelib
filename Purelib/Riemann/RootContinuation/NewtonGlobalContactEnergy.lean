@@ -46,6 +46,10 @@ import Purelib.Data.Gaussian.Field
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.LocalEnergy
+
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! A coefficient-independent contact budget pays the global centered error.
@@ -90,23 +94,23 @@ open Purelib.Data.Rat in
 /-- Per-contact target paying a global contact allowance.
 
 Divides the genus energy target by four times one plus the fourth power of the regular-face count. -/
-@[expose] def contactTarget (genus faces : Nat) (allowance : Fraction.Rational) : Fraction.Rational :=
-  Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance /
+@[expose] def contactTarget (genus faces : Nat) (allowance : Rational) : Rational :=
+  ConjugateRequest.energyAllowanceTarget genus allowance /
     (4 * ((Budget.Aggregate.countCoordinate faces) ^ 4 + 1))
 
 section
 open Purelib.Data.Rat
 /-- The fourth power of a rational natural-number cast is nonnegative. -/
-private theorem fourth_nonnegative (faces : Nat) : 0 ≤ (faces : Fraction.Rational) ^ 4 :=
-  (Fraction.Order.Arithmetic.sq_nonneg_direct ((faces : Fraction.Rational) ^ 2)).trans_eq (by ring1)
+private theorem fourth_nonnegative (faces : Nat) : 0 ≤ (faces : Rational) ^ 4 :=
+  (Arithmetic.sq_nonneg_direct ((faces : Rational) ^ 2)).trans_eq (by ring1)
 
 /-- The contact-target denominator is strictly positive.
 
 The fourth-power term is nonnegative and the added one keeps the denominator positive even for an empty face list. -/
-private theorem contact_denominator_positive (faces : Nat) : 0 < (4 : Fraction.Rational) * ((faces : Fraction.Rational)
+private theorem contact_denominator_positive (faces : Nat) : 0 < (4 : Rational) * ((faces : Rational)
   ^ 4 + 1) :=
-  Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-    (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct (fourth_nonnegative faces) (by decide))
+  Arithmetic.mul_pos_direct (by decide)
+    (Arithmetic.add_pos_of_nonneg_of_pos_direct (fourth_nonnegative faces) (by decide))
 
 end
 
@@ -117,34 +121,34 @@ open Purelib.Data.Rat
 /-- A positive contact allowance gives a positive local target.
 
 Uses positivity of the genus energy target and the fourth-power denominator. -/
-theorem contactTarget_positive {genus faces : Nat} {allowance : Fraction.Rational} (positive : 0 < allowance) :
+theorem contactTarget_positive {genus faces : Nat} {allowance : Rational} (positive : 0 < allowance) :
     0 < contactTarget genus faces allowance := by
   unfold contactTarget
   rw [Budget.Aggregate.countCoordinate_eq]
-  exact Fraction.Order.Field.div_pos_direct
-    (Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget_positive positive)
+  exact Field.div_pos_direct
+    (ConjugateRequest.energyAllowanceTarget_positive positive)
     (contact_denominator_positive faces)
 
 /-- The local contact target pays four times the face-count fourth power.
 
 The added one in the denominator leaves the scaled contact sum below the original genus energy target. -/
-theorem contactTarget_paid {genus faces : Nat} {allowance : Fraction.Rational} (positive : 0 < allowance) :
-    4 * (faces : Fraction.Rational) ^ 4 * contactTarget genus faces allowance ≤
-      Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance := by
-  have product : (4 * ((faces : Fraction.Rational) ^ 4 + 1)) * contactTarget genus faces allowance =
-      Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget genus allowance := by
+theorem contactTarget_paid {genus faces : Nat} {allowance : Rational} (positive : 0 < allowance) :
+    4 * (faces : Rational) ^ 4 * contactTarget genus faces allowance ≤
+      ConjugateRequest.energyAllowanceTarget genus allowance := by
+  have product : (4 * ((faces : Rational) ^ 4 + 1)) * contactTarget genus faces allowance =
+      ConjugateRequest.energyAllowanceTarget genus allowance := by
     unfold contactTarget
     rw [Budget.Aggregate.countCoordinate_eq, Fraction.Field.mul_comm]
     exact Fraction.Field.div_mul_cancel_of_ne _ _ (contact_denominator_positive faces).ne'
-  have factor : (4 : Fraction.Rational) * (faces : Fraction.Rational) ^ 4 ≤ 4 * ((faces : Fraction.Rational) ^ 4 + 1) :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (le_add_of_nonneg_right (by decide)) (by decide)
-  exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct factor (contactTarget_positive
+  have factor : (4 : Rational) * (faces : Rational) ^ 4 ≤ 4 * ((faces : Rational) ^ 4 + 1) :=
+    Arithmetic.mul_le_mul_of_nonneg_left_direct (le_add_of_nonneg_right (by decide)) (by decide)
+  exact (Arithmetic.mul_le_mul_of_nonneg_right_direct factor (contactTarget_positive
     positive).le).trans_eq product
 
 end
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target radius : Rational} {grid : NewtonGrid
@@ -171,43 +175,43 @@ open Purelib.Data.Rat in
 
 Combines the retained matching-side estimates with the fourth-power count payment and genus energy allowance, preserving
 the coefficient-norm square. -/
-theorem contact_paid {allowance : Fraction.Rational} (positive : 0 < allowance)
+theorem contact_paid {allowance : Rational} (positive : 0 < allowance)
     (horizontal : ∀ first last, GridSide.Matches .top (grid.faces.regulars[first.val]'first.isLt).cell.box
       (grid.faces.regulars[last.val]'last.isLt).cell.box →
-      Data.Gaussian.Norm.Basic.normSq (centeredSideSum samples .top first - centeredSideSum samples .bottom last) ≤
-        (genus : Fraction.Rational) ^ 2 * coefficientNormSq coefficients ^ 2 * contactTarget genus
+      normSq (centeredSideSum samples .top first - centeredSideSum samples .bottom last) ≤
+        (genus : Rational) ^ 2 * coefficientNormSq coefficients ^ 2 * contactTarget genus
           grid.faces.regulars.length allowance)
     (vertical : ∀ first last, GridSide.Matches .right (grid.faces.regulars[first.val]'first.isLt).cell.box
       (grid.faces.regulars[last.val]'last.isLt).cell.box →
-      Data.Gaussian.Norm.Basic.normSq (centeredSideSum samples .right first - centeredSideSum samples .left last) ≤
-        (genus : Fraction.Rational) ^ 2 * coefficientNormSq coefficients ^ 2 * contactTarget genus
+      normSq (centeredSideSum samples .right first - centeredSideSum samples .left last) ≤
+        (genus : Rational) ^ 2 * coefficientNormSq coefficients ^ 2 * contactTarget genus
           grid.faces.regulars.length allowance) :
-    Data.Gaussian.Norm.Basic.normSq (pairedCentered samples) ≤ (4 * (allowance * coefficientNormSq coefficients)) ^ 2
+    normSq (pairedCentered samples) ≤ (4 * (allowance * coefficientNormSq coefficients)) ^ 2
       := by
   have bound := paired_error_bound samples
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _)) (contactTarget_positive positive).le) horizontal vertical
+    (Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct
+      (Arithmetic.sq_nonneg_direct _)
+      (Arithmetic.sq_nonneg_direct _)) (contactTarget_positive positive).le) horizontal vertical
   have equal : samples.paired - pairedEndpoints samples = pairedCentered samples := by
     rw [paired_decomposition samples]
     ring1
   rw [equal] at bound
   apply bound.trans
   calc
-    _ = ((genus : Fraction.Rational) ^ 2 *
-        (4 * (grid.faces.regulars.length : Fraction.Rational) ^ 4 * contactTarget genus grid.faces.regulars.length
+    _ = ((genus : Rational) ^ 2 *
+        (4 * (grid.faces.regulars.length : Rational) ^ 4 * contactTarget genus grid.faces.regulars.length
           allowance)) *
           coefficientNormSq coefficients ^ 2 := by ring1
-    _ ≤ ((genus : Fraction.Rational) ^ 2 * Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget
+    _ ≤ ((genus : Rational) ^ 2 * ConjugateRequest.energyAllowanceTarget
       genus allowance) * coefficientNormSq coefficients ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (contactTarget_paid positive)
-          (Fraction.Order.Arithmetic.sq_nonneg_direct _))
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct (contactTarget_paid positive)
+          (Arithmetic.sq_nonneg_direct _))
+        (Arithmetic.sq_nonneg_direct _)
     _ ≤ (4 * allowance) ^ 2 * coefficientNormSq coefficients ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-        (Meshes.Newton.Surface.LocalEnergy.ConjugateRequest.energyAllowanceTarget_paid positive)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
+        (ConjugateRequest.energyAllowanceTarget_paid positive)
+        (Arithmetic.sq_nonneg_direct _)
     _ = _ := by ring1
 
 end PerimeterSamples
@@ -216,7 +220,7 @@ namespace GlobalEnergyRequest
 
 variable {depth : Nat}
   {requests : SynchronizedSurfaceRequests (fun sheet =>
-    Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts
+    surfaceMeshes partitions domains surfaceCuts
     sheet depth) fixed error}
   {ownershipAllowance exteriorAllowance faceAllowance contactAllowance : Rational}
 
@@ -239,14 +243,14 @@ theorem energy_lower_after_contacts
     {perimeters : SheetPerimeters requests assemblies} (faces : SheetFaces requests perimeters)
     {traces : PerimeterTraces requests} (samples : PerimeterSamples requests traces cache coefficients)
     (neighbors : PuncturedFaces.NeighborBank grid.faces) (positive : 0 < contactAllowance)
-    (contacts : Data.Gaussian.Norm.Basic.normSq (pairedCentered samples) ≤ (4 * (contactAllowance * coefficientNormSq
+    (contacts : normSq (pairedCentered samples) ≤ (4 * (contactAllowance * coefficientNormSq
       coefficients)) ^ 2) :
     (2 * (NewtonObservationSurfaceLower.surfaceLowerConstant observations - error - ownershipAllowance -
       exteriorAllowance - faceAllowance) - contactAllowance) *
       coefficientNormSq coefficients ≤
         (cornerBoundary faces + physicalCentered samples neighbors).im / 4 := by
   have normNonnegative : 0 ≤ coefficientNormSq coefficients := by
-    have bound := FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Fraction.Rational)) _
+    have bound := FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Rational)) _
       (fun row => Norm.Basic.normSq_nonneg (coefficients row))
     have same := FiniteSum.Fin.sumFin_congr
       (fun row : Fin genus => Norm.Basic.normSq_eq_canonical (coefficients row))
@@ -259,12 +263,12 @@ theorem energy_lower_after_contacts
     ring1
   have comparison := PreparedSurfaceCoercivity.boundaryEnergy_sub_budget_le samples.exterior
     (cornerBoundary faces + physicalCentered samples neighbors)
-    (contactAllowance * coefficientNormSq coefficients) (Fraction.Order.Arithmetic.mul_nonneg_direct positive.le
+    (contactAllowance * coefficientNormSq coefficients) (Arithmetic.mul_nonneg_direct positive.le
       normNonnegative)
     (difference ▸ contacts)
   have lower := request.energy_lower later readings observationFace faces samples neighbors
   rw [← samples.exterior_eq_paired_add_physical neighbors] at lower
-  have paid := (Fraction.Order.Arithmetic.sub_le_sub_direct lower
+  have paid := (Arithmetic.sub_le_sub_direct lower
     (le_rfl (a := contactAllowance * coefficientNormSq coefficients))).trans comparison
   exact (le_of_eq (by ring1)).trans paid
 

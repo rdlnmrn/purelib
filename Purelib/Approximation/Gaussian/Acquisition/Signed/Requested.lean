@@ -50,17 +50,17 @@ open Purelib.Data.Rat
 /-- One cached requested-target inspection, with a whole-ball classification. -/
 @[expose] public def Report (tau : Coherent.CoherentNamed) (start : State tau) (delta :
   Fraction.Rational) (positive : 0 < delta) :=
-  Sigma fun inspection : Name.Coherent.Refinement.Inspection tau start.retained
-      (delta ^ 2 / 16) (Purelib.Data.Rat.Bounds.Quarter.target_positive positive) =>
+  Sigma fun inspection : Inspection tau start.retained
+      (delta ^ 2 / 16) (Bounds.Quarter.target_positive positive) =>
     Signed.Decision inspection.ball delta
 
 /-- Refine the exact retained source to the requested squared-radius target and classify the cached ball at the
 displayed positive margin. -/
 @[expose] public def acquire (tau : Coherent.CoherentNamed) (start : State tau) (delta :
   Fraction.Rational) (positive : 0 < delta) :
-    Approximation.Gaussian.Acquisition.Signed.Requested.Report tau start delta positive :=
+    Report tau start delta positive :=
   let inspection := Inspection.request start.retained
-    (delta ^ 2 / 16) (Purelib.Data.Rat.Bounds.Quarter.target_positive positive)
+    (delta ^ 2 / 16) (Bounds.Quarter.target_positive positive)
   ⟨inspection, Signed.decide inspection.ball delta positive inspection.accurate⟩
 
 namespace Report
@@ -68,7 +68,7 @@ namespace Report
 /-- Read the acquisition state and cached ball retained by this exact requested inspection. -/
 @[expose] public def retained {tau : Coherent.CoherentNamed} {start : State tau} {delta :
   Fraction.Rational} {positive : 0 < delta}
-    (report : Approximation.Gaussian.Acquisition.Signed.Requested.Report tau start delta positive) :
+    (report : Report tau start delta positive) :
       State tau :=
   { retained := report.1.retained
     ball := report.1.ball
@@ -77,7 +77,7 @@ namespace Report
 /-- Every candidate at the retained requested-inspection state was possible at the original start. -/
 theorem possible_at_start {tau : Coherent.CoherentNamed} {start : State tau}
     {delta : Fraction.Rational} {positive : 0 < delta} (report :
-      Approximation.Gaussian.Acquisition.Signed.Requested.Report tau start delta positive)
+      Report tau start delta positive)
     {value : Data.Gaussian.Basic.Canonical} (possible : tau.name.process.Possible report.retained.retained.source value)
       :
     tau.name.process.Possible start.retained.source value := report.1.possible_at_start possible
@@ -85,14 +85,14 @@ theorem possible_at_start {tau : Coherent.CoherentNamed} {start : State tau}
 /-- Requested inspection preserves the canonical schedule index. -/
 theorem nextIndex_eq {tau : Coherent.CoherentNamed} {start : State tau}
     {delta : Fraction.Rational} {positive : 0 < delta} (report :
-      Approximation.Gaussian.Acquisition.Signed.Requested.Report tau start delta positive) :
+      Report tau start delta positive) :
     report.retained.retained.nextIndex = start.retained.nextIndex := report.1.index_eq
 
 /-- The new positive test implies the original test and constructs precisely the existing reusable enclosure, at the
 retained source. -/
 @[expose] public def enclosure {tau : Coherent.CoherentNamed} {start : State tau} {delta :
   Fraction.Rational} {positive : 0 < delta}
-    (report : Approximation.Gaussian.Acquisition.Signed.Requested.Report tau start delta positive) (high : delta / 2 <
+    (report : Report tau start delta positive) (high : delta / 2 <
       report.1.ball.center.im) :
     Positive.Basic.PositiveEnclosure tau :=
   Enclosure.enclosure report.retained
@@ -101,7 +101,7 @@ retained source. -/
 /-- The positive enclosure uses exactly the source retained by the requested inspection. -/
 @[simp] theorem enclosure_source {tau : Coherent.CoherentNamed} {start : State tau}
     {delta : Fraction.Rational} {positive : 0 < delta} (report :
-      Approximation.Gaussian.Acquisition.Signed.Requested.Report tau start delta positive)
+      Report tau start delta positive)
     (high : delta / 2 < report.1.ball.center.im) :
     (report.enclosure high).state = report.retained.retained.source := rfl
 
@@ -109,7 +109,7 @@ retained source. -/
 -/
 @[expose] public def negative {tau : Coherent.CoherentNamed} {start : State tau} {delta :
   Fraction.Rational} {positive : 0 < delta}
-    (report : Approximation.Gaussian.Acquisition.Signed.Requested.Report tau start delta positive)
+    (report : Report tau start delta positive)
     (upper : ∀ {value : Data.Gaussian.Basic.Canonical}, report.1.ball.Contains value → value.im ≤ -(delta / 4)) :
     Certificate.Negative tau report.retained delta where
   upper := by
@@ -122,7 +122,7 @@ retained source. -/
 -/
 @[expose] public def near {tau : Coherent.CoherentNamed} {start : State tau} {delta :
   Fraction.Rational} {positive : 0 < delta}
-    (report : Approximation.Gaussian.Acquisition.Signed.Requested.Report tau start delta positive)
+    (report : Report tau start delta positive)
     (bounds : ∀ {value : Data.Gaussian.Basic.Canonical}, report.1.ball.Contains value →
       -delta < value.im ∧ value.im < delta) : Certificate.Near tau report.retained delta where
   bounds := by

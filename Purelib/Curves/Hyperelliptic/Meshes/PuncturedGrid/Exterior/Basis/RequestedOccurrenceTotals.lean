@@ -79,15 +79,15 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedRunB
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedOccurrenceRuns
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
@@ -95,71 +95,71 @@ open Purelib.Riemann.Normalization.RectangularInverseModels
 
 namespace RequestedOccurrenceRuns
 
-variable (retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared)
+variable (retained : Preparation.CommonBasisPreparation prepared)
   {index : Nat} (inputs : retained.Inputs index)
   (outer : Fin prepared.occurrences.length)
   {whole :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
     regular domains differential} {previous :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+    RegularDomainMeshes.RegularMeshes.CommonCuts domains}
   (selected : SourceCuts whole previous)
-  (member : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer ∈
+  (member : ParentIndices.occurrenceAt prepared.occurrences outer ∈
     whole.occurrences)
   {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {meshTarget :
-    Normalization.InverseRootPolynomial.Coordinate}
-  (request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
-    (fun sheet => Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
+    RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {meshTarget :
+    InverseRootPolynomial.Coordinate}
+  (request : TwoSheetBilinearRequest.TwoSheetRequest
+    (fun sheet => RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
       coarseDepth) fixed meshTarget)
 
 variable {stage : Nat} (traces : Paths.RectangularPerimeterTraces.PerimeterTraces
-  (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedOccurrence.RequestedOccurrenceRuns.mesh outer selected
+  (RequestedOccurrence.RequestedOccurrenceRuns.mesh outer selected
   request))
-  (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage)
-  (banks : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.PerimeterSamples.SharedPerimeter.Banks (occurrence :=
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer) traces
+  (cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage)
+  (banks : SharedPerimeter.Banks (occurrence :=
+    ParentIndices.occurrenceAt prepared.occurrences outer) traces
     cache)
   (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
-  {allowance : Normalization.InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
+  {allowance : InverseRootPolynomial.Coordinate} (budget : Path.NoisyPathArea.LengthErrorBudget
     (Paths.RectangularDyadicPairedTrace.dyadicCount
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedOccurrence.RequestedOccurrenceRuns.mesh outer selected
+    (RequestedOccurrence.RequestedOccurrenceRuns.mesh outer selected
     request).depth) allowance)
   (owners : OwnerRequest
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer)
+    (ParentIndices.occurrenceAt prepared.occurrences outer)
     budget.tolerance) (later : owners.index ≤ stage)
-  {junctionAllowance : Normalization.InverseRootPolynomial.Coordinate} (junctionBudget :
+  {junctionAllowance : InverseRootPolynomial.Coordinate} (junctionBudget :
     Path.NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
   (junctionOwners : OwnerRequest
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences outer)
+    (ParentIndices.occurrenceAt prepared.occurrences outer)
     junctionBudget.tolerance)
   (junctionLater : junctionOwners.index ≤ stage)
 
 /-- Whole-face refinement preserves the complete acquired occurrence word. -/
 theorem build_increments :
-    (List.ofFn (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedOccurrence.RequestedOccurrenceRuns.build
+    (List.ofFn (RequestedOccurrence.RequestedOccurrenceRuns.build
       retained inputs outer selected member request traces cache banks coefficients
       budget owners later junctionBudget junctionOwners junctionLater).physical).flatten =
       let sample := (banks.sample traces cache coefficients).get traces cache coefficients
-        (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+        (ParentIndices.occurrenceAt prepared.occurrences
           outer).sideOccurrence.side
-      if (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+      if (ParentIndices.occurrenceAt prepared.occurrences
         outer).sourceForward then Path.CenteredPathIncrements.Sample.increments sample
       else Path.PairedAreaReversal.reverseIncrements (Path.CenteredPathIncrements.Sample.increments sample) :=
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SharedOccurrenceTotals.SharedOccurrenceRuns.build_increments
+  SharedOccurrenceTotals.SharedOccurrenceRuns.build_increments
     retained inputs outer traces cache banks coefficients
     budget owners later junctionBudget junctionOwners junctionLater
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBank.ParentBlock.forOccurrence selected member request)
+      (ParentBank.ParentBlock.forOccurrence selected member request)
       rfl
 
 /-- The actual acquired occurrence has its signed original corner displacement. -/
 theorem build_total :
     Path.PairedIncrementArea.total (List.ofFn
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedOccurrence.RequestedOccurrenceRuns.build retained
+      (RequestedOccurrence.RequestedOccurrenceRuns.build retained
       inputs outer selected member request traces cache banks coefficients
       budget owners later junctionBudget junctionOwners junctionLater).physical).flatten =
-      let occurrence := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+      let occurrence := ParentIndices.occurrenceAt
         prepared.occurrences outer
-      let total := Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.CornerTotals.SharedPerimeter.cachedIncrement
+      let total := CornerTotals.SharedPerimeter.cachedIncrement
         (lifted := lifted) cache coefficients
         occurrence.sideOccurrence.position occurrence.sideOccurrence.sheet occurrence.sideOccurrence.side
       if occurrence.sourceForward then total else Topology.Polygon.Stokes.PrimitivePoint.sub
@@ -168,11 +168,11 @@ theorem build_total :
     [build_increments]
   dsimp only
   split
-  · exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.CornerTotals.SharedPerimeter.total_eq_cached traces cache
+  · exact CornerTotals.SharedPerimeter.total_eq_cached traces cache
       coefficients _
   · rw [Path.PairedAreaReversal.total_reverseIncrements]
     exact congrArg (Topology.Polygon.Stokes.PrimitivePoint.sub Topology.Polygon.Stokes.PrimitivePoint.zero)
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.CornerTotals.SharedPerimeter.total_eq_cached traces cache
+      (CornerTotals.SharedPerimeter.total_eq_cached traces cache
       coefficients _)
 
 end RequestedOccurrenceRuns

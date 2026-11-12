@@ -92,18 +92,18 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceRefe
   (ParentEvaluation)
 open Purelib.Riemann.Normalization
 open Purelib.Data.Rat.Fraction.Compatibility
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential other :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential other :
+    Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
   {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
-    regular domains differential} {target : Purelib.Data.Rat.Fraction.Rational} {minimum floor : Nat}
+    AllSurfacePreparation
+    regular domains differential} {target : Rational} {minimum floor : Nat}
 
 namespace PhysicalOccurrenceSchedule
 
@@ -114,7 +114,7 @@ structure PhysicalOccurrencePreparation (request : PhysicalSourceRequest prepare
   minimum floor)
     (i : Fin prepared.occurrences.length) (count : Nat) where
   /-- The original physical-piece count budget allocated one eighth of the occurrence allowance. -/ budget :
-    PhysicalOwnerRequest.PhysicalOwnerBudget (request.plans.get i) count (request.allowance / 8)
+    PhysicalOwnerBudget (request.plans.get i) count (request.allowance / 8)
   /-- The cached original paired source plan refined to pay its retained query requirements. -/ sources :
     budget.Prepared
   /-- The source-run refinement requirement at the retained parent count and density. -/ refinement :
@@ -131,9 +131,9 @@ namespace PhysicalOccurrenceSchedule.PhysicalOccurrencePreparation
 order. -/
 @[expose] def build (request : PhysicalSourceRequest prepared other target minimum floor)
     (i : Fin prepared.occurrences.length) (count : Nat) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOccurrenceSchedule.PhysicalOccurrencePreparation
+      PhysicalOccurrencePreparation
       request i count :=
-  let positive := Fraction.Order.Field.div_pos_direct request.positive (by decide : (0 : Fraction.Rational) < 8)
+  let positive := Fraction.Order.Field.div_pos_direct request.positive (by decide : (0 : Rational) < 8)
   let budget := PhysicalOwnerBudget.build (request.plans.get i) count (request.allowance / 8) positive
   let sources := budget.prepare
   ⟨budget, sources, SourceRunRefinement.sourceRunRefinement sources.plan (request.allowance / 8) positive floor⟩
@@ -146,8 +146,8 @@ namespace PhysicalOccurrenceSchedule
 @[expose] def PhysicalOccurrencePreparations (request : PhysicalSourceRequest prepared other
   target minimum floor)
     (counts : Fin prepared.occurrences.length → Nat) :=
-  Data.Vector.DependentVector (fun i =>
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOccurrenceSchedule.PhysicalOccurrencePreparation request
+  DependentVector (fun i =>
+    PhysicalOccurrencePreparation request
     i (counts i))
 
 /-- The complete retained owner-request bank at one common physical trace depth. -/
@@ -155,9 +155,9 @@ namespace PhysicalOccurrenceSchedule
   minimum floor}
     {counts : Fin prepared.occurrences.length → Nat}
     (entries :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOccurrenceSchedule.PhysicalOccurrencePreparations
+      PhysicalOccurrencePreparations
       request counts) (physicalDepth : Nat) :=
-  Data.Vector.DependentVector (fun i => (entries.get i).budget.Owners
+  DependentVector (fun i => (entries.get i).budget.Owners
     (RectangularDyadicPairedTrace.dyadicCount physicalDepth))
 
 end PhysicalOccurrenceSchedule
@@ -169,14 +169,14 @@ structure PhysicalOccurrenceSchedule (request : PhysicalSourceRequest prepared o
   minimum floor)
     (counts : Fin prepared.occurrences.length → Nat) where
   /-- The cached original occurrence preparations and their exact dependent piece counts. -/ entries :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOccurrenceSchedule.PhysicalOccurrencePreparations request
+    PhysicalOccurrenceSchedule.PhysicalOccurrencePreparations request
     counts
   /-- The common physical trace depth paying all original occurrence refinements. -/ physicalDepth : Nat
   /-- The requested physical floor is paid by the common physical depth. -/ physicalFloor_le : floor ≤ physicalDepth
   /-- Every original occurrence refinement is paid at the common physical depth. -/ physical_ge : ∀ i, (entries.get
     i).refinement.depth ≤ physicalDepth
   /-- The cached complete bank of original piece and junction owner requests at that physical depth. -/ owners :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOccurrenceSchedule.PhysicalOccurrenceOwners entries
+    PhysicalOccurrenceSchedule.PhysicalOccurrenceOwners entries
     physicalDepth
   /-- The common numerical stage paying the original request, source plans and owner banks. -/ index : Nat
   /-- The common numerical stage equals the maximum of its retained original requirements. -/ index_eq : index = max
@@ -206,13 +206,13 @@ schedules. -/
       PhysicalOccurrenceSchedule request
       counts := by
   let entries :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOccurrenceSchedule.PhysicalOccurrencePreparations request
+    PhysicalOccurrencePreparations request
     counts :=
     DependentVector.ofFn fun i =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOccurrenceSchedule.PhysicalOccurrencePreparation.build
+      PhysicalOccurrencePreparation.build
       request i (counts i)
   let physicalDepth := max floor (entries.maximum fun _ entry => entry.refinement.depth)
-  let owners : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOccurrenceSchedule.PhysicalOccurrenceOwners
+  let owners : PhysicalOccurrenceOwners
     entries physicalDepth :=
     DependentVector.ofFn fun i => (entries.get i).budget.owners
       (RectangularDyadicPairedTrace.dyadicCount physicalDepth)
@@ -247,7 +247,7 @@ plans and recompute only the owner requests that depend on the physical trace's 
 @[expose] def atPhysicalDepth (physicalDepth : Nat) (later : schedule.physicalDepth ≤ physicalDepth) :
     PhysicalOccurrenceSchedule request
       counts := by
-  let owners : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalOccurrenceSchedule.PhysicalOccurrenceOwners
+  let owners : PhysicalOccurrenceOwners
     schedule.entries physicalDepth :=
     DependentVector.ofFn fun i => (schedule.entries.get i).budget.owners
       (RectangularDyadicPairedTrace.dyadicCount physicalDepth)
@@ -289,25 +289,25 @@ theorem source_refined {depth : Nat} (later : schedule.depth ≤ depth) (i : Fin
 
 /-- The selected physical mesh pays every retained source width cap. -/
 theorem physical_refined (i : Fin prepared.occurrences.length) :
-    (1 / 2 : Fraction.Rational)^schedule.physicalDepth ≤ (schedule.entries.get i).refinement.width := by
+    (1 / 2 : Rational)^schedule.physicalDepth ≤ (schedule.entries.get i).refinement.width := by
   have later := schedule.physical_ge i
   let extra := schedule.physicalDepth - (schedule.entries.get i).refinement.depth
   have same : schedule.physicalDepth = (schedule.entries.get i).refinement.depth + extra :=
     (Data.Nat.Subtraction.add_sub_of_le later).symm
   rw [(schedule.entries.get i).refinement.width_eq, same, pow_add]
-  have bounded := Fraction.Order.Arithmetic.pow_le_pow_direct (by decide : (0 : Fraction.Rational) ≤ 1 / 2)
-    (by decide : (1 / 2 : Fraction.Rational) ≤ 1) extra
+  have bounded := Fraction.Order.Arithmetic.pow_le_pow_direct (by decide : (0 : Rational) ≤ 1 / 2)
+    (by decide : (1 / 2 : Rational) ≤ 1) extra
   rw [one_pow] at bounded
   exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct bounded
     (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) _)).trans_eq (mul_one _)
 
-variable {stage depth : Nat} {box otherBox : Purelib.Geometry.Rational.Box}
-  (sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box)
-  (otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox)
+variable {stage depth : Nat} {box otherBox : Geometry.Rational.Box}
+  (sample : Cap.Primitives.Sample cap differential stage box)
+  (otherSample : Cap.Primitives.Sample cap other stage otherBox)
 
 /-- The complete dependent bank evaluating the exact retained source plans at their scheduled additional depths. -/
-@[expose] def Evaluations := Data.Vector.DependentVector (fun i : Fin prepared.occurrences.length =>
-  PairedSourcePlan.ParentEvaluation (schedule.entries.get i).sources.plan sample otherSample (schedule.fine depth i))
+@[expose] def Evaluations := DependentVector (fun i : Fin prepared.occurrences.length =>
+  ParentEvaluation (schedule.entries.get i).sources.plan sample otherSample (schedule.fine depth i))
 
 /-- Evaluate the query-refined owners themselves, at one later cap stage. -/
 @[expose] def evaluate (chart : HyperellipticReciprocal.originOrder curve = 0)

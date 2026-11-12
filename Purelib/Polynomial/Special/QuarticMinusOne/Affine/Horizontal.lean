@@ -22,6 +22,9 @@ import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Rat.Fraction.Order
+open Purelib.Polynomial.Dense.Gaussian.Substitution
+
 open Purelib.Polynomial.Dense.Basic (DensePolynomial)
 open Purelib.Polynomial.Dense.Gaussian.Basic.ExplicitQuarticPreparedHorizontalCells (HorizontalGaussianPolynomial)
 
@@ -67,7 +70,7 @@ The stage retains the original quarter-unit direction and the preceding exact de
 private def horizontalStage1 (origin :
   Gaussian.Basic.Canonical) :
     HorizontalGaussianPolynomial :=
-  Dense.Gaussian.Substitution.Affine.mulLine origin horizontalCellDirection 0
+  Affine.mulLine origin horizontalCellDirection 0
     +
     DensePolynomial.constant 1
 
@@ -77,7 +80,7 @@ The stage retains the original quarter-unit direction and the preceding exact de
 private def horizontalStage2 (origin :
   Gaussian.Basic.Canonical) :
     HorizontalGaussianPolynomial :=
-  Dense.Gaussian.Substitution.Affine.mulLine origin horizontalCellDirection
+  Affine.mulLine origin horizontalCellDirection
       (horizontalStage1 origin) + DensePolynomial.constant 0
 
 /-- The Horner stage representing the horizontal affine parameter to power 2.
@@ -86,7 +89,7 @@ The stage retains the original quarter-unit direction and the preceding exact de
 private def horizontalStage3 (origin :
   Gaussian.Basic.Canonical) :
     HorizontalGaussianPolynomial :=
-  Dense.Gaussian.Substitution.Affine.mulLine origin horizontalCellDirection
+  Affine.mulLine origin horizontalCellDirection
       (horizontalStage2 origin) + DensePolynomial.constant 0
 
 /-- The Horner stage representing the horizontal affine parameter to power 3.
@@ -95,7 +98,7 @@ The stage retains the original quarter-unit direction and the preceding exact de
 private def horizontalStage4 (origin :
   Gaussian.Basic.Canonical) :
     HorizontalGaussianPolynomial :=
-  Dense.Gaussian.Substitution.Affine.mulLine origin horizontalCellDirection
+  Affine.mulLine origin horizontalCellDirection
       (horizontalStage3 origin) + DensePolynomial.constant 0
 
 /-- Exact coefficients of the horizontal Horner stage of degree 0. -/
@@ -115,7 +118,7 @@ private theorem horizontalStage2_eq (origin :
       ⟨[horizontalCellDirection, origin]⟩ := by
   unfold horizontalStage2
   rw [horizontalStage1_eq, DensePolynomial.add_constant_zero,
-    Dense.Gaussian.Substitution.Affine.normalize_mulLine]
+    Affine.normalize_mulLine]
   apply DensePolynomial.ext
   rw [Path.Affine.SmallCoefficients.mulLine_one_coeff origin
     horizontalCellDirection 1 originNonzero
@@ -134,7 +137,7 @@ private theorem horizontalStage3_eq (origin :
   unfold horizontalStage3
   rw [horizontalStage2_eq origin originNonzero,
     DensePolynomial.add_constant_zero,
-    Dense.Gaussian.Substitution.Affine.normalize_mulLine]
+    Affine.normalize_mulLine]
   apply DensePolynomial.ext
   rw [Path.Affine.SmallCoefficients.mulLine_two_coeffs origin
     horizontalCellDirection
@@ -163,7 +166,7 @@ private theorem horizontalStage4_eq (origin :
   unfold horizontalStage4
   rw [horizontalStage3_eq origin originNonzero,
     DensePolynomial.add_constant_zero,
-    Dense.Gaussian.Substitution.Affine.normalize_mulLine]
+    Affine.normalize_mulLine]
   apply DensePolynomial.ext
   rw [Path.Affine.SmallCoefficients.mulLine_three_coeffs origin
     horizontalCellDirection
@@ -192,20 +195,20 @@ the displayed quartic coefficient list without changing its normalization. -/
 theorem horizontalQuarticCache_eq (origin :
   Gaussian.Basic.Canonical)
     (originNonzero : origin ≠ 0) :
-    Dense.Gaussian.Substitution.Affine.composeLine
+    Affine.composeLine
         Riemann.Periods.PeriodCurves.quarticPolynomial origin
           horizontalCellDirection =
             horizontalQuarticCache origin := by
-  unfold Dense.Gaussian.Substitution.Affine.composeLine Dense.Gaussian.Substitution.Affine.composeLineCoeffs
+  unfold Affine.composeLine Affine.composeLineCoeffs
   rw [show Riemann.Periods.PeriodCurves.quarticPolynomial.coeffs =
     [(1 : Gaussian.Basic.Canonical), 0, 0, 0, -1] from by with_unfolding_all rfl]
-  change Dense.Gaussian.Substitution.Affine.mulLine origin
+  change Affine.mulLine origin
     horizontalCellDirection
       (horizontalStage4 origin) + DensePolynomial.constant (-1) =
         _
   rw [horizontalStage4_eq origin originNonzero]
   have mulEq :
-      Dense.Gaussian.Substitution.Affine.mulLine origin
+      Affine.mulLine origin
         horizontalCellDirection
           ⟨[horizontalCellDirection ^ 3,
             3 * origin * horizontalCellDirection ^ 2,
@@ -250,8 +253,8 @@ The original quartic coefficients contribute monotone nonnegative power
 bounds. Their retained weighted sum and maximum with one preserve the order. -/
 theorem horizontalQuarticLipschitz_mono
     (origin target : Gaussian.Basic.Canonical)
-    (normLe : Data.Gaussian.Norm.Basic.normSq origin ≤
-      Data.Gaussian.Norm.Basic.normSq target) :
+    (normLe : Gaussian.Norm.Basic.normSq origin ≤
+      Gaussian.Norm.Basic.normSq target) :
     Dense.Gaussian.Bounds.Box.denseLipschitzBound
         (horizontalQuarticCache origin)
           Riemann.Branches.ClearSheetContinuation.parameterAmbient ≤
@@ -261,67 +264,67 @@ theorem horizontalQuarticLipschitz_mono
   have normNonnegative :=
     Gaussian.Norm.Basic.normSq_nonneg origin
   have squareLe :
-      Data.Gaussian.Norm.Basic.normSq origin ^ 2 ≤
-        Data.Gaussian.Norm.Basic.normSq target ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct normNonnegative normLe 2
+      Gaussian.Norm.Basic.normSq origin ^ 2 ≤
+        Gaussian.Norm.Basic.normSq target ^ 2 :=
+    Arithmetic.pow_le_pow_direct normNonnegative normLe 2
   have cubeLe :
-      Data.Gaussian.Norm.Basic.normSq origin ^ 3 ≤
-        Data.Gaussian.Norm.Basic.normSq target ^ 3 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct normNonnegative normLe 3
+      Gaussian.Norm.Basic.normSq origin ^ 3 ≤
+        Gaussian.Norm.Basic.normSq target ^ 3 :=
+    Arithmetic.pow_le_pow_direct normNonnegative normLe 3
   have secondLe :
-      Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq
           (4 * origin * horizontalCellDirection ^ 3) ≤
-        Data.Gaussian.Norm.Basic.normSq
+        Gaussian.Norm.Basic.normSq
           (4 * target * horizontalCellDirection ^ 3) := by
     simp only [Gaussian.Norm.Basic.normSq_mul,
       Gaussian.Power.normSq_pow]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct normLe
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct normLe
         (Gaussian.Norm.Basic.normSq_nonneg 4))
-      (Fraction.Order.Arithmetic.pow_nonneg_direct
+      (Arithmetic.pow_nonneg_direct
         (Gaussian.Norm.Basic.normSq_nonneg
           horizontalCellDirection) 3)
   have thirdLe :
-      Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq
           (6 * origin ^ 2 * horizontalCellDirection ^ 2) ≤
-        Data.Gaussian.Norm.Basic.normSq
+        Gaussian.Norm.Basic.normSq
           (6 * target ^ 2 * horizontalCellDirection ^ 2) := by
     simp only [Gaussian.Norm.Basic.normSq_mul,
       Gaussian.Power.normSq_pow]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct squareLe
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct squareLe
         (Gaussian.Norm.Basic.normSq_nonneg 6))
-      (Fraction.Order.Arithmetic.pow_nonneg_direct
+      (Arithmetic.pow_nonneg_direct
         (Gaussian.Norm.Basic.normSq_nonneg
           horizontalCellDirection) 2)
   have fourthLe :
-      Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq
           (4 * origin ^ 3 * horizontalCellDirection) ≤
-        Data.Gaussian.Norm.Basic.normSq
+        Gaussian.Norm.Basic.normSq
           (4 * target ^ 3 * horizontalCellDirection) := by
     simp only [Gaussian.Norm.Basic.normSq_mul,
       Gaussian.Power.normSq_pow]
-    exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct cubeLe
+    exact Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct cubeLe
         (Gaussian.Norm.Basic.normSq_nonneg 4))
       (Gaussian.Norm.Basic.normSq_nonneg
         horizontalCellDirection)
   unfold horizontalQuarticCache
-  rw [Purelib.Riemann.Branches.ClearSheetContinuation.parameterAmbient_denseLipschitzBound_fiveCoeffs,
-    Purelib.Riemann.Branches.ClearSheetContinuation.parameterAmbient_denseLipschitzBound_fiveCoeffs]
-  apply Fraction.Order.Basic.max_le
-  · exact Fraction.Order.Basic.le_max_left _ _
-  · apply Data.Rat.Fraction.Order.Basic.le_trans _ _ _ ?_ (Fraction.Order.Basic.le_max_right _ _)
-    exact Fraction.Order.Arithmetic.add_le_add_direct
-      (Fraction.Order.Arithmetic.add_le_add_direct
-        (Fraction.Order.Arithmetic.add_le_add_direct le_rfl
-          (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct secondLe
+  rw [Riemann.Branches.ClearSheetContinuation.parameterAmbient_denseLipschitzBound_fiveCoeffs,
+    Riemann.Branches.ClearSheetContinuation.parameterAmbient_denseLipschitzBound_fiveCoeffs]
+  apply Basic.max_le
+  · exact Basic.le_max_left _ _
+  · apply Basic.le_trans _ _ _ ?_ (Basic.le_max_right _ _)
+    exact Arithmetic.add_le_add_direct
+      (Arithmetic.add_le_add_direct
+        (Arithmetic.add_le_add_direct le_rfl
+          (Arithmetic.mul_le_mul_of_nonneg_left_direct secondLe
             (Fraction.Cast.Order.natCast_pos_direct
               (n := 192) (by omega)).le))
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct thirdLe
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct thirdLe
           (Fraction.Cast.Order.natCast_pos_direct
             (n := 32) (by omega)).le))
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct fourthLe
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct fourthLe
         (Fraction.Cast.Order.natCast_pos_direct
           (n := 4) (by omega)).le)
 end Purelib.Polynomial.Special.QuarticMinusOne.Affine.Horizontal

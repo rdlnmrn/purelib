@@ -20,6 +20,7 @@ import Purelib.Integration.Algebraic.SquareFactor.CellModels
 import Purelib.Geometry.Rational.Affine
 import Purelib.Data.Rat.Fraction
 import Purelib.Polynomial.Dense.Gaussian.Path.Bounds.Basic
+import Purelib.Approximation.Gaussian.Provenance.Power
 
 @[expose] public section
 
@@ -105,6 +106,12 @@ def source_original (edge : OwnedCells.Edge safe) (originalDomain : 0 < data.squ
   rw [SourceTransport.source_eq_reduced edge]
   exact NamedTransport.coefficient_transport prepared.weight _
     (data.squareFactor.eval_nonzero originalDomain (edge.span.inside_unit (edge.span.parameter_inside inside)))
-    (edge.root fraction inside).value (edge.root fraction inside).apart
+    (edge.root fraction inside).value (edge.root fraction inside).apart (by
+      have square := (edge.root fraction inside).square
+      rewrite [show Name.Basic.Named.exact (edge.target fraction) = Name.Basic.Named.exact
+        (prepared.reduction.radicand.eval (segment.point (edge.span.parameter fraction))) from
+          congrArg Name.Basic.Named.exact (edge.target_eq fraction)] at square
+      exact Purelib.Approximation.Gaussian.Provenance.Power.PowerIdentity.ofSquare square)
+    (safe.denominator_nonzero (edge.span.inside_unit (edge.span.parameter_inside inside)))
 
 end Purelib.Integration.Algebraic.SquareFactor.SourceTransport

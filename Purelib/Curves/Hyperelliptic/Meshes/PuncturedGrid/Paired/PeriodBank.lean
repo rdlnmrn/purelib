@@ -54,25 +54,25 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank
 set_option genInjectivity false in
 /-- The existential geometry is retained as executable constructor data,
 with the dependent preparation certifying the exact ordered branch words. -/
-inductive PairedPeriodBank {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus) : Type 4 where
+inductive PairedPeriodBank {genus : Nat} (curve : Basic.HyperellipticCurve genus) : Type 4 where
   /-- The empty original program family with its retained proof of genus zero. -/ | empty (zero : genus = 0)
   /-- The actual original grid, ordered pairing and dependent corrected-period preparation. -/ | retained {branches :
-    Hyperelliptic.Branches.BranchIsolation.Data curve} {higher : 1 < curve.polynomial.natDegree}
+    Branches.BranchIsolation.Data curve} {higher : 1 < curve.polynomial.natDegree}
       {base : Meshes.FramedPuncturedGrid curve branches higher} {lifted : Meshes.LiftedPuncturedGrid base}
-      {bank : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet :
+      {bank : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet :
         Fin 2} {ordered :
-        Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
-        {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered}
-      (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired)
+        BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered bank sheet}
+        {paired : OrderedBranchPairs.Ordered.Paired ordered}
+      (prepared : PeriodPrograms.Prepared paired)
 
 constructive_injectivity PairedPeriodBank
 
 namespace PairedPeriodBank
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus}
 
 /-- Read the actual corrected period programs, with the empty family in genus zero. -/
-@[expose] def periodData : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve →
+@[expose] def periodData : PairedPeriodBank curve →
   Periods.PeriodMatrix.PeriodData curve
   | .empty zero =>
       { cycles :=
@@ -87,7 +87,7 @@ set_option genInjectivity false in
 share the retained root, and every differential is the recast program of
 these states. This is the ownership boundary for checkpoint acquisition;
 it does not identify corrected walks with the former raw reference tours. -/
-structure InitialRow (bank : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve) (index : Fin
+structure InitialRow (bank : PairedPeriodBank curve) (index : Fin
   genus) where
   /-- The original root name shared by the retained A and corrected B initial states. -/ root :
     Gaussian.Name.Basic.Named
@@ -120,7 +120,7 @@ constructive_injectivity InitialRow
 
 /-- Read the already materialized states, without isolating roots,
 preparing walks, or extracting centered parents again. -/
-@[expose] def initialRow (bank : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve) (index :
+@[expose] def initialRow (bank : PairedPeriodBank curve) (index :
   Fin genus) : bank.InitialRow index :=
   match bank with
   | .empty zero => Fin.elim0 (Fin.cast zero index)
@@ -131,41 +131,41 @@ preparing walks, or extracting centered parents again. -/
 /-- Retain the supplied branch isolation and construct every subsequent
 finite stage once. No caller root owner, order, B correction or integration
 certificate is required. -/
-@[expose] def ofData : {genus : Nat} → (curve : Hyperelliptic.Basic.HyperellipticCurve genus) →
-  Hyperelliptic.Branches.BranchIsolation.Data curve →
-  Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve
+@[expose] def ofData : {genus : Nat} → (curve : Basic.HyperellipticCurve genus) →
+  Branches.BranchIsolation.Data curve →
+  PairedPeriodBank curve
   | 0, _, _ => .empty rfl
   | genus + 1, curve, branches =>
-      let higher := Purelib.Curves.Hyperelliptic.Branches.BranchCutLifts.degreeGtOne_of_cycleIndex curve (⟨0,
+      let higher := Branches.BranchCutLifts.degreeGtOne_of_cycleIndex curve (⟨0,
         Nat.zero_lt_succ genus⟩ : Fin (genus + 1))
       let base := Meshes.FramedPuncturedGrid.ofData curve branches higher
       let lifted := Meshes.LiftedPuncturedGrid.build base
-      let bank := Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.build lifted
+      let bank := BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.build lifted
       let ordered := bank.ordered 0
-      let paired := Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.paired ordered
-      .retained (Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.prepare paired)
+      let paired := OrderedBranchPairs.Ordered.paired ordered
+      .retained (PeriodPrograms.prepare paired)
 
 /-- Intrinsic curve data suffices for acquisition of the full corrected
 program family. The analytic boundary and energy estimates are separate. -/
-@[expose] def ofCurve : {genus : Nat} → (curve : Hyperelliptic.Basic.HyperellipticCurve genus) →
-  Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank curve
+@[expose] def ofCurve : {genus : Nat} → (curve : Basic.HyperellipticCurve genus) →
+  PairedPeriodBank curve
   | 0, _ => .empty rfl
-  | _ + 1, curve => Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank.ofData curve
-    (Hyperelliptic.Branches.BranchIsolation.data curve)
+  | _ + 1, curve => PairedPeriodBank.ofData curve
+    (Branches.BranchIsolation.data curve)
 
 /-- With an actual period index, intrinsic curve acquisition agrees with acquisition from its original branch-isolation
 data. -/
-theorem ofCurve_positive (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (index : Fin genus) :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank.ofCurve curve =
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank.ofData curve
-      (Hyperelliptic.Branches.BranchIsolation.data curve) := by
+theorem ofCurve_positive (curve : Basic.HyperellipticCurve genus) (index : Fin genus) :
+    PairedPeriodBank.ofCurve curve =
+      PairedPeriodBank.ofData curve
+      (Branches.BranchIsolation.data curve) := by
   cases genus with
   | zero => exact Fin.elim0 index
   | succ => rfl
 
 /-- Genus-zero acquisition returns the exact empty bank. -/
-theorem ofCurve_zero (curve : Hyperelliptic.Basic.HyperellipticCurve 0) :
-  Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank.PairedPeriodBank.ofCurve curve = .empty rfl := rfl
+theorem ofCurve_zero (curve : Basic.HyperellipticCurve 0) :
+  PairedPeriodBank.ofCurve curve = .empty rfl := rfl
 
 end PairedPeriodBank
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodBank

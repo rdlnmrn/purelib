@@ -37,7 +37,7 @@ millionth brackets with opposite quadratic signs.
 
 namespace Purelib.Geometry.Polygons.Regular.Pentagon.MetricScalars
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 /-- Derive the pentagon's radius, median and diagonal scalar identities.
 
@@ -57,50 +57,50 @@ public theorem metricScalars (a b q r d : K)
       d = b * r / a := by
   have fourNonzero := Characteristic.Nonzero.four_ne_zero twoNonzero
   have fourANonzero : (4 : K) * a ≠ 0 :=
-    Algebra.Field.ExplicitField.mul_ne_zero fourNonzero aNonzero
+    ExplicitField.mul_ne_zero fourNonzero aNonzero
   have radiusFirst : q = (1 - a) * r / b := by
-    apply Algebra.Field.ExplicitField.eq_of_mul_eq_mul_right bNonzero
+    apply ExplicitField.eq_of_mul_eq_mul_right bNonzero
     calc
       q * b = q * (4 * a * (1 - a)) := by rw [betaValue]
       _ = (1 - a) * r := by rw [sideValue]; ring1
       _ = ((1 - a) * r / b) * b :=
-        (Algebra.Field.ExplicitField.div_mul_cancel _ bNonzero).symm
+        (ExplicitField.div_mul_cancel _ bNonzero).symm
   have radiusSecond : q = r / (4 * a) := by
-    apply Algebra.Field.ExplicitField.eq_of_mul_eq_mul_right fourANonzero
+    apply ExplicitField.eq_of_mul_eq_mul_right fourANonzero
     calc
       q * (4 * a) = r := by rw [sideValue]; ring1
       _ = (r / (4 * a)) * (4 * a) :=
-        (Algebra.Field.ExplicitField.div_mul_cancel _ fourANonzero).symm
+        (ExplicitField.div_mul_cancel _ fourANonzero).symm
   have midpointValue :
       (2 * (q + q) - r) / 4 = (1 - a) * r / (4 * a) := by
-    apply Algebra.Field.ExplicitField.eq_of_mul_eq_mul_right
-      (Algebra.Field.ExplicitField.mul_ne_zero fourNonzero fourANonzero)
+    apply ExplicitField.eq_of_mul_eq_mul_right
+      (ExplicitField.mul_ne_zero fourNonzero fourANonzero)
     calc
       ((2 * (q + q) - r) / 4) * (4 * (4 * a)) =
           (((2 * (q + q) - r) / 4) * 4) * (4 * a) := by ring1
       _ = (2 * (q + q) - r) * (4 * a) := by
-        rw [Algebra.Field.ExplicitField.div_mul_cancel _ fourNonzero]
+        rw [ExplicitField.div_mul_cancel _ fourNonzero]
       _ = ((1 - a) * r) * 4 := by rw [sideValue]; ring1
       _ = (((1 - a) * r / (4 * a)) * (4 * a)) * 4 := by
-        rw [Algebra.Field.ExplicitField.div_mul_cancel _ fourANonzero]
+        rw [ExplicitField.div_mul_cancel _ fourANonzero]
       _ = ((1 - a) * r / (4 * a)) * (4 * (4 * a)) := by ring1
   have diagonalSide : d = 4 * (1 - a) * r := by
     rw [diagonalValue, sideValue]
     ring1
   have halfDiagonal : d / 4 = (1 - a) * r := by
-    apply Algebra.Field.ExplicitField.eq_of_mul_eq_mul_right fourNonzero
+    apply ExplicitField.eq_of_mul_eq_mul_right fourNonzero
     calc
       (d / 4) * 4 = d :=
-        Algebra.Field.ExplicitField.div_mul_cancel _ fourNonzero
+        ExplicitField.div_mul_cancel _ fourNonzero
       _ = 4 * (1 - a) * r := diagonalSide
       _ = ((1 - a) * r) * 4 := by ring1
   have diagonalRatio : d = b * r / a := by
-    apply Algebra.Field.ExplicitField.eq_of_mul_eq_mul_right aNonzero
+    apply ExplicitField.eq_of_mul_eq_mul_right aNonzero
     calc
       d * a = (4 * (1 - a) * r) * a := by rw [diagonalSide]
       _ = b * r := by rw [betaValue]; ring1
       _ = (b * r / a) * a :=
-        (Algebra.Field.ExplicitField.div_mul_cancel _ aNonzero).symm
+        (ExplicitField.div_mul_cancel _ aNonzero).symm
   exact ⟨radiusFirst, radiusSecond, midpointValue, halfDiagonal,
     diagonalSide, diagonalRatio⟩
 

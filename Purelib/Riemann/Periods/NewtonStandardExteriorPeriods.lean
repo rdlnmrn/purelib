@@ -33,6 +33,8 @@ public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoExteriorBudge
 import Purelib.Tactic.Ring
 public import Purelib.Riemann.RootContinuation.NewtonRequestedExteriorDepth
 import Purelib.Data.List.Flatten
+
+open Purelib.Riemann.RootContinuation
 open Purelib.Data.List
 
 @[expose] public section
@@ -90,40 +92,40 @@ open Purelib.Data in
 The retained ordered occurrence and index readbacks identify the sum without discarding repeated edges or their
 orientations. -/
 private theorem component_words_sum
-    {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
+    {genus : Nat} {curve : HyperellipticCurve genus} {branches :
       Hyperelliptic.Branches.BranchIsolation.Data curve}
     {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
-    {lifted : LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
+    {lifted : LiftedPuncturedGrid base} {differential : Differential genus}
     {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
       Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
     {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+      FaceDomainBank lifted.frames base.faces.regulars}
     (prepared :
-      SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+      AllSurfacePreparation
       regular domains differential)
     (value : OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.components.map (fun component => wordValue value
+    gaussianSum (prepared.components.map (fun component => wordValue value
       component.program.indexed)) =
       wordValue value lifted.exteriorBoundaries.flatten := by
   have sum (components : List
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceComponent
+    (SurfaceComponent
     regular domains differential)) :
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (components.map (fun component => wordValue value
+      gaussianSum (components.map (fun component => wordValue value
         component.program.indexed)) =
         wordValue value ((components.flatMap (fun component => component.prepared.occurrences)).map
           (fun occurrence => occurrence.placement.indexed)) := by
     induction components with
     | nil => rfl
     | cons head tail ih =>
-        rw [List.map_cons, Data.Gaussian.Norm.Sum.Basic.gaussianSum, Flatten.flatMap_cons, Map.map_append,
-          Surface.Sewing.SewingRetraction.wordValue_append,
+        rw [List.map_cons, gaussianSum, Flatten.flatMap_cons, Map.map_append,
+          wordValue_append,
           head.prepared.occurrences_eq, ih]
   exact (sum prepared.components).trans
     ((congrArg (fun occurrences => wordValue value (occurrences.map (fun occurrence => occurrence.placement.indexed)))
       prepared.occurrences_eq.symm).trans (congrArg (wordValue value) prepared.indexed_eq))
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {first second : Fin genus}
@@ -134,13 +136,13 @@ open Purelib.Approximation
 open Purelib.Data
 /-- Allocate a quarter of the count-paid per-component allowance before exterior requests are acquired. -/
 def ExteriorPeriodAllowance (prepared : BoundaryPreparation preparation first second target radius floor)
-    (requested : Rat.Fraction.Rational) : Rat.Fraction.Rational :=
+    (requested : Rational) : Rational :=
   Rational.Budget.Aggregate.perTerm requested prepared.exterior.prepared.components.length / 4
 
 /-- A positive exterior target gives a positive per-component allowance. -/
 theorem exteriorPeriodAllowance_positive
     (prepared : BoundaryPreparation preparation first second target radius floor)
-    {requested : Rat.Fraction.Rational} (positive : 0 < requested) : 0 < ExteriorPeriodAllowance prepared requested :=
+    {requested : Rational} (positive : 0 < requested) : 0 < ExteriorPeriodAllowance prepared requested :=
   Rat.Fraction.Order.Field.div_pos_direct (Rational.Budget.Aggregate.perTerm_positive positive _) (by decide)
 
 end
@@ -152,14 +154,14 @@ open Purelib.Data in
 target. -/
 def ExteriorBoundaryPeriodsSmall
     (prepared : BoundaryPreparation preparation first second target radius floor)
-    {index : Nat} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+    {index : Nat} {cache : Numerics
       prepared.domains index}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings prepared.paid.cut
-      cache) (requested : Rat.Fraction.Rational) : Prop :=
-  Data.Gaussian.Norm.Basic.normSq (wordValue (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation
+    (readings : Readings prepared.paid.cut
+      cache) (requested : Rational) : Prop :=
+  normSq (wordValue (edgeValuation
     prepared.lifted.mesh readings.left.values)
     prepared.lifted.exteriorBoundaries.flatten) < requested ∧
-  Data.Gaussian.Norm.Basic.normSq (wordValue (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation
+  normSq (wordValue (edgeValuation
     prepared.lifted.mesh readings.right.values)
     prepared.lifted.exteriorBoundaries.flatten) < requested
 
@@ -174,25 +176,25 @@ The source and endpoint requests share the refined depth and supplied numerical 
 allowances give a strict aggregate target. -/
 theorem ExteriorSourceRequest.boundary_periods_small
     (prepared : BoundaryPreparation preparation first second target radius floor)
-    {requested : Rat.Fraction.Rational} (positive : 0 < requested) {minimum : Nat}
+    {requested : Rational} (positive : 0 < requested) {minimum : Nat}
     (result : ExteriorSourceRequest prepared (ExteriorPeriodAllowance prepared requested) minimum)
     (endpoints :
-      SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.SideRemainderRequest
-      (RootContinuation.NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared
-        result.depth).exterior.prepared (RootContinuation.NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth
+      AllSurfacePreparation.SideRemainderRequest
+      (NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared
+        result.depth).exterior.prepared (NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth
         prepared result.depth).paid.cut.fixed first second
       (ExteriorPeriodAllowance prepared requested))
-    {index : Nat} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+    {index : Nat} {cache : Numerics
       prepared.domains index}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings
-      (RootContinuation.NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared result.depth).paid.cut cache)
+    (readings : Readings
+      (NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared result.depth).paid.cut cache)
     (later : result.index ≤ index) (endpointLater : endpoints.endpoints.index ≤ index) :
-    ExteriorBoundaryPeriodsSmall (RootContinuation.NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared
+    ExteriorBoundaryPeriodsSmall (NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared
       result.depth) readings requested := by
-  let refined := RootContinuation.NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared result.depth
-  let left := Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation refined.lifted.mesh
+  let refined := NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared result.depth
+  let left := edgeValuation refined.lifted.mesh
     readings.left.values
-  let right := Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation refined.lifted.mesh
+  let right := edgeValuation refined.lifted.mesh
     readings.right.values
   let allowance := Rational.Budget.Aggregate.perTerm requested prepared.exterior.prepared.components.length
   have paid : 2 * (ExteriorPeriodAllowance prepared requested + ExteriorPeriodAllowance prepared requested) = allowance
@@ -201,11 +203,11 @@ theorem ExteriorSourceRequest.boundary_periods_small
     exact (by ring1 : 2 * (allowance / 4 + allowance / 4) = (allowance / 4) * 4).trans
       (Rat.Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))
   have each (i : Fin prepared.exterior.prepared.components.length) :
-      Data.Gaussian.Norm.Basic.normSq (wordValue left
+      normSq (wordValue left
         (prepared.exterior.prepared.components[i.val]'i.isLt).program.indexed) ≤ allowance ∧
-      Data.Gaussian.Norm.Basic.normSq (wordValue right
+      normSq (wordValue right
         (prepared.exterior.prepared.components[i.val]'i.isLt).program.indexed) ≤ allowance := by
-    have bound := RootContinuation.NewtonRequestedExteriorRemainder.ExteriorSourceRequest.canonical_period_bound
+    have bound := NewtonRequestedExteriorRemainder.ExteriorSourceRequest.canonical_period_bound
       prepared result i endpoints readings later endpointLater
     unfold ComponentCanonicalPeriodBound at bound
     rw [paired_word_total, paid] at bound
@@ -220,9 +222,9 @@ theorem ExteriorSourceRequest.boundary_periods_small
       exact bound.2
   have aggregate (value : OrientedEdge prepared.lifted.vertices.count → Gaussian.Basic.Canonical)
       (bounded : ∀ i : Fin prepared.exterior.prepared.components.length,
-        Data.Gaussian.Norm.Basic.normSq (wordValue value
+        normSq (wordValue value
           (prepared.exterior.prepared.components[i.val]'i.isLt).program.indexed) ≤ allowance) :
-      Data.Gaussian.Norm.Basic.normSq (wordValue value prepared.lifted.exteriorBoundaries.flatten) < requested := by
+      normSq (wordValue value prepared.lifted.exteriorBoundaries.flatten) < requested := by
     have bound := Gaussian.Norm.Sum.Bounds.normSq_sum_le
       (prepared.exterior.prepared.components.map (fun component => wordValue value component.program.indexed)) allowance
         (by
@@ -244,23 +246,23 @@ exterior words. -/
 def WeightedExteriorPeriodsSmall
     (prepared : BoundaryPreparation preparation first second target radius floor)
     {aRows bRows : List (Int × List (OrientedEdge prepared.lifted.vertices.count))}
-    (a : Curves.Hyperelliptic.Meshes.PuncturedGrid.PhysicalLoopSplit prepared.lifted aRows) (b :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.PhysicalLoopSplit prepared.lifted bRows)
-    {index : Nat} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+    (a : PhysicalLoopSplit prepared.lifted aRows) (b :
+      PhysicalLoopSplit prepared.lifted bRows)
+    {index : Nat} {cache : Numerics
       prepared.domains index}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings prepared.paid.cut
-      cache) (requested : Rat.Fraction.Rational) : Prop :=
-  let left := Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation prepared.lifted.mesh
+    (readings : Readings prepared.paid.cut
+      cache) (requested : Rational) : Prop :=
+  let left := edgeValuation prepared.lifted.mesh
     readings.left.values
-  let right := Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation prepared.lifted.mesh
+  let right := edgeValuation prepared.lifted.mesh
     readings.right.values
-  (Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (a.exterior.map (fun entry => (entry.1
+  (normSq (gaussianSum (a.exterior.map (fun entry => (entry.1
     : Gaussian.Basic.Canonical) * wordValue left entry.2))) < requested / 4 ∧
-   Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (b.exterior.map (fun entry => (entry.1
+   normSq (gaussianSum (b.exterior.map (fun entry => (entry.1
      : Gaussian.Basic.Canonical) * wordValue left entry.2))) < requested / 4) ∧
-  (Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (a.exterior.map (fun entry => (entry.1
+  (normSq (gaussianSum (a.exterior.map (fun entry => (entry.1
     : Gaussian.Basic.Canonical) * wordValue right entry.2))) < requested / 4 ∧
-   Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (b.exterior.map (fun entry => (entry.1
+   normSq (gaussianSum (b.exterior.map (fun entry => (entry.1
      : Gaussian.Basic.Canonical) * wordValue right entry.2))) < requested / 4)
 
 open Purelib.Riemann in
@@ -273,24 +275,24 @@ estimates to all four original weighted rows. -/
 theorem ExteriorSourceRequest.weighted_periods_small
     (prepared : BoundaryPreparation preparation first second target radius floor)
     {aRows bRows : List (Int × List (OrientedEdge prepared.lifted.vertices.count))}
-    {a : Curves.Hyperelliptic.Meshes.PuncturedGrid.PhysicalLoopSplit prepared.lifted aRows} {b :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.PhysicalLoopSplit prepared.lifted bRows}
-    {requested : Rat.Fraction.Rational} (budget : Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoExteriorBudget
+    {a : PhysicalLoopSplit prepared.lifted aRows} {b :
+      PhysicalLoopSplit prepared.lifted bRows}
+    {requested : Rational} (budget : Hyperelliptic.Meshes.PuncturedGrid.TwoExteriorBudget
       a b requested)
     (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) {minimum : Nat}
     (result : ExteriorSourceRequest prepared (ExteriorPeriodAllowance prepared budget.allowance) minimum)
     (endpoints :
-      SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.SideRemainderRequest
-      (RootContinuation.NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared
-        result.depth).exterior.prepared (RootContinuation.NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth
+      AllSurfacePreparation.SideRemainderRequest
+      (NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared
+        result.depth).exterior.prepared (NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth
         prepared result.depth).paid.cut.fixed first second
       (ExteriorPeriodAllowance prepared budget.allowance))
-    {index : Nat} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics
+    {index : Nat} {cache : Numerics
       prepared.domains index}
-    (readings : Hyperelliptic.Meshes.PuncturedGrid.RequestedCutPairing.CutPairingRequest.Readings
-      (RootContinuation.NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared result.depth).paid.cut cache)
+    (readings : Readings
+      (NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared result.depth).paid.cut cache)
     (later : result.index ≤ index) (endpointLater : endpoints.endpoints.index ≤ index) :
-    WeightedExteriorPeriodsSmall (RootContinuation.NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared
+    WeightedExteriorPeriodsSmall (NewtonBoundaryDepthRefinement.BoundaryPreparation.atDepth prepared
       result.depth) a b readings requested := by
   have small := ExteriorSourceRequest.boundary_periods_small
     prepared budget.positive result endpoints readings later endpointLater

@@ -9,6 +9,8 @@ import Purelib.Algebra.Field.Inverse
 import Purelib.Algebra.Field.Characteristic.Nonzero
 import Purelib.Tactic.Ring
 
+open Purelib.Algebra.Quadratic.Pair
+
 /-!
 # Quaternion matrices with a displayed imaginary unit
 
@@ -376,14 +378,14 @@ real and imaginary coordinates, while retaining its target field dictionary.
 theorem toEmbeddedMatrix_imaginaryField [DecidableEq K]
     (noRoot : Field.Squares.NoSquareRootOfNegativeOne (K := K)) (twoNonzero : (2 : K) ≠ 0)
     (value : Proportion K) :
-    letI := Quadratic.Pair.ImaginaryField.explicitField noRoot twoNonzero
-    toEmbeddedMatrix (Quadratic.Pair.ImaginaryField.scalarEmbedding noRoot twoNonzero)
+    letI := ImaginaryField.explicitField noRoot twoNonzero
+    toEmbeddedMatrix (ImaginaryField.scalarEmbedding noRoot twoNonzero)
       Quadratic.Pair.generator value =
         ⟨⟨value.scalar, value.vector.s⟩, ⟨-value.vector.t, value.vector.r⟩,
           ⟨value.vector.t, value.vector.r⟩, ⟨value.scalar, -value.vector.s⟩⟩ := by
-  letI := Quadratic.Pair.ImaginaryField.explicitField noRoot twoNonzero
+  letI := ImaginaryField.explicitField noRoot twoNonzero
   apply Matrix2.ext <;> apply Quadratic.Pair.ext <;>
-    simp only [toEmbeddedMatrix, toMatrix, Proportion.map, Quadratic.Pair.ImaginaryField.scalarEmbedding,
+    simp only [toEmbeddedMatrix, toMatrix, Proportion.map, ImaginaryField.scalarEmbedding,
       Quadratic.Pair.generator, Quadratic.Pair.scalar, Quadratic.Pair.add_re, Quadratic.Pair.add_im,
       Quadratic.Pair.mul_re, Quadratic.Pair.mul_im, Quadratic.Pair.neg_re, Quadratic.Pair.neg_im,
       Quadratic.Pair.sub_re, Quadratic.Pair.sub_im, -eq_self, -iff_self] <;> ring1
@@ -397,11 +399,11 @@ the conjugated off-diagonal entries in the adjugate positions.
 theorem conjugateTranspose_toEmbeddedMatrix [DecidableEq K]
     (noRoot : Field.Squares.NoSquareRootOfNegativeOne (K := K)) (twoNonzero : (2 : K) ≠ 0)
     (value : Proportion K) :
-    letI := Quadratic.Pair.ImaginaryField.explicitField noRoot twoNonzero
-    let matrix := toEmbeddedMatrix (Quadratic.Pair.ImaginaryField.scalarEmbedding noRoot twoNonzero)
+    letI := ImaginaryField.explicitField noRoot twoNonzero
+    let matrix := toEmbeddedMatrix (ImaginaryField.scalarEmbedding noRoot twoNonzero)
       Quadratic.Pair.generator value
     Matrix2.conjugateTranspose Quadratic.Pair.conjugate matrix = Matrix2.adjugate matrix := by
-  letI := Quadratic.Pair.ImaginaryField.explicitField noRoot twoNonzero
+  letI := ImaginaryField.explicitField noRoot twoNonzero
   rw [toEmbeddedMatrix_imaginaryField]
   apply Matrix2.ext <;> apply Quadratic.Pair.ext <;>
     simp only [Matrix2.conjugateTranspose, Matrix2.transpose, Matrix2.map, Matrix2.adjugate,
@@ -416,16 +418,16 @@ original norm; real-coordinate readback reflects the determinant equality.
 theorem norm_one_iff_special_unitary [DecidableEq K]
     (noRoot : Field.Squares.NoSquareRootOfNegativeOne (K := K)) (twoNonzero : (2 : K) ≠ 0)
     (value : Proportion K) :
-    letI := Quadratic.Pair.ImaginaryField.explicitField noRoot twoNonzero
-    let matrix := toEmbeddedMatrix (Quadratic.Pair.ImaginaryField.scalarEmbedding noRoot twoNonzero)
+    letI := ImaginaryField.explicitField noRoot twoNonzero
+    let matrix := toEmbeddedMatrix (ImaginaryField.scalarEmbedding noRoot twoNonzero)
       Quadratic.Pair.generator value
     value.norm = 1 ↔ Matrix2.determinant matrix = 1 ∧ Matrix2.IsUnitary Quadratic.Pair.conjugate matrix := by
-  letI := Quadratic.Pair.ImaginaryField.explicitField noRoot twoNonzero
-  let embedding := Quadratic.Pair.ImaginaryField.scalarEmbedding noRoot twoNonzero
+  letI := ImaginaryField.explicitField noRoot twoNonzero
+  let embedding := ImaginaryField.scalarEmbedding noRoot twoNonzero
   let matrix := toEmbeddedMatrix embedding Quadratic.Pair.generator value
   have adjoint := conjugateTranspose_toEmbeddedMatrix noRoot twoNonzero value
   have determinant := determinant_toEmbeddedMatrix embedding Quadratic.Pair.generator
-    Quadratic.Pair.ImaginaryField.generator_square value
+    ImaginaryField.generator_square value
   have scaleOne : Matrix2.scalarScale (1 : Quadratic.Pair K (1 : K)) Matrix2.identity = Matrix2.identity := by
     apply Matrix2.ext <;> dsimp only [Matrix2.scalarScale, Matrix2.identity] <;> rw [one_mul]
   constructor
@@ -452,13 +454,13 @@ ground-field quaternion rather than a dimension or choice argument.
 theorem imaginary_image_iff_fixed [DecidableEq K]
     (noRoot : Field.Squares.NoSquareRootOfNegativeOne (K := K)) (twoNonzero : (2 : K) ≠ 0)
     (matrix : Matrix2 (Quadratic.Pair K (1 : K))) :
-    letI := Quadratic.Pair.ImaginaryField.explicitField noRoot twoNonzero
+    letI := ImaginaryField.explicitField noRoot twoNonzero
     (∃ value : Proportion K,
-      toEmbeddedMatrix (Quadratic.Pair.ImaginaryField.scalarEmbedding noRoot twoNonzero)
+      toEmbeddedMatrix (ImaginaryField.scalarEmbedding noRoot twoNonzero)
         Quadratic.Pair.generator value = matrix) ↔
       Matrix2.mul (Matrix2.mul ⟨0, -1, 1, 0⟩ matrix) ⟨0, 1, -1, 0⟩ =
         Matrix2.map Quadratic.Pair.conjugate matrix := by
-  letI := Quadratic.Pair.ImaginaryField.explicitField noRoot twoNonzero
+  letI := ImaginaryField.explicitField noRoot twoNonzero
   constructor
   · rintro ⟨value, image⟩
     rw [← image, toEmbeddedMatrix_imaginaryField]
@@ -502,12 +504,12 @@ coordinate reconstruction supplies the ground-field quaternion explicitly.
 theorem special_unitary_iff_unit_quaternion [DecidableEq K]
     (noRoot : Field.Squares.NoSquareRootOfNegativeOne (K := K)) (twoNonzero : (2 : K) ≠ 0)
     (matrix : Matrix2 (Quadratic.Pair K (1 : K))) :
-    letI := Quadratic.Pair.ImaginaryField.explicitField noRoot twoNonzero
+    letI := ImaginaryField.explicitField noRoot twoNonzero
     (Matrix2.determinant matrix = 1 ∧ Matrix2.IsUnitary Quadratic.Pair.conjugate matrix) ↔
       ∃ value : Proportion K, value.norm = 1 ∧
-        toEmbeddedMatrix (Quadratic.Pair.ImaginaryField.scalarEmbedding noRoot twoNonzero)
+        toEmbeddedMatrix (ImaginaryField.scalarEmbedding noRoot twoNonzero)
           Quadratic.Pair.generator value = matrix := by
-  letI := Quadratic.Pair.ImaginaryField.explicitField noRoot twoNonzero
+  letI := ImaginaryField.explicitField noRoot twoNonzero
   constructor
   · intro certificate
     have rightInverse : Matrix2.mul matrix (Matrix2.adjugate matrix) = Matrix2.identity := by

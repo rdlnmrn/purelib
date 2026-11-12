@@ -35,6 +35,8 @@ import Purelib.Polynomial.Dense.Gaussian.Primitive.Certificate
 import Purelib.Riemann.Integration.PreparedConstantModels
 import Purelib.Data.Nat.Subtraction
 
+open Purelib.Integration.Path.Dyadic
+
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_antitone)
 open Purelib.Data.Nat
 
@@ -64,27 +66,27 @@ namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularRefinement
 
 open Purelib.Data.Gaussian.Basic.Canonical
 
-variable {genus count : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+variable {genus count : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {cover :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data}
-  {prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison.Preparation regular cover} {totalTarget areaTarget :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap} {cover :
+    UniformReciprocalCover.Cover data}
+  {prepared : ParentComparison.Preparation regular cover} {totalTarget areaTarget :
     Normalization.InverseRootPolynomial.Coordinate} {floor index depth : Nat}
-  {source : Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.SourcePrimitive data index} {box :
+  {source : UniformReciprocalPrimitives.SourcePrimitive data index} {box :
     Rational.Box}
-  {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {request : Hyperelliptic.Charts.Reciprocal.Disk.RegularRequests.RegularRequest prepared totalTarget areaTarget floor}
-  {retained : Hyperelliptic.Charts.Reciprocal.Disk.ParentPaths.ComparedCells source capSample depth prepared.bank}
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {request : RegularRequests.RegularRequest prepared totalTarget areaTarget floor}
+  {retained : ParentPaths.ComparedCells source capSample depth prepared.bank}
 
 set_option genInjectivity false in
 /-- The unsigned polynomial is the same one used by cap energy. Its total
 is specified independently; only area is invariant under the retained sign. -/
-structure UnsignedRefinement (evaluated : Hyperelliptic.Charts.Reciprocal.Disk.RegularRequests.RegularRequest.Evaluation
+structure UnsignedRefinement (evaluated : RegularRequests.RegularRequest.Evaluation
   request retained)
     (bounds : Cap.EnergyBounds capSample) (commonDepth : Nat) where
   /-- The shared depth is at least the original coarse depth plus its retained fine depth. -/ later : cover.mesh.depth +
@@ -92,19 +94,19 @@ structure UnsignedRefinement (evaluated : Hyperelliptic.Charts.Reciprocal.Disk.R
   /-- The cached complete unsigned primitive increment path at the shared depth. -/ path : List
     Normalization.InverseRootPolynomial.Gaussian
   /-- The cached path uses the same original polynomial and inverse parent at that depth. -/ path_eq : path =
-    Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements (fun parameter => capSample.primitive.value.eval
+    DyadicPrimitivePaths.dyadicIncrements (fun parameter => capSample.primitive.value.eval
     ((parent.edge.point parameter)⁻¹)) commonDepth 0 1
   /-- The cached summary of this same unsigned path. -/ summary : Path.IncrementArea.Summary path
   /-- The total is the original endpoint primitive difference independently of sheet sign. -/ total_eq : summary.total =
     capSample.primitive.value.eval ((parent.edge.point 1)⁻¹) -
     capSample.primitive.value.eval ((parent.edge.point 0)⁻¹)
   /-- The area is exactly the original anchored unsigned dyadic area. -/ area_eq : summary.area =
-    Path.Dyadic.DyadicBoundaryRibbon.dyadicArea
+    DyadicBoundaryRibbon.dyadicArea
     (fun parameter => capSample.primitive.value.eval ((parent.edge.point parameter)⁻¹) -
       capSample.primitive.value.eval ((parent.edge.point 0)⁻¹)) commonDepth 0 1
   /-- The refined area differs from the original retained cap by at most its original quarter-radius charge. -/
-    area_error : Data.Gaussian.Norm.Basic.normSq (summary.area - evaluated.cap.area) ≤
-    Rational.Geometric.Basic.quarterRadius (Hyperelliptic.Charts.Reciprocal.Cap.RefinementArea.areaScale bounds) depth
+    area_error : Gaussian.Norm.Basic.normSq (summary.area - evaluated.cap.area) ≤
+    Rational.Geometric.Basic.quarterRadius (Cap.RefinementArea.areaScale bounds) depth
 
 constructive_injectivity UnsignedRefinement
 
@@ -112,31 +114,31 @@ namespace UnsignedRefinement
 
 /-- Sample the original unsigned primitive at the sufficient shared depth and retain its summary with exact endpoint,
 area and refinement certificates. -/
-def build (evaluated : Hyperelliptic.Charts.Reciprocal.Disk.RegularRequests.RegularRequest.Evaluation request retained)
+def build (evaluated : RegularRequests.RegularRequest.Evaluation request retained)
   (bounds : Cap.EnergyBounds capSample)
     (commonDepth : Nat) (later : cover.mesh.depth + depth ≤ commonDepth) :
-      Hyperelliptic.Charts.Reciprocal.Disk.RegularRefinement.UnsignedRefinement evaluated bounds commonDepth := by
+      UnsignedRefinement evaluated bounds commonDepth := by
   let value (parameter : Normalization.InverseRootPolynomial.Coordinate) := capSample.primitive.value.eval
     ((parent.edge.point parameter)⁻¹)
-  let path := Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements value commonDepth 0 1
+  let path := DyadicPrimitivePaths.dyadicIncrements value commonDepth 0 1
   let summary := Path.IncrementArea.Summary.build path
   have totalEq : summary.total = value 1 - value 0 := by
     rw [summary.total_eq]
-    exact Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements_sum value commonDepth 0 1
-  have areaEq : summary.area = Path.Dyadic.DyadicBoundaryRibbon.dyadicArea (fun parameter => value parameter - value 0)
+    exact DyadicPrimitivePaths.dyadicIncrements_sum value commonDepth 0 1
+  have areaEq : summary.area = DyadicBoundaryRibbon.dyadicArea (fun parameter => value parameter - value 0)
     commonDepth 0 1 := by
     rw [summary.area_eq]
-    change Path.IncrementArea.pathArea (Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements value commonDepth 0 1) = _
-    rw [← Path.Dyadic.DyadicPrimitivePaths.dyadicIncrements_sub_constant value (value 0)]
-    exact Path.Dyadic.DyadicPrimitivePaths.pathArea_dyadicIncrements _ _ _ _ (Gaussian.Basic.sub_self _)
+    change Path.IncrementArea.pathArea (DyadicPrimitivePaths.dyadicIncrements value commonDepth 0 1) = _
+    rw [← DyadicPrimitivePaths.dyadicIncrements_sub_constant value (value 0)]
+    exact DyadicPrimitivePaths.pathArea_dyadicIncrements _ _ _ _ (Gaussian.Basic.sub_self _)
   refine ⟨later, path, rfl, summary, totalEq, areaEq, ?_⟩
   rw [areaEq, evaluated.cap_area_unsigned]
-  have estimate := Hyperelliptic.Charts.Reciprocal.Cap.RefinementArea.parent_refinement_bound bounds data.boundary
+  have estimate := Cap.RefinementArea.parent_refinement_bound bounds data.boundary
     (cover.mesh.depth + depth)
     (commonDepth - (cover.mesh.depth + depth))
   rw [Subtraction.add_sub_of_le later] at estimate
   exact estimate.trans (quarterRadius_antitone
-    (Hyperelliptic.Charts.Reciprocal.Cap.RefinementArea.areaScale_nonnegative bounds) (Nat.le_add_left depth
+    (Cap.RefinementArea.areaScale_nonnegative bounds) (Nat.le_add_left depth
     cover.mesh.depth))
 
 end UnsignedRefinement

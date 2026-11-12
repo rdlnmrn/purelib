@@ -89,22 +89,22 @@ open Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility (PreparedPatch)
 open Purelib.Topology.Chain.PathBoundary (PathEndpoints)
 variable {genus count otherCount : Nat} {curve : HyperellipticCurve genus}
   {differential other : Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
   {parent : CenteredEdge curve differential} {patch :
     PreparedPatch parent}
   {otherPatch : PreparedPatch
-    (Purelib.Riemann.Integration.PreparedEdgeRecasting.recastCenteredEdge other parent)}
-  {data : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {otherData :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data otherPatch otherCount}
+    (recastCenteredEdge other parent)}
+  {data : UniformReciprocalModels.Data patch count} {otherData :
+    UniformReciprocalModels.Data otherPatch otherCount}
   {firstCover : Cover data} {secondCover :
     Cover otherData}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {common :
+  {regular : RegularBounds.Data cap} {common :
     CommonCover firstCover secondCover}
   {target : Coordinate} {minimum stage depth : Nat} {box otherBox :
-    Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+    Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Cap.Primitives.Sample cap other stage otherBox}
   {source : SourcePrimitive data stage}
     {otherSource : SourcePrimitive otherData
     stage}
@@ -113,10 +113,10 @@ variable {genus count otherCount : Nat} {curve : HyperellipticCurve genus}
 
 /-- A retained interval path with distinct endpoints contains an actual first interval at its original starting
 parameter. -/
-private theorem path_first (entries : List (CommonRibbonRequest.Entry request sample otherSample source otherSource
+private theorem path_first (entries : List (Entry request sample otherSample source otherSource
   depth))
-    {start finish : InverseRootPolynomial.Coordinate}
-    (path : PathBoundary.PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter)
+    {start finish : Coordinate}
+    (path : PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter)
       (entries.map (fun entry => entry.plan.interval.edge)) start finish) (different : start ≠ finish) :
     ∃ entry ∈ entries, entry.plan.interval.edge.left.parameter = start := by
   cases entries with
@@ -124,10 +124,10 @@ private theorem path_first (entries : List (CommonRibbonRequest.Entry request sa
   | cons head tail => cases path; exact ⟨head, List.mem_cons_self, rfl⟩
 
 /-- A nonempty retained interval path contains an actual last interval at its original finishing parameter. -/
-private theorem path_last (entries : List (CommonRibbonRequest.Entry request sample otherSample source otherSource
+private theorem path_last (entries : List (Entry request sample otherSample source otherSource
   depth))
-    {start finish : InverseRootPolynomial.Coordinate}
-    (path : PathBoundary.PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter)
+    {start finish : Coordinate}
+    (path : PathEndpoints (fun edge => edge.left.parameter) (fun edge => edge.right.parameter)
       (entries.map (fun entry => entry.plan.interval.edge)) start finish) (nonempty : entries ≠ []) :
     ∃ entry ∈ entries, entry.plan.interval.edge.right.parameter = finish := by
   induction entries generalizing start with
@@ -142,14 +142,14 @@ private theorem path_last (entries : List (CommonRibbonRequest.Entry request sam
               exact ⟨entry, List.mem_cons_of_mem head member, endpoint⟩
 
 /-- The actual common-ribbon evaluation contains an original interval beginning at parameter zero. -/
-theorem Evaluation.first_entry (evaluated : CommonRibbonRequest.Evaluation request sample otherSample source otherSource
+theorem Evaluation.first_entry (evaluated : Evaluation request sample otherSample source otherSource
   depth) :
     ∃ entry ∈ evaluated.entries, entry.plan.interval.edge.left.parameter = 0 :=
   path_first evaluated.entries
     evaluated.parameterPath (by decide)
 
 /-- The actual common-ribbon evaluation contains an original interval ending at parameter one. -/
-theorem Evaluation.last_entry (evaluated : CommonRibbonRequest.Evaluation request sample otherSample source otherSource
+theorem Evaluation.last_entry (evaluated : Evaluation request sample otherSample source otherSource
   depth) :
     ∃ entry ∈ evaluated.entries, entry.plan.interval.edge.right.parameter = 1 := by
   have nonempty : evaluated.entries ≠ [] := by
@@ -176,22 +176,22 @@ open Purelib.Riemann.Topology.PreparedRefinementRootChains (RootChain)
 open Purelib.Topology.Polygon.Stokes (PrimitivePoint edgeArea)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {differential other :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {parents : List
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {parents : List
     (CenteredEdge curve differential)}
   {target : Coordinate} {minimum stage fine : Nat} {box otherBox :
-    Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+    Geometry.Rational.Box}
+  {sample : Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Cap.Primitives.Sample cap other stage otherBox}
   {request : Request regular other parents
     target minimum}
 
 /-- Original endpoint coordinate and root-name agreement identify the same retained reciprocal sheet sign across
 adjacent parents. -/
-theorem Entry.adjacent_sign (first last : PairedParentRequest.Request.Entry request sample otherSample fine)
+theorem Entry.adjacent_sign (first last : Entry request sample otherSample fine)
     (same : first.plan.parent.edge.point 1 = last.plan.parent.edge.point 0)
-    (roots : Gaussian.Equivalence.NamedEquivalent (first.plan.parent.edge.rootName 1 (by decide))
+    (roots : NamedEquivalent (first.plan.parent.edge.rootName 1 (by decide))
       (last.plan.parent.edge.rootName 0 last.plan.parent.edge.baseInside)) :
     first.certified.shared.flip = last.certified.shared.flip := by
   obtain ⟨left, leftMember, leftEnd⟩ := first.certified.ribbons.last_entry
@@ -204,8 +204,8 @@ theorem Entry.adjacent_sign (first last : PairedParentRequest.Request.Entry requ
       0 ≤ right.plan.interval.first.owner.right.parameter := by
     rw [← rightStart]
     exact ⟨right.plan.interval.first.lower, right.plan.interval.ordered.trans right.plan.interval.first.upper⟩
-  let leftPoint := ArcOwners.Point.build cap (RootModel.build left.plan.interval.first.cell) 1 leftInside
-  let rightPoint := ArcOwners.Point.build cap (RootModel.build right.plan.interval.first.cell) 0 rightInside
+  let leftPoint := Point.build cap (RootModel.build left.plan.interval.first.cell) 1 leftInside
+  let rightPoint := Point.build cap (RootModel.build right.plan.interval.first.cell) 0 rightInside
   let joined := SourceJoin.build leftPoint.root rightPoint.root
     (first.plan.parent.edge.point 1) rfl same.symm roots
   have sign := Join.paired_same_sign
@@ -218,26 +218,26 @@ theorem Entry.adjacent_sign (first last : PairedParentRequest.Request.Entry requ
     (rightSign.trans last.certified.shared.flip_eq.symm)))
 
 /-- Read the first actual retained paired-parent sign, using the unsigned sign for an empty bank. -/
-@[expose] def firstFlip : List (PairedParentRequest.Request.Entry request sample otherSample fine) → Bool
+@[expose] def firstFlip : List (Entry request sample otherSample fine) → Bool
   | [] => false
   | head :: _ => head.certified.shared.flip
 
 /-- The actual direct parent chain begins at its first retained parent's original starting point. -/
-private theorem chain_start {parent : PreparedSubdivisionModelCore.CenteredEdge curve differential}
-    {tail : List (PreparedSubdivisionModelCore.CenteredEdge curve differential)} {start finish :
+private theorem chain_start {parent : CenteredEdge curve differential}
+    {tail : List (CenteredEdge curve differential)} {start finish :
       Lifted.Basic.LiftedPoint 2}
-    (chain : PreparedDirectDyadicRefinements.DirectPathChain (parent :: tail) (start := start) (finish := finish)) :
+    (chain : DirectPathChain (parent :: tail) (start := start) (finish := finish)) :
     start.coordinate = parent.edge.point 0 := by
   cases chain
   exact parent.edge.point_zero.symm
 
 /-- The original coordinate and root chains identify one retained sheet sign throughout all actual parent entries. -/
-private theorem path_signs (entries : List (PairedParentRequest.Request.Entry request sample otherSample fine))
+private theorem path_signs (entries : List (Entry request sample otherSample fine))
     {start finish : Lifted.Basic.LiftedPoint 2}
-    (chain : PreparedDirectDyadicRefinements.DirectPathChain (entries.map (fun entry => entry.plan.parent)) (start :=
+    (chain : DirectPathChain (entries.map (fun entry => entry.plan.parent)) (start :=
       start) (finish := finish))
     {first last : Gaussian.Name.Basic.Named}
-    (roots : PreparedRefinementRootChains.RootChain (entries.map (fun entry => entry.plan.parent)) first last) :
+    (roots : RootChain (entries.map (fun entry => entry.plan.parent)) first last) :
     ∀ entry ∈ entries, entry.certified.shared.flip =
       firstFlip entries := by
   induction entries generalizing start first with
@@ -256,7 +256,7 @@ private theorem path_signs (entries : List (PairedParentRequest.Request.Entry re
                     have physical : head.plan.parent.edge.point 1 = next.plan.parent.edge.point 0 :=
                       head.plan.parent.edge.point_one.trans
                         (chain_start chain)
-                    have rootJoin : Gaussian.Equivalence.NamedEquivalent (head.plan.parent.edge.rootName 1 (by decide))
+                    have rootJoin : NamedEquivalent (head.plan.parent.edge.rootName 1 (by decide))
                         (next.plan.parent.edge.rootName 0 next.plan.parent.edge.baseInside) :=
                       match roots with
                       | .cons _ joined _ => joined
@@ -264,10 +264,10 @@ private theorem path_signs (entries : List (PairedParentRequest.Request.Entry re
 
 /-- The original cached path and root chain identify one sheet bit across every retained parent. No caller equality
 between separately prepared signs is needed, and the count-paid evaluator keeps its original samples. -/
-theorem Evaluation.shared_signs (evaluated : PairedParentRequest.Request.Evaluation request sample otherSample fine)
+theorem Evaluation.shared_signs (evaluated : Evaluation request sample otherSample fine)
     {start finish : Lifted.Basic.LiftedPoint 2}
-    (chain : Nonempty (PreparedDirectDyadicRefinements.DirectPathChain parents (start := start) (finish := finish)))
-    {first last : Gaussian.Name.Basic.Named} (roots : PreparedRefinementRootChains.RootChain parents first last) :
+    (chain : Nonempty (DirectPathChain parents (start := start) (finish := finish)))
+    {first last : Gaussian.Name.Basic.Named} (roots : RootChain parents first last) :
     ∀ entry ∈ evaluated.retained, entry.certified.shared.flip =
       firstFlip evaluated.retained := by
   have parentsEq := (congrArg (List.map Plan.parent) evaluated.plans_eq).trans request.parents_eq
@@ -277,10 +277,10 @@ theorem Evaluation.shared_signs (evaluated : PairedParentRequest.Request.Evaluat
     (parentsEq.symm ▸ chain) (parentsEq.symm ▸ roots)
 
 /-- Negate both components of the original paired primitive point. -/
-private def negate (point : Stokes.PrimitivePoint) : PrimitivePoint := ⟨-point.left, -point.right⟩
+private def negate (point : PrimitivePoint) : PrimitivePoint := ⟨-point.left, -point.right⟩
 
 /-- Negating every original paired increment negates its exact complete total. -/
-private theorem total_negate (points : List Stokes.PrimitivePoint) :
+private theorem total_negate (points : List PrimitivePoint) :
     PairedIncrementArea.total (points.map
       negate) =
       negate (PairedIncrementArea.total points)
@@ -298,7 +298,7 @@ private theorem total_negate (points : List Stokes.PrimitivePoint) :
         [negate, PrimitivePoint.add] <;> ring1
 
 /-- Negating both components of every original paired increment preserves the complete path area. -/
-private theorem area_negate (points : List Stokes.PrimitivePoint) :
+private theorem area_negate (points : List PrimitivePoint) :
     PairedIncrementArea.area (points.map negate)
       = PairedIncrementArea.area points := by
   induction points with
@@ -306,12 +306,12 @@ private theorem area_negate (points : List Stokes.PrimitivePoint) :
   | cons head tail ih =>
       rw [List.map_cons, PairedAreaBlocks.area_cons, PairedAreaBlocks.area_cons,
         total_negate, ih]
-      simp only [Stokes.edgeArea, negate,
+      simp only [edgeArea, negate,
         -eq_self, -iff_self]
       ring1
 
 /-- The actual retained signed cap total is the original unsigned cap-path total with its exact cached common sign. -/
-private theorem Entry.signed_total (entry : PairedParentRequest.Request.Entry request sample otherSample fine) :
+private theorem Entry.signed_total (entry : Entry request sample otherSample fine) :
     entry.certified.compared.secondSummary.totalValue =
       if entry.certified.shared.flip then negate
         (PairedIncrementArea.total entry.pair.2)
@@ -324,7 +324,7 @@ private theorem Entry.signed_total (entry : PairedParentRequest.Request.Entry re
   rw [DyadicPairedPrimitivePaths.increments_total, DyadicPairedPrimitivePaths.increments_total]
   cases bit : entry.certified.shared.flip with
   | false =>
-      have point (parameter : InverseRootPolynomial.Coordinate) : entry.certified.shared.values parameter =
+      have point (parameter : Coordinate) : entry.certified.shared.values parameter =
           CommonRibbonRequest.capValues (parent := entry.plan.parent) sample otherSample parameter := by
         apply congrArg₂ PrimitivePoint.mk <;>
           simp only [entry.certified.shared.first_eq, entry.certified.shared.second_eq, bit, if_neg (show ¬ (false =
@@ -332,7 +332,7 @@ private theorem Entry.signed_total (entry : PairedParentRequest.Request.Entry re
       rw [point 0, point 1]
       rfl
   | true =>
-      have point (parameter : InverseRootPolynomial.Coordinate) : entry.certified.shared.values parameter =
+      have point (parameter : Coordinate) : entry.certified.shared.values parameter =
           negate (CommonRibbonRequest.capValues
             (parent := entry.plan.parent) sample otherSample parameter) := by
         apply congrArg₂ PrimitivePoint.mk <;>
@@ -345,11 +345,11 @@ private theorem Entry.signed_total (entry : PairedParentRequest.Request.Entry re
 
 /-- The polygon of cached signed cap totals is exactly the unsigned cap polygon once the actual parent root chain has
 propagated the common sign. -/
-theorem Evaluation.cap_polygon_unsigned (evaluated : PairedParentRequest.Request.Evaluation request sample otherSample
+theorem Evaluation.cap_polygon_unsigned (evaluated : Evaluation request sample otherSample
   fine)
     {start finish : Lifted.Basic.LiftedPoint 2}
-    (chain : Nonempty (PreparedDirectDyadicRefinements.DirectPathChain parents (start := start) (finish := finish)))
-    {first last : Gaussian.Name.Basic.Named} (roots : PreparedRefinementRootChains.RootChain parents first last) :
+    (chain : Nonempty (DirectPathChain parents (start := start) (finish := finish)))
+    {first last : Gaussian.Name.Basic.Named} (roots : RootChain parents first last) :
     PairedIncrementArea.area (evaluated.retained.map (fun entry => entry.certified.compared.secondSummary.totalValue)) =
       PairedIncrementArea.area ((evaluated.pairs.map Prod.snd).map PairedIncrementArea.total) := by
   have signs := evaluated.shared_signs chain roots

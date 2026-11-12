@@ -34,6 +34,8 @@ import Purelib.Riemann.Meshes.LiftedPuncturedGrid
 import Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices
 import Purelib.Topology.Polygon.Stokes
 
+open Purelib.Data.Gaussian.Norm
+
 /-! Retained canonical word observations beneath single, paired and conjugate
 magnitude producers. The observation preserves its actual value owner, ordered
 edges, one acquired increment list and its executable summary. Payment and
@@ -91,20 +93,20 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {owner : OwnedPuncture
 /-- Exact equality between the supplied original word and its retained edge list. -/
 @[reducible, expose] def WordIdentity (word retained : Word owner) : Prop := retained = word
 /-- The complete squared-count magnitude bound for the original finite edge word. -/
-@[reducible, expose] def BoundSpecification (count : Nat) (magnitude : Fraction.Rational) : Fraction.Rational := (count
-  : Fraction.Rational)^2 * (4 * magnitude)
+@[reducible, expose] def BoundSpecification (count : Nat) (magnitude : Rational) : Rational := (count
+  : Rational)^2 * (4 * magnitude)
 
 /-- Canonical valuation is either the retained supported route increment or zero. The stronger original 4*bound remains
 valid for every retained edge. -/
 theorem edge_bounded {values : Values owner} (magnitude : EdgeMagnitude values)
     (edge : OrientedEdge owner.vertices.count) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation owner.mesh values edge) ≤ 4 *
+    Basic.normSq
+      (CanonicalEdgeValues.edgeValuation owner.mesh values edge) ≤ 4 *
       magnitude.bound := by
   have nonnegative : 0 ≤ 4 * magnitude.bound := Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
     magnitude.nonnegative
   have forward (edge : OrientedEdge owner.vertices.count) :
-      Data.Gaussian.Norm.Basic.normSq (if supported : edge ∈ triangleEdgeOccurrences
+      Basic.normSq (if supported : edge ∈ triangleEdgeOccurrences
         owner.mesh.triangulation.faces ∨
           edge.reverse ∈ triangleEdgeOccurrences owner.mesh.triangulation.faces then
         (EdgeRoute.build owner.mesh edge supported).sourceEdge.increment values else 0) ≤
@@ -116,7 +118,7 @@ theorem edge_bounded {values : Values owner} (magnitude : EdgeMagnitude values)
   split
   · exact forward edge
   · split
-    · rw [Data.Gaussian.Norm.Basic.normSq_neg]
+    · rw [Basic.normSq_neg]
       exact forward edge.reverse
     · exact Data.Gaussian.Norm.Basic.normSq_zero.trans_le nonnegative
 
@@ -135,13 +137,13 @@ structure Observation (values : Values owner) (word : Word owner) (supplied : Ed
     Data.Gaussian.Basic.Canonical
   /-- The increment cache equals the canonical readings of the exact original edge word. -/ increments_eq :
     EntryIdentity values word increments
-  /-- The executable summary cached from the actual retained increment list. -/ summary : IncrementArea.Summary
+  /-- The executable summary cached from the actual retained increment list. -/ summary : Summary
     increments
-  /-- The cached complete squared-count total bound. -/ bound : Fraction.Rational
+  /-- The cached complete squared-count total bound. -/ bound : Rational
   /-- The cached bound is the original word-length expression with the retained magnitude. -/ bound_eq : bound =
     BoundSpecification word.length magnitude.bound
   /-- The squared norm of the actual cached increment total is at most the retained bound. -/ bounded :
-    Data.Gaussian.Norm.Basic.normSq summary.total ≤ bound
+    Basic.normSq summary.total ≤ bound
 
 constructive_injectivity Observation
 
@@ -153,12 +155,12 @@ word length certify the same complete squared-count bound. -/
 @[expose] def realize {values : Values owner} (magnitude : EdgeMagnitude values) (word : Word owner) : Observation
   values word magnitude :=
   let increments := Entries values word
-  let summary := IncrementArea.Summary.build increments
+  let summary := Summary.build increments
   let bound := BoundSpecification word.length magnitude.bound
-  have bounded : Data.Gaussian.Norm.Basic.normSq summary.total ≤ bound := by
+  have bounded : Basic.normSq summary.total ≤ bound := by
     rw [summary.total_eq]
-    change Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum increments) ≤
-      (word.length : Fraction.Rational)^2 * (4 * magnitude.bound)
+    change Basic.normSq (Sum.Basic.gaussianSum increments) ≤
+      (word.length : Rational)^2 * (4 * magnitude.bound)
     apply IncrementArea.sum_bound_of_length
       (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) magnitude.nonnegative) ?_ ?_
     · intro value member
@@ -194,8 +196,8 @@ theorem bound_readback (observation : Observation values word magnitude) :
   rw [observation.bound_eq, observation.magnitude_eq]
 
 /-- A paid retained bound controls the squared norm of the actual cached word total. -/
-theorem pay (observation : Observation values word magnitude) {target : Fraction.Rational}
-    (paid : observation.bound ≤ target) : Data.Gaussian.Norm.Basic.normSq observation.total ≤ target :=
+theorem pay (observation : Observation values word magnitude) {target : Rational}
+    (paid : observation.bound ≤ target) : Basic.normSq observation.total ≤ target :=
       observation.bounded.trans paid
 
 end Observation

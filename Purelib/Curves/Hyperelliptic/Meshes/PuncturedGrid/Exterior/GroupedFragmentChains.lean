@@ -82,21 +82,21 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Gaussian.Norm.Basic (normSq_nonneg)
 open Purelib.Data.Rat.Fraction.Compatibility
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential} {target : Coordinate} {minimum
     stage fine index : Nat}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
   {plan : PairedSourcePlan occurrence
     other target minimum}
 
@@ -149,7 +149,7 @@ their parent positions differ. -/
 
 /-- The original indexed fragment is forward and every actual retained source step fits the supplied width. -/
 @[expose] def FineEnough (item : IndexedFragmentGrouping.IndexedOwnedFragment evaluated data otherData) (width :
-  InverseRootPolynomial.Coordinate) : Prop :=
+  Coordinate) : Prop :=
   item.fragment.forward = true ∧ ∀ edge : Fin item.fragment.count,
     item.fragment.parameters edge.succ - item.fragment.parameters edge.castSucc ≤ width
 
@@ -165,26 +165,26 @@ private def apart (parent : Fin evaluated.retained.length) : List (IndexedFragme
 word.
 
 The original handoffs, parent separation and paid step widths supply every chain certificate. -/
-private theorem finish_run (parent : Fin evaluated.retained.length) (width : InverseRootPolynomial.Coordinate)
+private theorem finish_run (parent : Fin evaluated.retained.length) (width : Coordinate)
     (first : IndexedFragmentGrouping.IndexedOwnedFragment evaluated data otherData)
     (rest after : List (IndexedFragmentGrouping.IndexedOwnedFragment evaluated data otherData))
     (firstParent : first.parent = parent) (restParent : ∀ item ∈ rest, item.parent = parent)
-    (ends : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.IndexedOwnedFragment.After first
+    (ends : IndexedOwnedFragment.After first
       (rest ++ after)) (separate : apart parent
       after)
     (fineEnough : ∀ item ∈ first :: rest,
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.IndexedOwnedFragment.FineEnough item)
+      (IndexedOwnedFragment.FineEnough item)
       width) :
-    SourceFragmentRuns.SourceFragmentChain (IndexedSourceSplits.indexedEntry evaluated parent) width
+    SourceFragmentChain (IndexedSourceSplits.indexedEntry evaluated parent) width
       ((first :: rest).map IndexedOwnedFragment.fragment)
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.IndexedOwnedFragment.firstParameter
+        (IndexedOwnedFragment.firstParameter
         first) 1 ∧
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.IndexedOwnedFragment.Word after := by
+      IndexedOwnedFragment.Word after := by
   induction rest generalizing first with
   | nil =>
     have last :
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.IndexedOwnedFragment.lastParameter
-      first) = 1 ∧ Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.IndexedOwnedFragment.Word
+      (IndexedOwnedFragment.lastParameter
+      first) = 1 ∧ IndexedOwnedFragment.Word
       after := by
       cases after with
       | nil => exact ⟨ends, True.intro⟩
@@ -196,8 +196,8 @@ private theorem finish_run (parent : Fin evaluated.retained.length) (width : Inv
     refine ⟨SourceFragmentChain.cons first.fragment
       (first.entry_eq.trans (congrArg (IndexedSourceSplits.indexedEntry evaluated) firstParent)) fine.1 fine.2 ?_,
         last.2⟩
-    change SourceFragmentRuns.SourceFragmentChain _ _ []
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.IndexedOwnedFragment.lastParameter
+    change SourceFragmentChain _ _ []
+      (IndexedOwnedFragment.lastParameter
       first) 1
     rw [last.1]
     exact .nil 1
@@ -210,22 +210,22 @@ private theorem finish_run (parent : Fin evaluated.retained.length) (width : Inv
     refine ⟨SourceFragmentChain.cons first.fragment
       (first.entry_eq.trans (congrArg (IndexedSourceSplits.indexedEntry evaluated) firstParent)) fine.1 fine.2 ?_,
         result.2⟩
-    change SourceFragmentRuns.SourceFragmentChain _ _ _
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.IndexedOwnedFragment.lastParameter
+    change SourceFragmentChain _ _ _
+      (IndexedOwnedFragment.lastParameter
       first) 1
     rw [joined]
     exact result.1
 
 /-- Every maximal retained run of a fine original fragment word is a complete source chain from zero to one. -/
-private theorem runs_chains (runs : List (IndexedFragmentGrouping.IndexedOwnedRun evaluated data otherData)) (width :
-  InverseRootPolynomial.Coordinate)
+private theorem runs_chains (runs : List (IndexedOwnedRun evaluated data otherData)) (width :
+  Coordinate)
     (separated : IndexedOwnedRun.separated runs)
-    (word : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.IndexedOwnedFragment.Word (runs.map
+    (word : IndexedOwnedFragment.Word (runs.map
       IndexedOwnedRun.items).flatten)
     (fineEnough : ∀ item ∈ (runs.map IndexedOwnedRun.items).flatten,
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.IndexedOwnedFragment.FineEnough item)
+      (IndexedOwnedFragment.FineEnough item)
       width) :
-    ∀ run ∈ runs, SourceFragmentRuns.SourceFragmentChain (IndexedSourceSplits.indexedEntry evaluated run.parent) width
+    ∀ run ∈ runs, SourceFragmentChain (IndexedSourceSplits.indexedEntry evaluated run.parent) width
       run.fragments 0 1 := by
   induction runs with
   | nil => intro _ member; cases member
@@ -240,7 +240,7 @@ private theorem runs_chains (runs : List (IndexedFragmentGrouping.IndexedOwnedRu
       run.first run.rest (rest.map IndexedOwnedRun.items).flatten
       run.first_parent run.rest_parent word.2 separate
       (fun item member => fineEnough item (Data.List.Membership.mem_append.mpr (Or.inl member)))
-    have firstChain : SourceFragmentRuns.SourceFragmentChain (IndexedSourceSplits.indexedEntry evaluated run.parent)
+    have firstChain : SourceFragmentChain (IndexedSourceSplits.indexedEntry evaluated run.parent)
       width run.fragments 0 1 := by
       have chain := result.1
       rw [word.1] at chain
@@ -254,11 +254,11 @@ private theorem runs_chains (runs : List (IndexedFragmentGrouping.IndexedOwnedRu
 
 /-- Package each original retained run with its identical source entry, fragments, common width and complete chain
 certificate. -/
-@[expose] def certifyRuns (width : InverseRootPolynomial.Coordinate) :
-    (runs : List (IndexedFragmentGrouping.IndexedOwnedRun evaluated data otherData)) →
-    (∀ run ∈ runs, SourceFragmentRuns.SourceFragmentChain (IndexedSourceSplits.indexedEntry evaluated run.parent) width
+@[expose] def certifyRuns (width : Coordinate) :
+    (runs : List (IndexedOwnedRun evaluated data otherData)) →
+    (∀ run ∈ runs, SourceFragmentChain (IndexedSourceSplits.indexedEntry evaluated run.parent) width
       run.fragments 0 1) →
-    List (OwnedCapArcComparison.GroupedSourceFragments evaluated data otherData)
+    List (GroupedSourceFragments evaluated data otherData)
   | [], _ => []
   | run :: rest, chains =>
     ⟨indexedEntry evaluated run.parent, run.fragments, width, chains run List.mem_cons_self⟩ ::
@@ -266,9 +266,9 @@ certificate. -/
         member => chains run (List.mem_cons_of_mem _ member))
 
 /-- Certifying the original runs preserves their exact fragment lists. -/
-private theorem certifyRuns_fragments (width : InverseRootPolynomial.Coordinate) (runs : List
-  (IndexedFragmentGrouping.IndexedOwnedRun evaluated data otherData))
-    (chains : ∀ run ∈ runs, SourceFragmentRuns.SourceFragmentChain (IndexedSourceSplits.indexedEntry evaluated
+private theorem certifyRuns_fragments (width : Coordinate) (runs : List
+  (IndexedOwnedRun evaluated data otherData))
+    (chains : ∀ run ∈ runs, SourceFragmentChain (IndexedSourceSplits.indexedEntry evaluated
       run.parent) width run.fragments 0 1) :
     (certifyRuns width runs chains).map
       GroupedSourceFragments.fragments = runs.map IndexedOwnedRun.fragments := by
@@ -277,9 +277,9 @@ private theorem certifyRuns_fragments (width : InverseRootPolynomial.Coordinate)
   | cons run rest ih => exact congrArg (List.cons run.fragments) (ih _)
 
 /-- Certifying the original runs preserves their ordered retained source entries. -/
-private theorem certifyRuns_parents (width : InverseRootPolynomial.Coordinate) (runs : List
-  (IndexedFragmentGrouping.IndexedOwnedRun evaluated data otherData))
-    (chains : ∀ run ∈ runs, SourceFragmentRuns.SourceFragmentChain (IndexedSourceSplits.indexedEntry evaluated
+private theorem certifyRuns_parents (width : Coordinate) (runs : List
+  (IndexedOwnedRun evaluated data otherData))
+    (chains : ∀ run ∈ runs, SourceFragmentChain (IndexedSourceSplits.indexedEntry evaluated
       run.parent) width run.fragments 0 1) :
     (certifyRuns width runs chains).map
       GroupedSourceFragments.entry =
@@ -289,9 +289,9 @@ private theorem certifyRuns_parents (width : InverseRootPolynomial.Coordinate) (
   | cons run rest ih => exact congrArg (List.cons (IndexedSourceSplits.indexedEntry evaluated run.parent)) (ih _)
 
 /-- Every certified original run retains the supplied common parameter width. -/
-private theorem certifyRuns_widths (width : InverseRootPolynomial.Coordinate) (runs : List
-  (IndexedFragmentGrouping.IndexedOwnedRun evaluated data otherData))
-    (chains : ∀ run ∈ runs, SourceFragmentRuns.SourceFragmentChain (IndexedSourceSplits.indexedEntry evaluated
+private theorem certifyRuns_widths (width : Coordinate) (runs : List
+  (IndexedOwnedRun evaluated data otherData))
+    (chains : ∀ run ∈ runs, SourceFragmentChain (IndexedSourceSplits.indexedEntry evaluated
       run.parent) width run.fragments 0 1) :
     ∀ group ∈ certifyRuns width runs chains,
       group.width = width := by
@@ -311,14 +311,14 @@ variable {items : List
 /-- Complete parent chains follow from the original word's physical joins and endpoint handoffs, together with the
 grouping's maximal-run certificate. -/
 theorem source_chains (grouped : IndexedFragmentGrouping.IndexedOwnedGrouping evaluated data otherData items) (width :
-  InverseRootPolynomial.Coordinate)
-    (word : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.IndexedOwnedFragment.Word items)
+  Coordinate)
+    (word : IndexedOwnedFragment.Word items)
       (fineEnough : ∀ item ∈ items,
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.IndexedOwnedFragment.FineEnough item)
+      (IndexedOwnedFragment.FineEnough item)
       width) :
-    ∀ run ∈ grouped.runs, SourceFragmentRuns.SourceFragmentChain (IndexedSourceSplits.indexedEntry evaluated run.parent)
+    ∀ run ∈ grouped.runs, SourceFragmentChain (IndexedSourceSplits.indexedEntry evaluated run.parent)
       width run.fragments 0 1 := by
-  apply Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.runs_chains grouped.runs width
+  apply GroupedFragmentChains.runs_chains grouped.runs width
     grouped.separated
   · rw [grouped.flattened]
     exact word
@@ -328,51 +328,51 @@ theorem source_chains (grouped : IndexedFragmentGrouping.IndexedOwnedGrouping ev
 /-- Package each maximal run with its derived complete parameter chain. Only existing source entries and fragment
 samples are retained. -/
 @[expose] def certify (grouped : IndexedFragmentGrouping.IndexedOwnedGrouping evaluated data otherData items) (width :
-  InverseRootPolynomial.Coordinate)
-    (word : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.IndexedOwnedFragment.Word items)
+  Coordinate)
+    (word : IndexedOwnedFragment.Word items)
       (fineEnough : ∀ item ∈ items,
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.IndexedOwnedFragment.FineEnough item)
+      (IndexedOwnedFragment.FineEnough item)
       width) :
-    List (OwnedCapArcComparison.GroupedSourceFragments evaluated data otherData) :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.certifyRuns width grouped.runs
+    List (GroupedSourceFragments evaluated data otherData) :=
+  GroupedFragmentChains.certifyRuns width grouped.runs
     (source_chains grouped
     width word fineEnough)
 
 /-- Flattening the certified groups returns the exact original owned fragment word. -/
 theorem certify_partition (grouped : IndexedFragmentGrouping.IndexedOwnedGrouping evaluated data otherData items) (width
-  : InverseRootPolynomial.Coordinate)
-    (word : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.IndexedOwnedFragment.Word items)
+  : Coordinate)
+    (word : IndexedOwnedFragment.Word items)
       (fineEnough : ∀ item ∈ items,
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.IndexedOwnedFragment.FineEnough item)
+      (IndexedOwnedFragment.FineEnough item)
       width) :
     ((certify grouped
       width word fineEnough).map GroupedSourceFragments.fragments).flatten =
       items.map IndexedOwnedFragment.fragment :=
-  (congrArg List.flatten (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.certifyRuns_fragments
+  (congrArg List.flatten (GroupedFragmentChains.certifyRuns_fragments
     width grouped.runs _)).trans grouped.fragments_eq
 
 /-- The certified groups retain the original grouped parent entries in their exact order. -/
 theorem certify_parents (grouped : IndexedFragmentGrouping.IndexedOwnedGrouping evaluated data otherData items) (width :
-  InverseRootPolynomial.Coordinate)
-    (word : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.IndexedOwnedFragment.Word items)
+  Coordinate)
+    (word : IndexedOwnedFragment.Word items)
       (fineEnough : ∀ item ∈ items,
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.IndexedOwnedFragment.FineEnough item)
+      (IndexedOwnedFragment.FineEnough item)
       width) :
     (certify grouped width
       word fineEnough).map GroupedSourceFragments.entry =
       grouped.runs.map (fun run => IndexedSourceSplits.indexedEntry evaluated run.parent) :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.certifyRuns_parents width grouped.runs _
+  GroupedFragmentChains.certifyRuns_parents width grouped.runs _
 
 /-- Every certified group retains the original common parameter-width bound. -/
 theorem certify_widths (grouped : IndexedFragmentGrouping.IndexedOwnedGrouping evaluated data otherData items) (width :
-  InverseRootPolynomial.Coordinate)
-    (word : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.IndexedOwnedFragment.Word items)
+  Coordinate)
+    (word : IndexedOwnedFragment.Word items)
       (fineEnough : ∀ item ∈ items,
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.IndexedOwnedFragment.FineEnough item)
+      (IndexedOwnedFragment.FineEnough item)
       width) :
     ∀ group ∈ certify
       grouped width word fineEnough, group.width = width :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains.certifyRuns_widths width grouped.runs _
+  GroupedFragmentChains.certifyRuns_widths width grouped.runs _
 
 end IndexedOwnedGrouping
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedFragmentChains

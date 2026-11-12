@@ -28,6 +28,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian
+
 open Purelib
 
 open Purelib.Curves
@@ -68,7 +70,7 @@ set_option genInjectivity false in
 be exactly the queried one; the observation's decomposition and bound therefore certify the local polynomial model at
 that point. -/
 structure UniformObservation {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (differential : Differentials.Basic.Differential genus)
+    (curve : Basic.HyperellipticCurve genus) (differential : Basic.Differential genus)
     {start finish : Lifted.Basic.LiftedPoint 2} (liftedCell : Lifted.Basic.LiftedCell start finish)
     (cell : Cell.Basic.CellModel) (parameter : Fraction.Rational) where
   /-- The retained finite local observation for the original cell polynomial and allowance. -/ observation :
@@ -86,10 +88,10 @@ structure UniformObservation {genus : Nat}
               algebraic.sheetValue.value
               algebraic.sheetValue.apart).name.process.ball
                 algebraic.readingState).radiusSq +
-          Data.Gaussian.Norm.Basic.normSq observation.error) <=
+          Norm.Basic.normSq observation.error) <=
       cell.localAllowance
 
-constructive_injectivity Purelib.Curves.Hyperelliptic.Integration.Algebraic.Uniform.Basis.UniformObservation
+constructive_injectivity Basis.UniformObservation
 
 namespace UniformObservation
 
@@ -98,20 +100,20 @@ of the polynomial value. The factor eight pays constructively for comparing two 
 factor two is the Gaussian triangle estimate. -/
 theorem candidate_error_le
   {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : Differentials.Basic.Differential genus}
+    {curve : Basic.HyperellipticCurve genus}
+    {differential : Basic.Differential genus}
     {start finish : Lifted.Basic.LiftedPoint 2} {liftedCell : Lifted.Basic.LiftedCell start finish}
     {cell : Cell.Basic.CellModel}
     {parameter : Fraction.Rational}
-    (uniform : Curves.Hyperelliptic.Integration.Algebraic.Uniform.Basis.UniformObservation curve differential liftedCell
+    (uniform : UniformObservation curve differential liftedCell
       cell parameter)
-    {candidate : Data.Gaussian.Basic.Canonical}
+    {candidate : Basic.Canonical}
     (possible :
       (Value.differentialValue differential uniform.algebraic.point
         uniform.algebraic.sheetValue.value
         uniform.algebraic.sheetValue.apart).name.process.Possible
           uniform.algebraic.readingState candidate) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (candidate - Evaluation.eval cell.polynomial
           ⟨parameter, 0⟩) <= cell.localAllowance := by
   let value := Value.differentialValue differential uniform.algebraic.point
@@ -125,39 +127,39 @@ theorem candidate_error_le
       candidate - uniform.observation.integrandReading =
         (candidate - ball.center) +
           (ball.center - uniform.observation.integrandReading) := by
-    apply Data.Gaussian.Basic.ext <;>
-      simp only [Data.Gaussian.Basic.sub_re,
-        Data.Gaussian.Basic.sub_im,
-        Data.Gaussian.Basic.add_re,
-        Data.Gaussian.Basic.add_im] <;> ring1
+    apply Basic.ext <;>
+      simp only [Basic.sub_re,
+        Basic.sub_im,
+        Basic.add_re,
+        Basic.add_im] <;> ring1
   have candidateReadingBound :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (candidate - uniform.observation.integrandReading) <=
         4 * ball.radiusSq := by
     rw [candidateReadingIdentity]
     calc
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           ((candidate - ball.center) +
             (ball.center - uniform.observation.integrandReading)) <=
           2 *
-            (Data.Gaussian.Norm.Basic.normSq
+            (Norm.Basic.normSq
                 (candidate - ball.center) +
-              Data.Gaussian.Norm.Basic.normSq
+              Norm.Basic.normSq
                 (ball.center - uniform.observation.integrandReading)) :=
-        Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _
+        Norm.Bounds.normSq_add_le_two _ _
       _ <= 2 * (ball.radiusSq + ball.radiusSq) :=
         Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add candidateInside (by
             have reversed :
                 ball.center - uniform.observation.integrandReading =
                   -(uniform.observation.integrandReading - ball.center) := by
-              apply Data.Gaussian.Basic.ext <;>
-                simp only [Data.Gaussian.Basic.sub_re,
-                  Data.Gaussian.Basic.sub_im,
-                  Data.Gaussian.Basic.neg_re,
-                  Data.Gaussian.Basic.neg_im] <;> ring1
+              apply Basic.ext <;>
+                simp only [Basic.sub_re,
+                  Basic.sub_im,
+                  Basic.neg_re,
+                  Basic.neg_im] <;> ring1
             rw [reversed,
-              Data.Gaussian.Norm.Basic.normSq_neg]
+              Norm.Basic.normSq_neg]
             exact readingInside)) (by decide)
       _ = 4 * ball.radiusSq := by ring1
   have totalIdentity :
@@ -166,17 +168,17 @@ theorem candidate_error_le
         (candidate - uniform.observation.integrandReading) +
           uniform.observation.error := by
     have inputEqual :
-        (⟨parameter, 0⟩ : Data.Gaussian.Basic.Canonical) =
+        (⟨parameter, 0⟩ : Basic.Canonical) =
           ⟨uniform.observation.parameter, 0⟩ := by
       rw [uniform.parameter_eq]
     rw [inputEqual, ← uniform.observation.decomposition]
-    apply Data.Gaussian.Basic.ext <;>
-      simp only [Data.Gaussian.Basic.sub_re,
-        Data.Gaussian.Basic.sub_im,
-        Data.Gaussian.Basic.add_re,
-        Data.Gaussian.Basic.add_im] <;> ring1
+    apply Basic.ext <;>
+      simp only [Basic.sub_re,
+        Basic.sub_im,
+        Basic.add_re,
+        Basic.add_im] <;> ring1
   rw [totalIdentity]
-  exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
+  exact (Norm.Bounds.normSq_add_le_two _ _).trans
     ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
       (add_le_add candidateReadingBound le_rfl) (by decide)).trans
         uniform.semantic_error_le)
@@ -188,7 +190,7 @@ set_option genInjectivity false in
 parameter and receives a finite algebraic sheet value, an admitted differential reading, and the checked model-error
 inequality at that exact parameter. -/
 structure UniformCellCertificate {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (differential : Differentials.Basic.Differential genus)
+    (curve : Basic.HyperellipticCurve genus) (differential : Basic.Differential genus)
     {start finish : Lifted.Basic.LiftedPoint 2} (liftedCell : Lifted.Basic.LiftedCell start finish)
     (cell : Cell.Basic.CellModel) where
   /-- At every rational unit-interval parameter, return the retained algebraic observation and its quantitative model
@@ -198,14 +200,14 @@ structure UniformCellCertificate {genus : Nat}
       UniformObservation curve differential liftedCell cell
         parameter
 
-constructive_injectivity Purelib.Curves.Hyperelliptic.Integration.Algebraic.Uniform.Basis.UniformCellCertificate
+constructive_injectivity Basis.UniformCellCertificate
 
 set_option genInjectivity false in
 /-- A stationary cell contributes exactly zero regardless of its integrand. Every nonstationary cell must instead carry
 the uniform algebraic model contract. In particular, an empty observation list can no longer certify an arbitrary
 nonzero segment as a period integrand. -/
 inductive ValidCellCertificate {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (differential : Differentials.Basic.Differential genus)
+    (curve : Basic.HyperellipticCurve genus) (differential : Basic.Differential genus)
     {start finish : Lifted.Basic.LiftedPoint 2} (liftedCell : Lifted.Basic.LiftedCell start finish)
     (cell : Cell.Basic.CellModel) : Type 2
   /-- The original cell has equal endpoints and therefore zero displacement. -/ | stationary (equal : cell.start =
@@ -219,7 +221,7 @@ inductive ValidCellCertificate {genus : Nat}
       ValidCellCertificate curve differential
         liftedCell cell
 
-constructive_injectivity Purelib.Curves.Hyperelliptic.Integration.Algebraic.Uniform.Basis.ValidCellCertificate
+constructive_injectivity Basis.ValidCellCertificate
 
 end Purelib.Curves.Hyperelliptic.Integration.Algebraic.Uniform.Basis
 
@@ -248,8 +250,8 @@ set_option genInjectivity false in
 /-- A query at every rational unit parameter, together with enough explicit error budget to control every later reading
 of the admitted CCL state. -/
 structure UniformObservation {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
-    (differential : OddPower.Basic.OddPowerDifferential)
+    (curve : Basic.HyperellipticCurve genus)
+    (differential : OddPower.Basic.OddPowerDifferential curve.polynomial)
     {start finish : Lifted.Basic.LiftedPoint 2} (liftedCell : Lifted.Basic.LiftedCell start finish)
     (cell : Cell.Basic.CellModel) (parameter : Fraction.Rational) where
   /-- The retained finite local observation for the original cell polynomial and allowance. -/ observation :
@@ -263,14 +265,12 @@ structure UniformObservation {genus : Nat}
     semantic_error_le :
     2 *
         (4 *
-            (((differential.value algebraic.point
-              algebraic.sheetValue.value
-              algebraic.sheetValue.apart).name.process.ball
+            (((algebraic.interpretation.channel).name.process.ball
                 algebraic.readingState).radiusSq) +
-          Data.Gaussian.Norm.Basic.normSq observation.error) <=
+          Norm.Basic.normSq observation.error) <=
       cell.localAllowance
 
-constructive_injectivity Purelib.Curves.Hyperelliptic.Integration.Algebraic.Uniform.Jets.UniformObservation
+constructive_injectivity Jets.UniformObservation
 
 namespace UniformObservation
 
@@ -278,23 +278,20 @@ namespace UniformObservation
 the odd exponent once the coherent arithmetic name has been constructed. -/
 theorem candidate_error_le
   {genus : Nat}
-    {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {differential : OddPower.Basic.OddPowerDifferential}
+    {curve : Basic.HyperellipticCurve genus}
+    {differential : OddPower.Basic.OddPowerDifferential curve.polynomial}
     {start finish : Lifted.Basic.LiftedPoint 2} {liftedCell : Lifted.Basic.LiftedCell start finish}
     {cell : Cell.Basic.CellModel} {parameter : Fraction.Rational}
-    (uniform : Curves.Hyperelliptic.Integration.Algebraic.Uniform.Jets.UniformObservation curve differential liftedCell
+    (uniform : UniformObservation curve differential liftedCell
       cell parameter)
-    {candidate : Data.Gaussian.Basic.Canonical}
+    {candidate : Basic.Canonical}
     (possible :
-      (differential.value uniform.algebraic.point
-        uniform.algebraic.sheetValue.value
-        uniform.algebraic.sheetValue.apart).name.process.Possible
+      (uniform.algebraic.interpretation.channel).name.process.Possible
           uniform.algebraic.readingState candidate) :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
         (candidate - Evaluation.eval cell.polynomial
           ⟨parameter, 0⟩) <= cell.localAllowance := by
-  let value := differential.value uniform.algebraic.point
-    uniform.algebraic.sheetValue.value uniform.algebraic.sheetValue.apart
+  let value := uniform.algebraic.interpretation.channel
   let ball := value.name.process.ball uniform.algebraic.readingState
   have candidateInside : ball.Contains candidate :=
     value.name.process.possible_inside possible
@@ -304,39 +301,39 @@ theorem candidate_error_le
       candidate - uniform.observation.integrandReading =
         (candidate - ball.center) +
           (ball.center - uniform.observation.integrandReading) := by
-    apply Data.Gaussian.Basic.ext <;>
-      simp only [Data.Gaussian.Basic.sub_re,
-        Data.Gaussian.Basic.sub_im,
-        Data.Gaussian.Basic.add_re,
-        Data.Gaussian.Basic.add_im] <;> ring1
+    apply Basic.ext <;>
+      simp only [Basic.sub_re,
+        Basic.sub_im,
+        Basic.add_re,
+        Basic.add_im] <;> ring1
   have candidateReadingBound :
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           (candidate - uniform.observation.integrandReading) <=
         4 * ball.radiusSq := by
     rw [candidateReadingIdentity]
     calc
-      Data.Gaussian.Norm.Basic.normSq
+      Norm.Basic.normSq
           ((candidate - ball.center) +
             (ball.center - uniform.observation.integrandReading)) <=
           2 *
-            (Data.Gaussian.Norm.Basic.normSq
+            (Norm.Basic.normSq
                 (candidate - ball.center) +
-              Data.Gaussian.Norm.Basic.normSq
+              Norm.Basic.normSq
                 (ball.center - uniform.observation.integrandReading)) :=
-        Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _
+        Norm.Bounds.normSq_add_le_two _ _
       _ <= 2 * (ball.radiusSq + ball.radiusSq) :=
         Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add candidateInside (by
             have reversed :
                 ball.center - uniform.observation.integrandReading =
                   -(uniform.observation.integrandReading - ball.center) := by
-              apply Data.Gaussian.Basic.ext <;>
-                simp only [Data.Gaussian.Basic.sub_re,
-                  Data.Gaussian.Basic.sub_im,
-                  Data.Gaussian.Basic.neg_re,
-                  Data.Gaussian.Basic.neg_im] <;> ring1
+              apply Basic.ext <;>
+                simp only [Basic.sub_re,
+                  Basic.sub_im,
+                  Basic.neg_re,
+                  Basic.neg_im] <;> ring1
             rw [reversed,
-              Data.Gaussian.Norm.Basic.normSq_neg]
+              Norm.Basic.normSq_neg]
             exact readingInside)) (by decide)
       _ = 4 * ball.radiusSq := by ring1
   have totalIdentity :
@@ -344,17 +341,17 @@ theorem candidate_error_le
           ⟨parameter, 0⟩ =
         (candidate - uniform.observation.integrandReading) +
           uniform.observation.error := by
-    have inputEqual : (⟨parameter, 0⟩ : Data.Gaussian.Basic.Canonical) =
+    have inputEqual : (⟨parameter, 0⟩ : Basic.Canonical) =
         ⟨uniform.observation.parameter, 0⟩ := by
       rw [uniform.parameter_eq]
     rw [inputEqual, ← uniform.observation.decomposition]
-    apply Data.Gaussian.Basic.ext <;>
-      simp only [Data.Gaussian.Basic.sub_re,
-        Data.Gaussian.Basic.sub_im,
-        Data.Gaussian.Basic.add_re,
-        Data.Gaussian.Basic.add_im] <;> ring1
+    apply Basic.ext <;>
+      simp only [Basic.sub_re,
+        Basic.sub_im,
+        Basic.add_re,
+        Basic.add_im] <;> ring1
   rw [totalIdentity]
-  exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
+  exact (Norm.Bounds.normSq_add_le_two _ _).trans
     ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
       (add_le_add candidateReadingBound le_rfl) (by decide)).trans
         uniform.semantic_error_le)
@@ -364,8 +361,8 @@ end UniformObservation
 set_option genInjectivity false in
 /-- A nonstationary cell must answer every rational unit-interval query with uniform odd-power algebraic evidence. -/
 structure UniformCellCertificate {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
-    (differential : OddPower.Basic.OddPowerDifferential)
+    (curve : Basic.HyperellipticCurve genus)
+    (differential : OddPower.Basic.OddPowerDifferential curve.polynomial)
     {start finish : Lifted.Basic.LiftedPoint 2} (liftedCell : Lifted.Basic.LiftedCell start finish)
     (cell : Cell.Basic.CellModel) where
   /-- At every rational unit-interval parameter, return the retained algebraic observation and its quantitative model
@@ -373,7 +370,7 @@ structure UniformCellCertificate {genus : Nat}
     UniformObservation curve differential liftedCell cell
       parameter
 
-constructive_injectivity Purelib.Curves.Hyperelliptic.Integration.Algebraic.Uniform.Jets.UniformCellCertificate
+constructive_injectivity Jets.UniformCellCertificate
 
 set_option genInjectivity false in
 /-- A stationary cell or a uniform certificate for the retained odd-power differential.
@@ -381,8 +378,8 @@ set_option genInjectivity false in
 A nonstationary cell must answer every bounded rational parameter query with the original sheet evidence and paid local
 model bound. -/
 inductive ValidCellCertificate {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus)
-    (differential : OddPower.Basic.OddPowerDifferential)
+    (curve : Basic.HyperellipticCurve genus)
+    (differential : OddPower.Basic.OddPowerDifferential curve.polynomial)
     {start finish : Lifted.Basic.LiftedPoint 2} (liftedCell : Lifted.Basic.LiftedCell start finish)
     (cell : Cell.Basic.CellModel) : Type 2
   /-- The original cell has equal endpoints and therefore zero displacement. -/ | stationary (equal : cell.start =
@@ -396,7 +393,7 @@ inductive ValidCellCertificate {genus : Nat}
       ValidCellCertificate curve differential liftedCell
         cell
 
-constructive_injectivity Purelib.Curves.Hyperelliptic.Integration.Algebraic.Uniform.Jets.ValidCellCertificate
+constructive_injectivity Jets.ValidCellCertificate
 
 end Purelib.Curves.Hyperelliptic.Integration.Algebraic.Uniform.Jets
 

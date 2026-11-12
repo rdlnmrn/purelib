@@ -40,6 +40,10 @@ import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Riemann.Integration.PreparedConstantModels
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 open Purelib
@@ -83,34 +87,34 @@ open Purelib.Integration.Path.Dyadic.DyadicBoundaryRibbon (dyadicArea dyadicDiff
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius quarterRadius_nonneg)
 open Purelib.Approximation.Rational.Geometric.Search (firstQuarterBelow)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {comparison :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {retained : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample comparison capSample}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : ParameterEdge} {cell :
+    Cell data edge}
+  {regular : RegularBounds.Data cap} {comparison :
+    Data regular cell}
+  {index : Nat} {box : Geometry.Rational.Box} {capSample :
+    Cap.Primitives.Sample cap differential index box}
+  {retained : Sample comparison capSample}
 
 namespace Data
 
 /-- The fixed full-area discrepancy scale for the retained signed shared cap primitive and original source slope. -/
-@[expose] def regularAreaScale (comparison : ArcSamples.Data regular cell) : Coordinate :=
-  (RegularComparison.Data.regularScale comparison) * (144 * data.sourceSlope + 160 *
-    (RegularComparison.Data.regularScale comparison))
+@[expose] def regularAreaScale (comparison : Data regular cell) : Coordinate :=
+  (Data.regularScale comparison) * (144 * data.sourceSlope + 160 *
+    (Data.regularScale comparison))
 
 /-- The retained source slope and signed regular comparison scale give a nonnegative area bound. -/
-theorem regularAreaScale_nonnegative (comparison : ArcSamples.Data regular cell) : 0 ≤
-  (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.Data.regularAreaScale comparison) :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct (RegularComparison.Data.regularScale_nonnegative comparison)
-    (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) data.sourceSlope_nonnegative)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) (RegularComparison.Data.regularScale_nonnegative
+theorem regularAreaScale_nonnegative (comparison : Data regular cell) : 0 ≤
+  (regularAreaScale comparison) :=
+  Arithmetic.mul_nonneg_direct (Data.regularScale_nonnegative comparison)
+    (add_nonneg (Arithmetic.mul_nonneg_direct (by decide +kernel) data.sourceSlope_nonnegative)
+      (Arithmetic.mul_nonneg_direct (by decide +kernel) (Data.regularScale_nonnegative
         comparison)))
 
 end Data
@@ -118,47 +122,47 @@ end Data
 namespace RegularAlignment
 
 /-- The anchored value used to state the full inverse-arc area estimate. -/
-@[expose] def capValue (sample : SheetAlignment.RegularAlignment retained) (parameter :
-  InverseRootPolynomial.Coordinate) : Gaussian :=
+@[expose] def capValue (sample : RegularAlignment retained) (parameter :
+  Coordinate) : Gaussian :=
   sample.primitive.eval (parent.edge.point parameter)⁻¹ - sample.primitive.eval (parent.edge.point
     edge.left.parameter)⁻¹
 
 /-- The anchored retained signed cap primitive vanishes at the original left endpoint. -/
-theorem capValue_left (sample : SheetAlignment.RegularAlignment retained) :
-  (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue sample) edge.left.parameter = 0 :=
+theorem capValue_left (sample : RegularAlignment retained) :
+  (capValue sample) edge.left.parameter = 0 :=
   by
   exact Data.Gaussian.Basic.sub_self _
 
 /-- Read the retained signed shared cap primitive's increment across the actual inverse cell endpoints. -/
-@[expose] def increment (sample : SheetAlignment.RegularAlignment retained) : Gaussian :=
+@[expose] def increment (sample : RegularAlignment retained) : Gaussian :=
   sample.primitive.eval (parent.edge.point edge.right.parameter)⁻¹ - sample.primitive.eval (parent.edge.point
     edge.left.parameter)⁻¹
 
 /-- The anchored retained signed primitive reads back its original cell increment at the right endpoint. -/
-theorem capValue_right (sample : SheetAlignment.RegularAlignment retained) :
-  (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue sample) edge.right.parameter =
-  (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.increment sample) := by
+theorem capValue_right (sample : RegularAlignment retained) :
+  (capValue sample) edge.right.parameter =
+  (increment sample) := by
   rfl
 
 /-- The original source and retained signed shared primitive drift satisfies its geometric scale times squared
 subinterval width. -/
-theorem drift_bound (source : UniformReciprocalPrimitives.SourcePrimitive data index) (right :
-  SheetAlignment.RegularAlignment retained)
-    {first last : InverseRootPolynomial.Coordinate} (firstInside : edge.left.parameter ≤ first ∧ first ≤
+theorem drift_bound (source : SourcePrimitive data index) (right :
+  RegularAlignment retained)
+    {first last : Coordinate} (firstInside : edge.left.parameter ≤ first ∧ first ≤
       edge.right.parameter)
     (lastInside : edge.left.parameter ≤ last ∧ last ≤ edge.right.parameter) :
-    Data.Gaussian.Norm.Basic.normSq ((CellPrimitive.sourceValue source edge last -
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue right) last) -
+    Basic.normSq ((CellPrimitive.sourceValue source edge last -
+      (capValue right) last) -
       (CellPrimitive.sourceValue source edge first -
-        (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue right) first)) ≤
-      Geometric.Basic.quarterRadius (RegularComparison.Data.regularScale comparison) index * (last - first) ^ 2 := by
+        (capValue right) first)) ≤
+      quarterRadius (Data.regularScale comparison) index * (last - first) ^ 2 := by
   have identity : (CellPrimitive.sourceValue source edge last -
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue right) last) -
+    (capValue right) last) -
       (CellPrimitive.sourceValue source edge first -
-        (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue right) first) =
+        (capValue right) first) =
       RegularAlignment.comparisonValue right source last - RegularAlignment.comparisonValue right source first := by
     dsimp only [CellPrimitive.sourceValue,
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue,
+      capValue,
       RegularAlignment.comparisonValue]
     ring1
   rw [identity]
@@ -166,36 +170,36 @@ theorem drift_bound (source : UniformReciprocalPrimitives.SourcePrimitive data i
 
 /-- The anchored original source and retained signed cap value satisfy the original covered cell's geometric error
 bound. -/
-theorem point_error_bound (source : UniformReciprocalPrimitives.SourcePrimitive data index) (right :
-  SheetAlignment.RegularAlignment retained)
-    {parameter : InverseRootPolynomial.Coordinate} (inside : edge.left.parameter ≤ parameter ∧ parameter ≤
+theorem point_error_bound (source : SourcePrimitive data index) (right :
+  RegularAlignment retained)
+    {parameter : Coordinate} (inside : edge.left.parameter ≤ parameter ∧ parameter ≤
       edge.right.parameter) :
-    Data.Gaussian.Norm.Basic.normSq (CellPrimitive.sourceValue source edge parameter -
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue right) parameter) ≤
-      Geometric.Basic.quarterRadius (RegularComparison.Data.regularScale comparison) index * (edge.right.parameter -
+    Basic.normSq (CellPrimitive.sourceValue source edge parameter -
+      (capValue right) parameter) ≤
+      quarterRadius (Data.regularScale comparison) index * (edge.right.parameter -
         edge.left.parameter) ^ 2 := by
-  have estimate := Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.drift_bound source right
+  have estimate := drift_bound source right
     ⟨le_rfl, cell.ordered.le⟩ inside
   rw [CellPrimitive.sourceValue_left,
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue_left,
+    capValue_left,
     Data.Gaussian.Basic.sub_self, Data.Gaussian.Basic.sub_zero] at estimate
-  exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (Fraction.Order.Arithmetic.pow_le_pow_direct (Fraction.Order.Arithmetic.sub_nonneg_direct inside.1)
-      (Fraction.Order.Arithmetic.sub_le_sub_right_direct inside.2 _) 2)
-    (Geometric.Basic.quarterRadius_nonneg (RegularComparison.Data.regularScale_nonnegative comparison) index))
+  exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (Arithmetic.pow_le_pow_direct (Arithmetic.sub_nonneg_direct inside.1)
+      (Arithmetic.sub_le_sub_right_direct inside.2 _) 2)
+    (quarterRadius_nonneg (Data.regularScale_nonnegative comparison) index))
 
 /-- Each retained signed cap subarc increment satisfies the original source slope and regular discrepancy ceiling. -/
-theorem cap_increment_bound (source : UniformReciprocalPrimitives.SourcePrimitive data index) (right :
-  SheetAlignment.RegularAlignment retained)
-    {first last : InverseRootPolynomial.Coordinate} (firstInside : edge.left.parameter ≤ first ∧ first ≤
+theorem cap_increment_bound (source : SourcePrimitive data index) (right :
+  RegularAlignment retained)
+    {first last : Coordinate} (firstInside : edge.left.parameter ≤ first ∧ first ≤
       edge.right.parameter)
     (lastInside : edge.left.parameter ≤ last ∧ last ≤ edge.right.parameter) :
-    Data.Gaussian.Norm.Basic.normSq
-      ((Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue right) last -
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue right) first) ≤
-      (2 * (data.sourceSlope + Geometric.Basic.quarterRadius (RegularComparison.Data.regularScale comparison) index)) *
+    Basic.normSq
+      ((capValue right) last -
+      (capValue right) first) ≤
+      (2 * (data.sourceSlope + quarterRadius (Data.regularScale comparison) index)) *
         (last - first) ^ 2 := by
-  have sourceBound : Data.Gaussian.Norm.Basic.normSq (CellPrimitive.sourceValue source edge last -
+  have sourceBound : Basic.normSq (CellPrimitive.sourceValue source edge last -
     CellPrimitive.sourceValue source edge first) ≤ data.sourceSlope * (last - first) ^ 2 := by
     have identity : CellPrimitive.sourceValue source edge last - CellPrimitive.sourceValue source edge first =
         source.primitive.value.eval (parent.edge.point last) - source.primitive.value.eval (parent.edge.point first) :=
@@ -204,146 +208,146 @@ theorem cap_increment_bound (source : UniformReciprocalPrimitives.SourcePrimitiv
     rw [identity]
     exact source.increment_bound ⟨edge.left.inside.1.trans firstInside.1, firstInside.2.trans edge.right.inside.2⟩
       ⟨edge.left.inside.1.trans lastInside.1, lastInside.2.trans edge.right.inside.2⟩
-  have identity : (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue right) last -
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue right) first =
+  have identity : (capValue right) last -
+    (capValue right) first =
       (CellPrimitive.sourceValue source edge last - CellPrimitive.sourceValue source edge first) -
         ((CellPrimitive.sourceValue source edge last -
-          (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue right) last) -
+          (capValue right) last) -
           (CellPrimitive.sourceValue source edge first -
-          (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue right) first)) := by ring1
+          (capValue right) first)) := by ring1
   rw [identity]
-  exact (Data.Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (add_le_add sourceBound (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.drift_bound
+  exact (Bounds.normSq_sub_le_two _ _).trans
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (add_le_add sourceBound (drift_bound
         source right firstInside lastInside)) (by decide)).trans_eq (by ring1))
 
 /-- The complete finite ribbon retains its open endpoint correction. The bound is independent of the additional dyadic
 spatial depth. -/
-theorem ribbon_bound (source : UniformReciprocalPrimitives.SourcePrimitive data index) (right :
-  SheetAlignment.RegularAlignment retained) (depth : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (DyadicBoundaryRibbon.dyadicDifference (CellPrimitive.sourceValue source
-      edge) (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue right) depth
+theorem ribbon_bound (source : SourcePrimitive data index) (right :
+  RegularAlignment retained) (depth : Nat) :
+    Basic.normSq (dyadicDifference (CellPrimitive.sourceValue source
+      edge) (capValue right) depth
       edge.left.parameter edge.right.parameter) ≤
-      8 * Geometric.Basic.quarterRadius (RegularComparison.Data.regularScale comparison) index * (8 * data.sourceSlope +
-        9 * Geometric.Basic.quarterRadius (RegularComparison.Data.regularScale comparison) index) *
+      8 * quarterRadius (Data.regularScale comparison) index * (8 * data.sourceSlope +
+        9 * quarterRadius (Data.regularScale comparison) index) *
         (edge.right.parameter - edge.left.parameter) ^ 4 := by
   have estimate := DyadicBoundaryRibbon.dyadicDifference_bound (CellPrimitive.sourceValue source edge)
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue right)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (Geometric.Basic.quarterRadius_nonneg
-      (RegularComparison.Data.regularScale_nonnegative comparison) index)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _))
-    (fun _ inside => Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.point_error_bound source
+    (capValue right)
+    (Arithmetic.mul_nonneg_direct (quarterRadius_nonneg
+      (Data.regularScale_nonnegative comparison) index)
+      (Arithmetic.sq_nonneg_direct _))
+    (fun _ inside => point_error_bound source
       right inside)
     (fun _ _ firstInside lastInside =>
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.cap_increment_bound source right
+      cap_increment_bound source right
       firstInside lastInside)
     (fun _ _ firstInside lastInside =>
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.drift_bound source right firstInside
+      drift_bound source right firstInside
       lastInside)
     depth ⟨le_rfl, cell.ordered.le⟩ ⟨cell.ordered.le, le_rfl⟩ cell.ordered.le
   exact estimate.trans_eq (by ring1)
 
 /-- Paying, rather than dropping, the endpoint term compares the full anchored primitive areas. All intermediate dyadic
 excursions are retained. -/
-theorem area_error (source : UniformReciprocalPrimitives.SourcePrimitive data index) (right :
-  SheetAlignment.RegularAlignment retained) (depth : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (DyadicBoundaryRibbon.dyadicArea (CellPrimitive.sourceValue source edge)
+theorem area_error (source : SourcePrimitive data index) (right :
+  RegularAlignment retained) (depth : Nat) :
+    Basic.normSq (dyadicArea (CellPrimitive.sourceValue source edge)
       depth edge.left.parameter edge.right.parameter -
-      DyadicBoundaryRibbon.dyadicArea (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue
+      dyadicArea (capValue
         right) depth edge.left.parameter edge.right.parameter) ≤
-      Geometric.Basic.quarterRadius (RegularComparison.Data.regularScale comparison) index * (144 * data.sourceSlope +
-        160 * Geometric.Basic.quarterRadius (RegularComparison.Data.regularScale comparison) index) *
+      quarterRadius (Data.regularScale comparison) index * (144 * data.sourceSlope +
+        160 * quarterRadius (Data.regularScale comparison) index) *
         (edge.right.parameter - edge.left.parameter) ^ 4 := by
-  let endpoint := BoundaryRibbon.area
-    ((Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue right) edge.right.parameter)
+  let endpoint := area
+    ((capValue right) edge.right.parameter)
     (CellPrimitive.sourceValue source edge edge.right.parameter -
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue right) edge.right.parameter)
-  have rightBound := Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.cap_increment_bound source
+      (capValue right) edge.right.parameter)
+  have rightBound := cap_increment_bound source
     right
     ⟨le_rfl, cell.ordered.le⟩ ⟨cell.ordered.le, le_rfl⟩
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue_left,
+  rw [capValue_left,
     Data.Gaussian.Basic.sub_zero] at rightBound
-  have endpointBound : Data.Gaussian.Norm.Basic.normSq endpoint ≤
-      8 * (data.sourceSlope + Geometric.Basic.quarterRadius (RegularComparison.Data.regularScale comparison) index) *
-        Geometric.Basic.quarterRadius (RegularComparison.Data.regularScale comparison) index *
+  have endpointBound : Basic.normSq endpoint ≤
+      8 * (data.sourceSlope + quarterRadius (Data.regularScale comparison) index) *
+        quarterRadius (Data.regularScale comparison) index *
         (edge.right.parameter - edge.left.parameter) ^ 4 := by
-    have multiplied := Fraction.Order.Arithmetic.mul_le_mul_direct rightBound
-      (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.point_error_bound source right
-        ⟨cell.ordered.le, le_rfl⟩) (Data.Gaussian.Norm.Basic.normSq_nonneg _)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-          (add_nonneg data.sourceSlope_nonnegative (Geometric.Basic.quarterRadius_nonneg
-            (RegularComparison.Data.regularScale_nonnegative comparison) index)))
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _))
+    have multiplied := Arithmetic.mul_le_mul_direct rightBound
+      (point_error_bound source right
+        ⟨cell.ordered.le, le_rfl⟩) (Basic.normSq_nonneg _)
+      (Arithmetic.mul_nonneg_direct
+        (Arithmetic.mul_nonneg_direct (by decide)
+          (add_nonneg data.sourceSlope_nonnegative (quarterRadius_nonneg
+            (Data.regularScale_nonnegative comparison) index)))
+        (Arithmetic.sq_nonneg_direct _))
     calc
-      Data.Gaussian.Norm.Basic.normSq endpoint ≤ 4 * Data.Gaussian.Norm.Basic.normSq
-        ((Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue right) edge.right.parameter)
+      Basic.normSq endpoint ≤ 4 * Basic.normSq
+        ((capValue right) edge.right.parameter)
         *
-          Data.Gaussian.Norm.Basic.normSq (CellPrimitive.sourceValue source edge edge.right.parameter -
-            (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue right)
-            edge.right.parameter) := BoundaryRibbon.area_bound _ _
-      _ = 4 * (Data.Gaussian.Norm.Basic.normSq
-        ((Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue right) edge.right.parameter)
+          Basic.normSq (CellPrimitive.sourceValue source edge edge.right.parameter -
+            (capValue right)
+            edge.right.parameter) := area_bound _ _
+      _ = 4 * (Basic.normSq
+        ((capValue right) edge.right.parameter)
         *
-          Data.Gaussian.Norm.Basic.normSq (CellPrimitive.sourceValue source edge edge.right.parameter -
-            (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue right)
+          Basic.normSq (CellPrimitive.sourceValue source edge edge.right.parameter -
+            (capValue right)
             edge.right.parameter)) := by ring1
-      _ ≤ 4 * ((2 * (data.sourceSlope + Geometric.Basic.quarterRadius (RegularComparison.Data.regularScale comparison)
+      _ ≤ 4 * ((2 * (data.sourceSlope + quarterRadius (Data.regularScale comparison)
         index) * (edge.right.parameter - edge.left.parameter) ^ 2) *
-          (Geometric.Basic.quarterRadius (RegularComparison.Data.regularScale comparison) index * (edge.right.parameter
+          (quarterRadius (Data.regularScale comparison) index * (edge.right.parameter
             - edge.left.parameter) ^ 2)) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct multiplied (by decide)
+        Arithmetic.mul_le_mul_of_nonneg_left_direct multiplied (by decide)
       _ = _ := by ring1
-  have identity : DyadicBoundaryRibbon.dyadicArea (CellPrimitive.sourceValue source edge) depth edge.left.parameter
+  have identity : dyadicArea (CellPrimitive.sourceValue source edge) depth edge.left.parameter
     edge.right.parameter -
-      DyadicBoundaryRibbon.dyadicArea (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue
+      dyadicArea (capValue
         right) depth edge.left.parameter edge.right.parameter =
-      DyadicBoundaryRibbon.dyadicDifference (CellPrimitive.sourceValue source edge)
-        (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue right) depth
+      dyadicDifference (CellPrimitive.sourceValue source edge)
+        (capValue right) depth
         edge.left.parameter edge.right.parameter + endpoint := by
-    rw [DyadicBoundaryRibbon.dyadicDifference, CellPrimitive.sourceValue_left,
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue_left]
-    dsimp only [endpoint, BoundaryRibbon.area]
+    rw [dyadicDifference, CellPrimitive.sourceValue_left,
+      capValue_left]
+    dsimp only [endpoint, area]
     ring1
   rw [identity]
-  exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (add_le_add (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.ribbon_bound source right
+  exact (Bounds.normSq_add_le_two _ _).trans
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (add_le_add (ribbon_bound source right
         depth) endpointBound) (by decide)).trans_eq (by ring1))
 
 /-- A pre-index scale supplies the geometric area rate at every spatial depth. Increasing the inverse-model index
 controls the entire local area, not merely the final integral. -/
-theorem area_error_geometric (source : UniformReciprocalPrimitives.SourcePrimitive data index) (right :
-  SheetAlignment.RegularAlignment retained) (depth : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (DyadicBoundaryRibbon.dyadicArea (CellPrimitive.sourceValue source edge)
+theorem area_error_geometric (source : SourcePrimitive data index) (right :
+  RegularAlignment retained) (depth : Nat) :
+    Basic.normSq (dyadicArea (CellPrimitive.sourceValue source edge)
       depth edge.left.parameter edge.right.parameter -
-      DyadicBoundaryRibbon.dyadicArea (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.capValue
+      dyadicArea (capValue
         right) depth edge.left.parameter edge.right.parameter) ≤
-      Geometric.Basic.quarterRadius (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.Data.regularAreaScale
+      quarterRadius (Data.regularAreaScale
         comparison) index * (edge.right.parameter - edge.left.parameter) ^ 4 := by
-  have errorLe : Geometric.Basic.quarterRadius (RegularComparison.Data.regularScale comparison) index ≤
-    (RegularComparison.Data.regularScale comparison) := by
-    simpa only [Geometric.Basic.quarterRadius_eq_mul_pow, pow_zero, Fraction.Field.mul_one_direct, -eq_self, -iff_self]
+  have errorLe : quarterRadius (Data.regularScale comparison) index ≤
+    (Data.regularScale comparison) := by
+    simpa only [quarterRadius_eq_mul_pow, pow_zero, Fraction.Field.mul_one_direct, -eq_self, -iff_self]
       using
-      quarterRadius_antitone (RegularComparison.Data.regularScale_nonnegative comparison) (Nat.zero_le index)
-  apply (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.RegularAlignment.area_error source right depth).trans
-  have coefficient : Geometric.Basic.quarterRadius (RegularComparison.Data.regularScale comparison) index * (144 *
-    data.sourceSlope + 160 * Geometric.Basic.quarterRadius (RegularComparison.Data.regularScale comparison) index) ≤
-      Geometric.Basic.quarterRadius (RegularComparison.Data.regularScale comparison) index * (144 * data.sourceSlope +
-        160 * (RegularComparison.Data.regularScale comparison)) :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (add_le_add le_rfl (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct errorLe (by decide +kernel)))
-      (Geometric.Basic.quarterRadius_nonneg (RegularComparison.Data.regularScale_nonnegative comparison) index)
-  have identity : Geometric.Basic.quarterRadius (RegularComparison.Data.regularScale comparison) index * (144 *
-    data.sourceSlope + 160 * (RegularComparison.Data.regularScale comparison)) =
-      Geometric.Basic.quarterRadius (Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.Data.regularAreaScale
+      quarterRadius_antitone (Data.regularScale_nonnegative comparison) (Nat.zero_le index)
+  apply (area_error source right depth).trans
+  have coefficient : quarterRadius (Data.regularScale comparison) index * (144 *
+    data.sourceSlope + 160 * quarterRadius (Data.regularScale comparison) index) ≤
+      quarterRadius (Data.regularScale comparison) index * (144 * data.sourceSlope +
+        160 * (Data.regularScale comparison)) :=
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (add_le_add le_rfl (Arithmetic.mul_le_mul_of_nonneg_left_direct errorLe (by decide +kernel)))
+      (quarterRadius_nonneg (Data.regularScale_nonnegative comparison) index)
+  have identity : quarterRadius (Data.regularScale comparison) index * (144 *
+    data.sourceSlope + 160 * (Data.regularScale comparison)) =
+      quarterRadius (Data.regularAreaScale
         comparison) index := by
-    rw [Geometric.Basic.quarterRadius_eq_mul_pow, Geometric.Basic.quarterRadius_eq_mul_pow,
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularArea.Data.regularAreaScale]
+    rw [quarterRadius_eq_mul_pow, quarterRadius_eq_mul_pow,
+      Data.regularAreaScale]
     ring1
   rw [identity] at coefficient
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct coefficient
-    (Fraction.Order.Arithmetic.pow_nonneg_direct (Fraction.Order.Arithmetic.sub_nonneg_direct cell.ordered.le) 4)
+  exact Arithmetic.mul_le_mul_of_nonneg_right_direct coefficient
+    (Arithmetic.pow_nonneg_direct (Arithmetic.sub_nonneg_direct cell.ordered.le) 4)
 
 end RegularAlignment
 

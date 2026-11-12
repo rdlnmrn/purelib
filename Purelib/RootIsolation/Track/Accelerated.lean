@@ -11,6 +11,7 @@ import Purelib.Polynomial.Clearance.Box.Line.Elimination.Provider
 import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Polynomial.Elimination.Axis.Certificate
 public import Purelib.RootIsolation.Newton.Search.Attempt
+public import Purelib.RootIsolation.Newton.Search.Dyadic
 import Purelib.RootIsolation.Newton.Search.Center.Basic
 import Purelib.RootIsolation.Newton.Search.Iteration
 import Purelib.RootIsolation.Refinement.Basic
@@ -52,6 +53,10 @@ unsuccessful search delegates to the original total track.
 
 namespace Purelib.RootIsolation.Track.Accelerated
 
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
+open Purelib.Polynomial.Elimination.Axis.Certificate.AxisSafeCuts (AxisEliminationCertificate)
+open Purelib.Polynomial.Clearance.Box.Line.Elimination.Provider (AxisClearances)
+
 attribute [local irreducible] Newton.Search.Center.Basic.checkCenter Grid.Box.roundedCenter
   Gaussian.Basic.value Dense.Gaussian.Derivative.Evaluation.derivativeEval
   Dense.Gaussian.Newton.Basic.newtonCenter
@@ -59,13 +64,13 @@ attribute [local irreducible] Newton.Search.Iteration.search
 
 /-- Preserve the existing total fallback when no shortcut is certified. -/
 def refinement {p :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
+  CoefficientPolynomial} {ambient :
   Box} {degreeBound : Nat}
-    (elimination : Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
+    (elimination : AxisEliminationCertificate p degreeBound)
     (fallback : WindingOneTrack p ambient)
     (current : State.WindingOne.Basic.WindingOneState p ambient)
     (epsilon : Fraction.Rational) (positive : 0 < epsilon)
-    (clearances : Clearance.Box.Line.Elimination.Provider.AxisClearances elimination := .canonical elimination) :
+    (clearances : AxisClearances elimination := .canonical elimination) :
     Refinement current.raw epsilon :=
   match Newton.Search.Attempt.attempt elimination current.raw epsilon clearances with
   | some accepted => accepted
@@ -77,11 +82,11 @@ def refinement {p :
 /-- The accelerated track has exactly the original initial state and the
 same unconditional strict-nesting and accuracy interface. -/
 def accelerate {p :
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient :
+  CoefficientPolynomial} {ambient :
   Box} {degreeBound : Nat}
-    (elimination : Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
+    (elimination : AxisEliminationCertificate p degreeBound)
     (fallback : WindingOneTrack p ambient)
-    (clearances : Clearance.Box.Line.Elimination.Provider.AxisClearances elimination := .canonical elimination) :
+    (clearances : AxisClearances elimination := .canonical elimination) :
     WindingOneTrack p ambient where
   initial := fallback.initial
   refine current epsilon positive :=
@@ -93,6 +98,102 @@ def accelerate {p :
     (refinement elimination fallback current epsilon positive clearances).strict
   accurate current epsilon positive :=
     (refinement elimination fallback current epsilon positive clearances).accurate
+
+/-- The checked shortcut track retains its supplied fallback's complete initial state. -/
+theorem accelerate_initial {p : CoefficientPolynomial}
+    {ambient : Box} {degreeBound : Nat}
+    (elimination : AxisEliminationCertificate p degreeBound)
+    (fallback : WindingOneTrack p ambient)
+    (clearances : AxisClearances elimination := .canonical elimination) :
+    (accelerate elimination fallback clearances).initial = fallback.initial := rfl
+
+attribute [local irreducible] Newton.Search.Dyadic.attempt
+
+/-- Accept a checked dyadic proposal or use the supplied total strict and accurate fallback.
+
+The finite proposal attempt keeps the original polynomial, current state and
+requested epsilon. Only a certified result is returned directly; exhaustion
+invokes the retained fallback on those same inputs without changing its request.
+-/
+def dyadicRefinement {p : CoefficientPolynomial}
+    {ambient : Box} {degreeBound : Nat}
+    (elimination : AxisEliminationCertificate p degreeBound)
+    (fallback : WindingOneTrack p ambient)
+    (current : State.WindingOne.Basic.WindingOneState p ambient)
+    (epsilon : Fraction.Rational) (positive : 0 < epsilon)
+    (clearances : AxisClearances elimination := .canonical elimination) :
+    Refinement current.raw epsilon :=
+  match Newton.Search.Dyadic.attempt elimination current.raw epsilon clearances with
+  | some accepted => accepted
+  | none =>
+      { state := fallback.refine current epsilon positive
+        strict := fallback.strict current epsilon positive
+        accurate := fallback.accurate current epsilon positive }
+
+/-- A successful dyadic attempt is retained as the identical complete refinement certificate. -/
+theorem dyadicRefinement_of_some {p : CoefficientPolynomial}
+    {ambient : Box} {degreeBound : Nat}
+    (elimination : AxisEliminationCertificate p degreeBound)
+    (fallback : WindingOneTrack p ambient)
+    (current : State.WindingOne.Basic.WindingOneState p ambient)
+    (epsilon : Fraction.Rational) (positive : 0 < epsilon)
+    (clearances : AxisClearances elimination)
+    (accepted : Refinement current.raw epsilon)
+    (same : Newton.Search.Dyadic.attempt elimination current.raw epsilon clearances = some accepted) :
+    dyadicRefinement elimination fallback current epsilon positive clearances = accepted := by
+  unfold dyadicRefinement
+  rewrite [same]
+  rfl
+
+/-- Exhausting the bounded dyadic proposals preserves the complete supplied fallback refinement. -/
+theorem dyadicRefinement_of_none {p : CoefficientPolynomial}
+    {ambient : Box} {degreeBound : Nat}
+    (elimination : AxisEliminationCertificate p degreeBound)
+    (fallback : WindingOneTrack p ambient)
+    (current : State.WindingOne.Basic.WindingOneState p ambient)
+    (epsilon : Fraction.Rational) (positive : 0 < epsilon)
+    (clearances : AxisClearances elimination)
+    (same : Newton.Search.Dyadic.attempt elimination current.raw epsilon clearances = none) :
+    dyadicRefinement elimination fallback current epsilon positive clearances =
+      { state := fallback.refine current epsilon positive
+        strict := fallback.strict current epsilon positive
+        accurate := fallback.accurate current epsilon positive } := by
+  unfold dyadicRefinement
+  rewrite [same]
+  rfl
+
+attribute [local irreducible] dyadicRefinement
+
+/-- Install checked dyadic proposals while preserving the total fallback and its original initial state.
+
+The returned track has the same unconditional strict containment and requested
+accuracy interface. Proposal rejection is a finite inconclusive attempt;
+only that branch invokes the supplied fallback's existing refinement procedure.
+-/
+def fromDyadic {p : CoefficientPolynomial}
+    {ambient : Box} {degreeBound : Nat}
+    (elimination : AxisEliminationCertificate p degreeBound)
+    (fallback : WindingOneTrack p ambient)
+    (clearances : AxisClearances elimination := .canonical elimination) :
+    WindingOneTrack p ambient where
+  initial := fallback.initial
+  refine current epsilon positive :=
+    (dyadicRefinement elimination fallback current epsilon positive clearances).state
+  nested current epsilon positive :=
+    Geometry.Rational.Box.Refinement.StrictInterior.refines
+      (dyadicRefinement elimination fallback current epsilon positive clearances).strict
+  strict current epsilon positive :=
+    (dyadicRefinement elimination fallback current epsilon positive clearances).strict
+  accurate current epsilon positive :=
+    (dyadicRefinement elimination fallback current epsilon positive clearances).accurate
+
+/-- The dyadic shortcut track retains its supplied fallback's complete initial state. -/
+theorem fromDyadic_initial {p : CoefficientPolynomial}
+    {ambient : Box} {degreeBound : Nat}
+    (elimination : AxisEliminationCertificate p degreeBound)
+    (fallback : WindingOneTrack p ambient)
+    (clearances : AxisClearances elimination := .canonical elimination) :
+    (fromDyadic elimination fallback clearances).initial = fallback.initial := rfl
 
 end Purelib.RootIsolation.Track.Accelerated
 

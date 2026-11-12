@@ -21,6 +21,8 @@ import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Polynomial.Dense.Gaussian.Coprime.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Derivative quadrance separation from Bezout identities
 
@@ -46,7 +48,7 @@ value majorant. Its reciprocal scaled by sixteen determines the same
 residual threshold for the original approximate identity. -/
 @[expose] public def approximateThreshold (left : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (ambient : Box) : Fraction.Rational :=
-  1 / (16 * Dense.Gaussian.Bounds.Box.denseEvalNormMajorant left ambient)
+  1 / (16 * Bounds.Box.denseEvalNormMajorant left ambient)
 
 /-- The conservative derivative margin used by an approximate displayed
 Bézout identity.
@@ -56,7 +58,7 @@ value majorant. Its reciprocal scaled by sixteen determines the retained
 lower derivative margin for the original approximate identity. -/
 @[expose] public def approximateMargin (right : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (ambient : Box) : Fraction.Rational :=
-  1 / (16 * Dense.Gaussian.Bounds.Box.denseEvalNormMajorant right ambient)
+  1 / (16 * Bounds.Box.denseEvalNormMajorant right ambient)
 
 /-- The approximate Bezout residual threshold is positive on every supplied box.
 
@@ -64,11 +66,11 @@ The original left polynomial has a positive value majorant on the
 retained ambient box. Its product with sixteen is positive, so the
 displayed reciprocal threshold is also positive. -/
 public theorem approximateThreshold_pos (left : Basic.CanonicalCoefficients.CoefficientPolynomial)
-    (ambient : Box) : 0 < Dense.Gaussian.Derivative.Separation.Bezout.approximateThreshold left ambient
+    (ambient : Box) : 0 < approximateThreshold left ambient
       := by
-  apply Fraction.Order.Field.div_pos_direct (by decide)
-  exact Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-    (Dense.Gaussian.Bounds.Box.denseEvalNormMajorant_pos left ambient)
+  apply Field.div_pos_direct (by decide)
+  exact Arithmetic.mul_pos_direct (by decide)
+    (Bounds.Box.denseEvalNormMajorant_pos left ambient)
 
 /-- The approximate Bezout derivative margin is positive on every supplied box.
 
@@ -76,11 +78,11 @@ The original right polynomial has a positive value majorant on the
 retained ambient box. Its product with sixteen is positive, so the
 displayed reciprocal derivative margin is also positive. -/
 public theorem approximateMargin_pos (right : Basic.CanonicalCoefficients.CoefficientPolynomial)
-    (ambient : Box) : 0 < Dense.Gaussian.Derivative.Separation.Bezout.approximateMargin right ambient :=
+    (ambient : Box) : 0 < approximateMargin right ambient :=
       by
-  apply Fraction.Order.Field.div_pos_direct (by decide)
-  exact Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-    (Dense.Gaussian.Bounds.Box.denseEvalNormMajorant_pos right ambient)
+  apply Field.div_pos_direct (by decide)
+  exact Arithmetic.mul_pos_direct (by decide)
+    (Bounds.Box.denseEvalNormMajorant_pos right ambient)
 
 /-- The retained approximate Bezout identity forces derivative quadrance above the computed margin.
 
@@ -91,46 +93,46 @@ one sixteenth forces the derivative quadrance above the computed margin. -/
 public theorem approximateMargin_le
     (p left right : Basic.CanonicalCoefficients.CoefficientPolynomial) (ambient : Box)
     (approximateIdentity : ∀ {z : Gaussian.Basic.Canonical}, ambient.Contains z →
-      Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq
         (1 - (left.eval z * p.eval z + right.eval z *
-          (Dense.Gaussian.GCD.derivative p).eval z)) ≤
+          (GCD.derivative p).eval z)) ≤
         (1 / 16 : Fraction.Rational))
     {z : Gaussian.Basic.Canonical} (inside : ambient.Contains z)
-    (small : Data.Gaussian.Norm.Basic.normSq (p.eval z) ≤
-      Dense.Gaussian.Derivative.Separation.Bezout.approximateThreshold left ambient) :
-    Dense.Gaussian.Derivative.Separation.Bezout.approximateMargin right ambient ≤
-      Data.Gaussian.Norm.Basic.normSq ((Dense.Gaussian.GCD.derivative p).eval z) := open Purelib in by
-  let leftMajorant := Dense.Gaussian.Bounds.Box.denseEvalNormMajorant left ambient
-  let rightMajorant := Dense.Gaussian.Bounds.Box.denseEvalNormMajorant right ambient
-  let threshold := Dense.Gaussian.Derivative.Separation.Bezout.approximateThreshold left ambient
-  let margin := Dense.Gaussian.Derivative.Separation.Bezout.approximateMargin right ambient
+    (small : Gaussian.Norm.Basic.normSq (p.eval z) ≤
+      approximateThreshold left ambient) :
+    approximateMargin right ambient ≤
+      Gaussian.Norm.Basic.normSq ((GCD.derivative p).eval z) := open Purelib in by
+  let leftMajorant := Bounds.Box.denseEvalNormMajorant left ambient
+  let rightMajorant := Bounds.Box.denseEvalNormMajorant right ambient
+  let threshold := approximateThreshold left ambient
+  let margin := approximateMargin right ambient
   have leftMajorantPositive : 0 < leftMajorant :=
-    Dense.Gaussian.Bounds.Box.denseEvalNormMajorant_pos left ambient
+    Bounds.Box.denseEvalNormMajorant_pos left ambient
   have rightMajorantPositive : 0 < rightMajorant :=
-    Dense.Gaussian.Bounds.Box.denseEvalNormMajorant_pos right ambient
+    Bounds.Box.denseEvalNormMajorant_pos right ambient
   let leftValue := left.eval z
   let rightValue := right.eval z
   let value := p.eval z
-  let derivativeValue := (Dense.Gaussian.GCD.derivative p).eval z
+  let derivativeValue := (GCD.derivative p).eval z
   let error := 1 - (leftValue * value + rightValue * derivativeValue)
-  have leftBound : Data.Gaussian.Norm.Basic.normSq leftValue ≤ leftMajorant :=
-    Dense.Gaussian.Bounds.Box.normSq_eval_le_denseEvalNormMajorant left inside
-  have rightBound : Data.Gaussian.Norm.Basic.normSq rightValue ≤ rightMajorant :=
-    Dense.Gaussian.Bounds.Box.normSq_eval_le_denseEvalNormMajorant right inside
-  have errorBound : Data.Gaussian.Norm.Basic.normSq error ≤ (1 / 16 : Fraction.Rational) := by
+  have leftBound : Gaussian.Norm.Basic.normSq leftValue ≤ leftMajorant :=
+    Bounds.Box.normSq_eval_le_denseEvalNormMajorant left inside
+  have rightBound : Gaussian.Norm.Basic.normSq rightValue ≤ rightMajorant :=
+    Bounds.Box.normSq_eval_le_denseEvalNormMajorant right inside
+  have errorBound : Gaussian.Norm.Basic.normSq error ≤ (1 / 16 : Fraction.Rational) := by
     exact approximateIdentity inside
-  by_cases marginBound : margin ≤ Data.Gaussian.Norm.Basic.normSq derivativeValue
+  by_cases marginBound : margin ≤ Gaussian.Norm.Basic.normSq derivativeValue
   · exact marginBound
-  · have derivativeBound : Data.Gaussian.Norm.Basic.normSq derivativeValue ≤ margin :=
+  · have derivativeBound : Gaussian.Norm.Basic.normSq derivativeValue ≤ margin :=
       (lt_of_not_ge marginBound).le
-    have leftProduct : Data.Gaussian.Norm.Basic.normSq leftValue * Data.Gaussian.Norm.Basic.normSq value ≤
+    have leftProduct : Gaussian.Norm.Basic.normSq leftValue * Gaussian.Norm.Basic.normSq value ≤
         leftMajorant * threshold :=
-      Fraction.Order.Arithmetic.mul_le_mul_direct leftBound small
+      Arithmetic.mul_le_mul_direct leftBound small
         (Gaussian.Norm.Basic.normSq_nonneg value) leftMajorantPositive.le
-    have rightProduct : Data.Gaussian.Norm.Basic.normSq rightValue * Data.Gaussian.Norm.Basic.normSq
+    have rightProduct : Gaussian.Norm.Basic.normSq rightValue * Gaussian.Norm.Basic.normSq
       derivativeValue ≤
         rightMajorant * margin :=
-      Fraction.Order.Arithmetic.mul_le_mul_direct rightBound derivativeBound
+      Arithmetic.mul_le_mul_direct rightBound derivativeBound
         (Gaussian.Norm.Basic.normSq_nonneg derivativeValue) rightMajorantPositive.le
     have leftScaled : leftMajorant * threshold ≤
         (1 / 16 : Fraction.Rational) :=
@@ -141,18 +143,18 @@ public theorem approximateMargin_le
     have pairNorm := Gaussian.Norm.Bounds.normSq_add_le_two
       (leftValue * value) (rightValue * derivativeValue)
     have pairBound :
-        Data.Gaussian.Norm.Basic.normSq (leftValue * value + rightValue * derivativeValue) ≤
+        Gaussian.Norm.Basic.normSq (leftValue * value + rightValue * derivativeValue) ≤
           (1 / 4 : Fraction.Rational) := by
       calc
-        Data.Gaussian.Norm.Basic.normSq (leftValue * value + rightValue * derivativeValue) ≤
-            2 * (Data.Gaussian.Norm.Basic.normSq (leftValue * value) +
-              Data.Gaussian.Norm.Basic.normSq (rightValue * derivativeValue)) := pairNorm
-        _ = 2 * (Data.Gaussian.Norm.Basic.normSq leftValue * Data.Gaussian.Norm.Basic.normSq value +
-              Data.Gaussian.Norm.Basic.normSq rightValue * Data.Gaussian.Norm.Basic.normSq derivativeValue) :=
+        Gaussian.Norm.Basic.normSq (leftValue * value + rightValue * derivativeValue) ≤
+            2 * (Gaussian.Norm.Basic.normSq (leftValue * value) +
+              Gaussian.Norm.Basic.normSq (rightValue * derivativeValue)) := pairNorm
+        _ = 2 * (Gaussian.Norm.Basic.normSq leftValue * Gaussian.Norm.Basic.normSq value +
+              Gaussian.Norm.Basic.normSq rightValue * Gaussian.Norm.Basic.normSq derivativeValue) :=
                 by
           rw [Gaussian.Norm.Basic.normSq_mul, Gaussian.Norm.Basic.normSq_mul]
         _ ≤ 2 * ((1 / 16 : Fraction.Rational) + 1 / 16) :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          Arithmetic.mul_le_mul_of_nonneg_left_direct
             (add_le_add (leftProduct.trans leftScaled)
               (rightProduct.trans rightScaled)) (by decide)
         _ = 1 / 4 := by decide
@@ -166,23 +168,23 @@ public theorem approximateMargin_le
           Gaussian.Basic.one_re, Gaussian.Basic.one_im] <;>
         ring1
     have totalBound :
-        Data.Gaussian.Norm.Basic.normSq
+        Gaussian.Norm.Basic.normSq
             ((leftValue * value + rightValue * derivativeValue) + error) ≤
           (5 / 8 : Fraction.Rational) := by
       calc
-        Data.Gaussian.Norm.Basic.normSq
+        Gaussian.Norm.Basic.normSq
             ((leftValue * value + rightValue * derivativeValue) + error) ≤
             2 *
-            (Data.Gaussian.Norm.Basic.normSq (leftValue * value + rightValue * derivativeValue) +
-              Data.Gaussian.Norm.Basic.normSq error) := totalNorm
+            (Gaussian.Norm.Basic.normSq (leftValue * value + rightValue * derivativeValue) +
+              Gaussian.Norm.Basic.normSq error) := totalNorm
         _ ≤ 2 * ((1 / 4 : Fraction.Rational) + 1 / 16) :=
-          Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+          Arithmetic.mul_le_mul_of_nonneg_left_direct
             (add_le_add pairBound errorBound) (by decide)
         _ = 5 / 8 := by decide
     have impossible : (1 : Fraction.Rational) ≤ 5 / 8 := by
       calc
         (1 : Fraction.Rational) =
-            Data.Gaussian.Norm.Basic.normSq
+            Gaussian.Norm.Basic.normSq
               ((leftValue * value + rightValue * derivativeValue) +
                 error) := by
           rw [← identity, Gaussian.Norm.Basic.normSq_one]
@@ -198,16 +200,16 @@ provide its retained threshold, margin and quantitative lower proof. -/
 @[expose] public def ofApproximateBezout
     (p left right : Basic.CanonicalCoefficients.CoefficientPolynomial) (ambient : Box)
     (approximateIdentity : ∀ {z : Gaussian.Basic.Canonical}, ambient.Contains z →
-      Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq
         (1 - (left.eval z * p.eval z + right.eval z *
-          (Dense.Gaussian.GCD.derivative p).eval z)) ≤
+          (GCD.derivative p).eval z)) ≤
         (1 / 16 : Fraction.Rational)) :
-    Dense.Gaussian.Derivative.Separation.Basic.Certificate p ambient where
-  threshold := Dense.Gaussian.Derivative.Separation.Bezout.approximateThreshold left ambient
-  threshold_pos := Dense.Gaussian.Derivative.Separation.Bezout.approximateThreshold_pos left ambient
-  margin := Dense.Gaussian.Derivative.Separation.Bezout.approximateMargin right ambient
-  margin_pos := Dense.Gaussian.Derivative.Separation.Bezout.approximateMargin_pos right ambient
-  lower := Dense.Gaussian.Derivative.Separation.Bezout.approximateMargin_le p left right ambient approximateIdentity
+    Basic.Certificate p ambient where
+  threshold := approximateThreshold left ambient
+  threshold_pos := approximateThreshold_pos left ambient
+  margin := approximateMargin right ambient
+  margin_pos := approximateMargin_pos right ambient
+  lower := approximateMargin_le p left right ambient approximateIdentity
 
 /-- Construct derivative separation from the original exact squarefree Bezout certificate.
 
@@ -217,9 +219,9 @@ satisfies the approximate construction with the same displayed box and
 computed reciprocal threshold and derivative margin. -/
 @[expose] public def ofSquarefree
     {p : Basic.CanonicalCoefficients.CoefficientPolynomial} (squarefree :
-      Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate p)
-    (ambient : Box) : Dense.Gaussian.Derivative.Separation.Basic.Certificate p ambient :=
-  Dense.Gaussian.Derivative.Separation.Bezout.ofApproximateBezout p squarefree.left squarefree.right ambient (by
+      Squarefree.Basic.SquarefreeCertificate p)
+    (ambient : Box) : Basic.Certificate p ambient :=
+  ofApproximateBezout p squarefree.left squarefree.right ambient (by
     intro z _inside
     rw [squarefree.identity z]
     simp only [Gaussian.Basic.sub_self, Gaussian.Norm.Basic.normSq_zero]

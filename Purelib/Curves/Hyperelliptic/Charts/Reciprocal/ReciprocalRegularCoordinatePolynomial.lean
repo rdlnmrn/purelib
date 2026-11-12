@@ -57,6 +57,8 @@ import Purelib.Integration.Polynomial.Gaussian.Cell.Basic
 import Purelib.Riemann.Integration.PreparedConstantModels
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation.Rational
@@ -110,27 +112,27 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples (Data Sample
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {comparison :
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
+    UniformReciprocalCover.Cell data edge}
+  {regular : RegularBounds.Data cap} {comparison :
     Data regular cell}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {index : Nat} {box : Rational.Box} {capSample :
+    Cap.Primitives.Sample cap differential index box}
   {sample : Sample comparison capSample}
 
 /-- In the unramified reciprocal chart, the original coordinate derivative is exactly the sum of its two retained
 inverse residual terms. -/
-theorem CoordinatePolynomial.regular_derivative_eq (coordinate : Disk.CoordinatePolynomial sample)
-    (unramified : HyperellipticReciprocal.originOrder curve = 0) (point : InverseRootPolynomial.Gaussian) :
-    (Derivative.derivative coordinate.value).eval point = InverseRootPolynomial.half *
-      (capSample.inverse.value.eval point * InverseModelDifferentialResidual.differentialResidual
+theorem CoordinatePolynomial.regular_derivative_eq (coordinate : CoordinatePolynomial sample)
+    (unramified : HyperellipticReciprocal.originOrder curve = 0) (point : Gaussian) :
+    (derivative coordinate.value).eval point = half *
+      (capSample.inverse.value.eval point * differentialResidual
         (HyperellipticReciprocal.polynomial curve) sample.retained.inverse.value point +
-       sample.retained.inverse.value.eval point * InverseModelDifferentialResidual.differentialResidual cap.polynomial
+       sample.retained.inverse.value.eval point * differentialResidual cap.polynomial
          capSample.inverse.value point) := by
   have polynomials : HyperellipticReciprocal.polynomial curve = cap.polynomial.normalize := by
     rw [HyperellipticReciprocal.polynomial, unramified]
@@ -140,117 +142,117 @@ theorem CoordinatePolynomial.regular_derivative_eq (coordinate : Disk.Coordinate
     unfold DensePolynomial.shift
     by_cases zero : cap.polynomial.isZero = true
     · rw [if_pos zero, DensePolynomial.normalize_eq_zero_of_isZero zero]
-    · have zeroFalse := Purelib.Data.Bool.Decide.bool_eq_false_of_not_eq_true _ zero
+    · have zeroFalse := Data.Bool.Decide.bool_eq_false_of_not_eq_true _ zero
       rw [zeroFalse, if_neg (show (false : Bool) ≠ true by decide)]
-      simp only [-eq_self, -iff_self, List.replicate_zero, Purelib.Data.List.Append.append_nil]
+      simp only [-eq_self, -iff_self, List.replicate_zero, Data.List.Append.append_nil]
       rfl
   rw [coordinate.value_eq]
-  simp only [-eq_self, -iff_self, Derivative.eval_derivative_mul, DensePolynomial.eval_mul,
-    InverseModelDifferentialResidual.differentialResidual, polynomials,
+  simp only [-eq_self, -iff_self, Derivative.eval_derivative_mul, eval_mul,
+    differentialResidual, polynomials,
     Derivative.derivative_normalize, DensePolynomial.eval_normalize]
-  apply Data.Gaussian.Field.mul_right_cancel_of_ne (by decide : (2 : InverseRootPolynomial.Gaussian) ≠ 0)
-  have cancel (value : InverseRootPolynomial.Gaussian) : InverseRootPolynomial.half * value * 2 = value := by
+  apply Field.mul_right_cancel_of_ne (by decide : (2 : Gaussian) ≠ 0)
+  have cancel (value : Gaussian) : half * value * 2 = value := by
     calc
-      _ = (2 * InverseRootPolynomial.half) * value := by ring1
-      _ = value := by rw [show (2 : InverseRootPolynomial.Gaussian) * InverseRootPolynomial.half = 1 by decide,
-        Data.Gaussian.Basic.one_mul]
+      _ = (2 * half) * value := by ring1
+      _ = value := by rw [show (2 : Gaussian) * half = 1 by decide,
+        Basic.one_mul]
   rw [cancel]
   ring1
 
 /-- Retain the actual common index in both decreasing residual bounds. -/
-theorem CoordinatePolynomial.regular_derivative_bound (coordinate : Disk.CoordinatePolynomial sample)
+theorem CoordinatePolynomial.regular_derivative_bound (coordinate : CoordinatePolynomial sample)
     (unramified : HyperellipticReciprocal.originOrder curve = 0)
-    (parameter : InverseRootPolynomial.Coordinate) (between : edge.left.parameter ≤ parameter ∧ parameter ≤
+    (parameter : Coordinate) (between : edge.left.parameter ≤ parameter ∧ parameter ≤
       edge.right.parameter) :
-    Data.Gaussian.Norm.Basic.normSq ((Derivative.derivative coordinate.value).eval (parent.edge.point
+    Norm.Basic.normSq ((derivative coordinate.value).eval (parent.edge.point
       parameter)⁻¹) ≤
-      2 * (regular.inverseUpper * Geometric.Basic.quarterRadius comparison.disk.preparation.reciprocal.bound index +
-        comparison.disk.inverseUpper * Geometric.Basic.quarterRadius regular.differentialUpper index) := by
+      2 * (regular.inverseUpper * quarterRadius comparison.disk.preparation.reciprocal.bound index +
+        comparison.disk.inverseUpper * quarterRadius regular.differentialUpper index) := by
   let point := (parent.edge.point parameter)⁻¹
   have boundary := data.boundary.point ⟨edge.left.inside.1.trans between.1, between.2.trans edge.right.inside.2⟩
   have inside := ReciprocalExteriorCollar.inverse_inDisk curve boundary
-  have lower := (collar.point_clearance boundary (show 0 ≤ (0 : InverseRootPolynomial.Coordinate) ∧ (0 :
-    InverseRootPolynomial.Coordinate) ≤ 1 from ⟨le_rfl, by decide⟩)).2
+  have lower := (collar.point_clearance boundary (show 0 ≤ (0 : Coordinate) ∧ (0 :
+    Coordinate) ≤ 1 from ⟨le_rfl, by decide⟩)).2
   rw [collar.point_eq, ReciprocalExteriorCollar.deform_zero] at lower
-  have first : Data.Gaussian.Norm.Basic.normSq (sample.retained.inverse.value.eval point) ≤
+  have first : Norm.Basic.normSq (sample.retained.inverse.value.eval point) ≤
     comparison.disk.inverseUpper := by
     rw [comparison.disk.inverseUpper_eq]
     exact RegularBounds.inverse_le sample.retained.inverse (cell.contains parameter between)
       collar.radicandBound_positive lower
-  have second : Data.Gaussian.Norm.Basic.normSq (capSample.inverse.value.eval point) ≤ regular.inverseUpper :=
+  have second : Norm.Basic.normSq (capSample.inverse.value.eval point) ≤ regular.inverseUpper :=
     by
     rw [capSample.inverse_eq]
     exact regular.inverse_bound index inside
   have reciprocalError := sample.pullback.reciprocal_differential_bound (cell.contains parameter between)
   rw [sample.inverse_eq] at reciprocalError
-  have regularError : Data.Gaussian.Norm.Basic.normSq (InverseModelDifferentialResidual.differentialResidual
+  have regularError : Norm.Basic.normSq (differentialResidual
     cap.polynomial capSample.inverse.value point) ≤
-      Geometric.Basic.quarterRadius regular.differentialUpper index := by
+      quarterRadius regular.differentialUpper index := by
     rw [capSample.inverse_eq]
     exact regular.differential_bound index inside
-  have left := Fraction.Order.Arithmetic.mul_le_mul_direct second reciprocalError
-    (Data.Gaussian.Norm.Basic.normSq_nonneg _) regular.inverseUpper_positive.le
-  have right := Fraction.Order.Arithmetic.mul_le_mul_direct first regularError (Data.Gaussian.Norm.Basic.normSq_nonneg
+  have left := Arithmetic.mul_le_mul_direct second reciprocalError
+    (Norm.Basic.normSq_nonneg _) regular.inverseUpper_positive.le
+  have right := Arithmetic.mul_le_mul_direct first regularError (Norm.Basic.normSq_nonneg
     _) comparison.disk.inverseUpper_positive.le
   rw
     [CoordinatePolynomial.regular_derivative_eq
-    coordinate unramified, Data.Gaussian.Norm.Basic.normSq_mul]
-  have halfBound : Data.Gaussian.Norm.Basic.normSq InverseRootPolynomial.half ≤ 1 := by decide
-  apply ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct halfBound (Data.Gaussian.Norm.Basic.normSq_nonneg
+    coordinate unramified, Norm.Basic.normSq_mul]
+  have halfBound : Norm.Basic.normSq half ≤ 1 := by decide
+  apply ((Arithmetic.mul_le_mul_of_nonneg_right_direct halfBound (Norm.Basic.normSq_nonneg
     _)).trans_eq (Fraction.Field.one_mul _)).trans
-  apply (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-  simp only [-eq_self, -iff_self, Data.Gaussian.Norm.Basic.normSq_mul]
-  exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct left
+  apply (Norm.Bounds.normSq_add_le_two _ _).trans
+  simp only [-eq_self, -iff_self, Norm.Basic.normSq_mul]
+  exact Arithmetic.mul_le_mul_of_nonneg_left_direct (Arithmetic.add_le_add_direct left
     right) (by decide)
 
 /-- The decreasing derivative ceiling from the two original inverse-model residuals at their shared stage. -/
-@[expose] def regularDerivativeBound (comparison : ArcSamples.Data regular cell) (index : Nat) : Coordinate :=
-  2 * (regular.inverseUpper * Geometric.Basic.quarterRadius comparison.disk.preparation.reciprocal.bound index +
-    comparison.disk.inverseUpper * Geometric.Basic.quarterRadius regular.differentialUpper index)
+@[expose] def regularDerivativeBound (comparison : Data regular cell) (index : Nat) : Coordinate :=
+  2 * (regular.inverseUpper * quarterRadius comparison.disk.preparation.reciprocal.bound index +
+    comparison.disk.inverseUpper * quarterRadius regular.differentialUpper index)
 
 /-- The original regular coordinate movement ceiling including its retained source displacement. -/
-@[expose] def regularSlope (comparison : ArcSamples.Data regular cell) (index : Nat) : Coordinate :=
+@[expose] def regularSlope (comparison : Data regular cell) (index : Nat) : Coordinate :=
   2 * regularDerivativeBound comparison
-    index * Data.Gaussian.Norm.Basic.normSq parent.model.displacement
+    index * Norm.Basic.normSq parent.model.displacement
 
 /-- The fixed geometric scale of the original regular coordinate movement bound.
 
 The two retained inverse-model ceilings and source displacement determine this stage-independent rational scale. -/
-@[expose] def regularSlopeScale (comparison : ArcSamples.Data regular cell) : Coordinate :=
+@[expose] def regularSlopeScale (comparison : Data regular cell) : Coordinate :=
   4 * (regular.inverseUpper * comparison.disk.preparation.reciprocal.bound +
-    comparison.disk.inverseUpper * regular.differentialUpper) * Data.Gaussian.Norm.Basic.normSq
+    comparison.disk.inverseUpper * regular.differentialUpper) * Norm.Basic.normSq
       parent.model.displacement
 
 /-- The retained original regular-coordinate movement scale is nonnegative.
 
 The original positive inverse ceilings, nonnegative residual bounds and squared source displacement supply each factor.
 -/
-theorem regularSlopeScale_nonnegative (comparison : ArcSamples.Data regular cell) :
+theorem regularSlopeScale_nonnegative (comparison : Data regular cell) :
     0 ≤ regularSlopeScale comparison :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-    (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct regular.inverseUpper_positive.le
+  Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct (by decide)
+    (add_nonneg (Arithmetic.mul_nonneg_direct regular.inverseUpper_positive.le
       comparison.disk.preparation.reciprocal.bound_nonnegative)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct comparison.disk.inverseUpper_positive.le
-        regular.differentialUpper_nonnegative))) (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+      (Arithmetic.mul_nonneg_direct comparison.disk.inverseUpper_positive.le
+        regular.differentialUpper_nonnegative))) (Norm.Basic.normSq_nonneg _)
 
 /-- The original regular-coordinate slope is exactly its fixed scale's quarter-radius.
 
 Both residual terms use the same retained stage, so their common geometric decay factors out of the original slope. -/
-theorem regularSlope_eq (comparison : ArcSamples.Data regular cell) (index : Nat) :
+theorem regularSlope_eq (comparison : Data regular cell) (index : Nat) :
     regularSlope comparison index =
-      Geometric.Basic.quarterRadius
+      quarterRadius
       (regularSlopeScale
       comparison) index := by
   unfold regularSlope
     regularDerivativeBound
     regularSlopeScale
-  simp only [-eq_self, -iff_self, Geometric.Basic.quarterRadius_eq_mul_pow]
+  simp only [-eq_self, -iff_self, quarterRadius_eq_mul_pow]
   ring1
 
 /-- Compute a sufficient model index with a certificate for every later sample. The scale depends on retained geometry,
 not sampled polynomial size. -/
-@[expose] def regularSlopeRequest (comparison : ArcSamples.Data regular cell) (requested :
-  InverseRootPolynomial.Coordinate)
+@[expose] def regularSlopeRequest (comparison : Data regular cell) (requested :
+  Coordinate)
     (positive : 0 < requested) (floor : Nat) :
     { index : Nat // floor ≤ index ∧ ∀ later, index ≤ later →
       regularSlope comparison later <
@@ -283,42 +285,42 @@ The original value and displayed box determine the cached Taylor bound and its i
 
 /-- A decreasing bound on the sheet polynomial along the actual inverse edge, including the inverse-coordinate tangent.
 -/
-theorem CoordinatePolynomial.regular_increment_bound (coordinate : Disk.CoordinatePolynomial sample)
+theorem CoordinatePolynomial.regular_increment_bound (coordinate : CoordinatePolynomial sample)
     (unramified : HyperellipticReciprocal.originOrder curve = 0)
-    {first last : InverseRootPolynomial.Coordinate} (firstInside : edge.left.parameter ≤ first ∧ first ≤
+    {first last : Coordinate} (firstInside : edge.left.parameter ≤ first ∧ first ≤
       edge.right.parameter)
     (lastInside : edge.left.parameter ≤ last ∧ last ≤ edge.right.parameter) :
-    Data.Gaussian.Norm.Basic.normSq (coordinate.value.eval (parent.edge.point last)⁻¹ - coordinate.value.eval
+    Norm.Basic.normSq (coordinate.value.eval (parent.edge.point last)⁻¹ - coordinate.value.eval
       (parent.edge.point first)⁻¹) ≤
       regularSlope comparison index * (last
         - first)^2 := by
-  let interval : Data.Rat.Interval.Bounds := ⟨edge.left.parameter, edge.right.parameter, cell.ordered.le⟩
-  have within (parameter : InverseRootPolynomial.Coordinate) (inside : interval.Contains parameter) : 0 ≤ parameter ∧
+  let interval : Interval.Bounds := ⟨edge.left.parameter, edge.right.parameter, cell.ordered.le⟩
+  have within (parameter : Coordinate) (inside : interval.Contains parameter) : 0 ≤ parameter ∧
     parameter ≤ 1 :=
     ⟨edge.left.inside.1.trans inside.1, inside.2.trans edge.right.inside.2⟩
   let left := primitiveOfValue (⟨[]⟩ :
     InverseRootPolynomial.Polynomial) (patch.neighborhood count).base.box
   let right := primitiveOfValue
     coordinate.value (data.box edge.left.parameter)
-  have coefficientBound (parameter : InverseRootPolynomial.Coordinate) (inside : interval.Contains parameter) :
-      Data.Gaussian.Norm.Basic.normSq ((GCD.derivative (⟨[]⟩ : InverseRootPolynomial.Polynomial)).eval
+  have coefficientBound (parameter : Coordinate) (inside : interval.Contains parameter) :
+      Norm.Basic.normSq ((GCD.derivative (⟨[]⟩ : InverseRootPolynomial.Polynomial)).eval
         (parent.edge.point parameter) -
         (parent.edge.point parameter)⁻¹ ^ 2 * (GCD.derivative coordinate.value).eval (parent.edge.point parameter)⁻¹) ≤
         regularDerivativeBound comparison
           index := by
-    change Data.Gaussian.Norm.Basic.normSq ((0 : InverseRootPolynomial.Gaussian) - (parent.edge.point
+    change Norm.Basic.normSq ((0 : Gaussian) - (parent.edge.point
       parameter)⁻¹ ^ 2 *
-      (Derivative.derivative coordinate.value).eval (parent.edge.point parameter)⁻¹) ≤ _
-    rw [Data.Gaussian.Basic.zero_sub, Data.Gaussian.Norm.Basic.normSq_neg, Data.Gaussian.Norm.Basic.normSq_mul,
+      (derivative coordinate.value).eval (parent.edge.point parameter)⁻¹) ≤ _
+    rw [Basic.zero_sub, Norm.Basic.normSq_neg, Norm.Basic.normSq_mul,
       Power.normSq_pow]
-    have multiplier := Fraction.Order.Arithmetic.pow_le_pow_direct (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+    have multiplier := Arithmetic.pow_le_pow_direct (Norm.Basic.normSq_nonneg _)
       (Reciprocal.Bounds.disk_unit_bound (ReciprocalExteriorCollar.inverse_inDisk curve
         (data.boundary.point (within parameter inside)))) 2
-    have estimate := Fraction.Order.Arithmetic.mul_le_mul_direct multiplier
+    have estimate := Arithmetic.mul_le_mul_direct multiplier
 
         (CoordinatePolynomial.regular_derivative_bound
-        coordinate unramified parameter inside) (Data.Gaussian.Norm.Basic.normSq_nonneg _) (by
-            decide : (0 : InverseRootPolynomial.Coordinate) ≤ 1 ^ 2)
+        coordinate unramified parameter inside) (Norm.Basic.normSq_nonneg _) (by
+            decide : (0 : Coordinate) ≤ 1 ^ 2)
     simpa only [-eq_self, -iff_self,
       regularDerivativeBound, one_pow,
       Fraction.Field.one_mul] using estimate
@@ -326,10 +328,10 @@ theorem CoordinatePolynomial.regular_increment_bound (coordinate : Disk.Coordina
     (fun parameter inside => data.source_inside (within parameter inside)) cell.contains
     (regularDerivativeBound comparison
       index) coefficientBound firstInside lastInside
-  have values (parameter : InverseRootPolynomial.Coordinate) : Comparison.comparisonValue parent left right parameter =
+  have values (parameter : Coordinate) : Comparison.comparisonValue parent left right parameter =
       coordinate.value.eval (parent.edge.point parameter)⁻¹ := by
     change 0 + coordinate.value.eval (parent.edge.point parameter)⁻¹ = _
-    exact Data.Gaussian.Basic.zero_add _
+    exact Basic.zero_add _
   rw [values last, values first] at estimate
   exact estimate
 

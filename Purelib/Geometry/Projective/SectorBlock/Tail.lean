@@ -46,7 +46,7 @@ namespace Purelib.Geometry.Projective.SectorBlock.Tail
 tail)`. -/
 structure CompatibleTail (sector :
   Sector) (tail value
-  : Data.Gaussian.Basic.Canonical) : Prop where
+  : Canonical) : Prop where
   /-- The cleared homographic equation relating tail, value, and sector representative. -/ equation :
     Canonical.gamma * tail * value = Canonical.gamma * tail * sector.rep + 1
   /-- The value lies in the canonical annular band. -/ band : Sector.Band value
@@ -76,18 +76,18 @@ section CompatibleTail
 
 /-- Compatibility gives the cleared residual identity `gamma*tail*(value-sector.rep)=1`. -/
 theorem residual_equation {sector :
-  Sector} {tail value : Data.Gaussian.Basic.Canonical}
+  Sector} {tail value : Canonical}
     (compatible : CompatibleTail sector tail value) :
     Canonical.gamma * tail * (value - sector.rep) = 1 := by
   calc
     Canonical.gamma * tail * (value - sector.rep) =
         Canonical.gamma * tail * value - Canonical.gamma * tail * sector.rep :=
           by
-      apply Data.Gaussian.Basic.ext <;>
+      apply Basic.ext <;>
         simp only [Basic.sub_re, Basic.sub_im, Basic.mul_re, Basic.mul_im] <;> ring1
     _ = 1 := by
       rw [compatible.equation]
-      apply Data.Gaussian.Basic.ext <;>
+      apply Basic.ext <;>
         simp only [Basic.sub_re, Basic.sub_im, Basic.add_re, Basic.add_im, Basic.one_re, Basic.one_im] <;>
           ring1
 end CompatibleTail
@@ -103,21 +103,45 @@ section
 namespace Purelib.Geometry.Projective.SectorBlock.Tail.CompatibleTail
 section CompatibleTail
 
+/-- The displayed compatible sector residual is nonzero. -/
+theorem residual_nonzero {sector : Sector} {tail value : Canonical}
+    (compatible : CompatibleTail sector tail value) : value - sector.rep ≠ 0 := by
+  intro zero
+  have equation := compatible.residual_equation
+  rewrite [zero, Basic.mul_zero] at equation
+  exact one_ne_zero equation.symm
+
+/-- The exact compatible affine tail is the reciprocal gamma-scaled residual. -/
+theorem tail_eq_inverse {sector : Sector} {tail value : Canonical}
+    (compatible : CompatibleTail sector tail value) :
+    tail = (Canonical.gamma * (value - sector.rep))⁻¹ := by
+  have factorNonzero := Field.mul_ne_zero_direct (by decide : Canonical.gamma ≠ 0) compatible.residual_nonzero
+  apply Field.mul_right_cancel_of_ne factorNonzero
+  calc
+    tail * (Canonical.gamma * (value - sector.rep)) =
+        (Canonical.gamma * tail) * (value - sector.rep) := by
+      rewrite [← Basic.mul_assoc, Basic.mul_comm tail Canonical.gamma]
+      rfl
+    _ = 1 := compatible.residual_equation
+    _ = (Canonical.gamma * (value - sector.rep))⁻¹ *
+        (Canonical.gamma * (value - sector.rep)) :=
+      (Canonical.inv_mul_cancel _ factorNonzero).symm
+
 /-- The tail squared norm times twice the residual squared norm equals one. -/
 theorem norm_equation {sector :
   Sector}
-  {tail value : Data.Gaussian.Basic.Canonical}
+  {tail value : Canonical}
     (compatible : CompatibleTail sector tail value) :
-    (2 * Data.Gaussian.Norm.Basic.normSq (value - sector.rep)) * Data.Gaussian.Norm.Basic.normSq tail
+    (2 * Norm.Basic.normSq (value - sector.rep)) * Norm.Basic.normSq tail
       = 1 := by
-  have normEquation := congrArg Data.Gaussian.Norm.Basic.normSq
+  have normEquation := congrArg Norm.Basic.normSq
     (residual_equation compatible)
-  rw [Data.Gaussian.Norm.Basic.normSq_mul, Data.Gaussian.Norm.Basic.normSq_mul, Constants.normSq_gamma,
-    Data.Gaussian.Norm.Basic.normSq_one] at normEquation
+  rw [Norm.Basic.normSq_mul, Norm.Basic.normSq_mul, Constants.normSq_gamma,
+    Norm.Basic.normSq_one] at normEquation
   calc
-    (2 * Data.Gaussian.Norm.Basic.normSq (value - sector.rep)) * Data.Gaussian.Norm.Basic.normSq tail
+    (2 * Norm.Basic.normSq (value - sector.rep)) * Norm.Basic.normSq tail
       =
-        2 * Data.Gaussian.Norm.Basic.normSq tail * Data.Gaussian.Norm.Basic.normSq (value -
+        2 * Norm.Basic.normSq tail * Norm.Basic.normSq (value -
           sector.rep) := by ring1
     _ = 1 := normEquation
 end CompatibleTail
@@ -136,14 +160,14 @@ section CompatibleTail
 /-- A compatible affine tail is nonzero. -/
 theorem tail_nonzero {sector :
   Sector}
-  {tail value : Data.Gaussian.Basic.Canonical}
+  {tail value : Canonical}
     (compatible : CompatibleTail sector tail value) : tail ≠ 0 := by
   intro tailZero
   have equation := compatible.equation
   simp only [tailZero,
-    Data.Gaussian.Basic.mul_zero,
-    Data.Gaussian.Basic.zero_mul,
-    Data.Gaussian.Basic.zero_add] at equation
+    Basic.mul_zero,
+    Basic.zero_mul,
+    Basic.zero_add] at equation
   exact one_ne_zero equation.symm
 end CompatibleTail
 end Purelib.Geometry.Projective.SectorBlock.Tail.CompatibleTail
@@ -162,36 +186,36 @@ section CompatibleTail
 
 The sector contraction bound and the retained norm identity give the strict inequality. -/
 theorem tail_norm_gt_one {sector :
-  Sector} {tail value : Data.Gaussian.Basic.Canonical}
+  Sector} {tail value : Canonical}
     (compatible : CompatibleTail sector tail value) :
-    1 < Data.Gaussian.Norm.Basic.normSq tail := by
+    1 < Norm.Basic.normSq tail := by
   have contraction := Sector.contraction compatible.band sector compatible.holds
-  have factorLess : 2 * Data.Gaussian.Norm.Basic.normSq (value - sector.rep) < (1 : Fraction.Rational) := by
+  have factorLess : 2 * Norm.Basic.normSq (value - sector.rep) < (1 : Fraction.Rational) := by
     calc
-      2 * Data.Gaussian.Norm.Basic.normSq (value - sector.rep) < 2 * (1 / 2 : Fraction.Rational) :=
+      2 * Norm.Basic.normSq (value - sector.rep) < 2 * (1 / 2 : Fraction.Rational) :=
         Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
           (by decide) contraction
       _ = 1 := by decide
-  by_cases greater : 1 < Data.Gaussian.Norm.Basic.normSq tail
+  by_cases greater : 1 < Norm.Basic.normSq tail
   · exact greater
-  · have tailLe : Data.Gaussian.Norm.Basic.normSq tail ≤ 1 := le_of_not_gt greater
+  · have tailLe : Norm.Basic.normSq tail ≤ 1 := le_of_not_gt greater
     have factorNonnegative :
-        0 ≤ 2 * Data.Gaussian.Norm.Basic.normSq (value - sector.rep) :=
+        0 ≤ 2 * Norm.Basic.normSq (value - sector.rep) :=
       Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-        (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+        (Norm.Basic.normSq_nonneg _)
     have productLe :
-        (2 * Data.Gaussian.Norm.Basic.normSq (value - sector.rep)) * Data.Gaussian.Norm.Basic.normSq
+        (2 * Norm.Basic.normSq (value - sector.rep)) * Norm.Basic.normSq
           tail ≤
-          (2 * Data.Gaussian.Norm.Basic.normSq (value - sector.rep)) * 1 :=
+          (2 * Norm.Basic.normSq (value - sector.rep)) * 1 :=
       Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct tailLe
         factorNonnegative
     have oneLtOne : (1 : Fraction.Rational) < 1 := by
       calc
-        1 = (2 * Data.Gaussian.Norm.Basic.normSq (value - sector.rep)) *
-          Data.Gaussian.Norm.Basic.normSq tail :=
+        1 = (2 * Norm.Basic.normSq (value - sector.rep)) *
+          Norm.Basic.normSq tail :=
           compatible.norm_equation.symm
-        _ ≤ (2 * Data.Gaussian.Norm.Basic.normSq (value - sector.rep)) * 1 := productLe
-        _ = 2 * Data.Gaussian.Norm.Basic.normSq (value - sector.rep) := by ring1
+        _ ≤ (2 * Norm.Basic.normSq (value - sector.rep)) * 1 := productLe
+        _ = 2 * Norm.Basic.normSq (value - sector.rep) := by ring1
         _ < 1 := factorLess
     exact (lt_irrefl 1 oneLtOne).elim
 end CompatibleTail
@@ -215,7 +239,7 @@ retains the distinct formal endpoint in the same sector, without identifying it 
 inductive Tail (sector : Sector) where
   /-- The terminal tail representing the selected sector representative. -/ | omega
   /-- An affine tail and source value with their exact compatibility certificate. -/ | affine (tail value :
-    Data.Gaussian.Basic.Canonical) (compatible : Geometry.Projective.SectorBlock.Tail.CompatibleTail sector tail value)
+    Canonical) (compatible : Tail.CompatibleTail sector tail value)
 
 constructive_injectivity Tail
 
@@ -248,7 +272,7 @@ section Tail
 /-- The canonical tail is the terminal tail exactly at the selected representative, or an affine compatible tail for the
 displayed value. -/
 def ModelsValue {sector : Sector} (tail :
-  Tail sector) (value : Data.Gaussian.Basic.Canonical) : Prop :=
+  Tail sector) (value : Canonical) : Prop :=
   match tail with
   | .omega => value = sector.rep
   | .affine _ storedValue _ => storedValue = value

@@ -17,11 +17,14 @@ import Purelib.Riemann.RootContinuation.PreparedRefinementRootEndpoints
 
 public import Purelib.Riemann.Integration.PreparedEndpointSafeRefinement
 import Purelib.Data.Rat.Fraction.Order.Basic
+import Purelib.Data.List.Append
 import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Riemann.Branches.ClearSheetContinuation
 import Purelib.Riemann.Branches.PreparedSheetContinuationCore
 import Purelib.Riemann.Integration.PreparedEdgeRecasting
 import Purelib.Tactic.Ring
+
+open Purelib.Data.Rat.Fraction.Order
 
 public section
 
@@ -56,8 +59,8 @@ open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
 open Purelib.Riemann.Integration.PreparedSubdivisionModelCore (CenteredEdge RootChildAt RootChildBlock)
 open Purelib.Riemann.Integration.PreparedDirectDyadicRefinements (DirectPathChain)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
 
 set_option genInjectivity false in
 open Purelib.Data.Gaussian in
@@ -85,16 +88,16 @@ theorem interpolate_inside {left right fraction : Fraction.Rational}
     (leftInside : 0 ≤ left ∧ left ≤ 1) (rightInside : 0 ≤ right ∧ right ≤ 1)
     (inside : 0 ≤ fraction ∧ fraction ≤ 1) :
     0 ≤ (1 - fraction) * left + fraction * right ∧ (1 - fraction) * left + fraction * right ≤ 1 := by
-  have complementary := Fraction.Order.Arithmetic.sub_nonneg_direct inside.2
+  have complementary := Arithmetic.sub_nonneg_direct inside.2
   refine ⟨?_, ?_⟩
-  · have added := Fraction.Order.Arithmetic.add_le_add_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct complementary leftInside.1)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct inside.1 rightInside.1)
+  · have added := Arithmetic.add_le_add_direct
+      (Arithmetic.mul_nonneg_direct complementary leftInside.1)
+      (Arithmetic.mul_nonneg_direct inside.1 rightInside.1)
     exact (Fraction.zero_add 0).symm.trans_le added
   calc
-    _ ≤ (1 - fraction) * 1 + fraction * 1 := Fraction.Order.Arithmetic.add_le_add_direct
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct leftInside.2 complementary)
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct rightInside.2 inside.1)
+    _ ≤ (1 - fraction) * 1 + fraction * 1 := Arithmetic.add_le_add_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct leftInside.2 complementary)
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct rightInside.2 inside.1)
     _ = 1 := by ring1
 
 open Purelib.Data.Gaussian in
@@ -109,7 +112,7 @@ private theorem point_interpolate (edge : PreparedEdge curve differential) (left
     edge.point ((1 - fraction) * left + fraction * right) =
       edge.point left + Scale.scale fraction (edge.point right - edge.point left) := by
   apply Basic.ext <;>
-    simp only [PreparedConstantModels.PreparedEdge.point, Geometry.ClearPath.ClearSegment.pointAt,
+    simp only [PreparedEdge.point, Geometry.ClearPath.ClearSegment.pointAt,
       Basic.add_re, Basic.add_im, Basic.sub_re, Basic.sub_im, Scale.scale_re, Scale.scale_im] <;> ring1
 
 open Purelib.Data.Rat in
@@ -142,7 +145,7 @@ structure RootSubedge (parent child : CenteredEdge curve differential) : Type 2 
     ∧ fraction ≤ 1) → Location parent (child.edge.point fraction)
   /-- The original parent and child root names at these exact retained locations are operationally equivalent. -/
     equivalent : ∀ fraction inside,
-    Equivalence.NamedEquivalent (parent.edge.rootName (location fraction inside).fraction (location fraction
+    NamedEquivalent (parent.edge.rootName (location fraction inside).fraction (location fraction
       inside).inside)
       (child.edge.rootName fraction inside)
 
@@ -154,7 +157,7 @@ open Purelib.Approximation.Gaussian in
 /-- Retain each original edge as its own subedge with the same parameters and reflexive root-name comparisons. -/
 @[expose] def refl (parent : CenteredEdge curve differential) : RootSubedge parent parent where
   location := fun fraction inside => ⟨fraction, inside, rfl⟩
-  equivalent := fun _ _ => Equivalence.NamedEquivalent.refl _
+  equivalent := fun _ _ => NamedEquivalent.refl _
 
 /-- Compose two retained subedge relations through their original middle edge.
 
@@ -302,6 +305,22 @@ constructive_injectivity RootSubedgeRefinement
     (equal : first = second) (refinement : RootSubedgeRefinement parents first) : RootSubedgeRefinement parents second
       :=
   equal ▸ refinement
+
+/-- Concatenate two original rooted parent refinements in their exact occurrence order.
+
+Each retained child chain and all-query root relation remains unchanged.
+The sole transport reassociates the literal child-list append, preserving
+empty inner blocks, stationary parent roles and repeated occurrences.
+-/
+def RootSubedgeRefinement.append :
+    {firstParents lastParents firstChildren lastChildren : List (CenteredEdge curve differential)} →
+    RootSubedgeRefinement firstParents firstChildren → RootSubedgeRefinement lastParents lastChildren →
+      RootSubedgeRefinement (firstParents ++ lastParents) (firstChildren ++ lastChildren)
+  | _, _, _, _, .nil, last => last
+  | _, _, _, lastChildren, .cons (block := block) (children := children) chain head tail, last =>
+      RootSubedgeRefinement.castChildren
+        (Purelib.Data.List.Append.append_assoc block children lastChildren).symm
+        (.cons chain head (tail.append last))
 
 end Purelib.Riemann.RootContinuation.PreparedSubedgeRootQueries
 

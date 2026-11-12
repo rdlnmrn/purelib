@@ -39,10 +39,10 @@ coordinate is zero, in which case select the imaginary coordinate.
 The same normalized coefficient table supplies either its real or its
 imaginary coordinate according to the displayed leading-coordinate test. -/
 @[expose] def selectedCoordinate (p : Basic.CanonicalCoefficients.CoefficientPolynomial) :
-  (Dense.Basic.DensePolynomial Fraction.Rational) :=
+  (Basic.DensePolynomial Fraction.Rational) :=
   if p.leadingCoeff.re = 0 then
-    Dense.Gaussian.Components.imagPart p.normalize
-  else Dense.Gaussian.Components.realPart p.normalize
+    imagPart p.normalize
+  else realPart p.normalize
 
 /-- The selected real or imaginary coordinate polynomial is nonzero when the Gaussian polynomial is nonzero.
 
@@ -51,8 +51,8 @@ The retained coordinate table therefore begins with that component after
 its leading-zero scan. -/
 theorem selectedCoordinate_nonzero (p : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (nonzero : p.isZero = false) :
-    (Dense.Gaussian.Components.Selection.selectedCoordinate p).isZero = false := by
-  have leadingNonzero := Dense.Basic.DensePolynomial.leadingCoeff_ne_zero nonzero
+    (selectedCoordinate p).isZero = false := by
+  have leadingNonzero := Basic.DensePolynomial.leadingCoeff_ne_zero nonzero
   cases coefficients : p.normalize.coeffs with
   | nil =>
       change p.normalize.coeffs.headD 0 ≠ 0 at leadingNonzero
@@ -64,7 +64,7 @@ theorem selectedCoordinate_nonzero (p : Basic.CanonicalCoefficients.CoefficientP
         rewrite [coefficients]
         exact Eq.refl _
       by_cases realZero : p.leadingCoeff.re = 0
-      · rw [Dense.Gaussian.Components.Selection.selectedCoordinate, if_pos realZero]
+      · rw [selectedCoordinate, if_pos realZero]
         have leadingRealZero : leading.re = 0 := by
           simpa only [leadingIdentity] using realZero
         have imaginaryNonzero : leading.im ≠ 0 := by
@@ -86,7 +86,7 @@ theorem selectedCoordinate_nonzero (p : Basic.CanonicalCoefficients.CoefficientP
         rw [Data.List.DropWhile.cons_of_false (fun value => decide (value = 0))
           leading.im (remaining.map Gaussian.Basic.im) retained]
         rfl
-      · rw [Dense.Gaussian.Components.Selection.selectedCoordinate, if_neg realZero]
+      · rw [selectedCoordinate, if_neg realZero]
         have leadingRealNonzero : leading.re ≠ 0 := by
           simpa only [leadingIdentity] using realZero
         change ((p.normalize.coeffs.map
@@ -108,17 +108,17 @@ The value is the imaginary part on the real axis when the leading real coordinat
 -/
 @[simp] theorem eval_selectedCoordinate (p : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (parameter : Fraction.Rational) :
-    (Dense.Gaussian.Components.Selection.selectedCoordinate p).eval parameter =
+    (selectedCoordinate p).eval parameter =
       if p.leadingCoeff.re = 0 then
         (p.eval (Gaussian.Cast.Path.ofCoordinate parameter)).im
       else
         (p.eval (Gaussian.Cast.Path.ofCoordinate parameter)).re := by
-  unfold Dense.Gaussian.Components.Selection.selectedCoordinate
+  unfold selectedCoordinate
   split
-  · rw [Dense.Gaussian.Components.eval_imagPart,
-      Dense.Basic.DensePolynomial.eval_normalize]
-  · rw [Dense.Gaussian.Components.eval_realPart,
-      Dense.Basic.DensePolynomial.eval_normalize]
+  · rw [eval_imagPart,
+      Basic.DensePolynomial.eval_normalize]
+  · rw [eval_realPart,
+      Basic.DensePolynomial.eval_normalize]
 
 end Purelib.Polynomial.Dense.Gaussian.Components.Selection
 

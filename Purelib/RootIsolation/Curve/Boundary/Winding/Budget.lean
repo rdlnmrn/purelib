@@ -32,6 +32,8 @@ import Purelib.Geometry.Projective.Hermitian.Chart.Basic
 import Purelib.Geometry.Projective.Hermitian.Parametrization.Basic
 import Purelib.RootIsolation.Curve.Boundary.Event.Basic
 
+open Purelib.Geometry.Projective.Chordal.Box
+
 open Purelib.Polynomial.Dense.Gaussian.Squarefree.Basic (SquarefreeCertificate)
 open Purelib.RootIsolation.State.WindingOne.Family.Basic (WindingFamily)
 
@@ -69,13 +71,13 @@ is outside it.  Neither alternative asserts that a factor zero exists.
 namespace Purelib.RootIsolation.Curve.Boundary.Winding.Budget
 section Boundary
 
-variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
 variable {reference : LinearAlgebra.Coordinates2.Matrix.GaussianMatrix} {current :
   Box}
 variable {denominatorMargin : Fraction.Rational}
 variable {marginPositive : 0 < denominatorMargin}
 variable {atom : Geometry.Projective.Hermitian.Atom}
-variable {boundary : Curve.Boundary.Analysis.CurveBoundary p reference current denominatorMargin
+variable {boundary : Analysis.CurveBoundary p reference current denominatorMargin
   marginPositive atom}
 
 /-- Finite chart/box targets making a denominator-equality profile
@@ -83,13 +85,13 @@ projectively closer to `ω` than any point of the corresponding finite winding
 box. -/
 @[expose] def poleExclusionTargets
     (family : WindingFamily p ambient) : List Fraction.Rational :=
-  (Curve.Boundary.Profile.Family.boundaryProfileEventFamily
+  (Profile.Family.boundaryProfileEventFamily
     boundary).flatMap fun parent =>
       (parent.parent.chart.parameterization.weightLower *
-        Geometry.Projective.Chordal.Box.Interior.infinityBoxGap current) ^ 2 ::
+        Interior.infinityBoxGap current) ^ 2 ::
         family.boxes.map fun targetBox =>
           (parent.parent.chart.parameterization.weightLower *
-            Geometry.Projective.Chordal.Box.Interior.infinityBoxGap targetBox) ^ 2
+            Interior.infinityBoxGap targetBox) ^ 2
 
 /-- Every finite chart-and-box pole-exclusion target is positive. -/
 theorem poleExclusionTargets_positive
@@ -104,14 +106,14 @@ theorem poleExclusionTargets_positive
   · exact Fraction.Order.Arithmetic.pow_pos_direct
       (Fraction.Order.Arithmetic.mul_pos_direct
         parent.parent.chart.parameterization.weightLowerPositive
-        (Geometry.Projective.Chordal.Box.Interior.infinityBoxGap_pos current))
+        (Interior.infinityBoxGap_pos current))
       2
   have targetMember := Data.List.Map.mem_map.mp targetMember
   rcases targetMember with ⟨targetBox, _boxMember, rfl⟩
   exact Fraction.Order.Arithmetic.pow_pos_direct
     (Fraction.Order.Arithmetic.mul_pos_direct
       parent.parent.chart.parameterization.weightLowerPositive
-      (Geometry.Projective.Chordal.Box.Interior.infinityBoxGap_pos targetBox))
+      (Interior.infinityBoxGap_pos targetBox))
     2
 
 /-- One positive rational target below every finite chart/box pole-exclusion
@@ -131,15 +133,15 @@ theorem poleExclusionTarget_pos
 /-- The common pole-exclusion target is no larger than the target for the supplied retained chart and family box. -/
 theorem poleExclusionTarget_le
     (family : WindingFamily p ambient)
-    (parent : RootIsolation.Curve.Boundary.Profile.BoundaryProfileEventEntry
+    (parent : Profile.BoundaryProfileEventEntry
       boundary)
     (parentMember : parent ∈
-      Curve.Boundary.Profile.Family.boundaryProfileEventFamily
+      Profile.Family.boundaryProfileEventFamily
         boundary)
     (index : Fin family.boxes.length) :
     poleExclusionTarget (boundary := boundary) family ≤
       (parent.parent.chart.parameterization.weightLower *
-        Geometry.Projective.Chordal.Box.Interior.infinityBoxGap
+        Interior.infinityBoxGap
           (family.boxes.get index)) ^ 2 := by
   apply
     Data.Rat.List.Minimum.RegionOwnership.positiveMinimum_le_of_mem
@@ -153,14 +155,14 @@ theorem poleExclusionTarget_le
 box itself, independently of the auxiliary winding family. -/
 theorem poleExclusionTarget_le_current
     (family : WindingFamily p ambient)
-    (parent : RootIsolation.Curve.Boundary.Profile.BoundaryProfileEventEntry
+    (parent : Profile.BoundaryProfileEventEntry
       boundary)
     (parentMember : parent ∈
-      Curve.Boundary.Profile.Family.boundaryProfileEventFamily
+      Profile.Family.boundaryProfileEventFamily
         boundary) :
     poleExclusionTarget (boundary := boundary) family ≤
       (parent.parent.chart.parameterization.weightLower *
-        Geometry.Projective.Chordal.Box.Interior.infinityBoxGap current) ^ 2 := by
+        Interior.infinityBoxGap current) ^ 2 := by
   apply
     Data.Rat.List.Minimum.RegionOwnership.positiveMinimum_le_of_mem
   dsimp only [poleExclusionTargets]
@@ -230,7 +232,7 @@ projective-cylinder, and separated-family requirements. -/
 @[expose] def windingRequestWidth
     (squarefree : SquarefreeCertificate p)
     (family : WindingFamily p ambient) : Fraction.Rational :=
-  Curve.Boundary.Complete.Control.boundaryControlledRequestWidth
+  Complete.Control.boundaryControlledRequestWidth
     boundary family.boxes family.boxes_pairwise
       (windingTarget (boundary := boundary) squarefree family)
 
@@ -239,7 +241,7 @@ theorem windingRequestWidth_pos
     (squarefree : SquarefreeCertificate p)
     (family : WindingFamily p ambient) :
     0 < windingRequestWidth (boundary := boundary) squarefree family :=
-  Curve.Boundary.Complete.Control.boundaryControlledRequestWidth_pos
+  Complete.Control.boundaryControlledRequestWidth_pos
     boundary family.boxes family.boxes_pairwise
       (windingTarget_pos (boundary := boundary) squarefree family)
 
@@ -248,10 +250,10 @@ width. -/
 @[expose] def windingRequestFamily
     (squarefree : SquarefreeCertificate p)
     (family : WindingFamily p ambient) :
-    List (Curve.Boundary.Complete.Basic.BoundaryCompleteRequestEntry
+    List (Complete.Basic.BoundaryCompleteRequestEntry
       boundary
       (windingRequestWidth (boundary := boundary) squarefree family)) :=
-  Curve.Boundary.Complete.Control.controlledBoundaryCompleteRequestFamily
+  Complete.Control.controlledBoundaryCompleteRequestFamily
     boundary family.boxes family.boxes_pairwise
       (windingTarget (boundary := boundary) squarefree family)
 
@@ -260,7 +262,7 @@ winding states. -/
 @[expose] def classifiedWindingRequestFamily
     (squarefree : SquarefreeCertificate p)
     (family : WindingFamily p ambient) :=
-  Curve.Boundary.Complete.Ownership.classifiedControlledBoundaryFamily
+  Complete.Ownership.classifiedControlledBoundaryFamily
     boundary family.boxes family.boxes_pairwise
       (windingTarget (boundary := boundary) squarefree family)
       (windingTarget_pos (boundary := boundary) squarefree family)
@@ -270,7 +272,7 @@ target. -/
 abbrev ClassifiedChild
     (squarefree : SquarefreeCertificate p)
     (family : WindingFamily p ambient) :=
-  Curve.Boundary.Complete.Ownership.ClassifiedControlledBoundaryChild
+  Complete.Ownership.ClassifiedControlledBoundaryChild
     boundary family.boxes family.boxes_pairwise
       (windingTarget (boundary := boundary) squarefree family)
       (windingTarget_pos (boundary := boundary) squarefree family)

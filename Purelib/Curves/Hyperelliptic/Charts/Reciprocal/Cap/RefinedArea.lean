@@ -98,21 +98,21 @@ open Purelib.Riemann.Normalization.InverseRootPolynomial (Gaussian Coordinate)
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PathCover (Parent ParentData)
 open Purelib.Integration.Path.IncrementArea (Summary)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {collar :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {collar :
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {differential :
+    Differential genus}
   {parent : Parent curve differential} {count : Nat} {data : ParentData cap differential count parent}
-  {integrationTarget totalTarget areaTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor
-    index : Nat} {box : Purelib.Geometry.Rational.Box}
-  {base : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedPrimitives.Request data integrationTarget floor}
-  {request : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.AreaRequest base totalTarget areaTarget}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {retained : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedPrimitives.Sample base capSample}
+  {integrationTarget totalTarget areaTarget : Coordinate} {floor
+    index : Nat} {box : Geometry.Rational.Box}
+  {base : PreparedPrimitives.Request data integrationTarget floor}
+  {request : AreaRequest base totalTarget areaTarget}
+  {capSample : Primitives.Sample cap differential index box}
+  {retained : PreparedPrimitives.Sample base capSample}
 
 /-- Transport the original cached path summary along exact equality of its retained increment list. -/
-@[expose] public def castSummary {first last : List InverseRootPolynomial.Gaussian} (equal : first = last) (summary :
-  IncrementArea.Summary first) : IncrementArea.Summary last := by
+@[expose] public def castSummary {first last : List Gaussian} (equal : first = last) (summary :
+  Summary first) : Summary last := by
   cases equal
   exact summary
 
@@ -126,31 +126,31 @@ private theorem apply_proof_congr {α : Type u} {β : Type v} {property : α →
 namespace Evaluation
 
 /-- Read the original first retained endpoint's chart approximation stream. -/
-@[expose] public def firstStream (evaluated : AreaRequest.Evaluation request retained) :
+@[expose] public def firstStream (evaluated : Evaluation request retained) :
   ApproximationData :=
   (evaluated.first.request.prepared.coordinates.chartApproximation capSample).toApproximation
 
 /-- Read the original last retained endpoint's chart approximation stream. -/
-@[expose] public def lastStream (evaluated : AreaRequest.Evaluation request retained) :
+@[expose] public def lastStream (evaluated : Evaluation request retained) :
   ApproximationData :=
   (evaluated.last.request.prepared.coordinates.chartApproximation capSample).toApproximation
 
 /-- The original first endpoint reading stage is bounded by the retained chart-bank maximum. -/
-theorem first_stage_le (evaluated : AreaRequest.Evaluation request retained) : evaluated.first.evaluated.chart.stage ≤
+theorem first_stage_le (evaluated : Evaluation request retained) : evaluated.first.evaluated.chart.stage ≤
   evaluated.charts.stage := by
   rw [evaluated.first_eq, RetainedPoint.cast_stage]
   exact evaluated.charts.firstPoint_stage_le ⟨base.block.chain⟩ request.children_nonempty
 
 /-- The original last endpoint reading stage is bounded by the retained chart-bank maximum. -/
-theorem last_stage_le (evaluated : AreaRequest.Evaluation request retained) : evaluated.last.evaluated.chart.stage ≤
+theorem last_stage_le (evaluated : Evaluation request retained) : evaluated.last.evaluated.chart.stage ≤
   evaluated.charts.stage := by
   rw [evaluated.last_eq, RetainedPoint.cast_stage]
   exact evaluated.charts.lastPoint_stage_le ⟨base.block.chain⟩ request.children_nonempty
 
 /-- The retained integration model, polynomial rows and polynomial summary are reused. Only the requested chart readings
 and their area are updated. -/
-@[expose] public def refine (evaluated : AreaRequest.Evaluation request retained) (later : request.index ≤ index)
-    (stage : Nat) (ready : evaluated.charts.stage ≤ stage) : AreaRequest.Evaluation request retained := by
+@[expose] public def refine (evaluated : Evaluation request retained) (later : request.index ≤ index)
+    (stage : Nat) (ready : evaluated.charts.stage ≤ stage) : Evaluation request retained := by
   let charts := evaluated.charts.refine stage ready
   have shared := evaluated.charts.refine_shared request.shared base.block.chain stage ready
   have sourceEq : evaluated.pairs.map Prod.snd = charts.rows.map Prod.snd := by
@@ -160,47 +160,47 @@ and their area are updated. -/
   have sameSource : evaluated.pairs.map Prod.snd = pairs.map Prod.snd :=
     sourceEq.trans (congrArg (List.map Prod.snd) pairsEq.symm)
   exact request.evaluateReadings retained later charts shared pairs pairsEq
-    (Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.AreaRequest.castSummary sameSource
+    (castSummary sameSource
     evaluated.polynomial)
 
 /-- Refining the original chart polygon preserves the exact refinement of its retained first endpoint. -/
-theorem refine_first (evaluated : AreaRequest.Evaluation request retained) (later : request.index ≤ index)
+theorem refine_first (evaluated : Evaluation request retained) (later : request.index ≤ index)
     (stage : Nat) (ready : evaluated.charts.stage ≤ stage) :
     (evaluated.refine later stage ready).first = evaluated.first.refine stage (evaluated.first_stage_le.trans ready) :=
       by
   rw [(evaluated.refine later stage ready).first_eq]
   change ((evaluated.charts.refine stage ready).firstPoint ⟨base.block.chain⟩ request.children_nonempty).cast _ = _
   rw [Samples.firstPoint_refine, RetainedPoint.refine_cast]
-  exact Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.AreaRequest.apply_proof_congr evaluated.first_eq.symm (fun
+  exact apply_proof_congr evaluated.first_eq.symm (fun
     point ready => point.refine stage ready) _ _
 
 /-- Refining the original chart polygon preserves the exact refinement of its retained last endpoint. -/
-theorem refine_last (evaluated : AreaRequest.Evaluation request retained) (later : request.index ≤ index)
+theorem refine_last (evaluated : Evaluation request retained) (later : request.index ≤ index)
     (stage : Nat) (ready : evaluated.charts.stage ≤ stage) :
     (evaluated.refine later stage ready).last = evaluated.last.refine stage (evaluated.last_stage_le.trans ready) := by
   rw [(evaluated.refine later stage ready).last_eq]
   change ((evaluated.charts.refine stage ready).lastPoint ⟨base.block.chain⟩ request.children_nonempty).cast _ = _
   rw [Samples.lastPoint_refine, RetainedPoint.refine_cast]
-  exact Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.AreaRequest.apply_proof_congr evaluated.last_eq.symm (fun
+  exact apply_proof_congr evaluated.last_eq.symm (fun
     point ready => point.refine stage ready) _ _
 
 /-- The refined original first chart value is the negative sample of its retained endpoint stream at the chosen stage.
 -/
-theorem refine_first_value (evaluated : AreaRequest.Evaluation request retained) (later : request.index ≤ index)
+theorem refine_first_value (evaluated : Evaluation request retained) (later : request.index ≤ index)
     (stage : Nat) (ready : evaluated.charts.stage ≤ stage) :
     (evaluated.refine later stage ready).first.vertex.value =
       -(evaluated.first.request.prepared.coordinates.chartApproximation capSample).toApproximation.sample stage := by
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.AreaRequest.Evaluation.refine_first]
+  rw [refine_first]
   change -(ChartReading.build _ capSample stage).value = _
   rw [ChartReading.value_sample]
   rfl
 
 /-- The refined original last chart value is the negative sample of its retained endpoint stream at the chosen stage. -/
-theorem refine_last_value (evaluated : AreaRequest.Evaluation request retained) (later : request.index ≤ index)
+theorem refine_last_value (evaluated : Evaluation request retained) (later : request.index ≤ index)
     (stage : Nat) (ready : evaluated.charts.stage ≤ stage) :
     (evaluated.refine later stage ready).last.vertex.value =
       -(evaluated.last.request.prepared.coordinates.chartApproximation capSample).toApproximation.sample stage := by
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.Cap.FineCharts.AreaRequest.Evaluation.refine_last]
+  rw [refine_last]
   change -(ChartReading.build _ capSample stage).value = _
   rw [ChartReading.value_sample]
   rfl

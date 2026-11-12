@@ -1,4 +1,6 @@
 module
+import Purelib.Curves.Hyperelliptic.Differentials.OddPower.Ordinary
+import Purelib.Riemann.Readings.PreparedPrimitiveSamples.Numerator
 import Purelib.Data.Nat.Order
 meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Data.Gaussian.Basic
@@ -55,6 +57,8 @@ import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-! Opposite-sheet cancellation for the canonical edge valuation. The
@@ -82,6 +86,8 @@ open Purelib.Data.List
 
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
+open Purelib.Curves.Hyperelliptic.Differentials.OddPower.Basic.OddPowerDifferential (Ordinary)
+open Purelib.Riemann.Readings
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 open Purelib.Data.Rat.Fraction (Rational)
 open Purelib.Topology.Polygon.Stokes
@@ -103,63 +109,18 @@ open Purelib.Topology.Surface.Sewing.PrimitiveSewing (PrimitiveValues)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues (edgeValuation)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid}
-  {edges : Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames} {mesh :
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid}
+  {edges : RootIsolation.SquareRoot.Grid.RootEdgeBank frames} {mesh :
     LiftedMesh vertices edges base.faces}
   {domains : FaceDomainBank frames
     base.faces.regulars} {differential : Differential genus}
 
-namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkIncrementRequests.BranchCellBank.LiftedMesh
-namespace SourceChartRequests
-
-/-- The complete sum of original signed source-to-chart differences equals the source total minus the retained canonical
-word valuation. -/
-private theorem total_difference (sources : List (SewnPrimitiveContacts.SourceEdge mesh.triangles.length))
-    (values : Fin mesh.triangles.length → PrimitiveSewing.PrimitiveValues 3) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (sources.map (fun source => source.increment values -
-      CanonicalEdgeValues.edgeValuation mesh values (source.project mesh.triangulation.faces))) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (sources.map (fun source => source.increment values)) -
-        SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation mesh values) (sources.map (fun source =>
-          source.project mesh.triangulation.faces)) := by
-  induction sources with
-  | nil => change (0 : Data.Gaussian.Basic.Canonical) = 0 - 0; ring1
-  | cons source sources ih =>
-      change (_ - _) + _ = (_ + _) - (_ + _)
-      rw [ih]
-      ring1
-
-/-- The paid original signed source requests bound the complete source-to-canonical-word difference by the aggregate
-target. -/
-theorem total_accurate {sources : List (SewnPrimitiveContacts.SourceEdge mesh.triangles.length)} {target :
-  Fraction.Rational}
-    (positive : 0 < target)
-    (requests : PuncturedGrid.SourceChartRequests differential domains (Aggregate.perTerm target sources.length)
-      sources)
-    {stage : Nat} {shared : PrimitiveData.FacePrimitiveBank differential stage domains} (readings :
-      TrianglePrimitiveReadings.TriangleReadings shared mesh)
-    (later : requests.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (sources.map (fun source =>
-      source.increment readings.values)) -
-      SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation mesh readings.values) (sources.map (fun source =>
-        source.project mesh.triangulation.faces))) < target := by
-  rw [←
-    total_difference]
-  apply Gaussian.Budget.Aggregate.normSq_sum_lt _ positive
-  intro value member
-  obtain ⟨source, inSources, equal⟩ := Map.mem_map.mp member
-  rw [← equal, Map.length_map]
-  simpa only [Data.Gaussian.Norm.Basic.normSq_eq_canonical, -eq_self, -iff_self] using
-    (requests.accurate readings later source inSources).le
-
-end SourceChartRequests
-end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkIncrementRequests.BranchCellBank.LiftedMesh
-
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SignedSourceChartRequests (paired_sources_nonloop)
 
-variable {start finish : Purelib.Data.Gaussian.Basic.Canonical} {walk : Purelib.Polynomial.Geometry.Grid.Walks.Walk
+variable {start finish : Data.Gaussian.Basic.Canonical} {walk : Polynomial.Geometry.Grid.Walks.Walk
   base.bank.grid start finish}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkIncrementRequests.FramedPuncturedGrid.PairedWalk
@@ -168,22 +129,24 @@ set_option genInjectivity false in
 /-- The three retained request families paying opposite-sheet cancellation in the original canonical edge valuation.
 
 The shared stage pays paired source transport and both sheet-specific source/chart comparisons. -/
-structure IncrementRequest (paired : WalkOccurrences.PairedWalk mesh walk) (domains : DomainBanks.FaceDomainBank frames
+structure IncrementRequest (paired : WalkOccurrences.PairedWalk mesh walk) (domains : FaceDomainBank frames
   base.faces.regulars)
-    (differential : Differentials.Basic.Differential genus) (sheet : Fin 2) (target : Fraction.Rational) where
+    (differential : Differential genus) (sheet : Fin 2) (target : Fraction.Rational)
+    (polynomial : Option (Ordinary curve.polynomial) := none) where
   /-- The original complete cancellation target is strictly positive. -/ positive : 0 < target
   /-- The cached common target allocated to each original comparison family. -/ partTarget : Fraction.Rational
   /-- Each comparison family receives exactly one tenth of the complete cancellation target. -/ partTarget_eq :
     partTarget = target / 10
-  /-- The actual opposite-sheet source transport requests on the original paired walk. -/ opposite : PairedWalk.Requests
+  /-- The actual opposite-sheet source transport requests on the original paired walk. -/ opposite : Requests
     domains differential (Aggregate.perTerm partTarget walk.edgeCount) paired
+      (PreparedPrimitiveSamples.numerator curve.polynomial differential polynomial)
   /-- The retained signed source/chart requests on the originally selected sheet. -/ outward :
-    PuncturedGrid.SourceChartRequests differential domains
-    (Aggregate.perTerm partTarget (paired.sources sheet).length) (paired.sources sheet)
+    SourceChartRequests differential domains
+    (Aggregate.perTerm partTarget (paired.sources sheet).length) (paired.sources sheet) polynomial
   /-- The retained signed source/chart requests on the actual opposite sheet. -/ other :
-    PuncturedGrid.SourceChartRequests differential domains
+    SourceChartRequests differential domains
     (Aggregate.perTerm partTarget (paired.sources (BranchCutLifts.otherSheet sheet)).length)
-    (paired.sources (BranchCutLifts.otherSheet sheet))
+    (paired.sources (BranchCutLifts.otherSheet sheet)) polynomial
   /-- The cached common stage paying all three original request families. -/ index : Nat
   /-- The common stage is exactly the maximum of the original transport and both source/chart stages. -/ index_eq :
     index = max opposite.index (max outward.index other.index)
@@ -199,34 +162,35 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkIncrement
 namespace IncrementRequest
 
 /-- Prepare all three original request families with the paid aggregate allowances and cache their common stage. -/
-@[expose] def build (paired : WalkOccurrences.PairedWalk mesh walk) (domains : DomainBanks.FaceDomainBank frames
+@[expose] def build (paired : WalkOccurrences.PairedWalk mesh walk) (domains : FaceDomainBank frames
   base.faces.regulars)
-    (differential : Differentials.Basic.Differential genus) (sheet : Fin 2) (target : Fraction.Rational) (positive : 0 <
-      target) :
+    (differential : Differential genus) (sheet : Fin 2) (target : Fraction.Rational) (positive : 0 <
+      target) (polynomial : Option (Ordinary curve.polynomial) := none) :
 
-      PairedWalk.IncrementRequest
-      paired domains differential sheet target :=
+      IncrementRequest
+      paired domains differential sheet target polynomial :=
   let partTarget := target / 10
   have partPositive : 0 < partTarget := Fraction.Order.Field.div_pos_direct positive (by decide)
   let opposite := Requests.build domains differential (Aggregate.perTerm partTarget walk.edgeCount)
     (Aggregate.perTerm_positive partPositive _) paired
+    (PreparedPrimitiveSamples.numerator curve.polynomial differential polynomial)
   let outward := SourceChartRequests.build differential domains
     (Aggregate.perTerm partTarget (paired.sources sheet).length)
     (Aggregate.perTerm_positive partPositive _) (paired.sources sheet) (SignedSourceChartRequests.paired_sources_nonloop
-      paired sheet)
+      paired sheet) polynomial
   let other := SourceChartRequests.build differential domains
     (Aggregate.perTerm partTarget (paired.sources (BranchCutLifts.otherSheet sheet)).length)
     (Aggregate.perTerm_positive partPositive _) (paired.sources (BranchCutLifts.otherSheet sheet))
-    (SignedSourceChartRequests.paired_sources_nonloop paired _)
+    (SignedSourceChartRequests.paired_sources_nonloop paired _) polynomial
   ⟨positive, partTarget, rfl, opposite, outward, other, max opposite.index (max outward.index other.index), rfl⟩
 
 /-- The two actual sheet-specific source increment totals sum to the retained paired-walk source total. -/
 private theorem sheet_sum (paired : WalkOccurrences.PairedWalk mesh walk) (values : Fin mesh.triangles.length →
-  PrimitiveSewing.PrimitiveValues 3) (sheet : Fin 2) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum ((paired.sources sheet).map (fun source => source.increment values)) +
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum ((paired.sources (BranchCutLifts.otherSheet sheet)).map (fun source
+  PrimitiveValues 3) (sheet : Fin 2) :
+    Sum.Basic.gaussianSum ((paired.sources sheet).map (fun source => source.increment values)) +
+      Sum.Basic.gaussianSum ((paired.sources (BranchCutLifts.otherSheet sheet)).map (fun source
         => source.increment values)) =
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (paired.sums values) := by
+        Sum.Basic.gaussianSum (paired.sums values) := by
   have cases : sheet = 0 ∨ sheet = 1 := by
     have bound := sheet.isLt
     by_cases zero : sheet.val = 0
@@ -237,53 +201,51 @@ private theorem sheet_sum (paired : WalkOccurrences.PairedWalk mesh walk) (value
   · rw [BranchCutLifts.otherSheet_one, _root_.add_comm]
     exact paired.sums_eq values
 
-/-- At the paid common stage the two original opposite-sheet canonical word valuations cancel within the complete
-requested squared-norm bound. -/
-theorem accurate (request :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkIncrementRequests.FramedPuncturedGrid.PairedWalk.IncrementRequest
-  paired domains differential sheet target)
-    {stage : Nat} {shared : PrimitiveData.FacePrimitiveBank differential stage domains} (readings :
-      TrianglePrimitiveReadings.TriangleReadings shared mesh)
-    (later : request.index ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation mesh
-      readings.values) (edges.indexedEdges vertices walk sheet) +
-      SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation mesh readings.values) (edges.indexedEdges vertices
-        walk (BranchCutLifts.otherSheet sheet))) ≤ target := by
+/-- Original finite cancellation payment from the actual source transport and two paid chart discrepancies. -/
+private theorem cancel_accurate {polynomial : Option (Ordinary curve.polynomial)}
+    (request : IncrementRequest paired domains differential sheet target polynomial)
+    {stage : Nat} {shared : FacePrimitiveBank differential stage domains
+      (numerator := PreparedPrimitiveSamples.numerator curve.polynomial differential polynomial)}
+    (readings : TriangleReadings shared mesh) (later : request.index ≤ stage)
+    (outward : Basic.normSq (Sum.Basic.gaussianSum ((paired.sources sheet).map (fun source =>
+        source.increment readings.values)) - SewingRetraction.wordValue
+      (CanonicalEdgeValues.edgeValuation mesh readings.values) (edges.indexedEdges vertices walk sheet)) ≤
+        request.partTarget)
+    (other : Basic.normSq (Sum.Basic.gaussianSum ((paired.sources (BranchCutLifts.otherSheet sheet)).map (fun source =>
+        source.increment readings.values)) - SewingRetraction.wordValue
+      (CanonicalEdgeValues.edgeValuation mesh readings.values)
+      (edges.indexedEdges vertices walk (BranchCutLifts.otherSheet sheet))) ≤ request.partTarget) :
+    Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation mesh readings.values)
+      (edges.indexedEdges vertices walk sheet) + SewingRetraction.wordValue
+      (CanonicalEdgeValues.edgeValuation mesh readings.values)
+      (edges.indexedEdges vertices walk (BranchCutLifts.otherSheet sheet))) ≤ target := by
   have partPositive : 0 < request.partTarget := by
     rw [request.partTarget_eq]
     exact Fraction.Order.Field.div_pos_direct request.positive (by decide)
   have oppositeLater := (Data.Nat.Order.le_max_left _ _).trans (request.index_eq ▸ later)
-  have chartLater := (Data.Nat.Order.le_max_right _ _).trans (request.index_eq ▸ later)
-  have outward :=
-    (BranchCellBank.LiftedMesh.SourceChartRequests.total_accurate
-    partPositive request.outward readings ((Data.Nat.Order.le_max_left _ _).trans chartLater)).le
-  have other :=
-    (BranchCellBank.LiftedMesh.SourceChartRequests.total_accurate
-    partPositive request.other readings ((Data.Nat.Order.le_max_right _ _).trans chartLater)).le
-  rw [paired.sources_project] at outward other
-  let first := Data.Gaussian.Norm.Sum.Basic.gaussianSum ((paired.sources sheet).map (fun source => source.increment
+  let first := Sum.Basic.gaussianSum ((paired.sources sheet).map (fun source => source.increment
     readings.values))
-  let last := Data.Gaussian.Norm.Sum.Basic.gaussianSum ((paired.sources (BranchCutLifts.otherSheet sheet)).map (fun
+  let last := Sum.Basic.gaussianSum ((paired.sources (BranchCutLifts.otherSheet sheet)).map (fun
     source => source.increment readings.values))
   let left := SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation mesh readings.values) (edges.indexedEdges
     vertices walk sheet)
   let right := SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation mesh readings.values) (edges.indexedEdges
     vertices walk (BranchCutLifts.otherSheet sheet))
-  have opposite : Data.Gaussian.Norm.Basic.normSq (first + last) ≤ request.partTarget := by
+  have opposite : Basic.normSq (first + last) ≤ request.partTarget := by
     rw
       [sheet_sum]
     apply (Gaussian.Budget.Aggregate.normSq_sum_lt _ partPositive ?_).le
     intro value member
     rw [paired.sums_length]
     exact (request.opposite.term_bound readings paired oppositeLater value member).le
-  have middle : Data.Gaussian.Norm.Basic.normSq (first + right) ≤ 2 * (request.partTarget + request.partTarget)
+  have middle : Basic.normSq (first + right) ≤ 2 * (request.partTarget + request.partTarget)
     := by
-    have estimate := (Data.Gaussian.Norm.Bounds.normSq_sub_le_two (first + last) (last - right)).trans
+    have estimate := (Bounds.normSq_sub_le_two (first + last) (last - right)).trans
       (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
         (Fraction.Order.Arithmetic.add_le_add_direct opposite other) (by decide))
     rw [show first + last - (last - right) = first + right by ring1] at estimate
     exact estimate
-  have estimate := (Data.Gaussian.Norm.Bounds.normSq_sub_le_two (first + right) (first - left)).trans
+  have estimate := (Bounds.normSq_sub_le_two (first + right) (first - left)).trans
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
       (Fraction.Order.Arithmetic.add_le_add_direct middle outward) (by decide))
   rw [show first + right - (first - left) = left + right by ring1] at estimate
@@ -291,6 +253,70 @@ theorem accurate (request :
   rw [request.partTarget_eq]
   exact (by ring1 : 2 * (2 * (target / 10 + target / 10) + target / 10) = target / 10 * 10).trans
     (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))
+
+/-- At the paid common stage the two original opposite-sheet canonical word valuations cancel within the complete
+requested squared-norm bound. -/
+theorem accurate (request :
+  IncrementRequest
+  paired domains differential sheet target)
+    {stage : Nat} {shared : FacePrimitiveBank differential stage domains} (readings :
+      TriangleReadings shared mesh)
+    (later : request.index ≤ stage) :
+    Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation mesh
+      readings.values) (edges.indexedEdges vertices walk sheet) +
+      SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation mesh readings.values) (edges.indexedEdges vertices
+        walk (BranchCutLifts.otherSheet sheet))) ≤ target := by
+  have partPositive : 0 < request.partTarget := by
+    rw [request.partTarget_eq]
+    exact Fraction.Order.Field.div_pos_direct request.positive (by decide)
+  have chartLater := (Data.Nat.Order.le_max_right _ _).trans (request.index_eq ▸ later)
+  have outward :=
+    (PuncturedGrid.SourceChartRequests.total_accurate
+    partPositive request.outward readings ((Data.Nat.Order.le_max_left _ _).trans chartLater)).le
+  have other :=
+    (PuncturedGrid.SourceChartRequests.total_accurate
+    partPositive request.other readings ((Data.Nat.Order.le_max_right _ _).trans chartLater)).le
+  rw [paired.sources_project] at outward other
+  exact cancel_accurate request readings later outward other
+
+/-- The two actual signed chart-comparison products for the original selected and opposite sheets. -/
+@[expose] def Comparison {polynomial : Option (Ordinary curve.polynomial)}
+    (request : IncrementRequest paired domains differential sheet target polynomial) {stage : Nat}
+    (shared : FacePrimitiveBank differential stage domains
+      (numerator := PreparedPrimitiveSamples.numerator curve.polynomial differential polynomial)) : Type _ :=
+  request.outward.Comparisons shared × request.other.Comparisons shared
+
+/-- Execute both original signed chart-comparison products once, sharing the GIVEN polynomial primitive bank. -/
+def compare {polynomial : Option (Ordinary curve.polynomial)}
+    (request : IncrementRequest paired domains differential sheet target polynomial) {stage : Nat}
+    (shared : FacePrimitiveBank differential stage domains
+      (numerator := PreparedPrimitiveSamples.numerator curve.polynomial differential polynomial)) :
+    request.Comparison shared :=
+  let outward := request.outward.compare shared
+  let other := request.other.compare shared
+  ⟨outward, other⟩
+
+/-- Actual retained polynomial chart comparisons and true P opposite-sheet requests pay the complete canonical sum. -/
+theorem comparison_accurate {polynomial : Option (Ordinary curve.polynomial)}
+    (request : IncrementRequest paired domains differential sheet target polynomial)
+    {stage : Nat} {shared : FacePrimitiveBank differential stage domains
+      (numerator := PreparedPrimitiveSamples.numerator curve.polynomial differential polynomial)}
+    (readings : TriangleReadings shared mesh) (compared : request.Comparison shared)
+    (later : request.index ≤ stage) :
+    Basic.normSq (SewingRetraction.wordValue (CanonicalEdgeValues.edgeValuation mesh readings.values)
+      (edges.indexedEdges vertices walk sheet) + SewingRetraction.wordValue
+      (CanonicalEdgeValues.edgeValuation mesh readings.values)
+      (edges.indexedEdges vertices walk (BranchCutLifts.otherSheet sheet))) ≤ target := by
+  have partPositive : 0 < request.partTarget := by
+    rw [request.partTarget_eq]
+    exact Fraction.Order.Field.div_pos_direct request.positive (by decide)
+  have chartLater := (Data.Nat.Order.le_max_right _ _).trans (request.index_eq ▸ later)
+  have outward := (PuncturedGrid.SourceChartRequests.comparison_total_accurate
+    partPositive request.outward readings compared.1 ((Data.Nat.Order.le_max_left _ _).trans chartLater)).le
+  have other := (PuncturedGrid.SourceChartRequests.comparison_total_accurate
+    partPositive request.other readings compared.2 ((Data.Nat.Order.le_max_right _ _).trans chartLater)).le
+  rewrite [paired.sources_project] at outward other
+  exact cancel_accurate request readings later outward other
 
 end IncrementRequest
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.WalkIncrementRequests.FramedPuncturedGrid.PairedWalk

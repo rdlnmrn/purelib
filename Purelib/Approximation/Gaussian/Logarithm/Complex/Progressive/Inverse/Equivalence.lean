@@ -33,6 +33,9 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius_scale_mono)
 
 public section
@@ -133,16 +136,16 @@ private theorem finiteExpLogScale_le_chartEquivalentMaster :
 
 /-- The dynamic finite exp-log computation is operationally equal to exact Möbius reconstruction of the same finite
 reduced readings. -/
-@[expose] public def dynamicLocalExpLog_chart_equivalent (input : Gaussian.Name.Basic.Named)
+@[expose] public def dynamicLocalExpLog_chart_equivalent (input : Name.Basic.Named)
     (disk : Domain.Disk input) :
-    Gaussian.Equivalence.Equivalent
+    Equivalent
       (Diagonal.dynamicLocalExpLogApproximation input disk)
       (Reconstruction.dynamicLocalExpLogChartApproximation input disk) where
   compare := by
     intro leftStart rightStart target positive
     let smallTarget := target / 16
     have smallPositive : 0 < smallTarget :=
-      Fraction.Order.Field.div_pos_direct positive (by decide)
+      Field.div_pos_direct positive (by decide)
     let start := max leftStart rightStart
     let index := Search.firstQuarterBelow
 
@@ -154,7 +157,7 @@ reduced readings. -/
           dynamicLocalExpLogChartEquivalentMasterScale
           start smallTarget
     have masterSmall :
-        Geometric.Basic.quarterRadius
+        Basic.quarterRadius
 
               dynamicLocalExpLogChartEquivalentMasterScale
               index < smallTarget :=
@@ -167,8 +170,8 @@ reduced readings. -/
     exact
       { leftIndex := index
         rightIndex := index
-        left_ge := (Purelib.Data.Nat.Order.le_max_left _ _).trans indexGe
-        right_ge := (Purelib.Data.Nat.Order.le_max_right _ _).trans indexGe
+        left_ge := (Data.Nat.Order.le_max_left _ _).trans indexGe
+        right_ge := (Data.Nat.Order.le_max_right _ _).trans indexGe
         close := by
           intro leftLater rightLater leftOrder rightOrder
           have leftTail :=
@@ -188,7 +191,7 @@ reduced readings. -/
                   dynamicLocalExpLogChartScale_le_chartEquivalentMaster
                 index).trans_lt masterSmall)
           have rightTailReverse :
-              Data.Gaussian.Norm.Basic.normSq
+              Basic.normSq
                   ((Reconstruction.dynamicLocalExpLogChartApproximation input disk).sample
                       index -
                     (Reconstruction.dynamicLocalExpLogChartApproximation input disk).sample
@@ -203,75 +206,75 @@ reduced readings. -/
                     (Reconstruction.dynamicLocalExpLogChartApproximation input disk).sample
                       index) := by
               apply Data.Gaussian.Basic.ext <;>
-                simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-                  Purelib.Data.Gaussian.Basic.neg_re, Purelib.Data.Gaussian.Basic.neg_im] <;> ring1
-            rw [identity, Data.Gaussian.Norm.Basic.normSq_neg]
+                simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+                  Data.Gaussian.Basic.neg_re, Data.Gaussian.Basic.neg_im] <;> ring1
+            rw [identity, Basic.normSq_neg]
             exact rightTailSmall
           have direct := Reconstruction.dynamicLocalExpLog_chart_error input disk index
           have directSmall :
-              Data.Gaussian.Norm.Basic.normSq
+              Basic.normSq
                   ((Diagonal.dynamicLocalExpLogApproximation input disk).sample index -
                     (Reconstruction.dynamicLocalExpLogChartApproximation input disk).sample
                       index) < smallTarget := by
-            change Data.Gaussian.Norm.Basic.normSq
+            change Basic.normSq
                 ((Diagonal.dynamicLocalExpLogApproximation input disk).sample index -
                   Reconstruction.dynamicLocalExpLogChartSample input index) < smallTarget
             have directRadius :
                 Error.expLogErrorScale *
                     (1 / 4 : Fraction.Rational) ^ index ≤
-                  Geometric.Basic.quarterRadius
+                  Basic.quarterRadius
 
                       dynamicLocalExpLogChartEquivalentMasterScale
                       index := by
-              rw [Geometric.Basic.quarterRadius_eq_mul_pow]
-              exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+              rw [Basic.quarterRadius_eq_mul_pow]
+              exact Arithmetic.mul_le_mul_of_nonneg_right_direct
 
                   finiteExpLogScale_le_chartEquivalentMaster
-                (Fraction.Order.Arithmetic.pow_nonneg_direct (by decide) _)
+                (Arithmetic.pow_nonneg_direct (by decide) _)
             exact direct.trans_lt (directRadius.trans_lt masterSmall)
-          have middle := (Data.Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _).trans_lt
-            (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+          have middle := (Bounds.normSq_sub_le_via _ _ _).trans_lt
+            (Arithmetic.mul_lt_mul_of_pos_left_direct
               (by decide)
-              (Fraction.Order.Arithmetic.add_lt_add_direct
+              (Arithmetic.add_lt_add_direct
                 directSmall rightTailReverse))
           calc
-            Data.Gaussian.Norm.Basic.normSq
+            Basic.normSq
                 ((Diagonal.dynamicLocalExpLogApproximation input disk).sample
                     leftLater -
                   (Reconstruction.dynamicLocalExpLogChartApproximation input disk).sample
                     rightLater) ≤
               2 *
-                (Data.Gaussian.Norm.Basic.normSq
+                (Basic.normSq
                     ((Diagonal.dynamicLocalExpLogApproximation input disk).sample
                         leftLater -
                       (Diagonal.dynamicLocalExpLogApproximation input disk).sample
                         index) +
-                  Data.Gaussian.Norm.Basic.normSq
+                  Basic.normSq
                     ((Diagonal.dynamicLocalExpLogApproximation input disk).sample
                         index -
                       (Reconstruction.dynamicLocalExpLogChartApproximation input disk).sample
                         rightLater)) :=
-              Data.Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _
+              Bounds.normSq_sub_le_via _ _ _
             _ < 2 *
                 (smallTarget + 2 * (smallTarget + smallTarget)) :=
-              Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+              Arithmetic.mul_lt_mul_of_pos_left_direct
                 (by decide)
-                (Fraction.Order.Arithmetic.add_lt_add_direct
+                (Arithmetic.add_lt_add_direct
                   leftTailSmall middle)
             _ = 10 * smallTarget := by ring1
             _ < target := by
               dsimp only [smallTarget]
-              exact Purelib.Data.Rat.Bounds.Fraction.ten_sixteenths_lt positive }
+              exact Bounds.Fraction.ten_sixteenths_lt positive }
 
 /-- The productive diagonal exponential–logarithm and reconstructed-chart names are operationally equivalent for the
 same certified reduced input. -/
-@[expose] public def dynamicLocalExpLog_chart_named_equivalent (input : Gaussian.Name.Basic.Named)
+@[expose] public def dynamicLocalExpLog_chart_named_equivalent (input : Name.Basic.Named)
     (disk : Domain.Disk input) :
-    Gaussian.Equivalence.NamedEquivalent
+    NamedEquivalent
       (Diagonal.dynamicLocalExpLogApproximation input disk).toNamed
       (Reconstruction.dynamicLocalExpLogChartApproximation input disk).toNamed :=
   Equivalence.approximationEquivalent_toNamed
-    (Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Equivalence.dynamicLocalExpLog_chart_equivalent input
+    (dynamicLocalExpLog_chart_equivalent input
       disk)
 end Purelib.Approximation.Gaussian.Logarithm.Complex.Progressive.Inverse.Equivalence
 

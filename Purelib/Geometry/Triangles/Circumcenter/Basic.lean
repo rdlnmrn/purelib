@@ -28,7 +28,7 @@ open Purelib.Geometry.Plane.Point
 open scoped Purelib.Data.Nat
 attribute [local instance 2000] Purelib.Data.Nat.successorNeZero
   Purelib.Data.Nat.successorAtLeastTwo
-  Purelib.Algebra.Group.Negation.subNegZeroMonoid
+  Algebra.Group.Negation.subNegZeroMonoid
 
 public section
 
@@ -44,7 +44,7 @@ section
 
 open Purelib.Algebra
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Field.ExplicitField K]
 
 namespace Purelib.Geometry.Triangles.Circumcenter.Basic
 
@@ -61,7 +61,7 @@ theorem circumcenter_bisectors_not_parallel
   intro parallel
   apply notCollinear
   apply (Incidence.collinear_iff_pointDeterminant_eq_zero first second third).2
-  unfold Plane.Line.Parallel PerpendicularBisector.perpendicularBisector at parallel
+  unfold Parallel PerpendicularBisector.perpendicularBisector at parallel
   calc
     Incidence.pointDeterminant first second third =
         -((second.x - third.x) * (first.y - third.y) -
@@ -79,7 +79,7 @@ theorem circumcenter_bisectors_not_parallel
   Intersection.lineIntersection
     (PerpendicularBisector.perpendicularBisector second third secondThirdDistinct)
     (PerpendicularBisector.perpendicularBisector first third firstThirdDistinct)
-    (Geometry.Triangles.Circumcenter.Basic.circumcenter_bisectors_not_parallel first second third
+    (circumcenter_bisectors_not_parallel first second third
       firstThirdDistinct secondThirdDistinct notCollinear)
 
 /-- The circumquadrance belonging to the displayed circumcenter. -/
@@ -89,7 +89,7 @@ theorem circumcenter_bisectors_not_parallel
     (secondThirdDistinct : second ≠ third)
     (notCollinear : ¬ Incidence.Collinear first second third) : K :=
   Quadrance.quadrance
-    (Geometry.Triangles.Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+    (circumcenterPoint first second third firstThirdDistinct
       secondThirdDistinct notCollinear)
     first
 
@@ -103,7 +103,7 @@ theorem circumcenter [Nontrivial K] [DecidableEq K]
     (secondThirdDistinct : second ≠ third)
     (notCollinear : ¬ Incidence.Collinear first second third)
     (twoNonzero : (2 : K) ≠ 0) :
-    let center := Triangles.Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+    let center := circumcenterPoint first second third firstThirdDistinct
       secondThirdDistinct notCollinear
     (PerpendicularBisector.perpendicularBisector second third secondThirdDistinct).Contains center ∧
       (PerpendicularBisector.perpendicularBisector first third firstThirdDistinct).Contains center ∧
@@ -111,60 +111,60 @@ theorem circumcenter [Nontrivial K] [DecidableEq K]
       Quadrance.quadrance center first = Quadrance.quadrance center second ∧
       Quadrance.quadrance center second = Quadrance.quadrance center third := by
   dsimp only
-  let nonparallel := Geometry.Triangles.Circumcenter.Basic.circumcenter_bisectors_not_parallel first second third
+  let nonparallel := circumcenter_bisectors_not_parallel first second third
     firstThirdDistinct secondThirdDistinct notCollinear
   have onSecondThird :
       (PerpendicularBisector.perpendicularBisector second third secondThirdDistinct).Contains
-        (Triangles.Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+        (circumcenterPoint first second third firstThirdDistinct
           secondThirdDistinct notCollinear) := by
-    unfold Triangles.Circumcenter.Basic.circumcenterPoint
+    unfold circumcenterPoint
     exact Intersection.lineIntersection_on_first
       (PerpendicularBisector.perpendicularBisector second third secondThirdDistinct)
       (PerpendicularBisector.perpendicularBisector first third firstThirdDistinct) nonparallel
   have onFirstThird :
       (PerpendicularBisector.perpendicularBisector first third firstThirdDistinct).Contains
-        (Triangles.Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+        (circumcenterPoint first second third firstThirdDistinct
           secondThirdDistinct notCollinear) := by
-    unfold Triangles.Circumcenter.Basic.circumcenterPoint
+    unfold circumcenterPoint
     exact Intersection.lineIntersection_on_second
       (PerpendicularBisector.perpendicularBisector second third secondThirdDistinct)
       (PerpendicularBisector.perpendicularBisector first third firstThirdDistinct) nonparallel
   have equalSecondThird :
       Quadrance.quadrance
-          (Triangles.Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+          (circumcenterPoint first second third firstThirdDistinct
             secondThirdDistinct notCollinear) second =
         Quadrance.quadrance
-          (Triangles.Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+          (circumcenterPoint first second third firstThirdDistinct
             secondThirdDistinct notCollinear) third :=
     (PerpendicularBisector.equal_quadrance_iff_perpendicularBisector_contains second third
-      (Triangles.Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+      (circumcenterPoint first second third firstThirdDistinct
         secondThirdDistinct notCollinear)
       secondThirdDistinct twoNonzero).2 onSecondThird
   have equalFirstThird :
       Quadrance.quadrance
-          (Triangles.Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+          (circumcenterPoint first second third firstThirdDistinct
             secondThirdDistinct notCollinear) first =
         Quadrance.quadrance
-          (Triangles.Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+          (circumcenterPoint first second third firstThirdDistinct
             secondThirdDistinct notCollinear) third :=
     (PerpendicularBisector.equal_quadrance_iff_perpendicularBisector_contains first third
-      (Triangles.Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+      (circumcenterPoint first second third firstThirdDistinct
         secondThirdDistinct notCollinear)
       firstThirdDistinct twoNonzero).2 onFirstThird
   have equalFirstSecond :
       Quadrance.quadrance
-          (Triangles.Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+          (circumcenterPoint first second third firstThirdDistinct
             secondThirdDistinct notCollinear) first =
         Quadrance.quadrance
-          (Triangles.Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+          (circumcenterPoint first second third firstThirdDistinct
             secondThirdDistinct notCollinear) second :=
     equalFirstThird.trans equalSecondThird.symm
   have onFirstSecond :
       (PerpendicularBisector.perpendicularBisector first second firstSecondDistinct).Contains
-        (Triangles.Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+        (circumcenterPoint first second third firstThirdDistinct
           secondThirdDistinct notCollinear) :=
     (PerpendicularBisector.equal_quadrance_iff_perpendicularBisector_contains first second
-      (Triangles.Circumcenter.Basic.circumcenterPoint first second third firstThirdDistinct
+      (circumcenterPoint first second third firstThirdDistinct
         secondThirdDistinct notCollinear)
       firstSecondDistinct twoNonzero).1 equalFirstSecond
   exact ⟨onSecondThird, onFirstThird, onFirstSecond, equalFirstSecond,

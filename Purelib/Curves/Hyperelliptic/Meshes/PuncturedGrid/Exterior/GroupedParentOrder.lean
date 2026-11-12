@@ -76,30 +76,30 @@ open Purelib.Integration.Path.NoisyPathArea (LengthErrorBudget)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Gaussian.Norm.Basic (normSq_nonneg)
 open Purelib.Data.Rat.Fraction.Compatibility
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Riemann.Meshes.LiftedPuncturedGrid base} {differential other :
-    Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential other :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-    regular domains differential} {target : Riemann.Normalization.InverseRootPolynomial.Coordinate} {minimum stage fine
+    SurfaceOccurrence
+    regular domains differential} {target : Coordinate} {minimum stage fine
     index : Nat}
-  {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
-  {plan : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan occurrence other
+  {box otherBox : Geometry.Rational.Box}
+  {sample : Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {plan : PairedSourcePlan occurrence other
     target minimum}
 
 variable {evaluated :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan
+  ParentEvaluation plan
   sample otherSample fine}
-  {data : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.FirstData occurrence index} {otherData
-    : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentValues.SecondData occurrence other index}
+  {data : FirstData occurrence index} {otherData
+    : SecondData occurrence other index}
 
 namespace IndexedOwnedFragment
 
@@ -148,24 +148,24 @@ private theorem strict_range (first count : Nat) (rest : List Nat)
 private theorem skip_same (parent count : Nat)
     (before after : List (IndexedFragmentGrouping.IndexedOwnedFragment evaluated data otherData))
     (same : ∀ item ∈ before, item.parent.val = parent)
-    (steps : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedParentOrder.IndexedOwnedFragment.ParentAfter
+    (steps : IndexedOwnedFragment.ParentAfter
       parent count (before ++ after)) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedParentOrder.IndexedOwnedFragment.ParentAfter parent count
+    IndexedOwnedFragment.ParentAfter parent count
       after := by
   induction before with
   | nil => exact steps
   | cons item rest ih =>
     have remaining := (congrArg (fun index =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedParentOrder.IndexedOwnedFragment.ParentAfter index count
+      IndexedOwnedFragment.ParentAfter index count
       (rest ++ after))
       (same item List.mem_cons_self)).mp steps.2
     exact ih (fun found member => same found (List.mem_cons_of_mem _ member)) remaining
 
 /-- Maximal grouping removes stationary parent steps and leaves strict successive retained parent positions. -/
-private theorem strict_parents (rest : List (IndexedFragmentGrouping.IndexedOwnedRun evaluated data otherData))
-    (run : IndexedFragmentGrouping.IndexedOwnedRun evaluated data otherData) (count : Nat)
+private theorem strict_parents (rest : List (IndexedOwnedRun evaluated data otherData))
+    (run : IndexedOwnedRun evaluated data otherData) (count : Nat)
     (apart : IndexedOwnedRun.separated (run :: rest))
-    (steps : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedParentOrder.IndexedOwnedFragment.ParentAfter
+    (steps : IndexedOwnedFragment.ParentAfter
       run.parent.val count (run.rest ++ (rest.map IndexedOwnedRun.items).flatten)) :
     strictTail run.parent.val count (rest.map (fun
       run => run.parent.val)) := by
@@ -184,7 +184,7 @@ private theorem strict_parents (rest : List (IndexedFragmentGrouping.IndexedOwne
       exact apart.1 ((Fin.ext equal).symm.trans next.first_parent)
     have step : next.first.parent.val = run.parent.val + 1 := boundary.1.resolve_left different
     have remaining := (congrArg (fun index =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedParentOrder.IndexedOwnedFragment.ParentAfter index count
+      IndexedOwnedFragment.ParentAfter index count
       (next.rest ++ (rest.map IndexedOwnedRun.items).flatten)) nextEq).mp boundary.2
     exact ⟨nextEq.symm.trans step, ih next apart.2 remaining⟩
 
@@ -227,12 +227,12 @@ private theorem ofFn_read {Item : Type u} (items : List Item) :
     exact congrArg (List.cons head) ih
 
 namespace IndexedOwnedGrouping
-variable {items : List (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedFragmentGrouping.IndexedOwnedFragment
+variable {items : List (IndexedFragmentGrouping.IndexedOwnedFragment
   evaluated data otherData)}
 
 /-- The grouped original run positions enumerate the entire retained parent range in order. -/
 theorem parent_values (grouped : IndexedFragmentGrouping.IndexedOwnedGrouping evaluated data otherData items)
-    (word : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedParentOrder.IndexedOwnedFragment.ParentWord items)
+    (word : IndexedOwnedFragment.ParentWord items)
       :
     grouped.runs.map (fun run => run.parent.val) = List.range' 0 evaluated.retained.length := by
   rw [← grouped.flattened] at word
@@ -247,13 +247,13 @@ theorem parent_values (grouped : IndexedFragmentGrouping.IndexedOwnedGrouping ev
     rw [runsEq] at word
     have firstEq : run.parent.val = 0 := (congrArg Fin.val run.first_parent).symm.trans word.1
     have remaining := (congrArg (fun index =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedParentOrder.IndexedOwnedFragment.ParentAfter index
+      IndexedOwnedFragment.ParentAfter index
       evaluated.retained.length
       (run.rest ++ (rest.map IndexedOwnedRun.items).flatten)) (congrArg Fin.val run.first_parent)).mp word.2
-    have strict := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedParentOrder.strict_parents rest run
+    have strict := GroupedParentOrder.strict_parents rest run
       evaluated.retained.length
       ((congrArg IndexedOwnedRun.separated runsEq).mp grouped.separated) remaining
-    have ranged := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedParentOrder.strict_range run.parent.val
+    have ranged := GroupedParentOrder.strict_range run.parent.val
       evaluated.retained.length (rest.map (fun run => run.parent.val)) strict
     rw [firstEq, Nat.zero_add] at ranged
     change run.parent.val :: _ = _
@@ -263,13 +263,13 @@ theorem parent_values (grouped : IndexedFragmentGrouping.IndexedOwnedGrouping ev
 /-- The actual retained entries, including their order and multiplicity, are recovered from the grouped parent indices
 without comparing payloads. -/
 theorem parent_entries (grouped : IndexedFragmentGrouping.IndexedOwnedGrouping evaluated data otherData items)
-    (word : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedParentOrder.IndexedOwnedFragment.ParentWord items)
+    (word : IndexedOwnedFragment.ParentWord items)
       :
     grouped.runs.map (fun run => IndexedSourceSplits.indexedEntry evaluated run.parent) = evaluated.retained := by
   have indices : grouped.runs.map IndexedOwnedRun.parent = List.ofFn (fun i : Fin evaluated.retained.length => i) := by
-    apply Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedParentOrder.fin_values_injective
-    rw [Data.List.Map.map_map, OfFn.Basic.map_ofFn]
-    have ranged := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedParentOrder.indices_range
+    apply GroupedParentOrder.fin_values_injective
+    rw [Map.map_map, OfFn.Basic.map_ofFn]
+    have ranged := GroupedParentOrder.indices_range
       evaluated.retained.length 0
     have equal : List.ofFn (fun i : Fin evaluated.retained.length => i.val) =
         List.ofFn (fun i : Fin evaluated.retained.length => 0 + i.val) :=
@@ -277,15 +277,15 @@ theorem parent_entries (grouped : IndexedFragmentGrouping.IndexedOwnedGrouping e
     exact (parent_values
       grouped word).trans (equal.trans ranged).symm
   have entries := congrArg (List.map (IndexedSourceSplits.indexedEntry evaluated)) indices
-  rw [Data.List.Map.map_map, OfFn.Basic.map_ofFn] at entries
-  exact entries.trans (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedParentOrder.ofFn_read
+  rw [Map.map_map, OfFn.Basic.map_ofFn] at entries
+  exact entries.trans (GroupedParentOrder.ofFn_read
     evaluated.retained)
 
 /-- The certified complete source groups retain every original parent entry in its exact bank order. -/
 theorem certify_parent_order (grouped : IndexedFragmentGrouping.IndexedOwnedGrouping evaluated data otherData items)
-  (width : InverseRootPolynomial.Coordinate)
+  (width : Coordinate)
     (word : IndexedOwnedFragment.Word items) (fineEnough : ∀ item ∈ items, IndexedOwnedFragment.FineEnough item width)
-    (parentWord : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.GroupedParentOrder.IndexedOwnedFragment.ParentWord
+    (parentWord : IndexedOwnedFragment.ParentWord
       items) :
     (IndexedOwnedGrouping.certify grouped width word fineEnough).map GroupedSourceFragments.entry = evaluated.retained
       :=

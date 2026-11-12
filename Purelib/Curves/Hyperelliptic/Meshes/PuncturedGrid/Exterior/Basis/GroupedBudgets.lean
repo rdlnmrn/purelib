@@ -74,33 +74,33 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentGr
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedSideReadback (groupSideFragments
   indexedSideFragments)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceChains (SourceChain)
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
+  {program : ExteriorProgram lifted
     differential} {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+    SurfacePreparation
     regular domains program}
 
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
-variable (retained : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation
+variable (retained : CommonBasisPreparation
   prepared) {index : Nat} (inputs : retained.Inputs index)
   (outer : Fin prepared.occurrences.length) {faceIndex : Nat}
-  (data : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+  (data : RowData
+    (ParentIndices.occurrenceAt prepared.occurrences
     outer) faceIndex)
   (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
 
 variable {retained inputs outer data coefficients}
 
 namespace ParentFragment
-variable {first last : Fin (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt
+variable {first last : Fin (ParentIndices.occurrenceAt
   prepared.occurrences outer).compared.entered.cache.parents.length}
 
 /-- Transporting to an equal retained parent preserves the original fragment allowance. -/
@@ -126,9 +126,9 @@ The proof follows membership in the retained list through its original head, tai
 supplied occurrence witness. -/
 theorem fragmentsAt_budget
     (parent : Fin (ParentIndices.occurrenceAt prepared.occurrences outer).compared.entered.cache.parents.length)
-    (items : List (IndexedFragments.IndexedFragment retained inputs outer data coefficients))
+    (items : List (IndexedFragment retained inputs outer data coefficients))
     (same : ∀ item ∈ items, item.parent = parent)
-    {allowance tolerance : InverseRootPolynomial.Coordinate}
+    {allowance tolerance : Coordinate}
     (paid : ∀ item ∈ items, item.fragment.allowance ≤ allowance ∧ item.fragment.budget.tolerance ≤ tolerance) :
     ∀ fragment ∈ IndexedRun.fragmentsAt parent items same,
       fragment.allowance ≤ allowance ∧ fragment.budget.tolerance ≤ tolerance := by
@@ -139,37 +139,37 @@ theorem fragmentsAt_budget
     rcases Membership.mem_cons.mp member with rfl | member
     · have bounds := paid item List.mem_cons_self
       exact
-        ⟨(Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedBudgets.ParentFragment.castParent_allowance _
+        ⟨(ParentFragment.castParent_allowance _
         _).trans_le bounds.1,
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedBudgets.ParentFragment.castParent_tolerance _
+        (ParentFragment.castParent_tolerance _
           _).trans_le bounds.2⟩
     · exact ih (fun next member => same next (List.mem_cons_of_mem _ member))
         (fun next member => paid next (List.mem_cons_of_mem _ member)) fragment member
 
 /-- Every transported fragment of the retained run inherits its original allowance and tolerance bounds. -/
 theorem fragments_budget (run : FragmentGrouping.IndexedRun retained inputs outer data coefficients)
-    {allowance tolerance : InverseRootPolynomial.Coordinate}
+    {allowance tolerance : Coordinate}
     (paid : ∀ item ∈ run.items, item.fragment.allowance ≤ allowance ∧ item.fragment.budget.tolerance ≤ tolerance) :
     ∀ fragment ∈ run.fragments,
       fragment.allowance ≤ allowance ∧ fragment.budget.tolerance ≤ tolerance :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedBudgets.IndexedRun.fragmentsAt_budget run.parent
+  IndexedRun.fragmentsAt_budget run.parent
     run.items (fun _ member => run.parent_eq member) paid
 
 end IndexedRun
 
 namespace IndexedGrouping
 variable {items : List
-  (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.IndexedFragments.IndexedFragment retained inputs
+  (IndexedFragment retained inputs
   outer data coefficients)}
 
 /-- Every stored run inherits the paid budgets of the original geometric side. -/
 theorem run_budget (grouped : FragmentGrouping.IndexedGrouping retained inputs outer data coefficients items)
-    {allowance tolerance : InverseRootPolynomial.Coordinate}
+    {allowance tolerance : Coordinate}
     (paid : ∀ item ∈ items, item.fragment.allowance ≤ allowance ∧ item.fragment.budget.tolerance ≤ tolerance)
     (run : FragmentGrouping.IndexedRun retained inputs outer data coefficients) (member : run ∈ grouped.runs) :
     ∀ fragment ∈ run.fragments,
       fragment.allowance ≤ allowance ∧ fragment.budget.tolerance ≤ tolerance := by
-  apply Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.GroupedBudgets.IndexedRun.fragments_budget run
+  apply IndexedRun.fragments_budget run
   intro item inside
   apply paid item
   rw [← grouped.flattened]
@@ -183,9 +183,9 @@ endpoint-only substitute is used.
 The proof follows membership in the retained list through its original head, tail or concatenation, preserving the
 supplied occurrence witness. -/
 theorem indexedSideFragments_budget {count : Nat}
-    (pieces : Fin (count + 1) → IndexedFragments.IndexedFragment retained inputs outer data coefficients)
-    (junctions : Fin count → IndexedFragments.IndexedFragment retained inputs outer data coefficients)
-    {allowance tolerance : InverseRootPolynomial.Coordinate}
+    (pieces : Fin (count + 1) → IndexedFragment retained inputs outer data coefficients)
+    (junctions : Fin count → IndexedFragment retained inputs outer data coefficients)
+    {allowance tolerance : Coordinate}
     (piecePaid : ∀ position, (pieces position).fragment.allowance ≤ allowance ∧
       (pieces position).fragment.budget.tolerance ≤ tolerance)
     (junctionPaid : ∀ position, (junctions position).fragment.allowance ≤ allowance ∧

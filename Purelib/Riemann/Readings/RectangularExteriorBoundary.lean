@@ -35,6 +35,8 @@ cuts, with the same dyadic depth inside each interval.  The proof telescopes
 finite indexed sums; it does not assert that this boundary is an A/B word.
 -/
 
+open Purelib.Riemann.Integration.RectangularSharedPrimitives renaming SharedPrimitiveValues -> SharedValues
+
 namespace Purelib.Riemann.Readings.RectangularExteriorBoundary
 
 open Purelib.Data.Rat in
@@ -239,7 +241,7 @@ theorem sample_boundary_eq_exterior (readings : SharedPrimitiveValues anchors of
     (radius : Fraction.Rational) (positive : 0 < radius) :
     (readings.sample radius positive).boundaryArea =
       RectangularExteriorBoundary.Geometry.exteriorBoundary geometry (fun point => Polygon.energyPrimitivePoint
-        (RectangularPrimitiveBoundary.SharedPrimitiveValues.atPoint readings point)) depth := by
+        (SharedValues.atPoint readings point)) depth := by
   rw [RectangularPrimitiveBoundary.SharedPrimitiveValues.sample_boundary_eq_selection readings,
     RectangularExteriorBoundary.Geometry.selectionBoundary_allCells geometry]
 

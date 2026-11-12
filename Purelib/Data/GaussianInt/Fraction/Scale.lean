@@ -1,10 +1,12 @@
 module
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.GaussianInt.Constants.Power
+public import Purelib.Data.GaussianInt.Constants
+public import Purelib.Data.Gaussian.Constants
 import Purelib.Data.GaussianInt.Embedding
-import Purelib.Data.GaussianInt.Power
-import Purelib.Data.Gaussian.Power
-import Purelib.Data.GaussianInt.Fraction.Basic
+public import Purelib.Data.GaussianInt.Power
+public import Purelib.Data.Gaussian.Power
+public import Purelib.Data.GaussianInt.Fraction.Basic
 import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Tactic.Ring
 
@@ -26,7 +28,7 @@ value inversely.
 The original numerator equality and exact denominator identity retain both
 presentations; cross-multiplication proves the corresponding Gaussian-rational power
 relation. -/
-private theorem value_of_scaled_den
+theorem value_of_scaled_den
     (source normalized : SourceEncodingEncoderFracAlias) (exponent : Nat)
     (numeratorIdentity : normalized.numerator = source.numerator)
     (denominatorIdentity : normalized.denominator =
@@ -64,7 +66,7 @@ namespace Purelib.Data.GaussianInt.Fraction.Scale
 
 /-- Scaling only a displayed Gaussian numerator by a power of gamma scales its exact
 value by that power. -/
-private theorem value_of_scaled_num
+theorem value_of_scaled_num
     (source normalized : SourceEncodingEncoderFracAlias) (exponent : Nat)
     (numeratorIdentity : normalized.numerator =
       GaussianInt.natPow GaussianInt.gammaInt exponent * source.numerator)

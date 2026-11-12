@@ -63,6 +63,10 @@ import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Topology.Surface.Sewing.SewnPrimitiveContacts
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-!
@@ -103,20 +107,20 @@ open Purelib.Riemann.Normalization
 open Purelib.Integration.Path.IncrementArea (Summary)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
     regular domains differential} {target areaTarget : Coordinate}
     {floor : Nat}
-  {index depth readingIndex : Nat} {box : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box} {shared :
+  {index depth readingIndex : Nat} {box : Geometry.Rational.Box}
+  {sample : Primitives.Sample cap differential index box} {shared :
     FacePrimitiveBank differential index domains}
 
 namespace SampledEntry
@@ -124,18 +128,18 @@ namespace SampledEntry
 variable {localTarget localArea : Coordinate}
 
 /-- The complete retained cap summary total is the sum of the actual component totals. -/
-theorem rightSummary_total (values : List (AllSurfacePreparation.SampledEntry (regular := regular) sample shared depth
+theorem rightSummary_total (values : List (SampledEntry (regular := regular) sample shared depth
   readingIndex localTarget localArea floor)) :
-    (SampledEntry.rightSummary values).total = Data.Gaussian.Norm.Sum.Basic.gaussianSum (values.map (fun value =>
+    (SampledEntry.rightSummary values).total = Sum.Basic.gaussianSum (values.map (fun value =>
       value.evaluated.right.total)) := by
   induction values with
   | nil => rfl
   | cons head tail ih => exact congrArg (head.evaluated.right.total + ·) ih
 
 /-- The complete cap path area retains both the original internal areas and the area of the ordered component totals. -/
-theorem rightSummary_area (values : List (AllSurfacePreparation.SampledEntry (regular := regular) sample shared depth
+theorem rightSummary_area (values : List (SampledEntry (regular := regular) sample shared depth
   readingIndex localTarget localArea floor)) :
-    (SampledEntry.rightSummary values).area = Data.Gaussian.Norm.Sum.Basic.gaussianSum (values.map (fun value =>
+    (SampledEntry.rightSummary values).area = Sum.Basic.gaussianSum (values.map (fun value =>
       value.evaluated.right.area)) +
       IncrementArea.pathArea (values.map (fun value => value.evaluated.right.total)) := by
   induction values with
@@ -143,7 +147,7 @@ theorem rightSummary_area (values : List (AllSurfacePreparation.SampledEntry (re
   | cons head tail ih =>
       change head.evaluated.right.area + (SampledEntry.rightSummary tail).area +
         BoundaryRibbon.area head.evaluated.right.total (SampledEntry.rightSummary tail).total =
-          head.evaluated.right.area + Data.Gaussian.Norm.Sum.Basic.gaussianSum (tail.map (fun value =>
+          head.evaluated.right.area + Sum.Basic.gaussianSum (tail.map (fun value =>
             value.evaluated.right.area)) +
             IncrementArea.pathArea (head.evaluated.right.total :: tail.map (fun value => value.evaluated.right.total))
       rw [ih,
@@ -152,9 +156,9 @@ theorem rightSummary_area (values : List (AllSurfacePreparation.SampledEntry (re
       ring1
 
 /-- Every retained surface increment reads the same original source edge from the supplied shared triangle bank. -/
-theorem increment_list_eq (values : List (AllSurfacePreparation.SampledEntry (regular := regular) sample shared depth
+theorem increment_list_eq (values : List (SampledEntry (regular := regular) sample shared depth
   readingIndex localTarget localArea floor))
-    (readings : TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh) :
+    (readings : TriangleReadings shared lifted.mesh) :
     values.map SampledEntry.increment =
       (values.map SampledEntry.entry).map (fun entry => entry.occurrence.placement.location.sourceEdge.increment
         readings.values) := by
@@ -168,39 +172,39 @@ end SampledEntry
 namespace Request
 
 /-- The retained count, slope and local allowances pay the complete source/cap area target. -/
-theorem area_paid (request : AllSurfacePreparation.Request prepared target areaTarget floor) :
-    2 * ((request.count : InverseRootPolynomial.Coordinate) ^ 2 * request.budget.areaTarget +
-      16 * (request.count : InverseRootPolynomial.Coordinate) ^ 4 * request.localTarget * (2 * (request.slope + 1))) <
+theorem area_paid (request : Request prepared target areaTarget floor) :
+    2 * ((request.count : Coordinate) ^ 2 * request.budget.areaTarget +
+      16 * (request.count : Coordinate) ^ 4 * request.localTarget * (2 * (request.slope + 1))) <
         areaTarget := by
   have slopeNonnegative : 0 ≤ request.slope := request.slope_eq ▸ AllSurfacePreparation.sourceMaximum_nonnegative
     prepared.occurrences
-  have countNonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct (by
-      decide : (0 : InverseRootPolynomial.Coordinate) ≤ 16)
-    (Fraction.Order.Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le request.count)) 4)
-  have boundNonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct (by
-      decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
-    (add_nonneg slopeNonnegative (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 1))
-  exact (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-    (add_le_add le_rfl (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct request.local_le countNonnegative) boundNonnegative))
-    (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)).trans_lt request.budget.paid
+  have countNonnegative := Arithmetic.mul_nonneg_direct (by
+      decide : (0 : Coordinate) ≤ 16)
+    (Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le request.count)) 4)
+  have boundNonnegative := Arithmetic.mul_nonneg_direct (by
+      decide : (0 : Coordinate) ≤ 2)
+    (add_nonneg slopeNonnegative (by decide : (0 : Coordinate) ≤ 1))
+  exact (Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (add_le_add le_rfl (Arithmetic.mul_le_mul_of_nonneg_right_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct request.local_le countNonnegative) boundNonnegative))
+    (by decide : (0 : Coordinate) ≤ 2)).trans_lt request.budget.paid
 
 /-- The retained local allowance pays the original endpoint-total polygon discrepancy. -/
-theorem polygon_paid (request : AllSurfacePreparation.Request prepared target areaTarget floor) :
-    16 * (request.count : InverseRootPolynomial.Coordinate) ^ 4 * request.localTarget * (2 * (request.slope + 1)) <
+theorem polygon_paid (request : Request prepared target areaTarget floor) :
+    16 * (request.count : Coordinate) ^ 4 * request.localTarget * (2 * (request.slope + 1)) <
       areaTarget := by
   have slopeNonnegative : 0 ≤ request.slope := request.slope_eq ▸ AllSurfacePreparation.sourceMaximum_nonnegative
     prepared.occurrences
-  have internalNonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.sq_nonneg_direct (request.count : InverseRootPolynomial.Coordinate))
+  have internalNonnegative := Arithmetic.mul_nonneg_direct
+    (Arithmetic.sq_nonneg_direct (request.count : Coordinate))
       request.budget.area_positive.le
-  have polygonNonnegative := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 16)
-        (Fraction.Order.Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le request.count))
+  have polygonNonnegative := Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 16)
+        (Arithmetic.pow_nonneg_direct (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le request.count))
           4)) request.positive.le)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2) (add_nonneg
-      slopeNonnegative (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 1)))
+    (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 2) (add_nonneg
+      slopeNonnegative (by decide : (0 : Coordinate) ≤ 1)))
   exact ((le_add_of_nonneg_left internalNonnegative).trans
     ((le_add_of_nonneg_right (add_nonneg internalNonnegative polygonNonnegative)).trans_eq (by ring1))).trans_lt
       request.area_paid
@@ -210,74 +214,74 @@ set_option genInjectivity false in
 
 Cached local summaries assemble the actual paths, totals and areas, retaining the internal-area correction separately
 from the polygon of source increments. -/
-structure Evaluation (request : AllSurfacePreparation.Request prepared target areaTarget floor)
-    (sample : Primitives.Sample cap differential index box) (shared : PrimitiveData.FacePrimitiveBank differential index
+structure Evaluation (request : Request prepared target areaTarget floor)
+    (sample : Primitives.Sample cap differential index box) (shared : FacePrimitiveBank differential index
       domains)
     (depth readingIndex : Nat) where
   /-- The actual original occurrence samples sharing the supplied cap and face primitive banks. -/ samples :
-    AllSurfacePreparation.Samples request.entries sample shared depth readingIndex
+    Samples request.entries sample shared depth readingIndex
   /-- The retained ordered list of complete original source and cap increment paths. -/ pairs : List (List
     InverseRootPolynomial.Gaussian × List InverseRootPolynomial.Gaussian)
   /-- The paired paths are exactly those of the cached original occurrence samples. -/ pairs_eq : pairs =
     samples.values.map SampledEntry.pair
   /-- The actual pair count equals the original request's retained count. -/ count_eq : pairs.length = request.count
   /-- The complete cached source-path summary including all cross-component area terms. -/ source :
-    IncrementArea.Summary (pairs.map Prod.fst).flatten
-  /-- The complete cached cap-path summary including all cross-component area terms. -/ cap : IncrementArea.Summary
+    Summary (pairs.map Prod.fst).flatten
+  /-- The complete cached cap-path summary including all cross-component area terms. -/ cap : Summary
     (pairs.map Prod.snd).flatten
   /-- The cached sum of the original actual source increments. -/ integral : InverseRootPolynomial.Gaussian
   /-- The integral cache equals the sum of the retained samples' actual increments. -/ integral_eq : integral =
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (samples.values.map SampledEntry.increment)
+    Sum.Basic.gaussianSum (samples.values.map SampledEntry.increment)
   /-- The actual source integral and cap total satisfy the original total target. -/ integral_close :
-    Data.Gaussian.Norm.Basic.normSq (integral - cap.total) < target
+    Basic.normSq (integral - cap.total) < target
   /-- The actual complete source and cap areas satisfy the original area target. -/ area_close :
-    Data.Gaussian.Norm.Basic.normSq (source.area - cap.area) < areaTarget
-  /-- The cached polygon summary of the original source increments. -/ surface : IncrementArea.Summary
+    Basic.normSq (source.area - cap.area) < areaTarget
+  /-- The cached polygon summary of the original source increments. -/ surface : Summary
     (samples.values.map SampledEntry.increment)
   /-- The cached sum of internal areas of the original cap component paths. -/ internalArea :
     InverseRootPolynomial.Gaussian
   /-- The internal-area cache is exactly the sum of the retained original cap component areas. -/ internalArea_eq :
-    internalArea = Data.Gaussian.Norm.Sum.Basic.gaussianSum (samples.values.map (fun value =>
+    internalArea = Sum.Basic.gaussianSum (samples.values.map (fun value =>
     value.evaluated.right.area))
   /-- The source-increment polygon plus the retained internal-area correction approximates the complete cap area. -/
-    surface_area_close : Data.Gaussian.Norm.Basic.normSq (surface.area + internalArea - cap.area) < areaTarget
+    surface_area_close : Basic.normSq (surface.area + internalArea - cap.area) < areaTarget
 
 constructive_injectivity Evaluation
 
 /-- Every local request uses these exact shared polynomial banks. The complete path areas are assembled from the already
 cached local summaries. -/
-@[expose] def evaluateWithSamples (request : AllSurfacePreparation.Request prepared target areaTarget floor)
-    (samples : AllSurfacePreparation.Samples request.entries sample shared depth readingIndex) :
+@[expose] def evaluateWithSamples (request : Request prepared target areaTarget floor)
+    (samples : Samples request.entries sample shared depth readingIndex) :
     Evaluation request
       sample shared depth readingIndex := by
   let pairs := samples.values.map SampledEntry.pair
   let source := SampledEntry.leftSummary samples.values
   let cap := SampledEntry.rightSummary samples.values
-  let integral := Data.Gaussian.Norm.Sum.Basic.gaussianSum (samples.values.map SampledEntry.increment)
+  let integral := Sum.Basic.gaussianSum (samples.values.map SampledEntry.increment)
   have countEq : samples.values.length = request.count := by
-    rw [← Data.List.Map.length_map (values := samples.values) SampledEntry.entry, samples.entries_eq,
+    rw [← Map.length_map (values := samples.values) SampledEntry.entry, samples.entries_eq,
       request.count_entries]
-  have pairCount : pairs.length = request.count := (Data.List.Map.length_map ..).trans countEq
-  have integralClose : Data.Gaussian.Norm.Basic.normSq (integral - cap.total) < target := by
-    have estimate := Data.Gaussian.Norm.Sum.Bounds.normSq_sum_le
+  have pairCount : pairs.length = request.count := (Map.length_map ..).trans countEq
+  have integralClose : Basic.normSq (integral - cap.total) < target := by
+    have estimate := Sum.Bounds.normSq_sum_le
       (samples.values.map (fun value => value.increment - value.evaluated.right.total)) request.localTarget (by
         intro value member
         obtain ⟨original, member, equal⟩ := Map.mem_map.mp member
         rw [← equal]
         exact original.integral_close.le)
-    rw [Data.Gaussian.Norm.Sum.Basic.gaussianSum_map_sub, Data.List.Map.length_map, countEq, ←
+    rw [Sum.Basic.gaussianSum_map_sub, Map.length_map, countEq, ←
       SampledEntry.rightSummary_total]
       at estimate
     exact estimate.trans_lt request.total_paid
   have slopeNonnegative : 0 ≤ request.slope := request.slope_eq ▸ AllSurfacePreparation.sourceMaximum_nonnegative
     prepared.occurrences
   have bounds : ∀ pair ∈ pairs,
-      Data.Gaussian.Norm.Basic.normSq (IncrementArea.pathArea pair.1 - IncrementArea.pathArea pair.2) ≤
+      Basic.normSq (IncrementArea.pathArea pair.1 - IncrementArea.pathArea pair.2) ≤
         request.budget.areaTarget ∧
-      Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.1 -
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2) ≤ request.localTarget ∧
-      Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.1) ≤ 2 *
-        (request.slope + 1) ∧ Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      Basic.normSq (Sum.Basic.gaussianSum pair.1 -
+        Sum.Basic.gaussianSum pair.2) ≤ request.localTarget ∧
+      Basic.normSq (Sum.Basic.gaussianSum pair.1) ≤ 2 *
+        (request.slope + 1) ∧ Basic.normSq (Sum.Basic.gaussianSum
         pair.2) ≤ 2 * (request.slope + 1) := by
     intro pair member
     obtain ⟨value, member, equal⟩ := Map.mem_map.mp member
@@ -285,42 +289,42 @@ cached local summaries. -/
     exact value.pair_bounds slopeNonnegative
       (request.entry_bound value.entry (samples.entries_eq ▸ Map.mem_map.mpr ⟨value, member, rfl⟩))
       (request.local_le.trans request.budget.total_le_one)
-  have areaClose : Data.Gaussian.Norm.Basic.normSq (source.area - cap.area) < areaTarget := by
+  have areaClose : Basic.normSq (source.area - cap.area) < areaTarget := by
     have estimate := IncrementAreaComparison.blocks_area_difference_bound pairs request.positive.le
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+      (Arithmetic.mul_nonneg_direct (by decide)
         (add_nonneg slopeNonnegative (by decide)))
       (fun pair member => (bounds pair member).1) (fun pair member => (bounds pair member).2.1)
       (fun pair member => (bounds pair member).2.2.1) (fun pair member => (bounds pair member).2.2.2)
     rw [pairCount, ← source.area_eq, ← cap.area_eq] at estimate
     exact estimate.trans_lt request.area_paid
-  let surface := IncrementArea.Summary.build (samples.values.map SampledEntry.increment)
-  let internalArea := Data.Gaussian.Norm.Sum.Basic.gaussianSum (samples.values.map (fun value =>
+  let surface := Summary.build (samples.values.map SampledEntry.increment)
+  let internalArea := Sum.Basic.gaussianSum (samples.values.map (fun value =>
     value.evaluated.right.area))
-  have surfaceClose : Data.Gaussian.Norm.Basic.normSq (surface.area + internalArea - cap.area) < areaTarget :=
+  have surfaceClose : Basic.normSq (surface.area + internalArea - cap.area) < areaTarget :=
     by
     let totals := samples.values.map (fun value => (value.increment, value.evaluated.right.total))
-    have totalBounds : ∀ pair ∈ totals, Data.Gaussian.Norm.Basic.normSq (pair.1 - pair.2) ≤ request.localTarget
+    have totalBounds : ∀ pair ∈ totals, Basic.normSq (pair.1 - pair.2) ≤ request.localTarget
       ∧
-        Data.Gaussian.Norm.Basic.normSq pair.1 ≤ 2 * (request.slope + 1) ∧
-          Data.Gaussian.Norm.Basic.normSq pair.2 ≤ 2 * (request.slope + 1) := by
+        Basic.normSq pair.1 ≤ 2 * (request.slope + 1) ∧
+          Basic.normSq pair.2 ≤ 2 * (request.slope + 1) := by
       intro pair member
       obtain ⟨value, member, equal⟩ := Map.mem_map.mp member
       rw [← equal]
       have sourceLe := request.entry_bound value.entry (samples.entries_eq ▸ Map.mem_map.mpr ⟨value, member, rfl⟩)
       have small := request.local_le.trans request.budget.total_le_one
       have right := (value.pair_bounds slopeNonnegative sourceLe small).2.2.2
-      change Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      change Basic.normSq (Sum.Basic.gaussianSum
         value.evaluated.capPath) ≤ _ at right
       rw [← value.evaluated.right.total_eq] at right
       exact ⟨value.integral_close.le, value.increment_bound sourceLe small, right⟩
     have estimate := IncrementAreaComparison.pathArea_difference_bound totals request.positive.le
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (add_nonneg slopeNonnegative (by decide)))
+      (Arithmetic.mul_nonneg_direct (by decide) (add_nonneg slopeNonnegative (by decide)))
       (fun pair member => (totalBounds pair member).1) (fun pair member => (totalBounds pair member).2.1)
       (fun pair member => (totalBounds pair member).2.2)
-    change Data.Gaussian.Norm.Basic.normSq (IncrementArea.pathArea ((samples.values.map _).map Prod.fst) -
+    change Basic.normSq (IncrementArea.pathArea ((samples.values.map _).map Prod.fst) -
       IncrementArea.pathArea ((samples.values.map _).map Prod.snd)) ≤ _ at estimate
-    simp only [Data.List.Map.map_map, Function.comp_def] at estimate
-    have totalCount : totals.length = request.count := (Data.List.Map.length_map ..).trans countEq
+    simp only [Map.map_map, Function.comp_def] at estimate
+    have totalCount : totals.length = request.count := (Map.length_map ..).trans countEq
     rw [totalCount] at estimate
     have capAreaEq : cap.area = internalArea + IncrementArea.pathArea (samples.values.map (fun value =>
       value.evaluated.right.total)) :=
@@ -338,8 +342,8 @@ cached local summaries. -/
     surface, internalArea, rfl, surfaceClose⟩
 
 /-- Ordinary acquisition delegates to the retained-samples constructor. -/
-@[expose] def evaluate (request : AllSurfacePreparation.Request prepared target areaTarget floor)
-    (sample : Primitives.Sample cap differential index box) (shared : PrimitiveData.FacePrimitiveBank differential index
+@[expose] def evaluate (request : Request prepared target areaTarget floor)
+    (sample : Primitives.Sample cap differential index box) (shared : FacePrimitiveBank differential index
       domains)
     (depth readingIndex : Nat) (later : request.index ≤ index) (readingLater : request.readingIndex ≤ readingIndex) :
     Evaluation request
@@ -349,12 +353,12 @@ cached local summaries. -/
 
 /-- The displayed integral consists of the actual source edges consumed by sewing, in the exterior occurrence order
 certified by `Request.indexed_eq`. -/
-theorem Evaluation.triangle_integral {request : AllSurfacePreparation.Request prepared target areaTarget floor}
+theorem Evaluation.triangle_integral {request : Request prepared target areaTarget floor}
     (evaluated :
       Evaluation
       request sample shared depth readingIndex)
-    (readings : TrianglePrimitiveReadings.TriangleReadings shared lifted.mesh) :
-    evaluated.integral = Data.Gaussian.Norm.Sum.Basic.gaussianSum (request.entries.map
+    (readings : TriangleReadings shared lifted.mesh) :
+    evaluated.integral = Sum.Basic.gaussianSum (request.entries.map
       (fun entry => entry.occurrence.placement.location.sourceEdge.increment readings.values)) := by
   rw [evaluated.integral_eq,
     SampledEntry.increment_list_eq
@@ -362,10 +366,10 @@ theorem Evaluation.triangle_integral {request : AllSurfacePreparation.Request pr
 
 /-- The area comparison uses the polygon of the actual shared triangle increments. Its internal cap-area correction
 remains in `surface_area_close`. -/
-theorem Evaluation.triangle_area {request : AllSurfacePreparation.Request prepared target areaTarget floor}
+theorem Evaluation.triangle_area {request : Request prepared target areaTarget floor}
     (evaluated :
       Evaluation
-      request sample shared depth readingIndex) (readings : TrianglePrimitiveReadings.TriangleReadings shared
+      request sample shared depth readingIndex) (readings : TriangleReadings shared
       lifted.mesh) :
     evaluated.surface.area = IncrementArea.pathArea (request.entries.map
       (fun entry => entry.occurrence.placement.location.sourceEdge.increment readings.values)) := by
@@ -375,10 +379,10 @@ theorem Evaluation.triangle_area {request : AllSurfacePreparation.Request prepar
 
 set_option genInjectivity false in
 /-- The shared original cap and face primitive banks with their complete evaluated exterior comparison. -/
-structure Acquisition (request : AllSurfacePreparation.Request prepared target areaTarget floor) (depth : Nat) where
+structure Acquisition (request : Request prepared target areaTarget floor) (depth : Nat) where
   /-- The retained cap primitive sample at the original request stage and collar box. -/ sample : Primitives.Sample cap
     differential request.index collar.box
-  /-- The retained face primitive bank at that same original request stage. -/ shared : PrimitiveData.FacePrimitiveBank
+  /-- The retained face primitive bank at that same original request stage. -/ shared : FacePrimitiveBank
     differential request.index domains
   /-- The actual complete evaluation using these exact cached banks and original reading stage. -/ evaluated :
     Evaluation request
@@ -388,7 +392,7 @@ constructive_injectivity Acquisition
 
 /-- Build the shared original cap and face banks once, then cache their complete exterior comparison at the requested
 depth. -/
-@[expose] def acquire (request : AllSurfacePreparation.Request prepared target areaTarget floor) (depth : Nat) :
+@[expose] def acquire (request : Request prepared target areaTarget floor) (depth : Nat) :
   Acquisition request
   depth :=
   let sample := Primitives.Sample.build cap differential request.index collar.box

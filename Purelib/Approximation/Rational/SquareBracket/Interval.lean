@@ -18,6 +18,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Approximation.Rational
@@ -70,14 +72,14 @@ namespace Purelib.Approximation.Rational.SquareBracket.Basic.Bracket
 The original positive radius is retained as the upper endpoint. Its factor-four
 square bound certifies the lower endpoint obtained by exact rational halving. -/
 @[expose] def toSquareInterval {target : Fraction.Rational}
-    (bracket : SquareBracket.Basic.Bracket target) : Interval.SquareInterval target := by
+    (bracket : Bracket target) : Interval.SquareInterval target := by
   let lower := (1 / 2 : Fraction.Rational) * bracket.radius
   have lowerPositive : 0 < lower :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+    Arithmetic.mul_pos_direct (by decide)
       bracket.radiusPositive
   have lowerLeUpper : lower ≤ bracket.radius := by
     have scaled :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         (show (1 / 2 : Fraction.Rational) ≤ 1 by decide)
         bracket.radiusPositive.le
     simpa only [lower, _root_.one_mul] using scaled
@@ -85,7 +87,7 @@ square bound certifies the lower endpoint obtained by exact rational halving. -/
   have lowerSqLe : lower ^ 2 ≤ target := by
     have halfSquare : (1 / 2 : Fraction.Rational) ^ 2 = 1 / 4 := by decide
     have scaled :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         bracket.square_le_four_target quarterNonnegative
     calc
       lower ^ 2 = (1 / 2 : Fraction.Rational) ^ 2 * bracket.radius ^ 2 := by
@@ -112,72 +114,72 @@ namespace Purelib.Approximation.Rational.SquareBracket.Interval.SquareInterval
 
 /-- Rational midpoint of a displayed square interval. -/
 @[expose] def midpoint {target : Fraction.Rational}
-    (interval : Interval.SquareInterval target) : Fraction.Rational :=
+    (interval : SquareInterval target) : Fraction.Rational :=
   Fraction.Arithmetic.normalizedMul (1 / 2 : Fraction.Rational)
     (Fraction.Arithmetic.normalizedAdd interval.lower interval.upper)
 
 /-- The normalized midpoint of a square interval is strictly positive. -/
 theorem midpoint_pos {target : Fraction.Rational}
-    (interval : Interval.SquareInterval target) : 0 < interval.midpoint :=
+    (interval : SquareInterval target) : 0 < interval.midpoint :=
   (by
-    simp only [Interval.SquareInterval.midpoint,
+    simp only [midpoint,
       Fraction.Arithmetic.normalizedMul_eq,
       Fraction.Arithmetic.normalizedAdd_eq]
-    exact Fraction.Order.Arithmetic.mul_pos_direct (by decide)
-      (Fraction.Order.Arithmetic.add_lt_add_direct
+    exact Arithmetic.mul_pos_direct (by decide)
+      (Arithmetic.add_lt_add_direct
         interval.lowerPositive interval.upperPositive))
 
 /-- The midpoint is at least the lower endpoint. -/
 theorem lower_le_midpoint {target : Fraction.Rational}
-    (interval : Interval.SquareInterval target) : interval.lower ≤ interval.midpoint := by
-    have doubled := Fraction.Order.Arithmetic.add_le_add_direct
-      (Fraction.Order.Basic.le_refl interval.lower)
+    (interval : SquareInterval target) : interval.lower ≤ interval.midpoint := by
+    have doubled := Arithmetic.add_le_add_direct
+      (Basic.le_refl interval.lower)
       interval.lower_le_upper
     have halfNonnegative : (0 : Fraction.Rational) ≤ 1 / 2 := by decide
     have scaled :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         doubled halfNonnegative
     calc
       interval.lower = (1 / 2 : Fraction.Rational) *
           (interval.lower + interval.lower) :=
-        (Purelib.Data.Rat.Fraction.Constants.half_double interval.lower).symm
+        (Fraction.Constants.half_double interval.lower).symm
       _ ≤ (1 / 2 : Fraction.Rational) *
           (interval.lower + interval.upper) :=
         scaled
       _ = interval.midpoint := by
         symm
-        simp only [Interval.SquareInterval.midpoint,
+        simp only [midpoint,
           Fraction.Arithmetic.normalizedMul_eq,
           Fraction.Arithmetic.normalizedAdd_eq, -eq_self, -iff_self]
         rfl
 
 /-- The midpoint is at most the upper endpoint. -/
 theorem midpoint_le_upper {target : Fraction.Rational}
-    (interval : Interval.SquareInterval target) : interval.midpoint ≤ interval.upper := by
-    have doubled := Fraction.Order.Arithmetic.add_le_add_direct interval.lower_le_upper
-      (Fraction.Order.Basic.le_refl interval.upper)
+    (interval : SquareInterval target) : interval.midpoint ≤ interval.upper := by
+    have doubled := Arithmetic.add_le_add_direct interval.lower_le_upper
+      (Basic.le_refl interval.upper)
     have halfNonnegative : (0 : Fraction.Rational) ≤ 1 / 2 := by decide
     have scaled :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         doubled halfNonnegative
     calc
       interval.midpoint = (1 / 2 : Fraction.Rational) *
           (interval.lower + interval.upper) := by
-        simp only [Interval.SquareInterval.midpoint,
+        simp only [midpoint,
           Fraction.Arithmetic.normalizedMul_eq,
           Fraction.Arithmetic.normalizedAdd_eq, -eq_self, -iff_self]
         rfl
       _ ≤ (1 / 2 : Fraction.Rational) *
           (interval.upper + interval.upper) :=
         scaled
-      _ = interval.upper := Purelib.Data.Rat.Fraction.Constants.half_double interval.upper
+      _ = interval.upper := Fraction.Constants.half_double interval.upper
 
 /-- One exact rational comparison retains the half which still brackets the target.
 
 The target-to-midpoint square comparison selects the original lower endpoint
 or the original upper endpoint together with the midpoint and its certificates. -/
 @[expose] def bisect {target : Fraction.Rational}
-    (interval : Interval.SquareInterval target) : Interval.SquareInterval target :=
+    (interval : SquareInterval target) : SquareInterval target :=
   if midpointAbove : target < interval.midpoint ^ 2 then
     { lower := interval.lower
       upper := interval.midpoint

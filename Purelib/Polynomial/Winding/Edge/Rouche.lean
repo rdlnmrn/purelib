@@ -16,6 +16,8 @@ import Mathlib.Order.Basic
 import Purelib.Data.Gaussian.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 
+open Purelib.Polynomial.Dense.Gaussian.Path
+
 open Purelib.Data
 
 open Purelib.Data.Rat
@@ -45,48 +47,48 @@ namespace Purelib.Polynomial.Winding.Edge.Rouche
 
 The two coordinate pairs are evaluated on the same origin, direction and parameter interval. -/
 abbrev PolynomialLineData
-    (p q : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (origin direction :
+    (p q : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (origin direction :
       Gaussian.Basic.Canonical)
     (a b : Fraction.Rational) :=
-  Dense.Rational.CauchyIndex.Comparison.Basic.LineData (Dense.Gaussian.Path.Components.pathReal p origin direction)
-    (Dense.Gaussian.Path.Components.pathImag p origin direction)
-    (Dense.Gaussian.Path.Components.pathReal (p + q) origin direction)
-    (Dense.Gaussian.Path.Components.pathImag (p + q) origin direction) a b
+  Dense.Rational.CauchyIndex.Comparison.Basic.LineData (Components.pathReal p origin direction)
+    (Components.pathImag p origin direction)
+    (Components.pathReal (p + q) origin direction)
+    (Components.pathImag (p + q) origin direction) a b
 
 /-- Convert geometric boundary dominance and two path clearances into the
 finite Rouché data for one increasing affine side. -/
 theorem lineData_of_boundaryNormDominance
-    (p q : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (box : Box)
+    (p q : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (box : Box)
     (dominance : Clearance.Box.Dominance.Basic.BoundaryNormDominance p q box)
     (origin direction : Gaussian.Basic.Canonical) {a b : Fraction.Rational}
     (proper : a < b)
     (left : Clearance.Pair.Basic.Certificate
-      (Dense.Gaussian.Path.Components.pathReal p origin direction) (Dense.Gaussian.Path.Components.pathImag p origin
+      (Components.pathReal p origin direction) (Components.pathImag p origin
         direction)
       ⟨a, b, proper.le⟩)
     (onBoundary : ∀ t : Fraction.Rational,
-      Data.Rat.Interval.Bounds.Contains ⟨a, b, proper.le⟩ t →
+      Interval.Bounds.Contains ⟨a, b, proper.le⟩ t →
         Box.Boundary.OnBoxBoundary box
           (Affine.line origin direction t)) :
     PolynomialLineData p q origin direction a b := by
   apply Dense.Rational.CauchyIndex.Comparison.Dominance.lineData_of_normDominance
-    (C := Dense.Gaussian.Path.Components.pathReal q origin direction)
-    (D := Dense.Gaussian.Path.Components.pathImag q origin direction)
+    (C := Components.pathReal q origin direction)
+    (D := Components.pathImag q origin direction)
     proper left
     dominance.margin dominance.positive
   · intro t inside
     have lower := dominance.lower (Affine.line origin direction t)
       (onBoundary t inside)
-    rw [Dense.Gaussian.Path.Components.eval_pathReal, Dense.Gaussian.Path.Components.eval_pathImag,
-      Dense.Gaussian.Path.Components.eval_pathReal, Dense.Gaussian.Path.Components.eval_pathImag]
+    rw [Components.eval_pathReal, Components.eval_pathImag,
+      Components.eval_pathReal, Components.eval_pathImag]
     simpa only [Gaussian.Basic.Canonical.normSq, pow_two] using lower
   · intro t
-    rw [Dense.Gaussian.Path.Components.eval_pathReal, Dense.Gaussian.Path.Components.eval_pathReal,
-      Dense.Gaussian.Path.Components.eval_pathReal, Dense.Basic.DensePolynomial.eval_add]
+    rw [Components.eval_pathReal, Components.eval_pathReal,
+      Components.eval_pathReal, Dense.Basic.DensePolynomial.eval_add]
     rfl
   · intro t
-    rw [Dense.Gaussian.Path.Components.eval_pathImag, Dense.Gaussian.Path.Components.eval_pathImag,
-      Dense.Gaussian.Path.Components.eval_pathImag, Dense.Basic.DensePolynomial.eval_add]
+    rw [Components.eval_pathImag, Components.eval_pathImag,
+      Components.eval_pathImag, Dense.Basic.DensePolynomial.eval_add]
     rfl
 end Purelib.Polynomial.Winding.Edge.Rouche
 

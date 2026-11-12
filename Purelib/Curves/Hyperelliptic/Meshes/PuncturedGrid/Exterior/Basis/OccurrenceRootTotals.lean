@@ -70,6 +70,10 @@ import Purelib.Riemann.RootContinuation.PreparedGridRootClosure
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Topology.Surface.Cut.PrimitiveJumps
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentRootTotals.CommonBasisRequest
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootParentBounds.CommonBasisRequest
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -93,36 +97,36 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootParent
   (rootParentError rootParentError_nonnegative rootParentMagnitude rootParentMagnitude_nonnegative parent_root_bounded
     physical_parent_root_uniform_error)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
-variable {bounds : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
-  {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {target coefficientTarget : Normalization.InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
+variable {bounds : Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+  {retained : Preparation.CommonBasisPreparation prepared}
+  {basis : Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {target coefficientTarget : InverseRootPolynomial.Coordinate} {coverFloor floor index minimum stage
     energyFloor radialDepth : Nat}
-  {box : Rational.Box} {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap
+  {box : Rational.Box} {capSample : Charts.Reciprocal.Cap.Primitives.Sample cap
     differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box}
 
 namespace CommonBasisRequest
 
-variable {request : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisRequest retained basis
+variable {request : Preparation.CommonBasisRequest retained basis
   target coefficientTarget coverFloor floor}
   {plans : request.Plans capSample polynomials minimum} {inputs : retained.Inputs index}
-  {readings : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
+  {readings : Charts.Reciprocal.Disk.Basis.CommonParentPlans.Readings retained.anchors retained.sources
     request.schedule.bank plans inputs stage}
 
-variable {fans : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.FanPreparation request
+variable {fans : Connection.CommonBasisRequest.FanPreparation request
   plans inputs readings energyFloor}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -131,9 +135,9 @@ open Purelib.Riemann.Normalization.InverseRootPolynomial (Gaussian)
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable (sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.CommonBasisRequest.Sampled fans
+variable (sample : Connection.CommonBasisRequest.Sampled fans
   coefficients radialDepth) (comparisons :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
+  CommonPreparedComparison.CommonBasisRequest.Sampled.PreparedComparisons
   sample)
   {faceIndex : Nat} (banks : PhysicalRunEntries
     retained inputs coefficients faceIndex)
@@ -141,22 +145,22 @@ variable (sample : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Connection.
 /-- Parent displacements remain in the acquired root chart. -/
 def occurrenceRootPath (outer : Fin prepared.occurrences.length) : List Gaussian :=
   List.ofFn (fun position =>
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentRootTotals.CommonBasisRequest.Sampled.parentRootTotal sample
+    Sampled.parentRootTotal sample
     outer position)
 
 /-- Sum the original parent displacements in their acquired root chart for one retained occurrence. -/
 def occurrenceRootTotal (outer : Fin prepared.occurrences.length) : Gaussian :=
-  Data.Gaussian.Norm.Sum.Basic.gaussianSum
+  Gaussian.Norm.Sum.Basic.gaussianSum
     (occurrenceRootPath
     sample outer)
 
 /-- The parent restoration errors accumulate only with the finite parent count. -/
-theorem physical_occurrence_root_error {requested : Normalization.InverseRootPolynomial.Coordinate} (positive : 0 <
+theorem physical_occurrence_root_error {requested : InverseRootPolynomial.Coordinate} (positive : 0 <
   requested)
     (runs :
       PhysicalComponentComparison.CommonBasisRequest.Sampled.PreparedPhysicalRows
       sample comparisons banks
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SourceMagnitude.CommonBasisRequest.Sampled.parentMagnitude
+      (SourceMagnitude.CommonBasisRequest.Sampled.parentMagnitude
       retained inputs) requested)
     (outer : Fin prepared.occurrences.length) :
     Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded ((Path.PairedIncrementArea.total (List.ofFn
@@ -165,52 +169,52 @@ theorem physical_occurrence_root_error {requested : Normalization.InverseRootPol
       (Path.ConjugatePathReadback.conjugateDiagonal
         (occurrenceRootTotal
         sample outer)))
-        (((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
-          outer).compared.entered.cache.parents.length : Normalization.InverseRootPolynomial.Coordinate)^2 *
-          (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RootParentBounds.CommonBasisRequest.Sampled.rootParentError
+        (((ParentIndices.occurrenceAt prepared.occurrences
+          outer).compared.entered.cache.parents.length : InverseRootPolynomial.Coordinate)^2 *
+          (Sampled.rootParentError
             (request := request) requested * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)) :=
             open Purelib.Algebra in open Purelib.Data.Rat in by
   have massNN : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
     (FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 :
-      Normalization.InverseRootPolynomial.Coordinate)) _
+      InverseRootPolynomial.Coordinate)) _
       (fun row => Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
   have estimate := Path.ConjugateBlockTotals.conjugate_blocks_total_difference_bound
     (List.ofFn (fun position =>
       (PhysicalComponentComparison.CommonBasisRequest.Sampled.physicalPaths
       banks outer position,
-      [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentRootTotals.CommonBasisRequest.Sampled.parentRootTotal
+      [Sampled.parentRootTotal
       sample outer position])))
     (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (RootParentBounds.CommonBasisRequest.Sampled.rootParentError_nonnegative
+      (Sampled.rootParentError_nonnegative
       positive.le) massNN) (by
       intro pair member
       obtain ⟨position, rfl⟩ := Data.List.OfFn.Basic.mem_ofFn.mp member
       simpa only
         [PhysicalComponentComparison.CommonBasisRequest.Sampled.physicalPaths,
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum, add_zero] using
+        Gaussian.Norm.Sum.Basic.gaussianSum, add_zero] using
 
-          RootParentBounds.CommonBasisRequest.Sampled.physical_parent_root_uniform_error
+          Sampled.physical_parent_root_uniform_error
           sample comparisons banks positive runs outer position)
-  rw [Data.List.OfFn.Basic.map_ofFn, Data.List.OfFn.Basic.map_ofFn, Data.List.OfFn.Basic.length_ofFn] at estimate
+  rw [List.OfFn.Basic.map_ofFn, List.OfFn.Basic.map_ofFn, List.OfFn.Basic.length_ofFn] at estimate
   change Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded ((Path.PairedIncrementArea.total (List.ofFn
     (PhysicalComponentComparison.CommonBasisRequest.Sampled.physicalPaths
     banks outer)).flatten).sub
-    (Path.ConjugatePathReadback.conjugateDiagonal (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    (Path.ConjugatePathReadback.conjugateDiagonal (Gaussian.Norm.Sum.Basic.gaussianSum
       (List.ofFn (fun position =>
-        [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentRootTotals.CommonBasisRequest.Sampled.parentRootTotal
+        [Sampled.parentRootTotal
         sample outer position])).flatten))) _ at estimate
-  rw [Path.IncrementArea.sum_flatten, Data.List.OfFn.Basic.map_ofFn] at estimate
-  have readback := Data.List.OfFn.Basic.ofFn_congr (fun position =>
-    (show Data.Gaussian.Norm.Sum.Basic.gaussianSum
-      [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentRootTotals.CommonBasisRequest.Sampled.parentRootTotal
+  rw [Path.IncrementArea.sum_flatten, List.OfFn.Basic.map_ofFn] at estimate
+  have readback := List.OfFn.Basic.ofFn_congr (fun position =>
+    (show Gaussian.Norm.Sum.Basic.gaussianSum
+      [Sampled.parentRootTotal
       sample outer position] =
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentRootTotals.CommonBasisRequest.Sampled.parentRootTotal
+      Sampled.parentRootTotal
         sample outer position from add_zero _))
-  change List.ofFn (fun position => Data.Gaussian.Norm.Sum.Basic.gaussianSum
-    [Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentRootTotals.CommonBasisRequest.Sampled.parentRootTotal
+  change List.ofFn (fun position => Gaussian.Norm.Sum.Basic.gaussianSum
+    [Sampled.parentRootTotal
     sample outer position]) =
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OccurrenceRootTotals.CommonBasisRequest.Sampled.occurrenceRootPath
+    Sampled.occurrenceRootPath
       sample outer at readback
   simp only [Function.comp_def] at estimate
   rw [readback] at estimate
@@ -222,35 +226,35 @@ theorem occurrence_root_bounded (outer : Fin prepared.occurrences.length) :
     Readings.PrimitiveAreaBounds.PrimitivePoint.Bounded (Path.ConjugatePathReadback.conjugateDiagonal
       (occurrenceRootTotal
       sample outer))
-      (((Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
-        outer).compared.entered.cache.parents.length : Normalization.InverseRootPolynomial.Coordinate)^2 *
+      (((ParentIndices.occurrenceAt prepared.occurrences
+        outer).compared.entered.cache.parents.length : InverseRootPolynomial.Coordinate)^2 *
 
-          (RootParentBounds.CommonBasisRequest.Sampled.rootParentMagnitude
+          (Sampled.rootParentMagnitude
           (request := request) (inputs := inputs) * Readings.PreparedObservationCoercivity.coefficientNormSq
-          coefficients)) := open Purelib.Algebra in open Purelib.Data.Rat in by
+          coefficients)) := open Algebra in open Rat in by
   have massNN : 0 ≤ Readings.PreparedObservationCoercivity.coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
     (FiniteSum.Rational.Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 :
-      Normalization.InverseRootPolynomial.Coordinate)) _
+      InverseRootPolynomial.Coordinate)) _
       (fun row => Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
   have bound := Path.IncrementArea.sum_bound_of_length
     (values :=
       occurrenceRootPath
       sample outer)
     (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (RootParentBounds.CommonBasisRequest.Sampled.rootParentMagnitude_nonnegative
+      (Sampled.rootParentMagnitude_nonnegative
       (request := request) (inputs := inputs)) massNN)
     (by
       intro value member
       obtain ⟨position, rfl⟩ := Data.List.OfFn.Basic.mem_ofFn.mp member
       rw [Gaussian.Norm.Basic.normSq_eq_canonical]
       exact
-        (RootParentBounds.CommonBasisRequest.Sampled.parent_root_bounded
+        (Sampled.parent_root_bounded
         sample comparisons outer position).2)
-    (count := (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt prepared.occurrences
+    (count := (ParentIndices.occurrenceAt prepared.occurrences
       outer).compared.entered.cache.parents.length)
     (by
-        rw [occurrenceRootPath, Data.List.OfFn.Basic.length_ofFn])
+        rw [occurrenceRootPath, List.OfFn.Basic.length_ofFn])
   constructor
   · rw [← Gaussian.Norm.Basic.normSq_eq_canonical]
     exact (Gaussian.Norm.Basic.normSq_conj _).trans_le bound

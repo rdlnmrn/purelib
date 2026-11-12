@@ -79,49 +79,49 @@ open Purelib.Integration.Path.Resampling.OrientedBounds (orientParameter orientP
   oriented_increments)
 open Purelib.Topology.Polygon.Stokes (PrimitivePoint)
 open Purelib.Riemann.Normalization.InverseRootPolynomial (Coordinate)
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential other :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential other :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
+  {program : ExteriorProgram lifted
     differential} {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
+    SurfacePreparation
     regular domains program}
-  {requested : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
+  {requested : Coordinate} {minimum : Nat}
   {comparison : prepared.ClosedBoundaryComparison other requested minimum} {vertical : Bool}
 
 namespace StoredSourceChord
 
 /-- Every changed-parent junction uses the full oriented source endpoints, and the final retained chord reaches its
 terminal endpoint. -/
-private def parentEnds (forward : Bool) (before : SourceChordRuns.StoredSourceChord comparison vertical) :
-    List (SourceChordRuns.StoredSourceChord comparison vertical) → Prop
+private def parentEnds (forward : Bool) (before : StoredSourceChord comparison vertical) :
+    List (StoredSourceChord comparison vertical) → Prop
   | [] => BoundaryTraceParameters.lastParameter before.2.forward before.2.range = (if forward then 1 else 0)
   | after :: rest =>
       (after.2.index ≠ before.2.index →
         BoundaryTraceParameters.lastParameter before.2.forward before.2.range = (if forward then 1 else 0) ∧
           BoundaryTraceParameters.firstParameter after.2.forward after.2.range = (if forward then 0 else 1)) ∧
-      Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.StoredSourceChord.parentEnds forward
+      StoredSourceChord.parentEnds forward
         after rest
 
 /-- The retained chord word starts at its oriented initial endpoint and has full endpoints at every changed-parent
 handoff. -/
-private def parentWord (forward : Bool) : List (SourceChordRuns.StoredSourceChord comparison vertical) → Prop
+private def parentWord (forward : Bool) : List (StoredSourceChord comparison vertical) → Prop
   | [] => True
   | first :: rest => BoundaryTraceParameters.firstParameter first.2.forward first.2.range = (if forward then 0 else 1) ∧
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.StoredSourceChord.parentEnds forward first rest
+      StoredSourceChord.parentEnds forward first rest
 
 /-- Removing a retained initial chord segment preserves the endpoint handoff certificate from its actual last chord. -/
-private theorem parentEnds_tail (forward : Bool) (first : SourceChordRuns.StoredSourceChord comparison vertical)
-    (before after : List (SourceChordRuns.StoredSourceChord comparison vertical))
-    (ends : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.StoredSourceChord.parentEnds forward
+private theorem parentEnds_tail (forward : Bool) (first : StoredSourceChord comparison vertical)
+    (before after : List (StoredSourceChord comparison vertical))
+    (ends : StoredSourceChord.parentEnds forward
       first (before ++ after)) :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.StoredSourceChord.parentEnds forward
+      StoredSourceChord.parentEnds forward
       (StoredSourceChord.lastChord first before) after := by
   induction before generalizing first with
   | nil => exact ends
@@ -129,7 +129,7 @@ private theorem parentEnds_tail (forward : Bool) (first : SourceChordRuns.Stored
 
 /-- The original indexed chord bank's distinct-parent handoffs and final endpoint certify its complete parent-end word.
 -/
-private theorem parentEnds_ofFn {n : Nat} (forward : Bool) (source : Fin (n + 1) → SourceChordRuns.StoredSourceChord
+private theorem parentEnds_ofFn {n : Nat} (forward : Bool) (source : Fin (n + 1) → StoredSourceChord
   comparison vertical)
     (joins : ∀ i : Fin n, (source i.succ).2.index ≠ (source i.castSucc).2.index →
       BoundaryTraceParameters.lastParameter (source i.castSucc).2.forward (source i.castSucc).2.range = (if forward then
@@ -138,7 +138,7 @@ private theorem parentEnds_ofFn {n : Nat} (forward : Bool) (source : Fin (n + 1)
           else 1))
     (finish : BoundaryTraceParameters.lastParameter (source (Fin.last n)).2.forward (source (Fin.last n)).2.range = (if
       forward then 1 else 0)) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.StoredSourceChord.parentEnds forward (source 0)
+    StoredSourceChord.parentEnds forward (source 0)
       (List.ofFn (fun i : Fin n => source i.succ)) := by
   induction n with
   | zero => exact finish
@@ -157,15 +157,15 @@ end StoredSourceChord
 namespace SourceChordRun
 
 /-- The retained run starts and finishes at its original parent's full endpoints in the selected direction. -/
-@[expose] def FullEndpoints (run : SourceChordRuns.SourceChordRun comparison vertical) (forward : Bool) : Prop :=
+@[expose] def FullEndpoints (run : SourceChordRun comparison vertical) (forward : Bool) : Prop :=
   BoundaryTraceParameters.firstParameter run.first.2.forward run.first.2.range = (if forward then 0 else 1) ∧
     BoundaryTraceParameters.lastParameter (StoredSourceChord.lastChord run.first run.rest).2.forward
       (StoredSourceChord.lastChord run.first run.rest).2.range = (if forward then 1 else 0)
 
 /-- Orient the original complete run parameters into a chain from zero to one with unchanged sampled increments and paid
 mesh widths. -/
-theorem sampling_mesh (run : SourceChordRuns.SourceChordRun comparison vertical) (forward : Bool) {width :
-  InverseRootPolynomial.Coordinate}
+theorem sampling_mesh (run : SourceChordRun comparison vertical) (forward : Bool) {width :
+  Coordinate}
     (sampling : run.values = SourceListResampling.increments (comparison.sourceValues run.parent)
       (BoundaryTraceParameters.firstParameter run.first.2.forward run.first.2.range) run.parameters)
     (bounds : SourceResampling.Chain (OrientedBounds.orientParameter forward (BoundaryTraceParameters.firstParameter
@@ -199,15 +199,15 @@ theorem sampling_mesh (run : SourceChordRuns.SourceChordRun comparison vertical)
     (run.parameters.map (OrientedBounds.orientParameter forward))) first), chain, steps⟩
 
 /-- A maximal retained run has full source endpoints, and the remaining runs retain their parent-word certificate. -/
-private theorem run_end (run : SourceChordRuns.SourceChordRun comparison vertical) (rest : List
-  (SourceChordRuns.SourceChordRun comparison vertical))
+private theorem run_end (run : SourceChordRun comparison vertical) (rest : List
+  (SourceChordRun comparison vertical))
     (forward : Bool) (apart : SourceChordRun.startsApart run.parent rest)
-    (word : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.StoredSourceChord.parentWord forward
+    (word : StoredSourceChord.parentWord forward
       ((run :: rest).map SourceChordRun.chords).flatten) :
     run.FullEndpoints forward ∧
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.StoredSourceChord.parentWord forward (rest.map
+      StoredSourceChord.parentWord forward (rest.map
       SourceChordRun.chords).flatten := by
-  have ends := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.StoredSourceChord.parentEnds_tail
+  have ends := StoredSourceChord.parentEnds_tail
     forward run.first run.rest (rest.map SourceChordRun.chords).flatten word.2
   cases rest with
   | nil => exact ⟨⟨word.1, ends⟩, True.intro⟩
@@ -219,15 +219,15 @@ private theorem run_end (run : SourceChordRuns.SourceChordRun comparison vertica
     exact ⟨⟨word.1, boundary.1⟩, ⟨boundary.2, ends.2⟩⟩
 
 /-- Every separated run in the original parent word has its full oriented source endpoints. -/
-private theorem runs_endpoints (runs : List (SourceChordRuns.SourceChordRun comparison vertical)) (forward : Bool)
+private theorem runs_endpoints (runs : List (SourceChordRun comparison vertical)) (forward : Bool)
     (apart : SourceChordRun.separated runs) (word :
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.StoredSourceChord.parentWord forward (runs.map
+      StoredSourceChord.parentWord forward (runs.map
       SourceChordRun.chords).flatten) :
     ∀ run ∈ runs, run.FullEndpoints forward := by
   induction runs with
   | nil => intro _ member; cases member
   | cons run rest ih =>
-    have ends := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.SourceChordRun.run_end run rest
+    have ends := SourceChordRun.run_end run rest
       forward apart.1 word
     intro found member
     rcases Data.List.Membership.mem_cons.mp member with rfl | member
@@ -235,24 +235,24 @@ private theorem runs_endpoints (runs : List (SourceChordRuns.SourceChordRun comp
     · exact ih apart.2 ends.2 found member
 
 /-- Read the complete oriented endpoint increment of the run's retained original parent. -/
-@[expose] def parentIncrement (run : SourceChordRuns.SourceChordRun comparison vertical) (forward : Bool) :
+@[expose] def parentIncrement (run : SourceChordRun comparison vertical) (forward : Bool) :
   PrimitivePoint :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.sourceParentIncrement comparison forward run.parent
+  SourceChordRuns.sourceParentIncrement comparison forward run.parent
 
 /-- The run's actual endpoint increment equals its original parent increment when both full endpoints are retained. -/
-theorem endpointIncrement_eq (run : SourceChordRuns.SourceChordRun comparison vertical) {forward : Bool}
+theorem endpointIncrement_eq (run : SourceChordRun comparison vertical) {forward : Bool}
     (ends : run.FullEndpoints forward) : run.endpointIncrement = run.parentIncrement forward := by
   have first := congrArg₂ (fun (index : Fin comparison.original.plans.length) (parameter :
-    InverseRootPolynomial.Coordinate) =>
+    Coordinate) =>
     comparison.sourceValues index parameter) run.first_parent ends.1
   have last := congrArg₂ (fun (index : Fin comparison.original.plans.length) (parameter :
-    InverseRootPolynomial.Coordinate) =>
+    Coordinate) =>
     comparison.sourceValues index parameter) run.last_parent ends.2
   exact congrArg₂ PrimitivePoint.sub last first
 
 /-- Full endpoint certificates identify the original run-endpoint increment list with its retained parent-increment
 list. -/
-private theorem mapped_endpoints (runs : List (SourceChordRuns.SourceChordRun comparison vertical)) (forward : Bool)
+private theorem mapped_endpoints (runs : List (SourceChordRun comparison vertical)) (forward : Bool)
     (ends : ∀ run ∈ runs, run.FullEndpoints forward) :
     runs.map SourceChordRun.endpointIncrement = runs.map (fun run => run.parentIncrement forward) :=
   Map.map_congr_left (fun run member => run.endpointIncrement_eq (ends run member))
@@ -262,8 +262,8 @@ end SourceChordRun
 namespace SourceChordGrouping
 
 /-- Maximal grouping of the original indexed chord bank preserves full endpoints of every retained run. -/
-theorem endpoints_ofFn {n : Nat} {source : Fin (n + 1) → SourceChordRuns.StoredSourceChord comparison vertical}
-    (grouped : SourceChordRuns.SourceChordGrouping comparison vertical (List.ofFn source)) (forward : Bool)
+theorem endpoints_ofFn {n : Nat} {source : Fin (n + 1) → StoredSourceChord comparison vertical}
+    (grouped : SourceChordGrouping comparison vertical (List.ofFn source)) (forward : Bool)
     (joins : ∀ i : Fin n, (source i.succ).2.index ≠ (source i.castSucc).2.index →
       BoundaryTraceParameters.lastParameter (source i.castSucc).2.forward (source i.castSucc).2.range = (if forward then
         1 else 0) ∧
@@ -274,23 +274,23 @@ theorem endpoints_ofFn {n : Nat} {source : Fin (n + 1) → SourceChordRuns.Store
     (finish : BoundaryTraceParameters.lastParameter (source (Fin.last n)).2.forward (source (Fin.last n)).2.range = (if
       forward then 1 else 0)) :
     ∀ run ∈ grouped.runs, run.FullEndpoints forward := by
-  have word : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.StoredSourceChord.parentWord forward
+  have word : StoredSourceChord.parentWord forward
     (List.ofFn source) := by
     rw [OfFn.Basic.ofFn_succ]
-    exact ⟨start, Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.StoredSourceChord.parentEnds_ofFn
+    exact ⟨start, StoredSourceChord.parentEnds_ofFn
       forward source joins finish⟩
   rw [← grouped.flattened] at word
-  exact Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.SourceChordRun.runs_endpoints grouped.runs
+  exact SourceChordRun.runs_endpoints grouped.runs
     forward grouped.separated word
 
 /-- The exact original sampled run totals equal their full retained parent increments in run order. -/
-theorem full_totals (grouped : SourceChordRuns.SourceChordGrouping comparison vertical chords) (forward : Bool)
+theorem full_totals (grouped : SourceChordGrouping comparison vertical chords) (forward : Bool)
     (totals : (grouped.runs.map SourceChordRun.values).map PairedIncrementArea.total =
       grouped.runs.map SourceChordRun.endpointIncrement)
     (ends : ∀ run ∈ grouped.runs, run.FullEndpoints forward) :
     (grouped.runs.map SourceChordRun.values).map PairedIncrementArea.total =
       grouped.runs.map (fun run => run.parentIncrement forward) :=
-  totals.trans (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceChordRuns.SourceChordRun.mapped_endpoints
+  totals.trans (SourceChordRun.mapped_endpoints
     grouped.runs forward ends)
 
 end SourceChordGrouping

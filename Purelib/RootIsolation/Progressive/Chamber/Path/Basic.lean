@@ -37,29 +37,29 @@ set_option genInjectivity false in
 /-- A finite coefficient path is a finite inductive chain of certified
 chamber overlaps.  The endpoint indices remain dependent on their displayed
 frames, so unequal degrees cannot be joined accidentally. -/
-inductive ChamberPath : (start finish : Progressive.Chamber.Frame.ChamberFrame) → Type 2
-  /-- The empty retained chamber path at one original frame. -/ | nil (frame : Progressive.Chamber.Frame.ChamberFrame) :
-    Purelib.RootIsolation.Progressive.Chamber.Path.Basic.ChamberPath frame frame
+inductive ChamberPath : (start finish : Frame.ChamberFrame) → Type 2
+  /-- The empty retained chamber path at one original frame. -/ | nil (frame : Frame.ChamberFrame) :
+    Basic.ChamberPath frame frame
   /-- Prepend an original chamber overlap to a path beginning at its exact finishing frame. -/ | cons {start middle
-    finish : Progressive.Chamber.Frame.ChamberFrame}
-      (step : Progressive.Chamber.Overlap.ChamberOverlap start middle)
-      (remaining : Purelib.RootIsolation.Progressive.Chamber.Path.Basic.ChamberPath middle finish) :
-        Purelib.RootIsolation.Progressive.Chamber.Path.Basic.ChamberPath start finish
+    finish : Frame.ChamberFrame}
+      (step : Overlap.ChamberOverlap start middle)
+      (remaining : Basic.ChamberPath middle finish) :
+        Basic.ChamberPath start finish
 
 constructive_injectivity ChamberPath
 
 namespace ChamberPath
 
 /-- Count the actual retained chamber overlaps in a finite path. -/
-@[expose] def stepCount : {start finish : Progressive.Chamber.Frame.ChamberFrame} →
-    Progressive.Chamber.Path.Basic.ChamberPath start finish → Nat
+@[expose] def stepCount : {start finish : Frame.ChamberFrame} →
+    ChamberPath start finish → Nat
   | _, _, .nil _ => 0
   | _, _, .cons _ remaining => remaining.stepCount + 1
 
 /-- The finite list of rational Rouché bridge boxes traversed by one initial
 owner.  Its index is updated by the certified matching at every step. -/
-@[expose] def bridgeBoxes : {start finish : Progressive.Chamber.Frame.ChamberFrame} →
-    (path : Progressive.Chamber.Path.Basic.ChamberPath start finish) → start.Index → List Box
+@[expose] def bridgeBoxes : {start finish : Frame.ChamberFrame} →
+    (path : ChamberPath start finish) → start.Index → List Box
   | _, _, .nil _, _ => []
   | _, _, .cons step remaining, index =>
       (step.bridge index).box ::
@@ -67,22 +67,22 @@ owner.  Its index is updated by the certified matching at every step. -/
 
 /-- Every original owner traverses exactly one retained bridge box per path step. -/
 @[simp] theorem bridgeBoxes_length
-    {start finish : Progressive.Chamber.Frame.ChamberFrame} (path : Progressive.Chamber.Path.Basic.ChamberPath start
+    {start finish : Frame.ChamberFrame} (path : ChamberPath start
       finish)
     (index : start.Index) :
     (path.bridgeBoxes index).length = path.stepCount := by
   induction path with
   | nil frame => rfl
   | cons step remaining inductionHypothesis =>
-      simp only [-eq_self, -iff_self, Progressive.Chamber.Path.Basic.ChamberPath.bridgeBoxes, List.length_cons,
-        Progressive.Chamber.Path.Basic.ChamberPath.stepCount,
+      simp only [-eq_self, -iff_self, bridgeBoxes, List.length_cons,
+        stepCount,
         inductionHypothesis]
       rfl
 
 /-- Join compatible finite chamber paths at their exact shared middle frame. -/
-@[expose] def append {start middle finish : Progressive.Chamber.Frame.ChamberFrame}
-    (first : Progressive.Chamber.Path.Basic.ChamberPath start middle)
-    (second : Progressive.Chamber.Path.Basic.ChamberPath middle finish) : Progressive.Chamber.Path.Basic.ChamberPath
+@[expose] def append {start middle finish : Frame.ChamberFrame}
+    (first : ChamberPath start middle)
+    (second : ChamberPath middle finish) : ChamberPath
       start finish :=
   match first with
   | .nil _ => second
@@ -90,20 +90,20 @@ owner.  Its index is updated by the certified matching at every step. -/
 
 /-- Joining finite chamber paths is associative. -/
 theorem append_assoc
-    {first second third fourth : Progressive.Chamber.Frame.ChamberFrame}
-    (left : Progressive.Chamber.Path.Basic.ChamberPath first second) (middle :
-      Progressive.Chamber.Path.Basic.ChamberPath second third)
-    (right : Progressive.Chamber.Path.Basic.ChamberPath third fourth) :
+    {first second third fourth : Frame.ChamberFrame}
+    (left : ChamberPath first second) (middle :
+      ChamberPath second third)
+    (right : ChamberPath third fourth) :
     (left.append middle).append right = left.append (middle.append right) := by
   induction left with
   | nil => rfl
   | cons step remaining inductionHypothesis =>
-      simp only [-eq_self, -iff_self, Progressive.Chamber.Path.Basic.ChamberPath.append, inductionHypothesis]
+      simp only [-eq_self, -iff_self, append, inductionHypothesis]
       rfl
 
 /-- Reverse a finite chamber path and each of its original certified overlaps. -/
-@[expose] def reverse : {start finish : Progressive.Chamber.Frame.ChamberFrame} →
-    Progressive.Chamber.Path.Basic.ChamberPath start finish → Progressive.Chamber.Path.Basic.ChamberPath finish start
+@[expose] def reverse : {start finish : Frame.ChamberFrame} →
+    ChamberPath start finish → ChamberPath finish start
   | _, _, .nil frame => .nil frame
   | _, _, .cons step remaining =>
       remaining.reverse.append (.cons step.reverse (.nil _))

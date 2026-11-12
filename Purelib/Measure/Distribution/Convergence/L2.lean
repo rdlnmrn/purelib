@@ -18,6 +18,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Mathlib.Order.Basic
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 @[expose] public section
 
@@ -47,7 +49,7 @@ theorem l1Excess_nonnegative {α : Type}
     {distribution : Distribution α} {left right : α → Fraction.Rational}
     (budget : InMeasureBudget distribution left right) :
     0 ≤ budget.l1Excess :=
-  Fraction.Order.Basic.le_max_right _ _
+  Basic.le_max_right _ _
 
 /-- Squared L1 excess is bounded by the exact squared-L2 distance times the retained failure budget. -/
 theorem l1Excess_sq_le_poweredL2Distance_mul_failure {α : Type}
@@ -61,7 +63,7 @@ theorem l1Excess_sq_le_poweredL2Distance_mul_failure {α : Type}
   have tailErrorNonnegative : ∀ atom, atom ∈ distribution.atoms →
       0 ≤ tailError atom.item := by
     intro atom atomMember
-    apply Fraction.Order.Arithmetic.mul_nonneg_direct
+    apply Arithmetic.mul_nonneg_direct
     · exact Distance.rationalSeparation_nonneg _ _
     · cases selected : bad atom.item <;>
         simp only [indicator, selected] <;> decide
@@ -74,9 +76,9 @@ theorem l1Excess_sq_le_poweredL2Distance_mul_failure {α : Type}
           Distance.rationalSeparation (left atom.item) (right atom.item) := by
         unfold bad separationAtLeast at selected
         exact decide_eq_false_iff_not.mp selected
-      have below := Fraction.Order.Arithmetic.lt_of_not_ge_direct notThreshold
+      have below := Arithmetic.lt_of_not_ge_direct notThreshold
       simp only [tailError, indicator, selected, mul_zero, add_zero]
-      exact Fraction.Order.Arithmetic.le_of_lt_direct below
+      exact Arithmetic.le_of_lt_direct below
     · simp only [tailError, indicator, selected, mul_one]
       exact le_add_of_nonneg_left budget.threshold_positive.le
   have splitAveraged := distribution.expectation_mono
@@ -90,7 +92,7 @@ theorem l1Excess_sq_le_poweredL2Distance_mul_failure {α : Type}
     change distribution.expectation (fun item =>
       Distance.rationalSeparation (left item) (right item)) - budget.threshold ≤
         distribution.expectation tailError
-    have shifted := Fraction.Order.Arithmetic.sub_le_sub_right_direct
+    have shifted := Arithmetic.sub_le_sub_right_direct
       splitAveraged budget.threshold
     have canceled :
         (budget.threshold + distribution.expectation tailError) - budget.threshold =
@@ -103,10 +105,10 @@ theorem l1Excess_sq_le_poweredL2Distance_mul_failure {α : Type}
   have excessLeTail : budget.l1Excess ≤
       distribution.expectation tailError := by
     unfold l1Excess
-    exact Fraction.Order.Basic.max_le differenceLeTail tailExpectationNonnegative
+    exact Basic.max_le differenceLeTail tailExpectationNonnegative
   have excessSqLeTailSq : budget.l1Excess ^ 2 ≤
       distribution.expectation tailError ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct
+    Arithmetic.pow_le_pow_direct
       budget.l1Excess_nonnegative excessLeTail 2
   have cauchy := distribution.productExpectation_sq_le_poweredL2_mul
     (fun item => Distance.rationalSeparation (left item) (right item))
@@ -143,7 +145,7 @@ theorem l1Excess_sq_le_poweredL2Distance_mul_failure {α : Type}
     _ ≤ distribution.poweredL2Distance left right *
         distribution.probability bad := cauchy
     _ ≤ distribution.poweredL2Distance left right * budget.failure :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         budget.probability_le distanceNonnegative
 
 end InMeasureBudget
@@ -180,7 +182,7 @@ theorem l1Excess_sq_le {α : Type} {distribution : Distribution α}
           budget.inMeasure.failure :=
       budget.inMeasure.l1Excess_sq_le_poweredL2Distance_mul_failure
     _ ≤ budget.ceiling * budget.inMeasure.failure :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
         budget.poweredL2Distance_le budget.inMeasure.failure_nonnegative
 
 end L2InMeasureBudget

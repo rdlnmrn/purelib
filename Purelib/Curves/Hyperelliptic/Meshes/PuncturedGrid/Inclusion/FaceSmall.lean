@@ -81,6 +81,8 @@ import Purelib.Topology.Polygon.Stokes
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid
+
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.LiftedReadings.ClearGrid.RegularPrimitiveSplits
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.WordPoints.ClearGrid.RegularPrimitiveSplits
 
@@ -114,7 +116,7 @@ open Purelib.Riemann.Meshes (FramedPuncturedGrid)
 variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
   Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {base : FramedPuncturedGrid curve branches higher} {frames : RootIsolation.SquareRoot.Grid.RootFrames base.bank.grid}
+  {base : FramedPuncturedGrid curve branches higher} {frames : SquareRoot.Grid.RootFrames base.bank.grid}
   {vertices : SquareRoot.Grid.LiftedVertices.VertexBank base.bank.grid} {edges :
     SquareRoot.Grid.RootEdgeBank frames}
 
@@ -126,12 +128,12 @@ actual arriving sheet in the enlarged frame bank. -/
 theorem included_canonical_small (face : RegularFace bank)
     (included : Geometry.Grid.Extension.CoordinateInclusion bank.grid base.bank.grid)
     (mesh : LiftedMesh vertices edges base.faces) (domains :
-      Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames base.faces.regulars)
+      Face.DomainBanks.FaceDomainBank frames base.faces.regulars)
     (sheet : Fin 2) (source : Hyperelliptic.Differentials.Basic.Differential genus) (differential : Fin genus)
     (target : Fraction.Rational) (positive : 0 < target) (minimum : Nat) :
     let member := face.cell.anchor_mem face.member
     let walk := included.resplit face.boundary member
-    let assigned := Hyperelliptic.Meshes.PuncturedGrid.SkeletonFaceAssignments.walkFaces mesh walk sheet
+    let assigned := SkeletonFaceAssignments.walkFaces mesh walk sheet
     let quarter := target / 4
     let quarterPositive : 0 < quarter := Fraction.Order.Field.div_pos_direct positive (by
         decide +kernel : (0 : Fraction.Rational) < 4)
@@ -140,53 +142,53 @@ theorem included_canonical_small (face : RegularFace bank)
         decide +kernel : (0 : Fraction.Rational) < 32)
     let inner := Rational.Budget.Aggregate.perTerm part assigned.indexed.length
     let innerPositive := Rational.Budget.Aggregate.perTerm_positive partPositive assigned.indexed.length
-    let request := Hyperelliptic.Meshes.PuncturedGrid.Inclusion.FaceRequest.IncludedRequest.build face included frames
+    let request := Inclusion.FaceRequest.IncludedRequest.build face included frames
       sheet source differential minimum inner innerPositive domains
     let sources :=
       SheetEntries.LiftedSources.build
       mesh request.entries
-    let route := Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.RouteRequest.build
-      (Hyperelliptic.Meshes.PuncturedGrid.Fragment.RootedWords.RegularPrimitiveSplits.SheetEntries.LiftedSources.pieces
-      sources) Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteWords.canonicalRoute part partPositive
-    let charts := Hyperelliptic.Meshes.PuncturedGrid.RouteChartRequests.RouteChartRequest.build assigned.routeSpine
+    let route := Fragment.RouteWords.RouteRequest.build
+      (Fragment.RootedWords.RegularPrimitiveSplits.SheetEntries.LiftedSources.pieces
+      sources) Fragment.RouteWords.canonicalRoute part partPositive
+    let charts := RouteChartRequests.RouteChartRequest.build assigned.routeSpine
       (standardDifferential differential) domains part partPositive
     let numericalFloor := max
-      (Hyperelliptic.Meshes.PuncturedGrid.Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets.index request.scalars)
+      (Face.ScalarBudgets.BranchCellBank.FaceScalarBudgets.index request.scalars)
       (max route.index charts.index)
-    ∀ numericalIndex (numerics : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank
+    ∀ numericalIndex (numerics : Face.PrimitiveData.FacePrimitiveBank
       (standardDifferential differential) numericalIndex domains)
-      (triangles : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings numerics mesh),
+      (triangles : TrianglePrimitiveReadings.TriangleReadings numerics mesh),
         numericalFloor ≤ numericalIndex →
-      Data.Gaussian.Norm.Basic.normSq (Topology.Surface.Sewing.SewingRetraction.wordValue
-        (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh triangles.values)
+      Gaussian.Norm.Basic.normSq (Topology.Surface.Sewing.SewingRetraction.wordValue
+        (CanonicalEdgeValues.edgeValuation mesh triangles.values)
         (edges.indexedEdges vertices walk sheet)) < target := by
   intro member walk assigned quarter quarterPositive part partPositive inner innerPositive request sources route charts
     numericalFloor numericalIndex numerics triangles later
   let faces := face.includedFaces included frames mesh sheet
-  have scalarLater := (Data.Nat.Order.le_max_left _ _).trans later
-  have routeLater := (Data.Nat.Order.le_max_left _ _).trans ((Data.Nat.Order.le_max_right _ _).trans later)
-  have chartLater := (Data.Nat.Order.le_max_right _ _).trans ((Data.Nat.Order.le_max_right _ _).trans later)
+  have scalarLater := (Nat.Order.le_max_left _ _).trans later
+  have routeLater := (Nat.Order.le_max_left _ _).trans ((Nat.Order.le_max_right _ _).trans later)
+  have chartLater := (Nat.Order.le_max_right _ _).trans ((Nat.Order.le_max_right _ _).trans later)
   let readings := request.readWith innerPositive (List.ofFn vertices.coordinate) numerics scalarLater
   have vertexPoints : ∀ vertex, vertices.coordinate vertex ∈ request.points (List.ofFn vertices.coordinate) := by
     intro vertex
-    exact List.mem_append_right _ (Data.List.Permutation.ofFn_mem _ vertex)
-  let corners := Hyperelliptic.Meshes.PuncturedGrid.Face.MeshWords.LiftedMesh.PathFaces.MeshWordReadings.build
+    exact List.mem_append_right _ (List.Permutation.ofFn_mem _ vertex)
+  let corners := Face.MeshWords.LiftedMesh.PathFaces.MeshWordReadings.build
     readings.meshes vertexPoints assigned
   let zero := face.includedZeroTail included frames sheet source differential quarter quarterPositive minimum
   let stage := max request.fragments.comparison.stage zero.leftIndex
   let sample := (((face.includedPeriod included frames sheet source).period.program differential).integral.model
     stage).integralSample
-  have sampleSmall : Data.Gaussian.Norm.Basic.normSq sample < quarter := face.included_sample_small included frames
+  have sampleSmall : Gaussian.Norm.Basic.normSq sample < quarter := face.included_sample_small included frames
     sheet source differential
-    quarter quarterPositive minimum stage (Data.Nat.Order.le_max_right _ _)
-  have canonical : Data.Gaussian.Norm.Basic.normSq (Topology.Surface.Sewing.SewingRetraction.wordValue
-      (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation mesh triangles.values) assigned.indexed -
+    quarter quarterPositive minimum stage (Nat.Order.le_max_right _ _)
+  have canonical : Gaussian.Norm.Basic.normSq (Topology.Surface.Sewing.SewingRetraction.wordValue
+      (CanonicalEdgeValues.edgeValuation mesh triangles.values) assigned.indexed -
         sample) < quarter := by
-    apply Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PeriodCanonical.period_accurate corners quarterPositive charts
+    apply Inclusion.PeriodCanonical.period_accurate corners quarterPositive charts
       chartLater triangles sample readings.sum.value
-    · exact (readings.accurate stage (Data.Nat.Order.le_max_left _ _)).trans_le
+    · exact (readings.accurate stage (Nat.Order.le_max_left _ _)).trans_le
         (Rational.Budget.Aggregate.perTerm_le partPositive.le _)
-    · have routed := Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PeriodRoutes.routed_accurate sources member included
+    · have routed := Inclusion.PeriodRoutes.routed_accurate sources member included
         faces part partPositive
         readings.meshes readings.sum routeLater (by
           intro piece present
@@ -197,12 +199,12 @@ theorem included_canonical_small (face : RegularFace bank)
       rw [corners.value_eq, corners.values_eq]
       exact routed
     · rw [corners.bound_eq, corners.count_eq]
-      exact Hyperelliptic.Meshes.PuncturedGrid.Inclusion.PeriodCanonical.requested_corner_bound partPositive
+      exact Inclusion.PeriodCanonical.requested_corner_bound partPositive
         assigned.indexed.length request.pieces
   have bound := (Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans_lt
     (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Fraction.Rational) < 2)
       (Fraction.Order.Arithmetic.add_lt_add_direct canonical sampleSmall))
-  rw [sub_add_cancel, Hyperelliptic.Meshes.PuncturedGrid.SkeletonFaceAssignments.walkFaces_indexed] at bound
+  rw [sub_add_cancel, SkeletonFaceAssignments.walkFaces_indexed] at bound
   have equal : 2 * (quarter + quarter) = target := by
     change 2 * (target / 4 + target / 4) = target
     rw [show 2 * (target / 4 + target / 4) = target / 4 * 4 by ring1]

@@ -92,16 +92,16 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveAc
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveAcquisition.CommonPrimitivePlans (Blocks)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy (RegularBasisPolynomials)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {covers :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {covers :
+    BasisSourceCovers parent}
+  {index : Nat} {box : Geometry.Rational.Box}
 
 open Purelib.Data.Rat.Fraction.Compatibility
 open Purelib.Algebra.FiniteSum.Fin (sumFin_zero sumFin_mul_right)
@@ -110,8 +110,8 @@ open Purelib.Integration.Path.Dyadic.DyadicPrimitivePathSamples (DyadicSample)
 open Purelib.Integration.Path.Dyadic.DyadicPrimitivePaths (dyadicIncrements_sub_constant pathArea_dyadicIncrements)
 open Purelib.Integration.Path.Dyadic.DyadicBoundaryRibbon (dyadicArea)
 
-variable {cover : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {target :
-  Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
+variable {cover : Cover data} {target :
+  Coordinate} {floor : Nat}
 
 open Purelib.Integration.Path.Dyadic.DyadicPrimitivePaths (dyadicIncrements dyadicEdges_flatten_increments)
 
@@ -119,80 +119,80 @@ namespace BasisSourceLocations.PrimitiveBank
 
 /-- The coefficient-weighted value of the retained original primitive bank at the supplied parent-edge parameter. -/
 @[expose] def value (bank : BasisSourceLocations.PrimitiveBank covers index) (coefficients :
-    LinearAlgebra.Gaussian.Energy.GaussianVector
+    GaussianVector
   genus)
-    (parameter : InverseRootPolynomial.Coordinate) : Gaussian :=
-  FiniteSum.Fin.sumFin fun row => coefficients row * (bank.get row).primitive.value.eval (parent.edge.point parameter)
+    (parameter : Coordinate) : Gaussian :=
+  sumFin fun row => coefficients row * (bank.get row).primitive.value.eval (parent.edge.point parameter)
 
 end BasisSourceLocations.PrimitiveBank
 
 /-- Pointwise equal Gaussian paths have equal finite dyadic increment lists at every depth. -/
-private theorem increments_congr {firstValue lastValue : InverseRootPolynomial.Coordinate →
-  InverseRootPolynomial.Gaussian}
+private theorem increments_congr {firstValue lastValue : Coordinate →
+  Gaussian}
     (equal : ∀ parameter, firstValue parameter = lastValue parameter) (depth : Nat) (first last :
-      InverseRootPolynomial.Coordinate) :
-    DyadicPrimitivePaths.dyadicIncrements firstValue depth first last = DyadicPrimitivePaths.dyadicIncrements lastValue
+      Coordinate) :
+    dyadicIncrements firstValue depth first last = dyadicIncrements lastValue
       depth first last := by
   induction depth generalizing first last with
   | zero => change [firstValue last - firstValue first] = [lastValue last - lastValue first]; rw [equal, equal]
-  | succ depth ih => rw [DyadicPrimitivePaths.dyadicIncrements, DyadicPrimitivePaths.dyadicIncrements, ih, ih]
+  | succ depth ih => rw [dyadicIncrements, dyadicIncrements, ih, ih]
 
 namespace CommonPrimitivePlans.Blocks
 
 variable {polynomials :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+  RegularBasisPolynomials cap
       index box}
   {originals :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+    BasisSourceLocations.PrimitiveBank
     covers index} {cells :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers
+    BasisSourceLocations.SampleBank covers
     index}
-  {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus} {depth : Nat}
+  {coefficients : GaussianVector genus} {depth : Nat}
 
 /-- The actual concatenated source blocks equal the dyadic increments of the original primitive bank on each retained
 common interval. -/
-theorem source_paths : {intervals : List (CommonCover.BasisCommonInterval cover covers)} →
-    {plans : CommonPrimitiveAcquisition.CommonPrimitivePlans regular target floor intervals} →
-    (blocks : CommonPrimitivePlans.Blocks regular polynomials originals cells coefficients depth plans) →
+theorem source_paths : {intervals : List (BasisCommonInterval cover covers)} →
+    {plans : CommonPrimitivePlans regular target floor intervals} →
+    (blocks : Blocks regular polynomials originals cells coefficients depth plans) →
     (blocks.paths.map Prod.fst).flatten =
-      (intervals.map (fun interval => DyadicPrimitivePaths.dyadicIncrements
+      (intervals.map (fun interval => dyadicIncrements
         ((BasisSourceLocations.PrimitiveBank.value
         originals coefficients)) depth
         interval.edge.left.parameter interval.edge.right.parameter)).flatten
   | _, _, .nil => rfl
   | _, _, .cons (interval := interval) head _ remaining => by
       change head.source.increments ++ (remaining.paths.map Prod.fst).flatten =
-        DyadicPrimitivePaths.dyadicIncrements
+        dyadicIncrements
           ((BasisSourceLocations.PrimitiveBank.value
           originals coefficients)) depth interval.edge.left.parameter interval.edge.right.parameter ++ _
       rw [head.source.increments_eq,
         source_paths
         remaining]
       apply congrArg (fun path => path ++ _)
-      apply Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.increments_congr
+      apply increments_congr
       intro parameter
       exact PrimitiveSample.sourceValue_readback interval regular polynomials originals cells coefficients parameter
 
 /-- Common-cover completeness identifies the full original parent path. -/
-theorem source_parent_path {minimum : Nat} {common : CommonCover.BasisCommonCover cover covers minimum}
-    {plans : CommonPrimitiveAcquisition.CommonPrimitivePlans regular target floor common.intervals}
-    (blocks : CommonPrimitivePlans.Blocks regular polynomials originals cells coefficients depth plans) :
-    (blocks.paths.map Prod.fst).flatten = DyadicPrimitivePaths.dyadicIncrements
+theorem source_parent_path {minimum : Nat} {common : BasisCommonCover cover covers minimum}
+    {plans : CommonPrimitivePlans regular target floor common.intervals}
+    (blocks : Blocks regular polynomials originals cells coefficients depth plans) :
+    (blocks.paths.map Prod.fst).flatten = dyadicIncrements
       ((BasisSourceLocations.PrimitiveBank.value
       originals coefficients)) (common.depth + depth) 0 1 := by
-  rw [Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.CommonPrimitivePlans.Blocks.source_paths
+  rw [source_paths
     blocks]
-  have mapEq : common.intervals.map (fun interval => DyadicPrimitivePaths.dyadicIncrements
-    ((Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveReadback.BasisSourceLocations.PrimitiveBank.value
+  have mapEq : common.intervals.map (fun interval => dyadicIncrements
+    ((BasisSourceLocations.PrimitiveBank.value
     originals coefficients)) depth
       interval.edge.left.parameter interval.edge.right.parameter) =
-      (common.intervals.map BasisCommonInterval.edge).map (fun edge => DyadicPrimitivePaths.dyadicIncrements
+      (common.intervals.map BasisCommonInterval.edge).map (fun edge => dyadicIncrements
         ((BasisSourceLocations.PrimitiveBank.value
         originals coefficients)) depth
         edge.left.parameter edge.right.parameter) := by
-    rw [Purelib.Data.List.Map.map_map]
+    rw [Data.List.Map.map_map]
     rfl
-  rw [mapEq, common.edges_eq, DyadicPrimitivePaths.dyadicEdges_flatten_increments]
+  rw [mapEq, common.edges_eq, dyadicEdges_flatten_increments]
   rfl
 
 end CommonPrimitivePlans.Blocks
@@ -200,24 +200,24 @@ end CommonPrimitivePlans.Blocks
 namespace CommonPrimitiveRequest.Acquisition
 
 variable {minimum : Nat} {common :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonCover cover covers minimum}
-  {allowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
+  BasisCommonCover cover covers minimum}
+  {allowance : Coordinate}
   {request : CommonPrimitiveRequest
     regular common allowance floor} {polynomials :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap
+    RegularBasisPolynomials cap
         index box}
   {originals :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+    BasisSourceLocations.PrimitiveBank
     covers index} {cells :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers
+    BasisSourceLocations.SampleBank covers
     index}
-  {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus} {depth : Nat}
+  {coefficients : GaussianVector genus} {depth : Nat}
 
 /-- The cached source area is the complete original parent path area. -/
-theorem source_area (acquired : CommonPrimitiveRequest.Acquisition request polynomials originals cells coefficients
+theorem source_area (acquired : Acquisition request polynomials originals cells coefficients
   depth) :
     acquired.source.area = IncrementArea.pathArea
-      (DyadicPrimitivePaths.dyadicIncrements
+      (dyadicIncrements
         ((BasisSourceLocations.PrimitiveBank.value
         originals coefficients)) (common.depth + depth) 0 1) := by
   rw [acquired.source.area_eq,
@@ -226,12 +226,12 @@ theorem source_area (acquired : CommonPrimitiveRequest.Acquisition request polyn
 
 /-- The requested comparison now names the original parent primitive path, while retaining the actual pullback path and
 its independently cached area. -/
-theorem original_bound (acquired : CommonPrimitiveRequest.Acquisition request polynomials originals cells coefficients
+theorem original_bound (acquired : Acquisition request polynomials originals cells coefficients
   depth) :
-    Data.Gaussian.Norm.Basic.normSq (IncrementArea.pathArea (DyadicPrimitivePaths.dyadicIncrements
+    Data.Gaussian.Norm.Basic.normSq (IncrementArea.pathArea (dyadicIncrements
       ((BasisSourceLocations.PrimitiveBank.value
       originals coefficients)) (common.depth + depth) 0 1) -
-      acquired.pullback.area) ≤ allowance^2 * (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
+      acquired.pullback.area) ≤ allowance^2 * (coefficientNormSq coefficients)^2 := by
   rw [←
     source_area
     acquired, ← acquired.difference_eq]

@@ -58,6 +58,12 @@ import Purelib.RootIsolation.Curve.Event.Profile.Basic
 import Purelib.RootIsolation.Curve.Event.Profile.Complete.Basic
 import Purelib.RootIsolation.Curve.Event.Profile.Complete.Residual
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.RootIsolation.Curve.Event.Profile.Complete
+
+open Purelib.Geometry.Projective
+
 open Purelib.Geometry.Projective.Line (Proj)
 open Purelib.RootIsolation.Curve.Boundary.Analysis (CurveBoundary)
 open Purelib.RootIsolation.Curve.Boundary.Complete.Basic (BoundaryCompleteRequestEntry)
@@ -99,11 +105,11 @@ namespace Purelib.RootIsolation.Curve.Boundary.Complete
 
 section Boundary
 
-variable {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
+variable {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {reference :
   LinearAlgebra.Coordinates2.Matrix.GaussianMatrix} {current : Box}
 variable {denominatorMargin : Fraction.Rational}
 variable {marginPositive : 0 < denominatorMargin}
-variable {atom : Geometry.Projective.Hermitian.Atom}
+variable {atom : Hermitian.Atom}
 
 /-- Per-profile widths satisfying sign stability, separated-region
 ownership, the supplied original-polynomial residual target, a direct
@@ -117,15 +123,15 @@ projective-clearance requirements. -/
     (boxes : List Box)
     (pairwise : boxes.Pairwise fun left right => left.Separated right)
     (target : Fraction.Rational) : List Fraction.Rational :=
-  (Curve.Boundary.Profile.Family.boundaryProfileEventFamily
+  (Profile.Family.boundaryProfileEventFamily
     boundary).map fun parent =>
       min
-        (Curve.Boundary.Profile.Control.controlledProfileRequestWidth
+        (Profile.Control.controlledProfileRequestWidth
           parent boxes pairwise target)
         (min
-          (Data.Rat.SmallWidth.shrinkingWidth
+          (SmallWidth.shrinkingWidth
             parent.parent.chart.uniformChordalVariationCoefficient target)
-          (Curve.Event.Profile.Complete.Condition.profileConditionRequestWidth parent.event.1 target))
+          (Condition.profileConditionRequestWidth parent.event.1 target))
 
 /-- Each retained profile's control request appears in the finite boundary request family. -/
 theorem Control.boundaryControlledRequestWidth_mem
@@ -136,15 +142,15 @@ theorem Control.boundaryControlledRequestWidth_mem
     (target : Fraction.Rational) (parent :
       SourcePersistentProfileRequestFamilyBoundaryProfileEventEntryAlias boundary)
     (parentMember : parent ∈
-      Curve.Boundary.Profile.Family.boundaryProfileEventFamily
+      Profile.Family.boundaryProfileEventFamily
         boundary) :
     min
-        (Curve.Boundary.Profile.Control.controlledProfileRequestWidth
+        (Profile.Control.controlledProfileRequestWidth
           parent boxes pairwise target)
         (min
-          (Data.Rat.SmallWidth.shrinkingWidth
+          (SmallWidth.shrinkingWidth
             parent.parent.chart.uniformChordalVariationCoefficient target)
-          (Curve.Event.Profile.Complete.Condition.profileConditionRequestWidth parent.event.1 target)) ∈
+          (Condition.profileConditionRequestWidth parent.event.1 target)) ∈
       Control.boundaryControlledRequestWidths boundary boxes pairwise target :=
   Data.List.Map.mem_map.mpr ⟨parent, parentMember, rfl⟩
 
@@ -161,14 +167,14 @@ theorem Control.boundaryControlledRequestWidths_positive
   dsimp only [Control.boundaryControlledRequestWidths] at member
   have member := Data.List.Map.mem_map.mp member
   rcases member with ⟨parent, _parentMember, rfl⟩
-  exact Fraction.Order.Basic.lt_min
-    (Curve.Boundary.Profile.Control.controlledProfileRequestWidth_pos
+  exact Basic.lt_min
+    (Profile.Control.controlledProfileRequestWidth_pos
       parent boxes pairwise targetPositive)
-    (Fraction.Order.Basic.lt_min
-      (Data.Rat.SmallWidth.shrinkingWidth_pos
+    (Basic.lt_min
+      (SmallWidth.shrinkingWidth_pos
         parent.parent.chart.uniformChordalVariationCoefficient_nonneg
         targetPositive)
-      (Curve.Event.Profile.Complete.Condition.profileConditionRequestWidth_pos parent.event.1 targetPositive))
+      (Condition.profileConditionRequestWidth_pos parent.event.1 targetPositive))
 
 /-- One positive rational width satisfying every profile parent
 simultaneously.  All sibling children are subdivided at this same width. -/
@@ -202,14 +208,14 @@ theorem Control.boundaryControlledRequestWidth_le_parent
     (target : Fraction.Rational) (parent :
       SourcePersistentProfileRequestFamilyBoundaryProfileEventEntryAlias boundary)
     (parentMember : parent ∈
-      Curve.Boundary.Profile.Family.boundaryProfileEventFamily
+      Profile.Family.boundaryProfileEventFamily
         boundary) :
     Control.boundaryControlledRequestWidth boundary boxes pairwise target ≤
-      Curve.Boundary.Profile.Control.controlledProfileRequestWidth
+      Profile.Control.controlledProfileRequestWidth
         parent boxes pairwise target :=
   (Data.Rat.List.Minimum.RegionOwnership.positiveMinimum_le_of_mem
     (Control.boundaryControlledRequestWidth_mem boundary boxes pairwise target parent
-      parentMember)).trans (Fraction.Order.Basic.min_le_left _ _)
+      parentMember)).trans (Basic.min_le_left _ _)
 
 /-- The global width is also below the direct homogeneous-diameter width of
 every displayed profile parent. -/
@@ -221,14 +227,14 @@ theorem Control.boundaryControlledRequestWidth_le_diameter
     (target : Fraction.Rational) (parent :
       SourcePersistentProfileRequestFamilyBoundaryProfileEventEntryAlias boundary)
     (parentMember : parent ∈
-      Curve.Boundary.Profile.Family.boundaryProfileEventFamily
+      Profile.Family.boundaryProfileEventFamily
         boundary) :
     Control.boundaryControlledRequestWidth boundary boxes pairwise target ≤
-      Data.Rat.SmallWidth.shrinkingWidth
+      SmallWidth.shrinkingWidth
         parent.parent.chart.uniformChordalVariationCoefficient target :=
   (Data.Rat.List.Minimum.RegionOwnership.positiveMinimum_le_of_mem
     (Control.boundaryControlledRequestWidth_mem boundary boxes pairwise target parent
-      parentMember)).trans ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _))
+      parentMember)).trans ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _))
 
 /-- The global width is below every equality-cofactor condition width in
 every displayed profile parent. -/
@@ -240,19 +246,19 @@ theorem Control.boundaryControlledRequestWidth_le_condition
     (target : Fraction.Rational) (parent :
       SourcePersistentProfileRequestFamilyBoundaryProfileEventEntryAlias boundary)
     (parentMember : parent ∈
-      Curve.Boundary.Profile.Family.boundaryProfileEventFamily
+      Profile.Family.boundaryProfileEventFamily
         boundary)
     (relation :
       ProfileRelation
         parent.event.1)
     (relationMember : relation ∈ parent.event.1.profile.relations) :
     Control.boundaryControlledRequestWidth boundary boxes pairwise target ≤
-      Curve.Event.Profile.Complete.Condition.relationConditionRequestWidth parent.event.1 relation target :=
+      Condition.relationConditionRequestWidth parent.event.1 relation target :=
   (Data.Rat.List.Minimum.RegionOwnership.positiveMinimum_le_of_mem
     (Control.boundaryControlledRequestWidth_mem boundary boxes pairwise target parent
       parentMember)).trans
-    ((Fraction.Order.Basic.min_le_right _ _).trans ((Fraction.Order.Basic.min_le_right _ _).trans
-      (Curve.Event.Profile.Complete.Condition.profileConditionRequestWidth_le_relation parent.event.1 target relation
+    ((Basic.min_le_right _ _).trans ((Basic.min_le_right _ _).trans
+      (Condition.profileConditionRequestWidth_le_relation parent.event.1 target relation
         relationMember)))
 
 /-- The complete sibling-preserving boundary family at its one shared
@@ -265,7 +271,7 @@ sign-, separation-, and residual-controlled width. -/
     (target : Fraction.Rational) :
     List (BoundaryCompleteRequestEntry boundary
       (Control.boundaryControlledRequestWidth boundary boxes pairwise target)) :=
-  Curve.Boundary.Complete.Basic.boundaryCompleteRequestFamily boundary
+  Basic.boundaryCompleteRequestFamily boundary
     (Control.boundaryControlledRequestWidth boundary boxes pairwise target)
 namespace Basic.BoundaryCompleteRequestEntry
 
@@ -278,13 +284,13 @@ theorem controlledWidth_le_sign
     {pairwise : boxes.Pairwise fun left right => left.Separated right}
     {target : Fraction.Rational}
     (entry : BoundaryCompleteRequestEntry boundary
-      (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target)) :
-    Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target ≤
-      Curve.Event.Profile.Sign.profileSignWidth
+      (Control.boundaryControlledRequestWidth boundary boxes pairwise target)) :
+    Control.boundaryControlledRequestWidth boundary boxes pairwise target ≤
+      Event.Profile.Sign.profileSignWidth
         entry.parent.event.1 :=
-  (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth_le_parent boundary boxes pairwise target
+  (Control.boundaryControlledRequestWidth_le_parent boundary boxes pairwise target
     entry.parent entry.parentMember).trans
-      (Curve.Boundary.Profile.Control.controlledProfileRequestWidth_le_sign
+      (Profile.Control.controlledProfileRequestWidth_le_sign
         entry.parent boxes pairwise target)
 
 /-- The shared controlled boundary width satisfies this exact parent profile's separation request. -/
@@ -294,13 +300,13 @@ theorem
     {pairwise : boxes.Pairwise fun left right => left.Separated right}
     {target : Fraction.Rational}
     (entry : BoundaryCompleteRequestEntry boundary
-      (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target)) :
-    Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target ≤
-      Curve.Boundary.Profile.Separation.profileFamilyRequestWidth
+      (Control.boundaryControlledRequestWidth boundary boxes pairwise target)) :
+    Control.boundaryControlledRequestWidth boundary boxes pairwise target ≤
+      Profile.Separation.profileFamilyRequestWidth
         entry.parent boxes pairwise :=
-  (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth_le_parent boundary boxes pairwise target
+  (Control.boundaryControlledRequestWidth_le_parent boundary boxes pairwise target
     entry.parent entry.parentMember).trans
-      (Curve.Boundary.Profile.Control.controlledProfileRequestWidth_le_family
+      (Profile.Control.controlledProfileRequestWidth_le_family
         entry.parent boxes pairwise target)
 
 /-- Every equality-owned condition is uniformly below the shared rational
@@ -313,10 +319,10 @@ theorem
     {pairwise : boxes.Pairwise fun left right => left.Separated right}
     {target : Fraction.Rational} (targetPositive : 0 < target)
     (entry : BoundaryCompleteRequestEntry boundary
-      (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target))
+      (Control.boundaryControlledRequestWidth boundary boxes pairwise target))
     (condition cofactor :
-      Polynomial.Dense.BoundaryFactorization.CoefficientPolynomial)
-    (factorization : Polynomial.Dense.Rational.Factorization
+      Dense.BoundaryFactorization.CoefficientPolynomial)
+    (factorization : Dense.Rational.Factorization
       condition entry.parent.event.1.profile.factor.polynomial cofactor)
     (relationMember :
       (⟨condition,
@@ -329,10 +335,10 @@ theorem
     (inside : entry.child.cell.interval.Contains parameter) :
     condition.eval parameter ^ 2 < target := by
   have globalPositive :
-      0 < Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target :=
-    Curve.Boundary.Complete.Control.boundaryControlledRequestWidth_pos boundary boxes pairwise targetPositive
+      0 < Control.boundaryControlledRequestWidth boundary boxes pairwise target :=
+    Control.boundaryControlledRequestWidth_pos boundary boxes pairwise targetPositive
   have globalLeRelation :=
-    Curve.Boundary.Complete.Control.boundaryControlledRequestWidth_le_condition boundary boxes pairwise target
+    Control.boundaryControlledRequestWidth_le_condition boundary boxes pairwise target
       entry.parent entry.parentMember
       (⟨condition,
         Dense.Rational.Factorization.ConditionRelation.equality
@@ -341,10 +347,10 @@ theorem
           entry.parent.event.1)
       relationMember
   have globalLeEquality :
-      Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target ≤
-        Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf.equalityConditionWidth entry.parent.event.1
+      Control.boundaryControlledRequestWidth boundary boxes pairwise target ≤
+        Basic.CompleteRequestLeaf.equalityConditionWidth entry.parent.event.1
           cofactor target := by
-    simpa only [-eq_self, -iff_self, Curve.Event.Profile.Complete.Condition.relationConditionRequestWidth] using
+    simpa only [-eq_self, -iff_self, Condition.relationConditionRequestWidth] using
       globalLeRelation
   exact entry.child.equality_condition_eval_sq_lt globalPositive condition
     cofactor factorization globalLeEquality targetPositive parameter inside
@@ -357,33 +363,33 @@ theorem
     {pairwise : boxes.Pairwise fun left right => left.Separated right}
     {target : Fraction.Rational} (targetPositive : 0 < target)
     (entry : BoundaryCompleteRequestEntry boundary
-      (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target)) :
+      (Control.boundaryControlledRequestWidth boundary boxes pairwise target)) :
     entry.parent.parent.chart.uniformChordalVariationCoefficient *
-        Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target ^ 2 <
+        Control.boundaryControlledRequestWidth boundary boxes pairwise target ^ 2 <
       target := by
   let globalWidth :=
-    Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target
+    Control.boundaryControlledRequestWidth boundary boxes pairwise target
   let diameterWidth :=
-    Data.Rat.SmallWidth.shrinkingWidth
+    SmallWidth.shrinkingWidth
       entry.parent.parent.chart.uniformChordalVariationCoefficient target
   have globalPositive : 0 < globalWidth := by
     simpa only [-eq_self, -iff_self, globalWidth] using
-      Curve.Boundary.Complete.Control.boundaryControlledRequestWidth_pos boundary boxes pairwise
+      Control.boundaryControlledRequestWidth_pos boundary boxes pairwise
         targetPositive
   have globalLe : globalWidth ≤ diameterWidth := by
     simpa only [-eq_self, -iff_self, globalWidth, diameterWidth] using
-      Curve.Boundary.Complete.Control.boundaryControlledRequestWidth_le_diameter boundary boxes pairwise target
+      Control.boundaryControlledRequestWidth_le_diameter boundary boxes pairwise target
         entry.parent entry.parentMember
   have squareLe : globalWidth ^ 2 ≤ diameterWidth ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct globalPositive.le globalLe 2
+    Arithmetic.pow_le_pow_direct globalPositive.le globalLe 2
   have coefficientNonnegative :=
     entry.parent.parent.chart.uniformChordalVariationCoefficient_nonneg
   exact
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct squareLe
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct squareLe
       coefficientNonnegative).trans_lt
         (by
           simpa only [-eq_self, -iff_self, diameterWidth] using
-            Data.Rat.SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
+            SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
               coefficientNonnegative targetPositive)
 
 /-- Exact per-relation box classification for every sibling retained at the
@@ -394,10 +400,10 @@ throwing away which conditions are equality-owned or uniformly apart. -/
     {pairwise : boxes.Pairwise fun left right => left.Separated right}
     {target : Fraction.Rational} (targetPositive : 0 < target)
     (entry : BoundaryCompleteRequestEntry boundary
-      (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target)) :
-    Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf.BoxClassification entry.child :=
+      (Control.boundaryControlledRequestWidth boundary boxes pairwise target)) :
+    Basic.CompleteRequestLeaf.BoxClassification entry.child :=
   entry.child.classifyBox
-    (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth_pos boundary boxes pairwise targetPositive)
+    (Control.boundaryControlledRequestWidth_pos boundary boxes pairwise targetPositive)
     entry.controlledWidth_le_sign
 
 /-- Exact finite pole/apart classification for the retained profile's
@@ -408,12 +414,12 @@ homogeneous denominator relation at the global controlled width. -/
     {pairwise : boxes.Pairwise fun left right => left.Separated right}
     {target : Fraction.Rational} (targetPositive : 0 < target)
     (entry : BoundaryCompleteRequestEntry boundary
-      (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target)) :
-    Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf.DenominatorClassification entry.child
-      (Curve.Event.Profile.Complete.Denominator.profileDenominatorRelation entry.parent.event.1) :=
+      (Control.boundaryControlledRequestWidth boundary boxes pairwise target)) :
+    Basic.CompleteRequestLeaf.DenominatorClassification entry.child
+      (Denominator.profileDenominatorRelation entry.parent.event.1) :=
   entry.child.classifyDenominator
-    (Curve.Event.Profile.Complete.Denominator.profileDenominatorRelation entry.parent.event.1)
-    (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth_pos boundary boxes pairwise targetPositive)
+    (Denominator.profileDenominatorRelation entry.parent.event.1)
+    (Control.boundaryControlledRequestWidth_pos boundary boxes pairwise targetPositive)
     entry.controlledWidth_le_sign
 
 /-- Exact affine classification derived from the retained per-relation box
@@ -423,9 +429,9 @@ certificate. -/
     {pairwise : boxes.Pairwise fun left right => left.Separated right}
     {target : Fraction.Rational} (targetPositive : 0 < target)
     (entry : BoundaryCompleteRequestEntry boundary
-      (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target)) :
-    Curve.Event.Profile.Complete.Basic.CompleteRequestLeaf.AffineClassification entry.child :=
-  Curve.Event.Profile.Complete.Classification.CompleteRequestLeaf.BoxClassification.toAffine (entry.boxClassification
+      (Control.boundaryControlledRequestWidth boundary boxes pairwise target)) :
+    Basic.CompleteRequestLeaf.AffineClassification entry.child :=
+  Classification.CompleteRequestLeaf.BoxClassification.toAffine (entry.boxClassification
     targetPositive)
 
 /-- Homogeneous chordal diameter bound for one complete requested child. -/
@@ -435,7 +441,7 @@ theorem chordalSq_le
     (positive : 0 < epsilon) {left right : Fraction.Rational}
     (leftInside : entry.child.cell.interval.Contains left)
     (rightInside : entry.child.cell.interval.Contains right) :
-    Geometry.Projective.Chordal.Basic.chordalSq
+    Chordal.Basic.chordalSq
         (entry.parent.parent.chart.projective left)
         (entry.parent.parent.chart.projective right) ≤
       entry.parent.parent.chart.uniformChordalVariationCoefficient *
@@ -451,7 +457,7 @@ theorem not_spanning_with_gap
     (gapLower : ∀ {leftPoint rightPoint :
         Gaussian.Basic.Canonical},
       leftBox.Contains leftPoint → rightBox.Contains rightPoint →
-        gap ≤ Geometry.Projective.Chordal.Basic.chordalSq
+        gap ≤ Chordal.Basic.chordalSq
           (Proj.affine leftPoint) (Proj.affine rightPoint))
     (positive : 0 < epsilon)
     (diameterSmall :
@@ -479,14 +485,14 @@ theorem not_spanning_with_gap
   have eventUpper := entry.chordalSq_le positive leftParameterInside
     rightParameterInside
   have leftTransport :
-      Geometry.Projective.Chordal.Basic.chordalSq
+      Chordal.Basic.chordalSq
           (entry.parent.parent.chart.projective leftParameter)
           (entry.parent.parent.chart.projective rightParameter) =
-        Geometry.Projective.Chordal.Basic.chordalSq
+        Chordal.Basic.chordalSq
           (Proj.affine leftPoint)
           (entry.parent.parent.chart.projective rightParameter) := by
     simpa only [-eq_self, -iff_self, curve, leftPoint,
-      Geometry.Projective.Hermitian.Chart.BoundedChart.projective] using
+      Hermitian.Chart.BoundedChart.projective] using
       Curve.Projective.chordalSq_projective_eq_affine
         curve leftParameter leftDenominatorNonzero
           (entry.parent.parent.chart.projective rightParameter)
@@ -494,28 +500,28 @@ theorem not_spanning_with_gap
       (entry.parent.parent.chart.projective rightParameter).Equivalent
         (Proj.affine rightPoint) := by
     simpa only [-eq_self, -iff_self, curve, rightPoint,
-      Geometry.Projective.Hermitian.Chart.BoundedChart.projective] using
+      Hermitian.Chart.BoundedChart.projective] using
       Curve.Projective.projective_equivalent_affine
         curve rightParameter rightDenominatorNonzero
   have rightTransport :
-      Geometry.Projective.Chordal.Basic.chordalSq
+      Chordal.Basic.chordalSq
           (Proj.affine leftPoint)
           (entry.parent.parent.chart.projective rightParameter) =
-        Geometry.Projective.Chordal.Basic.chordalSq
+        Chordal.Basic.chordalSq
           (Proj.affine leftPoint) (Proj.affine rightPoint) :=
-    Geometry.Projective.Chordal.Equivalence.chordalSq_eq_of_equivalent_right
+    Chordal.Equivalence.chordalSq_eq_of_equivalent_right
       (entry.parent.parent.chart.projective_valid rightParameter)
-      (Geometry.Projective.Line.Gaussian.Proj.affine_hasNonzeroCoordinate rightPoint)
+      (Line.Gaussian.Proj.affine_hasNonzeroCoordinate rightPoint)
       rightEquivalent (Proj.affine leftPoint)
   have affineUpper :
-      Geometry.Projective.Chordal.Basic.chordalSq
+      Chordal.Basic.chordalSq
           (Proj.affine leftPoint) (Proj.affine rightPoint) ≤
         entry.parent.parent.chart.uniformChordalVariationCoefficient *
           epsilon ^ 2 := by
     rw [← rightTransport, ← leftTransport]
     exact eventUpper
   have affineLower : gap ≤
-      Geometry.Projective.Chordal.Basic.chordalSq
+      Chordal.Basic.chordalSq
         (Proj.affine leftPoint) (Proj.affine rightPoint) :=
     gapLower leftPointInside rightPointInside
   exact (not_lt_of_ge affineLower) (affineUpper.trans_lt diameterSmall)
@@ -527,7 +533,7 @@ theorem controlled_not_spanning
     {pairwise : boxes.Pairwise fun left right => left.Separated right}
     {target : Fraction.Rational} (targetPositive : 0 < target)
     (entry : BoundaryCompleteRequestEntry boundary
-      (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target))
+      (Control.boundaryControlledRequestWidth boundary boxes pairwise target))
     (left right : Fin boxes.length) (different : left ≠ right) :
     ∀ {leftParameter rightParameter : Fraction.Rational},
       entry.child.cell.interval.Contains leftParameter →
@@ -547,22 +553,22 @@ theorem controlled_not_spanning
     Data.List.Pairwise.pairwise_get_separated
       pairwise left right different
   let pairWidth :=
-    Curve.Boundary.Profile.Separation.separatedProfileRequestWidth
+    Profile.Separation.separatedProfileRequestWidth
       entry.parent separated
   let globalWidth :=
-    Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target
+    Control.boundaryControlledRequestWidth boundary boxes pairwise target
   have globalPositive : 0 < globalWidth := by
     simpa only [-eq_self, -iff_self, globalWidth] using
-      Curve.Boundary.Complete.Control.boundaryControlledRequestWidth_pos boundary boxes pairwise
+      Control.boundaryControlledRequestWidth_pos boundary boxes pairwise
         targetPositive
   have globalLePair : globalWidth ≤ pairWidth := by
     exact entry.controlledWidth_le_family.trans
       (by
         simpa only [-eq_self, -iff_self, pairWidth, separated] using
-          Curve.Boundary.Profile.Separation.profileFamilyRequestWidth_le_pair
+          Profile.Separation.profileFamilyRequestWidth_le_pair
             entry.parent boxes pairwise left right different)
   have widthSquare : globalWidth ^ 2 ≤ pairWidth ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct globalPositive.le
+    Arithmetic.pow_le_pow_direct globalPositive.le
       globalLePair 2
   have coefficientNonnegative :=
     entry.parent.parent.chart.uniformChordalVariationCoefficient_nonneg
@@ -571,23 +577,23 @@ theorem controlled_not_spanning
           globalWidth ^ 2 ≤
         entry.parent.parent.chart.uniformChordalVariationCoefficient *
           pairWidth ^ 2 :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct widthSquare
+    Arithmetic.mul_le_mul_of_nonneg_left_direct widthSquare
       coefficientNonnegative
   have pairSmall :
       entry.parent.parent.chart.uniformChordalVariationCoefficient *
           pairWidth ^ 2 <
-        Geometry.Projective.Chordal.Box.Separation.separatedChordalGap
+        Chordal.Box.Separation.separatedChordalGap
           separated := by
     simpa only [-eq_self, -iff_self, pairWidth,
-      Curve.Boundary.Profile.Separation.separatedProfileRequestWidth] using
-      Data.Rat.SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
+      Profile.Separation.separatedProfileRequestWidth] using
+      SmallWidth.coefficient_mul_shrinkingWidth_sq_lt
         coefficientNonnegative
-        (Geometry.Projective.Chordal.Box.Separation.separatedChordalGap_pos
+        (Chordal.Box.Separation.separatedChordalGap_pos
           separated)
   exact entry.not_spanning_with_gap
-    (Geometry.Projective.Chordal.Box.Separation.separatedChordalGap
+    (Chordal.Box.Separation.separatedChordalGap
       separated)
-    (Geometry.Projective.Chordal.Box.Separation.separatedChordalGap_le_affine
+    (Chordal.Box.Separation.separatedChordalGap_le_affine
       separated)
     globalPositive (diameterLe.trans_lt pairSmall) leftInside rightInside
       leftDenominator rightDenominator leftPointInside rightPointInside
@@ -600,42 +606,42 @@ theorem
     {pairwise : boxes.Pairwise fun left right => left.Separated right}
     {target : Fraction.Rational} (targetPositive : 0 < target)
     (entry : BoundaryCompleteRequestEntry boundary
-      (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target))
+      (Control.boundaryControlledRequestWidth boundary boxes pairwise target))
     (index : Fin boxes.length) :
-    Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient
+    Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient
         entry.parent (boxes.get index) *
-      Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target ^ 2 <
+      Control.boundaryControlledRequestWidth boundary boxes pairwise target ^ 2 <
         target := by
   let globalWidth :=
-    Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target
+    Control.boundaryControlledRequestWidth boundary boxes pairwise target
   let parentWidth :=
-    Curve.Boundary.Profile.Control.controlledProfileRequestWidth
+    Profile.Control.controlledProfileRequestWidth
       entry.parent boxes pairwise target
   let coefficient :=
-    Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient
+    Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient
       entry.parent (boxes.get index)
   have globalPositive : 0 < globalWidth := by
     simpa only [-eq_self, -iff_self, globalWidth] using
-      Curve.Boundary.Complete.Control.boundaryControlledRequestWidth_pos boundary boxes pairwise
+      Control.boundaryControlledRequestWidth_pos boundary boxes pairwise
         targetPositive
   have globalLeParent : globalWidth ≤ parentWidth := by
     simpa only [-eq_self, -iff_self, globalWidth, parentWidth] using
-      Curve.Boundary.Complete.Control.boundaryControlledRequestWidth_le_parent boundary boxes pairwise target
+      Control.boundaryControlledRequestWidth_le_parent boundary boxes pairwise target
         entry.parent entry.parentMember
   have squareOrder : globalWidth ^ 2 ≤ parentWidth ^ 2 :=
-    Fraction.Order.Arithmetic.pow_le_pow_direct globalPositive.le
+    Arithmetic.pow_le_pow_direct globalPositive.le
       globalLeParent 2
   have coefficientNonnegative : 0 ≤ coefficient := by
     simpa only [-eq_self, -iff_self, coefficient] using
-      Curve.Boundary.Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient_nonneg
+      Profile.Residual.BoundaryProfileEventEntry.affineResidualCoefficient_nonneg
         entry.parent (boxes.get index)
   have scaled : coefficient * globalWidth ^ 2 ≤
       coefficient * parentWidth ^ 2 :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct squareOrder
+    Arithmetic.mul_le_mul_of_nonneg_left_direct squareOrder
       coefficientNonnegative
   exact scaled.trans_lt (by
     simpa only [-eq_self, -iff_self, coefficient, parentWidth] using
-      Curve.Boundary.Profile.Control.controlledProfileResidual_lt
+      Profile.Control.controlledProfileResidual_lt
         entry.parent boxes pairwise targetPositive index)
 
 /-- Every owned rational point of a complete retained child has original-
@@ -645,7 +651,7 @@ theorem residual_lt_of_inside
     {pairwise : boxes.Pairwise fun left right => left.Separated right}
     {target : Fraction.Rational} (targetPositive : 0 < target)
     (entry : BoundaryCompleteRequestEntry boundary
-      (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth boundary boxes pairwise target))
+      (Control.boundaryControlledRequestWidth boundary boxes pairwise target))
     (index : Fin boxes.length) (parameter : Fraction.Rational)
     (parameterInside : entry.child.cell.interval.Contains parameter)
     (denominatorNonzero :
@@ -653,12 +659,12 @@ theorem residual_lt_of_inside
         parameter ≠ 0)
     (pointInside : (boxes.get index).Contains
       (entry.parent.parent.chart.parameterization.curve.point parameter)) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         (p.eval
           (entry.parent.parent.chart.parameterization.curve.point parameter)) <
       target := by
   have upper := entry.child.normSq_eval_point_le_of_inside
-    (Curve.Boundary.Complete.Control.boundaryControlledRequestWidth_pos boundary boxes pairwise targetPositive)
+    (Control.boundaryControlledRequestWidth_pos boundary boxes pairwise targetPositive)
     parameter parameterInside denominatorNonzero pointInside
   exact upper.trans_lt
     (entry.controlled_residual_budget_lt targetPositive index)

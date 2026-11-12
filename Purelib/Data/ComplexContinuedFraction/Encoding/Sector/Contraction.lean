@@ -11,6 +11,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Choice-free finite eight-sector table
 
@@ -44,43 +46,43 @@ private theorem axial_contraction (x y : Fraction.Rational)
     · have threeHalvesLe : (3 / 2 : Fraction.Rational) ≤ x := le_of_not_gt upper
       have squareLower : (3 / 2 : Fraction.Rational) ^ 2 ≤ x ^ 2 := by
         rw [pow_two, pow_two]
-        exact Fraction.Order.Arithmetic.mul_le_mul_direct threeHalvesLe
+        exact Arithmetic.mul_le_mul_direct threeHalvesLe
           threeHalvesLe (by decide) xNonnegative
       have impossible : (9 / 4 : Fraction.Rational) ≤ 2 := by
         calc
           (9 / 4 : Fraction.Rational) = (3 / 2 : Fraction.Rational) ^ 2 := by decide
           _ ≤ x ^ 2 := squareLower
           _ ≤ x ^ 2 + y ^ 2 := by
-            have bound := Fraction.Order.Arithmetic.add_le_add_direct
-              (le_refl (x ^ 2)) (Fraction.Order.Arithmetic.sq_nonneg_direct y)
+            have bound := Arithmetic.add_le_add_direct
+              (le_refl (x ^ 2)) (Arithmetic.sq_nonneg_direct y)
             calc
               x ^ 2 = x ^ 2 + 0 := by ring1
               _ ≤ x ^ 2 + y ^ 2 := bound
           _ ≤ 2 := normUpper
       exact ((by decide : ¬ ((9 / 4 : Fraction.Rational) ≤ 2)) impossible).elim
   have leftNonnegative : 0 ≤ x - 1 / 2 :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct xLower
+    Arithmetic.sub_nonneg_direct xLower
   have rightNonnegative : 0 ≤ 3 / 2 - x :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct xUpper.le
+    Arithmetic.sub_nonneg_direct xUpper.le
   have yLeftPositive : 0 < y + 1 / 2 := by
-    have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+    have shifted := Arithmetic.add_lt_add_right_direct
       yLower (1 / 2)
     calc
       0 = -1 / 2 + 1 / 2 := by decide
       _ < y + 1 / 2 := shifted
   have yRightPositive : 0 < 1 / 2 - y :=
-    Fraction.Order.Arithmetic.sub_pos_direct yUpper
+    Arithmetic.sub_pos_direct yUpper
   have firstNonnegative :
       0 ≤ (x - 1 / 2) * (3 / 2 - x) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct leftNonnegative rightNonnegative
+    Arithmetic.mul_nonneg_direct leftNonnegative rightNonnegative
   have secondPositive : 0 < (y + 1 / 2) * (1 / 2 - y) :=
-    Fraction.Order.Arithmetic.mul_pos_direct yLeftPositive yRightPositive
+    Arithmetic.mul_pos_direct yLeftPositive yRightPositive
   have differencePositive :
       0 < 1 / 2 - ((x - 1) ^ 2 + y ^ 2) := by
     calc
       0 < (x - 1 / 2) * (3 / 2 - x) +
           (y + 1 / 2) * (1 / 2 - y) :=
-        Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
+        Arithmetic.add_pos_of_nonneg_of_pos_direct
           firstNonnegative secondPositive
       _ = 1 / 2 - ((x - 1) ^ 2 + y ^ 2) +
           (2 * (1 / 2 : Fraction.Rational) - 1) * (x - 1) := by
@@ -89,7 +91,7 @@ private theorem axial_contraction (x y : Fraction.Rational)
       _ = 1 / 2 - ((x - 1) ^ 2 + y ^ 2) := by
         rw [show (2 : Fraction.Rational) * (1 / 2) - 1 = 0 by decide]
         ring1
-  exact Fraction.Order.Arithmetic.lt_of_sub_pos_direct differencePositive
+  exact Arithmetic.lt_of_sub_pos_direct differencePositive
 
 /-- A diagonal-sector point with squared norm between one and two has squared distance below one half from its diagonal
 representative.
@@ -106,9 +108,9 @@ private theorem diagonal_contraction (x y : Fraction.Rational)
   let p := a + b
   let q := a ^ 2 + b ^ 2
   have aNonnegative : 0 ≤ a :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct xLower
+    Arithmetic.sub_nonneg_direct xLower
   have bNonnegative : 0 ≤ b :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct yLower
+    Arithmetic.sub_nonneg_direct yLower
   have pNonnegative : 0 ≤ p := add_nonneg aNonnegative bNonnegative
   have normIdentity : x ^ 2 + y ^ 2 = p + q + 1 / 2 := by
     have linearZero : (1 : Fraction.Rational) - 2 * (1 / 2) = 0 := by decide
@@ -124,14 +126,14 @@ private theorem diagonal_contraction (x y : Fraction.Rational)
         dsimp only [a, b, p, q]
         ring1
   have lowerPQ : (1 / 2 : Fraction.Rational) ≤ p + q := by
-    apply Fraction.Order.Arithmetic.le_of_add_le_add_right_direct
+    apply Arithmetic.le_of_add_le_add_right_direct
       (c := (1 / 2 : Fraction.Rational))
     calc
       (1 / 2 : Fraction.Rational) + 1 / 2 = 1 := by decide
       _ ≤ x ^ 2 + y ^ 2 := normLower
       _ = (p + q) + 1 / 2 := normIdentity
   have upperPQ : p + q ≤ (3 / 2 : Fraction.Rational) := by
-    apply Fraction.Order.Arithmetic.le_of_add_le_add_right_direct
+    apply Arithmetic.le_of_add_le_add_right_direct
       (c := (1 / 2 : Fraction.Rational))
     calc
       (p + q) + 1 / 2 = x ^ 2 + y ^ 2 := normIdentity.symm
@@ -139,8 +141,8 @@ private theorem diagonal_contraction (x y : Fraction.Rational)
       _ = (3 / 2 : Fraction.Rational) + 1 / 2 := by decide
   have qLeSquareP : q ≤ p ^ 2 := by
     have twiceProductNonnegative : 0 ≤ 2 * (a * b) :=
-      Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-        (Fraction.Order.Arithmetic.mul_nonneg_direct aNonnegative bNonnegative)
+      Arithmetic.mul_nonneg_direct (by decide)
+        (Arithmetic.mul_nonneg_direct aNonnegative bNonnegative)
     calc
       q = q + 0 := by ring1
       _ ≤ q + 2 * (a * b) := add_le_add le_rfl twiceProductNonnegative
@@ -178,11 +180,11 @@ private theorem diagonal_contraction (x y : Fraction.Rational)
       have oneLeP : (1 : Fraction.Rational) ≤ p := by
         by_cases pLessOne : p < 1
         · have oneMinusPositive : 0 < 1 - p :=
-            Fraction.Order.Arithmetic.sub_pos_direct pLessOne
+            Arithmetic.sub_pos_direct pLessOne
           have productPositive : 0 < p * (1 - p) :=
-            Fraction.Order.Arithmetic.mul_pos_direct pPositive oneMinusPositive
+            Arithmetic.mul_pos_direct pPositive oneMinusPositive
           have squareLt : p ^ 2 < p := by
-            apply Fraction.Order.Arithmetic.lt_of_sub_pos_direct
+            apply Arithmetic.lt_of_sub_pos_direct
             calc
               0 < p * (1 - p) := productPositive
               _ = p - p ^ 2 := by ring1
@@ -190,7 +192,7 @@ private theorem diagonal_contraction (x y : Fraction.Rational)
           exact (not_lt_of_ge pLeQ qLessP).elim
         · exact le_of_not_gt pLessOne
       have twoLeTwoP : (2 : Fraction.Rational) ≤ 2 * p :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (a := (1 : Fraction.Rational)) (b := p) (c := 2)
           oneLeP (by decide)
       have twoPLePQ : 2 * p ≤ p + q := by
@@ -200,9 +202,9 @@ private theorem diagonal_contraction (x y : Fraction.Rational)
       have impossible : (2 : Fraction.Rational) ≤ 3 / 2 :=
         twoLeTwoP.trans (twoPLePQ.trans upperPQ)
       exact ((by decide : ¬ ((2 : Fraction.Rational) ≤ 3 / 2)) impossible).elim
-  apply Fraction.Order.Arithmetic.lt_of_sub_pos_direct
+  apply Arithmetic.lt_of_sub_pos_direct
   calc
-    0 < p - q := Fraction.Order.Arithmetic.sub_pos_direct qLtP
+    0 < p - q := Arithmetic.sub_pos_direct qLtP
     _ = 1 / 2 - ((x - 1) ^ 2 + (y - 1) ^ 2) +
         (2 * (1 / 2 : Fraction.Rational) - 1) * (x + y) +
         (2 - 3 * (1 / 2 : Fraction.Rational) - 2 * (1 / 2 : Fraction.Rational) ^ 2) := by
@@ -224,12 +226,12 @@ sector representative.
 The sector membership hypothesis retains the exact strict axial and weak diagonal boundaries. Rotating the original
 scalar estimates handles all eight representatives without changing the selected sector. -/
 theorem contraction {z : Basic.Canonical} (band : Band z) (sector : Sector)
-    (holds : Holds sector z) : Gaussian.Norm.Basic.normSq (z - rep sector) < 1 /
+    (holds : Holds sector z) : Norm.Basic.normSq (z - rep sector) < 1 /
       2 := by
   rcases band with ⟨normLower, normUpper⟩
-  have normLower : 1 ≤ Gaussian.Norm.Basic.normSq z := by
+  have normLower : 1 ≤ Norm.Basic.normSq z := by
     simpa only [Norm.Basic.normSq_eq_canonical] using normLower
-  have normUpper : Gaussian.Norm.Basic.normSq z ≤ 2 := by
+  have normUpper : Norm.Basic.normSq z ≤ 2 := by
     simpa only [Norm.Basic.normSq_eq_canonical] using normUpper
   cases sector with
   | east =>
@@ -248,13 +250,13 @@ theorem contraction {z : Basic.Canonical} (band : Band z) (sector : Sector)
       rcases holds with ⟨xLower, xUpper, yLower⟩
       have rotatedUpper : z.im ^ 2 + (-z.re) ^ 2 ≤ 2 := by
         calc
-          z.im ^ 2 + (-z.re) ^ 2 = Gaussian.Norm.Basic.normSq z := by
-            dsimp only [Gaussian.Norm.Basic.normSq]
+          z.im ^ 2 + (-z.re) ^ 2 = Norm.Basic.normSq z := by
+            dsimp only [Norm.Basic.normSq]
             ring1
           _ ≤ 2 := normUpper
       have rotated := axial_contraction z.im (-z.re) yLower
-        (Fraction.Order.Arithmetic.neg_lt_neg_direct xUpper)
-        (Fraction.Order.Arithmetic.neg_lt_neg_direct xLower)
+        (Arithmetic.neg_lt_neg_direct xUpper)
+        (Arithmetic.neg_lt_neg_direct xLower)
         rotatedUpper
       change (z.re - 0) ^ 2 + (z.im - 1) ^ 2 < 1 / 2
       calc
@@ -265,18 +267,18 @@ theorem contraction {z : Basic.Canonical} (band : Band z) (sector : Sector)
       rcases holds with ⟨xUpper, yLower⟩
       have rotatedLower : 1 ≤ z.im ^ 2 + (-z.re) ^ 2 := by
         calc
-          1 ≤ Gaussian.Norm.Basic.normSq z := normLower
+          1 ≤ Norm.Basic.normSq z := normLower
           _ = z.im ^ 2 + (-z.re) ^ 2 := by
-            dsimp only [Gaussian.Norm.Basic.normSq]
+            dsimp only [Norm.Basic.normSq]
             ring1
       have rotatedUpper : z.im ^ 2 + (-z.re) ^ 2 ≤ 2 := by
         calc
-          z.im ^ 2 + (-z.re) ^ 2 = Gaussian.Norm.Basic.normSq z := by
-            dsimp only [Gaussian.Norm.Basic.normSq]
+          z.im ^ 2 + (-z.re) ^ 2 = Norm.Basic.normSq z := by
+            dsimp only [Norm.Basic.normSq]
             ring1
           _ ≤ 2 := normUpper
       have rotated := diagonal_contraction z.im (-z.re) yLower
-        (Fraction.Order.Arithmetic.neg_le_neg_direct xUpper)
+        (Arithmetic.neg_le_neg_direct xUpper)
         rotatedLower rotatedUpper
       change (z.re - -1) ^ 2 + (z.im - 1) ^ 2 < 1 / 2
       calc
@@ -287,14 +289,14 @@ theorem contraction {z : Basic.Canonical} (band : Band z) (sector : Sector)
       rcases holds with ⟨xUpper, yLower, yUpper⟩
       have rotatedUpper : (-z.re) ^ 2 + (-z.im) ^ 2 ≤ 2 := by
         calc
-          (-z.re) ^ 2 + (-z.im) ^ 2 = Gaussian.Norm.Basic.normSq z := by
-            dsimp only [Gaussian.Norm.Basic.normSq]
+          (-z.re) ^ 2 + (-z.im) ^ 2 = Norm.Basic.normSq z := by
+            dsimp only [Norm.Basic.normSq]
             ring1
           _ ≤ 2 := normUpper
       have rotated := axial_contraction (-z.re) (-z.im)
-        (Fraction.Order.Arithmetic.neg_le_neg_direct xUpper)
-        (Fraction.Order.Arithmetic.neg_lt_neg_direct yUpper)
-        (Fraction.Order.Arithmetic.neg_lt_neg_direct yLower)
+        (Arithmetic.neg_le_neg_direct xUpper)
+        (Arithmetic.neg_lt_neg_direct yUpper)
+        (Arithmetic.neg_lt_neg_direct yLower)
         rotatedUpper
       change (z.re - -1) ^ 2 + (z.im - 0) ^ 2 < 1 / 2
       calc
@@ -305,19 +307,19 @@ theorem contraction {z : Basic.Canonical} (band : Band z) (sector : Sector)
       rcases holds with ⟨xUpper, yUpper⟩
       have rotatedLower : 1 ≤ (-z.re) ^ 2 + (-z.im) ^ 2 := by
         calc
-          1 ≤ Gaussian.Norm.Basic.normSq z := normLower
+          1 ≤ Norm.Basic.normSq z := normLower
           _ = (-z.re) ^ 2 + (-z.im) ^ 2 := by
-            dsimp only [Gaussian.Norm.Basic.normSq]
+            dsimp only [Norm.Basic.normSq]
             ring1
       have rotatedUpper : (-z.re) ^ 2 + (-z.im) ^ 2 ≤ 2 := by
         calc
-          (-z.re) ^ 2 + (-z.im) ^ 2 = Gaussian.Norm.Basic.normSq z := by
-            dsimp only [Gaussian.Norm.Basic.normSq]
+          (-z.re) ^ 2 + (-z.im) ^ 2 = Norm.Basic.normSq z := by
+            dsimp only [Norm.Basic.normSq]
             ring1
           _ ≤ 2 := normUpper
       have rotated := diagonal_contraction (-z.re) (-z.im)
-        (Fraction.Order.Arithmetic.neg_le_neg_direct xUpper)
-        (Fraction.Order.Arithmetic.neg_le_neg_direct yUpper)
+        (Arithmetic.neg_le_neg_direct xUpper)
+        (Arithmetic.neg_le_neg_direct yUpper)
         rotatedLower rotatedUpper
       change (z.re - -1) ^ 2 + (z.im - -1) ^ 2 < 1 / 2
       calc
@@ -328,12 +330,12 @@ theorem contraction {z : Basic.Canonical} (band : Band z) (sector : Sector)
       rcases holds with ⟨xLower, xUpper, yUpper⟩
       have rotatedUpper : (-z.im) ^ 2 + z.re ^ 2 ≤ 2 := by
         calc
-          (-z.im) ^ 2 + z.re ^ 2 = Gaussian.Norm.Basic.normSq z := by
-            dsimp only [Gaussian.Norm.Basic.normSq]
+          (-z.im) ^ 2 + z.re ^ 2 = Norm.Basic.normSq z := by
+            dsimp only [Norm.Basic.normSq]
             ring1
           _ ≤ 2 := normUpper
       have rotated := axial_contraction (-z.im) z.re
-        (Fraction.Order.Arithmetic.neg_le_neg_direct yUpper)
+        (Arithmetic.neg_le_neg_direct yUpper)
         xLower xUpper rotatedUpper
       change (z.re - 0) ^ 2 + (z.im - -1) ^ 2 < 1 / 2
       calc
@@ -344,18 +346,18 @@ theorem contraction {z : Basic.Canonical} (band : Band z) (sector : Sector)
       rcases holds with ⟨xLower, yUpper⟩
       have rotatedLower : 1 ≤ (-z.im) ^ 2 + z.re ^ 2 := by
         calc
-          1 ≤ Gaussian.Norm.Basic.normSq z := normLower
+          1 ≤ Norm.Basic.normSq z := normLower
           _ = (-z.im) ^ 2 + z.re ^ 2 := by
-            dsimp only [Gaussian.Norm.Basic.normSq]
+            dsimp only [Norm.Basic.normSq]
             ring1
       have rotatedUpper : (-z.im) ^ 2 + z.re ^ 2 ≤ 2 := by
         calc
-          (-z.im) ^ 2 + z.re ^ 2 = Gaussian.Norm.Basic.normSq z := by
-            dsimp only [Gaussian.Norm.Basic.normSq]
+          (-z.im) ^ 2 + z.re ^ 2 = Norm.Basic.normSq z := by
+            dsimp only [Norm.Basic.normSq]
             ring1
           _ ≤ 2 := normUpper
       have rotated := diagonal_contraction (-z.im) z.re
-        (Fraction.Order.Arithmetic.neg_le_neg_direct yUpper) xLower
+        (Arithmetic.neg_le_neg_direct yUpper) xLower
         rotatedLower rotatedUpper
       change (z.re - 1) ^ 2 + (z.im - -1) ^ 2 < 1 / 2
       calc
@@ -371,7 +373,7 @@ half.
 The original selector retains its exact eight-case sector table. Its membership certificate supplies the boundaries
 needed by the corresponding axial or diagonal contraction estimate. -/
 theorem select_contraction {z : Basic.Canonical} (band : Band z) :
-    Gaussian.Norm.Basic.normSq (z - rep (select z)) < 1 / 2 :=
+    Norm.Basic.normSq (z - rep (select z)) < 1 / 2 :=
   contraction band (select z) (select_spec z band.1)
 
 end Purelib.Data.ComplexContinuedFraction.Encoding.Sector

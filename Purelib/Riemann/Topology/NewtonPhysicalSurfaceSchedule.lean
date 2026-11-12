@@ -45,25 +45,25 @@ open _root_.Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior (Physical
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalMeshRequest
   (physicalMeshPieceCounts physicalMesh_pieceCount)
 open Purelib.Riemann.Normalization
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve branches
     higher}
-  {preparation : NewtonPreparation original} {gridTarget radius : Data.Rat.Fraction.Rational}
+  {preparation : NewtonPreparation original} {gridTarget radius : Rational}
   {grid : NewtonGrid preparation gridTarget radius}
   {observations : ProtectedObservations original} {lifted : LiftedPuncturedGrid grid.punctured}
-  {domains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+  {domains : FaceDomainBank lifted.frames
     grid.faces.regulars} {partitions : SurfacePartitions observations grid}
   {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
     Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
   {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {wholeCoarse : (sheet : Fin 2) → Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains
+  {wholeCoarse : (sheet : Fin 2) → RegularMeshes domains
     sheet}
-  {wholeFixed : (sheet : Fin 2) → Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights
-    domains sheet} {wholeTarget : Data.Rat.Fraction.Rational}
+  {wholeFixed : (sheet : Fin 2) → Preflights
+    domains sheet} {wholeTarget : Rational}
   {pieceCoarse : (sheet : Fin 2) → SurfaceMeshes partitions domains sheet}
-  {pieceFixed : (sheet : Fin 2) → Riemann.RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet}
-    {pieceTarget : Data.Rat.Fraction.Rational}
+  {pieceFixed : (sheet : Fin 2) → RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet}
+    {pieceTarget : Rational}
 
 open Purelib.Curves in
 open Purelib.Data in
@@ -73,18 +73,18 @@ set_option genInjectivity false in
 The original exterior basis preparations determine a shared depth after both initial requests, and the refined requests
 keep their original owners and index lower bounds. -/
 structure PhysicalSurfaceSchedule (preparations :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.BasisArcRequest.BasisArcPreparations regular domains)
-    (initialWhole : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest wholeCoarse wholeFixed
+  BasisArcPreparations regular domains)
+    (initialWhole : TwoSheetRequest wholeCoarse wholeFixed
       wholeTarget)
     (initialPieces : SynchronizedSurfaceRequests pieceCoarse pieceFixed pieceTarget)
-    (target : Rat.Fraction.Rational) (minimum floor : Nat) where
+    (target : Rational) (minimum floor : Nat) where
   /-- The retained exterior physical-basis request on the original domains. -/ basis :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalBasisRequest regular domains target minimum
+    PhysicalBasisRequest regular domains target minimum
     floor
   /-- The basis request retains exactly the supplied original preparations. -/ preparations_eq : basis.preparations =
     preparations
   /-- The retained physical-mesh request extending the original whole-surface request. -/ physical :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalMeshRequest basis initialWhole
+    PhysicalMeshRequest basis initialWhole
   /-- The refined request on the original observation-piece meshes and preflights. -/ surface :
     SynchronizedSurfaceRequests pieceCoarse pieceFixed pieceTarget
   /-- Whole physical and observation-piece requests share exactly the same depth. -/ same_depth : physical.surface.depth
@@ -107,28 +107,28 @@ open Purelib.Data in
 
 The initial depth maximum supplies the basis floor, both original requests refine to the selected physical depth, and
 their retained numerical indices determine the common threshold. -/
-@[expose] def build (preparations : Hyperelliptic.Meshes.PuncturedGrid.Exterior.BasisArcRequest.BasisArcPreparations
+@[expose] def build (preparations : BasisArcPreparations
   regular domains)
-    (initialWhole : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest wholeCoarse wholeFixed
+    (initialWhole : TwoSheetRequest wholeCoarse wholeFixed
       wholeTarget)
     (initialPieces : SynchronizedSurfaceRequests pieceCoarse pieceFixed pieceTarget)
-    (target : Rat.Fraction.Rational) (positive : 0 < target) (minimum floor : Nat) :
+    (target : Rational) (positive : 0 < target) (minimum floor : Nat) :
     PhysicalSurfaceSchedule preparations initialWhole initialPieces target minimum floor := by
   let lowerDepth := max initialWhole.depth initialPieces.depth
-  let counts := Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalMeshRequest.physicalMeshPieceCounts preparations
+  let counts := physicalMeshPieceCounts preparations
     wholeCoarse
-  let basis := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalBasisRequest.build preparations
+  let basis := PhysicalBasisRequest.build preparations
     counts target positive minimum floor lowerDepth
   have lowerLe : lowerDepth ≤ basis.physicalDepth :=
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalBasisRequest.build_physicalFloor_le
+    PhysicalBasisRequest.build_physicalFloor_le
       preparations counts target positive minimum floor lowerDepth
   have wholeLater := (Data.Nat.Order.le_max_left initialWhole.depth initialPieces.depth).trans lowerLe
   have piecesLater := (Data.Nat.Order.le_max_right initialWhole.depth initialPieces.depth).trans lowerLe
   let whole := initialWhole.atDepth basis.physicalDepth wholeLater
-  let physical : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalMeshRequest basis initialWhole
+  let physical : PhysicalMeshRequest basis initialWhole
     :=
     ⟨whole, rfl, (fun first second i =>
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalMeshRequest.physicalMesh_pieceCount whole ((preparations.get
+      (physicalMesh_pieceCount whole ((preparations.get
         first).occurrences[i.val]'i.isLt)).symm),
       initialWhole.atDepth_index_ge _ wholeLater, max basis.index whole.index, rfl,
       Data.Nat.Order.le_max_left _ _, Data.Nat.Order.le_max_right _ _⟩

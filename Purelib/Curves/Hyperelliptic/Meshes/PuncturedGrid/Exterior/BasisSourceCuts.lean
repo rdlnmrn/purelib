@@ -60,21 +60,21 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks (FaceDom
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes (CommonCuts)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.BasisArcRequest (BasisArcPreparations)
 open Purelib.Riemann.Normalization
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
 
 set_option genInjectivity false in
 /-- One common cut bank containing every original exterior basis source partition.
 
 The previous cut bank and all source points are retained in their original order, with exact readback equalities. -/
-structure BasisSourceCuts (preparations : BasisArcRequest.BasisArcPreparations regular domains) (previous :
-  RegularMeshes.CommonCuts domains) where
+structure BasisSourceCuts (preparations : BasisArcPreparations regular domains) (previous :
+  CommonCuts domains) where
   /-- The cached concatenation of all original exterior source partition points in basis and occurrence order. -/
     sourcePoints : List Data.Gaussian.Basic.Canonical
   /-- The source point cache equals the actual original basis-occurrence point concatenation. -/ sourcePoints_eq :
@@ -82,29 +82,29 @@ structure BasisSourceCuts (preparations : BasisArcRequest.BasisArcPreparations r
     (fun first => (preparations.get first).occurrences.flatMap (fun occurrence =>
       occurrence.compared.entered.mesh.points))
   /-- The shared original domain cut bank extended by every retained basis source point. -/ cuts :
-    RegularMeshes.CommonCuts domains
+    CommonCuts domains
   /-- The extended cut bank is exactly the previous point list followed by the cached original source points. -/
     points_eq : cuts.points = previous.points ++ sourcePoints
 
 constructive_injectivity BasisSourceCuts
 
 namespace BasisSourceCuts
-variable {preparations : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.BasisArcRequest.BasisArcPreparations
+variable {preparations : BasisArcPreparations
   regular domains} {previous :
-  Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+  CommonCuts domains}
 
 /-- Cache every original basis source partition point once and append the complete list to the retained previous cut
 bank.
 
 Basis and occurrence order determine the same cached source-point concatenation, which extends the retained previous
 bank without repeating acquisition. -/
-@[expose] def build (preparations : BasisArcRequest.BasisArcPreparations regular domains) (previous :
-  RegularMeshes.CommonCuts domains) :
+@[expose] def build (preparations : BasisArcPreparations regular domains) (previous :
+  CommonCuts domains) :
     BasisSourceCuts preparations previous :=
   let sourcePoints := (List.ofFn (fun first : Fin genus => first)).flatMap
     (fun first => (preparations.get first).occurrences.flatMap (fun occurrence =>
       occurrence.compared.entered.mesh.points))
-  let cuts : RegularMeshes.CommonCuts domains := ⟨previous.points ++ sourcePoints,
+  let cuts : CommonCuts domains := ⟨previous.points ++ sourcePoints,
     fun position sheet point member => List.mem_append_left _ (previous.includes position sheet point member)⟩
   ⟨sourcePoints, rfl, cuts, rfl⟩
 

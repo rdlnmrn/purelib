@@ -119,31 +119,31 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisRequest 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisAggregate (RegularBasisCap)
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve branches
     higher}
-  {preparation : NewtonPreparation original} {target radius : Data.Rat.Fraction.Rational} {grid : NewtonGrid preparation
+  {preparation : NewtonPreparation original} {target radius : Rational} {grid : NewtonGrid preparation
     target radius}
   {lifted : LiftedPuncturedGrid grid.punctured} {domains :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames grid.faces.regulars}
+    FaceDomainBank lifted.frames grid.faces.regulars}
   {stage : Nat} {cache : Numerics domains stage}
   {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
     Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
   {regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
-  {fixed : (sheet : Fin 2) → Preflights domains sheet} {surfaceTarget physicalTarget : Data.Rat.Fraction.Rational}
+  {fixed : (sheet : Fin 2) → Preflights domains sheet} {surfaceTarget physicalTarget : Rational}
   {minimum floor coarseDepth : Nat}
-  {preparations : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.BasisArcRequest.BasisArcPreparations regular
+  {preparations : BasisArcPreparations regular
     domains}
   {observations : ProtectedObservations original} {partitions : SurfacePartitions observations grid}
   (shared : SharedExteriorCuts partitions preparations)
-  {initialWhole : Curves.Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains shared.source.cuts sheet
+  {initialWhole : TwoSheetRequest (fun sheet =>
+    RegularMeshes.build domains shared.source.cuts sheet
     coarseDepth) fixed surfaceTarget}
   {surfaceFixed : (sheet : Fin 2) → Preflights domains sheet}
-  {pieceDepth : Nat} {error : Data.Rat.Fraction.Rational}
+  {pieceDepth : Nat} {error : Rational}
   {initialPieces : SynchronizedSurfaceRequests
-    (fun sheet => Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains
+    (fun sheet => surfaceMeshes partitions domains
       shared.surface sheet pieceDepth) surfaceFixed error}
   (schedule : PhysicalSurfaceSchedule preparations initialWhole initialPieces physicalTarget minimum floor)
   {traces : PerimeterTraces schedule.surface} {coefficients :
@@ -157,19 +157,19 @@ variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve ge
   (wholePerimeters : (position : Fin grid.faces.regulars.length) → (sheet : Fin 2) → (whole position sheet).Perimeter)
   {differential : Curves.Hyperelliptic.Differentials.Basic.Differential genus}
   {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+    AllSurfacePreparation
     regular domains differential}
-  (attached : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared)
-  {box : Purelib.Geometry.Rational.Box} {polynomials :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box}
-  {bounds : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisBounds.RegularBasisBounds polynomials} {capTarget
-    : Data.Rat.Fraction.Rational} {capMinimum : Nat}
-  (capRequest : Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisRequest.RegularBasisRequest bounds
+  (attached : CapAttachment prepared)
+  {box : Geometry.Rational.Box} {polynomials :
+    RegularBasisPolynomials cap stage box}
+  {bounds : RegularBasisBounds polynomials} {capTarget
+    : Rational} {capMinimum : Nat}
+  (capRequest : RegularBasisRequest bounds
     attached.caps.length capTarget capMinimum)
   {geometry :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
+    CapAttachment.ReciprocalGeometry
     attached}
-  {parameters : Purelib.Integration.Path.Dyadic.RadialTriangles.Parameters capRequest.depth}
+  {parameters : Integration.Path.Dyadic.RadialTriangles.Parameters capRequest.depth}
 
 include faces whole wholePerimeters
 
@@ -184,18 +184,18 @@ readings and cap certificate at every sufficiently late stage. -/
 theorem exterior_cap_energy_upper
     (entries : schedule.physical.Readings cache) (physicalFaces : schedule.physical.FacePerimeterBank cache)
     (attachments : Vector.DependentVector (fun first =>
-      Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment (schedule.basis.preparations.get first)))
+      CapAttachment (schedule.basis.preparations.get first)))
     (neighbors : PuncturedFaces.NeighborBank grid.faces)
     (evaluated : schedule.basis.Evaluations polynomials capRequest.depth)
     (later : schedule.index ≤ stage) (spatial : schedule.basis.depth ≤ capRequest.depth)
-    (caps : Meshes.PuncturedGrid.Exterior.CapBasisAggregate.RegularBasisCap geometry parameters polynomials)
+    (caps : RegularBasisCap geometry parameters polynomials)
     (capSample : (capRequest.certify caps).Evaluation coefficients)
-    (allowance : Fraction.Rational) (nonnegative : 0 ≤ allowance)
-    (paid : (genus : Fraction.Rational) ^ 2 * physicalTarget ≤ 16 * allowance ^ 2) :
+    (allowance : Rational) (nonnegative : 0 ≤ allowance)
+    (paid : (genus : Rational) ^ 2 * physicalTarget ≤ 16 * allowance ^ 2) :
     (componentBoundary samples neighbors
         .exterior -
       componentSum neighbors .exterior (cachedEndpointSideSum cache coefficients) +
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalMeshRequest.Readings.capJoiningEnergy attachments
+      capJoiningEnergy attachments
         polynomials coefficients).im / 4 ≤
         (capTarget + allowance) * PreparedObservationCoercivity.coefficientNormSq coefficients := by
   cases schedule with

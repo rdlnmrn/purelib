@@ -46,7 +46,7 @@ The complete finite successor list may contain several tied representatives;
 this program deterministically retains its first one. -/
 def nextBest? (source : GaussianInt.Fraction) (lower :
   GaussianInt.Pair.Basic.ConvergentPair) : Option GaussianInt.Pair.Basic.ConvergentPair :=
-  match Best.Successor.Exhaustive.consecutiveSuccessors source lower with
+  match Exhaustive.consecutiveSuccessors source lower with
   | [] => none
   | next :: _ => some next
 
@@ -55,9 +55,9 @@ above the supplied pair. -/
 theorem nextBest?_sound
     {source : GaussianInt.Fraction} {lower next : GaussianInt.Pair.Basic.ConvergentPair}
     (selected : nextBest? source lower = some next) :
-    Best.Consecutive.Basic.AreConsecutiveBest source.value lower next := by
+    Consecutive.Basic.AreConsecutiveBest source.value lower next := by
   unfold nextBest? at selected
-  cases listIdentity : Best.Successor.Exhaustive.consecutiveSuccessors source lower with
+  cases listIdentity : Exhaustive.consecutiveSuccessors source lower with
   | nil =>
       rw [listIdentity] at selected
       cases selected
@@ -65,7 +65,7 @@ theorem nextBest?_sound
       rw [listIdentity] at selected
       have headIdentity : head = next := Option.some.inj selected
       subst next
-      apply (Best.Successor.Exhaustive.mem_consecutiveSuccessors_iff source lower head).mp
+      apply (Exhaustive.mem_consecutiveSuccessors_iff source lower head).mp
       rw [listIdentity]
       exact List.mem_cons_self
 
@@ -74,19 +74,19 @@ exactly zero error. -/
 theorem exists_zeroErrorBest (source :
   GaussianInt.Fraction) :
     ∃ pair : GaussianInt.Pair.Basic.ConvergentPair,
-      Best.Basic.IsBest source.value pair ∧ Best.Error.errorQuadrance source.value pair = 0 := by
-  have exactSmall : Best.Error.errorQuadrance source.value (Best.Search.exactPair source) ≤ 1 / 2 := by
-    rw [Best.Error.errorQuadrance, Best.Search.exactPair_error,
+      Basic.IsBest source.value pair ∧ Error.errorQuadrance source.value pair = 0 := by
+  have exactSmall : Error.errorQuadrance source.value (Search.exactPair source) ≤ 1 / 2 := by
+    rw [Error.errorQuadrance, Search.exactPair_error,
       Gaussian.Norm.Basic.normSq_zero]
     decide
   obtain ⟨pair, best, _, errorLe⟩ :=
-    Best.Search.exists_best_below_of_small source.denominatorNonzero le_rfl exactSmall
-  have exactZero : Best.Error.errorQuadrance source.value (Best.Search.exactPair source) = 0 := by
-    rw [Best.Error.errorQuadrance, Best.Search.exactPair_error,
+    Search.exists_best_below_of_small source.denominatorNonzero le_rfl exactSmall
+  have exactZero : Error.errorQuadrance source.value (Search.exactPair source) = 0 := by
+    rw [Error.errorQuadrance, Search.exactPair_error,
       Gaussian.Norm.Basic.normSq_zero]
   rw [exactZero] at errorLe
-  have nonnegative : 0 ≤ Best.Error.errorQuadrance source.value pair := by
-    unfold Best.Error.errorQuadrance
+  have nonnegative : 0 ≤ Error.errorQuadrance source.value pair := by
+    unfold Error.errorQuadrance
     exact Gaussian.Norm.Basic.normSq_nonneg _
   exact ⟨pair, best, le_antisymm errorLe nonnegative⟩
 
@@ -96,31 +96,31 @@ a finite minimum over the displayed best pairs lying strictly above `lower`.
 -/
 theorem exists_nextBest_of_error_ne_zero
     {source : GaussianInt.Fraction} {lower : GaussianInt.Pair.Basic.ConvergentPair}
-    (lowerBest : Best.Basic.IsBest source.value lower)
-    (errorNonzero : Best.Error.errorQuadrance source.value lower ≠ 0) :
+    (lowerBest : Basic.IsBest source.value lower)
+    (errorNonzero : Error.errorQuadrance source.value lower ≠ 0) :
     ∃ next : GaussianInt.Pair.Basic.ConvergentPair,
       nextBest? source lower = some next ∧
-        Best.Consecutive.Basic.AreConsecutiveBest source.value lower next := by
+        Consecutive.Basic.AreConsecutiveBest source.value lower next := by
   obtain ⟨terminal, terminalBest, terminalZero⟩ :=
     exists_zeroErrorBest source
   have lowerBeforeTerminal :
-      Best.Error.denominatorQuadrance lower < Best.Error.denominatorQuadrance terminal := by
+      Error.denominatorQuadrance lower < Error.denominatorQuadrance terminal := by
     apply Nat.lt_of_not_ge
     intro terminalNoHigher
     have lowerErrorLeZero := lowerBest.2.2 terminal terminalBest.1
       terminalNoHigher
     rw [terminalZero] at lowerErrorLeZero
     have lowerErrorNonnegative :
-        0 ≤ Best.Error.errorQuadrance source.value lower := by
-      unfold Best.Error.errorQuadrance
+        0 ≤ Error.errorQuadrance source.value lower := by
+      unfold Error.errorQuadrance
       exact Gaussian.Norm.Basic.normSq_nonneg _
     exact errorNonzero (le_antisymm lowerErrorLeZero lowerErrorNonnegative)
   obtain ⟨witness, consecutive, _⟩ :=
-    Best.Successor.Local.exists_consecutiveBest_below
+    Local.exists_consecutiveBest_below
       lowerBest terminalBest lowerBeforeTerminal
-  have witnessMember : witness ∈ Best.Successor.Exhaustive.consecutiveSuccessors source lower :=
-    (Best.Successor.Exhaustive.mem_consecutiveSuccessors_iff source lower witness).mpr consecutive
-  cases listIdentity : Best.Successor.Exhaustive.consecutiveSuccessors source lower with
+  have witnessMember : witness ∈ Exhaustive.consecutiveSuccessors source lower :=
+    (Exhaustive.mem_consecutiveSuccessors_iff source lower witness).mpr consecutive
+  cases listIdentity : Exhaustive.consecutiveSuccessors source lower with
   | nil =>
       rw [listIdentity] at witnessMember
       exact (List.not_mem_nil witnessMember).elim
@@ -128,22 +128,22 @@ theorem exists_nextBest_of_error_ne_zero
       refine ⟨next, ?_, ?_⟩
       · simp only [-eq_self, -iff_self, nextBest?, listIdentity]
         rfl
-      · apply (Best.Successor.Exhaustive.mem_consecutiveSuccessors_iff source lower next).mp
+      · apply (Exhaustive.mem_consecutiveSuccessors_iff source lower next).mp
         rw [listIdentity]
         exact List.mem_cons_self
 
 /-- A zero-error best pair has no later best denominator level. -/
 theorem nextBest?_eq_none_of_error_eq_zero
     {source : GaussianInt.Fraction} {lower : GaussianInt.Pair.Basic.ConvergentPair}
-    (lowerBest : Best.Basic.IsBest source.value lower)
-    (errorZero : Best.Error.errorQuadrance source.value lower = 0) :
+    (lowerBest : Basic.IsBest source.value lower)
+    (errorZero : Error.errorQuadrance source.value lower = 0) :
     nextBest? source lower = none := by
   unfold nextBest?
-  cases listIdentity : Best.Successor.Exhaustive.consecutiveSuccessors source lower with
+  cases listIdentity : Exhaustive.consecutiveSuccessors source lower with
   | nil => rfl
   | cons next remaining =>
-      have nextConsecutive : Best.Consecutive.Basic.AreConsecutiveBest source.value lower next := by
-        apply (Best.Successor.Exhaustive.mem_consecutiveSuccessors_iff source lower next).mp
+      have nextConsecutive : Consecutive.Basic.AreConsecutiveBest source.value lower next := by
+        apply (Exhaustive.mem_consecutiveSuccessors_iff source lower next).mp
         rw [listIdentity]
         exact List.mem_cons_self
       have impossible := nextConsecutive.2.1.2.1 lower lowerBest.1
@@ -156,12 +156,12 @@ theorem nextBest?_eq_none_of_error_eq_zero
 /-- Exact terminal specification of the executable next-best selector. -/
 theorem nextBest?_eq_none_iff
     {source : GaussianInt.Fraction} {lower : GaussianInt.Pair.Basic.ConvergentPair}
-    (lowerBest : Best.Basic.IsBest source.value lower) :
+    (lowerBest : Basic.IsBest source.value lower) :
     nextBest? source lower = none ↔
-      Best.Error.errorQuadrance source.value lower = 0 := by
+      Error.errorQuadrance source.value lower = 0 := by
   constructor
   · intro selectedNone
-    by_cases errorZero : Best.Error.errorQuadrance source.value lower = 0
+    by_cases errorZero : Error.errorQuadrance source.value lower = 0
     · exact errorZero
     · obtain ⟨next, selected, _⟩ :=
         exists_nextBest_of_error_ne_zero lowerBest errorZero
@@ -173,12 +173,12 @@ theorem nextBest?_eq_none_iff
 successor, or it is already an exact terminal for the displayed source. -/
 theorem nextBest_or_exactTerminal
     {source : GaussianInt.Fraction} {lower : GaussianInt.Pair.Basic.ConvergentPair}
-    (lowerBest : Best.Basic.IsBest source.value lower) :
+    (lowerBest : Basic.IsBest source.value lower) :
     (∃ next : GaussianInt.Pair.Basic.ConvergentPair,
       nextBest? source lower = some next ∧
-        Best.Consecutive.Basic.AreConsecutiveBest source.value lower next) ∨
-      Best.Error.errorQuadrance source.value lower = 0 := by
-  by_cases errorZero : Best.Error.errorQuadrance source.value lower = 0
+        Consecutive.Basic.AreConsecutiveBest source.value lower next) ∨
+      Error.errorQuadrance source.value lower = 0 := by
+  by_cases errorZero : Error.errorQuadrance source.value lower = 0
   · exact Or.inr errorZero
   · exact Or.inl (exists_nextBest_of_error_ne_zero lowerBest errorZero)
 end Purelib.NumberTheory.Approximation.Best.Successor.Select

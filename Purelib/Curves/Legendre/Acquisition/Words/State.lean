@@ -39,13 +39,12 @@ public section
 /-!
 # Evidence-directed finite Legendre words
 
-Reuse a cached provider or separation first. Nonreal rational provenance
-automatically constructs and transports an all-row provider. Otherwise one
-signed numerical inspection prepares either half-plane, or returns retained
-near-boundary evidence. Nonzeroness of the input alone is not used as a
-certificate for every intermediate word denominator. Real inputs and
-unsupported symbolic provenance may remain inconclusive by this sufficient
-test; this is not a decision procedure for each particular real word.
+Reuse a cached provider or separation first. Nonreal rational and admitted
+irrational quadratic provenance supply all-row providers. Exact rational
+readings use ordered denominator inspection, returning complete execution or
+the first certified zero row with its prepared prefix. Other inputs use signed
+numerical acquisition and may retain inconclusive near-boundary evidence.
+Nonzeroness of the input alone is no certificate for every word denominator.
 -/
 
 namespace Purelib.Curves.Legendre.Acquisition.Words.State
@@ -62,12 +61,15 @@ set_option genInjectivity false in
 
 Provenance, an all-matrix preparation provider and unsigned imaginary separation remain separate optional data tied to
 the input channel. -/
-structure InputPayload.{u, v, w, x}
-    (stateType : Type u) (provenanceType : Type v) (providerType : Type w) (separationType : Type x) where
+structure InputPayload.{u, v, w, x, y}
+    (stateType : Type u) (provenanceType : Type v) (providerType : Type w)
+    (separationType : Type x) (rationalType : Type y) where
   /-- The current retained channel-inspection state. -/ state : stateType
   /-- Optional exact semantic provenance for the coherent channel. -/ provenance : Option provenanceType
   /-- An optional cached provider preparing every invertible denominator row. -/ provider : Option providerType := none
   /-- An optional retained unsigned imaginary separation certificate. -/ separation : Option separationType := none
+  /-- Exact rational evidence cached at the same original numerical input. -/
+  cachedRational : Option rationalType := none
 
 constructive_injectivity Purelib.Curves.Legendre.Acquisition.Words.State.InputPayload
 
@@ -77,6 +79,7 @@ constructive_injectivity Purelib.Curves.Legendre.Acquisition.Words.State.InputPa
   (Approximation.Gaussian.Acquisition.State tau)
   (Approximation.Gaussian.Acquisition.Provenance tau) (Preparation.Basic.Provider tau)
       (Approximation.Gaussian.Process.Imaginary.Separation tau)
+      (RationalSidecar tau)
 
 /-- Initialize word preparation from an annotated channel, retaining its original provenance. -/
 @[expose] def start (input :
@@ -90,7 +93,9 @@ inductive Route where
   /-- An already cached all-matrix preparation provider was reused. -/ | cached /-- An existing unsigned imaginary
     separation certificate supplied preparation. -/ | separation /-- Nonreal rational provenance supplied a preparation
     provider. -/ | rational /-- A finite inspection produced positive imaginary evidence. -/ | positive /-- A finite
-    inspection produced negative imaginary evidence. -/ | negative /-- The finite inspection retained unresolved
+    inspection produced negative imaginary evidence. -/ | negative
+  /-- Exact ordered rational denominator inspection supplied execution or its first zero obstruction. -/ | exact
+  /-- The finite inspection retained unresolved
     near-boundary evidence. -/ | near
   deriving DecidableEq
 
@@ -136,6 +141,11 @@ constructive_injectivity Purelib.Curves.Legendre.Acquisition.Words.State.Step
   (provider : Preparation.Basic.Provider tau) :
     Step input := { step with next := { step.next with provider := some provider
       } }
+/-- Cache exact rational evidence at the same original provenance and retained numerical state. -/
+@[expose] def Step.cacheRational {tau : CoherentNamed} {input : Input tau} (step : Step input)
+    (reading : RationalSidecar tau) : Step input :=
+  { step with next := { step.next with cachedRational := some reading } }
+
 end Purelib.Curves.Legendre.Acquisition.Words.State
 
 end

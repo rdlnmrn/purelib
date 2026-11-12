@@ -13,6 +13,8 @@ import Purelib.Measure.Distribution.Basic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Data.Rat.Fraction.Arithmetic
 
+open Purelib.Data.Rat.Fraction.Order
+
 section
 @[expose] public section
 
@@ -57,7 +59,7 @@ theorem poweredL2_nonnegative {α : Type} (content : Content α)
     0 ≤ content.poweredL2 value := by
   apply content.integral_nonneg
   intro atom member
-  exact Fraction.Order.Arithmetic.sq_nonneg_direct _
+  exact Arithmetic.sq_nonneg_direct _
 
 /-- The zero observable has zero square integral. -/
 @[simp] theorem poweredL2_zero {α : Type} (content : Content α) :
@@ -173,7 +175,7 @@ theorem poweredL2_add_le_radius_add_sq {α : Type}
       (leftRadius + rightRadius) ^ 2 := by
   have rightPowerNonnegative := content.poweredL2_nonnegative right
   have radiusProductNonnegative : 0 ≤ leftRadius * rightRadius :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
+    Arithmetic.mul_nonneg_direct
       leftRadiusNonnegative rightRadiusNonnegative
   have productSquares := content.productIntegral_sq_le_poweredL2_mul
     left right
@@ -183,11 +185,11 @@ theorem poweredL2_add_le_radius_add_sq {α : Type}
     calc
       content.poweredL2 left * content.poweredL2 right ≤
           leftRadius ^ 2 * content.poweredL2 right :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
           leftBound rightPowerNonnegative
       _ ≤ leftRadius ^ 2 * rightRadius ^ 2 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-          rightBound (Fraction.Order.Arithmetic.sq_nonneg_direct leftRadius)
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
+          rightBound (Arithmetic.sq_nonneg_direct leftRadius)
   have mixedSquareBound :
       content.productIntegral left right ^ 2 ≤
         (leftRadius * rightRadius) ^ 2 := by
@@ -198,7 +200,7 @@ theorem poweredL2_add_le_radius_add_sq {α : Type}
       _ = (leftRadius * rightRadius) ^ 2 := by ring1
   have mixedBound : content.productIntegral left right ≤
       leftRadius * rightRadius :=
-    Fraction.Order.Arithmetic.le_of_sq_le_sq_direct
+    Arithmetic.le_of_sq_le_sq_direct
       radiusProductNonnegative mixedSquareBound
   rw [content.poweredL2_add]
   calc
@@ -207,7 +209,7 @@ theorem poweredL2_add_le_radius_add_sq {α : Type}
         leftRadius ^ 2 + rightRadius ^ 2 +
           2 * (leftRadius * rightRadius) := by
       exact add_le_add (add_le_add leftBound rightBound)
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct
           mixedBound (by decide))
     _ = (leftRadius + rightRadius) ^ 2 := by ring1
 

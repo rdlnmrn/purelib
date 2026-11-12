@@ -49,6 +49,12 @@ import Purelib.RootIsolation.SquareRoot.Grid.Walk.ChainComparison
 import Purelib.RootIsolation.SquareRoot.Grid.Walk.Vertex
 import Purelib.Tactic.Ring
 
+open Purelib.Topology.Mesh
+
+open Purelib.Curves.Hyperelliptic.Branches.BranchIsolation hiding Gaussian
+
+open Purelib.Topology.Surface.Sewing
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -80,8 +86,8 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPu
 
 open Purelib.Data.Gaussian.Basic.Canonical
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
   {lifted : Meshes.LiftedPuncturedGrid base}
 
@@ -89,30 +95,30 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
 private theorem Paired.BranchRemainders.cross_remainder (stem hole returning : Gaussian.Basic.Canonical) :
     Path.BoundaryRibbon.area stem hole + Path.BoundaryRibbon.area (stem + hole) returning = Path.BoundaryRibbon.area
       (stem + hole) (returning - stem) := by
-  apply Gaussian.Basic.ext <;> simp only [-eq_self, -iff_self, Path.BoundaryRibbon.area, Data.Gaussian.Basic.conj,
+  apply Gaussian.Basic.ext <;> simp only [-eq_self, -iff_self, Path.BoundaryRibbon.area, Gaussian.Basic.conj,
     Gaussian.Basic.add_re, Gaussian.Basic.add_im, Gaussian.Basic.sub_re, Gaussian.Basic.sub_im, Gaussian.Basic.mul_re,
     Gaussian.Basic.mul_im] <;> ring1
 
 /-- Read the original outward stem on its actual incoming sheet. -/
 @[expose] def
   BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.stemWord
-  (bank : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted) (index :
-  Hyperelliptic.Branches.BranchIsolation.Data.Index branches) (sheet : Fin 2) :=
+  (bank : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted) (index :
+  Data.Index branches) (sheet : Fin 2) :=
   lifted.edges.indexedEdges lifted.vertices (bank.rows.get index).stem sheet
 
 /-- Read the original hole boundary on the sheet reached by its retained stem. -/
 @[expose] def
   BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.holeWord
-  (bank : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted) (index :
-  Hyperelliptic.Branches.BranchIsolation.Data.Index branches) (sheet : Fin 2) :=
+  (bank : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted) (index :
+  Data.Index branches) (sheet : Fin 2) :=
   lifted.edges.indexedEdges lifted.vertices (bank.rows.get index).boundary
     (SquareRoot.Grid.EdgeBank.RootEdgeBank.target lifted.edges (bank.rows.get index).stem sheet)
 
 /-- Read the original reversed stem on the sheet reached after its actual hole boundary. -/
 @[expose] def
   BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.returnWord
-  (bank : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted) (index :
-  Hyperelliptic.Branches.BranchIsolation.Data.Index branches) (sheet : Fin 2) :=
+  (bank : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted) (index :
+  Data.Index branches) (sheet : Fin 2) :=
   lifted.edges.indexedEdges lifted.vertices (bank.rows.get index).stem.reverse
     (SquareRoot.Grid.EdgeBank.RootEdgeBank.target lifted.edges (bank.rows.get index).boundary
       (SquareRoot.Grid.EdgeBank.RootEdgeBank.target lifted.edges (bank.rows.get index).stem sheet))
@@ -120,11 +126,11 @@ private theorem Paired.BranchRemainders.cross_remainder (stem hole returning : G
 /-- The original lifted branch loop is exactly its retained stem, hole and return word concatenation. -/
 theorem
   BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.loop_words
-  (bank : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted) (index :
-  Hyperelliptic.Branches.BranchIsolation.Data.Index branches) (sheet : Fin 2) :
+  (bank : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted) (index :
+  Data.Index branches) (sheet : Fin 2) :
     (bank.liftedLoop index sheet).indexed = bank.stemWord index sheet ++ (bank.holeWord index sheet ++ bank.returnWord
       index sheet) := by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.liftedLoop_indexed,
+  rw [BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.liftedLoop_indexed,
     (bank.rows.get index).reference_eq,
     lifted.edges.indexedEdges_append, lifted.edges.indexedEdges_append]
   rfl
@@ -132,38 +138,38 @@ theorem
 /-- Read the full area of the original transported hole boundary. -/
 @[expose] def
   BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.holeArea
-  (bank : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted) (value :
+  (bank : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted) (value :
   Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
-    (index : Hyperelliptic.Branches.BranchIsolation.Data.Index branches) (sheet : Fin 2) : Gaussian :=
-      Topology.Mesh.RetracingWords.wordArea value (bank.holeWord index sheet)
+    (index : Data.Index branches) (sheet : Fin 2) : Gaussian :=
+      RetracingWords.wordArea value (bank.holeWord index sheet)
 
 /-- Retain the original outward-and-return stem areas together with their exact endpoint-defect cross term. -/
 @[expose] def
   BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.stemError
-  (bank : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted) (value :
+  (bank : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted) (value :
   Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
-    (index : Hyperelliptic.Branches.BranchIsolation.Data.Index branches) (sheet : Fin 2) : Gaussian :=
-  Topology.Mesh.RetracingWords.wordArea value (bank.stemWord index sheet) + Topology.Mesh.RetracingWords.wordArea value
+    (index : Data.Index branches) (sheet : Fin 2) : Gaussian :=
+  RetracingWords.wordArea value (bank.stemWord index sheet) + RetracingWords.wordArea value
     (bank.returnWord index sheet) +
-    Path.BoundaryRibbon.area (Topology.Surface.Sewing.SewingRetraction.wordValue value (bank.stemWord index sheet) +
-      Topology.Surface.Sewing.SewingRetraction.wordValue value (bank.holeWord index sheet))
-      (Topology.Surface.Sewing.SewingRetraction.wordValue value (bank.returnWord index sheet) -
-        Topology.Surface.Sewing.SewingRetraction.wordValue value (bank.stemWord index sheet))
+    Path.BoundaryRibbon.area (SewingRetraction.wordValue value (bank.stemWord index sheet) +
+      SewingRetraction.wordValue value (bank.holeWord index sheet))
+      (SewingRetraction.wordValue value (bank.returnWord index sheet) -
+        SewingRetraction.wordValue value (bank.stemWord index sheet))
 
 /-- Both independent stem defects are paid. The full transported
 stem-plus-hole magnitude multiplies the endpoint defect. -/
 theorem
   BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.stemError_bound
-  (bank : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted) (value :
+  (bank : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted) (value :
   Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
-    (index : Hyperelliptic.Branches.BranchIsolation.Data.Index branches) (sheet : Fin 2) :
-    Data.Gaussian.Norm.Basic.normSq (bank.stemError value index sheet) ≤ 2 *
-      (Data.Gaussian.Norm.Basic.normSq (Topology.Mesh.RetracingWords.wordArea value (bank.stemWord index sheet) +
-        Topology.Mesh.RetracingWords.wordArea value (bank.returnWord index sheet)) +
-        4 * Data.Gaussian.Norm.Basic.normSq (Topology.Surface.Sewing.SewingRetraction.wordValue value (bank.stemWord
-          index sheet) + Topology.Surface.Sewing.SewingRetraction.wordValue value (bank.holeWord index sheet)) *
-          Data.Gaussian.Norm.Basic.normSq (Topology.Surface.Sewing.SewingRetraction.wordValue value (bank.returnWord
-            index sheet) - Topology.Surface.Sewing.SewingRetraction.wordValue value (bank.stemWord index sheet))) :=
+    (index : Data.Index branches) (sheet : Fin 2) :
+    Gaussian.Norm.Basic.normSq (bank.stemError value index sheet) ≤ 2 *
+      (Gaussian.Norm.Basic.normSq (RetracingWords.wordArea value (bank.stemWord index sheet) +
+        RetracingWords.wordArea value (bank.returnWord index sheet)) +
+        4 * Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue value (bank.stemWord
+          index sheet) + SewingRetraction.wordValue value (bank.holeWord index sheet)) *
+          Gaussian.Norm.Basic.normSq (SewingRetraction.wordValue value (bank.returnWord
+            index sheet) - SewingRetraction.wordValue value (bank.stemWord index sheet))) :=
   open Purelib.Data.Rat in (Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
     (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
     (Fraction.Order.Arithmetic.add_le_add_direct (le_refl _) (Path.BoundaryRibbon.area_bound _ _)) (by decide))
@@ -172,76 +178,76 @@ theorem
 any failure of stem cancellation remains an explicit error term. -/
 theorem
   BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.loop_area
-  (bank : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted) (value :
+  (bank : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted) (value :
   Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
-    (index : Hyperelliptic.Branches.BranchIsolation.Data.Index branches) (sheet : Fin 2) :
-    Topology.Mesh.RetracingWords.wordArea value (bank.liftedLoop index sheet).indexed = bank.holeArea value index sheet
+    (index : Data.Index branches) (sheet : Fin 2) :
+    RetracingWords.wordArea value (bank.liftedLoop index sheet).indexed = bank.holeArea value index sheet
       + bank.stemError value index sheet := by
-  rw [bank.loop_words, ← Purelib.Data.List.Append.append_assoc, Topology.Mesh.RetracingWords.wordArea_append,
-    Topology.Mesh.RetracingWords.wordArea_append, Topology.Surface.Sewing.SewingRetraction.wordValue_append]
-  unfold Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.holeArea
-    Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.stemError
-  rw [show Topology.Mesh.RetracingWords.wordArea value (bank.stemWord index sheet) +
-    Topology.Mesh.RetracingWords.wordArea value (bank.holeWord index sheet) +
-      Path.BoundaryRibbon.area (Topology.Surface.Sewing.SewingRetraction.wordValue value (bank.stemWord index sheet))
-        (Topology.Surface.Sewing.SewingRetraction.wordValue value (bank.holeWord index sheet)) +
-      Topology.Mesh.RetracingWords.wordArea value (bank.returnWord index sheet) +
-      Path.BoundaryRibbon.area (Topology.Surface.Sewing.SewingRetraction.wordValue value (bank.stemWord index sheet) +
-        Topology.Surface.Sewing.SewingRetraction.wordValue value (bank.holeWord index sheet))
-        (Topology.Surface.Sewing.SewingRetraction.wordValue value (bank.returnWord index sheet)) =
-      Topology.Mesh.RetracingWords.wordArea value (bank.holeWord index sheet) +
-        (Topology.Mesh.RetracingWords.wordArea value (bank.stemWord index sheet) + Topology.Mesh.RetracingWords.wordArea
+  rw [bank.loop_words, ← List.Append.append_assoc, RetracingWords.wordArea_append,
+    RetracingWords.wordArea_append, SewingRetraction.wordValue_append]
+  unfold BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.holeArea
+    BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.stemError
+  rw [show RetracingWords.wordArea value (bank.stemWord index sheet) +
+    RetracingWords.wordArea value (bank.holeWord index sheet) +
+      Path.BoundaryRibbon.area (SewingRetraction.wordValue value (bank.stemWord index sheet))
+        (SewingRetraction.wordValue value (bank.holeWord index sheet)) +
+      RetracingWords.wordArea value (bank.returnWord index sheet) +
+      Path.BoundaryRibbon.area (SewingRetraction.wordValue value (bank.stemWord index sheet) +
+        SewingRetraction.wordValue value (bank.holeWord index sheet))
+        (SewingRetraction.wordValue value (bank.returnWord index sheet)) =
+      RetracingWords.wordArea value (bank.holeWord index sheet) +
+        (RetracingWords.wordArea value (bank.stemWord index sheet) + RetracingWords.wordArea
           value (bank.returnWord index sheet)) +
-        (Path.BoundaryRibbon.area (Topology.Surface.Sewing.SewingRetraction.wordValue value (bank.stemWord index sheet))
-          (Topology.Surface.Sewing.SewingRetraction.wordValue value (bank.holeWord index sheet)) +
-          Path.BoundaryRibbon.area (Topology.Surface.Sewing.SewingRetraction.wordValue value (bank.stemWord index sheet)
-            + Topology.Surface.Sewing.SewingRetraction.wordValue value (bank.holeWord index sheet))
-            (Topology.Surface.Sewing.SewingRetraction.wordValue value (bank.returnWord index sheet))) by ring1,
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchRemainders.cross_remainder]
+        (Path.BoundaryRibbon.area (SewingRetraction.wordValue value (bank.stemWord index sheet))
+          (SewingRetraction.wordValue value (bank.holeWord index sheet)) +
+          Path.BoundaryRibbon.area (SewingRetraction.wordValue value (bank.stemWord index sheet)
+            + SewingRetraction.wordValue value (bank.holeWord index sheet))
+            (SewingRetraction.wordValue value (bank.returnWord index sheet))) by ring1,
+    Paired.BranchRemainders.cross_remainder]
   ring1
 
 namespace Paired.BranchArea.PairedRows
 
-variable {bank : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted}
-  {reference : Hyperelliptic.Branches.BranchIsolation.Data.Index branches} {sheet : Fin 2}
+variable {bank : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted}
+  {reference : Data.Index branches} {sheet : Fin 2}
 
 /-- Sum the full original hole areas of the retained paired rows on their actual incoming sheets. -/
 @[expose] def holeAreas (value :
   Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) :
-    {labels : List (Hyperelliptic.Branches.BranchIsolation.Data.Index branches ×
-      Hyperelliptic.Branches.BranchIsolation.Data.Index branches)} → {prior :
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.CommonLoop lifted sheet} →
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRows bank reference sheet labels prior →
+    {labels : List (Data.Index branches ×
+      Data.Index branches)} → {prior :
+      CommonLoop lifted sheet} →
+      PairedRows bank reference sheet labels prior →
         Gaussian.Basic.Canonical
   | _, _, .nil _ => 0
   | _, _, .cons (labels := labels) _ tail =>
       bank.holeArea value labels.1 sheet + bank.holeArea value labels.2
-        (Hyperelliptic.Branches.BranchCutLifts.otherSheet sheet) + holeAreas value tail
+        (Branches.BranchCutLifts.otherSheet sheet) + holeAreas value tail
 
 /-- Sum the explicit original stem defects of the retained paired rows. -/
 @[expose] def stemErrors (value :
   Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) :
-    {labels : List (Hyperelliptic.Branches.BranchIsolation.Data.Index branches ×
-      Hyperelliptic.Branches.BranchIsolation.Data.Index branches)} → {prior :
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.CommonLoop lifted sheet} →
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRows bank reference sheet labels prior →
+    {labels : List (Data.Index branches ×
+      Data.Index branches)} → {prior :
+      CommonLoop lifted sheet} →
+      PairedRows bank reference sheet labels prior →
         Gaussian.Basic.Canonical
   | _, _, .nil _ => 0
   | _, _, .cons (labels := labels) _ tail =>
       bank.stemError value labels.1 sheet + bank.stemError value labels.2
-        (Hyperelliptic.Branches.BranchCutLifts.otherSheet sheet) + stemErrors value tail
+        (Branches.BranchCutLifts.otherSheet sheet) + stemErrors value tail
 
 /-- The internal area of the original paired rows is the full retained hole-area sum plus the actual stem-error sum. -/
 theorem internalArea_split (value
   : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) :
-    ∀ {labels : List (Hyperelliptic.Branches.BranchIsolation.Data.Index branches ×
-      Hyperelliptic.Branches.BranchIsolation.Data.Index branches)} {prior :
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.CommonLoop lifted sheet}
-      (rows : Hyperelliptic.Meshes.PuncturedGrid.Paired.BranchArea.PairedRows bank reference sheet labels prior),
+    ∀ {labels : List (Data.Index branches ×
+      Data.Index branches)} {prior :
+      CommonLoop lifted sheet}
+      (rows : PairedRows bank reference sheet labels prior),
         rows.internalArea value = rows.holeAreas value + rows.stemErrors value
   | _, _, .nil _ => (_root_.add_zero _).symm
   | _, _, .cons row tail => by
-      change Topology.Mesh.RetracingWords.wordArea value row.a.outward.indexed + Topology.Mesh.RetracingWords.wordArea
+      change RetracingWords.wordArea value row.a.outward.indexed + RetracingWords.wordArea
         value row.a.returning.indexed + tail.internalArea value = _
       rw [row.a.outward_eq, row.a.returning_indexed, bank.loop_area, bank.loop_area, internalArea_split value tail]
       change _ = (_ + _ + _) + (_ + _ + _)
@@ -251,46 +257,46 @@ end Paired.BranchArea.PairedRows
 
 namespace OrderedBranchPairs.EndingTours
 
-variable {bank : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet
+variable {bank : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet
   : Fin 2}
 
 /-- Sum the full original hole areas of the retained terminal tours on their actual incoming sheets. -/
 @[expose] def holeAreas (value :
   Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) :
-    {ending : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.PairEnding
-      (Hyperelliptic.Branches.BranchIsolation.Data.Index branches)} →
-      Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.EndingTours bank sheet ending → Gaussian.Basic.Canonical
+    {ending : PairEnding
+      (Data.Index branches)} →
+      EndingTours bank sheet ending → Gaussian.Basic.Canonical
   | _, .odd index _ => bank.holeArea value index sheet
   | _, .even index last _ _ => bank.holeArea value index sheet + bank.holeArea value last
-    (Hyperelliptic.Branches.BranchCutLifts.otherSheet sheet)
+    (Branches.BranchCutLifts.otherSheet sheet)
 
 /-- Sum the explicit original stem defects of the retained terminal tours. -/
 @[expose] def stemErrors (value
   : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) :
-    {ending : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.PairEnding
-      (Hyperelliptic.Branches.BranchIsolation.Data.Index branches)} →
-      Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.EndingTours bank sheet ending → Gaussian.Basic.Canonical
+    {ending : PairEnding
+      (Data.Index branches)} →
+      EndingTours bank sheet ending → Gaussian.Basic.Canonical
   | _, .odd index _ => bank.stemError value index sheet
   | _, .even index last _ _ => bank.stemError value index sheet + bank.stemError value last
-    (Hyperelliptic.Branches.BranchCutLifts.otherSheet sheet)
+    (Branches.BranchCutLifts.otherSheet sheet)
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank in
 /-- The internal area of the original terminal tours is the full retained hole-area sum plus the actual stem-error sum.
 -/
 theorem internalArea_split
   (value : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical)
-    {ending : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.PairEnding
-      (Hyperelliptic.Branches.BranchIsolation.Data.Index branches)} (tours :
-      Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.EndingTours bank sheet ending) :
+    {ending : PairEnding
+      (Data.Index branches)} (tours :
+      EndingTours bank sheet ending) :
     tours.internalArea value = tours.holeAreas value + tours.stemErrors value := by
   cases tours with
   | odd index reference =>
-      change Topology.Mesh.RetracingWords.wordArea value reference.outward.indexed = _
+      change RetracingWords.wordArea value reference.outward.indexed = _
       rw [reference.outward_eq, bank.loop_area]
       rfl
   | even index last reference terminal =>
-      change Topology.Mesh.RetracingWords.wordArea value terminal.outward.indexed +
-        Topology.Mesh.RetracingWords.wordArea value terminal.returning.indexed = _
+      change RetracingWords.wordArea value terminal.outward.indexed +
+        RetracingWords.wordArea value terminal.returning.indexed = _
       rw [terminal.outward_eq, terminal.returning_indexed, bank.loop_area, bank.loop_area]
       change _ = (_ + _) + (_ + _)
       ring1
@@ -299,25 +305,25 @@ end OrderedBranchPairs.EndingTours
 
 namespace Paired.PeriodPrograms.Prepared
 
-variable {bank : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet
-  : Fin 2} {ordered : Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank.Ordered
-  bank sheet} {paired : Hyperelliptic.Meshes.PuncturedGrid.OrderedBranchPairs.Ordered.Paired ordered}
+variable {bank : BasedBranchTours.LiftedPuncturedGrid.BasedBranchBank lifted} {sheet
+  : Fin 2} {ordered : Ordered
+  bank sheet} {paired : OrderedBranchPairs.Ordered.Paired ordered}
 
 /-- The actual residual exposes the single-lap holes and all stem defects
 before any shrinking-hole or opposite-sheet analytic estimate is applied. -/
 theorem surfaceResidual_split
-  (prepared : Hyperelliptic.Meshes.PuncturedGrid.Paired.PeriodPrograms.Prepared paired) (value :
+  (prepared : Prepared paired) (value :
   Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count → Gaussian.Basic.Canonical) :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.surfaceResidual prepared value =
+    BilinearIdentity.surfaceResidual prepared value =
       (paired.rows.holeAreas value + paired.ending.holeAreas value) +
       (paired.rows.stemErrors value + paired.ending.stemErrors value) +
-      Path.BoundaryRibbon.area (Topology.Surface.Sewing.SewingRetraction.wordValue value paired.rows.word)
-        (-Topology.Surface.Sewing.SewingRetraction.wordValue value (paired.reference.hole.liftedBoundary lifted.vertices
+      Path.BoundaryRibbon.area (SewingRetraction.wordValue value paired.rows.word)
+        (-SewingRetraction.wordValue value (paired.reference.hole.liftedBoundary lifted.vertices
         lifted.edges)) +
-      paired.ending.exteriorArea value (Topology.Surface.Sewing.SewingRetraction.wordValue value paired.rows.word) +
-      Topology.Mesh.RetracingWords.AreaTerm.total value ordered.prepared.compiled.areaTerms -
+      paired.ending.exteriorArea value (SewingRetraction.wordValue value paired.rows.word) +
+      RetracingWords.AreaTerm.total value ordered.prepared.compiled.areaTerms -
       lifted.edges.chainArea lifted.vertices value base.bank.exterior sheet := by
-  rw [Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.surfaceResidual, paired.rows.internalArea_split,
+  rw [BilinearIdentity.surfaceResidual, paired.rows.internalArea_split,
     paired.ending.internalArea_split]
   ring1
 

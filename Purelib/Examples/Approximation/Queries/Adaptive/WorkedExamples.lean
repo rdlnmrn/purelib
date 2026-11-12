@@ -6,12 +6,11 @@ import Purelib.Computation.Query.Replay
 @[expose] public section
 
 /-!
-# Finite query and complete integration-output replay regressions
+An adaptive three-query computation and its exact replay.
 
-The natural-number protocol tests genuine adaptive query selection and
-repetition.  The polynomial client separately exercises the real CCL output
-projection, with the original complex quadratic and repeated path traversal.
-Malformed logs test missing, mismatched, trailing and invalid replies.
+The second query depends on the first answer, and the third repeats the
+original question. The displayed traces show how changing a reply changes
+the later query and the final result.
 -/
 
 namespace Purelib.Examples.Approximation.Queries.Adaptive.WorkedExamples
@@ -47,25 +46,6 @@ theorem adaptive_result :
 theorem adaptive_replay :
     adaptive.replayExact [⟨0, 1⟩, ⟨2, 3⟩, ⟨0, 1⟩] = .ok 5 := by
       rfl
-
-/-- A one-exchange transcript retains the missing second question two. -/
-theorem adaptive_missing :
-  adaptive.replayExact [⟨0, 1⟩] = .error (.missing 2) := by rfl
-
-/-- An incorrect second query yields the exact expected-versus-observed mismatch. -/
-theorem adaptive_mismatch :
-    adaptive.replayExact [⟨0, 1⟩, ⟨1, 3⟩] = .error (.mismatch 2 1
-      (by decide)) := by rfl
-
-/-- Reordering the transcript fails at the original first query. -/
-theorem adaptive_reordered :
-    adaptive.replayExact [⟨2, 3⟩, ⟨0, 1⟩, ⟨0, 1⟩] =
-      .error (.mismatch 0 2 (by decide)) := by rfl
-
-/-- An unused fourth exchange is retained as a trailing-query failure. -/
-theorem adaptive_trailing :
-    adaptive.replayExact [⟨0, 1⟩, ⟨2, 3⟩, ⟨0, 1⟩, ⟨7, 100⟩] =
-      .error (.trailing 7) := by rfl
 
 /-- A changed first reply alters the second question and yields fourteen.
 

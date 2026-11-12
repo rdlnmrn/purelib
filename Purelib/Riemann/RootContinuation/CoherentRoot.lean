@@ -1,8 +1,12 @@
 module
 public import Purelib.Polynomial.Dense.Gaussian.Bounds.Box
+public import Purelib.Polynomial.Dense.Gaussian.Approximation
+import Purelib.Approximation.Gaussian.Sequence.Equivalence
+public import Purelib.Approximation.Gaussian.Sequence.Name.Exact
 import Purelib.Data.Gaussian.Norm.Basic
 public import Purelib.Approximation.Gaussian.Name.Coherent
 import Purelib.Approximation.Gaussian.Sequence
+import Purelib.Approximation.Gaussian.Sequence.Process
 import Purelib.Approximation.Rational.Geometric.Basic
 public import Purelib.Approximation.Rational.Geometric.Search
 import Purelib.Data.Gaussian.Basic
@@ -20,8 +24,18 @@ import Purelib.Polynomial.Winding.Box.Residual
 import Purelib.RootIsolation.State.WindingOne.Basic
 public import Purelib.RootIsolation.Track.Basic
 import Purelib.Tactic.Ring
+public import Purelib.Algebra.Ring.Normalization
 import Purelib.Data.Nat.Subtraction
+import Purelib.Data.List.Search
 meta import Purelib.Elab.ConstructiveInjectivity
+
+open Purelib.Data.Rat.Bounds
+
+open Purelib.Polynomial.Dense.Gaussian.Bounds
+
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Approximation.Rational.Geometric
 
 /-!
 # Coherent names from deterministic shrinking root tracks
@@ -36,6 +50,10 @@ a genuine coherent CCL name without selecting a completed root.
 
 namespace Purelib.Riemann.RootContinuation.CoherentRoot
 
+open Purelib.Approximation.Gaussian.Name.Coherent (CoherentNamed)
+
+open Purelib.Algebra.Ring
+
 section
 open Purelib.Data
 /-- The rational scalar type for root error and residual bounds. -/
@@ -47,7 +65,7 @@ end
 open Purelib.Polynomial in
 /-- The dense Gaussian polynomial type defining the root equation. -/
 public abbrev GaussianPolynomial :=
-  Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+  Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
 open Purelib.Geometry in
 /-- The rational box type retaining the root track's enclosure. -/
 public abbrev Box := Rational.Box
@@ -84,24 +102,25 @@ positive and its vertical width square nonnegative. Their original sum
 therefore has a positive rational bound. -/
 public theorem scale_positive {polynomial : GaussianPolynomial} {ambient : Box}
     (track : WindingOneTrack polynomial ambient) : 0 < scale track := by
+  rewrite [scale, Geometry.Rational.Box.diagonalSq_eq_original]
   have widthPositive : 0 < track.initial.box.widthX :=
-    Rat.Fraction.Order.Arithmetic.sub_pos_direct track.initial.proper.1
+    Arithmetic.sub_pos_direct track.initial.proper.1
   have widthSquarePositive : 0 < track.initial.box.widthX ^ 2 :=
-    Rat.Fraction.Order.Arithmetic.pow_pos_direct widthPositive 2
+    Arithmetic.pow_pos_direct widthPositive 2
   have heightSquareNonnegative :
       0 <= track.initial.box.widthY ^ 2 :=
-    Rat.Fraction.Order.Arithmetic.sq_nonneg_direct _
+    Arithmetic.sq_nonneg_direct _
   constructor
   · have sumNonnegative :=
-      Rat.Fraction.Order.Arithmetic.add_le_add_direct
-        (Rat.Fraction.Order.Arithmetic.le_of_lt_direct widthSquarePositive)
+      Arithmetic.add_le_add_direct
+        (Arithmetic.le_of_lt_direct widthSquarePositive)
         heightSquareNonnegative
     have zeroIdentity : (0 : Coordinate) + 0 = 0 := by ring1
     rwa [zeroIdentity] at sumNonnegative
   · intro sumNonpositive
     apply widthSquarePositive.2
     have widthLeSum :=
-      Rat.Fraction.Order.Arithmetic.add_le_add_direct (first :=
+      Arithmetic.add_le_add_direct (first :=
           track.initial.box.widthX ^ 2)
         (second := track.initial.box.widthX ^ 2) (third := 0)
         (fourth := track.initial.box.widthY ^ 2) le_rfl
@@ -110,7 +129,7 @@ public theorem scale_positive {polynomial : GaussianPolynomial} {ambient : Box}
         track.initial.box.widthX ^ 2 + (0 : Coordinate) =
           track.initial.box.widthX ^ 2 := by ring1
     rw [widthIdentity] at widthLeSum
-    exact Rat.Fraction.Order.Basic.Compatibility.le_trans
+    exact Basic.Compatibility.le_trans
       (track.initial.box.widthX ^ 2)
       (track.initial.box.widthX ^ 2 + track.initial.box.widthY ^ 2) 0
       widthLeSum sumNonpositive
@@ -123,7 +142,7 @@ The same initial diagonal scale is used at the successor index. This
 retained quarter-geometric target determines the next refinement request. -/
 @[expose] public def stepTarget {polynomial : GaussianPolynomial} {ambient : Box}
     (track : WindingOneTrack polynomial ambient) (index : Nat) : Coordinate :=
-  Rational.Geometric.Basic.quarterRadius (scale track) (index + 1)
+  Basic.quarterRadius (scale track) (index + 1)
 
 /-- Every recursive refinement target is strictly positive.
 
@@ -132,7 +151,7 @@ quarter-geometric value at the successor index remains positive. -/
 public theorem stepTarget_positive {polynomial : GaussianPolynomial} {ambient : Box}
     (track : WindingOneTrack polynomial ambient) (index : Nat) :
     0 < stepTarget track index :=
-  Rational.Geometric.Basic.quarterRadius_pos (scale_positive track) (index + 1)
+  Basic.quarterRadius_pos (scale_positive track) (index + 1)
 
 end
 
@@ -148,8 +167,8 @@ state retains the original polynomial and ambient box. -/
   | 0 => track.initial
   | index + 1 =>
       track.refine (state track index)
-        (Rat.Bounds.AccuracyRadius.accuracyRadius (stepTarget track index))
-        (Rat.Bounds.AccuracyRadius.accuracyRadius_pos
+        (AccuracyRadius.accuracyRadius (stepTarget track index))
+        (AccuracyRadius.accuracyRadius_pos
           (stepTarget_positive track index))
 
 /-- Each successive root box refines its immediate predecessor.
@@ -161,8 +180,8 @@ public theorem state_succ_refines {polynomial : GaussianPolynomial} {ambient : B
     (track : WindingOneTrack polynomial ambient) (index : Nat) :
     (state track (index + 1)).box.Refines (state track index).box := by
   exact track.nested (state track index)
-    (Rat.Bounds.AccuracyRadius.accuracyRadius (stepTarget track index))
-    (Rat.Bounds.AccuracyRadius.accuracyRadius_pos
+    (AccuracyRadius.accuracyRadius (stepTarget track index))
+    (AccuracyRadius.accuracyRadius_pos
       (stepTarget_positive track index))
 
 end
@@ -200,12 +219,12 @@ square bound give the corresponding quarter-geometric target. -/
 public theorem state_diagonal_le {polynomial : GaussianPolynomial} {ambient : Box}
     (track : WindingOneTrack polynomial ambient) (index : Nat) :
     (state track index).box.diagonalSq <=
-      Rational.Geometric.Basic.quarterRadius (scale track) index := by
+      Basic.quarterRadius (scale track) index := by
   cases index with
   | zero =>
       change track.initial.box.diagonalSq <=
-        Rational.Geometric.Basic.quarterRadius track.initial.box.diagonalSq 0
-      unfold Rational.Geometric.Basic.quarterRadius
+        Basic.quarterRadius track.initial.box.diagonalSq 0
+      unfold Basic.quarterRadius
       rw [pow_zero]
       have divideOne : track.initial.box.diagonalSq / 1 =
           track.initial.box.diagonalSq := by
@@ -220,10 +239,10 @@ public theorem state_diagonal_le {polynomial : GaussianPolynomial} {ambient : Bo
       rw [divideOne]
   | succ index =>
       have accurate := track.accurate (state track index)
-        (Rat.Bounds.AccuracyRadius.accuracyRadius (stepTarget track index))
-        (Rat.Bounds.AccuracyRadius.accuracyRadius_pos
+        (AccuracyRadius.accuracyRadius (stepTarget track index))
+        (AccuracyRadius.accuracyRadius_pos
           (stepTarget_positive track index))
-      have targetBound := Rat.Bounds.AccuracyRadius.accuracyRadius_sq_lt
+      have targetBound := AccuracyRadius.accuracyRadius_sq_lt
         (stepTarget_positive track index)
       exact accurate.trans targetBound.le
 
@@ -251,27 +270,152 @@ state equality certifies the same track and nominal initial state. -/
   ⟨0, ⟨fun _ => track.initial⟩, rfl⟩
 
 open Purelib.Data in
-/-- Build the next cache entry by refining the retained predecessor thunk.
+/-- Retain a checked complete original state as an actual stored cache entry.
 
-The index increases by one, and the readback proof identifies this computation with the original recursive state. -/
+The supplied equality identifies every original state field at that same
+track and index. The thunk returns this literal retained state, so later
+reads consume the completed data rather than repeat its original refinement.
+-/
+public def Entry.ofState {polynomial : GaussianPolynomial} {ambient : Box}
+    (track : WindingOneTrack polynomial ambient) (index : Nat)
+    (retained : WindingOneState polynomial ambient) (same : retained = state track index) : Entry track :=
+  ⟨index, ⟨fun _ => retained⟩, same⟩
+
+/-- A checked state cache entry retains its original index exactly. -/
+public theorem Entry.ofState_index {polynomial : GaussianPolynomial} {ambient : Box}
+    (track : WindingOneTrack polynomial ambient) (index : Nat)
+    (retained : WindingOneState polynomial ambient) (same : retained = state track index) :
+    (Entry.ofState track index retained same).index = index := by
+  unfold Entry.ofState
+  rfl
+
+/-- Reading a checked state cache entry returns the literal supplied complete state. -/
+public theorem Entry.ofState_get {polynomial : GaussianPolynomial} {ambient : Box}
+    (track : WindingOneTrack polynomial ambient) (index : Nat)
+    (retained : WindingOneState polynomial ambient) (same : retained = state track index) :
+    (Entry.ofState track index retained same).value.get = retained := by
+  unfold Entry.ofState
+  rfl
+
+/-- Build the next original entry, optionally consuming a checked retained state at that exact next index.
+
+The thunk keeps the original predecessor and total refinement on a cache
+miss. A successful ordered lookup reads the supplied entry's literal stored
+state. Neither lookup nor refinement is forced while constructing the thunk;
+the original index and complete deterministic state equation are preserved.
+-/
 @[expose] public def Entry.next {polynomial : GaussianPolynomial} {ambient : Box}
-    {track : WindingOneTrack polynomial ambient} (entry : Entry track) : Entry track where
+    {track : WindingOneTrack polynomial ambient} (entry : Entry track)
+    (cached : Option (List (Entry track)) := none) : Entry track where
   index := entry.index + 1
-  value := ⟨fun _ => track.refine entry.value.get
-    (Rat.Bounds.AccuracyRadius.accuracyRadius (stepTarget track entry.index))
-    (Rat.Bounds.AccuracyRadius.accuracyRadius_pos (stepTarget_positive track entry.index))⟩
+  value := ⟨fun _ =>
+    match cached.bind (fun entries => entries.find? (fun candidate => decide (candidate.index = entry.index + 1))) with
+    | none => track.refine entry.value.get
+        (AccuracyRadius.accuracyRadius (stepTarget track entry.index))
+        (AccuracyRadius.accuracyRadius_pos (stepTarget_positive track entry.index))
+    | some retained => retained.value.get⟩
   value_eq := by
-    change track.refine entry.value.get _ _ = state track (entry.index + 1)
-    rw [state, entry.value_eq]
+    cases cached with
+    | none =>
+        change track.refine entry.value.get _ _ = state track (entry.index + 1)
+        rw [state, entry.value_eq]
+    | some entries =>
+        cases found : entries.find? (fun candidate => decide (candidate.index = entry.index + 1)) with
+        | none =>
+            change (match entries.find? (fun candidate => decide (candidate.index = entry.index + 1)) with
+              | none => track.refine entry.value.get _ _
+              | some retained => retained.value.get) = state track (entry.index + 1)
+            rewrite [found]
+            rw [state, entry.value_eq]
+        | some retained =>
+            have accepted := Purelib.Data.List.Search.find?_eq_some_accepts_certificate found
+            have index := of_decide_eq_true accepted
+            change (match entries.find? (fun candidate => decide (candidate.index = entry.index + 1)) with
+              | none => track.refine entry.value.get _ _
+              | some retained => retained.value.get) = state track (entry.index + 1)
+            rewrite [found]
+            exact retained.value_eq.trans (congrArg (state track) index)
+
+/-- A successful ordered successor lookup consumes the literal retained complete state.
+
+The lookup remains inside the original lazy thunk. Once that thunk is read,
+the supplied successful first match is returned directly; neither its
+predecessor nor the original refinement is evaluated on this branch.
+-/
+public theorem Entry.next_get_of_find {polynomial : GaussianPolynomial} {ambient : Box}
+    {track : WindingOneTrack polynomial ambient} (entry : Entry track)
+    (entries : List (Entry track)) (retained : Entry track)
+    (found : entries.find? (fun candidate => decide (candidate.index = entry.index + 1)) = some retained) :
+    (entry.next (some entries)).value.get = retained.value.get := by
+  change (match entries.find? (fun candidate => decide (candidate.index = entry.index + 1)) with
+    | none => track.refine entry.value.get _ _
+    | some retained => retained.value.get) = retained.value.get
+  rewrite [found]
+  rfl
+
+/-- The absent cache retains the whole previous lazy successor entry and original refinement operation. -/
+public theorem Entry.next_none {polynomial : GaussianPolynomial} {ambient : Box}
+    {track : WindingOneTrack polynomial ambient} (entry : Entry track) :
+    entry.next none =
+      { index := entry.index + 1
+        value := ⟨fun _ => track.refine entry.value.get
+          (AccuracyRadius.accuracyRadius (stepTarget track entry.index))
+          (AccuracyRadius.accuracyRadius_pos (stepTarget_positive track entry.index))⟩
+        value_eq := by
+          change track.refine entry.value.get _ _ = state track (entry.index + 1)
+          rw [state, entry.value_eq] } := rfl
+
+/-- Any checked retained bank preserves the whole original successor thunk, index and specification.
+
+The successor thunk is constant in its Unit argument. The scalar original
+state equation therefore transports its complete function by congrArg;
+no function extensionality or reading-only owner identification is needed.
+-/
+public theorem Entry.next_cached_eq_default {polynomial : GaussianPolynomial} {ambient : Box}
+    {track : WindingOneTrack polynomial ambient} (entry : Entry track) (cached : Option (List (Entry track))) :
+    entry.next cached = entry.next none := by
+  have scalar := (entry.next cached).value_eq.trans (entry.next none).value_eq.symm
+  have values : (entry.next cached).value = (entry.next none).value := by
+    change (⟨fun _ => (entry.next cached).value.get⟩ : Thunk (WindingOneState polynomial ambient)) =
+      (⟨fun _ => (entry.next none).value.get⟩ : Thunk (WindingOneState polynomial ambient))
+    exact congrArg (fun value : WindingOneState polynomial ambient => (⟨fun _ => value⟩ : Thunk _)) scalar
+  cases left : entry.next cached with
+  | mk leftIndex leftValue leftEq =>
+      cases right : entry.next none with
+      | mk rightIndex rightValue rightEq =>
+          have indices : leftIndex = rightIndex :=
+            (congrArg Entry.index left).symm.trans (congrArg Entry.index right)
+          rewrite [left, right] at values
+          exact (Entry.mk.injEq leftIndex leftValue leftEq rightIndex rightValue rightEq).mpr ⟨indices, values⟩
 
 /-- Construct a finite prefix of shared root-state thunks.
 
 Building the list does not execute root refinements; each successor retains its predecessor's thunk and exact state
 equality. -/
 @[expose] public def buildPrefix {polynomial : GaussianPolynomial} {ambient : Box}
-    {track : WindingOneTrack polynomial ambient} : Nat → Entry track → List (Entry track)
-  | 0, _ => []
-  | count + 1, entry => entry :: buildPrefix count entry.next
+    {track : WindingOneTrack polynomial ambient} (count : Nat) (entry : Entry track)
+    (cached : Option (List (Entry track)) := none) : List (Entry track) :=
+  match count with
+  | 0 => []
+  | count + 1 => entry :: buildPrefix count (entry.next cached) cached
+
+/-- Every checked retained bank preserves the entire original ordered thunk prefix.
+
+The original first entry remains literal. Each successor consumes the same
+retained bank and retains its whole default-entry equality; structural list
+congruence preserves every original index, thunk and suffix in order.
+-/
+public theorem buildPrefix_cached_eq_default {polynomial : GaussianPolynomial} {ambient : Box}
+    {track : WindingOneTrack polynomial ambient} (count : Nat) (entry : Entry track)
+    (cached : Option (List (Entry track))) : buildPrefix count entry cached = buildPrefix count entry none := by
+  induction count generalizing entry with
+  | zero => rfl
+  | succ count inductionHypothesis =>
+      change entry :: buildPrefix count (entry.next cached) cached =
+        entry :: buildPrefix count (entry.next none) none
+      have tail := (inductionHypothesis (entry.next cached)).trans
+        (congrArg (fun first => buildPrefix count first none) (entry.next_cached_eq_default cached))
+      exact congrArg (List.cons entry) tail
 
 /-- The finite thunk prefix has exactly the requested length.
 
@@ -315,6 +459,48 @@ public theorem read_eq {polynomial : GaussianPolynomial} {ambient : Box}
         exact entry.value_eq.trans (congrArg (state track) equal)
       · exact ih
 
+section
+open Purelib.Approximation
+
+/-- Build an anchor approximation using the actual retained original root-state cache.
+
+Every sample reads the supplied original cache. Its entries retain their
+original-track state equations; a cache miss uses the same total track
+calculation. The geometric refinement and error guarantees are unchanged.
+-/
+@[expose] public def approximation {polynomial : GaussianPolynomial} {ambient : Box}
+    (track : WindingOneTrack polynomial ambient) (cache : List (Entry track)) : Approximation :=
+  { sample := fun index => (read track index cache).box.anchor
+    radiusSq := fun index =>
+      Basic.quarterRadius (scale track) index
+    radiusSq_nonneg := fun index =>
+      Basic.quarterRadius_nonneg
+        (scale_positive track).le index
+    later_close := by
+      intro earlier later order
+      simpa only [read_eq] using
+        ((state track earlier).box.normSq_sub_le_diagonalSq
+          ((state_refines_of_le track order).contains
+            (state track later).box.contains_anchor)
+          (state track earlier).box.contains_anchor).trans
+            (state_diagonal_le track earlier)
+    refineIndex := fun current target _ =>
+      Search.firstQuarterBelow (scale track) current target
+    refineIndex_ge := fun current target _ =>
+      Search.firstQuarterBelow_ge (scale track) current target
+    refineIndex_accurate := fun current target positive =>
+      Search.firstQuarterBelow_accurate (scale track)
+        (scale_positive track).le current target positive
+    centerBound := ambient.normSqBound
+    centerBound_nonneg := ambient.normSqBound_nonneg
+    sample_bounded := by
+      intro index
+      simpa only [read_eq] using ambient.normSq_le_normSqBound
+        ((state track index).refinesAmbient.contains
+          (state track index).box.contains_anchor) }
+
+end
+
 end StateCache
 
 section
@@ -326,34 +512,7 @@ bounds, and finite quarter-radius search supplies refinement indices. -/
 @[expose] public def approximation {polynomial : GaussianPolynomial} {ambient : Box}
     (track : WindingOneTrack polynomial ambient) : Approximation :=
   let cache := StateCache.buildPrefix 64 (StateCache.first track)
-  { sample := fun index => (StateCache.read track index cache).box.anchor
-    radiusSq := fun index =>
-      Rational.Geometric.Basic.quarterRadius (scale track) index
-    radiusSq_nonneg := fun index =>
-      Rational.Geometric.Basic.quarterRadius_nonneg
-        (scale_positive track).le index
-    later_close := by
-      intro earlier later order
-      simpa only [StateCache.read_eq] using
-        ((state track earlier).box.normSq_sub_le_diagonalSq
-          ((state_refines_of_le track order).contains
-            (state track later).box.contains_anchor)
-          (state track earlier).box.contains_anchor).trans
-            (state_diagonal_le track earlier)
-    refineIndex := fun current target _ =>
-      Rational.Geometric.Search.firstQuarterBelow (scale track) current target
-    refineIndex_ge := fun current target _ =>
-      Rational.Geometric.Search.firstQuarterBelow_ge (scale track) current target
-    refineIndex_accurate := fun current target positive =>
-      Rational.Geometric.Search.firstQuarterBelow_accurate (scale track)
-        (scale_positive track).le current target positive
-    centerBound := ambient.normSqBound
-    centerBound_nonneg := ambient.normSqBound_nonneg
-    sample_bounded := by
-      intro index
-      simpa only [StateCache.read_eq] using ambient.normSq_le_normSqBound
-        ((state track index).refinesAmbient.contains
-          (state track index).box.contains_anchor) }
+  StateCache.approximation track cache
 
 /-- Convert the deterministic root-track approximation to a coherent arithmetic CCL name.
 
@@ -398,7 +557,7 @@ diagonal scale. Those same polynomial and box observations determine
 the retained quarter-geometric residual allowance. -/
 @[expose] public def residualScale (polynomial : GaussianPolynomial) (ambient : Box)
     (track : WindingOneTrack polynomial ambient) : Coordinate :=
-  Dense.Gaussian.Bounds.Box.denseLipschitzBound polynomial ambient * scale track
+  Box.denseLipschitzBound polynomial ambient * scale track
 
 end
 
@@ -411,8 +570,8 @@ are positive. Their original rational product is therefore nonnegative. -/
 public theorem residualScale_nonneg (polynomial : GaussianPolynomial) (ambient : Box)
     (track : WindingOneTrack polynomial ambient) :
     0 <= residualScale polynomial ambient track :=
-  Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos polynomial ambient).le
+  Arithmetic.mul_nonneg_direct
+    (Box.denseLipschitzBound_pos polynomial ambient).le
     (scale_positive track).le
 
 open Purelib.Approximation in
@@ -425,9 +584,9 @@ by the ambient residual scale times quarter-geometric decay. -/
 public theorem sample_residual_le {polynomial : GaussianPolynomial} {ambient : Box}
     (track : WindingOneTrack polynomial ambient)
     (degreePositive : 0 < polynomial.natDegree) (index : Nat) :
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         (polynomial.eval ((approximation track).sample index)) <=
-      Rational.Geometric.Basic.quarterRadius
+      Basic.quarterRadius
         (residualScale polynomial ambient track) index := by
   have residual :=
     Winding.Box.Residual.anchor_residual_le_of_quadrupledBoxWinding_ne_zero
@@ -436,29 +595,32 @@ public theorem sample_residual_le {polynomial : GaussianPolynomial} {ambient : B
         rw [(state track index).rawWindingFour]
         decide)
   have scaledDiagonal :
-      Dense.Gaussian.Bounds.Box.denseLipschitzBound polynomial ambient *
+      Box.denseLipschitzBound polynomial ambient *
           (state track index).box.diagonalSq <=
-        Dense.Gaussian.Bounds.Box.denseLipschitzBound polynomial ambient *
-          Rational.Geometric.Basic.quarterRadius (scale track) index :=
-    Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Box.denseLipschitzBound polynomial ambient *
+          Basic.quarterRadius (scale track) index :=
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       (state_diagonal_le track index)
-      (Dense.Gaussian.Bounds.Box.denseLipschitzBound_pos
+      (Box.denseLipschitzBound_pos
         polynomial ambient).le
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq
         (polynomial.eval ((approximation track).sample index)) <=
-        Dense.Gaussian.Bounds.Box.Residual.anchorResidualBound polynomial ambient
+        Box.Residual.anchorResidualBound polynomial ambient
           (state track index).box := by
       simpa only [approximation_sample] using residual
-    _ <= Dense.Gaussian.Bounds.Box.denseLipschitzBound polynomial ambient *
-          Rational.Geometric.Basic.quarterRadius (scale track) index :=
+    _ <= Box.denseLipschitzBound polynomial ambient *
+          Basic.quarterRadius (scale track) index :=
       scaledDiagonal
-    _ = Rational.Geometric.Basic.quarterRadius
+    _ = Basic.quarterRadius
           (residualScale polynomial ambient track) index := by
-      rw [Rational.Geometric.Basic.quarterRadius_eq_mul_pow,
-        Rational.Geometric.Basic.quarterRadius_eq_mul_pow]
+      rw [Basic.quarterRadius_eq_mul_pow,
+        Basic.quarterRadius_eq_mul_pow]
       unfold residualScale
       ring1
+
+open Purelib.Approximation.Gaussian
+open Purelib.Approximation.Rational
 
 open Purelib.Approximation in
 open Purelib.Data in
@@ -469,29 +631,222 @@ The positive degree and pointwise geometric evaluation bound certify the display
 root. -/
 public structure CertifiedName {polynomial : GaussianPolynomial} {ambient : Box}
     (track : WindingOneTrack polynomial ambient) where
+  /-- The actual shared original root-state thunk prefix consumed by the approximation. -/
+  stateCache : List (StateCache.Entry track)
+  /-- The retained prefix is the original deterministic 64-entry cache construction. -/
+  stateCache_eq : stateCache = StateCache.buildPrefix 64 (StateCache.first track)
+  /-- The actual retained anchor approximation and its shared root-state cache. -/
+  approximation : Approximation
+  /-- The approximation reads the same actual retained original state cache. -/
+  approximation_cache : approximation = StateCache.approximation track stateCache
+  /-- The retained approximation is the original deterministic root-track construction. -/
+  approximation_eq : approximation = CoherentRoot.approximation track
   /-- The retained coherent arithmetic name. -/ value : CoherentNamed
+  /-- The original name consumes this exact retained approximation. -/
+  value_approximation : value = CoherentNamed.ofApproximation approximation
   /-- The retained name is exactly the name built from this root track. -/ value_eq : value = named track
   /-- The defining polynomial has strictly positive natural degree. -/ degreePositive : 0 < polynomial.natDegree
   /-- Every finite sample satisfies the displayed quarter-geometric polynomial-residual bound. -/ residual : forall
     index,
-    Data.Gaussian.Norm.Basic.normSq
-        (polynomial.eval ((approximation track).sample index)) <=
-      Rational.Geometric.Basic.quarterRadius
+    Gaussian.Norm.Basic.normSq
+        (polynomial.eval ((CoherentRoot.approximation track).sample index)) <=
+      Geometric.Basic.quarterRadius
         (residualScale polynomial ambient track) index
 
 constructive_injectivity CertifiedName
 
-/-- Package the track's coherent name, positive degree and geometric residual proof.
+/-- Construct the complete original root from a retained whole-identical cache prefix.
 
-The retained coherent name is exactly the name constructed from the
-same track. Its positive-degree witness and every finite sample
-residual certificate are stored with that original name. -/
+The exact prefix equality transports the original approximation and coherent
+name records. All stored fields consume that same actual cache, with the
+original positive degree and pointwise residual certificate retained. -/
+@[expose] public def CertifiedName.ofCache {polynomial : GaussianPolynomial} {ambient : Box}
+    (track : WindingOneTrack polynomial ambient) (degreePositive : 0 < polynomial.natDegree)
+    (cached : {entries : List (StateCache.Entry track) //
+      entries = StateCache.buildPrefix 64 (StateCache.first track)}) : CertifiedName track :=
+  let retained := StateCache.approximation track cached.val
+  have approximationEq : retained = CoherentRoot.approximation track :=
+    congrArg (StateCache.approximation track) cached.property
+  { stateCache := cached.val
+    stateCache_eq := cached.property
+    approximation := retained
+    approximation_cache := rfl
+    approximation_eq := approximationEq
+    value := CoherentNamed.ofApproximation retained
+    value_approximation := rfl
+    value_eq := congrArg CoherentNamed.ofApproximation approximationEq
+    degreePositive := degreePositive
+    residual := sample_residual_le track degreePositive }
+
+/-- Package the original root using its lazy prefix and an optional checked completed-state bank.
+
+The same original prefix builder consumes the supplied actual entries. A
+cache miss retains the original lazy refinement, while whole prefix equality
+keeps every original root, channel and residual owner unchanged.
+-/
 @[expose] public def certifiedName {polynomial : GaussianPolynomial} {ambient : Box}
-    (track : WindingOneTrack polynomial ambient)
-    (degreePositive : 0 < polynomial.natDegree) : CertifiedName track where
-  value := named track
-  value_eq := rfl
-  degreePositive := degreePositive
-  residual := sample_residual_le track degreePositive
+    (track : WindingOneTrack polynomial ambient) (degreePositive : 0 < polynomial.natDegree)
+    (cached : Option (List (StateCache.Entry track)) := none) : CertifiedName track :=
+  CertifiedName.ofCache track degreePositive
+    ⟨StateCache.buildPrefix 64 (StateCache.first track) cached,
+      StateCache.buildPrefix_cached_eq_default 64 (StateCache.first track) cached⟩
+
+/-- A checked retained bank preserves the complete original certified root, channel and cache prefix.
+
+The actual stored bank is consumed by the original prefix builder. Its whole
+prefix equality transports the full approximation and coherent-name records,
+retaining every original parent, state equation and residual certificate.
+-/
+public theorem certifiedName_cached_eq_default {polynomial : GaussianPolynomial} {ambient : Box}
+    (track : WindingOneTrack polynomial ambient) (degreePositive : 0 < polynomial.natDegree)
+    (cached : Option (List (StateCache.Entry track))) :
+    certifiedName track degreePositive cached = certifiedName track degreePositive none := by
+  unfold certifiedName
+  apply congrArg (CertifiedName.ofCache track degreePositive)
+  apply Subtype.ext
+  exact StateCache.buildPrefix_cached_eq_default 64 (StateCache.first track) cached
+
+/-- The absent retained bank preserves every field of the original root construction. -/
+public theorem certifiedName_none {polynomial : GaussianPolynomial} {ambient : Box}
+    (track : WindingOneTrack polynomial ambient) (degreePositive : 0 < polynomial.natDegree) :
+    certifiedName track degreePositive none =
+      (let stateCache := StateCache.buildPrefix 64 (StateCache.first track)
+       let retained := StateCache.approximation track stateCache
+       { stateCache := stateCache
+         stateCache_eq := rfl
+         approximation := retained
+         approximation_cache := rfl
+         approximation_eq := rfl
+         value := CoherentNamed.ofApproximation retained
+         value_approximation := rfl
+         value_eq := rfl
+         degreePositive := degreePositive
+         residual := sample_residual_le track degreePositive }) := rfl
+
+namespace CertifiedName
+
+/-- Read the exact original approximation index represented by an actual original root-name process state.
+
+The complete channel-defining equality transports only the process-state
+type. No index is inferred from a numerical reading or operational agreement,
+and the original supplied process state is consumed literally.
+-/
+public def stateIndex {polynomial : GaussianPolynomial} {ambient : Box}
+    {track : WindingOneTrack polynomial ambient} (certificate : CertifiedName track)
+    (actual : certificate.value.name.process.State) : Nat :=
+  Eq.mp (congrArg (fun value : CoherentNamed => value.name.process.State) certificate.value_approximation) actual
+
+/-- Equality to an original sequence-backed channel transports its scalar refinement-index bound. -/
+private theorem stateIndex_refine_ge_of_eq (approximation : Approximation) (channel : CoherentNamed)
+    (same : channel = CoherentNamed.ofApproximation approximation)
+    (current : channel.name.process.State) (target : Coordinate) (positive : 0 < target) :
+    (show Nat from Eq.mp (congrArg (fun value : CoherentNamed => value.name.process.State) same) current) ≤
+      (show Nat from Eq.mp (congrArg (fun value : CoherentNamed => value.name.process.State) same)
+        (channel.name.process.refine current target positive)) := by
+  cases same
+  exact approximation.refineIndex_ge current target positive
+
+/-- Refining the actual original root-name state preserves its retained raw-index floor.
+
+The original whole-channel equation transports the exact supplied state and
+refinement. The original approximation's scalar refinement bound then applies
+without identifying channels from numerical readings.
+-/
+public theorem stateIndex_refine_ge {polynomial : GaussianPolynomial} {ambient : Box}
+    {track : WindingOneTrack polynomial ambient} (certificate : CertifiedName track)
+    (current : certificate.value.name.process.State) (target : Coordinate) (positive : 0 < target) :
+    certificate.stateIndex current ≤
+      certificate.stateIndex (certificate.value.name.process.refine current target positive) :=
+  stateIndex_refine_ge_of_eq certificate.approximation certificate.value certificate.value_approximation
+    current target positive
+
+/-- Read an original root state from the certificate's actual shared cache. -/
+@[expose] public def stateAt {polynomial : GaussianPolynomial} {ambient : Box}
+    {track : WindingOneTrack polynomial ambient} (certificate : CertifiedName track) (index : Nat) :
+    WindingOneState polynomial ambient :=
+  StateCache.read track index certificate.stateCache
+
+/-- A retained cache read is the original deterministic root state at the requested index. -/
+public theorem stateAt_eq {polynomial : GaussianPolynomial} {ambient : Box}
+    {track : WindingOneTrack polynomial ambient} (certificate : CertifiedName track) (index : Nat) :
+    certificate.stateAt index = state track index := StateCache.read_eq track index certificate.stateCache
+
+/-- The actual retained approximation sample is the anchor of its same cached original state. -/
+public theorem sample_stateAt {polynomial : GaussianPolynomial} {ambient : Box}
+    {track : WindingOneTrack polynomial ambient} (certificate : CertifiedName track) (index : Nat) :
+    certificate.approximation.sample index = (certificate.stateAt index).box.anchor := by
+  rewrite [certificate.approximation_cache]
+  rfl
+
+/-- Every sample of the retained original root approximation lies in its original ambient box. -/
+public theorem sample_inside {polynomial : GaussianPolynomial} {ambient : Box}
+    {track : WindingOneTrack polynomial ambient} (certificate : CertifiedName track) (index : Nat) :
+    ambient.Contains (certificate.approximation.sample index) := by
+  rewrite [certificate.approximation_eq, approximation_sample]
+  exact (state track index).refinesAmbient.contains (state track index).box.contains_anchor
+
+/-- Every actual cached root sample remains inside its same original initial owner box.
+
+The deterministic state refines the original initial state. Its anchor is
+the retained approximation reading, so the same refinement transports its
+containment without rebuilding the root cache.
+-/
+public theorem sample_initial_inside {polynomial : GaussianPolynomial} {ambient : Box}
+    {track : WindingOneTrack polynomial ambient} (certificate : CertifiedName track) (index : Nat) :
+    track.initial.box.Contains (certificate.approximation.sample index) := by
+  rewrite [certificate.approximation_eq, approximation_sample]
+  exact (state_refines_of_le track (Nat.zero_le index)).contains (state track index).box.contains_anchor
+
+/-- Every possible reading at the original root name belongs to its same original initial box.
+
+The defining whole-channel equality identifies the original sequence-backed
+process. Its possibility witness is an actual later retained approximation
+sample, whose deterministic state refines that original initial box.
+-/
+public theorem possible_initial_inside {polynomial : GaussianPolynomial} {ambient : Box}
+    {track : WindingOneTrack polynomial ambient} (certificate : CertifiedName track) {value : Gaussian}
+    (possible : certificate.value.name.process.Possible certificate.value.name.state value) :
+    track.initial.box.Contains value := by
+  rewrite [certificate.value_approximation] at possible
+  change certificate.approximation.Possible 0 value at possible
+  rcases possible with ⟨later, _order, rfl⟩
+  exact certificate.sample_initial_inside later
+
+/-- Evaluate the defining polynomial using the certificate's actual retained root approximation.
+
+The original root-state cache remains the input to every evaluation sample and
+refinement. Coefficient-derived bounds supply the polynomial output allowance.
+-/
+@[expose] public def evaluation {polynomial : GaussianPolynomial} {ambient : Box}
+    {track : WindingOneTrack polynomial ambient} (certificate : CertifiedName track) : Approximation :=
+  Polynomial.Dense.Gaussian.Approximation.evaluate polynomial ambient certificate.approximation
+    certificate.sample_inside
+
+/-- The defining polynomial's retained evaluation is operationally zero at every requested tolerance.
+
+The existing original-track residual certificate supplies the geometric scale.
+The comparison computes finite later indices for both independent starts and
+bounds every permitted later sample; no sample is claimed to be an exact root.
+-/
+@[expose] public def evaluation_zero {polynomial : GaussianPolynomial} {ambient : Box}
+    {track : WindingOneTrack polynomial ambient} (certificate : CertifiedName track) :
+    Equivalence.NamedEquivalent certificate.evaluation.toNamed
+      (CoherentNamed.Coherence.exact 0).name := by
+  have residual : ∀ index, Purelib.Data.Gaussian.Norm.Basic.normSq
+      (certificate.evaluation.sample index - 0) ≤
+        Geometric.Basic.quarterRadius (residualScale polynomial ambient track) index := by
+    intro index
+    change Purelib.Data.Gaussian.Norm.Basic.normSq
+      (polynomial.eval (certificate.approximation.sample index) - 0) ≤ _
+    rewrite [Normalization.sub_zero, certificate.approximation_eq]
+    exact certificate.residual index
+  exact Equivalence.NamedEquivalent.trans
+    (Equivalence.Equivalent.toNamed
+      (Sequence.Equivalence.equivalent_constant certificate.evaluation 0
+        (residualScale polynomial ambient track) (residualScale_nonneg polynomial ambient track) residual))
+    (Equivalence.NamedEquivalent.symm
+      (Sequence.Name.Exact.exact_toConstantNamed 0))
+
+end CertifiedName
 
 end Purelib.Riemann.RootContinuation.CoherentRoot

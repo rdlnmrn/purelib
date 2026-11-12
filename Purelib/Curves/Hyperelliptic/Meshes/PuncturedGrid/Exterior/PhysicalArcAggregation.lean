@@ -39,6 +39,8 @@ import Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian
+
 open Purelib
 
 open Purelib.Algebra
@@ -87,13 +89,13 @@ open Purelib.Riemann.Normalization
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
 
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_sub)
@@ -101,34 +103,34 @@ open Purelib.Data.Gaussian.Norm.Basic (normSq_neg)
 
 /-- Convert the ascending physical side sample to the occurrence orientation, then restore the chord retained by the
 literal cap-arc comparison. -/
-@[expose] def physicalArcValue (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential)
+@[expose] def physicalArcValue (occurrence : SurfaceOccurrence regular domains differential)
     {stage : Nat} {box otherBox : Rational.Box}
     (sample : Primitives.Sample cap differential stage box)
-    (otherSample : Primitives.Sample cap other stage otherBox) (physical : Data.Gaussian.Basic.Canonical) : Gaussian :=
+    (otherSample : Primitives.Sample cap other stage otherBox) (physical : Basic.Canonical) : Gaussian :=
   (if SurfaceOccurrence.sourceForward occurrence then physical else -physical) +
     PairedArcRequest.conjugateChordValue occurrence sample otherSample
 
 /-- The two physical-side theorems differ only by this explicitly retained sign. -/
-@[expose] def physicalArcError (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential)
+@[expose] def physicalArcError (occurrence : SurfaceOccurrence regular domains differential)
     {stage : Nat} {box otherBox : Rational.Box}
     (sample : Primitives.Sample cap differential stage box)
-    (otherSample : Primitives.Sample cap other stage otherBox) (depth : Nat) (physical : Data.Gaussian.Basic.Canonical)
+    (otherSample : Primitives.Sample cap other stage otherBox) (depth : Nat) (physical : Basic.Canonical)
       : Gaussian :=
   let centered := PairedArcRequest.conjugateArcValue occurrence sample otherSample depth -
     PairedArcRequest.conjugateChordValue occurrence sample otherSample
   if SurfaceOccurrence.sourceForward occurrence then physical - centered else physical + centered
 
 /-- Restoring the retained occurrence sign and chord preserves the squared physical-to-arc error. -/
-theorem physicalArcValue_error (occurrence : ExteriorProgram.SurfaceOccurrence regular domains differential)
+theorem physicalArcValue_error (occurrence : SurfaceOccurrence regular domains differential)
     {stage : Nat} {box otherBox : Rational.Box}
     (sample : Primitives.Sample cap differential stage box)
-    (otherSample : Primitives.Sample cap other stage otherBox) (depth : Nat) (physical : Data.Gaussian.Basic.Canonical)
+    (otherSample : Primitives.Sample cap other stage otherBox) (depth : Nat) (physical : Basic.Canonical)
       :
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
       (physicalArcValue occurrence sample
       otherSample physical -
       PairedArcRequest.conjugateArcValue occurrence sample otherSample depth) =
-    Data.Gaussian.Norm.Basic.normSq
+    Norm.Basic.normSq
       (physicalArcError occurrence sample
       otherSample depth physical) := by
   cases direction : SurfaceOccurrence.sourceForward occurrence with
@@ -137,46 +139,46 @@ theorem physicalArcValue_error (occurrence : ExteriorProgram.SurfaceOccurrence r
       physicalArcError]
     rw [direction]
     rewrite [if_pos (Eq.refl true), if_pos (Eq.refl true)]
-    apply congrArg Data.Gaussian.Norm.Basic.normSq
+    apply congrArg Norm.Basic.normSq
     ring1
   | false =>
     simp only [physicalArcValue,
       physicalArcError]
     rw [direction]
     rewrite [if_neg (show ¬false = true from by decide), if_neg (show ¬false = true from by decide)]
-    have scalar (a b c : Data.Gaussian.Basic.Canonical) : -a + b - c = -(a + (c - b)) := by ring1
-    rw [scalar, Data.Gaussian.Norm.Basic.normSq_neg]
+    have scalar (a b c : Basic.Canonical) : -a + b - c = -(a + (c - b)) := by ring1
+    rw [scalar, Norm.Basic.normSq_neg]
 
 namespace PhysicalSourceRequest
 variable {prepared :
-  SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+  ExteriorProgram.AllSurfacePreparation
   regular domains differential} {target : Rational} {minimum floor : Nat}
-  {stage depth : Nat} {box otherBox : Purelib.Geometry.Rational.Box}
+  {stage depth : Nat} {box otherBox : Rational.Box}
 
 /-- Sum the actual occurrence-level physical comparisons at the common arc depth. The finite family budget pays both
 factors of its retained count. -/
 theorem physical_arc_error (request : PhysicalSourceRequest prepared other target minimum floor)
     (sample : Primitives.Sample cap differential stage box)
     (otherSample : Primitives.Sample cap other stage otherBox)
-    (physical : Fin prepared.occurrences.length → Data.Gaussian.Basic.Canonical)
-    (accurate : ∀ i, Data.Gaussian.Norm.Basic.normSq
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalArcAggregation.physicalArcError
+    (physical : Fin prepared.occurrences.length → Basic.Canonical)
+    (accurate : ∀ i, Norm.Basic.normSq
+      (PhysicalArcAggregation.physicalArcError
       (prepared.occurrences[i.val]'i.isLt)
       sample otherSample depth (physical i)) < request.allowance) :
-    Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun i =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalArcAggregation.physicalArcValue
+    Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun i =>
+      PhysicalArcAggregation.physicalArcValue
       (prepared.occurrences[i.val]'i.isLt) sample otherSample (physical i)) -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.occurrences.map (fun occurrence =>
+      Basic.gaussianSum (prepared.occurrences.map (fun occurrence =>
         PairedArcRequest.conjugateArcValue occurrence sample otherSample depth))) < target := by
   have bound := Indexed.normSq_sumFin_le
     (fun i : Fin prepared.occurrences.length =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalArcAggregation.physicalArcValue
+      PhysicalArcAggregation.physicalArcValue
         (prepared.occurrences[i.val]'i.isLt) sample otherSample (physical i) -
         PairedArcRequest.conjugateArcValue (prepared.occurrences[i.val]'i.isLt) sample otherSample depth)
     request.allowance (fun i =>
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalArcAggregation.physicalArcValue_error _ sample
+      (PhysicalArcAggregation.physicalArcValue_error _ sample
       otherSample depth (physical i)).trans_le (accurate i).le)
-  have readback := Data.Gaussian.Norm.Sum.Indexed.sumFin_eq_gaussianSum
+  have readback := Indexed.sumFin_eq_gaussianSum
     (fun i : Fin prepared.occurrences.length => PairedArcRequest.conjugateArcValue
       (prepared.occurrences[i.val]'i.isLt) sample otherSample depth)
   have mapped := Data.List.OfFn.Basic.map_ofFn
@@ -196,16 +198,16 @@ theorem physical_arc_error (request : PhysicalSourceRequest prepared other targe
 reciprocal primitive samples. -/
 theorem physical_attachment_arc_error (request : PhysicalSourceRequest prepared other target
   minimum floor)
-    (attached : AllSurfacePreparation.CapAttachment prepared)
+    (attached : CapAttachment prepared)
     (sample : Primitives.Sample cap differential stage box)
     (otherSample : Primitives.Sample cap other stage otherBox)
-    (physical : Fin prepared.occurrences.length → Data.Gaussian.Basic.Canonical)
-    (accurate : ∀ i, Data.Gaussian.Norm.Basic.normSq
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalArcAggregation.physicalArcError
+    (physical : Fin prepared.occurrences.length → Basic.Canonical)
+    (accurate : ∀ i, Norm.Basic.normSq
+      (PhysicalArcAggregation.physicalArcError
       (prepared.occurrences[i.val]'i.isLt)
       sample otherSample depth (physical i)) < request.allowance) :
-    Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun i =>
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalArcAggregation.physicalArcValue
+    Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun i =>
+      PhysicalArcAggregation.physicalArcValue
       (prepared.occurrences[i.val]'i.isLt) sample otherSample (physical i)) -
       CellBoundary.sumValues (fun word => CellBoundary.sumValues (fun edge => Bilinear.arcArea
         (fun point => ConjugateIncrementComparison.conjugateFirst

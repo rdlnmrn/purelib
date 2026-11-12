@@ -101,33 +101,33 @@ open Purelib.Data.Rat.Fraction.Compatibility
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
     Fraction.Rational}
-  (allocated : Hyperelliptic.Meshes.Newton.AllHoles.FineAreaRequests.FamilyFineAreaRequest preparation target radius)
+  (allocated : AllHoles.FineAreaRequests.FamilyFineAreaRequest preparation target radius)
   {lifted : Meshes.LiftedPuncturedGrid allocated.family.single.grid.punctured} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+    PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
     allocated.family.single.grid.faces.regulars}
   {stage : Nat} {cache : RootContinuation.NewtonObservationLocalEnergy.LocalMeshes.Numerics domains stage}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap}
   {fixed : (sheet : Fin 2) → RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet} {surfaceTarget
     physicalTarget : Fraction.Rational}
   {minimum floor coarseDepth : Nat}
-  {preparations : Hyperelliptic.Meshes.PuncturedGrid.Exterior.BasisArcRequest.BasisArcPreparations regular domains}
+  {preparations : PuncturedGrid.Exterior.BasisArcRequest.BasisArcPreparations regular domains}
   {observations : RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {partitions :
     Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations allocated.family.single.grid}
   (shared : Branches.NewtonSharedExteriorCuts.SharedExteriorCuts partitions preparations)
-  {initialWhole : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains shared.source.cuts sheet
+  {initialWhole : PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+    PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains shared.source.cuts sheet
     coarseDepth) fixed surfaceTarget}
   {surfaceFixed : (sheet : Fin 2) → RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet}
   {pieceDepth : Nat} {error : Fraction.Rational}
   {initialPieces : Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests
-    (fun sheet => Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains shared.surface
+    (fun sheet => Surface.MeshCompatibility.surfaceMeshes partitions domains shared.surface
       sheet pieceDepth) surfaceFixed error}
   (schedule : Topology.NewtonPhysicalSurfaceSchedule.PhysicalSurfaceSchedule preparations initialWhole initialPieces
     physicalTarget minimum floor)
@@ -145,18 +145,18 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
       schedule.physical cache coefficients position sheet)
   (wholePerimeters : (position : Fin allocated.family.single.grid.faces.regulars.length) → (sheet : Fin 2) → (whole
     position sheet).Perimeter)
-  {differential : Hyperelliptic.Differentials.Basic.Differential genus}
+  {differential : Differentials.Basic.Differential genus}
   {prepared :
     PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
     regular domains differential}
-  (attached : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared)
+  (attached : PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared)
   {box : Rational.Box} {polynomials :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box}
-  {bounds : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisBounds.RegularBasisBounds polynomials} {capTarget :
+    PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box}
+  {bounds : PuncturedGrid.Exterior.CapBasisBounds.RegularBasisBounds polynomials} {capTarget :
     Fraction.Rational} {capMinimum : Nat}
-  (capRequest : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisRequest.RegularBasisRequest bounds
+  (capRequest : PuncturedGrid.Exterior.CapBasisRequest.RegularBasisRequest bounds
     attached.caps.length capTarget capMinimum)
-  {geometry : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
+  {geometry : PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
     attached}
   {parameters : Path.Dyadic.RadialTriangles.Parameters capRequest.depth}
 
@@ -165,19 +165,19 @@ include faces whole wholePerimeters
 /-- The paid annular-complement comparison and scheduled physical cap bound
 control the same remaining centered boundary, including its cached endpoints. -/
 theorem remaining_cap_energy_upper
-    {excision : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision allocated.family.single.grid lifted}
+    {excision : AllHoles.Excision.AllHoleExcision allocated.family.single.grid lifted}
       {remainingFloor : Nat}
-    (remaining : Hyperelliptic.Meshes.Newton.Complement.BandBoundary.SynchronizedSurfaceRequests.RemainingBandRequest
+    (remaining : BandBoundary.SynchronizedSurfaceRequests.RemainingBandRequest
       (grid := allocated.family.single.grid) excision traces remainingFloor)
     (remainingLater : remaining.index ≤ stage)
     (entries : schedule.physical.Readings cache) (physicalFaces : schedule.physical.FacePerimeterBank cache)
-    (attachments : Data.Vector.DependentVector (fun first =>
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment
+    (attachments : Vector.DependentVector (fun first =>
+      PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment
       (schedule.basis.preparations.get first)))
     (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank allocated.family.single.grid.faces)
     (evaluated : schedule.basis.Evaluations polynomials capRequest.depth)
     (later : schedule.index ≤ stage) (spatial : schedule.basis.depth ≤ capRequest.depth)
-    (caps : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisAggregate.RegularBasisCap geometry parameters
+    (caps : PuncturedGrid.Exterior.CapBasisAggregate.RegularBasisCap geometry parameters
       polynomials)
     (capSample : (capRequest.certify caps).Evaluation coefficients)
     (physicalAllowance : Fraction.Rational) (physicalNonnegative : 0 ≤ physicalAllowance)
@@ -185,7 +185,7 @@ theorem remaining_cap_energy_upper
     {remainingAllowance : Fraction.Rational} (remainingPositive : 0 < remainingAllowance)
     (remainingPaid : target ≤
       BoundaryBudget.ProtectedObservations.SynchronizedSurfaceRequests.remainingBoundaryTarget
-      genus (Hyperelliptic.Meshes.Newton.Annulus.AreaRequests.NewtonPreparation.outerCount preparation)
+      genus (Annulus.AreaRequests.NewtonPreparation.outerCount preparation)
       remainingAllowance) :
 
       (CenteredBoundary.SynchronizedSurfaceRequests.PerimeterSamples.remainingBoundaryCentered

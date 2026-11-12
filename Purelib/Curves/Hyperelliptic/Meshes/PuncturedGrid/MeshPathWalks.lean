@@ -75,18 +75,18 @@ open Purelib.Riemann.Meshes.PuncturedGridFaces (PuncturedFaces)
 open Purelib.Riemann.Meshes.GridLiftedMesh (LiftedMesh LiftedFaces)
 open Purelib.Topology.Surface.Cut.JumpPaths
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {vertices :
-    Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {faces : Purelib.Riemann.Meshes.PuncturedGridFaces.PuncturedFaces bank}
+    RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank bank.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+  {faces : PuncturedFaces bank}
 
 set_option genInjectivity false in
 /-- The retained original face location and orientation used to route one supported indexed mesh edge. -/
-inductive EdgeRoute (mesh : GridLiftedMesh.LiftedMesh vertices edges faces) (edge : Stokes.OrientedEdge vertices.count)
+inductive EdgeRoute (mesh : LiftedMesh vertices edges faces) (edge : OrientedEdge vertices.count)
   where
   /-- Retain the original forward supported edge occurrence and its exact lifted-face location. -/ | forward (location :
     LiftedFaces.EdgeLocation mesh.lifts edge)
@@ -97,50 +97,50 @@ constructive_injectivity EdgeRoute
 
 namespace EdgeRoute
 
-variable {mesh : Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges faces} {edge :
-  Purelib.Topology.Polygon.Stokes.OrientedEdge vertices.count}
+variable {mesh : LiftedMesh vertices edges faces} {edge :
+  OrientedEdge vertices.count}
 
 /-- Locate the original supported oriented mesh edge or its reverse in the retained lifted-face bank. -/
-@[expose] def build (mesh : GridLiftedMesh.LiftedMesh vertices edges faces) (edge : Stokes.OrientedEdge vertices.count)
+@[expose] def build (mesh : LiftedMesh vertices edges faces) (edge : OrientedEdge vertices.count)
     (supported : edge ∈ Stokes.triangleEdgeOccurrences mesh.triangulation.faces ∨
       edge.reverse ∈ Stokes.triangleEdgeOccurrences mesh.triangulation.faces) :
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute mesh edge :=
+        EdgeRoute mesh edge :=
   if member : edge ∈ Stokes.triangleEdgeOccurrences mesh.triangulation.faces then .forward (mesh.locateEdge edge member)
   else .backward (mesh.locateEdge edge.reverse (supported.resolve_left member))
 
 /-- Read the retained original face route as a root grid walk in the requested edge orientation. -/
-@[expose] def walk : Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute mesh edge → Vertex.VertexWalk
+@[expose] def walk : EdgeRoute mesh edge → VertexWalk
   vertices edges edge.start edge.finish
   | .forward location => location.walk
   | .backward location => location.walk.reverse (fun point member => (BranchCellBank.referenceAt bank point
     member).toLoop)
 
 /-- Read the retained original rectangle detour word in the requested edge orientation. -/
-@[expose] def detour : Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute mesh edge → List
-  (Stokes.OrientedEdge vertices.count)
+@[expose] def detour : EdgeRoute mesh edge → List
+  (OrientedEdge vertices.count)
   | .forward location => location.lifted.quad.detour location.kind
   | .backward location => CutPath.reverse (location.lifted.quad.detour location.kind)
 
 /-- The retained original edge route reads back exactly its indexed detour word. -/
-theorem walk_indexed (route : Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute mesh edge) :
+theorem walk_indexed (route : EdgeRoute mesh edge) :
   route.walk.indexed = route.detour := by
   cases route with
   | forward location => exact location.walk_indexed
   | backward location => exact congrArg CutPath.reverse location.walk_indexed
 
 /-- Each retained original mesh-edge detour contains at most two grid sides. -/
-theorem detour_length_le (route : Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute mesh edge) :
+theorem detour_length_le (route : EdgeRoute mesh edge) :
   route.detour.length ≤ 2 := by
   cases route with
   | forward location => exact RectangleDetours.detour_length_le location.lifted.quad location.kind
   | backward location =>
-      simpa only [Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute.detour, CutPath.reverse,
+      simpa only [EdgeRoute.detour, CutPath.reverse,
         Data.List.Map.length_map, Data.List.Reverse.length_reverse] using
         RectangleDetours.detour_length_le location.lifted.quad location.kind
 
 /-- The retained detour word preserves the exact original indexed edge endpoints. -/
-theorem detour_endpoints (route : Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute mesh edge) :
-    PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish route.detour edge.start edge.finish := by
+theorem detour_endpoints (route : EdgeRoute mesh edge) :
+    PathEndpoints OrientedEdge.start OrientedEdge.finish route.detour edge.start edge.finish := by
   cases route with
   | forward location =>
       exact ((RectangleDetours.detour_endpoints location.lifted.quad location.kind).castStart
@@ -150,7 +150,7 @@ theorem detour_endpoints (route : Curves.Hyperelliptic.Meshes.PuncturedGrid.Mesh
         (congrArg OrientedEdge.start location.edge_eq)).castFinish (congrArg OrientedEdge.finish location.edge_eq))
 
 /-- The retained edge detour remains supported by the original mesh triangle-edge list. -/
-theorem detour_supported (route : Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute mesh edge) :
+theorem detour_supported (route : EdgeRoute mesh edge) :
     CutPath.Supported (Stokes.triangleEdgeOccurrences mesh.triangulation.faces) route.detour := by
   rw [mesh.triangleEdges_eq]
   cases route with
@@ -167,98 +167,98 @@ end EdgeRoute
 set_option genInjectivity false in
 /-- An original-order spine retaining the chosen face location and orientation of every supported mesh-edge occurrence.
 -/
-inductive RouteSpine (mesh : GridLiftedMesh.LiftedMesh vertices edges faces) : List (Stokes.OrientedEdge vertices.count)
+inductive RouteSpine (mesh : LiftedMesh vertices edges faces) : List (OrientedEdge vertices.count)
   → Type
   /-- The empty original supported mesh word has an empty retained route spine. -/ | nil :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh []
+    RouteSpine mesh []
   /-- Retain the original head mesh-edge route followed by the exact original word tail. -/ | cons {edge :
-    Stokes.OrientedEdge vertices.count} {rest : List (Stokes.OrientedEdge vertices.count)}
-      (head : Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute mesh edge) (tail :
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh rest) :
-        Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh (edge :: rest)
+    OrientedEdge vertices.count} {rest : List (OrientedEdge vertices.count)}
+      (head : EdgeRoute mesh edge) (tail :
+        RouteSpine mesh rest) :
+        RouteSpine mesh (edge :: rest)
 
 constructive_injectivity RouteSpine
 
 namespace RouteSpine
 
-variable {mesh : Purelib.Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges faces}
+variable {mesh : LiftedMesh vertices edges faces}
 
 /-- Retain a face route for every original supported mesh-word occurrence in order. -/
-@[expose] def build (mesh : GridLiftedMesh.LiftedMesh vertices edges faces) : (word : List (Stokes.OrientedEdge
+@[expose] def build (mesh : LiftedMesh vertices edges faces) : (word : List (OrientedEdge
   vertices.count)) →
     CutPath.Supported (Stokes.triangleEdgeOccurrences mesh.triangulation.faces) word →
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh word
+      RouteSpine mesh word
   | [], _ => .nil
-  | edge :: rest, supported => .cons (Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.EdgeRoute.build mesh edge
+  | edge :: rest, supported => .cons (EdgeRoute.build mesh edge
     (supported edge List.mem_cons_self))
-      (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine.build mesh rest (fun next member =>
+      (RouteSpine.build mesh rest (fun next member =>
         supported next (List.mem_cons_of_mem _ member)))
 
 /-- Concatenate the retained original edge detours in their exact word order. -/
-@[expose] def detour : {word : List (Stokes.OrientedEdge vertices.count)} →
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh word → List (Stokes.OrientedEdge
+@[expose] def detour : {word : List (OrientedEdge vertices.count)} →
+  RouteSpine mesh word → List (OrientedEdge
   vertices.count)
   | _, .nil => []
   | _, .cons head tail => head.detour ++ tail.detour
 
 /-- An empty original indexed path has equal start and finish indices. -/
 public theorem nil_endpoints {first last : Fin vertices.count}
-    (path : PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish [] first last) : first = last := by
+    (path : PathEndpoints OrientedEdge.start OrientedEdge.finish [] first last) : first = last := by
   cases path; rfl
 
 /-- A nonempty original indexed path retains its head start and the exact endpoint path of its tail. -/
-public theorem cons_endpoints {edge : Stokes.OrientedEdge vertices.count} {rest : List (Stokes.OrientedEdge
+public theorem cons_endpoints {edge : OrientedEdge vertices.count} {rest : List (OrientedEdge
   vertices.count)}
     {first last : Fin vertices.count}
-    (path : PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish (edge :: rest) first last) :
-    edge.start = first ∧ PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish rest edge.finish last := by
+    (path : PathEndpoints OrientedEdge.start OrientedEdge.finish (edge :: rest) first last) :
+    edge.start = first ∧ PathEndpoints OrientedEdge.start OrientedEdge.finish rest edge.finish last := by
   cases path with
   | cons tail => exact ⟨rfl, tail⟩
 
 /-- Join the retained edge routes into a root grid walk preserving the original path endpoint indices. -/
-@[expose] def walk : {word : List (Stokes.OrientedEdge vertices.count)} → (spine :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh word) →
-    {first last : Fin vertices.count} → PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish word first
+@[expose] def walk : {word : List (OrientedEdge vertices.count)} → (spine :
+  RouteSpine mesh word) →
+    {first last : Fin vertices.count} → PathEndpoints OrientedEdge.start OrientedEdge.finish word first
       last →
-      Vertex.VertexWalk vertices edges first last
+      VertexWalk vertices edges first last
   | _, .nil, first, _, path => (VertexWalk.nil vertices edges first).castVertices rfl
-    (Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine.nil_endpoints path)
+    (RouteSpine.nil_endpoints path)
   | _, .cons head tail, _, _, path =>
-      (head.walk.append (tail.walk (Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine.cons_endpoints
-        path).2)).castVertices (Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine.cons_endpoints
+      (head.walk.append (tail.walk (RouteSpine.cons_endpoints
+        path).2)).castVertices (RouteSpine.cons_endpoints
         path).1 rfl
 
 /-- The complete retained root grid walk reads back the exact original-order detour word. -/
-theorem walk_indexed : {word : List (Stokes.OrientedEdge vertices.count)} → (spine :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh word) →
-    {first last : Fin vertices.count} → (path : PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish word
+theorem walk_indexed : {word : List (OrientedEdge vertices.count)} → (spine :
+  RouteSpine mesh word) →
+    {first last : Fin vertices.count} → (path : PathEndpoints OrientedEdge.start OrientedEdge.finish word
       first last) →
       (spine.walk path).indexed = spine.detour
   | _, .nil, _, _, path => by
-    rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine.walk, VertexWalk.castVertices_indexed]; rfl
+    rw [RouteSpine.walk, VertexWalk.castVertices_indexed]; rfl
   | _, .cons head tail, _, _, path => by
-      rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine.walk, VertexWalk.castVertices_indexed]
+      rw [RouteSpine.walk, VertexWalk.castVertices_indexed]
       change head.walk.indexed ++ (tail.walk
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine.cons_endpoints path).2).indexed =
+        (RouteSpine.cons_endpoints path).2).indexed =
         head.detour ++ tail.detour
       rw [head.walk_indexed, tail.walk_indexed]
 
 /-- The complete retained detour word is supported by the same original mesh triangle-edge list. -/
-theorem detour_supported : {word : List (Stokes.OrientedEdge vertices.count)} → (spine :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh word) →
+theorem detour_supported : {word : List (OrientedEdge vertices.count)} → (spine :
+  RouteSpine mesh word) →
     CutPath.Supported (Stokes.triangleEdgeOccurrences mesh.triangulation.faces) spine.detour
   | _, .nil => fun _ member => (List.not_mem_nil member).elim
   | _, .cons head tail => CutPath.supported_append head.detour_supported tail.detour_supported
 
 /-- The complete retained detour has at most twice the original word length. -/
-theorem detour_length_le : {word : List (Stokes.OrientedEdge vertices.count)} → (spine :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh word) →
+theorem detour_length_le : {word : List (OrientedEdge vertices.count)} → (spine :
+  RouteSpine mesh word) →
     spine.detour.length ≤ 2 * word.length
   | _, .nil => Nat.le_refl 0
   | _, .cons head tail => by
       have first := head.detour_length_le
       have rest := tail.detour_length_le
-      simp only [Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine.detour,
+      simp only [RouteSpine.detour,
         Data.List.Append.length_append, List.length_cons]
       omega
 
@@ -267,12 +267,12 @@ end RouteSpine
 set_option genInjectivity false in
 /-- Both words are retained: the input mesh word and its actual grid route. This does not identify integrals of diagonal
 and detour paths. -/
-structure RoutedPath (mesh : GridLiftedMesh.LiftedMesh vertices edges faces) (word : List (Stokes.OrientedEdge
+structure RoutedPath (mesh : LiftedMesh vertices edges faces) (word : List (OrientedEdge
   vertices.count))
     (first last : Fin vertices.count) where
   /-- The retained face-and-orientation route spine for the exact original mesh word. -/ spine :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine mesh word
-  /-- The cached original root grid walk preserving the requested indexed endpoints. -/ walk : Vertex.VertexWalk
+    RouteSpine mesh word
+  /-- The cached original root grid walk preserving the requested indexed endpoints. -/ walk : VertexWalk
     vertices edges first last
   /-- The cached original grid walk reads back exactly the retained route spine's detour word. -/ indexed_eq :
     walk.indexed = spine.detour
@@ -280,9 +280,9 @@ structure RoutedPath (mesh : GridLiftedMesh.LiftedMesh vertices edges faces) (wo
 constructive_injectivity RoutedPath
 
 /-- The retained grid route uses at most twice the original mesh-word edge count. -/
-theorem RoutedPath.edgeCount_le {mesh : GridLiftedMesh.LiftedMesh vertices edges faces} {word : List
-  (Stokes.OrientedEdge vertices.count)}
-    {first last : Fin vertices.count} (path : Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RoutedPath mesh
+theorem RoutedPath.edgeCount_le {mesh : LiftedMesh vertices edges faces} {word : List
+  (OrientedEdge vertices.count)}
+    {first last : Fin vertices.count} (path : RoutedPath mesh
       word first last) :
     path.walk.walk.edgeCount ≤ 2 * word.length := by
   rw [← edges.indexedEdges_length vertices path.walk.walk (vertices.sheet first), ← path.walk.indexed_eq,
@@ -290,13 +290,13 @@ theorem RoutedPath.edgeCount_le {mesh : GridLiftedMesh.LiftedMesh vertices edges
   exact path.spine.detour_length_le
 
 /-- Cache the original supported mesh word's route spine and corresponding endpoint-preserving root grid walk. -/
-@[expose] def routePath (mesh : GridLiftedMesh.LiftedMesh vertices edges faces) (word : List (Stokes.OrientedEdge
+@[expose] def routePath (mesh : LiftedMesh vertices edges faces) (word : List (OrientedEdge
   vertices.count))
-    {first last : Fin vertices.count} (path : PathBoundary.PathEndpoints OrientedEdge.start OrientedEdge.finish word
+    {first last : Fin vertices.count} (path : PathEndpoints OrientedEdge.start OrientedEdge.finish word
       first last)
     (supported : CutPath.Supported (Stokes.triangleEdgeOccurrences mesh.triangulation.faces) word) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RoutedPath mesh word first last :=
-  let spine := Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks.RouteSpine.build mesh word supported
+    RoutedPath mesh word first last :=
+  let spine := RouteSpine.build mesh word supported
   ⟨spine, spine.walk path, spine.walk_indexed path⟩
 
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.MeshPathWalks

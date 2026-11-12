@@ -47,8 +47,8 @@ open Purelib.Geometry in
 
 The certificate retains both original endpoints and their orientation. -/
 theorem of_exterior {face
-  band : Rational.Box} {side : GridSide} (inside : face.Refines band)
-    (exterior : side.Exterior face band) : Hyperelliptic.Meshes.PuncturedGrid.SideBoundaryGeometry.SideBoundary face
+  band : Box} {side : GridSide} (inside : face.Refines band)
+    (exterior : side.Exterior face band) : SideBoundary face
       band side := by
   have x := face.x_valid
   have y := face.y_valid
@@ -96,7 +96,7 @@ theorem
   selected_interface_exterior
   (grid : NewtonGrid preparation target radius)
     (index : Hyperelliptic.Branches.BranchIsolation.Data.Index branches)
-    (first next : Geometry.Grid.ClearGrid.Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve)) (nextMember
+    (first next : Cell curve.polynomial (Ambient curve)) (nextMember
       : next ∈ grid.punctured.bank.grid.cells)
     (side : GridSide) (matching : side.Matches first.box next.box)
     (inside : first.box.Refines (grid.bands.box index))
@@ -135,13 +135,13 @@ theorem
   selected_interface_boundary
   (grid : NewtonGrid preparation target radius)
     (index : Hyperelliptic.Branches.BranchIsolation.Data.Index branches)
-    (first next : Geometry.Grid.ClearGrid.Cell curve.polynomial (Hyperelliptic.Branches.Cuts.Ambient curve)) (nextMember
+    (first next : Cell curve.polynomial (Ambient curve)) (nextMember
       : next ∈ grid.punctured.bank.grid.cells)
     (side : GridSide) (matching : side.Matches first.box next.box)
     (inside : first.box.Refines (grid.bands.box index))
     (outside : ¬next.box.Refines (grid.bands.box index)) :
-      Hyperelliptic.Meshes.PuncturedGrid.SideBoundaryGeometry.SideBoundary first.box (grid.bands.box index) side :=
-  Hyperelliptic.Meshes.PuncturedGrid.SideBoundaryGeometry.SideBoundary.of_exterior inside
+      SideBoundary first.box (grid.bands.box index) side :=
+  SideBoundary.of_exterior inside
     (grid.selected_interface_exterior index first next nextMember side matching inside outside)
 
 end Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid
@@ -192,16 +192,16 @@ open Purelib.Geometry in
 
 Its retained Newton band lies strictly inside an original branch cell, and the original cell refines the ambient. -/
 theorem selected_strict_ambient
-  (excision : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted)
+  (excision : AllHoleExcision grid lifted)
     (position : Fin grid.faces.regulars.length)
     (selected : RootContinuation.NewtonSelectedPerimeters.AllHoleExcision.fineMask excision position = true) :
-    (grid.faces.regulars[position.val]'position.isLt).cell.box.StrictInterior (Hyperelliptic.Branches.Cuts.Ambient
+    (grid.faces.regulars[position.val]'position.isLt).cell.box.StrictInterior (Ambient
       curve) := by
-  let found := Riemann.RootContinuation.NewtonSelectedSideGeometry.BranchCellBank.NewtonGrid.selected_entry (fun entry :
-    Hyperelliptic.Meshes.Newton.AllHoles.Excision.AnnularEntry grid lifted =>
+  let found := RootContinuation.NewtonSelectedSideGeometry.BranchCellBank.NewtonGrid.selected_entry (fun entry :
+    AnnularEntry grid lifted =>
     entry.keep (grid.faces.regulars[position.val]'position.isLt)) excision.entries selected
-  exact Geometry.Rational.Box.Refinement.StrictInterior.of_refines
-    (Geometry.Rational.Box.Refinement.StrictInterior.Boxes.trans_refines
+  exact Box.Refinement.StrictInterior.of_refines
+    (Box.Refinement.StrictInterior.Boxes.trans_refines
       (grid.bands.strict_original found.val.hole.index)
       (original.cell found.val.hole.index).box_refines)
     (of_decide_eq_true found.property.2)
@@ -210,10 +210,10 @@ open Purelib.Riemann
 open Purelib.Curves
 /-- A selected regular face has no side on the ambient exterior boundary. -/
 theorem selected_not_exterior
-  (excision : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted)
+  (excision : AllHoleExcision grid lifted)
     (position : Fin grid.faces.regulars.length) (side : GridSide)
     (selected : RootContinuation.NewtonSelectedPerimeters.AllHoleExcision.fineMask excision position = true) :
-    ¬side.Exterior (grid.faces.regulars[position.val]'position.isLt).cell.box (Hyperelliptic.Branches.Cuts.Ambient
+    ¬side.Exterior (grid.faces.regulars[position.val]'position.isLt).cell.box (Ambient
       curve) := by
   have strict := excision.selected_strict_ambient position selected
   intro exterior
@@ -227,25 +227,25 @@ theorem selected_not_exterior
 
 Return its original list membership and exact band-side certificate, preserving the existing path and root choices. -/
 @[expose] def interfaceBand
-  (excision : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted)
+  (excision : AllHoleExcision grid lifted)
     (first next : Fin grid.faces.regulars.length) (side : GridSide)
     (matching : side.Matches (grid.faces.regulars[first.val]'first.isLt).cell.box
       (grid.faces.regulars[next.val]'next.isLt).cell.box)
     (selected : RootContinuation.NewtonSelectedPerimeters.AllHoleExcision.fineMask excision first = true)
     (discarded : RootContinuation.NewtonSelectedPerimeters.AllHoleExcision.fineMask excision next = false) :
-    {entry : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AnnularEntry grid lifted // entry ∈ excision.entries ∧
-      Hyperelliptic.Meshes.PuncturedGrid.SideBoundaryGeometry.SideBoundary
+    {entry : AnnularEntry grid lifted // entry ∈ excision.entries ∧
+      SideBoundary
         (grid.faces.regulars[first.val]'first.isLt).cell.box (grid.bands.box entry.hole.index) side} := by
-  let found := Riemann.RootContinuation.NewtonSelectedSideGeometry.BranchCellBank.NewtonGrid.selected_entry (fun entry :
-    Hyperelliptic.Meshes.Newton.AllHoles.Excision.AnnularEntry grid lifted =>
+  let found := RootContinuation.NewtonSelectedSideGeometry.BranchCellBank.NewtonGrid.selected_entry (fun entry :
+    AnnularEntry grid lifted =>
     entry.keep (grid.faces.regulars[first.val]'first.isLt)) excision.entries selected
   have inside : (grid.faces.regulars[first.val]'first.isLt).cell.box.Refines (grid.bands.box found.val.hole.index) :=
     of_decide_eq_true found.property.2
   have outside : ¬(grid.faces.regulars[next.val]'next.isLt).cell.box.Refines (grid.bands.box found.val.hole.index) := by
     intro included
     have kept : found.val.keep (grid.faces.regulars[next.val]'next.isLt) = true := decide_eq_true included
-    have present := Riemann.RootContinuation.NewtonSelectedSideGeometry.BranchCellBank.NewtonGrid.any_of_member (fun
-      entry : Hyperelliptic.Meshes.Newton.AllHoles.Excision.AnnularEntry grid lifted =>
+    have present := RootContinuation.NewtonSelectedSideGeometry.BranchCellBank.NewtonGrid.any_of_member (fun
+      entry : AnnularEntry grid lifted =>
       entry.keep (grid.faces.regulars[next.val]'next.isLt)) excision.entries found.val found.property.1 kept
     exact Bool.noConfusion (discarded.symm.trans present)
   exact ⟨found.val, found.property.1, grid.selected_interface_boundary found.val.hole.index

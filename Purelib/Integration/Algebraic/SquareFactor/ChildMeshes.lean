@@ -72,17 +72,17 @@ open Purelib.Data.Rat in
 /-- The rational carrier for retained child-mesh requests. -/
 abbrev Coordinate := Fraction.Rational
 /-- The original certified subdivision endpoint carrier. -/
-abbrev Endpoint := Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.Endpoint
+abbrev Endpoint := ClearSheetContinuation.Subdivision.Endpoint
 
-variable {polynomial : Purelib.Curves.Hyperelliptic.Differentials.SquareFactor.GaussianPolynomial} {request :
-  Purelib.Curves.Hyperelliptic.Differentials.SquareFactor.Request}
-  {prepared : Purelib.Curves.Hyperelliptic.Differentials.SquareFactor.Prepared polynomial request} {segment :
-    Purelib.Integration.Algebraic.SquareFactor.PathInput.Segment}
-  {data : Purelib.Integration.Algebraic.SquareFactor.PathInput.Data prepared segment} {safe : data.Safe}
+variable {polynomial : GaussianPolynomial} {request :
+  Request}
+  {prepared : Prepared polynomial request} {segment :
+    Segment}
+  {data : Data prepared segment} {safe : data.Safe}
 
 open Purelib.Integration.Algebraic.SquareFactor in
 /-- Construct the certified midpoint of the two retained unit-interval endpoints. -/
-@[expose] def midpoint (left right : ChildMeshes.Endpoint) : Endpoint :=
+@[expose] def midpoint (left right : Endpoint) : Endpoint :=
   ⟨ClearSheetContinuation.midpoint left.parameter right.parameter,
     ClearSheetContinuation.midpoint_inside left.inside right.inside⟩
 
@@ -90,7 +90,7 @@ open Purelib.Integration.Algebraic.SquareFactor.ChildMeshes in
 open Purelib.Data.Rat in
 open Purelib.Integration.Algebraic.SquareFactor in
 /-- Mapping a child midpoint through the parent edge equals the midpoint of its mapped parameters. -/
-theorem endpointAt_midpoint (parent : OwnedCells.Cell safe) (left right : ChildMeshes.Endpoint) :
+theorem endpointAt_midpoint (parent : Cell safe) (left right : Endpoint) :
     (ChildCells.endpointAt parent (midpoint left right)).parameter =
       ClearSheetContinuation.midpoint (ChildCells.endpointAt parent left).parameter (ChildCells.endpointAt parent
         right).parameter := by
@@ -98,7 +98,7 @@ theorem endpointAt_midpoint (parent : OwnedCells.Cell safe) (left right : ChildM
     ClearSheetContinuation.midpoint (parent.edge.parameter left.parameter) (parent.edge.parameter right.parameter)
   rw [parent.edge.parameter_eq, parent.edge.parameter_eq, parent.edge.parameter_eq]
   unfold CellModels.Span.parameter ClearSheetContinuation.midpoint
-  apply Fraction.Field.mul_right_cancel_of_ne (show (2 : ChildMeshes.Coordinate) ≠ 0 by decide)
+  apply Fraction.Field.mul_right_cancel_of_ne (show (2 : Coordinate) ≠ 0 by decide)
   rw [Fraction.Field.div_mul_cancel_of_ne _ 2 (by decide)]
   calc
     (parent.edge.span.interval.lower + parent.edge.span.width * ((left.parameter + right.parameter) / 2)) * 2 =
@@ -110,7 +110,7 @@ theorem endpointAt_midpoint (parent : OwnedCells.Cell safe) (left right : ChildM
 
 open Purelib.Integration.Algebraic.SquareFactor in
 /-- Certified endpoints with equal parameters are equal. -/
-private theorem endpoint_ext {left right : ChildMeshes.Endpoint} (equal : left.parameter = right.parameter) : left =
+private theorem endpoint_ext {left right : Endpoint} (equal : left.parameter = right.parameter) : left =
   right := by
   cases left
   cases right
@@ -120,20 +120,20 @@ private theorem endpoint_ext {left right : ChildMeshes.Endpoint} (equal : left.p
 open Purelib.Integration.Algebraic.SquareFactor.ChildMeshes in
 open Purelib.Integration.Algebraic.SquareFactor in
 /-- The parent-edge map preserves the exact certified midpoint endpoint. -/
-theorem endpointAt_midpoint_eq (parent : OwnedCells.Cell safe) (left right : ChildMeshes.Endpoint) :
+theorem endpointAt_midpoint_eq (parent : Cell safe) (left right : Endpoint) :
     ChildCells.endpointAt parent (midpoint left right) = midpoint (ChildCells.endpointAt parent left)
       (ChildCells.endpointAt parent right) :=
-  ChildMeshes.endpoint_ext (ChildMeshes.endpointAt_midpoint parent left right)
+  endpoint_ext (endpointAt_midpoint parent left right)
 
 open Purelib.Algebra in
 open Purelib.Approximation.Rational in
 open Purelib.Data.Rat in
 open Purelib.Integration.Algebraic.SquareFactor in
 /-- Dividing the initial scale by four advances the quarter-radius depth by one. -/
-private theorem quarterRadius_div_four (scale : ChildMeshes.Coordinate) (depth : Nat) :
+private theorem quarterRadius_div_four (scale : Coordinate) (depth : Nat) :
     Geometric.Basic.quarterRadius (scale / 4) depth =
       Geometric.Basic.quarterRadius scale (depth + 1) := by
-  have scaleDiv : scale / 4 = scale * (1 / 4 : ChildMeshes.Coordinate) := by
+  have scaleDiv : scale / 4 = scale * (1 / 4 : Coordinate) := by
     rw [Field.ExplicitField.div_eq_mul_inv, Field.ExplicitField.div_eq_mul_inv,
       Fraction.Field.one_mul]
   rw [Geometric.Basic.quarterRadius_eq_mul_pow,
@@ -147,18 +147,18 @@ open Purelib.Integration.Algebraic.SquareFactor in
 /-- A dyadic tree of certified child leaves tied to one original parent, diameter, depth and endpoint pair.
 
 Each split retains its two ordered midpoint submeshes, preserving the original leaf preparations and root owners. -/
-inductive Mesh (parent : OwnedCells.Cell safe) (diameter : ChildMeshes.Coordinate) : Nat → ChildMeshes.Endpoint →
-  ChildMeshes.Endpoint → Type
+inductive Mesh (parent : Cell safe) (diameter : Coordinate) : Nat → Endpoint →
+  Endpoint → Type
   /-- A retained certified child leaf gives a depth-zero mesh on its original interval. -/ | leaf {left right :
-    ChildMeshes.Endpoint} (value : ChildCells.Leaf parent left right diameter) :
-    Purelib.Integration.Algebraic.SquareFactor.ChildMeshes.Mesh parent diameter 0 left right
+    Endpoint} (value : Leaf parent left right diameter) :
+    ChildMeshes.Mesh parent diameter 0 left right
   /-- The retained midpoint halves form the next-depth mesh in their original order. -/ | split {depth : Nat} {left
-    right : ChildMeshes.Endpoint}
-      (first : Purelib.Integration.Algebraic.SquareFactor.ChildMeshes.Mesh parent diameter depth left (midpoint left
+    right : Endpoint}
+      (first : ChildMeshes.Mesh parent diameter depth left (midpoint left
         right))
-      (second : Purelib.Integration.Algebraic.SquareFactor.ChildMeshes.Mesh parent diameter depth (midpoint left right)
+      (second : ChildMeshes.Mesh parent diameter depth (midpoint left right)
         right) :
-      Purelib.Integration.Algebraic.SquareFactor.ChildMeshes.Mesh parent diameter (depth + 1) left right
+      ChildMeshes.Mesh parent diameter (depth + 1) left right
 
 constructive_injectivity Mesh
 
@@ -168,11 +168,11 @@ open Purelib.Integration.Algebraic.SquareFactor in
 /-- Attempt the exact dyadic child mesh by checking retained leaf preparations from left to right.
 
 Failure of any local leaf check returns no mesh at this depth; it does not rule out a finer subdivision. -/
-@[expose] def tryBuild (parent : OwnedCells.Cell safe) (diameter : ChildMeshes.Coordinate) (positive : 0 < diameter) :
-    (depth : Nat) → (left right : ChildMeshes.Endpoint) → left.parameter ≤ right.parameter →
-      Option (ChildMeshes.Mesh parent diameter depth left right)
+@[expose] def tryBuild (parent : Cell safe) (diameter : Coordinate) (positive : 0 < diameter) :
+    (depth : Nat) → (left right : Endpoint) → left.parameter ≤ right.parameter →
+      Option (Mesh parent diameter depth left right)
   | 0, left, right, ordered =>
-      (ChildCells.tryLeaf parent left right ordered diameter positive).map ChildMeshes.Mesh.leaf
+      (ChildCells.tryLeaf parent left right ordered diameter positive).map Mesh.leaf
   | depth + 1, left, right, ordered => do
       let first ← tryBuild parent diameter positive depth left (midpoint left right)
         (ClearSheetContinuation.left_le_midpoint ordered)
@@ -189,40 +189,40 @@ open Purelib.Integration.Algebraic.SquareFactor
 
 Each split transports the original bound to its midpoint halves, keeping the same parent and diameter request at every
 leaf. -/
-@[expose] def build (parent : OwnedCells.Cell safe) (diameter : ChildMeshes.Coordinate) (positive : 0 < diameter) :
-    (depth : Nat) → (left right : ChildMeshes.Endpoint) → (ordered : left.parameter ≤ right.parameter) →
+@[expose] def build (parent : Cell safe) (diameter : Coordinate) (positive : 0 < diameter) :
+    (depth : Nat) → (left right : Endpoint) → (ordered : left.parameter ≤ right.parameter) →
     Geometric.Basic.quarterRadius (ClearSheetContinuation.variationBound (PathContinuation.clearSegment safe)
       (ChildCells.endpointAt parent left).parameter (ChildCells.endpointAt parent right).parameter) depth <
         PreparedSheetContinuation.uniformPreparedClearanceFloor (PathContinuation.clearSegment safe) diameter →
-    ChildMeshes.Mesh parent diameter depth left right
+    Mesh parent diameter depth left right
   | 0, left, right, ordered, small =>
       .leaf (ChildCells.prepareLeaf parent left right ordered diameter positive (by
         simpa only [Geometric.Basic.quarterRadius_eq_mul_pow, pow_zero,
           Fraction.Field.mul_one_direct] using small))
   | depth + 1, left, right, ordered, small =>
       .split
-        (Purelib.Integration.Algebraic.SquareFactor.ChildMeshes.build parent diameter positive depth left (midpoint left
+        (ChildMeshes.build parent diameter positive depth left (midpoint left
           right)
           (ClearSheetContinuation.left_le_midpoint ordered) (by
-            rw [ChildMeshes.endpointAt_midpoint, ClearSheetContinuation.variationBound_left_midpoint,
-              ChildMeshes.quarterRadius_div_four]
+            rw [endpointAt_midpoint, ClearSheetContinuation.variationBound_left_midpoint,
+              quarterRadius_div_four]
             exact small))
-        (Purelib.Integration.Algebraic.SquareFactor.ChildMeshes.build parent diameter positive depth (midpoint left
+        (ChildMeshes.build parent diameter positive depth (midpoint left
           right) right
           (ClearSheetContinuation.midpoint_le_right ordered) (by
-            rw [ChildMeshes.endpointAt_midpoint, ClearSheetContinuation.variationBound_midpoint_right,
-              ChildMeshes.quarterRadius_div_four]
+            rw [endpointAt_midpoint, ClearSheetContinuation.variationBound_midpoint_right,
+              quarterRadius_div_four]
             exact small))
 
 /-- The uniform movement certificate makes the mesh checker return the exact constructed dyadic mesh. -/
-theorem tryBuild_eq_some_build (parent : OwnedCells.Cell safe) (diameter : ChildMeshes.Coordinate) (positive : 0 <
+theorem tryBuild_eq_some_build (parent : Cell safe) (diameter : Coordinate) (positive : 0 <
   diameter)
-    (depth : Nat) (left right : ChildMeshes.Endpoint) (ordered : left.parameter ≤ right.parameter)
+    (depth : Nat) (left right : Endpoint) (ordered : left.parameter ≤ right.parameter)
     (small : Geometric.Basic.quarterRadius (ClearSheetContinuation.variationBound (PathContinuation.clearSegment safe)
       (ChildCells.endpointAt parent left).parameter (ChildCells.endpointAt parent right).parameter) depth <
         PreparedSheetContinuation.uniformPreparedClearanceFloor (PathContinuation.clearSegment safe) diameter) :
     tryBuild parent diameter positive depth left right ordered =
-      some (ChildMeshes.build parent diameter positive depth left right ordered small) := by
+      some (build parent diameter positive depth left right ordered small) := by
   induction depth generalizing left right with
   | zero =>
       have bound : ClearSheetContinuation.variationBound (PathContinuation.clearSegment safe)
@@ -239,8 +239,8 @@ theorem tryBuild_eq_some_build (parent : OwnedCells.Cell safe) (diameter : Child
               right)).parameter) depth <
               PreparedSheetContinuation.uniformPreparedClearanceFloor (PathContinuation.clearSegment safe) diameter :=
                 by
-        rw [ChildMeshes.endpointAt_midpoint, ClearSheetContinuation.variationBound_left_midpoint,
-          ChildMeshes.quarterRadius_div_four]
+        rw [endpointAt_midpoint, ClearSheetContinuation.variationBound_left_midpoint,
+          quarterRadius_div_four]
         exact small
       have secondSmall : Geometric.Basic.quarterRadius
           (ClearSheetContinuation.variationBound (PathContinuation.clearSegment safe)
@@ -248,8 +248,8 @@ theorem tryBuild_eq_some_build (parent : OwnedCells.Cell safe) (diameter : Child
               right).parameter) depth <
               PreparedSheetContinuation.uniformPreparedClearanceFloor (PathContinuation.clearSegment safe) diameter :=
                 by
-        rw [ChildMeshes.endpointAt_midpoint, ClearSheetContinuation.variationBound_midpoint_right,
-          ChildMeshes.quarterRadius_div_four]
+        rw [endpointAt_midpoint, ClearSheetContinuation.variationBound_midpoint_right,
+          quarterRadius_div_four]
         exact small
       rw [tryBuild, ih left (midpoint left right) (ClearSheetContinuation.left_le_midpoint ordered) firstSmall]
       rw [ih (midpoint left right) right (ClearSheetContinuation.midpoint_le_right ordered) secondSmall]
@@ -261,46 +261,61 @@ open Purelib.Integration.Algebraic.SquareFactor.PathContinuation in
 open Purelib.Approximation.Rational in
 open Purelib.Integration.Algebraic.SquareFactor in
 /-- Construct the exact full-parent child mesh at any depth meeting the original sufficient dyadic depth. -/
-@[expose] def generateAtDepth (parent : OwnedCells.Cell safe) (diameter : ChildMeshes.Coordinate) (positive : 0 <
+@[expose] def generateAtDepth (parent : Cell safe) (diameter : Coordinate) (positive : 0 <
   diameter) (depth : Nat)
     (enough : PreparedSheetContinuation.Subdivision.sufficientDyadicDepth (PathContinuation.clearSegment safe)
       parent.edge.left parent.edge.step.endpoint diameter ≤ depth) :
-    ChildMeshes.Mesh parent diameter depth first last :=
-  ChildMeshes.build parent diameter positive _ first PathContinuation.last (by decide) (by
+    Mesh parent diameter depth first last :=
+  build parent diameter positive _ first PathContinuation.last (by decide) (by
     have sufficient := PreparedSheetContinuation.Subdivision.sufficientDyadicDepth_variation_lt
       (PathContinuation.clearSegment safe) parent.edge.left parent.edge.step.endpoint positive
     have small := (quarterRadius_antitone
       (ClearSheetContinuation.variationBound_nonneg (PathContinuation.clearSegment safe)
         parent.edge.left.parameter parent.edge.step.endpoint.parameter) enough).trans_lt
       sufficient
-    simpa only [ChildCells.endpointAt, first, PathContinuation.last, OwnedCells.Edge.parameter,
+    simpa only [ChildCells.endpointAt, first, PathContinuation.last, Edge.parameter,
       PreparedSheetContinuation.parameterAt_zero,
       PreparedSheetContinuation.parameterAt_one] using small)
 
 namespace Mesh
 
-variable {parent : Purelib.Integration.Algebraic.SquareFactor.OwnedCells.Cell safe} {diameter :
-  Purelib.Integration.Algebraic.SquareFactor.ChildMeshes.Coordinate} {level : Nat} {left right :
-  Purelib.Integration.Algebraic.SquareFactor.ChildMeshes.Endpoint}
+variable {parent : Cell safe} {diameter :
+  Coordinate} {level : Nat} {left right :
+  Endpoint}
 
 section
 open Purelib.Integration.Algebraic.SquareFactor.PathContinuation
 open Purelib.Integration.Algebraic.SquareFactor
 /-- Read the retained leaf cells in left-to-right order from the original dyadic mesh. -/
-@[expose] def cells : {level : Nat} → {left right : ChildMeshes.Endpoint} → ChildMeshes.Mesh parent diameter level left
-  right → List (OwnedCells.Cell safe)
+@[expose] def cells : {level : Nat} → {left right : Endpoint} → Mesh parent diameter level left
+  right → List (Cell safe)
   | _, _, _, .leaf value => [value.cell]
-  | _, _, _, .split first second => Purelib.Integration.Algebraic.SquareFactor.ChildMeshes.Mesh.cells first ++
-    Purelib.Integration.Algebraic.SquareFactor.ChildMeshes.Mesh.cells second
+  | _, _, _, .split first second => Mesh.cells first ++
+    Mesh.cells second
+
+/-- Read the exact original prepared leaf edges in order without constructing their root witnesses or cell models. -/
+@[expose] def edges : {level : Nat} → {left right : Endpoint} →
+    Mesh parent diameter level left right → List (Edge safe)
+  | _, _, _, .leaf value => [value.edge]
+  | _, _, _, .split first second => first.edges ++ second.edges
+
+/-- Compiling the retained leaf-edge list gives exactly the original mesh's ordered cell readback. -/
+theorem compileEdges_edges (mesh : Mesh parent diameter level left right) :
+    OwnedCells.compileEdges mesh.edges = mesh.cells := by
+  induction mesh with
+  | leaf value => exact congrArg (fun cell => [cell]) value.cell_eq_compileEdge.symm
+  | split first second firstEq secondEq =>
+      rewrite [edges, OwnedCells.compileEdges_append, firstEq, secondEq]
+      rfl
 
 /-- The retained dyadic mesh has exactly two to the power of its depth cells.
 
 A split retains both equal-depth halves in order, so their lengths add to the next dyadic power. -/
-theorem cellCount (mesh : ChildMeshes.Mesh parent diameter level left right) : mesh.cells.length = 2 ^ level := by
+theorem cellCount (mesh : Mesh parent diameter level left right) : mesh.cells.length = 2 ^ level := by
   induction mesh with
   | leaf _ => rfl
   | split first second ihFirst ihSecond =>
-      rw [ChildMeshes.Mesh.cells, Append.length_append, ihFirst, ihSecond, pow_succ]
+      rw [Mesh.cells, Append.length_append, ihFirst, ihSecond, pow_succ]
       omega
 
 end
@@ -313,9 +328,9 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 
 Each leaf retains its original parent-center comparison allowance; a split transports the bound through membership in
 its two ordered halves. -/
-theorem errors_le (mesh : ChildMeshes.Mesh parent diameter level left right) :
-    ∀ cell ∈ mesh.cells, Data.Gaussian.Norm.Basic.normSq (cell.model.center - parent.model.center) ≤
-      Basic.PathModel.parentChildAllowance parent.model.cell cell.model.cell := by
+theorem errors_le (mesh : Mesh parent diameter level left right) :
+    ∀ cell ∈ mesh.cells, Norm.Basic.normSq (cell.model.center - parent.model.center) ≤
+      PathModel.parentChildAllowance parent.model.cell cell.model.cell := by
   induction mesh with
   | leaf value =>
       intro cell member
@@ -335,7 +350,7 @@ open Purelib.Integration.Algebraic.SquareFactor
 
 The leaf endpoints and retained midpoint splits read the same ordered dyadic edges after mapping through the original
 parent. -/
-theorem parameterEdges (mesh : ChildMeshes.Mesh parent diameter level left right) :
+theorem parameterEdges (mesh : Mesh parent diameter level left right) :
     mesh.cells.map (fun cell =>
       (⟨cell.edge.left, cell.edge.step.endpoint⟩ : ClearSheetContinuation.Subdivision.ParameterEdge)) =
       ClearSheetContinuation.Subdivision.dyadicEdges level (ChildCells.endpointAt parent left) (ChildCells.endpointAt
@@ -343,16 +358,16 @@ theorem parameterEdges (mesh : ChildMeshes.Mesh parent diameter level left right
   induction mesh with
   | leaf _ => rfl
   | split first second ihFirst ihSecond =>
-      simp only [ChildMeshes.Mesh.cells, Map.map_append, ClearSheetContinuation.Subdivision.dyadicEdges]
+      simp only [Mesh.cells, Map.map_append, ClearSheetContinuation.Subdivision.dyadicEdges]
       rw [ihFirst, ihSecond]
-      rw [ChildMeshes.endpointAt_midpoint_eq]
+      rw [endpointAt_midpoint_eq]
       rfl
 
 /-- Every retained child cell keeps the original mesh's root-diameter request.
 
 Every leaf keeps the same original diameter index, and membership selects a leaf from one of the retained midpoint
 halves. -/
-theorem diameters (mesh : ChildMeshes.Mesh parent diameter level left right) :
+theorem diameters (mesh : Mesh parent diameter level left right) :
     ∀ cell ∈ mesh.cells, cell.edge.step.rootDiameter = diameter := by
   induction mesh with
   | leaf value =>
@@ -374,12 +389,12 @@ open Purelib.Integration.Polynomial.Gaussian.Cell in
 open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- Appending retained cell lists adds their exact displacement sums. -/
 private theorem displacementSum_append (first second : List Basic.CellModel) :
-    Basic.PathModel.displacementSum (first ++ second) =
-      Basic.PathModel.displacementSum first + Basic.PathModel.displacementSum second := by
+    PathModel.displacementSum (first ++ second) =
+      PathModel.displacementSum first + PathModel.displacementSum second := by
   induction first with
   | nil => exact (Basic.zero_add _).symm
   | cons head tail ih =>
-      simp only [List.cons_append, Basic.PathModel.displacementSum_cons]
+      simp only [List.cons_append, PathModel.displacementSum_cons]
       rw [ih, Basic.add_assoc]
 
 open Purelib.Integration.Algebraic.SquareFactor.PathContinuation in
@@ -390,8 +405,8 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 
 The ordered mesh halves meet at the retained midpoint, so their displacement sums telescope to the original outer
 endpoints. -/
-theorem displacement (mesh : ChildMeshes.Mesh parent diameter level left right) :
-    Basic.PathModel.displacementSum (mesh.cells.map (fun cell => cell.model.cell)) =
+theorem displacement (mesh : Mesh parent diameter level left right) :
+    PathModel.displacementSum (mesh.cells.map (fun cell => cell.model.cell)) =
       segment.point (ChildCells.endpointAt parent right).parameter - segment.point (ChildCells.endpointAt parent
         left).parameter := by
   induction mesh with
@@ -399,7 +414,7 @@ theorem displacement (mesh : ChildMeshes.Mesh parent diameter level left right) 
       change value.cell.model.cell.displacement + 0 = _
       exact Basic.add_zero _
   | split first second ihFirst ihSecond =>
-      rw [ChildMeshes.Mesh.cells, Map.map_append, ChildMeshes.Mesh.displacementSum_append, ihFirst, ihSecond]
+      rw [Mesh.cells, Map.map_append, displacementSum_append, ihFirst, ihSecond]
       apply Basic.ext <;>
         simp only [Basic.add_re, Basic.add_im, Basic.sub_re, Basic.sub_im] <;> ring1
 
@@ -412,11 +427,11 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 
 Each original child keeps its cached center and certified parent allowance. Structural recursion retains the children
 and their error list in the same order. -/
-@[expose] def comparisons (parent : OwnedCells.Cell safe) : (children : List (OwnedCells.Cell safe)) →
-    (∀ child ∈ children, Data.Gaussian.Norm.Basic.normSq (child.model.center - parent.model.center) ≤
-      Basic.PathModel.parentChildAllowance parent.model.cell child.model.cell) →
-    Basic.PathModel.ConstantComparison parent.model.center
-      (children.map (fun child => Basic.PathModel.comparisonCell parent.model.cell child.model.cell))
+@[expose] def comparisons (parent : Cell safe) : (children : List (Cell safe)) →
+    (∀ child ∈ children, Norm.Basic.normSq (child.model.center - parent.model.center) ≤
+      PathModel.parentChildAllowance parent.model.cell child.model.cell) →
+    PathModel.ConstantComparison parent.model.center
+      (children.map (fun child => PathModel.comparisonCell parent.model.cell child.model.cell))
       (children.map (fun child => child.model.center - parent.model.center))
   | [], _ => .nil
   | child :: children, bounds =>
@@ -425,19 +440,19 @@ and their error list in the same order. -/
           have scalar := bounds child (List.mem_cons_self ..)
           rw [normSq_eq_canonical] at scalar
           exact scalar)
-        (Purelib.Integration.Algebraic.SquareFactor.ChildMeshes.comparisons parent children (fun cell member => bounds
+        (ChildMeshes.comparisons parent children (fun cell member => bounds
           cell (List.mem_cons_of_mem _ member)))
 
 open Purelib.Integration.Polynomial.Gaussian.Cell in
 open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- Replacing child allowances by comparison allowances preserves their exact displacement sum. -/
 private theorem comparison_displacement (parent : Basic.CellModel) (children : List Basic.CellModel) :
-    Basic.PathModel.displacementSum (children.map (Basic.PathModel.comparisonCell parent)) =
-      Basic.PathModel.displacementSum children := by
+    PathModel.displacementSum (children.map (PathModel.comparisonCell parent)) =
+      PathModel.displacementSum children := by
   induction children with
   | nil => rfl
   | cons child children ih =>
-      simp only [List.map_cons, Basic.PathModel.displacementSum_cons]
+      simp only [List.map_cons, PathModel.displacementSum_cons]
       rw [ih]
       rfl
 
@@ -445,27 +460,45 @@ set_option genInjectivity false in
 open Purelib.Integration.Algebraic.SquareFactor.PathContinuation in
 open Purelib.Integration.Algebraic.SquareFactor in
 /-- The original full-parent dyadic mesh with its cached ordered child cell list. -/
-structure Block (parent : OwnedCells.Cell safe) (diameter : ChildMeshes.Coordinate) (depth : Nat) where
-  /-- The exact full-parent dyadic mesh at the retained diameter and depth. -/ mesh : ChildMeshes.Mesh parent diameter
+structure Block (parent : Cell safe) (diameter : Coordinate) (depth : Nat) where
+  /-- The exact full-parent dyadic mesh at the retained diameter and depth. -/ mesh : Mesh parent diameter
     depth first PathContinuation.last
-  /-- The cached ordered list of original mesh cells. -/ cells : List (OwnedCells.Cell safe)
+  /-- The cached ordered list of original mesh cells. -/ cells : List (Cell safe)
   /-- The cached list equals the exact original mesh's cell readback. -/ cells_eq : cells = mesh.cells
 
 constructive_injectivity Block
 
 open Purelib.Integration.Algebraic.SquareFactor.PathContinuation in
 open Purelib.Integration.Algebraic.SquareFactor in
+/-- Retain a supplied original mesh and its already compiled ordered cell cache with the exact readback identity. -/
+@[expose] def Block.ofCells {parent : Cell safe} {diameter : Coordinate} {depth : Nat}
+    (mesh : Mesh parent diameter depth first PathContinuation.last)
+    (cells : List (Cell safe)) (cellsEq : cells = mesh.cells) : Block parent diameter depth :=
+  ⟨mesh, cells, cellsEq⟩
+
+open Purelib.Integration.Algebraic.SquareFactor.PathContinuation in
+open Purelib.Integration.Algebraic.SquareFactor in
 /-- Cache the exact original mesh's ordered cells with their defining equation. -/
-@[expose] def compile {parent : OwnedCells.Cell safe} {diameter : ChildMeshes.Coordinate} {depth : Nat}
-    (mesh : ChildMeshes.Mesh parent diameter depth first PathContinuation.last) : ChildMeshes.Block parent diameter
+@[expose] def compile {parent : Cell safe} {diameter : Coordinate} {depth : Nat}
+    (mesh : Mesh parent diameter depth first PathContinuation.last) : Block parent diameter
       depth :=
-  ⟨mesh, mesh.cells, rfl⟩
+  Block.ofCells mesh mesh.cells rfl
+
+open Purelib.Integration.Algebraic.SquareFactor.PathContinuation in
+open Purelib.Integration.Algebraic.SquareFactor in
+/-- The original mesh and cell-cache identity preserve exactly the original compiled child block. -/
+theorem Block.ofCells_eq_compile {parent : Cell safe} {diameter : Coordinate} {depth : Nat}
+    (mesh : Mesh parent diameter depth first PathContinuation.last)
+    (cells : List (Cell safe)) (cellsEq : cells = mesh.cells) :
+    Block.ofCells mesh cells cellsEq = compile mesh := by
+  cases cellsEq
+  rfl
 
 namespace Block
 
-variable {parent : Purelib.Integration.Algebraic.SquareFactor.OwnedCells.Cell safe} {diameter :
-  Purelib.Integration.Algebraic.SquareFactor.ChildMeshes.Coordinate} {depth : Nat}
-  (block : Purelib.Integration.Algebraic.SquareFactor.ChildMeshes.Block parent diameter depth)
+variable {parent : Cell safe} {diameter :
+  Coordinate} {depth : Nat}
+  (block : Block parent diameter depth)
 
 /-- Read the path model from the exact retained child cell models. -/
 @[expose] def pathModel : PathModel := ⟨block.cells.map (fun cell => cell.model.cell)⟩
@@ -477,26 +510,26 @@ open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- Certify the retained child comparison path against its original constant parent.
 
 The certificate retains the ordered center-error list and the exact displacement agreement from the original mesh. -/
-@[expose] def partition : Basic.PathModel.ConstantPartitionCertificate parent.model.cell
-    (Basic.PathModel.comparisonBlock parent.model.cell block.pathModel) where
+@[expose] def partition : PathModel.ConstantPartitionCertificate parent.model.cell
+    (PathModel.comparisonBlock parent.model.cell block.pathModel) where
   reference := parent.model.center
   parent_polynomial_eq := rfl
   errors := block.cells.map (fun child => child.model.center - parent.model.center)
   comparison := by
-    have bound : ∀ child ∈ block.cells, Data.Gaussian.Norm.Basic.normSq (child.model.center - parent.model.center) ≤
-        Basic.PathModel.parentChildAllowance parent.model.cell child.model.cell := by
+    have bound : ∀ child ∈ block.cells, Norm.Basic.normSq (child.model.center - parent.model.center) ≤
+        PathModel.parentChildAllowance parent.model.cell child.model.cell := by
       rw [block.cells_eq]
       exact block.mesh.errors_le
-    have certificate := ChildMeshes.comparisons parent block.cells bound
-    unfold Basic.PathModel.comparisonBlock ChildMeshes.Block.pathModel
+    have certificate := comparisons parent block.cells bound
+    unfold PathModel.comparisonBlock pathModel
     rw [Map.map_map]
     dsimp only [Function.comp_def]
     exact certificate
   displacement_eq := by
-    rw [Basic.PathModel.comparisonBlock, ChildMeshes.comparison_displacement]
-    change Basic.PathModel.displacementSum (block.cells.map (fun cell => cell.model.cell)) = _
+    rw [PathModel.comparisonBlock, comparison_displacement]
+    change PathModel.displacementSum (block.cells.map (fun cell => cell.model.cell)) = _
     rw [block.cells_eq, block.mesh.displacement]
-    simp only [ChildCells.endpointAt, first, PathContinuation.last, OwnedCells.Edge.parameter,
+    simp only [ChildCells.endpointAt, first, PathContinuation.last, Edge.parameter,
       PreparedSheetContinuation.parameterAt_zero,
       PreparedSheetContinuation.parameterAt_one]
     rfl
@@ -504,12 +537,12 @@ The certificate retains the ordered center-error list and the exact displacement
 open Purelib.Data.Gaussian in
 open Purelib.Integration.Polynomial.Gaussian.Path in
 /-- The retained child-minus-parent integral sample meets the aggregate allowance of their exact comparison block. -/
-theorem integral_difference_le : Data.Gaussian.Norm.Basic.normSq (block.pathModel.integralSample -
+theorem integral_difference_le : Norm.Basic.normSq (block.pathModel.integralSample -
   parent.model.cell.integralSample) ≤
-    (Basic.PathModel.comparisonBlock parent.model.cell block.pathModel).aggregateAllowance := by
+    (PathModel.comparisonBlock parent.model.cell block.pathModel).aggregateAllowance := by
   have bound := ConstantComparison.PathModel.ConstantPartitionCertificate.integral_difference_le block.partition
   rw [← normSq_eq_canonical] at bound
-  rw [Basic.PathModel.comparisonBlock_integralSample] at bound
+  rw [PathModel.comparisonBlock_integralSample] at bound
   exact bound
 
 end Block

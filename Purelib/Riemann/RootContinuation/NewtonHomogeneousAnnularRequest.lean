@@ -52,21 +52,21 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnEnergyRequest (Energy
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples (ConjugateSample)
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve branches
     higher}
-  {preparation : NewtonPreparation original} {target radius : Data.Rat.Fraction.Rational}
-  {family : Curves.Hyperelliptic.Meshes.Newton.AllHoles.PrimitiveComparison.NewtonPreparation.FamilyAreaRequest
+  {preparation : NewtonPreparation original} {target radius : Rational}
+  {family : FamilyAreaRequest
     preparation target radius}
   {lifted : LiftedPuncturedGrid family.single.grid.punctured}
-  {excision : Curves.Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision family.single.grid lifted}
-  {domains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+  {excision : AllHoleExcision family.single.grid lifted}
+  {domains : FaceDomainBank lifted.frames
     family.single.grid.faces.regulars}
   (prepared :
     Curves.Hyperelliptic.Meshes.Newton.AllHoles.PrimitiveComparison.NewtonGrid.AllHoleExcision.OuterPreparations
     excision)
-  (sewing : Curves.Hyperelliptic.Meshes.PuncturedGrid.SewnEnergyRequest.EnergyPreparation lifted.cutPolygon domains)
+  (sewing : EnergyPreparation lifted.cutPolygon domains)
 
 namespace HomogeneousAnnularRequest
 
@@ -80,18 +80,18 @@ open Purelib.Data in
 The quantification uses the same comparison, domain bank, numerical stage and sewn conjugate pair for all later samples.
 -/
 @[expose] def Accurate {first second : Fin genus} (comparison :
-  Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison prepared
+  PairedComparison prepared
   first second domains) (index : Nat) : Prop :=
-  ∀ stage (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage)
-    (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get first) lifted.mesh)
-      (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get second)
+  ∀ stage (cache : Numerics domains stage)
+    (left : TriangleReadings (cache.get first) lifted.mesh)
+      (right : TriangleReadings (cache.get second)
       lifted.mesh)
-    (leftSurface : Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch left.values)
-    (rightSurface : Surface.Sewing.SewnPrimitiveSamples.CachedSample lifted.cutPolygon.patch right.values)
-    (pair : Surface.Sewing.SewnConjugateSamples.ConjugatePair leftSurface rightSurface)
-    (sample : Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateSample left right leftSurface rightSurface
+    (leftSurface : CachedSample lifted.cutPolygon.patch left.values)
+    (rightSurface : CachedSample lifted.cutPolygon.patch right.values)
+    (pair : ConjugatePair leftSurface rightSurface)
+    (sample : ConjugateSample left right leftSurface rightSurface
       pair comparison), index ≤ stage →
-      Data.Gaussian.Norm.Basic.normSq (sample.area + sample.holes) < (82 / 4 : Rat.Fraction.Rational) * target
+      normSq (sample.area + sample.holes) < (82 / 4 : Rational) * target
 
 open Purelib.Curves in
 set_option genInjectivity false in
@@ -100,7 +100,7 @@ set_option genInjectivity false in
 Its index respects the supplied floor and establishes the annular accuracy claim for every later sample. -/
 structure PairRequest (first second : Fin genus) (floor : Nat) where
   /-- The retained comparison for this ordered pair of basis indices. -/ comparison :
-    Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison prepared
+    PairedComparison prepared
     first second domains
   /-- The acquired stage from which the comparison is accurate. -/ index : Nat
   /-- The acquired stage is at least the requested floor. -/ floor_le : floor ≤ index
@@ -114,7 +114,7 @@ open Purelib.Curves in
 @[expose] def PairRequest.build (first second : Fin genus) (floor : Nat) : PairRequest (domains := domains) prepared
   first second floor :=
   let comparison :=
-    Curves.Hyperelliptic.Meshes.Newton.AllHoles.PairedComparison.build
+    PairedComparison.build
     prepared first second domains
   let acquired := Hyperelliptic.Meshes.Newton.AllHoles.ConjugatePhysicalAggregate.conjugatePhysicalRequest comparison
     (sewing.pair first second) floor
@@ -160,12 +160,12 @@ The maximum is also compared with the original floor, including an empty basis b
       (Data.Nat.Order.le_max_right _ _))
 
 variable {prepared sewing} {floor stage : Nat} {cache :
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  Numerics domains stage}
   (triangles : Data.Vector.DependentVector (fun basis : Fin genus =>
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get basis) lifted.mesh))
-  (surfaces : Topology.Surface.Sewing.SewnEnergyCombination.EnergySurfaces lifted.cutPolygon.patch (fun basis =>
+    TriangleReadings (cache.get basis) lifted.mesh))
+  (surfaces : EnergySurfaces lifted.cutPolygon.patch (fun basis =>
     (triangles.get basis).values))
-  (pairs : Topology.Surface.Sewing.SewnEnergyCombination.EnergyPairs surfaces) (request : Request (domains := domains)
+  (pairs : EnergyPairs surfaces) (request : Request (domains := domains)
     prepared floor)
 
 open Purelib.Curves
@@ -173,14 +173,14 @@ open Purelib.Data
 /-- A dependent bank of conjugate samples indexed by the exact retained request comparisons. -/
 @[expose] def Samples := Vector.DependentVector (fun first : Fin genus => Vector.DependentVector (fun second : Fin genus
   =>
-  Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateSample (triangles.get first) (triangles.get second)
+  ConjugateSample (triangles.get first) (triangles.get second)
     (surfaces.get first) (surfaces.get second)
     ((pairs.get first).get second) ((request.entries.get first).get second).comparison))
 
 /-- Build every conjugate sample from the retained triangles, sewn surfaces, pair certificates and comparison bank. -/
 @[expose] def Samples.build : Samples triangles surfaces pairs request :=
   Vector.DependentVector.ofFn fun first => Vector.DependentVector.ofFn fun second =>
-    Hyperelliptic.Meshes.Newton.AllHoles.ConjugateSamples.ConjugateSample.build (triangles.get first) (triangles.get
+    ConjugateSample.build (triangles.get first) (triangles.get
       second) (surfaces.get first) (surfaces.get second)
       ((pairs.get first).get second) ((request.entries.get first).get second).comparison
 

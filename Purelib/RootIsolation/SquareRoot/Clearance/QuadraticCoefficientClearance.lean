@@ -33,6 +33,8 @@ import Purelib.RootIsolation.State.WindingOne.Basic
 import Purelib.RootIsolation.Track.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian
+
 /-!
 # Quadratic clearance using the actual positive coefficient majorant
 
@@ -68,7 +70,7 @@ open Purelib.RootIsolation.SquareRoot.Clearance
 /-- The rational coordinate field used by the quadratic clearance construction. -/
 public abbrev Coordinate := Fraction.Rational
 /-- The exact Gaussian coefficient type of the quadratic root polynomial. -/
-public abbrev Gaussian := Data.Gaussian.Basic.Canonical
+public abbrev Gaussian := Basic.Canonical
 /-- The rational rectangular box carrying the quadratic boundary certificate. -/
 public abbrev Box := Geometry.Rational.Box
 /-- The original exact quadratic owner, retaining its parameter, state box and clearance. -/
@@ -79,8 +81,8 @@ public abbrev Owner := Riemann.Topology.SquareRootContinuationChain.Owner
 The original degree-two power construction retains the supplied canonical
 Gaussian coefficient. Its exact dense polynomial is shared by the boundary
 and line clearance certificates. -/
-@[expose] public def rootPolynomial (parameter : SquareRoot.Clearance.QuadraticCoefficientClearance.Gaussian) :=
-  Purelib.Polynomial.Power.Gaussian.rootPolynomial parameter Riemann.RootContinuation.SquareRootDegree.degreeTwo
+@[expose] public def rootPolynomial (parameter : Gaussian) :=
+  Power.Gaussian.rootPolynomial parameter Riemann.RootContinuation.SquareRootDegree.degreeTwo
 
 /-- Compute a positive Cauchy majorant for a constant term and an affine coefficient on a bounded line.
 
@@ -319,18 +321,18 @@ each provide a lower bound. -/
 public theorem vertical_lower (parameter : Gaussian) (box : Box) (x y : Coordinate)
     (lower : box.yLower ≤ y) (upper : y ≤ box.yUpper) :
     verticalBound parameter box x ≤
-      Data.Gaussian.Norm.Basic.normSq
-        ((rootPolynomial parameter).eval (Gaussian.Components.Basic.point x y)) := by
+      Norm.Basic.normSq
+        ((rootPolynomial parameter).eval (Components.Basic.point x y)) := by
   have bound := line_lower y (max (box.yLower ^ 2) (box.yUpper ^ 2))
     (4 * x ^ 2) (2 * x) parameter.im
     (QuadraticAxisElimination.verticalDeterminant parameter x)
     (x ^ 2 - y ^ 2 - parameter.re) (2 * x * y - parameter.im)
     (Box.sq_le_endpoint_max lower upper)
     (by unfold QuadraticAxisElimination.verticalDeterminant; ring1)
-  have evaluation : Data.Gaussian.Norm.Basic.normSq
-      ((rootPolynomial parameter).eval (Gaussian.Components.Basic.point x y)) =
+  have evaluation : Norm.Basic.normSq
+      ((rootPolynomial parameter).eval (Components.Basic.point x y)) =
       (x ^ 2 - y ^ 2 - parameter.re) ^ 2 + (2 * x * y - parameter.im) ^ 2 := by
-    rw [rootPolynomial, Purelib.Polynomial.Power.Gaussian.rootPolynomial_eval,
+    rw [rootPolynomial, Power.Gaussian.rootPolynomial_eval,
       Riemann.RootContinuation.SquareRootDegree.degreeTwo_value, pow_two]
     change
       ((x * x - y * y) - parameter.re) ^ 2 +
@@ -357,18 +359,18 @@ the squared-coordinate control. -/
 public theorem horizontal_lower (parameter : Gaussian) (box : Box) (x y : Coordinate)
     (lower : box.xLower ≤ x) (upper : x ≤ box.xUpper) :
     horizontalBound parameter box y ≤
-      Data.Gaussian.Norm.Basic.normSq
-        ((rootPolynomial parameter).eval (Gaussian.Components.Basic.point x y)) := by
+      Norm.Basic.normSq
+        ((rootPolynomial parameter).eval (Components.Basic.point x y)) := by
   have bound := line_lower x (max (box.xLower ^ 2) (box.xUpper ^ 2))
     (4 * y ^ 2) (-(2 * y)) (-parameter.im)
     (QuadraticAxisElimination.horizontalDeterminant parameter y)
     (x ^ 2 - y ^ 2 - parameter.re) (2 * x * y - parameter.im)
     (Box.sq_le_endpoint_max lower upper)
     (by unfold QuadraticAxisElimination.horizontalDeterminant; ring1)
-  have evaluation : Data.Gaussian.Norm.Basic.normSq
-      ((rootPolynomial parameter).eval (Gaussian.Components.Basic.point x y)) =
+  have evaluation : Norm.Basic.normSq
+      ((rootPolynomial parameter).eval (Components.Basic.point x y)) =
       (x ^ 2 - y ^ 2 - parameter.re) ^ 2 + (2 * x * y - parameter.im) ^ 2 := by
-    rw [rootPolynomial, Purelib.Polynomial.Power.Gaussian.rootPolynomial_eval,
+    rw [rootPolynomial, Power.Gaussian.rootPolynomial_eval,
       Riemann.RootContinuation.SquareRootDegree.degreeTwo_value, pow_two]
     change
       ((x * x - y * y) - parameter.re) ^ 2 +
@@ -404,24 +406,24 @@ Every boundary point lies on one of the four original sides, whose computed boun
 public theorem boundary_lower (parameter : Gaussian) (box : Box) (point : Gaussian)
     (boundary : Box.Boundary.OnBoxBoundary box point) :
     boundaryBound parameter box ≤
-      Data.Gaussian.Norm.Basic.normSq ((rootPolynomial parameter).eval point) := by
+      Norm.Basic.normSq ((rootPolynomial parameter).eval point) := by
   rcases boundary with ⟨inside, left | right | bottom | top⟩
-  · have equal : point = Gaussian.Components.Basic.point box.xLower point.im :=
-      Gaussian.Basic.ext left rfl
+  · have equal : point = Components.Basic.point box.xLower point.im :=
+      Basic.ext left rfl
     rw [equal]
     exact (Basic.min_le_left _ _).trans (vertical_lower parameter box _ _ inside.2.2.1 inside.2.2.2)
-  · have equal : point = Gaussian.Components.Basic.point box.xUpper point.im :=
-      Gaussian.Basic.ext right rfl
+  · have equal : point = Components.Basic.point box.xUpper point.im :=
+      Basic.ext right rfl
     rw [equal]
     exact ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _)).trans
       (vertical_lower parameter box _ _ inside.2.2.1 inside.2.2.2)
-  · have equal : point = Gaussian.Components.Basic.point point.re box.yLower :=
-      Gaussian.Basic.ext rfl bottom
+  · have equal : point = Components.Basic.point point.re box.yLower :=
+      Basic.ext rfl bottom
     rw [equal]
     exact ((Basic.min_le_right _ _).trans ((Basic.min_le_right _ _).trans (Basic.min_le_left _ _))).trans
       (horizontal_lower parameter box _ _ inside.1 inside.2.1)
-  · have equal : point = Gaussian.Components.Basic.point point.re box.yUpper :=
-      Gaussian.Basic.ext rfl top
+  · have equal : point = Components.Basic.point point.re box.yUpper :=
+      Basic.ext rfl top
     rw [equal]
     exact ((Basic.min_le_right _ _).trans ((Basic.min_le_right _ _).trans (Basic.min_le_right _ _))).trans
       (horizontal_lower parameter box _ _ inside.1 inside.2.1)
@@ -440,7 +442,7 @@ bound is replaced by its maximum with the new four-side value. -/
         (owner.track.initial.clearance.lower point boundary)
         (by
           have lower := boundary_lower parameter box point boundary
-          simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using lower) }
+          simpa only [Norm.Basic.normSq_eq_canonical] using lower) }
   ExactQuadraticOwnerClearance.ownerOfState owner.parameterNonzero
     { box := box
       refinesAmbient := Box.refines_refl box

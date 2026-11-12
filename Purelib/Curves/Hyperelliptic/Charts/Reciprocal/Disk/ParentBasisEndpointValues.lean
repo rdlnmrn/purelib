@@ -64,6 +64,8 @@ import Purelib.Riemann.RootContinuation.CertifiedSquareRoot
 import Purelib.Riemann.RootContinuation.SquareRootChannelOwnership
 import Purelib.Riemann.Topology.SquareRootContinuationChain
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Algebra
@@ -120,15 +122,15 @@ open Purelib.Riemann.Readings.PreparedObservationCoercivity (coefficientNormSq)
 variable {genus count index depth readingIndex floor minimum : Nat} {curve :
   HyperellipticCurve genus}
   {differential : Differential genus} {collar :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {parent :
-    Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+    ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {parent :
+    Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {source :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap} {source :
     SourcePrimitive data index}
-  {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {box : Geometry.Rational.Box} {capSample :
+    Cap.Primitives.Sample cap differential index box}
   {target : Coordinate}
   {polynomials : RegularBasisPolynomials cap
     index box}
@@ -141,36 +143,36 @@ variable {covers : BasisSourceCovers parent}
     covers index}
 
 /-- Three homogeneous comparisons needed for restoration and incoming joins. -/
-structure EndpointEstimate (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (target :
-  InverseRootPolynomial.Coordinate)
-    (chart : InverseRootPolynomial.Gaussian) (values : InverseRootPolynomial.Gaussian × InverseRootPolynomial.Gaussian)
+structure EndpointEstimate (coefficients : GaussianVector genus) (target :
+  Coordinate)
+    (chart : Gaussian) (values : Gaussian × Gaussian)
       : Prop where
   /-- The actual retained source and direct endpoint values satisfy the homogeneous four-times source tolerance bound.
   -/
-  source_close : Data.Gaussian.Norm.Basic.normSq (values.1 - values.2) ≤ 4 * target *
-    PreparedObservationCoercivity.coefficientNormSq coefficients
+  source_close : Basic.normSq (values.1 - values.2) ≤ 4 * target *
+    coefficientNormSq coefficients
   /-- The actual retained source and chart endpoint values satisfy the homogeneous ten-times source tolerance bound. -/
-    chart_close : Data.Gaussian.Norm.Basic.normSq (values.1 - chart) ≤ 10 * target *
-    PreparedObservationCoercivity.coefficientNormSq coefficients
+    chart_close : Basic.normSq (values.1 - chart) ≤ 10 * target *
+    coefficientNormSq coefficients
   /-- The actual retained direct and chart endpoint values satisfy the original homogeneous source tolerance bound. -/
-    direct_close : Data.Gaussian.Norm.Basic.normSq (values.2 - chart) ≤ target *
-    PreparedObservationCoercivity.coefficientNormSq coefficients
+    direct_close : Basic.normSq (values.2 - chart) ≤ target *
+    coefficientNormSq coefficients
 
 namespace Samples
 
 /-- Read the actual coefficient-weighted source and direct values at the original first retained endpoint, returning
 zeros for an empty bank. -/
-@[expose] def firstValues (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+@[expose] def firstValues (coefficients : GaussianVector genus) :
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → (evaluated : ChartPlans.EvaluationData
+    (cells : ComparedCells source capSample depth bank) → (evaluated : EvaluationData
       readingIndex plans cells) →
-    (sources : ParentBasisEndpoints.BasisEndpointRequests covers sourceTarget sourceFloor requests) → (planned :
-      ParentBasisEndpoints.BasisEndpointPlans polynomials plans sources) →
-    BasisEndpointPlans.Samples numerical plans cells evaluated sources planned → InverseRootPolynomial.Gaussian ×
-      InverseRootPolynomial.Gaussian
+    (sources : BasisEndpointRequests covers sourceTarget sourceFloor requests) → (planned :
+      BasisEndpointPlans polynomials plans sources) →
+    Samples numerical plans cells evaluated sources planned → Gaussian ×
+      Gaussian
   | _, _, _, _, .nil, .nil, _, _, _, _ => (0, 0)
   | _, _, _, _, .cons _ _, .cons _ _, _, _, _, endpoints =>
       let combined := endpoints.1.first.evaluated.combine coefficients
@@ -178,17 +180,17 @@ zeros for an empty bank. -/
 
 /-- Read the actual coefficient-weighted source and direct values at the original last retained endpoint, returning
 zeros for an empty bank. -/
-@[expose] def lastValues (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+@[expose] def lastValues (coefficients : GaussianVector genus) :
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → (evaluated : ChartPlans.EvaluationData
+    (cells : ComparedCells source capSample depth bank) → (evaluated : EvaluationData
       readingIndex plans cells) →
-    (sources : ParentBasisEndpoints.BasisEndpointRequests covers sourceTarget sourceFloor requests) → (planned :
-      ParentBasisEndpoints.BasisEndpointPlans polynomials plans sources) →
-    BasisEndpointPlans.Samples numerical plans cells evaluated sources planned → InverseRootPolynomial.Gaussian ×
-      InverseRootPolynomial.Gaussian
+    (sources : BasisEndpointRequests covers sourceTarget sourceFloor requests) → (planned :
+      BasisEndpointPlans polynomials plans sources) →
+    Samples numerical plans cells evaluated sources planned → Gaussian ×
+      Gaussian
   | _, _, _, _, .nil, .nil, _, _, _, _ => (0, 0)
   | _, _, _, _, .cons _ .nil, .cons _ .nil, _, _, _, endpoints =>
       let combined := endpoints.1.last.evaluated.combine coefficients
@@ -199,30 +201,30 @@ zeros for an empty bank. -/
 
 /-- The original empty endpoint bank satisfies all homogeneous bounds because the retained primitive values vanish at
 zero. -/
-private theorem zero_estimate (polynomials : CapBasisEnergy.RegularBasisPolynomials cap index box)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (nonnegative : 0 ≤ sourceTarget) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisEndpointValues.EndpointEstimate coefficients sourceTarget
+private theorem zero_estimate (polynomials : RegularBasisPolynomials cap index box)
+    (coefficients : GaussianVector genus) (nonnegative : 0 ≤ sourceTarget) :
+    EndpointEstimate coefficients sourceTarget
       (polynomials.value coefficients 0) (0, 0) := by
   have valueZero : polynomials.value coefficients 0 = 0 := by
-    unfold CapBasisEnergy.RegularBasisPolynomials.value
+    unfold RegularBasisPolynomials.value
     exact (FiniteSum.Fin.sumFin_congr (fun row => by
       rw [(polynomials.get row).primitive_zero, Data.Gaussian.Basic.mul_zero])).trans FiniteSum.Fin.sumFin_zero
-  have coefficientNonnegative : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients :=
+  have coefficientNonnegative : 0 ≤ coefficientNormSq coefficients :=
     FiniteSum.Fin.sumFin_zero.symm.trans_le
-      (Order.Positivity.sumFin_mono (fun _ => (0 : InverseRootPolynomial.Coordinate)) _ (fun row =>
-        Data.Gaussian.Basic.Canonical.normSq_nonneg (coefficients row)))
-  have bound : Data.Gaussian.Norm.Basic.normSq ((0 : InverseRootPolynomial.Gaussian) - 0) ≤ sourceTarget *
-    PreparedObservationCoercivity.coefficientNormSq coefficients := by
-    rw [Data.Gaussian.Basic.sub_self, Data.Gaussian.Norm.Basic.normSq_zero]
+      (Order.Positivity.sumFin_mono (fun _ => (0 : Coordinate)) _ (fun row =>
+        normSq_nonneg (coefficients row)))
+  have bound : Basic.normSq ((0 : Gaussian) - 0) ≤ sourceTarget *
+    coefficientNormSq coefficients := by
+    rw [Data.Gaussian.Basic.sub_self, Basic.normSq_zero]
     exact Fraction.Order.Arithmetic.mul_nonneg_direct nonnegative coefficientNonnegative
-  have four : Data.Gaussian.Norm.Basic.normSq ((0 : InverseRootPolynomial.Gaussian) - 0) ≤ 4 * sourceTarget *
-    PreparedObservationCoercivity.coefficientNormSq coefficients := by
-    rw [Data.Gaussian.Basic.sub_self, Data.Gaussian.Norm.Basic.normSq_zero]
+  have four : Basic.normSq ((0 : Gaussian) - 0) ≤ 4 * sourceTarget *
+    coefficientNormSq coefficients := by
+    rw [Data.Gaussian.Basic.sub_self, Basic.normSq_zero]
     exact Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
       nonnegative) coefficientNonnegative
-  have ten : Data.Gaussian.Norm.Basic.normSq ((0 : InverseRootPolynomial.Gaussian) - 0) ≤ 10 * sourceTarget *
-    PreparedObservationCoercivity.coefficientNormSq coefficients := by
-    rw [Data.Gaussian.Basic.sub_self, Data.Gaussian.Norm.Basic.normSq_zero]
+  have ten : Basic.normSq ((0 : Gaussian) - 0) ≤ 10 * sourceTarget *
+    coefficientNormSq coefficients := by
+    rw [Data.Gaussian.Basic.sub_self, Basic.normSq_zero]
     exact Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
       nonnegative) coefficientNonnegative
   rw [valueZero]
@@ -230,19 +232,19 @@ private theorem zero_estimate (polynomials : CapBasisEnergy.RegularBasisPolynomi
 
 /-- The actual first retained endpoint values satisfy all three original homogeneous source, direct and chart
 comparisons. -/
-theorem first_estimate (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (nonnegative : 0 ≤
+theorem first_estimate (coefficients : GaussianVector genus) (nonnegative : 0 ≤
   sourceTarget) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → (evaluated : ChartPlans.EvaluationData
+    (cells : ComparedCells source capSample depth bank) → (evaluated : EvaluationData
       readingIndex plans cells) →
-    (sources : ParentBasisEndpoints.BasisEndpointRequests covers sourceTarget sourceFloor requests) → (planned :
-      ParentBasisEndpoints.BasisEndpointPlans polynomials plans sources) →
-    (endpoints : BasisEndpointPlans.Samples numerical plans cells evaluated sources planned) →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisEndpointValues.EndpointEstimate coefficients sourceTarget
-      (polynomials.value coefficients (ParentBasisBoundary.chartFirstRoot plans cells evaluated))
+    (sources : BasisEndpointRequests covers sourceTarget sourceFloor requests) → (planned :
+      BasisEndpointPlans polynomials plans sources) →
+    (endpoints : Samples numerical plans cells evaluated sources planned) →
+    EndpointEstimate coefficients sourceTarget
+      (polynomials.value coefficients (chartFirstRoot plans cells evaluated))
       (firstValues coefficients plans
         cells evaluated sources planned endpoints)
   | _, _, _, _, .nil, .nil, _, _, _, _ =>
@@ -254,19 +256,19 @@ theorem first_estimate (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVec
 
 /-- The actual last retained endpoint values satisfy all three original homogeneous source, direct and chart
 comparisons. -/
-theorem last_estimate (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (nonnegative : 0 ≤
+theorem last_estimate (coefficients : GaussianVector genus) (nonnegative : 0 ≤
   sourceTarget) :
-    {edges : List ClearSheetContinuation.Subdivision.ParameterEdge} → {bank : ParentBank.Bank regular data edges} →
-      {owners : ParentOwners.Owners bank} →
-    {requests : ParentChartRequests.ChartRequests target floor owners} → (plans : ParentChartRequests.ChartPlans
+    {edges : List ParameterEdge} → {bank : Bank regular data edges} →
+      {owners : Owners bank} →
+    {requests : ChartRequests target floor owners} → (plans : ChartPlans
       capSample minimum requests) →
-    (cells : ParentPaths.ComparedCells source capSample depth bank) → (evaluated : ChartPlans.EvaluationData
+    (cells : ComparedCells source capSample depth bank) → (evaluated : EvaluationData
       readingIndex plans cells) →
-    (sources : ParentBasisEndpoints.BasisEndpointRequests covers sourceTarget sourceFloor requests) → (planned :
-      ParentBasisEndpoints.BasisEndpointPlans polynomials plans sources) →
-    (endpoints : BasisEndpointPlans.Samples numerical plans cells evaluated sources planned) →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisEndpointValues.EndpointEstimate coefficients sourceTarget
-      (polynomials.value coefficients (ParentBasisBoundary.chartLastRoot plans cells evaluated))
+    (sources : BasisEndpointRequests covers sourceTarget sourceFloor requests) → (planned :
+      BasisEndpointPlans polynomials plans sources) →
+    (endpoints : Samples numerical plans cells evaluated sources planned) →
+    EndpointEstimate coefficients sourceTarget
+      (polynomials.value coefficients (chartLastRoot plans cells evaluated))
       (lastValues coefficients plans cells
         evaluated sources planned endpoints)
   | _, _, _, _, .nil, .nil, _, _, _, _ =>
@@ -297,30 +299,30 @@ set_option genInjectivity false in
 /-- The cached actual source and direct values at both extremes of the original endpoint spine.
 
 Exact readback equalities and all three homogeneous comparisons are retained for both endpoints. -/
-structure Extremes (endpoints : BasisEndpointPlans.Samples numerical plans cells evaluated sources planned)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) where
-  /-- The cached original first source and direct endpoint values. -/ first : InverseRootPolynomial.Gaussian ×
-    InverseRootPolynomial.Gaussian
+structure Extremes (endpoints : Samples numerical plans cells evaluated sources planned)
+    (coefficients : GaussianVector genus) where
+  /-- The cached original first source and direct endpoint values. -/ first : Gaussian ×
+    Gaussian
   /-- The first cache reads exactly the original retained endpoint spine. -/ first_eq : first =
     firstValues coefficients plans cells
     evaluated sources planned endpoints
-  /-- The cached original last source and direct endpoint values. -/ last : InverseRootPolynomial.Gaussian ×
-    InverseRootPolynomial.Gaussian
+  /-- The cached original last source and direct endpoint values. -/ last : Gaussian ×
+    Gaussian
   /-- The last cache reads exactly the original retained endpoint spine. -/ last_eq : last =
     lastValues coefficients plans cells
     evaluated sources planned endpoints
   /-- The original first endpoint cache satisfies the retained homogeneous comparisons. -/ first_bounded :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisEndpointValues.EndpointEstimate coefficients sourceTarget
-    (polynomials.value coefficients (ParentBasisBoundary.chartFirstRoot plans cells evaluated)) first
+    EndpointEstimate coefficients sourceTarget
+    (polynomials.value coefficients (chartFirstRoot plans cells evaluated)) first
   /-- The original last endpoint cache satisfies the retained homogeneous comparisons. -/ last_bounded :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentBasisEndpointValues.EndpointEstimate coefficients sourceTarget
-    (polynomials.value coefficients (ParentBasisBoundary.chartLastRoot plans cells evaluated)) last
+    EndpointEstimate coefficients sourceTarget
+    (polynomials.value coefficients (chartLastRoot plans cells evaluated)) last
 
 constructive_injectivity Extremes
 
 /-- Cache both actual original endpoint pairs once and retain their homogeneous source, direct and chart bounds. -/
-@[expose] def extremes (endpoints : BasisEndpointPlans.Samples numerical plans cells evaluated sources planned)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (nonnegative : 0 ≤ sourceTarget) :
+@[expose] def extremes (endpoints : Samples numerical plans cells evaluated sources planned)
+    (coefficients : GaussianVector genus) (nonnegative : 0 ≤ sourceTarget) :
       Extremes endpoints coefficients :=
   ⟨firstValues coefficients plans cells evaluated sources planned endpoints, rfl,
     lastValues coefficients plans cells

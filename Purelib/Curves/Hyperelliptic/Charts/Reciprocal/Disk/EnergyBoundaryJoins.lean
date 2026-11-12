@@ -30,6 +30,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements
+
 open Purelib.Curves
 
 open Purelib.Data
@@ -52,29 +54,29 @@ namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.EnergyBoundaryJoin
 
 open Purelib.Data.Gaussian.Basic.Canonical
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap}
   {sourceTarget reciprocalTarget coefficientTarget totalTarget areaTarget target energyTarget joining :
     Normalization.InverseRootPolynomial.Coordinate}
   {minimum index depth readingIndex energyFloor energyDepth joinFloor : Nat} {box : Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {sample : Cap.Primitives.Sample cap differential index box}
 
 namespace EnergyData
 
 /-- The actual retained potential-jump list has exactly the original parent count. -/
 theorem joinErrors_length {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-  {covers : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents}
-    {prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers} {requests :
-      Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Requests sourceTarget reciprocalTarget
+  {covers : UniformReciprocalCover.ParentCovers parents}
+    {prepared : ParentJoins.SideBank regular covers} {requests :
+      SideRequests.SideBank.Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared}
-    (evaluated : Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Evaluations sample depth readingIndex
-      requests) (charts : Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartReplacements target evaluated)
-    (energies : Hyperelliptic.Charts.Reciprocal.Disk.SideEnergyRequests.EnergyData energyTarget energyFloor energyDepth
+    (evaluated : SideRequests.SideBank.Evaluations sample depth readingIndex
+      requests) (charts : SideChartRequests.ChartReplacements target evaluated)
+    (energies : SideEnergyRequests.EnergyData energyTarget energyFloor energyDepth
       evaluated charts) (previous previousPotential : Normalization.InverseRootPolynomial.Gaussian) :
-    (Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.joinErrors evaluated charts
+    (EnergyData.joinErrors evaluated charts
       energies previous previousPotential).length = parents.length := by
   induction evaluated generalizing previous previousPotential with
   | nil => cases charts; rfl
@@ -84,20 +86,20 @@ theorem joinErrors_length {parents : List (Integration.PreparedSubdivisionModelC
 
 /-- The sum of actual joined boundary terms is the terminal-minus-initial potential minus every retained join error. -/
 theorem boundary_identity {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-  {covers : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents}
-    {prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers} {requests :
-      Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Requests sourceTarget reciprocalTarget
+  {covers : UniformReciprocalCover.ParentCovers parents}
+    {prepared : ParentJoins.SideBank regular covers} {requests :
+      SideRequests.SideBank.Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared}
-    (evaluated : Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Evaluations sample depth readingIndex
-      requests) (charts : Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartReplacements target evaluated)
-    (energies : Hyperelliptic.Charts.Reciprocal.Disk.SideEnergyRequests.EnergyData energyTarget energyFloor energyDepth
+    (evaluated : SideRequests.SideBank.Evaluations sample depth readingIndex
+      requests) (charts : SideChartRequests.ChartReplacements target evaluated)
+    (energies : SideEnergyRequests.EnergyData energyTarget energyFloor energyDepth
       evaluated charts) (previous previousPotential : Normalization.InverseRootPolynomial.Gaussian) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (Hyperelliptic.Charts.Reciprocal.Disk.SideEnergy.EnergyData.boundaryTerms
+    Gaussian.Norm.Sum.Basic.gaussianSum (SideEnergy.EnergyData.boundaryTerms
       evaluated charts energies previous) =
-      Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.lastPotential evaluated charts
+      EnergyData.lastPotential evaluated charts
       energies previousPotential - previousPotential -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum
-        (Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.joinErrors evaluated charts
+      Gaussian.Norm.Sum.Basic.gaussianSum
+        (EnergyData.joinErrors evaluated charts
         energies previous previousPotential) := open Purelib.Integration in by
   induction evaluated generalizing previous previousPotential with
   | nil =>
@@ -106,48 +108,48 @@ theorem boundary_identity {parents : List (Integration.PreparedSubdivisionModelC
   | cons first rest ih =>
       cases charts with
       | cons _ head tail =>
-          change (Hyperelliptic.Charts.Reciprocal.Disk.RestoredEnergyBlocks.RestoredEnergyBlock.terminalPotential
+          change (RestoredEnergyBlocks.RestoredEnergyBlock.terminalPotential
             energies.1.val.blocks energies.1.val.firstPotential - energies.1.val.firstPotential +
             Path.BoundaryRibbon.area previous first.cap.firstValue) +
-              Data.Gaussian.Norm.Sum.Basic.gaussianSum
-                (Hyperelliptic.Charts.Reciprocal.Disk.SideEnergy.EnergyData.boundaryTerms rest tail energies.2
+              Gaussian.Norm.Sum.Basic.gaussianSum
+                (SideEnergy.EnergyData.boundaryTerms rest tail energies.2
                 first.cap.joined.lastValue) =
-            Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.lastPotential rest tail
+            EnergyData.lastPotential rest tail
               energies.2
-              (Hyperelliptic.Charts.Reciprocal.Disk.RestoredEnergyBlocks.RestoredEnergyBlock.terminalPotential
+              (RestoredEnergyBlocks.RestoredEnergyBlock.terminalPotential
               energies.1.val.blocks energies.1.val.firstPotential) - previousPotential -
               ((energies.1.val.firstPotential - previousPotential - Path.BoundaryRibbon.area previous
-                first.cap.firstValue) + Data.Gaussian.Norm.Sum.Basic.gaussianSum _)
+                first.cap.firstValue) + Gaussian.Norm.Sum.Basic.gaussianSum _)
           rw [ih tail energies.2 first.cap.joined.lastValue
-            (Hyperelliptic.Charts.Reciprocal.Disk.RestoredEnergyBlocks.RestoredEnergyBlock.terminalPotential
+            (RestoredEnergyBlocks.RestoredEnergyBlock.terminalPotential
             energies.1.val.blocks energies.1.val.firstPotential)]
           ring1
 
 /-- Existing connected-path clients use the same retained endpoint-bank checker. -/
-theorem joins_bounded (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+theorem joins_bounded (branch : HyperellipticReciprocal.originOrder curve = 1)
   (joinSmall : joining ≤ 1)
     {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)} {covers :
-      Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents}
-    {prepared : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers} {requests :
-      Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Requests sourceTarget reciprocalTarget
+      UniformReciprocalCover.ParentCovers parents}
+    {prepared : ParentJoins.SideBank regular covers} {requests :
+      SideRequests.SideBank.Requests sourceTarget reciprocalTarget
       coefficientTarget totalTarget areaTarget minimum prepared}
-    (evaluated : Hyperelliptic.Charts.Reciprocal.Disk.SideRequests.SideBank.Evaluations sample depth readingIndex
-      requests) (charts : Hyperelliptic.Charts.Reciprocal.Disk.SideChartRequests.ChartReplacements target evaluated)
-    (energies : Hyperelliptic.Charts.Reciprocal.Disk.SideEnergyRequests.EnergyData energyTarget energyFloor energyDepth
-      evaluated charts) {links : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank.Links prepared}
-    (junctions : Hyperelliptic.Charts.Reciprocal.Disk.SideConnections.JunctionRequests joining joinFloor prepared links)
+    (evaluated : SideRequests.SideBank.Evaluations sample depth readingIndex
+      requests) (charts : SideChartRequests.ChartReplacements target evaluated)
+    (energies : SideEnergyRequests.EnergyData energyTarget energyFloor energyDepth
+      evaluated charts) {links : ParentJoins.SideBank.Links prepared}
+    (junctions : SideConnections.JunctionRequests joining joinFloor prepared links)
       (later : junctions.maximum ≤ readingIndex)
     (previous previousPotential : Normalization.InverseRootPolynomial.Gaussian)
-    (small : Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.FirstJoinBound
+    (small : EnergyData.FirstJoinBound
       evaluated charts energies previous previousPotential (80 * target + 2 * joining)) :
-    ∀ error ∈ Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.joinErrors evaluated
-      charts energies previous previousPotential, Data.Gaussian.Norm.Basic.normSq error ≤ 80 * target + 2 * joining
+    ∀ error ∈ EnergyData.joinErrors evaluated
+      charts energies previous previousPotential, Gaussian.Norm.Basic.normSq error ≤ 80 * target + 2 * joining
       := by
-  have first := (Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.endBank_firstBound
+  have first := (EnergyData.endBank_firstBound
     evaluated charts energies branch previous previousPotential _).mpr small
-  have bound := (Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.endBank branch
+  have bound := (EnergyData.endBank branch
     evaluated charts energies).errors_bounded branch joinSmall junctions later previous previousPotential first
-  rw [Hyperelliptic.Charts.Reciprocal.Disk.EnergyEndReadback.ChartReplacements.EnergyData.endBank_errors evaluated
+  rw [EnergyData.endBank_errors evaluated
     charts energies branch previous previousPotential] at bound
   exact bound
 

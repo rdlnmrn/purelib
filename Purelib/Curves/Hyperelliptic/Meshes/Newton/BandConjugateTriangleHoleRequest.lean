@@ -69,6 +69,10 @@ import Purelib.RootIsolation.SquareRoot.Grid.Walk.ChainComparison
 import Purelib.Topology.Surface.Sewing.PrimitiveSewing
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid
+
 public section
 
 /-! The selected fine annular area cancels the positive physical-hole
@@ -84,18 +88,18 @@ open Purelib
 
 open Purelib.Data.Rat.Fraction.Compatibility
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Hyperelliptic.Branches.BranchCellBank curve branches higher}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : Branches.BranchCellBank curve branches higher}
   {preparation : RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius :
     Fraction.Rational}
-  {request : Hyperelliptic.Meshes.Newton.Annulus.AreaRequests.NewtonPreparation.AreaRequest preparation target radius}
-  {index : Hyperelliptic.Branches.BranchIsolation.Data.Index branches} {annulus :
-    Hyperelliptic.Meshes.Newton.Annulus.Faces.AnnularFaces request.grid index}
+  {request : Annulus.AreaRequests.NewtonPreparation.AreaRequest preparation target radius}
+  {index : Branches.BranchIsolation.Data.Index branches} {annulus :
+    Annulus.Faces.AnnularFaces request.grid index}
   {lifted : Meshes.LiftedPuncturedGrid request.grid.punctured} {region :
-    Hyperelliptic.Meshes.Newton.Annulus.LiftedBoundary.Lifted annulus lifted}
-  {prepared : Hyperelliptic.Meshes.Newton.Annulus.PrimitiveComparison.Lifted.OuterPreparation region}
-  {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+    Annulus.LiftedBoundary.Lifted annulus lifted}
+  {prepared : Annulus.PrimitiveComparison.Lifted.OuterPreparation region}
+  {domains : Face.DomainBanks.FaceDomainBank lifted.frames
     request.grid.faces.regulars} {i j : Fin genus}
 
 /-- Prepare a common threshold bounding the selected conjugate annular triangles plus both positive physical-hole
@@ -104,79 +108,79 @@ polygons.
 The retained outer-lap, selected-triangle and hole-polygon requests share the original magnitude banks and pay the
 fortyfold outer target on every later cache. -/
 @[expose] def conjugateTriangleHoleRequest (comparison :
-  Hyperelliptic.Meshes.Newton.Annulus.PairedAreaRequests.NewtonPreparation.AreaRequest.PairedComparison request prepared
+  Annulus.PairedAreaRequests.NewtonPreparation.AreaRequest.PairedComparison request prepared
   i j domains)
-    (first : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    (first : Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential i))
-    (second : Hyperelliptic.Meshes.PuncturedGrid.Face.MagnitudeBank.FaceMagnitudeBank domains
+    (second : Face.MagnitudeBank.FaceMagnitudeBank domains
       (Periods.PeriodMatrix.standardDifferential j)) (floor : Nat) :
     {threshold : Nat // floor ≤ threshold ∧
-      ∀ stage (cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage)
-        (left : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh)
-          (right : Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings (cache.get j)
+      ∀ stage (cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage)
+        (left : TrianglePrimitiveReadings.TriangleReadings (cache.get i) lifted.mesh)
+          (right : TrianglePrimitiveReadings.TriangleReadings (cache.get j)
           lifted.mesh),
         threshold ≤ stage →
-        let value := fun edge => (⟨Data.Gaussian.Basic.conj
-          (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh left.values edge),
-          Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh right.values edge⟩ :
+        let value := fun edge => (⟨Gaussian.Basic.conj
+          (CanonicalEdgeValues.edgeValuation lifted.mesh left.values edge),
+          CanonicalEdgeValues.edgeValuation lifted.mesh right.values edge⟩ :
             Topology.Polygon.Stokes.PrimitivePoint)
         let physical := fun sheet => Path.PairedIncrementArea.area
           ((lifted.edges.indexedEdges lifted.vertices (RootContinuation.NewtonBandWindowHole.fineHole (current :=
             lifted) annulus).hole.boundary sheet).map value)
-        Data.Gaussian.Norm.Basic.normSq
-          (Hyperelliptic.Meshes.PuncturedGrid.ConjugateTriangleAreas.selectedConjugateFullTriangleArea left right (fun
+        Gaussian.Norm.Basic.normSq
+          (ConjugateTriangleAreas.selectedConjugateFullTriangleArea left right (fun
           position =>
           decide ((request.grid.faces.regulars[position.val]'position.isLt).cell.box.Refines
             (request.grid.bands.box index))) + (physical 0 + physical 1)) ≤ 40 * target } := by
-  let outer := Hyperelliptic.Meshes.Newton.Annulus.ConjugateLapAreaRequest.conjugateLapAreaRequest comparison first
+  let outer := Annulus.ConjugateLapAreaRequest.conjugateLapAreaRequest comparison first
     second floor
-  let triangles := Hyperelliptic.Meshes.Newton.BandConjugateWindowSelectedRequest.selectedConjugateTriangleRequest
+  let triangles := BandConjugateWindowSelectedRequest.selectedConjugateTriangleRequest
     annulus first second target request.budget.positive floor
-  let hole := Hyperelliptic.Meshes.Newton.BandConjugateHolePolygonRequest.conjugateHolePolygonRequest annulus first
+  let hole := BandConjugateHolePolygonRequest.conjugateHolePolygonRequest annulus first
     second target request.budget.positive floor
-  refine ⟨max outer.val (max triangles.val hole.val), outer.property.1.trans (Data.Nat.Order.le_max_left _ _), ?_⟩
+  refine ⟨max outer.val (max triangles.val hole.val), outer.property.1.trans (Nat.Order.le_max_left _ _), ?_⟩
   intro stage cache left right later value physical
-  have outerBound := outer.property.2 stage cache left right ((Data.Nat.Order.le_max_left _ _).trans later)
+  have outerBound := outer.property.2 stage cache left right ((Nat.Order.le_max_left _ _).trans later)
   have triangleBound := triangles.property.2 stage cache left right
-    ((Data.Nat.Order.le_max_left _ _).trans ((Data.Nat.Order.le_max_right _ _).trans later))
+    ((Nat.Order.le_max_left _ _).trans ((Nat.Order.le_max_right _ _).trans later))
   have holeBound := hole.property.2 stage cache left right
-    ((Data.Nat.Order.le_max_right _ _).trans ((Data.Nat.Order.le_max_right _ _).trans later))
+    ((Nat.Order.le_max_right _ _).trans ((Nat.Order.le_max_right _ _).trans later))
   let lap := fun sheet => Path.PairedIncrementArea.area
     ((lifted.edges.indexedEdges lifted.vertices annulus.boundary sheet).map value)
   let kept := fun sheet => Path.PairedIncrementArea.area
     ((RootContinuation.NewtonBandWindowCircuits.fineCompiler (current := lifted) annulus sheet).word.map value)
-  let selected := Hyperelliptic.Meshes.PuncturedGrid.ConjugateTriangleAreas.selectedConjugateFullTriangleArea left right
+  let selected := ConjugateTriangleAreas.selectedConjugateFullTriangleArea left right
     (fun position =>
     decide ((request.grid.faces.regulars[position.val]'position.isLt).cell.box.Refines (request.grid.bands.box index)))
   have readback (sheet : Fin 2) :
-      Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
+      BilinearPolarization.extract (fun coefficient =>
         lifted.edges.chainArea lifted.vertices
-        (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix (fun edge =>
-          Data.Gaussian.Basic.conj (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
-          left.values edge)) (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation lifted.mesh
+        (BilinearPolarization.mix (fun edge =>
+          Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation lifted.mesh
+          left.values edge)) (CanonicalEdgeValues.edgeValuation lifted.mesh
           right.values) coefficient)
         annulus.boundary sheet - Topology.Mesh.RetracingWords.wordArea
-          (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix (fun edge =>
-            Data.Gaussian.Basic.conj (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation
-            lifted.mesh left.values edge)) (Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation
+          (BilinearPolarization.mix (fun edge =>
+            Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation
+            lifted.mesh left.values edge)) (CanonicalEdgeValues.edgeValuation
             lifted.mesh right.values) coefficient)
           (RootContinuation.NewtonBandWindowCircuits.fineCompiler (current := lifted) annulus sheet).word) = lap sheet -
             kept sheet := by
     have distribute (a b : Gaussian.Basic.Canonical → Gaussian.Basic.Canonical) :
-        Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient => a
+        BilinearPolarization.extract (fun coefficient => a
           coefficient - b coefficient) =
-          Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract a -
-          Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract b := by
-      unfold Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract
+          BilinearPolarization.extract a -
+          BilinearPolarization.extract b := by
+      unfold BilinearPolarization.extract
       ring1
     exact (distribute _ _).trans (congrArg₂ (· - ·)
       (Topology.Surface.Boundary.PolarizedWordArea.BilinearPolarization.extract_wordArea_mix _ _ _)
         (Topology.Surface.Boundary.PolarizedWordArea.BilinearPolarization.extract_wordArea_mix _ _ _))
   dsimp only at triangleBound
   rw [readback 0, readback 1] at triangleBound
-  change Data.Gaussian.Norm.Basic.normSq ((lap 0 - kept 0) + (lap 1 - kept 1) - selected) < target at triangleBound
-  change Data.Gaussian.Norm.Basic.normSq ((kept 0 + kept 1) - (physical 0 + physical 1)) ≤ target at holeBound
-  change Data.Gaussian.Norm.Basic.normSq (lap 0 + lap 1) ≤ 16 * target at outerBound
+  change Gaussian.Norm.Basic.normSq ((lap 0 - kept 0) + (lap 1 - kept 1) - selected) < target at triangleBound
+  change Gaussian.Norm.Basic.normSq ((kept 0 + kept 1) - (physical 0 + physical 1)) ≤ target at holeBound
+  change Gaussian.Norm.Basic.normSq (lap 0 + lap 1) ≤ 16 * target at outerBound
   have defects := (Gaussian.Norm.Bounds.normSq_add_le_two
       ((lap 0 - kept 0) + (lap 1 - kept 1) - selected)
       ((kept 0 + kept 1) - (physical 0 + physical 1))).trans

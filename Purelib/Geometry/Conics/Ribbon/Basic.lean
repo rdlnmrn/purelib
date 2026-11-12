@@ -19,6 +19,8 @@ import Purelib.Tactic.Ring
 meta import Mathlib.Tactic.Linter.Lint
 meta import Purelib.Elab.ConstructiveInjectivity
 
+open Purelib.Algebra.Field
+
 open Purelib
 
 open Purelib.Curves.Plane
@@ -43,27 +45,27 @@ relation `Line.Equivalent`.
 
 namespace Purelib.Geometry
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [ExplicitField K]
 
 namespace Conics.Ribbon
 
 /-- The cleared conic attached to `Q(X,l)=K`. -/
-@[expose] def conic (line : Plane.Line K) (ribbonQuadrance : K)
+@[expose] def conic (line : Line K) (ribbonQuadrance : K)
   : Conic K where
   d := line.a ^ 2
   e := 2 * line.a * line.b
   f := line.b ^ 2
   a := 2 * line.a * line.c
   b := 2 * line.b * line.c
-  c := line.c ^ 2 - ribbonQuadrance * Line.Basic.lineNorm line
+  c := line.c ^ 2 - ribbonQuadrance * Basic.lineNorm line
   quadratic_nonzero := by
     rcases line.direction_nonzero with lineANonzero | lineBNonzero
     · exact Or.inl (by
         simpa only [pow_two] using
-          Algebra.Field.ExplicitField.mul_ne_zero lineANonzero lineANonzero)
+          ExplicitField.mul_ne_zero lineANonzero lineANonzero)
     · exact Or.inr (Or.inr (by
         simpa only [pow_two] using
-          Algebra.Field.ExplicitField.mul_ne_zero lineBNonzero lineBNonzero))
+          ExplicitField.mul_ne_zero lineBNonzero lineBNonzero))
 
 set_option genInjectivity false in
 /-- A scaled coefficient presentation of a ribbon conic.
@@ -71,7 +73,7 @@ set_option genInjectivity false in
 It retains a non-null defining line, a nonzero common scale and all six equations for the cleared point-to-line
 quadrance locus. -/
 structure PresentationData (source : Conic K) (line :
-  Plane.Line K)
+  Line K)
     (ribbonQuadrance : K) where
   /-- The defining line has nonzero squared normal norm. -/ lineNonNull : ¬ line.IsNull
   /-- Common scale from the canonical ribbon coefficients to the source conic. -/ scale : K
@@ -88,7 +90,7 @@ structure PresentationData (source : Conic K) (line :
     bEquation : source.b = scale * (2 * line.b * line.c)
   /-- The source constant is the scaled squared line constant minus the ribbon quadrance times the line norm. -/
     cEquation : source.c =
-    scale * (line.c ^ 2 - ribbonQuadrance * Line.Basic.lineNorm line)
+    scale * (line.c ^ 2 - ribbonQuadrance * Basic.lineNorm line)
 
 -- Preserve the original constructor certificate names of this unchanged nominal datatype.
 
@@ -100,18 +102,18 @@ end PresentationData.mk
 
 /-- The proposition asserting an explicitly witnessed ribbon presentation. -/
 @[expose] def IsPresentation (source : Conic K) (line :
-  Plane.Line K)
+  Line K)
     (ribbonQuadrance : K) : Prop :=
   Nonempty (PresentationData source line ribbonQuadrance)
 
 /-- A ribbon is a conic with one explicitly exhibited valid presentation. -/
 @[expose] def IsRibbon (source : Conic K) : Prop :=
-  ∃ line : Plane.Line K, ∃ ribbonQuadrance : K,
+  ∃ line : Line K, ∃ ribbonQuadrance : K,
     IsPresentation source line ribbonQuadrance
 
 /-- The canonical cleared coefficient record has scale one. -/
 theorem conic_isPresentation [Nontrivial K]
-    (line : Plane.Line K) (ribbonQuadrance : K)
+    (line : Line K) (ribbonQuadrance : K)
     (lineNonNull : ¬ line.IsNull) :
     IsPresentation (conic line ribbonQuadrance) line
       ribbonQuadrance := by
@@ -128,9 +130,9 @@ theorem conic_isPresentation [Nontrivial K]
   all_goals (unfold conic; ring1)
 
 /-- Direct expansion of the cleared ribbon equation. -/
-theorem conic_evaluate (line : Plane.Line K) (ribbonQuadrance :
+theorem conic_evaluate (line : Line K) (ribbonQuadrance :
   K)
-    (point : Plane.Point K) :
+    (point : Point K) :
     (conic line ribbonQuadrance).evaluate point =
       (line.a * point.x + line.b * point.y + line.c) ^ 2 -
         ribbonQuadrance * Basic.lineNorm line := by
@@ -141,14 +143,14 @@ namespace PresentationData
 
 /-- Expansion of an arbitrarily scaled ribbon presentation. -/
 theorem evaluate {source : Conic K}
-  {line : Plane.Line K}
+  {line : Line K}
     {ribbonQuadrance : K}
     (presentation : PresentationData source line ribbonQuadrance)
-    (point : Plane.Point K) :
+    (point : Point K) :
     source.evaluate point =
       presentation.scale *
         ((line.a * point.x + line.b * point.y + line.c) ^ 2 -
-          ribbonQuadrance * Line.Basic.lineNorm line) := by
+          ribbonQuadrance * Basic.lineNorm line) := by
   unfold Conic.evaluate
   rw [presentation.dEquation, presentation.eEquation,
     presentation.fEquation, presentation.aEquation,
@@ -159,37 +161,37 @@ end PresentationData
 
 /-- The canonical conic has exactly the metric locus `Q(X,l)=K`. -/
 theorem conic_contains_iff [DecidableEq K]
-    (line : Plane.Line K) (ribbonQuadrance : K)
-    (lineNonNull : ¬ line.IsNull) (point : Plane.Point K) :
+    (line : Line K) (ribbonQuadrance : K)
+    (lineNonNull : ¬ line.IsNull) (point : Point K) :
     (conic line ribbonQuadrance).Contains point ↔
       Quadrance.pointLineQuadrance point line lineNonNull = ribbonQuadrance := by
-  have normNonzero : Line.Basic.lineNorm line ≠ 0 := lineNonNull
-  have normCancel : Line.Basic.lineNorm line * (Line.Basic.lineNorm line)⁻¹ = (1 : K) :=
-    Algebra.Field.ExplicitField.mul_inv_cancel _ normNonzero
+  have normNonzero : Basic.lineNorm line ≠ 0 := lineNonNull
+  have normCancel : Basic.lineNorm line * (Basic.lineNorm line)⁻¹ = (1 : K) :=
+    ExplicitField.mul_inv_cancel _ normNonzero
   rw [Conic.Contains, conic_evaluate,
     Quadrance.pointLineQuadrance_formula point line lineNonNull]
-  simp only [Algebra.Field.ExplicitField.div_eq_mul_inv]
+  simp only [ExplicitField.div_eq_mul_inv]
   let numerator :=
     (line.a * point.x + line.b * point.y + line.c) ^ 2
-  change numerator - ribbonQuadrance * Line.Basic.lineNorm line = 0 ↔
-    numerator * (Line.Basic.lineNorm line)⁻¹ = ribbonQuadrance
+  change numerator - ribbonQuadrance * Basic.lineNorm line = 0 ↔
+    numerator * (Basic.lineNorm line)⁻¹ = ribbonQuadrance
   constructor
   · intro clearedEquation
     calc
-      numerator * (Line.Basic.lineNorm line)⁻¹ =
-          (numerator - ribbonQuadrance * Line.Basic.lineNorm line) *
-              (Line.Basic.lineNorm line)⁻¹ +
+      numerator * (Basic.lineNorm line)⁻¹ =
+          (numerator - ribbonQuadrance * Basic.lineNorm line) *
+              (Basic.lineNorm line)⁻¹ +
             ribbonQuadrance *
-              (Line.Basic.lineNorm line * (Line.Basic.lineNorm line)⁻¹) := by ring1
+              (Basic.lineNorm line * (Basic.lineNorm line)⁻¹) := by ring1
       _ = ribbonQuadrance := by rw [clearedEquation, normCancel]; ring1
   · intro quotientEquation
     have numeratorEquation :
-        numerator = ribbonQuadrance * Line.Basic.lineNorm line := by
+        numerator = ribbonQuadrance * Basic.lineNorm line := by
       calc
         numerator = numerator *
-            (Line.Basic.lineNorm line * (Line.Basic.lineNorm line)⁻¹) := by rw [normCancel]; ring1
-        _ = (numerator * (Line.Basic.lineNorm line)⁻¹) * Line.Basic.lineNorm line := by ring1
-        _ = ribbonQuadrance * Line.Basic.lineNorm line := by rw [quotientEquation]
+            (Basic.lineNorm line * (Basic.lineNorm line)⁻¹) := by rw [normCancel]; ring1
+        _ = (numerator * (Basic.lineNorm line)⁻¹) * Basic.lineNorm line := by ring1
+        _ = ribbonQuadrance * Basic.lineNorm line := by rw [quotientEquation]
     rw [numeratorEquation]
     ring1
 
@@ -197,9 +199,9 @@ namespace PresentationData
 
 /-- Every scaled ribbon presentation recovers the source's metric equation. -/
 theorem contains_iff [DecidableEq K]
-    {source : Conic K} {line : Plane.Line K} {ribbonQuadrance : K}
+    {source : Conic K} {line : Line K} {ribbonQuadrance : K}
     (presentation : PresentationData source line ribbonQuadrance)
-    (point : Plane.Point K) :
+    (point : Point K) :
     source.Contains point ↔
       Quadrance.pointLineQuadrance point line presentation.lineNonNull =
         ribbonQuadrance := by
@@ -208,15 +210,15 @@ theorem contains_iff [DecidableEq K]
     have scaledZero :
         presentation.scale *
           ((line.a * point.x + line.b * point.y + line.c) ^ 2 -
-            ribbonQuadrance * Line.Basic.lineNorm line) = 0 := by
+            ribbonQuadrance * Basic.lineNorm line) = 0 := by
       calc
         presentation.scale *
             ((line.a * point.x + line.b * point.y + line.c) ^ 2 -
-              ribbonQuadrance * Line.Basic.lineNorm line) = source.evaluate point :=
+              ribbonQuadrance * Basic.lineNorm line) = source.evaluate point :=
           (presentation.evaluate point).symm
         _ = 0 := sourceContains
     have clearedZero :=
-      Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left presentation.scaleNonzero scaledZero
+      ExplicitField.eq_zero_of_mul_eq_zero_left presentation.scaleNonzero scaledZero
     apply (conic_contains_iff line ribbonQuadrance
       presentation.lineNonNull point).1
     unfold Conic.Contains
@@ -228,7 +230,7 @@ theorem contains_iff [DecidableEq K]
         presentation.lineNonNull point).2 metricEquation
     have clearedZero :
         (line.a * point.x + line.b * point.y + line.c) ^ 2 -
-            ribbonQuadrance * Line.Basic.lineNorm line = 0 := by
+            ribbonQuadrance * Basic.lineNorm line = 0 := by
       unfold Conic.Contains at canonicalContains
       rw [conic_evaluate] at canonicalContains
       exact canonicalContains
@@ -239,9 +241,9 @@ theorem contains_iff [DecidableEq K]
 /-- The centers of a presented ribbon are exactly the points on its defining line. This strengthens the last clause of
 Exercise 15.6 to an equivalence. -/
 theorem isCenter_iff_contains
-    {source : Conic K} {line : Plane.Line K} {ribbonQuadrance : K}
+    {source : Conic K} {line : Line K} {ribbonQuadrance : K}
     (presentation : PresentationData source line ribbonQuadrance)
-    (twoNonzero : (2 : K) ≠ 0) (point : Plane.Point K) :
+    (twoNonzero : (2 : K) ≠ 0) (point : Point K) :
     source.IsCenter point ↔ line.Contains point := by
   let lineValue := line.a * point.x + line.b * point.y + line.c
   have firstIdentity :
@@ -265,18 +267,18 @@ theorem isCenter_iff_contains
   constructor
   · intro centerEquations
     rcases line.direction_nonzero with lineANonzero | lineBNonzero
-    · apply Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left
-        (Algebra.Field.ExplicitField.mul_ne_zero
-          (Algebra.Field.ExplicitField.mul_ne_zero twoNonzero
+    · apply ExplicitField.eq_zero_of_mul_eq_zero_left
+        (ExplicitField.mul_ne_zero
+          (ExplicitField.mul_ne_zero twoNonzero
             presentation.scaleNonzero) lineANonzero)
       calc
         2 * presentation.scale * line.a * lineValue =
             2 * source.d * point.x + source.e * point.y + source.a :=
           firstIdentity.symm
         _ = 0 := centerEquations.1
-    · apply Algebra.Field.ExplicitField.eq_zero_of_mul_eq_zero_left
-        (Algebra.Field.ExplicitField.mul_ne_zero
-          (Algebra.Field.ExplicitField.mul_ne_zero twoNonzero
+    · apply ExplicitField.eq_zero_of_mul_eq_zero_left
+        (ExplicitField.mul_ne_zero
+          (ExplicitField.mul_ne_zero twoNonzero
             presentation.scaleNonzero) lineBNonzero)
       calc
         2 * presentation.scale * line.b * lineValue =

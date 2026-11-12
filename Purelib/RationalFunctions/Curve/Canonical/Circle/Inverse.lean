@@ -31,7 +31,7 @@ section
 open Purelib.Data
 open Purelib.RationalFunctions
 /-- Multiplying unit-primary-chart coordinates by the common denominator recovers the two numerator coordinates. -/
-private theorem circle_one_coordinate_products (parameter :
+theorem circle_one_coordinate_products (parameter :
   Rational) :
     let point := (Curve.Canonical.Circle.circle 1).point parameter
     point.re * (parameter ^ 2 + 1) = 1 - parameter ^ 2 ∧
@@ -67,7 +67,7 @@ private theorem circle_one_coordinate_products (parameter :
       Rat.Fraction.Field.zero_add] using imaginaryIdentity.symm
 
 /-- Multiplying unit-reciprocal-chart coordinates by the common denominator recovers the two numerator coordinates. -/
-private theorem reciprocalCircle_one_coordinate_products
+theorem reciprocalCircle_one_coordinate_products
     (parameter : Rational) :
     let point := (Curve.Canonical.Circle.reciprocalCircle 1).point parameter
     point.re * (parameter ^ 2 + 1) = parameter ^ 2 - 1 ∧

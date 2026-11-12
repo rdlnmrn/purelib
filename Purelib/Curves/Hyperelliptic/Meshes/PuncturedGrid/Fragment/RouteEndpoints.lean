@@ -1,4 +1,7 @@
 module
+import Purelib.Riemann.Integration.RectangularSharedPrimitives
+
+import Purelib.Polynomial.Dense.Gaussian.Basic
 import Purelib.Algebra.Group.Basic
 public import Purelib.Algebra.Group.Negation
 import Purelib.Data.Rat.Fraction
@@ -112,6 +115,10 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteContacts (r
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.SourceGeometry (Presents)
 open Purelib.Approximation.Gaussian.Equivalence (NamedEquivalent)
 
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
+
+variable {numerator : CoefficientPolynomial}
+
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
@@ -123,6 +130,8 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {domains : FaceDomainBank frames
     base.faces.regulars} {mesh : LiftedMesh vertices edges base.faces}
   {count : Nat} {target : Rational}
+
+open Purelib.Riemann.Integration.RectangularSharedPrimitives renaming SharedPrimitiveValues -> SharedValues
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteEndpoints
 
@@ -189,9 +198,9 @@ end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteEndpoints
 
 variable {points : List Purelib.Data.Gaussian.Basic.Canonical} {tolerance : Rational} {index :
   Nat}
-  {budgets : FaceMeshBudgets source points tolerance
+  {budgets : FaceMeshBudgets source points tolerance (numerator := numerator)
     domains} {numerics : FacePrimitiveBank source
-    index domains}
+    index (numerator := numerator) domains}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Fragment.RouteEndpoints
 
@@ -203,10 +212,10 @@ private theorem directed_point_build {left right : Stokes.OrientedEdge vertices.
       right.reverse ∈ Stokes.triangleEdgeOccurrences mesh.triangulation.faces)
     (forward : Bool) (equal : (if forward then left else left.reverse) = right)
     (shared : CommonMeshes.FaceSharedMeshes budgets numerics) (point : Data.Gaussian.Basic.Canonical) :
-    SharedPrimitiveValues.atPoint
+    SharedValues.atPoint
       ((FaceSharedMeshes.atRoute shared (RouteWords.directedRoute mesh left leftSupported forward)).atSheet
       (RouteWords.directedRoute mesh left leftSupported forward).sheet).readings point =
-    SharedPrimitiveValues.atPoint
+    SharedValues.atPoint
       ((FaceSharedMeshes.atRoute shared (EdgeRoute.build mesh right rightSupported)).atSheet
       (EdgeRoute.build mesh right rightSupported).sheet).readings point := by
   cases forward with
@@ -229,7 +238,7 @@ theorem canonicalPoint_eq_of_first_vertex (piece : RootedWords.LiftedFragment ax
       piece.firstName)
     (shared : CommonMeshes.FaceSharedMeshes budgets numerics) (point : Data.Gaussian.Basic.Canonical) :
     (RouteCancellation.canonicalPoint piece) shared point =
-      SharedPrimitiveValues.atPoint
+      SharedValues.atPoint
       ((FaceSharedMeshes.atRoute shared (EdgeRoute.build mesh (edges.indexedEdge vertices edge (vertices.sheet vertex))
         (SkeletonFaceAssignments.indexedEdge_supported mesh edge _))).atSheet
         (EdgeRoute.build mesh (edges.indexedEdge vertices edge (vertices.sheet vertex))
@@ -273,7 +282,7 @@ theorem routed_increment {head : RootedWords.LiftedFragment axes domains mesh so
     | cons _ equal equivalent _ => exact ⟨equal, equivalent⟩
   obtain ⟨entry⟩ := incoming.2
   have same : ∀ point, (RouteCancellation.canonicalPoint head) shared point =
-      SharedPrimitiveValues.atPoint
+      SharedValues.atPoint
       ((FaceSharedMeshes.atRoute shared (EdgeRoute.build mesh (edges.indexedEdge vertices edge (vertices.sheet vertex))
         (SkeletonFaceAssignments.indexedEdge_supported mesh edge _))).atSheet
         (EdgeRoute.build mesh (edges.indexedEdge vertices edge (vertices.sheet vertex))

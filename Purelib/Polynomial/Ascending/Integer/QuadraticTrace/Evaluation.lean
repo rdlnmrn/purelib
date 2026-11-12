@@ -12,6 +12,8 @@ import Mathlib.Algebra.Group.Basic
 import Mathlib.Algebra.Ring.Defs
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Ascending.Integer.Basic
+
 open Purelib.Algebra.Field
 
 open Purelib.Algebra.Quadratic (TracePair)
@@ -62,31 +64,31 @@ scalar plus trace times its generator. -/
 
 /-- Formal quadratic evaluation preserves padded addition of integer coefficient tables. -/
 theorem eval_add (left right : List Int) (trace : K) :
-    eval (Ascending.Integer.Basic.Certificate.add left right) trace =
+    eval (Certificate.add left right) trace =
       add (eval left trace) (eval right trace) := by
   induction left generalizing right with
   | nil =>
-      apply ext <;> simp only [Ascending.Integer.Basic.Certificate.add, eval, zero, add, -eq_self, -iff_self] <;> ring0
+      apply ext <;> simp only [Certificate.add, eval, zero, add, -eq_self, -iff_self] <;> ring0
   | cons coefficient remaining inductionHypothesis =>
       cases right with
       | nil =>
-          apply ext <;> simp only [Ascending.Integer.Basic.Certificate.add, eval,
+          apply ext <;> simp only [Certificate.add, eval,
             zero, add, -eq_self, -iff_self] <;> ring0
       | cons other others =>
-          rw [Ascending.Integer.Basic.Certificate.add, eval_cons,
+          rw [Certificate.add, eval_cons,
             eval_cons, eval_cons, inductionHypothesis others]
-          apply ext <;> simp only [add, Algebra.Ring.IntCast.add] <;> ring0
+          apply ext <;> simp only [add, Ring.IntCast.add] <;> ring0
 
 /-- Formal quadratic evaluation sends integer coefficient scaling to trace-pair scaling by the cast factor. -/
 theorem eval_scale (factor : Int) (coefficients : List Int) (trace : K) :
-    eval (Ascending.Integer.Basic.Certificate.scale factor coefficients) trace =
+    eval (Certificate.scale factor coefficients) trace =
       scale (factor : K) (eval coefficients trace) := open Purelib.Algebra in by
   induction coefficients with
   | nil =>
-      apply ext <;> simp only [Ascending.Integer.Basic.Certificate.scale,
+      apply ext <;> simp only [Certificate.scale,
         eval, zero, scale, -eq_self, -iff_self] <;> ring0
   | cons coefficient remaining inductionHypothesis =>
-      rw [Ascending.Integer.Basic.Certificate.scale, eval_cons, eval_cons,
+      rw [Certificate.scale, eval_cons, eval_cons,
         inductionHypothesis]
       apply ext <;>
         simp only [scale, Ring.IntCast.intCast_mul] <;> ring0
@@ -111,23 +113,23 @@ theorem eval_shift (coefficients : List Int) (trace : K) :
       mul trace alpha (eval coefficients trace) := by
   rw [Ascending.Integer.Basic.shift, eval_cons,
     alpha_mul]
-  apply ext <;> simp only [Algebra.Ring.IntCast.cast_zero, -eq_self, -iff_self] <;> ring0
+  apply ext <;> simp only [Ring.IntCast.cast_zero, -eq_self, -iff_self] <;> ring0
 
 /-- Formal quadratic evaluation turns integer coefficient convolution into trace-pair multiplication.
 
 The scalar and generator coordinates satisfy the same finite Horner recurrence under `a² = t*a - 1`. -/
 theorem eval_mul (left right : List Int) (trace : K) :
-    eval (Ascending.Integer.Basic.Certificate.mul left right) trace =
+    eval (Certificate.mul left right) trace =
       mul trace (eval left trace) (eval right trace) := by
   induction left with
   | nil =>
-      rw [Ascending.Integer.Basic.Certificate.mul, eval_nil, mul_zero_left]
+      rw [Certificate.mul, eval_nil, mul_zero_left]
   | cons coefficient remaining inductionHypothesis =>
-      rw [Ascending.Integer.Basic.Certificate.mul, eval_add, eval_scale]
+      rw [Certificate.mul, eval_add, eval_scale]
       change add
           (scale (coefficient : K) (eval right trace))
           (eval (Ascending.Integer.Basic.shift
-            (Ascending.Integer.Basic.Certificate.mul remaining right)) trace) = _
+            (Certificate.mul remaining right)) trace) = _
       rw [eval_shift, inductionHypothesis, eval_cons]
       apply ext <;> simp only [add, scale, mul, alpha] <;> ring0
 
@@ -137,7 +139,7 @@ theorem eval_append_zero : ∀ coefficients : List Int, ∀ trace : K,
     eval (coefficients ++ [0]) trace = eval coefficients trace
   | [], trace => by
       change eval [0] trace = eval [] trace
-      apply ext <;> simp only [eval, zero, Algebra.Ring.IntCast.cast_zero, -eq_self, -iff_self] <;> ring0
+      apply ext <;> simp only [eval, zero, Ring.IntCast.cast_zero, -eq_self, -iff_self] <;> ring0
   | coefficient :: remaining, trace => by
       rw [List.cons_append, eval_cons, eval_cons,
         eval_append_zero remaining trace]

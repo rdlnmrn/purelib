@@ -57,6 +57,8 @@ import Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Tactic.Ring
 
+open Purelib.LinearAlgebra.Gaussian
+
 public section
 
 /-! Transfer the regular cap bound to the actual physical perimeter energy.
@@ -76,27 +78,27 @@ open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet} {surfaceTarget target : Fraction.Rational}
   {minimum floor stage depth coarseDepth : Nat} {box : Rational.Box}
   {basis : PhysicalBasisRequest regular domains target
     minimum floor}
-  {previous : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains} (selected :
+  {previous : RegularDomainMeshes.RegularMeshes.CommonCuts domains} (selected :
     BasisSourceCuts basis.preparations previous)
-  {initial : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet coarseDepth)
+  {initial : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+    RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet coarseDepth)
     fixed surfaceTarget}
   {request : PhysicalMeshRequest basis initial} {cache :
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box}
+    RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  {polynomials : CapBasisEnergy.RegularBasisPolynomials cap stage box}
 
 section PhysicalMeshRequest
 
@@ -110,20 +112,20 @@ theorem assembled_pair (first second : Fin genus) :
     (((entries.assemble selected evaluated later spatial).get first).get second).correctedArea =
       retained.area first second + entries.endpointCorrection polynomials first second := by
   let pair := fun first second =>
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalBasisSamples.PhysicalBasisArcSample.ofSamples
+    PhysicalBasisSamples.PhysicalBasisArcSample.ofSamples
     (basis.preparations.get first) ((basis.entries.get first).get second)
     (basis.pieceCounts first second) ((basis.schedules.get first).get second)
     ((evaluated.get first).get second) ((basis.depth_ge first second).trans spatial)
     (entries.counts first second) (entries.values first second)
     ((entries.samples.get first).get second) (entries.accurate selected evaluated later spatial first second)
-  have outer := Data.Vector.DependentVector.ofFn_get
-    (fun first => Data.Vector.DependentVector.ofFn fun second => pair first second) first
-  have inner := Data.Vector.DependentVector.ofFn_get (fun second => pair first second) second
+  have outer := Vector.DependentVector.ofFn_get
+    (fun first => Vector.DependentVector.ofFn fun second => pair first second) first
+  have inner := Vector.DependentVector.ofFn_get (fun second => pair first second) second
   have readback := (congrArg (fun row => (row.get second).correctedArea) outer).trans
     (congrArg (fun sample => sample.correctedArea) inner)
   apply readback.trans
   change FiniteSum.Fin.sumFin (fun i =>
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalArcAggregation.physicalArcValue ((basis.preparations.get
+    PhysicalArcAggregation.physicalArcValue ((basis.preparations.get
     first).occurrences[i.val]'i.isLt)
     (polynomials.get first) (polynomials.get second)
     (((entries.samples.get first).get second).get i).centeredArea) = _
@@ -135,7 +137,7 @@ theorem assembled_pair (first second : Fin genus) :
   have equal := (((entries.get first).get second).get i).corrected_area
     (((retained.get first).get second).get i) polynomials
   simpa only [samples,
-    Data.Vector.DependentVector.ofFn_get, -eq_self, -iff_self] using equal
+    Vector.DependentVector.ofFn_get, -eq_self, -iff_self] using equal
 
 end Readings
 
@@ -144,8 +146,8 @@ variable {selected}
 
 /-- Form the conjugate coefficient-weighted double sum of the retained physical perimeter areas. -/
 @[expose] def energy (retained : request.Perimeters cache) (coefficients :
-  LinearAlgebra.Gaussian.Energy.GaussianVector genus) : Gaussian :=
-  FiniteSum.Fin.sumFin fun first => FiniteSum.Fin.sumFin fun second => Data.Gaussian.Basic.conj (coefficients first)
+  Energy.GaussianVector genus) : Gaussian :=
+  FiniteSum.Fin.sumFin fun first => FiniteSum.Fin.sumFin fun second => Gaussian.Basic.conj (coefficients first)
     * coefficients second * retained.area first second
 
 end Perimeters
@@ -157,10 +159,10 @@ variable {selected}
 classification. -/
 @[expose] def componentEnergy (faces : request.FacePerimeterBank cache)
     (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank base.faces) (coefficients :
-      LinearAlgebra.Gaussian.Energy.GaussianVector genus) : Gaussian :=
-  FiniteSum.Fin.sumFin fun first => FiniteSum.Fin.sumFin fun second => Data.Gaussian.Basic.conj (coefficients first)
+      Energy.GaussianVector genus) : Gaussian :=
+  FiniteSum.Fin.sumFin fun first => FiniteSum.Fin.sumFin fun second => Gaussian.Basic.conj (coefficients first)
     * coefficients second *
-    Hyperelliptic.Meshes.PuncturedGrid.SelectedPhysicalComponents.componentEvaluation neighbors (fun _ => true)
+    SelectedPhysicalComponents.componentEvaluation neighbors (fun _ => true)
       (fun side position => FiniteSum.Fin.sumFin (fun sheet => ((faces.get first).get second).area position sheet side))
         .exterior
 
@@ -168,7 +170,7 @@ classification. -/
 -/
 theorem occurrences_energy (faces : request.FacePerimeterBank cache)
     (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank base.faces) (coefficients :
-      LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
+      Energy.GaussianVector genus) :
     faces.occurrences.energy coefficients = faces.componentEnergy neighbors coefficients := by
   unfold Perimeters.energy
     componentEnergy
@@ -176,7 +178,7 @@ theorem occurrences_energy (faces : request.FacePerimeterBank cache)
   intro first
   apply FiniteSum.Fin.sumFin_congr
   intro second
-  exact congrArg (fun value => Data.Gaussian.Basic.conj (coefficients first) * coefficients second * value)
+  exact congrArg (fun value => Gaussian.Basic.conj (coefficients first) * coefficients second * value)
     (faces.area_eq_component neighbors first second)
 
 end FacePerimeterBank
@@ -186,9 +188,9 @@ variable {selected}
 
 /-- Form the conjugate coefficient-weighted sum of the retained cap-versus-physical endpoint corrections. -/
 @[expose] def endpointEnergy (entries : request.Readings cache) (polynomials :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap stage box)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) : Gaussian :=
-  FiniteSum.Fin.sumFin fun first => FiniteSum.Fin.sumFin fun second => Data.Gaussian.Basic.conj (coefficients first)
+  CapBasisEnergy.RegularBasisPolynomials cap stage box)
+    (coefficients : Energy.GaussianVector genus) : Gaussian :=
+  FiniteSum.Fin.sumFin fun first => FiniteSum.Fin.sumFin fun second => Gaussian.Basic.conj (coefficients first)
     * coefficients second *
     entries.endpointCorrection polynomials first second
 
@@ -198,10 +200,10 @@ variable (selected)
 theorem assembled_energy (entries : request.Readings cache) (retained : request.Perimeters cache)
     (evaluated : basis.Evaluations polynomials depth)
     (later : request.index ≤ stage) (spatial : basis.depth ≤ depth)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) :
+    (coefficients : Energy.GaussianVector genus) :
     (entries.assemble selected evaluated later spatial).energy coefficients =
       retained.energy coefficients + entries.endpointEnergy polynomials coefficients := by
-  unfold Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalBasisSamples.PhysicalBasisArcSamples.energy
+  unfold PhysicalBasisSamples.PhysicalBasisArcSamples.energy
     Perimeters.energy
     endpointEnergy
   rw [← FiniteSum.Fin.sumFin_add]
@@ -216,12 +218,12 @@ theorem assembled_energy (entries : request.Readings cache) (retained : request.
 variable {prepared :
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
   regular domains differential}
-  (attached : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared)
-  {bounds : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisBounds.RegularBasisBounds polynomials}
+  (attached : Caps.AllSurfacePreparation.CapAttachment prepared)
+  {bounds : CapBasisBounds.RegularBasisBounds polynomials}
   {capTarget : Fraction.Rational} {capMinimum : Nat}
-  (capRequest : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisRequest.RegularBasisRequest bounds
+  (capRequest : CapBasisRequest.RegularBasisRequest bounds
     attached.caps.length capTarget capMinimum)
-  {geometry : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
+  {geometry : Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry
     attached}
   {parameters : Path.Dyadic.RadialTriangles.Parameters capRequest.depth}
 
@@ -230,15 +232,15 @@ No physical or cap chord is silently identified with zero or with the other. -/
 theorem perimeter_energy_upper (entries : request.Readings cache) (retained : request.Perimeters cache)
     (evaluated : basis.Evaluations polynomials capRequest.depth)
     (later : request.index ≤ stage) (spatial : basis.depth ≤ capRequest.depth)
-    (caps : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisAggregate.RegularBasisCap geometry parameters
+    (caps : CapBasisAggregate.RegularBasisCap geometry parameters
       polynomials)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (coefficients : Energy.GaussianVector genus)
     (capSample : (capRequest.certify caps).Evaluation coefficients)
     (allowance : Fraction.Rational) (nonnegative : 0 ≤ allowance)
     (paid : (genus : Fraction.Rational) ^ 2 * target ≤ 16 * allowance ^ 2) :
     (retained.energy coefficients + entries.endpointEnergy polynomials coefficients).im / 4 ≤
       (capTarget + allowance) * Readings.PreparedObservationCoercivity.coefficientNormSq coefficients := by
-  have bound := Hyperelliptic.Meshes.PuncturedGrid.Exterior.PhysicalBasisEnergy.PhysicalBasisArcSamples.energy_upper
+  have bound := PhysicalBasisEnergy.PhysicalBasisArcSamples.energy_upper
     attached capRequest caps coefficients capSample
     (entries.assemble selected evaluated later spatial) allowance nonnegative paid
   rw [entries.assembled_energy selected retained evaluated later spatial coefficients] at bound
@@ -250,9 +252,9 @@ theorem component_energy_upper (entries : request.Readings cache) (faces : reque
     (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank base.faces)
     (evaluated : basis.Evaluations polynomials capRequest.depth)
     (later : request.index ≤ stage) (spatial : basis.depth ≤ capRequest.depth)
-    (caps : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisAggregate.RegularBasisCap geometry parameters
+    (caps : CapBasisAggregate.RegularBasisCap geometry parameters
       polynomials)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (coefficients : Energy.GaussianVector genus)
     (capSample : (capRequest.certify caps).Evaluation coefficients)
     (allowance : Fraction.Rational) (nonnegative : 0 ≤ allowance)
     (paid : (genus : Fraction.Rational) ^ 2 * target ≤ 16 * allowance ^ 2) :

@@ -29,6 +29,8 @@ import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Polynomial.Dense.Rational.CauchyIndex.Path
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Dense.Gaussian.Path.Box
+
 open Purelib.Polynomial.Clearance.Box.Boundary.Basic (BoundaryClearance)
 open Purelib.Polynomial.Geometry.Grid.CellBoundary (EdgeValues)
 open Purelib.Polynomial.Geometry.Grid.ClearGrid (HorizontalLine VerticalLine)
@@ -62,7 +64,7 @@ open _root_.Purelib.Polynomial.Geometry.Grid.ClearGrid
   (build_vertical_coordinates build_horizontal_coordinates)
 open Purelib.Polynomial.Geometry.Grid.Axis.Full
 
-variable {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient : Box}
+variable {polynomial : ClearPath.GaussianPolynomial} {ambient : Box}
 
 /-- Build the two vertical ambient frame lines using the same retained clearance bound. -/
 @[expose] def frameVertical (clearance : BoundaryClearance polynomial ambient) :
@@ -108,23 +110,23 @@ variable {grid : ClearGrid polynomial ambient}
 
 /-- Identify the full horizontal axis span with the ambient box bounds. -/
 @[expose] def xSpan (frame : AmbientFrame grid) :
-    Geometry.Grid.Axis.Full.Interval.Span (key := VerticalLine.coordinate) grid.vertical
+    Interval.Span (key := VerticalLine.coordinate) grid.vertical
       ambient.xLower ambient.xUpper :=
   .ofBounds grid.vertical grid.vertical_ordered (fun line _ => line.inside) frame.xLower frame.xUpper
 
 /-- Identify the full vertical axis span with the ambient box bounds. -/
 @[expose] def ySpan (frame : AmbientFrame grid) :
-    Geometry.Grid.Axis.Full.Interval.Span (key := HorizontalLine.coordinate) grid.horizontal
+    Interval.Span (key := HorizontalLine.coordinate) grid.horizontal
       ambient.yLower ambient.yUpper :=
   .ofBounds grid.horizontal grid.horizontal_ordered (fun line _ => line.inside) frame.yLower frame.yUpper
 
 set_option genInjectivity false in
 /-- Share the two full adjacent-axis spines between opposite exterior sides. -/
 structure Axes (grid : ClearGrid polynomial ambient) where
-  /-- The cached increasing walk across the horizontal axis. -/ x : Geometry.Grid.AxisWalks.IncreasingWalk
+  /-- The cached increasing walk across the horizontal axis. -/ x : AxisWalks.IncreasingWalk
     grid.xIntervals ambient.xLower ambient.xUpper
   /-- The cached horizontal walk uses exactly the original horizontal intervals. -/ x_edges : x.edges = grid.xIntervals
-  /-- The cached increasing walk across the vertical axis. -/ y : Geometry.Grid.AxisWalks.IncreasingWalk grid.yIntervals
+  /-- The cached increasing walk across the vertical axis. -/ y : AxisWalks.IncreasingWalk grid.yIntervals
     ambient.yLower ambient.yUpper
   /-- The cached vertical walk uses exactly the original vertical intervals. -/ y_edges : y.edges = grid.yIntervals
 
@@ -144,17 +146,17 @@ open Purelib.Polynomial.Geometry.Grid.FramedClearGrid.AmbientFrame
 /-- Lift the cached horizontal axis walk along a retained clear grid line. -/
 @[expose] def horizontal (axes : Axes grid) (y : Fraction.Rational)
   (member : y ∈ grid.horizontal.map HorizontalLine.coordinate) :
-    Geometry.Grid.Walks.Walk grid (point ambient.xLower y) (point ambient.xUpper y) :=
-  let line := Geometry.Grid.AxisWalks.lookup y grid.horizontal member
-  (Geometry.Grid.Walks.Walk.horizontalIncreasing line.entry line.member axes.x).castEndpoints
+    Walks.Walk grid (point ambient.xLower y) (point ambient.xUpper y) :=
+  let line := AxisWalks.lookup y grid.horizontal member
+  (Walks.Walk.horizontalIncreasing line.entry line.member axes.x).castEndpoints
     (congrArg (point ambient.xLower) line.coordinate_eq) (congrArg (point ambient.xUpper) line.coordinate_eq)
 
 /-- Lift the cached vertical axis walk along a retained clear grid line. -/
 @[expose] def vertical (axes : Axes grid) (x : Fraction.Rational)
   (member : x ∈ grid.vertical.map VerticalLine.coordinate) :
-    Geometry.Grid.Walks.Walk grid (point x ambient.yLower) (point x ambient.yUpper) :=
-  let line := Geometry.Grid.AxisWalks.lookup x grid.vertical member
-  (Geometry.Grid.Walks.Walk.verticalIncreasing line.entry line.member axes.y).castEndpoints
+    Walks.Walk grid (point x ambient.yLower) (point x ambient.yUpper) :=
+  let line := AxisWalks.lookup x grid.vertical member
+  (Walks.Walk.verticalIncreasing line.entry line.member axes.y).castEndpoints
     (congrArg (fun x => point x ambient.yLower) line.coordinate_eq) (congrArg (fun x => point x ambient.yUpper)
       line.coordinate_eq)
 
@@ -162,43 +164,43 @@ open Purelib.Polynomial.Geometry.Grid.FramedClearGrid.AmbientFrame
 theorem horizontal_winding (axes : Axes grid) (y : Fraction.Rational)
   (member : y ∈ grid.horizontal.map HorizontalLine.coordinate) :
     Riemann.Paths.PreparedPathWinding.ClearPath.rawWinding (axes.horizontal y member).path =
-      (Dense.Gaussian.Path.Box.Sides.horizontalEdge polynomial y ambient.xLower ambient.xUpper).doubledWinding := by
+      (Sides.horizontalEdge polynomial y ambient.xLower ambient.xUpper).doubledWinding := by
   dsimp only [horizontal]
-  rw [Geometry.Grid.Winding.Walk.castEndpoints_winding,
-    Geometry.Grid.Winding.Walk.horizontalIncreasing_winding,
-    (Geometry.Grid.AxisWalks.lookup y grid.horizontal member).coordinate_eq]
+  rw [Winding.Walk.castEndpoints_winding,
+    Winding.Walk.horizontalIncreasing_winding,
+    (AxisWalks.lookup y grid.horizontal member).coordinate_eq]
 
 /-- The cached vertical subdivision has the doubled winding of its full oriented side. -/
 theorem vertical_winding (axes : Axes grid) (x : Fraction.Rational)
   (member : x ∈ grid.vertical.map VerticalLine.coordinate) :
     Riemann.Paths.PreparedPathWinding.ClearPath.rawWinding (axes.vertical x member).path =
-      (Dense.Gaussian.Path.Box.Sides.verticalEdge polynomial x ambient.yLower ambient.yUpper).doubledWinding := by
+      (Sides.verticalEdge polynomial x ambient.yLower ambient.yUpper).doubledWinding := by
   dsimp only [vertical]
-  rw [Geometry.Grid.Winding.Walk.castEndpoints_winding,
-    Geometry.Grid.Winding.Walk.verticalIncreasing_winding,
-    (Geometry.Grid.AxisWalks.lookup x grid.vertical member).coordinate_eq]
+  rw [Winding.Walk.castEndpoints_winding,
+    Winding.Walk.verticalIncreasing_winding,
+    (AxisWalks.lookup x grid.vertical member).coordinate_eq]
 
 /-- Read the horizontal walk as the sum over its original grid intervals. -/
 theorem horizontal_value (axes : Axes grid) (y : Fraction.Rational)
   (member : y ∈ grid.horizontal.map HorizontalLine.coordinate)
     (values : EdgeValues) : values.walk (axes.horizontal y member) =
-      Geometry.Grid.CellBoundary.sumValues (fun interval => values.horizontal interval.lower.coordinate
+      CellBoundary.sumValues (fun interval => values.horizontal interval.lower.coordinate
         interval.upper.coordinate y) grid.xIntervals := by
   dsimp only [horizontal]
-  rw [Geometry.Grid.Axis.Full.EdgeValues.walk_castEndpoints,
-    Geometry.Grid.Axis.Full.EdgeValues.walk_horizontalIncreasing, axes.x_edges,
-    (Geometry.Grid.AxisWalks.lookup y grid.horizontal member).coordinate_eq]
+  rw [EdgeValues.walk_castEndpoints,
+    EdgeValues.walk_horizontalIncreasing, axes.x_edges,
+    (AxisWalks.lookup y grid.horizontal member).coordinate_eq]
 
 /-- Read the vertical walk as the sum over its original grid intervals. -/
 theorem vertical_value (axes : Axes grid) (x : Fraction.Rational)
   (member : x ∈ grid.vertical.map VerticalLine.coordinate)
     (values : EdgeValues) : values.walk (axes.vertical x member) =
-      Geometry.Grid.CellBoundary.sumValues (fun interval => values.vertical x interval.lower.coordinate
+      CellBoundary.sumValues (fun interval => values.vertical x interval.lower.coordinate
         interval.upper.coordinate) grid.yIntervals := by
   dsimp only [vertical]
-  rw [Geometry.Grid.Axis.Full.EdgeValues.walk_castEndpoints,
-    Geometry.Grid.Axis.Full.EdgeValues.walk_verticalIncreasing, axes.y_edges,
-    (Geometry.Grid.AxisWalks.lookup x grid.vertical member).coordinate_eq]
+  rw [EdgeValues.walk_castEndpoints,
+    EdgeValues.walk_verticalIncreasing, axes.y_edges,
+    (AxisWalks.lookup x grid.vertical member).coordinate_eq]
 
 end Axes
 
@@ -206,7 +208,7 @@ end Axes
 
 The bottom and right walks run forward, while the top and left walks reverse the same retained axis subdivisions. -/
 @[expose] def boundary (frame : AmbientFrame grid) :
-    Geometry.Grid.Walks.Walk grid (point ambient.xLower ambient.yLower) (point ambient.xLower ambient.yLower) :=
+    Walks.Walk grid (point ambient.xLower ambient.yLower) (point ambient.xLower ambient.yLower) :=
   let axes := frame.axes
   let bottom := axes.horizontal ambient.yLower frame.yLower
   let right := axes.vertical ambient.xUpper frame.xUpper
@@ -219,22 +221,22 @@ theorem boundary_winding (frame : AmbientFrame grid) :
     Riemann.Paths.PreparedPathWinding.ClearPath.rawWinding frame.boundary.path = Winding.Box.Basic.quadrupledBoxWinding
       polynomial ambient := by
   dsimp only [boundary]
-  rw [Geometry.Grid.Winding.Walk.append_winding,
-    Geometry.Grid.Winding.Walk.append_winding,
-    Geometry.Grid.Winding.Walk.append_winding,
-    Geometry.Grid.Winding.Walk.reverse_winding,
-    Geometry.Grid.Winding.Walk.reverse_winding, Axes.horizontal_winding,
+  rw [Winding.Walk.append_winding,
+    Winding.Walk.append_winding,
+    Winding.Walk.append_winding,
+    Winding.Walk.reverse_winding,
+    Winding.Walk.reverse_winding, Axes.horizontal_winding,
       Axes.horizontal_winding,
     Axes.vertical_winding,
       Axes.vertical_winding, Winding.Box.Basic.quadrupledBoxWinding_eq]
-  have top : (Dense.Gaussian.Path.Box.Sides.horizontalEdge polynomial ambient.yUpper ambient.xUpper
+  have top : (Sides.horizontalEdge polynomial ambient.yUpper ambient.xUpper
     ambient.xLower).doubledWinding =
-      -(Dense.Gaussian.Path.Box.Sides.horizontalEdge polynomial ambient.yUpper ambient.xLower
+      -(Sides.horizontalEdge polynomial ambient.yUpper ambient.xLower
         ambient.xUpper).doubledWinding :=
     Dense.Rational.CauchyIndex.Basic.cauchyIndex2_reverse _ _ _ _
-  have left : (Dense.Gaussian.Path.Box.Sides.verticalEdge polynomial ambient.xLower ambient.yUpper
+  have left : (Sides.verticalEdge polynomial ambient.xLower ambient.yUpper
     ambient.yLower).doubledWinding =
-      -(Dense.Gaussian.Path.Box.Sides.verticalEdge polynomial ambient.xLower ambient.yLower
+      -(Sides.verticalEdge polynomial ambient.xLower ambient.yLower
         ambient.yUpper).doubledWinding :=
     Dense.Rational.CauchyIndex.Basic.cauchyIndex2_reverse _ _ _ _
   rw [top, left]
@@ -255,7 +257,7 @@ theorem boundary_value (frame : AmbientFrame grid) (values :
   rw [frame.xSpan.entries_eq, frame.ySpan.entries_eq]
   dsimp only
   rw [frame.xSpan.lower_eq, frame.xSpan.upper_eq, frame.ySpan.lower_eq, frame.ySpan.upper_eq,
-    Geometry.Grid.CellBoundary.sumValues_sub, Geometry.Grid.CellBoundary.sumValues_sub]
+    CellBoundary.sumValues_sub, CellBoundary.sumValues_sub]
   ring1
 
 /-- Locate an ambient point in a cell of a proper framed grid.
@@ -275,57 +277,57 @@ end AmbientFrame
 The new clear lines reuse the given frame clearances and existing state certificates. -/
 @[expose] def withFrame (grid : ClearGrid polynomial ambient) (clearance :
   BoundaryClearance polynomial ambient)
-    (states : List (Geometry.Grid.FromStates.BranchState polynomial ambient)) : ClearGrid polynomial
+    (states : List (BranchState polynomial ambient)) : ClearGrid polynomial
       ambient :=
-  Geometry.Grid.Extension.extend grid (frameVertical clearance ++ states.flatMap
-    Geometry.Grid.FromStates.verticalSides)
-    (frameHorizontal clearance ++ states.flatMap Geometry.Grid.FromStates.horizontalSides)
+  Extension.extend grid (frameVertical clearance ++ states.flatMap
+    verticalSides)
+    (frameHorizontal clearance ++ states.flatMap horizontalSides)
 
 /-- Every coordinate of the original grid occurs in its framed extension. -/
 theorem withFrame_inclusion (grid : ClearGrid polynomial ambient) (clearance :
   BoundaryClearance polynomial ambient)
-    (states : List (Geometry.Grid.FromStates.BranchState polynomial ambient)) :
+    (states : List (BranchState polynomial ambient)) :
       CoordinateInclusion grid (withFrame grid clearance
       states) :=
-  Geometry.Grid.Extension.extend_inclusion grid _ _
+  Extension.extend_inclusion grid _ _
 
 /-- The framed extension contains every retained state coordinate. -/
 theorem withFrame_states (grid : ClearGrid polynomial ambient) (clearance :
   BoundaryClearance polynomial ambient)
-    (states : List (Geometry.Grid.FromStates.BranchState polynomial ambient)) :
-      CoordinateInclusion (Geometry.Grid.FromStates.ofStates states)
+    (states : List (BranchState polynomial ambient)) :
+      CoordinateInclusion (FromStates.ofStates states)
       (withFrame grid clearance states) where
   vertical := by
     intro coordinate member
-    apply Geometry.Grid.Extension.extend_vertical grid
+    apply Extension.extend_vertical grid
     rw [List.Map.map_append]
-    exact List.mem_append_right _ ((Geometry.Grid.ClearGrid.build_vertical_coordinates _ _ _).1 member)
+    exact List.mem_append_right _ ((build_vertical_coordinates _ _ _).1 member)
   horizontal := by
     intro coordinate member
-    apply Geometry.Grid.Extension.extend_horizontal grid
+    apply Extension.extend_horizontal grid
     rw [List.Map.map_append]
-    exact List.mem_append_right _ ((Geometry.Grid.ClearGrid.build_horizontal_coordinates _ _ _).1 member)
+    exact List.mem_append_right _ ((build_horizontal_coordinates _ _ _).1 member)
 
 /-- The framed extension contains all four ambient boundary coordinates. -/
 theorem withFrame_frame (grid : ClearGrid polynomial ambient) (clearance :
   BoundaryClearance polynomial ambient)
-    (states : List (Geometry.Grid.FromStates.BranchState polynomial ambient)) :
+    (states : List (BranchState polynomial ambient)) :
       AmbientFrame (withFrame grid clearance
       states) where
   xLower := by
-    apply Geometry.Grid.Extension.extend_vertical grid
+    apply Extension.extend_vertical grid
     rw [List.Map.map_append]
     exact List.mem_append_left _ List.mem_cons_self
   xUpper := by
-    apply Geometry.Grid.Extension.extend_vertical grid
+    apply Extension.extend_vertical grid
     rw [List.Map.map_append]
     exact List.mem_append_left _ (List.mem_cons_of_mem _ List.mem_cons_self)
   yLower := by
-    apply Geometry.Grid.Extension.extend_horizontal grid
+    apply Extension.extend_horizontal grid
     rw [List.Map.map_append]
     exact List.mem_append_left _ List.mem_cons_self
   yUpper := by
-    apply Geometry.Grid.Extension.extend_horizontal grid
+    apply Extension.extend_horizontal grid
     rw [List.Map.map_append]
     exact List.mem_append_left _ (List.mem_cons_of_mem _ List.mem_cons_self)
 
@@ -333,7 +335,7 @@ set_option genInjectivity false in
 /-- Retain one enlarged grid and its exact semantic coverage.  Generated
 axes may use different ordering witnesses or clearance margins. -/
 structure FramedExtension (original : ClearGrid polynomial ambient) (states : List
-  (Geometry.Grid.FromStates.BranchState polynomial ambient)) where
+  (BranchState polynomial ambient)) where
   /-- The extended clear grid on the original ambient box. -/ grid : ClearGrid polynomial ambient
   /-- Every original grid coordinate remains in the extension. -/ originalIncluded :
     CoordinateInclusion original grid
@@ -351,7 +353,7 @@ namespace FramedExtension
 All certificates refer to the same computed grid, including the original grid, retained states and ambient boundary. -/
 @[expose] def build (original : ClearGrid polynomial ambient)
     (clearance : BoundaryClearance polynomial ambient) (states : List
-      (Geometry.Grid.FromStates.BranchState polynomial ambient)) :
+      (BranchState polynomial ambient)) :
     FramedExtension original states :=
   ⟨withFrame original clearance states, withFrame_inclusion original clearance
     states,

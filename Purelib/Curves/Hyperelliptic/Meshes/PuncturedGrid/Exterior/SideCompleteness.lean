@@ -51,6 +51,10 @@ import Purelib.Topology.Surface.Sewing.VertexSewing
 import Purelib.Riemann.Meshes.GridLiftedBoundarySimplicity
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BoundaryComponents
 
+open Purelib.Curves.Hyperelliptic.Branches
+
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior
+
 public section
 
 open Purelib.Algebra
@@ -77,7 +81,7 @@ private def Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.
 
 /-- The fixed coordinate-direction pattern of each oriented rectangle-edge kind. -/
 private def Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.kindDirection :
-  Rectangle.Partition.RectangularEdgeUniqueness.RectangleEdge.Kind → Bool × Bool × Bool × Bool
+  RectangleEdge.Kind → Bool × Bool × Bool × Bool
   | .bottom => (true, false, false, false)
   | .right => (false, false, true, false)
   | .downDiagonal => (false, true, false, true)
@@ -87,11 +91,11 @@ private def Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.
 
 /-- A proper rectangle edge has the direction pattern assigned to its edge kind. -/
 private theorem Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.direction_coordinates {box :
-  Geometry.Rational.Box} (proper : box.Proper) (kind
-  : Rectangle.Partition.RectangularEdgeUniqueness.RectangleEdge.Kind) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.direction
-      (Rectangle.Partition.RectangularEdgeUniqueness.RectangleEdge.coordinates box kind) =
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.kindDirection kind  := by
+  Rational.Box} (proper : box.Proper) (kind
+  : RectangleEdge.Kind) :
+    SideCompleteness.direction
+      (RectangleEdge.coordinates box kind) =
+      SideCompleteness.kindDirection kind  := by
   have noX : ¬ box.xUpper < box.xLower := fun less => proper.1.2 less.1
   have noY : ¬ box.yUpper < box.yLower := fun less => proper.2.2 less.1
   have selfXLower : ¬ box.xLower < box.xLower := fun less => less.2 less.1
@@ -99,9 +103,9 @@ private theorem Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleten
   have selfYLower : ¬ box.yLower < box.yLower := fun less => less.2 less.1
   have selfYUpper : ¬ box.yUpper < box.yUpper := fun less => less.2 less.1
   cases kind <;>
-    dsimp only [Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.direction,
-      Rectangle.Partition.RectangularEdgeUniqueness.RectangleEdge.coordinates,
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.kindDirection] <;>
+    dsimp only [SideCompleteness.direction,
+      RectangleEdge.coordinates,
+      SideCompleteness.kindDirection] <;>
     simp only [decide_eq_true proper.1, decide_eq_true proper.2,
       decide_eq_false noX, decide_eq_false noY,
       decide_eq_false selfXLower, decide_eq_false selfXUpper,
@@ -109,11 +113,11 @@ private theorem Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleten
 
 /-- Reversing a proper rectangle side gives the direction pattern of its opposite side. -/
 private theorem Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.direction_reverse {box :
-  Geometry.Rational.Box} (proper : box.Proper) (side :
+  Rational.Box} (proper : box.Proper) (side :
   Meshes.GridLiftedDualSteps.GridSide) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.direction
-      (Rectangle.Partition.RectangularEdgeUniqueness.RectangleEdge.coordinates box side.kind).swap =
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.kindDirection side.opposite.kind  := by
+    SideCompleteness.direction
+      (RectangleEdge.coordinates box side.kind).swap =
+      SideCompleteness.kindDirection side.opposite.kind  := by
   have noX : ¬ box.xUpper < box.xLower := fun less => proper.1.2 less.1
   have noY : ¬ box.yUpper < box.yLower := fun less => proper.2.2 less.1
   have selfXLower : ¬ box.xLower < box.xLower := fun less => less.2 less.1
@@ -121,9 +125,9 @@ private theorem Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleten
   have selfYLower : ¬ box.yLower < box.yLower := fun less => less.2 less.1
   have selfYUpper : ¬ box.yUpper < box.yUpper := fun less => less.2 less.1
   cases side <;>
-    dsimp only [Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.direction,
-      Rectangle.Partition.RectangularEdgeUniqueness.RectangleEdge.coordinates,
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.kindDirection,
+    dsimp only [SideCompleteness.direction,
+      RectangleEdge.coordinates,
+      SideCompleteness.kindDirection,
       Meshes.GridLiftedDualSteps.GridSide.kind, Meshes.GridLiftedDualSteps.GridSide.opposite, Prod.swap] <;>
     simp only [decide_eq_true proper.1, decide_eq_true proper.2,
       decide_eq_false noX, decide_eq_false noY,
@@ -140,18 +144,18 @@ private theorem Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleten
 
 Matching endpoint coordinates would force an opposite side outside the original ambient rectangle. -/
 private theorem Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.no_reverse {face other ambient :
-  Geometry.Rational.Box} (proper : face.Proper)
+  Rational.Box} (proper : face.Proper)
   (otherProper : other.Proper)
     (inside : other.Refines ambient) (side : Meshes.GridLiftedDualSteps.GridSide) (exterior : side.Exterior face
       ambient)
-    (kind : Rectangle.Partition.RectangularEdgeUniqueness.RectangleEdge.Kind) :
-    (Rectangle.Partition.RectangularEdgeUniqueness.RectangleEdge.coordinates face side.kind).swap ≠
-      Rectangle.Partition.RectangularEdgeUniqueness.RectangleEdge.coordinates other kind := by
+    (kind : RectangleEdge.Kind) :
+    (RectangleEdge.coordinates face side.kind).swap ≠
+      RectangleEdge.coordinates other kind := by
   intro equal
-  have same := Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.kindDirection_injective
-    ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.direction_reverse proper side).symm.trans
-    ((congrArg Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.direction equal).trans
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.direction_coordinates otherProper kind)))
+  have same := SideCompleteness.kindDirection_injective
+    ((SideCompleteness.direction_reverse proper side).symm.trans
+    ((congrArg SideCompleteness.direction equal).trans
+      (SideCompleteness.direction_coordinates otherProper kind)))
   subst kind
   have x1 := congrArg (fun ends : Gaussian.Basic.Canonical × Gaussian.Basic.Canonical => ends.1.re) equal
   have x2 := congrArg (fun ends : Gaussian.Basic.Canonical × Gaussian.Basic.Canonical => ends.2.re) equal
@@ -170,14 +174,14 @@ section LiftedPuncturedGrid
 open Purelib.Riemann.Normalization
 
 variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+  BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
 
 /-- Every original located regular-cell side has positive orientation in its retained triangle. -/
 private theorem Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.LiftedPuncturedGrid.side_positive
   (lifted : Meshes.LiftedPuncturedGrid base)
     (position : Fin base.faces.regulars.length) (sheet : Fin 2) (side : Meshes.GridLiftedDualSteps.GridSide) :
-    Purelib.Topology.Mesh.TriangleSourceUniqueness.SourceEdge.Positive
+    Topology.Mesh.TriangleSourceUniqueness.SourceEdge.Positive
       (Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
         (lifted.mesh.locateFace position sheet) side)
       lifted.mesh.triangulation.faces := by
@@ -195,17 +199,17 @@ private theorem Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleten
   (lifted : Meshes.LiftedPuncturedGrid base)
     (position : Fin base.faces.regulars.length) (sheet : Fin 2) (side : Meshes.GridLiftedDualSteps.GridSide)
     (exterior : side.Exterior (base.faces.regulars[position.val]'position.isLt).cell.box
-      (Hyperelliptic.Branches.Cuts.Ambient curve)) :
+      (Cuts.Ambient curve)) :
     ((lifted.mesh.locateFace position sheet).lifted.quad.edge side.kind).reverse ∉
       Topology.Polygon.Stokes.triangleEdgeOccurrences lifted.mesh.triangulation.faces := by
   intro member
   let located := lifted.mesh.locateFace position sheet
   let other := lifted.mesh.locateEdge _ member
   have equal := (congrArg Prod.swap (located.lifted.rectangleCoordinates.edge_coordinates side.kind)).symm.trans
-    ((congrArg (fun edge : Topology.Polygon.Stokes.OrientedEdge lifted.vertices.count =>
+    ((congrArg (fun edge : OrientedEdge lifted.vertices.count =>
       (lifted.vertices.coordinate edge.start, lifted.vertices.coordinate edge.finish)) other.edge_eq).symm.trans
         (other.lifted.rectangleCoordinates.edge_coordinates other.kind))
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.no_reverse
+  exact SideCompleteness.no_reverse
     (base.faces.regulars[position.val]'position.isLt).cell.box_proper
     other.face.cell.box_proper other.face.cell.box_refines side exterior other.kind equal
 
@@ -215,9 +219,9 @@ private theorem
   Meshes.PuncturedGridFaces.BranchHole base.bank.toBranchCellBank) (point :
   Gaussian.Basic.Canonical)
     (inside : hole.cell.box.Contains point)
-    (boundary : point.re = (Hyperelliptic.Branches.Cuts.Ambient curve).xLower ∨ point.re =
-      (Hyperelliptic.Branches.Cuts.Ambient curve).xUpper ∨
-      point.im = (Hyperelliptic.Branches.Cuts.Ambient curve).yLower ∨ point.im = (Hyperelliptic.Branches.Cuts.Ambient
+    (boundary : point.re = (Cuts.Ambient curve).xLower ∨ point.re =
+      (Cuts.Ambient curve).xUpper ∨
+      point.im = (Cuts.Ambient curve).yLower ∨ point.im = (Cuts.Ambient
         curve).yUpper) : False := by
   have strict := base.hole_interior hole
   rcases boundary with left | right | bottom | top
@@ -232,55 +236,55 @@ theorem Riemann.Meshes.LiftedPuncturedGrid.exterior_side_member (lifted : Meshes
   base)
     (position : Fin base.faces.regulars.length) (sheet : Fin 2) (side : Meshes.GridLiftedDualSteps.GridSide)
     (exterior : side.Exterior (base.faces.regulars[position.val]'position.isLt).cell.box
-      (Hyperelliptic.Branches.Cuts.Ambient curve)) :
+      (Cuts.Ambient curve)) :
     (Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
       (lifted.mesh.locateFace position sheet) side).project lifted.mesh.triangulation.faces ∈
       lifted.exteriorBoundaries.flatten := by
   let located := lifted.mesh.locateFace position sheet
   have positive := Topology.Mesh.TriangleSourceUniqueness.SourceEdge.member
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.LiftedPuncturedGrid.side_positive lifted position
+    (SideCompleteness.LiftedPuncturedGrid.side_positive lifted position
     sheet side)
   rw [Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource_project
     located] at positive ⊢
   have boundary := (lifted.boundaryLoops_edge_iff _).mpr
-    ⟨positive, Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.LiftedPuncturedGrid.side_no_reverse lifted
+    ⟨positive, SideCompleteness.LiftedPuncturedGrid.side_no_reverse lifted
       position sheet side exterior⟩
-  rw [Meshes.LiftedPuncturedGrid.boundaryLoops, Data.List.Flatten.flatten_append] at boundary
+  rw [Meshes.LiftedPuncturedGrid.boundaryLoops, List.Flatten.flatten_append] at boundary
   rcases Data.List.Membership.mem_append.mp boundary with outer | holes
   · exact outer
   · obtain ⟨word, wordMember, edgeMember⟩ := Topology.Surface.Sewing.SimpleBoundaryCycles.mem_flatten.mp holes
     obtain ⟨hole, _, wordEq⟩ := Data.List.Map.mem_map.mp wordMember
     rw [← wordEq] at edgeMember
     have inside := hole.liftedBoundary_start_inside lifted.vertices lifted.edges
-      (Data.List.Map.mem_map_of_mem edgeMember)
+      (List.Map.mem_map_of_mem edgeMember)
     have coordinate := congrArg Prod.fst (located.lifted.rectangleCoordinates.edge_coordinates side.kind)
     dsimp only [Prod.fst] at coordinate
     have ambient : (lifted.vertices.coordinate (located.lifted.quad.edge side.kind).start).re =
-      (Hyperelliptic.Branches.Cuts.Ambient curve).xLower ∨
+      (Cuts.Ambient curve).xLower ∨
         (lifted.vertices.coordinate (located.lifted.quad.edge side.kind).start).re =
-          (Hyperelliptic.Branches.Cuts.Ambient curve).xUpper ∨
+          (Cuts.Ambient curve).xUpper ∨
         (lifted.vertices.coordinate (located.lifted.quad.edge side.kind).start).im =
-          (Hyperelliptic.Branches.Cuts.Ambient curve).yLower ∨
+          (Cuts.Ambient curve).yLower ∨
         (lifted.vertices.coordinate (located.lifted.quad.edge side.kind).start).im =
-          (Hyperelliptic.Branches.Cuts.Ambient curve).yUpper := by
+          (Cuts.Ambient curve).yUpper := by
       rw [coordinate]
       cases side with
       | bottom => exact Or.inr (Or.inr (Or.inl exterior))
       | right => exact Or.inr (Or.inl exterior)
       | top => exact Or.inr (Or.inr (Or.inr exterior))
       | left => exact Or.inl exterior
-    exact (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.LiftedPuncturedGrid.hole_not_on_ambient hole _
+    exact (SideCompleteness.LiftedPuncturedGrid.hole_not_on_ambient hole _
       inside ambient).elim
 
 namespace Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram
 namespace AllSurfacePreparation
 
-variable {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential
+variable {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential
   genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
 
 /-- Every nonzero face-neighbor exterior term has one retained source with
 exactly the original triangle, corners and sheet. Its coefficient in the
@@ -288,26 +292,26 @@ occurrence sum is one for arbitrary weights, not merely for area samples. -/
 theorem
   selected_side_weight
     (prepared :
-      SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
+      AllSurfacePreparation
       regular domains differential)
     (neighbors : Meshes.PuncturedGridFaces.PuncturedFaces.NeighborBank base.faces)
     (position : Fin base.faces.regulars.length) (sheet : Fin 2) (side : Meshes.GridLiftedDualSteps.GridSide)
     (value : Gaussian.Basic.Canonical)
-    (selected : Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.componentValue
-      (Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+    (selected : PhysicalComponentValues.SideNeighbor.componentValue
+      (NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
       (neighbors.entries.get position) side) .exterior value ≠ 0) :
     ∃ index : Fin prepared.occurrences.length,
       (prepared.occurrences[index.val]'index.isLt).sideOccurrence.source =
-        Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+        HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
           (lifted.mesh.locateFace position sheet) side ∧
       ∀ values : Fin prepared.occurrences.length → Gaussian.Basic.Canonical,
         FiniteSum.Fin.sumFin (fun other =>
           if (prepared.occurrences[other.val]'other.isLt).placement.indexed =
-            (Hyperelliptic.Meshes.PuncturedGrid.HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
+            (HoleSourceChords.BranchCellBank.LiftedMesh.LocatedFace.sideSource
               (lifted.mesh.locateFace position sheet) side).project lifted.mesh.triangulation.faces
           then values other else 0) = values index := by
-  have exterior := Hyperelliptic.Meshes.PuncturedGrid.PhysicalComponentValues.SideNeighbor.exterior_component_supported
-    (Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
+  have exterior := PhysicalComponentValues.SideNeighbor.exterior_component_supported
+    (NeighborPerimeterSums.BranchCellBank.PuncturedFaces.FaceNeighbors.at
     (neighbors.entries.get position) side) value selected
   have member := lifted.exterior_side_member position sheet side exterior
   obtain ⟨index, found, weighted⟩ := prepared.occurrence_weight _ member
@@ -316,12 +320,12 @@ theorem
     occurrence.side_source).trans occurrence.placement.location.sourceEdge_project).trans found
   have physical : occurrence.sideOccurrence.source.project lifted.mesh.triangulation.faces ∈
     lifted.boundaryLoops.flatten := by
-    rw [projected, Meshes.LiftedPuncturedGrid.boundaryLoops, Data.List.Flatten.flatten_append]
+    rw [projected, Meshes.LiftedPuncturedGrid.boundaryLoops, List.Flatten.flatten_append]
     exact Data.List.Membership.mem_append.mpr (Or.inl member)
-  exact ⟨index, Hyperelliptic.Meshes.PuncturedGrid.TriangleSourceUniqueness.LiftedMesh.source_eq_of_project_eq
+  exact ⟨index, TriangleSourceUniqueness.LiftedMesh.source_eq_of_project_eq
     lifted.mesh
-    (Hyperelliptic.Meshes.PuncturedGrid.BranchHoleSourceComparison.physicalSource_positive lifted _ physical)
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SideCompleteness.LiftedPuncturedGrid.side_positive lifted position
+    (BranchHoleSourceComparison.physicalSource_positive lifted _ physical)
+      (SideCompleteness.LiftedPuncturedGrid.side_positive lifted position
       sheet side) projected, weighted⟩
 
 end AllSurfacePreparation

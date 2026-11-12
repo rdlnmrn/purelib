@@ -65,14 +65,14 @@ open _root_.Purelib.Polynomial.Geometry.Grid renaming ClearGrid -> Grid
 
 /-- The original shrinking states, materialized once for the finite branch family. Both period tours and this grid use
 the same refinement index. -/
-@[expose] def branchStates {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (branches :
+@[expose] def branchStates {genus : Nat} (curve : HyperellipticCurve genus) (branches :
   BranchIsolation.Data curve)
-    (higher : 1 < curve.polynomial.natDegree) (refinement : Nat) : List (FromStates.BranchState curve.polynomial
+    (higher : 1 < curve.polynomial.natDegree) (refinement : Nat) : List (BranchState curve.polynomial
       (Cuts.Ambient curve)) :=
   List.ofFn fun index => Cuts.refinedState branches higher index refinement
 
 /-- Every original branch occurrence contributes its exact refined state to the shared finite state list. -/
-theorem refinedState_mem_branchStates {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (branches :
+theorem refinedState_mem_branchStates {genus : Nat} (curve : HyperellipticCurve genus) (branches :
   BranchIsolation.Data curve)
     (higher : 1 < curve.polynomial.natDegree) (refinement : Nat) (index : Data.Index branches) :
     Cuts.refinedState branches higher index refinement ∈
@@ -80,20 +80,20 @@ theorem refinedState_mem_branchStates {genus : Nat} (curve : Hyperelliptic.Basic
   Purelib.Data.List.OfFn.Basic.mem_ofFn.mpr ⟨index, rfl⟩
 
 /-- Construct one clear-line grid from the original branch states at their shared refinement index. -/
-@[expose] def branchGrid {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (branches :
+@[expose] def branchGrid {genus : Nat} (curve : HyperellipticCurve genus) (branches :
   BranchIsolation.Data curve)
-    (higher : 1 < curve.polynomial.natDegree) (refinement : Nat) : Polynomial.Geometry.Grid.ClearGrid curve.polynomial
+    (higher : 1 < curve.polynomial.natDegree) (refinement : Nat) : ClearGrid curve.polynomial
       (Cuts.Ambient curve)
       :=
-  Polynomial.Geometry.Grid.FromStates.ofStates (branchStates curve
+  FromStates.ofStates (branchStates curve
     branches higher refinement)
 
 /-- Both bends and endpoints of every standard connector are in this one grid, independently of which branch indices are
 paired. -/
-theorem branchGrid_connector {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (branches :
+theorem branchGrid_connector {genus : Nat} (curve : HyperellipticCurve genus) (branches :
   BranchIsolation.Data curve)
     (higher : 1 < curve.polynomial.natDegree) (refinement : Nat) (left right : Data.Index branches) :
-    Polynomial.Geometry.Grid.FromStates.ContainsPathVertices
+    ContainsPathVertices
       (branchGrid curve branches higher
       refinement)
       (Cuts.connectorAt branches higher left right refinement) := by
@@ -102,21 +102,21 @@ theorem branchGrid_connector {genus : Nat} (curve : Hyperelliptic.Basic.Hyperell
     higher refinement left
   have rightMember := refinedState_mem_branchStates curve branches
     higher refinement right
-  have leftX := (Polynomial.Geometry.Grid.FromStates.ofStates_x_bounds states leftMember).1
-  have rightX := (Polynomial.Geometry.Grid.FromStates.ofStates_x_bounds states rightMember).1
-  have leftY := (Polynomial.Geometry.Grid.FromStates.ofStates_y_bounds states leftMember).1
-  have rightY := (Polynomial.Geometry.Grid.FromStates.ofStates_y_bounds states rightMember).1
+  have leftX := (FromStates.ofStates_x_bounds states leftMember).1
+  have rightX := (FromStates.ofStates_x_bounds states rightMember).1
+  have leftY := (FromStates.ofStates_y_bounds states leftMember).1
+  have rightY := (FromStates.ofStates_y_bounds states rightMember).1
   exact ⟨⟨leftX, leftY⟩, ⟨rightX, leftY⟩, rightX, rightY⟩
 
 /-- Every original refined branch-box boundary vertex belongs to the shared clear-line grid. -/
-theorem branchGrid_boundary {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (branches :
+theorem branchGrid_boundary {genus : Nat} (curve : HyperellipticCurve genus) (branches :
   BranchIsolation.Data curve)
     (higher : 1 < curve.polynomial.natDegree) (refinement : Nat) (index : Data.Index branches) :
-    Polynomial.Geometry.Grid.FromStates.ContainsPathVertices
+    ContainsPathVertices
       (branchGrid curve branches higher
       refinement)
       (BranchCutLifts.ownerBoundaryPath (Cuts.refinedState branches higher index refinement)) :=
-  Polynomial.Geometry.Grid.FromStates.ofStates_boundary _
+  FromStates.ofStates_boundary _
     (refinedState_mem_branchStates curve
     branches higher refinement index)
 
@@ -124,34 +124,34 @@ namespace Grid
 
 /-- All original connector and boundary corners of a retained owner-closed tour lie in one grid. Reversing the connector
 introduces no new coordinates. -/
-@[expose] def ContainsTourVertices {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {gridAmbient :
+@[expose] def ContainsTourVertices {genus : Nat} {curve : HyperellipticCurve genus} {gridAmbient :
   Rational.Box}
-    (grid : Polynomial.Geometry.Grid.ClearGrid curve.polynomial gridAmbient) (tour :
-      PreparedBoundaryClosure.ClosedBoundaryDoublePath curve)
+    (grid : ClearGrid curve.polynomial gridAmbient) (tour :
+      ClosedBoundaryDoublePath curve)
       : Prop :=
-  Polynomial.Geometry.Grid.FromStates.ContainsPathVertices grid tour.joined.data.connector ∧
-    Polynomial.Geometry.Grid.FromStates.ContainsPathVertices grid tour.joined.data.rightBoundaryPath ∧
-    Polynomial.Geometry.Grid.FromStates.ContainsPathVertices grid (ClearPath.reverse tour.joined.data.connector) ∧
-    Polynomial.Geometry.Grid.FromStates.ContainsPathVertices grid tour.joined.data.leftBoundaryPath
+  ContainsPathVertices grid tour.joined.data.connector ∧
+    ContainsPathVertices grid tour.joined.data.rightBoundaryPath ∧
+    ContainsPathVertices grid (ClearPath.reverse tour.joined.data.connector) ∧
+    ContainsPathVertices grid tour.joined.data.leftBoundaryPath
 
 /-- Both return-check outcomes retain the supplied connector and boundary paths. Grid membership therefore uses their
 geometry without unfolding the chosen preparation banks. -/
-theorem containsTourVertices_total {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
+theorem containsTourVertices_total {genus : Nat} {curve : HyperellipticCurve genus}
     {gridAmbient leftAmbient rightAmbient connectorAmbient : Rational.Box}
-    (grid : Polynomial.Geometry.Grid.ClearGrid curve.polynomial gridAmbient)
+    (grid : ClearGrid curve.polynomial gridAmbient)
     (leftState : WindingOne.Basic.WindingOneState curve.polynomial leftAmbient)
     (rightState : WindingOne.Basic.WindingOneState curve.polynomial rightAmbient)
     (connector : Polynomial.Geometry.ClearPath curve.polynomial connectorAmbient leftState.box.anchor
       rightState.box.anchor)
     (within : connector.WithinAmbient)
     (owner : SquareRootContinuationChain.Owner (curve.polynomial.eval leftState.box.anchor))
-    (connectorOn : Polynomial.Geometry.Grid.FromStates.ContainsPathVertices grid connector)
-    (rightOn : Polynomial.Geometry.Grid.FromStates.ContainsPathVertices grid (BranchCutLifts.ownerBoundaryPath
+    (connectorOn : ContainsPathVertices grid connector)
+    (rightOn : ContainsPathVertices grid (BranchCutLifts.ownerBoundaryPath
       rightState))
-    (leftOn : Polynomial.Geometry.Grid.FromStates.ContainsPathVertices grid (BranchCutLifts.ownerBoundaryPath
+    (leftOn : ContainsPathVertices grid (BranchCutLifts.ownerBoundaryPath
       leftState)) :
     ContainsTourVertices grid
-      (Purelib.Riemann.Readings.PreparedBoundaryClosure.ClosedBoundaryDoublePath.total leftState rightState connector
+      (ClosedBoundaryDoublePath.total leftState rightState connector
         within owner) := by
   unfold ClosedBoundaryDoublePath.total
   dsimp only
@@ -159,37 +159,37 @@ theorem containsTourVertices_total {genus : Nat} {curve : Hyperelliptic.Basic.Hy
   · rename_i closed accepted
     unfold ContainsTourVertices
     rw [ClosedBoundaryDoublePath.checkReturn_joined _ closed accepted]
-    exact ⟨connectorOn, rightOn, Polynomial.Geometry.Grid.FromStates.ContainsPathVertices.reverse grid connector
+    exact ⟨connectorOn, rightOn, ContainsPathVertices.reverse grid connector
       connectorOn, leftOn⟩
-  · exact ⟨connectorOn, rightOn, Polynomial.Geometry.Grid.FromStates.ContainsPathVertices.reverse grid connector
+  · exact ⟨connectorOn, rightOn, ContainsPathVertices.reverse grid connector
       connectorOn, leftOn⟩
 
 end Grid
 
 /-- The paired A construction uses precisely the geometry present in the common branch grid, not a separately acquired
 path with matching labels. -/
-theorem branchGrid_aTour {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (branches :
+theorem branchGrid_aTour {genus : Nat} (curve : HyperellipticCurve genus) (branches :
   BranchIsolation.Data curve)
     (higher : 1 < curve.polynomial.natDegree) (index : Fin genus) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchGrid.Grid.ContainsTourVertices
+    Grid.ContainsTourVertices
       (branchGrid curve (BranchConfiguration.configurationOfData
       curve branches).branches higher 0)
       (OwnerClosedCyclePair.ofData curve branches index).aTour := by
-  apply Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchGrid.Grid.containsTourVertices_total
+  apply Grid.containsTourVertices_total
   · exact branchGrid_connector curve _ higher 0 _ _
   · exact branchGrid_boundary curve _ higher 0 _
   · exact branchGrid_boundary curve _ higher 0 _
 
 /-- Every paired B reference bridge uses the very same grid as A, including the additional actual branch-boundary loops
 needed for root closure. -/
-theorem branchGrid_bTour {genus : Nat} (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (branches :
+theorem branchGrid_bTour {genus : Nat} (curve : HyperellipticCurve genus) (branches :
   BranchIsolation.Data curve)
     (higher : 1 < curve.polynomial.natDegree) (index : Fin genus) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchGrid.Grid.ContainsTourVertices
+    Grid.ContainsTourVertices
       (branchGrid curve (BranchConfiguration.configurationOfData
       curve branches).branches higher 0)
       (OwnerClosedCyclePair.ofData curve branches index).bTour := by
-  apply Curves.Hyperelliptic.Meshes.PuncturedGrid.BranchGrid.Grid.containsTourVertices_total
+  apply Grid.containsTourVertices_total
   · exact branchGrid_connector curve _ higher 0 _ _
   · exact branchGrid_boundary curve _ higher 0 _
   · exact branchGrid_boundary curve _ higher 0 _

@@ -152,17 +152,17 @@ open Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh
 open Purelib.Riemann.Paths.RectangularPairedSegments (PairedSegmentPiece)
 open Purelib.Riemann.Integration.RectangularAxisParameterRange (AxisParameterRange)
 open Purelib.Data.Rat.Fraction.Compatibility
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {base : Purelib.Riemann.Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Purelib.Riemann.Meshes.LiftedPuncturedGrid base} {differential other :
-    Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
+  {lifted : LiftedPuncturedGrid base} {differential other :
+    Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
 
 open Purelib.Topology.Polygon.Stokes (PrimitivePoint)
@@ -170,19 +170,19 @@ open Purelib.Riemann.Periods.CenteredBilinearPath (Sample)
 open Purelib.Integration.Path.NoisyPathArea (LengthErrorBudget)
 open Purelib.Riemann.Paths.RectangularDyadicPairedTrace (dyadicCount)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr)
-variable {lc lr rc rr depth : Nat} {lg : Purelib.Riemann.Normalization.RectangularInverseModels.Geometry lc lr} {rg :
-  Purelib.Riemann.Normalization.RectangularInverseModels.Geometry rc rr}
-  {leftCuts : Purelib.Riemann.Paths.RectangularSegmentSplitting.GridCuts lg} {rightCuts :
-    Purelib.Riemann.Paths.RectangularSegmentSplitting.GridCuts rg} {leftBox rightBox :
-    Purelib.Geometry.Rational.Box}
-  {left : Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh leftCuts leftBox} {right :
-    Purelib.Riemann.Meshes.RectangularObservationMesh.ObservationMesh rightCuts rightBox}
+variable {lc lr rc rr depth : Nat} {lg : RectangularInverseModels.Geometry lc lr} {rg :
+  RectangularInverseModels.Geometry rc rr}
+  {leftCuts : GridCuts lg} {rightCuts :
+    GridCuts rg} {leftBox rightBox :
+    Geometry.Rational.Box}
+  {left : ObservationMesh leftCuts leftBox} {right :
+    ObservationMesh rightCuts rightBox}
 
 namespace ParentBlock
 
 /-- The retained block's last source parameter lies inside its original source range. -/
 public theorem last_inside {vertical forward : Bool} {physical : PreparedAxisPartitions.Interval}
-    (block : ParentBlocks.ParentBlock occurrence vertical forward physical) :
+    (block : ParentBlock occurrence vertical forward physical) :
     block.parameters.range.lower ≤ block.lastParameter ∧ block.lastParameter ≤ block.parameters.range.upper := by
   cases forward with
   | true => exact ⟨block.parameters.range.ordered.le, le_rfl⟩
@@ -191,20 +191,20 @@ public theorem last_inside {vertical forward : Bool} {physical : PreparedAxisPar
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest in
 /-- Retain both original owner readings at one source endpoint and pair them with a constant original source sample. -/
 public def ownedJunction {vertical forward : Bool} {physical : PreparedAxisPartitions.Interval}
-    (block : ParentBlocks.ParentBlock occurrence vertical forward physical)
-    {covers : SourceLocations.BasisSourceCovers (ParentBlocks.cacheParent occurrence block.index)}
+    (block : ParentBlock occurrence vertical forward physical)
+    {covers : BasisSourceCovers (ParentBlocks.cacheParent occurrence block.index)}
     {sourceIndex faceIndex : Nat}
     {originals : BasisSourceLocations.PrimitiveBank covers sourceIndex}
-    {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus} {data : FragmentQueries.RowData occurrence
+    {coefficients : GaussianVector genus} {data : RowData occurrence
       faceIndex}
-    {points : Fin 2 → InverseRootPolynomial.Gaussian}
+    {points : Fin 2 → Gaussian}
     (pointEq : ∀ vertex, points vertex = (ParentBlocks.cacheParent occurrence block.index).edge.point
       block.lastParameter)
-    {allowance : InverseRootPolynomial.Coordinate} (budget : NoisyPathArea.LengthErrorBudget 1 allowance)
+    {allowance : Coordinate} (budget : LengthErrorBudget 1 allowance)
     (owners : OwnerRequest occurrence budget.tolerance) (later : owners.index ≤ faceIndex)
-    (original : OwnerRequest.OwnedReadings data points) :
-    OwnedFragments.OwnedFragment (originals := originals) (coefficients := coefficients) data :=
-  let readings : OwnerRequest.OwnedReadings data (fun _ : Fin 2 => (ParentBlocks.cacheParent occurrence
+    (original : OwnedReadings data points) :
+    OwnedFragment (originals := originals) (coefficients := coefficients) data :=
+  let readings : OwnedReadings data (fun _ : Fin 2 => (ParentBlocks.cacheParent occurrence
     block.index).edge.point block.lastParameter) :=
     fun row => ⟨(original row).owners, fun vertex => ((original row).point_eq vertex).trans (pointEq vertex),
       (original row).values, (original row).value_eq⟩
@@ -212,40 +212,40 @@ public def ownedJunction {vertical forward : Bool} {physical : PreparedAxisParti
   { member := block.member, piece := block.located.piece, vertices := 1, parameters := fun _ => block.lastParameter
     inside := fun _ => block.located.contains block.last_inside, forward := true, ordered := fun _ => le_rfl
     allowance := allowance, budget := budget, owners := owners, later := later, readings := readings
-    owned := CenteredBilinearPath.Sample.build (fun vertex => ConjugateIncrementComparison.conjugateFirst
+    owned := Sample.build (fun vertex => ConjugateIncrementComparison.conjugateFirst
       (⟨ownedValue readings coefficients vertex, ownedValue readings coefficients vertex⟩ :
-        Purelib.Topology.Polygon.Stokes.PrimitivePoint))
-    source := CenteredBilinearPath.Sample.build (fun _ => ConjugateIncrementComparison.conjugateFirst (⟨value, value⟩ :
-      Purelib.Topology.Polygon.Stokes.PrimitivePoint)) }
+        PrimitivePoint))
+    source := Sample.build (fun _ => ConjugateIncrementComparison.conjugateFirst (⟨value, value⟩ :
+      PrimitivePoint)) }
 
 section Horizontal
 variable {leftRow : Fin left.partition.y.intervals.length} {rightRow : Fin right.partition.y.intervals.length} {height :
-  Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {side : Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedHorizontalSide left right
+  Coordinate}
+  {side : MatchedHorizontalSide left right
     leftRow rightRow height}
   (trace : side.Trace depth) (column : Fin left.boundaryColumns) {forward : Bool}
-  (block : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.ParentBlock occurrence false
+  (block : ParentBlock occurrence false
     forward (left.partition.x.intervals[(Fin.cast left.boundaryColumns_eq column.castSucc).val]'(Fin.cast
     left.boundaryColumns_eq column.castSucc).isLt))
-  {covers : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent occurrence block.index)}
+  {covers : BasisSourceCovers
+    (ParentBlocks.cacheParent occurrence block.index)}
   {sourceIndex faceIndex : Nat}
   {originals :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+    BasisSourceLocations.PrimitiveBank
     covers sourceIndex}
-  {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus} {data :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData occurrence faceIndex}
+  {coefficients : GaussianVector genus} {data :
+    RowData occurrence faceIndex}
   (sourceFirst : occurrence.start.im = height) (sourceLast : occurrence.finish.im = height)
-  {allowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} (budget :
-    Purelib.Integration.Path.NoisyPathArea.LengthErrorBudget 1 allowance)
+  {allowance : Coordinate} (budget :
+    LengthErrorBudget 1 allowance)
   (owners : OwnerRequest occurrence
     budget.tolerance) (later : owners.index ≤ faceIndex)
-  (original : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings data (fun
+  (original : OwnedReadings data (fun
     vertex => trace.point (trace.vertices.indexed vertex)))
 
 /-- Keep the two cached owner readings at the same physical endpoint. -/
-def horizontalJunction : OwnedFragments.OwnedFragment (originals := originals) (coefficients := coefficients) data :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.ParentBlock.ownedJunction block
+def horizontalJunction : OwnedFragment (originals := originals) (coefficients := coefficients) data :=
+  ParentBlock.ownedJunction block
     (fun vertex => (Trace.junction_point trace column vertex).trans
       (block.horizontalParameters trace (Fin.cast left.boundaryColumns_eq column.castSucc) sourceFirst
         sourceLast).last_point)
@@ -254,7 +254,7 @@ def horizontalJunction : OwnedFragments.OwnedFragment (originals := originals) (
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest in
 /-- The retained horizontal owner junction reads the exact coefficient combination of the original adjoining piece
 values. -/
-theorem horizontalJunction_values (values : Fin genus → side.Vertex depth → InverseRootPolynomial.Gaussian)
+theorem horizontalJunction_values (values : Fin genus → side.Vertex depth → Gaussian)
     (readback : ∀ basisRow vertex, (original basisRow).values vertex = values basisRow (trace.vertices.indexed vertex))
     (vertex : Fin 2) :
     ownedValue (block.horizontalJunction (originals := originals) (coefficients := coefficients) trace column
@@ -283,32 +283,32 @@ theorem horizontalJunction_sourceWidth :
 end Horizontal
 section Vertical
 variable {leftColumn : Fin left.partition.x.intervals.length} {rightColumn : Fin right.partition.x.intervals.length}
-  {width : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {side : Purelib.Riemann.Readings.RectangularMatchedObservationSides.ObservationMesh.MatchedVerticalSide left right
+  {width : Coordinate}
+  {side : MatchedVerticalSide left right
     leftColumn rightColumn width}
   (trace : side.Trace depth) (row : Fin left.boundaryRows) {forward : Bool}
-  (block : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.ParentBlock occurrence true
+  (block : ParentBlock occurrence true
     forward (left.partition.y.intervals[(Fin.cast left.boundaryRows_eq row.castSucc).val]'(Fin.cast left.boundaryRows_eq
     row.castSucc).isLt))
-  {covers : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.cacheParent occurrence block.index)}
+  {covers : BasisSourceCovers
+    (ParentBlocks.cacheParent occurrence block.index)}
   {sourceIndex faceIndex : Nat}
   {originals :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+    BasisSourceLocations.PrimitiveBank
     covers sourceIndex}
-  {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus} {data :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentQueries.RowData occurrence faceIndex}
+  {coefficients : GaussianVector genus} {data :
+    RowData occurrence faceIndex}
   (sourceFirst : occurrence.start.re = width) (sourceLast : occurrence.finish.re = width)
-  {allowance : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} (budget :
-    Purelib.Integration.Path.NoisyPathArea.LengthErrorBudget 1 allowance)
+  {allowance : Coordinate} (budget :
+    LengthErrorBudget 1 allowance)
   (owners : OwnerRequest occurrence
     budget.tolerance) (later : owners.index ≤ faceIndex)
-  (original : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest.OwnedReadings data (fun
+  (original : OwnedReadings data (fun
     vertex => trace.point (trace.vertices.indexed vertex)))
 
 /-- Keep the two cached owner readings at the same physical endpoint. -/
-def verticalJunction : OwnedFragments.OwnedFragment (originals := originals) (coefficients := coefficients) data :=
-  Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentBlocks.ParentBlock.ownedJunction block
+def verticalJunction : OwnedFragment (originals := originals) (coefficients := coefficients) data :=
+  ParentBlock.ownedJunction block
     (fun vertex => (Trace.junction_point trace row vertex).trans
       (block.verticalParameters trace (Fin.cast left.boundaryRows_eq row.castSucc) sourceFirst sourceLast).last_point)
     budget owners later (fun basisRow => Trace.junctionReadings trace row (original basisRow))
@@ -316,7 +316,7 @@ def verticalJunction : OwnedFragments.OwnedFragment (originals := originals) (co
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OwnerRequest in
 /-- The retained vertical owner junction reads the exact coefficient combination of the original adjoining piece values.
 -/
-theorem verticalJunction_values (values : Fin genus → side.Vertex depth → InverseRootPolynomial.Gaussian)
+theorem verticalJunction_values (values : Fin genus → side.Vertex depth → Gaussian)
     (readback : ∀ basisRow vertex, (original basisRow).values vertex = values basisRow (trace.vertices.indexed vertex))
     (vertex : Fin 2) :
     ownedValue (block.verticalJunction (originals := originals) (coefficients := coefficients) trace row

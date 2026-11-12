@@ -73,18 +73,18 @@ inside the common equal-norm global square. -/
 def transportedRawState
     {source target : Canonical}
     (sourceNonzero : source ≠ 0)
-    (equalNorm : Data.Gaussian.Norm.Basic.normSq source = Data.Gaussian.Norm.Basic.normSq target)
+    (equalNorm : Norm.Basic.normSq source = Norm.Basic.normSq target)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo)
     (index : Fin degree.value) :
-    State.Raw.RawWindingState (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Purelib.Polynomial.Power.Gaussian.rootPolynomial target
+    State.Raw.RawWindingState (Power.Gaussian.rootPolynomial target degree)
+      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Power.Gaussian.rootPolynomial target
         degree)) :=
         by
   let sourceState :=
-    (Power.Isolation.Track.isolatedTrack sourceNonzero degree degreeAtLeastTwo index).initial
+    (Isolation.Track.isolatedTrack sourceNonzero degree degreeAtLeastTwo index).initial
   let sourceOwner : Owner.Local.Basic.LocalOwner
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial source degree) :=
+      (Power.Gaussian.rootPolynomial source degree) :=
     { box := sourceState.box
       proper := sourceState.proper
       clearance := sourceState.clearance
@@ -93,7 +93,7 @@ def transportedRawState
   exact
     { box := sourceState.box
       refinesAmbient := by
-        rw [← Power.Bounds.largeSquareBox_polynomial_eq_of_normSq_eq equalNorm degree]
+        rw [← Bounds.largeSquareBox_polynomial_eq_of_normSq_eq equalNorm degree]
         exact sourceState.refinesAmbient
       proper := targetOwner.proper
       clearance := targetOwner.clearance
@@ -133,14 +133,14 @@ open Purelib.Data.Gaussian
 def transportedExtraction
     {source target : Canonical}
     (sourceNonzero : source ≠ 0) (targetNonzero : target ≠ 0)
-    (equalNorm : Data.Gaussian.Norm.Basic.normSq source = Data.Gaussian.Norm.Basic.normSq target)
+    (equalNorm : Norm.Basic.normSq source = Norm.Basic.normSq target)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo)
     (index : Fin degree.value) :=
   Newton.Band.Build.extract
-    (by rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]; exact degreeAtLeastTwo)
+    (by rw [Power.Gaussian.rootPolynomial_degree]; exact degreeAtLeastTwo)
     (Power.Gaussian.Squarefree.squarefree targetNonzero degree)
-    (Power.Isolation.isolationInput targetNonzero degree degreeAtLeastTwo).elimination
+    (Isolation.isolationInput targetNonzero degree degreeAtLeastTwo).elimination
     (transportedRawState sourceNonzero equalNorm degree degreeAtLeastTwo small
       index) (epsilon := (1 : Fraction.Rational)) (by decide)
 end Purelib.RootIsolation.Power.EqualNorm.Transport.Track
@@ -176,12 +176,12 @@ clearance has to survive the coefficient move. -/
 def transportedIsolatedState
     {source target : Canonical}
     (sourceNonzero : source ≠ 0) (targetNonzero : target ≠ 0)
-    (equalNorm : Data.Gaussian.Norm.Basic.normSq source = Data.Gaussian.Norm.Basic.normSq target)
+    (equalNorm : Norm.Basic.normSq source = Norm.Basic.normSq target)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo)
     (index : Fin degree.value) :
-    State.WindingOne.Basic.WindingOneState (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Purelib.Polynomial.Power.Gaussian.rootPolynomial target
+    State.WindingOne.Basic.WindingOneState (Power.Gaussian.rootPolynomial target degree)
+      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Power.Gaussian.rootPolynomial target
         degree)) :=
         by
   let extracted := transportedExtraction sourceNonzero targetNonzero equalNorm
@@ -227,17 +227,17 @@ global state. -/
 def transportedIsolatedTrack
     {source target : Canonical}
     (sourceNonzero : source ≠ 0) (targetNonzero : target ≠ 0)
-    (equalNorm : Data.Gaussian.Norm.Basic.normSq source = Data.Gaussian.Norm.Basic.normSq target)
+    (equalNorm : Norm.Basic.normSq source = Norm.Basic.normSq target)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo)
     (index : Fin degree.value) :
-    Track.Basic.WindingOneTrack (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Purelib.Polynomial.Power.Gaussian.rootPolynomial target
+    Track.Basic.WindingOneTrack (Power.Gaussian.rootPolynomial target degree)
+      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Power.Gaussian.rootPolynomial target
         degree)) :=
   Track.Newton.Build.ofInitial
-    (by rw [Purelib.Polynomial.Power.Gaussian.rootPolynomial_degree]; exact degreeAtLeastTwo)
+    (by rw [Power.Gaussian.rootPolynomial_degree]; exact degreeAtLeastTwo)
     (Power.Gaussian.Squarefree.squarefree targetNonzero degree)
-    (Power.Isolation.isolationInput targetNonzero degree degreeAtLeastTwo).elimination
+    (Isolation.isolationInput targetNonzero degree degreeAtLeastTwo).elimination
     (transportedIsolatedState sourceNonzero targetNonzero equalNorm degree
       degreeAtLeastTwo small index)
 end Purelib.RootIsolation.Power.EqualNorm.Transport.Track
@@ -270,13 +270,13 @@ open Purelib.Data.Gaussian
 @[simp] theorem transportedRawState_box
     {source target : Canonical}
     (sourceNonzero : source ≠ 0)
-    (equalNorm : Data.Gaussian.Norm.Basic.normSq source = Data.Gaussian.Norm.Basic.normSq target)
+    (equalNorm : Norm.Basic.normSq source = Norm.Basic.normSq target)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo)
     (index : Fin degree.value) :
     (transportedRawState sourceNonzero equalNorm degree degreeAtLeastTwo small
       index).box =
-      (Power.Isolation.Track.isolatedTrack sourceNonzero degree degreeAtLeastTwo
+      (Isolation.Track.isolatedTrack sourceNonzero degree degreeAtLeastTwo
         index).initial.box := rfl
 end Purelib.RootIsolation.Power.EqualNorm.Transport.Track
 
@@ -308,19 +308,19 @@ open Purelib.Data.Gaussian
 theorem transportedIsolatedState_refines
     {source target : Canonical}
     (sourceNonzero : source ≠ 0) (targetNonzero : target ≠ 0)
-    (equalNorm : Data.Gaussian.Norm.Basic.normSq source = Data.Gaussian.Norm.Basic.normSq target)
+    (equalNorm : Norm.Basic.normSq source = Norm.Basic.normSq target)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo)
     (index : Fin degree.value) :
     (transportedIsolatedState sourceNonzero targetNonzero equalNorm degree
       degreeAtLeastTwo small index).box.Refines
-      (Power.Isolation.Track.isolatedTrack sourceNonzero degree degreeAtLeastTwo
+      (Isolation.Track.isolatedTrack sourceNonzero degree degreeAtLeastTwo
         index).initial.box := by
   change (transportedExtraction sourceNonzero targetNonzero equalNorm degree
     degreeAtLeastTwo small index).box.Refines _
   rw [← transportedRawState_box sourceNonzero equalNorm degree
     degreeAtLeastTwo small index]
-  exact Geometry.Rational.Box.Refinement.StrictInterior.refines
+  exact Box.Refinement.StrictInterior.refines
     (transportedExtraction sourceNonzero targetNonzero equalNorm degree
       degreeAtLeastTwo small index).strictCurrent
 end Purelib.RootIsolation.Power.EqualNorm.Transport.Track
@@ -353,13 +353,13 @@ open Purelib.Data.Gaussian
 theorem transportedIsolatedTrack_initial_refines
     {source target : Canonical}
     (sourceNonzero : source ≠ 0) (targetNonzero : target ≠ 0)
-    (equalNorm : Data.Gaussian.Norm.Basic.normSq source = Data.Gaussian.Norm.Basic.normSq target)
+    (equalNorm : Norm.Basic.normSq source = Norm.Basic.normSq target)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo)
     (index : Fin degree.value) :
     (transportedIsolatedTrack sourceNonzero targetNonzero equalNorm degree
       degreeAtLeastTwo small index).initial.box.Refines
-      (Power.Isolation.Track.isolatedTrack sourceNonzero degree degreeAtLeastTwo
+      (Isolation.Track.isolatedTrack sourceNonzero degree degreeAtLeastTwo
         index).initial.box :=
   transportedIsolatedState_refines sourceNonzero targetNonzero equalNorm degree
     degreeAtLeastTwo small index

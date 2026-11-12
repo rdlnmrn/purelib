@@ -33,6 +33,9 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+open Purelib.Data.Rat.Fraction.Order
+
 section
 public section
 
@@ -57,31 +60,31 @@ open Purelib.Polynomial.Ascending.Rational.Nonnegative
 
 /-- The local exponential–logarithm approximation scale is nonnegative. -/
 theorem localExpLogApproximationScale_nonnegative :
-    0 ≤ Approximation.Gaussian.Logarithm.Local.Inverse.Sequence.localExpLogApproximationScale :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    0 ≤ localExpLogApproximationScale :=
+  Arithmetic.mul_nonneg_direct (by decide)
     Error.expLogErrorScale_nonnegative
 
 /-- On the one-ninth quadrance disk, every synchronized exponential–logarithm sample has squared norm at most fifty. -/
 theorem localExpLogSample_bounded {z : Data.Gaussian.Basic.Canonical}
-    (zBound : Data.Gaussian.Norm.Basic.normSq z ≤ 1 / 9) (depth : Nat) :
-    Data.Gaussian.Norm.Basic.normSq (Error.localExpLogSample z depth) ≤ 5 * 10 := by
+    (zBound : Basic.normSq z ≤ 1 / 9) (depth : Nat) :
+    Basic.normSq (Error.localExpLogSample z depth) ≤ 5 * 10 := by
   rw [Error.localExpLogSample_eq_eval]
   let polynomial := Polynomial.exponentialLocalLog (2 * depth + 2) depth
-  have polynomialNonnegative : Nonnegative.CoefficientsNonnegative polynomial :=
+  have polynomialNonnegative : CoefficientsNonnegative polynomial :=
     Polynomial.coefficientsNonnegative_exponentialLocalLog _ _
   have magnitudeNonnegative : 0 ≤ Evaluation.scalarEval (1 / 2) polynomial :=
     Evaluation.scalarEvalCoefficients_nonnegative (by decide) polynomial.coefficients
       polynomialNonnegative
   have magnitudeBound : Evaluation.scalarEval (1 / 2) polynomial ≤ 5 :=
     Majorant.scalarEval_exponentialLocalLog_half_le_five _ _
-  have magnitudeSquare := Fraction.Order.Arithmetic.pow_le_pow_direct
+  have magnitudeSquare := Arithmetic.pow_le_pow_direct
     magnitudeNonnegative magnitudeBound 2
   calc
-    Data.Gaussian.Norm.Basic.normSq (GaussianEvaluation.eval polynomial z) ≤
+    Basic.normSq (GaussianEvaluation.eval polynomial z) ≤
         2 * Evaluation.scalarEval (1 / 2) polynomial ^ 2 :=
       GaussianMajorant.eval_normSq_le_scalarHalf polynomialNonnegative zBound
     _ ≤ 2 * (5 : Fraction.Rational) ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         magnitudeSquare (by decide)
     _ = 5 * 10 := by decide
 
@@ -90,86 +93,86 @@ theorem localExpLogSample_bounded {z : Data.Gaussian.Basic.Canonical}
 The original Gaussian input is retained together with its one-ninth quadrance bound; every sample has the displayed
 uniform norm bound. -/
 @[expose] public def localExpLogApproximation (z : Data.Gaussian.Basic.Canonical)
-    (zBound : Data.Gaussian.Norm.Basic.normSq z ≤ 1 / 9) : ApproximationData where
+    (zBound : Basic.normSq z ≤ 1 / 9) : ApproximationData where
   sample := Error.localExpLogSample z
   radiusSq := fun depth =>
-    Geometric.Basic.quarterRadius
-      Approximation.Gaussian.Logarithm.Local.Inverse.Sequence.localExpLogApproximationScale depth
+    Basic.quarterRadius
+      localExpLogApproximationScale depth
   radiusSq_nonneg := fun depth =>
-    Geometric.Basic.quarterRadius_nonneg
-      Approximation.Gaussian.Logarithm.Local.Inverse.Sequence.localExpLogApproximationScale_nonnegative depth
+    Basic.quarterRadius_nonneg
+      localExpLogApproximationScale_nonnegative depth
   later_close := by
     intro earlier later order
     let chart := (1 + z) / (1 - z)
     have laterError := Error.localExpLogSample_chart_error zBound later
     have earlierError := Error.localExpLogSample_chart_error zBound earlier
     have earlierError' :
-        Data.Gaussian.Norm.Basic.normSq (chart - Error.localExpLogSample z earlier) ≤
+        Basic.normSq (chart - Error.localExpLogSample z earlier) ≤
           Error.expLogErrorScale * (1 / 4 : Fraction.Rational) ^ earlier := by
       have identity : chart - Error.localExpLogSample z earlier =
           -(Error.localExpLogSample z earlier - chart) := by
         apply Data.Gaussian.Basic.ext <;>
-          simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-            Purelib.Data.Gaussian.Basic.neg_re, Purelib.Data.Gaussian.Basic.neg_im] <;> ring1
-      rw [identity, Data.Gaussian.Norm.Basic.normSq_neg]
+          simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+            Data.Gaussian.Basic.neg_re, Data.Gaussian.Basic.neg_im] <;> ring1
+      rw [identity, Basic.normSq_neg]
       exact earlierError
     have laterScaled :
         Error.expLogErrorScale * (1 / 4 : Fraction.Rational) ^ later ≤
           Error.expLogErrorScale * (1 / 4 : Fraction.Rational) ^ earlier :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         (Quarter.quarterPower_antitone order) Error.expLogErrorScale_nonnegative
     calc
-      Data.Gaussian.Norm.Basic.normSq (Error.localExpLogSample z later - Error.localExpLogSample z earlier) ≤
-          2 * (Data.Gaussian.Norm.Basic.normSq (Error.localExpLogSample z later - chart) +
-            Data.Gaussian.Norm.Basic.normSq (chart - Error.localExpLogSample z earlier)) :=
-        Data.Gaussian.Norm.Bounds.normSq_sub_le_via _ chart _
+      Basic.normSq (Error.localExpLogSample z later - Error.localExpLogSample z earlier) ≤
+          2 * (Basic.normSq (Error.localExpLogSample z later - chart) +
+            Basic.normSq (chart - Error.localExpLogSample z earlier)) :=
+        Bounds.normSq_sub_le_via _ chart _
       _ ≤ 2 *
           (Error.expLogErrorScale * (1 / 4 : Fraction.Rational) ^ earlier +
             Error.expLogErrorScale * (1 / 4 : Fraction.Rational) ^ earlier) :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (add_le_add (laterError.trans laterScaled) earlierError') (by decide)
-      _ = Geometric.Basic.quarterRadius
-          Approximation.Gaussian.Logarithm.Local.Inverse.Sequence.localExpLogApproximationScale earlier := by
-        rw [Geometric.Basic.quarterRadius_eq_mul_pow]
-        dsimp only [Approximation.Gaussian.Logarithm.Local.Inverse.Sequence.localExpLogApproximationScale]
+      _ = Basic.quarterRadius
+          localExpLogApproximationScale earlier := by
+        rw [Basic.quarterRadius_eq_mul_pow]
+        dsimp only [localExpLogApproximationScale]
         ring1
   refineIndex := fun current target positive =>
     Search.firstQuarterBelow
-      Approximation.Gaussian.Logarithm.Local.Inverse.Sequence.localExpLogApproximationScale current target
+      localExpLogApproximationScale current target
   refineIndex_ge := by
     intro current target positive
     exact Search.firstQuarterBelow_ge
-      Approximation.Gaussian.Logarithm.Local.Inverse.Sequence.localExpLogApproximationScale current target
+      localExpLogApproximationScale current target
   refineIndex_accurate := by
     intro current target positive
     exact Search.firstQuarterBelow_accurate
-      Approximation.Gaussian.Logarithm.Local.Inverse.Sequence.localExpLogApproximationScale
-        Approximation.Gaussian.Logarithm.Local.Inverse.Sequence.localExpLogApproximationScale_nonnegative
+      localExpLogApproximationScale
+        localExpLogApproximationScale_nonnegative
         current target positive
   centerBound := 5 * 10
   centerBound_nonneg :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct (by decide) (by decide)
-  sample_bounded := Approximation.Gaussian.Logarithm.Local.Inverse.Sequence.localExpLogSample_bounded zBound
+    Arithmetic.mul_nonneg_direct (by decide) (by decide)
+  sample_bounded := localExpLogSample_bounded zBound
 
 /-- The constant finite approximation at the Gaussian Cayley-chart value of the displayed input. -/
-@[expose] public def localChartApproximation (z : Data.Gaussian.Basic.Canonical) : Gaussian.Sequence.ApproximationData
+@[expose] public def localChartApproximation (z : Data.Gaussian.Basic.Canonical) : ApproximationData
   :=
   Constant.constantApproximation
     ((1 + z) / (1 - z))
 
 /-- Finite operational form of `exp(2(z + z^3/3 + ...)) = (1+z)/(1-z)` on the displayed local disk. -/
 @[expose] public def local_exp_log_equivalent (z : Data.Gaussian.Basic.Canonical) (zBound :
-  Data.Gaussian.Norm.Basic.normSq z ≤ 1 / 9) :
-    Gaussian.Equivalence.Equivalent (Approximation.Gaussian.Logarithm.Local.Inverse.Sequence.localExpLogApproximation z
+  Basic.normSq z ≤ 1 / 9) :
+    Equivalence.Equivalent (localExpLogApproximation z
       zBound)
-      (Approximation.Gaussian.Logarithm.Local.Inverse.Sequence.localChartApproximation z) where
+      (localChartApproximation z) where
   compare := by
     intro leftStart rightStart target positive
     let leftIndex := Search.firstQuarterBelow
       Error.expLogErrorScale leftStart target
     have leftSmall :
         Error.expLogErrorScale * (1 / 4 : Fraction.Rational) ^ leftIndex < target := by
-      simpa only [Geometric.Basic.quarterRadius_eq_mul_pow]
+      simpa only [Basic.quarterRadius_eq_mul_pow]
         using Search.firstQuarterBelow_accurate
           Error.expLogErrorScale Error.expLogErrorScale_nonnegative leftStart target positive
     exact
@@ -180,10 +183,10 @@ uniform norm bound. -/
         right_ge := Nat.le_refl _
         close := by
           intro leftLater rightLater leftOrder rightOrder
-          change Data.Gaussian.Norm.Basic.normSq
+          change Basic.normSq
             (Error.localExpLogSample z leftLater - (1 + z) / (1 - z)) < target
           exact (Error.localExpLogSample_chart_error zBound leftLater).trans_lt
-            ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+            ((Arithmetic.mul_le_mul_of_nonneg_left_direct
               (Quarter.quarterPower_antitone leftOrder)
               Error.expLogErrorScale_nonnegative).trans_lt leftSmall) }
 

@@ -79,19 +79,19 @@ def unitSmallMovePath
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo) :
     ChamberPath
-      (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
+      (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one sourceUnit)
         sourceUnit degree
         degreeAtLeastTwo)
-      (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit)
+      (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit)
         targetUnit degree
         degreeAtLeastTwo) :=
-  .cons (Progressive.Power.Unit.Move.Overlap.unitMoveOverlap sourceUnit targetUnit degree degreeAtLeastTwo small)
-    (.cons (Progressive.Power.Unit.Rebase.Overlap.unitRebaseOverlap sourceUnit targetUnit degree degreeAtLeastTwo
+  .cons (Overlap.unitMoveOverlap sourceUnit targetUnit degree degreeAtLeastTwo small)
+    (.cons (Rebase.Overlap.unitRebaseOverlap sourceUnit targetUnit degree degreeAtLeastTwo
       small)
-      (.cons (Progressive.Power.Unit.Frame.Overlap.isolationRobustOverlap
-        (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit)
+      (.cons (Frame.Overlap.isolationRobustOverlap
+        (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit)
         targetUnit degree degreeAtLeastTwo)
-        (.nil (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+        (.nil (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one
           targetUnit)
           targetUnit degree degreeAtLeastTwo))))
 end Purelib.RootIsolation.Progressive.Power.Unit.Move.Path
@@ -126,22 +126,22 @@ theorem unitSmallMovePath_finalIndex_degree
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
-    (index : (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+    (index : (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one
       sourceUnit)
       sourceUnit degree degreeAtLeastTwo).Index) :
     Fin.cast
-        (Progressive.Power.Unit.Frame.robustChamberFrame_degree (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+        (Frame.robustChamberFrame_degree (Norm.Nonzero.nonzero_of_normSq_eq_one
           targetUnit)
           targetUnit degree degreeAtLeastTwo)
         ((unitSmallMovePath sourceUnit targetUnit degree degreeAtLeastTwo small)
           |>.finalIndex index) =
-      Progressive.Power.Unit.Rebase.Geometry.unitMoveTargetDegreeIndexFromSource sourceUnit targetUnit degree
+      Rebase.Geometry.unitMoveTargetDegreeIndexFromSource sourceUnit targetUnit degree
         degreeAtLeastTwo small index := by
   unfold unitSmallMovePath
   simp only [ChamberPath.finalIndex_cons,
     ChamberPath.finalIndex_nil,
-    Progressive.Power.Unit.Move.Overlap.unitMoveOverlap, Progressive.Power.Unit.Rebase.Overlap.unitRebaseOverlap,
-      Progressive.Power.Unit.Frame.Overlap.isolationRobustOverlap,
+    Overlap.unitMoveOverlap, Rebase.Overlap.unitRebaseOverlap,
+      Frame.Overlap.isolationRobustOverlap,
     Data.Fin.Bijection.cast_forward]
   apply Fin.ext
   rfl
@@ -177,19 +177,19 @@ theorem unitMoveTargetAnchor_eq_finalOwnerAnchor
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
-    (index : (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+    (index : (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one
       sourceUnit)
       sourceUnit degree degreeAtLeastTwo).Index) :
-    (Power.Unit.Box.unitRobustBox (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) targetUnit degree
+    (Power.Unit.Box.unitRobustBox (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit) targetUnit degree
       degreeAtLeastTwo
-      (Progressive.Power.Unit.Rebase.Geometry.unitMoveTargetDegreeIndexFromSource sourceUnit targetUnit degree
+      (Rebase.Geometry.unitMoveTargetDegreeIndexFromSource sourceUnit targetUnit degree
         degreeAtLeastTwo small index)).anchor =
-      ((Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit)
+      ((Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit)
         targetUnit
         degree degreeAtLeastTwo).owner
         ((unitSmallMovePath sourceUnit targetUnit degree degreeAtLeastTwo small)
           |>.finalIndex index)).box.anchor := by
-  rw [Progressive.Power.Unit.Frame.robustChamberFrame_owner_box]
+  rw [Frame.robustChamberFrame_owner_box]
   rw [unitSmallMovePath_finalIndex_degree]
 end Purelib.RootIsolation.Progressive.Power.Unit.Move.Path
 
@@ -223,19 +223,19 @@ theorem unitMoveLift_terminal_eq_finalOwnerAnchor
     (sourceUnit : normSq source = 1) (targetUnit : normSq target = 1)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : UnitMoveSmall sourceUnit targetUnit degree degreeAtLeastTwo)
-    (index : (Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one
+    (index : (Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one
       sourceUnit)
       sourceUnit degree degreeAtLeastTwo).Index) :
     Polygon.Chain.terminal
-        (Progressive.Power.Unit.Lift.Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index)
-        (Progressive.Power.Unit.Lift.Vertices.unitMoveLiftVertices sourceUnit targetUnit degree degreeAtLeastTwo small
+        (Lift.Vertices.unitMoveLiftBase sourceUnit targetUnit degree degreeAtLeastTwo index)
+        (Lift.Vertices.unitMoveLiftVertices sourceUnit targetUnit degree degreeAtLeastTwo small
           index) =
-      ((Progressive.Power.Unit.Frame.robustChamberFrame (Gaussian.Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit)
+      ((Frame.robustChamberFrame (Norm.Nonzero.nonzero_of_normSq_eq_one targetUnit)
         targetUnit
         degree degreeAtLeastTwo).owner
         ((unitSmallMovePath sourceUnit targetUnit degree degreeAtLeastTwo small)
           |>.finalIndex index)).box.anchor := by
-  simp only [Progressive.Power.Unit.Lift.Vertices.unitMoveLiftVertices, Polygon.Chain.terminal]
+  simp only [Lift.Vertices.unitMoveLiftVertices, Polygon.Chain.terminal]
   exact unitMoveTargetAnchor_eq_finalOwnerAnchor sourceUnit targetUnit degree
     degreeAtLeastTwo small index
 end Purelib.RootIsolation.Progressive.Power.Unit.Move.Path

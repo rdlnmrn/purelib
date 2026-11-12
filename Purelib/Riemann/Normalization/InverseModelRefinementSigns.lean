@@ -22,6 +22,8 @@ import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 public import Mathlib.Algebra.Field.Defs
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -52,13 +54,13 @@ open Purelib.Data.Rat in
 theorem nearest_of_close {reference candidate : Gaussian}
     (close : normSq (reference - candidate) ≤ normSq reference) :
     normSq (reference - candidate) ≤ normSq (reference + candidate) := by
-  apply Fraction.Order.Arithmetic.le_of_add_le_add_right_direct (c := normSq (reference - candidate))
+  apply Arithmetic.le_of_add_le_add_right_direct (c := normSq (reference - candidate))
   calc
     _ = 2 * normSq (reference - candidate) := by ring1
-    _ ≤ 2 * normSq reference := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct close (by decide)
+    _ ≤ 2 * normSq reference := Arithmetic.mul_le_mul_of_nonneg_left_direct close (by decide)
     _ ≤ 2 * (normSq reference + normSq candidate) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (le_add_of_nonneg_right (Basic.Canonical.normSq_nonneg _)) (by decide)
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (le_add_of_nonneg_right (normSq_nonneg _)) (by decide)
     _ = _ := by simp only [normSq, Basic.add_re, Basic.add_im, Basic.sub_re, Basic.sub_im]; ring1
 
 namespace SignAlignment
@@ -132,22 +134,22 @@ def stepAlignment (model : Model polynomial box) (point : Gaussian) (inside : bo
   have correctionEq : model.step.value.eval point = model.value.eval point * (1 + half * model.residual.eval point) :=
     by
     dsimp only [InverseRootPolynomial.Model.step]
-    rewrite [Dense.Basic.DensePolynomial.eval_mul, Dense.Basic.DensePolynomial.eval_add,
-      Dense.Basic.DensePolynomial.eval_constant, Dense.Basic.DensePolynomial.eval_scale]
+    rewrite [eval_mul, eval_add,
+      eval_constant, eval_scale]
     exact Eq.refl _
   rw [correctionEq]
   have difference : model.value.eval point - model.value.eval point * (1 + half * model.residual.eval point) =
       -(model.value.eval point * (half * model.residual.eval point)) := by ring1
-  rw [difference, Basic.Canonical.normSq_neg, Basic.Canonical.normSq_mul, Basic.Canonical.normSq_mul, show normSq half =
+  rw [difference, normSq_neg, normSq_mul, normSq_mul, show normSq half =
     (1 / 4 : Coordinate) by decide]
   have residual := (model.residualBound point inside).trans model.bound_small
   calc
     _ ≤ normSq (model.value.eval point) * ((1 / 4) * (1 / 16)) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct residual (by decide)) (Basic.Canonical.normSq_nonneg
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct residual (by decide)) (normSq_nonneg
           _)
     _ ≤ normSq (model.value.eval point) * 1 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (by decide +kernel) (Basic.Canonical.normSq_nonneg _)
+      Arithmetic.mul_le_mul_of_nonneg_left_direct (by decide +kernel) (normSq_nonneg _)
     _ = _ := Fraction.Field.mul_one_direct _
 
 open Purelib.Data.Gaussian in
@@ -160,17 +162,17 @@ theorem refine_self_flip (model : Model polynomial box) (small : model.bound ≤
   | zero =>
       change (SignAlignment.build (model.value.eval point) (model.value.eval point)).flip = false
       unfold SignAlignment.build
-      rw [dif_pos (by rw [Basic.sub_self, Basic.Canonical.normSq_zero]; exact Basic.Canonical.normSq_nonneg _)]
+      rw [dif_pos (by rw [Basic.sub_self, normSq_zero]; exact normSq_nonneg _)]
   | succ index ih =>
       have composed := InverseModelOverlapCocycle.SignAlignment.cocycle
         (SignAlignment.build (model.value.eval point) ((model.refine index).value.eval point))
-        ((InverseModelRefinementSigns.Model.stepAlignment (model.refine index)) point inside)
+        ((stepAlignment (model.refine index)) point inside)
         (SignAlignment.build (model.value.eval point) ((model.refine (index + 1)).value.eval point))
-        ((InverseModelRefinementSigns.Model.residual_at model) point inside)
-          ((InverseModelRefinementSigns.Model.residual_at (model.refine index)) point inside)
-        ((InverseModelRefinementSigns.Model.residual_at (model.refine (index + 1))) point inside)
-        small ((InverseModelRefinementSigns.Model.refined_small model) small index)
-          ((InverseModelRefinementSigns.Model.refined_small model) small (index + 1))
+        ((residual_at model) point inside)
+          ((residual_at (model.refine index)) point inside)
+        ((residual_at (model.refine (index + 1))) point inside)
+        small ((refined_small model) small index)
+          ((refined_small model) small (index + 1))
       rw [ih] at composed
       exact composed
 
@@ -195,24 +197,24 @@ theorem refine_flip (sample : OverlapSample left right point)
   let leftSelf := SignAlignment.build (left.value.eval point) ((left.refine leftIndex).value.eval point)
   let old := SignAlignment.build (left.value.eval point) (right.value.eval point)
   let middle := SignAlignment.build ((left.refine leftIndex).value.eval point) (right.value.eval point)
-  have first := InverseModelOverlapCocycle.SignAlignment.cocycle (InverseModelRefinementSigns.SignAlignment.reverse
+  have first := InverseModelOverlapCocycle.SignAlignment.cocycle (SignAlignment.reverse
     leftSelf) old middle
-    ((InverseModelRefinementSigns.Model.residual_at (left.refine leftIndex)) point leftInside)
-      ((InverseModelRefinementSigns.Model.residual_at left) point leftInside)
-    ((InverseModelRefinementSigns.Model.residual_at right) point rightInside)
-      ((InverseModelRefinementSigns.Model.refined_small left) leftSmall leftIndex) leftSmall rightSmall
-  have selfFalse : (InverseModelRefinementSigns.SignAlignment.reverse leftSelf).flip = false :=
-    (InverseModelRefinementSigns.Model.refine_self_flip left) leftSmall point leftInside leftIndex
+    ((Model.residual_at (left.refine leftIndex)) point leftInside)
+      ((Model.residual_at left) point leftInside)
+    ((Model.residual_at right) point rightInside)
+      ((Model.refined_small left) leftSmall leftIndex) leftSmall rightSmall
+  have selfFalse : (SignAlignment.reverse leftSelf).flip = false :=
+    (Model.refine_self_flip left) leftSmall point leftInside leftIndex
   rw [selfFalse] at first
   have second := InverseModelOverlapCocycle.SignAlignment.cocycle middle
     (SignAlignment.build (right.value.eval point) ((right.refine rightIndex).value.eval point))
     (SignAlignment.build ((left.refine leftIndex).value.eval point) ((right.refine rightIndex).value.eval point))
-    ((InverseModelRefinementSigns.Model.residual_at (left.refine leftIndex)) point leftInside)
-      ((InverseModelRefinementSigns.Model.residual_at right) point rightInside)
-    ((InverseModelRefinementSigns.Model.residual_at (right.refine rightIndex)) point rightInside)
-    ((InverseModelRefinementSigns.Model.refined_small left) leftSmall leftIndex) rightSmall
-      ((InverseModelRefinementSigns.Model.refined_small right) rightSmall rightIndex)
-  rw [(InverseModelRefinementSigns.Model.refine_self_flip right) rightSmall point rightInside rightIndex,
+    ((Model.residual_at (left.refine leftIndex)) point leftInside)
+      ((Model.residual_at right) point rightInside)
+    ((Model.residual_at (right.refine rightIndex)) point rightInside)
+    ((Model.refined_small left) leftSmall leftIndex) rightSmall
+      ((Model.refined_small right) rightSmall rightIndex)
+  rw [(Model.refine_self_flip right) rightSmall point rightInside rightIndex,
       first] at second
   have oldBit : old.flip = sample.alignment.flip := (InverseModelEdgeTransition.OverlapSample.flip_eq_build sample
     leftInside rightInside).symm
@@ -236,7 +238,7 @@ def ofRefined (sample : OverlapSample left right point)
   let rightValue := rightRefined.value.eval point
   ⟨leftValue, rfl, rightValue, rfl,
     ⟨sample.alignment.flip, if sample.alignment.flip then -rightValue else rightValue, rfl, by
-      have same := InverseModelRefinementSigns.OverlapSample.refine_flip sample leftInside rightInside leftSmall
+      have same := refine_flip sample leftInside rightInside leftSmall
         rightSmall leftIndex rightIndex
       have retained : (SignAlignment.build leftValue rightValue).flip = sample.alignment.flip := by
         dsimp only [leftValue, rightValue]

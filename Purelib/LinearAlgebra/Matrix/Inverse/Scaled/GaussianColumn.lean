@@ -30,25 +30,24 @@ abbrev Vector (K : Type*) (n :
 
 /-- Materialize the coordinate unit column at the supplied bounded index. -/
 def unitColumn {n : Nat} (column :
-  Fin n) : SquareMatrix.Inverse.Scaled.GaussianColumn.Vector Data.Gaussian.Basic.Canonical n :=
+  Fin n) : GaussianColumn.Vector Data.Gaussian.Basic.Canonical n :=
   Data.Vector.Basic.vectorOfFn fun row => if row = column then 1 else 0
 
 section
 /-- Multiplying a Gaussian matrix by a unit column reads the corresponding matrix column.
 
 The original finite sum has one nonzero entry, determined by the supplied column index; its coefficient is one. -/
-private theorem
-  matrixVector_unit
+theorem matrixVector_unit
   {n : Nat} (matrix : SquareMatrix Data.Gaussian.Basic.Canonical n)
-    (column row : Fin n) : SquareMatrix.Multiplication.matrixVector matrix
-      (SquareMatrix.Inverse.Scaled.GaussianColumn.unitColumn column) row = matrix row column := open Purelib.Algebra in
+    (column row : Fin n) : Multiplication.matrixVector matrix
+      (unitColumn column) row = matrix row column := open Purelib.Algebra in
       by
-  rw [SquareMatrix.Multiplication.matrixVector_apply]
+  rw [Multiplication.matrixVector_apply]
   calc
     _ = FiniteSum.Fin.sumFin (fun middle => if middle = column then matrix row middle else 0) := by
       apply FiniteSum.Fin.sumFin_congr
       intro middle
-      simp only [SquareMatrix.Inverse.Scaled.GaussianColumn.unitColumn, Data.Vector.Basic.vectorOfFn_apply]
+      simp only [unitColumn, Data.Vector.Basic.vectorOfFn_apply]
       split <;>
         (simp only [mul_one, mul_zero, -eq_self, -iff_self]
          rfl)
@@ -59,24 +58,24 @@ end
 Checking a saved solution does not construct it at runtime. -/
 theorem solution_eq_column {n :
   Nat} (matrix : SquareMatrix Data.Gaussian.Basic.Canonical n)
-    (inverse : SquareMatrix.Inverse.Scaled.Basic.ScaledInverse matrix) (nonzero : inverse.scalar ≠ 0)
-    (column : Fin n) (values : SquareMatrix.Inverse.Scaled.GaussianColumn.Vector Data.Gaussian.Basic.Canonical n)
-    (solves : SquareMatrix.Multiplication.matrixVector matrix values =
-      SquareMatrix.Inverse.Scaled.GaussianColumn.unitColumn column) (row : Fin n) :
+    (inverse : Basic.ScaledInverse matrix) (nonzero : inverse.scalar ≠ 0)
+    (column : Fin n) (values : GaussianColumn.Vector Data.Gaussian.Basic.Canonical n)
+    (solves : Multiplication.matrixVector matrix values =
+      unitColumn column) (row : Fin n) :
     values row = inverse.scalar⁻¹ * inverse.inverse row column := by
   have product : inverse.scalar * values row = inverse.inverse row column := by
     calc
-      _ = SquareMatrix.Multiplication.matrixVector (SquareMatrix.Multiplication.scaleIdentity inverse.scalar) values row
+      _ = Multiplication.matrixVector (Multiplication.scaleIdentity inverse.scalar) values row
         := by
-        rw [SquareMatrix.Multiplication.matrixVector_scaleIdentity, Data.Vector.Basic.vectorOfFn_apply]
-      _ = SquareMatrix.Multiplication.matrixVector (SquareMatrix.Multiplication.mul inverse.inverse matrix) values row
+        rw [Multiplication.matrixVector_scaleIdentity, Data.Vector.Basic.vectorOfFn_apply]
+      _ = Multiplication.matrixVector (Multiplication.mul inverse.inverse matrix) values row
         := by
         rw [inverse.left_identity]
-      _ = SquareMatrix.Multiplication.matrixVector inverse.inverse (SquareMatrix.Multiplication.matrixVector matrix
+      _ = Multiplication.matrixVector inverse.inverse (Multiplication.matrixVector matrix
         values) row := by
-        rw [SquareMatrix.Multiplication.matrixVector_mul]
-      _ = SquareMatrix.Multiplication.matrixVector inverse.inverse
-        (SquareMatrix.Inverse.Scaled.GaussianColumn.unitColumn column) row := by
+        rw [Multiplication.matrixVector_mul]
+      _ = Multiplication.matrixVector inverse.inverse
+        (unitColumn column) row := by
         rw [solves]
       _ = _ :=
         matrixVector_unit

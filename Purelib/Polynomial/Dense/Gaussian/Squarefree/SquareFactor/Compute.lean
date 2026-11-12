@@ -53,21 +53,21 @@ The supplied certificate concerns the exact normalized input; no multiplicity
 basis is computed and no coefficient or scalar is replaced. -/
 @[expose] def ofSquarefreeNormalized (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (nonzero : polynomial.isZero = false)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate polynomial.normalize) :
-    Dense.Gaussian.Squarefree.SquareFactor.Basic.Reduction polynomial := by
+    (squarefree : Basic.SquarefreeCertificate polynomial.normalize) :
+    Basic.Reduction polynomial := by
   refine
-    { squareFactor := Dense.Basic.DensePolynomial.constant 1
+    { squareFactor := Basic.DensePolynomial.constant 1
       radicand := polynomial.normalize
-      squareFactorNonzero := (Dense.Leading.LeadingTerm.constant one_ne_zero).nonzero
-      radicandNonzero := by simpa only [Dense.Basic.DensePolynomial.isZero_normalize] using nonzero
-      squareFactorNormalized := (Dense.Leading.LeadingTerm.constant one_ne_zero).normalized
-      radicandNormalized := Dense.Basic.DensePolynomial.normalize_normalize polynomial
+      squareFactorNonzero := (Leading.LeadingTerm.constant one_ne_zero).nonzero
+      radicandNonzero := by simpa only [Basic.DensePolynomial.isZero_normalize] using nonzero
+      squareFactorNormalized := (Leading.LeadingTerm.constant one_ne_zero).normalized
+      radicandNormalized := Basic.DensePolynomial.normalize_normalize polynomial
       squarefree := squarefree
       identity := ?_ }
-  apply Dense.Gaussian.Factorization.Identity.factorizationOfCandidateEvals
+  apply Factorization.Identity.factorizationOfCandidateEvals
   intro point _
-  simp only [Dense.Basic.DensePolynomial.eval_mul, Dense.Basic.DensePolynomial.eval_constant,
-    Dense.Basic.DensePolynomial.eval_normalize, one_mul, -eq_self]
+  simp only [Basic.DensePolynomial.eval_mul, Basic.DensePolynomial.eval_constant,
+    Basic.DensePolynomial.eval_normalize, one_mul, -eq_self]
   rfl
 
 set_option backward.match.sparseCases false in
@@ -78,71 +78,71 @@ multiplicity basis. Every other case uses the same parity-aware reduction. -/
 @[expose] def ofDecomposition (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (nonzero : polynomial.isZero = false)
     (decomposition : Decomposition polynomial.normalize) :
-    Dense.Gaussian.Squarefree.SquareFactor.Basic.Reduction polynomial :=
+    Basic.Reduction polynomial :=
   match single : decomposition.factors with
   | [factor] => ofSquarefreeNormalized polynomial nonzero
       (by
         have difference : (polynomial.normalize - factor.polynomial).isZero = true := by
-          apply Dense.Gaussian.NonzeroEvaluation.difference_isZero_of_candidate_evals
+          apply NonzeroEvaluation.difference_isZero_of_candidate_evals
           intro point _
           have identity := decomposition.evalIdentity point
-          simpa only [single, Dense.Gaussian.Squarefree.Decomposition.Basic.factorProduct,
-            Dense.Basic.DensePolynomial.eval_mul, Dense.Basic.DensePolynomial.eval_constant, mul_one] using identity
-        have same := Dense.Extensionality.normalized_eq_of_sub_isZero
-          (Dense.Basic.DensePolynomial.normalize_normalize polynomial) factor.normalized difference
+          simpa only [single, Decomposition.Basic.factorProduct,
+            Basic.DensePolynomial.eval_mul, Basic.DensePolynomial.eval_constant, mul_one] using identity
+        have same := Extensionality.normalized_eq_of_sub_isZero
+          (Basic.DensePolynomial.normalize_normalize polynomial) factor.normalized difference
         rw [same]
         exact factor.squarefree)
   | _ => by
       let basis := decomposition.multiplicityBasis
-      let entries := Dense.Gaussian.Multiplicity.Basis.Positive.positiveEntries basis.entries
-      let scalar := Dense.Gaussian.Multiplicity.Basis.Positive.unitValue basis.entries
-      have scalarNonzero : scalar ≠ 0 := Dense.Gaussian.Multiplicity.Basis.Positive.unitValue_ne_zero basis.entries
-      let squareFactor := Dense.Gaussian.Squarefree.SquareFactor.Products.halfProduct entries
-      let radicand := Dense.Basic.DensePolynomial.constant scalar *
-        Dense.Gaussian.Squarefree.SquareFactor.Products.oddProduct entries
+      let entries := Multiplicity.Basis.Positive.positiveEntries basis.entries
+      let scalar := Multiplicity.Basis.Positive.unitValue basis.entries
+      have scalarNonzero : scalar ≠ 0 := Multiplicity.Basis.Positive.unitValue_ne_zero basis.entries
+      let squareFactor := Products.halfProduct entries
+      let radicand := Basic.DensePolynomial.constant scalar *
+        Products.oddProduct entries
       have pairwise : entries.Pairwise
           (fun left right => Multiplicity.CoprimeRelation left.part right.part) :=
-        Dense.Gaussian.Multiplicity.Basis.Positive.positiveEntries_pairwise basis.pairwise
+        Multiplicity.Basis.Positive.positiveEntries_pairwise basis.pairwise
       refine
         { squareFactor := squareFactor
           radicand := radicand
-          squareFactorNonzero := Dense.Gaussian.Squarefree.SquareFactor.Products.halfProduct_nonzero entries
-          radicandNonzero := Dense.Basic.DensePolynomial.isZero_mul_eq_false (Dense.Leading.LeadingTerm.constant
+          squareFactorNonzero := Products.halfProduct_nonzero entries
+          radicandNonzero := Basic.DensePolynomial.isZero_mul_eq_false (Leading.LeadingTerm.constant
             scalarNonzero).nonzero
-            (Dense.Gaussian.Squarefree.SquareFactor.Products.oddProduct_nonzero entries)
-          squareFactorNormalized := Dense.Gaussian.Squarefree.SquareFactor.Products.halfProduct_normalized entries
-          radicandNormalized := Dense.Basic.DensePolynomial.normalize_mul _ _
-          squarefree := Dense.Gaussian.Squarefree.Product.product
-            (Dense.Leading.LeadingTerm.constant scalarNonzero).nonzero
-              (Dense.Gaussian.Squarefree.SquareFactor.Products.oddProduct_nonzero entries)
-            (Dense.Gaussian.Squarefree.Constants.constant scalar scalarNonzero)
-            (Dense.Gaussian.Squarefree.SquareFactor.Products.oddProductSquarefree entries pairwise)
-            (Dense.Gaussian.Coprime.Operations.CoprimeCertificate.symm
-              (Dense.Gaussian.Coprime.Operations.CoprimeCertificate.constantRightOfNe
-                (Dense.Gaussian.Squarefree.SquareFactor.Products.oddProduct_nonzero entries) scalar scalarNonzero))
+            (Products.oddProduct_nonzero entries)
+          squareFactorNormalized := Products.halfProduct_normalized entries
+          radicandNormalized := Basic.DensePolynomial.normalize_mul _ _
+          squarefree := Product.product
+            (Leading.LeadingTerm.constant scalarNonzero).nonzero
+              (Products.oddProduct_nonzero entries)
+            (Constants.constant scalar scalarNonzero)
+            (Products.oddProductSquarefree entries pairwise)
+            (Coprime.Operations.CoprimeCertificate.symm
+              (Coprime.Operations.CoprimeCertificate.constantRightOfNe
+                (Products.oddProduct_nonzero entries) scalar scalarNonzero))
           identity := ?_ }
-      apply Dense.Gaussian.Factorization.Identity.factorizationOfCandidateEvals
+      apply Factorization.Identity.factorizationOfCandidateEvals
       intro point _
       have original := decomposition.eval_positiveMultiplicityEntries point
-      change polynomial.normalize.eval point = scalar * Dense.Gaussian.Multiplicity.Basis.Positive.positiveValue entries
+      change polynomial.normalize.eval point = scalar * Multiplicity.Basis.Positive.positiveValue entries
         point at original
-      rw [Dense.Basic.DensePolynomial.eval_normalize, Dense.Gaussian.Squarefree.SquareFactor.Products.parityIdentity]
+      rw [Basic.DensePolynomial.eval_normalize, Products.parityIdentity]
         at original
       dsimp only [squareFactor, radicand]
-      simp only [Dense.Basic.DensePolynomial.eval_mul, Dense.Basic.DensePolynomial.eval_constant]
+      simp only [Basic.DensePolynomial.eval_mul, Basic.DensePolynomial.eval_constant]
       calc
         polynomial.eval point = scalar *
-            ((Dense.Gaussian.Squarefree.SquareFactor.Products.halfProduct entries).eval point *
-              (Dense.Gaussian.Squarefree.SquareFactor.Products.halfProduct entries).eval point *
-              (Dense.Gaussian.Squarefree.SquareFactor.Products.oddProduct entries).eval point) := original
+            ((Products.halfProduct entries).eval point *
+              (Products.halfProduct entries).eval point *
+              (Products.oddProduct entries).eval point) := original
         _ = _ := by ring1
 
 /-- A singleton decomposition retains square factor one and the original normalized radicand. -/
 theorem ofDecomposition_singleton (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (nonzero : polynomial.isZero = false)
     (decomposition : Decomposition polynomial.normalize)
-    (factor : Dense.Gaussian.Squarefree.Decomposition.Basic.Factor) (single : decomposition.factors = [factor]) :
-    (ofDecomposition polynomial nonzero decomposition).squareFactor = Dense.Basic.DensePolynomial.constant 1 ∧
+    (factor : Decomposition.Basic.Factor) (single : decomposition.factors = [factor]) :
+    (ofDecomposition polynomial nonzero decomposition).squareFactor = Basic.DensePolynomial.constant 1 ∧
       (ofDecomposition polynomial nonzero decomposition).radicand = polynomial.normalize := by
   unfold ofDecomposition
   split
@@ -155,14 +155,14 @@ the computed gcd certificate, not a heuristic on degree or coefficient shape. -/
 theorem squarefree_decomposition_length (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (normalized : polynomial.normalize = polynomial) (nonzero : polynomial.isZero = false)
     (positive : 0 < polynomial.natDegree)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate polynomial) :
-    (Dense.Gaussian.Squarefree.Decomposition.Compute.decomposeNormalized polynomial normalized nonzero
+    (squarefree : Basic.SquarefreeCertificate polynomial) :
+    (Decomposition.Compute.decomposeNormalized polynomial normalized nonzero
       positive).factors.length = 1 := by
-  have degreeZero : (Dense.Gaussian.GCD.extendedGCD polynomial
-      (Dense.Gaussian.GCD.derivative polynomial)).gcd.natDegree = 0 := by
+  have degreeZero : (GCD.extendedGCD polynomial
+      (GCD.derivative polynomial)).gcd.natDegree = 0 := by
     rw [squarefree.gcd_eq_constant]
-    exact (Dense.Leading.LeadingTerm.constant squarefree.unit_ne_zero).degree_eq
-  delta Dense.Gaussian.Squarefree.Decomposition.Compute.decomposeNormalized
+    exact (Leading.LeadingTerm.constant squarefree.unit_ne_zero).degree_eq
+  delta Decomposition.Compute.decomposeNormalized
     Dense.Gaussian.Squarefree.Decomposition.Compute.decomposeNormalized._unary
   have fixStep {α : Sort _} {motive : α → Sort _}
       (measure : α → Nat)
@@ -183,7 +183,7 @@ theorem squarefree_decomposition_length (polynomial : Basic.CanonicalCoefficient
   split
   · rfl
   · rename_i common outcome
-    unfold Dense.Gaussian.Squarefree.Decision.squarefreeOutcome Dense.Gaussian.Coprime.Decision.coprimeOutcome
+    unfold Decision.squarefreeOutcome Coprime.Decision.coprimeOutcome
       at outcome
     rw [dif_pos degreeZero] at outcome
     cases outcome
@@ -191,25 +191,25 @@ theorem squarefree_decomposition_length (polynomial : Basic.CanonicalCoefficient
 /-- Constants retain their entire scalar as the reduced radicand. -/
 @[expose] def ofConstant (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (nonzero : polynomial.isZero = false) (degreeZero : polynomial.natDegree = 0) :
-    Dense.Gaussian.Squarefree.SquareFactor.Basic.Reduction polynomial := by
-  have normalized : polynomial.normalize = Dense.Basic.DensePolynomial.constant polynomial.leadingCoeff :=
-    Dense.Basic.DensePolynomial.normalize_eq_constant_leadingCoeff_of_degree_zero nonzero degreeZero
-  have coefficientNonzero : polynomial.leadingCoeff ≠ 0 := Dense.Basic.DensePolynomial.leadingCoeff_ne_zero nonzero
+    Basic.Reduction polynomial := by
+  have normalized : polynomial.normalize = Basic.DensePolynomial.constant polynomial.leadingCoeff :=
+    Basic.DensePolynomial.normalize_eq_constant_leadingCoeff_of_degree_zero nonzero degreeZero
+  have coefficientNonzero : polynomial.leadingCoeff ≠ 0 := Basic.DensePolynomial.leadingCoeff_ne_zero nonzero
   refine
-    { squareFactor := Dense.Basic.DensePolynomial.constant 1
+    { squareFactor := Basic.DensePolynomial.constant 1
       radicand := polynomial.normalize
-      squareFactorNonzero := (Dense.Leading.LeadingTerm.constant one_ne_zero).nonzero
-      radicandNonzero := by simpa only [Dense.Basic.DensePolynomial.isZero_normalize] using nonzero
-      squareFactorNormalized := (Dense.Leading.LeadingTerm.constant one_ne_zero).normalized
-      radicandNormalized := Dense.Basic.DensePolynomial.normalize_normalize polynomial
+      squareFactorNonzero := (Leading.LeadingTerm.constant one_ne_zero).nonzero
+      radicandNonzero := by simpa only [Basic.DensePolynomial.isZero_normalize] using nonzero
+      squareFactorNormalized := (Leading.LeadingTerm.constant one_ne_zero).normalized
+      radicandNormalized := Basic.DensePolynomial.normalize_normalize polynomial
       squarefree := ?_
       identity := ?_ }
   · rw [normalized]
-    exact Dense.Gaussian.Squarefree.Constants.constant polynomial.leadingCoeff coefficientNonzero
-  · apply Dense.Gaussian.Factorization.Identity.factorizationOfCandidateEvals
+    exact Constants.constant polynomial.leadingCoeff coefficientNonzero
+  · apply Factorization.Identity.factorizationOfCandidateEvals
     intro point _
-    simp only [Dense.Basic.DensePolynomial.eval_mul, Dense.Basic.DensePolynomial.eval_constant,
-      Dense.Basic.DensePolynomial.eval_normalize, one_mul, -eq_self]
+    simp only [Basic.DensePolynomial.eval_mul, Basic.DensePolynomial.eval_constant,
+      Basic.DensePolynomial.eval_normalize, one_mul, -eq_self]
     rfl
 
 set_option genInjectivity false in
@@ -218,7 +218,7 @@ computed, certified square and squarefree factors, even when it is singular. -/
 inductive Outcome (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial) where
   /-- The input polynomial is certified zero. -/ | zero (certificate : polynomial.isZero = true)
   /-- The nonzero input has a certified square factor and squarefree residual radicand. -/ | reduced (nonzero :
-    polynomial.isZero = false) (result : Dense.Gaussian.Squarefree.SquareFactor.Basic.Reduction polynomial)
+    polynomial.isZero = false) (result : Basic.Reduction polynomial)
 
 constructive_injectivity Outcome
 
@@ -227,7 +227,7 @@ constructive_injectivity Outcome
 Zero has an explicit certificate; constants retain their scalar; positive-degree inputs reuse their computed
 decomposition and its squarefree fast path. -/
 @[expose] def reduce (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial) : Outcome polynomial :=
-  match Dense.Gaussian.Squarefree.Decomposition.Compute.preprocess polynomial with
+  match Decomposition.Compute.preprocess polynomial with
   | .zero certificate => .zero certificate
   | .constant nonzero degreeZero => .reduced nonzero (ofConstant polynomial nonzero degreeZero)
   | .positive result => .reduced result.nonzero
@@ -238,32 +238,32 @@ literally.  This is a property of the coefficient-first algorithm, not a
 certificate required by that algorithm's public argument list. -/
 theorem reduce_preserves_squarefree (polynomial : Basic.CanonicalCoefficients.CoefficientPolynomial)
     (nonzero : polynomial.isZero = false)
-    (squarefree : Dense.Gaussian.Squarefree.Basic.SquarefreeCertificate polynomial.normalize) :
+    (squarefree : Basic.SquarefreeCertificate polynomial.normalize) :
     match reduce polynomial with
     | .zero _ => False
     | .reduced _ result =>
-        result.squareFactor = Dense.Basic.DensePolynomial.constant 1 ∧ result.radicand = polynomial.normalize := by
+        result.squareFactor = Basic.DensePolynomial.constant 1 ∧ result.radicand = polynomial.normalize := by
   have notZero : ¬ polynomial.isZero = true := by rw [nonzero]; decide
   by_cases degreeZero : polynomial.natDegree = 0
-  · have preprocessing : Dense.Gaussian.Squarefree.Decomposition.Compute.preprocess polynomial =
+  · have preprocessing : Decomposition.Compute.preprocess polynomial =
         .constant nonzero degreeZero := by
-      unfold Dense.Gaussian.Squarefree.Decomposition.Compute.preprocess
+      unfold Decomposition.Compute.preprocess
       rw [dif_neg notZero, dif_pos degreeZero]
     rw [reduce, preprocessing]
     exact ⟨rfl, rfl⟩
   · have normalizedNonzero : polynomial.normalize.isZero = false := by
-      simpa only [Dense.Basic.DensePolynomial.isZero_normalize] using nonzero
+      simpa only [Basic.DensePolynomial.isZero_normalize] using nonzero
     have positive : 0 < polynomial.normalize.natDegree := by
-      simpa only [Dense.Basic.DensePolynomial.natDegree_normalize] using Nat.pos_of_ne_zero degreeZero
-    let decomposition := Dense.Gaussian.Squarefree.Decomposition.Compute.decomposeNormalized polynomial.normalize
-      (Dense.Basic.DensePolynomial.normalize_normalize polynomial) normalizedNonzero positive
-    have preprocessing : Dense.Gaussian.Squarefree.Decomposition.Compute.preprocess polynomial =
+      simpa only [Basic.DensePolynomial.natDegree_normalize] using Nat.pos_of_ne_zero degreeZero
+    let decomposition := Decomposition.Compute.decomposeNormalized polynomial.normalize
+      (Basic.DensePolynomial.normalize_normalize polynomial) normalizedNonzero positive
+    have preprocessing : Decomposition.Compute.preprocess polynomial =
         .positive ⟨nonzero, Nat.pos_of_ne_zero degreeZero, decomposition⟩ := by
-      unfold Dense.Gaussian.Squarefree.Decomposition.Compute.preprocess
+      unfold Decomposition.Compute.preprocess
       rw [dif_neg notZero, dif_neg degreeZero]
     rw [reduce, preprocessing]
     have length := squarefree_decomposition_length polynomial.normalize
-      (Dense.Basic.DensePolynomial.normalize_normalize polynomial) normalizedNonzero positive squarefree
+      (Basic.DensePolynomial.normalize_normalize polynomial) normalizedNonzero positive squarefree
     have single : ∃ factor, decomposition.factors = [factor] := by
       cases factorsEquation : decomposition.factors with
       | nil =>

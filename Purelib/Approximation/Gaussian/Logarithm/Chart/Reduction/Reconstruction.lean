@@ -34,6 +34,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-!
@@ -71,7 +73,7 @@ open Purelib.CCL.Transcendental
 open Purelib.Data.Rat
 
 /-- Every possible value of the synchronized reduced chart name satisfies the retained local logarithm disk bound. -/
-theorem synchronizedReducedDisk (input : Gaussian.Name.Basic.Named) (chart : Chart input)
+theorem synchronizedReducedDisk (input : Basic.Named) (chart : Chart input)
     (certificate : Branch.BranchCertificate input chart) :
     Domain.Disk
       (Synchronized.synchronizedReducedNamed input chart certificate) where
@@ -81,7 +83,7 @@ theorem synchronizedReducedDisk (input : Gaussian.Name.Basic.Named) (chart : Cha
     exact Synchronized.synchronizedReducedSample_disk input chart certificate later
 
 /-- Exact finite reconstruction of every synchronized reduced sample. -/
-theorem synchronizedReducedSample_reconstructs (input : Gaussian.Name.Basic.Named)
+theorem synchronizedReducedSample_reconstructs (input : Basic.Named)
     (chart : Chart input) (certificate : Branch.BranchCertificate input chart)
     (index : Nat) :
     ((1 + Synchronized.synchronizedReducedSample input chart index) /
@@ -119,7 +121,7 @@ theorem synchronizedReducedSample_reconstructs (input : Gaussian.Name.Basic.Name
     _ = value := Data.Gaussian.Basic.mul_one value
 
 /-- Sampling the synchronized reduced name returns its original reduced sample at the computed emitted source index. -/
-theorem synchronizedReducedNamed_inputSample (input : Gaussian.Name.Basic.Named)
+theorem synchronizedReducedNamed_inputSample (input : Basic.Named)
     (chart : Chart input) (certificate : Branch.BranchCertificate input chart)
     (index : Nat) :
     ComplexLog.inputSample
@@ -138,12 +140,12 @@ theorem synchronizedReducedNamed_inputSample (input : Gaussian.Name.Basic.Named)
 
 /-- Every raw sample of the scaled reconstruction of the productive synchronized reference is exactly a finite
 prepared-input sample. -/
-theorem synchronizedScaledChartSample_reconstructs (input : Gaussian.Name.Basic.Named)
+theorem synchronizedScaledChartSample_reconstructs (input : Basic.Named)
     (chart : Chart input) (certificate : Branch.BranchCertificate input chart)
     (index : Nat) :
     (Scale.scaledDynamicLocalExpLogChartApproximation
         (Synchronized.synchronizedReducedNamed input chart certificate)
-        (Approximation.Gaussian.Logarithm.Chart.Reduction.Reconstruction.synchronizedReducedDisk input chart
+        (synchronizedReducedDisk input chart
           certificate)
         (1 / chart.factor)).sample index =
       ComplexLog.inputSample
@@ -155,21 +157,21 @@ theorem synchronizedScaledChartSample_reconstructs (input : Gaussian.Name.Basic.
       (1 - ComplexLog.inputSample
         (Synchronized.synchronizedReducedNamed input chart certificate) index)) *
         (1 / chart.factor) = _
-  rw [Approximation.Gaussian.Logarithm.Chart.Reduction.Reconstruction.synchronizedReducedNamed_inputSample input chart
+  rw [synchronizedReducedNamed_inputSample input chart
     certificate index]
-  exact Approximation.Gaussian.Logarithm.Chart.Reduction.Reconstruction.synchronizedReducedSample_reconstructs input
+  exact synchronizedReducedSample_reconstructs input
     chart certificate
     (Comparison.synchronizedReducedSourceIndex input chart certificate index)
 
 /-- The scaled chart reconstruction is operationally the canonical finite sampler of the prepared input state.
 
 The comparison computes only finite indices and uses the explicit source-index reachability theorem above. -/
-@[expose] public def synchronizedScaledChartEquivalentPreparedSampling (input : Gaussian.Name.Basic.Named)
+@[expose] public def synchronizedScaledChartEquivalentPreparedSampling (input : Basic.Named)
     (chart : Chart input) (certificate : Branch.BranchCertificate input chart) :
-    Gaussian.Equivalence.Equivalent
+    Equivalent
       (Scale.scaledDynamicLocalExpLogChartApproximation
         (Synchronized.synchronizedReducedNamed input chart certificate)
-        (Approximation.Gaussian.Logarithm.Chart.Reduction.Reconstruction.synchronizedReducedDisk input chart
+        (synchronizedReducedDisk input chart
           certificate)
         (1 / chart.factor))
       (Sampling.approximation
@@ -180,7 +182,7 @@ The comparison computes only finite indices and uses the explicit source-index r
       (Prepared.preparedChartInput input chart)
     let smallTarget := target / 4
     have smallPositive : 0 < smallTarget :=
-      Purelib.Data.Rat.Bounds.Quarter.quarter_pos positive
+      Bounds.Quarter.quarter_pos positive
     let base := right.refineIndex rightStart smallTarget smallPositive
     have baseGe : rightStart ≤ base :=
       right.refineIndex_ge rightStart smallTarget smallPositive
@@ -207,34 +209,34 @@ The comparison computes only finite indices and uses the explicit source-index r
           have leftClose := right.later_close baseToLeftSource
           have rightCloseForward := right.later_close rightOrder
           have rightClose :
-              Data.Gaussian.Norm.Basic.normSq (right.sample base - right.sample rightLater) ≤
+              Basic.normSq (right.sample base - right.sample rightLater) ≤
                 right.radiusSq base := by
             have reverse :
                 right.sample base - right.sample rightLater =
                   -(right.sample rightLater - right.sample base) := by
               apply Data.Gaussian.Basic.ext <;>
-                simp only [Purelib.Data.Gaussian.Basic.sub_re, Purelib.Data.Gaussian.Basic.sub_im,
-                  Purelib.Data.Gaussian.Basic.neg_re, Purelib.Data.Gaussian.Basic.neg_im] <;> ring1
-            rw [reverse, Data.Gaussian.Norm.Basic.normSq_neg]
+                simp only [Data.Gaussian.Basic.sub_re, Data.Gaussian.Basic.sub_im,
+                  Data.Gaussian.Basic.neg_re, Data.Gaussian.Basic.neg_im] <;> ring1
+            rw [reverse, Basic.normSq_neg]
             exact rightCloseForward
-          rw [Approximation.Gaussian.Logarithm.Chart.Reduction.Reconstruction.synchronizedScaledChartSample_reconstructs
+          rw [synchronizedScaledChartSample_reconstructs
             input chart certificate leftLater]
-          change Data.Gaussian.Norm.Basic.normSq
+          change Basic.normSq
               (right.sample
                   (Comparison.synchronizedReducedSourceIndex input chart certificate
                     leftLater) - right.sample rightLater) < target
           calc
-            Data.Gaussian.Norm.Basic.normSq
+            Basic.normSq
                 (right.sample
                     (Comparison.synchronizedReducedSourceIndex input chart certificate
                       leftLater) - right.sample rightLater) ≤
               2 *
-                (Data.Gaussian.Norm.Basic.normSq
+                (Basic.normSq
                     (right.sample
                         (Comparison.synchronizedReducedSourceIndex input chart certificate
                           leftLater) - right.sample base) +
-                  Data.Gaussian.Norm.Basic.normSq (right.sample base - right.sample rightLater)) :=
-              Data.Gaussian.Norm.Bounds.normSq_sub_le_via _ _ _
+                  Basic.normSq (right.sample base - right.sample rightLater)) :=
+              Bounds.normSq_sub_le_via _ _ _
             _ ≤ 2 * (right.radiusSq base + right.radiusSq base) :=
               Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
                 (add_le_add leftClose rightClose) (by decide)
@@ -243,15 +245,15 @@ The comparison computes only finite indices and uses the explicit source-index r
                 (by decide)
                 (Fraction.Order.Arithmetic.add_lt_add_direct
                   baseRadiusSmall baseRadiusSmall)
-            _ = target := Purelib.Data.Rat.Fraction.Compatibility.two_quarter_sums target }
+            _ = target := Fraction.Compatibility.two_quarter_sums target }
 
 /-- Lift the finite sample comparison through the productive wrapper. -/
-@[expose] public def synchronizedScaledChart_toPreparedInput (input : Gaussian.Name.Basic.Named)
+@[expose] public def synchronizedScaledChart_toPreparedInput (input : Basic.Named)
     (chart : Chart input) (certificate : Branch.BranchCertificate input chart) :
-    Gaussian.Equivalence.NamedEquivalent
+    NamedEquivalent
       (Scale.scaledDynamicLocalExpLogChartApproximation
         (Synchronized.synchronizedReducedNamed input chart certificate)
-        (Approximation.Gaussian.Logarithm.Chart.Reduction.Reconstruction.synchronizedReducedDisk input chart
+        (synchronizedReducedDisk input chart
           certificate)
         (1 / chart.factor)).toNamed
       (Prepared.preparedChartInput input chart) :=
@@ -259,37 +261,37 @@ The comparison computes only finite indices and uses the explicit source-index r
     (Equivalent.toNamed_sampling
       (Scale.scaledDynamicLocalExpLogChartApproximation
         (Synchronized.synchronizedReducedNamed input chart certificate)
-        (Approximation.Gaussian.Logarithm.Chart.Reduction.Reconstruction.synchronizedReducedDisk input chart
+        (synchronizedReducedDisk input chart
           certificate)
         (1 / chart.factor)))
-    (Approximation.Gaussian.Logarithm.Chart.Reduction.Reconstruction.synchronizedScaledChartEquivalentPreparedSampling
+    (synchronizedScaledChartEquivalentPreparedSampling
       input chart certificate)
 
 /-- Finite coherence identifies the prepared input state with the original displayed starting state. -/
-@[expose] public def preparedChartInput_equivalent (input : Gaussian.Name.Basic.Named) (chart : Chart input)
+@[expose] public def preparedChartInput_equivalent (input : Basic.Named) (chart : Chart input)
     (inputCoherent :
-      Gaussian.Process.Coherence.Basic.Coherent input.process) :
-    Gaussian.Equivalence.NamedEquivalent (Prepared.preparedChartInput input chart) input :=
+      Process.Coherence.Basic.Coherent input.process) :
+    NamedEquivalent (Prepared.preparedChartInput input chart) input :=
   inputCoherent.namedEquivalent
     (Prepared.preparedChartInput input chart).state input.state
 
 /-- Exact sample reconstruction plus finite state coherence identifies the scaled synchronized chart with the original
 input name. -/
-@[expose] public def synchronizedScaledChart_reconstructsInput (input : Gaussian.Name.Basic.Named)
+@[expose] public def synchronizedScaledChart_reconstructsInput (input : Basic.Named)
     (chart : Chart input) (certificate : Branch.BranchCertificate input chart)
     (inputCoherent :
-      Gaussian.Process.Coherence.Basic.Coherent input.process) :
-    Gaussian.Equivalence.NamedEquivalent
+      Process.Coherence.Basic.Coherent input.process) :
+    NamedEquivalent
       (Scale.scaledDynamicLocalExpLogChartApproximation
         (Synchronized.synchronizedReducedNamed input chart certificate)
-        (Approximation.Gaussian.Logarithm.Chart.Reduction.Reconstruction.synchronizedReducedDisk input chart
+        (synchronizedReducedDisk input chart
           certificate)
         (1 / chart.factor)).toNamed
       input :=
   NamedEquivalent.trans
-    (Approximation.Gaussian.Logarithm.Chart.Reduction.Reconstruction.synchronizedScaledChart_toPreparedInput input chart
+    (synchronizedScaledChart_toPreparedInput input chart
       certificate)
-    (Approximation.Gaussian.Logarithm.Chart.Reduction.Reconstruction.preparedChartInput_equivalent input chart
+    (preparedChartInput_equivalent input chart
       inputCoherent)
 end Purelib.Approximation.Gaussian.Logarithm.Chart.Reduction.Reconstruction
 

@@ -88,7 +88,7 @@ open Purelib.Riemann.Meshes.GridLiftedDualSteps (GridSide)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_add sumFin_sub)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
   {preparation : NewtonPreparation original} {target radius : Rational} {grid : NewtonGrid
@@ -125,18 +125,18 @@ open Purelib.Riemann.RootContinuation in
 /-- Sheet-indexed side requests at the retained annular band tolerance.
 
 Each request uses the actual perimeter side geometry and the side budget determined by the band and trace length. -/
-@[expose] def BandReferences (traces : PerimeterTraces requests) (entry : Meshes.Newton.AllHoles.Excision.AnnularEntry
+@[expose] def BandReferences (traces : PerimeterTraces requests) (entry : AnnularEntry
   grid lifted)
     (position : Fin grid.faces.regulars.length) (side : GridSide) :=
   Vector.DependentVector (fun sheet : Fin 2 =>
-    Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces.SideRequest (((traces.get sheet).get
+    SideRequest (((traces.get sheet).get
       position).sideGeometry side)
       (PreparedNewtonAreaRate.PreparedBandFamily.sideBudget (grid.bands.entries.get entry.hole.index)
         (((traces.get sheet).get position).sideTrace side).rest.length).tolerance)
 
 open Purelib.Curves.Hyperelliptic in
 /-- Every retained band reference index is below the supplied index. -/
-@[expose] def BandReferences.IndexBound {entry : Meshes.Newton.AllHoles.Excision.AnnularEntry grid lifted}
+@[expose] def BandReferences.IndexBound {entry : AnnularEntry grid lifted}
     (references : BandReferences traces entry position side) (index : Nat) : Prop :=
   ∀ sheet, (references.get sheet).index ≤ index
 
@@ -146,13 +146,13 @@ set_option genInjectivity false in
 
 Keeps the actual excision entry and membership witness, the regular-side boundary relation, and a common index for its
 two side requests. -/
-structure BandBoundaryRequest (excision : Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted)
+structure BandBoundaryRequest (excision : AllHoleExcision grid lifted)
     (traces : PerimeterTraces requests) (position : Fin grid.faces.regulars.length) (side : GridSide) where
-  /-- Actual annular entry retained from the excision. -/ entry : Meshes.Newton.AllHoles.Excision.AnnularEntry grid
+  /-- Actual annular entry retained from the excision. -/ entry : AnnularEntry grid
     lifted
   /-- The retained entry belongs to the original excision list. -/ member : entry ∈ excision.entries
   /-- The indexed regular side lies on that band's boundary. -/ boundary :
-    Meshes.PuncturedGrid.SideBoundaryGeometry.SideBoundary (grid.faces.regulars[position.val]'position.isLt).cell.box
+    SideBoundary (grid.faces.regulars[position.val]'position.isLt).cell.box
     (grid.bands.box entry.hole.index) side
   /-- Two sheet-specific side requests for the retained band. -/ references : BandReferences traces entry position side
   /-- Common numerical index for the retained references. -/ index : Nat
@@ -169,18 +169,18 @@ open Purelib.Riemann.RootContinuation in
 /-- Build band references from an explicit certified side boundary.
 
 Constructs both sheet requests using the exact band side budget and retains their maximum index with its bounds. -/
-@[expose] def ofBoundary (excision : Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted) (traces :
+@[expose] def ofBoundary (excision : AllHoleExcision grid lifted) (traces :
   PerimeterTraces requests)
     (position : Fin grid.faces.regulars.length) (side : GridSide)
-    (entry : Meshes.Newton.AllHoles.Excision.AnnularEntry grid lifted) (member : entry ∈ excision.entries)
-    (boundary : Meshes.PuncturedGrid.SideBoundaryGeometry.SideBoundary
+    (entry : AnnularEntry grid lifted) (member : entry ∈ excision.entries)
+    (boundary : SideBoundary
       (grid.faces.regulars[position.val]'position.isLt).cell.box
       (grid.bands.box entry.hole.index) side) : BandBoundaryRequest excision traces position side :=
   let references : BandReferences traces entry position side := Vector.DependentVector.ofFn fun sheet =>
     let face := (traces.get sheet).get position
     let budget := PreparedNewtonAreaRate.PreparedBandFamily.sideBudget (grid.bands.entries.get entry.hole.index)
       (face.sideTrace side).rest.length
-    Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces.SideRequest.build (face.sideGeometry side)
+    SideRequest.build (face.sideGeometry side)
       budget.tolerance budget.tolerance_positive
   ⟨entry, member, boundary, references, references.maximum (fun _ reference => reference.index),
     fun sheet => references.get_le_maximum (fun _ reference => reference.index) sheet⟩
@@ -191,7 +191,7 @@ open Purelib.Curves.Hyperelliptic
 
 Finds the original excision band from the opposite matching side and transports its boundary witness back to the
 retained face. -/
-@[expose] def ofInterface (excision : Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted) (traces :
+@[expose] def ofInterface (excision : AllHoleExcision grid lifted) (traces :
   PerimeterTraces requests)
     (position next : Fin grid.faces.regulars.length) (side : GridSide)
     (matching : side.Matches (grid.faces.regulars[position.val]'position.isLt).cell.box
@@ -206,7 +206,7 @@ retained face. -/
 /-- Acquire a band boundary adjacent to an original hole.
 
 Retains the excision entry selected for that hole and its omitted-hole boundary certificate. -/
-@[expose] def ofHole (excision : Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted) (traces : PerimeterTraces
+@[expose] def ofHole (excision : AllHoleExcision grid lifted) (traces : PerimeterTraces
   requests)
     (position : Fin grid.faces.regulars.length) (hole : Fin grid.faces.holes.length) (side : GridSide)
     (matching : side.Matches (grid.faces.regulars[position.val]'position.isLt).cell.box
@@ -224,7 +224,7 @@ open Purelib.Riemann.RootContinuation in
 /-- Area allowance of the request's retained annular band.
 
 Multiplies the original prepared differential area coefficient by the square of the selected output radius. -/
-@[expose] def allowance (request : BandBoundaryRequest excision traces position side) : Fraction.Rational :=
+@[expose] def allowance (request : BandBoundaryRequest excision traces position side) : Rational :=
   PreparedNewtonAreaRate.PreparedBandFamily.areaCoefficient (curve := curve) (current := (BranchCellWinding.state
     original request.entry.hole.index).raw)
     (preparation.profiles.get request.entry.hole.index).differentials *
@@ -241,22 +241,22 @@ After the common request index, applies the band energy estimate to each actual 
 squared-norm bounds with factor four. -/
 theorem centered_bound (request : BandBoundaryRequest excision traces position side)
     (later : request.index ≤ stage) (samples : PerimeterSamples requests traces cache coefficients) :
-    Data.Gaussian.Norm.Basic.normSq (centeredSideSum samples side position) ≤
-      4 * ((genus : Fraction.Rational)^2 * PreparedObservationCoercivity.coefficientNormSq coefficients^2 *
+    normSq (centeredSideSum samples side position) ≤
+      4 * ((genus : Rational)^2 * PreparedObservationCoercivity.coefficientNormSq coefficients^2 *
         request.allowance) := by
   have bounded : ∀ sheet : Fin 2,
-      Data.Gaussian.Norm.Basic.normSq ((((samples.get sheet).get position).sideSample side).centeredArea) ≤
-        (genus : Fraction.Rational)^2 * PreparedObservationCoercivity.coefficientNormSq coefficients^2 *
+      normSq ((((samples.get sheet).get position).sideSample side).centeredArea) ≤
+        (genus : Rational)^2 * PreparedObservationCoercivity.coefficientNormSq coefficients^2 *
           request.allowance := by
     intro sheet
     exact ((traces.get sheet).get position).boundary_energy_bound side
       (grid.bands.entries.get request.entry.hole.index) request.boundary (request.references.get sheet)
       ((request.index_ge sheet).trans later)
-      (Curves.Hyperelliptic.Meshes.Newton.Surface.BasisReadings.build (((traces.get sheet).get
+      (BasisReadings.build (((traces.get sheet).get
         position).sideTrace side) cache)
       (((samples.get sheet).get position).sideSample side)
   have bound := Norm.Sum.Indexed.normSq_sumFin_le _ _ bounded
-  have readback : (FiniteSum.Fin.sumFin fun sheet : Fin 2 =>
+  have readback : (sumFin fun sheet : Fin 2 =>
       (((samples.get sheet).get position).sideSample side).centeredArea) = centeredSideSum samples side position := by
     cases side <;> rfl
   rw [readback] at bound

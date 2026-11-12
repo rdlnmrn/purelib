@@ -21,6 +21,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Data.Rat.Interval.Basic
 import Purelib.Polynomial.Dense.Evaluation
 
+open Purelib.Polynomial.Dense.Gaussian.Path
+
 open Purelib.Data.Gaussian.Basic (Canonical)
 open Purelib.Polynomial.Clearance.Box.Line.Basic (HorizontalLineClearance VerticalLineClearance)
 open Purelib.Polynomial.Clearance.Pair.Basic (Certificate)
@@ -53,9 +55,9 @@ def Basic.VerticalLineClearance.toPathCertificate
     {p : CoefficientPolynomial} {ambient : Box} {x : Fraction.Rational}
     (clearance : VerticalLineClearance p ambient x) :
     Certificate
-      (Dense.Gaussian.Path.Components.pathReal p (Gaussian.Cast.Winding.verticalBase x)
+      (Components.pathReal p (Gaussian.Cast.Winding.verticalBase x)
         Gaussian.Constants.imaginaryUnit)
-      (Dense.Gaussian.Path.Components.pathImag p (Gaussian.Cast.Winding.verticalBase x)
+      (Components.pathImag p (Gaussian.Cast.Winding.verticalBase x)
         Gaussian.Constants.imaginaryUnit)
       ⟨ambient.yLower, ambient.yUpper, ambient.y_valid⟩ where
   bound := clearance.bound
@@ -63,9 +65,9 @@ def Basic.VerticalLineClearance.toPathCertificate
   lower := by
     intro y inside
     have bound := clearance.lower y inside.1 inside.2
-    simpa only [Data.Gaussian.Norm.Basic.normSq,
-      Canonical.normSq, pow_two, Dense.Gaussian.Path.Components.eval_pathReal,
-        Dense.Gaussian.Path.Components.eval_pathImag, Purelib.Geometry.Rational.Affine.Axis.line_vertical]
+    simpa only [Gaussian.Norm.Basic.normSq,
+      Canonical.normSq, pow_two, Components.eval_pathReal,
+        Components.eval_pathImag, Affine.Axis.line_vertical]
       using bound
 
 /-- Conversion to the exact coordinate-path certificate retains the original bound. -/
@@ -80,9 +82,9 @@ def Basic.HorizontalLineClearance.toPathCertificate
     {p : CoefficientPolynomial} {ambient : Box} {y : Fraction.Rational}
     (clearance : HorizontalLineClearance p ambient y) :
     Certificate
-      (Dense.Gaussian.Path.Components.pathReal p (Gaussian.Cast.Imaginary.horizontalBase y)
+      (Components.pathReal p (Gaussian.Cast.Imaginary.horizontalBase y)
         Gaussian.Constants.horizontalDirection)
-      (Dense.Gaussian.Path.Components.pathImag p (Gaussian.Cast.Imaginary.horizontalBase y)
+      (Components.pathImag p (Gaussian.Cast.Imaginary.horizontalBase y)
         Gaussian.Constants.horizontalDirection)
       ⟨ambient.xLower, ambient.xUpper, ambient.x_valid⟩ where
   bound := clearance.bound
@@ -90,9 +92,9 @@ def Basic.HorizontalLineClearance.toPathCertificate
   lower := by
     intro x inside
     have bound := clearance.lower x inside.1 inside.2
-    simpa only [Data.Gaussian.Norm.Basic.normSq,
-      Canonical.normSq, pow_two, Dense.Gaussian.Path.Components.eval_pathReal,
-        Dense.Gaussian.Path.Components.eval_pathImag, Purelib.Geometry.Rational.Affine.Axis.line_horizontal]
+    simpa only [Gaussian.Norm.Basic.normSq,
+      Canonical.normSq, pow_two, Components.eval_pathReal,
+        Components.eval_pathImag, Affine.Axis.line_horizontal]
       using bound
 
 /-- Conversion to the exact coordinate-path certificate retains the original bound. -/
@@ -106,9 +108,9 @@ vertical-line clearance. -/
 def Path.verticalOfPathCertificate
     (p : CoefficientPolynomial) (ambient : Box) (x : Fraction.Rational)
     (certificate : Certificate
-      (Dense.Gaussian.Path.Components.pathReal p (Gaussian.Cast.Winding.verticalBase x)
+      (Components.pathReal p (Gaussian.Cast.Winding.verticalBase x)
         Gaussian.Constants.imaginaryUnit)
-      (Dense.Gaussian.Path.Components.pathImag p (Gaussian.Cast.Winding.verticalBase x)
+      (Components.pathImag p (Gaussian.Cast.Winding.verticalBase x)
         Gaussian.Constants.imaginaryUnit)
       (Box.Intervals.verticalInterval ambient)) : VerticalLineClearance p ambient x where
   bound := certificate.bound
@@ -116,21 +118,21 @@ def Path.verticalOfPathCertificate
   lower := by
     intro y lower upper
     have bound := certificate.lower y ⟨lower, upper⟩
-    simpa only [Data.Gaussian.Norm.Basic.normSq,
-      Canonical.normSq, pow_two, Dense.Gaussian.Path.Components.eval_pathReal,
-        Dense.Gaussian.Path.Components.eval_pathImag, Purelib.Geometry.Rational.Affine.Axis.line_vertical]
+    simpa only [Gaussian.Norm.Basic.normSq,
+      Canonical.normSq, pow_two, Components.eval_pathReal,
+        Components.eval_pathImag, Affine.Axis.line_vertical]
       using bound
 
 /-- Conversion from the vertical coordinate-path certificate retains its exact clearance bound. -/
 @[simp] theorem Path.verticalOfPathCertificate_bound
     (p : CoefficientPolynomial) (ambient : Box) (x : Fraction.Rational)
     (certificate : Certificate
-      (Dense.Gaussian.Path.Components.pathReal p (Gaussian.Cast.Winding.verticalBase x)
+      (Components.pathReal p (Gaussian.Cast.Winding.verticalBase x)
         Gaussian.Constants.imaginaryUnit)
-      (Dense.Gaussian.Path.Components.pathImag p (Gaussian.Cast.Winding.verticalBase x)
+      (Components.pathImag p (Gaussian.Cast.Winding.verticalBase x)
         Gaussian.Constants.imaginaryUnit)
       (Box.Intervals.verticalInterval ambient)) :
-    (Clearance.Box.Line.Path.verticalOfPathCertificate p ambient x certificate).bound =
+    (Path.verticalOfPathCertificate p ambient x certificate).bound =
       certificate.bound := rfl
 
 /-- Convert a finite coordinate-path certificate for `t + iy` into geometric
@@ -138,9 +140,9 @@ horizontal-line clearance. -/
 def Path.horizontalOfPathCertificate
     (p : CoefficientPolynomial) (ambient : Box) (y : Fraction.Rational)
     (certificate : Certificate
-      (Dense.Gaussian.Path.Components.pathReal p (Gaussian.Cast.Imaginary.horizontalBase y)
+      (Components.pathReal p (Gaussian.Cast.Imaginary.horizontalBase y)
         Gaussian.Constants.horizontalDirection)
-      (Dense.Gaussian.Path.Components.pathImag p (Gaussian.Cast.Imaginary.horizontalBase y)
+      (Components.pathImag p (Gaussian.Cast.Imaginary.horizontalBase y)
         Gaussian.Constants.horizontalDirection)
       (Box.Intervals.horizontalInterval ambient)) : HorizontalLineClearance p ambient y where
   bound := certificate.bound
@@ -148,21 +150,21 @@ def Path.horizontalOfPathCertificate
   lower := by
     intro x lower upper
     have bound := certificate.lower x ⟨lower, upper⟩
-    simpa only [Data.Gaussian.Norm.Basic.normSq,
-      Canonical.normSq, pow_two, Dense.Gaussian.Path.Components.eval_pathReal,
-        Dense.Gaussian.Path.Components.eval_pathImag, Purelib.Geometry.Rational.Affine.Axis.line_horizontal]
+    simpa only [Gaussian.Norm.Basic.normSq,
+      Canonical.normSq, pow_two, Components.eval_pathReal,
+        Components.eval_pathImag, Affine.Axis.line_horizontal]
       using bound
 
 /-- Conversion from the horizontal coordinate-path certificate retains its exact clearance bound. -/
 @[simp] theorem Path.horizontalOfPathCertificate_bound
     (p : CoefficientPolynomial) (ambient : Box) (y : Fraction.Rational)
     (certificate : Certificate
-      (Dense.Gaussian.Path.Components.pathReal p (Gaussian.Cast.Imaginary.horizontalBase y)
+      (Components.pathReal p (Gaussian.Cast.Imaginary.horizontalBase y)
         Gaussian.Constants.horizontalDirection)
-      (Dense.Gaussian.Path.Components.pathImag p (Gaussian.Cast.Imaginary.horizontalBase y)
+      (Components.pathImag p (Gaussian.Cast.Imaginary.horizontalBase y)
         Gaussian.Constants.horizontalDirection)
       (Box.Intervals.horizontalInterval ambient)) :
-    (Clearance.Box.Line.Path.horizontalOfPathCertificate p ambient y certificate).bound =
+    (Path.horizontalOfPathCertificate p ambient y certificate).bound =
       certificate.bound := rfl
 end Purelib.Polynomial.Clearance.Box.Line
 

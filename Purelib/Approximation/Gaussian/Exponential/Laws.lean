@@ -17,6 +17,8 @@ import Purelib.Tactic.QuotientFreeOmega
 import Init.Prelude
 import Purelib.Data.Gaussian.Basic
 
+open Purelib.Approximation.Gaussian.Exponential.Progressive.Range
+
 namespace Purelib.Approximation.Gaussian.Exponential.Laws
 
 open Purelib.Approximation.ElementaryFunction.Exponential.Operational
@@ -46,20 +48,20 @@ open Purelib.Approximation
 /-- If two coherent names have operationally equivalent exponentials, then the exponential of their finite CCL
 difference is operationally exact one. -/
 @[expose] def exp_difference_unit (left right : CoherentNamed)
-    (exponentials : Gaussian.Equivalence.NamedEquivalent
-      (Exponential.Progressive.Range.Name.named right.name)
-      (Exponential.Progressive.Range.Name.named left.name)) :
-    Gaussian.Equivalence.NamedEquivalent
-      (Exponential.Progressive.Range.Name.named
+    (exponentials : NamedEquivalent
+      (Name.named right.name)
+      (Name.named left.name)) :
+    NamedEquivalent
+      (Name.named
         (Difference.difference left right).name)
       (Named.exact 1) := by
   let negativeLeft :=
     CoherentNamed.neg left
-  let rightExp := Exponential.Progressive.Range.Coherent.exp right.name
-  let leftExp := Exponential.Progressive.Range.Coherent.exp left.name
+  let rightExp := Coherent.exp right.name
+  let leftExp := Coherent.exp left.name
   let negativeLeftExp :=
-    Exponential.Progressive.Range.Coherent.exp negativeLeft.name
-  have products : Gaussian.Equivalence.NamedEquivalent
+    Coherent.exp negativeLeft.name
+  have products : NamedEquivalent
       (Named.mul
         rightExp.name negativeLeftExp.name)
       (Named.mul
@@ -72,10 +74,10 @@ difference is operationally exact one. -/
     (NamedEquivalent.symm
       (by
         simpa only [Difference.difference, negativeLeft, rightExp, negativeLeftExp,
-          Coherent.CoherentNamed.add,
+          CoherentNamed.add,
           CoherentNamed.neg,
-          Exponential.Progressive.Range.Coherent.exp] using
-          Exponential.Progressive.Range.Addition.automaticExp_add right negativeLeft))
+          Coherent.exp] using
+          Addition.automaticExp_add right negativeLeft))
     (NamedEquivalent.trans products
       (Inverse.automaticExp_mul_neg left))
 
@@ -109,24 +111,24 @@ open Purelib.Approximation
 /-- Repeated multiplication of `exp(x)` is operationally the exponential of the corresponding finite repeated sum. -/
 @[expose] def automaticExp_natSum (value : CoherentNamed) :
     (count : Nat) →
-      Gaussian.Equivalence.NamedEquivalent
-        (Power.natPower (Exponential.Progressive.Range.Coherent.exp value.name)
+      NamedEquivalent
+        (Power.natPower (Coherent.exp value.name)
           count).name
-        (Exponential.Progressive.Range.Name.named
+        (Name.named
           (Power.natSum value count).name)
   | 0 => by
       simpa only [Power.natPower, Power.natSum,
         Coherence.exact] using
         NamedEquivalent.symm
-          Exponential.Progressive.Range.Exact.automaticExp_zero
+          Exact.automaticExp_zero
   | count + 1 => by
       let exponential :=
-        Exponential.Progressive.Range.Coherent.exp value.name
+        Coherent.exp value.name
       let previousPower := Power.natPower exponential count
       let previousSum := Power.natSum value count
       let previousExponential :=
-        Exponential.Progressive.Range.Coherent.exp previousSum.name
-      have replacePrevious : Gaussian.Equivalence.NamedEquivalent
+        Coherent.exp previousSum.name
+      have replacePrevious : NamedEquivalent
           (Named.mul
             exponential.name previousPower.name)
           (Named.mul
@@ -135,7 +137,7 @@ open Purelib.Approximation
           previousPower previousExponential
           (NamedEquivalent.refl
             exponential.name)
-          (Purelib.Approximation.Gaussian.Exponential.Laws.automaticExp_natSum value count)
+          (Laws.automaticExp_natSum value count)
       exact NamedEquivalent.trans
         (middle := Named.mul
           exponential.name previousExponential.name)
@@ -144,9 +146,9 @@ open Purelib.Approximation
               using replacePrevious)
         (by
           simpa only [Power.natSum, previousSum, previousExponential,
-            exponential, Exponential.Progressive.Range.Coherent.exp,
-            Coherent.CoherentNamed.add] using
-            Exponential.Progressive.Range.Addition.automaticExp_add value previousSum)
+            exponential, Coherent.exp,
+            CoherentNamed.add] using
+            Addition.automaticExp_add value previousSum)
 
 end
 

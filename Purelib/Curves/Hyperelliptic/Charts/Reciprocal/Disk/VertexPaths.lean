@@ -107,22 +107,22 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexRequests (Prepare
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexTree (Tree ChartTree Mesh ChartMesh)
 open Purelib.Integration.Path.IncrementArea (Summary)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {edge : Purelib.Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cell data edge}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {model :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalRootChannels.RootModel cell}
-  {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor index : Nat} {box :
-    Purelib.Geometry.Rational.Box}
-  {capSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {comparison : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Data regular cell}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcSamples.Sample comparison capSample} {stage : Nat}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {edge : Riemann.Branches.ClearSheetContinuation.Subdivision.ParameterEdge} {cell :
+    UniformReciprocalCover.Cell data edge}
+  {regular : RegularBounds.Data cap} {model :
+    UniformReciprocalRootChannels.RootModel cell}
+  {target : Coordinate} {floor index : Nat} {box :
+    Geometry.Rational.Box}
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {comparison : Data regular cell}
+  {sample : Sample comparison capSample} {stage : Nat}
 
 set_option genInjectivity false in
 /-- A segment between two cached cap-chart readings at a common stage.
@@ -130,20 +130,20 @@ set_option genInjectivity false in
 The ordered parameters, actual endpoint readings and both source and chart increments are retained together with their
 exact difference equations. -/
 structure Segment (regular : RegularBounds.Data cap) (model : UniformReciprocalRootChannels.RootModel cell)
-    {comparison : ArcSamples.Data regular cell}
-    (sample : ArcSamples.Sample comparison capSample) (target : InverseRootPolynomial.Coordinate) (floor stage : Nat)
+    {comparison : Data regular cell}
+    (sample : Sample comparison capSample) (target : Coordinate) (floor stage : Nat)
       where
-  /-- The retained parameter of the first endpoint. -/ firstParameter : InverseRootPolynomial.Coordinate
-  /-- The retained parameter of the last endpoint. -/ lastParameter : InverseRootPolynomial.Coordinate
-  /-- The cached first endpoint reading at the shared stage. -/ first : VertexRequests.Reading regular model sample
+  /-- The retained parameter of the first endpoint. -/ firstParameter : Coordinate
+  /-- The retained parameter of the last endpoint. -/ lastParameter : Coordinate
+  /-- The cached first endpoint reading at the shared stage. -/ first : Reading regular model sample
     firstParameter target floor stage
-  /-- The cached last endpoint reading at the shared stage. -/ last : VertexRequests.Reading regular model sample
+  /-- The cached last endpoint reading at the shared stage. -/ last : Reading regular model sample
     lastParameter target floor stage
   /-- The first parameter does not exceed the last parameter. -/ ordered : firstParameter ≤ lastParameter
-  /-- The cached difference of the two source readings. -/ sourceIncrement : InverseRootPolynomial.Gaussian
+  /-- The cached difference of the two source readings. -/ sourceIncrement : Gaussian
   /-- The source increment is exactly the retained last value minus the first. -/ source_eq : sourceIncrement =
     last.sourceValue - first.sourceValue
-  /-- The cached difference of the two chart readings. -/ chartIncrement : InverseRootPolynomial.Gaussian
+  /-- The cached difference of the two chart readings. -/ chartIncrement : Gaussian
   /-- The chart increment is exactly the retained last value minus the first. -/ chart_eq : chartIncrement =
     last.chartValue - first.chartValue
 
@@ -152,29 +152,29 @@ constructive_injectivity Segment
 namespace Segment
 
 /-- Cache both increments from the supplied ordered endpoint readings without evaluating either endpoint again. -/
-@[expose] def build {first last : InverseRootPolynomial.Coordinate} (before : VertexRequests.Reading regular model
+@[expose] def build {first last : Coordinate} (before : Reading regular model
   sample first target floor stage)
-    (after : VertexRequests.Reading regular model sample last target floor stage) (ordered : first ≤ last) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Segment regular model sample target floor stage :=
+    (after : Reading regular model sample last target floor stage) (ordered : first ≤ last) :
+      Segment regular model sample target floor stage :=
   ⟨first, last, before, after, ordered, after.sourceValue - before.sourceValue, rfl,
     after.chartValue - before.chartValue, rfl⟩
 
 /-- Consecutive segments share their actual root coordinates from the supplied first coordinate to the supplied last
 coordinate. -/
-@[expose] def From (first : InverseRootPolynomial.Gaussian) : List
-  (Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Segment regular model sample target floor stage) →
-  InverseRootPolynomial.Gaussian → Prop
+@[expose] def From (first : Gaussian) : List
+  (Segment regular model sample target floor stage) →
+  Gaussian → Prop
   | [], last => first = last
   | segment :: remaining, last => first = segment.first.root.coordinate ∧
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Segment.From segment.last.root.coordinate remaining
+    Segment.From segment.last.root.coordinate remaining
     last
 
 /-- Concatenation preserves the actual endpoint chain when its middle root coordinate agrees. -/
-theorem from_append {first middle last : InverseRootPolynomial.Gaussian} {before after : List
-  (Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Segment regular model sample target floor stage)}
-    (left : Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Segment.From first before middle) (right :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Segment.From middle after last) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Segment.From first (before ++ after) last := by
+theorem from_append {first middle last : Gaussian} {before after : List
+  (Segment regular model sample target floor stage)}
+    (left : From first before middle) (right :
+      From middle after last) :
+      From first (before ++ after) last := by
   induction before generalizing first with
   | nil => exact left ▸ right
   | cons head tail ih => exact ⟨left.1, ih left.2⟩
@@ -187,33 +187,33 @@ set_option genInjectivity false in
 The segment chain retains both increment paths and their summaries, their exact dyadic source readback, the telescoping
 chart total and every segment width. -/
 structure Path (regular : RegularBounds.Data cap) (model : UniformReciprocalRootChannels.RootModel cell)
-    {comparison : ArcSamples.Data regular cell}
-    (sample : ArcSamples.Sample comparison capSample) (target : InverseRootPolynomial.Coordinate) (floor stage depth :
+    {comparison : Data regular cell}
+    (sample : Sample comparison capSample) (target : Coordinate) (floor stage depth :
       Nat)
-    {first last : InverseRootPolynomial.Coordinate} (before : VertexRequests.Reading regular model sample first target
+    {first last : Coordinate} (before : Reading regular model sample first target
       floor stage)
-    (after : VertexRequests.Reading regular model sample last target floor stage) where
+    (after : Reading regular model sample last target floor stage) where
   /-- The cached ordered list of actual endpoint segments. -/ segments : List
-    (Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Segment regular model sample target floor stage)
+    (Segment regular model sample target floor stage)
   /-- There are exactly two to the retained depth segments. -/ count_eq : segments.length = 2 ^ depth
   /-- The actual root coordinates connect from the supplied first reading to the last. -/ chain :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Segment.From (regular := regular) (model := model) (sample
+    Segment.From (regular := regular) (model := model) (sample
     := sample)
     before.root.coordinate segments after.root.coordinate
-  /-- The cached list of source increments. -/ sourcePath : List InverseRootPolynomial.Gaussian
+  /-- The cached list of source increments. -/ sourcePath : List Gaussian
   /-- The source path is exactly the source-increment projection of the retained segments. -/ sourcePath_eq : sourcePath
-    = segments.map Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Segment.sourceIncrement
-  /-- The cached list of chart increments. -/ chartPath : List InverseRootPolynomial.Gaussian
+    = segments.map Segment.sourceIncrement
+  /-- The cached list of chart increments. -/ chartPath : List Gaussian
   /-- The chart path is exactly the chart-increment projection of the retained segments. -/ chartPath_eq : chartPath =
-    segments.map Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Segment.chartIncrement
-  /-- The cached source-path summary including all area cross terms. -/ source : IncrementArea.Summary sourcePath
-  /-- The cached chart-path summary including all area cross terms. -/ chart : IncrementArea.Summary chartPath
+    segments.map Segment.chartIncrement
+  /-- The cached source-path summary including all area cross terms. -/ source : Summary sourcePath
+  /-- The cached chart-path summary including all area cross terms. -/ chart : Summary chartPath
   /-- The retained source path is exactly the dyadic primitive increment list at this depth. -/ source_dyadic :
-    sourcePath = DyadicPrimitivePaths.dyadicIncrements (ArcArea.Sample.capValue sample) depth first last
+    sourcePath = dyadicIncrements (ArcArea.Sample.capValue sample) depth first last
   /-- The retained chart total is the actual last chart reading minus the first. -/ chart_total : chart.total =
     after.chartValue - before.chartValue
   /-- Every retained segment has the original interval width divided by two to the depth. -/ width_eq : ∀ segment ∈
-    segments, ((2 ^ depth : Nat) : InverseRootPolynomial.Coordinate) *
+    segments, ((2 ^ depth : Nat) : Coordinate) *
     (segment.lastParameter - segment.firstParameter) = last - first
 
 constructive_injectivity Path
@@ -221,28 +221,28 @@ constructive_injectivity Path
 namespace Path
 
 /-- Build the single-segment polygon from the supplied cached endpoint readings. -/
-@[expose] def leaf {first last : InverseRootPolynomial.Coordinate} (before : VertexRequests.Reading regular model sample
+@[expose] def leaf {first last : Coordinate} (before : Reading regular model sample
   first target floor stage)
-    (after : VertexRequests.Reading regular model sample last target floor stage) (ordered : first ≤ last) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Path regular model sample target floor stage 0 before after
+    (after : Reading regular model sample last target floor stage) (ordered : first ≤ last) :
+    Path regular model sample target floor stage 0 before after
       := by
-  let segment := Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Segment.build before after ordered
+  let segment := Segment.build before after ordered
   let sourcePath := [segment.sourceIncrement]
   let chartPath := [segment.chartIncrement]
-  let source := IncrementArea.Summary.build sourcePath
-  let chart := IncrementArea.Summary.build chartPath
+  let source := Summary.build sourcePath
+  let chart := Summary.build chartPath
   refine ⟨[segment], rfl, ⟨rfl, rfl⟩, sourcePath, rfl, chartPath, rfl, source, chart, ?_, ?_, ?_⟩
   · change [after.sourceValue - before.sourceValue] = [_]
     rw [after.source_eq, before.source_eq]
     apply congrArg (fun value => [value])
-    unfold Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ArcArea.Sample.capValue
+    unfold ArcArea.Sample.capValue
     ring1
   · change (after.chartValue - before.chartValue) + 0 = _
     ring1
   · intro segment member
     rcases Data.List.Membership.mem_cons.mp member with same | impossible
     · subst segment
-      change (1 : InverseRootPolynomial.Coordinate) * (last - first) = last - first
+      change (1 : Coordinate) * (last - first) = last - first
       exact Fraction.Field.one_mul _
     · exact False.elim (List.not_mem_nil impossible)
 
@@ -250,19 +250,19 @@ namespace Path
 
 Both increment lists and summaries are reused, and the equal-width certificate is transported to the doubled segment
 count. -/
-@[expose] def join {depth : Nat} {first last : InverseRootPolynomial.Coordinate}
-    {before : VertexRequests.Reading regular model sample first target floor stage}
-    {middle : VertexRequests.Reading regular model sample
-      (Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions.midpoint first last) target floor stage}
-    {after : VertexRequests.Reading regular model sample last target floor stage}
-    (left : Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Path regular model sample target floor stage depth
+@[expose] def join {depth : Nat} {first last : Coordinate}
+    {before : Reading regular model sample first target floor stage}
+    {middle : Reading regular model sample
+      (midpoint first last) target floor stage}
+    {after : Reading regular model sample last target floor stage}
+    (left : Path regular model sample target floor stage depth
       before middle)
-    (right : Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Path regular model sample target floor stage depth
+    (right : Path regular model sample target floor stage depth
       middle after) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Path regular model sample target floor stage (depth + 1)
+    Path regular model sample target floor stage (depth + 1)
       before after := by
   refine ⟨left.segments ++ right.segments, ?_,
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Segment.from_append left.chain right.chain,
+    Segment.from_append left.chain right.chain,
     left.sourcePath ++ right.sourcePath, ?_, left.chartPath ++ right.chartPath, ?_,
     left.source.append right.source, left.chart.append right.chart, ?_, ?_, ?_⟩
   · rw [Data.List.Append.length_append, left.count_eq, right.count_eq, Nat.pow_succ, Nat.mul_two]
@@ -275,25 +275,25 @@ count. -/
     ring1
   · intro segment member
     rw [Nat.pow_succ, Algebra.NatCast.mul]
-    have scaled : ((2 ^ depth : Nat) : InverseRootPolynomial.Coordinate) * (2 : InverseRootPolynomial.Coordinate) *
+    have scaled : ((2 ^ depth : Nat) : Coordinate) * (2 : Coordinate) *
       (segment.lastParameter - segment.firstParameter) =
-        (((2 ^ depth : Nat) : InverseRootPolynomial.Coordinate) * (segment.lastParameter - segment.firstParameter)) * 2
+        (((2 ^ depth : Nat) : Coordinate) * (segment.lastParameter - segment.firstParameter)) * 2
           := by ring1
-    change ((2 ^ depth : Nat) : InverseRootPolynomial.Coordinate) * (2 : InverseRootPolynomial.Coordinate) *
+    change ((2 ^ depth : Nat) : Coordinate) * (2 : Coordinate) *
       (segment.lastParameter - segment.firstParameter) = _
     rw [scaled]
     rcases Data.List.Membership.mem_append.mp member with member | member
     · rw [left.width_eq segment member]
       calc
         _ = ((last - first) / 2) * 2 := by
-          unfold Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions.midpoint;
+          unfold midpoint;
           ring1
         _ = _ := Fraction.Field.div_mul_cancel_of_ne _ _ (by decide)
     · rw [right.width_eq segment member]
       have twiceHalf := Fraction.Field.div_mul_cancel_of_ne (last - first) 2 (by decide)
       calc
         _ = (last - first) * 2 - ((last - first) / 2) * 2 := by
-          unfold Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions.midpoint;
+          unfold midpoint;
           ring1
         _ = _ := by rw [twiceHalf]; ring1
 
@@ -301,39 +301,39 @@ end Path
 
 set_option genInjectivity false in
 /-- An actual midpoint reading with its original prepared owner. -/
-structure OwnedReading (prepared : VertexRequests.Prepared regular model parameter target floor)
-    (sample : ArcSamples.Sample comparison capSample) (stage : Nat) where
-  /-- The cached midpoint reading with its actual prepared owner. -/ reading : VertexRequests.Reading regular model
+structure OwnedReading (prepared : Prepared regular model parameter target floor)
+    (sample : Sample comparison capSample) (stage : Nat) where
+  /-- The cached midpoint reading with its actual prepared owner. -/ reading : Reading regular model
     sample parameter target floor stage
   /-- The reading retains exactly the supplied prepared midpoint request. -/ owner : reading.prepared = prepared
 
 constructive_injectivity OwnedReading
 
 /-- Retained midpoint readings in the original dyadic tree order. -/
-@[expose] def TreeReadings (sample : ArcSamples.Sample comparison capSample) (stage : Nat) :
-    {depth : Nat} → {first last : InverseRootPolynomial.Coordinate} → VertexTree.Tree regular model target floor depth
+@[expose] def TreeReadings (sample : Sample comparison capSample) (stage : Nat) :
+    {depth : Nat} → {first last : Coordinate} → Tree regular model target floor depth
       first last → Type 1
   | _, _, _, .leaf _ _ => PUnit
-  | _, _, _, .node middle left right => Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.OwnedReading middle
-    sample stage × Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.TreeReadings sample stage left ×
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.TreeReadings sample stage right
+  | _, _, _, .node middle left right => OwnedReading middle
+    sample stage × VertexPaths.TreeReadings sample stage left ×
+    VertexPaths.TreeReadings sample stage right
 
 namespace TreeReadings
 
 open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.TreeReadings in
 /-- The cached complete polygon built from these endpoint and midpoint readings. -/
-@[expose] def path : {depth : Nat} → {first last : InverseRootPolynomial.Coordinate} → {tree : VertexTree.Tree regular
+@[expose] def path : {depth : Nat} → {first last : Coordinate} → {tree : Tree regular
   model target floor depth first last} →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.TreeReadings sample stage tree → (before :
-      VertexRequests.Reading regular model sample first target floor stage) →
-    (after : VertexRequests.Reading regular model sample last target floor stage) → first ≤ last →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Path regular model sample target floor stage depth before
+    TreeReadings sample stage tree → (before :
+      Reading regular model sample first target floor stage) →
+    (after : Reading regular model sample last target floor stage) → first ≤ last →
+    Path regular model sample target floor stage depth before
       after
-  | _, _, _, .leaf _ _, _, before, after, ordered => Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Path.leaf
+  | _, _, _, .leaf _ _, _, before, after, ordered => Path.leaf
     before after ordered
   | _, _, _, .node _ _ _, readings, before, after, ordered =>
-      let between := PreparedBoxPartitions.midpoint_between ordered
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Path.join (path readings.2.1 before readings.1.reading
+      let between := midpoint_between ordered
+      Path.join (path readings.2.1 before readings.1.reading
         between.1)
         (path readings.2.2 readings.1.reading after between.2)
 
@@ -345,11 +345,11 @@ variable {minimum : Nat}
 
 /-- Sample each midpoint once and preserve its owner for subsequent basis comparisons. The path builder consumes these
 same readings. -/
-@[expose] def read (sample : ArcSamples.Sample comparison capSample) (stage : Nat) :
-    {depth : Nat} → {first last : InverseRootPolynomial.Coordinate} → {tree : VertexTree.Tree regular model target floor
+@[expose] def read (sample : Sample comparison capSample) (stage : Nat) :
+    {depth : Nat} → {first last : Coordinate} → {tree : Tree regular model target floor
       depth first last} →
-    (charts : VertexTree.ChartTree capSample minimum tree) → tree.index ≤ index → charts.stage ≤ stage →
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.TreeReadings sample stage tree
+    (charts : ChartTree capSample minimum tree) → tree.index ≤ index → charts.stage ≤ stage →
+    TreeReadings sample stage tree
   | _, _, _, _, .leaf _ _, _, _ => ⟨⟩
   | _, _, _, _, .node middle left right, modelLater, readingLater => by
       have modelIndices : max _ (max _ _) ≤ index := modelLater
@@ -357,10 +357,10 @@ same readings. -/
       let value := middle.evaluate sample ((Data.Nat.Order.le_max_left _ _).trans modelIndices) stage
         ((Data.Nat.Order.le_max_left _ _).trans readingIndices)
       exact ⟨⟨value, rfl⟩,
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.ChartTree.read sample stage left
+        ChartTree.read sample stage left
           ((Data.Nat.Order.le_max_left _ _).trans ((Data.Nat.Order.le_max_right _ _).trans modelIndices))
           ((Data.Nat.Order.le_max_left _ _).trans ((Data.Nat.Order.le_max_right _ _).trans readingIndices)),
-        Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.ChartTree.read sample stage right
+        ChartTree.read sample stage right
           ((Data.Nat.Order.le_max_right _ _).trans ((Data.Nat.Order.le_max_right _ _).trans modelIndices))
           ((Data.Nat.Order.le_max_right _ _).trans ((Data.Nat.Order.le_max_right _ _).trans readingIndices))⟩
 
@@ -368,7 +368,7 @@ end ChartTree
 
 namespace ChartMesh
 
-variable {minimum depth : Nat} {mesh : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexTree.Mesh regular model
+variable {minimum depth : Nat} {mesh : Mesh regular model
   depth target floor}
 
 set_option genInjectivity false in
@@ -376,31 +376,31 @@ set_option genInjectivity false in
 
 The endpoint owners match the prepared mesh, and the retained polygon is built from these exact readings without a
 second root evaluation. -/
-structure Evaluation (charts : VertexTree.ChartMesh mesh capSample minimum) (sample : ArcSamples.Sample comparison
+structure Evaluation (charts : ChartMesh mesh capSample minimum) (sample : Sample comparison
   capSample) (stage : Nat) where
-  /-- The cached first endpoint reading at the shared stage. -/ first : VertexRequests.Reading regular model sample
+  /-- The cached first endpoint reading at the shared stage. -/ first : Reading regular model sample
     edge.left.parameter target floor stage
-  /-- The cached last endpoint reading at the shared stage. -/ last : VertexRequests.Reading regular model sample
+  /-- The cached last endpoint reading at the shared stage. -/ last : Reading regular model sample
     edge.right.parameter target floor stage
   /-- The first reading retains exactly the mesh's first prepared request. -/ first_prepared : first.prepared =
     mesh.first
   /-- The last reading retains exactly the mesh's last prepared request. -/ last_prepared : last.prepared = mesh.last
   /-- The cached midpoint readings in their original dyadic tree order. -/ readings :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.TreeReadings sample stage mesh.tree
+    TreeReadings sample stage mesh.tree
   /-- The cached complete polygon built from these endpoint and midpoint readings. -/ path :
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.Path regular model sample target floor stage depth first
+    Path regular model sample target floor stage depth first
     last
   /-- The retained polygon is exactly the construction from the cached reading tree. -/ path_eq : path =
-    Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.TreeReadings.path readings first last cell.ordered.le
+    TreeReadings.path readings first last cell.ordered.le
 
 constructive_injectivity Evaluation
 
 /-- One read per vertex at the same stage; endpoints and all midpoints are retained in the exact original dyadic edge
 order. -/
-@[expose] def evaluate (charts : VertexTree.ChartMesh mesh capSample minimum) (sample : ArcSamples.Sample comparison
+@[expose] def evaluate (charts : ChartMesh mesh capSample minimum) (sample : Sample comparison
   capSample)
     (modelLater : mesh.index ≤ index) (stage : Nat) (readingLater : charts.stage ≤ stage) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.ChartMesh.Evaluation charts sample stage := by
+      Evaluation charts sample stage := by
   have modelIndices := mesh.index_eq ▸ modelLater
   have readingIndices := charts.stage_eq ▸ readingLater
   let first := charts.first.evaluate sample ((Data.Nat.Order.le_max_left _ _).trans modelIndices) stage
@@ -408,10 +408,10 @@ order. -/
   let last := charts.last.evaluate sample ((Data.Nat.Order.le_max_left _ _).trans ((Data.Nat.Order.le_max_right _
     _).trans modelIndices)) stage
     ((Data.Nat.Order.le_max_left _ _).trans ((Data.Nat.Order.le_max_right _ _).trans readingIndices))
-  let readings := Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.ChartTree.read sample stage charts.tree
+  let readings := ChartTree.read sample stage charts.tree
     ((Data.Nat.Order.le_max_right _ _).trans ((Data.Nat.Order.le_max_right _ _).trans modelIndices))
     ((Data.Nat.Order.le_max_right _ _).trans ((Data.Nat.Order.le_max_right _ _).trans readingIndices))
-  let path := Curves.Hyperelliptic.Charts.Reciprocal.Disk.VertexPaths.TreeReadings.path readings first last
+  let path := TreeReadings.path readings first last
     cell.ordered.le
   exact ⟨first, last, rfl, rfl, readings, path, rfl⟩
 

@@ -1,4 +1,6 @@
 module
+
+import Purelib.Data.Rat.Fraction
 import Purelib.Polynomial.Clearance.Box.Region.Basic
 import Purelib.Geometry.Rational.Box.Basic
 import Purelib.Polynomial.Dense.Gaussian.Basic
@@ -93,11 +95,12 @@ theorem output_eq (initial : Clearance.Box.Region.ClearRegion p ambient)
   (count : Nat)
     (raw : Winding.Box.Basic.quadrupledBoxWinding p initial.box = (4 : Int) * count)
     (total : Winding.Box.Region.Sum.totalRaw (IsolationState.initial initial).regions = (4 : Int) * count)
+    (request : Option Data.Rat.Fraction.Rational)
     (result : Exact.Run.RunResult (IsolationState.initial initial) count)
     (resultEq : result = Exact.Run.run degreeAtLeastTwo squarefree elimination count
-      (IsolationState.initial initial) total) :
+      (IsolationState.initial initial) total request) :
     output degreeAtLeastTwo squarefree elimination initial count result =
-      Exact.Build.isolateFromRegion degreeAtLeastTwo squarefree elimination initial count raw := by
+      Exact.Build.isolateFromRegion degreeAtLeastTwo squarefree elimination initial count raw request := by
   cases resultEq
   rfl
 

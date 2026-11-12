@@ -11,6 +11,8 @@ import Purelib.Polynomial.Elimination.Axis.Cuts.Resource
 
 import Purelib.Polynomial.Clearance.Box.Grid.Four.Basic
 
+open Purelib.Data.Rat.Interval.Candidates
+
 /-!
 # Coordinate magnitudes of four-child clearance grids
 
@@ -33,19 +35,19 @@ public theorem clearFourGrid_children_within
     {p : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {degreeBound bound : Nat}
     (elimination : Elimination.Axis.Certificate.AxisSafeCuts.AxisEliminationCertificate p degreeBound)
     (box : Box) (proper : box.Proper) (boxWithin : Box.Resource.BoxWithin box bound) :
-    let grid := Clearance.Box.Grid.Four.Elimination.buildClearFourGrid elimination box proper
-    Box.Resource.BoxWithin grid.lowerLeft (Data.Rat.Interval.Candidates.Resource.safeCutMagnitudeEnvelope bound
+    let grid := Elimination.buildClearFourGrid elimination box proper
+    Box.Resource.BoxWithin grid.lowerLeft (Resource.safeCutMagnitudeEnvelope bound
       degreeBound) ∧
-      Box.Resource.BoxWithin grid.upperLeft (Data.Rat.Interval.Candidates.Resource.safeCutMagnitudeEnvelope bound
+      Box.Resource.BoxWithin grid.upperLeft (Resource.safeCutMagnitudeEnvelope bound
         degreeBound) ∧
-      Box.Resource.BoxWithin grid.lowerRight (Data.Rat.Interval.Candidates.Resource.safeCutMagnitudeEnvelope bound
+      Box.Resource.BoxWithin grid.lowerRight (Resource.safeCutMagnitudeEnvelope bound
         degreeBound) ∧
-      Box.Resource.BoxWithin grid.upperRight (Data.Rat.Interval.Candidates.Resource.safeCutMagnitudeEnvelope bound
+      Box.Resource.BoxWithin grid.upperRight (Resource.safeCutMagnitudeEnvelope bound
         degreeBound) := by
-  let grid := Clearance.Box.Grid.Four.Elimination.buildClearFourGrid elimination box proper
-  let outputBound := Data.Rat.Interval.Candidates.Resource.safeCutMagnitudeEnvelope bound degreeBound
+  let grid := Elimination.buildClearFourGrid elimination box proper
+  let outputBound := Resource.safeCutMagnitudeEnvelope bound degreeBound
   have oldBound : bound ≤ outputBound :=
-    Data.Rat.Interval.Candidates.Resource.bound_le_safeCutMagnitudeEnvelope bound degreeBound
+    Resource.bound_le_safeCutMagnitudeEnvelope bound degreeBound
   have xCutBound : Fraction.Resource.Model.coordinateMagnitude grid.xCut ≤ outputBound := by
     change Fraction.Resource.Model.coordinateMagnitude
       (Elimination.Axis.Cuts.verticalSafeCoordinate elimination box proper) ≤ _

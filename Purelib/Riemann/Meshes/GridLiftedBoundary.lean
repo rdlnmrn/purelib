@@ -42,7 +42,7 @@ open Purelib.Topology.Polygon.Stokes (PrimitivePoint edgeListArea edgeListArea_a
 open Purelib.Data.Gaussian.Basic (Canonical)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree}
 
 open Purelib.Riemann.Meshes.GridLiftedMesh.LiftedFaces (actualBoundaries)
@@ -59,7 +59,7 @@ theorem GridLiftedMesh.LiftedFaces.actualBoundaries_area (vertices :
   SquareRoot.Grid.LiftedVertices.VertexBank bank.grid) (edges : SquareRoot.Grid.RootEdgeBank frames)
     (primitive : Fin vertices.count → PrimitivePoint) : (faces : List (RegularFace bank)) →
     edgeListArea primitive (actualBoundaries vertices edges faces) =
-      Geometry.Grid.CellBoundary.sumValues (fun face => edges.twoSheetArea vertices primitive face.boundary) faces
+      sumValues (fun face => edges.twoSheetArea vertices primitive face.boundary) faces
   | [] => rfl
   | _ :: faces => by
       rw [actualBoundaries, edgeListArea_append, edgeListArea_append, actualBoundaries_area vertices edges primitive
@@ -84,24 +84,24 @@ theorem boundary_eq_exterior_and_holes (lifted : LiftedPuncturedGrid
     (primitive : Fin lifted.vertices.count → PrimitivePoint) :
     edgeListArea primitive lifted.mesh.triangulation.boundary =
       lifted.edges.twoSheetArea lifted.vertices primitive base.bank.exterior +
-        Geometry.Grid.CellBoundary.sumValues (fun hole => lifted.edges.twoSheetArea lifted.vertices primitive
+        sumValues (fun hole => lifted.edges.twoSheetArea lifted.vertices primitive
           hole.inwardBoundary) base.faces.holes := by
   let reference := fun point member => (Hyperelliptic.Meshes.PuncturedGrid.LoopMonodromy.BranchCellBank.referenceAt
     base.bank.toBranchCellBank point member).toLoop
   let values := lifted.edges.edgeValues lifted.vertices primitive
-  have walks {start finish : Gaussian.Basic.Canonical} (walk : Geometry.Grid.Walks.Walk base.bank.grid start finish) :
+  have walks {start finish : Canonical} (walk : Geometry.Grid.Walks.Walk base.bank.grid start finish) :
       values.walk walk = lifted.edges.twoSheetArea lifted.vertices primitive walk :=
     lifted.edges.edgeValues_walk lifted.vertices primitive reference walk
-  rw [lifted.mesh.boundary_eq_faceWalks, Meshes.GridLiftedMesh.LiftedFaces.actualBoundaries_area]
+  rw [lifted.mesh.boundary_eq_faceWalks, GridLiftedMesh.LiftedFaces.actualBoundaries_area]
   calc
-    _ = Geometry.Grid.CellBoundary.sumValues (fun face => values.walk face.boundary) base.faces.regulars :=
-      Geometry.Grid.CellBoundary.sumValues_congr _ _ _ (fun face _ => (walks face.boundary).symm)
-    _ = values.perimeter base.bank.grid + Geometry.Grid.CellBoundary.sumValues (fun hole => values.walk
+    _ = sumValues (fun face => values.walk face.boundary) base.faces.regulars :=
+      sumValues_congr _ _ _ (fun face _ => (walks face.boundary).symm)
+    _ = values.perimeter base.bank.grid + sumValues (fun hole => values.walk
       hole.inwardBoundary) base.faces.holes :=
       base.faces.boundary_eq_exterior_sub_holes values
-    _ = _ := congrArg₂ (fun first last : Gaussian.Basic.Canonical => first + last)
+    _ = _ := congrArg₂ (fun first last : Canonical => first + last)
       ((base.bank.frame.boundary_value values).symm.trans (walks base.bank.exterior))
-      (Geometry.Grid.CellBoundary.sumValues_congr _ _ _ (fun hole _ => walks hole.inwardBoundary))
+      (sumValues_congr _ _ _ (fun hole _ => walks hole.inwardBoundary))
 
 open Purelib.Polynomial in
 /-- Read the triangle wedge sum as exterior area plus inward hole areas on both sheets.
@@ -112,7 +112,7 @@ theorem wedge_eq_exterior_and_holes (lifted : LiftedPuncturedGrid
     (primitive : Fin lifted.vertices.count → PrimitivePoint) :
     triangleWedgeSum primitive lifted.mesh.triangulation.faces =
       lifted.edges.twoSheetArea lifted.vertices primitive base.bank.exterior +
-        Geometry.Grid.CellBoundary.sumValues (fun hole => lifted.edges.twoSheetArea lifted.vertices primitive
+        sumValues (fun hole => lifted.edges.twoSheetArea lifted.vertices primitive
           hole.inwardBoundary) base.faces.holes :=
   (lifted.mesh.wedge_eq_boundary primitive).trans (lifted.boundary_eq_exterior_and_holes primitive)
 

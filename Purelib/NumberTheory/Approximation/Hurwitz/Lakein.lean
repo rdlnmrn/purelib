@@ -36,6 +36,11 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.ComplexContinuedFraction.Hurwitz
+open Purelib.Data.GaussianInt.Division
+open Purelib.Geometry.Hermitian.Binary
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Data
@@ -68,7 +73,7 @@ namespace Purelib.NumberTheory.Approximation.Hurwitz.Lakein.Stage
 /-- The preceding continuant denominator divided by the current one.  This is
 formed only from displayed Gaussian integers. -/
 def denominatorRatio {source : GaussianInt.Fraction}
-  (stage : Data.ComplexContinuedFraction.Hurwitz.Trace.Stage source) :
+  (stage : Trace.Stage source) :
     Gaussian.Basic.Canonical :=
   GaussianInt.toGaussian stage.previous.denominator *
     (GaussianInt.toGaussian stage.current.denominator)⁻¹
@@ -80,8 +85,8 @@ namespace Purelib.NumberTheory.Approximation.Hurwitz.Lakein
 /-- The initial Hurwitz stage has denominator ratio zero. -/
 @[simp] theorem firstStage_denominatorRatio (source :
   GaussianInt.Fraction) :
-    Stage.denominatorRatio (Data.ComplexContinuedFraction.Hurwitz.Trace.firstStage source) = 0 := by
-  unfold Stage.denominatorRatio Data.ComplexContinuedFraction.Hurwitz.Trace.firstStage
+    Stage.denominatorRatio (Trace.firstStage source) = 0 := by
+  unfold Stage.denominatorRatio Trace.firstStage
   simp only [GaussianInt.toGaussian_zero, GaussianInt.toGaussian_one,
     Gaussian.Field.inv_eq,
     Gaussian.Field.inv_one_direct,
@@ -92,7 +97,7 @@ namespace Purelib.NumberTheory.Approximation.Hurwitz.Lakein
 case. -/
 def DenominatorRatioInLakeinSquare {source :
   GaussianInt.Fraction}
-    (stage : Data.ComplexContinuedFraction.Hurwitz.Trace.Stage source) : Prop :=
+    (stage : Trace.Stage source) : Prop :=
   -(3 / 4 : Fraction.Rational) ≤ (Stage.denominatorRatio stage).re ∧
     (Stage.denominatorRatio stage).re ≤ (3 / 4 : Fraction.Rational) ∧
     -(3 / 4 : Fraction.Rational) ≤ (Stage.denominatorRatio stage).im ∧
@@ -100,11 +105,11 @@ def DenominatorRatioInLakeinSquare {source :
 
 /-- The current denominator of a generated Hurwitz stage is nonzero. -/
 theorem current_denominator_ne_zero_of_generated
-    {source : GaussianInt.Fraction} {stage : Data.ComplexContinuedFraction.Hurwitz.Trace.Stage source}
-    (generated : Hurwitz.Geometry.Generated source stage) :
+    {source : GaussianInt.Fraction} {stage : Trace.Stage source}
+    (generated : Geometry.Generated source stage) :
     stage.current.denominator ≠ 0 := by
   intro currentZero
-  have growth := Hurwitz.Geometry.stage_denominatorGrowth generated
+  have growth := Geometry.stage_denominatorGrowth generated
   rw [currentZero] at growth
   change GaussianInt.normNat stage.previous.denominator < 0 at growth
   omega
@@ -112,7 +117,7 @@ theorem current_denominator_ne_zero_of_generated
 /-- Multiplying the denominator ratio by its nonzero current denominator recovers the previous denominator. -/
 theorem denominatorRatio_mul_current {source :
   GaussianInt.Fraction}
-    (stage : Data.ComplexContinuedFraction.Hurwitz.Trace.Stage source) (currentNonzero : stage.current.denominator ≠ 0)
+    (stage : Trace.Stage source) (currentNonzero : stage.current.denominator ≠ 0)
       :
     (Stage.denominatorRatio stage) * GaussianInt.toGaussian stage.current.denominator =
       GaussianInt.toGaussian stage.previous.denominator := by
@@ -138,58 +143,58 @@ theorem denominatorRatio_mul_current {source :
 
 /-- The denominator ratio of a generated Hurwitz stage lies strictly inside the unit disk. -/
 theorem denominatorRatio_normSq_lt_one_of_generated
-    {source : GaussianInt.Fraction} {stage : Data.ComplexContinuedFraction.Hurwitz.Trace.Stage source}
-    (generated : Hurwitz.Geometry.Generated source stage) :
-    Data.Gaussian.Norm.Basic.normSq (Stage.denominatorRatio stage) < 1 := by
+    {source : GaussianInt.Fraction} {stage : Trace.Stage source}
+    (generated : Geometry.Generated source stage) :
+    Gaussian.Norm.Basic.normSq (Stage.denominatorRatio stage) < 1 := by
   have currentNonzero := current_denominator_ne_zero_of_generated generated
   have currentGaussianNonzero :
       GaussianInt.toGaussian stage.current.denominator ≠ 0 := by
     intro currentZero
     exact currentNonzero (GaussianInt.toGaussian_eq_zero.mp currentZero)
   have currentPositive :
-      0 < Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian stage.current.denominator) :=
+      0 < Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian stage.current.denominator) :=
     Gaussian.Norm.Basic.normSq_pos currentGaussianNonzero
-  apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
-    (c := Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian stage.current.denominator)) _ currentPositive
+  apply Arithmetic.lt_of_mul_lt_mul_right_direct
+    (c := Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian stage.current.denominator)) _ currentPositive
   calc
-    Data.Gaussian.Norm.Basic.normSq (Stage.denominatorRatio stage) *
-          Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian stage.current.denominator) =
-        Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq (Stage.denominatorRatio stage) *
+          Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian stage.current.denominator) =
+        Gaussian.Norm.Basic.normSq
           ((Stage.denominatorRatio stage) *
             GaussianInt.toGaussian stage.current.denominator) := by
       rw [Gaussian.Norm.Basic.normSq_mul]
-    _ = Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian stage.previous.denominator) := by
+    _ = Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian stage.previous.denominator) := by
       rw [denominatorRatio_mul_current stage currentNonzero]
     _ = (GaussianInt.normNat stage.previous.denominator : Fraction.Rational) :=
       GaussianInt.normSq_toGaussian _
     _ < (GaussianInt.normNat stage.current.denominator : Fraction.Rational) :=
       Fraction.Cast.Order.natCast_lt_direct
-        (Hurwitz.Geometry.stage_denominatorGrowth generated)
-    _ = Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian stage.current.denominator) :=
+        (Geometry.stage_denominatorGrowth generated)
+    _ = Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian stage.current.denominator) :=
       (GaussianInt.normSq_toGaussian _).symm
-    _ = 1 * Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian stage.current.denominator) := by ring1
+    _ = 1 * Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian stage.current.denominator) := by ring1
 
 /-- Advancing the trace applies the usual finite backward-continued-fraction
 map to the displayed denominator ratio. -/
 theorem advanceStage_denominatorRatio {source :
   GaussianInt.Fraction}
-    (stage : Data.ComplexContinuedFraction.Hurwitz.Trace.Stage source) (generated : Hurwitz.Geometry.Generated source
+    (stage : Trace.Stage source) (generated : Geometry.Generated source
       stage)
-    (nonterminal : GaussianInt.Division.Nearest.remainder stage.quotient ≠ 0) :
+    (nonterminal : Nearest.remainder stage.quotient ≠ 0) :
     Stage.denominatorRatio
-        (Data.ComplexContinuedFraction.Hurwitz.Trace.advanceStage stage nonterminal) =
-      (GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next
+        (Trace.advanceStage stage nonterminal) =
+      (GaussianInt.toGaussian (Nearest.digit (Step.next
         stage.quotient nonterminal)) +
         (Stage.denominatorRatio stage))⁻¹ := by
-  let advanced := Data.ComplexContinuedFraction.Hurwitz.Trace.advanceStage stage nonterminal
-  let nextDigit := GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next stage.quotient
+  let advanced := Trace.advanceStage stage nonterminal
+  let nextDigit := Nearest.digit (Step.next stage.quotient
     nonterminal)
   let currentValue := GaussianInt.toGaussian stage.current.denominator
   let advancedValue := GaussianInt.toGaussian advanced.current.denominator
   let divisor := GaussianInt.toGaussian nextDigit + (Stage.denominatorRatio stage)
   have currentNonzero := current_denominator_ne_zero_of_generated generated
-  have advancedGenerated : Hurwitz.Geometry.Generated source advanced :=
-    Hurwitz.Geometry.Generated.advance generated nonterminal
+  have advancedGenerated : Geometry.Generated source advanced :=
+    Geometry.Generated.advance generated nonterminal
   have advancedNonzero :=
     current_denominator_ne_zero_of_generated advancedGenerated
   have advancedGaussianNonzero : advancedValue ≠ 0 := by
@@ -198,12 +203,12 @@ theorem advanceStage_denominatorRatio {source :
   have divisorMulCurrent : divisor * currentValue = advancedValue := by
     dsimp only [divisor, currentValue, advancedValue, advanced, nextDigit]
     change
-      (GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next
+      (GaussianInt.toGaussian (Nearest.digit (Step.next
         stage.quotient nonterminal)) +
           (Stage.denominatorRatio stage)) *
           GaussianInt.toGaussian stage.current.denominator =
         GaussianInt.toGaussian
-          (GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next stage.quotient
+          (Nearest.digit (Step.next stage.quotient
             nonterminal) *
             stage.current.denominator + stage.previous.denominator)
     rw [GaussianInt.toGaussian_add, GaussianInt.toGaussian_mul,
@@ -235,7 +240,7 @@ theorem advanceStage_denominatorRatio {source :
     _ = divisor⁻¹ * (divisor * currentValue) := by
       rw [Gaussian.Basic.mul_assoc]
     _ = divisor⁻¹ * advancedValue := by rw [divisorMulCurrent]
-    _ = (GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next
+    _ = (GaussianInt.toGaussian (Nearest.digit (Step.next
       stage.quotient nonterminal)) +
           (Stage.denominatorRatio stage))⁻¹ * advancedValue := rfl
 
@@ -244,7 +249,7 @@ private theorem twice_lt_one_of_lt_half {value :
   Fraction.Rational}
     (upper : value < 1 / 2) : 2 * value < 1 := by
   have scaled :=
-    Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+    Arithmetic.mul_lt_mul_of_pos_left_direct
       (show (0 : Fraction.Rational) < 2 by decide) upper
   calc
     2 * value < 2 * (1 / 2 : Fraction.Rational) := scaled
@@ -264,16 +269,16 @@ private theorem half_two_mul (value : Fraction.Rational) :
 This is the one strict edge needed by the finite succession table. -/
 theorem one_lt_next_sub_one_normSq (fraction :
   GaussianInt.Fraction)
-    (nonterminal : GaussianInt.Division.Nearest.remainder fraction ≠ 0) :
-    1 < Data.Gaussian.Norm.Basic.normSq ((Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+    (nonterminal : Nearest.remainder fraction ≠ 0) :
+    1 < Gaussian.Norm.Basic.normSq ((Step.next fraction
       nonterminal).value - 1) := by
-  let rho := GaussianInt.Division.Nearest.residual fraction
-  let nextValue := (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal).value
-  have rhoNonzero : rho ≠ 0 := GaussianInt.Division.Nearest.residual_ne_zero nonterminal
-  have rhoPositive : 0 < Data.Gaussian.Norm.Basic.normSq rho := Gaussian.Norm.Basic.normSq_pos rhoNonzero
+  let rho := Nearest.residual fraction
+  let nextValue := (Step.next fraction nonterminal).value
+  have rhoNonzero : rho ≠ 0 := Nearest.residual_ne_zero nonterminal
+  have rhoPositive : 0 < Gaussian.Norm.Basic.normSq rho := Gaussian.Norm.Basic.normSq_pos rhoNonzero
   have reciprocal : nextValue * rho = 1 := by
     dsimp only [nextValue, rho]
-    rw [Data.ComplexContinuedFraction.Hurwitz.Step.next_value, Gaussian.Field.inv_eq,
+    rw [Step.next_value, Gaussian.Field.inv_eq,
       Gaussian.Field.inv_mul _ rhoNonzero]
   have factorIdentity : (nextValue - 1) * rho = 1 - rho := by
     calc
@@ -288,29 +293,29 @@ theorem one_lt_next_sub_one_normSq (fraction :
         rw [reciprocal, _root_.one_mul]
   have rhoSquare := GaussianInt.Nearest.remainder_mem fraction.value
   have gapPositive : 0 < 1 - 2 * rho.re := by
-    exact Fraction.Order.Arithmetic.sub_pos_direct
+    exact Arithmetic.sub_pos_direct
       (twice_lt_one_of_lt_half rhoSquare.2.1)
-  have residualStrict : Data.Gaussian.Norm.Basic.normSq rho < Data.Gaussian.Norm.Basic.normSq (1 - rho) := by
+  have residualStrict : Gaussian.Norm.Basic.normSq rho < Gaussian.Norm.Basic.normSq (1 - rho) := by
     have shifted :=
-      Fraction.Order.Arithmetic.add_lt_add_left_direct
-        gapPositive (Data.Gaussian.Norm.Basic.normSq rho)
+      Arithmetic.add_lt_add_left_direct
+        gapPositive (Gaussian.Norm.Basic.normSq rho)
     calc
-      Data.Gaussian.Norm.Basic.normSq rho = Data.Gaussian.Norm.Basic.normSq rho + 0 := by ring1
-      _ < Data.Gaussian.Norm.Basic.normSq rho + (1 - 2 * rho.re) := shifted
-      _ = Data.Gaussian.Norm.Basic.normSq (1 - rho) := by
-        simp only [Data.Gaussian.Norm.Basic.normSq,
+      Gaussian.Norm.Basic.normSq rho = Gaussian.Norm.Basic.normSq rho + 0 := by ring1
+      _ < Gaussian.Norm.Basic.normSq rho + (1 - 2 * rho.re) := shifted
+      _ = Gaussian.Norm.Basic.normSq (1 - rho) := by
+        simp only [Gaussian.Norm.Basic.normSq,
           Gaussian.Basic.sub_re,
           Gaussian.Basic.sub_im,
           Gaussian.Basic.one_re,
           Gaussian.Basic.one_im]
         ring1
-  apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
-    (c := Data.Gaussian.Norm.Basic.normSq rho) _ rhoPositive
+  apply Arithmetic.lt_of_mul_lt_mul_right_direct
+    (c := Gaussian.Norm.Basic.normSq rho) _ rhoPositive
   calc
-    1 * Data.Gaussian.Norm.Basic.normSq rho = Data.Gaussian.Norm.Basic.normSq rho := by ring1
-    _ < Data.Gaussian.Norm.Basic.normSq (1 - rho) := residualStrict
-    _ = Data.Gaussian.Norm.Basic.normSq ((nextValue - 1) * rho) := by rw [factorIdentity]
-    _ = Data.Gaussian.Norm.Basic.normSq (nextValue - 1) * Data.Gaussian.Norm.Basic.normSq rho :=
+    1 * Gaussian.Norm.Basic.normSq rho = Gaussian.Norm.Basic.normSq rho := by ring1
+    _ < Gaussian.Norm.Basic.normSq (1 - rho) := residualStrict
+    _ = Gaussian.Norm.Basic.normSq ((nextValue - 1) * rho) := by rw [factorIdentity]
+    _ = Gaussian.Norm.Basic.normSq (nextValue - 1) * Gaussian.Norm.Basic.normSq rho :=
       Gaussian.Norm.Basic.normSq_mul _ _
 
 /-- After the digit 1+i, the following nonterminal complete quotient has real coordinate at least -1/2.
@@ -318,127 +323,127 @@ theorem one_lt_next_sub_one_normSq (fraction :
 The exterior inequality at i becomes a lower bound on the real coordinate after division by the positive residual
 quadrance. -/
 private theorem next_value_real_lower_of_one_add_i_digit
-    (fraction : GaussianInt.Fraction) (nonterminal : GaussianInt.Division.Nearest.remainder fraction ≠ 0)
-    (nextNonterminal : GaussianInt.Division.Nearest.remainder (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+    (fraction : GaussianInt.Fraction) (nonterminal : Nearest.remainder fraction ≠ 0)
+    (nextNonterminal : Nearest.remainder (Step.next fraction
       nonterminal) ≠ 0)
-    (digitValue : GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+    (digitValue : Nearest.digit (Step.next fraction
       nonterminal) = ⟨1, 1⟩) :
     -(1 / 2 : Fraction.Rational) ≤
-      (Data.ComplexContinuedFraction.Hurwitz.Step.next (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+      (Step.next (Step.next fraction
         nonterminal) nextNonterminal).value.re := by
-  let current := Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal
-  let following := Data.ComplexContinuedFraction.Hurwitz.Step.next current nextNonterminal
-  let rho := GaussianInt.Division.Nearest.residual current
-  have rhoNonzero : rho ≠ 0 := GaussianInt.Division.Nearest.residual_ne_zero nextNonterminal
-  have rhoPositive : 0 < Data.Gaussian.Norm.Basic.normSq rho := Gaussian.Norm.Basic.normSq_pos rhoNonzero
+  let current := Step.next fraction nonterminal
+  let following := Step.next current nextNonterminal
+  let rho := Nearest.residual current
+  have rhoNonzero : rho ≠ 0 := Nearest.residual_ne_zero nextNonterminal
+  have rhoPositive : 0 < Gaussian.Norm.Basic.normSq rho := Gaussian.Norm.Basic.normSq_pos rhoNonzero
   have currentDecomposition :
       current.value = GaussianInt.toGaussian (⟨1, 1⟩ : GaussianInt) + rho := by
     calc
-      current.value = GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit current) +
-        GaussianInt.Division.Nearest.residual current :=
-        GaussianInt.Division.Nearest.value_eq_digit_add_residual current
+      current.value = GaussianInt.toGaussian (Nearest.digit current) +
+        Nearest.residual current :=
+        Nearest.value_eq_digit_add_residual current
       _ = GaussianInt.toGaussian (⟨1, 1⟩ : GaussianInt) + rho := by
         rw [digitValue]
-  have exterior := Hurwitz.Geometry.one_le_next_sub_unit_normSq fraction nonterminal
+  have exterior := Geometry.one_le_next_sub_unit_normSq fraction nonterminal
     (unit := GaussianInt.Norm.Small.imaginaryUnit) (Or.inr (Or.inr (Or.inl rfl)))
-  have scaledLower : -(1 / 2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq rho ≤ rho.re := by
+  have scaledLower : -(1 / 2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq rho ≤ rho.re := by
     rw [currentDecomposition] at exterior
-    simp only [Data.Gaussian.Norm.Basic.normSq, GaussianInt.Norm.Small.imaginaryUnit, GaussianInt.toGaussian,
+    simp only [Gaussian.Norm.Basic.normSq, GaussianInt.Norm.Small.imaginaryUnit, GaussianInt.toGaussian,
       Gaussian.Basic.add_re,
       Gaussian.Basic.add_im,
       Gaussian.Basic.sub_re,
       Gaussian.Basic.sub_im,
-      Ring.IntCast.cast_zero, Int.cast_one, ← Rat.Fraction.Cast.intCast_eq_fromInt] at exterior
-    have doubled : -Data.Gaussian.Norm.Basic.normSq rho ≤ 2 * rho.re := by
+      Ring.IntCast.cast_zero, Int.cast_one, ← Fraction.Cast.intCast_eq_fromInt] at exterior
+    have doubled : -Gaussian.Norm.Basic.normSq rho ≤ 2 * rho.re := by
       have shifted :=
-        Fraction.Order.Arithmetic.add_le_add_right_direct exterior (-1)
-      have nonnegative : 0 ≤ Data.Gaussian.Norm.Basic.normSq rho + 2 * rho.re := by
+        Arithmetic.add_le_add_right_direct exterior (-1)
+      have nonnegative : 0 ≤ Gaussian.Norm.Basic.normSq rho + 2 * rho.re := by
         calc
           0 = (1 : Fraction.Rational) + -1 := by ring1
           _ ≤ ((1 + rho.re - 0) ^ 2 +
                 (1 + rho.im - 1) ^ 2) + -1 := shifted
-          _ = Data.Gaussian.Norm.Basic.normSq rho + 2 * rho.re := by
-            dsimp only [Data.Gaussian.Norm.Basic.normSq]
+          _ = Gaussian.Norm.Basic.normSq rho + 2 * rho.re := by
+            dsimp only [Gaussian.Norm.Basic.normSq]
             ring1
       have translated :=
-        Fraction.Order.Arithmetic.add_le_add_right_direct
-          nonnegative (-Data.Gaussian.Norm.Basic.normSq rho)
+        Arithmetic.add_le_add_right_direct
+          nonnegative (-Gaussian.Norm.Basic.normSq rho)
       calc
-        -Data.Gaussian.Norm.Basic.normSq rho = 0 + -Data.Gaussian.Norm.Basic.normSq rho := by ring1
-        _ ≤ (Data.Gaussian.Norm.Basic.normSq rho + 2 * rho.re) + -Data.Gaussian.Norm.Basic.normSq rho :=
+        -Gaussian.Norm.Basic.normSq rho = 0 + -Gaussian.Norm.Basic.normSq rho := by ring1
+        _ ≤ (Gaussian.Norm.Basic.normSq rho + 2 * rho.re) + -Gaussian.Norm.Basic.normSq rho :=
           translated
         _ = 2 * rho.re := by ring1
     have halfNonnegative : (0 : Fraction.Rational) ≤ 1 / 2 := by decide
     have scaled :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      Arithmetic.mul_le_mul_of_nonneg_left_direct
         doubled halfNonnegative
     calc
-      -(1 / 2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq rho =
-          (1 / 2 : Fraction.Rational) * (-Data.Gaussian.Norm.Basic.normSq rho) := by ring1
+      -(1 / 2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq rho =
+          (1 / 2 : Fraction.Rational) * (-Gaussian.Norm.Basic.normSq rho) := by ring1
       _ ≤ (1 / 2 : Fraction.Rational) * (2 * rho.re) := scaled
       _ = rho.re := half_two_mul rho.re
   have divided :=
-    (Fraction.Order.Field.le_div_iff_pos rhoPositive).2 scaledLower
-  rw [Data.ComplexContinuedFraction.Hurwitz.Step.next_value, Gaussian.Field.inv_eq]
-  change -(1 / 2 : Fraction.Rational) ≤ rho.re / Data.Gaussian.Norm.Basic.normSq rho
+    (Field.le_div_iff_pos rhoPositive).2 scaledLower
+  rw [Step.next_value, Gaussian.Field.inv_eq]
+  change -(1 / 2 : Fraction.Rational) ≤ rho.re / Gaussian.Norm.Basic.normSq rho
   exact divided
 
 /-- After the digit 1+i, the following nonterminal complete quotient has imaginary coordinate strictly below 1/2.
 
 The strict exterior inequality at 1 preserves the half-open rounding convention through inversion. -/
 private theorem next_value_imaginary_upper_of_one_add_i_digit
-    (fraction : GaussianInt.Fraction) (nonterminal : GaussianInt.Division.Nearest.remainder fraction ≠ 0)
-    (nextNonterminal : GaussianInt.Division.Nearest.remainder (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+    (fraction : GaussianInt.Fraction) (nonterminal : Nearest.remainder fraction ≠ 0)
+    (nextNonterminal : Nearest.remainder (Step.next fraction
       nonterminal) ≠ 0)
-    (digitValue : GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+    (digitValue : Nearest.digit (Step.next fraction
       nonterminal) = ⟨1, 1⟩) :
-    (Data.ComplexContinuedFraction.Hurwitz.Step.next (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+    (Step.next (Step.next fraction
       nonterminal) nextNonterminal).value.im <
       (1 / 2 : Fraction.Rational) := by
-  let current := Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal
-  let following := Data.ComplexContinuedFraction.Hurwitz.Step.next current nextNonterminal
-  let rho := GaussianInt.Division.Nearest.residual current
-  have rhoNonzero : rho ≠ 0 := GaussianInt.Division.Nearest.residual_ne_zero nextNonterminal
-  have rhoPositive : 0 < Data.Gaussian.Norm.Basic.normSq rho := Gaussian.Norm.Basic.normSq_pos rhoNonzero
+  let current := Step.next fraction nonterminal
+  let following := Step.next current nextNonterminal
+  let rho := Nearest.residual current
+  have rhoNonzero : rho ≠ 0 := Nearest.residual_ne_zero nextNonterminal
+  have rhoPositive : 0 < Gaussian.Norm.Basic.normSq rho := Gaussian.Norm.Basic.normSq_pos rhoNonzero
   have currentDecomposition :
       current.value = GaussianInt.toGaussian (⟨1, 1⟩ : GaussianInt) + rho := by
     calc
-      current.value = GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit current) +
-        GaussianInt.Division.Nearest.residual current :=
-        GaussianInt.Division.Nearest.value_eq_digit_add_residual current
+      current.value = GaussianInt.toGaussian (Nearest.digit current) +
+        Nearest.residual current :=
+        Nearest.value_eq_digit_add_residual current
       _ = GaussianInt.toGaussian (⟨1, 1⟩ : GaussianInt) + rho := by
         rw [digitValue]
   have exterior := one_lt_next_sub_one_normSq fraction nonterminal
-  have scaledUpper : -rho.im < (1 / 2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq rho := by
+  have scaledUpper : -rho.im < (1 / 2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq rho := by
     rw [currentDecomposition] at exterior
-    simp only [Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian,
+    simp only [Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian,
       Gaussian.Basic.add_re,
       Gaussian.Basic.add_im,
       Gaussian.Basic.sub_re,
       Gaussian.Basic.sub_im,
       Gaussian.Basic.one_re,
       Gaussian.Basic.one_im,
-      Int.cast_one, ← Rat.Fraction.Cast.intCast_eq_fromInt] at exterior
+      Int.cast_one, ← Fraction.Cast.intCast_eq_fromInt] at exterior
     have shifted :=
-      Fraction.Order.Arithmetic.add_lt_add_right_direct exterior (-1)
-    have positive : 0 < Data.Gaussian.Norm.Basic.normSq rho + 2 * rho.im := by
+      Arithmetic.add_lt_add_right_direct exterior (-1)
+    have positive : 0 < Gaussian.Norm.Basic.normSq rho + 2 * rho.im := by
       calc
         0 = (1 : Fraction.Rational) + -1 := by ring1
         _ < ((1 + rho.re - 1) ^ 2 +
               (1 + rho.im - 0) ^ 2) + -1 := shifted
-        _ = Data.Gaussian.Norm.Basic.normSq rho + 2 * rho.im := by
-          dsimp only [Data.Gaussian.Norm.Basic.normSq]
+        _ = Gaussian.Norm.Basic.normSq rho + 2 * rho.im := by
+          dsimp only [Gaussian.Norm.Basic.normSq]
           ring1
     have translated :=
-      Fraction.Order.Arithmetic.add_lt_add_right_direct
+      Arithmetic.add_lt_add_right_direct
         positive (-(2 * rho.im))
-    have doubled : -(2 * rho.im) < Data.Gaussian.Norm.Basic.normSq rho := by
+    have doubled : -(2 * rho.im) < Gaussian.Norm.Basic.normSq rho := by
       calc
         -(2 * rho.im) = 0 + -(2 * rho.im) := by ring1
-        _ < (Data.Gaussian.Norm.Basic.normSq rho + 2 * rho.im) + -(2 * rho.im) := translated
-        _ = Data.Gaussian.Norm.Basic.normSq rho := by ring1
+        _ < (Gaussian.Norm.Basic.normSq rho + 2 * rho.im) + -(2 * rho.im) := translated
+        _ = Gaussian.Norm.Basic.normSq rho := by ring1
     have scaled :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+      Arithmetic.mul_lt_mul_of_pos_left_direct
         (show (0 : Fraction.Rational) < 1 / 2 by decide) doubled
     calc
       -rho.im = (1 / 2 : Fraction.Rational) * (2 * (-rho.im)) := by
@@ -446,32 +451,32 @@ private theorem next_value_imaginary_upper_of_one_add_i_digit
       _ = (1 / 2 : Fraction.Rational) * (-(2 * rho.im)) := by
         congr 1
         ring1
-      _ < (1 / 2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq rho := scaled
+      _ < (1 / 2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq rho := scaled
   have divided :=
-    (Fraction.Order.Field.div_lt_iff_pos rhoPositive).2 scaledUpper
-  rw [Data.ComplexContinuedFraction.Hurwitz.Step.next_value, Gaussian.Field.inv_eq]
-  change (-rho.im) / Data.Gaussian.Norm.Basic.normSq rho < (1 / 2 : Fraction.Rational)
+    (Field.div_lt_iff_pos rhoPositive).2 scaledUpper
+  rw [Step.next_value, Gaussian.Field.inv_eq]
+  change (-rho.im) / Gaussian.Norm.Basic.normSq rho < (1 / 2 : Fraction.Rational)
   exact divided
 
 /-- A digit `1+i` can only be followed by a digit in the southeast
 quadrant.  The statement includes the deterministic boundary convention. -/
 theorem successor_signs_of_one_add_i
-    (fraction : GaussianInt.Fraction) (nonterminal : GaussianInt.Division.Nearest.remainder fraction ≠ 0)
-    (nextNonterminal : GaussianInt.Division.Nearest.remainder (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+    (fraction : GaussianInt.Fraction) (nonterminal : Nearest.remainder fraction ≠ 0)
+    (nextNonterminal : Nearest.remainder (Step.next fraction
       nonterminal) ≠ 0)
-    (digitValue : GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+    (digitValue : Nearest.digit (Step.next fraction
       nonterminal) = ⟨1, 1⟩) :
-    0 ≤ (GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next
-      (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal) nextNonterminal)).re ∧
-      (GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next
-        (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal) nextNonterminal)).im ≤ 0 := by
-  let following := Data.ComplexContinuedFraction.Hurwitz.Step.next (Data.ComplexContinuedFraction.Hurwitz.Step.next
+    0 ≤ (Nearest.digit (Step.next
+      (Step.next fraction nonterminal) nextNonterminal)).re ∧
+      (Nearest.digit (Step.next
+        (Step.next fraction nonterminal) nextNonterminal)).im ≤ 0 := by
+  let following := Step.next (Step.next
     fraction nonterminal) nextNonterminal
-  let followingDigit := GaussianInt.Division.Nearest.digit following
-  let followingResidual := GaussianInt.Division.Nearest.residual following
+  let followingDigit := Nearest.digit following
+  let followingResidual := Nearest.residual following
   have decomposition :
       following.value = GaussianInt.toGaussian followingDigit + followingResidual :=
-    GaussianInt.Division.Nearest.value_eq_digit_add_residual following
+    Nearest.value_eq_digit_add_residual following
   have residualSquare := GaussianInt.Nearest.remainder_mem following.value
   constructor
   · apply Int.Order.le_of_not_lt
@@ -483,16 +488,16 @@ theorem successor_signs_of_one_add_i
       (Fraction.Cast.Order.intCast_le_intCast_iff_direct _ _).2
         digitAtMostMinusOne
     have valueStrict : following.value.re < -(1 / 2 : Fraction.Rational) := by
-      have first := Fraction.Order.Arithmetic.add_le_add_right_direct
+      have first := Arithmetic.add_le_add_right_direct
         castDigitAtMostMinusOne followingResidual.re
-      have second := Fraction.Order.Arithmetic.add_lt_add_left_direct
+      have second := Arithmetic.add_lt_add_left_direct
         residualSquare.2.1 (-1)
       have shifted := first.trans_lt second
       calc
         following.value.re =
             (followingDigit.re : Fraction.Rational) + followingResidual.re := by
           simpa only [Gaussian.Basic.add_re, GaussianInt.toGaussian,
-            ← Rat.Fraction.Cast.intCast_eq_fromInt] using congrArg Gaussian.Basic.re decomposition
+            ← Fraction.Cast.intCast_eq_fromInt] using congrArg Gaussian.Basic.re decomposition
         _ < (-1 : Fraction.Rational) + 1 / 2 := shifted
         _ = -(1 / 2 : Fraction.Rational) := by decide
     exact (not_lt_of_ge
@@ -507,9 +512,9 @@ theorem successor_signs_of_one_add_i
       (Fraction.Cast.Order.intCast_le_intCast_iff_direct _ _).2
         oneLeDigit
     have valueLower : (1 / 2 : Fraction.Rational) ≤ following.value.im := by
-      have first := Fraction.Order.Arithmetic.add_le_add_right_direct
+      have first := Arithmetic.add_le_add_right_direct
         oneLeCast followingResidual.im
-      have second := Fraction.Order.Arithmetic.add_le_add_right_direct
+      have second := Arithmetic.add_le_add_right_direct
         residualSquare.2.2.1 1
       have shifted :
           (1 : Fraction.Rational) + -(1 / 2 : Fraction.Rational) ≤
@@ -525,7 +530,7 @@ theorem successor_signs_of_one_add_i
         _ ≤ (followingDigit.im : Fraction.Rational) + followingResidual.im := shifted
         _ = following.value.im :=
           by simpa only [Gaussian.Basic.add_im, GaussianInt.toGaussian,
-            ← Rat.Fraction.Cast.intCast_eq_fromInt] using (congrArg Gaussian.Basic.im decomposition).symm
+            ← Fraction.Cast.intCast_eq_fromInt] using (congrArg Gaussian.Basic.im decomposition).symm
     exact (not_le_of_gt
       (next_value_imaginary_upper_of_one_add_i_digit fraction nonterminal
         nextNonterminal digitValue) valueLower)
@@ -534,43 +539,43 @@ theorem successor_signs_of_one_add_i
 condition into a polynomial inequality in the following residual.  This is
 the common finite calculation behind the exceptional successor exclusions. -/
 theorem successor_exterior_cleared
-    (fraction : GaussianInt.Fraction) (nonterminal : GaussianInt.Division.Nearest.remainder fraction ≠ 0)
-    (nextNonterminal : GaussianInt.Division.Nearest.remainder (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+    (fraction : GaussianInt.Fraction) (nonterminal : Nearest.remainder fraction ≠ 0)
+    (nextNonterminal : Nearest.remainder (Step.next fraction
       nonterminal) ≠ 0)
     (unit : GaussianInt) (unitProperty : GaussianInt.Norm.Small.IsGaussianUnit unit) :
-    Data.Gaussian.Norm.Basic.normSq (Data.ComplexContinuedFraction.Hurwitz.Step.next
-      (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal) nextNonterminal).value ≤
-      Data.Gaussian.Norm.Basic.normSq
-        ((GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next
+    Gaussian.Norm.Basic.normSq (Step.next
+      (Step.next fraction nonterminal) nextNonterminal).value ≤
+      Gaussian.Norm.Basic.normSq
+        ((GaussianInt.toGaussian (Nearest.digit (Step.next
           fraction nonterminal)) - GaussianInt.toGaussian unit) *
-            (Data.ComplexContinuedFraction.Hurwitz.Step.next (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+            (Step.next (Step.next fraction
               nonterminal) nextNonterminal).value + 1) := by
-  let current := Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal
-  let following := Data.ComplexContinuedFraction.Hurwitz.Step.next current nextNonterminal
-  let rho := GaussianInt.Division.Nearest.residual current
-  have rhoNonzero : rho ≠ 0 := GaussianInt.Division.Nearest.residual_ne_zero nextNonterminal
+  let current := Step.next fraction nonterminal
+  let following := Step.next current nextNonterminal
+  let rho := Nearest.residual current
+  have rhoNonzero : rho ≠ 0 := Nearest.residual_ne_zero nextNonterminal
   have followingNonzero : following.value ≠ 0 := by
     intro followingZero
     have productZero := congrArg (fun value => value * rho) followingZero
     rw [Gaussian.Basic.zero_mul] at productZero
     have reciprocal : following.value * rho = 1 := by
       dsimp only [following, current, rho]
-      rw [Data.ComplexContinuedFraction.Hurwitz.Step.next_value, Gaussian.Field.inv_eq,
+      rw [Step.next_value, Gaussian.Field.inv_eq,
         Gaussian.Field.inv_mul _ rhoNonzero]
     rw [reciprocal] at productZero
     exact (show (1 : Gaussian.Basic.Canonical) ≠ 0 by decide) productZero
-  have followingPositive : 0 < Data.Gaussian.Norm.Basic.normSq following.value :=
+  have followingPositive : 0 < Gaussian.Norm.Basic.normSq following.value :=
     Gaussian.Norm.Basic.normSq_pos followingNonzero
   have exterior :
-      1 ≤ Data.Gaussian.Norm.Basic.normSq (current.value - GaussianInt.toGaussian unit) := by
+      1 ≤ Gaussian.Norm.Basic.normSq (current.value - GaussianInt.toGaussian unit) := by
     dsimp only [current]
-    exact Hurwitz.Geometry.one_le_next_sub_unit_normSq fraction nonterminal unitProperty
+    exact Geometry.one_le_next_sub_unit_normSq fraction nonterminal unitProperty
   have scaled :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+    Arithmetic.mul_le_mul_of_nonneg_right_direct
       exterior followingPositive.le
   have reciprocal : following.value * rho = 1 := by
     dsimp only [following, current, rho]
-    rw [Data.ComplexContinuedFraction.Hurwitz.Step.next_value, Gaussian.Field.inv_eq,
+    rw [Step.next_value, Gaussian.Field.inv_eq,
       Gaussian.Field.inv_mul _ rhoNonzero]
   have reciprocalReordered : rho * following.value = 1 := by
     calc
@@ -579,16 +584,16 @@ theorem successor_exterior_cleared
       _ = 1 := reciprocal
   have factorIdentity :
       (current.value - GaussianInt.toGaussian unit) * following.value =
-        (GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit current) - GaussianInt.toGaussian unit) *
+        (GaussianInt.toGaussian (Nearest.digit current) - GaussianInt.toGaussian unit) *
           following.value + 1 := by
-    rw [GaussianInt.Division.Nearest.value_eq_digit_add_residual current]
+    rw [Nearest.value_eq_digit_add_residual current]
     calc
-      (GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit current) + GaussianInt.Division.Nearest.residual
+      (GaussianInt.toGaussian (Nearest.digit current) + Nearest.residual
         current - GaussianInt.toGaussian unit) *
             following.value =
-          (GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit current) - GaussianInt.toGaussian unit) *
+          (GaussianInt.toGaussian (Nearest.digit current) - GaussianInt.toGaussian unit) *
             following.value +
-            GaussianInt.Division.Nearest.residual current * following.value := by
+            Nearest.residual current * following.value := by
         apply Gaussian.Basic.ext <;>
           simp only [Gaussian.Basic.add_re,
             Gaussian.Basic.add_im,
@@ -597,66 +602,66 @@ theorem successor_exterior_cleared
             Gaussian.Basic.mul_re,
             Gaussian.Basic.mul_im] <;>
           ring1
-      _ = (GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit current) - GaussianInt.toGaussian unit) *
+      _ = (GaussianInt.toGaussian (Nearest.digit current) - GaussianInt.toGaussian unit) *
         following.value +
           1 := by
-        change (GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit current) - GaussianInt.toGaussian unit) *
+        change (GaussianInt.toGaussian (Nearest.digit current) - GaussianInt.toGaussian unit) *
             following.value + rho * following.value = _
         rw [reciprocalReordered]
-  change Data.Gaussian.Norm.Basic.normSq following.value ≤
-    Data.Gaussian.Norm.Basic.normSq
-      ((GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit current) - GaussianInt.toGaussian unit) *
+  change Gaussian.Norm.Basic.normSq following.value ≤
+    Gaussian.Norm.Basic.normSq
+      ((GaussianInt.toGaussian (Nearest.digit current) - GaussianInt.toGaussian unit) *
         following.value + 1)
   calc
-    Data.Gaussian.Norm.Basic.normSq following.value = 1 * Data.Gaussian.Norm.Basic.normSq following.value := by
+    Gaussian.Norm.Basic.normSq following.value = 1 * Gaussian.Norm.Basic.normSq following.value := by
       ring1
-    _ ≤ Data.Gaussian.Norm.Basic.normSq (current.value - GaussianInt.toGaussian unit) *
-          Data.Gaussian.Norm.Basic.normSq following.value := scaled
-    _ = Data.Gaussian.Norm.Basic.normSq ((current.value - GaussianInt.toGaussian unit) * following.value) := by
+    _ ≤ Gaussian.Norm.Basic.normSq (current.value - GaussianInt.toGaussian unit) *
+          Gaussian.Norm.Basic.normSq following.value := scaled
+    _ = Gaussian.Norm.Basic.normSq ((current.value - GaussianInt.toGaussian unit) * following.value) := by
       rw [Gaussian.Norm.Basic.normSq_mul]
-    _ = Data.Gaussian.Norm.Basic.normSq
-        ((GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit current) - GaussianInt.toGaussian unit) *
+    _ = Gaussian.Norm.Basic.normSq
+        ((GaussianInt.toGaussian (Nearest.digit current) - GaussianInt.toGaussian unit) *
           following.value + 1) :=
       by rw [factorIdentity]
 
 /-- The same clearing calculation retains the strict exterior inequality at
 the positive real unit. -/
 theorem successor_strict_exterior_cleared
-    (fraction : GaussianInt.Fraction) (nonterminal : GaussianInt.Division.Nearest.remainder fraction ≠ 0)
-    (nextNonterminal : GaussianInt.Division.Nearest.remainder (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+    (fraction : GaussianInt.Fraction) (nonterminal : Nearest.remainder fraction ≠ 0)
+    (nextNonterminal : Nearest.remainder (Step.next fraction
       nonterminal) ≠ 0) :
-    Data.Gaussian.Norm.Basic.normSq (Data.ComplexContinuedFraction.Hurwitz.Step.next
-      (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal) nextNonterminal).value <
-      Data.Gaussian.Norm.Basic.normSq
-        ((GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next
+    Gaussian.Norm.Basic.normSq (Step.next
+      (Step.next fraction nonterminal) nextNonterminal).value <
+      Gaussian.Norm.Basic.normSq
+        ((GaussianInt.toGaussian (Nearest.digit (Step.next
           fraction nonterminal)) - 1) *
-            (Data.ComplexContinuedFraction.Hurwitz.Step.next (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+            (Step.next (Step.next fraction
               nonterminal) nextNonterminal).value + 1) := by
-  let current := Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal
-  let following := Data.ComplexContinuedFraction.Hurwitz.Step.next current nextNonterminal
-  let rho := GaussianInt.Division.Nearest.residual current
-  have rhoNonzero : rho ≠ 0 := GaussianInt.Division.Nearest.residual_ne_zero nextNonterminal
+  let current := Step.next fraction nonterminal
+  let following := Step.next current nextNonterminal
+  let rho := Nearest.residual current
+  have rhoNonzero : rho ≠ 0 := Nearest.residual_ne_zero nextNonterminal
   have followingNonzero : following.value ≠ 0 := by
     intro followingZero
     have productZero := congrArg (fun value => value * rho) followingZero
     rw [Gaussian.Basic.zero_mul] at productZero
     have reciprocal : following.value * rho = 1 := by
       dsimp only [following, current, rho]
-      rw [Data.ComplexContinuedFraction.Hurwitz.Step.next_value, Gaussian.Field.inv_eq,
+      rw [Step.next_value, Gaussian.Field.inv_eq,
         Gaussian.Field.inv_mul _ rhoNonzero]
     rw [reciprocal] at productZero
     exact (show (1 : Gaussian.Basic.Canonical) ≠ 0 by decide) productZero
-  have followingPositive : 0 < Data.Gaussian.Norm.Basic.normSq following.value :=
+  have followingPositive : 0 < Gaussian.Norm.Basic.normSq following.value :=
     Gaussian.Norm.Basic.normSq_pos followingNonzero
-  have exterior : 1 < Data.Gaussian.Norm.Basic.normSq (current.value - 1) := by
+  have exterior : 1 < Gaussian.Norm.Basic.normSq (current.value - 1) := by
     dsimp only [current]
     exact one_lt_next_sub_one_normSq fraction nonterminal
   have scaled :=
-    Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
+    Arithmetic.mul_lt_mul_of_pos_right_direct
       exterior followingPositive
   have reciprocal : following.value * rho = 1 := by
     dsimp only [following, current, rho]
-    rw [Data.ComplexContinuedFraction.Hurwitz.Step.next_value, Gaussian.Field.inv_eq,
+    rw [Step.next_value, Gaussian.Field.inv_eq,
       Gaussian.Field.inv_mul _ rhoNonzero]
   have reciprocalReordered : rho * following.value = 1 := by
     calc
@@ -665,14 +670,14 @@ theorem successor_strict_exterior_cleared
       _ = 1 := reciprocal
   have factorIdentity :
       (current.value - 1) * following.value =
-        (GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit current) - 1) * following.value + 1 := by
-    rw [GaussianInt.Division.Nearest.value_eq_digit_add_residual current]
+        (GaussianInt.toGaussian (Nearest.digit current) - 1) * following.value + 1 := by
+    rw [Nearest.value_eq_digit_add_residual current]
     calc
-      (GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit current) + GaussianInt.Division.Nearest.residual
+      (GaussianInt.toGaussian (Nearest.digit current) + Nearest.residual
         current - 1) *
             following.value =
-          (GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit current) - 1) * following.value +
-            GaussianInt.Division.Nearest.residual current * following.value := by
+          (GaussianInt.toGaussian (Nearest.digit current) - 1) * following.value +
+            Nearest.residual current * following.value := by
         apply Gaussian.Basic.ext <;>
           simp only [Gaussian.Basic.add_re,
             Gaussian.Basic.add_im,
@@ -683,22 +688,22 @@ theorem successor_strict_exterior_cleared
             Gaussian.Basic.one_re,
             Gaussian.Basic.one_im] <;>
           ring1
-      _ = (GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit current) - 1) * following.value + 1 := by
-        change (GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit current) - 1) * following.value +
+      _ = (GaussianInt.toGaussian (Nearest.digit current) - 1) * following.value + 1 := by
+        change (GaussianInt.toGaussian (Nearest.digit current) - 1) * following.value +
             rho * following.value = _
         rw [reciprocalReordered]
-  change Data.Gaussian.Norm.Basic.normSq following.value <
-    Data.Gaussian.Norm.Basic.normSq ((GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit current) - 1) *
+  change Gaussian.Norm.Basic.normSq following.value <
+    Gaussian.Norm.Basic.normSq ((GaussianInt.toGaussian (Nearest.digit current) - 1) *
       following.value + 1)
   calc
-    Data.Gaussian.Norm.Basic.normSq following.value = 1 * Data.Gaussian.Norm.Basic.normSq following.value := by
+    Gaussian.Norm.Basic.normSq following.value = 1 * Gaussian.Norm.Basic.normSq following.value := by
       ring1
-    _ < Data.Gaussian.Norm.Basic.normSq (current.value - 1) * Data.Gaussian.Norm.Basic.normSq following.value :=
+    _ < Gaussian.Norm.Basic.normSq (current.value - 1) * Gaussian.Norm.Basic.normSq following.value :=
       scaled
-    _ = Data.Gaussian.Norm.Basic.normSq ((current.value - 1) * following.value) := by
+    _ = Gaussian.Norm.Basic.normSq ((current.value - 1) * following.value) := by
       rw [Gaussian.Norm.Basic.normSq_mul]
-    _ = Data.Gaussian.Norm.Basic.normSq
-        ((GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit current) - 1) * following.value + 1) := by
+    _ = Gaussian.Norm.Basic.normSq
+        ((GaussianInt.toGaussian (Nearest.digit current) - 1) * following.value + 1) := by
       rw [factorIdentity]
 
 /-- On the rational interval [1/2,3/2], one quarter plus the square is strictly less than twice the value.
@@ -712,19 +717,19 @@ private theorem quarter_add_square_lt_twice_of_half_interval
   have displacementLower : -(1 / 2 : Fraction.Rational) ≤ displacement := by
     calc
       -(1 / 2 : Fraction.Rational) = (1 / 2 : Fraction.Rational) - 1 := by decide
-      _ ≤ value - 1 := Fraction.Order.Arithmetic.sub_le_sub_right_direct lower 1
+      _ ≤ value - 1 := Arithmetic.sub_le_sub_right_direct lower 1
       _ = displacement := rfl
   have displacementUpper : displacement ≤ (1 / 2 : Fraction.Rational) := by
     calc
       displacement = value - 1 := rfl
-      _ ≤ (3 / 2 : Fraction.Rational) - 1 := Fraction.Order.Arithmetic.sub_le_sub_right_direct upper 1
+      _ ≤ (3 / 2 : Fraction.Rational) - 1 := Arithmetic.sub_le_sub_right_direct upper 1
       _ = 1 / 2 := by decide
   have leftFactorNonnegative :
       0 ≤ (1 / 2 : Fraction.Rational) - displacement :=
-    Fraction.Order.Arithmetic.sub_nonneg_direct displacementUpper
+    Arithmetic.sub_nonneg_direct displacementUpper
   have rightFactorNonnegative :
       0 ≤ (1 / 2 : Fraction.Rational) + displacement := by
-    have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+    have shifted := Arithmetic.add_le_add_right_direct
       displacementLower (1 / 2 : Fraction.Rational)
     calc
       0 = -(1 / 2 : Fraction.Rational) + 1 / 2 := by ring1
@@ -733,7 +738,7 @@ private theorem quarter_add_square_lt_twice_of_half_interval
   have productNonnegative :
       0 ≤ ((1 / 2 : Fraction.Rational) - displacement) *
         ((1 / 2 : Fraction.Rational) + displacement) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
+    Arithmetic.mul_nonneg_direct
       leftFactorNonnegative rightFactorNonnegative
   have displacementSquareUpper :
       displacement ^ 2 ≤ (1 / 4 : Fraction.Rational) := by
@@ -745,7 +750,7 @@ private theorem quarter_add_square_lt_twice_of_half_interval
           ring1
         _ = (1 / 4 : Fraction.Rational) - displacement ^ 2 := by
           rw [show (1 / 2 : Fraction.Rational) * (1 / 2) = 1 / 4 by decide]
-    exact Fraction.Order.Arithmetic.le_of_sub_nonneg_direct gap
+    exact Arithmetic.le_of_sub_nonneg_direct gap
   have differenceUpper :
       (1 / 2 : Fraction.Rational) ^ 2 + value ^ 2 - 2 * value ≤
         -(1 / 2 : Fraction.Rational) := by
@@ -757,27 +762,27 @@ private theorem quarter_add_square_lt_twice_of_half_interval
       _ = displacement ^ 2 - 3 / 4 := by
         rw [show (1 : Fraction.Rational) - (1 / 2) ^ 2 = 3 / 4 by decide]
       _ ≤ (1 / 4 : Fraction.Rational) - 3 / 4 :=
-        Fraction.Order.Arithmetic.sub_le_sub_right_direct
+        Arithmetic.sub_le_sub_right_direct
           displacementSquareUpper (3 / 4 : Fraction.Rational)
       _ = -(1 / 2 : Fraction.Rational) := by decide
   have differenceNegative :
       (1 / 2 : Fraction.Rational) ^ 2 + value ^ 2 - 2 * value < 0 :=
     differenceUpper.trans_lt (show -(1 / 2 : Fraction.Rational) < 0 by decide)
-  exact Fraction.Order.Arithmetic.lt_of_sub_neg_direct differenceNegative
+  exact Arithmetic.lt_of_sub_neg_direct differenceNegative
 
 /-- A residual can be recovered from the following displayed quotient by
 one finite inversion; no infinite tail is involved. -/
 theorem residual_eq_next_value_inv (fraction :
   GaussianInt.Fraction)
-    (nonterminal : GaussianInt.Division.Nearest.remainder fraction ≠ 0) :
-    GaussianInt.Division.Nearest.residual fraction = (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+    (nonterminal : Nearest.remainder fraction ≠ 0) :
+    Nearest.residual fraction = (Step.next fraction
       nonterminal).value⁻¹ := by
-  let rho := GaussianInt.Division.Nearest.residual fraction
-  let following := Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal
-  have rhoNonzero : rho ≠ 0 := GaussianInt.Division.Nearest.residual_ne_zero nonterminal
+  let rho := Nearest.residual fraction
+  let following := Step.next fraction nonterminal
+  have rhoNonzero : rho ≠ 0 := Nearest.residual_ne_zero nonterminal
   have reciprocal : following.value * rho = 1 := by
     dsimp only [following, rho]
-    rw [Data.ComplexContinuedFraction.Hurwitz.Step.next_value, Gaussian.Field.inv_eq,
+    rw [Step.next_value, Gaussian.Field.inv_eq,
       Gaussian.Field.inv_mul _ rhoNonzero]
   have followingNonzero : following.value ≠ 0 := by
     intro followingZero
@@ -786,26 +791,26 @@ theorem residual_eq_next_value_inv (fraction :
   apply Gaussian.Field.mul_right_cancel_of_ne
     followingNonzero
   calc
-    GaussianInt.Division.Nearest.residual fraction * following.value = following.value * rho := by
+    Nearest.residual fraction * following.value = following.value * rho := by
       dsimp only [rho]
       exact Gaussian.Basic.mul_comm _ _
     _ = 1 := reciprocal
     _ = following.value⁻¹ * following.value := by
       rw [Gaussian.Field.inv_eq,
         Gaussian.Field.inv_mul _ followingNonzero]
-    _ = (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal).value⁻¹ * following.value := rfl
+    _ = (Step.next fraction nonterminal).value⁻¹ * following.value := rfl
 
 /-- A noninitial digit 1+i has residual real coordinate strictly above -1/2.
 
 Equality at the lower edge would force the preceding residual outside its selected fundamental square. -/
 private theorem next_residual_real_lower_strict_of_one_add_i
-    (fraction : GaussianInt.Fraction) (nonterminal : GaussianInt.Division.Nearest.remainder fraction ≠ 0)
-    (digitValue : GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+    (fraction : GaussianInt.Fraction) (nonterminal : Nearest.remainder fraction ≠ 0)
+    (digitValue : Nearest.digit (Step.next fraction
       nonterminal) = ⟨1, 1⟩) :
-    -(1 / 2 : Fraction.Rational) < (GaussianInt.Division.Nearest.residual
-      (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal)).re := by
-  let following := Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal
-  let sigma := GaussianInt.Division.Nearest.residual following
+    -(1 / 2 : Fraction.Rational) < (Nearest.residual
+      (Step.next fraction nonterminal)).re := by
+  let following := Step.next fraction nonterminal
+  let sigma := Nearest.residual following
   have sigmaSquare := GaussianInt.Nearest.remainder_mem following.value
   apply lt_of_not_ge
   intro upper
@@ -814,14 +819,14 @@ private theorem next_residual_real_lower_strict_of_one_add_i
   have decomposition :
       following.value = GaussianInt.toGaussian (⟨1, 1⟩ : GaussianInt) + sigma := by
     calc
-      following.value = GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit following) +
-        GaussianInt.Division.Nearest.residual following :=
-        GaussianInt.Division.Nearest.value_eq_digit_add_residual following
+      following.value = GaussianInt.toGaussian (Nearest.digit following) +
+        Nearest.residual following :=
+        Nearest.value_eq_digit_add_residual following
       _ = GaussianInt.toGaussian (⟨1, 1⟩ : GaussianInt) + sigma := by rw [digitValue]
   have realValue : following.value.re = (1 / 2 : Fraction.Rational) := by
     have component := congrArg Gaussian.Basic.re decomposition
     simp only [GaussianInt.toGaussian, Gaussian.Basic.add_re,
-      Int.cast_one, ← Rat.Fraction.Cast.intCast_eq_fromInt] at component
+      Int.cast_one, ← Fraction.Cast.intCast_eq_fromInt] at component
     dsimp only [sigma] at boundary
     rw [boundary] at component
     calc
@@ -830,8 +835,8 @@ private theorem next_residual_real_lower_strict_of_one_add_i
   have imaginaryLower : (1 / 2 : Fraction.Rational) ≤ following.value.im := by
     have component := congrArg Gaussian.Basic.im decomposition
     simp only [GaussianInt.toGaussian, Gaussian.Basic.add_im,
-      Int.cast_one, ← Rat.Fraction.Cast.intCast_eq_fromInt] at component
-    have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+      Int.cast_one, ← Fraction.Cast.intCast_eq_fromInt] at component
+    have shifted := Arithmetic.add_le_add_right_direct
       sigmaSquare.2.2.1 1
     calc
       (1 / 2 : Fraction.Rational) = -(1 / 2 : Fraction.Rational) + 1 := by decide
@@ -841,61 +846,61 @@ private theorem next_residual_real_lower_strict_of_one_add_i
   have imaginaryUpper : following.value.im ≤ (3 / 2 : Fraction.Rational) := by
     have component := congrArg Gaussian.Basic.im decomposition
     simp only [GaussianInt.toGaussian, Gaussian.Basic.add_im,
-      Int.cast_one, ← Rat.Fraction.Cast.intCast_eq_fromInt] at component
-    have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+      Int.cast_one, ← Fraction.Cast.intCast_eq_fromInt] at component
+    have shifted := Arithmetic.add_le_add_right_direct
       sigmaSquare.2.2.2.le 1
     calc
       following.value.im = 1 + sigma.im := component
       _ = sigma.im + 1 := by ring1
       _ ≤ (1 / 2 : Fraction.Rational) + 1 := shifted
       _ = 3 / 2 := by decide
-  have normLess : Data.Gaussian.Norm.Basic.normSq following.value < 2 * following.value.im := by
-    rw [Data.Gaussian.Norm.Basic.normSq, realValue]
+  have normLess : Gaussian.Norm.Basic.normSq following.value < 2 * following.value.im := by
+    rw [Gaussian.Norm.Basic.normSq, realValue]
     exact quarter_add_square_lt_twice_of_half_interval following.value.im
       imaginaryLower imaginaryUpper
   have followingNonzero : following.value ≠ 0 := by
     intro followingZero
-    have lower := Hurwitz.Geometry.next_normSq_ge_two fraction nonterminal
+    have lower := Geometry.next_normSq_ge_two fraction nonterminal
     rw [followingZero, Gaussian.Norm.Basic.normSq_zero] at lower
     exact (not_le_of_gt (show (0 : Fraction.Rational) < 2 by decide)) lower
-  have normPositive : 0 < Data.Gaussian.Norm.Basic.normSq following.value := Gaussian.Norm.Basic.normSq_pos
+  have normPositive : 0 < Gaussian.Norm.Basic.normSq following.value := Gaussian.Norm.Basic.normSq_pos
     followingNonzero
-  have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+  have scaled := Arithmetic.mul_lt_mul_of_pos_left_direct
     (show (0 : Fraction.Rational) < 1 / 2 by decide) normLess
   have numeratorStrict :
       -following.value.im <
-        -(1 / 2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq following.value := by
-    have negated := Fraction.Order.Arithmetic.neg_lt_neg_direct scaled
+        -(1 / 2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq following.value := by
+    have negated := Arithmetic.neg_lt_neg_direct scaled
     calc
       -following.value.im = -((1 / 2 : Fraction.Rational) *
           (2 * following.value.im)) := by
         rw [half_two_mul]
-      _ < -((1 / 2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq following.value) := negated
-      _ = -(1 / 2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq following.value := by ring1
+      _ < -((1 / 2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq following.value) := negated
+      _ = -(1 / 2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq following.value := by ring1
   have quotientStrict :=
-    (Fraction.Order.Field.div_lt_iff_pos normPositive).2 numeratorStrict
+    (Field.div_lt_iff_pos normPositive).2 numeratorStrict
   have rhoSquare := GaussianInt.Nearest.remainder_mem fraction.value
-  change GaussianInt.Nearest.InFundamentalSquare (GaussianInt.Division.Nearest.residual fraction)
+  change GaussianInt.Nearest.InFundamentalSquare (Nearest.residual fraction)
     at rhoSquare
   have rhoLower := rhoSquare.2.2.1
-  change -(1 / 2 : Fraction.Rational) ≤ (GaussianInt.Division.Nearest.residual fraction).im at rhoLower
+  change -(1 / 2 : Fraction.Rational) ≤ (Nearest.residual fraction).im at rhoLower
   rw [residual_eq_next_value_inv fraction nonterminal,
     Gaussian.Field.inv_eq] at rhoLower
   change -(1 / 2 : Fraction.Rational) ≤
-    -following.value.im / Data.Gaussian.Norm.Basic.normSq following.value at rhoLower
+    -following.value.im / Gaussian.Norm.Basic.normSq following.value at rhoLower
   exact (not_lt_of_ge rhoLower quotientStrict)
 
 /-- A noninitial digit 1-i has residual real coordinate strictly above -1/2.
 
 The excluded boundary would invert to an imaginary coordinate beyond the preceding residual square. -/
 private theorem next_residual_real_lower_strict_of_one_sub_i
-    (fraction : GaussianInt.Fraction) (nonterminal : GaussianInt.Division.Nearest.remainder fraction ≠ 0)
-    (digitValue : GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+    (fraction : GaussianInt.Fraction) (nonterminal : Nearest.remainder fraction ≠ 0)
+    (digitValue : Nearest.digit (Step.next fraction
       nonterminal) = ⟨1, -1⟩) :
-    -(1 / 2 : Fraction.Rational) < (GaussianInt.Division.Nearest.residual
-      (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal)).re := by
-  let following := Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal
-  let sigma := GaussianInt.Division.Nearest.residual following
+    -(1 / 2 : Fraction.Rational) < (Nearest.residual
+      (Step.next fraction nonterminal)).re := by
+  let following := Step.next fraction nonterminal
+  let sigma := Nearest.residual following
   have sigmaSquare := GaussianInt.Nearest.remainder_mem following.value
   apply lt_of_not_ge
   intro upper
@@ -904,14 +909,14 @@ private theorem next_residual_real_lower_strict_of_one_sub_i
   have decomposition :
       following.value = GaussianInt.toGaussian (⟨1, -1⟩ : GaussianInt) + sigma := by
     calc
-      following.value = GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit following) +
-        GaussianInt.Division.Nearest.residual following :=
-        GaussianInt.Division.Nearest.value_eq_digit_add_residual following
+      following.value = GaussianInt.toGaussian (Nearest.digit following) +
+        Nearest.residual following :=
+        Nearest.value_eq_digit_add_residual following
       _ = GaussianInt.toGaussian (⟨1, -1⟩ : GaussianInt) + sigma := by rw [digitValue]
   have realValue : following.value.re = (1 / 2 : Fraction.Rational) := by
     have component := congrArg Gaussian.Basic.re decomposition
     simp only [GaussianInt.toGaussian, Gaussian.Basic.add_re,
-      Int.cast_one, ← Rat.Fraction.Cast.intCast_eq_fromInt] at component
+      Int.cast_one, ← Fraction.Cast.intCast_eq_fromInt] at component
     dsimp only [sigma] at boundary
     rw [boundary] at component
     calc
@@ -921,8 +926,8 @@ private theorem next_residual_real_lower_strict_of_one_sub_i
   have magnitudeLower : (1 / 2 : Fraction.Rational) ≤ magnitude := by
     have component := congrArg Gaussian.Basic.im decomposition
     simp only [GaussianInt.toGaussian, Gaussian.Basic.add_im,
-      Int.cast_one, ← Rat.Fraction.Cast.intCast_eq_fromInt] at component
-    have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+      Int.cast_one, ← Fraction.Cast.intCast_eq_fromInt] at component
+    have shifted := Arithmetic.add_le_add_right_direct
       sigmaSquare.2.2.2.le (-1)
     have followingUpper : following.value.im ≤ -(1 / 2 : Fraction.Rational) := by
       calc
@@ -930,14 +935,14 @@ private theorem next_residual_real_lower_strict_of_one_sub_i
         _ = sigma.im + (-1 : Fraction.Rational) := by ring1
         _ ≤ (1 / 2 : Fraction.Rational) + (-1 : Fraction.Rational) := shifted
         _ = -(1 / 2 : Fraction.Rational) := by decide
-    have negated := Fraction.Order.Arithmetic.neg_le_neg_direct followingUpper
+    have negated := Arithmetic.neg_le_neg_direct followingUpper
     dsimp only [magnitude]
     simpa only [neg_neg] using negated
   have magnitudeUpper : magnitude ≤ (3 / 2 : Fraction.Rational) := by
     have component := congrArg Gaussian.Basic.im decomposition
     simp only [GaussianInt.toGaussian, Gaussian.Basic.add_im,
-      Int.cast_one, ← Rat.Fraction.Cast.intCast_eq_fromInt] at component
-    have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+      Int.cast_one, ← Fraction.Cast.intCast_eq_fromInt] at component
+    have shifted := Arithmetic.add_le_add_right_direct
       sigmaSquare.2.2.1 (-1)
     have followingLower : -(3 / 2 : Fraction.Rational) ≤ following.value.im := by
       calc
@@ -945,11 +950,11 @@ private theorem next_residual_real_lower_strict_of_one_sub_i
         _ ≤ sigma.im + (-1 : Fraction.Rational) := shifted
         _ = (-1 : Fraction.Rational) + sigma.im := by ring1
         _ = following.value.im := component.symm
-    have negated := Fraction.Order.Arithmetic.neg_le_neg_direct followingLower
+    have negated := Arithmetic.neg_le_neg_direct followingLower
     dsimp only [magnitude]
     simpa only [neg_neg] using negated
-  have normLess : Data.Gaussian.Norm.Basic.normSq following.value < 2 * magnitude := by
-    rw [Data.Gaussian.Norm.Basic.normSq, realValue]
+  have normLess : Gaussian.Norm.Basic.normSq following.value < 2 * magnitude := by
+    rw [Gaussian.Norm.Basic.normSq, realValue]
     have bound := quarter_add_square_lt_twice_of_half_interval magnitude
       magnitudeLower magnitudeUpper
     convert bound using 1
@@ -957,33 +962,33 @@ private theorem next_residual_real_lower_strict_of_one_sub_i
     all_goals ring1
   have followingNonzero : following.value ≠ 0 := by
     intro followingZero
-    have lower := Hurwitz.Geometry.next_normSq_ge_two fraction nonterminal
+    have lower := Geometry.next_normSq_ge_two fraction nonterminal
     rw [followingZero, Gaussian.Norm.Basic.normSq_zero] at lower
     exact (not_le_of_gt (show (0 : Fraction.Rational) < 2 by decide)) lower
-  have normPositive : 0 < Data.Gaussian.Norm.Basic.normSq following.value := Gaussian.Norm.Basic.normSq_pos
+  have normPositive : 0 < Gaussian.Norm.Basic.normSq following.value := Gaussian.Norm.Basic.normSq_pos
     followingNonzero
-  have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+  have scaled := Arithmetic.mul_lt_mul_of_pos_left_direct
     (show (0 : Fraction.Rational) < 1 / 2 by decide) normLess
   have lowerQuotient :
-      (1 / 2 : Fraction.Rational) < magnitude / Data.Gaussian.Norm.Basic.normSq following.value :=
-    (Fraction.Order.Field.lt_div_iff_pos normPositive).2 (by
+      (1 / 2 : Fraction.Rational) < magnitude / Gaussian.Norm.Basic.normSq following.value :=
+    (Field.lt_div_iff_pos normPositive).2 (by
       calc
-        (1 / 2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq following.value <
+        (1 / 2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq following.value <
             (1 / 2 : Fraction.Rational) * (2 * magnitude) := scaled
         _ = magnitude := half_two_mul magnitude)
   have rhoSquare := GaussianInt.Nearest.remainder_mem fraction.value
-  change GaussianInt.Nearest.InFundamentalSquare (GaussianInt.Division.Nearest.residual fraction)
+  change GaussianInt.Nearest.InFundamentalSquare (Nearest.residual fraction)
     at rhoSquare
   have rhoUpper := rhoSquare.2.2.2
-  change (GaussianInt.Division.Nearest.residual fraction).im < (1 / 2 : Fraction.Rational) at rhoUpper
+  change (Nearest.residual fraction).im < (1 / 2 : Fraction.Rational) at rhoUpper
   rw [residual_eq_next_value_inv fraction nonterminal,
     Gaussian.Field.inv_eq] at rhoUpper
   change
-    -following.value.im / Data.Gaussian.Norm.Basic.normSq following.value < (1 / 2 : Fraction.Rational)
+    -following.value.im / Gaussian.Norm.Basic.normSq following.value < (1 / 2 : Fraction.Rational)
       at rhoUpper
   have quotientIdentity :
-      -following.value.im / Data.Gaussian.Norm.Basic.normSq following.value =
-        magnitude / Data.Gaussian.Norm.Basic.normSq following.value := by rfl
+      -following.value.im / Gaussian.Norm.Basic.normSq following.value =
+        magnitude / Gaussian.Norm.Basic.normSq following.value := by rfl
   rw [quotientIdentity] at rhoUpper
   exact (not_lt_of_ge lowerQuotient.le rhoUpper)
 
@@ -992,13 +997,13 @@ private theorem next_residual_real_lower_strict_of_one_sub_i
 The boundary case would invert to a real coordinate larger than the preceding residual square permits. -/
 private theorem
   next_residual_imaginary_lower_strict_of_one_add_i
-    (fraction : GaussianInt.Fraction) (nonterminal : GaussianInt.Division.Nearest.remainder fraction ≠ 0)
-    (digitValue : GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+    (fraction : GaussianInt.Fraction) (nonterminal : Nearest.remainder fraction ≠ 0)
+    (digitValue : Nearest.digit (Step.next fraction
       nonterminal) = ⟨1, 1⟩) :
-    -(1 / 2 : Fraction.Rational) < (GaussianInt.Division.Nearest.residual
-      (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal)).im := by
-  let following := Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal
-  let sigma := GaussianInt.Division.Nearest.residual following
+    -(1 / 2 : Fraction.Rational) < (Nearest.residual
+      (Step.next fraction nonterminal)).im := by
+  let following := Step.next fraction nonterminal
+  let sigma := Nearest.residual following
   have sigmaSquare := GaussianInt.Nearest.remainder_mem following.value
   apply lt_of_not_ge
   intro upper
@@ -1007,14 +1012,14 @@ private theorem
   have decomposition :
       following.value = GaussianInt.toGaussian (⟨1, 1⟩ : GaussianInt) + sigma := by
     calc
-      following.value = GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit following) +
-        GaussianInt.Division.Nearest.residual following :=
-        GaussianInt.Division.Nearest.value_eq_digit_add_residual following
+      following.value = GaussianInt.toGaussian (Nearest.digit following) +
+        Nearest.residual following :=
+        Nearest.value_eq_digit_add_residual following
       _ = GaussianInt.toGaussian (⟨1, 1⟩ : GaussianInt) + sigma := by rw [digitValue]
   have imaginaryValue : following.value.im = (1 / 2 : Fraction.Rational) := by
     have component := congrArg Gaussian.Basic.im decomposition
     simp only [GaussianInt.toGaussian, Gaussian.Basic.add_im,
-      Int.cast_one, ← Rat.Fraction.Cast.intCast_eq_fromInt] at component
+      Int.cast_one, ← Fraction.Cast.intCast_eq_fromInt] at component
     dsimp only [sigma] at boundary
     rw [boundary] at component
     calc
@@ -1023,8 +1028,8 @@ private theorem
   have realLower : (1 / 2 : Fraction.Rational) ≤ following.value.re := by
     have component := congrArg Gaussian.Basic.re decomposition
     simp only [GaussianInt.toGaussian, Gaussian.Basic.add_re,
-      Int.cast_one, ← Rat.Fraction.Cast.intCast_eq_fromInt] at component
-    have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+      Int.cast_one, ← Fraction.Cast.intCast_eq_fromInt] at component
+    have shifted := Arithmetic.add_le_add_right_direct
       sigmaSquare.1 1
     calc
       (1 / 2 : Fraction.Rational) = -(1 / 2 : Fraction.Rational) + 1 := by decide
@@ -1034,16 +1039,16 @@ private theorem
   have realUpper : following.value.re ≤ (3 / 2 : Fraction.Rational) := by
     have component := congrArg Gaussian.Basic.re decomposition
     simp only [GaussianInt.toGaussian, Gaussian.Basic.add_re,
-      Int.cast_one, ← Rat.Fraction.Cast.intCast_eq_fromInt] at component
-    have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+      Int.cast_one, ← Fraction.Cast.intCast_eq_fromInt] at component
+    have shifted := Arithmetic.add_le_add_right_direct
       sigmaSquare.2.1.le 1
     calc
       following.value.re = 1 + sigma.re := component
       _ = sigma.re + 1 := by ring1
       _ ≤ (1 / 2 : Fraction.Rational) + 1 := shifted
       _ = 3 / 2 := by decide
-  have normLess : Data.Gaussian.Norm.Basic.normSq following.value < 2 * following.value.re := by
-    rw [Data.Gaussian.Norm.Basic.normSq, imaginaryValue]
+  have normLess : Gaussian.Norm.Basic.normSq following.value < 2 * following.value.re := by
+    rw [Gaussian.Norm.Basic.normSq, imaginaryValue]
     calc
       following.value.re ^ 2 + (1 / 2 : Fraction.Rational) ^ 2 =
           (1 / 2 : Fraction.Rational) ^ 2 + following.value.re ^ 2 := by ring1
@@ -1052,29 +1057,29 @@ private theorem
           realLower realUpper
   have followingNonzero : following.value ≠ 0 := by
     intro followingZero
-    have lower := Hurwitz.Geometry.next_normSq_ge_two fraction nonterminal
+    have lower := Geometry.next_normSq_ge_two fraction nonterminal
     rw [followingZero, Gaussian.Norm.Basic.normSq_zero] at lower
     exact (not_le_of_gt (show (0 : Fraction.Rational) < 2 by decide)) lower
-  have normPositive : 0 < Data.Gaussian.Norm.Basic.normSq following.value := Gaussian.Norm.Basic.normSq_pos
+  have normPositive : 0 < Gaussian.Norm.Basic.normSq following.value := Gaussian.Norm.Basic.normSq_pos
     followingNonzero
-  have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+  have scaled := Arithmetic.mul_lt_mul_of_pos_left_direct
     (show (0 : Fraction.Rational) < 1 / 2 by decide) normLess
   have quotientStrict :
       (1 / 2 : Fraction.Rational) <
-        following.value.re / Data.Gaussian.Norm.Basic.normSq following.value :=
-    (Fraction.Order.Field.lt_div_iff_pos normPositive).2 (by
+        following.value.re / Gaussian.Norm.Basic.normSq following.value :=
+    (Field.lt_div_iff_pos normPositive).2 (by
       calc
-        (1 / 2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq following.value <
+        (1 / 2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq following.value <
             (1 / 2 : Fraction.Rational) * (2 * following.value.re) := scaled
         _ = following.value.re := half_two_mul following.value.re)
   have rhoSquare := GaussianInt.Nearest.remainder_mem fraction.value
-  change GaussianInt.Nearest.InFundamentalSquare (GaussianInt.Division.Nearest.residual fraction)
+  change GaussianInt.Nearest.InFundamentalSquare (Nearest.residual fraction)
     at rhoSquare
   have rhoUpper := rhoSquare.2.1
-  change (GaussianInt.Division.Nearest.residual fraction).re < (1 / 2 : Fraction.Rational) at rhoUpper
+  change (Nearest.residual fraction).re < (1 / 2 : Fraction.Rational) at rhoUpper
   rw [residual_eq_next_value_inv fraction nonterminal,
     Gaussian.Field.inv_eq] at rhoUpper
-  change following.value.re / Data.Gaussian.Norm.Basic.normSq following.value <
+  change following.value.re / Gaussian.Norm.Basic.normSq following.value <
     (1 / 2 : Fraction.Rational) at rhoUpper
   exact (not_lt_of_ge quotientStrict.le rhoUpper)
 
@@ -1083,13 +1088,13 @@ private theorem
 The boundary case would invert to a real coordinate below the preceding residual square. -/
 private theorem
   next_residual_imaginary_lower_strict_of_neg_one_add_i
-    (fraction : GaussianInt.Fraction) (nonterminal : GaussianInt.Division.Nearest.remainder fraction ≠ 0)
-    (digitValue : GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+    (fraction : GaussianInt.Fraction) (nonterminal : Nearest.remainder fraction ≠ 0)
+    (digitValue : Nearest.digit (Step.next fraction
       nonterminal) = ⟨-1, 1⟩) :
-    -(1 / 2 : Fraction.Rational) < (GaussianInt.Division.Nearest.residual
-      (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal)).im := by
-  let following := Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal
-  let sigma := GaussianInt.Division.Nearest.residual following
+    -(1 / 2 : Fraction.Rational) < (Nearest.residual
+      (Step.next fraction nonterminal)).im := by
+  let following := Step.next fraction nonterminal
+  let sigma := Nearest.residual following
   have sigmaSquare := GaussianInt.Nearest.remainder_mem following.value
   apply lt_of_not_ge
   intro upper
@@ -1098,14 +1103,14 @@ private theorem
   have decomposition :
       following.value = GaussianInt.toGaussian (⟨-1, 1⟩ : GaussianInt) + sigma := by
     calc
-      following.value = GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit following) +
-        GaussianInt.Division.Nearest.residual following :=
-        GaussianInt.Division.Nearest.value_eq_digit_add_residual following
+      following.value = GaussianInt.toGaussian (Nearest.digit following) +
+        Nearest.residual following :=
+        Nearest.value_eq_digit_add_residual following
       _ = GaussianInt.toGaussian (⟨-1, 1⟩ : GaussianInt) + sigma := by rw [digitValue]
   have imaginaryValue : following.value.im = (1 / 2 : Fraction.Rational) := by
     have component := congrArg Gaussian.Basic.im decomposition
     simp only [GaussianInt.toGaussian, Gaussian.Basic.add_im,
-      Int.cast_one, ← Rat.Fraction.Cast.intCast_eq_fromInt] at component
+      Int.cast_one, ← Fraction.Cast.intCast_eq_fromInt] at component
     dsimp only [sigma] at boundary
     rw [boundary] at component
     calc
@@ -1115,8 +1120,8 @@ private theorem
   have magnitudeLower : (1 / 2 : Fraction.Rational) ≤ magnitude := by
     have component := congrArg Gaussian.Basic.re decomposition
     simp only [GaussianInt.toGaussian, Gaussian.Basic.add_re,
-      Int.cast_one, ← Rat.Fraction.Cast.intCast_eq_fromInt] at component
-    have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+      Int.cast_one, ← Fraction.Cast.intCast_eq_fromInt] at component
+    have shifted := Arithmetic.add_le_add_right_direct
       sigmaSquare.2.1.le (-1)
     have followingUpper : following.value.re ≤ -(1 / 2 : Fraction.Rational) := by
       calc
@@ -1124,14 +1129,14 @@ private theorem
         _ = sigma.re + (-1 : Fraction.Rational) := by ring1
         _ ≤ (1 / 2 : Fraction.Rational) + (-1 : Fraction.Rational) := shifted
         _ = -(1 / 2 : Fraction.Rational) := by decide
-    have negated := Fraction.Order.Arithmetic.neg_le_neg_direct followingUpper
+    have negated := Arithmetic.neg_le_neg_direct followingUpper
     dsimp only [magnitude]
     simpa only [neg_neg] using negated
   have magnitudeUpper : magnitude ≤ (3 / 2 : Fraction.Rational) := by
     have component := congrArg Gaussian.Basic.re decomposition
     simp only [GaussianInt.toGaussian, Gaussian.Basic.add_re,
-      Int.cast_one, ← Rat.Fraction.Cast.intCast_eq_fromInt] at component
-    have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+      Int.cast_one, ← Fraction.Cast.intCast_eq_fromInt] at component
+    have shifted := Arithmetic.add_le_add_right_direct
       sigmaSquare.1 (-1)
     have followingLower : -(3 / 2 : Fraction.Rational) ≤ following.value.re := by
       calc
@@ -1139,11 +1144,11 @@ private theorem
         _ ≤ sigma.re + (-1 : Fraction.Rational) := shifted
         _ = (-1 : Fraction.Rational) + sigma.re := by ring1
         _ = following.value.re := component.symm
-    have negated := Fraction.Order.Arithmetic.neg_le_neg_direct followingLower
+    have negated := Arithmetic.neg_le_neg_direct followingLower
     dsimp only [magnitude]
     simpa only [neg_neg] using negated
-  have normLess : Data.Gaussian.Norm.Basic.normSq following.value < 2 * magnitude := by
-    rw [Data.Gaussian.Norm.Basic.normSq, imaginaryValue]
+  have normLess : Gaussian.Norm.Basic.normSq following.value < 2 * magnitude := by
+    rw [Gaussian.Norm.Basic.normSq, imaginaryValue]
     have bound := quarter_add_square_lt_twice_of_half_interval magnitude
       magnitudeLower magnitudeUpper
     convert bound using 1
@@ -1151,34 +1156,34 @@ private theorem
     all_goals ring1
   have followingNonzero : following.value ≠ 0 := by
     intro followingZero
-    have lower := Hurwitz.Geometry.next_normSq_ge_two fraction nonterminal
+    have lower := Geometry.next_normSq_ge_two fraction nonterminal
     rw [followingZero, Gaussian.Norm.Basic.normSq_zero] at lower
     exact (not_le_of_gt (show (0 : Fraction.Rational) < 2 by decide)) lower
-  have normPositive : 0 < Data.Gaussian.Norm.Basic.normSq following.value := Gaussian.Norm.Basic.normSq_pos
+  have normPositive : 0 < Gaussian.Norm.Basic.normSq following.value := Gaussian.Norm.Basic.normSq_pos
     followingNonzero
-  have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+  have scaled := Arithmetic.mul_lt_mul_of_pos_left_direct
     (show (0 : Fraction.Rational) < 1 / 2 by decide) normLess
   have numeratorStrict :
       following.value.re <
-        -(1 / 2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq following.value := by
-    have negated := Fraction.Order.Arithmetic.neg_lt_neg_direct scaled
+        -(1 / 2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq following.value := by
+    have negated := Arithmetic.neg_lt_neg_direct scaled
     calc
       following.value.re = -magnitude := by dsimp only [magnitude]; ring1
       _ = -((1 / 2 : Fraction.Rational) * (2 * magnitude)) := by
         rw [half_two_mul]
-      _ < -((1 / 2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq following.value) := negated
-      _ = -(1 / 2 : Fraction.Rational) * Data.Gaussian.Norm.Basic.normSq following.value := by ring1
+      _ < -((1 / 2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq following.value) := negated
+      _ = -(1 / 2 : Fraction.Rational) * Gaussian.Norm.Basic.normSq following.value := by ring1
   have quotientStrict :=
-    (Fraction.Order.Field.div_lt_iff_pos normPositive).2 numeratorStrict
+    (Field.div_lt_iff_pos normPositive).2 numeratorStrict
   have rhoSquare := GaussianInt.Nearest.remainder_mem fraction.value
-  change GaussianInt.Nearest.InFundamentalSquare (GaussianInt.Division.Nearest.residual fraction)
+  change GaussianInt.Nearest.InFundamentalSquare (Nearest.residual fraction)
     at rhoSquare
   have rhoLower := rhoSquare.1
-  change -(1 / 2 : Fraction.Rational) ≤ (GaussianInt.Division.Nearest.residual fraction).re at rhoLower
+  change -(1 / 2 : Fraction.Rational) ≤ (Nearest.residual fraction).re at rhoLower
   rw [residual_eq_next_value_inv fraction nonterminal,
     Gaussian.Field.inv_eq] at rhoLower
   change -(1 / 2 : Fraction.Rational) ≤
-    following.value.re / Data.Gaussian.Norm.Basic.normSq following.value at rhoLower
+    following.value.re / Gaussian.Norm.Basic.normSq following.value at rhoLower
   exact (not_lt_of_ge rhoLower quotientStrict)
 
 /-- The signed quadrance difference obtained after clearing one proposed
@@ -1186,54 +1191,54 @@ adjacent digit pair against a Gaussian-unit exterior disc. -/
 def successorGap (previousDigit followingDigit unit :
   GaussianInt)
     (followingResidual : Gaussian.Basic.Canonical) : Fraction.Rational :=
-  Data.Gaussian.Norm.Basic.normSq
+  Gaussian.Norm.Basic.normSq
       ((GaussianInt.toGaussian previousDigit - GaussianInt.toGaussian unit) *
           (GaussianInt.toGaussian followingDigit + followingResidual) + 1) -
-    Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian followingDigit + followingResidual)
+    Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian followingDigit + followingResidual)
 
 /-- A proposed pair of successive Hurwitz digits is impossible when its cleared unit-exterior gap is negative.
 
 The digit identities tie the supplied polynomial gap to the actual following residual and contradict its exterior
 certificate. -/
 private theorem successor_pair_false_of_negative_gap
-    (fraction : GaussianInt.Fraction) (nonterminal : GaussianInt.Division.Nearest.remainder fraction ≠ 0)
-    (nextNonterminal : GaussianInt.Division.Nearest.remainder (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+    (fraction : GaussianInt.Fraction) (nonterminal : Nearest.remainder fraction ≠ 0)
+    (nextNonterminal : Nearest.remainder (Step.next fraction
       nonterminal) ≠ 0)
     (previousDigit followingDigit unit : GaussianInt)
     (unitProperty : GaussianInt.Norm.Small.IsGaussianUnit unit)
-    (previousDigitValue : GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+    (previousDigitValue : Nearest.digit (Step.next fraction
       nonterminal) = previousDigit)
     (followingDigitValue :
-      GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next
-        (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal) nextNonterminal) = followingDigit)
+      Nearest.digit (Step.next
+        (Step.next fraction nonterminal) nextNonterminal) = followingDigit)
     (negativeGap :
       successorGap previousDigit followingDigit unit
-        (GaussianInt.Division.Nearest.residual (Data.ComplexContinuedFraction.Hurwitz.Step.next
-          (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal) nextNonterminal)) < 0) :
+        (Nearest.residual (Step.next
+          (Step.next fraction nonterminal) nextNonterminal)) < 0) :
     False := by
-  let following := Data.ComplexContinuedFraction.Hurwitz.Step.next (Data.ComplexContinuedFraction.Hurwitz.Step.next
+  let following := Step.next (Step.next
     fraction nonterminal) nextNonterminal
   have decomposition :
       following.value =
-        GaussianInt.toGaussian followingDigit + GaussianInt.Division.Nearest.residual following := by
+        GaussianInt.toGaussian followingDigit + Nearest.residual following := by
     calc
-      following.value = GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit following) +
-        GaussianInt.Division.Nearest.residual following :=
-        GaussianInt.Division.Nearest.value_eq_digit_add_residual following
-      _ = GaussianInt.toGaussian followingDigit + GaussianInt.Division.Nearest.residual following := by
+      following.value = GaussianInt.toGaussian (Nearest.digit following) +
+        Nearest.residual following :=
+        Nearest.value_eq_digit_add_residual following
+      _ = GaussianInt.toGaussian followingDigit + Nearest.residual following := by
         rw [followingDigitValue]
   have exterior := successor_exterior_cleared fraction nonterminal
     nextNonterminal unit unitProperty
   rw [previousDigitValue, decomposition] at exterior
   have strictGap :
-      Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq
           ((GaussianInt.toGaussian previousDigit - GaussianInt.toGaussian unit) *
-              (GaussianInt.toGaussian followingDigit + GaussianInt.Division.Nearest.residual following) + 1) <
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian followingDigit +
-          GaussianInt.Division.Nearest.residual following) :=
-    Fraction.Order.Arithmetic.lt_of_sub_neg_direct (by
+              (GaussianInt.toGaussian followingDigit + Nearest.residual following) + 1) <
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian followingDigit +
+          Nearest.residual following) :=
+    Arithmetic.lt_of_sub_neg_direct (by
       change successorGap previousDigit followingDigit unit
-        (GaussianInt.Division.Nearest.residual following) < 0
+        (Nearest.residual following) < 0
       exact negativeGap)
   exact (not_lt_of_ge exterior strictGap)
 
@@ -1241,43 +1246,43 @@ private theorem successor_pair_false_of_negative_gap
 
 The half-open rounding convention supplies the strict exterior inequality needed to exclude equality as well. -/
 private theorem successor_pair_false_of_nonpositive_gap_at_one
-    (fraction : GaussianInt.Fraction) (nonterminal : GaussianInt.Division.Nearest.remainder fraction ≠ 0)
-    (nextNonterminal : GaussianInt.Division.Nearest.remainder (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+    (fraction : GaussianInt.Fraction) (nonterminal : Nearest.remainder fraction ≠ 0)
+    (nextNonterminal : Nearest.remainder (Step.next fraction
       nonterminal) ≠ 0)
     (previousDigit followingDigit : GaussianInt)
-    (previousDigitValue : GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+    (previousDigitValue : Nearest.digit (Step.next fraction
       nonterminal) = previousDigit)
     (followingDigitValue :
-      GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next
-        (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal) nextNonterminal) = followingDigit)
+      Nearest.digit (Step.next
+        (Step.next fraction nonterminal) nextNonterminal) = followingDigit)
     (nonpositiveGap :
       successorGap previousDigit followingDigit 1
-        (GaussianInt.Division.Nearest.residual (Data.ComplexContinuedFraction.Hurwitz.Step.next
-          (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal) nextNonterminal)) ≤ 0) :
+        (Nearest.residual (Step.next
+          (Step.next fraction nonterminal) nextNonterminal)) ≤ 0) :
     False := by
-  let following := Data.ComplexContinuedFraction.Hurwitz.Step.next (Data.ComplexContinuedFraction.Hurwitz.Step.next
+  let following := Step.next (Step.next
     fraction nonterminal) nextNonterminal
   have decomposition :
       following.value =
-        GaussianInt.toGaussian followingDigit + GaussianInt.Division.Nearest.residual following := by
+        GaussianInt.toGaussian followingDigit + Nearest.residual following := by
     calc
-      following.value = GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit following) +
-        GaussianInt.Division.Nearest.residual following :=
-        GaussianInt.Division.Nearest.value_eq_digit_add_residual following
-      _ = GaussianInt.toGaussian followingDigit + GaussianInt.Division.Nearest.residual following := by
+      following.value = GaussianInt.toGaussian (Nearest.digit following) +
+        Nearest.residual following :=
+        Nearest.value_eq_digit_add_residual following
+      _ = GaussianInt.toGaussian followingDigit + Nearest.residual following := by
         rw [followingDigitValue]
   have exterior := successor_strict_exterior_cleared fraction nonterminal
     nextNonterminal
   rw [previousDigitValue, decomposition] at exterior
   have weakGap :
-      Data.Gaussian.Norm.Basic.normSq
+      Gaussian.Norm.Basic.normSq
           ((GaussianInt.toGaussian previousDigit - 1) *
-              (GaussianInt.toGaussian followingDigit + GaussianInt.Division.Nearest.residual following) + 1) ≤
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian followingDigit +
-          GaussianInt.Division.Nearest.residual following) :=
-    Fraction.Order.Boundary.sub_nonpositive_iff.mp (by
+              (GaussianInt.toGaussian followingDigit + Nearest.residual following) + 1) ≤
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian followingDigit +
+          Nearest.residual following) :=
+    Boundary.sub_nonpositive_iff.mp (by
       change successorGap previousDigit followingDigit 1
-        (GaussianInt.Division.Nearest.residual following) ≤ 0
+        (Nearest.residual following) ≤ 0
       exact nonpositiveGap)
   exact (not_lt_of_ge weakGap exterior)
 
@@ -1350,10 +1355,10 @@ private abbrev IsForbiddenSmallSuccessorPair :=
 /-- The cleared gap for digits (-2,-1), (1,-1) at unit -1 is the residual quadrance minus one. -/
 private theorem successorGap_test_identity (sigma :
   Gaussian.Basic.Canonical) :
-    successorGap ⟨-2, -1⟩ ⟨1, -1⟩ (-1) sigma = Data.Gaussian.Norm.Basic.normSq sigma - 1 := by
+    successorGap ⟨-2, -1⟩ ⟨1, -1⟩ (-1) sigma = Gaussian.Norm.Basic.normSq sigma - 1 := by
   simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two, -Int.cast_add,
     -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero, successorGap,
-    Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+    Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ← Fraction.Cast.intCast_eq_fromInt]
   ring1
 
 /-- Minus one plus twice a rational value below one half is negative. -/
@@ -1361,7 +1366,7 @@ private theorem neg_one_add_twice_lt_zero_of_lt_half
     {value : Fraction.Rational} (upper : value < 1 / 2) :
     -1 + 2 * value < 0 := by
   have doubled := twice_lt_one_of_lt_half upper
-  have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+  have shifted := Arithmetic.add_lt_add_right_direct
     doubled (-1)
   calc
     -1 + 2 * value = 2 * value + -1 := by ring1
@@ -1372,9 +1377,9 @@ private theorem neg_one_add_twice_lt_zero_of_lt_half
 private theorem neg_one_sub_twice_lt_zero_of_neg_half_lt
     {value : Fraction.Rational} (lower : -(1 / 2 : Fraction.Rational) < value) :
     -1 - 2 * value < 0 := by
-  have doubled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct
+  have doubled := Arithmetic.mul_lt_mul_of_pos_left_direct
     (show (0 : Fraction.Rational) < 2 by decide) lower
-  have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+  have shifted := Arithmetic.add_lt_add_right_direct
     doubled (-(2 * value))
   calc
     -1 - 2 * value = -1 + -(2 * value) := by ring1
@@ -1388,7 +1393,7 @@ private theorem neg_three_add_twice_lt_zero_of_lt_half
     {value : Fraction.Rational} (upper : value < 1 / 2) :
     -3 + 2 * value < 0 := by
   have oneGap := neg_one_add_twice_lt_zero_of_lt_half upper
-  have shifted := Fraction.Order.Arithmetic.add_lt_add_right_direct
+  have shifted := Arithmetic.add_lt_add_right_direct
     oneGap (-2)
   calc
     -3 + 2 * value = (-1 + 2 * value) + -2 := by ring1
@@ -1399,10 +1404,10 @@ private theorem neg_three_add_twice_lt_zero_of_lt_half
 private theorem neg_three_sub_twice_lt_zero_of_neg_half_le
     {value : Fraction.Rational} (lower : -(1 / 2 : Fraction.Rational) ≤ value) :
     -3 - 2 * value < 0 := by
-  have doubled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  have doubled := Arithmetic.mul_le_mul_of_nonneg_left_direct
     lower (show (0 : Fraction.Rational) ≤ 2 by decide)
-  have negated := Fraction.Order.Arithmetic.neg_le_neg_direct doubled
-  have shifted := Fraction.Order.Arithmetic.add_le_add_right_direct
+  have negated := Arithmetic.neg_le_neg_direct doubled
+  have shifted := Arithmetic.add_le_add_right_direct
     negated (-3)
   calc
     -3 - 2 * value = -(2 * value) + -3 := by ring1
@@ -1414,23 +1419,23 @@ private theorem neg_three_sub_twice_lt_zero_of_neg_half_le
 finite exceptional relation.  Each constructor is discharged by one exact
 cleared exterior-disc calculation. -/
 theorem not_forbiddenSmallSuccessor
-    (fraction : GaussianInt.Fraction) (nonterminal : GaussianInt.Division.Nearest.remainder fraction ≠ 0)
-    (nextNonterminal : GaussianInt.Division.Nearest.remainder (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction
+    (fraction : GaussianInt.Fraction) (nonterminal : Nearest.remainder fraction ≠ 0)
+    (nextNonterminal : Nearest.remainder (Step.next fraction
       nonterminal) ≠ 0) :
     ¬ ForbiddenSmallSuccessor
-      (GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal))
-      (GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next
-        (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal) nextNonterminal)) := by
-  let following := Data.ComplexContinuedFraction.Hurwitz.Step.next (Data.ComplexContinuedFraction.Hurwitz.Step.next
+      (Nearest.digit (Step.next fraction nonterminal))
+      (Nearest.digit (Step.next
+        (Step.next fraction nonterminal) nextNonterminal)) := by
+  let following := Step.next (Step.next
     fraction nonterminal) nextNonterminal
-  let sigma := GaussianInt.Division.Nearest.residual following
+  let sigma := Nearest.residual following
   have sigmaSquare := GaussianInt.Nearest.remainder_mem following.value
-  have sigmaNormLtOne : Data.Gaussian.Norm.Basic.normSq sigma < 1 := by
+  have sigmaNormLtOne : Gaussian.Norm.Basic.normSq sigma < 1 := by
     exact
       (GaussianInt.Nearest.remainder_normSq_le_half following.value).trans_lt
         (show (1 / 2 : Fraction.Rational) < 1 by decide)
-  have normGap : Data.Gaussian.Norm.Basic.normSq sigma - 1 < 0 :=
-    Fraction.Order.Arithmetic.sub_neg_direct sigmaNormLtOne
+  have normGap : Gaussian.Norm.Basic.normSq sigma - 1 < 0 :=
+    Arithmetic.sub_neg_direct sigmaNormLtOne
   have realUpperGap : -1 + 2 * sigma.re < 0 :=
     neg_one_add_twice_lt_zero_of_lt_half sigmaSquare.2.1
   have imaginaryUpperGap : -1 + 2 * sigma.im < 0 :=
@@ -1444,12 +1449,12 @@ theorem not_forbiddenSmallSuccessor
   have imaginaryLowerThreeGap : -3 - 2 * sigma.im < 0 :=
     neg_three_sub_twice_lt_zero_of_neg_half_le sigmaSquare.2.2.1
   intro forbidden
-  generalize previousDigitValue : GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next
+  generalize previousDigitValue : Nearest.digit (Step.next
     fraction nonterminal) =
     previousDigit at forbidden
   generalize followingDigitValue :
-    GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next
-      (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal) nextNonterminal) =
+    Nearest.digit (Step.next
+      (Step.next fraction nonterminal) nextNonterminal) =
       followingDigit at forbidden
   cases forbidden with
   | c01 =>
@@ -1464,27 +1469,27 @@ theorem not_forbiddenSmallSuccessor
         nextNonterminal ⟨-2, 0⟩ ⟨1, -1⟩ (-1)
         (Or.inr (Or.inl rfl)) previousDigitValue followingDigitValue
       have strictLower := next_residual_real_lower_strict_of_one_sub_i
-        (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal) nextNonterminal followingDigitValue
+        (Step.next fraction nonterminal) nextNonterminal followingDigitValue
       have negative := neg_one_sub_twice_lt_zero_of_neg_half_lt strictLower
       change successorGap ⟨-2, 0⟩ ⟨1, -1⟩ (-1) sigma < 0
       convert negative using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, sigma, following, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, sigma, following, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c03 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨-2, 0⟩ ⟨1, 1⟩ (-1)
         (Or.inr (Or.inl rfl)) previousDigitValue followingDigitValue
       have strictLower := next_residual_real_lower_strict_of_one_add_i
-        (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal) nextNonterminal followingDigitValue
+        (Step.next fraction nonterminal) nextNonterminal followingDigitValue
       have negative := neg_one_sub_twice_lt_zero_of_neg_half_lt strictLower
       change successorGap ⟨-2, 0⟩ ⟨1, 1⟩ (-1) sigma < 0
       convert negative using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, sigma, following, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, sigma, following, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c04 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨-2, 1⟩ ⟨1, 1⟩ (-1)
@@ -1493,8 +1498,8 @@ theorem not_forbiddenSmallSuccessor
       convert normGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c05 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨-1, -2⟩ ⟨1, -1⟩ ⟨0, -1⟩
@@ -1503,8 +1508,8 @@ theorem not_forbiddenSmallSuccessor
       convert normGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c06 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨-1, -1⟩ ⟨0, -2⟩ (-1)
@@ -1513,8 +1518,8 @@ theorem not_forbiddenSmallSuccessor
       convert imaginaryUpperThreeGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c07 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨-1, -1⟩ ⟨1, -1⟩ (-1)
@@ -1523,8 +1528,8 @@ theorem not_forbiddenSmallSuccessor
       convert imaginaryUpperGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c08 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨-1, -1⟩ ⟨2, 0⟩ ⟨0, -1⟩
@@ -1533,8 +1538,8 @@ theorem not_forbiddenSmallSuccessor
       convert realLowerThreeGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c09 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨-1, 1⟩ ⟨0, 2⟩ (-1)
@@ -1543,21 +1548,21 @@ theorem not_forbiddenSmallSuccessor
       convert imaginaryLowerThreeGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c10 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨-1, 1⟩ ⟨1, 1⟩ (-1)
         (Or.inr (Or.inl rfl)) previousDigitValue followingDigitValue
       have strictLower := next_residual_imaginary_lower_strict_of_one_add_i
-        (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal) nextNonterminal followingDigitValue
+        (Step.next fraction nonterminal) nextNonterminal followingDigitValue
       have negative := neg_one_sub_twice_lt_zero_of_neg_half_lt strictLower
       change successorGap ⟨-1, 1⟩ ⟨1, 1⟩ (-1) sigma < 0
       convert negative using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, sigma, following, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, sigma, following, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c11 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨-1, 1⟩ ⟨2, 0⟩ ⟨0, 1⟩
@@ -1566,8 +1571,8 @@ theorem not_forbiddenSmallSuccessor
       convert realLowerThreeGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c12 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨-1, 2⟩ ⟨1, 1⟩ ⟨0, 1⟩
@@ -1576,8 +1581,8 @@ theorem not_forbiddenSmallSuccessor
       convert normGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c13 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨0, -2⟩ ⟨-1, -1⟩ ⟨0, -1⟩
@@ -1586,8 +1591,8 @@ theorem not_forbiddenSmallSuccessor
       convert imaginaryUpperGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c14 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨0, -2⟩ ⟨1, -1⟩ ⟨0, -1⟩
@@ -1596,34 +1601,34 @@ theorem not_forbiddenSmallSuccessor
       convert imaginaryUpperGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c15 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨0, 2⟩ ⟨-1, 1⟩ ⟨0, 1⟩
         (Or.inr (Or.inr (Or.inl rfl))) previousDigitValue followingDigitValue
       have strictLower := next_residual_imaginary_lower_strict_of_neg_one_add_i
-        (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal) nextNonterminal followingDigitValue
+        (Step.next fraction nonterminal) nextNonterminal followingDigitValue
       have negative := neg_one_sub_twice_lt_zero_of_neg_half_lt strictLower
       change successorGap ⟨0, 2⟩ ⟨-1, 1⟩ ⟨0, 1⟩ sigma < 0
       convert negative using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, sigma, following, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, sigma, following, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c16 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨0, 2⟩ ⟨1, 1⟩ ⟨0, 1⟩
         (Or.inr (Or.inr (Or.inl rfl))) previousDigitValue followingDigitValue
       have strictLower := next_residual_imaginary_lower_strict_of_one_add_i
-        (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal) nextNonterminal followingDigitValue
+        (Step.next fraction nonterminal) nextNonterminal followingDigitValue
       have negative := neg_one_sub_twice_lt_zero_of_neg_half_lt strictLower
       change successorGap ⟨0, 2⟩ ⟨1, 1⟩ ⟨0, 1⟩ sigma < 0
       convert negative using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, sigma, following, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, sigma, following, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c17 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨1, -2⟩ ⟨-1, -1⟩ ⟨0, -1⟩
@@ -1632,8 +1637,8 @@ theorem not_forbiddenSmallSuccessor
       convert normGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c18 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨1, -1⟩ ⟨-2, 0⟩ ⟨0, -1⟩
@@ -1642,8 +1647,8 @@ theorem not_forbiddenSmallSuccessor
       convert realUpperThreeGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c19 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨1, -1⟩ ⟨-1, -1⟩ 1
@@ -1652,8 +1657,8 @@ theorem not_forbiddenSmallSuccessor
       convert imaginaryUpperGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c20 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨1, -1⟩ ⟨0, -2⟩ 1
@@ -1662,8 +1667,8 @@ theorem not_forbiddenSmallSuccessor
       convert imaginaryUpperThreeGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c21 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨1, 1⟩ ⟨-2, 0⟩ ⟨0, 1⟩
@@ -1672,21 +1677,21 @@ theorem not_forbiddenSmallSuccessor
       convert realUpperThreeGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c22 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨1, 1⟩ ⟨-1, 1⟩ 1
         (Or.inl rfl) previousDigitValue followingDigitValue
       have strictLower := next_residual_imaginary_lower_strict_of_neg_one_add_i
-        (Data.ComplexContinuedFraction.Hurwitz.Step.next fraction nonterminal) nextNonterminal followingDigitValue
+        (Step.next fraction nonterminal) nextNonterminal followingDigitValue
       have negative := neg_one_sub_twice_lt_zero_of_neg_half_lt strictLower
       change successorGap ⟨1, 1⟩ ⟨-1, 1⟩ 1 sigma < 0
       convert negative using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, sigma, following, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, sigma, following, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c23 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨1, 1⟩ ⟨0, 2⟩ 1
@@ -1695,8 +1700,8 @@ theorem not_forbiddenSmallSuccessor
       convert imaginaryLowerThreeGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c24 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨1, 2⟩ ⟨-1, 1⟩ ⟨0, 1⟩
@@ -1705,8 +1710,8 @@ theorem not_forbiddenSmallSuccessor
       convert normGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c25 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨2, -1⟩ ⟨-1, -1⟩ 1
@@ -1715,8 +1720,8 @@ theorem not_forbiddenSmallSuccessor
       convert normGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c26 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨2, 0⟩ ⟨-1, -1⟩ 1
@@ -1725,8 +1730,8 @@ theorem not_forbiddenSmallSuccessor
       convert realUpperGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c27 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨2, 0⟩ ⟨-1, 1⟩ 1
@@ -1735,8 +1740,8 @@ theorem not_forbiddenSmallSuccessor
       convert realUpperGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
   | c28 =>
       apply successor_pair_false_of_negative_gap fraction nonterminal
         nextNonterminal ⟨2, 1⟩ ⟨-1, 1⟩ 1
@@ -1745,8 +1750,8 @@ theorem not_forbiddenSmallSuccessor
       convert normGap using 1 ;
         simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
           -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.cast_zero,
-          successorGap, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt] ; ring1
+          successorGap, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt] ; ring1
 
 /-- The eight cross terms of the quadrance-five/diagonal denominator
 comparison. -/
@@ -1773,7 +1778,7 @@ coefficients.
 
 The eight Lakein root choices express the norm-five/diagonal comparison after subtracting one. -/
 def lakeinRootForm (realCross imaginaryCross : Int) :
-    Geometry.Hermitian.Binary.IntegralHermitianForm :=
+    IntegralHermitianForm :=
   ⟨4, 2, realCross, imaginaryCross⟩
 
 /-- All eight Lakein root forms evaluate nonnegatively at the supplied Gaussian rational.
@@ -1803,33 +1808,33 @@ private theorem evaluate_root_plus_four_unit_square_nonnegative
     (unit : GaussianInt) (unitProperty : GaussianInt.Norm.Small.IsGaussianUnit unit) :
     0 ≤
       (⟨8, 6, realCross + 4 * unit.re,
-          imaginaryCross + 4 * unit.im⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).evaluate
+          imaginaryCross + 4 * unit.im⟩ : IntegralHermitianForm).evaluate
         value := by
   have squareNonnegative :
-      0 ≤ 4 * Data.Gaussian.Norm.Basic.normSq (value + GaussianInt.toGaussian unit) :=
-    Fraction.Order.Arithmetic.mul_nonneg_direct
+      0 ≤ 4 * Gaussian.Norm.Basic.normSq (value + GaussianInt.toGaussian unit) :=
+    Arithmetic.mul_nonneg_direct
       (show (0 : Fraction.Rational) ≤ 4 by decide) (Gaussian.Norm.Basic.normSq_nonneg _)
   have sumNonnegative := add_nonneg rootNonnegative squareNonnegative
   calc
     0 ≤
         (lakeinRootForm realCross imaginaryCross).evaluate value +
-          4 * Data.Gaussian.Norm.Basic.normSq (value + GaussianInt.toGaussian unit) := sumNonnegative
+          4 * Gaussian.Norm.Basic.normSq (value + GaussianInt.toGaussian unit) := sumNonnegative
     _ = (⟨8, 6, realCross + 4 * unit.re,
-          imaginaryCross + 4 * unit.im⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).evaluate
+          imaginaryCross + 4 * unit.im⟩ : IntegralHermitianForm).evaluate
         value := by
       rcases unitProperty with rfl | rfl | rfl | rfl
       all_goals simp [-tsub_zero, -sub_zero, -add_sub_add_right_eq_sub, -eq_self, -iff_self, -Even.neg_pow, -even_two,
         -Int.cast_add, -Int.cast_neg, -Int.cast_zero, -Int.cast_sub, Ring.IntCast.add, Ring.IntCast.cast_zero,
-        Geometry.Hermitian.Binary.IntegralHermitianForm.evaluate, lakeinRootForm,
-        Geometry.Hermitian.Binary.hermitianForm, Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
-          Rat.Fraction.Cast.intCast_eq_fromInt]
+        IntegralHermitianForm.evaluate, lakeinRootForm,
+        Geometry.Hermitian.Binary.hermitianForm, Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian, ←
+          Fraction.Cast.intCast_eq_fromInt]
       all_goals ring1
 
 /-- The twenty-four first-step forms not settled by the slack-one
 certificate.  The following digit is retained because it is needed by the
 second-step succession check. -/
 inductive FirstExceptionalHermitian :
-    Geometry.Hermitian.Binary.IntegralHermitianForm → GaussianInt → Prop
+    IntegralHermitianForm → GaussianInt → Prop
   /-- The exceptional form with coefficients (6, 4, 1, 5) and retained following digit (1, 1). -/ | c01 :
     FirstExceptionalHermitian ⟨6, 4, 1, 5⟩ ⟨1, 1⟩
   /-- The exceptional form with coefficients (2, 4, 1, -3) and retained following digit (1, -1). -/ | c02 :
@@ -1909,7 +1914,7 @@ private theorem root_pullback_constant_gap_or_exceptional
     have rootSquare :
         realCross * realCross + imaginaryCross * imaginaryCross = 10 := by
       cases root <;> decide
-    have lower := Geometry.Hermitian.Binary.IntegralHermitianForm.pullback_constant_lower
+    have lower := IntegralHermitianForm.pullback_constant_lower
       (lakeinRootForm realCross imaginaryCross) coefficient
     have constantEquation : 3 * GaussianInt.normInt coefficient - 8 =
           ((lakeinRootForm realCross imaginaryCross).constant - 1) *
@@ -2130,13 +2135,13 @@ private theorem isSmallPreviousDigit_of_norm_bounds
     rw [GaussianInt.Norm.Basic.normInt_eq_natCast_normNat]
     exact Int.Order.natCast_lt_iff.mpr lessThanEleven
   have realSmall : digit.re * digit.re < 16 := by
-    have imaginaryNonnegative := Purelib.Data.Int.Order.mul_self_nonneg digit.im
+    have imaginaryNonnegative := Data.Int.Order.mul_self_nonneg digit.im
     have realLeNorm : digit.re * digit.re ≤ GaussianInt.normInt digit := by
       have shifted := Int.Order.add_le_add (Int.Order.le_refl (digit.re * digit.re)) imaginaryNonnegative
       simpa only [GaussianInt.normInt, Int.add_zero] using shifted
     omega
   have imaginarySmall : digit.im * digit.im < 16 := by
-    have realNonnegative := Purelib.Data.Int.Order.mul_self_nonneg digit.re
+    have realNonnegative := Data.Int.Order.mul_self_nonneg digit.re
     have imaginaryLeNorm : digit.im * digit.im ≤ GaussianInt.normInt digit := by
       have shifted := Int.Order.add_le_add realNonnegative (Int.Order.le_refl (digit.im * digit.im))
       simpa only [GaussianInt.normInt, Int.Arithmetic.zero_add] using shifted
@@ -2155,9 +2160,9 @@ private theorem isSmallPreviousDigit_of_norm_bounds
   all_goals dsimp only [GaussianInt.normInt] at normIntTwoLe normIntSmall
   all_goals first
     | exact False.elim
-        (Purelib.Logic.Decidable.false_of_decide_false normIntTwoLe (by decide))
+        (Logic.Decidable.false_of_decide_false normIntTwoLe (by decide))
     | exact False.elim
-        (Purelib.Logic.Decidable.false_of_decide_false normIntSmall (by decide))
+        (Logic.Decidable.false_of_decide_false normIntSmall (by decide))
     | constructor
 
 end Purelib.NumberTheory.Approximation.Hurwitz.Lakein
@@ -2170,15 +2175,15 @@ disk.
 Its determinant is minus two and the norm bound supplies the required positive constant gap. -/
 private theorem
   pullback_nonnegative_of_large
-    {form : Geometry.Hermitian.Binary.IntegralHermitianForm} {followingDigit : GaussianInt}
+    {form : IntegralHermitianForm} {followingDigit : GaussianInt}
     (exceptional : FirstExceptionalHermitian form followingDigit)
     (previousDigit : GaussianInt) (large : 11 ≤ GaussianInt.normNat previousDigit)
-    (value : Gaussian.Basic.Canonical) (valueInside : Data.Gaussian.Norm.Basic.normSq value ≤ 1) :
+    (value : Gaussian.Basic.Canonical) (valueInside : Gaussian.Norm.Basic.normSq value ≤ 1) :
     0 ≤ (form.pullback previousDigit).evaluate value := by
   have normIntLarge : (11 : Int) ≤ GaussianInt.normInt previousDigit := by
     rw [GaussianInt.Norm.Basic.normInt_eq_natCast_normNat]
     exact Int.Order.natCast_le_iff.mpr large
-  have lower := Geometry.Hermitian.Binary.IntegralHermitianForm.pullback_constant_lower
+  have lower := IntegralHermitianForm.pullback_constant_lower
     form previousDigit
   have scaledLarge : (5 : Int) * 11 ≤ 5 * GaussianInt.normInt previousDigit :=
     Int.Order.mul_le_mul_of_nonneg_left normIntLarge (by decide)
@@ -2212,7 +2217,7 @@ private theorem
     cases exceptional <;> decide
   have determinantValue : form.determinant = -2 := by
     cases exceptional <;> decide
-  exact Geometry.Hermitian.Binary.IntegralHermitianForm.pullback_evaluate_nonnegative_of_constant_gap
+  exact IntegralHermitianForm.pullback_evaluate_nonnegative_of_constant_gap
     form previousDigit value valueInside scalePositive determinantValue
       constantGap
 
@@ -2222,7 +2227,7 @@ namespace Purelib.NumberTheory.Approximation.Hurwitz.Lakein
 
 /-- Membership in the eight exact integral Lakein root forms. -/
 private inductive IsLakeinRootForm :
-  Geometry.Hermitian.Binary.IntegralHermitianForm → Prop
+  IntegralHermitianForm → Prop
   /-- The root form with cross coefficients `(-3) (-1)`. -/ | c01 :
     IsLakeinRootForm (lakeinRootForm (-3) (-1))
   /-- The root form with cross coefficients `(-3) 1`. -/ | c02 :
@@ -2244,7 +2249,7 @@ private inductive IsLakeinRootForm :
 
 Their cross coefficients have magnitudes seven and one, in either coordinate order. -/
 private inductive IsLakeinAugmentedRootForm :
-    Geometry.Hermitian.Binary.IntegralHermitianForm → Prop
+    IntegralHermitianForm → Prop
   /-- The augmented root form with coefficients (8, 6, 7, 1). -/ | c01 :
     IsLakeinAugmentedRootForm ⟨8, 6, 7, 1⟩
   /-- The augmented root form with coefficients (8, 6, 7, -1). -/ | c02 :
@@ -2266,7 +2271,7 @@ private inductive IsLakeinAugmentedRootForm :
 
 The radial coefficient plus one is positive, and the corresponding constant-minus-one determinant gap is nonnegative. -/
 private def HasLakeinSlackOneCertificate
-    (form : Geometry.Hermitian.Binary.IntegralHermitianForm) : Prop :=
+    (form : IntegralHermitianForm) : Prop :=
   0 < form.radial + 1 ∧
     0 ≤ (form.constant - 1) * (form.radial + 1) -
       (form.realCross * form.realCross +
@@ -2274,7 +2279,7 @@ private def HasLakeinSlackOneCertificate
 
 /-- Decide the slack-one certificate by its two finite integer inequalities. -/
 private instance hasLakeinSlackOneCertificateDecidable
-    (form : Geometry.Hermitian.Binary.IntegralHermitianForm) :
+    (form : IntegralHermitianForm) :
     Decidable (HasLakeinSlackOneCertificate form) := by
   unfold HasLakeinSlackOneCertificate
   infer_instance
@@ -2283,7 +2288,7 @@ private instance hasLakeinSlackOneCertificateDecidable
 
 These alternatives preserve the exact form whose evaluation is to be bounded. -/
 private def IsLakeinSafeForm (form :
-  Geometry.Hermitian.Binary.IntegralHermitianForm) : Prop :=
+  IntegralHermitianForm) : Prop :=
   IsLakeinRootForm form ∨ IsLakeinAugmentedRootForm form ∨
     HasLakeinSlackOneCertificate form
 
@@ -2296,7 +2301,7 @@ private theorem exceptionalC01_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨1, 1⟩ ∨
       IsLakeinSafeForm
-        ((⟨6, 4, 1, 5⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨6, 4, 1, 5⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c03
     | exact Or.inl ForbiddenSmallSuccessor.c04
@@ -2316,7 +2321,7 @@ private theorem exceptionalC02_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨1, -1⟩ ∨
       IsLakeinSafeForm
-        ((⟨2, 4, 1, -3⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨2, 4, 1, -3⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c01
     | exact Or.inl ForbiddenSmallSuccessor.c02
@@ -2336,7 +2341,7 @@ private theorem exceptionalC03_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨2, 0⟩ ∨
       IsLakeinSafeForm
-        ((⟨6, 4, 5, 1⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨6, 4, 5, 1⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c08
     | exact Or.inl ForbiddenSmallSuccessor.c11
@@ -2353,7 +2358,7 @@ private theorem exceptionalC04_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨1, 1⟩ ∨
       IsLakeinSafeForm
-        ((⟨2, 4, 1, 3⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨2, 4, 1, 3⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c03
     | exact Or.inl ForbiddenSmallSuccessor.c04
@@ -2373,7 +2378,7 @@ private theorem exceptionalC05_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨1, -1⟩ ∨
       IsLakeinSafeForm
-        ((⟨6, 4, 1, -5⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨6, 4, 1, -5⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c01
     | exact Or.inl ForbiddenSmallSuccessor.c02
@@ -2393,7 +2398,7 @@ private theorem exceptionalC06_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨2, 0⟩ ∨
       IsLakeinSafeForm
-        ((⟨6, 4, 5, -1⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨6, 4, 5, -1⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c08
     | exact Or.inl ForbiddenSmallSuccessor.c11
@@ -2410,7 +2415,7 @@ private theorem exceptionalC07_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨1, -1⟩ ∨
       IsLakeinSafeForm
-        ((⟨2, 4, 3, -1⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨2, 4, 3, -1⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c01
     | exact Or.inl ForbiddenSmallSuccessor.c02
@@ -2430,7 +2435,7 @@ private theorem exceptionalC08_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨-1, -1⟩ ∨
       IsLakeinSafeForm
-        ((⟨6, 4, -5, -1⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨6, 4, -5, -1⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c13
     | exact Or.inl ForbiddenSmallSuccessor.c17
@@ -2450,7 +2455,7 @@ private theorem exceptionalC09_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨0, -2⟩ ∨
       IsLakeinSafeForm
-        ((⟨6, 4, -1, -5⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨6, 4, -1, -5⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c06
     | exact Or.inl ForbiddenSmallSuccessor.c20
@@ -2467,7 +2472,7 @@ private theorem exceptionalC10_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨1, 1⟩ ∨
       IsLakeinSafeForm
-        ((⟨2, 4, 3, 1⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨2, 4, 3, 1⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c03
     | exact Or.inl ForbiddenSmallSuccessor.c04
@@ -2487,7 +2492,7 @@ private theorem exceptionalC11_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨-1, 1⟩ ∨
       IsLakeinSafeForm
-        ((⟨6, 4, -5, 1⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨6, 4, -5, 1⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c15
     | exact Or.inl ForbiddenSmallSuccessor.c22
@@ -2507,7 +2512,7 @@ private theorem exceptionalC12_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨0, 2⟩ ∨
       IsLakeinSafeForm
-        ((⟨6, 4, -1, 5⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨6, 4, -1, 5⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c09
     | exact Or.inl ForbiddenSmallSuccessor.c23
@@ -2524,7 +2529,7 @@ private theorem exceptionalC13_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨1, -1⟩ ∨
       IsLakeinSafeForm
-        ((⟨6, 4, 5, -1⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨6, 4, 5, -1⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c01
     | exact Or.inl ForbiddenSmallSuccessor.c02
@@ -2544,7 +2549,7 @@ private theorem exceptionalC14_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨-1, -1⟩ ∨
       IsLakeinSafeForm
-        ((⟨2, 4, -3, -1⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨2, 4, -3, -1⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c13
     | exact Or.inl ForbiddenSmallSuccessor.c17
@@ -2564,7 +2569,7 @@ private theorem exceptionalC15_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨0, -2⟩ ∨
       IsLakeinSafeForm
-        ((⟨6, 4, 1, -5⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨6, 4, 1, -5⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c06
     | exact Or.inl ForbiddenSmallSuccessor.c20
@@ -2581,7 +2586,7 @@ private theorem exceptionalC16_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨1, 1⟩ ∨
       IsLakeinSafeForm
-        ((⟨6, 4, 5, 1⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨6, 4, 5, 1⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c03
     | exact Or.inl ForbiddenSmallSuccessor.c04
@@ -2601,7 +2606,7 @@ private theorem exceptionalC17_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨-1, 1⟩ ∨
       IsLakeinSafeForm
-        ((⟨2, 4, -3, 1⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨2, 4, -3, 1⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c15
     | exact Or.inl ForbiddenSmallSuccessor.c22
@@ -2621,7 +2626,7 @@ private theorem exceptionalC18_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨0, 2⟩ ∨
       IsLakeinSafeForm
-        ((⟨6, 4, 1, 5⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨6, 4, 1, 5⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c09
     | exact Or.inl ForbiddenSmallSuccessor.c23
@@ -2638,7 +2643,7 @@ private theorem exceptionalC19_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨-1, 1⟩ ∨
       IsLakeinSafeForm
-        ((⟨6, 4, -1, 5⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨6, 4, -1, 5⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c15
     | exact Or.inl ForbiddenSmallSuccessor.c22
@@ -2658,7 +2663,7 @@ private theorem exceptionalC20_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨-1, -1⟩ ∨
       IsLakeinSafeForm
-        ((⟨2, 4, -1, -3⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨2, 4, -1, -3⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c13
     | exact Or.inl ForbiddenSmallSuccessor.c17
@@ -2678,7 +2683,7 @@ private theorem exceptionalC21_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨-2, 0⟩ ∨
       IsLakeinSafeForm
-        ((⟨6, 4, -5, 1⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨6, 4, -5, 1⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c18
     | exact Or.inl ForbiddenSmallSuccessor.c21
@@ -2695,7 +2700,7 @@ private theorem exceptionalC22_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨-1, 1⟩ ∨
       IsLakeinSafeForm
-        ((⟨2, 4, -1, 3⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨2, 4, -1, 3⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c15
     | exact Or.inl ForbiddenSmallSuccessor.c22
@@ -2715,7 +2720,7 @@ private theorem exceptionalC23_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨-1, -1⟩ ∨
       IsLakeinSafeForm
-        ((⟨6, 4, -1, -5⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨6, 4, -1, -5⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c13
     | exact Or.inl ForbiddenSmallSuccessor.c17
@@ -2735,7 +2740,7 @@ private theorem exceptionalC24_second_classification
     (small : IsSmallPreviousDigit previousDigit) :
     IsForbiddenSmallSuccessorPair previousDigit ⟨-2, 0⟩ ∨
       IsLakeinSafeForm
-        ((⟨6, 4, -5, -1⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).pullback previousDigit) := by
+        ((⟨6, 4, -5, -1⟩ : IntegralHermitianForm).pullback previousDigit) := by
   cases small <;> first
     | exact Or.inl ForbiddenSmallSuccessor.c18
     | exact Or.inl ForbiddenSmallSuccessor.c21
@@ -2748,12 +2753,12 @@ private theorem exceptionalC24_second_classification
 Its value is a root-form value plus four times a unit-translated squared norm. -/
 private theorem evaluate_augmented_seven_one_nonnegative
     (value : Gaussian.Basic.Canonical) (rootNonnegative : LakeinRootFormsNonnegative value) :
-    0 ≤ (⟨8, 6, 7, 1⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).evaluate value := by
+    0 ≤ (⟨8, 6, 7, 1⟩ : IntegralHermitianForm).evaluate value := by
   have transformed := evaluate_root_plus_four_unit_square_nonnegative value
     (rootNonnegative 3 1 IsLakeinRootCross.positiveThreePositiveOne)
     (1 : GaussianInt) (Or.inl rfl)
   have identity :
-      (⟨8, 6, 7, 1⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm) =
+      (⟨8, 6, 7, 1⟩ : IntegralHermitianForm) =
         ⟨8, 6, 3 + 4 * (1 : GaussianInt).re,
           1 + 4 * (1 : GaussianInt).im⟩ := by decide
   rw [identity]
@@ -2765,12 +2770,12 @@ Its value is a root-form value plus four times a unit-translated squared norm. -
 private theorem
   evaluate_augmented_seven_negative_one_nonnegative
     (value : Gaussian.Basic.Canonical) (rootNonnegative : LakeinRootFormsNonnegative value) :
-    0 ≤ (⟨8, 6, 7, -1⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).evaluate value := by
+    0 ≤ (⟨8, 6, 7, -1⟩ : IntegralHermitianForm).evaluate value := by
   have transformed := evaluate_root_plus_four_unit_square_nonnegative value
     (rootNonnegative 3 (-1) IsLakeinRootCross.positiveThreeNegativeOne)
     (1 : GaussianInt) (Or.inl rfl)
   have identity :
-      (⟨8, 6, 7, -1⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm) =
+      (⟨8, 6, 7, -1⟩ : IntegralHermitianForm) =
         ⟨8, 6, 3 + 4 * (1 : GaussianInt).re,
           -1 + 4 * (1 : GaussianInt).im⟩ := by decide
   rw [identity]
@@ -2782,12 +2787,12 @@ Its value is a root-form value plus four times a unit-translated squared norm. -
 private theorem
   evaluate_augmented_negative_seven_one_nonnegative
     (value : Gaussian.Basic.Canonical) (rootNonnegative : LakeinRootFormsNonnegative value) :
-    0 ≤ (⟨8, 6, -7, 1⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).evaluate value := by
+    0 ≤ (⟨8, 6, -7, 1⟩ : IntegralHermitianForm).evaluate value := by
   have transformed := evaluate_root_plus_four_unit_square_nonnegative value
     (rootNonnegative (-3) 1 IsLakeinRootCross.negativeThreePositiveOne)
     (-1 : GaussianInt) (Or.inr (Or.inl rfl))
   have identity :
-      (⟨8, 6, -7, 1⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm) =
+      (⟨8, 6, -7, 1⟩ : IntegralHermitianForm) =
         ⟨8, 6, -3 + 4 * (-1 : GaussianInt).re,
           1 + 4 * (-1 : GaussianInt).im⟩ := by decide
   rw [identity]
@@ -2799,13 +2804,13 @@ Its value is a root-form value plus four times a unit-translated squared norm. -
 private theorem
   evaluate_augmented_negative_seven_negative_one_nonnegative
     (value : Gaussian.Basic.Canonical) (rootNonnegative : LakeinRootFormsNonnegative value) :
-    0 ≤ (⟨8, 6, -7, -1⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).evaluate value := by
+    0 ≤ (⟨8, 6, -7, -1⟩ : IntegralHermitianForm).evaluate value := by
   have transformed := evaluate_root_plus_four_unit_square_nonnegative value
     (rootNonnegative (-3) (-1)
       IsLakeinRootCross.negativeThreeNegativeOne)
     (-1 : GaussianInt) (Or.inr (Or.inl rfl))
   have identity :
-      (⟨8, 6, -7, -1⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm) =
+      (⟨8, 6, -7, -1⟩ : IntegralHermitianForm) =
         ⟨8, 6, -3 + 4 * (-1 : GaussianInt).re,
           -1 + 4 * (-1 : GaussianInt).im⟩ := by decide
   rw [identity]
@@ -2816,12 +2821,12 @@ private theorem
 Its value is a root-form value plus four times a unit-translated squared norm. -/
 private theorem evaluate_augmented_one_seven_nonnegative
     (value : Gaussian.Basic.Canonical) (rootNonnegative : LakeinRootFormsNonnegative value) :
-    0 ≤ (⟨8, 6, 1, 7⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).evaluate value := by
+    0 ≤ (⟨8, 6, 1, 7⟩ : IntegralHermitianForm).evaluate value := by
   have transformed := evaluate_root_plus_four_unit_square_nonnegative value
     (rootNonnegative 1 3 IsLakeinRootCross.positiveOnePositiveThree)
     GaussianInt.Norm.Small.imaginaryUnit (Or.inr (Or.inr (Or.inl rfl)))
   have identity :
-      (⟨8, 6, 1, 7⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm) =
+      (⟨8, 6, 1, 7⟩ : IntegralHermitianForm) =
         ⟨8, 6, 1 + 4 * GaussianInt.Norm.Small.imaginaryUnit.re,
           3 + 4 * GaussianInt.Norm.Small.imaginaryUnit.im⟩ := by decide
   rw [identity]
@@ -2833,12 +2838,12 @@ Its value is a root-form value plus four times a unit-translated squared norm. -
 private theorem
   evaluate_augmented_negative_one_seven_nonnegative
     (value : Gaussian.Basic.Canonical) (rootNonnegative : LakeinRootFormsNonnegative value) :
-    0 ≤ (⟨8, 6, -1, 7⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).evaluate value := by
+    0 ≤ (⟨8, 6, -1, 7⟩ : IntegralHermitianForm).evaluate value := by
   have transformed := evaluate_root_plus_four_unit_square_nonnegative value
     (rootNonnegative (-1) 3 IsLakeinRootCross.negativeOnePositiveThree)
     GaussianInt.Norm.Small.imaginaryUnit (Or.inr (Or.inr (Or.inl rfl)))
   have identity :
-      (⟨8, 6, -1, 7⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm) =
+      (⟨8, 6, -1, 7⟩ : IntegralHermitianForm) =
         ⟨8, 6, -1 + 4 * GaussianInt.Norm.Small.imaginaryUnit.re,
           3 + 4 * GaussianInt.Norm.Small.imaginaryUnit.im⟩ := by decide
   rw [identity]
@@ -2850,12 +2855,12 @@ Its value is a root-form value plus four times a unit-translated squared norm. -
 private theorem
   evaluate_augmented_one_negative_seven_nonnegative
     (value : Gaussian.Basic.Canonical) (rootNonnegative : LakeinRootFormsNonnegative value) :
-    0 ≤ (⟨8, 6, 1, -7⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).evaluate value := by
+    0 ≤ (⟨8, 6, 1, -7⟩ : IntegralHermitianForm).evaluate value := by
   have transformed := evaluate_root_plus_four_unit_square_nonnegative value
     (rootNonnegative 1 (-3) IsLakeinRootCross.positiveOneNegativeThree)
     (-GaussianInt.Norm.Small.imaginaryUnit) (Or.inr (Or.inr (Or.inr rfl)))
   have identity :
-      (⟨8, 6, 1, -7⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm) =
+      (⟨8, 6, 1, -7⟩ : IntegralHermitianForm) =
         ⟨8, 6, 1 + 4 * (-GaussianInt.Norm.Small.imaginaryUnit).re,
           -3 + 4 * (-GaussianInt.Norm.Small.imaginaryUnit).im⟩ := by decide
   rw [identity]
@@ -2867,13 +2872,13 @@ Its value is a root-form value plus four times a unit-translated squared norm. -
 private theorem
   evaluate_augmented_negative_one_negative_seven_nonnegative
     (value : Gaussian.Basic.Canonical) (rootNonnegative : LakeinRootFormsNonnegative value) :
-    0 ≤ (⟨8, 6, -1, -7⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm).evaluate value := by
+    0 ≤ (⟨8, 6, -1, -7⟩ : IntegralHermitianForm).evaluate value := by
   have transformed := evaluate_root_plus_four_unit_square_nonnegative value
     (rootNonnegative (-1) (-3)
       IsLakeinRootCross.negativeOneNegativeThree)
     (-GaussianInt.Norm.Small.imaginaryUnit) (Or.inr (Or.inr (Or.inr rfl)))
   have identity :
-      (⟨8, 6, -1, -7⟩ : Geometry.Hermitian.Binary.IntegralHermitianForm) =
+      (⟨8, 6, -1, -7⟩ : IntegralHermitianForm) =
         ⟨8, 6, -1 + 4 * (-GaussianInt.Norm.Small.imaginaryUnit).re,
           -3 + 4 * (-GaussianInt.Norm.Small.imaginaryUnit).im⟩ := by decide
   rw [identity]
@@ -2887,42 +2892,42 @@ namespace Purelib.NumberTheory.Approximation.Hurwitz.Lakein.IsLakeinSafeForm
 
 The three cases use the supplied root inequalities, unit-square augmentation, or the integral slack-one certificate. -/
 private theorem evaluate_nonnegative
-    {form : Geometry.Hermitian.Binary.IntegralHermitianForm} {value : Gaussian.Basic.Canonical}
-    (safe : IsLakeinSafeForm form) (valueInside : Data.Gaussian.Norm.Basic.normSq value ≤ 1)
+    {form : IntegralHermitianForm} {value : Gaussian.Basic.Canonical}
+    (safe : IsLakeinSafeForm form) (valueInside : Gaussian.Norm.Basic.normSq value ≤ 1)
     (rootNonnegative : LakeinRootFormsNonnegative value) :
     0 ≤ form.evaluate value := open Purelib.Algebra in by
   rcases safe with root | augmented | slack
   · cases root
     · exact rootNonnegative (-3) (-1)
-        Lakein.IsLakeinRootCross.negativeThreeNegativeOne
+        IsLakeinRootCross.negativeThreeNegativeOne
     · exact rootNonnegative (-3) 1
-        Lakein.IsLakeinRootCross.negativeThreePositiveOne
+        IsLakeinRootCross.negativeThreePositiveOne
     · exact rootNonnegative (-1) (-3)
-        Lakein.IsLakeinRootCross.negativeOneNegativeThree
+        IsLakeinRootCross.negativeOneNegativeThree
     · exact rootNonnegative (-1) 3
-        Lakein.IsLakeinRootCross.negativeOnePositiveThree
+        IsLakeinRootCross.negativeOnePositiveThree
     · exact rootNonnegative 1 (-3)
-        Lakein.IsLakeinRootCross.positiveOneNegativeThree
+        IsLakeinRootCross.positiveOneNegativeThree
     · exact rootNonnegative 1 3
-        Lakein.IsLakeinRootCross.positiveOnePositiveThree
+        IsLakeinRootCross.positiveOnePositiveThree
     · exact rootNonnegative 3 (-1)
-        Lakein.IsLakeinRootCross.positiveThreeNegativeOne
+        IsLakeinRootCross.positiveThreeNegativeOne
     · exact rootNonnegative 3 1
-        Lakein.IsLakeinRootCross.positiveThreePositiveOne
+        IsLakeinRootCross.positiveThreePositiveOne
   · cases augmented
-    · exact Lakein.evaluate_augmented_seven_one_nonnegative value rootNonnegative
-    · exact Lakein.evaluate_augmented_seven_negative_one_nonnegative value
+    · exact evaluate_augmented_seven_one_nonnegative value rootNonnegative
+    · exact evaluate_augmented_seven_negative_one_nonnegative value
         rootNonnegative
-    · exact Lakein.evaluate_augmented_negative_seven_one_nonnegative value
+    · exact evaluate_augmented_negative_seven_one_nonnegative value
         rootNonnegative
-    · exact Lakein.evaluate_augmented_negative_seven_negative_one_nonnegative value
+    · exact evaluate_augmented_negative_seven_negative_one_nonnegative value
         rootNonnegative
-    · exact Lakein.evaluate_augmented_one_seven_nonnegative value rootNonnegative
-    · exact Lakein.evaluate_augmented_negative_one_seven_nonnegative value
+    · exact evaluate_augmented_one_seven_nonnegative value rootNonnegative
+    · exact evaluate_augmented_negative_one_seven_nonnegative value
         rootNonnegative
-    · exact Lakein.evaluate_augmented_one_negative_seven_nonnegative value
+    · exact evaluate_augmented_one_negative_seven_nonnegative value
         rootNonnegative
-    · exact Lakein.evaluate_augmented_negative_one_negative_seven_nonnegative value
+    · exact evaluate_augmented_negative_one_negative_seven_nonnegative value
         rootNonnegative
   · change
       0 < form.radial + 1 ∧
@@ -2948,7 +2953,7 @@ private theorem evaluate_nonnegative
             (form.imaginaryCross : Fraction.Rational) ^ 2) := by
       simpa only [Ring.IntCast.cast_zero, Ring.IntCast.sub, Int.cast_one, Ring.IntCast.intCast_mul,
         Ring.IntCast.add, pow_two] using gapCast
-    exact Geometry.Hermitian.Binary.IntegralHermitianForm.evaluate_nonnegative_of_slack_one
+    exact IntegralHermitianForm.evaluate_nonnegative_of_slack_one
       form value valueInside scalePositive determinantGap
 
 end Purelib.NumberTheory.Approximation.Hurwitz.Lakein.IsLakeinSafeForm
@@ -2960,7 +2965,7 @@ namespace Purelib.NumberTheory.Approximation.Hurwitz.Lakein
 The 24 first-step exceptions and 32 possible preceding digits are checked by the explicit case lemmas. -/
 private theorem
   exceptional_second_pullback_classification_of_small
-    {form : Geometry.Hermitian.Binary.IntegralHermitianForm} {followingDigit : GaussianInt}
+    {form : IntegralHermitianForm} {followingDigit : GaussianInt}
     (exceptional : FirstExceptionalHermitian form followingDigit)
     (previousDigit : GaussianInt)
     (previousNorm : 2 ≤ GaussianInt.normNat previousDigit)
@@ -3005,17 +3010,17 @@ The evaluation point lies in the closed unit disk and satisfies all root-form in
 branch is excluded explicitly. -/
 private theorem
   pullback_nonnegative_of_small
-    {form : Geometry.Hermitian.Binary.IntegralHermitianForm} {followingDigit : GaussianInt}
+    {form : IntegralHermitianForm} {followingDigit : GaussianInt}
     (exceptional : FirstExceptionalHermitian form followingDigit)
     (previousDigit : GaussianInt)
     (previousNorm : 2 ≤ GaussianInt.normNat previousDigit)
     (small : GaussianInt.normNat previousDigit < 11)
     (notForbidden :
       ¬ ForbiddenSmallSuccessor previousDigit followingDigit)
-    (value : Gaussian.Basic.Canonical) (valueInside : Data.Gaussian.Norm.Basic.normSq value ≤ 1)
+    (value : Gaussian.Basic.Canonical) (valueInside : Gaussian.Norm.Basic.normSq value ≤ 1)
     (rootNonnegative : LakeinRootFormsNonnegative value) :
     0 ≤ (form.pullback previousDigit).evaluate value := by
-  rcases Lakein.exceptional_second_pullback_classification_of_small exceptional
+  rcases exceptional_second_pullback_classification_of_small exceptional
       previousDigit previousNorm small with forbidden | safe
   · exact (notForbidden forbidden).elim
   · exact safe.evaluate_nonnegative valueInside rootNonnegative
@@ -3025,13 +3030,13 @@ Hurwitz step.  Large preceding digits are settled by the determinant
 certificate; the finitely many small digits are exactly the preceding table,
 with the impossible entries removed by Hurwitz succession. -/
 theorem pullback_nonnegative
-    {form : Geometry.Hermitian.Binary.IntegralHermitianForm} {followingDigit : GaussianInt}
+    {form : IntegralHermitianForm} {followingDigit : GaussianInt}
     (exceptional : FirstExceptionalHermitian form followingDigit)
     (previousDigit : GaussianInt)
     (previousNorm : 2 ≤ GaussianInt.normNat previousDigit)
     (notForbidden :
       ¬ ForbiddenSmallSuccessor previousDigit followingDigit)
-    (value : Gaussian.Basic.Canonical) (valueInside : Data.Gaussian.Norm.Basic.normSq value ≤ 1)
+    (value : Gaussian.Basic.Canonical) (valueInside : Gaussian.Norm.Basic.normSq value ≤ 1)
     (rootNonnegative : LakeinRootFormsNonnegative value) :
     0 ≤ (form.pullback previousDigit).evaluate value := by
   by_cases large : 11 ≤ GaussianInt.normNat previousDigit
@@ -3048,13 +3053,13 @@ namespace Purelib.NumberTheory.Approximation.Hurwitz.Lakein
 proof uses only the strict growth of the two displayed continuant
 denominators and the finite lower bound on the next Hurwitz digit. -/
 theorem denominatorRatio_step_sum_ne_zero
-    {source : GaussianInt.Fraction} {stage : Data.ComplexContinuedFraction.Hurwitz.Trace.Stage source}
-    (generated : Hurwitz.Geometry.Generated source stage)
-    (nonterminal : GaussianInt.Division.Nearest.remainder stage.quotient ≠ 0) :
-    GaussianInt.toGaussian (GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next
+    {source : GaussianInt.Fraction} {stage : Trace.Stage source}
+    (generated : Geometry.Generated source stage)
+    (nonterminal : Nearest.remainder stage.quotient ≠ 0) :
+    GaussianInt.toGaussian (Nearest.digit (Step.next
       stage.quotient nonterminal)) +
         (Stage.denominatorRatio stage) ≠ 0 := by
-  let coefficient := GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next stage.quotient
+  let coefficient := Nearest.digit (Step.next stage.quotient
     nonterminal)
   intro sumZero
   have ratioIdentity :
@@ -3063,7 +3068,7 @@ theorem denominatorRatio_step_sum_ne_zero
     · have realZero := congrArg
         Gaussian.Basic.re sumZero
       simp only [Gaussian.Basic.add_re, GaussianInt.toGaussian,
-        ← Rat.Fraction.Cast.intCast_eq_fromInt] at realZero
+        ← Fraction.Cast.intCast_eq_fromInt] at realZero
       change (coefficient.re : Fraction.Rational) +
           (Stage.denominatorRatio stage).re = 0 at realZero
       calc
@@ -3073,12 +3078,12 @@ theorem denominatorRatio_step_sum_ne_zero
               (coefficient.re : Fraction.Rational) := by ring1
         _ = 0 - (coefficient.re : Fraction.Rational) := by rw [realZero]
         _ = (-(GaussianInt.toGaussian coefficient)).re := by
-          simp only [Gaussian.Basic.neg_re, GaussianInt.toGaussian, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+          simp only [Gaussian.Basic.neg_re, GaussianInt.toGaussian, ← Fraction.Cast.intCast_eq_fromInt]
           ring1
     · have imaginaryZero := congrArg
         Gaussian.Basic.im sumZero
       simp only [Gaussian.Basic.add_im, GaussianInt.toGaussian,
-        ← Rat.Fraction.Cast.intCast_eq_fromInt] at imaginaryZero
+        ← Fraction.Cast.intCast_eq_fromInt] at imaginaryZero
       change (coefficient.im : Fraction.Rational) +
           (Stage.denominatorRatio stage).im = 0 at imaginaryZero
       calc
@@ -3088,16 +3093,16 @@ theorem denominatorRatio_step_sum_ne_zero
               (coefficient.im : Fraction.Rational) := by ring1
         _ = 0 - (coefficient.im : Fraction.Rational) := by rw [imaginaryZero]
         _ = (-(GaussianInt.toGaussian coefficient)).im := by
-          simp only [Gaussian.Basic.neg_im, GaussianInt.toGaussian, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+          simp only [Gaussian.Basic.neg_im, GaussianInt.toGaussian, ← Fraction.Cast.intCast_eq_fromInt]
           ring1
   have coefficientNorm : 2 ≤ GaussianInt.normNat coefficient :=
-    Hurwitz.Geometry.two_le_next_digit_normNat stage.quotient nonterminal
+    Geometry.two_le_next_digit_normNat stage.quotient nonterminal
   have coefficientNormCast :
-      (2 : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian coefficient) := by
+      (2 : Fraction.Rational) ≤ Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian coefficient) := by
     rw [GaussianInt.normSq_toGaussian]
     exact Fraction.Cast.Order.natCast_le_direct coefficientNorm
   have ratioAtLeastOne :
-      (1 : Fraction.Rational) ≤ Data.Gaussian.Norm.Basic.normSq (Stage.denominatorRatio stage) := by
+      (1 : Fraction.Rational) ≤ Gaussian.Norm.Basic.normSq (Stage.denominatorRatio stage) := by
     rw [ratioIdentity, Gaussian.Norm.Basic.normSq_neg]
     exact (show (1 : Fraction.Rational) ≤ 2 by decide).trans coefficientNormCast
   exact (not_lt_of_ge ratioAtLeastOne)
@@ -3110,36 +3115,36 @@ namespace Purelib.Geometry.Hermitian.Binary.IntegralHermitianForm
 /-- Nonnegativity of a pulled-back Hermitian form transports through one
 explicit Hurwitz advance. -/
 theorem evaluate_advance_nonnegative_of_pullback
-    (form : Geometry.Hermitian.Binary.IntegralHermitianForm)
-    {source : GaussianInt.Fraction} {stage : Data.ComplexContinuedFraction.Hurwitz.Trace.Stage source}
-    (generated : Hurwitz.Geometry.Generated source stage)
-    (nonterminal : GaussianInt.Division.Nearest.remainder stage.quotient ≠ 0)
+    (form : IntegralHermitianForm)
+    {source : GaussianInt.Fraction} {stage : Trace.Stage source}
+    (generated : Geometry.Generated source stage)
+    (nonterminal : Nearest.remainder stage.quotient ≠ 0)
     (pullbackNonnegative :
       0 ≤ (form.pullback
-        (GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next stage.quotient
+        (Nearest.digit (Step.next stage.quotient
           nonterminal))).evaluate
           (Lakein.Stage.denominatorRatio stage)) :
     0 ≤ form.evaluate
       (Lakein.Stage.denominatorRatio
-        (Data.ComplexContinuedFraction.Hurwitz.Trace.advanceStage stage nonterminal)) := by
-  let coefficient := GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next stage.quotient
+        (Trace.advanceStage stage nonterminal)) := by
+  let coefficient := Nearest.digit (Step.next stage.quotient
     nonterminal)
   let sum := GaussianInt.toGaussian coefficient + (Lakein.Stage.denominatorRatio stage)
   have sumNonzero : sum ≠ 0 := by
     exact Lakein.denominatorRatio_step_sum_ne_zero generated nonterminal
-  have normPositive : 0 < Data.Gaussian.Norm.Basic.normSq sum := Gaussian.Norm.Basic.normSq_pos sumNonzero
+  have normPositive : 0 < Gaussian.Norm.Basic.normSq sum := Gaussian.Norm.Basic.normSq_pos sumNonzero
   have transformed := form.evaluate_pullback_mul_normSq coefficient
     (Lakein.Stage.denominatorRatio stage) sumNonzero
   have productNonnegative :
-      0 ≤ form.evaluate sum⁻¹ * Data.Gaussian.Norm.Basic.normSq sum := by
+      0 ≤ form.evaluate sum⁻¹ * Gaussian.Norm.Basic.normSq sum := by
     rw [transformed]
     exact pullbackNonnegative
   have evaluatedNonnegative : 0 ≤ form.evaluate sum⁻¹ := by
-    apply Fraction.Order.Arithmetic.le_of_mul_le_mul_right_direct
-      (c := Data.Gaussian.Norm.Basic.normSq sum) _ normPositive
+    apply Arithmetic.le_of_mul_le_mul_right_direct
+      (c := Gaussian.Norm.Basic.normSq sum) _ normPositive
     calc
-      0 * Data.Gaussian.Norm.Basic.normSq sum = 0 := by ring1
-      _ ≤ form.evaluate sum⁻¹ * Data.Gaussian.Norm.Basic.normSq sum := productNonnegative
+      0 * Gaussian.Norm.Basic.normSq sum = 0 := by ring1
+      _ ≤ form.evaluate sum⁻¹ * Gaussian.Norm.Basic.normSq sum := productNonnegative
   rw [Lakein.advanceStage_denominatorRatio stage generated nonterminal]
   exact evaluatedNonnegative
 
@@ -3161,7 +3166,7 @@ namespace Purelib.NumberTheory.Approximation.Hurwitz.Lakein.FirstExceptionalHerm
 /-- Every first-step exceptional Hermitian form is nonnegative at zero. -/
 private theorem
   evaluate_zero_nonnegative
-    {form : Geometry.Hermitian.Binary.IntegralHermitianForm} {coefficient : GaussianInt}
+    {form : IntegralHermitianForm} {coefficient : GaussianInt}
     (exceptional : FirstExceptionalHermitian form coefficient) :
     0 ≤ form.evaluate 0 := by
   cases exceptional <;> decide
@@ -3180,7 +3185,7 @@ private theorem root_pullback_nonnegative_at_zero
   rcases root_pullback_constant_gap_or_exceptional root coefficient
       coefficientNorm with constantGap | exceptional
   · exact
-      Geometry.Hermitian.Binary.IntegralHermitianForm.pullback_evaluate_nonnegative_of_constant_gap
+      IntegralHermitianForm.pullback_evaluate_nonnegative_of_constant_gap
         (lakeinRootForm realCross imaginaryCross) coefficient 0
         (by decide) (by
           change (0 : Fraction.Rational) < 4 + 1
@@ -3190,55 +3195,55 @@ private theorem root_pullback_nonnegative_at_zero
 
 /-- All root forms are nonnegative at the denominator ratio after the first nonterminal Hurwitz advance. -/
 private theorem firstAdvance_lakeinRootFormsNonnegative
-    (source : GaussianInt.Fraction) (nonterminal : GaussianInt.Division.Nearest.remainder source ≠ 0) :
+    (source : GaussianInt.Fraction) (nonterminal : Nearest.remainder source ≠ 0) :
     LakeinRootFormsNonnegative
       (Stage.denominatorRatio
-        (Data.ComplexContinuedFraction.Hurwitz.Trace.advanceStage
-          (Data.ComplexContinuedFraction.Hurwitz.Trace.firstStage source) nonterminal)) := by
+        (Trace.advanceStage
+          (Trace.firstStage source) nonterminal)) := by
   intro realCross imaginaryCross root
-  apply Purelib.Geometry.Hermitian.Binary.IntegralHermitianForm.evaluate_advance_nonnegative_of_pullback
-    (lakeinRootForm realCross imaginaryCross) Hurwitz.Geometry.Generated.first nonterminal
+  apply IntegralHermitianForm.evaluate_advance_nonnegative_of_pullback
+    (lakeinRootForm realCross imaginaryCross) Geometry.Generated.first nonterminal
   rw [firstStage_denominatorRatio]
   exact root_pullback_nonnegative_at_zero root _
-    (Hurwitz.Geometry.two_le_next_digit_normNat source nonterminal)
+    (Geometry.two_le_next_digit_normNat source nonterminal)
 
 /-- Assuming the root forms at one generated stage, the explicit
 two-successor classification establishes them two stages later. -/
 private theorem lakeinRootFormsNonnegative_two_advances
-    {source : GaussianInt.Fraction} {stage : Data.ComplexContinuedFraction.Hurwitz.Trace.Stage source}
-    (generated : Hurwitz.Geometry.Generated source stage)
-    (nonterminal : GaussianInt.Division.Nearest.remainder stage.quotient ≠ 0)
+    {source : GaussianInt.Fraction} {stage : Trace.Stage source}
+    (generated : Geometry.Generated source stage)
+    (nonterminal : Nearest.remainder stage.quotient ≠ 0)
     (nextNonterminal :
-      GaussianInt.Division.Nearest.remainder
-        (Data.ComplexContinuedFraction.Hurwitz.Trace.advanceStage stage nonterminal).quotient ≠ 0)
+      Nearest.remainder
+        (Trace.advanceStage stage nonterminal).quotient ≠ 0)
     (rootNonnegative :
       LakeinRootFormsNonnegative (Stage.denominatorRatio stage)) :
     LakeinRootFormsNonnegative
       (Stage.denominatorRatio
-        (Data.ComplexContinuedFraction.Hurwitz.Trace.advanceStage
-          (Data.ComplexContinuedFraction.Hurwitz.Trace.advanceStage stage nonterminal)
+        (Trace.advanceStage
+          (Trace.advanceStage stage nonterminal)
           nextNonterminal)) := by
-  let middle := Data.ComplexContinuedFraction.Hurwitz.Trace.advanceStage stage nonterminal
-  let previousDigit := GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next
+  let middle := Trace.advanceStage stage nonterminal
+  let previousDigit := Nearest.digit (Step.next
     stage.quotient nonterminal)
-  let followingDigit := GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next
+  let followingDigit := Nearest.digit (Step.next
     middle.quotient nextNonterminal)
-  have middleGenerated : Hurwitz.Geometry.Generated source middle :=
-    Hurwitz.Geometry.Generated.advance generated nonterminal
-  have baseInside : Data.Gaussian.Norm.Basic.normSq (Stage.denominatorRatio stage) ≤ 1 :=
+  have middleGenerated : Geometry.Generated source middle :=
+    Geometry.Generated.advance generated nonterminal
+  have baseInside : Gaussian.Norm.Basic.normSq (Stage.denominatorRatio stage) ≤ 1 :=
     (denominatorRatio_normSq_lt_one_of_generated generated).le
-  have middleInside : Data.Gaussian.Norm.Basic.normSq (Stage.denominatorRatio middle) ≤ 1 :=
+  have middleInside : Gaussian.Norm.Basic.normSq (Stage.denominatorRatio middle) ≤ 1 :=
     (denominatorRatio_normSq_lt_one_of_generated middleGenerated).le
   have previousNorm : 2 ≤ GaussianInt.normNat previousDigit := by
-    exact Hurwitz.Geometry.two_le_next_digit_normNat stage.quotient nonterminal
+    exact Geometry.two_le_next_digit_normNat stage.quotient nonterminal
   have followingNorm : 2 ≤ GaussianInt.normNat followingDigit := by
-    exact Hurwitz.Geometry.two_le_next_digit_normNat middle.quotient nextNonterminal
+    exact Geometry.two_le_next_digit_normNat middle.quotient nextNonterminal
   have notForbidden :
       ¬ ForbiddenSmallSuccessor previousDigit followingDigit := by
     change ¬ ForbiddenSmallSuccessor
-      (GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next stage.quotient nonterminal))
-      (GaussianInt.Division.Nearest.digit (Data.ComplexContinuedFraction.Hurwitz.Step.next
-        (Data.ComplexContinuedFraction.Hurwitz.Step.next stage.quotient nonterminal) nextNonterminal))
+      (Nearest.digit (Step.next stage.quotient nonterminal))
+      (Nearest.digit (Step.next
+        (Step.next stage.quotient nonterminal) nextNonterminal))
     exact not_forbiddenSmallSuccessor stage.quotient nonterminal
       nextNonterminal
   intro realCross imaginaryCross root
@@ -3248,7 +3253,7 @@ private theorem lakeinRootFormsNonnegative_two_advances
     rcases root_pullback_constant_gap_or_exceptional root followingDigit
         followingNorm with constantGap | exceptional
     · exact
-        Geometry.Hermitian.Binary.IntegralHermitianForm.pullback_evaluate_nonnegative_of_constant_gap
+        IntegralHermitianForm.pullback_evaluate_nonnegative_of_constant_gap
           (lakeinRootForm realCross imaginaryCross) followingDigit
           (Stage.denominatorRatio middle) middleInside (by
             change (0 : Fraction.Rational) < 4 + 1
@@ -3261,11 +3266,11 @@ private theorem lakeinRootFormsNonnegative_two_advances
         exact exceptional.pullback_nonnegative previousDigit previousNorm
           notForbidden (Stage.denominatorRatio stage) baseInside rootNonnegative
       have transported :=
-        Purelib.Geometry.Hermitian.Binary.IntegralHermitianForm.evaluate_advance_nonnegative_of_pullback
+        IntegralHermitianForm.evaluate_advance_nonnegative_of_pullback
           ((lakeinRootForm realCross imaginaryCross).pullback followingDigit)
           generated nonterminal secondPullbackNonnegative
       exact transported
-  exact Purelib.Geometry.Hermitian.Binary.IntegralHermitianForm.evaluate_advance_nonnegative_of_pullback
+  exact IntegralHermitianForm.evaluate_advance_nonnegative_of_pullback
     (lakeinRootForm realCross imaginaryCross) middleGenerated nextNonterminal
     firstPullbackNonnegative
 
@@ -3275,20 +3280,20 @@ the two-step exceptional calculation line up exactly with the unary
 `Generated` recursion. -/
 private def LakeinRootStageInvariant {source :
   GaussianInt.Fraction}
-    (stage : Data.ComplexContinuedFraction.Hurwitz.Trace.Stage source) : Prop :=
+    (stage : Trace.Stage source) : Prop :=
   LakeinRootFormsNonnegative (Stage.denominatorRatio stage) ∧
-    ∀ nonterminal : GaussianInt.Division.Nearest.remainder stage.quotient ≠ 0,
+    ∀ nonterminal : Nearest.remainder stage.quotient ≠ 0,
       LakeinRootFormsNonnegative
         (Stage.denominatorRatio
-          (Data.ComplexContinuedFraction.Hurwitz.Trace.advanceStage stage nonterminal))
+          (Trace.advanceStage stage nonterminal))
 
 /-- Every finitely generated Hurwitz stage retains root-form nonnegativity both now and after its next nonterminal
 advance.
 
 The paired invariant propagates the two-step exceptional classification through the unary generation relation. -/
 private theorem lakeinRootStageInvariant_of_generated
-    {source : GaussianInt.Fraction} {stage : Data.ComplexContinuedFraction.Hurwitz.Trace.Stage source}
-    (generated : Hurwitz.Geometry.Generated source stage) :
+    {source : GaussianInt.Fraction} {stage : Trace.Stage source}
+    (generated : Geometry.Generated source stage) :
     LakeinRootStageInvariant stage := by
   induction generated with
   | first =>
@@ -3307,8 +3312,8 @@ private theorem lakeinRootStageInvariant_of_generated
 /-- All eight quadrance-five/diagonal root forms are nonnegative at every
 stage produced by the finite Hurwitz trace. -/
 theorem lakeinRootFormsNonnegative_of_generated
-    {source : GaussianInt.Fraction} {stage : Data.ComplexContinuedFraction.Hurwitz.Trace.Stage source}
-    (generated : Hurwitz.Geometry.Generated source stage) :
+    {source : GaussianInt.Fraction} {stage : Trace.Stage source}
+    (generated : Geometry.Generated source stage) :
     LakeinRootFormsNonnegative (Stage.denominatorRatio stage) :=
   (lakeinRootStageInvariant_of_generated generated).1
 
@@ -3318,35 +3323,35 @@ The cross coefficients are the displayed integral bilinear expressions in the tw
 private theorem normFive_diagonal_factor_identity
     (ratio : Gaussian.Basic.Canonical) (s t : GaussianInt)
     (sNorm : GaussianInt.normNat s = 5) (tNorm : GaussianInt.normNat t = 2) :
-    Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian s + GaussianInt.toGaussian t * ratio) =
+    Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian s + GaussianInt.toGaussian t * ratio) =
       1 +
         (lakeinRootForm
           (s.re * t.re + s.im * t.im)
           (-s.re * t.im + s.im * t.re)).evaluate ratio := open Purelib.Algebra in by
   have castNeg (value : Int) : ((-value : Int) : Fraction.Rational) = -(value : Fraction.Rational) :=
     Ring.IntCast.neg value
-  have sNormIdentity : Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian s) = 5 := by
+  have sNormIdentity : Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian s) = 5 := by
     rw [GaussianInt.normSq_toGaussian, sNorm]
     rfl
-  have tNormIdentity : Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian t) = 2 := by
+  have tNormIdentity : Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian t) = 2 := by
     rw [GaussianInt.normSq_toGaussian, tNorm]
     rfl
   calc
-    Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian s + GaussianInt.toGaussian t * ratio) =
-        Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian s) + Data.Gaussian.Norm.Basic.normSq
-          (GaussianInt.toGaussian t) * Data.Gaussian.Norm.Basic.normSq ratio +
+    Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian s + GaussianInt.toGaussian t * ratio) =
+        Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian s) + Gaussian.Norm.Basic.normSq
+          (GaussianInt.toGaussian t) * Gaussian.Norm.Basic.normSq ratio +
           2 *
             (((s.re * t.re + s.im * t.im : Int) : Fraction.Rational) * ratio.re +
               ((-s.re * t.im + s.im * t.re : Int) : Fraction.Rational) *
                 ratio.im) := by
-      simp only [Data.Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian,
+      simp only [Gaussian.Norm.Basic.normSq, GaussianInt.toGaussian,
         Gaussian.Basic.add_re,
         Gaussian.Basic.add_im,
         Gaussian.Basic.mul_re,
         Gaussian.Basic.mul_im,
-        Ring.IntCast.add, Ring.IntCast.intCast_mul, castNeg, ← Rat.Fraction.Cast.intCast_eq_fromInt]
+        Ring.IntCast.add, Ring.IntCast.intCast_mul, castNeg, ← Fraction.Cast.intCast_eq_fromInt]
       ring1
-    _ = 5 + 2 * Data.Gaussian.Norm.Basic.normSq ratio +
+    _ = 5 + 2 * Gaussian.Norm.Basic.normSq ratio +
           2 *
             (((s.re * t.re + s.im * t.im : Int) : Fraction.Rational) * ratio.re +
               ((-s.re * t.im + s.im * t.re : Int) : Fraction.Rational) *
@@ -3356,7 +3361,7 @@ private theorem normFive_diagonal_factor_identity
         (lakeinRootForm
           (s.re * t.re + s.im * t.im)
           (-s.re * t.im + s.im * t.re)).evaluate ratio := by
-      simp only [Geometry.Hermitian.Binary.IntegralHermitianForm.evaluate, lakeinRootForm,
+      simp only [IntegralHermitianForm.evaluate, lakeinRootForm,
         Geometry.Hermitian.Binary.hermitianForm, Int.cast_ofNat, Ring.IntCast.add, Ring.IntCast.intCast_mul]
       ring1
 
@@ -3389,7 +3394,7 @@ theorem one_le_normSq_normFive_add_diagonal_mul_of_rootForms
     (ratio : Gaussian.Basic.Canonical) (rootNonnegative : LakeinRootFormsNonnegative ratio)
     (s t : GaussianInt) (sNorm : GaussianInt.normNat s = 5)
     (tNorm : GaussianInt.normNat t = 2) :
-    1 ≤ Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian s + GaussianInt.toGaussian t * ratio) := by
+    1 ≤ Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian s + GaussianInt.toGaussian t * ratio) := by
   let realCross := s.re * t.re + s.im * t.im
   let imaginaryCross := -s.re * t.im + s.im * t.re
   have root : IsLakeinRootCross realCross imaginaryCross :=
@@ -3400,38 +3405,38 @@ theorem one_le_normSq_normFive_add_diagonal_mul_of_rootForms
     _ ≤ 1 + (lakeinRootForm realCross imaginaryCross).evaluate ratio :=
       by
         have shifted :=
-          Fraction.Order.Arithmetic.add_le_add_right_direct rootBound 1
+          Arithmetic.add_le_add_right_direct rootBound 1
         calc
           (1 : Fraction.Rational) + 0 = 0 + 1 := by ring1
           _ ≤ (lakeinRootForm realCross imaginaryCross).evaluate ratio + 1 :=
             shifted
           _ = 1 + (lakeinRootForm realCross imaginaryCross).evaluate ratio := by
             ring1
-    _ = Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian s + GaussianInt.toGaussian t * ratio) := by
+    _ = Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian s + GaussianInt.toGaussian t * ratio) := by
       exact (normFive_diagonal_factor_identity ratio s t sNorm tNorm).symm
 
 /-- Root-form nonnegativity supplies the outstanding quadrance-five
 denominator comparison at a generated stage. -/
 theorem normFiveDenominatorSafe_of_rootForms
-    {source : GaussianInt.Fraction} {stage : Data.ComplexContinuedFraction.Hurwitz.Trace.Stage source}
-    (generated : Hurwitz.Geometry.Generated source stage)
+    {source : GaussianInt.Fraction} {stage : Trace.Stage source}
+    (generated : Geometry.Generated source stage)
     (rootNonnegative :
       LakeinRootFormsNonnegative (Stage.denominatorRatio stage)) :
-    Hurwitz.Geometry.NormFiveDenominatorSafe stage := by
+    Geometry.NormFiveDenominatorSafe stage := by
   intro s t sNorm tNorm
   have currentNonzero := current_denominator_ne_zero_of_generated generated
   let currentValue := GaussianInt.toGaussian stage.current.denominator
   let factor := GaussianInt.toGaussian s + GaussianInt.toGaussian t * (Stage.denominatorRatio stage)
-  have factorExterior : 1 ≤ Data.Gaussian.Norm.Basic.normSq factor := by
+  have factorExterior : 1 ≤ Gaussian.Norm.Basic.normSq factor := by
     dsimp only [factor]
     exact one_le_normSq_normFive_add_diagonal_mul_of_rootForms
       (Stage.denominatorRatio stage) rootNonnegative s t sNorm tNorm
-  have currentNormNonnegative : 0 ≤ Data.Gaussian.Norm.Basic.normSq currentValue :=
+  have currentNormNonnegative : 0 ≤ Gaussian.Norm.Basic.normSq currentValue :=
     Gaussian.Norm.Basic.normSq_nonneg _
   have scaledExterior :
-      1 * Data.Gaussian.Norm.Basic.normSq currentValue ≤ Data.Gaussian.Norm.Basic.normSq factor *
-        Data.Gaussian.Norm.Basic.normSq currentValue :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      1 * Gaussian.Norm.Basic.normSq currentValue ≤ Gaussian.Norm.Basic.normSq factor *
+        Gaussian.Norm.Basic.normSq currentValue :=
+    Arithmetic.mul_le_mul_of_nonneg_right_direct
       factorExterior currentNormNonnegative
   have factorIdentity :
       factor * currentValue =
@@ -3450,11 +3455,11 @@ theorem normFiveDenominatorSafe_of_rootForms
   apply (Fraction.Cast.Order.natCast_le_iff_direct).1
   calc
     (GaussianInt.normNat stage.current.denominator : Fraction.Rational) =
-        Data.Gaussian.Norm.Basic.normSq currentValue := (GaussianInt.normSq_toGaussian _).symm
-    _ = 1 * Data.Gaussian.Norm.Basic.normSq currentValue := by ring1
-    _ ≤ Data.Gaussian.Norm.Basic.normSq factor * Data.Gaussian.Norm.Basic.normSq currentValue := scaledExterior
-    _ = Data.Gaussian.Norm.Basic.normSq (factor * currentValue) := by rw [Gaussian.Norm.Basic.normSq_mul]
-    _ = Data.Gaussian.Norm.Basic.normSq
+        Gaussian.Norm.Basic.normSq currentValue := (GaussianInt.normSq_toGaussian _).symm
+    _ = 1 * Gaussian.Norm.Basic.normSq currentValue := by ring1
+    _ ≤ Gaussian.Norm.Basic.normSq factor * Gaussian.Norm.Basic.normSq currentValue := scaledExterior
+    _ = Gaussian.Norm.Basic.normSq (factor * currentValue) := by rw [Gaussian.Norm.Basic.normSq_mul]
+    _ = Gaussian.Norm.Basic.normSq
         (GaussianInt.toGaussian
           (s * stage.current.denominator +
             t * stage.previous.denominator)) := by rw [factorIdentity]
@@ -3466,9 +3471,9 @@ theorem normFiveDenominatorSafe_of_rootForms
 /-- Every generated Hurwitz stage satisfies the exceptional denominator
 certificate required by Lakein's comparison. -/
 theorem normFiveDenominatorSafe_of_generated
-    {source : GaussianInt.Fraction} {stage : Data.ComplexContinuedFraction.Hurwitz.Trace.Stage source}
-    (generated : Hurwitz.Geometry.Generated source stage) :
-    Hurwitz.Geometry.NormFiveDenominatorSafe stage :=
+    {source : GaussianInt.Fraction} {stage : Trace.Stage source}
+    (generated : Geometry.Generated source stage) :
+    Geometry.NormFiveDenominatorSafe stage :=
   normFiveDenominatorSafe_of_rootForms generated
     (lakeinRootFormsNonnegative_of_generated generated)
 
@@ -3479,17 +3484,17 @@ namespace Purelib.NumberTheory.Approximation.Hurwitz.Lakein.Stage
 /-- A terminal generated stage reconstructs the displayed rational source
 exactly. -/
 theorem current_error_eq_zero_of_terminal
-    {source : GaussianInt.Fraction} (stage : Data.ComplexContinuedFraction.Hurwitz.Trace.Stage source)
-    (terminal : GaussianInt.Division.Nearest.remainder stage.quotient = 0) :
+    {source : GaussianInt.Fraction} (stage : Trace.Stage source)
+    (terminal : Nearest.remainder stage.quotient = 0) :
     Best.Error.error source.value stage.current = 0 := by
-  have residualZero : GaussianInt.Division.Nearest.residual stage.quotient = 0 := by
+  have residualZero : Nearest.residual stage.quotient = 0 := by
     apply Gaussian.Field.mul_right_cancel_of_ne
       stage.quotient.denominatorGaussianNonzero
     calc
-      GaussianInt.Division.Nearest.residual stage.quotient *
+      Nearest.residual stage.quotient *
             GaussianInt.toGaussian stage.quotient.denominator =
-          GaussianInt.toGaussian (GaussianInt.Division.Nearest.remainder stage.quotient) :=
-        (GaussianInt.Division.Nearest.remainder_toGaussian stage.quotient).symm
+          GaussianInt.toGaussian (Nearest.remainder stage.quotient) :=
+        (Nearest.remainder_toGaussian stage.quotient).symm
       _ = 0 := by rw [terminal, GaussianInt.toGaussian_zero]
       _ = 0 * GaussianInt.toGaussian stage.quotient.denominator := by
         rw [Gaussian.Basic.zero_mul]
@@ -3500,16 +3505,16 @@ theorem current_error_eq_zero_of_terminal
 
 /-- Lakein's comparison at a nonterminal generated stage. -/
 theorem atLeastAsGoodAs_of_generated_nonterminal
-    {source : GaussianInt.Fraction} (stage : Data.ComplexContinuedFraction.Hurwitz.Trace.Stage source)
-    (generated : Hurwitz.Geometry.Generated source stage)
-    (nonterminal : GaussianInt.Division.Nearest.remainder stage.quotient ≠ 0)
+    {source : GaussianInt.Fraction} (stage : Trace.Stage source)
+    (generated : Geometry.Generated source stage)
+    (nonterminal : Nearest.remainder stage.quotient ≠ 0)
     (competitor : GaussianInt.Pair.Basic.ConvergentPair)
     (competitorDenominatorNonzero : competitor.denominator ≠ 0)
     (denominatorSmaller :
       GaussianInt.normNat competitor.denominator < GaussianInt.normNat stage.current.denominator) :
     Best.Error.AtLeastAsGoodAs source.value stage.current competitor := by
-  exact (Hurwitz.Geometry.Stage.atLeastAsGoodAs_of_generated_of_normFiveDenominatorSafe stage)
-    generated (Lakein.normFiveDenominatorSafe_of_generated generated) nonterminal
+  exact (Geometry.Stage.atLeastAsGoodAs_of_generated_of_normFiveDenominatorSafe stage)
+    generated (normFiveDenominatorSafe_of_generated generated) nonterminal
     competitor competitorDenominatorNonzero denominatorSmaller
 
 /-- **Finite Lakein inequality.**  Every displayed Hurwitz convergent is at
@@ -3517,14 +3522,14 @@ least as good as any Gaussian-rational competitor with strictly smaller
 denominator quadrance.  At the terminal stage the displayed convergent is
 exact; every earlier stage is covered by the finite root-form invariant. -/
 theorem atLeastAsGoodAs_of_generated
-    {source : GaussianInt.Fraction} (stage : Data.ComplexContinuedFraction.Hurwitz.Trace.Stage source)
-    (generated : Hurwitz.Geometry.Generated source stage)
+    {source : GaussianInt.Fraction} (stage : Trace.Stage source)
+    (generated : Geometry.Generated source stage)
     (competitor : GaussianInt.Pair.Basic.ConvergentPair)
     (competitorDenominatorNonzero : competitor.denominator ≠ 0)
     (denominatorSmaller :
       GaussianInt.normNat competitor.denominator < GaussianInt.normNat stage.current.denominator) :
     Best.Error.AtLeastAsGoodAs source.value stage.current competitor := by
-  by_cases terminal : GaussianInt.Division.Nearest.remainder stage.quotient = 0
+  by_cases terminal : Nearest.remainder stage.quotient = 0
   · have currentErrorZero := (current_error_eq_zero_of_terminal stage) terminal
     rw [Best.Error.AtLeastAsGoodAs, currentErrorZero, Gaussian.Norm.Basic.normSq_zero]
     exact Gaussian.Norm.Basic.normSq_nonneg _
@@ -3534,10 +3539,10 @@ theorem atLeastAsGoodAs_of_generated
 /-- Every generated stage satisfies the unconditional weak lower-height
 best-approximation predicate. -/
 theorem isWeakLowerBest_of_generated
-    {source : GaussianInt.Fraction} (stage : Data.ComplexContinuedFraction.Hurwitz.Trace.Stage source)
-    (generated : Hurwitz.Geometry.Generated source stage) :
+    {source : GaussianInt.Fraction} (stage : Trace.Stage source)
+    (generated : Geometry.Generated source stage) :
     Best.Basic.IsWeakLowerBest source.value stage.current := by
-  refine ⟨Lakein.current_denominator_ne_zero_of_generated generated, ?_⟩
+  refine ⟨current_denominator_ne_zero_of_generated generated, ?_⟩
   intro competitor competitorNonzero denominatorSmaller
   change Best.Error.AtLeastAsGoodAs source.value stage.current competitor
   exact (atLeastAsGoodAs_of_generated stage) generated competitor
@@ -3548,11 +3553,11 @@ and adjacent unit determinant make it a genuine best approximation.  Any
 smaller exact competitor would force its denominator to be a nonzero
 Gaussian-integer multiple of the terminal denominator. -/
 theorem isBest_of_generated_of_terminal
-    {source : GaussianInt.Fraction} (stage : Data.ComplexContinuedFraction.Hurwitz.Trace.Stage source)
-    (generated : Hurwitz.Geometry.Generated source stage)
-    (terminal : GaussianInt.Division.Nearest.remainder stage.quotient = 0) :
+    {source : GaussianInt.Fraction} (stage : Trace.Stage source)
+    (generated : Geometry.Generated source stage)
+    (terminal : Nearest.remainder stage.quotient = 0) :
     Best.Basic.IsBest source.value stage.current := by
-  have currentNonzero := Lakein.current_denominator_ne_zero_of_generated generated
+  have currentNonzero := current_denominator_ne_zero_of_generated generated
   have currentErrorZero := (current_error_eq_zero_of_terminal stage) terminal
   refine ⟨currentNonzero, ?_, ?_⟩
   · intro competitor competitorNonzero denominatorSmaller
@@ -3561,7 +3566,7 @@ theorem isBest_of_generated_of_terminal
     intro competitorErrorZero
     have determinantGaussianZero :
         GaussianInt.toGaussian (GaussianInt.Pair.Basis.determinant stage.current competitor) = 0 := by
-      rw [Data.ComplexContinuedFraction.Hurwitz.Trace.determinant_eq_denominator_mul_error_sub,
+      rw [Trace.determinant_eq_denominator_mul_error_sub,
         competitorErrorZero, currentErrorZero]
       apply Gaussian.Basic.ext <;>
         simp only [Gaussian.Basic.sub_re,
@@ -3614,8 +3619,8 @@ theorem exists_bestApproximation (source :
     ∃ pair : GaussianInt.Pair.Basic.ConvergentPair,
       Best.Basic.IsBest source.value pair := by
   obtain ⟨terminalStage, member, terminal⟩ :=
-    Data.ComplexContinuedFraction.Hurwitz.Trace.exists_terminal_mem_stages source
-  have generated := Hurwitz.Geometry.generated_of_mem_stages member
+    Trace.exists_terminal_mem_stages source
+  have generated := Geometry.generated_of_mem_stages member
   exact ⟨terminalStage.current,
     Stage.isBest_of_generated_of_terminal
       terminalStage generated terminal⟩
@@ -3688,10 +3693,10 @@ private theorem half_scaled_bounds {value bound :
       value ≤ (1 / 2 : Fraction.Rational) * bound := by
   have halfNonnegative : (0 : Fraction.Rational) ≤ 1 / 2 := by decide
   have scaledLower :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       lower halfNonnegative
   have scaledUpper :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    Arithmetic.mul_le_mul_of_nonneg_left_direct
       upper halfNonnegative
   constructor
   · calc
@@ -3714,9 +3719,9 @@ private theorem div_half_bounds {value bound :
     -(1 / 2 : Fraction.Rational) ≤ value / bound ∧
       value / bound ≤ (1 / 2 : Fraction.Rational) := by
   exact
-    ⟨(Fraction.Order.Field.le_div_iff_pos boundPositive).2
+    ⟨(Field.le_div_iff_pos boundPositive).2
         scaledBounds.1,
-      (Fraction.Order.Field.div_le_iff_pos boundPositive).2
+      (Field.div_le_iff_pos boundPositive).2
         scaledBounds.2⟩
 
 /-- Every reciprocal of a Gaussian integer of quadrance at least two lies
@@ -3758,7 +3763,7 @@ theorem inverse_integer_coordinate_bounds {value : GaussianInt}
   have normPositive : (0 : Fraction.Rational) < (GaussianInt.normNat value : Fraction.Rational) :=
     Fraction.Cast.Order.natCast_pos_direct normPositiveNat
   have normIdentity :
-      Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian value) = (GaussianInt.normNat value :
+      Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian value) = (GaussianInt.normNat value :
         Fraction.Rational) :=
     GaussianInt.normSq_toGaussian value
   have castRealUpper :
@@ -3797,7 +3802,7 @@ theorem inverse_integer_coordinate_bounds {value : GaussianInt}
   have imaginaryNegLower :
       -(GaussianInt.normNat value : Fraction.Rational) ≤
         2 * (-(value.im : Fraction.Rational)) := by
-    have reversed := Fraction.Order.Arithmetic.neg_le_neg_direct
+    have reversed := Arithmetic.neg_le_neg_direct
       castImaginaryUpper
     calc
       -(GaussianInt.normNat value : Fraction.Rational) ≤
@@ -3806,7 +3811,7 @@ theorem inverse_integer_coordinate_bounds {value : GaussianInt}
   have imaginaryNegUpper :
       2 * (-(value.im : Fraction.Rational)) ≤
         (GaussianInt.normNat value : Fraction.Rational) := by
-    have reversed := Fraction.Order.Arithmetic.neg_le_neg_direct
+    have reversed := Arithmetic.neg_le_neg_direct
       castImaginaryLower
     calc
       2 * (-(value.im : Fraction.Rational)) =
@@ -3820,13 +3825,13 @@ theorem inverse_integer_coordinate_bounds {value : GaussianInt}
   rw [Gaussian.Field.inv_eq]
   change
     -(1 / 2 : Fraction.Rational) ≤
-        Rat.Fraction.Cast.fromInt value.re / Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian value) ∧
-      Rat.Fraction.Cast.fromInt value.re / Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian value) ≤ 1 / 2 ∧
+        Fraction.Cast.fromInt value.re / Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian value) ∧
+      Fraction.Cast.fromInt value.re / Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian value) ≤ 1 / 2 ∧
       -(1 / 2 : Fraction.Rational) ≤
-        -Rat.Fraction.Cast.fromInt value.im / Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian value) ∧
-      -Rat.Fraction.Cast.fromInt value.im / Data.Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian value) ≤ 1 / 2
+        -Fraction.Cast.fromInt value.im / Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian value) ∧
+      -Fraction.Cast.fromInt value.im / Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian value) ≤ 1 / 2
   rw [normIdentity]
-  simpa only [← Rat.Fraction.Cast.intCast_eq_fromInt] using
+  simpa only [← Fraction.Cast.intCast_eq_fromInt] using
     And.intro realBounds.1 (And.intro realBounds.2 (And.intro
       imaginaryBounds.1 imaginaryBounds.2))
 
@@ -3834,30 +3839,30 @@ theorem inverse_integer_coordinate_bounds {value : GaussianInt}
 half-square. -/
 theorem firstAdvance_denominatorRatioInLakeinSquare (source :
   GaussianInt.Fraction)
-    (nonterminal : GaussianInt.Division.Nearest.remainder source ≠ 0) :
+    (nonterminal : Nearest.remainder source ≠ 0) :
     DenominatorRatioInLakeinSquare
-      (Data.ComplexContinuedFraction.Hurwitz.Trace.advanceStage
-      (Data.ComplexContinuedFraction.Hurwitz.Trace.firstStage source) nonterminal) := by
+      (Trace.advanceStage
+      (Trace.firstStage source) nonterminal) := by
   unfold DenominatorRatioInLakeinSquare
   have recurrence := advanceStage_denominatorRatio
-    (Data.ComplexContinuedFraction.Hurwitz.Trace.firstStage source) Hurwitz.Geometry.Generated.first nonterminal
-  have digitTwoLe := Hurwitz.Geometry.two_le_next_digit_normNat source nonterminal
+    (Trace.firstStage source) Geometry.Generated.first nonterminal
+  have digitTwoLe := Geometry.two_le_next_digit_normNat source nonterminal
   have inverseBounds := inverse_integer_coordinate_bounds digitTwoLe
   change
     -(3 / 4 : Fraction.Rational) ≤
         (Stage.denominatorRatio
-          (Data.ComplexContinuedFraction.Hurwitz.Trace.advanceStage
-            (Data.ComplexContinuedFraction.Hurwitz.Trace.firstStage source) nonterminal)).re ∧
+          (Trace.advanceStage
+            (Trace.firstStage source) nonterminal)).re ∧
       (Stage.denominatorRatio
-          (Data.ComplexContinuedFraction.Hurwitz.Trace.advanceStage
-            (Data.ComplexContinuedFraction.Hurwitz.Trace.firstStage source) nonterminal)).re ≤ 3 / 4 ∧
+          (Trace.advanceStage
+            (Trace.firstStage source) nonterminal)).re ≤ 3 / 4 ∧
       -(3 / 4 : Fraction.Rational) ≤
         (Stage.denominatorRatio
-          (Data.ComplexContinuedFraction.Hurwitz.Trace.advanceStage
-            (Data.ComplexContinuedFraction.Hurwitz.Trace.firstStage source) nonterminal)).im ∧
+          (Trace.advanceStage
+            (Trace.firstStage source) nonterminal)).im ∧
       (Stage.denominatorRatio
-          (Data.ComplexContinuedFraction.Hurwitz.Trace.advanceStage
-            (Data.ComplexContinuedFraction.Hurwitz.Trace.firstStage source) nonterminal)).im ≤ 3 / 4
+          (Trace.advanceStage
+            (Trace.firstStage source) nonterminal)).im ≤ 3 / 4
   rw [recurrence]
   rw [firstStage_denominatorRatio,
     Gaussian.Basic.add_zero]
@@ -3873,25 +3878,25 @@ theorem firstAdvance_denominatorRatioInLakeinSquare (source :
 /-- The Lakein square is exactly strong enough to provide the outstanding
 quadrance-five denominator certificate. -/
 theorem normFiveDenominatorSafe_of_lakeinSquare
-    {source : GaussianInt.Fraction} {stage : Data.ComplexContinuedFraction.Hurwitz.Trace.Stage source}
-    (generated : Hurwitz.Geometry.Generated source stage)
+    {source : GaussianInt.Fraction} {stage : Trace.Stage source}
+    (generated : Geometry.Generated source stage)
     (inside : DenominatorRatioInLakeinSquare stage) :
-    Hurwitz.Geometry.NormFiveDenominatorSafe stage := by
+    Geometry.NormFiveDenominatorSafe stage := by
   intro s t sNorm tNorm
   have currentNonzero := current_denominator_ne_zero_of_generated generated
   let currentValue := GaussianInt.toGaussian stage.current.denominator
   let factor := GaussianInt.toGaussian s + GaussianInt.toGaussian t * (Stage.denominatorRatio stage)
-  have factorExterior : 1 ≤ Data.Gaussian.Norm.Basic.normSq factor := by
+  have factorExterior : 1 ≤ Gaussian.Norm.Basic.normSq factor := by
     dsimp only [factor]
-    exact Hurwitz.Geometry.one_le_normSq_normFive_add_diagonal_mul_of_coordinate_bounds
+    exact Geometry.one_le_normSq_normFive_add_diagonal_mul_of_coordinate_bounds
       (Stage.denominatorRatio stage) s t sNorm tNorm inside.1 inside.2.1
       inside.2.2.1 inside.2.2.2
-  have currentNormNonnegative : 0 ≤ Data.Gaussian.Norm.Basic.normSq currentValue :=
+  have currentNormNonnegative : 0 ≤ Gaussian.Norm.Basic.normSq currentValue :=
     Gaussian.Norm.Basic.normSq_nonneg _
   have scaledExterior :
-      1 * Data.Gaussian.Norm.Basic.normSq currentValue ≤ Data.Gaussian.Norm.Basic.normSq factor *
-        Data.Gaussian.Norm.Basic.normSq currentValue :=
-    Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
+      1 * Gaussian.Norm.Basic.normSq currentValue ≤ Gaussian.Norm.Basic.normSq factor *
+        Gaussian.Norm.Basic.normSq currentValue :=
+    Arithmetic.mul_le_mul_of_nonneg_right_direct
       factorExterior currentNormNonnegative
   have factorIdentity :
       factor * currentValue =
@@ -3910,11 +3915,11 @@ theorem normFiveDenominatorSafe_of_lakeinSquare
   apply (Fraction.Cast.Order.natCast_le_iff_direct).1
   calc
     (GaussianInt.normNat stage.current.denominator : Fraction.Rational) =
-        Data.Gaussian.Norm.Basic.normSq currentValue := (GaussianInt.normSq_toGaussian _).symm
-    _ = 1 * Data.Gaussian.Norm.Basic.normSq currentValue := by ring1
-    _ ≤ Data.Gaussian.Norm.Basic.normSq factor * Data.Gaussian.Norm.Basic.normSq currentValue := scaledExterior
-    _ = Data.Gaussian.Norm.Basic.normSq (factor * currentValue) := by rw [Gaussian.Norm.Basic.normSq_mul]
-    _ = Data.Gaussian.Norm.Basic.normSq
+        Gaussian.Norm.Basic.normSq currentValue := (GaussianInt.normSq_toGaussian _).symm
+    _ = 1 * Gaussian.Norm.Basic.normSq currentValue := by ring1
+    _ ≤ Gaussian.Norm.Basic.normSq factor * Gaussian.Norm.Basic.normSq currentValue := scaledExterior
+    _ = Gaussian.Norm.Basic.normSq (factor * currentValue) := by rw [Gaussian.Norm.Basic.normSq_mul]
+    _ = Gaussian.Norm.Basic.normSq
         (GaussianInt.toGaussian
           (s * stage.current.denominator +
             t * stage.previous.denominator)) := by rw [factorIdentity]
@@ -3928,19 +3933,19 @@ noninitial convergent; no succession argument is needed until the following
 stage. -/
 theorem firstAdvance_normFiveDenominatorSafe (source :
   GaussianInt.Fraction)
-    (nonterminal : GaussianInt.Division.Nearest.remainder source ≠ 0) :
-    Hurwitz.Geometry.NormFiveDenominatorSafe
-      (Data.ComplexContinuedFraction.Hurwitz.Trace.advanceStage
-        (Data.ComplexContinuedFraction.Hurwitz.Trace.firstStage source) nonterminal) := by
+    (nonterminal : Nearest.remainder source ≠ 0) :
+    Geometry.NormFiveDenominatorSafe
+      (Trace.advanceStage
+        (Trace.firstStage source) nonterminal) := by
   exact normFiveDenominatorSafe_of_lakeinSquare
-    (Hurwitz.Geometry.Generated.advance Hurwitz.Geometry.Generated.first nonterminal)
+    (Geometry.Generated.advance Geometry.Generated.first nonterminal)
     (firstAdvance_denominatorRatioInLakeinSquare source nonterminal)
 
 /-- The initial denominator ratio zero lies in the Lakein square. -/
 theorem firstStage_denominatorRatioInLakeinSquare (source :
   GaussianInt.Fraction) :
     DenominatorRatioInLakeinSquare
-      (Data.ComplexContinuedFraction.Hurwitz.Trace.firstStage source) := by
+      (Trace.firstStage source) := by
   unfold DenominatorRatioInLakeinSquare
   rw [firstStage_denominatorRatio]
   change -(3 / 4 : Fraction.Rational) ≤ 0 ∧ 0 ≤ 3 / 4 ∧

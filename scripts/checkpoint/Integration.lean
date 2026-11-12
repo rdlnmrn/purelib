@@ -11,6 +11,8 @@ public import Purelib.Data.Json.Codec
 public import Purelib.Data.Json.Parser
 -- Exposed rational encoders retain the original signed-decimal renderer.
 public import Purelib.Data.Int.Decimal
+import Purelib.Data.Nat.Decimal
+import Purelib.Data.Task.Parallel
 import Purelib.Data.Json.Basic
 import Purelib.Data.Json.Printer
 import Purelib.Data.String.Basic
@@ -103,6 +105,8 @@ parser/printer and record deriving handler.
 -/
 
 namespace IntegrationCheckpoint
+
+open Purelib.Data.Task
 
 variable {Result : Type}
 
@@ -208,7 +212,7 @@ inductive InvalidData where
   /-- The actual and expected rational values with their inequality proof. -/ | rationalMismatch (label : String)
     (actual expected : Coordinate) (invalid : actual ≠ expected)
   /-- The retained local error violates its squared-norm allowance. -/ | localBound (error : Gaussian) (allowance :
-    Coordinate) (invalid : ¬ Data.Gaussian.Norm.Basic.normSq error ≤ allowance)
+    Coordinate) (invalid : ¬ normSq error ≤ allowance)
 
 constructive_injectivity InvalidData
 
@@ -230,7 +234,13 @@ constructive_injectivity InvalidData
       s!"local error {gaussianText error} exceeds allowance {fractionText allowance}"
 
 /-- Serialize the exact rational numerator and denominator as decimal strings. -/
-@[expose] def fractionData (value : Coordinate) : FractionData := ⟨toString value.num, toString value.den⟩
+@[expose] def fractionData (value : Coordinate) : FractionData :=
+  ⟨toString value.num, Data.Nat.Decimal.repr value.den⟩
+
+/-- The encoded denominator retains the complete original natural decimal string. -/
+theorem fractionData_denominator (value : Coordinate) :
+    (fractionData value).denominator = Nat.repr value.den :=
+  Data.Nat.Decimal.repr_eq value.den
 /-- Serialize both exact rational coordinates of a Gaussian value. -/
 @[expose] def gaussianData (value : Gaussian) : GaussianData := ⟨fractionData value.re, fractionData value.im⟩
 
@@ -238,34 +248,110 @@ set_option backward.match.sparseCases false in
 /-- Parse a signed numerator and certify a positive denominator before constructing the exact rational.
 
 The owned decimal parsers retain the original signed magnitude and separator
-grammar. Failure retains the original syntax diagnostic or denominator invalidity. -/
-@[expose] def decodeFraction (data : FractionData) : Except InvalidData Coordinate := do
+grammar. Failure retains the original syntax diagnostic or denominator invalidity.
+An actual supplied scalar is reused only when both parsed integers equal its
+retained numerator and denominator; other encodings follow the original division. -/
+@[expose] def decodeFraction (data : FractionData) (expected : Option Coordinate := none) :
+    Except InvalidData Coordinate := do
   let some numerator := Data.String.toInt? data.numerator
     | .error (.syntax s!"invalid integer numerator {data.numerator}")
   let some denominator := Data.String.toNat? data.denominator
     | .error (.syntax s!"invalid natural denominator {data.denominator}")
   if positive : 0 < denominator then
-    .ok (Fraction.Cast.fromInt numerator / Fraction.Cast.fromInt denominator)
+    let retained := match expected with
+      | none => none
+      | some value =>
+          if numerator = value.num then
+            if denominator = value.den then some value else none
+          else none
+    match retained with
+    | some value => .ok value
+    | none => .ok (Fraction.Cast.fromInt numerator / Fraction.Cast.fromInt denominator)
   else .error (.denominator denominator positive)
+
+/-- An expected scalar preserves every original parse result and invalidity diagnostic.
+
+The original ordered syntax and positive-denominator checks precede reuse.
+An unequal displayed numerator or denominator retains the original division. -/
+theorem decodeFraction_expected_eq_default (data : FractionData) (expected : Option Coordinate) :
+    decodeFraction data expected = decodeFraction data := by
+  unfold decodeFraction
+  cases numeratorParsed : Data.String.toInt? data.numerator with
+  | none => rfl
+  | some numerator =>
+      dsimp only
+      cases denominatorParsed : Data.String.toNat? data.denominator with
+      | none => rfl
+      | some denominator =>
+          dsimp only
+          by_cases positive : 0 < denominator
+          · rewrite [dif_pos positive, dif_pos positive]
+            cases expected with
+            | none => rfl
+            | some value =>
+                dsimp only
+                by_cases numeratorEqual : numerator = value.num
+                · rewrite [if_pos numeratorEqual]
+                  by_cases denominatorEqual : denominator = value.den
+                  · rewrite [if_pos denominatorEqual]
+                    dsimp only
+                    rewrite [numeratorEqual, denominatorEqual]
+                    apply congrArg Except.ok
+                    have equal := Fraction.Cast.representative_eq_num_div_den value
+                    change value = (value.num : Coordinate) / (value.den : Coordinate) at equal
+                    rewrite [Fraction.Cast.intCast_eq_fromInt, Fraction.Cast.natCast_eq_fromInt] at equal
+                    exact equal
+                  · rewrite [if_neg denominatorEqual]
+                    rfl
+                · rewrite [if_neg numeratorEqual]
+                  rfl
+          · rewrite [dif_neg positive, dif_neg positive]
+            rfl
+
+/-- Execute an ordered rational-list decode with one joined pair of scalar tasks. -/
+def decodeFractionsParallel (data : List FractionData) : Except InvalidData (List Coordinate) :=
+  Parallel.mapExcept decodeFraction data
+
+/-- Decode every original rational encoding in order, retaining its first typed scalar failure. -/
+@[expose, implemented_by decodeFractionsParallel] def decodeFractions (data : List FractionData) :
+    Except InvalidData (List Coordinate) := data.mapM decodeFraction
+
+/-- Parallel rational-list decoding preserves the complete original ordered values or first invalidity. -/
+theorem decodeFractionsParallel_eq (data : List FractionData) :
+    decodeFractionsParallel data = decodeFractions data :=
+  Parallel.mapExcept_eq decodeFraction data
 
 /-- Decode the exact real and imaginary rational coordinates. -/
 @[expose] def decodeGaussian (data : GaussianData) : Except InvalidData Gaussian := do
   return ⟨← decodeFraction data.real, ← decodeFraction data.imaginary⟩
 
+/-- Execute an ordered Gaussian-list decode with one joined pair of scalar tasks. -/
+def decodeGaussiansParallel (data : List GaussianData) : Except InvalidData (List Gaussian) :=
+  Parallel.mapExcept decodeGaussian data
+
+/-- Decode the original Gaussian list in order, retaining its first exact coordinate failure. -/
+@[expose, implemented_by decodeGaussiansParallel] def decodeGaussians (data : List GaussianData) :
+    Except InvalidData (List Gaussian) := data.mapM decodeGaussian
+
+/-- Parallel Gaussian-list decoding preserves complete coordinates and the original first typed failure. -/
+theorem decodeGaussiansParallel_eq (data : List GaussianData) :
+    decodeGaussiansParallel data = decodeGaussians data :=
+  Parallel.mapExcept_eq decodeGaussian data
+
 /-- Serialize the original local observation parameter, reading and error. -/
-@[expose] def localData {polynomial : Polynomial.Ascending.Gaussian.CoefficientPolynomial} {allowance : Coordinate}
-    (value : Polynomial.Gaussian.Cell.Basic.LocalObservation polynomial allowance) : LocalData :=
+@[expose] def localData {polynomial : CoefficientPolynomial} {allowance : Coordinate}
+    (value : LocalObservation polynomial allowance) : LocalData :=
   ⟨fractionData value.parameter, gaussianData value.integrandReading, gaussianData value.error⟩
 
 /-- Decode a local observation and certify its exact error decomposition and squared-norm bound. -/
-@[expose] def decodeLocal (polynomial : Polynomial.Ascending.Gaussian.CoefficientPolynomial) (allowance : Coordinate)
-    (data : LocalData) : Except InvalidData (Polynomial.Gaussian.Cell.Basic.LocalObservation polynomial allowance) := do
+@[expose] def decodeLocal (polynomial : CoefficientPolynomial) (allowance : Coordinate)
+    (data : LocalData) : Except InvalidData (LocalObservation polynomial allowance) := do
   let parameter ← decodeFraction data.parameter
   let reading ← decodeGaussian data.reading
   let error ← decodeGaussian data.error
   let difference := reading - Evaluation.eval polynomial ⟨parameter, 0⟩
   if decomposition : difference = error then
-    if bounded : Data.Gaussian.Norm.Basic.normSq error ≤ allowance then
+    if bounded : normSq error ≤ allowance then
       .ok ⟨parameter, reading, error, decomposition, by
         have scalar := bounded
         rw [normSq_eq_canonical] at scalar
@@ -274,13 +360,13 @@ grammar. Failure retains the original syntax diagnostic or denominator invalidit
   else .error (.gaussianMismatch "local decomposition" difference error decomposition)
 
 /-- Serialize the original cell endpoints, polynomial, allowance and ordered observations. -/
-@[expose] def cellData (cell : Polynomial.Gaussian.Cell.Basic.CellModel) : CellData :=
+@[expose] def cellData (cell : CellModel) : CellData :=
   ⟨gaussianData cell.start, gaussianData cell.finish,
     cell.polynomial.coefficients.map gaussianData, fractionData cell.localAllowance,
     cell.observations.map localData⟩
 
 /-- Serialize every finite field of a checked cell view. -/
-@[expose] def cellViewData (view : Polynomial.Gaussian.Cell.Check.CellView) : CellData :=
+@[expose] def cellViewData (view : Cell.Check.CellView) : CellData :=
   ⟨gaussianData view.start, gaussianData view.finish, view.coefficients.map gaussianData,
     fractionData view.allowance, view.observations.map fun value =>
       ⟨fractionData value.parameter, gaussianData value.reading, gaussianData value.error⟩⟩
@@ -292,7 +378,7 @@ grammar. Failure retains the original syntax diagnostic or denominator invalidit
   let coefficients ← data.coefficients.mapM decodeGaussian
   let allowance ← decodeFraction data.allowance
   if nonnegative : 0 ≤ allowance then
-    let polynomial : Polynomial.Ascending.Gaussian.CoefficientPolynomial := ⟨coefficients⟩
+    let polynomial : CoefficientPolynomial := ⟨coefficients⟩
     let observations ← data.observations.mapM (decodeLocal polynomial allowance)
     .ok ⟨start, finish, polynomial, allowance, nonnegative, observations⟩
   else .error (.negative "cell allowance" allowance nonnegative)
@@ -302,7 +388,7 @@ grammar. Failure retains the original syntax diagnostic or denominator invalidit
   ⟨gaussianData reply.sample, fractionData reply.allowance⟩
 
 /-- Decode a cached reply and certify both exact aggregate equations against its original model. -/
-@[expose] def decodeReply (model : Path.Basic.PathModel) (data : ReplyData) :
+@[expose] def decodeReply (model : PathModel) (data : ReplyData) :
     Except InvalidData {reply : CachedModel // reply.model = model} := do
   let sample ← decodeGaussian data.sample
   let allowance ← decodeFraction data.allowance
@@ -413,13 +499,16 @@ end SharedJson
 
 set_option backward.match.sparseCases false in
 /-- Write beside the destination and atomically publish complete bytes. `CCL_CHECKPOINT_SHARED_JSON` optionally supplies
-an immutable JSON object store. This changes physical storage only: every existing data reader and mathematical verifier
-still reads and checks the ordinary checkpoint path. -/
+an immutable JSON object store. Ordinary JSON writes retain an existing regular file when all its bytes already agree.
+The shared-store branch keeps its original adoption and publication procedure; other paths still replace atomically.
+Comparison failures fall back to the original writer, and readers and verifiers still check the ordinary path. -/
 @[expose] def atomicBytes (path : System.FilePath) (bytes : ByteArray) : IO Unit := do
   if Data.String.endsWith path.toString ".json" then
     if let some directory ← IO.getEnv "CCL_CHECKPOINT_SHARED_JSON" then
       SharedJson.write directory path bytes
       return
+    let unchanged ← try SharedJson.sameBytes path bytes catch _ => pure false
+    if unchanged then return
   let pending := System.FilePath.mk (path.toString ++ ".pending")
   if ← pending.pathExists then IO.FS.removeFile pending
   IO.FS.withFile pending .write fun handle => do
@@ -473,28 +562,68 @@ the retained profile record. Owned splitting and prefix comparison preserve thei
   let value : Profile := ⟨phase, now, Data.List.getD fields 11 "?", Data.List.getD fields 12 "?", memory⟩
   IO.FS.withFile ((Purelib.System.FilePath.join directory (System.FilePath.mk ("profile.jsonl")))) .append fun handle =>
     do
-    Purelib.System.IO.FS.Handle.putStrLn handle (jsonText value)
+    FS.Handle.putStrLn handle (jsonText value)
     handle.flush
   println
     s!"PROFILE {phase}; monotonic_ms={now}; user_ticks={value.cpuUserTicks}; system_ticks={value.cpuSystemTicks}; \
       {memory}"
   (← IO.getStdout).flush
 
+/-- Preserve the first counter snapshot and append this execution's counters to its profile journal.
+
+Existing diagnostic bytes remain unchanged on replay. The ordinary profile
+envelope retains the current execution's counters and their exact destination
+path, independently of the historical snapshot.
+-/
+@[expose] def recordCounts {α : Type} [Json.ToJson α] (path : System.FilePath) (value : α) : IO Unit := do
+  unless ← path.pathExists do saveJson path value
+  let directory := (Purelib.System.FilePath.parent path).getD (System.FilePath.mk ".")
+  profile directory (jsonText (Json.mkObj
+    [("countsPath", toJson path.toString), ("counts", toJson value)]))
+
+/-- Read the latest execution counters for this exact path, falling back to a legacy first snapshot.
+
+The append-only profile retains separate counters for each destination.
+Malformed journal records or matching counters fail decoding instead of
+silently accepting a different execution's diagnostic.
+-/
+@[expose] def loadCounts {α : Type} [Json.FromJson α] (path : System.FilePath) : IO α := do
+  let directory := (Purelib.System.FilePath.parent path).getD (System.FilePath.mk ".")
+  let journal := Purelib.System.FilePath.join directory "profile.jsonl"
+  let mut latest : Option Json := none
+  if ← journal.pathExists then
+    for line in Data.String.splitOn (← FS.readFile journal) "\n" do
+      unless line == "" do
+        let entry : Profile ← parseJson journal.toString line
+        match Json.parse entry.phase with
+        | .error _ => pure ()
+        | .ok value =>
+            match value.getObjValAs? String "countsPath" with
+            | .error _ => pure ()
+            | .ok recorded =>
+                if recorded == path.toString then
+                  match value.getObjVal? "counts" with
+                  | .ok counts => latest := some counts
+                  | .error message => throw (IO.userError s!"{journal}: {message}")
+  match latest with
+  | none => loadJson path
+  | some value => parseJson path.toString (jsonText value)
+
 /-- Store complete original models before computing their aggregate integral.
 
 The original declared count and ordered cells are written to the same pending
 handle, each as its own complete JSON line. Flushing and atomic rename retain
 completed-work recovery and the original numerical verification boundary. -/
-@[expose] def saveModel (directory : System.FilePath) (index : Nat) (model : Path.Basic.PathModel) : IO Unit := do
+@[expose] def saveModel (directory : System.FilePath) (index : Nat) (model : PathModel) : IO Unit := do
   let path := (Purelib.System.FilePath.join directory (System.FilePath.mk (s!"model-{index}.cells.jsonl")))
   let pending := System.FilePath.mk (path.toString ++ ".pending")
   let count := model.cells.length
   IO.FS.withFile pending .write fun handle => do
-    Purelib.System.IO.FS.Handle.putStrLn handle "ccl-integration-cells-v1"
-    Purelib.System.IO.FS.Handle.putStrLn handle (toString count)
+    FS.Handle.putStrLn handle "ccl-integration-cells-v1"
+    FS.Handle.putStrLn handle (toString count)
     let mut written := 0
     for cell in model.cells do
-      Purelib.System.IO.FS.Handle.putStrLn handle (jsonText (cellData cell))
+      FS.Handle.putStrLn handle (jsonText (cellData cell))
       written := written + 1
       if written % 4096 == 0 then
         handle.flush
@@ -543,8 +672,8 @@ comparison with restored source data.
 
 The ordered checked cells remain separate from the original specification.
 The optional equality retains evidence for that same specification when available. -/
-structure CellBatch (specification : List Polynomial.Gaussian.Cell.Basic.CellModel) where
-  /-- The checked cells in their original requested order. -/ cells : List Polynomial.Gaussian.Cell.Basic.CellModel
+structure CellBatch (specification : List CellModel) where
+  /-- The checked cells in their original requested order. -/ cells : List CellModel
   /-- An exact source-list equation when every cell has original-source evidence. -/ source_eq : Option (PLift (cells =
     specification))
 
@@ -555,8 +684,8 @@ set_option genInjectivity false in
 
 The retained cell and specification remain the original two owners. An absent
 equality records numerical-only reuse rather than inventing source association. -/
-structure CellResult (specification : Polynomial.Gaussian.Cell.Basic.CellModel) where
-  /-- The retained checked finite cell. -/ cell : Polynomial.Gaussian.Cell.Basic.CellModel
+structure CellResult (specification : CellModel) where
+  /-- The retained checked finite cell. -/ cell : CellModel
   /-- The optional exact equality to the original cell specification. -/ source_eq : Option (PLift (cell =
     specification))
 
@@ -568,10 +697,10 @@ a path or hash cannot stand in for the missing source equation.
 
 The cached branch retains its exact source thunk and equality. The numerical
 branch retains no source equation and does not force an original generator. -/
-inductive CellReload (source : Polynomial.Gaussian.Cell.Basic.CellModel) where
+inductive CellReload (source : CellModel) where
   /-- Reuse checked numerical data without claiming original-source equality. -/ | numericalOnly
   /-- Use independently restored finite cell data with its exact original-source equation. -/ | cached (value : Thunk
-    Polynomial.Gaussian.Cell.Basic.CellModel) (equal : value.get = source)
+    CellModel) (equal : value.get = source)
 
 constructive_injectivity CellReload
 
@@ -582,18 +711,18 @@ The policy is indexed by that same original thunk value. Its cached witness
 therefore refers to the retained source instead of a newly selected cell. -/
 structure CellTask where
   /-- The original executable cell specification retained as a thunk. -/ source : Thunk
-    Polynomial.Gaussian.Cell.Basic.CellModel
+    CellModel
   /-- The exact reload policy indexed by that original cell. -/ reload : CellReload source.get
 
 constructive_injectivity CellTask
 
 /-- Create a cell task whose saved data can be reused only as numerical evidence. -/
-@[expose] def CellTask.numerical (source : Thunk Polynomial.Gaussian.Cell.Basic.CellModel) : CellTask := ⟨source,
+@[expose] def CellTask.numerical (source : Thunk CellModel) : CellTask := ⟨source,
   .numericalOnly⟩
 
 /-- The source constructor is only a proof index during checked reload. Callers derive the cached value from their
 restored geometric/model data. -/
-@[expose] def CellTask.fromCached (source value : Thunk Polynomial.Gaussian.Cell.Basic.CellModel) (equal : value.get =
+@[expose] def CellTask.fromCached (source value : Thunk CellModel) (equal : value.get =
   source.get) :
     CellTask := ⟨source, .cached value equal⟩
 
@@ -601,8 +730,8 @@ restored geometric/model data. -/
 @[expose] def CellTask.specification (task : CellTask) : CellModel := task.source.get
 
 /-- Force one original cell thunk and retain equality to that exact source value. -/
-@[expose, noinline] def forceCell (work : Thunk Polynomial.Gaussian.Cell.Basic.CellModel) : IO {cell :
-  Polynomial.Gaussian.Cell.Basic.CellModel // cell = work.get} :=
+@[expose, noinline] def forceCell (work : Thunk CellModel) : IO {cell :
+  CellModel // cell = work.get} :=
   pure ⟨work.get, rfl⟩
 
 set_option backward.match.sparseCases false in
@@ -627,7 +756,7 @@ cell generators. The caller must first open the input-fingerprinted store. -/
                 s!"model {modelIndex}, cell {offset}: END numerical reuse; source association unresolved"
               pure ⟨cell, none⟩
           | .cached expected sourceEqual =>
-              match Polynomial.Gaussian.Cell.Check.cell expected.get cell with
+              match Cell.Check.cell expected.get cell with
               | .error failure =>
                   saveJson ((Purelib.System.FilePath.join cellsDirectory (System.FilePath.mk
                     (s!"cell-{offset}-source-mismatch.json"))))
@@ -660,7 +789,7 @@ it; disk decoding alone cannot.
 The retained model is identified with the exact source stage at the same index.
 That equation is independent of any filename, numerical sample or checkpoint hash. -/
 structure FreshModel (source : CachedProgram) (index : Nat) where
-  /-- The retained finite model restored or generated from the original source. -/ model : Path.Basic.PathModel
+  /-- The retained finite model restored or generated from the original source. -/ model : PathModel
   /-- The model equals the original source stage at the retained index. -/ equal : model = (source.stage index).model
 
 constructive_injectivity FreshModel
@@ -711,7 +840,7 @@ constructive_injectivity Preparation
 
 /-- Canonical aggregation of a cached model reconstructs its original certified reply. -/
 theorem canonical_model (reply : CachedModel) :
-    CertifiedProgram.CachedModel.canonical (operations := Cached.Basic.modelOperations) reply.model = reply := by
+    CertifiedProgram.CachedModel.canonical (operations := Basic.modelOperations) reply.model = reply := by
   cases reply with
   | mk model sample sampleEq allowance allowanceEq =>
       cases sampleEq
@@ -725,7 +854,7 @@ the stronger source equation.
 The original model stage and its exact index remain separate from the retained
 model. Its optional equality records whether source association was established. -/
 structure PendingModel (source : CachedProgram) (index : Nat) where
-  /-- The retained complete finite model. -/ model : Path.Basic.PathModel
+  /-- The retained complete finite model. -/ model : PathModel
   /-- The optional exact original-source model equation. -/ source_eq : Option (PLift (model = (source.stage
     index).model))
 
@@ -793,7 +922,7 @@ cross-module call boundary. -/
 cells must be the original ones. -/
 @[expose] def associateModel {source : CachedProgram} {State : Type u}
     (directory : System.FilePath) (reload : ModelReload source State)
-    (index : Nat) (model : Path.Basic.PathModel) (state : State)
+    (index : Nat) (model : PathModel) (state : State)
     (done : PendingModel source index → State → IO Result) : IO Result := do
   match reload with
   | .numericalOnly => done ⟨model, none⟩ state
@@ -885,7 +1014,7 @@ constructive_injectivity ReceiptData
 
 /-- Serialize the requested bit count, ordered queries and complete selected numerical enclosure. -/
 @[expose] def receiptData (count : Nat) (trace : Trace) (observation :
-  Integration.Program.Gaussian.CCL.Replay.Observation)
+  Observation)
     (freshSourceVerified : Bool) : ReceiptData :=
   ⟨count, observation.word, trace.map (·.query), observation.selected.index,
     gaussianData observation.selected.sample, fractionData observation.selected.allowance,
@@ -893,7 +1022,7 @@ constructive_injectivity ReceiptData
     freshSourceVerified⟩
 
 /-- Compare the complete replay machine and selected numerical enclosure data. -/
-@[expose] def sameObservation (left right : Integration.Program.Gaussian.CCL.Replay.Observation) : Bool :=
+@[expose] def sameObservation (left right : Observation) : Bool :=
   left.machine == right.machine && left.selected.index == right.selected.index &&
     left.selected.sample == right.selected.sample && left.selected.allowance == right.selected.allowance &&
     left.selected.ball.center == right.selected.ball.center &&
@@ -927,7 +1056,7 @@ An original-source reply equation is retained only when the pending model alread
     IO (CachedModel × Option (KnownReply source.get)) := do
   let model := pending.model
   profile directory s!"query {index}: BEGIN aggregate integral/allowance"
-  let reply := CertifiedProgram.CachedModel.canonical (operations := Cached.Basic.modelOperations) model
+  let reply := CertifiedProgram.CachedModel.canonical (operations := Basic.modelOperations) model
   -- Saving forces both cached values inside this separately timed phase.
   saveReply directory index reply
   profile directory s!"query {index}: END aggregate integral/allowance; reply saved"
@@ -939,7 +1068,7 @@ An original-source reply equation is retained only when the pending model alread
   let known := pending.source_eq.map fun equal =>
     { index := index, reply := reply
       equal := by
-        change CertifiedProgram.CachedModel.canonical (operations := Cached.Basic.modelOperations) pending.model =
+        change CertifiedProgram.CachedModel.canonical (operations := Basic.modelOperations) pending.model =
           source.get.stage index
         rw [equal.down]
         exact canonical_model _ : KnownReply source.get }
@@ -988,7 +1117,7 @@ returns the exact continuation result; restoration errors remain IO errors. -/
 Historical numerical receipts remain unchanged; fresh source certification receives its own separate acceptance record.
 -/
 @[expose] def finishObservation (directory : System.FilePath) (request : Request) (count : Nat)
-    (trace : Trace) (observation : Integration.Program.Gaussian.CCL.Replay.Observation) (fresh : Bool) : IO Unit := do
+    (trace : Trace) (observation : Observation) (fresh : Bool) : IO Unit := do
   unless observation.word.length == count && observation.selected.ball.radiusSq < request.target &&
       observation.selected.allowance < request.target do
     throw (IO.userError "completed replay failed its prefix/accuracy checks")
@@ -1020,7 +1149,7 @@ missing query and preserves all completed checkpoints, not a mathematical non-ce
     (request : Request) (count : Nat) :
     Nat → State → Trace → List (Nat × CachedModel) → Option (List (KnownReply source.get)) → IO Unit
   | remaining, state, trace, cache, known => do
-      match Integration.Program.Gaussian.CCL.Replay.Observation.Transcript.replay control request count trace with
+      match Transcript.replay control request count trace with
       | .ok observation =>
           let fresh ← match controlProof, known with
             | some certifiedControl, some entries => do
@@ -1161,7 +1290,7 @@ provenance metadata, not a curve theorem. -/
           cache := (index, reply) :: cache
           pure reply
     trace := trace ++ [⟨index, reply⟩]
-  match Integration.Program.Gaussian.CCL.Replay.Observation.Transcript.replay control request count trace with
+  match Transcript.replay control request count trace with
   | .error _ => throw (IO.userError "saved complete transcript failed replay")
   | .ok observation =>
       let actual := receiptData count trace observation expected.freshSourceVerified

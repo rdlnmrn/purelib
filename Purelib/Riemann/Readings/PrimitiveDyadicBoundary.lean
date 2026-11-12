@@ -17,6 +17,8 @@ import Purelib.Integration.Path.BoundaryRibbon
 public import Purelib.Riemann.Integration.PrimitiveEdgeRibbon
 public import Purelib.Integration.Path.Dyadic.DyadicBoundaryRibbon
 
+open Purelib.Integration.Path.Dyadic
+
 @[expose] public section
 
 /-!
@@ -40,7 +42,7 @@ end
 
 open Purelib.Polynomial in
 /-- A dense polynomial over Gaussian rationals. -/
-private abbrev Polynomial := Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
+private abbrev Polynomial := Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial
 open Purelib.Geometry in
 /-- A rational rectangular box. -/
 private abbrev Box := Rational.Box
@@ -65,9 +67,9 @@ namespace PrimitiveEdgeAnchor
 
 variable {polynomial leftPrimitive rightPrimitive :
   Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {leftBox
-  rightBox : Purelib.Geometry.Rational.Box}
+  rightBox : Geometry.Rational.Box}
     {left : Model polynomial leftBox} {right : Model polynomial rightBox} {start finish :
-      Purelib.Data.Gaussian.Basic.Canonical}
+      Data.Gaussian.Basic.Canonical}
     {edge : EdgeTransition left right start finish}
 
 open Purelib.Integration in
@@ -77,18 +79,18 @@ open Purelib.Geometry in
 
 Alignment cancels the initial ribbon; the final contribution remains explicit for this open side. -/
 theorem dyadic_difference_eq (anchor : PrimitiveEdgeAnchor edge leftPrimitive rightPrimitive) (depth : Nat) :
-    Path.Dyadic.DyadicBoundaryRibbon.dyadicDifference (fun parameter => anchor.alignedValue (Rational.Affine.line start
+    DyadicBoundaryRibbon.dyadicDifference (fun parameter => anchor.alignedValue (Rational.Affine.line start
       (finish - start) parameter))
       (fun parameter => leftPrimitive.eval (Rational.Affine.line start (finish - start) parameter)) depth 0 1 =
-        Path.Dyadic.DyadicBoundaryRibbon.dyadicArea (fun parameter => anchor.alignedValue (Rational.Affine.line start
+        DyadicBoundaryRibbon.dyadicArea (fun parameter => anchor.alignedValue (Rational.Affine.line start
           (finish - start) parameter)) depth 0 1 -
-          Path.Dyadic.DyadicBoundaryRibbon.dyadicArea (fun parameter => leftPrimitive.eval (Rational.Affine.line start
+          DyadicBoundaryRibbon.dyadicArea (fun parameter => leftPrimitive.eval (Rational.Affine.line start
             (finish - start) parameter)) depth 0 1 -
-            Path.BoundaryRibbon.area (leftPrimitive.eval finish) (anchor.alignedValue finish - leftPrimitive.eval
+            area (leftPrimitive.eval finish) (anchor.alignedValue finish - leftPrimitive.eval
               finish) := by
-  rw [Path.Dyadic.DyadicBoundaryRibbon.dyadicDifference, line_zero, line_one, anchor.aligned_at_start,
+  rw [DyadicBoundaryRibbon.dyadicDifference, line_zero, line_one, anchor.aligned_at_start,
     Gaussian.Basic.sub_self]
-  simp only [Path.BoundaryRibbon.area, Gaussian.Basic.conj_zero, Gaussian.Basic.mul_zero, Gaussian.Basic.zero_mul,
+  simp only [area, Gaussian.Basic.conj_zero, Gaussian.Basic.mul_zero, Gaussian.Basic.zero_mul,
     Gaussian.Basic.sub_zero, -eq_self, -iff_self]
   rfl
 
@@ -98,10 +100,10 @@ namespace PrimitiveEdgeControl
 
 variable {polynomial numerator leftCoefficient rightCoefficient :
   Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {leftBox rightBox :
-  Purelib.Geometry.Rational.Box}
+  Geometry.Rational.Box}
     {clearance : RegionClearance polynomial leftBox} {bounds : PrimitiveOverlapBounds clearance numerator}
     {left : Model polynomial leftBox} {right : Model polynomial rightBox} {start finish :
-      Purelib.Data.Gaussian.Basic.Canonical}
+      Data.Gaussian.Basic.Canonical}
     {edge : EdgeTransition left right start finish} {leftPrimitive : DensePrimitive leftCoefficient leftBox}
     {rightPrimitive : DensePrimitive rightCoefficient rightBox} {anchor : PrimitiveEdgeAnchor edge leftPrimitive.value
       rightPrimitive.value}
@@ -114,11 +116,11 @@ open Purelib.Geometry in
 The actual error, right increment and drift increment bounds use the same retained primitive edge control. -/
 theorem dyadic_difference_bound (control : PrimitiveEdgeControl bounds edge leftPrimitive rightPrimitive anchor) (depth
   : Nat) :
-    normSq (Path.Dyadic.DyadicBoundaryRibbon.dyadicDifference (fun parameter => anchor.alignedValue
+    normSq (DyadicBoundaryRibbon.dyadicDifference (fun parameter => anchor.alignedValue
       (Rational.Affine.line start (finish - start) parameter))
       (fun parameter => leftPrimitive.value.eval (Rational.Affine.line start (finish - start) parameter)) depth 0 1) ≤
         8 * control.drift * (4 * control.slope + control.drift) := by
-  have estimate := Path.Dyadic.DyadicBoundaryRibbon.dyadicDifference_bound
+  have estimate := DyadicBoundaryRibbon.dyadicDifference_bound
     (lower := 0) (upper := 1) (error := control.drift)
     (slope := control.slope) (drift := control.drift)
     (fun parameter => anchor.alignedValue (Rational.Affine.line start (finish - start) parameter))
@@ -147,34 +149,34 @@ theorem horizontal_difference_bound {first last height : Rat.Fraction.Rational}
     {edge : EdgeTransition left right ⟨first, height⟩ ⟨last, height⟩}
     {anchor : PrimitiveEdgeAnchor edge leftPrimitive.value rightPrimitive.value}
     (control : PrimitiveEdgeControl bounds edge leftPrimitive rightPrimitive anchor) (depth : Nat) :
-    normSq (Rectangle.Partition.PreparedBoxBoundary.horizontalBoundary (fun point => Energy.Polygon.energyPrimitivePoint
+    normSq (horizontalBoundary (fun point => energyPrimitivePoint
       (anchor.alignedValue point)) depth first last height -
-      Rectangle.Partition.PreparedBoxBoundary.horizontalBoundary (fun point => Energy.Polygon.energyPrimitivePoint
+      horizontalBoundary (fun point => energyPrimitivePoint
         (leftPrimitive.value.eval point)) depth first last height -
-        Path.BoundaryRibbon.area (leftPrimitive.value.eval ⟨last, height⟩) (anchor.alignedValue ⟨last, height⟩ -
+        area (leftPrimitive.value.eval ⟨last, height⟩) (anchor.alignedValue ⟨last, height⟩ -
           leftPrimitive.value.eval ⟨last, height⟩)) ≤
       8 * control.drift * (4 * control.slope + control.drift) := by
-  rw [Path.Dyadic.DyadicBoundaryRibbon.horizontalBoundary_eq_lineArea,
-    Path.Dyadic.DyadicBoundaryRibbon.horizontalBoundary_eq_lineArea]
-  rw [← Readings.PrimitiveDyadicBoundary.PrimitiveEdgeAnchor.dyadic_difference_eq anchor depth]
-  exact Readings.PrimitiveDyadicBoundary.PrimitiveEdgeControl.dyadic_difference_bound control depth
+  rw [DyadicBoundaryRibbon.horizontalBoundary_eq_lineArea,
+    DyadicBoundaryRibbon.horizontalBoundary_eq_lineArea]
+  rw [← PrimitiveEdgeAnchor.dyadic_difference_eq anchor depth]
+  exact dyadic_difference_bound control depth
 
 /-- Bound the actual vertical boundary-sum difference with its final endpoint ribbon retained. -/
 theorem vertical_difference_bound {first last horizontal : Rat.Fraction.Rational}
     {edge : EdgeTransition left right ⟨horizontal, first⟩ ⟨horizontal, last⟩}
     {anchor : PrimitiveEdgeAnchor edge leftPrimitive.value rightPrimitive.value}
     (control : PrimitiveEdgeControl bounds edge leftPrimitive rightPrimitive anchor) (depth : Nat) :
-    normSq (Rectangle.Partition.PreparedBoxBoundary.verticalBoundary (fun point => Energy.Polygon.energyPrimitivePoint
+    normSq (verticalBoundary (fun point => energyPrimitivePoint
       (anchor.alignedValue point)) depth first last horizontal -
-      Rectangle.Partition.PreparedBoxBoundary.verticalBoundary (fun point => Energy.Polygon.energyPrimitivePoint
+      verticalBoundary (fun point => energyPrimitivePoint
         (leftPrimitive.value.eval point)) depth first last horizontal -
-        Path.BoundaryRibbon.area (leftPrimitive.value.eval ⟨horizontal, last⟩) (anchor.alignedValue ⟨horizontal, last⟩ -
+        area (leftPrimitive.value.eval ⟨horizontal, last⟩) (anchor.alignedValue ⟨horizontal, last⟩ -
           leftPrimitive.value.eval ⟨horizontal, last⟩)) ≤
       8 * control.drift * (4 * control.slope + control.drift) := by
-  rw [Path.Dyadic.DyadicBoundaryRibbon.verticalBoundary_eq_lineArea,
-    Path.Dyadic.DyadicBoundaryRibbon.verticalBoundary_eq_lineArea]
-  rw [← Readings.PrimitiveDyadicBoundary.PrimitiveEdgeAnchor.dyadic_difference_eq anchor depth]
-  exact Readings.PrimitiveDyadicBoundary.PrimitiveEdgeControl.dyadic_difference_bound control depth
+  rw [DyadicBoundaryRibbon.verticalBoundary_eq_lineArea,
+    DyadicBoundaryRibbon.verticalBoundary_eq_lineArea]
+  rw [← PrimitiveEdgeAnchor.dyadic_difference_eq anchor depth]
+  exact dyadic_difference_bound control depth
 
 end PrimitiveEdgeControl
 
@@ -182,10 +184,10 @@ namespace PrimitiveRibbonAccuracy
 
 variable {polynomial numerator : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {leftBox
   rightBox :
-  Purelib.Geometry.Rational.Box}
+  Geometry.Rational.Box}
     {clearance : RegionClearance polynomial leftBox} {bounds : PrimitiveOverlapBounds clearance numerator}
     {left : Model polynomial leftBox} {right : Model polynomial rightBox} {start finish :
-      Purelib.Data.Gaussian.Basic.Canonical} {target : Purelib.Data.Rat.Fraction.Rational}
+      Data.Gaussian.Basic.Canonical} {target : Data.Rat.Fraction.Rational}
 
 open Purelib.Riemann in
 open Purelib.Integration in
@@ -198,17 +200,17 @@ each actual dyadic reading. -/
 theorem dyadic_accurate (request : PrimitiveRibbonAccuracy bounds left right start finish target)
     {edge : EdgeTransition (left.refine request.edgeRequest.index) (right.refine request.edgeRequest.index) start
       finish}
-    {leftCoefficient rightCoefficient : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {leftCoefficient rightCoefficient : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
       {leftPrimitive : DensePrimitive
       leftCoefficient leftBox}
     {rightPrimitive : DensePrimitive rightCoefficient rightBox}
     {anchor : PrimitiveEdgeAnchor edge leftPrimitive.value rightPrimitive.value}
     (control : PrimitiveEdgeControl bounds edge leftPrimitive rightPrimitive anchor) (depth : Nat) :
-    normSq (Path.Dyadic.DyadicBoundaryRibbon.dyadicDifference (fun parameter => anchor.alignedValue
+    normSq (DyadicBoundaryRibbon.dyadicDifference (fun parameter => anchor.alignedValue
       (Rational.Affine.line start (finish - start) parameter))
       (fun parameter => leftPrimitive.value.eval (Rational.Affine.line start (finish - start) parameter)) depth 0 1) <
         target :=
-  (Readings.PrimitiveDyadicBoundary.PrimitiveEdgeControl.dyadic_difference_bound control depth).trans_lt
+  (PrimitiveEdgeControl.dyadic_difference_bound control depth).trans_lt
     (request.allowance_lt control)
 
 end PrimitiveRibbonAccuracy

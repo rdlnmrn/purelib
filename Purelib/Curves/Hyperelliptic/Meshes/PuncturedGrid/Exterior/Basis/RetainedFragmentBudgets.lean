@@ -84,20 +84,20 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.FragmentAr
 open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Riemann.Integration.PreparedEdgeRecasting (recastCenteredEdge)
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {count : Nat} {patch : PreparedPatch parent}
-  {sourceData : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
+  {sourceData : Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
     Cover sourceData}
   {covers : BasisSourceCovers parent} {minimum
     floor index depth : Nat}
@@ -105,7 +105,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {areaAllowance sourceTarget coefficientTarget : Coordinate}
   {request : BasisPreparedCommonRequest
     regular common areaAllowance sourceTarget coefficientTarget floor}
-  {box : Purelib.Geometry.Rational.Box}
+  {box : Geometry.Rational.Box}
   {polynomials : RegularBasisPolynomials cap
     index box}
   {originals :
@@ -144,14 +144,14 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedFragmentBl
 
 namespace BlockRequest
 variable {fragmentCount : Nat} {target : Coordinate}
-  (selected : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedBlocks.BlockRequest occurrence
+  (selected : BlockRequest occurrence
     covers fragmentCount target)
 
 /-- Attach the supplied unit-allowance and tolerance certificates to each original retained fragment in order. -/
 @[expose] def budgetedEntries :
-    (fragments : List (OwnedFragments.OwnedFragment (originals := originals) (coefficients := coefficients) data)) →
+    (fragments : List (OwnedFragment (originals := originals) (coefficients := coefficients) data)) →
     (∀ fragment ∈ fragments, fragment.allowance ≤ 1 ∧ fragment.budget.tolerance ≤ selected.budget.tolerance) →
-    List (BlockRequest.BudgetedFragment (originals := originals) (coefficients := coefficients) selected data)
+    List (BudgetedFragment (originals := originals) (coefficients := coefficients) selected data)
   | [], _ => []
   | fragment :: rest, paid =>
     ⟨fragment, (paid fragment List.mem_cons_self).1, (paid fragment List.mem_cons_self).2⟩ ::
@@ -163,7 +163,7 @@ variable {fragmentCount : Nat} {target : Coordinate}
 Every retained fragment stays in its original position. Only the added unit
 allowance and tolerance certificates are removed by this projection. -/
 theorem budgetedEntries_readback
-    (fragments : List (OwnedFragments.OwnedFragment (originals := originals) (coefficients := coefficients) data))
+    (fragments : List (OwnedFragment (originals := originals) (coefficients := coefficients) data))
     (paid : ∀ fragment ∈ fragments, fragment.allowance ≤ 1 ∧ fragment.budget.tolerance ≤ selected.budget.tolerance) :
     (budgetedEntries selected
       fragments paid).map BudgetedFragment.fragment = fragments := by
@@ -177,9 +177,9 @@ set_option genInjectivity false in
 The entries cache only the added budget evidence; the map equality retains every
 original payload and its ordered occurrence. -/
 structure RetainedFragments
-    (fragments : List (OwnedFragments.OwnedFragment (originals := originals) (coefficients := coefficients) data)) where
+    (fragments : List (OwnedFragment (originals := originals) (coefficients := coefficients) data)) where
   /-- The cached original fragments with their additional paid allowance and tolerance certificates. -/ entries : List
-    (BlockRequest.BudgetedFragment (originals := originals) (coefficients := coefficients) selected data)
+    (BudgetedFragment (originals := originals) (coefficients := coefficients) selected data)
   /-- Removing the additional certificates preserves every original fragment payload and its order. -/ readback :
     entries.map BudgetedFragment.fragment = fragments
 
@@ -187,7 +187,7 @@ constructive_injectivity RetainedFragments
 
 /-- Cache the original paid fragments with an exact readback equality to the supplied fragment list. -/
 @[expose] def certifyFragments
-    (fragments : List (OwnedFragments.OwnedFragment (originals := originals) (coefficients := coefficients) data))
+    (fragments : List (OwnedFragment (originals := originals) (coefficients := coefficients) data))
     (paid : ∀ fragment ∈ fragments, fragment.allowance ≤ 1 ∧ fragment.budget.tolerance ≤ selected.budget.tolerance) :
     selected.RetainedFragments fragments :=
   ⟨budgetedEntries selected fragments paid,

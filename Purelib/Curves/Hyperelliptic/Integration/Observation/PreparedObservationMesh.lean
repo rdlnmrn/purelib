@@ -80,44 +80,44 @@ open Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions
 
 set_option genInjectivity false in
 /-- Materialized finite refinement geometry, shared by all coefficient requests. -/
-structure ObservationMesh (polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+structure ObservationMesh (polynomial : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
   (count depth : Nat) where
   /-- The original coefficient-independent observation-box energy certificate. -/ energy :
-    PreparedObservationSurface.ObservationBoxEnergy polynomial count
+    ObservationBoxEnergy polynomial count
   /-- The retained finite dyadic partition of each original observation box. -/ partitions : Data.Vector
-    (PreparedSurfacePartitions.BoxPartition depth) count
+    (BoxPartition depth) count
   /-- Each cached partition parent is exactly the corresponding original observation box. -/ parent_eq : forall index,
     (partitions index).parent = energy.boxes.box index
-  /-- The cached sum of original observation-box content times span. -/ areaSpan : PreparedBoxPartitions.Coordinate
+  /-- The cached sum of original observation-box content times span. -/ areaSpan : Coordinate
   /-- The cached area-span total equals the explicit finite sum over the original sites. -/ areaSpan_eq : areaSpan =
     FiniteSum.Fin.sumFin (fun index =>
-    Content.boxContent (energy.boxes.box index) * PreparedBoxPartitions.span (energy.boxes.box index))
+    Content.boxContent (energy.boxes.box index) * span (energy.boxes.box index))
 
 constructive_injectivity ObservationMesh
 
 namespace ObservationMesh
 
-variable {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {count depth : Nat}
+variable {polynomial : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {count depth : Nat}
 
 /-- Refine the already computed observation geometry to any finite depth. -/
-def ofEnergy (energy : PreparedObservationSurface.ObservationBoxEnergy polynomial count) (depth : Nat) :
-    Curves.Hyperelliptic.Integration.Observation.PreparedObservationMesh.ObservationMesh polynomial count depth :=
+def ofEnergy (energy : ObservationBoxEnergy polynomial count) (depth : Nat) :
+    ObservationMesh polynomial count depth :=
   { energy := energy
     partitions := Data.Vector.Basic.vectorOfFn (fun index => BoxPartition.build (energy.boxes.box index) depth)
     parent_eq := fun index => by rw [Data.Vector.Basic.vectorOfFn_apply]; rfl
     areaSpan := FiniteSum.Fin.sumFin (fun index =>
-      Content.boxContent (energy.boxes.box index) * PreparedBoxPartitions.span (energy.boxes.box index))
+      Content.boxContent (energy.boxes.box index) * span (energy.boxes.box index))
     areaSpan_eq := rfl }
 
 /-- Every retained site partition has exactly four to the depth leaves. -/
-theorem leafCount (mesh : Curves.Hyperelliptic.Integration.Observation.PreparedObservationMesh.ObservationMesh
+theorem leafCount (mesh : ObservationMesh
   polynomial count depth) (index : Fin count) :
     (mesh.partitions index).leaves.length = 4 ^ depth := (mesh.partitions index).length_eq
 
 /-- Leaf rectangles coming from different observation sites remain strictly separated. Within one site they have
 disjoint interiors and shared edges. -/
 theorem differentSites_separated (mesh :
-  Curves.Hyperelliptic.Integration.Observation.PreparedObservationMesh.ObservationMesh polynomial count depth)
+  ObservationMesh polynomial count depth)
     {left right : Fin count} (different : left ≠ right) (leftLeaf rightLeaf : Fin (4 ^ depth)) :
     ((mesh.partitions left).leaf leftLeaf).Separated ((mesh.partitions right).leaf rightLeaf) := by
   apply (mesh.energy.boxes.box_separated different).of_refines
@@ -129,33 +129,33 @@ theorem differentSites_separated (mesh :
 /-- Geometry-weighted total error over all sites, with the growing leaf count included. This is the standard quarter
 rate at twice the spatial depth. -/
 theorem totalAreaSpan_quarterRate {index : Nat}
-    (mesh : Curves.Hyperelliptic.Integration.Observation.PreparedObservationMesh.ObservationMesh polynomial count (2 *
-      index)) (scale : PreparedBoxPartitions.Coordinate) :
-    FiniteSum.Fin.sumFin (fun site => PreparedBoxPartitions.sumCells
-      (fun small => scale * (Content.boxContent small * PreparedBoxPartitions.span small))
+    (mesh : ObservationMesh polynomial count (2 *
+      index)) (scale : Coordinate) :
+    FiniteSum.Fin.sumFin (fun site => sumCells
+      (fun small => scale * (Content.boxContent small * span small))
       (mesh.partitions site).leaves) = Geometric.Basic.quarterRadius (scale * mesh.areaSpan) index := by
   have pointwise := FiniteSum.Fin.sumFin_congr
-    (left := fun site : Fin count => PreparedBoxPartitions.sumCells
-      (fun small => scale * (Content.boxContent small * PreparedBoxPartitions.span small)) (mesh.partitions
+    (left := fun site : Fin count => sumCells
+      (fun small => scale * (Content.boxContent small * span small)) (mesh.partitions
         site).leaves)
     (right := fun site : Fin count =>
-      (scale * (Content.boxContent (mesh.energy.boxes.box site) * PreparedBoxPartitions.span (mesh.energy.boxes.box
+      (scale * (Content.boxContent (mesh.energy.boxes.box site) * span (mesh.energy.boxes.box
         site))) *
-        (1 / 4 : PreparedBoxPartitions.Coordinate) ^ index)
+        (1 / 4 : Coordinate) ^ index)
     (fun site : Fin count => by
     rw [(mesh.partitions site).leaves_eq, PreparedBoxPartitions.totalAreaSpan_quarterRate, mesh.parent_eq]
     exact Geometric.Basic.quarterRadius_eq_mul_pow _ index)
   rw [pointwise, FiniteSum.Fin.sumFin_mul_right, FiniteSum.Fin.sumFin_mul_left, <- mesh.areaSpan_eq,
     Geometric.Basic.quarterRadius_eq_mul_pow]
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus}
 
 open Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions in
 set_option genInjectivity false in
 /-- Cached request-specific leaves and their exact finite total energy. -/
-structure Sample (mesh : Curves.Hyperelliptic.Integration.Observation.PreparedObservationMesh.ObservationMesh
+structure Sample (mesh : ObservationMesh
   curve.polynomial genus depth)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (coefficients : GaussianVector genus)
     (face : Attachment.Face) where
   /-- The cached checked surface cells in the original site and leaf order. -/ cells : Data.Vector
     (Data.Vector (PreparedEnergy.SurfaceCell curve coefficients) (4 ^ depth)) genus
@@ -166,18 +166,18 @@ structure Sample (mesh : Curves.Hyperelliptic.Integration.Observation.PreparedOb
           simpa only [ObservationBoxes.surfaceCells_box]
             using mesh.parent_eq site) leaf
   /-- The cached rational lower energy of the original request-specific surface cells. -/ energy :
-    PreparedBoxPartitions.Coordinate
+    Coordinate
   /-- The cached request energy equals the finite surface sum of these exact retained cells. -/ energy_eq : energy =
     FiniteSum.Fin.sumFin (fun site =>
-    Prepared.surfaceEnergy (fun leaf => cells site leaf))
+    surfaceEnergy (fun leaf => cells site leaf))
 
 constructive_injectivity Sample
 
 open Purelib.Geometry.Rectangle.Partition.PreparedBoxPartitions in
 /-- Instantiate densities once, reusing every cached geometric partition. -/
-def sample (mesh : Curves.Hyperelliptic.Integration.Observation.PreparedObservationMesh.ObservationMesh curve.polynomial
+def sample (mesh : ObservationMesh curve.polynomial
   genus depth)
-    (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (coefficients : GaussianVector genus)
     (face : Attachment.Face) :
       Sample mesh coefficients face
       :=
@@ -186,27 +186,27 @@ def sample (mesh : Curves.Hyperelliptic.Integration.Observation.PreparedObservat
       simpa only [ObservationBoxes.surfaceCells_box] using mesh.parent_eq site)
   { cells := cells
     cells_eq := fun site _ => by rw [Data.Vector.Basic.vectorOfFn_apply]
-    energy := FiniteSum.Fin.sumFin (fun site => Prepared.surfaceEnergy (fun leaf => cells site leaf))
+    energy := FiniteSum.Fin.sumFin (fun site => surfaceEnergy (fun leaf => cells site leaf))
     energy_eq := rfl }
 
 namespace Sample
 
-variable {mesh : Purelib.Curves.Hyperelliptic.Integration.Observation.PreparedObservationMesh.ObservationMesh
+variable {mesh : ObservationMesh
   curve.polynomial genus depth}
-  {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
-  {face : Purelib.Topology.BranchedCover.Double.Attachment.Face}
+  {coefficients : GaussianVector genus}
+  {face : Attachment.Face}
 
 open Purelib.Curves.Hyperelliptic.Integration.Observation.PreparedObservationMesh.ObservationMesh
 /-- Each cached surface cell uses its exact original partition leaf box. -/
-theorem cell_box (sample : Curves.Hyperelliptic.Integration.Observation.PreparedObservationMesh.ObservationMesh.Sample
+theorem cell_box (sample : Sample
   mesh coefficients face) (site : Fin genus) (leaf : Fin (4 ^ depth)) :
     (sample.cells site leaf).box = (mesh.partitions site).leaf leaf := by
   rw [sample.cells_eq, BoxPartition.surfaceCells_box]
 
 /-- The refined mesh retains exactly the original checked lower sum. -/
 theorem energy_eq_original (sample :
-  Curves.Hyperelliptic.Integration.Observation.PreparedObservationMesh.ObservationMesh.Sample mesh coefficients face) :
-    sample.energy = Prepared.surfaceEnergy
+  Sample mesh coefficients face) :
+    sample.energy = surfaceEnergy
       (fun site => ObservationBoxes.surfaceCells mesh.energy.boxes coefficients face site) := by
   rw [sample.energy_eq]
   change FiniteSum.Fin.sumFin (fun site => FiniteSum.Fin.sumFin (fun leaf =>
@@ -217,7 +217,7 @@ theorem energy_eq_original (sample :
   apply FiniteSum.Fin.sumFin_congr
   intro site
   calc
-    _ = Prepared.surfaceEnergy (fun leaf =>
+    _ = surfaceEnergy (fun leaf =>
         (mesh.partitions site).surfaceCells (ObservationBoxes.surfaceCells mesh.energy.boxes coefficients face site)
           (by simpa only [ObservationBoxes.surfaceCells_box] using mesh.parent_eq site) leaf) :=
       FiniteSum.Fin.sumFin_congr (fun leaf => by rw [sample.cells_eq]; rfl)
@@ -227,15 +227,15 @@ theorem energy_eq_original (sample :
 
 /-- The same coefficient-independent constant works at every finite depth. -/
 theorem uniform_lower (sample :
-  Curves.Hyperelliptic.Integration.Observation.PreparedObservationMesh.ObservationMesh.Sample mesh coefficients face) :
-    mesh.energy.lower * PreparedObservationCoercivity.coefficientNormSq coefficients <= sample.energy := by
+  Sample mesh coefficients face) :
+    mesh.energy.lower * coefficientNormSq coefficients <= sample.energy := by
   rw [sample.energy_eq_original]
   exact mesh.energy.lower_mul_coefficientNorm_le_surfaceEnergy coefficients face
 
 /-- A nonzero original coefficient vector gives strictly positive cached mesh energy. -/
-theorem positive (sample : Curves.Hyperelliptic.Integration.Observation.PreparedObservationMesh.ObservationMesh.Sample
+theorem positive (sample : Sample
   mesh coefficients face)
-    (nonzero : Energy.NonzeroGaussianVector coefficients) : 0 < sample.energy := by
+    (nonzero : NonzeroGaussianVector coefficients) : 0 < sample.energy := by
   rw [sample.energy_eq_original]
   exact mesh.energy.surfaceEnergy_positive coefficients nonzero face
 
@@ -245,9 +245,9 @@ end ObservationMesh
 
 /-- Automatic finite refinement data from just an admissible curve and a depth. -/
 def curveObservationMesh {genus : Nat}
-    (curve : Hyperelliptic.Basic.HyperellipticCurve genus) (depth : Nat) :
+    (curve : Basic.HyperellipticCurve genus) (depth : Nat) :
     ObservationMesh curve.polynomial genus depth :=
-  Curves.Hyperelliptic.Integration.Observation.PreparedObservationMesh.ObservationMesh.ofEnergy
-    (PreparedObservationSurface.curveObservationBoxEnergy curve) depth
+  ObservationMesh.ofEnergy
+    (curveObservationBoxEnergy curve) depth
 
 end Purelib.Curves.Hyperelliptic.Integration.Observation.PreparedObservationMesh

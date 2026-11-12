@@ -43,6 +43,8 @@ import Purelib.Topology.Mesh.CoordinateTriangulation
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Integration.Path.Dyadic
+
 open Purelib.Approximation
 
 open Purelib.Curves
@@ -80,18 +82,18 @@ open Purelib.Topology.Polygon.Stokes
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
     regular domains differential} {attached :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment prepared}
+    Caps.AllSurfacePreparation.CapAttachment prepared}
   {depth : Nat}
 
 set_option genInjectivity false in
@@ -100,9 +102,9 @@ set_option genInjectivity false in
 The indexed incidence is retained, every vertex remains in the disk and every mapped face has nonnegative coordinate
 area. -/
 structure Refinement (geometry :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry attached)
-    (coarse : Topology.Polygon.Stokes.OrientedTriangle (lifted.vertices.count + attached.words.length)) (parameters :
-      Path.Dyadic.RadialTriangles.Parameters depth) where
+  Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry attached)
+    (coarse : OrientedTriangle (lifted.vertices.count + attached.words.length)) (parameters :
+      RadialTriangles.Parameters depth) where
   /-- The cached mapped coordinates on the original indexed mesh. -/ coordinates : Data.Vector
     Gaussian.Basic.Canonical parameters.mesh.mesh.vertices.length
   /-- Each coordinate is the exact original reciprocal geometry map. -/ coordinates_eq : ∀ index, coordinates index =
@@ -127,23 +129,23 @@ namespace Refinement
 /-- Map the supplied shared radial parameters into the original retained cap triangle and retain its containment and
 orientation proofs. -/
 @[expose] def build (geometry :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry attached)
-    (coarse : Topology.Polygon.Stokes.OrientedTriangle (lifted.vertices.count + attached.words.length)) (member : coarse
+  Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry attached)
+    (coarse : OrientedTriangle (lifted.vertices.count + attached.words.length)) (member : coarse
       ∈ attached.caps)
-    (parameters : Path.Dyadic.RadialTriangles.Parameters depth) :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapRefinement.Refinement geometry coarse parameters := by
-  let coordinates := Data.Vector.Basic.vectorOfFn (fun index => geometry.point coarse
+    (parameters : RadialTriangles.Parameters depth) :
+      Refinement geometry coarse parameters := by
+  let coordinates := Vector.Basic.vectorOfFn (fun index => geometry.point coarse
     (parameters.mesh.mesh.coordinate index).re (parameters.mesh.mesh.coordinate index).im)
   have coordinatesEq (index : Fin parameters.mesh.mesh.vertices.length) : coordinates index = geometry.point coarse
       (parameters.mesh.mesh.coordinate index).re (parameters.mesh.mesh.coordinate index).im :=
-        Data.Vector.Basic.vectorOfFn_apply _ index
+        Vector.Basic.vectorOfFn_apply _ index
   refine ⟨coordinates, coordinatesEq, ?_, ?_⟩
   · intro face
     have originals := parameters.mesh.mesh.face_coordinates face
     have sourceMember : (Rectangle.Partition.PreparedBoxTriangulation.boxTriangles
       parameters.mesh.partition.leaves)[face.val] ∈
         Rectangle.Partition.PreparedBoxTriangulation.boxTriangles parameters.mesh.partition.leaves := List.getElem_mem _
-    have contained := Path.Dyadic.RadialTriangles.triangles_inside parameters.mesh.partition.leaves
+    have contained := RadialTriangles.triangles_inside parameters.mesh.partition.leaves
       parameters.leaves_inside
       _ sourceMember
     have inside (point : Gaussian.Basic.Canonical) (included : Path.Dyadic.RadialTriangles.unitBox.Contains point) :
@@ -155,25 +157,25 @@ orientation proofs. -/
     have originals := parameters.mesh.mesh.face_coordinates face
     rw [coordinatesEq, coordinatesEq, coordinatesEq, originals.1, originals.2.1, originals.2.2]
     change 0 ≤ Rectangle.Partition.PreparedBoxTriangulation.coordinateArea
-      (Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.triangle
+      (Charts.Reciprocal.ReciprocalRadialGeometry.triangle
       (geometry.sourceCoordinates coarse.second) (geometry.sourceCoordinates coarse.third)
       (Rectangle.Partition.PreparedBoxTriangulation.boxTriangles parameters.mesh.partition.leaves)[face.val])
-    exact Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.triangles_nonnegative _ _ (geometry.source_positive
+    exact Charts.Reciprocal.ReciprocalRadialGeometry.triangles_nonnegative _ _ (geometry.source_positive
       coarse member).le
       parameters.mesh.partition.leaves parameters.leaves_inside _ (List.getElem_mem _)
 
 /-- Both actual face-edge squared distances satisfy the original quarter-radius bound at the retained depth. -/
 theorem distances {geometry :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry attached}
-    {coarse : Topology.Polygon.Stokes.OrientedTriangle (lifted.vertices.count + attached.words.length)}
-    {parameters : Path.Dyadic.RadialTriangles.Parameters depth} (refinement :
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapRefinement.Refinement geometry coarse parameters)
+  Caps.AllSurfacePreparation.CapAttachment.ReciprocalGeometry attached}
+    {coarse : OrientedTriangle (lifted.vertices.count + attached.words.length)}
+    {parameters : RadialTriangles.Parameters depth} (refinement :
+      Refinement geometry coarse parameters)
     (member : coarse ∈ attached.caps) (face : Fin (Rectangle.Partition.PreparedBoxTriangulation.boxTriangles
       parameters.mesh.partition.leaves).length) :
-    Data.Gaussian.Norm.Basic.normSq (refinement.coordinates (parameters.mesh.mesh.triangulation.faces face).second -
+    Gaussian.Norm.Basic.normSq (refinement.coordinates (parameters.mesh.mesh.triangulation.faces face).second -
       refinement.coordinates (parameters.mesh.mesh.triangulation.faces face).first) ≤
         Rational.Geometric.Basic.quarterRadius 64 depth ∧
-    Data.Gaussian.Norm.Basic.normSq (refinement.coordinates (parameters.mesh.mesh.triangulation.faces face).third -
+    Gaussian.Norm.Basic.normSq (refinement.coordinates (parameters.mesh.mesh.triangulation.faces face).third -
       refinement.coordinates (parameters.mesh.mesh.triangulation.faces face).first) ≤
         Rational.Geometric.Basic.quarterRadius 64 depth := by
   have source := parameters.mesh.face_geometry face
@@ -182,11 +184,11 @@ theorem distances {geometry :
   have estimate (left right : Fin parameters.mesh.mesh.vertices.length)
       (leftInside : Path.Dyadic.RadialTriangles.unitBox.Contains (parameters.mesh.mesh.coordinate left))
       (rightInside : Path.Dyadic.RadialTriangles.unitBox.Contains (parameters.mesh.mesh.coordinate right)) :
-      Data.Gaussian.Norm.Basic.normSq (refinement.coordinates left - refinement.coordinates right) ≤
-        32 * Data.Gaussian.Norm.Basic.normSq (parameters.mesh.mesh.coordinate left - parameters.mesh.mesh.coordinate
+      Gaussian.Norm.Basic.normSq (refinement.coordinates left - refinement.coordinates right) ≤
+        32 * Gaussian.Norm.Basic.normSq (parameters.mesh.mesh.coordinate left - parameters.mesh.mesh.coordinate
           right) := by
     rw [refinement.coordinates_eq, refinement.coordinates_eq]
-    exact Hyperelliptic.Charts.Reciprocal.ReciprocalRadialGeometry.point_distance contained.1 contained.2.1
+    exact Charts.Reciprocal.ReciprocalRadialGeometry.point_distance contained.1 contained.2.1
       contained.2.2 _ _ leftInside rightInside
   have diameter : 32 * parameters.mesh.partition.leafDiagonalSq = Rational.Geometric.Basic.quarterRadius 64 depth := by
     rw [parameters.mesh.partition.leafDiagonalSq_eq, parameters.parent_eq, show

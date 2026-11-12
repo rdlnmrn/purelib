@@ -18,6 +18,8 @@ import Purelib.Data.Rat.Fraction.Order.Field
 public import Purelib.Riemann.Normalization.InverseModelRootChannels
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-!
@@ -47,7 +49,7 @@ open Purelib.Data in
 theorem parameterNorm_positive (channel : RootChannel model point) : 0 < channel.samples.parameterNorm := by
   rw [channel.samples.parameterNorm_eq, channel.samples.parameter_eq]
   exact (by simpa only [Gaussian.Norm.Basic.normSq_eq_canonical] using (Gaussian.Norm.Basic.normSq_pos
-    (RootContinuation.SquareRootChannelOwnership.parameter_nonzero channel.certificate)))
+    (parameter_nonzero channel.certificate)))
 
 /-- The uniform inverse-value ceiling obtained by dividing the cached root bound by its parameter norm. -/
 @[expose] def inverseBound (channel : RootChannel model point) : Coordinate := channel.samples.bound /
@@ -57,7 +59,7 @@ section
 open Purelib.Data
 /-- The cached inverse-value ceiling is nonnegative. -/
 theorem inverseBound_nonnegative (channel : RootChannel model point) : 0 ≤ (inverseBound channel) :=
-  Rat.Fraction.Order.Field.div_nonneg_direct channel.samples.bound_nonnegative (parameterNorm_positive channel).le
+  Field.div_nonneg_direct channel.samples.bound_nonnegative (parameterNorm_positive channel).le
 
 /-- Every refined inverse-polynomial value obeys the same retained channel ceiling.
 
@@ -65,9 +67,9 @@ The channel point lies in the original model box, and positivity of the paramete
 bound to the inverse value. -/
 theorem inverse_value_bound (channel : RootChannel model point) (index : Nat) :
     normSq ((model.refine index).value.eval point) ≤ (inverseBound channel) := by
-  apply (Rat.Fraction.Order.Field.le_div_iff_pos (parameterNorm_positive channel)).mpr
+  apply (Field.le_div_iff_pos (parameterNorm_positive channel)).mpr
   have bound := channel.samples.sample_bounded channel.inside index
-  rw [channel.samples.sample_eq, Gaussian.Basic.Canonical.normSq_mul] at bound
+  rw [channel.samples.sample_eq, normSq_mul] at bound
   rw [channel.samples.parameterNorm_eq, channel.samples.parameter_eq, Rat.Fraction.Field.mul_comm]
   exact bound
 
@@ -115,10 +117,10 @@ stage combines the geometric search with the original comparison stage. -/
   let upper := (inverseBound channel)
   let residualTarget := target * channel.certificate.apart.certificate.lowerSq / 4
   let rootTarget := residualTarget / (upper + 1)
-  have residualPositive : 0 < residualTarget := Rat.Fraction.Order.Field.div_pos_direct
-    (Rat.Fraction.Order.Arithmetic.mul_pos_direct positive channel.certificate.apart.certificate.positive) (by decide)
-  have rootPositive : 0 < rootTarget := Rat.Fraction.Order.Field.div_pos_direct residualPositive
-    (Rat.Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct (inverseBound_nonnegative channel) (by decide))
+  have residualPositive : 0 < residualTarget := Field.div_pos_direct
+    (Arithmetic.mul_pos_direct positive channel.certificate.apart.certificate.positive) (by decide)
+  have rootPositive : 0 < rootTarget := Field.div_pos_direct residualPositive
+    (Arithmetic.add_pos_of_nonneg_of_pos_direct (inverseBound_nonnegative channel) (by decide))
   let comparison := channel.samples_equivalent.compare floor floor rootTarget rootPositive
   let residualIndex := Rational.Geometric.Search.firstQuarterBelow model.bound floor residualTarget
   ⟨positive, upper, rfl, residualTarget, rfl, rootTarget, rfl, comparison, residualIndex, rfl,
@@ -132,14 +134,14 @@ The retained maximum includes the original comparison stage. Its existing
 floor certificate therefore applies to the selected model stage. -/
 theorem floor_le (request : InverseRequest channel target floor) : floor ≤ request.index := by
   rw [request.index_eq]
-  exact request.comparison.left_ge.trans (Purelib.Data.Nat.Order.le_max_right _ _)
+  exact request.comparison.left_ge.trans (Data.Nat.Order.le_max_right _ _)
 
 open Purelib.Data in
 /-- The retained residual target is strictly positive. -/
 theorem residualTarget_positive (request : InverseRequest channel target floor) : 0 < request.residualTarget := by
   rw [request.residualTarget_eq]
-  exact Rat.Fraction.Order.Field.div_pos_direct
-    (Rat.Fraction.Order.Arithmetic.mul_pos_direct request.positive channel.certificate.apart.certificate.positive) (by
+  exact Field.div_pos_direct
+    (Arithmetic.mul_pos_direct request.positive channel.certificate.apart.certificate.positive) (by
       decide)
 
 open Purelib.Approximation in
@@ -156,7 +158,7 @@ theorem accurate (request : InverseRequest channel target floor) {index rootInde
   let root := (Gaussian.Name.Sampling.approximation channel.certificate.value.name).sample rootIndex
   have indices := later
   rw [request.index_eq] at indices
-  have close := request.comparison.close ((Purelib.Data.Nat.Order.le_max_right _ _).trans indices) rootLater
+  have close := request.comparison.close ((Data.Nat.Order.le_max_right _ _).trans indices) rootLater
   simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at close
   change normSq (channel.samples.sample index - root) < request.rootTarget at close
   rw [channel.samples.sample_eq] at close
@@ -164,23 +166,23 @@ theorem accurate (request : InverseRequest channel target floor) {index rootInde
     rw [request.upper_eq]
     exact (inverse_value_bound channel) index
   have upperPositive : 0 < request.upper + 1 :=
-    Rat.Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct ((Gaussian.Basic.Canonical.normSq_nonneg _).trans
+    Arithmetic.add_pos_of_nonneg_of_pos_direct ((normSq_nonneg _).trans
       upper) (by decide)
   have rootTerm : normSq (inverse * (root - polynomial.eval point * inverse)) < request.residualTarget := by
-    rw [Gaussian.Basic.Canonical.normSq_mul, show root - polynomial.eval point * inverse =
-      -(polynomial.eval point * inverse - root) by ring1, Gaussian.Basic.Canonical.normSq_neg]
+    rw [normSq_mul, show root - polynomial.eval point * inverse =
+      -(polynomial.eval point * inverse - root) by ring1, normSq_neg]
     calc
       _ ≤ (request.upper + 1) * normSq (polynomial.eval point * inverse - root) :=
-        Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-          (upper.trans (le_add_of_nonneg_right (by decide))) (Gaussian.Basic.Canonical.normSq_nonneg _)
+        Arithmetic.mul_le_mul_of_nonneg_right_direct
+          (upper.trans (le_add_of_nonneg_right (by decide))) (normSq_nonneg _)
       _ < (request.upper + 1) * request.rootTarget :=
-        Rat.Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct upperPositive close
+        Arithmetic.mul_lt_mul_of_pos_left_direct upperPositive close
       _ = request.residualTarget := by
         rw [request.rootTarget_eq, Rat.Fraction.Field.mul_comm]
         exact Rat.Fraction.Field.div_mul_cancel_of_ne _ _ upperPositive.ne'
   have residual : normSq (1 - polynomial.eval point * inverse ^ 2) < request.residualTarget := by
     apply (model.refine_residualBound index point channel.inside).trans_lt
-    have residualLater := (Purelib.Data.Nat.Order.le_max_left _ _).trans indices
+    have residualLater := (Data.Nat.Order.le_max_left _ _).trans indices
     rw [request.residualIndex_eq] at residualLater
     exact (quarterRadius_antitone model.bound_nonnegative residualLater).trans_lt
       (Rational.Geometric.Search.firstQuarterBelow_accurate model.bound model.bound_nonnegative floor
@@ -192,8 +194,8 @@ theorem accurate (request : InverseRequest channel target floor) {index rootInde
       (inverse * (root - polynomial.eval point * inverse)) (1 - polynomial.eval point * inverse ^ 2)
     simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at subtractBound
     apply subtractBound.trans_lt
-    have bound := Rat.Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Coordinate) < 2)
-      (Rat.Fraction.Order.Arithmetic.add_lt_add_direct rootTerm residual)
+    have bound := Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Coordinate) < 2)
+      (Arithmetic.add_lt_add_direct rootTerm residual)
     apply bound.trans_eq
     rw [show 2 * (request.residualTarget + request.residualTarget) = request.residualTarget * 4 by ring1,
       request.residualTarget_eq]
@@ -203,20 +205,20 @@ theorem accurate (request : InverseRequest channel target floor) {index rootInde
   simp only [Gaussian.Norm.Basic.normSq_eq_canonical] at rootLower
   have nonzero := Gaussian.Name.Apart.Sampling.sampled_nonzero channel.certificate.value channel.certificate.apart
     rootIndex
-  apply Rat.Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct (c := channel.certificate.apart.certificate.lowerSq)
+  apply Arithmetic.lt_of_mul_lt_mul_right_direct (c := channel.certificate.apart.certificate.lowerSq)
     _ channel.certificate.apart.certificate.positive
   calc
     _ ≤ normSq (inverse - inv root) * normSq root :=
-      Rat.Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct rootLower (Gaussian.Basic.Canonical.normSq_nonneg
+      Arithmetic.mul_le_mul_of_nonneg_left_direct rootLower (normSq_nonneg
         _)
     _ = normSq (inverse * root - 1) := by
-      rw [← Gaussian.Basic.Canonical.normSq_mul]
+      rw [← normSq_mul]
       congr 1
       calc
         _ = inverse * root - root * inv root := by ring1
         _ = _ := by
           change inverse * root - root * root⁻¹ = inverse * root - 1
-          rw [Gaussian.Basic.Canonical.mul_inv_cancel root nonzero]
+          rw [mul_inv_cancel root nonzero]
     _ < _ := mismatch
 
 end InverseRequest

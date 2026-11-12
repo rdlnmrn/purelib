@@ -87,18 +87,18 @@ attribute [local congr] FiniteSum.Fin.sumFin_congr
 open Purelib.Riemann.Readings.RectangularObservationAssembly.ObservationMesh.ClippedAssembly
   (local_sub_exterior_combination)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {faces : List (Meshes.PuncturedGridFaces.RegularFace
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {faces : List (Meshes.PuncturedGridFaces.RegularFace
       bank)}
-    {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces}
-  {coarse : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains sheet}
-  {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+    {domains : Face.DomainBanks.FaceDomainBank frames faces}
+  {coarse : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes domains sheet}
+  {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet} {target : Fraction.Rational}
 
 /-- The explicit original seam and corner bound for one retained basis pair, sheet and face at a sufficient stage. -/
-def pairExteriorBound (energy : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest coarse fixed
+def pairExteriorBound (energy : TwoSheetBilinearRequest.TwoSheetRequest coarse fixed
   target) (stage : Nat) (later : energy.index ≤ stage)
     (sheet : Fin 2) (position : Fin faces.length) (first second : Fin genus) : Fraction.Rational :=
   let entry := (energy.entries.get sheet).entries.get position
@@ -120,17 +120,17 @@ def pairExteriorBound (energy : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilin
 /-- The actual weighted local-minus-exterior reading is bounded by the original pairwise face errors with their
 homogeneous coefficient weights. -/
 theorem FaceAssembly.local_sub_exterior_bound {energy :
-  Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest coarse fixed target}
-    {stage : Nat} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+  TwoSheetBilinearRequest.TwoSheetRequest coarse fixed target}
+    {stage : Nat} {cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage}
       {left right : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
     {sheet : Fin 2} {position : Fin faces.length} (later : energy.index ≤ stage)
-    (assembly : Hyperelliptic.Meshes.PuncturedGrid.RegularClippedAssembly.TwoSheetRequest.FaceAssembly energy cache left
+    (assembly : RegularClippedAssembly.TwoSheetRequest.FaceAssembly energy cache left
       right sheet position) :
-    Data.Gaussian.Norm.Basic.normSq (assembly.localTotal - assembly.exterior) ≤
+    Gaussian.Norm.Basic.normSq (assembly.localTotal - assembly.exterior) ≤
       ((genus : Fraction.Rational) * (genus : Fraction.Rational)) *
-        FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => Data.Gaussian.Norm.Basic.normSq (left
-          first) * Data.Gaussian.Norm.Basic.normSq (right second) *
-          Hyperelliptic.Meshes.PuncturedGrid.RegularClippedErrorBound.TwoSheetRequest.pairExteriorBound energy stage
+        FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => Gaussian.Norm.Basic.normSq (left
+          first) * Gaussian.Norm.Basic.normSq (right second) *
+          TwoSheetRequest.pairExteriorBound energy stage
             later sheet position first second)) := by
   let mesh := (energy.entries.get sheet).meshes.entries.get position
   let values := fun (i : Fin genus) column row point =>
@@ -138,19 +138,19 @@ theorem FaceAssembly.local_sub_exterior_bound {energy :
   let pairs := fun (i j : Fin genus) => Readings.RectangularObservationAssembly.ObservationMesh.ClippedAssembly.build
     mesh
     (fun column row point => ⟨values i column row point, values j column row point⟩)
-  have bounded (i j : Fin genus) : Data.Gaussian.Norm.Basic.normSq ((pairs i j).localTotal - (pairs i j).exterior) ≤
-      Hyperelliptic.Meshes.PuncturedGrid.RegularClippedErrorBound.TwoSheetRequest.pairExteriorBound energy stage later
+  have bounded (i j : Fin genus) : Gaussian.Norm.Basic.normSq ((pairs i j).localTotal - (pairs i j).exterior) ≤
+      TwoSheetRequest.pairExteriorBound energy stage later
         sheet position i j := by
     exact
-      Hyperelliptic.Meshes.PuncturedGrid.DomainBilinearAssembly.EnergyPreflight.Request.clipped_local_sub_exterior_bound
+      DomainBilinearAssembly.EnergyPreflight.Request.clipped_local_sub_exterior_bound
       ((energy.entries.get sheet).entries.get position).modelRequest
       (((energy.entries.get sheet).index_ge position).trans ((energy.index_ge sheet).trans later))
       (cache.atDomain position sheet) i j (pairs i j)
   rw [assembly.local_sub_exterior_combination left right values values pairs]
   have weighted (i j : Fin genus) :
-      Data.Gaussian.Norm.Basic.normSq (left i * right j * ((pairs i j).localTotal - (pairs i j).exterior)) ≤
-        Data.Gaussian.Norm.Basic.normSq (left i) * Data.Gaussian.Norm.Basic.normSq (right j) *
-          Hyperelliptic.Meshes.PuncturedGrid.RegularClippedErrorBound.TwoSheetRequest.pairExteriorBound energy stage
+      Gaussian.Norm.Basic.normSq (left i * right j * ((pairs i j).localTotal - (pairs i j).exterior)) ≤
+        Gaussian.Norm.Basic.normSq (left i) * Gaussian.Norm.Basic.normSq (right j) *
+          TwoSheetRequest.pairExteriorBound energy stage
           later sheet position i j := by
     rw [Gaussian.Norm.Basic.normSq_mul, Gaussian.Norm.Basic.normSq_mul]
     exact Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (bounded i j)
@@ -158,14 +158,14 @@ theorem FaceAssembly.local_sub_exterior_bound {energy :
         (Gaussian.Norm.Basic.normSq_nonneg _))
   have inner (i : Fin genus) := Gaussian.Norm.Sum.Indexed.normSq_sumFin_le_count_mul_sumFin
     (fun j => left i * right j * ((pairs i j).localTotal - (pairs i j).exterior))
-    (fun j => Data.Gaussian.Norm.Basic.normSq (left i) * Data.Gaussian.Norm.Basic.normSq (right j) *
-      Hyperelliptic.Meshes.PuncturedGrid.RegularClippedErrorBound.TwoSheetRequest.pairExteriorBound energy stage later
+    (fun j => Gaussian.Norm.Basic.normSq (left i) * Gaussian.Norm.Basic.normSq (right j) *
+      TwoSheetRequest.pairExteriorBound energy stage later
       sheet position i j) (weighted i)
   have estimate := Gaussian.Norm.Sum.Indexed.normSq_sumFin_le_count_mul_sumFin
     (fun i => FiniteSum.Fin.sumFin (fun j => left i * right j * ((pairs i j).localTotal - (pairs i j).exterior)))
-    (fun i => (genus : Fraction.Rational) * FiniteSum.Fin.sumFin (fun j => Data.Gaussian.Norm.Basic.normSq (left i)
-      * Data.Gaussian.Norm.Basic.normSq (right j) *
-      Hyperelliptic.Meshes.PuncturedGrid.RegularClippedErrorBound.TwoSheetRequest.pairExteriorBound energy stage later
+    (fun i => (genus : Fraction.Rational) * FiniteSum.Fin.sumFin (fun j => Gaussian.Norm.Basic.normSq (left i)
+      * Gaussian.Norm.Basic.normSq (right j) *
+      TwoSheetRequest.pairExteriorBound energy stage later
         sheet position i j)) inner
   exact estimate.trans_eq (by rw [FiniteSum.Fin.sumFin_mul_left]; ring1)
 
@@ -175,33 +175,33 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularClippedErrorB
 
 attribute [local congr] FiniteSum.Fin.sumFin_congr
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {faces : List (Meshes.PuncturedGridFaces.RegularFace
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {faces : List (Meshes.PuncturedGridFaces.RegularFace
       bank)}
-    {domains : Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames faces}
-  {coarse : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes domains sheet}
-  {fixed : (sheet : Fin 2) → Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains
+    {domains : Face.DomainBanks.FaceDomainBank frames faces}
+  {coarse : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes domains sheet}
+  {fixed : (sheet : Fin 2) → RegularDomainMeshes.RegularMeshes.Preflights domains
     sheet} {target : Fraction.Rational}
 
 /-- The existing small local boundary now controls the stitched exteriors,
 with every actual face error paid on both sheets. -/
-theorem exterior_bound (request : Hyperelliptic.Meshes.PuncturedGrid.RegularLocalBoundaryRequest.LocalBoundaryRequest
+theorem exterior_bound (request : RegularLocalBoundaryRequest.LocalBoundaryRequest
   coarse fixed target)
-    {stage : Nat} {cache : Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Numerics domains stage}
+    {stage : Nat} {cache : RegularDomainMeshes.RegularMeshes.Numerics domains stage}
       (later : request.ownership.index ≤ stage)
-    (samples : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest.Samples request.energy cache)
+    (samples : TwoSheetBilinearRequest.TwoSheetRequest.Samples request.energy cache)
     (left right : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
-    (assemblies : Hyperelliptic.Meshes.PuncturedGrid.RegularClippedAssembly.TwoSheetRequest.Assemblies
+    (assemblies : RegularClippedAssembly.TwoSheetRequest.Assemblies
       request.energy cache left right) :
     let energyLater := request.ownership.energy_le.trans later
     let faceBound := fun sheet position => ((genus : Fraction.Rational) * (genus : Fraction.Rational)) *
-      FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => Data.Gaussian.Norm.Basic.normSq (left
-        first) * Data.Gaussian.Norm.Basic.normSq (right second) *
-        Hyperelliptic.Meshes.PuncturedGrid.RegularClippedErrorBound.TwoSheetRequest.pairExteriorBound
+      FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => Gaussian.Norm.Basic.normSq (left
+        first) * Gaussian.Norm.Basic.normSq (right second) *
+        TwoSheetRequest.pairExteriorBound
           request.energy stage energyLater sheet position first second))
-    Data.Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun sheet : Fin 2 => FiniteSum.Fin.sumFin (fun position :
+    Gaussian.Norm.Basic.normSq (FiniteSum.Fin.sumFin (fun sheet : Fin 2 => FiniteSum.Fin.sumFin (fun position :
       Fin faces.length =>
       ((assemblies.get sheet).get position).exterior))) ≤
       2 * (Readings.PreparedObservationCoercivity.coefficientNormSq left *
@@ -213,21 +213,21 @@ theorem exterior_bound (request : Hyperelliptic.Meshes.PuncturedGrid.RegularLoca
   let energyLater := request.ownership.energy_le.trans later
   let faceBound := fun (sheet : Fin 2) (position : Fin faces.length) => ((genus : Fraction.Rational) * (genus :
     Fraction.Rational)) *
-    FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => Data.Gaussian.Norm.Basic.normSq (left
-      first) * Data.Gaussian.Norm.Basic.normSq (right second) *
-      Hyperelliptic.Meshes.PuncturedGrid.RegularClippedErrorBound.TwoSheetRequest.pairExteriorBound
+    FiniteSum.Fin.sumFin (fun first => FiniteSum.Fin.sumFin (fun second => Gaussian.Norm.Basic.normSq (left
+      first) * Gaussian.Norm.Basic.normSq (right second) *
+      TwoSheetRequest.pairExteriorBound
         request.energy stage energyLater sheet position first second))
   have inner (sheet : Fin 2) := Gaussian.Norm.Sum.Indexed.normSq_sumFin_le_count_mul_sumFin
     (fun position => ((assemblies.get sheet).get position).localTotal - ((assemblies.get sheet).get position).exterior)
     (faceBound sheet) (fun position =>
-      Hyperelliptic.Meshes.PuncturedGrid.RegularClippedErrorBound.TwoSheetRequest.FaceAssembly.local_sub_exterior_bound
+      TwoSheetRequest.FaceAssembly.local_sub_exterior_bound
       energyLater
       ((assemblies.get sheet).get position))
   have errorBound := Gaussian.Norm.Sum.Indexed.normSq_sumFin_le_count_mul_sumFin
     (fun sheet : Fin 2 => FiniteSum.Fin.sumFin (fun position : Fin faces.length =>
       ((assemblies.get sheet).get position).localTotal - ((assemblies.get sheet).get position).exterior))
     (fun sheet : Fin 2 => (faces.length : Fraction.Rational) * FiniteSum.Fin.sumFin (faceBound sheet)) inner
-  have localBound := Hyperelliptic.Meshes.PuncturedGrid.RegularClippedAssembly.LocalBoundaryRequest.assembled_bound
+  have localBound := RegularClippedAssembly.LocalBoundaryRequest.assembled_bound
     request later samples left right assemblies
   have locals := FiniteSum.Fin.sumFin_congr (fun sheet : Fin 2 => FiniteSum.Fin.sumFin_congr (fun position : Fin
     faces.length =>

@@ -61,22 +61,22 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks (FaceDom
 open Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy (SurfacePartitions SurfaceMeshes SurfaceRequest)
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces (FacePerimeterTraces PiecePerimeterTraces)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target
-    radius : Purelib.Data.Rat.Fraction.Rational} {grid :
-    Purelib.Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid preparation target radius}
-  {observations : Purelib.Riemann.RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
+  {preparation : NewtonPreparation original} {target
+    radius : Rational} {grid :
+    NewtonGrid preparation target radius}
+  {observations : ProtectedObservations original} {frames :
     RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
+  {domains : FaceDomainBank frames
     grid.faces.regulars} {sheet : Fin 2}
-  {partitions : Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid} {coarse :
-    Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfaceMeshes partitions domains sheet}
-  {fixed : Purelib.Riemann.RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet} {error :
-    Purelib.Data.Rat.Fraction.Rational}
-  {energy : Purelib.Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfaceRequest partitions coarse fixed error}
+  {partitions : SurfacePartitions observations grid} {coarse :
+    SurfaceMeshes partitions domains sheet}
+  {fixed : Preflights domains sheet} {error :
+    Rational}
+  {energy : SurfaceRequest partitions coarse fixed error}
   {position : Fin grid.faces.regulars.length}
 
 open Purelib.Riemann.Integration.RectangularOwnedTriangulation (OwnedVertex)
@@ -111,7 +111,7 @@ theorem bottom_height (traces : PerimeterTraces.FacePerimeterTraces energy posit
     let mesh := (energy.meshes.get position).entries.get piece
     let trace := (traces.pieces.get piece).bottom
     exact (RectangularHorizontalTraceLengths.point_height trace _).trans (mesh.y_first.trans
-      (Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterGeometry.FacePerimeterTraces.bottom_piece_boundary column))
+      (FacePerimeterTraces.bottom_piece_boundary column))
   exact valid.indexed vertex
 
 /-- The complete original bottom perimeter retains physical side geometry and containment from each actual vertex owner.
@@ -122,7 +122,7 @@ def bottomGeometry (traces : PerimeterTraces.FacePerimeterTraces energy position
   .horizontal (domains.get position).models _ (fun vertex =>
     let owner := traces.bottom.indexed vertex
     (((domains.get position).domain sheet).patch.cell_refines owner.column owner.row).contains owner.contains)
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterGeometry.FacePerimeterTraces.bottom_height traces)
+    (FacePerimeterTraces.bottom_height traces)
 
 /-- Every actual original top boundary piece lies on the corresponding side of the complete face box. -/
 private theorem top_piece_boundary (column : Fin ((PieceIndices.columns (partitions.get position)) + 1)) :
@@ -150,7 +150,7 @@ theorem top_height (traces : PerimeterTraces.FacePerimeterTraces energy position
     let mesh := (energy.meshes.get position).entries.get piece
     let trace := (traces.pieces.get piece).top
     exact (RectangularHorizontalTraceLengths.point_height trace _).trans (mesh.y_last.trans
-      (Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterGeometry.FacePerimeterTraces.top_piece_boundary column))
+      (FacePerimeterTraces.top_piece_boundary column))
   exact valid.indexed vertex
 
 /-- The complete original top perimeter retains physical side geometry and containment from each actual vertex owner. -/
@@ -160,7 +160,7 @@ def topGeometry (traces : PerimeterTraces.FacePerimeterTraces energy position) :
   .horizontal (domains.get position).models _ (fun vertex =>
     let owner := traces.top.indexed vertex
     (((domains.get position).domain sheet).patch.cell_refines owner.column owner.row).contains owner.contains)
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterGeometry.FacePerimeterTraces.top_height traces)
+    (FacePerimeterTraces.top_height traces)
 
 /-- Every actual original left boundary piece lies on the corresponding side of the complete face box. -/
 private theorem left_piece_boundary (column : Fin ((PieceIndices.rows (partitions.get position)) + 1)) :
@@ -187,7 +187,7 @@ theorem left_horizontal (traces : PerimeterTraces.FacePerimeterTraces energy pos
     let mesh := (energy.meshes.get position).entries.get piece
     let trace := (traces.pieces.get piece).left
     exact (RectangularVerticalTraceLengths.point_horizontal trace _).trans (mesh.x_first.trans
-      (Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterGeometry.FacePerimeterTraces.left_piece_boundary column))
+      (FacePerimeterTraces.left_piece_boundary column))
   exact valid.indexed vertex
 
 /-- The complete original left perimeter retains physical side geometry and containment from each actual vertex owner.
@@ -198,7 +198,7 @@ def leftGeometry (traces : PerimeterTraces.FacePerimeterTraces energy position) 
   .vertical (domains.get position).models _ (fun vertex =>
     let owner := traces.left.indexed vertex
     (((domains.get position).domain sheet).patch.cell_refines owner.column owner.row).contains owner.contains)
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterGeometry.FacePerimeterTraces.left_horizontal traces)
+    (FacePerimeterTraces.left_horizontal traces)
 
 /-- Every actual original right boundary piece lies on the corresponding side of the complete face box. -/
 private theorem right_piece_boundary (column : Fin ((PieceIndices.rows (partitions.get position)) + 1)) :
@@ -226,7 +226,7 @@ theorem right_horizontal (traces : PerimeterTraces.FacePerimeterTraces energy po
     let mesh := (energy.meshes.get position).entries.get piece
     let trace := (traces.pieces.get piece).right
     exact (RectangularVerticalTraceLengths.point_horizontal trace _).trans (mesh.x_last.trans
-      (Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterGeometry.FacePerimeterTraces.right_piece_boundary column))
+      (FacePerimeterTraces.right_piece_boundary column))
   exact valid.indexed vertex
 
 /-- The complete original right perimeter retains physical side geometry and containment from each actual vertex owner.
@@ -237,7 +237,7 @@ def rightGeometry (traces : PerimeterTraces.FacePerimeterTraces energy position)
   .vertical (domains.get position).models _ (fun vertex =>
     let owner := traces.right.indexed vertex
     (((domains.get position).domain sheet).patch.cell_refines owner.column owner.row).contains owner.contains)
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterGeometry.FacePerimeterTraces.right_horizontal traces)
+    (FacePerimeterTraces.right_horizontal traces)
 
 end FacePerimeterTraces
 end Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterGeometry

@@ -38,6 +38,11 @@ import Mathlib.Algebra.Ring.Defs
 public import Purelib.Data.Rat.Fraction.Field
 import Purelib.Tactic.Ring
 
+open Purelib.Polynomial.Recurrence.Spread
+open Purelib.Geometry.Stars.Regular
+open Purelib.Geometry.Trigonometry.Spread.Number.Basic
+open Purelib.Polynomial.Ascending.Integer.Bezout
+
 open Purelib.Algebra.Field
 
 open Purelib.Data.Rat
@@ -66,8 +71,8 @@ variable {K : Type*} [ExplicitField K]
 /-- Example 14.2: `5² = 3` in `F₁₁`, yielding the printed regular star with
 line parameters `0`, `5`, and `6 = -5`. -/
 theorem example_14_2_fieldEleven :
-    Nonempty (Geometry.Stars.Regular.OrderThree.Basic.RegularThreeStar Finite.Eleven.Element) := by
-  apply (Geometry.Stars.Regular.OrderThree.Classification.order_three_star (K := Finite.Eleven.Element) (by decide)).2
+    Nonempty (OrderThree.Basic.RegularThreeStar Finite.Eleven.Element) := by
+  apply (OrderThree.Classification.order_three_star (K := Finite.Eleven.Element) (by decide)).2
   exact ⟨5, by decide, by decide⟩
 
 end formalisations.DivineProportions.Chapters.Examples.ChapterFourteen
@@ -94,15 +99,15 @@ variable {K : Type*} [ExplicitField K] [Nontrivial K] [DecidableEq K]
 
 /-- Failure of three to be a nonzero square excludes every regular order-three star when two is nonzero. -/
 private theorem no_star_of_not_square
-    (twoNonzero : (2 : K) ≠ 0) (notSquare : ¬ Purelib.Algebra.Field.Squares.IsNonzeroSquare (3 : K)) :
-    ¬ Nonempty (Geometry.Stars.Regular.OrderThree.Basic.RegularThreeStar K) := by
+    (twoNonzero : (2 : K) ≠ 0) (notSquare : ¬ Squares.IsNonzeroSquare (3 : K)) :
+    ¬ Nonempty (OrderThree.Basic.RegularThreeStar K) := by
   intro star
-  exact notSquare ((Geometry.Stars.Regular.OrderThree.Classification.order_three_star twoNonzero).1 star)
+  exact notSquare ((OrderThree.Classification.order_three_star twoNonzero).1 star)
 
 /-- The `F₃` clause: here the scalar `3` itself vanishes. -/
 theorem field_three
     (threeZero : (3 : K) = 0) (twoNonzero : (2 : K) ≠ 0) :
-    ¬ Nonempty (Geometry.Stars.Regular.OrderThree.Basic.RegularThreeStar K) := by
+    ¬ Nonempty (OrderThree.Basic.RegularThreeStar K) := by
   apply no_star_of_not_square twoNonzero
   rintro ⟨root, rootNonzero, threeSquare⟩
   have squareZero : root ^ 2 = 0 := threeSquare.symm.trans threeZero
@@ -114,7 +119,7 @@ theorem field_three
 /-- The `F₅` clause, using `3²=-1` and `x⁵=x`. -/
 theorem field_five
     (fiveZero : (5 : K) = 0) (frobenius : ∀ value : K, value ^ 5 = value) :
-    ¬ Nonempty (Geometry.Stars.Regular.OrderThree.Basic.RegularThreeStar K) := by
+    ¬ Nonempty (OrderThree.Basic.RegularThreeStar K) := by
   have twoNonzero : (2 : K) ≠ 0 := by
     intro twoZero
     apply (one_ne_zero : (1 : K) ≠ 0)
@@ -132,7 +137,7 @@ theorem field_five
 theorem field_seven
     (sevenZero : (7 : K) = 0)
     (frobenius : ∀ value : K, value ^ 7 = value) :
-    ¬ Nonempty (Geometry.Stars.Regular.OrderThree.Basic.RegularThreeStar K) := by
+    ¬ Nonempty (OrderThree.Basic.RegularThreeStar K) := by
   have twoNonzero : (2 : K) ≠ 0 := by
     intro twoZero
     apply (one_ne_zero : (1 : K) ≠ 0)
@@ -150,7 +155,7 @@ theorem field_seven
 theorem field_seventeen
     (seventeenZero : (17 : K) = 0)
     (frobenius : ∀ value : K, value ^ 17 = value) :
-    ¬ Nonempty (Geometry.Stars.Regular.OrderThree.Basic.RegularThreeStar K) := by
+    ¬ Nonempty (OrderThree.Basic.RegularThreeStar K) := by
   have twoNonzero : (2 : K) ≠ 0 := by
     intro twoZero
     apply (one_ne_zero : (1 : K) ≠ 0)
@@ -168,7 +173,7 @@ theorem field_seventeen
 theorem field_nineteen
     (nineteenZero : (19 : K) = 0)
     (frobenius : ∀ value : K, value ^ 19 = value) :
-    ¬ Nonempty (Geometry.Stars.Regular.OrderThree.Basic.RegularThreeStar K) := by
+    ¬ Nonempty (OrderThree.Basic.RegularThreeStar K) := by
   have twoNonzero : (2 : K) ≠ 0 := by
     intro twoZero
     apply (one_ne_zero : (1 : K) ≠ 0)
@@ -187,8 +192,8 @@ end ExampleFourteenOne
 namespace ExampleFourteenThree
 
 /-- The source's literal `F₁₃` star from the square root `4²=3`. -/
-def star : Geometry.Stars.Regular.OrderThree.Basic.RegularThreeStar Finite.Thirteen.Element :=
-  Geometry.Stars.Regular.OrderThree.Construction.orderThreeStar 4 (by decide) (by decide) (by decide)
+def star : OrderThree.Basic.RegularThreeStar Finite.Thirteen.Element :=
+  OrderThree.Construction.orderThreeStar 4 (by decide) (by decide) (by decide)
 
 /-- The characteristic-thirteen star has normalized line coefficients (0, 1), (4, 1) and (9, 1). -/
 theorem example_14_3 :
@@ -203,7 +208,7 @@ namespace ExampleFourteenFour
 
 /-- The rational clause of Example 14.4: the exact reduced-fraction
 certificate excludes a square root of three and hence an order-three star. -/
-theorem example_14_4 : ¬ Nonempty (Geometry.Stars.Regular.OrderThree.Basic.RegularThreeStar Fraction.Rational) := by
+theorem example_14_4 : ¬ Nonempty (OrderThree.Basic.RegularThreeStar Fraction.Rational) := by
   intro star
   have twoNonzero : (2 : Fraction.Rational) ≠ 0 := by decide
   have rationalNontrivial : Nontrivial Fraction.Rational := by
@@ -215,7 +220,7 @@ theorem example_14_4 : ¬ Nonempty (Geometry.Stars.Regular.OrderThree.Basic.Regu
       (2 : Fraction.Rational) = 1 + 1 := by ring1
       _ = 0 + 0 := by rw [← zeroOne]
       _ = 0 := by ring1
-  rcases (Geometry.Stars.Regular.OrderThree.Classification.order_three_star (K := Fraction.Rational) twoNonzero).1 star
+  rcases (OrderThree.Classification.order_three_star (K := Fraction.Rational) twoNonzero).1 star
     with
     ⟨root, _rootNonzero, threeSquare⟩
   exact NumberTheory.SquareClass.Rational.Nonsquare.square_ne_three root threeSquare.symm
@@ -229,7 +234,7 @@ variable {K : Type*} [ExplicitField K] [Nontrivial K] [DecidableEq K]
 theorem field_three
     (threeZero : (3 : K) = 0)
     (frobenius : ∀ value : K, value ^ 3 = value)
-    (value : K) (polynomialZero : Polynomial.Recurrence.Spread.Basic.spreadPolynomial 5 value = 0) :
+    (value : K) (polynomialZero : Basic.spreadPolynomial 5 value = 0) :
     value = 0 := by
   have twoNonzero : (2 : K) ≠ 0 := by
     intro twoZero
@@ -243,7 +248,7 @@ theorem field_three
     calc
       (2 : K) = 5 - 3 := by ring1
       _ = 0 := by rw [fiveZero, threeZero]; ring1
-  apply Polynomial.Recurrence.Spread.Roots.Five.only_zero_of_five_nonsquare fiveNonzero
+  apply Roots.Five.only_zero_of_five_nonsquare fiveNonzero
   apply SquareObstruction.Frobenius.not_nonzeroSquare_of_frobenius_neg 5 1 twoNonzero
   · calc
       (5 : K) ^ 1 = -1 + 2 * 3 := by ring1
@@ -256,7 +261,7 @@ omit [Nontrivial K] in
 again its only root is zero. -/
 theorem field_five
     (fiveZero : (5 : K) = 0)
-    (value : K) (polynomialZero : Polynomial.Recurrence.Spread.Basic.spreadPolynomial 5 value = 0) :
+    (value : K) (polynomialZero : Basic.spreadPolynomial 5 value = 0) :
     value = 0 := by
   have factorAsSquare :
       5 - 20 * value + 16 * value ^ 2 = value ^ 2 := by
@@ -264,7 +269,7 @@ theorem field_five
       5 - 20 * value + 16 * value ^ 2 =
           value ^ 2 + (1 - 4 * value + 3 * value ^ 2) * 5 := by ring1
       _ = value ^ 2 := by rw [fiveZero]; ring1
-  rw [Polynomial.Recurrence.Spread.Values.spreadPolynomial_five_formula, factorAsSquare] at polynomialZero
+  rw [Values.spreadPolynomial_five_formula, factorAsSquare] at polynomialZero
   by_cases valueZero : value = 0
   · exact valueZero
   · have squareNonzero : value ^ 2 ≠ 0 := by
@@ -280,7 +285,7 @@ theorem field_five
 theorem field_seven
     (sevenZero : (7 : K) = 0)
     (frobenius : ∀ value : K, value ^ 7 = value)
-    (value : K) (polynomialZero : Polynomial.Recurrence.Spread.Basic.spreadPolynomial 5 value = 0) :
+    (value : K) (polynomialZero : Basic.spreadPolynomial 5 value = 0) :
     value = 0 := by
   have twoNonzero : (2 : K) ≠ 0 := by
     intro twoZero
@@ -294,7 +299,7 @@ theorem field_seven
     calc
       (2 : K) = 7 - 5 := by ring1
       _ = 0 := by rw [sevenZero, fiveZero]; ring1
-  apply Polynomial.Recurrence.Spread.Roots.Five.only_zero_of_five_nonsquare fiveNonzero
+  apply Roots.Five.only_zero_of_five_nonsquare fiveNonzero
   apply SquareObstruction.Frobenius.not_nonzeroSquare_of_frobenius_neg 5 3 twoNonzero
   · calc
       (5 : K) ^ 3 = -1 + 18 * 7 := by ring1
@@ -306,7 +311,7 @@ theorem field_seven
 theorem field_thirteen
     (thirteenZero : (13 : K) = 0)
     (frobenius : ∀ value : K, value ^ 13 = value)
-    (value : K) (polynomialZero : Polynomial.Recurrence.Spread.Basic.spreadPolynomial 5 value = 0) :
+    (value : K) (polynomialZero : Basic.spreadPolynomial 5 value = 0) :
     value = 0 := by
   have twoNonzero : (2 : K) ≠ 0 := by
     intro twoZero
@@ -320,7 +325,7 @@ theorem field_thirteen
     calc
       (1 : K) = 2 * 13 - 5 * 5 := by ring1
       _ = 0 := by rw [thirteenZero, fiveZero]; ring1
-  apply Polynomial.Recurrence.Spread.Roots.Five.only_zero_of_five_nonsquare fiveNonzero
+  apply Roots.Five.only_zero_of_five_nonsquare fiveNonzero
   apply SquareObstruction.Frobenius.not_nonzeroSquare_of_frobenius_neg 5 6 twoNonzero
   · calc
       (5 : K) ^ 6 = -1 + 1202 * 13 := by ring1
@@ -332,7 +337,7 @@ theorem field_thirteen
 theorem field_seventeen
     (seventeenZero : (17 : K) = 0)
     (frobenius : ∀ value : K, value ^ 17 = value)
-    (value : K) (polynomialZero : Polynomial.Recurrence.Spread.Basic.spreadPolynomial 5 value = 0) :
+    (value : K) (polynomialZero : Basic.spreadPolynomial 5 value = 0) :
     value = 0 := by
   have twoNonzero : (2 : K) ≠ 0 := by
     intro twoZero
@@ -346,7 +351,7 @@ theorem field_seventeen
     calc
       (2 : K) = 17 - 3 * 5 := by ring1
       _ = 0 := by rw [seventeenZero, fiveZero]; ring1
-  apply Polynomial.Recurrence.Spread.Roots.Five.only_zero_of_five_nonsquare fiveNonzero
+  apply Roots.Five.only_zero_of_five_nonsquare fiveNonzero
   apply SquareObstruction.Frobenius.not_nonzeroSquare_of_frobenius_neg 5 8 twoNonzero
   · calc
       (5 : K) ^ 8 = -1 + 22978 * 17 := by ring1
@@ -364,9 +369,9 @@ variable {K : Type*} [ExplicitField K] [Nontrivial K] [DecidableEq K]
 roots of `S₅` are the printed values `0`, `7`, and `8`. -/
 theorem root_classification
     (elevenZero : (11 : K) = 0) (value : K) :
-    Polynomial.Recurrence.Spread.Basic.spreadPolynomial 5 value = 0 ↔
+    Basic.spreadPolynomial 5 value = 0 ↔
       value = 0 ∨ value = 7 ∨ value = 8 := by
-  rw [Polynomial.Recurrence.Spread.Values.spreadPolynomial_five_formula]
+  rw [Values.spreadPolynomial_five_formula]
   constructor
   · intro productZero
     by_cases valueZero : value = 0
@@ -379,7 +384,7 @@ theorem root_classification
         · exact False.elim
             ((ExplicitField.mul_ne_zero valueZero zero) productZero)
       have factorZero := (fun {K : Type _} [ExplicitField K] [DecidableEq K] {value : K}
-        (squareZero : value ^ 2 = 0) => (Purelib.Algebra.Field.Squares.eq_zero_of_square_eq_zero (K := K) value
+        (squareZero : value ^ 2 = 0) => (Squares.eq_zero_of_square_eq_zero (K := K) value
         squareZero : value = 0)) factorSquareZero
       have factored : (5 : K) * (value - 7) * (value - 8) = 0 := by
         calc
@@ -422,8 +427,8 @@ the finite obstructions are respectively that `2` and `-1` are nonsquares. -/
 theorem nonzero_roots_not_spread
     (elevenZero : (11 : K) = 0)
     (frobenius : ∀ value : K, value ^ 11 = value) :
-    ¬ Geometry.Trigonometry.Spread.Number.Basic.IsSpreadNumber (7 : K) ∧ ¬
-      Geometry.Trigonometry.Spread.Number.Basic.IsSpreadNumber (8 : K) := by
+    ¬ IsSpreadNumber (7 : K) ∧ ¬
+      IsSpreadNumber (8 : K) := by
   have twoNonzero : (2 : K) ≠ 0 := by
     intro twoZero
     apply (one_ne_zero : (1 : K) ≠ 0)
@@ -474,11 +479,11 @@ namespace ExampleFourteenSeven
 
 /-- The source's literal `F₁₉` star is the order-five construction
 with `r=9` and `v=7`, normalized to slopes `0,2,5,-5,-2`. -/
-def star : Geometry.Stars.Regular.OrderFive.Basic.RegularFiveStar Finite.Nineteen.Element :=
-  Geometry.Stars.Regular.OrderFive.Construction.orderFiveStar 9 7 (by decide) (by decide) (by decide) (by decide)
+def star : OrderFive.Basic.RegularFiveStar Finite.Nineteen.Element :=
+  OrderFive.Construction.orderFiveStar 9 7 (by decide) (by decide) (by decide) (by decide)
 
 /-- The characteristic-nineteen line with coefficients (slope, 1, 0). -/
-private def printedLine (slope : Finite.Nineteen.Element) : Geometry.Plane.Line Finite.Nineteen.Element where
+private def printedLine (slope : Finite.Nineteen.Element) : Line Finite.Nineteen.Element where
   a := slope
   b := 1
   c := 0
@@ -501,20 +506,20 @@ theorem example_14_7_lines :
     star.line₂.Equivalent (printedLine 5) ∧
     star.line₃.Equivalent (printedLine (-5)) ∧
     star.line₄.Equivalent (printedLine (-2))
-  unfold Geometry.Plane.Line.Equivalent star Geometry.Stars.Regular.OrderFive.Construction.orderFiveStar printedLine
+  unfold Line.Equivalent star OrderFive.Construction.orderFiveStar printedLine
     Line.Basic.xAxis
-    Geometry.Stars.Regular.OrderFive.Construction.orderFiveLine₁
-      Geometry.Stars.Regular.OrderFive.Construction.orderFiveLine₂
-      Geometry.Stars.Regular.OrderFive.Construction.orderFiveLine₃
-      Geometry.Stars.Regular.OrderFive.Construction.orderFiveLine₄
+    OrderFive.Construction.orderFiveLine₁
+      OrderFive.Construction.orderFiveLine₂
+      OrderFive.Construction.orderFiveLine₃
+      OrderFive.Construction.orderFiveLine₄
   decide
 
 /-- The two printed nonzero roots and their spread-number witnesses. -/
 theorem example_14_7_values :
-    Polynomial.Recurrence.Spread.Basic.spreadPolynomial 5 (9 : Finite.Nineteen.Element) = 0 ∧
-      Polynomial.Recurrence.Spread.Basic.spreadPolynomial 5 (16 : Finite.Nineteen.Element) = 0 ∧
-      Geometry.Trigonometry.Spread.Number.Basic.IsSpreadNumber (9 : Finite.Nineteen.Element) ∧
-        Geometry.Trigonometry.Spread.Number.Basic.IsSpreadNumber (16 : Finite.Nineteen.Element) := by
+    Basic.spreadPolynomial 5 (9 : Finite.Nineteen.Element) = 0 ∧
+      Basic.spreadPolynomial 5 (16 : Finite.Nineteen.Element) = 0 ∧
+      IsSpreadNumber (9 : Finite.Nineteen.Element) ∧
+        IsSpreadNumber (16 : Finite.Nineteen.Element) := by
   refine ⟨by decide, by decide, ⟨2, by decide⟩, ⟨8, by decide⟩⟩
 
 end ExampleFourteenSeven
@@ -535,21 +540,21 @@ private theorem eval_cubic
   ring1
 
 /-- Literal finite Bezout certificate modulo three. -/
-private def three : Purelib.Polynomial.Ascending.Integer.Bezout.BezoutCertificate 3 cubic where
+private def three : BezoutCertificate 3 cubic where
   left := [1, 0, 1]
   right := [1, -1, 1]
   correction := [2, -19, 40, -40, 37, -21]
   identity := by decide
 
 /-- Literal finite Bezout certificate modulo five. -/
-private def five : Purelib.Polynomial.Ascending.Integer.Bezout.BezoutCertificate 5 cubic where
+private def five : BezoutCertificate 5 cubic where
   left := [-2, -1, 2, 1, -1]
   right := [0, 1, 1]
   correction := [-3, 21, -31, -18, 45, 8, -35, 13]
   identity := by decide
 
 /-- Literal finite Bezout certificate modulo eleven. -/
-private def eleven : Purelib.Polynomial.Ascending.Integer.Bezout.BezoutCertificate 11 cubic where
+private def eleven : BezoutCertificate 11 cubic where
   left := [-3, -3, -5, 5, 3, 2, -2, 3, 2, 0, -3]
   right := [4, -5, -5]
   correction :=
@@ -557,7 +562,7 @@ private def eleven : Purelib.Polynomial.Ascending.Integer.Bezout.BezoutCertifica
   identity := by decide
 
 /-- Literal finite Bezout certificate modulo seventeen. -/
-private def seventeen : Purelib.Polynomial.Ascending.Integer.Bezout.BezoutCertificate 17 cubic where
+private def seventeen : BezoutCertificate 17 cubic where
   left := [5, -8, -3, 6, 1, 6, -3, -4, -2, 6, 7, 0, 6, -7, 1, 0, 5]
   right := [4, 1, -3]
   correction :=
@@ -566,7 +571,7 @@ private def seventeen : Purelib.Polynomial.Ascending.Integer.Bezout.BezoutCertif
   identity := by decide
 
 /-- Literal finite Bezout certificate modulo nineteen. -/
-private def nineteen : Purelib.Polynomial.Ascending.Integer.Bezout.BezoutCertificate 19 cubic where
+private def nineteen : BezoutCertificate 19 cubic where
   left :=
     [-8, -7, 1, -5, -6, -5, -6, 7, -5, -6, 1, 4, -9, -2, -1,
       -4, 1, -5, -3]
@@ -577,7 +582,7 @@ private def nineteen : Purelib.Polynomial.Ascending.Integer.Bezout.BezoutCertifi
   identity := by decide
 
 /-- Literal finite Bezout certificate modulo twenty-three. -/
-private def twentyThree : Purelib.Polynomial.Ascending.Integer.Bezout.BezoutCertificate 23 cubic where
+private def twentyThree : BezoutCertificate 23 cubic where
   left :=
     [10, 11, -4, -7, 10, 1, -9, 10, -10, 3, 6, -6, 5, -3, -11,
       9, 7, 2, 6, 11, 7, -6, 3]
@@ -594,10 +599,10 @@ The modulus vanishes in the explicit field, so the certificate excludes roots of
 the carrier. -/
 private theorem only_zero_of_certificate
     {K : Type*} [ExplicitField K] [Nontrivial K] [DecidableEq K]
-    {modulus : Nat} (certificate : Purelib.Polynomial.Ascending.Integer.Bezout.BezoutCertificate modulus cubic)
+    {modulus : Nat} (certificate : BezoutCertificate modulus cubic)
     (modulusZero : (modulus : K) = 0)
     (frobeniusLaw : ∀ value : K, value ^ modulus = value)
-    (value : K) (polynomialZero : Polynomial.Recurrence.Spread.Basic.spreadPolynomial 7 value = 0) :
+    (value : K) (polynomialZero : Basic.spreadPolynomial 7 value = 0) :
     value = 0 := by
   by_cases valueZero : value = 0
   · exact valueZero
@@ -612,7 +617,7 @@ private theorem only_zero_of_certificate
         (7 - 56 * value + 112 * value ^ 2 - 64 * value ^ 3) ^ 2 ≠ 0 := by
       simpa [pow_two] using
         ExplicitField.mul_ne_zero cubicNonzero cubicNonzero
-    rw [Polynomial.Recurrence.Spread.Values.spreadPolynomial_seven_formula] at polynomialZero
+    rw [Values.spreadPolynomial_seven_formula] at polynomialZero
     exact False.elim
       ((ExplicitField.mul_ne_zero valueZero cubicSquareNonzero)
         polynomialZero)
@@ -625,7 +630,7 @@ variable {K : Type*} [ExplicitField K] [Nontrivial K] [DecidableEq K]
 theorem field_three
     (threeZero : (3 : K) = 0)
     (frobenius : ∀ value : K, value ^ 3 = value)
-    (value : K) (polynomialZero : Polynomial.Recurrence.Spread.Basic.spreadPolynomial 7 value = 0) :
+    (value : K) (polynomialZero : Basic.spreadPolynomial 7 value = 0) :
     value = 0 :=
   Certificate.only_zero_of_certificate Certificate.three threeZero
     frobenius value polynomialZero
@@ -634,7 +639,7 @@ theorem field_three
 theorem field_five
     (fiveZero : (5 : K) = 0)
     (frobenius : ∀ value : K, value ^ 5 = value)
-    (value : K) (polynomialZero : Polynomial.Recurrence.Spread.Basic.spreadPolynomial 7 value = 0) :
+    (value : K) (polynomialZero : Basic.spreadPolynomial 7 value = 0) :
     value = 0 :=
   Certificate.only_zero_of_certificate Certificate.five fiveZero
     frobenius value polynomialZero
@@ -644,7 +649,7 @@ omit [Nontrivial K] in
 spread polynomial again has only its zero root. -/
 theorem field_seven
     (sevenZero : (7 : K) = 0)
-    (value : K) (polynomialZero : Polynomial.Recurrence.Spread.Basic.spreadPolynomial 7 value = 0) :
+    (value : K) (polynomialZero : Basic.spreadPolynomial 7 value = 0) :
     value = 0 := by
   by_cases valueZero : value = 0
   · exact valueZero
@@ -671,7 +676,7 @@ theorem field_seven
         (7 - 56 * value + 112 * value ^ 2 - 64 * value ^ 3) ^ 2 ≠ 0 := by
       simpa [pow_two] using
         ExplicitField.mul_ne_zero cubicNonzero cubicNonzero
-    rw [Polynomial.Recurrence.Spread.Values.spreadPolynomial_seven_formula] at polynomialZero
+    rw [Values.spreadPolynomial_seven_formula] at polynomialZero
     exact False.elim
       ((ExplicitField.mul_ne_zero valueZero cubicSquareNonzero)
         polynomialZero)
@@ -680,7 +685,7 @@ theorem field_seven
 theorem field_eleven
     (elevenZero : (11 : K) = 0)
     (frobenius : ∀ value : K, value ^ 11 = value)
-    (value : K) (polynomialZero : Polynomial.Recurrence.Spread.Basic.spreadPolynomial 7 value = 0) :
+    (value : K) (polynomialZero : Basic.spreadPolynomial 7 value = 0) :
     value = 0 :=
   Certificate.only_zero_of_certificate Certificate.eleven elevenZero
     frobenius value polynomialZero
@@ -689,7 +694,7 @@ theorem field_eleven
 theorem field_seventeen
     (seventeenZero : (17 : K) = 0)
     (frobenius : ∀ value : K, value ^ 17 = value)
-    (value : K) (polynomialZero : Polynomial.Recurrence.Spread.Basic.spreadPolynomial 7 value = 0) :
+    (value : K) (polynomialZero : Basic.spreadPolynomial 7 value = 0) :
     value = 0 :=
   Certificate.only_zero_of_certificate Certificate.seventeen seventeenZero
     frobenius value polynomialZero
@@ -698,7 +703,7 @@ theorem field_seventeen
 theorem field_nineteen
     (nineteenZero : (19 : K) = 0)
     (frobenius : ∀ value : K, value ^ 19 = value)
-    (value : K) (polynomialZero : Polynomial.Recurrence.Spread.Basic.spreadPolynomial 7 value = 0) :
+    (value : K) (polynomialZero : Basic.spreadPolynomial 7 value = 0) :
     value = 0 :=
   Certificate.only_zero_of_certificate Certificate.nineteen nineteenZero
     frobenius value polynomialZero
@@ -707,7 +712,7 @@ theorem field_nineteen
 theorem field_twentyThree
     (twentyThreeZero : (23 : K) = 0)
     (frobenius : ∀ value : K, value ^ 23 = value)
-    (value : K) (polynomialZero : Polynomial.Recurrence.Spread.Basic.spreadPolynomial 7 value = 0) :
+    (value : K) (polynomialZero : Basic.spreadPolynomial 7 value = 0) :
     value = 0 :=
   Certificate.only_zero_of_certificate Certificate.twentyThree
     twentyThreeZero frobenius value polynomialZero
@@ -758,11 +763,11 @@ omit [Nontrivial K] in
 /-- The complete `S₇` root classification in characteristic thirteen. -/
 theorem field_thirteen_roots
     (thirteenZero : (13 : K) = 0) (value : K) :
-    Polynomial.Recurrence.Spread.Basic.spreadPolynomial 7 value = 0 ↔
+    Basic.spreadPolynomial 7 value = 0 ↔
       value = 0 ∨ value = 2 ∨ value = 5 ∨ value = 11 := by
   constructor
   · intro polynomialZero
-    rw [Polynomial.Recurrence.Spread.Values.spreadPolynomial_seven_formula] at polynomialZero
+    rw [Values.spreadPolynomial_seven_formula] at polynomialZero
     by_cases valueZero : value = 0
     · exact Or.inl valueZero
     · right
@@ -776,19 +781,19 @@ theorem field_thirteen_roots
               polynomialZero)
       exact (cubic_root_classification thirteenZero value).1
         ((fun {K : Type _} [ExplicitField K] [DecidableEq K] {value : K} (squareZero : value ^ 2 =
-          0) => (Purelib.Algebra.Field.Squares.eq_zero_of_square_eq_zero (K := K) value squareZero : value = 0))
+          0) => (Squares.eq_zero_of_square_eq_zero (K := K) value squareZero : value = 0))
           cubicSquareZero)
   · rintro (valueZero | valueTwo | valueFive | valueEleven)
-    · rw [valueZero, Polynomial.Recurrence.Spread.Values.spreadPolynomial_seven_formula]
+    · rw [valueZero, Values.spreadPolynomial_seven_formula]
       ring1
-    · rw [Polynomial.Recurrence.Spread.Values.spreadPolynomial_seven_formula,
+    · rw [Values.spreadPolynomial_seven_formula,
         (cubic_root_classification thirteenZero value).2 (Or.inl valueTwo)]
       ring1
-    · rw [Polynomial.Recurrence.Spread.Values.spreadPolynomial_seven_formula,
+    · rw [Values.spreadPolynomial_seven_formula,
         (cubic_root_classification thirteenZero value).2
           (Or.inr (Or.inl valueFive))]
       ring1
-    · rw [Polynomial.Recurrence.Spread.Values.spreadPolynomial_seven_formula,
+    · rw [Values.spreadPolynomial_seven_formula,
         (cubic_root_classification thirteenZero value).2
           (Or.inr (Or.inr valueEleven))]
       ring1
@@ -798,9 +803,9 @@ numbers, exactly as asserted in Example 14.8. -/
 theorem field_thirteen_roots_not_spread
     (thirteenZero : (13 : K) = 0)
     (frobenius : ∀ value : K, value ^ 13 = value) :
-    ¬ Geometry.Trigonometry.Spread.Number.Basic.IsSpreadNumber (2 : K) ∧
-      ¬ Geometry.Trigonometry.Spread.Number.Basic.IsSpreadNumber (5 : K) ∧ ¬
-        Geometry.Trigonometry.Spread.Number.Basic.IsSpreadNumber (11 : K) := by
+    ¬ IsSpreadNumber (2 : K) ∧
+      ¬ IsSpreadNumber (5 : K) ∧ ¬
+        IsSpreadNumber (11 : K) := by
   have twoNonzero : (2 : K) ≠ 0 := by
     intro twoZero
     apply (one_ne_zero : (1 : K) ≠ 0)
@@ -916,8 +921,8 @@ private theorem twelveSpreadSquare (twentyNineZero : (29 : K) = 0) :
 
 /-- The source's characteristic-twenty-nine star, constructed from the
 spread `6` and the finite square witness `12²=6(1-6)`. -/
-def star (twentyNineZero : (29 : K) = 0) : Geometry.Stars.Regular.OrderSeven.Basic.RegularSevenStar K :=
-  Geometry.Stars.Regular.OrderSeven.Construction.orderSevenStar 6 12
+def star (twentyNineZero : (29 : K) = 0) : OrderSeven.Basic.RegularSevenStar K :=
+  OrderSeven.Construction.orderSevenStar 6 12
     (by
       intro sixZero
       apply (one_ne_zero : (1 : K) ≠ 0)
@@ -944,7 +949,7 @@ def star (twentyNineZero : (29 : K) = 0) : Geometry.Stars.Regular.OrderSeven.Bas
 -/
 private theorem star_initial (twentyNineZero : (29 : K) = 0) :
     (star twentyNineZero).initial =
-      Geometry.Stars.Regular.OrderSeven.Construction.orderSevenInitialPair 6 12 (sixNonzero twentyNineZero)
+      OrderSeven.Construction.orderSevenInitialPair 6 12 (sixNonzero twentyNineZero)
         (twelveSpreadSquare twentyNineZero) := rfl
 
 /-- The characteristic-twenty-nine cubic factor has exactly the three
@@ -1000,11 +1005,11 @@ theorem cubic_root_classification
 /-- The complete root classification of `S₇` in characteristic twenty-nine. -/
 theorem roots
     (twentyNineZero : (29 : K) = 0) (value : K) :
-    Polynomial.Recurrence.Spread.Basic.spreadPolynomial 7 value = 0 ↔
+    Basic.spreadPolynomial 7 value = 0 ↔
       value = 0 ∨ value = 6 ∨ value = 7 ∨ value = 25 := by
   constructor
   · intro polynomialZero
-    rw [Polynomial.Recurrence.Spread.Values.spreadPolynomial_seven_formula] at polynomialZero
+    rw [Values.spreadPolynomial_seven_formula] at polynomialZero
     by_cases valueZero : value = 0
     · exact Or.inl valueZero
     · right
@@ -1018,19 +1023,19 @@ theorem roots
               polynomialZero)
       exact (cubic_root_classification twentyNineZero value).1
         ((fun {K : Type _} [ExplicitField K] [DecidableEq K] {value : K} (squareZero : value ^ 2 =
-          0) => (Purelib.Algebra.Field.Squares.eq_zero_of_square_eq_zero (K := K) value squareZero : value = 0))
+          0) => (Squares.eq_zero_of_square_eq_zero (K := K) value squareZero : value = 0))
           cubicSquareZero)
   · rintro (valueZero | valueSix | valueSeven | valueTwentyFive)
-    · rw [valueZero, Polynomial.Recurrence.Spread.Values.spreadPolynomial_seven_formula]
+    · rw [valueZero, Values.spreadPolynomial_seven_formula]
       ring1
-    · rw [Polynomial.Recurrence.Spread.Values.spreadPolynomial_seven_formula,
+    · rw [Values.spreadPolynomial_seven_formula,
         (cubic_root_classification twentyNineZero value).2 (Or.inl valueSix)]
       ring1
-    · rw [Polynomial.Recurrence.Spread.Values.spreadPolynomial_seven_formula,
+    · rw [Values.spreadPolynomial_seven_formula,
         (cubic_root_classification twentyNineZero value).2
           (Or.inr (Or.inl valueSeven))]
       ring1
-    · rw [Polynomial.Recurrence.Spread.Values.spreadPolynomial_seven_formula,
+    · rw [Values.spreadPolynomial_seven_formula,
         (cubic_root_classification twentyNineZero value).2
           (Or.inr (Or.inr valueTwentyFive))]
       ring1
@@ -1039,9 +1044,9 @@ omit [Nontrivial K] [DecidableEq K] in
 /-- All three nonzero roots are spread numbers, with the literal finite
 square witnesses `12`, `4`, and `3`. -/
 theorem values_are_spread (twentyNineZero : (29 : K) = 0) :
-    Geometry.Trigonometry.Spread.Number.Basic.IsSpreadNumber (6 : K) ∧
-      Geometry.Trigonometry.Spread.Number.Basic.IsSpreadNumber (7 : K) ∧
-      Geometry.Trigonometry.Spread.Number.Basic.IsSpreadNumber (25 : K) := by
+    IsSpreadNumber (6 : K) ∧
+      IsSpreadNumber (7 : K) ∧
+      IsSpreadNumber (25 : K) := by
   refine ⟨⟨12, ?_⟩, ⟨4, ?_⟩, ⟨3, ?_⟩⟩
   · exact (twelveSpreadSquare twentyNineZero).symm
   · calc
@@ -1091,7 +1096,7 @@ theorem lines (twentyNineZero : (29 : K) = 0) :
       (Line.Normalized.printedLine 14)
   let initial := (star twentyNineZero).initial
   have initialEq :
-      initial = Geometry.Stars.Regular.OrderSeven.Construction.orderSevenInitialPair 6 12 (sixNonzero twentyNineZero)
+      initial = OrderSeven.Construction.orderSevenInitialPair 6 12 (sixNonzero twentyNineZero)
         (twelveSpreadSquare twentyNineZero) := by
     unfold initial
     exact star_initial twentyNineZero
@@ -1099,14 +1104,14 @@ theorem lines (twentyNineZero : (29 : K) = 0) :
       (Reflection.Iteration.reflectionLineAt initial 0).Equivalent (Line.Normalized.printedLine 0) := by
     rw [initialEq]
     change (Line.Basic.xAxis (K := K)).Equivalent (Line.Normalized.printedLine 0)
-    unfold Geometry.Plane.Line.Equivalent Line.Basic.xAxis Line.Normalized.printedLine
+    unfold Line.Equivalent Line.Basic.xAxis Line.Normalized.printedLine
     exact ⟨by ring1, by ring1, by ring1⟩
   have lineOne :
       (Reflection.Iteration.reflectionLineAt initial 1).Equivalent (Line.Normalized.printedLine 15) := by
     rw [initialEq]
-    change (Geometry.Stars.Regular.OrderSeven.Construction.orderSevenLine₁ (K := K) 6 12
+    change (OrderSeven.Construction.orderSevenLine₁ (K := K) 6 12
       (sixNonzero twentyNineZero)).Equivalent (Line.Normalized.printedLine 15)
-    unfold Geometry.Plane.Line.Equivalent Geometry.Stars.Regular.OrderSeven.Construction.orderSevenLine₁
+    unfold Line.Equivalent OrderSeven.Construction.orderSevenLine₁
       Line.Normalized.printedLine
     constructor
     · calc

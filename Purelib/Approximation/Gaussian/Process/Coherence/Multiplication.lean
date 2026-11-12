@@ -24,6 +24,8 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Approximation
@@ -66,13 +68,13 @@ public theorem product_ball_radius_le
   have rightRadiusLe : rightRadius ≤ rightAllowance :=
     rightCoherent.ball_radius_le state.2
   have firstTerm :
-      leftRadius * Data.Gaussian.Norm.Basic.normSq (right.ball state.2).center ≤
+      leftRadius * Basic.normSq (right.ball state.2).center ≤
         leftAllowance * right.centerBound :=
     Arithmetic.mul_le_mul_direct leftRadiusLe
-      (right.center_bounded state.2) (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+      (right.center_bounded state.2) (Basic.normSq_nonneg _)
       (leftCoherent.allowance_nonneg state.1)
   have secondTerm :
-      Data.Gaussian.Norm.Basic.normSq (left.ball state.1).center * rightRadius ≤
+      Basic.normSq (left.ball state.1).center * rightRadius ≤
         left.centerBound * rightAllowance :=
     Arithmetic.mul_le_mul_direct
       (left.center_bounded state.1) rightRadiusLe
@@ -95,15 +97,15 @@ public theorem product_ball_radius_le
       (rightCoherent.allowance_nonneg state.2)
       (rightCoherent.allowance_nonneg state.2)
   change 4 *
-      (leftRadius * Data.Gaussian.Norm.Basic.normSq (right.ball state.2).center +
-        Data.Gaussian.Norm.Basic.normSq (left.ball state.1).center * rightRadius) +
+      (leftRadius * Basic.normSq (right.ball state.2).center +
+        Basic.normSq (left.ball state.1).center * rightRadius) +
       2 * (leftRadius * rightRadius) ≤
     productAllowance left.centerBound right.centerBound
       leftAllowance rightAllowance
   calc
     4 *
-        (leftRadius * Data.Gaussian.Norm.Basic.normSq (right.ball state.2).center +
-          Data.Gaussian.Norm.Basic.normSq (left.ball state.1).center * rightRadius) +
+        (leftRadius * Basic.normSq (right.ball state.2).center +
+          Basic.normSq (left.ball state.1).center * rightRadius) +
         2 * (leftRadius * rightRadius) ≤
       4 * (leftAllowance * right.centerBound +
           left.centerBound * rightAllowance) +
@@ -148,7 +150,7 @@ public theorem product_possible_close
     (leftYPossible : right.Possible leftState.2 leftY)
     (rightXPossible : left.Possible rightState.1 rightX)
     (rightYPossible : right.Possible rightState.2 rightY) :
-    Data.Gaussian.Norm.Basic.normSq (leftX * leftY - rightX * rightY) ≤
+    Basic.normSq (leftX * leftY - rightX * rightY) ≤
       4 *
         (productAllowance left.centerBound right.centerBound
             (leftCoherent.allowance leftState.1)
@@ -160,16 +162,16 @@ public theorem product_possible_close
   let leftTwo := leftCoherent.allowance rightState.1
   let rightOne := rightCoherent.allowance leftState.2
   let rightTwo := rightCoherent.allowance rightState.2
-  have leftClose : Data.Gaussian.Norm.Basic.normSq (leftX - rightX) ≤
+  have leftClose : Basic.normSq (leftX - rightX) ≤
       4 * (leftOne + leftTwo) :=
     leftCoherent.possible_close leftXPossible rightXPossible
-  have rightClose : Data.Gaussian.Norm.Basic.normSq (leftY - rightY) ≤
+  have rightClose : Basic.normSq (leftY - rightY) ≤
       4 * (rightOne + rightTwo) :=
     rightCoherent.possible_close leftYPossible rightYPossible
-  have rightOneNorm : Data.Gaussian.Norm.Basic.normSq leftY ≤
+  have rightOneNorm : Basic.normSq leftY ≤
       2 * (rightOne + right.centerBound) :=
     possible_normSq_le rightCoherent leftYPossible
-  have leftTwoNorm : Data.Gaussian.Norm.Basic.normSq rightX ≤
+  have leftTwoNorm : Basic.normSq rightX ≤
       2 * (leftTwo + left.centerBound) :=
     possible_normSq_le leftCoherent rightXPossible
   have leftSumNonnegative : 0 ≤ 4 * (leftOne + leftTwo) :=
@@ -182,19 +184,19 @@ public theorem product_possible_close
       (add_nonneg (leftCoherent.allowance_nonneg rightState.1)
         left.centerBound_nonneg)
   have firstTerm :
-      Data.Gaussian.Norm.Basic.normSq ((leftX - rightX) * leftY) ≤
+      Basic.normSq ((leftX - rightX) * leftY) ≤
         (4 * (leftOne + leftTwo)) *
           (2 * (rightOne + right.centerBound)) := by
-    rw [Data.Gaussian.Norm.Basic.normSq_mul]
+    rw [Basic.normSq_mul]
     exact Arithmetic.mul_le_mul_direct
-      leftClose rightOneNorm (Data.Gaussian.Norm.Basic.normSq_nonneg leftY) leftSumNonnegative
+      leftClose rightOneNorm (Basic.normSq_nonneg leftY) leftSumNonnegative
   have secondTerm :
-      Data.Gaussian.Norm.Basic.normSq (rightX * (leftY - rightY)) ≤
+      Basic.normSq (rightX * (leftY - rightY)) ≤
         (2 * (leftTwo + left.centerBound)) *
           (4 * (rightOne + rightTwo)) := by
-    rw [Data.Gaussian.Norm.Basic.normSq_mul]
+    rw [Basic.normSq_mul]
     exact Arithmetic.mul_le_mul_direct
-      leftTwoNorm rightClose (Data.Gaussian.Norm.Basic.normSq_nonneg (leftY - rightY))
+      leftTwoNorm rightClose (Basic.normSq_nonneg (leftY - rightY))
       leftNormBoundNonnegative
   have difference :
       leftX * leftY - rightX * rightY =
@@ -208,11 +210,11 @@ public theorem product_possible_close
     (rightCoherent.allowance_nonneg rightState.2)
   rw [difference]
   calc
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
         ((leftX - rightX) * leftY + rightX * (leftY - rightY)) ≤
-      2 * (Data.Gaussian.Norm.Basic.normSq ((leftX - rightX) * leftY) +
-        Data.Gaussian.Norm.Basic.normSq (rightX * (leftY - rightY))) :=
-      Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _
+      2 * (Basic.normSq ((leftX - rightX) * leftY) +
+        Basic.normSq (rightX * (leftY - rightY))) :=
+      Bounds.normSq_add_le_two _ _
     _ ≤ 2 *
         ((4 * (leftOne + leftTwo)) *
             (2 * (rightOne + right.centerBound)) +
@@ -278,7 +280,7 @@ The positive target and the retained positive coefficient give a positive
 denominator. The original quotient request is therefore positive. -/
 public theorem productInputTarget_pos (left right : Process) {target : Fraction.Rational}
     (positive : 0 < target) : 0 < productInputTarget left right target :=
-  Fraction.Order.Field.div_pos_direct positive
+  Field.div_pos_direct positive
     (Arithmetic.add_pos_of_pos_of_nonneg_direct positive
       (Arithmetic.le_of_lt_direct
         (productCoefficient_pos left right)))
@@ -290,7 +292,7 @@ target makes the denominator strictly greater than the numerator. -/
 public theorem productInputTarget_lt_one (left right : Process)
     {target : Fraction.Rational} (positive : 0 < target) :
     productInputTarget left right target < 1 := by
-  apply (Fraction.Order.Field.div_lt_iff_pos
+  apply (Field.div_lt_iff_pos
     (Arithmetic.add_pos_of_pos_of_nonneg_direct positive
       (Arithmetic.le_of_lt_direct
         (productCoefficient_pos left right)))).2
@@ -327,7 +329,7 @@ public theorem productInputTarget_budget_lt (left right : Process)
         (target + productCoefficient left right) :=
       Fraction.Field.quotient_mul_reorder _ _ _
     _ < target := by
-      apply (Fraction.Order.Field.div_lt_iff_pos
+      apply (Field.div_lt_iff_pos
         denominatorPositive).2
       have coefficientLt : productCoefficient left right <
           target + productCoefficient left right := by

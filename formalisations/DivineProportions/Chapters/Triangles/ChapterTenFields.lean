@@ -9,6 +9,8 @@ import Purelib.Geometry.Triangles.NonNull.Basic
 public import Purelib.Geometry.Triangles.Similarity.Basic
 import Purelib.LinearAlgebra.Coordinates3.Vector
 
+open Purelib.Geometry.Triangles.FiniteField.Three
+
 open Purelib.Algebra
 
 open Purelib
@@ -36,9 +38,9 @@ namespace FieldThree
 theorem exercise_10_10 (left right : Geometry.Triangles.NonNull.Basic.NonNullTriangle Field.Finite.Three.Element) :
     left.Similar right ∧ (Geometry.Triangles.Right.Isosceles.Basic.NonNullTriangle.IsRightIsosceles left) ∧
       (Geometry.Triangles.Right.Isosceles.Basic.NonNullTriangle.IsRightIsosceles right) :=
-  ⟨Geometry.Triangles.FiniteField.Three.Classification.exercise_10_10_similar left right,
-    Geometry.Triangles.FiniteField.Three.Classification.exercise_10_10_right_isosceles left,
-    Geometry.Triangles.FiniteField.Three.Classification.exercise_10_10_right_isosceles right⟩
+  ⟨Classification.exercise_10_10_similar left right,
+    Classification.exercise_10_10_right_isosceles left,
+    Classification.exercise_10_10_right_isosceles right⟩
 
 end FieldThree
 

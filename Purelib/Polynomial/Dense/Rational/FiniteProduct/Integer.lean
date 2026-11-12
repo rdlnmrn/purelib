@@ -50,15 +50,15 @@ theorem leadingCoeff_constant_one :
 /-- A finite product of nonzero monic rational polynomials is monic. -/
 theorem leadingCoeff_productFin_one : ∀
   (count : Nat)
-    (factor : Fin count → Polynomial.Dense.Rational.Divisibility.CoefficientPolynomial),
+    (factor : Fin count → Divisibility.CoefficientPolynomial),
     (∀ index, (factor index).isZero = false) →
     (∀ index, (factor index).leadingCoeff = 1) →
-    (Dense.Rational.FiniteProduct.productFin count factor).leadingCoeff = 1
+    (productFin count factor).leadingCoeff = 1
   | 0, factor, allNonzero, allMonic => leadingCoeff_constant_one
   | count + 1, factor, allNonzero, allMonic => by
-      rw [Dense.Rational.FiniteProduct.productFin_succ,
+      rw [productFin_succ,
         DensePolynomial.leadingCoeff_mul
-          (Dense.Rational.FiniteProduct.productFin_nonzero count (fun index => factor index.castSucc)
+          (productFin_nonzero count (fun index => factor index.castSucc)
             (fun index => allNonzero index.castSucc))
           (allNonzero (Fin.last count)),
         leadingCoeff_productFin_one count
@@ -70,15 +70,15 @@ theorem leadingCoeff_productFin_one : ∀
 /-- A finite product of rational polynomials with integral coefficients again has integral coefficients. -/
 theorem integral_productFin : ∀ (count :
   Nat)
-    (factor : Fin count → Polynomial.Dense.Rational.Divisibility.CoefficientPolynomial),
-    (∀ index, Dense.Rational.IntegerCoefficients.Basic.IsIntegralPolynomial (factor index)) →
-    Dense.Rational.IntegerCoefficients.Basic.IsIntegralPolynomial (Dense.Rational.FiniteProduct.productFin count factor)
+    (factor : Fin count → Divisibility.CoefficientPolynomial),
+    (∀ index, IntegerCoefficients.Basic.IsIntegralPolynomial (factor index)) →
+    IntegerCoefficients.Basic.IsIntegralPolynomial (productFin count factor)
   | 0, factor, allIntegral => by
-      exact Dense.Rational.IntegerCoefficients.Basic.integral_constant
-        (Purelib.Data.Rat.Fraction.Integer.integral_of_integer 1)
+      exact IntegerCoefficients.Basic.integral_constant
+        (Fraction.Integer.integral_of_integer 1)
   | count + 1, factor, allIntegral => by
-      rw [Dense.Rational.FiniteProduct.productFin_succ]
-      exact Dense.Rational.IntegerCoefficients.Basic.integral_mul
+      rw [productFin_succ]
+      exact IntegerCoefficients.Basic.integral_mul
         (integral_productFin count (fun index =>
           factor index.castSucc)
           (fun index => allIntegral index.castSucc))
@@ -115,17 +115,17 @@ The identity preserves the original `Fin` indexing and exact ascending coefficie
 theorem ofAscending_coefficientProductFin : ∀ (count :
   Nat)
     (factor : Fin count → List Int),
-    Dense.Rational.AscendingInteger.Basic.ofAscending
+    AscendingInteger.Basic.ofAscending
         (coefficientProductFin count factor) =
-      Dense.Rational.FiniteProduct.productFin count (fun index =>
-        Dense.Rational.AscendingInteger.Basic.ofAscending
+      productFin count (fun index =>
+        AscendingInteger.Basic.ofAscending
           (factor index))
-  | 0, factor => Dense.Rational.AscendingInteger.Basic.ofAscending_one
+  | 0, factor => AscendingInteger.Basic.ofAscending_one
   | count + 1, factor => by
       rw [coefficientProductFin_succ,
-        Dense.Rational.AscendingInteger.Basic.ofAscending_mul,
+        AscendingInteger.Basic.ofAscending_mul,
         ofAscending_coefficientProductFin count
-          (fun index => factor index.castSucc), Dense.Rational.FiniteProduct.productFin_succ]
+          (fun index => factor index.castSucc), productFin_succ]
 end Purelib.Polynomial.Dense.Rational.FiniteProduct.Integer
 
 end

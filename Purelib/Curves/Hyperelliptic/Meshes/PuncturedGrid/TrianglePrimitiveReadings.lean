@@ -1,4 +1,5 @@
 module
+import Purelib.Polynomial.Dense.Gaussian.Basic
 meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Curves.Hyperelliptic.Basic
 import Purelib.Curves.Hyperelliptic.Differentials.Basic
@@ -81,6 +82,7 @@ open Purelib.Topology.Surface.Sewing.SewnPrimitiveFaces (corner)
 open Purelib.Data.Vector.Basic (vectorOfFn vectorOfFn_apply)
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 open Purelib.Topology.Surface.Sewing.PrimitiveSewing (PrimitiveValues)
 open Purelib.Geometry.Rectangle.Partition.RectangularEdgeUniqueness
 open Purelib.Topology.Mesh.QuadrilateralDual
@@ -91,6 +93,7 @@ open Purelib.Curves.Hyperelliptic.Branches (BranchCellBank)
 open Purelib.Riemann.Meshes.PuncturedGridFaces (PuncturedFaces RegularFace)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks (FaceDomains FaceDomainBank)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData (FacePrimitives FacePrimitiveBank)
+open Purelib.Riemann.Normalization.InverseRootPolynomial (Polynomial)
 
 section
 
@@ -141,6 +144,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     LiftedMesh vertices edges faces}
   {domains : FaceDomainBank frames faces.regulars}
     {differential : Differential genus} {index : Nat}
+    {numerator : Polynomial} {pairs : Nat}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitives
 
@@ -149,7 +153,7 @@ theorem castFace_corners
   {first last : PuncturedGridFaces.RegularFace bank} (equal : first = last) {domains : DomainBanks.FaceDomains frames
   first}
     {differential : Differentials.Basic.Differential genus} {index : Nat} (cached : PrimitiveData.FacePrimitives domains
-      differential index) (sheet : Fin 2) :
+      differential index numerator pairs) (sheet : Fin 2) :
     ((cached.castFace equal).atSheet sheet).corners.values = (cached.atSheet sheet).corners.values := by
   cases equal
   rfl
@@ -160,7 +164,7 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.F
 
 /-- Reading the primitive bank through a route preserves the original bounded-position corner cache. -/
 theorem atRoute_corners
-  (cached : PrimitiveData.FacePrimitiveBank differential index domains)
+  (cached : PrimitiveData.FacePrimitiveBank differential index domains numerator pairs)
     {edge : Stokes.OrientedEdge vertices.count} (route : MeshPathWalks.EdgeRoute mesh edge) :
     ((cached.atRoute route).atSheet route.sheet).corners.values = ((cached.get route.position).atSheet
       route.sheet).corners.values :=
@@ -169,7 +173,7 @@ theorem atRoute_corners
 
 /-- A routed edge increment reads the exact retained face-position, sheet and oriented corner pair. -/
 theorem edgeIncrement_eq
-  (cached : PrimitiveData.FacePrimitiveBank differential index domains)
+  (cached : PrimitiveData.FacePrimitiveBank differential index domains numerator pairs)
     {edge : Stokes.OrientedEdge vertices.count} (route : MeshPathWalks.EdgeRoute mesh edge) :
     cached.edgeIncrement route =
       ((cached.get route.position).atSheet route.sheet).corners.values route.corners.finish -
@@ -185,8 +189,9 @@ set_option genInjectivity false in
 /-- Cached three-corner readings for every retained lifted triangle.
 
 The materialized vector retains the mesh's original triangle indices. Its
-readback field certifies each entry against the same face-sheet corner cache. -/
-structure TriangleReadings (cached : PrimitiveData.FacePrimitiveBank differential index domains) (mesh :
+readback field certifies each entry against the same face-sheet corner cache,
+including its actual numerator and odd inverse power. -/
+structure TriangleReadings (cached : PrimitiveData.FacePrimitiveBank differential index domains numerator pairs) (mesh :
   GridLiftedMesh.LiftedMesh vertices edges faces) where
   /-- The cached three-corner readings for every actual retained lifted triangle. -/ values : Data.Vector
     (PrimitiveSewing.PrimitiveValues 3) mesh.triangles.length
@@ -248,7 +253,7 @@ private theorem upper_eq (mesh : GridLiftedMesh.LiftedMesh vertices edges faces)
     omega
 
 /-- Materialize the triangle reading vector once from the exact retained face-sheet corner caches. -/
-@[expose] def build (cached : PrimitiveData.FacePrimitiveBank differential index domains) (mesh :
+@[expose] def build (cached : PrimitiveData.FacePrimitiveBank differential index domains numerator pairs) (mesh :
   GridLiftedMesh.LiftedMesh vertices edges faces) :
   Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings cached mesh where
   values := Data.Vector.Basic.vectorOfFn fun triangle =>
@@ -269,7 +274,7 @@ end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.
 end
 
 variable {cached : FacePrimitiveBank differential
-  index domains}
+  index domains numerator pairs}
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.TrianglePrimitiveReadings.TriangleReadings
 

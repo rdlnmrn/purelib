@@ -31,33 +31,33 @@ namespace Purelib.Polynomial.Dense.Gaussian.Path.Product
 
 /-- The real path component of a product evaluates to the real part of the product of both coordinate pairs. -/
 theorem eval_pathReal_mul (p q :
-  Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+  Basic.CanonicalCoefficients.CoefficientPolynomial)
     (origin direction : Gaussian.Basic.Canonical) (t : Fraction.Rational) :
-    (Dense.Gaussian.Path.Components.pathReal (p * q) origin direction).eval t =
-      (Dense.Rational.Pair.Product.productReal (Dense.Gaussian.Path.Components.pathReal p origin direction)
-        (Dense.Gaussian.Path.Components.pathImag p origin direction)
-        (Dense.Gaussian.Path.Components.pathReal q origin direction) (Dense.Gaussian.Path.Components.pathImag q origin
+    (Components.pathReal (p * q) origin direction).eval t =
+      (Rational.Pair.Product.productReal (Components.pathReal p origin direction)
+        (Components.pathImag p origin direction)
+        (Components.pathReal q origin direction) (Components.pathImag q origin
           direction)).eval t := by
-  rw [Dense.Gaussian.Path.Components.eval_pathReal, Dense.Rational.Pair.Product.eval_productReal,
-    Dense.Gaussian.Path.Components.eval_pathReal, Dense.Gaussian.Path.Components.eval_pathImag,
-    Dense.Gaussian.Path.Components.eval_pathReal, Dense.Gaussian.Path.Components.eval_pathImag,
-      Dense.Basic.DensePolynomial.eval_mul]
+  rw [Components.eval_pathReal, Rational.Pair.Product.eval_productReal,
+    Components.eval_pathReal, Components.eval_pathImag,
+    Components.eval_pathReal, Components.eval_pathImag,
+      Basic.DensePolynomial.eval_mul]
   rfl
 
 /-- The imaginary path component of a product evaluates to the imaginary part of the product of both coordinate pairs.
 -/
 theorem eval_pathImag_mul (p q :
-  Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial)
+  Basic.CanonicalCoefficients.CoefficientPolynomial)
     (origin direction : Gaussian.Basic.Canonical) (t : Fraction.Rational) :
-    (Dense.Gaussian.Path.Components.pathImag (p * q) origin direction).eval t =
-      (Dense.Rational.Pair.Product.productImag (Dense.Gaussian.Path.Components.pathReal p origin direction)
-        (Dense.Gaussian.Path.Components.pathImag p origin direction)
-        (Dense.Gaussian.Path.Components.pathReal q origin direction) (Dense.Gaussian.Path.Components.pathImag q origin
+    (Components.pathImag (p * q) origin direction).eval t =
+      (Rational.Pair.Product.productImag (Components.pathReal p origin direction)
+        (Components.pathImag p origin direction)
+        (Components.pathReal q origin direction) (Components.pathImag q origin
           direction)).eval t := by
-  rw [Dense.Gaussian.Path.Components.eval_pathImag, Dense.Rational.Pair.Product.eval_productImag,
-    Dense.Gaussian.Path.Components.eval_pathReal, Dense.Gaussian.Path.Components.eval_pathImag,
-    Dense.Gaussian.Path.Components.eval_pathReal, Dense.Gaussian.Path.Components.eval_pathImag,
-      Dense.Basic.DensePolynomial.eval_mul]
+  rw [Components.eval_pathImag, Rational.Pair.Product.eval_productImag,
+    Components.eval_pathReal, Components.eval_pathImag,
+    Components.eval_pathReal, Components.eval_pathImag,
+      Basic.DensePolynomial.eval_mul]
   rfl
 
 end Purelib.Polynomial.Dense.Gaussian.Path.Product

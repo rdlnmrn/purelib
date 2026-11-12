@@ -69,6 +69,10 @@ import Purelib.Riemann.Meshes.ShrinkingPuncturedGrid
 import Purelib.Riemann.Periods.CenteredBilinearPath
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! The shared contact tail pays only joins between retained regular faces.
@@ -147,97 +151,97 @@ open Purelib.Data.Rat.Fraction.Order.Arithmetic (mul_nonneg_direct mul_le_mul_of
 
 namespace SynchronizedSurfaceRequests
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve branches
     higher}
-  {preparation : Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius
-    : Data.Rat.Fraction.Rational} {grid : Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid
+  {preparation : NewtonPreparation original} {target radius
+    : Rational} {grid : NewtonGrid
     preparation target radius}
-  {lifted : Riemann.Meshes.LiftedPuncturedGrid grid.punctured}
-  {observations : Riemann.RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
+  {lifted : LiftedPuncturedGrid grid.punctured}
+  {observations : ProtectedObservations original} {frames :
     RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars}
-    {partitions : Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid}
-  {surfaceCuts : Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceCuts partitions domains}
-  {coarse : (sheet : Fin 2) → Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfaceMeshes partitions domains sheet}
-  {fixed : (sheet : Fin 2) → Riemann.RootContinuation.NewtonRequestedObservationEnergy.Preflights domains sheet} {error
-    : Data.Rat.Fraction.Rational}
-  {stage : Nat} {cache : Riemann.RootContinuation.NewtonObservationLocalEnergy.LocalMeshes.Numerics domains stage}
+  {domains : FaceDomainBank frames grid.faces.regulars}
+    {partitions : SurfacePartitions observations grid}
+  {surfaceCuts : SurfaceCuts partitions domains}
+  {coarse : (sheet : Fin 2) → SurfaceMeshes partitions domains sheet}
+  {fixed : (sheet : Fin 2) → Preflights domains sheet} {error
+    : Rational}
+  {stage : Nat} {cache : Numerics domains stage}
     {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
 namespace PerimeterSamples
 
-variable {requests : Riemann.Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests coarse fixed error}
-  {traces : Riemann.Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.PerimeterTraces requests}
-  (excision : Curves.Hyperelliptic.Meshes.Newton.AllHoles.Excision.AllHoleExcision grid lifted)
-  (samples : Riemann.Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.PerimeterSamples requests traces
+variable {requests : NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests coarse fixed error}
+  {traces : PerimeterTraces requests}
+  (excision : AllHoleExcision grid lifted)
+  (samples : NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.PerimeterSamples requests traces
     cache coefficients)
 
 /-- The hypothesis is exactly the homogeneous bound supplied by the complete face-side comparison. The finite face count
 is paid before taking imaginary parts. -/
-theorem remaining_contact_paid {allowance : Fraction.Rational} (positive : 0 < allowance)
+theorem remaining_contact_paid {allowance : Rational} (positive : 0 < allowance)
     (horizontal : ∀ first last, GridSide.Matches .top (grid.faces.regulars[first.val]'first.isLt).cell.box
       (grid.faces.regulars[last.val]'last.isLt).cell.box →
-      Data.Gaussian.Norm.Basic.normSq (PerimeterSamples.centeredSideSum samples .top first -
+      Basic.normSq (PerimeterSamples.centeredSideSum samples .top first -
         PerimeterSamples.centeredSideSum samples .bottom last) ≤
-        (genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
+        (genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
           SynchronizedSurfaceRequests.contactTarget genus grid.faces.regulars.length allowance)
     (vertical : ∀ first last, GridSide.Matches .right (grid.faces.regulars[first.val]'first.isLt).cell.box
       (grid.faces.regulars[last.val]'last.isLt).cell.box →
-      Data.Gaussian.Norm.Basic.normSq (PerimeterSamples.centeredSideSum samples .right first -
+      Basic.normSq (PerimeterSamples.centeredSideSum samples .right first -
         PerimeterSamples.centeredSideSum samples .left last) ≤
-        (genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
+        (genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
           SynchronizedSurfaceRequests.contactTarget genus grid.faces.regulars.length allowance) :
-    Data.Gaussian.Norm.Basic.normSq (PerimeterSamples.remainingPairedCentered excision samples) ≤ (4 *
+    Basic.normSq (PerimeterSamples.remainingPairedCentered excision samples) ≤ (4 *
       (allowance * PreparedObservationCoercivity.coefficientNormSq coefficients)) ^ 2 := by
   have bound := SelectedEvaluationPartition.pairedEvaluation_bound
     (ObservationLower.remainingFaceMask excision) (PerimeterSamples.centeredSideSum samples)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _)) (SynchronizedSurfaceRequests.contactTarget_positive positive).le)
+    (Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct
+      (Arithmetic.sq_nonneg_direct _)
+      (Arithmetic.sq_nonneg_direct _)) (SynchronizedSurfaceRequests.contactTarget_positive positive).le)
         horizontal vertical
   apply bound.trans
   calc
-    _ = ((genus : Fraction.Rational) ^ 2 *
-        (4 * (grid.faces.regulars.length : Fraction.Rational) ^ 4 * SynchronizedSurfaceRequests.contactTarget genus
+    _ = ((genus : Rational) ^ 2 *
+        (4 * (grid.faces.regulars.length : Rational) ^ 4 * SynchronizedSurfaceRequests.contactTarget genus
           grid.faces.regulars.length allowance)) *
           PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 := by ring1
-    _ ≤ ((genus : Fraction.Rational) ^ 2 * ConjugateRequest.energyAllowanceTarget genus allowance) *
+    _ ≤ ((genus : Rational) ^ 2 * ConjugateRequest.energyAllowanceTarget genus allowance) *
       PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct
-        (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (SynchronizedSurfaceRequests.contactTarget_paid
-          positive) (Fraction.Order.Arithmetic.sq_nonneg_direct _))
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+      Arithmetic.mul_le_mul_of_nonneg_right_direct
+        (Arithmetic.mul_le_mul_of_nonneg_left_direct (SynchronizedSurfaceRequests.contactTarget_paid
+          positive) (Arithmetic.sq_nonneg_direct _))
+        (Arithmetic.sq_nonneg_direct _)
     _ ≤ (4 * allowance) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct (ConjugateRequest.energyAllowanceTarget_paid positive)
-        (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+      Arithmetic.mul_le_mul_of_nonneg_right_direct (ConjugateRequest.energyAllowanceTarget_paid positive)
+        (Arithmetic.sq_nonneg_direct _)
     _ = _ := by ring1
 
-variable {vertices : Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank grid.shrunk.prepared.grid} {edges :
-  Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  (mesh : Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges grid.faces)
+variable {vertices : RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank grid.shrunk.prepared.grid} {edges :
+  RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+  (mesh : LiftedMesh vertices edges grid.faces)
 
 /-- The original sheet-transported contact bounds pay the complete centered paired contribution of the retained
 complement. -/
-theorem remaining_lifted_contact_paid {allowance : Fraction.Rational} (positive : 0 < allowance)
+theorem remaining_lifted_contact_paid {allowance : Rational} (positive : 0 < allowance)
     (horizontal : ∀ first last, GridSide.Matches .top (grid.faces.regulars[first.val]'first.isLt).cell.box
       (grid.faces.regulars[last.val]'last.isLt).cell.box →
       (sheet : Fin 2) → mesh.AtSide last .bottom ((mesh.locateFace first sheet).lifted.sideFinishSheet .top))
     (vertical : ∀ first last, GridSide.Matches .right (grid.faces.regulars[first.val]'first.isLt).cell.box
       (grid.faces.regulars[last.val]'last.isLt).cell.box →
       (sheet : Fin 2) → mesh.AtSide last .left ((mesh.locateFace first sheet).lifted.sideFinishSheet .right))
-    (horizontalBound : ∀ first last matching sheet, Data.Gaussian.Norm.Basic.normSq
+    (horizontalBound : ∀ first last matching sheet, Basic.normSq
       (((samples.get sheet).get first).top.centeredArea -
         ((samples.get (horizontal first last matching sheet).sheet).get last).bottom.centeredArea) ≤
-      (genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
+      (genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
         SynchronizedSurfaceRequests.contactTarget genus grid.faces.regulars.length allowance / 4)
-    (verticalBound : ∀ first last matching sheet, Data.Gaussian.Norm.Basic.normSq
+    (verticalBound : ∀ first last matching sheet, Basic.normSq
       (((samples.get sheet).get first).right.centeredArea -
         ((samples.get (vertical first last matching sheet).sheet).get last).left.centeredArea) ≤
-      (genus : Fraction.Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
+      (genus : Rational) ^ 2 * PreparedObservationCoercivity.coefficientNormSq coefficients ^ 2 *
         SynchronizedSurfaceRequests.contactTarget genus grid.faces.regulars.length allowance / 4) :
-    Data.Gaussian.Norm.Basic.normSq (PerimeterSamples.remainingPairedCentered excision samples) ≤ (4 *
+    Basic.normSq (PerimeterSamples.remainingPairedCentered excision samples) ≤ (4 *
       (allowance * PreparedObservationCoercivity.coefficientNormSq coefficients)) ^ 2 := by
   apply
     remaining_contact_paid
@@ -258,25 +262,25 @@ theorem remaining_lifted_contact_paid {allowance : Fraction.Rational} (positive 
 end PerimeterSamples
 
 variable {depth : Nat}
-  {requests : Riemann.Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests (fun sheet =>
-    Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts sheet
+  {requests : NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests (fun sheet =>
+    Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts sheet
     depth) fixed error}
-  {compatible : Curves.Hyperelliptic.Meshes.Newton.Surface.PartitionBankCompatibility.Compatible partitions}
-  {vertices : Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank grid.shrunk.prepared.grid} {edges :
-    Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {mesh : Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges grid.faces} {traces :
-    Riemann.Topology.NewtonGlobalSurfaceBoundary.SynchronizedSurfaceRequests.PerimeterTraces requests}
+  {compatible : Compatible partitions}
+  {vertices : RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank grid.shrunk.prepared.grid} {edges :
+    RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+  {mesh : LiftedMesh vertices edges grid.faces} {traces :
+    PerimeterTraces requests}
 
 namespace GlobalContactRequest
 
-variable {allowance : Data.Rat.Fraction.Rational} {floor : Nat}
+variable {allowance : Rational} {floor : Nat}
 
 /-- The acquired global contact request bounds the original remaining-face centered pair sum at every paid stage. -/
-theorem remaining_accurate (excision : Excision.AllHoleExcision grid lifted) (request :
-  SynchronizedSurfaceRequests.GlobalContactRequest requests compatible mesh traces allowance floor)
+theorem remaining_accurate (excision : AllHoleExcision grid lifted) (request :
+  GlobalContactRequest requests compatible mesh traces allowance floor)
     (positive : 0 < allowance) (later : request.index ≤ stage)
-    (samples : SynchronizedSurfaceRequests.PerimeterSamples requests traces cache coefficients) :
-    Data.Gaussian.Norm.Basic.normSq (PerimeterSamples.remainingPairedCentered excision samples) ≤
+    (samples : PerimeterSamples requests traces cache coefficients) :
+    Basic.normSq (PerimeterSamples.remainingPairedCentered excision samples) ≤
       (4 * (allowance * PreparedObservationCoercivity.coefficientNormSq coefficients)) ^ 2 := by
   apply
     PerimeterSamples.remaining_lifted_contact_paid
@@ -303,27 +307,27 @@ end GlobalContactRequest
 namespace GlobalEnergyRequest
 
 variable {depth : Nat}
-  {requests : Riemann.Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests (fun sheet =>
-    Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts sheet
+  {requests : NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests (fun sheet =>
+    Surface.MeshCompatibility.surfaceMeshes partitions domains surfaceCuts sheet
     depth) fixed error}
-  {ownershipAllowance exteriorAllowance faceAllowance contactAllowance : Data.Rat.Fraction.Rational}
+  {ownershipAllowance exteriorAllowance faceAllowance contactAllowance : Rational}
 
 /-- Only the paid centered contact error is removed from the complete surface lower bound. The surviving corner and
 physical terms still require the period bridge. -/
-theorem remaining_energy_lower_after_contacts (excision : Excision.AllHoleExcision grid lifted)
-    (request : SynchronizedSurfaceRequests.GlobalEnergyRequest requests ownershipAllowance exteriorAllowance
+theorem remaining_energy_lower_after_contacts (excision : AllHoleExcision grid lifted)
+    (request : GlobalEnergyRequest requests ownershipAllowance exteriorAllowance
       faceAllowance)
     (later : request.index ≤ stage)
     (readings : Data.Vector.DependentVector (fun sheet : Fin 2 => (requests.entries.get sheet).Readings cache))
     (observationFace : Attachment.Face)
-    {assemblies : SynchronizedSurfaceRequests.SheetAssemblies requests (cache := cache) (coefficients := coefficients)}
-    {perimeters : SynchronizedSurfaceRequests.SheetPerimeters requests assemblies} (faces :
-      SynchronizedSurfaceRequests.SheetFaces requests perimeters)
-    {traces : SynchronizedSurfaceRequests.PerimeterTraces requests} (samples :
-      SynchronizedSurfaceRequests.PerimeterSamples requests traces cache coefficients)
+    {assemblies : SheetAssemblies requests (cache := cache) (coefficients := coefficients)}
+    {perimeters : SheetPerimeters requests assemblies} (faces :
+      SheetFaces requests perimeters)
+    {traces : PerimeterTraces requests} (samples :
+      PerimeterSamples requests traces cache coefficients)
     (neighbors : PuncturedFaces.NeighborBank grid.faces) (positive : 0 < contactAllowance)
     {contactFloor : Nat}
-    (contacts : SynchronizedSurfaceRequests.GlobalContactRequest requests compatible mesh traces contactAllowance
+    (contacts : GlobalContactRequest requests compatible mesh traces contactAllowance
       contactFloor)
     (contactLater : contacts.index ≤ stage) :
     (2 * (NewtonObservationSurfaceLower.surfaceLowerConstant observations - error - ownershipAllowance -
@@ -332,10 +336,10 @@ theorem remaining_energy_lower_after_contacts (excision : Excision.AllHoleExcisi
         (PerimeterSamples.remainingCornerBoundary excision faces + PerimeterSamples.remainingBoundaryCentered excision
           samples neighbors).im / 4 := by
   have normNonnegative : 0 ≤ PreparedObservationCoercivity.coefficientNormSq coefficients := by
-    have bound := Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Fraction.Rational)) _
-      (fun row => Data.Gaussian.Norm.Basic.normSq_nonneg (coefficients row))
+    have bound := Order.Positivity.sumFin_mono (fun _ : Fin genus => (0 : Rational)) _
+      (fun row => Basic.normSq_nonneg (coefficients row))
     have same := FiniteSum.Fin.sumFin_congr
-      (fun row : Fin genus => Data.Gaussian.Norm.Basic.normSq_eq_canonical (coefficients row))
+      (fun row : Fin genus => Basic.normSq_eq_canonical (coefficients row))
     change 0 ≤ FiniteSum.Fin.sumFin (fun row => (coefficients row).normSq)
     rw [← same]
     exact FiniteSum.Fin.sumFin_zero.symm.trans_le bound
@@ -349,12 +353,12 @@ theorem remaining_energy_lower_after_contacts (excision : Excision.AllHoleExcisi
     (PerimeterSamples.remainingCornerBoundary excision faces + PerimeterSamples.remainingBoundaryCentered excision
       samples neighbors)
     (contactAllowance * PreparedObservationCoercivity.coefficientNormSq coefficients)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct positive.le normNonnegative)
+      (Arithmetic.mul_nonneg_direct positive.le normNonnegative)
     (by
         rw [difference];
         exact GlobalContactRequest.remaining_accurate excision contacts positive contactLater samples)
   have lower := GlobalEnergyRequest.remaining_energy_lower excision request later readings observationFace faces samples
-  have paid := (Fraction.Order.Arithmetic.sub_le_sub_direct lower
+  have paid := (Arithmetic.sub_le_sub_direct lower
     (le_rfl (a := contactAllowance * PreparedObservationCoercivity.coefficientNormSq coefficients))).trans comparison
   exact (le_of_eq (by ring1)).trans paid
 

@@ -40,7 +40,7 @@ that pointwise condition while its remainder coefficient count strictly drops. -
 public theorem terminalValue_signedRemainderChain_eval_ne_zero
     {p q : Dense} (hq : q.isZero = false)
     (coprime : NoCommonZero p q) (x : Fraction.Rational) {tail : List Dense}
-    (hchain : SignedRemainder.Basic.Sturm.signedRemainderChain p q = p :: tail) :
+    (hchain : Basic.Sturm.signedRemainderChain p q = p :: tail) :
     Sign.Variation.terminalValue (p.eval x) (tail.map fun r => r.eval x) ≠ 0 := by
   generalize hn : q.degreeCount = n
   induction n using Nat.strong_induction_on generalizing p q tail with
@@ -48,8 +48,8 @@ public theorem terminalValue_signedRemainderChain_eval_ne_zero
       have qNotTrue : q.isZero ≠ true := by
         intro qTrue
         exact Bool.noConfusion (hq.symm.trans qTrue)
-      rewrite [SignedRemainder.Basic.Sturm.signedRemainderChain,
-        SignedRemainder.Basic.Sturm.signedRemainderChainWF_eq,
+      rewrite [Basic.Sturm.signedRemainderChain,
+        Basic.Sturm.signedRemainderChainWF_eq,
         if_neg qNotTrue] at hchain
       dsimp only at hchain
       by_cases remainderTrue : (DensePolynomial.divMod p q).remainder.isZero = true
@@ -61,7 +61,7 @@ public theorem terminalValue_signedRemainderChain_eval_ne_zero
         subst tail
         change q.eval x ≠ 0
         intro qZeroAtX
-        have step := SignedRemainder.Evaluation.signedStep_eval_identity p q x
+        have step := Evaluation.signedStep_eval_identity p q x
         have remainderZeroAtX := DensePolynomial.eval_eq_zero_of_isZero remainderTrue x
         rewrite [qZeroAtX, DensePolynomial.eval_neg, remainderZeroAtX,
           neg_zero, zero_mul, Fraction.Arithmetic.sub_eq_add_neg_direct,
@@ -77,17 +77,17 @@ public theorem terminalValue_signedRemainderChain_eval_ne_zero
           rewrite [DensePolynomial.isZero_neg]
           exact remainderFalse
         have nextCoprime : NoCommonZero q next :=
-          SignedRemainder.Evaluation.noCommonZero_signedStep coprime
+          Evaluation.noCommonZero_signedStep coprime
         have count : next.degreeCount < n := by
           dsimp only [next]
           rewrite [DensePolynomial.degreeCount_neg, ← hn]
           exact DensePolynomial.divMod_remainder_degreeCount_lt p q hq
-        have htail : tail = SignedRemainder.Basic.Sturm.signedRemainderChain q next := by
+        have htail : tail = Basic.Sturm.signedRemainderChain q next := by
           have tails := congrArg List.tail hchain
-          change SignedRemainder.Basic.Sturm.signedRemainderChain q next = tail at tails
+          change Basic.Sturm.signedRemainderChain q next = tail at tails
           exact tails.symm
         obtain ⟨recursiveTail, recursiveChain⟩ :=
-          SignedRemainder.Basic.signedRemainderChain_eq_cons q next
+          Basic.signedRemainderChain_eq_cons q next
         rewrite [htail, recursiveChain]
         change Sign.Variation.terminalValue (q.eval x)
           (recursiveTail.map fun r => r.eval x) ≠ 0
@@ -100,12 +100,12 @@ point. Signed division preserves this pointwise condition, and finite descent
 propagates it along the same emitted polynomial chain. -/
 public theorem noAdjacentZero_signedRemainderChain {p q : Dense}
     (coprime : NoCommonZero p q) (x : Fraction.Rational) :
-    Sign.Variation.NoAdjacentZero ((SignedRemainder.Basic.Sturm.signedRemainderChain p q).map fun r => r.eval x) := by
+    Sign.Variation.NoAdjacentZero ((Basic.Sturm.signedRemainderChain p q).map fun r => r.eval x) := by
   generalize hn : q.degreeCount = n
   induction n using Nat.strong_induction_on generalizing p q with
   | h n ih =>
-      rewrite [SignedRemainder.Basic.Sturm.signedRemainderChain,
-        SignedRemainder.Basic.Sturm.signedRemainderChainWF_eq]
+      rewrite [Basic.Sturm.signedRemainderChain,
+        Basic.Sturm.signedRemainderChainWF_eq]
       by_cases qTrue : q.isZero = true
       · rewrite [if_pos qTrue]
         exact True.intro
@@ -119,16 +119,16 @@ public theorem noAdjacentZero_signedRemainderChain {p q : Dense}
         · rewrite [if_neg remainderTrue]
           let next := -((DensePolynomial.divMod p q).remainder)
           have nextCoprime : NoCommonZero q next :=
-            SignedRemainder.Evaluation.noCommonZero_signedStep coprime
+            Evaluation.noCommonZero_signedStep coprime
           have count : next.degreeCount < n := by
             dsimp only [next]
             rewrite [DensePolynomial.degreeCount_neg, ← hn]
             exact DensePolynomial.divMod_remainder_degreeCount_lt p q qFalse
           have recursive := ih next.degreeCount count (p := q) (q := next) nextCoprime rfl
-          obtain ⟨tail, chain⟩ := SignedRemainder.Basic.signedRemainderChain_eq_cons q next
+          obtain ⟨tail, chain⟩ := Basic.signedRemainderChain_eq_cons q next
           rewrite [chain] at recursive
           change Sign.Variation.NoAdjacentZero
-            (p.eval x :: (SignedRemainder.Basic.Sturm.signedRemainderChain q next).map fun r => r.eval x)
+            (p.eval x :: (Basic.Sturm.signedRemainderChain q next).map fun r => r.eval x)
           rewrite [chain]
           change (p.eval x ≠ 0 ∨ q.eval x ≠ 0) ∧
             Sign.Variation.NoAdjacentZero (q.eval x :: tail.map fun r => r.eval x)

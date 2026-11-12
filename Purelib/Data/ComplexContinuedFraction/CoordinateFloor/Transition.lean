@@ -38,7 +38,7 @@ open Purelib in
 open Purelib.Data in
 /-- Take the coordinatewise Gaussian-integer floor of the retained fraction readback. -/
 def digit (fraction : GaussianInt.Fraction) :
-  Data.GaussianInt :=
+  GaussianInt :=
   GaussianInt.Floor.floor fraction.value
 
 open Purelib.Data in
@@ -54,7 +54,7 @@ open Purelib.Data in
 open Purelib.Data.ComplexContinuedFraction.CoordinateFloor in
 /-- Compute the displayed integer numerator minus the selected digit times the retained denominator. -/
 def remainder (fraction : GaussianInt.Fraction)
-  : Data.GaussianInt :=
+  : GaussianInt :=
   fraction.numerator - digit fraction * fraction.denominator
 
 section
@@ -165,7 +165,7 @@ theorem next_den_norm (fraction :
   GaussianInt.Fraction)
     (remainderNonzero : remainder fraction ≠ 0) :
     (GaussianInt.normNat (next fraction remainderNonzero).denominator : Fraction.Rational) =
-      Data.Gaussian.Norm.Basic.normSq (residual fraction) * (GaussianInt.normNat fraction.denominator :
+      Norm.Basic.normSq (residual fraction) * (GaussianInt.normNat fraction.denominator :
         Fraction.Rational) := by
   rw [next_den, ← GaussianInt.normSq_toGaussian, remainder_toGaussian, Norm.Basic.normSq_mul,
     GaussianInt.normSq_toGaussian]
@@ -208,28 +208,28 @@ theorem three_den_descent (fraction :
   have secondNorm := next_den_norm first secondNonzero
   have thirdNorm := next_den_norm second thirdNonzero
   have normIdentity : (GaussianInt.normNat third.denominator : Fraction.Rational) =
-      Data.Gaussian.Norm.Basic.normSq (u * Return.step u *
+      Norm.Basic.normSq (u * Return.step u *
         Return.step
           (Return.step u)) *
         (GaussianInt.normNat fraction.denominator : Fraction.Rational) := by
     calc
       (GaussianInt.normNat third.denominator : Fraction.Rational) =
-          Data.Gaussian.Norm.Basic.normSq (residual second) * (GaussianInt.normNat second.denominator :
+          Norm.Basic.normSq (residual second) * (GaussianInt.normNat second.denominator :
             Fraction.Rational) :=
         thirdNorm
-      _ = Data.Gaussian.Norm.Basic.normSq (residual second) *
-          (Data.Gaussian.Norm.Basic.normSq (residual first) * (GaussianInt.normNat first.denominator :
+      _ = Norm.Basic.normSq (residual second) *
+          (Norm.Basic.normSq (residual first) * (GaussianInt.normNat first.denominator :
             Fraction.Rational)) := by
         rw [secondNorm]
-      _ = Data.Gaussian.Norm.Basic.normSq (residual second) *
-          (Data.Gaussian.Norm.Basic.normSq (residual first) *
-            (Data.Gaussian.Norm.Basic.normSq u * (GaussianInt.normNat fraction.denominator : Fraction.Rational))) := by
+      _ = Norm.Basic.normSq (residual second) *
+          (Norm.Basic.normSq (residual first) *
+            (Norm.Basic.normSq u * (GaussianInt.normNat fraction.denominator : Fraction.Rational))) := by
         rw [firstNorm]
-      _ = Data.Gaussian.Norm.Basic.normSq (u * residual first * residual second) *
+      _ = Norm.Basic.normSq (u * residual first * residual second) *
           (GaussianInt.normNat fraction.denominator : Fraction.Rational) := by
         rw [Norm.Basic.normSq_mul, Norm.Basic.normSq_mul]
         ring1
-      _ = Data.Gaussian.Norm.Basic.normSq (u * Return.step u *
+      _ = Norm.Basic.normSq (u * Return.step u *
           Return.step
             (Return.step u)) *
           (GaussianInt.normNat fraction.denominator : Fraction.Rational) := by

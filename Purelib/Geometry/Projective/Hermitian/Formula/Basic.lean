@@ -29,7 +29,7 @@ set_option genInjectivity false in
 inductive BoundaryFormula where
   /-- A formula true at every Gaussian rational. -/ | truth
   /-- A formula false at every Gaussian rational. -/ | falsity
-  /-- One Hermitian form sign test. -/ | atom (value : Hermitian.Atom)
+  /-- One Hermitian form sign test. -/ | atom (value : Atom)
   /-- Conjunction of two finite boundary formulas. -/ | and (left right :
     BoundaryFormula)
   /-- Disjunction of two finite boundary formulas. -/ | or (left right :
@@ -46,26 +46,26 @@ Truth and falsity have their logical meanings, atoms evaluate their sign tests, 
 conjunction and disjunction. -/
 @[expose] def Holds :
   BoundaryFormula → Data.Gaussian.Basic.Canonical → Prop
-  | Geometry.Projective.Hermitian.Formula.BoundaryFormula.truth, _ => True
-  | Geometry.Projective.Hermitian.Formula.BoundaryFormula.falsity, _ => False
-  | Geometry.Projective.Hermitian.Formula.BoundaryFormula.atom testAtom, value => testAtom.Holds value
-  | Geometry.Projective.Hermitian.Formula.BoundaryFormula.and left right, value => left.Holds value ∧ right.Holds value
-  | Geometry.Projective.Hermitian.Formula.BoundaryFormula.or left right, value => left.Holds value ∨ right.Holds value
+  | truth, _ => True
+  | falsity, _ => False
+  | atom testAtom, value => testAtom.Holds value
+  | and left right, value => left.Holds value ∧ right.Holds value
+  | or left right, value => left.Holds value ∨ right.Holds value
 
 /-- Conjoin a finite list of boundary formulas, with truth for the empty list. -/
 @[expose] def all : List
   BoundaryFormula →
   BoundaryFormula
-  | [] => Purelib.Geometry.Projective.Hermitian.Formula.BoundaryFormula.truth
-  | formula :: formulas => Purelib.Geometry.Projective.Hermitian.Formula.BoundaryFormula.and formula
+  | [] => truth
+  | formula :: formulas => and formula
     (all formulas)
 
 /-- Disjoin a finite list of boundary formulas, with falsity for the empty list. -/
 @[expose] def any : List
   BoundaryFormula →
   BoundaryFormula
-  | [] => Purelib.Geometry.Projective.Hermitian.Formula.BoundaryFormula.falsity
-  | formula :: formulas => Purelib.Geometry.Projective.Hermitian.Formula.BoundaryFormula.or formula
+  | [] => falsity
+  | formula :: formulas => or formula
     (any formulas)
 
 /-- The finite conjunction holds exactly when every member formula holds. -/
@@ -85,7 +85,7 @@ theorem holds_all (formulas : List
         ∀ item ∈ formula :: formulas, item.Holds value
       constructor
       · rintro ⟨headHolds, tailHolds⟩ item member
-        rcases Purelib.Data.List.Membership.mem_cons.mp member with identity | tailMember
+        rcases Data.List.Membership.mem_cons.mp member with identity | tailMember
         · subst item
           exact headHolds
         · exact (inductionHypothesis.mp tailHolds) item tailMember
@@ -119,7 +119,7 @@ theorem holds_any (formulas : List
           exact
             ⟨item, List.mem_cons_of_mem formula member, itemHolds⟩
       · rintro ⟨item, member, itemHolds⟩
-        rcases Purelib.Data.List.Membership.mem_cons.mp member with head | tail
+        rcases Data.List.Membership.mem_cons.mp member with head | tail
         · subst item
           exact Or.inl itemHolds
         · exact
@@ -130,12 +130,12 @@ theorem holds_any (formulas : List
 The Boolean recursion follows the formula constructors and combines their results with conjunction or disjunction. -/
 @[expose] def evalBool :
   BoundaryFormula → Data.Gaussian.Basic.Canonical → Bool
-  | Geometry.Projective.Hermitian.Formula.BoundaryFormula.truth, _ => true
-  | Geometry.Projective.Hermitian.Formula.BoundaryFormula.falsity, _ => false
-  | Geometry.Projective.Hermitian.Formula.BoundaryFormula.atom testAtom, value => decide (testAtom.Holds value)
-  | Geometry.Projective.Hermitian.Formula.BoundaryFormula.and left right, value => left.evalBool value && right.evalBool
+  | truth, _ => true
+  | falsity, _ => false
+  | atom testAtom, value => decide (testAtom.Holds value)
+  | and left right, value => left.evalBool value && right.evalBool
     value
-  | Geometry.Projective.Hermitian.Formula.BoundaryFormula.or left right, value => left.evalBool value || right.evalBool
+  | or left right, value => left.evalBool value || right.evalBool
     value
 
 /-- Boolean evaluation returns true exactly when the formula proposition holds. -/
@@ -149,7 +149,7 @@ theorem evalBool_eq_true (formula :
       change decide (atom.Holds value) = true ↔ atom.Holds value
       exact ⟨of_decide_eq_true, fun holds => decide_eq_true holds⟩
   | and left right leftHypothesis rightHypothesis =>
-      exact (Purelib.Data.Bool.Decide.and_true_iff _ _).trans
+      exact (Data.Bool.Decide.and_true_iff _ _).trans
         (and_congr leftHypothesis rightHypothesis)
   | or left right leftHypothesis rightHypothesis =>
       change (left.evalBool value || right.evalBool value) = true ↔ _
@@ -174,12 +174,12 @@ end BoundaryFormula
 
 /-- Explicit finite list of all sign atoms occurring in a formula. -/
 @[expose] def BoundaryFormula.atoms :
-  BoundaryFormula → List Hermitian.Atom
-  | Geometry.Projective.Hermitian.Formula.BoundaryFormula.truth |
-    Geometry.Projective.Hermitian.Formula.BoundaryFormula.falsity => []
-  | Geometry.Projective.Hermitian.Formula.BoundaryFormula.atom testAtom => [testAtom]
-  | Geometry.Projective.Hermitian.Formula.BoundaryFormula.and left right |
-    Geometry.Projective.Hermitian.Formula.BoundaryFormula.or left right =>
+  BoundaryFormula → List Atom
+  | BoundaryFormula.truth |
+    BoundaryFormula.falsity => []
+  | BoundaryFormula.atom testAtom => [testAtom]
+  | BoundaryFormula.and left right |
+    BoundaryFormula.or left right =>
       left.atoms ++ right.atoms
 
 end Purelib.Geometry.Projective.Hermitian.Formula

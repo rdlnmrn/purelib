@@ -112,7 +112,7 @@ open _root_.Purelib.Data.Gaussian.Norm.Basic (normSq)
 open Purelib.Data.Rat.Fraction.Compatibility
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base next : FramedPuncturedGrid curve branches
     higher}
   {lifted : LiftedPuncturedGrid base} {bank :
@@ -122,13 +122,13 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
     Ordered bank
     sheet} {paired : Paired ordered}
     {current : LiftedPuncturedGrid next}
-  (included : Purelib.Polynomial.Geometry.Grid.Extension.CoordinateInclusion base.bank.grid next.bank.grid)
+  (included : Extension.CoordinateInclusion base.bank.grid next.bank.grid)
   {domains : FaceDomainBank current.frames
     next.faces.regulars} {newSheet : Fin 2}
   (compiled :
     OrderedBranchCircuits.BranchCellBank.CircuitPartition.ResplitCompiled
     included current.edges current.vertices
-    (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
+    (BasedBranchTours.FramedBranchCellBank.baseMember base.bank)
     ordered.prepared.partition newSheet)
   {firstIndex secondIndex : Fin genus}
 
@@ -136,29 +136,29 @@ namespace PolarizedCorrectionRequest
 
 variable {included compiled}
   {first : FaceMagnitudeBank domains
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential firstIndex)}
+    (PeriodMatrix.standardDifferential firstIndex)}
   {second : FaceMagnitudeBank domains
-    (Purelib.Riemann.Periods.PeriodMatrix.standardDifferential secondIndex)} {error :
+    (PeriodMatrix.standardDifferential secondIndex)} {error :
     Rational}
 
 /-- The correction removed from the original polygon/period comparison is small on every later common sample. The
 statement keeps the actual connector terms, rather than substituting regular polygon areas or another compiler. -/
 theorem conjugate_accurate (request : PolarizedCorrections.PolarizedCorrectionRequest (paired := paired) included
   compiled first second error)
-    (reference : ∀ point, Polynomial.Geometry.Grid.FromStates.ContainsVertex next.bank.grid point →
+    (reference : ∀ point, ContainsVertex next.bank.grid point →
       OwnerLoopMonodromy.WindingOneLoop curve.polynomial
       point)
     (minimum : Nat)
-    {stage : Nat} {leftShared : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential firstIndex) stage
+    {stage : Nat} {leftShared : FacePrimitiveBank (PeriodMatrix.standardDifferential firstIndex) stage
       domains}
-    {rightShared : PrimitiveData.FacePrimitiveBank (PeriodMatrix.standardDifferential secondIndex) stage domains}
-    (leftReadings : TrianglePrimitiveReadings.TriangleReadings leftShared current.mesh) (rightReadings :
-      TrianglePrimitiveReadings.TriangleReadings rightShared current.mesh)
+    {rightShared : FacePrimitiveBank (PeriodMatrix.standardDifferential secondIndex) stage domains}
+    (leftReadings : TriangleReadings leftShared current.mesh) (rightReadings :
+      TriangleReadings rightShared current.mesh)
     (later : request.index minimum ≤ stage) :
-    Data.Gaussian.Norm.Basic.normSq
-      (Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun
+    Gaussian.Norm.Basic.normSq
+      (BilinearPolarization.extract (fun
       coefficient =>
-      let value := BilinearPolarization.mix (fun edge => Data.Gaussian.Basic.conj
+      let value := BilinearPolarization.mix (fun edge => Gaussian.Basic.conj
         (CanonicalEdgeValues.edgeValuation current.mesh leftReadings.values edge))
         (CanonicalEdgeValues.edgeValuation current.mesh rightReadings.values) coefficient
       OriginalPeriodArea.resplitEndCorrection (paired := paired) included current.edges current.vertices newSheet value
@@ -167,7 +167,7 @@ theorem conjugate_accurate (request : PolarizedCorrections.PolarizedCorrectionRe
         ExteriorTotal.resplitPhysicalExteriorCorrection (paired := paired) included current.edges current.vertices
           newSheet value)) < error := by
   let values := fun coefficient => BilinearPolarization.mix
-    (fun edge => Data.Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation current.mesh leftReadings.values
+    (fun edge => Gaussian.Basic.conj (CanonicalEdgeValues.edgeValuation current.mesh leftReadings.values
       edge))
     (CanonicalEdgeValues.edgeValuation current.mesh rightReadings.values) coefficient
   let terminal := BilinearPolarization.extract (fun coefficient =>
@@ -184,13 +184,13 @@ theorem conjugate_accurate (request : PolarizedCorrections.PolarizedCorrectionRe
   have innerLater := (Nat.Order.le_max_right _ _).trans later
   have referenceLater := (Nat.Order.le_max_left _ _).trans innerLater
   have pairLater := (Nat.Order.le_max_right _ _).trans innerLater
-  have referenceBound : Data.Gaussian.Norm.Basic.normSq (terminal - exterior) ≤ error / 16 :=
+  have referenceBound : Gaussian.Norm.Basic.normSq (terminal - exterior) ≤ error / 16 :=
     PolarizedReferenceRequest.conjugate_end_accurate
       request.reference leftReadings rightReadings referenceLater
-  have exteriorBound : Data.Gaussian.Norm.Basic.normSq (physical - exterior) ≤ error / 16 :=
+  have exteriorBound : Gaussian.Norm.Basic.normSq (physical - exterior) ≤ error / 16 :=
     PolarizedExteriorRequest.conjugate_accurate
       request.exterior reference leftReadings rightReadings ((Nat.Order.le_max_left _ _).trans pairLater)
-  have connectorBound : Data.Gaussian.Norm.Basic.normSq connector ≤ error / 16 := by
+  have connectorBound : Gaussian.Norm.Basic.normSq connector ≤ error / 16 := by
     have bound := PolarizedConnectorRequest.conjugate_accurate
       request.connectors leftReadings rightReadings ((Nat.Order.le_max_right _ _).trans pairLater)
     have read := BilinearPolarization.extract_congr (fun coefficient =>
@@ -198,16 +198,16 @@ theorem conjugate_accurate (request : PolarizedCorrections.PolarizedCorrectionRe
         coefficient) occurrence.word) compiled.regulars)
         (compiled.area_split (values coefficient))).trans
         (show _ = AreaTerm.total (values coefficient) compiled.connectorTerms by ring1))
-    exact (congrArg Data.Gaussian.Norm.Basic.normSq read.symm).trans_le bound
-  have difference : Data.Gaussian.Norm.Basic.normSq ((terminal - exterior) - (physical - exterior)) ≤
+    exact (congrArg Gaussian.Norm.Basic.normSq read.symm).trans_le bound
+  have difference : Gaussian.Norm.Basic.normSq ((terminal - exterior) - (physical - exterior)) ≤
       2 * (error / 16 + error / 16) :=
-    (Data.Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
+    (Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
       (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
         referenceBound exteriorBound) (by decide))
-  have sumBound : Data.Gaussian.Norm.Basic.normSq (((terminal - exterior) - (physical - exterior)) + connector)
+  have sumBound : Gaussian.Norm.Basic.normSq (((terminal - exterior) - (physical - exterior)) + connector)
     ≤
       2 * (2 * (error / 16 + error / 16) + error / 16) :=
-    (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
+    (Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
       (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (Fraction.Order.Arithmetic.add_le_add_direct
         difference connectorBound) (by decide))
   have read : BilinearPolarization.extract (fun coefficient =>
@@ -221,10 +221,10 @@ theorem conjugate_accurate (request : PolarizedCorrections.PolarizedCorrectionRe
     ring1
   have paid : 2 * (2 * (error / 16 + error / 16) + error / 16) < error :=
     (by ring1 : 2 * (2 * (error / 16 + error / 16) + error / 16) = 10 * (error / 16)).trans_lt
-      ((Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct (by decide : (10 : Fraction.Rational) < 16)
+      ((Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct (by decide : (10 : Rational) < 16)
         request.reference.positive).trans_eq
         ((by ring1 : 16 * (error / 16) = error / 16 * 16).trans (Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))))
-  exact (congrArg Data.Gaussian.Norm.Basic.normSq read).trans_le sumBound |>.trans_lt paid
+  exact (congrArg Gaussian.Norm.Basic.normSq read).trans_le sumBound |>.trans_lt paid
 
 end PolarizedCorrectionRequest
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Inclusion.ConjugateCorrections

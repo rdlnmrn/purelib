@@ -15,6 +15,8 @@ import Purelib.Data.Rat.Fraction
 import Mathlib.Data.Nat.Basic
 import Mathlib.Order.Basic
 
+open Purelib.Data.Gaussian.Fraction.NaturalDenominator
+
 open Purelib.Data
 
 open Purelib
@@ -48,11 +50,11 @@ def coefficientDenominatorProduct : List
   | [] => 1
   | coefficient :: remaining =>
       let realDen :=
-        (Rat.Fraction.Basic.representative coefficient.re).den
+        (Fraction.Basic.representative coefficient.re).den
       let imaginaryDen :=
-        (Rat.Fraction.Basic.representative coefficient.im).den
+        (Fraction.Basic.representative coefficient.im).den
       realDen * imaginaryDen *
-        Purelib.Polynomial.Dense.Gaussian.Denominator.Clearing.Resource.coefficientDenominatorProduct remaining
+        Resource.coefficientDenominatorProduct remaining
 
 /-- A coefficient's least natural denominator is bounded by its coordinate product.
 
@@ -60,13 +62,13 @@ Both coordinate denominators are positive, and their least common multiple
 divides the retained product. -/
 theorem coefficientDenominator_le_product
   (coefficient : Gaussian.Basic.Canonical) :
-    Gaussian.Fraction.NaturalDenominator.LeastDenominator.coefficientDenominator coefficient ≤
-      (Rat.Fraction.Basic.representative coefficient.re).den *
-        (Rat.Fraction.Basic.representative coefficient.im).den := by
+    LeastDenominator.coefficientDenominator coefficient ≤
+      (Fraction.Basic.representative coefficient.re).den *
+        (Fraction.Basic.representative coefficient.im).den := by
   apply Nat.Divisibility.le_of_dvd
   · exact Nat.mul_pos
-      (Rat.Fraction.Basic.representative coefficient.re).den_pos
-      (Rat.Fraction.Basic.representative coefficient.im).den_pos
+      (Fraction.Basic.representative coefficient.re).den_pos
+      (Fraction.Basic.representative coefficient.im).den_pos
   · exact Nat.LCM.lcm_dvd_mul _ _
 
 /-- The coefficient LCM scale is bounded by the coordinate-denominator product.
@@ -75,24 +77,24 @@ Structural recursion retains each original coordinate denominator and bounds
 the least common multiple at each actual list entry. -/
 theorem lcmScale_le_denominatorProduct : ∀
   coefficients : List Gaussian.Basic.Canonical,
-    Clearing.LCM.lcmScale coefficients ≤
-      Clearing.Resource.coefficientDenominatorProduct coefficients
+    LCM.lcmScale coefficients ≤
+      coefficientDenominatorProduct coefficients
   | [] => le_refl 1
   | coefficient :: remaining => by
-      unfold Clearing.LCM.lcmScale Clearing.Resource.coefficientDenominatorProduct
+      unfold LCM.lcmScale coefficientDenominatorProduct
       have lcmBound : Nat.LCM.lcm
-          (Gaussian.Fraction.NaturalDenominator.LeastDenominator.coefficientDenominator coefficient)
-          (Clearing.LCM.lcmScale remaining) ≤
-          Gaussian.Fraction.NaturalDenominator.LeastDenominator.coefficientDenominator coefficient *
-            Clearing.LCM.lcmScale remaining := by
+          (LeastDenominator.coefficientDenominator coefficient)
+          (LCM.lcmScale remaining) ≤
+          LeastDenominator.coefficientDenominator coefficient *
+            LCM.lcmScale remaining := by
         apply Nat.Divisibility.le_of_dvd
         · exact Nat.mul_pos
-            (Gaussian.Fraction.NaturalDenominator.LeastDenominator.coefficientDenominator_pos coefficient)
-            (Clearing.LCM.lcmScale_pos remaining)
+            (LeastDenominator.coefficientDenominator_pos coefficient)
+            (LCM.lcmScale_pos remaining)
         · exact Nat.LCM.lcm_dvd_mul _ _
       exact lcmBound.trans (Nat.mul_le_mul
-        (Clearing.Resource.coefficientDenominator_le_product coefficient)
-        (Purelib.Polynomial.Dense.Gaussian.Denominator.Clearing.Resource.lcmScale_le_denominatorProduct remaining))
+        (coefficientDenominator_le_product coefficient)
+        (Resource.lcmScale_le_denominatorProduct remaining))
 
 /-- Bound every cleared integer component by the displayed denominator product.
 
@@ -102,7 +104,7 @@ def clearedCoefficientMagnitudeEnvelope
     (coefficients : List Gaussian.Basic.Canonical) : Nat :=
   coefficients.foldl (fun bound coefficient =>
     max bound (Gaussian.Resource.ClearingCalculationSize.coefficientComponentMagnitude coefficient *
-      Clearing.Resource.coefficientDenominatorProduct coefficients)) 0
+      coefficientDenominatorProduct coefficients)) 0
 
 section
 /-- Each displayed coefficient contribution lies within the clearing magnitude envelope. -/
@@ -111,11 +113,11 @@ private theorem
     (coefficients : List Gaussian.Basic.Canonical) (candidate : Gaussian.Basic.Canonical)
     (member : candidate ∈ coefficients) :
     Gaussian.Resource.ClearingCalculationSize.coefficientComponentMagnitude candidate *
-        Clearing.Resource.coefficientDenominatorProduct coefficients ≤
-      Clearing.Resource.clearedCoefficientMagnitudeEnvelope coefficients := by
-  exact Purelib.Data.Gaussian.Resource.List.member_le_foldl_max
+        coefficientDenominatorProduct coefficients ≤
+      clearedCoefficientMagnitudeEnvelope coefficients := by
+  exact Gaussian.Resource.List.member_le_foldl_max
     (fun value => Gaussian.Resource.ClearingCalculationSize.coefficientComponentMagnitude value *
-      Clearing.Resource.coefficientDenominatorProduct coefficients)
+      coefficientDenominatorProduct coefficients)
     coefficients 0 candidate member
 end
 
@@ -128,25 +130,25 @@ theorem scaledGaussianCoefficient_component_le
     (coefficients : List Gaussian.Basic.Canonical) (coefficient : Gaussian.Basic.Canonical)
     (member : coefficient ∈ coefficients) :
     max
-        (Gaussian.Fraction.NaturalDenominator.ScaledNumerator.scaledGaussianCoefficient
-          (Clearing.LCM.lcmScale coefficients) coefficient).re.natAbs
-        (Gaussian.Fraction.NaturalDenominator.ScaledNumerator.scaledGaussianCoefficient
-          (Clearing.LCM.lcmScale coefficients) coefficient).im.natAbs ≤
-      Clearing.Resource.clearedCoefficientMagnitudeEnvelope coefficients := by
+        (ScaledNumerator.scaledGaussianCoefficient
+          (LCM.lcmScale coefficients) coefficient).re.natAbs
+        (ScaledNumerator.scaledGaussianCoefficient
+          (LCM.lcmScale coefficients) coefficient).im.natAbs ≤
+      clearedCoefficientMagnitudeEnvelope coefficients := by
   apply Nat.Order.max_le
-  · exact (Rat.Fraction.ScaledNumerator.scaledCoordinateNumerator_le
-      (Clearing.LCM.lcmScale coefficients) coefficient.re).trans
+  · exact (Fraction.ScaledNumerator.scaledCoordinateNumerator_le
+      (LCM.lcmScale coefficients) coefficient.re).trans
       ((Nat.mul_le_mul
         (Nat.Order.le_max_left _ _)
-        (Clearing.Resource.lcmScale_le_denominatorProduct coefficients)).trans
-        (Purelib.Polynomial.Dense.Gaussian.Denominator.Clearing.Resource.member_le_clearedEnvelope coefficients
+        (lcmScale_le_denominatorProduct coefficients)).trans
+        (member_le_clearedEnvelope coefficients
           coefficient member))
-  · exact (Rat.Fraction.ScaledNumerator.scaledCoordinateNumerator_le
-      (Clearing.LCM.lcmScale coefficients) coefficient.im).trans
+  · exact (Fraction.ScaledNumerator.scaledCoordinateNumerator_le
+      (LCM.lcmScale coefficients) coefficient.im).trans
       ((Nat.mul_le_mul
         (Nat.Order.le_max_right _ _)
-        (Clearing.Resource.lcmScale_le_denominatorProduct coefficients)).trans
-        (Purelib.Polynomial.Dense.Gaussian.Denominator.Clearing.Resource.member_le_clearedEnvelope coefficients
+        (lcmScale_le_denominatorProduct coefficients)).trans
+        (member_le_clearedEnvelope coefficients
           coefficient member))
 
 /-- The declared coefficient-clearing operation budget is six times the coefficient count. -/

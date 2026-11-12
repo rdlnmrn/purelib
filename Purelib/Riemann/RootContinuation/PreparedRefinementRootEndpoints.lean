@@ -40,6 +40,8 @@ import Purelib.RootIsolation.SquareRoot.Clearance.QuadraticLineClearance
 import Mathlib.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 @[expose] public section
 
 /-!
@@ -55,6 +57,7 @@ only by explicit equalities of displayed coordinates.
 
 namespace Purelib.Riemann.RootContinuation.PreparedRefinementRootEndpoints
 
+open Purelib.Approximation.Gaussian
 open Purelib.Data.Gaussian.Basic.Canonical
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
@@ -69,35 +72,17 @@ open Purelib.Data.Gaussian in
 /-- The canonical Gaussian rational carrier for original point and root readings. -/
 abbrev Gaussian := Basic.Canonical
 /-- The original winding-one quadratic root owner indexed by its exact parameter. -/
-abbrev Owner := Purelib.Riemann.Topology.SquareRootContinuationChain.Owner
+abbrev Owner := Topology.SquareRootContinuationChain.Owner
 /-- The original operational equivalence certificate between retained Gaussian names. -/
-abbrev NamedEquivalent := Purelib.Approximation.Gaussian.Equivalence.NamedEquivalent
+abbrev NamedEquivalent := Approximation.Gaussian.Equivalence.NamedEquivalent
 open Purelib.Curves.Hyperelliptic in
 /-- The original prepared edge for the retained curve and differential. -/
-abbrev PreparedEdge {genus : Nat} (curve : Basic.HyperellipticCurve genus) (differential :
-  Differentials.Basic.Differential genus) :=
-  Purelib.Riemann.Integration.PreparedConstantModels.PreparedEdge curve differential
+abbrev PreparedEdge {genus : Nat} (curve : HyperellipticCurve genus) (differential :
+  Differential genus) :=
+  Integration.PreparedConstantModels.PreparedEdge curve differential
 
-open Purelib.RootIsolation in
-/-- Transporting an original root owner along an exact parameter equality preserves its root name. -/
-private theorem castOwner_name {source target : Gaussian} (equal : source = target)
-    (owner : Owner source) :
-    ownerRootName (SquareRoot.Owner.Transport.castOwnerParameter equal owner).parameterNonzero
-      (SquareRoot.Owner.Transport.castOwnerParameter equal owner) = ownerRootName owner.parameterNonzero owner := by
-  cases equal
-  rfl
-
-open Purelib.Approximation.Gaussian in
-/-- Transport a retained operational name equivalence along exact equalities of its two original names. -/
-public def rename {first second left right : Name.Basic.Named}
-    (firstEq : first = left) (secondEq : second = right)
-    (equivalent : NamedEquivalent first second) : NamedEquivalent left right := by
-  cases firstEq
-  cases secondEq
-  exact equivalent
-
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
+variable {genus : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
 
 open Purelib.Riemann.Branches in
 set_option genInjectivity false in
@@ -208,7 +193,7 @@ def compareQueries {parent : PreparedEdge curve differential} (budget : ParentBu
     (movement : normSq (curve.polynomial.eval (parent.segment.pointAt parent.left.parameter) -
       curve.polynomial.eval point) ≤ budget.data.movement) :
     NamedEquivalent (parent.rootName first firstInside) (parent.rootName second secondInside) :=
-  rename firstQuery.name_eq secondQuery.name_eq
+  Equivalence.NamedEquivalent.transport firstQuery.name_eq secondQuery.name_eq
     ((budget.data.retainedEquivalent firstQuery.owner.parameterNonzero movement
       firstQuery.owner firstQuery.refines).symm.trans
       (budget.data.retainedEquivalent secondQuery.owner.parameterNonzero movement
@@ -230,23 +215,23 @@ open Purelib.Data.Rat
 /-- The product of two retained unit-interval parameters remains in the unit interval. -/
 public theorem multiply_inside {first second : Coordinate}
     (firstInside : Inside first) (secondInside : Inside second) : Inside (first * second) :=
-  ⟨Fraction.Order.Arithmetic.mul_nonneg_direct firstInside.1 secondInside.1,
-    (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct secondInside.2 firstInside.1).trans
+  ⟨Arithmetic.mul_nonneg_direct firstInside.1 secondInside.1,
+    (Arithmetic.mul_le_mul_of_nonneg_left_direct secondInside.2 firstInside.1).trans
       (by simpa only [Fraction.Field.mul_one_direct] using firstInside.2)⟩
 
 /-- A unit-interval interpolation of two retained unit-interval parameters remains in that interval. -/
 public theorem interpolate_inside {first last fraction : Coordinate}
     (firstInside : Inside first) (lastInside : Inside last) (inside : Inside fraction) :
     Inside ((1 - fraction) * first + fraction * last) := by
-  have complementary := Fraction.Order.Arithmetic.sub_nonneg_direct inside.2
-  have nonnegative := Fraction.Order.Arithmetic.add_le_add_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct complementary firstInside.1)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct inside.1 lastInside.1)
+  have complementary := Arithmetic.sub_nonneg_direct inside.2
+  have nonnegative := Arithmetic.add_le_add_direct
+    (Arithmetic.mul_nonneg_direct complementary firstInside.1)
+    (Arithmetic.mul_nonneg_direct inside.1 lastInside.1)
   refine ⟨by simpa only [Fraction.Field.zero_add] using nonnegative, ?_⟩
   calc
-    _ ≤ (1 - fraction) * 1 + fraction * 1 := Fraction.Order.Arithmetic.add_le_add_direct
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct firstInside.2 complementary)
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct lastInside.2 inside.1)
+    _ ≤ (1 - fraction) * 1 + fraction * 1 := Arithmetic.add_le_add_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct firstInside.2 complementary)
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct lastInside.2 inside.1)
     _ = 1 := by ring1
 
 end
@@ -334,10 +319,10 @@ public def pathData {parent child : CenteredEdge curve differential}
     have distanceNonnegative : 0 ≤ normSq (child.edge.localSegment.pointAt 1 - child.edge.localSegment.pointAt 0) := by
       rw [← Norm.Basic.normSq_eq_canonical]
       exact Norm.Basic.normSq_nonneg _
-    exact Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct
+    exact Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct
         (Bounds.Box.denseLipschitzBound_pos _ _).le distanceNonnegative)
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _)
+      (Arithmetic.sq_nonneg_direct _)
   variation := variation child.edge childFraction childInside
 
 open Purelib.Data.Rat in
@@ -355,7 +340,7 @@ def queryEquivalent {parent child : CenteredEdge curve differential}
       (child.edge.rootName childFraction childInside) where
   compare := fun leftIndex rightIndex target positive =>
     let childBudget := ParentBudget.acquire child.edge
-    let path := PreparedRefinementRootEndpoints.pathData budget childBudget start childFraction childInside
+    let path := pathData budget childBudget start childFraction childInside
       finishFraction finishInside finishEq
     have zeroPoint : child.edge.point 0 = child.edge.point (childFraction * 0) := by rw [Fraction.Field.mul_zero_direct]
     have onePoint : child.edge.point childFraction = child.edge.point (childFraction * 1) := by rw
@@ -365,9 +350,9 @@ def queryEquivalent {parent child : CenteredEdge curve differential}
     let firstFinish := queryAt parent.edge finishFraction finishInside (finishEq.trans onePoint)
     let secondFinish := queryAt child.edge childFraction childInside onePoint
     let startAgreement : NamedEquivalent
-        (SquareRootTrackEquivalence.ownerRootName (QueryAt.owner firstStart).parameterNonzero (QueryAt.owner
+        (ownerRootName (QueryAt.owner firstStart).parameterNonzero (QueryAt.owner
           firstStart))
-        (SquareRootTrackEquivalence.ownerRootName (QueryAt.owner secondStart).parameterNonzero (QueryAt.owner
+        (ownerRootName (QueryAt.owner secondStart).parameterNonzero (QueryAt.owner
           secondStart)) := by
       rw [(QueryAt.name_eq firstStart), (QueryAt.name_eq secondStart)]
       exact start.rootEquivalent
@@ -375,7 +360,8 @@ def queryEquivalent {parent child : CenteredEdge curve differential}
       (QueryAt.refines firstStart) (QueryAt.refines secondStart) startAgreement (QueryAt.owner firstFinish)
         (QueryAt.owner secondFinish)
       (QueryAt.refines firstFinish) (QueryAt.refines secondFinish)
-    let renamed := rename (QueryAt.name_eq firstFinish) (QueryAt.name_eq secondFinish) result
+    let renamed := Equivalence.NamedEquivalent.transport
+      (QueryAt.name_eq firstFinish) (QueryAt.name_eq secondFinish) result
     renamed.compare leftIndex rightIndex target positive
 
 end Purelib.Riemann.RootContinuation.PreparedRefinementRootEndpoints

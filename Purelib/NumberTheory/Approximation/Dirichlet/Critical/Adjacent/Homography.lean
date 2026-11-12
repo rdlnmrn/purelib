@@ -21,6 +21,8 @@ import Purelib.NumberTheory.Approximation.Dirichlet.Critical.Transition
 import Purelib.NumberTheory.Approximation.Dirichlet.Window.SourceBound
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 /-!
 # Homographic images of transported critical bases
 
@@ -120,10 +122,10 @@ theorem homographicPerturbationDenominatorBound_nonneg
     (lowerLeftCoefficient : GaussianInt) {perturbationBudget : Fraction.Rational}
     (positive : 0 < perturbationBudget) :
     0 ≤ normal.homographicPerturbationDenominatorBound lowerLeftCoefficient perturbationBudget := by
-  apply Fraction.Order.Field.div_nonneg_direct
-  · exact Fraction.Order.Arithmetic.mul_nonneg_direct
+  apply Field.div_nonneg_direct
+  · exact Arithmetic.mul_nonneg_direct
       (Gaussian.Norm.Basic.normSq_nonneg _) normal.lowerErrorPositive.le
-  · exact Fraction.Order.Arithmetic.mul_nonneg_direct (Gaussian.Norm.Basic.normSq_nonneg _) positive.le
+  · exact Arithmetic.mul_nonneg_direct (Gaussian.Norm.Basic.normSq_nonneg _) positive.le
 
 /-- Exceeding the computed affine-denominator bound pays the actual normalized homographic perturbation budget. -/
 theorem homographicPerturbation_normSq_lt_of_denominator_gt
@@ -145,11 +147,11 @@ theorem homographicPerturbation_normSq_lt_of_denominator_gt
     exact Pair.criticalUpper_denominator_ne_zero targetStage (GaussianInt.toGaussian_eq_zero.mp zero)
   have upperPositive : 0 < upperNorm := Gaussian.Norm.Basic.normSq_pos upperNonzero
   have denominatorPositive : 0 < denominatorNorm := Gaussian.Norm.Basic.normSq_pos poleExcluded
-  have scaled := (Fraction.Order.Field.div_lt_iff_pos
-    (Fraction.Order.Arithmetic.mul_pos_direct upperPositive positive)).mp denominatorLarge
-  apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct
+  have scaled := (Field.div_lt_iff_pos
+    (Arithmetic.mul_pos_direct upperPositive positive)).mp denominatorLarge
+  apply Arithmetic.lt_of_mul_lt_mul_right_direct
     (c := denominatorNorm * upperNorm) _
-    (Fraction.Order.Arithmetic.mul_pos_direct denominatorPositive upperPositive)
+    (Arithmetic.mul_pos_direct denominatorPositive upperPositive)
   calc
     Gaussian.Norm.Basic.normSq (normal.homographicPerturbation matrix) * (denominatorNorm * upperNorm) =
         Gaussian.Norm.Basic.normSq (GaussianInt.toGaussian matrix.c) *
@@ -271,9 +273,9 @@ theorem homographicScaleDenominatorBound_nonneg
     (normal : TransportedNormalForm source errorStage targetStage) (requestedScale : Nat) :
     0 ≤ normal.homographicScaleDenominatorBound requestedScale := by
   rewrite [normal.homographicScaleDenominatorBound_eq_cast]
-  apply Fraction.Order.Field.div_nonneg_direct
+  apply Field.div_nonneg_direct
   · exact Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)
-  · exact Fraction.Order.Arithmetic.mul_nonneg_direct (Gaussian.Norm.Basic.normSq_nonneg _) (by decide)
+  · exact Arithmetic.mul_nonneg_direct (Gaussian.Norm.Basic.normSq_nonneg _) (by decide)
 
 /-- Exceeding the scale payment places the transformed upper pair beyond the requested natural scale.
 
@@ -304,8 +306,8 @@ theorem homographic_beyondScale
     exact Pair.criticalUpper_denominator_ne_zero targetStage (GaussianInt.toGaussian_eq_zero.mp zero)
   have upperPositive : 0 < upperNorm := Gaussian.Norm.Basic.normSq_pos upperNonzero
   have denominatorPositive : 0 < denominatorNorm := Gaussian.Norm.Basic.normSq_pos poleExcluded
-  have scaled := (Fraction.Order.Field.div_lt_iff_pos
-    (Fraction.Order.Arithmetic.mul_pos_direct upperPositive (by decide : (0 : Fraction.Rational) < 3 / 8))).mp
+  have scaled := (Field.div_lt_iff_pos
+    (Arithmetic.mul_pos_direct upperPositive (by decide : (0 : Fraction.Rational) < 3 / 8))).mp
       denominatorLarge
   have correctionBound := Cylinder.TwoParameter.threeEighths_le_perturbed_upper_normSq
     (Parameter.pellParameter_isCritical errorStage)
@@ -317,8 +319,8 @@ theorem homographic_beyondScale
     _ ≤ (denominatorNorm * upperNorm) *
         Gaussian.Norm.Basic.normSq (1 - normal.homographicPerturbation matrix *
           Cylinder.TwoParameter.errorRatio (Parameter.pellParameter errorStage)) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct correctionBound
-        (Fraction.Order.Arithmetic.mul_nonneg_direct denominatorPositive.le upperPositive.le)
+      Arithmetic.mul_le_mul_of_nonneg_left_direct correctionBound
+        (Arithmetic.mul_nonneg_direct denominatorPositive.le upperPositive.le)
     _ = (Best.Error.denominatorQuadrance ((Pair.criticalUpperPair targetStage).transform matrix) :
         Fraction.Rational) := (normal.homographic_upperDenominatorQuadrance matrix poleExcluded).symm
 
@@ -371,11 +373,11 @@ theorem homographic_windowQuadrance
     (normal : TransportedNormalForm source errorStage targetStage)
     (matrix : Matrix GaussianInt) (unitDeterminant : matrix.determinant = 1)
     (poleExcluded : Homography.Basic.denominator (Matrix.map GaussianInt.toGaussian matrix) source.value ≠ 0) :
-    Dirichlet.Window.SourceBound.dirichletWindowQuadrance
+    Window.SourceBound.dirichletWindowQuadrance
         (Homography.Basic.homographic (Matrix.map GaussianInt.toGaussian matrix) source.value)
         ((Pair.criticalLowerPair targetStage).transform matrix)
         ((Pair.criticalUpperPair targetStage).transform matrix) =
-      Dirichlet.Window.SourceBound.dirichletWindowQuadrance source.value
+      Window.SourceBound.dirichletWindowQuadrance source.value
           (Pair.criticalLowerPair targetStage) (Pair.criticalUpperPair targetStage) *
         Gaussian.Norm.Basic.normSq (1 - normal.homographicPerturbation matrix *
           Cylinder.TwoParameter.errorRatio (Parameter.pellParameter errorStage)) := by
@@ -393,8 +395,8 @@ theorem homographic_windowQuadrance
     have exact := normal.homographic_upperDenominatorQuadrance matrix poleExcluded
     rewrite [GaussianInt.normSq_toGaussian] at exact
     exact exact
-  rewrite [Dirichlet.Window.SourceBound.dirichletWindowQuadrance_eq_cast,
-    Dirichlet.Window.SourceBound.dirichletWindowQuadrance_eq_cast]
+  rewrite [Window.SourceBound.dirichletWindowQuadrance_eq_cast,
+    Window.SourceBound.dirichletWindowQuadrance_eq_cast]
   apply Fraction.Field.mul_right_cancel_of_ne (Gaussian.Norm.Basic.normSq_pos poleExcluded).ne'
   calc
     ((Best.Error.denominatorQuadrance ((Pair.criticalUpperPair targetStage).transform matrix) :
@@ -427,21 +429,21 @@ theorem homographic_windowQuadrance_le_nineHalves
     (matrix : Matrix GaussianInt) (unitDeterminant : matrix.determinant = 1)
     (poleExcluded : Homography.Basic.denominator (Matrix.map GaussianInt.toGaussian matrix) source.value ≠ 0)
     (small : Gaussian.Norm.Basic.normSq (normal.homographicPerturbation matrix) ≤ 1 / 8) :
-    Dirichlet.Window.SourceBound.dirichletWindowQuadrance
+    Window.SourceBound.dirichletWindowQuadrance
       (Homography.Basic.homographic (Matrix.map GaussianInt.toGaussian matrix) source.value)
       ((Pair.criticalLowerPair targetStage).transform matrix)
       ((Pair.criticalUpperPair targetStage).transform matrix) ≤ 9 / 2 := by
   rewrite [normal.homographic_windowQuadrance matrix unitDeterminant poleExcluded]
   calc
-    Dirichlet.Window.SourceBound.dirichletWindowQuadrance source.value
+    Window.SourceBound.dirichletWindowQuadrance source.value
         (Pair.criticalLowerPair targetStage) (Pair.criticalUpperPair targetStage) *
         Gaussian.Norm.Basic.normSq (1 - normal.homographicPerturbation matrix *
           Cylinder.TwoParameter.errorRatio (Parameter.pellParameter errorStage)) ≤
       2 * Gaussian.Norm.Basic.normSq (1 - normal.homographicPerturbation matrix *
         Cylinder.TwoParameter.errorRatio (Parameter.pellParameter errorStage)) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_right_direct normal.windowQuadrance_lt_two.le
+      Arithmetic.mul_le_mul_of_nonneg_right_direct normal.windowQuadrance_lt_two.le
         (Gaussian.Norm.Basic.normSq_nonneg _)
-    _ ≤ 2 * (9 / 4) := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    _ ≤ 2 * (9 / 4) := Arithmetic.mul_le_mul_of_nonneg_left_direct
       (Cylinder.TwoParameter.perturbed_upper_normSq_le (Parameter.pellParameter_isCritical errorStage) small)
       (by decide)
     _ = 9 / 2 := by decide
@@ -461,7 +463,7 @@ def homographicViolationDistanceSq
     {source : GaussianInt.Fraction} {errorStage targetStage : Nat}
     (_normal : TransportedNormalForm source errorStage targetStage)
     (threshold : Fraction.Rational) : Fraction.Rational :=
-  let payment := threshold * Dirichlet.Window.SourceBound.dirichletWindowQuadrance source.value
+  let payment := threshold * Window.SourceBound.dirichletWindowQuadrance source.value
     (Pair.criticalLowerPair targetStage) (Pair.criticalUpperPair targetStage)
   Gaussian.Norm.Stability.perturbationDistanceSq 1 ((payment - 1) / (2 * payment))
 
@@ -470,12 +472,12 @@ theorem homographicViolationDistanceSq_pos
     {source : GaussianInt.Fraction} {errorStage targetStage : Nat}
     (normal : TransportedNormalForm source errorStage targetStage)
     {threshold : Fraction.Rational}
-    (violates : 1 < threshold * Dirichlet.Window.SourceBound.dirichletWindowQuadrance source.value
+    (violates : 1 < threshold * Window.SourceBound.dirichletWindowQuadrance source.value
       (Pair.criticalLowerPair targetStage) (Pair.criticalUpperPair targetStage)) :
     0 < normal.homographicViolationDistanceSq threshold := by
   apply Gaussian.Norm.Stability.perturbationDistanceSq_pos
-  exact Fraction.Order.Field.div_pos_direct (Fraction.Order.Arithmetic.sub_pos_direct violates)
-    (Fraction.Order.Arithmetic.mul_pos_direct (by decide)
+  exact Field.div_pos_direct (Arithmetic.sub_pos_direct violates)
+    (Arithmetic.mul_pos_direct (by decide)
       ((by decide : (0 : Fraction.Rational) < 1).trans violates))
 
 /-- The explicit violation budget preserves the strict sharpness inequality for the homographic image. -/
@@ -485,31 +487,31 @@ theorem homographic_violates
     (matrix : Matrix GaussianInt) (unitDeterminant : matrix.determinant = 1)
     (poleExcluded : Homography.Basic.denominator (Matrix.map GaussianInt.toGaussian matrix) source.value ≠ 0)
     {threshold : Fraction.Rational}
-    (violates : 1 < threshold * Dirichlet.Window.SourceBound.dirichletWindowQuadrance source.value
+    (violates : 1 < threshold * Window.SourceBound.dirichletWindowQuadrance source.value
       (Pair.criticalLowerPair targetStage) (Pair.criticalUpperPair targetStage))
     (small : Gaussian.Norm.Basic.normSq (normal.homographicPerturbation matrix) <
       normal.homographicViolationDistanceSq threshold) :
-    1 < threshold * Dirichlet.Window.SourceBound.dirichletWindowQuadrance
+    1 < threshold * Window.SourceBound.dirichletWindowQuadrance
       (Homography.Basic.homographic (Matrix.map GaussianInt.toGaussian matrix) source.value)
       ((Pair.criticalLowerPair targetStage).transform matrix)
       ((Pair.criticalUpperPair targetStage).transform matrix) := by
-  let payment := threshold * Dirichlet.Window.SourceBound.dirichletWindowQuadrance source.value
+  let payment := threshold * Window.SourceBound.dirichletWindowQuadrance source.value
     (Pair.criticalLowerPair targetStage) (Pair.criticalUpperPair targetStage)
   let margin := (payment - 1) / (2 * payment)
   let perturbation := normal.homographicPerturbation matrix
   let ratio := Cylinder.TwoParameter.errorRatio (Parameter.pellParameter errorStage)
   have paymentPositive : 0 < payment := (by decide : (0 : Fraction.Rational) < 1).trans violates
   have denominatorPositive : 0 < 2 * payment :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide) paymentPositive
-  have marginPositive : 0 < margin := Fraction.Order.Field.div_pos_direct
-    (Fraction.Order.Arithmetic.sub_pos_direct violates) denominatorPositive
+    Arithmetic.mul_pos_direct (by decide) paymentPositive
+  have marginPositive : 0 < margin := Field.div_pos_direct
+    (Arithmetic.sub_pos_direct violates) denominatorPositive
   have displacementSmall : Gaussian.Norm.Basic.normSq (-(perturbation * ratio)) <
       Gaussian.Norm.Stability.perturbationDistanceSq 1 margin := by
     rewrite [Gaussian.Norm.Basic.normSq_neg, Gaussian.Norm.Basic.normSq_mul]
     calc
       Gaussian.Norm.Basic.normSq perturbation * Gaussian.Norm.Basic.normSq ratio ≤
           Gaussian.Norm.Basic.normSq perturbation * 1 :=
-        Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+        Arithmetic.mul_le_mul_of_nonneg_left_direct
           (Cylinder.TwoParameter.normSq_errorRatio_lt_one (Parameter.pellParameter_isCritical errorStage)).le
           (Gaussian.Norm.Basic.normSq_nonneg perturbation)
       _ = Gaussian.Norm.Basic.normSq perturbation := Fraction.Field.mul_one_direct _
@@ -521,17 +523,17 @@ theorem homographic_violates
   have marginPaid : margin * (2 * payment) = payment - 1 :=
     Fraction.Field.div_mul_cancel_of_ne _ _ denominatorPositive.ne'
   have baseline : 1 < payment - payment * margin := by
-    apply Fraction.Order.Arithmetic.lt_of_mul_lt_mul_right_direct (c := (2 : Fraction.Rational)) _ (by decide)
+    apply Arithmetic.lt_of_mul_lt_mul_right_direct (c := (2 : Fraction.Rational)) _ (by decide)
     calc
       (1 : Fraction.Rational) * 2 = 1 + 1 := by ring1
-      _ < payment + 1 := Fraction.Order.Arithmetic.add_lt_add_right_direct violates _
+      _ < payment + 1 := Arithmetic.add_lt_add_right_direct violates _
       _ = 2 * payment - (payment - 1) := by ring1
       _ = 2 * payment - margin * (2 * payment) := by
         rewrite [marginPaid]
         rfl
       _ = (payment - payment * margin) * 2 := by ring1
-  have scaled := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct paymentPositive normBound
-  have translated := Fraction.Order.Arithmetic.sub_lt_sub_right_direct scaled (payment * margin)
+  have scaled := Arithmetic.mul_lt_mul_of_pos_left_direct paymentPositive normBound
+  have translated := Arithmetic.sub_lt_sub_right_direct scaled (payment * margin)
   rewrite [normal.homographic_windowQuadrance matrix unitDeterminant poleExcluded]
   calc
     1 < payment - payment * margin := baseline
@@ -590,7 +592,7 @@ theorem homographic_strictExteriorCertificate
       show GaussianInt.normNat (1 : GaussianInt) = 1 by decide, Nat.one_mul]
     exact Pair.criticalPair_indexOne targetStage
   · apply Fraction.Cast.Order.natCast_lt_iff_direct.mp
-    have ordered := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct factorPositive
+    have ordered := Arithmetic.mul_lt_mul_of_pos_left_direct factorPositive
       (Cylinder.TwoParameter.denominatorOrder_of_perturbation errorCertificate denominatorCertificate small)
     change (GaussianInt.normNat ((Pair.criticalLowerPair targetStage).transform matrix).denominator :
       Fraction.Rational) <
@@ -609,7 +611,7 @@ theorem homographic_strictExteriorCertificate
           Best.Error.errorQuadrance source.value
             (GaussianInt.Pair.LinearCombination.linearCombination
               (Pair.criticalLowerPair targetStage) (Pair.criticalUpperPair targetStage) left right) := by
-        have ordered := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct normal.lowerErrorPositive
+        have ordered := Arithmetic.mul_lt_mul_of_pos_left_direct normal.lowerErrorPositive
           errorExterior
         unfold Best.Error.errorQuadrance
         rewrite [normal.lowerIdentity, normal.error_linearCombination, Gaussian.Norm.Basic.normSq_mul]
@@ -624,7 +626,7 @@ theorem homographic_strictExteriorCertificate
       exact transported
     · right
       apply Fraction.Cast.Order.natCast_lt_iff_direct.mp
-      have ordered := Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct factorPositive denominatorExterior
+      have ordered := Arithmetic.mul_lt_mul_of_pos_left_direct factorPositive denominatorExterior
       change (GaussianInt.normNat ((Pair.criticalUpperPair targetStage).transform matrix).denominator :
         Fraction.Rational) <
         (GaussianInt.normNat
@@ -663,7 +665,7 @@ theorem homographic_upperQuadrance_ordered
   have firstPositive : 0 < firstQuadrance := Fraction.Cast.Order.natCast_pos_direct
     (GaussianInt.normNat_pos (Pair.criticalUpper_denominator_ne_zero firstTarget))
   have factorPositive : 0 < denominatorNorm * firstQuadrance :=
-    Fraction.Order.Arithmetic.mul_pos_direct denominatorPositive firstPositive
+    Arithmetic.mul_pos_direct denominatorPositive firstPositive
   have originalGrowth := Fraction.Cast.Order.natCast_lt_direct (Transition.nine_mul_upperQuadrance_lt_of_lt stageOrder)
   rewrite [Fraction.Cast.natCast_mul_direct] at originalGrowth
   change 9 * firstQuadrance < secondQuadrance at originalGrowth
@@ -681,9 +683,9 @@ theorem homographic_upperQuadrance_ordered
           (1 - first.homographicPerturbation matrix *
             Cylinder.TwoParameter.errorRatio (Parameter.pellParameter firstError)) := firstIdentity
     _ ≤ (denominatorNorm * firstQuadrance) * (9 / 4) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct firstCorrection factorPositive.le
+      Arithmetic.mul_le_mul_of_nonneg_left_direct firstCorrection factorPositive.le
     _ < (denominatorNorm * firstQuadrance) * (27 / 8) :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct factorPositive (by
+      Arithmetic.mul_lt_mul_of_pos_left_direct factorPositive (by
         change (((9 : Nat) : Fraction.Rational) / ((4 : Nat) : Fraction.Rational)) <
           (((27 : Nat) : Fraction.Rational) / ((8 : Nat) : Fraction.Rational))
         rewrite [Fraction.Cast.natCast_eq_fromInt 9, Fraction.Cast.natCast_eq_fromInt 4,
@@ -693,13 +695,13 @@ theorem homographic_upperQuadrance_ordered
       rewrite [show (27 / 8 : Fraction.Rational) = 9 * (3 / 8) by decide]
       ring1
     _ < (denominatorNorm * secondQuadrance) * (3 / 8) :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
-        (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct denominatorPositive originalGrowth) (by decide)
+      Arithmetic.mul_lt_mul_of_pos_right_direct
+        (Arithmetic.mul_lt_mul_of_pos_left_direct denominatorPositive originalGrowth) (by decide)
     _ ≤ (denominatorNorm * secondQuadrance) * Gaussian.Norm.Basic.normSq
         (1 - second.homographicPerturbation matrix *
           Cylinder.TwoParameter.errorRatio (Parameter.pellParameter secondError)) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct secondCorrection
-        (Fraction.Order.Arithmetic.mul_nonneg_direct denominatorPositive.le
+      Arithmetic.mul_le_mul_of_nonneg_left_direct secondCorrection
+        (Arithmetic.mul_nonneg_direct denominatorPositive.le
           (Fraction.Cast.Order.natCast_le_direct (Nat.zero_le _)))
     _ = (Best.Error.denominatorQuadrance ((Pair.criticalUpperPair secondTarget).transform matrix) :
         Fraction.Rational) := secondIdentity.symm
@@ -735,7 +737,7 @@ theorem homographic_strictExteriorCertificate_of_distance
       ((Pair.criticalUpperPair targetStage).transform matrix) := by
   have windowBound := normal.homographic_windowQuadrance_le_nineHalves matrix unitDeterminant poleExcluded
     ((small.trans_le (Cylinder.TwoParameter.denominatorPerturbationDistanceSq_le_oneEighth _ _)).le)
-  rewrite [Dirichlet.Window.SourceBound.dirichletWindowQuadrance_eq_cast] at windowBound
+  rewrite [Window.SourceBound.dirichletWindowQuadrance_eq_cast] at windowBound
   exact Best.Cylinder.Stability.strictExteriorCertificate_of_distance
     (normal.homographic_strictExteriorCertificate matrix unitDeterminant poleExcluded small)
     windowBound near

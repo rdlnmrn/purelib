@@ -179,64 +179,73 @@ mutual
 
 /-- Emit the complete expression DAG with literal dependency declarations. -/
 private partial def dumpExprAux (e : Expr) : M Nat := do
-  getIdx e "ie" (·.visitedExprs) ({ · with visitedExprs := · }) do
-    match e with
+  if let some idx := (← get).visitedExprs[e]? then
+    return idx
+  -- Preserve child traversal and canonical JSON key order while avoiding a
+  -- temporary JSON object tree for every node of the shared expression DAG.
+  let render : Nat → String ← match e with
     | .fvar .. | .mvar .. => panic! "cannot export free variables or metavariables"
-    | .mdata a e' =>
-      return .mkObj [
-        ("mdata", .mkObj [
-            ("data", metadataJson a),
-            ("expr", ← dumpExprAux e')
-        ])
-      ]
-    | .bvar i => return .mkObj [("bvar", i)]
-    | .lit (.natVal i) => dumpNatDeps; return .mkObj [("natVal", s!"{i}")]
-    | .lit (.strVal s) => dumpStrDeps; return .mkObj [("strVal", s)]
-    | .sort l => return .mkObj [("sort", ← dumpLevel l)]
-    | .const n us => return .mkObj [
-      ("const", .mkObj [
-        ("name", ← dumpName n),
-        ("us", (← us.mapM dumpLevel).toJson)
-      ])
-    ]
-    | .app f a => return .mkObj [
-      ("app", .mkObj [
-        ("fn", ← dumpExprAux f),
-        ("arg", ← dumpExprAux a)
-      ])
-    ]
-    | .lam n d b bi => return .mkObj [
-      ("lam", .mkObj [
-        ("name", ← dumpName n),
-        ("type", ← dumpExprAux d),
-        ("body", ← dumpExprAux b),
-        ("binderInfo", binderInfoJson bi)
-      ])
-    ]
-    | .forallE n d b bi => return .mkObj [
-      ("forallE", .mkObj [
-        ("name", ← dumpName n),
-        ("type", ← dumpExprAux d),
-        ("body", ← dumpExprAux b),
-        ("binderInfo", binderInfoJson bi)
-      ])
-    ]
-    | .letE n d v b nondep => return .mkObj [
-      ("letE", .mkObj [
-        ("name", ← dumpName n),
-        ("type", ← dumpExprAux d),
-        ("value", ← dumpExprAux v),
-        ("body", ← dumpExprAux b),
-        ("nondep", nondep)
-      ])
-    ]
-    | .proj s i e => return .mkObj [
-      ("proj", .mkObj [
-        ("typeName", ← dumpName s),
-        ("idx", i),
-        ("struct", ← dumpExprAux e)
-      ])
-    ]
+    | .mdata data body => do
+      let encoded := (metadataJson data).compress
+      let body ← dumpExprAux body
+      pure fun idx => "{\"ie\":" ++ toString idx ++ ",\"mdata\":{\"data\":" ++ encoded ++
+        ",\"expr\":" ++ toString body ++ "}}"
+    | .bvar index => pure fun idx =>
+      "{\"bvar\":" ++ toString index ++ ",\"ie\":" ++ toString idx ++ "}"
+    | .lit (.natVal value) => do
+      dumpNatDeps
+      pure fun idx => "{\"ie\":" ++ toString idx ++ ",\"natVal\":\"" ++ toString value ++ "\"}"
+    | .lit (.strVal value) => do
+      dumpStrDeps
+      let encoded := (Json.str value).compress
+      pure fun idx => "{\"ie\":" ++ toString idx ++ ",\"strVal\":" ++ encoded ++ "}"
+    | .sort level => do
+      let level ← dumpLevel level
+      pure fun idx => "{\"ie\":" ++ toString idx ++ ",\"sort\":" ++ toString level ++ "}"
+    | .const name levels => do
+      let name ← dumpName name
+      let levels := (toJson (← levels.mapM dumpLevel)).compress
+      pure fun idx => "{\"const\":{\"name\":" ++ toString name ++ ",\"us\":" ++ levels ++
+        "},\"ie\":" ++ toString idx ++ "}"
+    | .app function argument => do
+      let function ← dumpExprAux function
+      let argument ← dumpExprAux argument
+      pure fun idx => "{\"app\":{\"arg\":" ++ toString argument ++ ",\"fn\":" ++ toString function ++
+        "},\"ie\":" ++ toString idx ++ "}"
+    | .lam name domain body info => do
+      let name ← dumpName name
+      let domain ← dumpExprAux domain
+      let body ← dumpExprAux body
+      let info := (binderInfoJson info).compress
+      pure fun idx => "{\"ie\":" ++ toString idx ++ ",\"lam\":{\"binderInfo\":" ++ info ++
+        ",\"body\":" ++ toString body ++ ",\"name\":" ++ toString name ++
+        ",\"type\":" ++ toString domain ++ "}}"
+    | .forallE name domain body info => do
+      let name ← dumpName name
+      let domain ← dumpExprAux domain
+      let body ← dumpExprAux body
+      let info := (binderInfoJson info).compress
+      pure fun idx => "{\"forallE\":{\"binderInfo\":" ++ info ++ ",\"body\":" ++ toString body ++
+        ",\"name\":" ++ toString name ++ ",\"type\":" ++ toString domain ++
+        "},\"ie\":" ++ toString idx ++ "}"
+    | .letE name domain value body nondep => do
+      let name ← dumpName name
+      let domain ← dumpExprAux domain
+      let value ← dumpExprAux value
+      let body ← dumpExprAux body
+      let nondep := if nondep then "true" else "false"
+      pure fun idx => "{\"ie\":" ++ toString idx ++ ",\"letE\":{\"body\":" ++ toString body ++
+        ",\"name\":" ++ toString name ++ ",\"nondep\":" ++ nondep ++
+        ",\"type\":" ++ toString domain ++ ",\"value\":" ++ toString value ++ "}}"
+    | .proj name index value => do
+      let name ← dumpName name
+      let value ← dumpExprAux value
+      pure fun idx => "{\"ie\":" ++ toString idx ++ ",\"proj\":{\"idx\":" ++ toString index ++
+        ",\"struct\":" ++ toString value ++ ",\"typeName\":" ++ toString name ++ "}}"
+  let idx := (← get).visitedExprs.size
+  IO.println (render idx)
+  modify fun st => { st with visitedExprs := st.visitedExprs.insert e idx }
+  return idx
 where
   dumpNatDeps : M Unit := do
     let nat := ``Nat
@@ -541,7 +550,12 @@ private def selectRoots (env : Environment) (modules : Array Name) : IO (Array N
   return (roots, Json.mkObj [("schema", 2), ("selected_modules", toJson (modules.map Name.toString)),
     ("roots", .arr rows)])
 
-/-- Import complete private artifacts without target initializers, callbacks or plugins. -/
+/-- Import complete private artifacts without target initializers, callbacks or plugins.
+
+This single-use CLI flushes both streams before exiting with its serialization
+state still live. Process teardown reclaims the large expression tables without
+an additional traversal after the output streams have been flushed successfully.
+-/
 private def exportModules (manifest inventory : System.FilePath) : IO UInt32 := do
   let modules ← readModules manifest
   initSearchPath (← findSysroot)
@@ -563,12 +577,18 @@ private def exportModules (manifest inventory : System.FilePath) : IO UInt32 := 
     let state ← get
     stderr.putStrLn s!"native nanoda: roots={roots.size} declarations={state.visitedConstants.size}"
     stderr.putStrLn s!"native nanoda: expressions={state.visitedExprs.size} export_ms={(← IO.monoMsNow) - started}"
+    (← IO.getStdout).flush
+    stderr.flush
+    IO.Process.exit 0
   return 0
 
 /-- Dispatch explicit metadata and artifact export requests. -/
 private def runArgs (args : List String) : IO UInt32 := do
   match args with
-  | ["--metadata"] => IO.println exportMetadata.compress; return 0
+  | ["--metadata"] =>
+    IO.println exportMetadata.compress
+    (← IO.getStdout).flush
+    return 0
   | ["--export", manifest, inventory] => exportModules manifest inventory
   | _ => throw <| IO.userError "usage: nanoda-export --metadata | --export MANIFEST INVENTORY"
 

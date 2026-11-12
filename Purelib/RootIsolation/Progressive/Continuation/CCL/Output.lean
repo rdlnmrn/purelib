@@ -55,11 +55,11 @@ namespace RootContinuation
 /-- Start the persistent raw-word cursor for one owner. -/
 def rootCursorAt
     {initialTable : CoefficientTable}
-    (continuation : Progressive.Continuation.Basic.RootContinuation initialTable)
+    (continuation : RootContinuation initialTable)
     (index : continuation.Index) :
-    Data.CCL.Progressive.Cursor.Request.State
+    CCL.Progressive.Cursor.Request.State
       (continuation.toProcess index) continuation.initial :=
-  Data.CCL.Progressive.Cursor.Request.State.initial
+  CCL.Progressive.Cursor.Request.State.initial
     (continuation.toProcess index) continuation.initial
 end RootContinuation
 
@@ -91,20 +91,20 @@ namespace RootContinuation
 /-- Any two possible values after a root-cursor request have squared chordal distance at most the requested bound. -/
 theorem rootCursorAt_request_chordalSq_le
     {initialTable : CoefficientTable}
-    (continuation : Progressive.Continuation.Basic.RootContinuation initialTable)
+    (continuation : RootContinuation initialTable)
     (index : continuation.Index) (epsilonSq : Fraction.Rational)
     (positive : 0 < epsilonSq) (count : Nat)
-    {left right : Gaussian.Basic.Canonical}
-    (leftPossible : Data.CCL.Transducer.Mode.Semantics.SemanticMode.possible
+    {left right : Basic.Canonical}
+    (leftPossible : CCL.Transducer.Mode.Semantics.SemanticMode.possible
       ((continuation.rootCursorAt index).request
         epsilonSq positive count).machine.mode left)
-    (rightPossible : Data.CCL.Transducer.Mode.Semantics.SemanticMode.possible
+    (rightPossible : CCL.Transducer.Mode.Semantics.SemanticMode.possible
       ((continuation.rootCursorAt index).request
         epsilonSq positive count).machine.mode right) :
     Geometry.Projective.Chordal.Basic.chordalSq
-        (Data.CCL.Progressive.Cursor.Image.Machine.image ((continuation.rootCursorAt index).request
+        (CCL.Progressive.Cursor.Image.Machine.image ((continuation.rootCursorAt index).request
           epsilonSq positive count).machine left)
-        (Data.CCL.Progressive.Cursor.Image.Machine.image ((continuation.rootCursorAt index).request
+        (CCL.Progressive.Cursor.Image.Machine.image ((continuation.rootCursorAt index).request
           epsilonSq positive count).machine right) ≤ epsilonSq :=
   (continuation.rootCursorAt index).request_pair_chordalSq_le
     epsilonSq positive count leftPossible rightPossible
@@ -139,7 +139,7 @@ namespace RootContinuation
 /-- A root-cursor request preserves the previously emitted raw prefix. -/
 theorem rootCursorAt_request_extends
     {initialTable : CoefficientTable}
-    (continuation : Progressive.Continuation.Basic.RootContinuation initialTable)
+    (continuation : RootContinuation initialTable)
     (index : continuation.Index) (epsilonSq : Fraction.Rational)
     (positive : 0 < epsilonSq) (count : Nat) :
     (continuation.rootCursorAt index).machine.emitted.IsPrefix
@@ -177,7 +177,7 @@ namespace RootContinuation
 /-- A fresh root cursor emits exactly the requested number of raw bits. -/
 theorem rootCursorAt_request_length
     {initialTable : CoefficientTable}
-    (continuation : Progressive.Continuation.Basic.RootContinuation initialTable)
+    (continuation : RootContinuation initialTable)
     (index : continuation.Index) (epsilonSq : Fraction.Rational)
     (positive : 0 < epsilonSq) (count : Nat) :
     ((continuation.rootCursorAt index).request
@@ -219,9 +219,9 @@ namespace RootContinuation
 -/
 theorem rootNameAt_exact
     {initialTable : CoefficientTable}
-    (continuation : Progressive.Continuation.Basic.RootContinuation initialTable)
+    (continuation : RootContinuation initialTable)
     (index : continuation.Index) (count : Nat) :
-    Data.CCL.Transducer.Machine.Semantics.Basic.ExactCursor
+    Machine.Semantics.Basic.ExactCursor
       (continuation.toProcess index) continuation.initial
       (Machine.Advance.advance
         (continuation.rootNameAt index).machine count) :=
@@ -257,7 +257,7 @@ namespace RootContinuation
 /-- Advancing a fresh root name preserves its prefix and emits exactly the requested number of bits. -/
 theorem rootNameAt_productive
     {initialTable : CoefficientTable}
-    (continuation : Progressive.Continuation.Basic.RootContinuation initialTable)
+    (continuation : RootContinuation initialTable)
     (index : continuation.Index) (count : Nat) :
     (continuation.rootNameAt index).machine.emitted.IsPrefix
         (Machine.Advance.advance

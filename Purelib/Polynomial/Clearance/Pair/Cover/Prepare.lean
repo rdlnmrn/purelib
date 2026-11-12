@@ -32,8 +32,8 @@ set_option genInjectivity false in
 The cover retains the original polynomial source and parameter interval; a zero floor does not certify a root or failed
 separation. -/
 public structure Prepared {realPolynomial imagPolynomial : Dense.Rational.Basic.CoordinatePolynomial}
-    (source : Clearance.Pair.Cover.Leaf.Source realPolynomial imagPolynomial) (parameters :
-      Data.Rat.Interval.Bounds) where
+    (source : Leaf.Source realPolynomial imagPolynomial) (parameters :
+      Interval.Bounds) where
   /-- The retained aggregate quadrance lower bound. -/ normFloor : Fraction.Rational
   /-- The retained aggregate maximum-coordinate lower bound. -/ coordinateFloor : Fraction.Rational
   /-- The actual finite certificate tree indexed by these exact floor values. -/ cover :
@@ -45,10 +45,10 @@ constructive_injectivity Prepared
 
 The package projects the cached leaf floors and retains that same leaf as its one-node certificate tree. -/
 @[expose] public def Prepared.ofLeaf {realPolynomial imagPolynomial :
-  Dense.Rational.Basic.CoordinatePolynomial} {source : Clearance.Pair.Cover.Leaf.Source realPolynomial
+  Dense.Rational.Basic.CoordinatePolynomial} {source : Leaf.Source realPolynomial
   imagPolynomial}
-    {parameters : Data.Rat.Interval.Bounds} (leaf : Leaf source parameters) :
-      Clearance.Pair.Cover.Prepare.Prepared source parameters :=
+    {parameters : Interval.Bounds} (leaf : Leaf source parameters) :
+      Prepared source parameters :=
   ⟨leaf.normFloor, leaf.coordinateFloor, .leaf leaf⟩
 
 /-- Structural recursion gives a total finite proposal.  Already separated
@@ -57,17 +57,17 @@ nodes do not build either child, regardless of the unused depth budget.
 The original positive-floor stop test is checked before constructing children. Unresolved successor-depth nodes retain
 both half-interval covers and combine their floor indices with the baseline. -/
 @[expose] public def refine {realPolynomial imagPolynomial : Dense.Rational.Basic.CoordinatePolynomial}
-  {source : Clearance.Pair.Cover.Leaf.Source realPolynomial imagPolynomial}
-    {parameters : Data.Rat.Interval.Bounds} (leaf : Leaf source parameters) : Nat →
-      Clearance.Pair.Cover.Prepare.Prepared source parameters
+  {source : Leaf.Source realPolynomial imagPolynomial}
+    {parameters : Interval.Bounds} (leaf : Leaf source parameters) : Nat →
+      Prepared source parameters
   | 0 => .ofLeaf leaf
   | depth + 1 =>
       if 0 < leaf.normFloor then .ofLeaf leaf
       else
-        let left := Purelib.Polynomial.Clearance.Pair.Cover.Prepare.refine (Leaf.prepare
-          source (Data.Rat.Interval.Bisection.leftHalf parameters)) depth
-        let right := Purelib.Polynomial.Clearance.Pair.Cover.Prepare.refine (Leaf.prepare
-          source (Data.Rat.Interval.Bisection.rightHalf parameters)) depth
+        let left := Prepare.refine (Leaf.prepare
+          source (Interval.Bisection.leftHalf parameters)) depth
+        let right := Prepare.refine (Leaf.prepare
+          source (Interval.Bisection.rightHalf parameters)) depth
         ⟨max leaf.normFloor (min left.normFloor right.normFloor),
           max leaf.coordinateFloor (min left.coordinateFloor right.coordinateFloor),
           .split leaf left.cover right.cover⟩
@@ -84,10 +84,10 @@ guarantee. -/
 The initial leaf is constructed for the supplied source and interval. Refinement then consumes the fixed depth budget
 and retains its actual certificate tree. -/
 @[expose] public def prepare {realPolynomial imagPolynomial : Dense.Rational.Basic.CoordinatePolynomial}
-  (source : Clearance.Pair.Cover.Leaf.Source realPolynomial imagPolynomial)
-    (parameters : Data.Rat.Interval.Bounds) : Clearance.Pair.Cover.Prepare.Prepared source parameters :=
-  Clearance.Pair.Cover.Prepare.refine (Leaf.prepare source parameters)
-    Clearance.Pair.Cover.Prepare.defaultDepth
+  (source : Leaf.Source realPolynomial imagPolynomial)
+    (parameters : Interval.Bounds) : Prepared source parameters :=
+  refine (Leaf.prepare source parameters)
+    defaultDepth
 
 /-- Coverage and aggregate soundness are the universal results, not an
 acceptance-tag check or a finite sample substitution for uniform bounds.
@@ -95,16 +95,16 @@ acceptance-tag check or a finite sample substitution for uniform bounds.
 Every contained parameter has an explicit retained leaf region. The same prepared tree bounds pair quadrance and the
 larger coordinate magnitude through its exact floor indices. -/
 public theorem retained_cover_contract (realPolynomial imagPolynomial :
-  Dense.Rational.Basic.CoordinatePolynomial) (parameters : Data.Rat.Interval.Bounds)
+  Dense.Rational.Basic.CoordinatePolynomial) (parameters : Interval.Bounds)
     {parameter : Fraction.Rational} (inside : parameters.Contains parameter) :
-    let result := Clearance.Pair.Cover.Prepare.prepare (Clearance.Pair.Cover.Leaf.Source.prepare realPolynomial
+    let result := prepare (Leaf.Source.prepare realPolynomial
       imagPolynomial) parameters
     (∃ region, region ∈ result.cover.regions ∧ region.Contains parameter) ∧
       result.normFloor ≤ realPolynomial.eval parameter ^ 2 + imagPolynomial.eval parameter ^ 2 ∧
       result.coordinateFloor ≤ max (Fraction.abs (realPolynomial.eval parameter)) (Fraction.abs (imagPolynomial.eval
         parameter)) :=
-  ⟨(Clearance.Pair.Cover.Prepare.prepare _ _).cover.covers inside, (Clearance.Pair.Cover.Prepare.prepare _
+  ⟨(prepare _ _).cover.covers inside, (prepare _
     _).cover.norm_le inside,
-    (Clearance.Pair.Cover.Prepare.prepare _ _).cover.coordinate_le inside⟩
+    (prepare _ _).cover.coordinate_le inside⟩
 
 end Purelib.Polynomial.Clearance.Pair.Cover.Prepare

@@ -52,34 +52,34 @@ open Purelib.Riemann.Branches Purelib.Riemann.Integration Purelib.Riemann.RootCo
 open Purelib.RootIsolation.SquareRoot.Replay.PreparedOwnerTransportReplay
   (Coordinate Gaussian Box Owner State)
 
-variable {source target : SquareRoot.Replay.PreparedOwnerTransportReplay.Gaussian} {ambient :
-  SquareRoot.Replay.PreparedOwnerTransportReplay.Box}
-variable {state : SquareRoot.Replay.PreparedOwnerTransportReplay.State source ambient} {reserve :
-  SquareRoot.Replay.PreparedOwnerTransportReplay.Coordinate}
+variable {source target : Gaussian} {ambient :
+  Box}
+variable {state : State source ambient} {reserve :
+  Coordinate}
 
 /-- The successful endpoint-retention stage before any moving reset. -/
 inductive Branch where
   /-- Retain the carried owner whose existing clearance meets the requested floor. -/ | inherited
   /-- Retain the coefficient-strengthened owner after the original bound misses the floor. -/ | coefficientStrengthened
 deriving DecidableEq
-derive_exposed_repr Purelib.RootIsolation.SquareRoot.Replay.PreparedRetainedTransportReplay.Branch
+derive_exposed_repr PreparedRetainedTransportReplay.Branch
 
 set_option genInjectivity false in
 /-- Both checked bounds and the refreshed owner are retained.  This proves
 which reset the canonical constructor would select, not that it would fail. -/
-structure NeedsReset (transport : SquareRoot.Replay.PreparedOwnerTransportReplay.Checked state target reserve)
-    (floor : SquareRoot.Replay.PreparedOwnerTransportReplay.Coordinate) where
+structure NeedsReset (transport : PreparedOwnerTransportReplay.Checked state target reserve)
+    (floor : Coordinate) where
   /-- The carried owner's retained original clearance reading. -/ originalBound :
-    SquareRoot.Replay.PreparedOwnerTransportReplay.Coordinate
+    Coordinate
   /-- The original reading equals the carried owner's actual clearance. -/ originalBound_eq : originalBound =
     transport.value.track.initial.clearance.bound
   /-- The original carried clearance does not meet the requested floor. -/ originalMiss : ¬ floor ≤ originalBound
   /-- The actual coefficient-strengthened owner computed from the carried owner. -/ refreshed :
-    SquareRoot.Replay.PreparedOwnerTransportReplay.Owner target
+    Owner target
   /-- The retained refreshed owner equals the original coefficient-strengthening construction. -/ refreshed_eq :
-    refreshed = SquareRoot.Clearance.QuadraticCoefficientClearance.strengthen transport.value
+    refreshed = Clearance.QuadraticCoefficientClearance.strengthen transport.value
   /-- The refreshed owner's retained clearance reading. -/ refreshedBound :
-    SquareRoot.Replay.PreparedOwnerTransportReplay.Coordinate
+    Coordinate
   /-- The retained refreshed reading equals that exact owner's clearance. -/ refreshedBound_eq : refreshedBound =
     refreshed.track.initial.clearance.bound
   /-- The refreshed clearance still does not meet the requested floor. -/ refreshedMiss : ¬ floor ≤ refreshedBound
@@ -89,34 +89,34 @@ constructive_injectivity NeedsReset
 /-- When both retained bound comparisons fail, the original endpoint-retention procedure selects its recentered owner.
 -/
 theorem NeedsReset.canonical_reset
-    {transport : SquareRoot.Replay.PreparedOwnerTransportReplay.Checked state target reserve} {floor :
-      SquareRoot.Replay.PreparedOwnerTransportReplay.Coordinate}
-    (report : SquareRoot.Replay.PreparedRetainedTransportReplay.NeedsReset transport floor) :
-    Riemann.Branches.PreparedSheetContinuation.retainedAtReserve transport.value floor =
-      Riemann.Branches.PreparedSheetContinuation.recentered transport.value := by
+    {transport : PreparedOwnerTransportReplay.Checked state target reserve} {floor :
+      Coordinate}
+    (report : NeedsReset transport floor) :
+    PreparedSheetContinuation.retainedAtReserve transport.value floor =
+      PreparedSheetContinuation.recentered transport.value := by
   have originalMiss : ¬ floor ≤ transport.value.track.initial.clearance.bound := by
     rw [← report.originalBound_eq]
     exact report.originalMiss
   have refreshedMiss : ¬ floor ≤
-      (SquareRoot.Clearance.QuadraticCoefficientClearance.strengthen transport.value).track.initial.clearance.bound :=
+      (Clearance.QuadraticCoefficientClearance.strengthen transport.value).track.initial.clearance.bound :=
         by
     rw [← report.refreshed_eq, ← report.refreshedBound_eq]
     exact report.refreshedMiss
-  unfold Riemann.Branches.PreparedSheetContinuation.retainedAtReserve
+  unfold PreparedSheetContinuation.retainedAtReserve
   rw [if_neg originalMiss, if_neg refreshedMiss]
 
 set_option genInjectivity false in
 /-- The retained endpoint owner meeting the requested floor with its exact original branch identity.
 
 Record the selected branch, its actual clearance reading and equality with the canonical endpoint-retention result. -/
-structure Checked (transport : SquareRoot.Replay.PreparedOwnerTransportReplay.Checked state target reserve)
-    (floor : SquareRoot.Replay.PreparedOwnerTransportReplay.Coordinate) where
+structure Checked (transport : PreparedOwnerTransportReplay.Checked state target reserve)
+    (floor : Coordinate) where
   /-- The actual successful endpoint-retention stage. -/ branch :
-    SquareRoot.Replay.PreparedRetainedTransportReplay.Branch
-  /-- The retained target owner selected by that stage. -/ value : SquareRoot.Replay.PreparedOwnerTransportReplay.Owner
+    Branch
+  /-- The retained target owner selected by that stage. -/ value : Owner
     target
   /-- The clearance reading retained from the selected owner. -/ bound :
-    SquareRoot.Replay.PreparedOwnerTransportReplay.Coordinate
+    Coordinate
   /-- The retained reading equals the selected owner's actual clearance. -/ bound_eq : bound =
     value.track.initial.clearance.bound
   /-- The selected owner's retained bound meets the requested floor. -/ enough : floor ≤ bound
@@ -124,19 +124,19 @@ structure Checked (transport : SquareRoot.Replay.PreparedOwnerTransportReplay.Ch
     branch_correct : match branch with
     | .inherited => value = transport.value
     | .coefficientStrengthened =>
-        value = SquareRoot.Clearance.QuadraticCoefficientClearance.strengthen transport.value ∧
+        value = Clearance.QuadraticCoefficientClearance.strengthen transport.value ∧
           ¬ floor ≤ transport.value.track.initial.clearance.bound
   /-- The selected owner equals the original canonical endpoint-retention result. -/ value_eq : value =
-    Riemann.Branches.PreparedSheetContinuation.retainedAtReserve transport.value floor
+    PreparedSheetContinuation.retainedAtReserve transport.value floor
 
 constructive_injectivity Checked
 
 /-- Complete the canonical endpoint move when no moving reset is required.
 The carried owner and a possible coefficient refresh are each computed once. -/
-def retain (transport : SquareRoot.Replay.PreparedOwnerTransportReplay.Checked state target reserve)
-    (floor : SquareRoot.Replay.PreparedOwnerTransportReplay.Coordinate) : Except
-      (SquareRoot.Replay.PreparedRetainedTransportReplay.NeedsReset transport floor)
-      (SquareRoot.Replay.PreparedRetainedTransportReplay.Checked transport floor) :=
+def retain (transport : PreparedOwnerTransportReplay.Checked state target reserve)
+    (floor : Coordinate) : Except
+      (NeedsReset transport floor)
+      (Checked transport floor) :=
   let bound := transport.value.track.initial.clearance.bound
   if enough : floor ≤ bound then
     .ok
@@ -146,9 +146,9 @@ def retain (transport : SquareRoot.Replay.PreparedOwnerTransportReplay.Checked s
         bound_eq := rfl
         enough := enough
         branch_correct := rfl
-        value_eq := (Riemann.Branches.PreparedSheetContinuation.retainedAtReserve_eq_self _ _ enough).symm }
+        value_eq := (PreparedSheetContinuation.retainedAtReserve_eq_self _ _ enough).symm }
   else
-    let refreshed := SquareRoot.Clearance.QuadraticCoefficientClearance.strengthen transport.value
+    let refreshed := Clearance.QuadraticCoefficientClearance.strengthen transport.value
     let refreshedBound := refreshed.track.initial.clearance.bound
     if refreshedEnough : floor ≤ refreshedBound then
       .ok
@@ -158,7 +158,7 @@ def retain (transport : SquareRoot.Replay.PreparedOwnerTransportReplay.Checked s
           bound_eq := rfl
           enough := refreshedEnough
           branch_correct := ⟨rfl, enough⟩
-          value_eq := (Riemann.Branches.PreparedSheetContinuation.retainedAtReserve_eq_coefficientStrengthening
+          value_eq := (PreparedSheetContinuation.retainedAtReserve_eq_coefficientStrengthening
             _ _ enough refreshedEnough).symm }
     else
       .error
@@ -174,86 +174,86 @@ def retain (transport : SquareRoot.Replay.PreparedOwnerTransportReplay.Checked s
 /-- Inconclusivity identifies this actual finite check, including its cached
 refresh.  The unexecuted moving reset is not labelled a failed root process. -/
 theorem NeedsReset.retain_error
-    {transport : SquareRoot.Replay.PreparedOwnerTransportReplay.Checked state target reserve} {floor :
-      SquareRoot.Replay.PreparedOwnerTransportReplay.Coordinate}
-    (report : SquareRoot.Replay.PreparedRetainedTransportReplay.NeedsReset transport floor) :
-      SquareRoot.Replay.PreparedRetainedTransportReplay.retain transport floor = .error report := by
+    {transport : PreparedOwnerTransportReplay.Checked state target reserve} {floor :
+      Coordinate}
+    (report : NeedsReset transport floor) :
+      retain transport floor = .error report := by
   cases report with
   | mk originalBound originalBoundEq originalMiss refreshed refreshedEq
       refreshedBound refreshedBoundEq refreshedMiss =>
       cases originalBoundEq
       cases refreshedEq
       cases refreshedBoundEq
-      unfold SquareRoot.Replay.PreparedRetainedTransportReplay.retain
+      unfold retain
       rw [dif_neg originalMiss, dif_neg refreshedMiss]
 
 /-- The initial state's already checked association suffices for the whole
 retained transport, regardless of the original incoming refinement function. -/
-theorem Checked.eq_original (original : SquareRoot.Replay.PreparedOwnerTransportReplay.Owner source)
-    (restored : SquareRoot.Replay.PreparedRootStateReplay.Checked source original.ambient
-      (SquareRoot.Replay.PreparedRootStateReplay.capture original.track.initial))
-    {transport : SquareRoot.Replay.PreparedOwnerTransportReplay.Checked restored.state target reserve}
-    {floor : SquareRoot.Replay.PreparedOwnerTransportReplay.Coordinate} (result :
-      SquareRoot.Replay.PreparedRetainedTransportReplay.Checked transport floor) :
-    result.value = Riemann.Branches.PreparedSheetContinuation.retainedAtReserve
-      (SquareRoot.Clearance.ExactQuadraticOwnerClearance.reservedTransport original transport.targetNonzero
+theorem Checked.eq_original (original : Owner source)
+    (restored : PreparedRootStateReplay.Checked source original.ambient
+      (PreparedRootStateReplay.capture original.track.initial))
+    {transport : PreparedOwnerTransportReplay.Checked restored.state target reserve}
+    {floor : Coordinate} (result :
+      Checked transport floor) :
+    result.value = PreparedSheetContinuation.retainedAtReserve
+      (Clearance.ExactQuadraticOwnerClearance.reservedTransport original transport.targetNonzero
         (transport.originalSmall original restored) reserve) floor :=
-  result.value_eq.trans (congrArg (fun owner => Riemann.Branches.PreparedSheetContinuation.retainedAtReserve owner
+  result.value_eq.trans (congrArg (fun owner => PreparedSheetContinuation.retainedAtReserve owner
     floor)
     (transport.eq_original original restored))
 
 /-- This is the actual dependent successor index used by prepared spines,
 including endpoint retention.  It does not merely identify a point query. -/
 theorem Checked.eq_advanceCached
-    {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-    {baseAmbient : SquareRoot.Replay.PreparedOwnerTransportReplay.Box} {start finish :
-      SquareRoot.Replay.PreparedOwnerTransportReplay.Gaussian}
+    {polynomial : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+    {baseAmbient : Box} {start finish :
+      Gaussian}
     (segment : Geometry.ClearPath.ClearSegment polynomial baseAmbient start finish)
-    (within : segment.WithinAmbient) (left : Riemann.Branches.ClearSheetContinuation.Subdivision.Endpoint)
-    (owner : SquareRoot.Replay.PreparedOwnerTransportReplay.Owner (polynomial.eval (segment.pointAt left.parameter)))
-    (request : Riemann.Branches.PreparedSheetContinuation.StepRequest)
-    (cached : Riemann.Branches.PreparedSheetContinuation.CachedSource segment left owner request)
-    (small : Riemann.Branches.ClearSheetContinuation.variationBound segment left.parameter request.endpoint.parameter <
+    (within : segment.WithinAmbient) (left : ClearSheetContinuation.Subdivision.Endpoint)
+    (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
+    (request : PreparedSheetContinuation.StepRequest)
+    (cached : PreparedSheetContinuation.CachedSource segment left owner request)
+    (small : ClearSheetContinuation.variationBound segment left.parameter request.endpoint.parameter <
       cached.preparedOwner.track.initial.clearance.bound)
-    (restored : SquareRoot.Replay.PreparedRootStateReplay.Checked (polynomial.eval (segment.pointAt left.parameter))
+    (restored : PreparedRootStateReplay.Checked (polynomial.eval (segment.pointAt left.parameter))
       cached.preparedOwner.ambient
-      (SquareRoot.Replay.PreparedRootStateReplay.capture cached.preparedOwner.track.initial))
-    {transport : SquareRoot.Replay.PreparedOwnerTransportReplay.Checked restored.state
+      (PreparedRootStateReplay.capture cached.preparedOwner.track.initial))
+    {transport : PreparedOwnerTransportReplay.Checked restored.state
       (polynomial.eval (segment.pointAt request.endpoint.parameter))
-      (Riemann.Branches.PreparedSheetContinuation.transportReserve segment left request)}
-    (result : SquareRoot.Replay.PreparedRetainedTransportReplay.Checked transport
-      (Riemann.Branches.PreparedSheetContinuation.preparedClearanceLower segment left request)) :
-    result.value = Riemann.Branches.PreparedSheetContinuation.advanceCached segment within left owner request cached
+      (PreparedSheetContinuation.transportReserve segment left request)}
+    (result : Checked transport
+      (PreparedSheetContinuation.preparedClearanceLower segment left request)) :
+    result.value = PreparedSheetContinuation.advanceCached segment within left owner request cached
       small :=
   result.eq_original cached.preparedOwner restored
 
 section Spines
 
-variable {polynomial : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
-  {baseAmbient : SquareRoot.Replay.PreparedOwnerTransportReplay.Box} {start finish :
-    SquareRoot.Replay.PreparedOwnerTransportReplay.Gaussian}
+variable {polynomial : Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial}
+  {baseAmbient : Box} {start finish :
+    Gaussian}
   (segment : Geometry.ClearPath.ClearSegment polynomial baseAmbient start finish)
-  (within : segment.WithinAmbient) (left : Riemann.Branches.ClearSheetContinuation.Subdivision.Endpoint)
-  (owner : SquareRoot.Replay.PreparedOwnerTransportReplay.Owner (polynomial.eval (segment.pointAt left.parameter)))
-  (request : Riemann.Branches.PreparedSheetContinuation.StepRequest)
-  (cached : Riemann.Branches.PreparedSheetContinuation.CachedSource segment left owner request)
+  (within : segment.WithinAmbient) (left : ClearSheetContinuation.Subdivision.Endpoint)
+  (owner : Owner (polynomial.eval (segment.pointAt left.parameter)))
+  (request : PreparedSheetContinuation.StepRequest)
+  (cached : PreparedSheetContinuation.CachedSource segment left owner request)
   (ordered : left.parameter ≤ request.endpoint.parameter)
-  (small : Riemann.Branches.ClearSheetContinuation.variationBound segment left.parameter request.endpoint.parameter <
+  (small : ClearSheetContinuation.variationBound segment left.parameter request.endpoint.parameter <
     cached.preparedOwner.track.initial.clearance.bound)
-  (restored : SquareRoot.Replay.PreparedRootStateReplay.Checked (polynomial.eval (segment.pointAt left.parameter))
-    cached.preparedOwner.ambient (SquareRoot.Replay.PreparedRootStateReplay.capture cached.preparedOwner.track.initial))
-  {transport : SquareRoot.Replay.PreparedOwnerTransportReplay.Checked restored.state
+  (restored : PreparedRootStateReplay.Checked (polynomial.eval (segment.pointAt left.parameter))
+    cached.preparedOwner.ambient (PreparedRootStateReplay.capture cached.preparedOwner.track.initial))
+  {transport : PreparedOwnerTransportReplay.Checked restored.state
     (polynomial.eval (segment.pointAt request.endpoint.parameter))
-    (Riemann.Branches.PreparedSheetContinuation.transportReserve segment left request)}
-  (result : Purelib.RootIsolation.SquareRoot.Replay.PreparedRetainedTransportReplay.Checked transport
-    (Riemann.Branches.PreparedSheetContinuation.preparedClearanceLower segment left request))
+    (PreparedSheetContinuation.transportReserve segment left request)}
+  (result : Checked transport
+    (PreparedSheetContinuation.preparedClearanceLower segment left request))
 
 /-- Attach a restored tail at the exact canonical successor without executing
 that successor again.  The only connection is an erased equality cast. -/
 def Checked.prepend
-    (remaining : Riemann.Branches.PreparedSheetContinuation.Subdivision segment within request.endpoint result.value) :
-    Riemann.Branches.PreparedSheetContinuation.Subdivision segment within left owner :=
-  Riemann.Branches.PreparedSheetContinuation.Subdivision.nextCached segment within left owner request cached ordered
+    (remaining : PreparedSheetContinuation.Subdivision segment within request.endpoint result.value) :
+    PreparedSheetContinuation.Subdivision segment within left owner :=
+  PreparedSheetContinuation.Subdivision.nextCached segment within left owner request cached ordered
     small
     (by rw [← cached.preparedOwner_eq]; exact small)
     (remaining.castOwner (result.eq_advanceCached segment within left owner request cached small restored))
@@ -261,13 +261,13 @@ def Checked.prepend
 /-- Replay preserves the actual request list consumed by the bank-provenance
 and uniqueness theorem, not just the number of accepted cells. -/
 theorem Checked.prepend_requests
-    (remaining : Riemann.Branches.PreparedSheetContinuation.Subdivision segment within request.endpoint result.value) :
+    (remaining : PreparedSheetContinuation.Subdivision segment within request.endpoint result.value) :
     (result.prepend segment within left owner request cached ordered small restored remaining).requests =
       request :: remaining.requests := by
-  simp only [SquareRoot.Replay.PreparedRetainedTransportReplay.Checked.prepend,
-    Riemann.Branches.PreparedSheetContinuation.Subdivision.nextCached,
-    Riemann.Branches.PreparedSheetContinuation.Subdivision.requests_next,
-    Riemann.Branches.PreparedSheetContinuation.Subdivision.castOwner_requests, -eq_self, -iff_self]
+  simp only [Checked.prepend,
+    PreparedSheetContinuation.Subdivision.nextCached,
+    PreparedSheetContinuation.Subdivision.requests_next,
+    PreparedSheetContinuation.Subdivision.castOwner_requests, -eq_self, -iff_self]
   rfl
 
 end Spines

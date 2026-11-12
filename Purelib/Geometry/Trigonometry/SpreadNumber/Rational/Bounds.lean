@@ -14,6 +14,8 @@ public import Purelib.Data.Rat.Fraction.Field
 public import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Algebra
@@ -45,7 +47,7 @@ cardinal, carrier enumeration, or selected square root is introduced.
 
 namespace Purelib.Geometry.Trigonometry.SpreadNumber.Rational.Bounds
 
-variable {K : Type*} [Purelib.Algebra.Field.ExplicitField K]
+variable {K : Type*} [Field.ExplicitField K]
 section
 
 /-- The constructive half of Example 2.3: a displayed square root certifies nonnegativity in the rational/decimal order.
@@ -54,7 +56,7 @@ theorem squareNumber_nonnegative
     (value : Fraction.Rational) (square : Squares.Basic.IsSquareNumber value) : 0 ≤ value := by
   rcases square with ⟨root, valueSquare⟩
   rw [valueSquare]
-  exact Fraction.Order.Arithmetic.sq_nonneg_direct root
+  exact Arithmetic.sq_nonneg_direct root
 
 /-- A rational spread-number witness forces the value into the unit interval. The converse over the source's decimal
 field requires square-root closure; over constructive rationals it is correctly retained as explicit witness data rather
@@ -65,29 +67,29 @@ theorem spreadNumber_mem_unitInterval
   rcases spreadNumber with ⟨root, spreadSquare⟩
   have productNonnegative : 0 ≤ value * (1 - value) := by
     rw [spreadSquare]
-    exact Fraction.Order.Arithmetic.sq_nonneg_direct root
+    exact Arithmetic.sq_nonneg_direct root
   constructor
   · rcases lt_trichotomy value 0 with valueNegative | valueZero |
         valuePositive
     · have onePositive : (0 : Fraction.Rational) < 1 := by decide
       have valueLessOne : value < 1 := valueNegative.trans onePositive
       have complementPositive :=
-        Fraction.Order.Arithmetic.sub_pos_direct valueLessOne
+        Arithmetic.sub_pos_direct valueLessOne
       have productNegative :=
-        Fraction.Order.Arithmetic.mul_neg_of_neg_of_pos_direct valueNegative
+        Arithmetic.mul_neg_of_neg_of_pos_direct valueNegative
           complementPositive
       exact False.elim ((not_lt_of_ge productNonnegative) productNegative)
     · rw [valueZero]
-    · exact Fraction.Order.Arithmetic.le_of_lt_direct valuePositive
+    · exact Arithmetic.le_of_lt_direct valuePositive
   · rcases lt_trichotomy value 1 with valueLess | valueOne | valueGreater
-    · exact Fraction.Order.Arithmetic.le_of_lt_direct valueLess
+    · exact Arithmetic.le_of_lt_direct valueLess
     · exact valueOne.le
     · have valuePositive : (0 : Fraction.Rational) < value :=
         (by decide : (0 : Fraction.Rational) < 1).trans valueGreater
       have complementNegative :=
-        Fraction.Order.Arithmetic.sub_neg_direct valueGreater
+        Arithmetic.sub_neg_direct valueGreater
       have productNegative :=
-        Fraction.Order.Arithmetic.mul_neg_of_pos_of_neg_direct valuePositive
+        Arithmetic.mul_neg_of_pos_of_neg_direct valuePositive
           complementNegative
       exact False.elim ((not_lt_of_ge productNonnegative) productNegative)
 

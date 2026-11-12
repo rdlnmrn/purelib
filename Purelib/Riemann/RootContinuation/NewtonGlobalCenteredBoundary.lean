@@ -42,18 +42,18 @@ open Purelib.Riemann.Meshes.GridLiftedDualSteps (GridSide)
 open Purelib.Riemann.Meshes.PuncturedGridFaces (PuncturedFaces RegularFace)
 open Purelib.Algebra.FiniteSum.Fin (sumFin sumFin_congr sumFin_add sumFin_sub)
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve
     branches higher}
-  {preparation : NewtonPreparation original} {target radius : Purelib.Data.Rat.Fraction.Rational} {grid : NewtonGrid
+  {preparation : NewtonPreparation original} {target radius : Rational} {grid : NewtonGrid
     preparation target radius}
   {observations : ProtectedObservations original} {frames : RootIsolation.SquareRoot.Grid.RootFrames
     grid.shrunk.prepared.grid}
-  {domains : Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames
+  {domains : FaceDomainBank frames
     grid.faces.regulars} {partitions : SurfacePartitions observations grid}
   {coarse : (sheet : Fin 2) → SurfaceMeshes partitions domains sheet}
-  {fixed : (sheet : Fin 2) → Preflights domains sheet} {error : Purelib.Data.Rat.Fraction.Rational}
+  {fixed : (sheet : Fin 2) → Preflights domains sheet} {error : Rational}
   {stage : Nat} {cache : Numerics domains stage} {coefficients :
     LinearAlgebra.Gaussian.Energy.GaussianVector genus}
 
@@ -66,7 +66,7 @@ section
 open Purelib.Algebra
 /-- Sum the retained centered area of one actual face side over both sheets. -/
 @[expose] def centeredSideSum (side : GridSide) (position : Fin grid.faces.regulars.length) : Gaussian :=
-  FiniteSum.Fin.sumFin fun sheet : Fin 2 => match side with
+  sumFin fun sheet : Fin 2 => match side with
     | .bottom => ((samples.get sheet).get position).bottom.centeredArea
     | .right => ((samples.get sheet).get position).right.centeredArea
     | .top => ((samples.get sheet).get position).top.centeredArea
@@ -74,7 +74,7 @@ open Purelib.Algebra
 
 /-- Sum the retained endpoint term of one actual face side over both sheets. -/
 @[expose] def endpointSideSum (side : GridSide) (position : Fin grid.faces.regulars.length) : Gaussian :=
-  FiniteSum.Fin.sumFin fun sheet : Fin 2 => match side with
+  sumFin fun sheet : Fin 2 => match side with
     | .bottom => ((samples.get sheet).get position).bottom.endpoint
     | .right => ((samples.get sheet).get position).right.endpoint
     | .top => ((samples.get sheet).get position).top.endpoint
@@ -84,8 +84,8 @@ open Purelib.Algebra
 theorem side_decomposition (side : GridSide) (position : Fin grid.faces.regulars.length) :
     samples.sideSum side position = centeredSideSum samples side position + endpointSideSum samples side position := by
   unfold sideSum centeredSideSum endpointSideSum
-  rw [← FiniteSum.Fin.sumFin_add]
-  apply FiniteSum.Fin.sumFin_congr
+  rw [← sumFin_add]
+  apply sumFin_congr
   intro sheet
   cases side
   · exact ((samples.get sheet).get position).bottom.decomposition
@@ -99,32 +99,32 @@ section
 open Purelib.Algebra
 open Purelib.Data
 /-- Sum the signed outgoing-minus-incoming readings over actual matching ordered face pairs. -/
-private def pairSum (side : GridSide) (outgoing incoming : Fin grid.faces.regulars.length → Gaussian.Basic.Canonical) :
+private def pairSum (side : GridSide) (outgoing incoming : Fin grid.faces.regulars.length → Canonical) :
   Gaussian :=
-  FiniteSum.Fin.sumFin fun first => FiniteSum.Fin.sumFin fun last =>
+  sumFin fun first => sumFin fun last =>
     if side.Matches (grid.faces.regulars[first.val]'first.isLt).cell.box
       (grid.faces.regulars[last.val]'last.isLt).cell.box then outgoing first - incoming last else 0
 
 /-- Sum the signed outgoing-minus-incoming readings over actual matching ordered face pairs. -/
 @[expose] def pairSum_for_boundary (side : GridSide) (outgoing incoming : Fin grid.faces.regulars.length →
-  Gaussian.Basic.Canonical) : Gaussian :=
-  FiniteSum.Fin.sumFin fun first => FiniteSum.Fin.sumFin fun last =>
+  Canonical) : Gaussian :=
+  sumFin fun first => sumFin fun last =>
     if side.Matches (grid.faces.regulars[first.val]'first.isLt).cell.box
       (grid.faces.regulars[last.val]'last.isLt).cell.box then outgoing first - incoming last else 0
 
 /-- Pointwise centered and endpoint decompositions split the complete matching-pair sum. -/
 private theorem pairSum_split (side : GridSide)
     (first last firstCentered lastCentered firstEndpoint lastEndpoint : Fin grid.faces.regulars.length →
-      Gaussian.Basic.Canonical)
+      Canonical)
     (firstEq : ∀ position, first position = firstCentered position + firstEndpoint position)
     (lastEq : ∀ position, last position = lastCentered position + lastEndpoint position) :
     pairSum side first last = pairSum side firstCentered lastCentered + pairSum side firstEndpoint lastEndpoint := by
   unfold pairSum
-  rw [← FiniteSum.Fin.sumFin_add]
-  apply FiniteSum.Fin.sumFin_congr
+  rw [← sumFin_add]
+  apply sumFin_congr
   intro a
-  rw [← FiniteSum.Fin.sumFin_add]
-  apply FiniteSum.Fin.sumFin_congr
+  rw [← sumFin_add]
+  apply sumFin_congr
   intro b
   by_cases matching : side.Matches (grid.faces.regulars[a.val]'a.isLt).cell.box
     (grid.faces.regulars[b.val]'b.isLt).cell.box
@@ -135,17 +135,17 @@ private theorem pairSum_split (side : GridSide)
 /-- Pointwise centered and endpoint decompositions split the complete matching-pair sum. -/
 theorem pairSum_split_for_boundary (side : GridSide)
     (first last firstCentered lastCentered firstEndpoint lastEndpoint : Fin grid.faces.regulars.length →
-      Gaussian.Basic.Canonical)
+      Canonical)
     (firstEq : ∀ position, first position = firstCentered position + firstEndpoint position)
     (lastEq : ∀ position, last position = lastCentered position + lastEndpoint position) :
     pairSum_for_boundary side first last = pairSum_for_boundary side firstCentered lastCentered + pairSum_for_boundary
       side firstEndpoint lastEndpoint := by
   unfold pairSum_for_boundary
-  rw [← FiniteSum.Fin.sumFin_add]
-  apply FiniteSum.Fin.sumFin_congr
+  rw [← sumFin_add]
+  apply sumFin_congr
   intro a
-  rw [← FiniteSum.Fin.sumFin_add]
-  apply FiniteSum.Fin.sumFin_congr
+  rw [← sumFin_add]
+  apply sumFin_congr
   intro b
   by_cases matching : side.Matches (grid.faces.regulars[a.val]'a.isLt).cell.box
     (grid.faces.regulars[b.val]'b.isLt).cell.box
@@ -184,15 +184,15 @@ open Purelib.Data.Gaussian.Norm.Sum
 Each actual matching difference has squared norm at most the same nonnegative allowance; unmatched pairs contribute
 zero. -/
 private theorem pairSum_bound (side : GridSide)
-    (outgoing incoming : Fin grid.faces.regulars.length → Gaussian.Basic.Canonical) {allowance : Rat.Fraction.Rational}
+    (outgoing incoming : Fin grid.faces.regulars.length → Canonical) {allowance : Rational}
     (nonnegative : 0 ≤ allowance)
     (bounded : ∀ first last, side.Matches (grid.faces.regulars[first.val]'first.isLt).cell.box
       (grid.faces.regulars[last.val]'last.isLt).cell.box →
-      Data.Gaussian.Norm.Basic.normSq (outgoing first - incoming last) ≤ allowance) :
-    Data.Gaussian.Norm.Basic.normSq (pairSum side outgoing incoming) ≤
-      (grid.faces.regulars.length : Rat.Fraction.Rational)^4 * allowance := by
+      Basic.normSq (outgoing first - incoming last) ≤ allowance) :
+    Basic.normSq (pairSum side outgoing incoming) ≤
+      (grid.faces.regulars.length : Rational)^4 * allowance := by
   have pointwise (first last : Fin grid.faces.regulars.length) :
-      Data.Gaussian.Norm.Basic.normSq
+      Basic.normSq
         (if side.Matches (grid.faces.regulars[first.val]'first.isLt).cell.box
           (grid.faces.regulars[last.val]'last.isLt).cell.box then outgoing first - incoming last else 0) ≤ allowance :=
             by
@@ -205,7 +205,7 @@ private theorem pairSum_bound (side : GridSide)
   have rows (first : Fin grid.faces.regulars.length) :=
     Indexed.normSq_sumFin_le _ allowance (pointwise first)
   have total := Indexed.normSq_sumFin_le _
-    ((grid.faces.regulars.length : Rat.Fraction.Rational)^2 * allowance) rows
+    ((grid.faces.regulars.length : Rational)^2 * allowance) rows
   exact total.trans_eq (by ring1)
 
 /-- Bound a complete matching-pair sum by the fourth power of the regular face count.
@@ -213,15 +213,15 @@ private theorem pairSum_bound (side : GridSide)
 Each actual matching difference has squared norm at most the same nonnegative allowance; unmatched pairs contribute
 zero. -/
 theorem pairSum_bound_for_boundary (side : GridSide)
-    (outgoing incoming : Fin grid.faces.regulars.length → Gaussian.Basic.Canonical) {allowance : Rat.Fraction.Rational}
+    (outgoing incoming : Fin grid.faces.regulars.length → Canonical) {allowance : Rational}
     (nonnegative : 0 ≤ allowance)
     (bounded : ∀ first last, side.Matches (grid.faces.regulars[first.val]'first.isLt).cell.box
       (grid.faces.regulars[last.val]'last.isLt).cell.box →
-      Data.Gaussian.Norm.Basic.normSq (outgoing first - incoming last) ≤ allowance) :
-    Data.Gaussian.Norm.Basic.normSq (pairSum_for_boundary side outgoing incoming) ≤
-      (grid.faces.regulars.length : Rat.Fraction.Rational)^4 * allowance := by
+      Basic.normSq (outgoing first - incoming last) ≤ allowance) :
+    Basic.normSq (pairSum_for_boundary side outgoing incoming) ≤
+      (grid.faces.regulars.length : Rational)^4 * allowance := by
   have pointwise (first last : Fin grid.faces.regulars.length) :
-      Data.Gaussian.Norm.Basic.normSq
+      Basic.normSq
         (if side.Matches (grid.faces.regulars[first.val]'first.isLt).cell.box
           (grid.faces.regulars[last.val]'last.isLt).cell.box then outgoing first - incoming last else 0) ≤ allowance :=
             by
@@ -234,7 +234,7 @@ theorem pairSum_bound_for_boundary (side : GridSide)
   have rows (first : Fin grid.faces.regulars.length) :=
     Indexed.normSq_sumFin_le _ allowance (pointwise first)
   have total := Indexed.normSq_sumFin_le _
-    ((grid.faces.regulars.length : Rat.Fraction.Rational)^2 * allowance) rows
+    ((grid.faces.regulars.length : Rational)^2 * allowance) rows
   exact total.trans_eq (by ring1)
 
 end
@@ -246,17 +246,17 @@ open Purelib.Data.Rat.Fraction.Order in
 
 Horizontal and vertical contact estimates with one nonnegative allowance give four times the fourth power of the regular
 face count. -/
-theorem paired_error_bound {allowance : Rat.Fraction.Rational} (nonnegative : 0 ≤ allowance)
+theorem paired_error_bound {allowance : Rational} (nonnegative : 0 ≤ allowance)
     (horizontal : ∀ first last, GridSide.Matches .top (grid.faces.regulars[first.val]'first.isLt).cell.box
       (grid.faces.regulars[last.val]'last.isLt).cell.box →
-      Data.Gaussian.Norm.Basic.normSq
+      Basic.normSq
         (centeredSideSum samples .top first - centeredSideSum samples .bottom last) ≤ allowance)
     (vertical : ∀ first last, GridSide.Matches .right (grid.faces.regulars[first.val]'first.isLt).cell.box
       (grid.faces.regulars[last.val]'last.isLt).cell.box →
-      Data.Gaussian.Norm.Basic.normSq
+      Basic.normSq
         (centeredSideSum samples .right first - centeredSideSum samples .left last) ≤ allowance) :
-    Data.Gaussian.Norm.Basic.normSq (samples.paired - pairedEndpoints samples) ≤
-      4 * (grid.faces.regulars.length : Rat.Fraction.Rational)^4 * allowance := by
+    Basic.normSq (samples.paired - pairedEndpoints samples) ≤
+      4 * (grid.faces.regulars.length : Rational)^4 * allowance := by
   have equal : samples.paired - pairedEndpoints samples = pairedCentered samples := by
     rw [paired_decomposition samples]
     ring1
@@ -266,13 +266,13 @@ theorem paired_error_bound {allowance : Rat.Fraction.Rational} (nonnegative : 0 
   have top := pairSum_bound_for_boundary .top _ _ nonnegative horizontal
   exact (Bounds.normSq_sub_le_two _ _).trans
     ((Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (Arithmetic.add_le_add_direct right top) (by decide : (0 : Rat.Fraction.Rational) ≤ 2)).trans_eq (by ring1))
+      (Arithmetic.add_le_add_direct right top) (by decide : (0 : Rational) ≤ 2)).trans_eq (by ring1))
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.BranchCellBank.PuncturedFaces in
 open Purelib.Data in
 /-- The retained physical-neighbor readback preserves addition of side contributions. -/
 private theorem physicalValue_add {face : RegularFace grid.shrunk.prepared.toBranchCellBank} {side : GridSide}
-    (neighbor : PuncturedFaces.SideNeighbor grid.faces face side) (first last : Gaussian.Basic.Canonical) :
+    (neighbor : PuncturedFaces.SideNeighbor grid.faces face side) (first last : Canonical) :
     SideNeighbor.physicalValue neighbor (first + last) = SideNeighbor.physicalValue neighbor first +
       SideNeighbor.physicalValue neighbor last := by
   cases neighbor with
@@ -287,40 +287,40 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.NeighborPerimeterSums.Bra
 
 The original neighbor bank selects the physical contributions, preserving each face, side and sheet. -/
 @[expose] def physicalCentered (neighbors : PuncturedFaces.NeighborBank grid.faces) : Gaussian :=
-  FiniteSum.Fin.sumFin (fun p => SideNeighbor.physicalValue ((neighbors.entries.get p).right) (centeredSideSum samples
+  sumFin (fun p => SideNeighbor.physicalValue ((neighbors.entries.get p).right) (centeredSideSum samples
     .right p)) -
-    FiniteSum.Fin.sumFin (fun p => SideNeighbor.physicalValue ((neighbors.entries.get p).left) (centeredSideSum samples
+    sumFin (fun p => SideNeighbor.physicalValue ((neighbors.entries.get p).left) (centeredSideSum samples
       .left p)) -
-    (FiniteSum.Fin.sumFin (fun p => SideNeighbor.physicalValue ((neighbors.entries.get p).top) (centeredSideSum samples
+    (sumFin (fun p => SideNeighbor.physicalValue ((neighbors.entries.get p).top) (centeredSideSum samples
       .top p)) -
-      FiniteSum.Fin.sumFin (fun p => SideNeighbor.physicalValue ((neighbors.entries.get p).bottom) (centeredSideSum
+      sumFin (fun p => SideNeighbor.physicalValue ((neighbors.entries.get p).bottom) (centeredSideSum
         samples .bottom p)))
 
 /-- The oriented physical boundary sum of the actual retained endpoint terms.
 
 The original neighbor bank selects the same physical occurrences used by the complete perimeter reading. -/
 @[expose] def physicalEndpoints (neighbors : PuncturedFaces.NeighborBank grid.faces) : Gaussian :=
-  FiniteSum.Fin.sumFin (fun p => SideNeighbor.physicalValue ((neighbors.entries.get p).right) (endpointSideSum samples
+  sumFin (fun p => SideNeighbor.physicalValue ((neighbors.entries.get p).right) (endpointSideSum samples
     .right p)) -
-    FiniteSum.Fin.sumFin (fun p => SideNeighbor.physicalValue ((neighbors.entries.get p).left) (endpointSideSum samples
+    sumFin (fun p => SideNeighbor.physicalValue ((neighbors.entries.get p).left) (endpointSideSum samples
       .left p)) -
-    (FiniteSum.Fin.sumFin (fun p => SideNeighbor.physicalValue ((neighbors.entries.get p).top) (endpointSideSum samples
+    (sumFin (fun p => SideNeighbor.physicalValue ((neighbors.entries.get p).top) (endpointSideSum samples
       .top p)) -
-      FiniteSum.Fin.sumFin (fun p => SideNeighbor.physicalValue ((neighbors.entries.get p).bottom) (endpointSideSum
+      sumFin (fun p => SideNeighbor.physicalValue ((neighbors.entries.get p).bottom) (endpointSideSum
         samples .bottom p)))
 
 /-- The actual physical perimeter reading splits into its centered and endpoint sums. -/
 theorem physical_decomposition (neighbors : PuncturedFaces.NeighborBank grid.faces) :
     samples.physical neighbors = physicalCentered samples neighbors + physicalEndpoints samples neighbors := by
   have split (side : GridSide) :
-      FiniteSum.Fin.sumFin (fun p => SideNeighbor.physicalValue (FaceNeighbors.at (neighbors.entries.get p) side)
+      sumFin (fun p => SideNeighbor.physicalValue (FaceNeighbors.at (neighbors.entries.get p) side)
         (samples.sideSum side p)) =
-        FiniteSum.Fin.sumFin (fun p => SideNeighbor.physicalValue (FaceNeighbors.at (neighbors.entries.get p) side)
+        sumFin (fun p => SideNeighbor.physicalValue (FaceNeighbors.at (neighbors.entries.get p) side)
           (centeredSideSum samples side p)) +
-          FiniteSum.Fin.sumFin (fun p => SideNeighbor.physicalValue (FaceNeighbors.at (neighbors.entries.get p) side)
+          sumFin (fun p => SideNeighbor.physicalValue (FaceNeighbors.at (neighbors.entries.get p) side)
             (endpointSideSum samples side p)) := by
-    rw [← FiniteSum.Fin.sumFin_add]
-    apply FiniteSum.Fin.sumFin_congr
+    rw [← sumFin_add]
+    apply sumFin_congr
     intro p
     rw [side_decomposition samples side p, physicalValue_add]
   have bottom := split .bottom

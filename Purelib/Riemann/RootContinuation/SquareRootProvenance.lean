@@ -71,6 +71,14 @@ def SquareIdentity (channel : Name.Coherent.CoherentNamed) (parameter : Basic.Ca
   Equivalence.NamedEquivalent (Name.Coherent.CoherentNamed.mul channel channel).name
     (Name.Coherent.CoherentNamed.Coherence.exact parameter).name
 
+/-- An exact Gaussian-rational channel's retained square identity implies its original scalar equation. -/
+theorem squareIdentity_exact_eq {point parameter : Basic.Canonical}
+    (identity : SquareIdentity (Name.Coherent.CoherentNamed.Coherence.exact point) parameter) :
+    point * point = parameter :=
+  let exactProduct := Name.Coherent.Exact.Arithmetic.exact_mul point point
+  let comparison := Equivalence.NamedEquivalent.trans (Equivalence.NamedEquivalent.symm exactProduct) identity
+  comparison.constant_samples_eq (point * point) parameter (fun _ => rfl) (fun _ => rfl)
+
 /-- Transport the retained named square identity to the original sampled product approximation. -/
 def sampled_square {channel : Name.Coherent.CoherentNamed} {parameter : Basic.Canonical}
     (square : SquareIdentity channel parameter) :
@@ -83,6 +91,19 @@ def sampled_square {channel : Name.Coherent.CoherentNamed} {parameter : Basic.Ca
     (Equivalence.NamedEquivalent.trans
       (Equivalence.NamedEquivalent.symm
         (Name.Coherent.Arithmetic.Product.Bridge.coherentMul_toNamed channel channel)) square)
+
+/-- Constant witness samples of a channel with retained square identity satisfy the same exact scalar equation. -/
+theorem squareIdentity_constant_eq {channel : Name.Coherent.CoherentNamed} {point parameter : Basic.Canonical}
+    (identity : SquareIdentity channel parameter)
+    (sampleEq : ∀ index, (Name.Sampling.approximation channel.name).sample index = point) :
+    point * point = parameter := by
+  apply (sampled_square identity).constant_samples_eq (point * point) parameter
+  · intro index
+    change (Name.Sampling.approximation channel.name).sample index *
+      (Name.Sampling.approximation channel.name).sample index = point * point
+    exact congrArg (fun value => value * value) (sampleEq index)
+  · intro _
+    rfl
 
 end
 

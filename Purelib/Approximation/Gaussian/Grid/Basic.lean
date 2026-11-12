@@ -55,6 +55,7 @@ denominator grid. -/
 @[simp] theorem gridFraction_value_re (center : Data.Gaussian.Basic.Canonical) (radius : Fraction.Rational) :
     (gridFraction center radius).value.re =
       Grid.Basic.gridCoordinate center.re (Grid.Basic.gridDenominator radius) := by
+  rewrite [NaturalDenominator.value_eq]
   simp only [gridFraction, Grid.Basic.gridCoordinate,
     Fraction.Arithmetic.normalizedDiv_eq,
     Fraction.Arithmetic.normalizedMul_eq]
@@ -65,6 +66,7 @@ denominator grid. -/
 @[simp] theorem gridFraction_value_im (center : Data.Gaussian.Basic.Canonical) (radius : Fraction.Rational) :
     (gridFraction center radius).value.im =
       Grid.Basic.gridCoordinate center.im (Grid.Basic.gridDenominator radius) := by
+  rewrite [NaturalDenominator.value_eq]
   simp only [gridFraction, Grid.Basic.gridCoordinate,
     Fraction.Arithmetic.normalizedDiv_eq,
     Fraction.Arithmetic.normalizedMul_eq]

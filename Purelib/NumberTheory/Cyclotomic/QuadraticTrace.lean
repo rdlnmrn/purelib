@@ -12,6 +12,9 @@ public import Purelib.Polynomial.Ascending.Integer.QuadraticTrace.Reduction
 import Purelib.Tactic.QuotientFreeOmega
 import Mathlib.Algebra.Ring.Defs
 
+open Purelib.Polynomial.Ascending.Integer.QuadraticTrace.Reduction
+open Purelib.Algebra.Quadratic
+
 open Purelib.Algebra.Field
 
 open Purelib.NumberTheory
@@ -50,59 +53,59 @@ theorem
   ExerciseEightThirteen.IntegerPolynomial.eval_norm_cyclotomic_factorization
     (number : Nat) (positive : 0 < number) (trace : K) :
     Ascending.Integer.Basic.eval
-        (Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.normCoefficients
+        (IntegerPolynomial.normCoefficients
           (Ascending.Integer.PowerMinusOne.IntegerPolynomial.powerMinusOneCoefficients
             number)) trace =
       Ascending.Integer.Basic.eval
-          (Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.normCoefficients
-            (Cyclotomic.Integer.properCyclotomicProductCoefficients
+          (IntegerPolynomial.normCoefficients
+            (Integer.properCyclotomicProductCoefficients
               number)) trace *
         Ascending.Integer.Basic.eval
-          (Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.normCoefficients
-            (Cyclotomic.Integer.cyclotomicCoefficients number))
+          (IntegerPolynomial.normCoefficients
+            (Integer.cyclotomicCoefficients number))
           trace := open Purelib in by
   have pairIdentity :=
-    Algebra.Quadratic.TracePair.eval_eq_of_ofAscending_eq
-      (Cyclotomic.Integer.cyclotomic_factorization_coefficients
+    TracePair.eval_eq_of_ofAscending_eq
+      (Integer.cyclotomic_factorization_coefficients
         number positive) trace
-  rw [Algebra.Quadratic.TracePair.eval_mul] at pairIdentity
+  rw [TracePair.eval_mul] at pairIdentity
   calc
     Ascending.Integer.Basic.eval
-        (Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.normCoefficients
+        (IntegerPolynomial.normCoefficients
           (Ascending.Integer.PowerMinusOne.IntegerPolynomial.powerMinusOneCoefficients
             number)) trace =
-      Algebra.Quadratic.TracePair.norm trace
-        (Algebra.Quadratic.TracePair.eval
+      TracePair.norm trace
+        (TracePair.eval
           (Ascending.Integer.PowerMinusOne.IntegerPolynomial.powerMinusOneCoefficients
             number) trace) :=
-        Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.eval_normCoefficients _ _
-    _ = Algebra.Quadratic.TracePair.norm trace
-        (Algebra.Quadratic.TracePair.mul trace
-          (Algebra.Quadratic.TracePair.eval
-            (Cyclotomic.Integer.properCyclotomicProductCoefficients
+        IntegerPolynomial.eval_normCoefficients _ _
+    _ = TracePair.norm trace
+        (TracePair.mul trace
+          (TracePair.eval
+            (Integer.properCyclotomicProductCoefficients
               number) trace)
-          (Algebra.Quadratic.TracePair.eval
-            (Cyclotomic.Integer.cyclotomicCoefficients number)
+          (TracePair.eval
+            (Integer.cyclotomicCoefficients number)
             trace)) := by rw [pairIdentity]
-    _ = Algebra.Quadratic.TracePair.norm trace
-          (Algebra.Quadratic.TracePair.eval
-            (Cyclotomic.Integer.properCyclotomicProductCoefficients
+    _ = TracePair.norm trace
+          (TracePair.eval
+            (Integer.properCyclotomicProductCoefficients
               number) trace) *
-        Algebra.Quadratic.TracePair.norm trace
-          (Algebra.Quadratic.TracePair.eval
-            (Cyclotomic.Integer.cyclotomicCoefficients number)
+        TracePair.norm trace
+          (TracePair.eval
+            (Integer.cyclotomicCoefficients number)
             trace) :=
-      Algebra.Quadratic.TracePair.norm_mul _ _ _
+      TracePair.norm_mul _ _ _
     _ = Ascending.Integer.Basic.eval
-          (Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.normCoefficients
-            (Cyclotomic.Integer.properCyclotomicProductCoefficients
+          (IntegerPolynomial.normCoefficients
+            (Integer.properCyclotomicProductCoefficients
               number)) trace *
         Ascending.Integer.Basic.eval
-          (Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.normCoefficients
-            (Cyclotomic.Integer.cyclotomicCoefficients number))
+          (IntegerPolynomial.normCoefficients
+            (Integer.cyclotomicCoefficients number))
           trace := by
-      rw [Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.eval_normCoefficients,
-        Ascending.Integer.QuadraticTrace.Reduction.IntegerPolynomial.eval_normCoefficients]
+      rw [IntegerPolynomial.eval_normCoefficients,
+        IntegerPolynomial.eval_normCoefficients]
 end IntegerPolynomial
 end ExerciseEightThirteen
 end Purelib.NumberTheory.Cyclotomic.QuadraticTrace

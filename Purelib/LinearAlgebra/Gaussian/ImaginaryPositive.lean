@@ -51,13 +51,13 @@ namespace Purelib.LinearAlgebra.Gaussian.ImaginaryPositive
 set_option genInjectivity false in
 /-- Exact finite matrix form of the two Riemann conclusions. -/
 structure RiemannMatrixWitness (size : Nat) where
-  /-- The retained Gaussian matrix. -/ omega : LinearAlgebra.Gaussian.QuadraticForm.ExactGaussianMatrix size
+  /-- The retained Gaussian matrix. -/ omega : QuadraticForm.ExactGaussianMatrix size
   /-- The retained matrix is symmetric under transposition. -/ symmetric : forall row column, omega row column = omega
     column row
   /-- Its imaginary quadratic form is positive on every vector with a retained nonzero coordinate. -/ positive : forall
-    (vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector size),
-    LinearAlgebra.Gaussian.QuadraticForm.NonzeroVector vector ->
-      0 < LinearAlgebra.Gaussian.QuadraticForm.imaginaryQuadraticForm vector omega
+    (vector : QuadraticForm.RationalVector size),
+    QuadraticForm.NonzeroVector vector ->
+      0 < QuadraticForm.imaginaryQuadraticForm vector omega
 
 constructive_injectivity RiemannMatrixWitness
 
@@ -66,9 +66,9 @@ namespace RiemannMatrixWitness
 /-- Explicit positive rational evidence returned for a nonzero vector. -/
 def requestedMargin {size : Nat}
     (witness : RiemannMatrixWitness size)
-    (vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector size) :
+    (vector : QuadraticForm.RationalVector size) :
     Fraction.Rational :=
-  LinearAlgebra.Gaussian.QuadraticForm.imaginaryQuadraticForm vector witness.omega / 2
+  QuadraticForm.imaginaryQuadraticForm vector witness.omega / 2
 
 /-- Half of a positive rational is strictly less than that rational. -/
 private theorem exact_half_lt_self {value :
@@ -86,8 +86,8 @@ private theorem exact_half_lt_self {value :
 theorem requestedMargin_positive {size :
   Nat}
     (witness : RiemannMatrixWitness size)
-    (vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector size)
-    (nonzero : LinearAlgebra.Gaussian.QuadraticForm.NonzeroVector vector) :
+    (vector : QuadraticForm.RationalVector size)
+    (nonzero : QuadraticForm.NonzeroVector vector) :
     0 < witness.requestedMargin vector :=
   Fraction.Order.Field.div_pos_direct (witness.positive vector nonzero)
     (by decide)
@@ -96,10 +96,10 @@ theorem requestedMargin_positive {size :
 theorem requestedMargin_lt_form {size :
   Nat}
     (witness : RiemannMatrixWitness size)
-    (vector : LinearAlgebra.Gaussian.QuadraticForm.RationalVector size)
-    (nonzero : LinearAlgebra.Gaussian.QuadraticForm.NonzeroVector vector) :
+    (vector : QuadraticForm.RationalVector size)
+    (nonzero : QuadraticForm.NonzeroVector vector) :
     witness.requestedMargin vector <
-      LinearAlgebra.Gaussian.QuadraticForm.imaginaryQuadraticForm vector witness.omega :=
+      QuadraticForm.imaginaryQuadraticForm vector witness.omega :=
   exact_half_lt_self (witness.positive vector nonzero)
 
 end RiemannMatrixWitness

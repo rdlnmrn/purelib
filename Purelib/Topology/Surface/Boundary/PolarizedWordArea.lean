@@ -25,6 +25,9 @@ public import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Readings.EdgeMag
 import Purelib.Curves.Hyperelliptic.Branches.FramedBranchCellBank
 import Purelib.Tactic.Ring
 
+open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity
+open Purelib.Integration.Path
+
 open Purelib
 
 public section
@@ -45,99 +48,99 @@ open _root_.Purelib.Data.Gaussian.Norm.Sum.Basic (gaussianSum)
 
 /-- Summing paired edge increments gives the two original ordered word totals. -/
 private theorem paired_total {vertices : Nat}
-    (first second : OrientedEdge vertices → Data.Gaussian.Basic.Canonical) (word : List (OrientedEdge vertices)) :
-    Integration.Path.PairedIncrementArea.total (word.map (fun edge =>
+    (first second : OrientedEdge vertices → Canonical) (word : List (OrientedEdge vertices)) :
+    PairedIncrementArea.total (word.map (fun edge =>
       (⟨first edge, second edge⟩ : PrimitivePoint))) =
-      ⟨wordValue first word, Purelib.Topology.Surface.Sewing.SewingRetraction.wordValue second word⟩ := by
+      ⟨wordValue first word, wordValue second word⟩ := by
   induction word with
   | nil => rfl
   | cons edge rest ih =>
     change (⟨first edge, second edge⟩ : PrimitivePoint).add
-      (Integration.Path.PairedIncrementArea.total (rest.map (fun e => ⟨first e, second e⟩))) = _
+      (PairedIncrementArea.total (rest.map (fun e => ⟨first e, second e⟩))) = _
     rw [ih]
     rfl
 
 /-- This is an equality of full areas, with no closure or vanishing-total assumption. Its right side is the increment
 area retained by Newton cut boundary comparisons. -/
 theorem extract_wordArea_mix {vertices : Nat}
-    (first second : OrientedEdge vertices → Data.Gaussian.Basic.Canonical) (word : List (OrientedEdge vertices)) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-      Topology.Mesh.RetracingWords.wordArea
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second
+    (first second : OrientedEdge vertices → Canonical) (word : List (OrientedEdge vertices)) :
+    BilinearPolarization.extract (fun coefficient =>
+      wordArea
+      (BilinearPolarization.mix first second
       coefficient) word) =
-      Integration.Path.PairedIncrementArea.area (word.map (fun edge =>
+      PairedIncrementArea.area (word.map (fun edge =>
         (⟨first edge, second edge⟩ : PrimitivePoint))) := by
   induction word with
   | nil =>
-    change (⟨1 / 4, 0⟩ : Data.Gaussian.Basic.Canonical) * (0 - 0 -
-      Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.imaginary * (0 - 0)) = 0
+    change (⟨1 / 4, 0⟩ : Canonical) * (0 - 0 -
+      BilinearPolarization.imaginary * (0 - 0)) = 0
     ring1
   | cons edge rest ih =>
-    have split (coefficient : Data.Gaussian.Basic.Canonical) :
-        Topology.Mesh.RetracingWords.wordArea
-          (Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second
+    have split (coefficient : Canonical) :
+        wordArea
+          (BilinearPolarization.mix first second
           coefficient) (edge :: rest) =
-          Topology.Mesh.RetracingWords.wordArea
-            (Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second
+          wordArea
+            (BilinearPolarization.mix first second
             coefficient) rest +
-          Integration.Path.BoundaryRibbon.area
-            (Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second
+          BoundaryRibbon.area
+            (BilinearPolarization.mix first second
             coefficient edge)
-            (Topology.Surface.Sewing.SewingRetraction.wordValue
-              (Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second
+            (wordValue
+              (BilinearPolarization.mix first second
               coefficient) rest) := by
-      exact (Integration.Path.IncrementArea.pathArea_cons _ _).trans
-        (congrArg (fun total => Topology.Mesh.RetracingWords.wordArea
-          (Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second
+      exact (IncrementArea.pathArea_cons _ _).trans
+        (congrArg (fun total => wordArea
+          (BilinearPolarization.mix first second
           coefficient) rest +
-          Integration.Path.BoundaryRibbon.area
-            (Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second
+          BoundaryRibbon.area
+            (BilinearPolarization.mix first second
             coefficient edge) total)
-          (Topology.Mesh.RetracingWords.sum_map_eq_wordValue _ rest))
+          (Mesh.RetracingWords.sum_map_eq_wordValue _ rest))
     have distribute :
-        Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient
-          => Topology.Mesh.RetracingWords.wordArea
-          (Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second
+        BilinearPolarization.extract (fun coefficient
+          => wordArea
+          (BilinearPolarization.mix first second
           coefficient) (edge :: rest)) =
-          Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun
-            coefficient => Topology.Mesh.RetracingWords.wordArea
-            (Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second
+          BilinearPolarization.extract (fun
+            coefficient => wordArea
+            (BilinearPolarization.mix first second
             coefficient) rest) +
-          Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun
-            coefficient => Integration.Path.BoundaryRibbon.area
-            (Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second
+          BilinearPolarization.extract (fun
+            coefficient => BoundaryRibbon.area
+            (BilinearPolarization.mix first second
             coefficient edge)
-            (Topology.Surface.Sewing.SewingRetraction.wordValue
-              (Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second
+            (wordValue
+              (BilinearPolarization.mix first second
               coefficient) rest)) := by
-      refine (Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract_congr
+      refine (BilinearPolarization.extract_congr
         split).trans ?_
-      unfold Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract
+      unfold BilinearPolarization.extract
       ring1
     rw [distribute, ih]
-    have crossed : Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun
+    have crossed : BilinearPolarization.extract (fun
       coefficient =>
-        Integration.Path.BoundaryRibbon.area
-          (Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second
+        BoundaryRibbon.area
+          (BilinearPolarization.mix first second
           coefficient edge)
-          (Topology.Surface.Sewing.SewingRetraction.wordValue
-            (Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second
+          (wordValue
+            (BilinearPolarization.mix first second
             coefficient) rest)) =
-        first edge * Topology.Surface.Sewing.SewingRetraction.wordValue second rest -
-          Topology.Surface.Sewing.SewingRetraction.wordValue first rest * second edge := by
-      refine (Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract_congr (fun
+        first edge * wordValue second rest -
+          wordValue first rest * second edge := by
+      refine (BilinearPolarization.extract_congr (fun
         coefficient => ?_)).trans
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract_area (first
-          edge) (Topology.Surface.Sewing.SewingRetraction.wordValue first rest) (second edge)
-          (Topology.Surface.Sewing.SewingRetraction.wordValue second rest))
-      rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.word_mix]
+        (BilinearPolarization.extract_area (first
+          edge) (wordValue first rest) (second edge)
+          (wordValue second rest))
+      rw [BilinearPolarization.word_mix]
       rfl
     rw [crossed]
-    change _ = Topology.Polygon.Stokes.edgeArea (⟨first edge, second edge⟩ : PrimitivePoint)
-      (Integration.Path.PairedIncrementArea.total (rest.map (fun e => ⟨first e, second e⟩))) +
-      Integration.Path.PairedIncrementArea.area (rest.map (fun e => ⟨first e, second e⟩))
+    change _ = Polygon.Stokes.edgeArea (⟨first edge, second edge⟩ : PrimitivePoint)
+      (PairedIncrementArea.total (rest.map (fun e => ⟨first e, second e⟩))) +
+      PairedIncrementArea.area (rest.map (fun e => ⟨first e, second e⟩))
     rw [paired_total]
-    unfold Topology.Polygon.Stokes.edgeArea
+    unfold Polygon.Stokes.edgeArea
     ring1
 
 end Purelib.Topology.Surface.Boundary.PolarizedWordArea.BilinearPolarization
@@ -157,31 +160,31 @@ open _root_.Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Readings (EdgeMagn
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues (edgeValuation)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus}
+variable {genus : Nat} {curve : HyperellipticCurve genus}
   {owner : OwnedPuncturedMesh curve}
 
 /-- Read the polarized area of actual supported mixed face readings as the paired increment area used in the
 physical-boundary estimates. -/
 theorem extract_wordArea_mixValues
-    (leftValues rightValues : Fin owner.mesh.triangles.length → Topology.Surface.Sewing.PrimitiveSewing.PrimitiveValues
+    (leftValues rightValues : Fin owner.mesh.triangles.length → PrimitiveValues
       3)
     (source : List (OrientedEdge owner.vertices.count))
     (supported : ∀ edge ∈ source, edge ∈ triangleEdgeOccurrences owner.mesh.triangulation.faces ∨
       edge.reverse ∈ triangleEdgeOccurrences owner.mesh.triangulation.faces) :
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-      Topology.Mesh.RetracingWords.wordArea
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation owner.mesh (EdgeMagnitude.mixValues
+    BilinearPolarization.extract (fun coefficient =>
+      wordArea
+      (edgeValuation owner.mesh (EdgeMagnitude.mixValues
         (owner := owner) leftValues rightValues coefficient)) source) =
-      Integration.Path.PairedIncrementArea.area (source.map (fun edge =>
-        (⟨Curves.Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation owner.mesh leftValues edge,
-          Curves.Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation owner.mesh rightValues edge⟩ :
+      PairedIncrementArea.area (source.map (fun edge =>
+        (⟨edgeValuation owner.mesh leftValues edge,
+          edgeValuation owner.mesh rightValues edge⟩ :
             PrimitivePoint))) := by
-  refine (Curves.Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract_congr (fun
+  refine (BilinearPolarization.extract_congr (fun
     coefficient => ?_)).trans
     (BilinearPolarization.extract_wordArea_mix
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation owner.mesh leftValues)
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.CanonicalEdgeValues.edgeValuation owner.mesh rightValues) source)
-  apply congrArg Integration.Path.IncrementArea.pathArea
+      (edgeValuation owner.mesh leftValues)
+        (edgeValuation owner.mesh rightValues) source)
+  apply congrArg IncrementArea.pathArea
   induction source with
   | nil => rfl
   | cons edge rest ih =>
@@ -204,36 +207,36 @@ The two edge-value functions supply the original increments of each retained
 word. Structural recursion preserves every word and repeated signed occurrence;
 the pointwise polarization law identifies each head area and retains the tail. -/
 theorem extract_word_sum {Item : Type} {vertices : Nat}
-    (first second : Topology.Polygon.Stokes.OrientedEdge vertices → Gaussian.Basic.Canonical) (words : Item → List
-      (Topology.Polygon.Stokes.OrientedEdge vertices)) (items : List Item) :
-    Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-      Purelib.Polynomial.Geometry.Grid.CellBoundary.sumValues (fun item => Topology.Mesh.RetracingWords.wordArea
-      (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient)
+    (first second : Polygon.Stokes.OrientedEdge vertices → Gaussian.Basic.Canonical) (words : Item → List
+      (Polygon.Stokes.OrientedEdge vertices)) (items : List Item) :
+    BilinearPolarization.extract (fun coefficient =>
+      Geometry.Grid.CellBoundary.sumValues (fun item => Mesh.RetracingWords.wordArea
+      (BilinearPolarization.mix first second coefficient)
       (words item)) items) =
-      Purelib.Polynomial.Geometry.Grid.CellBoundary.sumValues (fun item =>
-        Purelib.Integration.Path.PairedIncrementArea.area ((words item).map (fun edge =>
-        (⟨first edge, second edge⟩ : Topology.Polygon.Stokes.PrimitivePoint)))) items := by
+      Geometry.Grid.CellBoundary.sumValues (fun item =>
+        PairedIncrementArea.area ((words item).map (fun edge =>
+        (⟨first edge, second edge⟩ : Polygon.Stokes.PrimitivePoint)))) items := by
   induction items with
   | nil =>
       change (⟨1 / 4, 0⟩ : Gaussian.Basic.Canonical) * (0 - 0 -
-        Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.imaginary * (0 - 0)) = 0
+        BilinearPolarization.imaginary * (0 - 0)) = 0
       ring1
   | cons item rest ih =>
-      have split : Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun
-        coefficient => Polynomial.Geometry.Grid.CellBoundary.sumValues (fun item =>
-        Topology.Mesh.RetracingWords.wordArea
-        (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second coefficient)
+      have split : BilinearPolarization.extract (fun
+        coefficient => Geometry.Grid.CellBoundary.sumValues (fun item =>
+        Mesh.RetracingWords.wordArea
+        (BilinearPolarization.mix first second coefficient)
         (words item)) (item :: rest)) =
-          Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-            Topology.Mesh.RetracingWords.wordArea
-            (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second
+          BilinearPolarization.extract (fun coefficient =>
+            Mesh.RetracingWords.wordArea
+            (BilinearPolarization.mix first second
             coefficient) (words item)) +
-          Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract (fun coefficient =>
-            Polynomial.Geometry.Grid.CellBoundary.sumValues (fun item => Topology.Mesh.RetracingWords.wordArea
-            (Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.mix first second
+          BilinearPolarization.extract (fun coefficient =>
+            Geometry.Grid.CellBoundary.sumValues (fun item => Mesh.RetracingWords.wordArea
+            (BilinearPolarization.mix first second
             coefficient) (words item)) rest) := by
-        unfold Hyperelliptic.Meshes.PuncturedGrid.Paired.BilinearIdentity.BilinearPolarization.extract
-        dsimp only [Polynomial.Geometry.Grid.CellBoundary.sumValues]
+        unfold BilinearPolarization.extract
+        dsimp only [Geometry.Grid.CellBoundary.sumValues]
         ring1
       rw [split, extract_wordArea_mix, ih]
       rfl

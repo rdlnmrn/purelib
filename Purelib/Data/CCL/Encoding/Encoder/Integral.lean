@@ -12,6 +12,7 @@ import Purelib.Data.GaussianInt.Cancellation
 import Purelib.Data.GaussianInt.Fraction.Basic
 import Purelib.Data.GaussianInt.Projective
 import Purelib.Data.List.BinaryPrefix.Basic
+import Purelib.Data.List.Append
 import Purelib.Geometry.Projective.GaussianInt.Embedding
 import Purelib.Geometry.Projective.Line.Basic
 import Purelib.Geometry.Projective.Line.Matrix
@@ -24,6 +25,8 @@ import Purelib.Data.GaussianInt.Embedding
 import Purelib.Data.ComplexContinuedFraction.Encoding.Sector.Integral
 import Purelib.Data.ComplexContinuedFraction.Encoding.Sector.Code
 import Purelib.Tactic.Ring
+
+open Purelib.Data.GaussianInt.Fraction.Basic
 
 section
 public section
@@ -38,7 +41,7 @@ set_option genInjectivity false in
 
 The reconstruction witness belongs to the stored matrix acting on infinity and the original numerator-denominator pair.
 The word and matrix remain the exact outputs of the retained encoder. -/
-structure CompleteEncoding (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias) where
+structure CompleteEncoding (fraction : SourceEncodingEncoderFracAlias) where
   /-- The exact finite bit word returned by this encoding. -/ word : BinaryPrefix.Basic.SourceEncodingEncoderWordAlias
   /-- The retained integral matrix associated with the encoding. -/ matrix :
     Matrix2.SourceEncodingEncoderIntegralMat2Alias
@@ -93,15 +96,15 @@ open Purelib.LinearAlgebra.Coordinates2 renaming Matrix -> Matrix2 in
 The matrix and reconstruction witness come from the original well-founded recursion on denominator norm. The returned
 word uses the selected sector code followed by the separately computed annulus block continuation; terminal residuals
 and nonterminal normalizations retain their original branches. -/
-@[expose] def encodeTail (annulus : Annulus) : Encoder.Integral.TailEncoding annulus :=
+@[expose] def encodeTail (annulus : Annulus) : TailEncoding annulus :=
   let core := coreHere annulus
-  { word := (ComplexContinuedFraction.Encoding.Sector.select annulus.frac.value).code ++
-      Block.Basic.rawWord (Encoder.Annulus.Blocks.encodeAnnulusBlocks annulus).continuation
+  { word := (Sector.select annulus.frac.value).code ++
+      Block.Basic.rawWord (Annulus.Blocks.encodeAnnulusBlocks annulus).continuation
     matrix := core.matrix
     reconstruct := core.reconstruct }
 where
-  coreHere (current : Annulus) : Encoder.Integral.TailEncoding current :=
-    let sector := ComplexContinuedFraction.Encoding.Sector.select current.frac.value
+  coreHere (current : Annulus) : TailEncoding current :=
+    let sector := Sector.select current.frac.value
     let residual := current.frac.numerator - Sector.Integral.sectorInt sector * current.frac.denominator
     if residualZero : residual = 0 then
       ⟨sector.code, Block.Integral.sectorMatrixInt sector, by
@@ -124,9 +127,9 @@ where
           Line.Proj.omega]
         ring1⟩
     else
-      let post := Encoder.Annulus.postInversion current (by
+      let post := Annulus.postInversion current (by
         simpa only [residual, sector] using residualZero)
-      let normalized := Encoder.Annulus.normalizeLoop post.frac (GaussianInt.normNat current.frac.denominator)
+      let normalized := Annulus.normalizeLoop post.frac (GaussianInt.normNat current.frac.denominator)
         post.den_descent rfl
       let tail := coreHere normalized.annulus
       let factor := Matrix2.mul (Block.Integral.sectorMatrixInt sector)
@@ -195,13 +198,13 @@ open Purelib.LinearAlgebra.Coordinates2 renaming Matrix -> Matrix2 in
 
 The exact norm comparison selects high or low normalization. Retain the selected initial header and radial matrix, then
 compose with the annulus tail matrix and its original reconstruction witness. -/
-@[expose] def encodeResult (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias) (numeratorNonzero :
+@[expose] def encodeResult (fraction : SourceEncodingEncoderFracAlias) (numeratorNonzero :
   fraction.numerator ≠ 0) :
-    Encoder.Integral.CompleteEncoding fraction :=
-  let finishHere : {current : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias} →
-    Encoder.Normalization.InitialResult current →
-      Encoder.Integral.CompleteEncoding current := fun {current} initial =>
-    let tail := Encoder.Integral.encodeTail initial.annulus
+    CompleteEncoding fraction :=
+  let finishHere : {current : SourceEncodingEncoderFracAlias} →
+    Normalization.InitialResult current →
+      CompleteEncoding current := fun {current} initial =>
+    let tail := encodeTail initial.annulus
     let matrix := Matrix2.mul initial.radial tail.matrix
     ⟨initial.header ++ tail.word, matrix, by
       dsimp only [matrix]
@@ -211,9 +214,9 @@ compose with the annulus tail matrix and its original reconstruction witness. -/
       exact GaussianInt.equivalent_trans_of_mid_q acted
         initial.radial_reconstruct initial.radial_den_ne⟩
   if highBranch : 2 * GaussianInt.normNat fraction.denominator ≤ GaussianInt.normNat fraction.numerator then
-    finishHere (Encoder.Normalization.initialHigh fraction numeratorNonzero highBranch)
+    finishHere (Normalization.initialHigh fraction numeratorNonzero highBranch)
   else
-    finishHere (Encoder.Normalization.initialLow fraction numeratorNonzero
+    finishHere (Normalization.initialLow fraction numeratorNonzero
       (Nat.lt_of_not_ge highBranch))
 end Purelib.Data.CCL.Encoding.Encoder.Integral
 
@@ -227,9 +230,9 @@ open Purelib.Data in
 open Purelib.Data.CCL.Encoding in
 open Purelib.Data.List in
 /-- Read the exact finite bit word computed for a displayed fraction with nonzero numerator. -/
-@[expose] def encode (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias) (numeratorNonzero :
+@[expose] def encode (fraction : SourceEncodingEncoderFracAlias) (numeratorNonzero :
   fraction.numerator ≠ 0) : BinaryPrefix.Basic.SourceEncodingEncoderWordAlias :=
-  (Encoder.Integral.encodeResult fraction numeratorNonzero).word
+  (encodeResult fraction numeratorNonzero).word
 end Purelib.Data.CCL.Encoding.Encoder.Integral
 
 end
@@ -245,9 +248,9 @@ open Purelib.Data.ComplexContinuedFraction.Encoding in
 The displayed fraction, selected annulus and retained integral matrix remain fixed. The claim transports their explicit
 coordinate identities and reconstruction evidence. -/
 theorem encodeTail_word_eq (annulus : Annulus) :
-    (Encoder.Integral.encodeTail annulus).word =
-      (ComplexContinuedFraction.Encoding.Sector.select annulus.frac.value).code ++
-        Block.Basic.rawWord (Encoder.Annulus.Blocks.encodeAnnulusBlocks annulus).continuation := rfl
+    (encodeTail annulus).word =
+      (Sector.select annulus.frac.value).code ++
+        Block.Basic.rawWord (Annulus.Blocks.encodeAnnulusBlocks annulus).continuation := rfl
 end Purelib.Data.CCL.Encoding.Encoder.Integral
 
 end
@@ -264,33 +267,33 @@ open Purelib.Geometry.Projective in
 
 The displayed fraction, selected annulus and retained integral matrix remain fixed. The claim transports their explicit
 coordinate identities and reconstruction evidence. -/
-theorem encode_reconstruct (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+theorem encode_reconstruct (fraction : SourceEncodingEncoderFracAlias)
     (numeratorNonzero : fraction.numerator ≠ 0) :
     Line.Proj.Equivalent
-      (Line.Matrix.act (GaussianInt.Embedding.mapMat (Encoder.Integral.encodeResult fraction numeratorNonzero).matrix)
+      (Line.Matrix.act (GaussianInt.Embedding.mapMat (encodeResult fraction numeratorNonzero).matrix)
         (Line.Proj.omega : Line.Basic.SourceEncodingEncoderProjAlias))
       (Line.Proj.affine fraction.value) := by
   have mapped := GaussianInt.Embedding.mapProj_equivalent
-    (Encoder.Integral.encodeResult fraction numeratorNonzero).reconstruct
+    (encodeResult fraction numeratorNonzero).reconstruct
   rw [GaussianInt.Embedding.mapProj_act, GaussianInt.Embedding.mapProj_omega] at mapped
   dsimp only [Line.Proj.Equivalent, GaussianInt.Embedding.mapProj, Line.Proj.affine] at mapped ⊢
   rw [Basic.mul_one]
   apply Field.mul_right_cancel_of_ne
     fraction.denominatorGaussianNonzero
   calc
-    (Line.Matrix.act (GaussianInt.Embedding.mapMat (Encoder.Integral.encodeResult fraction numeratorNonzero).matrix)
+    (Line.Matrix.act (GaussianInt.Embedding.mapMat (encodeResult fraction numeratorNonzero).matrix)
         (Line.Proj.omega : Line.Basic.SourceEncodingEncoderProjAlias)).p * GaussianInt.toGaussian fraction.denominator =
         GaussianInt.toGaussian fraction.numerator *
           (Line.Matrix.act
-            (GaussianInt.Embedding.mapMat (Encoder.Integral.encodeResult fraction numeratorNonzero).matrix)
+            (GaussianInt.Embedding.mapMat (encodeResult fraction numeratorNonzero).matrix)
             (Line.Proj.omega : Line.Basic.SourceEncodingEncoderProjAlias)).q := mapped
     _ = (fraction.value * GaussianInt.toGaussian fraction.denominator) *
         (Line.Matrix.act
-          (GaussianInt.Embedding.mapMat (Encoder.Integral.encodeResult fraction numeratorNonzero).matrix)
+          (GaussianInt.Embedding.mapMat (encodeResult fraction numeratorNonzero).matrix)
           (Line.Proj.omega : Line.Basic.SourceEncodingEncoderProjAlias)).q := by rw [fraction.value_mul_denominator]
     _ = (fraction.value *
         (Line.Matrix.act
-          (GaussianInt.Embedding.mapMat (Encoder.Integral.encodeResult fraction numeratorNonzero).matrix)
+          (GaussianInt.Embedding.mapMat (encodeResult fraction numeratorNonzero).matrix)
           (Line.Proj.omega : Line.Basic.SourceEncodingEncoderProjAlias)).q) * GaussianInt.toGaussian
             fraction.denominator := by
       ring1
@@ -310,13 +313,13 @@ pair.
 
 The displayed fraction, selected annulus and retained integral matrix remain fixed. The claim transports their explicit
 coordinate identities and reconstruction evidence. -/
-theorem encode_reconstruct_pair (fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias)
+theorem encode_reconstruct_pair (fraction : SourceEncodingEncoderFracAlias)
     (numeratorNonzero : fraction.numerator ≠ 0) :
     Line.Proj.Equivalent
-      (Line.Matrix.act (Encoder.Integral.encodeResult fraction numeratorNonzero).matrix
+      (Line.Matrix.act (encodeResult fraction numeratorNonzero).matrix
         (Line.Proj.omega : Line.Basic.SourceEncodingEncoderIntegralProjAlias))
       ⟨fraction.numerator, fraction.denominator⟩ :=
-  (Encoder.Integral.encodeResult fraction numeratorNonzero).reconstruct
+  (encodeResult fraction numeratorNonzero).reconstruct
 end Purelib.Data.CCL.Encoding.Encoder.Integral
 
 end
@@ -331,9 +334,9 @@ open Purelib.Geometry.Projective in
 open Purelib.LinearAlgebra.Coordinates2 renaming Matrix -> Matrix2 in
 /-- Complete a retained initial normalization by composing its header and radial matrix with the exact annulus tail
 encoding. -/
-private def finishInitial {fraction : GaussianInt.Fraction.Basic.SourceEncodingEncoderFracAlias}
-    (initial : Encoder.Normalization.InitialResult fraction) : Encoder.Integral.CompleteEncoding fraction :=
-  let tail := Encoder.Integral.encodeTail initial.annulus
+private def finishInitial {fraction : SourceEncodingEncoderFracAlias}
+    (initial : Normalization.InitialResult fraction) : CompleteEncoding fraction :=
+  let tail := encodeTail initial.annulus
   let matrix := Matrix2.mul initial.radial tail.matrix
   ⟨initial.header ++ tail.word, matrix, by
     dsimp only [matrix]
@@ -360,11 +363,11 @@ open Purelib.LinearAlgebra.Coordinates2 renaming Matrix -> Matrix2 in
 The displayed fraction, selected annulus and retained integral matrix remain fixed. The claim transports their explicit
 coordinate identities and reconstruction evidence. -/
 private theorem normalized_step_den_ne (annulus : Annulus)
-    (post : Encoder.Annulus.PostInversion annulus)
-    (normalized : Encoder.Annulus.LoopResult post.frac (GaussianInt.normNat annulus.frac.denominator)) :
+    (post : Annulus.PostInversion annulus)
+    (normalized : Annulus.LoopResult post.frac (GaussianInt.normNat annulus.frac.denominator)) :
     (Line.Matrix.act
       (Matrix2.mul
-        (Block.Integral.sectorMatrixInt (ComplexContinuedFraction.Encoding.Sector.select annulus.frac.value))
+        (Block.Integral.sectorMatrixInt (Sector.select annulus.frac.value))
         (Line.Matrix.scale (GaussianInt.natPow GaussianInt.gammaInt normalized.exponent)))
       ⟨normalized.annulus.frac.numerator, normalized.annulus.frac.denominator⟩).q ≠ 0 := by
   rw [normalized.num_eq, normalized.den_eq, post.num_eq]
@@ -394,12 +397,12 @@ open Purelib.LinearAlgebra.Coordinates2 renaming Matrix -> Matrix2 in
 The displayed fraction, selected annulus and retained integral matrix remain fixed. The claim transports their explicit
 coordinate identities and reconstruction evidence. -/
 private theorem normalized_step_reconstruct (annulus : Annulus)
-    (post : Encoder.Annulus.PostInversion annulus)
-    (normalized : Encoder.Annulus.LoopResult post.frac (GaussianInt.normNat annulus.frac.denominator)) :
+    (post : Annulus.PostInversion annulus)
+    (normalized : Annulus.LoopResult post.frac (GaussianInt.normNat annulus.frac.denominator)) :
     Line.Proj.Equivalent
       (Line.Matrix.act
         (Matrix2.mul
-          (Block.Integral.sectorMatrixInt (ComplexContinuedFraction.Encoding.Sector.select annulus.frac.value))
+          (Block.Integral.sectorMatrixInt (Sector.select annulus.frac.value))
           (Line.Matrix.scale (GaussianInt.natPow GaussianInt.gammaInt normalized.exponent)))
         ⟨normalized.annulus.frac.numerator, normalized.annulus.frac.denominator⟩)
       ⟨annulus.frac.numerator, annulus.frac.denominator⟩ := by
@@ -464,20 +467,20 @@ open Purelib.LinearAlgebra.Coordinates2 renaming Matrix -> Matrix2 in
 A zero selected residual returns its sector code and sector matrix. Otherwise retain the post-inversion fraction, loop
 normalization and recursive tail, then compose the exact word and matrices with the original projective reconstruction
 witness. -/
-private def encodeTailCore (annulus : Annulus) : Encoder.Integral.TailEncoding annulus :=
-  let sector := ComplexContinuedFraction.Encoding.Sector.select annulus.frac.value
+private def encodeTailCore (annulus : Annulus) : TailEncoding annulus :=
+  let sector := Sector.select annulus.frac.value
   let residual :=
     annulus.frac.numerator - Sector.Integral.sectorInt sector * annulus.frac.denominator
   if residualZero : residual = 0 then
     ⟨sector.code, Block.Integral.sectorMatrixInt sector,
-      Encoder.Integral.terminal_reconstruct annulus sector (by
+      terminal_reconstruct annulus sector (by
         simpa only [residual, sector] using residualZero)⟩
   else
-    let post := Encoder.Annulus.postInversion annulus (by
+    let post := Annulus.postInversion annulus (by
       simpa only [residual, sector] using residualZero)
-    let normalized := Encoder.Annulus.normalizeLoop post.frac (GaussianInt.normNat annulus.frac.denominator)
+    let normalized := Annulus.normalizeLoop post.frac (GaussianInt.normNat annulus.frac.denominator)
       post.den_descent rfl
-    let tail := Purelib.Data.CCL.Encoding.Encoder.Integral.encodeTailCore normalized.annulus
+    let tail := Integral.encodeTailCore normalized.annulus
     let factor := Matrix2.mul (Block.Integral.sectorMatrixInt sector)
       (Line.Matrix.scale (GaussianInt.natPow GaussianInt.gammaInt normalized.exponent))
     let matrix := Matrix2.mul factor tail.matrix
@@ -488,10 +491,55 @@ private def encodeTailCore (annulus : Annulus) : Encoder.Integral.TailEncoding a
         rw [Line.Matrix.act_mul]
         have acted := Line.Matrix.act_respects_equivalent factor tail.reconstruct
         exact GaussianInt.equivalent_trans_of_mid_q acted
-          (Encoder.Integral.normalized_step_reconstruct annulus post normalized)
-          (Encoder.Integral.normalized_step_den_ne annulus post normalized)⟩
+          (normalized_step_reconstruct annulus post normalized)
+          (normalized_step_den_ne annulus post normalized)⟩
 termination_by GaussianInt.normNat annulus.frac.denominator
 decreasing_by exact normalized.measure_lt
 end Purelib.Data.CCL.Encoding.Encoder.Integral
 
+end
+
+section
+public section
+namespace Purelib.Data.CCL.Encoding.Encoder.Annulus
+
+open Purelib.Data
+open Purelib.Data.ComplexContinuedFraction.Encoding
+
+/-- Retain the exact integral fraction at an original sector representative with denominator one. -/
+@[expose] def ofSector (sector : Sector) : Annulus :=
+  ⟨⟨Sector.Integral.sectorInt sector, 1, by decide⟩, by cases sector <;> decide⟩
+
+/-- The retained sector annulus reads exactly that original Gaussian representative. -/
+theorem ofSector_value (sector : Sector) : (ofSector sector).frac.value = sector.rep := by
+  cases sector <;> rfl
+
+/-- The original selected integral residual vanishes at the same retained sector annulus. -/
+theorem ofSector_residual (sector : Sector) :
+    (ofSector sector).frac.numerator -
+      Sector.Integral.sectorInt (Sector.select (ofSector sector).frac.value) *
+        (ofSector sector).frac.denominator = 0 := by
+  rewrite [ofSector_value, Sector.select_rep]
+  change Sector.Integral.sectorInt sector - Sector.Integral.sectorInt sector * 1 = 0
+  rewrite [GaussianInt.mul_one]
+  cases sector <;> rfl
+
+end Purelib.Data.CCL.Encoding.Encoder.Annulus
+end
+end
+
+section
+public section
+namespace Purelib.Data.CCL.Encoding.Encoder.Integral
+
+open Purelib.Data.ComplexContinuedFraction.Encoding
+
+/-- The original annulus encoder returns exactly the retained three-bit sector code at its terminal representative. -/
+theorem encodeTail_sector_word (sector : Sector) : (encodeTail (Annulus.ofSector sector)).word = sector.code := by
+  rewrite [encodeTail_word_eq, Annulus.ofSector_value, Sector.select_rep,
+    Annulus.Blocks.encodeAnnulusBlocks_continuation_of_eq _ (Annulus.ofSector_residual sector)]
+  exact Data.List.Append.append_nil _
+
+end Purelib.Data.CCL.Encoding.Encoder.Integral
+end
 end

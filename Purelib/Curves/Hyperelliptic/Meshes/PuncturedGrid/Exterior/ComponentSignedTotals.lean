@@ -46,6 +46,8 @@ import Purelib.Riemann.Paths.PreparedPathDecomposition
 import Purelib.Riemann.Paths.PreparedPathParentCaches
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.RegularWitnesses
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
+
 open Purelib.Curves
 
 open Purelib.Geometry
@@ -59,25 +61,25 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSi
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {index depth : Nat} {box :
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap} {index depth : Nat} {box :
     Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {sample : Cap.Primitives.Sample cap differential index box}
 
 /-- A shared primitive witness on appended original parent banks restricts to the same primitive on each retained bank.
 -/
-theorem withPrimitive_append (value : Normalization.InverseRootPolynomial.Polynomial)
+theorem withPrimitive_append (value : InverseRootPolynomial.Polynomial)
     {first last : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-    {firstCovers : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers first} {lastCovers :
-      Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers last}
-    {firstBank : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular firstCovers} {lastBank :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular lastCovers}
-    {firstPaths lastPaths : List (List Normalization.InverseRootPolynomial.Gaussian)}
-    (left : Charts.Reciprocal.Disk.RegularWitnesses sample depth firstBank
-      firstPaths) (right : Charts.Reciprocal.Disk.RegularWitnesses sample depth
+    {firstCovers : UniformReciprocalCover.ParentCovers first} {lastCovers :
+      UniformReciprocalCover.ParentCovers last}
+    {firstBank : Disk.ParentJoins.SideBank regular firstCovers} {lastBank :
+      Disk.ParentJoins.SideBank regular lastCovers}
+    {firstPaths lastPaths : List (List InverseRootPolynomial.Gaussian)}
+    (left : Disk.RegularWitnesses sample depth firstBank
+      firstPaths) (right : Disk.RegularWitnesses sample depth
       lastBank lastPaths)
     (shared : (left.append right).WithPrimitive value) : left.WithPrimitive value ∧ right.WithPrimitive value := by
   induction left with
@@ -95,34 +97,34 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrenc
 
 open Purelib.Riemann.Normalization
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential other : Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {index depth readingIndex floor : Nat} {box : Rational.Box}
-  {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {shared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank differential index domains}
-    {localTarget localArea : Normalization.InverseRootPolynomial.Coordinate}
+  {sample : Cap.Primitives.Sample cap differential index box}
+  {shared : Face.PrimitiveData.FacePrimitiveBank differential index domains}
+    {localTarget localArea : InverseRootPolynomial.Coordinate}
 
 /-- Keep each occurrence's total readback while concatenating its parent
 witnesses. A shared primitive then specializes all totals without reevaluation. -/
 theorem
   SurfaceRequests.AllSurfacePreparation.SampledEntry.regular_total_witnesses
-    (values : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry
+    (values : List (SurfaceRequests.AllSurfacePreparation.SampledEntry
       (regular := regular) sample shared depth readingIndex localTarget localArea floor))
     (degree : curve.polynomial.natDegree = 2 * genus + 2) :
-    ∃ paths, ∃ witnesses : Charts.Reciprocal.Disk.RegularWitnesses sample depth
+    ∃ paths, ∃ witnesses : Disk.RegularWitnesses sample depth
 
-        (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence.capSpine
+        (SurfaceOccurrence.capSpine
         (values.map (fun value => value.entry.occurrence))).bank paths,
       ∀ primitive, witnesses.WithPrimitive primitive →
         values.map (fun value => value.evaluated.right.total) = values.map (fun value =>
           primitive.eval value.entry.occurrence.finish⁻¹ - primitive.eval value.entry.occurrence.start⁻¹) := open
-            Purelib.Data in by
+            Data in by
   induction values with
   | nil => exact ⟨[], .nil, fun _ _ => rfl⟩
   | cons head tail ih =>
@@ -131,7 +133,7 @@ theorem
       refine ⟨firstPaths ++ lastPaths, firstWitnesses.append lastWitnesses, ?_⟩
       intro primitive sharedPrimitive
       obtain ⟨headShared, tailShared⟩ :=
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSignedTotals.RegularWitnesses.withPrimitive_append
+        ComponentSignedTotals.RegularWitnesses.withPrimitive_append
         primitive firstWitnesses lastWitnesses sharedPrimitive
       obtain ⟨chain⟩ := head.entry.occurrence.compared.entered.cache.chain
       have headTotal := head.evaluated.right.total_eq.trans ((congrArg Data.Gaussian.Norm.Sum.Basic.gaussianSum
@@ -145,22 +147,22 @@ theorem
 witnesses. -/
 private def ComponentSignedTotals.ExteriorProgram.sign_of_parent_eq
     {otherDepth : Nat} {otherBox : Rational.Box}
-    {otherSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other index otherBox}
+    {otherSample : Cap.Primitives.Sample cap other index otherBox}
     {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential)}
     {otherParents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve other)}
-    (same : parents.map (Purelib.Riemann.Integration.PreparedEdgeRecasting.recastCenteredEdge other) = otherParents)
-    {covers : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers parents} {bank :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular covers}
-    {otherCovers : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.ParentCovers otherParents} {otherBank :
-      Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank regular otherCovers}
-    {paths otherPaths : List (List Normalization.InverseRootPolynomial.Gaussian)}
-    (first : Charts.Reciprocal.Disk.RegularWitnesses sample depth bank paths)
-    (last : Charts.Reciprocal.Disk.RegularWitnesses otherSample otherDepth
+    (same : parents.map (Integration.PreparedEdgeRecasting.recastCenteredEdge other) = otherParents)
+    {covers : UniformReciprocalCover.ParentCovers parents} {bank :
+      Disk.ParentJoins.SideBank regular covers}
+    {otherCovers : UniformReciprocalCover.ParentCovers otherParents} {otherBank :
+      Disk.ParentJoins.SideBank regular otherCovers}
+    {paths otherPaths : List (List InverseRootPolynomial.Gaussian)}
+    (first : Disk.RegularWitnesses sample depth bank paths)
+    (last : Disk.RegularWitnesses otherSample otherDepth
       otherBank otherPaths) :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.PairedWitnessSigns.PairedPrimitiveSign first.primitive
+    Disk.PairedWitnessSigns.PairedPrimitiveSign first.primitive
       last.primitive sample.primitive.value otherSample.primitive.value := by
   cases same
-  exact Hyperelliptic.Charts.Reciprocal.Disk.PairedWitnessSigns.RegularWitnesses.recastSign first last
+  exact Disk.PairedWitnessSigns.RegularWitnesses.recastSign first last
 
 /-- Every retained occurrence total in both independently evaluated component
 lists uses the same sheet bit, even across occurrence boundaries. -/
@@ -168,20 +170,20 @@ theorem
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation.paired_occurrence_totals
     {sheet : Fin 2}
     (first :
-      SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
-      regular domains (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram.build lifted
+      SurfacePreparation
+      regular domains (PeriodPrograms.ExteriorProgram.build lifted
       differential sheet))
     (last :
-      SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
-      regular domains (Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram.build lifted other
+      SurfacePreparation
+      regular domains (PeriodPrograms.ExteriorProgram.build lifted other
       sheet))
     {otherDepth otherReadingIndex otherFloor : Nat} {otherBox : Rational.Box}
-    {otherSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other index otherBox}
-    {otherShared : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.FacePrimitiveBank other index domains}
-      {otherTarget otherArea : Normalization.InverseRootPolynomial.Coordinate}
-    (values : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry
+    {otherSample : Cap.Primitives.Sample cap other index otherBox}
+    {otherShared : Face.PrimitiveData.FacePrimitiveBank other index domains}
+      {otherTarget otherArea : InverseRootPolynomial.Coordinate}
+    (values : List (SurfaceRequests.AllSurfacePreparation.SampledEntry
       (regular := regular) sample shared depth readingIndex localTarget localArea floor))
-    (otherValues : List (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceRequests.AllSurfacePreparation.SampledEntry
+    (otherValues : List (SurfaceRequests.AllSurfacePreparation.SampledEntry
       (regular := regular)
       otherSample otherShared otherDepth otherReadingIndex otherTarget otherArea otherFloor))
     (occurrences : values.map (fun value => value.entry.occurrence) = first.occurrences)
@@ -204,21 +206,21 @@ theorem
     otherValues degree
   have parents := first.build_parents_recast last
   rw [← occurrences, ← otherOccurrences] at parents
-  let sign := Hyperelliptic.Meshes.PuncturedGrid.Exterior.ComponentSignedTotals.ExteriorProgram.sign_of_parent_eq
+  let sign := ComponentSignedTotals.ExteriorProgram.sign_of_parent_eq
     parents witnesses otherWitnesses
-  have firstLinks : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank.Links
-    (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence.capSpine
+  have firstLinks : Disk.ParentJoins.SideBank.Links
+    (SurfaceOccurrence.capSpine
     (values.map (fun value => value.entry.occurrence))).bank := by
     rw [occurrences]
     exact
-      (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation.JoinedCap.build
+      (SurfacePreparation.JoinedCap.build
       first).links
-  have lastLinks : Hyperelliptic.Charts.Reciprocal.Disk.ParentJoins.SideBank.Links
-    (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence.capSpine
+  have lastLinks : Disk.ParentJoins.SideBank.Links
+    (SurfaceOccurrence.capSpine
     (otherValues.map (fun value => value.entry.occurrence))).bank := by
     rw [otherOccurrences]
     exact
-      (SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation.JoinedCap.build
+      (SurfacePreparation.JoinedCap.build
       last).links
   have firstTotal := totals witnesses.primitive (witnesses.shared firstLinks)
   have lastTotal := otherTotals otherWitnesses.primitive (otherWitnesses.shared lastLinks)

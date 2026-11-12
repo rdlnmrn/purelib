@@ -46,6 +46,8 @@ import Purelib.Data.Rat.Fraction.Field
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Data.Vector.Dependent
 
+open Purelib.Data.Rat.Fraction.Order
+
 public section
 
 /-! Requested paired fan boundaries for the original retained chart edges. -/
@@ -88,17 +90,17 @@ open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius)
 variable {genus count otherCount depth floor index : Nat} {curve : HyperellipticCurve
   genus}
   {differential other : Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : PreparedPatch parent}
   {otherPatch : PreparedPatch
-    (Purelib.Riemann.Integration.PreparedEdgeRecasting.recastCenteredEdge other parent)}
+    (recastCenteredEdge other parent)}
   {data : Data patch count} {otherData :
     Data otherPatch otherCount}
   {cover : Cover data} {otherCover :
     Cover otherData}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {common :
+  {regular : RegularBounds.Data cap} {common :
     CommonCover cover otherCover}
   {target : Coordinate} {request :
     ChartRequest regular common depth target floor}
@@ -109,22 +111,22 @@ set_option genInjectivity false in
 /-- One retained pair of coefficient bounds and a shared radial mesh paying the original chart-edge fan target.
 
 The computed geometric depth retains the supplied minimum and exact error scale for every actual edge. -/
-structure FanRequest (target : InverseRootPolynomial.Coordinate) (minimum : Nat) where
+structure FanRequest (target : Coordinate) (minimum : Nat) where
   /-- The cached first cap-polynomial energy bounds on the original radial domain. -/ firstBounds :
-    Cap.EnergyBounds evaluated.samples.firstCap RootRadialGeometry.domain
+    EnergyBounds evaluated.samples.firstCap RootRadialGeometry.domain
   /-- The cached second cap-polynomial energy bounds on that same original radial domain. -/ otherBounds :
-    Cap.EnergyBounds evaluated.samples.otherCap RootRadialGeometry.domain
-  /-- The cached common paired fan error scale. -/ scale : InverseRootPolynomial.Coordinate
+    EnergyBounds evaluated.samples.otherCap RootRadialGeometry.domain
+  /-- The cached common paired fan error scale. -/ scale : Coordinate
   /-- The retained scale is the exact radial geometric factor times the original paired coefficient scale. -/ scale_eq :
     scale = 128^2 * 64 * ReciprocalCapBilinearBounds.bilinearScale firstBounds otherBounds
   /-- The cached common radial subdivision depth. -/ depth : Nat
   /-- The retained depth is at least the computed positive-target search threshold. -/ depth_ge :
     Search.firstQuarterBelow scale minimum target ≤ depth
   /-- The retained depth preserves the supplied minimum. -/ minimum_le : minimum ≤ depth
-  /-- The actual radial parameter mesh at that exact retained depth. -/ parameters : RadialTriangles.Parameters depth
-  /-- The cached geometric fan error at the retained depth. -/ error : InverseRootPolynomial.Coordinate
+  /-- The actual radial parameter mesh at that exact retained depth. -/ parameters : Parameters depth
+  /-- The cached geometric fan error at the retained depth. -/ error : Coordinate
   /-- The error cache is the quarter-radius expression for the original scale and depth. -/ error_eq : error =
-    Geometric.Basic.quarterRadius scale depth
+    quarterRadius scale depth
   /-- The cached common geometric fan error is strictly below the original positive target. -/ accurate : error < target
 
 constructive_injectivity FanRequest
@@ -133,36 +135,36 @@ namespace FanRequest
 
 /-- One pair of coefficient caches and one radial mesh serve all original chart edges. No orientation or analytic
 clearance is supplied by the caller. -/
-@[expose] def build (target : InverseRootPolynomial.Coordinate) (positive : 0 < target) (minimum : Nat) :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartFans.FanRequest evaluated target minimum := by
+@[expose] def build (target : Coordinate) (positive : 0 < target) (minimum : Nat) :
+  FanRequest evaluated target minimum := by
   let firstBounds := EnergyBounds.build evaluated.samples.firstCap RootRadialGeometry.domain
   let otherBounds := EnergyBounds.build evaluated.samples.otherCap RootRadialGeometry.domain
   let scale : Coordinate := 128^2 * 64 * ReciprocalCapBilinearBounds.bilinearScale firstBounds otherBounds
-  have nonnegative : 0 ≤ scale := Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.sq_nonneg_direct _) (by decide +kernel))
+  have nonnegative : 0 ≤ scale := Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct (Arithmetic.sq_nonneg_direct _) (by decide +kernel))
       (ReciprocalCapBilinearBounds.bilinearScale_nonnegative firstBounds otherBounds)
   let depth := Search.firstQuarterBelow scale minimum target
   exact ⟨firstBounds, otherBounds, scale, rfl, depth, Nat.le_refl _,
     Search.firstQuarterBelow_ge scale minimum target, Parameters.build depth,
-    Geometric.Basic.quarterRadius scale depth, rfl, Search.firstQuarterBelow_accurate scale nonnegative minimum target
+    quarterRadius scale depth, rfl, Search.firstQuarterBelow_accurate scale nonnegative minimum target
       positive⟩
 
 variable {evaluated} {fanTarget : Coordinate} {minimum : Nat}
 
 /-- Synchronize radial meshes before acquiring any fans; coefficient caches and the original requested error budget are
 retained. -/
-@[expose] def atDepth (planned : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartFans.FanRequest evaluated
+@[expose] def atDepth (planned : FanRequest evaluated
   fanTarget minimum) (depth : Nat)
-    (later : planned.depth ≤ depth) : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartFans.FanRequest evaluated
+    (later : planned.depth ≤ depth) : FanRequest evaluated
       fanTarget minimum := by
   have nonnegative : 0 ≤ planned.scale := by
     rw [planned.scale_eq]
-    exact Fraction.Order.Arithmetic.mul_nonneg_direct (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.sq_nonneg_direct _) (by decide +kernel))
+    exact Arithmetic.mul_nonneg_direct (Arithmetic.mul_nonneg_direct
+      (Arithmetic.sq_nonneg_direct _) (by decide +kernel))
       (ReciprocalCapBilinearBounds.bilinearScale_nonnegative planned.firstBounds planned.otherBounds)
   exact ⟨planned.firstBounds, planned.otherBounds, planned.scale, planned.scale_eq,
     depth, planned.depth_ge.trans later, planned.minimum_le.trans later,
-    Parameters.build depth, Geometric.Basic.quarterRadius planned.scale depth, rfl,
+    Parameters.build depth, quarterRadius planned.scale depth, rfl,
     (quarterRadius_antitone nonnegative later).trans_lt
       (planned.error_eq.symm.trans_lt planned.accurate)⟩
 
@@ -178,25 +180,25 @@ retained. -/
 
 set_option genInjectivity false in
 /-- The actual bounded radial fan on one original retained chart edge with its paired polynomial area estimate. -/
-structure Fan (planned : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartFans.FanRequest evaluated fanTarget
+structure Fan (planned : FanRequest evaluated fanTarget
   minimum)
     (i : Fin common.intervals.length) (edge : Fin (request.plans.get i).geometry.tail.length) where
   /-- The bounded refinement of the original edge endpoints using the retained common radial parameters. -/ geometry :
-    RootRadialRefinement.BoundedRefinement
+    BoundedRefinement
     (FirstCoordinate (evaluated := evaluated) i
     edge)
     (LastCoordinate (evaluated := evaluated) i
       edge) planned.parameters
   /-- The paired polynomial fan sample using the two original cached coefficient bounds. -/ sampled :
-    RootRadialPairedBoundary.PairedPolynomialSample geometry planned.firstBounds planned.otherBounds
+    PairedPolynomialSample geometry planned.firstBounds planned.otherBounds
   /-- The actual retained paired fan area satisfies the original requested target. -/ accurate :
-    Data.Gaussian.Norm.Basic.normSq sampled.area < fanTarget
+    normSq sampled.area < fanTarget
 
 constructive_injectivity Fan
 
 /-- Construct the actual chart-edge radial fan from the retained root bounds, parameters and original coefficient
 caches. -/
-@[expose] def acquire (planned : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartFans.FanRequest evaluated
+@[expose] def acquire (planned : FanRequest evaluated
   fanTarget minimum)
     (branch : HyperellipticReciprocal.originOrder curve = 1)
     (i : Fin common.intervals.length) (edge : Fin (request.plans.get i).geometry.tail.length) :
@@ -211,7 +213,7 @@ caches. -/
   exact ⟨geometry, sampled, sampled.bounded.trans_lt (error.trans_lt planned.accurate)⟩
 
 /-- The actual fan area is the first radial potential plus its original arc area minus the last radial potential. -/
-theorem Fan.boundary_eq {planned : Curves.Hyperelliptic.Charts.Reciprocal.Disk.CommonChartFans.FanRequest evaluated
+theorem Fan.boundary_eq {planned : FanRequest evaluated
   fanTarget minimum}
     {i : Fin common.intervals.length} {edge : Fin (request.plans.get i).geometry.tail.length} (fan :
       Fan planned i edge) :

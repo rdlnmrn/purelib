@@ -14,6 +14,9 @@ import Purelib.Data.Rat.Fraction.Arithmetic
 import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+open Purelib.Data.Rat.Fraction.Order
+
 open Purelib
 
 open Purelib.Data.Rat
@@ -53,19 +56,19 @@ def directionalErrorBudget : List
   Data.Gaussian.Basic.Canonical → Fraction.Rational → Fraction.Rational
   | [], _ => 0
   | direction :: directions, coefficientAllowance =>
-      2 * (Data.Gaussian.Norm.Basic.normSq direction * coefficientAllowance +
+      2 * (Basic.normSq direction * coefficientAllowance +
         directionalErrorBudget directions coefficientAllowance)
 
 /-- A nonnegative entrywise allowance gives a nonnegative directional error budget. -/
 theorem directionalErrorBudget_nonneg : ∀ directions
     {coefficientAllowance : Fraction.Rational}, 0 ≤ coefficientAllowance →
       0 ≤ directionalErrorBudget directions coefficientAllowance
-  | [], _coefficientAllowance, _nonnegative => Fraction.Order.Basic.le_refl 0
+  | [], _coefficientAllowance, _nonnegative => Basic.le_refl 0
   | direction :: directions, coefficientAllowance, nonnegative =>
-      Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-        (show (0 : Fraction.Rational) + 0 ≤ _ from Fraction.Order.Arithmetic.add_le_add_direct
-          (Purelib.Data.Rat.Fraction.Order.Arithmetic.mul_nonneg_direct
-            (Data.Gaussian.Norm.Basic.normSq_nonneg direction) nonnegative)
+      Arithmetic.mul_nonneg_direct (by decide)
+        (show (0 : Fraction.Rational) + 0 ≤ _ from Arithmetic.add_le_add_direct
+          (Arithmetic.mul_nonneg_direct
+            (Basic.normSq_nonneg direction) nonnegative)
           (directionalErrorBudget_nonneg directions nonnegative))
 
 /-- The directional dot-product error satisfies the recursively accumulated budget.
@@ -78,15 +81,15 @@ theorem directional_error_le : ∀ (actual displayed
     actual.length = directions.length →
     displayed.length = directions.length →
     Data.Gaussian.List.Proximity.EntriesClose actual displayed coefficientAllowance →
-      Data.Gaussian.Norm.Basic.normSq (directionalEval actual
+      Basic.normSq (directionalEval actual
         directions -
         directionalEval displayed directions) ≤
           directionalErrorBudget directions coefficientAllowance
   | [], [], [], coefficientAllowance, _actualLength, _displayedLength,
       _valid => by
-      change Data.Gaussian.Norm.Basic.normSq ((0 : Data.Gaussian.Basic.Canonical) - 0) ≤ 0
-      rewrite [Data.Gaussian.Basic.sub_self, Data.Gaussian.Norm.Basic.normSq_zero]
-      exact Fraction.Order.Basic.le_refl 0
+      change Basic.normSq ((0 : Data.Gaussian.Basic.Canonical) - 0) ≤ 0
+      rewrite [Data.Gaussian.Basic.sub_self, Basic.normSq_zero]
+      exact Basic.le_refl 0
   | [], [], _ :: _, coefficientAllowance, actualLength, displayedLength,
       valid => by
       change 0 = Nat.succ _ at actualLength
@@ -124,28 +127,28 @@ theorem directional_error_le : ∀ (actual displayed
             Data.Gaussian.Basic.mul_im] <;> ring1
       rw [identity]
       calc
-        Data.Gaussian.Norm.Basic.normSq ((actual - displayed) * direction +
+        Basic.normSq ((actual - displayed) * direction +
             (directionalEval actualTail directions -
               directionalEval displayedTail directions)) ≤
-          2 * (Data.Gaussian.Norm.Basic.normSq ((actual - displayed) * direction) +
-            Data.Gaussian.Norm.Basic.normSq (directionalEval
+          2 * (Basic.normSq ((actual - displayed) * direction) +
+            Basic.normSq (directionalEval
               actualTail directions -
               directionalEval displayedTail directions)) :=
-          Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _
-        _ = 2 * (Data.Gaussian.Norm.Basic.normSq direction * Data.Gaussian.Norm.Basic.normSq (actual -
+          Bounds.normSq_add_le_two _ _
+        _ = 2 * (Basic.normSq direction * Basic.normSq (actual -
           displayed) +
-            Data.Gaussian.Norm.Basic.normSq (directionalEval
+            Basic.normSq (directionalEval
               actualTail directions -
               directionalEval displayedTail directions)) := by
-          rw [Data.Gaussian.Norm.Basic.normSq_mul]
+          rw [Basic.normSq_mul]
           ring1
-        _ ≤ 2 * (Data.Gaussian.Norm.Basic.normSq direction * coefficientAllowance +
+        _ ≤ 2 * (Basic.normSq direction * coefficientAllowance +
             directionalErrorBudget directions coefficientAllowance) := by
-          apply Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct _
+          apply Arithmetic.mul_le_mul_of_nonneg_left_direct _
             (by decide)
-          exact Fraction.Order.Arithmetic.add_le_add_direct
-            (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-              headClose (Data.Gaussian.Norm.Basic.normSq_nonneg direction))
+          exact Arithmetic.add_le_add_direct
+            (Arithmetic.mul_le_mul_of_nonneg_left_direct
+              headClose (Basic.normSq_nonneg direction))
             (directional_error_le actualTail displayedTail
               directions
               coefficientAllowance actualTailLength displayedTailLength

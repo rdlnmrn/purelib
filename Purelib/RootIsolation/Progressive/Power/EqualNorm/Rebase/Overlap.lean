@@ -34,6 +34,8 @@ import Purelib.RootIsolation.FTA.Squarefree.Basic
 import Purelib.RootIsolation.Progressive.Chamber.Frame
 import Purelib.RootIsolation.Track.Basic
 
+open Purelib.Polynomial.Power.Gaussian.Progressive
+
 open Purelib.Data.Gaussian.Basic (Canonical)
 open Purelib.Data.Nat.Positive (RootDegree)
 open Purelib.RootIsolation.Owner.Bridge.Basic (OwnerBridge)
@@ -81,22 +83,22 @@ def rebaseRefinedState
     (equalNorm : normSq source = normSq target)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo)
-    (index : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree) :
-    State.WindingOne.Basic.WindingOneState (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Purelib.Polynomial.Power.Gaussian.rootPolynomial target
+    (index : Fin (Coefficients.coefficientTable target degree).degree) :
+    State.WindingOne.Basic.WindingOneState (Power.Gaussian.rootPolynomial target degree)
+      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Power.Gaussian.rootPolynomial target
         degree)) :=
   let output :=
     (Power.Isolation.isolationResult targetNonzero degree degreeAtLeastTwo).boxes.isolation
-  let track := Progressive.Power.EqualNorm.Move.Track.transportedFrameTrack sourceNonzero targetNonzero equalNorm
+  let track := Move.Track.transportedFrameTrack sourceNonzero targetNonzero equalNorm
     degree degreeAtLeastTwo small index
   track.refine track.initial
-    (Exact.Ownership.Radius.assignmentRadius (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Purelib.Polynomial.Power.Gaussian.rootPolynomial target
+    (Exact.Ownership.Radius.assignmentRadius (Power.Gaussian.rootPolynomial target degree)
+      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Power.Gaussian.rootPolynomial target
         degree))
         output)
     (Exact.Ownership.Radius.assignmentRadius_pos
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree)
-      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Purelib.Polynomial.Power.Gaussian.rootPolynomial target
+      (Power.Gaussian.rootPolynomial target degree)
+      (Dense.Gaussian.Bounds.RootRadius.Box.largeSquareBox (Power.Gaussian.rootPolynomial target
         degree))
         output)
 end Purelib.RootIsolation.Progressive.Power.EqualNorm.Rebase.Overlap
@@ -132,24 +134,24 @@ def rebaseBridge
     (equalNorm : normSq source = normSq target)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo)
-    (index : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree) :
+    (index : Fin (Coefficients.coefficientTable target degree).degree) :
     OwnerBridge
-      (Progressive.Power.EqualNorm.Move.Frame.transportedFrame sourceNonzero targetNonzero degree degreeAtLeastTwo
+      (Move.Frame.transportedFrame sourceNonzero targetNonzero degree degreeAtLeastTwo
         small.toMoveSmall).polynomial
-      (Progressive.Power.Frame.Basic.chamberFrame targetNonzero degree degreeAtLeastTwo).polynomial := by
+      (Frame.Basic.chamberFrame targetNonzero degree degreeAtLeastTwo).polynomial := by
   let state := rebaseRefinedState sourceNonzero targetNonzero equalNorm
     degree
     degreeAtLeastTwo small index
   let owner : Owner.Local.Basic.LocalOwner
-      (Purelib.Polynomial.Power.Gaussian.rootPolynomial target degree) :=
+      (Power.Gaussian.rootPolynomial target degree) :=
     { box := state.box
       proper := state.proper
       clearance := state.clearance
       rawWindingFour := state.rawWindingFour }
   exact (OwnerBridge.reflexive owner).cast
-    (Progressive.Power.EqualNorm.Move.Frame.transportedFrame_polynomial sourceNonzero targetNonzero degree
+    (Move.Frame.transportedFrame_polynomial sourceNonzero targetNonzero degree
       degreeAtLeastTwo small.toMoveSmall).symm
-    (Progressive.Power.Frame.Basic.chamberFrame_polynomial targetNonzero degree degreeAtLeastTwo).symm
+    (Frame.Basic.chamberFrame_polynomial targetNonzero degree degreeAtLeastTwo).symm
 end Purelib.RootIsolation.Progressive.Power.EqualNorm.Rebase.Overlap
 
 end
@@ -183,7 +185,7 @@ open Purelib.Data.Gaussian
     (equalNorm : normSq source = normSq target)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo)
-    (index : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree) :
+    (index : Fin (Coefficients.coefficientTable target degree).degree) :
     (rebaseBridge sourceNonzero targetNonzero equalNorm degree
       degreeAtLeastTwo small index).box =
       (rebaseRefinedState sourceNonzero targetNonzero equalNorm degree
@@ -224,16 +226,16 @@ theorem rebaseBridge_refines_transported
     (equalNorm : normSq source = normSq target)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo)
-    (index : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree) :
+    (index : Fin (Coefficients.coefficientTable target degree).degree) :
     (rebaseBridge sourceNonzero targetNonzero equalNorm degree
       degreeAtLeastTwo
       small index).box.Refines
-      ((Progressive.Power.EqualNorm.Move.Frame.transportedFrame sourceNonzero targetNonzero degree degreeAtLeastTwo
+      ((Move.Frame.transportedFrame sourceNonzero targetNonzero degree degreeAtLeastTwo
         small.toMoveSmall).owner index).box := by
   rw [rebaseBridge_box]
-  exact ((Progressive.Power.EqualNorm.Move.Track.transportedFrameTrack sourceNonzero targetNonzero equalNorm degree
+  exact ((Move.Track.transportedFrameTrack sourceNonzero targetNonzero equalNorm degree
     degreeAtLeastTwo small index).nested _ _ _).trans
-      (Progressive.Power.EqualNorm.Move.Track.transportedFrameTrack_initial_refines sourceNonzero targetNonzero
+      (Move.Track.transportedFrameTrack_initial_refines sourceNonzero targetNonzero
         equalNorm degree degreeAtLeastTwo small index)
 end Purelib.RootIsolation.Progressive.Power.EqualNorm.Rebase.Overlap
 
@@ -268,16 +270,16 @@ theorem selectedTargetBox_eq_rebaseMap_owner
     (equalNorm : normSq source = normSq target)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo)
-    (index : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree) :
+    (index : Fin (Coefficients.coefficientTable target degree).degree) :
     ((Power.Isolation.isolationResult targetNonzero degree
         degreeAtLeastTwo).boxes.isolation.tracks.get
-      (Progressive.Power.EqualNorm.Rebase.Matching.transportedOwnerSelection sourceNonzero targetNonzero equalNorm
+      (Matching.transportedOwnerSelection sourceNonzero targetNonzero equalNorm
         degree
         degreeAtLeastTwo small index).owner).initial.box =
-      ((Progressive.Power.Frame.Basic.chamberFrame targetNonzero degree degreeAtLeastTwo).owner
-        (Progressive.Power.EqualNorm.Rebase.Matching.rebaseMap sourceNonzero targetNonzero equalNorm degree
+      ((Frame.Basic.chamberFrame targetNonzero degree degreeAtLeastTwo).owner
+        (Matching.rebaseMap sourceNonzero targetNonzero equalNorm degree
           degreeAtLeastTwo small index)).box := by
-  exact Progressive.Power.EqualNorm.Rebase.Matching.targetTrack_get_box_eq_chamber_owner targetNonzero degree
+  exact Matching.targetTrack_get_box_eq_chamber_owner targetNonzero degree
     degreeAtLeastTwo _
 end Purelib.RootIsolation.Progressive.Power.EqualNorm.Rebase.Overlap
 
@@ -312,19 +314,19 @@ theorem rebaseBridge_refines_target
     (equalNorm : normSq source = normSq target)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo)
-    (index : Fin (Power.Gaussian.Progressive.Coefficients.coefficientTable target degree).degree) :
+    (index : Fin (Coefficients.coefficientTable target degree).degree) :
     (rebaseBridge sourceNonzero targetNonzero equalNorm degree
       degreeAtLeastTwo
       small index).box.Refines
-      ((Progressive.Power.Frame.Basic.chamberFrame targetNonzero degree degreeAtLeastTwo).owner
-        ((Progressive.Power.EqualNorm.Rebase.Matching.rebaseMatching sourceNonzero targetNonzero equalNorm degree
+      ((Frame.Basic.chamberFrame targetNonzero degree degreeAtLeastTwo).owner
+        ((Matching.rebaseMatching sourceNonzero targetNonzero equalNorm degree
           degreeAtLeastTwo small).forward index)).box := by
   have strict :=
-    (Progressive.Power.EqualNorm.Rebase.Matching.transportedOwnerSelection sourceNonzero targetNonzero equalNorm degree
+    (Matching.transportedOwnerSelection sourceNonzero targetNonzero equalNorm degree
       degreeAtLeastTwo small index).strict
-  have refined := (Geometry.Rational.Box.Refinement.StrictInterior.refines strict)
+  have refined := (Box.Refinement.StrictInterior.refines strict)
   rw [rebaseBridge_box,
-    Progressive.Power.EqualNorm.Rebase.Matching.rebaseMatching_forward]
+    Matching.rebaseMatching_forward]
   rw [← selectedTargetBox_eq_rebaseMap_owner sourceNonzero targetNonzero
     equalNorm degree degreeAtLeastTwo small index]
   exact refined
@@ -362,11 +364,11 @@ def rebaseOverlap
     (equalNorm : normSq source = normSq target)
     (degree : RootDegree) (degreeAtLeastTwo : 2 ≤ degree.value)
     (small : GlobalMoveSmall sourceNonzero target degree degreeAtLeastTwo) :
-    Progressive.Chamber.Overlap.ChamberOverlap
-      (Progressive.Power.EqualNorm.Move.Frame.transportedFrame sourceNonzero targetNonzero degree degreeAtLeastTwo
+    Chamber.Overlap.ChamberOverlap
+      (Move.Frame.transportedFrame sourceNonzero targetNonzero degree degreeAtLeastTwo
         small.toMoveSmall)
-      (Progressive.Power.Frame.Basic.chamberFrame targetNonzero degree degreeAtLeastTwo) where
-  matching := Progressive.Power.EqualNorm.Rebase.Matching.rebaseMatching sourceNonzero targetNonzero equalNorm degree
+      (Frame.Basic.chamberFrame targetNonzero degree degreeAtLeastTwo) where
+  matching := Matching.rebaseMatching sourceNonzero targetNonzero equalNorm degree
     degreeAtLeastTwo small
   bridge := rebaseBridge sourceNonzero targetNonzero equalNorm degree
     degreeAtLeastTwo small

@@ -29,19 +29,19 @@ open Purelib.Integration.Path.JoinedTrace (VertexTrace)
 open Purelib.Algebra in
 /-- Pointwise equality of indexed primitive readings preserves their exact edge-area sum. -/
 theorem area_congr {count : Nat} {first last : Fin (count + 1) → Stokes.PrimitivePoint}
-    (equal : ∀ vertex, first vertex = last vertex) : CenteredBilinearPath.area first = CenteredBilinearPath.area last :=
+    (equal : ∀ vertex, first vertex = last vertex) : area first = area last :=
   FiniteSum.Fin.sumFin_congr
     (fun edge => congrArg₂ Stokes.edgeArea (equal edge.castSucc) (equal edge.succ))
 
 namespace Sample
-variable {count : Nat} {first last : Fin (count + 1) → Purelib.Topology.Polygon.Stokes.PrimitivePoint}
+variable {count : Nat} {first last : Fin (count + 1) → Stokes.PrimitivePoint}
 
 /-- Transport a sample to pointwise equal original readings while retaining all its computed caches.
 
 The centered values, centered area, endpoint correction and original area are reused; only their original-reading
 certificates are transported. -/
-@[expose] def readback (sample : CenteredBilinearPath.Sample first) (equal : ∀ vertex, first vertex = last vertex) :
-  CenteredBilinearPath.Sample last where
+@[expose] def readback (sample : Sample first) (equal : ∀ vertex, first vertex = last vertex) :
+  Sample last where
   centered := sample.centered
   centered_eq vertex := by rw [sample.centered_eq, equal vertex, equal 0]
   centeredArea := sample.centeredArea
@@ -49,39 +49,39 @@ certificates are transported. -/
   endpoint := sample.endpoint
   endpoint_eq := by rw [sample.endpoint_eq, equal 0, equal (Fin.last count)]
   originalArea := sample.originalArea
-  originalArea_eq := sample.originalArea_eq.trans (Rectangle.SampleReadback.area_congr equal)
+  originalArea_eq := sample.originalArea_eq.trans (area_congr equal)
   decomposition := sample.decomposition
 
 /-- Transport a retained sample along equality of its original edge count using the corresponding finite-index cast. -/
 @[expose] def castCount {firstCount lastCount : Nat} (equal : firstCount = lastCount)
-    {values : Fin (firstCount + 1) → Stokes.PrimitivePoint} (sample : CenteredBilinearPath.Sample values) :
-    CenteredBilinearPath.Sample (fun vertex : Fin (lastCount + 1) => values (Fin.cast (congrArg (· + 1) equal.symm)
+    {values : Fin (firstCount + 1) → Stokes.PrimitivePoint} (sample : Sample values) :
+    Sample (fun vertex : Fin (lastCount + 1) => values (Fin.cast (congrArg (· + 1) equal.symm)
       vertex)) := by
   cases equal
   exact sample
 
 /-- Pointwise readback transport retains the exact centered-area cache. -/
-theorem readback_centeredArea (sample : CenteredBilinearPath.Sample first) (equal : ∀ vertex, first vertex = last
+theorem readback_centeredArea (sample : Sample first) (equal : ∀ vertex, first vertex = last
   vertex) :
-    (Rectangle.SampleReadback.Sample.readback sample equal).centeredArea = sample.centeredArea := rfl
+    (readback sample equal).centeredArea = sample.centeredArea := rfl
 
 /-- Pointwise readback transport retains the exact increment list from the centered cache. -/
-theorem readback_increments (sample : CenteredBilinearPath.Sample first) (equal : ∀ vertex, first vertex = last vertex)
+theorem readback_increments (sample : Sample first) (equal : ∀ vertex, first vertex = last vertex)
   :
-    CenteredPathIncrements.Sample.increments (Rectangle.SampleReadback.Sample.readback sample equal) =
+    CenteredPathIncrements.Sample.increments (readback sample equal) =
       CenteredPathIncrements.Sample.increments sample := rfl
 
 /-- Count transport preserves the retained centered-area cache. -/
 theorem castCount_centeredArea {firstCount lastCount : Nat} (equal : firstCount = lastCount)
-    {values : Fin (firstCount + 1) → Stokes.PrimitivePoint} (sample : CenteredBilinearPath.Sample values) :
-    (Rectangle.SampleReadback.Sample.castCount equal sample).centeredArea = sample.centeredArea := by
+    {values : Fin (firstCount + 1) → Stokes.PrimitivePoint} (sample : Sample values) :
+    (castCount equal sample).centeredArea = sample.centeredArea := by
   cases equal
   rfl
 
 /-- Count transport preserves the retained sample's increment list. -/
 theorem castCount_increments {firstCount lastCount : Nat} (equal : firstCount = lastCount)
-    {values : Fin (firstCount + 1) → Stokes.PrimitivePoint} (sample : CenteredBilinearPath.Sample values) :
-    CenteredPathIncrements.Sample.increments (Rectangle.SampleReadback.Sample.castCount equal sample) =
+    {values : Fin (firstCount + 1) → Stokes.PrimitivePoint} (sample : Sample values) :
+    CenteredPathIncrements.Sample.increments (castCount equal sample) =
       CenteredPathIncrements.Sample.increments sample := by
   cases equal
   rfl
@@ -96,30 +96,30 @@ The exact count equality and indexed-reading theorem transport the existing samp
 or area caches. -/
 @[expose] def ofIndexedSample {count : Nat} (vertices : Fin (count + 1) → Vertex) (values : Vertex →
   Stokes.PrimitivePoint)
-    (sample : CenteredBilinearPath.Sample (fun vertex => values (vertices vertex))) :
-    CenteredBilinearPath.Sample (fun vertex => values ((JoinedTrace.VertexTrace.ofIndexed vertices).indexed vertex)) :=
-  let equal : count = (JoinedTrace.VertexTrace.ofIndexed vertices).rest.length := by
-    dsimp only [JoinedTrace.VertexTrace.ofIndexed]
+    (sample : Sample (fun vertex => values (vertices vertex))) :
+    Sample (fun vertex => values ((VertexTrace.ofIndexed vertices).indexed vertex)) :=
+  let equal : count = (VertexTrace.ofIndexed vertices).rest.length := by
+    dsimp only [VertexTrace.ofIndexed]
     exact OfFn.Basic.length_ofFn.symm
-  Rectangle.SampleReadback.Sample.readback
-    (Rectangle.SampleReadback.Sample.castCount equal sample)
+  Sample.readback
+    (Sample.castCount equal sample)
     (fun vertex => congrArg values (JoinedTraceIndices.ofIndexed_indexed vertices vertex).symm)
 
 /-- The indexed-trace sample retains the original centered-area cache. -/
 theorem ofIndexedSample_area {count : Nat} (vertices : Fin (count + 1) → Vertex) (values : Vertex →
   Stokes.PrimitivePoint)
-    (sample : CenteredBilinearPath.Sample (fun vertex => values (vertices vertex))) :
-    (Rectangle.SampleReadback.VertexTrace.ofIndexedSample vertices values sample).centeredArea = sample.centeredArea :=
-  Rectangle.SampleReadback.Sample.castCount_centeredArea _ sample
+    (sample : Sample (fun vertex => values (vertices vertex))) :
+    (ofIndexedSample vertices values sample).centeredArea = sample.centeredArea :=
+  Sample.castCount_centeredArea _ sample
 
 /-- The indexed-trace sample retains the original increment list. -/
 theorem ofIndexedSample_increments {count : Nat} (vertices : Fin (count + 1) → Vertex) (values : Vertex →
   Stokes.PrimitivePoint)
-    (sample : CenteredBilinearPath.Sample (fun vertex => values (vertices vertex))) :
-    CenteredPathIncrements.Sample.increments (Rectangle.SampleReadback.VertexTrace.ofIndexedSample vertices values
+    (sample : Sample (fun vertex => values (vertices vertex))) :
+    CenteredPathIncrements.Sample.increments (ofIndexedSample vertices values
       sample) =
       CenteredPathIncrements.Sample.increments sample :=
-  Rectangle.SampleReadback.Sample.castCount_increments _ sample
+  Sample.castCount_increments _ sample
 
 end VertexTrace
 end Purelib.Integration.Polynomial.Rectangle.SampleReadback

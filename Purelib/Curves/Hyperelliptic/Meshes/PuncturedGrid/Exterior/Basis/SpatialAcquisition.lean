@@ -50,15 +50,15 @@ open Purelib.Riemann.Normalization
 
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedOccurrence
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : Meshes.FramedPuncturedGrid curve branches higher}
-  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
-  {program : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram lifted differential} {prepared :
+  {lifted : Meshes.LiftedPuncturedGrid base} {differential : Differentials.Basic.Differential genus}
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+    Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
+  {program : PeriodPrograms.ExteriorProgram lifted differential} {prepared :
     SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfacePreparation
     regular domains program}
 
@@ -70,18 +70,18 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.Regul
 variable {whole :
   SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
   regular domains differential} {previous :
-  Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+  CommonCuts domains}
   {selected : SourceCuts whole previous}
   {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-    Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {meshTarget :
-    Normalization.InverseRootPolynomial.Coordinate}
-  {request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
-    (fun sheet => Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
+    Preflights domains sheet} {meshTarget :
+    InverseRootPolynomial.Coordinate}
+  {request : TwoSheetBilinearRequest.TwoSheetRequest
+    (fun sheet => RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
       coarseDepth) fixed meshTarget}
-  {retained : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation prepared} {index :
+  {retained : Preparation.CommonBasisPreparation prepared} {index :
     Nat} {inputs : retained.Inputs index}
-  {requested : Normalization.InverseRootPolynomial.Coordinate} {minimum : Nat}
-  (schedules : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.Schedules
+  {requested : InverseRootPolynomial.Coordinate} {minimum : Nat}
+  (schedules : Schedules
     selected request retained inputs requested minimum)
 
 namespace SpatialAcquisition.RequestedSurfaceRuns
@@ -90,8 +90,8 @@ namespace SpatialAcquisition.RequestedSurfaceRuns
 @[expose] def MeshReadback (depths :
   RunDepthSynchronization.CommonBasisPreparation.ParentRunSchedules.DepthStage
   schedules request.depth)
-    (refined : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
-      (fun sheet => Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts
+    (refined : TwoSheetBilinearRequest.TwoSheetRequest
+      (fun sheet => RegularDomainMeshes.RegularMeshes.build domains selected.cuts
         sheet coarseDepth) fixed meshTarget) : Prop :=
   refined = request.atDepth depths.depth depths.floor_le
 
@@ -99,31 +99,31 @@ namespace SpatialAcquisition.RequestedSurfaceRuns
 @[expose] def RefinedSchedules (depths :
   RunDepthSynchronization.CommonBasisPreparation.ParentRunSchedules.DepthStage
   schedules request.depth)
-    {refined : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
-      (fun sheet => Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts
+    {refined : TwoSheetBilinearRequest.TwoSheetRequest
+      (fun sheet => RegularDomainMeshes.RegularMeshes.build domains selected.cuts
         sheet coarseDepth) fixed meshTarget}
-    (equal : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SpatialAcquisition.RequestedSurfaceRuns.MeshReadback
+    (equal : MeshReadback
       schedules depths refined) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.Schedules selected
+    Schedules selected
       refined retained inputs requested minimum :=
   Eq.mp (congrArg (fun meshRequest =>
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.Schedules selected
+    Schedules selected
     meshRequest retained inputs requested minimum) equal.symm)
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.atDepth schedules
+    (SurfaceRunSchedules.RequestedSurfaceRuns.atDepth schedules
       depths.depth depths.floor_le)
 
 /-- Certify that the retained refined schedules are exactly the transport of the original request vector. -/
 @[expose] def SchedulesReadback (depths :
   RunDepthSynchronization.CommonBasisPreparation.ParentRunSchedules.DepthStage
   schedules request.depth)
-    {refined : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
-      (fun sheet => Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts
+    {refined : TwoSheetBilinearRequest.TwoSheetRequest
+      (fun sheet => RegularDomainMeshes.RegularMeshes.build domains selected.cuts
         sheet coarseDepth) fixed meshTarget}
-    (equal : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SpatialAcquisition.RequestedSurfaceRuns.MeshReadback
+    (equal : MeshReadback
       schedules depths refined)
-    (requests : Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.Schedules
+    (requests : Schedules
       selected refined retained inputs requested minimum) : Prop :=
-  requests = Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SpatialAcquisition.RequestedSurfaceRuns.RefinedSchedules
+  requests = RefinedSchedules
     schedules depths equal
 
 end SpatialAcquisition.RequestedSurfaceRuns
@@ -136,17 +136,17 @@ structure SpatialAcquisition where
     RunDepthSynchronization.CommonBasisPreparation.ParentRunSchedules.DepthStage
     schedules request.depth
   /-- The actual original surface request refined to the common depth. -/ refined :
-    Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest
-    (fun sheet => Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
+    TwoSheetBilinearRequest.TwoSheetRequest
+    (fun sheet => RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
       coarseDepth) fixed meshTarget
   /-- The refined mesh is exactly the depth refinement of the original request. -/ refined_eq :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SpatialAcquisition.RequestedSurfaceRuns.MeshReadback schedules
+    SpatialAcquisition.RequestedSurfaceRuns.MeshReadback schedules
     depths refined
   /-- The original occurrence requests transported to the exact refined mesh capacities. -/ requests :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.Schedules selected
+    Schedules selected
     refined retained inputs requested minimum
   /-- The retained requests equal the specified transport of the original schedules. -/ requests_eq :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SpatialAcquisition.RequestedSurfaceRuns.SchedulesReadback
+    SpatialAcquisition.RequestedSurfaceRuns.SchedulesReadback
     schedules depths refined_eq requests
 
 constructive_injectivity SpatialAcquisition
@@ -165,7 +165,7 @@ the retained schedules. -/
     schedules request.depth
   let refined := request.atDepth depths.depth depths.floor_le
   ⟨depths, refined, rfl,
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.atDepth schedules
+    SurfaceRunSchedules.RequestedSurfaceRuns.atDepth schedules
     depths.depth depths.floor_le, rfl⟩
 
 end SpatialAcquisition.RequestedSurfaceRuns
@@ -177,12 +177,12 @@ variable {schedules} (acquired :
 
 /-- The acquired refined surface has exactly the selected common depth. -/
 theorem mesh_depth : acquired.refined.depth = acquired.depths.depth :=
-  congrArg Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest.depth acquired.refined_eq
+  congrArg TwoSheetBilinearRequest.TwoSheetRequest.depth acquired.refined_eq
 
 /-- The refined surface preserves the original numerical stage requirement. -/
 theorem surface_index_le : request.index ≤ acquired.refined.index :=
   (request.atDepth_index_ge acquired.depths.depth acquired.depths.floor_le).trans_eq
-    (congrArg Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest.index acquired.refined_eq).symm
+    (congrArg TwoSheetBilinearRequest.TwoSheetRequest.index acquired.refined_eq).symm
 
 /-- Spatial acquisition preserves every original occurrence request depth. -/
 theorem request_depth (outer : Fin prepared.occurrences.length) :
@@ -190,7 +190,7 @@ theorem request_depth (outer : Fin prepared.occurrences.length) :
   rcases acquired with ⟨depths, refined, equal, requests, readback⟩
   cases equal
   cases readback
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.atDepth_depth
+  exact SurfaceRunSchedules.RequestedSurfaceRuns.atDepth_depth
     schedules depths.depth depths.floor_le outer
 
 /-- Spatial acquisition preserves every original occurrence source-stage threshold. -/
@@ -199,7 +199,7 @@ theorem sourceIndex_readback (outer : Fin prepared.occurrences.length) :
   rcases acquired with ⟨depths, refined, equal, requests, readback⟩
   cases equal
   cases readback
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.atDepth_sourceIndex
+  exact SurfaceRunSchedules.RequestedSurfaceRuns.atDepth_sourceIndex
     schedules depths.depth depths.floor_le outer
 
 /-- Spatial acquisition preserves every original occurrence source magnitude. -/
@@ -208,17 +208,17 @@ theorem magnitude_readback (outer : Fin prepared.occurrences.length) :
   rcases acquired with ⟨depths, refined, equal, requests, readback⟩
   cases equal
   cases readback
-  exact Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.atDepth_magnitude
+  exact SurfaceRunSchedules.RequestedSurfaceRuns.atDepth_magnitude
     schedules depths.depth depths.floor_le outer
 
 /-- The actual later physical mesh meets every retained source-run width cap. -/
 theorem physical_depth_paid (outer : Fin prepared.occurrences.length) :
     (acquired.requests.get outer).depth ≤
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.RequestedOccurrence.RequestedOccurrenceRuns.mesh outer selected
+      (RequestedOccurrenceRuns.mesh outer selected
         acquired.refined).depth :=
   (acquired.request_depth outer).le.trans ((acquired.depths.depth_le outer).trans_eq
     (acquired.mesh_depth.symm.trans
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.OccurrenceRefinement.RequestedOccurrenceRuns.mesh_depth
+      (OccurrenceRefinement.RequestedOccurrenceRuns.mesh_depth
         outer selected acquired.refined).symm))
 
 end SpatialAcquisition

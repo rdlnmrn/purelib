@@ -77,44 +77,44 @@ namespace Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonConnec
 open Purelib.Riemann.RootContinuation
 open Purelib.Data.Gaussian.Basic.Canonical
 
-variable {genus count : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Hyperelliptic.Differentials.Basic.Differential genus}
-  {collar : Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+variable {genus count : Nat} {curve : Basic.HyperellipticCurve genus} {differential :
+  Differentials.Basic.Differential genus}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
   {parent : Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
   {patch : Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {cover : Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data} {covers :
-    Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent}
-  {regular : Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {bounds :
-    Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded}
+    UniformReciprocalModels.Data patch count}
+  {cover : UniformReciprocalCover.Cover data} {covers :
+    SourceLocations.BasisSourceCovers parent}
+  {regular : RegularBounds.Data cap} {bounds :
+    ReciprocalPaddedInverse.UniformBounds regular.padded}
   {depth floor sourceFloor : Nat} {target sourceTarget rightSourceTarget :
     Normalization.InverseRootPolynomial.Coordinate}
-  {first next : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonInterval cover covers}
-  {leftRequest : Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartRequest.BasisIntervalChartRequest first regular
+  {first next : CommonCover.BasisCommonInterval cover covers}
+  {leftRequest : IntervalChartRequest.BasisIntervalChartRequest first regular
     depth target sourceTarget floor sourceFloor}
-  {rightRequest : Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartRequest.BasisIntervalChartRequest next regular
+  {rightRequest : IntervalChartRequest.BasisIntervalChartRequest next regular
     depth target rightSourceTarget floor sourceFloor}
   {index minimum stage : Nat} {box : Rational.Box}
-  {capSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
-  {polynomials : Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
-  {leftPlan : Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartAcquisition.BasisIntervalChartRequest.Plan
+  {capSample : Cap.Primitives.Sample cap differential index box}
+  {polynomials : Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {leftPlan : IntervalChartAcquisition.BasisIntervalChartRequest.Plan
     leftRequest capSample polynomials minimum}
-  {rightPlan : Hyperelliptic.Charts.Reciprocal.Disk.Basis.IntervalChartAcquisition.BasisIntervalChartRequest.Plan
+  {rightPlan : IntervalChartAcquisition.BasisIntervalChartRequest.Plan
     rightRequest capSample polynomials minimum}
-  {anchorBank : Hyperelliptic.Charts.Reciprocal.UniformReciprocalPrimitives.PrimitiveCells data index cover.mesh.edges}
-  {bank : Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers index}
-  {basis : Hyperelliptic.Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds}
-  {joined : Hyperelliptic.Charts.Reciprocal.Disk.ArcOwners.Join leftRequest.last.point rightRequest.first.point}
+  {anchorBank : UniformReciprocalPrimitives.PrimitiveCells data index cover.mesh.edges}
+  {bank : SourceLocations.BasisSourceLocations.SampleBank covers index}
+  {basis : ReciprocalPaddedBasisBounds.BasisBounds bounds}
+  {joined : ArcOwners.Join leftRequest.last.point rightRequest.first.point}
   {joinTarget : Normalization.InverseRootPolynomial.Coordinate} {joinFloor : Nat}
 
 set_option genInjectivity false in
 /-- The retained primitive values determine the actual connector increment;
 its radial estimate includes the signed joining ribbon. -/
 structure BasisCommonConnector (left :
-  Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisIntervalChartRequest.Plan.Acquisition leftPlan
+  CommonChartReadings.BasisIntervalChartRequest.Plan.Acquisition leftPlan
   anchorBank bank stage)
-    (right : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisIntervalChartRequest.Plan.Acquisition
+    (right : CommonChartReadings.BasisIntervalChartRequest.Plan.Acquisition
       rightPlan anchorBank bank stage)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (radialDepth : Nat) (joinTarget :
       Normalization.InverseRootPolynomial.Coordinate) where
@@ -130,13 +130,13 @@ structure BasisCommonConnector (left :
   /-- The connector is the last retained endpoint value minus the first. -/ increment_eq : increment = lastValue -
     firstValue
   /-- The connector increment meets the original joining target homogeneously in the coefficient norm. -/
-    increment_bound : Data.Gaussian.Norm.Basic.normSq increment ≤ joinTarget *
+    increment_bound : Gaussian.Norm.Basic.normSq increment ≤ joinTarget *
     Readings.PreparedObservationCoercivity.coefficientNormSq coefficients
   /-- The actual radial-potential difference, including the signed joining ribbon, meets the original homogeneous
-    joining target. -/ radial_bound : Data.Gaussian.Norm.Basic.normSq (
-    RootContinuation.RootRadialGeometry.radialArea (polynomials.value coefficients) radialDepth
+    joining target. -/ radial_bound : Gaussian.Norm.Basic.normSq (
+    RootRadialGeometry.radialArea (polynomials.value coefficients) radialDepth
       right.evaluated.first.root.coordinate -
-    RootContinuation.RootRadialGeometry.radialArea (polynomials.value coefficients) radialDepth
+    RootRadialGeometry.radialArea (polynomials.value coefficients) radialDepth
       left.evaluated.last.root.coordinate -
     Path.BoundaryRibbon.area firstValue lastValue) ≤ joinTarget *
       (Readings.PreparedObservationCoercivity.coefficientNormSq coefficients)^2
@@ -147,29 +147,29 @@ namespace BasisCommonConnector
 
 /-- Reuse the two actual interval endpoint readings to cache the connector and certify its increment and radial bounds
 from their original root join. -/
-@[expose] def build (request : Hyperelliptic.Charts.Reciprocal.Disk.Basis.JunctionRequests.BasisRequest basis joined
+@[expose] def build (request : JunctionRequests.BasisRequest basis joined
   joinTarget joinFloor)
-    (left : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisIntervalChartRequest.Plan.Acquisition
+    (left : CommonChartReadings.BasisIntervalChartRequest.Plan.Acquisition
       leftPlan anchorBank bank stage) (right :
-      Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonChartReadings.BasisIntervalChartRequest.Plan.Acquisition
+      CommonChartReadings.BasisIntervalChartRequest.Plan.Acquisition
       rightPlan anchorBank bank stage)
     (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus) (radialDepth : Nat)
-    (branch : Hyperelliptic.Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
+    (branch : HyperellipticReciprocal.originOrder curve = 1)
     (leftInside : regular.padded.Contains (left.evaluated.last.root.coordinate * left.evaluated.last.root.coordinate))
     (rightInside : regular.padded.Contains (right.evaluated.first.root.coordinate *
       right.evaluated.first.root.coordinate))
-    (later : request.index ≤ stage) : Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonConnector.BasisCommonConnector
+    (later : request.index ≤ stage) : BasisCommonConnector
       left right coefficients radialDepth joinTarget := by
-  let firstView := Hyperelliptic.Charts.Reciprocal.Disk.ChartEndpointReadings.Point.ReadingView.ofEqual (congrArg
-    Hyperelliptic.Charts.Reciprocal.Disk.VertexRequests.Prepared.point left.evaluated.last_owner)
+  let firstView := ChartEndpointReadings.Point.ReadingView.ofEqual (congrArg
+    VertexRequests.Prepared.point left.evaluated.last_owner)
     left.evaluated.last.root
-  let lastView := Hyperelliptic.Charts.Reciprocal.Disk.ChartEndpointReadings.Point.ReadingView.ofEqual (congrArg
-    Hyperelliptic.Charts.Reciprocal.Disk.VertexRequests.Prepared.point right.evaluated.first_owner)
+  let lastView := ChartEndpointReadings.Point.ReadingView.ofEqual (congrArg
+    VertexRequests.Prepared.point right.evaluated.first_owner)
     right.evaluated.first.root
   have firstEq : firstView.reading.coordinate = left.evaluated.last.root.coordinate :=
-    Hyperelliptic.Charts.Reciprocal.Disk.ChartEndpointReadings.Point.ReadingView.coordinate_eq _ _
+    ChartEndpointReadings.Point.ReadingView.coordinate_eq _ _
   have lastEq : lastView.reading.coordinate = right.evaluated.first.root.coordinate :=
-    Hyperelliptic.Charts.Reciprocal.Disk.ChartEndpointReadings.Point.ReadingView.coordinate_eq _ _
+    ChartEndpointReadings.Point.ReadingView.coordinate_eq _ _
   have beforeInside : regular.padded.Contains (firstView.reading.coordinate * firstView.reading.coordinate) := by
     rw [firstEq]; exact leftInside
   have afterInside : regular.padded.Contains (lastView.reading.coordinate * lastView.reading.coordinate) := by

@@ -111,54 +111,54 @@ open Purelib.Topology.Surface.Cut.Patch (CutPatch)
 open Purelib.Integration.Energy.Polygon (energyPrimitivePoint)
 
 /-- Evaluate the Hermitian primitive wedge area of one original three-corner local reading. -/
-def localTriangleArea (values : PrimitiveSewing.PrimitiveValues 3) : Gaussian.Basic.Canonical :=
-  Stokes.triangleWedgeArea (Polygon.energyPrimitivePoint (values 0)) (Polygon.energyPrimitivePoint (values 1))
-    (Polygon.energyPrimitivePoint (values 2))
+def localTriangleArea (values : PrimitiveValues 3) : Canonical :=
+  triangleWedgeArea (energyPrimitivePoint (values 0)) (energyPrimitivePoint (values 1))
+    (energyPrimitivePoint (values 2))
 
 /-- The original triangle boundary area is the pairing of its two first-corner increments. -/
-private theorem triangle_area_increments {count : Nat} (values : Fin count → Stokes.PrimitivePoint)
-    (triangle : Stokes.OrientedTriangle count) :
-    Stokes.edgeListArea values triangle.boundary =
-      Stokes.edgeArea ((Purelib.Topology.Polygon.Stokes.PrimitivePoint.sub (values triangle.second)) (values
+private theorem triangle_area_increments {count : Nat} (values : Fin count → PrimitivePoint)
+    (triangle : OrientedTriangle count) :
+    edgeListArea values triangle.boundary =
+      edgeArea ((PrimitivePoint.sub (values triangle.second)) (values
         triangle.first))
-        ((Purelib.Topology.Polygon.Stokes.PrimitivePoint.sub (values triangle.third)) (values triangle.first)) := by
-  change Stokes.edgeArea (values triangle.first) (values triangle.second) +
-    (Stokes.edgeArea (values triangle.second) (values triangle.third) +
-      (Stokes.edgeArea (values triangle.third) (values triangle.first) + 0)) = _
-  simp only [Stokes.edgeArea, PrimitivePoint.sub]
+        ((PrimitivePoint.sub (values triangle.third)) (values triangle.first)) := by
+  change edgeArea (values triangle.first) (values triangle.second) +
+    (edgeArea (values triangle.second) (values triangle.third) +
+      (edgeArea (values triangle.third) (values triangle.first) + 0)) = _
+  simp only [edgeArea, PrimitivePoint.sub]
   ring1
 
-variable {vertexCount faceCount : Nat} {faces : Fin faceCount → Stokes.OrientedTriangle vertexCount}
-  {localValues : Fin faceCount → PrimitiveSewing.PrimitiveValues 3} {patch : SewingTree.SewnPatch faces}
+variable {vertexCount faceCount : Nat} {faces : Fin faceCount → OrientedTriangle vertexCount}
+  {localValues : Fin faceCount → PrimitiveValues 3} {patch : SewnPatch faces}
 
 /-- Bound the actual retained face-area discrepancy using normalized original corner increments and both inherited
 sewing errors. -/
-theorem FaceTrace.area_difference_bound (sample : SewnPrimitiveSamples.CachedSample patch localValues)
-    (trace : SewnPrimitiveFaces.FaceTrace localValues sample.sewn.values) {magnitude error :
-      SewnPrimitiveFaces.Coordinate}
+theorem FaceTrace.area_difference_bound (sample : CachedSample patch localValues)
+    (trace : FaceTrace localValues sample.sewn.values) {magnitude error :
+      Coordinate}
     (nonnegative : 0 ≤ magnitude) (errorNonnegative : 0 ≤ error) (small : error ≤ 1)
-    (bounded : ∀ index, Data.Gaussian.Norm.Basic.normSq (localValues trace.source index - localValues trace.source 0) ≤
+    (bounded : ∀ index, Gaussian.Norm.Basic.normSq (localValues trace.source index - localValues trace.source 0) ≤
       magnitude)
-    (accurate : Data.Gaussian.Norm.Basic.normSq (trace.errors 1) ≤ error ∧ Data.Gaussian.Norm.Basic.normSq
+    (accurate : Gaussian.Norm.Basic.normSq (trace.errors 1) ≤ error ∧ Gaussian.Norm.Basic.normSq
       (trace.errors 2) ≤ error) :
-    Data.Gaussian.Norm.Basic.normSq (Stokes.edgeListArea sample.energyValues trace.triangle.boundary -
+    Gaussian.Norm.Basic.normSq (edgeListArea sample.energyValues trace.triangle.boundary -
       localTriangleArea (localValues trace.source)) ≤
       32 * (magnitude + 1) * error := by
   rw [triangle_area_increments]
   have conjugate (vertex) : PrimitivePoint.Conjugate
       (sample.energyValues vertex) := by rw [sample.energyValues_eq]; rfl
   have localConjugate (index) : PrimitivePoint.Conjugate
-      (Polygon.energyPrimitivePoint (localValues trace.source index)) := rfl
+      (energyPrimitivePoint (localValues trace.source index)) := rfl
   have firstBound := PrimitivePoint.bounded_of_conjugate
     (PrimitivePoint.sub_conjugate (localConjugate 1) (localConjugate 0)) (by
       have scalar := bounded 1
       simpa only [Gaussian.Norm.Basic.normSq_eq_canonical, PrimitivePoint.sub,
-        Polygon.energyPrimitivePoint] using scalar)
+        energyPrimitivePoint] using scalar)
   have lastBound := PrimitivePoint.bounded_of_conjugate
     (PrimitivePoint.sub_conjugate (localConjugate 2) (localConjugate 0)) (by
       have scalar := bounded 2
       simpa only [Gaussian.Norm.Basic.normSq_eq_canonical, PrimitivePoint.sub,
-        Polygon.energyPrimitivePoint] using scalar)
+        energyPrimitivePoint] using scalar)
   apply PrimitivePoint.area_difference_bound
     nonnegative errorNonnegative small firstBound lastBound
   · apply PrimitivePoint.bounded_of_conjugate
@@ -166,24 +166,24 @@ theorem FaceTrace.area_difference_bound (sample : SewnPrimitiveSamples.CachedSam
         (PrimitivePoint.sub_conjugate (conjugate _) (conjugate _))
         (PrimitivePoint.sub_conjugate (localConjugate 1) (localConjugate 0)))
     simpa only [Gaussian.Norm.Basic.normSq_eq_canonical, PrimitivePoint.sub, sample.energyValues_eq,
-      Polygon.energyPrimitivePoint, trace.errors_eq,
+      energyPrimitivePoint, trace.errors_eq,
       show SewnPrimitiveFaces.corner trace.triangle 1 = trace.triangle.second from rfl] using accurate.1
   · apply PrimitivePoint.bounded_of_conjugate
       (PrimitivePoint.sub_conjugate
         (PrimitivePoint.sub_conjugate (conjugate _) (conjugate _))
         (PrimitivePoint.sub_conjugate (localConjugate 2) (localConjugate 0)))
     simpa only [Gaussian.Norm.Basic.normSq_eq_canonical, PrimitivePoint.sub, sample.energyValues_eq,
-      Polygon.energyPrimitivePoint, trace.errors_eq,
+      energyPrimitivePoint, trace.errors_eq,
       show SewnPrimitiveFaces.corner trace.triangle 2 = trace.triangle.third from rfl] using accurate.2
 
 /-- One retained face trace's squared errors are bounded by the complete original trace-error sum. -/
-private theorem trace_errors_le_sum {count : Nat} {values : PrimitiveSewing.PrimitiveValues count}
-    (entries : List (SewnPrimitiveFaces.FaceTrace localValues values)) (trace : SewnPrimitiveFaces.FaceTrace localValues
+private theorem trace_errors_le_sum {count : Nat} {values : PrimitiveValues count}
+    (entries : List (FaceTrace localValues values)) (trace : FaceTrace localValues
       values) (member : trace ∈ entries) :
-    trace.squaredErrors ≤ Purelib.Algebra.FiniteSum.Rational.Squares.coordinateSum (entries.map FaceTrace.squaredErrors)
+    trace.squaredErrors ≤ coordinateSum (entries.map FaceTrace.squaredErrors)
       := by
-  have nonnegative (items : List (SewnPrimitiveFaces.FaceTrace localValues values)) :
-      0 ≤ Squares.coordinateSum (items.map FaceTrace.squaredErrors) := by
+  have nonnegative (items : List (FaceTrace localValues values)) :
+      0 ≤ coordinateSum (items.map FaceTrace.squaredErrors) := by
     induction items with
     | nil => exact le_rfl
     | cons first remaining ih =>
@@ -197,11 +197,11 @@ private theorem trace_errors_le_sum {count : Nat} {values : PrimitiveSewing.Prim
         (Gaussian.Norm.Basic.normSq_nonneg _)))
 
 /-- Both retained corner errors are bounded by the original face bank's complete squared-error cache. -/
-theorem FaceBank.trace_errors_le {indices : List (Fin faceCount)} {boundary : List (Stokes.OrientedEdge vertexCount)}
-    {cut : Patch.CutPatch faces indices boundary} {values : PrimitiveSewing.PrimitiveValues cut.count}
-    (bank : SewnPrimitiveFaces.FaceBank cut localValues values) (trace : SewnPrimitiveFaces.FaceTrace localValues
+theorem FaceBank.trace_errors_le {indices : List (Fin faceCount)} {boundary : List (OrientedEdge vertexCount)}
+    {cut : CutPatch faces indices boundary} {values : PrimitiveValues cut.count}
+    (bank : FaceBank cut localValues values) (trace : FaceTrace localValues
       values) (member : trace ∈ bank.entries) :
-    Data.Gaussian.Norm.Basic.normSq (trace.errors 1) ≤ bank.squaredErrors ∧ Data.Gaussian.Norm.Basic.normSq
+    Gaussian.Norm.Basic.normSq (trace.errors 1) ≤ bank.squaredErrors ∧ Gaussian.Norm.Basic.normSq
       (trace.errors 2) ≤ bank.squaredErrors := by
   have total := trace_errors_le_sum bank.entries trace member
   rw [← bank.squaredErrors_eq] at total
@@ -223,33 +223,33 @@ open Purelib.Topology.Surface.Sewing.SewingTree (SewnPatch)
 open Purelib.Topology.Surface.Sewing.SewnPrimitiveFaces (FaceTrace)
 open Purelib.Topology.Surface.Sewing.SewnPrimitiveSamples (CachedSample)
 
-variable {vertexCount faceCount : Nat} {faces : Fin faceCount → Stokes.OrientedTriangle vertexCount}
-  {localValues : Fin faceCount → PrimitiveSewing.PrimitiveValues 3} {patch : SewingTree.SewnPatch faces}
+variable {vertexCount faceCount : Nat} {faces : Fin faceCount → OrientedTriangle vertexCount}
+  {localValues : Fin faceCount → PrimitiveValues 3} {patch : SewnPatch faces}
 
-variable {sample : SewnPrimitiveSamples.CachedSample patch localValues} {keep : Fin faceCount → Bool}
+variable {sample : CachedSample patch localValues} {keep : Fin faceCount → Bool}
 
 set_option genInjectivity false in
 /-- The local area is computed from exactly the retained source occurrences, not from a projected vertex assignment or a
 separately prepared surface. -/
-structure LocalArea (selected : CachedSample.FaceSelection sample keep) where
-  /-- Cached local area sum over the exact retained original selection. -/ value : Gaussian.Basic.Canonical
+structure LocalArea (selected : FaceSelection sample keep) where
+  /-- Cached local area sum over the exact retained original selection. -/ value : Canonical
   /-- The local-area cache reads the source of every retained selected trace. -/ value_eq : value =
-    CellBoundary.sumValues (fun trace : SewnPrimitiveFaces.FaceTrace localValues sample.sewn.values =>
-    Topology.Surface.Sewing.SewnFaceAreaComparison.localTriangleArea (localValues trace.source)) selected.traces
+    sumValues (fun trace : FaceTrace localValues sample.sewn.values =>
+    SewnFaceAreaComparison.localTriangleArea (localValues trace.source)) selected.traces
 
 constructive_injectivity LocalArea
 
 /-- Cache the local triangle-area sum of the exact original selected face traces. -/
-def LocalArea.build (selected : CachedSample.FaceSelection sample keep) : selected.LocalArea :=
-  ⟨sumValues (fun trace : SewnPrimitiveFaces.FaceTrace localValues sample.sewn.values =>
-    Topology.Surface.Sewing.SewnFaceAreaComparison.localTriangleArea (localValues trace.source)) selected.traces, rfl⟩
+def LocalArea.build (selected : FaceSelection sample keep) : selected.LocalArea :=
+  ⟨sumValues (fun trace : FaceTrace localValues sample.sewn.values =>
+    SewnFaceAreaComparison.localTriangleArea (localValues trace.source)) selected.traces, rfl⟩
 
 /-- The original selected area discrepancy is the full trace-bank sum of selected local differences and zero elsewhere.
 -/
-theorem LocalArea.difference (selected : CachedSample.FaceSelection sample keep) (area : selected.LocalArea) :
-    selected.area - area.value = Data.Gaussian.Norm.Sum.Basic.gaussianSum (sample.faces.entries.map fun trace =>
-      if keep trace.source then Stokes.edgeListArea sample.energyValues trace.triangle.boundary -
-        Topology.Surface.Sewing.SewnFaceAreaComparison.localTriangleArea (localValues trace.source) else 0) := by
+theorem LocalArea.difference (selected : FaceSelection sample keep) (area : selected.LocalArea) :
+    selected.area - area.value = gaussianSum (sample.faces.entries.map fun trace =>
+      if keep trace.source then edgeListArea sample.energyValues trace.triangle.boundary -
+        SewnFaceAreaComparison.localTriangleArea (localValues trace.source) else 0) := by
   rw [selected.area_readback, area.value_eq, selected.traces_eq,
     ← CellBoundary.sumValues_sub]
   induction sample.faces.entries with
@@ -260,14 +260,14 @@ theorem LocalArea.difference (selected : CachedSample.FaceSelection sample keep)
         rw [Filter.filter_cons_of_neg (predicate := fun trace => keep trace.source) (head := first) (tail := remaining)
           (by rw [equal]; exact Bool.noConfusion)]
         simp only [equal, if_neg (show (false : Bool) ≠ true from fun h => Bool.noConfusion h), List.map_cons,
-          Data.Gaussian.Norm.Sum.Basic.gaussianSum, -eq_self, -iff_self]
+          gaussianSum, -eq_self, -iff_self]
         rw [Gaussian.Basic.zero_add]
         exact ih
     | true =>
         rw [Filter.filter_cons_of_pos (predicate := fun trace => keep trace.source) (head := first) (tail := remaining)
           equal]
-        simp only [equal, if_pos (rfl : true = true), CellBoundary.sumValues, List.map_cons,
-          Data.Gaussian.Norm.Sum.Basic.gaussianSum, -eq_self, -iff_self]
+        simp only [equal, if_pos (rfl : true = true), sumValues, List.map_cons,
+          gaussianSum, -eq_self, -iff_self]
         exact congrArg (_ + ·) ih
 
 end Purelib.Integration.Surface.Sewn.Selection.Basic.SewnPrimitiveFaces.CachedSample.FaceSelection
@@ -289,36 +289,36 @@ open Purelib.Topology.Surface.Sewing.SewnPrimitiveRequests (LocalAccuracy Reques
 open Purelib.Topology.Surface.Cut.Patch (CutPatch)
 open Purelib.Integration.Energy.Polygon (energyPrimitivePoint)
 
-variable {vertexCount faceCount : Nat} {faces : Fin faceCount → Stokes.OrientedTriangle vertexCount}
-  {localValues : Fin faceCount → PrimitiveSewing.PrimitiveValues 3} {patch : SewingTree.SewnPatch faces}
+variable {vertexCount faceCount : Nat} {faces : Fin faceCount → OrientedTriangle vertexCount}
+  {localValues : Fin faceCount → PrimitiveValues 3} {patch : SewnPatch faces}
 
-variable {indices : List (Fin faceCount)} {boundary : List (Stokes.OrientedEdge vertexCount)}
-  {cut : Patch.CutPatch faces indices boundary} {assembly : CutPatch.Assembly faces cut}
+variable {indices : List (Fin faceCount)} {boundary : List (OrientedEdge vertexCount)}
+  {cut : CutPatch faces indices boundary} {assembly : CutPatch.Assembly faces cut}
 
 set_option genInjectivity false in
 /-- A cached sewing request paying the area error for original selected face occurrences.
 
 The local error is capped at one and weighted by magnitude and the complete assembly face count. -/
-structure FaceAreaRequest (assembly : CutPatch.Assembly faces cut) (magnitude target : SewnPrimitiveFaces.Coordinate)
+structure FaceAreaRequest (assembly : CutPatch.Assembly faces cut) (magnitude target : Coordinate)
   where
   /-- The supplied normalized local primitive magnitude bound is nonnegative. -/ nonnegative : 0 ≤ magnitude
   /-- The requested total selected-area error target is strictly positive. -/ positive : 0 < target
   /-- Cached local error allowance used by the original dependent sewing request. -/ error :
-    SewnPrimitiveFaces.Coordinate
+    Coordinate
   /-- The local error is capped at one and pays the full weighted original face-count allocation. -/ error_eq : error =
     min 1 (Aggregate.perTerm
     (Weighted.allowance target (32 * (magnitude + 1))) indices.length)
   /-- Retained sewing request for this exact original assembly and cached local error. -/ sewing :
-    SewnPrimitiveRequests.Request assembly error
+    Request assembly error
 
 constructive_injectivity FaceAreaRequest
 
 namespace FaceAreaRequest
 
-variable {magnitude target : SewnPrimitiveFaces.Coordinate}
+variable {magnitude target : Coordinate}
 
 /-- Cache the weighted original face-area allowance and its dependent sewing request. -/
-def build (assembly : CutPatch.Assembly faces cut) (magnitude target : SewnPrimitiveFaces.Coordinate)
+def build (assembly : CutPatch.Assembly faces cut) (magnitude target : Coordinate)
     (nonnegative : 0 ≤ magnitude) (positive : 0 < target) : FaceAreaRequest assembly magnitude
       target :=
   let error := min 1 (Aggregate.perTerm
@@ -330,15 +330,15 @@ def build (assembly : CutPatch.Assembly faces cut) (magnitude target : SewnPrimi
   ⟨nonnegative, positive, error, rfl, Request.build assembly error errorPositive⟩
 
 /-- The retained sewing accuracy pays the complete selected original face-area discrepancy. -/
-theorem accurate {patch : SewingTree.SewnPatch faces} (request : FaceAreaRequest patch.assembly
+theorem accurate {patch : SewnPatch faces} (request : FaceAreaRequest patch.assembly
   magnitude target)
-    (sample : SewnPrimitiveSamples.CachedSample patch localValues) {keep : Fin faceCount → Bool}
+    (sample : CachedSample patch localValues) {keep : Fin faceCount → Bool}
     (selected : CachedSample.FaceSelection sample keep)
     (area : selected.LocalArea)
-    (bounded : ∀ source index, Data.Gaussian.Norm.Basic.normSq (localValues source index - localValues source 0) ≤
+    (bounded : ∀ source index, Gaussian.Norm.Basic.normSq (localValues source index - localValues source 0) ≤
       magnitude)
-    (locallyAccurate : SewnPrimitiveRequests.LocalAccuracy request.sewing.tolerance sample.sewn.readings) :
-    Data.Gaussian.Norm.Basic.normSq (selected.area - area.value) < target := by
+    (locallyAccurate : LocalAccuracy request.sewing.tolerance sample.sewn.readings) :
+    Gaussian.Norm.Basic.normSq (selected.area - area.value) < target := by
   have total : sample.faces.squaredErrors < request.error := by
     rw [sample.faces_eq]
     exact request.sewing.accurate sample.sewn.readings locallyAccurate
@@ -356,8 +356,8 @@ theorem accurate {patch : SewingTree.SewnPatch faces} (request : FaceAreaRequest
   obtain ⟨trace, member, equal⟩ := Map.mem_map.mp member
   rw [← equal, Map.length_map, lengthEq]
   split
-  · have errors := SewnFaceAreaComparison.FaceBank.trace_errors_le sample.faces trace member
-    exact (SewnFaceAreaComparison.FaceTrace.area_difference_bound
+  · have errors := FaceBank.trace_errors_le sample.faces trace member
+    exact (FaceTrace.area_difference_bound
       sample trace request.nonnegative request.sewing.target_positive.le small
       (bounded trace.source) ⟨errors.1.trans total.le, errors.2.trans total.le⟩).trans
       ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct paid weightNonnegative).trans

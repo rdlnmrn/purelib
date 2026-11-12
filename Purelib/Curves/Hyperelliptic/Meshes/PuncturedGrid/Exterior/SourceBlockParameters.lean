@@ -59,6 +59,10 @@ import Purelib.Riemann.Paths.PreparedPathDecomposition
 import Purelib.Riemann.Paths.PreparedPathParentCaches
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Geometry.Rectangle.Partition
+
 public section
 
 /-! Midpoint search selects a source occurrence; the actual mesh cuts then
@@ -84,7 +88,7 @@ variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {b
     Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
     Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
-    regular domains differential} {target : Normalization.InverseRootPolynomial.Coordinate} {minimum stage fine : Nat}
+    regular domains differential} {target : Coordinate} {minimum stage fine : Nat}
   {box otherBox : Rational.Box}
   {sample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
   {otherSample : Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
@@ -96,14 +100,14 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior
 namespace SourceBlockParameters
 
 /-- Read the selected coordinate with the sign of the chosen traversal orientation. -/
-@[expose] def signedAxis (vertical forward : Bool) (point : Normalization.InverseRootPolynomial.Gaussian) : Coordinate
+@[expose] def signedAxis (vertical forward : Bool) (point : InverseRootPolynomial.Gaussian) : Coordinate
   :=
   if forward then Rectangle.SourceIntervals.axisCoordinate vertical point else -Rectangle.SourceIntervals.axisCoordinate
     vertical point
 
 /-- Orient a physical interval by preserving it forward or negating and exchanging its endpoints in reverse. -/
-@[expose] def signedInterval (forward : Bool) (physical : Rectangle.Partition.PreparedAxisPartitions.Interval) :
-  Rectangle.Partition.PreparedAxisPartitions.Interval :=
+@[expose] def signedInterval (forward : Bool) (physical : PreparedAxisPartitions.Interval) :
+  PreparedAxisPartitions.Interval :=
 
   open Purelib.Data.Rat in if forward then physical else ⟨-physical.upper, -physical.lower,
     Fraction.Order.Arithmetic.neg_lt_neg_direct physical.ordered⟩
@@ -113,46 +117,46 @@ end SourceBlockParameters
 namespace SourceBlockParameters
 
 /-- The midpoint of the physical block in the selected signed orientation. -/
-@[expose] def blockMidpoint (forward : Bool) (physical : Rectangle.Partition.PreparedAxisPartitions.Interval) :
+@[expose] def blockMidpoint (forward : Bool) (physical : PreparedAxisPartitions.Interval) :
   Coordinate :=
-  ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward physical).lower +
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward physical).upper) / 2
+  ((SourceBlockParameters.signedInterval forward physical).lower +
+    (SourceBlockParameters.signedInterval forward physical).upper) / 2
 
 /-- Every retained mesh cut lies outside the interior of an original physical block in either orientation. -/
-theorem signed_outside {columns rows : Nat} {geometry : Normalization.RectangularInverseModels.Geometry columns rows}
+theorem signed_outside {columns rows : Nat} {geometry : RectangularInverseModels.Geometry columns rows}
     {cuts : Paths.RectangularSegmentSplitting.GridCuts geometry} {meshBox : Rational.Box}
     (mesh : Meshes.RectangularObservationMesh.ObservationMesh cuts meshBox) (vertical forward : Bool)
-    {physical : Rectangle.Partition.PreparedAxisPartitions.Interval} (member : physical ∈
+    {physical : PreparedAxisPartitions.Interval} (member : physical ∈
       Rectangle.SourceIntervals.axisIntervals mesh vertical)
-    {point : Normalization.InverseRootPolynomial.Gaussian} (present : point ∈ mesh.points) :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward point ≤
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward physical).lower ∨
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward physical).upper ≤
-        Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward point := open
-        Purelib.Data.Rat in by
+    {point : InverseRootPolynomial.Gaussian} (present : point ∈ mesh.points) :
+    SourceBlockParameters.signedAxis vertical forward point ≤
+      (SourceBlockParameters.signedInterval forward physical).lower ∨
+      (SourceBlockParameters.signedInterval forward physical).upper ≤
+        SourceBlockParameters.signedAxis vertical forward point := open
+        Data.Rat in by
   have outside := Rectangle.SourceIntervals.axis_cut_outside mesh vertical member present
   cases forward with
   | true => exact outside
   | false =>
-    exact outside.elim (fun bound => Or.inr (Fraction.Order.Arithmetic.neg_le_neg_direct bound))
-      (fun bound => Or.inl (Fraction.Order.Arithmetic.neg_le_neg_direct bound))
+    exact outside.elim (fun bound => Or.inr (Arithmetic.neg_le_neg_direct bound))
+      (fun bound => Or.inl (Arithmetic.neg_le_neg_direct bound))
 
 /-- Read the signed initial coordinate of the parent at the original paired source index. -/
 @[expose] def sourceAxisFirst (evaluated :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan sample
+  PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan sample
   otherSample fine) (index : Fin evaluated.retained.length)
     (vertical forward : Bool) : Coordinate :=
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+      SourceBlockParameters.signedAxis vertical forward
+      ((IndexedSourceSplits.indexedEntry evaluated
       index).plan.parent.edge.point 0)
 
 /-- Read the signed final coordinate of that same retained source parent. -/
 @[expose] def sourceAxisLast (evaluated :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan sample
+  PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan sample
   otherSample fine) (index : Fin evaluated.retained.length)
     (vertical forward : Bool) : Coordinate :=
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+      SourceBlockParameters.signedAxis vertical forward
+      ((IndexedSourceSplits.indexedEntry evaluated
       index).plan.parent.edge.point 1)
 
 end SourceBlockParameters
@@ -162,19 +166,19 @@ set_option genInjectivity false in
 
 The retained finite index, strict signed endpoint order and parameter correspondence preserve the selected parent. -/
 structure SourceBlockParameters (evaluated :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan sample
+  PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan sample
   otherSample fine)
-    (vertical forward : Bool) (physical : Rectangle.Partition.PreparedAxisPartitions.Interval) where
+    (vertical forward : Bool) (physical : PreparedAxisPartitions.Interval) where
   /-- The original paired source occurrence index selected for the physical block. -/ index : Fin
     evaluated.retained.length
   /-- The selected parent's signed endpoints are strictly increasing. -/ ordered :
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.sourceAxisFirst evaluated index vertical forward <
-    Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.sourceAxisLast evaluated index vertical forward
+    SourceBlockParameters.sourceAxisFirst evaluated index vertical forward <
+    SourceBlockParameters.sourceAxisLast evaluated index vertical forward
   /-- The executable parent parameter range corresponding to the signed physical interval. -/ parameters :
     Integration.RectangularAxisParameterRange.AxisParameterRange
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.sourceAxisFirst evaluated index vertical forward)
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.sourceAxisLast evaluated index vertical forward)
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward physical)
+    (SourceBlockParameters.sourceAxisFirst evaluated index vertical forward)
+    (SourceBlockParameters.sourceAxisLast evaluated index vertical forward)
+      (SourceBlockParameters.signedInterval forward physical)
 
 constructive_injectivity SourceBlockParameters
 
@@ -187,54 +191,54 @@ Retained mesh cuts certify that both physical endpoints lie in the selected pare
     {prepared :
       SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
       regular domains differential} {previous :
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+      RegularDomainMeshes.RegularMeshes.CommonCuts domains}
     (selected : SourceCuts prepared previous) (member :
       occurrence ∈ prepared.occurrences)
     {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {meshTarget :
-      Normalization.InverseRootPolynomial.Coordinate}
-    (request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
+      RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {meshTarget :
+      Coordinate}
+    (request : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+      RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
       coarseDepth) fixed meshTarget)
     (sheet : Fin 2) (position : Fin base.faces.regulars.length)
-    (evaluated : Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan.ParentEvaluation
+    (evaluated : PairedSourceReferences.PairedSourcePlan.ParentEvaluation
       plan sample otherSample fine) (vertical forward : Bool) (physical :
-      Rectangle.Partition.PreparedAxisPartitions.Interval)
+      PreparedAxisPartitions.Interval)
     (present : physical ∈ Rectangle.SourceIntervals.axisIntervals ((request.entries.get sheet).meshes.entries.get
       position) vertical)
-    (lower : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward
-      occurrence.start ≤ Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.blockMidpoint forward
+    (lower : SourceBlockParameters.signedAxis vertical forward
+      occurrence.start ≤ SourceBlockParameters.blockMidpoint forward
       physical)
-    (upper : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.blockMidpoint forward physical <
-      Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward occurrence.finish) :
+    (upper : SourceBlockParameters.blockMidpoint forward physical <
+      SourceBlockParameters.signedAxis vertical forward occurrence.finish) :
     SourceBlockParameters evaluated vertical forward
       physical := by
-  let found := Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.locateSourceAxis evaluated
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedAxis vertical forward)
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.blockMidpoint forward physical) lower upper
-  let split := Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.sourceSplit evaluated found.index
+  let found := IndexedSourceSplits.locateSourceAxis evaluated
+    (SourceBlockParameters.signedAxis vertical forward)
+    (SourceBlockParameters.blockMidpoint forward physical) lower upper
+  let split := IndexedSourceSplits.sourceSplit evaluated found.index
   have firstPoint := Paths.RectangularSegmentRefinement.coordinate_point_mem
     split.split split.split.partition.lower_mem
   have lastPoint := Paths.RectangularSegmentRefinement.coordinate_point_mem
     split.split split.split.partition.upper_mem
-  rw [Rectangle.Partition.PreparedSegmentCuts.point_zero] at firstPoint
-  rw [Rectangle.Partition.PreparedSegmentCuts.point_one] at lastPoint
-  have firstOutside := Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signed_outside
+  rw [PreparedSegmentCuts.point_zero] at firstPoint
+  rw [PreparedSegmentCuts.point_one] at lastPoint
+  have firstOutside := SourceBlockParameters.signed_outside
     ((request.entries.get sheet).meshes.entries.get position) vertical forward present
     (selected.requested_split_points request sheet position member split.member firstPoint)
-  have lastOutside := Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signed_outside
+  have lastOutside := SourceBlockParameters.signed_outside
     ((request.entries.get sheet).meshes.entries.get position) vertical forward present
     (selected.requested_split_points request sheet position member split.member lastPoint)
-  have between := Rectangle.Partition.PreparedSegmentCuts.midpoint_bounds
-    (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward physical)
-  have firstBound : Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.sourceAxisFirst evaluated
-    found.index vertical forward ≤ (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval
+  have between := PreparedSegmentCuts.midpoint_bounds
+    (SourceBlockParameters.signedInterval forward physical)
+  have firstBound : SourceBlockParameters.sourceAxisFirst evaluated
+    found.index vertical forward ≤ (SourceBlockParameters.signedInterval
     forward physical).lower := by
     rcases firstOutside with bound | bound
     · exact bound
     · exact (not_lt_of_ge (bound.trans found.lower) between.2).elim
-  have lastBound : (Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.signedInterval forward
-    physical).upper ≤ Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlockParameters.sourceAxisLast evaluated
+  have lastBound : (SourceBlockParameters.signedInterval forward
+    physical).upper ≤ SourceBlockParameters.sourceAxisLast evaluated
     found.index vertical forward := by
     rcases lastOutside with bound | bound
     · exact (not_lt_of_ge (bound.trans between.1.le) found.upper).elim
@@ -251,31 +255,31 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SourceBlock
 
 /-- The retained signed parameter range gives the actual forward or reverse physical-axis correspondence. -/
 theorem correspondence {evaluated :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan sample
+  PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan sample
   otherSample fine}
-    {vertical forward : Bool} {physical : Rectangle.Partition.PreparedAxisPartitions.Interval}
+    {vertical forward : Bool} {physical : PreparedAxisPartitions.Interval}
     (block : SourceBlockParameters evaluated vertical
       forward physical) :
     Rectangle.SourceIntervals.AxisCorrespondence vertical
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+      ((IndexedSourceSplits.indexedEntry evaluated
         block.index).plan.parent.edge.point 0)
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
-        block.index).plan.parent.edge.point 1) block.parameters.range physical := open Purelib.Data.Rat in by
+      ((IndexedSourceSplits.indexedEntry evaluated
+        block.index).plan.parent.edge.point 1) block.parameters.range physical := open Data.Rat in by
   cases forward with
   | true =>
-    exact Or.inl ⟨Fraction.Order.Arithmetic.sub_pos_direct block.ordered, block.parameters.first_eq,
+    exact Or.inl ⟨Arithmetic.sub_pos_direct block.ordered, block.parameters.first_eq,
       block.parameters.last_eq⟩
   | false =>
-    have ordered := Fraction.Order.Arithmetic.neg_lt_neg_direct block.ordered
+    have ordered := Arithmetic.neg_lt_neg_direct block.ordered
     change -(-Rectangle.SourceIntervals.axisCoordinate vertical
-      ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+      ((IndexedSourceSplits.indexedEntry evaluated
       block.index).plan.parent.edge.point 1)) <
       -(-Rectangle.SourceIntervals.axisCoordinate vertical
-        ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+        ((IndexedSourceSplits.indexedEntry evaluated
         block.index).plan.parent.edge.point 0)) at ordered
     rw [neg_neg, neg_neg] at ordered
-    have negative := Fraction.Order.Arithmetic.sub_lt_sub_right_direct ordered (Rectangle.SourceIntervals.axisCoordinate
-      vertical ((Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.indexedEntry evaluated
+    have negative := Arithmetic.sub_lt_sub_right_direct ordered (Rectangle.SourceIntervals.axisCoordinate
+      vertical ((IndexedSourceSplits.indexedEntry evaluated
       block.index).plan.parent.edge.point 0))
     rw [sub_self] at negative
     exact Or.inr ⟨negative, Fraction.Field.unneg_affine block.parameters.first_eq, Fraction.Field.unneg_affine
@@ -283,30 +287,30 @@ theorem correspondence {evaluated :
 
 /-- Locate the retained parameter range in its original source split on the requested shared mesh. -/
 @[expose] def locate {evaluated :
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan sample
+  PairedSourceReferences.PairedSourcePlan.ParentEvaluation plan sample
   otherSample fine}
-    {vertical forward : Bool} {physical : Rectangle.Partition.PreparedAxisPartitions.Interval}
+    {vertical forward : Bool} {physical : PreparedAxisPartitions.Interval}
     (block : SourceBlockParameters evaluated vertical
       forward physical)
     {prepared :
       SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
       regular domains differential} {previous :
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.CommonCuts domains}
+      RegularDomainMeshes.RegularMeshes.CommonCuts domains}
     (selected : SourceCuts prepared previous) (member :
       occurrence ∈ prepared.occurrences)
     {coarseDepth : Nat} {fixed : (sheet : Fin 2) →
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {meshTarget :
-      Normalization.InverseRootPolynomial.Coordinate}
-    (request : Hyperelliptic.Meshes.PuncturedGrid.TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
-      Hyperelliptic.Meshes.PuncturedGrid.RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
+      RegularDomainMeshes.RegularMeshes.Preflights domains sheet} {meshTarget :
+      Coordinate}
+    (request : TwoSheetBilinearRequest.TwoSheetRequest (fun sheet =>
+      RegularDomainMeshes.RegularMeshes.build domains selected.cuts sheet
       coarseDepth) fixed meshTarget)
     (sheet : Fin 2) (position : Fin base.faces.regulars.length)
     (present : physical ∈ Rectangle.SourceIntervals.axisIntervals ((request.entries.get sheet).meshes.entries.get
       position) vertical) :
     Paths.RectangularSegmentRefinement.Subinterval
-      (Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.sourceSplit evaluated block.index).split
+      (IndexedSourceSplits.sourceSplit evaluated block.index).split
       block.parameters.range :=
-  Hyperelliptic.Meshes.PuncturedGrid.Exterior.IndexedSourceSplits.locateIndexedSourceInterval selected member request
+  IndexedSourceSplits.locateIndexedSourceInterval selected member request
     sheet position evaluated block.index vertical physical present
     block.parameters.range block.parameters.within block.correspondence
 

@@ -8,12 +8,14 @@ import Purelib.Polynomial.Dense.Gaussian.Primitive.Segment.Comparison
 import Purelib.Riemann.Normalization.InverseModelEdgeTransition
 import Purelib.Data.Gaussian.Basic
 import Purelib.Data.Gaussian.Norm.Basic
+import Purelib.Data.Gaussian.Norm.Power
 import Purelib.Data.Rat.Fraction.Order.Arithmetic
 import Purelib.Data.Rat.Interval.Basic
 import Purelib.Data.Vector.Basic
 import Purelib.Geometry.Rational.Affine
 import Purelib.Polynomial.Dense.Gaussian.Primitive.Certificate
 import Purelib.Polynomial.Dense.Multiplication
+public import Purelib.Polynomial.Dense.Power
 
 import Purelib.Polynomial.Dense.Gaussian.GCD
 import Purelib.Topology.Grid.Signs
@@ -43,6 +45,8 @@ does not grow with the Newton degree.
 -/
 
 namespace Purelib.Riemann.Integration.RectangularPrimitiveModels
+
+open Purelib.Data.Rat.Fraction.Order
 
 open Purelib.Riemann.Normalization.RectangularInverseModels (Geometry Bank Transitions)
 open Purelib.Riemann.Comparison.PrimitiveEdgeComparison (RegionClearance PrimitiveOverlapBounds DensePrimitive)
@@ -77,15 +81,19 @@ set_option genInjectivity false in
 open Purelib.Data in
 /-- An indexed primitive bank for the original inverse-root models and numerator polynomial.
 
-Each coefficient equals the same numerator times its original cell model, and the retained remainder bounds control
-increments inside that exact cell box. -/
+Each coefficient uses the same numerator and the retained model's indexed
+odd inverse power. The zero-pair branch is the original inverse model;
+the cached remainder bounds control increments in that exact cell box. -/
 structure Primitives {polynomial : Polynomial} {columns rows : Nat} {geometry : Geometry columns rows}
-    (models : Bank polynomial geometry) (numerator : Polynomial) where
+    (models : Bank polynomial geometry) (numerator : Polynomial) (pairs : optParam Nat 0) where
   /-- The cached primitive cells at the original column and row indices. -/ cells : Data.Vector
     (Data.Vector PrimitiveCell (rows + 1)) (columns + 1)
-  /-- Each retained coefficient evaluates to the original numerator times its exact inverse-root model. -/
+  /-- Each coefficient evaluates to the numerator times its indexed original odd inverse-root power. -/
     coefficient_eq : ∀ column row point,
-    (cells column row).coefficient.eval point = numerator.eval point * (models.ready column row).model.value.eval point
+    (cells column row).coefficient.eval point = match pairs with
+      | 0 => numerator.eval point * (models.ready column row).model.value.eval point
+      | remaining + 1 => numerator.eval point *
+          (models.ready column row).model.value.eval point ^ (2 * (remaining + 1) + 1)
   /-- The original cell primitive's linearization remainder obeys its retained bound inside the same cell box. -/
     increment_bound : ∀ column row {start finish : Gaussian},
     (geometry.box column row).Contains start → (geometry.box column row).Contains finish →
@@ -98,7 +106,7 @@ constructive_injectivity Primitives
 namespace Primitives
 
 variable {polynomial numerator : Polynomial} {columns rows : Nat} {geometry : Geometry columns rows}
-    {models : Bank polynomial geometry}
+    {models : Bank polynomial geometry} {pairs : Nat}
 
 open Purelib.Data in
 open Purelib.Data.Gaussian in
@@ -108,9 +116,12 @@ open Purelib.Polynomial.Dense.Gaussian in
 
 Each coefficient uses the exact stored inverse-root model and common numerator; its original dense primitive supplies
 the cached value and bound. -/
-def build (models : Bank polynomial geometry) (numerator : Polynomial) : Primitives models numerator :=
+def build (models : Bank polynomial geometry) (numerator : Polynomial) (pairs : optParam Nat 0) :
+    Primitives models numerator pairs :=
   let cells := Vector.Basic.vectorOfFn fun column => Vector.Basic.vectorOfFn fun row =>
-    let coefficient := numerator * (models.ready column row).model.value
+    let coefficient := match pairs with
+      | 0 => numerator * (models.ready column row).model.value
+      | remaining + 1 => numerator * Dense.Power.power ((models.ready column row).model.value) (2 * (remaining + 1) + 1)
     let primitive := Primitive.Certificate.DensePrimitive.ofPolynomial coefficient (geometry.box column row)
     (⟨coefficient, primitive.value, primitive.derivative_eq, primitive.remainderBound,
       primitive.remainderBound_nonnegative⟩ : PrimitiveCell)
@@ -118,7 +129,11 @@ def build (models : Bank polynomial geometry) (numerator : Polynomial) : Primiti
     coefficient_eq := fun column row point => by
       dsimp only [cells]
       rw [Vector.Basic.vectorOfFn_apply, Vector.Basic.vectorOfFn_apply]
-      exact Dense.Basic.DensePolynomial.eval_mul _ _ _
+      cases pairs with
+      | zero => exact Dense.Basic.DensePolynomial.eval_mul _ _ _
+      | succ remaining =>
+          rewrite [Dense.Basic.DensePolynomial.eval_mul, Dense.Power.eval_power]
+          rfl
     increment_bound := fun column row _ _ startInside finishInside => by
       dsimp only [cells]
       rw [Vector.Basic.vectorOfFn_apply, Vector.Basic.vectorOfFn_apply]
@@ -127,7 +142,7 @@ def build (models : Bank polynomial geometry) (numerator : Polynomial) : Primiti
 
 open Purelib.Data.Gaussian in
 /-- Read the exact retained primitive cell as a dense primitive on its original cell box. -/
-def dense (primitives : Primitives models numerator) (column : Fin (columns + 1)) (row : Fin (rows + 1)) :
+def dense (primitives : Primitives models numerator pairs) (column : Fin (columns + 1)) (row : Fin (rows + 1)) :
     DensePrimitive (primitives.cells column row).coefficient (geometry.box column row) :=
   { value := (primitives.cells column row).value
     derivative_eq := (primitives.cells column row).derivative_eq
@@ -137,11 +152,21 @@ def dense (primitives : Primitives models numerator) (column : Fin (columns + 1)
       simpa only [Norm.Basic.normSq_eq_canonical] using primitives.increment_bound column row startInside finishInside }
 
 /-- Evaluate the original cached primitive polynomial at the given point in its retained cell index. -/
-def value (primitives : Primitives models numerator) (column : Fin (columns + 1)) (row : Fin (rows + 1)) (point :
+def value (primitives : Primitives models numerator pairs) (column : Fin (columns + 1)) (row : Fin (rows + 1)) (point :
   Gaussian) : Gaussian :=
   (primitives.cells column row).value.eval point
 
 end Primitives
+
+open Purelib.Data.Gaussian in
+/-- The original ambient clearance controls any retained model on a refining cell. -/
+private theorem ambient_inverse_le {polynomial numerator : Polynomial} {ambient inner : Box}
+    {clearance : RegionClearance polynomial ambient} (bounds : PrimitiveOverlapBounds clearance numerator)
+    (model : Model polynomial inner) (refines : inner.Refines ambient) {point : Gaussian}
+    (inside : inner.Contains point) : normSq (model.value.eval point) ≤ bounds.inverseUpper := by
+  have inverse := (PrimitiveOverlapBounds.build (clearance.restrict refines) numerator).inverse_norm_le model inside
+  change normSq (model.value.eval point) ≤ 1 + 4 / clearance.bound at inverse
+  exact inverse.trans_eq bounds.inverseUpper_eq.symm
 
 open Purelib.Data.Gaussian in
 open Purelib.Data.Rat in
@@ -152,20 +177,18 @@ theorem ambient_numerator_inverse_le {polynomial numerator : Polynomial} {ambien
     (model : Model polynomial inner) (refines : inner.Refines ambient) {point : Gaussian} (inside : inner.Contains
       point) :
     normSq (numerator.eval point * model.value.eval point) ≤ bounds.numeratorUpper * bounds.inverseUpper := by
-  have inverse := (PrimitiveOverlapBounds.build (clearance.restrict refines) numerator).inverse_norm_le model inside
-  change normSq (model.value.eval point) ≤ 1 + 4 / clearance.bound at inverse
-  rw [← bounds.inverseUpper_eq] at inverse
+  have inverse := ambient_inverse_le bounds model refines inside
   rw [Basic.Canonical.normSq_mul]
   have scalar := Bounds.Box.normSq_eval_le_denseEvalNormBound numerator (refines.contains inside)
   rw [Norm.Basic.normSq_eq_canonical] at scalar
-  exact Fraction.Order.Arithmetic.mul_le_mul_direct
+  exact Arithmetic.mul_le_mul_direct
     (scalar.trans_eq bounds.numeratorUpper_eq.symm)
     inverse (Basic.Canonical.normSq_nonneg _) bounds.numeratorUpper_nonnegative
 
 namespace Primitives
 
 variable {polynomial numerator : Polynomial} {columns rows : Nat} {geometry : Geometry columns rows}
-    {bank : Bank polynomial geometry} {transitions : Transitions bank}
+    {bank : Bank polynomial geometry} {pairs : Nat} {transitions : Transitions bank}
     {gauge : Purelib.Topology.Grid.Signs.Gauge transitions.flatGrid}
     {ambient : Purelib.Riemann.Normalization.InverseRootPolynomial.Box} {clearance : RegionClearance polynomial ambient}
 
@@ -215,13 +238,56 @@ private theorem increment_of_gap {leftCoefficient rightCoefficient : Polynomial}
 private theorem distribute_difference (numerator left right : Gaussian) :
     numerator * left - numerator * right = numerator * (left - right) := by ring1
 
+open Purelib.Data.Gaussian in
+open Purelib.Data.Rat in
+/-- The original weighted inverse-model gap pays the same retained higher odd power. -/
+private theorem coefficient_power_gap_le (bounds : PrimitiveOverlapBounds clearance numerator)
+    (left right value : Gaussian) (leftBound : normSq left ≤ bounds.inverseUpper)
+    (rightBound : normSq right ≤ bounds.inverseUpper) (error : Coordinate)
+    (base : normSq (value * (left - right)) ≤ error * bounds.weight 0) (pairs : Nat) :
+    normSq (value * (match pairs with
+      | 0 => left - right
+      | remaining + 1 => left ^ (2 * (remaining + 1) + 1) - right ^ (2 * (remaining + 1) + 1))) ≤
+      error * bounds.weight pairs := by
+  cases pairs with
+  | zero => exact base
+  | succ remaining =>
+      have upperNonnegative : 0 ≤ 4 * bounds.inverseUpper :=
+        Arithmetic.mul_nonneg_direct (by decide +kernel) bounds.inverseUpper_positive.le
+      have upper : bounds.inverseUpper ≤ 4 * bounds.inverseUpper := by
+        have extra := Arithmetic.mul_nonneg_direct
+          (by decide +kernel : (0 : Coordinate) ≤ 3) bounds.inverseUpper_positive.le
+        exact (by ring1 : bounds.inverseUpper = bounds.inverseUpper + 0).trans_le
+          ((Arithmetic.add_le_add_direct (Fraction.Order.Basic.le_refl _) extra).trans_eq (by ring1))
+      have power := Norm.Power.difference_normSq_le
+        (first := left) (last := right) (bound := 4 * bounds.inverseUpper)
+        (by simpa only [Norm.Basic.normSq_eq_canonical] using leftBound.trans upper)
+        (by simpa only [Norm.Basic.normSq_eq_canonical] using rightBound.trans upper)
+        (2 * (remaining + 1) + 1)
+      simp only [Norm.Basic.normSq_eq_canonical] at power
+      rewrite [Basic.Canonical.normSq_mul]
+      have estimate := Arithmetic.mul_le_mul_of_nonneg_left_direct power
+        (Basic.Canonical.normSq_nonneg value)
+      have identity : normSq value *
+          (Norm.Power.differenceFactor (4 * bounds.inverseUpper) (2 * (remaining + 1) + 1) *
+            normSq (left - right)) =
+          Norm.Power.differenceFactor (4 * bounds.inverseUpper) (2 * (remaining + 1) + 1) *
+            normSq (value * (left - right)) := by
+        rewrite [Basic.Canonical.normSq_mul]
+        ring1
+      rewrite [identity] at estimate
+      exact estimate.trans ((Arithmetic.mul_le_mul_of_nonneg_left_direct base
+        (Norm.Power.differenceFactor_nonnegative upperNonnegative _)).trans_eq (by
+          unfold PrimitiveOverlapBounds.weight
+          ring1))
+
 section
 open Purelib.Data.Rat
 open Purelib.Geometry.Rational
 open Purelib.Riemann.Branches
 /-- The adjacent-column primitive gap has a controlled increment between any two points on the original common edge. -/
 theorem horizontal_gap_increment_le (primitives : Primitives (RectangularSheetGauge.Transitions.oriented transitions
-  gauge) numerator)
+  gauge) numerator pairs)
     (bounds : PrimitiveOverlapBounds clearance numerator)
     (refines : ∀ column row, (geometry.box column row).Refines ambient)
     (column : Fin columns) (row : Fin (rows + 1)) {first last : Fraction.Rational}
@@ -233,7 +299,7 @@ theorem horizontal_gap_increment_le (primitives : Primitives (RectangularSheetGa
     normSq ((primitives.value column.castSucc row lastPoint - primitives.value column.succ row lastPoint) -
       (primitives.value column.castSucc row firstPoint - primitives.value column.succ row firstPoint)) ≤
       12 * ((bank.ready column.castSucc row).model.bound + (bank.ready column.succ row).model.bound) *
-        (bounds.numeratorUpper * bounds.inverseUpper) * normSq (finish - start) * (last - first) ^ 2 := by
+        bounds.weight pairs * normSq (finish - start) * (last - first) ^ 2 := by
   let edge := (RectangularSheetGauge.Transitions.oriented transitions gauge).horizontalEdge column row
   let start := geometry.vertex column.castSucc.succ row.castSucc
   let finish := geometry.vertex column.castSucc.succ row.succ
@@ -241,26 +307,53 @@ theorem horizontal_gap_increment_le (primitives : Primitives (RectangularSheetGa
       normSq ((primitives.cells column.castSucc row).coefficient.eval (Affine.line start (finish - start) parameter) -
         (primitives.cells column.succ row).coefficient.eval (Affine.line start (finish - start) parameter)) ≤
       6 * ((bank.ready column.castSucc row).model.bound + (bank.ready column.succ row).model.bound) *
-        (bounds.numeratorUpper * bounds.inverseUpper) := by
-    rw [primitives.coefficient_eq, primitives.coefficient_eq]
-    rw [distribute_difference]
-    have estimate := RectangularSheetGauge.Transitions.horizontal_distance_le transitions gauge column row inside
-      (numerator.eval (Affine.line start (finish - start) parameter))
-    simp only [RectangularSheetGauge.Transitions.oriented, RectangularSheetGauge.Bank.orient_bound] at estimate
-    exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (ambient_numerator_inverse_le bounds ((RectangularSheetGauge.Transitions.oriented transitions gauge).ready
-        column.castSucc row).model
-        (refines column.castSucc row) (edge.left_contains_at inside))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-        (add_nonneg (bank.ready column.castSucc row).model.bound_nonnegative (bank.ready column.succ
-          row).model.bound_nonnegative)))
+        bounds.weight pairs := by
+    cases pairs with
+    | zero =>
+        rw [primitives.coefficient_eq, primitives.coefficient_eq]
+        rw [distribute_difference]
+        have estimate := RectangularSheetGauge.Transitions.horizontal_distance_le transitions gauge column row inside
+          (numerator.eval (Affine.line start (finish - start) parameter))
+        simp only [RectangularSheetGauge.Transitions.oriented, RectangularSheetGauge.Bank.orient_bound] at estimate
+        exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (ambient_numerator_inverse_le bounds ((RectangularSheetGauge.Transitions.oriented transitions gauge).ready
+            column.castSucc row).model
+            (refines column.castSucc row) (edge.left_contains_at inside))
+          (Arithmetic.mul_nonneg_direct (by decide)
+            (add_nonneg (bank.ready column.castSucc row).model.bound_nonnegative (bank.ready column.succ
+              row).model.bound_nonnegative)))
+    | succ remaining =>
+        rewrite [primitives.coefficient_eq, primitives.coefficient_eq, distribute_difference]
+        let point := Affine.line start (finish - start) parameter
+        let oriented := RectangularSheetGauge.Transitions.oriented transitions gauge
+        have original := RectangularSheetGauge.Transitions.horizontal_distance_le transitions gauge column row inside
+          (numerator.eval point)
+        have weighted : normSq (numerator.eval point *
+            ((oriented.ready column.castSucc row).model.value.eval point -
+              (oriented.ready column.succ row).model.value.eval point)) ≤
+            6 * ((bank.ready column.castSucc row).model.bound + (bank.ready column.succ row).model.bound) *
+              bounds.weight 0 := by
+          simp only [RectangularSheetGauge.Transitions.oriented, RectangularSheetGauge.Bank.orient_bound] at original
+          exact original.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+            (ambient_numerator_inverse_le bounds (oriented.ready column.castSucc row).model
+              (refines column.castSucc row) (edge.left_contains_at inside))
+            (Arithmetic.mul_nonneg_direct (by decide +kernel)
+              (add_nonneg (bank.ready column.castSucc row).model.bound_nonnegative
+                (bank.ready column.succ row).model.bound_nonnegative)))
+        exact coefficient_power_gap_le bounds
+          ((oriented.ready column.castSucc row).model.value.eval point)
+          ((oriented.ready column.succ row).model.value.eval point) (numerator.eval point)
+          (ambient_inverse_le bounds (oriented.ready column.castSucc row).model
+            (refines column.castSucc row) (edge.left_contains_at inside))
+          (ambient_inverse_le bounds (oriented.ready column.succ row).model
+            (refines column.succ row) (edge.right_contains_at inside)) _ weighted (remaining + 1)
   exact (increment_of_gap (primitives.dense column.castSucc row) (primitives.dense column.succ row) _ _ _
     (fun _ inside => edge.left_contains_at inside) (fun _ inside => edge.right_contains_at inside) gap firstInside
       lastInside).trans_eq (by ring1)
 
 /-- The adjacent-row primitive gap has a controlled increment between any two points on the original common edge. -/
 theorem vertical_gap_increment_le (primitives : Primitives (RectangularSheetGauge.Transitions.oriented transitions
-  gauge) numerator)
+  gauge) numerator pairs)
     (bounds : PrimitiveOverlapBounds clearance numerator)
     (refines : ∀ column row, (geometry.box column row).Refines ambient)
     (column : Fin (columns + 1)) (row : Fin rows) {first last : Fraction.Rational}
@@ -272,7 +365,7 @@ theorem vertical_gap_increment_le (primitives : Primitives (RectangularSheetGaug
     normSq ((primitives.value column row.castSucc lastPoint - primitives.value column row.succ lastPoint) -
       (primitives.value column row.castSucc firstPoint - primitives.value column row.succ firstPoint)) ≤
       12 * ((bank.ready column row.castSucc).model.bound + (bank.ready column row.succ).model.bound) *
-        (bounds.numeratorUpper * bounds.inverseUpper) * normSq (finish - start) * (last - first) ^ 2 := by
+        bounds.weight pairs * normSq (finish - start) * (last - first) ^ 2 := by
   let edge := (RectangularSheetGauge.Transitions.oriented transitions gauge).verticalEdge column row
   let start := geometry.vertex column.castSucc row.castSucc.succ
   let finish := geometry.vertex column.succ row.castSucc.succ
@@ -280,19 +373,46 @@ theorem vertical_gap_increment_le (primitives : Primitives (RectangularSheetGaug
       normSq ((primitives.cells column row.castSucc).coefficient.eval (Affine.line start (finish - start) parameter) -
         (primitives.cells column row.succ).coefficient.eval (Affine.line start (finish - start) parameter)) ≤
       6 * ((bank.ready column row.castSucc).model.bound + (bank.ready column row.succ).model.bound) *
-        (bounds.numeratorUpper * bounds.inverseUpper) := by
-    rw [primitives.coefficient_eq, primitives.coefficient_eq]
-    rw [distribute_difference]
-    have estimate := RectangularSheetGauge.Transitions.vertical_distance_le transitions gauge column row inside
-      (numerator.eval (Affine.line start (finish - start) parameter))
-    simp only [RectangularSheetGauge.Transitions.oriented, RectangularSheetGauge.Bank.orient_bound] at estimate
-    exact estimate.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
-      (ambient_numerator_inverse_le bounds ((RectangularSheetGauge.Transitions.oriented transitions gauge).ready column
-        row.castSucc).model
-        (refines column row.castSucc) (edge.left_contains_at inside))
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-        (add_nonneg (bank.ready column row.castSucc).model.bound_nonnegative (bank.ready column
-          row.succ).model.bound_nonnegative)))
+        bounds.weight pairs := by
+    cases pairs with
+    | zero =>
+        rw [primitives.coefficient_eq, primitives.coefficient_eq]
+        rw [distribute_difference]
+        have estimate := RectangularSheetGauge.Transitions.vertical_distance_le transitions gauge column row inside
+          (numerator.eval (Affine.line start (finish - start) parameter))
+        simp only [RectangularSheetGauge.Transitions.oriented, RectangularSheetGauge.Bank.orient_bound] at estimate
+        exact estimate.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+          (ambient_numerator_inverse_le bounds
+            ((RectangularSheetGauge.Transitions.oriented transitions gauge).ready column row.castSucc).model
+            (refines column row.castSucc) (edge.left_contains_at inside))
+          (Arithmetic.mul_nonneg_direct (by decide)
+            (add_nonneg (bank.ready column row.castSucc).model.bound_nonnegative (bank.ready column
+              row.succ).model.bound_nonnegative)))
+    | succ remaining =>
+        rewrite [primitives.coefficient_eq, primitives.coefficient_eq, distribute_difference]
+        let point := Affine.line start (finish - start) parameter
+        let oriented := RectangularSheetGauge.Transitions.oriented transitions gauge
+        have original := RectangularSheetGauge.Transitions.vertical_distance_le transitions gauge column row inside
+          (numerator.eval point)
+        have weighted : normSq (numerator.eval point *
+            ((oriented.ready column row.castSucc).model.value.eval point -
+              (oriented.ready column row.succ).model.value.eval point)) ≤
+            6 * ((bank.ready column row.castSucc).model.bound + (bank.ready column row.succ).model.bound) *
+              bounds.weight 0 := by
+          simp only [RectangularSheetGauge.Transitions.oriented, RectangularSheetGauge.Bank.orient_bound] at original
+          exact original.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
+            (ambient_numerator_inverse_le bounds (oriented.ready column row.castSucc).model
+              (refines column row.castSucc) (edge.left_contains_at inside))
+            (Arithmetic.mul_nonneg_direct (by decide +kernel)
+              (add_nonneg (bank.ready column row.castSucc).model.bound_nonnegative
+                (bank.ready column row.succ).model.bound_nonnegative)))
+        exact coefficient_power_gap_le bounds
+          ((oriented.ready column row.castSucc).model.value.eval point)
+          ((oriented.ready column row.succ).model.value.eval point) (numerator.eval point)
+          (ambient_inverse_le bounds (oriented.ready column row.castSucc).model
+            (refines column row.castSucc) (edge.left_contains_at inside))
+          (ambient_inverse_le bounds (oriented.ready column row.succ).model
+            (refines column row.succ) (edge.right_contains_at inside)) _ weighted (remaining + 1)
   exact (increment_of_gap (primitives.dense column row.castSucc) (primitives.dense column row.succ) _ _ _
     (fun _ inside => edge.left_contains_at inside) (fun _ inside => edge.right_contains_at inside) gap firstInside
       lastInside).trans_eq (by ring1)
@@ -303,7 +423,7 @@ open Purelib.Riemann.Normalization
 The original common-edge parameter is measured from zero, with both cached cell primitives and the same numerator and
 error ceilings retained. -/
 theorem horizontal_increment_le (primitives : Primitives (RectangularSheetGauge.Transitions.oriented transitions gauge)
-  numerator)
+  numerator pairs)
     (bounds : PrimitiveOverlapBounds clearance numerator)
     (refines : ∀ column row, (geometry.box column row).Refines ambient)
     (column : Fin columns) (row : Fin (rows + 1)) {parameter : Fraction.Rational} (inside : 0 ≤ parameter ∧ parameter ≤
@@ -314,7 +434,7 @@ theorem horizontal_increment_le (primitives : Primitives (RectangularSheetGauge.
     normSq ((primitives.value column.castSucc row point - primitives.value column.succ row point) -
       (primitives.value column.castSucc row start - primitives.value column.succ row start)) ≤
       12 * ((bank.ready column.castSucc row).model.bound + (bank.ready column.succ row).model.bound) *
-        (bounds.numeratorUpper * bounds.inverseUpper) * normSq (finish - start) * parameter ^ 2 := by
+        bounds.weight pairs * normSq (finish - start) * parameter ^ 2 := by
   have bound := primitives.horizontal_gap_increment_le bounds refines column row (first := 0) ⟨le_rfl, by decide⟩ inside
   have parameterZero : parameter - 0 = parameter := by ring1
   simpa only [InverseModelEdgeTransition.line_zero, parameterZero] using bound
@@ -324,7 +444,7 @@ theorem horizontal_increment_le (primitives : Primitives (RectangularSheetGauge.
 The original common-edge parameter is measured from zero, with both cached cell primitives and the same numerator and
 error ceilings retained. -/
 theorem vertical_increment_le (primitives : Primitives (RectangularSheetGauge.Transitions.oriented transitions gauge)
-  numerator)
+  numerator pairs)
     (bounds : PrimitiveOverlapBounds clearance numerator)
     (refines : ∀ column row, (geometry.box column row).Refines ambient)
     (column : Fin (columns + 1)) (row : Fin rows) {parameter : Fraction.Rational} (inside : 0 ≤ parameter ∧ parameter ≤
@@ -335,7 +455,7 @@ theorem vertical_increment_le (primitives : Primitives (RectangularSheetGauge.Tr
     normSq ((primitives.value column row.castSucc point - primitives.value column row.succ point) -
       (primitives.value column row.castSucc start - primitives.value column row.succ start)) ≤
       12 * ((bank.ready column row.castSucc).model.bound + (bank.ready column row.succ).model.bound) *
-        (bounds.numeratorUpper * bounds.inverseUpper) * normSq (finish - start) * parameter ^ 2 := by
+        bounds.weight pairs * normSq (finish - start) * parameter ^ 2 := by
   have bound := primitives.vertical_gap_increment_le bounds refines column row (first := 0) ⟨le_rfl, by decide⟩ inside
   have parameterZero : parameter - 0 = parameter := by ring1
   simpa only [InverseModelEdgeTransition.line_zero, parameterZero] using bound

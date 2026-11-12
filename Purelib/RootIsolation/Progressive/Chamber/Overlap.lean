@@ -1,6 +1,6 @@
 module
 meta import Purelib.Elab.ConstructiveInjectivity
-public import Purelib.Data.Fin.Bijection.Basic
+public import Purelib.Data.Fin.Bijection.Cache
 import Purelib.Geometry.Rational.Box.Refinement
 public import Purelib.RootIsolation.Owner.Bridge.Basic
 public import Purelib.RootIsolation.Progressive.Chamber.Frame
@@ -66,6 +66,70 @@ namespace ChamberOverlap
     Box.refines_refl (frame.owner index).box
   bridge_refines_right := fun index =>
     Box.refines_refl (frame.owner index).box
+
+/-- Replace one bridge using an actual checked owner pair and retain its two map readings.
+
+The original chamber frames and pointwise owner matching are preserved. The
+supplied bridge lies in both original endpoint owners; the matching caches
+that same source/target pair, and other bridges remain the original records.
+-/
+@[expose] def withBridge {left right : ChamberFrame}
+    (overlap : ChamberOverlap left right) (source : left.Index) (target : right.Index)
+    (same : target = overlap.matching.forward source)
+    (bridge : Owner.Bridge.Basic.OwnerBridge left.polynomial right.polynomial)
+    (leftContained : bridge.box.Refines (left.owner source).box)
+    (rightContained : bridge.box.Refines (right.owner target).box) : ChamberOverlap left right where
+  matching := overlap.matching.cache source target same
+  bridge index := if index = source then bridge else overlap.bridge index
+  bridge_refines_left index := by
+    by_cases equal : index = source
+    · cases equal
+      rewrite [if_pos rfl]
+      exact leftContained
+    · rewrite [if_neg equal]
+      exact overlap.bridge_refines_left index
+  bridge_refines_right index := by
+    by_cases equal : index = source
+    · cases equal
+      rewrite [if_pos rfl, Data.Fin.Bijection.cache_forward_source]
+      exact rightContained
+    · rewrite [if_neg equal, Data.Fin.Bijection.cache_forward]
+      exact overlap.bridge_refines_right index
+
+/-- A replaced bridge retains the original complete owner matching pointwise. -/
+theorem withBridge_matching_same {left right : ChamberFrame}
+    (overlap : ChamberOverlap left right) (source : left.Index) (target : right.Index)
+    (same : target = overlap.matching.forward source)
+    (bridge : Owner.Bridge.Basic.OwnerBridge left.polynomial right.polynomial)
+    (leftContained : bridge.box.Refines (left.owner source).box)
+    (rightContained : bridge.box.Refines (right.owner target).box) :
+    Data.Fin.Bijection.Same (overlap.withBridge source target same bridge leftContained rightContained).matching
+      overlap.matching :=
+  Data.Fin.Bijection.cache_same overlap.matching source target same
+
+/-- The supplied source reads its actual retained replacement bridge. -/
+theorem withBridge_bridge_source {left right : ChamberFrame}
+    (overlap : ChamberOverlap left right) (source : left.Index) (target : right.Index)
+    (same : target = overlap.matching.forward source)
+    (bridge : Owner.Bridge.Basic.OwnerBridge left.polynomial right.polynomial)
+    (leftContained : bridge.box.Refines (left.owner source).box)
+    (rightContained : bridge.box.Refines (right.owner target).box) :
+    (overlap.withBridge source target same bridge leftContained rightContained).bridge source = bridge := by
+  change (if source = source then bridge else overlap.bridge source) = bridge
+  exact if_pos rfl
+
+/-- Every other source retains its complete original bridge record. -/
+theorem withBridge_bridge_other {left right : ChamberFrame}
+    (overlap : ChamberOverlap left right) (source : left.Index) (target : right.Index)
+    (same : target = overlap.matching.forward source)
+    (bridge : Owner.Bridge.Basic.OwnerBridge left.polynomial right.polynomial)
+    (leftContained : bridge.box.Refines (left.owner source).box)
+    (rightContained : bridge.box.Refines (right.owner target).box)
+    (index : left.Index) (different : index ≠ source) :
+    (overlap.withBridge source target same bridge leftContained rightContained).bridge index =
+      overlap.bridge index := by
+  change (if index = source then bridge else overlap.bridge index) = overlap.bridge index
+  exact if_neg different
 
 /-- Reverse the retained matching and common-owner bridges of a chamber overlap.
 

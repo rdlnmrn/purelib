@@ -48,21 +48,21 @@ namespace Purelib.Approximation.Gaussian.Acquisition.Positive.Search
 /-- One finite inspection either discovers the reusable positive enclosure or refines the retained source once. No
 exclusion case is manufactured. -/
 def inspect (tau : Coherent.CoherentNamed) (state :
-  Approximation.Gaussian.Acquisition.State tau) :
-    Sum (PositiveEnclosure tau) (Approximation.Gaussian.Acquisition.State tau) :=
+  State tau) :
+    Sum (PositiveEnclosure tau) (State tau) :=
   if test : Positive.PositiveTest state.ball then .inl (Enclosure.enclosure state test)
   else .inr (State.advance state)
 
 /-- A successful cached-ball positivity test makes inspection return the enclosure at that exact retained state. -/
 theorem inspect_of_positive {tau :
-  Coherent.CoherentNamed} (state : Approximation.Gaussian.Acquisition.State tau)
+  Coherent.CoherentNamed} (state : State tau)
     (test : Positive.PositiveTest state.ball) :
     inspect tau state = .inl (Enclosure.enclosure state test) := by
   rw [inspect, dif_pos test]
 
 /-- An unresolved cached-ball positivity test makes inspection return exactly one canonical refinement. -/
 theorem inspect_of_unresolved {tau :
-  Coherent.CoherentNamed} (state : Approximation.Gaussian.Acquisition.State tau)
+  Coherent.CoherentNamed} (state : State tau)
     (unresolved : ¬ Positive.PositiveTest state.ball) :
     inspect tau state = .inr (State.advance state) := by
   rw [inspect, dif_neg unresolved]
@@ -71,79 +71,79 @@ theorem inspect_of_unresolved {tau :
 -/
 def Result (tau : Coherent.CoherentNamed) : Type :=
   LegendreTransport.ResultPayload.{0, 0}
-    (PositiveEnclosure tau) (Approximation.Gaussian.Acquisition.State tau)
+    (PositiveEnclosure tau) (State tau)
 
 /-- Bounded discovery reuses the same finite runner as single-matrix acquisition. A caller can resume an exhausted
 result at exactly its state. -/
 def attempt (tau : Coherent.CoherentNamed) (state :
-  Approximation.Gaussian.Acquisition.State tau) (fuel : Nat) : Result
+  State tau) (fuel : Nat) : Result
       tau :=
-  FiniteRunner.Basic.runPayload (inspect tau) state fuel
+  Basic.runPayload (inspect tau) state fuel
 
 /-- A zero-budget positivity search retains its starting acquisition state as exhausted. -/
 @[simp] theorem attempt_zero (tau :
-  Coherent.CoherentNamed) (state : Approximation.Gaussian.Acquisition.State tau) :
+  Coherent.CoherentNamed) (state : State tau) :
     attempt tau state 0 = .exhausted state := rfl
 
 /-- Splitting a finite search budget is equivalent to resuming its exhausted state with the remaining budget. -/
 theorem attempt_add (tau : Coherent.CoherentNamed)
-  (state : Approximation.Gaussian.Acquisition.State tau) (first second : Nat) :
+  (state : State tau) (first second : Nat) :
     attempt tau state (first + second) =
       match attempt tau state first with
       | .ready certificate => .ready certificate
       | .exhausted retained => attempt tau retained second := by
   unfold Result
-  have law := FiniteRunner.Basic.runPayload_add
+  have law := Basic.runPayload_add
     (inspect tau) state first second
-  cases firstRun : FiniteRunner.Basic.runPayload (inspect tau) state
+  cases firstRun : Basic.runPayload (inspect tau) state
     first <;>
     simpa only [attempt, firstRun] using law
 
 /-- A displayed passing state needs exactly one inspection to finish. -/
 theorem attempt_one_of_positive {tau :
-  Coherent.CoherentNamed} (state : Approximation.Gaussian.Acquisition.State tau)
+  Coherent.CoherentNamed} (state : State tau)
     (test : Positive.PositiveTest state.ball) :
     attempt tau state 1 = .ready (Enclosure.enclosure state
       test) := by
   unfold attempt
-  rw [FiniteRunner.Basic.runPayload, inspect_of_positive state test]
+  rw [Basic.runPayload, inspect_of_positive state test]
 
 /-- Any positive search budget returns the enclosure immediately when the current cached ball passes. -/
 theorem attempt_succ_of_positive {tau :
-  Coherent.CoherentNamed} (state : Approximation.Gaussian.Acquisition.State tau)
+  Coherent.CoherentNamed} (state : State tau)
     (test : Positive.PositiveTest state.ball) (fuel : Nat) :
     attempt tau state (fuel + 1) = .ready
       (Enclosure.enclosure state test) := by
   unfold attempt
-  rw [FiniteRunner.Basic.runPayload, inspect_of_positive state test]
+  rw [Basic.runPayload, inspect_of_positive state test]
 
 /-- An unresolved first inspection consumes one step and continues from the canonical refined state. -/
 theorem attempt_succ_of_unresolved {tau :
-  Coherent.CoherentNamed} (state : Approximation.Gaussian.Acquisition.State tau)
+  Coherent.CoherentNamed} (state : State tau)
     (unresolved : ¬ Positive.PositiveTest state.ball) (fuel : Nat) :
     attempt tau state (fuel + 1) =
       attempt tau (State.advance state) fuel := by
   unfold attempt
-  rw [FiniteRunner.Basic.runPayload, inspect_of_unresolved state
+  rw [Basic.runPayload, inspect_of_unresolved state
     unresolved]
 
 /-- A finite passing-state witness gives a certified sufficient budget. The algorithm may stop earlier; no infinitary
 fairness assumption is used. -/
 def finishBy {tau :
-  Purelib.Approximation.Gaussian.Name.Coherent.CoherentNamed} (state :
-  Approximation.Gaussian.Acquisition.State tau) :
-    (count : Nat) → Purelib.Approximation.Gaussian.Enclosure.Ball.Imaginary.Positive.PositiveTest
-      (Purelib.Approximation.Gaussian.Acquisition.State.Schedule.advanceN state count).ball →
+  Coherent.CoherentNamed} (state :
+  State tau) :
+    (count : Nat) → Positive.PositiveTest
+      (State.Schedule.advanceN state count).ball →
       { certificate : PositiveEnclosure tau //
         attempt tau state (count + 1) = .ready certificate }
-  | 0, test => ⟨Purelib.Approximation.Gaussian.Acquisition.Positive.Enclosure.enclosure state test,
+  | 0, test => ⟨Enclosure.enclosure state test,
     attempt_one_of_positive state test⟩
   | count + 1, test => by
-      by_cases now : Purelib.Approximation.Gaussian.Enclosure.Ball.Imaginary.Positive.PositiveTest state.ball
-      · exact ⟨Purelib.Approximation.Gaussian.Acquisition.Positive.Enclosure.enclosure state now,
+      by_cases now : Positive.PositiveTest state.ball
+      · exact ⟨Enclosure.enclosure state now,
           attempt_succ_of_positive state now (count + 1)⟩
       · let later := finishBy
-          (Purelib.Approximation.Gaussian.Acquisition.State.advance state) count test
+          (State.advance state) count test
         exact ⟨later.val,
           (attempt_succ_of_unresolved state now (count +
             1)).trans later.property⟩

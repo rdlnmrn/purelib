@@ -46,7 +46,7 @@ variable {K L : Type*}
 /-- Map every polynomial coefficient through the supplied explicit field embedding. -/
 @[expose] def mapPolynomial (embedding : Algebra.Field.Embedding K L)
     (polynomial : Polynomial K) : Polynomial L :=
-  Dense.Map.map embedding polynomial
+  Dense.Map.map embedding.toFun polynomial
 
 /-- Map coefficients through the field embedding in every retained vector coordinate. -/
 @[expose] def mapVector (embedding : Algebra.Field.Embedding K L)
@@ -167,9 +167,9 @@ theorem map_sumFin (embedding : Algebra.Field.Embedding K L)
         apply congrArg (fun initial => remaining.map (mapPolynomial embedding) |>.foldl
           (fun left right => left + right) initial)
         unfold mapPolynomial
-        exact Dense.Map.map_add embedding _ _
+        exact (Dense.Map.map_add embedding.toFun embedding.map_zero embedding.injective embedding.map_add) _ _
   rw [foldMap]
-  simp only [mapPolynomial, Dense.Map.map_zero_polynomial,
+  simp only [mapPolynomial, (Dense.Map.map_zero_polynomial embedding.toFun),
     Data.List.OfFn.Basic.map_ofFn]
   rfl
 
@@ -183,7 +183,8 @@ theorem map_dot (embedding : Algebra.Field.Embedding K L)
   apply PolynomialMatrix.Basic.sumFin_congr
   intro index
   simp only [Data.Vector.Basic.vectorOfFn_apply]
-  exact Dense.Map.map_mul embedding _ _
+  exact (Dense.Map.map_mul embedding.toFun embedding.map_zero embedding.injective embedding.map_add embedding.map_mul)
+    _ _
 end
 
 end Purelib.LinearAlgebra.PolynomialMatrix.Map

@@ -52,6 +52,8 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Topology.Mesh.CoordinateTriangulation
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 open Purelib
 
 open Purelib.Curves.Hyperelliptic
@@ -99,32 +101,32 @@ open Purelib.Riemann.Integration.RectangularSharedPrimitives (SharedPrimitiveVal
 open Purelib.Riemann.Readings.PreparedPrimitiveSamples (differentialNumerator)
 open Purelib.Data.Gaussian.Basic.Canonical
 
-variable {genus : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Purelib.Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : BranchCellBank curve branches
     higher}
   {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {face :
-    Purelib.Riemann.Meshes.PuncturedGridFaces.RegularFace bank}
+    RegularFace bank}
 
 /-- This bound is for the original shared vertex values, including their independently retained primitive offsets and
 vertex owners on both sheets. -/
-theorem shared_increment_sum_lt (domains : DomainBanks.FaceDomains frames face) (differential :
-  Differentials.Basic.Differential genus)
-    {globalBounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds face.clearance
+theorem shared_increment_sum_lt (domains : FaceDomains frames face) (differential :
+  Differential genus)
+    {globalBounds : PrimitiveOverlapBounds face.clearance
       (PreparedPrimitiveSamples.differentialNumerator differential)}
-    {leftTolerance rightTolerance : InverseRootPolynomial.Coordinate}
+    {leftTolerance rightTolerance : Coordinate}
     (leftRequest : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy globalBounds (domains.domain 0).steps
       leftTolerance)
     (rightRequest : RectangularPrimitiveAccuracy.GridPrimitiveAccuracy globalBounds (domains.domain 1).steps
       rightTolerance)
-    (first : PrimitiveData.DomainPrimitives (domains.domain 0) differential leftRequest.index)
-    (second : PrimitiveData.DomainPrimitives (domains.domain 1) differential rightRequest.index)
-    {leftTriangles : List (RectangularOwnedTriangulation.ModelTriangle (domains.domain 0).geometry)}
-    {rightTriangles : List (RectangularOwnedTriangulation.ModelTriangle (domains.domain 1).geometry)}
-    {leftSurface : RectangularOwnedTriangulation.OwnedTriangulation leftTriangles} {rightSurface :
-      RectangularOwnedTriangulation.OwnedTriangulation rightTriangles}
-    (leftReadings : RectangularSharedPrimitives.SharedPrimitiveValues first.anchors first.offsets leftSurface)
-    (rightReadings : RectangularSharedPrimitives.SharedPrimitiveValues second.anchors second.offsets rightSurface)
+    (first : DomainPrimitives (domains.domain 0) differential leftRequest.index)
+    (second : DomainPrimitives (domains.domain 1) differential rightRequest.index)
+    {leftTriangles : List (ModelTriangle (domains.domain 0).geometry)}
+    {rightTriangles : List (ModelTriangle (domains.domain 1).geometry)}
+    {leftSurface : OwnedTriangulation leftTriangles} {rightSurface :
+      OwnedTriangulation rightTriangles}
+    (leftReadings : SharedPrimitiveValues first.anchors first.offsets leftSurface)
+    (rightReadings : SharedPrimitiveValues second.anchors second.offsets rightSurface)
     (leftColumn leftRow : Fin ((domains.domain 0).steps + 1))
     (rightColumn rightRow : Fin ((domains.domain 1).steps + 1))
     (leftStart leftFinish : Fin leftSurface.mesh.vertices.length)
@@ -139,15 +141,15 @@ theorem shared_increment_sum_lt (domains : DomainBanks.FaceDomains frames face) 
       rightStart))
     (rightFinishInside : ((domains.domain 1).geometry.box rightColumn rightRow).Contains (rightSurface.mesh.coordinate
       rightFinish))
-    {bounds : PrimitiveEdgeComparison.PrimitiveOverlapBounds
+    {bounds : PrimitiveOverlapBounds
       (face.clearance.restrict ((domains.domain 0).patch.transported.cell leftColumn leftRow).geometry.refines)
-      (PreparedPrimitiveSamples.differentialNumerator differential)} {target : InverseRootPolynomial.Coordinate}
-    (request : PrimitiveEdgeComparison.PrimitiveEdgeAccuracy bounds ((domains.domain 0).patch.models.ready leftColumn
+      (PreparedPrimitiveSamples.differentialNumerator differential)} {target : Coordinate}
+    (request : PrimitiveEdgeAccuracy bounds ((domains.domain 0).patch.models.ready leftColumn
       leftRow).model
       ((domains.domain 1).patch.models.ready rightColumn rightRow).model
       (leftSurface.mesh.coordinate leftStart) (leftSurface.mesh.coordinate leftFinish) target)
     (leftLater : request.index ≤ leftRequest.index) (rightLater : request.index ≤ rightRequest.index) :
-    Data.Gaussian.Norm.Basic.normSq ((leftReadings.values leftFinish - leftReadings.values leftStart) +
+    Basic.normSq ((leftReadings.values leftFinish - leftReadings.values leftStart) +
       (rightReadings.values rightFinish - rightReadings.values rightStart)) <
       64 * (leftRequest.globalBound + rightRequest.globalBound) + 2 * target := by
   let leftIncrement := first.primitives.value leftColumn leftRow (leftSurface.mesh.coordinate leftFinish) -
@@ -156,24 +158,24 @@ theorem shared_increment_sum_lt (domains : DomainBanks.FaceDomains frames face) 
     second.primitives.value rightColumn rightRow (rightSurface.mesh.coordinate rightStart)
   let leftError := (leftReadings.values leftFinish - leftReadings.values leftStart) - leftIncrement
   let rightError := (rightReadings.values rightFinish - rightReadings.values rightStart) - rightIncrement
-  have leftOwnership : Data.Gaussian.Norm.Basic.normSq leftError ≤ 16 * leftRequest.globalBound := by
+  have leftOwnership : Basic.normSq leftError ≤ 16 * leftRequest.globalBound := by
     have scalar := GridPrimitiveAccuracy.shared_local_increment_bound leftRequest leftReadings (domains.domain
       0).patch.cell_refines
       leftColumn leftRow leftStart leftFinish leftStartInside leftFinishInside
-    rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+    rw [← Basic.normSq_eq_canonical] at scalar
     exact scalar
-  have rightOwnership : Data.Gaussian.Norm.Basic.normSq rightError ≤ 16 * rightRequest.globalBound := by
+  have rightOwnership : Basic.normSq rightError ≤ 16 * rightRequest.globalBound := by
     have scalar := GridPrimitiveAccuracy.shared_local_increment_bound rightRequest rightReadings (domains.domain
       1).patch.cell_refines
       rightColumn rightRow rightStart rightFinish rightStartInside rightFinishInside
-    rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+    rw [← Basic.normSq_eq_canonical] at scalar
     exact scalar
-  have ownership : Data.Gaussian.Norm.Basic.normSq (leftError + rightError) ≤ 32 * (leftRequest.globalBound +
+  have ownership : Basic.normSq (leftError + rightError) ≤ 32 * (leftRequest.globalBound +
     rightRequest.globalBound) :=
-    (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
+    (Bounds.normSq_add_le_two _ _).trans
       ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add leftOwnership rightOwnership) (by decide)).trans_eq (by ring1))
-  have analytic : Data.Gaussian.Norm.Basic.normSq (leftIncrement + rightIncrement) < target := by
+  have analytic : Basic.normSq (leftIncrement + rightIncrement) < target := by
     dsimp only [leftIncrement, rightIncrement]
     rw [← startEq, ← finishEq]
     exact FaceDomains.cell_primitive_sum_accurate domains leftColumn leftRow rightColumn rightRow request first second
@@ -185,7 +187,7 @@ theorem shared_increment_sum_lt (domains : DomainBanks.FaceDomains frames face) 
     dsimp only [leftError, rightError]
     ring1
   rw [identity]
-  exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans_lt
+  exact (Bounds.normSq_add_le_two _ _).trans_lt
     ((Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide)
       ((add_le_add ownership le_rfl).trans_lt
         (Fraction.Order.Arithmetic.add_lt_add_left_direct analytic

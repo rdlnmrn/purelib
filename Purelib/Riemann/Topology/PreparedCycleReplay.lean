@@ -3,6 +3,7 @@ meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Data.List.Append
 import Purelib.Riemann.Integration.PreparedDirectDyadicRefinements
 import Purelib.Riemann.Integration.PreparedDirectDyadicRefinementsCore
+import Purelib.Riemann.Integration.PreparedDirectDyadicRefinements.CenteredPathChain
 import Purelib.Riemann.Paths.PreparedClearPathModels
 import Purelib.Riemann.Topology.PreparedCycleModels
 import Purelib.Riemann.Integration.PreparedDyadicRefinements
@@ -65,24 +66,6 @@ abbrev Owner := Topology.SquareRootContinuationChain.Owner
 section
 open Purelib.Curves
 open Purelib.Curves.Hyperelliptic.Differentials
-open Purelib.Geometry.Path.Gaussian.Lifted in
-open Purelib.Riemann in
-/-- A fixed finite centered-parent list determines its consecutive endpoint chain uniquely. -/
-theorem centeredChain_eq {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
-    {source : Basic.Differential genus}
-    {parents : List (Integration.PreparedSubdivisionModelCore.CenteredEdge curve source)}
-    {start finish : Basic.LiftedPoint 2}
-    (first second : CenteredPathChain parents (start := start) (finish := finish)) :
-    first = second := by
-  induction first with
-  | nil point => cases second; rfl
-  | cons parent tail ih =>
-      cases second with
-      | cons _ otherTail =>
-          have same := ih otherTail
-          cases same
-          rfl
-
 /-- Equal parent lists determine equal checked centered states with the same endpoints and sheet. -/
 theorem centeredState_eq_of_parents_eq {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus}
     {source : Basic.Differential genus} {sheet : Fin 2} {start finish : Gaussian}
@@ -93,7 +76,7 @@ theorem centeredState_eq_of_parents_eq {genus : Nat} {curve : Hyperelliptic.Basi
     cases second with
     | mk second secondProper secondChain =>
       cases same
-      have chains := centeredChain_eq firstChain secondChain
+      have chains := CenteredPathChain.eq firstChain secondChain
       cases chains
       rfl
 

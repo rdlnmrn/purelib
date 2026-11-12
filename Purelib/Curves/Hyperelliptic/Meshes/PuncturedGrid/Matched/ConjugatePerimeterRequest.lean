@@ -77,20 +77,20 @@ namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Matched.ConjugatePer
 
 open _root_.Purelib.Data.Gaussian.Basic (conj)
 
-variable {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {bank : Hyperelliptic.Branches.BranchCellBank curve branches higher}
-  {frames : RootIsolation.SquareRoot.Grid.RootFrames bank.grid} {firstFace lastFace :
+variable {genus : Nat} {curve : Basic.HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {bank : Branches.BranchCellBank curve branches higher}
+  {frames : SquareRoot.Grid.RootFrames bank.grid} {firstFace lastFace :
       Meshes.PuncturedGridFaces.RegularFace
     bank}
-  {firstModels : Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames firstFace}
-    {lastModels : Hyperelliptic.Meshes.PuncturedGrid.Face.InverseModels.BranchCellBank.FaceModels frames lastFace}
+  {firstModels : Face.InverseModels.BranchCellBank.FaceModels frames firstFace}
+    {lastModels : Face.InverseModels.BranchCellBank.FaceModels frames lastFace}
   {start : Gaussian.Basic.Canonical} {owner : Topology.SquareRootContinuationChain.Owner (curve.polynomial.eval start)}
-  {leftEntry : Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry firstModels start owner} {rightEntry :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.Entries.FaceModels.Entry lastModels start owner}
-  {leftDomain : Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain firstModels leftEntry.sheet} {rightDomain :
-    Hyperelliptic.Meshes.PuncturedGrid.Face.Periods.PeriodDomain lastModels rightEntry.sheet}
-  {firstDifferential secondDifferential : Hyperelliptic.Differentials.Basic.Differential genus} {firstSheet secondSheet
+  {leftEntry : Face.Entries.FaceModels.Entry firstModels start owner} {rightEntry :
+    Face.Entries.FaceModels.Entry lastModels start owner}
+  {leftDomain : Face.Periods.PeriodDomain firstModels leftEntry.sheet} {rightDomain :
+    Face.Periods.PeriodDomain lastModels rightEntry.sheet}
+  {firstDifferential secondDifferential : Differentials.Basic.Differential genus} {firstSheet secondSheet
     : Fin 2}
 
 section
@@ -102,22 +102,22 @@ variable {leftBox rightBox : Rational.Box}
     (Fin.cast leftMesh.boundaryRows_eq (Fin.last leftMesh.boundaryRows))
     (Fin.cast rightMesh.boundaryRows_eq 0) height}
   {trace : side.Trace leftMesh.depth}
-  {preparation : Hyperelliptic.Meshes.PuncturedGrid.Matched.SidePreparation.MatchedSidePreparation trace}
+  {preparation : SidePreparation.MatchedSidePreparation trace}
   {target : Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
 
 /-- The actual top-minus-bottom perimeter difference satisfies the conjugate comparison target with both original
 endpoint corrections retained. -/
 theorem MatchedSidePreparation.AreaRequest.conjugate_top_sub_bottom_accurate
-    (assembled : Hyperelliptic.Meshes.PuncturedGrid.Matched.SideAreaRequest.MatchedSidePreparation.AreaRequest
+    (assembled : SideAreaRequest.MatchedSidePreparation.AreaRequest
       preparation firstDifferential secondDifferential firstSheet secondSheet target floor)
     {stage : Nat} (later : assembled.index ≤ stage)
-    (firstLeft : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives leftDomain firstDifferential
+    (firstLeft : Face.PrimitiveData.DomainPrimitives leftDomain firstDifferential
       stage)
-    (firstRight : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives rightDomain firstDifferential
+    (firstRight : Face.PrimitiveData.DomainPrimitives rightDomain firstDifferential
       stage)
-    (secondLeft : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives leftDomain secondDifferential
+    (secondLeft : Face.PrimitiveData.DomainPrimitives leftDomain secondDifferential
       stage)
-    (secondRight : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives rightDomain secondDifferential
+    (secondRight : Face.PrimitiveData.DomainPrimitives rightDomain secondDifferential
       stage)
     (left : Periods.CenteredBilinearPath.Sample (fun vertex => ⟨conj ((trace.leftReadings firstLeft.anchors
       firstLeft.offsets).values vertex),
@@ -136,7 +136,7 @@ theorem MatchedSidePreparation.AreaRequest.conjugate_top_sub_bottom_accurate
       (fun column row point => ⟨conj (firstRight.anchors.alignedValue firstRight.offsets column row point),
         secondRight.anchors.alignedValue secondRight.offsets column row point⟩))
     (leftPerimeter : leftAssembly.Perimeter) (rightPerimeter : rightAssembly.Perimeter) :
-    Data.Gaussian.Norm.Basic.normSq ((leftPerimeter.top - rightPerimeter.bottom) - (left.endpoint - right.endpoint))
+    Gaussian.Norm.Basic.normSq ((leftPerimeter.top - rightPerimeter.bottom) - (left.endpoint - right.endpoint))
       < target := by
   have estimate :=
     ConjugateRequest.MatchedSidePreparation.AreaRequest.conjugate_boundary_accurate
@@ -161,7 +161,7 @@ variable {leftBox rightBox : Rational.Box}
     (Fin.cast leftMesh.boundaryColumns_eq (Fin.last leftMesh.boundaryColumns))
     (Fin.cast rightMesh.boundaryColumns_eq 0) horizontal}
   {trace : side.Trace leftMesh.depth}
-  {preparation : Hyperelliptic.Meshes.PuncturedGrid.Matched.VerticalSidePreparation.MatchedVerticalSidePreparation
+  {preparation : VerticalSidePreparation.MatchedVerticalSidePreparation
     trace}
   {target : Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
 
@@ -169,16 +169,16 @@ variable {leftBox rightBox : Rational.Box}
 endpoint corrections retained. -/
 theorem MatchedVerticalSidePreparation.AreaRequest.conjugate_right_sub_left_accurate
     (assembled :
-      Hyperelliptic.Meshes.PuncturedGrid.Matched.VerticalSideAreaRequest.MatchedVerticalSidePreparation.AreaRequest
+      VerticalSideAreaRequest.MatchedVerticalSidePreparation.AreaRequest
       preparation firstDifferential secondDifferential firstSheet secondSheet target floor)
     {stage : Nat} (later : assembled.index ≤ stage)
-    (firstLeft : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives leftDomain firstDifferential
+    (firstLeft : Face.PrimitiveData.DomainPrimitives leftDomain firstDifferential
       stage)
-    (firstRight : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives rightDomain firstDifferential
+    (firstRight : Face.PrimitiveData.DomainPrimitives rightDomain firstDifferential
       stage)
-    (secondLeft : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives leftDomain secondDifferential
+    (secondLeft : Face.PrimitiveData.DomainPrimitives leftDomain secondDifferential
       stage)
-    (secondRight : Hyperelliptic.Meshes.PuncturedGrid.Face.PrimitiveData.DomainPrimitives rightDomain secondDifferential
+    (secondRight : Face.PrimitiveData.DomainPrimitives rightDomain secondDifferential
       stage)
     (left : Periods.CenteredBilinearPath.Sample (fun vertex => ⟨conj ((trace.leftReadings firstLeft.anchors
       firstLeft.offsets).values vertex),
@@ -197,7 +197,7 @@ theorem MatchedVerticalSidePreparation.AreaRequest.conjugate_right_sub_left_accu
       (fun column row point => ⟨conj (firstRight.anchors.alignedValue firstRight.offsets column row point),
         secondRight.anchors.alignedValue secondRight.offsets column row point⟩))
     (leftPerimeter : leftAssembly.Perimeter) (rightPerimeter : rightAssembly.Perimeter) :
-    Data.Gaussian.Norm.Basic.normSq ((leftPerimeter.right - rightPerimeter.left) - (left.endpoint - right.endpoint))
+    Gaussian.Norm.Basic.normSq ((leftPerimeter.right - rightPerimeter.left) - (left.endpoint - right.endpoint))
       < target := by
   have estimate :=
     VerticalConjugateRequest.MatchedVerticalSidePreparation.AreaRequest.conjugate_boundary_accurate

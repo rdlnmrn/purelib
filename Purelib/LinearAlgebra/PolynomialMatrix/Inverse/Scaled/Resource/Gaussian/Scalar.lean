@@ -23,6 +23,9 @@ import Purelib.LinearAlgebra.PolynomialMatrix.Inverse.Scaled.Block
 import Purelib.Polynomial.Dense.Arithmetic
 import Purelib.Polynomial.Dense.Multiplication
 
+open Purelib.Data.Gaussian.Resource
+open Purelib.Algebra.Field.Resource
+
 /-!
 # Retained polynomial inverse resource envelopes
 
@@ -48,95 +51,95 @@ The recurrence follows the actual Schur matrices and their finite maximum coeffi
     (count : Nat) → Basic.GaussianNumberMatrix count → Nat → Nat
   | 0, _, bound => bound
   | count + 1, matrix, bound =>
-      let slots := PolynomialMatrix.Resource.Gaussian.Slots.matrixSlotBound matrix
-      let schurBound := Algebra.Field.Resource.Magnitude.grow
-        Purelib.Data.Gaussian.Resource.Model.gaussianModel bound (2 * slots + 2)
+      let slots := Resource.Gaussian.Slots.matrixSlotBound matrix
+      let schurBound := Magnitude.grow
+        Model.gaussianModel bound (2 * slots + 2)
       let smallerBound :=
-        Purelib.LinearAlgebra.PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Scalar.scaledScalarMagnitudeEnvelope
+        Scalar.scaledScalarMagnitudeEnvelope
         count
-        (PolynomialMatrix.Basic.schur matrix) schurBound
-      Algebra.Field.Resource.Magnitude.grow Purelib.Data.Gaussian.Resource.Model.gaussianModel smallerBound
+        (Basic.schur matrix) schurBound
+      Magnitude.grow Model.gaussianModel smallerBound
         (2 * slots)
 
 /-- The recursive scalar magnitude envelope is at least its supplied input bound. -/
 theorem scaledScalar_bound_le_envelope :
     ∀ (count : Nat) (matrix : Basic.GaussianNumberMatrix count) (bound : Nat),
-      bound ≤ PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Scalar.scaledScalarMagnitudeEnvelope count matrix bound
+      bound ≤ scaledScalarMagnitudeEnvelope count matrix bound
   | 0, _, _ => le_refl _
   | count + 1, matrix, bound => by
-      dsimp only [PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Scalar.scaledScalarMagnitudeEnvelope, -eq_self,
+      dsimp only [scaledScalarMagnitudeEnvelope, -eq_self,
         -iff_self]
-      exact (Algebra.Field.Resource.Magnitude.bound_le_grow
-        Purelib.Data.Gaussian.Resource.Model.gaussianModel bound _).trans
-        ((Purelib.LinearAlgebra.PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Scalar.scaledScalar_bound_le_envelope
+      exact (Magnitude.bound_le_grow
+        Model.gaussianModel bound _).trans
+        ((Scalar.scaledScalar_bound_le_envelope
           count
-          (PolynomialMatrix.Basic.schur matrix)
-          (Algebra.Field.Resource.Magnitude.grow Purelib.Data.Gaussian.Resource.Model.gaussianModel bound
-            (2 * PolynomialMatrix.Resource.Gaussian.Slots.matrixSlotBound matrix + 2))).trans
-            (Algebra.Field.Resource.Magnitude.bound_le_grow
-              Purelib.Data.Gaussian.Resource.Model.gaussianModel _ _))
+          (Basic.schur matrix)
+          (Magnitude.grow Model.gaussianModel bound
+            (2 * Resource.Gaussian.Slots.matrixSlotBound matrix + 2))).trans
+            (Magnitude.bound_le_grow
+              Model.gaussianModel _ _))
 
 /-- The polynomial Schur complement satisfies the input magnitude bound advanced by its slot budget.
 
 The input bound also covers zero, and the retained maximum coefficient length pays for both products and subtraction. -/
 theorem schur_within {count : Nat}
     {matrix : Basic.GaussianNumberMatrix (count + 1)} {bound : Nat}
-    (zeroBound : Purelib.Data.Gaussian.Resource.Model.gaussianModel.magnitude 0 ≤ bound)
-    (bounded : PolynomialMatrix.Resource.Gaussian.Magnitude.MatrixWithin matrix bound) :
-    PolynomialMatrix.Resource.Gaussian.Magnitude.MatrixWithin (PolynomialMatrix.Basic.schur matrix)
-      (Algebra.Field.Resource.Magnitude.grow Purelib.Data.Gaussian.Resource.Model.gaussianModel bound (2 *
-        PolynomialMatrix.Resource.Gaussian.Slots.matrixSlotBound matrix + 2)) := by
+    (zeroBound : Model.gaussianModel.magnitude 0 ≤ bound)
+    (bounded : Resource.Gaussian.Magnitude.MatrixWithin matrix bound) :
+    Resource.Gaussian.Magnitude.MatrixWithin (Basic.schur matrix)
+      (Magnitude.grow Model.gaussianModel bound (2 *
+        Resource.Gaussian.Slots.matrixSlotBound matrix + 2)) := by
   intro row column
-  let slots := PolynomialMatrix.Resource.Gaussian.Slots.matrixSlotBound matrix
-  have headWithin : Dense.Resource.PolynomialWithin Purelib.Data.Gaussian.Resource.Model.gaussianModel
-      (PolynomialMatrix.Basic.head matrix) bound := by
-    simpa only [PolynomialMatrix.Basic.head, -eq_self, -iff_self] using bounded 0 0
-  have tailWithin : Dense.Resource.PolynomialWithin Purelib.Data.Gaussian.Resource.Model.gaussianModel
-      (PolynomialMatrix.Basic.tail matrix row column) bound := by
-    simpa only [PolynomialMatrix.Basic.tail,
+  let slots := Resource.Gaussian.Slots.matrixSlotBound matrix
+  have headWithin : PolynomialWithin Model.gaussianModel
+      (Basic.head matrix) bound := by
+    simpa only [Basic.head, -eq_self, -iff_self] using bounded 0 0
+  have tailWithin : PolynomialWithin Model.gaussianModel
+      (Basic.tail matrix row column) bound := by
+    simpa only [Basic.tail,
       SquareMatrix.matrixOfFn_apply, -eq_self, -iff_self] using
       bounded row.succ column.succ
-  have leftWithin : Dense.Resource.PolynomialWithin Purelib.Data.Gaussian.Resource.Model.gaussianModel
-      (PolynomialMatrix.Basic.leftColumn matrix row) bound := by
-    simpa only [PolynomialMatrix.Basic.leftColumn,
+  have leftWithin : PolynomialWithin Model.gaussianModel
+      (Basic.leftColumn matrix row) bound := by
+    simpa only [Basic.leftColumn,
       Data.Vector.Basic.vectorOfFn_apply, -eq_self, -iff_self] using bounded row.succ 0
-  have topWithin : Dense.Resource.PolynomialWithin Purelib.Data.Gaussian.Resource.Model.gaussianModel
-      (PolynomialMatrix.Basic.topRow matrix column) bound := by
-    simpa only [PolynomialMatrix.Basic.topRow,
+  have topWithin : PolynomialWithin Model.gaussianModel
+      (Basic.topRow matrix column) bound := by
+    simpa only [Basic.topRow,
       Data.Vector.Basic.vectorOfFn_apply, -eq_self, -iff_self] using bounded 0 column.succ
-  have first := Dense.Resource.mul_within Purelib.Data.Gaussian.Resource.Model.gaussianModel zeroBound
+  have first := Dense.Resource.mul_within Model.gaussianModel zeroBound
     headWithin tailWithin
-  have second := Dense.Resource.mul_within Purelib.Data.Gaussian.Resource.Model.gaussianModel zeroBound
+  have second := Dense.Resource.mul_within Model.gaussianModel zeroBound
     leftWithin topWithin
-  have headLength := PolynomialMatrix.Resource.Gaussian.Slots.matrixSlot_le matrix 0 0
+  have headLength := Resource.Gaussian.Slots.matrixSlot_le matrix 0 0
   have leftLength :
-      (PolynomialMatrix.Basic.leftColumn matrix row).coeffs.length ≤
+      (Basic.leftColumn matrix row).coeffs.length ≤
         slots := by
-    simpa only [PolynomialMatrix.Basic.leftColumn,
+    simpa only [Basic.leftColumn,
       Data.Vector.Basic.vectorOfFn_apply, slots, -eq_self, -iff_self] using
-      PolynomialMatrix.Resource.Gaussian.Slots.matrixSlot_le matrix row.succ 0
-  have firstBound : Dense.Resource.PolynomialWithin Purelib.Data.Gaussian.Resource.Model.gaussianModel
-      (PolynomialMatrix.Basic.head matrix *
-        PolynomialMatrix.Basic.tail matrix row column)
-      (Algebra.Field.Resource.Magnitude.grow Purelib.Data.Gaussian.Resource.Model.gaussianModel bound (2 *
+      Resource.Gaussian.Slots.matrixSlot_le matrix row.succ 0
+  have firstBound : PolynomialWithin Model.gaussianModel
+      (Basic.head matrix *
+        Basic.tail matrix row column)
+      (Magnitude.grow Model.gaussianModel bound (2 *
         slots)) :=
-    Dense.Resource.polynomialWithin_mono Purelib.Data.Gaussian.Resource.Model.gaussianModel first
-      (Algebra.Field.Resource.Magnitude.grow_mono_steps Purelib.Data.Gaussian.Resource.Model.gaussianModel
+    Dense.Resource.polynomialWithin_mono Model.gaussianModel first
+      (Magnitude.grow_mono_steps Model.gaussianModel
         bound (Nat.mul_le_mul_left 2 headLength))
-  have secondBound : Dense.Resource.PolynomialWithin Purelib.Data.Gaussian.Resource.Model.gaussianModel
-      (PolynomialMatrix.Basic.leftColumn matrix row *
-        PolynomialMatrix.Basic.topRow matrix column)
-      (Algebra.Field.Resource.Magnitude.grow Purelib.Data.Gaussian.Resource.Model.gaussianModel bound (2 *
+  have secondBound : PolynomialWithin Model.gaussianModel
+      (Basic.leftColumn matrix row *
+        Basic.topRow matrix column)
+      (Magnitude.grow Model.gaussianModel bound (2 *
         slots)) :=
-    Dense.Resource.polynomialWithin_mono Purelib.Data.Gaussian.Resource.Model.gaussianModel second
-      (Algebra.Field.Resource.Magnitude.grow_mono_steps Purelib.Data.Gaussian.Resource.Model.gaussianModel
+    Dense.Resource.polynomialWithin_mono Model.gaussianModel second
+      (Magnitude.grow_mono_steps Model.gaussianModel
         bound (Nat.mul_le_mul_left 2 leftLength))
-  have difference := Dense.Resource.sub_within Purelib.Data.Gaussian.Resource.Model.gaussianModel
-    (zeroBound.trans (Algebra.Field.Resource.Magnitude.bound_le_grow
-      Purelib.Data.Gaussian.Resource.Model.gaussianModel bound (2 * slots)))
+  have difference := Dense.Resource.sub_within Model.gaussianModel
+    (zeroBound.trans (Magnitude.bound_le_grow
+      Model.gaussianModel bound (2 * slots)))
     firstBound secondBound
-  rw [Algebra.Field.Resource.Magnitude.grow_add] at difference
-  simpa only [PolynomialMatrix.Basic.schur,
+  rw [Magnitude.grow_add] at difference
+  simpa only [Basic.schur,
     SquareMatrix.matrixOfFn_apply, slots, -eq_self, -iff_self] using difference
 
 /-- The recursive inverse scalar satisfies its matrix-dependent magnitude envelope.
@@ -144,49 +147,49 @@ theorem schur_within {count : Nat}
 The supplied input bound covers every matrix coefficient as well as zero and one. -/
 theorem scaledInverseScalar_within :
     ∀ (count : Nat) (matrix : Basic.GaussianNumberMatrix count) (bound : Nat),
-      Purelib.Data.Gaussian.Resource.Model.gaussianModel.magnitude 0 ≤ bound →
-      Purelib.Data.Gaussian.Resource.Model.gaussianModel.magnitude (1 : Data.Gaussian.Basic.Number) ≤ bound
+      Model.gaussianModel.magnitude 0 ≤ bound →
+      Model.gaussianModel.magnitude (1 : Data.Gaussian.Basic.Number) ≤ bound
         →
-      PolynomialMatrix.Resource.Gaussian.Magnitude.MatrixWithin matrix bound →
-      Dense.Resource.PolynomialWithin Purelib.Data.Gaussian.Resource.Model.gaussianModel
-        (PolynomialMatrix.Inverse.Scaled.Compute.scaledInverseData count matrix).scalar
-        (PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Scalar.scaledScalarMagnitudeEnvelope count matrix bound)
+      Resource.Gaussian.Magnitude.MatrixWithin matrix bound →
+      PolynomialWithin Model.gaussianModel
+        (Compute.scaledInverseData count matrix).scalar
+        (scaledScalarMagnitudeEnvelope count matrix bound)
   | 0, _, bound, _, oneBound, _ => by
-      simpa only [PolynomialMatrix.Inverse.Scaled.Compute.scaledInverseData,
-        PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Scalar.scaledScalarMagnitudeEnvelope, -eq_self, -iff_self]
-        using Dense.Resource.constant_within Purelib.Data.Gaussian.Resource.Model.gaussianModel oneBound
+      simpa only [Compute.scaledInverseData,
+        scaledScalarMagnitudeEnvelope, -eq_self, -iff_self]
+        using Dense.Resource.constant_within Model.gaussianModel oneBound
   | count + 1, matrix, bound, zeroBound, oneBound, matrixWithin => by
-      let slots := PolynomialMatrix.Resource.Gaussian.Slots.matrixSlotBound matrix
-      let schurBound := Algebra.Field.Resource.Magnitude.grow
-        Purelib.Data.Gaussian.Resource.Model.gaussianModel bound (2 * slots + 2)
-      let smallerBound := PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Scalar.scaledScalarMagnitudeEnvelope count
-        (PolynomialMatrix.Basic.schur matrix) schurBound
-      have schurWithin := PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Scalar.schur_within zeroBound matrixWithin
+      let slots := Resource.Gaussian.Slots.matrixSlotBound matrix
+      let schurBound := Magnitude.grow
+        Model.gaussianModel bound (2 * slots + 2)
+      let smallerBound := scaledScalarMagnitudeEnvelope count
+        (Basic.schur matrix) schurBound
+      have schurWithin := schur_within zeroBound matrixWithin
       have smallerWithin :=
-        Purelib.LinearAlgebra.PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Scalar.scaledInverseScalar_within count
-        (PolynomialMatrix.Basic.schur matrix) schurBound
-        (zeroBound.trans (Algebra.Field.Resource.Magnitude.bound_le_grow
-          Purelib.Data.Gaussian.Resource.Model.gaussianModel bound _))
-        (oneBound.trans (Algebra.Field.Resource.Magnitude.bound_le_grow
-          Purelib.Data.Gaussian.Resource.Model.gaussianModel bound _)) schurWithin
+        Scalar.scaledInverseScalar_within count
+        (Basic.schur matrix) schurBound
+        (zeroBound.trans (Magnitude.bound_le_grow
+          Model.gaussianModel bound _))
+        (oneBound.trans (Magnitude.bound_le_grow
+          Model.gaussianModel bound _)) schurWithin
       have headWithin := Dense.Resource.polynomialWithin_mono
-        Purelib.Data.Gaussian.Resource.Model.gaussianModel (matrixWithin 0 0)
-        ((Algebra.Field.Resource.Magnitude.bound_le_grow Purelib.Data.Gaussian.Resource.Model.gaussianModel
+        Model.gaussianModel (matrixWithin 0 0)
+        ((Magnitude.bound_le_grow Model.gaussianModel
           bound _).trans
-          (PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Scalar.scaledScalar_bound_le_envelope count
-            (PolynomialMatrix.Basic.schur matrix) schurBound))
-      have product := Dense.Resource.mul_within Purelib.Data.Gaussian.Resource.Model.gaussianModel
+          (scaledScalar_bound_le_envelope count
+            (Basic.schur matrix) schurBound))
+      have product := Dense.Resource.mul_within Model.gaussianModel
         (zeroBound.trans
-          ((Algebra.Field.Resource.Magnitude.bound_le_grow
-            Purelib.Data.Gaussian.Resource.Model.gaussianModel bound _).trans
-            (PolynomialMatrix.Inverse.Scaled.Resource.Gaussian.Scalar.scaledScalar_bound_le_envelope count
-              (PolynomialMatrix.Basic.schur matrix) schurBound)))
+          ((Magnitude.bound_le_grow
+            Model.gaussianModel bound _).trans
+            (scaledScalar_bound_le_envelope count
+              (Basic.schur matrix) schurBound)))
         headWithin smallerWithin
-      have headLength := PolynomialMatrix.Resource.Gaussian.Slots.matrixSlot_le matrix 0 0
-      dsimp only [PolynomialMatrix.Inverse.Scaled.Compute.scaledInverseData, -eq_self, -iff_self]
-      apply Dense.Resource.polynomialWithin_mono Purelib.Data.Gaussian.Resource.Model.gaussianModel product
-      apply Algebra.Field.Resource.Magnitude.grow_mono_steps
-        Purelib.Data.Gaussian.Resource.Model.gaussianModel smallerBound
+      have headLength := Resource.Gaussian.Slots.matrixSlot_le matrix 0 0
+      dsimp only [Compute.scaledInverseData, -eq_self, -iff_self]
+      apply Dense.Resource.polynomialWithin_mono Model.gaussianModel product
+      apply Magnitude.grow_mono_steps
+        Model.gaussianModel smallerBound
       exact Nat.mul_le_mul_left 2 headLength
 
 end

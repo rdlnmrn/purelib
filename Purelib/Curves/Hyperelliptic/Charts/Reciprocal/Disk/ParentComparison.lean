@@ -87,12 +87,12 @@ open Purelib.Approximation.Rational.Geometric.Search (firstQuarterBelow)
 
 variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
-  {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {cover :
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {parent : Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential}
+  {patch : Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
+    UniformReciprocalModels.Data patch count}
+  {regular : RegularBounds.Data cap} {cover :
     Cover data}
 
 set_option genInjectivity false in
@@ -100,15 +100,15 @@ set_option genInjectivity false in
 
 The retained numerical budget uses the actual cell-bank maximum, and the boundary views refer to the exact original
 owner spine. -/
-structure Preparation (regular : RegularBounds.Data cap) (cover : UniformReciprocalCover.Cover data) where
-  /-- The original comparison bank indexed by the complete retained cover mesh. -/ bank : ParentBank.Bank regular data
+structure Preparation (regular : RegularBounds.Data cap) (cover : Cover data) where
+  /-- The original comparison bank indexed by the complete retained cover mesh. -/ bank : Bank regular data
     cover.mesh.edges
-  /-- The cached endpoint owners of these exact original comparison cells. -/ owners : ParentOwners.Owners bank
-  /-- The cached operational coordinate joins between the original adjacent endpoint owners. -/ links : Owners.Links
+  /-- The cached endpoint owners of these exact original comparison cells. -/ owners : Owners bank
+  /-- The cached operational coordinate joins between the original adjacent endpoint owners. -/ links : Links
     owners
-  /-- The exact first and last endpoint views of the original retained owner bank. -/ boundary : Owners.Boundary
+  /-- The exact first and last endpoint views of the original retained owner bank. -/ boundary : Boundary
     cover.mesh owners
-  /-- The cached numerical comparison budget for the original full parent. -/ budget : ParentBank.Budget data
+  /-- The cached numerical comparison budget for the original full parent. -/ budget : Budget data
   /-- The retained budget scale is exactly the original comparison bank's maximum. -/ scale_eq : budget.scale =
     bank.maximum
 
@@ -118,15 +118,15 @@ namespace Preparation
 
 /-- Prepare the original comparison bank and select a shared polynomial stage paying its separate total and area
 targets. -/
-@[expose] def build (regular : RegularBounds.Data cap) (cover : UniformReciprocalCover.Cover data) :
-  Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison.Preparation regular cover :=
+@[expose] def build (regular : RegularBounds.Data cap) (cover : Cover data) :
+  Preparation regular cover :=
   let bank := Bank.build regular cover.cells
   let owners := Owners.build bank
   ⟨bank, owners, Links.build cover.mesh owners, Boundary.build cover.mesh owners,
     Budget.build data bank.maximum bank.maximum_nonnegative, rfl⟩
 
 /-- The retained parent budget bounds every actual original cell comparison scale. -/
-theorem bounded (prepared : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison.Preparation regular cover) :
+theorem bounded (prepared : Preparation regular cover) :
   prepared.bank.Bounded prepared.budget.scale := by
   rw [prepared.scale_eq]
   exact prepared.bank.maximum_bounded
@@ -136,21 +136,21 @@ end Preparation
 set_option genInjectivity false in
 /-- A cached shared-stage request paying the original complete parent's total and area discrepancies. -/
 structure Request (prepared : Preparation regular cover)
-  (totalTarget areaTarget : InverseRootPolynomial.Coordinate) (floor : Nat) where
+  (totalTarget areaTarget : Coordinate) (floor : Nat) where
   /-- The cached common polynomial stage paying both original discrepancy targets. -/ index : Nat
   /-- The stage is the maximum of the original total and full-area quarter-radius searches. -/ index_eq : index = max
-    (Search.firstQuarterBelow prepared.budget.scale floor totalTarget)
-    (Search.firstQuarterBelow prepared.budget.boundaryAreaScale floor areaTarget)
+    (firstQuarterBelow prepared.budget.scale floor totalTarget)
+    (firstQuarterBelow prepared.budget.boundaryAreaScale floor areaTarget)
   /-- The retained common stage respects the caller's original floor. -/ floor_le : floor ≤ index
   /-- The cached original whole-total discrepancy at the selected stage. -/ totalError :
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The total discrepancy is exactly the retained comparison scale's quarter-radius. -/ totalError_eq : totalError =
-    Geometric.Basic.quarterRadius prepared.budget.scale index
+    quarterRadius prepared.budget.scale index
   /-- The retained whole-total discrepancy is strictly below the original total target. -/ total_lt : totalError <
     totalTarget
-  /-- The cached original whole-area discrepancy at the selected stage. -/ areaError : InverseRootPolynomial.Coordinate
+  /-- The cached original whole-area discrepancy at the selected stage. -/ areaError : Coordinate
   /-- The area discrepancy is exactly the retained full-boundary area scale's quarter-radius. -/ areaError_eq :
-    areaError = Geometric.Basic.quarterRadius prepared.budget.boundaryAreaScale index
+    areaError = quarterRadius prepared.budget.boundaryAreaScale index
   /-- The retained whole-area discrepancy is strictly below the original area target. -/ area_lt : areaError <
     areaTarget
 
@@ -160,47 +160,47 @@ namespace Request
 
 /-- Prepare the original comparison bank and select a shared polynomial stage paying its separate total and area
 targets. -/
-@[expose] def build (prepared : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison.Preparation regular cover)
-  (totalTarget areaTarget : InverseRootPolynomial.Coordinate)
+@[expose] def build (prepared : Preparation regular cover)
+  (totalTarget areaTarget : Coordinate)
     (totalPositive : 0 < totalTarget) (areaPositive : 0 < areaTarget) (floor : Nat) :
-      Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison.Request prepared totalTarget areaTarget floor :=
-  let totalIndex := Search.firstQuarterBelow prepared.budget.scale floor totalTarget
-  let areaIndex := Search.firstQuarterBelow prepared.budget.boundaryAreaScale floor areaTarget
+      Request prepared totalTarget areaTarget floor :=
+  let totalIndex := firstQuarterBelow prepared.budget.scale floor totalTarget
+  let areaIndex := firstQuarterBelow prepared.budget.boundaryAreaScale floor areaTarget
   let index := max totalIndex areaIndex
   ⟨index, rfl, (Search.firstQuarterBelow_ge _ _ _).trans (Data.Nat.Order.le_max_left _ _),
-    Geometric.Basic.quarterRadius prepared.budget.scale index, rfl,
+    quarterRadius prepared.budget.scale index, rfl,
     (quarterRadius_antitone prepared.budget.nonnegative (Data.Nat.Order.le_max_left totalIndex
       areaIndex)).trans_lt
       (Search.firstQuarterBelow_accurate _ prepared.budget.nonnegative _ _ totalPositive),
-    Geometric.Basic.quarterRadius prepared.budget.boundaryAreaScale index, rfl,
+    quarterRadius prepared.budget.boundaryAreaScale index, rfl,
     (quarterRadius_antitone prepared.budget.boundaryAreaScale_nonnegative (Data.Nat.Order.le_max_right
       totalIndex areaIndex)).trans_lt
       (Search.firstQuarterBelow_accurate _ prepared.budget.boundaryAreaScale_nonnegative _ _ areaPositive)⟩
 
-variable {prepared : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison.Preparation regular cover}
+variable {prepared : Preparation regular cover}
   {totalTarget areaTarget : Coordinate} {floor depth : Nat}
   {originalTarget : Coordinate} {original :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalBoundaryArea.Cover.AreaRequest cover depth originalTarget}
-  {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential original.index box}
+    Cover.AreaRequest cover depth originalTarget}
+  {box : Geometry.Rational.Box} {capSample :
+    Primitives.Sample cap differential original.index box}
 
 set_option genInjectivity false in
 /-- The actual original reciprocal area request with its cached cap comparison path.
 
 The original source cell spine and summary are retained exactly, and both complete path discrepancies satisfy their
 requested targets. -/
-structure Evaluation (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison.Request prepared
+structure Evaluation (request : Request prepared
   totalTarget areaTarget floor)
     (original : Cover.AreaRequest cover depth originalTarget)
     (capSample : Primitives.Sample cap differential original.index box) where
-  /-- The actual original source cells with their retained cap comparison paths. -/ cells : ParentPaths.ComparedCells
+  /-- The actual original source cells with their retained cap comparison paths. -/ cells : ComparedCells
     original.source capSample depth prepared.bank
   /-- The comparison bank retains exactly the original reciprocal area-cell spine. -/ original_eq : cells.original =
     original.cells
-  /-- The cached original source path summary. -/ left : IncrementArea.Summary (original.cells.pairs.map
+  /-- The cached original source path summary. -/ left : Summary (original.cells.pairs.map
     Prod.fst).flatten
   /-- The source summary is exactly the original area request's retained left summary. -/ left_eq : left = original.left
-  /-- The cached complete cap path summary for these exact original compared cells. -/ cap : IncrementArea.Summary
+  /-- The cached complete cap path summary for these exact original compared cells. -/ cap : Summary
     (cells.pairs.map Prod.snd).flatten
   /-- The actual retained source and cap totals satisfy the original requested target. -/ total_close :
     Data.Gaussian.Norm.Basic.normSq (left.total - cap.total) < totalTarget
@@ -211,7 +211,7 @@ constructive_injectivity Evaluation
 
 /-- Preserve the original paths and inverse caches. The caller's shared stage need only be at least the stage certified
 by this request. -/
-@[expose] def evaluate (request : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison.Request prepared
+@[expose] def evaluate (request : Request prepared
   totalTarget areaTarget floor)
     (original : Cover.AreaRequest cover depth originalTarget)
     (capSample : Primitives.Sample cap differential original.index box)
@@ -237,11 +237,11 @@ by this request. -/
 
 namespace Evaluation
 
-variable {request : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison.Request prepared totalTarget
+variable {request : Request prepared totalTarget
   areaTarget floor}
 
 /-- The retained original source total is its actual endpoint primitive difference. -/
-theorem source_total (evaluated : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison.Request.Evaluation
+theorem source_total (evaluated : Evaluation
   request original capSample) :
     evaluated.left.total = original.source.primitive.value.eval (parent.edge.point 1) -
       original.source.primitive.value.eval (parent.edge.point 0) := by
@@ -249,9 +249,9 @@ theorem source_total (evaluated : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Pa
   exact original.source_total
 
 /-- The retained original source area is the exact finite dyadic area at the combined cover and cell depth. -/
-theorem source_area (evaluated : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison.Request.Evaluation request
+theorem source_area (evaluated : Evaluation request
   original capSample) :
-    evaluated.left.area = DyadicBoundaryRibbon.dyadicArea
+    evaluated.left.area = dyadicArea
       (fun parameter => original.source.primitive.value.eval (parent.edge.point parameter) -
         original.source.primitive.value.eval (parent.edge.point 0))
       (cover.mesh.depth + depth) 0 1 := by
@@ -260,9 +260,9 @@ theorem source_area (evaluated : Curves.Hyperelliptic.Charts.Reciprocal.Disk.Par
 
 /-- The area path has precisely the sum of the retained cap-polynomial increments. Reading this total does not
 reevaluate a primitive endpoint. -/
-theorem cap_total (evaluated : Curves.Hyperelliptic.Charts.Reciprocal.Disk.ParentComparison.Request.Evaluation request
+theorem cap_total (evaluated : Evaluation request
   original capSample) :
-    evaluated.cap.total = Data.Gaussian.Norm.Sum.Basic.gaussianSum evaluated.cells.increments := by
+    evaluated.cap.total = gaussianSum evaluated.cells.increments := by
   rw [evaluated.cap.total_eq, ← evaluated.cells.capSummary.total_eq]
   exact evaluated.cells.cap_total
 

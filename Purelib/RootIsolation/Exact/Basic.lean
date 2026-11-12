@@ -34,6 +34,8 @@ list at each requested finite degree index.
 
 namespace Purelib.RootIsolation.Exact.Basic
 
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
+
 set_option genInjectivity false in
 /-- An exact finite isolation retaining its original tracks and zero-winding remainder partition.
 
@@ -41,7 +43,7 @@ The displayed support and ordered track/remainder lists retain their coverage,
 separation, winding and requested-count certificates for the same polynomial
 and original ambient box. -/
 public structure Output
-    (p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial) (ambient : Box) (count : Nat)
+    (p : CoefficientPolynomial) (ambient : Box) (count : Nat)
       where
   /-- The retained support box containing the original finite partition. -/ support : Box
   /-- The retained support box lies within the original ambient box. -/ support_refinesAmbient : support.Refines ambient
@@ -69,27 +71,42 @@ constructive_injectivity Output
 
 /-- Reindex the original degree index by the retained equality for the track-list length. -/
 @[expose] public def Output.trackIndex
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {count : Nat}
+    {p : CoefficientPolynomial} {ambient : Box} {count : Nat}
     (output : Exact.Basic.Output p ambient count) (index : Fin count) :
     Fin output.tracks.length :=
   Fin.cast output.tracks_length.symm index
 
 /-- Read the original retained track at its certified degree index. -/
 @[expose] public def Output.trackAt
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {count : Nat}
+    {p : CoefficientPolynomial} {ambient : Box} {count : Nat}
     (output : Exact.Basic.Output p ambient count) (index : Fin count) :
     Track.Basic.WindingOneTrack p ambient :=
   output.tracks.get (output.trackIndex index)
 
 /-- Reindexing a track index preserves its natural value. -/
 @[simp] public theorem Output.trackIndex_val
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {count : Nat}
+    {p : CoefficientPolynomial} {ambient : Box} {count : Nat}
     (output : Exact.Basic.Output p ambient count) (index : Fin count) :
     (output.trackIndex index).val = index.val := rfl
 
+/-- Distinct original list indices select tracks with positively separated initial boxes. -/
+public theorem Output.tracks_get_separated
+    {p : CoefficientPolynomial} {ambient : Box} {count : Nat}
+    (output : Exact.Basic.Output p ambient count) (left right : Fin output.tracks.length)
+    (different : left ≠ right) :
+    (output.tracks.get left).initial.box.Separated
+      (output.tracks.get right).initial.box := open Purelib in by
+  by_cases ordered : left.val < right.val
+  · exact Data.List.Pairwise.pairwise_get_of_val_lt output.tracks_pairwise _ _ ordered
+  · have reversed : right.val < left.val := by
+      have unequalValues : left.val ≠ right.val := fun equal => different (Fin.ext equal)
+      exact Nat.lt_of_le_of_ne (Nat.le_of_not_gt ordered) (Ne.symm unequalValues)
+    exact Box.separated_symm
+      (Data.List.Pairwise.pairwise_get_of_val_lt output.tracks_pairwise _ _ reversed)
+
 /-- Distinct degree indices select tracks with positively separated initial boxes. -/
 public theorem Output.trackAt_pairwiseSeparated
-    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box} {count : Nat}
+    {p : CoefficientPolynomial} {ambient : Box} {count : Nat}
     (output : Exact.Basic.Output p ambient count) (left right : Fin count)
     (different : left ≠ right) :
     (output.trackAt left).initial.box.Separated
@@ -101,17 +118,5 @@ public theorem Output.trackAt_pairwiseSeparated
           (output.trackIndex_val left).symm
         _ = (output.trackIndex right).val := congrArg Fin.val equal
         _ = right.val := output.trackIndex_val right))
-  by_cases ordered : (output.trackIndex left).val <
-      (output.trackIndex right).val
-  · exact Data.List.Pairwise.pairwise_get_of_val_lt output.tracks_pairwise _ _ ordered
-  · have reversed : (output.trackIndex right).val <
-        (output.trackIndex left).val := by
-      have unequalValues : (output.trackIndex left).val ≠
-          (output.trackIndex right).val := by
-        intro equal
-        exact indexDifferent (Fin.ext equal)
-      exact Nat.lt_of_le_of_ne (Nat.le_of_not_gt ordered)
-        (Ne.symm unequalValues)
-    exact Box.separated_symm
-      (Data.List.Pairwise.pairwise_get_of_val_lt output.tracks_pairwise _ _ reversed)
+  exact output.tracks_get_separated _ _ indexDifferent
 end Purelib.RootIsolation.Exact.Basic

@@ -41,61 +41,61 @@ open Purelib.Integration.Path.IncrementArea
 open Purelib.Data.Gaussian.Basic.Canonical
 
 /-- The sum of retained paired differences equals the difference of the two original ordered sums. -/
-private theorem sum_differences (pairs : List (IncrementArea.Gaussian × IncrementArea.Gaussian)) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (pairs.map (fun pair => pair.1 - pair.2)) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (pairs.map Prod.fst) - Data.Gaussian.Norm.Sum.Basic.gaussianSum
+private theorem sum_differences (pairs : List (Gaussian × Gaussian)) :
+    Norm.Sum.Basic.gaussianSum (pairs.map (fun pair => pair.1 - pair.2)) =
+      Norm.Sum.Basic.gaussianSum (pairs.map Prod.fst) - Norm.Sum.Basic.gaussianSum
         (pairs.map Prod.snd) := by
   induction pairs with
-  | nil => change (0 : IncrementArea.Gaussian) = 0 - 0; ring1
-  | cons pair pairs ih => simp only [List.map_cons, Data.Gaussian.Norm.Sum.Basic.gaussianSum, ih]; ring1
+  | nil => change (0 : Gaussian) = 0 - 0; ring1
+  | cons pair pairs ih => simp only [List.map_cons, Norm.Sum.Basic.gaussianSum, ih]; ring1
 
 /-- Read each pair's area difference against its retained original left and right tail sums. -/
-private def pairedTerms : List (IncrementArea.Gaussian × IncrementArea.Gaussian) → List IncrementArea.Gaussian
+private def pairedTerms : List (Gaussian × Gaussian) → List Gaussian
   | [] => []
   | pair :: remaining =>
-      (BoundaryRibbon.area pair.1 (Data.Gaussian.Norm.Sum.Basic.gaussianSum (remaining.map Prod.fst)) -
-        BoundaryRibbon.area pair.2 (Data.Gaussian.Norm.Sum.Basic.gaussianSum (remaining.map Prod.snd))) ::
-          Purelib.Integration.Path.IncrementAreaComparison.pairedTerms remaining
+      (BoundaryRibbon.area pair.1 (Norm.Sum.Basic.gaussianSum (remaining.map Prod.fst)) -
+        BoundaryRibbon.area pair.2 (Norm.Sum.Basic.gaussianSum (remaining.map Prod.snd))) ::
+          IncrementAreaComparison.pairedTerms remaining
 
 /-- The retained paired-area term list has exactly the original pair count. -/
-private theorem pairedTerms_length (pairs : List (IncrementArea.Gaussian × IncrementArea.Gaussian)) :
-  (IncrementAreaComparison.pairedTerms pairs).length = pairs.length := by
+private theorem pairedTerms_length (pairs : List (Gaussian × Gaussian)) :
+  (pairedTerms pairs).length = pairs.length := by
   induction pairs with
   | nil => rfl
   | cons _ _ ih => exact congrArg Nat.succ ih
 
 /-- Summing the paired-area terms gives the exact difference of the two original path areas. -/
-private theorem pairedTerms_sum (pairs : List (IncrementArea.Gaussian × IncrementArea.Gaussian)) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (IncrementAreaComparison.pairedTerms pairs) = IncrementArea.pathArea
+private theorem pairedTerms_sum (pairs : List (Gaussian × Gaussian)) :
+    Norm.Sum.Basic.gaussianSum (pairedTerms pairs) = pathArea
       (pairs.map
-      Prod.fst) - IncrementArea.pathArea (pairs.map Prod.snd) := by
+      Prod.fst) - pathArea (pairs.map Prod.snd) := by
   induction pairs with
-  | nil => change (0 : IncrementArea.Gaussian) = 0 - 0; ring1
+  | nil => change (0 : Gaussian) = 0 - 0; ring1
   | cons pair pairs ih =>
-      simp only [IncrementAreaComparison.pairedTerms, Data.Gaussian.Norm.Sum.Basic.gaussianSum, List.map_cons,
-        IncrementArea.pathArea_cons, ih]
+      simp only [pairedTerms, Norm.Sum.Basic.gaussianSum, List.map_cons,
+        pathArea_cons, ih]
       ring1
 
 /-- Split an area difference into the first-entry difference contribution and the second-entry difference contribution.
 -/
-private theorem area_difference_pair (first second third fourth : IncrementArea.Gaussian) :
+private theorem area_difference_pair (first second third fourth : Gaussian) :
     BoundaryRibbon.area first third - BoundaryRibbon.area second fourth = BoundaryRibbon.area (first - second) third +
       BoundaryRibbon.area second (third - fourth) := by
-  apply Basic.ext <;> simp only [BoundaryRibbon.area, Data.Gaussian.Basic.conj, Basic.sub_re, Basic.sub_im,
+  apply Basic.ext <;> simp only [BoundaryRibbon.area, Basic.conj, Basic.sub_re, Basic.sub_im,
     Basic.add_re,
     Basic.add_im, Basic.mul_re, Basic.mul_im] <;> ring1
 
 /-- Retained squared-norm bounds control the squared area norm by four times their product. -/
-private theorem area_bound_of_bounds {first last : IncrementArea.Gaussian} {firstBound lastBound :
-  IncrementArea.Coordinate}
-    (firstLe : Data.Gaussian.Norm.Basic.normSq first ≤ firstBound) (lastLe : Data.Gaussian.Norm.Basic.normSq last ≤
+private theorem area_bound_of_bounds {first last : Gaussian} {firstBound lastBound :
+  Coordinate}
+    (firstLe : Norm.Basic.normSq first ≤ firstBound) (lastLe : Norm.Basic.normSq last ≤
       lastBound)
       (firstNonnegative : 0 ≤ firstBound) :
-    Data.Gaussian.Norm.Basic.normSq (BoundaryRibbon.area first last) ≤ 4 * firstBound * lastBound := by
+    Norm.Basic.normSq (BoundaryRibbon.area first last) ≤ 4 * firstBound * lastBound := by
   calc
-    _ ≤ 4 * Data.Gaussian.Norm.Basic.normSq first * Data.Gaussian.Norm.Basic.normSq last := BoundaryRibbon.area_bound _
+    _ ≤ 4 * Norm.Basic.normSq first * Norm.Basic.normSq last := BoundaryRibbon.area_bound _
       _
-    _ = 4 * (Data.Gaussian.Norm.Basic.normSq first * Data.Gaussian.Norm.Basic.normSq last) := by ring1
+    _ = 4 * (Norm.Basic.normSq first * Norm.Basic.normSq last) := by ring1
     _ ≤ 4 * (firstBound * lastBound) := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
       (Fraction.Order.Arithmetic.mul_le_mul_direct firstLe lastLe (Norm.Basic.normSq_nonneg _) firstNonnegative) (by
         decide)
@@ -105,31 +105,31 @@ private theorem area_bound_of_bounds {first last : IncrementArea.Gaussian} {firs
 
 Every displayed mapped entry retains an original pair membership witness. The unchanged finite map length transports the
 supplied count capacity to the original norm-sum estimate. -/
-private theorem sum_map_bound {pairs : List (IncrementArea.Gaussian × IncrementArea.Gaussian)} (value :
-  IncrementArea.Gaussian × IncrementArea.Gaussian → IncrementArea.Gaussian)
-    {bound : IncrementArea.Coordinate} (nonnegative : 0 ≤ bound) (bounded : ∀ pair ∈ pairs,
-      Data.Gaussian.Norm.Basic.normSq
+private theorem sum_map_bound {pairs : List (Gaussian × Gaussian)} (value :
+  Gaussian × Gaussian → Gaussian)
+    {bound : Coordinate} (nonnegative : 0 ≤ bound) (bounded : ∀ pair ∈ pairs,
+      Norm.Basic.normSq
       (value pair) ≤ bound)
     {count : Nat} (countLe : pairs.length ≤ count) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum (pairs.map value)) ≤ (count :
-      IncrementArea.Coordinate)
+    Norm.Basic.normSq (Norm.Sum.Basic.gaussianSum (pairs.map value)) ≤ (count :
+      Coordinate)
       ^ 2 * bound :=
-  IncrementArea.sum_bound_of_length nonnegative (by
+  sum_bound_of_length nonnegative (by
     intro point member
     obtain ⟨pair, inPairs, equal⟩ := Map.mem_map.mp member
     rw [← equal]
     exact bounded pair inPairs) (by simpa only [Map.length_map] using countLe)
 
 /-- Each retained paired-area term meets the explicit count-squared, error and magnitude bound. -/
-private theorem pairedTerms_bounded {pairs : List (IncrementArea.Gaussian × IncrementArea.Gaussian)} {error bound :
-  IncrementArea.Coordinate}
+private theorem pairedTerms_bounded {pairs : List (Gaussian × Gaussian)} {error bound :
+  Coordinate}
     (errorNonnegative : 0 ≤ error) (boundNonnegative : 0 ≤ bound)
-    (errors : ∀ pair ∈ pairs, Data.Gaussian.Norm.Basic.normSq (pair.1 - pair.2) ≤ error)
-    (leftBound : ∀ pair ∈ pairs, Data.Gaussian.Norm.Basic.normSq pair.1 ≤ bound) (rightBound : ∀ pair ∈ pairs,
-      Data.Gaussian.Norm.Basic.normSq pair.2 ≤ bound)
+    (errors : ∀ pair ∈ pairs, Norm.Basic.normSq (pair.1 - pair.2) ≤ error)
+    (leftBound : ∀ pair ∈ pairs, Norm.Basic.normSq pair.1 ≤ bound) (rightBound : ∀ pair ∈ pairs,
+      Norm.Basic.normSq pair.2 ≤ bound)
     {count : Nat} (countLe : pairs.length ≤ count) :
-    ∀ value ∈ IncrementAreaComparison.pairedTerms pairs, Data.Gaussian.Norm.Basic.normSq value ≤ 16 * (count :
-      IncrementArea.Coordinate) ^ 2 * error * bound := by
+    ∀ value ∈ pairedTerms pairs, Norm.Basic.normSq value ≤ 16 * (count :
+      Coordinate) ^ 2 * error * bound := by
   induction pairs with
   | nil => intro _ member; exact False.elim (List.not_mem_nil member)
   | cons pair remaining ih =>
@@ -140,13 +140,13 @@ private theorem pairedTerms_bounded {pairs : List (IncrementArea.Gaussian × Inc
       intro value member
       rcases Membership.mem_cons.mp member with same | member
       · subst value
-        have first := IncrementAreaComparison.area_bound_of_bounds (errors pair (List.mem_cons_self ..))
-          (IncrementAreaComparison.sum_map_bound Prod.fst boundNonnegative tailLeft tailCount) errorNonnegative
-        have last := IncrementAreaComparison.area_bound_of_bounds (rightBound pair (List.mem_cons_self ..))
-          (IncrementAreaComparison.sum_map_bound (fun pair => pair.1 - pair.2) errorNonnegative tailErrors tailCount)
+        have first := area_bound_of_bounds (errors pair (List.mem_cons_self ..))
+          (sum_map_bound Prod.fst boundNonnegative tailLeft tailCount) errorNonnegative
+        have last := area_bound_of_bounds (rightBound pair (List.mem_cons_self ..))
+          (sum_map_bound (fun pair => pair.1 - pair.2) errorNonnegative tailErrors tailCount)
             boundNonnegative
-        rw [IncrementAreaComparison.sum_differences] at last
-        rw [IncrementAreaComparison.area_difference_pair]
+        rw [sum_differences] at last
+        rw [area_difference_pair]
         exact (Norm.Bounds.normSq_add_le_two _ _).trans
           ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add first last) (by decide)).trans_eq (by
             ring1))
@@ -157,20 +157,20 @@ magnitude bound.
 
 The two original ordered increment lists remain paired, with separate magnitude certificates and a pointwise
 squared-difference bound. -/
-theorem pathArea_difference_bound (pairs : List (IncrementArea.Gaussian × IncrementArea.Gaussian)) {error bound :
-  IncrementArea.Coordinate}
+theorem pathArea_difference_bound (pairs : List (Gaussian × Gaussian)) {error bound :
+  Coordinate}
     (errorNonnegative : 0 ≤ error) (boundNonnegative : 0 ≤ bound)
-    (errors : ∀ pair ∈ pairs, Data.Gaussian.Norm.Basic.normSq (pair.1 - pair.2) ≤ error)
-    (leftBound : ∀ pair ∈ pairs, Data.Gaussian.Norm.Basic.normSq pair.1 ≤ bound) (rightBound : ∀ pair ∈ pairs,
-      Data.Gaussian.Norm.Basic.normSq pair.2 ≤ bound) :
-    Data.Gaussian.Norm.Basic.normSq (IncrementArea.pathArea (pairs.map Prod.fst) - IncrementArea.pathArea (pairs.map
+    (errors : ∀ pair ∈ pairs, Norm.Basic.normSq (pair.1 - pair.2) ≤ error)
+    (leftBound : ∀ pair ∈ pairs, Norm.Basic.normSq pair.1 ≤ bound) (rightBound : ∀ pair ∈ pairs,
+      Norm.Basic.normSq pair.2 ≤ bound) :
+    Norm.Basic.normSq (pathArea (pairs.map Prod.fst) - pathArea (pairs.map
       Prod.snd)) ≤
-      16 * (pairs.length : IncrementArea.Coordinate) ^ 4 * error * bound := by
-  rw [← IncrementAreaComparison.pairedTerms_sum]
-  have estimate := Norm.Sum.Bounds.normSq_sum_le (IncrementAreaComparison.pairedTerms pairs) _
-    (IncrementAreaComparison.pairedTerms_bounded errorNonnegative boundNonnegative errors leftBound rightBound (count :=
+      16 * (pairs.length : Coordinate) ^ 4 * error * bound := by
+  rw [← pairedTerms_sum]
+  have estimate := Norm.Sum.Bounds.normSq_sum_le (pairedTerms pairs) _
+    (pairedTerms_bounded errorNonnegative boundNonnegative errors leftBound rightBound (count :=
       pairs.length) le_rfl)
-  rw [IncrementAreaComparison.pairedTerms_length] at estimate
+  rw [pairedTerms_length] at estimate
   exact estimate.trans_eq (by ring1)
 
 /-- Bound the area difference of the two original flattened block paths using separate block-area and block-total
@@ -178,35 +178,35 @@ errors.
 
 The retained ordered block pairs contribute a squared-count area term and a fourth-power total-interaction term with the
 exact original factors. -/
-theorem blocks_area_difference_bound (pairs : List (List IncrementArea.Gaussian × List IncrementArea.Gaussian))
-    {areaError totalError bound : IncrementArea.Coordinate} (totalNonnegative : 0 ≤ totalError) (boundNonnegative : 0 ≤
+theorem blocks_area_difference_bound (pairs : List (List Gaussian × List Gaussian))
+    {areaError totalError bound : Coordinate} (totalNonnegative : 0 ≤ totalError) (boundNonnegative : 0 ≤
       bound)
-    (areas : ∀ pair ∈ pairs, Data.Gaussian.Norm.Basic.normSq (IncrementArea.pathArea pair.1 - IncrementArea.pathArea
+    (areas : ∀ pair ∈ pairs, Norm.Basic.normSq (pathArea pair.1 - pathArea
       pair.2)
       ≤ areaError)
-    (totals : ∀ pair ∈ pairs, Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.1 -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2) ≤ totalError)
-    (leftBound : ∀ pair ∈ pairs, Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.1) ≤
+    (totals : ∀ pair ∈ pairs, Norm.Basic.normSq (Norm.Sum.Basic.gaussianSum pair.1 -
+      Norm.Sum.Basic.gaussianSum pair.2) ≤ totalError)
+    (leftBound : ∀ pair ∈ pairs, Norm.Basic.normSq (Norm.Sum.Basic.gaussianSum pair.1) ≤
       bound)
-    (rightBound : ∀ pair ∈ pairs, Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2) ≤
+    (rightBound : ∀ pair ∈ pairs, Norm.Basic.normSq (Norm.Sum.Basic.gaussianSum pair.2) ≤
       bound) :
-    Data.Gaussian.Norm.Basic.normSq (IncrementArea.pathArea (pairs.map Prod.fst).flatten - IncrementArea.pathArea
+    Norm.Basic.normSq (pathArea (pairs.map Prod.fst).flatten - pathArea
       (pairs.map
       Prod.snd).flatten) ≤
-      2 * ((pairs.length : IncrementArea.Coordinate) ^ 2 * areaError + 16 * (pairs.length : IncrementArea.Coordinate) ^
+      2 * ((pairs.length : Coordinate) ^ 2 * areaError + 16 * (pairs.length : Coordinate) ^
         4 * totalError * bound) := by
-  have areaDifference := IncrementAreaComparison.sum_differences (pairs.map (fun pair => (IncrementArea.pathArea pair.1,
-    IncrementArea.pathArea pair.2)))
+  have areaDifference := sum_differences (pairs.map (fun pair => (pathArea pair.1,
+    pathArea pair.2)))
   simp only [Map.map_map, Function.comp_def] at areaDifference
-  have areaBound := Norm.Sum.Bounds.normSq_sum_le (pairs.map (fun pair => IncrementArea.pathArea pair.1 -
-    IncrementArea.pathArea pair.2)) areaError (by
+  have areaBound := Norm.Sum.Bounds.normSq_sum_le (pairs.map (fun pair => pathArea pair.1 -
+    pathArea pair.2)) areaError (by
     intro value member
     obtain ⟨pair, inPairs, equal⟩ := Map.mem_map.mp member
     rw [← equal]
     exact areas pair inPairs)
   rw [Map.length_map, areaDifference] at areaBound
-  have coarse := IncrementAreaComparison.pathArea_difference_bound (pairs.map (fun pair =>
-    (Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.1, Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2)))
+  have coarse := pathArea_difference_bound (pairs.map (fun pair =>
+    (Norm.Sum.Basic.gaussianSum pair.1, Norm.Sum.Basic.gaussianSum pair.2)))
     totalNonnegative boundNonnegative
     (by
       intro pair member
@@ -221,17 +221,17 @@ theorem blocks_area_difference_bound (pairs : List (List IncrementArea.Gaussian 
       obtain ⟨original, inPairs, equal⟩ := Map.mem_map.mp member
       rw [← equal]; exact rightBound original inPairs)
   simp only [Map.map_map, Function.comp_def, Map.length_map] at coarse
-  rw [IncrementArea.pathArea_flatten, IncrementArea.pathArea_flatten]
+  rw [pathArea_flatten, pathArea_flatten]
   simp only [Map.map_map, Function.comp_def]
-  rw [show Data.Gaussian.Norm.Sum.Basic.gaussianSum (pairs.map (fun pair => IncrementArea.pathArea pair.1)) +
-    IncrementArea.pathArea (pairs.map (fun pair => Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.1)) -
-      (Data.Gaussian.Norm.Sum.Basic.gaussianSum (pairs.map (fun pair => IncrementArea.pathArea pair.2)) +
-        IncrementArea.pathArea
-        (pairs.map (fun pair => Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2))) =
-      (Data.Gaussian.Norm.Sum.Basic.gaussianSum (pairs.map (fun pair => IncrementArea.pathArea pair.1)) -
-        Data.Gaussian.Norm.Sum.Basic.gaussianSum (pairs.map (fun pair => IncrementArea.pathArea pair.2))) +
-        (IncrementArea.pathArea (pairs.map (fun pair => Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.1)) -
-          IncrementArea.pathArea (pairs.map (fun pair => Data.Gaussian.Norm.Sum.Basic.gaussianSum pair.2))) by ring1]
+  rw [show Norm.Sum.Basic.gaussianSum (pairs.map (fun pair => pathArea pair.1)) +
+    pathArea (pairs.map (fun pair => Norm.Sum.Basic.gaussianSum pair.1)) -
+      (Norm.Sum.Basic.gaussianSum (pairs.map (fun pair => pathArea pair.2)) +
+        pathArea
+        (pairs.map (fun pair => Norm.Sum.Basic.gaussianSum pair.2))) =
+      (Norm.Sum.Basic.gaussianSum (pairs.map (fun pair => pathArea pair.1)) -
+        Norm.Sum.Basic.gaussianSum (pairs.map (fun pair => pathArea pair.2))) +
+        (pathArea (pairs.map (fun pair => Norm.Sum.Basic.gaussianSum pair.1)) -
+          pathArea (pairs.map (fun pair => Norm.Sum.Basic.gaussianSum pair.2))) by ring1]
   exact (Norm.Bounds.normSq_add_le_two _ _).trans
     ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add areaBound coarse) (by decide)).trans_eq (by
       ring1))

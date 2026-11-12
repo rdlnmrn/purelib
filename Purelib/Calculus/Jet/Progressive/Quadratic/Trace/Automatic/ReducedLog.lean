@@ -92,7 +92,7 @@ The certificate has zero base, slope two and sample depth index plus one. Its re
 linear term; the displayed disk premise bounds increment quadrance by one ninth. -/
 def reducedLogCertificate (increment
   : Canonical)
-    (_disk : Data.Gaussian.Norm.Basic.normSq increment ≤ 1 / 9) (index : Nat) :
+    (_disk : Gaussian.Norm.Basic.normSq increment ≤ 1 / 9) (index : Nat) :
     Certificate increment :=
   Certificate.ofExpansion
     increment 0 AutomaticQuadraticTrace.reducedLogSlopePublic
@@ -123,27 +123,27 @@ Every input has quadrance at most one ninth. The zero base, constant slope, samp
 yield common transport for the indexed finite certificates. -/
 def reducedLogOuterTrace {source :
   Nat → Canonical}
-    (sourceChannel : Approximation.Gaussian.Sequence.Geometric.Channel source)
-    (disk : ∀ index, Data.Gaussian.Norm.Basic.normSq (source index) ≤ 1 / 9) : Trace source := by
+    (sourceChannel : Channel source)
+    (disk : ∀ index, Gaussian.Norm.Basic.normSq (source index) ≤ 1 / 9) : Trace source := by
   let certificates := fun index =>
     reducedLogCertificate (source index) (disk index) index
-  let baseChannel := Approximation.Gaussian.Sequence.Geometric.Channel.exact 0
-  let slopeChannel := Approximation.Gaussian.Sequence.Geometric.Channel.exact
+  let baseChannel := Channel.exact 0
+  let slopeChannel := Channel.exact
       AutomaticQuadraticTrace.reducedLogSlopePublic
   let outputChannel := sourceChannel.reducedLogSample disk
   let remainderChannel :=
     (outputChannel.sub baseChannel).sub (sourceChannel.mul slopeChannel)
-  have baseChannel' : Approximation.Gaussian.Sequence.Geometric.Channel (fun index => (certificates index).base) :=
+  have baseChannel' : Channel (fun index => (certificates index).base) :=
     baseChannel.map (by intro index; rfl)
-  have outputChannel' : Approximation.Gaussian.Sequence.Geometric.Channel (fun index => (certificates index).output) :=
+  have outputChannel' : Channel (fun index => (certificates index).output) :=
     outputChannel.map (by intro index; rfl)
-  have slopeChannel' : Approximation.Gaussian.Sequence.Geometric.Channel (fun index => (certificates index).slope) :=
+  have slopeChannel' : Channel (fun index => (certificates index).slope) :=
     slopeChannel.map (by intro index; rfl)
   have remainderChannel' :
-      Approximation.Gaussian.Sequence.Geometric.Channel (fun index => (certificates index).remainder) :=
+      Channel (fun index => (certificates index).remainder) :=
     remainderChannel.map (by intro index; rfl)
-  exact Trace.ofTransport
-    (Transport.Channel.transportOfChannels sourceChannel baseChannel' outputChannel'
+  exact ofTransport
+    (Channel.transportOfChannels sourceChannel baseChannel' outputChannel'
       slopeChannel' remainderChannel')
 
 end Calculus.Jet.Progressive.Quadratic.Trace.Automatic.ReducedLog
@@ -156,8 +156,8 @@ open Purelib.Data in
 /-- Each outer reduced-logarithm trace certificate is the finite certificate at that input and index. -/
 @[simp] theorem
   reducedLogOuterTrace_certificate
-    {source : Nat → Canonical} (sourceChannel : Approximation.Gaussian.Sequence.Geometric.Channel source)
-    (disk : ∀ index, Data.Gaussian.Norm.Basic.normSq (source index) ≤ 1 / 9) (index : Nat) :
+    {source : Nat → Canonical} (sourceChannel : Channel source)
+    (disk : ∀ index, Gaussian.Norm.Basic.normSq (source index) ≤ 1 / 9) (index : Nat) :
     (reducedLogOuterTrace sourceChannel disk).certificate index =
       reducedLogCertificate (source index) (disk index) index := rfl
 
@@ -176,9 +176,9 @@ def reducedLogAutomatic {increment :
   Nat → Canonical}
     (inner : Trace increment)
     (movementDisk : ∀ index,
-      Data.Gaussian.Norm.Basic.normSq ((inner.certificate index).output -
+      Gaussian.Norm.Basic.normSq ((inner.certificate index).output -
         (inner.certificate index).base) ≤ 1 / 9)
-    (incrementUnit : ∀ index, Data.Gaussian.Norm.Basic.normSq (increment index) ≤ 1) :
+    (incrementUnit : ∀ index, Gaussian.Norm.Basic.normSq (increment index) ≤ 1) :
     Trace increment :=
   let movementChannel := (Channel.outputField inner).sub (Channel.baseField inner)
   Arithmetic.composeAutomatic inner
@@ -197,11 +197,11 @@ open Purelib.Data in
   reducedLogAutomatic_certificate
     {increment : Nat → Canonical} (inner : Trace increment)
     (movementDisk : ∀ index,
-      Data.Gaussian.Norm.Basic.normSq ((inner.certificate index).output -
+      Gaussian.Norm.Basic.normSq ((inner.certificate index).output -
         (inner.certificate index).base) ≤ 1 / 9)
-    (incrementUnit : ∀ index, Data.Gaussian.Norm.Basic.normSq (increment index) ≤ 1)
+    (incrementUnit : ∀ index, Gaussian.Norm.Basic.normSq (increment index) ≤ 1)
     (index : Nat) :
-    Trace.certificate
+    certificate
         (reducedLogAutomatic inner movementDisk incrementUnit) index =
       (inner.certificate index).compose
         (reducedLogCertificate

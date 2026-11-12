@@ -90,6 +90,8 @@ import Purelib.Riemann.Readings.SeededPrimitiveBounds
 import Purelib.Riemann.RootContinuation.CertifiedSquareRoot
 import Purelib.Tactic.Ring
 
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-!
@@ -149,22 +151,22 @@ open Purelib.Riemann.Integration.PreparedDirectDyadicRefinements (DirectParentBl
   value := -primitive.value
   derivative_eq := fun point => by
     change (Derivative.derivative (-primitive.value)).eval point = _
-    rw [Derivative.eval_derivative_neg, DensePolynomial.eval_neg]
+    rw [Derivative.eval_derivative_neg, eval_neg]
     exact congrArg Neg.neg (primitive.derivative_eq point)
   remainderBound := primitive.remainderBound
   remainderBound_nonnegative := primitive.remainderBound_nonnegative
   increment_bound := by
     intro first last firstInside lastInside
-    simp only [DensePolynomial.eval_neg]
+    simp only [eval_neg]
     rw [show -primitive.value.eval last - -primitive.value.eval first -
       -coefficient.eval first * (last - first) =
         -(primitive.value.eval last - primitive.value.eval first - coefficient.eval first * (last - first)) by ring1,
-      Data.Gaussian.Norm.Basic.normSq_neg]
+      Basic.normSq_neg]
     exact primitive.increment_bound firstInside lastInside
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {collar :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {differential :
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {differential :
     Differential genus} {count : Nat}
   {parent : Parent curve differential} {data : ParentData cap differential count parent}
 
@@ -173,12 +175,12 @@ refinement or integration is repeated. -/
 @[expose] public def positiveModel {index : Nat} {box : Rational.Box}
     {capSample : Primitives.Sample cap differential index box}
     (sample : PrimitiveComparison.Sample data.data capSample) :
-    InverseRootPrimitive.PrimitiveModel data.terminal.neighborhood.patch index
-      (PreparedPrimitiveSamples.differentialNumerator (HyperellipticReciprocal.reversedDifferential differential)) where
+    PrimitiveModel data.terminal.neighborhood.patch index
+      (differentialNumerator (HyperellipticReciprocal.reversedDifferential differential)) where
   coefficient := -sample.retained.primitive.coefficient
   coefficient_eq := fun point => by
-    rw [DensePolynomial.eval_neg, sample.retained.primitive.coefficient_eq, data.comparison.numerator_eq,
-      PreparedPrimitiveSamples.differentialNumerator_eval]
+    rw [eval_neg, sample.retained.primitive.coefficient_eq, data.comparison.numerator_eq,
+      differentialNumerator_eval]
     ring1
   primitive := negativePrimitive
     sample.retained.primitive.primitive
@@ -201,7 +203,7 @@ structure Request (data : ParentData cap differential count parent) (target : In
   /-- The cached numerator ceiling is nonnegative. -/ numerator_nonnegative : 0 ≤ numeratorBound
   /-- The original differential numerator satisfies the cached ceiling throughout the retained neighborhood. -/
     numerator_le : ∀ point, data.terminal.neighborhood.patch.box.Contains point →
-    Data.Gaussian.Norm.Basic.normSq ((PreparedPrimitiveSamples.differentialNumerator
+    Basic.normSq ((differentialNumerator
       (HyperellipticReciprocal.reversedDifferential differential)).eval point) ≤ numeratorBound
   /-- The cached original prepared-integral root error scale. -/ scale : InverseRootPolynomial.Coordinate
   /-- The scale uses the original neighborhood, numerator ceiling and retained parent movement. -/ scale_eq : scale =
@@ -210,12 +212,12 @@ structure Request (data : ParentData cap differential count parent) (target : In
     (PreparedPrimitiveRequests.movement parent)
   /-- The selected polynomial stage paying the original integration allocation. -/ modelIndex : Nat
   /-- The model stage is the original finite geometric search with the requested floor. -/ modelIndex_eq : modelIndex =
-    Search.firstQuarterBelow scale floor ((budget / 8) / 3)
+    firstQuarterBelow scale floor ((budget / 8) / 3)
   /-- The shared original polynomial stage paying both cap and integration requests. -/ index : Nat
   /-- The shared stage is the maximum of the original cap and integration floors. -/ index_eq : index = max
     capRequest.index modelIndex
   /-- The retained finite spatial budget on the original parent movement and model bounds. -/ spatial :
-    Spatial.SpatialBudget (budget / 8) (PreparedPrimitiveRequests.movement parent)
+    SpatialBudget (budget / 8) (PreparedPrimitiveRequests.movement parent)
     (4 * (4 * data.comparison.primitiveBounds.bound) * PreparedPrimitiveRequests.movement parent)
     (PreparedPrimitiveRequests.errorWeight (curve := HyperellipticReciprocalCurve.reciprocalCurve curve)
       data.terminal.neighborhood.patch numeratorBound (PreparedPrimitiveRequests.movement parent))
@@ -223,7 +225,7 @@ structure Request (data : ParentData cap differential count parent) (target : In
       HyperellipticReciprocalCurve.reciprocalCurve curve) data.terminal.neighborhood.patch)
     (PreparedPrimitiveRequests.preparationDepth parent)
   /-- The actual original direct parent refinement block selected by the retained spatial budget. -/ block :
-    PreparedDirectDyadicRefinements.DirectParentBlock parent
+    DirectParentBlock parent
   /-- The retained child block has exactly the selected spatial depth. -/ block_depth : block.depth = spatial.depth
   /-- The retained child block has exactly the selected root-diameter bound. -/ block_rootDiameter : block.rootDiameter
     = spatial.rootDiameter
@@ -236,19 +238,19 @@ namespace Request
 @[expose] public def build (data : ParentData cap differential count parent) (target : InverseRootPolynomial.Coordinate)
   (positive : 0 < target) (floor : Nat)
     (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedPrimitives.Request data target floor :=
+    Request data target floor :=
   let budget := target / 4
   have budgetPositive : 0 < budget := Fraction.Order.Field.div_pos_direct positive (by decide)
   let capRequest := PrimitiveComparison.Request.build data.data budget budgetPositive floor
-  let numeratorBound := Dense.Gaussian.Bounds.Box.denseEvalNormBound
-    (PreparedPrimitiveSamples.differentialNumerator (HyperellipticReciprocal.reversedDifferential differential))
+  let numeratorBound := Gaussian.Bounds.Box.denseEvalNormBound
+    (differentialNumerator (HyperellipticReciprocal.reversedDifferential differential))
       data.terminal.neighborhood.patch.box
   let scale := PreparedPrimitiveRequests.rootScale (curve := HyperellipticReciprocalCurve.reciprocalCurve curve)
     data.terminal.neighborhood.patch numeratorBound
     (PreparedPrimitiveRequests.movement parent)
-  let modelIndex := Search.firstQuarterBelow scale floor ((budget / 8) / 3)
-  have numeratorNonnegative := (Dense.Gaussian.Bounds.Box.denseHornerNormBounds_nonneg
-    (PreparedPrimitiveSamples.differentialNumerator (HyperellipticReciprocal.reversedDifferential differential))
+  let modelIndex := firstQuarterBelow scale floor ((budget / 8) / 3)
+  have numeratorNonnegative := (Gaussian.Bounds.Box.denseHornerNormBounds_nonneg
+    (differentialNumerator (HyperellipticReciprocal.reversedDifferential differential))
       data.terminal.neighborhood.patch.box).1
   let spatial := SpatialBudget.acquire (budget / 8) (PreparedPrimitiveRequests.movement parent)
     (4 * (4 * data.comparison.primitiveBounds.bound) * PreparedPrimitiveRequests.movement parent)
@@ -267,31 +269,31 @@ namespace Request
       numeratorNonnegative (PreparedPrimitiveRequests.movement_nonnegative parent))
     (PreparedPrimitiveRequests.preparedScale_nonnegative parent) (PreparedPrimitiveRequests.denominatorLower_positive
       (curve := HyperellipticReciprocalCurve.reciprocalCurve curve) _)
-  let block := PreparedDirectDyadicRefinements.directParentBlockAtDepth parent proper spatial.rootDiameter
+  let block := directParentBlockAtDepth parent proper spatial.rootDiameter
     spatial.rootDiameter_positive spatial.depth spatial.prepared_depth
   ⟨positive, budget, rfl, capRequest, numeratorBound,
-    (Dense.Gaussian.Bounds.Box.denseHornerNormBounds_nonneg _ _).1,
-    (fun _ inside => Dense.Gaussian.Bounds.Box.normSq_eval_le_denseEvalNormBound _ inside),
+    (Gaussian.Bounds.Box.denseHornerNormBounds_nonneg _ _).1,
+    (fun _ inside => Gaussian.Bounds.Box.normSq_eval_le_denseEvalNormBound _ inside),
     scale, rfl, modelIndex, rfl, max capRequest.index modelIndex, rfl, spatial, block, rfl, rfl⟩
 
-variable {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor : Nat}
+variable {target : InverseRootPolynomial.Coordinate} {floor : Nat}
 
 /-- The retained quarter-target comparison budget is strictly positive. -/
-theorem budget_positive (request : Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedPrimitives.Request data target
+theorem budget_positive (request : Request data target
   floor) : 0 < request.budget := by
   rw [request.budget_eq]
   exact Fraction.Order.Field.div_pos_direct request.positive (by decide)
 
 /-- The shared cap and integration polynomial stage respects the original requested floor. -/
-theorem floor_le (request : Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedPrimitives.Request data target floor) :
+theorem floor_le (request : Request data target floor) :
   floor ≤ request.index := by
   rw [request.index_eq]
-  exact request.capRequest.floor_le.trans (Purelib.Data.Nat.Order.le_max_left _ _)
+  exact request.capRequest.floor_le.trans (Data.Nat.Order.le_max_left _ _)
 
 /-- Every later shared polynomial stage pays the retained prepared-integral root error allocation. -/
-theorem polynomial_accurate (request : Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedPrimitives.Request data target
+theorem polynomial_accurate (request : Request data target
   floor) {index : Nat} (later : request.index ≤ index) :
-    Geometric.Basic.quarterRadius (PreparedPrimitiveRequests.rootScale (curve :=
+    quarterRadius (PreparedPrimitiveRequests.rootScale (curve :=
       HyperellipticReciprocalCurve.reciprocalCurve curve) data.terminal.neighborhood.patch request.numeratorBound
       (PreparedPrimitiveRequests.movement parent)) index < (request.budget / 8) / 3 := by
   have nonnegative : 0 ≤ request.scale := by
@@ -299,12 +301,12 @@ theorem polynomial_accurate (request : Curves.Hyperelliptic.Charts.Reciprocal.Ca
     exact PreparedPrimitiveRequests.rootScale_nonnegative (curve := HyperellipticReciprocalCurve.reciprocalCurve curve)
       _ request.numerator_nonnegative
       (PreparedPrimitiveRequests.movement_nonnegative parent)
-  have selected : request.modelIndex ≤ index := (Purelib.Data.Nat.Order.le_max_right _ _).trans (request.index_eq ▸
+  have selected : request.modelIndex ≤ index := (Data.Nat.Order.le_max_right _ _).trans (request.index_eq ▸
     later)
   rw [← request.scale_eq]
   apply (quarterRadius_antitone nonnegative selected).trans_lt
   rw [request.modelIndex_eq]
-  exact Search.firstQuarterBelow_accurate request.scale nonnegative floor _
+  exact firstQuarterBelow_accurate request.scale nonnegative floor _
     (Fraction.Order.Field.div_pos_direct
       (Fraction.Order.Field.div_pos_direct request.budget_positive (by decide)) (by decide))
 
@@ -314,17 +316,17 @@ end Request
 patch-neighborhood identity. -/
 private theorem integral_error {target : InverseRootPolynomial.Coordinate} (patch :
   UniformPrimitiveSheetCompatibility.PreparedPatch parent)
-    (neighborhood : ContinuedInverseRoot.ContinuedNeighborhood (HyperellipticReciprocal.polynomial curve) count)
+    (neighborhood : ContinuedNeighborhood (HyperellipticReciprocal.polynomial curve) count)
     (equal : neighborhood = patch.neighborhood count)
     (request : PreparedPrimitiveRequests.Request parent neighborhood target) (positive : 0 < target)
     (finishInside : neighborhood.box.Contains (parent.edge.point 1)) :
-    Data.Gaussian.Norm.Basic.normSq (request.model.primitive.value.eval (parent.edge.point 1) -
+    Basic.normSq (request.model.primitive.value.eval (parent.edge.point 1) -
       request.model.primitive.value.eval (parent.edge.point 0) -
       (PathModel.mk (request.block.children.map CenteredEdge.model)).integralSample) < 8 * target := by
   cases equal
   have scalar := UniformPreparedPrimitives.request_integral_error_lt
     patch request positive finishInside
-  rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+  rw [← Basic.normSq_eq_canonical] at scalar
   exact scalar
 
 set_option genInjectivity false in
@@ -354,68 +356,68 @@ constructive_injectivity Sample
 
 namespace Sample
 
-variable {target : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate} {floor : Nat} {request :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedPrimitives.Request data target floor}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+variable {target : InverseRootPolynomial.Coordinate} {floor : Nat} {request :
+  Request data target floor}
+  {index : Nat} {box : Rational.Box} {capSample :
+    Primitives.Sample cap differential index box}
 
 /-- Reuse the supplied cap sample, negate its retained primitive into the original integration request, and cache both
 exact readings. -/
-@[expose] public def build (request : Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedPrimitives.Request data target
+@[expose] public def build (request : Request data target
   floor) (capSample : Primitives.Sample cap differential index box)
     (later : request.index ≤ index) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedPrimitives.Sample request capSample :=
+    Sample request capSample :=
   let retained := PrimitiveComparison.Sample.build data.data capSample
   let integration : PreparedPrimitiveRequests.Request parent data.terminal.neighborhood.patch (request.budget / 8) :=
     { numeratorBound := request.numeratorBound
       numerator_nonnegative := request.numerator_nonnegative
       numerator_le := fun point inside => by
         have scalar := request.numerator_le point inside
-        rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+        rw [Basic.normSq_eq_canonical] at scalar
         exact scalar
       index := index
-      model := Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedPrimitives.positiveModel retained
+      model := positiveModel retained
       polynomial_accurate := request.polynomial_accurate later
       budget := request.spatial
       block := request.block
       block_depth := request.block_depth
       block_rootDiameter := request.block_rootDiameter }
-  ⟨retained, integration, rfl, rfl, (fun point => DensePolynomial.eval_neg _ point), request.capRequest.increment
+  ⟨retained, integration, rfl, rfl, (fun point => eval_neg _ point), request.capRequest.increment
     retained, rfl,
     (PathModel.mk (integration.block.children.map CenteredEdge.model)).integralSample, rfl⟩
 
 /-- The positive prepared integral cancels the cap increment to the supplied accuracy, with the complete operational
 child-block discrepancy included. -/
-theorem accurate_at (sample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedPrimitives.Sample request capSample)
+theorem accurate_at (sample : Sample request capSample)
   (later : request.index ≤ index)
     (firstIndex lastIndex : Nat)
     (firstLater : request.capRequest.first.coordinate.rightIndex ≤ firstIndex)
     (lastLater : request.capRequest.last.coordinate.rightIndex ≤ lastIndex) :
-    Data.Gaussian.Norm.Basic.normSq (sample.retained.increment firstIndex lastIndex + sample.integral) < target
+    Basic.normSq (sample.retained.increment firstIndex lastIndex + sample.integral) < target
       := by
   let primitiveIncrement := sample.retained.retained.primitive.primitive.value.eval data.segment.comparison.last -
     sample.retained.retained.primitive.primitive.value.eval data.segment.comparison.first
-  have capError : Data.Gaussian.Norm.Basic.normSq ((sample.retained.increment firstIndex lastIndex) -
+  have capError : Basic.normSq ((sample.retained.increment firstIndex lastIndex) -
     primitiveIncrement) < request.budget := by
-    exact request.capRequest.accurate sample.retained ((Purelib.Data.Nat.Order.le_max_left _ _).trans (request.index_eq
+    exact request.capRequest.accurate sample.retained ((Data.Nat.Order.le_max_left _ _).trans (request.index_eq
       ▸ later)) firstLater lastLater
-  have integrationError := Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedPrimitives.integral_error data.patch
+  have integrationError := integral_error data.patch
     data.terminal.neighborhood.patch data.patch_eq sample.integration
     (Fraction.Order.Field.div_pos_direct request.budget_positive (by decide)) (data.last_eq ▸ data.segment.lastInside)
   rw [sample.sign, sample.sign, ← sample.integral_eq, ← data.first_eq, ← data.last_eq] at integrationError
-  have integrationPaid : Data.Gaussian.Norm.Basic.normSq (primitiveIncrement + sample.integral) <
+  have integrationPaid : Basic.normSq (primitiveIncrement + sample.integral) <
     request.budget := by
     rw [show -sample.retained.retained.primitive.primitive.value.eval data.segment.comparison.last -
       -sample.retained.retained.primitive.primitive.value.eval data.segment.comparison.first - sample.integral =
         -(primitiveIncrement + sample.integral) by dsimp only [primitiveIncrement]; ring1,
-      Data.Gaussian.Norm.Basic.normSq_neg] at integrationError
+      Basic.normSq_neg] at integrationError
     exact integrationError.trans_eq (by
       rw [Fraction.Field.mul_comm]
       exact Fraction.Field.div_mul_cancel_of_ne _ _ (by decide))
   rw [show (sample.retained.increment firstIndex lastIndex) + sample.integral =
     ((sample.retained.increment firstIndex lastIndex) - primitiveIncrement) + (primitiveIncrement + sample.integral) by
       ring1]
-  apply (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans_lt
+  apply (Bounds.normSq_add_le_two _ _).trans_lt
   apply (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by
       decide : (0 : InverseRootPolynomial.Coordinate) < 2)
     (Fraction.Order.Arithmetic.add_lt_add_direct capError integrationPaid)).trans_eq
@@ -424,9 +426,9 @@ theorem accurate_at (sample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.Prepare
 
 /-- The cached original readings remain a specialization of the same comparison, while chart consumers may advance
 either endpoint independently. -/
-theorem accurate (sample : Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedPrimitives.Sample request capSample)
+theorem accurate (sample : Sample request capSample)
   (later : request.index ≤ index) :
-    Data.Gaussian.Norm.Basic.normSq (sample.increment + sample.integral) < target := by
+    Basic.normSq (sample.increment + sample.integral) < target := by
   rw [sample.increment_eq]
   exact sample.accurate_at later _ _ (Nat.le_refl _) (Nat.le_refl _)
 

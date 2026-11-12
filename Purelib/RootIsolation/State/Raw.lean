@@ -41,6 +41,29 @@ structure RawWindingState
 
 constructive_injectivity RawWindingState
 
+/-- Raw states with the same box and boundary-clearance bound retain the same complete state record.
+
+The polynomial and ambient indices stay fixed. Properness, refinement,
+boundary inequalities and nonzero winding are proof fields, so equality of
+these two executable readings identifies the whole original state.
+-/
+theorem RawWindingState.eq_of_box_bound
+    {p : Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients.CoefficientPolynomial} {ambient : Box}
+    {left right : RawWindingState p ambient}
+    (boxSame : left.box = right.box)
+    (boundSame : left.clearance.bound = right.clearance.bound) : left = right := by
+  cases left with
+  | mk leftBox leftRefines leftProper leftClearance leftWinding =>
+    cases right with
+    | mk rightBox rightRefines rightProper rightClearance rightWinding =>
+      cases boxSame
+      cases leftClearance with
+      | mk leftBound leftPositive leftLower =>
+        cases rightClearance with
+        | mk rightBound rightPositive rightLower =>
+          cases boundSame
+          rfl
+
 end Purelib.RootIsolation.State.Raw
 
 end

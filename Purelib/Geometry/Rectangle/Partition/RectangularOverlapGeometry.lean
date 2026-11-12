@@ -57,7 +57,7 @@ variable {steps : Nat}
 
 Finite induction follows the original ordered coordinate array; each successive step transports the retained
 adjacent-coordinate inequality. -/
-theorem coordinate_mono (axis : RectangularInverseModels.Axis steps) (first last : Fin (steps + 2)) (order : first ≤
+theorem coordinate_mono (axis : Axis steps) (first last : Fin (steps + 2)) (order : first ≤
   last) :
     axis.coordinates first ≤ axis.coordinates last := by
   induction last using Data.Fin.induction with
@@ -78,33 +78,33 @@ theorem coordinate_mono (axis : RectangularInverseModels.Axis steps) (first last
 
 An original strictly later coordinate has a predecessor in the same retained finite array, whose adjacent step supplies
 strictness. -/
-theorem coordinate_lt (axis : RectangularInverseModels.Axis steps) (first last : Fin (steps + 2)) (order : first < last)
+theorem coordinate_lt (axis : Axis steps) (first last : Fin (steps + 2)) (order : first < last)
   :
     axis.coordinates first < axis.coordinates last := by
   revert order
   refine Data.Fin.cases_induction ?_ (fun last order => ?_) last
   · intro order
     exact (Nat.not_lt_zero _ order).elim
-  · exact (Geometry.Rectangle.Partition.RectangularOverlapGeometry.Axis.coordinate_mono axis first last.castSucc
+  · exact (coordinate_mono axis first last.castSucc
       (Nat.le_of_lt_succ order)).trans_lt (axis.ordered last)
 
 /-- Only boundary points can have a different containing cell. -/
-theorem unique_cell (axis : RectangularInverseModels.Axis steps) (first last : Fin (steps + 1)) {point :
-  InverseRootPolynomial.Coordinate}
+theorem unique_cell (axis : Axis steps) (first last : Fin (steps + 1)) {point :
+  Coordinate}
     (firstInside : axis.coordinates first.castSucc < point ∧ point < axis.coordinates first.succ)
     (lastInside : axis.coordinates last.castSucc ≤ point ∧ point ≤ axis.coordinates last.succ) : first = last := by
   rcases Nat.lt_trichotomy first.val last.val with before | equal | after
-  · have ordered := Geometry.Rectangle.Partition.RectangularOverlapGeometry.Axis.coordinate_mono axis first.succ
+  · have ordered := coordinate_mono axis first.succ
       last.castSucc (Nat.succ_le_of_lt before)
     exact (not_lt_of_ge (ordered.trans lastInside.1) firstInside.2).elim
   · exact Fin.ext equal
-  · have ordered := Geometry.Rectangle.Partition.RectangularOverlapGeometry.Axis.coordinate_mono axis last.succ
+  · have ordered := coordinate_mono axis last.succ
       first.castSucc (Nat.succ_le_of_lt after)
     exact (not_lt_of_ge (lastInside.2.trans ordered) firstInside.1).elim
 
 /-- A common point in two increasing cells forces their shared endpoint and their consecutive finite indices. -/
-theorem shared_boundary (axis : RectangularInverseModels.Axis steps) (first last : Fin (steps + 1)) {point :
-  InverseRootPolynomial.Coordinate}
+theorem shared_boundary (axis : Axis steps) (first last : Fin (steps + 1)) {point :
+  Coordinate}
     (firstInside : axis.coordinates first.castSucc ≤ point ∧ point ≤ axis.coordinates first.succ)
     (lastInside : axis.coordinates last.castSucc ≤ point ∧ point ≤ axis.coordinates last.succ)
     (order : first < last) :
@@ -113,7 +113,7 @@ theorem shared_boundary (axis : RectangularInverseModels.Axis steps) (first last
     have upper : last.val ≤ first.val + 1 := by
       apply Nat.le_of_not_gt
       intro gap
-      have separated := Geometry.Rectangle.Partition.RectangularOverlapGeometry.Axis.coordinate_lt axis first.succ
+      have separated := coordinate_lt axis first.succ
         last.castSucc gap
       exact (not_lt_of_ge (lastInside.1.trans firstInside.2) separated)
     change first.val < last.val at order
@@ -135,8 +135,8 @@ set_option genInjectivity false in
 /-- A retained rational parameter for a point on a closed nondegenerate axis segment.
 
 The unit-interval bound and affine equality certify the original lower and upper coordinates at the supplied point. -/
-structure SegmentParameter (lower upper point : InverseRootPolynomial.Coordinate) where
-  /-- The retained rational segment parameter. -/ value : InverseRootPolynomial.Coordinate
+structure SegmentParameter (lower upper point : Coordinate) where
+  /-- The retained rational segment parameter. -/ value : Coordinate
   /-- The parameter lies in the closed unit interval. -/ inside : 0 ≤ value ∧ value ≤ 1
   /-- The affine segment evaluation equals the requested coordinate. -/ equation : lower + value * (upper - lower) =
     point
@@ -149,8 +149,8 @@ namespace SegmentParameter
 
 The retained inequalities place the quotient in the unit interval and its affine evaluation equals the original point.
 -/
-def build (lower upper point : InverseRootPolynomial.Coordinate) (ordered : lower < upper)
-    (inside : lower ≤ point ∧ point ≤ upper) : Geometry.Rectangle.Partition.RectangularOverlapGeometry.SegmentParameter
+def build (lower upper point : Coordinate) (ordered : lower < upper)
+    (inside : lower ≤ point ∧ point ≤ upper) : SegmentParameter
       lower upper point :=
   let width := upper - lower
   have widthPositive := Fraction.Order.Arithmetic.sub_pos_direct ordered
@@ -172,29 +172,29 @@ section Geometry
 variable {columns rows : Nat}
 
 /-- A point strictly inside one grid cell has no other closed-cell owner. -/
-theorem unique_owner (geometry : RectangularInverseModels.Geometry columns rows)
+theorem unique_owner (geometry : Geometry columns rows)
     (firstColumn lastColumn : Fin (columns + 1)) (firstRow lastRow : Fin (rows + 1)) {point :
-      InverseRootPolynomial.Gaussian}
+      Gaussian}
     (firstInside : (geometry.box firstColumn firstRow).StrictContains point)
     (lastInside : (geometry.box lastColumn lastRow).Contains point) :
     firstColumn = lastColumn ∧ firstRow = lastRow :=
-  ⟨Geometry.Rectangle.Partition.RectangularOverlapGeometry.Axis.unique_cell geometry.x firstColumn lastColumn
+  ⟨Axis.unique_cell geometry.x firstColumn lastColumn
     ⟨firstInside.1, firstInside.2.1⟩ ⟨lastInside.1, lastInside.2.1⟩,
-    Geometry.Rectangle.Partition.RectangularOverlapGeometry.Axis.unique_cell geometry.y firstRow lastRow firstInside.2.2
+    Axis.unique_cell geometry.y firstRow lastRow firstInside.2.2
       lastInside.2.2⟩
 
 /-- Parameterize a point on a vertical shared edge by its rational height.
 
 The horizontal coordinate is fixed at the shared cut and the vertical coordinate lies in the closed row interval. -/
-theorem horizontal_parameter (geometry : RectangularInverseModels.Geometry columns rows) (column : Fin columns) (row :
+theorem horizontal_parameter (geometry : Geometry columns rows) (column : Fin columns) (row :
   Fin (rows + 1))
-    {point : InverseRootPolynomial.Gaussian} (horizontal : point.re = geometry.x.coordinates column.castSucc.succ)
+    {point : Gaussian} (horizontal : point.re = geometry.x.coordinates column.castSucc.succ)
     (vertical : geometry.y.coordinates row.castSucc ≤ point.im ∧ point.im ≤ geometry.y.coordinates row.succ) :
-    ∃ parameter : InverseRootPolynomial.Coordinate, (0 ≤ parameter ∧ parameter ≤ 1) ∧
+    ∃ parameter : Coordinate, (0 ≤ parameter ∧ parameter ≤ 1) ∧
       Affine.line (geometry.vertex column.castSucc.succ row.castSucc)
         (geometry.vertex column.castSucc.succ row.succ - geometry.vertex column.castSucc.succ row.castSucc) parameter =
           point := by
-  let parameter := Geometry.Rectangle.Partition.RectangularOverlapGeometry.SegmentParameter.build _ _ _
+  let parameter := SegmentParameter.build _ _ _
     (geometry.y.ordered row) vertical
   refine ⟨parameter.value, parameter.inside, ?_⟩
   apply Data.Gaussian.Basic.ext
@@ -215,16 +215,16 @@ theorem horizontal_parameter (geometry : RectangularInverseModels.Geometry colum
 /-- Parameterize a point on a horizontal shared edge by its rational width.
 
 The vertical coordinate is fixed at the shared cut and the horizontal coordinate lies in the closed column interval. -/
-theorem vertical_parameter (geometry : RectangularInverseModels.Geometry columns rows) (column : Fin (columns + 1)) (row
+theorem vertical_parameter (geometry : Geometry columns rows) (column : Fin (columns + 1)) (row
   : Fin rows)
-    {point : InverseRootPolynomial.Gaussian} (horizontal : geometry.x.coordinates column.castSucc ≤ point.re ∧ point.re
+    {point : Gaussian} (horizontal : geometry.x.coordinates column.castSucc ≤ point.re ∧ point.re
       ≤ geometry.x.coordinates column.succ)
     (vertical : point.im = geometry.y.coordinates row.castSucc.succ) :
-    ∃ parameter : InverseRootPolynomial.Coordinate, (0 ≤ parameter ∧ parameter ≤ 1) ∧
+    ∃ parameter : Coordinate, (0 ≤ parameter ∧ parameter ≤ 1) ∧
       Affine.line (geometry.vertex column.castSucc row.castSucc.succ)
         (geometry.vertex column.succ row.castSucc.succ - geometry.vertex column.castSucc row.castSucc.succ) parameter =
           point := by
-  let parameter := Geometry.Rectangle.Partition.RectangularOverlapGeometry.SegmentParameter.build _ _ _
+  let parameter := SegmentParameter.build _ _ _
     (geometry.x.ordered column) horizontal
   refine ⟨parameter.value, parameter.inside, ?_⟩
   apply Data.Gaussian.Basic.ext

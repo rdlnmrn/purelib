@@ -19,6 +19,8 @@ import Purelib.Data.Rat.Fraction.Order.Basic
 import Purelib.Tactic.QuotientFreeOmega
 import Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.BoundaryCounts
 
+open Purelib.Data.Gaussian.Components
+
 open Purelib.Data
 
 open Purelib.Data.Rat
@@ -39,11 +41,11 @@ and left walks. No replacement four-edge rectangle is used.
 
 namespace Purelib.Polynomial.Geometry.Grid.AxisWalks.IncreasingWalk
 
-variable {Alpha : Type} {key : Alpha → Fraction.Rational} {intervals : List (Geometry.Grid.ClearGrid.Interval key)}
+variable {Alpha : Type} {key : Alpha → Fraction.Rational} {intervals : List (ClearGrid.Interval key)}
 
 open Purelib.Polynomial.Geometry.Grid.AxisWalks
 /-- A strictly increasing walk contains at least one interval. -/
-theorem edges_length_pos {start finish : Fraction.Rational} (walk : Geometry.Grid.AxisWalks.IncreasingWalk intervals
+theorem edges_length_pos {start finish : Fraction.Rational} (walk : IncreasingWalk intervals
   start finish)
     (strict : start < finish) : 0 < walk.edges.length := by
   cases walk with
@@ -54,7 +56,7 @@ theorem edges_length_pos {start finish : Fraction.Rational} (walk : Geometry.Gri
 
 Each ordered interval starts strictly before every later retained interval,
 so its lower coordinate cannot equal a later lower coordinate. -/
-theorem lowerCoordinates_nodup : ∀ {start finish : Fraction.Rational} (walk : Geometry.Grid.AxisWalks.IncreasingWalk
+theorem lowerCoordinates_nodup : ∀ {start finish : Fraction.Rational} (walk : IncreasingWalk
   intervals start finish),
     (walk.edges.map (fun interval => key interval.lower)).Nodup
   | _, _, .nil _ => .nil
@@ -71,7 +73,7 @@ theorem lowerCoordinates_nodup : ∀ {start finish : Fraction.Rational} (walk : 
 
 Every later interval finishes strictly beyond the preceding upper endpoint,
 which excludes duplicate upper coordinates in the retained walk. -/
-theorem upperCoordinates_nodup : ∀ {start finish : Fraction.Rational} (walk : Geometry.Grid.AxisWalks.IncreasingWalk
+theorem upperCoordinates_nodup : ∀ {start finish : Fraction.Rational} (walk : IncreasingWalk
   intervals start finish),
     (walk.edges.map (fun interval => key interval.upper)).Nodup
   | _, _, .nil _ => .nil
@@ -88,12 +90,12 @@ end Purelib.Polynomial.Geometry.Grid.AxisWalks.IncreasingWalk
 
 namespace Purelib.Polynomial.Geometry.Grid.Walks.Walk
 
-variable {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient : Box} {grid :
+variable {polynomial : ClearPath.GaussianPolynomial} {ambient : Box} {grid :
   ClearGrid polynomial ambient}
 
 /-- Transporting a walk's endpoint indices preserves its finishing-coordinate list. -/
 theorem finishCoordinates_castEndpoints {start finish first last : Gaussian.Basic.Canonical} (walk :
-  Geometry.Grid.Walks.Walk grid start finish)
+  Walk grid start finish)
     (startEq : start = first) (finishEq : finish = last) :
     (walk.castEndpoints startEq finishEq).finishCoordinates = walk.finishCoordinates := by
   cases startEq
@@ -102,103 +104,103 @@ theorem finishCoordinates_castEndpoints {start finish first last : Gaussian.Basi
 
 /-- The starts of the horizontal increasing walk are its axis intervals' lower endpoints lifted to the fixed grid line.
 -/
-theorem horizontalIncreasing_starts (line : Geometry.Grid.ClearGrid.HorizontalLine polynomial ambient) (member : line ∈
+theorem horizontalIncreasing_starts (line : ClearGrid.HorizontalLine polynomial ambient) (member : line ∈
   grid.horizontal) :
-    ∀ {start finish : Fraction.Rational} (walk : Geometry.Grid.AxisWalks.IncreasingWalk grid.xIntervals start finish),
-      (Geometry.Grid.Walks.Walk.horizontalIncreasing line member walk).startCoordinates =
-        (walk.edges.map (fun interval => interval.lower.coordinate)).map (fun x => Gaussian.Components.Basic.point x
+    ∀ {start finish : Fraction.Rational} (walk : AxisWalks.IncreasingWalk grid.xIntervals start finish),
+      (horizontalIncreasing line member walk).startCoordinates =
+        (walk.edges.map (fun interval => interval.lower.coordinate)).map (fun x => Basic.point x
           line.coordinate)
   | _, _, .nil _ => rfl
   | _, _, .cons _ _ tail => congrArg (List.cons _)
-    (Purelib.Polynomial.Geometry.Grid.Walks.Walk.horizontalIncreasing_starts line member tail)
+    (Walk.horizontalIncreasing_starts line member tail)
 
 /-- The finishes of the horizontal increasing walk are its axis intervals' upper endpoints lifted to the fixed grid
 line. -/
-theorem horizontalIncreasing_finishes (line : Geometry.Grid.ClearGrid.HorizontalLine polynomial ambient) (member : line
+theorem horizontalIncreasing_finishes (line : ClearGrid.HorizontalLine polynomial ambient) (member : line
   ∈ grid.horizontal) :
-    ∀ {start finish : Fraction.Rational} (walk : Geometry.Grid.AxisWalks.IncreasingWalk grid.xIntervals start finish),
-      (Geometry.Grid.Walks.Walk.horizontalIncreasing line member walk).finishCoordinates =
-        (walk.edges.map (fun interval => interval.upper.coordinate)).map (fun x => Gaussian.Components.Basic.point x
+    ∀ {start finish : Fraction.Rational} (walk : AxisWalks.IncreasingWalk grid.xIntervals start finish),
+      (horizontalIncreasing line member walk).finishCoordinates =
+        (walk.edges.map (fun interval => interval.upper.coordinate)).map (fun x => Basic.point x
           line.coordinate)
   | _, _, .nil _ => rfl
   | _, _, .cons _ _ tail => congrArg (List.cons _)
-    (Purelib.Polynomial.Geometry.Grid.Walks.Walk.horizontalIncreasing_finishes line member tail)
+    (Walk.horizontalIncreasing_finishes line member tail)
 
 /-- The starts of the vertical increasing walk are its axis intervals' lower endpoints lifted to the fixed grid line. -/
-theorem verticalIncreasing_starts (line : Geometry.Grid.ClearGrid.VerticalLine polynomial ambient) (member : line ∈
+theorem verticalIncreasing_starts (line : ClearGrid.VerticalLine polynomial ambient) (member : line ∈
   grid.vertical) :
-    ∀ {start finish : Fraction.Rational} (walk : Geometry.Grid.AxisWalks.IncreasingWalk grid.yIntervals start finish),
-      (Geometry.Grid.Walks.Walk.verticalIncreasing line member walk).startCoordinates =
-        (walk.edges.map (fun interval => interval.lower.coordinate)).map (fun y => Gaussian.Components.Basic.point
+    ∀ {start finish : Fraction.Rational} (walk : AxisWalks.IncreasingWalk grid.yIntervals start finish),
+      (verticalIncreasing line member walk).startCoordinates =
+        (walk.edges.map (fun interval => interval.lower.coordinate)).map (fun y => Basic.point
           line.coordinate y)
   | _, _, .nil _ => rfl
   | _, _, .cons _ _ tail => congrArg (List.cons _)
-    (Purelib.Polynomial.Geometry.Grid.Walks.Walk.verticalIncreasing_starts line member tail)
+    (Walk.verticalIncreasing_starts line member tail)
 
 /-- The finishes of the vertical increasing walk are its axis intervals' upper endpoints lifted to the fixed grid line.
 -/
-theorem verticalIncreasing_finishes (line : Geometry.Grid.ClearGrid.VerticalLine polynomial ambient) (member : line ∈
+theorem verticalIncreasing_finishes (line : ClearGrid.VerticalLine polynomial ambient) (member : line ∈
   grid.vertical) :
-    ∀ {start finish : Fraction.Rational} (walk : Geometry.Grid.AxisWalks.IncreasingWalk grid.yIntervals start finish),
-      (Geometry.Grid.Walks.Walk.verticalIncreasing line member walk).finishCoordinates =
-        (walk.edges.map (fun interval => interval.upper.coordinate)).map (fun y => Gaussian.Components.Basic.point
+    ∀ {start finish : Fraction.Rational} (walk : AxisWalks.IncreasingWalk grid.yIntervals start finish),
+      (verticalIncreasing line member walk).finishCoordinates =
+        (walk.edges.map (fun interval => interval.upper.coordinate)).map (fun y => Basic.point
           line.coordinate y)
   | _, _, .nil _ => rfl
   | _, _, .cons _ _ tail => congrArg (List.cons _)
-    (Purelib.Polynomial.Geometry.Grid.Walks.Walk.verticalIncreasing_finishes line member tail)
+    (Walk.verticalIncreasing_finishes line member tail)
 
 end Purelib.Polynomial.Geometry.Grid.Walks.Walk
 
 namespace Purelib.Polynomial.Geometry.Grid.FramedClearGrid.AmbientFrame.Axes
 
-variable {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient : Box} {grid :
+variable {polynomial : ClearPath.GaussianPolynomial} {ambient : Box} {grid :
   ClearGrid polynomial ambient}
 
 section
 open Purelib.Polynomial.Geometry.Grid.FramedClearGrid.AmbientFrame
 /-- Read the horizontal walk's starts from the cached axis intervals and the retained fixed coordinate. -/
 theorem horizontal_starts (axes : Axes grid) (y : Fraction.Rational)
-  (member : y ∈ grid.horizontal.map Geometry.Grid.ClearGrid.HorizontalLine.coordinate) :
+  (member : y ∈ grid.horizontal.map ClearGrid.HorizontalLine.coordinate) :
     (axes.horizontal y member).startCoordinates =
-      (axes.x.edges.map (fun interval => interval.lower.coordinate)).map (fun x => Gaussian.Components.Basic.point x y)
+      (axes.x.edges.map (fun interval => interval.lower.coordinate)).map (fun x => Basic.point x y)
         := by
   dsimp only [horizontal]
-  rw [Geometry.Grid.Walks.Walk.startCoordinates_castEndpoints, Geometry.Grid.Walks.Walk.horizontalIncreasing_starts,
-    (Geometry.Grid.AxisWalks.lookup y grid.horizontal member).coordinate_eq]
+  rw [Walks.Walk.startCoordinates_castEndpoints, Walks.Walk.horizontalIncreasing_starts,
+    (AxisWalks.lookup y grid.horizontal member).coordinate_eq]
 
 /-- Read the horizontal walk's finishes from the cached axis intervals and the retained fixed coordinate. -/
 theorem horizontal_finishes (axes : Axes grid) (y : Fraction.Rational)
-  (member : y ∈ grid.horizontal.map Geometry.Grid.ClearGrid.HorizontalLine.coordinate) :
+  (member : y ∈ grid.horizontal.map ClearGrid.HorizontalLine.coordinate) :
     (axes.horizontal y member).finishCoordinates =
-      (axes.x.edges.map (fun interval => interval.upper.coordinate)).map (fun x => Gaussian.Components.Basic.point x y)
+      (axes.x.edges.map (fun interval => interval.upper.coordinate)).map (fun x => Basic.point x y)
         := by
   dsimp only [horizontal]
-  rw [Geometry.Grid.Walks.Walk.finishCoordinates_castEndpoints, Geometry.Grid.Walks.Walk.horizontalIncreasing_finishes,
-    (Geometry.Grid.AxisWalks.lookup y grid.horizontal member).coordinate_eq]
+  rw [Walks.Walk.finishCoordinates_castEndpoints, Walks.Walk.horizontalIncreasing_finishes,
+    (AxisWalks.lookup y grid.horizontal member).coordinate_eq]
 
 /-- Read the vertical walk's starts from the cached axis intervals and the retained fixed coordinate. -/
 theorem vertical_starts (axes : Axes grid) (x : Fraction.Rational)
-  (member : x ∈ grid.vertical.map Geometry.Grid.ClearGrid.VerticalLine.coordinate) :
+  (member : x ∈ grid.vertical.map ClearGrid.VerticalLine.coordinate) :
     (axes.vertical x member).startCoordinates =
-      (axes.y.edges.map (fun interval => interval.lower.coordinate)).map (fun y => Gaussian.Components.Basic.point x y)
+      (axes.y.edges.map (fun interval => interval.lower.coordinate)).map (fun y => Basic.point x y)
         := by
   dsimp only [vertical]
-  rw [Geometry.Grid.Walks.Walk.startCoordinates_castEndpoints, Geometry.Grid.Walks.Walk.verticalIncreasing_starts,
-    (Geometry.Grid.AxisWalks.lookup x grid.vertical member).coordinate_eq]
+  rw [Walks.Walk.startCoordinates_castEndpoints, Walks.Walk.verticalIncreasing_starts,
+    (AxisWalks.lookup x grid.vertical member).coordinate_eq]
 
 /-- Read the vertical walk's finishes from the cached axis intervals and the retained fixed coordinate. -/
 theorem vertical_finishes (axes : Axes grid) (x : Fraction.Rational)
-  (member : x ∈ grid.vertical.map Geometry.Grid.ClearGrid.VerticalLine.coordinate) :
+  (member : x ∈ grid.vertical.map ClearGrid.VerticalLine.coordinate) :
     (axes.vertical x member).finishCoordinates =
-      (axes.y.edges.map (fun interval => interval.upper.coordinate)).map (fun y => Gaussian.Components.Basic.point x y)
+      (axes.y.edges.map (fun interval => interval.upper.coordinate)).map (fun y => Basic.point x y)
         := by
   dsimp only [vertical]
-  rw [Geometry.Grid.Walks.Walk.finishCoordinates_castEndpoints, Geometry.Grid.Walks.Walk.verticalIncreasing_finishes,
-    (Geometry.Grid.AxisWalks.lookup x grid.vertical member).coordinate_eq]
+  rw [Walks.Walk.finishCoordinates_castEndpoints, Walks.Walk.verticalIncreasing_finishes,
+    (AxisWalks.lookup x grid.vertical member).coordinate_eq]
 
 /-- The horizontal walk's starts have no duplicate coordinates. -/
 theorem horizontal_starts_simple (axes : Axes grid) (y :
-  Fraction.Rational) (member : y ∈ grid.horizontal.map Geometry.Grid.ClearGrid.HorizontalLine.coordinate) :
+  Fraction.Rational) (member : y ∈ grid.horizontal.map ClearGrid.HorizontalLine.coordinate) :
     (axes.horizontal y member).startCoordinates.Nodup := open Purelib in by
   rw [axes.horizontal_starts]
   exact Data.List.Nodup.nodup_map_of_injective (fun _ _ equal => congrArg (fun value : Gaussian.Basic.Canonical =>
@@ -206,7 +208,7 @@ theorem horizontal_starts_simple (axes : Axes grid) (y :
 
 /-- The horizontal walk's finishes have no duplicate coordinates. -/
 theorem horizontal_finishes_simple (axes : Axes grid) (y :
-  Fraction.Rational) (member : y ∈ grid.horizontal.map Geometry.Grid.ClearGrid.HorizontalLine.coordinate) :
+  Fraction.Rational) (member : y ∈ grid.horizontal.map ClearGrid.HorizontalLine.coordinate) :
     (axes.horizontal y member).finishCoordinates.Nodup := open Purelib in by
   rw [axes.horizontal_finishes]
   exact Data.List.Nodup.nodup_map_of_injective (fun _ _ equal => congrArg (fun value : Gaussian.Basic.Canonical =>
@@ -214,7 +216,7 @@ theorem horizontal_finishes_simple (axes : Axes grid) (y :
 
 /-- The vertical walk's starts have no duplicate coordinates. -/
 theorem vertical_starts_simple (axes : Axes grid) (x :
-  Fraction.Rational) (member : x ∈ grid.vertical.map Geometry.Grid.ClearGrid.VerticalLine.coordinate) :
+  Fraction.Rational) (member : x ∈ grid.vertical.map ClearGrid.VerticalLine.coordinate) :
     (axes.vertical x member).startCoordinates.Nodup := open Purelib in by
   rw [axes.vertical_starts]
   exact Data.List.Nodup.nodup_map_of_injective (fun _ _ equal => congrArg (fun value : Gaussian.Basic.Canonical =>
@@ -222,7 +224,7 @@ theorem vertical_starts_simple (axes : Axes grid) (x :
 
 /-- The vertical walk's finishes have no duplicate coordinates. -/
 theorem vertical_finishes_simple (axes : Axes grid) (x :
-  Fraction.Rational) (member : x ∈ grid.vertical.map Geometry.Grid.ClearGrid.VerticalLine.coordinate) :
+  Fraction.Rational) (member : x ∈ grid.vertical.map ClearGrid.VerticalLine.coordinate) :
     (axes.vertical x member).finishCoordinates.Nodup := open Purelib in by
   rw [axes.vertical_finishes]
   exact Data.List.Nodup.nodup_map_of_injective (fun _ _ equal => congrArg (fun value : Gaussian.Basic.Canonical =>
@@ -231,7 +233,7 @@ theorem vertical_finishes_simple (axes : Axes grid) (x :
 /-- Every horizontal start coordinate lies on its fixed grid line and includes the lower ambient endpoint and excludes
 the upper endpoint. -/
 theorem horizontal_start_bounds (axes : Axes grid) (y :
-  Fraction.Rational) (line : y ∈ grid.horizontal.map Geometry.Grid.ClearGrid.HorizontalLine.coordinate)
+  Fraction.Rational) (line : y ∈ grid.horizontal.map ClearGrid.HorizontalLine.coordinate)
     {vertex : Gaussian.Basic.Canonical} (member : vertex ∈ (axes.horizontal y line).startCoordinates) :
     ambient.xLower ≤ vertex.re ∧ vertex.re < ambient.xUpper ∧ vertex.im = y := open Purelib in by
   rw [axes.horizontal_starts] at member
@@ -243,7 +245,7 @@ theorem horizontal_start_bounds (axes : Axes grid) (y :
 /-- Every horizontal finish coordinate lies on its fixed grid line and excludes the lower ambient endpoint and includes
 the upper endpoint. -/
 theorem horizontal_finish_bounds (axes : Axes grid) (y :
-  Fraction.Rational) (line : y ∈ grid.horizontal.map Geometry.Grid.ClearGrid.HorizontalLine.coordinate)
+  Fraction.Rational) (line : y ∈ grid.horizontal.map ClearGrid.HorizontalLine.coordinate)
     {vertex : Gaussian.Basic.Canonical} (member : vertex ∈ (axes.horizontal y line).finishCoordinates) :
     ambient.xLower < vertex.re ∧ vertex.re ≤ ambient.xUpper ∧ vertex.im = y := open Purelib in by
   rw [axes.horizontal_finishes] at member
@@ -255,7 +257,7 @@ theorem horizontal_finish_bounds (axes : Axes grid) (y :
 /-- Every vertical start coordinate lies on its fixed grid line and includes the lower ambient endpoint and excludes the
 upper endpoint. -/
 theorem vertical_start_bounds (axes : Axes grid) (x : Fraction.Rational)
-  (line : x ∈ grid.vertical.map Geometry.Grid.ClearGrid.VerticalLine.coordinate)
+  (line : x ∈ grid.vertical.map ClearGrid.VerticalLine.coordinate)
     {vertex : Gaussian.Basic.Canonical} (member : vertex ∈ (axes.vertical x line).startCoordinates) :
     ambient.yLower ≤ vertex.im ∧ vertex.im < ambient.yUpper ∧ vertex.re = x := open Purelib in by
   rw [axes.vertical_starts] at member
@@ -267,7 +269,7 @@ theorem vertical_start_bounds (axes : Axes grid) (x : Fraction.Rational)
 /-- Every vertical finish coordinate lies on its fixed grid line and excludes the lower ambient endpoint and includes
 the upper endpoint. -/
 theorem vertical_finish_bounds (axes : Axes grid) (x :
-  Fraction.Rational) (line : x ∈ grid.vertical.map Geometry.Grid.ClearGrid.VerticalLine.coordinate)
+  Fraction.Rational) (line : x ∈ grid.vertical.map ClearGrid.VerticalLine.coordinate)
     {vertex : Gaussian.Basic.Canonical} (member : vertex ∈ (axes.vertical x line).finishCoordinates) :
     ambient.yLower < vertex.im ∧ vertex.im ≤ ambient.yUpper ∧ vertex.re = x := open Purelib in by
   rw [axes.vertical_finishes] at member
@@ -282,7 +284,7 @@ end Purelib.Polynomial.Geometry.Grid.FramedClearGrid.AmbientFrame.Axes
 
 namespace Purelib.Polynomial.Geometry.Grid.FramedClearGrid.AmbientFrame
 
-variable {polynomial : Geometry.ClearPath.GaussianPolynomial} {ambient : Box} {grid :
+variable {polynomial : ClearPath.GaussianPolynomial} {ambient : Box} {grid :
   ClearGrid polynomial ambient}
 
 /-- Reversing a list preserves the absence of duplicate entries.
@@ -310,8 +312,8 @@ theorem boundary_starts (frame : AmbientFrame grid) :
       (frame.axes.vertical ambient.xUpper frame.xUpper).startCoordinates ++
       (frame.axes.horizontal ambient.yUpper frame.yUpper).finishCoordinates.reverse ++
       (frame.axes.vertical ambient.xLower frame.xLower).finishCoordinates.reverse := by
-  simp only [boundary, Geometry.Grid.Walks.Walk.startCoordinates_append,
-    Geometry.Grid.Walks.Walk.startCoordinates_reverse, List.Append.append_assoc, -eq_self, -iff_self]
+  simp only [boundary, Walks.Walk.startCoordinates_append,
+    Walks.Walk.startCoordinates_reverse, List.Append.append_assoc, -eq_self, -iff_self]
   rfl
 
 /-- The subdivided boundary of a proper ambient box visits each starting vertex once.

@@ -102,31 +102,31 @@ open Purelib.Integration.Path.Dyadic.DyadicBoundaryRibbon (dyadicArea)
 open Purelib.Integration.Path.IncrementArea (pathArea)
 open Purelib.Approximation.Rational.Geometric.Basic (quarterRadius)
 
-variable {genus count : Nat} {curve : Purelib.Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Purelib.Curves.Hyperelliptic.Differentials.Basic.Differential genus}
-  {parent : Purelib.Riemann.Integration.PreparedSubdivisionModelCore.CenteredEdge curve differential} {covers :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceCovers parent} {index : Nat}
+variable {genus count : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+  {parent : CenteredEdge curve differential} {covers :
+    BasisSourceCovers parent} {index : Nat}
 
-variable {patch : Purelib.Riemann.Branches.UniformPrimitiveSheetCompatibility.PreparedPatch parent} {data :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalModels.Data patch count} {cover :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.UniformReciprocalCover.Cover data}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {minimum floor depth : Nat}
-  {common : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonCover.BasisCommonCover cover covers minimum}
-    {areaAllowance sourceTarget coefficientTarget : Purelib.Riemann.Normalization.InverseRootPolynomial.Coordinate}
-  {request : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.PreparedCommonRequest.BasisPreparedCommonRequest
+variable {patch : PreparedPatch parent} {data :
+  Data patch count} {cover :
+  Cover data}
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : RegularBounds.Data cap} {minimum floor depth : Nat}
+  {common : BasisCommonCover cover covers minimum}
+    {areaAllowance sourceTarget coefficientTarget : Coordinate}
+  {request : BasisPreparedCommonRequest
     regular common areaAllowance sourceTarget coefficientTarget floor}
-  {box : Purelib.Geometry.Rational.Box} {polynomials :
-    Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.CapBasisEnergy.RegularBasisPolynomials cap index box}
+  {box : Geometry.Rational.Box} {polynomials :
+    RegularBasisPolynomials cap index box}
   {originals :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
+    CommonPrimitiveSamples.BasisSourceLocations.PrimitiveBank
     covers index} {cells :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceLocations.BasisSourceLocations.SampleBank covers
+    BasisSourceLocations.SampleBank covers
     index}
   {coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus}
   {acquired :
-    PreparedCommonRequest.BasisPreparedCommonRequest.Acquisition
+    BasisPreparedCommonRequest.Acquisition
     request polynomials originals cells coefficients depth}
 
 open Purelib.Integration.Path.ConjugatePathReadback (conjugateDiagonal conjugateDiagonal_sub conjugateDiagonal_area
@@ -138,31 +138,31 @@ The homogeneous area bound uses the maximum of the supplied run width and the or
 source primitive and coefficient vector. -/
 theorem BasisPreparedCommonRequest.Acquisition.ChildPairs.Weighted.source_run_bound
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs)
-    {points : List InverseRootPolynomial.Coordinate} {width : InverseRootPolynomial.Coordinate}
+    {points : List Coordinate} {width : Coordinate}
     (chain : SourceResampling.Chain 0 points 1)
     (steps : SourceResampling.widths 0 points width) :
     Data.Gaussian.Norm.Basic.normSq (PairedIncrementArea.area
-      (SourceListResampling.increments (fun t => ConjugatePathReadback.conjugateDiagonal (PrimitiveBank.value originals
+      (increments (fun t => ConjugatePathReadback.conjugateDiagonal (PrimitiveBank.value originals
         coefficients t)) 0 points) -
       weighted.source.area) ≤
       16 * (BasisSourceCovers.primitiveSlope covers)^2 *
-        (max width ((1 / 2 : InverseRootPolynomial.Coordinate)^(common.depth + acquired.extraDepth)))^2 *
-        (PreparedObservationCoercivity.coefficientNormSq coefficients)^2 := by
+        (max width ((1 / 2 : Coordinate)^(common.depth + acquired.extraDepth)))^2 *
+        (coefficientNormSq coefficients)^2 := by
   have bounded := SourceDyadicResampling.dyadic_resampling_bound
     (fun t => ConjugatePathReadback.conjugateDiagonal (PrimitiveBank.value originals coefficients t))
-    (density := BasisSourceCovers.primitiveSlope covers * PreparedObservationCoercivity.coefficientNormSq coefficients)
+    (density := BasisSourceCovers.primitiveSlope covers * coefficientNormSq coefficients)
     (fun a b al au bl bu => by
       rw [← ConjugatePathReadback.conjugateDiagonal_sub]
       have bound := ReciprocalDiskArcOwners.increment_bound
         originals coefficients (first := a) (last := b) ⟨al, au⟩ ⟨bl, bu⟩
       constructor
-      · change Data.Gaussian.Basic.Canonical.normSq
+      · change normSq
           (Data.Gaussian.Basic.conj
             (PrimitiveBank.value originals coefficients b -
               PrimitiveBank.value originals coefficients a)) ≤ _
         rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical]
         exact (Data.Gaussian.Norm.Basic.normSq_conj _).trans_le bound
-      · change Data.Gaussian.Basic.Canonical.normSq
+      · change normSq
           (PrimitiveBank.value originals coefficients b -
             PrimitiveBank.value originals coefficients a) ≤ _
         rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical]
@@ -175,12 +175,12 @@ theorem BasisPreparedCommonRequest.Acquisition.ChildPairs.Weighted.source_run_bo
 /-- Endpoint equality is separate from the area estimate and retains the actual common-parent source total. -/
 theorem BasisPreparedCommonRequest.Acquisition.ChildPairs.Weighted.source_run_total
     {pairs : Acquisition.ChildPairs acquired} (weighted : ChildPairs.Weighted pairs)
-    {points : List InverseRootPolynomial.Coordinate} (chain : SourceResampling.Chain 0 points 1) :
+    {points : List Coordinate} (chain : SourceResampling.Chain 0 points 1) :
     PairedIncrementArea.total
-      (SourceListResampling.increments (fun t => ConjugatePathReadback.conjugateDiagonal (PrimitiveBank.value originals
+      (increments (fun t => ConjugatePathReadback.conjugateDiagonal (PrimitiveBank.value originals
         coefficients t)) 0 points) =
       ConjugatePathReadback.conjugateDiagonal weighted.source.total := by
-  rw [SourceListResampling.increments_total, Chain.terminal_eq chain, ← ConjugatePathReadback.conjugateDiagonal_sub,
+  rw [increments_total, Chain.terminal_eq chain, ← ConjugatePathReadback.conjugateDiagonal_sub,
     Weighted.source_total weighted]
 
 end Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.Basis.SourceRunResampling

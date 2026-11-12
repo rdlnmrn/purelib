@@ -19,6 +19,8 @@ import Purelib.Polynomial.Clearance.Pair.Operations
 import Purelib.Polynomial.Dense.Evaluation
 import Purelib.Data.Sign.ComplexProduct.Center.Basic
 
+open Purelib.Polynomial.Dense.Rational.SignedRemainder.Signs
+
 namespace Purelib.Polynomial.Dense.Rational.CauchyIndex.Product.Resolution
 
 open Purelib
@@ -35,7 +37,7 @@ The same factor certificates construct the product clearance. Three swapped
 signed-chain thresholds and two factor-turn thresholds are combined by their
 original nested minima, preserving their input order and exact rational value. -/
 @[expose] public def localProductResolutionRadiusSq
-    {A B C D E H : Dense.Rational.Basic.CoordinatePolynomial} {root : Data.Rat.Interval.Bounds}
+    {A B C D E H : Basic.CoordinatePolynomial} {root : Interval.Bounds}
     (left : Clearance.Pair.Basic.Certificate A B root)
     (right : Clearance.Pair.Basic.Certificate C D root)
     (realIdentity : ∀ x : Fraction.Rational,
@@ -43,9 +45,9 @@ original nested minima, preserving their input order and exact rational value. -
     (imagIdentity : ∀ x : Fraction.Rational,
       H.eval x = A.eval x * D.eval x + B.eval x * C.eval x) : Fraction.Rational :=
   let product := left.complexProduct right realIdentity imagIdentity
-  min (SignedRemainder.Signs.Radius.signedChainResolutionRadiusSq B A left.swap)
-    (min (SignedRemainder.Signs.Radius.signedChainResolutionRadiusSq D C right.swap)
-      (min (SignedRemainder.Signs.Radius.signedChainResolutionRadiusSq H E product.swap)
+  min (Radius.signedChainResolutionRadiusSq B A left.swap)
+    (min (Radius.signedChainResolutionRadiusSq D C right.swap)
+      (min (Radius.signedChainResolutionRadiusSq H E product.swap)
         (min (Pair.Turn.Bounds.narrowTurnResolutionRadiusSq left)
           (Pair.Turn.Bounds.narrowTurnResolutionRadiusSq right))))
 
@@ -55,7 +57,7 @@ The original three scanner thresholds and two turn thresholds are strictly
 positive for the supplied clearance certificates. Nested rational minimum
 positivity therefore proves the common threshold positive. -/
 public theorem localProductResolutionRadiusSq_pos
-    {A B C D E H : Dense.Rational.Basic.CoordinatePolynomial} {root : Data.Rat.Interval.Bounds}
+    {A B C D E H : Basic.CoordinatePolynomial} {root : Interval.Bounds}
     (left : Clearance.Pair.Basic.Certificate A B root)
     (right : Clearance.Pair.Basic.Certificate C D root)
     (realIdentity : ∀ x : Fraction.Rational,
@@ -67,11 +69,11 @@ public theorem localProductResolutionRadiusSq_pos
   let product := left.complexProduct right realIdentity imagIdentity
   unfold localProductResolutionRadiusSq
   apply Fraction.Order.Basic.lt_min
-  · exact SignedRemainder.Signs.Radius.signedChainResolutionRadiusSq_pos B A left.swap
+  · exact Radius.signedChainResolutionRadiusSq_pos B A left.swap
   · apply Fraction.Order.Basic.lt_min
-    · exact SignedRemainder.Signs.Radius.signedChainResolutionRadiusSq_pos D C right.swap
+    · exact Radius.signedChainResolutionRadiusSq_pos D C right.swap
     · apply Fraction.Order.Basic.lt_min
-      · exact SignedRemainder.Signs.Radius.signedChainResolutionRadiusSq_pos H E product.swap
+      · exact Radius.signedChainResolutionRadiusSq_pos H E product.swap
       · apply Fraction.Order.Basic.lt_min
         · exact Pair.Turn.Bounds.narrowTurnResolutionRadiusSq_pos left
         · exact Pair.Turn.Bounds.narrowTurnResolutionRadiusSq_pos right
@@ -83,7 +85,7 @@ The same three event searches and finite center search are retained. The
 refinement bound supplies their scanner and turn conditions, while the twelve
 coordinate nonzero conditions and four product identities validate the data. -/
 public theorem localProductCell?_eq_true_of_refined_radiusSq
-    {A B C D E H : Dense.Rational.Basic.CoordinatePolynomial} {root interval : Data.Rat.Interval.Bounds}
+    {A B C D E H : Basic.CoordinatePolynomial} {root interval : Interval.Bounds}
     (left : Clearance.Pair.Basic.Certificate A B root)
     (right : Clearance.Pair.Basic.Certificate C D root)
     (realIdentity : ∀ x : Fraction.Rational,
@@ -105,21 +107,21 @@ public theorem localProductCell?_eq_true_of_refined_radiusSq
     (DᵣNonzero : D.eval interval.upper ≠ 0)
     (EᵣNonzero : E.eval interval.upper ≠ 0)
     (HᵣNonzero : H.eval interval.upper ≠ 0) :
-    CauchyIndex.Product.Prepare.localProductCell?
+    Prepare.localProductCell?
       A B C D E H interval = true := by
   let product := left.complexProduct right realIdentity imagIdentity
   have leftRadius : Interval.Radius.sampleRadiusSq interval interval.lower <
-      SignedRemainder.Signs.Radius.signedChainResolutionRadiusSq B A left.swap :=
+      Radius.signedChainResolutionRadiusSq B A left.swap :=
     radius.trans_le (by
       unfold localProductResolutionRadiusSq
       exact Fraction.Order.Basic.min_le_left _ _)
   have rightRadius : Interval.Radius.sampleRadiusSq interval interval.lower <
-      SignedRemainder.Signs.Radius.signedChainResolutionRadiusSq D C right.swap :=
+      Radius.signedChainResolutionRadiusSq D C right.swap :=
     radius.trans_le (by
       unfold localProductResolutionRadiusSq
       exact (Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_left _ _))
   have productRadius : Interval.Radius.sampleRadiusSq interval interval.lower <
-      SignedRemainder.Signs.Radius.signedChainResolutionRadiusSq H E product.swap :=
+      Radius.signedChainResolutionRadiusSq H E product.swap :=
     radius.trans_le (by
       unfold localProductResolutionRadiusSq
       exact (Fraction.Order.Basic.min_le_right _ _).trans
@@ -138,11 +140,11 @@ public theorem localProductCell?_eq_true_of_refined_radiusSq
       exact (Fraction.Order.Basic.min_le_right _ _).trans
         ((Fraction.Order.Basic.min_le_right _ _).trans
           ((Fraction.Order.Basic.min_le_right _ _).trans (Fraction.Order.Basic.min_le_right _ _))))
-  have leftFound := CauchyIndex.Events.Resolution.cauchyEventSigns?_isSome_of_refined_radiusSq
+  have leftFound := Events.Resolution.cauchyEventSigns?_isSome_of_refined_radiusSq
     left.swap refines leftRadius
-  have rightFound := CauchyIndex.Events.Resolution.cauchyEventSigns?_isSome_of_refined_radiusSq
+  have rightFound := Events.Resolution.cauchyEventSigns?_isSome_of_refined_radiusSq
     right.swap refines rightRadius
-  have productFound := CauchyIndex.Events.Resolution.cauchyEventSigns?_isSome_of_refined_radiusSq
+  have productFound := Events.Resolution.cauchyEventSigns?_isSome_of_refined_radiusSq
     product.swap refines productRadius
   have leftNarrow := Pair.Turn.Bounds.narrowComplexTurn_of_refined_radiusSq
     left refines leftTurnRadius
@@ -156,7 +158,7 @@ public theorem localProductCell?_eq_true_of_refined_radiusSq
       (realIdentity interval.upper) (imagIdentity interval.upper)
       leftNarrow rightNarrow
   have eventDataFound :=
-    CauchyIndex.Product.Prepare.localEventData?_isSome
+    Prepare.localEventData?_isSome
       leftFound rightFound productFound centerFound
       BₗNonzero DₗNonzero HₗNonzero BᵣNonzero DᵣNonzero HᵣNonzero
       (realIdentity interval.lower) (imagIdentity interval.lower)
@@ -170,7 +172,7 @@ The radius condition and endpoint coordinate evidence establish success of
 the retained complete local classifier. Its selected event data certify the
 doubled Cauchy-product formula for the same six polynomials and interval. -/
 public theorem auxiliaryProductFormula_of_refined_radiusSq
-    {A B C D E H : Dense.Rational.Basic.CoordinatePolynomial} {root interval : Data.Rat.Interval.Bounds}
+    {A B C D E H : Basic.CoordinatePolynomial} {root interval : Interval.Bounds}
     (left : Clearance.Pair.Basic.Certificate A B root)
     (right : Clearance.Pair.Basic.Certificate C D root)
     (realIdentity : ∀ x : Fraction.Rational,
@@ -192,9 +194,9 @@ public theorem auxiliaryProductFormula_of_refined_radiusSq
     (DᵣNonzero : D.eval interval.upper ≠ 0)
     (EᵣNonzero : E.eval interval.upper ≠ 0)
     (HᵣNonzero : H.eval interval.upper ≠ 0) :
-    CauchyIndex.Product.Basic.AuxiliaryProductFormula
+    Basic.AuxiliaryProductFormula
       A B C D E H interval.lower interval.upper := by
-  apply CauchyIndex.Product.Prepare.auxiliaryProductFormula_of_localProductCell
+  apply Prepare.auxiliaryProductFormula_of_localProductCell
     A B C D E H interval
   exact localProductCell?_eq_true_of_refined_radiusSq left right
     realIdentity imagIdentity refines radius

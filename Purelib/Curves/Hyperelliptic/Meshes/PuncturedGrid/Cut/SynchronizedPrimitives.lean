@@ -1,4 +1,5 @@
 module
+import Purelib.Polynomial.Dense.Gaussian.Basic
 meta import Purelib.Elab.ConstructiveInjectivity
 import Purelib.Data.Gaussian.Basic
 import Purelib.Curves.Hyperelliptic.Basic
@@ -104,6 +105,7 @@ ownership and the global primitive-jump identity remain separate obligations.
 
 namespace Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Cut
 
+open Purelib.Polynomial.Dense.Gaussian.Basic.CanonicalCoefficients (CoefficientPolynomial)
 open Purelib.Curves.Hyperelliptic.Basic (HyperellipticCurve)
 open Purelib.Curves.Hyperelliptic.Differentials.Basic (Differential)
 open Purelib.Data.Gaussian.Basic renaming Canonical -> Gaussian
@@ -142,8 +144,14 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
 
 namespace PrimitiveBanks.LiftedMesh.SegmentComparison
 
-/-- Read the retained face position and sheet; equality transport changes only the dependent indices. No models or
-numerical witnesses are acquired. -/
+variable {numerator : InverseRootPolynomial.Polynomial} {pairs : Nat}
+
+/-- Read the retained face position and sheet for the supplied numerator and odd inverse power.
+
+Equality transport changes only the dependent indices. The complete shared
+primitive, anchor, offset and corner caches remain the original values;
+no model or numerical witness is acquired.
+-/
 @[expose] def
   sharedData
   {start finish : Data.Gaussian.Basic.Canonical} {segment : ClearPath.ClearSegment curve.polynomial ambient start
@@ -153,9 +161,9 @@ numerical witnesses are acquired. -/
     {differential : Differentials.Basic.Differential genus} {parentSheet : Fin 2} (compared :
       LiftedMesh.SegmentComparison placement piece differential parentSheet)
     {domains : DomainBanks.FaceDomainBank frames faces.regulars} {index : Nat} (shared : PrimitiveData.FacePrimitiveBank
-      differential index domains)
+      differential index domains numerator pairs)
     (aligned : compared.domains = domains.atRoute placement.location) : PrimitiveData.DomainPrimitives
-      compared.entered.domain differential index :=
+      compared.entered.domain differential index numerator pairs :=
   DomainPrimitives.castDomain compared.domain_eq.symm
     (((shared.atRoute placement.location).castDomains aligned.symm).atSheet compared.entered.entry.sheet)
 
@@ -170,7 +178,7 @@ theorem
     {differential : Differentials.Basic.Differential genus} {parentSheet : Fin 2} (compared :
       LiftedMesh.SegmentComparison placement piece differential parentSheet)
     {domains : DomainBanks.FaceDomainBank frames faces.regulars} {index : Nat} (shared : PrimitiveData.FacePrimitiveBank
-      differential index domains)
+      differential index domains numerator pairs)
     (aligned : compared.domains = domains.atRoute placement.location) :
     (compared.sharedData shared aligned).corners.values = ((shared.atRoute placement.location).atSheet
       placement.location.sheet).corners.values := by

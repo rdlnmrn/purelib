@@ -82,6 +82,10 @@ import Purelib.Riemann.Readings.SeededPrimitiveBounds
 import Purelib.Tactic.Ring
 import Purelib.Tactic.QuotientFreeOmega
 
+open Purelib.Data.Rat.Fraction.Order
+
+open Purelib.Data.Gaussian.Norm
+
 public section
 
 /-!
@@ -131,50 +135,50 @@ open Purelib.Integration.Polynomial.Gaussian.Path.Basic (PathModel)
 open Purelib.Integration.Path.IncrementArea (pathArea Summary)
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {collar :
-  Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve}
-  {cap : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar} {differential :
+  ReciprocalExteriorCollar.Data curve}
+  {cap : ReciprocalInnerInverse.Data curve collar} {differential :
     Differential genus} {count : Nat}
   {parent : Parent curve differential} {data :
     ParentData cap differential count parent}
 
 /-- The retained parent movement is the squared distance between its actual endpoint coordinates. -/
-private theorem movement_eq (parent : PathCover.Parent curve differential) :
-    PreparedPrimitiveRequests.movement parent = Data.Gaussian.Norm.Basic.normSq (parent.edge.point 1 -
+private theorem movement_eq (parent : Parent curve differential) :
+    movement parent = Basic.normSq (parent.edge.point 1 -
       parent.edge.point 0) := by
   rw [parent.edge.point_one, parent.edge.point_zero]
   rfl
 
 /-- The fixed coefficient ceiling comes from the original cap numerator box and the retained local inverse clearance. It
 precedes model refinement. -/
-@[expose] public def areaSlope (data : PathCover.ParentData cap differential count parent) : Coordinate :=
+@[expose] public def areaSlope (data : ParentData cap differential count parent) : Coordinate :=
   2 * data.comparison.bounds.factor.base.numeratorUpper * data.comparison.bounds.reciprocal.inverseUpper *
-    PreparedPrimitiveRequests.movement parent
+    movement parent
 
 /-- The retained cap numerator ceiling, inverse bound and parent movement give a nonnegative area slope. -/
-theorem areaSlope_nonnegative (data : PathCover.ParentData cap differential count parent) : 0 ≤
+theorem areaSlope_nonnegative (data : ParentData cap differential count parent) : 0 ≤
   areaSlope data :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct
-    (Fraction.Order.Arithmetic.mul_nonneg_direct
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+  Arithmetic.mul_nonneg_direct
+    (Arithmetic.mul_nonneg_direct
+      (Arithmetic.mul_nonneg_direct (by decide)
         data.comparison.bounds.factor.base.numeratorUpper_nonnegative)
-      data.comparison.bounds.reciprocal.inverseUpper_positive.le) (PreparedPrimitiveRequests.movement_nonnegative
+      data.comparison.bounds.reciprocal.inverseUpper_positive.le) (movement_nonnegative
         parent)
 
 namespace Sample
 
 variable {target : Coordinate} {floor : Nat} {request :
   Request data target floor}
-  {index : Nat} {box : Purelib.Geometry.Rational.Box} {capSample :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential index box}
+  {index : Nat} {box : Box} {capSample :
+    Primitives.Sample cap differential index box}
 
 /-- Reuse the existing spatial request and original uniform patch. -/
-@[expose] public def localRequest (sample : PreparedPrimitives.Sample request capSample) :
+@[expose] public def localRequest (sample : Sample request capSample) :
   UniformPreparedRequests.LocalRequest parent count request.budget :=
   ⟨data.patch, data.terminal.neighborhood.patch, data.patch_eq, sample.integration,
     data.last_eq ▸ data.segment.lastInside⟩
 
 /-- Each retained integration child has both endpoints inside the original local patch and cap collar. -/
-private theorem child_inside (sample : PreparedPrimitives.Sample request capSample) {child : PathCover.Parent curve
+private theorem child_inside (sample : Sample request capSample) {child : Parent curve
   differential}
     (member : child ∈ sample.integration.block.children) :
     (data.terminal.neighborhood.patch.box.Contains (child.edge.point 0) ∧
@@ -191,31 +195,31 @@ private theorem child_inside (sample : PreparedPrimitives.Sample request capSamp
       (data.first_eq ▸ data.segment.comparison.firstCap) (data.last_eq ▸ data.segment.comparison.lastCap) child member⟩
 
 /-- The retained local primitive coefficient satisfies the original cap numerator and inverse ceiling. -/
-private theorem coefficient_le (sample : PreparedPrimitives.Sample request capSample) {point :
-  InverseRootPolynomial.Gaussian}
+private theorem coefficient_le (sample : Sample request capSample) {point :
+  Gaussian}
     (inside : data.terminal.neighborhood.patch.box.Contains point) (capInside : collar.box.Contains point) :
-    Data.Gaussian.Norm.Basic.normSq (sample.retained.retained.primitive.coefficient.eval point) ≤
+    Basic.normSq (sample.retained.retained.primitive.coefficient.eval point) ≤
       data.comparison.bounds.factor.base.numeratorUpper * data.comparison.bounds.reciprocal.inverseUpper := by
   rw [sample.retained.retained.coefficient_eq, sample.retained.retained.comparison.coefficient_eq,
-    Data.Gaussian.Norm.Basic.normSq_neg, Data.Gaussian.Norm.Basic.normSq_mul]
-  have numerator : Data.Gaussian.Norm.Basic.normSq (point ^ (HyperellipticReciprocal.reversedDifferential
+    Basic.normSq_neg, Basic.normSq_mul]
+  have numerator : Basic.normSq (point ^ (HyperellipticReciprocal.reversedDifferential
     differential).exponent) ≤
       data.comparison.bounds.factor.base.numeratorUpper := by
     rw [← data.comparison.bounds.factor.numerator_eq, data.comparison.bounds.factor.base.numeratorUpper_eq]
     exact Dense.Gaussian.Bounds.Box.normSq_eval_le_denseEvalNormBound _ capInside
   have scalar := data.comparison.bounds.reciprocal.inverse_norm_le sample.retained.retained.comparison.reciprocal
     (data.terminal.neighborhood.patch.box_refines.contains inside)
-  rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
-  exact Fraction.Order.Arithmetic.mul_le_mul_direct numerator scalar (Data.Gaussian.Norm.Basic.normSq_nonneg _)
+  rw [← Basic.normSq_eq_canonical] at scalar
+  exact Arithmetic.mul_le_mul_direct numerator scalar (Basic.normSq_nonneg _)
     data.comparison.bounds.factor.base.numeratorUpper_nonnegative
 
 /-- A retained child's local primitive increment satisfies the parent slope bound scaled by its dyadic depth. -/
-private theorem primitive_child_bound (sample : PreparedPrimitives.Sample request capSample) {child : PathCover.Parent
+private theorem primitive_child_bound (sample : Sample request capSample) {child : Parent
   curve differential}
     (member : child ∈ sample.integration.block.children) :
-    Data.Gaussian.Norm.Basic.normSq (sample.integration.model.primitive.value.eval (child.edge.point 1) -
-      sample.integration.model.primitive.value.eval (child.edge.point 0)) ≤ Geometric.Basic.quarterRadius
-        (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope data)
+    Basic.normSq (sample.integration.model.primitive.value.eval (child.edge.point 1) -
+      sample.integration.model.primitive.value.eval (child.edge.point 0)) ≤ quarterRadius
+        (areaSlope data)
         sample.integration.block.depth := by
   have contained :=
     (child_inside sample)
@@ -227,13 +231,13 @@ private theorem primitive_child_bound (sample : PreparedPrimitives.Sample reques
   have finishEq : Affine.line first direction 1 = last := by
     change first + 1 * direction = last; dsimp only [direction]; ring1
   have estimate := DensePrimitive.segment_increment_le sample.retained.retained.primitive.primitive first direction
-    (⟨0, 1, by decide⟩ : Data.Rat.Interval.Bounds)
-    (fun _ inside => Rational.Box.contains_line contained.1.1 contained.1.2 inside) _
+    (⟨0, 1, by decide⟩ : Interval.Bounds)
+    (fun _ inside => Box.contains_line contained.1.1 contained.1.2 inside) _
     (fun _ inside =>
       (coefficient_le
       sample)
-      (Rational.Box.contains_line contained.1.1 contained.1.2 inside)
-      (Rational.Box.contains_line contained.2.1 contained.2.2 inside))
+      (Box.contains_line contained.1.1 contained.1.2 inside)
+      (Box.contains_line contained.2.1 contained.2.2 inside))
     (first := 1) (last := 0) ⟨by decide, le_rfl⟩ ⟨le_rfl, by decide⟩
   rw [startEq, finishEq, show (1 : Fraction.Rational) - 0 = 1 by decide,
     _root_.one_pow, Fraction.Field.mul_one_direct] at estimate
@@ -241,34 +245,33 @@ private theorem primitive_child_bound (sample : PreparedPrimitives.Sample reques
     -sample.retained.retained.primitive.primitive.value.eval (child.edge.point 0) =
       -(sample.retained.retained.primitive.primitive.value.eval (child.edge.point 1) -
         sample.retained.retained.primitive.primitive.value.eval (child.edge.point 0)) by ring1,
-          Data.Gaussian.Norm.Basic.normSq_neg]
+          Basic.normSq_neg]
   apply estimate.trans
-  have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  have scaled := Arithmetic.mul_le_mul_of_nonneg_left_direct
     (PreparedPrimitivePaths.block_movement_le sample.integration.block member)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
-      (Fraction.Order.Arithmetic.mul_nonneg_direct data.comparison.bounds.factor.base.numeratorUpper_nonnegative
+    (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 2)
+      (Arithmetic.mul_nonneg_direct data.comparison.bounds.factor.base.numeratorUpper_nonnegative
         data.comparison.bounds.reciprocal.inverseUpper_positive.le))
-  exact scaled.trans_eq (by simp only [Geometric.Basic.quarterRadius_eq_mul_pow,
-    Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope,
-    PreparedPrimitiveRequests.movement]; ring1)
+  exact scaled.trans_eq (by
+    simp only [quarterRadius_eq_mul_pow, areaSlope, movement]; ring1)
 
 /-- Evaluate the signed original cap comparison polynomial between the actual retained child endpoints. -/
-@[expose] public def polynomialIncrement (sample : PreparedPrimitives.Sample request capSample) (child :
-  PathCover.Parent curve differential) : Gaussian :=
+@[expose] public def polynomialIncrement (sample : Sample request capSample) (child :
+  Parent curve differential) : Gaussian :=
   -(sample.retained.retained.comparison.value.eval (child.edge.point 1) -
     sample.retained.retained.comparison.value.eval (child.edge.point 0))
 
 /-- The cap polynomial and local primitive increments differ by the retained geometric error times the child's squared
 width. -/
-private theorem polynomial_child_error (sample : PreparedPrimitives.Sample request capSample) {child : PathCover.Parent
+private theorem polynomial_child_error (sample : Sample request capSample) {child : Parent
   curve differential}
     (member : child ∈ sample.integration.block.children) :
-    Data.Gaussian.Norm.Basic.normSq
+    Basic.normSq
       ((polynomialIncrement
       sample) child -
       (sample.integration.model.primitive.value.eval (child.edge.point 1) -
         sample.integration.model.primitive.value.eval (child.edge.point 0))) ≤
-        Geometric.Basic.quarterRadius (Geometric.Basic.quarterRadius data.segment.comparison.scale index)
+        quarterRadius (quarterRadius data.segment.comparison.scale index)
           sample.integration.block.depth := by
   have contained :=
     (child_inside sample)
@@ -289,53 +292,53 @@ private theorem polynomial_child_error (sample : PreparedPrimitives.Sample reque
       sample.retained.retained.comparison.value.eval (child.edge.point 0)) -
       (sample.retained.retained.primitive.primitive.value.eval (child.edge.point 1) -
         sample.retained.retained.primitive.primitive.value.eval (child.edge.point 0))) by ring1,
-    Data.Gaussian.Norm.Basic.normSq_neg]
+    Basic.normSq_neg]
   apply estimate.trans
-  have scaled := Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  have scaled := Arithmetic.mul_le_mul_of_nonneg_left_direct
     (PreparedPrimitivePaths.block_movement_le sample.integration.block member)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
-      (Geometric.Basic.quarterRadius_nonneg data.comparison.bounds.scale_nonnegative index))
-  have direction : Data.Gaussian.Norm.Basic.normSq data.segment.comparison.direction =
-    PreparedPrimitiveRequests.movement parent := by
+    (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 2)
+      (quarterRadius_nonneg data.comparison.bounds.scale_nonnegative index))
+  have direction : Basic.normSq data.segment.comparison.direction =
+    movement parent := by
     rw [data.segment.comparison.direction_eq, data.first_eq, data.last_eq,
-      Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.movement_eq]
-  have equal : Geometric.Basic.quarterRadius segment.scale index =
-      (2 * Geometric.Basic.quarterRadius data.comparison.bounds.scale index) * child.edge.pointMovement := by
-    simp only [segment, Segment.build, Geometric.Basic.quarterRadius_eq_mul_pow,
+      movement_eq]
+  have equal : quarterRadius segment.scale index =
+      (2 * quarterRadius data.comparison.bounds.scale index) * child.edge.pointMovement := by
+    simp only [segment, Segment.build, quarterRadius_eq_mul_pow,
       PreparedConstantModels.PreparedEdge.pointMovement]
     ring1
   rw [equal]
   exact scaled.trans_eq (by
     rw [data.segment.comparison.scale_eq, direction]
-    simp only [Geometric.Basic.quarterRadius_eq_mul_pow, PreparedPrimitiveRequests.movement]
+    simp only [quarterRadius_eq_mul_pow, movement]
     ring1)
 
 /-- Pair the cap polynomial with the actual integrator cell by cell. -/
-@[expose] public def areaPairs (sample : PreparedPrimitives.Sample request capSample) : List
-  (InverseRootPolynomial.Gaussian × InverseRootPolynomial.Gaussian) :=
+@[expose] public def areaPairs (sample : Sample request capSample) : List
+  (Gaussian × Gaussian) :=
   sample.integration.block.children.map fun child =>
     ((polynomialIncrement
     sample) child, child.model.integralSample)
 
 /-- Combine the cap comparison error and the original integration error into the common child-area discrepancy scale. -/
-@[expose] public def areaError (sample : PreparedPrimitives.Sample request capSample) : Coordinate :=
-  2 * (Geometric.Basic.quarterRadius data.segment.comparison.scale index + (LocalRequest.areaComparisonError
+@[expose] public def areaError (sample : Sample request capSample) : Coordinate :=
+  2 * (quarterRadius data.segment.comparison.scale index + (LocalRequest.areaComparisonError
     (localRequest
     sample)))
 
 /-- The retained cap comparison and integration error scales give a nonnegative area error. -/
-theorem areaError_nonnegative (sample : PreparedPrimitives.Sample request capSample) : 0 ≤
+theorem areaError_nonnegative (sample : Sample request capSample) : 0 ≤
   (areaError sample) :=
-  Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
-    (add_nonneg (Geometric.Basic.quarterRadius_nonneg data.segment.comparison.scale_nonnegative index)
+  Arithmetic.mul_nonneg_direct (by decide)
+    (add_nonneg (quarterRadius_nonneg data.segment.comparison.scale_nonnegative index)
       (LocalRequest.areaComparisonError_nonnegative
       (localRequest
       sample)))
 
 /-- Every original child pair satisfies the common discrepancy scale at its retained dyadic depth. -/
-theorem areaPairs_errors (sample : PreparedPrimitives.Sample request capSample) : ∀ pair ∈
+theorem areaPairs_errors (sample : Sample request capSample) : ∀ pair ∈
   (areaPairs sample),
-    Data.Gaussian.Norm.Basic.normSq (pair.1 - pair.2) ≤ Geometric.Basic.quarterRadius
+    Basic.normSq (pair.1 - pair.2) ≤ quarterRadius
       (areaError sample)
       sample.integration.block.depth := by
   intro pair member
@@ -344,14 +347,14 @@ theorem areaPairs_errors (sample : PreparedPrimitives.Sample request capSample) 
   have operational := (LocalRequest.areaPairs_errors
     (localRequest
     sample)) _ (Map.mem_map.mpr ⟨child, inChildren, rfl⟩)
-  rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at operational
-  change Data.Gaussian.Norm.Basic.normSq (_ - _) ≤ Geometric.Basic.quarterRadius
+  rw [← Basic.normSq_eq_canonical] at operational
+  change Basic.normSq (_ - _) ≤ quarterRadius
     (LocalRequest.areaComparisonError
     (localRequest
     sample)) sample.integration.block.depth at operational
   let increment := sample.integration.model.primitive.value.eval (child.edge.point 1) -
     sample.integration.model.primitive.value.eval (child.edge.point 0)
-  change Data.Gaussian.Norm.Basic.normSq
+  change Basic.normSq
     ((polynomialIncrement
     sample) child - child.model.integralSample) ≤ _
   rw [show
@@ -359,20 +362,20 @@ theorem areaPairs_errors (sample : PreparedPrimitives.Sample request capSample) 
     sample) child - child.model.integralSample =
     ((polynomialIncrement
       sample) child - increment) + (increment - child.model.integralSample) by ring1]
-  exact (Data.Gaussian.Norm.Bounds.normSq_add_le_two _ _).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  exact (Bounds.normSq_add_le_two _ _).trans
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct
     (add_le_add
       ((polynomial_child_error
       sample) inChildren) operational) (by decide)).trans_eq (by
-      simp only [Geometric.Basic.quarterRadius_eq_mul_pow,
+      simp only [quarterRadius_eq_mul_pow,
         areaError];
         ring1))
 
 /-- Each retained child's actual integration sample satisfies the parent slope and operational error bound. -/
-theorem areaPairs_integral_bound (sample : PreparedPrimitives.Sample request capSample) : ∀ pair ∈
+theorem areaPairs_integral_bound (sample : Sample request capSample) : ∀ pair ∈
   (areaPairs sample),
-    Data.Gaussian.Norm.Basic.normSq pair.2 ≤ Geometric.Basic.quarterRadius (2 *
-      (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope data +
+    Basic.normSq pair.2 ≤ quarterRadius (2 *
+      (areaSlope data +
       (LocalRequest.areaComparisonError
       (localRequest
       sample)))) sample.integration.block.depth := by
@@ -382,33 +385,33 @@ theorem areaPairs_integral_bound (sample : PreparedPrimitives.Sample request cap
   have operational := (LocalRequest.areaPairs_errors
     (localRequest
     sample)) _ (Map.mem_map.mpr ⟨child, inChildren, rfl⟩)
-  rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at operational
-  change Data.Gaussian.Norm.Basic.normSq (_ - _) ≤ Geometric.Basic.quarterRadius
+  rw [← Basic.normSq_eq_canonical] at operational
+  change Basic.normSq (_ - _) ≤ quarterRadius
     (LocalRequest.areaComparisonError
     (localRequest
     sample)) sample.integration.block.depth at operational
   let increment := sample.integration.model.primitive.value.eval (child.edge.point 1) -
     sample.integration.model.primitive.value.eval (child.edge.point 0)
-  change Data.Gaussian.Norm.Basic.normSq child.model.integralSample ≤ _
+  change Basic.normSq child.model.integralSample ≤ _
   rw [show child.model.integralSample = increment - (increment - child.model.integralSample) by ring1]
-  exact (Data.Gaussian.Norm.Bounds.normSq_sub_le_two _ _).trans
-    ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+  exact (Bounds.normSq_sub_le_two _ _).trans
+    ((Arithmetic.mul_le_mul_of_nonneg_left_direct
     (add_le_add
       ((primitive_child_bound
       sample) inChildren) operational) (by decide)).trans_eq (by
-      simp only [Geometric.Basic.quarterRadius_eq_mul_pow]; ring1))
+      simp only [quarterRadius_eq_mul_pow]; ring1))
 
 /-- Bound the full paired child-path area discrepancy using the retained common error and slope, with all child counts
 cancelled. -/
-theorem area_error (sample : PreparedPrimitives.Sample request capSample) :
-    Data.Gaussian.Norm.Basic.normSq (IncrementArea.pathArea
+theorem area_error (sample : Sample request capSample) :
+    Basic.normSq (pathArea
       ((areaPairs
-      sample).map Prod.fst) - IncrementArea.pathArea
+      sample).map Prod.fst) - pathArea
       ((areaPairs
       sample).map Prod.snd)) ≤
       32 * (areaError
         sample) * (2 *
-        (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope data +
+        (areaSlope data +
         (LocalRequest.areaComparisonError
         (localRequest
         sample))) +
@@ -419,16 +422,16 @@ theorem area_error (sample : PreparedPrimitives.Sample request capSample) :
     sample.integration.block.depth
     (error := areaError
       sample)
-    (bound := 2 * (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope
+    (bound := 2 * (areaSlope
       data + LocalRequest.areaComparisonError
       (localRequest
       sample)))
-    ((Purelib.Data.List.Map.length_map ..).trans sample.integration.block.childCount)
+    ((Map.length_map ..).trans sample.integration.block.childCount)
       (areaError_nonnegative
       sample)
-    (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide)
+    (Arithmetic.mul_nonneg_direct (by decide)
       (add_nonneg
-        (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope_nonnegative
+        (areaSlope_nonnegative
         data) (LocalRequest.areaComparisonError_nonnegative
         (localRequest
         sample))))
@@ -436,31 +439,31 @@ theorem area_error (sample : PreparedPrimitives.Sample request capSample) :
       have certificate :=
         areaPairs_errors
         sample pair member
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at certificate
+      rw [Basic.normSq_eq_canonical] at certificate
       exact certificate) (fun pair member => by
       have certificate :=
         areaPairs_integral_bound
         sample pair member
-      rw [Data.Gaussian.Norm.Basic.normSq_eq_canonical] at certificate
+      rw [Basic.normSq_eq_canonical] at certificate
       exact certificate)
-  rw [← Data.Gaussian.Norm.Basic.normSq_eq_canonical] at scalar
+  rw [← Basic.normSq_eq_canonical] at scalar
   exact scalar
 
 /-- A quarter of a positive rational budget is strictly below that budget. -/
-private theorem quarter_lt {value : InverseRootPolynomial.Coordinate} (positive : 0 < value) : value / 4 < value := by
-  apply (Fraction.Order.Field.div_lt_iff_pos (by decide)).mpr
+private theorem quarter_lt {value : Coordinate} (positive : 0 < value) : value / 4 < value := by
+  apply (Field.div_lt_iff_pos (by decide)).mpr
   simpa only [Fraction.Field.mul_one_direct] using
-    Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct positive (by
-        decide : (1 : InverseRootPolynomial.Coordinate) < 4)
+    Arithmetic.mul_lt_mul_of_pos_left_direct positive (by
+        decide : (1 : Coordinate) < 4)
 
 /-- Every later common stage pays the retained cap polynomial comparison target. -/
-private theorem comparison_error_lt (_sample : PreparedPrimitives.Sample request capSample) (later : request.index ≤
+private theorem comparison_error_lt (_sample : Sample request capSample) (later : request.index ≤
   index) :
-    Geometric.Basic.quarterRadius data.segment.comparison.scale index < target := by
-  have retainedLater : request.capRequest.index ≤ index := (Purelib.Data.Nat.Order.le_max_left _ _).trans
+    quarterRadius data.segment.comparison.scale index < target := by
+  have retainedLater : request.capRequest.index ≤ index := (Data.Nat.Order.le_max_left _ _).trans
     (request.index_eq ▸ later)
   have interiorLater : request.capRequest.interior.index ≤ index :=
-    (Purelib.Data.Nat.Order.le_max_right _ _).trans (request.capRequest.index_eq ▸ retainedLater)
+    (Data.Nat.Order.le_max_right _ _).trans (request.capRequest.index_eq ▸ retainedLater)
   have estimate := (quarterRadius_antitone data.segment.comparison.scale_nonnegative interiorLater).trans_lt
     (request.capRequest.interior.error_eq ▸ request.capRequest.interior.error_lt)
   have first : request.capRequest.budget < request.budget := by
@@ -474,7 +477,7 @@ private theorem comparison_error_lt (_sample : PreparedPrimitives.Sample request
   exact estimate.trans (first.trans second)
 
 /-- The retained integration request pays its original operational error target. -/
-private theorem operational_error_lt (sample : PreparedPrimitives.Sample request capSample) :
+private theorem operational_error_lt (sample : Sample request capSample) :
   (LocalRequest.areaComparisonError
   (localRequest sample))
   < target :=
@@ -486,117 +489,117 @@ private theorem operational_error_lt (sample : PreparedPrimitives.Sample request
       request.positive)
 
 /-- At every later shared stage the combined child-area error is less than four times the original target. -/
-theorem areaError_lt (sample : PreparedPrimitives.Sample request capSample) (later : request.index ≤ index) :
+theorem areaError_lt (sample : Sample request capSample) (later : request.index ≤ index) :
   (areaError sample) < 4
   * target :=
-  (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : InverseRootPolynomial.Coordinate) < 2)
-    (Fraction.Order.Arithmetic.add_lt_add_direct
+  (Arithmetic.mul_lt_mul_of_pos_left_direct (by decide : (0 : Coordinate) < 2)
+    (Arithmetic.add_lt_add_direct
       ((comparison_error_lt
       sample) later)
       (operational_error_lt
       sample))).trans_eq (by ring1)
 
 /-- The preflight target controls the full actual area, independently of every child depth and polynomial degree. -/
-theorem area_error_lt (sample : PreparedPrimitives.Sample request capSample) (later : request.index ≤ index) :
-    Data.Gaussian.Norm.Basic.normSq (IncrementArea.pathArea
+theorem area_error_lt (sample : Sample request capSample) (later : request.index ≤ index) :
+    Basic.normSq (pathArea
       ((areaPairs
-      sample).map Prod.fst) - IncrementArea.pathArea
+      sample).map Prod.fst) - pathArea
       ((areaPairs
       sample).map Prod.snd)) <
-      256 * target * (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope
+      256 * target * (areaSlope
         data + 3 * target) := by
   have errorLt :=
     (areaError_lt sample)
     later
-  have totalLe : 2 * (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope
+  have totalLe : 2 * (areaSlope
     data + (LocalRequest.areaComparisonError
     (localRequest
     sample))) +
     (areaError sample) ≤
-      2 * Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope data + 6 *
+      2 * areaSlope data + 6 *
         target :=
-    (add_le_add (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (add_le_add (Arithmetic.mul_le_mul_of_nonneg_left_direct
       (add_le_add le_rfl
         (operational_error_lt
         sample).le) (by decide)) errorLt.le).trans_eq (by ring1)
   have factorPositive : 0 < 32 * (2 *
-    Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope data + 6 * target)
+    areaSlope data + 6 * target)
     :=
-    Fraction.Order.Arithmetic.mul_pos_direct (by decide +kernel)
-      (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct (Fraction.Order.Arithmetic.mul_nonneg_direct (by
+    Arithmetic.mul_pos_direct (by decide +kernel)
+      (Arithmetic.add_pos_of_nonneg_of_pos_direct (Arithmetic.mul_nonneg_direct (by
         decide)
-        (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope_nonnegative
+        (areaSlope_nonnegative
         data))
-        (Fraction.Order.Arithmetic.mul_pos_direct (by decide) request.positive))
+        (Arithmetic.mul_pos_direct (by decide) request.positive))
   apply (area_error
     sample).trans_lt
   calc
     _ ≤ 32 * (areaError
-      sample) * (2 * Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope
+      sample) * (2 * areaSlope
       data + 6 * target) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct totalLe
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel)
+      Arithmetic.mul_le_mul_of_nonneg_left_direct totalLe
+        (Arithmetic.mul_nonneg_direct (by decide +kernel)
           (areaError_nonnegative
           sample))
-    _ = (32 * (2 * Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope
+    _ = (32 * (2 * areaSlope
       data + 6 * target)) *
       (areaError sample)
       := by
       ring1
-    _ < (32 * (2 * Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope
+    _ < (32 * (2 * areaSlope
       data + 6 * target)) * (4 * target) :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_left_direct factorPositive errorLt
+      Arithmetic.mul_lt_mul_of_pos_left_direct factorPositive errorLt
     _ = _ := by ring1
 
 /-- A dyadic list of increments with matching quarter-radius bounds has a total bounded by the original scale. -/
-private theorem dyadic_sum_bound (values : List InverseRootPolynomial.Gaussian) (depth : Nat) (count : values.length = 2
+private theorem dyadic_sum_bound (values : List Gaussian) (depth : Nat) (count : values.length = 2
   ^ depth)
-    (bound : InverseRootPolynomial.Coordinate) (bounded : ∀ value ∈ values, Data.Gaussian.Norm.Basic.normSq
-      value ≤ Geometric.Basic.quarterRadius bound depth) :
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum values) ≤ bound := by
-  have estimate := Data.Gaussian.Norm.Sum.Bounds.normSq_sum_le values (Geometric.Basic.quarterRadius bound depth)
+    (bound : Coordinate) (bounded : ∀ value ∈ values, Basic.normSq
+      value ≤ quarterRadius bound depth) :
+    Basic.normSq (Sum.Basic.gaussianSum values) ≤ bound := by
+  have estimate := Sum.Bounds.normSq_sum_le values (quarterRadius bound depth)
     bounded
   rw [count, DyadicCount.dyadic_count_cancel] at estimate
   exact estimate
 
 /-- The finite sum of paired differences equals the difference of the two original component sums. -/
-private theorem sum_differences (pairs : List (InverseRootPolynomial.Gaussian × InverseRootPolynomial.Gaussian)) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (pairs.map (fun pair => pair.1 - pair.2)) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (pairs.map Prod.fst) - Data.Gaussian.Norm.Sum.Basic.gaussianSum
+private theorem sum_differences (pairs : List (Gaussian × Gaussian)) :
+    Sum.Basic.gaussianSum (pairs.map (fun pair => pair.1 - pair.2)) =
+      Sum.Basic.gaussianSum (pairs.map Prod.fst) - Sum.Basic.gaussianSum
         (pairs.map Prod.snd) := by
   induction pairs with
-  | nil => change (0 : InverseRootPolynomial.Gaussian) = 0 - 0; ring1
+  | nil => change (0 : Gaussian) = 0 - 0; ring1
   | cons pair pairs previous =>
-    simp only [List.map_cons, Data.Gaussian.Norm.Sum.Basic.gaussianSum, previous]; ring1
+    simp only [List.map_cons, Sum.Basic.gaussianSum, previous]; ring1
 
 /-- These four bounds control concatenation: internal areas, total errors, and both polygons of parent totals. Every
 child count has already cancelled. -/
-theorem area_bounds (sample : PreparedPrimitives.Sample request capSample) (later : request.index ≤ index) :
+theorem area_bounds (sample : Sample request capSample) (later : request.index ≤ index) :
     let left :=
       (areaPairs
       sample).map Prod.fst
     let right :=
       (areaPairs
       sample).map Prod.snd
-    Data.Gaussian.Norm.Basic.normSq (IncrementArea.pathArea left - IncrementArea.pathArea right) ≤ 256 * target
-      * (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope data + 3 *
+    Basic.normSq (pathArea left - pathArea right) ≤ 256 * target
+      * (areaSlope data + 3 *
       target) ∧
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum left -
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum right) ≤ 4 * target ∧
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum left) ≤ 4 *
-      (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope data + 3 *
+    Basic.normSq (Sum.Basic.gaussianSum left -
+      Sum.Basic.gaussianSum right) ≤ 4 * target ∧
+    Basic.normSq (Sum.Basic.gaussianSum left) ≤ 4 *
+      (areaSlope data + 3 *
       target) ∧
-    Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum right) ≤ 4 *
-      (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope data + 3 *
+    Basic.normSq (Sum.Basic.gaussianSum right) ≤ 4 *
+      (areaSlope data + 3 *
       target) := by
   have count : (areaPairs
     sample).length = 2 ^ sample.integration.block.depth :=
-    (Purelib.Data.List.Map.length_map ..).trans sample.integration.block.childCount
+    (Map.length_map ..).trans sample.integration.block.childCount
   have errors :=
     dyadic_sum_bound
     ((areaPairs
     sample).map (fun pair => pair.1 - pair.2)) sample.integration.block.depth
-    ((Purelib.Data.List.Map.length_map ..).trans count)
+    ((Map.length_map ..).trans count)
       (areaError sample)
       (by
       intro value member
@@ -610,8 +613,8 @@ theorem area_bounds (sample : PreparedPrimitives.Sample request capSample) (late
     dyadic_sum_bound
     ((areaPairs
     sample).map Prod.snd) sample.integration.block.depth
-    ((Purelib.Data.List.Map.length_map ..).trans count) (2 *
-      (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope data +
+    ((Map.length_map ..).trans count) (2 *
+      (areaSlope data +
       (LocalRequest.areaComparisonError
       (localRequest
       sample)))) (by
@@ -621,11 +624,11 @@ theorem area_bounds (sample : PreparedPrimitives.Sample request capSample) (late
       exact
         (areaPairs_integral_bound
         sample) pair inPairs)
-  have rightLe : Data.Gaussian.Norm.Basic.normSq (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+  have rightLe : Basic.normSq (Sum.Basic.gaussianSum
     ((areaPairs
     sample).map Prod.snd)) ≤ 2 *
-    (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope data + target) :=
-    rightBound.trans (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+    (areaSlope data + target) :=
+    rightBound.trans (Arithmetic.mul_le_mul_of_nonneg_left_direct
       (add_le_add le_rfl
         (operational_error_lt
         sample).le) (by decide))
@@ -634,32 +637,32 @@ theorem area_bounds (sample : PreparedPrimitives.Sample request capSample) (late
     sample) later).le
   refine ⟨((area_error_lt
     sample) later).le, errorLe, ?_, ?_⟩
-  · have estimate := Data.Gaussian.Norm.Bounds.normSq_add_le_two
-      (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+  · have estimate := Bounds.normSq_add_le_two
+      (Sum.Basic.gaussianSum
         ((areaPairs
-        sample).map Prod.fst) - Data.Gaussian.Norm.Sum.Basic.gaussianSum
+        sample).map Prod.fst) - Sum.Basic.gaussianSum
         ((areaPairs
         sample).map Prod.snd))
-      (Data.Gaussian.Norm.Sum.Basic.gaussianSum
+      (Sum.Basic.gaussianSum
         ((areaPairs
         sample).map Prod.snd))
     rw [sub_add_cancel] at estimate
-    exact estimate.trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add errorLe rightLe) (by
+    exact estimate.trans ((Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add errorLe rightLe) (by
       decide)).trans_eq (by ring1))
   · exact rightLe.trans ((Fraction.Compatibility.coordinate_le_add_of_nonneg_right _ _
-      (add_nonneg (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
-        (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope_nonnegative
+      (add_nonneg (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 2)
+        (areaSlope_nonnegative
         data))
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 10)
+        (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 10)
           request.positive.le))).trans_eq (by ring1))
 
 /-- Every retained child's cap polynomial increment satisfies the same finite parent slope bound. -/
-theorem polynomial_child_bound (sample : PreparedPrimitives.Sample request capSample) (later : request.index ≤ index)
-    {child : PathCover.Parent curve differential} (member : child ∈ sample.integration.block.children) :
-    Data.Gaussian.Norm.Basic.normSq
+theorem polynomial_child_bound (sample : Sample request capSample) (later : request.index ≤ index)
+    {child : Parent curve differential} (member : child ∈ sample.integration.block.children) :
+    Basic.normSq
       ((polynomialIncrement
       sample) child) ≤ 4 *
-      (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope data + 3 *
+      (areaSlope data + 3 *
       target) := by
   have inPairs :
     ((polynomialIncrement
@@ -669,7 +672,7 @@ theorem polynomial_child_bound (sample : PreparedPrimitives.Sample request capSa
   have error :=
     ((areaPairs_errors
     sample) _ inPairs).trans
-    ((Geometric.Basic.quarterRadius_le_scale
+    ((quarterRadius_le_scale
       (areaError_nonnegative
       sample) _).trans
       ((areaError_lt
@@ -677,55 +680,48 @@ theorem polynomial_child_bound (sample : PreparedPrimitives.Sample request capSa
   have integral :=
     ((areaPairs_integral_bound
     sample) _ inPairs).trans
-    ((Geometric.Basic.quarterRadius_le_scale
-      (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide : (0 : InverseRootPolynomial.Coordinate) ≤ 2)
+    ((quarterRadius_le_scale
+      (Arithmetic.mul_nonneg_direct (by decide : (0 : Coordinate) ≤ 2)
         (add_nonneg
-          (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope_nonnegative
+          (areaSlope_nonnegative
           data) (LocalRequest.areaComparisonError_nonnegative
           (localRequest
           sample)))) _).trans
-      (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct
+      (Arithmetic.mul_le_mul_of_nonneg_left_direct
         (add_le_add le_rfl
           (operational_error_lt
           sample).le) (by decide)))
-  have estimate := Data.Gaussian.Norm.Bounds.normSq_add_le_two
+  have estimate := Bounds.normSq_add_le_two
     ((polynomialIncrement
     sample) child - child.model.integralSample) child.model.integralSample
   rw [sub_add_cancel] at estimate
-  exact estimate.trans ((Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add error integral) (by
+  exact estimate.trans ((Arithmetic.mul_le_mul_of_nonneg_left_direct (add_le_add error integral) (by
     decide)).trans_eq (by ring1))
 
 /-- The right components of the retained pairs are exactly the original integrator path increments. -/
-theorem areaPairs_integral (sample : PreparedPrimitives.Sample request capSample) :
+theorem areaPairs_integral (sample : Sample request capSample) :
     (areaPairs
       sample).map Prod.snd = PathArea.increments
       (PathModel.mk (sample.integration.block.children.map PreparedSubdivisionModelCore.CenteredEdge.model)) := by
   rewrite [areaPairs,
-    Purelib.Data.List.Map.map_map, PathArea.increments]
-  rewrite [Purelib.Data.List.Map.map_map]
+    Map.map_map, PathArea.increments]
+  rewrite [Map.map_map]
   dsimp only [Function.comp_def]
 
 /-- Differences of one value function telescope over the original retained child chain. -/
 private theorem child_increment_sum (block : PreparedDirectDyadicRefinements.DirectParentBlock parent) (value :
-  InverseRootPolynomial.Gaussian → InverseRootPolynomial.Gaussian) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (block.children.map (fun child => value (child.edge.point 1) - value
+  Gaussian → Gaussian) :
+    Sum.Basic.gaussianSum (block.children.map (fun child => value (child.edge.point 1) - value
       (child.edge.point 0))) =
       value (parent.edge.point 1) - value (parent.edge.point 0) := by
-  have sumEq (children : List (PathCover.Parent curve differential)) :
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (children.map (fun child => value (child.edge.point 1) - value
-        (child.edge.point 0))) =
-        Primitive.incrementSum value (children.map PreparedSubdivisionModelCore.CenteredEdge.model) := by
-    induction children with
-    | nil => rfl
-    | cons child children previous =>
-      exact congrArg (fun tail => value (child.edge.point 1) - value (child.edge.point 0) + tail) previous
-  have telescope := (sumEq block.children).trans (PreparedPrimitivePaths.incrementSum_eq value block.chain)
+  have telescope := (PreparedPrimitivePaths.mapped_increment_sum value block.children).trans
+    (PreparedPrimitivePaths.incrementSum_eq value block.chain)
   rw [← parent.edge.point_one, ← parent.edge.point_zero] at telescope
   exact telescope
 
 /-- The retained cap polynomial child increments telescope to the original whole-parent polynomial increment. -/
-theorem areaPairs_polynomial_total (sample : PreparedPrimitives.Sample request capSample) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum
+theorem areaPairs_polynomial_total (sample : Sample request capSample) :
+    Sum.Basic.gaussianSum
       ((areaPairs
       sample).map Prod.fst) =
       (polynomialIncrement
@@ -735,7 +731,7 @@ theorem areaPairs_polynomial_total (sample : PreparedPrimitives.Sample request c
     sample).map Prod.fst = sample.integration.block.children.map
       (fun child => value (child.edge.point 1) - value (child.edge.point 0)) := by
     rewrite [areaPairs,
-      Purelib.Data.List.Map.map_map]
+      Map.map_map]
     dsimp only [Function.comp_def]
     apply Map.map_congr_left
     intro child _
@@ -754,18 +750,18 @@ end Sample
 set_option genInjectivity false in
 /-- Choose the integration tolerance from the requested full area error. The fixed slope is retained before selecting or
 building a model stage. -/
-structure AreaRequest (data : PathCover.ParentData cap differential count parent) (target :
-  InverseRootPolynomial.Coordinate) (floor : Nat) where
+structure AreaRequest (data : ParentData cap differential count parent) (target :
+  Coordinate) (floor : Nat) where
   /-- The original full-area error target is strictly positive. -/ positive : 0 < target
-  /-- The cached original cap coefficient and parent-movement ceiling. -/ slope : InverseRootPolynomial.Coordinate
+  /-- The cached original cap coefficient and parent-movement ceiling. -/ slope : Coordinate
   /-- The cached slope equals the original retained parent area slope. -/ slope_eq : slope =
     areaSlope data
   /-- The positive local integration tolerance selected before model refinement. -/ tolerance :
-    InverseRootPolynomial.Coordinate
+    Coordinate
   /-- The tolerance is the smaller of one and the original target divided by its slope-adjusted cost. -/ tolerance_eq :
     tolerance = min 1 (target / (512 * (slope + 3)))
   /-- The original parent primitive request paid at this exact retained tolerance. -/ request :
-    PreparedPrimitives.Request data tolerance floor
+    Request data tolerance floor
 
 constructive_injectivity AreaRequest
 
@@ -775,57 +771,57 @@ open Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalC
 
 /-- Pay the full requested area target by retaining its original slope, positive tolerance and proper-parent primitive
 request. -/
-@[expose] public def build (data : PathCover.ParentData cap differential count parent) (target :
-  InverseRootPolynomial.Coordinate) (positive : 0 < target) (floor : Nat)
+@[expose] public def build (data : ParentData cap differential count parent) (target :
+  Coordinate) (positive : 0 < target) (floor : Nat)
     (proper : parent.edge.left.parameter < parent.edge.request.endpoint.parameter) :
-    Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.AreaRequest data target
+    AreaRequest data target
       floor :=
-  let slope := Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope data
+  let slope := areaSlope data
   let tolerance := min 1 (target / (512 * (slope + 3)))
-  have tolerancePositive : 0 < tolerance := Fraction.Order.Basic.lt_min (by decide)
-    (Fraction.Order.Field.div_pos_direct positive
-      (Fraction.Order.Arithmetic.mul_pos_direct (by decide +kernel)
-        (Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct
-          (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope_nonnegative
+  have tolerancePositive : 0 < tolerance := Basic.lt_min (by decide)
+    (Field.div_pos_direct positive
+      (Arithmetic.mul_pos_direct (by decide +kernel)
+        (Arithmetic.add_pos_of_nonneg_of_pos_direct
+          (areaSlope_nonnegative
           data) (by decide))))
-  ⟨positive, slope, rfl, tolerance, rfl, PreparedPrimitives.Request.build data tolerance tolerancePositive floor proper⟩
+  ⟨positive, slope, rfl, tolerance, rfl, Request.build data tolerance tolerancePositive floor proper⟩
 
 variable {target : Coordinate} {floor : Nat}
 
 /-- The retained integration tolerance pays the complete original area discrepancy target. -/
 theorem paid (request :
-  Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.AreaRequest data target floor)
+  AreaRequest data target floor)
   :
     256 * request.tolerance *
-      (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope data + 3 *
+      (areaSlope data + 3 *
       request.tolerance) < target := by
   have nonnegative : 0 ≤ request.slope := request.slope_eq ▸
-    Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope_nonnegative data
-  have shifted : 0 < request.slope + 3 := Fraction.Order.Arithmetic.add_pos_of_nonneg_of_pos_direct nonnegative (by
+    areaSlope_nonnegative data
+  have shifted : 0 < request.slope + 3 := Arithmetic.add_pos_of_nonneg_of_pos_direct nonnegative (by
     decide)
-  have denominator : 0 < 512 * (request.slope + 3) := Fraction.Order.Arithmetic.mul_pos_direct (by decide +kernel)
+  have denominator : 0 < 512 * (request.slope + 3) := Arithmetic.mul_pos_direct (by decide +kernel)
     shifted
-  have small : request.tolerance ≤ 1 := by rw [request.tolerance_eq]; exact Fraction.Order.Basic.min_le_left _ _
+  have small : request.tolerance ≤ 1 := by rw [request.tolerance_eq]; exact Basic.min_le_left _ _
   have selected : request.tolerance ≤ target / (512 * (request.slope + 3)) := by
-    rw [request.tolerance_eq]; exact Fraction.Order.Basic.min_le_right _ _
-  have factor : Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.areaSlope data +
+    rw [request.tolerance_eq]; exact Basic.min_le_right _ _
+  have factor : areaSlope data +
     3 * request.tolerance ≤ request.slope + 3 := by
     rw [← request.slope_eq]
     simpa only [Fraction.Field.mul_one_direct] using
-      add_le_add le_rfl (Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct small (by
-          decide : (0 : InverseRootPolynomial.Coordinate) ≤ 3))
+      add_le_add le_rfl (Arithmetic.mul_le_mul_of_nonneg_left_direct small (by
+          decide : (0 : Coordinate) ≤ 3))
   calc
     _ ≤ 256 * request.tolerance * (request.slope + 3) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct factor
-        (Fraction.Order.Arithmetic.mul_nonneg_direct (by decide +kernel) request.request.positive.le)
+      Arithmetic.mul_le_mul_of_nonneg_left_direct factor
+        (Arithmetic.mul_nonneg_direct (by decide +kernel) request.request.positive.le)
     _ = (256 * (request.slope + 3)) * request.tolerance := by ring1
     _ < (512 * (request.slope + 3)) * request.tolerance :=
-      Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct
-        (Fraction.Order.Arithmetic.mul_lt_mul_of_pos_right_direct (by
-            decide +kernel : (256 : InverseRootPolynomial.Coordinate) < 512) shifted)
+      Arithmetic.mul_lt_mul_of_pos_right_direct
+        (Arithmetic.mul_lt_mul_of_pos_right_direct (by
+            decide +kernel : (256 : Coordinate) < 512) shifted)
         request.request.positive
     _ ≤ (512 * (request.slope + 3)) * (target / (512 * (request.slope + 3))) :=
-      Fraction.Order.Arithmetic.mul_le_mul_of_nonneg_left_direct selected denominator.le
+      Arithmetic.mul_le_mul_of_nonneg_left_direct selected denominator.le
     _ = target := by
       rw [Fraction.Field.mul_comm]
       exact Fraction.Field.div_mul_cancel_of_ne _ _ denominator.ne'
@@ -833,21 +829,21 @@ theorem paid (request :
 set_option genInjectivity false in
 /-- Cache both literal paths and their finite total/area summaries. -/
 structure Evaluation (request :
-  Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.AreaRequest data target floor)
-  {index : Nat} {box : Rational.Box}
+  AreaRequest data target floor)
+  {index : Nat} {box : Box}
     (capSample : Primitives.Sample cap differential index box) where
-  /-- The evaluated original primitive request and its retained integration block. -/ sample : PreparedPrimitives.Sample
+  /-- The evaluated original primitive request and its retained integration block. -/ sample : Sample
     request.request capSample
   /-- The cached ordered cap-polynomial and integrator increments on the original children. -/ pairs : List
-    (InverseRootPolynomial.Gaussian × InverseRootPolynomial.Gaussian)
+    (Gaussian × Gaussian)
   /-- The cached pairs are exactly the evaluated sample's original child pairs. -/ pairs_eq : pairs =
-    (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.Sample.areaPairs sample)
-  /-- The cached finite total and area summary of the cap polynomial increments. -/ left : IncrementArea.Summary
+    (areaPairs sample)
+  /-- The cached finite total and area summary of the cap polynomial increments. -/ left : Summary
     (pairs.map Prod.fst)
-  /-- The cached finite total and area summary of the actual integration increments. -/ right : IncrementArea.Summary
+  /-- The cached finite total and area summary of the actual integration increments. -/ right : Summary
     (pairs.map Prod.snd)
   /-- The cached cap total equals the original whole-parent polynomial increment. -/ left_total : left.total =
-    (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.Sample.polynomialIncrement
+    (polynomialIncrement
     sample) parent
   /-- The cached integration total equals the retained original integration sample. -/ right_total : right.total =
     sample.integral
@@ -855,34 +851,34 @@ structure Evaluation (request :
     = PathArea.increments
     (PathModel.mk (sample.integration.block.children.map PreparedSubdivisionModelCore.CenteredEdge.model))
   /-- The cached two path areas differ by less than the original full-area target. -/ accurate :
-    Data.Gaussian.Norm.Basic.normSq (left.area - right.area) < target
+    Basic.normSq (left.area - right.area) < target
 
 constructive_injectivity Evaluation
 
 /-- Evaluate the retained area request once and cache both exact child paths, totals, areas and the requested
 discrepancy certificate. -/
 @[expose] public def evaluate (request :
-  Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.AreaRequest data target floor)
-  {index : Nat} {box : Rational.Box}
+  AreaRequest data target floor)
+  {index : Nat} {box : Box}
     (capSample : Primitives.Sample cap differential index box) (later : request.request.index ≤ index) :
       Evaluation
       request capSample :=
-  let sample := PreparedPrimitives.Sample.build request.request capSample later
-  let pairs := (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.Sample.areaPairs
+  let sample := Sample.build request.request capSample later
+  let pairs := (areaPairs
     sample)
-  let left := IncrementArea.Summary.build (pairs.map Prod.fst)
-  let right := IncrementArea.Summary.build (pairs.map Prod.snd)
+  let left := Summary.build (pairs.map Prod.fst)
+  let right := Summary.build (pairs.map Prod.snd)
   ⟨sample, pairs, rfl, left, right, left.total_eq.trans
-    (Sample.areaPairs_polynomial_total
+    (areaPairs_polynomial_total
     sample),
     (by rw [right.total_eq,
-      (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.Sample.areaPairs_integral
+      (areaPairs_integral
       sample), PathArea.increments_sum, sample.integral_eq]),
-    (Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.Sample.areaPairs_integral
+    (areaPairs_integral
       sample), (by
       rw [left.area_eq, right.area_eq]
       exact
-        ((Curves.Hyperelliptic.Charts.Reciprocal.Cap.PreparedArea.ReciprocalCapPreparedPrimitives.Sample.area_error_lt
+        ((area_error_lt
         sample) later).trans request.paid)⟩
 
 end AreaRequest
@@ -924,7 +920,7 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {differential :
   Differential genus}
 
 /-- Each indexed parent in an all-proper retained list has a strictly ordered original parameter interval. -/
-private theorem proper_get : {parents : List (PathCover.Parent curve differential)} →
+private theorem proper_get : {parents : List (Parent curve differential)} →
     PreparedDyadicRefinements.AllParentsProper parents → (position : Fin parents.length) →
     (parents[position]).edge.left.parameter < (parents[position]).edge.request.endpoint.parameter
   | [], _, position => Fin.elim0 position
@@ -936,11 +932,11 @@ private theorem proper_get : {parents : List (PathCover.Parent curve differentia
 /-- Every retained occurrence supplies the nondegeneracy premise for its actual area request, directly from the complete
 path cache. -/
 theorem parent_proper {collar : ReciprocalExteriorCollar.Data curve} {cap : ReciprocalInnerInverse.Data curve collar}
-    {first last : InverseRootPolynomial.Gaussian} {path : Polynomial.Geometry.ClearPath
+    {first last : Gaussian} {path : ClearPath
       (HyperellipticReciprocal.polynomial curve)
       collar.box first last}
     {owner : SquareRootContinuationChain.Owner ((HyperellipticReciprocal.polynomial curve).eval first)}
-    (data : PathCover.Data cap path owner differential) (position : Fin data.cache.parents.length) :
+    (data : Data cap path owner differential) (position : Fin data.cache.parents.length) :
     (data.cache.parents[position]).edge.left.parameter < (data.cache.parents[position]).edge.request.endpoint.parameter
       :=
   proper_get data.cache.proper position

@@ -85,6 +85,8 @@ import Purelib.Riemann.Topology.SquareRootContinuationChain
 import Purelib.Topology.Polygon.Stokes
 import Purelib.Riemann.Integration.RectangularClippedCornerGeometry
 
+open Purelib.Curves.Hyperelliptic.Charts.Reciprocal
+
 public section
 
 /-! Complete source words for the cached horizontal and vertical side factories. -/
@@ -140,17 +142,17 @@ variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : ReciprocalExteriorCollar.Data curve} {cap :
+    ReciprocalInnerInverse.Data curve collar}
+  {regular : Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {occurrence :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceOccurrence
+    SurfaceOccurrence
     regular domains differential} {target : Coordinate} {minimum
     stage fine index : Nat}
   {box otherBox : Purelib.Geometry.Rational.Box}
-  {sample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap differential stage box}
-  {otherSample : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Cap.Primitives.Sample cap other stage otherBox}
+  {sample : Cap.Primitives.Sample cap differential stage box}
+  {otherSample : Cap.Primitives.Sample cap other stage otherBox}
   {plan : PairedSourcePlan occurrence
     other target minimum}
 
@@ -181,22 +183,22 @@ Original mesh endpoints and cached source parameters certify traversal from the 
 including every owner junction. -/
 theorem buildHorizontal_reverse_indexed_words
     {leftRow : Fin left.partition.y.intervals.length} {rightRow : Fin right.partition.y.intervals.length}
-    {height : InverseRootPolynomial.Coordinate} {side : ObservationMesh.MatchedHorizontalSide left right leftRow
+    {height : Coordinate} {side : MatchedHorizontalSide left right leftRow
       rightRow height}
     (trace : side.Trace depth)
-    (sources : FragmentFamilies.AxisSourceBank evaluated left false false)
+    (sources : AxisSourceBank evaluated left false false)
     (sourceFirst : occurrence.start.im = height) (sourceLast : occurrence.finish.im = height)
-    {allowance junctionAllowance : InverseRootPolynomial.Coordinate}
-    (budget : NoisyPathArea.LengthErrorBudget (RectangularDyadicPairedTrace.dyadicCount depth) allowance)
-    (junctionBudget : NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
-    (owners : PairedOwnerRequest.OwnerRequest occurrence other budget.tolerance) (later : owners.index ≤ index)
-    (junctionOwners : PairedOwnerRequest.OwnerRequest occurrence other junctionBudget.tolerance) (junctionLater :
+    {allowance junctionAllowance : Coordinate}
+    (budget : LengthErrorBudget (RectangularDyadicPairedTrace.dyadicCount depth) allowance)
+    (junctionBudget : LengthErrorBudget 1 junctionAllowance)
+    (owners : OwnerRequest occurrence other budget.tolerance) (later : owners.index ≤ index)
+    (junctionOwners : OwnerRequest occurrence other junctionBudget.tolerance) (junctionLater :
       junctionOwners.index ≤ index)
-    (first : RectangularPointReadings.PointReadings data.anchors data.offsets (fun vertex => trace.point
+    (first : PointReadings data.anchors data.offsets (fun vertex => trace.point
       (trace.vertices.indexed vertex)))
-    (second : RectangularPointReadings.PointReadings otherData.anchors otherData.offsets (fun vertex => trace.point
+    (second : PointReadings otherData.anchors otherData.offsets (fun vertex => trace.point
       (trace.vertices.indexed vertex)))
-    (leftValues rightValues : side.Vertex depth → InverseRootPolynomial.Gaussian)
+    (leftValues rightValues : side.Vertex depth → Gaussian)
     (leftEq : ∀ vertex, first.values vertex = leftValues (trace.vertices.indexed vertex))
     (rightEq : ∀ vertex, second.values vertex = rightValues (trace.vertices.indexed vertex))
     (axis : false = occurrence.sourceVertical) (backward : occurrence.sourceForward = false)
@@ -230,22 +232,22 @@ Original mesh endpoints and cached source parameters certify traversal from the 
 including every owner junction. -/
 theorem buildVertical_reverse_indexed_words
     {leftColumn : Fin left.partition.x.intervals.length} {rightColumn : Fin right.partition.x.intervals.length}
-    {horizontal : InverseRootPolynomial.Coordinate} {side : ObservationMesh.MatchedVerticalSide left right leftColumn
+    {horizontal : Coordinate} {side : MatchedVerticalSide left right leftColumn
       rightColumn horizontal}
     (trace : side.Trace depth)
-    (sources : FragmentFamilies.AxisSourceBank evaluated left true false)
+    (sources : AxisSourceBank evaluated left true false)
     (sourceFirst : occurrence.start.re = horizontal) (sourceLast : occurrence.finish.re = horizontal)
-    {allowance junctionAllowance : InverseRootPolynomial.Coordinate}
-    (budget : NoisyPathArea.LengthErrorBudget (RectangularDyadicPairedTrace.dyadicCount depth) allowance)
-    (junctionBudget : NoisyPathArea.LengthErrorBudget 1 junctionAllowance)
-    (owners : PairedOwnerRequest.OwnerRequest occurrence other budget.tolerance) (later : owners.index ≤ index)
-    (junctionOwners : PairedOwnerRequest.OwnerRequest occurrence other junctionBudget.tolerance) (junctionLater :
+    {allowance junctionAllowance : Coordinate}
+    (budget : LengthErrorBudget (RectangularDyadicPairedTrace.dyadicCount depth) allowance)
+    (junctionBudget : LengthErrorBudget 1 junctionAllowance)
+    (owners : OwnerRequest occurrence other budget.tolerance) (later : owners.index ≤ index)
+    (junctionOwners : OwnerRequest occurrence other junctionBudget.tolerance) (junctionLater :
       junctionOwners.index ≤ index)
-    (first : RectangularPointReadings.PointReadings data.anchors data.offsets (fun vertex => trace.point
+    (first : PointReadings data.anchors data.offsets (fun vertex => trace.point
       (trace.vertices.indexed vertex)))
-    (second : RectangularPointReadings.PointReadings otherData.anchors otherData.offsets (fun vertex => trace.point
+    (second : PointReadings otherData.anchors otherData.offsets (fun vertex => trace.point
       (trace.vertices.indexed vertex)))
-    (leftValues rightValues : side.Vertex depth → InverseRootPolynomial.Gaussian)
+    (leftValues rightValues : side.Vertex depth → Gaussian)
     (leftEq : ∀ vertex, first.values vertex = leftValues (trace.vertices.indexed vertex))
     (rightEq : ∀ vertex, second.values vertex = rightValues (trace.vertices.indexed vertex))
     (axis : true = occurrence.sourceVertical) (backward : occurrence.sourceForward = false)

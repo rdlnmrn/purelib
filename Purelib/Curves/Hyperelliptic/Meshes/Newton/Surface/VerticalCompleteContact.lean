@@ -123,47 +123,47 @@ open Purelib.Riemann.Meshes.GridLiftedMesh (LiftedMesh)
 open Purelib.Riemann.Meshes.GridLiftedDualSteps (GridSide)
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.LiftedEntries
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
-  Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
+  Branches.BranchIsolation.Data curve}
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve branches
     higher}
-  {preparation : Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonPreparation original} {target radius
-    : Data.Rat.Fraction.Rational} {grid : Riemann.RootContinuation.NewtonPuncturedGrid.BranchCellBank.NewtonGrid
+  {preparation : NewtonPreparation original} {target radius
+    : Rational} {grid : NewtonGrid
     preparation target radius}
-  {observations : Riemann.RootContinuation.NewtonProtectedObservations.ProtectedObservations original} {frames :
+  {observations : ProtectedObservations original} {frames :
     RootIsolation.SquareRoot.Grid.RootFrames grid.shrunk.prepared.grid}
-  {domains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank frames grid.faces.regulars}
-    {partitions : Riemann.Topology.NewtonRequestedSurfaceEnergy.SurfacePartitions observations grid}
-  {surfaceCuts : Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.SurfaceCuts partitions domains}
+  {domains : FaceDomainBank frames grid.faces.regulars}
+    {partitions : SurfacePartitions observations grid}
+  {surfaceCuts : SurfaceCuts partitions domains}
   {first last : Fin grid.faces.regulars.length}
-  {coarseDepth : Nat} {fixed : (sheet : Fin 2) → Riemann.RootContinuation.NewtonRequestedObservationEnergy.Preflights
-    domains sheet} {error : Data.Rat.Fraction.Rational}
+  {coarseDepth : Nat} {fixed : (sheet : Fin 2) → Preflights
+    domains sheet} {error : Rational}
 
 variable (requests : Riemann.Topology.NewtonSynchronizedSurfaceRequests.SynchronizedSurfaceRequests
-  (fun sheet => Curves.Hyperelliptic.Meshes.Newton.Surface.MeshCompatibility.surfaceMeshes partitions domains
+  (fun sheet => MeshCompatibility.surfaceMeshes partitions domains
     surfaceCuts sheet coarseDepth) fixed error)
 
 open Purelib.Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces (FacePerimeterTraces)
 
-variable {vertices : Purelib.RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank grid.shrunk.prepared.grid} {edges :
-  Purelib.RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
-  {mesh : Riemann.Meshes.GridLiftedMesh.LiftedMesh vertices edges grid.faces} {sheet : Fin 2}
+variable {vertices : RootIsolation.SquareRoot.Grid.LiftedVertices.VertexBank grid.shrunk.prepared.grid} {edges :
+  RootIsolation.SquareRoot.Grid.RootEdgeBank frames}
+  {mesh : LiftedMesh vertices edges grid.faces} {sheet : Fin 2}
   (source : mesh.LocatedFace first sheet)
 
 section VerticalCompleteContact
 
 variable
-  (firstTraces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces (requests.entries.get
+  (firstTraces : PerimeterTraces.FacePerimeterTraces (requests.entries.get
     sheet) first)
-  (lastTraces : Curves.Hyperelliptic.Meshes.Newton.Surface.PerimeterTraces.FacePerimeterTraces (requests.entries.get
-    (Curves.Hyperelliptic.Meshes.Newton.Surface.LiftedEntries.VerticalContact.next (last := last) source).sheet) last)
-  (matching : Riemann.Meshes.GridLiftedDualSteps.GridSide.Matches .right
+  (lastTraces : PerimeterTraces.FacePerimeterTraces (requests.entries.get
+    (VerticalContact.next (last := last) source).sheet) last)
+  (matching : GridSide.Matches .right
     (grid.faces.regulars[first.val]'first.isLt).cell.box
     (grid.faces.regulars[last.val]'last.isLt).cell.box)
   (equal : (partitions.get first).cuts.y.intervals = (partitions.get last).cuts.y.intervals)
 
 /-- The endpoint-polygon preparation on the actual lifted vertical contact owner and matched perimeter pieces. -/
-@[expose] def Endpoints := PuncturedGrid.EndpointPolygonPreparation
+@[expose] def Endpoints := EndpointPolygonPreparation
   (leftEntry := (VerticalContact.firstEntry (domains := domains) source)) (rightEntry := (VerticalContact.lastEntry
     (domains := domains) source matching.1 matching.2.1 matching.2.2))
   (EndpointGeometry.verticalPieces firstTraces.pieces lastTraces.pieces (VerticalPieces.build _ _ equal matching.2.2))
@@ -202,7 +202,7 @@ end Traces
   Endpoints requests source
   firstTraces lastTraces matching equal)
     (traces : Traces requests
-      source matching equal) (allowance : Fraction.Rational) (floor : Nat) :=
+      source matching equal) (allowance : Rational) (floor : Nat) :=
   let part := Contact.pieceContactTarget genus grid.faces.regulars.length
     ((PieceIndices.rows (partitions.get first)) + 1) allowance
   VerticalBoundaryRequest.Request (VerticalContact.firstEntry (domains := domains) source) (VerticalContact.lastEntry
@@ -214,7 +214,7 @@ set_option genInjectivity false in
 
 Its endpoint preparation, perimeter traces and request retain the original neighboring faces and shared global
 allowance. -/
-structure Prepared (allowance : Fraction.Rational) (floor : Nat) where
+structure Prepared (allowance : Rational) (floor : Nat) where
   /-- The actual matched vertical endpoint-polygon preparation. -/ endpoints :
     Endpoints requests source
     firstTraces lastTraces matching equal
@@ -231,7 +231,7 @@ namespace Prepared
 
 /-- Construct the actual vertical endpoint and trace preparations and allocate their positive piece and polygon
 allowances. -/
-@[expose] def build (allowance : Fraction.Rational) (positive : 0 < allowance) (floor : Nat) :
+@[expose] def build (allowance : Rational) (positive : 0 < allowance) (floor : Nat) :
     Prepared requests source
       firstTraces lastTraces matching equal allowance floor := by
   let endpoints :=
@@ -259,15 +259,15 @@ namespace Prepared
 
 /-- At the paid common stage, the actual right and left centered-area discrepancy fits the global contact target with
 its homogeneous coefficient factor. -/
-theorem accurate {allowance : Fraction.Rational} {floor stage : Nat}
+theorem accurate {allowance : Rational} {floor stage : Nat}
     (prepared : Prepared
       requests source firstTraces lastTraces matching equal allowance floor)
     (later : prepared.request.index ≤ stage)
-    (cache : LocalMeshes.Numerics domains stage) (coefficients : LinearAlgebra.Gaussian.Energy.GaussianVector genus)
+    (cache : Numerics domains stage) (coefficients : GaussianVector genus)
     (firstSamples : FacePerimeterTraces.Centered firstTraces cache coefficients)
     (lastSamples : FacePerimeterTraces.Centered lastTraces cache coefficients) :
     Data.Gaussian.Norm.Basic.normSq (firstSamples.right.centeredArea - lastSamples.left.centeredArea) ≤
-      (genus : Fraction.Rational)^2 * PreparedObservationCoercivity.coefficientNormSq coefficients^2 *
+      (genus : Rational)^2 * PreparedObservationCoercivity.coefficientNormSq coefficients^2 *
         SynchronizedSurfaceRequests.contactTarget genus grid.faces.regulars.length allowance / 4 := by
   have bound := BoundaryContactAccuracy.verticalBoundary_accurate (VerticalContact.firstEntry (domains := domains)
     source) (VerticalContact.lastEntry (domains := domains) source matching.1 matching.2.1 matching.2.2) requests

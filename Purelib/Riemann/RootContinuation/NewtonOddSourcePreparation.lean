@@ -83,18 +83,18 @@ open Purelib.Curves.Hyperelliptic.Meshes.Newton.Basis
   (SourceSurfaceAcquisition)
 open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.Basis.ParentIndices (occurrenceAt)
 
-variable {genus : Nat} {curve : Curves.Hyperelliptic.Basic.HyperellipticCurve genus} {branches :
+variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
   Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
-  {higher : 1 < curve.polynomial.natDegree} {original : Curves.Hyperelliptic.Branches.BranchCellBank curve branches
+  {higher : 1 < curve.polynomial.natDegree} {original : BranchCellBank curve branches
     higher}
-  {preparation : NewtonPreparation original} {gridTarget radius : Data.Rat.Fraction.Rational}
+  {preparation : NewtonPreparation original} {gridTarget radius : Rational}
   {grid : NewtonGrid preparation gridTarget radius}
   (observations : ProtectedObservations original) (partitions : SurfacePartitions observations grid)
   {lifted : LiftedPuncturedGrid grid.punctured}
   {collar : Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
     Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
   (regular : Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap)
-  (domains : Curves.Hyperelliptic.Meshes.PuncturedGrid.Face.DomainBanks.FaceDomainBank lifted.frames
+  (domains : FaceDomainBank lifted.frames
     grid.faces.regulars)
 
 variable (geometry : OddSurfaceGeometry observations partitions regular domains) (first : Fin genus) (floor : Nat)
@@ -107,23 +107,23 @@ Keeps the canonical component, common basis preparation, padded inverse and basi
 and the actual source-surface acquisition. -/
 structure OddSourcePreparation where
   /-- Actual exterior surface component for the selected standard differential. -/ component :
-    Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceComponent regular
+    SurfaceComponent regular
     domains (standardDifferential first)
   /-- The retained component equals its canonical exterior-program construction. -/ component_eq : component =
-    Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceComponent.build regular
-    domains (Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram.build lifted (standardDifferential first) 0)
+    SurfaceComponent.build regular
+    domains (ExteriorProgram.build lifted (standardDifferential first) 0)
   /-- Common basis preparation of the retained component. -/ retained :
-    Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation component.prepared
+    CommonBasisPreparation component.prepared
   /-- Uniform inverse bounds on the original padded region. -/ bounds :
-    Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds regular.padded
+    UniformBounds regular.padded
   /-- Basis bounds derived from those exact inverse bounds. -/ basis :
-    Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds bounds
+    BasisBounds bounds
   /-- Retained common-preparation inputs at the requested floor. -/ inputs : retained.Inputs floor
   /-- Actual surface-run schedules at the odd physical target. -/ schedules :
-    Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.Schedules
+    Schedules
     (geometry.shared.source.select first) geometry.whole retained inputs (rawOddPhysicalTarget observations) floor
   /-- Source-surface acquisition retaining those schedules, pieces and basis bounds. -/ acquired :
-    Curves.Hyperelliptic.Meshes.Newton.Basis.SourceSurfaceAcquisition schedules geometry.pieces
+    SourceSurfaceAcquisition schedules geometry.pieces
     basis (rawOddSourceTarget observations) 1 0 floor
 
 constructive_injectivity OddSourcePreparation
@@ -137,16 +137,16 @@ Reuses the canonical component and common basis preparation, builds the padded b
 physical and source targets with the requested floor. -/
 @[expose] def build : OddSourcePreparation observations partitions regular domains geometry first floor :=
   let component :=
-    Meshes.PuncturedGrid.Exterior.SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.SurfaceComponent.build regular
-    domains (Meshes.PuncturedGrid.Exterior.PeriodPrograms.ExteriorProgram.build lifted (standardDifferential first) 0)
-  let retained := Meshes.PuncturedGrid.Exterior.Basis.Preparation.CommonBasisPreparation.build component.prepared
-  let bounds := Charts.Reciprocal.ReciprocalPaddedInverse.UniformBounds.build regular.padded
-  let basis := Charts.Reciprocal.ReciprocalPaddedBasisBounds.BasisBounds.build bounds
+    SurfaceComponent.build regular
+    domains (ExteriorProgram.build lifted (standardDifferential first) 0)
+  let retained := CommonBasisPreparation.build component.prepared
+  let bounds := UniformBounds.build regular.padded
+  let basis := BasisBounds.build bounds
   let inputs := retained.inputs floor
-  let schedules := Meshes.PuncturedGrid.Exterior.Basis.SurfaceRunSchedules.RequestedSurfaceRuns.prepare
+  let schedules := prepare
     (geometry.shared.source.select first) geometry.whole retained inputs
     (rawOddPhysicalTarget observations) (rawOddPhysicalTarget_positive observations) floor
-  let acquired := Curves.Hyperelliptic.Meshes.Newton.Basis.SourceSurfaceAcquisition.build
+  let acquired := SourceSurfaceAcquisition.build
     schedules geometry.pieces basis (rawOddSourceTarget observations) 1 0 floor
     (rawOddSourceTarget_positive observations) (by decide)
   ⟨component, rfl, retained, bounds, basis, inputs, schedules, acquired⟩
@@ -163,7 +163,7 @@ actual member. -/
 theorem component_member (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1) :
     source.component ∈ (geometry.preparations.get first).components := by
   rw [geometry.preparation_readback,
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation.built_components_ramified
+    built_components_ramified
     branch]
   exact Data.List.Membership.mem_singleton.mpr source.component_eq
 
@@ -173,7 +173,7 @@ Uses origin order one and the component membership witness without changing the 
 -/
 theorem occurrence_member (branch : Charts.Reciprocal.HyperellipticReciprocal.originOrder curve = 1)
     (outer : Fin source.component.prepared.occurrences.length) :
-    Meshes.PuncturedGrid.Exterior.Basis.ParentIndices.occurrenceAt source.component.prepared.occurrences outer ∈
+    occurrenceAt source.component.prepared.occurrences outer ∈
       (geometry.preparations.get first).occurrences :=
   (geometry.preparations.get first).component_occurrence_member source.component (source.component_member branch) outer
 

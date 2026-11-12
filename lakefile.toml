@@ -1,8 +1,9 @@
 name = "purelib"
-version = "1.0.0"
+version = "2.0.0"
 # Use Lean 4.32.2 built-in linting; no additional driver or dependency is needed.
 builtinLint = true
 defaultTargets = [
+  "IOReference",
   "Purelib",
   "CCLPublication",
   "RFAPPublication",
@@ -11,47 +12,52 @@ defaultTargets = [
   "RationalRotationsPublication",
   "MinkowskiRotationsPublication",
   "PurelibExamples",
-  "Test",
+  "TestPurelib",
   "CCLExamples",
   "DivineProportionsExamples",
   "RationalRotationsExamples",
   "IntegrationCheckpointIO",
   "RootStateCheckpointIO",
-  "CenterCheckpointIO",
   "RootRefinementCheckpointIO",
-  "QuadraticSampleCheckpointIO",
-  "DiameterPreparationCheckpointIO",
   "InitialExtractionCheckpointIO",
   "SquareRootFamilyCheckpointIO",
-  "PreparedBankCheckpointIO",
-  "PreparedCycleCheckpointIO",
-  "PreparedCenterCheckpointIO",
   "NanodaExport",
   "canonical_isolation_checkpoint_harness",
   "fraction_regression",
+  "decimal_regression",
+  "circle_winding_regression",
   "unreserved_sharpness_regression",
-  "canonical_pilot_benchmark",
+  "enclosure_observer_regression",
+  "ccl_cursor_continuation_regression",
+  "machine_simulation_regression",
+  "observer_coverage_regression",
   "scalar_gcd_benchmark",
-  "legendre_replay_harness",
+  "decimal_balanced_benchmark",
+  "legendre_unit_root_regression",
   "integration_replay_regression",
+  "circle_integration_harness",
   "integration_checkpoint_harness",
-  "quadratic_refinement_harness",
   "square_factor_observation_harness",
   "initial_isolation_harness",
-  "polynomial_period_observation_harness",
+  "accelerated_root_harness",
+  "subdivision_checkpoint_harness",
+  "dyadic_checkpoint_harness",
+  "algebraic_root_execution_harness",
+  "cubic_admission_harness",
+  "multiplicity_admission_harness",
+  "cubic_sheets_harness",
+  "quartic_admission_harness",
+  "hyperelliptic_differential_harness",
+  "proposed_box_admission",
+  "operational_equivalence_harness",
   "adaptive_prepared_banks_harness",
   "canonical_period_preparation_harness",
-  "moving_reset_harness",
-  "saved_root_refinement_harness",
-  "prepared_source_replay_harness",
-  "saved_forecast_harness",
-  "saved_geometry_harness",
-  "saved_boundary_harness",
   "finite_tasks_scheduling_harness",
-  "standard_branch_geometry_harness",
   "json_regression",
+  "io_reference_regression",
   "polynomial_inverse_checkpoint_harness",
   "project_query_replay_observation",
+  "normalized_cap_loop_harness",
 ]
 
 # Load only the reviewed linter providers, without adding source imports.
@@ -94,9 +100,15 @@ leanOptions = [
 ]
 
 [[lean_lib]]
+name = "IOReference"
+roots = ["Purelib.System.IO.Reference"]
+# The small Core-only library provides native adapters to interpreted clients.
+precompileModules = true
+
+[[lean_lib]]
 name = "Purelib"
 roots = ["Purelib.Library", "Purelib.Measure", "Purelib.Riemann", "Purelib.Geometry.Rotations", "Purelib.Geometry", "Purelib.Curves"]
-globs = ["Purelib.Library", "Purelib.Measure", "Purelib.Riemann", "Purelib.Geometry.Rotations", "Purelib.Geometry", "Purelib.Algebra.+", "Purelib.Approximation.+", "Purelib.CCL.+", "Purelib.Curves.+", "Purelib.Data.+", "Purelib.Elab.+", "Purelib.Geometry.+", "Purelib.Integration.+", "Purelib.LinearAlgebra.+", "Purelib.Measure.+", "Purelib.NumberTheory.+", "Purelib.Polynomial.+", "Purelib.RationalFunctions.+", "Purelib.Riemann.+", "Purelib.RootIsolation.+", "Purelib.Tactic.+", "Purelib.Topology.+", "Purelib.Calculus.+", "Purelib.Computation.+", "Purelib.Control.+", "Purelib.System.+", "Purelib.Logic.+", "Purelib.Physics.+", "Purelib.Curves"]
+globs = ["Purelib.Library", "Purelib.Measure", "Purelib.Riemann", "Purelib.Geometry.Rotations", "Purelib.Geometry", "Purelib.Algebra.+", "Purelib.Approximation.+", "Purelib.CCL.+", "Purelib.Curves.+", "Purelib.Data.+", "Purelib.Elab.+", "Purelib.Geometry.+", "Purelib.Integration.+", "Purelib.LinearAlgebra.+", "Purelib.Measure.+", "Purelib.NumberTheory.+", "Purelib.Polynomial.+", "Purelib.RationalFunctions.+", "Purelib.Riemann.+", "Purelib.RootIsolation.+", "Purelib.Tactic.+", "Purelib.Topology.+", "Purelib.Calculus.+", "Purelib.Computation.+", "Purelib.Control.+", "Purelib.System.IO", "Purelib.System.FilePath", "Purelib.Logic.+", "Purelib.Physics.+", "Purelib.Curves"]
 
 [[lean_lib]]
 name = "CCLPublication"
@@ -134,9 +146,9 @@ roots = ["Purelib.Examples.All"]
 globs = ["Purelib.Examples.+"]
 
 [[lean_lib]]
-name = "Test"
-roots = ["Test.All"]
-globs = ["Test.+"]
+name = "TestPurelib"
+roots = ["TestPurelib.All"]
+globs = ["TestPurelib.+"]
 
 [[lean_lib]]
 name = "CCLExamples"
@@ -161,78 +173,72 @@ name = "RootStateCheckpointIO"
 roots = ["scripts.checkpoint.RootState"]
 
 [[lean_lib]]
-name = "CenterCheckpointIO"
-roots = ["scripts.checkpoint.Center"]
-
-[[lean_lib]]
 name = "RootRefinementCheckpointIO"
-roots = ["scripts.checkpoint.RootRefinement"]
-
-[[lean_lib]]
-name = "QuadraticSampleCheckpointIO"
-roots = ["scripts.checkpoint.QuadraticSample"]
-
-[[lean_lib]]
-name = "DiameterPreparationCheckpointIO"
-roots = ["scripts.checkpoint.DiameterPreparation"]
+roots = ["scripts.checkpoint.RootRefinement", "scripts.checkpoint.RawSubdivision", "scripts.checkpoint.RawRefinement", "scripts.checkpoint.CoherentRoot", "scripts.checkpoint.CoherentRootSamples"]
 
 [[lean_lib]]
 name = "InitialExtractionCheckpointIO"
-roots = ["scripts.checkpoint.InitialExtraction"]
+roots = ["scripts.checkpoint.InitialExtraction", "scripts.checkpoint.Multiplicity", "scripts.checkpoint.RootSelection", "scripts.checkpoint.Circle"]
 
 [[lean_lib]]
 name = "SquareRootFamilyCheckpointIO"
 roots = ["scripts.checkpoint.SquareRootFamily"]
 
-[[lean_lib]]
-name = "PreparedBankCheckpointIO"
-roots = ["scripts.checkpoint.PreparedBank"]
-
-[[lean_lib]]
-name = "PreparedCycleCheckpointIO"
-roots = ["scripts.checkpoint.PreparedCycle"]
-
-[[lean_lib]]
-name = "PreparedCenterCheckpointIO"
-# Imported reusable modules belong to Purelib, including native library emission.
-roots = ["scripts.checkpoint.PreparedCenter"]
-
 [[lean_exe]]
 name = "canonical_isolation_checkpoint_harness"
-root = "Test.RootIsolation.Checkpoint.Main"
-
+root = "TestPurelib.RootIsolation.Checkpoint.Main"
 
 [[lean_exe]]
 name = "fraction_regression"
-root = "Test.Data.Rat.Fraction.RegressionMain"
+root = "TestPurelib.Data.Rat.Fraction.RegressionMain"
+
+[[lean_exe]]
+name = "decimal_regression"
+root = "TestPurelib.Data.Nat.DecimalMain"
+
+[[lean_exe]]
+name = "circle_winding_regression"
+root = "TestPurelib.Polynomial.Winding.CircleMain"
 
 [[lean_exe]]
 name = "unreserved_sharpness_regression"
-root = "Test.NumberTheory.Approximation.UnreservedMain"
+root = "TestPurelib.NumberTheory.Approximation.UnreservedMain"
 
 [[lean_exe]]
-name = "canonical_pilot_benchmark"
-root = "scripts.profiling.CanonicalPilot"
+name = "enclosure_observer_regression"
+root = "TestPurelib.Approximation.Gaussian.Observation.Main"
+
+[[lean_exe]]
+name = "ccl_cursor_continuation_regression"
+root = "TestPurelib.Data.CCL.Transducer.ContinuationMain"
+
+[[lean_exe]]
+name = "machine_simulation_regression"
+root = "TestPurelib.Computation.Machine.SimulationMain"
+
+[[lean_exe]]
+name = "observer_coverage_regression"
+root = "TestPurelib.Computation.Query.ObservationMain"
 
 [[lean_exe]]
 name = "scalar_gcd_benchmark"
 root = "scripts.profiling.ScalarGCD"
 
 [[lean_exe]]
-name = "legendre_replay_harness"
-root = "scripts.observations.LegendreReplay"
+name = "legendre_unit_root_regression"
+root = "TestPurelib.Curves.Legendre.UnitRootMain"
 
 [[lean_exe]]
 name = "integration_replay_regression"
-root = "Test.Integration.Replay.Runtime"
+root = "TestPurelib.Integration.Replay.Runtime"
+
+[[lean_exe]]
+name = "circle_integration_harness"
+root = "TestPurelib.Integration.CircleMain"
 
 [[lean_exe]]
 name = "integration_checkpoint_harness"
-root = "Test.System.Checkpoint.Integration"
-
-[[lean_exe]]
-name = "quadratic_refinement_harness"
-root = "scripts.observations.QuadraticRefinement"
+root = "TestPurelib.System.Checkpoint.Integration"
 
 [[lean_exe]]
 name = "square_factor_observation_harness"
@@ -243,48 +249,24 @@ name = "initial_isolation_harness"
 root = "scripts.observations.InitialIsolation"
 
 [[lean_exe]]
-name = "polynomial_period_observation_harness"
-root = "scripts.observations.PolynomialPeriodObservation"
+name = "algebraic_root_execution_harness"
+root = "TestPurelib.Approximation.Gaussian.AlgebraicRootExecutionMain"
+
+[[lean_exe]]
+name = "cubic_admission_harness"
+root = "TestPurelib.Approximation.Gaussian.CubicAdmissionMain"
 
 [[lean_exe]]
 name = "adaptive_prepared_banks_harness"
-root = "Test.RootIsolation.SquareRoot.Preparation.Bank.AdaptiveRun"
+root = "TestPurelib.RootIsolation.SquareRoot.Preparation.Bank.AdaptiveRun"
 
 [[lean_exe]]
 name = "canonical_period_preparation_harness"
 root = "scripts.observations.CanonicalPeriodPreparation"
 
 [[lean_exe]]
-name = "moving_reset_harness"
-root = "scripts.observations.MovingReset"
-
-[[lean_exe]]
-name = "saved_root_refinement_harness"
-root = "scripts.observations.saved.RootRefinement"
-
-[[lean_exe]]
-name = "prepared_source_replay_harness"
-root = "Test.Riemann.Preparation.SourceReplay"
-
-[[lean_exe]]
-name = "saved_forecast_harness"
-root = "scripts.observations.saved.Forecast"
-
-[[lean_exe]]
-name = "saved_geometry_harness"
-root = "scripts.observations.saved.Geometry"
-
-[[lean_exe]]
-name = "saved_boundary_harness"
-root = "scripts.observations.saved.Boundary"
-
-[[lean_exe]]
 name = "finite_tasks_scheduling_harness"
 root = "scripts.profiling.FiniteTasksScheduling"
-
-[[lean_exe]]
-name = "standard_branch_geometry_harness"
-root = "scripts.observations.StandardBranchGeometry"
 
 [[require]]
 name = "mathlib"
@@ -293,18 +275,65 @@ rev = "v4.32.2"
 
 [[lean_exe]]
 name = "json_regression"
-root = "Test.Data.Json"
+root = "TestPurelib.Data.Json"
+
+[[lean_exe]]
+name = "io_reference_regression"
+root = "TestPurelib.System.Reference"
 
 [[lean_exe]]
 name = "polynomial_inverse_checkpoint_harness"
-root = "Test.LinearAlgebra.PolynomialMatrix.Checkpoint"
+root = "TestPurelib.LinearAlgebra.PolynomialMatrix.Checkpoint"
 
 [[lean_exe]]
 name = "project_query_replay_observation"
 root = "scripts.observations.ProjectQueryReplay"
 
-
 [[lean_lib]]
 name = "NanodaExport"
 # The custom native builder initializes the tool's meta phase before its entrypoint.
 roots = ["scripts.nanoda.NativeExport"]
+
+[[lean_exe]]
+name = "multiplicity_admission_harness"
+root = "TestPurelib.Approximation.Gaussian.MultiplicityAdmissionMain"
+
+[[lean_exe]]
+name = "cubic_sheets_harness"
+root = "TestPurelib.Approximation.Gaussian.CubicSheetsMain"
+
+[[lean_exe]]
+name = "quartic_admission_harness"
+root = "TestPurelib.Approximation.Gaussian.QuarticAdmissionMain"
+
+[[lean_exe]]
+name = "hyperelliptic_differential_harness"
+root = "TestPurelib.Curves.Hyperelliptic.DifferentialReductionMain"
+
+[[lean_exe]]
+name = "normalized_cap_loop_harness"
+root = "TestPurelib.Curves.Hyperelliptic.NormalizedCapLoop.ObservationMain"
+
+[[lean_exe]]
+name = "operational_equivalence_harness"
+root = "TestPurelib.Approximation.Gaussian.OperationalEquivalenceMain"
+
+[[lean_exe]]
+name = "decimal_balanced_benchmark"
+root = "scripts.profiling.DecimalBalanced"
+
+[[lean_exe]]
+name = "accelerated_root_harness"
+root = "TestPurelib.Riemann.AcceleratedRootMain"
+
+[[lean_exe]]
+name = "subdivision_checkpoint_harness"
+root = "TestPurelib.RootIsolation.Checkpoint.Subdivision"
+
+[[lean_exe]]
+name = "dyadic_checkpoint_harness"
+root = "TestPurelib.RootIsolation.Checkpoint.Dyadic"
+
+[[lean_exe]]
+name = "proposed_box_admission"
+root = "TestPurelib.RootIsolation.ProposedBoxAdmission"

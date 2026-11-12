@@ -211,4 +211,156 @@ public theorem exists_member_ne_zero_of_not_all_zero
         exact ⟨point, List.Mem.tail first member, nonzero⟩
       · exact ⟨first, List.Mem.head remaining, firstZero⟩
 
+public section
+
+/-- A retained first accepted occurrence, including its original position, complete entry and rejected earlier keys.
+
+The original list is an index. The entry is the identical stored list value,
+not a reconstructed owner or a value selected from a membership proof.
+-/
+@[expose] def Occurrence (accept : Alpha → Prop) (values : List Alpha) : Type u :=
+  (index : Fin values.length) ×
+  { entry : Alpha // entry = values[index.val]'index.isLt ∧ accept entry ∧
+    ∀ earlier : Fin values.length, earlier.val < index.val → ¬ accept (values[earlier.val]'earlier.isLt) }
+
+namespace Occurrence
+
+variable {accept : Alpha → Prop} {values : List Alpha} (selected : Occurrence accept values)
+
+/-- Read the actual bounded position selected by the original finite scan. -/
+@[expose] def index : Fin values.length := selected.1
+
+/-- Read the same complete original selected entry without rebuilding any of its fields. -/
+@[expose] def entry : Alpha := selected.2.val
+
+/-- The selected entry is the identical original list value at its retained position. -/
+theorem entry_eq : selected.entry = values[selected.index.val]'selected.index.isLt := selected.2.property.1
+
+/-- The complete selected entry belongs to its SAME original source list. -/
+theorem member : selected.entry ∈ values :=
+  Eq.mp (congrArg (fun entry => entry ∈ values) selected.entry_eq.symm) (List.getElem_mem _)
+
+/-- The actual selected entry satisfies the original predicate. -/
+theorem accepted : accept selected.entry := selected.2.property.2.1
+
+/-- Every earlier original position fails the same predicate, even when later entries repeat the key. -/
+theorem earlier (index : Fin values.length) (before : index.val < selected.index.val) :
+    ¬ accept (values[index.val]'index.isLt) := selected.2.property.2.2 index before
+
+end Occurrence
+
+/-- Retain an accepted actual head with position zero and no preceding occurrence. -/
+private def headOccurrence (accept : Alpha → Prop) (head : Alpha) (tail : List Alpha) (kept : accept head) :
+    Occurrence accept (head :: tail) :=
+  ⟨0, ⟨head, rfl, kept, fun index before => False.elim (Nat.not_lt_zero index.val before)⟩⟩
+
+/-- Shift the same selected tail occurrence past one rejected original head. -/
+private def prependOccurrence {accept : Alpha → Prop} {tail : List Alpha}
+    (head : Alpha) (rejected : ¬ accept head) (selected : Occurrence accept tail) :
+    Occurrence accept (head :: tail) :=
+  ⟨selected.index.succ, ⟨selected.entry, selected.entry_eq, selected.accepted, by
+    intro earlier before
+    cases earlier with
+    | mk value bounded =>
+      cases value with
+      | zero => exact rejected
+      | succ value =>
+        exact selected.earlier ⟨value, Nat.lt_of_succ_lt_succ bounded⟩
+          (Nat.lt_of_succ_lt_succ before)⟩⟩
+
+/-- Scan once for the first accepted original occurrence and retain its exact position and whole entry.
+
+The supplied decision procedure is run once on each visited head, in original
+list order. Acceptance returns immediately; rejection preserves the same
+recursive tail result and shifts only its bounded position. No observer or
+entry-producing operation is invoked by the scan.
+-/
+def firstOccurrence (accept : Alpha → Prop) (decisions : (entry : Alpha) → Decidable (accept entry)) :
+    (values : List Alpha) → Option (Occurrence accept values)
+  | [] => none
+  | head :: tail =>
+      match decisions head with
+      | .isTrue kept => some (headOccurrence accept head tail kept)
+      | .isFalse rejected => (firstOccurrence accept decisions tail).map (prependOccurrence head rejected)
+
+/-- An original failed occurrence scan rejects every actual source entry. -/
+private theorem firstOccurrence_rejects (accept : Alpha → Prop)
+    (decisions : (entry : Alpha) → Decidable (accept entry)) :
+    (values : List Alpha) → firstOccurrence accept decisions values = none →
+      ∀ entry ∈ values, ¬ accept entry
+  | [], _, _, member => by nomatch member
+  | head :: tail, failed, entry, member => by
+      cases choice : decisions head with
+      | isTrue kept =>
+          have impossible := failed
+          rewrite [firstOccurrence, choice] at impossible
+          nomatch impossible
+      | isFalse rejected =>
+          have tailFailed : firstOccurrence accept decisions tail = none := by
+            cases selected : firstOccurrence accept decisions tail with
+            | none => rfl
+            | some retained =>
+                have impossible := failed
+                rewrite [firstOccurrence, choice, selected] at impossible
+                nomatch impossible
+          rcases Membership.mem_cons.mp member with equal | member
+          · exact fun kept => rejected (Eq.mp (congrArg accept equal) kept)
+          · exact firstOccurrence_rejects accept decisions tail tailFailed entry member
+
+/-- Retain the whole original first accepted occurrence when genuine finite acceptance is already proved.
+
+The original scan runs once. Its entire selected value and original whole
+result equation are retained. The existence proof only rules out the none
+branch; it is never eliminated to choose runtime data.
+-/
+def firstAccepted (accept : Alpha → Prop) (decisions : (entry : Alpha) → Decidable (accept entry))
+    (values : List Alpha) (accepted : ∃ entry ∈ values, accept entry) :
+    {selected : Occurrence accept values // firstOccurrence accept decisions values = some selected} :=
+  match result : firstOccurrence accept decisions values with
+  | some selected => ⟨selected, rfl⟩
+  | none => False.elim (by
+      obtain ⟨entry, member, kept⟩ := accepted
+      exact firstOccurrence_rejects accept decisions values result entry member kept)
+
+/-- Forget only the occurrence certificates of the same finite scan, preserving its complete selected value. -/
+def firstValue (accept : Alpha → Prop) (decisions : (entry : Alpha) → Decidable (accept entry))
+    (values : List Alpha) : Option Alpha :=
+  (firstOccurrence accept decisions values).map Occurrence.entry
+
+/-- The original value view forgets only the same finite scan's retained positional evidence. -/
+theorem firstValue_eq_occurrence (accept : Alpha → Prop)
+    (decisions : (entry : Alpha) → Decidable (accept entry)) (values : List Alpha) :
+    firstValue accept decisions values = (firstOccurrence accept decisions values).map Occurrence.entry := by
+  unfold firstValue
+  rfl
+
+/-- An empty original list has no accepted value or retained occurrence. -/
+theorem firstValue_nil (accept : Alpha → Prop) (decisions : (entry : Alpha) → Decidable (accept entry)) :
+    firstValue accept decisions [] = none := by
+  unfold firstValue firstOccurrence
+  rfl
+
+/-- An accepted head returns its identical original value without visiting the retained tail. -/
+theorem firstValue_cons_pos (accept : Alpha → Prop) (decisions : (entry : Alpha) → Decidable (accept entry))
+    (head : Alpha) (tail : List Alpha) (kept : accept head) :
+    firstValue accept decisions (head :: tail) = some head := by
+  unfold firstValue
+  rewrite [firstOccurrence]
+  cases decisions head with
+  | isTrue _ => rfl
+  | isFalse rejected => exact False.elim (rejected kept)
+
+/-- A rejected head leaves the same original finite value lookup on the unchanged tail. -/
+theorem firstValue_cons_neg (accept : Alpha → Prop) (decisions : (entry : Alpha) → Decidable (accept entry))
+    (head : Alpha) (tail : List Alpha) (rejected : ¬ accept head) :
+    firstValue accept decisions (head :: tail) = firstValue accept decisions tail := by
+  unfold firstValue
+  rewrite [firstOccurrence]
+  cases decisions head with
+  | isTrue kept => exact False.elim (rejected kept)
+  | isFalse _ =>
+      cases firstOccurrence accept decisions tail <;> rfl
+
+end
+
 end Purelib.Data.List.Search

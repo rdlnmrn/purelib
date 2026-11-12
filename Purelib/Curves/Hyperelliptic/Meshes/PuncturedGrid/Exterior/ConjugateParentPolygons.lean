@@ -50,6 +50,8 @@ import Purelib.Riemann.RootContinuation.PreparedGridRootClosure
 import Purelib.Tactic.Ring
 import Purelib.Data.List.Flatten
 
+open Purelib.Data.Gaussian.Norm.Sum
+
 open Purelib
 
 open Purelib.Curves
@@ -107,18 +109,18 @@ open Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.SurfaceOccurrenc
   (SurfacePreparation SurfaceComponent SurfaceOccurrence)
 open Purelib.Integration.Path.PairedAreaBlocks (area_flatten)
 /-- The paired primitive difference between the two physical endpoints of one retained original parent. -/
-private def parentIncrement {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Differentials.Basic.Differential genus}
-    (values : Data.Gaussian.Basic.Canonical → Stokes.PrimitivePoint) (parent : PreparedSubdivisionModelCore.CenteredEdge
+private def parentIncrement {genus : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+    (values : Data.Gaussian.Basic.Canonical → PrimitivePoint) (parent : CenteredEdge
       curve differential) : PrimitivePoint :=
   (values (parent.edge.point 1)).sub (values (parent.edge.point 0))
 
 /-- The paired increment total of an actual direct parent chain equals its original outer endpoint difference. -/
-private theorem parent_total {genus : Nat} {curve : Hyperelliptic.Basic.HyperellipticCurve genus} {differential :
-  Differentials.Basic.Differential genus}
-    (values : Data.Gaussian.Basic.Canonical → Stokes.PrimitivePoint) {parents : List
-      (PreparedSubdivisionModelCore.CenteredEdge curve differential)}
-    {first last : Lifted.Basic.LiftedPoint 2} (chain : PreparedDirectDyadicRefinements.DirectPathChain parents (start :=
+private theorem parent_total {genus : Nat} {curve : HyperellipticCurve genus} {differential :
+  Differential genus}
+    (values : Data.Gaussian.Basic.Canonical → PrimitivePoint) {parents : List
+      (CenteredEdge curve differential)}
+    {first last : Lifted.Basic.LiftedPoint 2} (chain : DirectPathChain parents (start :=
       first) (finish := last)) :
     PairedIncrementArea.total (parents.map
       (parentIncrement values)) = (values
@@ -126,7 +128,7 @@ private theorem parent_total {genus : Nat} {curve : Hyperelliptic.Basic.Hyperell
   induction chain with
   | nil =>
       apply congrArg₂ PrimitivePoint.mk <;>
-        simp only [List.map_nil, Data.Gaussian.Norm.Sum.Basic.gaussianSum, sub_self, -eq_self, -iff_self] <;> rfl
+        simp only [List.map_nil, Basic.gaussianSum, sub_self, -eq_self, -iff_self] <;> rfl
   | cons parent chain ih =>
       change (parentIncrement values
         parent).add (PairedIncrementArea.total _) = _
@@ -137,26 +139,26 @@ private theorem parent_total {genus : Nat} {curve : Hyperelliptic.Basic.Hyperell
         ring1
 
 variable {genus : Nat} {curve : HyperellipticCurve genus} {branches :
-  Purelib.Curves.Hyperelliptic.Branches.BranchIsolation.Data curve}
+  Branches.BranchIsolation.Data curve}
   {higher : 1 < curve.polynomial.natDegree} {base : FramedPuncturedGrid curve branches higher}
   {lifted : LiftedPuncturedGrid base} {differential other :
     Differential genus}
-  {collar : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
-    Purelib.Curves.Hyperelliptic.Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
-  {regular : Purelib.Curves.Hyperelliptic.Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
+  {collar : Charts.Reciprocal.ReciprocalExteriorCollar.Data curve} {cap :
+    Charts.Reciprocal.ReciprocalInnerInverse.Data curve collar}
+  {regular : Charts.Reciprocal.Disk.RegularBounds.Data cap} {domains :
     FaceDomainBank lifted.frames base.faces.regulars}
   {prepared :
-    SurfaceOccurrences.LiftedPuncturedGrid.ExteriorProgram.AllSurfacePreparation
-    regular domains differential} {stage : Nat} {box otherBox : Purelib.Geometry.Rational.Box}
+    ExteriorProgram.AllSurfacePreparation
+    regular domains differential} {stage : Nat} {box otherBox : Geometry.Rational.Box}
 
 /-- The actual parent polygon area decomposes into all original occurrence polygons and the retained exterior joining
 polygon. -/
 private theorem component_regroup {program : PeriodPrograms.ExteriorProgram lifted differential}
-    (component : ExteriorProgram.SurfacePreparation regular domains program) (values : Data.Gaussian.Basic.Canonical →
-      Stokes.PrimitivePoint) :
+    (component : SurfacePreparation regular domains program) (values : Data.Gaussian.Basic.Canonical →
+      PrimitivePoint) :
     PairedIncrementArea.area (program.cache.parents.map
       (parentIncrement values)) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (component.occurrences.map (fun occurrence =>
+      Basic.gaussianSum (component.occurrences.map (fun occurrence =>
         PairedIncrementArea.area (occurrence.compared.entered.cache.parents.map
           (parentIncrement values)))) +
       PairedIncrementArea.area (program.indexed.map (fun edge =>
@@ -187,19 +189,19 @@ private theorem component_regroup {program : PeriodPrograms.ExteriorProgram lift
 /-- Summing retained blockwise Gaussian values equals summing their exact flattened original list. -/
 private theorem sum_flatMap {A : Type u} {B : Type v} (entries : List A) (blocks : A → List B) (value : B →
   Data.Gaussian.Basic.Canonical) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map (fun entry =>
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum ((blocks entry).map value))) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum ((entries.flatMap blocks).map value) := by
+    Basic.gaussianSum (entries.map (fun entry =>
+      Basic.gaussianSum ((blocks entry).map value))) =
+      Basic.gaussianSum ((entries.flatMap blocks).map value) := by
   induction entries with
   | nil => rfl
   | cons head tail ih =>
       rw [Flatten.flatMap_cons, Map.map_append, IncrementArea.sum_append]
-      exact congrArg (Data.Gaussian.Norm.Sum.Basic.gaussianSum ((blocks head).map value) + ·) ih
+      exact congrArg (Basic.gaussianSum ((blocks head).map value) + ·) ih
 
 /-- The Gaussian sum of pairwise added list readings equals the sum of the two original list totals. -/
 private theorem sum_map_add {A : Type u} (entries : List A) (first last : A → Data.Gaussian.Basic.Canonical) :
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map (fun entry => first entry + last entry)) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (entries.map first) + Data.Gaussian.Norm.Sum.Basic.gaussianSum
+    Basic.gaussianSum (entries.map (fun entry => first entry + last entry)) =
+      Basic.gaussianSum (entries.map first) + Basic.gaussianSum
         (entries.map last) := by
   induction entries with
   | nil => exact (add_zero _).symm
@@ -212,48 +214,47 @@ namespace AllSurfacePreparation.CapAttachment
 
 /-- Coarsening the parent polygons produces the joining polygon plus every internal occurrence polygon. Closure does not
 discard those internal areas. -/
-theorem conjugate_parent_polygons (attached : AllSurfacePreparation.CapAttachment prepared)
+theorem conjugate_parent_polygons (attached : CapAttachment prepared)
     (sample : Primitives.Sample cap differential stage box)
     (otherSample : Primitives.Sample cap other stage otherBox) :
     let values := fun point => ConjugateIncrementComparison.conjugateFirst (⟨sample.primitive.value.eval point⁻¹,
-      otherSample.primitive.value.eval point⁻¹⟩ : Stokes.PrimitivePoint)
-    Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.components.map (fun component =>
+      otherSample.primitive.value.eval point⁻¹⟩ : PrimitivePoint)
+    Basic.gaussianSum (prepared.components.map (fun component =>
       PairedIncrementArea.area (component.program.cache.parents.map (fun parent =>
         (values (parent.edge.point 1)).sub (values (parent.edge.point 0)))))) =
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.occurrences.map (fun occurrence =>
+      Basic.gaussianSum (prepared.occurrences.map (fun occurrence =>
         PairedIncrementArea.area (occurrence.compared.entered.cache.parents.map (fun parent =>
           (values (parent.edge.point 1)).sub (values (parent.edge.point 0)))))) +
       CapAttachment.conjugateJoiningArea attached sample otherSample := by
   intro values
   have components := Map.map_congr_left (fun component (_ : component ∈ prepared.components) =>
-    Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateParentPolygons.component_regroup component.prepared
+    ConjugateParentPolygons.component_regroup component.prepared
       values)
-  have result := congrArg Data.Gaussian.Norm.Sum.Basic.gaussianSum components
-  have splitSum := Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateParentPolygons.sum_map_add (A :=
-    ExteriorProgram.SurfaceComponent regular domains differential) prepared.components
-    (fun component : ExteriorProgram.SurfaceComponent regular domains differential =>
-      Data.Gaussian.Norm.Sum.Basic.gaussianSum (component.prepared.occurrences.map (fun occurrence =>
+  have result := congrArg Basic.gaussianSum components
+  have splitSum := ConjugateParentPolygons.sum_map_add (A :=
+    SurfaceComponent regular domains differential) prepared.components
+    (fun component : SurfaceComponent regular domains differential =>
+      Basic.gaussianSum (component.prepared.occurrences.map (fun occurrence =>
       PairedIncrementArea.area (occurrence.compared.entered.cache.parents.map
-        (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateParentPolygons.parentIncrement values)))))
-    (fun component : ExteriorProgram.SurfaceComponent regular domains differential => PairedIncrementArea.area
+        (ConjugateParentPolygons.parentIncrement values)))))
+    (fun component : SurfaceComponent regular domains differential => PairedIncrementArea.area
       (component.program.indexed.map (fun edge =>
       (values (lifted.vertices.coordinate edge.finish)).sub (values (lifted.vertices.coordinate edge.start)))))
   have split := result.trans splitSum
-  rw [Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateParentPolygons.sum_flatMap, ← prepared.occurrences_eq]
+  rw [ConjugateParentPolygons.sum_flatMap, ← prepared.occurrences_eq]
     at split
   have wordOrder : attached.words = prepared.components.map (fun component => component.program.indexed) :=
     attached.words_eq.trans (Map.map_congr_left (fun component _ => component.prepared.occurrences_eq))
-  have words := congrArg (fun words => Data.Gaussian.Norm.Sum.Basic.gaussianSum (words.map (fun word =>
+  have words := congrArg (fun words => Basic.gaussianSum (words.map (fun word =>
     PairedIncrementArea.area (word.map (fun edge =>
     (values (lifted.vertices.coordinate edge.finish)).sub (values (lifted.vertices.coordinate edge.start)))))))
       wordOrder
   rw [Map.map_map] at words
-  exact split.trans (congrArg (Data.Gaussian.Norm.Sum.Basic.gaussianSum (prepared.occurrences.map (fun occurrence
+  exact split.trans (congrArg (Basic.gaussianSum (prepared.occurrences.map (fun occurrence
     =>
     PairedIncrementArea.area (occurrence.compared.entered.cache.parents.map
-      (Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateParentPolygons.parentIncrement values)))) + ·)
+      (ConjugateParentPolygons.parentIncrement values)))) + ·)
       words.symm)
 
 end AllSurfacePreparation.CapAttachment
 end Purelib.Curves.Hyperelliptic.Meshes.PuncturedGrid.Exterior.ConjugateParentPolygons
-
